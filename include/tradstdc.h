@@ -124,7 +124,7 @@
 /* generic pointer, always a macro; genericptr_t is usually a typedef */
 # define genericptr	void *
 
-# if (defined(ULTRIX_PROTO) && !defined(__GNUC__)) || defined(OS2_CSET2)
+# if (defined(ULTRIX_PROTO) && !defined(__GNUC__))
 /* Cover for Ultrix on a DECstation with 2.0 compiler, which coredumps on
  *   typedef void * genericptr_t;
  *   extern void a(void(*)(int, genericptr_t));

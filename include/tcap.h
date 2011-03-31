@@ -13,7 +13,7 @@
 
 /* might display need graphics code? */
 #if !defined(AMIGA) && !defined(TOS) && !defined(MAC)
-# if defined(TERMLIB) || defined(OS2)
+# if defined(TERMLIB)
 #  define ASCIIGRAPH
 # endif
 #endif

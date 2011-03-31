@@ -16,8 +16,6 @@
 
 #define UNIX		/* delete if no fork(), exec() available */
 
-/* #define OS2 */	/* define for OS/2 */
-
 /* #define TOS */	/* define for Atari ST/TT */
 
 /* #define MINIMAL_TERM */

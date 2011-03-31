@@ -2150,21 +2150,8 @@ const char *dir;
 #endif  /* !UNIX && !VMS */
 #if defined(MICRO) || defined(WIN32)
 	char tmp[PATHLEN];
-
-# ifdef OS2_CODEVIEW   /* explicit path on opening for OS/2 */
-	/* how does this work when there isn't an explicit path or fopenp
-	 * for later access to the file via fopen_datafile? ? */
-	(void) strncpy(tmp, dir, PATHLEN - 1);
-	tmp[PATHLEN-1] = '\0';
-	if ((strlen(tmp) + 1 + strlen(RECORD)) < (PATHLEN - 1)) {
-		append_slash(tmp);
-		Strcat(tmp, RECORD);
-	}
-	fq_record = tmp;
-# else
 	Strcpy(tmp, RECORD);
 	fq_record = fqname(RECORD, SCOREPREFIX, 0);
-# endif
 
 	if ((fd = open(fq_record, O_RDWR)) < 0) {
 	    /* try to create empty record */
