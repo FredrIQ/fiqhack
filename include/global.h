@@ -8,8 +8,6 @@
 #include <stdio.h>
 
 
-/* #define BETA	*/	/* if a beta-test copy	[MRS] */
-
 /*
  * Files expected to exist in the playground directory.
  */
@@ -31,20 +29,6 @@
 
 
 /* Assorted definitions that may depend on selections in config.h. */
-
-/*
- * for DUMB preprocessor and compiler, e.g., cpp and pcc supplied
- * with Microport SysV/AT, which have small symbol tables;
- * DUMB if needed is defined in CFLAGS
- */
-#ifdef DUMB
-#ifdef BITFIELDS
-#undef BITFIELDS
-#endif
-#ifndef STUPID
-#define STUPID
-#endif
-#endif	/* DUMB */
 
 /*
  * type xchar: small integers in the range 0 - 127, usually coordinates

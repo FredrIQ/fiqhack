@@ -5,14 +5,6 @@
 #ifndef TRADSTDC_H
 #define TRADSTDC_H
 
-#if defined(DUMB) && !defined(NOVOID)
-#define NOVOID
-#endif
-
-#ifdef NOVOID
-#define void int
-#endif
-
 /*
  * Borland C provides enough ANSI C compatibility in its Borland C++
  * mode to warrant this.  But it does not set __STDC__ unless it compiles

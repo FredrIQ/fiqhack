@@ -22,8 +22,6 @@
 
 /* #define TOS */	/* define for Atari ST/TT */
 
-/* #define STUPID */	/* avoid some complicated expressions if
-			   your C compiler chokes on them */
 /* #define MINIMAL_TERM */
 			/* if a terminal handles highlighting or tabs poorly,
 			   try this define, used in pager.c and termcap.c */

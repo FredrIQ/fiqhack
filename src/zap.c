@@ -3530,12 +3530,7 @@ xchar x, y;
 	if (lev->typ == DRAWBRIDGE_UP)
 	    lev->drawbridgemask &= ~DB_ICE;	/* revert to DB_MOAT */
 	else {	/* lev->typ == ICE */
-#ifdef STUPID
-	    if (lev->icedpool == ICED_POOL) lev->typ = POOL;
-	    else lev->typ = MOAT;
-#else
 	    lev->typ = (lev->icedpool == ICED_POOL ? POOL : MOAT);
-#endif
 	    lev->icedpool = 0;
 	}
 	obj_ice_effects(x, y, FALSE);
