@@ -679,22 +679,15 @@ static const char *build_opts[] = {
 #ifdef MAIL
 		"mail daemon",
 #endif
-#ifdef GNUDOS
-		"MSDOS protected mode",
-#endif
 #ifdef NEWS
 		"news file",
 #endif
 #ifdef OVERLAY
-# ifdef MOVERLAY
-		"MOVE overlays",
-# else
 #  ifdef VROOMM
 		"VROOMM overlays",
 #  else
 		"overlays",
 #  endif
-# endif
 #endif
 #ifdef REDO
 		"redo command",

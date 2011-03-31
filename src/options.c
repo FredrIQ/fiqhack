@@ -306,9 +306,6 @@ static struct Comp_Opt
 	{ "scroll_amount", "amount to scroll map when scroll_margin is reached",
 						20, DISP_IN_GAME }, /*WC*/
 	{ "scroll_margin", "scroll map when this far from the edge", 20, DISP_IN_GAME }, /*WC*/
-#ifdef MSDOS
-	{ "soundcard", "type of sound card to use", 20, SET_IN_FILE },
-#endif
 	{ "suppress_alert", "suppress alerts about version-specific features",
 						8, SET_IN_GAME },
 	{ "tile_width", "width of tiles", 20, DISP_IN_GAME},	/*WC*/
@@ -317,15 +314,6 @@ static struct Comp_Opt
 	{ "traps",    "the symbols to use in drawing traps",
 						MAXTCHARS+1, SET_IN_FILE },
 	{ "vary_msgcount", "show more old messages at a time", 20, DISP_IN_GAME }, /*WC*/
-#ifdef MSDOS
-	{ "video",    "method of video updating", 20, SET_IN_FILE },
-#endif
-#ifdef VIDEOSHADES
-	{ "videocolors", "color mappings for internal screen routines",
-						40, DISP_IN_GAME },
-	{ "videoshades", "gray shades to map to black/gray/white",
-						32, DISP_IN_GAME },
-#endif
 #ifdef WIN32CON
 	{"subkeyvalue", "override keystroke value", 7, SET_IN_FILE},
 #endif
@@ -344,11 +332,6 @@ static boolean need_redraw; /* for doset() */
 
 #if defined(TOS) && defined(TEXTCOLOR)
 extern boolean colors_changed;	/* in tos.c */
-#endif
-
-#ifdef VIDEOSHADES
-extern char *shade[3];		  /* in sys/msdos/video.c */
-extern char ttycolors[CLR_MAX];	  /* in sys/msdos/video.c */
 #endif
 
 static char def_inv_order[MAXOCLASSES] = {
@@ -1847,69 +1830,6 @@ goodfruit:
 		return;
 	}
 	
-#ifdef VIDEOSHADES
-	/* videocolors:string */
-	fullname = "videocolors";
-	if (match_optname(opts, fullname, 6, TRUE) ||
-	    match_optname(opts, "videocolours", 10, TRUE)) {
-		if (negated) {
-			bad_negation(fullname, FALSE);
-			return;
-		}
-		else if (!(opts = string_for_env_opt(fullname, opts, FALSE))) {
-			return;
-		}
-		if (!assign_videocolors(opts))
-			badoption(opts);
-		return;
-	}
-	/* videoshades:string */
-	fullname = "videoshades";
-	if (match_optname(opts, fullname, 6, TRUE)) {
-		if (negated) {
-			bad_negation(fullname, FALSE);
-			return;
-		}
-		else if (!(opts = string_for_env_opt(fullname, opts, FALSE))) {
-			return;
-		}
-		if (!assign_videoshades(opts))
-			badoption(opts);
-		return;
-	}
-#endif /* VIDEOSHADES */
-#ifdef MSDOS
-# ifdef NO_TERMS
-	/* video:string -- must be after longer tests */
-	fullname = "video";
-	if (match_optname(opts, fullname, 5, TRUE)) {
-		if (negated) {
-			bad_negation(fullname, FALSE);
-			return;
-		}
-		else if (!(opts = string_for_env_opt(fullname, opts, FALSE))) {
-			return;
-		}
-		if (!assign_video(opts))
-			badoption(opts);
-		return;
-	}
-# endif /* NO_TERMS */
-	/* soundcard:string -- careful not to match boolean 'sound' */
-	fullname = "soundcard";
-	if (match_optname(opts, fullname, 6, TRUE)) {
-		if (negated) {
-			bad_negation(fullname, FALSE);
-			return;
-		}
-		else if (!(opts = string_for_env_opt(fullname, opts, FALSE))) {
-			return;
-		}
-		if (!assign_soundcard(opts))
-			badoption(opts);
-		return;
-	}
-#endif /* MSDOS */
 
 	/* WINCAP
 	 * map_mode:[tiles|ascii4x6|ascii6x8|ascii8x8|ascii16x8|ascii7x12|ascii8x12|
@@ -3074,10 +2994,6 @@ char *buf;
 	}
 	else if (!strcmp(optname, "player_selection"))
 		Sprintf(buf, "%s", iflags.wc_player_selection ? "prompts" : "dialog");
-#ifdef MSDOS
-	else if (!strcmp(optname, "soundcard"))
-		Sprintf(buf, "%s", to_be_done);
-#endif
 	else if (!strcmp(optname, "suppress_alert")) {
 	    if (flags.suppress_alert == 0L)
 		Strcpy(buf, none);
@@ -3103,23 +3019,6 @@ char *buf;
 		if (iflags.wc_vary_msgcount) Sprintf(buf, "%d",iflags.wc_vary_msgcount);
 		else Strcpy(buf, defopt);
 	}
-#ifdef MSDOS
-	else if (!strcmp(optname, "video"))
-		Sprintf(buf, "%s", to_be_done);
-#endif
-#ifdef VIDEOSHADES
-	else if (!strcmp(optname, "videoshades"))
-		Sprintf(buf, "%s-%s-%s", shade[0],shade[1],shade[2]);
-	else if (!strcmp(optname, "videocolors"))
-		Sprintf(buf, "%d-%d-%d-%d-%d-%d-%d-%d-%d-%d-%d-%d",
-			ttycolors[CLR_RED], ttycolors[CLR_GREEN],
-			ttycolors[CLR_BROWN], ttycolors[CLR_BLUE],
-			ttycolors[CLR_MAGENTA], ttycolors[CLR_CYAN],
-			ttycolors[CLR_ORANGE], ttycolors[CLR_BRIGHT_GREEN],
-			ttycolors[CLR_YELLOW], ttycolors[CLR_BRIGHT_BLUE],
-			ttycolors[CLR_BRIGHT_MAGENTA],
-			ttycolors[CLR_BRIGHT_CYAN]);
-#endif /* VIDEOSHADES */
 	else if (!strcmp(optname, "windowtype"))
 		Sprintf(buf, "%s", windowprocs.name);
 	else if (!strcmp(optname, "windowcolors"))

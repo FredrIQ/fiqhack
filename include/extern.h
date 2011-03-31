@@ -2121,21 +2121,6 @@ E unsigned long NDECL(get_current_feature_ver);
 E void FDECL(append_port_id, (char *));
 #endif
 
-/* ### video.c ### */
-
-#ifdef MSDOS
-E int FDECL(assign_video, (char *));
-# ifdef NO_TERMS
-E void NDECL(gr_init);
-E void NDECL(gr_finish);
-# endif
-E void FDECL(tileview,(BOOLEAN_P));
-#endif
-#ifdef VIDEOSHADES
-E int FDECL(assign_videoshades, (char *));
-E int FDECL(assign_videocolors, (char *));
-#endif
-
 /* ### vis_tab.c ### */
 
 #ifdef VISION_TABLES

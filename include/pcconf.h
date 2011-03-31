@@ -171,18 +171,7 @@
 #define SELF_RECOVER		/* NetHack itself can recover games */
 #endif
 
-# ifdef MSDOS
-#  ifndef EXEPATH
-#define EXEPATH		/* HACKDIR is .exe location if not explicitly defined */
-#  endif
-# endif
-
 # if defined(_MSC_VER) && defined(MSDOS)
-#  if (_MSC_VER >= 700) && !defined(FUNCTION_LEVEL_LINKING)
-#   ifndef MOVERLAY
-#define MOVERLAY	/* Microsoft's MOVE overlay system (MSC >= 7.0) */
-#   endif
-#  endif
 #define PC_LOCKING
 # endif
 
@@ -241,8 +230,8 @@
 
 /* Sanity check, do not modify these blocks. */
 
-/* OVERLAY must be defined with MOVERLAY or VROOMM */
-#if (defined(MOVERLAY) || defined(VROOMM))
+/* OVERLAY must be defined with VROOMM */
+#if defined(VROOMM)
 # ifndef OVERLAY
 #  define OVERLAY
 # endif
@@ -257,7 +246,7 @@
 #define OVLB
 #endif
 
-#if defined(OVERLAY) && !defined(MOVERLAY) && !defined(VROOMM) && !defined(FUNCTION_LEVEL_LINKING)
+#if defined(OVERLAY) && !defined(VROOMM) && !defined(FUNCTION_LEVEL_LINKING)
 #define USE_TRAMPOLI
 #endif
 
@@ -296,9 +285,6 @@
 #  endif
 # endif
 # define ASCIIGRAPH
-# ifdef TEXTCOLOR
-#  define VIDEOSHADES
-# endif
 /* SCREEN_8514, SCREEN_VESA are only placeholders presently - sub VGA instead */
 # if defined(SCREEN_8514) || defined(SCREEN_VESA)
 #  undef SCREEN_8514
@@ -314,14 +300,6 @@
 #  define SMALL_MAP
 # endif
 #endif			/* End of sanity check block */
-
-#if defined(MSDOS) && defined(DLB)
-#define FILENAME_CMP  stricmp		      /* case insensitive */
-#endif
-
-#ifdef MSC7_WARN	/* define with cl /DMSC7_WARN	*/
-#pragma warning(disable:4131)
-#endif
 
 #ifdef TIMED_DELAY
 # ifdef __DJGPP__

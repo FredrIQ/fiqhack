@@ -28,11 +28,6 @@ extern void FDECL(close_library,(library *));
 char *FDECL(eos, (char *));	/* also used by dlb.c */
 FILE *FDECL(fopen_datafile, (const char *,const char *));
 
-#ifdef VMS
-extern char *FDECL(vms_basename, (const char *));
-extern int FDECL(vms_open, (const char *,int,unsigned int));
-#endif
-
 static void FDECL(Write, (int,char *,long));
 static void NDECL(usage);
 static void NDECL(verbose_help);
@@ -44,10 +39,6 @@ static char *progname = default_progname;
 /* fixed library and list file names - can be overridden if necessary */
 static const char *library_file = DLBFILE;
 static const char *list_file = LIBLISTFILE;
-
-#ifdef AMIGA
-static char origdir[255]="";
-#endif
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -122,19 +113,7 @@ Write(out,buf,len)
     char *buf;
     long len;
 {
-#if defined(MSDOS) && !defined(__DJGPP__)
-    unsigned short slen;
-
-    if (len > 65534) {
-	printf("%d Length specified for write() too large for 16 bit env.",
-		len);
-	xexit(EXIT_FAILURE);
-    }
-    slen = (unsigned short)len;
-    if (write(out,buf,slen) != slen) {
-#else
     if (write(out,buf,len) != len) {
-#endif
 	printf("Write Error in '%s'\n",library_file);
 	xexit(EXIT_FAILURE);
     }

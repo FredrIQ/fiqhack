@@ -2,7 +2,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *  System related functions for MSDOS, OS/2, TOS, and Windows NT
+ *  System related functions for OS/2, TOS, and Windows NT
  */
 
 #define NEED_VARARGS
@@ -11,9 +11,8 @@
 
 #include <ctype.h>
 #include <fcntl.h>
-#if !defined(MSDOS) && !defined(WIN_CE) 	/* already done */
 #include <process.h>
-#endif
+
 #ifdef __GO32__
 #define P_WAIT		0
 #define P_NOWAIT	1
@@ -21,12 +20,6 @@
 #ifdef TOS
 #include <osbind.h>
 #endif
-#if defined(MSDOS) && !defined(__GO32__)
-#define findfirst findfirst_file
-#define findnext findnext_file
-#define filesize filesize_nh
-#endif
-
 
 #if defined(MICRO) || defined(WIN32) || defined(OS2)
 void FDECL(nethack_exit,(int));
@@ -35,15 +28,6 @@ void FDECL(nethack_exit,(int));
 #endif
 static void NDECL(msexit);
 
-
-#ifdef MOVERLAY
-extern void __far __cdecl _movepause( void );
-extern void __far __cdecl _moveresume( void );
-extern unsigned short __far __cdecl _movefpause;
-extern unsigned short __far __cdecl _movefpaused;
-#define     __MOVE_PAUSE_DISK	  2   /* Represents the executable file */
-#define     __MOVE_PAUSE_CACHE	  4   /* Represents the cache memory */
-#endif /* MOVERLAY */
 
 #ifdef MFLOPPY
 STATIC_DCL boolean NDECL(record_exists);
@@ -83,16 +67,10 @@ dosh()
 # ifndef __GO32__
 	int spawnstat;
 # endif
-#if defined(MSDOS) && defined(NO_TERMS)
-	int grmode = iflags.grmode;
-#endif
 	if ((comspec = getcomspec())) {
 #  ifndef TOS	/* TOS has a variety of shells */
 		suspend_nhwindows("To return to NetHack, enter \"exit\" at the system prompt.\n");
 #  else
-#   if defined(MSDOS) && defined(NO_TERMS)
-		grmode = iflags.grmode;
-#   endif
 		suspend_nhwindows((char *)0);
 #  endif /* TOS */
 #  ifndef NOCWD_ASSUMPTIONS
@@ -101,16 +79,7 @@ dosh()
 #  ifdef __GO32__
 		if (system(comspec) < 0) {  /* wsu@eecs.umich.edu */
 #  else
-#   ifdef MOVERLAY
-       /* Free the cache memory used by overlays, close .exe */
-	_movefpause |= __MOVE_PAUSE_DISK;
-	_movefpause |= __MOVE_PAUSE_CACHE;
-	_movepause();
-#   endif
 		spawnstat = spawnl(P_WAIT, comspec, comspec, (char *)0);
-#   ifdef MOVERLAY
-		 _moveresume();
-#   endif
 
 		if ( spawnstat < 0) {
 #  endif
@@ -126,9 +95,6 @@ dosh()
 		chdirx(hackdir, 0);
 #  endif
 		get_scr_size(); /* maybe the screen mode changed (TH) */
-#  if defined(MSDOS) && defined(NO_TERMS)
-		if (grmode) gr_init();
-#  endif
 		resume_nhwindows();
 	} else
 		pline("Can't find %s.",COMSPEC);
@@ -413,10 +379,6 @@ void
 msmsg VA_DECL(const char *, fmt)
 	VA_START(fmt);
 	VA_INIT(fmt, const char *);
-# if defined(MSDOS) && defined(NO_TERMS)
-	if (iflags.grmode)
-		gr_finish();
-# endif
 	Vprintf(fmt, VA_ARGS);
 	flushout();
 	VA_END();

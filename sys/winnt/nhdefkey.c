@@ -48,7 +48,6 @@ int WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
 
 /*
  *  Keyboard translation tables.
- *  (Adopted from the MSDOS port)
  */
 
 #define KEYPADLO	0x47

@@ -2,7 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/* main.c - MSDOS, OS/2, ST, Amiga, and NT NetHack */
+/* main.c - NT NetHack */
 
 #include "hack.h"
 #include "dlb.h"
@@ -276,13 +276,8 @@ char *argv[];
 	chdirx(hackdir,1);
 #endif
 
-#ifdef MSDOS
-	process_options(argc, argv);
-	init_nhwindows(&argc,argv);
-#else
 	init_nhwindows(&argc,argv);
 	process_options(argc, argv);
-#endif
 
 #ifdef WIN32CON
 	toggle_mouse_support();	/* must come after process_options */
@@ -663,14 +658,14 @@ boolean wr;
 #ifdef OVLB
 
 #ifdef PORT_HELP
-# if defined(MSDOS) || defined(WIN32)
+# if defined(WIN32)
 void
 port_help()
 {
     /* display port specific help file */
     display_file( PORT_HELP, 1 );
 }
-# endif /* MSDOS || WIN32 */
+# endif /* WIN32 */
 #endif /* PORT_HELP */
 
 #ifdef EXEPATH

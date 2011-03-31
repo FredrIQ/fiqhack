@@ -11,9 +11,7 @@
 
 #include <ctype.h>
 
-#if !defined(MAC) && !defined(O_WRONLY) && !defined(AZTEC_C)
 #include <fcntl.h>
-#endif
 
 #include <errno.h>
 #ifdef _MSC_VER	/* MSC 6.0 defines errno quite differently */
@@ -32,22 +30,14 @@ const
 extern int errno;
 #endif
 
-#if defined(UNIX) && defined(QT_GRAPHICS)
-#include <dirent.h>
-#endif
-
 #if defined(UNIX) || defined(VMS)
 #include <signal.h>
 #endif
 
-#if defined(MSDOS) || defined(OS2) || defined(TOS) || defined(WIN32)
-# ifndef GNUDOS
-#include <sys\stat.h>
-# else
+#if defined(WIN32)
 #include <sys/stat.h>
-# endif
 #endif
-#ifndef O_BINARY	/* used for micros, no-op for others */
+#ifndef O_BINARY
 # define O_BINARY 0
 #endif
 
@@ -64,28 +54,18 @@ char lock[PL_NSIZ+14] = "1lock"; /* long enough for uid+name+.99 */
 char bones[FILENAME];		/* pathname of bones files */
 char lock[FILENAME];		/* pathname of level files */
 # endif
-# if defined(VMS)
-char bones[] = "bonesnn.xxx;1";
-char lock[PL_NSIZ+17] = "1lock"; /* long enough for _uid+name+.99;1 */
-# endif
 # if defined(WIN32)
 char bones[] = "bonesnn.xxx";
 char lock[PL_NSIZ+25];		/* long enough for username+-+name+.99 */
 # endif
 #endif
 
-#if defined(UNIX) || defined(__BEOS__)
+#if defined(UNIX)
 #define SAVESIZE	(PL_NSIZ + 13)	/* save/99999player.e */
 #else
-# ifdef VMS
-#define SAVESIZE	(PL_NSIZ + 22)	/* [.save]<uid>player.e;1 */
-# else
 #  if defined(WIN32)
 #define SAVESIZE	(PL_NSIZ + 40)	/* username-player.NetHack-saved-game */
-#  else
-#define SAVESIZE	FILENAME	/* from macconf.h or pcconf.h */
 #  endif
-# endif
 #endif
 
 char SAVEF[SAVESIZE];	/* holds relative path of save file from playground */
@@ -123,11 +103,8 @@ static int lockptr;
 extern void FDECL(amii_set_text_font, ( char *, int ));
 #endif
 
-#if defined(WIN32) || defined(MSDOS)
+#if defined(WIN32)
 static int lockptr;
-# ifdef MSDOS
-#define Delay(a) msleep(a)
-# endif
 #define Close close
 #ifndef WIN_CE
 #define DeleteFile unlink
@@ -1258,7 +1235,7 @@ char *lockname;
 # pragma unused(filename,lockname)
 	return (char*)0;
 #else
-# if defined(UNIX) || defined(VMS) || defined(AMIGA) || defined(WIN32) || defined(MSDOS)
+# if defined(UNIX) || defined(VMS) || defined(AMIGA) || defined(WIN32)
 #  ifdef NO_FILE_LINKS
 	Strcpy(lockname, LOCKDIR);
 	Strcat(lockname, "/");
@@ -1279,7 +1256,7 @@ char *lockname;
 # else
 	lockname[0] = '\0';
 	return (char*)0;
-# endif  /* UNIX || VMS || AMIGA || WIN32 || MSDOS */
+# endif  /* UNIX || VMS || AMIGA || WIN32 */
 #endif
 }
 
@@ -1364,7 +1341,7 @@ int retryct;
 	}
 #endif  /* UNIX || VMS */
 
-#if defined(AMIGA) || defined(WIN32) || defined(MSDOS)
+#if defined(AMIGA) || defined(WIN32)
 # ifdef AMIGA
 #define OPENFAILURE(fd) (!fd)
     lockptr = 0;
@@ -1394,7 +1371,7 @@ int retryct;
 	nesting--;
 	return FALSE;
     }
-#endif /* AMIGA || WIN32 || MSDOS */
+#endif /* AMIGA || WIN32 */
 	return TRUE;
 }
 
@@ -1432,11 +1409,11 @@ const char *filename;
 
 #endif  /* UNIX || VMS */
 
-#if defined(AMIGA) || defined(WIN32) || defined(MSDOS)
+#if defined(AMIGA) || defined(WIN32)
 		if (lockptr) Close(lockptr);
 		DeleteFile(lockname);
 		lockptr = 0;
-#endif /* AMIGA || WIN32 || MSDOS */
+#endif /* AMIGA || WIN32 */
 	}
 
 	nesting--;
@@ -1454,7 +1431,7 @@ const char *configfile =
 # if defined(MAC) || defined(__BEOS__)
 			"NetHack Defaults";
 # else
-#  if defined(MSDOS) || defined(WIN32)
+#  if defined(WIN32)
 			"defaults.nh";
 #  else
 			"NetHack.cnf";
@@ -1462,17 +1439,6 @@ const char *configfile =
 # endif
 #endif
 
-
-#ifdef MSDOS
-/* conflict with speed-dial under windows
- * for XXX.cnf file so support of NetHack.cnf
- * is for backward compatibility only.
- * Preferred name (and first tried) is now defaults.nh but
- * the game will try the old name if there
- * is no defaults.nh.
- */
-const char *backward_compat_configfile = "nethack.cnf"; 
-#endif
 
 #ifndef MFLOPPY
 #define fopenp fopen
@@ -1523,11 +1489,6 @@ const char *filename;
 	if ((fp = fopenp(fqname(configfile, CONFIGPREFIX, 0), "r"))
 								!= (FILE *)0)
 		return(fp);
-# ifdef MSDOS
-	else if ((fp = fopenp(fqname(backward_compat_configfile,
-					CONFIGPREFIX, 0), "r")) != (FILE *)0)
-		return(fp);
-# endif
 #else
 	/* constructed full path names don't need fqname() */
 # ifdef VMS

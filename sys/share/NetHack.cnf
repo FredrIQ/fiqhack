@@ -154,15 +154,3 @@ OPTIONS=time,noshowexp,number_pad:2,lit_corridor
 # like the selections, you can make up your own via the graphics options,
 # adding 128 to the value of any line-drawing character you want to use.
 # (But you should still set DECgraphics to get the correct processing.)
-
-# =================================================
-# *** VIDEOCOLORS AND VIDEOSHADES ***
-#
-# While playing on NEC PC-9800, default game display may be difficult to
-# read.  Try following setting.
-#
-#OPTIONS=videocolors:4-2-6-1-5-3-4-2-6-1-5-3,videoshades:normal-normal-normal
-#
-# DEC Rainbows will hang if rawio is set, so they should instead use:
-#OPTIONS=BIOS,DECgraphics
-

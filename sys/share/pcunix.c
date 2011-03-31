@@ -8,11 +8,11 @@
 #include "wintty.h"
 
 #include	<sys/stat.h>
-#if defined(WIN32) || defined(MSDOS)
+#if defined(WIN32)
 #include	<errno.h>
 #endif
 
-#if defined(WIN32) || defined(MSDOS)
+#if defined(WIN32)
 extern char orgdir[];
 # ifdef WIN32
 extern void NDECL(backsp);
@@ -32,45 +32,6 @@ static struct stat hbuf;
 
 #ifdef PC_LOCKING
 static int NDECL(eraseoldlocks);
-#endif
-
-#if 0
-int
-uptodate(fd)
-int fd;
-{
-# ifdef WANT_GETHDATE
-    if(fstat(fd, &buf)) {
-	pline("Cannot get status of saved level? ");
-	return(0);
-    }
-    if(buf.st_mtime < hbuf.st_mtime) {
-	pline("Saved level is out of date. ");
-	return(0);
-    }
-# else
-#  if (defined(MICRO) || defined(WIN32)) && !defined(NO_FSTAT)
-    if(fstat(fd, &buf)) {
-	if(moves > 1) pline("Cannot get status of saved level? ");
-	else pline("Cannot get status of saved game.");
-	return(0);
-    } 
-    if(comp_times(buf.st_mtime)) { 
-	if(moves > 1) pline("Saved level is out of date.");
-	else pline("Saved game is out of date. ");
-	/* This problem occurs enough times we need to give the player
-	 * some more information about what causes it, and how to fix.
-	 */
-#  ifdef MSDOS
-	    pline("Make sure that your system's date and time are correct.");
-	    pline("They must be more current than NetHack.EXE's date/time stamp.");
-#  endif /* MSDOS */
-	return(0);
-    }
-#  endif  /* MICRO */
-# endif /* WANT_GETHDATE */
-    return(1);
-}
 #endif
 
 #ifdef PC_LOCKING
@@ -103,9 +64,6 @@ getlock()
 	register int fd, c, ci, ct, ern;
 	char tbuf[BUFSZ];
 	const char *fq_lock;
-# if defined(MSDOS) && defined(NO_TERMS)
-	int grmode = iflags.grmode;
-# endif
 	/* we ignore QUIT and INT at this point */
 	if (!lock_file(HLOCK, LOCKPREFIX, 10)) {
 		wait_synch();
@@ -160,10 +118,6 @@ getlock()
 	  c = yn("Do you want to destroy the old game?");
 # endif
 	} else {
-# if defined(MSDOS) && defined(NO_TERMS)
-		grmode = iflags.grmode;
-		if (grmode) gr_finish();
-# endif
 		c = 'n';
 		ct = 0;
 # ifdef SELF_RECOVER
@@ -254,9 +208,6 @@ gotlock:
 			error("cannot close lock (%s)", fq_lock);
 		}
 	}
-# if defined(MSDOS) && defined(NO_TERMS)
-	if (grmode) gr_init();
-# endif
 }	
 #endif /* PC_LOCKING */
 

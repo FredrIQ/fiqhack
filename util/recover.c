@@ -16,38 +16,22 @@
 #include "win32api.h"
 #endif
 
-#ifdef VMS
-extern int FDECL(vms_creat, (const char *,unsigned));
-extern int FDECL(vms_open, (const char *,int,unsigned));
-#endif	/* VMS */
-
 int FDECL(restore_savefile, (char *));
 void FDECL(set_levelfile_name, (int));
 int FDECL(open_levelfile, (int));
 int NDECL(create_savefile);
 void FDECL(copy_bytes, (int,int));
 
-#ifndef WIN_CE
 #define Fprintf	(void)fprintf
-#else
-#define Fprintf	(void)nhce_message
-static void nhce_message(FILE*, const char*, ...);
-#endif
 
 #define Close	(void)close
 
 #ifdef UNIX
 #define SAVESIZE	(PL_NSIZ + 13)	/* save/99999player.e */
 #else
-# ifdef VMS
-#define SAVESIZE	(PL_NSIZ + 22)	/* [.save]<uid>player.e;1 */
-# else
 #  ifdef WIN32
 #define SAVESIZE	(PL_NSIZ + 40)  /* username-player.NetHack-saved-game */
-#  else
-#define SAVESIZE	FILENAME	/* from macconf.h or pcconf.h */
 #  endif
-# endif
 #endif
 
 #if defined(EXEPATH)
@@ -80,7 +64,7 @@ char *argv[];
 	if (argc == 1 || (argc == 2 && !strcmp(argv[1], "-"))) {
 	    Fprintf(stderr,
 		"Usage: %s [ -d directory ] base1 [ base2 ... ]\n", argv[0]);
-#if defined(WIN32) || defined(MSDOS)
+#if defined(WIN32)
 	    if (dir) {
 	    	Fprintf(stderr, "\t(Unless you override it with -d, recover will look \n");
 	    	Fprintf(stderr, "\t in the %s directory on your system)\n", dir);
@@ -105,7 +89,7 @@ char *argv[];
 		}
 		argno++;
 	}
-#if defined(SECURE) && !defined(VMS)
+#if defined(SECURE)
 	if (dir
 # ifdef HACKDIR
 		&& strcmp(dir, HACKDIR)
@@ -153,9 +137,6 @@ int lev;
 	tf = rindex(lock, '.');
 	if (!tf) tf = lock + strlen(lock);
 	(void) sprintf(tf, ".%d", lev);
-#ifdef VMS
-	(void) strcat(tf, ";1");
-#endif
 }
 
 int
@@ -165,7 +146,7 @@ int lev;
 	int fd;
 
 	set_levelfile_name(lev);
-#if defined(MICRO) || defined(WIN32) || defined(MSDOS)
+#if defined(MICRO) || defined(WIN32)
 	fd = open(lock, O_RDONLY | O_BINARY);
 #else
 	fd = open(lock, O_RDONLY, 0);
@@ -178,7 +159,7 @@ create_savefile()
 {
 	int fd;
 
-#if defined(MICRO) || defined(WIN32) || defined(MSDOS)
+#if defined(MICRO) || defined(WIN32)
 	fd = open(savename, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, FCMASK);
 #else
 	fd = creat(savename, FCMASK);
