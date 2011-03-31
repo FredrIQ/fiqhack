@@ -23,7 +23,7 @@
 #if (defined(MICRO) && !defined(TOS)) || defined(ANCIENT_VAXC)
 # if !defined(_SIZE_T) && !defined(__size_t) /* __size_t for CSet/2 */
 #  define _SIZE_T
-#  if !((defined(MSDOS) || defined(OS2)) && defined(_SIZE_T_DEFINED)) /* MSC 5.1 */
+#  if !(defined(OS2) && defined(_SIZE_T_DEFINED)) /* MSC 5.1 */
 #   if !(defined(__GNUC__) && defined(AMIGA))
 typedef unsigned int	size_t;
 #   endif

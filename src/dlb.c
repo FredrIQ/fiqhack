@@ -5,10 +5,6 @@
 #include "config.h"
 #include "dlb.h"
 
-#ifdef __DJGPP__
-#include <string.h>
-#endif
-
 #define DATAPREFIX 4
 
 #ifdef DLB

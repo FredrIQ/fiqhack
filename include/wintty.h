@@ -235,19 +235,17 @@ E int FDECL(term_putc, (int c));
 E int FDECL(term_flush, (void *desc));
 E int FDECL(term_puts, (const char *str));
 # endif /* MAC */
-# if defined(MSDOS) || defined(WIN32CON)
-#  if defined(SCREEN_BIOS) || defined(SCREEN_DJGPPFAST) || defined(WIN32CON)
+# if defined(WIN32CON)
 #   undef putchar
 #   undef putc
 #   undef puts
 #   define putchar(x) xputc(x)	/* these are in video.c, nttty.c */
 #   define putc(x) xputc(x)
 #   define puts(x) xputs(x)
-#  endif/*SCREEN_BIOS || SCREEN_DJGPPFAST || WIN32CON */
 #  ifdef POSITIONBAR
 E void FDECL(video_update_positionbar, (char *));
 #  endif
-# endif/*MSDOS*/
+# endif
 #endif/*NO_TERMS*/
 
 #undef E

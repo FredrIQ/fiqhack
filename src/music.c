@@ -46,9 +46,6 @@ STATIC_DCL void NDECL(playinit);
 STATIC_DCL void FDECL(playstring, (char *,size_t));
 STATIC_DCL void FDECL(speaker,(struct obj *,char *));
 #endif
-#ifdef PCMUSIC
-void FDECL( pc_speaker, ( struct obj *, char * ) );
-#endif
 #ifdef AMIGA
 void FDECL( amii_speaker, ( struct obj *, char *, int ) );
 #endif
@@ -354,7 +351,7 @@ do_improvisation(instr)
 struct obj *instr;
 {
 	int damage, do_spec = !Confusion;
-#if defined(MAC) || defined(AMIGA) || defined(VPIX_MUSIC) || defined (PCMUSIC)
+#if defined(MAC) || defined(AMIGA) || defined(VPIX_MUSIC)
 	struct obj itmp;
 
 	itmp = *instr;
@@ -371,10 +368,7 @@ struct obj *instr;
 	if (sco_flag_console)
 	    speaker(&itmp, "C");
 # endif
-#ifdef PCMUSIC
-	  pc_speaker ( &itmp, "C");
-#endif
-#endif /* MAC || AMIGA || VPIX_MUSIC || PCMUSIC */
+#endif /* MAC || AMIGA || VPIX_MUSIC */
 
 	if (!do_spec)
 	    pline("What you produce is quite far from music...");
@@ -517,9 +511,6 @@ struct obj *instr;
 #endif
 #ifdef MAC
 	mac_speaker ( instr , buf ) ;
-#endif
-#ifdef PCMUSIC
-	pc_speaker ( instr, buf );
 #endif
 #ifdef AMIGA
 	{

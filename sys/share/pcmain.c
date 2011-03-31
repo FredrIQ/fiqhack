@@ -25,10 +25,6 @@
 #include "win32api.h"			/* for GetModuleFileName */
 #endif
 
-#ifdef __DJGPP__
-#include <unistd.h>			/* for getcwd() prototype */
-#endif
-
 #ifdef OVL0
 #define SHARED_DCL
 #else
@@ -669,11 +665,7 @@ port_help()
 #endif /* PORT_HELP */
 
 #ifdef EXEPATH
-# ifdef __DJGPP__
-#define PATH_SEPARATOR '/'
-# else
 #define PATH_SEPARATOR '\\'
-# endif
 
 #define EXEPATHBUFSZ 256
 char exepathbuf[EXEPATHBUFSZ];

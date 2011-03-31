@@ -310,10 +310,6 @@ const struct symdef defsyms[MAXPCHARS] = {
 
 #ifdef ASCIIGRAPH
 
-#ifdef PC9800
-void NDECL((*ibmgraphics_mode_callback)) = 0;	/* set in tty_start_screen() */
-#endif /* PC9800 */
-
 static uchar ibm_graphics[MAXPCHARS] = {
 /* 0*/	g_FILLER(S_stone),
 	0xb3,	/* S_vwall:	meta-3, vertical rule */
@@ -606,9 +602,6 @@ static uchar mac_graphics[MAXPCHARS] = {
 };
 #endif	/* MAC_GRAPHICS_ENV */
 
-#ifdef PC9800
-void NDECL((*ascgraphics_mode_callback)) = 0;	/* set in tty_start_screen() */
-#endif
 
 /*
  * Convert the given character to an object class.  If the character is not
@@ -659,9 +652,6 @@ int gr_set_flag;
 	default:
 	case ASCII_GRAPHICS:
 	    assign_graphics((uchar *)0, 0, MAXPCHARS, 0);
-#ifdef PC9800
-	    if (ascgraphics_mode_callback) (*ascgraphics_mode_callback)();
-#endif
 	    break;
 #ifdef ASCIIGRAPH
 	case IBM_GRAPHICS:
@@ -675,9 +665,6 @@ int gr_set_flag;
 	    iflags.IBMgraphics = TRUE;
 	    iflags.DECgraphics = FALSE;
 	    assign_graphics(ibm_graphics, SIZE(ibm_graphics), MAXPCHARS, 0);
-#ifdef PC9800
-	    if (ibmgraphics_mode_callback) (*ibmgraphics_mode_callback)();
-#endif
 	    break;
 #endif /* ASCIIGRAPH */
 #ifdef TERMLIB

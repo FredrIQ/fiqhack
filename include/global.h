@@ -68,27 +68,14 @@ typedef xchar	boolean;		/* 0 or 1 */
 #define Bitfield(x,n)	uchar x
 #endif
 
-#ifdef UNWIDENED_PROTOTYPES
-# define CHAR_P char
-# define SCHAR_P schar
-# define UCHAR_P uchar
-# define XCHAR_P xchar
-# define SHORT_P short
-#ifndef SKIP_BOOLEAN
-# define BOOLEAN_P boolean
-#endif
-# define ALIGNTYP_P aligntyp
-#else
-# ifdef WIDENED_PROTOTYPES
-#  define CHAR_P int
-#  define SCHAR_P int
-#  define UCHAR_P int
-#  define XCHAR_P int
-#  define SHORT_P int
-#  define BOOLEAN_P int
-#  define ALIGNTYP_P int
-# endif
-#endif
+#define CHAR_P int
+#define SCHAR_P int
+#define UCHAR_P int
+#define XCHAR_P int
+#define SHORT_P int
+#define BOOLEAN_P int
+#define ALIGNTYP_P int
+
 #if defined(ULTRIX_PROTO) && !defined(__STDC__)
 /* The ultrix 2.0 and 2.1 compilers (on Ultrix 4.0 and 4.2 respectively) can't
  * handle "struct obj *" constructs in prototypes.  Their bugs are different,
@@ -135,11 +122,7 @@ typedef xchar	boolean;		/* 0 or 1 */
 #endif
 
 #ifdef OS2
-#include "os2conf.h"
-#endif
-
-#ifdef MSDOS
-#include "pcconf.h"
+//#include "os2conf.h"
 #endif
 
 #ifdef TOS
@@ -151,19 +134,15 @@ typedef xchar	boolean;		/* 0 or 1 */
 #endif
 
 #ifdef MAC
-#include "macconf.h"
+//#include "macconf.h"
 #endif
 
 #ifdef __BEOS__
-#include "beconf.h"
+//#include "beconf.h"
 #endif
 
 #ifdef WIN32
-#ifdef WIN_CE
-#include "wceconf.h"
-#else
 #include "ntconf.h"
-#endif
 #endif
 
 /* Displayable name of this port; don't redefine if defined in *conf.h */
@@ -173,22 +152,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 # endif
 # ifdef MAC
 #  define PORT_ID	"Mac"
-# endif
-# ifdef MSDOS
-#  ifdef PC9800
-#  define PORT_ID	"PC-9800"
-#  else
-#  define PORT_ID	"PC"
-#  endif
-#  ifdef DJGPP
-#  define PORT_SUB_ID	"djgpp"
-#  else
-#   ifdef OVERLAY
-#  define PORT_SUB_ID	"overlaid"
-#   else
-#  define PORT_SUB_ID	"non-overlaid"
-#   endif
-#  endif
 # endif
 # ifdef OS2
 #  define PORT_ID	"OS/2"
