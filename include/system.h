@@ -118,10 +118,6 @@ E int FDECL(unlink, (const char *));
 
 #endif /* !__GNUC__ */
 
-#if defined(HPUX) && !defined(_POSIX_SOURCE)
-E long NDECL(fork);
-#endif
-
 #ifdef POSIX_TYPES
 /* The POSIX string.h is required to define all the mem* and str* functions */
 #include <string.h>
@@ -145,44 +141,24 @@ E char *memcpy();
 E char *memset();
 #  endif
 # endif
-#else
-# ifdef HPUX
-E int FDECL(memcmp, (char *,char *,int));
-E void *FDECL(memcpy, (char *,char *,int));
-E void *FDECL(memset, (char*,int,int));
-# endif
 #endif
 #endif /* POSIX_TYPES */
 
 #if defined(SYSV)
 E unsigned sleep();
 #endif
-#if defined(HPUX)
-E unsigned int FDECL(sleep, (unsigned int));
-#endif
 
 E char *FDECL(getenv, (const char *));
 E char *getlogin();
-#if defined(HPUX) && !defined(_POSIX_SOURCE)
-E long NDECL(getuid);
-E long NDECL(getgid);
-E long NDECL(getpid);
-#else
-# ifdef POSIX_TYPES
+#ifdef POSIX_TYPES
 E pid_t NDECL(getpid);
 E uid_t NDECL(getuid);
 E gid_t NDECL(getgid);
-# else	/* !POSIX_TYPES */
+#else	/* !POSIX_TYPES */
 #  ifndef getpid		/* Borland C defines getpid() as a macro */
 E int NDECL(getpid);
 #  endif
-# endif	/*?POSIX_TYPES*/
-#endif	/*?(HPUX && !_POSIX_SOURCE)*/
-
-/* add more architectures as needed */
-#if defined(HPUX)
-#define seteuid(x) setreuid(-1, (x));
-#endif
+#endif	/*?POSIX_TYPES*/
 
 /*# string(s).h #*/
 #if !defined(_XtIntrinsic_h) && !defined(POSIX_TYPES)
@@ -197,7 +173,7 @@ E char	*FDECL(strcat, (char *,const char *));
 E char	*FDECL(strncat, (char *,const char *,size_t));
 E char	*FDECL(strpbrk, (const char *,const char *));
 
-# if defined(SYSV) || defined(HPUX)
+# if defined(SYSV)
 E char	*FDECL(strchr, (const char *,int));
 E char	*FDECL(strrchr, (const char *,int));
 # else /* BSD */
@@ -207,11 +183,7 @@ E char	*FDECL(rindex, (const char *,int));
 
 E int	FDECL(strcmp, (const char *,const char *));
 E int	FDECL(strncmp, (const char *,const char *,size_t));
-# ifdef HPUX
-E unsigned int	FDECL(strlen, (char *));
-# else
 E int	FDECL(strlen, (const char *));
-# endif /* HPUX */
 #endif /* NeXT */
 
 #endif	/* !_XtIntrinsic_h_ && !POSIX_TYPES */
@@ -233,10 +205,8 @@ E int FDECL(vprintf, (const char *, va_list));
 #endif /* NEED_VARARGS */
 
 
-#if ! (defined(HPUX) && defined(_POSIX_SOURCE))
 E int FDECL(tgetent, (char *,const char *));
 E void FDECL(tputs, (const char *,int,int (*)()));
-#endif
 E int FDECL(tgetnum, (const char *));
 E int FDECL(tgetflag, (const char *));
 E char *FDECL(tgetstr, (const char *,char **));
@@ -250,7 +220,7 @@ E genericptr_t FDECL(malloc, (size_t));
 
 E struct tm *FDECL(localtime, (const time_t *));
 
-# if (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || (defined(HPUX) && defined(_POSIX_SOURCE))
+# if (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV)
 E time_t FDECL(time, (time_t *));
 # else
 E long FDECL(time, (time_t *));

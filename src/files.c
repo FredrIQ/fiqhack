@@ -578,7 +578,7 @@ d_level *lev;
 	tempname = set_bonestemp_name();
 	tempname = fqname(tempname, BONESPREFIX, 1);
 
-#if (defined(SYSV) && !defined(SVR4)) || defined(GENIX)
+#if defined(SYSV) && !defined(SVR4)
 	/* old SYSVs don't have rename.  Some SVR3's may, but since they
 	 * also have link/unlink, it doesn't matter. :-)
 	 */
