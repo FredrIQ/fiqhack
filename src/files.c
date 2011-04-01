@@ -43,14 +43,10 @@ extern int errno;
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
 #endif
 
-#if !defined(MFLOPPY) && !defined(VMS) && !defined(WIN32)
+#if !defined(VMS) && !defined(WIN32)
 char bones[] = "bonesnn.xxx";
 char lock[PL_NSIZ+14] = "1lock"; /* long enough for uid+name+.99 */
 #else
-# if defined(MFLOPPY)
-char bones[FILENAME];		/* pathname of bones files */
-char lock[FILENAME];		/* pathname of level files */
-# endif
 # if defined(WIN32)
 char bones[] = "bonesnn.xxx";
 char lock[PL_NSIZ+25];		/* long enough for username+-+name+.99 */
@@ -329,26 +325,6 @@ int prefix;
 
 /* ----------  BEGIN LEVEL FILE HANDLING ----------- */
 
-#ifdef MFLOPPY
-/* Set names for bones[] and lock[] */
-void
-set_lock_and_bones()
-{
-	if (!ramdisk) {
-		Strcpy(levels, permbones);
-		Strcpy(bones, permbones);
-	}
-	append_slash(permbones);
-	append_slash(levels);
-	append_slash(bones);
-	Strcat(bones, "bonesnn.*");
-	Strcpy(lock, levels);
-	Strcat(lock, alllevels);
-	return;
-}
-#endif /* MFLOPPY */
-
-
 /* Construct a file name for a level-type file, which is of the form
  * something.level (with any old level stripped off).
  * This assumes there is space on the end of 'file' to append
@@ -420,11 +396,6 @@ char errbuf[];
 	if (errbuf) *errbuf = '\0';
 	set_levelfile_name(lock, lev);
 	fq_lock = fqname(lock, LEVELPREFIX, 0);
-#ifdef MFLOPPY
-	/* If not currently accessible, swap it in. */
-	if (level_info[lev].where != ACTIVE)
-		swapin_file(lev);
-#endif
 # ifdef HOLD_LOCKFILE_OPEN
 	if (lev == 0)
 		fd = open_levelfile_exclusively(fq_lock, lev, O_RDONLY | O_BINARY );
@@ -466,20 +437,14 @@ int lev;
 void
 clearlocks()
 {
-#if !defined(PC_LOCKING) && defined(MFLOPPY)
-	eraseall(levels, alllevels);
-	if (ramdisk)
-		eraseall(permbones, alllevels);
-#else
 	register int x;
 
-# if defined(UNIX) || defined(VMS)
+#if defined(UNIX) || defined(VMS)
 	(void) signal(SIGHUP, SIG_IGN);
-# endif
+#endif
 	/* can't access maxledgerno() before dungeons are created -dlc */
 	for (x = (n_dgns ? maxledgerno() : 0); x >= 0; x--)
 		delete_levelfile(x);	/* not all levels need be present */
-#endif
 }
 
 #ifdef HOLD_LOCKFILE_OPEN
@@ -634,18 +599,6 @@ char errbuf[];
 	return fd;
 }
 
-#ifdef MFLOPPY
-/* remove partial bonesfile in process of creation */
-void
-cancel_bonesfile()
-{
-	const char *tempname;
-
-	tempname = set_bonestemp_name();
-	tempname = fqname(tempname, BONESPREFIX, 0);
-	(void) unlink(tempname);
-}
-#endif /* MFLOPPY */
 
 /* move completed bones file to proper name */
 void
@@ -839,10 +792,6 @@ restore_saved_game()
 	int fd;
 
 	set_savefile_name();
-#ifdef MFLOPPY
-	if (!saveDiskPrompt(1))
-	    return -1;
-#endif /* MFLOPPY */
 	fq_save = fqname(SAVEF, SAVEPREFIX, 0);
 
 	uncompress(fq_save);
@@ -1352,9 +1301,7 @@ const char *configfile =
 #endif
 
 
-#ifndef MFLOPPY
 #define fopenp fopen
-#endif
 
 STATIC_OVL FILE *
 fopen_config_file(filename)
@@ -1613,33 +1560,14 @@ char		*tmp_levels;
 # ifdef MICRO
 	} else if (match_varname(buf, "HACKDIR", 4)) {
 		(void) strncpy(hackdir, bufp, PATHLEN-1);
-#  ifdef MFLOPPY
-	} else if (match_varname(buf, "RAMDISK", 3)) {
-				/* The following ifdef is NOT in the wrong
-				 * place.  For now, we accept and silently
-				 * ignore RAMDISK */
-		(void) strncpy(tmp_ramdisk, bufp, PATHLEN-1);
-#  endif
 	} else if (match_varname(buf, "LEVELS", 4)) {
 		(void) strncpy(tmp_levels, bufp, PATHLEN-1);
 
 	} else if (match_varname(buf, "SAVE", 4)) {
-#  ifdef MFLOPPY
-		extern	int saveprompt;
-#  endif
 		char *ptr;
 		if ((ptr = index(bufp, ';')) != 0) {
 			*ptr = '\0';
-#  ifdef MFLOPPY
-			if (*(ptr+1) == 'n' || *(ptr+1) == 'N') {
-				saveprompt = FALSE;
-			}
-#  endif
 		}
-# ifdef	MFLOPPY
-		else
-		    saveprompt = flags.asksavedisk;
-# endif
 
 		(void) strncpy(SAVEP, bufp, SAVESIZE-1);
 		append_slash(SAVEP);
@@ -1737,15 +1665,10 @@ read_config_file(filename)
 const char *filename;
 {
 #define tmp_levels	(char *)0
-#define tmp_ramdisk	(char *)0
 
 #if defined(MICRO) || defined(WIN32)
 #undef tmp_levels
 	char	tmp_levels[PATHLEN];
-# ifdef MFLOPPY
-#undef tmp_ramdisk
-	char	tmp_ramdisk[PATHLEN];
-# endif
 #endif
 	char	buf[4*BUFSZ];
 	FILE	*fp;
@@ -1753,16 +1676,13 @@ const char *filename;
 	if (!(fp = fopen_config_file(filename))) return;
 
 #if defined(MICRO) || defined(WIN32)
-# ifdef MFLOPPY
-	tmp_ramdisk[0] = 0;
-# endif
 	tmp_levels[0] = 0;
 #endif
 	/* begin detection of duplicate configfile options */
 	set_duplicate_opt_detection(1);
 
 	while (fgets(buf, 4*BUFSZ, fp)) {
-		if (!parse_config_line(fp, buf, tmp_ramdisk, tmp_levels)) {
+		if (!parse_config_line(fp, buf, (char *)0, tmp_levels)) {
 			raw_printf("Bad option line:  \"%.50s\"", buf);
 			wait_synch();
 		}
@@ -1772,20 +1692,6 @@ const char *filename;
 	/* turn off detection of duplicate configfile options */
 	set_duplicate_opt_detection(0);
 
-#if defined(MICRO) && !defined(NOCWD_ASSUMPTIONS)
-	/* should be superseded by fqn_prefix[] */
-# ifdef MFLOPPY
-	Strcpy(permbones, tmp_levels);
-	if (tmp_ramdisk[0]) {
-		Strcpy(levels, tmp_ramdisk);
-		if (strcmp(permbones, levels))		/* if not identical */
-			ramdisk = TRUE;
-	} else
-		Strcpy(levels, tmp_levels);
-
-	Strcpy(bones, levels);
-# endif /* MFLOPPY */
-#endif /* MICRO */
 	return;
 }
 

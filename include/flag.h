@@ -15,9 +15,6 @@
  */
 
 struct flag {
-#ifdef	MFLOPPY
-	boolean  asksavedisk;
-#endif
 	boolean  autodig;       /* MRKR: Automatically dig */
 	boolean  autoquiver;	/* Automatically fill quiver */
 	boolean  beginner;
@@ -170,11 +167,6 @@ struct instance_flags {
 #ifdef TTY_GRAPHICS
 	char prevmsg_window;	/* type of old message window to use */
 	boolean  extmenu;	/* extended commands use menu interface */
-#endif
-#ifdef MFLOPPY
-	boolean  checkspace;	/* check disk space before writing files */
-				/* (in iflags to allow restore after moving
-				 * to >2GB partition) */
 #endif
 #ifdef MICRO
 	boolean  BIOS;		/* use IBM or ST BIOS calls when appropriate */

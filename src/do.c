@@ -907,15 +907,6 @@ currentlevel_rewrite()
 		return -1;
 	}
 
-#ifdef MFLOPPY
-	if (!savelev(fd, ledger_no(&u.uz), COUNT_SAVE)) {
-		(void) close(fd);
-		delete_levelfile(ledger_no(&u.uz));
-		pline("NetHack is out of disk space for making levels!");
-		You("can save, quit, or continue playing.");
-		return -1;
-	}
-#endif
 	return fd;
 }
 
@@ -938,16 +929,6 @@ save_currentstate()
 	savestateinlock();
 }
 #endif
-
-/*
-static boolean
-badspot(x, y)
-register xchar x, y;
-{
-	return((levl[x][y].typ != ROOM && levl[x][y].typ != AIR &&
-			 levl[x][y].typ != CORR) || MON_AT(x, y));
-}
-*/
 
 void
 goto_level(newlevel, at_stairs, falling, portal)

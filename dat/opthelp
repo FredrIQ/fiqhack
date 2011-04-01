@@ -58,9 +58,6 @@ checkpoint save game state after each level change, for possible  [TRUE]
 Boolean option if NEWS was set at compile time:
 news       print any news from game administrator on startup      [TRUE]
 
-Boolean option if MFLOPPY was set at compile time:
-checkspace check free disk space before writing files to disk     [TRUE]
-
 Boolean option if EXP_ON_BOTL was set at compile time:
 showexp    display your accumulated experience points             [FALSE]
 

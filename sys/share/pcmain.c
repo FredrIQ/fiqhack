@@ -13,13 +13,7 @@
 
 #include <ctype.h>
 
-#if !defined(GNUDOS)
-#include <sys\stat.h>
-#else
-# ifdef GNUDOS
 #include <sys/stat.h>
-# endif
-#endif
 
 #ifdef WIN32
 #include "win32api.h"			/* for GetModuleFileName */
@@ -132,7 +126,6 @@ char *argv[];
 
 	choose_windows(DEFAULT_WINDOW_SYS);
 
-#if !defined(GNUDOS)
 	/* Save current directory and make sure it gets restored when
 	 * the game is exited.
 	 */
@@ -141,7 +134,6 @@ char *argv[];
 # ifndef NO_SIGNAL
 	signal(SIGINT, (SIG_RET_TYPE) nethack_exit);	/* restore original directory */
 # endif
-#endif /* !GNUDOS */
 
 	dir = nh_getenv("NETHACKDIR");
 	if (dir == (char *)0)
@@ -262,11 +254,6 @@ char *argv[];
 	toggle_mouse_support();	/* must come after process_options */
 #endif
 
-#ifdef MFLOPPY
-	set_lock_and_bones();
-	copybones(FROMPERM);
-#endif
-
 	if (!*plname)
 		askname();
 	plnamesuffix(); 	/* strip suffix from name; calls askname() */
@@ -312,14 +299,9 @@ char *argv[];
 # endif
 	getlock();
 #else   /* What follows is !PC_LOCKING */
-#  ifndef MFLOPPY
-	/* I'm not sure what, if anything, is left here, but MFLOPPY has
-	 * conflicts with set_lock_and_bones() in files.c.
-	 */
 	Strcpy(lock,plname);
 	Strcat(lock,".99");
 	regularize(lock);	/* is this necessary? */
-#  endif
 #endif	/* PC_LOCKING */
 
 	/* Set up level 0 file to keep the game state.
@@ -336,9 +318,6 @@ char *argv[];
 		write(fd, (genericptr_t) &hackpid, sizeof(hackpid));
 		close(fd);
 	}
-#ifdef MFLOPPY
-	level_info[0].where = ACTIVE;
-#endif
 
 	/*
 	 * Initialisation of the boundaries of the mazes
@@ -516,13 +495,6 @@ char *argv[];
 			    	flags.initrace = i;
 			}
 			break;
-#ifdef MFLOPPY
-		/* Player doesn't want to use a RAM disk
-		 */
-		case 'R':
-			ramdisk = FALSE;
-			break;
-#endif
 		case '@':
 			flags.randomall = 1;
 			break;
@@ -565,9 +537,6 @@ nhusage()
 	ADD_USAGE(" [-n]");
 #endif
 	ADD_USAGE(" [-I] [-i] [-d]");
-#ifdef MFLOPPY
-	ADD_USAGE(" [-R]");
-#endif
 	if (!iflags.window_inited)
 		raw_printf("%s\n",buf1);
 	else

@@ -33,7 +33,6 @@
 #endif
 
 /* configurable options */
-#define MFLOPPY			/* floppy support		*/
 #define RANDOM			/* improved random numbers	*/
 #define SHELL			/* allow spawning of shell	*/
 #define TERMLIB			/* use termcap			*/
