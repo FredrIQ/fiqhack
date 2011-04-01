@@ -484,17 +484,13 @@ initoptions()
 		iflags.use_color = TRUE;
 # endif
 	}
-#endif /* UNIX && TTY_GRAPHICS */
-#if defined(UNIX) || defined(VMS)
-# ifdef TTY_GRAPHICS
 	/* detect whether a "vt" terminal can handle alternate charsets */
 	if ((opts = nh_getenv("TERM")) &&
 	    !strncmpi(opts, "vt", 2) && AS && AE &&
 	    index(AS, '\016') && index(AE, '\017')) {
 		switch_graphics(DEC_GRAPHICS);
 	}
-# endif
-#endif /* UNIX || VMS */
+#endif /* UNIX && TTY_GRAPHICS */
 
 	flags.menu_style = MENU_FULL;
 
@@ -3045,9 +3041,6 @@ static const char *opt_intro[] = {
 	(char *)0,
 	"or use `NETHACKOPTIONS=\"<options>\"' in your environment",
 	"(<options> is a list of options separated by commas)",
-#ifdef VMS
-	"-- for example, $ DEFINE NETHACKOPTIONS \"noautopickup,fruit:kumquat\"",
-#endif
 	"or press \"O\" while playing and use the menu.",
 	"",
  "Boolean options (which can be negated by prefixing them with '!' or \"no\"):",

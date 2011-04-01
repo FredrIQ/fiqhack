@@ -10,8 +10,6 @@
  * Section 1:	Operating and window systems selection.
  *		Select the version of the OS you are using.
  *		For "UNIX" select BSD, ULTRIX, SYSV, or HPUX in unixconf.h.
- *		A "VMS" option is not needed since the VMS C-compilers
- *		provide it (no need to change sec#1, vmsconf.h handles it).
  */
 
 #define UNIX		/* delete if no fork(), exec() available */
@@ -116,12 +114,7 @@
  */
 
 #ifndef WIZARD		/* allow for compile-time or Makefile changes */
-# ifndef KR1ED
-#  define WIZARD  "wizard" /* the person allowed to use the -D option */
-# else
-#  define WIZARD
-#  define WIZARD_NAME "wizard"
-# endif
+# define WIZARD  "wizard" /* the person allowed to use the -D option */
 #endif
 
 #define LOGFILE "logfile"	/* larger file for debugging purposes */

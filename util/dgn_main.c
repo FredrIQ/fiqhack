@@ -68,10 +68,6 @@ char **argv;
 
 		/* build output file name */
 		/* Use the whole name - strip off the last 3 or 4 chars. */
-
-#ifdef VMS	/* avoid possible interaction with logical name */
-		len++;	/* retain "." as trailing punctuation */
-#endif
 		(void) strncpy(basename, infile, len);
 		basename[len] = '\0';
 

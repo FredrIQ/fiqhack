@@ -38,7 +38,7 @@ extern char *viz_rmin, *viz_rmax;	/* line-of-sight limits (vision.c) */
 
 #ifdef OVL0
 
-# if !defined(UNIX) && !defined(VMS) && !defined(LAN_MAIL)
+# if !defined(UNIX) && !defined(LAN_MAIL)
 int mustgetmail = -1;
 # endif
 
@@ -412,7 +412,7 @@ give_up:
 	pline("Hark!  \"%s.\"", info->display_txt);
 }
 
-# if !defined(UNIX) && !defined(VMS) && !defined(LAN_MAIL)
+# if !defined(UNIX) && !defined(LAN_MAIL)
 
 void
 ckmailstatus()
@@ -448,7 +448,7 @@ struct obj *otmp;
 
 }
 
-# endif /* !UNIX && !VMS && !LAN_MAIL */
+# endif /* !UNIX && !LAN_MAIL */
 
 # ifdef UNIX
 
@@ -516,59 +516,6 @@ struct obj *otmp;
 
 # endif /* UNIX */
 
-# ifdef VMS
-
-extern NDECL(struct mail_info *parse_next_broadcast);
-
-volatile int broadcasts = 0;
-
-void
-ckmailstatus()
-{
-    struct mail_info *brdcst;
-
-    if (u.uswallow || !flags.biff) return;
-
-    while (broadcasts > 0) {	/* process all trapped broadcasts [until] */
-	broadcasts--;
-	if ((brdcst = parse_next_broadcast()) != 0) {
-	    newmail(brdcst);
-	    break;		/* only handle one real message at a time */
-	}
-    }
-}
-
-void
-readmail(otmp)
-struct obj *otmp;
-{
-#  ifdef SHELL	/* can't access mail reader without spawning subprocess */
-    const char *txt, *cmd;
-    char *p, buf[BUFSZ], qbuf[BUFSZ];
-    int len;
-
-    /* there should be a command hidden beyond the object name */
-    txt = otmp->onamelth ? ONAME(otmp) : "";
-    len = strlen(txt);
-    cmd = (len + 1 < otmp->onamelth) ? txt + len + 1 : (char *) 0;
-    if (!cmd || !*cmd) cmd = "SPAWN";
-
-    Sprintf(qbuf, "System command (%s)", cmd);
-    getlin(qbuf, buf);
-    if (*buf != '\033') {
-	for (p = eos(buf); p > buf; *p = '\0')
-	    if (*--p != ' ') break;	/* strip trailing spaces */
-	if (*buf) cmd = buf;		/* use user entered command */
-	if (!strcmpi(cmd, "SPAWN") || !strcmp(cmd, "!"))
-	    cmd = (char *) 0;		/* interactive escape */
-
-	vms_doshell(cmd, TRUE);
-	(void) sleep(1);
-    }
-#  endif /* SHELL */
-}
-
-# endif /* VMS */
 
 # ifdef LAN_MAIL
 

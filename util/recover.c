@@ -94,7 +94,7 @@ char *argv[];
 		(void) setgid(getgid());
 		(void) setuid(getuid());
 	}
-#endif	/* SECURE && !VMS */
+#endif	/* SECURE */
 
 #ifdef HACKDIR
 	if (!dir) dir = HACKDIR;

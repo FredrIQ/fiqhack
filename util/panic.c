@@ -10,10 +10,6 @@
 #define NEED_VARARGS
 #include "config.h"
 
-#ifdef VMS
-extern void NDECL(vms_abort);
-#endif
-
 /*VARARGS1*/
 boolean panicking;
 void VDECL(panic, (char *,...));
@@ -31,7 +27,7 @@ panic VA_DECL(char *,str)
 	(void) fputs(" ERROR:  ", stderr);
 	Vfprintf(stderr, str, VA_ARGS);
 	(void) fflush(stderr);
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 # ifdef SYSV
 		(void)
 # endif

@@ -85,13 +85,12 @@
 
 /*
  * The next two defines are intended mainly for the Andrew File System,
- * which does not allow hard links.  If NO_FILE_LINKS is defined, lock files
+ * which does not allow hard links.  Lock files
  * will be created in LOCKDIR using open() instead of in the playground using
  * link().
  *		Ralf Brown, 7/26/89 (from v2.3 hack of 10/10/88)
  */
 
-/* #define NO_FILE_LINKS */	/* if no hard links */
 /* #define LOCKDIR "/usr/games/lib/nethackdir" */	/* where to put locks */
 
 /*

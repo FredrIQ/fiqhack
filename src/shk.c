@@ -3529,8 +3529,8 @@ boolean cant_mollify;
 		    You_hear("an angry voice:");
 		    verbalize("Out of my way, scum!");
 		    wait_synch();
-#if defined(UNIX) || defined(VMS)
-# if defined(SYSV) || defined(ULTRIX) || defined(VMS)
+#if defined(UNIX)
+# if defined(SYSV) || defined(ULTRIX)
 		    (void)
 # endif
 			sleep(1);

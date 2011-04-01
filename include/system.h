@@ -9,20 +9,7 @@
 
 #define E extern
 
-/* some old <sys/types.h> may not define off_t and size_t; if your system is
- * one of these, define them by hand below
- */
-#if (defined(VMS) && !defined(__GNUC__))
-#include <types.h>
-#else
 #include <sys/types.h>
-#endif
-
-#if defined(ANCIENT_VAXC)
-# if !defined(_SIZE_T) && !defined(__size_t) /* __size_t for CSet/2 */
-#  define _SIZE_T
-# endif
-#endif	/* ANCIENT_VAXC */
 
 #if defined(__TURBOC__)
 #include <time.h>	/* time_t is not in <sys/types.h> */
@@ -32,7 +19,7 @@
 # define time_t long
 #endif
 
-#if defined(ULTRIX) || defined(VMS)
+#if defined(ULTRIX)
 # define off_t long
 #endif
 #if defined(THINKC4) || defined(__TURBOC__)
@@ -175,35 +162,6 @@ E long NDECL(fork);
 # endif
 #endif /* ULTRIX */
 
-#ifdef VMS
-# ifndef abs
-E int FDECL(abs, (int));
-# endif
-E int FDECL(atexit, (void (*)(void)));
-E int FDECL(atoi, (const char *));
-E int FDECL(chdir, (const char *));
-E int FDECL(chown, (const char *,unsigned,unsigned));
-# ifdef __DECC_VER
-E int FDECL(chmod, (const char *,mode_t));
-E mode_t FDECL(umask, (mode_t));
-# else
-E int FDECL(chmod, (const char *,int));
-E int FDECL(umask, (int));
-# endif
-/* #include <unixio.h> */
-E int FDECL(close, (int));
-E int VDECL(creat, (const char *,unsigned,...));
-E int FDECL(delete, (const char *));
-E int FDECL(fstat, ( /*_ int, stat_t * _*/ ));
-E int FDECL(isatty, (int));	/* 1==yes, 0==no, -1==error */
-E long FDECL(lseek, (int,long,int));
-E int VDECL(open, (const char *,int,unsigned,...));
-E int FDECL(read, (int,genericptr_t,unsigned));
-E int FDECL(rename, (const char *,const char *));
-E int FDECL(stat, ( /*_ const char *,stat_t * _*/ ));
-E int FDECL(write, (int,const genericptr,unsigned));
-#endif
-
 /* both old & new versions of Ultrix want these, but real BSD does not */
 #ifdef ultrix
 E void abort();
@@ -223,8 +181,8 @@ E long NDECL(fork);
 /* The POSIX string.h is required to define all the mem* and str* functions */
 #include <string.h>
 #else
-#if defined(SYSV) || defined(VMS) || defined(SUNOS4)
-# if defined(NHSTDC) || (defined(VMS) && !defined(ANCIENT_VAXC))
+#if defined(SYSV) || defined(SUNOS4)
+# if defined(NHSTDC)
 #  if !defined(_AIX32) && !(defined(SUNOS4) && defined(__STDC__))
 				/* Solaris unbundled cc (acc) */
 E int FDECL(memcmp, (const void *,const void *,size_t));
@@ -260,9 +218,6 @@ E unsigned sleep();
 #if defined(HPUX)
 E unsigned int FDECL(sleep, (unsigned int));
 #endif
-#ifdef VMS
-E int FDECL(sleep, (unsigned));
-#endif
 
 E char *FDECL(getenv, (const char *));
 E char *getlogin();
@@ -275,17 +230,9 @@ E long NDECL(getpid);
 E pid_t NDECL(getpid);
 E uid_t NDECL(getuid);
 E gid_t NDECL(getgid);
-#  ifdef VMS
-E pid_t NDECL(getppid);
-#  endif
-# else	/*!POSIX_TYPES*/
+# else	/* !POSIX_TYPES */
 #  ifndef getpid		/* Borland C defines getpid() as a macro */
 E int NDECL(getpid);
-#  endif
-#  ifdef VMS
-E int NDECL(getppid);
-E unsigned NDECL(getuid);
-E unsigned NDECL(getgid);
 #  endif
 #  if defined(ULTRIX) && !defined(_UNISTD_H_)
 E unsigned NDECL(getuid);
@@ -314,7 +261,7 @@ E char	*FDECL(strcat, (char *,const char *));
 E char	*FDECL(strncat, (char *,const char *,size_t));
 E char	*FDECL(strpbrk, (const char *,const char *));
 
-# if defined(SYSV) || defined(VMS) || defined(HPUX)
+# if defined(SYSV) || defined(HPUX)
 E char	*FDECL(strchr, (const char *,int));
 E char	*FDECL(strrchr, (const char *,int));
 # else /* BSD */
@@ -324,17 +271,13 @@ E char	*FDECL(rindex, (const char *,int));
 
 E int	FDECL(strcmp, (const char *,const char *));
 E int	FDECL(strncmp, (const char *,const char *,size_t));
-# if defined(VMS)
-E size_t FDECL(strlen, (const char *));
-# else
-#  ifdef HPUX
+# ifdef HPUX
 E unsigned int	FDECL(strlen, (char *));
-#  else
-#   if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
+# else
+#  if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
 E int	FDECL(strlen, (const char *));
-#   endif
-#  endif /* HPUX */
-# endif /* VMS */
+#  endif
+# endif /* HPUX */
 #endif /* ULTRIX */
 
 #endif	/* !_XtIntrinsic_h_ && !POSIX_TYPES */
@@ -419,16 +362,11 @@ E struct tm *FDECL(localtime, (const time_t *));
 #  endif
 # endif
 
-# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || defined(VMS) || (defined(HPUX) && defined(_POSIX_SOURCE))
+# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || (defined(HPUX) && defined(_POSIX_SOURCE))
 E time_t FDECL(time, (time_t *));
 # else
 E long FDECL(time, (time_t *));
 # endif /* ULTRIX */
-
-#ifdef VMS
-	/* used in makedefs.c, but missing from gcc-vms's <time.h> */
-E char *FDECL(ctime, (const time_t *));
-#endif
 
 
 #undef E

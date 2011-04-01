@@ -8,7 +8,7 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-#if defined(NO_FILE_LINKS) || defined(SUNOS4) || defined(POSIX_TYPES)
+#if defined(SUNOS4) || defined(POSIX_TYPES)
 #include <fcntl.h>
 #endif
 #include <signal.h>

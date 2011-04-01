@@ -85,11 +85,7 @@ int *wid, *hgt;
 	register char *tptr;
 	char *tbufptr, *pc;
 
-# ifdef VMS
-	term = verify_termcap();
-	if (!term)
-# endif
-		term = getenv("TERM");
+	term = getenv("TERM");
 
 	if (!term)
 #endif
@@ -588,16 +584,9 @@ graph_off() {
 #endif /* OVL0 */
 #ifdef OVL1
 
-#ifdef VMS
-static const short tmspc10[] = {		/* from termcap */
-	0, 2000, 1333, 909, 743, 666, 333, 166, 83, 55, 50, 41, 27, 20, 13, 10,
-	5
-};
-#else
 static const short tmspc10[] = {		/* from termcap */
 	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
 };
-#endif
 
 /* delay 50 ms */
 void

@@ -293,17 +293,8 @@ do_rumors()
 	}
 
 	/* get size of true rumors file */
-#ifndef VMS
 	(void) fseek(ifp, 0L, SEEK_END);
 	true_rumor_size = ftell(ifp);
-#else
-	/* seek+tell is only valid for stream format files; since rumors.%%%
-	   might be in record format, count the actual data bytes instead.
-	 */
-	true_rumor_size = 0;
-	while (fgets(in_line, sizeof in_line, ifp) != 0)
-		true_rumor_size += strlen(in_line);	/* includes newline */
-#endif /* VMS */
 	Fprintf(ofp,"%06lx\n", true_rumor_size);
 	(void) fseek(ifp, 0L, SEEK_SET);
 
@@ -482,13 +473,8 @@ do_date()
 	Fprintf(ofp,"/*\tSCCS Id: @(#)date.h\t3.4\t2002/02/03 */\n\n");
 	Fprintf(ofp,Dont_Edit_Code);
 
-#ifdef KR1ED
-	(void) time(&clocktim);
-	Strcpy(cbuf, ctime(&clocktim));
-#else
 	(void) time((time_t *)&clocktim);
 	Strcpy(cbuf, ctime((time_t *)&clocktim));
-#endif
 	for (c = cbuf; *c; c++) if (*c == '\n') break;
 	*c = '\0';	/* strip off the '\n' */
 	Fprintf(ofp,"#define BUILD_DATE \"%s\"\n", cbuf);
@@ -1021,9 +1007,6 @@ do_oracles()
 	if (ok) {
 	    Sprintf(in_line, "data rewrite of \"%s\"", filename);
 	    for (i = 0; i <= oracle_cnt; i++) {
-#ifndef VMS	/* alpha/vms v1.0; this fflush seems to confuse ftell */
-		if (!(ok = (fflush(ofp) == 0))) break;
-#endif
 		if (!(ok = (fpos = ftell(ofp)) >= 0)) break;
 		if (!(ok = (fseek(ofp, fpos, SEEK_SET) >= 0))) break;
 		if (!(ok = (fscanf(ofp, "%5lx", &offset) == 1))) break;

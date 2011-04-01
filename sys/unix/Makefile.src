@@ -360,7 +360,7 @@ HACKINCL = align.h artifact.h artilist.h attrib.h color.h \
 	monattk.h mondata.h monflag.h monst.h monsym.h obj.h objclass.h \
 	patchlevel.h permonst.h prop.h rect.h region.h rm.h \
 	sp_lev.h spell.h system.h tcap.h timeout.h tradstdc.h \
-	trampoli.h trap.h unixconf.h vault.h vision.h vmsconf.h wintty.h \
+	trampoli.h trap.h unixconf.h vault.h vision.h wintty.h \
 	winX.h winprocs.h wintype.h you.h youprop.h
 
 HSOURCES = $(HACKINCL) date.h onames.h pm.h vis_tab.h\
@@ -549,7 +549,7 @@ depend: ../sys/unix/depend.awk \
 
 # config.h timestamp
 $(CONFIG_H): ../include/config.h ../include/config1.h ../include/tradstdc.h \
-		../include/global.h ../include/coord.h ../include/vmsconf.h \
+		../include/global.h ../include/coord.h \
 		../include/system.h ../include/unixconf.h \
 		../include/ntconf.h ../include/nhlan.h
 	touch $(CONFIG_H)

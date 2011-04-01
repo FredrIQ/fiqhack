@@ -27,7 +27,7 @@
 extern int errno;
 #endif
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 #include <signal.h>
 #endif
 
@@ -43,7 +43,7 @@ extern int errno;
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
 #endif
 
-#if !defined(VMS) && !defined(WIN32)
+#if !defined(WIN32)
 char bones[] = "bonesnn.xxx";
 char lock[PL_NSIZ+14] = "1lock"; /* long enough for uid+name+.99 */
 #else
@@ -304,17 +304,7 @@ int prefix;
 	FILE *fp;
 
 	filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
-#ifdef VMS	/* essential to have punctuation, to avoid logical names */
-    {
-	char tmp[BUFSIZ];
-
-	if (!index(filename, '.') && !index(filename, ';'))
-		filename = strcat(strcpy(tmp, filename), ";0");
-	fp = fopen(filename, mode, "mbc=16");
-    }
-#else
 	fp = fopen(filename, mode);
-#endif
 	return fp;
 }
 
@@ -336,9 +326,6 @@ int lev;
 	tf = rindex(file, '.');
 	if (!tf) tf = eos(file);
 	Sprintf(tf, ".%d", lev);
-#ifdef VMS
-	Strcat(tf, ";1");
-#endif
 	return;
 }
 
@@ -434,7 +421,7 @@ clearlocks()
 {
 	register int x;
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 	(void) signal(SIGHUP, SIG_IGN);
 #endif
 	/* can't access maxledgerno() before dungeons are created -dlc */
@@ -526,9 +513,7 @@ d_level *lev;
 	    Sprintf(dptr, ".%c", sptr->boneid);
 	else
 	    Sprintf(dptr, ".%d", lev->dlevel);
-#ifdef VMS
-	Strcat(dptr, ";1");
-#endif
+	
 	return(dptr-2);
 }
 
@@ -546,9 +531,6 @@ set_bonestemp_name()
 	tf = rindex(lock, '.');
 	if (!tf) tf = eos(lock);
 	Sprintf(tf, ".bn");
-#ifdef VMS
-	Strcat(tf, ";1");
-#endif
 	return lock;
 }
 
@@ -578,18 +560,6 @@ char errbuf[];
 	    Sprintf(errbuf,
 		    "Cannot create bones \"%s\", id %s (errno %d).",
 		    lock, *bonesid, errno);
-
-# if defined(VMS) && !defined(SECURE)
-	/*
-	   Re-protect bones file with world:read+write+execute+delete access.
-	   umask() doesn't seem very reliable; also, vaxcrtl won't let us set
-	   delete access without write access, which is what's really wanted.
-	   Can't simply create it with the desired protection because creat
-	   ANDs the mask with the user's default protection, which usually
-	   denies some or all access to world.
-	 */
-	(void) chmod(file, FCMASK | 007);  /* allow other users full access */
-# endif /* VMS && !SECURE */
 
 	return fd;
 }
@@ -670,24 +640,16 @@ set_savefile_name()
 {
 #if defined(WIN32)
 	char fnamebuf[BUFSZ], encodedfnamebuf[BUFSZ];
-#endif
-#ifdef VMS
-	Sprintf(SAVEF, "[.save]%d%s", getuid(), plname);
-	regularize(SAVEF+7);
-	Strcat(SAVEF, ";1");
-#else
-# if defined(WIN32)
 	/* Obtain the name of the logged on user and incorporate
 	 * it into the name. */
 	Sprintf(fnamebuf, "%s-%s", get_username(0), plname);
 	(void)fname_encode("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.",
 				'%', fnamebuf, encodedfnamebuf, BUFSZ);
 	Sprintf(SAVEF, "%s.NetHack-saved-game", encodedfnamebuf);
-# else
+#else
 	Sprintf(SAVEF, "save/%d%s", (int)getuid(), plname);
 	regularize(SAVEF+5);	/* avoid . or / in name */
-# endif /* WIN32 */
-#endif /* VMS   */
+#endif /* WIN32 */
 }
 
 #ifdef INSURANCE
@@ -705,15 +667,7 @@ int fd;
 void
 set_error_savefile()
 {
-# ifdef VMS
-      {
-	char *semi_colon = rindex(SAVEF, ';');
-	if (semi_colon) *semi_colon = '\0';
-      }
-	Strcat(SAVEF, ".e;1");
-# else
 	Strcat(SAVEF, ".e");
-# endif
 }
 #endif
 
@@ -730,17 +684,6 @@ create_savefile()
 	fd = open(fq_save, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, FCMASK);
 #else
 	fd = creat(fq_save, FCMASK);
-# if defined(VMS) && !defined(SECURE)
-	/*
-	   Make sure the save file is owned by the current process.  That's
-	   the default for non-privileged users, but for priv'd users the
-	   file will be owned by the directory's owner instead of the user.
-	 */
-#  ifdef getuid	/*(see vmsunix.c)*/
-#   undef getuid
-#  endif
-	(void) chown(fq_save, getuid(), getgid());
-# endif /* VMS && !SECURE */
 #endif	/* WIN32 */
 
 	return fd;
@@ -1086,10 +1029,6 @@ const char *filename;
 
 static int nesting = 0;
 
-#ifdef NO_FILE_LINKS	/* implies UNIX */
-static int lockfd;	/* for lock_file() to pass to unlock_file() */
-#endif
-
 #define HUP	if (!program_state.done_hup)
 
 STATIC_OVL char *
@@ -1097,28 +1036,14 @@ make_lockname(filename, lockname)
 const char *filename;
 char *lockname;
 {
-#if defined(UNIX) || defined(VMS) || defined(WIN32)
-#  ifdef NO_FILE_LINKS
-	Strcpy(lockname, LOCKDIR);
-	Strcat(lockname, "/");
-	Strcat(lockname, filename);
-#  else
+#if defined(UNIX) || defined(WIN32)
 	Strcpy(lockname, filename);
-#  endif
-#  ifdef VMS
-      {
-	char *semi_colon = rindex(lockname, ';');
-	if (semi_colon) *semi_colon = '\0';
-      }
-	Strcat(lockname, ".lock;1");
-#  else
 	Strcat(lockname, "_lock");
-#  endif
 	return lockname;
 # else
 	lockname[0] = '\0';
 	return (char*)0;
-#endif  /* UNIX || VMS || WIN32 */
+#endif  /* UNIX || WIN32 */
 }
 
 
@@ -1140,16 +1065,10 @@ int retryct;
 
 	lockname = make_lockname(filename, locknambuf);
 	filename = fqname(filename, whichprefix, 0);
-#ifndef NO_FILE_LINKS	/* LOCKDIR should be subsumed by LOCKPREFIX */
 	lockname = fqname(lockname, LOCKPREFIX, 2);
-#endif
 
-#if defined(UNIX) || defined(VMS)
-# ifdef NO_FILE_LINKS
-	while ((lockfd = open(lockname, O_RDWR|O_CREAT|O_EXCL, 0666)) == -1) {
-# else
+#if defined(UNIX)
 	while (link(filename, lockname) == -1) {
-# endif
 	    register int errnosv = errno;
 
 	    switch (errnosv) {	/* George Barbanis */
@@ -1158,7 +1077,7 @@ int retryct;
 		    HUP raw_printf(
 			    "Waiting for access to %s.  (%d retries left).",
 			    filename, retryct);
-# if defined(SYSV) || defined(ULTRIX) || defined(VMS)
+# if defined(SYSV) || defined(ULTRIX)
 		    (void)
 # endif
 			sleep(1);
@@ -1179,14 +1098,6 @@ int retryct;
 		HUP raw_printf("No write permission to lock %s!", filename);
 		nesting--;
 		return FALSE;
-# ifdef VMS			/* c__translate(vmsfiles.c) */
-	    case EPERM:
-		/* could be misleading, but usually right */
-		HUP raw_printf("Can't lock %s due to directory protection.",
-			       filename);
-		nesting--;
-		return FALSE;
-# endif
 	    default:
 		HUP perror(lockname);
 		HUP raw_printf(
@@ -1197,7 +1108,7 @@ int retryct;
 	    }
 
 	}
-#endif  /* UNIX || VMS */
+#endif  /* UNIX */
 
 #if defined(WIN32)
 #define OPENFAILURE(fd) (fd < 0)
@@ -1219,14 +1130,6 @@ int retryct;
 	return TRUE;
 }
 
-
-#ifdef VMS	/* for unlock_file, use the unlink() routine in vmsunix.c */
-# ifdef unlink
-#  undef unlink
-# endif
-# define unlink(foo) vms_unlink(foo)
-#endif
-
 /* unlock file, which must be currently locked by lock_file */
 void
 unlock_file(filename)
@@ -1237,18 +1140,12 @@ const char *filename;
 
 	if (nesting == 1) {
 		lockname = make_lockname(filename, locknambuf);
-#ifndef NO_FILE_LINKS	/* LOCKDIR should be subsumed by LOCKPREFIX */
 		lockname = fqname(lockname, LOCKPREFIX, 2);
-#endif
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 		if (unlink(lockname) < 0)
 			HUP raw_printf("Can't unlink %s.", lockname);
-# ifdef NO_FILE_LINKS
-		(void) close(lockfd);
-# endif
-
-#endif  /* UNIX || VMS */
+#endif  /* UNIX */
 
 #if defined(WIN32)
 		if (lockptr) Close(lockptr);
@@ -1288,7 +1185,7 @@ fopen_config_file(filename)
 const char *filename;
 {
 	FILE *fp;
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 	char	tmp_config[BUFSZ];
 	char *envp;
 #endif
@@ -1313,7 +1210,7 @@ const char *filename;
 		if ((fp = fopenp(filename, "r")) != (FILE *)0) {
 		    configfile = filename;
 		    return(fp);
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 		} else {
 		    /* access() above probably caught most problems for UNIX */
 		    raw_printf("Couldn't open requested config file %s (%d).",
@@ -1329,25 +1226,7 @@ const char *filename;
 		return(fp);
 #else
 	/* constructed full path names don't need fqname() */
-# ifdef VMS
-	if ((fp = fopenp(fqname("nethackini", CONFIGPREFIX, 0), "r"))
-								!= (FILE *)0) {
-		configfile = "nethackini";
-		return(fp);
-	}
-	if ((fp = fopenp("sys$login:nethack.ini", "r")) != (FILE *)0) {
-		configfile = "nethack.ini";
-		return(fp);
-	}
-
-	envp = nh_getenv("HOME");
-	if (!envp)
-		Strcpy(tmp_config, "NetHack.cnf");
-	else
-		Sprintf(tmp_config, "%s%s", envp, "NetHack.cnf");
-	if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
-		return(fp);
-# else	/* should be only UNIX left */
+	/* should be only UNIX left */
 	envp = nh_getenv("HOME");
 	if (!envp)
 		Strcpy(tmp_config, configfile);
@@ -1380,7 +1259,6 @@ const char *filename;
 		       tmp_config, details, errno);
 	    wait_synch();
 	}
-# endif
 #endif
 	return (FILE *)0;
 
@@ -1664,7 +1542,7 @@ STATIC_OVL FILE *
 fopen_wizkit_file()
 {
 	FILE *fp;
-#if defined(VMS) || defined(UNIX)
+#if defined(UNIX)
 	char	tmp_wizkit[BUFSZ];
 #endif
 	char *envp;
@@ -1689,7 +1567,7 @@ fopen_wizkit_file()
 #endif
 	if ((fp = fopenp(wizkit, "r")) != (FILE *)0) {
 	    return(fp);
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 	} else {
 	    /* access() above probably caught most problems for UNIX */
 	    raw_printf("Couldn't open requested config file %s (%d).",
@@ -1702,15 +1580,6 @@ fopen_wizkit_file()
 	if ((fp = fopenp(fqname(wizkit, CONFIGPREFIX, 0), "r")) != (FILE *)0)
 		return(fp);
 #else
-# ifdef VMS
-	envp = nh_getenv("HOME");
-	if (envp)
-		Sprintf(tmp_wizkit, "%s%s", envp, wizkit);
-	else
-		Sprintf(tmp_wizkit, "%s%s", "sys$login:", wizkit);
-	if ((fp = fopenp(tmp_wizkit, "r")) != (FILE *)0)
-		return(fp);
-# else	/* should be only UNIX left */
 	envp = nh_getenv("HOME");
 	if (envp)
 		Sprintf(tmp_wizkit, "%s/%s", envp, wizkit);
@@ -1724,7 +1593,6 @@ fopen_wizkit_file()
 					tmp_wizkit, errno);
 		wait_synch();
 	}
-# endif
 #endif
 	return (FILE *)0;
 }
@@ -1780,30 +1648,18 @@ const char *dir;
 	const char *fq_record;
 	int fd;
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
 	fq_record = fqname(RECORD, SCOREPREFIX, 0);
 	fd = open(fq_record, O_RDWR, 0);
 	if (fd >= 0) {
-# ifdef VMS	/* must be stream-lf to use UPDATE_RECORD_IN_PLACE */
-		if (!file_is_stmlf(fd)) {
-		    raw_printf(
-		  "Warning: scoreboard file %s is not in stream_lf format",
-				fq_record);
-		    wait_synch();
-		}
-# endif
 	    (void) close(fd);	/* RECORD is accessible */
 	} else if ((fd = open(fq_record, O_CREAT|O_RDWR, FCMASK)) >= 0) {
 	    (void) close(fd);	/* RECORD newly created */
-# if defined(VMS) && !defined(SECURE)
-	    /* Re-protect RECORD with world:read+write+execute+delete access. */
-	    (void) chmod(fq_record, FCMASK | 007);
-# endif /* VMS && !SECURE */
 	} else {
 	    raw_printf("Warning: cannot write scoreboard file %s", fq_record);
 	    wait_synch();
 	}
-#endif  /* !UNIX && !VMS */
+#endif  /* UNIX */
 #if defined(WIN32)
 	char tmp[PATHLEN];
 	Strcpy(tmp, RECORD);
