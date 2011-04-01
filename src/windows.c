@@ -18,9 +18,6 @@ extern struct window_procs Qt_procs;
 #ifdef GEM_GRAPHICS
 #include "wingem.h"
 #endif
-#ifdef MAC
-extern struct window_procs mac_procs;
-#endif
 #ifdef BEOS_GRAPHICS
 extern struct window_procs beos_procs;
 extern void NDECL(be_win_init);
@@ -61,9 +58,6 @@ struct win_choices {
 #endif
 #ifdef GEM_GRAPHICS
     { &Gem_procs, win_Gem_init },
-#endif
-#ifdef MAC
-    { &mac_procs, 0 },
 #endif
 #ifdef BEOS_GRAPHICS
     { &beos_procs, be_win_init },

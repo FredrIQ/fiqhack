@@ -111,10 +111,6 @@ static int lockptr;
 #endif
 #endif
 
-#ifdef MAC
-# define unlink macunlink
-#endif
-
 #ifdef USER_SOUNDS
 extern char *sounddir;
 #endif
@@ -419,11 +415,7 @@ char errbuf[];
 # endif
 	fd = open(fq_lock, O_WRONLY |O_CREAT | O_TRUNC | O_BINARY, FCMASK);
 #else
-# ifdef MAC
-	fd = maccreat(fq_lock, LEVL_TYPE);
-# else
 	fd = creat(fq_lock, FCMASK);
-# endif
 #endif /* MICRO || WIN32 */
 
 	if (fd >= 0)
@@ -453,16 +445,12 @@ char errbuf[];
 	if (level_info[lev].where != ACTIVE)
 		swapin_file(lev);
 #endif
-#ifdef MAC
-	fd = macopen(fq_lock, O_RDONLY | O_BINARY, LEVL_TYPE);
-#else
 # ifdef HOLD_LOCKFILE_OPEN
 	if (lev == 0)
 		fd = open_levelfile_exclusively(fq_lock, lev, O_RDONLY | O_BINARY );
 	else
 # endif
 	fd = open(fq_lock, O_RDONLY | O_BINARY, 0);
-#endif
 
 	/* for failure, return an explanation that our caller can use;
 	   settle for `lock' instead of `fq_lock' because the latter
@@ -644,11 +632,7 @@ char errbuf[];
 	 */
 	fd = open(file, O_WRONLY |O_CREAT | O_TRUNC | O_BINARY, FCMASK);
 #else
-# ifdef MAC
-	fd = maccreat(file, BONE_TYPE);
-# else
 	fd = creat(file, FCMASK);
-# endif
 #endif
 	if (fd < 0 && errbuf) /* failure explanation */
 	    Sprintf(errbuf,
@@ -724,11 +708,7 @@ char **bonesid;
 	*bonesid = set_bonesfile_name(bones, lev);
 	fq_bones = fqname(bones, BONESPREFIX, 0);
 	uncompress(fq_bones);	/* no effect if nonexistent */
-#ifdef MAC
-	fd = macopen(fq_bones, O_RDONLY | O_BINARY, BONE_TYPE);
-#else
 	fd = open(fq_bones, O_RDONLY | O_BINARY, 0);
-#endif
 	return fd;
 }
 
@@ -822,11 +802,7 @@ set_error_savefile()
       }
 	Strcat(SAVEF, ".e;1");
 # else
-#  ifdef MAC
-	Strcat(SAVEF, "-e");
-#  else
 	Strcat(SAVEF, ".e");
-#  endif
 # endif
 }
 #endif
@@ -843,11 +819,7 @@ create_savefile()
 #if defined(MICRO) || defined(WIN32)
 	fd = open(fq_save, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, FCMASK);
 #else
-# ifdef MAC
-	fd = maccreat(fq_save, SAVE_TYPE);
-# else
 	fd = creat(fq_save, FCMASK);
-# endif
 # if defined(VMS) && !defined(SECURE)
 	/*
 	   Make sure the save file is owned by the current process.  That's
@@ -873,11 +845,7 @@ open_savefile()
 	int fd;
 
 	fq_save = fqname(SAVEF, SAVEPREFIX, 0);
-#ifdef MAC
-	fd = macopen(fq_save, O_RDONLY | O_BINARY, SAVE_TYPE);
-#else
 	fd = open(fq_save, O_RDONLY | O_BINARY, 0);
-#endif
 	return fd;
 }
 
@@ -1428,7 +1396,7 @@ const char *configfile =
 #ifdef UNIX
 			".nethackrc";
 #else
-# if defined(MAC) || defined(__BEOS__)
+# if defined(__BEOS__)
 			"NetHack Defaults";
 # else
 #  if defined(WIN32)
@@ -1485,9 +1453,8 @@ const char *filename;
 		}
 	}
 
-#if defined(MICRO) || defined(MAC) || defined(__BEOS__) || defined(WIN32)
-	if ((fp = fopenp(fqname(configfile, CONFIGPREFIX, 0), "r"))
-								!= (FILE *)0)
+#if defined(MICRO) || defined(__BEOS__) || defined(WIN32)
+	if ((fp = fopenp(fqname(configfile, CONFIGPREFIX, 0), "r")) != (FILE *)0)
 		return(fp);
 #else
 	/* constructed full path names don't need fqname() */
@@ -2038,9 +2005,8 @@ fopen_wizkit_file()
 #endif
 	}
 
-#if defined(MICRO) || defined(MAC) || defined(__BEOS__) || defined(WIN32)
-	if ((fp = fopenp(fqname(wizkit, CONFIGPREFIX, 0), "r"))
-								!= (FILE *)0)
+#if defined(MICRO) || defined(__BEOS__) || defined(WIN32)
+	if ((fp = fopenp(fqname(wizkit, CONFIGPREFIX, 0), "r")) != (FILE *)0)
 		return(fp);
 #else
 # ifdef VMS
@@ -2168,15 +2134,6 @@ const char *dir;
 		(void) close(fd);
 	} else		/* open succeeded */
 	    (void) close(fd);
-#else /* MICRO || WIN32*/
-
-# ifdef MAC
-	/* Create the "record" file, if necessary */
-	fq_record = fqname(RECORD, SCOREPREFIX, 0);
-	fd = macopen (fq_record, O_RDWR | O_CREAT, TEXT_TYPE);
-	if (fd != -1) macclose (fd);
-# endif /* MAC */
-
 #endif /* MICRO || WIN32*/
 }
 

@@ -51,7 +51,7 @@
 # define USE_VARARGS
 #endif
 
-#if defined(NHSTDC) || defined(ULTRIX_PROTO) || defined(MAC)
+#if defined(NHSTDC) || defined(ULTRIX_PROTO)
 # if !defined(USE_VARARGS) && !defined(USE_OLDARGS) && !defined(USE_STDARG)
 #   define USE_STDARG
 # endif
@@ -97,7 +97,7 @@
 #endif
 #endif /* NEED_VARARGS */
 
-#if defined(NHSTDC) || defined(MAC) || defined(ULTRIX_PROTO) || defined(__BEOS__)
+#if defined(NHSTDC) || defined(ULTRIX_PROTO) || defined(__BEOS__)
 
 /*
  * Used for robust ANSI parameter forward declarations:
@@ -133,7 +133,7 @@
 /* And IBM CSet/2.  The redeclaration of free hoses the compile. */
 #  define genericptr_t	genericptr
 # else
-#  if !defined(NHSTDC) && !defined(MAC)
+#  if !defined(NHSTDC)
 #   define const
 #   define signed
 #   define volatile

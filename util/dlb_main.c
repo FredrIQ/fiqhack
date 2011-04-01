@@ -6,14 +6,13 @@
 
 #include "config.h"
 #include "dlb.h"
-#if !defined(O_WRONLY) && !defined(MAC) && !defined(AZTEC_C)
+#if !defined(O_WRONLY) && !defined(AZTEC_C)
 #include <fcntl.h>
 #endif
 
 static void FDECL(xexit, (int));
 
 #ifdef DLB
-#ifdef DLBLIB
 
 #define DLB_DIRECTORY "Directory"	/* name of lib directory */
 #define LIBLISTFILE "dlb.lst"		/* default list file */
@@ -148,7 +147,6 @@ const char *filename, *mode;
     return fopen(filename, mode);
 }
 
-#endif	/* DLBLIB */
 #endif	/* DLB */
 
 int
@@ -157,7 +155,6 @@ main(argc, argv)
     char **argv;
 {
 #ifdef DLB
-#ifdef DLBLIB
     int i, r;
     int ap=2;				/* argument pointer */
     int cp;				/* command pointer */
@@ -453,7 +450,6 @@ main(argc, argv)
 	xexit(EXIT_SUCCESS);
 	}
     }
-#endif	/* DLBLIB */
 #endif	/* DLB */
 
     xexit(EXIT_SUCCESS);
@@ -462,7 +458,6 @@ main(argc, argv)
 }
 
 #ifdef DLB
-#ifdef DLBLIB
 
 static void
 write_dlb_directory(out, nfiles, ld, slen, dir_size, flen)
@@ -495,7 +490,6 @@ long slen, dir_size, flen;
     }
 }
 
-#endif	/* DLBLIB */
 #endif	/* DLB */
 
 static void

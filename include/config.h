@@ -29,7 +29,7 @@
 			/* Hint: if you're not developing code, don't define
 			   ULTRIX_PROTO. */
 
-#include "config1.h"	/* should auto-detect MAC, AMIGA, and WIN32 */
+#include "config1.h"	/* should auto-detect AMIGA and WIN32 */
 
 
 /* Windowing systems...
@@ -46,15 +46,8 @@
  * Define the default window system.  This should be one that is compiled
  * into your system (see defines above).  Known window systems are:
  *
- *	tty, X11, mac, amii, BeOS, Qt, Gem, Gnome
+ *	tty, X11, amii, BeOS, Qt, Gem, Gnome
  */
-
-/* MAC also means MAC windows */
-#ifdef MAC
-# ifndef	AUX
-#  define DEFAULT_WINDOW_SYS "mac"
-# endif
-#endif
 
 /* Amiga supports AMII_GRAPHICS and/or TTY_GRAPHICS */
 #ifdef AMIGA
@@ -188,9 +181,7 @@
  */
 #define INSURANCE	/* allow crashed game recovery */
 
-#ifndef MAC
-# define CHDIR		/* delete if no chdir() available */
-#endif
+#define CHDIR		/* delete if no chdir() available */
 
 #ifdef CHDIR
 /*
@@ -321,9 +312,7 @@ typedef unsigned char	uchar;
 #define ELBERETH	/* Engraving the E-word repels monsters */
 /* I/O */
 #define REDO		/* support for redoing last command - DGK */
-#if !defined(MAC)
 # define CLIPPING	/* allow smaller screens -- ERS */
-#endif
 
 #ifdef REDO
 # define DOAGAIN '\001' /* ^A, the "redo" key used in cmd.c and getline.c */

@@ -119,10 +119,6 @@ static const char * const shktools[] = {
 #ifdef WIN32
     "Lechaim", "Lexa", "Niod",
 #endif
-#ifdef MAC
-    "Nhoj-lee", "Evad\'kh", "Ettaw-noj", "Tsew-mot", "Ydna-s",
-    "Yao-hang", "Tonbar", "Kivenhoug",
-#endif
 #ifdef AMIGA
     "Falo", "Nosid-da\'r", "Ekim-p", "Rebrol-nek", "Noslo", "Yl-rednow",
     "Mured-oog", "Ivrajimsal",

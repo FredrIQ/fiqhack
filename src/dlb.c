@@ -29,7 +29,6 @@ typedef struct dlb_procs {
 /* without extern.h via hack.h, these haven't been declared for us */
 extern FILE *FDECL(fopen_datafile, (const char *,const char *,int));
 
-#ifdef DLBLIB
 /*
  * Library Implementation:
  *
@@ -388,22 +387,6 @@ const dlb_procs_t lib_dlb_procs = {
     lib_dlb_ftell
 };
 
-#endif /* DLBLIB */
-
-#ifdef DLBRSRC
-const dlb_procs_t rsrc_dlb_procs = {
-    rsrc_dlb_init,
-    rsrc_dlb_cleanup,
-    rsrc_dlb_fopen,
-    rsrc_dlb_fclose,
-    rsrc_dlb_fread,
-    rsrc_dlb_fseek,
-    rsrc_dlb_fgets,
-    rsrc_dlb_fgetc,
-    rsrc_dlb_ftell
-};
-#endif
-
 /* Global wrapper functions ------------------------------------------------ */
 
 #define do_dlb_init (*dlb_procs->dlb_init_proc)
@@ -423,13 +406,7 @@ boolean
 dlb_init()
 {
     if (!dlb_initialized) {
-#ifdef DLBLIB
 	dlb_procs = &lib_dlb_procs;
-#endif
-#ifdef DLBRSRC
-	dlb_procs = &rsrc_dlb_procs;
-#endif
-
 	if (dlb_procs) 
 	    dlb_initialized = do_dlb_init();
     }

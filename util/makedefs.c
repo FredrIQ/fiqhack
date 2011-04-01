@@ -26,21 +26,6 @@
 #include "patchlevel.h"
 #endif
 
-#ifdef MAC
-# if defined(__SC__) || defined(__MRC__)	/* MPW compilers */
-#  define MPWTOOL
-#include <CursorCtl.h>
-#include <string.h>
-#include <ctype.h>
-# else		/* MAC without MPWTOOL */
-#  define MACsansMPWTOOL
-# endif
-#endif /* MAC */
-
-#ifndef MPWTOOL
-# define SpinCursor(x)
-#endif
-
 #define Fprintf	(void) fprintf
 #define Fclose	(void) fclose
 #define Unlink	(void) unlink
@@ -78,24 +63,11 @@ static	const char	SCCS_Id[] = "@(#)makedefs.c\t3.4\t2002/02/03";
 # define DATA_TEMPLATE		"NH:slib/%s"
 # define DATA_IN_TEMPLATE	"NH:dat/%s"
 #else /* not AMIGA */
-# if defined(MAC) && !defined(__MACH__)
-    /* MacOS 9 or earlier */
-#   define INCLUDE_TEMPLATE	":include:%s"
-#   define SOURCE_TEMPLATE	":src:%s"
-#   define DGN_TEMPLATE		":dat:%s"  /* where dungeon.pdf file goes */
-#  if __SC__ || __MRC__
-#   define DATA_TEMPLATE	":Dungeon:%s"
-#  else
-#   define DATA_TEMPLATE	":lib:%s"
-#  endif /* __SC__ || __MRC__ */
-#   define DATA_IN_TEMPLATE	":dat:%s"
-# else /* neither AMIGA nor MAC */
 #   define INCLUDE_TEMPLATE	"../include/%s"
 #   define SOURCE_TEMPLATE	"../src/%s"
 #   define DGN_TEMPLATE		"../dat/%s"  /* where dungeon.pdf file goes */
 #   define DATA_TEMPLATE	"../dat/%s"
 #   define DATA_IN_TEMPLATE	"../dat/%s"
-# endif /* else !MAC */
 #endif	/* else !AMIGA */
 
 static const char
@@ -132,11 +104,7 @@ static char	in_line[256], filename[60];
 char *file_prefix="";
 #endif
 
-#ifdef MACsansMPWTOOL
-int FDECL(main, (void));
-#else
 int FDECL(main, (int,char **));
-#endif
 void FDECL(do_makedefs, (char *));
 void NDECL(do_objs);
 void NDECL(do_data);
@@ -196,30 +164,6 @@ extern unsigned _stklen = STKSIZ;
 #endif
 
 
-#ifdef MACsansMPWTOOL
-int
-main(void)
-{
-    const char *def_options = "odemvpqrhz";
-    char buf[100];
-    int len;
-
-    printf("Enter options to run: [%s] ", def_options);
-    fflush(stdout);
-    fgets(buf, 100, stdin);
-    len = strlen(buf);
-    if (len <= 1)
-	Strcpy(buf, def_options);
-    else
-	buf[len-1] = 0;			/* remove return */
-
-    do_makedefs(buf);
-    exit(EXIT_SUCCESS);
-    return 0;
-}
-
-#else /* ! MAC */
-
 int
 main(argc, argv)
 int	argc;
@@ -246,8 +190,6 @@ char	*argv[];
 	/*NOTREACHED*/
 	return 0;
 }
-
-#endif
 
 void
 do_makedefs(options)
@@ -697,9 +639,6 @@ static const char *build_opts[] = {
 		"screen clipping",
 #endif
 #ifdef NO_TERMS
-# ifdef MAC
-		"screen control via mactty",
-# endif
 # ifdef SCREEN_VGA
 		"screen control via VGA graphics",
 # endif
@@ -769,9 +708,6 @@ static const char *window_opts[] = {
 #endif
 #ifdef GNOME_GRAPHICS
 		"Gnome",
-#endif
-#ifdef MAC
-		"Mac",
 #endif
 #ifdef AMIGA_INTUITION
 		"Amiga Intuition",
@@ -982,8 +918,6 @@ h_filter(line)
     static boolean skip = FALSE;
     char tag[sizeof in_line];
 
-    SpinCursor(3);
-
     if (*line == '#') return TRUE;	/* ignore comment lines */
     if (sscanf(line, "----- %s", tag) == 1) {
 	skip = FALSE;
@@ -1063,7 +997,6 @@ do_oracles()
 	    (void) fputs(xcrypt(special_oracle[i]), tfp);
 	    (void) fputc('\n', tfp);
 	}
-	SpinCursor(3);
 
 	oracle_cnt = 1;
 	(void) fputs("---\n", tfp);
@@ -1071,7 +1004,6 @@ do_oracles()
 	in_oracle = FALSE;
 
 	while (fgets(in_line, sizeof in_line, ifp)) {
-	    SpinCursor(3);
 
 	    if (h_filter(in_line)) continue;
 	    if (!strncmp(in_line, "-----", 5)) {
@@ -1124,17 +1056,6 @@ do_oracles()
 		if (!(ok = (fpos = ftell(ofp)) >= 0)) break;
 		if (!(ok = (fseek(ofp, fpos, SEEK_SET) >= 0))) break;
 		if (!(ok = (fscanf(ofp, "%5lx", &offset) == 1))) break;
-#ifdef MAC
-# ifdef __MWERKS__
-		/*
-		MetroWerks CodeWarrior Pro 1's (AKA CW12) version of MSL
-		(ANSI C Libraries) needs this rewind or else the fprintf
-		stops working.  This may also be true for CW11, but has
-		never been checked.
-		*/
-		rewind(ofp);
-# endif
-#endif
 		if (!(ok = (fseek(ofp, fpos, SEEK_SET) >= 0))) break;
 		if (!(ok = (fprintf(ofp, "%05lx\n", offset + txt_offset) >= 0)))
 		    break;
@@ -1211,8 +1132,6 @@ do_dungeon()
 	Fprintf(ofp,Dont_Edit_Data);
 
 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
-	    SpinCursor(3);
-
 	    rcnt++;
 	    if(in_line[0] == '#') continue;	/* discard comments */
 recheck:
@@ -1334,9 +1253,6 @@ do_monstr()
     Fprintf(ofp,"#include \"config.h\"\n");
     Fprintf(ofp,"\nconst int monstr[] = {\n");
     for (ptr = &mons[0], j = 0; ptr->mlet; ptr++) {
-
-	SpinCursor(3);
-
 	i = mstrength(ptr);
 	Fprintf(ofp,"%2d,%c", i, (++j & 15) ? ' ' : '\n');
     }
@@ -1378,8 +1294,6 @@ do_permonst()
 		Fprintf(ofp,"\n#define\tPM_PLAYERMON\t(-1)");
 
 	for (i = 0; mons[i].mlet; i++) {
-		SpinCursor(3);
-
 		Fprintf(ofp,"\n#define\tPM_");
 		if (mons[i].mlet == S_HUMAN &&
 				!strncmp(mons[i].mname, "were", 4))
@@ -1626,8 +1540,6 @@ do_questtxt()
 	in_msg = FALSE;
 
 	while (fgets(in_line, 80, ifp) != 0) {
-	    SpinCursor (3);
-
 	    qt_line++;
 	    if(qt_control(in_line)) do_qt_control(in_line);
 	    else if(qt_comment(in_line)) continue;
@@ -1691,8 +1603,6 @@ do_objs()
 	Fprintf(ofp,"#ifndef ONAMES_H\n#define ONAMES_H\n\n");
 
 	for(i = 0; !i || objects[i].oc_class != ILLOBJ_CLASS; i++) {
-		SpinCursor(3);
-
 		objects[i].oc_name_idx = objects[i].oc_descr_idx = i;	/* init */
 		if (!(objnam = tmpdup(OBJ_NAME(objects[i])))) continue;
 
@@ -1764,8 +1674,6 @@ do_objs()
 	Fprintf(ofp, "\n/* Artifacts (unique objects) */\n\n");
 
 	for (i = 1; artifact_names[i]; i++) {
-		SpinCursor(3);
-
 		for (c = objnam = tmpdup(artifact_names[i]); *c; c++)
 		    if (*c >= 'a' && *c <= 'z') *c -= (char)('a' - 'A');
 		    else if (*c < 'A' || *c > 'Z') *c = '_';
@@ -1828,8 +1736,6 @@ do_vision()
 		xclear[i][j] = '\001';
 #endif /* VISION_TABLES */
 
-    SpinCursor(3);
-
     /*
      * create the include file, "vis_tab.h"
      */
@@ -1851,8 +1757,6 @@ do_vision()
     Fprintf(ofp,"\n#endif /* VISION_TABLES */\n");
     Fclose(ofp);
 
-    SpinCursor(3);
-
     /*
      * create the source file, "vis_tab.c"
      */
@@ -1872,15 +1776,11 @@ do_vision()
     Fprintf(ofp,"#ifdef VISION_TABLES\n");
     Fprintf(ofp,"#include \"vis_tab.h\"\n");
 
-    SpinCursor(3);
-
 #ifdef VISION_TABLES
     C_close_gen();
     C_far_gen();
     Fprintf(ofp,"\nvoid vis_tab_init() { return; }\n");
 #endif /* VISION_TABLES */
-
-    SpinCursor(3);
 
     Fprintf(ofp,"\n#endif /* VISION_TABLES */\n");
     Fprintf(ofp,"\n/*vis_tab.c*/\n");
@@ -2013,7 +1913,6 @@ C_close_gen()
 		    Fprintf(ofp, "%s%s", CLOSE_OFF_TABLE_STRING, delim);
 		    continue;
 		}
-		SpinCursor(3);
 
 		/* Find the first column that we can see. */
 		for (i = block_col+1; i < MAX_COL; i++) {
@@ -2069,7 +1968,6 @@ C_far_gen()
 								this_row++) {
 		delim = (this_row < block_row + TEST_HEIGHT - 1) ? "," : "";
 
-		SpinCursor(3);
 		/* Find first col that we can see. */
 		for (i = 0; i <= block_col; i++) {
 		    if (clear_path(src_row,src_col,this_row,i)) break;

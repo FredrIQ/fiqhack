@@ -54,9 +54,6 @@ qt_clust.h      qt_kde0.h       qt_win.h        qt_xpms.h       qttableview.h
 bitmfile.h      gem_rsc.h       load_img.h      wingem.h
 (file for GNOME versions)
 winGnome.h
-(files for various Macintosh versions)
-mac-carbon.h    mac-qt.h        mac-term.h      macconf.h       macpopup.h
-mactty.h        macwin.h        mttypriv.h
 
 src:
 (files for all versions)
@@ -108,10 +105,6 @@ sys/unix:
 Install.unx     Makefile.dat    Makefile.doc    Makefile.src    Makefile.top
 Makefile.utl    README.linux    depend.awk      nethack.sh      setup.sh
 unixmain.c      unixres.c       unixunix.c
-(files for replacement cpp, apparently only needed by some UNIX systems)
-cpp1.shr        cpp2.shr        cpp3.shr
-(file for sound driver for 386 UNIX)
-snd86unx.shr
 
 sys/winnt:
 (files for Windows 9x, NT and Windows2000 version)

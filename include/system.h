@@ -12,7 +12,7 @@
 /* some old <sys/types.h> may not define off_t and size_t; if your system is
  * one of these, define them by hand below
  */
-#if (defined(VMS) && !defined(__GNUC__)) || defined(MAC)
+#if (defined(VMS) && !defined(__GNUC__))
 #include <types.h>
 #else
 # ifndef AMIGA
@@ -29,7 +29,7 @@ typedef unsigned int	size_t;
 # endif
 #endif	/* MICRO && !TOS */
 
-#if defined(__TURBOC__) || defined(MAC)
+#if defined(__TURBOC__)
 #include <time.h>	/* time_t is not in <sys/types.h> */
 #endif
 #if defined(ULTRIX) && !(defined(ULTRIX_PROTO) || defined(NHSTDC))
@@ -164,17 +164,6 @@ E int FDECL(unlink, (const char *));
 
 #endif /* AZTEC_50 && __GNUC__ */
 
-#ifdef MAC
-#ifndef __CONDITIONALMACROS__	/* universal headers */
-E int FDECL(close, (int));		/* unistd.h */
-E int FDECL(read, (int, char *, int));	/* unistd.h */
-E int FDECL(chdir, (const char *));	/* unistd.h */
-E char *FDECL(getcwd, (char *,int));	/* unistd.h */
-#endif
-
-E int FDECL(open, (const char *,int));
-#endif
-
 #if defined(MICRO)
 E int FDECL(close, (int));
 #ifndef __EMX__
@@ -275,7 +264,7 @@ E long NDECL(fork);
 /* The POSIX string.h is required to define all the mem* and str* functions */
 #include <string.h>
 #else
-#if defined(SYSV) || defined(VMS) || defined(MAC) || defined(SUNOS4)
+#if defined(SYSV) || defined(VMS) || defined(SUNOS4)
 # if defined(NHSTDC) || (defined(VMS) && !defined(ANCIENT_VAXC))
 #  if !defined(_AIX32) && !(defined(SUNOS4) && defined(__STDC__))
 				/* Solaris unbundled cc (acc) */
@@ -384,7 +373,7 @@ E char	*FDECL(strcat, (char *,const char *));
 E char	*FDECL(strncat, (char *,const char *,size_t));
 E char	*FDECL(strpbrk, (const char *,const char *));
 
-# if defined(SYSV) || defined(MICRO) || defined(MAC) || defined(VMS) || defined(HPUX)
+# if defined(SYSV) || defined(MICRO) || defined(VMS) || defined(HPUX)
 E char	*FDECL(strchr, (const char *,int));
 E char	*FDECL(strrchr, (const char *,int));
 # else /* BSD */
@@ -394,7 +383,7 @@ E char	*FDECL(rindex, (const char *,int));
 
 E int	FDECL(strcmp, (const char *,const char *));
 E int	FDECL(strncmp, (const char *,const char *,size_t));
-# if defined(MICRO) || defined(MAC) || defined(VMS)
+# if defined(MICRO) || defined(VMS)
 E size_t FDECL(strlen, (const char *));
 # else
 # ifdef HPUX
@@ -500,7 +489,7 @@ E struct tm *FDECL(localtime, (const time_t *));
 #  endif
 # endif
 
-# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || defined(MICRO) || defined(VMS) || defined(MAC) || (defined(HPUX) && defined(_POSIX_SOURCE))
+# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || defined(MICRO) || defined(VMS) || (defined(HPUX) && defined(_POSIX_SOURCE))
 E time_t FDECL(time, (time_t *));
 # else
 E long FDECL(time, (time_t *));

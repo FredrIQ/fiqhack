@@ -351,16 +351,13 @@ do_improvisation(instr)
 struct obj *instr;
 {
 	int damage, do_spec = !Confusion;
-#if defined(MAC) || defined(AMIGA) || defined(VPIX_MUSIC)
+#if defined(AMIGA) || defined(VPIX_MUSIC)
 	struct obj itmp;
 
 	itmp = *instr;
 	/* if won't yield special effect, make sound of mundane counterpart */
 	if (!do_spec || instr->spe <= 0)
 	    while (objects[itmp.otyp].oc_magic) itmp.otyp -= 1;
-# ifdef MAC
-	mac_speaker(&itmp, "C");
-# endif
 # ifdef AMIGA
 	amii_speaker(&itmp, "Cw", AMII_OKAY_VOLUME);
 # endif
@@ -368,7 +365,7 @@ struct obj *instr;
 	if (sco_flag_console)
 	    speaker(&itmp, "C");
 # endif
-#endif /* MAC || AMIGA || VPIX_MUSIC */
+#endif /* AMIGA || VPIX_MUSIC */
 
 	if (!do_spec)
 	    pline("What you produce is quite far from music...");
@@ -508,9 +505,6 @@ struct obj *instr;
 #ifdef VPIX_MUSIC
 	if (sco_flag_console)
 	    speaker(instr, buf);
-#endif
-#ifdef MAC
-	mac_speaker ( instr , buf ) ;
 #endif
 #ifdef AMIGA
 	{

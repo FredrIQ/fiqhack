@@ -8,14 +8,6 @@
 
 #ifdef DLB
 
-/* implementations */
-#ifdef MAC
-# define DLBRSRC	/* use Mac resources */
-#else
-# define DLBLIB		/* use a set of external files */
-#endif
-
-#ifdef DLBLIB
 /* directory structure in memory */
 typedef struct dlb_directory {
     char *fname;	/* file name as seen from calling code */
@@ -43,20 +35,14 @@ typedef struct dlb_library {
 #  define FILENAME_CMP	strcmp			/* case sensitive */
 # endif
 
-#endif /* DLBLIB */
 
 
 typedef struct dlb_handle {
     FILE *fp;		/* pointer to an external file, use if non-null */
-#ifdef DLBLIB
     library *lib;	/* pointer to library structure */
     long start;		/* offset of start of file */
     long size;		/* size of file */
     long mark;		/* current file marker */
-#endif
-#ifdef DLBRSRC
-    int fd;		/* HandleFile file descriptor */
-#endif
 } dlb;
 
 #if defined(ULTRIX_PROTO) && !defined(__STDC__)
@@ -78,20 +64,6 @@ int FDECL(dlb_fseek, (DLB_P,long,int));
 char *FDECL(dlb_fgets, (char *,int,DLB_P));
 int FDECL(dlb_fgetc, (DLB_P));
 long FDECL(dlb_ftell, (DLB_P));
-
-
-/* Resource DLB entry points */
-#ifdef DLBRSRC
-	boolean rsrc_dlb_init(void);
-	void rsrc_dlb_cleanup(void);
-	boolean rsrc_dlb_fopen(dlb *dp, const char *name, const char *mode);
-	int rsrc_dlb_fclose(dlb *dp);
-	int rsrc_dlb_fread(char *buf, int size, int quan, dlb *dp);
-	int rsrc_dlb_fseek(dlb *dp, long pos, int whence);
-	char *rsrc_dlb_fgets(char *buf, int len, dlb *dp);
-	int rsrc_dlb_fgetc(dlb *dp);
-	long rsrc_dlb_ftell(dlb *dp);
-#endif
 
 
 #else /* DLB */

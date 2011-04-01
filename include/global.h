@@ -129,10 +129,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #include "amiconf.h"
 #endif
 
-#ifdef MAC
-//#include "macconf.h"
-#endif
-
 #ifdef __BEOS__
 //#include "beconf.h"
 #endif
@@ -145,9 +141,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #ifndef PORT_ID
 # ifdef AMIGA
 #  define PORT_ID	"Amiga"
-# endif
-# ifdef MAC
-#  define PORT_ID	"Mac"
 # endif
 # ifdef TOS
 #  define PORT_ID	"ST"
