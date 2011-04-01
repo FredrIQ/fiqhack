@@ -9,7 +9,7 @@
 #ifndef NO_SIGNAL
 #include <signal.h>
 #endif
-#if !defined(LSC) && !defined(O_WRONLY) && !defined(AZTEC_C)
+#if !defined(LSC) && !defined(O_WRONLY)
 #include <fcntl.h>
 #endif
 

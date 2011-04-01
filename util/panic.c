@@ -10,9 +10,6 @@
 #define NEED_VARARGS
 #include "config.h"
 
-#ifdef AZTEC
-#define abort() exit()
-#endif
 #ifdef VMS
 extern void NDECL(vms_abort);
 #endif

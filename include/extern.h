@@ -1392,9 +1392,7 @@ E void NDECL(gameDiskPrompt);
 # endif
 E void FDECL(append_slash, (char *));
 E void FDECL(getreturn, (const char *));
-# ifndef AMIGA
 E void VDECL(msmsg, (const char *,...));
-# endif
 E FILE *FDECL(fopenp, (const char *,const char *));
 #endif /* MICRO || WIN32 */
 

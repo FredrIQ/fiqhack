@@ -6,7 +6,7 @@
 
 #include "config.h"
 #include "dlb.h"
-#if !defined(O_WRONLY) && !defined(AZTEC_C)
+#if !defined(O_WRONLY)
 #include <fcntl.h>
 #endif
 
@@ -198,12 +198,6 @@ main(argc, argv)
 		break;
 	    case 'C':
 		if (ap == argc) usage();
-#ifdef AMIGA
-		if(!getcwd(origdir,sizeof(origdir))){
-		    printf("Can't get current directory.\n");
-		    xexit(EXIT_FAILURE);
-		}
-#endif
 		if(chdir(argv[ap++])){
 		    printf("Can't chdir to %s\n",argv[--ap]);
 		    xexit(EXIT_FAILURE);
@@ -496,18 +490,7 @@ static void
 xexit(retcd)
     int retcd;
 {
-#ifdef DLB
-#ifdef AMIGA
-    if (origdir[0]) chdir(origdir);
-#endif
-#endif
     exit(retcd);
 }
-
-
-#ifdef AMIGA
-#include "date.h"
-const char amiga_version_string[] = AMIGA_VERSION_STRING;
-#endif
 
 /*dlb_main.c*/

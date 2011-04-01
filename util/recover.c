@@ -8,7 +8,7 @@
  *  time NetHack creates those level files.
  */
 #include "config.h"
-#if !defined(O_WRONLY) && !defined(LSC) && !defined(AZTEC_C)
+#if !defined(O_WRONLY) && !defined(LSC)
 #include <fcntl.h>
 #endif
 #ifdef WIN32
@@ -51,10 +51,6 @@ char *argv[];
 {
 	int argno;
 	const char *dir = (char *)0;
-#ifdef AMIGA
-	char *startdir = (char *)0;
-#endif
-
 
 	if (!dir) dir = getenv("NETHACKDIR");
 	if (!dir) dir = getenv("HACKDIR");
@@ -104,9 +100,6 @@ char *argv[];
 	if (!dir) dir = HACKDIR;
 #endif
 
-#ifdef AMIGA
-	startdir = getcwd(0,255);
-#endif
 	if (dir && chdir((char *) dir) < 0) {
 		Fprintf(stderr, "%s: cannot chdir to %s.\n", argv[0], dir);
 		exit(EXIT_FAILURE);
@@ -118,9 +111,6 @@ char *argv[];
 			    argv[argno], savename);
 		argno++;
 	}
-#ifdef AMIGA
-	if (startdir) (void)chdir(startdir);
-#endif
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/
 	return 0;
@@ -296,26 +286,6 @@ char *basename;
 
 	Close(sfd);
 
-#if 0 /* OBSOLETE, HackWB is no longer in use */
-#ifdef AMIGA
-			/* we need to create an icon for the saved game
-			 * or HackWB won't notice the file.
-			 */
-	{
-	char iconfile[FILENAME];
-	int in, out;
-
-	(void) sprintf(iconfile, "%s.info", savename);
-	in = open("NetHack:default.icon", O_RDONLY);
-	out = open(iconfile, O_WRONLY | O_TRUNC | O_CREAT);
-	if(in > -1 && out > -1){
-		copy_bytes(in,out);
-	}
-	if(in > -1)close(in);
-	if(out > -1)close(out);
-	}
-#endif
-#endif
 	return(0);
 }
 
@@ -352,11 +322,6 @@ char *str;
 	return tmp;
 }
 #endif /* EXEPATH */
-
-#ifdef AMIGA
-#include "date.h"
-const char amiga_version_string[] = AMIGA_VERSION_STRING;
-#endif
 
 #ifdef WIN_CE
 void nhce_message(FILE* f, const char* str, ...)

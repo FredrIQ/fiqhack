@@ -1129,10 +1129,6 @@ int color;
 	if (windowprocs.name != NULL &&
 	    !strcmpi(windowprocs.name, "Qt")) return TRUE;
 #endif
-#ifdef AMII_GRAPHICS
-	/* hilites[] not used */
-	return iflags.use_color;
-#endif
 	return hilites[color] != (char *)0;
 }
 

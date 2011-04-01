@@ -46,9 +46,7 @@ typedef xchar	boolean;		/* 0 or 1 */
 #endif
 
 #ifndef STRNCMPI
-# ifndef __SASC_60		/* SAS/C already shifts to stricmp */
 #  define strcmpi(a,b) strncmpi((a),(b),-1)
-# endif
 #endif
 
 /* comment out to test effects of each #define -- these will probably
@@ -125,10 +123,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #include "tosconf.h"
 #endif
 
-#ifdef AMIGA
-#include "amiconf.h"
-#endif
-
 #ifdef __BEOS__
 //#include "beconf.h"
 #endif
@@ -139,9 +133,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 
 /* Displayable name of this port; don't redefine if defined in *conf.h */
 #ifndef PORT_ID
-# ifdef AMIGA
-#  define PORT_ID	"Amiga"
-# endif
 # ifdef TOS
 #  define PORT_ID	"ST"
 # endif
@@ -164,7 +155,7 @@ typedef xchar	boolean;		/* 0 or 1 */
 #endif
 
 #if defined(MICRO)
-#if !defined(AMIGA) && !defined(TOS)
+#if !defined(TOS)
 #define SHORT_FILENAMES		/* filenames are 8.3 */
 #endif
 #endif
@@ -195,7 +186,7 @@ typedef xchar	boolean;		/* 0 or 1 */
 #  define USE_TILES		/* glyph2tile[] will be available */
 # endif
 #endif
-#if defined(AMII_GRAPHICS) || defined(GEM_GRAPHICS)
+#if defined(GEM_GRAPHICS)
 # ifndef USE_TILES
 #  define USE_TILES
 # endif

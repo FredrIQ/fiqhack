@@ -24,9 +24,6 @@
 # endif
 #endif
 #ifndef SKIP_ERRNO
-# ifdef _DCC
-const
-# endif
 extern int errno;
 #endif
 
@@ -89,18 +86,6 @@ boolean nethack_thinks_it_is_open;	/* Does NetHack think it's open?       */
 #define WIZKIT_MAX 128
 static char wizkit[WIZKIT_MAX];
 STATIC_DCL FILE *NDECL(fopen_wizkit_file);
-#endif
-
-#ifdef AMIGA
-extern char PATH[];	/* see sys/amiga/amidos.c */
-extern char bbs_id[];
-static int lockptr;
-# ifdef __SASC_60
-#include <proto/dos.h>
-# endif
-
-#include <libraries/dos.h>
-extern void FDECL(amii_set_text_font, ( char *, int ));
 #endif
 
 #if defined(WIN32)
@@ -355,15 +340,10 @@ set_lock_and_bones()
 	}
 	append_slash(permbones);
 	append_slash(levels);
-#ifdef AMIGA
-	strncat(levels, bbs_id, PATHLEN);
-#endif
 	append_slash(bones);
 	Strcat(bones, "bonesnn.*");
 	Strcpy(lock, levels);
-#ifndef AMIGA
 	Strcat(lock, alllevels);
-#endif
 	return;
 }
 #endif /* MFLOPPY */
@@ -486,7 +466,7 @@ int lev;
 void
 clearlocks()
 {
-#if !defined(PC_LOCKING) && defined(MFLOPPY) && !defined(AMIGA)
+#if !defined(PC_LOCKING) && defined(MFLOPPY)
 	eraseall(levels, alllevels);
 	if (ramdisk)
 		eraseall(permbones, alllevels);
@@ -750,17 +730,9 @@ set_savefile_name()
 #else
 # if defined(MICRO)
 	Strcpy(SAVEF, SAVEP);
-#  ifdef AMIGA
-	strncat(SAVEF, bbs_id, PATHLEN);
-#  endif
 	{
 		int i = strlen(SAVEP);
-#  ifdef AMIGA
-		/* plname has to share space with SAVEP and ".sav" */
-		(void)strncat(SAVEF, plname, FILENAME - i - 4);
-#  else
 		(void)strncat(SAVEF, plname, 8);
-#  endif
 		regularize(SAVEF+i);
 	}
 	Strcat(SAVEF, ".sav");
@@ -1157,11 +1129,7 @@ void
 compress(filename)
 const char *filename;
 {
-#ifndef COMPRESS
-#if (defined(macintosh) && (defined(__SC__) || defined(__MRC__))) || defined(__MWERKS__)
-# pragma unused(filename)
-#endif
-#else
+#ifdef COMPRESS
 	docompress_file(filename, FALSE);
 #endif
 }
@@ -1172,11 +1140,7 @@ void
 uncompress(filename)
 const char *filename;
 {
-#ifndef COMPRESS
-#if (defined(macintosh) && (defined(__SC__) || defined(__MRC__))) || defined(__MWERKS__)
-# pragma unused(filename)
-#endif
-#else
+#ifdef COMPRESS
 	docompress_file(filename, TRUE);
 #endif
 }
@@ -1199,11 +1163,7 @@ make_lockname(filename, lockname)
 const char *filename;
 char *lockname;
 {
-#if (defined(macintosh) && (defined(__SC__) || defined(__MRC__))) || defined(__MWERKS__)
-# pragma unused(filename,lockname)
-	return (char*)0;
-#else
-# if defined(UNIX) || defined(VMS) || defined(AMIGA) || defined(WIN32)
+#if defined(UNIX) || defined(VMS) || defined(WIN32)
 #  ifdef NO_FILE_LINKS
 	Strcpy(lockname, LOCKDIR);
 	Strcat(lockname, "/");
@@ -1224,8 +1184,7 @@ char *lockname;
 # else
 	lockname[0] = '\0';
 	return (char*)0;
-# endif  /* UNIX || VMS || AMIGA || WIN32 */
-#endif
+#endif  /* UNIX || VMS || WIN32 */
 }
 
 
@@ -1236,9 +1195,6 @@ const char *filename;
 int whichprefix;
 int retryct;
 {
-#if (defined(macintosh) && (defined(__SC__) || defined(__MRC__))) || defined(__MWERKS__)
-# pragma unused(filename, retryct)
-#endif
 	char locknambuf[BUFSZ];
 	const char *lockname;
 
@@ -1309,24 +1265,15 @@ int retryct;
 	}
 #endif  /* UNIX || VMS */
 
-#if defined(AMIGA) || defined(WIN32)
-# ifdef AMIGA
-#define OPENFAILURE(fd) (!fd)
-    lockptr = 0;
-# else
+#if defined(WIN32)
 #define OPENFAILURE(fd) (fd < 0)
     lockptr = -1;
-# endif
     while (--retryct && OPENFAILURE(lockptr)) {
 # if defined(WIN32) && !defined(WIN_CE)
 	lockptr = sopen(lockname, O_RDWR|O_CREAT, SH_DENYRW, S_IWRITE);
 # else
 	(void)DeleteFile(lockname); /* in case dead process was here first */
-#  ifdef AMIGA
-	lockptr = Open(lockname,MODE_NEWFILE);
-#  else
 	lockptr = open(lockname, O_RDWR|O_CREAT|O_EXCL, S_IWRITE);
-#  endif
 # endif
 	if (OPENFAILURE(lockptr)) {
 	    raw_printf("Waiting for access to %s.  (%d retries left).",
@@ -1339,7 +1286,7 @@ int retryct;
 	nesting--;
 	return FALSE;
     }
-#endif /* AMIGA || WIN32 */
+#endif /* WIN32 */
 	return TRUE;
 }
 
@@ -1355,9 +1302,6 @@ int retryct;
 void
 unlock_file(filename)
 const char *filename;
-#if defined(macintosh) && (defined(__SC__) || defined(__MRC__))
-# pragma unused(filename)
-#endif
 {
 	char locknambuf[BUFSZ];
 	const char *lockname;
@@ -1377,11 +1321,11 @@ const char *filename;
 
 #endif  /* UNIX || VMS */
 
-#if defined(AMIGA) || defined(WIN32)
+#if defined(WIN32)
 		if (lockptr) Close(lockptr);
 		DeleteFile(lockname);
 		lockptr = 0;
-#endif /* AMIGA || WIN32 */
+#endif /* WIN32 */
 	}
 
 	nesting--;
@@ -1607,9 +1551,6 @@ char		*buf;
 char		*tmp_ramdisk;
 char		*tmp_levels;
 {
-#if (defined(macintosh) && (defined(__SC__) || defined(__MRC__))) || defined(__MWERKS__)
-# pragma unused(tmp_ramdisk,tmp_levels)
-#endif
 	char		*bufp, *altp;
 	uchar   translate[MAXPCHARS];
 	int   len;
@@ -1677,9 +1618,7 @@ char		*tmp_levels;
 				/* The following ifdef is NOT in the wrong
 				 * place.  For now, we accept and silently
 				 * ignore RAMDISK */
-#   ifndef AMIGA
 		(void) strncpy(tmp_ramdisk, bufp, PATHLEN-1);
-#   endif
 #  endif
 	} else if (match_varname(buf, "LEVELS", 4)) {
 		(void) strncpy(tmp_levels, bufp, PATHLEN-1);
@@ -1755,116 +1694,6 @@ char		*tmp_levels;
 	} else if (match_varname(buf, "WIZKIT", 6)) {
 	    (void) strncpy(wizkit, bufp, WIZKIT_MAX-1);
 #endif
-#ifdef AMIGA
-	} else if (match_varname(buf, "FONT", 4)) {
-		char *t;
-
-		if( t = strchr( buf+5, ':' ) )
-		{
-		    *t = 0;
-		    amii_set_text_font( buf+5, atoi( t + 1 ) );
-		    *t = ':';
-		}
-	} else if (match_varname(buf, "PATH", 4)) {
-		(void) strncpy(PATH, bufp, PATHLEN-1);
-	} else if (match_varname(buf, "DEPTH", 5)) {
-		extern int amii_numcolors;
-		int val = atoi( bufp );
-		amii_numcolors = 1L << min( DEPTH, val );
-	} else if (match_varname(buf, "DRIPENS", 7)) {
-		int i, val;
-		char *t;
-		for (i = 0, t = strtok(bufp, ",/"); t != (char *)0;
-				i < 20 && (t = strtok((char*)0, ",/")), ++i) {
-			sscanf(t, "%d", &val );
-			flags.amii_dripens[i] = val;
-		}
-	} else if (match_varname(buf, "SCREENMODE", 10 )) {
-		extern long amii_scrnmode;
-		if (!stricmp(bufp,"req"))
-		    amii_scrnmode = 0xffffffff; /* Requester */
-		else if( sscanf(bufp, "%x", &amii_scrnmode) != 1 )
-		    amii_scrnmode = 0;
-	} else if (match_varname(buf, "MSGPENS", 7)) {
-		extern int amii_msgAPen, amii_msgBPen;
-		char *t = strtok(bufp, ",/");
-		if( t )
-		{
-		    sscanf(t, "%d", &amii_msgAPen);
-		    if( t = strtok((char*)0, ",/") )
-				sscanf(t, "%d", &amii_msgBPen);
-		}
-	} else if (match_varname(buf, "TEXTPENS", 8)) {
-		extern int amii_textAPen, amii_textBPen;
-		char *t = strtok(bufp, ",/");
-		if( t )
-		{
-		    sscanf(t, "%d", &amii_textAPen);
-		    if( t = strtok((char*)0, ",/") )
-				sscanf(t, "%d", &amii_textBPen);
-		}
-	} else if (match_varname(buf, "MENUPENS", 8)) {
-		extern int amii_menuAPen, amii_menuBPen;
-		char *t = strtok(bufp, ",/");
-		if( t )
-		{
-		    sscanf(t, "%d", &amii_menuAPen);
-		    if( t = strtok((char*)0, ",/") )
-				sscanf(t, "%d", &amii_menuBPen);
-		}
-	} else if (match_varname(buf, "STATUSPENS", 10)) {
-		extern int amii_statAPen, amii_statBPen;
-		char *t = strtok(bufp, ",/");
-		if( t )
-		{
-		    sscanf(t, "%d", &amii_statAPen);
-		    if( t = strtok((char*)0, ",/") )
-				sscanf(t, "%d", &amii_statBPen);
-		}
-	} else if (match_varname(buf, "OTHERPENS", 9)) {
-		extern int amii_otherAPen, amii_otherBPen;
-		char *t = strtok(bufp, ",/");
-		if( t )
-		{
-		    sscanf(t, "%d", &amii_otherAPen);
-		    if( t = strtok((char*)0, ",/") )
-				sscanf(t, "%d", &amii_otherBPen);
-		}
-	} else if (match_varname(buf, "PENS", 4)) {
-		extern unsigned short amii_init_map[ AMII_MAXCOLORS ];
-		int i;
-		char *t;
-
-		for (i = 0, t = strtok(bufp, ",/");
-			i < AMII_MAXCOLORS && t != (char *)0;
-			t = strtok((char *)0, ",/"), ++i)
-		{
-			sscanf(t, "%hx", &amii_init_map[i]);
-		}
-		amii_setpens( amii_numcolors = i );
-	} else if (match_varname(buf, "FGPENS", 6)) {
-		extern int foreg[ AMII_MAXCOLORS ];
-		int i;
-		char *t;
-
-		for (i = 0, t = strtok(bufp, ",/");
-			i < AMII_MAXCOLORS && t != (char *)0;
-			t = strtok((char *)0, ",/"), ++i)
-		{
-			sscanf(t, "%d", &foreg[i]);
-		}
-	} else if (match_varname(buf, "BGPENS", 6)) {
-		extern int backg[ AMII_MAXCOLORS ];
-		int i;
-		char *t;
-
-		for (i = 0, t = strtok(bufp, ",/");
-			i < AMII_MAXCOLORS && t != (char *)0;
-			t = strtok((char *)0, ",/"), ++i)
-		{
-			sscanf(t, "%d", &backg[i]);
-		}
-#endif
 #ifdef USER_SOUNDS
 	} else if (match_varname(buf, "SOUNDDIR", 8)) {
 		sounddir = (char *)strdup(bufp);
@@ -1914,10 +1743,8 @@ const char *filename;
 #undef tmp_levels
 	char	tmp_levels[PATHLEN];
 # ifdef MFLOPPY
-#  ifndef AMIGA
 #undef tmp_ramdisk
 	char	tmp_ramdisk[PATHLEN];
-#  endif
 # endif
 #endif
 	char	buf[4*BUFSZ];
@@ -1927,9 +1754,7 @@ const char *filename;
 
 #if defined(MICRO) || defined(WIN32)
 # ifdef MFLOPPY
-#  ifndef AMIGA
 	tmp_ramdisk[0] = 0;
-#  endif
 # endif
 	tmp_levels[0] = 0;
 #endif
@@ -1951,13 +1776,11 @@ const char *filename;
 	/* should be superseded by fqn_prefix[] */
 # ifdef MFLOPPY
 	Strcpy(permbones, tmp_levels);
-#  ifndef AMIGA
 	if (tmp_ramdisk[0]) {
 		Strcpy(levels, tmp_ramdisk);
 		if (strcmp(permbones, levels))		/* if not identical */
 			ramdisk = TRUE;
 	} else
-#  endif /* AMIGA */
 		Strcpy(levels, tmp_levels);
 
 	Strcpy(bones, levels);
@@ -2084,9 +1907,6 @@ void
 check_recordfile(dir)
 const char *dir;
 {
-#if (defined(macintosh) && (defined(__SC__) || defined(__MRC__))) || defined(__MWERKS__)
-# pragma unused(dir)
-#endif
 	const char *fq_record;
 	int fd;
 
@@ -2121,13 +1941,7 @@ const char *dir;
 
 	if ((fd = open(fq_record, O_RDWR)) < 0) {
 	    /* try to create empty record */
-# if defined(AZTEC_C) || defined(_DCC) || (defined(__GNUC__) && defined(__AMIGA__))
-	    /* Aztec doesn't use the third argument */
-	    /* DICE doesn't like it */
-	    if ((fd = open(fq_record, O_CREAT|O_RDWR)) < 0) {
-# else
 	    if ((fd = open(fq_record, O_CREAT|O_RDWR, S_IREAD|S_IWRITE)) < 0) {
-# endif
 	raw_printf("Warning: cannot write record %s", tmp);
 		wait_synch();
 	    } else

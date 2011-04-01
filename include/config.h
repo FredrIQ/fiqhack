@@ -29,7 +29,7 @@
 			/* Hint: if you're not developing code, don't define
 			   ULTRIX_PROTO. */
 
-#include "config1.h"	/* should auto-detect AMIGA and WIN32 */
+#include "config1.h"	/* should auto-detect WIN32 */
 
 
 /* Windowing systems...
@@ -46,14 +46,8 @@
  * Define the default window system.  This should be one that is compiled
  * into your system (see defines above).  Known window systems are:
  *
- *	tty, X11, amii, BeOS, Qt, Gem, Gnome
+ *	tty, X11, BeOS, Qt, Gem, Gnome
  */
-
-/* Amiga supports AMII_GRAPHICS and/or TTY_GRAPHICS */
-#ifdef AMIGA
-# define AMII_GRAPHICS			/* (optional) */
-# define DEFAULT_WINDOW_SYS "amii"	/* "amii", "amitile" or "tty" */
-#endif
 
 /* Atari supports GEM_GRAPHICS and/or TTY_GRAPHICS */
 #ifdef TOS
@@ -241,11 +235,7 @@
  *
  *	typedef short int schar;
  */
-#ifdef AZTEC
-# define schar	char
-#else
 typedef signed char	schar;
-#endif
 
 /*
  * type uchar: small unsigned integers (8 bits suffice - but 7 bits do not)

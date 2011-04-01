@@ -15,17 +15,12 @@
 #if (defined(VMS) && !defined(__GNUC__))
 #include <types.h>
 #else
-# ifndef AMIGA
 #include <sys/types.h>
-# endif
 #endif
 
 #if (defined(MICRO) && !defined(TOS)) || defined(ANCIENT_VAXC)
 # if !defined(_SIZE_T) && !defined(__size_t) /* __size_t for CSet/2 */
 #  define _SIZE_T
-#   if !(defined(__GNUC__) && defined(AMIGA))
-typedef unsigned int	size_t;
-#   endif
 # endif
 #endif	/* MICRO && !TOS */
 
@@ -40,7 +35,7 @@ typedef unsigned int	size_t;
 #if defined(ULTRIX) || defined(VMS)
 # define off_t long
 #endif
-#if defined(AZTEC) || defined(THINKC4) || defined(__TURBOC__)
+#if defined(THINKC4) || defined(__TURBOC__)
 typedef long	off_t;
 #endif
 
@@ -104,14 +99,10 @@ E void FDECL(exit, (int));
 E void FDECL(free, (genericptr_t));
 #   endif
 # endif
-#if !defined(__SASC_60) && !defined(_DCC) && !defined(__SC__)
-# if defined(AMIGA) && !defined(AZTEC_50) && !defined(__GNUC__)
-E int FDECL(perror, (const char *));
-# else
+#if !defined(__SC__)
 #  if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
 E void FDECL(perror, (const char *));
 #  endif
-# endif
 #endif
 #endif
 #ifndef NeXT
@@ -122,7 +113,7 @@ E void FDECL(qsort, (genericptr_t,size_t,size_t,
 # if defined(BSD) || defined(ULTRIX)
 E  int qsort();
 # else
-#  if !defined(LATTICE) && !defined(AZTEC_50)
+#  if !defined(LATTICE)
 E   void FDECL(qsort, (genericptr_t,size_t,size_t,
 		       int(*)(const genericptr,const genericptr)));
 #  endif
@@ -130,8 +121,7 @@ E   void FDECL(qsort, (genericptr_t,size_t,size_t,
 #endif
 #endif /* NeXT */
 
-#ifndef __SASC_60
-#if !defined(AZTEC_50) && !defined(__GNUC__)
+#if !defined(__GNUC__)
 /* may already be defined */
 
 # ifdef ULTRIX
@@ -162,7 +152,7 @@ E int FDECL(write, (int,genericptr_t,unsigned));
 E int FDECL(unlink, (const char *));
 #  endif
 
-#endif /* AZTEC_50 && __GNUC__ */
+#endif /* !__GNUC__ */
 
 #if defined(MICRO)
 E int FDECL(close, (int));
@@ -173,7 +163,6 @@ E int FDECL(open, (const char *,int,...));
 E int FDECL(dup2, (int, int));
 E int FDECL(setmode, (int,int));
 E int NDECL(kbhit);
-# if !defined(_DCC)
 #  if defined(__TURBOC__)
 E int FDECL(chdir, (const char *));
 #  else
@@ -184,7 +173,6 @@ E int FDECL(chdir, (char *));
 #  ifndef __EMX__
 E char *FDECL(getcwd, (char *,int));
 #  endif
-# endif /* !_DCC */
 #endif
 
 #ifdef ULTRIX
@@ -237,8 +225,6 @@ E int FDECL(rename, (const char *,const char *));
 E int FDECL(stat, ( /*_ const char *,stat_t * _*/ ));
 E int FDECL(write, (int,const genericptr,unsigned));
 #endif
-
-#endif	/* __SASC_60 */
 
 /* both old & new versions of Ultrix want these, but real BSD does not */
 #ifdef ultrix
@@ -298,7 +284,7 @@ E int FDECL(memcmp, (const void *,const void *,size_t));
 E void *FDECL(memcpy, (void *,const void *,size_t));
 E void *FDECL(memset, (void *,int,size_t));
 # else
-#  if defined(AZTEC_50) || defined(NHSTDC) || defined(WIN32)
+#  if defined(NHSTDC) || defined(WIN32)
 E int  FDECL(memcmp, (const void *, const void *, size_t));
 E void *FDECL(memcpy, (void *, const void *, size_t));
 E void *FDECL(memset, (void *, int, size_t));
@@ -306,7 +292,7 @@ E void *FDECL(memset, (void *, int, size_t));
 E int FDECL(memcmp, (char *,char *,unsigned int));
 E char *FDECL(memcpy, (char *,char *,unsigned int));
 E char *FDECL(memset, (char*,int,int));
-#  endif /* AZTEC_50 || NHSTDC */
+#  endif /* NHSTDC */
 # endif /* TOS */
 #endif /* MICRO */
 
@@ -411,13 +397,13 @@ E char	*FDECL(rindex, (const char *,int));
  * If your system defines sprintf, et al, in stdio.h, add to the initial
  * #if.
  */
-#if defined(ULTRIX) || defined(__DECC) || defined(__SASC_60) || defined(WIN32)
+#if defined(ULTRIX) || defined(__DECC) || defined(WIN32)
 #define SPRINTF_PROTO
 #endif
 #if (defined(SUNOS4) && defined(__STDC__)) || defined(_AIX32)
 #define SPRINTF_PROTO
 #endif
-#if defined(TOS) || defined(AZTEC_50) || defined(__sgi) || defined(__GNUC__)
+#if defined(TOS) || defined(__sgi) || defined(__GNUC__)
 	/* problem with prototype mismatches */
 #define SPRINTF_PROTO
 #endif
@@ -438,7 +424,6 @@ E  char *sprintf();
 # undef SPRINTF_PROTO
 #endif
 
-#ifndef __SASC_60
 #ifdef NEED_VARARGS
 # if defined(USE_STDARG) || defined(USE_VARARGS)
 #  if !defined(SVR4) && !defined(apollo)
@@ -456,7 +441,6 @@ E int FDECL(vprintf, (const char *, va_list));
 #  define vsprintf	sprintf
 # endif
 #endif /* NEED_VARARGS */
-#endif
 
 
 #ifdef MICRO

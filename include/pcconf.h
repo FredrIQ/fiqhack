@@ -47,9 +47,7 @@
 # define rindex strrchr
 #endif
 
-#ifndef AMIGA
 #include <time.h>
-#endif
 
 #ifdef RANDOM
 /* Use the high quality random number routines. */

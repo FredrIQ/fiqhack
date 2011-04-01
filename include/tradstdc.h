@@ -159,7 +159,7 @@
 # define FDECL(f,p)	f()
 # define VDECL(f,p)	f()
 
-# if defined(AMIGA) || defined(HPUX) || defined(POSIX_TYPES) || defined(__DECC) || defined(__BORLANDC__)
+# if defined(HPUX) || defined(POSIX_TYPES) || defined(__DECC) || defined(__BORLANDC__)
 #  define genericptr	void *
 # endif
 # ifndef genericptr

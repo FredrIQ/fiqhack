@@ -211,13 +211,6 @@ shortsighted	{ yylval.i=SHORTSIGHTED; return FLAG_TYPE; }
 '.'		{ yylval.i = yytext[1]; return CHAR; }
 .		{ return yytext[0]; }
 %%
-#ifdef	AMIGA
-long *alloc(n)
-	unsigned n;
-{
-	return ((long *)malloc (n));
-}
-#endif
 
 /* routine to switch to another input file; needed for flex */
 void init_yyin( input_f )

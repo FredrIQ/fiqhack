@@ -51,11 +51,6 @@ static int n_ids_mapped = 0;
 static struct bucket *id_map = 0;
 
 
-#ifdef AMII_GRAPHICS
-void FDECL( amii_setpens, (int) );	/* use colors from save file */
-extern int amii_numcolors;
-#endif
-
 #include "quest.h"
 
 boolean restoring = FALSE;
@@ -379,9 +374,6 @@ unsigned int *stuckid, *steedid;	/* STEED */
 	if (remember_discover) discover = remember_discover;
 
 	role_init();	/* Reset the initial role, race, gender, and alignment */
-#ifdef AMII_GRAPHICS
-	amii_setpens(amii_numcolors);	/* use colors from save file */
-#endif
 	mread(fd, (genericptr_t) &u, sizeof(struct you));
 	set_uasmon();
 #ifdef CLIPPING
@@ -482,9 +474,6 @@ STATIC_OVL int
 restlevelfile(fd, ltmp)
 register int fd;
 xchar ltmp;
-#if defined(macintosh) && (defined(__SC__) || defined(__MRC__))
-# pragma unused(fd)
-#endif
 {
 	register int nfd;
 	char whynot[BUFSZ];
@@ -507,9 +496,6 @@ xchar ltmp;
 		/* Remove levels and bones that may have been created.
 		 */
 		(void) close(nfd);
-# ifdef AMIGA
-		clearlocks();
-# else
 		eraseall(levels, alllevels);
 		eraseall(levels, allbones);
 
@@ -526,12 +512,9 @@ xchar ltmp;
 			(void) uptodate(fd, (char *)0);	/* skip version */
 			return dorecover(fd);	/* 0 or 1 */
 		} else {
-# endif
 			pline("Be seeing you...");
 			terminate(EXIT_SUCCESS);
-# ifndef AMIGA
 		}
-# endif
 	}
 #endif
 	bufon(nfd);
@@ -581,17 +564,7 @@ register int fd;
 #endif
 
 #ifdef MICRO
-# ifdef AMII_GRAPHICS
-	{
-	extern struct window_procs amii_procs;
-	if(windowprocs.win_init_nhwindows== amii_procs.win_init_nhwindows){
-	    extern winid WIN_BASE;
-	    clear_nhwindow(WIN_BASE);	/* hack until there's a hook for this */
-	}
-	}
-# else
 	clear_nhwindow(WIN_MAP);
-# endif
 	clear_nhwindow(WIN_MESSAGE);
 	You("return to level %d in %s%s.",
 		depth(&u.uz), dungeons[u.uz.dnum].dname,
