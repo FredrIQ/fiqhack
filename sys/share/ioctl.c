@@ -18,23 +18,12 @@ struct ltchars ltchars;
 struct ltchars ltchars0 = { -1, -1, -1, -1, -1, -1 }; /* turn all off */
 #else
 
-# ifdef POSIX_TYPES
 #include <termios.h>
 struct termios termio;
-#  if defined(BSD)
+# if defined(BSD)
 #include <sys/ioctl.h>
-#  endif
-# else
-#include <termio.h>	/* also includes part of <sgtty.h> */
-#  if defined(TCSETS)
-struct termios termio;
-#  else
-struct termio termio;
-#  endif
 # endif
-# ifdef AMIX
-#include <sys/ioctl.h>
-# endif /* AMIX */
+
 #endif
 
 #ifdef SUSPEND	/* BSD isn't alone anymore... */
@@ -90,15 +79,7 @@ getioctls()
 	(void) ioctl(fileno(stdin), (int) TIOCGLTC, (char *) &ltchars);
 	(void) ioctl(fileno(stdin), (int) TIOCSLTC, (char *) &ltchars0);
 #else
-# ifdef POSIX_TYPES
 	(void) tcgetattr(fileno(stdin), &termio);
-# else
-#  if defined(TCSETS)
-	(void) ioctl(fileno(stdin), (int) TCGETS, &termio);
-#  else
-	(void) ioctl(fileno(stdin), (int) TCGETA, &termio);
-#  endif
-# endif
 #endif
 	getwindowsz();
 #ifdef AUX
@@ -112,15 +93,7 @@ setioctls()
 #ifdef BSD_JOB_CONTROL
 	(void) ioctl(fileno(stdin), (int) TIOCSLTC, (char *) &ltchars);
 #else
-# ifdef POSIX_TYPES
 	(void) tcsetattr(fileno(stdin), TCSADRAIN, &termio);
-# else
-#  if defined(TCSETS)
-	(void) ioctl(fileno(stdin), (int) TCSETSW, &termio);
-#  else
-	(void) ioctl(fileno(stdin), (int) TCSETAW, &termio);
-#  endif
-# endif
 #endif
 }
 

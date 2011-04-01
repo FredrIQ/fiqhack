@@ -33,7 +33,7 @@ int NDECL(yylex);
 # if defined(NeXT) || defined(SVR4)
 #  define VOIDYYPUT
 # endif
-# if !defined(VOIDYYPUT) && defined(POSIX_TYPES)
+# if !defined(VOIDYYPUT)
 #   define VOIDYYPUT
 # endif
 # if defined(VOIDYYPUT) && defined(__osf__)

@@ -28,19 +28,9 @@ typedef long	off_t;
 #if (defined(_MSC_VER) || defined(__TURBOC__) || defined(__SC__) || defined(WIN32))
 # define SIG_RET_TYPE void (__cdecl *)(int)
 #endif
+
 #ifndef SIG_RET_TYPE
-# if defined(NHSTDC) || defined(POSIX_TYPES) || defined(__DECC)
-#  define SIG_RET_TYPE void (*)()
-# endif
-#endif
-#ifndef SIG_RET_TYPE
-# if defined(SVR3) || defined(SVR4)
-	/* SVR3 is defined automatically by some systems */
-#  define SIG_RET_TYPE void (*)()
-# endif
-#endif
-#ifndef SIG_RET_TYPE	/* BSD, SIII, SVR2 and earlier, Sun3.5 and earlier */
-# define SIG_RET_TYPE int (*)()
+# define SIG_RET_TYPE void (*)()
 #endif
 
 #if !defined(__cplusplus)
@@ -83,17 +73,8 @@ E void FDECL(perror, (const char *));
 # endif
 #endif
 #ifndef NeXT
-#ifdef POSIX_TYPES
 E void FDECL(qsort, (genericptr_t,size_t,size_t,
 		     int(*)(const genericptr,const genericptr)));
-#else
-# if defined(BSD)
-E  int qsort();
-# else
-E   void FDECL(qsort, (genericptr_t,size_t,size_t,
-		       int(*)(const genericptr,const genericptr)));
-# endif
-#endif
 #endif /* NeXT */
 
 #if !defined(__GNUC__)
@@ -102,15 +83,9 @@ E   void FDECL(qsort, (genericptr_t,size_t,size_t,
 # ifndef bsdi
 E long FDECL(lseek, (int,long,int));
 # endif
-#  if defined(POSIX_TYPES) || defined(__TURBOC__)
-#   ifndef bsdi
+# ifndef bsdi
 E int FDECL(write, (int, const void *,unsigned));
-#   endif
-#  else
-#   ifndef __MWERKS__	/* metrowerks defines write via universal headers */
-E int FDECL(write, (int,genericptr_t,unsigned));
-#   endif
-#  endif
+# endif
 
 #  ifndef __SC__
 E int FDECL(unlink, (const char *));
@@ -118,28 +93,8 @@ E int FDECL(unlink, (const char *));
 
 #endif /* !__GNUC__ */
 
-#ifdef POSIX_TYPES
 /* The POSIX string.h is required to define all the mem* and str* functions */
 #include <string.h>
-#else
-#if defined(SYSV)
-# if defined(NHSTDC)
-E int FDECL(memcmp, (const void *,const void *,size_t));
-E void *FDECL(memcpy, (void *, const void *, size_t));
-E void *FDECL(memset, (void *, int, size_t));
-# else
-#  ifndef memcmp	/* some systems seem to macro these back to b*() */
-E int memcmp();
-#  endif
-#  ifndef memcpy
-E char *memcpy();
-#  endif
-#  ifndef memset
-E char *memset();
-#  endif
-# endif
-#endif
-#endif /* POSIX_TYPES */
 
 #if defined(SYSV)
 E unsigned sleep();
@@ -147,43 +102,11 @@ E unsigned sleep();
 
 E char *FDECL(getenv, (const char *));
 E char *getlogin();
-#ifdef POSIX_TYPES
 E pid_t NDECL(getpid);
 E uid_t NDECL(getuid);
 E gid_t NDECL(getgid);
-#else	/* !POSIX_TYPES */
-#  ifndef getpid		/* Borland C defines getpid() as a macro */
-E int NDECL(getpid);
-#  endif
-#endif	/*?POSIX_TYPES*/
 
 /*# string(s).h #*/
-#if !defined(_XtIntrinsic_h) && !defined(POSIX_TYPES)
-/* <X11/Intrinsic.h> #includes <string[s].h>; so does defining POSIX_TYPES */
-
-#if defined(NeXT) && defined(__GNUC__)
-#include <strings.h>
-#else
-E char	*FDECL(strcpy, (char *,const char *));
-E char	*FDECL(strncpy, (char *,const char *,size_t));
-E char	*FDECL(strcat, (char *,const char *));
-E char	*FDECL(strncat, (char *,const char *,size_t));
-E char	*FDECL(strpbrk, (const char *,const char *));
-
-# if defined(SYSV)
-E char	*FDECL(strchr, (const char *,int));
-E char	*FDECL(strrchr, (const char *,int));
-# else /* BSD */
-E char	*FDECL(index, (const char *,int));
-E char	*FDECL(rindex, (const char *,int));
-# endif
-
-E int	FDECL(strcmp, (const char *,const char *));
-E int	FDECL(strncmp, (const char *,const char *,size_t));
-E int	FDECL(strlen, (const char *));
-#endif /* NeXT */
-
-#endif	/* !_XtIntrinsic_h_ && !POSIX_TYPES */
 
 #ifdef NEED_VARARGS
 # if defined(USE_STDARG) || defined(USE_VARARGS)
@@ -215,12 +138,7 @@ E genericptr_t FDECL(malloc, (size_t));
 
 E struct tm *FDECL(localtime, (const time_t *));
 
-# if (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV)
 E time_t FDECL(time, (time_t *));
-# else
-E long FDECL(time, (time_t *));
-# endif
-
 
 #undef E
 

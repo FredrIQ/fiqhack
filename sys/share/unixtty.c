@@ -11,30 +11,9 @@
 #define NEED_VARARGS
 #include "hack.h"
 
-/*
- * The distinctions here are not BSD - rest but rather USG - rest, as
- * BSD still has the old sgttyb structure, but SYSV has termio. Thus:
- */
-#if defined(BSD) && !defined(POSIX_TYPES)
-# define V7
-#else
-# define USG
-#endif
-
-#ifdef USG
-
-# ifdef POSIX_TYPES
-#  include <termios.h>
-#  include <unistd.h>
-#  define termstruct	termios
-# else
-#  include <termio.h>
-#  if defined(TCSETS)
-#   define termstruct	termios
-#  else
-#   define termstruct	termio
-#  endif
-# endif /* POSIX_TYPES */
+# include <termios.h>
+# include <unistd.h>
+# define termstruct	termios
 # ifdef LINUX
 #  include <sys/ioctl.h>
 #  undef delay_output	/* curses redefines this */
@@ -53,73 +32,24 @@
 # define cbrkflgs	c_lflag
 # define CBRKMASK	ICANON
 # define CBRKON		! /* reverse condition */
-# ifdef POSIX_TYPES
-#  define OSPEED(x)	(speednum(cfgetospeed(&x)))
-# else
-#  ifndef CBAUD
-#   define CBAUD	_CBAUD /* for POSIX nitpickers (like RS/6000 cc) */
-#  endif
-#  define OSPEED(x)	((x).c_cflag & CBAUD)
-# endif
+# define OSPEED(x)	(speednum(cfgetospeed(&x)))
 # define IS_7BIT(x)	((x).c_cflag & CS7)
 # define inputflags	c_iflag
 # define STRIPHI	ISTRIP
-# ifdef POSIX_TYPES
-#  define GTTY(x)	(tcgetattr(0, x))
-#  define STTY(x)	(tcsetattr(0, TCSADRAIN, x))
-# else
-#  if defined(TCSETS)
-#   define GTTY(x)	(ioctl(0, TCGETS, x))
-#   define STTY(x)	(ioctl(0, TCSETSW, x))
-#  else
-#   define GTTY(x)	(ioctl(0, TCGETA, x))
-#   define STTY(x)	(ioctl(0, TCSETAW, x))
-#  endif
-# endif /* POSIX_TYPES */
-#  define GTTY2(x)	1
-#  define STTY2(x)	1
-# ifdef POSIX_TYPES
+
+# define GTTY(x)	(tcgetattr(0, x))
+# define STTY(x)	(tcsetattr(0, TCSADRAIN, x))
+# define GTTY2(x)	1
+# define STTY2(x)	1
+
 #  if defined(BSD)
 #   define nonesuch	_POSIX_VDISABLE
 #  else
 #   define nonesuch	(fpathconf(0, _PC_VDISABLE))
 #  endif
-# else
-#  define nonesuch	0
-# endif
 # define inittyb2	inittyb
 # define curttyb2	curttyb
 
-#else	/* V7 */
-
-# include <sgtty.h>
-# define termstruct	sgttyb
-# define kill_sym	sg_kill
-# define erase_sym	sg_erase
-# define intr_sym	t_intrc
-# define EXTABS		XTABS
-# define tabflgs	sg_flags
-# define echoflgs	sg_flags
-# define cbrkflgs	sg_flags
-# define CBRKMASK	CBREAK
-# define CBRKON		/* empty */
-# define inputflags	sg_flags	/* don't know how enabling meta bits */
-# define IS_7BIT(x)	(FALSE)
-# define STRIPHI	0		/* should actually be done on BSD */
-# define OSPEED(x)	(x).sg_ospeed
-# if defined(bsdi) || defined(__386BSD)
-#  define GTTY(x)	(ioctl(0, TIOCGETP, (char *)x))
-#  define STTY(x)	(ioctl(0, TIOCSETP, (char *)x))
-# else
-#  define GTTY(x)	(gtty(0, x))
-#  define STTY(x)	(stty(0, x))
-# endif
-# define GTTY2(x)	(ioctl(0, TIOCGETC, (char *)x))
-# define STTY2(x)	(ioctl(0, TIOCSETC, (char *)x))
-# define nonesuch	-1
-struct tchars inittyb2, curttyb2;
-
-#endif	/* V7 */
 
 #if defined(TTY_GRAPHICS) && (!defined(SYSV) || defined(SVR4))
 # ifndef LINT
@@ -130,14 +60,13 @@ extern			/* it is defined in libtermlib (libtermcap) */
 short	ospeed = 0;	/* gets around "not defined" error message */
 #endif
 
-#if defined(POSIX_TYPES) && defined(BSD)
+#if defined(BSD)
 unsigned
 #endif
 	char erase_char, intr_char, kill_char;
 static boolean settty_needed = FALSE;
 struct termstruct inittyb, curttyb;
 
-#ifdef POSIX_TYPES
 static int
 speednum(speed)
 speed_t speed;
@@ -163,7 +92,6 @@ speed_t speed;
 
 	return 0;
 }
-#endif
 
 static void
 setctty()
@@ -234,37 +162,35 @@ register int change = 0;
 	if((curttyb.cbrkflgs & CBRKMASK) != cf){
 		curttyb.cbrkflgs &= ~CBRKMASK;
 		curttyb.cbrkflgs |= cf;
-#ifdef USG
 		/* be satisfied with one character; no timeout */
 		curttyb.c_cc[VMIN] = 1;		/* was VEOF */
 		curttyb.c_cc[VTIME] = 0;	/* was VEOL */
-# ifdef POSIX_JOB_CONTROL
+#ifdef POSIX_JOB_CONTROL
 		/* turn off system suspend character
 		 * due to differences in structure layout, this has to be
 		 * here instead of in ioctl.c:getioctls() with the BSD
 		 * equivalent
 		 */
-#  ifdef VSUSP	/* real POSIX */
+# ifdef VSUSP	/* real POSIX */
 		curttyb.c_cc[VSUSP] = nonesuch;
-#  else		/* other later SYSV */
+# else		/* other later SYSV */
 		curttyb.c_cc[VSWTCH] = nonesuch;
-#  endif
 # endif
-# ifdef VDSUSP /* SunOS Posix extensions */
+#endif
+#ifdef VDSUSP /* SunOS Posix extensions */
 		curttyb.c_cc[VDSUSP] = nonesuch;
-# endif
-# ifdef VREPRINT
+#endif
+#ifdef VREPRINT
 		curttyb.c_cc[VREPRINT] = nonesuch;
-# endif
-# ifdef VDISCARD
+#endif
+#ifdef VDISCARD
 		curttyb.c_cc[VDISCARD] = nonesuch;
-# endif
-# ifdef VWERASE
+#endif
+#ifdef VWERASE
 		curttyb.c_cc[VWERASE] = nonesuch;
-# endif
-# ifdef VLNEXT
+#endif
+#ifdef VLNEXT
 		curttyb.c_cc[VLNEXT] = nonesuch;
-# endif
 #endif
 		change++;
 	}

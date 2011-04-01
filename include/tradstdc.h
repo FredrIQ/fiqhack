@@ -115,12 +115,7 @@
 # define FDECL(f,p)	f()
 # define VDECL(f,p)	f()
 
-# if defined(POSIX_TYPES) || defined(__DECC) || defined(__BORLANDC__)
-#  define genericptr	void *
-# endif
-# ifndef genericptr
-#  define genericptr	char *
-# endif
+# define genericptr	void *
 
 /*
  * Traditional C compilers don't have "signed", "const", or "volatile".

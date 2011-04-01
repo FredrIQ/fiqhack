@@ -464,11 +464,7 @@ setrandom()
 	srandom((unsigned int) time((time_t *)0));
 #else
 # if defined(__APPLE__) || defined(BSD) || defined(LINUX) || defined(CYGWIN32) /* system srandom() */
-#  if defined(BSD) && !defined(POSIX_TYPES)
-		srandom((int) time((long *)0));
-#  else
-		srandom((int) time((time_t *)0));
-#  endif
+	srandom((int) time((time_t *)0));
 # else
 #  ifdef UNIX	/* system srand48() */
 	srand48((long) time((time_t *)0));
@@ -484,13 +480,8 @@ getlt()
 {
 	time_t date;
 
-#if defined(BSD) && !defined(POSIX_TYPES)
-	(void) time((long *)(&date));
-	return(localtime((long *)(&date)));
-#else
 	(void) time(&date);
 	return(localtime(&date));
-#endif
 }
 
 int
@@ -509,11 +500,7 @@ time_t date;
 	if (date == 0)
 		lt = getlt();
 	else
-#if defined(BSD) && !defined(POSIX_TYPES)
-		lt = localtime((long *)(&date));
-#else
 		lt = localtime(&date);
-#endif
 
 	/* just in case somebody's localtime supplies (year % 100)
 	   rather than the expected (year - 1900) */

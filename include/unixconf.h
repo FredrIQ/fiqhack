@@ -42,13 +42,6 @@
 			/* and/or X11 color */
 #define POSIX_JOB_CONTROL /* use System V / Solaris 2.x / POSIX job control */
 			/* (e.g., VSUSP) */
-#define POSIX_TYPES	/* use POSIX types for system calls and termios */
-			/* Define for many recent OS releases, including
-			 * those with specific defines (since types are
-			 * changing toward the standard from earlier chaos).
-			 * For example, platforms using the GNU libraries,
-			 * Linux, Solaris 2.x
-			 */
 
 /* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
 				   is available from your system */
@@ -188,9 +181,6 @@
 #endif /* _AUX_SOURCE */
 
 #if defined(LINUX) || defined(bsdi)
-# ifndef POSIX_TYPES
-#  define POSIX_TYPES
-# endif
 # ifndef POSIX_JOB_CONTROL
 #  define POSIX_JOB_CONTROL
 # endif
@@ -238,14 +228,9 @@
 
 #include "system.h"
 
-#if defined(POSIX_TYPES) || defined(__GNUC__)
 #include <stdlib.h>
 #include <unistd.h>
-#endif
-
-#if defined(POSIX_TYPES) || defined(__GNUC__) || defined(BSD)
 #include <sys/wait.h>
-#endif
 
 #if defined(BSD)
 #define memcpy(d, s, n)		bcopy(s, d, n)
