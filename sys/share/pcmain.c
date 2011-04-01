@@ -155,11 +155,8 @@ char *argv[];
 #endif
 
 	if (!hackdir[0])
-#if !defined(LATTICE)
 		Strcpy(hackdir, orgdir);
-#else
-		Strcpy(hackdir, HACKDIR);
-#endif
+	
 	if(argc > 1) {
 	    if (!strncmp(argv[1], "-d", 2) && argv[1][2] != 'e') {
 		/* avoid matching "-dec" for DECgraphics; since the man page

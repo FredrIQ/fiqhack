@@ -92,11 +92,6 @@ ioctl.c         unixtty.c
 nhlan.c
 (Berkeley random number file, which may be included in any version)
 random.c
-(Berkeley uudecode file, which may be used in build process of any version)
-uudecode.c
-(lex/yacc output for special level and dungeon compilers)
-dgn_comp.h      dgn_lex.c       dgn_yacc.c      lev_comp.h      lev_lex.c
-lev_yacc.c
 
 sys/unix:
 (files for UNIX versions)

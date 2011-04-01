@@ -14,14 +14,7 @@
 #if defined(__TURBOC__)
 #include <time.h>	/* time_t is not in <sys/types.h> */
 #endif
-#if defined(ULTRIX) && !(defined(ULTRIX_PROTO) || defined(NHSTDC))
-/* The Ultrix v3.0 <sys/types.h> seems to be very wrong. */
-# define time_t long
-#endif
 
-#if defined(ULTRIX)
-# define off_t long
-#endif
 #if defined(THINKC4) || defined(__TURBOC__)
 typedef long	off_t;
 #endif
@@ -41,7 +34,7 @@ typedef long	off_t;
 # endif
 #endif
 #ifndef SIG_RET_TYPE
-# if defined(ULTRIX) || defined(SUNOS4) || defined(SVR3) || defined(SVR4)
+# if defined(SUNOS4) || defined(SVR3) || defined(SVR4)
 	/* SVR3 is defined automatically by some systems */
 #  define SIG_RET_TYPE void (*)()
 # endif
@@ -52,7 +45,7 @@ typedef long	off_t;
 
 #if !defined(__cplusplus) && !defined(__GO32__)
 
-#if defined(BSD) || defined(ULTRIX) || defined(RANDOM)
+#if defined(BSD) || defined(RANDOM)
 # ifdef random
 # undef random
 # endif
@@ -69,9 +62,9 @@ E int FDECL(srandom, (unsigned int));
 #else
 E long lrand48();
 E void srand48();
-#endif /* BSD || ULTRIX || RANDOM */
+#endif /* BSD || RANDOM */
 
-#if !defined(BSD) || defined(ultrix)
+#if !defined(BSD)
 			/* real BSD wants all these to return int */
 E void FDECL(exit, (int));
 
@@ -85,24 +78,20 @@ E void FDECL(exit, (int));
 E void FDECL(free, (genericptr_t));
 #   endif
 # endif
-#if !defined(__SC__)
-#  if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
+# if !defined(__SC__)
 E void FDECL(perror, (const char *));
-#  endif
-#endif
+# endif
 #endif
 #ifndef NeXT
 #ifdef POSIX_TYPES
 E void FDECL(qsort, (genericptr_t,size_t,size_t,
 		     int(*)(const genericptr,const genericptr)));
 #else
-# if defined(BSD) || defined(ULTRIX)
+# if defined(BSD)
 E  int qsort();
 # else
-#  if !defined(LATTICE)
 E   void FDECL(qsort, (genericptr_t,size_t,size_t,
 		       int(*)(const genericptr,const genericptr)));
-#  endif
 # endif
 #endif
 #endif /* NeXT */
@@ -110,16 +99,6 @@ E   void FDECL(qsort, (genericptr_t,size_t,size_t,
 #if !defined(__GNUC__)
 /* may already be defined */
 
-# ifdef ULTRIX
-#  ifdef ULTRIX_PROTO
-E int FDECL(lseek, (int,off_t,int));
-#  else
-E long FDECL(lseek, (int,off_t,int));
-#  endif
-  /* Ultrix 3.0 man page mistakenly says it returns an int. */
-E int FDECL(write, (int,char *,int));
-E int FDECL(link, (const char *, const char*));
-# else
 # ifndef bsdi
 E long FDECL(lseek, (int,long,int));
 # endif
@@ -132,7 +111,6 @@ E int FDECL(write, (int, const void *,unsigned));
 E int FDECL(write, (int,genericptr_t,unsigned));
 #   endif
 #  endif
-# endif /* ULTRIX */
 
 #  ifndef __SC__
 E int FDECL(unlink, (const char *));
@@ -140,39 +118,6 @@ E int FDECL(unlink, (const char *));
 
 #endif /* !__GNUC__ */
 
-#ifdef ULTRIX
-E int FDECL(close, (int));
-E int FDECL(atoi, (const char *));
-E int FDECL(chdir, (const char *));
-# if !defined(ULTRIX_CC20) && !defined(__GNUC__)
-E int FDECL(chmod, (const char *,int));
-E mode_t FDECL(umask, (int));
-# endif
-E int FDECL(read, (int,genericptr_t,unsigned));
-/* these aren't quite right, but this saves including lots of system files */
-E int FDECL(stty, (int,genericptr_t));
-E int FDECL(gtty, (int,genericptr_t));
-E int FDECL(ioctl, (int, int, char*));
-E int FDECL(isatty, (int));	/* 1==yes, 0==no, -1==error */
-#include <sys/file.h>
-# if defined(ULTRIX_PROTO) || defined(__GNUC__)
-E int NDECL(fork);
-# else
-E long NDECL(fork);
-# endif
-#endif /* ULTRIX */
-
-/* both old & new versions of Ultrix want these, but real BSD does not */
-#ifdef ultrix
-E void abort();
-E void bcopy();
-# ifdef ULTRIX
-E int FDECL(system, (const char *));
-#  ifndef _UNISTD_H_
-E int FDECL(execl, (const char *, ...));
-#  endif
-# endif
-#endif
 #if defined(HPUX) && !defined(_POSIX_SOURCE)
 E long NDECL(fork);
 #endif
@@ -209,10 +154,7 @@ E void *FDECL(memset, (char*,int,int));
 #endif
 #endif /* POSIX_TYPES */
 
-#if defined(BSD) && defined(ultrix)	/* i.e., old versions of Ultrix */
-E void sleep();
-#endif
-#if defined(ULTRIX) || defined(SYSV)
+#if defined(SYSV)
 E unsigned sleep();
 #endif
 #if defined(HPUX)
@@ -234,12 +176,6 @@ E gid_t NDECL(getgid);
 #  ifndef getpid		/* Borland C defines getpid() as a macro */
 E int NDECL(getpid);
 #  endif
-#  if defined(ULTRIX) && !defined(_UNISTD_H_)
-E unsigned NDECL(getuid);
-E unsigned NDECL(getgid);
-E int FDECL(setgid, (int));
-E int FDECL(setuid, (int));
-#  endif
 # endif	/*?POSIX_TYPES*/
 #endif	/*?(HPUX && !_POSIX_SOURCE)*/
 
@@ -252,7 +188,7 @@ E int FDECL(setuid, (int));
 #if !defined(_XtIntrinsic_h) && !defined(POSIX_TYPES)
 /* <X11/Intrinsic.h> #includes <string[s].h>; so does defining POSIX_TYPES */
 
-#if (defined(ULTRIX) || defined(NeXT)) && defined(__GNUC__)
+#if defined(NeXT) && defined(__GNUC__)
 #include <strings.h>
 #else
 E char	*FDECL(strcpy, (char *,const char *));
@@ -274,18 +210,11 @@ E int	FDECL(strncmp, (const char *,const char *,size_t));
 # ifdef HPUX
 E unsigned int	FDECL(strlen, (char *));
 # else
-#  if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
 E int	FDECL(strlen, (const char *));
-#  endif
 # endif /* HPUX */
-#endif /* ULTRIX */
+#endif /* NeXT */
 
 #endif	/* !_XtIntrinsic_h_ && !POSIX_TYPES */
-
-#if defined(ULTRIX) && defined(__GNUC__)
-E char	*FDECL(index, (const char *,int));
-E char	*FDECL(rindex, (const char *,int));
-#endif
 
 /* Old varieties of BSD have char *sprintf().
  * Newer varieties of BSD have int sprintf() but allow for the old char *.
@@ -295,7 +224,7 @@ E char	*FDECL(rindex, (const char *,int));
  * If your system defines sprintf, et al, in stdio.h, add to the initial
  * #if.
  */
-#if defined(ULTRIX) || defined(__DECC) || defined(WIN32)
+#if defined(__DECC) || defined(WIN32)
 #define SPRINTF_PROTO
 #endif
 #if (defined(SUNOS4) && defined(__STDC__)) || defined(_AIX32)
@@ -324,14 +253,12 @@ E  char *sprintf();
 
 #ifdef NEED_VARARGS
 # if defined(USE_STDARG) || defined(USE_VARARGS)
-#  if !defined(SVR4) && !defined(apollo)
-#   if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
+#  if !defined(SVR4)
 #    if !(defined(SUNOS4) && defined(__STDC__)) /* Solaris unbundled cc (acc) */
 E int FDECL(vsprintf, (char *, const char *, va_list));
 E int FDECL(vfprintf, (FILE *, const char *, va_list));
 E int FDECL(vprintf, (const char *, va_list));
 #    endif
-#   endif
 #  endif
 # else
 #  define vprintf	printf
@@ -356,17 +283,13 @@ E genericptr_t FDECL(malloc, (size_t));
 
 /* time functions */
 
-# ifndef LATTICE
-#  if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
 E struct tm *FDECL(localtime, (const time_t *));
-#  endif
-# endif
 
-# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || (defined(HPUX) && defined(_POSIX_SOURCE))
+# if (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || (defined(HPUX) && defined(_POSIX_SOURCE))
 E time_t FDECL(time, (time_t *));
 # else
 E long FDECL(time, (time_t *));
-# endif /* ULTRIX */
+# endif
 
 
 #undef E

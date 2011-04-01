@@ -122,14 +122,10 @@ done2()
 		}
 		return 0;
 	}
-#if defined(WIZARD) && (defined(UNIX) || defined(LATTICE))
+#if defined(WIZARD) && defined(UNIX)
 	if(wizard) {
 	    int c;
-#  ifdef LATTICE
-	    const char *tmp = "Create SnapShot?";
-#  else
 	    const char *tmp = "Dump core?";
-#  endif
 	    if ((c = ynq(tmp)) == 'y') {
 		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
 		exit_nhwindows((char *)0);
@@ -289,7 +285,7 @@ panic VA_DECL(const char *, str)
 #ifdef WIN32
 	interject(INTERJECT_PANIC);
 #endif
-#if defined(WIZARD) && (defined(UNIX) || defined(LATTICE) || defined(WIN32))
+#if defined(WIZARD) && (defined(UNIX) || defined(WIN32))
 	if (wizard)
 	    NH_abort();	/* generate core dump */
 #endif

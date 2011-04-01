@@ -28,31 +28,11 @@
 #	For HP/UX 10.20 with GCC:
 # CC = gcc -D_POSIX_SOURCE
 #
-# if your make doesn't define a default SHELL properly, you may need
-#    the line below (Atari users will need a bourne work-alike)
-# SHELL = /bin/sh
-# for Atari
-# SHELL=E:/GEMINI2/MUPFEL.TTP
 
 # flags may have to be changed as required
 # flags for 286 Xenix:
 # CFLAGS = -Ml2t16 -O -LARGE -I../include
 # LFLAGS = -Ml -F 4000 -SEG 512
-
-# flags for 286 Microport SysV-AT
-# CFLAGS = -DDUMB -Ml -I../include
-# LFLAGS = -Ml
-
-# flags for Atari GCC (3.2.1)
-# CFLAGS = -O -I../include
-# LFLAGS = -s
-# flags for Atari GCC (3.3)
-# CFLAGS = -mshort -O2 -I../include
-# LFLAGS = -mshort -s
-
-# flags for Apollos using their native cc
-# (as long as it claims to be __STDC__ but isn't)
-# CFLAGS = -DAPOLLO -O -I../include
 
 # flags for AIX 3.1 cc on IBM RS/6000 to define
 # a suitable subset of standard libraries

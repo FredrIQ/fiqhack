@@ -119,11 +119,7 @@ getlin_hook_proc hook;
 				*bufp = 0;
 #endif /* NEWAUTOCOMP */
 			} else	tty_nhbell();
-#if defined(apollo)
-		} else if(c == '\n' || c == '\r') {
-#else
 		} else if(c == '\n') {
-#endif
 #ifndef NEWAUTOCOMP
 			*bufp = 0;
 #endif /* not NEWAUTOCOMP */

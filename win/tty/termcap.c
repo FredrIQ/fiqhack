@@ -431,11 +431,7 @@ register int x, y;
 /* See note at OVLx ifdef above.   xputc() is a special function. */
 void
 xputc(c)
-#if defined(apollo)
-int c;
-#else
 char c;
-#endif
 {
 	(void) putchar(c);
 }
@@ -447,7 +443,7 @@ const char *s;
 # ifndef TERMLIB
 	(void) fputs(s, stdout);
 # else
-#  if defined(NHSTDC) || defined(ULTRIX_PROTO)
+#  if defined(NHSTDC)
 	tputs(s, 1, (int (*)())xputc);
 #  else
 	tputs(s, 1, xputc);
@@ -610,7 +606,7 @@ tty_delay_output()
 		tputs("$<50>", 1, xputc);
 #  endif
 # else
-#  if defined(NHSTDC) || defined(ULTRIX_PROTO)
+#  if defined(NHSTDC)
 		tputs("50", 1, (int (*)())xputc);
 #  else
 		tputs("50", 1, xputc);
