@@ -1259,9 +1259,6 @@ boolean at_stairs, falling, portal;
 	    if (Is_valley(&u.uz)) {
 		You("arrive at the Valley of the Dead...");
 		pline_The("odor of burnt flesh and decay pervades the air.");
-#ifdef MICRO
-		display_nhwindow(WIN_MESSAGE, FALSE);
-#endif
 		You_hear("groans and moans everywhere.");
 	    } else pline("It is hot here.  You smell smoke...");
 	}

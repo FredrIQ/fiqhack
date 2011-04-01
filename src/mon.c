@@ -2,11 +2,6 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/* If you're using precompiled headers, you don't want this either */
-#ifdef MICROPORT_BUG
-#define MKROOM_H
-#endif
-
 #include "hack.h"
 #include "mfndpos.h"
 #include "edog.h"

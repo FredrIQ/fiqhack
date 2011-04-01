@@ -31,10 +31,6 @@
  */
 /* #define SHORT_FILENAMES	/* All NT filesystems support long names now */
 
-#ifdef MICRO
-#undef MICRO			/* never define this! */
-#endif
-
 #define NOCWD_ASSUMPTIONS	/* Always define this. There are assumptions that
                                    it is defined for WIN32.
 				   Allow paths to be specified for HACKDIR,
@@ -124,11 +120,6 @@ extern void FDECL(interject, (int));
 #define FILENAME_CMP  stricmp		      /* case insensitive */
 #endif
 
-#if 0
-extern char levels[], bones[], permbones[],
-#endif /* 0 */
-
-/* this was part of the MICRO stuff in the past */
 extern const char *alllevels, *allbones;
 extern char hackdir[];
 #define ABORT C('a')

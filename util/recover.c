@@ -136,7 +136,7 @@ int lev;
 	int fd;
 
 	set_levelfile_name(lev);
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
 	fd = open(lock, O_RDONLY | O_BINARY);
 #else
 	fd = open(lock, O_RDONLY, 0);
@@ -149,7 +149,7 @@ create_savefile()
 {
 	int fd;
 
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
 	fd = open(savename, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC, FCMASK);
 #else
 	fd = creat(savename, FCMASK);

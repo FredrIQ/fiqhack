@@ -20,16 +20,10 @@ E char *catmore;
 #endif	/* DEF_PAGER */
 
 E char SAVEF[];
-#ifdef MICRO
-E char SAVEP[];
-#endif
 
 E NEARDATA int bases[MAXOCLASSES];
 
 E NEARDATA int multi;
-#if 0
-E NEARDATA int warnlevel;
-#endif
 E NEARDATA int nroom;
 E NEARDATA int nsubroom;
 E NEARDATA int occtime;

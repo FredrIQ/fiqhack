@@ -119,10 +119,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #include "unixconf.h"
 #endif
 
-#ifdef TOS
-#include "tosconf.h"
-#endif
-
 #ifdef __BEOS__
 //#include "beconf.h"
 #endif
@@ -152,12 +148,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #   endif
 #  endif
 # endif
-#endif
-
-#if defined(MICRO)
-#if !defined(TOS)
-#define SHORT_FILENAMES		/* filenames are 8.3 */
-#endif
 #endif
 
 #ifdef VMS

@@ -21,7 +21,7 @@
 #include <osbind.h>
 #endif
 
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
 void FDECL(nethack_exit,(int));
 #else
 #define nethack_exit exit
@@ -33,7 +33,7 @@ static void NDECL(msexit);
 extern int GUILaunched;    /* from nttty.c */
 #endif
 
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
 
 void
 flushout()
@@ -99,7 +99,7 @@ dosh()
 #define comspec_exists() 1
 # endif
 
-#endif /* MICRO */
+#endif /* WIN32 */
 
 /*
  * Add a backslash to any name not ending in /, \ or :	 There must
@@ -203,7 +203,7 @@ const char *name, *mode;
 	return (FILE *)0;
 }
 
-#if defined(MICRO) || defined(WIN32)
+#if defined(WIN32)
 void nethack_exit(code)
 int code;
 {
@@ -253,4 +253,4 @@ static void msexit()
 #endif
 	return;
 }
-#endif /* MICRO || WIN32 */
+#endif /* WIN32 */

@@ -18,11 +18,11 @@
 #include <sys/types.h>
 #endif
 
-#if (defined(MICRO) && !defined(TOS)) || defined(ANCIENT_VAXC)
+#if defined(ANCIENT_VAXC)
 # if !defined(_SIZE_T) && !defined(__size_t) /* __size_t for CSet/2 */
 #  define _SIZE_T
 # endif
-#endif	/* MICRO && !TOS */
+#endif	/* ANCIENT_VAXC */
 
 #if defined(__TURBOC__)
 #include <time.h>	/* time_t is not in <sys/types.h> */
@@ -86,9 +86,8 @@ E void srand48();
 
 #if !defined(BSD) || defined(ultrix)
 			/* real BSD wants all these to return int */
-# ifndef MICRO
 E void FDECL(exit, (int));
-# endif /* MICRO */
+
 /* compensate for some CSet/2 bogosities */
 
 /* If flex thinks that we're not __STDC__ it declares free() to return
@@ -154,27 +153,6 @@ E int FDECL(unlink, (const char *));
 
 #endif /* !__GNUC__ */
 
-#if defined(MICRO)
-E int FDECL(close, (int));
-#ifndef __EMX__
-E int FDECL(read, (int,genericptr_t,unsigned int));
-#endif
-E int FDECL(open, (const char *,int,...));
-E int FDECL(dup2, (int, int));
-E int FDECL(setmode, (int,int));
-E int NDECL(kbhit);
-#  if defined(__TURBOC__)
-E int FDECL(chdir, (const char *));
-#  else
-#   ifndef __EMX__
-E int FDECL(chdir, (char *));
-#   endif
-#  endif
-#  ifndef __EMX__
-E char *FDECL(getcwd, (char *,int));
-#  endif
-#endif
-
 #ifdef ULTRIX
 E int FDECL(close, (int));
 E int FDECL(atoi, (const char *));
@@ -237,11 +215,6 @@ E int FDECL(execl, (const char *, ...));
 #  endif
 # endif
 #endif
-#ifdef MICRO
-E void NDECL(abort);
-E void FDECL(_exit, (int));
-E int FDECL(system, (const char *));
-#endif
 #if defined(HPUX) && !defined(_POSIX_SOURCE)
 E long NDECL(fork);
 #endif
@@ -277,24 +250,6 @@ E void *FDECL(memset, (char*,int,int));
 # endif
 #endif
 #endif /* POSIX_TYPES */
-
-#if defined(MICRO) && !defined(LATTICE)
-# if defined(TOS) && defined(__GNUC__)
-E int FDECL(memcmp, (const void *,const void *,size_t));
-E void *FDECL(memcpy, (void *,const void *,size_t));
-E void *FDECL(memset, (void *,int,size_t));
-# else
-#  if defined(NHSTDC) || defined(WIN32)
-E int  FDECL(memcmp, (const void *, const void *, size_t));
-E void *FDECL(memcpy, (void *, const void *, size_t));
-E void *FDECL(memset, (void *, int, size_t));
-#  else
-E int FDECL(memcmp, (char *,char *,unsigned int));
-E char *FDECL(memcpy, (char *,char *,unsigned int));
-E char *FDECL(memset, (char*,int,int));
-#  endif /* NHSTDC */
-# endif /* TOS */
-#endif /* MICRO */
 
 #if defined(BSD) && defined(ultrix)	/* i.e., old versions of Ultrix */
 E void sleep();
@@ -359,7 +314,7 @@ E char	*FDECL(strcat, (char *,const char *));
 E char	*FDECL(strncat, (char *,const char *,size_t));
 E char	*FDECL(strpbrk, (const char *,const char *));
 
-# if defined(SYSV) || defined(MICRO) || defined(VMS) || defined(HPUX)
+# if defined(SYSV) || defined(VMS) || defined(HPUX)
 E char	*FDECL(strchr, (const char *,int));
 E char	*FDECL(strrchr, (const char *,int));
 # else /* BSD */
@@ -369,17 +324,17 @@ E char	*FDECL(rindex, (const char *,int));
 
 E int	FDECL(strcmp, (const char *,const char *));
 E int	FDECL(strncmp, (const char *,const char *,size_t));
-# if defined(MICRO) || defined(VMS)
+# if defined(VMS)
 E size_t FDECL(strlen, (const char *));
 # else
-# ifdef HPUX
+#  ifdef HPUX
 E unsigned int	FDECL(strlen, (char *));
 #  else
 #   if !(defined(ULTRIX_PROTO) && defined(__GNUC__))
 E int	FDECL(strlen, (const char *));
 #   endif
 #  endif /* HPUX */
-# endif /* MICRO */
+# endif /* VMS */
 #endif /* ULTRIX */
 
 #endif	/* !_XtIntrinsic_h_ && !POSIX_TYPES */
@@ -443,23 +398,14 @@ E int FDECL(vprintf, (const char *, va_list));
 #endif /* NEED_VARARGS */
 
 
-#ifdef MICRO
-E int FDECL(tgetent, (const char *,const char *));
-E void FDECL(tputs, (const char *,int,int (*)()));
-E int FDECL(tgetnum, (const char *));
-E int FDECL(tgetflag, (const char *));
-E char *FDECL(tgetstr, (const char *,char **));
-E char *FDECL(tgoto, (const char *,int,int));
-#else
-# if ! (defined(HPUX) && defined(_POSIX_SOURCE))
+#if ! (defined(HPUX) && defined(_POSIX_SOURCE))
 E int FDECL(tgetent, (char *,const char *));
 E void FDECL(tputs, (const char *,int,int (*)()));
-# endif
+#endif
 E int FDECL(tgetnum, (const char *));
 E int FDECL(tgetflag, (const char *));
 E char *FDECL(tgetstr, (const char *,char **));
 E char *FDECL(tgoto, (const char *,int,int));
-#endif
 
 #ifdef ALLOC_C
 E genericptr_t FDECL(malloc, (size_t));
@@ -473,7 +419,7 @@ E struct tm *FDECL(localtime, (const time_t *));
 #  endif
 # endif
 
-# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || defined(MICRO) || defined(VMS) || (defined(HPUX) && defined(_POSIX_SOURCE))
+# if defined(ULTRIX) || (defined(BSD) && defined(POSIX_TYPES)) || defined(SYSV) || defined(VMS) || (defined(HPUX) && defined(_POSIX_SOURCE))
 E time_t FDECL(time, (time_t *));
 # else
 E long FDECL(time, (time_t *));
@@ -484,17 +430,6 @@ E long FDECL(time, (time_t *));
 E char *FDECL(ctime, (const time_t *));
 #endif
 
-
-#ifdef MICRO
-# ifdef abs
-# undef abs
-# endif
-E int FDECL(abs, (int));
-# ifdef atoi
-# undef atoi
-# endif
-E int FDECL(atoi, (const char *));
-#endif
 
 #undef E
 
