@@ -46,12 +46,6 @@
 /* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
 				   is available from your system */
 
-/* see sys/unix/snd86unx.shr for more information on these */
-/* #define UNIX386MUSIC */	/* play real music through speaker on systems
-				   with music driver installed */
-/* #define VPIX_MUSIC */	/* play real music through speaker on systems
-				   with built-in VPIX support */
-
 
 /*
  * The next two defines are intended mainly for the Andrew File System,
