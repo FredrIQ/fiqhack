@@ -16,8 +16,6 @@
 
 #define UNIX		/* delete if no fork(), exec() available */
 
-/* #define TOS */	/* define for Atari ST/TT */
-
 /* #define MINIMAL_TERM */
 			/* if a terminal handles highlighting or tabs poorly,
 			   try this define, used in pager.c and termcap.c */
@@ -49,11 +47,6 @@
  *	tty, X11, BeOS, Qt, Gem, Gnome
  */
 
-/* Atari supports GEM_GRAPHICS and/or TTY_GRAPHICS */
-#ifdef TOS
-# define GEM_GRAPHICS			/* Atari GEM interface (optional) */
-# define DEFAULT_WINDOW_SYS "Gem"	/* "Gem" or "tty" */
-#endif
 
 #ifdef __BEOS__
 #define BEOS_GRAPHICS /* (optional) */
@@ -227,7 +220,7 @@
 #include "tradstdc.h"
 
 /*
- * type schar: small signed integers (8 bits suffice) (eg. TOS)
+ * type schar: small signed integers (8 bits suffice)
  *
  *	typedef char	schar;
  *

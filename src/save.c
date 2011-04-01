@@ -336,10 +336,6 @@ int fd;
 xchar lev;
 int mode;
 {
-#ifdef TOS
-	short tlev;
-#endif
-
 	/* if we're tearing down the current level without saving anything
 	   (which happens upon entrance to the endgame or after an aborted
 	   restore attempt) then we don't want to do any actual I/O */
@@ -356,12 +352,7 @@ int mode;
 	if (lev >= 0 && lev <= maxledgerno())
 	    level_info[lev].flags |= VISITED;
 	bwrite(fd,(genericptr_t) &hackpid,sizeof(hackpid));
-#ifdef TOS
-	tlev=lev; tlev &= 0x00ff;
-	bwrite(fd,(genericptr_t) &tlev,sizeof(tlev));
-#else
 	bwrite(fd,(genericptr_t) &lev,sizeof(lev));
-#endif
 #ifdef RLECOMP
 	{
 	    /* perform run-length encoding of rm structs */

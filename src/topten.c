@@ -272,10 +272,6 @@ int how;
 #else
 #define HUP
 #endif
-
-#ifdef TOS
-	restore_colors();	/* make sure the screen is black on white */
-#endif
 	/* create a new 'topten' entry */
 	t0_used = FALSE;
 	t0 = newttentry();

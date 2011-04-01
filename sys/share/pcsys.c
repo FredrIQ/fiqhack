@@ -2,7 +2,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *  System related functions for OS/2, TOS, and Windows NT
+ *  System related functions for OS/2 and Windows NT
  */
 
 #define NEED_VARARGS
@@ -16,9 +16,6 @@
 #ifdef __GO32__
 #define P_WAIT		0
 #define P_NOWAIT	1
-#endif
-#ifdef TOS
-#include <osbind.h>
 #endif
 
 #if defined(WIN32)
@@ -42,12 +39,7 @@ flushout()
 	return;
 }
 
-static const char *COMSPEC =
-# ifdef TOS
-"SHELL";
-# else
-"COMSPEC";
-# endif
+static const char *COMSPEC = "COMSPEC";
 
 #define getcomspec() nh_getenv(COMSPEC)
 
@@ -61,11 +53,7 @@ dosh()
 	int spawnstat;
 # endif
 	if ((comspec = getcomspec())) {
-#  ifndef TOS	/* TOS has a variety of shells */
 		suspend_nhwindows("To return to NetHack, enter \"exit\" at the system prompt.\n");
-#  else
-		suspend_nhwindows((char *)0);
-#  endif /* TOS */
 #  ifndef NOCWD_ASSUMPTIONS
 		chdirx(orgdir, 0);
 #  endif
@@ -79,11 +67,6 @@ dosh()
 			raw_printf("Can't spawn \"%s\"!", comspec);
 			getreturn("to continue");
 		}
-#  ifdef TOS
-/* Some shells (e.g. Gulam) turn the cursor off when they exit */
-		if (iflags.BIOS)
-			(void)Cursconf(1, -1);
-#  endif
 #  ifndef NOCWD_ASSUMPTIONS
 		chdirx(hackdir, 0);
 #  endif
@@ -94,10 +77,6 @@ dosh()
 	return 0;
 }
 # endif /* SHELL */
-
-# ifdef TOS
-#define comspec_exists() 1
-# endif
 
 #endif /* WIN32 */
 
@@ -132,11 +111,7 @@ const char *str;
 #ifdef WIN32
 	if (!getreturn_enabled) return;
 #endif
-#ifdef TOS
-	msmsg("Hit <Return> %s.", str);
-#else
 	msmsg("Hit <Enter> %s.", str);
-#endif
 	while (Getchar() != '\n') ;
 	return;
 }
@@ -156,15 +131,7 @@ msmsg VA_DECL(const char *, fmt)
 /*
  * Follow the PATH, trying to fopen the file.
  */
-#ifdef TOS
-# ifdef __MINT__
-#define PATHSEP ':'
-# else
-#define PATHSEP ','
-# endif
-#else
 #define PATHSEP ';'
-#endif
 
 FILE *
 fopenp(name, mode)
@@ -213,9 +180,6 @@ int code;
 
 /* Chdir back to original directory
  */
-#ifdef TOS
-extern boolean run_from_desktop;	/* set in pcmain.c */
-#endif
 
 static void msexit()
 {
@@ -224,22 +188,12 @@ static void msexit()
 #endif
 
 	flushout();
-#ifndef TOS
-# ifndef WIN32
+#ifndef WIN32
 	enable_ctrlP(); 	/* in case this wasn't done */
-# endif
 #endif
 #if defined(CHDIR) && !defined(NOCWD_ASSUMPTIONS)
 	chdir(orgdir);		/* chdir, not chdirx */
 	chdrive(orgdir);
-#endif
-#ifdef TOS
-	if (run_from_desktop)
-	    getreturn("to continue"); /* so the user can read the score list */
-# ifdef TEXTCOLOR
-	if (colors_changed)
-		restore_colors();
-# endif
 #endif
 #ifdef WIN32CON
 	/* Only if we started from the GUI, not the command prompt,

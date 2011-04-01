@@ -20,9 +20,7 @@ gettty(){
 	erase_char = '\b';
 	kill_char = 21;		/* cntl-U */
 	iflags.cbreak = TRUE;
-#if !defined(TOS) 
 	disable_ctrlP();	/* turn off ^P processing */
-#endif
 }
 
 /* reset terminal to original state */
@@ -32,10 +30,7 @@ const char *s;
 {
 	end_screen();
 	if(s) raw_print(s);
-#if !defined(TOS)
 	enable_ctrlP();		/* turn on ^P processing */
-#endif
-
 }
 
 /* called by init_nhwindows() and resume_nhwindows() */

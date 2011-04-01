@@ -1,3 +1,12 @@
+NetHack, experimental dev version
+
+Current goals:
+	- remove support for obsolete systems, OSes, compilers
+	- libification: NetHack should be a share library that is included by
+	window ports rather than a monolithic binary
+
+
+---------------Original Description ------------------
                 NetHack 3.4.3 -- General information
 
 NetHack 3.4 is an enhancement to the dungeon exploration game NetHack.

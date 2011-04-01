@@ -119,9 +119,6 @@ static const char * const shktools[] = {
 #ifdef WIN32
     "Lechaim", "Lexa", "Niod",
 #endif
-#ifdef TOS
-    "Nivram",
-#endif
 #ifdef VMS
     "Lez-tneg", "Ytnu-haled", "Niknar",
 #endif

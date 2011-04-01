@@ -358,7 +358,7 @@ E char	*FDECL(rindex, (const char *,int));
 #if (defined(SUNOS4) && defined(__STDC__)) || defined(_AIX32)
 #define SPRINTF_PROTO
 #endif
-#if defined(TOS) || defined(__sgi) || defined(__GNUC__)
+#if defined(__sgi) || defined(__GNUC__)
 	/* problem with prototype mismatches */
 #define SPRINTF_PROTO
 #endif
