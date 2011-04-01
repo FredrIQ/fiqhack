@@ -5,13 +5,8 @@
 #ifndef CONFIG1_H
 #define CONFIG1_H
 
-#ifdef __TURBOC__
-# define __MSC		/* increase Borland C compatibility in libraries */
-#endif
-
 
 #define NEARDATA
-
 
 /*
  * Windows NT Autodetection

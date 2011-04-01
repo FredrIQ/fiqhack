@@ -11,21 +11,13 @@
 
 #include <sys/types.h>
 
-#if defined(__TURBOC__)
-#include <time.h>	/* time_t is not in <sys/types.h> */
-#endif
-
-#if defined(THINKC4) || defined(__TURBOC__)
-typedef long	off_t;
-#endif
-
 #endif /* !__cplusplus */
 
 /* You may want to change this to fit your system, as this is almost
  * impossible to get right automatically.
  * This is the type of signal handling functions.
  */
-#if (defined(_MSC_VER) || defined(__TURBOC__) || defined(__SC__) || defined(WIN32))
+#if (defined(_MSC_VER) || defined(WIN32))
 # define SIG_RET_TYPE void (__cdecl *)(int)
 #endif
 
@@ -39,7 +31,7 @@ typedef long	off_t;
 # ifdef random
 # undef random
 # endif
-# if !defined(__SC__) && !defined(LINUX)
+# if !defined(LINUX)
 E  long NDECL(random);
 # endif
 # if (!defined(bsdi) && !defined(__FreeBSD__)) || defined(RANDOM)
@@ -68,14 +60,10 @@ E void FDECL(exit, (int));
 E void FDECL(free, (genericptr_t));
 #   endif
 # endif
-# if !defined(__SC__)
 E void FDECL(perror, (const char *));
-# endif
 #endif
-#ifndef NeXT
 E void FDECL(qsort, (genericptr_t,size_t,size_t,
 		     int(*)(const genericptr,const genericptr)));
-#endif /* NeXT */
 
 #if !defined(__GNUC__)
 /* may already be defined */
@@ -87,9 +75,7 @@ E long FDECL(lseek, (int,long,int));
 E int FDECL(write, (int, const void *,unsigned));
 # endif
 
-#  ifndef __SC__
 E int FDECL(unlink, (const char *));
-#  endif
 
 #endif /* !__GNUC__ */
 
