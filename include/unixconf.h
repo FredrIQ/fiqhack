@@ -299,14 +299,6 @@
 # endif
 #endif
 
-#ifdef hc	/* older versions of the MetaWare High-C compiler define this */
-# ifdef __HC__
-#  undef __HC__
-# endif
-# define __HC__ hc
-# undef hc
-#endif
-
 #if defined(GNOME_GRAPHICS)
 #if defined(LINUX)
 # include <linux/unistd.h>

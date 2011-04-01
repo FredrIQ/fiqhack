@@ -5,7 +5,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#if !defined(__cplusplus) && !defined(__GO32__)
+#if !defined(__cplusplus)
 
 #define E extern
 
@@ -19,7 +19,7 @@
 typedef long	off_t;
 #endif
 
-#endif /* !__cplusplus && !__GO32__ */
+#endif /* !__cplusplus */
 
 /* You may want to change this to fit your system, as this is almost
  * impossible to get right automatically.
@@ -43,7 +43,7 @@ typedef long	off_t;
 # define SIG_RET_TYPE int (*)()
 #endif
 
-#if !defined(__cplusplus) && !defined(__GO32__)
+#if !defined(__cplusplus)
 
 #if defined(BSD) || defined(RANDOM)
 # ifdef random
@@ -259,6 +259,6 @@ E long FDECL(time, (time_t *));
 
 #undef E
 
-#endif /*  !__cplusplus && !__GO32__ */
+#endif /*  !__cplusplus */
 
 #endif /* SYSTEM_H */
