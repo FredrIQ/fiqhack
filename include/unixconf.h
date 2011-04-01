@@ -37,8 +37,6 @@
 #define LINUX	/* Another Unix clone */
 /* #define CYGWIN32 */	/* Unix on Win32 -- use with case sensitive defines */
 /* #define GENIX */	/* Yet Another Unix Clone */
-/* #define HISX */	/* Bull Unix for XPS Machines */
-/* #define BOS */	/* Bull Open Software - Unix for DPX/2 Machines */
 /* #define UNIXPC */	/* use in addition to SYSV for AT&T 7300/3B1 */
 
 #define TERMINFO	/* uses terminfo rather than termcap */

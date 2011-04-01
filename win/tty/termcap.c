@@ -692,7 +692,6 @@ extern char *tparm();
 #  ifdef COLOR_BLACK	/* trust include file */
 #undef COLOR_BLACK
 #  else
-#   ifndef _M_UNIX	/* guess BGR */
 #define COLOR_BLUE    1
 #define COLOR_GREEN   2
 #define COLOR_CYAN    3
@@ -700,15 +699,6 @@ extern char *tparm();
 #define COLOR_MAGENTA 5
 #define COLOR_YELLOW  6
 #define COLOR_WHITE   7
-#   else		/* guess RGB */
-#define COLOR_RED     1
-#define COLOR_GREEN   2
-#define COLOR_YELLOW  3
-#define COLOR_BLUE    4
-#define COLOR_MAGENTA 5
-#define COLOR_CYAN    6
-#define COLOR_WHITE   7
-#   endif
 #  endif
 #define COLOR_BLACK COLOR_BLUE
 

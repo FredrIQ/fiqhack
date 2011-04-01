@@ -34,9 +34,7 @@ int NDECL(yylex);
 #  define VOIDYYPUT
 # endif
 # if !defined(VOIDYYPUT) && defined(POSIX_TYPES)
-#  if !defined(BOS) && !defined(HISX) && !defined(_M_UNIX)
 #   define VOIDYYPUT
-#  endif
 # endif
 # if !defined(VOIDYYPUT) && defined(WEIRD_LEX)
 #  if defined(SUNOS4) && defined(__STDC__) && (WEIRD_LEX > 1)
