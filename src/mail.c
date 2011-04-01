@@ -50,14 +50,12 @@ int mustgetmail = -1;
 #include <pwd.h>
 /* DON'T trust all Unices to declare getpwuid() in <pwd.h> */
 #  if !defined(_BULL_SOURCE) && !defined(__sgi)
-#   if !defined(SUNOS4)
 /* DO trust all SVR4 to typedef uid_t in <sys/types.h> (probably to a long) */
 #    if defined(POSIX_TYPES) || defined(SVR4)
 extern struct passwd *FDECL(getpwuid,(uid_t));
 #    else
 extern struct passwd *FDECL(getpwuid,(int));
 #    endif
-#   endif
 #  endif
 static struct stat omstat,nmstat;
 static char *mailbox = (char *)0;

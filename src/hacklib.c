@@ -465,9 +465,6 @@ setrandom()
 #else
 # if defined(__APPLE__) || defined(BSD) || defined(LINUX) || defined(CYGWIN32) /* system srandom() */
 #  if defined(BSD) && !defined(POSIX_TYPES)
-#   if defined(SUNOS4)
-	(void)
-#   endif
 		srandom((int) time((long *)0));
 #  else
 		srandom((int) time((time_t *)0));

@@ -15,13 +15,11 @@
 #endif
 
 #if !defined(_BULL_SOURCE) && !defined(__sgi)
-# if !defined(SUNOS4)
 #  if defined(POSIX_TYPES) || defined(SVR4)
 extern struct passwd *FDECL(getpwuid,(uid_t));
 #  else
 extern struct passwd *FDECL(getpwuid,(int));
 #  endif
-# endif
 #endif
 extern struct passwd *FDECL(getpwnam,(const char *));
 #ifdef CHDIR
