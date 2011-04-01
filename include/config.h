@@ -226,9 +226,7 @@ typedef signed char	schar;
  *
  *	typedef unsigned short int uchar;
  */
-#ifndef _AIX32		/* identical typedef in system file causes trouble */
 typedef unsigned char	uchar;
-#endif
 
 /*
  * Various structures have the option of using bitfields to save space.

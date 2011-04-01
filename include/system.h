@@ -128,7 +128,7 @@ E long NDECL(fork);
 #else
 #if defined(SYSV) || defined(SUNOS4)
 # if defined(NHSTDC)
-#  if !defined(_AIX32) && !(defined(SUNOS4) && defined(__STDC__))
+#  if !(defined(SUNOS4) && defined(__STDC__))
 				/* Solaris unbundled cc (acc) */
 E int FDECL(memcmp, (const void *,const void *,size_t));
 E void *FDECL(memcpy, (void *, const void *, size_t));
@@ -215,41 +215,6 @@ E int	FDECL(strlen, (const char *));
 #endif /* NeXT */
 
 #endif	/* !_XtIntrinsic_h_ && !POSIX_TYPES */
-
-/* Old varieties of BSD have char *sprintf().
- * Newer varieties of BSD have int sprintf() but allow for the old char *.
- * Several varieties of SYSV and PC systems also have int sprintf().
- * If your system doesn't agree with this breakdown, you may want to change
- * this declaration, especially if your machine treats the types differently.
- * If your system defines sprintf, et al, in stdio.h, add to the initial
- * #if.
- */
-#if defined(__DECC) || defined(WIN32)
-#define SPRINTF_PROTO
-#endif
-#if (defined(SUNOS4) && defined(__STDC__)) || defined(_AIX32)
-#define SPRINTF_PROTO
-#endif
-#if defined(__sgi) || defined(__GNUC__)
-	/* problem with prototype mismatches */
-#define SPRINTF_PROTO
-#endif
-#if defined(__MWERKS__) || defined(__SC__)
-	/* Metrowerks already has a prototype for sprintf() */
-# define SPRINTF_PROTO
-#endif
-
-#ifndef SPRINTF_PROTO
-# if defined(POSIX_TYPES) || defined(DGUX) || defined(NeXT) || !defined(BSD)
-E  int FDECL(sprintf, (char *,const char *,...));
-# else
-#  define OLD_SPRINTF
-E  char *sprintf();
-# endif
-#endif
-#ifdef SPRINTF_PROTO
-# undef SPRINTF_PROTO
-#endif
 
 #ifdef NEED_VARARGS
 # if defined(USE_STDARG) || defined(USE_VARARGS)

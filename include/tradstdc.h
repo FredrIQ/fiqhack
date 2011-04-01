@@ -137,8 +137,7 @@ typedef genericptr genericptr_t;	/* (void *) or (char *) */
 #endif
 
 	/* MetaWare High-C defaults to unsigned chars */
-	/* AIX 3.2 needs this also */
-#if defined(__HC__) || defined(_AIX32)
+#if defined(__HC__)
 # undef signed
 #endif
 

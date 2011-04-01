@@ -97,17 +97,6 @@ SYSOBJ = ioctl.o unixmain.o unixtty.o unixunix.o unixres.o
 # CFLAGS = -mshort -O2 -fomit-frame-pointer -I../include
 # LFLAGS = -mshort -s
 
-# flags for AIX 3.1 cc on IBM RS/6000 to define
-# a suitable subset of standard libraries
-# (note that there is more info regarding the "-qchars=signed"
-# switch in file Install.unx note 8)
-# CFLAGS = -D_NO_PROTO -D_XOPEN_SOURCE -O -I../include -qchars=signed
-#
-# Some of our subroutines are complex enough that this is required for full
-# optimization under AIX 3.2 (I don't know about 3.1).
-#
-# CFLAGS = -D_NO_PROTO -D_XOPEN_SOURCE -D_ALL_SOURCE -O -I../include -qchars=signed -qmaxmem=5000
-
 # flags for A/UX 2.01 using native cc or c89
 # gcc predefines AUX so that's not needed there
 # Remember to use -lcurses for WINLIB below !
@@ -221,8 +210,6 @@ WINOBJ = $(WINTTYOBJ)
 # on 386 Xenix, the -ltermlib tputs() seems not to work; use -lcurses instead
 # Sysatt uses shared library in lieu of this option
 # Systos needs -lcurses16 if you use -mshort
-# AIX 3.1 on RS/6000 likes -lcurses if TERMINFO defined in unixconf.h
-# and -ltermcap otherwise
 # Linux uses -lncurses (newer) or -ltermcap (older)
 # Be uses -ltermcap
 #
@@ -230,8 +217,8 @@ WINOBJ = $(WINTTYOBJ)
 # WINTTYLIB = -ltermcap
 # WINTTYLIB = -lcurses
 # WINTTYLIB = -lcurses16
-# WINTTYLIB = -lncurses
-WINTTYLIB = -ltermlib
+WINTTYLIB = -lncurses
+# WINTTYLIB = -ltermlib
 #
 # libraries for X11
 # If USE_XPM is defined in config.h, you will also need -lXpm here.

@@ -40,9 +40,6 @@
 /* #define HISX */	/* Bull Unix for XPS Machines */
 /* #define BOS */	/* Bull Open Software - Unix for DPX/2 Machines */
 /* #define UNIXPC */	/* use in addition to SYSV for AT&T 7300/3B1 */
-/* #define AIX_31 */	/* In AIX 3.1 (IBM RS/6000) use BSD ioctl's to gain
-			 * job control (note that AIX is SYSV otherwise)
-			 * Also define this for AIX 3.2 */
 
 #define TERMINFO	/* uses terminfo rather than termcap */
 			/* Should be defined for most SYSV, SVR4 (including
@@ -68,7 +65,6 @@
 				   for other X11 implementations. */
 /* #define PYRAMID_BUG */	/* avoid a bug on the Pyramid */
 /* #define BSD_43_BUG */	/* for real 4.3BSD cc's without schain botch fix */
-/* #define AIXPS_2BUG */	/* avoid a problem with little_to_big() optimization */
 
 /* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
 				   is available from your system */
@@ -236,7 +232,7 @@
  * various recent SYSV versions (with possibly tweaks to unixtty.c again).
  */
 #ifndef POSIX_JOB_CONTROL
-# if defined(BSD) || defined(HPUX) || defined(AIX_31)
+# if defined(BSD) || defined(HPUX)
 #  define BSD_JOB_CONTROL
 # else
 #  if defined(SVR4)
