@@ -157,11 +157,7 @@
 #  endif
 #else
 # if defined(SYSV) && !defined(LINUX)
-#   ifdef __sgi
-#define DEF_MAILREADER	"/usr/sbin/Mail"
-#   else
 #define DEF_MAILREADER	"/usr/bin/mailx"
-#   endif
 # else
 #define DEF_MAILREADER	"/bin/mail"
 # endif

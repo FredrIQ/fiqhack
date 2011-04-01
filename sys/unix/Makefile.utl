@@ -17,31 +17,8 @@
 #	uncomment the CC definition below if it's not in your environment
 # CC = gcc
 #
-#	For Bull DPX/2 systems at B.O.S. 2.0 or higher use the following:
-#
-# CC = gcc -ansi -D_BULL_SOURCE -D_XOPEN_SOURCE -D_POSIX_SOURCE
-# 
-#	If you are using GCC 2.2.2 or higher on a DPX/2, just use:
-#
-# CC = gcc -ansi
-#
-#	For HP/UX 10.20 with GCC:
-# CC = gcc -D_POSIX_SOURCE
-#
 
 # flags may have to be changed as required
-# flags for 286 Xenix:
-# CFLAGS = -Ml2t16 -O -LARGE -I../include
-# LFLAGS = -Ml -F 4000 -SEG 512
-
-# flags for A/UX 2.01 using native cc or c89
-# gcc predefines AUX so that's not needed there
-# CFLAGS = -ZS -D_POSIX_SOURCE -O -I../include -DAUX
-
-# flags for IRIX 4.0.x using native cc
-# SGI cc 3.10 will fail to compile makedefs with -O
-# CFLAGS = -I../include -D__STDC__ -woff 100,293
-
 # flags for Linux
 #   compile normally
 # CFLAGS = -O2 -fomit-frame-pointer -I../include
@@ -49,14 +26,6 @@
 #   OR compile backwards compatible a.out format
 # CFLAGS = -O2 -b i486-linuxaout -fomit-frame-pointer -I../include
 # LFLAGS = -b i486-linuxaout -L/usr/X11R6/lib
-
-# flags for BeOS using the command line
-# remember to uncomment flex and bison below
-#   BeOS on a Mac/BeBox:
-#CC = mwcc
-#CFLAGS = -I../include
-#   BeOS on Intel:
-# the default values are fine
 
 # flags for debugging:
 # CFLAGS = -g -I../include
