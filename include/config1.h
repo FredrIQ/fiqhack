@@ -28,23 +28,14 @@
 /*
  * Windows NT Autodetection
  */
-#ifdef _WIN32_WCE
-#define WIN_CE
-# ifndef WIN32
-# define WIN32
-# endif
-#endif
-
 #ifdef WIN32
 # undef UNIX
 # define NHSTDC
 # define USE_STDARG
 # define NEED_VARARGS
 
-#ifndef WIN_CE
 # define STRNCMPI
 # define STRCMPI
-#endif
 
 #endif
 

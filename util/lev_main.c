@@ -16,10 +16,6 @@
 #include "tcap.h"
 #endif
 
-#ifdef WIN_CE
-#define PREFIX "\\nethack\\dat\\"
-#endif
-
 #ifndef O_WRONLY
 #include <fcntl.h>
 #endif

@@ -192,7 +192,7 @@ char *basename;
 	(void) strcpy(lock, basename);
 	gfd = open_levelfile(0);
 	if (gfd < 0) {
-#if defined(WIN32) && !defined(WIN_CE)
+#if defined(WIN32)
  	    if(errno == EACCES) {
 	  	Fprintf(stderr,
 			"\nThere are files from a game in progress under your name.");
@@ -307,35 +307,12 @@ char *str;
 #if !defined(WIN32)
 	strcpy (tmp, str);
 #else
-# if defined(WIN_CE)
-	{
-	  TCHAR wbuf[EXEPATHBUFSZ];
-	  GetModuleFileName((HANDLE)0, wbuf, EXEPATHBUFSZ);
-	  NH_W2A(wbuf, tmp, bsize);
-	}
-# else
 	*(tmp + GetModuleFileName((HANDLE)0, tmp, bsize)) = '\0';
-# endif
 #endif
 	tmp2 = strrchr(tmp, PATH_SEPARATOR);
 	if (tmp2) *tmp2 = '\0';
 	return tmp;
 }
 #endif /* EXEPATH */
-
-#ifdef WIN_CE
-void nhce_message(FILE* f, const char* str, ...)
-{
-    va_list ap;
-	TCHAR wbuf[NHSTR_BUFSIZE];
-	char buf[NHSTR_BUFSIZE];
-
-    va_start(ap, str);
-	vsprintf(buf, str, ap);
-    va_end(ap);
-
-	MessageBox(NULL, NH_A2W(buf, wbuf, NHSTR_BUFSIZE), TEXT("Recover"), MB_OK);
-}
-#endif
 
 /*recover.c*/
