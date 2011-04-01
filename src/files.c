@@ -1166,14 +1166,10 @@ const char *configfile =
 #ifdef UNIX
 			".nethackrc";
 #else
-# if defined(__BEOS__)
-			"NetHack Defaults";
-# else
-#  if defined(WIN32)
+# if defined(WIN32)
 			"defaults.nh";
-#  else
+# else
 			"NetHack.cnf";
-#  endif
 # endif
 #endif
 
@@ -1221,7 +1217,7 @@ const char *filename;
 		}
 	}
 
-#if defined(__BEOS__) || defined(WIN32)
+#if defined(WIN32)
 	if ((fp = fopenp(fqname(configfile, CONFIGPREFIX, 0), "r")) != (FILE *)0)
 		return(fp);
 #else
@@ -1576,7 +1572,7 @@ fopen_wizkit_file()
 #endif
 	}
 
-#if defined(__BEOS__) || defined(WIN32)
+#if defined(WIN32)
 	if ((fp = fopenp(fqname(wizkit, CONFIGPREFIX, 0), "r")) != (FILE *)0)
 		return(fp);
 #else

@@ -76,7 +76,7 @@
 #endif
 #endif /* NEED_VARARGS */
 
-#if defined(NHSTDC) || defined(__BEOS__)
+#if defined(NHSTDC)
 
 /*
  * Used for robust ANSI parameter forward declarations:

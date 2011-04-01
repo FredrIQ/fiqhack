@@ -11,7 +11,7 @@ extern const char * const killed_by_prefix[];	/* from topten.c */
 #if defined(TTY_GRAPHICS) || defined(X11_GRAPHICS) || defined(GEM_GRAPHICS) || defined(MSWIN_GRAPHICS)
 # define TEXT_TOMBSTONE
 #endif
-#if defined(mac) || defined(__BEOS__) || defined(WIN32_GRAPHICS)
+#if defined(WIN32_GRAPHICS)
 # ifndef TEXT_TOMBSTONE
 #  define TEXT_TOMBSTONE
 # endif

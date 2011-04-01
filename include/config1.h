@@ -10,15 +10,6 @@
 #endif
 
 
-#if defined(__BEOS__)
-# define DLB
-# undef UNIX
-#endif
-
-#ifdef __BEOS__
-# define NEED_VARARGS
-#endif
-
 #define NEARDATA
 
 
