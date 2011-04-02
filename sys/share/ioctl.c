@@ -19,15 +19,6 @@ struct termios termio;
 #include "tcap.h"	/* for LI and CO */
 #endif
 
-#ifdef AUX
-void
-catch_stp()
-{
-    signal(SIGTSTP, SIG_DFL);
-    dosuspend();
-}
-#endif /* AUX */
-
 void
 getwindowsz()
 {
@@ -56,9 +47,6 @@ getioctls()
 {
 	(void) tcgetattr(fileno(stdin), &termio);
 	getwindowsz();
-#ifdef AUX
-	( void ) signal ( SIGTSTP , catch_stp ) ;
-#endif
 }
 
 void
