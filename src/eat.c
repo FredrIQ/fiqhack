@@ -166,12 +166,12 @@ static NEARDATA struct {
 	int	usedtime,	/* turns spent eating */
 		reqtime;	/* turns required to eat */
 	int	nmod;		/* coded nutrition per turn */
-	Bitfield(canchoke,1);	/* was satiated at beginning */
+	unsigned canchoke:1;	/* was satiated at beginning */
 
 	/* start_eating() initializes these */
-	Bitfield(fullwarn,1);	/* have warned about being full */
-	Bitfield(eating,1);	/* victual currently being eaten */
-	Bitfield(doreset,1);	/* stop eating at end of turn */
+	unsigned fullwarn:1;	/* have warned about being full */
+	unsigned eating:1;	/* victual currently being eaten */
+	unsigned doreset:1;	/* stop eating at end of turn */
 } victual;
 
 static char *eatmbuf = 0;	/* set by cpostfx() */

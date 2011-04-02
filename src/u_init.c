@@ -8,8 +8,8 @@ struct trobj {
 	short trotyp;
 	schar trspe;
 	char trclass;
-	Bitfield(trquan,6);
-	Bitfield(trbless,2);
+	unsigned trquan:6;
+	unsigned trbless:2;
 };
 
 STATIC_DCL void FDECL(ini_inv, (struct trobj *));

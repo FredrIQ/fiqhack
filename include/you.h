@@ -27,30 +27,30 @@ struct RoleAdvance {
 };
 
 struct u_have {
-	Bitfield(amulet,1);	/* carrying Amulet	*/
-	Bitfield(bell,1);	/* carrying Bell	*/
-	Bitfield(book,1);	/* carrying Book	*/
-	Bitfield(menorah,1);	/* carrying Candelabrum */
-	Bitfield(questart,1);	/* carrying the Quest Artifact */
-	Bitfield(unused,3);
+	unsigned amulet:1;	/* carrying Amulet	*/
+	unsigned bell:1;	/* carrying Bell	*/
+	unsigned book:1;	/* carrying Book	*/
+	unsigned menorah:1;	/* carrying Candelabrum */
+	unsigned questart:1;	/* carrying the Quest Artifact */
+	unsigned unused:3;
 };
 
 struct u_event {
-	Bitfield(minor_oracle,1);	/* received at least 1 cheap oracle */
-	Bitfield(major_oracle,1);	/*  "  expensive oracle */
-	Bitfield(qcalled,1);		/* called by Quest leader to do task */
-	Bitfield(qexpelled,1);		/* expelled from the Quest dungeon */
-	Bitfield(qcompleted,1);		/* successfully completed Quest task */
-	Bitfield(uheard_tune,2);	/* 1=know about, 2=heard passtune */
-	Bitfield(uopened_dbridge,1);	/* opened the drawbridge */
+	unsigned minor_oracle:1;	/* received at least 1 cheap oracle */
+	unsigned major_oracle:1;	/*  "  expensive oracle */
+	unsigned qcalled:1;		/* called by Quest leader to do task */
+	unsigned qexpelled:1;		/* expelled from the Quest dungeon */
+	unsigned qcompleted:1;		/* successfully completed Quest task */
+	unsigned uheard_tune:2;		/* 1=know about, 2=heard passtune */
+	unsigned uopened_dbridge:1;	/* opened the drawbridge */
 
-	Bitfield(invoked,1);		/* invoked Gate to the Sanctum level */
-	Bitfield(gehennom_entered,1);	/* entered Gehennom via Valley */
+	unsigned invoked:1;		/* invoked Gate to the Sanctum level */
+	unsigned gehennom_entered:1;	/* entered Gehennom via Valley */
 #ifdef ELBERETH
-	Bitfield(uhand_of_elbereth,2);	/* became Hand of Elbereth */
+	unsigned uhand_of_elbereth:2;	/* became Hand of Elbereth */
 #endif
-	Bitfield(udemigod,1);		/* killed the wiz */
-	Bitfield(ascended,1);		/* has offered the Amulet */
+	unsigned udemigod:1;		/* killed the wiz */
+	unsigned ascended:1;		/* has offered the Amulet */
 };
 
 /* KMH, conduct --
@@ -265,7 +265,7 @@ struct you {
 
 	unsigned umconf;
 	char usick_cause[PL_PSIZ+20]; /* sizeof "unicorn horn named "+1 */
-	Bitfield(usick_type,2);
+	unsigned usick_type:2;
 #define SICK_VOMITABLE 0x01
 #define SICK_NONVOMITABLE 0x02
 #define SICK_ALL 0x03
@@ -295,14 +295,14 @@ struct you {
 	unsigned ucreamed;
 	unsigned uswldtim;		/* time you have been swallowed */
 
-	Bitfield(uswallow,1);		/* true if swallowed */
-	Bitfield(uinwater,1);		/* if you're currently in water (only
+	unsigned uswallow:1;		/* true if swallowed */
+	unsigned uinwater:1;		/* if you're currently in water (only
 					   underwater possible currently) */
-	Bitfield(uundetected,1);	/* if you're a hiding monster/piercer */
-	Bitfield(mfemale,1);		/* saved human value of flags.female */
-	Bitfield(uinvulnerable,1);	/* you're invulnerable (praying) */
-	Bitfield(uburied,1);		/* you're buried */
-	Bitfield(uedibility,1);		/* blessed food detection; sense unsafe food */
+	unsigned uundetected:1;	/* if you're a hiding monster/piercer */
+	unsigned mfemale:1;		/* saved human value of flags.female */
+	unsigned uinvulnerable:1;	/* you're invulnerable (praying) */
+	unsigned uburied:1;		/* you're buried */
+	unsigned uedibility:1;		/* blessed food detection; sense unsafe food */
 	/* 1 free bit! */
 
 	unsigned udg_cnt;		/* how long you have been demigod */

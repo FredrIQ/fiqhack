@@ -17,10 +17,10 @@ struct trap {
 	xchar tx,ty;
 	d_level dst;	/* destination for portals */
 	coord launch;
-	Bitfield(ttyp,5);
-	Bitfield(tseen,1);
-	Bitfield(once,1);
-	Bitfield(madeby_u,1); /* So monsters may take offence when you trap
+	unsigned ttyp:5;
+	unsigned tseen:1;
+	unsigned once:1;
+	unsigned madeby_u:1;	/* So monsters may take offence when you trap
 				 them.	Recognizing who made the trap isn't
 				 completely unreasonable, everybody has
 				 their own style.  This flag is also needed

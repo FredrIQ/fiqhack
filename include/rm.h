@@ -333,12 +333,12 @@ struct rm {
 	int glyph;		/* what the hero thinks is there */
 	schar typ;		/* what is really there */
 	uchar seenv;		/* seen vector */
-	Bitfield(flags,5);	/* extra information for typ */
-	Bitfield(horizontal,1); /* wall/door/etc is horiz. (more typ info) */
-	Bitfield(lit,1);	/* speed hack for lit rooms */
-	Bitfield(waslit,1);	/* remember if a location was lit */
-	Bitfield(roomno,6);	/* room # for special rooms */
-	Bitfield(edge,1);	/* marks boundaries for special rooms*/
+	unsigned flags:5;	/* extra information for typ */
+	unsigned horizontal:1; /* wall/door/etc is horiz. (more typ info) */
+	unsigned lit:1;	/* speed hack for lit rooms */
+	unsigned waslit:1;	/* remember if a location was lit */
+	unsigned roomno:6;	/* room # for special rooms */
+	unsigned edge:1;	/* marks boundaries for special rooms*/
 };
 
 /*
@@ -444,26 +444,26 @@ struct levelflags {
 	uchar	nfountains;		/* number of fountains on level */
 	uchar	nsinks;			/* number of sinks on the level */
 	/* Several flags that give hints about what's on the level */
-	Bitfield(has_shop, 1);
-	Bitfield(has_vault, 1);
-	Bitfield(has_zoo, 1);
-	Bitfield(has_court, 1);
-	Bitfield(has_morgue, 1);
-	Bitfield(has_beehive, 1);
-	Bitfield(has_barracks, 1);
-	Bitfield(has_temple, 1);
+	unsigned has_shop:1;
+	unsigned has_vault:1;
+	unsigned has_zoo:1;
+	unsigned has_court:1;
+	unsigned has_morgue:1;
+	unsigned has_beehive:1;
+	unsigned has_barracks:1;
+	unsigned has_temple:1;
 
-	Bitfield(has_swamp, 1);
-	Bitfield(noteleport,1);
-	Bitfield(hardfloor,1);
-	Bitfield(nommap,1);
-	Bitfield(hero_memory,1);	/* hero has memory */
-	Bitfield(shortsighted,1);	/* monsters are shortsighted */
-	Bitfield(graveyard,1);		/* has_morgue, but remains set */
-	Bitfield(is_maze_lev,1);
+	unsigned has_swamp:1;
+	unsigned noteleport:1;
+	unsigned hardfloor:1;
+	unsigned nommap:1;
+	unsigned hero_memory:1;		/* hero has memory */
+	unsigned shortsighted:1;	/* monsters are shortsighted */
+	unsigned graveyard:1;		/* has_morgue, but remains set */
+	unsigned is_maze_lev:1;
 
-	Bitfield(is_cavernous_lev,1);
-	Bitfield(arboreal, 1);		/* Trees replace rock */
+	unsigned is_cavernous_lev:1;
+	unsigned arboreal:1;		/* Trees replace rock */
 };
 
 typedef struct

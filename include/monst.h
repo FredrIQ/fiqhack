@@ -63,52 +63,52 @@ struct monst {
 	unsigned short mintrinsics;	/* low 8 correspond to mresists */
 	int mspec_used;		/* monster's special ability attack timeout */
 
-	Bitfield(female,1);	/* is female */
-	Bitfield(minvis,1);	/* currently invisible */
-	Bitfield(invis_blkd,1); /* invisibility blocked */
-	Bitfield(perminvis,1);	/* intrinsic minvis value */
-	Bitfield(cham,3);	/* shape-changer */
+	unsigned female:1;	/* is female */
+	unsigned minvis:1;	/* currently invisible */
+	unsigned invis_blkd:1;	/* invisibility blocked */
+	unsigned perminvis:1;	/* intrinsic minvis value */
+	unsigned cham:3;	/* shape-changer */
 /* note: lychanthropes are handled elsewhere */
 #define CHAM_ORDINARY		0	/* not a shapechanger */
 #define CHAM_CHAMELEON		1	/* animal */
 #define CHAM_DOPPELGANGER	2	/* demi-human */
 #define CHAM_SANDESTIN		3	/* demon */
 #define CHAM_MAX_INDX		CHAM_SANDESTIN
-	Bitfield(mundetected,1);	/* not seen in present hiding place */
+	unsigned mundetected:1;	/* not seen in present hiding place */
 				/* implies one of M1_CONCEAL or M1_HIDE,
 				 * but not mimic (that is, snake, spider,
 				 * trapper, piercer, eel)
 				 */
 
-	Bitfield(mcan,1);	/* has been cancelled */
-	Bitfield(mburied,1);	/* has been buried */
-	Bitfield(mspeed,2);	/* current speed */
-	Bitfield(permspeed,2);	/* intrinsic mspeed value */
-	Bitfield(mrevived,1);	/* has been revived from the dead */
-	Bitfield(mavenge,1);	/* did something to deserve retaliation */
+	unsigned mcan:1;	/* has been cancelled */
+	unsigned mburied:1;	/* has been buried */
+	unsigned mspeed:2;	/* current speed */
+	unsigned permspeed:2;	/* intrinsic mspeed value */
+	unsigned mrevived:1;	/* has been revived from the dead */
+	unsigned mavenge:1;	/* did something to deserve retaliation */
 
-	Bitfield(mflee,1);	/* fleeing */
-	Bitfield(mfleetim,7);	/* timeout for mflee */
+	unsigned mflee:1;	/* fleeing */
+	unsigned mfleetim:7;	/* timeout for mflee */
 
-	Bitfield(mcansee,1);	/* cansee 1, temp.blinded 0, blind 0 */
-	Bitfield(mblinded,7);	/* cansee 0, temp.blinded n, blind 0 */
+	unsigned mcansee:1;	/* cansee 1, temp.blinded 0, blind 0 */
+	unsigned mblinded:7;	/* cansee 0, temp.blinded n, blind 0 */
 
-	Bitfield(mcanmove,1);	/* paralysis, similar to mblinded */
-	Bitfield(mfrozen,7);
+	unsigned mcanmove:1;	/* paralysis, similar to mblinded */
+	unsigned mfrozen:7;
 
-	Bitfield(msleeping,1);	/* asleep until woken */
-	Bitfield(mstun,1);	/* stunned (off balance) */
-	Bitfield(mconf,1);	/* confused */
-	Bitfield(mpeaceful,1);	/* does not attack unprovoked */
-	Bitfield(mtrapped,1);	/* trapped in a pit, web or bear trap */
-	Bitfield(mleashed,1);	/* monster is on a leash */
-	Bitfield(isshk,1);	/* is shopkeeper */
-	Bitfield(isminion,1);	/* is a minion */
+	unsigned msleeping:1;	/* asleep until woken */
+	unsigned mstun:1;	/* stunned (off balance) */
+	unsigned mconf:1;	/* confused */
+	unsigned mpeaceful:1;	/* does not attack unprovoked */
+	unsigned mtrapped:1;	/* trapped in a pit, web or bear trap */
+	unsigned mleashed:1;	/* monster is on a leash */
+	unsigned isshk:1;	/* is shopkeeper */
+	unsigned isminion:1;	/* is a minion */
 
-	Bitfield(isgd,1);	/* is guard */
-	Bitfield(ispriest,1);	/* is a priest */
-	Bitfield(iswiz,1);	/* is the Wizard of Yendor */
-	Bitfield(wormno,5);	/* at most 31 worms on any level */
+	unsigned isgd:1;	/* is guard */
+	unsigned ispriest:1;	/* is a priest */
+	unsigned iswiz:1;	/* is the Wizard of Yendor */
+	unsigned wormno:5;	/* at most 31 worms on any level */
 #define MAX_NUM_WORMS	32	/* should be 2^(wormno bitfield size) */
 
 	long mstrategy;		/* for monsters with mflag3: current strategy */

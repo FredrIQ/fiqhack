@@ -54,43 +54,43 @@ struct obj {
 #define NOBJ_STATES	8
 	xchar timed;		/* # of fuses (timers) attached to this obj */
 
-	Bitfield(cursed,1);
-	Bitfield(blessed,1);
-	Bitfield(unpaid,1);	/* on some bill */
-	Bitfield(no_charge,1);	/* if shk shouldn't charge for this */
-	Bitfield(known,1);	/* exact nature known */
-	Bitfield(dknown,1);	/* color or text known */
-	Bitfield(bknown,1);	/* blessing or curse known */
-	Bitfield(rknown,1);	/* rustproof or not known */
+	unsigned cursed:1;
+	unsigned blessed:1;
+	unsigned unpaid:1;	/* on some bill */
+	unsigned no_charge:1;	/* if shk shouldn't charge for this */
+	unsigned known:1;	/* exact nature known */
+	unsigned dknown:1;	/* color or text known */
+	unsigned bknown:1;	/* blessing or curse known */
+	unsigned rknown:1;	/* rustproof or not known */
 
-	Bitfield(oeroded,2);	/* rusted/burnt weapon/armor */
-	Bitfield(oeroded2,2);	/* corroded/rotted weapon/armor */
+	unsigned oeroded:2;	/* rusted/burnt weapon/armor */
+	unsigned oeroded2:2;	/* corroded/rotted weapon/armor */
 #define greatest_erosion(otmp) (int)((otmp)->oeroded > (otmp)->oeroded2 ? (otmp)->oeroded : (otmp)->oeroded2)
 #define MAX_ERODE 3
 #define orotten oeroded		/* rotten food */
 #define odiluted oeroded	/* diluted potions */
 #define norevive oeroded2
-	Bitfield(oerodeproof,1); /* erodeproof weapon/armor */
-	Bitfield(olocked,1);	/* object is locked */
-	Bitfield(obroken,1);	/* lock has been broken */
-	Bitfield(otrapped,1);	/* container is trapped */
+	unsigned oerodeproof:1; /* erodeproof weapon/armor */
+	unsigned olocked:1;	/* object is locked */
+	unsigned obroken:1;	/* lock has been broken */
+	unsigned otrapped:1;	/* container is trapped */
 				/* or accidental tripped rolling boulder trap */
 #define opoisoned otrapped	/* object (weapon) is coated with poison */
 
-	Bitfield(recharged,3);	/* number of times it's been recharged */
-	Bitfield(lamplit,1);	/* a light-source -- can be lit */
+	unsigned recharged:3;	/* number of times it's been recharged */
+	unsigned lamplit:1;	/* a light-source -- can be lit */
 #ifdef INVISIBLE_OBJECTS
-	Bitfield(oinvis,1);	/* invisible */
+	unsigned oinvis:1;	/* invisible */
 #endif
-	Bitfield(greased,1);	/* covered with grease */
-	Bitfield(oattached,2);	/* obj struct has special attachment */
+	unsigned greased:1;	/* covered with grease */
+	unsigned oattached:2;	/* obj struct has special attachment */
 #define OATTACHED_NOTHING 0
 #define OATTACHED_MONST   1	/* monst struct in oextra */
 #define OATTACHED_M_ID    2	/* monst id in oextra */
 #define OATTACHED_UNUSED3 3
 
-	Bitfield(in_use,1);	/* for magic items before useup items */
-	Bitfield(bypass,1);	/* mark this as an object to be skipped by bhito() */
+	unsigned in_use:1;	/* for magic items before useup items */
+	unsigned bypass:1;	/* mark this as an object to be skipped by bhito() */
 	/* 6 free bits */
 
 	int	corpsenm;	/* type of corpse is mons[corpsenm] */

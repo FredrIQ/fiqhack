@@ -17,8 +17,8 @@ struct egd {
 	xchar ogx, ogy;		/* guard's last position */
 	d_level gdlevel;	/* level (& dungeon) guard was created in */
 	xchar warncnt;		/* number of warnings to follow */
-	Bitfield(gddone,1);	/* true iff guard has released player */
-	Bitfield(unused,7);
+	unsigned gddone:1;	/* true iff guard has released player */
+	unsigned unused:7;
 	struct fakecorridor fakecorr[FCSIZ];
 };
 

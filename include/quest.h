@@ -6,29 +6,29 @@
 #define QUEST_H
 
 struct q_score {			/* Quest "scorecard" */
-	Bitfield(first_start,1);	/* only set the first time */
-	Bitfield(met_leader,1);		/* has met the leader */
-	Bitfield(not_ready,3);		/* rejected due to alignment, etc. */
-	Bitfield(pissed_off,1);		/* got the leader angry */
-	Bitfield(got_quest,1);		/* got the quest assignment */
+	unsigned first_start:1;		/* only set the first time */
+	unsigned met_leader:1;		/* has met the leader */
+	unsigned not_ready:3;		/* rejected due to alignment, etc. */
+	unsigned pissed_off:1;		/* got the leader angry */
+	unsigned got_quest:1;		/* got the quest assignment */
 
-	Bitfield(first_locate,1);	/* only set the first time */
-	Bitfield(met_intermed,1);	/* used if the locate is a person. */
-	Bitfield(got_final,1);		/* got the final quest assignment */
+	unsigned first_locate:1;	/* only set the first time */
+	unsigned met_intermed:1;	/* used if the locate is a person. */
+	unsigned got_final:1;		/* got the final quest assignment */
 
-	Bitfield(made_goal,3);		/* # of times on goal level */
-	Bitfield(met_nemesis,1);	/* has met the nemesis before */
-	Bitfield(killed_nemesis,1);	/* set when the nemesis is killed */
-	Bitfield(in_battle,1);		/* set when nemesis fighting you */
+	unsigned made_goal:3;		/* # of times on goal level */
+	unsigned met_nemesis:1;	/* has met the nemesis before */
+	unsigned killed_nemesis:1;	/* set when the nemesis is killed */
+	unsigned in_battle:1;		/* set when nemesis fighting you */
 
-	Bitfield(cheater,1);		/* set if cheating detected */
-	Bitfield(touched_artifact,1);	/* for a special message */
-	Bitfield(offered_artifact,1);	/* offered to leader */
-	Bitfield(got_thanks,1);		/* final message from leader */
+	unsigned cheater:1;		/* set if cheating detected */
+	unsigned touched_artifact:1;	/* for a special message */
+	unsigned offered_artifact:1;	/* offered to leader */
+	unsigned got_thanks:1;		/* final message from leader */
 
 	/* keep track of leader presence/absence even if leader is
 	   polymorphed, raised from dead, etc */
-	Bitfield(leader_is_dead,1);
+	unsigned leader_is_dead:1;
 	unsigned leader_m_id;
 };
 

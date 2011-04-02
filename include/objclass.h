@@ -11,25 +11,25 @@ struct objclass {
 	short	oc_name_idx;		/* index of actual name */
 	short	oc_descr_idx;		/* description when name unknown */
 	char *	oc_uname;		/* called by user */
-	Bitfield(oc_name_known,1);
-	Bitfield(oc_merge,1);	/* merge otherwise equal objects */
-	Bitfield(oc_uses_known,1); /* obj->known affects full decription */
+	unsigned oc_name_known:1;
+	unsigned oc_merge:1;	/* merge otherwise equal objects */
+	unsigned oc_uses_known:1; /* obj->known affects full decription */
 				/* otherwise, obj->dknown and obj->bknown */
 				/* tell all, and obj->known should always */
 				/* be set for proper merging behavior */
-	Bitfield(oc_pre_discovered,1);	/* Already known at start of game; */
+	unsigned oc_pre_discovered:1;	/* Already known at start of game; */
 					/* won't be listed as a discovery. */
-	Bitfield(oc_magic,1);	/* inherently magical object */
-	Bitfield(oc_charged,1); /* may have +n or (n) charges */
-	Bitfield(oc_unique,1);	/* special one-of-a-kind object */
-	Bitfield(oc_nowish,1);	/* cannot wish for this object */
+	unsigned oc_magic:1;	/* inherently magical object */
+	unsigned oc_charged:1; /* may have +n or (n) charges */
+	unsigned oc_unique:1;	/* special one-of-a-kind object */
+	unsigned oc_nowish:1;	/* cannot wish for this object */
 
-	Bitfield(oc_big,1);
+	unsigned oc_big:1;
 #define oc_bimanual	oc_big	/* for weapons & tools used as weapons */
 #define oc_bulky	oc_big	/* for armor */
-	Bitfield(oc_tough,1);	/* hard gems/rings */
+	unsigned oc_tough:1;	/* hard gems/rings */
 
-	Bitfield(oc_dir,2);
+	unsigned oc_dir:2;
 #define NODIR		1	/* for wands/spells: non-directional */
 #define IMMEDIATE	2	/*		     directional */
 #define RAY		3	/*		     zap beams */
@@ -38,9 +38,7 @@ struct objclass {
 #define SLASH		2	/* (latter includes iron ball & chain) */
 #define WHACK		0
 
-	/*Bitfield(oc_subtyp,3);*/	/* Now too big for a bitfield... see below */
-
-	Bitfield(oc_material,5);
+	unsigned oc_material:5;
 #define LIQUID		1	/* currently only for venom */
 #define WAX		2
 #define VEGGY		3	/* foodstuffs */

@@ -206,15 +206,6 @@ typedef signed char	schar;
  */
 typedef unsigned char	uchar;
 
-/*
- * Various structures have the option of using bitfields to save space.
- * If your C compiler handles bitfields well (e.g., it can initialize structs
- * containing bitfields), you can define BITFIELDS.  Otherwise, the game will
- * allocate a separate character for each bitfield.  (The bitfields used never
- * have more than 7 bits, and most are only 1 bit.)
- */
-#define BITFIELDS	/* Good bitfield handling */
-
 /* #define STRNCMPI */	/* compiler/library has the strncmpi function */
 
 /*

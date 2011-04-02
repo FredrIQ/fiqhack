@@ -59,13 +59,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 
 /* #define SPECIALIZATION */	/* do "specialized" version of new topology */
 
-
-#ifdef BITFIELDS
-#define Bitfield(x,n)	unsigned x:n
-#else
-#define Bitfield(x,n)	uchar x
-#endif
-
 #define CHAR_P int
 #define SCHAR_P int
 #define UCHAR_P int
