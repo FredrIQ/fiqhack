@@ -244,9 +244,6 @@ typedef unsigned char	uchar;
 
 /* #define VISION_TABLES */ /* use vision tables generated at compile time */
 #ifndef VISION_TABLES
-# ifndef NO_MACRO_CPATH
-#  define MACRO_CPATH	/* use clear_path macros instead of functions */
-# endif
 #endif
 
 /*

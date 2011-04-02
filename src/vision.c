@@ -1097,7 +1097,7 @@ static genericptr_t varg;
 #define is_clear(row,col) viz_clear_rows[row][col]
 
 /*
- * clear_path()		expanded into 4 macros/functions:
+ * clear_path()		expanded into 4 functions:
  *
  *	q1_path()
  *	q2_path()
@@ -1113,195 +1113,6 @@ static genericptr_t varg;
  * line drawing) for all quadrants.  The algorithm was taken from _Procedural
  * Elements for Computer Graphics_, by David F. Rogers.  McGraw-Hill, 1985.
  */
-#ifdef MACRO_CPATH	/* quadrant calls are macros */
-
-/*
- * When called, the result is in "result".
- * The first two arguments (srow,scol) are one end of the path.  The next
- * two arguments (row,col) are the destination.  The last argument is
- * used as a C language label.  This means that it must be different
- * in each pair of calls.
- */
-
-/*
- *  Quadrant I (step < 0).
- */
-#define q1_path(srow,scol,y2,x2,label)			\
-{							\
-    int dx, dy;						\
-    register int k, err, x, y, dxs, dys;		\
-							\
-    x  = (scol);	y  = (srow);			\
-    dx = (x2) - x;	dy = y - (y2);			\
-							\
-    result = 0;		 /* default to a blocked path */\
-							\
-    dxs = dx << 1;	   /* save the shifted values */\
-    dys = dy << 1;					\
-    if (dy > dx) {					\
-	err = dxs - dy;					\
-							\
-	for (k = dy-1; k; k--) {			\
-	    if (err >= 0) {				\
-		x++;					\
-		err -= dys;				\
-	    }						\
-	    y--;					\
-	    err += dxs;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-    } else {						\
-	err = dys - dx;					\
-							\
-	for (k = dx-1; k; k--) {			\
-	    if (err >= 0) {				\
-		y--;					\
-		err -= dxs;				\
-	    }						\
-	    x++;					\
-	    err += dys;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-    }							\
-							\
-    result = 1;						\
-}
-
-/*
- * Quadrant IV (step > 0).
- */
-#define q4_path(srow,scol,y2,x2,label)			\
-{							\
-    int dx, dy;						\
-    register int k, err, x, y, dxs, dys;		\
-							\
-    x  = (scol);	y  = (srow);			\
-    dx = (x2) - x;	dy = (y2) - y;			\
-							\
-    result = 0;		 /* default to a blocked path */\
-							\
-    dxs = dx << 1;	   /* save the shifted values */\
-    dys = dy << 1;					\
-    if (dy > dx) {					\
-	err = dxs - dy;					\
-							\
-	for (k = dy-1; k; k--) {			\
-	    if (err >= 0) {				\
-		x++;					\
-		err -= dys;				\
-	    }						\
-	    y++;					\
-	    err += dxs;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-							\
-    } else {						\
-	err = dys - dx;					\
-							\
-	for (k = dx-1; k; k--) {			\
-	    if (err >= 0) {				\
-		y++;					\
-		err -= dxs;				\
-	    }						\
-	    x++;					\
-	    err += dys;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-    }							\
-							\
-    result = 1;						\
-}
-
-/*
- * Quadrant II (step < 0).
- */
-#define q2_path(srow,scol,y2,x2,label)			\
-{							\
-    int dx, dy;						\
-    register int k, err, x, y, dxs, dys;		\
-							\
-    x  = (scol);	y  = (srow);			\
-    dx = x - (x2);	dy = y - (y2);			\
-							\
-    result = 0;		 /* default to a blocked path */\
-							\
-    dxs = dx << 1;	   /* save the shifted values */\
-    dys = dy << 1;					\
-    if (dy > dx) {					\
-	err = dxs - dy;					\
-							\
-	for (k = dy-1; k; k--) {			\
-	    if (err >= 0) {				\
-		x--;					\
-		err -= dys;				\
-	    }						\
-	    y--;					\
-	    err += dxs;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-    } else {						\
-	err = dys - dx;					\
-							\
-	for (k = dx-1; k; k--) {			\
-	    if (err >= 0) {				\
-		y--;					\
-		err -= dxs;				\
-	    }						\
-	    x--;					\
-	    err += dys;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-    }							\
-							\
-    result = 1;						\
-}
-
-/*
- * Quadrant III (step > 0).
- */
-#define q3_path(srow,scol,y2,x2,label)			\
-{							\
-    int dx, dy;						\
-    register int k, err, x, y, dxs, dys;		\
-							\
-    x  = (scol);	y  = (srow);			\
-    dx = x - (x2);	dy = (y2) - y;			\
-							\
-    result = 0;		 /* default to a blocked path */\
-							\
-    dxs = dx << 1;	   /* save the shifted values */\
-    dys = dy << 1;					\
-    if (dy > dx) {					\
-	err = dxs - dy;					\
-							\
-	for (k = dy-1; k; k--) {			\
-	    if (err >= 0) {				\
-		x--;					\
-		err -= dys;				\
-	    }						\
-	    y++;					\
-	    err += dxs;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-							\
-    } else {						\
-	err = dys - dx;					\
-							\
-	for (k = dx-1; k; k--) {			\
-	    if (err >= 0) {				\
-		y++;					\
-		err -= dxs;				\
-	    }						\
-	    x--;					\
-	    err += dys;					\
-	    if (!is_clear(y,x)) goto label;/* blocked */\
-	}						\
-    }							\
-							\
-    result = 1;						\
-}
-
-#else   /* quadrants are really functions */
 
 STATIC_DCL int FDECL(_q1_path, (int,int,int,int));
 STATIC_DCL int FDECL(_q2_path, (int,int,int,int));
@@ -1489,7 +1300,6 @@ _q3_path(srow,scol,y2,x2)
     return 1;
 }
 
-#endif	/* quadrants are functions */
 
 /*
  * Use vision tables to determine if there is a clear path from
@@ -1519,9 +1329,6 @@ clear_path(col1,row1,col2,row2)
 	    q3_path(row1,col1,row2,col2,cleardone);
 	}
     }
-#ifdef MACRO_CPATH
-cleardone:
-#endif
     return((boolean)result);
 }
 
