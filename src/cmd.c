@@ -1271,11 +1271,7 @@ int final;
 #ifdef OVL1
 
 #ifndef M
-# ifndef NHSTDC
-#  define M(c)		(0x80 | (c))
-# else
-#  define M(c)		((c) - 128)
-# endif /* NHSTDC */
+# define M(c)		((c) - 128)
 #endif
 #ifndef C
 #define C(c)		(0x1f & (c))

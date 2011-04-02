@@ -5,10 +5,6 @@
 #ifndef TRADSTDC_H
 #define TRADSTDC_H
 
-#if defined(__STDC__) && !defined(NOTSTDC)
-#define NHSTDC
-#endif
-
 /*
  * ANSI X3J11 detection.
  * Makes substitutes for compatibility with the old C standard.
@@ -27,10 +23,8 @@
 /* #define USE_VARARGS */	/* use <varargs.h> instead of <stdarg.h> */
 /* #define USE_OLDARGS */	/* don't use any variable argument facilites */
 
-#if defined(NHSTDC)
-# if !defined(USE_VARARGS) && !defined(USE_OLDARGS) && !defined(USE_STDARG)
-#   define USE_STDARG
-# endif
+#if !defined(USE_VARARGS) && !defined(USE_OLDARGS) && !defined(USE_STDARG)
+# define USE_STDARG
 #endif
 
 #ifdef NEED_VARARGS		/* only define these if necessary */
@@ -70,7 +64,6 @@
 #endif
 #endif /* NEED_VARARGS */
 
-#if defined(NHSTDC)
 
 /*
  * Used for robust ANSI parameter forward declarations:
@@ -97,29 +90,6 @@
 /* generic pointer, always a macro; genericptr_t is usually a typedef */
 # define genericptr	void *
 
-# if !defined(NHSTDC)
-#  define const
-#  define signed
-#  define volatile
-# endif
-
-#else /* NHSTDC */	/* a "traditional" C  compiler */
-
-# define NDECL(f)	f()
-# define FDECL(f,p)	f()
-# define VDECL(f,p)	f()
-
-# define genericptr	void *
-
-/*
- * Traditional C compilers don't have "signed", "const", or "volatile".
- */
-# define signed
-# define const
-# define volatile
-
-#endif /* NHSTDC */
-
 
 #ifndef genericptr_t
 typedef genericptr genericptr_t;	/* (void *) or (char *) */
@@ -131,9 +101,7 @@ typedef genericptr genericptr_t;	/* (void *) or (char *) */
  * append this to a prototype declaration (see pline() in extern.h).
  */
 #ifdef __GNUC__
-# if __GNUC__ >= 2
 #define PRINTF_F(f,v) __attribute__ ((format (printf, f, v)))
-# endif
 #endif
 #ifndef PRINTF_F
 #define PRINTF_F(f,v)

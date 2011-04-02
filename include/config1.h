@@ -13,7 +13,6 @@
  */
 #ifdef WIN32
 # undef UNIX
-# define NHSTDC
 # define USE_STDARG
 # define NEED_VARARGS
 

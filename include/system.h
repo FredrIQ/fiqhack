@@ -50,16 +50,10 @@ E void srand48();
 			/* real BSD wants all these to return int */
 E void FDECL(exit, (int));
 
-/* compensate for some CSet/2 bogosities */
 
-/* If flex thinks that we're not __STDC__ it declares free() to return
-   int and we die.  We must use __STDC__ instead of NHSTDC because
-   the former is naturally what flex tests for. */
-# if defined(__STDC__) || !defined(FLEX_SCANNER)
 #   ifndef MONITOR_HEAP
 E void FDECL(free, (genericptr_t));
 #   endif
-# endif
 E void FDECL(perror, (const char *));
 #endif
 E void FDECL(qsort, (genericptr_t,size_t,size_t,

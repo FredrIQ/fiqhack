@@ -56,32 +56,13 @@ register unsigned int lth;
 
 #if defined(MONITOR_HEAP) || defined(WIZARD)
 
-# if defined(WIN32)
-/* we actually want to know which systems have an ANSI run-time library
- * to know which support the new %p format for printing pointers.
- * due to the presence of things like gcc, NHSTDC is not a good test.
- * so we assume microcomputers have all converted to ANSI and bigger
- * computers which may have older libraries give reasonable results with
- * the cast.
- */
-#  define MONITOR_PTR_FMT
-# endif
-
-# ifdef MONITOR_PTR_FMT
-#  define PTR_FMT "%p"
-#  define PTR_TYP genericptr_t
-# else
-#  define PTR_FMT "%06lx"
-#  define PTR_TYP unsigned long
-# endif
-
 /* format a pointer for display purposes; caller supplies the result buffer */
 char *
 fmt_ptr(ptr, buf)
 const genericptr ptr;
 char *buf;
 {
-	Sprintf(buf, PTR_FMT, (PTR_TYP)ptr);
+	Sprintf(buf, "%p", (genericptr_t)ptr);
 	return buf;
 }
 

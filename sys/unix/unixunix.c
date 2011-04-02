@@ -16,10 +16,6 @@ extern void NDECL(linux_mapon);
 extern void NDECL(linux_mapoff);
 #endif
 
-#ifndef NHSTDC
-extern int errno;
-#endif
-
 static struct stat buf;
 
 /* see whether we should throw away this xlock file */
