@@ -119,11 +119,11 @@ register int fd;
 	s_level	*tmplev, *x;
 
 	sp_levchn = (s_level *) 0;
-	mread(fd, (genericptr_t) &cnt, sizeof(int));
+	mread(fd, (void *) &cnt, sizeof(int));
 	for(; cnt > 0; cnt--) {
 
 	    tmplev = (s_level *)alloc(sizeof(s_level));
-	    mread(fd, (genericptr_t) tmplev, sizeof(s_level));
+	    mread(fd, (void *) tmplev, sizeof(s_level));
 	    if(!sp_levchn) sp_levchn = tmplev;
 	    else {
 
@@ -142,14 +142,14 @@ boolean ghostly;
 	int counter;
 	struct damage *tmp_dam;
 
-	mread(fd, (genericptr_t) &counter, sizeof(counter));
+	mread(fd, (void *) &counter, sizeof(counter));
 	if (!counter)
 	    return;
 	tmp_dam = (struct damage *)alloc(sizeof(struct damage));
 	while (--counter >= 0) {
 	    char damaged_shops[5], *shp = (char *)0;
 
-	    mread(fd, (genericptr_t) tmp_dam, sizeof(*tmp_dam));
+	    mread(fd, (void *) tmp_dam, sizeof(*tmp_dam));
 	    if (ghostly)
 		tmp_dam->when += (monstermoves - omoves);
 	    Strcpy(damaged_shops,
@@ -174,7 +174,7 @@ boolean ghostly;
 		tmp_dam = (struct damage *)alloc(sizeof(*tmp_dam));
 	    }
 	}
-	free((genericptr_t)tmp_dam);
+	free((void *)tmp_dam);
 }
 
 static struct obj *
@@ -187,12 +187,12 @@ boolean ghostly, frozen;
 	int xl;
 
 	while(1) {
-		mread(fd, (genericptr_t) &xl, sizeof(xl));
+		mread(fd, (void *) &xl, sizeof(xl));
 		if(xl == -1) break;
 		otmp = newobj(xl);
 		if(!first) first = otmp;
 		else otmp2->nobj = otmp;
-		mread(fd, (genericptr_t) otmp,
+		mread(fd, (void *) otmp,
 					(unsigned) xl + sizeof(struct obj));
 		if (ghostly) {
 		    unsigned nid = flags.ident++;
@@ -239,16 +239,16 @@ boolean ghostly;
 	boolean moved;
 
 	/* get the original base address */
-	mread(fd, (genericptr_t)&monbegin, sizeof(monbegin));
+	mread(fd, (void *)&monbegin, sizeof(monbegin));
 	moved = (monbegin != mons);
 
 	while(1) {
-		mread(fd, (genericptr_t) &xl, sizeof(xl));
+		mread(fd, (void *) &xl, sizeof(xl));
 		if(xl == -1) break;
 		mtmp = newmonst(xl);
 		if(!first) first = mtmp;
 		else mtmp2->nmon = mtmp;
-		mread(fd, (genericptr_t) mtmp, (unsigned) xl + sizeof(struct monst));
+		mread(fd, (void *) mtmp, (unsigned) xl + sizeof(struct monst));
 		if (ghostly) {
 			unsigned nid = flags.ident++;
 			add_id_mapping(mtmp->m_id, nid);
@@ -304,7 +304,7 @@ int fd;
 
 	flist = 0;
 	while (fnext = newfruit(),
-	       mread(fd, (genericptr_t)fnext, sizeof *fnext),
+	       mread(fd, (void *)fnext, sizeof *fnext),
 	       fnext->fid != 0) {
 		fnext->nextf = flist;
 		flist = fnext;
@@ -350,7 +350,7 @@ unsigned int *stuckid, *steedid;	/* STEED */
 	struct obj *otmp;
 	int uid;
 
-	mread(fd, (genericptr_t) &uid, sizeof uid);
+	mread(fd, (void *) &uid, sizeof uid);
 	if (uid != getuid()) {		/* strange ... */
 	    /* for wizard mode, issue a reminder; for others, treat it
 	       as an attempt to cheat and refuse to restore this file */
@@ -361,12 +361,12 @@ unsigned int *stuckid, *steedid;	/* STEED */
 		return FALSE;
 	}
 
-	mread(fd, (genericptr_t) &flags, sizeof(struct flag));
+	mread(fd, (void *) &flags, sizeof(struct flag));
 	flags.bypasses = 0;	/* never use the saved value of bypasses */
 	if (remember_discover) discover = remember_discover;
 
 	role_init();	/* Reset the initial role, race, gender, and alignment */
-	mread(fd, (genericptr_t) &u, sizeof(struct you));
+	mread(fd, (void *) &u, sizeof(struct you));
 	set_uasmon();
 #ifdef CLIPPING
 	cliparound(u.ux, u.uy);
@@ -389,7 +389,7 @@ unsigned int *stuckid, *steedid;	/* STEED */
 	invent = restobjchn(fd, FALSE, FALSE);
 	migrating_objs = restobjchn(fd, FALSE, FALSE);
 	migrating_mons = restmonchn(fd, FALSE);
-	mread(fd, (genericptr_t) mvitals, sizeof(mvitals));
+	mread(fd, (void *) mvitals, sizeof(mvitals));
 
 	/* this comes after inventory has been loaded */
 	for(otmp = invent; otmp; otmp = otmp->nobj)
@@ -407,23 +407,23 @@ unsigned int *stuckid, *steedid;	/* STEED */
 
 	restore_dungeon(fd);
 	restlevchn(fd);
-	mread(fd, (genericptr_t) &moves, sizeof moves);
-	mread(fd, (genericptr_t) &monstermoves, sizeof monstermoves);
-	mread(fd, (genericptr_t) &quest_status, sizeof(struct q_score));
-	mread(fd, (genericptr_t) spl_book,
+	mread(fd, (void *) &moves, sizeof moves);
+	mread(fd, (void *) &monstermoves, sizeof monstermoves);
+	mread(fd, (void *) &quest_status, sizeof(struct q_score));
+	mread(fd, (void *) spl_book,
 				sizeof(struct spell) * (MAXSPELL + 1));
 	restore_artifacts(fd);
 	restore_oracles(fd);
 	if (u.ustuck)
-		mread(fd, (genericptr_t) stuckid, sizeof (*stuckid));
+		mread(fd, (void *) stuckid, sizeof (*stuckid));
 #ifdef STEED
 	if (u.usteed)
-		mread(fd, (genericptr_t) steedid, sizeof (*steedid));
+		mread(fd, (void *) steedid, sizeof (*steedid));
 #endif
-	mread(fd, (genericptr_t) pl_character, sizeof pl_character);
+	mread(fd, (void *) pl_character, sizeof pl_character);
 
-	mread(fd, (genericptr_t) pl_fruit, sizeof pl_fruit);
-	mread(fd, (genericptr_t) &current_fruit, sizeof current_fruit);
+	mread(fd, (void *) pl_fruit, sizeof pl_fruit);
+	mread(fd, (void *) &current_fruit, sizeof current_fruit);
 	freefruitchn(ffruit);	/* clean up fruit(s) made by initoptions() */
 	ffruit = loadfruitchn(fd);
 
@@ -491,7 +491,7 @@ register int fd;
 	struct obj *otmp;
 
 #ifdef STORE_PLNAME_IN_FILE
-	mread(fd, (genericptr_t) plname, PL_NSIZ);
+	mread(fd, (void *) plname, PL_NSIZ);
 #endif
 
 	restoring = TRUE;
@@ -522,7 +522,7 @@ register int fd;
 #endif
 
 	while(1) {
-		if(read(fd, (genericptr_t) &ltmp, sizeof ltmp) != sizeof ltmp)
+		if(read(fd, (void *) &ltmp, sizeof ltmp) != sizeof ltmp)
 			break;
 		getlev(fd, 0, ltmp, FALSE);
 		rtmp = restlevelfile(ltmp);
@@ -536,7 +536,7 @@ register int fd;
 #endif
 	(void) uptodate(fd, (char *)0);		/* skip version info */
 #ifdef STORE_PLNAME_IN_FILE
-	mread(fd, (genericptr_t) plname, PL_NSIZ);
+	mread(fd, (void *) plname, PL_NSIZ);
 #endif
 	getlev(fd, 0, (xchar)0, FALSE);
 	(void) close(fd);
@@ -614,9 +614,9 @@ boolean ghostly;
 	if (ghostly) oldfruit = loadfruitchn(fd);
 
 	/* First some sanity checks */
-	mread(fd, (genericptr_t) &hpid, sizeof(hpid));
+	mread(fd, (void *) &hpid, sizeof(hpid));
 /* CHECK:  This may prevent restoration */
-	mread(fd, (genericptr_t) &dlvl, sizeof(dlvl));
+	mread(fd, (void *) &dlvl, sizeof(dlvl));
 	if ((pid && pid != hpid) || (lev && dlvl != lev)) {
 	    char trickbuf[BUFSZ];
 
@@ -631,17 +631,17 @@ boolean ghostly;
 	    trickery(trickbuf);
 	}
 
-	mread(fd, (genericptr_t) levl, sizeof(levl));
-	mread(fd, (genericptr_t)&omoves, sizeof(omoves));
-	mread(fd, (genericptr_t)&upstair, sizeof(stairway));
-	mread(fd, (genericptr_t)&dnstair, sizeof(stairway));
-	mread(fd, (genericptr_t)&upladder, sizeof(stairway));
-	mread(fd, (genericptr_t)&dnladder, sizeof(stairway));
-	mread(fd, (genericptr_t)&sstairs, sizeof(stairway));
-	mread(fd, (genericptr_t)&updest, sizeof(dest_area));
-	mread(fd, (genericptr_t)&dndest, sizeof(dest_area));
-	mread(fd, (genericptr_t)&level.flags, sizeof(level.flags));
-	mread(fd, (genericptr_t)doors, sizeof(doors));
+	mread(fd, (void *) levl, sizeof(levl));
+	mread(fd, (void *)&omoves, sizeof(omoves));
+	mread(fd, (void *)&upstair, sizeof(stairway));
+	mread(fd, (void *)&dnstair, sizeof(stairway));
+	mread(fd, (void *)&upladder, sizeof(stairway));
+	mread(fd, (void *)&dnladder, sizeof(stairway));
+	mread(fd, (void *)&sstairs, sizeof(stairway));
+	mread(fd, (void *)&updest, sizeof(dest_area));
+	mread(fd, (void *)&dndest, sizeof(dest_area));
+	mread(fd, (void *)&level.flags, sizeof(level.flags));
+	mread(fd, (void *)doors, sizeof(doors));
 	rest_rooms(fd);		/* No joke :-) */
 	if (nroom)
 	    doorindex = rooms[nroom - 1].fdoor + rooms[nroom - 1].doorct;
@@ -676,7 +676,7 @@ boolean ghostly;
 	rest_worm(fd);	/* restore worm information */
 	ftrap = 0;
 	while (trap = newtrap(),
-	       mread(fd, (genericptr_t)trap, sizeof(struct trap)),
+	       mread(fd, (void *)trap, sizeof(struct trap)),
 	       trap->tx != 0) {	/* need "!= 0" to work around DICE 3.0 bug */
 		trap->ntrap = ftrap;
 		ftrap = trap;
@@ -772,7 +772,7 @@ clear_id_mapping()
 
     while ((curr = id_map) != 0) {
 	id_map = curr->next;
-	free((genericptr_t) curr);
+	free((void *) curr);
     }
     n_ids_mapped = 0;
 }
@@ -843,10 +843,10 @@ boolean ghostly;
 	    mtmp->mpeaceful = mtmp->mtame = 0;	/* pet's owner died! */
 	}
 	if (ghostly && otmp->oattached == OATTACHED_M_ID) {
-	    (void) memcpy((genericptr_t)&oldid, (genericptr_t)otmp->oextra,
+	    (void) memcpy((void *)&oldid, (void *)otmp->oextra,
 								sizeof(oldid));
 	    if (lookup_id_mapping(oldid, &nid))
-		(void) memcpy((genericptr_t)otmp->oextra, (genericptr_t)&nid,
+		(void) memcpy((void *)otmp->oextra, (void *)&nid,
 								sizeof(nid));
 	    else
 		otmp->oattached = OATTACHED_NOTHING;
@@ -857,7 +857,7 @@ boolean ghostly;
 void
 mread(fd, buf, len)
 register int fd;
-register genericptr_t buf;
+register void * buf;
 register unsigned int len;
 {
 	register int rlen;

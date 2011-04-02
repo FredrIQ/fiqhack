@@ -36,7 +36,7 @@ struct lchoice {
 	char menuletter;
 };
 
-static void FDECL(Fread, (genericptr_t, int, int, dlb *));
+static void FDECL(Fread, (void *, int, int, dlb *));
 static xchar FDECL(dname_to_dnum, (const char *));
 static int FDECL(find_branch, (const char *, struct proto_dungeon *));
 static xchar FDECL(parent_dnum, (const char *, struct proto_dungeon *));
@@ -118,29 +118,29 @@ save_dungeon(fd, perform_write, free_data)
     int    count;
 
     if (perform_write) {
-	bwrite(fd, (genericptr_t) &n_dgns, sizeof n_dgns);
-	bwrite(fd, (genericptr_t) dungeons, sizeof(dungeon) * (unsigned)n_dgns);
-	bwrite(fd, (genericptr_t) &dungeon_topology, sizeof dungeon_topology);
-	bwrite(fd, (genericptr_t) tune, sizeof tune);
+	bwrite(fd, (void *) &n_dgns, sizeof n_dgns);
+	bwrite(fd, (void *) dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+	bwrite(fd, (void *) &dungeon_topology, sizeof dungeon_topology);
+	bwrite(fd, (void *) tune, sizeof tune);
 
 	for (count = 0, curr = branches; curr; curr = curr->next)
 	    count++;
-	bwrite(fd, (genericptr_t) &count, sizeof(count));
+	bwrite(fd, (void *) &count, sizeof(count));
 
 	for (curr = branches; curr; curr = curr->next)
-	    bwrite(fd, (genericptr_t) curr, sizeof (branch));
+	    bwrite(fd, (void *) curr, sizeof (branch));
 
 	count = maxledgerno();
-	bwrite(fd, (genericptr_t) &count, sizeof count);
-	bwrite(fd, (genericptr_t) level_info,
+	bwrite(fd, (void *) &count, sizeof count);
+	bwrite(fd, (void *) level_info,
 			(unsigned)count * sizeof (struct linfo));
-	bwrite(fd, (genericptr_t) &inv_pos, sizeof inv_pos);
+	bwrite(fd, (void *) &inv_pos, sizeof inv_pos);
     }
 
     if (free_data) {
 	for (curr = branches; curr; curr = next) {
 	    next = curr->next;
-	    free((genericptr_t) curr);
+	    free((void *) curr);
 	}
 	branches = 0;
     }
@@ -154,17 +154,17 @@ restore_dungeon(fd)
     branch *curr, *last;
     int    count, i;
 
-    mread(fd, (genericptr_t) &n_dgns, sizeof(n_dgns));
-    mread(fd, (genericptr_t) dungeons, sizeof(dungeon) * (unsigned)n_dgns);
-    mread(fd, (genericptr_t) &dungeon_topology, sizeof dungeon_topology);
-    mread(fd, (genericptr_t) tune, sizeof tune);
+    mread(fd, (void *) &n_dgns, sizeof(n_dgns));
+    mread(fd, (void *) dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+    mread(fd, (void *) &dungeon_topology, sizeof dungeon_topology);
+    mread(fd, (void *) tune, sizeof tune);
 
     last = branches = (branch *) 0;
 
-    mread(fd, (genericptr_t) &count, sizeof(count));
+    mread(fd, (void *) &count, sizeof(count));
     for (i = 0; i < count; i++) {
 	curr = (branch *) alloc(sizeof(branch));
-	mread(fd, (genericptr_t) curr, sizeof(branch));
+	mread(fd, (void *) curr, sizeof(branch));
 	curr->next = (branch *) 0;
 	if (last)
 	    last->next = curr;
@@ -173,16 +173,16 @@ restore_dungeon(fd)
 	last = curr;
     }
 
-    mread(fd, (genericptr_t) &count, sizeof(count));
+    mread(fd, (void *) &count, sizeof(count));
     if (count >= MAXLINFO)
 	panic("level information count larger (%d) than allocated size", count);
-    mread(fd, (genericptr_t) level_info, (unsigned)count*sizeof(struct linfo));
-    mread(fd, (genericptr_t) &inv_pos, sizeof inv_pos);
+    mread(fd, (void *) level_info, (unsigned)count*sizeof(struct linfo));
+    mread(fd, (void *) &inv_pos, sizeof inv_pos);
 }
 
 static void
 Fread(ptr, size, nitems, stream)
-	genericptr_t	ptr;
+	void *	ptr;
 	int	size, nitems;
 	dlb	*stream;
 {
@@ -666,14 +666,14 @@ init_dungeons()		/* initialize the "dungeon" structs */
 # endif
 	    Strcat(tbuf, "\" file!");
 #ifdef WIN32
-	    interject_assistance(1, INTERJECT_PANIC, (genericptr_t)tbuf,
-				 (genericptr_t)fqn_prefix[DATAPREFIX]);
+	    interject_assistance(1, INTERJECT_PANIC, (void *)tbuf,
+				 (void *)fqn_prefix[DATAPREFIX]);
 #endif
 	    panic(tbuf);
 	}
 
 	/* validate the data's version against the program's version */
-	Fread((genericptr_t) &vers_info, sizeof vers_info, 1, dgn_file);
+	Fread((void *) &vers_info, sizeof vers_info, 1, dgn_file);
 	/* we'd better clear the screen now, since when error messages come from
 	 * check_version() they will be printed using pline(), which doesn't
 	 * mix with the raw messages that might be already on the screen
@@ -687,12 +687,12 @@ init_dungeons()		/* initialize the "dungeon" structs */
 	 * dungeon arrays.
 	 */
 	sp_levchn = (s_level *) 0;
-	Fread((genericptr_t)&n_dgns, sizeof(int), 1, dgn_file);
+	Fread((void *)&n_dgns, sizeof(int), 1, dgn_file);
 	if (n_dgns >= MAXDUNGEON)
 	    panic("init_dungeons: too many dungeons");
 
 	for (i = 0; i < n_dgns; i++) {
-	    Fread((genericptr_t)&pd.tmpdungeon[i],
+	    Fread((void *)&pd.tmpdungeon[i],
 				    sizeof(struct tmpdungeon), 1, dgn_file);
 #ifdef WIZARD
 	    if(!wizard)
@@ -702,11 +702,11 @@ init_dungeons()		/* initialize the "dungeon" structs */
 
 		/* skip over any levels or branches */
 		for(j = 0; j < pd.tmpdungeon[i].levels; j++)
-		    Fread((genericptr_t)&pd.tmplevel[cl], sizeof(struct tmplevel),
+		    Fread((void *)&pd.tmplevel[cl], sizeof(struct tmplevel),
 							1, dgn_file);
 
 		for(j = 0; j < pd.tmpdungeon[i].branches; j++)
-		    Fread((genericptr_t)&pd.tmpbranch[cb],
+		    Fread((void *)&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 		n_dgns--; i--;
 		continue;
@@ -806,7 +806,7 @@ init_dungeons()		/* initialize the "dungeon" structs */
 	     * special levels until they are all placed.
 	     */
 	    for(; cl < pd.n_levs; cl++) {
-		Fread((genericptr_t)&pd.tmplevel[cl],
+		Fread((void *)&pd.tmplevel[cl],
 					sizeof(struct tmplevel), 1, dgn_file);
 		init_level(i, cl, &pd);
 	    }
@@ -830,7 +830,7 @@ init_dungeons()		/* initialize the "dungeon" structs */
 	    if (pd.n_brs > BRANCH_LIMIT)
 		panic("init_dungeon: too many branches");
 	    for(; cb < pd.n_brs; cb++)
-		Fread((genericptr_t)&pd.tmpbranch[cb],
+		Fread((void *)&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 	}
 	(void) dlb_fclose(dgn_file);
@@ -1675,7 +1675,7 @@ xchar *rdgn;
 	destroy_nhwindow(win);
 	if (n > 0) {
 		idx = selected[0].item.a_int - 1;
-		free((genericptr_t)selected);
+		free((void *)selected);
 		if (rlev && rdgn) {
 			*rlev = lchoices.lev[idx];
 			*rdgn = lchoices.dgn[idx];

@@ -488,7 +488,7 @@ menu_pickup:
 		if (res < 0) break;	/* can't continue */
 		n_picked += res;
 	    }
-	    if (pick_list) free((genericptr_t)pick_list);
+	    if (pick_list) free((void *)pick_list);
 
 	} else {
 	    /* old style interface */
@@ -1871,8 +1871,8 @@ register struct obj *obj;
 		obj->age = monstermoves - obj->age; /* actual age */
 		/* stop any corpse timeouts when frozen */
 		if (obj->otyp == CORPSE && obj->timed) {
-			long rot_alarm = stop_timer(ROT_CORPSE, (genericptr_t)obj);
-			(void) stop_timer(REVIVE_MON, (genericptr_t)obj);
+			long rot_alarm = stop_timer(ROT_CORPSE, (void *)obj);
+			(void) stop_timer(REVIVE_MON, (void *)obj);
 			/* mark a non-reviving corpse as such */
 			if (rot_alarm) obj->norevive = 1;
 		}
@@ -2330,7 +2330,7 @@ boolean put_in;
 	    else
 		add_valid_menu_class(pick_list[i].item.a_int);
 	}
-	free((genericptr_t) pick_list);
+	free((void *) pick_list);
     }
 
     if (loot_everything) {
@@ -2364,7 +2364,7 @@ boolean put_in;
 			break;
 		    }
 		}
-		free((genericptr_t)pick_list);
+		free((void *)pick_list);
 	}
     }
     return n_looted;
@@ -2409,7 +2409,7 @@ boolean outokay, inokay;
     destroy_nhwindow(win);
     if (n > 0) {
 	n = pick_list[0].item.a_int;
-	free((genericptr_t) pick_list);
+	free((void *) pick_list);
     }
     return n;
 }

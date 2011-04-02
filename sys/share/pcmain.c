@@ -241,7 +241,7 @@ char *argv[];
 #else
 		hackpid = 1;
 #endif
-		write(fd, (genericptr_t) &hackpid, sizeof(hackpid));
+		write(fd, (void *) &hackpid, sizeof(hackpid));
 		close(fd);
 	}
 

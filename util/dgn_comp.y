@@ -25,7 +25,7 @@ void NDECL(init_branch);
 void NDECL(init_level);
 void NDECL(output_dgn);
 
-#define Free(ptr)		free((genericptr_t)ptr)
+#define Free(ptr)		free((void *)ptr)
 
 #define ERR		(-1)
 

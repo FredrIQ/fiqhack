@@ -17,8 +17,8 @@ static boolean FDECL(check_map_spot, (int,int,CHAR_P,unsigned));
 static boolean FDECL(clear_stale_map, (CHAR_P,unsigned));
 static void FDECL(sense_trap, (struct trap *,XCHAR_P,XCHAR_P,int));
 static void FDECL(show_map_spot, (int,int));
-STATIC_PTR void FDECL(findone,(int,int,genericptr_t));
-STATIC_PTR void FDECL(openone,(int,int,genericptr_t));
+STATIC_PTR void FDECL(findone,(int,int,void *));
+STATIC_PTR void FDECL(openone,(int,int,void *));
 
 /* Recursively search obj for an object in class oclass and return 1st found */
 struct obj *
@@ -1001,7 +1001,7 @@ struct rm *lev;
 STATIC_PTR void
 findone(zx,zy,num)
 int zx,zy;
-genericptr_t num;
+void * num;
 {
 	register struct trap *ttmp;
 	register struct monst *mtmp;
@@ -1047,7 +1047,7 @@ genericptr_t num;
 STATIC_PTR void
 openone(zx,zy,num)
 int zx,zy;
-genericptr_t num;
+void * num;
 {
 	register struct trap *ttmp;
 	register struct obj *otmp;
@@ -1103,7 +1103,7 @@ findit()	/* returns number of things found */
 	int num = 0;
 
 	if(u.uswallow) return(0);
-	do_clear_area(u.ux, u.uy, BOLT_LIM, findone, (genericptr_t) &num);
+	do_clear_area(u.ux, u.uy, BOLT_LIM, findone, (void *) &num);
 	return(num);
 }
 
@@ -1121,7 +1121,7 @@ openit()	/* returns number of things found and opened */
 		return(-1);
 	}
 
-	do_clear_area(u.ux, u.uy, BOLT_LIM, openone, (genericptr_t) &num);
+	do_clear_area(u.ux, u.uy, BOLT_LIM, openone, (void *) &num);
 	return(num);
 }
 

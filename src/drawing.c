@@ -669,12 +669,12 @@ boolean is_rlevel;
     if (is_rlevel) {
 	register int i;
 
-	(void) memcpy((genericptr_t)save_showsyms,
-		      (genericptr_t)showsyms, sizeof showsyms);
-	(void) memcpy((genericptr_t)save_oc_syms,
-		      (genericptr_t)oc_syms, sizeof oc_syms);
-	(void) memcpy((genericptr_t)save_monsyms,
-		      (genericptr_t)monsyms, sizeof monsyms);
+	(void) memcpy((void *)save_showsyms,
+		      (void *)showsyms, sizeof showsyms);
+	(void) memcpy((void *)save_oc_syms,
+		      (void *)oc_syms, sizeof oc_syms);
+	(void) memcpy((void *)save_monsyms,
+		      (void *)monsyms, sizeof monsyms);
 
 	/* Use a loop: char != uchar on some machines. */
 	for (i = 0; i < MAXMCLASSES; i++)
@@ -753,12 +753,12 @@ boolean is_rlevel;
 		oc_syms[i] = r_oc_syms[i];
 	}
     } else {
-	(void) memcpy((genericptr_t)showsyms,
-		      (genericptr_t)save_showsyms, sizeof showsyms);
-	(void) memcpy((genericptr_t)oc_syms,
-		      (genericptr_t)save_oc_syms, sizeof oc_syms);
-	(void) memcpy((genericptr_t)monsyms,
-		      (genericptr_t)save_monsyms, sizeof monsyms);
+	(void) memcpy((void *)showsyms,
+		      (void *)save_showsyms, sizeof showsyms);
+	(void) memcpy((void *)oc_syms,
+		      (void *)save_oc_syms, sizeof oc_syms);
+	(void) memcpy((void *)monsyms,
+		      (void *)save_monsyms, sizeof monsyms);
     }
 }
 #endif /* REINCARNATION */

@@ -31,7 +31,7 @@
  * Define the default window system.  This should be one that is compiled
  * into your system (see defines above).  Known window systems are:
  *
- *	tty, X11, Qt, Gem, Gnome
+ *	tty
  */
 
 #ifndef DEFAULT_WINDOW_SYS

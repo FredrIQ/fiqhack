@@ -47,8 +47,8 @@ int FDECL(yyoutput, (int));
 
 #ifdef FLEX_SCANNER
 #define YY_MALLOC_DECL \
-	      genericptr_t FDECL(malloc, (size_t)); \
-	      genericptr_t FDECL(realloc, (genericptr_t,size_t));
+	      void * FDECL(malloc, (size_t)); \
+	      void * FDECL(realloc, (void *,size_t));
 #endif
 
 void FDECL(init_yyin, (FILE *));

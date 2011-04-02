@@ -52,12 +52,12 @@ E void FDECL(exit, (int));
 
 
 #   ifndef MONITOR_HEAP
-E void FDECL(free, (genericptr_t));
+E void FDECL(free, (void *));
 #   endif
 E void FDECL(perror, (const char *));
 #endif
-E void FDECL(qsort, (genericptr_t,size_t,size_t,
-		     int(*)(const genericptr,const genericptr)));
+E void FDECL(qsort, (void *,size_t,size_t,
+		     int(*)(const void *,const void *)));
 
 #if !defined(__GNUC__)
 /* may already be defined */
@@ -103,7 +103,7 @@ E char *FDECL(tgetstr, (const char *,char **));
 E char *FDECL(tgoto, (const char *,int,int));
 
 #ifdef ALLOC_C
-E genericptr_t FDECL(malloc, (size_t));
+E void * FDECL(malloc, (size_t));
 #endif
 
 /* time functions */

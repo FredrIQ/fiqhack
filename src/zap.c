@@ -634,8 +634,8 @@ register struct obj *obj;
 			if (obj->oxlth && (obj->oattached == OATTACHED_M_ID)) {
 			    unsigned m_id;
 			    struct monst *ghost;
-			    (void) memcpy((genericptr_t)&m_id,
-				    (genericptr_t)obj->oextra, sizeof(m_id));
+			    (void) memcpy((void *)&m_id,
+				    (void *)obj->oextra, sizeof(m_id));
 			    ghost = find_mid(m_id, FM_FMON);
 		    	    if (ghost && ghost->data == &mons[PM_GHOST]) {
 		    		    int x2, y2;

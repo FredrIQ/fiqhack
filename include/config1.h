@@ -5,13 +5,11 @@
 #ifndef CONFIG1_H
 #define CONFIG1_H
 
-
 #ifdef WIN32
 # undef UNIX
 # define STRNCMPI
 # define STRCMPI
 #endif
-
 
 #if defined(__linux__) && defined(__GNUC__) && !defined(_GNU_SOURCE)
 /* ensure _GNU_SOURCE is defined before including any system headers */

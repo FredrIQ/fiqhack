@@ -35,8 +35,8 @@
 #define ERR		(-1)
 
 #define NewTab(type, size)	(type **) alloc(sizeof(type *) * size)
-#define Free(ptr)		if(ptr) free((genericptr_t) (ptr))
-#define Write(fd, item, size)	if (write(fd, (genericptr_t)(item), size) != size) return FALSE;
+#define Free(ptr)		if(ptr) free((void *) (ptr))
+#define Write(fd, item, size)	if (write(fd, (void *)(item), size) != size) return FALSE;
 
 #define MAX_ERRORS	25
 
@@ -1108,7 +1108,7 @@ specialmaze *maze;
 			 * warning '!=' : signed/unsigned mismatch
 			 */
 			unsigned reslt, sz = pt->xsize * sizeof *pt->map[j];
-			reslt = write(fd, (genericptr_t)(pt->map[j]), sz);
+			reslt = write(fd, (void *)(pt->map[j]), sz);
 			if (reslt != sz) return FALSE;
 #endif
 		}

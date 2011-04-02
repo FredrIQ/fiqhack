@@ -12,7 +12,7 @@
 #if 0
 E long *FDECL(alloc, (unsigned int));
 #endif
-E char *FDECL(fmt_ptr, (const genericptr,char *));
+E char *FDECL(fmt_ptr, (const void *,char *));
 
 /* This next pre-processor directive covers almost the entire file,
  * interrupted only occasionally to pick up specific functions as needed. */
@@ -46,7 +46,7 @@ E boolean FDECL(catch_lit, (struct obj *));
 E void FDECL(use_unicorn_horn, (struct obj *));
 E boolean FDECL(tinnable, (struct obj *));
 E void NDECL(reset_trapset);
-E void FDECL(fig_transform, (genericptr_t, long));
+E void FDECL(fig_transform, (void *, long));
 E int FDECL(unfixable_trouble_count,(BOOLEAN_P));
 
 /* ### artifact.c ### */
@@ -216,8 +216,8 @@ E void NDECL(zap_dig);
 E struct obj *FDECL(bury_an_obj, (struct obj *));
 E void FDECL(bury_objs, (int,int));
 E void FDECL(unearth_objs, (int,int));
-E void FDECL(rot_organic, (genericptr_t, long));
-E void FDECL(rot_corpse, (genericptr_t, long));
+E void FDECL(rot_organic, (void *, long));
+E void FDECL(rot_corpse, (void *, long));
 #if 0
 E void FDECL(bury_monst, (struct monst *));
 E void NDECL(bury_you);
@@ -283,7 +283,7 @@ E void FDECL(schedule_goto, (d_level *,BOOLEAN_P,BOOLEAN_P,int,
 			     const char *,const char *));
 E void NDECL(deferred_goto);
 E boolean FDECL(revive_corpse, (struct obj *));
-E void FDECL(revive_mon, (genericptr_t, long));
+E void FDECL(revive_mon, (void *, long));
 E int NDECL(donull);
 E int NDECL(dowipe);
 E void FDECL(set_wounded_legs, (long,int));
@@ -317,7 +317,7 @@ E const char *NDECL(rndcolor);
 E const char *NDECL(roguename);
 #endif
 E struct obj *FDECL(realloc_obj,
-		(struct obj *, int, genericptr_t, int, const char *));
+		(struct obj *, int, void *, int, const char *));
 E char *FDECL(coyotename, (struct monst *,char *));
 
 /* ### do_wear.c ### */
@@ -405,8 +405,8 @@ E int FDECL(thitmonst, (struct monst *,struct obj *));
 E int FDECL(hero_breaks, (struct obj *,XCHAR_P,XCHAR_P,BOOLEAN_P));
 E int FDECL(breaks, (struct obj *,XCHAR_P,XCHAR_P));
 E boolean FDECL(breaktest, (struct obj *));
-E boolean FDECL(walk_path, (coord *, coord *, boolean (*)(genericptr_t,int,int), genericptr_t));
-E boolean FDECL(hurtle_step, (genericptr_t, int, int));
+E boolean FDECL(walk_path, (coord *, coord *, boolean (*)(void *,int,int), void *));
+E boolean FDECL(hurtle_step, (void *, int, int));
 
 /* ### drawing.c ### */
 #endif /* !MAKEDEFS_C && !LEV_LEX_C */
@@ -764,8 +764,8 @@ E void NDECL(setioctls);
 
 /* ### light.c ### */
 
-E void FDECL(new_light_source, (XCHAR_P, XCHAR_P, int, int, genericptr_t));
-E void FDECL(del_light_source, (int, genericptr_t));
+E void FDECL(new_light_source, (XCHAR_P, XCHAR_P, int, int, void *));
+E void FDECL(del_light_source, (int, void *));
 E void FDECL(do_light_sources, (char **));
 E struct monst *FDECL(find_mid, (unsigned, unsigned));
 E void FDECL(save_light_sources, (int, int, int));
@@ -1496,7 +1496,7 @@ E int FDECL(dorecover, (int));
 E void FDECL(trickery, (char *));
 E void FDECL(getlev, (int,int,XCHAR_P,BOOLEAN_P));
 E boolean FDECL(lookup_id_mapping, (unsigned, unsigned *));
-E void FDECL(mread, (int,genericptr_t,unsigned int));
+E void FDECL(mread, (int,void *,unsigned int));
 
 /* ### rip.c ### */
 
@@ -1564,7 +1564,7 @@ E void FDECL(savelev, (int,XCHAR_P,int));
 E void FDECL(bufon, (int));
 E void FDECL(bufoff, (int));
 E void FDECL(bflush, (int));
-E void FDECL(bwrite, (int,genericptr_t,unsigned int));
+E void FDECL(bwrite, (int,void *,unsigned int));
 E void FDECL(bclose, (int));
 E void FDECL(savefruitchn, (int,int));
 E void NDECL(free_dungeons);
@@ -1750,14 +1750,14 @@ E void FDECL(fall_asleep, (int, BOOLEAN_P));
 E void FDECL(attach_egg_hatch_timeout, (struct obj *));
 E void FDECL(attach_fig_transform_timeout, (struct obj *));
 E void FDECL(kill_egg, (struct obj *));
-E void FDECL(hatch_egg, (genericptr_t, long));
+E void FDECL(hatch_egg, (void *, long));
 E void FDECL(learn_egg_type, (int));
-E void FDECL(burn_object, (genericptr_t, long));
+E void FDECL(burn_object, (void *, long));
 E void FDECL(begin_burn, (struct obj *, BOOLEAN_P));
 E void FDECL(end_burn, (struct obj *, BOOLEAN_P));
 E void NDECL(do_storms);
-E boolean FDECL(start_timer, (long, SHORT_P, SHORT_P, genericptr_t));
-E long FDECL(stop_timer, (SHORT_P, genericptr_t));
+E boolean FDECL(start_timer, (long, SHORT_P, SHORT_P, void *));
+E long FDECL(stop_timer, (SHORT_P, void *));
 E void NDECL(run_timers);
 E void FDECL(obj_move_timers, (struct obj *, struct obj *));
 E void FDECL(obj_split_timers, (struct obj *, struct obj *));
@@ -1905,7 +1905,7 @@ E void FDECL(block_point, (int,int));
 E void FDECL(unblock_point, (int,int));
 E boolean FDECL(clear_path, (int,int,int,int));
 E void FDECL(do_clear_area, (int,int,int,
-			     void (*)(int,int,genericptr_t),genericptr_t));
+			     void (*)(int,int,void *),void *));
 
 /* ### weapon.c ### */
 

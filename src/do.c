@@ -665,7 +665,7 @@ int retry;
 	    else
 		add_valid_menu_class(pick_list[i].item.a_int);
 	}
-	free((genericptr_t) pick_list);
+	free((void *) pick_list);
     } else if (flags.menu_style == MENU_COMBINATION) {
 	unsigned ggoresults = 0;
 	all_categories = FALSE;
@@ -709,7 +709,7 @@ int retry;
 		}
 		n_dropped += drop(otmp);
 	    }
-	    free((genericptr_t) pick_list);
+	    free((void *) pick_list);
 	}
     }
 
@@ -1051,8 +1051,8 @@ boolean at_stairs, falling, portal;
 
 	/* set default level change destination areas */
 	/* the special level code may override these */
-	(void) memset((genericptr_t) &updest, 0, sizeof updest);
-	(void) memset((genericptr_t) &dndest, 0, sizeof dndest);
+	(void) memset((void *) &updest, 0, sizeof updest);
+	(void) memset((void *) &dndest, 0, sizeof dndest);
 
 	if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
 		/* entering this level for first time; make it now */
@@ -1434,9 +1434,9 @@ deferred_goto()
 	}
 	u.utotype = 0;		/* our caller keys off of this */
 	if (dfr_pre_msg)
-	    free((genericptr_t)dfr_pre_msg),  dfr_pre_msg = 0;
+	    free((void *)dfr_pre_msg),  dfr_pre_msg = 0;
 	if (dfr_post_msg)
-	    free((genericptr_t)dfr_post_msg),  dfr_post_msg = 0;
+	    free((void *)dfr_post_msg),  dfr_post_msg = 0;
 }
 
 
@@ -1532,7 +1532,7 @@ struct obj *corpse;
 /*ARGSUSED*/
 void
 revive_mon(arg, timeout)
-genericptr_t arg;
+void * arg;
 long timeout;
 {
     struct obj *body = (struct obj *) arg;

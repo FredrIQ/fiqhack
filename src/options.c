@@ -457,8 +457,8 @@ initoptions()
 	flags.warntype = 0L;
 
      /* assert( sizeof flags.inv_order == sizeof def_inv_order ); */
-	(void)memcpy((genericptr_t)flags.inv_order,
-		     (genericptr_t)def_inv_order, sizeof flags.inv_order);
+	(void)memcpy((void *)flags.inv_order,
+		     (void *)def_inv_order, sizeof flags.inv_order);
 	flags.pickup_types[0] = '\0';
 	flags.pickup_burden = MOD_ENCUMBER;
 
@@ -821,9 +821,9 @@ int on_or_off;
 			*optptr++ = 0;
 	} else {
 		/*-- OFF --*/
-		if (iflags.opt_booldup) free((genericptr_t) iflags.opt_booldup);
+		if (iflags.opt_booldup) free((void *) iflags.opt_booldup);
 		iflags.opt_booldup = (int *)0;
-		if (iflags.opt_compdup) free((genericptr_t) iflags.opt_compdup);
+		if (iflags.opt_compdup) free((void *) iflags.opt_compdup);
 		iflags.opt_compdup = (int *)0;
 	} 
 }
@@ -2299,7 +2299,7 @@ doset()
 			preference_update(compopt[opt_indx].name);
 		}
 	    }
-	    free((genericptr_t)pick_list);
+	    free((void *)pick_list);
 	    pick_list = (menu_item *)0;
 	}
 
@@ -2342,7 +2342,7 @@ boolean setinitial,setfromfile;
 	end_menu(tmpwin, "Select menustyle:");
 	if (select_menu(tmpwin, PICK_ONE, &style_pick) > 0) {
 		flags.menu_style = style_pick->item.a_int - 1;
-		free((genericptr_t)style_pick);
+		free((void *)style_pick);
         }
 	destroy_nhwindow(tmpwin);
         retval = TRUE;
@@ -2360,7 +2360,7 @@ boolean setinitial,setfromfile;
 	end_menu(tmpwin, "Select encumbrance level:");
 	if (select_menu(tmpwin, PICK_ONE, &burden_pick) > 0) {
 		flags.pickup_burden = burden_pick->item.a_int - 1;
-		free((genericptr_t)burden_pick);
+		free((void *)burden_pick);
 	}
 	destroy_nhwindow(tmpwin);
 	retval = TRUE;
@@ -2396,7 +2396,7 @@ boolean setinitial,setfromfile;
 		opt_idx = disclosure_category_pick[pick_idx].item.a_int - 1;
 		disc_cat[opt_idx] = 1;
 	    }
-	    free((genericptr_t)disclosure_category_pick);
+	    free((void *)disclosure_category_pick);
 	    disclosure_category_pick = (menu_item *)0;
 	}
 	destroy_nhwindow(tmpwin);
@@ -2426,7 +2426,7 @@ boolean setinitial,setfromfile;
 		end_menu(tmpwin, dbuf);
 		if (select_menu(tmpwin, PICK_ONE, &disclosure_option_pick) > 0) {
 			flags.end_disclose[i] = disclosure_option_pick->item.a_char;
-			free((genericptr_t)disclosure_option_pick);
+			free((void *)disclosure_option_pick);
 		}
 		destroy_nhwindow(tmpwin);
 	    }
@@ -2446,7 +2446,7 @@ boolean setinitial,setfromfile;
 	end_menu(tmpwin, "Select run/travel display mode:");
 	if (select_menu(tmpwin, PICK_ONE, &mode_pick) > 0) {
 		iflags.runmode = mode_pick->item.a_int - 1;
-		free((genericptr_t)mode_pick);
+		free((void *)mode_pick);
 	}
 	destroy_nhwindow(tmpwin);
 	retval = TRUE;
@@ -2472,7 +2472,7 @@ boolean setinitial,setfromfile;
 	end_menu(tmpwin, "Select message history display type:");
 	if (select_menu(tmpwin, PICK_ONE, &window_pick) > 0) {
 		iflags.prevmsg_window = window_pick->item.a_char;
-		free((genericptr_t)window_pick);
+		free((void *)window_pick);
 	}
 	destroy_nhwindow(tmpwin);
         retval = TRUE;
@@ -2504,7 +2504,7 @@ boolean setinitial,setfromfile;
 	if (select_menu(tmpwin, PICK_ONE, &window_pick) > 0) {		
 		if (msg) iflags.wc_align_message = window_pick->item.a_int;
 		else iflags.wc_align_status = window_pick->item.a_int;
-		free((genericptr_t)window_pick);
+		free((void *)window_pick);
 	}
 	destroy_nhwindow(tmpwin);
         retval = TRUE;
@@ -2538,7 +2538,7 @@ boolean setinitial,setfromfile;
 				iflags.num_pad = 0;
 				iflags.num_pad_mode = 0;
 		}
-		free((genericptr_t)mode_pick);
+		free((void *)mode_pick);
         }
 	destroy_nhwindow(tmpwin);
         retval = TRUE;
@@ -2568,7 +2568,7 @@ boolean setinitial,setfromfile;
 			default:
 				iflags.menu_headings = ATR_INVERSE;
 		}
-		free((genericptr_t)mode_pick);
+		free((void *)mode_pick);
         }
 	destroy_nhwindow(tmpwin);
         retval = TRUE;
@@ -2604,7 +2604,7 @@ ape_again:
 		for (pick_idx = 0; pick_idx < pick_cnt; ++pick_idx) {
 			opt_idx = pick_list[pick_idx].item.a_int - 1;
 		}
-		free((genericptr_t)pick_list);
+		free((void *)pick_list);
 		pick_list = (menu_item *)0;
 	}
 	destroy_nhwindow(tmpwin);
@@ -2648,7 +2648,7 @@ ape_again:
 			remove_autopickup_exception(
 			 (struct autopickup_exception *)pick_list[pick_idx].item.a_void);
 	        }
-	        free((genericptr_t)pick_list);
+	        free((void *)pick_list);
 	        pick_list = (menu_item *)0;
 		destroy_nhwindow(tmpwin);
 		goto ape_again;
@@ -3295,7 +3295,7 @@ char *class_select;
     if (n > 0) {
 	for (i = 0; i < n; ++i)
 	    *class_select++ = (char)pick_list[i].item.a_int;
-	free((genericptr_t)pick_list);
+	free((void *)pick_list);
 	ret = n;
     } else if (n == -1) {
 	class_select = eos(class_select);

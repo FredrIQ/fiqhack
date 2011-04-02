@@ -71,8 +71,8 @@ hack_artifacts()
 void
 init_artifacts()
 {
-	(void) memset((genericptr_t) artiexist, 0, sizeof artiexist);
-	(void) memset((genericptr_t) artidisco, 0, sizeof artidisco);
+	(void) memset((void *) artiexist, 0, sizeof artiexist);
+	(void) memset((void *) artidisco, 0, sizeof artidisco);
 	hack_artifacts();
 }
 
@@ -80,16 +80,16 @@ void
 save_artifacts(fd)
 int fd;
 {
-	bwrite(fd, (genericptr_t) artiexist, sizeof artiexist);
-	bwrite(fd, (genericptr_t) artidisco, sizeof artidisco);
+	bwrite(fd, (void *) artiexist, sizeof artiexist);
+	bwrite(fd, (void *) artidisco, sizeof artidisco);
 }
 
 void
 restore_artifacts(fd)
 int fd;
 {
-	mread(fd, (genericptr_t) artiexist, sizeof artiexist);
-	mread(fd, (genericptr_t) artidisco, sizeof artidisco);
+	mread(fd, (void *) artiexist, sizeof artiexist);
+	mread(fd, (void *) artidisco, sizeof artidisco);
 	hack_artifacts();	/* redo non-saved special cases */
 }
 
@@ -1284,7 +1284,7 @@ arti_invoke(obj)
 		    goto nothing_special;
 		}
 		i = selected[0].item.a_int - 1;
-		free((genericptr_t)selected);
+		free((void *)selected);
 	    } else
 		i = last_ok_dungeon;	/* also first & only OK dungeon */
 	    destroy_nhwindow(tmpwin);

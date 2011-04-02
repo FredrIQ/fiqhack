@@ -1100,7 +1100,7 @@ int *spell_no;
 		   de-select any preselected entry */
 		if (n > 1 && *spell_no == splaction)
 		    *spell_no = selected[1].item.a_int - 1;
-		free((genericptr_t)selected);
+		free((void *)selected);
 		/* default selection of preselected spell means that
 		   user chose not to swap it with anything */
 		if (*spell_no == splaction) return FALSE;

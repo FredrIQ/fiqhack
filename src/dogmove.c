@@ -51,7 +51,7 @@ static boolean FDECL(cursed_object_at, (int, int));
 
 static xchar gtyp, gx, gy;	/* type and position of dog's current goal */
 
-STATIC_PTR void FDECL(wantdoor, (int, int, genericptr_t));
+STATIC_PTR void FDECL(wantdoor, (int, int, void *));
 
 static boolean
 cursed_object_at(x, y)
@@ -445,7 +445,7 @@ int after, udist, whappr;
 		    int fardist = FARAWAY * FARAWAY;
 		    gx = gy = FARAWAY; /* random */
 		    do_clear_area(omx, omy, 9, wantdoor,
-				  (genericptr_t)&fardist);
+				  (void *)&fardist);
 
 		    /* here gx == FARAWAY e.g. when dog is in a vault */
 		    if (gx == FARAWAY || (gx == omx && gy == omy)) {
@@ -838,7 +838,7 @@ xchar mx, my, fx, fy;
 STATIC_PTR void
 wantdoor(x, y, distance)
 int x, y;
-genericptr_t distance;
+void * distance;
 {
     int ndist;
 

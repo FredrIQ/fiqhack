@@ -543,7 +543,7 @@ struct obj *obj;			/* only scatter this obj        */
 			place_object(stmp->obj, x, y);
 			stackobj(stmp->obj);
 		}
-		free((genericptr_t)stmp);
+		free((void *)stmp);
 		newsym(x,y);
 	}
 

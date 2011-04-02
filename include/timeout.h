@@ -6,7 +6,7 @@
 #define TIMEOUT_H
 
 /* generic timeout function */
-typedef void FDECL((*timeout_proc), (genericptr_t, long));
+typedef void FDECL((*timeout_proc), (void *, long));
 
 /* kind of timer */
 #define TIMER_LEVEL	0	/* event specific to level */
@@ -37,7 +37,7 @@ typedef struct fe {
     unsigned long tid;		/* timer ID */
     short kind;			/* kind of use */
     short func_index;		/* what to call when we time out */
-    genericptr_t arg;		/* pointer to timeout argument */
+    void * arg;		/* pointer to timeout argument */
     unsigned needs_fixup:1;	/* does arg need to be patched? */
 } timer_element;
 

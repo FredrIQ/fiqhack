@@ -73,7 +73,7 @@ You_buf(siz)
 int siz;
 {
 	if (siz > you_buf_siz) {
-		if (you_buf) free((genericptr_t) you_buf);
+		if (you_buf) free((void *) you_buf);
 		you_buf_siz = siz + 10;
 		you_buf = (char *) alloc((unsigned) you_buf_siz);
 	}
@@ -83,7 +83,7 @@ int siz;
 void
 free_youbuf()
 {
-	if (you_buf) free((genericptr_t) you_buf),  you_buf = (char *)0;
+	if (you_buf) free((void *) you_buf),  you_buf = (char *)0;
 	you_buf_siz = 0;
 }
 

@@ -18,7 +18,7 @@ static void FDECL(breakmsg, (struct obj *,BOOLEAN_P));
 static boolean FDECL(toss_up,(struct obj *, BOOLEAN_P));
 static boolean FDECL(throwing_weapon, (struct obj *));
 static void FDECL(sho_obj_return_to_u, (struct obj *obj));
-static boolean FDECL(mhurtle_step, (genericptr_t,int,int));
+static boolean FDECL(mhurtle_step, (void *,int,int));
 
 
 static const char toss_objs[] =
@@ -363,8 +363,8 @@ boolean
 walk_path(src_cc, dest_cc, check_proc, arg)
     coord *src_cc;
     coord *dest_cc;
-    boolean FDECL((*check_proc), (genericptr_t, int, int));
-    genericptr_t arg;
+    boolean FDECL((*check_proc), (void *, int, int));
+    void * arg;
 {
     int x, y, dx, dy, x_change, y_change, err, i, prev_x, prev_y;
     boolean keep_going = TRUE;
@@ -445,7 +445,7 @@ walk_path(src_cc, dest_cc, check_proc, arg)
  */
 boolean
 hurtle_step(arg, x, y)
-    genericptr_t arg;
+    void * arg;
     int x, y;
 {
     int ox, oy, *range = (int *)arg;
@@ -564,7 +564,7 @@ hurtle_step(arg, x, y)
 
 static boolean
 mhurtle_step(arg, x, y)
-    genericptr_t arg;
+    void * arg;
     int x, y;
 {
 	struct monst *mon = (struct monst *)arg;
@@ -641,7 +641,7 @@ hurtle(dx, dy, range, verbose)
     /* this setting of cc is only correct if dx and dy are [-1,0,1] only */
     cc.x = u.ux + (dx * range);
     cc.y = u.uy + (dy * range);
-    (void) walk_path(&uc, &cc, hurtle_step, (genericptr_t)&range);
+    (void) walk_path(&uc, &cc, hurtle_step, (void *)&range);
 }
 
 /* Move a monster through the air for a few squares.
@@ -673,7 +673,7 @@ mhurtle(mon, dx, dy, range)
 	mc.y = mon->my;
 	cc.x = mon->mx + (dx * range);
 	cc.y = mon->my + (dy * range);
-	(void) walk_path(&mc, &cc, mhurtle_step, (genericptr_t)mon);
+	(void) walk_path(&mc, &cc, mhurtle_step, (void *)mon);
 	return;
 }
 

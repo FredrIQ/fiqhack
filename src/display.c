@@ -851,7 +851,7 @@ tmp_at(x, y)
 	case DISP_FREEMEM:  /* in case game ends with tmp_at() in progress */
 	    while (tglyph) {
 		tmp = tglyph->prev;
-		if (tglyph != &tgfirst) free((genericptr_t)tglyph);
+		if (tglyph != &tgfirst) free((void *)tglyph);
 		tglyph = tmp;
 	    }
 	    return;
@@ -880,7 +880,7 @@ tmp_at(x, y)
 	    }
 	 /* tglyph->sidx = 0; -- about to be freed, so not necessary */
 	    tmp = tglyph->prev;
-	    if (tglyph != &tgfirst) free((genericptr_t)tglyph);
+	    if (tglyph != &tgfirst) free((void *)tglyph);
 	    tglyph = tmp;
 	    break;
 
