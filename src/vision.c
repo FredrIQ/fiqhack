@@ -88,14 +88,14 @@ static char  left_ptrs[ROWNO][COLNO];		/* LOS algorithm helpers */
 static char right_ptrs[ROWNO][COLNO];
 
 /* Forward declarations. */
-STATIC_DCL void FDECL(fill_point, (int,int));
-STATIC_DCL void FDECL(dig_point, (int,int));
-STATIC_DCL void NDECL(view_init);
-STATIC_DCL void FDECL(view_from,(int,int,char **,char *,char *,int,
+static void FDECL(fill_point, (int,int));
+static void FDECL(dig_point, (int,int));
+static void NDECL(view_init);
+static void FDECL(view_from,(int,int,char **,char *,char *,int,
 			     void (*)(int,int,genericptr_t),genericptr_t));
-STATIC_DCL void FDECL(get_unused_cs, (char ***,char **,char **));
+static void FDECL(get_unused_cs, (char ***,char **,char **));
 #ifdef REINCARNATION
-STATIC_DCL void FDECL(rogue_vision, (char **,char *,char *));
+static void FDECL(rogue_vision, (char **,char *,char *));
 #endif
 
 /* Macro definitions that I can't find anywhere. */
@@ -240,7 +240,7 @@ vision_reset()
  * Called from vision_recalc() and at least one light routine.  Get pointers
  * to the unused vision work area.
  */
-STATIC_OVL void
+static void
 get_unused_cs(rows, rmin, rmax)
     char ***rows;
     char **rmin, **rmax;
@@ -283,7 +283,7 @@ get_unused_cs(rows, rmin, rmax)
  * We set the in_sight bit here as well to escape a bug that shows up
  * due to the one-sided lit wall hack.
  */
-STATIC_OVL void
+static void
 rogue_vision(next, rmin, rmax)
     char **next;	/* could_see array pointers */
     char *rmin, *rmax;
@@ -340,7 +340,7 @@ rogue_vision(next, rmin, rmax)
 
 #ifdef EXTEND_SPINE
 
-STATIC_DCL int FDECL(new_angle, (struct rm *, unsigned char *, int, int));
+static int FDECL(new_angle, (struct rm *, unsigned char *, int, int));
 /*
  * new_angle()
  *
@@ -383,7 +383,7 @@ STATIC_DCL int FDECL(new_angle, (struct rm *, unsigned char *, int, int));
  *	  many exceptions.  I may have to bite the bullet and do more
  *	  checks.	- Dean 2/11/93
  */
-STATIC_OVL int
+static int
 new_angle(lev, sv, row, col)
     struct rm *lev;
     unsigned char *sv;
@@ -884,7 +884,7 @@ unblock_point(x,y)
  *   This means that a right-edge (a blocked spot that has an open
  *    spot on its right) will point to itself.
  */
-STATIC_OVL void
+static void
 dig_point(row,col)
     int row,col;
 {
@@ -965,7 +965,7 @@ dig_point(row,col)
     }
 }
 
-STATIC_OVL void
+static void
 fill_point(row,col)
     int row, col;
 {
@@ -1101,10 +1101,10 @@ static genericptr_t varg;
  * Elements for Computer Graphics_, by David F. Rogers.  McGraw-Hill, 1985.
  */
 
-STATIC_DCL int FDECL(_q1_path, (int,int,int,int));
-STATIC_DCL int FDECL(_q2_path, (int,int,int,int));
-STATIC_DCL int FDECL(_q3_path, (int,int,int,int));
-STATIC_DCL int FDECL(_q4_path, (int,int,int,int));
+static int FDECL(_q1_path, (int,int,int,int));
+static int FDECL(_q2_path, (int,int,int,int));
+static int FDECL(_q3_path, (int,int,int,int));
+static int FDECL(_q4_path, (int,int,int,int));
 
 #define q1_path(sy,sx,y,x,dummy) result = _q1_path(sy,sx,y,x)
 #define q2_path(sy,sx,y,x,dummy) result = _q2_path(sy,sx,y,x)
@@ -1114,7 +1114,7 @@ STATIC_DCL int FDECL(_q4_path, (int,int,int,int));
 /*
  * Quadrant I (step < 0).
  */
-STATIC_OVL int
+static int
 _q1_path(srow,scol,y2,x2)
     int scol, srow, y2, x2;
 {
@@ -1158,7 +1158,7 @@ _q1_path(srow,scol,y2,x2)
 /*
  * Quadrant IV (step > 0).
  */
-STATIC_OVL int
+static int
 _q4_path(srow,scol,y2,x2)
     int scol, srow, y2, x2;
 {
@@ -1202,7 +1202,7 @@ _q4_path(srow,scol,y2,x2)
 /*
  * Quadrant II (step < 0).
  */
-STATIC_OVL int
+static int
 _q2_path(srow,scol,y2,x2)
     int scol, srow, y2, x2;
 {
@@ -1246,7 +1246,7 @@ _q2_path(srow,scol,y2,x2)
 /*
  * Quadrant III (step > 0).
  */
-STATIC_OVL int
+static int
 _q3_path(srow,scol,y2,x2)
     int scol, srow, y2, x2;
 {
@@ -1328,11 +1328,11 @@ clear_path(col1,row1,col2,row2)
 /*
  * Defines local to Algorithm C.
  */
-STATIC_DCL void FDECL(right_side, (int,int,int,char*));
-STATIC_DCL void FDECL(left_side, (int,int,int,char*));
+static void FDECL(right_side, (int,int,int,char*));
+static void FDECL(left_side, (int,int,int,char*));
 
 /* Initialize algorithm C (nothing). */
-STATIC_OVL void
+static void
 view_init()
 {
 }
@@ -1341,7 +1341,7 @@ view_init()
  * Mark positions as visible on one quadrant of the right side.  The
  * quadrant is determined by the value of the global variable step.
  */
-STATIC_OVL void
+static void
 right_side(row, left, right_mark, limits)
     int row;		/* current row */
     int left;		/* first (left side) visible spot on prev row */
@@ -1523,7 +1523,7 @@ rside2:					/* used if q?_path() is a macro */
  * This routine is the mirror image of right_side().  See right_side() for
  * extensive comments.
  */
-STATIC_OVL void
+static void
 left_side(row, left_mark, right, limits)
     int row, left_mark, right;
     char *limits;
@@ -1645,7 +1645,7 @@ lside2:					/* used if q?_path() is a macro */
  * (srow,scol).  NOTE this is (y,x)!  Mark the visible locations in the
  * array provided.
  */
-STATIC_OVL void
+static void
 view_from(srow, scol, loc_cs_rows, left_most, right_most, range, func, arg)
     int  srow, scol;	/* starting row and column */
     char **loc_cs_rows;	/* pointers to the rows of the could_see array */

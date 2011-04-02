@@ -5,16 +5,15 @@
 #include "hack.h"
 #include "lev.h"	/* for checking save modes */
 
-STATIC_DCL void NDECL(stoned_dialogue);
-STATIC_DCL void NDECL(vomiting_dialogue);
-STATIC_DCL void NDECL(choke_dialogue);
-STATIC_DCL void NDECL(slime_dialogue);
-STATIC_DCL void NDECL(slip_or_trip);
-STATIC_DCL void FDECL(see_lamp_flicker, (struct obj *, const char *));
-STATIC_DCL void FDECL(lantern_message, (struct obj *));
-STATIC_DCL void FDECL(cleanup_burn, (genericptr_t,long));
+static void NDECL(stoned_dialogue);
+static void NDECL(vomiting_dialogue);
+static void NDECL(choke_dialogue);
+static void NDECL(slime_dialogue);
+static void NDECL(slip_or_trip);
+static void FDECL(see_lamp_flicker, (struct obj *, const char *));
+static void FDECL(lantern_message, (struct obj *));
+static void FDECL(cleanup_burn, (genericptr_t,long));
 
-#ifdef OVLB
 
 /* He is being petrified - dialogue by inmet!tower */
 static NEARDATA const char * const stoned_texts[] = {
@@ -25,7 +24,7 @@ static NEARDATA const char * const stoned_texts[] = {
 	"You are a statue."			/* 1 */
 };
 
-STATIC_OVL void
+static void
 stoned_dialogue()
 {
 	register long i = (Stoned & TIMEOUT);
@@ -48,7 +47,7 @@ static NEARDATA const char * const vomiting_texts[] = {
 	"suddenly vomit!"			/* 2 */
 };
 
-STATIC_OVL void
+static void
 vomiting_dialogue()
 {
 	register long i = (Vomiting & TIMEOUT) / 3L;
@@ -88,7 +87,7 @@ static NEARDATA const char * const choke_texts2[] = {
 	"You suffocate."
 };
 
-STATIC_OVL void
+static void
 choke_dialogue()
 {
 	register long i = (Strangled & TIMEOUT);
@@ -116,7 +115,7 @@ static NEARDATA const char * const slime_texts[] = {
 	"You have become %s."             /* 1 */
 };
 
-STATIC_OVL void
+static void
 slime_dialogue()
 {
 	register long i = (Slimed & TIMEOUT) / 2L;
@@ -154,8 +153,6 @@ burn_away_slime()
 }
 
 
-#endif /* OVLB */
-#ifdef OVL0
 
 void
 nh_timeout()
@@ -353,8 +350,6 @@ nh_timeout()
 	run_timers();
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 void
 fall_asleep(how_long, wakeup_msg)
@@ -613,7 +608,7 @@ struct obj *figurine;
 }
 
 /* give a fumble message */
-STATIC_OVL void
+static void
 slip_or_trip()
 {
 	struct obj *otmp = vobj_at(u.ux, u.uy);
@@ -698,7 +693,7 @@ slip_or_trip()
 }
 
 /* Print a lamp flicker message with tailer. */
-STATIC_OVL void
+static void
 see_lamp_flicker(obj, tailer)
 struct obj *obj;
 const char *tailer;
@@ -715,7 +710,7 @@ const char *tailer;
 }
 
 /* Print a dimming message for brass lanterns. */
-STATIC_OVL void
+static void
 lantern_message(obj)
 struct obj *obj;
 {
@@ -1155,8 +1150,6 @@ end_burn(obj, timer_attached)
 	    impossible("end_burn: obj %s not timed!", xname(obj));
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 /*
  * Cleanup a burning object if timer stopped.
@@ -1183,8 +1176,6 @@ cleanup_burn(arg, expire_time)
 	update_inventory();
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 void
 do_storms()
@@ -1225,10 +1216,8 @@ do_storms()
     } else
 	You_hear("a rumbling noise.");
 }
-#endif /* OVL1 */
 
 
-#ifdef OVL0
 /* ------------------------------------------------------------------------- */
 /*
  * Generic Timeout Functions.
@@ -1283,16 +1272,16 @@ do_storms()
  */
 
 #ifdef WIZARD
-STATIC_DCL const char *FDECL(kind_name, (SHORT_P));
-STATIC_DCL void FDECL(print_queue, (winid, timer_element *));
+static const char *FDECL(kind_name, (SHORT_P));
+static void FDECL(print_queue, (winid, timer_element *));
 #endif
-STATIC_DCL void FDECL(insert_timer, (timer_element *));
-STATIC_DCL timer_element *FDECL(remove_timer, (timer_element **, SHORT_P,
+static void FDECL(insert_timer, (timer_element *));
+static timer_element *FDECL(remove_timer, (timer_element **, SHORT_P,
 								genericptr_t));
-STATIC_DCL void FDECL(write_timer, (int, timer_element *));
-STATIC_DCL boolean FDECL(mon_is_local, (struct monst *));
-STATIC_DCL boolean FDECL(timer_is_local, (timer_element *));
-STATIC_DCL int FDECL(maybe_write_timer, (int, int, BOOLEAN_P));
+static void FDECL(write_timer, (int, timer_element *));
+static boolean FDECL(mon_is_local, (struct monst *));
+static boolean FDECL(timer_is_local, (timer_element *));
+static int FDECL(maybe_write_timer, (int, int, BOOLEAN_P));
 
 /* ordered timer list */
 static timer_element *timer_base;		/* "active" */
@@ -1325,7 +1314,7 @@ static const ttable timeout_funcs[NUM_TIME_FUNCS] = {
 
 #if defined(WIZARD)
 
-STATIC_OVL const char *
+static const char *
 kind_name(kind)
     short kind;
 {
@@ -1338,7 +1327,7 @@ kind_name(kind)
     return "unknown";
 }
 
-STATIC_OVL void
+static void
 print_queue(win, base)
     winid win;
     timer_element *base;
@@ -1565,7 +1554,7 @@ obj_stop_timers(obj)
 
 
 /* Insert timer into the global queue */
-STATIC_OVL void
+static void
 insert_timer(gnu)
     timer_element *gnu;
 {
@@ -1582,7 +1571,7 @@ insert_timer(gnu)
 }
 
 
-STATIC_OVL timer_element *
+static timer_element *
 remove_timer(base, func_index, arg)
 timer_element **base;
 short func_index;
@@ -1604,7 +1593,7 @@ genericptr_t arg;
 }
 
 
-STATIC_OVL void
+static void
 write_timer(fd, timer)
     int fd;
     timer_element *timer;
@@ -1678,7 +1667,7 @@ obj_is_local(obj)
  * Return TRUE if the given monster will stay on the level when the
  * level is saved.
  */
-STATIC_OVL boolean
+static boolean
 mon_is_local(mon)
 struct monst *mon;
 {
@@ -1697,7 +1686,7 @@ struct monst *mon;
  * Return TRUE if the timer is attached to something that will stay on the
  * level when the level is saved.
  */
-STATIC_OVL boolean
+static boolean
 timer_is_local(timer)
     timer_element *timer;
 {
@@ -1716,7 +1705,7 @@ timer_is_local(timer)
  * Part of the save routine.  Count up the number of timers that would
  * be written.  If write_it is true, actually write the timer.
  */
-STATIC_OVL int
+static int
 maybe_write_timer(fd, range, write_it)
     int fd, range;
     boolean write_it;
@@ -1850,7 +1839,5 @@ relink_timers(ghostly)
 	}
     }
 }
-
-#endif /* OVL0 */
 
 /*timeout.c*/

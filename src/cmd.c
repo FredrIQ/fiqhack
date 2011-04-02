@@ -25,9 +25,7 @@
 extern int NDECL(wiz_debug_cmd);
 #endif
 
-#ifdef OVL1
 static int NDECL((*timed_occ_fn));
-#endif /* OVL1 */
 
 STATIC_PTR int NDECL(doprev_message);
 STATIC_PTR int NDECL(timed_occupation);
@@ -52,14 +50,14 @@ STATIC_PTR int NDECL(wiz_show_wmodes);
 #ifdef DEBUG_MIGRATING_MONS
 STATIC_PTR int NDECL(wiz_migrate_mons);
 #endif
-STATIC_DCL void FDECL(count_obj, (struct obj *, long *, long *, BOOLEAN_P, BOOLEAN_P));
-STATIC_DCL void FDECL(obj_chain, (winid, const char *, struct obj *, long *, long *));
-STATIC_DCL void FDECL(mon_invent_chain, (winid, const char *, struct monst *, long *, long *));
-STATIC_DCL void FDECL(mon_chain, (winid, const char *, struct monst *, long *, long *));
-STATIC_DCL void FDECL(contained, (winid, const char *, long *, long *));
+static void FDECL(count_obj, (struct obj *, long *, long *, BOOLEAN_P, BOOLEAN_P));
+static void FDECL(obj_chain, (winid, const char *, struct obj *, long *, long *));
+static void FDECL(mon_invent_chain, (winid, const char *, struct monst *, long *, long *));
+static void FDECL(mon_chain, (winid, const char *, struct monst *, long *, long *));
+static void FDECL(contained, (winid, const char *, long *, long *));
 STATIC_PTR int NDECL(wiz_show_stats);
 #  ifdef PORT_DEBUG
-STATIC_DCL int NDECL(wiz_port_debug);
+static int NDECL(wiz_port_debug);
 #  endif
 # endif
 STATIC_PTR int NDECL(enter_explore_mode);
@@ -67,20 +65,17 @@ STATIC_PTR int NDECL(doattributes);
 STATIC_PTR int NDECL(doconduct); /**/
 STATIC_PTR boolean NDECL(minimal_enlightenment);
 
-#ifdef OVLB
-STATIC_DCL void FDECL(enlght_line, (const char *,const char *,const char *));
-STATIC_DCL char *FDECL(enlght_combatinc, (const char *,int,int,char *));
+static void FDECL(enlght_line, (const char *,const char *,const char *));
+static char *FDECL(enlght_combatinc, (const char *,int,int,char *));
 #ifdef UNIX
 static void NDECL(end_of_input);
 #endif
-#endif /* OVLB */
 
 static const char* readchar_queue="";
 
-STATIC_DCL char *NDECL(parse);
-STATIC_DCL boolean FDECL(help_dir, (CHAR_P,const char *));
+static char *NDECL(parse);
+static boolean FDECL(help_dir, (CHAR_P,const char *));
 
-#ifdef OVL1
 
 STATIC_PTR int
 doprev_message()
@@ -203,8 +198,6 @@ char ch;
 }
 #endif /* REDO */
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 STATIC_PTR int
 doextcmd()	/* here after # - now read a full-word command */
@@ -1054,7 +1047,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
  * to help refresh them about who/what they are.
  * Returns FALSE if menu cancelled (dismissed with ESC), TRUE otherwise.
  */
-STATIC_OVL boolean
+static boolean
 minimal_enlightenment()
 {
 	winid tmpwin;
@@ -1264,8 +1257,6 @@ int final;
 	destroy_nhwindow(en_win);
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 #ifndef M
 # define M(c)		((c) - 128)
@@ -1500,7 +1491,7 @@ static const char template[] = "%-18s %4ld  %6ld";
 static const char count_str[] = "                   count  bytes";
 static const char separator[] = "------------------ -----  ------";
 
-STATIC_OVL void
+static void
 count_obj(chain, total_count, total_size, top, recurse)
 	struct obj *chain;
 	long *total_count;
@@ -1523,7 +1514,7 @@ count_obj(chain, total_count, total_size, top, recurse)
 	*total_size += size;
 }
 
-STATIC_OVL void
+static void
 obj_chain(win, src, chain, total_count, total_size)
 	winid win;
 	const char *src;
@@ -1541,7 +1532,7 @@ obj_chain(win, src, chain, total_count, total_size)
 	putstr(win, 0, buf);
 }
 
-STATIC_OVL void
+static void
 mon_invent_chain(win, src, chain, total_count, total_size)
 	winid win;
 	const char *src;
@@ -1561,7 +1552,7 @@ mon_invent_chain(win, src, chain, total_count, total_size)
 	putstr(win, 0, buf);
 }
 
-STATIC_OVL void
+static void
 contained(win, src, total_count, total_size)
 	winid win;
 	const char *src;
@@ -1588,7 +1579,7 @@ contained(win, src, total_count, total_size)
 	putstr(win, 0, buf);
 }
 
-STATIC_OVL void
+static void
 mon_chain(win, src, chain, total_count, total_size)
 	winid win;
 	const char *src;
@@ -2017,7 +2008,7 @@ const char *s;
 	return 1;
 }
 
-STATIC_OVL boolean
+static boolean
 help_dir(sym, msg)
 char sym;
 const char *msg;
@@ -2097,8 +2088,6 @@ const char *msg;
 	return TRUE;
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 void
 confdir()
@@ -2109,8 +2098,6 @@ confdir()
 	return;
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 int
 isok(x,y)
@@ -2225,7 +2212,7 @@ click_to_cmd(x, y, mod)
     return cmd;
 }
 
-STATIC_OVL char *
+static char *
 parse()
 {
 #ifdef LINT	/* static char in_line[COLNO]; */
@@ -2292,8 +2279,6 @@ parse()
 	return(in_line);
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 #ifdef UNIX
 static
@@ -2310,8 +2295,6 @@ end_of_input()
 }
 #endif
 
-#endif /* OVLB */
-#ifdef OVL0
 
 char
 readchar()
@@ -2433,8 +2416,7 @@ wiz_port_debug()
 }
 # endif /*PORT_DEBUG*/
 
-#endif /* OVL0 */
-#ifdef OVLB
+
 /*
  *   Parameter validator for generic yes/no function to prevent
  *   the core from sending too long a prompt string to the
@@ -2459,6 +2441,5 @@ char def;
 	Strcat(qbuf,"...");
 	return (*windowprocs.win_yn_function)(qbuf, resp, def);
 }
-#endif
 
 /*cmd.c*/

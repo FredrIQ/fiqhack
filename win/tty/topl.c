@@ -14,12 +14,11 @@
 #define C(c)	(0x1f & (c))
 #endif
 
-STATIC_DCL void FDECL(redotoplin, (const char*));
-STATIC_DCL void FDECL(topl_putsym, (CHAR_P));
-STATIC_DCL void NDECL(remember_topl);
-STATIC_DCL void FDECL(removetopl, (int));
+static void FDECL(redotoplin, (const char*));
+static void FDECL(topl_putsym, (CHAR_P));
+static void NDECL(remember_topl);
+static void FDECL(removetopl, (int));
 
-#ifdef OVLB
 
 int
 tty_doprev_message()
@@ -117,10 +116,8 @@ tty_doprev_message()
     return 0;
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
-STATIC_OVL void
+static void
 redotoplin(str)
     const char *str;
 {
@@ -140,7 +137,7 @@ redotoplin(str)
 		more();
 }
 
-STATIC_OVL void
+static void
 remember_topl()
 {
     register struct WinDesc *cw = wins[WIN_MESSAGE];
@@ -169,8 +166,6 @@ const char *s;
     ttyDisplay->toplin = 1;
 }
 
-#endif /* OVL1 */
-#ifdef OVL2
 
 void
 more()
@@ -258,7 +253,7 @@ update_topl(bp)
 	if(!(cw->flags & WIN_STOP)) redotoplin(toplines);
 }
 
-STATIC_OVL
+static
 void
 topl_putsym(c)
     char c;
@@ -307,7 +302,7 @@ putsyms(str)
 	topl_putsym(*str++);
 }
 
-STATIC_OVL void
+static void
 removetopl(n)
 register int n;
 {
@@ -459,8 +454,6 @@ char def;
 
 	return q;
 }
-
-#endif /* OVL2 */
 
 #endif /* TTY_GRAPHICS */
 

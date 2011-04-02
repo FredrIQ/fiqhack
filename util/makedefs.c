@@ -523,13 +523,6 @@ static const char *build_opts[] = {
 #ifdef NEWS
 		"news file",
 #endif
-#ifdef OVERLAY
-#  ifdef VROOMM
-		"VROOMM overlays",
-#  else
-		"overlays",
-#  endif
-#endif
 #ifdef REDO
 		"redo command",
 #endif

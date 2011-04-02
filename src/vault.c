@@ -5,20 +5,19 @@
 #include "hack.h"
 #include "vault.h"
 
-STATIC_DCL struct monst *NDECL(findgd);
+static struct monst *NDECL(findgd);
 
 #define g_monnam(mtmp) \
 	x_monnam(mtmp, ARTICLE_NONE, (char *)0, SUPPRESS_IT, FALSE)
 
-#ifdef OVLB
 
-STATIC_DCL boolean FDECL(clear_fcorr, (struct monst *,BOOLEAN_P));
-STATIC_DCL void FDECL(restfakecorr,(struct monst *));
-STATIC_DCL boolean FDECL(in_fcorridor, (struct monst *,int,int));
-STATIC_DCL void FDECL(move_gold,(struct obj *,int));
-STATIC_DCL void FDECL(wallify_vault,(struct monst *));
+static boolean FDECL(clear_fcorr, (struct monst *,BOOLEAN_P));
+static void FDECL(restfakecorr,(struct monst *));
+static boolean FDECL(in_fcorridor, (struct monst *,int,int));
+static void FDECL(move_gold,(struct obj *,int));
+static void FDECL(wallify_vault,(struct monst *));
 
-STATIC_OVL boolean
+static boolean
 clear_fcorr(grd, forceshow)
 register struct monst *grd;
 register boolean forceshow;
@@ -59,7 +58,7 @@ register boolean forceshow;
 	return(TRUE);
 }
 
-STATIC_OVL void
+static void
 restfakecorr(grd)
 register struct monst *grd;
 {
@@ -85,7 +84,7 @@ register struct monst *grd;
 	return(dispose);
 }
 
-STATIC_OVL boolean
+static boolean
 in_fcorridor(grd, x, y)
 register struct monst *grd;
 int x, y;
@@ -99,7 +98,7 @@ int x, y;
 	return(FALSE);
 }
 
-STATIC_OVL
+static
 struct monst *
 findgd()
 {
@@ -111,8 +110,6 @@ findgd()
 	return((struct monst *)0);
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 char
 vault_occupied(array)
@@ -343,10 +340,8 @@ fnd:
     }
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
-STATIC_OVL void
+static void
 move_gold(gold, vroom)
 struct obj *gold;
 int vroom;
@@ -362,7 +357,7 @@ int vroom;
 	newsym(nx,ny);
 }
 
-STATIC_OVL void
+static void
 wallify_vault(grd)
 struct monst *grd;
 {
@@ -812,7 +807,5 @@ gd_sound()  /* prevent "You hear footsteps.." when inappropriate */
 	if (vault_occupied(u.urooms)) return(FALSE);
 	else return((boolean)(grd == (struct monst *)0));
 }
-
-#endif /* OVLB */
 
 /*vault.c*/

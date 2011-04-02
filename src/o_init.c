@@ -5,16 +5,16 @@
 #include "hack.h"
 #include "lev.h"	/* save & restore info */
 
-STATIC_DCL void FDECL(setgemprobs, (d_level*));
-STATIC_DCL void FDECL(shuffle,(int,int,BOOLEAN_P));
-STATIC_DCL void NDECL(shuffle_all);
-STATIC_DCL boolean FDECL(interesting_to_discover,(int));
+static void FDECL(setgemprobs, (d_level*));
+static void FDECL(shuffle,(int,int,BOOLEAN_P));
+static void NDECL(shuffle_all);
+static boolean FDECL(interesting_to_discover,(int));
 
 
 static NEARDATA short disco[NUM_OBJECTS] = DUMMY;
 
 #ifdef USE_TILES
-STATIC_DCL void NDECL(shuffle_tiles);
+static void NDECL(shuffle_tiles);
 extern short glyph2tile[];	/* from tile.c */
 
 /* Shuffle tile assignments to match descriptions, so a red potion isn't
@@ -26,7 +26,7 @@ extern short glyph2tile[];	/* from tile.c */
  * is restored.  So might as well do that the first time instead of writing
  * another routine.
  */
-STATIC_OVL void
+static void
 shuffle_tiles()
 {
 	int i;
@@ -41,7 +41,7 @@ shuffle_tiles()
 }
 #endif	/* USE_TILES */
 
-STATIC_OVL void
+static void
 setgemprobs(dlev)
 d_level *dlev;
 {
@@ -68,7 +68,7 @@ d_level *dlev;
 }
 
 /* shuffle descriptions on objects o_low to o_high */
-STATIC_OVL void
+static void
 shuffle(o_low, o_high, domaterial)
 	int o_low, o_high;
 	boolean domaterial;
@@ -176,7 +176,7 @@ register char oclass;
 #endif
 }
 
-STATIC_OVL void
+static void
 shuffle_all()
 {
 	int first, last, oclass;
@@ -347,7 +347,7 @@ register int oindx;
     }
 }
 
-STATIC_OVL boolean
+static boolean
 interesting_to_discover(i)
 register int i;
 {

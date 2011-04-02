@@ -7,18 +7,18 @@
 #include "hack.h"
 #include "edog.h"
 
-STATIC_DCL int FDECL(throw_obj, (struct obj *,int));
-STATIC_DCL void NDECL(autoquiver);
-STATIC_DCL int FDECL(gem_accept, (struct monst *, struct obj *));
-STATIC_DCL void FDECL(tmiss, (struct obj *, struct monst *));
-STATIC_DCL int FDECL(throw_gold, (struct obj *));
-STATIC_DCL void FDECL(check_shop_obj, (struct obj *,XCHAR_P,XCHAR_P,BOOLEAN_P));
-STATIC_DCL void FDECL(breakobj, (struct obj *,XCHAR_P,XCHAR_P,BOOLEAN_P,BOOLEAN_P));
-STATIC_DCL void FDECL(breakmsg, (struct obj *,BOOLEAN_P));
-STATIC_DCL boolean FDECL(toss_up,(struct obj *, BOOLEAN_P));
-STATIC_DCL boolean FDECL(throwing_weapon, (struct obj *));
-STATIC_DCL void FDECL(sho_obj_return_to_u, (struct obj *obj));
-STATIC_DCL boolean FDECL(mhurtle_step, (genericptr_t,int,int));
+static int FDECL(throw_obj, (struct obj *,int));
+static void NDECL(autoquiver);
+static int FDECL(gem_accept, (struct monst *, struct obj *));
+static void FDECL(tmiss, (struct obj *, struct monst *));
+static int FDECL(throw_gold, (struct obj *));
+static void FDECL(check_shop_obj, (struct obj *,XCHAR_P,XCHAR_P,BOOLEAN_P));
+static void FDECL(breakobj, (struct obj *,XCHAR_P,XCHAR_P,BOOLEAN_P,BOOLEAN_P));
+static void FDECL(breakmsg, (struct obj *,BOOLEAN_P));
+static boolean FDECL(toss_up,(struct obj *, BOOLEAN_P));
+static boolean FDECL(throwing_weapon, (struct obj *));
+static void FDECL(sho_obj_return_to_u, (struct obj *obj));
+static boolean FDECL(mhurtle_step, (genericptr_t,int,int));
 
 
 static NEARDATA const char toss_objs[] =
@@ -33,7 +33,7 @@ extern boolean notonhead;	/* for long worms */
 
 
 /* Throw the selected object, asking for direction */
-STATIC_OVL int
+static int
 throw_obj(obj, shotlimit)
 struct obj *obj;
 int shotlimit;
@@ -562,7 +562,7 @@ hurtle_step(arg, x, y)
     return TRUE;
 }
 
-STATIC_OVL boolean
+static boolean
 mhurtle_step(arg, x, y)
     genericptr_t arg;
     int x, y;
@@ -677,7 +677,7 @@ mhurtle(mon, dx, dy, range)
 	return;
 }
 
-STATIC_OVL void
+static void
 check_shop_obj(obj, x, y, broken)
 register struct obj *obj;
 register xchar x, y;
@@ -718,7 +718,7 @@ register boolean broken;
  *
  * Returns FALSE if the object is gone.
  */
-STATIC_OVL boolean
+static boolean
 toss_up(obj, hitsroof)
 struct obj *obj;
 boolean hitsroof;
@@ -825,7 +825,7 @@ boolean hitsroof;
 }
 
 /* return true for weapon meant to be thrown; excludes ammo */
-STATIC_OVL boolean
+static boolean
 throwing_weapon(obj)
 struct obj *obj;
 {
@@ -838,7 +838,7 @@ struct obj *obj;
 }
 
 /* the currently thrown object is returning to you (not for boomerangs) */
-STATIC_OVL void
+static void
 sho_obj_return_to_u(obj)
 struct obj *obj;
 {
@@ -1146,7 +1146,7 @@ boolean mon_notices;
 }
 
 /* thrown object misses target monster */
-STATIC_OVL void
+static void
 tmiss(obj, mon)
 struct obj *obj;
 struct monst *mon;
@@ -1411,7 +1411,7 @@ register struct obj   *obj;
 	return 0;
 }
 
-STATIC_OVL int
+static int
 gem_accept(mon, obj)
 register struct monst *mon;
 register struct obj *obj;
@@ -1550,7 +1550,7 @@ xchar x, y;		/* object location (ox, oy may not be right) */
  * Unconditionally break an object. Assumes all resistance checks
  * and break messages have been delivered prior to getting here.
  */
-STATIC_OVL void
+static void
 breakobj(obj, x, y, hero_caused, from_invent)
 struct obj *obj;
 xchar x, y;		/* object location (ox, oy may not be right) */
@@ -1646,7 +1646,7 @@ struct obj *obj;
 	}
 }
 
-STATIC_OVL void
+static void
 breakmsg(obj, in_view)
 struct obj *obj;
 boolean in_view;
@@ -1688,7 +1688,7 @@ boolean in_view;
 	}
 }
 
-STATIC_OVL int
+static int
 throw_gold(obj)
 struct obj *obj;
 {

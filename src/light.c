@@ -38,16 +38,14 @@
  * across saves and restores.
  */
 
-#ifdef OVL3
-
 /* flags */
 #define LSF_SHOW	0x1		/* display the light source */
 #define LSF_NEEDS_FIXUP	0x2		/* need oid fixup */
 
 static light_source *light_base = 0;
 
-STATIC_DCL void FDECL(write_ls, (int, light_source *));
-STATIC_DCL int FDECL(maybe_write_ls, (int, int, BOOLEAN_P));
+static void FDECL(write_ls, (int, light_source *));
+static int FDECL(maybe_write_ls, (int, int, BOOLEAN_P));
 
 /* imported from vision.c, for small circles */
 extern char circle_data[];
@@ -335,7 +333,7 @@ relink_light_sources(ghostly)
  * sources that would be written.  If write_it is true, actually write
  * the light source out.
  */
-STATIC_OVL int
+static int
 maybe_write_ls(fd, range, write_it)
     int fd, range;
     boolean write_it;
@@ -372,7 +370,7 @@ maybe_write_ls(fd, range, write_it)
 }
 
 /* Write a light source structure to disk. */
-STATIC_OVL void
+static void
 write_ls(fd, ls)
     int fd;
     light_source *ls;
@@ -620,7 +618,5 @@ wiz_light_sources()
 }
 
 #endif /* WIZARD */
-
-#endif /* OVL3 */
 
 /*light.c*/

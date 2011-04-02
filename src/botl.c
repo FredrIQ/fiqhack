@@ -4,7 +4,6 @@
 
 #include "hack.h"
 
-#ifdef OVL0
 extern const char *hu_stat[];	/* defined in eat.c */
 
 const char * const enc_stat[] = {
@@ -16,9 +15,9 @@ const char * const enc_stat[] = {
 	"Overloaded"
 };
 
-STATIC_DCL void NDECL(bot1);
-STATIC_DCL void NDECL(bot2);
-#endif /* OVL0 */
+static void NDECL(bot1);
+static void NDECL(bot2);
+
 
 /* MAXCO must hold longest uncompressed status line, and must be larger
  * than COLNO
@@ -34,15 +33,9 @@ STATIC_DCL void NDECL(bot2);
 #define MAXCO (COLNO+20)
 #endif
 
-#ifndef OVLB
-STATIC_DCL int mrank_sz;
-#else /* OVLB */
-STATIC_OVL NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
-#endif /* OVLB */
+static NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
+static const char *NDECL(rank);
 
-STATIC_DCL const char *NDECL(rank);
-
-#ifdef OVL1
 
 /* convert experience level (1..30) to rank index (0..8) */
 int
@@ -92,7 +85,7 @@ rank_of(lev, monnum, female)
 }
 
 
-STATIC_OVL const char *
+static const char *
 rank()
 {
 	return(rank_of(u.ulevel, Role_switch, flags.female));
@@ -126,8 +119,6 @@ int *rank_indx, *title_length;
 	return NON_PM;
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 void
 max_rank_sz()
@@ -141,8 +132,6 @@ max_rank_sz()
 	return;
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 #ifdef SCORE_ON_BOTL
 long
@@ -165,7 +154,7 @@ botl_score()
 }
 #endif
 
-STATIC_OVL void
+static void
 bot1()
 {
 	char newbot1[MAXCO];
@@ -242,7 +231,7 @@ char *buf;
 	return ret;
 }
 
-STATIC_OVL void
+static void
 bot2()
 {
 	char  newbot2[MAXCO];
@@ -303,7 +292,5 @@ bot()
 	bot2();
 	flags.botl = flags.botlx = 0;
 }
-
-#endif /* OVL0 */
 
 /*botl.c*/

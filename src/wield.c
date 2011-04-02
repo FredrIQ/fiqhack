@@ -50,7 +50,7 @@
  */
 
 
-STATIC_DCL int FDECL(ready_weapon, (struct obj *));
+static int FDECL(ready_weapon, (struct obj *));
 
 /* used by will_weld() */
 /* probably should be renamed */
@@ -112,7 +112,7 @@ register struct obj *obj;
 	update_inventory();
 }
 
-STATIC_OVL int
+static int
 ready_weapon(wep)
 struct obj *wep;
 {

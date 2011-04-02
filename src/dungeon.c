@@ -6,7 +6,6 @@
 #include "dgn_file.h"
 #include "dlb.h"
 
-#ifdef OVL1
 
 #define DUNGEON_FILE	"dungeon"
 
@@ -38,28 +37,28 @@ struct lchoice {
 };
 
 static void FDECL(Fread, (genericptr_t, int, int, dlb *));
-STATIC_DCL xchar FDECL(dname_to_dnum, (const char *));
-STATIC_DCL int FDECL(find_branch, (const char *, struct proto_dungeon *));
-STATIC_DCL xchar FDECL(parent_dnum, (const char *, struct proto_dungeon *));
-STATIC_DCL int FDECL(level_range, (XCHAR_P,int,int,int,struct proto_dungeon *,int *));
-STATIC_DCL xchar FDECL(parent_dlevel, (const char *, struct proto_dungeon *));
-STATIC_DCL int FDECL(correct_branch_type, (struct tmpbranch *));
-STATIC_DCL branch *FDECL(add_branch, (int, int, struct proto_dungeon *));
-STATIC_DCL void FDECL(add_level, (s_level *));
-STATIC_DCL void FDECL(init_level, (int,int,struct proto_dungeon *));
-STATIC_DCL int FDECL(possible_places, (int, boolean *, struct proto_dungeon *));
-STATIC_DCL xchar FDECL(pick_level, (boolean *, int));
-STATIC_DCL boolean FDECL(place_level, (int, struct proto_dungeon *));
+static xchar FDECL(dname_to_dnum, (const char *));
+static int FDECL(find_branch, (const char *, struct proto_dungeon *));
+static xchar FDECL(parent_dnum, (const char *, struct proto_dungeon *));
+static int FDECL(level_range, (XCHAR_P,int,int,int,struct proto_dungeon *,int *));
+static xchar FDECL(parent_dlevel, (const char *, struct proto_dungeon *));
+static int FDECL(correct_branch_type, (struct tmpbranch *));
+static branch *FDECL(add_branch, (int, int, struct proto_dungeon *));
+static void FDECL(add_level, (s_level *));
+static void FDECL(init_level, (int,int,struct proto_dungeon *));
+static int FDECL(possible_places, (int, boolean *, struct proto_dungeon *));
+static xchar FDECL(pick_level, (boolean *, int));
+static boolean FDECL(place_level, (int, struct proto_dungeon *));
 #ifdef WIZARD
-STATIC_DCL const char *FDECL(br_string, (int));
-STATIC_DCL void FDECL(print_branch, (winid, int, int, int, BOOLEAN_P, struct lchoice *));
+static const char *FDECL(br_string, (int));
+static void FDECL(print_branch, (winid, int, int, int, BOOLEAN_P, struct lchoice *));
 #endif
 
 #ifdef DEBUG
 #define DD	dungeons[i]
-STATIC_DCL void NDECL(dumpit);
+static void NDECL(dumpit);
 
-STATIC_OVL void
+static void
 dumpit()
 {
 	int	i;
@@ -197,7 +196,7 @@ Fread(ptr, size, nitems, stream)
 	}
 }
 
-STATIC_OVL xchar
+static xchar
 dname_to_dnum(s)
 const char	*s;
 {
@@ -222,7 +221,7 @@ find_level(s)
 }
 
 /* Find the branch that links the named dungeon. */
-STATIC_OVL int
+static int
 find_branch(s, pd)
 	const char *s;		/* dungeon name */
 	struct proto_dungeon *pd;
@@ -254,7 +253,7 @@ find_branch(s, pd)
  * Find the "parent" by searching the prototype branch list for the branch
  * listing, then figuring out to which dungeon it belongs.
  */
-STATIC_OVL xchar
+static xchar
 parent_dnum(s, pd)
 const char	   *s;	/* dungeon name */
 struct proto_dungeon *pd;
@@ -286,7 +285,7 @@ struct proto_dungeon *pd;
  *	 a negative random component means from the (adjusted) base to the
  *	 end of the dungeon.
  */
-STATIC_OVL int
+static int
 level_range(dgn, base, rand, chain, pd, adjusted_base)
 	xchar	dgn;
 	int	base, rand, chain;
@@ -319,7 +318,7 @@ level_range(dgn, base, rand, chain, pd, adjusted_base)
 	return 1;
 }
 
-STATIC_OVL xchar
+static xchar
 parent_dlevel(s, pd)
 	const char	*s;
 	struct proto_dungeon *pd;
@@ -347,7 +346,7 @@ parent_dlevel(s, pd)
 }
 
 /* Convert from the temporary branch type to the dungeon branch type. */
-STATIC_OVL int
+static int
 correct_branch_type(tbr)
     struct tmpbranch *tbr;
 {
@@ -414,7 +413,7 @@ insert_branch(new_branch, extract_first)
 }
 
 /* Add a dungeon branch to the branch list. */
-STATIC_OVL branch *
+static branch *
 add_branch(dgn, child_entry_level, pd)
     int dgn;
     int child_entry_level;
@@ -445,7 +444,7 @@ add_branch(dgn, child_entry_level, pd)
  * level that has a dungeon number less than the dungeon number of the
  * last entry.
  */
-STATIC_OVL void
+static void
 add_level(new_lev)
     s_level *new_lev;
 {
@@ -467,7 +466,7 @@ add_level(new_lev)
 	}
 }
 
-STATIC_OVL void
+static void
 init_level(dgn, proto_index, pd)
 	int dgn, proto_index;
 	struct proto_dungeon *pd;
@@ -502,7 +501,7 @@ init_level(dgn, proto_index, pd)
 	new_level->next    = (s_level *) 0;
 }
 
-STATIC_OVL int
+static int
 possible_places(idx, map, pd)
     int idx;		/* prototype index */
     boolean *map;	/* array MAXLEVEL+1 in length */
@@ -534,7 +533,7 @@ possible_places(idx, map, pd)
 }
 
 /* Pick the nth TRUE entry in the given boolean array. */
-STATIC_OVL xchar
+static xchar
 pick_level(map, nth)
     boolean *map;	/* an array MAXLEVEL+1 in size */
     int nth;
@@ -564,7 +563,7 @@ int d;
  * all possible places have been tried.  If all possible places have
  * been exausted, return false.
  */
-STATIC_OVL boolean
+static boolean
 place_level(proto_index, pd)
     int proto_index;
     struct proto_dungeon *pd;
@@ -994,8 +993,6 @@ xchar	ledgerno;
 	return((xchar)(ledgerno - dungeons[ledger_to_dnum(ledgerno)].ledger_start));
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 /* returns the depth of a level, in floors below the surface	*/
 /* (note levels in different dungeons can have the same depth).	*/
@@ -1013,8 +1010,6 @@ d_level	*lev1, *lev2;
 	return((boolean)((lev1->dnum == lev2->dnum) && (lev1->dlevel == lev2->dlevel)));
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 /* is this level referenced in the special level chain? */
 s_level *
@@ -1261,8 +1256,6 @@ int levnum;
 	newlevel->dlevel = levnum;
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 boolean
 In_quest(lev)	/* are you in the quest dungeon? */
@@ -1271,8 +1264,6 @@ d_level *lev;
 	return((boolean)(lev->dnum == quest_dnum));
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 boolean
 In_mines(lev)	/* are you in the mines dungeon? */
@@ -1360,8 +1351,6 @@ d_level	*lev;
 	return FALSE;
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 boolean
 In_hell(lev)	/* are you in one of the Hell levels? */
@@ -1370,8 +1359,6 @@ d_level	*lev;
 	return((boolean)(dungeons[lev->dnum].flags.hellish));
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 void
 find_hell(lev)	/* sets *lev to be the gateway to Gehennom... */
@@ -1413,8 +1400,6 @@ int range;
 		dest->dlevel = 1;
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 int
 induced_align(pct)
@@ -1433,8 +1418,6 @@ int	pct;
 	return(Align2amask(al));
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 boolean
 Invocation_lev(lev)
@@ -1530,7 +1513,7 @@ const char *nam;
 #ifdef WIZARD
 
 /* Convert a branch type to a string usable by print_dungeon(). */
-STATIC_OVL const char *
+static const char *
 br_string(type)
     int type;
 {
@@ -1544,7 +1527,7 @@ br_string(type)
 }
 
 /* Print all child branches between the lower and upper bounds. */
-STATIC_OVL void
+static void
 print_branch(win, dnum, lower_bound, upper_bound, bymenu, lchoices)
     winid win;
     int   dnum;
@@ -1734,7 +1717,5 @@ xchar *rdgn;
     return 0;
 }
 #endif /* WIZARD */
-
-#endif /* OVL1 */
 
 /*dungeon.c*/

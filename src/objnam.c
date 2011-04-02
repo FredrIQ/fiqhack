@@ -9,10 +9,8 @@
 #define SCHAR_LIM 127
 #define NUMOBUF 12
 
-STATIC_DCL char *FDECL(strprepend,(char *,const char *));
-#ifdef OVLB
+static char *FDECL(strprepend,(char *,const char *));
 static boolean FDECL(wishymatch, (const char *,const char *,BOOLEAN_P));
-#endif
 static char *NDECL(nextobuf);
 static void FDECL(add_erosion_words, (struct obj *, char *));
 
@@ -29,13 +27,8 @@ struct Jitem {
 			   typ != BLACK_OPAL && 	\
 			   typ != EMERALD && typ != OPAL)))
 
-#ifndef OVLB
 
-STATIC_DCL struct Jitem Japanese_items[];
-
-#else /* OVLB */
-
-STATIC_OVL struct Jitem Japanese_items[] = {
+static struct Jitem Japanese_items[] = {
 	{ SHORT_SWORD, "wakizashi" },
 	{ BROADSWORD, "ninja-to" },
 	{ FLAIL, "nunchaku" },
@@ -51,13 +44,10 @@ STATIC_OVL struct Jitem Japanese_items[] = {
 	{0, "" }
 };
 
-#endif /* OVLB */
 
-STATIC_DCL const char *FDECL(Japanese_item_name,(int i));
+static const char *FDECL(Japanese_item_name,(int i));
 
-#ifdef OVL1
-
-STATIC_OVL char *
+static char *
 strprepend(s,pref)
 register char *s;
 register const char *pref;
@@ -73,8 +63,6 @@ register const char *pref;
 	return(s);
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 /* manage a pool of BUFSZ buffers, so callers don't have to */
 static char *
@@ -227,8 +215,6 @@ boolean juice;	/* whether or not to append " juice" to the name */
     return buf;
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 char *
 xname(obj)
@@ -500,8 +486,6 @@ struct obj *obj;
     return onm;
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 /* used for naming "the unique_item" instead of "a unique_item" */
 boolean
@@ -786,8 +770,6 @@ ring:
 	return(bp);
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 /* used from invent.c */
 boolean
@@ -1243,8 +1225,6 @@ static const char wrpsym[] = {
 	FOOD_CLASS
 };
 
-#endif /* OVLB */
-#ifdef OVL0
 
 /* Plural routine; chiefly used for user-defined fruits.  We have to try to
  * account for everything reasonable the player has; something unreasonable
@@ -1473,21 +1453,14 @@ bottom:	if (excess) Strcpy(eos(str), excess);
 	return str;
 }
 
-#endif /* OVL0 */
 
 struct o_range {
 	const char *name, oclass;
 	int  f_o_range, l_o_range;
 };
 
-#ifndef OVLB
-
-STATIC_DCL const struct o_range o_ranges[];
-
-#else /* OVLB */
-
 /* wishable subranges of objects */
-STATIC_OVL NEARDATA const struct o_range o_ranges[] = {
+static NEARDATA const struct o_range o_ranges[] = {
 	{ "bag",	TOOL_CLASS,   SACK,	      BAG_OF_TRICKS },
 	{ "lamp",	TOOL_CLASS,   OIL_LAMP,	      MAGIC_LAMP },
 	{ "candle",	TOOL_CLASS,   TALLOW_CANDLE,  WAX_CANDLE },
@@ -2722,7 +2695,7 @@ int first,last;
 	return 0;
 }
 
-STATIC_OVL const char *
+static const char *
 Japanese_item_name(i)
 int i;
 {
@@ -2767,6 +2740,5 @@ struct monst *mtmp;
 	}
 	return "whatcha-may-callit";
 }
-#endif /* OVLB */
 
 /*objnam.c*/

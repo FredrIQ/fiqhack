@@ -4,9 +4,7 @@
 
 #include "hack.h"
 
-#ifdef OVLB
-
-STATIC_DCL void FDECL(do_oname, (struct obj *));
+static void FDECL(do_oname, (struct obj *));
 static void FDECL(getpos_help, (BOOLEAN_P,const char *));
 
 extern const char what_is_an_unknown_object[];		/* from pager.c */
@@ -281,7 +279,7 @@ do_mname()
  * when there might be pointers around in unknown places. For now: only
  * when obj is in the inventory.
  */
-STATIC_OVL
+static
 void
 do_oname(obj)
 register struct obj *obj;
@@ -522,8 +520,6 @@ register struct obj *obj;
 	}
 }
 
-#endif /*OVLB*/
-#ifdef OVL0
 
 static const char * const ghostnames[] = {
 	/* these names should have length < PL_NSIZ */
@@ -744,8 +740,6 @@ boolean called;
 	}
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 char *
 l_monnam(mtmp)
@@ -755,8 +749,6 @@ register struct monst *mtmp;
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, TRUE));
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 char *
 mon_nam(mtmp)
@@ -825,8 +817,6 @@ struct monst *mtmp;
 	return x_monnam(mtmp, prefix, (char *)0, suppression_flag, FALSE);
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 char *
 Adjmonnam(mtmp, adj)
@@ -972,9 +962,6 @@ roguename() /* Name of a Rogue player */
 		: "Glenn Wichman";
 }
 #endif /* REINCARNATION */
-#endif /* OVLB */
-
-#ifdef OVL2
 
 static NEARDATA const char * const hcolors[] = {
 	"ultraviolet", "infrared", "bluish-orange",
@@ -1033,6 +1020,5 @@ char *buf;
     }
     return buf;
 }
-#endif /* OVL2 */
 
 /*do_name.c*/

@@ -3,12 +3,12 @@
 
 #include "hack.h"
 
-STATIC_DCL int FDECL(cost,(struct obj *));
+static int FDECL(cost,(struct obj *));
 
 /*
  * returns basecost of a scroll or a spellbook
  */
-STATIC_OVL int
+static int
 cost(otmp)
 register struct obj *otmp;
 {

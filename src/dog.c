@@ -5,9 +5,7 @@
 #include "hack.h"
 #include "edog.h"
 
-#ifdef OVLB
-
-STATIC_DCL int NDECL(pet_type);
+static int NDECL(pet_type);
 
 void
 initedog(mtmp)
@@ -32,7 +30,7 @@ register struct monst *mtmp;
 	EDOG(mtmp)->killed_by_u = 0;
 }
 
-STATIC_OVL int
+static int
 pet_type()
 {
 	if (urole.petnum != NON_PM)
@@ -476,8 +474,6 @@ long nmv;		/* number of moves */
 	else mtmp->mhp += imv;
 }
 
-#endif /* OVLB */
-#ifdef OVL2
 
 /* called when you move to another level */
 void
@@ -578,8 +574,6 @@ boolean pets_only;	/* true for ascension or final escape */
 	}
 }
 
-#endif /* OVL2 */
-#ifdef OVLB
 
 void
 migrate_to_level(mtmp, tolev, xyloc, cc)
@@ -637,8 +631,6 @@ migrate_to_level(mtmp, tolev, xyloc, cc)
 	mtmp->mx = mtmp->my = 0;	/* this implies migration */
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 /* return quality of food; the lower the better */
 /* fungi will eat even tainted food */
@@ -738,8 +730,6 @@ register struct obj *obj;
 	}
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 struct monst *
 tamedog(mtmp, obj)
@@ -933,7 +923,5 @@ struct monst *mtmp;
 	    if (!mtmp->mtame) newsym(mtmp->mx, mtmp->my);
 	}
 }
-
-#endif /* OVLB */
 
 /*dog.c*/

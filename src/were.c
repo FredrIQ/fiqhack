@@ -4,8 +4,6 @@
 
 #include "hack.h"
 
-#ifdef OVL0
-
 void
 were_change(mon)
 register struct monst *mon;
@@ -35,12 +33,10 @@ register struct monst *mon;
 	}
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
-STATIC_DCL int FDECL(counter_were,(int));
+static int FDECL(counter_were,(int));
 
-STATIC_OVL int
+static int
 counter_were(pm)
 int pm;
 {
@@ -159,7 +155,5 @@ boolean purify;
 		(!Polymorph_control || yn("Remain in beast form?") == 'n'))
 	    rehumanize();
 }
-
-#endif /* OVLB */
 
 /*were.c*/

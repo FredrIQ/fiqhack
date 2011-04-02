@@ -20,19 +20,19 @@ static NEARDATA struct obj *book;	/* last/current book being xscribed */
 #define spellet(spell)	\
 	((char)((spell < 26) ? ('a' + spell) : ('A' + spell - 26)))
 
-STATIC_DCL int FDECL(spell_let_to_idx, (CHAR_P));
-STATIC_DCL boolean FDECL(cursed_book, (struct obj *bp));
-STATIC_DCL boolean FDECL(confused_book, (struct obj *));
-STATIC_DCL void FDECL(deadbook, (struct obj *));
+static int FDECL(spell_let_to_idx, (CHAR_P));
+static boolean FDECL(cursed_book, (struct obj *bp));
+static boolean FDECL(confused_book, (struct obj *));
+static void FDECL(deadbook, (struct obj *));
 STATIC_PTR int NDECL(learn);
-STATIC_DCL boolean FDECL(getspell, (int *));
-STATIC_DCL boolean FDECL(dospellmenu, (const char *,int,int *));
-STATIC_DCL int FDECL(percent_success, (int));
-STATIC_DCL int NDECL(throwspell);
-STATIC_DCL void NDECL(cast_protection);
-STATIC_DCL void FDECL(spell_backfire, (int));
-STATIC_DCL const char *FDECL(spelltypemnemonic, (int));
-STATIC_DCL int FDECL(isqrt, (int));
+static boolean FDECL(getspell, (int *));
+static boolean FDECL(dospellmenu, (const char *,int,int *));
+static int FDECL(percent_success, (int));
+static int NDECL(throwspell);
+static void NDECL(cast_protection);
+static void FDECL(spell_backfire, (int));
+static const char *FDECL(spelltypemnemonic, (int));
+static int FDECL(isqrt, (int));
 
 /* The roles[] table lists the role-specific values for tuning
  * percent_success().
@@ -91,7 +91,7 @@ STATIC_DCL int FDECL(isqrt, (int));
 static const char explodes[] = "radiates explosive energy";
 
 /* convert a letter into a number in the range 0..51, or -1 if not a letter */
-STATIC_OVL int
+static int
 spell_let_to_idx(ilet)
 char ilet;
 {
@@ -105,7 +105,7 @@ char ilet;
 }
 
 /* TRUE: book should be destroyed by caller */
-STATIC_OVL boolean
+static boolean
 cursed_book(bp)
 	struct obj *bp;
 {
@@ -175,7 +175,7 @@ cursed_book(bp)
 }
 
 /* study while confused: returns TRUE if the book is destroyed */
-STATIC_OVL boolean
+static boolean
 confused_book(spellbook)
 struct obj *spellbook;
 {
@@ -200,7 +200,7 @@ struct obj *spellbook;
 }
 
 /* special effects for The Book of the Dead */
-STATIC_OVL void
+static void
 deadbook(book2)
 struct obj *book2;
 {
@@ -534,7 +534,7 @@ age_spells()
  * Return TRUE if a spell was picked, with the spell index in the return
  * parameter.  Otherwise return FALSE.
  */
-STATIC_OVL boolean
+static boolean
 getspell(spell_no)
 	int *spell_no;
 {
@@ -587,7 +587,7 @@ docast()
 	return 0;
 }
 
-STATIC_OVL const char *
+static const char *
 spelltypemnemonic(skill)
 int skill;
 {
@@ -619,7 +619,7 @@ int booktype;
 	return (objects[booktype].oc_skill);
 }
 
-STATIC_OVL void
+static void
 cast_protection()
 {
 	int loglev = 0;
@@ -681,7 +681,7 @@ cast_protection()
 }
 
 /* attempting to cast a forgotten spell will cause disorientation */
-STATIC_OVL void
+static void
 spell_backfire(spell)
 int spell;
 {
@@ -964,7 +964,7 @@ boolean atme;
 }
 
 /* Choose location where spell takes effect. */
-STATIC_OVL int
+static int
 throwspell()
 {
 	coord cc;
@@ -1044,7 +1044,7 @@ dovspell()
 	return 0;
 }
 
-STATIC_OVL boolean
+static boolean
 dospellmenu(prompt, splaction, spell_no)
 const char *prompt;
 int splaction;	/* SPELLMENU_CAST, SPELLMENU_VIEW, or spl_book[] index */
@@ -1115,7 +1115,7 @@ int *spell_no;
 }
 
 /* Integer square root function without using floating point. */
-STATIC_OVL int
+static int
 isqrt(val)
 int val;
 {
@@ -1129,7 +1129,7 @@ int val;
     return rt;
 }
 
-STATIC_OVL int
+static int
 percent_success(spell)
 int spell;
 {

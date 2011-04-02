@@ -13,12 +13,12 @@
 #include <fcntl.h>
 #endif
 
-STATIC_DCL void FDECL(savelevchn, (int,int));
-STATIC_DCL void FDECL(savedamage, (int,int));
-STATIC_DCL void FDECL(saveobjchn, (int,struct obj *,int));
-STATIC_DCL void FDECL(savemonchn, (int,struct monst *,int));
-STATIC_DCL void FDECL(savetrapchn, (int,struct trap *,int));
-STATIC_DCL void FDECL(savegamestate, (int,int));
+static void FDECL(savelevchn, (int,int));
+static void FDECL(savedamage, (int,int));
+static void FDECL(saveobjchn, (int,struct obj *,int));
+static void FDECL(savemonchn, (int,struct monst *,int));
+static void FDECL(savetrapchn, (int,struct trap *,int));
+static void FDECL(savegamestate, (int,int));
 #ifdef GCC_WARN
 static long nulls[10];
 #else
@@ -189,7 +189,7 @@ dosave0()
 	return(1);
 }
 
-STATIC_OVL void
+static void
 savegamestate(fd, mode)
 register int fd, mode;
 {
@@ -466,7 +466,7 @@ bclose(fd)
     return;
 }
 
-STATIC_OVL void
+static void
 savelevchn(fd, mode)
 register int fd, mode;
 {
@@ -488,7 +488,7 @@ register int fd, mode;
 	    sp_levchn = 0;
 }
 
-STATIC_OVL void
+static void
 savedamage(fd, mode)
 register int fd, mode;
 {
@@ -513,7 +513,7 @@ register int fd, mode;
 	    level.damagelist = 0;
 }
 
-STATIC_OVL void
+static void
 saveobjchn(fd, otmp, mode)
 register int fd, mode;
 register struct obj *otmp;
@@ -545,7 +545,7 @@ register struct obj *otmp;
 	    bwrite(fd, (genericptr_t) &minusone, sizeof(int));
 }
 
-STATIC_OVL void
+static void
 savemonchn(fd, mtmp, mode)
 register int fd, mode;
 register struct monst *mtmp;
@@ -575,7 +575,7 @@ register struct monst *mtmp;
 	    bwrite(fd, (genericptr_t) &minusone, sizeof(int));
 }
 
-STATIC_OVL void
+static void
 savetrapchn(fd, trap, mode)
 register int fd, mode;
 register struct trap *trap;

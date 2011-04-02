@@ -8,17 +8,16 @@ STATIC_PTR int NDECL(picklock);
 STATIC_PTR int NDECL(forcelock);
 
 /* at most one of `door' and `box' should be non-null at any given time */
-STATIC_VAR NEARDATA struct xlock_s {
+static NEARDATA struct xlock_s {
 	struct rm  *door;
 	struct obj *box;
 	int picktyp, chance, usedtime;
 } xlock;
 
-#ifdef OVLB
 
-STATIC_DCL const char *NDECL(lock_action);
-STATIC_DCL boolean FDECL(obstructed,(int,int));
-STATIC_DCL void FDECL(chest_shatter_msg, (struct obj *));
+static const char *NDECL(lock_action);
+static boolean FDECL(obstructed,(int,int));
+static void FDECL(chest_shatter_msg, (struct obj *));
 
 boolean
 picking_lock(x, y)
@@ -42,7 +41,7 @@ int x, y;
 }
 
 /* produce an occupation string appropriate for the current activity */
-STATIC_OVL const char *
+static const char *
 lock_action()
 {
 	/* "unlocking"+2 == "locking" */
@@ -208,8 +207,6 @@ forcelock()	/* try to force a locked chest */
 	return((xlock.usedtime = 0));
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 void
 reset_pick()
@@ -219,8 +216,6 @@ reset_pick()
 	xlock.box = 0;
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 int
 pick_lock(pick) /* pick a lock with a given object */
@@ -580,7 +575,7 @@ doopen()		/* try to open a door */
 	return(1);
 }
 
-STATIC_OVL
+static
 boolean
 obstructed(x,y)
 register int x, y;
@@ -877,7 +872,7 @@ int x, y;
 	return res;
 }
 
-STATIC_OVL void
+static void
 chest_shatter_msg(otmp)
 struct obj *otmp;
 {
@@ -915,7 +910,5 @@ struct obj *otmp;
 	}
 	pline("%s %s!", An(thing), disposition);
 }
-
-#endif /* OVLB */
 
 /*lock.c*/

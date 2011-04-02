@@ -5,39 +5,34 @@
 #include "hack.h"
 #include "artifact.h"
 
-STATIC_VAR NEARDATA struct obj *otmp;
+static NEARDATA struct obj *otmp;
 
-STATIC_DCL void FDECL(urustm, (struct monst *, struct obj *));
-# ifdef OVL1
-STATIC_DCL boolean FDECL(u_slip_free, (struct monst *,struct attack *));
-STATIC_DCL int FDECL(passiveum, (struct permonst *,struct monst *,struct attack *));
-# endif /* OVL1 */
+static void FDECL(urustm, (struct monst *, struct obj *));
+static boolean FDECL(u_slip_free, (struct monst *,struct attack *));
+static int FDECL(passiveum, (struct permonst *,struct monst *,struct attack *));
 
-#ifdef OVLB
 # ifdef SEDUCE
-STATIC_DCL void FDECL(mayberem, (struct obj *, const char *));
+static void FDECL(mayberem, (struct obj *, const char *));
 # endif
-#endif /* OVLB */
 
-STATIC_DCL boolean FDECL(diseasemu, (struct permonst *));
-STATIC_DCL int FDECL(hitmu, (struct monst *,struct attack *));
-STATIC_DCL int FDECL(gulpmu, (struct monst *,struct attack *));
-STATIC_DCL int FDECL(explmu, (struct monst *,struct attack *,BOOLEAN_P));
-STATIC_DCL void FDECL(missmu,(struct monst *,BOOLEAN_P,struct attack *));
-STATIC_DCL void FDECL(mswings,(struct monst *,struct obj *));
-STATIC_DCL void FDECL(wildmiss, (struct monst *,struct attack *));
+static boolean FDECL(diseasemu, (struct permonst *));
+static int FDECL(hitmu, (struct monst *,struct attack *));
+static int FDECL(gulpmu, (struct monst *,struct attack *));
+static int FDECL(explmu, (struct monst *,struct attack *,BOOLEAN_P));
+static void FDECL(missmu,(struct monst *,BOOLEAN_P,struct attack *));
+static void FDECL(mswings,(struct monst *,struct obj *));
+static void FDECL(wildmiss, (struct monst *,struct attack *));
 
-STATIC_DCL void FDECL(hurtarmor,(int));
-STATIC_DCL void FDECL(hitmsg,(struct monst *,struct attack *));
+static void FDECL(hurtarmor,(int));
+static void FDECL(hitmsg,(struct monst *,struct attack *));
 
 /* See comment in mhitm.c.  If we use this a lot it probably should be */
 /* changed to a parameter to mhitu. */
 static int dieroll;
 
-#ifdef OVL1
 
 
-STATIC_OVL void
+static void
 hitmsg(mtmp, mattk)
 register struct monst *mtmp;
 register struct attack *mattk;
@@ -82,7 +77,7 @@ register struct attack *mattk;
 	    }
 }
 
-STATIC_OVL void
+static void
 missmu(mtmp, nearmiss, mattk)		/* monster missed you */
 register struct monst *mtmp;
 register boolean nearmiss;
@@ -102,7 +97,7 @@ register struct attack *mattk;
 	stop_occupation();
 }
 
-STATIC_OVL void
+static void
 mswings(mtmp, otemp)		/* monster swings obj */
 register struct monst *mtmp;
 register struct obj *otemp;
@@ -144,10 +139,8 @@ u_slow_down()
 	exercise(A_DEX, FALSE);
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
-STATIC_OVL void
+static void
 wildmiss(mtmp, mattk)		/* monster attacked your displaced image */
 	register struct monst *mtmp;
 	register struct attack *mattk;
@@ -263,8 +256,6 @@ boolean message;
 		pline("Brrooaa...  You land hard at some distance.");
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 /* select a monster's next attack, possibly substituting for its usual one */
 struct attack *
@@ -693,14 +684,12 @@ mattacku(mtmp)
 	return(0);
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 /*
  * helper function for some compilers that have trouble with hitmu
  */
 
-STATIC_OVL void
+static void
 hurtarmor(attk)
 int attk;
 {
@@ -759,10 +748,9 @@ int attk;
 	}
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
-STATIC_OVL boolean
+
+static boolean
 diseasemu(mdat)
 struct permonst *mdat;
 {
@@ -777,7 +765,7 @@ struct permonst *mdat;
 }
 
 /* check whether slippery clothing protects from hug or wrap attack */
-STATIC_OVL boolean
+static boolean
 u_slip_free(mtmp, mattk)
 struct monst *mtmp;
 struct attack *mattk;
@@ -864,7 +852,7 @@ struct monst *mon;
  *	  3 if the monster lives but teleported/paralyzed, so it can't keep
  *	       attacking you
  */
-STATIC_OVL int
+static int
 hitmu(mtmp, mattk)
 	register struct monst *mtmp;
 	register struct attack  *mattk;
@@ -1616,10 +1604,8 @@ dopois:
 	return res;
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
-STATIC_OVL int
+static int
 gulpmu(mtmp, mattk)	/* monster swallows you, or damage if u.uswallow */
 	register struct monst *mtmp;
 	register struct attack  *mattk;
@@ -1808,7 +1794,7 @@ gulpmu(mtmp, mattk)	/* monster swallows you, or damage if u.uswallow */
 	return(1);
 }
 
-STATIC_OVL int
+static int
 explmu(mtmp, mattk, ufound)	/* monster explodes in your face */
 register struct monst *mtmp;
 register struct attack  *mattk;
@@ -2037,8 +2023,6 @@ gazemu(mtmp, mattk)	/* monster gazes at you */
 	return(0);
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 void
 mdamageu(mtmp, n)	/* mtmp hits you for n points damage */
@@ -2055,10 +2039,8 @@ register int n;
 	}
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
-STATIC_OVL void
+static void
 urustm(mon, obj)
 register struct monst *mon;
 register struct obj *obj;
@@ -2096,8 +2078,6 @@ register struct obj *obj;
 	}
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 int
 could_seduce(magr,mdef,mattk)
@@ -2150,8 +2130,6 @@ struct attack *mattk;
 		return (pagr->mlet == S_NYMPH) ? 2 : 0;
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 #ifdef SEDUCE
 /* Returns 1 if monster teleported */
@@ -2406,7 +2384,7 @@ register struct monst *mon;
 	return 1;
 }
 
-STATIC_OVL void
+static void
 mayberem(obj, str)
 register struct obj *obj;
 const char *str;
@@ -2440,11 +2418,8 @@ const char *str;
 }
 #endif  /* SEDUCE */
 
-#endif /* OVLB */
 
-#ifdef OVL1
-
-STATIC_OVL int
+static int
 passiveum(olduasmon,mtmp,mattk)
 struct permonst *olduasmon;
 register struct monst *mtmp;
@@ -2605,8 +2580,6 @@ register struct attack *mattk;
 	return 1;
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 #include "edog.h"
 struct monst *
@@ -2628,6 +2601,5 @@ cloneu()
 	return(mon);
 }
 
-#endif /* OVLB */
 
 /*mhitu.c*/

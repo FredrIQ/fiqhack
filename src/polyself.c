@@ -12,13 +12,12 @@
 
 #include "hack.h"
 
-#ifdef OVLB
-STATIC_DCL void FDECL(polyman, (const char *,const char *));
-STATIC_DCL void NDECL(break_armor);
-STATIC_DCL void FDECL(drop_weapon,(int));
-STATIC_DCL void NDECL(uunstick);
-STATIC_DCL int FDECL(armor_to_dragon,(int));
-STATIC_DCL void NDECL(newman);
+static void FDECL(polyman, (const char *,const char *));
+static void NDECL(break_armor);
+static void FDECL(drop_weapon,(int));
+static void NDECL(uunstick);
+static int FDECL(armor_to_dragon,(int));
+static void NDECL(newman);
 
 /* update the youmonst.data structure pointer */
 void
@@ -28,7 +27,7 @@ set_uasmon()
 }
 
 /* make a (new) human out of the player */
-STATIC_OVL void
+static void
 polyman(fmt, arg)
 const char *fmt, *arg;
 {
@@ -128,7 +127,7 @@ change_sex()
 	}
 }
 
-STATIC_OVL void
+static void
 newman()
 {
 	int tmp, oldlvl;
@@ -560,7 +559,7 @@ int	mntmp;
 	return(1);
 }
 
-STATIC_OVL void
+static void
 break_armor()
 {
     register struct obj *otmp;
@@ -666,7 +665,7 @@ break_armor()
     }
 }
 
-STATIC_OVL void
+static void
 drop_weapon(alone)
 int alone;
 {
@@ -1098,7 +1097,7 @@ domindblast()
 	return 1;
 }
 
-STATIC_OVL void
+static void
 uunstick()
 {
 	pline("%s is no longer in your clutches.", Monnam(u.ustuck));
@@ -1118,8 +1117,6 @@ boolean silently;
 	}
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 const char *
 mbodypart(mon, part)
@@ -1241,8 +1238,6 @@ int part;
 	return mbodypart(&youmonst, part);
 }
 
-#endif /* OVL1 */
-#ifdef OVL0
 
 int
 poly_gender()
@@ -1254,8 +1249,6 @@ poly_gender()
 	return flags.female;
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 void
 ugolemeffects(damtype, dam)
@@ -1285,7 +1278,7 @@ int damtype, dam;
 	}
 }
 
-STATIC_OVL int
+static int
 armor_to_dragon(atyp)
 int atyp;
 {
@@ -1326,7 +1319,5 @@ int atyp;
 		return -1;
 	}
 }
-
-#endif /* OVLB */
 
 /*polyself.c*/

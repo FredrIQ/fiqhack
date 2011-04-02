@@ -8,23 +8,23 @@
 #define HEIGHT	(ROWNO - 1)
 #define WIDTH	(COLNO - 2)
 
-STATIC_DCL void FDECL(init_map,(SCHAR_P));
-STATIC_DCL void FDECL(init_fill,(SCHAR_P,SCHAR_P));
-STATIC_DCL schar FDECL(get_map,(int,int,SCHAR_P));
-STATIC_DCL void FDECL(pass_one,(SCHAR_P,SCHAR_P));
-STATIC_DCL void FDECL(pass_two,(SCHAR_P,SCHAR_P));
-STATIC_DCL void FDECL(pass_three,(SCHAR_P,SCHAR_P));
-STATIC_DCL void NDECL(wallify_map);
-STATIC_DCL void FDECL(join_map,(SCHAR_P,SCHAR_P));
-STATIC_DCL void FDECL(finish_map,(SCHAR_P,SCHAR_P,XCHAR_P,XCHAR_P));
-STATIC_DCL void FDECL(remove_room,(unsigned));
+static void FDECL(init_map,(SCHAR_P));
+static void FDECL(init_fill,(SCHAR_P,SCHAR_P));
+static schar FDECL(get_map,(int,int,SCHAR_P));
+static void FDECL(pass_one,(SCHAR_P,SCHAR_P));
+static void FDECL(pass_two,(SCHAR_P,SCHAR_P));
+static void FDECL(pass_three,(SCHAR_P,SCHAR_P));
+static void NDECL(wallify_map);
+static void FDECL(join_map,(SCHAR_P,SCHAR_P));
+static void FDECL(finish_map,(SCHAR_P,SCHAR_P,XCHAR_P,XCHAR_P));
+static void FDECL(remove_room,(unsigned));
 void FDECL(mkmap, (lev_init *));
 
 char *new_locations;
 int min_rx, max_rx, min_ry, max_ry; /* rectangle bounds for regions */
 static int n_loc_filled;
 
-STATIC_OVL void
+static void
 init_map(bg_typ)
 	schar	bg_typ;
 {
@@ -35,7 +35,7 @@ init_map(bg_typ)
 		levl[i][j].typ = bg_typ;
 }
 
-STATIC_OVL void
+static void
 init_fill(bg_typ, fg_typ)
 	schar	bg_typ, fg_typ;
 {
@@ -54,7 +54,7 @@ init_fill(bg_typ, fg_typ)
 	}
 }
 
-STATIC_OVL schar
+static schar
 get_map(col,row, bg_typ)
 	int col,row;
 	schar	bg_typ;
@@ -69,7 +69,7 @@ static int dirs[16] = {
      0, -1 /**/,              0, 1 /**/,
      1, -1 /**/,  1, 0 /**/,  1, 1};
 
-STATIC_OVL void
+static void
 pass_one(bg_typ, fg_typ)
 	schar	bg_typ, fg_typ;
 {
@@ -103,7 +103,7 @@ pass_one(bg_typ, fg_typ)
 
 #define new_loc(i,j)	*(new_locations+ ((j)*(WIDTH+1)) + (i))
 
-STATIC_OVL void
+static void
 pass_two(bg_typ, fg_typ)
 	schar	bg_typ, fg_typ;
 {
@@ -127,7 +127,7 @@ pass_two(bg_typ, fg_typ)
 		levl[i][j].typ = new_loc(i,j);
 }
 
-STATIC_OVL void
+static void
 pass_three(bg_typ, fg_typ)
 	schar	bg_typ, fg_typ;
 {
@@ -246,7 +246,7 @@ flood_fill_rm(sx, sy, rmno, lit, anyroom)
  *	If we have drawn a map without walls, this allows us to
  *	auto-magically wallify it.  Taken from lev_main.c.
  */
-STATIC_OVL void
+static void
 wallify_map()
 {
 
@@ -264,7 +264,7 @@ wallify_map()
 	    }
 }
 
-STATIC_OVL void
+static void
 join_map(bg_typ, fg_typ)
 	schar	bg_typ, fg_typ;
 {
@@ -335,7 +335,7 @@ joinm:
     }
 }
 
-STATIC_OVL void
+static void
 finish_map(fg_typ, bg_typ, lit, walled)
 	schar	fg_typ, bg_typ;
 	boolean	lit, walled;
@@ -401,7 +401,7 @@ remove_rooms(lx, ly, hx, hy)
  * level structure contents corresponding to roomno have already been reset.
  * Currently handles only the removal of rooms that have no subrooms.
  */
-STATIC_OVL void
+static void
 remove_room(roomno)
     unsigned roomno;
 {

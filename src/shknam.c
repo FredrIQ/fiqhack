@@ -7,14 +7,9 @@
 #include "hack.h"
 #include "eshk.h"
 
-#ifndef OVLB
-extern const struct shclass shtypes[];
-
-#else
-
-STATIC_DCL void FDECL(mkshobj_at, (const struct shclass *,int,int));
-STATIC_DCL void FDECL(nameshk, (struct monst *,const char * const *));
-STATIC_DCL int  FDECL(shkinit, (const struct shclass *,struct mkroom *));
+static void FDECL(mkshobj_at, (const struct shclass *,int,int));
+static void FDECL(nameshk, (struct monst *,const char * const *));
+static int  FDECL(shkinit, (const struct shclass *,struct mkroom *));
 
 static const char * const shkliquors[] = {
     /* Ukraine */
@@ -113,9 +108,6 @@ static const char * const shktools[] = {
     "Yelpur", "Nosnehpets", "Stewe", "Renrut", "_Zlaw", "Nosalnef",
     "Rewuorb", "Rellenk", "Yad", "Cire Htims", "Y-crad", "Nenilukah",
     "Corsh", "Aned",
-#ifdef OVERLAY
-    "Erreip", "Nehpets", "Mron", "Snivek", "Lapu", "Kahztiy",
-#endif
 #ifdef WIN32
     "Lechaim", "Lexa", "Niod",
 #endif
@@ -228,7 +220,7 @@ init_shop_selection()
 }
 #endif /*0*/
 
-STATIC_OVL void
+static void
 mkshobj_at(shp, sx, sy)
 /* make an object of the appropriate type for a shop square */
 const struct shclass *shp;
@@ -256,7 +248,7 @@ int sx, sy;
 }
 
 /* extract a shopkeeper name for the given shop type */
-STATIC_OVL void
+static void
 nameshk(shk, nlp)
 struct monst *shk;
 const char * const *nlp;
@@ -317,7 +309,7 @@ const char * const *nlp;
 	ESHK(shk)->shknam[PL_NSIZ-1] = 0;
 }
 
-STATIC_OVL int
+static int
 shkinit(shp, sroom)	/* create a new shopkeeper in the given room */
 const struct shclass	*shp;
 struct mkroom	*sroom;
@@ -475,8 +467,6 @@ register struct mkroom *sroom;
     level.flags.has_shop = TRUE;
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 /* does shkp's shop stock this item type? */
 boolean
@@ -510,7 +500,5 @@ int type;
 
 	return shp->iprobs[i].itype;
 }
-
-#endif /* OVL0 */
 
 /*shknam.c*/

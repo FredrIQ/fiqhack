@@ -8,8 +8,6 @@
 #include "edog.h"
 #endif
 
-#ifdef OVLB
-
 static boolean no_repeat = FALSE;
 
 static char *FDECL(You_buf, (int));
@@ -414,5 +412,4 @@ self_invis_message()
 		"can't see yourself");
 }
 
-#endif /* OVLB */
 /*pline.c*/

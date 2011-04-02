@@ -4,19 +4,18 @@
 
 #include "hack.h"
 
-#ifdef OVLB
 boolean notonhead = FALSE;
 
 static NEARDATA int nothing, unkn;
 static NEARDATA const char beverages[] = { POTION_CLASS, 0 };
 
-STATIC_DCL long FDECL(itimeout, (long));
-STATIC_DCL long FDECL(itimeout_incr, (long,int));
-STATIC_DCL void NDECL(ghost_from_bottle);
-STATIC_DCL short FDECL(mixtype, (struct obj *,struct obj *));
+static long FDECL(itimeout, (long));
+static long FDECL(itimeout_incr, (long,int));
+static void NDECL(ghost_from_bottle);
+static short FDECL(mixtype, (struct obj *,struct obj *));
 
 /* force `val' to be within valid range for intrinsic timeout value */
-STATIC_OVL long
+static long
 itimeout(val)
 long val;
 {
@@ -27,7 +26,7 @@ long val;
 }
 
 /* increment `old' by `incr' and force result to be valid intrinsic timeout */
-STATIC_OVL long
+static long
 itimeout_incr(old, incr)
 long old;
 int incr;
@@ -299,7 +298,7 @@ long mask;	/* nonzero if resistance status should change by mask */
 	return changed;
 }
 
-STATIC_OVL void
+static void
 ghost_from_bottle()
 {
 	struct monst *mtmp = makemon(&mons[PM_GHOST], u.ux, u.uy, NO_MM_FLAGS);
@@ -1318,7 +1317,7 @@ register struct obj *obj;
 	}
 }
 
-STATIC_OVL short
+static short
 mixtype(o1, o2)
 register struct obj *o1, *o2;
 /* returns the potion type when o1 is dipped in o2 */
@@ -1998,7 +1997,5 @@ struct monst *mon,	/* monster being split */
 	}
 	return mtmp2;
 }
-
-#endif /* OVLB */
 
 /*potion.c*/

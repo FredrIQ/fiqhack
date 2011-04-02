@@ -8,8 +8,6 @@
 
 /* #define DEBUG */	/* uncomment for debugging info */
 
-#ifdef OVLB
-
 	/* part of the output on gain or loss of attribute */
 static
 const char	* const plusattr[] = {
@@ -97,8 +95,8 @@ const struct innate {
 		     {	 0, 0, 0, 0 } };
 
 static long next_check = 600L;	/* arbitrary first setting */
-STATIC_DCL void NDECL(exerper);
-STATIC_DCL void FDECL(postadjabil, (long *));
+static void NDECL(exerper);
+static void FDECL(postadjabil, (long *));
 
 /* adjust an attribute; return TRUE if change is made, FALSE otherwise */
 boolean
@@ -232,8 +230,6 @@ set_moreluck()
 	else u.moreluck = -LUCKADD;
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 void
 restore_attrib()
@@ -254,8 +250,6 @@ restore_attrib()
 	(void)encumber_msg();
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 #define AVAL	50		/* tune value for exercise gains */
 
@@ -302,7 +296,7 @@ boolean	inc_or_dec;
 #define FAINTED		5
 #define STARVED		6
 
-STATIC_OVL void
+static void
 exerper()
 {
 	if(!(moves % 10)) {
@@ -522,7 +516,7 @@ redist_attr()
 	(void)encumber_msg();
 }
 
-STATIC_OVL
+static
 void
 postadjabil(ability)
 long *ability;
@@ -658,9 +652,6 @@ newhp()
 	return((hp <= 0) ? 1 : hp);
 }
 
-#endif /* OVLB */
-#ifdef OVL0
-
 schar
 acurr(x)
 int x;
@@ -703,9 +694,6 @@ acurrstr()
 	else return((schar)(str - 100));
 }
 
-#endif /* OVL0 */
-#ifdef OVL2
-
 /* avoid possible problems with alignment overflow, and provide a centralized
  * location for any future alignment limits
  */
@@ -725,7 +713,5 @@ register int n;
 				u.ualign.record = ALIGNLIM;
 		}
 }
-
-#endif /* OVL2 */
 
 /*attrib.c*/

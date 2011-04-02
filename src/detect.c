@@ -12,11 +12,11 @@
 
 extern boolean known;	/* from read.c */
 
-STATIC_DCL void FDECL(do_dknown_of, (struct obj *));
-STATIC_DCL boolean FDECL(check_map_spot, (int,int,CHAR_P,unsigned));
-STATIC_DCL boolean FDECL(clear_stale_map, (CHAR_P,unsigned));
-STATIC_DCL void FDECL(sense_trap, (struct trap *,XCHAR_P,XCHAR_P,int));
-STATIC_DCL void FDECL(show_map_spot, (int,int));
+static void FDECL(do_dknown_of, (struct obj *));
+static boolean FDECL(check_map_spot, (int,int,CHAR_P,unsigned));
+static boolean FDECL(clear_stale_map, (CHAR_P,unsigned));
+static void FDECL(sense_trap, (struct trap *,XCHAR_P,XCHAR_P,int));
+static void FDECL(show_map_spot, (int,int));
 STATIC_PTR void FDECL(findone,(int,int,genericptr_t));
 STATIC_PTR void FDECL(openone,(int,int,genericptr_t));
 
@@ -60,7 +60,7 @@ unsigned material;
     return (struct obj *) 0;
 }
 
-STATIC_OVL void
+static void
 do_dknown_of(obj)
 struct obj *obj;
 {
@@ -74,7 +74,7 @@ struct obj *obj;
 }
 
 /* Check whether the location has an outdated object displayed on it. */
-STATIC_OVL boolean
+static boolean
 check_map_spot(x, y, oclass, material)
 int x, y;
 register char oclass;
@@ -140,7 +140,7 @@ unsigned material;
    reappear after the detection has completed.  Return true if noticeable
    change occurs.
  */
-STATIC_OVL boolean
+static boolean
 clear_stale_map(oclass, material)
 register char oclass;
 unsigned material;
@@ -641,7 +641,7 @@ int mclass;			/* monster class, 0 for all */
     return 0;
 }
 
-STATIC_OVL void
+static void
 sense_trap(trap, x, y, src_cursed)
 struct trap *trap;
 xchar x, y;
@@ -907,7 +907,7 @@ struct obj *obj;
     return;
 }
 
-STATIC_OVL void
+static void
 show_map_spot(x, y)
 register int x, y;
 {

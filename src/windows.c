@@ -7,7 +7,7 @@
 #include "wintty.h"
 #endif
 
-STATIC_DCL void FDECL(def_raw_print, (const char *s));
+static void FDECL(def_raw_print, (const char *s));
 
 NEARDATA struct window_procs windowprocs;
 
@@ -22,7 +22,7 @@ struct win_choices {
     { 0, 0 }		/* must be last */
 };
 
-STATIC_OVL
+static
 void
 def_raw_print(s)
 const char *s;

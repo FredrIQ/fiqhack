@@ -26,17 +26,10 @@
 #define PN_ESCAPE_SPELL			(-13)
 #define PN_MATTER_SPELL			(-14)
 
-STATIC_DCL void FDECL(give_may_advance_msg, (int));
+static void FDECL(give_may_advance_msg, (int));
 
-#ifndef OVLB
 
-STATIC_DCL NEARDATA const short skill_names_indices[];
-STATIC_DCL NEARDATA const char *odd_skill_names[];
-STATIC_DCL NEARDATA const char *barehands_or_martial[];
-
-#else	/* OVLB */
-
-STATIC_VAR NEARDATA const short skill_names_indices[P_NUM_SKILLS] = {
+static NEARDATA const short skill_names_indices[P_NUM_SKILLS] = {
 	0,                DAGGER,         KNIFE,        AXE,
 	PICK_AXE,         SHORT_SWORD,    BROADSWORD,   LONG_SWORD,
 	TWO_HANDED_SWORD, SCIMITAR,       PN_SABER,     CLUB,
@@ -56,7 +49,7 @@ STATIC_VAR NEARDATA const short skill_names_indices[P_NUM_SKILLS] = {
 };
 
 /* note: entry [0] isn't used */
-STATIC_VAR NEARDATA const char * const odd_skill_names[] = {
+static NEARDATA const char * const odd_skill_names[] = {
     "no skill",
     "bare hands",		/* use barehands_or_martial[] instead */
     "two weapon combat",
@@ -74,11 +67,11 @@ STATIC_VAR NEARDATA const char * const odd_skill_names[] = {
     "matter spells",
 };
 /* indexed vis `is_martial() */
-STATIC_VAR NEARDATA const char * const barehands_or_martial[] = {
+static NEARDATA const char * const barehands_or_martial[] = {
     "bare handed combat", "martial arts"
 };
 
-STATIC_OVL void
+static void
 give_may_advance_msg(skill)
 int skill;
 {
@@ -92,19 +85,13 @@ int skill;
 		"fighting ");
 }
 
-#endif	/* OVLB */
 
-STATIC_DCL boolean FDECL(can_advance, (int, BOOLEAN_P));
-STATIC_DCL boolean FDECL(could_advance, (int));
-STATIC_DCL boolean FDECL(peaked_skill, (int));
-STATIC_DCL int FDECL(slots_required, (int));
-
-#ifdef OVL1
-
-STATIC_DCL char *FDECL(skill_level_name, (int,char *));
-STATIC_DCL void FDECL(skill_advance, (int));
-
-#endif	/* OVL1 */
+static boolean FDECL(can_advance, (int, BOOLEAN_P));
+static boolean FDECL(could_advance, (int));
+static boolean FDECL(peaked_skill, (int));
+static int FDECL(slots_required, (int));
+static char *FDECL(skill_level_name, (int,char *));
+static void FDECL(skill_advance, (int));
 
 #define P_NAME(type) ((skill_names_indices[type] > 0) ? \
 		      OBJ_NAME(objects[skill_names_indices[type]]) : \
@@ -112,7 +99,6 @@ STATIC_DCL void FDECL(skill_advance, (int));
 			barehands_or_martial[martial_bonus()] : \
 			odd_skill_names[-skill_names_indices[type]])
 
-#ifdef OVLB
 static NEARDATA const char kebabable[] = {
 	S_XORN, S_DRAGON, S_JABBERWOCK, S_NAGA, S_GIANT, '\0'
 };
@@ -314,13 +300,11 @@ struct monst *mon;
 	return(tmp);
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
-STATIC_DCL struct obj *FDECL(oselect, (struct monst *,int));
+static struct obj *FDECL(oselect, (struct monst *,int));
 #define Oselect(x)	if ((otmp = oselect(mtmp, x)) != 0) return(otmp);
 
-STATIC_OVL struct obj *
+static struct obj *
 oselect(mtmp, x)
 struct monst *mtmp;
 int x;
@@ -709,8 +693,6 @@ abon()		/* attack bonus for strength & dexterity */
 	else return(sbon + dex-14);
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 int
 dbon()		/* damage bonus for strength */
@@ -731,7 +713,7 @@ dbon()		/* damage bonus for strength */
 
 
 /* copy the skill level name into the given buffer */
-STATIC_OVL char *
+static char *
 skill_level_name(skill, buf)
 int skill;
 char *buf;
@@ -753,7 +735,7 @@ char *buf;
 }
 
 /* return the # of slots required to advance the skill */
-STATIC_OVL int
+static int
 slots_required(skill)
 int skill;
 {
@@ -779,7 +761,7 @@ int skill;
 
 /* return true if this skill can be advanced */
 /*ARGSUSED*/
-STATIC_OVL boolean
+static boolean
 can_advance(skill, speedy)
 int skill;
 boolean speedy;
@@ -796,7 +778,7 @@ boolean speedy;
 }
 
 /* return true if this skill could be advanced if more slots were available */
-STATIC_OVL boolean
+static boolean
 could_advance(skill)
 int skill;
 {
@@ -809,7 +791,7 @@ int skill;
 
 /* return true if this skill has reached its maximum and there's been enough
    practice to become eligible for the next step if that had been possible */
-STATIC_OVL boolean
+static boolean
 peaked_skill(skill)
 int skill;
 {
@@ -819,7 +801,7 @@ int skill;
 		(unsigned) practice_needed_to_advance(P_SKILL(skill))));
 }
 
-STATIC_OVL void
+static void
 skill_advance(skill)
 int skill;
 {
@@ -1006,8 +988,6 @@ int skill;
     }
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 void
 use_skill(skill,degree)
@@ -1313,7 +1293,5 @@ register struct obj *obj;
     }
     obj->owornmask &= ~W_WEP;
 }
-
-#endif /* OVLB */
 
 /*weapon.c*/

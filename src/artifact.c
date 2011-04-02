@@ -4,11 +4,7 @@
 
 #include "hack.h"
 #include "artifact.h"
-#ifdef OVLB
 #include "artilist.h"
-#else
-STATIC_DCL struct artifact artilist[];
-#endif
 /*
  * Note:  both artilist[] and artiexist[] have a dummy element #0,
  *	  so loops over them should normally start at #1.  The primary
@@ -21,9 +17,9 @@ extern boolean notonhead;	/* for long worms */
 #define get_artifact(o) \
 		(((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
 
-STATIC_DCL int FDECL(spec_applies, (const struct artifact *,struct monst *));
-STATIC_DCL int FDECL(arti_invoke, (struct obj*));
-STATIC_DCL boolean FDECL(Mb_hit, (struct monst *magr,struct monst *mdef,
+static int FDECL(spec_applies, (const struct artifact *,struct monst *));
+static int FDECL(arti_invoke, (struct obj*));
+static boolean FDECL(Mb_hit, (struct monst *magr,struct monst *mdef,
 				  struct obj *,int *,int,BOOLEAN_P,char *));
 
 /* The amount added to the victim's total hit points to insure that the
@@ -36,23 +32,19 @@ STATIC_DCL boolean FDECL(Mb_hit, (struct monst *magr,struct monst *mdef,
    of hit points that will fit in a 15 bit integer. */
 #define FATAL_DAMAGE_MODIFIER 200
 
-#ifndef OVLB
-STATIC_DCL int spec_dbon_applies;
-STATIC_DCL xchar artidisco[NROFARTIFACTS];
-#else	/* OVLB */
 /* coordinate effects from spec_dbon() with messages in artifact_hit() */
-STATIC_OVL int spec_dbon_applies = 0;
+static int spec_dbon_applies = 0;
 
 /* flags including which artifacts have already been created */
 static boolean artiexist[1+NROFARTIFACTS+1];
 /* and a discovery list for them (no dummy first entry here) */
-STATIC_OVL xchar artidisco[NROFARTIFACTS];
+static xchar artidisco[NROFARTIFACTS];
 
-STATIC_DCL void NDECL(hack_artifacts);
-STATIC_DCL boolean FDECL(attacks, (int,struct obj *));
+static void NDECL(hack_artifacts);
+static boolean FDECL(attacks, (int,struct obj *));
 
 /* handle some special cases; must be called after u_init() */
-STATIC_OVL void
+static void
 hack_artifacts()
 {
 	struct artifact *art;
@@ -238,8 +230,7 @@ nartifact_exist()
 
     return a;
 }
-#endif /* OVLB */
-#ifdef OVL0
+
 
 boolean
 spec_ability(otmp, abil)
@@ -279,8 +270,6 @@ struct obj *obj;
     return FALSE;
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 boolean
 restrict_name(otmp, name)  /* returns 1 if name is restricted for otmp->otyp */
@@ -309,7 +298,7 @@ register const char *name;
 	return FALSE;
 }
 
-STATIC_OVL boolean
+static boolean
 attacks(adtyp, otmp)
 register int adtyp;
 register struct obj *otmp;
@@ -554,11 +543,9 @@ touch_artifact(obj,mon)
     return 1;
 }
 
-#endif /* OVLB */
-#ifdef OVL1
 
 /* decide whether an artifact's special attacks apply against mtmp */
-STATIC_OVL int
+static int
 spec_applies(weap, mtmp)
 register const struct artifact *weap;
 struct monst *mtmp;
@@ -717,10 +704,6 @@ winid tmpwin;		/* supplied by dodiscover() */
     return i;
 }
 
-#endif /* OVL1 */
-
-#ifdef OVLB
-
 
 	/*
 	 * Magicbane's intrinsic magic is incompatible with normal
@@ -753,7 +736,7 @@ static const char * const mb_verb[2][4] = {
 #define MB_INDEX_CANCEL		3
 
 /* called when someone is being hit by Magicbane */
-STATIC_OVL boolean
+static boolean
 Mb_hit(magr, mdef, mb, dmgptr, dieroll, vis, hittee)
 struct monst *magr, *mdef;	/* attacker and defender */
 struct obj *mb;			/* Magicbane */
@@ -1181,7 +1164,7 @@ doinvoke()
     return arti_invoke(obj);
 }
 
-STATIC_OVL int
+static int
 arti_invoke(obj)
     register struct obj *obj;
 {
@@ -1455,7 +1438,5 @@ struct obj *otmp;
 	else
 	    return (100L * (long)objects[otmp->otyp].oc_cost);
 }
-
-#endif /* OVLB */
 
 /*artifact.c*/

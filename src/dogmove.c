@@ -9,18 +9,16 @@
 
 extern boolean notonhead;
 
-#ifdef OVL0
+static boolean FDECL(dog_hunger,(struct monst *,struct edog *));
+static int FDECL(dog_invent,(struct monst *,struct edog *,int));
+static int FDECL(dog_goal,(struct monst *,struct edog *,int,int,int));
 
-STATIC_DCL boolean FDECL(dog_hunger,(struct monst *,struct edog *));
-STATIC_DCL int FDECL(dog_invent,(struct monst *,struct edog *,int));
-STATIC_DCL int FDECL(dog_goal,(struct monst *,struct edog *,int,int,int));
-
-STATIC_DCL struct obj *FDECL(DROPPABLES, (struct monst *));
-STATIC_DCL boolean FDECL(can_reach_location,(struct monst *,XCHAR_P,XCHAR_P,
+static struct obj *FDECL(DROPPABLES, (struct monst *));
+static boolean FDECL(can_reach_location,(struct monst *,XCHAR_P,XCHAR_P,
     XCHAR_P,XCHAR_P));
-STATIC_DCL boolean FDECL(could_reach_item,(struct monst *, XCHAR_P,XCHAR_P));
+static boolean FDECL(could_reach_item,(struct monst *, XCHAR_P,XCHAR_P));
 
-STATIC_OVL struct obj *
+static struct obj *
 DROPPABLES(mon)
 register struct monst *mon;
 {
@@ -49,16 +47,13 @@ register struct monst *mon;
 
 static NEARDATA const char nofetch[] = { BALL_CLASS, CHAIN_CLASS, ROCK_CLASS, 0 };
 
-#endif /* OVL0 */
+static boolean FDECL(cursed_object_at, (int, int));
 
-STATIC_OVL boolean FDECL(cursed_object_at, (int, int));
-
-STATIC_VAR xchar gtyp, gx, gy;	/* type and position of dog's current goal */
+static xchar gtyp, gx, gy;	/* type and position of dog's current goal */
 
 STATIC_PTR void FDECL(wantdoor, (int, int, genericptr_t));
 
-#ifdef OVLB
-STATIC_OVL boolean
+static boolean
 cursed_object_at(x, y)
 int x, y;
 {
@@ -205,11 +200,9 @@ boolean devour;
 	return 1;
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 /* hunger effects -- returns TRUE on starvation */
-STATIC_OVL boolean
+static boolean
 dog_hunger(mtmp, edog)
 register struct monst *mtmp;
 register struct edog *edog;
@@ -257,7 +250,7 @@ register struct edog *edog;
 /* do something with object (drop, pick up, eat) at current position
  * returns 1 if object eaten (since that counts as dog's move), 2 if died
  */
-STATIC_OVL int
+static int
 dog_invent(mtmp, edog, udist)
 register struct monst *mtmp;
 register struct edog *edog;
@@ -323,7 +316,7 @@ int udist;
 /* set dog's goal -- gtyp, gx, gy
  * returns -1/0/1 (dog's desire to approach player) or -2 (abort move)
  */
-STATIC_OVL int
+static int
 dog_goal(mtmp, edog, after, udist, whappr)
 register struct monst *mtmp;
 struct edog *edog;
@@ -788,7 +781,7 @@ dognext:
 }
 
 /* check if a monster could pick up objects from a location */
-STATIC_OVL boolean
+static boolean
 could_reach_item(mon, nx, ny)
 struct monst *mon;
 xchar nx, ny;
@@ -807,7 +800,7 @@ xchar nx, ny;
  * Since the maximum food distance is 5, this should never be more than 5 calls
  * deep.
  */
-STATIC_OVL boolean
+static boolean
 can_reach_location(mon, mx, my, fx, fy)
 struct monst *mon;
 xchar mx, my, fx, fy;
@@ -840,8 +833,6 @@ xchar mx, my, fx, fy;
     return FALSE;
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 /*ARGSUSED*/	/* do_clear_area client */
 STATIC_PTR void
@@ -857,7 +848,5 @@ genericptr_t distance;
 	*(int*)distance = ndist;
     }
 }
-
-#endif /* OVLB */
 
 /*dogmove.c*/

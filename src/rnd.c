@@ -16,7 +16,6 @@ extern int NDECL(rand);
 # endif
 #endif /* LINT */
 
-#ifdef OVL0
 
 int
 rn2(x)		/* 0 <= rn2(x) < x */
@@ -34,8 +33,6 @@ register int x;
 #endif
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
 int
 rnl(x)		/* 0 <= rnl(x) < x; sometimes subtracting Luck */
@@ -60,8 +57,6 @@ register int x;	/* good luck approaches 0, bad luck approaches (x-1) */
 	return i;
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 int
 rnd(x)		/* 1 <= rnd(x) <= x */
@@ -79,8 +74,6 @@ register int x;
 #endif
 }
 
-#endif /* OVL0 */
-#ifdef OVL1
 
 int
 d(n,x)		/* n <= d(n,x) <= (n*x) */
@@ -98,8 +91,6 @@ register int n, x;
 	return(tmp); /* Alea iacta est. -- J.C. */
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 int
 rne(x)
@@ -139,7 +130,5 @@ int i;
 	else { x *= 1000; x /= tmp; }
 	return((int)x);
 }
-
-#endif /* OVLB */
 
 /*rnd.c*/

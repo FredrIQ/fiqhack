@@ -12,23 +12,16 @@
 #endif
 
 #include <ctype.h>
-
 #include <sys/stat.h>
 
 #ifdef WIN32
-#include "win32api.h"			/* for GetModuleFileName */
-#endif
-
-#ifdef OVL0
-#define SHARED_DCL
-#else
-#define SHARED_DCL extern
+#include "win32api.h"	/* for GetModuleFileName */
 #endif
 
 
 SHARED_DCL char orgdir[PATHLEN];	/* also used in pcsys.c, amidos.c */
-STATIC_DCL void FDECL(process_options,(int argc,char **argv));
-STATIC_DCL void NDECL(nhusage);
+static void FDECL(process_options,(int argc,char **argv));
+static void NDECL(nhusage);
 
 #if defined(WIN32)
 extern void FDECL(nethack_exit,(int));
@@ -41,21 +34,14 @@ extern boolean getreturn_enabled;	/* from sys/share/pcsys.c */
 #endif
 
 #ifdef EXEPATH
-STATIC_DCL char *FDECL(exepath,(char *));
+static char *FDECL(exepath,(char *));
 #endif
 
-#ifdef OVL0
 int FDECL(main, (int,char **));
-#endif
 
 extern void FDECL(pcmain, (int,char **));
 
 
-#ifdef OVL0
-/* If the graphics version is built, we don't need a main; it is skipped
- * to help MinGW decide which entry point to choose. If both main and 
- * WinMain exist, the resulting executable won't work correctly.
- */
 int
 main(argc,argv)
 int argc;
@@ -70,8 +56,7 @@ char *argv[];
      /*NOTREACHED*/
      return 0;
 }
-#endif /*OVL0*/
-#ifdef OVL1
+
 
 void
 pcmain(argc,argv)
@@ -339,7 +324,7 @@ not_recovered:
 	return;
 }
 
-STATIC_OVL void
+static void
 process_options(argc, argv)
 int argc;
 char *argv[];
@@ -452,7 +437,7 @@ char *argv[];
 	}
 }
 
-STATIC_OVL void 
+static void 
 nhusage()
 {
 	char buf1[BUFSZ], buf2[BUFSZ], *bufptr;
@@ -506,8 +491,7 @@ boolean wr;
 	if (wr) check_recordfile(dir ? dir : thisdir);
 }
 #endif /* CHDIR */
-#endif /*OVL1*/
-#ifdef OVLB
+
 
 #ifdef PORT_HELP
 # if defined(WIN32)
@@ -553,5 +537,5 @@ char *str;
 	return tmp;
 }
 #endif /* EXEPATH */
-#endif /*OVLB*/
+
 /*pcmain.c*/

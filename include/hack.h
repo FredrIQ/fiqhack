@@ -111,22 +111,8 @@ NEARDATA extern coord bhitpos;	/* place where throw or zap hits or stops */
 #include "engrave.h"
 #include "rect.h"
 #include "region.h"
-
-#ifdef USE_TRAMPOLI /* This doesn't belong here, but we have little choice */
-#undef NDECL
-#define NDECL(f) f()
-#endif
-
 #include "extern.h"
 #include "winprocs.h"
-
-#ifdef USE_TRAMPOLI
-#include "wintty.h"
-#undef WINTTY_H
-#include "trampoli.h"
-#undef EXTERN_H
-#include "extern.h"
-#endif /* USE_TRAMPOLI */
 
 #define NO_SPELL	0
 
@@ -293,34 +279,6 @@ NEARDATA extern coord bhitpos;	/* place where throw or zap hits or stops */
 /* negative armor class is randomly weakened to prevent invulnerability */
 #define AC_VALUE(AC)	((AC) >= 0 ? (AC) : -rnd(-(AC)))
 
-#if defined(OVERLAY)&&(defined(OVL0)||defined(OVL1)||defined(OVL2)||defined(OVL3)||defined(OVLB))
-# define USE_OVLx
-# define STATIC_DCL extern
-# define STATIC_OVL
-# ifdef OVLB
-#  define STATIC_VAR
-# else
-#  define STATIC_VAR extern
-# endif
-
-#else	/* !OVERLAY || (!OVL0 && !OVL1 && !OVL2 && !OVL3 && !OVLB) */
-# define STATIC_DCL static
-# define STATIC_OVL static
-# define STATIC_VAR static
-
-/* If not compiling an overlay, compile everything. */
-# define OVL0	/* highest priority */
-# define OVL1
-# define OVL2
-# define OVL3	/* lowest specified priority */
-# define OVLB	/* the base overlay segment */
-#endif	/* OVERLAY && (OVL0 || OVL1 || OVL2 || OVL3 || OVLB) */
-
-/* Macro for a few items that are only static if we're not overlaid.... */
-#if defined(USE_TRAMPOLI) || defined(USE_OVLx)
-# define STATIC_PTR
-#else
 # define STATIC_PTR static
-#endif
 
 #endif /* HACK_H */

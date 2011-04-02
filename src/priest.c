@@ -11,10 +11,8 @@
 /* this matches the categorizations shown by enlightenment */
 #define ALGN_SINNED	(-4)	/* worse than strayed */
 
-#ifdef OVLB
-
-STATIC_DCL boolean FDECL(histemple_at,(struct monst *,XCHAR_P,XCHAR_P));
-STATIC_DCL boolean FDECL(has_shrine,(struct monst *));
+static boolean FDECL(histemple_at,(struct monst *,XCHAR_P,XCHAR_P));
+static boolean FDECL(has_shrine,(struct monst *));
 
 /*
  * Move for priests and shopkeepers.  Called from shk_move() and pri_move().
@@ -109,9 +107,6 @@ pick_move:
 	return(0);
 }
 
-#endif /* OVLB */
-
-#ifdef OVL0
 
 char
 temple_occupied(array)
@@ -125,10 +120,8 @@ register char *array;
 	return('\0');
 }
 
-#endif /* OVL0 */
-#ifdef OVLB
 
-STATIC_OVL boolean
+static boolean
 histemple_at(priest, x, y)
 register struct monst *priest;
 register xchar x, y;
@@ -291,7 +284,7 @@ struct monst *priest;
 	return((boolean)(u.ualign.type == ((int)EPRI(priest)->shralign)));
 }
 
-STATIC_OVL boolean
+static boolean
 has_shrine(pri)
 struct monst *pri;
 {
@@ -715,7 +708,5 @@ boolean ghostly;
 	    assign_level(&(EPRI(mtmp)->shrlevel), &u.uz);
     }
 }
-
-#endif /* OVLB */
 
 /*priest.c*/

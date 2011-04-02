@@ -76,7 +76,7 @@ boolean nethack_thinks_it_is_open;	/* Does NetHack think it's open?       */
 #ifdef WIZARD
 #define WIZKIT_MAX 128
 static char wizkit[WIZKIT_MAX];
-STATIC_DCL FILE *NDECL(fopen_wizkit_file);
+static FILE *NDECL(fopen_wizkit_file);
 #endif
 
 #if defined(WIN32)
@@ -91,20 +91,20 @@ extern char *sounddir;
 
 extern int n_dgns;		/* from dungeon.c */
 
-STATIC_DCL char *FDECL(set_bonesfile_name, (char *,d_level*));
-STATIC_DCL char *NDECL(set_bonestemp_name);
-STATIC_DCL char *FDECL(make_lockname, (const char *,char *));
-STATIC_DCL FILE *FDECL(fopen_config_file, (const char *));
-STATIC_DCL int FDECL(get_uchars, (FILE *,char *,char *,uchar *,BOOLEAN_P,int,const char *));
+static char *FDECL(set_bonesfile_name, (char *,d_level*));
+static char *NDECL(set_bonestemp_name);
+static char *FDECL(make_lockname, (const char *,char *));
+static FILE *FDECL(fopen_config_file, (const char *));
+static int FDECL(get_uchars, (FILE *,char *,char *,uchar *,BOOLEAN_P,int,const char *));
 int FDECL(parse_config_line, (FILE *,char *,char *,char *));
 #ifdef NOCWD_ASSUMPTIONS
-STATIC_DCL void FDECL(adjust_prefix, (char *, int));
+static void FDECL(adjust_prefix, (char *, int));
 #endif
 #ifdef SELF_RECOVER
-STATIC_DCL boolean FDECL(copy_bytes, (int, int));
+static boolean FDECL(copy_bytes, (int, int));
 #endif
 #ifdef HOLD_LOCKFILE_OPEN
-STATIC_DCL int FDECL(open_levelfile_exclusively, (const char *, int, int));
+static int FDECL(open_levelfile_exclusively, (const char *, int, int));
 #endif
 
 /*
@@ -423,7 +423,7 @@ clearlocks()
 }
 
 #ifdef HOLD_LOCKFILE_OPEN
-STATIC_OVL int
+static int
 open_levelfile_exclusively(name, lev, oflag)
 const char *name;
 int lev, oflag;
@@ -491,7 +491,7 @@ int fd;
 /* set up "file" to be file name for retrieving bones, and return a
  * bonesid to be read/written in the bones file.
  */
-STATIC_OVL char *
+static char *
 set_bonesfile_name(file, lev)
 char *file;
 d_level *lev;
@@ -516,7 +516,7 @@ d_level *lev;
  * (we are not reading or writing level files while writing bones files, so
  * the same array may be used instead of copying.)
  */
-STATIC_OVL char *
+static char *
 set_bonestemp_name()
 {
 	char *tf;
@@ -736,7 +736,7 @@ static int nesting = 0;
 
 #define HUP	if (!program_state.done_hup)
 
-STATIC_OVL char *
+static char *
 make_lockname(filename, lockname)
 const char *filename;
 char *lockname;
@@ -881,7 +881,7 @@ const char *configfile =
 
 #define fopenp fopen
 
-STATIC_OVL FILE *
+static FILE *
 fopen_config_file(filename)
 const char *filename;
 {
@@ -970,7 +970,7 @@ const char *filename;
  * NOTE: zeros are inserted unless modlist is TRUE, in which case the list
  *  location is unchanged.  Callers must handle zeros if modlist is FALSE.
  */
-STATIC_OVL int
+static int
 get_uchars(fp, buf, bufp, list, modlist, size, name)
     FILE *fp;		/* input file pointer */
     char *buf;		/* read buffer, must be of size BUFSZ */
@@ -1027,7 +1027,7 @@ gi_error:
 }
 
 #ifdef NOCWD_ASSUMPTIONS
-STATIC_OVL void
+static void
 adjust_prefix(bufp, prefixid)
 char *bufp;
 int prefixid;
@@ -1219,7 +1219,7 @@ const char *filename;
 }
 
 #ifdef WIZARD
-STATIC_OVL FILE *
+static FILE *
 fopen_wizkit_file()
 {
 	FILE *fp;

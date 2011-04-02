@@ -12,26 +12,19 @@
 
 #include "hack.h"
 
-#ifdef OVLB
-STATIC_DCL void FDECL(get_wall_for_db, (int *, int *));
-STATIC_DCL struct entity *FDECL(e_at, (int, int));
-STATIC_DCL void FDECL(m_to_e, (struct monst *, int, int, struct entity *));
-STATIC_DCL void FDECL(u_to_e, (struct entity *));
-STATIC_DCL void FDECL(set_entity, (int, int, struct entity *));
-STATIC_DCL const char *FDECL(e_nam, (struct entity *));
-#ifdef D_DEBUG
-static const char *FDECL(Enam, (struct entity *)); /* unused */
-#endif
-STATIC_DCL const char *FDECL(E_phrase, (struct entity *, const char *));
-STATIC_DCL boolean FDECL(e_survives_at, (struct entity *, int, int));
-STATIC_DCL void FDECL(e_died, (struct entity *, int, int));
-STATIC_DCL boolean FDECL(automiss, (struct entity *));
-STATIC_DCL boolean FDECL(e_missed, (struct entity *, BOOLEAN_P));
-STATIC_DCL boolean FDECL(e_jumps, (struct entity *));
-STATIC_DCL void FDECL(do_entity, (struct entity *));
-#endif /* OVLB */
-
-#ifdef OVL0
+static void FDECL(get_wall_for_db, (int *, int *));
+static struct entity *FDECL(e_at, (int, int));
+static void FDECL(m_to_e, (struct monst *, int, int, struct entity *));
+static void FDECL(u_to_e, (struct entity *));
+static void FDECL(set_entity, (int, int, struct entity *));
+static const char *FDECL(e_nam, (struct entity *));
+static const char *FDECL(E_phrase, (struct entity *, const char *));
+static boolean FDECL(e_survives_at, (struct entity *, int, int));
+static void FDECL(e_died, (struct entity *, int, int));
+static boolean FDECL(automiss, (struct entity *));
+static boolean FDECL(e_missed, (struct entity *, BOOLEAN_P));
+static boolean FDECL(e_jumps, (struct entity *));
+static void FDECL(do_entity, (struct entity *));
 
 boolean
 is_pool(x,y)
@@ -75,9 +68,6 @@ int x,y;
     return FALSE;
 }
 
-#endif /* OVL0 */
-
-#ifdef OVL1
 
 /*
  * We want to know whether a wall (or a door) is the portcullis (passageway)
@@ -150,13 +140,11 @@ int *x,*y;
 	return FALSE;
 }
 
-#endif /* OVL1 */
-#ifdef OVLB
 
 /*
  * Find the drawbridge wall associated with a drawbridge.
  */
-STATIC_OVL void
+static void
 get_wall_for_db(x,y)
 int *x,*y;
 {
@@ -234,7 +222,7 @@ struct entity {
 
 static NEARDATA struct entity occupants[ENTITIES];
 
-STATIC_OVL
+static
 struct entity *
 e_at(x, y)
 int x, y;
@@ -246,15 +234,11 @@ int x, y;
 		    (occupants[entitycnt].ex == x) &&
 		    (occupants[entitycnt].ey == y))
 			break;
-#ifdef D_DEBUG
-	pline("entitycnt = %d", entitycnt);
-	wait_synch();
-#endif
 	return((entitycnt == ENTITIES)?
 	       (struct entity *)0 : &(occupants[entitycnt]));
 }
 
-STATIC_OVL void
+static void
 m_to_e(mtmp, x, y, etmp)
 struct monst *mtmp;
 int x, y;
@@ -272,7 +256,7 @@ struct entity *etmp;
 		etmp->edata = (struct permonst *)0;
 }
 
-STATIC_OVL void
+static void
 u_to_e(etmp)
 struct entity *etmp;
 {
@@ -282,7 +266,7 @@ struct entity *etmp;
 	etmp->edata = youmonst.data;
 }
 
-STATIC_OVL void
+static void
 set_entity(x, y, etmp)
 int x, y;
 struct entity *etmp;
@@ -305,32 +289,19 @@ struct entity *etmp;
 
 /* #define e_strg(etmp, func) (is_u(etmp)? (char *)0 : func(etmp->emon)) */
 
-STATIC_OVL const char *
+static const char *
 e_nam(etmp)
 struct entity *etmp;
 {
 	return(is_u(etmp)? "you" : mon_nam(etmp->emon));
 }
 
-#ifdef D_DEBUG
-/*
- * Enam is another unused utility routine:  E_phrase is preferable.
- */
-
-static const char *
-Enam(etmp)
-struct entity *etmp;
-{
-	return(is_u(etmp)? "You" : Monnam(etmp->emon));
-}
-#endif /* D_DEBUG */
-
 /*
  * Generates capitalized entity name, makes 2nd -> 3rd person conversion on
  * verb, where necessary.
  */
 
-STATIC_OVL const char *
+static const char *
 E_phrase(etmp, verb)
 struct entity *etmp;
 const char *verb;
@@ -351,7 +322,7 @@ const char *verb;
  * Simple-minded "can it be here?" routine
  */
 
-STATIC_OVL boolean
+static boolean
 e_survives_at(etmp, x, y)
 struct entity *etmp;
 int x, y;
@@ -374,7 +345,7 @@ int x, y;
 	return(TRUE);
 }
 
-STATIC_OVL void
+static void
 e_died(etmp, dest, how)
 struct entity *etmp;
 int dest, how;
@@ -439,7 +410,7 @@ int dest, how;
  * These are never directly affected by a bridge or portcullis.
  */
 
-STATIC_OVL boolean
+static boolean
 automiss(etmp)
 struct entity *etmp;
 {
@@ -451,17 +422,13 @@ struct entity *etmp;
  * Does falling drawbridge or portcullis miss etmp?
  */
 
-STATIC_OVL boolean
+static boolean
 e_missed(etmp, chunks)
 struct entity *etmp;
 boolean chunks;
 {
 	int misses;
 
-#ifdef D_DEBUG
-	if (chunks)
-		pline("Do chunks miss?");
-#endif
 	if (automiss(etmp))
 		return(TRUE);
 
@@ -481,9 +448,6 @@ boolean chunks;
 	if (is_db_wall(etmp->ex, etmp->ey))
 		misses -= 3;				    /* less airspace */
 
-#ifdef D_DEBUG
-	pline("Miss chance = %d (out of 8)", misses);
-#endif
 
 	return((boolean)((misses >= rnd(8))? TRUE : FALSE));
 }
@@ -492,7 +456,7 @@ boolean chunks;
  * Can etmp jump from death?
  */
 
-STATIC_OVL boolean
+static boolean
 e_jumps(etmp)
 struct entity *etmp;
 {
@@ -512,13 +476,10 @@ struct entity *etmp;
 	if (is_db_wall(etmp->ex, etmp->ey))
 		tmp -= 2;			    /* less room to maneuver */
 
-#ifdef D_DEBUG
-	pline("%s to jump (%d chances in 10)", E_phrase(etmp, "try"), tmp);
-#endif
 	return((boolean)((tmp >= rnd(10))? TRUE : FALSE));
 }
 
-STATIC_OVL void
+static void
 do_entity(etmp)
 struct entity *etmp;
 {
@@ -547,17 +508,9 @@ struct entity *etmp;
 		if (at_portcullis)
 			pline_The("portcullis misses %s!",
 			      e_nam(etmp));
-#ifdef D_DEBUG
-		else
-			pline_The("drawbridge misses %s!",
-			      e_nam(etmp));
-#endif
 		if (e_survives_at(etmp, oldx, oldy))
 			return;
 		else {
-#ifdef D_DEBUG
-			pline("Mon can't survive here");
-#endif
 			if (at_portcullis)
 				must_jump = TRUE;
 			else
@@ -576,9 +529,6 @@ struct entity *etmp;
 	    if (at_portcullis) {
 		if (e_jumps(etmp)) {
 		    relocates = TRUE;
-#ifdef D_DEBUG
-		    pline("Jump succeeds!");
-#endif
 		} else {
 		    if (e_inview)
 			pline("%s crushed by the falling portcullis!",
@@ -591,9 +541,6 @@ struct entity *etmp;
 		}
 	    } else { /* tries to jump off bridge to original square */
 		relocates = !e_jumps(etmp);
-#ifdef D_DEBUG
-		pline("Jump %s!", (relocates)? "fails" : "succeeds");
-#endif
 	    }
 	}
 
@@ -603,17 +550,11 @@ struct entity *etmp;
  * would be inaccessible (i.e. etmp started on drawbridge square) or
  * unnecessary (i.e. etmp started here) in such a situation.
  */
-#ifdef D_DEBUG
-	pline("Doing relocation.");
-#endif
 	newx = oldx;
 	newy = oldy;
 	(void)find_drawbridge(&newx, &newy);
 	if ((newx == oldx) && (newy == oldy))
 		get_wall_for_db(&newx, &newy);
-#ifdef D_DEBUG
-	pline("Checking new square for occupancy.");
-#endif
 	if (relocates && (e_at(newx, newy))) {
 
 /*
@@ -624,40 +565,19 @@ struct entity *etmp;
 		struct entity *other;
 
 		other = e_at(newx, newy);
-#ifdef D_DEBUG
-		pline("New square is occupied by %s", e_nam(other));
-#endif
 		if (e_survives_at(other, newx, newy) && automiss(other)) {
 			relocates = FALSE;	      /* "other" won't budge */
-#ifdef D_DEBUG
-			pline("%s suicide.", E_phrase(etmp, "commit"));
-#endif
 		} else {
 
-#ifdef D_DEBUG
-			pline("Handling %s", e_nam(other));
-#endif
 			while ((e_at(newx, newy) != 0) &&
 			       (e_at(newx, newy) != etmp))
 				do_entity(other);
-#ifdef D_DEBUG
-			pline("Checking existence of %s", e_nam(etmp));
-			wait_synch();
-#endif
 			if (e_at(oldx, oldy) != etmp) {
-#ifdef D_DEBUG
-			    pline("%s moved or died in recursion somewhere",
-				  E_phrase(etmp, "have"));
-			    wait_synch();
-#endif
 			    return;
 			}
 		}
 	}
 	if (relocates && !e_at(newx, newy)) {/* if e_at() entity = worm tail */
-#ifdef D_DEBUG
-		pline("Moving %s", e_nam(etmp));
-#endif
 		if (!is_u(etmp)) {
 			remove_monster(etmp->ex, etmp->ey);
 			place_monster(etmp->emon, newx, newy);
@@ -670,15 +590,7 @@ struct entity *etmp;
 		etmp->ey = newy;
 		e_inview = e_canseemon(etmp);
 	}
-#ifdef D_DEBUG
-	pline("Final disposition of %s", e_nam(etmp));
-	wait_synch();
-#endif
 	if (is_db_wall(etmp->ex, etmp->ey)) {
-#ifdef D_DEBUG
-		pline("%s in portcullis chamber", E_phrase(etmp, "are"));
-		wait_synch();
-#endif
 		if (e_inview) {
 			if (is_u(etmp)) {
 				You("tumble towards the closed portcullis!");
@@ -696,13 +608,7 @@ struct entity *etmp;
 			e_died(etmp, 0, CRUSHING);	       /* no message */
 			return;
 		}
-#ifdef D_DEBUG
-		pline("%s in here", E_phrase(etmp, "survive"));
-#endif
 	} else {
-#ifdef D_DEBUG
-		pline("%s on drawbridge square", E_phrase(etmp, "are"));
-#endif
 		if (is_pool(etmp->ex, etmp->ey) && !e_inview)
 			if (flags.soundok)
 				You_hear("a splash.");
@@ -713,9 +619,6 @@ struct entity *etmp;
 				      E_phrase(etmp, "fall"));
 			return;
 		}
-#ifdef D_DEBUG
-		pline("%s cannot survive on the drawbridge square",Enam(etmp));
-#endif
 		if (is_pool(etmp->ex, etmp->ey) || is_lava(etmp->ex, etmp->ey))
 		    if (e_inview && !is_u(etmp)) {
 			/* drown() will supply msgs if nec. */
@@ -908,11 +811,7 @@ int x,y;
 	set_entity(x, y, etmp1);
 	if (etmp1->edata) {
 		e_inview = e_canseemon(etmp1);
-		if (e_missed(etmp1, TRUE)) {
-#ifdef D_DEBUG
-			pline("%s spared!", E_phrase(etmp1, "are"));
-#endif
-		} else {
+		if (!e_missed(etmp1, TRUE)) {
 			if (e_inview) {
 			    if (!is_u(etmp1) && Hallucination)
 				pline("%s into some heavy metal!",
@@ -923,11 +822,6 @@ int x,y;
 			} else {
 			    if (flags.soundok && !is_u(etmp1) && !is_pool(x,y))
 				You_hear("a crushing sound.");
-#ifdef D_DEBUG
-			    else
-				pline("%s from shrapnel",
-				      E_phrase(etmp1, "die"));
-#endif
 			}
 			killer_format = KILLED_BY_AN;
 			killer = "collapsing drawbridge";
@@ -936,7 +830,5 @@ int x,y;
 		}
 	}
 }
-
-#endif /* OVLB */
 
 /*dbridge.c*/

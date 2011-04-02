@@ -6,17 +6,15 @@
 #include "edog.h"
 /* #define DEBUG */	/* turn on for diagnostics */
 
-#ifdef OVLB
-
 static NEARDATA boolean did_dig_msg;
 
-STATIC_DCL boolean NDECL(rm_waslit);
-STATIC_DCL void FDECL(mkcavepos, (XCHAR_P,XCHAR_P,int,BOOLEAN_P,BOOLEAN_P));
-STATIC_DCL void FDECL(mkcavearea, (BOOLEAN_P));
-STATIC_DCL int FDECL(dig_typ, (struct obj *,XCHAR_P,XCHAR_P));
-STATIC_DCL int NDECL(dig);
-STATIC_DCL schar FDECL(fillholetyp, (int, int));
-STATIC_DCL void NDECL(dig_up_grave);
+static boolean NDECL(rm_waslit);
+static void FDECL(mkcavepos, (XCHAR_P,XCHAR_P,int,BOOLEAN_P,BOOLEAN_P));
+static void FDECL(mkcavearea, (BOOLEAN_P));
+static int FDECL(dig_typ, (struct obj *,XCHAR_P,XCHAR_P));
+static int NDECL(dig);
+static schar FDECL(fillholetyp, (int, int));
+static void NDECL(dig_up_grave);
 
 /* Indices returned by dig_typ() */
 #define DIGTYP_UNDIGGABLE 0
@@ -27,7 +25,7 @@ STATIC_DCL void NDECL(dig_up_grave);
 #define DIGTYP_TREE       5
 
 
-STATIC_OVL boolean
+static boolean
 rm_waslit()
 {
     register xchar x, y;
@@ -44,7 +42,7 @@ rm_waslit()
  * boulders in the name of a nice effect.  Vision will get fixed up again
  * immediately after the effect is complete.
  */
-STATIC_OVL void
+static void
 mkcavepos(x, y, dist, waslit, rockit)
     xchar x,y;
     int dist;
@@ -83,7 +81,7 @@ mkcavepos(x, y, dist, waslit, rockit)
     else newsym(x,y);
 }
 
-STATIC_OVL void
+static void
 mkcavearea(rockit)
 register boolean rockit;
 {
@@ -130,7 +128,7 @@ register boolean rockit;
 }
 
 /* When digging into location <x,y>, what are you actually digging into? */
-STATIC_OVL int
+static int
 dig_typ(otmp, x, y)
 struct obj *otmp;
 xchar x, y;
@@ -206,7 +204,7 @@ dig_check(madeby, verbose, x, y)
 	return(TRUE);
 }
 
-STATIC_OVL int
+static int
 dig()
 {
 	register struct rm *lev;
@@ -441,7 +439,7 @@ holetime()
 }
 
 /* Return typ of liquid to fill a hole with, or ROOM, if no liquid nearby */
-STATIC_OVL
+static
 schar
 fillholetyp(x,y)
 int x, y;
@@ -761,7 +759,7 @@ boolean pit_only;
 	return FALSE;
 }
 
-STATIC_OVL void
+static void
 dig_up_grave()
 {
 	struct obj *otmp;
@@ -1059,8 +1057,6 @@ watch_dig(mtmp, x, y, zap)
 	}
 }
 
-#endif /* OVLB */
-#ifdef OVL0
 
 /* Return TRUE if monster died, FALSE otherwise.  Called from m_move(). */
 boolean
@@ -1135,8 +1131,6 @@ register struct monst *mtmp;
 	return FALSE;
 }
 
-#endif /* OVL0 */
-#ifdef OVL3
 
 /* digging via wand zap or spell cast */
 void
@@ -1566,6 +1560,5 @@ wiz_debug_cmd() /* in this case, bury everything at your loc and around */
 }
 
 #endif /* DEBUG */
-#endif /* OVL3 */
 
 /*dig.c*/
