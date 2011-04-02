@@ -72,13 +72,6 @@ SYSOBJ = ioctl.o unixmain.o unixtty.o unixunix.o unixres.o
 # CFLAGS = -O2 -b i486-linuxaout -fomit-frame-pointer -I../include
 # LFLAGS = -b i486-linuxaout -L/usr/X11R6/lib
 
-# Only used for the Gnome interface.
-# When including the Gnome interface, you need to include gnome specific
-# directories.  The ones given below is the usual spot for linux systems.
-# The paths are for glibconfig.h and gnomesupport.h respectively.
-#
-GNOMEINC=-I/usr/lib/glib/include -I/usr/lib/gnome-libs/include -I../win/gnome
-
 # flags for debugging:
 # CFLAGS = -g -I../include
 
@@ -104,46 +97,7 @@ CXX=g++
 WINTTYSRC = ../win/tty/getline.c ../win/tty/termcap.c ../win/tty/topl.c \
 	../win/tty/wintty.c
 WINTTYOBJ = getline.o termcap.o topl.o wintty.o
-#
-# files for an X11 port
-# (tile.c is a generated source file)
-WINX11SRC = ../win/X11/Window.c ../win/X11/dialogs.c ../win/X11/winX.c \
-	../win/X11/winmap.c  ../win/X11/winmenu.c ../win/X11/winmesg.c \
-	../win/X11/winmisc.c ../win/X11/winstat.c ../win/X11/wintext.c \
-	../win/X11/winval.c tile.c
-WINX11OBJ = Window.o dialogs.o winX.o winmap.o winmenu.o winmesg.o \
-	winmisc.o winstat.o wintext.o winval.o tile.o
-#
-# Files for a Qt port
-#
-WINQTSRC = ../win/Qt/qt_win.cpp ../win/Qt/qt_clust.cpp ../win/Qt/qttableview.cpp
-WINQTOBJ = qt_win.o qt_clust.o qttableview.o tile.o
-#
-# Files for a Gnome port
-#
-WINGNOMESRC = ../win/gnome/gnaskstr.c ../win/gnome/gnbind.c \
-	../win/gnome/gnglyph.c ../win/gnome/gnmain.c ../win/gnome/gnmap.c \
-	../win/gnome/gnmenu.c ../win/gnome/gnmesg.c ../win/gnome/gnopts.c \
-	../win/gnome/gnplayer.c ../win/gnome/gnsignal.c \
-	../win/gnome/gnstatus.c ../win/gnome/gntext.c ../win/gnome/gnyesno.c \
-	../win/gnome/gnworn.c
-WINGNOMEOBJ = gnaskstr.o gnbind.o gnglyph.o gnmain.o gnmap.o gnmenu.o \
-	gnmesg.o gnopts.o gnplayer.o gnsignal.o gnstatus.o gntext.o \
-	gnyesno.o gnworn.o tile.o
-#
-# Files for a Gem port
-WINGEMSRC = ../win/gem/wingem.c ../win/gem/wingem1.c ../win/gem/load_img.c \
-	../win/gem/gr_rect.c tile.c
-WINGEMOBJ = wingem.o wingem1.o load_img.o gr_rect.o tile.o
-#
-# Files for a BeOS InterfaceKit port -- not ready for prime time
-WINBESRC =
-WINBEOBJ =
-#WINBESRC = ../win/BeOS/winbe.cpp ../win/BeOS/NHWindow.cpp \
-#	../win/BeOS/NHMenuWindow.cpp ../win/BeOS/NHMapWindow.cpp tile.c
-#WINBEOBJ = winbe.o NHWindow.o NHMenuWindow.o NHMapWindow.o tile.o
 
-#
 #
 WINSRC = $(WINTTYSRC)
 WINOBJ = $(WINTTYOBJ)
@@ -450,8 +404,6 @@ $(HACK_H): ../include/hack.h $(CONFIG_H) ../include/align.h \
 		../include/wintty.h
 	touch $(HACK_H)
 #
-tos.o: ../sys/atari/tos.c $(HACK_H) ../include/tcap.h
-	$(CC) $(CFLAGS) -c ../sys/atari/tos.c
 pcmain.o: ../sys/share/pcmain.c $(HACK_H) ../include/dlb.h \
 		#../include/win32api.h
 	$(CC) $(CFLAGS) -c ../sys/share/pcmain.c
@@ -484,94 +436,7 @@ topl.o: ../win/tty/topl.c $(HACK_H) ../include/tcap.h
 wintty.o: ../win/tty/wintty.c $(HACK_H) ../include/dlb.h \
 		../include/patchlevel.h ../include/tcap.h
 	$(CC) $(CFLAGS) -c ../win/tty/wintty.c
-Window.o: ../win/X11/Window.c ../include/xwindowp.h ../include/xwindow.h \
-		$(CONFIG_H)
-	$(CC) $(CFLAGS) -c ../win/X11/Window.c
-dialogs.o: ../win/X11/dialogs.c $(CONFIG_H)
-	$(CC) $(CFLAGS) -c ../win/X11/dialogs.c
-winX.o: ../win/X11/winX.c $(HACK_H) ../include/winX.h ../include/dlb.h \
-		../include/patchlevel.h ../win/X11/nh72icon \
-		../win/X11/nh56icon ../win/X11/nh32icon
-	$(CC) $(CFLAGS) -c ../win/X11/winX.c
-winmap.o: ../win/X11/winmap.c ../include/xwindow.h $(HACK_H) ../include/dlb.h \
-		../include/winX.h ../include/tile2x11.h
-	$(CC) $(CFLAGS) -c ../win/X11/winmap.c
-winmenu.o: ../win/X11/winmenu.c $(HACK_H) ../include/winX.h
-	$(CC) $(CFLAGS) -c ../win/X11/winmenu.c
-winmesg.o: ../win/X11/winmesg.c ../include/xwindow.h $(HACK_H) ../include/winX.h
-	$(CC) $(CFLAGS) -c ../win/X11/winmesg.c
-winmisc.o: ../win/X11/winmisc.c $(HACK_H) ../include/func_tab.h \
-		../include/winX.h
-	$(CC) $(CFLAGS) -c ../win/X11/winmisc.c
-winstat.o: ../win/X11/winstat.c $(HACK_H) ../include/winX.h
-	$(CC) $(CFLAGS) -c ../win/X11/winstat.c
-wintext.o: ../win/X11/wintext.c $(HACK_H) ../include/winX.h ../include/xwindow.h
-	$(CC) $(CFLAGS) -c ../win/X11/wintext.c
-winval.o: ../win/X11/winval.c $(HACK_H) ../include/winX.h
-	$(CC) $(CFLAGS) -c ../win/X11/winval.c
 tile.o: tile.c $(HACK_H)
-gnaskstr.o: ../win/gnome/gnaskstr.c ../win/gnome/gnaskstr.h \
-		../win/gnome/gnmain.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnaskstr.c
-gnbind.o: ../win/gnome/gnbind.c ../win/gnome/gnbind.h ../win/gnome/gnmain.h \
-		../win/gnome/gnmenu.h ../win/gnome/gnaskstr.h \
-		../win/gnome/gnyesno.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnbind.c
-gnglyph.o: ../win/gnome/gnglyph.c ../win/gnome/gnglyph.h ../include/tile2x11.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnglyph.c
-gnmain.o: ../win/gnome/gnmain.c ../win/gnome/gnmain.h ../win/gnome/gnsignal.h \
-		../win/gnome/gnbind.h ../win/gnome/gnopts.h $(HACK_H) \
-		../include/date.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnmain.c
-gnmap.o: ../win/gnome/gnmap.c ../win/gnome/gnmap.h ../win/gnome/gnglyph.h \
-		../win/gnome/gnsignal.h $(HACK_H)
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnmap.c
-gnmenu.o: ../win/gnome/gnmenu.c ../win/gnome/gnmenu.h ../win/gnome/gnmain.h \
-		../win/gnome/gnbind.h ../include/func_tab.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnmenu.c
-gnmesg.o: ../win/gnome/gnmesg.c ../win/gnome/gnmesg.h ../win/gnome/gnsignal.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnmesg.c
-gnopts.o: ../win/gnome/gnopts.c ../win/gnome/gnopts.h ../win/gnome/gnglyph.h \
-		../win/gnome/gnmain.h ../win/gnome/gnmap.h $(HACK_H)
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnopts.c
-gnplayer.o: ../win/gnome/gnplayer.c ../win/gnome/gnplayer.h \
-		../win/gnome/gnmain.h $(HACK_H)
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnplayer.c
-gnsignal.o: ../win/gnome/gnsignal.c ../win/gnome/gnsignal.h \
-		../win/gnome/gnmain.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnsignal.c
-gnstatus.o: ../win/gnome/gnstatus.c ../win/gnome/gnstatus.h \
-		../win/gnome/gnsignal.h ../win/gnome/gn_xpms.h \
-		../win/gnome/gnomeprv.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnstatus.c
-gntext.o: ../win/gnome/gntext.c ../win/gnome/gntext.h ../win/gnome/gnmain.h \
-		../win/gnome/gn_rip.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gntext.c
-gnyesno.o: ../win/gnome/gnyesno.c ../win/gnome/gnbind.h ../win/gnome/gnyesno.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnyesno.c
-gnworn.o: ../win/gnome/gnworn.c ../win/gnome/gnworn.h ../win/gnome/gnglyph.h \
-		../win/gnome/gnsignal.h ../win/gnome/gnomeprv.h
-	$(CC) $(CFLAGS) $(GNOMEINC) -c ../win/gnome/gnworn.c
-wingem.o: ../win/gem/wingem.c $(HACK_H) ../include/func_tab.h ../include/dlb.h \
-		../include/patchlevel.h ../include/wingem.h
-	$(CC) $(CFLAGS) -c ../win/gem/wingem.c
-wingem1.o: ../win/gem/wingem1.c ../include/gem_rsc.h ../include/load_img.h \
-		../include/gr_rect.h ../include/wintype.h ../include/wingem.h
-	$(CC) $(CFLAGS) -c ../win/gem/wingem1.c
-load_img.o: ../win/gem/load_img.c ../include/load_img.h
-	$(CC) $(CFLAGS) -c ../win/gem/load_img.c
-gr_rect.o: ../win/gem/gr_rect.c ../include/gr_rect.h
-	$(CC) $(CFLAGS) -c ../win/gem/gr_rect.c
-tile.o: tile.c $(HACK_H)
-qt_win.o: ../win/Qt/qt_win.cpp $(HACK_H) ../include/func_tab.h \
-		../include/dlb.h ../include/patchlevel.h ../include/tile2x11.h \
-		../include/qt_win.h ../include/qt_clust.h ../include/qt_kde0.h \
-		../include/qt_xpms.h qt_win.moc qt_kde0.moc qttableview.moc
-	$(CXX) $(CXXFLAGS) -c ../win/Qt/qt_win.cpp
-qt_clust.o: ../win/Qt/qt_clust.cpp ../include/qt_clust.h
-	$(CXX) $(CXXFLAGS) -c ../win/Qt/qt_clust.cpp
-qttableview.o: ../win/Qt/qttableview.cpp ../include/qttableview.h
-	$(CXX) $(CXXFLAGS) -c ../win/Qt/qttableview.cpp
 monstr.o: monstr.c $(CONFIG_H)
 allmain.o: allmain.c $(HACK_H)
 alloc.o: alloc.c $(CONFIG_H)
@@ -680,7 +545,6 @@ vision.o: vision.c $(HACK_H)
 weapon.o: weapon.c $(HACK_H)
 were.o: were.c $(HACK_H)
 wield.o: wield.c $(HACK_H)
-windows.o: windows.c $(HACK_H) ../include/wingem.h ../include/winGnome.h
 wizard.o: wizard.c $(HACK_H) ../include/qtext.h ../include/epri.h
 worm.o: worm.c $(HACK_H) ../include/lev.h
 worn.o: worn.c $(HACK_H)
