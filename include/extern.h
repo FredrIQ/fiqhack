@@ -1993,12 +1993,6 @@ E unsigned long NDECL(get_current_feature_ver);
 E void FDECL(append_port_id, (char *));
 #endif
 
-/* ### vis_tab.c ### */
-
-#ifdef VISION_TABLES
-E void NDECL(vis_tab_init);
-#endif
-
 /* ### vision.c ### */
 
 E void NDECL(vision_init);
