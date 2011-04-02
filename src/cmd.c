@@ -49,9 +49,6 @@ STATIC_PTR int NDECL(wiz_show_seenv);
 STATIC_PTR int NDECL(wiz_show_vision);
 STATIC_PTR int NDECL(wiz_mon_polycontrol);
 STATIC_PTR int NDECL(wiz_show_wmodes);
-#if defined(__BORLANDC__) && !defined(_WIN32)
-extern void FDECL(show_borlandc_stats, (winid));
-#endif
 #ifdef DEBUG_MIGRATING_MONS
 STATIC_PTR int NDECL(wiz_migrate_mons);
 #endif
@@ -1664,10 +1661,6 @@ wiz_show_stats()
 	putstr(win, 0, separator);
 	Sprintf(buf, template, "Total", total_mon_count, total_mon_size);
 	putstr(win, 0, buf);
-
-#if defined(__BORLANDC__) && !defined(_WIN32)
-	show_borlandc_stats(win);
-#endif
 
 	display_nhwindow(win, FALSE);
 	destroy_nhwindow(win);

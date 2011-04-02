@@ -55,15 +55,6 @@ int FDECL(main, (int,char **));
 extern void FDECL(pcmain, (int,char **));
 
 
-#if defined(__BORLANDC__) && !defined(_WIN32)
-void NDECL( startup );
-# ifdef OVLB
-unsigned _stklen = STKSIZ;
-# else
-extern unsigned _stklen;
-# endif
-#endif
-
 #ifdef OVL0
 /* If the graphics version is built, we don't need a main; it is skipped
  * to help MinGW decide which entry point to choose. If both main and 
@@ -103,9 +94,6 @@ char *argv[];
 	char failbuf[BUFSZ];
 #endif
 
-#if defined(__BORLANDC__) && !defined(_WIN32)
-	startup();
-#endif
 	hname = "NetHack";      /* used for syntax messages */
 
 	choose_windows(DEFAULT_WINDOW_SYS);

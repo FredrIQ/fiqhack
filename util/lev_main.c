@@ -38,9 +38,6 @@
 #define Free(ptr)		if(ptr) free((genericptr_t) (ptr))
 #define Write(fd, item, size)	if (write(fd, (genericptr_t)(item), size) != size) return FALSE;
 
-#if defined(__BORLANDC__) && !defined(_WIN32)
-extern unsigned _stklen = STKSIZ;
-#endif
 #define MAX_ERRORS	25
 
 extern int  NDECL (yyparse);
@@ -1103,7 +1100,7 @@ specialmaze *maze;
 	    for(j=0;j<pt->ysize;j++) {
 		if(!maze->init_lev.init_present ||
 		   pt->xsize > 1 || pt->ysize > 1) {
-#if !defined(_MSC_VER) && !defined(__BORLANDC__)
+#if !defined(_MSC_VER)
 			Write(fd, pt->map[j], pt->xsize * sizeof *pt->map[j]);
 #else
 			/*
