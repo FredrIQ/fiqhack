@@ -271,7 +271,7 @@ HACKINCL = align.h artifact.h artilist.h attrib.h color.h \
 	global.h hack.h lev.h mfndpos.h mkroom.h \
 	monattk.h mondata.h monflag.h monst.h monsym.h obj.h objclass.h \
 	patchlevel.h permonst.h prop.h rect.h region.h rm.h \
-	sp_lev.h spell.h system.h tcap.h timeout.h tradstdc.h \
+	sp_lev.h spell.h system.h tcap.h timeout.h \
 	trap.h unixconf.h vault.h vision.h wintty.h \
 	winX.h winprocs.h wintype.h you.h youprop.h
 
@@ -429,7 +429,7 @@ depend: ../sys/unix/depend.awk \
 # DO NOT DELETE THIS LINE OR CHANGE ANYTHING BEYOND IT
 
 # config.h timestamp
-$(CONFIG_H): ../include/config.h ../include/config1.h ../include/tradstdc.h \
+$(CONFIG_H): ../include/config.h ../include/config1.h \
 		../include/global.h ../include/coord.h \
 		../include/system.h ../include/unixconf.h \
 		../include/ntconf.h

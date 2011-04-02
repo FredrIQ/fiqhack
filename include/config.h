@@ -104,7 +104,18 @@
  *		the AT&T 3B2/3B5/etc. family.
  */
 
-#include "tradstdc.h"
+#include <stdarg.h>
+
+/*
+ * Allow gcc2 to check parameters of printf-like calls with -Wformat;
+ * append this to a prototype declaration (see pline() in extern.h).
+ */
+#ifdef __GNUC__
+#define PRINTF_F(f,v) __attribute__ ((format (printf, f, v)))
+#endif
+#ifndef PRINTF_F
+#define PRINTF_F(f,v)
+#endif
 
 /*
  * type schar: small signed integers (8 bits suffice)
