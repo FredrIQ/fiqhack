@@ -20,11 +20,11 @@
 
 
 SHARED_DCL char orgdir[PATHLEN];	/* also used in pcsys.c, amidos.c */
-static void FDECL(process_options,(int argc,char **argv));
+static void process_options(int argc,char **argv);
 static void nhusage(void);
 
 #if defined(WIN32)
-extern void FDECL(nethack_exit,(int));
+extern void nethack_exit(int);
 #else
 #define nethack_exit exit
 #endif
@@ -34,12 +34,12 @@ extern boolean getreturn_enabled;	/* from sys/share/pcsys.c */
 #endif
 
 #ifdef EXEPATH
-static char *FDECL(exepath,(char *));
+static char *exepath(char *);
 #endif
 
-int FDECL(main, (int,char **));
+int main(int,char **);
 
-extern void FDECL(pcmain, (int,char **));
+extern void pcmain(int,char **);
 
 
 int

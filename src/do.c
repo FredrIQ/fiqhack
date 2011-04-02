@@ -8,17 +8,17 @@
 #include "lev.h"
 
 #ifdef SINKS
-static void FDECL(trycall, (struct obj *));
-static void FDECL(dosinkring, (struct obj *));
+static void trycall(struct obj *);
+static void dosinkring(struct obj *);
 #endif /* SINKS */
 
-STATIC_PTR int FDECL(drop, (struct obj *));
+STATIC_PTR int drop(struct obj *);
 STATIC_PTR int wipeoff(void);
 
-static int FDECL(menu_drop, (int));
+static int menu_drop(int);
 static int currentlevel_rewrite(void);
 static void final_level(void);
-/* static boolean FDECL(badspot, (XCHAR_P,XCHAR_P)); */
+/* static boolean badspot(XCHAR_P,XCHAR_P); */
 
 static const char drop_types[] =
 	{ ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, 0 };

@@ -14,9 +14,9 @@
 #define PAY_BROKE (-2)
 
 #ifdef KOPS
-static void FDECL(makekops, (coord *));
-static void FDECL(call_kops, (struct monst *,BOOLEAN_P));
-static void FDECL(kops_gone, (BOOLEAN_P));
+static void makekops(coord *);
+static void call_kops(struct monst *,BOOLEAN_P);
+static void kops_gone(BOOLEAN_P);
 #endif /* KOPS */
 
 #define IS_SHOP(x)	(rooms[x].rtype >= SHOPBASE)
@@ -26,44 +26,41 @@ extern struct obj *thrownobj;		/* defined in dothrow.c */
 
 static long int followmsg;	/* last time of follow message */
 
-static void FDECL(setpaid, (struct monst *));
-static long FDECL(addupbill, (struct monst *));
-static void FDECL(pacify_shk, (struct monst *));
-static struct bill_x *FDECL(onbill, (struct obj *, struct monst *, BOOLEAN_P));
-static struct monst *FDECL(next_shkp, (struct monst *, BOOLEAN_P));
-static long FDECL(shop_debt, (struct eshk *));
-static char *FDECL(shk_owns, (char *,struct obj *));
-static char *FDECL(mon_owns, (char *,struct obj *));
-static void FDECL(clear_unpaid,(struct obj *));
-static long FDECL(check_credit, (long, struct monst *));
-static void FDECL(pay, (long, struct monst *));
-static long FDECL(get_cost, (struct obj *, struct monst *));
-static long FDECL(set_cost, (struct obj *, struct monst *));
-static const char *FDECL(shk_embellish, (struct obj *, long));
-static long FDECL(cost_per_charge, (struct monst *,struct obj *,BOOLEAN_P));
-static long FDECL(cheapest_item, (struct monst *));
-static int FDECL(dopayobj, (struct monst *, struct bill_x *,
-			    struct obj **, int, BOOLEAN_P));
-static long FDECL(stolen_container, (struct obj *, struct monst *, long,
-				     BOOLEAN_P));
-static long FDECL(getprice, (struct obj *,BOOLEAN_P));
-static void FDECL(shk_names_obj,
-		 (struct monst *,struct obj *,const char *,long,const char *));
-static struct obj *FDECL(bp_to_obj, (struct bill_x *));
-static boolean FDECL(inherits, (struct monst *,int,int));
-static void FDECL(set_repo_loc, (struct eshk *));
+static void setpaid(struct monst *);
+static long addupbill(struct monst *);
+static void pacify_shk(struct monst *);
+static struct bill_x *onbill(struct obj *, struct monst *, BOOLEAN_P);
+static struct monst *next_shkp(struct monst *, BOOLEAN_P);
+static long shop_debt(struct eshk *);
+static char *shk_owns(char *,struct obj *);
+static char *mon_owns(char *,struct obj *);
+static void clear_unpaid(struct obj *);
+static long check_credit(long, struct monst *);
+static void pay(long, struct monst *);
+static long get_cost(struct obj *, struct monst *);
+static long set_cost(struct obj *, struct monst *);
+static const char *shk_embellish(struct obj *, long);
+static long cost_per_charge(struct monst *,struct obj *,BOOLEAN_P);
+static long cheapest_item(struct monst *);
+static int dopayobj(struct monst *, struct bill_x *,
+		    struct obj **, int, BOOLEAN_P);
+static long stolen_container(struct obj *, struct monst *, long, BOOLEAN_P);
+static long getprice(struct obj *,BOOLEAN_P);
+static void shk_names_obj(struct monst *,struct obj *,
+			  const char *,long,const char *);
+static struct obj *bp_to_obj(struct bill_x *);
+static boolean inherits(struct monst *,int,int);
+static void set_repo_loc(struct eshk *);
 static boolean angry_shk_exists(void);
-static void FDECL(rile_shk, (struct monst *));
-static void FDECL(rouse_shk, (struct monst *,BOOLEAN_P));
-static void FDECL(remove_damage, (struct monst *, BOOLEAN_P));
-static void FDECL(sub_one_frombill, (struct obj *, struct monst *));
-static void FDECL(add_one_tobill, (struct obj *, BOOLEAN_P));
-static void FDECL(dropped_container, (struct obj *, struct monst *,
-				      BOOLEAN_P));
-static void FDECL(add_to_billobjs, (struct obj *));
-static void FDECL(bill_box_content, (struct obj *, BOOLEAN_P, BOOLEAN_P,
-				     struct monst *));
-static boolean FDECL(rob_shop, (struct monst *));
+static void rile_shk(struct monst *);
+static void rouse_shk(struct monst *,BOOLEAN_P);
+static void remove_damage(struct monst *, BOOLEAN_P);
+static void sub_one_frombill(struct obj *, struct monst *);
+static void add_one_tobill(struct obj *, BOOLEAN_P);
+static void dropped_container(struct obj *, struct monst *,BOOLEAN_P);
+static void add_to_billobjs(struct obj *);
+static void bill_box_content(struct obj *, BOOLEAN_P, BOOLEAN_P,struct monst *);
+static boolean rob_shop(struct monst *);
 /*
 	invariants: obj->unpaid iff onbill(obj) [unless bp->useup]
 		obj->quan <= bp->bquan

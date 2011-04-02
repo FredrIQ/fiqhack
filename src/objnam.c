@@ -9,10 +9,10 @@
 #define SCHAR_LIM 127
 #define NUMOBUF 12
 
-static char *FDECL(strprepend,(char *,const char *));
-static boolean FDECL(wishymatch, (const char *,const char *,BOOLEAN_P));
+static char *strprepend(char *,const char *);
+static boolean wishymatch(const char *,const char *,BOOLEAN_P);
 static char *nextobuf(void);
-static void FDECL(add_erosion_words, (struct obj *, char *));
+static void add_erosion_words(struct obj *, char *);
 
 struct Jitem {
 	int item;
@@ -45,7 +45,7 @@ static struct Jitem Japanese_items[] = {
 };
 
 
-static const char *FDECL(Japanese_item_name,(int i));
+static const char *Japanese_item_name(int i);
 
 static char *
 strprepend(s,pref)
@@ -186,7 +186,7 @@ register struct obj *obj;
 char *
 distant_name(obj, func)
 register struct obj *obj;
-char *FDECL((*func), (OBJ_P));
+char *(*func)(OBJ_P);
 {
 	char *str;
 
@@ -875,7 +875,7 @@ struct obj *obj;
 const char *
 singular(otmp, func)
 register struct obj *otmp;
-char *FDECL((*func), (OBJ_P));
+char *(*func)(OBJ_P);
 {
 	long savequan;
 	char *nam;

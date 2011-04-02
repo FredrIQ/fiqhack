@@ -10,9 +10,9 @@ static void vomiting_dialogue(void);
 static void choke_dialogue(void);
 static void slime_dialogue(void);
 static void slip_or_trip(void);
-static void FDECL(see_lamp_flicker, (struct obj *, const char *));
-static void FDECL(lantern_message, (struct obj *));
-static void FDECL(cleanup_burn, (void *,long));
+static void see_lamp_flicker(struct obj *, const char *);
+static void lantern_message(struct obj *);
+static void cleanup_burn(void *,long);
 
 
 /* He is being petrified - dialogue by inmet!tower */
@@ -1272,16 +1272,15 @@ do_storms()
  */
 
 #ifdef WIZARD
-static const char *FDECL(kind_name, (SHORT_P));
-static void FDECL(print_queue, (winid, timer_element *));
+static const char *kind_name(SHORT_P);
+static void print_queue(winid, timer_element *);
 #endif
-static void FDECL(insert_timer, (timer_element *));
-static timer_element *FDECL(remove_timer, (timer_element **, SHORT_P,
-								void *));
-static void FDECL(write_timer, (int, timer_element *));
-static boolean FDECL(mon_is_local, (struct monst *));
-static boolean FDECL(timer_is_local, (timer_element *));
-static int FDECL(maybe_write_timer, (int, int, BOOLEAN_P));
+static void insert_timer(timer_element *);
+static timer_element *remove_timer(timer_element **, SHORT_P,void *);
+static void write_timer(int, timer_element *);
+static boolean mon_is_local(struct monst *);
+static boolean timer_is_local(timer_element *);
+static int maybe_write_timer(int, int, BOOLEAN_P);
 
 /* ordered timer list */
 static timer_element *timer_base;		/* "active" */

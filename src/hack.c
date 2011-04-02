@@ -6,14 +6,14 @@
 
 static void maybe_wail(void);
 static int moverock(void);
-static int FDECL(still_chewing,(XCHAR_P,XCHAR_P));
+static int still_chewing(XCHAR_P,XCHAR_P);
 #ifdef SINKS
 static void dosinkfall(void);
 #endif
-static boolean FDECL(findtravelpath, (BOOLEAN_P));
-static boolean FDECL(monstinroom, (struct permonst *,int));
+static boolean findtravelpath(BOOLEAN_P);
+static boolean monstinroom(struct permonst *,int);
 
-static void FDECL(move_update, (BOOLEAN_P));
+static void move_update(BOOLEAN_P);
 
 #define IS_SHOP(x)	(rooms[x].rtype >= SHOPBASE)
 

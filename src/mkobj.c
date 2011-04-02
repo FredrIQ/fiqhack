@@ -5,13 +5,13 @@
 #include "hack.h"
 #include "prop.h"
 
-static void FDECL(mkbox_cnts,(struct obj *));
-static void FDECL(obj_timer_checks,(struct obj *, XCHAR_P, XCHAR_P, int));
-static void FDECL(container_weight, (struct obj *));
-static struct obj *FDECL(save_mtraits, (struct obj *, struct monst *));
+static void mkbox_cnts(struct obj *);
+static void obj_timer_checks(struct obj *, XCHAR_P, XCHAR_P, int);
+static void container_weight(struct obj *);
+static struct obj *save_mtraits(struct obj *, struct monst *);
 #ifdef WIZARD
-static const char *FDECL(where_name, (int));
-static void FDECL(check_contained, (struct obj *,const char *));
+static const char *where_name(int);
+static void check_contained(struct obj *,const char *);
 #endif
 
 extern struct obj *thrownobj;		/* defined in dothrow.c */

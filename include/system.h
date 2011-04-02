@@ -35,10 +35,10 @@
 E  long random(void);
 # endif
 # if (!defined(bsdi) && !defined(__FreeBSD__)) || defined(RANDOM)
-E void FDECL(srandom, (unsigned int));
+E void srandom(unsigned int);
 # else
 #  if !defined(bsdi) && !defined(__FreeBSD__)
-E int FDECL(srandom, (unsigned int));
+E int srandom(unsigned int);
 #  endif
 # endif
 #else
@@ -48,28 +48,27 @@ E void srand48();
 
 #if !defined(BSD)
 			/* real BSD wants all these to return int */
-E void FDECL(exit, (int));
+E void exit(int);
 
 
 #   ifndef MONITOR_HEAP
-E void FDECL(free, (void *));
+E void free(void *);
 #   endif
-E void FDECL(perror, (const char *));
+E void perror(const char *);
 #endif
-E void FDECL(qsort, (void *,size_t,size_t,
-		     int(*)(const void *,const void *)));
+E void qsort(void *,size_t,size_t,int(*)(const void *,const void *));
 
 #if !defined(__GNUC__)
 /* may already be defined */
 
 # ifndef bsdi
-E long FDECL(lseek, (int,long,int));
+E long lseek(int,long,int);
 # endif
 # ifndef bsdi
-E int FDECL(write, (int, const void *,unsigned));
+E int write(int, const void *,unsigned);
 # endif
 
-E int FDECL(unlink, (const char *));
+E int unlink(const char *);
 
 #endif /* !__GNUC__ */
 
@@ -80,7 +79,7 @@ E int FDECL(unlink, (const char *));
 E unsigned sleep();
 #endif
 
-E char *FDECL(getenv, (const char *));
+E char *getenv(const char *);
 E char *getlogin();
 E pid_t getpid(void);
 E uid_t getuid(void);
@@ -89,28 +88,28 @@ E gid_t getgid(void);
 /*# string(s).h #*/
 
 # if !defined(SVR4)
-E int FDECL(vsprintf, (char *, const char *, va_list));
-E int FDECL(vfprintf, (FILE *, const char *, va_list));
-E int FDECL(vprintf, (const char *, va_list));
+E int vsprintf(char *, const char *, va_list);
+E int vfprintf(FILE *, const char *, va_list);
+E int vprintf(const char *, va_list);
 # endif
 
 
-E int FDECL(tgetent, (char *,const char *));
-E void FDECL(tputs, (const char *,int,int (*)()));
-E int FDECL(tgetnum, (const char *));
-E int FDECL(tgetflag, (const char *));
-E char *FDECL(tgetstr, (const char *,char **));
-E char *FDECL(tgoto, (const char *,int,int));
+E int tgetent(char *,const char *);
+E void tputs(const char *,int,int (*)());
+E int tgetnum(const char *);
+E int tgetflag(const char *);
+E char *tgetstr(const char *,char **);
+E char *tgoto(const char *,int,int);
 
 #ifdef ALLOC_C
-E void * FDECL(malloc, (size_t));
+E void * malloc(size_t);
 #endif
 
 /* time functions */
 
-E struct tm *FDECL(localtime, (const time_t *));
+E struct tm *localtime(const time_t *);
 
-E time_t FDECL(time, (time_t *));
+E time_t time(time_t *);
 
 #undef E
 

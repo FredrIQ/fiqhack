@@ -53,20 +53,20 @@ struct toptenentry {
 	char death[DTHSZ+1];
 } *tt_head;
 
-static void FDECL(topten_print, (const char *));
-static void FDECL(topten_print_bold, (const char *));
-static xchar FDECL(observable_depth, (d_level *));
+static void topten_print(const char *);
+static void topten_print_bold(const char *);
+static xchar observable_depth(d_level *);
 static void outheader(void);
-static void FDECL(outentry, (int,struct toptenentry *,BOOLEAN_P));
-static void FDECL(readentry, (FILE *,struct toptenentry *));
-static void FDECL(writeentry, (FILE *,struct toptenentry *));
-static void FDECL(free_ttlist, (struct toptenentry *));
-static int FDECL(classmon, (char *,BOOLEAN_P));
-static int FDECL(score_wanted,
-		(BOOLEAN_P, int,struct toptenentry *,int,const char **,int));
+static void outentry(int,struct toptenentry *,BOOLEAN_P);
+static void readentry(FILE *,struct toptenentry *);
+static void writeentry(FILE *,struct toptenentry *);
+static void free_ttlist(struct toptenentry *);
+static int classmon(char *,BOOLEAN_P);
+static int score_wanted(BOOLEAN_P, int,struct toptenentry *,
+			int,const char **,int);
 #ifdef NO_SCAN_BRACK
-static void FDECL(nsb_mung_line,(char*));
-static void FDECL(nsb_unmung_line,(char*));
+static void nsb_mung_line(char*);
+static void nsb_unmung_line(char*);
 #endif
 
 /* must fit with end.c; used in rip.c */

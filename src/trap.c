@@ -6,28 +6,27 @@
 
 extern const char * const destroy_strings[];	/* from zap.c */
 
-static void FDECL(dofiretrap, (struct obj *));
+static void dofiretrap(struct obj *);
 static void domagictrap(void);
-static boolean FDECL(emergency_disrobe,(boolean *));
-static int FDECL(untrap_prob, (struct trap *ttmp));
-static void FDECL(cnv_trap_obj, (int, int, struct trap *));
-static void FDECL(move_into_trap, (struct trap *));
-static int FDECL(try_disarm, (struct trap *,BOOLEAN_P));
-static void FDECL(reward_untrap, (struct trap *, struct monst *));
-static int FDECL(disarm_holdingtrap, (struct trap *));
-static int FDECL(disarm_landmine, (struct trap *));
-static int FDECL(disarm_squeaky_board, (struct trap *));
-static int FDECL(disarm_shooting_trap, (struct trap *, int));
-static int FDECL(try_lift, (struct monst *, struct trap *, int, BOOLEAN_P));
-static int FDECL(help_monster_out, (struct monst *, struct trap *));
-static boolean FDECL(thitm, (int,struct monst *,struct obj *,int,BOOLEAN_P));
-static int FDECL(mkroll_launch,
-			(struct trap *,XCHAR_P,XCHAR_P,SHORT_P,long));
-static boolean FDECL(isclearpath,(coord *, int, SCHAR_P, SCHAR_P));
+static boolean emergency_disrobe(boolean *);
+static int untrap_prob(struct trap *ttmp);
+static void cnv_trap_obj(int, int, struct trap *);
+static void move_into_trap(struct trap *);
+static int try_disarm(struct trap *,BOOLEAN_P);
+static void reward_untrap(struct trap *, struct monst *);
+static int disarm_holdingtrap(struct trap *);
+static int disarm_landmine(struct trap *);
+static int disarm_squeaky_board(struct trap *);
+static int disarm_shooting_trap(struct trap *, int);
+static int try_lift(struct monst *, struct trap *, int, BOOLEAN_P);
+static int help_monster_out(struct monst *, struct trap *);
+static boolean thitm(int,struct monst *,struct obj *,int,BOOLEAN_P);
+static int mkroll_launch(struct trap *,XCHAR_P,XCHAR_P,SHORT_P,long);
+static boolean isclearpath(coord *, int, SCHAR_P, SCHAR_P);
 #ifdef STEED
-static int FDECL(steedintrap, (struct trap *, struct obj *));
-static boolean FDECL(keep_saddle_with_steedcorpse,
-			(unsigned, struct obj *, struct obj *));
+static int steedintrap(struct trap *, struct obj *);
+static boolean keep_saddle_with_steedcorpse
+			(unsigned, struct obj *, struct obj *);
 #endif
 
 

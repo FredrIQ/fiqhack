@@ -8,22 +8,22 @@
 #define CONTAINED_SYM	'>'	/* designator for inside a container */
 
 static void reorder_invent(void);
-static boolean FDECL(mergable,(struct obj *,struct obj *));
-static void FDECL(invdisp_nothing, (const char *,const char *));
-static boolean FDECL(worn_wield_only, (struct obj *));
-static boolean FDECL(only_here, (struct obj *));
-static void FDECL(compactify,(char *));
-static boolean FDECL(taking_off, (const char *));
-static boolean FDECL(putting_on, (const char *));
-STATIC_PTR int FDECL(ckunpaid,(struct obj *));
-STATIC_PTR int FDECL(ckvalidcat,(struct obj *));
-static char FDECL(display_pickinv, (const char *,BOOLEAN_P, long *));
-static boolean FDECL(this_type_only, (struct obj *));
+static boolean mergable(struct obj *,struct obj *);
+static void invdisp_nothing(const char *,const char *);
+static boolean worn_wield_only(struct obj *);
+static boolean only_here(struct obj *);
+static void compactify(char *);
+static boolean taking_off(const char *);
+static boolean putting_on(const char *);
+STATIC_PTR int ckunpaid(struct obj *);
+STATIC_PTR int ckvalidcat(struct obj *);
+static char display_pickinv(const char *,BOOLEAN_P, long *);
+static boolean this_type_only(struct obj *);
 static void dounpaid(void);
-static struct obj *FDECL(find_unpaid,(struct obj *,struct obj **));
-static void FDECL(menu_identify, (int));
-static boolean FDECL(tool_in_use, (struct obj *));
-static char FDECL(obj_to_let,(struct obj *));
+static struct obj *find_unpaid(struct obj *,struct obj **);
+static void menu_identify(int);
+static boolean tool_in_use(struct obj *);
+static char obj_to_let(struct obj *);
 
 
 static int lastinvnr = 51;	/* 0 ... 51 (never saved&restored) */
@@ -1151,12 +1151,12 @@ static const char removeables[] =
 int
 ggetobj(word, fn, mx, combo, resultflags)
 const char *word;
-int FDECL((*fn),(OBJ_P)), mx;
+int (*fn)(OBJ_P), mx;
 boolean combo;		/* combination menu flag */
 unsigned *resultflags;
 {
-	int FDECL((*ckfn),(OBJ_P)) = (int FDECL((*),(OBJ_P))) 0;
-	boolean FDECL((*filter),(OBJ_P)) = (boolean FDECL((*),(OBJ_P))) 0;
+	int (*ckfn)(OBJ_P) = (int (*)(OBJ_P)) 0;
+	boolean (*filter)(OBJ_P) = (boolean (*)(OBJ_P)) 0;
 	boolean takeoff, ident, allflag, m_seen;
 	int itemcount;
 #ifndef GOLDOBJ
@@ -1347,7 +1347,7 @@ askchain(objchn, olets, allflag, fn, ckfn, mx, word)
 struct obj **objchn;
 register int allflag, mx;
 register const char *olets, *word;	/* olets is an Obj Class char array */
-register int FDECL((*fn),(OBJ_P)), FDECL((*ckfn),(OBJ_P));
+register int (*fn)(OBJ_P), (*ckfn)(OBJ_P);
 {
 	struct obj *otmp, *otmp2, *otmpo;
 	register char sym, ilet;
@@ -1983,7 +1983,7 @@ dotypeinv()
 #ifndef GOLDOBJ
 					      (u.ugold != 0),
 #endif
-					      (boolean FDECL((*),(OBJ_P))) 0, &itemcount);
+					      (boolean (*)(OBJ_P)) 0, &itemcount);
 	    if (unpaid_count) {
 		Strcat(types, "u");
 		class_count++;

@@ -14,13 +14,13 @@
 #include <fcntl.h>
 #endif
 
-extern struct passwd *FDECL(getpwuid,(uid_t));
-extern struct passwd *FDECL(getpwnam,(const char *));
+extern struct passwd *getpwuid(uid_t);
+extern struct passwd *getpwnam(const char *);
 #ifdef CHDIR
-static void FDECL(chdirx, (const char *,BOOLEAN_P));
+static void chdirx(const char *,BOOLEAN_P);
 #endif /* CHDIR */
 static boolean whoami(void);
-static void FDECL(process_options, (int, char **));
+static void process_options(int, char **);
 
 #ifdef __linux__
 extern void check_linux_console(void);

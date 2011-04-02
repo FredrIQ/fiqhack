@@ -9,14 +9,14 @@
 
 extern boolean notonhead;
 
-static boolean FDECL(dog_hunger,(struct monst *,struct edog *));
-static int FDECL(dog_invent,(struct monst *,struct edog *,int));
-static int FDECL(dog_goal,(struct monst *,struct edog *,int,int,int));
+static boolean dog_hunger(struct monst *,struct edog *);
+static int dog_invent(struct monst *,struct edog *,int);
+static int dog_goal(struct monst *,struct edog *,int,int,int);
 
-static struct obj *FDECL(DROPPABLES, (struct monst *));
-static boolean FDECL(can_reach_location,(struct monst *,XCHAR_P,XCHAR_P,
-    XCHAR_P,XCHAR_P));
-static boolean FDECL(could_reach_item,(struct monst *, XCHAR_P,XCHAR_P));
+static struct obj *DROPPABLES(struct monst *);
+static boolean can_reach_location(struct monst *,XCHAR_P,XCHAR_P,
+    XCHAR_P,XCHAR_P);
+static boolean could_reach_item(struct monst *, XCHAR_P,XCHAR_P);
 
 static struct obj *
 DROPPABLES(mon)
@@ -47,11 +47,11 @@ register struct monst *mon;
 
 static const char nofetch[] = { BALL_CLASS, CHAIN_CLASS, ROCK_CLASS, 0 };
 
-static boolean FDECL(cursed_object_at, (int, int));
+static boolean cursed_object_at(int, int);
 
 static xchar gtyp, gx, gy;	/* type and position of dog's current goal */
 
-STATIC_PTR void FDECL(wantdoor, (int, int, void *));
+STATIC_PTR void wantdoor(int, int, void *);
 
 static boolean
 cursed_object_at(x, y)

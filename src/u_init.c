@@ -12,10 +12,10 @@ struct trobj {
 	unsigned trbless:2;
 };
 
-static void FDECL(ini_inv, (struct trobj *));
-static void FDECL(knows_object,(int));
-static void FDECL(knows_class,(CHAR_P));
-static boolean FDECL(restricted_spell_discipline, (int));
+static void ini_inv(struct trobj *);
+static void knows_object(int);
+static void knows_class(CHAR_P);
+static boolean restricted_spell_discipline(int);
 
 #define UNDEF_TYP	0
 #define UNDEF_SPE	'\177'

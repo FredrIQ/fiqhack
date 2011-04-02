@@ -10,14 +10,14 @@
 
 static boolean no_repeat = FALSE;
 
-static char *FDECL(You_buf, (int));
+static char *You_buf(int);
 
 /*VARARGS1*/
 /* Note that these declarations rely on knowledge of the internals
  * of the variable argument handling stuff in "tradstdc.h"
  */
 
-static void FDECL(vpline, (const char *, va_list));
+static void vpline(const char *, va_list);
 
 void
 pline(const char * line, ...)
@@ -194,7 +194,7 @@ verbalize (const char *line, ...)
 	va_end(the_args);
 }
 
-static void FDECL(vraw_printf,(const char *,va_list));
+static void vraw_printf(const char *,va_list);
 
 void
 raw_printf (const char *line, ...)

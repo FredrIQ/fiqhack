@@ -36,22 +36,22 @@ struct lchoice {
 	char menuletter;
 };
 
-static void FDECL(Fread, (void *, int, int, dlb *));
-static xchar FDECL(dname_to_dnum, (const char *));
-static int FDECL(find_branch, (const char *, struct proto_dungeon *));
-static xchar FDECL(parent_dnum, (const char *, struct proto_dungeon *));
-static int FDECL(level_range, (XCHAR_P,int,int,int,struct proto_dungeon *,int *));
-static xchar FDECL(parent_dlevel, (const char *, struct proto_dungeon *));
-static int FDECL(correct_branch_type, (struct tmpbranch *));
-static branch *FDECL(add_branch, (int, int, struct proto_dungeon *));
-static void FDECL(add_level, (s_level *));
-static void FDECL(init_level, (int,int,struct proto_dungeon *));
-static int FDECL(possible_places, (int, boolean *, struct proto_dungeon *));
-static xchar FDECL(pick_level, (boolean *, int));
-static boolean FDECL(place_level, (int, struct proto_dungeon *));
+static void Fread(void *, int, int, dlb *);
+static xchar dname_to_dnum(const char *);
+static int find_branch(const char *, struct proto_dungeon *);
+static xchar parent_dnum(const char *, struct proto_dungeon *);
+static int level_range(XCHAR_P,int,int,int,struct proto_dungeon *,int *);
+static xchar parent_dlevel(const char *, struct proto_dungeon *);
+static int correct_branch_type(struct tmpbranch *);
+static branch *add_branch(int, int, struct proto_dungeon *);
+static void add_level(s_level *);
+static void init_level(int,int,struct proto_dungeon *);
+static int possible_places(int, boolean *, struct proto_dungeon *);
+static xchar pick_level(boolean *, int);
+static boolean place_level(int, struct proto_dungeon *);
 #ifdef WIZARD
-static const char *FDECL(br_string, (int));
-static void FDECL(print_branch, (winid, int, int, int, BOOLEAN_P, struct lchoice *));
+static const char *br_string(int);
+static void print_branch(winid, int, int, int, BOOLEAN_P, struct lchoice *);
 #endif
 
 #ifdef DEBUG
@@ -546,7 +546,7 @@ pick_level(map, nth)
 }
 
 #ifdef DDEBUG
-static void FDECL(indent,(int));
+static void indent(int);
 
 static void
 indent(d)

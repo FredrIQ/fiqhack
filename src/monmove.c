@@ -10,10 +10,10 @@
 extern boolean notonhead;
 
 
-static int FDECL(disturb,(struct monst *));
-static void FDECL(distfleeck,(struct monst *,int *,int *,int *));
-static int FDECL(m_arrival, (struct monst *));
-static void FDECL(watch_on_duty,(struct monst *));
+static int disturb(struct monst *);
+static void distfleeck(struct monst *,int *,int *,int *);
+static int m_arrival(struct monst *);
+static void watch_on_duty(struct monst *);
 
 
 boolean /* TRUE : mtmp died */

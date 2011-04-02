@@ -5,10 +5,10 @@
 #include "hack.h"
 #include "lev.h"	/* save & restore info */
 
-static void FDECL(setgemprobs, (d_level*));
-static void FDECL(shuffle,(int,int,BOOLEAN_P));
+static void setgemprobs(d_level*);
+static void shuffle(int,int,BOOLEAN_P);
 static void shuffle_all(void);
-static boolean FDECL(interesting_to_discover,(int));
+static boolean interesting_to_discover(int);
 
 
 static short disco[NUM_OBJECTS] = DUMMY;

@@ -41,40 +41,40 @@
 #define MAX_ERRORS	25
 
 extern int  yyparse(void);
-extern void FDECL (init_yyin, (FILE *));
-extern void FDECL (init_yyout, (FILE *));
+extern void init_yyin(FILE *);
+extern void init_yyout(FILE *);
 
-int  FDECL (main, (int, char **));
-void FDECL (yyerror, (const char *));
-void FDECL (yywarning, (const char *));
+int  main(int, char **);
+void yyerror(const char *);
+void yywarning(const char *);
 int  yywrap(void);
-int FDECL(get_floor_type, (CHAR_P));
-int FDECL(get_room_type, (char *));
-int FDECL(get_trap_type, (char *));
-int FDECL(get_monster_id, (char *,CHAR_P));
-int FDECL(get_object_id, (char *,CHAR_P));
-boolean FDECL(check_monster_char, (CHAR_P));
-boolean FDECL(check_object_char, (CHAR_P));
-char FDECL(what_map_char, (CHAR_P));
-void FDECL(scan_map, (char *));
+int get_floor_type(CHAR_P);
+int get_room_type(char *);
+int get_trap_type(char *);
+int get_monster_id(char *,CHAR_P);
+int get_object_id(char *,CHAR_P);
+boolean check_monster_char(CHAR_P);
+boolean check_object_char(CHAR_P);
+char what_map_char(CHAR_P);
+void scan_map(char *);
 void wallify_map(void);
 boolean check_subrooms(void);
-void FDECL(check_coord, (int,int,const char *));
+void check_coord(int,int,const char *);
 void store_part(void);
 void store_room(void);
-boolean FDECL(write_level_file, (char *,splev *,specialmaze *));
-void FDECL(free_rooms, (splev *));
+boolean write_level_file(char *,splev *,specialmaze *);
+void free_rooms(splev *);
 
 extern void monst_init(void);
 extern void objects_init(void);
 extern void decl_init(void);
 
-static boolean FDECL(write_common_data, (int,int,lev_init *,long));
-static boolean FDECL(write_monsters, (int,char *,monster ***));
-static boolean FDECL(write_objects, (int,char *,object ***));
-static boolean FDECL(write_engravings, (int,char *,engraving ***));
-static boolean FDECL(write_maze, (int,specialmaze *));
-static boolean FDECL(write_rooms, (int,splev *));
+static boolean write_common_data(int,int,lev_init *,long);
+static boolean write_monsters(int,char *,monster ***);
+static boolean write_objects(int,char *,object ***);
+static boolean write_engravings(int,char *,engraving ***);
+static boolean write_maze(int,specialmaze *);
+static boolean write_rooms(int,splev *);
 static void init_obj_classes(void);
 
 static struct {

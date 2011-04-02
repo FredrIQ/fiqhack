@@ -16,16 +16,16 @@
 #include "hack.h"
 
 
-static boolean FDECL(isbig, (struct mkroom *));
-static struct mkroom * FDECL(pick_room,(BOOLEAN_P));
-static void mkshop(void), FDECL(mkzoo,(int)), mkswamp(void);
+static boolean isbig(struct mkroom *);
+static struct mkroom * pick_room(BOOLEAN_P);
+static void mkshop(void), mkzoo(int), mkswamp(void);
 static void mktemple(void);
-static coord * FDECL(shrine_pos, (int));
+static coord * shrine_pos(int);
 static struct permonst * morguemon(void);
 static struct permonst * antholemon(void);
 static struct permonst * squadmon(void);
-static void FDECL(save_room, (int,struct mkroom *));
-static void FDECL(rest_room, (int,struct mkroom *));
+static void save_room(int,struct mkroom *);
+static void rest_room(int,struct mkroom *);
 
 #define sq(x) ((x)*(x))
 

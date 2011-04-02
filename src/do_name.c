@@ -4,8 +4,8 @@
 
 #include "hack.h"
 
-static void FDECL(do_oname, (struct obj *));
-static void FDECL(getpos_help, (BOOLEAN_P,const char *));
+static void do_oname(struct obj *);
+static void getpos_help(BOOLEAN_P,const char *);
 
 extern const char what_is_an_unknown_object[];		/* from pager.c */
 

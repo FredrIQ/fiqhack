@@ -10,35 +10,34 @@ static const char tools_too[] = { ALL_CLASSES, TOOL_CLASS, POTION_CLASS,
 				  WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0 };
 
 #ifdef TOURIST
-static int FDECL(use_camera, (struct obj *));
+static int use_camera(struct obj *);
 #endif
-static int FDECL(use_towel, (struct obj *));
-static boolean FDECL(its_dead, (int,int,int *));
-static int FDECL(use_stethoscope, (struct obj *));
-static void FDECL(use_whistle, (struct obj *));
-static void FDECL(use_magic_whistle, (struct obj *));
-static void FDECL(use_leash, (struct obj *));
-static int FDECL(use_mirror, (struct obj *));
-static void FDECL(use_bell, (struct obj **));
-static void FDECL(use_candelabrum, (struct obj *));
-static void FDECL(use_candle, (struct obj **));
-static void FDECL(use_lamp, (struct obj *));
-static void FDECL(light_cocktail, (struct obj *));
-static void FDECL(use_tinning_kit, (struct obj *));
-static void FDECL(use_figurine, (struct obj **));
-static void FDECL(use_grease, (struct obj *));
-static void FDECL(use_trap, (struct obj *));
-static void FDECL(use_stone, (struct obj *));
-STATIC_PTR int set_trap(void);		/* occupation callback */
-static int FDECL(use_whip, (struct obj *));
-static int FDECL(use_pole, (struct obj *));
-static int FDECL(use_cream_pie, (struct obj *));
-static int FDECL(use_grapple, (struct obj *));
-static int FDECL(do_break_wand, (struct obj *));
-static boolean FDECL(figurine_location_checks,
-				(struct obj *, coord *, BOOLEAN_P));
+static int use_towel(struct obj *);
+static boolean its_dead(int,int,int *);
+static int use_stethoscope(struct obj *);
+static void use_whistle(struct obj *);
+static void use_magic_whistle(struct obj *);
+static void use_leash(struct obj *);
+static int use_mirror(struct obj *);
+static void use_bell(struct obj **);
+static void use_candelabrum(struct obj *);
+static void use_candle(struct obj **);
+static void use_lamp(struct obj *);
+static void light_cocktail(struct obj *);
+static void use_tinning_kit(struct obj *);
+static void use_figurine(struct obj **);
+static void use_grease(struct obj *);
+static void use_trap(struct obj *);
+static void use_stone(struct obj *);
+static int set_trap(void);		/* occupation callback */
+static int use_whip(struct obj *);
+static int use_pole(struct obj *);
+static int use_cream_pie(struct obj *);
+static int use_grapple(struct obj *);
+static int do_break_wand(struct obj *);
+static boolean figurine_location_checks(struct obj *, coord *, BOOLEAN_P);
 static boolean uhave_graystone(void);
-static void FDECL(add_class, (char *, CHAR_P));
+static void add_class(char *, CHAR_P);
 
 static const char no_elbow_room[] = "don't have enough elbow-room to maneuver.";
 
@@ -72,8 +71,8 @@ use_camera(obj)
 	} else if (!u.dx && !u.dy) {
 		(void) zapyourself(obj, TRUE);
 	} else if ((mtmp = bhit(u.dx, u.dy, COLNO, FLASHED_LIGHT,
-				(int FDECL((*),(MONST_P,OBJ_P)))0,
-				(int FDECL((*),(OBJ_P,OBJ_P)))0,
+				(int (*)(MONST_P,OBJ_P))0,
+				(int (*)(OBJ_P,OBJ_P))0,
 				obj)) != 0) {
 		obj->ox = u.ux,  obj->oy = u.uy;
 		(void) flash_hits_mon(mtmp, obj);
@@ -656,8 +655,8 @@ struct obj *obj;
 		return 1;
 	}
 	mtmp = bhit(u.dx, u.dy, COLNO, INVIS_BEAM,
-		    (int FDECL((*),(MONST_P,OBJ_P)))0,
-		    (int FDECL((*),(OBJ_P,OBJ_P)))0,
+		    (int (*)(MONST_P,OBJ_P))0,
+		    (int (*)(OBJ_P,OBJ_P))0,
 		    obj);
 	if (!mtmp || !haseyes(mtmp->data))
 		return 1;

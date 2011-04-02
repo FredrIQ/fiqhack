@@ -118,21 +118,21 @@
 #include "hack.h"
 #include "region.h"
 
-static void FDECL(display_monster,(XCHAR_P,XCHAR_P,struct monst *,int,XCHAR_P));
-static int FDECL(swallow_to_glyph, (int, int));
-static void FDECL(display_warning,(struct monst *));
+static void display_monster(XCHAR_P,XCHAR_P,struct monst *,int,XCHAR_P);
+static int swallow_to_glyph(int, int);
+static void display_warning(struct monst *);
 
-static int FDECL(check_pos, (int, int, int));
+static int check_pos(int, int, int);
 #ifdef WA_VERBOSE
-static boolean FDECL(more_than_one, (int, int, int, int, int));
+static boolean more_than_one(int, int, int, int, int);
 #endif
-static int FDECL(set_twall, (int,int, int,int, int,int, int,int));
-static int FDECL(set_wall, (int, int, int));
-static int FDECL(set_corn, (int,int, int,int, int,int, int,int));
-static int FDECL(set_crosswall, (int, int));
-static void FDECL(set_seenv, (struct rm *, int, int, int, int));
-static void FDECL(t_warn, (struct rm *));
-static int FDECL(wall_angle, (struct rm *));
+static int set_twall(int,int, int,int, int,int, int,int);
+static int set_wall(int, int, int);
+static int set_corn(int,int, int,int, int,int, int,int);
+static int set_crosswall(int, int);
+static void set_seenv(struct rm *, int, int, int, int);
+static void t_warn(struct rm *);
+static int wall_angle(struct rm *);
 
 #ifdef INVISIBLE_OBJECTS
 /*
@@ -1545,8 +1545,8 @@ glyph_at(x, y)
 
 #ifdef WA_VERBOSE
 
-static const char *FDECL(type_to_name, (int));
-static void FDECL(error4, (int,int,int,int,int,int));
+static const char *type_to_name(int);
+static void error4(int,int,int,int,int,int);
 
 static int bad_count[MAX_TYPE]; /* count of positions flagged as bad */
 static const char *type_names[MAX_TYPE] = {

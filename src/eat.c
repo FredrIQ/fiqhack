@@ -15,33 +15,33 @@
 
 STATIC_PTR int eatmdone(void);
 STATIC_PTR int eatfood(void);
-STATIC_PTR void FDECL(costly_tin, (const char*));
+STATIC_PTR void costly_tin(const char*);
 STATIC_PTR int opentin(void);
 STATIC_PTR int unfaint(void);
 
-static const char *FDECL(food_xname, (struct obj *,BOOLEAN_P));
-static void FDECL(choke, (struct obj *));
+static const char *food_xname(struct obj *,BOOLEAN_P);
+static void choke(struct obj *);
 static void recalc_wt(void);
-static struct obj *FDECL(touchfood, (struct obj *));
+static struct obj *touchfood(struct obj *);
 static void do_reset_eat(void);
-static void FDECL(done_eating, (BOOLEAN_P));
-static void FDECL(cprefx, (int));
-static int FDECL(intrinsic_possible, (int,struct permonst *));
-static void FDECL(givit, (int,struct permonst *));
-static void FDECL(cpostfx, (int));
-static void FDECL(start_tin, (struct obj *));
-static int FDECL(eatcorpse, (struct obj *));
-static void FDECL(start_eating, (struct obj *));
-static void FDECL(fprefx, (struct obj *));
-static void FDECL(accessory_has_effect, (struct obj *));
-static void FDECL(fpostfx, (struct obj *));
+static void done_eating(BOOLEAN_P);
+static void cprefx(int);
+static int intrinsic_possible(int,struct permonst *);
+static void givit(int,struct permonst *);
+static void cpostfx(int);
+static void start_tin(struct obj *);
+static int eatcorpse(struct obj *);
+static void start_eating(struct obj *);
+static void fprefx(struct obj *);
+static void accessory_has_effect(struct obj *);
+static void fpostfx(struct obj *);
 static int bite(void);
-static int FDECL(edibility_prompts, (struct obj *));
-static int FDECL(rottenfood, (struct obj *));
+static int edibility_prompts(struct obj *);
+static int rottenfood(struct obj *);
 static void eatspecial(void);
-static void FDECL(eataccessory, (struct obj *));
-static const char *FDECL(foodword, (struct obj *));
-static boolean FDECL(maybe_cannibal, (int,BOOLEAN_P));
+static void eataccessory(struct obj *);
+static const char *foodword(struct obj *);
+static boolean maybe_cannibal(int,BOOLEAN_P);
 
 char msgbuf[BUFSZ];
 

@@ -13,7 +13,7 @@
 #include <process.h>
 
 #if defined(WIN32)
-void FDECL(nethack_exit,(int));
+void nethack_exit(int);
 #else
 #define nethack_exit exit
 #endif

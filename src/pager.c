@@ -8,13 +8,12 @@
 #include "hack.h"
 #include "dlb.h"
 
-static boolean FDECL(is_swallow_sym, (int));
-static int FDECL(append_str, (char *, const char *));
-static struct permonst * FDECL(lookat, (int, int, char *, char *));
-static void FDECL(checkfile,
-		      (char *,struct permonst *,BOOLEAN_P,BOOLEAN_P));
-static int FDECL(do_look, (BOOLEAN_P));
-static boolean FDECL(help_menu, (int *));
+static boolean is_swallow_sym(int);
+static int append_str(char *, const char *);
+static struct permonst * lookat(int, int, char *, char *);
+static void checkfile(char *,struct permonst *,BOOLEAN_P,BOOLEAN_P);
+static int do_look(BOOLEAN_P);
+static boolean help_menu(int *);
 #ifdef PORT_HELP
 extern void port_help(void);
 #endif

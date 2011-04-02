@@ -24,27 +24,27 @@
 #define NewTab(type, size)	(type **) alloc(sizeof(type *) * size)
 #define Free(ptr)		free((void *)ptr)
 
-extern void FDECL(yyerror, (const char *));
-extern void FDECL(yywarning, (const char *));
+extern void yyerror(const char *);
+extern void yywarning(const char *);
 extern int yylex(void);
 int yyparse(void);
 
-extern int FDECL(get_floor_type, (CHAR_P));
-extern int FDECL(get_room_type, (char *));
-extern int FDECL(get_trap_type, (char *));
-extern int FDECL(get_monster_id, (char *,CHAR_P));
-extern int FDECL(get_object_id, (char *,CHAR_P));
-extern boolean FDECL(check_monster_char, (CHAR_P));
-extern boolean FDECL(check_object_char, (CHAR_P));
-extern char FDECL(what_map_char, (CHAR_P));
-extern void FDECL(scan_map, (char *));
+extern int get_floor_type(CHAR_P);
+extern int get_room_type(char *);
+extern int get_trap_type(char *);
+extern int get_monster_id(char *,CHAR_P);
+extern int get_object_id(char *,CHAR_P);
+extern boolean check_monster_char(CHAR_P);
+extern boolean check_object_char(CHAR_P);
+extern char what_map_char(CHAR_P);
+extern void scan_map(char *);
 extern void wallify_map(void);
 extern boolean check_subrooms(void);
-extern void FDECL(check_coord, (int,int,const char *));
+extern void check_coord(int,int,const char *);
 extern void store_part(void);
 extern void store_room(void);
-extern boolean FDECL(write_level_file, (char *,splev *,specialmaze *));
-extern void FDECL(free_rooms, (splev *));
+extern boolean write_level_file(char *,splev *,specialmaze *);
+extern void free_rooms(splev *);
 
 static struct reg {
 	int x1, y1;

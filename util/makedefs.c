@@ -75,8 +75,8 @@ static char	in_line[256], filename[60];
 char *file_prefix="";
 #endif
 
-int FDECL(main, (int,char **));
-void FDECL(do_makedefs, (char *));
+int main(int,char **);
+void do_makedefs(char *);
 void do_objs(void);
 void do_data(void);
 void do_dungeon(void);
@@ -92,31 +92,31 @@ extern void monst_init(void);		/* monst.c */
 extern void objects_init(void);	/* objects.c */
 
 static void make_version(void);
-static char *FDECL(version_string, (char *));
-static char *FDECL(version_id_string, (char *,const char *));
-static char *FDECL(xcrypt, (const char *));
-static int FDECL(check_control, (char *));
-static char *FDECL(without_control, (char *));
-static boolean FDECL(d_filter, (char *));
-static boolean FDECL(h_filter, (char *));
-static boolean FDECL(ranged_attk,(struct permonst*));
-static int FDECL(mstrength,(struct permonst *));
+static char *version_string(char *);
+static char *version_id_string(char *,const char *);
+static char *xcrypt(const char *);
+static int check_control(char *);
+static char *without_control(char *);
+static boolean d_filter(char *);
+static boolean h_filter(char *);
+static boolean ranged_attk(struct permonst*);
+static int mstrength(struct permonst *);
 static void build_savebones_compat_string(void);
 
-static boolean FDECL(qt_comment, (char *));
-static boolean FDECL(qt_control, (char *));
-static int FDECL(get_hdr, (char *));
-static boolean FDECL(new_id, (char *));
-static boolean FDECL(known_msg, (int,int));
-static void FDECL(new_msg, (char *,int,int));
-static void FDECL(do_qt_control, (char *));
-static void FDECL(do_qt_text, (char *));
+static boolean qt_comment(char *);
+static boolean qt_control(char *);
+static int get_hdr(char *);
+static boolean new_id(char *);
+static boolean known_msg(int,int);
+static void new_msg(char *,int,int);
+static void do_qt_control(char *);
+static void do_qt_text(char *);
 static void adjust_qt_hdrs(void);
 static void put_qt_hdrs(void);
 
-static char *FDECL(tmpdup, (const char *));
-static char *FDECL(limit, (char *,int));
-static char *FDECL(eos, (char *));
+static char *tmpdup(const char *);
+static char *limit(char *,int);
+static char *eos(char *);
 
 /* input, output, tmp */
 static FILE *ifp, *ofp, *tfp;

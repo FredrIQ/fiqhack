@@ -91,20 +91,20 @@ extern char *sounddir;
 
 extern int n_dgns;		/* from dungeon.c */
 
-static char *FDECL(set_bonesfile_name, (char *,d_level*));
+static char *set_bonesfile_name(char *,d_level*);
 static char *set_bonestemp_name(void);
-static char *FDECL(make_lockname, (const char *,char *));
-static FILE *FDECL(fopen_config_file, (const char *));
-static int FDECL(get_uchars, (FILE *,char *,char *,uchar *,BOOLEAN_P,int,const char *));
-int FDECL(parse_config_line, (FILE *,char *,char *,char *));
+static char *make_lockname(const char *,char *);
+static FILE *fopen_config_file(const char *);
+static int get_uchars(FILE *,char *,char *,uchar *,BOOLEAN_P,int,const char *);
+int parse_config_line(FILE *,char *,char *,char *);
 #ifdef NOCWD_ASSUMPTIONS
-static void FDECL(adjust_prefix, (char *, int));
+static void adjust_prefix(char *, int);
 #endif
 #ifdef SELF_RECOVER
-static boolean FDECL(copy_bytes, (int, int));
+static boolean copy_bytes(int, int);
 #endif
 #ifdef HOLD_LOCKFILE_OPEN
-static int FDECL(open_levelfile_exclusively, (const char *, int, int));
+static int open_levelfile_exclusively(const char *, int, int);
 #endif
 
 /*

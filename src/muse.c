@@ -19,18 +19,18 @@ boolean m_using = FALSE;
  * don't know not to read scrolls, etc....
  */
 
-static struct permonst *FDECL(muse_newcham_mon, (struct monst *));
-static int FDECL(precheck, (struct monst *,struct obj *));
-static void FDECL(mzapmsg, (struct monst *,struct obj *,BOOLEAN_P));
-static void FDECL(mreadmsg, (struct monst *,struct obj *));
-static void FDECL(mquaffmsg, (struct monst *,struct obj *));
-STATIC_PTR int FDECL(mbhitm, (struct monst *,struct obj *));
-static void FDECL(mbhit,
-	(struct monst *,int,int FDECL((*),(MONST_P,OBJ_P)),
-	int FDECL((*),(OBJ_P,OBJ_P)),struct obj *));
-static void FDECL(you_aggravate, (struct monst *));
-static void FDECL(mon_consume_unstone, (struct monst *,struct obj *,
-	BOOLEAN_P,BOOLEAN_P));
+static struct permonst *muse_newcham_mon(struct monst *);
+static int precheck(struct monst *,struct obj *);
+static void mzapmsg(struct monst *,struct obj *,BOOLEAN_P);
+static void mreadmsg(struct monst *,struct obj *);
+static void mquaffmsg(struct monst *,struct obj *);
+static int mbhitm(struct monst *,struct obj *);
+static void mbhit
+	(struct monst *,int,int (*)(MONST_P,OBJ_P),
+	int (*)(OBJ_P,OBJ_P),struct obj *);
+static void you_aggravate(struct monst *);
+static void mon_consume_unstone(struct monst *,struct obj *,
+	BOOLEAN_P,BOOLEAN_P);
 
 static struct musable {
 	struct obj *offensive;
@@ -1175,8 +1175,8 @@ static void
 mbhit(mon,range,fhitm,fhito,obj)
 struct monst *mon;			/* monster shooting the wand */
 register int range;			/* direction and range */
-int FDECL((*fhitm),(MONST_P,OBJ_P));
-int FDECL((*fhito),(OBJ_P,OBJ_P));	/* fns called when mon/obj hit */
+int (*fhitm)(MONST_P,OBJ_P);
+int (*fhito)(OBJ_P,OBJ_P);	/* fns called when mon/obj hit */
 struct obj *obj;			/* 2nd arg to fhitm/fhito */
 {
 	register struct monst *mtmp;

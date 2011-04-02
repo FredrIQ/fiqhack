@@ -502,9 +502,9 @@ const struct Align aligns[] = {
 	{"evil",	"unaligned",	"Una",	0,		A_NONE}
 };
 
-static char * FDECL(promptsep, (char *, int));
-static int FDECL(role_gendercount, (int));
-static int FDECL(race_alignmentcount, (int));
+static char * promptsep(char *, int);
+static int role_gendercount(int);
+static int race_alignmentcount(int);
 
 /* used by str2XXX() */
 static char randomstr[] = "random";

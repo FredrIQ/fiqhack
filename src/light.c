@@ -44,8 +44,8 @@
 
 static light_source *light_base = 0;
 
-static void FDECL(write_ls, (int, light_source *));
-static int FDECL(maybe_write_ls, (int, int, BOOLEAN_P));
+static void write_ls(int, light_source *);
+static int maybe_write_ls(int, int, BOOLEAN_P);
 
 /* imported from vision.c, for small circles */
 extern char circle_data[];
@@ -576,7 +576,7 @@ struct obj *obj;
 }
 
 #ifdef WIZARD
-extern char *FDECL(fmt_ptr, (const void *, char *));  /* from alloc.c */
+extern char *fmt_ptr(const void *, char *);  /* from alloc.c */
 
 int
 wiz_light_sources()

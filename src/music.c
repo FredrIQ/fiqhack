@@ -28,17 +28,17 @@
 
 #include "hack.h"
 
-static void FDECL(awaken_monsters,(int));
-static void FDECL(put_monsters_to_sleep,(int));
-static void FDECL(charm_snakes,(int));
-static void FDECL(calm_nymphs,(int));
-static void FDECL(charm_monsters,(int));
-static void FDECL(do_earthquake,(int));
-static int FDECL(do_improvisation,(struct obj *));
+static void awaken_monsters(int);
+static void put_monsters_to_sleep(int);
+static void charm_snakes(int);
+static void calm_nymphs(int);
+static void charm_monsters(int);
+static void do_earthquake(int);
+static int do_improvisation(struct obj *);
 
 #ifdef UNIX386MUSIC
 static int atconsole(void);
-static void FDECL(speaker,(struct obj *,char *));
+static void speaker(struct obj *,char *);
 #endif
 
 /*

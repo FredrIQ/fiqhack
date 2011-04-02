@@ -34,7 +34,7 @@ register struct monst *mon;
 }
 
 
-static int FDECL(counter_were,(int));
+static int counter_were(int);
 
 static int
 counter_were(pm)

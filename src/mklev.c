@@ -18,33 +18,33 @@
 /* conversion of result to int is reasonable */
 
 
-static void FDECL(mkfount,(int,struct mkroom *));
+static void mkfount(int,struct mkroom *);
 #ifdef SINKS
-static void FDECL(mksink,(struct mkroom *));
+static void mksink(struct mkroom *);
 #endif
-static void FDECL(mkaltar,(struct mkroom *));
-static void FDECL(mkgrave,(struct mkroom *));
+static void mkaltar(struct mkroom *);
+static void mkgrave(struct mkroom *);
 static void makevtele(void);
 static void clear_level_structures(void);
 static void makelevel(void);
 static void mineralize(void);
-static boolean FDECL(bydoor,(XCHAR_P,XCHAR_P));
-static struct mkroom *FDECL(find_branch_room, (coord *));
-static struct mkroom *FDECL(pos_to_room, (XCHAR_P, XCHAR_P));
-static boolean FDECL(place_niche,(struct mkroom *,int*,int*,int*));
-static void FDECL(makeniche,(int));
+static boolean bydoor(XCHAR_P,XCHAR_P);
+static struct mkroom *find_branch_room(coord *);
+static struct mkroom *pos_to_room(XCHAR_P, XCHAR_P);
+static boolean place_niche(struct mkroom *,int*,int*,int*);
+static void makeniche(int);
 static void make_niches(void);
 
-STATIC_PTR int FDECL(do_comp,(const void *,const void *));
+STATIC_PTR int do_comp(const void *,const void *);
 
-static void FDECL(dosdoor,(XCHAR_P,XCHAR_P,struct mkroom *,int));
-static void FDECL(join,(int,int,BOOLEAN_P));
-static void FDECL(do_room_or_subroom, (struct mkroom *,int,int,int,int,
-				       BOOLEAN_P,SCHAR_P,BOOLEAN_P,BOOLEAN_P));
+static void dosdoor(XCHAR_P,XCHAR_P,struct mkroom *,int);
+static void join(int,int,BOOLEAN_P);
+static void do_room_or_subroom(struct mkroom *,int,int,int,int,
+				       BOOLEAN_P,SCHAR_P,BOOLEAN_P,BOOLEAN_P);
 static void makerooms(void);
-static void FDECL(finddpos,(coord *,XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P));
-static void FDECL(mkinvpos, (XCHAR_P,XCHAR_P,int));
-static void FDECL(mk_knox_portal, (XCHAR_P,XCHAR_P));
+static void finddpos(coord *,XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P);
+static void mkinvpos(XCHAR_P,XCHAR_P,int);
+static void mk_knox_portal(XCHAR_P,XCHAR_P);
 
 #define create_vault()	create_room(-1, -1, 2, 2, -1, -1, VAULT, TRUE)
 #define init_vault()	vault_x = -1

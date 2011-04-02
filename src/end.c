@@ -27,22 +27,22 @@ static struct val_list { struct valuable_data *list; int size; } valuables[] = {
 };
 
 #ifndef NO_SIGNAL
-STATIC_PTR void FDECL(done_intr, (int));
+STATIC_PTR void done_intr(int);
 # if defined(UNIX)
-static void FDECL(done_hangup, (int));
+static void done_hangup(int);
 # endif
 #endif
-static void FDECL(disclose,(int,BOOLEAN_P));
-static void FDECL(get_valuables, (struct obj *));
-static void FDECL(sort_valuables, (struct valuable_data *,int));
-static void FDECL(artifact_score, (struct obj *,BOOLEAN_P,winid));
-static void FDECL(savelife, (int));
-static void FDECL(list_vanquished, (CHAR_P,BOOLEAN_P));
-static void FDECL(list_genocided, (CHAR_P,BOOLEAN_P));
-static boolean FDECL(should_query_disclose_option, (int,char *));
+static void disclose(int,BOOLEAN_P);
+static void get_valuables(struct obj *);
+static void sort_valuables(struct valuable_data *,int);
+static void artifact_score(struct obj *,BOOLEAN_P,winid);
+static void savelife(int);
+static void list_vanquished(CHAR_P,BOOLEAN_P);
+static void list_genocided(CHAR_P,BOOLEAN_P);
+static boolean should_query_disclose_option(int,char *);
 
 #if defined(WIN32)
-extern void FDECL(nethack_exit,(int));
+extern void nethack_exit(int);
 #else
 #define nethack_exit exit
 #endif

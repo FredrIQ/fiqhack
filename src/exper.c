@@ -4,8 +4,8 @@
 
 #include "hack.h"
 
-static long FDECL(newuexp, (int));
-static int FDECL(enermod, (int));
+static long newuexp(int);
+static int enermod(int);
 
 static long
 newuexp(lev)

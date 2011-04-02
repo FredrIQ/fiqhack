@@ -7,11 +7,11 @@
 #include "edog.h"
 #include <ctype.h>
 
-static boolean FDECL(restrap,(struct monst *));
-static long FDECL(mm_aggression, (struct monst *,struct monst *));
+static boolean restrap(struct monst *);
+static long mm_aggression(struct monst *,struct monst *);
 static int pick_animal(void);
-static int FDECL(select_newcham_form, (struct monst *));
-static void FDECL(kill_eggs, (struct obj *));
+static int select_newcham_form(struct monst *);
+static void kill_eggs(struct obj *);
 
 #ifdef REINCARNATION
 #define LEVEL_SPECIFIC_NOCORPSE(mdat) \
@@ -36,9 +36,9 @@ const char *warnings[] = {
 static void warn_effects(void);
 #endif /* 0 */
 
-static struct obj *FDECL(make_corpse,(struct monst *));
-static void FDECL(m_detach, (struct monst *, struct permonst *));
-static void FDECL(lifesaved_monster, (struct monst *));
+static struct obj *make_corpse(struct monst *);
+static void m_detach(struct monst *, struct permonst *);
+static void lifesaved_monster(struct monst *);
 
 /* convert the monster index of an undead to its living counterpart */
 int

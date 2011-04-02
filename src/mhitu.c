@@ -7,24 +7,24 @@
 
 static struct obj *otmp;
 
-static void FDECL(urustm, (struct monst *, struct obj *));
-static boolean FDECL(u_slip_free, (struct monst *,struct attack *));
-static int FDECL(passiveum, (struct permonst *,struct monst *,struct attack *));
+static void urustm(struct monst *, struct obj *);
+static boolean u_slip_free(struct monst *,struct attack *);
+static int passiveum(struct permonst *,struct monst *,struct attack *);
 
 # ifdef SEDUCE
-static void FDECL(mayberem, (struct obj *, const char *));
+static void mayberem(struct obj *, const char *);
 # endif
 
-static boolean FDECL(diseasemu, (struct permonst *));
-static int FDECL(hitmu, (struct monst *,struct attack *));
-static int FDECL(gulpmu, (struct monst *,struct attack *));
-static int FDECL(explmu, (struct monst *,struct attack *,BOOLEAN_P));
-static void FDECL(missmu,(struct monst *,BOOLEAN_P,struct attack *));
-static void FDECL(mswings,(struct monst *,struct obj *));
-static void FDECL(wildmiss, (struct monst *,struct attack *));
+static boolean diseasemu(struct permonst *);
+static int hitmu(struct monst *,struct attack *);
+static int gulpmu(struct monst *,struct attack *);
+static int explmu(struct monst *,struct attack *,BOOLEAN_P);
+static void missmu(struct monst *,BOOLEAN_P,struct attack *);
+static void mswings(struct monst *,struct obj *);
+static void wildmiss(struct monst *,struct attack *);
 
-static void FDECL(hurtarmor,(int));
-static void FDECL(hitmsg,(struct monst *,struct attack *));
+static void hurtarmor(int);
+static void hitmsg(struct monst *,struct attack *);
 
 /* See comment in mhitm.c.  If we use this a lot it probably should be */
 /* changed to a parameter to mhitu. */

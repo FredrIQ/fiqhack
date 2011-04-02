@@ -101,8 +101,8 @@ winid BASE_WINDOW;
 struct WinDesc *wins[MAXWIN];
 struct DisplayDesc *ttyDisplay;	/* the tty display descriptor */
 
-extern void FDECL(cmov, (int,int)); /* from termcap.c */
-extern void FDECL(nocmov, (int,int)); /* from termcap.c */
+extern void cmov(int,int); /* from termcap.c */
+extern void nocmov(int,int); /* from termcap.c */
 #if defined(UNIX)
 static char obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
 #endif
@@ -127,21 +127,21 @@ static const char to_continue[] = "to continue";
 #else
 static void getret(void);
 #endif
-static void FDECL(erase_menu_or_text, (winid, struct WinDesc *, BOOLEAN_P));
-static void FDECL(free_window_info, (struct WinDesc *, BOOLEAN_P));
-static void FDECL(dmore,(struct WinDesc *, const char *));
-static void FDECL(set_item_state, (winid, int, tty_menu_item *));
-static void FDECL(set_all_on_page, (winid,tty_menu_item *,tty_menu_item *));
-static void FDECL(unset_all_on_page, (winid,tty_menu_item *,tty_menu_item *));
-static void FDECL(invert_all_on_page, (winid,tty_menu_item *,tty_menu_item *, CHAR_P));
-static void FDECL(invert_all, (winid,tty_menu_item *,tty_menu_item *, CHAR_P));
-static void FDECL(process_menu_window, (winid,struct WinDesc *));
-static void FDECL(process_text_window, (winid,struct WinDesc *));
-static tty_menu_item *FDECL(reverse, (tty_menu_item *));
-static const char * FDECL(compress_str, (const char *));
-static void FDECL(tty_putsym, (winid, int, int, CHAR_P));
-static char *FDECL(copy_of, (const char *));
-static void FDECL(bail, (const char *));	/* __attribute__((noreturn)) */
+static void erase_menu_or_text(winid, struct WinDesc *, BOOLEAN_P);
+static void free_window_info(struct WinDesc *, BOOLEAN_P);
+static void dmore(struct WinDesc *, const char *);
+static void set_item_state(winid, int, tty_menu_item *);
+static void set_all_on_page(winid,tty_menu_item *,tty_menu_item *);
+static void unset_all_on_page(winid,tty_menu_item *,tty_menu_item *);
+static void invert_all_on_page(winid,tty_menu_item *,tty_menu_item *, CHAR_P);
+static void invert_all(winid,tty_menu_item *,tty_menu_item *, CHAR_P);
+static void process_menu_window(winid,struct WinDesc *);
+static void process_text_window(winid,struct WinDesc *);
+static tty_menu_item *reverse(tty_menu_item *);
+static const char * compress_str(const char *);
+static void tty_putsym(winid, int, int, CHAR_P);
+static char *copy_of(const char *);
+static void bail(const char *);	/* __attribute__((noreturn)) */
 
 /*
  * A string containing all the default commands -- to add to a list

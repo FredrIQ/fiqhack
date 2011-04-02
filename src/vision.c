@@ -88,14 +88,14 @@ static char  left_ptrs[ROWNO][COLNO];		/* LOS algorithm helpers */
 static char right_ptrs[ROWNO][COLNO];
 
 /* Forward declarations. */
-static void FDECL(fill_point, (int,int));
-static void FDECL(dig_point, (int,int));
+static void fill_point(int,int);
+static void dig_point(int,int);
 static void view_init(void);
-static void FDECL(view_from,(int,int,char **,char *,char *,int,
-			     void (*)(int,int,void *),void *));
-static void FDECL(get_unused_cs, (char ***,char **,char **));
+static void view_from(int,int,char **,char *,char *,int,
+			     void (*)(int,int,void *),void *);
+static void get_unused_cs(char ***,char **,char **);
 #ifdef REINCARNATION
-static void FDECL(rogue_vision, (char **,char *,char *));
+static void rogue_vision(char **,char *,char *);
 #endif
 
 /* Macro definitions that I can't find anywhere. */
@@ -340,7 +340,7 @@ rogue_vision(next, rmin, rmax)
 
 #ifdef EXTEND_SPINE
 
-static int FDECL(new_angle, (struct rm *, unsigned char *, int, int));
+static int new_angle(struct rm *, unsigned char *, int, int);
 /*
  * new_angle()
  *
@@ -528,7 +528,7 @@ vision_recalc(control)
 	 *	+ Monsters can see you even when you're in a pit.
 	 */
 	view_from(u.uy, u.ux, next_array, next_rmin, next_rmax,
-		0, (void FDECL((*),(int,int,void *)))0, (void *)0);
+		0, (void (*)(int,int,void *))0, (void *)0);
 
 	/*
 	 * Our own version of the update loop below.  We know we can't see
@@ -592,7 +592,7 @@ vision_recalc(control)
 	    }
 	} else
 	    view_from(u.uy, u.ux, next_array, next_rmin, next_rmax,
-		0, (void FDECL((*),(int,int,void *)))0, (void *)0);
+		0, (void (*)(int,int,void *))0, (void *)0);
 
 	/*
 	 * Set the IN_SIGHT bit for xray and night vision.
@@ -1061,7 +1061,7 @@ static char **cs_rows;
 static char *cs_left;
 static char *cs_right;
 
-static void FDECL((*vis_func), (int,int,void *));
+static void (*vis_func)(int,int,void *);
 static void * varg;
 
 /*
@@ -1101,10 +1101,10 @@ static void * varg;
  * Elements for Computer Graphics_, by David F. Rogers.  McGraw-Hill, 1985.
  */
 
-static int FDECL(_q1_path, (int,int,int,int));
-static int FDECL(_q2_path, (int,int,int,int));
-static int FDECL(_q3_path, (int,int,int,int));
-static int FDECL(_q4_path, (int,int,int,int));
+static int _q1_path(int,int,int,int);
+static int _q2_path(int,int,int,int);
+static int _q3_path(int,int,int,int);
+static int _q4_path(int,int,int,int);
 
 #define q1_path(sy,sx,y,x,dummy) result = _q1_path(sy,sx,y,x)
 #define q2_path(sy,sx,y,x,dummy) result = _q2_path(sy,sx,y,x)
@@ -1328,8 +1328,8 @@ clear_path(col1,row1,col2,row2)
 /*
  * Defines local to Algorithm C.
  */
-static void FDECL(right_side, (int,int,int,char*));
-static void FDECL(left_side, (int,int,int,char*));
+static void right_side(int,int,int,char*);
+static void left_side(int,int,int,char*);
 
 /* Initialize algorithm C (nothing). */
 static void
@@ -1652,7 +1652,7 @@ view_from(srow, scol, loc_cs_rows, left_most, right_most, range, func, arg)
     char *left_most;	/* min mark on each row */
     char *right_most;	/* max mark on each row */
     int range;		/* 0 if unlimited */
-    void FDECL((*func), (int,int,void *));
+    void (*func)(int,int,void *);
     void * arg;
 {
     register int i;		/* loop counter */
@@ -1742,7 +1742,7 @@ view_from(srow, scol, loc_cs_rows, left_most, right_most, range, func, arg)
 void
 do_clear_area(scol,srow,range,func,arg)
     int scol, srow, range;
-    void FDECL((*func), (int,int,void *));
+    void (*func)(int,int,void *);
     void * arg;
 {
 	/* If not centered on hero, do the hard work of figuring the area */

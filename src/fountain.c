@@ -9,7 +9,7 @@
 static void dowatersnakes(void);
 static void dowaterdemon(void);
 static void dowaternymph(void);
-STATIC_PTR void FDECL(gush, (int,int,void *));
+STATIC_PTR void gush(int,int,void *);
 static void dofindgem(void);
 
 void

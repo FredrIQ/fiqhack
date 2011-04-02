@@ -17,10 +17,10 @@ extern boolean notonhead;	/* for long worms */
 #define get_artifact(o) \
 		(((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
 
-static int FDECL(spec_applies, (const struct artifact *,struct monst *));
-static int FDECL(arti_invoke, (struct obj*));
-static boolean FDECL(Mb_hit, (struct monst *magr,struct monst *mdef,
-				  struct obj *,int *,int,BOOLEAN_P,char *));
+static int spec_applies(const struct artifact *,struct monst *);
+static int arti_invoke(struct obj*);
+static boolean Mb_hit(struct monst *magr,struct monst *mdef,
+				  struct obj *,int *,int,BOOLEAN_P,char *);
 
 /* The amount added to the victim's total hit points to insure that the
    victim will be killed even after damage bonus/penalty adjustments.
@@ -41,7 +41,7 @@ static boolean artiexist[1+NROFARTIFACTS+1];
 static xchar artidisco[NROFARTIFACTS];
 
 static void hack_artifacts(void);
-static boolean FDECL(attacks, (int,struct obj *));
+static boolean attacks(int,struct obj *);
 
 /* handle some special cases; must be called after u_init() */
 static void

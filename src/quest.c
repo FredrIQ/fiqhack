@@ -16,12 +16,12 @@ static void on_start(void);
 static void on_locate(void);
 static void on_goal(void);
 static boolean not_capable(void);
-static int FDECL(is_pure, (BOOLEAN_P));
-static void FDECL(expulsion, (BOOLEAN_P));
+static int is_pure(BOOLEAN_P);
+static void expulsion(BOOLEAN_P);
 static void chat_with_leader(void);
 static void chat_with_nemesis(void);
 static void chat_with_guardian(void);
-static void FDECL(prisoner_speaks, (struct monst *));
+static void prisoner_speaks(struct monst *);
 
 
 static void

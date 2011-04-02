@@ -13,7 +13,7 @@
  * yyunput is properly declared in flex.skel.
  */
 #if !defined(FLEX_SCANNER) && !defined(FLEXHACK_SCANNER)
-int FDECL(yyback, (int *,int));
+int yyback(int *,int);
 int yylook(void);
 int yyinput(void);
 int yywrap(void);
@@ -37,22 +37,22 @@ int yylex(void);
 #  undef VOIDYYPUT
 # endif
 # ifdef VOIDYYPUT
-void FDECL(yyunput, (int));
-void FDECL(yyoutput, (int));
+void yyunput(int);
+void yyoutput(int);
 # else
-int FDECL(yyunput, (int));
-int FDECL(yyoutput, (int));
+int yyunput(int);
+int yyoutput(int);
 # endif
 #endif	/* !FLEX_SCANNER && !FLEXHACK_SCANNER */
 
 #ifdef FLEX_SCANNER
 #define YY_MALLOC_DECL \
-	      void * FDECL(malloc, (size_t)); \
-	      void * FDECL(realloc, (void *,size_t));
+	      void * malloc(size_t); \
+	      void * realloc(void *,size_t);
 #endif
 
-void FDECL(init_yyin, (FILE *));
-void FDECL(init_yyout, (FILE *));
+void init_yyin(FILE *);
+void init_yyout(FILE *);
 
 /*
  * This doesn't always get put in lev_comp.h

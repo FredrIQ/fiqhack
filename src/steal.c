@@ -6,8 +6,8 @@
 
 STATIC_PTR int stealarm(void);
 
-static const char *FDECL(equipname, (struct obj *));
-static void FDECL(mdrop_obj, (struct monst *,struct obj *,BOOLEAN_P));
+static const char *equipname(struct obj *);
+static void mdrop_obj(struct monst *,struct obj *,BOOLEAN_P);
 
 static const char *
 equipname(otmp)

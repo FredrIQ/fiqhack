@@ -19,13 +19,13 @@ static struct monst zeromonst;
 		(mptr->mlet == S_HUMAN && Role_if(role_pm) && \
 		  (mptr->msound == MS_LEADER || mptr->msound == MS_NEMESIS))
 
-static boolean FDECL(uncommon, (int));
-static int FDECL(align_shift, (struct permonst *));
-static boolean FDECL(wrong_elem_type, (struct permonst *));
-static void FDECL(m_initgrp,(struct monst *,int,int,int));
-static void FDECL(m_initthrow,(struct monst *,int,int));
-static void FDECL(m_initweap,(struct monst *));
-static void FDECL(m_initinv,(struct monst *));
+static boolean uncommon(int);
+static int align_shift(struct permonst *);
+static boolean wrong_elem_type(struct permonst *);
+static void m_initgrp(struct monst *,int,int,int);
+static void m_initthrow(struct monst *,int,int);
+static void m_initweap(struct monst *);
+static void m_initinv(struct monst *);
 
 extern const int monstr[];
 

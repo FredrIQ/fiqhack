@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-static int FDECL(drop_throw,(struct obj *,BOOLEAN_P,int,int));
+static int drop_throw(struct obj *,BOOLEAN_P,int,int);
 
 #define URETREATING(x,y) (distmin(u.ux,u.uy,x,y) > distmin(u.ux0,u.uy0,x,y))
 

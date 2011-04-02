@@ -16,17 +16,17 @@ static struct obj *otmp;
 static const char brief_feeling[] =
 	"have a %s feeling for a moment, then it passes.";
 
-static char *FDECL(mon_nam_too, (char *,struct monst *,struct monst *));
-static void FDECL(mrustm, (struct monst *, struct monst *, struct obj *));
-static int FDECL(hitmm, (struct monst *,struct monst *,struct attack *));
-static int FDECL(gazemm, (struct monst *,struct monst *,struct attack *));
-static int FDECL(gulpmm, (struct monst *,struct monst *,struct attack *));
-static int FDECL(explmm, (struct monst *,struct monst *,struct attack *));
-static int FDECL(mdamagem, (struct monst *,struct monst *,struct attack *));
-static void FDECL(mswingsm, (struct monst *, struct monst *, struct obj *));
-static void FDECL(noises,(struct monst *,struct attack *));
-static void FDECL(missmm,(struct monst *,struct monst *,struct attack *));
-static int FDECL(passivemm, (struct monst *, struct monst *, BOOLEAN_P, int));
+static char *mon_nam_too(char *,struct monst *,struct monst *);
+static void mrustm(struct monst *, struct monst *, struct obj *);
+static int hitmm(struct monst *,struct monst *,struct attack *);
+static int gazemm(struct monst *,struct monst *,struct attack *);
+static int gulpmm(struct monst *,struct monst *,struct attack *);
+static int explmm(struct monst *,struct monst *,struct attack *);
+static int mdamagem(struct monst *,struct monst *,struct attack *);
+static void mswingsm(struct monst *, struct monst *, struct obj *);
+static void noises(struct monst *,struct attack *);
+static void missmm(struct monst *,struct monst *,struct attack *);
+static int passivemm(struct monst *, struct monst *, BOOLEAN_P, int);
 
 /* Needed for the special case of monsters wielding vorpal blades (rare).
  * If we use this a lot it should probably be a parameter to mdamagem()

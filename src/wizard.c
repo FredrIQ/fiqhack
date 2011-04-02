@@ -13,13 +13,13 @@
 
 extern const int monstr[];
 
-static short FDECL(which_arti, (int));
-static boolean FDECL(mon_has_arti, (struct monst *,SHORT_P));
-static struct monst *FDECL(other_mon_has_arti, (struct monst *,SHORT_P));
-static struct obj *FDECL(on_ground, (SHORT_P));
-static boolean FDECL(you_have, (int));
-static long FDECL(target_on, (int,struct monst *));
-static long FDECL(strategy, (struct monst *));
+static short which_arti(int);
+static boolean mon_has_arti(struct monst *,SHORT_P);
+static struct monst *other_mon_has_arti(struct monst *,SHORT_P);
+static struct obj *on_ground(SHORT_P);
+static boolean you_have(int);
+static long target_on(int,struct monst *);
+static long strategy(struct monst *);
 
 static const int nasties[] = {
 	PM_COCKATRICE, PM_ETTIN, PM_STALKER, PM_MINOTAUR, PM_RED_DRAGON,

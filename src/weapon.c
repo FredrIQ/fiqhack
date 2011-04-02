@@ -26,7 +26,7 @@
 #define PN_ESCAPE_SPELL			(-13)
 #define PN_MATTER_SPELL			(-14)
 
-static void FDECL(give_may_advance_msg, (int));
+static void give_may_advance_msg(int);
 
 
 static const short skill_names_indices[P_NUM_SKILLS] = {
@@ -86,12 +86,12 @@ int skill;
 }
 
 
-static boolean FDECL(can_advance, (int, BOOLEAN_P));
-static boolean FDECL(could_advance, (int));
-static boolean FDECL(peaked_skill, (int));
-static int FDECL(slots_required, (int));
-static char *FDECL(skill_level_name, (int,char *));
-static void FDECL(skill_advance, (int));
+static boolean can_advance(int, BOOLEAN_P);
+static boolean could_advance(int);
+static boolean peaked_skill(int);
+static int slots_required(int);
+static char *skill_level_name(int,char *);
+static void skill_advance(int);
 
 #define P_NAME(type) ((skill_names_indices[type] > 0) ? \
 		      OBJ_NAME(objects[skill_names_indices[type]]) : \
@@ -301,7 +301,7 @@ struct monst *mon;
 }
 
 
-static struct obj *FDECL(oselect, (struct monst *,int));
+static struct obj *oselect(struct monst *,int);
 #define Oselect(x)	if ((otmp = oselect(mtmp, x)) != 0) return(otmp);
 
 static struct obj *

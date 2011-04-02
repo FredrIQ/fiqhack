@@ -16,8 +16,8 @@ static struct xlock_s {
 
 
 static const char *lock_action(void);
-static boolean FDECL(obstructed,(int,int));
-static void FDECL(chest_shatter_msg, (struct obj *));
+static boolean obstructed(int,int);
+static void chest_shatter_msg(struct obj *);
 
 boolean
 picking_lock(x, y)

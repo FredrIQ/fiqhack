@@ -7,21 +7,21 @@
 #include "tcap.h" /* for TERMLIB and ASCIIGRAPH */
 
 #ifdef USE_TILES
-extern void FDECL(substitute_tiles, (d_level *));       /* from tile.c */
+extern void substitute_tiles(d_level *);       /* from tile.c */
 #endif
 
 static void find_lev_obj(void);
-static void FDECL(restlevchn, (int));
-static void FDECL(restdamage, (int,BOOLEAN_P));
-static struct obj *FDECL(restobjchn, (int,BOOLEAN_P,BOOLEAN_P));
-static struct monst *FDECL(restmonchn, (int,BOOLEAN_P));
-static struct fruit *FDECL(loadfruitchn, (int));
-static void FDECL(freefruitchn, (struct fruit *));
-static void FDECL(ghostfruit, (struct obj *));
-static boolean FDECL(restgamestate, (int, unsigned int *, unsigned int *));
-static void FDECL(restlevelstate, (unsigned int, unsigned int));
-static int FDECL(restlevelfile, (XCHAR_P));
-static void FDECL(reset_oattached_mids, (BOOLEAN_P));
+static void restlevchn(int);
+static void restdamage(int,BOOLEAN_P);
+static struct obj *restobjchn(int,BOOLEAN_P,BOOLEAN_P);
+static struct monst *restmonchn(int,BOOLEAN_P);
+static struct fruit *loadfruitchn(int);
+static void freefruitchn(struct fruit *);
+static void ghostfruit(struct obj *);
+static boolean restgamestate(int, unsigned int *, unsigned int *);
+static void restlevelstate(unsigned int, unsigned int);
+static int restlevelfile(XCHAR_P);
+static void reset_oattached_mids(BOOLEAN_P);
 
 /*
  * Save a mapping of IDs from ghost levels to the current level.  This
@@ -37,7 +37,7 @@ struct bucket {
 };
 
 static void clear_id_mapping(void);
-static void FDECL(add_id_mapping, (unsigned, unsigned));
+static void add_id_mapping(unsigned, unsigned);
 
 static int n_ids_mapped = 0;
 static struct bucket *id_map = 0;

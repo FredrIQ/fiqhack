@@ -50,11 +50,11 @@ STATIC_PTR int wiz_show_wmodes(void);
 #ifdef DEBUG_MIGRATING_MONS
 STATIC_PTR int wiz_migrate_mons(void);
 #endif
-static void FDECL(count_obj, (struct obj *, long *, long *, BOOLEAN_P, BOOLEAN_P));
-static void FDECL(obj_chain, (winid, const char *, struct obj *, long *, long *));
-static void FDECL(mon_invent_chain, (winid, const char *, struct monst *, long *, long *));
-static void FDECL(mon_chain, (winid, const char *, struct monst *, long *, long *));
-static void FDECL(contained, (winid, const char *, long *, long *));
+static void count_obj(struct obj *, long *, long *, BOOLEAN_P, BOOLEAN_P);
+static void obj_chain(winid, const char *, struct obj *, long *, long *);
+static void mon_invent_chain(winid, const char *, struct monst *, long *, long *);
+static void mon_chain(winid, const char *, struct monst *, long *, long *);
+static void contained(winid, const char *, long *, long *);
 STATIC_PTR int wiz_show_stats(void);
 #  ifdef PORT_DEBUG
 static int wiz_port_debug(void);
@@ -65,8 +65,8 @@ STATIC_PTR int doattributes(void);
 STATIC_PTR int doconduct(void); /**/
 STATIC_PTR boolean minimal_enlightenment(void);
 
-static void FDECL(enlght_line, (const char *,const char *,const char *));
-static char *FDECL(enlght_combatinc, (const char *,int,int,char *));
+static void enlght_line(const char *,const char *,const char *);
+static char *enlght_combatinc(const char *,int,int,char *);
 #ifdef UNIX
 static void end_of_input(void);
 #endif
@@ -74,7 +74,7 @@ static void end_of_input(void);
 static const char* readchar_queue="";
 
 static char *parse(void);
-static boolean FDECL(help_dir, (CHAR_P,const char *));
+static boolean help_dir(CHAR_P,const char *);
 
 
 STATIC_PTR int

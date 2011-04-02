@@ -7,7 +7,7 @@
 
 /* generic callback function */
 
-typedef boolean FDECL((*callback_proc), (void *, void *));
+typedef boolean (*callback_proc)(void *, void *);
 
 /*
  * Overload the old player_inside field with two values, coded in such

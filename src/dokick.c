@@ -14,12 +14,12 @@ static const char *gate_str;
 
 extern boolean notonhead;	/* for long worms */
 
-static void FDECL(kickdmg, (struct monst *, BOOLEAN_P));
-static void FDECL(kick_monster, (XCHAR_P, XCHAR_P));
-static int FDECL(kick_object, (XCHAR_P, XCHAR_P));
-static char *FDECL(kickstr, (char *));
-static void FDECL(otransit_msg, (struct obj *, BOOLEAN_P, long));
-static void FDECL(drop_to, (coord *,SCHAR_P));
+static void kickdmg(struct monst *, BOOLEAN_P);
+static void kick_monster(XCHAR_P, XCHAR_P);
+static int kick_object(XCHAR_P, XCHAR_P);
+static char *kickstr(char *);
+static void otransit_msg(struct obj *, BOOLEAN_P, long);
+static void drop_to(coord *,SCHAR_P);
 
 static struct obj *kickobj;
 
@@ -551,8 +551,8 @@ xchar x, y;
 	(void) snuff_candle(kickobj);
 	newsym(x, y);
 	mon = bhit(u.dx, u.dy, range, KICKED_WEAPON,
-		   (int FDECL((*),(MONST_P,OBJ_P)))0,
-		   (int FDECL((*),(OBJ_P,OBJ_P)))0,
+		   (int (*)(MONST_P,OBJ_P))0,
+		   (int (*)(OBJ_P,OBJ_P))0,
 		   kickobj);
 
 	if(mon) {

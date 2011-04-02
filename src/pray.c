@@ -8,21 +8,21 @@
 STATIC_PTR int prayer_done(void);
 static struct obj *worst_cursed_item(void);
 static int in_trouble(void);
-static void FDECL(fix_worst_trouble,(int));
-static void FDECL(angrygods,(ALIGNTYP_P));
-static void FDECL(at_your_feet, (const char *));
+static void fix_worst_trouble(int);
+static void angrygods(ALIGNTYP_P);
+static void at_your_feet(const char *);
 #ifdef ELBERETH
 static void gcrownu(void);
 #endif	/*ELBERETH*/
-static void FDECL(pleased,(ALIGNTYP_P));
-static void FDECL(godvoice,(ALIGNTYP_P,const char*));
-static void FDECL(god_zaps_you,(ALIGNTYP_P));
-static void FDECL(fry_by_god,(ALIGNTYP_P));
-static void FDECL(gods_angry,(ALIGNTYP_P));
-static void FDECL(gods_upset,(ALIGNTYP_P));
-static void FDECL(consume_offering,(struct obj *));
-static boolean FDECL(water_prayer,(BOOLEAN_P));
-static boolean FDECL(blocked_boulder,(int,int));
+static void pleased(ALIGNTYP_P);
+static void godvoice(ALIGNTYP_P,const char*);
+static void god_zaps_you(ALIGNTYP_P);
+static void fry_by_god(ALIGNTYP_P);
+static void gods_angry(ALIGNTYP_P);
+static void gods_upset(ALIGNTYP_P);
+static void consume_offering(struct obj *);
+static boolean water_prayer(BOOLEAN_P);
+static boolean blocked_boulder(int,int);
 
 /* simplify a few tests */
 #define Cursed_obj(obj,typ) ((obj) && (obj)->otyp == (typ) && (obj)->cursed)

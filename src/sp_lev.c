@@ -24,26 +24,26 @@
 #include "sp_lev.h"
 #include "rect.h"
 
-extern void FDECL(mkmap, (lev_init *));
+extern void mkmap(lev_init *);
 
-static void FDECL(get_room_loc, (schar *, schar *, struct mkroom *));
-static void FDECL(get_free_room_loc, (schar *, schar *, struct mkroom *));
-static void FDECL(create_trap, (trap *, struct mkroom *));
-static int FDECL(noncoalignment, (ALIGNTYP_P));
-static void FDECL(create_monster, (monster *, struct mkroom *));
-static void FDECL(create_object, (object *, struct mkroom *));
-static void FDECL(create_engraving, (engraving *,struct mkroom *));
-static void FDECL(create_stairs, (stair *, struct mkroom *));
-static void FDECL(create_altar, (altar *, struct mkroom *));
-static void FDECL(create_gold, (gold *, struct mkroom *));
-static void FDECL(create_feature, (int,int,struct mkroom *,int));
-static boolean FDECL(search_door, (struct mkroom *, xchar *, xchar *,
-					XCHAR_P, int));
+static void get_room_loc(schar *, schar *, struct mkroom *);
+static void get_free_room_loc(schar *, schar *, struct mkroom *);
+static void create_trap(trap *, struct mkroom *);
+static int noncoalignment(ALIGNTYP_P);
+static void create_monster(monster *, struct mkroom *);
+static void create_object(object *, struct mkroom *);
+static void create_engraving(engraving *,struct mkroom *);
+static void create_stairs(stair *, struct mkroom *);
+static void create_altar(altar *, struct mkroom *);
+static void create_gold(gold *, struct mkroom *);
+static void create_feature(int,int,struct mkroom *,int);
+static boolean search_door(struct mkroom *, xchar *, xchar *,
+					XCHAR_P, int);
 static void fix_stair_rooms(void);
-static void FDECL(create_corridor, (corridor *));
+static void create_corridor(corridor *);
 
-static boolean FDECL(create_subroom, (struct mkroom *, XCHAR_P, XCHAR_P,
-					XCHAR_P, XCHAR_P, XCHAR_P, XCHAR_P));
+static boolean create_subroom(struct mkroom *, XCHAR_P, XCHAR_P,
+					XCHAR_P, XCHAR_P, XCHAR_P, XCHAR_P);
 
 #define LEFT	1
 #define H_LEFT	2
@@ -74,22 +74,22 @@ static aligntyp	ralign[3] = { AM_CHAOTIC, AM_NEUTRAL, AM_LAWFUL };
 static xchar xstart, ystart;
 static char xsize, ysize;
 
-static void FDECL(set_wall_property, (XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P,int));
+static void set_wall_property(XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P,int);
 static int rnddoor(void);
 static int rndtrap(void);
-static void FDECL(get_location, (schar *,schar *,int));
-static void FDECL(sp_lev_shuffle, (char *,char *,int));
-static void FDECL(light_region, (region *));
-static void FDECL(load_common_data, (dlb *,int));
-static void FDECL(load_one_monster, (dlb *,monster *));
-static void FDECL(load_one_object, (dlb *,object *));
-static void FDECL(load_one_engraving, (dlb *,engraving *));
-static boolean FDECL(load_rooms, (dlb *));
-static void FDECL(maze1xy, (coord *,int));
-static boolean FDECL(load_maze, (dlb *));
-static void FDECL(create_door, (room_door *, struct mkroom *));
-static void FDECL(free_rooms,(room **, int));
-static void FDECL(build_room, (room *, room*));
+static void get_location(schar *,schar *,int);
+static void sp_lev_shuffle(char *,char *,int);
+static void light_region(region *);
+static void load_common_data(dlb *,int);
+static void load_one_monster(dlb *,monster *);
+static void load_one_object(dlb *,object *);
+static void load_one_engraving(dlb *,engraving *);
+static boolean load_rooms(dlb *);
+static void maze1xy(coord *,int);
+static boolean load_maze(dlb *);
+static void create_door(room_door *, struct mkroom *);
+static void free_rooms(room **, int);
+static void build_room(room *, room*);
 
 char *lev_message = 0;
 lev_region *lregions = 0;
@@ -165,7 +165,7 @@ rndtrap()
 #define DRY	0x1
 #define WET	0x2
 
-static boolean FDECL(is_ok_location, (SCHAR_P, SCHAR_P, int));
+static boolean is_ok_location(SCHAR_P, SCHAR_P, int);
 
 static void
 get_location(x, y, humidity)

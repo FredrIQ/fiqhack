@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-static void FDECL(center, (int, char *));
+static void center(int, char *);
 
 extern const char * const killed_by_prefix[];	/* from topten.c */
 

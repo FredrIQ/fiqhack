@@ -19,20 +19,20 @@ extern boolean notonhead;	/* for long worms */
 /* kludge to use mondied instead of killed */
 extern boolean m_using;
 
-static void FDECL(costly_cancel, (struct obj *));
-static void FDECL(polyuse, (struct obj*, int, int));
-static void FDECL(create_polymon, (struct obj *, int));
-static boolean FDECL(zap_updown, (struct obj *));
-static int FDECL(zhitm, (struct monst *,int,int,struct obj **));
-static void FDECL(zhitu, (int,int,const char *,XCHAR_P,XCHAR_P));
-static void FDECL(revive_egg, (struct obj *));
+static void costly_cancel(struct obj *);
+static void polyuse(struct obj*, int, int);
+static void create_polymon(struct obj *, int);
+static boolean zap_updown(struct obj *);
+static int zhitm(struct monst *,int,int,struct obj **);
+static void zhitu(int,int,const char *,XCHAR_P,XCHAR_P);
+static void revive_egg(struct obj *);
 #ifdef STEED
-static boolean FDECL(zap_steed, (struct obj *));
+static boolean zap_steed(struct obj *);
 #endif
 
-static int FDECL(zap_hit, (int,int));
-static void FDECL(backfire, (struct obj *));
-static int FDECL(spell_hit_bonus, (int));
+static int zap_hit(int,int);
+static void backfire(struct obj *);
+static int spell_hit_bonus(int);
 
 #define ZT_MAGIC_MISSILE	(AD_MAGM-1)
 #define ZT_FIRE			(AD_FIRE-1)
@@ -1679,7 +1679,7 @@ smell:
 int
 bhitpile(obj,fhito,tx,ty)
     struct obj *obj;
-    int FDECL((*fhito), (OBJ_P,OBJ_P));
+    int (*fhito)(OBJ_P,OBJ_P);
     int tx, ty;
 {
     int hitanything = 0;
@@ -2579,8 +2579,8 @@ struct monst *
 bhit(ddx,ddy,range,weapon,fhitm,fhito,obj)
 register int ddx,ddy,range;		/* direction and range */
 int weapon;				/* see values in hack.h */
-int FDECL((*fhitm), (MONST_P, OBJ_P)),	/* fns called when mon/obj hit */
-    FDECL((*fhito), (OBJ_P, OBJ_P));
+int (*fhitm)(MONST_P, OBJ_P),		/* fns called when mon/obj hit */
+    (*fhito)(OBJ_P, OBJ_P);
 struct obj *obj;			/* object tossed/used */
 {
 	struct monst *mtmp;

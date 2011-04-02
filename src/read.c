@@ -21,17 +21,17 @@ static const char readable[] =
 		   { ALL_CLASSES, SCROLL_CLASS, SPBOOK_CLASS, 0 };
 static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 
-static void FDECL(wand_explode, (struct obj *));
+static void wand_explode(struct obj *);
 static void do_class_genocide(void);
-static void FDECL(stripspe,(struct obj *));
-static void FDECL(p_glow1,(struct obj *));
-static void FDECL(p_glow2,(struct obj *,const char *));
-static void FDECL(randomize,(int *, int));
-static void FDECL(forget_single_object, (int));
-static void FDECL(forget, (int));
-static void FDECL(maybe_tame, (struct monst *,struct obj *));
+static void stripspe(struct obj *);
+static void p_glow1(struct obj *);
+static void p_glow2(struct obj *,const char *);
+static void randomize(int *, int);
+static void forget_single_object(int);
+static void forget(int);
+static void maybe_tame(struct monst *,struct obj *);
 
-STATIC_PTR void FDECL(set_lit, (int,int,void *));
+STATIC_PTR void set_lit(int,int,void *);
 
 int
 doread()

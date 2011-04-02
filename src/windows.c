@@ -7,7 +7,7 @@
 #include "wintty.h"
 #endif
 
-static void FDECL(def_raw_print, (const char *s));
+static void def_raw_print(const char *s);
 
 struct window_procs windowprocs;
 

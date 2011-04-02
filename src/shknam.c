@@ -7,9 +7,9 @@
 #include "hack.h"
 #include "eshk.h"
 
-static void FDECL(mkshobj_at, (const struct shclass *,int,int));
-static void FDECL(nameshk, (struct monst *,const char * const *));
-static int  FDECL(shkinit, (const struct shclass *,struct mkroom *));
+static void mkshobj_at(const struct shclass *,int,int);
+static void nameshk(struct monst *,const char * const *);
+static int  shkinit(const struct shclass *,struct mkroom *);
 
 static const char * const shkliquors[] = {
     /* Ukraine */

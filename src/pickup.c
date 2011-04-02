@@ -8,36 +8,35 @@
 
 #include "hack.h"
 
-static void FDECL(simple_look, (struct obj *,BOOLEAN_P));
+static void simple_look(struct obj *,BOOLEAN_P);
 #ifndef GOLDOBJ
-static boolean FDECL(query_classes, (char *,boolean *,boolean *,
-		const char *,struct obj *,BOOLEAN_P,BOOLEAN_P,int *));
+static boolean query_classes(char *,boolean *,boolean *,
+		const char *,struct obj *,BOOLEAN_P,BOOLEAN_P,int *);
 #else
-static boolean FDECL(query_classes, (char *,boolean *,boolean *,
-		const char *,struct obj *,BOOLEAN_P,int *));
+static boolean query_classes(char *,boolean *,boolean *,
+		const char *,struct obj *,BOOLEAN_P,int *);
 #endif
-static void FDECL(check_here, (BOOLEAN_P));
-static boolean FDECL(n_or_more, (struct obj *));
-static boolean FDECL(all_but_uchain, (struct obj *));
+static void check_here(BOOLEAN_P);
+static boolean n_or_more(struct obj *);
+static boolean all_but_uchain(struct obj *);
 #if 0 /* not used */
-static boolean FDECL(allow_cat_no_uchain, (struct obj *));
+static boolean allow_cat_no_uchain(struct obj *);
 #endif
-static int FDECL(autopick, (struct obj*, int, menu_item **));
-static int FDECL(count_categories, (struct obj *,int));
-static long FDECL(carry_count,
-		      (struct obj *,struct obj *,long,BOOLEAN_P,int *,int *));
-static int FDECL(lift_object, (struct obj *,struct obj *,long *,BOOLEAN_P));
-static boolean FDECL(mbag_explodes, (struct obj *,int));
-STATIC_PTR int FDECL(in_container,(struct obj *));
-STATIC_PTR int FDECL(ck_bag,(struct obj *));
-STATIC_PTR int FDECL(out_container,(struct obj *));
-static long FDECL(mbag_item_gone, (int,struct obj *));
-static void FDECL(observe_quantum_cat, (struct obj *));
-static int FDECL(menu_loot, (int, struct obj *, BOOLEAN_P));
-static int FDECL(in_or_out_menu, (const char *,struct obj *, BOOLEAN_P, BOOLEAN_P));
-static int FDECL(container_at, (int, int, BOOLEAN_P));
-static boolean FDECL(able_to_loot, (int, int));
-static boolean FDECL(mon_beside, (int, int));
+static int autopick(struct obj*, int, menu_item **);
+static int count_categories(struct obj *,int);
+static long carry_count (struct obj *,struct obj *,long,BOOLEAN_P,int *,int *);
+static int lift_object(struct obj *,struct obj *,long *,BOOLEAN_P);
+static boolean mbag_explodes(struct obj *,int);
+STATIC_PTR int in_container(struct obj *);
+STATIC_PTR int ck_bag(struct obj *);
+STATIC_PTR int out_container(struct obj *);
+static long mbag_item_gone(int,struct obj *);
+static void observe_quantum_cat(struct obj *);
+static int menu_loot(int, struct obj *, BOOLEAN_P);
+static int in_or_out_menu(const char *,struct obj *, BOOLEAN_P, BOOLEAN_P);
+static int container_at(int, int, BOOLEAN_P);
+static boolean able_to_loot(int, int);
+static boolean mon_beside(int, int);
 
 /* define for query_objlist() and autopickup() */
 #define FOLLOW(curr, flags) \
@@ -93,7 +92,7 @@ collect_obj_classes(ilets, otmp, here, incl_gold, filter, itemcount)
 char ilets[];
 register struct obj *otmp;
 boolean here, incl_gold;
-boolean FDECL((*filter),(OBJ_P));
+boolean (*filter)(OBJ_P);
 int *itemcount;
 #else
 int
@@ -101,7 +100,7 @@ collect_obj_classes(ilets, otmp, here, filter, itemcount)
 char ilets[];
 register struct obj *otmp;
 boolean here;
-boolean FDECL((*filter),(OBJ_P));
+boolean (*filter)(OBJ_P);
 int *itemcount;
 #endif
 {
@@ -172,7 +171,7 @@ int *menu_on_demand;
 #ifndef GOLDOBJ
 				     incl_gold,
 #endif
-				     (boolean FDECL((*),(OBJ_P))) 0, &itemcount);
+				     (boolean (*)(OBJ_P)) 0, &itemcount);
 	if (iletct == 0) {
 		return FALSE;
 	} else if (iletct == 1) {
@@ -688,7 +687,7 @@ struct obj *olist;		/* the list to pick from */
 int qflags;			/* options to control the query */
 menu_item **pick_list;		/* return list of items picked */
 int how;			/* type of query */
-boolean FDECL((*allow), (OBJ_P));/* allow function */
+boolean (*allow)(OBJ_P);/* allow function */
 {
 	int n;
 	winid win;
@@ -2189,7 +2188,7 @@ ask_again2:
 			if (askchain((struct obj **)&current_container->cobj,
 				     (one_by_one ? (char *)0 : select),
 				     allflag, out_container,
-				     (int FDECL((*),(OBJ_P)))0,
+				     (int (*)(OBJ_P))0,
 				     0, "nodot"))
 			    used = 1;
 		    } else if (menu_on_request < 0) {

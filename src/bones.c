@@ -7,10 +7,10 @@
 
 extern char bones[];	/* from files.c */
 
-static boolean FDECL(no_bones_level, (d_level *));
-static void FDECL(goodfruit, (int));
-static void FDECL(resetobjs,(struct obj *,BOOLEAN_P));
-static void FDECL(drop_upon_death, (struct monst *, struct obj *));
+static boolean no_bones_level(d_level *);
+static void goodfruit(int);
+static void resetobjs(struct obj *,BOOLEAN_P);
+static void drop_upon_death(struct monst *, struct obj *);
 
 static boolean
 no_bones_level(lev)
