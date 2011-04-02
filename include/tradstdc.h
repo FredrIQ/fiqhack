@@ -8,15 +8,6 @@
 #include <stdarg.h>
 
 /*
- * Used for robust ANSI parameter forward declarations:
- * int VDECL(sprintf, (char *, const char *, ...));
- *
- * VDECL() is used for functions with a variable number of arguments.
- */
-
-#define VDECL(f,p)	f p
-
-/*
  * Allow gcc2 to check parameters of printf-like calls with -Wformat;
  * append this to a prototype declaration (see pline() in extern.h).
  */
