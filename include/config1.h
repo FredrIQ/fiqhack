@@ -6,15 +6,10 @@
 #define CONFIG1_H
 
 
-#define NEARDATA
-
-
 #ifdef WIN32
 # undef UNIX
-
 # define STRNCMPI
 # define STRCMPI
-
 #endif
 
 

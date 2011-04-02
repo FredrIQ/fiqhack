@@ -21,12 +21,12 @@ E char *catmore;
 
 E char SAVEF[];
 
-E NEARDATA int bases[MAXOCLASSES];
+E int bases[MAXOCLASSES];
 
-E NEARDATA int multi;
-E NEARDATA int nroom;
-E NEARDATA int nsubroom;
-E NEARDATA int occtime;
+E int multi;
+E int nroom;
+E int nsubroom;
+E int occtime;
 
 #define WARNCOUNT 6			/* number of different warning levels */
 E uchar warnsyms[WARNCOUNT];
@@ -35,7 +35,7 @@ E int x_maze_max, y_maze_max;
 E int otg_temp;
 
 #ifdef REDO
-E NEARDATA int in_doagain;
+E int in_doagain;
 #endif
 
 E struct dgn_topology {		/* special dungeon levels for speed */
@@ -99,43 +99,43 @@ E struct dgn_topology {		/* special dungeon levels for speed */
 #define nemesis_level		(dungeon_topology.d_nemesis_level)
 #define knox_level		(dungeon_topology.d_knox_level)
 
-E NEARDATA stairway dnstair, upstair;		/* stairs up and down */
+E stairway dnstair, upstair;		/* stairs up and down */
 #define xdnstair	(dnstair.sx)
 #define ydnstair	(dnstair.sy)
 #define xupstair	(upstair.sx)
 #define yupstair	(upstair.sy)
 
-E NEARDATA stairway dnladder, upladder;		/* ladders up and down */
+E stairway dnladder, upladder;		/* ladders up and down */
 #define xdnladder	(dnladder.sx)
 #define ydnladder	(dnladder.sy)
 #define xupladder	(upladder.sx)
 #define yupladder	(upladder.sy)
 
-E NEARDATA stairway sstairs;
+E stairway sstairs;
 
-E NEARDATA dest_area updest, dndest;	/* level-change destination areas */
+E dest_area updest, dndest;	/* level-change destination areas */
 
-E NEARDATA coord inv_pos;
-E NEARDATA dungeon dungeons[];
-E NEARDATA s_level *sp_levchn;
+E coord inv_pos;
+E dungeon dungeons[];
+E s_level *sp_levchn;
 #define dunlev_reached(x)	(dungeons[(x)->dnum].dunlev_ureached)
 
 #include "quest.h"
 E struct q_score quest_status;
 
-E NEARDATA char pl_character[PL_CSIZ];
-E NEARDATA char pl_race;		/* character's race */
+E char pl_character[PL_CSIZ];
+E char pl_race;		/* character's race */
 
-E NEARDATA char pl_fruit[PL_FSIZ];
-E NEARDATA int current_fruit;
-E NEARDATA struct fruit *ffruit;
+E char pl_fruit[PL_FSIZ];
+E int current_fruit;
+E struct fruit *ffruit;
 
-E NEARDATA char tune[6];
+E char tune[6];
 
 #define MAXLINFO (MAXDUNGEON * MAXLEVEL)
 E struct linfo level_info[MAXLINFO];
 
-E NEARDATA struct sinfo {
+E struct sinfo {
 	int gameover;		/* self explanatory? */
 	int stopprint;		/* inhibit further end of game disclosure */
 #if defined(UNIX) || defined(WIN32)
@@ -161,17 +161,17 @@ E const char ynchars[];
 E const char ynqchars[];
 E const char ynaqchars[];
 E const char ynNaqchars[];
-E NEARDATA long yn_number;
+E long yn_number;
 
 E const char disclosure_options[];
 
-E NEARDATA int smeq[];
-E NEARDATA int doorindex;
-E NEARDATA char *save_cm;
+E int smeq[];
+E int doorindex;
+E char *save_cm;
 #define KILLED_BY_AN	 0
 #define KILLED_BY	 1
 #define NO_KILLER_PREFIX 2
-E NEARDATA int killer_format;
+E int killer_format;
 E const char *killer;
 E const char *delayed_killer;
 #ifdef GOLDOBJ
@@ -179,10 +179,10 @@ E long done_money;
 #endif
 E char killer_buf[BUFSZ];
 E const char *configfile;
-E NEARDATA char plname[PL_NSIZ];
-E NEARDATA char dogname[];
-E NEARDATA char catname[];
-E NEARDATA char horsename[];
+E char plname[PL_NSIZ];
+E char dogname[];
+E char catname[];
+E char horsename[];
 E char preferred_pet;
 E const char *occtxt;			/* defined when occupation != NULL */
 E const char *nomovemsg;
@@ -192,11 +192,11 @@ E char lock[];
 E const char sdir[], ndir[];
 E const schar xdir[], ydir[], zdir[];
 
-E NEARDATA schar tbx, tby;		/* set in mthrowu.c */
+E schar tbx, tby;		/* set in mthrowu.c */
 
-E NEARDATA struct multishot { int n, i; short o; boolean s; } m_shot;
+E struct multishot { int n, i; short o; boolean s; } m_shot;
 
-E NEARDATA struct dig_info {		/* apply.c, hack.c */
+E struct dig_info {		/* apply.c, hack.c */
 	int	effort;
 	d_level level;
 	coord	pos;
@@ -204,21 +204,21 @@ E NEARDATA struct dig_info {		/* apply.c, hack.c */
 	boolean down, chew, warned, quiet;
 } digging;
 
-E NEARDATA long moves, monstermoves;
-E NEARDATA long wailmsg;
+E long moves, monstermoves;
+E long wailmsg;
 
-E NEARDATA boolean in_mklev;
-E NEARDATA boolean stoned;
-E NEARDATA boolean unweapon;
-E NEARDATA boolean mrg_to_wielded;
-E NEARDATA struct obj *current_wand;
+E boolean in_mklev;
+E boolean stoned;
+E boolean unweapon;
+E boolean mrg_to_wielded;
+E struct obj *current_wand;
 
-E NEARDATA boolean in_steed_dismounting;
+E boolean in_steed_dismounting;
 
 E const int shield_static[];
 
 #include "spell.h"
-E NEARDATA struct spell spl_book[];	/* sized in decl.c */
+E struct spell spl_book[];	/* sized in decl.c */
 
 #include "color.h"
 #ifdef TEXTCOLOR
@@ -231,7 +231,7 @@ E const char def_monsyms[MAXMCLASSES];	/* default class symbols */
 E uchar monsyms[MAXMCLASSES];		/* current class symbols */
 
 #include "obj.h"
-E NEARDATA struct obj *invent,
+E struct obj *invent,
 	*uarm, *uarmc, *uarmh, *uarms, *uarmg, *uarmf,
 #ifdef TOURIST
 	*uarmu,				/* under-wear, so to speak */
@@ -239,30 +239,30 @@ E NEARDATA struct obj *invent,
 	*uskin, *uamul, *uleft, *uright, *ublindf,
 	*uwep, *uswapwep, *uquiver;
 
-E NEARDATA struct obj *uchain;		/* defined only when punished */
-E NEARDATA struct obj *uball;
-E NEARDATA struct obj *migrating_objs;
-E NEARDATA struct obj *billobjs;
-E NEARDATA struct obj zeroobj;		/* init'd and defined in decl.c */
+E struct obj *uchain;		/* defined only when punished */
+E struct obj *uball;
+E struct obj *migrating_objs;
+E struct obj *billobjs;
+E struct obj zeroobj;		/* init'd and defined in decl.c */
 
 #include "you.h"
-E NEARDATA struct you u;
+E struct you u;
 
 #include "onames.h"
 #ifndef PM_H		/* (pm.h has already been included via youprop.h) */
 #include "pm.h"
 #endif
 
-E NEARDATA struct monst youmonst;	/* init'd and defined in decl.c */
-E NEARDATA struct monst *mydogs, *migrating_mons;
+E struct monst youmonst;	/* init'd and defined in decl.c */
+E struct monst *mydogs, *migrating_mons;
 
-E NEARDATA struct mvitals {
+E struct mvitals {
 	uchar	born;
 	uchar	died;
 	uchar	mvflags;
 } mvitals[NUMMONS];
 
-E NEARDATA struct c_color_names {
+E struct c_color_names {
     const char	*const c_black, *const c_amber, *const c_golden,
 		*const c_light_blue,*const c_red, *const c_green,
 		*const c_silver, *const c_blue, *const c_purple,
@@ -318,12 +318,12 @@ E const char *materialnm[];
 #define EXACT_NAME		0x0F
 
 /* Vision */
-E NEARDATA boolean vision_full_recalc;	/* TRUE if need vision recalc */
-E NEARDATA char **viz_array;		/* could see/in sight row pointers */
+E boolean vision_full_recalc;	/* TRUE if need vision recalc */
+E char **viz_array;		/* could see/in sight row pointers */
 
 /* Window system stuff */
-E NEARDATA winid WIN_MESSAGE, WIN_STATUS;
-E NEARDATA winid WIN_MAP, WIN_INVEN;
+E winid WIN_MESSAGE, WIN_STATUS;
+E winid WIN_MAP, WIN_INVEN;
 E char toplines[];
 #ifndef TCAP_H
 E struct tc_gbl_data {	/* also declared in tcap.h */

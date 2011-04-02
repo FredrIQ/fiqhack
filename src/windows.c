@@ -9,7 +9,7 @@
 
 static void FDECL(def_raw_print, (const char *s));
 
-NEARDATA struct window_procs windowprocs;
+struct window_procs windowprocs;
 
 static
 struct win_choices {

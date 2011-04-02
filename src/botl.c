@@ -33,7 +33,7 @@ static void NDECL(bot2);
 #define MAXCO (COLNO+20)
 #endif
 
-static NEARDATA int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
+static int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
 static const char *NDECL(rank);
 
 

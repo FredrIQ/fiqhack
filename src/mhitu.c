@@ -5,7 +5,7 @@
 #include "hack.h"
 #include "artifact.h"
 
-static NEARDATA struct obj *otmp;
+static struct obj *otmp;
 
 static void FDECL(urustm, (struct monst *, struct obj *));
 static boolean FDECL(u_slip_free, (struct monst *,struct attack *));

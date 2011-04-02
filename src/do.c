@@ -20,7 +20,7 @@ static int NDECL(currentlevel_rewrite);
 static void NDECL(final_level);
 /* static boolean FDECL(badspot, (XCHAR_P,XCHAR_P)); */
 
-static NEARDATA const char drop_types[] =
+static const char drop_types[] =
 	{ ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, 0 };
 
 /* 'd' command: drop one inventory item */
@@ -729,7 +729,7 @@ int retry;
 
 
 /* on a ladder, used in goto_level */
-static NEARDATA boolean at_ladder = FALSE;
+static boolean at_ladder = FALSE;
 
 int
 dodown()
@@ -1577,7 +1577,7 @@ int
 dowipe()
 {
 	if(u.ucreamed)  {
-		static NEARDATA char buf[39];
+		static char buf[39];
 
 		Sprintf(buf, "wiping off your %s", body_part(FACE));
 		set_occupation(wipeoff, buf, 0);

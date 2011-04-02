@@ -11,7 +11,7 @@ static void NDECL(shuffle_all);
 static boolean FDECL(interesting_to_discover,(int));
 
 
-static NEARDATA short disco[NUM_OBJECTS] = DUMMY;
+static short disco[NUM_OBJECTS] = DUMMY;
 
 #ifdef USE_TILES
 static void NDECL(shuffle_tiles);

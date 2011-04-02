@@ -26,7 +26,7 @@ static const char *artifact_names[] = {
 #define     ELEC(a,b)	{0,AD_ELEC,a,b}		/* electrical shock */
 #define     STUN(a,b)	{0,AD_STUN,a,b}		/* magical attack */
 
-static NEARDATA struct artifact artilist[] = {
+static struct artifact artilist[] = {
 #endif	/* MAKEDEFS_C */
 
 /* Artifact cost rationale:

@@ -9,8 +9,8 @@
 #define martial()	(martial_bonus() || is_bigfoot(youmonst.data) || \
 		(uarmf && uarmf->otyp == KICKING_BOOTS))
 
-static NEARDATA struct rm *maploc;
-static NEARDATA const char *gate_str;
+static struct rm *maploc;
+static const char *gate_str;
 
 extern boolean notonhead;	/* for long worms */
 
@@ -21,7 +21,7 @@ static char *FDECL(kickstr, (char *));
 static void FDECL(otransit_msg, (struct obj *, BOOLEAN_P, long));
 static void FDECL(drop_to, (coord *,SCHAR_P));
 
-static NEARDATA struct obj *kickobj;
+static struct obj *kickobj;
 
 static const char kick_passes_thru[] = "kick passes harmlessly through";
 

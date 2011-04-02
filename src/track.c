@@ -7,8 +7,8 @@
 
 #define UTSZ	50
 
-static NEARDATA int utcnt, utpnt;
-static NEARDATA coord utrack[UTSZ];
+static int utcnt, utpnt;
+static coord utrack[UTSZ];
 
 
 void

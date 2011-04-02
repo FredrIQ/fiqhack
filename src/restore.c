@@ -46,8 +46,8 @@ static struct bucket *id_map = 0;
 #include "quest.h"
 
 boolean restoring = FALSE;
-static NEARDATA struct fruit *oldfruit;
-static NEARDATA long omoves;
+static struct fruit *oldfruit;
+static long omoves;
 
 #define Is_IceBox(o) ((o)->otyp == ICE_BOX ? TRUE : FALSE)
 

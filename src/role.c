@@ -507,7 +507,7 @@ static int FDECL(role_gendercount, (int));
 static int FDECL(race_alignmentcount, (int));
 
 /* used by str2XXX() */
-static char NEARDATA randomstr[] = "random";
+static char randomstr[] = "random";
 
 
 boolean

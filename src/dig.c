@@ -6,7 +6,7 @@
 #include "edog.h"
 /* #define DEBUG */	/* turn on for diagnostics */
 
-static NEARDATA boolean did_dig_msg;
+static boolean did_dig_msg;
 
 static boolean NDECL(rm_waslit);
 static void FDECL(mkcavepos, (XCHAR_P,XCHAR_P,int,BOOLEAN_P,BOOLEAN_P));
