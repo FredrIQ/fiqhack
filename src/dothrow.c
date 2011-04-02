@@ -8,7 +8,7 @@
 #include "edog.h"
 
 static int FDECL(throw_obj, (struct obj *,int));
-static void NDECL(autoquiver);
+static void autoquiver(void);
 static int FDECL(gem_accept, (struct monst *, struct obj *));
 static void FDECL(tmiss, (struct obj *, struct monst *));
 static int FDECL(throw_gold, (struct obj *));

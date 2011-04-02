@@ -19,10 +19,10 @@ static boolean FDECL(okay,(int,int,int));
 static void FDECL(maze0xy,(coord *));
 static boolean FDECL(put_lregion_here,(XCHAR_P,XCHAR_P,XCHAR_P,
 	XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P,BOOLEAN_P,d_level *));
-static void NDECL(fixup_special);
+static void fixup_special(void);
 static void FDECL(move, (int *,int *,int));
-static void NDECL(setup_waterlevel);
-static void NDECL(unsetup_waterlevel);
+static void setup_waterlevel(void);
+static void unsetup_waterlevel(void);
 
 
 static boolean
@@ -871,7 +871,7 @@ static int xmin, ymin, xmax, ymax;	/* level boundaries */
 #define bxmax (xmax - 1)
 #define bymax (ymax - 1)
 
-static void NDECL(set_wportal);
+static void set_wportal(void);
 static void FDECL(mk_bubble, (int,int,int));
 static void FDECL(mv_bubble, (struct bubble *,int,int,BOOLEAN_P));
 

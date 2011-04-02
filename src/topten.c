@@ -56,7 +56,7 @@ struct toptenentry {
 static void FDECL(topten_print, (const char *));
 static void FDECL(topten_print_bold, (const char *));
 static xchar FDECL(observable_depth, (d_level *));
-static void NDECL(outheader);
+static void outheader(void);
 static void FDECL(outentry, (int,struct toptenentry *,BOOLEAN_P));
 static void FDECL(readentry, (FILE *,struct toptenentry *));
 static void FDECL(writeentry, (FILE *,struct toptenentry *));

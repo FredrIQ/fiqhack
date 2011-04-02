@@ -90,7 +90,7 @@ static char right_ptrs[ROWNO][COLNO];
 /* Forward declarations. */
 static void FDECL(fill_point, (int,int));
 static void FDECL(dig_point, (int,int));
-static void NDECL(view_init);
+static void view_init(void);
 static void FDECL(view_from,(int,int,char **,char *,char *,int,
 			     void (*)(int,int,void *),void *));
 static void FDECL(get_unused_cs, (char ***,char **,char **));

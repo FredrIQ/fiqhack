@@ -16,7 +16,7 @@ static void FDECL(checkfile,
 static int FDECL(do_look, (BOOLEAN_P));
 static boolean FDECL(help_menu, (int *));
 #ifdef PORT_HELP
-extern void NDECL(port_help);
+extern void port_help(void);
 #endif
 
 /* Returns "true" for characters that could represent a monster's stomach. */

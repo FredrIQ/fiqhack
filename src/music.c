@@ -37,7 +37,7 @@ static void FDECL(do_earthquake,(int));
 static int FDECL(do_improvisation,(struct obj *));
 
 #ifdef UNIX386MUSIC
-static int NDECL(atconsole);
+static int atconsole(void);
 static void FDECL(speaker,(struct obj *,char *));
 #endif
 

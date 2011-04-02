@@ -13,11 +13,11 @@ static void FDECL(dosinkring, (struct obj *));
 #endif /* SINKS */
 
 STATIC_PTR int FDECL(drop, (struct obj *));
-STATIC_PTR int NDECL(wipeoff);
+STATIC_PTR int wipeoff(void);
 
 static int FDECL(menu_drop, (int));
-static int NDECL(currentlevel_rewrite);
-static void NDECL(final_level);
+static int currentlevel_rewrite(void);
+static void final_level(void);
 /* static boolean FDECL(badspot, (XCHAR_P,XCHAR_P)); */
 
 static const char drop_types[] =

@@ -25,8 +25,8 @@ char *FDECL(eos, (char *));	/* also used by dlb.c */
 FILE *FDECL(fopen_datafile, (const char *,const char *));
 
 static void FDECL(Write, (int,char *,long));
-static void NDECL(usage);
-static void NDECL(verbose_help);
+static void usage(void);
+static void verbose_help(void);
 static void FDECL(write_dlb_directory, (int,int,libdir *,long,long,long));
 
 static char default_progname[] = "dlb";

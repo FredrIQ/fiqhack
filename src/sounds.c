@@ -11,7 +11,7 @@
 #endif
 
 static int FDECL(domonnoise,(struct monst *));
-static int NDECL(dochat);
+static int dochat(void);
 static int FDECL(mon_in_room, (struct monst *,int));
 
 /* this easily could be a macro, but it might overtax dumb compilers */

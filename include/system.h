@@ -32,7 +32,7 @@
 # undef random
 # endif
 # if !defined(LINUX)
-E  long NDECL(random);
+E  long random(void);
 # endif
 # if (!defined(bsdi) && !defined(__FreeBSD__)) || defined(RANDOM)
 E void FDECL(srandom, (unsigned int));
@@ -82,9 +82,9 @@ E unsigned sleep();
 
 E char *FDECL(getenv, (const char *));
 E char *getlogin();
-E pid_t NDECL(getpid);
-E uid_t NDECL(getuid);
-E gid_t NDECL(getgid);
+E pid_t getpid(void);
+E uid_t getuid(void);
+E gid_t getgid(void);
 
 /*# string(s).h #*/
 

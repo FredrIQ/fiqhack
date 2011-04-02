@@ -39,7 +39,7 @@ static void FDECL(create_gold, (gold *, struct mkroom *));
 static void FDECL(create_feature, (int,int,struct mkroom *,int));
 static boolean FDECL(search_door, (struct mkroom *, xchar *, xchar *,
 					XCHAR_P, int));
-static void NDECL(fix_stair_rooms);
+static void fix_stair_rooms(void);
 static void FDECL(create_corridor, (corridor *));
 
 static boolean FDECL(create_subroom, (struct mkroom *, XCHAR_P, XCHAR_P,
@@ -75,8 +75,8 @@ static xchar xstart, ystart;
 static char xsize, ysize;
 
 static void FDECL(set_wall_property, (XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P,int));
-static int NDECL(rnddoor);
-static int NDECL(rndtrap);
+static int rnddoor(void);
+static int rndtrap(void);
 static void FDECL(get_location, (schar *,schar *,int));
 static void FDECL(sp_lev_shuffle, (char *,char *,int));
 static void FDECL(light_region, (region *));

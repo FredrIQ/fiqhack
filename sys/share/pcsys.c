@@ -17,7 +17,7 @@ void FDECL(nethack_exit,(int));
 #else
 #define nethack_exit exit
 #endif
-static void NDECL(msexit);
+static void msexit(void);
 
 
 #ifdef WIN32CON

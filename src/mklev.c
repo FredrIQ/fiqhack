@@ -24,16 +24,16 @@ static void FDECL(mksink,(struct mkroom *));
 #endif
 static void FDECL(mkaltar,(struct mkroom *));
 static void FDECL(mkgrave,(struct mkroom *));
-static void NDECL(makevtele);
-static void NDECL(clear_level_structures);
-static void NDECL(makelevel);
-static void NDECL(mineralize);
+static void makevtele(void);
+static void clear_level_structures(void);
+static void makelevel(void);
+static void mineralize(void);
 static boolean FDECL(bydoor,(XCHAR_P,XCHAR_P));
 static struct mkroom *FDECL(find_branch_room, (coord *));
 static struct mkroom *FDECL(pos_to_room, (XCHAR_P, XCHAR_P));
 static boolean FDECL(place_niche,(struct mkroom *,int*,int*,int*));
 static void FDECL(makeniche,(int));
-static void NDECL(make_niches);
+static void make_niches(void);
 
 STATIC_PTR int FDECL(do_comp,(const void *,const void *));
 
@@ -41,7 +41,7 @@ static void FDECL(dosdoor,(XCHAR_P,XCHAR_P,struct mkroom *,int));
 static void FDECL(join,(int,int,BOOLEAN_P));
 static void FDECL(do_room_or_subroom, (struct mkroom *,int,int,int,int,
 				       BOOLEAN_P,SCHAR_P,BOOLEAN_P,BOOLEAN_P));
-static void NDECL(makerooms);
+static void makerooms(void);
 static void FDECL(finddpos,(coord *,XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P));
 static void FDECL(mkinvpos, (XCHAR_P,XCHAR_P,int));
 static void FDECL(mk_knox_portal, (XCHAR_P,XCHAR_P));

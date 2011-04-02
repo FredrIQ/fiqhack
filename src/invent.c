@@ -7,7 +7,7 @@
 #define NOINVSYM	'#'
 #define CONTAINED_SYM	'>'	/* designator for inside a container */
 
-static void NDECL(reorder_invent);
+static void reorder_invent(void);
 static boolean FDECL(mergable,(struct obj *,struct obj *));
 static void FDECL(invdisp_nothing, (const char *,const char *));
 static boolean FDECL(worn_wield_only, (struct obj *));
@@ -19,7 +19,7 @@ STATIC_PTR int FDECL(ckunpaid,(struct obj *));
 STATIC_PTR int FDECL(ckvalidcat,(struct obj *));
 static char FDECL(display_pickinv, (const char *,BOOLEAN_P, long *));
 static boolean FDECL(this_type_only, (struct obj *));
-static void NDECL(dounpaid);
+static void dounpaid(void);
 static struct obj *FDECL(find_unpaid,(struct obj *,struct obj **));
 static void FDECL(menu_identify, (int));
 static boolean FDECL(tool_in_use, (struct obj *));

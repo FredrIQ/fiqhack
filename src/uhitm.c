@@ -11,11 +11,11 @@ static boolean FDECL(hmon_hitmon, (struct monst *,struct obj *,int));
 #ifdef STEED
 static int FDECL(joust, (struct monst *,struct obj *));
 #endif
-static void NDECL(demonpet);
+static void demonpet(void);
 static boolean FDECL(m_slips_free, (struct monst *mtmp,struct attack *mattk));
 static int FDECL(explum, (struct monst *,struct attack *));
 static void FDECL(start_engulf, (struct monst *));
-static void NDECL(end_engulf);
+static void end_engulf(void);
 static int FDECL(gulpum, (struct monst *,struct attack *));
 static boolean FDECL(hmonas, (struct monst *,int));
 static void FDECL(nohandglow, (struct monst *));

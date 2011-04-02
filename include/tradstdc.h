@@ -11,12 +11,10 @@
  * Used for robust ANSI parameter forward declarations:
  * int VDECL(sprintf, (char *, const char *, ...));
  *
- * NDECL() is used for functions with zero arguments;
  * FDECL() is used for functions with a fixed number of arguments;
  * VDECL() is used for functions with a variable number of arguments.
  */
 
-#define NDECL(f)	f(void)
 #define FDECL(f,p)	f p
 #define VDECL(f,p)	f p
 

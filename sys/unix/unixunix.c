@@ -12,8 +12,8 @@
 #include <signal.h>
 
 #ifdef __linux__
-extern void NDECL(linux_mapon);
-extern void NDECL(linux_mapoff);
+extern void linux_mapon(void);
+extern void linux_mapoff(void);
 #endif
 
 static struct stat buf;
@@ -251,11 +251,11 @@ int wt;
 #ifdef GETRES_SUPPORT
 
 extern int FDECL(nh_getresuid, (uid_t *, uid_t *, uid_t *));
-extern uid_t NDECL(nh_getuid);
-extern uid_t NDECL(nh_geteuid);
+extern uid_t nh_getuid(void);
+extern uid_t nh_geteuid(void);
 extern int FDECL(nh_getresgid, (gid_t *, gid_t *, gid_t *));
-extern gid_t NDECL(nh_getgid);
-extern gid_t NDECL(nh_getegid);
+extern gid_t nh_getgid(void);
+extern gid_t nh_getegid(void);
 
 int
 (getresuid)(ruid, euid, suid)

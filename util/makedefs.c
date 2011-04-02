@@ -77,21 +77,21 @@ char *file_prefix="";
 
 int FDECL(main, (int,char **));
 void FDECL(do_makedefs, (char *));
-void NDECL(do_objs);
-void NDECL(do_data);
-void NDECL(do_dungeon);
-void NDECL(do_date);
-void NDECL(do_options);
-void NDECL(do_monstr);
-void NDECL(do_permonst);
-void NDECL(do_questtxt);
-void NDECL(do_rumors);
-void NDECL(do_oracles);
+void do_objs(void);
+void do_data(void);
+void do_dungeon(void);
+void do_date(void);
+void do_options(void);
+void do_monstr(void);
+void do_permonst(void);
+void do_questtxt(void);
+void do_rumors(void);
+void do_oracles(void);
 
-extern void NDECL(monst_init);		/* monst.c */
-extern void NDECL(objects_init);	/* objects.c */
+extern void monst_init(void);		/* monst.c */
+extern void objects_init(void);	/* objects.c */
 
-static void NDECL(make_version);
+static void make_version(void);
 static char *FDECL(version_string, (char *));
 static char *FDECL(version_id_string, (char *,const char *));
 static char *FDECL(xcrypt, (const char *));
@@ -101,7 +101,7 @@ static boolean FDECL(d_filter, (char *));
 static boolean FDECL(h_filter, (char *));
 static boolean FDECL(ranged_attk,(struct permonst*));
 static int FDECL(mstrength,(struct permonst *));
-static void NDECL(build_savebones_compat_string);
+static void build_savebones_compat_string(void);
 
 static boolean FDECL(qt_comment, (char *));
 static boolean FDECL(qt_control, (char *));
@@ -111,8 +111,8 @@ static boolean FDECL(known_msg, (int,int));
 static void FDECL(new_msg, (char *,int,int));
 static void FDECL(do_qt_control, (char *));
 static void FDECL(do_qt_text, (char *));
-static void NDECL(adjust_qt_hdrs);
-static void NDECL(put_qt_hdrs);
+static void adjust_qt_hdrs(void);
+static void put_qt_hdrs(void);
 
 static char *FDECL(tmpdup, (const char *));
 static char *FDECL(limit, (char *,int));
@@ -1121,7 +1121,7 @@ do_monstr()
     /* might want to insert a final 0 entry here instead of just newline */
     Fprintf(ofp,"%s};\n", (j & 15) ? "\n" : "");
 
-    Fprintf(ofp,"\nvoid NDECL(monstr_init);\n");
+    Fprintf(ofp,"\nvoid monstr_init(void);\n");
     Fprintf(ofp,"\nvoid\n");
     Fprintf(ofp,"monstr_init()\n");
     Fprintf(ofp,"{\n");

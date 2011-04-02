@@ -22,58 +22,58 @@
  * module you are trying to debug) or things are going to get rather
  * hard to link :-)
  */
-extern int NDECL(wiz_debug_cmd);
+extern int wiz_debug_cmd(void);
 #endif
 
-static int NDECL((*timed_occ_fn));
+static int (*timed_occ_fn)(void);
 
-STATIC_PTR int NDECL(doprev_message);
-STATIC_PTR int NDECL(timed_occupation);
-STATIC_PTR int NDECL(doextcmd);
-STATIC_PTR int NDECL(domonability);
-STATIC_PTR int NDECL(dotravel);
+STATIC_PTR int doprev_message(void);
+STATIC_PTR int timed_occupation(void);
+STATIC_PTR int doextcmd(void);
+STATIC_PTR int domonability(void);
+STATIC_PTR int dotravel(void);
 # ifdef WIZARD
-STATIC_PTR int NDECL(wiz_wish);
-STATIC_PTR int NDECL(wiz_identify);
-STATIC_PTR int NDECL(wiz_map);
-STATIC_PTR int NDECL(wiz_genesis);
-STATIC_PTR int NDECL(wiz_where);
-STATIC_PTR int NDECL(wiz_detect);
-STATIC_PTR int NDECL(wiz_panic);
-STATIC_PTR int NDECL(wiz_polyself);
-STATIC_PTR int NDECL(wiz_level_tele);
-STATIC_PTR int NDECL(wiz_level_change);
-STATIC_PTR int NDECL(wiz_show_seenv);
-STATIC_PTR int NDECL(wiz_show_vision);
-STATIC_PTR int NDECL(wiz_mon_polycontrol);
-STATIC_PTR int NDECL(wiz_show_wmodes);
+STATIC_PTR int wiz_wish(void);
+STATIC_PTR int wiz_identify(void);
+STATIC_PTR int wiz_map(void);
+STATIC_PTR int wiz_genesis(void);
+STATIC_PTR int wiz_where(void);
+STATIC_PTR int wiz_detect(void);
+STATIC_PTR int wiz_panic(void);
+STATIC_PTR int wiz_polyself(void);
+STATIC_PTR int wiz_level_tele(void);
+STATIC_PTR int wiz_level_change(void);
+STATIC_PTR int wiz_show_seenv(void);
+STATIC_PTR int wiz_show_vision(void);
+STATIC_PTR int wiz_mon_polycontrol(void);
+STATIC_PTR int wiz_show_wmodes(void);
 #ifdef DEBUG_MIGRATING_MONS
-STATIC_PTR int NDECL(wiz_migrate_mons);
+STATIC_PTR int wiz_migrate_mons(void);
 #endif
 static void FDECL(count_obj, (struct obj *, long *, long *, BOOLEAN_P, BOOLEAN_P));
 static void FDECL(obj_chain, (winid, const char *, struct obj *, long *, long *));
 static void FDECL(mon_invent_chain, (winid, const char *, struct monst *, long *, long *));
 static void FDECL(mon_chain, (winid, const char *, struct monst *, long *, long *));
 static void FDECL(contained, (winid, const char *, long *, long *));
-STATIC_PTR int NDECL(wiz_show_stats);
+STATIC_PTR int wiz_show_stats(void);
 #  ifdef PORT_DEBUG
-static int NDECL(wiz_port_debug);
+static int wiz_port_debug(void);
 #  endif
 # endif
-STATIC_PTR int NDECL(enter_explore_mode);
-STATIC_PTR int NDECL(doattributes);
-STATIC_PTR int NDECL(doconduct); /**/
-STATIC_PTR boolean NDECL(minimal_enlightenment);
+STATIC_PTR int enter_explore_mode(void);
+STATIC_PTR int doattributes(void);
+STATIC_PTR int doconduct(void); /**/
+STATIC_PTR boolean minimal_enlightenment(void);
 
 static void FDECL(enlght_line, (const char *,const char *,const char *));
 static char *FDECL(enlght_combatinc, (const char *,int,int,char *));
 #ifdef UNIX
-static void NDECL(end_of_input);
+static void end_of_input(void);
 #endif
 
 static const char* readchar_queue="";
 
-static char *NDECL(parse);
+static char *parse(void);
 static boolean FDECL(help_dir, (CHAR_P,const char *));
 
 
@@ -120,7 +120,7 @@ reset_occupations()
  */
 void
 set_occupation(fn, txt, xtime)
-int NDECL((*fn));
+int (*fn)(void);
 const char *txt;
 int xtime;
 {
@@ -136,7 +136,7 @@ int xtime;
 
 #ifdef REDO
 
-static char NDECL(popch);
+static char popch(void);
 
 /* Provide a means to redo the last command.  The flag `in_doagain' is set
  * to true while redoing the command.  This flag is tested in commands that
@@ -1848,7 +1848,7 @@ register char *cmd;
 	/* handle all other commands */
 	} else {
 	    register const struct func_tab *tlist;
-	    int res, NDECL((*func));
+	    int res, (*func)(void);
 
 	    for (tlist = cmdlist; tlist->f_char; tlist++) {
 		if ((*cmd & 0xff) != (tlist->f_char & 0xff)) continue;
@@ -2368,8 +2368,8 @@ dotravel()
 
 #ifdef PORT_DEBUG
 # ifdef WIN32CON
-extern void NDECL(win32con_debug_keystrokes);
-extern void NDECL(win32con_handler_info);
+extern void win32con_debug_keystrokes(void);
+extern void win32con_handler_info(void);
 # endif
 
 int
@@ -2382,13 +2382,13 @@ wiz_port_debug()
 	int num_menu_selections;
 	struct menu_selection_struct {
 		char *menutext;
-		void NDECL((*fn));
+		void (*fn)(void);
 	} menu_selections[] = {
 #ifdef WIN32CON
 		{"test win32 keystrokes", win32con_debug_keystrokes},
 		{"show keystroke handler information", win32con_handler_info},
 #endif
-		{(char *)0, (void NDECL((*)))0}		/* array terminator */
+		{(char *)0, (void (*)(void))0}		/* array terminator */
 	};
 
 	num_menu_selections = SIZE(menu_selections) - 1;

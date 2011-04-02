@@ -21,7 +21,7 @@
 
 SHARED_DCL char orgdir[PATHLEN];	/* also used in pcsys.c, amidos.c */
 static void FDECL(process_options,(int argc,char **argv));
-static void NDECL(nhusage);
+static void nhusage(void);
 
 #if defined(WIN32)
 extern void FDECL(nethack_exit,(int));

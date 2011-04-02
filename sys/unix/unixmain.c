@@ -19,15 +19,15 @@ extern struct passwd *FDECL(getpwnam,(const char *));
 #ifdef CHDIR
 static void FDECL(chdirx, (const char *,BOOLEAN_P));
 #endif /* CHDIR */
-static boolean NDECL(whoami);
+static boolean whoami(void);
 static void FDECL(process_options, (int, char **));
 
 #ifdef __linux__
-extern void NDECL(check_linux_console);
-extern void NDECL(init_linux_cons);
+extern void check_linux_console(void);
+extern void init_linux_cons(void);
 #endif
 
-static void NDECL(wd_message);
+static void wd_message(void);
 #ifdef WIZARD
 static boolean wiz_error_flag = FALSE;
 #endif

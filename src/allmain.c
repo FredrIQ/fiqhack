@@ -11,7 +11,7 @@
 #endif
 
 #ifdef POSITIONBAR
-static void NDECL(do_positionbar);
+static void do_positionbar(void);
 #endif
 
 

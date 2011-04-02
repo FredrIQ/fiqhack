@@ -125,7 +125,7 @@ boolean HE_resets_AS;	/* see termcap.c */
 static const char to_continue[] = "to continue";
 #define getret() getreturn(to_continue)
 #else
-static void NDECL(getret);
+static void getret(void);
 #endif
 static void FDECL(erase_menu_or_text, (winid, struct WinDesc *, BOOLEAN_P));
 static void FDECL(free_window_info, (struct WinDesc *, BOOLEAN_P));

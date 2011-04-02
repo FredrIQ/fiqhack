@@ -10,12 +10,12 @@ struct window_procs {
     unsigned long wincap;	/* window port capability options supported */
     unsigned long wincap2;	/* additional window port capability options supported */
     void FDECL((*win_init_nhwindows), (int *, char **));
-    void NDECL((*win_player_selection));
-    void NDECL((*win_askname));
-    void NDECL((*win_get_nh_event)) ;
+    void (*win_player_selection)(void);
+    void (*win_askname)(void);
+    void (*win_get_nh_event)(void);
     void FDECL((*win_exit_nhwindows), (const char *));
     void FDECL((*win_suspend_nhwindows), (const char *));
-    void NDECL((*win_resume_nhwindows));
+    void (*win_resume_nhwindows)(void);
     winid FDECL((*win_create_nhwindow), (int));
     void FDECL((*win_clear_nhwindow), (winid));
     void FDECL((*win_display_nhwindow), (winid, BOOLEAN_P));
@@ -29,9 +29,9 @@ struct window_procs {
     void FDECL((*win_end_menu), (winid, const char *));
     int FDECL((*win_select_menu), (winid, int, MENU_ITEM_P **));
     char FDECL((*win_message_menu), (CHAR_P,int,const char *));
-    void NDECL((*win_update_inventory));
-    void NDECL((*win_mark_synch));
-    void NDECL((*win_wait_synch));
+    void (*win_update_inventory)(void);
+    void (*win_mark_synch)(void);
+    void (*win_wait_synch)(void);
 #ifdef CLIPPING
     void FDECL((*win_cliparound), (int, int));
 #endif
@@ -41,23 +41,23 @@ struct window_procs {
     void FDECL((*win_print_glyph), (winid,XCHAR_P,XCHAR_P,int));
     void FDECL((*win_raw_print), (const char *));
     void FDECL((*win_raw_print_bold), (const char *));
-    int NDECL((*win_nhgetch));
+    int (*win_nhgetch)(void);
     int FDECL((*win_nh_poskey), (int *, int *, int *));
-    void NDECL((*win_nhbell));
-    int NDECL((*win_doprev_message));
+    void (*win_nhbell)(void);
+    int (*win_doprev_message)(void);
     char FDECL((*win_yn_function), (const char *, const char *, CHAR_P));
     void FDECL((*win_getlin), (const char *,char *));
-    int NDECL((*win_get_ext_cmd));
+    int (*win_get_ext_cmd)(void);
     void FDECL((*win_number_pad), (int));
-    void NDECL((*win_delay_output));
+    void (*win_delay_output)(void);
 #ifdef CHANGE_COLOR
     void FDECL((*win_change_color), (int,long,int));
-    char * NDECL((*win_get_color_string));
+    char * (*win_get_color_string)(void);
 #endif
 
     /* other defs that really should go away (they're tty specific) */
-    void NDECL((*win_start_screen));
-    void NDECL((*win_end_screen));
+    void (*win_start_screen)(void);
+    void (*win_end_screen)(void);
 
     void FDECL((*win_outrip), (winid,int));
     void FDECL((*win_preference_update), (const char *));

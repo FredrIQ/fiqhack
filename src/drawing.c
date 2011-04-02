@@ -407,7 +407,7 @@ static uchar ibm_graphics[MAXPCHARS] = {
 #endif  /* ASCIIGRAPH */
 
 #ifdef TERMLIB
-void NDECL((*decgraphics_mode_callback)) = 0;  /* set in tty_start_screen() */
+void (*decgraphics_mode_callback)(void) = 0;  /* set in tty_start_screen() */
 
 static uchar dec_graphics[MAXPCHARS] = {
 /* 0*/	g_FILLER(S_stone),

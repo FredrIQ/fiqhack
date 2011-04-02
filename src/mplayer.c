@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-static const char *NDECL(dev_name);
+static const char *dev_name(void);
 static void FDECL(get_mplname, (struct monst *, char *));
 static void FDECL(mk_mplayer_armor, (struct monst *, SHORT_P));
 

@@ -29,7 +29,7 @@ static void FDECL(use_figurine, (struct obj **));
 static void FDECL(use_grease, (struct obj *));
 static void FDECL(use_trap, (struct obj *));
 static void FDECL(use_stone, (struct obj *));
-STATIC_PTR int NDECL(set_trap);		/* occupation callback */
+STATIC_PTR int set_trap(void);		/* occupation callback */
 static int FDECL(use_whip, (struct obj *));
 static int FDECL(use_pole, (struct obj *));
 static int FDECL(use_cream_pie, (struct obj *));
@@ -37,7 +37,7 @@ static int FDECL(use_grapple, (struct obj *));
 static int FDECL(do_break_wand, (struct obj *));
 static boolean FDECL(figurine_location_checks,
 				(struct obj *, coord *, BOOLEAN_P));
-static boolean NDECL(uhave_graystone);
+static boolean uhave_graystone(void);
 static void FDECL(add_class, (char *, CHAR_P));
 
 static const char no_elbow_room[] = "don't have enough elbow-room to maneuver.";

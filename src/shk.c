@@ -52,7 +52,7 @@ static void FDECL(shk_names_obj,
 static struct obj *FDECL(bp_to_obj, (struct bill_x *));
 static boolean FDECL(inherits, (struct monst *,int,int));
 static void FDECL(set_repo_loc, (struct eshk *));
-static boolean NDECL(angry_shk_exists);
+static boolean angry_shk_exists(void);
 static void FDECL(rile_shk, (struct monst *));
 static void FDECL(rouse_shk, (struct monst *,BOOLEAN_P));
 static void FDECL(remove_damage, (struct monst *, BOOLEAN_P));

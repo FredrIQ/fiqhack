@@ -10,7 +10,7 @@
 extern void FDECL(substitute_tiles, (d_level *));       /* from tile.c */
 #endif
 
-static void NDECL(find_lev_obj);
+static void find_lev_obj(void);
 static void FDECL(restlevchn, (int));
 static void FDECL(restdamage, (int,BOOLEAN_P));
 static struct obj *FDECL(restobjchn, (int,BOOLEAN_P,BOOLEAN_P));
@@ -36,7 +36,7 @@ struct bucket {
     } map[N_PER_BUCKET];
 };
 
-static void NDECL(clear_id_mapping);
+static void clear_id_mapping(void);
 static void FDECL(add_id_mapping, (unsigned, unsigned));
 
 static int n_ids_mapped = 0;

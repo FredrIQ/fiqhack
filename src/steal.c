@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-STATIC_PTR int NDECL(stealarm);
+STATIC_PTR int stealarm(void);
 
 static const char *FDECL(equipname, (struct obj *));
 static void FDECL(mdrop_obj, (struct monst *,struct obj *,BOOLEAN_P));

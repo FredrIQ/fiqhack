@@ -6,8 +6,8 @@
 
 #include "hack.h"
 
-static int NDECL(bc_order);
-static void NDECL(litter);
+static int bc_order(void);
+static void litter(void);
 
 void
 ballfall()

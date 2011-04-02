@@ -15,14 +15,15 @@
 
 #include "hack.h"
 
+
 static boolean FDECL(isbig, (struct mkroom *));
 static struct mkroom * FDECL(pick_room,(BOOLEAN_P));
-static void NDECL(mkshop), FDECL(mkzoo,(int)), NDECL(mkswamp);
-static void NDECL(mktemple);
+static void mkshop(void), FDECL(mkzoo,(int)), mkswamp(void);
+static void mktemple(void);
 static coord * FDECL(shrine_pos, (int));
-static struct permonst * NDECL(morguemon);
-static struct permonst * NDECL(antholemon);
-static struct permonst * NDECL(squadmon);
+static struct permonst * morguemon(void);
+static struct permonst * antholemon(void);
+static struct permonst * squadmon(void);
 static void FDECL(save_room, (int,struct mkroom *));
 static void FDECL(rest_room, (int,struct mkroom *));
 

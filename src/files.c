@@ -76,7 +76,7 @@ boolean nethack_thinks_it_is_open;	/* Does NetHack think it's open?       */
 #ifdef WIZARD
 #define WIZKIT_MAX 128
 static char wizkit[WIZKIT_MAX];
-static FILE *NDECL(fopen_wizkit_file);
+static FILE *fopen_wizkit_file(void);
 #endif
 
 #if defined(WIN32)
@@ -92,7 +92,7 @@ extern char *sounddir;
 extern int n_dgns;		/* from dungeon.c */
 
 static char *FDECL(set_bonesfile_name, (char *,d_level*));
-static char *NDECL(set_bonestemp_name);
+static char *set_bonestemp_name(void);
 static char *FDECL(make_lockname, (const char *,char *));
 static FILE *FDECL(fopen_config_file, (const char *));
 static int FDECL(get_uchars, (FILE *,char *,char *,uchar *,BOOLEAN_P,int,const char *));

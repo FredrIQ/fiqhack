@@ -4,11 +4,11 @@
 
 #include "hack.h"
 
-static void NDECL(maybe_wail);
-static int NDECL(moverock);
+static void maybe_wail(void);
+static int moverock(void);
 static int FDECL(still_chewing,(XCHAR_P,XCHAR_P));
 #ifdef SINKS
-static void NDECL(dosinkfall);
+static void dosinkfall(void);
 #endif
 static boolean FDECL(findtravelpath, (BOOLEAN_P));
 static boolean FDECL(monstinroom, (struct permonst *,int));

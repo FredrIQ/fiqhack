@@ -6,7 +6,7 @@
 
 static boolean FDECL(tele_jump_ok, (int,int,int,int));
 static boolean FDECL(teleok, (int,int,BOOLEAN_P));
-static void NDECL(vault_tele);
+static void vault_tele(void);
 static boolean FDECL(rloc_pos_ok, (int,int,struct monst *));
 static void FDECL(mvault_tele, (struct monst *));
 

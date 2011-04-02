@@ -15,8 +15,8 @@ const char * const enc_stat[] = {
 	"Overloaded"
 };
 
-static void NDECL(bot1);
-static void NDECL(bot2);
+static void bot1(void);
+static void bot2(void);
 
 
 /* MAXCO must hold longest uncompressed status line, and must be larger
@@ -34,7 +34,7 @@ static void NDECL(bot2);
 #endif
 
 static int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
-static const char *NDECL(rank);
+static const char *rank(void);
 
 
 /* convert experience level (1..30) to rank index (0..8) */

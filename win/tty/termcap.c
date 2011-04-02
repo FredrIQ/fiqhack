@@ -22,8 +22,8 @@ void FDECL(nocmov, (int, int));
 #  if !defined(UNIX) || !defined(TERMINFO)
 static void FDECL(analyze_seq, (char *, int *, int *));
 #  endif
-static void NDECL(init_hilite);
-static void NDECL(kill_hilite);
+static void init_hilite(void);
+static void kill_hilite(void);
 #endif
 
 	/* (see tcap.h) -- nh_CM, nh_ND, nh_CD, nh_HI,nh_HE, nh_US,nh_UE,
@@ -272,8 +272,8 @@ int state;
 }
 
 #ifdef TERMLIB
-extern void NDECL((*decgraphics_mode_callback));    /* defined in drawing.c */
-static void NDECL(tty_decgraphics_termcap_fixup);
+extern void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
+static void tty_decgraphics_termcap_fixup(void);
 
 /*
    We call this routine whenever DECgraphics mode is enabled, even if it

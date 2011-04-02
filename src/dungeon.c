@@ -56,7 +56,7 @@ static void FDECL(print_branch, (winid, int, int, int, BOOLEAN_P, struct lchoice
 
 #ifdef DEBUG
 #define DD	dungeons[i]
-static void NDECL(dumpit);
+static void dumpit(void);
 
 static void
 dumpit()

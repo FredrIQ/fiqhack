@@ -9,7 +9,7 @@
 
 static boolean FDECL(restrap,(struct monst *));
 static long FDECL(mm_aggression, (struct monst *,struct monst *));
-static int NDECL(pick_animal);
+static int pick_animal(void);
 static int FDECL(select_newcham_form, (struct monst *));
 static void FDECL(kill_eggs, (struct obj *));
 
@@ -33,7 +33,7 @@ const char *warnings[] = {
 	"white", "pink", "red", "ruby", "purple", "black"
 };
 
-static void NDECL(warn_effects);
+static void warn_effects(void);
 #endif /* 0 */
 
 static struct obj *FDECL(make_corpse,(struct monst *));

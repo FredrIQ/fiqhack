@@ -13,11 +13,11 @@
 #include "hack.h"
 
 static void FDECL(polyman, (const char *,const char *));
-static void NDECL(break_armor);
+static void break_armor(void);
 static void FDECL(drop_weapon,(int));
-static void NDECL(uunstick);
+static void uunstick(void);
 static int FDECL(armor_to_dragon,(int));
-static void NDECL(newman);
+static void newman(void);
 
 /* update the youmonst.data structure pointer */
 void

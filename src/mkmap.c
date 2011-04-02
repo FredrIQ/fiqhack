@@ -14,7 +14,7 @@ static schar FDECL(get_map,(int,int,SCHAR_P));
 static void FDECL(pass_one,(SCHAR_P,SCHAR_P));
 static void FDECL(pass_two,(SCHAR_P,SCHAR_P));
 static void FDECL(pass_three,(SCHAR_P,SCHAR_P));
-static void NDECL(wallify_map);
+static void wallify_map(void);
 static void FDECL(join_map,(SCHAR_P,SCHAR_P));
 static void FDECL(finish_map,(SCHAR_P,SCHAR_P,XCHAR_P,XCHAR_P));
 static void FDECL(remove_room,(unsigned));
