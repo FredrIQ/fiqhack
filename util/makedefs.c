@@ -549,11 +549,9 @@ static const char *build_opts[] = {
 # ifdef SCREEN_VGA
 		"screen control via VGA graphics",
 # endif
-# ifndef MSWIN_GRAPHICS
 #  ifdef WIN32CON
 		"screen control via WIN32 console I/O",
 #  endif
-# endif
 #endif
 #ifdef SEDUCE
 		"seduction",
@@ -594,21 +592,6 @@ static const char *build_opts[] = {
 static const char *window_opts[] = {
 #ifdef TTY_GRAPHICS
 		"traditional tty-based graphics",
-#endif
-#ifdef X11_GRAPHICS
-		"X11",
-#endif
-#ifdef QT_GRAPHICS
-		"Qt",
-#endif
-#ifdef GNOME_GRAPHICS
-		"Gnome",
-#endif
-#ifdef GEM_GRAPHICS
-		"Gem",
-#endif
-#ifdef MSWIN_GRAPHICS
-		"mswin",
 #endif
 		0
 	};

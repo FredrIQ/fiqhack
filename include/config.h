@@ -26,10 +26,6 @@
  * Some combinations make no sense.  See the installation document.
  */
 #define TTY_GRAPHICS	/* good old tty based graphics */
-/* #define X11_GRAPHICS */	/* X11 interface */
-/* #define QT_GRAPHICS */	/* Qt interface */
-/* #define GNOME_GRAPHICS */	/* Gnome interface */
-/* #define MSWIN_GRAPHICS */	/* Windows NT, CE, Graphics */
 
 /*
  * Define the default window system.  This should be one that is compiled
@@ -38,55 +34,8 @@
  *	tty, X11, Qt, Gem, Gnome
  */
 
-
-#ifdef QT_GRAPHICS
-# define DEFAULT_WC_TILED_MAP   /* Default to tiles if users doesn't say wc_ascii_map */
-# define USER_SOUNDS		/* Use sounds */
-# ifndef __APPLE__
-#  define USER_SOUNDS_REGEX
-# endif
-# define USE_XPM		/* Use XPM format for images (required) */
-# define GRAPHIC_TOMBSTONE	/* Use graphical tombstone (rip.ppm) */
-# ifndef DEFAULT_WINDOW_SYS
-#  define DEFAULT_WINDOW_SYS "Qt"
-# endif
-#endif
-
-#ifdef GNOME_GRAPHICS
-# define USE_XPM		/* Use XPM format for images (required) */
-# define GRAPHIC_TOMBSTONE	/* Use graphical tombstone (rip.ppm) */
-# ifndef DEFAULT_WINDOW_SYS
-#  define DEFAULT_WINDOW_SYS "Gnome"
-# endif
-#endif
-
-#ifdef MSWIN_GRAPHICS
-# ifdef TTY_GRAPHICS
-# undef TTY_GRAPHICS
-# endif
-# ifndef DEFAULT_WINDOW_SYS
-#  define DEFAULT_WINDOW_SYS "mswin"
-# endif
-# define HACKDIR "\\nethack"
-#endif
-
 #ifndef DEFAULT_WINDOW_SYS
 # define DEFAULT_WINDOW_SYS "tty"
-#endif
-
-#ifdef X11_GRAPHICS
-/*
- * There are two ways that X11 tiles may be defined.  (1) using a custom
- * format loaded by NetHack code, or (2) using the XPM format loaded by
- * the free XPM library.  The second option allows you to then use other
- * programs to generate tiles files.  For example, the PBMPlus tools
- * would allow:
- *  xpmtoppm <x11tiles.xpm | pnmscale 1.25 | ppmquant 90 >x11tiles_big.xpm
- */
-/* # define USE_XPM */		/* Disable if you do not have the XPM library */
-# ifdef USE_XPM
-#  define GRAPHIC_TOMBSTONE	/* Use graphical tombstone (rip.xpm) */
-# endif
 #endif
 
 

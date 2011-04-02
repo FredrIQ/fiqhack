@@ -40,11 +40,7 @@
 #ifdef OPTIONS_USED
 #undef OPTIONS_USED
 #endif
-#ifdef MSWIN_GRAPHICS
-#define OPTIONS_USED	"guioptions"
-#else
 #define OPTIONS_USED	"ttyoptions"
-#endif
 #define OPTIONS_FILE OPTIONS_USED
 
 #define PORT_HELP	"porthelp"

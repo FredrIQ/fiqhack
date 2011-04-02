@@ -40,10 +40,6 @@ extern void FDECL(nethack_exit,(int));
 extern boolean getreturn_enabled;	/* from sys/share/pcsys.c */
 #endif
 
-#if defined(MSWIN_GRAPHICS)
-extern void NDECL(mswin_destroy_reg);
-#endif
-
 #ifdef EXEPATH
 STATIC_DCL char *FDECL(exepath,(char *));
 #endif
@@ -60,7 +56,6 @@ extern void FDECL(pcmain, (int,char **));
  * to help MinGW decide which entry point to choose. If both main and 
  * WinMain exist, the resulting executable won't work correctly.
  */
-#ifndef MSWIN_GRAPHICS
 int
 main(argc,argv)
 int argc;
@@ -75,7 +70,6 @@ char *argv[];
      /*NOTREACHED*/
      return 0;
 }
-#endif /*MSWIN_GRAPHICS*/
 #endif /*OVL0*/
 #ifdef OVL1
 
@@ -170,23 +164,13 @@ char *argv[];
 		 * may do a prscore().
 		 */
 		if (!strncmp(argv[1], "-s", 2)) {
-#if !defined(MSWIN_GRAPHICS)
 # if defined(CHDIR) && !defined(NOCWD_ASSUMPTIONS)
 			chdirx(hackdir,0);
 # endif
 			prscore(argc, argv);
-#else
-			raw_printf("-s is not supported for the Graphical Interface\n");
-#endif /*MSWIN_GRAPHICS*/
 			nethack_exit(EXIT_SUCCESS);
 		}
 
-#ifdef MSWIN_GRAPHICS
-		if (!strncmpi(argv[1], "-clearreg", 6)) {	/* clear registry */
-			mswin_destroy_reg();
-			nethack_exit(EXIT_SUCCESS);
-		}
-#endif
 		/* Don't initialize the window system just to print usage */
 		if (!strncmp(argv[1], "-?", 2) || !strncmp(argv[1], "/?", 2)) {
 			nhusage();

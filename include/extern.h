@@ -643,7 +643,6 @@ E void NDECL(read_wizkit);
 #endif
 E void FDECL(paniclog, (const char *, const char *));
 E int FDECL(validate_prefix_locations, (char *));
-E char** NDECL(get_saved_games);
 E void FDECL(free_saved_games, (char**));
 #ifdef SELF_RECOVER
 E boolean NDECL(recover_savefile);
@@ -1950,14 +1949,6 @@ E void FDECL(msleep, (unsigned));
 # endif
 # if defined(DEF_PAGER)
 E int FDECL(child, (int));
-# endif
-#endif /* UNIX */
-
-/* ### unixres.c ### */
-
-#ifdef UNIX
-# ifdef GNOME_GRAPHICS 
-E int FDECL(hide_privileges, (BOOLEAN_P));
 # endif
 #endif /* UNIX */
 
