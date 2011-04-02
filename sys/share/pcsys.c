@@ -37,36 +37,6 @@ static const char *COMSPEC = "COMSPEC";
 
 #define getcomspec() nh_getenv(COMSPEC)
 
-# ifdef SHELL
-int
-dosh()
-{
-	extern char orgdir[];
-	char *comspec;
-	int spawnstat;
-	
-	if ((comspec = getcomspec())) {
-		suspend_nhwindows("To return to NetHack, enter \"exit\" at the system prompt.\n");
-#  ifndef NOCWD_ASSUMPTIONS
-		chdirx(orgdir, 0);
-#  endif
-		spawnstat = spawnl(P_WAIT, comspec, comspec, (char *)0);
-
-		if ( spawnstat < 0) {
-			raw_printf("Can't spawn \"%s\"!", comspec);
-			getreturn("to continue");
-		}
-#  ifndef NOCWD_ASSUMPTIONS
-		chdirx(hackdir, 0);
-#  endif
-		get_scr_size(); /* maybe the screen mode changed (TH) */
-		resume_nhwindows();
-	} else
-		pline("Can't find %s.",COMSPEC);
-	return 0;
-}
-# endif /* SHELL */
-
 #endif /* WIN32 */
 
 /*

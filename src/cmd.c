@@ -1368,9 +1368,6 @@ static const struct func_tab cmdlist[] = {
 	{'&', TRUE, dowhatdoes},
 	{'?', TRUE, dohelp},
 	{M('?'), TRUE, doextlist},
-#ifdef SHELL
-	{'!', TRUE, dosh},
-#endif
 	{'.', TRUE, donull, "waiting"},
 	{' ', TRUE, donull, "waiting"},
 	{',', FALSE, dopickup},

@@ -608,9 +608,6 @@ static const char *build_opts[] = {
 #ifdef SEDUCE
 		"seduction",
 #endif
-#ifdef SHELL
-		"shell command",
-#endif
 #ifdef SINKS
 		"sinks",
 #endif

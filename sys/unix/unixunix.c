@@ -220,24 +220,7 @@ unsigned msec;				/* milliseconds */
 }
 #endif /* TIMED_DELAY for SYSV */
 
-#ifdef SHELL
-int
-dosh()
-{
-	register char *str;
-	if(child(0)) {
-		if((str = getenv("SHELL")) != (char*)0)
-			(void) execl(str, str, (char *)0);
-		else
-			(void) execl("/bin/sh", "sh", (char *)0);
-		raw_print("sh: cannot execute.");
-		exit(EXIT_FAILURE);
-	}
-	return 0;
-}
-#endif /* SHELL */
-
-#if defined(SHELL) || defined(DEF_PAGER) || defined(DEF_MAILREADER)
+#if defined(DEF_PAGER) || defined(DEF_MAILREADER)
 int
 child(wt)
 int wt;
