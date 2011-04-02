@@ -5,7 +5,6 @@
  *  System related functions for OS/2 and Windows NT
  */
 
-#define NEED_VARARGS
 #include "hack.h"
 #include "wintty.h"
 
@@ -108,12 +107,13 @@ const char *str;
 
 #ifndef WIN32CON
 void
-msmsg VA_DECL(const char *, fmt)
-	VA_START(fmt);
-	VA_INIT(fmt, const char *);
-	Vprintf(fmt, VA_ARGS);
+msmsg (const char * fmt, ...)
+{
+	va_list the_args;
+	va_start(the_args, fmt);
+	Vprintf(fmt, the_args);
 	flushout();
-	VA_END();
+	va_end(the_args);
 	return;
 }
 #endif

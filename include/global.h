@@ -146,11 +146,9 @@ typedef xchar	boolean;		/* 0 or 1 */
 #define Sprintf  (void) sprintf
 #define Strcat   (void) strcat
 #define Strcpy   (void) strcpy
-#ifdef NEED_VARARGS
 #define Vprintf  (void) vprintf
 #define Vfprintf (void) vfprintf
 #define Vsprintf (void) vsprintf
-#endif
 
 
 /* primitive memory leak debugging; see alloc.c */

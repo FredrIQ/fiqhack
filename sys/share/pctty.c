@@ -4,7 +4,6 @@
 
 /* tty.c - (PC) version */
 
-#define NEED_VARARGS /* Uses ... */	/* comment line for pre-compiled headers */
 #include "hack.h"
 #include "wintty.h"
 
@@ -59,15 +58,16 @@ unsigned mseconds;
 /*VARARGS1*/
 
 void
-error VA_DECL(const char *,s)
-	VA_START(s);
-	VA_INIT(s, const char *);
+error (const char *s, ...)
+{
+	va_list the_args;
+	va_start(the_args, s);
 	/* error() may get called before tty is initialized */
 	if (iflags.window_inited) end_screen();
 	putchar('\n');
-	Vprintf(s,VA_ARGS);
+	Vprintf(s, the_args);
 	putchar('\n');
-	VA_END();
+	va_end(the_args);
 	exit(EXIT_FAILURE);
 }
 

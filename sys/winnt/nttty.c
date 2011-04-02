@@ -12,7 +12,6 @@
  */
 
 #ifdef WIN32CON
-#define NEED_VARARGS /* Uses ... */
 #include "hack.h"
 #include "wintty.h"
 #include <sys\types.h>
@@ -925,12 +924,13 @@ load_keyboard_handler()
  * system isn't initialized yet
  */
 void
-msmsg VA_DECL(const char *, fmt)
+msmsg (const char *fmt, ...)
+{
+	va_list the_args;
 	char buf[ROWNO * COLNO];	/* worst case scenario */
-	VA_START(fmt);
-	VA_INIT(fmt, const char *);
-	Vsprintf(buf, fmt, VA_ARGS);
-	VA_END();
+	va_start(the_args, fmt);
+	Vsprintf(buf, fmt, the_args);
+	va_end(the_args);
 	xputs(buf);
 	if (ttyDisplay) curs(BASE_WINDOW, cursor.X+1, cursor.Y);
 	return;
@@ -939,15 +939,16 @@ msmsg VA_DECL(const char *, fmt)
 /* fatal error */
 /*VARARGS1*/
 void
-error VA_DECL(const char *,s)
+error (const char *s, ...)
+{
+	va_list the_args;
 	char buf[BUFSZ];
-	VA_START(s);
-	VA_INIT(s, const char *);
+	va_start(the_args, s);
 	/* error() may get called before tty is initialized */
 	if (iflags.window_inited) end_screen();
 	buf[0] = '\n';
-	(void) vsprintf(&buf[1], s, VA_ARGS);
-	VA_END();
+	(void) vsprintf(&buf[1], s, the_args);
+	va_end(the_args);
 	msmsg(buf);
 	really_move_cursor();
 	exit(EXIT_FAILURE);

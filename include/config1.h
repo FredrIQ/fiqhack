@@ -8,13 +8,9 @@
 
 #define NEARDATA
 
-/*
- * Windows NT Autodetection
- */
+
 #ifdef WIN32
 # undef UNIX
-# define USE_STDARG
-# define NEED_VARARGS
 
 # define STRNCMPI
 # define STRCMPI

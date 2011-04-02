@@ -95,7 +95,7 @@ extern void FDECL(interject, (int));
 #define index	strchr
 #define rindex	strrchr
 #include <time.h>
-#define USE_STDARG
+
 #ifdef RANDOM
 /* Use the high quality random number routines. */
 #define Rand()	random()

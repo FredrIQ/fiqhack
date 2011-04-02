@@ -88,19 +88,11 @@ E gid_t NDECL(getgid);
 
 /*# string(s).h #*/
 
-#ifdef NEED_VARARGS
-# if defined(USE_STDARG) || defined(USE_VARARGS)
-#  if !defined(SVR4)
+# if !defined(SVR4)
 E int FDECL(vsprintf, (char *, const char *, va_list));
 E int FDECL(vfprintf, (FILE *, const char *, va_list));
 E int FDECL(vprintf, (const char *, va_list));
-#  endif
-# else
-#  define vprintf	printf
-#  define vfprintf	fprintf
-#  define vsprintf	sprintf
 # endif
-#endif /* NEED_VARARGS */
 
 
 E int FDECL(tgetent, (char *,const char *));

@@ -2,7 +2,6 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#define NEED_VARARGS /* Uses ... */	/* comment line for pre-compiled headers */
 #include "hack.h"
 #include "epri.h"
 #ifdef WIZARD
@@ -20,39 +19,26 @@ static char *FDECL(You_buf, (int));
  * of the variable argument handling stuff in "tradstdc.h"
  */
 
-#if defined(USE_STDARG) || defined(USE_VARARGS)
 static void FDECL(vpline, (const char *, va_list));
 
 void
-pline VA_DECL(const char *, line)
-	VA_START(line);
-	VA_INIT(line, char *);
-	vpline(line, VA_ARGS);
-	VA_END();
+pline(const char * line, ...)
+{
+	va_list the_args;
+	
+	va_start(the_args, line);
+	vpline(line, the_args);
+	va_end(the_args);
 }
 
-# ifdef USE_STDARG
 static void
-vpline(const char *line, va_list the_args) {
-# else
-static void
-vpline(line, the_args) const char *line; va_list the_args; {
-# endif
-
-#else	/* USE_STDARG | USE_VARARG */
-
-#define vpline pline
-
-void
-pline VA_DECL(const char *, line)
-#endif	/* USE_STDARG | USE_VARARG */
-
+vpline(const char *line, va_list the_args)
+{
 	char pbuf[BUFSZ];
-/* Do NOT use VA_START and VA_END in here... see above */
 
 	if (!line || !*line) return;
 	if (index(line, '%')) {
-	    Vsprintf(pbuf,line,VA_ARGS);
+	    Vsprintf(pbuf,line,the_args);
 	    line = pbuf;
 	}
 	if (!iflags.window_inited) {
@@ -68,13 +54,15 @@ pline VA_DECL(const char *, line)
 
 /*VARARGS1*/
 void
-Norep VA_DECL(const char *, line)
-	VA_START(line);
-	VA_INIT(line, const char *);
+Norep (const char * line, ...)
+{
+	va_list the_args;
+	
+	va_start(the_args, line);
 	no_repeat = TRUE;
-	vpline(line, VA_ARGS);
+	vpline(line, the_args);
 	no_repeat = FALSE;
-	VA_END();
+	va_end(the_args);
 	return;
 }
 
@@ -110,132 +98,123 @@ free_youbuf()
 
 /*VARARGS1*/
 void
-You VA_DECL(const char *, line)
+You (const char * line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
-	vpline(YouMessage(tmp, "You ", line), VA_ARGS);
-	VA_END();
+	va_start(the_args, line);
+	vpline(YouMessage(tmp, "You ", line), the_args);
+	va_end(the_args);
 }
 
 /*VARARGS1*/
 void
-Your VA_DECL(const char *,line)
+Your (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
-	vpline(YouMessage(tmp, "Your ", line), VA_ARGS);
-	VA_END();
+	va_start(the_args, line);
+	vpline(YouMessage(tmp, "Your ", line), the_args);
+	va_end(the_args);
 }
 
 /*VARARGS1*/
 void
-You_feel VA_DECL(const char *,line)
+You_feel (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
-	vpline(YouMessage(tmp, "You feel ", line), VA_ARGS);
-	VA_END();
+	va_start(the_args, line);
+	vpline(YouMessage(tmp, "You feel ", line), the_args);
+	va_end(the_args);
 }
 
 
 /*VARARGS1*/
 void
-You_cant VA_DECL(const char *,line)
+You_cant (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
-	vpline(YouMessage(tmp, "You can't ", line), VA_ARGS);
-	VA_END();
+	va_start(the_args, line);
+	vpline(YouMessage(tmp, "You can't ", line), the_args);
+	va_end(the_args);
 }
 
 /*VARARGS1*/
 void
-pline_The VA_DECL(const char *,line)
+pline_The (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
-	vpline(YouMessage(tmp, "The ", line), VA_ARGS);
-	VA_END();
+	va_start(the_args, line);
+	vpline(YouMessage(tmp, "The ", line), the_args);
+	va_end(the_args);
 }
 
 /*VARARGS1*/
 void
-There VA_DECL(const char *,line)
+There (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
-	vpline(YouMessage(tmp, "There ", line), VA_ARGS);
-	VA_END();
+	va_start(the_args, line);
+	vpline(YouMessage(tmp, "There ", line), the_args);
+	va_end(the_args);
 }
 
 /*VARARGS1*/
 void
-You_hear VA_DECL(const char *,line)
+You_hear (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
-	VA_START(line);
-	VA_INIT(line, const char *);
+	va_start(the_args, line);
 	if (Underwater)
 		YouPrefix(tmp, "You barely hear ", line);
 	else if (u.usleep)
 		YouPrefix(tmp, "You dream that you hear ", line);
 	else
 		YouPrefix(tmp, "You hear ", line);
-	vpline(strcat(tmp, line), VA_ARGS);
-	VA_END();
+	vpline(strcat(tmp, line), the_args);
+	va_end(the_args);
 }
 
 /*VARARGS1*/
 void
-verbalize VA_DECL(const char *,line)
+verbalize (const char *line, ...)
+{
+	va_list the_args;
 	char *tmp;
 	if (!flags.soundok) return;
-	VA_START(line);
-	VA_INIT(line, const char *);
+	va_start(the_args, line);
 	tmp = You_buf((int)strlen(line) + sizeof "\"\"");
 	Strcpy(tmp, "\"");
 	Strcat(tmp, line);
 	Strcat(tmp, "\"");
-	vpline(tmp, VA_ARGS);
-	VA_END();
+	vpline(tmp, the_args);
+	va_end(the_args);
 }
 
-/*VARARGS1*/
-/* Note that these declarations rely on knowledge of the internals
- * of the variable argument handling stuff in "tradstdc.h"
- */
-
-#if defined(USE_STDARG) || defined(USE_VARARGS)
 static void FDECL(vraw_printf,(const char *,va_list));
 
 void
-raw_printf VA_DECL(const char *, line)
-	VA_START(line);
-	VA_INIT(line, char *);
-	vraw_printf(line, VA_ARGS);
-	VA_END();
+raw_printf (const char *line, ...)
+{
+	va_list the_args;
+	va_start(the_args, line);
+	vraw_printf(line, the_args);
+	va_end(the_args);
 }
 
-# ifdef USE_STDARG
 static void
-vraw_printf(const char *line, va_list the_args) {
-# else
-static void
-vraw_printf(line, the_args) const char *line; va_list the_args; {
-# endif
-
-#else  /* USE_STDARG | USE_VARARG */
-
-void
-raw_printf VA_DECL(const char *, line)
-#endif
-/* Do NOT use VA_START and VA_END in here... see above */
-
+vraw_printf(const char *line, va_list the_args)
+{
 	if(!index(line, '%'))
 	    raw_print(line);
 	else {
 	    char pbuf[BUFSZ];
-	    Vsprintf(pbuf,line,VA_ARGS);
+	    Vsprintf(pbuf,line,the_args);
 	    raw_print(pbuf);
 	}
 }
@@ -243,21 +222,22 @@ raw_printf VA_DECL(const char *, line)
 
 /*VARARGS1*/
 void
-impossible VA_DECL(const char *, s)
-	VA_START(s);
-	VA_INIT(s, const char *);
+impossible (const char *s, ...)
+{
+	va_list the_args;
+	va_start(the_args, s);
 	if (program_state.in_impossible)
 		panic("impossible called impossible");
 	program_state.in_impossible = 1;
 	{
 	    char pbuf[BUFSZ];
-	    Vsprintf(pbuf,s,VA_ARGS);
+	    Vsprintf(pbuf,s,the_args);
 	    paniclog("impossible", pbuf);
 	}
-	vpline(s,VA_ARGS);
+	vpline(s,the_args);
 	pline("Program in disorder - perhaps you'd better #quit.");
 	program_state.in_impossible = 0;
-	VA_END();
+	va_end(the_args);
 }
 
 const char *

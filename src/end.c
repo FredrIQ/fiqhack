@@ -2,8 +2,6 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#define NEED_VARARGS	/* comment line for pre-compiled headers */
-
 #include "hack.h"
 #include "eshk.h"
 #ifndef NO_SIGNAL
@@ -238,9 +236,10 @@ register struct monst *mtmp;
 
 /*VARARGS1*/
 void
-panic VA_DECL(const char *, str)
-	VA_START(str);
-	VA_INIT(str, char *);
+panic (const char *str, ...)
+{
+	va_list the_args;
+	va_start(the_args, str);
 
 	if (program_state.panicking++)
 	    NH_abort();	/* avoid loops - this should never happen*/
@@ -278,7 +277,7 @@ panic VA_DECL(const char *, str)
 #endif
 	{
 	    char buf[BUFSZ];
-	    Vsprintf(buf,str,VA_ARGS);
+	    Vsprintf(buf,str,the_args);
 	    raw_print(buf);
 	    paniclog("panic", buf);
 	}
@@ -289,7 +288,7 @@ panic VA_DECL(const char *, str)
 	if (wizard)
 	    NH_abort();	/* generate core dump */
 #endif
-	VA_END();
+	va_end(the_args);
 	done(PANICKED);
 }
 
