@@ -29,9 +29,6 @@ static const char *random_mesg[] = {
 	"Madam, in Eden, I'm Adam.", /* A palindrome */
 	"Two thumbs up!", /* Siskel & Ebert */
 	"Hello, World!", /* The First C Program */
-#ifdef MAIL
-	"You've got mail!", /* AOL */
-#endif
 	"As if!", /* Clueless */
 };
 

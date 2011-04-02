@@ -781,9 +781,6 @@ POTION("water", "clear",                0, 0,          92, 100, CLR_CYAN),
 	SCROLL((char *)0,		"GARVEN DEH",           1,   0, 100),
 	SCROLL((char *)0,		"READ ME",              1,   0, 100),
 	/* these must come last because they have special descriptions */
-#ifdef MAIL
-	SCROLL("mail",                  "stamped",          0,   0,   0),
-#endif
 	SCROLL("blank paper",           "unlabeled",        0,  28,  60),
 #undef SCROLL
 

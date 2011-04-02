@@ -365,9 +365,6 @@ make_version()
 #ifdef KOPS
 			| (1L <<  6)
 #endif
-#ifdef MAIL
-			| (1L <<  7)
-#endif
 		/* objects (10..14) */
 #ifdef TOURIST
 			| (1L << 10)
@@ -566,9 +563,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef LOGFILE
 		"log file",
-#endif
-#ifdef MAIL
-		"mail daemon",
 #endif
 #ifdef NEWS
 		"news file",

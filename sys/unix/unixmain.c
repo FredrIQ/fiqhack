@@ -156,9 +156,6 @@ char *argv[];
 	if(!(catmore = nh_getenv("HACKPAGER")) && !(catmore = nh_getenv("PAGER")))
 		catmore = DEF_PAGER;
 #endif
-#ifdef MAIL
-	getmailstatus();
-#endif
 #ifdef WIZARD
 	if (wizard)
 		Strcpy(plname, "wizard");

@@ -18,9 +18,6 @@ struct flag {
 	boolean  autodig;       /* MRKR: Automatically dig */
 	boolean  autoquiver;	/* Automatically fill quiver */
 	boolean  beginner;
-#ifdef MAIL
-	boolean  biff;		/* enable checking for mail */
-#endif
 	boolean  botl;		/* partially redo status line */
 	boolean  botlx;		/* print an entirely new bottom line */
 	boolean  confirm;	/* confirm before hitting tame monsters */
@@ -176,10 +173,6 @@ struct instance_flags {
 	boolean tile_view;
 	boolean over_view;
 	boolean traditional_view;
-#endif
-#ifdef LAN_FEATURES
-	boolean lan_mail;	/* mail is initialized */
-	boolean lan_mail_fetched; /* mail is awaiting display */
 #endif
 /*
  * Window capability support.

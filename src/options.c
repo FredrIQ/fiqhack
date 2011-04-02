@@ -83,11 +83,7 @@ static struct Bool_Opt
 	{"lit_corridor", &flags.lit_corridor, FALSE, SET_IN_GAME},
 	{"lootabc", &iflags.lootabc, FALSE, SET_IN_GAME},
 	{"Macgraphics", (boolean *)0, FALSE, SET_IN_FILE},
-#ifdef MAIL
-	{"mail", &flags.biff, TRUE, SET_IN_GAME},
-#else
 	{"mail", (boolean *)0, TRUE, SET_IN_FILE},
-#endif
 #ifdef WIZARD
 	/* for menu debugging only*/
 	{"menu_tab_sep", &iflags.menu_tab_sep, FALSE, SET_IN_GAME},
@@ -2004,12 +2000,6 @@ goodfruit:
 			else if ((boolopt[i].addr) == &flags.invlet_constant) {
 			    if (flags.invlet_constant) reassign();
 			}
-#ifdef LAN_MAIL
-			else if ((boolopt[i].addr) == &flags.biff) {
-			    if (flags.biff) lan_mail_init();
-			    else lan_mail_finish();
-			}
-#endif
 			else if ((boolopt[i].addr) == &flags.lit_corridor) {
 			    /*
 			     * All corridor squares seen via night vision or

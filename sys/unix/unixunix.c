@@ -220,7 +220,7 @@ unsigned msec;				/* milliseconds */
 }
 #endif /* TIMED_DELAY for SYSV */
 
-#if defined(DEF_PAGER) || defined(DEF_MAILREADER)
+#if defined(DEF_PAGER)
 int
 child(wt)
 int wt;

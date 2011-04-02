@@ -234,7 +234,7 @@ HACKCSRC = allmain.c alloc.c apply.c artifact.c attrib.c ball.c bones.c \
 	   do_name.c do_wear.c dog.c dogmove.c dokick.c dothrow.c drawing.c \
 	   dungeon.c eat.c end.c engrave.c exper.c explode.c extralev.c \
 	   files.c fountain.c hack.c hacklib.c invent.c light.c lock.c \
-	   mail.c makemon.c mapglyph.c mcastu.c mhitm.c mhitu.c minion.c \
+	   makemon.c mapglyph.c mcastu.c mhitm.c mhitu.c minion.c \
 	   mklev.c mkmap.c \
 	   mkmaze.c mkobj.c mkroom.c mon.c mondata.c monmove.c monst.c \
 	   mplayer.c mthrowu.c muse.c music.c o_init.c objects.c objnam.c \
@@ -291,7 +291,7 @@ HOBJ = $(FIRSTOBJ) allmain.o alloc.o apply.o artifact.o attrib.o ball.o \
 	do.o do_name.o do_wear.o dog.o dogmove.o dokick.o dothrow.o \
 	drawing.o dungeon.o eat.o end.o engrave.o exper.o explode.o \
 	extralev.o files.o fountain.o hack.o hacklib.o invent.o light.o \
-	lock.o mail.o makemon.o mapglyph.o mcastu.o mhitm.o mhitu.o \
+	lock.o makemon.o mapglyph.o mcastu.o mhitm.o mhitu.o \
 	minion.o mklev.o mkmap.o \
 	mkmaze.o mkobj.o mkroom.o mon.o mondata.o monmove.o monstr.o \
 	mplayer.o mthrowu.o muse.o music.o o_init.o objnam.o options.o \
@@ -441,7 +441,7 @@ depend: ../sys/unix/depend.awk \
 $(CONFIG_H): ../include/config.h ../include/config1.h ../include/tradstdc.h \
 		../include/global.h ../include/coord.h \
 		../include/system.h ../include/unixconf.h \
-		../include/ntconf.h ../include/nhlan.h
+		../include/ntconf.h
 	touch $(CONFIG_H)
 # hack.h timestamp
 $(HACK_H): ../include/hack.h $(CONFIG_H) ../include/align.h \
@@ -620,7 +620,6 @@ hacklib.o: hacklib.c $(HACK_H)
 invent.o: invent.c $(HACK_H)
 light.o: light.c $(HACK_H) ../include/lev.h
 lock.o: lock.c $(HACK_H)
-mail.o: mail.c $(HACK_H) ../include/mail.h
 makemon.o: makemon.c $(HACK_H) ../include/epri.h ../include/emin.h \
 		../include/edog.h
 mapglyph.o: mapglyph.c $(HACK_H)

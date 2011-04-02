@@ -857,16 +857,6 @@ E boolean FDECL(doorlock, (struct obj *,int,int));
 E int NDECL(doopen);
 E int NDECL(doclose);
 
-/* ### mail.c ### */
-
-#ifdef MAIL
-# ifdef UNIX
-E void NDECL(getmailstatus);
-# endif
-E void NDECL(ckmailstatus);
-E void FDECL(readmail, (struct obj *));
-#endif /* MAIL */
-
 /* ### makemon.c ### */
 
 E boolean FDECL(is_home_elemental, (struct permonst *));
@@ -1228,13 +1218,6 @@ E int FDECL(do_play_instrument, (struct obj *));
 #ifdef LAN_FEATURES
 E void NDECL(init_lan_features);
 E char *NDECL(lan_username);
-# ifdef LAN_MAIL
-E boolean NDECL(lan_mail_check);
-E void FDECL(lan_mail_read, (struct obj *));
-E void NDECL(lan_mail_init);
-E void NDECL(lan_mail_finish);
-E void NDECL(lan_mail_terminate);
-# endif
 #endif
 
 /* ### nttty.c ### */
@@ -1973,7 +1956,7 @@ E void FDECL(regularize, (char *));
 # if defined(TIMED_DELAY) && !defined(msleep) && defined(SYSV)
 E void FDECL(msleep, (unsigned));
 # endif
-# if defined(DEF_PAGER) || defined(DEF_MAILREADER)
+# if defined(DEF_PAGER)
 E int FDECL(child, (int));
 # endif
 #endif /* UNIX */

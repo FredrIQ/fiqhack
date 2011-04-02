@@ -116,9 +116,6 @@ doread()
 	    u.uconduct.literate++;
 
 	confused = (Confusion != 0);
-#ifdef MAIL
-	if (scroll->otyp == SCR_MAIL) confused = FALSE;
-#endif
 	if(scroll->oclass == SPBOOK_CLASS) {
 	    return(study_book(scroll));
 	}
@@ -654,17 +651,6 @@ register struct obj	*sobj;
 	if (objects[sobj->otyp].oc_magic)
 		exercise(A_WIS, TRUE);		/* just for trying */
 	switch(sobj->otyp) {
-#ifdef MAIL
-	case SCR_MAIL:
-		known = TRUE;
-		if (sobj->spe)
-		    pline("This seems to be junk mail addressed to the finder of the Eye of Larn.");
-		/* note to the puzzled: the game Larn actually sends you junk
-		 * mail if you win!
-		 */
-		else readmail(sobj);
-		break;
-#endif
 	case SCR_ENCHANT_ARMOR:
 	    {
 		register schar s;
