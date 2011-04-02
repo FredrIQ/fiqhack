@@ -144,21 +144,15 @@ int *wid, *hgt;
 	    error("Terminal must backspace.");
 # else
 	    if(!(BC = Tgetstr("bc"))) {	/* termcap also uses bc/bs */
-#  ifndef MINIMAL_TERM
 		if(!tgetflag("bs"))
 			error("Terminal must backspace.");
-#  endif
 		BC = tbufptr;
 		tbufptr += 2;
 		*BC = '\b';
 	    }
 # endif
 
-# ifdef MINIMAL_TERM
-	HO = (char *)0;
-# else
 	HO = Tgetstr("ho");
-# endif
 	/*
 	 * LI and CO are set in ioctl.c via a TIOCGWINSZ if available.  If
 	 * the kernel has values for either we should use them rather than

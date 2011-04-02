@@ -14,9 +14,6 @@
 
 #define UNIX		/* delete if no fork(), exec() available */
 
-/* #define MINIMAL_TERM */
-			/* if a terminal handles highlighting or tabs poorly,
-			   try this define, used in pager.c and termcap.c */
 
 #include "config1.h"	/* should auto-detect WIN32 */
 
