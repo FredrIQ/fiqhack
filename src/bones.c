@@ -201,7 +201,6 @@ struct obj *corpse;
 	fd = open_bonesfile(&u.uz, &bonesid);
 	if (fd >= 0) {
 		(void) close(fd);
-		compress_bonesfile();
 #ifdef WIZARD
 		if (wizard) {
 		    if (yn("Bones file already exists.  Replace it?") == 'y') {
@@ -331,7 +330,6 @@ struct obj *corpse;
 	savelev(fd, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
 	bclose(fd);
 	commit_bonesfile(&u.uz);
-	compress_bonesfile();
 }
 
 int
@@ -364,7 +362,6 @@ getbones()
 		if(wizard)  {
 			if(yn("Get bones?") == 'n') {
 				(void) close(fd);
-				compress_bonesfile();
 				return(0);
 			}
 		}
@@ -416,7 +413,6 @@ getbones()
 #ifdef WIZARD
 	if(wizard) {
 		if(yn("Unlink bones?") == 'n') {
-			compress_bonesfile();
 			return(ok);
 		}
 	}

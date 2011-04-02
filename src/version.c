@@ -101,7 +101,6 @@ const char *name;
     boolean verbose = name ? TRUE : FALSE;
 
     rlen = read(fd, (genericptr_t) &vers_info, sizeof vers_info);
-    minit();		/* ZEROCOMP */
     if (rlen == 0) {
 	if (verbose) {
 	    pline("File \"%s\" is empty?", name);

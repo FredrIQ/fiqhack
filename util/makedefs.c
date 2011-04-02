@@ -357,13 +357,6 @@ make_version()
 #ifdef SCORE_ON_BOTL
 			| (1L << 21)
 #endif
-		/* data format [COMPRESS excluded] (27..31) */
-#ifdef ZEROCOMP
-			| (1L << 27)
-#endif
-#ifdef RLECOMP
-			| (1L << 28)
-#endif
 			);
 	/*
 	 * Value used for object & monster sanity check.
@@ -500,9 +493,6 @@ static const char *build_opts[] = {
 #ifdef COM_COMPL
 		"command line completion",
 #endif
-#ifdef COMPRESS
-		"data file compression",
-#endif
 #ifdef DLB
 		"data librarian",
 #endif
@@ -596,9 +586,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef WALLIFIED_MAZE
 		"walled mazes",
-#endif
-#ifdef ZEROCOMP
-		"zero-compressed save files",
 #endif
 		save_bones_compat_buf,
 		"basic NetHack features"

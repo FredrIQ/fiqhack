@@ -620,7 +620,6 @@ E int FDECL(create_bonesfile, (d_level*,char **, char *));
 E void FDECL(commit_bonesfile, (d_level *));
 E int FDECL(open_bonesfile, (d_level*,char **));
 E int FDECL(delete_bonesfile, (d_level*));
-E void NDECL(compress_bonesfile);
 E void NDECL(set_savefile_name);
 #ifdef INSURANCE
 E void FDECL(save_savefile_name, (int));
@@ -632,8 +631,6 @@ E int NDECL(create_savefile);
 E int NDECL(open_savefile);
 E int NDECL(delete_savefile);
 E int NDECL(restore_saved_game);
-E void FDECL(compress, (const char *));
-E void FDECL(uncompress, (const char *));
 E boolean FDECL(lock_file, (const char *,int,int));
 E void FDECL(unlock_file, (const char *));
 #ifdef USER_SOUNDS
@@ -1574,13 +1571,8 @@ E void FDECL(inven_inuse, (BOOLEAN_P));
 E int FDECL(dorecover, (int));
 E void FDECL(trickery, (char *));
 E void FDECL(getlev, (int,int,XCHAR_P,BOOLEAN_P));
-E void NDECL(minit);
 E boolean FDECL(lookup_id_mapping, (unsigned, unsigned *));
-#ifdef ZEROCOMP
-E int FDECL(mread, (int,genericptr_t,unsigned int));
-#else
 E void FDECL(mread, (int,genericptr_t,unsigned int));
-#endif
 
 /* ### rip.c ### */
 

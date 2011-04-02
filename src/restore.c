@@ -10,9 +10,6 @@
 extern void FDECL(substitute_tiles, (d_level *));       /* from tile.c */
 #endif
 
-#ifdef ZEROCOMP
-static int NDECL(mgetc);
-#endif
 STATIC_DCL void NDECL(find_lev_obj);
 STATIC_DCL void FDECL(restlevchn, (int));
 STATIC_DCL void FDECL(restdamage, (int,BOOLEAN_P));
@@ -525,11 +522,7 @@ register int fd;
 #endif
 
 	while(1) {
-#ifdef ZEROCOMP
-		if(mread(fd, (genericptr_t) &ltmp, sizeof ltmp) < 0)
-#else
 		if(read(fd, (genericptr_t) &ltmp, sizeof ltmp) != sizeof ltmp)
-#endif
 			break;
 		getlev(fd, 0, ltmp, FALSE);
 		rtmp = restlevelfile(ltmp);
@@ -638,32 +631,7 @@ boolean ghostly;
 	    trickery(trickbuf);
 	}
 
-#ifdef RLECOMP
-	{
-		short	i, j;
-		uchar	len;
-		struct rm r;
-		
-		i = 0; j = 0; len = 0;
-		while(i < ROWNO) {
-		    while(j < COLNO) {
-			if(len > 0) {
-			    levl[j][i] = r;
-			    len -= 1;
-			    j += 1;
-			} else {
-			    mread(fd, (genericptr_t)&len, sizeof(uchar));
-			    mread(fd, (genericptr_t)&r, sizeof(struct rm));
-			}
-		    }
-		    j = 0;
-		    i += 1;
-		}
-	}
-#else
 	mread(fd, (genericptr_t) levl, sizeof(levl));
-#endif	/* RLECOMP */
-
 	mread(fd, (genericptr_t)&omoves, sizeof(omoves));
 	mread(fd, (genericptr_t)&upstair, sizeof(stairway));
 	mread(fd, (genericptr_t)&dnstair, sizeof(stairway));
@@ -886,76 +854,6 @@ boolean ghostly;
     }
 }
 
-
-#ifdef ZEROCOMP
-#define RLESC '\0'	/* Leading character for run of RLESC's */
-
-#ifndef ZEROCOMP_BUFSIZ
-#define ZEROCOMP_BUFSIZ BUFSZ
-#endif
-static NEARDATA unsigned char inbuf[ZEROCOMP_BUFSIZ];
-static NEARDATA unsigned short inbufp = 0;
-static NEARDATA unsigned short inbufsz = 0;
-static NEARDATA short inrunlength = -1;
-static NEARDATA int mreadfd;
-
-static int
-mgetc()
-{
-    if (inbufp >= inbufsz) {
-	inbufsz = read(mreadfd, (genericptr_t)inbuf, sizeof inbuf);
-	if (!inbufsz) {
-	    if (inbufp > sizeof inbuf)
-		error("EOF on file #%d.\n", mreadfd);
-	    inbufp = 1 + sizeof inbuf;  /* exactly one warning :-) */
-	    return -1;
-	}
-	inbufp = 0;
-    }
-    return inbuf[inbufp++];
-}
-
-void
-minit()
-{
-    inbufsz = 0;
-    inbufp = 0;
-    inrunlength = -1;
-}
-
-int
-mread(fd, buf, len)
-int fd;
-genericptr_t buf;
-register unsigned len;
-{
-    /*register int readlen = 0;*/
-    if (fd < 0) error("Restore error; mread attempting to read file %d.", fd);
-    mreadfd = fd;
-    while (len--) {
-	if (inrunlength > 0) {
-	    inrunlength--;
-	    *(*((char **)&buf))++ = '\0';
-	} else {
-	    register short ch = mgetc();
-	    if (ch < 0) return -1; /*readlen;*/
-	    if ((*(*(char **)&buf)++ = (char)ch) == RLESC) {
-		inrunlength = mgetc();
-	    }
-	}
-	/*readlen++;*/
-    }
-    return 0; /*readlen;*/
-}
-
-#else /* ZEROCOMP */
-
-void
-minit()
-{
-    return;
-}
-
 void
 mread(fd, buf, len)
 register int fd;
@@ -980,6 +878,5 @@ register unsigned int len;
 		panic("Error reading level file.");
 	}
 }
-#endif /* ZEROCOMP */
 
 /*restore.c*/
