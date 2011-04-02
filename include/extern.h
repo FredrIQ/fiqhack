@@ -818,9 +818,6 @@ E void FDECL(silly_thing, (const char *,struct obj *));
 E void NDECL(getwindowsz);
 E void NDECL(getioctls);
 E void NDECL(setioctls);
-# ifdef SUSPEND
-E int NDECL(dosuspend);
-# endif /* SUSPEND */
 #endif /* UNIX */
 
 /* ### light.c ### */

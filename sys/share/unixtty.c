@@ -164,18 +164,6 @@ register int change = 0;
 		/* be satisfied with one character; no timeout */
 		curttyb.c_cc[VMIN] = 1;		/* was VEOF */
 		curttyb.c_cc[VTIME] = 0;	/* was VEOL */
-#ifdef POSIX_JOB_CONTROL
-		/* turn off system suspend character
-		 * due to differences in structure layout, this has to be
-		 * here instead of in ioctl.c:getioctls() with the BSD
-		 * equivalent
-		 */
-# ifdef VSUSP	/* real POSIX */
-		curttyb.c_cc[VSUSP] = nonesuch;
-# else		/* other later SYSV */
-		curttyb.c_cc[VSWTCH] = nonesuch;
-# endif
-#endif
 #ifdef VDSUSP /* SunOS Posix extensions */
 		curttyb.c_cc[VDSUSP] = nonesuch;
 #endif

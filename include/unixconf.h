@@ -40,8 +40,6 @@
 #define TEXTCOLOR	/* Use System V r3.2 terminfo color support */
 			/* and/or ANSI color support on termcap systems */
 			/* and/or X11 color */
-#define POSIX_JOB_CONTROL /* use System V / Solaris 2.x / POSIX job control */
-			/* (e.g., VSUSP) */
 
 /* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
 				   is available from your system */
@@ -173,37 +171,6 @@
 #  define AUX
 # endif
 #endif /* _AUX_SOURCE */
-
-#if defined(LINUX) || defined(bsdi)
-# ifndef POSIX_JOB_CONTROL
-#  define POSIX_JOB_CONTROL
-# endif
-#endif
-
-/*
- * BSD systems are normally the only ones that can suspend processes.
- * Suspending NetHack processes cleanly should be easy to add to other systems
- * that have SIGTSTP in the Berkeley sense.  Currently the only such systems
- * known to work are HPUX and AIX 3.1; other systems will probably require
- * tweaks to unixtty.c and ioctl.c.
- *
- * POSIX defines a slightly different type of job control, which should be
- * equivalent for NetHack's purposes.  POSIX_JOB_CONTROL should work on
- * various recent SYSV versions (with possibly tweaks to unixtty.c again).
- */
-#ifndef POSIX_JOB_CONTROL
-# if defined(BSD)
-#  define BSD_JOB_CONTROL
-# else
-#  if defined(SVR4)
-#   define POSIX_JOB_CONTROL
-#  endif
-# endif
-#endif
-#if defined(BSD_JOB_CONTROL) || defined(POSIX_JOB_CONTROL) || defined(AUX)
-#define SUSPEND		/* let ^Z suspend the game */
-#endif
-
 
 #if defined(BSD)
 #include <sys/time.h>

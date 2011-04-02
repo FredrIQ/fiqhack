@@ -130,14 +130,6 @@
 #define doorganize() doorganize_()
 
 
-/* ### ioctl.c ### */
-#ifdef UNIX
-# ifdef SUSPEND
-#define dosuspend() dosuspend_()
-# endif /* SUSPEND */
-#endif /* UNIX */
-
-
 /* ### lock.c ### */
 #define doclose()   doclose_()
 #define doforce()   doforce_()

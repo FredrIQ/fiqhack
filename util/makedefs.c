@@ -614,9 +614,6 @@ static const char *build_opts[] = {
 #ifdef SINKS
 		"sinks",
 #endif
-#ifdef SUSPEND
-		"suspend command",
-#endif
 #ifdef TERMINFO
 		"terminal info library",
 #else
