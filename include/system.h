@@ -7,8 +7,6 @@
 
 #if !defined(__cplusplus)
 
-#define E extern
-
 #include <sys/types.h>
 
 #endif /* !__cplusplus */
@@ -32,39 +30,39 @@
 # undef random
 # endif
 # if !defined(LINUX)
-E  long random(void);
+extern  long random(void);
 # endif
 # if (!defined(bsdi) && !defined(__FreeBSD__)) || defined(RANDOM)
-E void srandom(unsigned int);
+extern void srandom(unsigned int);
 # else
 #  if !defined(bsdi) && !defined(__FreeBSD__)
-E int srandom(unsigned int);
+extern int srandom(unsigned int);
 #  endif
 # endif
 #else
-E long lrand48();
-E void srand48();
+extern long lrand48();
+extern void srand48();
 #endif /* BSD || RANDOM */
 
 #if !defined(BSD)
 /* real BSD wants all these to return int */
-E void exit(int);
-E void free(void *);
-E void perror(const char *);
+extern void exit(int);
+extern void free(void *);
+extern void perror(const char *);
 #endif
-E void qsort(void *,size_t,size_t,int(*)(const void *,const void *));
+extern void qsort(void *,size_t,size_t,int(*)(const void *,const void *));
 
 #if !defined(__GNUC__)
 /* may already be defined */
 
 # ifndef bsdi
-E long lseek(int,long,int);
+extern long lseek(int,long,int);
 # endif
 # ifndef bsdi
-E int write(int, const void *,unsigned);
+extern int write(int, const void *,unsigned);
 # endif
 
-E int unlink(const char *);
+extern int unlink(const char *);
 
 #endif /* !__GNUC__ */
 
@@ -72,38 +70,36 @@ E int unlink(const char *);
 #include <string.h>
 
 #if defined(SYSV)
-E unsigned sleep();
+extern unsigned sleep();
 #endif
 
-E char *getenv(const char *);
-E char *getlogin();
-E pid_t getpid(void);
-E uid_t getuid(void);
-E gid_t getgid(void);
+extern char *getenv(const char *);
+extern char *getlogin();
+extern pid_t getpid(void);
+extern uid_t getuid(void);
+extern gid_t getgid(void);
 
 /*# string(s).h #*/
 
 # if !defined(SVR4)
-E int vsprintf(char *, const char *, va_list);
-E int vfprintf(FILE *, const char *, va_list);
-E int vprintf(const char *, va_list);
+extern int vsprintf(char *, const char *, va_list);
+extern int vfprintf(FILE *, const char *, va_list);
+extern int vprintf(const char *, va_list);
 # endif
 
 
-E int tgetent(char *,const char *);
-E void tputs(const char *,int,int (*)());
-E int tgetnum(const char *);
-E int tgetflag(const char *);
-E char *tgetstr(const char *,char **);
-E char *tgoto(const char *,int,int);
+extern int tgetent(char *,const char *);
+extern void tputs(const char *,int,int (*)());
+extern int tgetnum(const char *);
+extern int tgetflag(const char *);
+extern char *tgetstr(const char *,char **);
+extern char *tgoto(const char *,int,int);
 
 /* time functions */
 
-E struct tm *localtime(const time_t *);
+extern struct tm *localtime(const time_t *);
 
-E time_t time(time_t *);
-
-#undef E
+extern time_t time(time_t *);
 
 #endif /*  !__cplusplus */
 

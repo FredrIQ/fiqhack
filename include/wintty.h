@@ -5,8 +5,6 @@
 #ifndef WINTTY_H
 #define WINTTY_H
 
-#define E extern
-
 #ifndef WINDOW_STRUCTS
 #define WINDOW_STRUCTS
 
@@ -91,35 +89,35 @@ extern char defmorestr[];	/* default --more-- prompt */
 /* port specific external function references */
 
 /* ### getline.c ### */
-E void xwaitforspace(const char *);
+extern void xwaitforspace(const char *);
 
 /* ### termcap.c, video.c ### */
 
-E void tty_startup(int*, int*);
+extern void tty_startup(int*, int*);
 #ifndef NO_TERMS
-E void tty_shutdown(void);
+extern void tty_shutdown(void);
 #endif
-E void xputc(CHAR_P);
-E void xputs(const char *);
+extern void xputc(CHAR_P);
+extern void xputs(const char *);
 #if defined(SCREEN_VGA) || defined(SCREEN_8514)
-E void xputg(int, int, unsigned);
+extern void xputg(int, int, unsigned);
 #endif
-E void cl_end(void);
-E void clear_screen(void);
-E void home(void);
-E void standoutbeg(void);
-E void standoutend(void);
+extern void cl_end(void);
+extern void clear_screen(void);
+extern void home(void);
+extern void standoutbeg(void);
+extern void standoutend(void);
 # if 0
-E void revbeg(void);
-E void boldbeg(void);
-E void blinkbeg(void);
-E void dimbeg(void);
-E void m_end(void);
+extern void revbeg(void);
+extern void boldbeg(void);
+extern void blinkbeg(void);
+extern void dimbeg(void);
+extern void m_end(void);
 # endif
-E void backsp(void);
-E void graph_on(void);
-E void graph_off(void);
-E void cl_eos(void);
+extern void backsp(void);
+extern void graph_on(void);
+extern void graph_off(void);
+extern void cl_eos(void);
 
 /*
  * termcap.c (or facsimiles in other ports) is the right place for doing
@@ -127,78 +125,78 @@ E void cl_eos(void);
  * a color or whatever.  wintty.c should concern itself with WHERE to put
  * stuff in a window.
  */
-E void term_start_attr(int attr);
-E void term_end_attr(int attr);
-E void term_start_raw_bold(void);
-E void term_end_raw_bold(void);
+extern void term_start_attr(int attr);
+extern void term_end_attr(int attr);
+extern void term_start_raw_bold(void);
+extern void term_end_raw_bold(void);
 
 #ifdef TEXTCOLOR
-E void term_end_color(void);
-E void term_start_color(int color);
-E int has_color(int color);
+extern void term_end_color(void);
+extern void term_start_color(int color);
+extern int has_color(int color);
 #endif /* TEXTCOLOR */
 
 
 /* ### topl.c ### */
 
-E void addtopl(const char *);
-E void more(void);
-E void update_topl(const char *);
-E void putsyms(const char*);
+extern void addtopl(const char *);
+extern void more(void);
+extern void update_topl(const char *);
+extern void putsyms(const char*);
 
 /* ### wintty.c ### */
-E void docorner(int, int);
-E void end_glyphout(void);
-E void g_putch(int);
-E void win_tty_init(void);
+extern void docorner(int, int);
+extern void end_glyphout(void);
+extern void g_putch(int);
+extern void win_tty_init(void);
 
 /* external declarations */
-E void tty_init_nhwindows(int *, char **);
-E void tty_player_selection(void);
-E void tty_askname(void);
-E void tty_get_nh_event(void);
-E void tty_exit_nhwindows(const char *);
-E void tty_suspend_nhwindows(const char *);
-E void tty_resume_nhwindows(void);
-E winid tty_create_nhwindow(int);
-E void tty_clear_nhwindow(winid);
-E void tty_display_nhwindow(winid, BOOLEAN_P);
-E void tty_dismiss_nhwindow(winid);
-E void tty_destroy_nhwindow(winid);
-E void tty_curs(winid,int,int);
-E void tty_putstr(winid, int, const char *);
-E void tty_display_file(const char *, BOOLEAN_P);
-E void tty_start_menu(winid);
-E void tty_add_menu(winid,int,const ANY_P *,
+extern void tty_init_nhwindows(int *, char **);
+extern void tty_player_selection(void);
+extern void tty_askname(void);
+extern void tty_get_nh_event(void);
+extern void tty_exit_nhwindows(const char *);
+extern void tty_suspend_nhwindows(const char *);
+extern void tty_resume_nhwindows(void);
+extern winid tty_create_nhwindow(int);
+extern void tty_clear_nhwindow(winid);
+extern void tty_display_nhwindow(winid, BOOLEAN_P);
+extern void tty_dismiss_nhwindow(winid);
+extern void tty_destroy_nhwindow(winid);
+extern void tty_curs(winid,int,int);
+extern void tty_putstr(winid, int, const char *);
+extern void tty_display_file(const char *, BOOLEAN_P);
+extern void tty_start_menu(winid);
+extern void tty_add_menu(winid,int,const ANY_P *,
 		CHAR_P,CHAR_P,int,const char *, BOOLEAN_P);
-E void tty_end_menu(winid, const char *);
-E int tty_select_menu(winid, int, MENU_ITEM_P **);
-E char tty_message_menu(CHAR_P,int,const char *);
-E void tty_update_inventory(void);
-E void tty_mark_synch(void);
-E void tty_wait_synch(void);
-E void tty_print_glyph(winid,XCHAR_P,XCHAR_P,int);
-E void tty_raw_print(const char *);
-E void tty_raw_print_bold(const char *);
-E int tty_nhgetch(void);
-E int tty_nh_poskey(int *, int *, int *);
-E void tty_nhbell(void);
-E int tty_doprev_message(void);
-E char tty_yn_function(const char *, const char *, CHAR_P);
-E void tty_getlin(const char *,char *);
-E int tty_get_ext_cmd(void);
-E void tty_number_pad(int);
-E void tty_delay_output(void);
+extern void tty_end_menu(winid, const char *);
+extern int tty_select_menu(winid, int, MENU_ITEM_P **);
+extern char tty_message_menu(CHAR_P,int,const char *);
+extern void tty_update_inventory(void);
+extern void tty_mark_synch(void);
+extern void tty_wait_synch(void);
+extern void tty_print_glyph(winid,XCHAR_P,XCHAR_P,int);
+extern void tty_raw_print(const char *);
+extern void tty_raw_print_bold(const char *);
+extern int tty_nhgetch(void);
+extern int tty_nh_poskey(int *, int *, int *);
+extern void tty_nhbell(void);
+extern int tty_doprev_message(void);
+extern char tty_yn_function(const char *, const char *, CHAR_P);
+extern void tty_getlin(const char *,char *);
+extern int tty_get_ext_cmd(void);
+extern void tty_number_pad(int);
+extern void tty_delay_output(void);
 #ifdef CHANGE_COLOR
-E void tty_change_color(int color,long rgb,int reverse);
-E char * tty_get_color_string(void);
+extern void tty_change_color(int color,long rgb,int reverse);
+extern char * tty_get_color_string(void);
 #endif
 
 /* other defs that really should go away (they're tty specific) */
-E void tty_start_screen(void);
-E void tty_end_screen(void);
+extern void tty_start_screen(void);
+extern void tty_end_screen(void);
 
-E void genl_outrip(winid,int);
+extern void genl_outrip(winid,int);
 
 #ifdef NO_TERMS
 # if defined(WIN32CON)
@@ -210,7 +208,5 @@ E void genl_outrip(winid,int);
 #   define puts(x) xputs(x)
 # endif
 #endif/*NO_TERMS*/
-
-#undef E
 
 #endif /* WINTTY_H */
