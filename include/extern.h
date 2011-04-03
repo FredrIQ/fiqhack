@@ -1829,9 +1829,6 @@ E void regularize(char *);
 # if defined(TIMED_DELAY) && !defined(msleep) && defined(SYSV)
 E void msleep(unsigned);
 # endif
-# if defined(DEF_PAGER)
-E int child(int);
-# endif
 #endif /* UNIX */
 
 /* ### vault.c ### */

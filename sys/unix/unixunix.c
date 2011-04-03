@@ -206,47 +206,6 @@ unsigned msec;				/* milliseconds */
 }
 #endif /* TIMED_DELAY for SYSV */
 
-#if defined(DEF_PAGER)
-int
-child(wt)
-int wt;
-{
-	int f;
-	suspend_nhwindows((char *)0);	/* also calls end_screen() */
-#ifdef __linux__
-	linux_mapon();
-#endif
-	if((f = fork()) == 0){		/* child */
-		(void) setgid(getgid());
-		(void) setuid(getuid());
-#ifdef CHDIR
-		(void) chdir(getenv("HOME"));
-#endif
-		return(1);
-	}
-	if(f == -1) {	/* cannot fork */
-		pline("Fork failed.  Try again.");
-		return(0);
-	}
-	/* fork succeeded; wait for child to exit */
-	(void) signal(SIGINT,SIG_IGN);
-	(void) signal(SIGQUIT,SIG_IGN);
-	(void) wait( (int *) 0);
-#ifdef __linux__
-	linux_mapoff();
-#endif
-	(void) signal(SIGINT, (SIG_RET_TYPE) done1);
-	if(wizard)
-		(void) signal(SIGQUIT,SIG_DFL);
-	if(wt) {
-		raw_print("");
-		wait_synch();
-	}
-	resume_nhwindows();
-	return(0);
-}
-#endif
-
 #ifdef GETRES_SUPPORT
 
 extern int nh_getresuid(uid_t *, uid_t *, uid_t *);
