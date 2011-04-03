@@ -366,9 +366,6 @@ unsigned int *stuckid, *steedid;	/* STEED */
 	role_init();	/* Reset the initial role, race, gender, and alignment */
 	mread(fd, (void *) &u, sizeof(struct you));
 	set_uasmon();
-#ifdef CLIPPING
-	cliparound(u.ux, u.uy);
-#endif
 	if(u.uhp <= 0 && (!Upolyd || u.mh <= 0)) {
 	    u.ux = u.uy = 0;	/* affects pline() [hence You()] */
 	    You("were not healthy enough to survive restoration.");

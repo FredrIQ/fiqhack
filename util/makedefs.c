@@ -528,9 +528,6 @@ static const char *build_opts[] = {
 #ifdef SCORE_ON_BOTL
 		"score on status line",
 #endif
-#ifdef CLIPPING
-		"screen clipping",
-#endif
 #ifdef NO_TERMS
 # ifdef SCREEN_VGA
 		"screen control via VGA graphics",

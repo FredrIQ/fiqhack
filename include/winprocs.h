@@ -32,9 +32,6 @@ struct window_procs {
     void (*win_update_inventory)(void);
     void (*win_mark_synch)(void);
     void (*win_wait_synch)(void);
-#ifdef CLIPPING
-    void (*win_cliparound)(int, int);
-#endif
     void (*win_print_glyph)(winid,XCHAR_P,XCHAR_P,int);
     void (*win_raw_print)(const char *);
     void (*win_raw_print_bold)(const char *);
@@ -89,9 +86,6 @@ extern struct window_procs windowprocs;
 #define update_inventory (*windowprocs.win_update_inventory)
 #define mark_synch (*windowprocs.win_mark_synch)
 #define wait_synch (*windowprocs.win_wait_synch)
-#ifdef CLIPPING
-#define cliparound (*windowprocs.win_cliparound)
-#endif
 #define print_glyph (*windowprocs.win_print_glyph)
 #define raw_print (*windowprocs.win_raw_print)
 #define raw_print_bold (*windowprocs.win_raw_print_bold)

@@ -161,7 +161,7 @@ typedef unsigned char	uchar;
 #define ELBERETH	/* Engraving the E-word repels monsters */
 /* I/O */
 #define REDO		/* support for redoing last command - DGK */
-# define CLIPPING	/* allow smaller screens -- ERS */
+
 
 #ifdef REDO
 # define DOAGAIN '\001' /* ^A, the "redo" key used in cmd.c and getline.c */

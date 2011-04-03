@@ -324,9 +324,6 @@ delay_output()	-- Causes a visible delay of 50ms in the output.
 		   Conceptually, this is similar to wait_synch() followed
 		   by a nap(50ms), but allows asynchronous operation.
 askname()	-- Ask the user for a player name.
-cliparound(x, y)-- Make sure that the user is more-or-less centered on the
-		   screen if the playing area is larger than the screen.
-		-- This function is only defined if CLIPPING is defined.
 number_pad(state)
 		-- Initialize the number pad to the given state.
 suspend_nhwindows(str)

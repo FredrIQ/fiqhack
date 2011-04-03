@@ -156,10 +156,6 @@ int *wid, *hgt;
 	 */
 	if (!CO) CO = tgetnum("co");
 	if (!LI) LI = tgetnum("li");
-# ifdef CLIPPING
-	if(CO < COLNO || LI < ROWNO+3)
-		setclipped();
-# endif
 	nh_ND = Tgetstr("nd");
 	if(tgetflag("os"))
 		error("NetHack can't have OS.");

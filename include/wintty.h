@@ -147,9 +147,6 @@ E void update_topl(const char *);
 E void putsyms(const char*);
 
 /* ### wintty.c ### */
-#ifdef CLIPPING
-E void setclipped(void);
-#endif
 E void docorner(int, int);
 E void end_glyphout(void);
 E void g_putch(int);
@@ -180,9 +177,6 @@ E char tty_message_menu(CHAR_P,int,const char *);
 E void tty_update_inventory(void);
 E void tty_mark_synch(void);
 E void tty_wait_synch(void);
-#ifdef CLIPPING
-E void tty_cliparound(int, int);
-#endif
 E void tty_print_glyph(winid,XCHAR_P,XCHAR_P,int);
 E void tty_raw_print(const char *);
 E void tty_raw_print_bold(const char *);

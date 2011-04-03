@@ -58,9 +58,6 @@ const char *goal;
     }
     cx = cc->x;
     cy = cc->y;
-#ifdef CLIPPING
-    cliparound(cx, cy);
-#endif
     curs(WIN_MAP, cx,cy);
     flush_screen(0);
     for (;;) {
@@ -170,9 +167,6 @@ const char *goal;
 	    break;
 	}
     nxtc:	;
-#ifdef CLIPPING
-	cliparound(cx, cy);
-#endif
 	curs(WIN_MAP,cx,cy);
 	flush_screen(0);
     }

@@ -366,11 +366,6 @@ moveloop()
 	if (iflags.sanity_check)
 	    sanity_check();
 
-#ifdef CLIPPING
-	/* just before rhack */
-	cliparound(u.ux, u.uy);
-#endif
-
 	u.umoved = FALSE;
 
 	if (multi > 0) {
