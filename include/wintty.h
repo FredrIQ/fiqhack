@@ -183,9 +183,6 @@ E void tty_wait_synch(void);
 #ifdef CLIPPING
 E void tty_cliparound(int, int);
 #endif
-#ifdef POSITIONBAR
-E void tty_update_positionbar(char *);
-#endif
 E void tty_print_glyph(winid,XCHAR_P,XCHAR_P,int);
 E void tty_raw_print(const char *);
 E void tty_raw_print_bold(const char *);
@@ -217,9 +214,6 @@ E void genl_outrip(winid,int);
 #   define putchar(x) xputc(x)	/* these are in video.c, nttty.c */
 #   define putc(x) xputc(x)
 #   define puts(x) xputs(x)
-#  ifdef POSITIONBAR
-E void video_update_positionbar(char *);
-#  endif
 # endif
 #endif/*NO_TERMS*/
 
