@@ -250,10 +250,6 @@ coord *cc;
 		  	       		*mod = CLICK_1;
 				    else if (ir->Event.MouseEvent.dwButtonState & RIGHTBUTTON)
 					*mod = CLICK_2;
-#if 0	/* middle button */
-				    else if (ir->Event.MouseEvent.dwButtonState & MIDBUTTON)
-			      		*mod = CLICK_3;
-#endif 
 			           return 0;
 			    }
 	        	}

@@ -439,9 +439,6 @@ const char *in_str;
 		{ "grey elf",		PM_GREY_ELF },
 		{ "gray elf",		PM_GREY_ELF },
 		{ "elf lord",		PM_ELF_LORD },
-#if 0	/* OBSOLETE */
-		{ "high elf",		PM_HIGH_ELF },
-#endif
 		{ "olog hai",		PM_OLOG_HAI },
 		{ "arch lich",		PM_ARCH_LICH },
 	    /* Some irregular plurals */
@@ -554,9 +551,6 @@ static const short grownups[][2] = {
 	{PM_VAMPIRE, PM_VAMPIRE_LORD}, {PM_BAT, PM_GIANT_BAT},
 	{PM_BABY_GRAY_DRAGON, PM_GRAY_DRAGON},
 	{PM_BABY_SILVER_DRAGON, PM_SILVER_DRAGON},
-#if 0	/* DEFERRED */
-	{PM_BABY_SHIMMERING_DRAGON, PM_SHIMMERING_DRAGON},
-#endif
 	{PM_BABY_RED_DRAGON, PM_RED_DRAGON},
 	{PM_BABY_WHITE_DRAGON, PM_WHITE_DRAGON},
 	{PM_BABY_ORANGE_DRAGON, PM_ORANGE_DRAGON},

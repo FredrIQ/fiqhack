@@ -333,9 +333,6 @@ HELM("helm of telepathy", "visored helmet",
    needed to create them */
 DRGN_ARMR("gray dragon scale mail",   1, ANTIMAGIC,  1200, 1, CLR_GRAY),
 DRGN_ARMR("silver dragon scale mail", 1, REFLECTING, 1200, 1, DRAGON_SILVER),
-#if 0	/* DEFERRED */
-DRGN_ARMR("shimmering dragon scale mail", 1, DISPLACED, 1200, 1, CLR_CYAN),
-#endif
 DRGN_ARMR("red dragon scale mail",    1, FIRE_RES,    900, 1, CLR_RED),
 DRGN_ARMR("white dragon scale mail",  1, COLD_RES,    900, 1, CLR_WHITE),
 DRGN_ARMR("orange dragon scale mail", 1, SLEEP_RES,   900, 1, CLR_ORANGE),
@@ -349,9 +346,6 @@ DRGN_ARMR("yellow dragon scale mail", 1, ACID_RES,    900, 1, CLR_YELLOW),
    magical properties but are produced "naturally" */
 DRGN_ARMR("gray dragon scales",   0, ANTIMAGIC,  700, 7, CLR_GRAY),
 DRGN_ARMR("silver dragon scales", 0, REFLECTING, 700, 7, DRAGON_SILVER),
-#if 0	/* DEFERRED */
-DRGN_ARMR("shimmering dragon scales", 0, DISPLACED,  700, 7, CLR_CYAN),
-#endif
 DRGN_ARMR("red dragon scales",    0, FIRE_RES,   500, 7, CLR_RED),
 DRGN_ARMR("white dragon scales",  0, COLD_RES,   500, 7, CLR_WHITE),
 DRGN_ARMR("orange dragon scales", 0, SLEEP_RES,  500, 7, CLR_ORANGE),
@@ -829,10 +823,6 @@ SPELL("cancellation",    "shining",     P_MATTER_SPELL, 15,  8, 7, 1, IMMEDIATE,
 SPELL("protection",	     "dull",        P_CLERIC_SPELL, 18,  3, 1, 1, NODIR,     HI_PAPER),
 SPELL("jumping",	     "thin",        P_ESCAPE_SPELL, 20,  3, 1, 1, IMMEDIATE, HI_PAPER),
 SPELL("stone to flesh",	 "thick",       P_HEALING_SPELL, 15,  1, 3, 1, IMMEDIATE, HI_PAPER),
-#if 0	/* DEFERRED */
-SPELL("flame sphere",    "canvas",      P_MATTER_SPELL, 20,  2, 1, 1, NODIR, CLR_BROWN),
-SPELL("freeze sphere",   "hardcover",   P_MATTER_SPELL, 20,  2, 1, 1, NODIR, CLR_BROWN),
-#endif
 /* blank spellbook must come last because it retains its description */
 SPELL("blank paper",     "plain",       P_NONE, 18,  0, 0, 0, 0,         HI_PAPER),
 /* a special, one of a kind, spellbook */

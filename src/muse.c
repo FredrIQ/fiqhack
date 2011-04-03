@@ -583,11 +583,7 @@ mon_tele:
 			mtmp->mtrapseen |= (1 << (TELEP_TRAP-1));
 		    return 2;
 		}
-		if ((
-#if 0
-			mon_has_amulet(mtmp) ||
-#endif
-			On_W_tower_level(&u.uz)) && !rn2(3)) {
+		if ((On_W_tower_level(&u.uz)) && !rn2(3)) {
 		    if (vismon)
 			pline("%s seems disoriented for a moment.",
 				Monnam(mtmp));
@@ -1079,15 +1075,6 @@ struct monst *mtmp;
 		    m.offensive = obj;
 		    m.has_offense = MUSE_SCR_EARTH;
 		}
-#if 0
-		nomore(MUSE_SCR_FIRE);
-		if (obj->otyp == SCR_FIRE && resists_fire(mtmp)
-		   && dist2(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy) <= 2
-		   && mtmp->mcansee && haseyes(mtmp->data)) {
-			m.offensive = obj;
-			m.has_offense = MUSE_SCR_FIRE;
-		}
-#endif
 	}
 	return((boolean)(!!m.has_offense));
 #undef nomore
@@ -1443,50 +1430,6 @@ struct monst *mtmp;
 
 		return (mtmp->mhp <= 0) ? 1 : 2;
 	    }
-#if 0
-	case MUSE_SCR_FIRE:
-	      {
-		boolean vis = cansee(mtmp->mx, mtmp->my);
-
-		mreadmsg(mtmp, otmp);
-		if (mtmp->mconf) {
-			if (vis)
-			    pline("Oh, what a pretty fire!");
-		} else {
-			struct monst *mtmp2;
-			int num;
-
-			if (vis)
-			    pline_The("scroll erupts in a tower of flame!");
-			shieldeff(mtmp->mx, mtmp->my);
-			pline("%s is uninjured.", Monnam(mtmp));
-			(void) destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
-			(void) destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
-			(void) destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
-			num = (2*(rn1(3, 3) + 2 * bcsign(otmp)) + 1)/3;
-			if (Fire_resistance)
-			    You("are not harmed.");
-			burn_away_slime();
-			if (Half_spell_damage) num = (num+1) / 2;
-			else losehp(num, "scroll of fire", KILLED_BY_AN);
-			for(mtmp2 = fmon; mtmp2; mtmp2 = mtmp2->nmon) {
-			   if(DEADMONSTER(mtmp2)) continue;
-			   if(mtmp == mtmp2) continue;
-			   if(dist2(mtmp2->mx,mtmp2->my,mtmp->mx,mtmp->my) < 3){
-				if (resists_fire(mtmp2)) continue;
-				mtmp2->mhp -= num;
-				if (resists_cold(mtmp2))
-				    mtmp2->mhp -= 3*num;
-				if(mtmp2->mhp < 1) {
-				    mondied(mtmp2);
-				    break;
-				}
-			    }
-			}
-		}
-		return 2;
-	      }
-#endif	/* 0 */
 	case MUSE_POT_PARALYSIS:
 	case MUSE_POT_BLINDNESS:
 	case MUSE_POT_CONFUSION:

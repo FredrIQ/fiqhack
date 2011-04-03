@@ -9,9 +9,6 @@
 
 /* ### alloc.c ### */
 
-#if 0
-E long *alloc(unsigned int);
-#endif
 E char *fmt_ptr(const void *,char *);
 
 /* This next pre-processor directive covers almost the entire file,
@@ -213,13 +210,6 @@ E void bury_objs(int,int);
 E void unearth_objs(int,int);
 E void rot_organic(void *, long);
 E void rot_corpse(void *, long);
-#if 0
-E void bury_monst(struct monst *);
-E void bury_you(void);
-E void unearth_you(void);
-E void escape_tomb(void);
-E void bury_obj(struct obj *);
-#endif
 
 /* ### display.c ### */
 
@@ -474,9 +464,6 @@ E void lesshungry(int);
 E boolean is_fainted(void);
 E void reset_faint(void);
 E void violated_vegetarian(void);
-#if 0
-E void sync_hunger(void);
-#endif
 E void newuhs(BOOLEAN_P);
 E struct obj *floorfood(const char *,int);
 E void vomit(void);
@@ -668,9 +655,6 @@ E char *strstri(const char *,const char *);
 E boolean fuzzymatch(const char *,const char *,const char *,BOOLEAN_P);
 E void setrandom(void);
 E int getyear(void);
-#if 0
-E char *yymmdd(time_t);
-#endif
 E long yyyymmdd(time_t);
 E int phase_of_the_moon(void);
 E boolean friday_13th(void);

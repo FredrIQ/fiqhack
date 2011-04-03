@@ -45,6 +45,7 @@ static const unsigned wizapp[] = {
 
 /* If you've found the Amulet, make the Wizard appear after some time */
 /* Also, give hints about portal locations, if amulet is worn/wielded -dlc */
+/* pre condition: u.uhave.amulet == 1 */
 void
 amulet()
 {
@@ -52,10 +53,6 @@ amulet()
 	struct trap *ttmp;
 	struct obj *amu;
 
-#if 0		/* caller takes care of this check */
-	if (!u.uhave.amulet)
-		return;
-#endif
 	if ((((amu = uamul) != 0 && amu->otyp == AMULET_OF_YENDOR) ||
 	     ((amu = uwep) != 0 && amu->otyp == AMULET_OF_YENDOR))
 	    && !rn2(15)) {

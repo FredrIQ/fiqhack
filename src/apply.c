@@ -1634,10 +1634,6 @@ long timeout;
 			    locomotion(mtmp->data, "drop"), carriedby);
 		    }
 		    break;
-#if 0
-		case OBJ_MIGRATING:
-		    break;
-#endif
 
 		default:
 		    impossible("figurine came to life where? (%d)",
@@ -2256,25 +2252,6 @@ struct obj *obj;
 		    break;
 		case 3:
 		    /* right to you */
-#if 0
-		    if (!rn2(25)) {
-			/* proficient with whip, but maybe not
-			   so proficient at catching weapons */
-			int hitu, hitvalu;
-
-			hitvalu = 8 + otmp->spe;
-			hitu = thitu(hitvalu,
-				     dmgval(otmp, &youmonst),
-				     otmp, (char *)0);
-			if (hitu) {
-			    pline_The("%s hits you as you try to snatch it!",
-				the(onambuf));
-			}
-			place_object(otmp, u.ux, u.uy);
-			stackobj(otmp);
-			break;
-		    }
-#endif /* 0 */
 		    /* right into your inventory */
 		    You("snatch %s %s!", s_suffix(mon_nam(mtmp)), onambuf);
 		    if (otmp->otyp == CORPSE &&

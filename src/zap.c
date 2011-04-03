@@ -3841,9 +3841,6 @@ register int osym, dmgtyp;
 			    break;
 			case WAND_CLASS:
 			    if(obj->otyp == WAN_LIGHTNING) { skip++; break; }
-#if 0
-			    if (obj == current_wand) { skip++; break; }
-#endif
 			    dindx = 5;
 			    dmg = rnd(10);
 			    break;

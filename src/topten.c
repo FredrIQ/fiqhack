@@ -102,18 +102,7 @@ static xchar
 observable_depth(lev)
 d_level *lev;
 {
-#if 0	/* if we ever randomize the order of the elemental planes, we
-	   must use a constant external representation in the record file */
-	if (In_endgame(lev)) {
-	    if (Is_astralevel(lev))	 return -5;
-	    else if (Is_waterlevel(lev)) return -4;
-	    else if (Is_firelevel(lev))	 return -3;
-	    else if (Is_airlevel(lev))	 return -2;
-	    else if (Is_earthlevel(lev)) return -1;
-	    else			 return 0;	/* ? */
-	} else
-#endif
-	    return depth(lev);
+	return depth(lev);
 }
 
 static void

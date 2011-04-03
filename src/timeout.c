@@ -458,32 +458,6 @@ long timeout;
 		egg->quan -= (long)hatchcount;
 	    }
 	}
-#if 0
-	/*
-	 * We could possibly hatch while migrating, but the code isn't
-	 * set up for it...
-	 */
-	else if (obj->where == OBJ_MIGRATING) {
-	    /*
-	    We can do several things.  The first ones that come to
-	    mind are:
-
-	    + Create the hatched monster then place it on the migrating
-	      mons list.  This is tough because all makemon() is made
-	      to place the monster as well.    Makemon() also doesn't
-	      lend itself well to splitting off a "not yet placed"
-	      subroutine.
-
-	    + Mark the egg as hatched, then place the monster when we
-	      place the migrating objects.
-
-	    + Or just kill any egg which gets sent to another level.
-	      Falling is the usual reason such transportation occurs.
-	    */
-	    cansee_hatchspot = FALSE;
-	    mon = ???
-	    }
-#endif
 
 	if (mon) {
 	    char monnambuf[BUFSZ], carriedby[BUFSZ];
@@ -544,10 +518,6 @@ long timeout;
 			    locomotion(mon->data, "drop"), carriedby);
 		    }
 		    break;
-#if 0
-		case OBJ_MIGRATING:
-		    break;
-#endif
 		default:
 		    impossible("egg hatched where? (%d)", (int)egg->where);
 		    break;

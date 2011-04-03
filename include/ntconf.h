@@ -144,10 +144,6 @@ extern void load_keyboard_handler(void);
 #endif
 
 #ifdef _MSC_VER
-#if 0
-#pragma warning(disable:4018)	/* signed/unsigned mismatch */
-#pragma warning(disable:4305)	/* init, conv from 'const int' to 'char' */
-#endif
 #pragma warning(disable:4761)	/* integral size mismatch in arg; conv supp*/
 #ifdef YYPREFIX
 #pragma warning(disable:4102)	/* unreferenced label */

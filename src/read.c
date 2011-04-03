@@ -439,21 +439,6 @@ forget_single_object(obj_id)
 }
 
 
-#if 0	/* here if anyone wants it.... */
-/* Forget everything known about a particular object class. */
-static void
-forget_objclass(oclass)
-	int oclass;
-{
-	int i;
-
-	for (i=bases[oclass];
-		i < NUM_OBJECTS && objects[i].oc_class==oclass; i++)
-	    forget_single_object(i);
-}
-#endif
-
-
 /* randomize the given list of numbers  0 <= i < count */
 static void
 randomize(indices, count)

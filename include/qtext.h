@@ -45,9 +45,6 @@ struct	qthdr {
 
 struct	qtlists {
 	struct	qtmsg	*common,
-#if 0	/* UNUSED but available */
-			*chrace,
-#endif
 			*chrole;
 };
 

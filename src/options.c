@@ -3312,9 +3312,6 @@ struct wc_Opt wc_options[] = {
 	{"font_map", WC_FONT_MAP},
 	{"font_menu", WC_FONT_MENU},
 	{"font_message",WC_FONT_MESSAGE},
-#if 0
-	{"perm_invent",WC_PERM_INVENT},
-#endif
 	{"font_size_map", WC_FONTSIZ_MAP},
 	{"font_size_menu", WC_FONTSIZ_MENU},
 	{"font_size_message", WC_FONTSIZ_MESSAGE},

@@ -556,15 +556,6 @@ clear_bypasses()
 		   used for polymorph handling, the objects here probably
 		   have been transformed and won't be stacked in the usual
 		   manner afterwards; so don't bother with this */
-#if 0
-		if (objects[otmp->otyp].oc_merge) {
-		    xchar ox, oy;
-
-		    (void) get_obj_location(otmp, &ox, &oy, 0);
-		    stack_object(otmp);
-		    newsym(ox, oy);
-		}
-#endif	/*0*/
 	    }
 	}
 	/* invent and mydogs chains shouldn't matter here */

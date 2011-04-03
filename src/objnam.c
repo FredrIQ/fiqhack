@@ -703,10 +703,6 @@ ring:
 			strcat(prefix, " ");
 		    }
 		} else if (obj->otyp == EGG) {
-#if 0	/* corpses don't tell if they're stale either */
-		    if (obj->known && stale_egg(obj))
-			strcat(prefix, "stale ");
-#endif
 		    if (obj->corpsenm >= LOW_PM &&
 			    (obj->known ||
 			    mvitals[obj->corpsenm].mvflags & MV_KNOWS_EGG)) {

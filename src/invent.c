@@ -202,17 +202,6 @@ struct obj **potmp, **pobj;
 		    setworn(otmp, wmask);
 		    setnotworn(obj);
 		}
-#if 0
-		/* (this should not be necessary, since items
-		    already in a monster's inventory don't ever get
-		    merged into other objects [only vice versa]) */
-		else if (obj->owornmask && mcarried(otmp)) {
-		    if (obj == MON_WEP(otmp->ocarry)) {
-			MON_WEP(otmp->ocarry) = otmp;
-			otmp->owornmask = W_WEP;
-		    }
-		}
-#endif /*0*/
 
 		obfree(obj,otmp);	/* free(obj), bill->otmp */
 		return(1);
@@ -816,10 +805,6 @@ register const char *let,*word;
 		|| (putting_on(word) &&
 		     (otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)))
 							/* already worn */
-#if 0	/* 3.4.1 -- include currently wielded weapon among the choices */
-		|| (!strcmp(word, "wield") &&
-		    (otmp->owornmask & W_WEP))
-#endif
 		|| (!strcmp(word, "ready") &&
 		    (otmp == uwep || (otmp == uswapwep && u.twoweap)))
 		    ) {

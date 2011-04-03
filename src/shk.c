@@ -1744,9 +1744,6 @@ finish_paybill()
 	int ox = repo_location.x,
 	    oy = repo_location.y;
 
-#if 0		/* don't bother */
-	if (ox == 0 && oy == 0) impossible("finish_paybill: no location");
-#endif
 	/* normally done by savebones(), but that's too late in this case */
 	unleash_all();
 	/* transfer all of the character's inventory to the shop floor */
@@ -3311,16 +3308,6 @@ register int fall;
 	    register struct obj *obj, *obj2;
 	    if (nolimbs(shkp->data)) {
 		grabs = "knocks off";
-#if 0
-	       /* This is what should happen, but for balance
-	        * reasons, it isn't currently.
-	        */
-		if (lang == 2)
-		    pline("%s curses %s inability to grab your backpack!",
-			  shkname(shkp), mhim(shkp));
-		rile_shk(shkp);
-		return;
-#endif
 	    }
 	    if (distu(shkp->mx, shkp->my) > 2) {
 		mnexto(shkp);

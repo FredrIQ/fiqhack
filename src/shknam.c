@@ -199,7 +199,7 @@ const struct shclass shtypes[] = {
 	{(char *)0, 0, 0, 0, {{0, 0}, {0, 0}, {0, 0}}, 0}
 };
 
-#if 0
+#if DEBUG
 /* validate shop probabilities; otherwise incorrect local changes could
    end up provoking infinite loops or wild subscripts fetching garbage */
 void
@@ -218,7 +218,7 @@ init_shop_selection()
 	if (shop_prob != 100)
 		panic("shop probabilities total to %d!", shop_prob);
 }
-#endif /*0*/
+#endif /* DEBUG */
 
 static void
 mkshobj_at(shp, sx, sy)

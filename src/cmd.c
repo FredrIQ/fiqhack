@@ -976,13 +976,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	     * resulting in a false claim that you could have prayed safely.
 	     */
 	  if (!final) {
-#if 0
-	    /* "can [not] safely pray" vs "could [not] have safely prayed" */
-	    sprintf(buf, "%s%ssafely pray%s", can_pray(FALSE) ? "" : "not ",
-		    final ? "have " : "", final ? "ed" : "");
-#else
 	    sprintf(buf, "%ssafely pray", can_pray(FALSE) ? "" : "not ");
-#endif
 	    if (wizard) sprintf(eos(buf), " (%d)", u.ublesscnt);
 	    you_can(buf);
 	}

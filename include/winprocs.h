@@ -194,15 +194,6 @@ extern struct window_procs windowprocs;
 #define MAP_MODE_ASCII_FIT_TO_SCREEN 10
 #define MAP_MODE_TILES_FIT_TO_SCREEN 11
 
-#if 0
-#define WC_SND_SOUND	 0x01L		/* 01 Port has some sound capabilities       */
-#define WC_SND_SPEAKER	 0x02L		/* 02 Sound supported via built-in speaker   */
-#define WC_SND_STEREO	 0x04L		/* 03 Stereo sound supported                 */
-#define WC_SND_RAW	 0x08L		/* 04 Raw sound supported                    */
-#define WC_SND_WAVE	 0x10L		/* 05 Wave support                           */
-#define WC_SND_MIDI	 0x20L		/* 06 Midi support                           */
-					/* 26 free bits */
-#endif
 
 struct wc_Opt {
 	const char *wc_name;

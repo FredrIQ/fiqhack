@@ -27,21 +27,10 @@ void add_mon_to_reg(NhRegion *,struct monst *);
 void remove_mon_from_reg(NhRegion *,struct monst *);
 boolean mon_in_region(NhRegion *,struct monst *);
 
-#if 0
-NhRegion *clone_region(NhRegion *);
-#endif
 void free_region(NhRegion *);
 void add_region(NhRegion *);
 void remove_region(NhRegion *);
 
-#if 0
-void replace_mon_regions(struct monst *,struct monst *);
-void remove_mon_from_regions(struct monst *);
-NhRegion *create_msg_region(XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P,
-				    const char *,const char *);
-boolean enter_force_field(void *,void *);
-NhRegion *create_force_field(XCHAR_P,XCHAR_P,int,int);
-#endif
 
 static void reset_region_mids(NhRegion *);
 
@@ -225,41 +214,6 @@ struct monst *mon;
     return FALSE;
 }
 
-#if 0
-/* not yet used */
-
-/*
- * Clone (make a standalone copy) the region.
- */
-NhRegion *
-clone_region(reg)
-NhRegion *reg;
-{
-    NhRegion *ret_reg;
-
-    ret_reg = create_region(reg->rects, reg->nrects);
-    ret_reg->ttl = reg->ttl;
-    ret_reg->attach_2_u = reg->attach_2_u;
-    ret_reg->attach_2_m = reg->attach_2_m;
- /* ret_reg->attach_2_o = reg->attach_2_o; */
-    ret_reg->expire_f = reg->expire_f;
-    ret_reg->enter_f = reg->enter_f;
-    ret_reg->can_enter_f = reg->can_enter_f;
-    ret_reg->leave_f = reg->leave_f;
-    ret_reg->can_leave_f = reg->can_leave_f;
-    ret_reg->player_flags = reg->player_flags;	/* set/clear_hero_inside,&c*/
-    ret_reg->n_monst = reg->n_monst;
-    if (reg->n_monst > 0) {
-	ret_reg->monsters = (unsigned *)
-				alloc((sizeof (unsigned)) * reg->n_monst);
-	(void) memcpy((void *) ret_reg->monsters, (void *) reg->monsters,
-		      sizeof (unsigned) * reg->n_monst);
-    } else
-	ret_reg->monsters = NULL;
-    return ret_reg;
-}
-
-#endif	/*0*/
 
 /*
  * Free mem from region.
@@ -546,42 +500,6 @@ struct monst *mon;
     }
 }
 
-#if 0
-/* not yet used */
-
-/*
- * Change monster pointer in regions
- * This happens, for instance, when a monster grows and
- * need a new structure (internally that is).
- */
-void
-replace_mon_regions(monold, monnew)
-struct monst *monold, *monnew;
-{
-    register int i;
-
-    for (i = 0; i < n_regions; i++)
-	if (mon_in_region(regions[i], monold)) {
-	    remove_mon_from_reg(regions[i], monold);
-	    add_mon_to_reg(regions[i], monnew);
-	}
-}
-
-/*
- * Remove monster from all regions it was in (ie monster just died)
- */
-void
-remove_mon_from_regions(mon)
-struct monst *mon;
-{
-    register int i;
-
-    for (i = 0; i < n_regions; i++)
-	if (mon_in_region(regions[i], mon))
-	    remove_mon_from_reg(regions[i], mon);
-}
-
-#endif	/*0*/
 
 /*
  * Check if a spot is under a visible region (eg: gas cloud).
@@ -769,98 +687,6 @@ NhRegion *reg;
     return;
 }
 
-#if 0
-/* not yet used */
-
-/*--------------------------------------------------------------*
- *								*
- *			Create Region with just a message	*
- *								*
- *--------------------------------------------------------------*/
-
-NhRegion *
-create_msg_region(x, y, w, h, msg_enter, msg_leave)
-xchar x, y;
-xchar w, h;
-const char *msg_enter;
-const char *msg_leave;
-{
-    NhRect tmprect;
-    NhRegion *reg = create_region((NhRect *) 0, 0);
-
-    reg->enter_msg = msg_enter;
-    reg->leave_msg = msg_leave;
-    tmprect.lx = x;
-    tmprect.ly = y;
-    tmprect.hx = x + w;
-    tmprect.hy = y + h;
-    add_rect_to_reg(reg, &tmprect);
-    reg->ttl = -1;
-    return reg;
-}
-
-
-/*--------------------------------------------------------------*
- *								*
- *			Force Field Related Code		*
- *			(unused yet)				*
- *--------------------------------------------------------------*/
-
-boolean
-enter_force_field(p1, p2)
-void * p1;
-void * p2;
-{
-    struct monst *mtmp;
-
-    if (p2 == NULL) {		/* That means the player */
-	if (!Blind)
-		You("bump into %s. Ouch!",
-		    Hallucination ? "an invisible tree" :
-			"some kind of invisible wall");
-	else
-	    pline("Ouch!");
-    } else {
-	mtmp = (struct monst *) p2;
-	if (canseemon(mtmp))
-	    pline("%s bumps into %s!", Monnam(mtmp), something);
-    }
-    return FALSE;
-}
-
-NhRegion *
-create_force_field(x, y, radius, ttl)
-xchar x, y;
-int radius, ttl;
-{
-    int i;
-    NhRegion *ff;
-    int nrect;
-    NhRect tmprect;
-
-    ff = create_region((NhRect *) 0, 0);
-    nrect = radius;
-    tmprect.lx = x;
-    tmprect.hx = x;
-    tmprect.ly = y - (radius - 1);
-    tmprect.hy = y + (radius - 1);
-    for (i = 0; i < nrect; i++) {
-	add_rect_to_reg(ff, &tmprect);
-	tmprect.lx--;
-	tmprect.hx++;
-	tmprect.ly++;
-	tmprect.hy--;
-    }
-    ff->ttl = ttl;
-    if (!in_mklev && !flags.mon_moving)
-	set_heros_fault(ff);		/* assume player has created it */
- /* ff->can_enter_f = enter_force_field; */
- /* ff->can_leave_f = enter_force_field; */
-    add_region(ff);
-    return ff;
-}
-
-#endif	/*0*/
 
 /*--------------------------------------------------------------*
  *								*

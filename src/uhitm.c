@@ -733,10 +733,6 @@ int thrown;
 			    if (resists_ston(mon)) break;
 			    /* note: hp may be <= 0 even if munstoned==TRUE */
 			    return (boolean) (mon->mhp > 0);
-#if 0
-			} else if (touch_petrifies(mdat)) {
-			    /* maybe turn the corpse into a statue? */
-#endif
 			}
 			tmp = (obj->corpsenm >= LOW_PM ?
 					mons[obj->corpsenm].msize : 0) + 1;

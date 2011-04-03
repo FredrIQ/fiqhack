@@ -34,10 +34,6 @@ static char *HO, *CL, *CE, *UP, *XD, *BC, *SO, *SE, *TI, *TE;
 static char *VS, *VE;
 static char *ME;
 static char *MR;
-#if 0
-static char *MB, *MH;
-static char *MD;     /* may already be in use below */
-#endif
 #ifdef TERMLIB
 # ifdef TEXTCOLOR
 static char *MD;
@@ -477,40 +473,6 @@ standoutend()
 {
 	if(SE) xputs(SE);
 }
-
-#if 0	/* if you need one of these, uncomment it (here and in extern.h) */
-void
-revbeg()
-{
-	if(MR) xputs(MR);
-}
-
-void
-boldbeg()
-{
-	if(MD) xputs(MD);
-}
-
-void
-blinkbeg()
-{
-	if(MB) xputs(MB);
-}
-
-void
-dimbeg()
-/* not in most termcap entries */
-{
-	if(MH) xputs(MH);
-}
-
-void
-m_end()
-{
-	if(ME) xputs(ME);
-}
-#endif
-
 
 void
 backsp()

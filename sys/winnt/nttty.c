@@ -228,10 +228,6 @@ DWORD ctrltype;
 #ifndef NOSAVEONHANGUP
 			hangup(0);
 #endif
-#if 0
-			clearlocks();
-			terminate(EXIT_FAILURE);
-#endif
 		default:
 			return FALSE;
 	}
@@ -267,16 +263,6 @@ nttty_open()
         /* Obtain handles for the standard Console I/O devices */
 	hConIn = GetStdHandle(STD_INPUT_HANDLE);
 	hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
-#if 0
-	hConIn = CreateFile("CONIN$",
-			GENERIC_READ |GENERIC_WRITE,
-			FILE_SHARE_READ |FILE_SHARE_WRITE,
-			0, OPEN_EXISTING, 0, 0);					
-	hConOut = CreateFile("CONOUT$",
-			GENERIC_READ |GENERIC_WRITE,
-			FILE_SHARE_READ |FILE_SHARE_WRITE,
-			0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,0);
-#endif       
 
 	GetConsoleMode(hConIn,&cmode);
 #ifdef NO_MOUSE_ALLOWED

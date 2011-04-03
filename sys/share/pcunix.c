@@ -21,10 +21,6 @@ extern void clear_screen(void);
 #endif
 
 
-#if 0
-static struct stat buf;
-#endif
-
 # ifdef WANT_GETHDATE
 static struct stat hbuf;
 # endif

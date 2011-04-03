@@ -177,10 +177,6 @@ dosounds()
 	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (is_mercenary(mtmp->data) &&
-#if 0		/* don't bother excluding these */
-		!strstri(mtmp->data->mname, "watch") &&
-		!strstri(mtmp->data->mname, "guard") &&
-#endif
 		mon_in_room(mtmp, BARRACKS) &&
 		/* sleeping implies not-yet-disturbed (usually) */
 		(mtmp->msleeping || ++count > 5)) {

@@ -488,20 +488,9 @@ coord *cc;
 		  	       		*mod = CLICK_1;
 			  	else if (ir->Event.MouseEvent.dwButtonState & RIGHTBUTTON)
 					*mod = CLICK_2;
-#if 0	/* middle button */			       
-				else if (ir->Event.MouseEvent.dwButtonState & MIDBUTTON)
-			      		*mod = CLICK_3;
-#endif 
 			       return 0;
 			    }
 		        }
-#if 0
-			/* We ignore these types of console events */
-		        else if (ir->EventType == FOCUS_EVENT) {
-		        }
-		        else if (ir->EventType == MENU_EVENT) {
-		        }
-#endif
 		    }
 	        } else 
 		    done = 1;

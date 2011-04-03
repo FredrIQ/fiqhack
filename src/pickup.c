@@ -19,9 +19,6 @@ static boolean query_classes(char *,boolean *,boolean *,
 static void check_here(BOOLEAN_P);
 static boolean n_or_more(struct obj *);
 static boolean all_but_uchain(struct obj *);
-#if 0 /* not used */
-static boolean allow_cat_no_uchain(struct obj *);
-#endif
 static int autopick(struct obj*, int, menu_item **);
 static int count_categories(struct obj *,int);
 static long carry_count (struct obj *,struct obj *,long,BOOLEAN_P,int *,int *);
@@ -343,20 +340,6 @@ struct obj *obj;
 	return FALSE;
 }
 
-#if 0 /* not used */
-/* query_objlist callback: return TRUE if valid category (class), no uchain */
-static boolean
-allow_cat_no_uchain(obj)
-struct obj *obj;
-{
-    if ((obj != uchain) &&
-	(((index(valid_menu_classes,'u') != (char *)0) && obj->unpaid) ||
-	(index(valid_menu_classes, obj->oclass) != (char *)0)))
-	return TRUE;
-    else
-	return FALSE;
-}
-#endif
 
 /* query_objlist callback: return TRUE if valid class and worn */
 boolean

@@ -20,9 +20,6 @@ char *catmore = 0;		/* default pager */
 int bases[MAXOCLASSES] = DUMMY;
 
 int multi = 0;
-#if 0
-int warnlevel = 0;		/* used by movemon and dochugw */
-#endif
 int nroom = 0;
 int nsubroom = 0;
 int occtime = 0;
