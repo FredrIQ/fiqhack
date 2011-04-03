@@ -51,12 +51,9 @@
 
 
 #if defined(TTY_GRAPHICS) && (!defined(SYSV) || defined(SVR4))
-# ifndef LINT
-extern			/* it is defined in libtermlib (libtermcap) */
-# endif
-	short ospeed;	/* terminal baudrate; set by gettty */
+extern short ospeed;	/* terminal baudrate; set by gettty */
 #else
-short	ospeed = 0;	/* gets around "not defined" error message */
+short ospeed = 0;	/* gets around "not defined" error message */
 #endif
 
 #if defined(BSD)
@@ -143,13 +140,9 @@ const char *s;
 void
 setftty()
 {
-register int ef = 0;			/* desired value of flags & ECHO */
-#ifdef LINT	/* cf = CBRKON(CBRKMASK); const expr to initialize is ok */
-register int cf = 0;
-#else
-register int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
-#endif
-register int change = 0;
+	register int ef = 0;			/* desired value of flags & ECHO */
+	register int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
+	register int change = 0;
 	iflags.cbreak = ON;
 	iflags.echo = OFF;
 	/* Should use (ECHO|CRMOD) here instead of ECHO */

@@ -164,29 +164,21 @@ newman()
 	 *   gain)
 	 * 9 - rn2(19): random change of -9 to +9 hit points
 	 */
-#ifndef LINT
 	u.uhpmax = ((u.uhpmax - 10) * (long)u.ulevel / oldlvl + 10) +
 		(9 - rn2(19));
-#endif
 
-#ifdef LINT
-	u.uhp = u.uhp + tmp;
-#else
 	u.uhp = u.uhp * (long)u.uhpmax/tmp;
-#endif
 
 	tmp = u.uenmax;
-#ifndef LINT
 	u.uenmax = u.uenmax * (long)u.ulevel / oldlvl + 9 - rn2(19);
-#endif
-	if (u.uenmax < 0) u.uenmax = 0;
-#ifndef LINT
+	if (u.uenmax < 0)
+		u.uenmax = 0;
 	u.uen = (tmp ? u.uen * (long)u.uenmax / tmp : u.uenmax);
-#endif
 
 	redist_attr();
 	u.uhunger = rn1(500,500);
-	if (Sick) make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+	if (Sick)
+		make_sick(0L, (char *) 0, FALSE, SICK_ALL);
 	Stoned = 0;
 	delayed_killer = 0;
 	if (u.uhp <= 0 || u.uhpmax <= 0) {

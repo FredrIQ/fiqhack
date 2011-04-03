@@ -217,13 +217,8 @@ moverock()
 	    }
 
 	    {
-#ifdef LINT /* static long lastmovetime; */
-		long lastmovetime;
-		lastmovetime = 0;
-#else
 		/* note: reset to zero after save/restore cycle */
 		static long lastmovetime;
-#endif
 #ifdef STEED
 		if (!u.usteed) {
 #endif

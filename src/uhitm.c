@@ -1755,11 +1755,7 @@ register struct attack *mattk;
 		(void) snuff_lit(otmp);
 
 	    if(!touch_petrifies(mdef->data) || Stone_resistance) {
-#ifdef LINT	/* static char msgbuf[BUFSZ]; */
-		char msgbuf[BUFSZ];
-#else
 		static char msgbuf[BUFSZ];
-#endif
 		start_engulf(mdef);
 		switch(mattk->adtyp) {
 		    case AD_DGST:
