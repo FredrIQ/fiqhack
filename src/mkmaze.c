@@ -520,7 +520,6 @@ register const char *s;
 
 	} else Strcpy(protofile, "");
 
-#ifdef WIZARD
 	/* SPLEVTYPE format is "level-choice,level-choice"... */
 	if (wizard && *protofile && sp && sp->rndlevs) {
 	    char *ep = getenv("SPLEVTYPE");	/* not nh_getenv */
@@ -542,7 +541,6 @@ register const char *s;
 		}
 	    }
 	}
-#endif
 
 	if(*protofile) {
 	    Strcat(protofile, LEV_EXT);

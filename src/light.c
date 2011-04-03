@@ -575,7 +575,6 @@ struct obj *obj;
     return radius;
 }
 
-#ifdef WIZARD
 extern char *fmt_ptr(const void *, char *);  /* from alloc.c */
 
 int
@@ -616,7 +615,5 @@ wiz_light_sources()
 
     return 0;
 }
-
-#endif /* WIZARD */
 
 /*light.c*/

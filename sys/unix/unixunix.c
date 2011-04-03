@@ -236,9 +236,8 @@ int wt;
 	linux_mapoff();
 #endif
 	(void) signal(SIGINT, (SIG_RET_TYPE) done1);
-#ifdef WIZARD
-	if(wizard) (void) signal(SIGQUIT,SIG_DFL);
-#endif
+	if(wizard)
+		(void) signal(SIGQUIT,SIG_DFL);
 	if(wt) {
 		raw_print("");
 		wait_synch();

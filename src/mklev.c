@@ -6,11 +6,7 @@
 /* #define DEBUG */	/* uncomment to enable code debugging */
 
 #ifdef DEBUG
-# ifdef WIZARD
 #define debugpline	if (wizard) pline
-# else
-#define debugpline	pline
-# endif
 #endif
 
 /* for UNIX, Rand #def'd to (long)lrand48() or (long)random() */
@@ -708,9 +704,7 @@ makelevel()
     {
 	register int u_depth = depth(&u.uz);
 
-#ifdef WIZARD
 	if(wizard && nh_getenv("SHOPTYPE")) mkroom(SHOPBASE); else
-#endif
 	if (u_depth > 1 &&
 	    u_depth < depth(&medusa_level) &&
 	    nroom >= room_threshold &&
@@ -1554,11 +1548,7 @@ xchar x, y;
 	}
 
 	/* Already set or 2/3 chance of deferring until a later level. */
-	if (source->dnum < n_dgns || (rn2(3)
-#ifdef WIZARD
-				      && !wizard
-#endif
-				      )) return;
+	if (source->dnum < n_dgns || (rn2(3) && !wizard)) return;
 
 	if (! (u.uz.dnum == oracle_level.dnum	    /* in main dungeon */
 		&& !at_dgn_entrance("The Quest")    /* but not Quest's entry */

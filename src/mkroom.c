@@ -68,7 +68,6 @@ mkshop()
 {
 	register struct mkroom *sroom;
 	int i = -1;
-#ifdef WIZARD
 	char *ep = (char *)0;	/* (init == lint suppression) */
 
 	/* first determine shoptype */
@@ -125,7 +124,7 @@ mkshop()
 		}
 	}
 gottype:
-#endif
+
 	for(sroom = &rooms[0]; ; sroom++){
 		if(sroom->hx < 0) return;
 		if(sroom - rooms >= nroom) {
@@ -135,10 +134,7 @@ gottype:
 		if(sroom->rtype != OROOM) continue;
 		if(has_dnstairs(sroom) || has_upstairs(sroom))
 			continue;
-		if(
-#ifdef WIZARD
-		   (wizard && ep && sroom->doorct != 0) ||
-#endif
+		if((wizard && ep && sroom->doorct != 0) ||
 			sroom->doorct == 1) break;
 	}
 	if (!sroom->rlit) {
@@ -195,11 +191,7 @@ register boolean strict;
 			continue;
 		} else if(has_upstairs(sroom) || has_dnstairs(sroom))
 			continue;
-		if(sroom->doorct == 1 || !rn2(5)
-#ifdef WIZARD
-						|| wizard
-#endif
-							)
+		if(sroom->doorct == 1 || !rn2(5) || wizard)
 			return sroom;
 	}
 	return (struct mkroom *)0;

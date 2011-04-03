@@ -49,9 +49,7 @@ moveloop()
     monstr_init();	/* monster strengths */
     objects_init();
 
-#ifdef WIZARD
     if (wizard) add_debug_extended_commands();
-#endif
 
     (void) encumber_msg(); /* in case they auto-picked up something */
 
@@ -372,10 +370,8 @@ moveloop()
 	    }
 	}
 
-#ifdef WIZARD
 	if (iflags.sanity_check)
 	    sanity_check();
-#endif
 
 #ifdef CLIPPING
 	/* just before rhack */

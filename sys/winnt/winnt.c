@@ -230,7 +230,6 @@ extern void backsp(void);
 
 void win32_abort()
 {
-#ifdef WIZARD
    	if (wizard) {
 # ifdef WIN32CON
 	    int c, ci, ct;
@@ -257,7 +256,6 @@ void win32_abort()
 			DebugBreak();
 # endif
 	}
-#endif
 	abort();
 }
 

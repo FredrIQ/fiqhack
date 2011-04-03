@@ -10,9 +10,7 @@
 #define EXTERN_H	/* comment line for pre-compiled headers */
 #include "config.h"
 
-#if defined(MONITOR_HEAP) || defined(WIZARD)
 char *fmt_ptr(const void *,char *);
-#endif
 
 #ifdef MONITOR_HEAP
 #undef alloc
@@ -54,8 +52,6 @@ register unsigned int lth;
 }
 
 
-#if defined(MONITOR_HEAP) || defined(WIZARD)
-
 /* format a pointer for display purposes; caller supplies the result buffer */
 char *
 fmt_ptr(ptr, buf)
@@ -65,8 +61,6 @@ char *buf;
 	Sprintf(buf, "%p", (void *)ptr);
 	return buf;
 }
-
-#endif
 
 #ifdef MONITOR_HEAP
 

@@ -73,11 +73,9 @@ boolean nethack_thinks_it_is_open;	/* Does NetHack think it's open?       */
 # endif
 #endif /*HOLD_LOCKFILE_OPEN*/
 
-#ifdef WIZARD
 #define WIZKIT_MAX 128
 static char wizkit[WIZKIT_MAX];
 static FILE *fopen_wizkit_file(void);
-#endif
 
 #if defined(WIN32)
 static int lockptr;
@@ -581,10 +579,8 @@ d_level *lev;
 #else
 	ret = rename(tempname, fq_bones);
 #endif
-#ifdef WIZARD
 	if (wizard && ret != 0)
 		pline("couldn't rename %s to %s.", tempname, fq_bones);
-#endif
 }
 
 
@@ -645,14 +641,12 @@ int fd;
 #endif
 
 
-#if defined(WIZARD)
 /* change pre-existing savefile name to indicate an error savefile */
 void
 set_error_savefile()
 {
 	Strcat(SAVEF, ".e");
 }
-#endif
 
 
 /* create save file, overwriting one if it already exists */
@@ -1159,10 +1153,8 @@ char		*tmp_levels;
 	    (void) get_uchars(fp, buf, bufp, translate, FALSE,
 					WARNCOUNT, "WARNINGS");
 	    assign_warnings(translate);
-#ifdef WIZARD
 	} else if (match_varname(buf, "WIZKIT", 6)) {
 	    (void) strncpy(wizkit, bufp, WIZKIT_MAX-1);
-#endif
 #ifdef USER_SOUNDS
 	} else if (match_varname(buf, "SOUNDDIR", 8)) {
 		sounddir = (char *)strdup(bufp);
@@ -1218,7 +1210,7 @@ const char *filename;
 	return;
 }
 
-#ifdef WIZARD
+
 static FILE *
 fopen_wizkit_file()
 {
@@ -1315,7 +1307,6 @@ read_wizkit()
 	return;
 }
 
-#endif /*WIZARD*/
 
 /* ----------  END CONFIG FILE HANDLING ----------- */
 

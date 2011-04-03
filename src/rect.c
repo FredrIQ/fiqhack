@@ -135,9 +135,7 @@ add_rect(r)
 NhRect *r;
 {
 	if (rect_cnt >= MAXRECT) {
-#ifdef WIZARD
 		if (wizard) pline("MAXRECT may be too small.");
-#endif
 		return;
 	}
 	/* Check that this NhRect is not included in another one */

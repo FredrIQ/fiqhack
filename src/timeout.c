@@ -1271,10 +1271,8 @@ do_storms()
  *		Stop all timers attached to obj.
  */
 
-#ifdef WIZARD
 static const char *kind_name(SHORT_P);
 static void print_queue(winid, timer_element *);
-#endif
 static void insert_timer(timer_element *);
 static timer_element *remove_timer(timer_element **, SHORT_P,void *);
 static void write_timer(int, timer_element *);
@@ -1310,8 +1308,6 @@ static const ttable timeout_funcs[NUM_TIME_FUNCS] = {
 };
 #undef TTAB
 
-
-#if defined(WIZARD)
 
 static const char *
 kind_name(kind)
@@ -1393,8 +1389,6 @@ timer_sanity_check()
 	    }
 	}
 }
-
-#endif /* WIZARD */
 
 
 /*

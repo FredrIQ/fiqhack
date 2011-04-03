@@ -496,9 +496,6 @@ static const char *build_opts[] = {
 #ifdef DLB
 		"data librarian",
 #endif
-#ifdef WIZARD
-		"debug mode",
-#endif
 #ifdef ELBERETH
 		"Elbereth",
 #endif

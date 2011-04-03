@@ -189,7 +189,6 @@ char *argv[];
 	plnamesuffix(); 	/* strip suffix from name; calls askname() */
 				/* again if suffix was whole name */
 				/* accepts any suffix */
-#ifdef WIZARD
 	if (wizard) {
 		if(!strcmp(plname, WIZARD))
 			Strcpy(plname, "wizard");
@@ -198,7 +197,6 @@ char *argv[];
 			discover = TRUE;
 		}
 	}
-#endif /* WIZARD */
 #if defined(PC_LOCKING)
 	/* 3.3.0 added this to support detection of multiple games
 	 * under the same plname on the same machine in a windowed
@@ -271,12 +269,10 @@ char *argv[];
 #endif
 
 	if ((fd = restore_saved_game()) >= 0) {
-#ifdef WIZARD
 		/* Since wizard is actually flags.debug, restoring might
 		 * overwrite it.
 		 */
 		boolean remember_wiz_mode = wizard;
-#endif
 #ifndef NO_SIGNAL
 		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
@@ -291,9 +287,7 @@ char *argv[];
 
 		if(!dorecover(fd))
 			goto not_recovered;
-#ifdef WIZARD
 		if(!wizard && remember_wiz_mode) wizard = TRUE;
-#endif
 		check_special_room(FALSE);
 		if (discover)
 			You("are in non-scoring discovery mode.");
@@ -351,7 +345,6 @@ char *argv[];
 			}
 			break;
 		case 'D':
-#ifdef WIZARD
 			/* If they don't have a valid wizard name, it'll be
 			 * changed to discover later.  Cannot check for
 			 * validity of the name right now--it might have a
@@ -359,7 +352,6 @@ char *argv[];
 			 */
 			wizard = TRUE;
 			break;
-#endif
 		case 'X':
 			discover = TRUE;
 			break;

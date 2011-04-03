@@ -84,12 +84,8 @@ static struct Bool_Opt
 	{"lootabc", &iflags.lootabc, FALSE, SET_IN_GAME},
 	{"Macgraphics", (boolean *)0, FALSE, SET_IN_FILE},
 	{"mail", (boolean *)0, TRUE, SET_IN_FILE},
-#ifdef WIZARD
 	/* for menu debugging only*/
 	{"menu_tab_sep", &iflags.menu_tab_sep, FALSE, SET_IN_GAME},
-#else
-	{"menu_tab_sep", (boolean *)0, FALSE, SET_IN_FILE},
-#endif
 	{"mouse_support", &iflags.wc_mouse_support, TRUE, DISP_IN_GAME},	/*WC*/
 #ifdef NEWS
 	{"news", &iflags.news, TRUE, DISP_IN_GAME},
@@ -106,11 +102,7 @@ static struct Bool_Opt
 	{"rawio", (boolean *)0, FALSE, SET_IN_FILE},
 	{"rest_on_space", &flags.rest_on_space, FALSE, SET_IN_GAME},
 	{"safe_pet", &flags.safe_dog, TRUE, SET_IN_GAME},
-#ifdef WIZARD
 	{"sanity_check", &iflags.sanity_check, FALSE, SET_IN_GAME},
-#else
-	{"sanity_check", (boolean *)0, FALSE, SET_IN_FILE},
-#endif
 #ifdef EXP_ON_BOTL
 	{"showexp", &flags.showexp, FALSE, SET_IN_GAME},
 #else
@@ -2174,10 +2166,8 @@ doset()
 			((boolopt[i].optflags == DISP_IN_GAME && pass == 0) ||
 			 (boolopt[i].optflags == SET_IN_GAME && pass == 1))) {
 		    if (bool_p == &flags.female) continue;  /* obsolete */
-#ifdef WIZARD
 		    if (bool_p == &iflags.sanity_check && !wizard) continue;
 		    if (bool_p == &iflags.menu_tab_sep && !wizard) continue;
-#endif
 		    if (is_wc_option(boolopt[i].name) &&
 			!wc_supported(boolopt[i].name)) continue;
 		    if (is_wc2_option(boolopt[i].name) &&
@@ -3060,10 +3050,8 @@ option_help()
     /* Boolean options */
     for (i = 0; boolopt[i].name; i++) {
 	if (boolopt[i].addr) {
-#ifdef WIZARD
 	    if (boolopt[i].addr == &iflags.sanity_check && !wizard) continue;
 	    if (boolopt[i].addr == &iflags.menu_tab_sep && !wizard) continue;
-#endif
 	    next_opt(datawin, boolopt[i].name);
 	}
     }

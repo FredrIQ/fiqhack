@@ -4,9 +4,7 @@
 
 #include "hack.h"
 #include "epri.h"
-#ifdef WIZARD
 #include "edog.h"
-#endif
 
 static boolean no_repeat = FALSE;
 
@@ -269,7 +267,6 @@ register struct monst *mtmp;
 
 	info[0] = 0;
 	if (mtmp->mtame) {	  Strcat(info, ", tame");
-#ifdef WIZARD
 	    if (wizard) {
 		Sprintf(eos(info), " (%d", mtmp->mtame);
 		if (!mtmp->isminion)
@@ -277,7 +274,6 @@ register struct monst *mtmp;
 			EDOG(mtmp)->hungrytime, EDOG(mtmp)->apport);
 		Strcat(info, ")");
 	    }
-#endif
 	}
 	else if (mtmp->mpeaceful) Strcat(info, ", peaceful");
 	if (mtmp->meating)	  Strcat(info, ", eating");

@@ -140,9 +140,7 @@ E char pgetchar(void);
 E void pushch(CHAR_P);
 E void savech(CHAR_P);
 #endif
-#ifdef WIZARD
 E void add_debug_extended_commands(void);
-#endif /* WIZARD */
 E void rhack(char *);
 E int doextlist(void);
 E int extcmd_via_menu(void);
@@ -157,9 +155,7 @@ E int isok(int,int);
 E int get_adjacent_loc(const char *, const char *, XCHAR_P, XCHAR_P, coord *);
 E const char *click_to_cmd(int,int,int);
 E char readchar(void);
-#ifdef WIZARD
 E void sanity_check(void);
-#endif
 E char yn_function(const char *, const char *, CHAR_P);
 
 /* ### dbridge.c ### */
@@ -463,9 +459,7 @@ E int induced_align(int);
 E boolean Invocation_lev(d_level *);
 E xchar level_difficulty(void);
 E schar lev_by_name(const char *);
-#ifdef WIZARD
 E schar print_dungeon(BOOLEAN_P,schar *,xchar *);
-#endif
 
 /* ### eat.c ### */
 
@@ -574,9 +568,7 @@ E void set_savefile_name(void);
 #ifdef INSURANCE
 E void save_savefile_name(int);
 #endif
-#if defined(WIZARD)
 E void set_error_savefile(void);
-#endif
 E int create_savefile(void);
 E int open_savefile(void);
 E int delete_savefile(void);
@@ -588,9 +580,7 @@ E boolean can_read_file(const char *);
 #endif
 E void read_config_file(const char *);
 E void check_recordfile(const char *);
-#if defined(WIZARD)
 E void read_wizkit(void);
-#endif
 E void paniclog(const char *, const char *);
 E int validate_prefix_locations(char *);
 E void free_saved_games(char**);
@@ -777,9 +767,7 @@ E boolean obj_is_burning(struct obj *);
 E void obj_split_light_source(struct obj *, struct obj *);
 E void obj_merge_light_sources(struct obj *,struct obj *);
 E int candle_light_range(struct obj *);
-#ifdef WIZARD
 E int wiz_light_sources(void);
-#endif
 
 /* ### lock.c ### */
 
@@ -950,9 +938,7 @@ E void add_to_buried(struct obj *);
 E void dealloc_obj(struct obj *);
 E void obj_ice_effects(int, int, BOOLEAN_P);
 E long peek_at_iced_corpse_age(struct obj *);
-#ifdef WIZARD
 E void obj_sanity_check(void);
-#endif
 
 /* ### mkroom.c ### */
 
@@ -1461,9 +1447,7 @@ E void do_genocide(int);
 E void punish(struct obj *);
 E void unpunish(void);
 E boolean cant_create(int *, BOOLEAN_P);
-#ifdef WIZARD
 E boolean create_particular(void);
-#endif
 
 /* ### rect.c ### */
 
@@ -1764,10 +1748,8 @@ E boolean obj_is_local(struct obj *);
 E void save_timers(int,int,int);
 E void restore_timers(int,int,BOOLEAN_P,long);
 E void relink_timers(BOOLEAN_P);
-#ifdef WIZARD
 E int wiz_timeout_queue(void);
 E void timer_sanity_check(void);
-#endif
 
 /* ### topten.c ### */
 

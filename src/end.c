@@ -120,7 +120,7 @@ done2()
 		}
 		return 0;
 	}
-#if defined(WIZARD) && defined(UNIX)
+#if defined(UNIX)
 	if(wizard) {
 	    int c;
 	    const char *tmp = "Dump core?";
@@ -256,7 +256,6 @@ panic (const char *str, ...)
 		  !program_state.something_worth_saving ?
 		  "Program initialization has failed." :
 		  "Suddenly, the dungeon collapses.");
-#if defined(WIZARD)
 # if defined(NOTIFY_NETHACK_BUGS)
 	if (!wizard)
 	    raw_printf("Report the following error to \"%s\".",
@@ -274,17 +273,15 @@ panic (const char *str, ...)
 	    set_error_savefile();
 	    (void) dosave0();
 	}
-#endif
-	{
-	    char buf[BUFSZ];
-	    Vsprintf(buf,str,the_args);
-	    raw_print(buf);
-	    paniclog("panic", buf);
-	}
+	
+	char buf[BUFSZ];
+	Vsprintf(buf,str,the_args);
+	raw_print(buf);
+	paniclog("panic", buf);
 #ifdef WIN32
 	interject(INTERJECT_PANIC);
 #endif
-#if defined(WIZARD) && (defined(UNIX) || defined(WIN32))
+#if defined(UNIX) || defined(WIN32)
 	if (wizard)
 	    NH_abort();	/* generate core dump */
 #endif
@@ -531,12 +528,10 @@ int how;
 		paniclog("trickery", killer);
 		killer = 0;
 	    }
-#ifdef WIZARD
 	    if (wizard) {
 		You("are a very tricky wizard, it seems.");
 		return;
 	    }
-#endif
 	}
 
 	/* kilbuf: used to copy killer in case it comes from something like
@@ -574,11 +569,7 @@ int how;
 			return;
 		}
 	}
-	if ((
-#ifdef WIZARD
-			wizard ||
-#endif
-			discover) && (how <= GENOCIDED)) {
+	if ((wizard || discover) && (how <= GENOCIDED)) {
 		if(yn("Die?") == 'y') goto die;
 		pline("OK, so you don't %s.",
 			(how == CHOKING) ? "choke" : "die");
@@ -707,9 +698,7 @@ die:
 	}
 
 	if (bones_ok) {
-#ifdef WIZARD
 	    if (!wizard || yn("Save bones?") == 'y')
-#endif
 		savebones(corpse);
 	    /* corpse may be invalid pointer now so
 		ensure that it isn't used again */
