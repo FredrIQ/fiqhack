@@ -2064,10 +2064,8 @@ char *buf;
 	    cmap = S_ice;				/* "ice" */
 	else if (is_pool(x,y))
 	    dfeature = "pool of water";
-#ifdef SINKS
 	else if (IS_SINK(ltyp))
 	    cmap = S_sink;				/* "sink" */
-#endif
 	else if (IS_ALTAR(ltyp)) {
 	    sprintf(altbuf, "altar to %s (%s)", a_gname(),
 		    align_str(Amask2align(lev->altarmask & ~AM_SHRINE)));

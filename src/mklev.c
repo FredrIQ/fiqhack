@@ -15,9 +15,7 @@
 
 
 static void mkfount(int,struct mkroom *);
-#ifdef SINKS
 static void mksink(struct mkroom *);
-#endif
 static void mkaltar(struct mkroom *);
 static void mkgrave(struct mkroom *);
 static void makevtele(void);
@@ -752,9 +750,7 @@ skip0:
 		if(Is_rogue_level(&u.uz)) goto skip_nonrogue;
 #endif
 		if(!rn2(10)) mkfount(0,croom);
-#ifdef SINKS
 		if(!rn2(60)) mksink(croom);
-#endif
 		if(!rn2(60)) mkaltar(croom);
 		x = 80 - (depth(&u.uz) * 2);
 		if (x < 2) x = 2;
@@ -1300,7 +1296,7 @@ struct mkroom *croom;
 	level.flags.nfountains++;
 }
 
-#ifdef SINKS
+
 static void
 mksink(croom)
 struct mkroom *croom;
@@ -1319,7 +1315,6 @@ struct mkroom *croom;
 
 	level.flags.nsinks++;
 }
-#endif /* SINKS */
 
 
 static void

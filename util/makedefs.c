@@ -320,9 +320,6 @@ make_version()
 #ifdef REINCARNATION
 			| (1L <<  1)
 #endif
-#ifdef SINKS
-			| (1L <<  2)
-#endif
 		/* monsters (5..9) */
 #ifdef KOPS
 			| (1L <<  6)
@@ -532,9 +529,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef SEDUCE
 		"seduction",
-#endif
-#ifdef SINKS
-		"sinks",
 #endif
 #ifdef TERMINFO
 		"terminal info library",
@@ -763,9 +757,6 @@ h_filter(line)
     if (*line == '#') return TRUE;	/* ignore comment lines */
     if (sscanf(line, "----- %s", tag) == 1) {
 	skip = FALSE;
-#ifndef SINKS
-	if (!strcmp(tag, "SINKS")) skip = TRUE;
-#endif
 #ifndef ELBERETH
 	if (!strcmp(tag, "ELBERETH")) skip = TRUE;
 #endif

@@ -7,9 +7,7 @@
 static void maybe_wail(void);
 static int moverock(void);
 static int still_chewing(XCHAR_P,XCHAR_P);
-#ifdef SINKS
 static void dosinkfall(void);
-#endif
 static boolean findtravelpath(BOOLEAN_P);
 static boolean monstinroom(struct permonst *,int);
 
@@ -434,7 +432,6 @@ xchar ox, oy;
 	newsym(ox, oy);
 }
 
-#ifdef SINKS
 static const char fell_on_sink[] = "fell onto a sink";
 
 static void
@@ -487,7 +484,6 @@ dosinkfall()
 	}
 	HLevitation--;
 }
-#endif
 
 boolean
 may_dig(x,y)
@@ -1495,10 +1491,8 @@ stillinwater:;
 	    }
 	}
 	check_special_room(FALSE);
-#ifdef SINKS
 	if(IS_SINK(levl[u.ux][u.uy].typ) && Levitation)
 		dosinkfall();
-#endif
 	if (!in_steed_dismounting) { /* if dismounting, we'll check again later */
 		struct trap *trap = t_at(u.ux, u.uy);
 		boolean pit;

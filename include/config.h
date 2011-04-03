@@ -147,8 +147,6 @@ typedef unsigned char	uchar;
  * complexity of the game but also to the size of the load module.
  */
 
-/* dungeon features */
-#define SINKS		/* Kitchen sinks - Janet Walz */
 /* dungeon levels */
 #define WALLIFIED_MAZE	/* Fancy mazes - Jean-Christophe Collet */
 #define REINCARNATION	/* Special Rogue-like levels */

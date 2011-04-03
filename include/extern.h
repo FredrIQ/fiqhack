@@ -580,10 +580,8 @@ extern void dogushforth(int);
 extern void dryup(XCHAR_P,XCHAR_P, BOOLEAN_P);
 extern void drinkfountain(void);
 extern void dipfountain(struct obj *);
-#ifdef SINKS
 extern void breaksink(int,int);
 extern void drinksink(void);
-#endif
 
 /* ### hack.c ### */
 

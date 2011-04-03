@@ -612,7 +612,7 @@ LEV_COMP(6)                   1996                    LEV_COMP(6)
      'H'     a secret corridor
      '{'     a fountain
      '\'     a throne
-     'K'     a sink (if SINKS is defined, else a room location)
+     'K'     a sink
      '}'     a part of a moat or other deep water
      'P'     a pool
      'L'     lava

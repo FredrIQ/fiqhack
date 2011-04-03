@@ -421,13 +421,7 @@ char c;
 		  case 'H'  : return(SCORR);
 		  case '{'  : return(FOUNTAIN);
 		  case '\\' : return(THRONE);
-		  case 'K'  :
-#ifdef SINKS
-		      return(SINK);
-#else
-		      yywarning("Sinks are not allowed in this version!  Ignoring...");
-		      return(ROOM);
-#endif
+		  case 'K'  : return(SINK);
 		  case '}'  : return(MOAT);
 		  case 'P'  : return(POOL);
 		  case 'L'  : return(LAVAPOOL);
