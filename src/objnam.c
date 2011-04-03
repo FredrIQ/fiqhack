@@ -186,7 +186,7 @@ register struct obj *obj;
 char *
 distant_name(obj, func)
 register struct obj *obj;
-char *(*func)(OBJ_P);
+char *(*func)(struct obj*);
 {
 	char *str;
 
@@ -875,7 +875,7 @@ struct obj *obj;
 const char *
 singular(otmp, func)
 register struct obj *otmp;
-char *(*func)(OBJ_P);
+char *(*func)(struct obj*);
 {
 	long savequan;
 	char *nam;

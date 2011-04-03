@@ -981,8 +981,8 @@ boolean twoweap; /* used to restore twoweapon mode if wielded weapon returns */
 		if (Underwater) range = 1;
 
 		mon = bhit(u.dx, u.dy, range, THROWN_WEAPON,
-			   (int (*)(MONST_P,OBJ_P))0,
-			   (int (*)(OBJ_P,OBJ_P))0,
+			   (int (*)(struct monst*,struct obj*))0,
+			   (int (*)(struct obj*,struct obj*))0,
 			   obj);
 
 		/* have to do this after bhit() so u.ux & u.uy are correct */
@@ -1746,8 +1746,8 @@ struct obj *obj;
 			bhitpos.y = u.uy;
 		} else {
 			mon = bhit(u.dx, u.dy, range, THROWN_WEAPON,
-				   (int (*)(MONST_P,OBJ_P))0,
-				   (int (*)(OBJ_P,OBJ_P))0,
+				   (int (*)(struct monst*,struct obj*))0,
+				   (int (*)(struct obj*,struct obj*))0,
 				   obj);
 			if(mon) {
 			    if (ghitm(mon, obj))	/* was it caught? */

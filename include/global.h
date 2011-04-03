@@ -59,8 +59,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #define BOOLEAN_P int
 #define ALIGNTYP_P int
 
-#define OBJ_P struct obj*
-#define MONST_P struct monst*
 
 #define SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 

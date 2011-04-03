@@ -704,12 +704,12 @@ E boolean is_worn(struct obj *);
 E struct obj *g_at(int,int);
 E struct obj *mkgoldobj(long);
 E struct obj *getobj(const char *,const char *);
-E int ggetobj(const char *,int (*)(OBJ_P),int,BOOLEAN_P,unsigned *);
+E int ggetobj(const char *,int (*)(struct obj*),int,BOOLEAN_P,unsigned *);
 E void fully_identify_obj(struct obj *);
 E int identify(struct obj *);
 E void identify_pack(int);
-E int askchain(struct obj **,const char *,int,int (*)(OBJ_P),
-			int (*)(OBJ_P),int,const char *);
+E int askchain(struct obj **,const char *,int,int (*)(struct obj*),
+			int (*)(struct obj*),int,const char *);
 E void prinv(const char *,struct obj *,long);
 E char *xprname(struct obj *,const char *,CHAR_P,BOOLEAN_P,long,long);
 E int ddoinv(void);
@@ -1169,7 +1169,7 @@ E void objects_init(void);
 E char *obj_typename(int);
 E char *simple_typename(int);
 E boolean obj_is_pname(struct obj *);
-E char *distant_name(struct obj *,char *(*)(OBJ_P));
+E char *distant_name(struct obj *,char *(*)(struct obj*));
 E char *fruitname(BOOLEAN_P);
 E char *xname(struct obj *);
 E char *mshot_xname(struct obj *);
@@ -1179,7 +1179,7 @@ E boolean not_fully_identified(struct obj *);
 E char *corpse_xname(struct obj *,BOOLEAN_P);
 E char *cxname(struct obj *);
 E char *killer_xname(struct obj *);
-E const char *singular(struct obj *,char *(*)(OBJ_P));
+E const char *singular(struct obj *,char *(*)(struct obj*));
 E char *an(const char *);
 E char *An(const char *);
 E char *The(const char *);
@@ -1275,10 +1275,10 @@ E void getlock(void);
 
 #ifdef GOLDOBJ
 E int collect_obj_classes
-	(char *,struct obj *,BOOLEAN_P,boolean (*)(OBJ_P), int *);
+	(char *,struct obj *,BOOLEAN_P,boolean (*)(struct obj*), int *);
 #else
 E int collect_obj_classes
-	(char *,struct obj *,BOOLEAN_P,BOOLEAN_P,boolean (*)(OBJ_P), int *);
+	(char *,struct obj *,BOOLEAN_P,BOOLEAN_P,boolean (*)(struct obj*), int *);
 #endif
 E void add_valid_menu_class(int);
 E boolean allow_all(struct obj *);
@@ -1289,7 +1289,7 @@ E int pickup_object(struct obj *, long, BOOLEAN_P);
 E int query_category(const char *, struct obj *, int,
 				menu_item **, int);
 E int query_objlist(const char *, struct obj *, int,
-				menu_item **, int, boolean (*)(OBJ_P));
+				menu_item **, int, boolean (*)(struct obj*));
 E struct obj *pick_obj(struct obj *);
 E int encumber_msg(void);
 E int doloot(void);
@@ -2011,7 +2011,7 @@ E boolean obj_resists(struct obj *,int,int);
 E boolean obj_shudders(struct obj *);
 E void do_osshock(struct obj *);
 E int bhito(struct obj *,struct obj *);
-E int bhitpile(struct obj *,int (*)(OBJ_P,OBJ_P),int,int);
+E int bhitpile(struct obj *,int (*)(struct obj*,struct obj*),int,int);
 E int zappable(struct obj *);
 E void zapnodir(struct obj *);
 E int dozap(void);
@@ -2023,8 +2023,8 @@ E int spell_damage_bonus(void);
 E const char *exclam(int force);
 E void hit(const char *,struct monst *,const char *);
 E void miss(const char *,struct monst *);
-E struct monst *bhit(int,int,int,int,int (*)(MONST_P,OBJ_P),
-			     int (*)(OBJ_P,OBJ_P),struct obj *);
+E struct monst *bhit(int,int,int,int,int (*)(struct monst*,struct obj*),
+			     int (*)(struct obj*,struct obj*),struct obj *);
 E struct monst *boomhit(int,int);
 E int burn_floor_paper(int,int,BOOLEAN_P,BOOLEAN_P);
 E void buzz(int,int,XCHAR_P,XCHAR_P,int,int);

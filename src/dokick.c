@@ -551,8 +551,8 @@ xchar x, y;
 	(void) snuff_candle(kickobj);
 	newsym(x, y);
 	mon = bhit(u.dx, u.dy, range, KICKED_WEAPON,
-		   (int (*)(MONST_P,OBJ_P))0,
-		   (int (*)(OBJ_P,OBJ_P))0,
+		   (int (*)(struct monst*,struct obj*))0,
+		   (int (*)(struct obj*,struct obj*))0,
 		   kickobj);
 
 	if(mon) {
