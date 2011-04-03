@@ -347,9 +347,6 @@ make_version()
 #ifdef ELBERETH
 			| (1L << 19)
 #endif
-#ifdef EXP_ON_BOTL
-			| (1L << 20)
-#endif
 #ifdef SCORE_ON_BOTL
 			| (1L << 21)
 #endif
@@ -494,9 +491,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef ELBERETH
 		"Elbereth",
-#endif
-#ifdef EXP_ON_BOTL
-		"experience points on status line",
 #endif
 #ifdef GOLDOBJ
 		"gold object in inventories",

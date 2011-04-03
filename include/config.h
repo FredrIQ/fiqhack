@@ -167,7 +167,6 @@ typedef unsigned char	uchar;
 # define DOAGAIN '\001' /* ^A, the "redo" key used in cmd.c and getline.c */
 #endif
 
-#define EXP_ON_BOTL	/* Show experience on bottom line */
 /* #define SCORE_ON_BOTL */	/* added by Gary Erickson (erickson@ucivax) */
 
 /*
