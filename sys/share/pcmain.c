@@ -101,7 +101,7 @@ char *argv[];
 		    int prefcnt;
 
 		    fqn_prefix[0] = (char *)alloc(strlen(hackdir)+2);
-		    Strcpy(fqn_prefix[0], hackdir);
+		    strcpy(fqn_prefix[0], hackdir);
 		    append_slash(fqn_prefix[0]);
 		    for (prefcnt = 1; prefcnt < PREFIX_COUNT; prefcnt++)
 			fqn_prefix[prefcnt] = fqn_prefix[0];
@@ -122,7 +122,7 @@ char *argv[];
 #endif
 
 	if (!hackdir[0])
-		Strcpy(hackdir, orgdir);
+		strcpy(hackdir, orgdir);
 	
 	if(argc > 1) {
 	    if (!strncmp(argv[1], "-d", 2) && argv[1][2] != 'e') {
@@ -140,7 +140,7 @@ char *argv[];
 		}
 		if(!*dir)
 		    error("Flag -d must be followed by a directory name.");
-		Strcpy(hackdir, dir);
+		strcpy(hackdir, dir);
 	    }
 	    if (argc > 1) {
 
@@ -191,7 +191,7 @@ char *argv[];
 				/* accepts any suffix */
 	if (wizard) {
 		if(!strcmp(plname, WIZARD))
-			Strcpy(plname, "wizard");
+			strcpy(plname, "wizard");
 		else {
 			wizard = FALSE;
 			discover = TRUE;
@@ -212,19 +212,19 @@ char *argv[];
 # if defined(WIN32)
 	/* Obtain the name of the logged on user and incorporate
 	 * it into the name. */
-	Sprintf(fnamebuf, "%s-%s", get_username(0), plname);
+	sprintf(fnamebuf, "%s-%s", get_username(0), plname);
 	(void)fname_encode("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.",
 				'%', fnamebuf, encodedfnamebuf, BUFSZ);
-	Sprintf(lock, "%s",encodedfnamebuf);
+	sprintf(lock, "%s",encodedfnamebuf);
 	/* regularize(lock); */ /* we encode now, rather than substitute */
 # else
-	Strcpy(lock,plname);
+	strcpy(lock,plname);
 	regularize(lock);
 # endif
 	getlock();
 #else   /* What follows is !PC_LOCKING */
-	Strcpy(lock,plname);
-	Strcat(lock,".99");
+	strcpy(lock,plname);
+	strcat(lock,".99");
 	regularize(lock);	/* is this necessary? */
 #endif	/* PC_LOCKING */
 
@@ -437,17 +437,17 @@ nhusage()
 	buf1[0] = '\0';
 	bufptr = buf1;
 
-#define ADD_USAGE(s)	if ((strlen(buf1) + strlen(s)) < (BUFSZ - 1)) Strcat(bufptr, s);
+#define ADD_USAGE(s)	if ((strlen(buf1) + strlen(s)) < (BUFSZ - 1)) strcat(bufptr, s);
 
 	/* -role still works for those cases which aren't already taken, but
 	 * is deprecated and will not be listed here.
 	 */
-	(void) Sprintf(buf2,
+	(void) sprintf(buf2,
 "\nUsage:\n%s [-d dir] -s [-r race] [-p profession] [maxrank] [name]...\n       or",
 		hname);
 	ADD_USAGE(buf2);
 
-	(void) Sprintf(buf2,
+	(void) sprintf(buf2,
 	 "\n%s [-d dir] [-u name] [-r race] [-p profession] [-[DX]]",
 		hname);
 	ADD_USAGE(buf2);
@@ -512,7 +512,7 @@ char *str;
 	bsize = EXEPATHBUFSZ;
 	tmp = exepathbuf;
 # ifndef WIN32
-	Strcpy (tmp, str);
+	strcpy (tmp, str);
 # else
 	#ifdef UNICODE
 	{

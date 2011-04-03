@@ -40,7 +40,7 @@ char *outbuf;
 	/* a random engraving may come from the "rumors" file,
 	   or from the list above */
 	if (!rn2(4) || !(rumor = getrumor(0, outbuf, TRUE)) || !*rumor)
-	    Strcpy(outbuf, random_mesg[rn2(SIZE(random_mesg))]);
+	    strcpy(outbuf, random_mesg[rn2(SIZE(random_mesg))]);
 
 	wipeout_text(outbuf, (int)(strlen(outbuf) / 4), 0);
 	return outbuf;
@@ -355,7 +355,7 @@ register xchar e_type;
 	ep->engr_x = x;
 	ep->engr_y = y;
 	ep->engr_txt = (char *)(ep + 1);
-	Strcpy(ep->engr_txt, s);
+	strcpy(ep->engr_txt, s);
 	/* engraving Elbereth shows wisdom */
 	if (!in_mklev && !strcmp(s, "Elbereth")) exercise(A_WIS, TRUE);
 	ep->engr_time = e_time;
@@ -607,20 +607,20 @@ doengrave()
 			 * previous engraving even if turning to dust.
 			 */
 		    case WAN_STRIKING:
-			Strcpy(post_engr_text,
+			strcpy(post_engr_text,
 			"The wand unsuccessfully fights your attempt to write!"
 			);
 			break;
 		    case WAN_SLOW_MONSTER:
 			if (!Blind) {
-			   Sprintf(post_engr_text,
+			   sprintf(post_engr_text,
 				   "The bugs on the %s slow down!",
 				   surface(u.ux, u.uy));
 			}
 			break;
 		    case WAN_SPEED_MONSTER:
 			if (!Blind) {
-			   Sprintf(post_engr_text,
+			   sprintf(post_engr_text,
 				   "The bugs on the %s speed up!",
 				   surface(u.ux, u.uy));
 			}
@@ -645,7 +645,7 @@ doengrave()
 		    case WAN_MAGIC_MISSILE:
 			ptext = TRUE;
 			if (!Blind) {
-			   Sprintf(post_engr_text,
+			   sprintf(post_engr_text,
 				   "The %s is riddled by bullet holes!",
 				   surface(u.ux, u.uy));
 			}
@@ -655,7 +655,7 @@ doengrave()
 		    case WAN_SLEEP:
 		    case WAN_DEATH:
 			if (!Blind) {
-			   Sprintf(post_engr_text,
+			   sprintf(post_engr_text,
 				   "The bugs on the %s stop moving!",
 				   surface(u.ux, u.uy));
 			}
@@ -663,7 +663,7 @@ doengrave()
 
 		    case WAN_COLD:
 			if (!Blind)
-			    Strcpy(post_engr_text,
+			    strcpy(post_engr_text,
 				"A few ice cubes drop from the wand.");
 			if(!oep || (oep->engr_type != BURN))
 			    break;
@@ -696,14 +696,14 @@ doengrave()
 			    doknown = TRUE;
 			}
 			if (!Blind)
-			    Strcpy(post_engr_text,
+			    strcpy(post_engr_text,
 				IS_GRAVE(levl[u.ux][u.uy].typ) ?
 				"Chips fly out from the headstone." :
 				is_ice(u.ux,u.uy) ?
 				"Ice chips fly up from the ice surface!" :
 				"Gravel flies up from the floor.");
 			else
-			    Strcpy(post_engr_text, "You hear drilling!");
+			    strcpy(post_engr_text, "You hear drilling!");
 			break;
 
 		    /* type = BURN wands */
@@ -715,7 +715,7 @@ doengrave()
 			    pline("This %s is a wand of fire!", xname(otmp));
 			    doknown = TRUE;
 			}
-			Strcpy(post_engr_text,
+			strcpy(post_engr_text,
 				Blind ? "You feel the wand heat up." :
 					"Flames fly from the wand.");
 			break;
@@ -729,11 +729,11 @@ doengrave()
 			    doknown = TRUE;
 			}
 			if (!Blind) {
-			    Strcpy(post_engr_text,
+			    strcpy(post_engr_text,
 				    "Lightning arcs from the wand.");
 			    doblind = TRUE;
 			} else
-			    Strcpy(post_engr_text, "You hear crackling!");
+			    strcpy(post_engr_text, "You hear crackling!");
 			break;
 
 		    /* type = MARK wands */
@@ -954,7 +954,7 @@ doengrave()
 		makeplural(body_part(FINGER)));
 
 	/* Prompt for engraving! */
-	Sprintf(qbuf,"What do you want to %s the %s here?", everb, eloc);
+	sprintf(qbuf,"What do you want to %s the %s here?", everb, eloc);
 	getlin(qbuf, ebuf);
 
 	/* Count the actual # of chars engraved not including spaces */
@@ -1079,7 +1079,7 @@ doengrave()
 	}
 
 	/* Add to existing engraving */
-	if (oep) Strcpy(buf, oep->engr_txt);
+	if (oep) strcpy(buf, oep->engr_txt);
 
 	(void) strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
 

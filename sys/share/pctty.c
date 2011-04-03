@@ -65,7 +65,7 @@ error (const char *s, ...)
 	/* error() may get called before tty is initialized */
 	if (iflags.window_inited) end_screen();
 	putchar('\n');
-	Vprintf(s, the_args);
+	vprintf(s, the_args);
 	putchar('\n');
 	va_end(the_args);
 	exit(EXIT_FAILURE);

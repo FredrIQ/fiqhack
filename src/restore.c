@@ -152,7 +152,7 @@ boolean ghostly;
 	    mread(fd, (void *) tmp_dam, sizeof(*tmp_dam));
 	    if (ghostly)
 		tmp_dam->when += (monstermoves - omoves);
-	    Strcpy(damaged_shops,
+	    strcpy(damaged_shops,
 		   in_rooms(tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 	    if (u.uz.dlevel) {
 		/* when restoring, there are two passes over the current
@@ -619,10 +619,10 @@ boolean ghostly;
 	    char trickbuf[BUFSZ];
 
 	    if (pid && pid != hpid)
-		Sprintf(trickbuf, "PID (%d) doesn't match saved PID (%d)!",
+		sprintf(trickbuf, "PID (%d) doesn't match saved PID (%d)!",
 			hpid, pid);
 	    else
-		Sprintf(trickbuf, "This is level %d, not %d!", dlvl, lev);
+		sprintf(trickbuf, "This is level %d, not %d!", dlvl, lev);
 	    if (wizard)
 		pline(trickbuf);
 	    trickery(trickbuf);

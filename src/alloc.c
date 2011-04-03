@@ -58,7 +58,7 @@ fmt_ptr(ptr, buf)
 const void * ptr;
 char *buf;
 {
-	Sprintf(buf, "%p", (void *)ptr);
+	sprintf(buf, "%p", (void *)ptr);
 	return buf;
 }
 

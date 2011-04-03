@@ -141,13 +141,13 @@ s_suffix(s)		/* return a name converted to possessive */
 {
     static char buf[BUFSZ];
 
-    Strcpy(buf, s);
+    strcpy(buf, s);
     if(!strcmpi(buf, "it"))
-	Strcat(buf, "s");
+	strcat(buf, "s");
     else if(*(eos(buf)-1) == 's')
-	Strcat(buf, "'");
+	strcat(buf, "'");
     else
-	Strcat(buf, "'s");
+	strcat(buf, "'s");
     return buf;
 }
 
@@ -242,7 +242,7 @@ sitoa(n)		/* make a signed digit string from a number */
 {
     static char buf[13];
 
-    Sprintf(buf, (n < 0) ? "%d" : "+%d", n);
+    sprintf(buf, (n < 0) ? "%d" : "+%d", n);
     return buf;
 }
 

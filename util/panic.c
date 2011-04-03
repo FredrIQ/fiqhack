@@ -25,7 +25,7 @@ panic (char *str, ...)
 		abort();    /* avoid loops - this should never happen*/
 
 	(void) fputs(" ERROR:  ", stderr);
-	Vfprintf(stderr, str, the_args);
+	vfprintf(stderr, str, the_args);
 	(void) fflush(stderr);
 #if defined(UNIX)
 # ifdef SYSV

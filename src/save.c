@@ -276,7 +276,7 @@ savestateinlock()
 
 		(void) read(fd, (void *) &hpid, sizeof(hpid));
 		if (hackpid != hpid) {
-		    Sprintf(whynot,
+		    sprintf(whynot,
 			    "Level #0 pid (%d) doesn't match ours (%d)!",
 			    hpid, hackpid);
 		    pline("%s", whynot);

@@ -191,7 +191,7 @@ boolean talk;
 		if (!haseyes(youmonst.data)) {
 		    strange_feeling((struct obj *)0, (char *)0);
 		} else if (Blindfolded) {
-		    Strcpy(buf, body_part(EYE));
+		    strcpy(buf, body_part(EYE));
 		    eyecnt = eyecount(youmonst.data);
 		    Your(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
 			 (eyecnt == 1) ? "itches" : "itch");
@@ -217,7 +217,7 @@ boolean talk;
 		if (!haseyes(youmonst.data)) {
 		    strange_feeling((struct obj *)0, (char *)0);
 		} else if (Blindfolded) {
-		    Strcpy(buf, body_part(EYE));
+		    strcpy(buf, body_part(EYE));
 		    eyecnt = eyecount(youmonst.data);
 		    Your(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
 			 (eyecnt == 1) ? "twitches" : "twitch");
@@ -269,7 +269,7 @@ long mask;	/* nonzero if resistance status should change by mask */
 		    char buf[BUFSZ];
 		    int eyecnt = eyecount(youmonst.data);
 
-		    Strcpy(buf, body_part(EYE));
+		    strcpy(buf, body_part(EYE));
 		    Your(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
 			 (eyecnt == 1) ? "itches" : "itch");
 		} else {	/* Grayswandir */
@@ -976,11 +976,11 @@ boolean your_fault;
 		    char buf[BUFSZ];
 
 		    if(has_head(mon->data)) {
-			Sprintf(buf, "%s %s",
+			sprintf(buf, "%s %s",
 				s_suffix(mnam),
 				(notonhead ? "body" : "head"));
 		    } else {
-			Strcpy(buf, mnam);
+			strcpy(buf, mnam);
 		    }
 		    pline_The("%s crashes on %s and breaks into shards.",
 			   botlnam, buf);
@@ -1536,7 +1536,7 @@ dodip()
 		}
 	} else if (is_pool(u.ux,u.uy)) {
 		tmp = waterbody_name(u.ux,u.uy);
-		Sprintf(qbuf, "Dip it into the %s?", tmp);
+		sprintf(qbuf, "Dip it into the %s?", tmp);
 		if (yn(qbuf) == 'y') {
 		    if (Levitation) {
 			floating_above(tmp);
@@ -1739,9 +1739,9 @@ dodip()
 	    if(potion->otyp == POT_SICKNESS && !obj->opoisoned) {
 		char buf[BUFSZ];
 		if (potion->quan > 1L)
-		    Sprintf(buf, "One of %s", the(xname(potion)));
+		    sprintf(buf, "One of %s", the(xname(potion)));
 		else
-		    Strcpy(buf, The(xname(potion)));
+		    strcpy(buf, The(xname(potion)));
 		pline("%s forms a coating on %s.",
 		      buf, the(xname(obj)));
 		obj->opoisoned = TRUE;
@@ -1862,7 +1862,7 @@ dodip()
 		oldbuf[0] = '\0';
 		if (potion->dknown) {
 		    old_dknown = TRUE;
-		    Sprintf(oldbuf, "%s ",
+		    sprintf(oldbuf, "%s ",
 			    hcolor(OBJ_DESCR(objects[potion->otyp])));
 		}
 		/* with multiple merged potions, split off one and
@@ -1887,9 +1887,9 @@ dodip()
 		} else {
 		    singlepotion->dknown = !Hallucination;
 		    if (mixture == POT_WATER && singlepotion->dknown)
-			Sprintf(newbuf, "clears");
+			sprintf(newbuf, "clears");
 		    else
-			Sprintf(newbuf, "turns %s",
+			sprintf(newbuf, "turns %s",
 				hcolor(OBJ_DESCR(objects[mixture])));
 		    pline_The("%spotion%s %s.", oldbuf,
 			      more_than_one ? " that you dipped into" : "",
@@ -1974,7 +1974,7 @@ struct monst *mon,	/* monster being split */
 	char reason[BUFSZ];
 
 	reason[0] = '\0';
-	if (mtmp) Sprintf(reason, " from %s heat",
+	if (mtmp) sprintf(reason, " from %s heat",
 			  (mtmp == &youmonst) ? (const char *)"your" :
 			      (const char *)s_suffix(mon_nam(mtmp)));
 

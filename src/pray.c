@@ -543,7 +543,7 @@ aligntyp resp_god;
 
 	You("fry to a crisp.");
 	killer_format = KILLED_BY;
-	Sprintf(killerbuf, "the wrath of %s", align_gname(resp_god));
+	sprintf(killerbuf, "the wrath of %s", align_gname(resp_god));
 	killer = killerbuf;
 	done(DIED);
 }
@@ -740,7 +740,7 @@ gcrownu()
       {
 	char swordbuf[BUFSZ];
 
-	Sprintf(swordbuf, "%s sword", hcolor(NH_BLACK));
+	sprintf(swordbuf, "%s sword", hcolor(NH_BLACK));
 	if (class_gift != STRANGE_OBJECT) {
 	    ;		/* already got bonus above */
 	} else if (in_hand) {
@@ -856,7 +856,7 @@ pleased(g_align)
 
 		*repair_buf = '\0';
 		if (uwep->oeroded || uwep->oeroded2)
-		    Sprintf(repair_buf, " and %s now as good as new",
+		    sprintf(repair_buf, " and %s now as good as new",
 			    otense(uwep, "are"));
 
 		if (uwep->cursed) {

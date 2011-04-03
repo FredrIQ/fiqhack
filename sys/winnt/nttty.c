@@ -378,7 +378,7 @@ really_move_cursor()
 		if (GetConsoleTitle(oldtitle, BUFSZ)) {
 			oldtitle[39] = '\0';
 		}
-		Sprintf(newtitle, "%-55s tty=(%02d,%02d) nttty=(%02d,%02d)",
+		sprintf(newtitle, "%-55s tty=(%02d,%02d) nttty=(%02d,%02d)",
 			oldtitle, ttyDisplay->curx, ttyDisplay->cury,
 			cursor.X, cursor.Y);
 		(void)SetConsoleTitle(newtitle);
@@ -860,8 +860,8 @@ load_keyboard_handler()
 		(void) strncpy(kh, iflags.altkeyhandler,
 				(MAX_ALTKEYHANDLER - sizeof suffx) - 1);
 		kh[(MAX_ALTKEYHANDLER - sizeof suffx) - 1] = '\0';
-		Strcat(kh, suffx);
-		Strcpy(iflags.altkeyhandler, kh);
+		strcat(kh, suffx);
+		strcpy(iflags.altkeyhandler, kh);
 		hLibrary = LoadLibrary(kh);
 		if (hLibrary) {
 		   pProcessKeystroke =
@@ -891,7 +891,7 @@ load_keyboard_handler()
 		}
 		(void)strncpy(kh, "nhdefkey.dll", (MAX_ALTKEYHANDLER - sizeof suffx) - 1);
 		kh[(MAX_ALTKEYHANDLER - sizeof suffx) - 1] = '\0';
-		Strcpy(iflags.altkeyhandler, kh);
+		strcpy(iflags.altkeyhandler, kh);
 		hLibrary = LoadLibrary(kh);
 		if (hLibrary) {
 		   pProcessKeystroke =
@@ -929,7 +929,7 @@ msmsg (const char *fmt, ...)
 	va_list the_args;
 	char buf[ROWNO * COLNO];	/* worst case scenario */
 	va_start(the_args, fmt);
-	Vsprintf(buf, fmt, the_args);
+	vsprintf(buf, fmt, the_args);
 	va_end(the_args);
 	xputs(buf);
 	if (ttyDisplay) curs(BASE_WINDOW, cursor.X+1, cursor.Y);

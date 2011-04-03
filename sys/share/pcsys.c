@@ -81,7 +81,7 @@ msmsg (const char * fmt, ...)
 {
 	va_list the_args;
 	va_start(the_args, fmt);
-	Vprintf(fmt, the_args);
+	vprintf(fmt, the_args);
 	flushout();
 	va_end(the_args);
 	return;

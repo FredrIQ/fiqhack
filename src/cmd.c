@@ -228,7 +228,7 @@ doextlist()	/* here after #? - now list all full-word commands */
 	putstr(datawin, 0, "");
 
 	for(efp = extcmdlist; efp->ef_txt; efp++) {
-		Sprintf(buf, "    %-15s - %s.", efp->ef_txt, efp->ef_desc);
+		sprintf(buf, "    %-15s - %s.", efp->ef_txt, efp->ef_desc);
 		putstr(datawin, 0, buf);
 	}
 	display_nhwindow(datawin, FALSE);
@@ -270,7 +270,7 @@ extcmd_via_menu()	/* here after # - now show pick-list of possible commands */
 			choices[i++] = efp;
 			if ((int)strlen(efp->ef_desc) > biggest) {
 				biggest = strlen(efp->ef_desc);
-				Sprintf(fmtstr,"%%-%ds", biggest + 15);
+				sprintf(fmtstr,"%%-%ds", biggest + 15);
 			}
 #ifdef DEBUG
 			if (i >= MAX_EXT_CMD - 2) {
@@ -303,7 +303,7 @@ extcmd_via_menu()	/* here after # - now show pick-list of possible commands */
 		if (accelerator != prevaccelerator || nchoices < (ROWNO - 3)) {
 		    if (acount) {
  			/* flush the extended commands for that letter already in buf */
-			Sprintf(buf, fmtstr, prompt);
+			sprintf(buf, fmtstr, prompt);
 			any.a_char = prevaccelerator;
 			add_menu(win, NO_GLYPH, &any, any.a_char, 0,
 					ATR_NONE, buf, FALSE);
@@ -312,24 +312,24 @@ extcmd_via_menu()	/* here after # - now show pick-list of possible commands */
 		}
 		prevaccelerator = accelerator;
 		if (!acount || nchoices < (ROWNO - 3)) {
-		    Sprintf(prompt, "%s [%s]", choices[i]->ef_txt,
+		    sprintf(prompt, "%s [%s]", choices[i]->ef_txt,
 				choices[i]->ef_desc);
 		} else if (acount == 1) {
-		    Sprintf(prompt, "%s or %s", choices[i-1]->ef_txt,
+		    sprintf(prompt, "%s or %s", choices[i-1]->ef_txt,
 				choices[i]->ef_txt);
 		} else {
-		    Strcat(prompt," or ");
-		    Strcat(prompt, choices[i]->ef_txt);
+		    strcat(prompt," or ");
+		    strcat(prompt, choices[i]->ef_txt);
 		}
 		++acount;
 	    }
 	    if (acount) {
 		/* flush buf */
-		Sprintf(buf, fmtstr, prompt);
+		sprintf(buf, fmtstr, prompt);
 		any.a_char = prevaccelerator;
 		add_menu(win, NO_GLYPH, &any, any.a_char, 0, ATR_NONE, buf, FALSE);
 	    }
-	    Sprintf(prompt, "Extended Command: %s", cbuf);
+	    sprintf(prompt, "Extended Command: %s", cbuf);
 	    end_menu(win, prompt);
 	    n = select_menu(win, PICK_ONE, &pick_list);
 	    destroy_nhwindow(win);
@@ -585,7 +585,7 @@ wiz_show_seenv()
 		    if (v == 0)
 			row[curx] = row[curx+1] = ' ';
 		    else
-			Sprintf(&row[curx], "%02x", v);
+			sprintf(&row[curx], "%02x", v);
 		}
 	    }
 	    /* remove trailing spaces */
@@ -609,7 +609,7 @@ wiz_show_vision()
 	char row[COLNO+1];
 
 	win = create_nhwindow(NHW_TEXT);
-	Sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit",
+	sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit",
 		COULD_SEE, IN_SIGHT, TEMP_LIT);
 	putstr(win, 0, row);
 	putstr(win, 0, "");
@@ -696,7 +696,7 @@ const char *start, *middle, *end;
 {
 	char buf[BUFSZ];
 
-	Sprintf(buf, "%s%s%s.", start, middle, end);
+	sprintf(buf, "%s%s%s.", start, middle, end);
 	putstr(en_win, 0, buf);
 }
 
@@ -711,7 +711,7 @@ char *outbuf;
 	const char *modif, *bonus;
 
 	if (final || wizard) {
-	    Sprintf(numbuf, "%s%d",
+	    sprintf(numbuf, "%s%d",
 		    (incamt > 0) ? "+" : "", incamt);
 	    modif = (const char *) numbuf;
 	} else {
@@ -729,7 +729,7 @@ char *outbuf;
 	    inctyp = bonus;
 	    bonus = ctmp;
 	}
-	Sprintf(outbuf, "%s %s %s", an(modif), bonus, inctyp);
+	sprintf(outbuf, "%s %s %s", an(modif), bonus, inctyp);
 	return outbuf;
 }
 
@@ -767,7 +767,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	else if (u.ualign.record >= -8)	you_have("sinned");
 	else you_have("transgressed");
 	if (wizard) {
-		Sprintf(buf, " %d", u.ualign.record);
+		sprintf(buf, " %d", u.ualign.record);
 		enl_msg("Your alignment ", "is", "was", buf);
 	}
 
@@ -806,7 +806,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	if (Slimed) you_are("turning into slime");
 	if (Strangled) you_are((u.uburied) ? "buried" : "being strangled");
 	if (Glib) {
-		Sprintf(buf, "slippery %s", makeplural(body_part(FINGER)));
+		sprintf(buf, "slippery %s", makeplural(body_part(FINGER)));
 		you_have(buf);
 	}
 	if (Fumbling) enl_msg("You fumble", "", "d", "");
@@ -815,12 +815,12 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	    && !u.usteed
 #endif
 			  ) {
-		Sprintf(buf, "wounded %s", makeplural(body_part(LEG)));
+		sprintf(buf, "wounded %s", makeplural(body_part(LEG)));
 		you_have(buf);
 	}
 #if defined(STEED)
 	if (Wounded_legs && u.usteed && wizard) {
-	    Strcpy(buf, x_monnam(u.usteed, ARTICLE_YOUR, (char *)0, 
+	    strcpy(buf, x_monnam(u.usteed, ARTICLE_YOUR, (char *)0, 
 		    SUPPRESS_SADDLE | SUPPRESS_HALLUCINATION, FALSE));
 	    *buf = highc(*buf);
 	    enl_msg(buf, " has", " had", " wounded legs");
@@ -834,7 +834,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	if (Blind_telepat) you_are("telepathic");
 	if (Warning) you_are("warned");
 	if (Warn_of_mon && flags.warntype) {
-		Sprintf(buf, "aware of the presence of %s",
+		sprintf(buf, "aware of the presence of %s",
 			(flags.warntype & M2_ORC) ? "orcs" :
 			(flags.warntype & M2_DEMON) ? "demons" :
 			something); 
@@ -886,16 +886,16 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	 * places in the done() sequence depend on u.usteed, just detect this
 	 * special case. */
 	if (u.usteed && (final < 2 || strcmp(killer, "riding accident"))) {
-	    Sprintf(buf, "riding %s", y_monnam(u.usteed));
+	    sprintf(buf, "riding %s", y_monnam(u.usteed));
 	    you_are(buf);
 	}
 #endif
 	if (u.uswallow) {
-	    Sprintf(buf, "swallowed by %s", a_monnam(u.ustuck));
-	    if (wizard) Sprintf(eos(buf), " (%u)", u.uswldtim);
+	    sprintf(buf, "swallowed by %s", a_monnam(u.ustuck));
+	    if (wizard) sprintf(eos(buf), " (%u)", u.uswldtim);
 	    you_are(buf);
 	} else if (u.ustuck) {
-	    Sprintf(buf, "%s %s",
+	    sprintf(buf, "%s %s",
 		    (Upolyd && sticks(youmonst.data)) ? "holding" : "held by",
 		    a_monnam(u.ustuck));
 	    you_are(buf);
@@ -926,13 +926,13 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	if (Polymorph) you_are("polymorphing");
 	if (Polymorph_control) you_have("polymorph control");
 	if (u.ulycn >= LOW_PM) {
-		Strcpy(buf, an(mons[u.ulycn].mname));
+		strcpy(buf, an(mons[u.ulycn].mname));
 		you_are(buf);
 	}
 	if (Upolyd) {
-	    if (u.umonnum == u.ulycn) Strcpy(buf, "in beast form");
-	    else Sprintf(buf, "polymorphed into %s", an(youmonst.data->mname));
-	    if (wizard) Sprintf(eos(buf), " (%d)", u.mtimedone);
+	    if (u.umonnum == u.ulycn) strcpy(buf, "in beast form");
+	    else sprintf(buf, "polymorphed into %s", an(youmonst.data->mname));
+	    if (wizard) sprintf(eos(buf), " (%d)", u.mtimedone);
 	    you_are(buf);
 	}
 	if (Unchanging) you_can("not change from your current form");
@@ -947,10 +947,10 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	/*** Miscellany ***/
 	if (Luck) {
 	    ltmp = abs((int)Luck);
-	    Sprintf(buf, "%s%slucky",
+	    sprintf(buf, "%s%slucky",
 		    ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
 		    Luck < 0 ? "un" : "");
-	    if (wizard) Sprintf(eos(buf), " (%d)", Luck);
+	    if (wizard) sprintf(eos(buf), " (%d)", Luck);
 	    you_are(buf);
 	}
 	 else if (wizard) enl_msg("Your luck ", "is", "was", " zero");
@@ -965,9 +965,9 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	}
 
 	if (u.ugangr) {
-	    Sprintf(buf, " %sangry with you",
+	    sprintf(buf, " %sangry with you",
 		    u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
-	    if (wizard) Sprintf(eos(buf), " (%d)", u.ugangr);
+	    if (wizard) sprintf(eos(buf), " (%d)", u.ugangr);
 	    enl_msg(u_gname(), " is", " was", buf);
 	} else
 	    /*
@@ -978,12 +978,12 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	  if (!final) {
 #if 0
 	    /* "can [not] safely pray" vs "could [not] have safely prayed" */
-	    Sprintf(buf, "%s%ssafely pray%s", can_pray(FALSE) ? "" : "not ",
+	    sprintf(buf, "%s%ssafely pray%s", can_pray(FALSE) ? "" : "not ",
 		    final ? "have " : "", final ? "ed" : "");
 #else
-	    Sprintf(buf, "%ssafely pray", can_pray(FALSE) ? "" : "not ");
+	    sprintf(buf, "%ssafely pray", can_pray(FALSE) ? "" : "not ");
 #endif
-	    if (wizard) Sprintf(eos(buf), " (%d)", u.ublesscnt);
+	    if (wizard) sprintf(eos(buf), " (%d)", u.ublesscnt);
 	    you_can(buf);
 	}
 
@@ -995,10 +995,10 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	    p = "survived after being killed ";
 	    switch (u.umortality) {
 	    case 0:  p = !final ? (char *)0 : "survived";  break;
-	    case 1:  Strcpy(buf, "once");  break;
-	    case 2:  Strcpy(buf, "twice");  break;
-	    case 3:  Strcpy(buf, "thrice");  break;
-	    default: Sprintf(buf, "%d times", u.umortality);
+	    case 1:  strcpy(buf, "once");  break;
+	    case 2:  strcpy(buf, "twice");  break;
+	    case 3:  strcpy(buf, "thrice");  break;
+	    default: sprintf(buf, "%d times", u.umortality);
 		     break;
 	    }
 	} else {		/* game ended in character's death */
@@ -1006,7 +1006,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	    switch (u.umortality) {
 	    case 0:  impossible("dead without dying?");
 	    case 1:  break;			/* just "are dead" */
-	    default: Sprintf(buf, " (%d%s time!)", u.umortality,
+	    default: sprintf(buf, " (%d%s time!)", u.umortality,
 			     ordin(u.umortality));
 		     break;
 	    }
@@ -1049,72 +1049,72 @@ minimal_enlightenment()
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings, "Starting", FALSE);
 
 	/* Starting name, race, role, gender */
-	Sprintf(buf, fmtstr, "name", plname);
+	sprintf(buf, fmtstr, "name", plname);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-	Sprintf(buf, fmtstr, "race", urace.noun);
+	sprintf(buf, fmtstr, "race", urace.noun);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-	Sprintf(buf, fmtstr, "role",
+	sprintf(buf, fmtstr, "role",
 		(flags.initgend && urole.name.f) ? urole.name.f : urole.name.m);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-	Sprintf(buf, fmtstr, "gender", genders[flags.initgend].adj);
+	sprintf(buf, fmtstr, "gender", genders[flags.initgend].adj);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
 	/* Starting alignment */
-	Sprintf(buf, fmtstr, "alignment", align_str(u.ualignbase[A_ORIGINAL]));
+	sprintf(buf, fmtstr, "alignment", align_str(u.ualignbase[A_ORIGINAL]));
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
 	/* Current name, race, role, gender */
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, "", FALSE);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings, "Current", FALSE);
-	Sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun);
+	sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 	if (Upolyd) {
-	    Sprintf(buf, fmtstr, "role (base)",
+	    sprintf(buf, fmtstr, "role (base)",
 		(u.mfemale && urole.name.f) ? urole.name.f : urole.name.m);
 	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 	} else {
-	    Sprintf(buf, fmtstr, "role",
+	    sprintf(buf, fmtstr, "role",
 		(flags.female && urole.name.f) ? urole.name.f : urole.name.m);
 	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 	}
 	/* don't want poly_gender() here; it forces `2' for non-humanoids */
 	genidx = is_neuter(youmonst.data) ? 2 : flags.female;
-	Sprintf(buf, fmtstr, "gender", genders[genidx].adj);
+	sprintf(buf, fmtstr, "gender", genders[genidx].adj);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 	if (Upolyd && (int)u.mfemale != genidx) {
-	    Sprintf(buf, fmtstr, "gender (base)", genders[u.mfemale].adj);
+	    sprintf(buf, fmtstr, "gender (base)", genders[u.mfemale].adj);
 	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 	}
 
 	/* Current alignment */
-	Sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type));
+	sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type));
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
 	/* Deity list */
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, "", FALSE);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings, "Deities", FALSE);
-	Sprintf(buf2, deity_fmtstr, align_gname(A_CHAOTIC),
+	sprintf(buf2, deity_fmtstr, align_gname(A_CHAOTIC),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type
 		&& u.ualign.type == A_CHAOTIC) ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_CHAOTIC)       ? " (s)" :
 	    (u.ualign.type   == A_CHAOTIC)       ? " (c)" : "");
-	Sprintf(buf, fmtstr, "Chaotic", buf2);
+	sprintf(buf, fmtstr, "Chaotic", buf2);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
-	Sprintf(buf2, deity_fmtstr, align_gname(A_NEUTRAL),
+	sprintf(buf2, deity_fmtstr, align_gname(A_NEUTRAL),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type
 		&& u.ualign.type == A_NEUTRAL) ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_NEUTRAL)       ? " (s)" :
 	    (u.ualign.type   == A_NEUTRAL)       ? " (c)" : "");
-	Sprintf(buf, fmtstr, "Neutral", buf2);
+	sprintf(buf, fmtstr, "Neutral", buf2);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
-	Sprintf(buf2, deity_fmtstr, align_gname(A_LAWFUL),
+	sprintf(buf2, deity_fmtstr, align_gname(A_LAWFUL),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
 		u.ualign.type == A_LAWFUL)  ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_LAWFUL)        ? " (s)" :
 	    (u.ualign.type   == A_LAWFUL)        ? " (c)" : "");
-	Sprintf(buf, fmtstr, "Lawful", buf2);
+	sprintf(buf, fmtstr, "Lawful", buf2);
 	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
 
 	end_menu(tmpwin, "Base Attributes");
@@ -1169,7 +1169,7 @@ int final;
 	if (!u.uconduct.weaphit)
 	    you_have_never("hit with a wielded weapon");
 	else if (wizard) {
-	    Sprintf(buf, "used a wielded weapon %ld time%s",
+	    sprintf(buf, "used a wielded weapon %ld time%s",
 		    u.uconduct.weaphit, plur(u.uconduct.weaphit));
 	    you_have_X(buf);
 	}
@@ -1179,7 +1179,7 @@ int final;
 	if (!u.uconduct.literate)
 	    you_have_been("illiterate");
 	else if (wizard) {
-	    Sprintf(buf, "read items or engraved %ld time%s",
+	    sprintf(buf, "read items or engraved %ld time%s",
 		    u.uconduct.literate, plur(u.uconduct.literate));
 	    you_have_X(buf);
 	}
@@ -1188,7 +1188,7 @@ int final;
 	if (ngenocided == 0) {
 	    you_have_never("genocided any monsters");
 	} else {
-	    Sprintf(buf, "genocided %d type%s of monster%s",
+	    sprintf(buf, "genocided %d type%s of monster%s",
 		    ngenocided, plur(ngenocided), plur(ngenocided));
 	    you_have_X(buf);
 	}
@@ -1196,7 +1196,7 @@ int final;
 	if (!u.uconduct.polypiles)
 	    you_have_never("polymorphed an object");
 	else if (wizard) {
-	    Sprintf(buf, "polymorphed %ld item%s",
+	    sprintf(buf, "polymorphed %ld item%s",
 		    u.uconduct.polypiles, plur(u.uconduct.polypiles));
 	    you_have_X(buf);
 	}
@@ -1204,7 +1204,7 @@ int final;
 	if (!u.uconduct.polyselfs)
 	    you_have_never("changed form");
 	else if (wizard) {
-	    Sprintf(buf, "changed form %ld time%s",
+	    sprintf(buf, "changed form %ld time%s",
 		    u.uconduct.polyselfs, plur(u.uconduct.polyselfs));
 	    you_have_X(buf);
 	}
@@ -1212,7 +1212,7 @@ int final;
 	if (!u.uconduct.wishes)
 	    you_have_X("used no wishes");
 	else {
-	    Sprintf(buf, "used %ld wish%s",
+	    sprintf(buf, "used %ld wish%s",
 		    u.uconduct.wishes, (u.uconduct.wishes > 1L) ? "es" : "");
 	    you_have_X(buf);
 
@@ -1490,7 +1490,7 @@ obj_chain(win, src, chain, total_count, total_size)
 	count_obj(chain, &count, &size, TRUE, FALSE);
 	*total_count += count;
 	*total_size += size;
-	Sprintf(buf, template, src, count, size);
+	sprintf(buf, template, src, count, size);
 	putstr(win, 0, buf);
 }
 
@@ -1510,7 +1510,7 @@ mon_invent_chain(win, src, chain, total_count, total_size)
 	    count_obj(mon->minvent, &count, &size, TRUE, FALSE);
 	*total_count += count;
 	*total_size += size;
-	Sprintf(buf, template, src, count, size);
+	sprintf(buf, template, src, count, size);
 	putstr(win, 0, buf);
 }
 
@@ -1537,7 +1537,7 @@ contained(win, src, total_count, total_size)
 
 	*total_count += count; *total_size += size;
 
-	Sprintf(buf, template, src, count, size);
+	sprintf(buf, template, src, count, size);
 	putstr(win, 0, buf);
 }
 
@@ -1559,7 +1559,7 @@ mon_chain(win, src, chain, total_count, total_size)
 	}
 	*total_count += count;
 	*total_size += size;
-	Sprintf(buf, template, src, count, size);
+	sprintf(buf, template, src, count, size);
 	putstr(win, 0, buf);
 }
 
@@ -1577,7 +1577,7 @@ wiz_show_stats()
 	win = create_nhwindow(NHW_TEXT);
 	putstr(win, 0, "Current memory statistics:");
 	putstr(win, 0, "");
-	Sprintf(buf, "Objects, size %d", (int) sizeof(struct obj));
+	sprintf(buf, "Objects, size %d", (int) sizeof(struct obj));
 	putstr(win, 0, buf);
 	putstr(win, 0, "");
 	putstr(win, 0, count_str);
@@ -1597,12 +1597,12 @@ wiz_show_stats()
 				&total_obj_count, &total_obj_size);
 
 	putstr(win, 0, separator);
-	Sprintf(buf, template, "Total", total_obj_count, total_obj_size);
+	sprintf(buf, template, "Total", total_obj_count, total_obj_size);
 	putstr(win, 0, buf);
 
 	putstr(win, 0, "");
 	putstr(win, 0, "");
-	Sprintf(buf, "Monsters, size %d", (int) sizeof(struct monst));
+	sprintf(buf, "Monsters, size %d", (int) sizeof(struct monst));
 	putstr(win, 0, buf);
 	putstr(win, 0, "");
 
@@ -1612,7 +1612,7 @@ wiz_show_stats()
 				&total_mon_count, &total_mon_size);
 
 	putstr(win, 0, separator);
-	Sprintf(buf, template, "Total", total_mon_count, total_mon_size);
+	sprintf(buf, template, "Total", total_mon_count, total_mon_size);
 	putstr(win, 0, buf);
 
 	display_nhwindow(win, FALSE);
@@ -1982,7 +1982,7 @@ const char *msg;
 	win = create_nhwindow(NHW_TEXT);
 	if (!win) return FALSE;
 	if (msg) {
-		Sprintf(buf, "cmdassist: %s", msg);
+		sprintf(buf, "cmdassist: %s", msg);
 		putstr(win, 0, buf);
 		putstr(win, 0, "");
 	}
@@ -1991,7 +1991,7 @@ const char *msg;
 	    ctrl = (sym - 'A') + 1;
 	    if ((expl = dowhatdoes_core(ctrl, buf2))
 		&& (!index(wiz_only_list, sym) || wizard)) {
-		Sprintf(buf, "Are you trying to use ^%c%s?", sym,
+		sprintf(buf, "Are you trying to use ^%c%s?", sym,
 			index(wiz_only_list, sym) ? "" :
 			" as specified in the Guidebook");
 		putstr(win, 0, buf);
@@ -1999,7 +1999,7 @@ const char *msg;
 		putstr(win, 0, expl);
 		putstr(win, 0, "");
 		putstr(win, 0, "To use that command, you press");
-		Sprintf(buf,
+		sprintf(buf,
 			"the <Ctrl> key, and the <%c> key at the same time.", sym);
 		putstr(win, 0, buf);
 		putstr(win, 0, "");
@@ -2192,7 +2192,7 @@ parse()
 		    if (multi < 0 || multi >= LARGEST_INT) multi = LARGEST_INT;
 		    if (multi > 9) {
 			clear_nhwindow(WIN_MESSAGE);
-			Sprintf(in_line, "Count: %d", multi);
+			sprintf(in_line, "Count: %d", multi);
 			pline(in_line);
 			mark_synch();
 		    }
@@ -2395,7 +2395,7 @@ char def;
 	truncspot = QBUFSZ - reduction;
 	(void) strncpy(qbuf, query, (int)truncspot);
 	qbuf[truncspot] = '\0';
-	Strcat(qbuf,"...");
+	strcat(qbuf,"...");
 	return (*windowprocs.win_yn_function)(qbuf, resp, def);
 }
 

@@ -102,17 +102,17 @@ char *genbuf;
 		case PM_WERERAT:
 		case PM_HUMAN_WERERAT:
 			typ = rn2(3) ? PM_SEWER_RAT : rn2(3) ? PM_GIANT_RAT : PM_RABID_RAT ;
-			if (genbuf) Strcpy(genbuf, "rat");
+			if (genbuf) strcpy(genbuf, "rat");
 			break;
 		case PM_WEREJACKAL:
 		case PM_HUMAN_WEREJACKAL:
 			typ = PM_JACKAL;
-			if (genbuf) Strcpy(genbuf, "jackal");
+			if (genbuf) strcpy(genbuf, "jackal");
 			break;
 		case PM_WEREWOLF:
 		case PM_HUMAN_WEREWOLF:
 			typ = rn2(5) ? PM_WOLF : PM_WINTER_WOLF ;
-			if (genbuf) Strcpy(genbuf, "wolf");
+			if (genbuf) strcpy(genbuf, "wolf");
 			break;
 		default:
 			continue;
@@ -136,7 +136,7 @@ you_were()
 	if (Unchanging || (u.umonnum == u.ulycn)) return;
 	if (Polymorph_control) {
 	    /* `+4' => skip "were" prefix to get name of beast */
-	    Sprintf(qbuf, "Do you want to change into %s? ",
+	    sprintf(qbuf, "Do you want to change into %s? ",
 		    an(mons[u.ulycn].mname+4));
 	    if(yn(qbuf) == 'n') return;
 	}

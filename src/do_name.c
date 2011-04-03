@@ -19,7 +19,7 @@ const char *goal;
     boolean doing_what_is;
     winid tmpwin = create_nhwindow(NHW_MENU);
 
-    Sprintf(sbuf, "Use [%s] to move the cursor to %s.",
+    sprintf(sbuf, "Use [%s] to move the cursor to %s.",
 	    iflags.num_pad ? "2468" : "hjkl", goal);
     putstr(tmpwin, 0, sbuf);
     putstr(tmpwin, 0, "Use [HJKL] to move the cursor 8 units at a time.");
@@ -27,7 +27,7 @@ const char *goal;
     /* disgusting hack; the alternate selection characters work for any
        getpos call, but they only matter for dowhatis (and doquickwhatis) */
     doing_what_is = (goal == what_is_an_unknown_object);
-    Sprintf(sbuf, "Type a .%s when you are at the right place.",
+    sprintf(sbuf, "Type a .%s when you are at the right place.",
             doing_what_is ? " or , or ; or :" : "");
     putstr(tmpwin, 0, sbuf);
     if (!force)
@@ -200,7 +200,7 @@ const char *name;
 	}
 	if (lth == mtmp->mnamelth) {
 		/* don't need to allocate a new monst struct */
-		if (lth) Strcpy(NAME(mtmp), name);
+		if (lth) strcpy(NAME(mtmp), name);
 		return mtmp;
 	}
 	mtmp2 = newmonst(mtmp->mxlth + lth);
@@ -208,7 +208,7 @@ const char *name;
 	(void) memcpy((void *)mtmp2->mextra,
 		      (void *)mtmp->mextra, mtmp->mxlth);
 	mtmp2->mnamelth = lth;
-	if (lth) Strcpy(NAME(mtmp2), name);
+	if (lth) strcpy(NAME(mtmp2), name);
 	replmon(mtmp,mtmp2);
 	return(mtmp2);
 }
@@ -261,7 +261,7 @@ do_mname()
 	}
 	/* special case similar to the one in lookat() */
 	(void) distant_monnam(mtmp, ARTICLE_THE, buf);
-	Sprintf(qbuf, "What do you want to call %s?", buf);
+	sprintf(qbuf, "What do you want to call %s?", buf);
 	getlin(qbuf,buf);
 	if(!*buf || *buf == '\033') return(0);
 	/* strip leading and trailing spaces; unnames monster if all spaces */
@@ -288,7 +288,7 @@ register struct obj *obj;
 	const char *aname;
 	short objtyp;
 
-	Sprintf(qbuf, "What do you want to name %s %s?",
+	sprintf(qbuf, "What do you want to name %s %s?",
 		is_plural(obj) ? "these" : "this", xname(obj));
 	getlin(qbuf, buf);
 	if(!*buf || *buf == '\033')	return;
@@ -297,7 +297,7 @@ register struct obj *obj;
 
 	/* relax restrictions over proper capitalization for artifacts */
 	if ((aname = artifact_name(buf, &objtyp)) != 0 && objtyp == obj->otyp)
-		Strcpy(buf, aname);
+		strcpy(buf, aname);
 
 	if (obj->oartifact) {
 		pline_The("artifact seems to resist the attempt.");
@@ -350,7 +350,7 @@ const char *name;
 	   gcc-2.7.2.1 finally fixed this. */
 	if (oname_size) {
 	    if (name)
-		Strcpy(ONAME(otmp), name);
+		strcpy(ONAME(otmp), name);
 	}
 
 	if (obj->owornmask) {
@@ -412,7 +412,7 @@ const char *name;
 
 	if (lth == obj->onamelth) {
 		/* no need to replace entire object */
-		if (lth) Strcpy(ONAME(obj), name);
+		if (lth) strcpy(ONAME(obj), name);
 	} else {
 		obj = realloc_obj(obj, obj->oxlth,
 			      (void *)obj->oextra, lth, name);
@@ -493,10 +493,10 @@ register struct obj *obj;
 	otemp.oxlth = 0;
 	if (objects[otemp.otyp].oc_class == POTION_CLASS && otemp.fromsink)
 	    /* kludge, meaning it's sink water */
-	    Sprintf(qbuf,"Call a stream of %s fluid:",
+	    sprintf(qbuf,"Call a stream of %s fluid:",
 		    OBJ_DESCR(objects[otemp.otyp]));
 	else
-	    Sprintf(qbuf, "Call %s:", an(xname(&otemp)));
+	    sprintf(qbuf, "Call %s:", an(xname(&otemp)));
 	getlin(qbuf, buf);
 	if(!*buf || *buf == '\033')
 		return;
@@ -605,7 +605,7 @@ boolean called;
 
 	/* unseen monsters, etc.  Use "it" */
 	if (do_it) {
-	    Strcpy(buf, "it");
+	    strcpy(buf, "it");
 	    return buf;
 	}
 
@@ -636,30 +636,30 @@ boolean called;
 	    if (adjective && article == ARTICLE_THE) {
 		/* pathological case: "the angry Asidonhopo the blue dragon"
 		   sounds silly */
-		Strcpy(buf, "the ");
-		Strcat(strcat(buf, adjective), " ");
-		Strcat(buf, shkname(mtmp));
+		strcpy(buf, "the ");
+		strcat(strcat(buf, adjective), " ");
+		strcat(buf, shkname(mtmp));
 		return buf;
 	    }
-	    Strcat(buf, shkname(mtmp));
+	    strcat(buf, shkname(mtmp));
 	    if (mdat == &mons[PM_SHOPKEEPER] && !do_invis)
 		return buf;
-	    Strcat(buf, " the ");
+	    strcat(buf, " the ");
 	    if (do_invis)
-		Strcat(buf, "invisible ");
-	    Strcat(buf, mdat->mname);
+		strcat(buf, "invisible ");
+	    strcat(buf, mdat->mname);
 	    return buf;
 	}
 
 	/* Put the adjectives in the buffer */
 	if (adjective)
-	    Strcat(strcat(buf, adjective), " ");
+	    strcat(strcat(buf, adjective), " ");
 	if (do_invis)
-	    Strcat(buf, "invisible ");
+	    strcat(buf, "invisible ");
 #ifdef STEED
 	if (do_saddle && (mtmp->misc_worn_check & W_SADDLE) &&
 	    !Blind && !Hallucination)
-	    Strcat(buf, "saddled ");
+	    strcat(buf, "saddled ");
 #endif
 	if (buf[0] != 0)
 	    has_adjectives = TRUE;
@@ -669,42 +669,42 @@ boolean called;
 	/* Put the actual monster name or type into the buffer now */
 	/* Be sure to remember whether the buffer starts with a name */
 	if (do_hallu) {
-	    Strcat(buf, rndmonnam());
+	    strcat(buf, rndmonnam());
 	    name_at_start = FALSE;
 	} else if (mtmp->mnamelth) {
 	    char *name = NAME(mtmp);
 
 	    if (mdat == &mons[PM_GHOST]) {
-		Sprintf(eos(buf), "%s ghost", s_suffix(name));
+		sprintf(eos(buf), "%s ghost", s_suffix(name));
 		name_at_start = TRUE;
 	    } else if (called) {
-		Sprintf(eos(buf), "%s called %s", mdat->mname, name);
+		sprintf(eos(buf), "%s called %s", mdat->mname, name);
 		name_at_start = (boolean)type_is_pname(mdat);
 	    } else if (is_mplayer(mdat) && (bp = strstri(name, " the ")) != 0) {
 		/* <name> the <adjective> <invisible> <saddled> <rank> */
 		char pbuf[BUFSZ];
 
-		Strcpy(pbuf, name);
+		strcpy(pbuf, name);
 		pbuf[bp - name + 5] = '\0'; /* adjectives right after " the " */
 		if (has_adjectives)
-		    Strcat(pbuf, buf);
-		Strcat(pbuf, bp + 5);	/* append the rest of the name */
-		Strcpy(buf, pbuf);
+		    strcat(pbuf, buf);
+		strcat(pbuf, bp + 5);	/* append the rest of the name */
+		strcpy(buf, pbuf);
 		article = ARTICLE_NONE;
 		name_at_start = TRUE;
 	    } else {
-		Strcat(buf, name);
+		strcat(buf, name);
 		name_at_start = TRUE;
 	    }
 	} else if (is_mplayer(mdat) && !In_endgame(&u.uz)) {
 	    char pbuf[BUFSZ];
-	    Strcpy(pbuf, rank_of((int)mtmp->m_lev,
+	    strcpy(pbuf, rank_of((int)mtmp->m_lev,
 				 monsndx(mdat),
 				 (boolean)mtmp->female));
-	    Strcat(buf, lcase(pbuf));
+	    strcat(buf, lcase(pbuf));
 	    name_at_start = FALSE;
 	} else {
-	    Strcat(buf, mdat->mname);
+	    strcat(buf, mdat->mname);
 	    name_at_start = (boolean)type_is_pname(mdat);
 	}
 
@@ -722,14 +722,14 @@ boolean called;
 
 	    switch(article) {
 		case ARTICLE_YOUR:
-		    Strcpy(buf2, "your ");
-		    Strcat(buf2, buf);
-		    Strcpy(buf, buf2);
+		    strcpy(buf2, "your ");
+		    strcat(buf2, buf);
+		    strcpy(buf, buf2);
 		    return buf;
 		case ARTICLE_THE:
-		    Strcpy(buf2, "the ");
-		    Strcat(buf2, buf);
-		    Strcpy(buf, buf2);
+		    strcpy(buf2, "the ");
+		    strcat(buf2, buf);
+		    strcpy(buf, buf2);
 		    return buf;
 		case ARTICLE_A:
 		    return(an(buf));
@@ -861,10 +861,10 @@ char *outbuf;
        its own obfuscation) */
     if (mon->data == &mons[PM_HIGH_PRIEST] && !Hallucination &&
 	    Is_astralevel(&u.uz) && distu(mon->mx, mon->my) > 2) {
-	Strcpy(outbuf, article == ARTICLE_THE ? "the " : "");
-	Strcat(outbuf, mon->female ? "high priestess" : "high priest");
+	strcpy(outbuf, article == ARTICLE_THE ? "the " : "");
+	strcat(outbuf, mon->female ? "high priestess" : "high priest");
     } else {
-	Strcpy(outbuf, x_monnam(mon, article, (char *)0, 0, TRUE));
+	strcpy(outbuf, x_monnam(mon, article, (char *)0, 0, TRUE));
     }
     return outbuf;
 }
@@ -1014,7 +1014,7 @@ struct monst *mtmp;
 char *buf;
 {
     if (mtmp && buf) {
-	Sprintf(buf, "%s - %s",
+	sprintf(buf, "%s - %s",
 	    x_monnam(mtmp, ARTICLE_NONE, (char *)0, 0, TRUE),
 	    mtmp->mcan ? coynames[SIZE(coynames)-1] : coynames[rn2(SIZE(coynames)-1)]);
     }

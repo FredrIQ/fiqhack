@@ -34,7 +34,7 @@ vpline(const char *line, va_list the_args)
 
 	if (!line || !*line) return;
 	if (index(line, '%')) {
-	    Vsprintf(pbuf,line,the_args);
+	    vsprintf(pbuf,line,the_args);
 	    line = pbuf;
 	}
 	if (!iflags.window_inited) {
@@ -87,7 +87,7 @@ free_youbuf()
 
 /* `prefix' must be a string literal, not a pointer */
 #define YouPrefix(pointer,prefix,text) \
- Strcpy((pointer = You_buf((int)(strlen(text) + sizeof prefix))), prefix)
+ strcpy((pointer = You_buf((int)(strlen(text) + sizeof prefix))), prefix)
 
 #define YouMessage(pointer,prefix,text) \
  strcat((YouPrefix(pointer, prefix, text), pointer), text)
@@ -185,9 +185,9 @@ verbalize (const char *line, ...)
 	if (!flags.soundok) return;
 	va_start(the_args, line);
 	tmp = You_buf((int)strlen(line) + sizeof "\"\"");
-	Strcpy(tmp, "\"");
-	Strcat(tmp, line);
-	Strcat(tmp, "\"");
+	strcpy(tmp, "\"");
+	strcat(tmp, line);
+	strcat(tmp, "\"");
 	vpline(tmp, the_args);
 	va_end(the_args);
 }
@@ -210,7 +210,7 @@ vraw_printf(const char *line, va_list the_args)
 	    raw_print(line);
 	else {
 	    char pbuf[BUFSZ];
-	    Vsprintf(pbuf,line,the_args);
+	    vsprintf(pbuf,line,the_args);
 	    raw_print(pbuf);
 	}
 }
@@ -227,7 +227,7 @@ impossible (const char *s, ...)
 	program_state.in_impossible = 1;
 	{
 	    char pbuf[BUFSZ];
-	    Vsprintf(pbuf,s,the_args);
+	    vsprintf(pbuf,s,the_args);
 	    paniclog("impossible", pbuf);
 	}
 	vpline(s,the_args);
@@ -266,54 +266,54 @@ register struct monst *mtmp;
 		A_NEUTRAL;
 
 	info[0] = 0;
-	if (mtmp->mtame) {	  Strcat(info, ", tame");
+	if (mtmp->mtame) {	  strcat(info, ", tame");
 	    if (wizard) {
-		Sprintf(eos(info), " (%d", mtmp->mtame);
+		sprintf(eos(info), " (%d", mtmp->mtame);
 		if (!mtmp->isminion)
-		    Sprintf(eos(info), "; hungry %ld; apport %d",
+		    sprintf(eos(info), "; hungry %ld; apport %d",
 			EDOG(mtmp)->hungrytime, EDOG(mtmp)->apport);
-		Strcat(info, ")");
+		strcat(info, ")");
 	    }
 	}
-	else if (mtmp->mpeaceful) Strcat(info, ", peaceful");
-	if (mtmp->meating)	  Strcat(info, ", eating");
-	if (mtmp->mcan)		  Strcat(info, ", cancelled");
-	if (mtmp->mconf)	  Strcat(info, ", confused");
+	else if (mtmp->mpeaceful) strcat(info, ", peaceful");
+	if (mtmp->meating)	  strcat(info, ", eating");
+	if (mtmp->mcan)		  strcat(info, ", cancelled");
+	if (mtmp->mconf)	  strcat(info, ", confused");
 	if (mtmp->mblinded || !mtmp->mcansee)
-				  Strcat(info, ", blind");
-	if (mtmp->mstun)	  Strcat(info, ", stunned");
-	if (mtmp->msleeping)	  Strcat(info, ", asleep");
+				  strcat(info, ", blind");
+	if (mtmp->mstun)	  strcat(info, ", stunned");
+	if (mtmp->msleeping)	  strcat(info, ", asleep");
 #if 0	/* unfortunately mfrozen covers temporary sleep and being busy
 	   (donning armor, for instance) as well as paralysis */
-	else if (mtmp->mfrozen)	  Strcat(info, ", paralyzed");
+	else if (mtmp->mfrozen)	  strcat(info, ", paralyzed");
 #else
 	else if (mtmp->mfrozen || !mtmp->mcanmove)
-				  Strcat(info, ", can't move");
+				  strcat(info, ", can't move");
 #endif
 				  /* [arbitrary reason why it isn't moving] */
 	else if (mtmp->mstrategy & STRAT_WAITMASK)
-				  Strcat(info, ", meditating");
-	else if (mtmp->mflee)	  Strcat(info, ", scared");
-	if (mtmp->mtrapped)	  Strcat(info, ", trapped");
-	if (mtmp->mspeed)	  Strcat(info,
+				  strcat(info, ", meditating");
+	else if (mtmp->mflee)	  strcat(info, ", scared");
+	if (mtmp->mtrapped)	  strcat(info, ", trapped");
+	if (mtmp->mspeed)	  strcat(info,
 					mtmp->mspeed == MFAST ? ", fast" :
 					mtmp->mspeed == MSLOW ? ", slow" :
 					", ???? speed");
-	if (mtmp->mundetected)	  Strcat(info, ", concealed");
-	if (mtmp->minvis)	  Strcat(info, ", invisible");
-	if (mtmp == u.ustuck)	  Strcat(info,
+	if (mtmp->mundetected)	  strcat(info, ", concealed");
+	if (mtmp->minvis)	  strcat(info, ", invisible");
+	if (mtmp == u.ustuck)	  strcat(info,
 			(sticks(youmonst.data)) ? ", held by you" :
 				u.uswallow ? (is_animal(u.ustuck->data) ?
 				", swallowed you" :
 				", engulfed you") :
 				", holding you");
 #ifdef STEED
-	if (mtmp == u.usteed)	  Strcat(info, ", carrying you");
+	if (mtmp == u.usteed)	  strcat(info, ", carrying you");
 #endif
 
 	/* avoid "Status of the invisible newt ..., invisible" */
 	/* and unlike a normal mon_nam, use "saddled" even if it has a name */
-	Strcpy(monnambuf, x_monnam(mtmp, ARTICLE_THE, (char *)0,
+	strcpy(monnambuf, x_monnam(mtmp, ARTICLE_THE, (char *)0,
 	    (SUPPRESS_IT|SUPPRESS_INVISIBLE), FALSE));
 
 	pline("Status of %s (%s):  Level %d  HP %d(%d)  AC %d%s.",
@@ -333,30 +333,30 @@ ustatusline()
 
 	info[0] = '\0';
 	if (Sick) {
-		Strcat(info, ", dying from");
+		strcat(info, ", dying from");
 		if (u.usick_type & SICK_VOMITABLE)
-			Strcat(info, " food poisoning");
+			strcat(info, " food poisoning");
 		if (u.usick_type & SICK_NONVOMITABLE) {
 			if (u.usick_type & SICK_VOMITABLE)
-				Strcat(info, " and");
-			Strcat(info, " illness");
+				strcat(info, " and");
+			strcat(info, " illness");
 		}
 	}
-	if (Stoned)		Strcat(info, ", solidifying");
-	if (Slimed)		Strcat(info, ", becoming slimy");
-	if (Strangled)		Strcat(info, ", being strangled");
-	if (Vomiting)		Strcat(info, ", nauseated"); /* !"nauseous" */
-	if (Confusion)		Strcat(info, ", confused");
+	if (Stoned)		strcat(info, ", solidifying");
+	if (Slimed)		strcat(info, ", becoming slimy");
+	if (Strangled)		strcat(info, ", being strangled");
+	if (Vomiting)		strcat(info, ", nauseated"); /* !"nauseous" */
+	if (Confusion)		strcat(info, ", confused");
 	if (Blind) {
-	    Strcat(info, ", blind");
+	    strcat(info, ", blind");
 	    if (u.ucreamed) {
 		if ((long)u.ucreamed < Blinded || Blindfolded
 						|| !haseyes(youmonst.data))
-		    Strcat(info, ", cover");
-		Strcat(info, "ed by sticky goop");
+		    strcat(info, ", cover");
+		strcat(info, "ed by sticky goop");
 	    }	/* note: "goop" == "glop"; variation is intentional */
 	}
-	if (Stunned)		Strcat(info, ", stunned");
+	if (Stunned)		strcat(info, ", stunned");
 #ifdef STEED
 	if (!u.usteed)
 #endif
@@ -364,21 +364,21 @@ ustatusline()
 	    const char *what = body_part(LEG);
 	    if ((Wounded_legs & BOTH_SIDES) == BOTH_SIDES)
 		what = makeplural(what);
-				Sprintf(eos(info), ", injured %s", what);
+				sprintf(eos(info), ", injured %s", what);
 	}
-	if (Glib)		Sprintf(eos(info), ", slippery %s",
+	if (Glib)		sprintf(eos(info), ", slippery %s",
 					makeplural(body_part(HAND)));
-	if (u.utrap)		Strcat(info, ", trapped");
-	if (Fast)		Strcat(info, Very_fast ?
+	if (u.utrap)		strcat(info, ", trapped");
+	if (Fast)		strcat(info, Very_fast ?
 						", very fast" : ", fast");
-	if (u.uundetected)	Strcat(info, ", concealed");
-	if (Invis)		Strcat(info, ", invisible");
+	if (u.uundetected)	strcat(info, ", concealed");
+	if (Invis)		strcat(info, ", invisible");
 	if (u.ustuck) {
 	    if (sticks(youmonst.data))
-		Strcat(info, ", holding ");
+		strcat(info, ", holding ");
 	    else
-		Strcat(info, ", held by ");
-	    Strcat(info, mon_nam(u.ustuck));
+		strcat(info, ", held by ");
+	    strcat(info, mon_nam(u.ustuck));
 	}
 
 	pline("Status of %s (%s%s):  Level %d  HP %d(%d)  AC %d%s.",

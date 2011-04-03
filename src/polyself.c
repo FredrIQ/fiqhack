@@ -112,9 +112,9 @@ change_sex()
 	    u.mfemale = !u.mfemale;
 	max_rank_sz();		/* [this appears to be superfluous] */
 	if ((already_polyd ? u.mfemale : flags.female) && urole.name.f)
-	    Strcpy(pl_character, urole.name.f);
+	    strcpy(pl_character, urole.name.f);
 	else
-	    Strcpy(pl_character, urole.name.m);
+	    strcpy(pl_character, urole.name.m);
 	u.umonster = ((already_polyd ? u.mfemale : flags.female) && urole.femalenum != NON_PM) ?
 			urole.femalenum : urole.malenum;
 	if (!already_polyd) {
@@ -479,7 +479,7 @@ int	mntmp;
 
 	    	pline("No longer petrifying-resistant, you touch %s.",
 	    			mon_nam(u.usteed));
-	    	Sprintf(buf, "riding %s", an(u.usteed->data->mname));
+	    	sprintf(buf, "riding %s", an(u.usteed->data->mname));
 	    	instapetrify(buf);
  	    }
 	    if (!can_ride(u.usteed)) dismount_steed(DISMOUNT_POLY);
@@ -619,7 +619,7 @@ break_armor()
 		char hornbuf[BUFSZ], yourbuf[BUFSZ];
 
 		/* Future possiblities: This could damage/destroy helmet */
-		Sprintf(hornbuf, "horn%s", plur(num_horns(youmonst.data)));
+		sprintf(hornbuf, "horn%s", plur(num_horns(youmonst.data)));
 		Your("%s %s through %s %s.", hornbuf, vtense(hornbuf, "pierce"),
 		     shk_your(yourbuf, otmp), xname(otmp));
 	    } else {
@@ -715,7 +715,7 @@ rehumanize()
 	if (u.uhp < 1) {
 	    char kbuf[256];
 
-	    Sprintf(kbuf, "reverting to unhealthy %s form", urace.adj);
+	    sprintf(kbuf, "reverting to unhealthy %s form", urace.adj);
 	    killer_format = KILLED_BY;
 	    killer = kbuf;
 	    done(DIED);
@@ -809,13 +809,13 @@ dospinweb()
 				sweep[0] = '\0';
 				switch(u.ustuck->data->mattk[i].adtyp) {
 					case AD_FIRE:
-						Strcpy(sweep, "ignites and ");
+						strcpy(sweep, "ignites and ");
 						break;
 					case AD_ELEC:
-						Strcpy(sweep, "fries and ");
+						strcpy(sweep, "fries and ");
 						break;
 					case AD_COLD:
-						Strcpy(sweep,
+						strcpy(sweep,
 						      "freezes, shatters and ");
 						break;
 				}
@@ -963,7 +963,7 @@ dogaze()
 		} else {
 		    if (flags.confirm && mtmp->mpeaceful && !Confusion
 							&& !Hallucination) {
-			Sprintf(qbuf, "Really %s %s?",
+			sprintf(qbuf, "Really %s %s?",
 			    (adtyp == AD_CONF) ? "confuse" : "attack",
 			    mon_nam(mtmp));
 			if (yn(qbuf) != 'y') continue;

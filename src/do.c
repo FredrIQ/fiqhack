@@ -467,7 +467,7 @@ register struct obj *obj;
 			char buf[BUFSZ];
 
 			/* doname can call s_suffix, reusing its buffer */
-			Strcpy(buf, s_suffix(mon_nam(u.ustuck)));
+			strcpy(buf, s_suffix(mon_nam(u.ustuck)));
 			You("drop %s into %s %s.", doname(obj), buf,
 				mbodypart(u.ustuck, STOMACH));
 		}
@@ -1268,7 +1268,7 @@ boolean at_stairs, falling, portal;
 	    else
 		mesg = fam_msgs[which];
 	    if (mesg && index(mesg, '%')) {
-		Sprintf(buf, mesg, !Blind ? "looks" : "seems");
+		sprintf(buf, mesg, !Blind ? "looks" : "seems");
 		mesg = buf;
 	    }
 	    if (mesg) pline(mesg);
@@ -1458,7 +1458,7 @@ struct obj *corpse;
     where = corpse->where;
     is_uwep = corpse == uwep;
     cname = eos(strcpy(cname_buf, "bite-covered "));
-    Strcpy(cname, corpse_xname(corpse, TRUE));
+    strcpy(cname, corpse_xname(corpse, TRUE));
     mcarry = (where == OBJ_MINVENT) ? corpse->ocarry : 0;
 
     if (where == OBJ_CONTAINED) {
@@ -1501,12 +1501,12 @@ struct obj *corpse;
 	   	if (container_where == OBJ_MINVENT && cansee(mtmp->mx, mtmp->my) &&
 		    mcarry && canseemon(mcarry) && container) {
 		        char sackname[BUFSZ];
-		        Sprintf(sackname, "%s %s", s_suffix(mon_nam(mcarry)),
+		        sprintf(sackname, "%s %s", s_suffix(mon_nam(mcarry)),
 				xname(container)); 
 	   		pline("%s writhes out of %s!", Amonnam(mtmp), sackname);
 	   	} else if (container_where == OBJ_INVENT && container) {
 		        char sackname[BUFSZ];
-		        Strcpy(sackname, an(xname(container)));
+		        strcpy(sackname, an(xname(container)));
 	   		pline("%s %s out of %s in your pack!",
 	   			Blind ? Something : Amonnam(mtmp),
 				locomotion(mtmp->data,"writhes"),
@@ -1514,7 +1514,7 @@ struct obj *corpse;
 	   	} else if (container_where == OBJ_FLOOR && container &&
 		            cansee(mtmp->mx, mtmp->my)) {
 		        char sackname[BUFSZ];
-		        Strcpy(sackname, an(xname(container)));
+		        strcpy(sackname, an(xname(container)));
 			pline("%s escapes from %s!", Amonnam(mtmp), sackname);
 		}
 		break;
@@ -1579,7 +1579,7 @@ dowipe()
 	if(u.ucreamed)  {
 		static char buf[39];
 
-		Sprintf(buf, "wiping off your %s", body_part(FACE));
+		sprintf(buf, "wiping off your %s", body_part(FACE));
 		set_occupation(wipeoff, buf, 0);
 		/* Not totally correct; what if they change back after now
 		 * but before they're finished wiping?

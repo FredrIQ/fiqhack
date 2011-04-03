@@ -804,7 +804,7 @@ register struct obj *obj;
 	mtmp2 = newmonst(sizeof(struct edog) + mtmp->mnamelth);
 	*mtmp2 = *mtmp;
 	mtmp2->mxlth = sizeof(struct edog);
-	if (mtmp->mnamelth) Strcpy(NAME(mtmp2), NAME(mtmp));
+	if (mtmp->mnamelth) strcpy(NAME(mtmp2), NAME(mtmp));
 	initedog(mtmp2);
 	replmon(mtmp, mtmp2);
 	/* `mtmp' is now obsolete */

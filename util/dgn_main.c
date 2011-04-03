@@ -39,9 +39,9 @@ char **argv;
 	int	i, len;
 	boolean errors_encountered = FALSE;
 
-	Strcpy(infile, "(stdin)");
+	strcpy(infile, "(stdin)");
 	fin = stdin;
-	Strcpy(outfile, "(stdout)");
+	strcpy(outfile, "(stdout)");
 	fout = stdout;
 
 	if (argc == 1) {	/* Read standard input */

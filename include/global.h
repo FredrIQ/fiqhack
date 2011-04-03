@@ -111,14 +111,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #endif
 
 
-#define Sprintf  (void) sprintf
-#define Strcat   (void) strcat
-#define Strcpy   (void) strcpy
-#define Vprintf  (void) vprintf
-#define Vfprintf (void) vfprintf
-#define Vsprintf (void) vsprintf
-
-
 /* primitive memory leak debugging; see alloc.c */
 #ifdef MONITOR_HEAP
 extern long *nhalloc(unsigned int,const char *,int);

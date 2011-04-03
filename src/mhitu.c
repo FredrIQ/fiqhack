@@ -232,16 +232,16 @@ boolean message;
 				if (is_whirly(mdat)) {
 					switch (mdat->mattk[i].adtyp) {
 						case AD_ELEC:
-							Strcpy(blast,
+							strcpy(blast,
 						      " in a shower of sparks");
 							break;
 						case AD_COLD:
-							Strcpy(blast,
+							strcpy(blast,
 							" in a blast of frost");
 							break;
 					}
 				} else
-					Strcpy(blast, " with a squelch");
+					strcpy(blast, " with a squelch");
 				You("get expelled from %s%s!",
 				    mon_nam(mtmp), blast);
 			}
@@ -442,7 +442,7 @@ mattacku(mtmp)
 			plname);
 	    if (multi < 0) {	/* this should always be the case */
 		char buf[BUFSZ];
-		Sprintf(buf, "You appear to be %s again.",
+		sprintf(buf, "You appear to be %s again.",
 			Upolyd ? (const char *) an(youmonst.data->mname) :
 			    (const char *) "yourself");
 		unmul(buf);	/* immediately stop mimicking */
@@ -484,7 +484,7 @@ mattacku(mtmp)
 	    	int numseen, numhelp;
 		char buf[BUFSZ], genericwere[BUFSZ];
 
-		Strcpy(genericwere, "creature");
+		strcpy(genericwere, "creature");
 		numhelp = were_summon(mdat, FALSE, &numseen, genericwere);
 		if (youseeit) {
 			pline("%s summons help!", Monnam(mtmp));
@@ -504,10 +504,10 @@ mattacku(mtmp)
 			    if (numseen < 1) You_feel("hemmed in.");
 			    else {
 				if (numseen == 1)
-			    		Sprintf(buf, "%s appears",
+			    		sprintf(buf, "%s appears",
 							an(genericwere));
 			    	else
-			    		Sprintf(buf, "%s appear",
+			    		sprintf(buf, "%s appear",
 							makeplural(genericwere));
 				pline("%s%s!", upstart(buf), from_nowhere);
 			    }
@@ -1039,7 +1039,7 @@ hitmu(mtmp, mattk)
 dopois:
 		hitmsg(mtmp, mattk);
 		if (uncancelled && !rn2(8)) {
-		    Sprintf(buf, "%s %s",
+		    sprintf(buf, "%s %s",
 			    s_suffix(Monnam(mtmp)), mpoisons_subj(mtmp, mattk));
 		    poisoned(buf, ptmp, mdat->mname, 30);
 		}
@@ -1187,7 +1187,7 @@ dopois:
 					static char kbuf[BUFSZ];
 
 					/* "the" buffer may be reallocated */
-					Strcpy(kbuf, the(delayed_killer));
+					strcpy(kbuf, the(delayed_killer));
 					delayed_killer = kbuf;
 				    }
 				    killer_format = KILLED_BY;
@@ -1226,7 +1226,7 @@ dopois:
 
 			    pline("%s drowns you...", Monnam(mtmp));
 			    killer_format = KILLED_BY_AN;
-			    Sprintf(buf, "%s by %s",
+			    sprintf(buf, "%s by %s",
 				    moat ? "moat" : "pool of water",
 				    an(mtmp->data->mname));
 			    killer = buf;
@@ -1635,7 +1635,7 @@ gulpmu(mtmp, mattk)	/* monster swallows you, or damage if u.uswallow */
 			 * are swallowed. Pretend purple worms don't
 			 * like horses for now :-)
 			 */
-			Strcpy(buf, mon_nam(u.usteed));
+			strcpy(buf, mon_nam(u.usteed));
 			pline ("%s lunges forward and plucks you off %s!",
 				Monnam(mtmp), buf);
 			dismount_steed(DISMOUNT_ENGULFED);
@@ -2162,7 +2162,7 @@ register struct monst *mon;
 	    if (ring->otyp != RIN_ADORNMENT) continue;
 	    if (fem) {
 		if (rn2(20) < ACURR(A_CHA)) {
-		    Sprintf(qbuf, "\"That %s looks pretty.  May I have it?\"",
+		    sprintf(qbuf, "\"That %s looks pretty.  May I have it?\"",
 			safe_qbuf("",sizeof("\"That  looks pretty.  May I have it?\""),
 			xname(ring), simple_typename(ring->otyp), "ring"));
 		    makeknown(RIN_ADORNMENT);
@@ -2184,7 +2184,7 @@ register struct monst *mon;
 			break;
 		if (ring==uleft || ring==uright) continue;
 		if (rn2(20) < ACURR(A_CHA)) {
-		    Sprintf(qbuf,"\"That %s looks pretty.  Would you wear it for me?\"",
+		    sprintf(qbuf,"\"That %s looks pretty.  Would you wear it for me?\"",
 			safe_qbuf("",
 			    sizeof("\"That  looks pretty.  Would you wear it for me?\""),
 			    xname(ring), simple_typename(ring->otyp), "ring"));
@@ -2205,13 +2205,13 @@ register struct monst *mon;
 			Blind ? "He" : Monnam(mon), the(xname(ring)), body_part(HAND));
 		    setworn(ring, LEFT_RING);
 		} else if (uright && uright->otyp != RIN_ADORNMENT) {
-		    Strcpy(buf, xname(uright));
+		    strcpy(buf, xname(uright));
 		    pline("%s replaces your %s with your %s.",
 			Blind ? "He" : Monnam(mon), buf, xname(ring));
 		    Ring_gone(uright);
 		    setworn(ring, RIGHT_RING);
 		} else if (uleft && uleft->otyp != RIN_ADORNMENT) {
-		    Strcpy(buf, xname(uleft));
+		    strcpy(buf, xname(uleft));
 		    pline("%s replaces your %s with your %s.",
 			Blind ? "He" : Monnam(mon), buf, xname(ring));
 		    Ring_gone(uleft);
@@ -2394,14 +2394,14 @@ const char *str;
 	if (!obj || !obj->owornmask) return;
 
 	if (rn2(20) < ACURR(A_CHA)) {
-		Sprintf(qbuf,"\"Shall I remove your %s, %s?\"",
+		sprintf(qbuf,"\"Shall I remove your %s, %s?\"",
 			str,
 			(!rn2(2) ? "lover" : !rn2(2) ? "dear" : "sweetheart"));
 		if (yn(qbuf) == 'n') return;
 	} else {
 		char hairbuf[BUFSZ];
 
-		Sprintf(hairbuf, "let me run my fingers through your %s",
+		sprintf(hairbuf, "let me run my fingers through your %s",
 			body_part(HAIR));
 		verbalize("Take off your %s; %s.", str,
 			(obj == uarm)  ? "let's get a little closer" :

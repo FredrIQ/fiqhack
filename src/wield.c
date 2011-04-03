@@ -134,7 +134,7 @@ struct obj *wep;
 
 	    You("wield the %s corpse in your bare %s.",
 		mons[wep->corpsenm].mname, makeplural(body_part(HAND)));
-	    Sprintf(kbuf, "%s corpse", an(mons[wep->corpsenm].mname));
+	    sprintf(kbuf, "%s corpse", an(mons[wep->corpsenm].mname));
 	    instapetrify(kbuf);
 	} else if (uarms && bimanual(wep))
 	    You("cannot wield a two-handed %s while wearing a shield.",
@@ -499,7 +499,7 @@ can_twoweapon()
 
 		You("wield the %s corpse with your bare %s.",
 		    mons[uswapwep->corpsenm].mname, body_part(HAND));
-		Sprintf(kbuf, "%s corpse", an(mons[uswapwep->corpsenm].mname));
+		sprintf(kbuf, "%s corpse", an(mons[uswapwep->corpsenm].mname));
 		instapetrify(kbuf);
 	} else if (Glib || uswapwep->cursed) {
 		if (!Glib)
@@ -517,7 +517,7 @@ drop_uswapwep()
 	struct obj *obj = uswapwep;
 
 	/* Avoid trashing makeplural's static buffer */
-	Strcpy(str, makeplural(body_part(HAND)));
+	strcpy(str, makeplural(body_part(HAND)));
 	Your("%s from your %s!",  aobjnam(obj, "slip"), str);
 	dropx(obj);
 }
@@ -691,7 +691,7 @@ register int amount;
 	if(!uwep || (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep))) {
 		char buf[BUFSZ];
 
-		Sprintf(buf, "Your %s %s.", makeplural(body_part(HAND)),
+		sprintf(buf, "Your %s %s.", makeplural(body_part(HAND)),
 			(amount >= 0) ? "twitch" : "itch");
 		strange_feeling(otmp, buf);
 		exercise(A_DEX, (boolean) (amount >= 0));

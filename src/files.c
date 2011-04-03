@@ -237,7 +237,7 @@ int whichprefix, buffnum;
 						basename);
 		return basename;	/* XXX */
 	}
-	Strcpy(fqn_filename_buffer[buffnum], fqn_prefix[whichprefix]);
+	strcpy(fqn_filename_buffer[buffnum], fqn_prefix[whichprefix]);
 	return strcat(fqn_filename_buffer[buffnum], basename);
 #endif
 }
@@ -264,15 +264,15 @@ char *reasonbuf;
 			(void) unlink(filename);
 		} else {
 			if (reasonbuf) {
-				if (failcount) Strcat(reasonbuf,", ");
-				Strcat(reasonbuf, fqn_prefix_names[prefcnt]);
+				if (failcount) strcat(reasonbuf,", ");
+				strcat(reasonbuf, fqn_prefix_names[prefcnt]);
 			}
 			/* the paniclog entry gets the value of errno as well */
-			Sprintf(panicbuf1,"Invalid %s", fqn_prefix_names[prefcnt]);
+			sprintf(panicbuf1,"Invalid %s", fqn_prefix_names[prefcnt]);
 			
 			if (!(details = strerror(errno)))
 				details = "";
-			Sprintf(panicbuf2,"\"%s\", (%d) %s",
+			sprintf(panicbuf2,"\"%s\", (%d) %s",
 				fqn_prefix[prefcnt], errno, details);
 			paniclog(panicbuf1, panicbuf2);
 			failcount++;
@@ -316,7 +316,7 @@ int lev;
 
 	tf = rindex(file, '.');
 	if (!tf) tf = eos(file);
-	Sprintf(tf, ".%d", lev);
+	sprintf(tf, ".%d", lev);
 	return;
 }
 
@@ -350,7 +350,7 @@ char errbuf[];
 	if (fd >= 0)
 	    level_info[lev].flags |= LFILE_EXISTS;
 	else if (errbuf)	/* failure explanation */
-	    Sprintf(errbuf,
+	    sprintf(errbuf,
 		    "Cannot create file \"%s\" for level %d (errno %d).",
 		    lock, lev, errno);
 
@@ -380,7 +380,7 @@ char errbuf[];
 	   settle for `lock' instead of `fq_lock' because the latter
 	   might end up being too big for nethack's BUFSZ */
 	if (fd < 0 && errbuf)
-	    Sprintf(errbuf,
+	    sprintf(errbuf,
 		    "Cannot open file \"%s\" for level %d (errno %d).",
 		    lock, lev, errno);
 
@@ -497,13 +497,13 @@ d_level *lev;
 	s_level *sptr;
 	char *dptr;
 
-	Sprintf(file, "bon%c%s", dungeons[lev->dnum].boneid,
+	sprintf(file, "bon%c%s", dungeons[lev->dnum].boneid,
 			In_quest(lev) ? urole.filecode : "0");
 	dptr = eos(file);
 	if ((sptr = Is_special(lev)) != 0)
-	    Sprintf(dptr, ".%c", sptr->boneid);
+	    sprintf(dptr, ".%c", sptr->boneid);
 	else
-	    Sprintf(dptr, ".%d", lev->dlevel);
+	    sprintf(dptr, ".%d", lev->dlevel);
 	
 	return(dptr-2);
 }
@@ -521,7 +521,7 @@ set_bonestemp_name()
 
 	tf = rindex(lock, '.');
 	if (!tf) tf = eos(lock);
-	Sprintf(tf, ".bn");
+	sprintf(tf, ".bn");
 	return lock;
 }
 
@@ -548,7 +548,7 @@ char errbuf[];
 	fd = creat(file, FCMASK);
 #endif
 	if (fd < 0 && errbuf) /* failure explanation */
-	    Sprintf(errbuf,
+	    sprintf(errbuf,
 		    "Cannot create bones \"%s\", id %s (errno %d).",
 		    lock, *bonesid, errno);
 
@@ -621,12 +621,12 @@ set_savefile_name()
 	char fnamebuf[BUFSZ], encodedfnamebuf[BUFSZ];
 	/* Obtain the name of the logged on user and incorporate
 	 * it into the name. */
-	Sprintf(fnamebuf, "%s-%s", get_username(0), plname);
+	sprintf(fnamebuf, "%s-%s", get_username(0), plname);
 	(void)fname_encode("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.",
 				'%', fnamebuf, encodedfnamebuf, BUFSZ);
-	Sprintf(SAVEF, "%s.NetHack-saved-game", encodedfnamebuf);
+	sprintf(SAVEF, "%s.NetHack-saved-game", encodedfnamebuf);
 #else
-	Sprintf(SAVEF, "save/%d%s", (int)getuid(), plname);
+	sprintf(SAVEF, "save/%d%s", (int)getuid(), plname);
 	regularize(SAVEF+5);	/* avoid . or / in name */
 #endif /* WIN32 */
 }
@@ -645,7 +645,7 @@ int fd;
 void
 set_error_savefile()
 {
-	Strcat(SAVEF, ".e");
+	strcat(SAVEF, ".e");
 }
 
 
@@ -736,8 +736,8 @@ const char *filename;
 char *lockname;
 {
 #if defined(UNIX) || defined(WIN32)
-	Strcpy(lockname, filename);
-	Strcat(lockname, "_lock");
+	strcpy(lockname, filename);
+	strcat(lockname, "_lock");
 	return lockname;
 # else
 	lockname[0] = '\0';
@@ -924,18 +924,18 @@ const char *filename;
 	/* should be only UNIX left */
 	envp = nh_getenv("HOME");
 	if (!envp)
-		Strcpy(tmp_config, configfile);
+		strcpy(tmp_config, configfile);
 	else
-		Sprintf(tmp_config, "%s/%s", envp, configfile);
+		sprintf(tmp_config, "%s/%s", envp, configfile);
 	if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
 		return(fp);
 # if defined(__APPLE__)
 	/* try an alternative */
 	if (envp) {
-		Sprintf(tmp_config, "%s/%s", envp, "Library/Preferences/NetHack Defaults");
+		sprintf(tmp_config, "%s/%s", envp, "Library/Preferences/NetHack Defaults");
 		if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
 			return(fp);
-		Sprintf(tmp_config, "%s/%s", envp, "Library/Preferences/NetHack Defaults.txt");
+		sprintf(tmp_config, "%s/%s", envp, "Library/Preferences/NetHack Defaults.txt");
 		if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
 			return(fp);
 	}
@@ -1033,7 +1033,7 @@ int prefixid;
 	if ((ptr = index(bufp, ';')) != 0) *ptr = '\0';
 	if (strlen(bufp) > 0) {
 		fqn_prefix[prefixid] = (char *)alloc(strlen(bufp)+2);
-		Strcpy(fqn_prefix[prefixid], bufp);
+		strcpy(fqn_prefix[prefixid], bufp);
 		append_slash(fqn_prefix[prefixid]);
 	}
 }
@@ -1255,8 +1255,8 @@ fopen_wizkit_file()
 #else
 	envp = nh_getenv("HOME");
 	if (envp)
-		Sprintf(tmp_wizkit, "%s/%s", envp, wizkit);
-	else 	Strcpy(tmp_wizkit, wizkit);
+		sprintf(tmp_wizkit, "%s/%s", envp, wizkit);
+	else 	strcpy(tmp_wizkit, wizkit);
 	if ((fp = fopenp(tmp_wizkit, "r")) != (FILE *)0)
 		return(fp);
 	else if (errno != ENOENT) {
@@ -1334,7 +1334,7 @@ const char *dir;
 #endif  /* UNIX */
 #if defined(WIN32)
 	char tmp[PATHLEN];
-	Strcpy(tmp, RECORD);
+	strcpy(tmp, RECORD);
 	fq_record = fqname(RECORD, SCOREPREFIX, 0);
 
 	if ((fd = open(fq_record, O_RDWR)) < 0) {

@@ -204,7 +204,7 @@ struct obj *otmp;
 		char nambuf[BUFSZ];
 
 		/* format monster's name before altering its visibility */
-		Strcpy(nambuf, Monnam(mtmp));
+		strcpy(nambuf, Monnam(mtmp));
 		mon_set_minvis(mtmp);
 		if (!oldinvis && knowninvisible(mtmp)) {
 		    pline("%s turns transparent!", nambuf);
@@ -740,13 +740,13 @@ struct monst *mon;
 		revive_egg(otmp);
 	    if (otmp->otyp != CORPSE) continue;
 	    /* save the name; the object is liable to go away */
-	    if (youseeit) Strcpy(corpse, corpse_xname(otmp, TRUE));
+	    if (youseeit) strcpy(corpse, corpse_xname(otmp, TRUE));
 
 	    /* for a merged group, only one is revived; should this be fixed? */
 	    if ((mtmp2 = revive(otmp)) != 0) {
 		++res;
 		if (youseeit) {
-		    if (!once++) Strcpy(owner,
+		    if (!once++) strcpy(owner,
 					(mon == &youmonst) ? "Your" :
 					s_suffix(Monnam(mon)));
 		    pline("%s %s suddenly comes alive!", owner, corpse);
@@ -1814,7 +1814,7 @@ dozap()
 	} else if(!u.dx && !u.dy && !u.dz && !(objects[obj->otyp].oc_dir == NODIR)) {
 	    if ((damage = zapyourself(obj, TRUE)) != 0) {
 		char buf[BUFSZ];
-		Sprintf(buf, "zapped %sself with a wand", uhim());
+		sprintf(buf, "zapped %sself with a wand", uhim());
 		losehp(damage, buf, NO_KILLER_PREFIX);
 	    }
 	} else {
@@ -2022,7 +2022,7 @@ boolean ordinary;
 			  : "You seem no deader than before.");
 			break;
 		    }
-		    Sprintf(buf, "shot %sself with a death ray", uhim());
+		    sprintf(buf, "shot %sself with a death ray", uhim());
 		    killer = buf;
 		    killer_format = NO_KILLER_PREFIX;
 		    You("irradiate yourself with pure energy!");
@@ -3179,10 +3179,10 @@ boolean u_caused;
 		    /* save name before potential delobj() */
 		    if (give_feedback) {
 			obj->quan = 1;
-			Strcpy(buf1, (x == u.ux && y == u.uy) ?
+			strcpy(buf1, (x == u.ux && y == u.uy) ?
 				xname(obj) : distant_name(obj, xname));
 			obj->quan = 2;
-		    	Strcpy(buf2, (x == u.ux && y == u.uy) ?
+		    	strcpy(buf2, (x == u.ux && y == u.uy) ?
 				xname(obj) : distant_name(obj, xname));
 			obj->quan = scrquan;
 		    }

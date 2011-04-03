@@ -287,7 +287,7 @@ error (const char *s, ...)
 	va_start(the_args, s);
 	if(settty_needed)
 		settty((char *)0);
-	Vprintf(s, the_args);
+	vprintf(s, the_args);
 	(void) putchar('\n');
 	va_end(the_args);
 	exit(EXIT_FAILURE);

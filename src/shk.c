@@ -503,7 +503,7 @@ register char *enterstring;
 		in_rooms(u.ux, u.uy, SHOPBASE) !=
 				  in_rooms(u.ux0, u.uy0, SHOPBASE))
 		pline(no_shk);
-	    Strcpy(empty_shops, u.ushops);
+	    strcpy(empty_shops, u.ushops);
 	    u.ushops[0] = '\0';
 	    return;
 	}
@@ -515,7 +515,7 @@ register char *enterstring;
 	    eshkp->bill_p = (struct bill_x *) -1000;
 	    if (!index(empty_shops, *enterstring))
 		pline(no_shk);
-	    Strcpy(empty_shops, u.ushops);
+	    strcpy(empty_shops, u.ushops);
 	    u.ushops[0] = '\0';
 	    return;
 	}
@@ -962,7 +962,7 @@ register boolean silentkops;
 		char shk_nam[BUFSZ];
 		boolean vanished = canseemon(shkp);
 
-		Strcpy(shk_nam, mon_nam(shkp));
+		strcpy(shk_nam, mon_nam(shkp));
 		if (on_level(&eshkp->shoplevel, &u.uz)) {
 			home_shk(shkp, FALSE);
 			/* didn't disappear if shk can still be seen */
@@ -1305,14 +1305,14 @@ proceed:
 #ifdef GOLDOBJ
                 umoney = money_cnt(invent);
 #endif
-		Sprintf(sbuf, "You owe %s %ld %s ",
+		sprintf(sbuf, "You owe %s %ld %s ",
 					   shkname(shkp), dtmp, currency(dtmp));
 		if(loan) {
 		    if(loan == dtmp)
-			Strcat(sbuf, "you picked up in the store.");
-		    else Strcat(sbuf,
+			strcat(sbuf, "you picked up in the store.");
+		    else strcat(sbuf,
 			   "for gold picked up and the use of merchandise.");
-		} else Strcat(sbuf, "for the use of merchandise.");
+		} else strcat(sbuf, "for the use of merchandise.");
 		pline(sbuf);
 #ifndef GOLDOBJ
 		if (u.ugold + eshkp->credit < dtmp) {
@@ -1500,7 +1500,7 @@ boolean itemize;
 
 	if (itemize) {
 	    char qbuf[BUFSZ];
-	    Sprintf(qbuf,"%s for %ld %s.  Pay?", quan == 1L ?
+	    sprintf(qbuf,"%s for %ld %s.  Pay?", quan == 1L ?
 		    Doname2(obj) : doname(obj), ltmp, currency(ltmp));
 	    if (yn(qbuf) == 'n') {
 		buy = PAY_SKIP;		/* don't want to buy */
@@ -1656,10 +1656,10 @@ int croaked;
 #endif
 		takes[0] = '\0';
 		if (!shkp->mcanmove || shkp->msleeping)
-			Strcat(takes, "wakes up and ");
+			strcat(takes, "wakes up and ");
 		if (distu(shkp->mx, shkp->my) > 2)
-			Strcat(takes, "comes and ");
-		Strcat(takes, "takes");
+			strcat(takes, "comes and ");
+		strcat(takes, "takes");
 
 #ifndef GOLDOBJ
 		if (loss > u.ugold || !loss || roomno == eshkp->shoproom) {
@@ -2138,7 +2138,7 @@ const char *arg;
 	obj_name = doname(obj);
 	/* Use an alternate message when extra information is being provided */
 	if (was_unknown) {
-	    Sprintf(fmtbuf, "%%s; you %s", fmt);
+	    sprintf(fmtbuf, "%%s; you %s", fmt);
 	    obj_name[0] = highc(obj_name[0]);
 	    pline(fmtbuf, obj_name, (obj->quan > 1) ? "them" : "it",
 		  amt, plur(amt), arg);
@@ -2225,17 +2225,17 @@ speak:
 					     the(xname(obj)));
 		return;
 	    }
-	    Strcpy(buf, "\"For you, ");
-	    if (ANGRY(shkp)) Strcat(buf, "scum ");
+	    strcpy(buf, "\"For you, ");
+	    if (ANGRY(shkp)) strcat(buf, "scum ");
 	    else {
 		static const char *honored[5] = {
 		  "good", "honored", "most gracious", "esteemed",
 		  "most renowned and sacred"
 		};
-		Strcat(buf, honored[rn2(4) + u.uevent.udemigod]);
-		if (!is_human(youmonst.data)) Strcat(buf, " creature");
+		strcat(buf, honored[rn2(4) + u.uevent.udemigod]);
+		if (!is_human(youmonst.data)) strcat(buf, " creature");
 		else
-		    Strcat(buf, (flags.female) ? " lady" : " sir");
+		    strcat(buf, (flags.female) ? " lady" : " sir");
 	    }
 	    if(ininv) {
 		long quan = obj->quan;
@@ -2626,7 +2626,7 @@ move_on:
 		    c = sell_response = 'y';
 		} else if (sell_response != 'n') {
 		    pline("%s cannot pay you at present.", Monnam(shkp));
-		    Sprintf(qbuf,
+		    sprintf(qbuf,
 			    "Will you accept %ld %s in credit for %s?",
 			    tmpcr, currency(tmpcr), doname(obj));
 		    /* won't accept 'a' response here */
@@ -2669,7 +2669,7 @@ move_on:
 		    only_partially_your_contents =
 			(contained_cost(obj, shkp, 0L, FALSE, FALSE) !=
 			 contained_cost(obj, shkp, 0L, FALSE, TRUE));
-		    Sprintf(qbuf,
+		    sprintf(qbuf,
 			 "%s offers%s %ld gold piece%s for%s %s %s.  Sell %s?",
 			    Monnam(shkp), short_funds ? " only" : "",
 			    offer, plur(offer),
@@ -2923,7 +2923,7 @@ register boolean croaked;
 	    int disposition;
 
 	    disposition = 0;
-	    Strcpy(shops, in_rooms(x, y, SHOPBASE));
+	    strcpy(shops, in_rooms(x, y, SHOPBASE));
 	    if (index(shops, ESHK(shkp)->shoproom)) {
 		if (croaked)
 		    disposition = (shops[1])? 0 : 1;
@@ -3405,7 +3405,7 @@ boolean cant_mollify;
 	    if (!tmp_dam->cost)
 		continue;
 	    cost_of_damage += tmp_dam->cost;
-	    Strcpy(shops_affected,
+	    strcpy(shops_affected,
 		   in_rooms(tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 	    for (shp = shops_affected; *shp; shp++) {
 		struct monst *tmp_shk;
@@ -3513,7 +3513,7 @@ getcad:
 	}
 
 	if (Invis) Your("invisibility does not fool %s!", shkname(shkp));
-	Sprintf(qbuf,"\"Cad!  You did %ld %s worth of damage!\"  Pay? ",
+	sprintf(qbuf,"\"Cad!  You did %ld %s worth of damage!\"  Pay? ",
 		 cost_of_damage, currency(cost_of_damage));
 	if(yn(qbuf) != 'n') {
 		cost_of_damage = check_credit(cost_of_damage, shkp);
@@ -3596,12 +3596,12 @@ register struct obj *first_obj;
 	if (Has_contents(otmp))
 	    cost += contained_cost(otmp, shkp, 0L, FALSE, FALSE);
 	if (!cost) {
-	    Strcpy(price, "no charge");
+	    strcpy(price, "no charge");
 	} else {
-	    Sprintf(price, "%ld %s%s", cost, currency(cost),
+	    sprintf(price, "%ld %s%s", cost, currency(cost),
 		    otmp->quan > 1L ? " each" : "");
 	}
-	Sprintf(buf, "%s, %s", doname(otmp), price);
+	sprintf(buf, "%s, %s", doname(otmp), price);
 	putstr(tmpwin, 0, buf),  cnt++;
     }
     if (cnt > 1) {
@@ -3969,7 +3969,7 @@ char *buf;
 struct obj *obj;
 {
 	if (!shk_owns(buf, obj) && !mon_owns(buf, obj))
-	    Strcpy(buf, carried(obj) ? "your" : "the");
+	    strcpy(buf, carried(obj) ? "your" : "the");
 	return buf;
 }
 

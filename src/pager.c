@@ -70,10 +70,10 @@ lookat(x, y, buf, monbuf)
 	/* if not polymorphed, show both the role and the race */
 	race[0] = 0;
 	if (!Upolyd) {
-	    Sprintf(race, "%s ", urace.adj);
+	    sprintf(race, "%s ", urace.adj);
 	}
 
-	Sprintf(buf, "%s%s%s called %s",
+	sprintf(buf, "%s%s%s called %s",
 		Invis ? "invisible " : "",
 		race,
 		mons[u.umonnum].mname,
@@ -88,9 +88,9 @@ lookat(x, y, buf, monbuf)
 	if (u.usteed) {
 	    char steedbuf[BUFSZ];
 
-	    Sprintf(steedbuf, ", mounted on %s", y_monnam(u.usteed));
+	    sprintf(steedbuf, ", mounted on %s", y_monnam(u.usteed));
 	    /* assert((sizeof buf >= strlen(buf)+strlen(steedbuf)+1); */
-	    Strcat(buf, steedbuf);
+	    strcat(buf, steedbuf);
 	}
 #endif
 	/* When you see yourself normally, no explanation is appended
@@ -105,7 +105,7 @@ lookat(x, y, buf, monbuf)
 	    if (Detect_monsters) how |= 4;
 
 	    if (how)
-		Sprintf(eos(buf), " [seen: %s%s%s%s%s]",
+		sprintf(eos(buf), " [seen: %s%s%s%s%s]",
 			(how & 1) ? "infravision" : "",
 			/* add comma if telep and infrav */
 			((how & 3) > 2) ? ", " : "",
@@ -116,7 +116,7 @@ lookat(x, y, buf, monbuf)
 	}
     } else if (u.uswallow) {
 	/* all locations when swallowed other than the hero are the monster */
-	Sprintf(buf, "interior of %s",
+	sprintf(buf, "interior of %s",
 				    Blind ? "a monster" : a_monnam(u.ustuck));
 	pm = u.ustuck->data;
     } else if (glyph_is_monster(glyph)) {
@@ -133,7 +133,7 @@ lookat(x, y, buf, monbuf)
 		name = distant_monnam(mtmp, ARTICLE_NONE, monnambuf);
 
 	    pm = mtmp->data;
-	    Sprintf(buf, "%s%s%s",
+	    sprintf(buf, "%s%s%s",
 		    (mtmp->mx != x || mtmp->my != y) ?
 			((mtmp->isshk && accurate)
 				? "tail of " : "tail of a ") : "",
@@ -141,10 +141,10 @@ lookat(x, y, buf, monbuf)
 		    (mtmp->mpeaceful && accurate) ? "peaceful " : "",
 		    name);
 	    if (u.ustuck == mtmp)
-		Strcat(buf, (Upolyd && sticks(youmonst.data)) ?
+		strcat(buf, (Upolyd && sticks(youmonst.data)) ?
 			", being held" : ", holding you");
 	    if (mtmp->mleashed)
-		Strcat(buf, ", leashed to you");
+		strcat(buf, ", leashed to you");
 
 	    if (mtmp->mtrapped && cansee(mtmp->mx, mtmp->my)) {
 		struct trap *t = t_at(mtmp->mx, mtmp->my);
@@ -153,7 +153,7 @@ lookat(x, y, buf, monbuf)
 		/* newsym lets you know of the trap, so mention it here */
 		if (tt == BEAR_TRAP || tt == PIT ||
 			tt == SPIKED_PIT || tt == WEB)
-		    Sprintf(eos(buf), ", trapped in %s",
+		    sprintf(eos(buf), ", trapped in %s",
 			    an(defsyms[trap_to_defsym(tt)].explanation));
 	    }
 
@@ -188,43 +188,43 @@ lookat(x, y, buf, monbuf)
 
 		if (ways_seen > 1 || !normal) {
 		    if (normal) {
-			Strcat(monbuf, "normal vision");
+			strcat(monbuf, "normal vision");
 			/* can't actually be 1 yet here */
-			if (ways_seen-- > 1) Strcat(monbuf, ", ");
+			if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		    if (useemon && mtmp->minvis) {
-			Strcat(monbuf, "see invisible");
-			if (ways_seen-- > 1) Strcat(monbuf, ", ");
+			strcat(monbuf, "see invisible");
+			if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		    if ((!mtmp->minvis || See_invisible) &&
 			    see_with_infrared(mtmp)) {
-			Strcat(monbuf, "infravision");
-			if (ways_seen-- > 1) Strcat(monbuf, ", ");
+			strcat(monbuf, "infravision");
+			if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		    if (tp_sensemon(mtmp)) {
-			Strcat(monbuf, "telepathy");
-			if (ways_seen-- > 1) Strcat(monbuf, ", ");
+			strcat(monbuf, "telepathy");
+			if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		    if (useemon && xraydist > 0 &&
 			    distu(mtmp->mx, mtmp->my) <= xraydist) {
 			/* Eyes of the Overworld */
-			Strcat(monbuf, "astral vision");
-			if (ways_seen-- > 1) Strcat(monbuf, ", ");
+			strcat(monbuf, "astral vision");
+			if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		    if (Detect_monsters) {
-			Strcat(monbuf, "monster detection");
-			if (ways_seen-- > 1) Strcat(monbuf, ", ");
+			strcat(monbuf, "monster detection");
+			if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		    if (MATCH_WARN_OF_MON(mtmp)) {
 		    	char wbuf[BUFSZ];
 			if (Hallucination)
-				Strcat(monbuf, "paranoid delusion");
+				strcat(monbuf, "paranoid delusion");
 			else {
-				Sprintf(wbuf, "warned of %s",
+				sprintf(wbuf, "warned of %s",
 					makeplural(mtmp->data->mname));
-		    		Strcat(monbuf, wbuf);
+		    		strcat(monbuf, wbuf);
 		    	}
-		    	if (ways_seen-- > 1) Strcat(monbuf, ", ");
+		    	if (ways_seen-- > 1) strcat(monbuf, ", ");
 		    }
 		}
 	    }
@@ -240,47 +240,47 @@ lookat(x, y, buf, monbuf)
 		    otmp->quan = 2L; /* to force pluralization */
 		else if (otmp->otyp == SLIME_MOLD)
 		    otmp->spe = current_fruit;	/* give the fruit a type */
-		Strcpy(buf, distant_name(otmp, xname));
+		strcpy(buf, distant_name(otmp, xname));
 		dealloc_obj(otmp);
 	    }
 	} else
-	    Strcpy(buf, distant_name(otmp, xname));
+	    strcpy(buf, distant_name(otmp, xname));
 
 	if (levl[x][y].typ == STONE || levl[x][y].typ == SCORR)
-	    Strcat(buf, " embedded in stone");
+	    strcat(buf, " embedded in stone");
 	else if (IS_WALL(levl[x][y].typ) || levl[x][y].typ == SDOOR)
-	    Strcat(buf, " embedded in a wall");
+	    strcat(buf, " embedded in a wall");
 	else if (closed_door(x,y))
-	    Strcat(buf, " embedded in a door");
+	    strcat(buf, " embedded in a door");
 	else if (is_pool(x,y))
-	    Strcat(buf, " in water");
+	    strcat(buf, " in water");
 	else if (is_lava(x,y))
-	    Strcat(buf, " in molten lava");	/* [can this ever happen?] */
+	    strcat(buf, " in molten lava");	/* [can this ever happen?] */
     } else if (glyph_is_trap(glyph)) {
 	int tnum = what_trap(glyph_to_trap(glyph));
-	Strcpy(buf, defsyms[trap_to_defsym(tnum)].explanation);
+	strcpy(buf, defsyms[trap_to_defsym(tnum)].explanation);
     } else if(!glyph_is_cmap(glyph)) {
-	Strcpy(buf,"dark part of a room");
+	strcpy(buf,"dark part of a room");
     } else switch(glyph_to_cmap(glyph)) {
     case S_altar:
 	if(!In_endgame(&u.uz))
-	    Sprintf(buf, "%s altar",
+	    sprintf(buf, "%s altar",
 		align_str(Amask2align(levl[x][y].altarmask & ~AM_SHRINE)));
-	else Sprintf(buf, "aligned altar");
+	else sprintf(buf, "aligned altar");
 	break;
     case S_ndoor:
 	if (is_drawbridge_wall(x, y) >= 0)
-	    Strcpy(buf,"open drawbridge portcullis");
+	    strcpy(buf,"open drawbridge portcullis");
 	else if ((levl[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
-	    Strcpy(buf,"broken door");
+	    strcpy(buf,"broken door");
 	else
-	    Strcpy(buf,"doorway");
+	    strcpy(buf,"doorway");
 	break;
     case S_cloud:
-	Strcpy(buf, Is_airlevel(&u.uz) ? "cloudy area" : "fog/vapor cloud");
+	strcpy(buf, Is_airlevel(&u.uz) ? "cloudy area" : "fog/vapor cloud");
 	break;
     default:
-	Strcpy(buf,defsyms[glyph_to_cmap(glyph)].explanation);
+	strcpy(buf,defsyms[glyph_to_cmap(glyph)].explanation);
 	break;
     }
 
@@ -563,7 +563,7 @@ do_look(quick)
 		monexplain[i]) {
 		need_to_look = TRUE;
 		if (!found) {
-		    Sprintf(out_str, "%c       %s", sym, an(monexplain[i]));
+		    sprintf(out_str, "%c       %s", sym, an(monexplain[i]));
 		    firstmatch = monexplain[i];
 		    found++;
 		} else {
@@ -587,7 +587,7 @@ do_look(quick)
 	 */
 	if (u.uswallow && from_screen && is_swallow_sym(sym)) {
 	    if (!found) {
-		Sprintf(out_str, "%c       %s", sym, mon_interior);
+		sprintf(out_str, "%c       %s", sym, mon_interior);
 		firstmatch = mon_interior;
 	    } else {
 		found += append_str(out_str, mon_interior);
@@ -604,7 +604,7 @@ do_look(quick)
 		    continue;
 		}
 		if (!found) {
-		    Sprintf(out_str, "%c       %s", sym, an(objexplain[i]));
+		    sprintf(out_str, "%c       %s", sym, an(objexplain[i]));
 		    firstmatch = objexplain[i];
 		    found++;
 		} else {
@@ -615,7 +615,7 @@ do_look(quick)
 
 	if (sym == DEF_INVISIBLE) {
 	    if (!found) {
-		Sprintf(out_str, "%c       %s", sym, an(invisexplain));
+		sprintf(out_str, "%c       %s", sym, an(invisexplain));
 		firstmatch = invisexplain;
 		found++;
 	    } else {
@@ -637,10 +637,10 @@ do_look(quick)
 
 		if (!found) {
 		    if (is_cmap_trap(i)) {
-			Sprintf(out_str, "%c       a trap", sym);
+			sprintf(out_str, "%c       a trap", sym);
 			hit_trap = TRUE;
 		    } else {
-			Sprintf(out_str, "%c       %s", sym,
+			sprintf(out_str, "%c       %s", sym,
 				article == 2 ? the(x_str) :
 				article == 1 ? an(x_str) : x_str);
 		    }
@@ -664,7 +664,7 @@ do_look(quick)
 	    x_str = def_warnsyms[i].explanation;
 	    if (sym == (from_screen ? warnsyms[i] : def_warnsyms[i].sym)) {
 		if (!found) {
-			Sprintf(out_str, "%c       %s",
+			sprintf(out_str, "%c       %s",
 				sym, def_warnsyms[i].explanation);
 			firstmatch = def_warnsyms[i].explanation;
 			found++;
@@ -674,7 +674,7 @@ do_look(quick)
 		/* Kludge: warning trumps boulders on the display.
 		   Reveal the boulder too or player can get confused */
 		if (from_screen && sobj_at(BOULDER, cc.x, cc.y))
-			Strcat(out_str, " co-located with a boulder");
+			strcat(out_str, " co-located with a boulder");
 		break;	/* out of for loop*/
 	    }
 	}
@@ -683,7 +683,7 @@ do_look(quick)
 	if (skipped_venom && found < 2) {
 	    x_str = objexplain[VENOM_CLASS];
 	    if (!found) {
-		Sprintf(out_str, "%c       %s", sym, an(x_str));
+		sprintf(out_str, "%c       %s", sym, an(x_str));
 		firstmatch = x_str;
 		found++;
 	    } else {
@@ -695,7 +695,7 @@ do_look(quick)
 	if (iflags.bouldersym && sym == iflags.bouldersym) {
 	    if (!found) {
 		firstmatch = "boulder";
-		Sprintf(out_str, "%c       %s", sym, an(firstmatch));
+		sprintf(out_str, "%c       %s", sym, an(firstmatch));
 		found++;
 	    } else {
 		found += append_str(out_str, "boulder");
@@ -714,12 +714,12 @@ do_look(quick)
 		pm = lookat(cc.x, cc.y, look_buf, monbuf);
 		firstmatch = look_buf;
 		if (*firstmatch) {
-		    Sprintf(temp_buf, " (%s)", firstmatch);
+		    sprintf(temp_buf, " (%s)", firstmatch);
 		    (void)strncat(out_str, temp_buf, BUFSZ-strlen(out_str)-1);
 		    found = 1;	/* we have something to look up */
 		}
 		if (monbuf[0]) {
-		    Sprintf(temp_buf, " [seen: %s]", monbuf);
+		    sprintf(temp_buf, " [seen: %s]", monbuf);
 		    (void)strncat(out_str, temp_buf, BUFSZ-strlen(out_str)-1);
 		}
 	    }
@@ -732,7 +732,7 @@ do_look(quick)
 	    if (found == 1 && ans != LOOK_QUICK && ans != LOOK_ONCE &&
 			(ans == LOOK_VERBOSE || (flags.help && !quick))) {
 		char temp_buf[BUFSZ];
-		Strcpy(temp_buf, firstmatch);
+		strcpy(temp_buf, firstmatch);
 		checkfile(temp_buf, pm, FALSE, (boolean)(ans == LOOK_VERBOSE));
 	    }
 	} else {
@@ -827,7 +827,7 @@ char *cbuf;
 			(void) strncpy(buf+1, "       ", 7);
 		}
 		(void) dlb_fclose(fp);
-		Strcpy(cbuf, buf);
+		strcpy(cbuf, buf);
 		return cbuf;
 	    }
 	}
@@ -899,7 +899,7 @@ help_menu(sel)
 #ifdef PORT_HELP
 	    /* port-specific line has a %s in it for the PORT_ID */
 	    if (help_menu_items[i][0] == '%') {
-		Sprintf(helpbuf, help_menu_items[i], PORT_ID);
+		sprintf(helpbuf, help_menu_items[i], PORT_ID);
 		any.a_int = PORT_HELP_ID + 1;
 		add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
 			 helpbuf, MENU_UNSELECTED);

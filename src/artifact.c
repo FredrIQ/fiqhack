@@ -529,7 +529,7 @@ touch_artifact(obj,mon)
 	if (!yours) return 0;
 	You("are blasted by %s power!", s_suffix(the(xname(obj))));
 	dmg = d((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
-	Sprintf(buf, "touching %s", oart->name);
+	sprintf(buf, "touching %s", oart->name);
 	losehp(dmg, buf, KILLED_BY);
 	exercise(A_WIS, FALSE);
     }
@@ -697,7 +697,7 @@ winid tmpwin;		/* supplied by dodiscover() */
 	if (i == 0) putstr(tmpwin, iflags.menu_headings, "Artifacts");
 	m = artidisco[i];
 	otyp = artilist[m].otyp;
-	Sprintf(buf, "  %s [%s %s]", artiname(m),
+	sprintf(buf, "  %s [%s %s]", artiname(m),
 		align_str(artilist[m].alignment), simple_typename(otyp));
 	putstr(tmpwin, 0, buf);
     }
@@ -896,9 +896,9 @@ char *hittee;			/* target's name: "you" or mon_nam(mdef) */
 	    char buf[BUFSZ];
 
 	    buf[0] = '\0';
-	    if (do_stun) Strcat(buf, "stunned");
-	    if (do_stun && do_confuse) Strcat(buf, " and ");
-	    if (do_confuse) Strcat(buf, "confused");
+	    if (do_stun) strcat(buf, "stunned");
+	    if (do_stun && do_confuse) strcat(buf, " and ");
+	    if (do_confuse) strcat(buf, "confused");
 	    pline("%s %s %s%c", hittee, vtense(hittee, "are"),
 		  buf, (do_stun && do_confuse) ? '!' : '.');
 	}
@@ -932,7 +932,7 @@ int dieroll; /* needed for Magicbane and vorpal blades */
 	static const char you[] = "you";
 	char hittee[BUFSZ];
 
-	Strcpy(hittee, youdefend ? you : mon_nam(mdef));
+	strcpy(hittee, youdefend ? you : mon_nam(mdef));
 
 	/* The following takes care of most of the damage, but not all--
 	 * the exception being for level draining, which is specially

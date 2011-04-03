@@ -620,7 +620,7 @@ register struct monst *mon;
 			const char *mon_hand = mbodypart(mon, HAND);
 
 			if (bimanual(mw_tmp)) mon_hand = makeplural(mon_hand);
-			Sprintf(welded_buf, "%s welded to %s %s",
+			sprintf(welded_buf, "%s welded to %s %s",
 				otense(mw_tmp, "are"),
 				mhis(mon), mon_hand);
 
@@ -730,7 +730,7 @@ char *buf;
 	case P_GRAND_MASTER: ptr = "Grand Master"; break;
 	default:	     ptr = "Unknown";	break;
     }
-    Strcpy(buf, ptr);
+    strcpy(buf, ptr);
     return buf;
 }
 
@@ -863,7 +863,7 @@ enhance_weapon_skill()
 	    if (eventually_advance > 0 || maxxed_cnt > 0) {
 		any.a_void = 0;
 		if (eventually_advance > 0) {
-		    Sprintf(buf,
+		    sprintf(buf,
 			    "(Skill%s flagged by \"*\" may be enhanced %s.)",
 			    plur(eventually_advance),
 			    (u.ulevel < MAXULEV) ?
@@ -873,7 +873,7 @@ enhance_weapon_skill()
 			     buf, MENU_UNSELECTED);
 		}
 		if (maxxed_cnt > 0) {
-		    Sprintf(buf,
+		    sprintf(buf,
 		  "(Skill%s flagged by \"#\" cannot be enhanced any further.)",
 			    plur(maxxed_cnt));
 		    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
@@ -916,22 +916,22 @@ enhance_weapon_skill()
 		(void) skill_level_name(i, sklnambuf);
 		if (wizard) {
 		    if (!iflags.menu_tab_sep)
-			Sprintf(buf, " %s%-*s %-12s %5d(%4d)",
+			sprintf(buf, " %s%-*s %-12s %5d(%4d)",
 			    prefix, longest, P_NAME(i), sklnambuf,
 			    P_ADVANCE(i),
 			    practice_needed_to_advance(P_SKILL(i)));
 		    else
-			Sprintf(buf, " %s%s\t%s\t%5d(%4d)",
+			sprintf(buf, " %s%s\t%s\t%5d(%4d)",
 			    prefix, P_NAME(i), sklnambuf,
 			    P_ADVANCE(i),
 			    practice_needed_to_advance(P_SKILL(i)));
 		 } else
 		{
 		    if (!iflags.menu_tab_sep)
-			Sprintf(buf, " %s %-*s [%s]",
+			sprintf(buf, " %s %-*s [%s]",
 			    prefix, longest, P_NAME(i), sklnambuf);
 		    else
-			Sprintf(buf, " %s%s\t[%s]",
+			sprintf(buf, " %s%s\t[%s]",
 			    prefix, P_NAME(i), sklnambuf);
 		}
 		any.a_int = can_advance(i, speedy) ? i+1 : 0;
@@ -939,10 +939,10 @@ enhance_weapon_skill()
 			 buf, MENU_UNSELECTED);
 	    }
 
-	    Strcpy(buf, (to_advance > 0) ? "Pick a skill to advance:" :
+	    strcpy(buf, (to_advance > 0) ? "Pick a skill to advance:" :
 					   "Current skills:");
 	    if (wizard && !speedy)
-		Sprintf(eos(buf), "  (%d slot%s available)",
+		sprintf(eos(buf), "  (%d slot%s available)",
 			u.weapon_slots, plur(u.weapon_slots));
 	    end_menu(win, buf);
 	    n = select_menu(win, to_advance ? PICK_ONE : PICK_NONE, &selected);

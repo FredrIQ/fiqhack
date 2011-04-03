@@ -371,16 +371,16 @@ give_up:	/* Quit */
 			if (thisch == lastch) thisch = highc(thisch);
 			if (flags.initgend != ROLE_NONE && flags.initgend != ROLE_RANDOM) {
 				if (flags.initgend == 1  && roles[i].name.f)
-					Strcpy(rolenamebuf, roles[i].name.f);
+					strcpy(rolenamebuf, roles[i].name.f);
 				else
-					Strcpy(rolenamebuf, roles[i].name.m);
+					strcpy(rolenamebuf, roles[i].name.m);
 			} else {
 				if (roles[i].name.f) {
-					Strcpy(rolenamebuf, roles[i].name.m);
-					Strcat(rolenamebuf, "/");
-					Strcat(rolenamebuf, roles[i].name.f);
+					strcpy(rolenamebuf, roles[i].name.m);
+					strcat(rolenamebuf, "/");
+					strcat(rolenamebuf, roles[i].name.f);
 				} else 
-					Strcpy(rolenamebuf, roles[i].name.m);
+					strcpy(rolenamebuf, roles[i].name.m);
 			}	
 			add_menu(win, NO_GLYPH, &any, thisch,
 			    0, ATR_NONE, an(rolenamebuf), MENU_UNSELECTED);
@@ -396,7 +396,7 @@ give_up:	/* Quit */
 		any.a_int = i+1;	/* must be non-zero */
 		add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				"Quit", MENU_UNSELECTED);
-		Sprintf(pbuf, "Pick a role for your %s", plbuf);
+		sprintf(pbuf, "Pick a role for your %s", plbuf);
 		end_menu(win, pbuf);
 		n = select_menu(win, PICK_ONE, &selected);
 		destroy_nhwindow(win);
@@ -467,7 +467,7 @@ give_up:	/* Quit */
 		    any.a_int = i+1;	/* must be non-zero */
 		    add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
-		    Sprintf(pbuf, "Pick the race of your %s", plbuf);
+		    sprintf(pbuf, "Pick the race of your %s", plbuf);
 		    end_menu(win, pbuf);
 		    n = select_menu(win, PICK_ONE, &selected);
 		    destroy_nhwindow(win);
@@ -539,7 +539,7 @@ give_up:	/* Quit */
 		    any.a_int = i+1;	/* must be non-zero */
 		    add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
-		    Sprintf(pbuf, "Pick the gender of your %s", plbuf);
+		    sprintf(pbuf, "Pick the gender of your %s", plbuf);
 		    end_menu(win, pbuf);
 		    n = select_menu(win, PICK_ONE, &selected);
 		    destroy_nhwindow(win);
@@ -610,7 +610,7 @@ give_up:	/* Quit */
 		    any.a_int = i+1;	/* must be non-zero */
 		    add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
-		    Sprintf(pbuf, "Pick the alignment of your %s", plbuf);
+		    sprintf(pbuf, "Pick the alignment of your %s", plbuf);
 		    end_menu(win, pbuf);
 		    n = select_menu(win, PICK_ONE, &selected);
 		    destroy_nhwindow(win);
@@ -1210,18 +1210,18 @@ struct WinDesc *cw;
 	    }
 
 	    /* set extra chars.. */
-	    Strcat(resp, default_menu_cmds);
-	    Strcat(resp, "0123456789\033\n\r");	/* counts, quit */
-	    Strcat(resp, gacc);			/* group accelerators */
-	    Strcat(resp, mapped_menu_cmds);
+	    strcat(resp, default_menu_cmds);
+	    strcat(resp, "0123456789\033\n\r");	/* counts, quit */
+	    strcat(resp, gacc);			/* group accelerators */
+	    strcat(resp, mapped_menu_cmds);
 
 	    if (cw->npages > 1)
-		Sprintf(cw->morestr, "(%d of %d)",
+		sprintf(cw->morestr, "(%d of %d)",
 			curr_page + 1, (int) cw->npages);
 	    else if (msave)
-		Strcpy(cw->morestr, msave);
+		strcpy(cw->morestr, msave);
 	    else
-		Strcpy(cw->morestr, defmorestr);
+		strcpy(cw->morestr, defmorestr);
 
 	    tty_curs(window, 1, page_lines);
 	    cl_end();
@@ -1825,7 +1825,7 @@ tty_putstr(window, attr, str)
 	n0 = strlen(str) + 1;
 	ob = cw->data[cw->cury] = (char *)alloc((unsigned)n0 + 1);
 	*ob++ = (char)(attr + 1);	/* avoid nuls, for convenience */
-	Strcpy(ob, str);
+	strcpy(ob, str);
 
 	if(n0 > cw->maxcol)
 	    cw->maxcol = n0;
@@ -1964,7 +1964,7 @@ tty_add_menu(window, glyph, identifier, ch, gch, attr, str, preselected)
 	    impossible("Menu item too long (%d).", len);
 	    len = BUFSZ - 1;
 	}
-	Sprintf(buf, "%c - ", ch ? ch : '?');
+	sprintf(buf, "%c - ", ch ? ch : '?');
 	(void) strncpy(buf+4, str, len);
 	buf[4+len] = '\0';
 	newstr = buf;
@@ -2073,7 +2073,7 @@ tty_end_menu(window, prompt)
     if (cw->npages > 1) {
 	char buf[QBUFSZ];
 	/* produce the largest demo string */
-	Sprintf(buf, "(%d of %d) ", cw->npages, cw->npages);
+	sprintf(buf, "(%d of %d) ", cw->npages, cw->npages);
 	len = strlen(buf);
 	cw->morestr = copy_of("");
     } else {

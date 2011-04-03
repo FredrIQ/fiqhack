@@ -420,7 +420,7 @@ tele()
 	    } else {
 #ifdef STEED
 		    char buf[BUFSZ];
-		    if (u.usteed) Sprintf(buf," and %s", mon_nam(u.usteed));
+		    if (u.usteed) sprintf(buf," and %s", mon_nam(u.usteed));
 #endif
 		    pline("To what position do you%s want to be teleported?",
 #ifdef STEED
@@ -558,14 +558,14 @@ level_tele()
 	    char qbuf[BUFSZ];
 	    int trycnt = 0;
 
-	    Strcpy(qbuf, "To what level do you want to teleport?");
+	    strcpy(qbuf, "To what level do you want to teleport?");
 	    do {
 		if (++trycnt == 2) {
 
-			if (wizard) Strcat(qbuf, " [type a number or ? for a menu]");
+			if (wizard) strcat(qbuf, " [type a number or ? for a menu]");
 			else
 
-			Strcat(qbuf, " [type a number]");
+			strcat(qbuf, " [type a number]");
 		}
 		getlin(qbuf, buf);
 		if (!strcmp(buf,"\033")) {	/* cancelled */
@@ -589,7 +589,7 @@ level_tele()
 			newlevel.dnum = destdnum;
 			newlevel.dlevel = destlev;
 			if (In_endgame(&newlevel) && !In_endgame(&u.uz)) {
-				Sprintf(buf,
+				sprintf(buf,
 				    "Destination is earth level");
 				if (!u.uhave.amulet) {
 					struct obj *obj;
@@ -597,7 +597,7 @@ level_tele()
 							TRUE, FALSE);
 					if (obj) {
 						obj = addinv(obj);
-						Strcat(buf, " with the amulet");
+						strcat(buf, " with the amulet");
 					}
 				}
 				assign_level(&newlevel, &earth_level);
@@ -708,7 +708,7 @@ level_tele()
 		} else {
 		    pline("Unfortunately, you don't know how to fly.");
 		    You("plummet a few thousand feet to your death.");
-		    Sprintf(buf,
+		    sprintf(buf,
 			  "teleported out of the dungeon and fell to %s death",
 			    uhis());
 		    killer = buf;

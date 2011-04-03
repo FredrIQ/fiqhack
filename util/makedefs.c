@@ -240,17 +240,17 @@ do_rumors()
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename,file_prefix);
+	strcat(filename,file_prefix);
 #endif
-	Sprintf(eos(filename), DATA_TEMPLATE, RUMOR_FILE);
+	sprintf(eos(filename), DATA_TEMPLATE, RUMOR_FILE);
 	if (!(ofp = fopen(filename, WRTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
 	}
 	Fprintf(ofp,Dont_Edit_Data);
 
-	Sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
-	Strcat(infile, ".tru");
+	sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
+	strcat(infile, ".tru");
 	if (!(ifp = fopen(infile, RDTMODE))) {
 		perror(infile);
 		Fclose(ofp);
@@ -270,8 +270,8 @@ do_rumors()
 
 	Fclose(ifp);
 
-	Sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
-	Strcat(infile, ".fal");
+	sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
+	strcat(infile, ".fal");
 	if (!(ifp = fopen(infile, RDTMODE))) {
 		perror(infile);
 		Fclose(ofp);
@@ -382,9 +382,9 @@ static char *
 version_string(outbuf)
 char *outbuf;
 {
-    Sprintf(outbuf, "%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+    sprintf(outbuf, "%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 #ifdef BETA
-    Sprintf(eos(outbuf), "-%d", EDITLEVEL);
+    sprintf(eos(outbuf), "-%d", EDITLEVEL);
 #endif
     return outbuf;
 }
@@ -399,13 +399,13 @@ const char *build_date;
     subbuf[0] = '\0';
 #ifdef PORT_SUB_ID
     subbuf[0] = ' ';
-    Strcpy(&subbuf[1], PORT_SUB_ID);
+    strcpy(&subbuf[1], PORT_SUB_ID);
 #endif
 #ifdef BETA
-    Strcat(subbuf, " Beta");
+    strcat(subbuf, " Beta");
 #endif
 
-    Sprintf(outbuf, "%s NetHack%s Version %s - last build %s.",
+    sprintf(outbuf, "%s NetHack%s Version %s - last build %s.",
 	    PORT_ID, subbuf, version_string(versbuf), build_date);
     return outbuf;
 }
@@ -419,9 +419,9 @@ do_date()
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename,file_prefix);
+	strcat(filename,file_prefix);
 #endif
-	Sprintf(eos(filename), INCLUDE_TEMPLATE, DATE_FILE);
+	sprintf(eos(filename), INCLUDE_TEMPLATE, DATE_FILE);
 	if (!(ofp = fopen(filename, WRTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
@@ -430,7 +430,7 @@ do_date()
 	Fprintf(ofp,Dont_Edit_Code);
 
 	(void) time((time_t *)&clocktim);
-	Strcpy(cbuf, ctime((time_t *)&clocktim));
+	strcpy(cbuf, ctime((time_t *)&clocktim));
 	for (c = cbuf; *c; c++) if (*c == '\n') break;
 	*c = '\0';	/* strip off the '\n' */
 	Fprintf(ofp,"#define BUILD_DATE \"%s\"\n", cbuf);
@@ -467,15 +467,15 @@ build_savebones_compat_string()
 #ifdef VERSION_COMPATIBILITY
 	unsigned long uver = VERSION_COMPATIBILITY;
 #endif
-	Strcpy(save_bones_compat_buf,
+	strcpy(save_bones_compat_buf,
 		"save and bones files accepted from version");
 #ifdef VERSION_COMPATIBILITY
-	Sprintf(eos(save_bones_compat_buf), "s %lu.%lu.%lu through %d.%d.%d",
+	sprintf(eos(save_bones_compat_buf), "s %lu.%lu.%lu through %d.%d.%d",
 		((uver & 0xFF000000L) >> 24), ((uver & 0x00FF0000L) >> 16),
 		((uver & 0x0000FF00L) >> 8),
 		VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 #else
-	Sprintf(eos(save_bones_compat_buf), " %d.%d.%d only",
+	sprintf(eos(save_bones_compat_buf), " %d.%d.%d only",
 		VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 #endif
 }
@@ -594,9 +594,9 @@ do_options()
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename,file_prefix);
+	strcat(filename,file_prefix);
 #endif
-	Sprintf(eos(filename), DATA_TEMPLATE, OPTIONS_FILE);
+	sprintf(eos(filename), DATA_TEMPLATE, OPTIONS_FILE);
 	if (!(ofp = fopen(filename, WRTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
@@ -682,14 +682,14 @@ do_data()
 	long	txt_offset;
 	int	entry_cnt, line_cnt;
 
-	Sprintf(tempfile, DATA_TEMPLATE, "database.tmp");
+	sprintf(tempfile, DATA_TEMPLATE, "database.tmp");
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename,file_prefix);
+	strcat(filename,file_prefix);
 #endif
-	Sprintf(eos(filename), DATA_TEMPLATE, DATA_FILE);
-	Sprintf(infile, DATA_IN_TEMPLATE, DATA_FILE);
-	Strcat(infile,
+	sprintf(eos(filename), DATA_TEMPLATE, DATA_FILE);
+	sprintf(infile, DATA_IN_TEMPLATE, DATA_FILE);
+	strcat(infile,
 #ifdef SHORT_FILENAMES
 		".bas"
 #else
@@ -741,7 +741,7 @@ do_data()
 	Fclose(ifp);		/* all done with original input file */
 
 	/* reprocess the scratch file; 1st format an error msg, just in case */
-	Sprintf(in_line, "rewind of \"%s\"", tempfile);
+	sprintf(in_line, "rewind of \"%s\"", tempfile);
 	if (rewind(tfp) != 0)  goto dead_data;
 	/* copy all lines of text from the scratch file into the output file */
 	while (fgets(in_line, sizeof in_line, tfp))
@@ -752,10 +752,10 @@ do_data()
 	Unlink(tempfile);	/* remove it */
 
 	/* update the first record of the output file; prepare error msg 1st */
-	Sprintf(in_line, "rewind of \"%s\"", filename);
+	sprintf(in_line, "rewind of \"%s\"", filename);
 	ok = (rewind(ofp) == 0);
 	if (ok) {
-	   Sprintf(in_line, "header rewrite of \"%s\"", filename);
+	   sprintf(in_line, "header rewrite of \"%s\"", filename);
 	   ok = (fprintf(ofp, "%s%08lx\n", Dont_Edit_Data, txt_offset) >= 0);
 	}
 	if (!ok) {
@@ -824,14 +824,14 @@ do_oracles()
 	int	oracle_cnt;
 	register int i;
 
-	Sprintf(tempfile, DATA_TEMPLATE, "oracles.tmp");
+	sprintf(tempfile, DATA_TEMPLATE, "oracles.tmp");
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename, file_prefix);
+	strcat(filename, file_prefix);
 #endif
-	Sprintf(eos(filename), DATA_TEMPLATE, ORACLE_FILE);
-	Sprintf(infile, DATA_IN_TEMPLATE, ORACLE_FILE);
-	Strcat(infile, ".txt");
+	sprintf(eos(filename), DATA_TEMPLATE, ORACLE_FILE);
+	sprintf(infile, DATA_IN_TEMPLATE, ORACLE_FILE);
+	strcat(infile, ".txt");
 	if (!(ifp = fopen(infile, RDTMODE))) {
 		perror(infile);
 		exit(EXIT_FAILURE);
@@ -892,7 +892,7 @@ do_oracles()
 	Fclose(ifp);		/* all done with original input file */
 
 	/* reprocess the scratch file; 1st format an error msg, just in case */
-	Sprintf(in_line, "rewind of \"%s\"", tempfile);
+	sprintf(in_line, "rewind of \"%s\"", tempfile);
 	if (rewind(tfp) != 0)  goto dead_data;
 	/* copy all lines of text from the scratch file into the output file */
 	while (fgets(in_line, sizeof in_line, tfp))
@@ -903,14 +903,14 @@ do_oracles()
 	Unlink(tempfile);	/* remove it */
 
 	/* update the first record of the output file; prepare error msg 1st */
-	Sprintf(in_line, "rewind of \"%s\"", filename);
+	sprintf(in_line, "rewind of \"%s\"", filename);
 	ok = (rewind(ofp) == 0);
 	if (ok) {
-	    Sprintf(in_line, "header rewrite of \"%s\"", filename);
+	    sprintf(in_line, "header rewrite of \"%s\"", filename);
 	    ok = (fprintf(ofp, "%s%5d\n", Dont_Edit_Data, oracle_cnt) >=0);
 	}
 	if (ok) {
-	    Sprintf(in_line, "data rewrite of \"%s\"", filename);
+	    sprintf(in_line, "data rewrite of \"%s\"", filename);
 	    for (i = 0; i <= oracle_cnt; i++) {
 		if (!(ok = (fpos = ftell(ofp)) >= 0)) break;
 		if (!(ok = (fseek(ofp, fpos, SEEK_SET) >= 0))) break;
@@ -974,16 +974,16 @@ do_dungeon()
 {
 	int rcnt = 0;
 
-	Sprintf(filename, DATA_IN_TEMPLATE, DGN_I_FILE);
+	sprintf(filename, DATA_IN_TEMPLATE, DGN_I_FILE);
 	if (!(ifp = fopen(filename, RDTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
 	}
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename, file_prefix);
+	strcat(filename, file_prefix);
 #endif
-	Sprintf(eos(filename), DGN_TEMPLATE, DGN_O_FILE);
+	sprintf(eos(filename), DGN_TEMPLATE, DGN_O_FILE);
 	if (!(ofp = fopen(filename, WRTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
@@ -1101,9 +1101,9 @@ do_monstr()
      */
     filename[0]='\0';
 #ifdef FILE_PREFIX
-    Strcat(filename, file_prefix);
+    strcat(filename, file_prefix);
 #endif
-    Sprintf(eos(filename), SOURCE_TEMPLATE, MON_STR_C);
+    sprintf(eos(filename), SOURCE_TEMPLATE, MON_STR_C);
     if (!(ofp = fopen(filename, WRTMODE))) {
 	perror(filename);
 	exit(EXIT_FAILURE);
@@ -1138,9 +1138,9 @@ do_permonst()
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename, file_prefix);
+	strcat(filename, file_prefix);
 #endif
-	Sprintf(eos(filename), INCLUDE_TEMPLATE, MONST_FILE);
+	sprintf(eos(filename), INCLUDE_TEMPLATE, MONST_FILE);
 	if (!(ofp = fopen(filename, WRTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
@@ -1377,7 +1377,7 @@ put_qt_hdrs()
 void
 do_questtxt()
 {
-	Sprintf(filename, DATA_IN_TEMPLATE, QTXT_I_FILE);
+	sprintf(filename, DATA_IN_TEMPLATE, QTXT_I_FILE);
 	if(!(ifp = fopen(filename, RDTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);
@@ -1385,9 +1385,9 @@ do_questtxt()
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename, file_prefix);
+	strcat(filename, file_prefix);
 #endif
-	Sprintf(eos(filename), DATA_TEMPLATE, QTXT_O_FILE);
+	sprintf(eos(filename), DATA_TEMPLATE, QTXT_O_FILE);
 	if(!(ofp = fopen(filename, WRBMODE))) {
 		perror(filename);
 		Fclose(ifp);
@@ -1450,9 +1450,9 @@ do_objs()
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
-	Strcat(filename, file_prefix);
+	strcat(filename, file_prefix);
 #endif
-	Sprintf(eos(filename), INCLUDE_TEMPLATE, ONAME_FILE);
+	sprintf(eos(filename), INCLUDE_TEMPLATE, ONAME_FILE);
 	if (!(ofp = fopen(filename, WRTMODE))) {
 		perror(filename);
 		exit(EXIT_FAILURE);

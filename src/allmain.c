@@ -533,11 +533,11 @@ boolean new_game;	/* false => restoring an old game */
      */
     *buf = '\0';
     if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
-	Sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
+	sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
     if (!urole.name.f &&
 	    (new_game ? (urole.allow & ROLE_GENDMASK) == (ROLE_MALE|ROLE_FEMALE) :
 	     currentgend != flags.initgend))
-	Sprintf(eos(buf), " %s", genders[currentgend].adj);
+	sprintf(eos(buf), " %s", genders[currentgend].adj);
 
     pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s."
 		   : "%s %s, the%s %s %s, welcome back to NetHack!",

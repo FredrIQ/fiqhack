@@ -93,20 +93,20 @@ int how;
 	rip = dp = (char **) alloc(sizeof(rip_txt));
 	for (x = 0; rip_txt[x]; x++) {
 		dp[x] = (char *) alloc((unsigned int)(strlen(rip_txt[x]) + 1));
-		Strcpy(dp[x], rip_txt[x]);
+		strcpy(dp[x], rip_txt[x]);
 	}
 	dp[x] = (char *)0;
 
 	/* Put name on stone */
-	Sprintf(buf, "%s", plname);
+	sprintf(buf, "%s", plname);
 	buf[STONE_LINE_LEN] = 0;
 	center(NAME_LINE, buf);
 
 	/* Put $ on stone */
 #ifndef GOLDOBJ
-	Sprintf(buf, "%ld Au", u.ugold);
+	sprintf(buf, "%ld Au", u.ugold);
 #else
-	Sprintf(buf, "%ld Au", done_money);
+	sprintf(buf, "%ld Au", done_money);
 #endif
 	buf[STONE_LINE_LEN] = 0; /* It could be a *lot* of gold :-) */
 	center(GOLD_LINE, buf);
@@ -115,15 +115,15 @@ int how;
 	switch (killer_format) {
 		default: impossible("bad killer format?");
 		case KILLED_BY_AN:
-			Strcpy(buf, killed_by_prefix[how]);
-			Strcat(buf, an(killer));
+			strcpy(buf, killed_by_prefix[how]);
+			strcat(buf, an(killer));
 			break;
 		case KILLED_BY:
-			Strcpy(buf, killed_by_prefix[how]);
-			Strcat(buf, killer);
+			strcpy(buf, killed_by_prefix[how]);
+			strcat(buf, killer);
 			break;
 		case NO_KILLER_PREFIX:
-			Strcpy(buf, killer);
+			strcpy(buf, killer);
 			break;
 	}
 
@@ -148,7 +148,7 @@ int how;
 	}
 
 	/* Put year on stone */
-	Sprintf(buf, "%4d", getyear());
+	sprintf(buf, "%4d", getyear());
 	center(YEAR_LINE, buf);
 
 	putstr(tmpwin, 0, "");

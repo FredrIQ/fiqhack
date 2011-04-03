@@ -73,7 +73,7 @@ getlock()
 	}
 
 	/* regularize(lock); */ /* already done in pcmain */
-	Sprintf(tbuf,"%s",fqname(lock, LEVELPREFIX, 0));
+	sprintf(tbuf,"%s",fqname(lock, LEVELPREFIX, 0));
 	set_levelfile_name(lock, 0);
 	fq_lock = fqname(lock, LEVELPREFIX, 1);
 	if((fd = open(fq_lock,0)) == -1) {
@@ -86,13 +86,13 @@ getlock()
  		if(errno == EACCES) {
 #define OOPS_BUFSZ 512
  		    char oops[OOPS_BUFSZ];
- 		    Strcpy(oops,
+ 		    strcpy(oops,
 			     "\nThere are files from a game in progress under your name.");
-		    Strcat(oops, "\nThe files are locked or inaccessible.");
-		    Strcat(oops, " Is the other game still running?\n");
+		    strcat(oops, "\nThe files are locked or inaccessible.");
+		    strcat(oops, " Is the other game still running?\n");
 		    if (strlen(fq_lock) < ((OOPS_BUFSZ -16) - strlen(oops)))
-			    Sprintf(eos(oops), "Cannot open %s", fq_lock);
-		    Strcat(oops, "\n");
+			    sprintf(eos(oops), "Cannot open %s", fq_lock);
+		    strcat(oops, "\n");
 		    unlock_file(HLOCK);
 		    error(oops);
  		} else
