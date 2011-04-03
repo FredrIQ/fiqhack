@@ -47,13 +47,9 @@ E void srand48();
 #endif /* BSD || RANDOM */
 
 #if !defined(BSD)
-			/* real BSD wants all these to return int */
+/* real BSD wants all these to return int */
 E void exit(int);
-
-
-#   ifndef MONITOR_HEAP
 E void free(void *);
-#   endif
 E void perror(const char *);
 #endif
 E void qsort(void *,size_t,size_t,int(*)(const void *,const void *));
@@ -100,10 +96,6 @@ E int tgetnum(const char *);
 E int tgetflag(const char *);
 E char *tgetstr(const char *,char **);
 E char *tgoto(const char *,int,int);
-
-#ifdef ALLOC_C
-E void * malloc(size_t);
-#endif
 
 /* time functions */
 

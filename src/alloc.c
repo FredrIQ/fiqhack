@@ -2,8 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/* to get the malloc() prototype from system.h */
-#define ALLOC_C		/* comment line for pre-compiled headers */
+
 /* since this file is also used in auxiliary programs, don't include all the
  * function declarations for all of nethack
  */
@@ -11,17 +10,6 @@
 #include "config.h"
 
 char *fmt_ptr(const void *,char *);
-
-#ifdef MONITOR_HEAP
-#undef alloc
-#undef free
-extern void free(void *);
-static void heapmon_init(void);
-
-static FILE *heaplog = 0;
-static boolean tried_heaplog = FALSE;
-#endif
-
 long *alloc(unsigned int);
 extern void panic(const char *,...) PRINTF_F(1,2);
 
@@ -44,9 +32,7 @@ register unsigned int lth;
 	register void * ptr;
 
 	ptr = malloc(lth);
-#ifndef MONITOR_HEAP
 	if (!ptr) panic("Memory allocation failure; cannot get %u bytes", lth);
-#endif
 	return((long *) ptr);
 #endif
 }
@@ -62,58 +48,5 @@ char *buf;
 	return buf;
 }
 
-#ifdef MONITOR_HEAP
-
-/* If ${NH_HEAPLOG} is defined and we can create a file by that name,
-   then we'll log the allocation and release information to that file. */
-static void
-heapmon_init()
-{
-	char *logname = getenv("NH_HEAPLOG");
-
-	if (logname && *logname)
-		heaplog = fopen(logname, "w");
-	tried_heaplog = TRUE;
-}
-
-long *
-nhalloc(lth, file, line)
-unsigned int lth;
-const char *file;
-int line;
-{
-	long *ptr = alloc(lth);
-	char ptr_address[20];
-
-	if (!tried_heaplog) heapmon_init();
-	if (heaplog)
-		(void) fprintf(heaplog, "+%5u %s %4d %s\n", lth,
-				fmt_ptr((void *)ptr, ptr_address),
-				line, file);
-	/* potential panic in alloc() was deferred til here */
-	if (!ptr) panic("Cannot get %u bytes, line %d of %s",
-			lth, line, file);
-
-	return ptr;
-}
-
-void
-nhfree(ptr, file, line)
-void * ptr;
-const char *file;
-int line;
-{
-	char ptr_address[20];
-
-	if (!tried_heaplog) heapmon_init();
-	if (heaplog)
-		(void) fprintf(heaplog, "-      %s %4d %s\n",
-				fmt_ptr((void *)ptr, ptr_address),
-				line, file);
-
-	free(ptr);
-}
-
-#endif /* MONITOR_HEAP */
 
 /*alloc.c*/
