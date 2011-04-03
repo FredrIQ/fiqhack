@@ -562,9 +562,6 @@ E int delete_savefile(void);
 E int restore_saved_game(void);
 E boolean lock_file(const char *,int,int);
 E void unlock_file(const char *);
-#ifdef USER_SOUNDS
-E boolean can_read_file(const char *);
-#endif
 E void read_config_file(const char *);
 E void check_recordfile(const char *);
 E void read_wizkit(void);
@@ -1619,10 +1616,6 @@ E void yelp(struct monst *);
 E void whimper(struct monst *);
 E void beg(struct monst *);
 E int dotalk(void);
-#ifdef USER_SOUNDS
-E int add_sound_mapping(const char *);
-E void play_sound_for_message(const char *);
-#endif
 
 /* ### sp_lev.c ### */
 

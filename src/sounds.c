@@ -4,11 +4,6 @@
 
 #include "hack.h"
 #include "edog.h"
-#ifdef USER_SOUNDS
-# ifdef USER_SOUNDS_REGEX
-#include <regex.h>
-# endif
-#endif
 
 static int domonnoise(struct monst *);
 static int dochat(void);
@@ -902,107 +897,5 @@ dochat()
 
     return domonnoise(mtmp);
 }
-
-#ifdef USER_SOUNDS
-
-extern void play_usersound(const char*, int);
-
-typedef struct audio_mapping_rec {
-#ifdef USER_SOUNDS_REGEX
-	struct re_pattern_buffer regex;
-#else
-	char *pattern;
-#endif
-	char *filename;
-	int volume;
-	struct audio_mapping_rec *next;
-} audio_mapping;
-
-static audio_mapping *soundmap = 0;
-
-char* sounddir = ".";
-
-/* adds a sound file mapping, returns 0 on failure, 1 on success */
-int
-add_sound_mapping(mapping)
-const char *mapping;
-{
-	char text[256];
-	char filename[256];
-	char filespec[256];
-	int volume;
-
-	if (sscanf(mapping, "MESG \"%255[^\"]\"%*[\t ]\"%255[^\"]\" %d",
-		   text, filename, &volume) == 3) {
-	    const char *err;
-	    audio_mapping *new_map;
-
-	    if (strlen(sounddir) + strlen(filename) > 254) {
-		raw_print("sound file name too long");
-		return 0;
-	    }
-	    sprintf(filespec, "%s/%s", sounddir, filename);
-
-	    if (can_read_file(filespec)) {
-		new_map = (audio_mapping *)alloc(sizeof(audio_mapping));
-#ifdef USER_SOUNDS_REGEX
-		new_map->regex.translate = 0;
-		new_map->regex.fastmap = 0;
-		new_map->regex.buffer = 0;
-		new_map->regex.allocated = 0;
-		new_map->regex.regs_allocated = REGS_FIXED;
-#else
-		new_map->pattern = (char *)alloc(strlen(text) + 1);
-		strcpy(new_map->pattern, text);
-#endif
-		new_map->filename = strdup(filespec);
-		new_map->volume = volume;
-		new_map->next = soundmap;
-
-#ifdef USER_SOUNDS_REGEX
-		err = re_compile_pattern(text, strlen(text), &new_map->regex);
-#else
-		err = 0;
-#endif
-		if (err) {
-		    raw_print(err);
-		    free(new_map->filename);
-		    free(new_map);
-		    return 0;
-		} else {
-		    soundmap = new_map;
-		}
-	    } else {
-		sprintf(text, "cannot read %.243s", filespec);
-		raw_print(text);
-		return 0;
-	    }
-	} else {
-	    raw_print("syntax error in SOUND");
-	    return 0;
-	}
-
-	return 1;
-}
-
-void
-play_sound_for_message(msg)
-const char* msg;
-{
-	audio_mapping* cursor = soundmap;
-
-	while (cursor) {
-#ifdef USER_SOUNDS_REGEX
-	    if (re_search(&cursor->regex, msg, strlen(msg), 0, 9999, 0) >= 0) {
-#else
-	    if (pmatch(cursor->pattern, msg)) {
-#endif
-		play_usersound(cursor->filename, cursor->volume);
-	    }
-	    cursor = cursor->next;
-	}
-}
-
-#endif /* USER_SOUNDS */
 
 /*sounds.c*/

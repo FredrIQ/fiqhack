@@ -21,7 +21,6 @@
 
 #define SELF_RECOVER		/* Allow the game itself to recover from an aborted game */
 
-#define USER_SOUNDS
 /*
  * -----------------------------------------------------------------
  *  The remaining code shouldn't need modification.

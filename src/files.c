@@ -83,10 +83,6 @@ static int lockptr;
 #define DeleteFile unlink
 #endif
 
-#ifdef USER_SOUNDS
-extern char *sounddir;
-#endif
-
 extern int n_dgns;		/* from dungeon.c */
 
 static char *set_bonesfile_name(char *,d_level*);
@@ -1155,25 +1151,11 @@ char		*tmp_levels;
 	    assign_warnings(translate);
 	} else if (match_varname(buf, "WIZKIT", 6)) {
 	    (void) strncpy(wizkit, bufp, WIZKIT_MAX-1);
-#ifdef USER_SOUNDS
-	} else if (match_varname(buf, "SOUNDDIR", 8)) {
-		sounddir = (char *)strdup(bufp);
-	} else if (match_varname(buf, "SOUND", 5)) {
-		add_sound_mapping(bufp);
-#endif
 	} else
 		return 0;
 	return 1;
 }
 
-#ifdef USER_SOUNDS
-boolean
-can_read_file(filename)
-const char *filename;
-{
-	return (access(filename, 4) == 0);
-}
-#endif /* USER_SOUNDS */
 
 void
 read_config_file(filename)
