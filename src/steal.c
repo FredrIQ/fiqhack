@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-STATIC_PTR int stealarm(void);
+static int stealarm(void);
 
 static const char *equipname(struct obj *);
 static void mdrop_obj(struct monst *,struct obj *,BOOLEAN_P);
@@ -141,7 +141,7 @@ register struct monst *mtmp;
 unsigned int stealoid;		/* object to be stolen */
 unsigned int stealmid;		/* monster doing the stealing */
 
-STATIC_PTR int
+static int
 stealarm()
 {
 	register struct monst *mtmp;

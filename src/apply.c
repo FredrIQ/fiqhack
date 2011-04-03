@@ -2037,7 +2037,7 @@ struct obj *otmp;
 	return;
 }
 
-STATIC_PTR
+static
 int
 set_trap()
 {

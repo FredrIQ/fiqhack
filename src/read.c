@@ -31,7 +31,7 @@ static void forget_single_object(int);
 static void forget(int);
 static void maybe_tame(struct monst *,struct obj *);
 
-STATIC_PTR void set_lit(int,int,void *);
+static void set_lit(int,int,void *);
 
 int
 doread()
@@ -1300,7 +1300,7 @@ register struct obj *obj;
 /*
  * Low-level lit-field update routine.
  */
-STATIC_PTR void
+static void
 set_lit(x,y,val)
 int x, y;
 void * val;

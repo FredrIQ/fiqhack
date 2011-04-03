@@ -27,7 +27,7 @@ static struct val_list { struct valuable_data *list; int size; } valuables[] = {
 };
 
 #ifndef NO_SIGNAL
-STATIC_PTR void done_intr(int);
+static void done_intr(int);
 # if defined(UNIX)
 static void done_hangup(int);
 # endif
@@ -139,7 +139,7 @@ done2()
 
 #ifndef NO_SIGNAL
 /*ARGSUSED*/
-STATIC_PTR void
+static void
 done_intr(sig_unused) /* called as signal() handler, so sent at least one arg */
 int sig_unused;
 {

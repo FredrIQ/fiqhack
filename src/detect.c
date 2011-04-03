@@ -17,8 +17,8 @@ static boolean check_map_spot(int,int,CHAR_P,unsigned);
 static boolean clear_stale_map(CHAR_P,unsigned);
 static void sense_trap(struct trap *,XCHAR_P,XCHAR_P,int);
 static void show_map_spot(int,int);
-STATIC_PTR void findone(int,int,void *);
-STATIC_PTR void openone(int,int,void *);
+static void findone(int,int,void *);
+static void openone(int,int,void *);
 
 /* Recursively search obj for an object in class oclass and return 1st found */
 struct obj *
@@ -998,7 +998,7 @@ struct rm *lev;
 }
 
 
-STATIC_PTR void
+static void
 findone(zx,zy,num)
 int zx,zy;
 void * num;
@@ -1044,7 +1044,7 @@ void * num;
 	}
 }
 
-STATIC_PTR void
+static void
 openone(zx,zy,num)
 int zx,zy;
 void * num;

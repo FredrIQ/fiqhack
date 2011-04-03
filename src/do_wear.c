@@ -36,20 +36,20 @@ static const long takeoff_order[] = { WORN_BLINDF, W_WEP,
 	WORN_BOOTS, W_SWAPWEP, W_QUIVER, 0L };
 
 static void on_msg(struct obj *);
-STATIC_PTR int Armor_on(void);
-STATIC_PTR int Boots_on(void);
+static int Armor_on(void);
+static int Boots_on(void);
 static int Cloak_on(void);
-STATIC_PTR int Helmet_on(void);
-STATIC_PTR int Gloves_on(void);
-STATIC_PTR int Shield_on(void);
+static int Helmet_on(void);
+static int Gloves_on(void);
+static int Shield_on(void);
 #ifdef TOURIST
-STATIC_PTR int Shirt_on(void);
+static int Shirt_on(void);
 #endif
 static void Amulet_on(void);
 static void Ring_off_or_gone(struct obj *, BOOLEAN_P);
-STATIC_PTR int select_off(struct obj *);
+static int select_off(struct obj *);
 static struct obj *do_takeoff(void);
-STATIC_PTR int take_off(void);
+static int take_off(void);
 static int menu_remarm(int);
 static void already_wearing(const char*);
 static void already_wearing2(const char*, const char*);
@@ -84,7 +84,7 @@ register struct obj *otmp;
  * The Type_off() functions call setworn() themselves.
  */
 
-STATIC_PTR
+static
 int
 Boots_on()
 {
@@ -282,7 +282,7 @@ Cloak_off()
     return 0;
 }
 
-STATIC_PTR
+static
 int
 Helmet_on()
 {
@@ -382,7 +382,7 @@ Helmet_off()
     return 0;
 }
 
-STATIC_PTR
+static
 int
 Gloves_on()
 {
@@ -540,7 +540,7 @@ Shirt_off()
  * is fire resistance, and we have to immediately set HFire_resistance in worn.c
  * since worn.c will check it before returning.
  */
-STATIC_PTR
+static
 int
 Armor_on()
 {
@@ -1744,7 +1744,7 @@ unchanger()
 }
 
 /* occupation callback for 'A' */
-STATIC_PTR
+static
 int
 select_off(otmp)
 register struct obj *otmp;
@@ -1916,7 +1916,7 @@ do_takeoff()
 
 static const char *disrobing = "";
 
-STATIC_PTR
+static
 int
 take_off()
 {

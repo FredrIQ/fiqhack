@@ -15,8 +15,8 @@ static boolean only_here(struct obj *);
 static void compactify(char *);
 static boolean taking_off(const char *);
 static boolean putting_on(const char *);
-STATIC_PTR int ckunpaid(struct obj *);
-STATIC_PTR int ckvalidcat(struct obj *);
+static int ckunpaid(struct obj *);
+static int ckvalidcat(struct obj *);
 static char display_pickinv(const char *,BOOLEAN_P, long *);
 static boolean this_type_only(struct obj *);
 static void dounpaid(void);
@@ -1104,7 +1104,7 @@ struct obj *otmp;
 }
 
 
-STATIC_PTR int
+static int
 ckvalidcat(otmp)
 register struct obj *otmp;
 {
@@ -1112,7 +1112,7 @@ register struct obj *otmp;
 	return((int)allow_category(otmp));
 }
 
-STATIC_PTR int
+static int
 ckunpaid(otmp)
 register struct obj *otmp;
 {

@@ -4,8 +4,8 @@
 
 #include "hack.h"
 
-STATIC_PTR int picklock(void);
-STATIC_PTR int forcelock(void);
+static int picklock(void);
+static int forcelock(void);
 
 /* at most one of `door' and `box' should be non-null at any given time */
 static struct xlock_s {
@@ -70,7 +70,7 @@ lock_action()
 		return xlock.box->otyp == CHEST ? actions[1] : actions[2];
 }
 
-STATIC_PTR
+static
 int
 picklock()	/* try to open/close a lock */
 {
@@ -125,7 +125,7 @@ picklock()	/* try to open/close a lock */
 	return((xlock.usedtime = 0));
 }
 
-STATIC_PTR
+static
 int
 forcelock()	/* try to force a locked chest */
 {

@@ -5,7 +5,7 @@
 #include "hack.h"
 #include "epri.h"
 
-STATIC_PTR int prayer_done(void);
+static int prayer_done(void);
 static struct obj *worst_cursed_item(void);
 static int in_trouble(void);
 static void fix_worst_trouble(int);
@@ -1592,7 +1592,7 @@ dopray()
     return(1);
 }
 
-STATIC_PTR int
+static int
 prayer_done()		/* M. Stephenson (1.0.3b) */
 {
     aligntyp alignment = p_aligntyp;

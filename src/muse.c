@@ -1093,7 +1093,7 @@ struct monst *mtmp;
 #undef nomore
 }
 
-STATIC_PTR
+static
 int
 mbhitm(mtmp, otmp)
 register struct monst *mtmp;

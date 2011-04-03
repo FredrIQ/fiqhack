@@ -24,7 +24,7 @@ static int spell_let_to_idx(CHAR_P);
 static boolean cursed_book(struct obj *bp);
 static boolean confused_book(struct obj *);
 static void deadbook(struct obj *);
-STATIC_PTR int learn(void);
+static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *,int,int *);
 static int percent_success(int);
@@ -312,7 +312,7 @@ raise_dead:
     return;
 }
 
-STATIC_PTR int
+static int
 learn()
 {
 	int i;

@@ -12,8 +12,8 @@ static void trycall(struct obj *);
 static void dosinkring(struct obj *);
 #endif /* SINKS */
 
-STATIC_PTR int drop(struct obj *);
-STATIC_PTR int wipeoff(void);
+static int drop(struct obj *);
+static int wipeoff(void);
 
 static int menu_drop(int);
 static int currentlevel_rewrite(void);
@@ -438,7 +438,7 @@ register const char *word;
 	return(TRUE);
 }
 
-STATIC_PTR
+static
 int
 drop(obj)
 register struct obj *obj;
@@ -1553,7 +1553,7 @@ donull()
 }
 
 
-STATIC_PTR int
+static int
 wipeoff()
 {
 	if(u.ucreamed < 4)	u.ucreamed = 0;

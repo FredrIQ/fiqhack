@@ -51,7 +51,7 @@ static boolean cursed_object_at(int, int);
 
 static xchar gtyp, gx, gy;	/* type and position of dog's current goal */
 
-STATIC_PTR void wantdoor(int, int, void *);
+static void wantdoor(int, int, void *);
 
 static boolean
 cursed_object_at(x, y)
@@ -835,7 +835,7 @@ xchar mx, my, fx, fy;
 
 
 /*ARGSUSED*/	/* do_clear_area client */
-STATIC_PTR void
+static void
 wantdoor(x, y, distance)
 int x, y;
 void * distance;
