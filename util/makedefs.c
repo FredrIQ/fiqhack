@@ -215,9 +215,9 @@ char *xcrypt(str)
 const char *str;
 {				/* duplicated in src/hacklib.c */
 	static char buf[BUFSZ];
-	register const char *p;
-	register char *q;
-	register int bitmask;
+	const char *p;
+	char *q;
+	int bitmask;
 
 	for (bitmask = 1, p = str, q = buf; *p; q++) {
 		*q = *p++;
@@ -299,7 +299,7 @@ do_rumors()
 static void
 make_version()
 {
-	register int i;
+	int i;
 
 	/*
 	 * integer version number
@@ -585,8 +585,8 @@ static const char *window_opts[] = {
 void
 do_options()
 {
-	register int i, length;
-	register const char *str, *indent = "    ";
+	int i, length;
+	const char *str, *indent = "    ";
 
 	filename[0]='\0';
 #ifdef FILE_PREFIX
@@ -818,7 +818,7 @@ do_oracles()
 	boolean in_oracle, ok;
 	long	txt_offset, offset, fpos;
 	int	oracle_cnt;
-	register int i;
+	int i;
 
 	sprintf(tempfile, DATA_TEMPLATE, "oracles.tmp");
 	filename[0]='\0';
@@ -1014,10 +1014,10 @@ recheck:
 
 static boolean
 ranged_attk(ptr)	/* returns TRUE if monster can attack at range */
-	register struct permonst *ptr;
+	struct permonst *ptr;
 {
-	register int	i, j;
-	register int atk_mask = (1<<AT_BREA) | (1<<AT_SPIT) | (1<<AT_GAZE);
+	int	i, j;
+	int atk_mask = (1<<AT_BREA) | (1<<AT_SPIT) | (1<<AT_GAZE);
 
 	for(i = 0; i < NATTK; i++) {
 	    if((j=ptr->mattk[i].aatyp) >= AT_WEAP || (atk_mask & (1<<j)))
@@ -1089,8 +1089,8 @@ struct permonst *ptr;
 void
 do_monstr()
 {
-    register struct permonst *ptr;
-    register int i, j;
+    struct permonst *ptr;
+    int i, j;
 
     /*
      * create the source file, "monstr.c"

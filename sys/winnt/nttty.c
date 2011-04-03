@@ -379,7 +379,7 @@ really_move_cursor()
 
 void
 cmov(x, y)
-register int x, y;
+int x, y;
 {
 	ttyDisplay->cury = y;
 	ttyDisplay->curx = x;
@@ -795,7 +795,7 @@ void win32con_toggle_cursor_info()
 
 void
 map_subkeyvalue(op)
-register char *op;
+char *op;
 {
 	char digits[] = "0123456789";
 	int length, i, idx, val;

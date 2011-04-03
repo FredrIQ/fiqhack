@@ -130,7 +130,7 @@ int
 forcelock()	/* try to force a locked chest */
 {
 
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	if((xlock.box->ox != u.ux) || (xlock.box->oy != u.uy))
 		return((xlock.usedtime = 0));		/* you or it moved */
@@ -219,7 +219,7 @@ reset_pick()
 
 int
 pick_lock(pick) /* pick a lock with a given object */
-	register struct	obj	*pick;
+	struct	obj	*pick;
 {
 	int picktyp, c, ch;
 	coord cc;
@@ -431,8 +431,8 @@ pick_lock(pick) /* pick a lock with a given object */
 int
 doforce()		/* try to force a chest with your weapon */
 {
-	register struct obj *otmp;
-	register int c, picktyp;
+	struct obj *otmp;
+	int c, picktyp;
 	char qbuf[QBUFSZ];
 
 	if(!uwep ||	/* proper type test */
@@ -495,7 +495,7 @@ int
 doopen()		/* try to open a door */
 {
 	coord cc;
-	register struct rm *door;
+	struct rm *door;
 	struct monst *mtmp;
 
 	if (nohands(youmonst.data)) {
@@ -578,9 +578,9 @@ doopen()		/* try to open a door */
 static
 boolean
 obstructed(x,y)
-register int x, y;
+int x, y;
 {
-	register struct monst *mtmp = m_at(x, y);
+	struct monst *mtmp = m_at(x, y);
 
 	if(mtmp && mtmp->m_ap_type != M_AP_FURNITURE) {
 		if (mtmp->m_ap_type == M_AP_OBJECT) goto objhere;
@@ -600,8 +600,8 @@ objhere:	pline("%s's in the way.", Something);
 int
 doclose()		/* try to close a door */
 {
-	register int x, y;
-	register struct rm *door;
+	int x, y;
+	struct rm *door;
 	struct monst *mtmp;
 
 	if (nohands(youmonst.data)) {
@@ -694,9 +694,9 @@ doclose()		/* try to close a door */
 
 boolean			/* box obj was hit with spell effect otmp */
 boxlock(obj, otmp)	/* returns true if something happened */
-register struct obj *obj, *otmp;	/* obj *is* a box */
+struct obj *obj, *otmp;	/* obj *is* a box */
 {
-	register boolean res = 0;
+	boolean res = 0;
 
 	switch(otmp->otyp) {
 	case WAN_LOCKING:
@@ -733,7 +733,7 @@ doorlock(otmp,x,y)	/* returns true if something happened */
 struct obj *otmp;
 int x, y;
 {
-	register struct rm *door = &levl[x][y];
+	struct rm *door = &levl[x][y];
 	boolean res = TRUE;
 	int loudness = 0;
 	const char *msg = (const char *)0;

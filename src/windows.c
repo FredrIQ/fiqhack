@@ -34,7 +34,7 @@ void
 choose_windows(s)
 const char *s;
 {
-    register int i;
+    int i;
 
     for(i=0; winchoices[i].procs; i++)
 	if (!strcmpi(s, winchoices[i].procs->name)) {

@@ -6,7 +6,7 @@
 
 void
 were_change(mon)
-register struct monst *mon;
+struct monst *mon;
 {
 	if (!is_were(mon->data))
 	    return;
@@ -53,9 +53,9 @@ int pm;
 
 void
 new_were(mon)
-register struct monst *mon;
+struct monst *mon;
 {
-	register int pm;
+	int pm;
 
 	pm = counter_were(monsndx(mon->data));
 	if(!pm) {
@@ -84,13 +84,13 @@ register struct monst *mon;
 
 int
 were_summon(ptr,yours,visible,genbuf)	/* were-creature (even you) summons a horde */
-register struct permonst *ptr;
-register boolean yours;
+struct permonst *ptr;
+boolean yours;
 int *visible;			/* number of visible helpers created */
 char *genbuf;
 {
-	register int i, typ, pm = monsndx(ptr);
-	register struct monst *mtmp;
+	int i, typ, pm = monsndx(ptr);
+	struct monst *mtmp;
 	int total = 0;
 
 	*visible = 0;

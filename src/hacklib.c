@@ -80,7 +80,7 @@ char *
 lcase(s)		/* convert a string into all lowercase */
     char *s;
 {
-    register char *p;
+    char *p;
 
     for (p = s; *p; p++)
 	if ('A' <= *p && *p <= 'Z') *p |= 040;
@@ -100,7 +100,7 @@ char *
 mungspaces(bp)
 char *bp;
 {
-    register char c, *p, *p2;
+    char c, *p, *p2;
     boolean was_space = TRUE;
 
     for (p = p2 = bp; (c = *p) != '\0'; p++) {
@@ -116,7 +116,7 @@ char *bp;
 
 char *
 eos(s)			/* return the end of a string (pointing at '\0') */
-    register char *s;
+    char *s;
 {
     while (*s) s++;	/* s += strlen(s); */
     return s;
@@ -156,9 +156,9 @@ xcrypt(str, buf)	/* trivial text encryption routine (see makedefs) */
 const char *str;
 char *buf;
 {
-    register const char *p;
-    register char *q;
-    register int bitmask;
+    const char *p;
+    char *q;
+    int bitmask;
 
     for (bitmask = 1, p = str, q = buf; *p; q++) {
 	*q = *p++;
@@ -185,8 +185,8 @@ tabexpand(sbuf)		/* expand tabs into proper number of spaces */
     char *sbuf;
 {
     char buf[BUFSZ];
-    register char *bp, *s = sbuf;
-    register int idx;
+    char *bp, *s = sbuf;
+    int idx;
 
     if (!*s) return sbuf;
 
@@ -229,7 +229,7 @@ const char *
 ordin(n)		/* return the ordinal suffix of a number */
     int n;			/* note: should be non-negative */
 {
-    register int dd = n % 10;
+    int dd = n % 10;
 
     return (dd == 0 || dd > 3 || (n % 100) / 10 == 1) ? "th" :
 	    (dd == 1) ? "st" : (dd == 2) ? "nd" : "rd";
@@ -282,7 +282,7 @@ int
 distmin(x0, y0, x1, y1) /* distance between two points, in moves */
     int x0, y0, x1, y1;
 {
-    register int dx = x0 - x1, dy = y0 - y1;
+    int dx = x0 - x1, dy = y0 - y1;
     if (dx < 0) dx = -dx;
     if (dy < 0) dy = -dy;
   /*  The minimum number of moves to get from (x0,y0) to (x1,y1) is the
@@ -295,7 +295,7 @@ int
 dist2(x0, y0, x1, y1)	/* square of euclidean distance between pair of pts */
     int x0, y0, x1, y1;
 {
-    register int dx = x0 - x1, dy = y0 - y1;
+    int dx = x0 - x1, dy = y0 - y1;
     return dx * dx + dy * dy;
 }
 
@@ -337,10 +337,10 @@ pmatch_top:
 #ifndef STRNCMPI
 int
 strncmpi(s1, s2, n)	/* case insensitive counted string comparison */
-    register const char *s1, *s2;
-    register int n; /*(should probably be size_t, which is usually unsigned)*/
+    const char *s1, *s2;
+    int n; /*(should probably be size_t, which is usually unsigned)*/
 {					/*{ aka strncasecmp }*/
-    register char t1, t2;
+    char t1, t2;
 
     while (n--) {
 	if (!*s2) return (*s1 != 0);	/* s1 >= s2 */
@@ -360,8 +360,8 @@ strstri(str, sub)	/* case insensitive substring search */
     const char *str;
     const char *sub;
 {
-    register const char *s1, *s2;
-    register int i, k;
+    const char *s1, *s2;
+    int i, k;
 # define TABSIZ 0x20	/* 0x40 would be case-sensitive */
     char tstr[TABSIZ], tsub[TABSIZ];	/* nibble count tables */
 # if 0
@@ -401,7 +401,7 @@ fuzzymatch(s1, s2, ignore_chars, caseblind)
     const char *ignore_chars;
     boolean caseblind;
 {
-    register char c1, c2;
+    char c1, c2;
 
     do {
 	while ((c1 = *s1++) != '\0' && index(ignore_chars, c1) != 0) continue;
@@ -509,8 +509,8 @@ time_t date;
 int
 phase_of_the_moon()		/* 0-7, with 0: new, 4: full */
 {
-	register struct tm *lt = getlt();
-	register int epact, diy, goldn;
+	struct tm *lt = getlt();
+	int epact, diy, goldn;
 
 	diy = lt->tm_yday;
 	goldn = (lt->tm_year % 19) + 1;
@@ -524,7 +524,7 @@ phase_of_the_moon()		/* 0-7, with 0: new, 4: full */
 boolean
 friday_13th()
 {
-	register struct tm *lt = getlt();
+	struct tm *lt = getlt();
 
 	return((boolean)(lt->tm_wday == 5 /* friday */ && lt->tm_mday == 13));
 }
@@ -532,7 +532,7 @@ friday_13th()
 int
 night()
 {
-	register int hour = getlt()->tm_hour;
+	int hour = getlt()->tm_hour;
 
 	return(hour < 6 || hour > 21);
 }

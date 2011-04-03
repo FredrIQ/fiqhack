@@ -36,7 +36,7 @@ extern const int monstr[];
 
 boolean
 is_home_elemental(ptr)
-register struct permonst *ptr;
+struct permonst *ptr;
 {
 	if (ptr->mlet == S_ELEMENTAL)
 	    switch (monsndx(ptr)) {
@@ -53,7 +53,7 @@ register struct permonst *ptr;
  */
 static boolean
 wrong_elem_type(ptr)
-    register struct permonst *ptr;
+    struct permonst *ptr;
 {
     if (ptr->mlet == S_ELEMENTAL) {
 	return((boolean)(!is_home_elemental(ptr)));
@@ -74,11 +74,11 @@ wrong_elem_type(ptr)
 
 static void
 m_initgrp(mtmp, x, y, n)	/* make a group just like mtmp */
-register struct monst *mtmp;
-register int x, y, n;
+struct monst *mtmp;
+int x, y, n;
 {
 	coord mm;
-	register int cnt = rnd(n);
+	int cnt = rnd(n);
 	struct monst *mon;
 	
 	/* Tuning: cut down on swarming at low character levels [mrs] */
@@ -113,7 +113,7 @@ m_initthrow(mtmp,otyp,oquan)
 struct monst *mtmp;
 int otyp,oquan;
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	otmp = mksobj(otyp, TRUE, FALSE);
 	otmp->quan = (long) rn1(oquan, 3);
@@ -125,10 +125,10 @@ int otyp,oquan;
 
 static void
 m_initweap(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
-	register struct permonst *ptr = mtmp->data;
-	register int mm = monsndx(ptr);
+	struct permonst *ptr = mtmp->data;
+	int mm = monsndx(ptr);
 	struct obj *otmp;
 
 #ifdef REINCARNATION
@@ -447,11 +447,11 @@ long amount;
 
 static void
 m_initinv(mtmp)
-register struct	monst	*mtmp;
+struct	monst	*mtmp;
 {
-	register int cnt;
-	register struct obj *otmp;
-	register struct permonst *ptr = mtmp->data;
+	int cnt;
+	struct obj *otmp;
+	struct permonst *ptr = mtmp->data;
 #ifdef REINCARNATION
 	if (Is_rogue_level(&u.uz)) return;
 #endif
@@ -463,7 +463,7 @@ register struct	monst	*mtmp;
 
 	    case S_HUMAN:
 		if(is_mercenary(ptr)) {
-		    register int mac;
+		    int mac;
 
 		    switch(monsndx(ptr)) {
 			case PM_GUARD: mac = -1; break;
@@ -783,11 +783,11 @@ boolean ghostly;
  */
 struct monst *
 makemon(ptr, x, y, mmflags)
-register struct permonst *ptr;
-register int	x, y;
-register int	mmflags;
+struct permonst *ptr;
+int	x, y;
+int	mmflags;
 {
-	register struct monst *mtmp;
+	struct monst *mtmp;
 	int mndx, mcham, ct, mitem, xlth;
 	boolean anymon = (!ptr);
 	boolean byyou = (x == u.ux && y == u.uy);
@@ -1119,11 +1119,11 @@ int mndx;
  */
 static int
 align_shift(ptr)
-register struct permonst *ptr;
+struct permonst *ptr;
 {
     static long oldmoves = 0L;	/* != 1, starting value of moves */
     static s_level *lev;
-    register int alshift;
+    int alshift;
 
     if(oldmoves != moves) {
 	lev = Is_special(&u.uz);
@@ -1152,8 +1152,8 @@ static struct {
 struct permonst *
 rndmonst()
 {
-	register struct permonst *ptr;
-	register int mndx, ct;
+	struct permonst *ptr;
+	int mndx, ct;
 
 	if (u.uz.dnum == quest_dnum && rn2(7) && (ptr = qt_montype()) != 0)
 	    return ptr;
@@ -1265,7 +1265,7 @@ mkclass(class,spc)
 char	class;
 int	spc;
 {
-	register int	first, last, num = 0;
+	int	first, last, num = 0;
 	int maxmlev, mask = (G_NOGEN | G_UNIQ) & ~spc;
 
 	maxmlev = level_difficulty() >> 1;
@@ -1313,7 +1313,7 @@ int	spc;
 
 int
 adj_lev(ptr)	/* adjust strength of monsters based on u.uz and u.ulevel */
-register struct permonst *ptr;
+struct permonst *ptr;
 {
 	int	tmp, tmp2;
 
@@ -1432,10 +1432,10 @@ struct monst *mtmp, *victim;
 
 int
 mongets(mtmp, otyp)
-register struct monst *mtmp;
-register int otyp;
+struct monst *mtmp;
+int otyp;
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 	int spe;
 
 	if (!otyp) return 0;
@@ -1507,7 +1507,7 @@ int type;
  */
 boolean
 peace_minded(ptr)
-register struct permonst *ptr;
+struct permonst *ptr;
 {
 	aligntyp mal = ptr->maligntyp, ual = u.ualign.type;
 
@@ -1607,7 +1607,7 @@ static char syms[] = {
 
 void
 set_mimic_sym(mtmp)		/* KAA, modified by ERS */
-register struct monst *mtmp;
+struct monst *mtmp;
 {
 	int typ, roomno, rt;
 	unsigned appear, ap_type;

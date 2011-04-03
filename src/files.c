@@ -410,7 +410,7 @@ int lev;
 void
 clearlocks()
 {
-	register int x;
+	int x;
 
 #if defined(UNIX)
 	(void) signal(SIGHUP, SIG_IGN);
@@ -768,7 +768,7 @@ int retryct;
 
 #if defined(UNIX)
 	while (link(filename, lockname) == -1) {
-	    register int errnosv = errno;
+	    int errnosv = errno;
 
 	    switch (errnosv) {	/* George Barbanis */
 	    case EEXIST:

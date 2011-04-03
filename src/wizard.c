@@ -88,9 +88,9 @@ amulet()
 
 int
 mon_has_amulet(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 		if(otmp->otyp == AMULET_OF_YENDOR) return(1);
@@ -99,9 +99,9 @@ register struct monst *mtmp;
 
 int
 mon_has_special(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 		if(otmp->otyp == AMULET_OF_YENDOR ||
@@ -125,7 +125,7 @@ register struct monst *mtmp;
 
 static short
 which_arti(mask)
-	register int mask;
+	int mask;
 {
 	switch(mask) {
 	    case M3_WANTSAMUL:	return(AMULET_OF_YENDOR);
@@ -144,10 +144,10 @@ which_arti(mask)
  */
 static boolean
 mon_has_arti(mtmp, otyp)
-	register struct monst *mtmp;
-	register short	otyp;
+	struct monst *mtmp;
+	short	otyp;
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
 	    if(otyp) {
@@ -162,10 +162,10 @@ mon_has_arti(mtmp, otyp)
 
 static struct monst *
 other_mon_has_arti(mtmp, otyp)
-	register struct monst *mtmp;
-	register short	otyp;
+	struct monst *mtmp;
+	short	otyp;
 {
-	register struct monst *mtmp2;
+	struct monst *mtmp2;
 
 	for(mtmp2 = fmon; mtmp2; mtmp2 = mtmp2->nmon)
 	    /* no need for !DEADMONSTER check here since they have no inventory */
@@ -177,9 +177,9 @@ other_mon_has_arti(mtmp, otyp)
 
 static struct obj *
 on_ground(otyp)
-	register short	otyp;
+	short	otyp;
 {
-	register struct obj *otmp;
+	struct obj *otmp;
 
 	for (otmp = fobj; otmp; otmp = otmp->nobj)
 	    if (otyp) {
@@ -192,7 +192,7 @@ on_ground(otyp)
 
 static boolean
 you_have(mask)
-	register int mask;
+	int mask;
 {
 	switch(mask) {
 	    case M3_WANTSAMUL:	return(boolean)(u.uhave.amulet);
@@ -207,12 +207,12 @@ you_have(mask)
 
 static long
 target_on(mask, mtmp)
-	register int mask;
-	register struct monst *mtmp;
+	int mask;
+	struct monst *mtmp;
 {
-	register short	otyp;
-	register struct obj *otmp;
-	register struct monst *mtmp2;
+	short	otyp;
+	struct obj *otmp;
+	struct monst *mtmp2;
 
 	if(!M_Wants(mask))	return(STRAT_NONE);
 
@@ -230,7 +230,7 @@ target_on(mask, mtmp)
 
 static long
 strategy(mtmp)
-	register struct monst *mtmp;
+	struct monst *mtmp;
 {
 	long strat, dstrat;
 
@@ -289,7 +289,7 @@ strategy(mtmp)
 
 int
 tactics(mtmp)
-	register struct monst *mtmp;
+	struct monst *mtmp;
 {
 	long strat = strategy(mtmp);
 
@@ -368,7 +368,7 @@ tactics(mtmp)
 void
 aggravate()
 {
-	register struct monst *mtmp;
+	struct monst *mtmp;
 
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp)) {
@@ -383,7 +383,7 @@ aggravate()
 void
 clonewiz()
 {
-	register struct monst *mtmp2;
+	struct monst *mtmp2;
 
 	if ((mtmp2 = makemon(&mons[PM_WIZARD_OF_YENDOR],
 				u.ux, u.uy, NO_MM_FLAGS)) != 0) {
@@ -413,8 +413,8 @@ int
 nasty(mcast)
 	struct monst *mcast;
 {
-    register struct monst	*mtmp;
-    register int	i, j, tmp;
+    struct monst	*mtmp;
+    int	i, j, tmp;
     int castalign = (mcast ? mcast->data->maligntyp : -1);
     coord bypos;
     int count=0;
@@ -591,7 +591,7 @@ const char * const random_malediction[] = {
 /* Insult or intimidate the player */
 void
 cuss(mtmp)
-register struct monst	*mtmp;
+struct monst	*mtmp;
 {
 	if (mtmp->iswiz) {
 	    if (!rn2(5))  /* typical bad guy action */

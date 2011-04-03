@@ -140,9 +140,9 @@ const char *s;
 void
 setftty()
 {
-	register int ef = 0;			/* desired value of flags & ECHO */
-	register int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
-	register int change = 0;
+	int ef = 0;			/* desired value of flags & ECHO */
+	int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
+	int change = 0;
 	iflags.cbreak = ON;
 	iflags.echo = OFF;
 	/* Should use (ECHO|CRMOD) here instead of ECHO */

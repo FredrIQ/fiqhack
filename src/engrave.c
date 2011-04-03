@@ -141,9 +141,9 @@ can_reach_floor()
 
 const char *
 surface(x, y)
-register int x, y;
+int x, y;
 {
-	register struct rm *lev = &levl[x][y];
+	struct rm *lev = &levl[x][y];
 
 	if ((x == u.ux) && (y == u.uy) && u.uswallow &&
 		is_animal(u.ustuck->data))
@@ -173,9 +173,9 @@ register int x, y;
 
 const char *
 ceiling(x, y)
-register int x, y;
+int x, y;
 {
-	register struct rm *lev = &levl[x][y];
+	struct rm *lev = &levl[x][y];
 	const char *what;
 
 	/* other room types will no longer exist when we're interested --
@@ -204,7 +204,7 @@ struct engr *
 engr_at(x, y)
 xchar x, y;
 {
-	register struct engr *ep = head_engr;
+	struct engr *ep = head_engr;
 
 	while(ep) {
 		if(x == ep->engr_x && y == ep->engr_y)
@@ -224,7 +224,7 @@ sengr_at(s, x, y)
 	const char *s;
 	xchar x, y;
 {
-	register struct engr *ep = engr_at(x,y);
+	struct engr *ep = engr_at(x,y);
 
 	return (ep && ep->engr_type != HEADSTONE &&
 		ep->engr_time <= moves && strstri(ep->engr_txt, s) != 0);
@@ -234,7 +234,7 @@ sengr_at(s, x, y)
 
 void
 u_wipe_engr(cnt)
-register int cnt;
+int cnt;
 {
 	if (can_reach_floor())
 		wipe_engr_at(u.ux, u.uy, cnt);
@@ -243,9 +243,9 @@ register int cnt;
 
 void
 wipe_engr_at(x,y,cnt)
-register xchar x,y,cnt;
+xchar x,y,cnt;
 {
-	register struct engr *ep = engr_at(x,y);
+	struct engr *ep = engr_at(x,y);
 
 	/* Headstones are indelible */
 	if(ep && ep->engr_type != HEADSTONE){
@@ -264,10 +264,10 @@ register xchar x,y,cnt;
 
 void
 read_engr_at(x,y)
-register int x,y;
+int x,y;
 {
-	register struct engr *ep = engr_at(x,y);
-	register int	sensed = 0;
+	struct engr *ep = engr_at(x,y);
+	int	sensed = 0;
 	char buf[BUFSZ];
 	
 	/* Sensing an engraving does not require sight,
@@ -340,12 +340,12 @@ register int x,y;
 
 void
 make_engr_at(x,y,s,e_time,e_type)
-register int x,y;
-register const char *s;
-register long e_time;
-register xchar e_type;
+int x,y;
+const char *s;
+long e_time;
+xchar e_type;
 {
-	register struct engr *ep;
+	struct engr *ep;
 
 	if ((ep = engr_at(x,y)) != 0)
 	    del_engr(ep);
@@ -368,7 +368,7 @@ void
 del_engr_at(x, y)
 int x, y;
 {
-	register struct engr *ep = engr_at(x, y);
+	struct engr *ep = engr_at(x, y);
 
 	if (ep) del_engr(ep);
 }
@@ -863,7 +863,7 @@ doengrave()
 	 */
 
 	if (oep) {
-	    register char c = 'n';
+	    char c = 'n';
 
 	    /* Give player the choice to add to engraving. */
 
@@ -1100,8 +1100,8 @@ void
 save_engravings(fd, mode)
 int fd, mode;
 {
-	register struct engr *ep = head_engr;
-	register struct engr *ep2;
+	struct engr *ep = head_engr;
+	struct engr *ep2;
 	unsigned no_more_engr = 0;
 
 	while (ep) {
@@ -1124,7 +1124,7 @@ void
 rest_engravings(fd)
 int fd;
 {
-	register struct engr *ep;
+	struct engr *ep;
 	unsigned lth;
 
 	head_engr = 0;
@@ -1145,12 +1145,12 @@ int fd;
 
 void
 del_engr(ep)
-register struct engr *ep;
+struct engr *ep;
 {
 	if (ep == head_engr) {
 		head_engr = ep->nxt_engr;
 	} else {
-		register struct engr *ept;
+		struct engr *ept;
 
 		for (ept = head_engr; ept; ept = ept->nxt_engr)
 		    if (ept->nxt_engr == ep) {

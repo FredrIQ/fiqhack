@@ -82,7 +82,7 @@ static int ready_weapon(struct obj *);
  */
 void
 setuwep(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	struct obj *olduwep = uwep;
 
@@ -195,7 +195,7 @@ struct obj *wep;
 
 void
 setuqwep(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	setworn(obj, W_QUIVER);
 	update_inventory();
@@ -203,7 +203,7 @@ register struct obj *obj;
 
 void
 setuswapwep(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	setworn(obj, W_SWAPWEP);
 	update_inventory();
@@ -222,7 +222,7 @@ static const char bullets[] =	/* (note: different from dothrow.c) */
 int
 dowield()
 {
-	register struct obj *wep, *oldwep;
+	struct obj *wep, *oldwep;
 	int result;
 
 	/* May we attempt this? */
@@ -276,7 +276,7 @@ dowield()
 int
 doswapweapon()
 {
-	register struct obj *oldwep, *oldswap;
+	struct obj *oldwep, *oldswap;
 	int result = 0;
 
 
@@ -320,7 +320,7 @@ doswapweapon()
 int
 dowieldquiver()
 {
-	register struct obj *newquiver;
+	struct obj *newquiver;
 	const char *quivee_types = (uslinging() ||
 		  (uswapwep && objects[uswapwep->otyp].oc_skill == P_SLING)) ?
 				  bullets : ready_objs;
@@ -671,8 +671,8 @@ boolean fade_scrolls;
 
 int
 chwepon(otmp, amount)
-register struct obj *otmp;
-register int amount;
+struct obj *otmp;
+int amount;
 {
 	const char *color = hcolor((amount < 0) ? NH_BLACK : NH_BLUE);
 	const char *xtime;
@@ -760,7 +760,7 @@ register int amount;
 
 int
 welded(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	if (obj && obj == uwep && will_weld(obj)) {
 		obj->bknown = TRUE;
@@ -771,7 +771,7 @@ register struct obj *obj;
 
 void
 weldmsg(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	long savewornmask;
 

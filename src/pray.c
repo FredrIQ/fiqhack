@@ -205,7 +205,7 @@ in_trouble()
 static struct obj *
 worst_cursed_item()
 {
-    register struct obj *otmp;
+    struct obj *otmp;
 
     /* if strained or worse, check for loadstone first */
     if (near_capacity() >= HVY_ENCUMBER) {
@@ -262,7 +262,7 @@ worst_cursed_item()
 
 static void
 fix_worst_trouble(trouble)
-register int trouble;
+int trouble;
 {
 	int i;
 	struct obj *otmp = 0;
@@ -552,7 +552,7 @@ static void
 angrygods(resp_god)
 aligntyp resp_god;
 {
-	register int	maxanger;
+	int	maxanger;
 
 	if(Inhell) resp_god = A_NONE;
 	u.ublessed = 0;
@@ -933,7 +933,7 @@ pleased(g_align)
 	    flags.botl = 1;
 	    break;
 	case 4: {
-	    register struct obj *otmp;
+	    struct obj *otmp;
 	    int any = 0;
 
 	    if (Blind)
@@ -1032,8 +1032,8 @@ static boolean
 water_prayer(bless_water)
     boolean bless_water;
 {
-    register struct obj* otmp;
-    register long changed = 0;
+    struct obj* otmp;
+    long changed = 0;
     boolean other = FALSE, bc_known = !(Blind || Hallucination);
 
     for(otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
@@ -1093,7 +1093,7 @@ static const char sacrifice_types[] = { FOOD_CLASS, AMULET_CLASS, 0 };
 
 static void
 consume_offering(otmp)
-register struct obj *otmp;
+struct obj *otmp;
 {
     if (Hallucination)
 	switch (rn2(3)) {
@@ -1119,7 +1119,7 @@ register struct obj *otmp;
 int
 dosacrifice()
 {
-    register struct obj *otmp;
+    struct obj *otmp;
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(u.ux,u.uy);
@@ -1147,7 +1147,7 @@ dosacrifice()
 #define MAXVALUE 24 /* Highest corpse value (besides Wiz) */
 
     if (otmp->otyp == CORPSE) {
-	register struct permonst *ptr = &mons[otmp->corpsenm];
+	struct permonst *ptr = &mons[otmp->corpsenm];
 	struct monst *mtmp;
 	extern const int monstr[];
 
@@ -1655,7 +1655,7 @@ doturn()
 	if (!Role_if(PM_PRIEST) && !Role_if(PM_KNIGHT)) {
 		/* Try to use turn undead spell. */
 		if (objects[SPE_TURN_UNDEAD].oc_name_known) {
-		    register int sp_no;
+		    int sp_no;
 		    for (sp_no = 0; sp_no < MAXSPELL &&
 			 spl_book[sp_no].sp_id != NO_SPELL &&
 			 spl_book[sp_no].sp_id != SPE_TURN_UNDEAD; sp_no++);
@@ -1823,7 +1823,7 @@ aligntyp alignment;
 
 void
 altar_wrath(x, y)
-register int x, y;
+int x, y;
 {
     aligntyp altaralign = a_align(x,y);
 
@@ -1843,7 +1843,7 @@ static boolean
 blocked_boulder(dx,dy)
 int dx,dy;
 {
-    register struct obj *otmp;
+    struct obj *otmp;
     long count = 0L;
 
     for(otmp = level.objects[u.ux+dx][u.uy+dy]; otmp; otmp = otmp->nexthere) {

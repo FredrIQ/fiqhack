@@ -51,8 +51,8 @@ rank_of(lev, monnum, female)
 	short monnum;
 	boolean female;
 {
-	register struct Role *role;
-	register int i;
+	struct Role *role;
+	int i;
 
 
 	/* Find the role */
@@ -86,7 +86,7 @@ title_to_mon(str, rank_indx, title_length)
 const char *str;
 int *rank_indx, *title_length;
 {
-	register int i, j;
+	int i, j;
 
 
 	/* Loop through each of the roles */
@@ -113,7 +113,7 @@ int *rank_indx, *title_length;
 void
 max_rank_sz()
 {
-	register int i, r, maxr = 0;
+	int i, r, maxr = 0;
 	for (i = 0; i < 9; i++) {
 	    if (urole.rank[i].m && (r = strlen(urole.rank[i].m)) > maxr) maxr = r;
 	    if (urole.rank[i].f && (r = strlen(urole.rank[i].f)) > maxr) maxr = r;
@@ -148,8 +148,8 @@ static void
 bot1()
 {
 	char newbot1[MAXCO];
-	register char *nb;
-	register int i,j;
+	char *nb;
+	int i,j;
 
 	strcpy(newbot1, plname);
 	if('a' <= newbot1[0] && newbot1[0] <= 'z') newbot1[0] += 'A'-'a';
@@ -225,7 +225,7 @@ static void
 bot2()
 {
 	char  newbot2[MAXCO];
-	register char *nb;
+	char *nb;
 	int hp, hpmax;
 	int cap = near_capacity();
 

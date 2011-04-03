@@ -651,7 +651,7 @@ void
 close_drawbridge(x,y)
 int x,y;
 {
-	register struct rm *lev1, *lev2;
+	struct rm *lev1, *lev2;
 	struct trap *t;
 	int x2, y2;
 
@@ -703,7 +703,7 @@ void
 open_drawbridge(x,y)
 int x,y;
 {
-	register struct rm *lev1, *lev2;
+	struct rm *lev1, *lev2;
 	struct trap *t;
 	int x2, y2;
 
@@ -741,7 +741,7 @@ void
 destroy_drawbridge(x,y)
 int x,y;
 {
-	register struct rm *lev1, *lev2;
+	struct rm *lev1, *lev2;
 	struct trap *t;
 	int x2, y2;
 	boolean e_inview;

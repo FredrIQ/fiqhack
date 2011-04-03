@@ -300,7 +300,7 @@ int
 get_room_type(s)
 char *s;
 {
-	register int i;
+	int i;
 
 	for(i=0; room_types[i].name; i++)
 	    if (!strcmp(s, room_types[i].name))
@@ -315,7 +315,7 @@ int
 get_trap_type(s)
 char *s;
 {
-	register int i;
+	int i;
 
 	for (i=0; trap_types[i].name; i++)
 	    if(!strcmp(s,trap_types[i].name))
@@ -331,7 +331,7 @@ get_monster_id(s, c)
 char *s;
 char c;
 {
-	register int i, class;
+	int i, class;
 
 	class = c ? def_char_to_monclass(c) : 0;
 	if (class == MAXMCLASSES) return ERR;
@@ -447,8 +447,8 @@ void
 scan_map(map)
 char *map;
 {
-	register int i, len;
-	register char *s1, *s2;
+	int i, len;
+	char *s1, *s2;
 	int max_len = 0;
 	int max_hig = 0;
 	char msg[256];
@@ -631,7 +631,7 @@ const char *str;
 void
 store_part()
 {
-	register unsigned i;
+	unsigned i;
 
 	/* Ok, We got the whole part, now we store it. */
 
@@ -791,7 +791,7 @@ store_part()
 void
 store_room()
 {
-	register unsigned i;
+	unsigned i;
 
 	/* Ok, We got the whole room, now we store it. */
 

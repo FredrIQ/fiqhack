@@ -10,7 +10,7 @@ static int cost(struct obj *);
  */
 static int
 cost(otmp)
-register struct obj *otmp;
+struct obj *otmp;
 {
 
 	if (otmp->oclass == SPBOOK_CLASS)
@@ -63,11 +63,11 @@ static const char write_on[] = { SCROLL_CLASS, SPBOOK_CLASS, 0 };
 
 int
 dowrite(pen)
-register struct obj *pen;
+struct obj *pen;
 {
-	register struct obj *paper;
+	struct obj *paper;
 	char namebuf[BUFSZ], *nm, *bp;
-	register struct obj *new_obj;
+	struct obj *new_obj;
 	int basecost, actualcost;
 	int curseval;
 	char qbuf[QBUFSZ];

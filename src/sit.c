@@ -39,8 +39,8 @@ int
 dosit()
 {
 	static const char sit_message[] = "sit on the %s.";
-	register struct trap *trap;
-	register int typ = levl[u.ux][u.uy].typ;
+	struct trap *trap;
+	int typ = levl[u.ux][u.uy].typ;
 
 
 #ifdef STEED
@@ -61,7 +61,7 @@ dosit()
 	}
 
 	if(OBJ_AT(u.ux, u.uy)) {
-	    register struct obj *obj;
+	    struct obj *obj;
 
 	    obj = level.objects[u.ux][u.uy];
 	    You("sit on %s.", the(xname(obj)));
@@ -200,7 +200,7 @@ dosit()
 			break;
 		    case 7:
 			{
-			register int cnt = rnd(10);
+			int cnt = rnd(10);
 
 			pline("A voice echoes:");
 			verbalize("Thy audience hath been summoned, %s!",

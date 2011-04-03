@@ -218,8 +218,8 @@ do_mname()
 {
 	char buf[BUFSZ];
 	coord cc;
-	register int cx,cy;
-	register struct monst *mtmp;
+	int cx,cy;
+	struct monst *mtmp;
 	char qbuf[QBUFSZ];
 
 	if (Hallucination) {
@@ -282,7 +282,7 @@ do_mname()
 static
 void
 do_oname(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	char buf[BUFSZ], qbuf[QBUFSZ];
 	const char *aname;
@@ -304,7 +304,7 @@ register struct obj *obj;
 		return;
 	} else if (restrict_name(obj, buf) || exist_artifact(obj->otyp, buf)) {
 		int n = rn2((int)strlen(buf));
-		register char c1, c2;
+		char c1, c2;
 
 		c1 = lowc(buf[n]);
 		do c2 = 'a' + rn2('z'-'a'); while (c1 == c2);
@@ -435,7 +435,7 @@ static const char callable[] = {
 int
 ddocall()
 {
-	register struct obj *obj;
+	struct obj *obj;
 #ifdef REDO
 	char	ch;
 #endif
@@ -480,11 +480,11 @@ ddocall()
 
 void
 docall(obj)
-register struct obj *obj;
+struct obj *obj;
 {
 	char buf[BUFSZ], qbuf[QBUFSZ];
 	struct obj otemp;
-	register char **str1;
+	char **str1;
 
 	if (!obj->dknown) return; /* probably blind */
 	otemp = *obj;
@@ -558,7 +558,7 @@ rndghostname()
  */
 char *
 x_monnam(mtmp, article, adjective, suppress, called)
-register struct monst *mtmp;
+struct monst *mtmp;
 int article;
 /* ARTICLE_NONE, ARTICLE_THE, ARTICLE_A: obvious
  * ARTICLE_YOUR: "your" on pets, "the" on everything else
@@ -740,7 +740,7 @@ boolean called;
 
 char *
 l_monnam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
 	return(x_monnam(mtmp, ARTICLE_NONE, (char *)0, 
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, TRUE));
@@ -749,7 +749,7 @@ register struct monst *mtmp;
 
 char *
 mon_nam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
 	return(x_monnam(mtmp, ARTICLE_THE, (char *)0,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE));
@@ -761,7 +761,7 @@ register struct monst *mtmp;
  */
 char *
 noit_mon_nam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
 	return(x_monnam(mtmp, ARTICLE_THE, (char *)0,
 		mtmp->mnamelth ? (SUPPRESS_SADDLE|SUPPRESS_IT) :
@@ -770,9 +770,9 @@ register struct monst *mtmp;
 
 char *
 Monnam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
-	register char *bp = mon_nam(mtmp);
+	char *bp = mon_nam(mtmp);
 
 	*bp = highc(*bp);
 	return(bp);
@@ -780,9 +780,9 @@ register struct monst *mtmp;
 
 char *
 noit_Monnam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
-	register char *bp = noit_mon_nam(mtmp);
+	char *bp = noit_mon_nam(mtmp);
 
 	*bp = highc(*bp);
 	return(bp);
@@ -817,10 +817,10 @@ struct monst *mtmp;
 
 char *
 Adjmonnam(mtmp, adj)
-register struct monst *mtmp;
-register const char *adj;
+struct monst *mtmp;
+const char *adj;
 {
-	register char *bp = x_monnam(mtmp, ARTICLE_THE, adj,
+	char *bp = x_monnam(mtmp, ARTICLE_THE, adj,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
 
 	*bp = highc(*bp);
@@ -829,7 +829,7 @@ register const char *adj;
 
 char *
 a_monnam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
 	return x_monnam(mtmp, ARTICLE_A, (char *)0,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
@@ -837,9 +837,9 @@ register struct monst *mtmp;
 
 char *
 Amonnam(mtmp)
-register struct monst *mtmp;
+struct monst *mtmp;
 {
-	register char *bp = a_monnam(mtmp);
+	char *bp = a_monnam(mtmp);
 
 	*bp = highc(*bp);
 	return(bp);

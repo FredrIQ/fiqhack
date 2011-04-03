@@ -33,7 +33,7 @@ roguejoin(x1,y1,x2,y2, horiz)
 int x1,y1,x2,y2;
 int horiz;
 {
-	register int x,y,middle;
+	int x,y,middle;
 #ifndef MAX
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #endif
@@ -64,7 +64,7 @@ void
 roguecorr(x, y, dir)
 int x,y,dir;
 {
-	register int fromx, fromy, tox, toy;
+	int fromx, fromy, tox, toy;
 
 	if (dir==DOWN) {
 		r[x][y].doortable &= ~DOWN;
@@ -149,7 +149,7 @@ void
 miniwalk(x, y)
 int x,y;
 {
-	register int q, dir;
+	int q, dir;
 	int dirs[4];
 
 	while(1) {
@@ -196,7 +196,7 @@ int x,y;
 
 void
 makeroguerooms() {
-	register int x,y;
+	int x,y;
 	/* Rogue levels are structured 3 by 3, with each section containing
 	 * a room or an intersection.  The minimum width is 2 each way.
 	 * One difference between these and "real" Rogue levels: real Rogue
@@ -288,7 +288,7 @@ int x, y;
 void
 makerogueghost()
 {
-	register struct monst *ghost;
+	struct monst *ghost;
 	struct obj *ghostobj;
 	struct mkroom *croom;
 	int x,y;

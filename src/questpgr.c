@@ -222,7 +222,7 @@ static void
 convert_arg(c)
 char c;
 {
-	register const char *str;
+	const char *str;
 
 	switch (c) {
 

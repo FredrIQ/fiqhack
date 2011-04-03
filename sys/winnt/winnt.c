@@ -153,9 +153,9 @@ def_kbhit()
 
 void
 nt_regularize(s)	/* normalize file name */
-register char *s;
+char *s;
 {
-	register unsigned char *lp;
+	unsigned char *lp;
 
 	for (lp = s; *lp; lp++)
 	    if ( *lp == '?' || *lp == '"' || *lp == '\\' ||

@@ -16,9 +16,9 @@ extern void panic(const char *,...) PRINTF_F(1,2);
 
 long *
 alloc(lth)
-register unsigned int lth;
+unsigned int lth;
 {
-	register void * ptr;
+	void * ptr;
 
 	ptr = malloc(lth);
 	if (!ptr) panic("Memory allocation failure; cannot get %u bytes", lth);
