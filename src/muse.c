@@ -514,7 +514,7 @@ struct monst *mtmp;
 			m.has_defense = MUSE_SCR_CREATE_MONSTER;
 		}
 	}
-botm:	return((boolean)(!!m.has_defense));
+botm:	return (boolean)(!!m.has_defense);
 #undef nomore
 }
 
@@ -1076,7 +1076,7 @@ struct monst *mtmp;
 		    m.has_offense = MUSE_SCR_EARTH;
 		}
 	}
-	return((boolean)(!!m.has_offense));
+	return (boolean)(!!m.has_offense);
 #undef nomore
 }
 
@@ -1612,7 +1612,7 @@ struct monst *mtmp;
 			m.has_misc = MUSE_POT_POLYMORPH;
 		}
 	}
-	return((boolean)(!!m.has_misc));
+	return (boolean)(!!m.has_misc);
 #undef nomore
 }
 
@@ -1943,7 +1943,7 @@ struct obj *obj;
 	    if (typ == UNICORN_HORN)
 		return (boolean)(!obj->cursed && !is_unicorn(mon->data));
 	    if (typ == FROST_HORN || typ == FIRE_HORN)
-		return (obj->spe > 0);
+		return obj->spe > 0;
 	    break;
 	case FOOD_CLASS:
 	    if (typ == CORPSE)

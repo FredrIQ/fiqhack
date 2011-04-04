@@ -295,12 +295,12 @@ struct monst *mon;
 		if (tmp < 1) tmp = 1;
 	}
 
-	return(tmp);
+	return tmp;
 }
 
 
 static struct obj *oselect(struct monst *,int);
-#define Oselect(x)	if ((otmp = oselect(mtmp, x)) != 0) return(otmp);
+#define Oselect(x)	if ((otmp = oselect(mtmp, x)) != 0) return otmp;
 
 static struct obj *
 oselect(mtmp, x)
@@ -434,7 +434,7 @@ struct monst *mtmp;
 			/* Don't throw a cursed weapon-in-hand or an artifact */
 			if ((otmp = oselect(mtmp, rwep[i])) && !otmp->oartifact
 			    && (!otmp->cursed || otmp != MON_WEP(mtmp)))
-				return(otmp);
+				return otmp;
 		} else for(otmp=mtmp->minvent; otmp; otmp=otmp->nobj) {
 		    if (otmp->otyp == LOADSTONE && !otmp->cursed)
 			return otmp;
@@ -673,7 +673,7 @@ abon()		/* attack bonus for strength & dexterity */
 	int sbon;
 	int str = ACURR(A_STR), dex = ACURR(A_DEX);
 
-	if (Upolyd) return(adj_lev(&mons[u.umonnum]) - 3);
+	if (Upolyd) return adj_lev(&mons[u.umonnum]) - 3;
 	if (str < 6) sbon = -2;
 	else if (str < 8) sbon = -1;
 	else if (str < 17) sbon = 0;
@@ -684,11 +684,11 @@ abon()		/* attack bonus for strength & dexterity */
 /* Game tuning kludge: make it a bit easier for a low level character to hit */
 	sbon += (u.ulevel < 3) ? 1 : 0;
 
-	if (dex < 4) return(sbon-3);
-	else if (dex < 6) return(sbon-2);
-	else if (dex < 8) return(sbon-1);
-	else if (dex < 14) return(sbon);
-	else return(sbon + dex-14);
+	if (dex < 4) return sbon-3;
+	else if (dex < 6) return sbon-2;
+	else if (dex < 8) return sbon-1;
+	else if (dex < 14) return sbon;
+	else return sbon + dex-14;
 }
 
 
@@ -697,16 +697,16 @@ dbon()		/* damage bonus for strength */
 {
 	int str = ACURR(A_STR);
 
-	if (Upolyd) return(0);
+	if (Upolyd) return 0;
 
-	if (str < 6) return(-1);
-	else if (str < 16) return(0);
-	else if (str < 18) return(1);
-	else if (str == 18) return(2);		/* up to 18 */
-	else if (str <= STR18(75)) return(3);		/* up to 18/75 */
-	else if (str <= STR18(90)) return(4);		/* up to 18/90 */
-	else if (str < STR18(100)) return(5);		/* up to 18/99 */
-	else return(6);
+	if (str < 6) return -1;
+	else if (str < 16) return 0;
+	else if (str < 18) return 1;
+	else if (str == 18) return 2;		/* up to 18 */
+	else if (str <= STR18(75)) return 3;		/* up to 18/75 */
+	else if (str <= STR18(90)) return 4;		/* up to 18/90 */
+	else if (str < STR18(100)) return 5;		/* up to 18/99 */
+	else return 6;
 }
 
 
@@ -1041,13 +1041,13 @@ struct obj *obj;
 
 	if (!obj)
 		/* Not using a weapon */
-		return (P_BARE_HANDED_COMBAT);
+		return P_BARE_HANDED_COMBAT;
 	if (obj->oclass != WEAPON_CLASS && obj->oclass != TOOL_CLASS &&
 	    obj->oclass != GEM_CLASS)
 		/* Not a weapon, weapon-tool, or ammo */
-		return (P_NONE);
+		return P_NONE;
 	type = objects[obj->otyp].oc_skill;
-	return ((type < 0) ? -type : type);
+	return (type < 0) ? -type : type;
 }
 
 int

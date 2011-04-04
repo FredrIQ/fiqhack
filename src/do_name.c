@@ -204,7 +204,7 @@ const char *name;
 	mtmp2->mnamelth = lth;
 	if (lth) strcpy(NAME(mtmp2), name);
 	replmon(mtmp,mtmp2);
-	return(mtmp2);
+	return mtmp2;
 }
 
 int
@@ -236,7 +236,7 @@ do_mname()
 		(flags.female ? "beautiful" : "handsome") :
 		"ugly",
 		plname);
-		return(0);
+		return 0;
 	    }
 	} else
 	    mtmp = m_at(cx, cy);
@@ -247,13 +247,13 @@ do_mname()
 			|| mtmp->m_ap_type == M_AP_OBJECT
 			|| (mtmp->minvis && !See_invisible)))) {
 		pline("I see no monster there.");
-		return(0);
+		return 0;
 	}
 	/* special case similar to the one in lookat() */
 	(void) distant_monnam(mtmp, ARTICLE_THE, buf);
 	sprintf(qbuf, "What do you want to call %s?", buf);
 	getlin(qbuf,buf);
-	if(!*buf || *buf == '\033') return(0);
+	if(!*buf || *buf == '\033') return 0;
 	/* strip leading and trailing spaces; unnames monster if all spaces */
 	(void)mungspaces(buf);
 
@@ -261,7 +261,7 @@ do_mname()
 	    pline("%s doesn't like being called names!", Monnam(mtmp));
 	else
 	    (void) christen_monst(mtmp, buf);
-	return(0);
+	return 0;
 }
 
 /*
@@ -717,7 +717,7 @@ boolean called;
 		    strcpy(buf, buf2);
 		    return buf;
 		case ARTICLE_A:
-		    return(an(buf));
+		    return an(buf);
 		case ARTICLE_NONE:
 		default:
 		    return buf;
@@ -763,7 +763,7 @@ struct monst *mtmp;
 	char *bp = mon_nam(mtmp);
 
 	*bp = highc(*bp);
-	return(bp);
+	return bp;
 }
 
 char *
@@ -773,7 +773,7 @@ struct monst *mtmp;
 	char *bp = noit_mon_nam(mtmp);
 
 	*bp = highc(*bp);
-	return(bp);
+	return bp;
 }
 
 /* monster's own name */
@@ -808,7 +808,7 @@ const char *adj;
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
 
 	*bp = highc(*bp);
-	return(bp);
+	return bp;
 }
 
 char *
@@ -826,7 +826,7 @@ struct monst *mtmp;
 	char *bp = a_monnam(mtmp);
 
 	*bp = highc(*bp);
-	return(bp);
+	return bp;
 }
 
 /* used for monster ID by the '/', ';', and 'C' commands to block remote

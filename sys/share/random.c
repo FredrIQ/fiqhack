@@ -292,7 +292,7 @@ initstate( seed, arg_state, n )
 	srandom( seed );
 	if(  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
 	else  state[ -1 ] = MAX_TYPES*(rptr - state) + rand_type;
-	return( ostate );
+	return  ostate ;
 }
 
 
@@ -342,7 +342,7 @@ setstate( arg_state )
 	    fptr = &state[ (rear + rand_sep)%rand_deg ];
 	}
 	end_ptr = &state[ rand_deg ];		/* set end_ptr too */
-	return( ostate );
+	return  ostate ;
 }
 
 
@@ -381,6 +381,6 @@ random()
 		if(  ++rptr  >=  end_ptr  )  rptr = state;
 	    }
 	}
-	return( i );
+	return  i ;
 }
 

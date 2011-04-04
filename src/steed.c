@@ -174,7 +174,7 @@ doride()
 	else if (getdir((char *)0) && isok(u.ux+u.dx, u.uy+u.dy)) {
 	    if (wizard && yn("Force the mount to succeed?") == 'y')
 		forcemount = TRUE;
-	    return (mount_steed(m_at(u.ux+u.dx, u.uy+u.dy), forcemount));
+	    return mount_steed(m_at(u.ux+u.dx, u.uy+u.dy), forcemount);
 	} else
 	    return 0;
 	return 1;
@@ -194,13 +194,13 @@ mount_steed(mtmp, force)
 	/* Sanity checks */
 	if (u.usteed) {
 	    You("are already riding %s.", mon_nam(u.usteed));
-	    return (FALSE);
+	    return FALSE;
 	}
 
 	/* Is the player in the right form? */
 	if (Hallucination && !force) {
 	    pline("Maybe you should find a designated driver.");
-	    return (FALSE);
+	    return FALSE;
 	}
 	/* While riding Wounded_legs refers to the steed's,
 	 * not the hero's legs.
@@ -217,17 +217,17 @@ mount_steed(mtmp, force)
 	    if (force && wizard && yn("Heal your legs?") == 'y')
 		HWounded_legs = EWounded_legs = 0;
 	    else
-		return (FALSE);
+		return FALSE;
 	}
 
 	if (Upolyd && (!humanoid(youmonst.data) || verysmall(youmonst.data) ||
 			bigmonst(youmonst.data) || slithy(youmonst.data))) {
 	    You("won't fit on a saddle.");
-	    return (FALSE);
+	    return FALSE;
 	}
 	if(!force && (near_capacity() > SLT_ENCUMBER)) {
 	    You_cant("do that while carrying so much stuff.");
-	    return (FALSE);
+	    return FALSE;
 	}
 
 	/* Can the player reach and see the monster? */
@@ -236,7 +236,7 @@ mount_steed(mtmp, force)
 		mtmp->m_ap_type == M_AP_FURNITURE ||
 		mtmp->m_ap_type == M_AP_OBJECT))) {
 	    pline("I see nobody there.");
-	    return (FALSE);
+	    return FALSE;
 	}
 	if (u.uswallow || u.ustuck || u.utrap || Punished ||
 	    !test_move(u.ux, u.uy, mtmp->mx-u.ux, mtmp->my-u.uy, TEST_MOVE)) {
@@ -244,14 +244,14 @@ mount_steed(mtmp, force)
 		You("are unable to swing your %s over.", body_part(LEG)); 
 	    else
 		You("are stuck here for now.");
-	    return (FALSE);
+	    return FALSE;
 	}
 
 	/* Is this a valid monster? */
 	otmp = which_armor(mtmp, W_SADDLE);
 	if (!otmp) {
 	    pline("%s is not saddled.", Monnam(mtmp));
-	    return (FALSE);
+	    return FALSE;
 	}
 	ptr = mtmp->data;
 	if (touch_petrifies(ptr) && !Stone_resistance) {
@@ -263,7 +263,7 @@ mount_steed(mtmp, force)
 	}
 	if (!mtmp->mtame || mtmp->isminion) {
 	    pline("I think %s would mind.", mon_nam(mtmp));
-	    return (FALSE);
+	    return FALSE;
 	}
 	if (mtmp->mtrapped) {
 	    struct trap *t = t_at(mtmp->mx, mtmp->my);
@@ -271,7 +271,7 @@ mount_steed(mtmp, force)
 	    You_cant("mount %s while %s's trapped in %s.",
 		     mon_nam(mtmp), mhe(mtmp),
 		     an(defsyms[trap_to_defsym(t->ttyp)].explanation));
-	    return (FALSE);
+	    return FALSE;
 	}
 
 	if (!force && !Role_if(PM_KNIGHT) && !(--mtmp->mtame)) {
@@ -280,29 +280,29 @@ mount_steed(mtmp, force)
 	    pline("%s resists%s!", Monnam(mtmp),
 		  mtmp->mleashed ? " and its leash comes off" : "");
 	    if (mtmp->mleashed) m_unleash(mtmp, FALSE);
-	    return (FALSE);
+	    return FALSE;
 	}
 	if (!force && Underwater && !is_swimmer(ptr)) {
 	    You_cant("ride that creature while under water.");
-	    return (FALSE);
+	    return FALSE;
 	}
 	if (!can_saddle(mtmp) || !can_ride(mtmp)) {
 	    You_cant("ride such a creature.");
-	    return (0);
+	    return 0;
 	}
 
 	/* Is the player impaired? */
 	if (!force && !is_floater(ptr) && !is_flyer(ptr) &&
 			Levitation && !Lev_at_will) {
 	    You("cannot reach %s.", mon_nam(mtmp));
-	    return (FALSE);
+	    return FALSE;
 	}
 	if (!force && uarm && is_metallic(uarm) &&
 			greatest_erosion(uarm)) {
 	    Your("%s armor is too stiff to be able to mount %s.",
 			uarm->oeroded ? "rusty" : "corroded",
 			mon_nam(mtmp));
-	    return (FALSE);
+	    return FALSE;
 	}
 	if (!force && (Confusion || Fumbling || Glib || Wounded_legs ||
 		otmp->cursed || (u.ulevel+mtmp->mtame < rnd(MAXULEV/2+5)))) {
@@ -318,7 +318,7 @@ mount_steed(mtmp, force)
 			SUPPRESS_IT|SUPPRESS_INVISIBLE|SUPPRESS_HALLUCINATION,
 			     TRUE));
 	    losehp(rn1(5,10), buf, NO_KILLER_PREFIX);
-	    return (FALSE);
+	    return FALSE;
 	}
 
 	/* Success */
@@ -333,7 +333,7 @@ mount_steed(mtmp, force)
 	u.usteed = mtmp;
 	remove_monster(mtmp->mx, mtmp->my);
 	teleds(mtmp->mx, mtmp->my, TRUE);
-	return (TRUE);
+	return TRUE;
 }
 
 

@@ -735,8 +735,8 @@ aligntyp alignment;
 
 	k = rn2(2);
 	if (!alignment)
-		return(k ? -1 : 1);
-	return(k ? -alignment : 0);
+		return k ? -1 : 1;
+	return k ? -alignment : 0;
 }
 
 static void

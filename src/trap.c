@@ -114,7 +114,7 @@ struct monst *victim;
 	boolean vismon = (victim != &youmonst) && canseemon(victim);
 	int erosion;
 
-	if (!otmp) return(FALSE);
+	if (!otmp) return FALSE;
 	switch(type) {
 		case 0: vulnerable = is_flammable(otmp);
 			break;
@@ -183,7 +183,7 @@ struct monst *victim;
 			  vtense(ostr, "look"), msg[type]);
 	    }
 	}
-	return(TRUE);
+	return TRUE;
 }
 
 void
@@ -301,7 +301,7 @@ int x, y, typ;
 	    ttmp->ntrap = ftrap;
 	    ftrap = ttmp;
 	}
-	return(ttmp);
+	return ttmp;
 }
 
 void
@@ -1646,7 +1646,7 @@ struct monst *mtmp;
 		    ((mtmp->mtrapseen & (1 << (tt-1))) != 0 ||
 			(tt == HOLE && !mindless(mtmp->data)))) {
 		/* it has been in such a trap - perhaps it escapes */
-		if(rn2(4)) return(0);
+		if(rn2(4)) return 0;
 	    } else {
 		mtmp->mtrapseen |= (1 << (tt-1));
 	    }
@@ -1931,7 +1931,7 @@ glovecheck:		    target = which_armor(mtmp, W_ARMG);
 			    int mlev_res;
 			    mlev_res = mlevel_tele_trap(mtmp, trap,
 							inescapable, in_sight);
-			    if (mlev_res) return(mlev_res);
+			    if (mlev_res) return mlev_res;
 			}
 			break;
 
@@ -2247,11 +2247,11 @@ long hmask, emask;     /* might cancel timeout */
 
 	HLevitation &= ~hmask;
 	ELevitation &= ~emask;
-	if(Levitation) return(0); /* maybe another ring/potion/boots */
+	if(Levitation) return 0; /* maybe another ring/potion/boots */
 	if(u.uswallow) {
 	    You("float down, but you are still %s.",
 		is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
-	    return(1);
+	    return 1;
 	}
 
 	if (Punished && !carried(uball) &&
@@ -2731,17 +2731,17 @@ boolean *lostsome;
 		    continue;                    /* Try again */
 		}
 		/* We can't even drop gold! */
-		return (FALSE);
+		return FALSE;
 	    }
 #else
-	    if (!otmp) return (FALSE); /* nothing to drop! */	
+	    if (!otmp) return FALSE; /* nothing to drop! */	
 #endif
 	    if (otmp->owornmask) remove_worn_item(otmp, FALSE);
 	    *lostsome = TRUE;
 	    dropx(otmp);
 	    invc--;
 	}
-	return(TRUE);
+	return TRUE;
 }
 
 /*
@@ -2758,7 +2758,7 @@ drown()
 	    (Swimming || Amphibious)) {
 		/* water effects on objects every now and then */
 		if (!rn2(5)) inpool_ok = TRUE;
-		else return(FALSE);
+		else return FALSE;
 	}
 
 	if (!u.uinwater) {
@@ -2780,7 +2780,7 @@ drown()
 	    if (u.mhmax > i) u.mhmax -= i;
 	    losehp(i, "rusting away", KILLED_BY);
 	}
-	if (inpool_ok) return(FALSE);
+	if (inpool_ok) return FALSE;
 
 	if ((i = number_leashed()) > 0) {
 		pline_The("leash%s slip%s loose.",
@@ -2808,7 +2808,7 @@ drown()
 		u.uinwater = 1;
 		under_water(1);
 		vision_full_recalc = 1;
-		return(FALSE);
+		return FALSE;
 	}
 	if ((Teleportation || can_teleport(youmonst.data)) &&
 		    !u.usleep && (Teleport_control || rn2(3) < Luck+2)) {
@@ -2816,13 +2816,13 @@ drown()
 		if (!level.flags.noteleport) {
 			(void) dotele();
 			if(!is_pool(u.ux,u.uy))
-				return(TRUE);
+				return TRUE;
 		} else pline_The("attempted teleport spell fails.");
 	}
 	if (u.usteed) {
 		dismount_steed(DISMOUNT_GENERIC);
 		if(!is_pool(u.ux,u.uy))
-			return(TRUE);
+			return TRUE;
 	}
 	crawl_ok = FALSE;
 	x = y = 0;		/* lint suppression */
@@ -2861,7 +2861,7 @@ drown()
 		if (succ) {
 			pline("Pheew!  That was close.");
 			teleds(x,y,TRUE);
-			return(TRUE);
+			return TRUE;
 		}
 		/* still too much weight */
 		pline("But in vain.");
@@ -2882,7 +2882,7 @@ drown()
 	    You("find yourself back %s.", Is_waterlevel(&u.uz) ?
 		"in an air bubble" : "on land");
 	}
-	return(TRUE);
+	return TRUE;
 }
 
 void
@@ -3328,7 +3328,7 @@ boolean force;
 	char the_trap[BUFSZ], qbuf[QBUFSZ];
 	int containercnt = 0;
 
-	if(!getdir((char *)0)) return(0);
+	if(!getdir((char *)0)) return 0;
 	x = u.ux + u.dx;
 	y = u.uy + u.dy;
 
@@ -3357,7 +3357,7 @@ boolean force;
 				an(defsyms[trap_to_defsym(ttmp->ttyp)].explanation),
 				ttmp->ttyp == WEB ? "Remove" : "Disarm", the_trap);
 			    switch (ynq(qbuf)) {
-				case 'q': return(0);
+				case 'q': return 0;
 				case 'n': trap_skipped = TRUE;
 					  deal_with_floor_trap = FALSE;
 					  break;
@@ -3407,13 +3407,13 @@ boolean force;
 			safe_qbuf("", sizeof("There is  here. Check it for traps?"),
 				doname(otmp), an(simple_typename(otmp->otyp)), "a box"));
 		    switch (ynq(qbuf)) {
-			case 'q': return(0);
+			case 'q': return 0;
 			case 'n': continue;
 		    }
 		    if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
 			You("aren't skilled enough to reach from %s.",
 				mon_nam(u.usteed));
-			return(0);
+			return 0;
 		    }
 		    if((otmp->otrapped && (force || (!confused
 				&& rn2(MAXULEV + 1 - u.ulevel) < 10)))
@@ -3422,7 +3422,7 @@ boolean force;
 			if (!confused) exercise(A_WIS, TRUE);
 
 			switch (ynq("Disarm it?")) {
-			    case 'q': return(1);
+			    case 'q': return 1;
 			    case 'n': trap_skipped = TRUE;  continue;
 			}
 
@@ -3438,16 +3438,16 @@ boolean force;
 				otmp->otrapped = 0;
 			    }
 			} else pline("That %s was not trapped.", xname(otmp));
-			return(1);
+			return 1;
 		    } else {
 			You("find no traps on %s.", the(xname(otmp)));
-			return(1);
+			return 1;
 		    }
 		}
 
 	    You(trap_skipped ? "find no other traps here."
 			     : "know of no traps here.");
-	    return(0);
+	    return 0;
 	}
 
 	if ((mtmp = m_at(x,y))				&&
@@ -3457,7 +3457,7 @@ boolean force;
 		!Protection_from_shape_changers)	 {
 
 	    stumble_onto_mimic(mtmp);
-	    return(1);
+	    return 1;
 	}
 
 	if (!IS_DOOR(levl[x][y].typ)) {
@@ -3465,19 +3465,19 @@ boolean force;
 		You("cannot disable that trap.");
 	    else
 		You("know of no traps there.");
-	    return(0);
+	    return 0;
 	}
 
 	switch (levl[x][y].doormask) {
 	    case D_NODOOR:
 		You("%s no door there.", Blind ? "feel" : "see");
-		return(0);
+		return 0;
 	    case D_ISOPEN:
 		pline("This door is safely open.");
-		return(0);
+		return 0;
 	    case D_BROKEN:
 		pline("This door is broken.");
-		return(0);
+		return 0;
 	}
 
 	if ((levl[x][y].doormask & D_TRAPPED
@@ -3486,7 +3486,7 @@ boolean force;
 	    || (!force && confused && !rn2(3))) {
 		You("find a trap on the door!");
 		exercise(A_WIS, TRUE);
-		if (ynq("Disarm it?") != 'y') return(1);
+		if (ynq("Disarm it?") != 'y') return 1;
 		if (levl[x][y].doormask & D_TRAPPED) {
 		    ch = 15 + (Role_if(PM_ROGUE) ? u.ulevel*3 : u.ulevel);
 		    exercise(A_DEX, TRUE);
@@ -3504,10 +3504,10 @@ boolean force;
 			levl[x][y].doormask &= ~D_TRAPPED;
 		    }
 		} else pline("This door was not trapped.");
-		return(1);
+		return 1;
 	} else {
 		You("find no traps on the door.");
-		return(1);
+		return 1;
 	}
 }
 
@@ -3698,10 +3698,10 @@ int x, y;
 {
 	struct trap *trap = ftrap;
 	while(trap) {
-		if(trap->tx == x && trap->ty == y) return(trap);
+		if(trap->tx == x && trap->ty == y) return trap;
 		trap = trap->ntrap;
 	}
-	return((struct trap *)0);
+	return (struct trap *)0;
 }
 
 
@@ -3825,10 +3825,10 @@ boolean nocorpse;
 boolean
 unconscious()
 {
-	return((boolean)(multi < 0 && (!nomovemsg ||
+	return (boolean)(multi < 0 && (!nomovemsg ||
 		u.usleep ||
 		!strncmp(nomovemsg,"You regain con", 14) ||
-		!strncmp(nomovemsg,"You are consci", 14))));
+		!strncmp(nomovemsg,"You are consci", 14)));
 }
 
 static const char lava_killer[] = "molten lava";
@@ -3897,7 +3897,7 @@ lava_effects()
 		done(BURNING);
 	}
 	You("find yourself back on solid %s.", surface(u.ux, u.uy));
-	return(TRUE);
+	return TRUE;
     }
 
     if (!Wwalking) {
@@ -3920,7 +3920,7 @@ burn_stuff:
     destroy_item(SCROLL_CLASS, AD_FIRE);
     destroy_item(SPBOOK_CLASS, AD_FIRE);
     destroy_item(POTION_CLASS, AD_FIRE);
-    return(FALSE);
+    return FALSE;
 }
 
 /*trap.c*/

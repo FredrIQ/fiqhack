@@ -38,7 +38,7 @@ struct mkroom *sroom;
 {
 	int area = (sroom->hx - sroom->lx + 1)
 			   * (sroom->hy - sroom->ly + 1);
-	return((boolean)( area > 20 ));
+	return (boolean)( area > 20 );
 }
 
 void
@@ -405,13 +405,13 @@ morguemon()
 	int i = rn2(100), hd = rn2(level_difficulty());
 
 	if(hd > 10 && i < 10)
-		return((Inhell || In_endgame(&u.uz)) ? mkclass(S_DEMON,0) :
-						       &mons[ndemon(A_NONE)]);
+		return (Inhell || In_endgame(&u.uz)) ? mkclass(S_DEMON,0) :
+						       &mons[ndemon(A_NONE)];
 	if(hd > 8 && i > 85)
-		return(mkclass(S_VAMPIRE,0));
+		return mkclass(S_VAMPIRE,0);
 
-	return((i < 20) ? &mons[PM_GHOST]
-			: (i < 40) ? &mons[PM_WRAITH] : mkclass(S_ZOMBIE,0));
+	return (i < 20) ? &mons[PM_GHOST]
+			: (i < 40) ? &mons[PM_WRAITH] : mkclass(S_ZOMBIE,0);
 }
 
 static struct permonst *
@@ -425,8 +425,7 @@ antholemon()
 	case 0:		mtyp = PM_SOLDIER_ANT; break;
 	case 1:		mtyp = PM_FIRE_ANT; break;
 	}
-	return ((mvitals[mtyp].mvflags & G_GONE) ?
-			(struct permonst *)0 : &mons[mtyp]);
+	return (mvitals[mtyp].mvflags & G_GONE) ? NULL : &mons[mtyp];
 }
 
 static void
@@ -475,7 +474,7 @@ int roomno;
 
 	buf.x = troom->lx + ((troom->hx - troom->lx) / 2);
 	buf.y = troom->ly + ((troom->hy - troom->ly) / 2);
-	return(&buf);
+	return &buf;
 }
 
 static void
@@ -512,9 +511,9 @@ int sx, sy;
 		if(!isok(sx+dx, sy+dy)) continue;
 		if(IS_DOOR((lev = &levl[sx+dx][sy+dy])->typ) ||
 		    lev->typ == SDOOR)
-			return(TRUE);
+			return TRUE;
 	}
-	return(FALSE);
+	return FALSE;
 }
 
 boolean
@@ -524,7 +523,7 @@ struct mkroom *sroom;
 	if (sroom == dnstairs_room)
 		return TRUE;
 	if (sstairs.sx && !sstairs.up)
-		return((boolean)(sroom == sstairs_room));
+		return (boolean)(sroom == sstairs_room);
 	return FALSE;
 }
 
@@ -535,7 +534,7 @@ struct mkroom *sroom;
 	if (sroom == upstairs_room)
 		return TRUE;
 	if (sstairs.sx && sstairs.up)
-		return((boolean)(sroom == sstairs_room));
+		return (boolean)(sroom == sstairs_room);
 	return FALSE;
 }
 
@@ -645,15 +644,15 @@ struct permonst *
 courtmon()
 {
 	int     i = rn2(60) + rn2(3*level_difficulty());
-	if (i > 100)		return(mkclass(S_DRAGON,0));
-	else if (i > 95)	return(mkclass(S_GIANT,0));
-	else if (i > 85)	return(mkclass(S_TROLL,0));
-	else if (i > 75)	return(mkclass(S_CENTAUR,0));
-	else if (i > 60)	return(mkclass(S_ORC,0));
-	else if (i > 45)	return(&mons[PM_BUGBEAR]);
-	else if (i > 30)	return(&mons[PM_HOBGOBLIN]);
-	else if (i > 15)	return(mkclass(S_GNOME,0));
-	else			return(mkclass(S_KOBOLD,0));
+	if (i > 100)		return mkclass(S_DRAGON,0);
+	else if (i > 95)	return mkclass(S_GIANT,0);
+	else if (i > 85)	return mkclass(S_TROLL,0);
+	else if (i > 75)	return mkclass(S_CENTAUR,0);
+	else if (i > 60)	return mkclass(S_ORC,0);
+	else if (i > 45)	return &mons[PM_BUGBEAR];
+	else if (i > 30)	return &mons[PM_HOBGOBLIN];
+	else if (i > 15)	return mkclass(S_GNOME,0);
+	else			return mkclass(S_KOBOLD,0);
 }
 
 #define NSTYPES (PM_CAPTAIN - PM_SOLDIER + 1)
@@ -682,8 +681,8 @@ squadmon()		/* return soldier types. */
 	}
 	mndx = squadprob[rn2(NSTYPES)].pm;
 gotone:
-	if (!(mvitals[mndx].mvflags & G_GONE)) return(&mons[mndx]);
-	else			    return((struct permonst *) 0);
+	if (!(mvitals[mndx].mvflags & G_GONE)) return &mons[mndx];
+	else			    return (struct permonst *) 0;
 }
 
 /*

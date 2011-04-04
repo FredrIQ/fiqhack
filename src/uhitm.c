@@ -153,7 +153,7 @@ struct obj *wep;	/* uwep for attack(), null for kick_monster() */
 		 */
 		if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph)) {
 		    seemimic(mtmp);
-		    return(FALSE);
+		    return FALSE;
 		}
 		stumble_onto_mimic(mtmp);
 		return TRUE;
@@ -166,7 +166,7 @@ struct obj *wep;	/* uwep for attack(), null for kick_monster() */
 	    newsym(mtmp->mx, mtmp->my);
 	    if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph)) {
 		seemimic(mtmp);
-		return(FALSE);
+		return FALSE;
 	    }
 	    if (!(Blind ? Blind_telepat : Unblind_telepat)) {
 		struct obj *obj;
@@ -194,18 +194,18 @@ struct obj *wep;	/* uwep for attack(), null for kick_monster() */
 		/* Intelligent chaotic weapons (Stormbringer) want blood */
 		if (wep && wep->oartifact == ART_STORMBRINGER) {
 			override_confirmation = TRUE;
-			return(FALSE);
+			return FALSE;
 		}
 		if (canspotmon(mtmp)) {
 			sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
 			if (yn(qbuf) != 'y') {
 				flags.move = 0;
-				return(TRUE);
+				return TRUE;
 			}
 		}
 	}
 
-	return(FALSE);
+	return FALSE;
 }
 
 /*
@@ -332,19 +332,19 @@ struct monst *mtmp;
 		    strcpy(buf, y_monnam(mtmp));
 		    buf[0] = highc(buf[0]);
 		    You("stop.  %s is in the way!", buf);
-		    return(TRUE);
+		    return TRUE;
 		} else if ((mtmp->mfrozen || (! mtmp->mcanmove)
 				|| (mtmp->data->mmove == 0)) && rn2(6)) {
 		    pline("%s doesn't seem to move!", Monnam(mtmp));
-		    return(TRUE);
-		} else return(FALSE);
+		    return TRUE;
+		} else return FALSE;
 	    }
 	}
 
 	/* possibly set in attack_checks;
 	   examined in known_hitum, called via hitum or hmonas below */
 	override_confirmation = FALSE;
-	if (attack_checks(mtmp, uwep)) return(TRUE);
+	if (attack_checks(mtmp, uwep)) return TRUE;
 
 	if (Upolyd) {
 		/* certain "pacifist" monsters don't attack */
@@ -383,7 +383,7 @@ struct monst *mtmp;
 	   !mtmp->mconf && mtmp->mcansee && !rn2(7) &&
 	   (m_move(mtmp, 0) == 2 ||			    /* it died */
 	   mtmp->mx != u.ux+u.dx || mtmp->my != u.uy+u.dy)) /* it moved */
-		return(FALSE);
+		return FALSE;
 
 	tmp = find_roll_to_hit(mtmp);
 	if (Upolyd)
@@ -403,7 +403,7 @@ atk_done:
 	    !(u.uswallow && mtmp == u.ustuck))
 		map_invisible(u.ux+u.dx, u.uy+u.dy);
 
-	return(TRUE);
+	return TRUE;
 }
 
 static boolean
@@ -463,7 +463,7 @@ struct attack *uattk;
 		    cutworm(mon, x, y, uwep);
 	    }
 	}
-	return(malive);
+	return malive;
 }
 
 static boolean
@@ -478,7 +478,7 @@ struct attack *uattk;
 	if(tmp > dieroll) exercise(A_DEX, TRUE);
 	malive = known_hitum(mon, &mhit, uattk);
 	(void) passive(mon, mhit, malive, AT_WEAP);
-	return(malive);
+	return malive;
 }
 
 boolean			/* general "damage monster" routine */
@@ -705,7 +705,7 @@ int thrown;
 			You("succeed in destroying %s camera.  Congratulations!",
 			        shk_your(yourbuf, obj));
 			useup(obj);
-			return(TRUE);
+			return TRUE;
 			/*NOTREACHED*/
 			break;
 #endif
@@ -1046,7 +1046,7 @@ int thrown;
 		}
 	}
 
-	return((boolean)(destroyed ? FALSE : TRUE));
+	return (boolean)(destroyed ? FALSE : TRUE);
 }
 
 static boolean
@@ -1273,7 +1273,7 @@ struct attack *mattk;
 		&& u.umonnum != PM_SUCCUBUS && u.umonnum != PM_INCUBUS
 		&& u.umonnum != PM_BALROG) {
 	    demonpet();
-	    return(0);
+	    return 0;
 	}
 	switch(mattk->adtyp) {
 	    case AD_STUN:
@@ -1632,9 +1632,9 @@ struct attack *mattk;
 		if (tmp) xkilled(mdef, 0);
 	    } else
 		if (tmp) killed(mdef);
-	    return(2);
+	    return 2;
 	}
-	return(1);
+	return 1;
 }
 
 static int
@@ -1676,7 +1676,7 @@ common:
 		    mdef->mhp -= tmp;
 		    if (mdef->mhp <= 0) {
 			 killed(mdef);
-			 return(2);
+			 return 2;
 		    }
 		} else {
 		    shieldeff(mdef->mx, mdef->my);
@@ -1690,7 +1690,7 @@ common:
 	    default:
 		break;
 	}
-	return(1);
+	return 1;
 }
 
 static void
@@ -1807,7 +1807,7 @@ struct attack *mattk;
 			    exercise(A_CON, TRUE);
 			}
 			end_engulf();
-			return(2);
+			return 2;
 		    case AD_PHYS:
 			if (youmonst.data == &mons[PM_FOG_CLOUD]) {
 			    pline("%s is laden with your moisture.",
@@ -1874,7 +1874,7 @@ struct attack *mattk;
 		if ((mdef->mhp -= dam) <= 0) {
 		    killed(mdef);
 		    if (mdef->mhp <= 0)	/* not lifesaved */
-			return(2);
+			return 2;
 		}
 		You("%s %s!", is_animal(youmonst.data) ? "regurgitate"
 			: "expel", mon_nam(mdef));
@@ -1890,7 +1890,7 @@ struct attack *mattk;
 		instapetrify(kbuf);
 	    }
 	}
-	return(0);
+	return 0;
 }
 
 void
@@ -1948,7 +1948,7 @@ use_weapon:
 			    break;
 			} else sum[i] = dhit;
 			/* might be a worm that gets cut in half */
-			if (m_at(u.ux+u.dx, u.uy+u.dy) != mon) return((boolean)(nsum != 0));
+			if (m_at(u.ux+u.dx, u.uy+u.dy) != mon) return (boolean)(nsum != 0);
 			/* Do not print "You hit" message, since known_hitum
 			 * already did it.
 			 */
@@ -2093,7 +2093,7 @@ use_weapon:
 		rehumanize();
 	    }
 	    if (sum[i] == 2)
-		return((boolean)passive(mon, 1, 0, mattk->aatyp));
+		return (boolean)passive(mon, 1, 0, mattk->aatyp);
 							/* defender dead */
 	    else {
 		(void) passive(mon, sum[i], 1, mattk->aatyp);
@@ -2104,7 +2104,7 @@ use_weapon:
 	    if (multi < 0)
 		break; /* If paralyzed while attacking, i.e. floating eye */
 	}
-	return((boolean)(nsum != 0));
+	return (boolean)(nsum != 0);
 }
 
 /*	Special (passive) attacks on you by monsters done here.		*/
@@ -2120,7 +2120,7 @@ uchar aatyp;
 	int i, tmp;
 
 	for(i = 0; ; i++) {
-	    if(i >= NATTK) return(malive | mhit);	/* no passive attacks */
+	    if(i >= NATTK) return malive | mhit;	/* no passive attacks */
 	    if(ptr->mattk[i].aatyp == AT_NONE) break;	/* try this one */
 	}
 	/* Note: tmp not always used */
@@ -2311,7 +2311,7 @@ uchar aatyp;
 		break;
 	    }
 	}
-	return(malive | mhit);
+	return malive | mhit;
 }
 
 /*

@@ -206,10 +206,10 @@ xchar x, y;
 
 	while(ep) {
 		if(x == ep->engr_x && y == ep->engr_y)
-			return(ep);
+			return ep;
 		ep = ep->nxt_engr;
 	}
-	return((struct engr *) 0);
+	return (struct engr *) 0;
 }
 
 #ifdef ELBERETH
@@ -381,9 +381,9 @@ freehand()
 	   (!bimanual(uwep) && (!uarms || !uarms->cursed)));
 /*	if ((uwep && bimanual(uwep)) ||
 	    (uwep && uarms))
-		return(0);
+		return 0;
 	else
-		return(1);*/
+		return 1;*/
 }
 
 static const char styluses[] =
@@ -459,35 +459,35 @@ doengrave()
 	if(u.uswallow) {
 		if (is_animal(u.ustuck->data)) {
 			pline("What would you write?  \"Jonah was here\"?");
-			return(0);
+			return 0;
 		} else if (is_whirly(u.ustuck->data)) {
 			You_cant("reach the %s.", surface(u.ux,u.uy));
-			return(0);
+			return 0;
 		} else
 			jello = TRUE;
 	} else if (is_lava(u.ux, u.uy)) {
 		You_cant("write on the lava!");
-		return(0);
+		return 0;
 	} else if (is_pool(u.ux,u.uy) || IS_FOUNTAIN(levl[u.ux][u.uy].typ)) {
 		You_cant("write on the water!");
-		return(0);
+		return 0;
 	}
 	if(Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)/* in bubble */) {
 		You_cant("write in thin air!");
-		return(0);
+		return 0;
 	}
 	if (cantwield(youmonst.data)) {
 		You_cant("even hold anything!");
-		return(0);
+		return 0;
 	}
-	if (check_capacity((char *)0)) return (0);
+	if (check_capacity((char *)0)) return 0;
 
 	/* One may write with finger, or weapon, or wand, or..., or...
 	 * Edited by GAN 10/20/86 so as not to change weapon wielded.
 	 */
 
 	otmp = getobj(styluses, "write with");
-	if(!otmp) return(0);		/* otmp == zeroobj if fingers */
+	if(!otmp) return 0;		/* otmp == zeroobj if fingers */
 
 	if (otmp == &zeroobj) writer = makeplural(body_part(FINGER));
 	else writer = xname(otmp);
@@ -497,34 +497,34 @@ doengrave()
 	 */
 	if (!freehand() && otmp != uwep && !otmp->owornmask) {
 		You("have no free %s to write with!", body_part(HAND));
-		return(0);
+		return 0;
 	}
 
 	if (jello) {
 		You("tickle %s with your %s.", mon_nam(u.ustuck), writer);
 		Your("message dissolves...");
-		return(0);
+		return 0;
 	}
 	if (otmp->oclass != WAND_CLASS && !can_reach_floor()) {
 		You_cant("reach the %s!", surface(u.ux,u.uy));
-		return(0);
+		return 0;
 	}
 	if (IS_ALTAR(levl[u.ux][u.uy].typ)) {
 		You("make a motion towards the altar with your %s.", writer);
 		altar_wrath(u.ux, u.uy);
-		return(0);
+		return 0;
 	}
 	if (IS_GRAVE(levl[u.ux][u.uy].typ)) {
 	    if (otmp == &zeroobj) { /* using only finger */
 		You("would only make a small smudge on the %s.",
 			surface(u.ux, u.uy));
-		return(0);
+		return 0;
 	    } else if (!levl[u.ux][u.uy].disturbed) {
 		You("disturb the undead!");
 		levl[u.ux][u.uy].disturbed = 1;
 		(void) makemon(&mons[PM_GHOUL], u.ux, u.uy, NO_MM_FLAGS);
 		exercise(A_WIS, FALSE);
-		return(1);
+		return 1;
 	    }
 	}
 
@@ -740,7 +740,7 @@ doengrave()
 		} else /* end if zappable */
 		    if (!can_reach_floor()) {
 			You_cant("reach the %s!", surface(u.ux,u.uy));
-			return(0);
+			return 0;
 		    }
 		break;
 
@@ -757,7 +757,7 @@ doengrave()
 		if(otmp == ublindf) {
 		    pline(
 		"That is a bit difficult to engrave with, don't you think?");
-		    return(0);
+		    return 0;
 		}
 		switch (otmp->otyp)  {
 		    case MAGIC_MARKER:
@@ -853,7 +853,7 @@ doengrave()
 	if (!ptext) {		/* Early exit for some implements. */
 	    if (otmp->oclass == WAND_CLASS && !can_reach_floor())
 		You_cant("reach the %s!", surface(u.ux,u.uy));
-	    return(1);
+	    return 1;
 	}
 
 	/* Special effects should have deleted the current engraving (if
@@ -874,7 +874,7 @@ doengrave()
 				ynqchars, 'y');
 		if (c == 'q') {
 		    pline(Never_mind);
-		    return(0);
+		    return 0;
 		}
 	    }
 
@@ -899,7 +899,7 @@ doengrave()
 			 oep->engr_type == BURN ?
 			   (is_ice(u.ux,u.uy) ? "melted into" : "burned into") :
 			   "engraved in", surface(u.ux,u.uy));
-			return(1);
+			return 1;
 		    } else
 			if ( (type != oep->engr_type) || (c == 'n') ) {
 			    if (!Blind || can_reach_floor())
@@ -964,10 +964,10 @@ doengrave()
 		if (!Blind)
 		    pline("%s, then %s.",
 			  Tobjnam(otmp, "glow"), otense(otmp, "fade"));
-		return(1);
+		return 1;
 	    } else {
 		pline(Never_mind);
-		return(0);
+		return 0;
 	    }
 	}
 
@@ -1091,7 +1091,7 @@ doengrave()
 	    if (!Blind) Your(vision_clears);
 	}
 
-	return(1);
+	return 1;
 }
 
 void

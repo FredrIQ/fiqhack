@@ -329,7 +329,7 @@ int	mntmp;
 	if (mvitals[mntmp].mvflags & G_GENOD) {	/* allow G_EXTINCT */
 		You_feel("rather %s-ish.",mons[mntmp].mname);
 		exercise(A_WIS, TRUE);
-		return(0);
+		return 0;
 	}
 
 	/* KMH, conduct */
@@ -546,7 +546,7 @@ int	mntmp;
 	exercise(A_CON, FALSE);
 	exercise(A_WIS, TRUE);
 	(void) encumber_msg();
-	return(1);
+	return 1;
 }
 
 static void
@@ -725,16 +725,16 @@ dobreathe()
 
 	if (Strangled) {
 	    You_cant("breathe.  Sorry.");
-	    return(0);
+	    return 0;
 	}
 	if (u.uen < 15) {
 	    You("don't have enough energy to breathe!");
-	    return(0);
+	    return 0;
 	}
 	u.uen -= 15;
 	flags.botl = 1;
 
-	if (!getdir((char *)0)) return(0);
+	if (!getdir((char *)0)) return 0;
 
 	mattk = attacktype_fordmg(youmonst.data, AT_BREA, AD_ANY);
 	if (!mattk)
@@ -742,7 +742,7 @@ dobreathe()
 	else
 	    buzz((int) (20 + mattk->adtyp-1), (int)mattk->damn,
 		u.ux, u.uy, u.dx, u.dy);
-	return(1);
+	return 1;
 }
 
 int
@@ -750,12 +750,12 @@ dospit()
 {
 	struct obj *otmp;
 
-	if (!getdir((char *)0)) return(0);
+	if (!getdir((char *)0)) return 0;
 	otmp = mksobj(u.umonnum==PM_COBRA ? BLINDING_VENOM : ACID_VENOM,
 			TRUE, FALSE);
 	otmp->spe = 1; /* to indicate it's yours */
 	throwit(otmp, 0L, FALSE);
-	return(1);
+	return 1;
 }
 
 int
@@ -763,10 +763,10 @@ doremove()
 {
 	if (!Punished) {
 		You("are not chained to anything!");
-		return(0);
+		return 0;
 	}
 	unpunish();
-	return(1);
+	return 1;
 }
 
 int
@@ -777,13 +777,13 @@ dospinweb()
 	if (Levitation || Is_airlevel(&u.uz)
 	    || Underwater || Is_waterlevel(&u.uz)) {
 		You("must be on the ground to spin a web.");
-		return(0);
+		return 0;
 	}
 	if (u.uswallow) {
 		You("release web fluid inside %s.", mon_nam(u.ustuck));
 		if (is_animal(u.ustuck->data)) {
 			expels(u.ustuck, u.ustuck->data, TRUE);
-			return(0);
+			return 0;
 		}
 		if (is_whirly(u.ustuck->data)) {
 			int i;
@@ -811,14 +811,14 @@ dospinweb()
 				}
 				pline_The("web %sis swept away!", sweep);
 			}
-			return(0);
+			return 0;
 		}		     /* default: a nasty jelly-like creature */
 		pline_The("web dissolves into %s.", mon_nam(u.ustuck));
-		return(0);
+		return 0;
 	}
 	if (u.utrap) {
 		You("cannot spin webs while stuck in a trap.");
-		return(0);
+		return 0;
 	}
 	exercise(A_DEX, TRUE);
 	if (ttmp) switch (ttmp->ttyp) {
@@ -827,18 +827,18 @@ dospinweb()
 			deltrap(ttmp);
 			bury_objs(u.ux, u.uy);
 			newsym(u.ux, u.uy);
-			return(1);
+			return 1;
 		case SQKY_BOARD: pline_The("squeaky board is muffled.");
 			deltrap(ttmp);
 			newsym(u.ux, u.uy);
-			return(1);
+			return 1;
 		case TELEP_TRAP:
 		case LEVEL_TELEP:
 		case MAGIC_PORTAL:
 			Your("webbing vanishes!");
-			return(0);
+			return 0;
 		case WEB: You("make the web thicker.");
-			return(1);
+			return 1;
 		case HOLE:
 		case TRAPDOOR:
 			You("web over the %s.",
@@ -850,7 +850,7 @@ dospinweb()
 			You("spin a web, jamming the trigger.");
 			deltrap(ttmp);
 			newsym(u.ux, u.uy);
-			return(1);
+			return 1;
 		case ARROW_TRAP:
 		case DART_TRAP:
 		case BEAR_TRAP:
@@ -864,16 +864,16 @@ dospinweb()
 		case POLY_TRAP:
 			You("have triggered a trap!");
 			dotrap(ttmp, 0);
-			return(1);
+			return 1;
 		default:
 			impossible("Webbing over trap type %d?", ttmp->ttyp);
-			return(0);
+			return 0;
 		}
 	else if (On_stairs(u.ux, u.uy)) {
 	    /* cop out: don't let them hide the stairs */
 	    Your("web fails to impede access to the %s.",
 		 (levl[u.ux][u.uy].typ == STAIRS) ? "stairs" : "ladder");
-	    return(1);
+	    return 1;
 		 
 	}
 	ttmp = maketrap(u.ux, u.uy, WEB);
@@ -882,7 +882,7 @@ dospinweb()
 		ttmp->madeby_u = 1;
 	}
 	newsym(u.ux, u.uy);
-	return(1);
+	return 1;
 }
 
 int
@@ -891,7 +891,7 @@ dosummon()
 	int placeholder;
 	if (u.uen < 10) {
 	    You("lack the energy to send forth a call for help!");
-	    return(0);
+	    return 0;
 	}
 	u.uen -= 10;
 	flags.botl = 1;
@@ -900,7 +900,7 @@ dosummon()
 	exercise(A_WIS, TRUE);
 	if (!were_summon(youmonst.data, TRUE, &placeholder, (char *)0))
 		pline("But none arrive.");
-	return(1);
+	return 1;
 }
 
 int
@@ -930,7 +930,7 @@ dogaze()
 	}
 	if (u.uen < 15) {
 	    You("lack the energy to use your special gaze!");
-	    return(0);
+	    return 0;
 	}
 	u.uen -= 15;
 	flags.botl = 1;
@@ -1037,7 +1037,7 @@ dohide()
 
 	if (u.uundetected || (ismimic && youmonst.m_ap_type != M_AP_NOTHING)) {
 		You("are already hiding.");
-		return(0);
+		return 0;
 	}
 	if (ismimic) {
 		/* should bring up a dialog "what would you like to imitate?" */
@@ -1046,7 +1046,7 @@ dohide()
 	} else
 		u.uundetected = 1;
 	newsym(u.ux,u.uy);
-	return(1);
+	return 1;
 }
 
 int
@@ -1056,7 +1056,7 @@ domindblast()
 
 	if (u.uen < 10) {
 	    You("concentrate but lack the energy to maintain doing so.");
-	    return(0);
+	    return 0;
 	}
 	u.uen -= 10;
 	flags.botl = 1;

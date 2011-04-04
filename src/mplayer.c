@@ -60,7 +60,7 @@ dev_name()
 	} while (match && m < 100); /* m for insurance */
 
 	if (match) return (const char *)0;
-	return(developers[i]);
+	return developers[i];
 }
 
 static void
@@ -118,7 +118,7 @@ boolean special;
 	char nam[PL_NSIZ];
 
 	if(!is_mplayer(ptr))
-		return((struct monst *)0);
+		return (struct monst *)0;
 
 	if(MON_AT(x, y))
 		(void) rloc(m_at(x, y), FALSE); /* insurance */
@@ -276,7 +276,7 @@ boolean special;
 		(void)mongets(mtmp, rnd_misc_item(mtmp));
 	}
 
-	return(mtmp);
+	return mtmp;
 }
 
 /* create the indicated number (num) of monster-players,

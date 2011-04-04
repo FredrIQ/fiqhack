@@ -25,9 +25,9 @@ int fd;
 {
 	time_t date;
 
-	if(fstat(fd, &buf)) return(0);			/* cannot get status */
+	if(fstat(fd, &buf)) return 0;			/* cannot get status */
 #ifndef INSURANCE
-	if(buf.st_size != sizeof(int)) return(0);	/* not an xlock file */
+	if(buf.st_size != sizeof(int)) return 0;	/* not an xlock file */
 #endif
 	(void) time(&date);
 	if(date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
@@ -36,7 +36,7 @@ int fd;
 		if(read(fd, (void *)&lockedpid, sizeof(lockedpid)) !=
 			sizeof(lockedpid))
 			/* strange ... */
-			return(0);
+			return 0;
 
 		/* From: Rick Adams <seismo!rick> */
 		/* This will work on 4.1cbsd, 4.2bsd and system 3? & 5. */
@@ -46,10 +46,10 @@ int fd;
 		   by more than one machine! -pem */
 		if(!(kill(lockedpid, 0) == -1 && errno == ESRCH))
 #endif
-			return(0);
+			return 0;
 	}
 	(void) close(fd);
-	return(1);
+	return 1;
 }
 
 static int
@@ -68,8 +68,8 @@ eraseoldlocks()
 	}
 	set_levelfile_name(lock, 0);
 	if (unlink(fqname(lock, LEVELPREFIX, 0)))
-		return(0);				/* cannot remove it */
-	return(1);					/* success! */
+		return 0;				/* cannot remove it */
+	return 1;					/* success! */
 }
 
 void

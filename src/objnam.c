@@ -56,11 +56,11 @@ const char *pref;
 
 	if(i > PREFIX) {
 		impossible("PREFIX too short (for %d).", i);
-		return(s);
+		return s;
 	}
 	s -= i;
 	(void) strncpy(s, pref, i);	/* do not copy trailing 0 */
-	return(s);
+	return s;
 }
 
 
@@ -116,7 +116,7 @@ int otyp;
 			sprintf(eos(buf)," called %s",un);
 		if(dn)
 			sprintf(eos(buf)," (%s)",dn);
-		return(buf);
+		return buf;
 	default:
 		if(nn) {
 			strcpy(buf, actualn);
@@ -134,7 +134,7 @@ int otyp;
 			if(un)
 				sprintf(eos(buf), " called %s", un);
 		}
-		return(buf);
+		return buf;
 	}
 	/* here for ring/scroll/potion/wand */
 	if(nn) {
@@ -147,7 +147,7 @@ int otyp;
 		sprintf(eos(buf), " called %s", un);
 	if(dn)
 		sprintf(eos(buf), " (%s)", dn);
-	return(buf);
+	return buf;
 }
 
 /* less verbose result than obj_typename(); either the actual name
@@ -464,7 +464,7 @@ nameit:
 	}
 
 	if (!strncmpi(buf, "the ", 4)) buf += 4;
-	return(buf);
+	return buf;
 }
 
 /* xname() output augmented for multishot missile feedback */
@@ -760,7 +760,7 @@ ring:
 		strcpy(prefix+3, tmpbuf+2);
 	}
 	bp = strprepend(bp, prefix);
-	return(bp);
+	return bp;
 }
 
 
@@ -998,7 +998,7 @@ const char *verb;
 	    strcat(bp, " ");
 	    strcat(bp, otense(otmp, verb));
 	}
-	return(bp);
+	return bp;
 }
 
 /* like aobjnam, but prepend "The", not count, and use xname */
@@ -1013,7 +1013,7 @@ const char *verb;
 	    strcat(bp, " ");
 	    strcat(bp, otense(otmp, verb));
 	}
-	return(bp);
+	return bp;
 }
 
 /* return form of the verb (input plural) if xname(otmp) were the subject */
@@ -1153,7 +1153,7 @@ struct obj *obj;
 	char *s = doname(obj);
 
 	*s = highc(*s);
-	return(s);
+	return s;
 }
 
 /* returns "your xname(obj)" or "Foobar's xname(obj)" or "the xname(obj)" */
@@ -2044,13 +2044,13 @@ boolean from_user;
 		    pline("%d gold piece%s.", cnt, plur(cnt));
 		u.ugold += cnt;
 		flags.botl=1;
-		return (&zeroobj);
+		return &zeroobj;
 #else
                 otmp = mksobj(GOLD_PIECE, FALSE, FALSE);
 		otmp->quan = cnt;
                 otmp->owt = weight(otmp);
 		flags.botl=1;
-		return (otmp);
+		return otmp;
 #endif
 	}
 	if (strlen(bp) == 1 &&
@@ -2257,7 +2257,7 @@ srch:
 				      && !Can_fall_thru(&u.uz)) trap = ROCKTRAP;
 				(void) maketrap(u.ux, u.uy, trap);
 				pline("%s.", An(tname));
-				return(&zeroobj);
+				return &zeroobj;
 			}
 		}
 		/* or some other dungeon features -dlc */
@@ -2270,13 +2270,13 @@ srch:
 			pline("A %sfountain.",
 			      levl[u.ux][u.uy].blessedftn ? "magic " : "");
 			newsym(u.ux, u.uy);
-			return(&zeroobj);
+			return &zeroobj;
 		}
 		if(!BSTRCMP(bp, p-6, "throne")) {
 			levl[u.ux][u.uy].typ = THRONE;
 			pline("A throne.");
 			newsym(u.ux, u.uy);
-			return(&zeroobj);
+			return &zeroobj;
 		}
 		if(!BSTRCMP(bp, p-4, "sink")) {
 			levl[u.ux][u.uy].typ = SINK;
@@ -2320,14 +2320,14 @@ srch:
 		    levl[u.ux][u.uy].altarmask = Align2amask( al );
 		    pline("%s altar.", An(align_str(al)));
 		    newsym(u.ux, u.uy);
-		    return(&zeroobj);
+		    return &zeroobj;
 		}
 
 		if(!BSTRCMP(bp, p-5, "grave") || !BSTRCMP(bp, p-9, "headstone")) {
 		    make_grave(u.ux, u.uy, (char *) 0);
 		    pline("A grave.");
 		    newsym(u.ux, u.uy);
-		    return(&zeroobj);
+		    return &zeroobj;
 		}
 
 		if(!BSTRCMP(bp, p-4, "tree")) {
@@ -2346,7 +2346,7 @@ srch:
 		}
 	}
 
-	if(!oclass) return((struct obj *)0);
+	if(!oclass) return (struct obj *)0;
 any:
 	if(!oclass) oclass = wrpsym[rn2((int)sizeof(wrpsym))];
 typfnd:
@@ -2373,7 +2373,7 @@ typfnd:
 
 	/* catch any other non-wishable objects */
 	if (objects[typ].oc_nowish && !wizard)
-	    return((struct obj *)0);
+	    return (struct obj *)0;
 
 	/* convert magic lamps to regular lamps before lighting them or setting
 	   the charges */
@@ -2600,7 +2600,7 @@ typfnd:
 	otmp->owt = weight(otmp);
 	if (very && otmp->otyp == HEAVY_IRON_BALL) otmp->owt += 160;
 
-	return(otmp);
+	return otmp;
 }
 
 int
@@ -2610,7 +2610,7 @@ int first,last;
 	int i, x, sum=0;
 
 	if (first == last)
-	    return (first);
+	    return first;
 	for(i=first; i<=last; i++)
 		sum += objects[i].oc_prob;
 	if (!sum) /* all zero */

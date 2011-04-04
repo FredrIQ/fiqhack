@@ -41,13 +41,13 @@ counter_were(pm)
 int pm;
 {
 	switch(pm) {
-	    case PM_WEREWOLF:	      return(PM_HUMAN_WEREWOLF);
-	    case PM_HUMAN_WEREWOLF:   return(PM_WEREWOLF);
-	    case PM_WEREJACKAL:	      return(PM_HUMAN_WEREJACKAL);
-	    case PM_HUMAN_WEREJACKAL: return(PM_WEREJACKAL);
-	    case PM_WERERAT:	      return(PM_HUMAN_WERERAT);
-	    case PM_HUMAN_WERERAT:    return(PM_WERERAT);
-	    default:		      return(0);
+	    case PM_WEREWOLF:	      return PM_HUMAN_WEREWOLF;
+	    case PM_HUMAN_WEREWOLF:   return PM_WEREWOLF;
+	    case PM_WEREJACKAL:	      return PM_HUMAN_WEREJACKAL;
+	    case PM_HUMAN_WEREJACKAL: return PM_WEREJACKAL;
+	    case PM_WERERAT:	      return PM_HUMAN_WERERAT;
+	    case PM_HUMAN_WERERAT:    return PM_WERERAT;
+	    default:		      return 0;
 	}
 }
 

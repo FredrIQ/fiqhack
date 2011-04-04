@@ -121,7 +121,7 @@ dosave0()
 	if(fd < 0) {
 		HUP pline("Cannot open save file.");
 		(void) delete_savefile();	/* ab@unido */
-		return(0);
+		return 0;
 	}
 
 	vision_recalc(2);	/* shut down vision to prevent problems
@@ -167,7 +167,7 @@ dosave0()
 		    (void) delete_savefile();
 		    HUP killer = whynot;
 		    HUP done(TRICKED);
-		    return(0);
+		    return 0;
 		}
 		getlev(ofd, hackpid, ltmp, FALSE);
 		(void) close(ofd);
@@ -182,7 +182,7 @@ dosave0()
 	/* get rid of current level --jgm */
 	delete_levelfile(ledger_no(&u.uz));
 	delete_levelfile(0);
-	return(1);
+	return 1;
 }
 
 static void

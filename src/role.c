@@ -500,14 +500,14 @@ boolean
 validrole(rolenum)
 	int rolenum;
 {
-	return (rolenum >= 0 && rolenum < SIZE(roles)-1);
+	return rolenum >= 0 && rolenum < SIZE(roles)-1;
 }
 
 
 int
 randrole()
 {
-	return (rn2(SIZE(roles)-1));
+	return rn2(SIZE(roles)-1);
 }
 
 
@@ -571,11 +571,11 @@ randrace(rolenum)
 	for (i = 0; races[i].noun; i++)
 	    if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK) {
 	    	if (n) n--;
-	    	else return (i);
+	    	else return i;
 	    }
 
 	/* This role has no permitted races? */
-	return (rn2(SIZE(races)-1));
+	return rn2(SIZE(races)-1);
 }
 
 
@@ -638,11 +638,11 @@ randgend(rolenum, racenum)
 	    if (roles[rolenum].allow & races[racenum].allow &
 	    		genders[i].allow & ROLE_GENDMASK) {
 	    	if (n) n--;
-	    	else return (i);
+	    	else return i;
 	    }
 
 	/* This role/race has no permitted genders? */
-	return (rn2(ROLE_GENDERS));
+	return rn2(ROLE_GENDERS);
 }
 
 
@@ -704,11 +704,11 @@ randalign(rolenum, racenum)
 	    if (roles[rolenum].allow & races[racenum].allow &
 	    		aligns[i].allow & ROLE_ALIGNMASK) {
 	    	if (n) n--;
-	    	else return (i);
+	    	else return i;
 	    }
 
 	/* This role/race has no permitted alignments? */
-	return (rn2(ROLE_ALIGNS));
+	return rn2(ROLE_ALIGNS);
 }
 
 
@@ -1436,18 +1436,18 @@ struct monst *mtmp;
 {
 	switch (Role_switch) {
 	case PM_KNIGHT:
-	    return ("Salutations"); /* Olde English */
+	    return "Salutations"; /* Olde English */
 	case PM_SAMURAI:
 	    return (mtmp && mtmp->data == &mons[PM_SHOPKEEPER] ?
 	    		"Irasshaimase" : "Konnichi wa"); /* Japanese */
 #ifdef TOURIST
 	case PM_TOURIST:
-	    return ("Aloha");       /* Hawaiian */
+	    return "Aloha";       /* Hawaiian */
 #endif
 	case PM_VALKYRIE:
-	    return ("Velkommen");   /* Norse */
+	    return "Velkommen";   /* Norse */
 	default:
-	    return ("Hello");
+	    return "Hello";
 	}
 }
 
@@ -1456,17 +1456,17 @@ Goodbye()
 {
 	switch (Role_switch) {
 	case PM_KNIGHT:
-	    return ("Fare thee well");  /* Olde English */
+	    return "Fare thee well";  /* Olde English */
 	case PM_SAMURAI:
-	    return ("Sayonara");        /* Japanese */
+	    return "Sayonara";        /* Japanese */
 #ifdef TOURIST
 	case PM_TOURIST:
-	    return ("Aloha");           /* Hawaiian */
+	    return "Aloha";           /* Hawaiian */
 #endif
 	case PM_VALKYRIE:
-	    return ("Farvel");          /* Norse */
+	    return "Farvel";          /* Norse */
 	default:
-	    return ("Goodbye");
+	    return "Goodbye";
 	}
 }
 

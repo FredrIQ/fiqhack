@@ -205,7 +205,7 @@ castmu(mtmp, mattk, thinks_it_foundyou, foundyou)
 	/* monster unable to cast spells? */
 	if(mtmp->mcan || mtmp->mspec_used || !ml) {
 	    cursetxt(mtmp, is_undirected_spell(mattk->adtyp, spellnum));
-	    return(0);
+	    return 0;
 	}
 
 	if (mattk->adtyp == AD_SPEL || mattk->adtyp == AD_CLRC) {
@@ -222,14 +222,14 @@ castmu(mtmp, mattk, thinks_it_foundyou, foundyou)
 		canseemon(mtmp) ? Monnam(mtmp) : "Something",
 		levl[mtmp->mux][mtmp->muy].typ == WATER
 		    ? "empty water" : "thin air");
-	    return(0);
+	    return 0;
 	}
 
 	nomul(0);
 	if(rn2(ml*10) < (mtmp->mconf ? 100 : 20)) {	/* fumbled attack */
 	    if (canseemon(mtmp) && flags.soundok)
 		pline_The("air crackles around %s.", mon_nam(mtmp));
-	    return(0);
+	    return 0;
 	}
 	if (canspotmon(mtmp) || !is_undirected_spell(mattk->adtyp, spellnum)) {
 	    pline("%s casts a spell%s!",
@@ -253,7 +253,7 @@ castmu(mtmp, mattk, thinks_it_foundyou, foundyou)
 		impossible(
 	      "%s casting non-hand-to-hand version of hand-to-hand spell %d?",
 			   Monnam(mtmp), mattk->adtyp);
-		return(0);
+		return 0;
 	    }
 	} else if (mattk->damd)
 	    dmg = d((int)((ml/2) + mattk->damn), (int)mattk->damd);
@@ -301,7 +301,7 @@ castmu(mtmp, mattk, thinks_it_foundyou, foundyou)
 	    }
 	}
 	if(dmg) mdamageu(mtmp, dmg);
-	return(ret);
+	return ret;
 }
 
 /* monster wizard and cleric spellcasting functions */
@@ -759,11 +759,11 @@ buzzmu(mtmp, mattk)		/* monster uses spell (ranged) */
 	/* don't print constant stream of curse messages for 'normal'
 	   spellcasting monsters at range */
 	if (mattk->adtyp > AD_SPC2)
-	    return(0);
+	    return 0;
 
 	if (mtmp->mcan) {
 	    cursetxt(mtmp, FALSE);
-	    return(0);
+	    return 0;
 	}
 	if(lined_up(mtmp) && rn2(3)) {
 	    nomul(0);
@@ -775,7 +775,7 @@ buzzmu(mtmp, mattk)		/* monster uses spell (ranged) */
 		     mtmp->mx, mtmp->my, sgn(tbx), sgn(tby));
 	    } else impossible("Monster spell %d cast", mattk->adtyp-1);
 	}
-	return(1);
+	return 1;
 }
 
 /*mcastu.c*/

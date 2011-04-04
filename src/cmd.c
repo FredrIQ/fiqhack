@@ -154,8 +154,8 @@ popch() {
 	 * pushed back on the pushq.
 	 */
 	if (occupation) return '\0';
-	if (in_doagain) return(char)((shead != stail) ? saveq[stail++] : '\0');
-	else		return(char)((phead != ptail) ? pushq[ptail++] : '\0');
+	if (in_doagain) return (char)((shead != stail) ? saveq[stail++] : '\0');
+	else		return (char)((phead != ptail) ? pushq[ptail++] : '\0');
 }
 
 char
@@ -164,7 +164,7 @@ pgetchar() {		/* curtesy of aeb@cwi.nl */
 
 	if(!(ch = popch()))
 		ch = nhgetch();
-	return((char)ch);
+	return (char)ch;
 }
 
 /* A ch == 0 resets the pushq */
@@ -1108,7 +1108,7 @@ minimal_enlightenment()
 	end_menu(tmpwin, "Base Attributes");
 	n = select_menu(tmpwin, PICK_NONE, &selected);
 	destroy_nhwindow(tmpwin);
-	return (n != -1);
+	return n != -1;
 }
 
 static int
@@ -2215,7 +2215,7 @@ parse()
 	}
 	clear_nhwindow(WIN_MESSAGE);
 	if (prezero) in_line[0] = '\033';
-	return(in_line);
+	return in_line;
 }
 
 
@@ -2274,7 +2274,7 @@ readchar()
 	    readchar_queue = click_to_cmd(x, y, mod);
 	    sym = *readchar_queue++;
 	}
-	return((char) sym);
+	return (char) sym;
 }
 
 static int

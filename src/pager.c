@@ -282,7 +282,7 @@ lookat(x, y, buf, monbuf)
 	break;
     }
 
-    return ((pm && !Hallucination) ? pm : (struct permonst *) 0);
+    return (pm && !Hallucination) ? pm : (struct permonst *) 0;
 }
 
 /*

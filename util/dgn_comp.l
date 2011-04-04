@@ -67,39 +67,39 @@ int line_number = 1;
 
 %}
 %%
-DUNGEON		return(A_DUNGEON);
-up		{ yylval.i=1; return(UP_OR_DOWN); }
-down		{ yylval.i=0; return(UP_OR_DOWN); }
-ENTRY		return(ENTRY);
-stair		return(STAIR);
-no_up		return(NO_UP);
-no_down		return(NO_DOWN);
-portal		return(PORTAL);
-PROTOFILE	return(PROTOFILE);
-DESCRIPTION	return(DESCRIPTION);
-LEVELDESC	return(LEVELDESC);
-ALIGNMENT       return(ALIGNMENT);
-LEVALIGN        return(LEVALIGN);
-town		{ yylval.i=TOWN ; return(DESCRIPTOR); }
-hellish		{ yylval.i=HELLISH ; return(DESCRIPTOR); }
-mazelike	{ yylval.i=MAZELIKE ; return(DESCRIPTOR); }
-roguelike	{ yylval.i=ROGUELIKE ; return(DESCRIPTOR); }
-unaligned       { yylval.i=D_ALIGN_NONE ; return(DESCRIPTOR); }
-noalign         { yylval.i=D_ALIGN_NONE ; return(DESCRIPTOR); }
-lawful          { yylval.i=D_ALIGN_LAWFUL ; return(DESCRIPTOR); }
-neutral         { yylval.i=D_ALIGN_NEUTRAL ; return(DESCRIPTOR); }
-chaotic         { yylval.i=D_ALIGN_CHAOTIC ; return(DESCRIPTOR); }
-BRANCH		return(BRANCH);
-CHAINBRANCH	return(CHBRANCH);
-LEVEL		return(LEVEL);
-RNDLEVEL	return(RNDLEVEL);
-CHAINLEVEL	return(CHLEVEL);
-RNDCHLEVEL	return(RNDCHLEVEL);
-[-0-9]+		{ yylval.i=atoi(yytext); return(INTEGER); }
+DUNGEON		return A_DUNGEON;
+up		{ yylval.i=1; return UP_OR_DOWN; }
+down		{ yylval.i=0; return UP_OR_DOWN; }
+ENTRY		return ENTRY;
+stair		return STAIR;
+no_up		return NO_UP;
+no_down		return NO_DOWN;
+portal		return PORTAL;
+PROTOFILE	return PROTOFILE;
+DESCRIPTION	return DESCRIPTION;
+LEVELDESC	return LEVELDESC;
+ALIGNMENT       return ALIGNMENT;
+LEVALIGN        return LEVALIGN;
+town		{ yylval.i=TOWN ; return DESCRIPTOR; }
+hellish		{ yylval.i=HELLISH ; return DESCRIPTOR; }
+mazelike	{ yylval.i=MAZELIKE ; return DESCRIPTOR; }
+roguelike	{ yylval.i=ROGUELIKE ; return DESCRIPTOR; }
+unaligned       { yylval.i=D_ALIGN_NONE ; return DESCRIPTOR; }
+noalign         { yylval.i=D_ALIGN_NONE ; return DESCRIPTOR; }
+lawful          { yylval.i=D_ALIGN_LAWFUL ; return DESCRIPTOR; }
+neutral         { yylval.i=D_ALIGN_NEUTRAL ; return DESCRIPTOR; }
+chaotic         { yylval.i=D_ALIGN_CHAOTIC ; return DESCRIPTOR; }
+BRANCH		return BRANCH;
+CHAINBRANCH	return CHBRANCH;
+LEVEL		return LEVEL;
+RNDLEVEL	return RNDLEVEL;
+CHAINLEVEL	return CHLEVEL;
+RNDCHLEVEL	return RNDCHLEVEL;
+[-0-9]+		{ yylval.i=atoi(yytext); return INTEGER; }
 \"[^"]*\"	{ yytext[yyleng-1] = 0; /* Discard the trailing \" */
 		  yylval.str = (char *) alloc(strlen(yytext+1)+1);
 		  strcpy(yylval.str, yytext+1); /* Discard the first \" */
-		  return(STRING); }
+		  return STRING; }
 ^#.*\n		{ line_number++; }
 \r?\n		{ line_number++; }
 [ \t]+		;	/* skip trailing tabs & spaces */

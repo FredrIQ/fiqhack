@@ -223,12 +223,12 @@ struct obj *sobj;
 			strcpy(buf, "You feel materially poor.");
 		strange_feeling(sobj, buf);
         }
-	return(1);
+	return 1;
     }
     /* only under me - no separate display required */
     if (stale) docrt();
     You("notice some gold between your %s.", makeplural(body_part(FOOT)));
-    return(0);
+    return 0;
 
 outgoldmap:
     cls();
@@ -285,7 +285,7 @@ outgoldmap:
     u.uinwater = uw;
     if (Underwater) under_water(2);
     if (u.uburied) under_ground(2);
-    return(0);
+    return 0;
 }
 
 /* returns 1 if nothing was detected		*/
@@ -387,7 +387,7 @@ struct obj	*sobj;
 	if (Underwater) under_water(2);
 	if (u.uburied) under_ground(2);
     }
-    return(0);
+    return 0;
 }
 
 /*
@@ -712,11 +712,11 @@ struct obj *sobj;
 	char buf[42];
 	sprintf(buf, "Your %s stop itching.", makeplural(body_part(TOE)));
 	strange_feeling(sobj,buf);
-	return(1);
+	return 1;
     }
     /* traps exist, but only under me - no separate display required */
     Your("%s itch.", makeplural(body_part(TOE)));
-    return(0);
+    return 0;
 outtrapmap:
     cls();
 
@@ -741,7 +741,7 @@ outtrapmap:
     u.uinwater = uw;
     if (Underwater) under_water(2);
     if (u.uburied) under_ground(2);
-    return(0);
+    return 0;
 }
 
 const char *
@@ -1102,9 +1102,9 @@ findit()	/* returns number of things found */
 {
 	int num = 0;
 
-	if(u.uswallow) return(0);
+	if(u.uswallow) return 0;
 	do_clear_area(u.ux, u.uy, BOLT_LIM, findone, (void *) &num);
-	return(num);
+	return num;
 }
 
 int
@@ -1118,11 +1118,11 @@ openit()	/* returns number of things found and opened */
 			else pline("%s opens its mouth!", Monnam(u.ustuck));
 		}
 		expels(u.ustuck, u.ustuck->data, TRUE);
-		return(-1);
+		return -1;
 	}
 
 	do_clear_area(u.ux, u.uy, BOLT_LIM, openone, (void *) &num);
-	return(num);
+	return num;
 }
 
 void
@@ -1225,7 +1225,7 @@ int aflag;
 				    }
 				} else if (!sensemon(mtmp))
 				    You("find %s.", a_monnam(mtmp));
-				return(1);
+				return 1;
 			    }
 			    if(!canspotmon(mtmp)) {
 				if (mtmp->mundetected &&
@@ -1251,7 +1251,7 @@ int aflag;
 			    if (trap->ttyp == STATUE_TRAP) {
 				if (activate_statue_trap(trap, x, y, FALSE))
 				    exercise(A_WIS, TRUE);
-				return(1);
+				return 1;
 			    } else {
 				find_trap(trap);
 			    }
@@ -1260,13 +1260,13 @@ int aflag;
 		}
 	    }
 	}
-	return(1);
+	return 1;
 }
 
 int
 dosearch()
 {
-	return(dosearch0(0));
+	return dosearch0(0);
 }
 
 /* Pre-map the sokoban levels */

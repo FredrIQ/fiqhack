@@ -648,7 +648,7 @@ newhp()
 	else conplus = 4;
 	
 	hp += conplus;
-	return((hp <= 0) ? 1 : hp);
+	return (hp <= 0) ? 1 : hp;
 }
 
 schar
@@ -658,11 +658,11 @@ int x;
 	int tmp = (u.abon.a[x] + u.atemp.a[x] + u.acurr.a[x]);
 
 	if (x == A_STR) {
-		if (uarmg && uarmg->otyp == GAUNTLETS_OF_POWER) return(125);
+		if (uarmg && uarmg->otyp == GAUNTLETS_OF_POWER) return 125;
 #ifdef WIN32_BUG
-		else return(x=((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp));
+		else return x=((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
 #else
-		else return((schar)((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp));
+		else return (schar)((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
 #endif
 	} else if (x == A_CHA) {
 		if (tmp < 18 && (youmonst.data->mlet == S_NYMPH ||
@@ -672,12 +672,12 @@ int x;
 		/* yes, this may raise int/wis if player is sufficiently
 		 * stupid.  there are lower levels of cognition than "dunce".
 		 */
-		if (uarmh && uarmh->otyp == DUNCE_CAP) return(6);
+		if (uarmh && uarmh->otyp == DUNCE_CAP) return 6;
 	}
 #ifdef WIN32_BUG
-	return(x=((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp));
+	return x=((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp);
 #else
-	return((schar)((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp));
+	return (schar)((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp);
 #endif
 }
 
@@ -688,9 +688,9 @@ acurrstr()
 {
 	int str = ACURR(A_STR);
 
-	if (str <= 18) return((schar)str);
-	if (str <= 121) return((schar)(19 + str / 50)); /* map to 19-21 */
-	else return((schar)(str - 100));
+	if (str <= 18) return (schar)str;
+	if (str <= 121) return (schar)(19 + str / 50); /* map to 19-21 */
+	else return (schar)(str - 100);
 }
 
 /* avoid possible problems with alignment overflow, and provide a centralized

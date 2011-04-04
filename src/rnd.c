@@ -19,12 +19,12 @@ int x;
 #ifdef DEBUG
 	if (x <= 0) {
 		impossible("rn2(%d) attempted", x);
-		return(0);
+		return 0;
 	}
 	x = RND(x);
-	return(x);
+	return x;
 #else
-	return(RND(x));
+	return RND(x);
 #endif
 }
 
@@ -38,7 +38,7 @@ int x;	/* good luck approaches 0, bad luck approaches (x-1) */
 #ifdef DEBUG
 	if (x <= 0) {
 		impossible("rnl(%d) attempted", x);
-		return(0);
+		return 0;
 	}
 #endif
 	i = RND(x);
@@ -60,12 +60,12 @@ int x;
 #ifdef DEBUG
 	if (x <= 0) {
 		impossible("rnd(%d) attempted", x);
-		return(1);
+		return 1;
 	}
 	x = RND(x)+1;
-	return(x);
+	return x;
 #else
-	return(RND(x)+1);
+	return RND(x)+1;
 #endif
 }
 
@@ -79,11 +79,11 @@ int n, x;
 #ifdef DEBUG
 	if (x < 0 || n < 0 || (x == 0 && n != 0)) {
 		impossible("d(%d,%d) attempted", n, x);
-		return(1);
+		return 1;
 	}
 #endif
 	while(n--) tmp += RND(x);
-	return(tmp); /* Alea iacta est. -- J.C. */
+	return tmp; /* Alea iacta est. -- J.C. */
 }
 
 
@@ -111,7 +111,7 @@ int i;
 	tmp *= rne(4);
 	if (rn2(2)) { x *= tmp; x /= 1000; }
 	else { x *= 1000; x /= tmp; }
-	return((int)x);
+	return (int)x;
 }
 
 /*rnd.c*/

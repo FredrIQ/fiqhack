@@ -50,7 +50,7 @@ eraseoldlocks()
 #endif
 	if(unlink(fqname(lock, LEVELPREFIX, 0)))
 		return 0;				/* cannot remove it */
-	return(1);					/* success! */
+	return 1;					/* success! */
 }
 
 void

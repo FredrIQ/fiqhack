@@ -404,8 +404,8 @@ struct monst *mtmp;
     char verbuf[BUFSZ];
 
     /* presumably nearness and sleep checks have already been made */
-    if (!flags.soundok) return(0);
-    if (is_silent(ptr)) return(0);
+    if (!flags.soundok) return 0;
+    if (is_silent(ptr)) return 0;
 
     /* Make sure its your role's quest quardian; adjust if not */
     if (ptr->msound == MS_GUARDIAN && ptr != &mons[urole.guardnum]) {
@@ -789,7 +789,7 @@ struct monst *mtmp;
 
     if (pline_msg) pline("%s %s", Monnam(mtmp), pline_msg);
     else if (verbl_msg) verbalize(verbl_msg);
-    return(1);
+    return 1;
 }
 
 
@@ -813,19 +813,19 @@ dochat()
 
     if (is_silent(youmonst.data)) {
 	pline("As %s, you cannot speak.", an(youmonst.data->mname));
-	return(0);
+	return 0;
     }
     if (Strangled) {
 	You_cant("speak.  You're choking!");
-	return(0);
+	return 0;
     }
     if (u.uswallow) {
 	pline("They won't hear you out there.");
-	return(0);
+	return 0;
     }
     if (Underwater) {
 	Your("speech is unintelligible underwater.");
-	return(0);
+	return 0;
     }
 
     if (!Blind && (otmp = shop_object(u.ux, u.uy)) != (struct obj *)0) {
@@ -837,19 +837,19 @@ dochat()
 	   any objects other than just gold.
 	*/
 	price_quote(otmp);
-	return(1);
+	return 1;
     }
 
     if (!getdir("Talk to whom? (in what direction)")) {
 	/* decided not to chat */
-	return(0);
+	return 0;
     }
 
     if (u.usteed && u.dz > 0)
-	return (domonnoise(u.usteed));
+	return domonnoise(u.usteed);
     if (u.dz) {
 	pline("They won't hear you %s there.", u.dz < 0 ? "up" : "down");
-	return(0);
+	return 0;
     }
 
     if (u.dx == 0 && u.dy == 0) {
@@ -859,11 +859,11 @@ dochat()
  * etc...  --KAA
 	if (u.umonnum == PM_ETTIN) {
 	    You("discover that your other head makes boring conversation.");
-	    return(1);
+	    return 1;
 	}
 */
 	pline("Talking to yourself is a bad habit for a dungeoneer.");
-	return(0);
+	return 0;
     }
 
     tx = u.ux+u.dx; ty = u.uy+u.dy;
@@ -872,7 +872,7 @@ dochat()
     if (!mtmp || mtmp->mundetected ||
 		mtmp->m_ap_type == M_AP_FURNITURE ||
 		mtmp->m_ap_type == M_AP_OBJECT)
-	return(0);
+	return 0;
 
     /* sleeping monsters won't talk, except priests (who wake up) */
     if ((!mtmp->mcanmove || mtmp->msleeping) && !mtmp->ispriest) {
@@ -880,7 +880,7 @@ dochat()
 	   not noticing him and just not existing, so skip the message. */
 	if (canspotmon(mtmp))
 	    pline("%s seems not to notice you.", Monnam(mtmp));
-	return(0);
+	return 0;
     }
 
     /* if this monster is waiting for something, prod it into action */
@@ -890,7 +890,7 @@ dochat()
 	if (!canspotmon(mtmp))
 	    map_invisible(mtmp->mx, mtmp->my);
 	pline("%s is eating noisily.", Monnam(mtmp));
-	return (0);
+	return 0;
     }
 
     return domonnoise(mtmp);

@@ -83,7 +83,7 @@ long	hdr_offset;
 	Fread((void *)msg_list, n_msgs*sizeof(struct qtmsg), 1, msg_file);
 
 	msg_list[n_msgs].msgnum = -1;
-	return(msg_list);
+	return msg_list;
 }
 
 void
@@ -147,10 +147,10 @@ quest_info(typ)
 int typ;
 {
 	switch (typ) {
-	    case 0:		return (urole.questarti);
-	    case MS_LEADER:	return (urole.ldrnum);
-	    case MS_NEMESIS:	return (urole.neminum);
-	    case MS_GUARDIAN:	return (urole.guardnum);
+	    case 0:		return urole.questarti;
+	    case MS_LEADER:	return urole.ldrnum;
+	    case MS_NEMESIS:	return urole.neminum;
+	    case MS_GUARDIAN:	return urole.guardnum;
 	    default:		impossible("quest_info(%d)", typ);
 	}
 	return 0;
@@ -170,14 +170,14 @@ ldrname()	/* return your role leader's name */
 static const char *
 intermed()	/* return your intermediate target string */
 {
-	return (urole.intermed);
+	return urole.intermed;
 }
 
 boolean
 is_quest_artifact(otmp)
 struct obj *otmp;
 {
-	return((boolean)(otmp->oartifact == urole.questarti));
+	return (boolean)(otmp->oartifact == urole.questarti);
 }
 
 static const char *
@@ -196,13 +196,13 @@ guardname()	/* return your role leader's guard monster name */
 {
 	int i = urole.guardnum;
 
-	return(mons[i].mname);
+	return mons[i].mname;
 }
 
 static const char *
 homebase()	/* return your role leader's location */
 {
-	return(urole.homebase);
+	return urole.homebase;
 }
 
 static struct qtmsg *
@@ -213,9 +213,9 @@ int	msgnum;
 	struct qtmsg *qt_msg;
 
 	for (qt_msg = qtm_list; qt_msg->msgnum > 0; qt_msg++)
-	    if (qt_msg->msgnum == msgnum) return(qt_msg);
+	    if (qt_msg->msgnum == msgnum) return qt_msg;
 
-	return((struct qtmsg *)0);
+	return (struct qtmsg *)0;
 }
 
 static void
@@ -426,13 +426,13 @@ qt_montype()
 	if (rn2(5)) {
 	    qpm = urole.enemy1num;
 	    if (qpm != NON_PM && rn2(5) && !(mvitals[qpm].mvflags & G_GENOD))
-	    	return (&mons[qpm]);
-	    return (mkclass(urole.enemy1sym, 0));
+	    	return &mons[qpm];
+	    return mkclass(urole.enemy1sym, 0);
 	}
 	qpm = urole.enemy2num;
 	if (qpm != NON_PM && rn2(5) && !(mvitals[qpm].mvflags & G_GENOD))
-	    return (&mons[qpm]);
-	return (mkclass(urole.enemy2sym, 0));
+	    return &mons[qpm];
+	return mkclass(urole.enemy2sym, 0);
 }
 
 /*questpgr.c*/

@@ -327,17 +327,17 @@ learn()
 	    book = 0;			/* no longer studying */
 	    nomul(delay);		/* remaining delay is uninterrupted */
 	    delay = 0;
-	    return(0);
+	    return 0;
 	}
 	if (delay) {	/* not if (delay++), so at end delay == 0 */
 	    delay++;
-	    return(1); /* still busy */
+	    return 1; /* still busy */
 	}
 	exercise(A_WIS, TRUE);		/* you're studying. */
 	booktype = book->otyp;
 	if(booktype == SPE_BOOK_OF_THE_DEAD) {
 	    deadbook(book);
-	    return(0);
+	    return 0;
 	}
 
 	sprintf(splname, objects[booktype].oc_name_known ?
@@ -383,7 +383,7 @@ learn()
 	}
 	if (costly) check_unpaid(book);
 	book = 0;
-	return(0);
+	return 0;
 }
 
 int
@@ -404,7 +404,7 @@ struct obj *spellbook;
 		if (booktype == SPE_BLANK_PAPER) {
 			pline("This spellbook is all blank.");
 			makeknown(booktype);
-			return(1);
+			return 1;
 		}
 		switch (objects[booktype].oc_level) {
 		 case 1:
@@ -450,7 +450,7 @@ struct obj *spellbook;
 				    (read_ability < 12 ? "very " : ""));
 			    if (yn(qbuf) != 'y') {
 				spellbook->in_use = FALSE;
-				return(1);
+				return 1;
 			    }
 			}
 			/* its up to random luck now */
@@ -473,14 +473,14 @@ struct obj *spellbook;
 			useup(spellbook);
 		    } else
 			spellbook->in_use = FALSE;
-		    return(1);
+		    return 1;
 		} else if (confused) {
 		    if (!confused_book(spellbook)) {
 			spellbook->in_use = FALSE;
 		    }
 		    nomul(delay);
 		    delay = 0;
-		    return(1);
+		    return 1;
 		}
 		spellbook->in_use = FALSE;
 
@@ -491,7 +491,7 @@ struct obj *spellbook;
 
 	book = spellbook;
 	set_occupation(learn, "studying", 0);
-	return(1);
+	return 1;
 }
 
 /* a spellbook has been destroyed or the character has changed levels;
@@ -616,7 +616,7 @@ int
 spell_skilltype(booktype)
 int booktype;
 {
-	return (objects[booktype].oc_skill);
+	return objects[booktype].oc_skill;
 }
 
 static void
@@ -728,7 +728,7 @@ boolean atme;
 	    Your("knowledge of this spell is twisted.");
 	    pline("It invokes nightmarish images in your mind...");
 	    spell_backfire(spell);
-	    return(0);
+	    return 0;
 	} else if (spellknow(spell) <= 100) {
 	    You("strain to recall the spell.");
 	} else if (spellknow(spell) <= 1000) {
@@ -738,16 +738,16 @@ boolean atme;
 
 	if (u.uhunger <= 10 && spellid(spell) != SPE_DETECT_FOOD) {
 		You("are too hungry to cast that spell.");
-		return(0);
+		return 0;
 	} else if (ACURR(A_STR) < 4)  {
 		You("lack the strength to cast spells.");
-		return(0);
+		return 0;
 	} else if(check_capacity(
 		"Your concentration falters while carrying so much stuff.")) {
-	    return (1);
+	    return 1;
 	} else if (!freehand()) {
 		Your("arms are not free to cast!");
-		return (0);
+		return 0;
 	}
 
 	if (u.uhave.amulet) {
@@ -756,7 +756,7 @@ boolean atme;
 	}
 	if(energy > u.uen)  {
 		You("don't have enough energy to cast that spell.");
-		return(0);
+		return 0;
 	} else {
 		if (spellid(spell) != SPE_DETECT_FOOD) {
 			int hungr = energy * 2;
@@ -800,7 +800,7 @@ boolean atme;
 		You("fail to cast the spell correctly.");
 		u.uen -= energy / 2;
 		flags.botl = 1;
-		return(1);
+		return 1;
 	}
 
 	u.uen -= energy;
@@ -953,14 +953,14 @@ boolean atme;
 	default:
 		impossible("Unknown spell %d attempted.", spell);
 		obfree(pseudo, (struct obj *)0);
-		return(0);
+		return 0;
 	}
 
 	/* gain skill for successful cast */
 	use_skill(skill, spellev(spell));
 
 	obfree(pseudo, (struct obj *)0);	/* now, get rid of it */
-	return(1);
+	return 1;
 }
 
 /* Choose location where spell takes effect. */

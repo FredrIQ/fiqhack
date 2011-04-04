@@ -224,7 +224,7 @@ boolean ghostly, frozen;
 		otmp2->nobj = 0;
 	}
 
-	return(first);
+	return first;
 }
 
 static struct monst *
@@ -293,7 +293,7 @@ boolean ghostly;
 		impossible("Restmonchn: error reading monchn.");
 		mtmp2->nmon = 0;
 	}
-	return(first);
+	return first;
 }
 
 static struct fruit *
@@ -375,7 +375,7 @@ unsigned int *stuckid, *steedid;
 	    wiz1_level.dlevel = 0;
 	    u.uz.dnum = 0;
 	    u.uz.dlevel = 1;
-	    return(FALSE);
+	    return FALSE;
 	}
 
 	/* this stuff comes after potential aborted restore attempts */
@@ -425,7 +425,7 @@ unsigned int *stuckid, *steedid;
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE);
 	relink_light_sources(FALSE);
-	return(TRUE);
+	return TRUE;
 }
 
 /* update game state pointers to those valid for the current level (so we
@@ -469,7 +469,7 @@ xchar ltmp;
 	bufon(nfd);
 	savelev(nfd, ltmp, WRITE_SAVE | FREE_SAVE);
 	bclose(nfd);
-	return(2);
+	return 2;
 }
 
 int
@@ -493,14 +493,14 @@ int fd;
 		(void) close(fd);
 		(void) delete_savefile();
 		restoring = FALSE;
-		return(0);
+		return 0;
 	}
 	restlevelstate(stuckid, steedid);
 #ifdef INSURANCE
 	savestateinlock();
 #endif
 	rtmp = restlevelfile(ledger_no(&u.uz));
-	if (rtmp < 2) return(rtmp);  /* dorecover called recursively */
+	if (rtmp < 2) return rtmp;  /* dorecover called recursively */
 
 	/* these pointers won't be valid while we're processing the
 	 * other levels, but they'll be reset again by restlevelstate()
@@ -515,7 +515,7 @@ int fd;
 			break;
 		getlev(fd, 0, ltmp, FALSE);
 		rtmp = restlevelfile(ltmp);
-		if (rtmp < 2) return(rtmp);  /* dorecover called recursively */
+		if (rtmp < 2) return rtmp;  /* dorecover called recursively */
 	}
 
 #ifdef BSD
@@ -567,7 +567,7 @@ int fd;
 
 	/* Success! */
 	welcome(FALSE);
-	return(1);
+	return 1;
 }
 
 void

@@ -110,12 +110,12 @@ fightm(mtmp)		/* have monsters fight each other */
 
 	/* perhaps the monster will resist Conflict */
 	if(resist(mtmp, RING_CLASS, 0, 0))
-	    return(0);
+	    return 0;
 
 	if(u.ustuck == mtmp) {
 	    /* perhaps we're holding it... */
 	    if(itsstuck(mtmp))
-		return(0);
+		return 0;
 	}
 	has_u_swallowed = (u.uswallow && (mtmp == u.ustuck));
 
@@ -160,7 +160,7 @@ fightm(mtmp)		/* have monsters fight each other */
 			(void) mattackm(mon, mtmp);	/* return attack */
 		    }
 
-		    return ((result & MM_HIT) ? 1 : 0);
+		    return (result & MM_HIT) ? 1 : 0;
 		}
 	    }
 	}
@@ -201,14 +201,14 @@ mattackm(magr, mdef)
     struct attack   *mattk, alt_attk;
     struct permonst *pa, *pd;
 
-    if (!magr || !mdef) return(MM_MISS);		/* mike@genat */
-    if (!magr->mcanmove || magr->msleeping) return(MM_MISS);
+    if (!magr || !mdef) return MM_MISS;		/* mike@genat */
+    if (!magr->mcanmove || magr->msleeping) return MM_MISS;
     pa = magr->data;  pd = mdef->data;
 
     /* Grid bugs cannot attack at an angle. */
     if (pa == &mons[PM_GRID_BUG] && magr->mx != mdef->mx
 						&& magr->my != mdef->my)
-	return(MM_MISS);
+	return MM_MISS;
 
     /* Calculate the armour class differential. */
     tmp = find_mac(mdef) + magr->m_lev;
@@ -369,7 +369,7 @@ mattackm(magr, mdef)
 	if (res[i] & MM_HIT) struck = 1;	/* at least one hit */
     }
 
-    return(struck ? MM_HIT : MM_MISS);
+    return struck ? MM_HIT : MM_MISS;
 }
 
 /* Returns the result of mdamagem(). */
@@ -426,7 +426,7 @@ hitmm(magr, mdef, mattk)
 		    pline("%s %s.", buf, mon_nam_too(mdef_name, mdef, magr));
 		}
 	} else  noises(magr, mattk);
-	return(mdamagem(magr, mdef, mattk));
+	return mdamagem(magr, mdef, mattk);
 }
 
 /* Returns the same values as mdamagem(). */
@@ -446,7 +446,7 @@ gazemm(magr, mdef, mattk)
 	    (magr->minvis && !perceives(mdef->data)) ||
 	    !mdef->mcansee || mdef->msleeping) {
 	    if(vis) pline("but nothing happens.");
-	    return(MM_MISS);
+	    return MM_MISS;
 	}
 	/* call mon_reflects 2x, first test, then, if visible, print message */
 	if (magr->data == &mons[PM_MEDUSA] && mon_reflects(mdef, (char *)0)) {
@@ -458,24 +458,24 @@ gazemm(magr, mdef, mattk)
 		    if (canseemon(magr))
 			(void) mon_reflects(magr,
 					"The gaze is reflected away by %s %s.");
-		    return (MM_MISS);
+		    return MM_MISS;
 		}
 		if (mdef->minvis && !perceives(magr->data)) {
 		    if (canseemon(magr)) {
 			pline("%s doesn't seem to notice that %s gaze was reflected.",
 			      Monnam(magr), mhis(magr));
 		    }
-		    return (MM_MISS);
+		    return MM_MISS;
 		}
 		if (canseemon(magr))
 		    pline("%s is turned to stone!", Monnam(magr));
 		monstone(magr);
-		if (magr->mhp > 0) return (MM_MISS);
-		return (MM_AGR_DIED);
+		if (magr->mhp > 0) return MM_MISS;
+		return MM_AGR_DIED;
 	    }
 	}
 
-	return(mdamagem(magr, mdef, mattk));
+	return mdamagem(magr, mdef, mattk);
 }
 
 /* Returns the same values as mattackm(). */
@@ -1118,7 +1118,7 @@ mdamagem(magr, mdef, mattk)
 	    default:	tmp = 0;
 			break;
 	}
-	if(!tmp) return(MM_MISS);
+	if(!tmp) return MM_MISS;
 
 	if((mdef->mhp -= tmp) < 1) {
 	    if (m_at(mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
@@ -1140,15 +1140,15 @@ mdamagem(magr, mdef, mattk)
 		} else if (mdef->data == &mons[PM_WRAITH]) {
 		    (void) grow_up(magr, (struct monst *)0);
 		    /* don't grow up twice */
-		    return (MM_DEF_DIED | (magr->mhp > 0 ? 0 : MM_AGR_DIED));
+		    return MM_DEF_DIED | (magr->mhp > 0 ? 0 : MM_AGR_DIED);
 		} else if (mdef->data == &mons[PM_NURSE]) {
 		    magr->mhp = magr->mhpmax;
 		}
 	    }
 
-	    return (MM_DEF_DIED | (grow_up(magr,mdef) ? 0 : MM_AGR_DIED));
+	    return MM_DEF_DIED | (grow_up(magr,mdef) ? 0 : MM_AGR_DIED);
 	}
-	return(MM_HIT);
+	return MM_HIT;
 }
 
 
@@ -1159,9 +1159,9 @@ noattacks(ptr)			/* returns 1 if monster doesn't attack */
 	int i;
 
 	for(i = 0; i < NATTK; i++)
-		if(ptr->mattk[i].aatyp) return(0);
+		if(ptr->mattk[i].aatyp) return 0;
 
-	return(1);
+	return 1;
 }
 
 /* `mon' is hit by a sleep attack; return 1 if it's affected, 0 otherwise */
@@ -1265,7 +1265,7 @@ int mdead;
 	int i, tmp;
 
 	for(i = 0; ; i++) {
-	    if(i >= NATTK) return (mdead | mhit); /* no passive attacks */
+	    if(i >= NATTK) return mdead | mhit; /* no passive attacks */
 	    if(mddat->mattk[i].aatyp == AT_NONE) break;
 	}
 	if (mddat->mattk[i].damn)
@@ -1300,7 +1300,7 @@ int mdead;
 	    default:
 		break;
 	}
-	if (mdead || mdef->mcan) return (mdead|mhit);
+	if (mdead || mdef->mcan) return mdead|mhit;
 
 	/* These affect the enemy only if defender is still alive */
 	if (rn2(3)) switch(mddat->mattk[i].adtyp) {
@@ -1314,14 +1314,14 @@ int mdead;
 				s_suffix(mon_nam(mdef)));
 			if (mon_reflects(magr,
 					 canseemon(magr) ? buf : (char *)0))
-				return(mdead|mhit);
+				return mdead|mhit;
 			strcpy(buf, Monnam(magr));
 			if(canseemon(magr))
 			    pline("%s is frozen by %s gaze!",
 				  buf, s_suffix(mon_nam(mdef)));
 			magr->mcanmove = 0;
 			magr->mfrozen = tmp;
-			return (mdead|mhit);
+			return mdead|mhit;
 		    }
 		} else { /* gelatinous cube */
 		    strcpy(buf, Monnam(magr));
@@ -1329,7 +1329,7 @@ int mdead;
 			pline("%s is frozen by %s.", buf, mon_nam(mdef));
 		    magr->mcanmove = 0;
 		    magr->mfrozen = tmp;
-		    return (mdead|mhit);
+		    return mdead|mhit;
 		}
 		return 1;
 	    case AD_COLD:
@@ -1389,9 +1389,9 @@ int mdead;
     assess_dmg:
 	if((magr->mhp -= tmp) <= 0) {
 		monkilled(magr, "", (int)mddat->mattk[i].adtyp);
-		return (mdead | mhit | MM_AGR_DIED);
+		return mdead | mhit | MM_AGR_DIED;
 	}
-	return (mdead | mhit);
+	return mdead | mhit;
 }
 
 /* "aggressive defense"; what type of armor prevents specified attack

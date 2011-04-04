@@ -56,7 +56,7 @@ wrong_elem_type(ptr)
     struct permonst *ptr;
 {
     if (ptr->mlet == S_ELEMENTAL) {
-	return((boolean)(!is_home_elemental(ptr)));
+	return (boolean)(!is_home_elemental(ptr));
     } else if (Is_earthlevel(&u.uz)) {
 	/* no restrictions? */
     } else if (Is_waterlevel(&u.uz)) {
@@ -813,7 +813,7 @@ int	mmflags;
 			x = bypos.x;
 			y = bypos.y;
 		} else
-			return((struct monst *)0);
+			return (struct monst *)0;
 	}
 
 	/* Does monster already exist at the position? */
@@ -824,16 +824,16 @@ int	mmflags;
 				x = bypos.x;
 				y = bypos.y;
 			} else
-				return((struct monst *) 0);
+				return (struct monst *) 0;
 		} else 
-			return((struct monst *) 0);
+			return (struct monst *) 0;
 	}
 
 	if(ptr){
 		mndx = monsndx(ptr);
 		/* if you are to make a specific monster and it has
 		   already been genocided, return */
-		if (mvitals[mndx].mvflags & G_GENOD) return((struct monst *) 0);
+		if (mvitals[mndx].mvflags & G_GENOD) return (struct monst *) 0;
 #if defined(DEBUG)
 		if (wizard && (mvitals[mndx].mvflags & G_EXTINCT))
 		    pline("Explicitly creating extinct monster %s.",
@@ -852,7 +852,7 @@ int	mmflags;
 #ifdef DEBUG
 			    pline("Warning: no monster.");
 #endif
-			    return((struct monst *) 0);	/* no more monsters! */
+			    return (struct monst *) 0;	/* no more monsters! */
 			}
 			fakemon.data = ptr;	/* set up for goodpos */
 		} while(!goodpos(x, y, &fakemon, gpflags) && tryct++ < 50);
@@ -1055,7 +1055,7 @@ int	mmflags;
 	if (!in_mklev)
 	    newsym(mtmp->mx,mtmp->my);	/* make sure the mon shows up */
 
-	return(mtmp);
+	return mtmp;
 }
 
 int
@@ -1063,7 +1063,7 @@ mbirth_limit(mndx)
 int mndx;
 {
 	/* assert(MAXMONNO < 255); */
-	return (mndx == PM_NAZGUL ? 9 : mndx == PM_ERINYS ? 3 : MAXMONNO); 
+	return mndx == PM_NAZGUL ? 9 : mndx == PM_ERINYS ? 3 : MAXMONNO; 
 }
 
 /* used for wand/scroll/spell of create monster */
@@ -1107,9 +1107,9 @@ int mndx;
 	if (mons[mndx].geno & (G_NOGEN | G_UNIQ)) return TRUE;
 	if (mvitals[mndx].mvflags & G_GONE) return TRUE;
 	if (Inhell)
-		return(mons[mndx].maligntyp > A_NEUTRAL);
+		return mons[mndx].maligntyp > A_NEUTRAL;
 	else
-		return((mons[mndx].geno & G_HELL) != 0);
+		return (mons[mndx].geno & G_HELL) != 0;
 }
 
 /*
@@ -1271,7 +1271,7 @@ int	spc;
 	maxmlev = level_difficulty() >> 1;
 	if(class < 1 || class >= MAXMCLASSES) {
 	    impossible("mkclass called with bad class!");
-	    return((struct permonst *) 0);
+	    return (struct permonst *) 0;
 	}
 /*	Assumption #1:	monsters of a given class are contiguous in the
  *			mons[] array.
@@ -1290,7 +1290,7 @@ int	spc;
 		num += mons[last].geno & G_FREQ;
 	    }
 
-	if(!num) return((struct permonst *) 0);
+	if(!num) return (struct permonst *) 0;
 
 /*	Assumption #2:	monsters of a given class are presented in ascending
  *			order of strength.
@@ -1308,7 +1308,7 @@ int	spc;
 	    }
 	first--; /* correct an off-by-one error */
 
-	return(&mons[first]);
+	return &mons[first];
 }
 
 int
@@ -1326,7 +1326,7 @@ struct permonst *ptr;
 		return tmp;
 	}
 
-	if((tmp = ptr->mlevel) > 49) return(50); /* "special" demons/devils */
+	if((tmp = ptr->mlevel) > 49) return 50; /* "special" demons/devils */
 	tmp2 = (level_difficulty() - tmp);
 	if(tmp2 < 0) tmp--;		/* if mlevel > u.uz decrement tmp */
 	else tmp += (tmp2 / 5);		/* else increment 1 per five diff */
@@ -1336,7 +1336,7 @@ struct permonst *ptr;
 
 	tmp2 = (3 * ((int) ptr->mlevel))/ 2;	/* crude upper limit */
 	if (tmp2 > 49) tmp2 = 49;		/* hard upper limit */
-	return((tmp > tmp2) ? tmp2 : (tmp > 0 ? tmp : 0)); /* 0 lower limit */
+	return (tmp > tmp2) ? tmp2 : (tmp > 0 ? tmp : 0); /* 0 lower limit */
 }
 
 
@@ -1351,7 +1351,7 @@ struct monst *mtmp, *victim;
 	/* monster died after killing enemy but before calling this function */
 	/* currently possible if killing a gas spore */
 	if (mtmp->mhp <= 0)
-	    return ((struct permonst *)0);
+	    return (struct permonst *)0;
 
 	/* note:  none of the monsters with special hit point calculations
 	   have both little and big forms */
@@ -1475,8 +1475,8 @@ int otyp;
 
 	    spe = otmp->spe;
 	    (void) mpickobj(mtmp, otmp);	/* might free otmp */
-	    return(spe);
-	} else return(0);
+	    return spe;
+	} else return 0;
 }
 
 
@@ -1528,7 +1528,7 @@ struct permonst *ptr;
 	if (mal < A_NEUTRAL && u.uhave.amulet) return FALSE;
 
 	/* minions are hostile to players that have strayed at all */
-	if (is_minion(ptr)) return((boolean)(u.ualign.record >= 0));
+	if (is_minion(ptr)) return (boolean)(u.ualign.record >= 0);
 
 	/* Last case:  a chance of a co-aligned monster being
 	 * hostile.  This chance is greater if the player has strayed

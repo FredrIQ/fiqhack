@@ -360,14 +360,14 @@ struct mkroom	*sroom;
 	    }
 #endif
 
-	    return(-1);
+	    return -1;
 	}
 
 	if(MON_AT(sx, sy)) (void) rloc(m_at(sx, sy), FALSE); /* insurance */
 
 	/* now initialize the shopkeeper monster structure */
 	if(!(shk = makemon(&mons[PM_SHOPKEEPER], sx, sy, NO_MM_FLAGS)))
-		return(-1);
+		return -1;
 	shk->isshk = shk->mpeaceful = 1;
 	set_malign(shk);
 	shk->msleeping = 0;
@@ -395,7 +395,7 @@ struct mkroom	*sroom;
 	    (void) mongets(shk, TOUCHSTONE);
 	nameshk(shk, shp->shknms);
 
-	return(sh);
+	return sh;
 }
 
 /* stock a newly-created room with objects */

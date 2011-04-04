@@ -308,7 +308,7 @@ struct monst *mtmp;
 	/* Flying and levitation keeps our steed out of the liquid */
 	/* (but not water-walking or swimming) */
 	if (mtmp == u.usteed && (Flying || Levitation))
-		return (0);
+		return 0;
 
     /* Gremlin multiplying won't go on forever since the hit points
      * keep going down, and when it gets to 1 hit point the clone
@@ -318,7 +318,7 @@ struct monst *mtmp;
 	if (split_mon(mtmp, (struct monst *)0))
 	    dryup(mtmp->mx, mtmp->my, FALSE);
 	if (inpool) water_damage(mtmp->minvent, FALSE, FALSE);
-	return (0);
+	return 0;
     } else if (mtmp->data == &mons[PM_IRON_GOLEM] && inpool && !rn2(5)) {
 	int dam = d(2,6);
 	if (cansee(mtmp->mx,mtmp->my))
@@ -327,10 +327,10 @@ struct monst *mtmp;
 	if (mtmp->mhpmax > dam) mtmp->mhpmax -= dam;
 	if (mtmp->mhp < 1) {
 	    mondead(mtmp);
-	    if (mtmp->mhp < 1) return (1);
+	    if (mtmp->mhp < 1) return 1;
 	}
 	water_damage(mtmp->minvent, FALSE, FALSE);
-	return (0);
+	return 0;
     }
 
     if (inlava) {
@@ -362,7 +362,7 @@ struct monst *mtmp;
 		(void) rloc(mtmp, FALSE);
 		return 0;
 	    }
-	    return (1);
+	    return 1;
 	}
     } else if (inpool) {
 	/* Most monsters drown in pools.  flooreffects() will take care of
@@ -386,7 +386,7 @@ struct monst *mtmp;
 		water_damage(mtmp->minvent, FALSE, FALSE);
 		return 0;
 	    }
-	    return (1);
+	    return 1;
 	}
     } else {
 	/* but eels have a difficult time outside */
@@ -395,7 +395,7 @@ struct monst *mtmp;
 	    monflee(mtmp, 2, FALSE, FALSE);
 	}
     }
-    return (0);
+    return 0;
 }
 
 
@@ -871,16 +871,16 @@ struct obj *otmp;
 	    return FALSE;
 
 	/* Steeds don't pick up stuff (to avoid shop abuse) */
-	if (mtmp == u.usteed) return (FALSE);
-	if (mtmp->isshk) return(TRUE); /* no limit */
-	if (mtmp->mpeaceful && !mtmp->mtame) return(FALSE);
+	if (mtmp == u.usteed) return FALSE;
+	if (mtmp->isshk) return TRUE; /* no limit */
+	if (mtmp->mpeaceful && !mtmp->mtame) return FALSE;
 	/* otherwise players might find themselves obligated to violate
 	 * their alignment if the monster takes something they need
 	 */
 
 	/* special--boulder throwers carry unlimited amounts of boulders */
 	if (throws_rocks(mdat) && otyp == BOULDER)
-		return(TRUE);
+		return TRUE;
 
 	/* nymphs deal in stolen merchandise, but not boulders or statues */
 	if (mdat->mlet == S_NYMPH)
@@ -888,7 +888,7 @@ struct obj *otmp;
 
 	if (curr_mon_load(mtmp) + newload > max_mon_load(mtmp)) return FALSE;
 
-	return(TRUE);
+	return TRUE;
 }
 
 /* return number of acceptable neighbour positions */
@@ -1097,7 +1097,7 @@ impossible("A monster looked at a very strange trap of type %d.", ttmp->ttyp);
 		wantpool = FALSE;
 		goto nexttry;
 	}
-	return(cnt);
+	return cnt;
 }
 
 
@@ -1130,7 +1130,7 @@ int x,y;
 {
 	int distance = dist2(mon->mx, mon->my, x, y);
 	if (distance==2 && mon->data==&mons[PM_GRID_BUG]) return 0;
-	return((boolean)(distance < 3));
+	return (boolean)(distance < 3);
 }
 
 /* really free dead monsters */
@@ -1420,7 +1420,7 @@ boolean was_swallowed;			/* digestion */
 	    	killer = killer_buf;
 	    	killer_format = KILLED_BY_AN;
 	    	explode(mon->mx, mon->my, -1, tmp, MON_EXPLODE, EXPL_NOXIOUS); 
-	    	return (FALSE);
+	    	return FALSE;
 	    }
   	}
 
@@ -1829,7 +1829,7 @@ boolean move_other;	/* make sure mtmp gets to x, y! so move m_at(x, y) */
 	xchar newx, newy;
 	coord mm;
 
-	if ((mtmp->mx == x) && (mtmp->my == y)) return(FALSE);
+	if ((mtmp->mx == x) && (mtmp->my == y)) return FALSE;
 
 	if (move_other && (othermon = m_at(x, y))) {
 		if (othermon->wormno)
@@ -1846,7 +1846,7 @@ boolean move_other;	/* make sure mtmp gets to x, y! so move m_at(x, y) */
 		 * migrating_mons that need to be placed will cause
 		 * no end of trouble.
 		 */
-		if (!enexto(&mm, newx, newy, mtmp->data)) return(FALSE);
+		if (!enexto(&mm, newx, newy, mtmp->data)) return FALSE;
 		newx = mm.x; newy = mm.y;
 	}
 
@@ -1856,10 +1856,10 @@ boolean move_other;	/* make sure mtmp gets to x, y! so move m_at(x, y) */
 	    othermon->mx = othermon->my = 0;
 	    (void) mnearto(othermon, x, y, FALSE);
 	    if ((othermon->mx != x) || (othermon->my != y))
-		return(TRUE);
+		return TRUE;
 	}
 
-	return(FALSE);
+	return FALSE;
 }
 
 
@@ -2143,18 +2143,18 @@ struct monst *mtmp;
 	if(mtmp->cham || mtmp->mcan || mtmp->m_ap_type ||
 	   cansee(mtmp->mx, mtmp->my) || rn2(3) || (mtmp == u.ustuck) ||
 	   (sensemon(mtmp) && distu(mtmp->mx, mtmp->my) <= 2))
-		return(FALSE);
+		return FALSE;
 
 	if(mtmp->data->mlet == S_MIMIC) {
 		set_mimic_sym(mtmp);
-		return(TRUE);
+		return TRUE;
 	} else
 	    if(levl[mtmp->mx][mtmp->my].typ == ROOM)  {
 		mtmp->mundetected = 1;
-		return(TRUE);
+		return TRUE;
 	    }
 
-	return(FALSE);
+	return FALSE;
 }
 
 short *animal_list = 0;		/* list of PM values for animal monsters */
@@ -2281,7 +2281,7 @@ boolean msg;		/* "The oldmon turns into a newmon!" */
 	    }
 	    if (tryct > 100) return 0;	/* Should never happen */
 	} else if (mvitals[monsndx(mdat)].mvflags & G_GENOD)
-	    return(0);	/* passed in mdat is genocided */
+	    return 0;	/* passed in mdat is genocided */
 
 	if(is_male(mdat)) {
 		if(mtmp->female) mtmp->female = FALSE;
@@ -2305,7 +2305,7 @@ boolean msg;		/* "The oldmon turns into a newmon!" */
 		}
 	}
 
-	if(mdat == mtmp->data) return(0);	/* still the same monster */
+	if(mdat == mtmp->data) return 0;	/* still the same monster */
 
 	if(mtmp->wormno) {			/* throw tail away */
 		wormgone(mtmp);
@@ -2429,7 +2429,7 @@ boolean msg;		/* "The oldmon turns into a newmon!" */
 	    }
 	}
 
-	return(1);
+	return 1;
 }
 
 /* sometimes an egg will be special */
@@ -2626,9 +2626,9 @@ boolean silent;
 		} else if(flags.soundok)
 			You_hear("the shrill sound of a guard's whistle.");
 	    }
-	    return(TRUE);
+	    return TRUE;
 	}
-	return(FALSE);
+	return FALSE;
 }
 
 void

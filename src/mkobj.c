@@ -83,7 +83,7 @@ boolean artif;
 
 	otmp = mkobj(let, artif);
 	place_object(otmp, x, y);
-	return(otmp);
+	return otmp;
 }
 
 struct obj *
@@ -95,7 +95,7 @@ boolean init, artif;
 
 	otmp = mksobj(otyp, init, artif);
 	place_object(otmp, x, y);
-	return(otmp);
+	return otmp;
 }
 
 struct obj *
@@ -126,7 +126,7 @@ boolean artif;
 	if(objects[i].oc_class != oclass || !OBJ_NAME(objects[i]))
 		panic("probtype error, oclass=%d i=%d", (int) oclass, i);
 
-	return(mksobj(i, TRUE, artif));
+	return mksobj(i, TRUE, artif);
 }
 
 static void
@@ -201,7 +201,7 @@ rndmonnum()	/* select a random, common monster type */
 
 	/* Plan A: get a level-appropriate common monster */
 	ptr = rndmonst();
-	if (ptr) return(monsndx(ptr));
+	if (ptr) return monsndx(ptr);
 
 	/* Plan B: get any common monster */
 	do {
@@ -209,7 +209,7 @@ rndmonnum()	/* select a random, common monster type */
 	    ptr = &mons[i];
 	} while((ptr->geno & G_NOGEN) || (!Inhell && (ptr->geno & G_HELL)));
 
-	return(i);
+	return i;
 }
 
 /*
@@ -613,7 +613,7 @@ boolean artif;
 	if (objects[otyp].oc_unique && !otmp->oartifact)
 	    otmp = mk_artifact(otmp, (aligntyp)A_NONE);
 	otmp->owt = weight(otmp);
-	return(otmp);
+	return otmp;
 }
 
 /*
@@ -763,7 +763,7 @@ int
 bcsign(otmp)
 struct obj *otmp;
 {
-	return(!!otmp->blessed - !!otmp->cursed);
+	return !!otmp->blessed - !!otmp->cursed;
 }
 
 
@@ -829,8 +829,8 @@ struct obj *obj;
 	} else if (obj->oclass == COIN_CLASS)
 		return (int)((obj->quan + 50L) / 100L);
 	else if (obj->otyp == HEAVY_IRON_BALL && obj->owt != 0)
-		return((int)(obj->owt));	/* kludge for "very" heavy iron ball */
-	return(wt ? wt*(int)obj->quan : ((int)obj->quan + 1)>>1);
+		return (int)(obj->owt);	/* kludge for "very" heavy iron ball */
+	return wt ? wt*(int)obj->quan : ((int)obj->quan + 1)>>1;
 }
 
 static int treefruits[] = {APPLE,ORANGE,PEAR,BANANA,EUCALYPTUS_LEAF};
@@ -858,7 +858,7 @@ int x, y;
 	gold->quan = amount;
     }
     gold->owt = weight(gold);
-    return (gold);
+    return gold;
 }
 
 
@@ -918,7 +918,7 @@ boolean init;
 		}
 	    }
 	}
-	return(otmp);
+	return otmp;
 }
 
 /*
@@ -1017,7 +1017,7 @@ int x, y;
 	    /* tt_oname will return null if the scoreboard is empty */
 	    if ((otmp2 = tt_oname(otmp)) != 0) otmp = otmp2;
 	}
-	return(otmp);
+	return otmp;
 }
 
 /* make a new corpse or statue, uninitialized if a statue (i.e. no books) */
@@ -1034,7 +1034,7 @@ const char *nm;
 				x, y, (boolean)(objtype != STATUE));
 	if (nm)
 		otmp = oname(otmp, nm);
-	return(otmp);
+	return otmp;
 }
 
 boolean
@@ -1047,7 +1047,7 @@ struct obj *otmp;
 	if (objects[otyp].oc_oprop == FIRE_RES || otyp == WAN_FIRE)
 		return FALSE;
 
-	return((boolean)((omat <= WOOD && omat != LIQUID) || omat == PLASTIC));
+	return (boolean)((omat <= WOOD && omat != LIQUID) || omat == PLASTIC);
 }
 
 boolean
@@ -1394,13 +1394,13 @@ add_to_container(container, obj)
 
     /* merge if possible */
     for (otmp = container->cobj; otmp; otmp = otmp->nobj)
-	if (merged(&otmp, &obj)) return (otmp);
+	if (merged(&otmp, &obj)) return otmp;
 
     obj->where = OBJ_CONTAINED;
     obj->ocontainer = container;
     obj->nobj = container->cobj;
     container->cobj = obj;
-    return (obj);
+    return obj;
 }
 
 void

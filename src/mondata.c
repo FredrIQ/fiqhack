@@ -257,7 +257,7 @@ can_track(ptr)		/* returns TRUE if monster can track well */
 	if (uwep && uwep->oartifact == ART_EXCALIBUR)
 		return TRUE;
 	else
-		return((boolean)haseyes(ptr));
+		return (boolean)haseyes(ptr);
 }
 
 
@@ -374,7 +374,7 @@ monsndx(ptr)		/* return an index into the mons array */
 	    return NON_PM;		/* will not get here */
 	}
 
-	return(i);
+	return i;
 }
 
 
@@ -616,8 +616,8 @@ const struct permonst *
 raceptr(mtmp)
 struct monst *mtmp;
 {
-    if (mtmp == &youmonst && !Upolyd) return(&mons[urace.malenum]);
-    else return(mtmp->data);
+    if (mtmp == &youmonst && !Upolyd) return &mons[urace.malenum];
+    else return mtmp->data;
 }
 
 static const char *levitate[4]	= { "float", "Float", "wobble", "Wobble" };

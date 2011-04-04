@@ -50,14 +50,14 @@ boolean
 digit(c)		/* is 'c' a digit? */
     char c;
 {
-    return((boolean)('0' <= c && c <= '9'));
+    return (boolean)('0' <= c && c <= '9');
 }
 
 boolean
 letter(c)		/* is 'c' a letter?  note: '@' classed as letter */
     char c;
 {
-    return((boolean)(('@' <= c && c <= 'Z') || ('a' <= c && c <= 'z')));
+    return (boolean)(('@' <= c && c <= 'Z') || ('a' <= c && c <= 'z'));
 }
 
 
@@ -65,14 +65,14 @@ char
 highc(c)			/* force 'c' into uppercase */
     char c;
 {
-    return((char)(('a' <= c && c <= 'z') ? (c & ~040) : c));
+    return (char)(('a' <= c && c <= 'z') ? (c & ~040) : c);
 }
 
 char
 lowc(c)			/* force 'c' into lowercase */
     char c;
 {
-    return((char)(('A' <= c && c <= 'Z') ? (c | 040) : c));
+    return (char)(('A' <= c && c <= 'Z') ? (c | 040) : c);
 }
 
 
@@ -307,7 +307,7 @@ online2(x0, y0, x1, y1) /* are two points lined up (on a straight line)? */
     /*  If either delta is zero then they're on an orthogonal line,
      *  else if the deltas are equal (signs ignored) they're on a diagonal.
      */
-    return((boolean)(!dy || !dx || (dy == dx) || (dy + dx == 0)));	/* (dy == -dx) */
+    return (boolean)(!dy || !dx || (dy == dx) || (dy + dx == 0));	/* (dy == -dx) */
 }
 
 
@@ -323,7 +323,7 @@ pmatch(patrn, strng)	/* match a string against a pattern */
 pmatch_top:
     s = *strng++;  p = *patrn++;	/* get next chars and pre-advance */
     if (!p)			/* end of pattern */
-	return((boolean)(s == '\0'));		/* matches iff end of string too */
+	return (boolean)(s == '\0');		/* matches iff end of string too */
     else if (p == '*')		/* wildcard reached */
 	return((boolean)((!*patrn || pmatch(patrn, strng-1)) ? TRUE :
 		s ? pmatch(patrn-1, strng) : FALSE));
@@ -343,7 +343,7 @@ strncmpi(s1, s2, n)	/* case insensitive counted string comparison */
     char t1, t2;
 
     while (n--) {
-	if (!*s2) return (*s1 != 0);	/* s1 >= s2 */
+	if (!*s2) return *s1 != 0;	/* s1 >= s2 */
 	else if (!*s1) return -1;	/* s1  < s2 */
 	t1 = lowc(*s1++);
 	t2 = lowc(*s2++);
@@ -459,13 +459,13 @@ getlt()
 	time_t date;
 
 	(void) time(&date);
-	return(localtime(&date));
+	return localtime(&date);
 }
 
 int
 getyear()
 {
-	return(1900 + getlt()->tm_year);
+	return 1900 + getlt()->tm_year;
 }
 
 long
@@ -518,7 +518,7 @@ phase_of_the_moon()		/* 0-7, with 0: new, 4: full */
 	if ((epact == 25 && goldn > 11) || epact == 24)
 		epact++;
 
-	return( (((((diy + epact) * 6) + 11) % 177) / 22) & 7 );
+	return  (((((diy + epact) * 6) + 11) % 177) / 22) & 7 ;
 }
 
 boolean
@@ -526,7 +526,7 @@ friday_13th()
 {
 	struct tm *lt = getlt();
 
-	return((boolean)(lt->tm_wday == 5 /* friday */ && lt->tm_mday == 13));
+	return (boolean)(lt->tm_wday == 5 /* friday */ && lt->tm_mday == 13);
 }
 
 int
@@ -534,13 +534,13 @@ night()
 {
 	int hour = getlt()->tm_hour;
 
-	return(hour < 6 || hour > 21);
+	return hour < 6 || hour > 21;
 }
 
 int
 midnight()
 {
-	return(getlt()->tm_hour == 0);
+	return getlt()->tm_hour == 0;
 }
 
 /*hacklib.c*/

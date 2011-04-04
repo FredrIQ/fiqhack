@@ -901,9 +901,9 @@ struct obj *obj;
 			obj->oclass != WEAPON_CLASS &&
 			obj->oclass != ARMOR_CLASS && !is_weptool(obj)) ||
 			obj->spe <= 0)
-	    return (FALSE);
+	    return FALSE;
 	if (obj_resists(obj, 10, 90))
-	    return (FALSE);
+	    return FALSE;
 
 	/* Charge for the cost of the object */
 	costly_cancel(obj);	/* The term "cancel" is okay for now */
@@ -956,7 +956,7 @@ struct obj *obj;
 	    break;
 	}
 	if (carried(obj)) update_inventory();
-	return (TRUE);
+	return TRUE;
 }
 
 
@@ -974,7 +974,7 @@ int ochance, achance;	/* percent chance for ordinary objects, artifacts */
 	} else {
 		int chance = rn2(100);
 
-		return((boolean)(chance < (obj->oartifact ? achance : ochance)));
+		return (boolean)(chance < (obj->oartifact ? achance : ochance));
 	}
 }
 
@@ -996,7 +996,7 @@ struct obj *obj;
 	/* adjust for "large" quantities of identical things */
 	if(obj->quan > 4L) zap_odds /= 2;
 
-	return((boolean)(! rn2(zap_odds)));
+	return (boolean)(! rn2(zap_odds));
 }
 
 
@@ -1791,9 +1791,9 @@ dozap()
 	struct obj *obj;
 	int	damage;
 
-	if(check_capacity((char *)0)) return(0);
+	if(check_capacity((char *)0)) return 0;
 	obj = getobj(zap_syms, "zap");
-	if(!obj) return(0);
+	if(!obj) return 0;
 
 	check_unpaid(obj);
 
@@ -1802,7 +1802,7 @@ dozap()
 	else if(obj->cursed && !rn2(100)) {
 		backfire(obj);	/* the wand blows up in your face! */
 		exercise(A_STR, FALSE);
-		return(1);
+		return 1;
 	} else if(!(objects[obj->otyp].oc_dir == NODIR) && !getdir((char *)0)) {
 		if (!Blind)
 		    pline("%s glows and fades.", The(xname(obj)));
@@ -1831,7 +1831,7 @@ dozap()
 	    useup(obj);
 	}
 	update_inventory();	/* maybe used a charge */
-	return(1);
+	return 1;
 }
 
 int
@@ -2111,7 +2111,7 @@ boolean ordinary;
 		default: impossible("object %d used?",obj->otyp);
 		    break;
 	}
-	return(damage);
+	return damage;
 }
 
 /* you've zapped a wand downwards while riding
@@ -2609,7 +2609,7 @@ struct obj *obj;			/* object tossed/used */
 	    if(is_pick(obj) && inside_shop(x, y) &&
 					   (mtmp = shkcatch(obj, x, y))) {
 		tmp_at(DISP_END, 0);
-		return(mtmp);
+		return mtmp;
 	    }
 
 	    typ = levl[bhitpos.x][bhitpos.y].typ;
@@ -2659,10 +2659,10 @@ struct obj *obj;			/* object tossed/used */
 			    if (cansee(bhitpos.x,bhitpos.y) && !canspotmon(mtmp)) {
 				if (weapon != INVIS_BEAM) {
 				    map_invisible(bhitpos.x, bhitpos.y);
-				    return(mtmp);
+				    return mtmp;
 				}
 			    } else
-				return(mtmp);
+				return mtmp;
 			}
 			if (weapon != INVIS_BEAM) {
 			    (*fhitm)(mtmp, obj);
@@ -2682,7 +2682,7 @@ struct obj *obj;			/* object tossed/used */
 			(void) flash_hits_mon(mtmp, obj);
 		    } else {
 			tmp_at(DISP_END, 0);
-		    	return(mtmp); 	/* caller will call flash_hits_mon */
+		    	return mtmp; 	/* caller will call flash_hits_mon */
 		    }
 		}
 	    } else {
@@ -2812,7 +2812,7 @@ int dx, dy;
 			mtmp = m_at(bhitpos.x,bhitpos.y);
 			m_respond(mtmp);
 			tmp_at(DISP_END, 0);
-			return(mtmp);
+			return mtmp;
 		}
 		if(!ZAP_POS(levl[bhitpos.x][bhitpos.y].typ) ||
 		   closed_door(bhitpos.x, bhitpos.y)) {
@@ -2829,7 +2829,7 @@ int dx, dy;
 			} else {	/* we catch it */
 				tmp_at(DISP_END, 0);
 				You("skillfully catch the boomerang.");
-				return(&youmonst);
+				return &youmonst;
 			}
 		}
 		tmp_at(bhitpos.x, bhitpos.y);
@@ -3009,7 +3009,7 @@ struct obj **ootmp;	/* to return worn armor for caller to disintegrate */
 	pline("zapped monster hp = %d (= %d - %d)", mon->mhp-tmp,mon->mhp,tmp);
 #endif
 	mon->mhp -= tmp;
-	return(tmp);
+	return tmp;
 }
 
 static void
@@ -3970,7 +3970,7 @@ int osym, dmgtyp;
 		for(i = 0; i < cnt; i++) m_useup(mtmp, obj);
 	    }
 	}
-	return(tmp);
+	return tmp;
 }
 
 
@@ -4014,7 +4014,7 @@ int damage, tell;
 		else killed(mtmp);
 	    }
 	}
-	return(resisted);
+	return resisted;
 }
 
 void

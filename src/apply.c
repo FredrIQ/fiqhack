@@ -50,13 +50,13 @@ use_camera(obj)
 
 	if(Underwater) {
 		pline("Using your camera underwater would void the warranty.");
-		return(0);
+		return 0;
 	}
-	if(!getdir((char *)0)) return(0);
+	if(!getdir((char *)0)) return 0;
 
 	if (obj->spe <= 0) {
 		pline(nothing_happens);
-		return (1);
+		return 1;
 	}
 	consume_obj_charge(obj, TRUE);
 
@@ -341,7 +341,7 @@ boolean
 um_dist(x,y,n)
 xchar x, y, n;
 {
-	return((boolean)(abs(u.ux - x) > n  || abs(u.uy - y) > n));
+	return (boolean)(abs(u.ux - x) > n  || abs(u.uy - y) > n);
 }
 
 int
@@ -352,7 +352,7 @@ number_leashed()
 
 	for(obj = invent; obj; obj = obj->nobj)
 		if(obj->otyp == LEASH && obj->leashmon != 0) i++;
-	return(i);
+	return i;
 }
 
 void
@@ -482,10 +482,10 @@ struct monst *mtmp;
 	otmp = invent;
 	while(otmp) {
 		if(otmp->otyp == LEASH && otmp->leashmon == (int)mtmp->m_id)
-			return(otmp);
+			return otmp;
 		otmp = otmp->nobj;
 	}
-	return((struct obj *)0);
+	return (struct obj *)0;
 }
 
 
@@ -503,7 +503,7 @@ next_to_u()
 			    for(otmp = invent; otmp; otmp = otmp->nobj)
 				if(otmp->otyp == LEASH &&
 					otmp->leashmon == (int)mtmp->m_id) {
-				    if(otmp->cursed) return(FALSE);
+				    if(otmp->cursed) return FALSE;
 				    You_feel("%s leash go slack.",
 					(number_leashed() > 1) ? "a" : "the");
 				    mtmp->mleashed = 0;
@@ -515,7 +515,7 @@ next_to_u()
 	/* no pack mules for the Amulet */
 	if (u.usteed && mon_has_amulet(u.usteed))
 	    return FALSE;
-	return(TRUE);
+	return TRUE;
 }
 
 
@@ -956,9 +956,9 @@ struct obj *otmp;
 		      (candle ? "" : "candelabrum's "),
 		      (many ? "s'" : "'s"), (many ? "s are" : " is"));
 	   end_burn(otmp, TRUE);
-	   return(TRUE);
+	   return TRUE;
 	}
-	return(FALSE);
+	return FALSE;
 }
 
 /* called when lit lamp is hit by water or put into a container or
@@ -1241,7 +1241,7 @@ int magic; /* 0=Physical, otherwise skill level */
 	}
 	else if (u.usteed && u.utrap) {
 		pline("%s is stuck in a trap.", Monnam(u.usteed));
-		return (0);
+		return 0;
 	}
 
 	pline("Where do you want to jump?");
@@ -2306,10 +2306,10 @@ use_pole (obj)
 	/* Are you allowed to use the pole? */
 	if (u.uswallow) {
 	    pline(not_enough_room);
-	    return (0);
+	    return 0;
 	}
 	if (obj != uwep) {
-	    if (!wield_tool(obj, "swing")) return(0);
+	    if (!wield_tool(obj, "swing")) return 0;
 	    else res = 1;
 	}
      /* assert(obj == uwep); */
@@ -2328,15 +2328,15 @@ use_pole (obj)
 	else max_range = 8;
 	if (distu(cc.x, cc.y) > max_range) {
 	    pline("Too far!");
-	    return (res);
+	    return res;
 	} else if (distu(cc.x, cc.y) < min_range) {
 	    pline("Too close!");
-	    return (res);
+	    return res;
 	} else if (!cansee(cc.x, cc.y) &&
 		   ((mtmp = m_at(cc.x, cc.y)) == (struct monst *)0 ||
 		    !canseemon(mtmp))) {
 	    You(cant_see_spot);
-	    return (res);
+	    return res;
 	} else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */
 	    You(cant_reach);
 	    return res;
@@ -2358,7 +2358,7 @@ use_pole (obj)
 	} else
 	    /* Now you know that nothing is there... */
 	    pline(nothing_happens);
-	return (1);
+	return 1;
 }
 
 static int
@@ -2397,7 +2397,7 @@ struct obj *obj;
 	}
 	obj_extract_self(obj);
 	delobj(obj);
-	return(0);
+	return 0;
 }
 
 static int
@@ -2412,10 +2412,10 @@ use_grapple (obj)
 	/* Are you allowed to use the hook? */
 	if (u.uswallow) {
 	    pline(not_enough_room);
-	    return (0);
+	    return 0;
 	}
 	if (obj != uwep) {
-	    if (!wield_tool(obj, "cast")) return(0);
+	    if (!wield_tool(obj, "cast")) return 0;
 	    else res = 1;
 	}
      /* assert(obj == uwep); */
@@ -2434,10 +2434,10 @@ use_grapple (obj)
 	else max_range = 8;
 	if (distu(cc.x, cc.y) > max_range) {
 	    pline("Too far!");
-	    return (res);
+	    return res;
 	} else if (!cansee(cc.x, cc.y)) {
 	    You(cant_see_spot);
-	    return (res);
+	    return res;
 	} else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */
 	    You(cant_reach);
 	    return res;
@@ -2485,7 +2485,7 @@ use_grapple (obj)
 		(void) pickup_object(otmp, 1L, FALSE);
 		/* If pickup fails, leave it alone */
 		newsym(cc.x, cc.y);
-		return (1);
+		return 1;
 	    }
 	    break;
 	case 2:	/* Monster */
@@ -2495,11 +2495,11 @@ use_grapple (obj)
 		You("pull in %s!", mon_nam(mtmp));
 		mtmp->mundetected = 0;
 		rloc_to(mtmp, cc.x, cc.y);
-		return (1);
+		return 1;
 	    } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data)) ||
 		       rn2(4)) {
 		(void) thitmonst(mtmp, uwep);
-		return (1);
+		return 1;
 	    }
 	    /* FALL THROUGH */
 	case 3:	/* Surface */
@@ -2510,17 +2510,17 @@ use_grapple (obj)
 		hurtle(sgn(cc.x-u.ux), sgn(cc.y-u.uy), 1, FALSE);
 		spoteffects(TRUE);
 	    }
-	    return (1);
+	    return 1;
 	default:	/* Yourself (oops!) */
 	    if (P_SKILL(typ) <= P_BASIC) {
 		You("hook yourself!");
 		losehp(rn1(10,10), "a grappling hook", KILLED_BY);
-		return (1);
+		return 1;
 	    }
 	    break;
 	}
 	pline(nothing_happens);
-	return (1);
+	return 1;
 }
 
 
@@ -2714,7 +2714,7 @@ doapply()
 	int res = 1;
 	char class_list[MAXOCLASSES+2];
 
-	if(check_capacity((char *)0)) return (0);
+	if(check_capacity((char *)0)) return 0;
 
 	if (carrying(POT_OIL) || uhave_graystone())
 		strcpy(class_list, tools_too);

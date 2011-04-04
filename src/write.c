@@ -14,7 +14,7 @@ struct obj *otmp;
 {
 
 	if (otmp->oclass == SPBOOK_CLASS)
-		return(10 * objects[otmp->otyp].oc_level);
+		return 10 * objects[otmp->otyp].oc_level;
 
 	switch (otmp->otyp) {
 	case SCR_LIGHT:
@@ -24,39 +24,39 @@ struct obj *otmp;
 	case SCR_AMNESIA:
 	case SCR_FIRE:
 	case SCR_EARTH:
-		return(8);
+		return 8;
 /*		break; */
 	case SCR_DESTROY_ARMOR:
 	case SCR_CREATE_MONSTER:
 	case SCR_PUNISHMENT:
-		return(10);
+		return 10;
 /*		break; */
 	case SCR_CONFUSE_MONSTER:
-		return(12);
+		return 12;
 /*		break; */
 	case SCR_IDENTIFY:
-		return(14);
+		return 14;
 /*		break; */
 	case SCR_ENCHANT_ARMOR:
 	case SCR_REMOVE_CURSE:
 	case SCR_ENCHANT_WEAPON:
 	case SCR_CHARGING:
-		return(16);
+		return 16;
 /*		break; */
 	case SCR_SCARE_MONSTER:
 	case SCR_STINKING_CLOUD:
 	case SCR_TAMING:
 	case SCR_TELEPORTATION:
-		return(20);
+		return 20;
 /*		break; */
 	case SCR_GENOCIDE:
-		return(30);
+		return 30;
 /*		break; */
 	case SCR_BLANK_PAPER:
 	default:
 		impossible("You can't write such a weird scroll!");
 	}
-	return(1000);
+	return 1000;
 }
 
 static const char write_on[] = { SCROLL_CLASS, SPBOOK_CLASS, 0 };
@@ -88,17 +88,17 @@ struct obj *pen;
 	/* get paper to write on */
 	paper = getobj(write_on,"write on");
 	if(!paper)
-		return(0);
+		return 0;
 	typeword = (paper->oclass == SPBOOK_CLASS) ? "spellbook" : "scroll";
 	if(Blind && !paper->dknown) {
 		You("don't know if that %s is blank or not!", typeword);
-		return(1);
+		return 1;
 	}
 	paper->dknown = 1;
 	if(paper->otyp != SCR_BLANK_PAPER && paper->otyp != SPE_BLANK_PAPER) {
 		pline("That %s is not blank!", typeword);
 		exercise(A_WIS, FALSE);
-		return(1);
+		return 1;
 	}
 
 	/* what to write */
@@ -106,7 +106,7 @@ struct obj *pen;
 	getlin(qbuf, namebuf);
 	(void)mungspaces(namebuf);	/* remove any excess whitespace */
 	if(namebuf[0] == '\033' || !namebuf[0])
-		return(1);
+		return 1;
 	nm = namebuf;
 	if (!strncmpi(nm, "scroll ", 7)) nm += 7;
 	else if (!strncmpi(nm, "spellbook ", 10)) nm += 10;
@@ -164,7 +164,7 @@ found:
 	if(pen->spe < basecost/2)  {
 		Your("marker is too dry to write that!");
 		obfree(new_obj, (struct obj *) 0);
-		return(1);
+		return 1;
 	}
 
 	/* we're really going to write now, so calculate cost
@@ -186,7 +186,7 @@ found:
 			useup(paper);
 		}
 		obfree(new_obj, (struct obj *) 0);
-		return(1);
+		return 1;
 	}
 	pen->spe -= actualcost;
 
@@ -210,7 +210,7 @@ found:
 			useup(paper);
 		}
 		obfree(new_obj, (struct obj *) 0);
-		return(1);
+		return 1;
 	}
 
 	/* useup old scroll / spellbook */
@@ -227,7 +227,7 @@ found:
 	new_obj = hold_another_object(new_obj, "Oops!  %s out of your grasp!",
 					       The(aobjnam(new_obj, "slip")),
 					       (const char *)0);
-	return(1);
+	return 1;
 }
 
 /*write.c*/

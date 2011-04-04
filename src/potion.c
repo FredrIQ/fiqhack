@@ -353,7 +353,7 @@ dodrink()
 	}
 
 	otmp = getobj(beverages, "drink");
-	if(!otmp) return(0);
+	if(!otmp) return 0;
 	otmp->in_use = TRUE;		/* you've opened the stopper */
 
 #define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))	/* also in muse.c */
@@ -365,13 +365,13 @@ dodrink()
 		    !rn2(POTION_OCCUPANT_CHANCE(flags.ghost_count))) {
 		ghost_from_bottle();
 		useup(otmp);
-		return(1);
+		return 1;
 	    } else if (!strcmp(potion_descr, "smoky") &&
 		    flags.djinni_count < MAXMONNO &&
 		    !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
 		djinni_from_bottle(otmp);
 		useup(otmp);
-		return(1);
+		return 1;
 	    }
 	}
 	return dopotion(otmp);
@@ -385,7 +385,7 @@ struct obj *otmp;
 
 	otmp->in_use = TRUE;
 	nothing = unkn = 0;
-	if((retval = peffects(otmp)) >= 0) return(retval);
+	if((retval = peffects(otmp)) >= 0) return retval;
 
 	if(nothing) {
 	    unkn++;
@@ -400,7 +400,7 @@ struct obj *otmp;
 			docall(otmp);
 	}
 	useup(otmp);
-	return(1);
+	return 1;
 }
 
 int
@@ -636,13 +636,13 @@ peffects(otmp)
 		    break;
 		}
 		if (monster_detect(otmp, 0))
-			return(1);		/* nothing detected */
+			return 1;		/* nothing detected */
 		exercise(A_WIS, TRUE);
 		break;
 	case POT_OBJECT_DETECTION:
 	case SPE_DETECT_TREASURE:
 		if (object_detect(otmp, 0))
-			return(1);		/* nothing detected */
+			return 1;		/* nothing detected */
 		exercise(A_WIS, TRUE);
 		break;
 	case POT_SICKNESS:
@@ -888,9 +888,9 @@ peffects(otmp)
 		break;
 	default:
 		impossible("What a funny potion! (%u)", otmp->otyp);
-		return(0);
+		return 0;
 	}
-	return(-1);
+	return -1;
 }
 
 void
@@ -1365,7 +1365,7 @@ struct obj *o1, *o2;
 		case POT_GAIN_ENERGY:
 			switch (o2->otyp) {
 			    case POT_CONFUSION:
-				return (rn2(3) ? POT_BOOZE : POT_ENLIGHTENMENT);
+				return rn2(3) ? POT_BOOZE : POT_ENLIGHTENMENT;
 			    case POT_HEALING:
 				return POT_EXTRA_HEALING;
 			    case POT_EXTRA_HEALING:
@@ -1413,11 +1413,11 @@ struct obj *obj;
 {
 	char Your_buf[BUFSZ];
 
-	if (snuff_lit(obj)) return(TRUE);
+	if (snuff_lit(obj)) return TRUE;
 
 	if (obj->greased) {
 		grease_protect(obj,(char *)0,&youmonst);
-		return(FALSE);
+		return FALSE;
 	}
 	(void) Shk_Your(Your_buf, obj);
 	/* (Rusting shop goods ought to be charged for.) */
@@ -1431,7 +1431,7 @@ struct obj *obj;
 			losehp(rnd(10), "elementary chemistry", KILLED_BY);
 			makeknown(obj->otyp);
 			update_inventory();
-			return (TRUE);
+			return TRUE;
 		}
 		pline("%s %s%s.", Your_buf, aobjnam(obj,"dilute"),
 		      obj->odiluted ? " further" : "");
@@ -1516,14 +1516,14 @@ dodip()
 
 	allowall[0] = ALL_CLASSES; allowall[1] = '\0';
 	if(!(obj = getobj(allowall, "dip")))
-		return(0);
+		return 0;
 
 	here = levl[u.ux][u.uy].typ;
 	/* Is there a fountain to dip into here? */
 	if (IS_FOUNTAIN(here)) {
 		if(yn("Dip it into the fountain?") == 'y') {
 			dipfountain(obj);
-			return(1);
+			return 1;
 		}
 	} else if (is_pool(u.ux,u.uy)) {
 		tmp = waterbody_name(u.ux,u.uy);
@@ -1543,7 +1543,7 @@ dodip()
 	}
 
 	if(!(potion = getobj(beverages, "dip into")))
-		return(0);
+		return 0;
 	if (potion == obj && potion->quan == 1L) {
 		pline("That is a potion bottle, not a Klein bottle!");
 		return 0;
@@ -1566,7 +1566,7 @@ dodip()
 				   !(objects[potion->otyp].oc_uname))
 					docall(potion);
 				useup(potion);
-				return(1);
+				return 1;
 			} else if(!obj->blessed) {
 				if (useeit) {
 				    tmp = hcolor(NH_LIGHT_BLUE);
@@ -1641,7 +1641,7 @@ dodip()
 		}
 	    }
 	    potion->in_use = FALSE;	/* didn't go poof */
-	    return(1);
+	    return 1;
 	} else if(obj->oclass == POTION_CLASS && obj->otyp != potion->otyp) {
 		/* Mixing potions is dangerous... */
 		pline_The("potions mix...");
@@ -1654,7 +1654,7 @@ dodip()
 			useup(obj);
 			useup(potion);
 			losehp(rnd(10), "alchemic blast", KILLED_BY_AN);
-			return(1);
+			return 1;
 		}
 
 		obj->blessed = obj->cursed = obj->bknown = 0;
@@ -1684,7 +1684,7 @@ dodip()
 			  pline_The("mixture glows brightly and evaporates.");
 				useup(obj);
 				useup(potion);
-				return(1);
+				return 1;
 		    }
 		}
 
@@ -1699,7 +1699,7 @@ dodip()
 		}
 
 		useup(potion);
-		return(1);
+		return 1;
 	}
 
 #ifdef INVISIBLE_OBJECTS
@@ -1898,11 +1898,11 @@ dodip()
 					"You juggle and drop %s!",
 					doname(singlepotion), (const char *)0);
 		update_inventory();
-		return(1);
+		return 1;
 	}
 
 	pline("Interesting...");
-	return(1);
+	return 1;
 }
 
 

@@ -84,22 +84,22 @@ int x,y;
 
 	lev = &levl[x][y];
 	if (lev->typ != DOOR && lev->typ != DBWALL)
-		return (-1);
+		return -1;
 
 	if (IS_DRAWBRIDGE(levl[x+1][y].typ) &&
 	    (levl[x+1][y].drawbridgemask & DB_DIR) == DB_WEST)
-		return (DB_WEST);
+		return DB_WEST;
 	if (IS_DRAWBRIDGE(levl[x-1][y].typ) &&
 	    (levl[x-1][y].drawbridgemask & DB_DIR) == DB_EAST)
-		return (DB_EAST);
+		return DB_EAST;
 	if (IS_DRAWBRIDGE(levl[x][y-1].typ) &&
 	    (levl[x][y-1].drawbridgemask & DB_DIR) == DB_SOUTH)
-		return (DB_SOUTH);
+		return DB_SOUTH;
 	if (IS_DRAWBRIDGE(levl[x][y+1].typ) &&
 	    (levl[x][y+1].drawbridgemask & DB_DIR) == DB_NORTH)
-		return (DB_NORTH);
+		return DB_NORTH;
 
-	return (-1);
+	return -1;
 }
 
 /*
@@ -111,7 +111,7 @@ boolean
 is_db_wall(x,y)
 int x,y;
 {
-	return((boolean)( levl[x][y].typ == DBWALL ));
+	return (boolean)( levl[x][y].typ == DBWALL );
 }
 
 
@@ -194,7 +194,7 @@ boolean flag;
 			break;
 	}
 	if (!IS_WALL(levl[x2][y2].typ))
-		return(FALSE);
+		return FALSE;
 	if (flag) {             /* We want the bridge open */
 		levl[x][y].typ = DRAWBRIDGE_DOWN;
 		levl[x2][y2].typ = DOOR;
@@ -209,7 +209,7 @@ boolean flag;
 	levl[x2][y2].horizontal = horiz;
 	levl[x][y].drawbridgemask = dir;
 	if(lava) levl[x][y].drawbridgemask |= DB_LAVA;
-	return(TRUE);
+	return TRUE;
 }
 
 struct entity {
@@ -293,7 +293,7 @@ static const char *
 e_nam(etmp)
 struct entity *etmp;
 {
-	return(is_u(etmp)? "you" : mon_nam(etmp->emon));
+	return is_u(etmp)? "you" : mon_nam(etmp->emon);
 }
 
 /*
@@ -309,13 +309,13 @@ const char *verb;
 	static char wholebuf[80];
 
 	strcpy(wholebuf, is_u(etmp) ? "You" : Monnam(etmp->emon));
-	if (!*verb) return(wholebuf);
+	if (!*verb) return wholebuf;
 	strcat(wholebuf, " ");
 	if (is_u(etmp))
 	    strcat(wholebuf, verb);
 	else
 	    strcat(wholebuf, vtense((char *)0, verb));
-	return(wholebuf);
+	return wholebuf;
 }
 
 /*
@@ -328,7 +328,7 @@ struct entity *etmp;
 int x, y;
 {
 	if (noncorporeal(etmp->edata))
-		return(TRUE);
+		return TRUE;
 	if (is_pool(x, y))
 		return (boolean)((is_u(etmp) &&
 				(Wwalking || Amphibious || Swimming ||
@@ -342,7 +342,7 @@ int x, y;
 	if (is_db_wall(x, y))
 		return((boolean)(is_u(etmp) ? Passes_walls :
 			passes_walls(etmp->edata)));
-	return(TRUE);
+	return TRUE;
 }
 
 static void
@@ -430,7 +430,7 @@ boolean chunks;
 	int misses;
 
 	if (automiss(etmp))
-		return(TRUE);
+		return TRUE;
 
 	if (is_flyer(etmp->edata) &&
 	    (is_u(etmp)? !Sleeping :
@@ -449,7 +449,7 @@ boolean chunks;
 		misses -= 3;				    /* less airspace */
 
 
-	return((boolean)((misses >= rnd(8))? TRUE : FALSE));
+	return (boolean)((misses >= rnd(8))? TRUE : FALSE);
 }
 
 /*
@@ -465,7 +465,7 @@ struct entity *etmp;
 	if (is_u(etmp)? (Sleeping || Fumbling) :
 		        (!etmp->emon->mcanmove || etmp->emon->msleeping ||
 			 !etmp->edata->mmove   || etmp->emon->wormno))
-		return(FALSE);
+		return FALSE;
 
 	if (is_u(etmp)? Confusion : etmp->emon->mconf)
 		tmp -= 2;
@@ -476,7 +476,7 @@ struct entity *etmp;
 	if (is_db_wall(etmp->ex, etmp->ey))
 		tmp -= 2;			    /* less room to maneuver */
 
-	return((boolean)((tmp >= rnd(10))? TRUE : FALSE));
+	return (boolean)((tmp >= rnd(10))? TRUE : FALSE);
 }
 
 static void

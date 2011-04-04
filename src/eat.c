@@ -99,7 +99,7 @@ struct obj *obj;
 	    !Has_contents(obj))
 		return TRUE;
 
-     /* return((boolean)(!!index(comestibles, obj->oclass))); */
+     /* return (boolean)(!!index(comestibles, obj->oclass)); */
 	return (boolean)(obj->oclass == FOOD_CLASS);
 }
 
@@ -328,7 +328,7 @@ struct obj *otmp;
 		otmp->oxlth--;
 	    }
 	}
-	return(otmp);
+	return otmp;
 }
 
 /* When food decays, in the middle of your meal, we don't want to dereference
@@ -383,16 +383,16 @@ eatfood()		/* called each move during eating process */
 	 (!carried(victual.piece) && !obj_here(victual.piece, u.ux, u.uy))) {
 		/* maybe it was stolen? */
 		do_reset_eat();
-		return(0);
+		return 0;
 	}
-	if(!victual.eating) return(0);
+	if(!victual.eating) return 0;
 
 	if(++victual.usedtime <= victual.reqtime) {
-	    if(bite()) return(0);
-	    return(1);	/* still busy */
+	    if(bite()) return 0;
+	    return 1;	/* still busy */
 	} else {	/* done */
 	    done_eating(TRUE);
-	    return(0);
+	    return 0;
 	}
 }
 
@@ -536,85 +536,85 @@ struct permonst *ptr;
 #ifdef DEBUG
 		if (ptr->mconveys & MR_FIRE) {
 			debugpline("can get fire resistance");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(ptr->mconveys & MR_FIRE);
+		return ptr->mconveys & MR_FIRE;
 #endif
 	    case SLEEP_RES:
 #ifdef DEBUG
 		if (ptr->mconveys & MR_SLEEP) {
 			debugpline("can get sleep resistance");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(ptr->mconveys & MR_SLEEP);
+		return ptr->mconveys & MR_SLEEP;
 #endif
 	    case COLD_RES:
 #ifdef DEBUG
 		if (ptr->mconveys & MR_COLD) {
 			debugpline("can get cold resistance");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(ptr->mconveys & MR_COLD);
+		return ptr->mconveys & MR_COLD;
 #endif
 	    case DISINT_RES:
 #ifdef DEBUG
 		if (ptr->mconveys & MR_DISINT) {
 			debugpline("can get disintegration resistance");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(ptr->mconveys & MR_DISINT);
+		return ptr->mconveys & MR_DISINT;
 #endif
 	    case SHOCK_RES:	/* shock (electricity) resistance */
 #ifdef DEBUG
 		if (ptr->mconveys & MR_ELEC) {
 			debugpline("can get shock resistance");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(ptr->mconveys & MR_ELEC);
+		return ptr->mconveys & MR_ELEC;
 #endif
 	    case POISON_RES:
 #ifdef DEBUG
 		if (ptr->mconveys & MR_POISON) {
 			debugpline("can get poison resistance");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(ptr->mconveys & MR_POISON);
+		return ptr->mconveys & MR_POISON;
 #endif
 	    case TELEPORT:
 #ifdef DEBUG
 		if (can_teleport(ptr)) {
 			debugpline("can get teleport");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(can_teleport(ptr));
+		return can_teleport(ptr);
 #endif
 	    case TELEPORT_CONTROL:
 #ifdef DEBUG
 		if (control_teleport(ptr)) {
 			debugpline("can get teleport control");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(control_teleport(ptr));
+		return control_teleport(ptr);
 #endif
 	    case TELEPAT:
 #ifdef DEBUG
 		if (telepathic(ptr)) {
 			debugpline("can get telepathy");
-			return(TRUE);
-		} else  return(FALSE);
+			return TRUE;
+		} else  return FALSE;
 #else
-		return(telepathic(ptr));
+		return telepathic(ptr);
 #endif
 	    default:
-		return(FALSE);
+		return FALSE;
 	}
 	/*NOTREACHED*/
 }
@@ -1001,13 +1001,13 @@ opentin()		/* called during each move whilst opening a tin */
 
 	if(!carried(tin.tin) && !obj_here(tin.tin, u.ux, u.uy))
 					/* perhaps it was stolen? */
-		return(0);		/* %% probably we should use tinoid */
+		return 0;		/* %% probably we should use tinoid */
 	if(tin.usedtime++ >= 50) {
 		You("give up your attempt to open the tin.");
-		return(0);
+		return 0;
 	}
 	if(tin.usedtime < tin.reqtime)
-		return(1);		/* still busy */
+		return 1;		/* still busy */
 	if(tin.tin->otrapped ||
 	   (tin.tin->cursed && tin.tin->spe != -1 && !rn2(8))) {
 		b_trapped("tin", 0);
@@ -1106,7 +1106,7 @@ use_me:
 	if (carried(tin.tin)) useup(tin.tin);
 	else useupf(tin.tin, 1L);
 	tin.tin = (struct obj *) 0;
-	return(0);
+	return 0;
 }
 
 static void
@@ -1205,9 +1205,9 @@ struct obj *obj;
 		nomul(-rnd(10));
 		nomovemsg = "You are conscious again.";
 		afternmv = Hear_again;
-		return(1);
+		return 1;
 	}
-	return(0);
+	return 0;
 }
 
 static int
@@ -1259,7 +1259,7 @@ eatcorpse(otmp)		/* called when a corpse is selected as food */
 		}
 		if (carried(otmp)) useup(otmp);
 		else useupf(otmp, 1L);
-		return(2);
+		return 2;
 	} else if (acidic(&mons[mnum]) && !Acid_resistance) {
 		tp++;
 		You("have a very bad case of stomach acid."); /* not body_part() */
@@ -1309,7 +1309,7 @@ eatcorpse(otmp)		/* called when a corpse is selected as food */
 		  ? "is delicious" : "tastes terrible");
 	}
 
-	return(retcode);
+	return retcode;
 }
 
 static void
@@ -1903,7 +1903,7 @@ doeat()		/* generic "eat" command funtion (see cmd.c) */
 		if (otmp->dknown && !objects[otmp->otyp].oc_name_known
 				&& !objects[otmp->otyp].oc_uname)
 			docall(otmp);
-		return (1);
+		return 1;
 	}
 	if (otmp->oclass != FOOD_CLASS) {
 	    int material;
@@ -1962,7 +1962,7 @@ doeat()		/* generic "eat" command funtion (see cmd.c) */
 	    victual.piece = touchfood(otmp);
 	    You("resume your meal.");
 	    start_eating(victual.piece);
-	    return(1);
+	    return 1;
 	}
 
 	/* nothing in progress - so try to find something. */
@@ -1970,7 +1970,7 @@ doeat()		/* generic "eat" command funtion (see cmd.c) */
 	/* tins must also check conduct separately in case they're discarded */
 	if(otmp->otyp == TIN) {
 	    start_tin(otmp);
-	    return(1);
+	    return 1;
 	}
 
 	/* KMH, conduct */
@@ -1989,7 +1989,7 @@ doeat()		/* generic "eat" command funtion (see cmd.c) */
 	    if (tmp == 2) {
 		/* used up */
 		victual.piece = (struct obj *)0;
-		return(1);
+		return 1;
 	    } else if (tmp)
 		dont_start = TRUE;
 	    /* if not used up, eatcorpse sets up reqtime and may modify
@@ -2058,7 +2058,7 @@ doeat()		/* generic "eat" command funtion (see cmd.c) */
 	victual.canchoke = (u.uhs == SATIATED);
 
 	if (!dont_start) start_eating(otmp);
-	return(1);
+	return 1;
 }
 
 /* Take a single bite from a piece of food, checking for choking and
@@ -2201,7 +2201,7 @@ unfaint()
 boolean
 is_fainted()
 {
-	return((boolean)(u.uhs == FAINTED));
+	return (boolean)(u.uhs == FAINTED);
 }
 
 void
@@ -2408,9 +2408,9 @@ floorfood(verb,corpsecheck)	/* get food from floor or pack */
 				doname(otmp), verb,
 				(otmp->quan == 1L) ? "it" : "one");
 			if((c = yn_function(qbuf,ynqchars,'n')) == 'y')
-				return(otmp);
+				return otmp;
 			else if(c == 'q')
-				return((struct obj *) 0);
+				return (struct obj *) 0;
 		}
 	}
 

@@ -32,11 +32,11 @@ struct monst *mtmp;
 	if(mtmp->mhp <= 0) {
 		mondied(mtmp);
 		if (mtmp->mhp > 0) /* lifesaved */
-			return(FALSE);
+			return FALSE;
 		else
-			return(TRUE);
+			return TRUE;
 	}
-	return(FALSE);
+	return FALSE;
 }
 
 
@@ -96,7 +96,7 @@ dochugw(mtmp)
 	    !noattacks(mtmp->data) && !onscary(u.ux, u.uy, mtmp))
 		stop_occupation();
 
-	return(rd);
+	return rd;
 }
 
 
@@ -109,7 +109,7 @@ struct monst *mtmp;
 	    mtmp->mpeaceful || mtmp->data->mlet == S_HUMAN ||
 	    is_lminion(mtmp) || mtmp->data == &mons[PM_ANGEL] ||
 	    is_rider(mtmp->data) || mtmp->data == &mons[PM_MINOTAUR])
-		return(FALSE);
+		return FALSE;
 
 	return (boolean)(sobj_at(SCR_SCARE_MONSTER, x, y)
 #ifdef ELBERETH
@@ -166,9 +166,9 @@ disturb(mtmp)
 			|| (!rn2(7) && mtmp->m_ap_type != M_AP_FURNITURE &&
 				mtmp->m_ap_type != M_AP_OBJECT) )) {
 		mtmp->msleeping = 0;
-		return(1);
+		return 1;
 	}
-	return(0);
+	return 0;
 }
 
 /* monster begins fleeing for the specified time, 0 means untimed flee
@@ -292,13 +292,13 @@ struct monst *mtmp;
 	    if (mtmp->mcanmove && (mtmp->mstrategy & STRAT_CLOSE) &&
 	       !mtmp->msleeping && monnear(mtmp, u.ux, u.uy))
 		quest_talk(mtmp);	/* give the leaders a chance to speak */
-	    return(0);	/* other frozen monsters can't do anything */
+	    return 0;	/* other frozen monsters can't do anything */
 	}
 
 	/* there is a chance we will wake it */
 	if (mtmp->msleeping && !disturb(mtmp)) {
 		if (Hallucination) newsym(mtmp->mx,mtmp->my);
-		return(0);
+		return 0;
 	}
 
 	/* not frozen or sleeping: wipe out texts written in the dust */
@@ -314,13 +314,13 @@ struct monst *mtmp;
 	if (mtmp->mflee && !rn2(40) && can_teleport(mdat) && !mtmp->iswiz &&
 	    !level.flags.noteleport) {
 		(void) rloc(mtmp, FALSE);
-		return(0);
+		return 0;
 	}
 	if (mdat->msound == MS_SHRIEK && !um_dist(mtmp->mx, mtmp->my, 1))
 	    m_respond(mtmp);
 	if (mdat == &mons[PM_MEDUSA] && couldsee(mtmp->mx, mtmp->my))
 	    m_respond(mtmp);
-	if (mtmp->mhp <= 0) return(1); /* m_respond gaze can kill medusa */
+	if (mtmp->mhp <= 0) return 1; /* m_respond gaze can kill medusa */
 
 	/* fleeing monsters might regain courage */
 	if (mtmp->mflee && !mtmp->mfleetim
@@ -364,7 +364,7 @@ struct monst *mtmp;
 			    mtmp->mpeaceful = 0;
 			    /* since no way is an image going to pay it off */
 			}
-		} else if(demon_talk(mtmp)) return(1);	/* you paid it off */
+		} else if(demon_talk(mtmp)) return 1;	/* you paid it off */
 	}
 
 	/* the watch will look around and see if you are up to no good :-) */
@@ -437,7 +437,7 @@ toofar:
 		mtmp->weapon_check == NEED_WEAPON &&
 		!(mtmp->mtrapped && !nearby && select_rwep(mtmp))) {
 		mtmp->weapon_check = NEED_HTH_WEAPON;
-		if (mon_wield_item(mtmp) != 0) return(0);
+		if (mon_wield_item(mtmp) != 0) return 0;
 	    }
 	}
 
@@ -496,7 +496,7 @@ toofar:
 			break;
 		    case 1:	/* monster moved */
 			/* Maybe it stepped on a trap and fell asleep... */
-			if (mtmp->msleeping || !mtmp->mcanmove) return(0);
+			if (mtmp->msleeping || !mtmp->mcanmove) return 0;
 			if(!nearby &&
 			  (ranged_attk(mdat) || find_offensive(mtmp)))
 			    break;
@@ -504,13 +504,13 @@ toofar:
 			    /* a monster that's digesting you can move at the
 			     * same time -dlc
 			     */
-			    return(mattacku(mtmp));
+			    return mattacku(mtmp);
 			} else
-				return(0);
+				return 0;
 			/*NOTREACHED*/
 			break;
 		    case 2:	/* monster died */
-			return(1);
+			return 1;
 		}
 	}
 
@@ -519,7 +519,7 @@ toofar:
 	if (!mtmp->mpeaceful ||
 	    (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
 	    if(inrange && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3)
-		if(mattacku(mtmp)) return(1); /* monster died (e.g. exploded) */
+		if(mattacku(mtmp)) return 1; /* monster died (e.g. exploded) */
 
 	    if(mtmp->wormno) wormhitu(mtmp);
 	}
@@ -531,7 +531,7 @@ toofar:
 		couldsee(mtmp->mx, mtmp->my) && !mtmp->minvis && !rn2(5))
 	    cuss(mtmp);
 
-	return(tmp == 2);
+	return tmp == 2;
 }
 
 static const char practical[] = { WEAPON_CLASS, ARMOR_CLASS, GEM_CLASS, FOOD_CLASS, 0 };
@@ -548,9 +548,9 @@ struct monst *mtmp;
 {
 	if (sticks(youmonst.data) && mtmp==u.ustuck && !u.uswallow) {
 		pline("%s cannot escape from you!", Monnam(mtmp));
-		return(TRUE);
+		return TRUE;
 	}
-	return(FALSE);
+	return FALSE;
 }
 
 /* Return values:
@@ -582,8 +582,8 @@ int after;
 
 	if(mtmp->mtrapped) {
 	    int i = mintrap(mtmp);
-	    if(i >= 2) { newsym(mtmp->mx,mtmp->my); return(2); }/* it died */
-	    if(i == 1) return(0);	/* still in trap, so didn't move */
+	    if(i >= 2) { newsym(mtmp->mx,mtmp->my); return 2; }/* it died */
+	    if(i == 1) return 0;	/* still in trap, so didn't move */
 	}
 	ptr = mtmp->data; /* mintrap() can change mtmp->data -dlc */
 
@@ -617,7 +617,7 @@ int after;
 	/* likewise for shopkeeper */
 	if(mtmp->isshk) {
 	    mmoved = shk_move(mtmp);
-	    if(mmoved == -2) return(2);
+	    if(mmoved == -2) return 2;
 	    if(mmoved >= 0) goto postmov;
 	    mmoved = 0;		/* follow player outside shop */
 	}
@@ -625,7 +625,7 @@ int after;
 	/* and for the guard */
 	if(mtmp->isgd) {
 	    mmoved = gd_move(mtmp);
-	    if(mmoved == -2) return(2);
+	    if(mmoved == -2) return 2;
 	    if(mmoved >= 0) goto postmov;
 	    mmoved = 0;
 	}
@@ -643,7 +643,7 @@ int after;
 	       intruder && (intruder != mtmp)) {
 
 		notonhead = (intruder->mx != tx || intruder->my != ty);
-		if(mattackm(mtmp, intruder) == 2) return(2);
+		if(mattackm(mtmp, intruder) == 2) return 2;
 		mmoved = 1;
 	    } else mmoved = 0;
 	    goto postmov;
@@ -652,7 +652,7 @@ int after;
 	/* and for the priest */
 	if(mtmp->ispriest) {
 	    mmoved = pri_move(mtmp);
-	    if(mmoved == -2) return(2);
+	    if(mmoved == -2) return 2;
 	    if(mmoved >= 0) goto postmov;
 	    mmoved = 0;
 	}
@@ -668,7 +668,7 @@ int after;
 	    goto postmov;
 	}
 not_special:
-	if(u.uswallow && !mtmp->mflee && u.ustuck != mtmp) return(1);
+	if(u.uswallow && !mtmp->mflee && u.ustuck != mtmp) return 1;
 	omx = mtmp->mx;
 	omy = mtmp->my;
 	gx = mtmp->mux;
@@ -914,7 +914,7 @@ not_special:
 	    int j;
 
 	    if (mmoved==1 && (u.ux != nix || u.uy != niy) && itsstuck(mtmp))
-		return(3);
+		return 3;
 
 	    if (((IS_ROCK(levl[nix][niy].typ) && may_dig(nix,niy)) ||
 		 closed_door(nix, niy)) &&
@@ -930,7 +930,7 @@ not_special:
 		    mtmp->weapon_check = NEED_PICK_AXE;
 		}
 		if (mtmp->weapon_check >= NEED_PICK_AXE && mon_wield_item(mtmp))
-		    return(3);
+		    return 3;
 	    }
 	    /* If ALLOW_U is set, either it's trying to attack you, or it
 	     * thinks it is.  In either case, attack this spot in preference to
@@ -951,7 +951,7 @@ not_special:
 	    if (nix == u.ux && niy == u.uy) {
 		mtmp->mux = u.ux;
 		mtmp->muy = u.uy;
-		return(0);
+		return 0;
 	    }
 	    /* The monster may attack another based on 1 of 2 conditions:
 	     * 1 - It may be confused.
@@ -996,7 +996,7 @@ not_special:
 	} else {
 	    if(is_unicorn(ptr) && rn2(2) && !tele_restrict(mtmp)) {
 		(void) rloc(mtmp, FALSE);
-		return(1);
+		return 1;
 	    }
 	    if(mtmp->wormno) worm_nomove(mtmp);
 	}
@@ -1008,7 +1008,7 @@ postmov:
 		newsym(omx,omy);		/* update the old position */
 		if (mintrap(mtmp) >= 2) {
 		    if(mtmp->mx) newsym(mtmp->mx,mtmp->my);
-		    return(2);	/* it died */
+		    return 2;	/* it died */
 		}
 		ptr = mtmp->data;
 
@@ -1031,7 +1031,7 @@ postmov:
 			    here->doormask = D_NODOOR;
 			    newsym(mtmp->mx, mtmp->my);
 			    unblock_point(mtmp->mx,mtmp->my); /* vision */
-			    if(mb_trapped(mtmp)) return(2);
+			    if(mb_trapped(mtmp)) return 2;
 			} else {
 			    if (flags.verbose) {
 				if (canseeit)
@@ -1048,7 +1048,7 @@ postmov:
 			    here->doormask = D_NODOOR;
 			    newsym(mtmp->mx, mtmp->my);
 			    unblock_point(mtmp->mx,mtmp->my); /* vision */
-			    if(mb_trapped(mtmp)) return(2);
+			    if(mb_trapped(mtmp)) return 2;
 			} else {
 			    if (flags.verbose) {
 				if (canseeit)
@@ -1066,7 +1066,7 @@ postmov:
 			    here->doormask = D_NODOOR;
 			    newsym(mtmp->mx, mtmp->my);
 			    unblock_point(mtmp->mx,mtmp->my); /* vision */
-			    if(mb_trapped(mtmp)) return(2);
+			    if(mb_trapped(mtmp)) return 2;
 			} else {
 			    if (flags.verbose) {
 				if (canseeit)
@@ -1094,7 +1094,7 @@ postmov:
 
 		/* possibly dig */
 		if (can_tunnel && mdig_tunnel(mtmp))
-			return(2);  /* mon died (position already updated) */
+			return 2;  /* mon died (position already updated) */
 
 		/* set also in domove(), hack.c */
 		if (u.uswallow && mtmp == u.ustuck &&
@@ -1171,7 +1171,7 @@ postmov:
 		after_shk_move(mtmp);
 	    }
 	}
-	return(mmoved);
+	return mmoved;
 }
 
 
@@ -1179,15 +1179,15 @@ boolean
 closed_door(x, y)
 int x, y;
 {
-	return((boolean)(IS_DOOR(levl[x][y].typ) &&
-			(levl[x][y].doormask & (D_LOCKED | D_CLOSED))));
+	return (boolean)(IS_DOOR(levl[x][y].typ) &&
+			(levl[x][y].doormask & (D_LOCKED | D_CLOSED)));
 }
 
 boolean
 accessible(x, y)
 int x, y;
 {
-	return((boolean)(ACCESSIBLE(levl[x][y].typ) && !closed_door(x, y)));
+	return (boolean)(ACCESSIBLE(levl[x][y].typ) && !closed_door(x, y));
 }
 
 

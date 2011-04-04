@@ -53,7 +53,7 @@ int x, y;
 	    else
 		tc -= ndist;
 	} else if(ndist <= 1)
-	    return(ndist ? tc : 0);
+	    return ndist ? tc : 0;
     }
     return (coord *)0;
 }

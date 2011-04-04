@@ -35,7 +35,7 @@ xchar omx,omy,gx,gy;
 	struct obj *ib = (struct obj *)0;
 
 	if(omx == gx && omy == gy)
-		return(0);
+		return 0;
 	if(mtmp->mconf) {
 		avoid = FALSE;
 		appr = 0;
@@ -102,9 +102,9 @@ pick_move:
 			obj_extract_self(ib);
 			(void) mpickobj(mtmp, ib);
 		}
-		return(1);
+		return 1;
 	}
-	return(0);
+	return 0;
 }
 
 
@@ -116,8 +116,8 @@ char *array;
 
 	for (ptr = array; *ptr; ptr++)
 		if (rooms[*ptr - ROOMOFFSET].rtype == TEMPLE)
-			return(*ptr);
-	return('\0');
+			return *ptr;
+	return '\0';
 }
 
 
@@ -144,7 +144,7 @@ struct monst *priest;
 	omx = priest->mx;
 	omy = priest->my;
 
-	if(!histemple_at(priest, omx, omy)) return(-1);
+	if(!histemple_at(priest, omx, omy)) return -1;
 
 	temple = EPRI(priest)->shroom;
 
@@ -161,7 +161,7 @@ struct monst *priest;
 				Your("displaced image doesn't fool %s!",
 					mon_nam(priest));
 			(void) mattacku(priest);
-			return(0);
+			return 0;
 		} else if(index(u.urooms, temple)) {
 			/* chase player if inside temple & can see him */
 			if(priest->mcansee && m_canseeu(priest)) {
@@ -172,7 +172,7 @@ struct monst *priest;
 		}
 	} else if(Invis) avoid = FALSE;
 
-	return(move_special(priest,FALSE,TRUE,FALSE,avoid,omx,omy,gx,gy));
+	return move_special(priest,FALSE,TRUE,FALSE,avoid,omx,omy,gx,gy);
 }
 
 /* exclusively for mktemple() */
@@ -268,20 +268,20 @@ char *pname;		/* caller-supplied output buffer */
 		}
 		strcat(pname, "of ");
 		strcat(pname, halu_gname((int)EPRI(mon)->shralign));
-		return(pname);
+		return pname;
 	}
 	/* use emin instead of epri */
 	strcat(pname, what);
 	strcat(pname, " of ");
 	strcat(pname, halu_gname(EMIN(mon)->min_align));
-	return(pname);
+	return pname;
 }
 
 boolean
 p_coaligned(priest)
 struct monst *priest;
 {
-	return((boolean)(u.ualign.type == ((int)EPRI(priest)->shralign)));
+	return (boolean)(u.ualign.type == ((int)EPRI(priest)->shralign));
 }
 
 static boolean
@@ -291,11 +291,11 @@ struct monst *pri;
 	struct rm *lev;
 
 	if(!pri)
-		return(FALSE);
+		return FALSE;
 	lev = &levl[EPRI(pri)->shrpos.x][EPRI(pri)->shrpos.y];
 	if (!IS_ALTAR(lev->typ) || !(lev->altarmask & AM_SHRINE))
-		return(FALSE);
-	return((boolean)(EPRI(pri)->shralign == Amask2align(lev->altarmask & ~AM_SHRINE)));
+		return FALSE;
+	return (boolean)(EPRI(pri)->shralign == Amask2align(lev->altarmask & ~AM_SHRINE));
 }
 
 struct monst *
@@ -308,7 +308,7 @@ char roomno;
 	    if (DEADMONSTER(mtmp)) continue;
 	    if(mtmp->ispriest && (EPRI(mtmp)->shroom == roomno) &&
 	       histemple_at(mtmp,mtmp->mx,mtmp->my))
-		return(mtmp);
+		return mtmp;
 	}
 	return (struct monst *)0;
 }
@@ -534,12 +534,12 @@ boolean peaceful;
 	boolean coaligned = (u.ualign.type == alignment);
 
 	if (ptr != &mons[PM_ALIGNED_PRIEST] && ptr != &mons[PM_ANGEL])
-		return((struct monst *)0);
+		return (struct monst *)0;
 	
 	if (MON_AT(x, y)) (void) rloc(m_at(x, y), FALSE);	/* insurance */
 
 	if (!(roamer = makemon(ptr, x, y, NO_MM_FLAGS)))
-		return((struct monst *)0);
+		return (struct monst *)0;
 
 	EPRI(roamer)->shralign = alignment;
 	if (coaligned && !peaceful)
@@ -552,7 +552,7 @@ boolean peaceful;
 	set_malign(roamer); /* peaceful may have changed */
 
 	/* MORE TO COME */
-	return(roamer);
+	return roamer;
 }
 
 void

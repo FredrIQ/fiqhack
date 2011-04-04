@@ -248,7 +248,7 @@ not_recovered:
 	moveloop();
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/
-	return(0);
+	return 0;
 }
 
 static void

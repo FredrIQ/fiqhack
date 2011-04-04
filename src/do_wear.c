@@ -1074,10 +1074,10 @@ dotakeoff()
 	}
 	if (armorpieces > 1)
 		otmp = getobj(clothes, "take off");
-	if (otmp == 0) return(0);
+	if (otmp == 0) return 0;
 	if (!(otmp->owornmask & W_ARMOR)) {
 		You("are not wearing that.");
-		return(0);
+		return 0;
 	}
 	/* note: the `uskin' case shouldn't be able to happen here; dragons
 	   can't wear any armor so will end up with `armorpieces == 0' above */
@@ -1096,7 +1096,7 @@ dotakeoff()
 	reset_remarm();		/* armoroff() doesn't use takeoff_mask */
 
 	(void) armoroff(otmp);
-	return(1);
+	return 1;
 }
 
 /* the 'R' command */
@@ -1120,13 +1120,13 @@ doremring()
 #endif
 			     uarms || uarmh || uarmg || uarmf)) ?
 		      "  Use 'T' command to take off armor." : "");
-		return(0);
+		return 0;
 	}
 	if (Accessories != 1) otmp = getobj(accessories, "remove");
-	if(!otmp) return(0);
+	if(!otmp) return 0;
 	if(!(otmp->owornmask & (W_RING | W_AMUL | W_TOOL))) {
 		You("are not wearing that.");
-		return(0);
+		return 0;
 	}
 
 	reset_remarm();		/* clear takeoff_mask and taking_off */
@@ -1151,7 +1151,7 @@ doremring()
 	} else {
 		impossible("removing strange accessory?");
 	}
-	return(1);
+	return 1;
 }
 
 /* Check if something worn is cursed _and_ unremovable. */
@@ -1165,9 +1165,9 @@ struct obj *otmp;
 			(is_boots(otmp) || is_gloves(otmp) || otmp->quan > 1L)
 			? "They are" : "It is");
 		otmp->bknown = TRUE;
-		return(1);
+		return 1;
 	}
-	return(0);
+	return 0;
 }
 
 int
@@ -1176,7 +1176,7 @@ struct obj *otmp;
 {
 	int delay = -objects[otmp->otyp].oc_delay;
 
-	if(cursed(otmp)) return(0);
+	if(cursed(otmp)) return 0;
 	if(delay) {
 		nomul(delay);
 		if (is_helmet(otmp)) {
@@ -1219,7 +1219,7 @@ struct obj *otmp;
 		off_msg(otmp);
 	}
 	takeoff_mask = taking_off = 0L;
-	return(1);
+	return 1;
 }
 
 static void
@@ -1402,13 +1402,13 @@ dowear()
 	/* verysmall or nohands checks for shields, gloves, etc... */
 	if ((verysmall(youmonst.data) || nohands(youmonst.data))) {
 		pline("Don't even bother.");
-		return(0);
+		return 0;
 	}
 
 	otmp = getobj(clothes, "wear");
-	if(!otmp) return(0);
+	if(!otmp) return 0;
 
-	if (!canwearobj(otmp,&mask,TRUE)) return(0);
+	if (!canwearobj(otmp,&mask,TRUE)) return 0;
 
 	if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
 	    return 1;	/* costs a turn even though it didn't get worn */
@@ -1450,7 +1450,7 @@ dowear()
 		on_msg(otmp);
 	}
 	takeoff_mask = taking_off = 0L;
-	return(1);
+	return 1;
 }
 
 int
@@ -1464,17 +1464,17 @@ doputon()
 			humanoid(youmonst.data) ? "ring-" : "",
 			makeplural(body_part(FINGER)),
 			ublindf->otyp==LENSES ? "some lenses" : "a blindfold");
-		return(0);
+		return 0;
 	}
 	otmp = getobj(accessories, "put on");
-	if(!otmp) return(0);
+	if(!otmp) return 0;
 	if(otmp->owornmask & (W_RING | W_AMUL | W_TOOL)) {
 		already_wearing(c_that_);
-		return(0);
+		return 0;
 	}
 	if(welded(otmp)) {
 		weldmsg(otmp);
-		return(0);
+		return 0;
 	}
 	if(otmp == uwep)
 		setuwep((struct obj *)0);
@@ -1485,13 +1485,13 @@ doputon()
 	if(otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING) {
 		if(nolimbs(youmonst.data)) {
 			You("cannot make the ring stick to your body.");
-			return(0);
+			return 0;
 		}
 		if(uleft && uright){
 			There("are no more %s%s to fill.",
 				humanoid(youmonst.data) ? "ring-" : "",
 				makeplural(body_part(FINGER)));
-			return(0);
+			return 0;
 		}
 		if(uleft) mask = RIGHT_RING;
 		else if(uright) mask = LEFT_RING;
@@ -1503,7 +1503,7 @@ doputon()
 				humanoid(youmonst.data) ? "ring-" : "",
 				body_part(FINGER));
 			if(!(answer = yn_function(qbuf, "rl", '\0')))
-				return(0);
+				return 0;
 			switch(answer){
 			case 'l':
 			case 'L':
@@ -1518,17 +1518,17 @@ doputon()
 		if (uarmg && uarmg->cursed) {
 			uarmg->bknown = TRUE;
 		    You("cannot remove your gloves to put on the ring.");
-			return(0);
+			return 0;
 		}
 		if (welded(uwep) && bimanual(uwep)) {
 			/* welded will set bknown */
 	    You("cannot free your weapon hands to put on the ring.");
-			return(0);
+			return 0;
 		}
 		if (welded(uwep) && mask==RIGHT_RING) {
 			/* welded will set bknown */
 	    You("cannot free your weapon hand to put on the ring.");
-			return(0);
+			return 0;
 		}
 		if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
 		    return 1; /* costs a turn even though it didn't get worn */
@@ -1537,7 +1537,7 @@ doputon()
 	} else if (otmp->oclass == AMULET_CLASS) {
 		if(uamul) {
 			already_wearing("an amulet");
-			return(0);
+			return 0;
 		}
 		if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
 		    return 1;
@@ -1545,7 +1545,7 @@ doputon()
 		if (otmp->otyp == AMULET_OF_CHANGE) {
 			Amulet_on();
 			/* Don't do a prinv() since the amulet is now gone */
-			return(1);
+			return 1;
 		}
 		Amulet_on();
 	} else {	/* it's a blindfold, towel, or lenses */
@@ -1565,20 +1565,20 @@ doputon()
 					already_wearing("some lenses");
 			} else
 				already_wearing(something); /* ??? */
-			return(0);
+			return 0;
 		}
 		if (otmp->otyp != BLINDFOLD && otmp->otyp != TOWEL && otmp->otyp != LENSES) {
 			You_cant("wear that!");
-			return(0);
+			return 0;
 		}
 		if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
 		    return 1;
 		Blindf_on(otmp);
-		return(1);
+		return 1;
 	}
 	if (is_worn(otmp))
 	    prinv((char *)0, otmp, 0L);
-	return(1);
+	return 1;
 }
 
 
@@ -1693,7 +1693,7 @@ struct monst *victim;
 	if(otmp && (!otmph || !rn2(4))) otmph = otmp;
 	otmp = (victim == &youmonst) ? uarms : which_armor(victim, W_ARMS);
 	if(otmp && (!otmph || !rn2(4))) otmph = otmp;
-	return(otmph);
+	return otmph;
 }
 
 /* erode some arbitrary armor worn by the victim */
@@ -1854,7 +1854,7 @@ struct obj *otmp;
 
 	else impossible("select_off: %s???", doname(otmp));
 
-	return(0);
+	return 0;
 }
 
 static struct obj *
@@ -1911,7 +1911,7 @@ do_takeoff()
 	  if (!cursed(ublindf)) Blindf_off(ublindf);
 	} else impossible("do_takeoff: taking off %lx", taking_off);
 
-	return(otmp);
+	return otmp;
 }
 
 static const char *disrobing = "";
@@ -1926,7 +1926,7 @@ take_off()
 	if (taking_off) {
 	    if (todelay > 0) {
 		todelay--;
-		return(1);	/* still busy */
+		return 1;	/* still busy */
 	    } else {
 		if ((otmp = do_takeoff())) off_msg(otmp);
 	    }
@@ -1998,7 +1998,7 @@ take_off()
 	if (todelay > 0) todelay--;
 
 	set_occupation(take_off, disrobing, 0);
-	return(1);		/* get busy */
+	return 1;		/* get busy */
 }
 
 /* clear saved context to avoid inappropriate resumption of interrupted 'A' */
@@ -2144,7 +2144,7 @@ struct obj *atmp;
 
 #undef DESTROY_ARM
 	stop_occupation();
-	return(1);
+	return 1;
 }
 
 void

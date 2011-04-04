@@ -34,13 +34,13 @@ static int
 pet_type()
 {
 	if (urole.petnum != NON_PM)
-	    return (urole.petnum);
+	    return urole.petnum;
 	else if (preferred_pet == 'c')
-	    return (PM_KITTEN);
+	    return PM_KITTEN;
 	else if (preferred_pet == 'd')
-	    return (PM_LITTLE_DOG);
+	    return PM_LITTLE_DOG;
 	else
-	    return (rn2(2) ? PM_KITTEN : PM_LITTLE_DOG);
+	    return rn2(2) ? PM_KITTEN : PM_LITTLE_DOG;
 }
 
 struct monst *
@@ -131,7 +131,7 @@ makedog()
 	int   pettype;
 	static int petname_used = 0;
 
-	if (preferred_pet == 'n') return((struct monst *) 0);
+	if (preferred_pet == 'n') return (struct monst *) 0;
 
 	pettype = pet_type();
 	if (pettype == PM_LITTLE_DOG)
@@ -152,7 +152,7 @@ makedog()
 
 	mtmp = makemon(&mons[pettype], u.ux, u.uy, MM_EDOG);
 
-	if(!mtmp) return((struct monst *) 0); /* pets were genocided */
+	if(!mtmp) return (struct monst *) 0; /* pets were genocided */
 
 	/* Horses already wear a saddle */
 	if (pettype == PM_PONY && !!(otmp = mksobj(SADDLE, TRUE, FALSE))) {
@@ -169,7 +169,7 @@ makedog()
 		mtmp = christen_monst(mtmp, petname);
 
 	initedog(mtmp);
-	return(mtmp);
+	return mtmp;
 }
 
 /* record `last move time' for all monsters prior to level save so that
@@ -630,7 +630,7 @@ struct obj *obj;
 	boolean starving;
 
 	if (is_quest_artifact(obj) || obj_resists(obj, 0, 95))
-	    return (obj->cursed ? TABU : APPORT);
+	    return obj->cursed ? TABU : APPORT;
 
 	switch(obj->oclass) {
 	case FOOD_CLASS:
@@ -646,7 +646,7 @@ struct obj *obj;
 				DOGFOOD : TABU;
 
 	    if (!carni && !herbi)
-		    return (obj->cursed ? UNDEF : APPORT);
+		    return obj->cursed ? UNDEF : APPORT;
 
 	    /* a starving pet will eat almost anything */
 	    starving = (mon->mtame && !mon->isminion &&
@@ -658,11 +658,11 @@ struct obj *obj;
 		case MEAT_RING:
 		case MEAT_STICK:
 		case HUGE_CHUNK_OF_MEAT:
-		    return (carni ? DOGFOOD : MANFOOD);
+		    return carni ? DOGFOOD : MANFOOD;
 		case EGG:
 		    if (touch_petrifies(&mons[obj->corpsenm]) && !resists_ston(mon))
 			return POISON;
-		    return (carni ? CADAVER : MANFOOD);
+		    return carni ? CADAVER : MANFOOD;
 		case CORPSE:
 		   if ((peek_at_iced_corpse_age(obj) + 50L <= monstermoves
 					    && obj->corpsenm != PM_LIZARD
@@ -673,16 +673,16 @@ struct obj *obj;
 						!resists_poison(mon)))
 			return POISON;
 		    else if (vegan(fptr))
-			return (herbi ? CADAVER : MANFOOD);
-		    else return (carni ? CADAVER : MANFOOD);
+			return herbi ? CADAVER : MANFOOD;
+		    else return carni ? CADAVER : MANFOOD;
 		case CLOVE_OF_GARLIC:
 		    return (is_undead(mon->data) ? TABU :
 			    ((herbi || starving) ? ACCFOOD : MANFOOD));
 		case TIN:
-		    return (metallivorous(mon->data) ? ACCFOOD : MANFOOD);
+		    return metallivorous(mon->data) ? ACCFOOD : MANFOOD;
 		case APPLE:
 		case CARROT:
-		    return (herbi ? DOGFOOD : starving ? ACCFOOD : MANFOOD);
+		    return herbi ? DOGFOOD : starving ? ACCFOOD : MANFOOD;
 		case BANANA:
 		    return ((mon->data->mlet == S_YETI) ? DOGFOOD :
 			    ((herbi || starving) ? ACCFOOD : MANFOOD));
@@ -698,20 +698,19 @@ struct obj *obj;
 		return TABU;
 	    if (hates_silver(mon->data) &&
 		objects[obj->otyp].oc_material == SILVER)
-		return(TABU);
+		return TABU;
 	    if (mon->data == &mons[PM_GELATINOUS_CUBE] && is_organic(obj))
-		return(ACCFOOD);
+		return ACCFOOD;
 	    if (metallivorous(mon->data) && is_metallic(obj) && (is_rustprone(obj) || mon->data != &mons[PM_RUST_MONSTER])) {
 		/* Non-rustproofed ferrous based metals are preferred. */
-		return((is_rustprone(obj) && !obj->oerodeproof) ? DOGFOOD :
-			ACCFOOD);
+		return (is_rustprone(obj) && !obj->oerodeproof) ? DOGFOOD : ACCFOOD;
 	    }
 	    if(!obj->cursed && obj->oclass != BALL_CLASS &&
 						obj->oclass != CHAIN_CLASS)
-		return(APPORT);
+		return APPORT;
 	    /* fall into next case */
 	case ROCK_CLASS:
-	    return(UNDEF);
+	    return UNDEF;
 	}
 }
 
@@ -726,14 +725,14 @@ struct obj *obj;
 	/* The Wiz, Medusa and the quest nemeses aren't even made peaceful. */
 	if (mtmp->iswiz || mtmp->data == &mons[PM_MEDUSA]
 				|| (mtmp->data->mflags3 & M3_WANTSARTI))
-		return((struct monst *)0);
+		return (struct monst *)0;
 
 	/* worst case, at least it'll be peaceful. */
 	mtmp->mpeaceful = 1;
 	set_malign(mtmp);
 	if(flags.moonphase == FULL_MOON && night() && rn2(6) && obj
 						&& mtmp->data->mlet == S_DOG)
-		return((struct monst *)0);
+		return (struct monst *)0;
 
 	/* If we cannot tame it, at least it's no longer afraid. */
 	mtmp->mflee = 0;
@@ -783,7 +782,7 @@ struct obj *obj;
 	    (obj && dogfood(mtmp, obj) >= MANFOOD)) return (struct monst *)0;
 
 	if (mtmp->m_id == quest_status.leader_m_id)
-	    return((struct monst *)0);
+	    return (struct monst *)0;
 
 	/* make a new monster which has the pet extension */
 	mtmp2 = newmonst(sizeof(struct edog) + mtmp->mnamelth);
@@ -808,7 +807,7 @@ struct obj *obj;
 		mtmp2->weapon_check = NEED_HTH_WEAPON;
 		(void) mon_wield_item(mtmp2);
 	}
-	return(mtmp2);
+	return mtmp2;
 }
 
 /*

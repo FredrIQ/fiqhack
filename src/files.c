@@ -501,7 +501,7 @@ d_level *lev;
 	else
 	    sprintf(dptr, ".%d", lev->dlevel);
 	
-	return(dptr-2);
+	return dptr-2;
 }
 
 /* set up temporary file name for writing bones, to avoid another game's
@@ -900,7 +900,7 @@ const char *filename;
 #endif
 		if ((fp = fopenp(filename, "r")) != (FILE *)0) {
 		    configfile = filename;
-		    return(fp);
+		    return fp;
 #if defined(UNIX)
 		} else {
 		    /* access() above probably caught most problems for UNIX */
@@ -914,7 +914,7 @@ const char *filename;
 
 #if defined(WIN32)
 	if ((fp = fopenp(fqname(configfile, CONFIGPREFIX, 0), "r")) != (FILE *)0)
-		return(fp);
+		return fp;
 #else
 	/* constructed full path names don't need fqname() */
 	/* should be only UNIX left */
@@ -924,16 +924,16 @@ const char *filename;
 	else
 		sprintf(tmp_config, "%s/%s", envp, configfile);
 	if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
-		return(fp);
+		return fp;
 # if defined(__APPLE__)
 	/* try an alternative */
 	if (envp) {
 		sprintf(tmp_config, "%s/%s", envp, "Library/Preferences/NetHack Defaults");
 		if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
-			return(fp);
+			return fp;
 		sprintf(tmp_config, "%s/%s", envp, "Library/Preferences/NetHack Defaults.txt");
 		if ((fp = fopenp(tmp_config, "r")) != (FILE *)0)
-			return(fp);
+			return fp;
 	}
 # endif
 	if (errno != ENOENT) {
@@ -1221,7 +1221,7 @@ fopen_wizkit_file()
 	} else
 #endif
 	if ((fp = fopenp(wizkit, "r")) != (FILE *)0) {
-	    return(fp);
+	    return fp;
 #if defined(UNIX)
 	} else {
 	    /* access() above probably caught most problems for UNIX */
@@ -1233,14 +1233,14 @@ fopen_wizkit_file()
 
 #if defined(WIN32)
 	if ((fp = fopenp(fqname(wizkit, CONFIGPREFIX, 0), "r")) != (FILE *)0)
-		return(fp);
+		return fp;
 #else
 	envp = nh_getenv("HOME");
 	if (envp)
 		sprintf(tmp_wizkit, "%s/%s", envp, wizkit);
 	else 	strcpy(tmp_wizkit, wizkit);
 	if ((fp = fopenp(tmp_wizkit, "r")) != (FILE *)0)
-		return(fp);
+		return fp;
 	else if (errno != ENOENT) {
 		/* e.g., problems when setuid NetHack can't search home
 		 * directory restricted to user */

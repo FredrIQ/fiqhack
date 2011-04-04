@@ -40,7 +40,7 @@ boolean forceshow;
 			return FALSE;
 
 		if ((mtmp = m_at(fcx,fcy)) != 0) {
-			if(mtmp->isgd) return(FALSE);
+			if(mtmp->isgd) return FALSE;
 			else if(!in_fcorridor(grd, u.ux, u.uy)) {
 			    if(mtmp->mtame) yelp(mtmp);
 			    (void) rloc(mtmp, FALSE);
@@ -55,7 +55,7 @@ boolean forceshow;
 	    pline_The("corridor disappears.");
 	    if(IS_ROCK(levl[u.ux][u.uy].typ)) You("are encased in rock.");
 	}
-	return(TRUE);
+	return TRUE;
 }
 
 static void
@@ -81,7 +81,7 @@ struct monst *grd;
 		EGD(grd)->ogy = grd->my;
 		dispose = clear_fcorr(grd, TRUE);
 	}
-	return(dispose);
+	return dispose;
 }
 
 static boolean
@@ -94,8 +94,8 @@ int x, y;
 	for(fci = EGD(grd)->fcbeg; fci < EGD(grd)->fcend; fci++)
 		if(x == EGD(grd)->fakecorr[fci].fx &&
 				y == EGD(grd)->fakecorr[fci].fy)
-			return(TRUE);
-	return(FALSE);
+			return TRUE;
+	return FALSE;
 }
 
 static
@@ -106,8 +106,8 @@ findgd()
 
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 	    if(mtmp->isgd && !DEADMONSTER(mtmp) && on_level(&(EGD(mtmp)->gdlevel), &u.uz))
-		return(mtmp);
-	return((struct monst *)0);
+		return mtmp;
+	return (struct monst *)0;
 }
 
 
@@ -119,8 +119,8 @@ char *array;
 
 	for (ptr = array; *ptr; ptr++)
 		if (rooms[*ptr - ROOMOFFSET].rtype == VAULT)
-			return(*ptr);
-	return('\0');
+			return *ptr;
+	return '\0';
 }
 
 void
@@ -448,7 +448,7 @@ struct monst *grd;
 #endif
 	boolean see_guard;
 
-	if(!on_level(&(egrd->gdlevel), &u.uz)) return(-1);
+	if(!on_level(&(egrd->gdlevel), &u.uz)) return -1;
 	nx = ny = m = n = 0;
 	if(!u_in_vault && !grd_in_vault)
 	    wallify_vault(grd);
@@ -468,11 +468,11 @@ struct monst *grd;
 	    }
 	    if(!in_fcorridor(grd, grd->mx, grd->my))
 		(void) clear_fcorr(grd, TRUE);
-	    return(-1);
+	    return -1;
 	}
 	if(abs(egrd->ogx - grd->mx) > 1 ||
 			abs(egrd->ogy - grd->my) > 1)
-		return(-1);	/* teleported guard - treat as monster */
+		return -1;	/* teleported guard - treat as monster */
 	if(egrd->fcend == 1) {
 	    if(u_in_vault &&
 			(u_carry_gold || um_dist(grd->mx, grd->my, 1))) {
@@ -496,11 +496,11 @@ struct monst *grd;
 			levl[m][n].typ = egrd->fakecorr[0].ftyp;
 			newsym(m,n);
 			grd->mpeaceful = 0;
-			return(-1);
+			return -1;
 		}
 		/* not fair to get mad when (s)he's fainted or paralyzed */
 		if(!is_fainted() && multi >= 0) egrd->warncnt++;
-		return(0);
+		return 0;
 	    }
 
 	    if (!u_in_vault) {
@@ -519,7 +519,7 @@ letknow:
 			    "see an angry %s approaching." :
 			    "are confronted by an angry %s.",
 			    g_monnam(grd));
-		    return(-1);
+		    return -1;
 		} else {
 		    verbalize("Well, begone.");
 		    wallify_vault(grd);
@@ -544,16 +544,16 @@ letknow:
 		    (egrd->fcend > 1 && u_in_vault))) {
 		if(!grd->mx) {
 			restfakecorr(grd);
-			return(-2);
+			return -2;
 		}
 		if(egrd->warncnt < 6) {
 			egrd->warncnt = 6;
 			verbalize("Drop all your gold, scoundrel!");
-			return(0);
+			return 0;
 		} else {
 			verbalize("So be it, rogue!");
 			grd->mpeaceful = 0;
-			return(-1);
+			return -1;
 		}
 	    }
 	}
@@ -599,16 +599,16 @@ letknow:
 		    place_monster(grd, x, y);
 		    newsym(x, y);
 		}
-		if(!grd->mpeaceful) return(-1);
+		if(!grd->mpeaceful) return -1;
 		else {
 		    egrd->warncnt = 5;
-		    return(0);
+		    return 0;
 		}
 	}
 	if(um_dist(grd->mx, grd->my, 1) || egrd->gddone) {
 		if(!egrd->gddone && !rn2(10)) verbalize("Move along!");
 		restfakecorr(grd);
-		return(0);	/* didn't move */
+		return 0;	/* didn't move */
 	}
 	x = grd->mx;
 	y = grd->my;
@@ -711,9 +711,9 @@ cleanup:
 				     cansee(x, y))) {
 		    if (!disappear_msg_seen && see_guard)
 			pline("Suddenly, the %s disappears.", g_monnam(grd));
-		    return(1);
+		    return 1;
 		}
-		return(-2);
+		return -2;
 	}
 	egrd->ogx = grd->mx;	/* update old positions */
 	egrd->ogy = grd->my;
@@ -721,7 +721,7 @@ cleanup:
 	place_monster(grd, nx, ny);
 	newsym(grd->mx,grd->my);
 	restfakecorr(grd);
-	return(1);
+	return 1;
 }
 
 /* Routine when dying or quitting with a vault guard around */
@@ -796,7 +796,7 @@ hidden_gold()
 		value += contained_gold(obj);
 	/* unknown gold stuck inside statues may cause some consternation... */
 
-	return(value);
+	return value;
 }
 
 boolean
@@ -804,8 +804,8 @@ gd_sound()  /* prevent "You hear footsteps.." when inappropriate */
 {
 	struct monst *grd = findgd();
 
-	if (vault_occupied(u.urooms)) return(FALSE);
-	else return((boolean)(grd == (struct monst *)0));
+	if (vault_occupied(u.urooms)) return FALSE;
+	else return (boolean)(grd == (struct monst *)0);
 }
 
 /*vault.c*/

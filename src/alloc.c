@@ -22,7 +22,7 @@ unsigned int lth;
 
 	ptr = malloc(lth);
 	if (!ptr) panic("Memory allocation failure; cannot get %u bytes", lth);
-	return((long *) ptr);
+	return (long *) ptr;
 }
 
 

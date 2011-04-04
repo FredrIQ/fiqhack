@@ -11,9 +11,9 @@ static long
 newuexp(lev)
 int lev;
 {
-	if (lev < 10) return (10L * (1L << lev));
-	if (lev < 20) return (10000L * (1L << (lev - 10)));
-	return (10000000L * ((long)(lev - 19)));
+	if (lev < 10) return 10L * (1L << lev);
+	if (lev < 20) return 10000L * (1L << (lev - 10));
+	return 10000000L * ((long)(lev - 19));
 }
 
 static int
@@ -23,15 +23,15 @@ int en;
 	switch (Role_switch) {
 	case PM_PRIEST:
 	case PM_WIZARD:
-	    return(2 * en);
+	    return 2 * en;
 	case PM_HEALER:
 	case PM_KNIGHT:
-	    return((3 * en) / 2);
+	    return (3 * en) / 2;
 	case PM_BARBARIAN:
 	case PM_VALKYRIE:
-	    return((3 * en) / 4);
+	    return (3 * en) / 4;
 	default:
-	    return (en);
+	    return en;
 	}
 }
 
@@ -84,7 +84,7 @@ experience(mtmp, nk)	/* return # of exp points for mtmp after nk killed */
 /*	For higher level monsters, an additional bonus is given */
 	if(mtmp->m_lev > 8) tmp += 50;
 
-	return(tmp);
+	return tmp;
 }
 
 void

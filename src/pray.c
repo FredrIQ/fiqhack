@@ -135,17 +135,17 @@ in_trouble()
 	/*
 	 * major troubles
 	 */
-	if(Stoned) return(TROUBLE_STONED);
-	if(Slimed) return(TROUBLE_SLIMED);
-	if(Strangled) return(TROUBLE_STRANGLED);
-	if(u.utrap && u.utraptype == TT_LAVA) return(TROUBLE_LAVA);
-	if(Sick) return(TROUBLE_SICK);
-	if(u.uhs >= WEAK) return(TROUBLE_STARVING);
+	if(Stoned) return TROUBLE_STONED;
+	if(Slimed) return TROUBLE_SLIMED;
+	if(Strangled) return TROUBLE_STRANGLED;
+	if(u.utrap && u.utraptype == TT_LAVA) return TROUBLE_LAVA;
+	if(Sick) return TROUBLE_SICK;
+	if(u.uhs >= WEAK) return TROUBLE_STARVING;
 	if (Upolyd ? (u.mh <= 5 || u.mh*7 <= u.mhmax) :
 		(u.uhp <= 5 || u.uhp*7 <= u.uhpmax)) return TROUBLE_HIT;
-	if(u.ulycn >= LOW_PM) return(TROUBLE_LYCANTHROPE);
+	if(u.ulycn >= LOW_PM) return TROUBLE_LYCANTHROPE;
 	if(near_capacity() >= EXT_ENCUMBER && AMAX(A_STR)-ABASE(A_STR) > 3)
-		return(TROUBLE_COLLAPSING);
+		return TROUBLE_COLLAPSING;
 
 	for (i= -1; i<=1; i++) for(j= -1; j<=1; j++) {
 		if (!i && !j) continue;
@@ -154,12 +154,12 @@ in_trouble()
 			count++;
 	}
 	if (count == 8 && !Passes_walls)
-		return(TROUBLE_STUCK_IN_WALL);
+		return TROUBLE_STUCK_IN_WALL;
 
 	if (Cursed_obj(uarmf, LEVITATION_BOOTS) ||
 		stuck_ring(uleft, RIN_LEVITATION) ||
 		stuck_ring(uright, RIN_LEVITATION))
-		return(TROUBLE_CURSED_LEVITATION);
+		return TROUBLE_CURSED_LEVITATION;
 	if (nohands(youmonst.data) || !freehand()) {
 	    /* for bag/box access [cf use_container()]...
 	       make sure it's a case that we know how to handle;
@@ -169,12 +169,12 @@ in_trouble()
 		    ((otmp = unchanger()) != 0 && otmp->cursed)))
 		return TROUBLE_UNUSEABLE_HANDS;
 	}
-	if(Blindfolded && ublindf->cursed) return(TROUBLE_CURSED_BLINDFOLD);
+	if(Blindfolded && ublindf->cursed) return TROUBLE_CURSED_BLINDFOLD;
 
 	/*
 	 * minor troubles
 	 */
-	if(Punished) return(TROUBLE_PUNISHED);
+	if(Punished) return TROUBLE_PUNISHED;
 	if (Cursed_obj(uarmg, GAUNTLETS_OF_FUMBLING) ||
 		Cursed_obj(uarmf, FUMBLE_BOOTS))
 	    return TROUBLE_FUMBLING;
@@ -184,16 +184,16 @@ in_trouble()
 	    if (Cursed_obj(otmp, SADDLE)) return TROUBLE_SADDLE;
 	}
 
-	if (Blinded > 1 && haseyes(youmonst.data)) return(TROUBLE_BLIND);
+	if (Blinded > 1 && haseyes(youmonst.data)) return TROUBLE_BLIND;
 	for(i=0; i<A_MAX; i++)
-	    if(ABASE(i) < AMAX(i)) return(TROUBLE_POISONED);
+	    if(ABASE(i) < AMAX(i)) return TROUBLE_POISONED;
 	if(Wounded_legs && !u.usteed)
-		return (TROUBLE_WOUNDED_LEGS);
-	if(u.uhs >= HUNGRY) return(TROUBLE_HUNGRY);
-	if(HStun) return (TROUBLE_STUNNED);
-	if(HConfusion) return (TROUBLE_CONFUSED);
-	if(Hallucination) return(TROUBLE_HALLUCINATION);
-	return(0);
+		return TROUBLE_WOUNDED_LEGS;
+	if(u.uhs >= HUNGRY) return TROUBLE_HUNGRY;
+	if(HStun) return TROUBLE_STUNNED;
+	if(HConfusion) return TROUBLE_CONFUSED;
+	if(Hallucination) return TROUBLE_HALLUCINATION;
+	return 0;
 }
 
 /* select an item for TROUBLE_CURSED_ITEMS */
@@ -1047,7 +1047,7 @@ water_prayer(bless_water)
 	      ((other || changed > 1L) ? "s" : ""), (changed > 1L ? "" : "s"),
 	      (bless_water ? hcolor(NH_LIGHT_BLUE) : hcolor(NH_BLACK)));
     }
-    return((boolean)(changed > 0L));
+    return (boolean)(changed > 0L);
 }
 
 static void
@@ -1212,7 +1212,7 @@ dosacrifice()
 	    } else adjalign(5);
 	    if (carried(otmp)) useup(otmp);
 	    else useupf(otmp, 1L);
-	    return(1);
+	    return 1;
 	} else if (otmp->oxlth && otmp->oattached == OATTACHED_MONST
 		    && ((mtmp = get_mtraits(otmp, FALSE)) != (struct monst *)0)
 		    && mtmp->mtame) {
@@ -1311,7 +1311,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 
     if (value == 0) {
 	pline(nothing_happens);
-	return (1);
+	return 1;
     }
 
     if (altaralign != u.ualign.type &&
@@ -1365,7 +1365,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    (void) adjattrib(A_WIS, -2, TRUE);
 		    if (!Inhell) angrygods(u.ualign.type);
 		}
-		return(1);
+		return 1;
 	    } else {
 		consume_offering(otmp);
 		You("sense a conflict between %s and %s.",
@@ -1402,7 +1402,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		       rnd(u.ualign.record) > (7*ALIGNLIM)/8)
 			summon_minion(altaralign, TRUE);
 		}
-		return(1);
+		return 1;
 	    }
 	}
 
@@ -1475,7 +1475,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    /* make sure we can use this weapon */
 		    unrestrict_weapon_skill(weapon_type(otmp));
 		    discover_artifact(otmp->oartifact);
-		    return(1);
+		    return 1;
 		}
 	    }
 	    change_luck((value * LUCKMAX) / (MAXVALUE * 2));
@@ -1490,7 +1490,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 	    }
 	}
     }
-    return(1);
+    return 1;
 }
 
 
@@ -1582,7 +1582,7 @@ dopray()
 	u.uinvulnerable = TRUE;
     }
 
-    return(1);
+    return 1;
 }
 
 static int
@@ -1601,7 +1601,7 @@ prayer_done()		/* M. Stephenson (1.0.3b) */
 	rehumanize();
 	losehp(rnd(20), "residual undead turning effect", KILLED_BY_AN);
 	exercise(A_CON, FALSE);
-	return(1);
+	return 1;
     }
     if (Inhell) {
 	pline("Since you are in Gehennom, %s won't help you.",
@@ -1609,7 +1609,7 @@ prayer_done()		/* M. Stephenson (1.0.3b) */
 	/* haltingly aligned is least likely to anger */
 	if (u.ualign.record <= 0 || rnl(u.ualign.record))
 	    angrygods(u.ualign.type);
-	return(0);
+	return 0;
     }
 
     if (p_type == 0) {
@@ -1635,7 +1635,7 @@ prayer_done()		/* M. Stephenson (1.0.3b) */
 	    (void) water_prayer(TRUE);
 	pleased(alignment); /* nice */
     }
-    return(1);
+    return 1;
 }
 
 int
@@ -1659,7 +1659,7 @@ doturn()
 		}
 
 		You("don't know how to turn undead!");
-		return(0);
+		return 0;
 	}
 	u.uconduct.gnostic++;
 
@@ -1670,13 +1670,13 @@ doturn()
 		pline("For some reason, %s seems to ignore you.", u_gname());
 		aggravate();
 		exercise(A_WIS, FALSE);
-		return(0);
+		return 0;
 	}
 
 	if (Inhell) {
 	    pline("Since you are in Gehennom, %s won't help you.", u_gname());
 	    aggravate();
-	    return(0);
+	    return 0;
 	}
 	pline("Calling upon %s, you chant an arcane formula.", u_gname());
 	exercise(A_WIS, TRUE);
@@ -1732,20 +1732,20 @@ doturn()
 	    }
 	}
 	nomul(-5);
-	return(1);
+	return 1;
 }
 
 const char *
 a_gname()
 {
-    return(a_gname_at(u.ux, u.uy));
+    return a_gname_at(u.ux, u.uy);
 }
 
 const char *
 a_gname_at(x,y)     /* returns the name of an altar's deity */
 xchar x, y;
 {
-    if(!IS_ALTAR(levl[x][y].typ)) return((char *)0);
+    if(!IS_ALTAR(levl[x][y].typ)) return (char *)0;
 
     return align_gname(a_align(x,y));
 }

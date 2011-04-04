@@ -45,7 +45,7 @@ dosit()
 
 	if (u.usteed) {
 	    You("are already sitting on %s.", mon_nam(u.usteed));
-	    return (0);
+	    return 0;
 	}
 
 	if(!can_reach_floor())	{
@@ -301,7 +301,7 @@ dosit()
 		There("are no seats in here!");
 	else
 		pline("Having fun sitting on the %s?", surface(u.ux,u.uy));
-	return(1);
+	return 1;
 }
 
 void

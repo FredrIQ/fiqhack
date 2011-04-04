@@ -304,7 +304,7 @@ char *s;
 
 	for(i=0; room_types[i].name; i++)
 	    if (!strcmp(s, room_types[i].name))
-		return ((int) room_types[i].type);
+		return (int) room_types[i].type;
 	return ERR;
 }
 
@@ -387,7 +387,7 @@ boolean
 check_monster_char(c)
 char c;
 {
-	return (def_char_to_monclass(c) != MAXMCLASSES);
+	return def_char_to_monclass(c) != MAXMCLASSES;
 }
 
 /*
@@ -397,7 +397,7 @@ boolean
 check_object_char(c)
 char c;
 {
-	return (def_char_to_objclass(c) != MAXOCLASSES);
+	return def_char_to_objclass(c) != MAXOCLASSES;
 }
 
 /*
@@ -408,29 +408,29 @@ what_map_char(c)
 char c;
 {
 	switch(c) {
-		  case ' '  : return(STONE);
-		  case '#'  : return(CORR);
-		  case '.'  : return(ROOM);
-		  case '-'  : return(HWALL);
-		  case '|'  : return(VWALL);
-		  case '+'  : return(DOOR);
-		  case 'A'  : return(AIR);
-		  case 'B'  : return(CROSSWALL); /* hack: boundary location */
-		  case 'C'  : return(CLOUD);
-		  case 'S'  : return(SDOOR);
-		  case 'H'  : return(SCORR);
-		  case '{'  : return(FOUNTAIN);
-		  case '\\' : return(THRONE);
-		  case 'K'  : return(SINK);
-		  case '}'  : return(MOAT);
-		  case 'P'  : return(POOL);
-		  case 'L'  : return(LAVAPOOL);
-		  case 'I'  : return(ICE);
-		  case 'W'  : return(WATER);
-		  case 'T'	: return (TREE);
-		  case 'F'	: return (IRONBARS);	/* Fe = iron */
+		  case ' '  : return STONE;
+		  case '#'  : return CORR;
+		  case '.'  : return ROOM;
+		  case '-'  : return HWALL;
+		  case '|'  : return VWALL;
+		  case '+'  : return DOOR;
+		  case 'A'  : return AIR;
+		  case 'B'  : return CROSSWALL; /* hack: boundary location */
+		  case 'C'  : return CLOUD;
+		  case 'S'  : return SDOOR;
+		  case 'H'  : return SCORR;
+		  case '{'  : return FOUNTAIN;
+		  case '\\' : return THRONE;
+		  case 'K'  : return SINK;
+		  case '}'  : return MOAT;
+		  case 'P'  : return POOL;
+		  case 'L'  : return LAVAPOOL;
+		  case 'I'  : return ICE;
+		  case 'W'  : return WATER;
+		  case 'T'	: return TREE;
+		  case 'F'	: return IRONBARS;	/* Fe = iron */
 	    }
-	return(INVALID_TYPE);
+	return INVALID_TYPE;
 }
 
 /*

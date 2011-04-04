@@ -97,8 +97,8 @@ const char *
 artiname(artinum)
 int artinum;
 {
-	if (artinum <= 0 || artinum > NROFARTIFACTS) return("");
-	return(artilist[artinum].name);
+	if (artinum <= 0 || artinum > NROFARTIFACTS) return "";
+	return artilist[artinum].name;
 }
 
 /*
@@ -239,7 +239,7 @@ unsigned long abil;
 {
 	const struct artifact *arti = get_artifact(otmp);
 
-	return((boolean)(arti && (arti->spfx & abil)));
+	return (boolean)(arti && (arti->spfx & abil));
 }
 
 /* used so that callers don't need to known about SPFX_ codes */
@@ -250,7 +250,7 @@ struct obj *obj;
     /* might as well check for this too */
     if (obj->otyp == LUCKSTONE) return TRUE;
 
-    return (obj->oartifact && spec_ability(obj, SPFX_LUCK));
+    return obj->oartifact && spec_ability(obj, SPFX_LUCK);
 }
 
 /* used to check whether a monster is getting reflection from an artifact */
@@ -306,7 +306,7 @@ struct obj *otmp;
 	const struct artifact *weap;
 
 	if ((weap = get_artifact(otmp)) != 0)
-		return((boolean)(weap->attk.adtyp == adtyp));
+		return (boolean)(weap->attk.adtyp == adtyp);
 	return FALSE;
 }
 
@@ -318,7 +318,7 @@ struct obj *otmp;
 	const struct artifact *weap;
 
 	if ((weap = get_artifact(otmp)) != 0)
-		return((boolean)(weap->defn.adtyp == adtyp));
+		return (boolean)(weap->defn.adtyp == adtyp);
 	return FALSE;
 }
 
@@ -554,17 +554,17 @@ struct monst *mtmp;
 	boolean yours;
 
 	if(!(weap->spfx & (SPFX_DBONUS | SPFX_ATTK)))
-	    return(weap->attk.adtyp == AD_PHYS);
+	    return weap->attk.adtyp == AD_PHYS;
 
 	yours = (mtmp == &youmonst);
 	ptr = mtmp->data;
 
 	if (weap->spfx & SPFX_DMONS) {
-	    return (ptr == &mons[(int)weap->mtype]);
+	    return ptr == &mons[(int)weap->mtype];
 	} else if (weap->spfx & SPFX_DCLAS) {
-	    return (weap->mtype == (unsigned long)ptr->mlet);
+	    return weap->mtype == (unsigned long)ptr->mlet;
 	} else if (weap->spfx & SPFX_DFLAG1) {
-	    return ((ptr->mflags1 & weap->mtype) != 0L);
+	    return (ptr->mflags1 & weap->mtype) != 0L;
 	} else if (weap->spfx & SPFX_DFLAG2) {
 	    return ((ptr->mflags2 & weap->mtype) || (yours &&
 			((!Upolyd && (urace.selfmask & weap->mtype)) ||
@@ -598,7 +598,7 @@ struct monst *mtmp;
 		default:	impossible("Weird weapon special attack.");
 	    }
 	}
-	return(0);
+	return 0;
 }
 
 /* return the M2 flags of monster that an artifact's special attacks apply against */
@@ -1067,7 +1067,7 @@ int dieroll; /* needed for Magicbane and vorpal blades */
 					pline("Somehow, %s misses wildly.",
 						mon_nam(magr));
 				*dmgptr = 0;
-				return ((boolean)(youattack || vis));
+				return (boolean)(youattack || vis);
 			}
 			if (noncorporeal(mdef->data) || amorphous(mdef->data)) {
 				pline("%s slices through %s %s.", wepdesc,
@@ -1391,7 +1391,7 @@ boolean
 artifact_light(obj)
     struct obj *obj;
 {
-    return (get_artifact(obj) && obj->oartifact == ART_SUNSWORD);
+    return get_artifact(obj) && obj->oartifact == ART_SUNSWORD;
 }
 
 /* KMH -- Talking artifacts are finally implemented */
@@ -1423,7 +1423,7 @@ uchar inv_prop;
 {
 	const struct artifact *arti = get_artifact(otmp);
 
-	return((boolean)(arti && (arti->inv_prop == inv_prop)));
+	return (boolean)(arti && (arti->inv_prop == inv_prop));
 }
 
 /* Return the price sold to the hero of a given artifact or unique item */
@@ -1432,11 +1432,11 @@ arti_cost(otmp)
 struct obj *otmp;
 {
 	if (!otmp->oartifact)
-	    return ((long)objects[otmp->otyp].oc_cost);
+	    return (long)objects[otmp->otyp].oc_cost;
 	else if (artilist[(int) otmp->oartifact].cost)
-	    return (artilist[(int) otmp->oartifact].cost);
+	    return artilist[(int) otmp->oartifact].cost;
 	else
-	    return (100L * (long)objects[otmp->otyp].oc_cost);
+	    return 100L * (long)objects[otmp->otyp].oc_cost;
 }
 
 /*artifact.c*/

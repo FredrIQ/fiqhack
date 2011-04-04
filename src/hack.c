@@ -49,7 +49,7 @@ const char *msg;
 	/* else impossible? */
     }
 
-    return (revived);
+    return revived;
 }
 
 static int
@@ -99,7 +99,7 @@ moverock()
 	    }
 
 	    if (revive_nasty(rx, ry, "You sense movement on the other side."))
-		return (-1);
+		return -1;
 
 	    if (mtmp && !noncorporeal(mtmp->data) &&
 		    (!mtmp->mtrapped ||
@@ -266,10 +266,10 @@ nopushmsg:
 		    change_luck(-1);	/* Sokoban guilt */
 		break;
 	    } else
-		return (-1);
+		return -1;
 	}
     }
-    return (0);
+    return 0;
 }
 
 /*
@@ -487,17 +487,17 @@ bad_rock(mdat,x,y)
 struct permonst *mdat;
 xchar x,y;
 {
-	return((boolean) ((In_sokoban(&u.uz) && sobj_at(BOULDER,x,y)) ||
+	return (boolean) ((In_sokoban(&u.uz) && sobj_at(BOULDER,x,y)) ||
 	       (IS_ROCK(levl[x][y].typ)
 		    && (!tunnels(mdat) || needspick(mdat) || !may_dig(x,y))
-		    && !(passes_walls(mdat) && may_passwall(x,y)))));
+		    && !(passes_walls(mdat) && may_passwall(x,y))));
 }
 
 boolean
 invocation_pos(x, y)
 xchar x, y;
 {
-	return((boolean)(Invocation_lev(&u.uz) && x == inv_pos.x && y == inv_pos.y));
+	return (boolean)(Invocation_lev(&u.uz) && x == inv_pos.x && y == inv_pos.y);
 }
 
 
@@ -1502,8 +1502,8 @@ int roomno;
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 		if(!DEADMONSTER(mtmp) && mtmp->data == mdat &&
 		   index(in_rooms(mtmp->mx, mtmp->my, 0), roomno + ROOMOFFSET))
-			return(TRUE);
-	return(FALSE);
+			return TRUE;
+	return FALSE;
 }
 
 char *
@@ -1522,7 +1522,7 @@ int typewanted;
 
 	switch (rno = levl[x][y].roomno) {
 		case NO_ROOM:
-			return(ptr);
+			return ptr;
 		case SHARED:
 			step = 2;
 			break;
@@ -1532,7 +1532,7 @@ int typewanted;
 		default:			/* i.e. a regular room # */
 			if (goodtype(rno))
 				*(--ptr) = rno;
-			return(ptr);
+			return ptr;
 	}
 
 	min_x = x - 1;
@@ -1571,7 +1571,7 @@ int typewanted;
 		    !index(ptr, rno) && goodtype(rno))
 			*(--ptr) = rno;
 	}
-	return(ptr);
+	return ptr;
 }
 
 /* is (x,y) in a town? */
@@ -1774,7 +1774,7 @@ dopickup()
 		} else
 		    You("don't %s anything in here to pick up.",
 			  Blind ? "feel" : "see");
-		return(1);
+		return 1;
 	    } else {
 	    	int tmpcount = -count;
 		return loot_mon(u.ustuck, &tmpcount, (boolean *)0);
@@ -1784,26 +1784,26 @@ dopickup()
 	    if (Wwalking || is_floater(youmonst.data) || is_clinger(youmonst.data)
 			|| (Flying && !Breathless)) {
 		You("cannot dive into the water to pick things up.");
-		return(0);
+		return 0;
 	    } else if (!Underwater) {
 		You_cant("even see the bottom, let alone pick up %s.",
 				something);
-		return(0);
+		return 0;
 	    }
 	}
 	if (is_lava(u.ux, u.uy)) {
 	    if (Wwalking || is_floater(youmonst.data) || is_clinger(youmonst.data)
 			|| (Flying && !Breathless)) {
 		You_cant("reach the bottom to pick things up.");
-		return(0);
+		return 0;
 	    } else if (!likes_lava(youmonst.data)) {
 		You("would burn to a crisp trying to pick things up.");
-		return(0);
+		return 0;
 	    }
 	}
 	if(!OBJ_AT(u.ux, u.uy)) {
 		There("is nothing here to pick up.");
-		return(0);
+		return 0;
 	}
 	if (!can_reach_floor()) {
 		if (u.usteed && P_SKILL(P_RIDING) < P_BASIC)
@@ -1811,7 +1811,7 @@ dopickup()
 			y_monnam(u.usteed));
 		else
 			You("cannot reach the %s.", surface(u.ux,u.uy));
-		return(0);
+		return 0;
 	}
 
  	if (traphere && traphere->tseen) {
@@ -1823,11 +1823,11 @@ dopickup()
 		if ((traphere->ttyp == PIT || traphere->ttyp == SPIKED_PIT) &&
 		     (!u.utrap || (u.utrap && u.utraptype != TT_PIT))) {
 			You("cannot reach the bottom of the pit.");
-			return(0);
+			return 0;
 		}
 	}
 
-	return (pickup(-count));
+	return pickup(-count);
 }
 
 
@@ -1979,9 +1979,9 @@ monster_nearby()
 		   mtmp->mcanmove && !mtmp->msleeping &&  /* aplvax!jcn */
 		   !onscary(u.ux, u.uy, mtmp) &&
 		   canspotmon(mtmp))
-			return(1);
+			return 1;
 	}
-	return(0);
+	return 0;
 }
 
 void
@@ -2101,7 +2101,7 @@ weight_cap()
 		}
 		if (carrcap < 0) carrcap = 0;
 	}
-	return((int) carrcap);
+	return (int) carrcap;
 }
 
 static int wc;	/* current weight_cap(); valid after call to inv_weight() */
@@ -2134,7 +2134,7 @@ inv_weight()
 		otmp = otmp->nobj;
 	}
 	wc = weight_cap();
-	return (wt - wc);
+	return wt - wc;
 }
 
 /*
@@ -2164,7 +2164,7 @@ max_capacity()
 {
     int wt = inv_weight();
 
-    return (wt - (2 * wc));
+    return wt - (2 * wc);
 }
 
 boolean
@@ -2192,7 +2192,7 @@ inv_cnt()
 		ct++;
 		otmp = otmp->nobj;
 	}
-	return(ct);
+	return ct;
 }
 
 #ifdef GOLDOBJ

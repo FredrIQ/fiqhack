@@ -468,7 +468,7 @@ dlb_fread(buf, size, quan, dp)
     dlb *dp;
 {
     if (!dlb_initialized || size <= 0 || quan <= 0) return 0;
-    if (dp->fp) return (int) fread(buf, size, quan, dp->fp);
+    if (dp->fp) return int) fread(buf, size, quan, dp->fp;
     return do_dlb_fread(buf, size, quan, dp);
 }
 

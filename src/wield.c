@@ -187,7 +187,7 @@ struct obj *wep;
 		}
 	    }
 	}
-	return(res);
+	return res;
 }
 
 void
@@ -226,35 +226,35 @@ dowield()
 	multi = 0;
 	if (cantwield(youmonst.data)) {
 		pline("Don't be ridiculous!");
-		return(0);
+		return 0;
 	}
 
 	/* Prompt for a new weapon */
 	if (!(wep = getobj(wield_objs, "wield")))
 		/* Cancelled */
-		return (0);
+		return 0;
 	else if (wep == uwep) {
 	    You("are already wielding that!");
 	    if (is_weptool(wep)) unweapon = FALSE;	/* [see setuwep()] */
-		return (0);
+		return 0;
 	} else if (welded(uwep)) {
 		weldmsg(uwep);
 		/* previously interrupted armor removal mustn't be resumed */
 		reset_remarm();
-		return (0);
+		return 0;
 	}
 
 	/* Handle no object, or object in other slot */
 	if (wep == &zeroobj)
 		wep = (struct obj *) 0;
 	else if (wep == uswapwep)
-		return (doswapweapon());
+		return doswapweapon();
 	else if (wep == uquiver)
 		setuqwep((struct obj *) 0);
 	else if (wep->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL
 			| W_SADDLE)) {
 		You("cannot wield that!");
-		return (0);
+		return 0;
 	}
 
 	/* Set your new primary weapon */
@@ -264,7 +264,7 @@ dowield()
 		setuswapwep(oldwep);
 	untwoweapon();
 
-	return (result);
+	return result;
 }
 
 int
@@ -278,11 +278,11 @@ doswapweapon()
 	multi = 0;
 	if (cantwield(youmonst.data)) {
 		pline("Don't be ridiculous!");
-		return(0);
+		return 0;
 	}
 	if (welded(uwep)) {
 		weldmsg(uwep);
-		return (0);
+		return 0;
 	}
 
 	/* Unwield your current secondary weapon */
@@ -308,7 +308,7 @@ doswapweapon()
 	if (u.twoweap && !can_twoweapon())
 		untwoweapon();
 
-	return (result);
+	return result;
 }
 
 int
@@ -330,7 +330,7 @@ dowieldquiver()
 	/* Prompt for a new quiver */
 	if (!(newquiver = getobj(quivee_types, "ready")))
 		/* Cancelled */
-		return (0);
+		return 0;
 
 	/* Handle no object, or object in other slot */
 	/* Any type is okay, since we give no intrinsics anyways */
@@ -341,20 +341,20 @@ dowieldquiver()
 			setuqwep(newquiver = (struct obj *) 0);
 		} else {
 			You("already have no ammunition readied!");
-			return(0);
+			return 0;
 		}
 	} else if (newquiver == uquiver) {
 		pline("That ammunition is already readied!");
-		return(0);
+		return 0;
 	} else if (newquiver == uwep) {
 		/* Prevent accidentally readying the main weapon */
 		pline("%s already being used as a weapon!",
 		      !is_plural(uwep) ? "That is" : "They are");
-		return(0);
+		return 0;
 	} else if (newquiver->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL
 			| W_SADDLE)) {
 		You("cannot ready that!");
-		return (0);
+		return 0;
 	} else {
 		long dummy;
 
@@ -375,7 +375,7 @@ dowieldquiver()
 	/* Finally, place it in the quiver */
 	setuqwep(newquiver);
 	/* Take no time since this is a convenience slot */
-	return (0);
+	return 0;
 }
 
 /* used for #rub and for applying pick-axe, whip, grappling hook, or polearm */
@@ -487,8 +487,8 @@ can_twoweapon()
 			uswapwep->bknown = TRUE;
 		drop_uswapwep();
 	} else
-		return (TRUE);
-	return (FALSE);
+		return TRUE;
+	return FALSE;
 }
 
 void
@@ -511,7 +511,7 @@ dotwoweapon()
 		You("switch to your primary weapon.");
 		u.twoweap = 0;
 		update_inventory();
-		return (0);
+		return 0;
 	}
 
 	/* May we use two weapons? */
@@ -520,9 +520,9 @@ dotwoweapon()
 		You("begin two-weapon combat.");
 		u.twoweap = 1;
 		update_inventory();
-		return (rnd(20) > ACURR(A_DEX));
+		return rnd(20) > ACURR(A_DEX);
 	}
-	return (0);
+	return 0;
 }
 
 /*** Functions to empty a given slot ***/
@@ -676,7 +676,7 @@ int amount;
 			(amount >= 0) ? "twitch" : "itch");
 		strange_feeling(otmp, buf);
 		exercise(A_DEX, (boolean) (amount >= 0));
-		return(0);
+		return 0;
 	}
 
 	if (otmp && otmp->oclass == SCROLL_CLASS) otyp = otmp->otyp;
@@ -687,7 +687,7 @@ int amount;
 		Your("weapon seems sharper now.");
 		uwep->cursed = 0;
 		if (otyp != STRANGE_OBJECT) makeknown(otyp);
-		return(1);
+		return 1;
 	}
 
 	if(uwep->otyp == CRYSKNIFE && amount < 0) {
@@ -695,13 +695,13 @@ int amount;
 		uwep->oerodeproof = 0;
 		Your("weapon seems duller now.");
 		if (otyp != STRANGE_OBJECT && otmp->bknown) makeknown(otyp);
-		return(1);
+		return 1;
 	}
 
 	if (amount < 0 && uwep->oartifact && restrict_name(uwep, ONAME(uwep))) {
 	    if (!Blind)
 		Your("%s %s.", aobjnam(uwep, "faintly glow"), color);
-	    return(1);
+	    return 1;
 	}
 	/* there is a (soft) upper and lower limit to uwep->spe */
 	if(((uwep->spe > 5 && amount >= 0) || (uwep->spe < -5 && amount < 0))
@@ -714,7 +714,7 @@ int amount;
 		Your("%s.", aobjnam(uwep, "evaporate"));
 
 	    useupall(uwep);	/* let all of them disappear */
-	    return(1);
+	    return 1;
 	}
 	if (!Blind) {
 	    xtime = (amount*amount == 1) ? "moment" : "while";
@@ -746,7 +746,7 @@ int amount;
 	    Your("%s unexpectedly.",
 		aobjnam(uwep, "suddenly vibrate"));
 
-	return(1);
+	return 1;
 }
 
 int

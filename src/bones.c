@@ -331,15 +331,15 @@ getbones()
 	char c, *bonesid, oldbonesid[10];
 
 	if(discover)		/* save bones files for real games */
-		return(0);
+		return 0;
 
 	/* wizard check added by GAN 02/05/87 */
 	if(rn2(3)	/* only once in three times do we find bones */
 		&& !wizard)
-		return(0);
-	if(no_bones_level(&u.uz)) return(0);
+		return 0;
+	if(no_bones_level(&u.uz)) return 0;
 	fd = open_bonesfile(&u.uz, &bonesid);
-	if (fd < 0) return(0);
+	if (fd < 0) return 0;
 
 	if ((ok = uptodate(fd, bones)) == 0) {
 	    if (!wizard)
@@ -349,7 +349,7 @@ getbones()
 		if(wizard)  {
 			if(yn("Get bones?") == 'n') {
 				(void) close(fd);
-				return(0);
+				return 0;
 			}
 		}
 
@@ -399,7 +399,7 @@ getbones()
 
 	if(wizard) {
 		if(yn("Unlink bones?") == 'n') {
-			return(ok);
+			return ok;
 		}
 	}
 	if (!delete_bonesfile(&u.uz)) {
@@ -410,9 +410,9 @@ getbones()
 		 * -- just generate a new level for those N-1 games.
 		 */
 		/* pline("Cannot unlink bones."); */
-		return(0);
+		return 0;
 	}
-	return(ok);
+	return ok;
 }
 
 /*bones.c*/

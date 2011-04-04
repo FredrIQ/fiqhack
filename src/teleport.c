@@ -67,7 +67,7 @@ unsigned gpflags;
 		if (mtmp == &youmonst)
 		    return !!HLevitation;
 		else
-		    return (is_flyer(mdat) || likes_lava(mdat));
+		    return is_flyer(mdat) || likes_lava(mdat);
 	    }
 	    if (passes_walls(mdat) && may_passwall(x,y)) return TRUE;
 	}
@@ -367,7 +367,7 @@ boolean force_it;
 	struct obj *otmp;
 
 	if (mtmp == u.usteed)
-		return (FALSE);
+		return FALSE;
 
 	if (mtmp->mleashed) {
 	    otmp = get_mleash(mtmp);
@@ -475,7 +475,7 @@ dotele()
 			if (!Teleportation)
 			    You("don't know that spell.");
 			else You("are not able to teleport at will.");
-			return(0);
+			return 0;
 		    }
 		}
 	    }
@@ -507,10 +507,10 @@ dotele()
 	    if (castit) {
 		exercise(A_WIS, TRUE);
 		if (spelleffects(sp_no, TRUE))
-			return(1);
+			return 1;
 		else
 		    if (!wizard)
-			return(0);
+			return 0;
 	    } else {
 		u.uen -= energy;
 		flags.botl = 1;
@@ -523,10 +523,10 @@ dotele()
 		(void) next_to_u();
 	} else {
 		You(shudder_for_moment);
-		return(0);
+		return 0;
 	}
 	if (!trap) morehungry(100);
-	return(1);
+	return 1;
 }
 
 

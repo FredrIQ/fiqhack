@@ -58,8 +58,8 @@ const void * vy;
 
 	x = (const struct mkroom *)vx;
 	y = (const struct mkroom *)vy;
-	if(x->lx < y->lx) return(-1);
-	return(x->lx > y->lx);
+	if(x->lx < y->lx) return -1;
+	return x->lx > y->lx;
 }
 
 static void

@@ -1316,7 +1316,7 @@ clear_path(col1,row1,col2,row2)
 	    q3_path(row1,col1,row2,col2,cleardone);
 	}
     }
-    return((boolean)result);
+    return (boolean)result;
 }
 
 
