@@ -225,12 +225,8 @@ struct edog *edog;
 		    You_feel("worried about %s.", y_monnam(mtmp));
 		stop_occupation();
 	    } else if (monstermoves > edog->hungrytime + 750 || mtmp->mhp < 1) {
- dog_died:
-		if (mtmp->mleashed
-#ifdef STEED
-		    && mtmp != u.usteed
-#endif
-		    )
+dog_died:
+		if (mtmp->mleashed && mtmp != u.usteed)
 		    Your("leash goes slack.");
 		else if (cansee(mtmp->mx, mtmp->my))
 		    pline("%s starves.", Monnam(mtmp));
@@ -325,11 +321,9 @@ int after, udist, whappr;
 	xchar otyp;
 	int appr;
 
-#ifdef STEED
 	/* Steeds don't move on their own will */
 	if (mtmp == u.usteed)
 		return (-2);
-#endif
 
 	omx = mtmp->mx;
 	omy = mtmp->my;
@@ -495,7 +489,6 @@ int after;	/* this is extra fast monster movement */
 	if (has_edog && dog_hunger(mtmp, edog)) return(2);	/* starved */
 
 	udist = distu(omx,omy);
-#ifdef STEED
 	/* Let steeds eat and maybe throw rider during Conflict */
 	if (mtmp == u.usteed) {
 	    if (Conflict && !resist(mtmp, RING_CLASS, 0, 0)) {
@@ -503,10 +496,9 @@ int after;	/* this is extra fast monster movement */
 		return (1);
 	    }
 	    udist = 1;
-	} else
-#endif
+	} else if (!udist)
 	/* maybe we tamed him while being swallowed --jgm */
-	if (!udist) return(0);
+		return(0);
 
 	nix = omx;	/* set before newdogpos */
 	niy = omy;

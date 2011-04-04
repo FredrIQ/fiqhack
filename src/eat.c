@@ -840,10 +840,8 @@ int pm;
 		    char buf[BUFSZ];
 		    You_cant("resist the temptation to mimic %s.",
 			Hallucination ? "an orange" : "a pile of gold");
-#ifdef STEED
                     /* A pile of gold can't ride. */
 		    if (u.usteed) dismount_steed(DISMOUNT_FELL);
-#endif
 		    nomul(-tmp);
 		    sprintf(buf, Hallucination ?
 			"You suddenly dread being peeled and mimic %s again!" :
@@ -1200,9 +1198,7 @@ struct obj *obj;
 		    what = "you lose control of",  where = "yourself";
 		else
 		    what = "you slap against the", where =
-#ifdef STEED
 			   (u.usteed) ? "saddle" :
-#endif
 			   surface(u.ux,u.uy);
 		pline_The("world spins and %s %s.", what, where);
 		flags.soundok = 0;
@@ -1873,11 +1869,7 @@ doeat()		/* generic "eat" command funtion (see cmd.c) */
 	if (!is_edible(otmp)) {
 	    You("cannot eat that!");
 	    return 0;
-	} else if ((otmp->owornmask & (W_ARMOR|W_TOOL|W_AMUL
-#ifdef STEED
-			|W_SADDLE
-#endif
-			)) != 0) {
+	} else if ((otmp->owornmask & (W_ARMOR | W_TOOL | W_AMUL | W_SADDLE)) != 0) {
 	    /* let them eat rings */
 	    You_cant("eat %s you're wearing.", something);
 	    return 0;
@@ -2364,9 +2356,7 @@ floorfood(verb,corpsecheck)	/* get food from floor or pack */
 
 	/* if we can't touch floor objects then use invent food only */
 	if (!can_reach_floor() ||
-#ifdef STEED
 		(feeding && u.usteed) || /* can't eat off floor while riding */
-#endif
 		((is_pool(u.ux, u.uy) || is_lava(u.ux, u.uy)) &&
 		    (Wwalking || is_clinger(youmonst.data) ||
 			(Flying && !Breathless))))

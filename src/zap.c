@@ -26,9 +26,7 @@ static boolean zap_updown(struct obj *);
 static int zhitm(struct monst *,int,int,struct obj **);
 static void zhitu(int,int,const char *,XCHAR_P,XCHAR_P);
 static void revive_egg(struct obj *);
-#ifdef STEED
 static boolean zap_steed(struct obj *);
-#endif
 
 static int zap_hit(int,int);
 static void backfire(struct obj *);
@@ -232,7 +230,6 @@ struct obj *otmp;
 				else pline("%s opens its mouth!", Monnam(mtmp));
 			}
 			expels(mtmp, mtmp->data, TRUE);
-#ifdef STEED
 		} else if (!!(obj = which_armor(mtmp, W_SADDLE))) {
 			mtmp->misc_worn_check &= ~obj->owornmask;
 			update_mon_intrinsics(mtmp, obj, FALSE, FALSE);
@@ -241,7 +238,6 @@ struct obj *otmp;
 			place_object(obj, mtmp->mx, mtmp->my);
 			/* call stackobj() if we ever drop anything that can merge */
 			newsym(mtmp->mx, mtmp->my);
-#endif
 		}
 		break;
 	case SPE_HEALING:
@@ -2118,7 +2114,6 @@ boolean ordinary;
 	return(damage);
 }
 
-#ifdef STEED
 /* you've zapped a wand downwards while riding
  * Return TRUE if the steed was hit by the wand.
  * Return FALSE if the steed was not hit by the wand.
@@ -2178,7 +2173,6 @@ struct obj *obj;	/* wand or spell */
 	}
 	return steedhit;
 }
-#endif
 
 
 /*
@@ -2409,19 +2403,16 @@ struct obj *obj;	/* wand or spell */
 /* called for various wand and spell effects - M. Stephenson */
 void
 weffects(obj)
-struct	obj	*obj;
+struct obj *obj;
 {
 	int otyp = obj->otyp;
 	boolean disclose = FALSE, was_unkn = !objects[otyp].oc_name_known;
 
 	exercise(A_WIS, TRUE);
-#ifdef STEED
 	if (u.usteed && (objects[otyp].oc_dir != NODIR) &&
 	    !u.dx && !u.dy && (u.dz > 0) && zap_steed(obj)) {
 		disclose = TRUE;
-	} else
-#endif
-	if (objects[otyp].oc_dir == IMMEDIATE) {
+	} else if (objects[otyp].oc_dir == IMMEDIATE) {
 	    obj_zapped = FALSE;
 
 	    if (u.uswallow) {
@@ -3294,9 +3285,7 @@ int dx,dy;
 	if (mon) {
 	    if (type == ZT_SPELL(ZT_FIRE)) break;
 	    if (type >= 0) mon->mstrategy &= ~STRAT_WAITMASK;
-#ifdef STEED
-	    buzzmonst:
-#endif
+buzzmonst:
 	    if (zap_hit(find_mac(mon), spell_type)) {
 		if (mon_reflects(mon, (char *)0)) {
 		    if(cansee(mon->mx,mon->my)) {
@@ -3392,13 +3381,10 @@ int dx,dy;
 	    }
 	} else if (sx == u.ux && sy == u.uy && range >= 0) {
 	    nomul(0);
-#ifdef STEED
 	    if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, (char *)0)) {
 		    mon = u.usteed;
 		    goto buzzmonst;
-	    } else
-#endif
-	    if (zap_hit((int) u.uac, 0)) {
+	    } else if (zap_hit((int) u.uac, 0)) {
 		range -= 2;
 		pline("%s hits you!", The(fltxt));
 		if (Reflecting) {

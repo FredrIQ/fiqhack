@@ -630,10 +630,7 @@ plus:
 		if (!is_weptool(obj))
 		    add_erosion_words(obj, prefix);
 		if(obj->owornmask & (W_TOOL /* blindfold */
-#ifdef STEED
-				| W_SADDLE
-#endif
-				)) {
+				| W_SADDLE)) {
 			strcat(bp, " (being worn)");
 			break;
 		}

@@ -1071,11 +1071,9 @@ see_monsters()
 	newsym(mon->mx,mon->my);
 	if (mon->wormno) see_wsegs(mon);
     }
-#ifdef STEED
     /* when mounted, hero's location gets caught by monster loop */
     if (!u.usteed)
-#endif
-    newsym(u.ux, u.uy);
+	newsym(u.ux, u.uy);
 }
 
 /*

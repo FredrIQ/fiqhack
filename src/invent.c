@@ -1119,10 +1119,7 @@ is_worn(otmp)
 struct obj *otmp;
 {
     return((boolean)(!!(otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL |
-#ifdef STEED
-			W_SADDLE |
-#endif
-			W_WEP | W_SWAPWEP | W_QUIVER))));
+			W_SADDLE | W_WEP | W_SWAPWEP | W_QUIVER))));
 }
 
 static const char removeables[] =
@@ -2435,11 +2432,8 @@ static boolean
 tool_in_use(obj)
 struct obj *obj;
 {
-	if ((obj->owornmask & (W_TOOL
-#ifdef STEED
-			| W_SADDLE
-#endif
-			)) != 0L) return TRUE;
+	if ((obj->owornmask & (W_TOOL | W_SADDLE)) != 0L)
+		return TRUE;
 	if (obj->oclass != TOOL_CLASS) return FALSE;
 	return (boolean)(obj == uwep || obj->lamplit ||
 				(obj->otyp == LEASH && obj->leashmon));

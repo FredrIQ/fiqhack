@@ -810,22 +810,17 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 		you_have(buf);
 	}
 	if (Fumbling) enl_msg("You fumble", "", "d", "");
-	if (Wounded_legs
-#ifdef STEED
-	    && !u.usteed
-#endif
-			  ) {
+	if (Wounded_legs && !u.usteed) {
 		sprintf(buf, "wounded %s", makeplural(body_part(LEG)));
 		you_have(buf);
 	}
-#if defined(STEED)
 	if (Wounded_legs && u.usteed && wizard) {
 	    strcpy(buf, x_monnam(u.usteed, ARTICLE_YOUR, (char *)0, 
 		    SUPPRESS_SADDLE | SUPPRESS_HALLUCINATION, FALSE));
 	    *buf = highc(*buf);
 	    enl_msg(buf, " has", " had", " wounded legs");
 	}
-#endif
+	
 	if (Sleeping) enl_msg("You ", "fall", "fell", " asleep");
 	if (Hunger) enl_msg("You hunger", "", "ed", " rapidly");
 
@@ -881,7 +876,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	if (Breathless) you_can("survive without air");
 	else if (Amphibious) you_can("breathe water");
 	if (Passes_walls) you_can("walk through walls");
-#ifdef STEED
+	
 	/* If you die while dismounting, u.usteed is still set.  Since several
 	 * places in the done() sequence depend on u.usteed, just detect this
 	 * special case. */
@@ -889,7 +884,6 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
 	    sprintf(buf, "riding %s", y_monnam(u.usteed));
 	    you_are(buf);
 	}
-#endif
 	if (u.uswallow) {
 	    sprintf(buf, "swallowed by %s", a_monnam(u.ustuck));
 	    if (wizard) sprintf(eos(buf), " (%u)", u.uswldtim);
@@ -1351,9 +1345,7 @@ struct ext_func_tab extcmdlist[] = {
 	{"offer", "offer a sacrifice to the gods", dosacrifice, FALSE},
 	{"pray", "pray to the gods for help", dopray, TRUE},
 	{"quit", "exit without saving current game", done2, TRUE},
-#ifdef STEED
 	{"ride", "ride (or stop riding) a monster", doride, FALSE},
-#endif
 	{"rub", "rub a lamp or a stone", dorub, FALSE},
 	{"sit", "sit down", dosit, FALSE},
 	{"turn", "turn undead", doturn, TRUE},

@@ -343,17 +343,16 @@ exerper()
 #ifdef DEBUG
 		pline("exerper: Status checks");
 #endif
-		if ((HClairvoyant & (INTRINSIC|TIMEOUT)) &&
-			!BClairvoyant)                      exercise(A_WIS, TRUE);
-		if (HRegeneration)			exercise(A_STR, TRUE);
-
-		if(Sick || Vomiting)     exercise(A_CON, FALSE);
-		if(Confusion || Hallucination)		exercise(A_WIS, FALSE);
-		if((Wounded_legs 
-#ifdef STEED
-		    && !u.usteed
-#endif
-			    ) || Fumbling || HStun)	exercise(A_DEX, FALSE);
+		if ((HClairvoyant & (INTRINSIC|TIMEOUT)) && !BClairvoyant)
+			exercise(A_WIS, TRUE);
+		if (HRegeneration)
+			exercise(A_STR, TRUE);
+		if(Sick || Vomiting)
+			exercise(A_CON, FALSE);
+		if(Confusion || Hallucination)
+			exercise(A_WIS, FALSE);
+		if((Wounded_legs && !u.usteed) || Fumbling || HStun)
+			exercise(A_DEX, FALSE);
 	}
 }
 

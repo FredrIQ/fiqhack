@@ -586,13 +586,11 @@ char *enterstring;
 			  "Leave the %s%s outside.",
 			  tool, plur(cnt));
 		should_block = TRUE;
-#ifdef STEED
 	    } else if (u.usteed) {
 		verbalize(NOTANGRY(shkp) ?
 			  "Will you please leave %s outside?" :
 			  "Leave %s outside.", y_monnam(u.usteed));
 		should_block = TRUE;
-#endif
 	    } else {
 		should_block = (Fast && (sobj_at(PICK_AXE, u.ux, u.uy) ||
 				      sobj_at(DWARVISH_MATTOCK, u.ux, u.uy)));
@@ -3201,11 +3199,7 @@ struct monst *shkp;
 		avoid = FALSE;
 	} else {
 #define	GDIST(x,y)	(dist2(x,y,gx,gy))
-		if (Invis
-#ifdef STEED
-			|| u.usteed
-#endif
-			) {
+		if (Invis || u.usteed) {
 		    avoid = FALSE;
 		} else {
 		    uondoor = (u.ux == eshkp->shd.x && u.uy == eshkp->shd.y);
@@ -3939,10 +3933,7 @@ xchar x, y;
 		&& shkp->mcanmove && !shkp->msleeping
 		&& (x == sx-1 || x == sx+1 || y == sy-1 || y == sy+1)
 		&& (Invis || carrying(PICK_AXE) || carrying(DWARVISH_MATTOCK)
-#ifdef STEED
-			|| u.usteed
-#endif
-	  )) {
+			|| u.usteed)) {
 		pline("%s%s blocks your way!", shkname(shkp),
 				Invis ? " senses your motion and" : "");
 		return(TRUE);

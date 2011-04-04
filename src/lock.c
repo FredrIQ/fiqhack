@@ -662,18 +662,11 @@ doclose()		/* try to close a door */
 	}
 
 	if(door->doormask == D_ISOPEN) {
-	    if(verysmall(youmonst.data)
-#ifdef STEED
-		&& !u.usteed
-#endif
-		) {
+	    if(verysmall(youmonst.data) && !u.usteed) {
 		 pline("You're too small to push the door closed.");
 		 return(0);
 	    }
-	    if (
-#ifdef STEED
-		 u.usteed ||
-#endif
+	    if (u.usteed ||
 		rn2(25) < (ACURRSTR+ACURR(A_DEX)+ACURR(A_CON))/3) {
 		pline_The("door closes.");
 		door->doormask = D_CLOSED;

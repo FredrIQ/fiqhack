@@ -1656,7 +1656,6 @@ extern struct obj *findgold(struct obj *);
 
 /* ### steed.c ### */
 
-#ifdef STEED
 extern void rider_cant_reach(void);
 extern boolean can_saddle(struct monst *);
 extern int use_saddle(struct obj *);
@@ -1667,7 +1666,6 @@ extern void exercise_steed(void);
 extern void kick_steed(void);
 extern void dismount_steed(int);
 extern void place_monster(struct monst *,int,int);
-#endif
 
 /* ### teleport.c ### */
 

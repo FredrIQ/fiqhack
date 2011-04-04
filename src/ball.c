@@ -670,9 +670,8 @@ xchar x, y;
 		long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
 		pline(pullmsg, "bear trap");
 		set_wounded_legs(side, rn1(1000, 500));
-#ifdef STEED
+		
 		if (!u.usteed)
-#endif
 		{
 		    Your("%s %s is severely damaged.",
 					(side == LEFT_SIDE) ? "left" : "right",
