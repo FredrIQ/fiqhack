@@ -500,9 +500,7 @@ vision_recalc(control)
     vision_full_recalc = 0;			/* reset flag */
     if (in_mklev || !iflags.vision_inited) return;
 
-#ifdef GCC_WARN
     row = 0;
-#endif
 
     /*
      * Either the light sources have been taken care of, or we must
@@ -1359,9 +1357,7 @@ right_side(row, left, right_mark, limits)
     char	  *row_max;	/* right most [used by macro set_max()] */
     int		  lim_max;	/* right most limit of circle */
 
-#ifdef GCC_WARN
     rowp = row_min = row_max = 0;
-#endif
     nrow    = row + step;
     /*
      * Can go deeper if the row is in bounds and the next row is within
@@ -1534,9 +1530,7 @@ left_side(row, left_mark, right, limits)
     char	  *row_min, *row_max;
     int		  lim_min;
 
-#ifdef GCC_WARN
     rowp = row_min = row_max = 0;
-#endif
     nrow    = row+step;
     deeper  = good_row(nrow) && (!limits || (*limits >= *(limits+1)));
     if(!vis_func) {
