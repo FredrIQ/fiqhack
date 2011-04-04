@@ -102,10 +102,10 @@ extern void ballfall(void);
 extern void placebc(void);
 extern void unplacebc(void);
 extern void set_bc(int);
-extern void move_bc(int,int,XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P);
-extern boolean drag_ball(XCHAR_P,XCHAR_P,
-		int *,xchar *,xchar *,xchar *,xchar *, boolean *,BOOLEAN_P);
-extern void drop_ball(XCHAR_P,XCHAR_P);
+extern void move_bc(int,int,xchar,xchar,xchar,xchar);
+extern boolean drag_ball(xchar,xchar,
+		int *,xchar *,xchar *,xchar *,xchar *, boolean *,boolean);
+extern void drop_ball(xchar,xchar);
 extern void drag_down(void);
 
 /* ### bones.c ### */
@@ -123,7 +123,7 @@ extern void max_rank_sz(void);
 extern long botl_score(void);
 #endif
 extern int describe_level(char *);
-extern const char *rank_of(int,SHORT_P,BOOLEAN_P);
+extern const char *rank_of(int, short, boolean);
 extern void bot(void);
 
 /* ### cmd.c ### */

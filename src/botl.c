@@ -38,18 +38,12 @@ static const char *rank(void);
 
 
 /* convert experience level (1..30) to rank index (0..8) */
-int
-xlev_to_rank(xlev)
-int xlev;
+int xlev_to_rank(int xlev)
 {
 	return (xlev <= 2) ? 0 : (xlev <= 30) ? ((xlev + 2) / 4) : 8;
 }
 
-const char *
-rank_of(lev, monnum, female)
-	int lev;
-	short monnum;
-	boolean female;
+const char *rank_of(int lev, short monnum, boolean female)
 {
 	struct Role *role;
 	int i;
@@ -75,16 +69,12 @@ rank_of(lev, monnum, female)
 }
 
 
-static const char *
-rank()
+static const char *rank(void)
 {
 	return rank_of(u.ulevel, Role_switch, flags.female);
 }
 
-int
-title_to_mon(str, rank_indx, title_length)
-const char *str;
-int *rank_indx, *title_length;
+int title_to_mon(const char *str, int *rank_indx, int *title_length)
 {
 	int i, j;
 
@@ -110,8 +100,7 @@ int *rank_indx, *title_length;
 }
 
 
-void
-max_rank_sz()
+void max_rank_sz(void)
 {
 	int i, r, maxr = 0;
 	for (i = 0; i < 9; i++) {
@@ -124,8 +113,7 @@ max_rank_sz()
 
 
 #ifdef SCORE_ON_BOTL
-long
-botl_score()
+long botl_score(void)
 {
     int deepest = deepest_lev_reached(FALSE);
 #ifndef GOLDOBJ
@@ -144,8 +132,7 @@ botl_score()
 }
 #endif
 
-static void
-bot1()
+static void bot1(void)
 {
 	char newbot1[MAXCO];
 	char *nb;
@@ -199,9 +186,7 @@ bot1()
 }
 
 /* provide the name of the current level for display by various ports */
-int
-describe_level(buf)
-char *buf;
+int describe_level(char *buf)
 {
 	int ret = 1;
 
@@ -221,8 +206,7 @@ char *buf;
 	return ret;
 }
 
-static void
-bot2()
+static void bot2(void)
 {
 	char  newbot2[MAXCO];
 	char *nb;
@@ -273,8 +257,7 @@ bot2()
 	putstr(WIN_STATUS, 0, newbot2);
 }
 
-void
-bot()
+void bot(void)
 {
 	bot1();
 	bot2();
