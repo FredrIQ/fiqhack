@@ -9,9 +9,9 @@
 static boolean did_dig_msg;
 
 static boolean rm_waslit(void);
-static void mkcavepos(XCHAR_P,XCHAR_P,int,BOOLEAN_P,BOOLEAN_P);
-static void mkcavearea(BOOLEAN_P);
-static int dig_typ(struct obj *,XCHAR_P,XCHAR_P);
+static void mkcavepos(xchar,xchar,int,boolean,boolean);
+static void mkcavearea(boolean);
+static int dig_typ(struct obj *,xchar,xchar);
 static int dig(void);
 static schar fillholetyp(int, int);
 static void dig_up_grave(void);
@@ -25,8 +25,7 @@ static void dig_up_grave(void);
 #define DIGTYP_TREE       5
 
 
-static boolean
-rm_waslit()
+static boolean rm_waslit(void)
 {
     xchar x, y;
 
@@ -42,11 +41,7 @@ rm_waslit()
  * boulders in the name of a nice effect.  Vision will get fixed up again
  * immediately after the effect is complete.
  */
-static void
-mkcavepos(x, y, dist, waslit, rockit)
-    xchar x,y;
-    int dist;
-    boolean waslit, rockit;
+static void mkcavepos(xchar x, xchar y, int dist, boolean waslit, boolean rockit)
 {
     struct rm *lev;
 
@@ -81,9 +76,7 @@ mkcavepos(x, y, dist, waslit, rockit)
     else newsym(x,y);
 }
 
-static void
-mkcavearea(rockit)
-boolean rockit;
+static void mkcavearea(boolean rockit)
 {
     int dist;
     xchar xmin = u.ux, xmax = u.ux;
@@ -128,10 +121,7 @@ boolean rockit;
 }
 
 /* When digging into location <x,y>, what are you actually digging into? */
-static int
-dig_typ(otmp, x, y)
-struct obj *otmp;
-xchar x, y;
+static int dig_typ(struct obj *otmp, xchar x, xchar y)
 {
 	boolean ispick = is_pick(otmp);
 
@@ -145,8 +135,7 @@ xchar x, y;
 			DIGTYP_ROCK : DIGTYP_UNDIGGABLE);
 }
 
-boolean
-is_digging()
+boolean is_digging(void)
 {
 	if (occupation == dig) {
 	    return TRUE;
@@ -157,11 +146,7 @@ is_digging()
 #define BY_YOU		(&youmonst)
 #define BY_OBJECT	((struct monst *)0)
 
-boolean
-dig_check(madeby, verbose, x, y)
-	struct monst	*madeby;
-	boolean		verbose;
-	int		x, y;
+boolean dig_check(struct monst *madeby, boolean verbose, int x, int y)
 {
 	struct trap *ttmp = t_at(x, y);
 	const char *verb = (madeby == BY_YOU && uwep && is_axe(uwep)) ? "chop" : "dig in";
@@ -204,8 +189,7 @@ dig_check(madeby, verbose, x, y)
 	return TRUE;
 }
 
-static int
-dig()
+static int dig(void)
 {
 	struct rm *lev;
 	xchar dpx = digging.pos.x, dpy = digging.pos.y;
@@ -429,18 +413,14 @@ cleanup:
 }
 
 /* When will hole be finished? Very rough indication used by shopkeeper. */
-int
-holetime()
+int holetime(void)
 {
 	if(occupation != dig || !*u.ushops) return -1;
 	return (250 - digging.effort) / 20;
 }
 
 /* Return typ of liquid to fill a hole with, or ROOM, if no liquid nearby */
-static
-schar
-fillholetyp(x,y)
-int x, y;
+static schar fillholetyp(int x, int y)
 {
     int x1, y1;
     int lo_x = max(1,x-1), hi_x = min(x+1,COLNO-1),
@@ -471,11 +451,7 @@ int x, y;
 	return ROOM;
 }
 
-void
-digactualhole(x, y, madeby, ttyp)
-int	x, y;
-struct monst	*madeby;
-int ttyp;
+void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 {
 	struct obj *oldobjs, *newobjs;
 	struct trap *ttmp;
@@ -639,9 +615,7 @@ int ttyp;
 }
 
 /* return TRUE if digging succeeded, FALSE otherwise */
-boolean
-dighole(pit_only)
-boolean pit_only;
+boolean dighole(boolean pit_only)
 {
 	struct trap *ttmp = t_at(u.ux, u.uy);
 	struct rm *lev = &levl[u.ux][u.uy];
@@ -755,8 +729,7 @@ boolean pit_only;
 	return FALSE;
 }
 
-static void
-dig_up_grave()
+static void dig_up_grave(void)
 {
 	struct obj *otmp;
 
@@ -801,9 +774,7 @@ dig_up_grave()
 	return;
 }
 
-int
-use_pick_axe(obj)
-struct obj *obj;
+int use_pick_axe(struct obj *obj)
 {
 	boolean ispick;
 	char dirsyms[12];
@@ -854,9 +825,7 @@ struct obj *obj;
 /*       the "In what direction do you want to dig?" query.        */
 /*       use_pick_axe2() uses the existing u.dx, u.dy and u.dz    */
 
-int
-use_pick_axe2(obj) 
-struct obj *obj;
+int use_pick_axe2(struct obj *obj)
 {
 	int rx, ry;
 	struct rm *lev;
@@ -1007,11 +976,7 @@ struct obj *obj;
  * If mtmp is assumed to be a watchman, a watchman is found if mtmp == 0
  * zap == TRUE if wand/spell of digging, FALSE otherwise (chewing)
  */
-void
-watch_dig(mtmp, x, y, zap)
-    struct monst *mtmp;
-    xchar x, y;
-    boolean zap;
+void watch_dig(struct monst *mtmp, xchar x, xchar y, boolean zap)
 {
 	struct rm *lev = &levl[x][y];
 
@@ -1055,9 +1020,7 @@ watch_dig(mtmp, x, y, zap)
 
 
 /* Return TRUE if monster died, FALSE otherwise.  Called from m_move(). */
-boolean
-mdig_tunnel(mtmp)
-struct monst *mtmp;
+boolean mdig_tunnel(struct monst *mtmp)
 {
 	struct rm *here;
 	int pile = rnd(12);
@@ -1129,8 +1092,7 @@ struct monst *mtmp;
 
 
 /* digging via wand zap or spell cast */
-void
-zap_dig()
+void zap_dig(void)
 {
 	struct rm *room;
 	struct monst *mtmp;
@@ -1272,9 +1234,7 @@ zap_dig()
 
 /* move objects from fobj/nexthere lists to buriedobjlist, keeping position */
 /* information */
-struct obj *
-bury_an_obj(otmp)
-	struct obj *otmp;
+struct obj *bury_an_obj(struct obj *otmp)
 {
 	struct obj *otmp2;
 	boolean under_ice;
@@ -1326,9 +1286,7 @@ bury_an_obj(otmp)
 	return otmp2;
 }
 
-void
-bury_objs(x, y)
-int x, y;
+void bury_objs(int x, int y)
 {
 	struct obj *otmp, *otmp2;
 
@@ -1345,9 +1303,7 @@ int x, y;
 }
 
 /* move objects from buriedobjlist to fobj/nexthere lists */
-void
-unearth_objs(x, y)
-int x, y;
+void unearth_objs(int x, int y)
 {
 	struct obj *otmp, *otmp2;
 
@@ -1377,11 +1333,9 @@ int x, y;
  * This is used by buried objects other than corpses.  When a container rots
  * away, any contents become newly buried objects.
  */
-/* ARGSUSED */
-void
-rot_organic(arg, timeout)
-void * arg;
-long timeout;	/* unused */
+/* ARGSUSED ; */
+void rot_organic(void *arg,
+		 long timeout /* unused */)
 {
 	struct obj *obj = (struct obj *) arg;
 
@@ -1395,16 +1349,13 @@ long timeout;	/* unused */
 	    (void)bury_an_obj(obj->cobj);
 	}
 	obj_extract_self(obj);
-	obfree(obj, (struct obj *) 0);
+	obfree(obj, NULL);
 }
 
 /*
  * Called when a corpse has rotted completely away.
  */
-void
-rot_corpse(arg, timeout)
-void * arg;
-long timeout;	/* unused */
+void rot_corpse(void *arg, long timeout)
 {
 	xchar x = 0, y = 0;
 	struct obj *obj = (struct obj *) arg;
@@ -1444,8 +1395,7 @@ long timeout;	/* unused */
 
 
 #ifdef DEBUG
-int
-wiz_debug_cmd() /* in this case, bury everything at your loc and around */
+int wiz_debug_cmd(void) /* in this case, bury everything at your loc and around */
 {
 	int x, y;
 

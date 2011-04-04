@@ -13,18 +13,15 @@
 extern boolean known;	/* from read.c */
 
 static void do_dknown_of(struct obj *);
-static boolean check_map_spot(int,int,CHAR_P,unsigned);
-static boolean clear_stale_map(CHAR_P,unsigned);
-static void sense_trap(struct trap *,XCHAR_P,XCHAR_P,int);
+static boolean check_map_spot(int,int,char,unsigned);
+static boolean clear_stale_map(char,unsigned);
+static void sense_trap(struct trap *,xchar,xchar,int);
 static void show_map_spot(int,int);
 static void findone(int,int,void *);
 static void openone(int,int,void *);
 
 /* Recursively search obj for an object in class oclass and return 1st found */
-struct obj *
-o_in(obj, oclass)
-struct obj* obj;
-char oclass;
+struct obj *o_in(struct obj *obj, char oclass)
 {
     struct obj* otmp;
     struct obj *temp;
@@ -37,14 +34,11 @@ char oclass;
 	    else if (Has_contents(otmp) && (temp = o_in(otmp, oclass)))
 		return temp;
     }
-    return (struct obj *) 0;
+    return NULL;
 }
 
 /* Recursively search obj for an object made of specified material and return 1st found */
-struct obj *
-o_material(obj, material)
-struct obj* obj;
-unsigned material;
+struct obj *o_material(struct obj *obj, unsigned material)
 {
     struct obj* otmp;
     struct obj *temp;
@@ -57,12 +51,10 @@ unsigned material;
 	    else if (Has_contents(otmp) && (temp = o_material(otmp, material)))
 		return temp;
     }
-    return (struct obj *) 0;
+    return NULL;
 }
 
-static void
-do_dknown_of(obj)
-struct obj *obj;
+static void do_dknown_of(struct obj *obj)
 {
     struct obj *otmp;
 
@@ -74,11 +66,7 @@ struct obj *obj;
 }
 
 /* Check whether the location has an outdated object displayed on it. */
-static boolean
-check_map_spot(x, y, oclass, material)
-int x, y;
-char oclass;
-unsigned material;
+static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 {
 	int glyph;
 	struct obj *otmp;
@@ -140,10 +128,7 @@ unsigned material;
    reappear after the detection has completed.  Return true if noticeable
    change occurs.
  */
-static boolean
-clear_stale_map(oclass, material)
-char oclass;
-unsigned material;
+static boolean clear_stale_map(char oclass, unsigned material)
 {
 	int zx, zy;
 	boolean change_made = FALSE;
@@ -159,9 +144,7 @@ unsigned material;
 }
 
 /* look for gold, on the floor or in monsters' possession */
-int
-gold_detect(sobj)
-struct obj *sobj;
+int gold_detect(struct obj *sobj)
 {
     struct obj *obj;
     struct monst *mtmp;
@@ -290,9 +273,7 @@ outgoldmap:
 
 /* returns 1 if nothing was detected		*/
 /* returns 0 if something was detected		*/
-int
-food_detect(sobj)
-struct obj	*sobj;
+int food_detect(struct obj *sobj)
 {
     struct obj *obj;
     struct monst *mtmp;
@@ -396,10 +377,8 @@ struct obj	*sobj;
  *	1 - nothing was detected
  *	0 - something was detected
  */
-int
-object_detect(detector, class)
-struct obj	*detector;	/* object doing the detecting */
-int		class;		/* an object class, 0 for all */
+int object_detect(struct obj *detector, /* object doing the detecting */
+		  int class /* an object class, 0 for all */) 
 {
     int x, y;
     char stuff[BUFSZ];
@@ -579,10 +558,8 @@ int		class;		/* an object class, 0 for all */
  * Returns 1 if nothing was detected.
  * Returns 0 if something was detected.
  */
-int
-monster_detect(otmp, mclass)
-struct obj *otmp;	/* detecting object (if any) */
-int mclass;			/* monster class, 0 for all */
+int monster_detect(struct obj *otmp,	/* detecting object (if any) */
+		   int mclass		/* monster class, 0 for all */)
 {
     struct monst *mtmp;
     int mcnt = 0;
@@ -641,11 +618,7 @@ int mclass;			/* monster class, 0 for all */
     return 0;
 }
 
-static void
-sense_trap(trap, x, y, src_cursed)
-struct trap *trap;
-xchar x, y;
-int src_cursed;
+static void sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
 {
     if (Hallucination || src_cursed) {
 	struct obj obj;			/* fake object */
@@ -676,9 +649,7 @@ int src_cursed;
 /* also be used in the crystal ball routine	*/
 /* returns 1 if nothing was detected		*/
 /* returns 0 if something was detected		*/
-int
-trap_detect(sobj)
-struct obj *sobj;
+int trap_detect(struct obj *sobj)
 /* sobj is null if crystal ball, *scroll if gold detection scroll */
 {
     struct trap *ttmp;
@@ -744,9 +715,8 @@ outtrapmap:
     return 0;
 }
 
-const char *
-level_distance(where)
-d_level *where;
+
+const char *level_distance(d_level *where)
 {
     schar ll = depth(&u.uz) - depth(where);
     boolean indun = (u.uz.dnum == where->dnum);
@@ -786,9 +756,7 @@ static const struct {
   { "the Wizard of Yendor's tower", &wiz1_level },
 };
 
-void
-use_crystal_ball(obj)
-struct obj *obj;
+void use_crystal_ball(struct obj *obj)
 {
     char ch;
     int oops;
@@ -907,9 +875,7 @@ struct obj *obj;
     return;
 }
 
-static void
-show_map_spot(x, y)
-int x, y;
+static void show_map_spot(int x, int y)
 {
     struct rm *lev;
 
@@ -938,8 +904,8 @@ int x, y;
     }
 }
 
-void
-do_mapping()
+
+void do_mapping(void)
 {
     int zx, zy;
     int uw = u.uinwater;
@@ -957,8 +923,8 @@ do_mapping()
     }
 }
 
-void
-do_vicinity_map()
+
+void do_vicinity_map(void)
 {
     int zx, zy;
     int lo_y = (u.uy-5 < 0 ? 0 : u.uy-5),
@@ -978,9 +944,7 @@ do_vicinity_map()
 }
 
 /* convert a secret door into a normal door */
-void
-cvt_sdoor_to_door(lev)
-struct rm *lev;
+void cvt_sdoor_to_door(struct rm *lev)
 {
 	int newmask = lev->doormask & ~WM_MASK;
 
@@ -998,10 +962,7 @@ struct rm *lev;
 }
 
 
-static void
-findone(zx,zy,num)
-int zx,zy;
-void * num;
+static void findone(int zx, int zy, void *num)
 {
 	struct trap *ttmp;
 	struct monst *mtmp;
@@ -1044,10 +1005,8 @@ void * num;
 	}
 }
 
-static void
-openone(zx,zy,num)
-int zx,zy;
-void * num;
+
+static void openone(int zx, int zy, void *num)
 {
 	struct trap *ttmp;
 	struct obj *otmp;
@@ -1097,8 +1056,7 @@ void * num;
 	}
 }
 
-int
-findit()	/* returns number of things found */
+int findit(void)	/* returns number of things found */
 {
 	int num = 0;
 
@@ -1107,8 +1065,7 @@ findit()	/* returns number of things found */
 	return num;
 }
 
-int
-openit()	/* returns number of things found and opened */
+int openit(void)	/* returns number of things found and opened */
 {
 	int num = 0;
 
@@ -1125,9 +1082,8 @@ openit()	/* returns number of things found and opened */
 	return num;
 }
 
-void
-find_trap(trap)
-struct trap *trap;
+
+void find_trap(struct trap *trap)
 {
     int tt = what_trap(trap->ttyp);
     boolean cleared = FALSE;
@@ -1155,20 +1111,10 @@ struct trap *trap;
     }
 }
 
-int
-dosearch0(aflag)
-int aflag;
+
+int dosearch0(int aflag)
 {
-#ifdef GCC_BUG
-/* some versions of gcc seriously muck up nested loops. if you get strange
-   crashes while searching in a version compiled with gcc, try putting
-   #define GCC_BUG in *conf.h (or adding -DGCC_BUG to CFLAGS in the
-   makefile).
- */
-	volatile xchar x, y;
-#else
 	xchar x, y;
-#endif
 	struct trap *trap;
 	struct monst *mtmp;
 
@@ -1263,15 +1209,14 @@ int aflag;
 	return 1;
 }
 
-int
-dosearch()
+
+int dosearch(void)
 {
 	return dosearch0(0);
 }
 
 /* Pre-map the sokoban levels */
-void
-sokoban_detect()
+void sokoban_detect(void)
 {
 	int x, y;
 	struct trap *ttmp;

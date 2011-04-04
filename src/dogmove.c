@@ -14,13 +14,12 @@ static int dog_invent(struct monst *,struct edog *,int);
 static int dog_goal(struct monst *,struct edog *,int,int,int);
 
 static struct obj *DROPPABLES(struct monst *);
-static boolean can_reach_location(struct monst *,XCHAR_P,XCHAR_P,
-    XCHAR_P,XCHAR_P);
-static boolean could_reach_item(struct monst *, XCHAR_P,XCHAR_P);
+static boolean can_reach_location(struct monst *,xchar,xchar,
+    xchar,xchar);
+static boolean could_reach_item(struct monst *, xchar,xchar);
 
-static struct obj *
-DROPPABLES(mon)
-struct monst *mon;
+
+static struct obj *DROPPABLES(struct monst *mon)
 {
 	struct obj *obj;
 	struct obj *wep = MON_WEP(mon);
@@ -46,16 +45,12 @@ struct monst *mon;
 }
 
 static const char nofetch[] = { BALL_CLASS, CHAIN_CLASS, ROCK_CLASS, 0 };
-
-static boolean cursed_object_at(int, int);
-
 static xchar gtyp, gx, gy;	/* type and position of dog's current goal */
 
+static boolean cursed_object_at(int, int);
 static void wantdoor(int, int, void *);
 
-static boolean
-cursed_object_at(x, y)
-int x, y;
+static boolean cursed_object_at(int x, int y)
 {
 	struct obj *otmp;
 
@@ -64,10 +59,7 @@ int x, y;
 	return FALSE;
 }
 
-int
-dog_nutrition(mtmp, obj)
-struct monst *mtmp;
-struct obj *obj;
+int dog_nutrition(struct monst *mtmp, struct obj *obj)
 {
 	int nutrit;
 
@@ -114,12 +106,7 @@ struct obj *obj;
 }
 
 /* returns 2 if pet dies, otherwise 1 */
-int
-dog_eat(mtmp, obj, x, y, devour)
-struct monst *mtmp;
-struct obj * obj;
-int x, y;
-boolean devour;
+int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 {
 	struct edog *edog = EDOG(mtmp);
 	boolean poly = FALSE, grow = FALSE, heal = FALSE;
@@ -199,10 +186,7 @@ boolean devour;
 
 
 /* hunger effects -- returns TRUE on starvation */
-static boolean
-dog_hunger(mtmp, edog)
-struct monst *mtmp;
-struct edog *edog;
+static boolean dog_hunger(struct monst *mtmp, struct edog *edog)
 {
 	if (monstermoves > edog->hungrytime + 500) {
 	    if (!carnivorous(mtmp->data) && !herbivorous(mtmp->data)) {
@@ -243,11 +227,7 @@ dog_died:
 /* do something with object (drop, pick up, eat) at current position
  * returns 1 if object eaten (since that counts as dog's move), 2 if died
  */
-static int
-dog_invent(mtmp, edog, udist)
-struct monst *mtmp;
-struct edog *edog;
-int udist;
+static int dog_invent(struct monst *mtmp, struct edog *edog, int udist)
 {
 	int omx, omy;
 	struct obj *obj;
@@ -309,11 +289,8 @@ int udist;
 /* set dog's goal -- gtyp, gx, gy
  * returns -1/0/1 (dog's desire to approach player) or -2 (abort move)
  */
-static int
-dog_goal(mtmp, edog, after, udist, whappr)
-struct monst *mtmp;
-struct edog *edog;
-int after, udist, whappr;
+static int dog_goal(struct monst *mtmp, struct edog *edog,
+		    int after, int udist, int whappr)
 {
 	int omx, omy;
 	boolean in_masters_sight, dog_has_minvent;
@@ -455,10 +432,8 @@ int after, udist, whappr;
 }
 
 /* return 0 (no move), 1 (move) or 2 (dead) */
-int
-dog_move(mtmp, after)
-struct monst *mtmp;
-int after;	/* this is extra fast monster movement */
+int dog_move(struct monst *mtmp, 
+	     int after)	/* this is extra fast monster movement */
 {
 	int omx, omy;		/* original mtmp position */
 	int appr, whappr, udist;
@@ -770,10 +745,7 @@ dognext:
 }
 
 /* check if a monster could pick up objects from a location */
-static boolean
-could_reach_item(mon, nx, ny)
-struct monst *mon;
-xchar nx, ny;
+static boolean could_reach_item(struct monst *mon, xchar nx, xchar ny)
 {
     if ((!is_pool(nx,ny) || is_swimmer(mon->data)) &&
 	(!is_lava(nx,ny) || likes_lava(mon->data)) &&
@@ -789,10 +761,8 @@ xchar nx, ny;
  * Since the maximum food distance is 5, this should never be more than 5 calls
  * deep.
  */
-static boolean
-can_reach_location(mon, mx, my, fx, fy)
-struct monst *mon;
-xchar mx, my, fx, fy;
+static boolean can_reach_location(struct monst *mon,
+				  xchar mx, xchar my, xchar fx, xchar fy)
 {
     int i, j;
     int dist;
@@ -824,10 +794,7 @@ xchar mx, my, fx, fy;
 
 
 /*ARGSUSED*/	/* do_clear_area client */
-static void
-wantdoor(x, y, distance)
-int x, y;
-void * distance;
+static void wantdoor(int x, int y, void *distance)
 {
     int ndist;
 

@@ -255,8 +255,7 @@ char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
 #endif
 
 /* dummy routine used to force linkage */
-void
-decl_init()
+void decl_init(void)
 {
     return;
 }

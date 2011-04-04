@@ -5,15 +5,12 @@
 #include "hack.h"
 
 static void do_oname(struct obj *);
-static void getpos_help(BOOLEAN_P,const char *);
+static void getpos_help(boolean,const char *);
 
 extern const char what_is_an_unknown_object[];		/* from pager.c */
 
 /* the response for '?' help request in getpos() */
-static void
-getpos_help(force, goal)
-boolean force;
-const char *goal;
+static void getpos_help(boolean force, const char *goal)
 {
     char sbuf[BUFSZ];
     boolean doing_what_is;
@@ -37,11 +34,7 @@ const char *goal;
     destroy_nhwindow(tmpwin);
 }
 
-int
-getpos(cc, force, goal)
-coord *cc;
-boolean force;
-const char *goal;
+int getpos(coord *cc, boolean force, const char *goal)
 {
     int result = 0;
     int cx, cy, i, c;
@@ -176,10 +169,8 @@ const char *goal;
     return result;
 }
 
-struct monst *
-christen_monst(mtmp, name)
-struct monst *mtmp;
-const char *name;
+
+struct monst *christen_monst(struct monst *mtmp, const char *name)
 {
 	int lth;
 	struct monst *mtmp2;
@@ -207,8 +198,8 @@ const char *name;
 	return mtmp2;
 }
 
-int
-do_mname()
+
+int do_mname(void)
 {
 	char buf[BUFSZ];
 	coord cc;
@@ -269,10 +260,7 @@ do_mname()
  * when there might be pointers around in unknown places. For now: only
  * when obj is in the inventory.
  */
-static
-void
-do_oname(obj)
-struct obj *obj;
+static void do_oname(struct obj *obj)
 {
 	char buf[BUFSZ], qbuf[QBUFSZ];
 	const char *aname;
@@ -309,13 +297,8 @@ struct obj *obj;
 /*
  * Allocate a new and possibly larger storage space for an obj.
  */
-struct obj *
-realloc_obj(obj, oextra_size, oextra_src, oname_size, name)
-struct obj *obj;
-int oextra_size;		/* storage to allocate for oextra            */
-void * oextra_src;
-int oname_size;			/* size of name string + 1 (null terminator) */
-const char *name;
+struct obj *realloc_obj(struct obj *obj, int oextra_size, void *oextra_src,
+			int oname_size, const char *name)
 {
 	struct obj *otmp;
 
@@ -379,10 +362,7 @@ const char *name;
 	return otmp;
 }
 
-struct obj *
-oname(obj, name)
-struct obj *obj;
-const char *name;
+struct obj *oname(struct obj *obj, const char *name)
 {
 	int lth;
 	char buf[PL_PSIZ];
@@ -422,8 +402,8 @@ static const char callable[] = {
 	SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS, AMULET_CLASS,
 	GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS, 0 };
 
-int
-ddocall()
+
+int ddocall(void)
 {
 	struct obj *obj;
 #ifdef REDO
@@ -468,9 +448,8 @@ ddocall()
 	return 0;
 }
 
-void
-docall(obj)
-struct obj *obj;
+
+void docall(struct obj *obj)
 {
 	char buf[BUFSZ], qbuf[QBUFSZ];
 	struct obj otemp;
@@ -522,8 +501,7 @@ static const char * const ghostnames[] = {
 };
 
 /* ghost names formerly set by x_monnam(), now by makemon() instead */
-const char *
-rndghostname()
+const char * rndghostname(void)
 {
     return rn2(7) ? ghostnames[rn2(SIZE(ghostnames))] : (const char *)plname;
 }
@@ -546,23 +524,19 @@ rndghostname()
 /* Bug: if the monster is a priest or shopkeeper, not every one of these
  * options works, since those are special cases.
  */
-char *
-x_monnam(mtmp, article, adjective, suppress, called)
-struct monst *mtmp;
-int article;
-/* ARTICLE_NONE, ARTICLE_THE, ARTICLE_A: obvious
- * ARTICLE_YOUR: "your" on pets, "the" on everything else
- *
- * If the monster would be referred to as "it" or if the monster has a name
- * _and_ there is no adjective, "invisible", "saddled", etc., override this
- * and always use no article.
- */
-const char *adjective;
-int suppress;
-/* SUPPRESS_IT, SUPPRESS_INVISIBLE, SUPPRESS_HALLUCINATION, SUPPRESS_SADDLE.
- * EXACT_NAME: combination of all the above
- */
-boolean called;
+char *x_monnam(struct monst *mtmp,
+	       int article, /* ARTICLE_NONE, ARTICLE_THE, ARTICLE_A: obvious
+	                     * ARTICLE_YOUR: "your" on pets, "the" on everything
+			     * else
+			     * If the monster would be referred to as "it" or if the monster has a name
+			     * _and_ there is no adjective, "invisible", "saddled", etc., override this
+			     * and always use no article.
+			     */
+	       const char *adjective,
+	       int suppress, /* SUPPRESS_IT, SUPPRESS_INVISIBLE, SUPPRESS_HALLUCINATION, SUPPRESS_SADDLE.
+	                      * EXACT_NAME: combination of all the above
+			      */
+	       boolean called)
 {
 	static char buf[BUFSZ];
 
@@ -726,18 +700,14 @@ boolean called;
 }
 
 
-char *
-l_monnam(mtmp)
-struct monst *mtmp;
+char *l_monnam(struct monst *mtmp)
 {
 	return(x_monnam(mtmp, ARTICLE_NONE, (char *)0, 
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, TRUE));
 }
 
 
-char *
-mon_nam(mtmp)
-struct monst *mtmp;
+char *mon_nam(struct monst *mtmp)
 {
 	return(x_monnam(mtmp, ARTICLE_THE, (char *)0,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE));
@@ -747,18 +717,14 @@ struct monst *mtmp;
  * can always see the monster--used for probing and for monsters aggravating
  * the player with a cursed potion of invisibility
  */
-char *
-noit_mon_nam(mtmp)
-struct monst *mtmp;
+char *noit_mon_nam(struct monst *mtmp)
 {
 	return(x_monnam(mtmp, ARTICLE_THE, (char *)0,
 		mtmp->mnamelth ? (SUPPRESS_SADDLE|SUPPRESS_IT) :
 		    SUPPRESS_IT, FALSE));
 }
 
-char *
-Monnam(mtmp)
-struct monst *mtmp;
+char *Monnam(struct monst *mtmp)
 {
 	char *bp = mon_nam(mtmp);
 
@@ -766,9 +732,7 @@ struct monst *mtmp;
 	return bp;
 }
 
-char *
-noit_Monnam(mtmp)
-struct monst *mtmp;
+char *noit_Monnam(struct monst *mtmp)
 {
 	char *bp = noit_mon_nam(mtmp);
 
@@ -777,17 +741,13 @@ struct monst *mtmp;
 }
 
 /* monster's own name */
-char *
-m_monnam(mtmp)
-struct monst *mtmp;
+char *m_monnam(struct monst *mtmp)
 {
 	return x_monnam(mtmp, ARTICLE_NONE, (char *)0, EXACT_NAME, FALSE);
 }
 
 /* pet name: "your little dog" */
-char *
-y_monnam(mtmp)
-struct monst *mtmp;
+char *y_monnam(struct monst *mtmp)
 {
 	int prefix, suppression_flag;
 
@@ -799,10 +759,7 @@ struct monst *mtmp;
 }
 
 
-char *
-Adjmonnam(mtmp, adj)
-struct monst *mtmp;
-const char *adj;
+char *Adjmonnam(struct monst *mtmp, const char *adj)
 {
 	char *bp = x_monnam(mtmp, ARTICLE_THE, adj,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
@@ -811,17 +768,13 @@ const char *adj;
 	return bp;
 }
 
-char *
-a_monnam(mtmp)
-struct monst *mtmp;
+char *a_monnam(struct monst *mtmp)
 {
 	return x_monnam(mtmp, ARTICLE_A, (char *)0,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
 }
 
-char *
-Amonnam(mtmp)
-struct monst *mtmp;
+char *Amonnam(struct monst *mtmp)
 {
 	char *bp = a_monnam(mtmp);
 
@@ -831,11 +784,8 @@ struct monst *mtmp;
 
 /* used for monster ID by the '/', ';', and 'C' commands to block remote
    identification of the endgame altars via their attending priests */
-char *
-distant_monnam(mon, article, outbuf)
-struct monst *mon;
-int article;	/* only ARTICLE_NONE and ARTICLE_THE are handled here */
-char *outbuf;
+/* article: only ARTICLE_NONE and ARTICLE_THE are handled here */
+char *distant_monnam(struct monst *mon, int article, char *outbuf)
 {
     /* high priest(ess)'s identity is concealed on the Astral Plane,
        unless you're adjacent (overridden for hallucination which does
@@ -910,8 +860,7 @@ static const char * const bogusmons[] = {
  * (the Terminator, a Dalek).  There's no elegant way to deal
  * with this without radically modifying the calling functions.
  */
-const char *
-rndmonnam()
+const char *rndmonnam(void)
 {
 	int name;
 
@@ -925,8 +874,7 @@ rndmonnam()
 }
 
 #ifdef REINCARNATION
-const char *
-roguename() /* Name of a Rogue player */
+const char *roguename(void) /* Name of a Rogue player */
 {
 	char *i, *opts;
 
@@ -956,17 +904,14 @@ static const char * const hcolors[] = {
 	"romantic", "incandescent"
 };
 
-const char *
-hcolor(colorpref)
-const char *colorpref;
+const char *hcolor(const char *colorpref)
 {
 	return (Hallucination || !colorpref) ?
 		hcolors[rn2(SIZE(hcolors))] : colorpref;
 }
 
 /* return a random real color unless hallucinating */
-const char *
-rndcolor()
+const char *rndcolor(void)
 {
 	int k = rn2(CLR_MAX);
 	return Hallucination ? hcolor((char *)0) : (k == NO_COLOR) ?
@@ -989,10 +934,7 @@ static const char * const coynames[] = {
 	"Nemesis Riduclii","Canis latrans"
 };
 	
-char *
-coyotename(mtmp, buf)
-struct monst *mtmp;
-char *buf;
+char *coyotename(struct monst *mtmp, char *buf)
 {
     if (mtmp && buf) {
 	sprintf(buf, "%s - %s",

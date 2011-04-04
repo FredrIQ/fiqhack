@@ -49,7 +49,7 @@ static int wiz_show_wmodes(void);
 #ifdef DEBUG_MIGRATING_MONS
 static int wiz_migrate_mons(void);
 #endif
-static void count_obj(struct obj *, long *, long *, BOOLEAN_P, BOOLEAN_P);
+static void count_obj(struct obj *, long *, long *, boolean, boolean);
 static void obj_chain(winid, const char *, struct obj *, long *, long *);
 static void mon_invent_chain(winid, const char *, struct monst *, long *, long *);
 static void mon_chain(winid, const char *, struct monst *, long *, long *);
@@ -72,18 +72,16 @@ static void end_of_input(void);
 static const char* readchar_queue="";
 
 static char *parse(void);
-static boolean help_dir(CHAR_P,const char *);
+static boolean help_dir(char, const char *);
 
 
-static int
-doprev_message()
+static int doprev_message(void)
 {
     return nh_doprev_message();
 }
 
 /* Count down by decrementing multi */
-static int
-timed_occupation()
+static int timed_occupation(void)
 {
 	(*timed_occ_fn)();
 	if (multi > 0)
@@ -105,8 +103,7 @@ timed_occupation()
  *			Picking Locks / Forcing Chests.
  *			Setting traps.
  */
-void
-reset_occupations()
+void reset_occupations(void)
 {
 	reset_remarm();
 	reset_pick();
@@ -116,11 +113,7 @@ reset_occupations()
 /* If a time is given, use it to timeout this function, otherwise the
  * function times out by its own means.
  */
-void
-set_occupation(fn, txt, xtime)
-int (*fn)(void);
-const char *txt;
-int xtime;
+void set_occupation(int (*fn)(void), const char *txt, int xtime)
 {
 	if (xtime) {
 		occupation = timed_occupation;
@@ -146,8 +139,7 @@ static char popch(void);
 static char pushq[BSIZE], saveq[BSIZE];
 static int phead, ptail, shead, stail;
 
-static char
-popch() {
+static char popch(void) {
 	/* If occupied, return '\0', letting tgetch know a character should
 	 * be read from the keyboard.  If the character read is not the
 	 * ABORT character (as checked in pcmain.c), that character will be
@@ -158,8 +150,8 @@ popch() {
 	else		return (char)((phead != ptail) ? pushq[ptail++] : '\0');
 }
 
-char
-pgetchar() {		/* curtesy of aeb@cwi.nl */
+char pgetchar(void)
+{		/* curtesy of aeb@cwi.nl */
 	int ch;
 
 	if(!(ch = popch()))
@@ -168,9 +160,7 @@ pgetchar() {		/* curtesy of aeb@cwi.nl */
 }
 
 /* A ch == 0 resets the pushq */
-void
-pushch(ch)
-char ch;
+void pushch(char ch)
 {
 	if (!ch)
 		phead = ptail = 0;
@@ -182,9 +172,7 @@ char ch;
 /* A ch == 0 resets the saveq.	Only save keystrokes when not
  * replaying a previous command.
  */
-void
-savech(ch)
-char ch;
+void savech(char ch)
 {
 	if (!in_doagain) {
 		if (!ch)
@@ -197,8 +185,7 @@ char ch;
 #endif /* REDO */
 
 
-static int
-doextcmd()	/* here after # - now read a full-word command */
+static int doextcmd(void) /* here after # - now read a full-word command */
 {
 	int idx, retval;
 
@@ -213,8 +200,7 @@ doextcmd()	/* here after # - now read a full-word command */
 	return retval;
 }
 
-int
-doextlist()	/* here after #? - now list all full-word commands */
+int doextlist(void)	/* here after #? - now list all full-word commands */
 {
 	const struct ext_func_tab *efp;
 	char	 buf[BUFSZ];
@@ -242,8 +228,7 @@ doextlist()	/* here after #? - now list all full-word commands */
  * This is currently used only by the tty port and is
  * controlled via runtime option 'extmenu'
  */
-int
-extcmd_via_menu()	/* here after # - now show pick-list of possible commands */
+int extcmd_via_menu(void)	/* here after # - now show pick-list of possible commands */
 {
     const struct ext_func_tab *efp;
     menu_item *pick_list = (menu_item *)0;
@@ -359,8 +344,7 @@ extcmd_via_menu()	/* here after # - now show pick-list of possible commands */
 #endif
 
 /* #monster command - use special monster ability while polymorphed */
-static int
-domonability()
+static int domonability(void)
 {
 	if (can_breathe(youmonst.data)) return dobreathe();
 	else if (attacktype(youmonst.data, AT_SPIT)) return dospit();
@@ -389,8 +373,7 @@ domonability()
 	return 0;
 }
 
-static int
-enter_explore_mode()
+static int enter_explore_mode(void)
 {
 	if(!discover && !wizard) {
 		pline("Beware!  From explore mode there will be no return to normal game.");
@@ -409,8 +392,7 @@ enter_explore_mode()
 
 
 /* ^W command - wish for something */
-static int
-wiz_wish()	/* Unlimited wishes for debug mode by Paul Polderman */
+static int wiz_wish(void)	/* Unlimited wishes for debug mode by Paul Polderman */
 {
 	if (wizard) {
 	    boolean save_verbose = flags.verbose;
@@ -425,8 +407,7 @@ wiz_wish()	/* Unlimited wishes for debug mode by Paul Polderman */
 }
 
 /* ^I command - identify hero's inventory */
-static int
-wiz_identify()
+static int wiz_identify(void)
 {
 	if (wizard)	identify_pack(0);
 	else		pline("Unavailable command '^I'.");
@@ -434,8 +415,7 @@ wiz_identify()
 }
 
 /* ^F command - reveal the level map and any traps on it */
-static int
-wiz_map()
+static int wiz_map(void)
 {
 	if (wizard) {
 	    struct trap *t;
@@ -456,8 +436,7 @@ wiz_map()
 }
 
 /* ^G command - generate monster(s); a count prefix will be honored */
-static int
-wiz_genesis()
+static int wiz_genesis(void)
 {
 	if (wizard)	(void) create_particular();
 	else		pline("Unavailable command '^G'.");
@@ -465,8 +444,7 @@ wiz_genesis()
 }
 
 /* ^O command - display dungeon layout */
-static int
-wiz_where()
+static int wiz_where(void)
 {
 	if (wizard) (void) print_dungeon(FALSE, (schar *)0, (xchar *)0);
 	else	    pline("Unavailable command '^O'.");
@@ -474,8 +452,7 @@ wiz_where()
 }
 
 /* ^E command - detect unseen (secret doors, traps, hidden monsters) */
-static int
-wiz_detect()
+static int wiz_detect(void)
 {
 	if(wizard)  (void) findit();
 	else	    pline("Unavailable command '^E'.");
@@ -483,8 +460,7 @@ wiz_detect()
 }
 
 /* ^V command - level teleport */
-static int
-wiz_level_tele()
+static int wiz_level_tele(void)
 {
 	if (wizard)	level_tele();
 	else		pline("Unavailable command '^V'.");
@@ -492,8 +468,7 @@ wiz_level_tele()
 }
 
 /* #monpolycontrol command - choose new form for shapechangers, polymorphees */
-static int
-wiz_mon_polycontrol()
+static int wiz_mon_polycontrol(void)
 {
     iflags.mon_polycontrol = !iflags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
@@ -502,8 +477,7 @@ wiz_mon_polycontrol()
 }
 
 /* #levelchange command - adjust hero's experience level */
-static int
-wiz_level_change()
+static int wiz_level_change(void)
 {
     char buf[BUFSZ];
     int newlevel;
@@ -542,8 +516,7 @@ wiz_level_change()
 }
 
 /* #panic command - test program's panic handling */
-static int
-wiz_panic()
+static int wiz_panic(void)
 {
 	if (yn("Do you want to call panic() and end your game?") == 'y')
 		panic("crash test.");
@@ -551,16 +524,14 @@ wiz_panic()
 }
 
 /* #polyself command - change hero's form */
-static int
-wiz_polyself()
+static int wiz_polyself(void)
 {
         polyself(TRUE);
         return 0;
 }
 
 /* #seenv command */
-static int
-wiz_show_seenv()
+static int wiz_show_seenv(void)
 {
 	winid win;
 	int x, y, v, startx, stopx, curx;
@@ -601,8 +572,7 @@ wiz_show_seenv()
 }
 
 /* #vision command */
-static int
-wiz_show_vision()
+static int wiz_show_vision(void)
 {
 	winid win;
 	int x, y, v;
@@ -638,8 +608,7 @@ wiz_show_vision()
 }
 
 /* #wmode command */
-static int
-wiz_show_wmodes()
+static int wiz_show_wmodes(void)
 {
 	winid win;
 	int x,y;
@@ -690,9 +659,7 @@ static const char
 #define you_have_never(badthing) enl_msg(You_,have_never,never,badthing)
 #define you_have_X(something)	enl_msg(You_,have,(const char *)"",something)
 
-static void
-enlght_line(start, middle, end)
-const char *start, *middle, *end;
+static void enlght_line(const char *start, const char *middle, const char *end)
 {
 	char buf[BUFSZ];
 
@@ -701,11 +668,7 @@ const char *start, *middle, *end;
 }
 
 /* format increased damage or chance to hit */
-static char *
-enlght_combatinc(inctyp, incamt, final, outbuf)
-const char *inctyp;
-int incamt, final;
-char *outbuf;
+static char *enlght_combatinc(const char *inctyp, int incamt, int final, char *outbuf)
 {
 	char numbuf[24];
 	const char *modif, *bonus;
@@ -733,9 +696,9 @@ char *outbuf;
 	return outbuf;
 }
 
-void
-enlightenment(final)
-int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
+
+void enlightenment(int final)
+    /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
 {
 	int ltmp;
 	char buf[BUFSZ];
@@ -1012,8 +975,7 @@ int final;	/* 0 => still in progress; 1 => over, survived; 2 => dead */
  * to help refresh them about who/what they are.
  * Returns FALSE if menu cancelled (dismissed with ESC), TRUE otherwise.
  */
-static boolean
-minimal_enlightenment()
+static boolean minimal_enlightenment(void)
 {
 	winid tmpwin;
 	menu_item *selected;
@@ -1111,8 +1073,7 @@ minimal_enlightenment()
 	return n != -1;
 }
 
-static int
-doattributes()
+static int doattributes(void)
 {
 	if (!minimal_enlightenment())
 		return 0;
@@ -1124,16 +1085,13 @@ doattributes()
 /* KMH, #conduct
  * (shares enlightenment's tense handling)
  */
-static int
-doconduct()
+static int doconduct(void)
 {
 	show_conduct(0);
 	return 0;
 }
 
-void
-show_conduct(final)
-int final;
+void show_conduct(int final)
 {
 	char buf[BUFSZ];
 	int ngenocided;
@@ -1413,8 +1371,7 @@ static const struct ext_func_tab debug_extcmdlist[] = {
  * You must add entries in ext_func_tab every time you add one to the
  * debug_extcmdlist().
  */
-void
-add_debug_extended_commands()
+void add_debug_extended_commands(void)
 {
 	int i, j, k, n;
 
@@ -1439,13 +1396,8 @@ static const char template[] = "%-18s %4ld  %6ld";
 static const char count_str[] = "                   count  bytes";
 static const char separator[] = "------------------ -----  ------";
 
-static void
-count_obj(chain, total_count, total_size, top, recurse)
-	struct obj *chain;
-	long *total_count;
-	long *total_size;
-	boolean top;
-	boolean recurse;
+static void count_obj(struct obj *chain, long *total_count, long *total_size,
+		      boolean top, boolean recurse)
 {
 	long count, size;
 	struct obj *obj;
@@ -1462,13 +1414,8 @@ count_obj(chain, total_count, total_size, top, recurse)
 	*total_size += size;
 }
 
-static void
-obj_chain(win, src, chain, total_count, total_size)
-	winid win;
-	const char *src;
-	struct obj *chain;
-	long *total_count;
-	long *total_size;
+static void obj_chain(winid win, const char *src, struct obj *chain,
+		      long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
 	long count = 0, size = 0;
@@ -1480,13 +1427,8 @@ obj_chain(win, src, chain, total_count, total_size)
 	putstr(win, 0, buf);
 }
 
-static void
-mon_invent_chain(win, src, chain, total_count, total_size)
-	winid win;
-	const char *src;
-	struct monst *chain;
-	long *total_count;
-	long *total_size;
+static void mon_invent_chain(winid win, const char *src, struct monst *chain,
+			     long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
 	long count = 0, size = 0;
@@ -1500,12 +1442,7 @@ mon_invent_chain(win, src, chain, total_count, total_size)
 	putstr(win, 0, buf);
 }
 
-static void
-contained(win, src, total_count, total_size)
-	winid win;
-	const char *src;
-	long *total_count;
-	long *total_size;
+static void contained(winid win, const char *src, long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
 	long count = 0, size = 0;
@@ -1527,13 +1464,8 @@ contained(win, src, total_count, total_size)
 	putstr(win, 0, buf);
 }
 
-static void
-mon_chain(win, src, chain, total_count, total_size)
-	winid win;
-	const char *src;
-	struct monst *chain;
-	long *total_count;
-	long *total_size;
+static void mon_chain(winid win, const char *src, struct monst *chain,
+		      long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
 	long count, size;
@@ -1552,8 +1484,7 @@ mon_chain(win, src, chain, total_count, total_size)
 /*
  * Display memory usage of all monsters and objects on the level.
  */
-static int
-wiz_show_stats()
+static int wiz_show_stats(void)
 {
 	char buf[BUFSZ];
 	winid win;
@@ -1606,16 +1537,14 @@ wiz_show_stats()
 	return 0;
 }
 
-void
-sanity_check()
+void sanity_check(void)
 {
 	obj_sanity_check();
 	timer_sanity_check();
 }
 
 #ifdef DEBUG_MIGRATING_MONS
-static int
-wiz_migrate_mons()
+static int wiz_migrate_mons(void)
 {
 	int mcount = 0;
 	char inbuf[BUFSZ];
@@ -1647,9 +1576,7 @@ wiz_migrate_mons()
 #define unmeta(c)	(0x7f & (c))
 
 
-void
-rhack(cmd)
-char *cmd;
+void rhack(char *cmd)
 {
 	boolean do_walk, do_rush, prefix_seen, bad_command,
 		firsttime = (cmd == 0);
@@ -1848,9 +1775,7 @@ char *cmd;
 	return;
 }
 
-int
-xytod(x, y)	/* convert an x,y pair into a direction code */
-schar x, y;
+int xytod(schar x, schar y)	/* convert an x,y pair into a direction code */
 {
 	int dd;
 
@@ -1860,19 +1785,14 @@ schar x, y;
 	return -1;
 }
 
-void
-dtoxy(cc,dd)	/* convert a direction code into an x,y pair */
-coord *cc;
-int dd;
+void dtoxy(coord *cc, int dd)	/* convert a direction code into an x,y pair */
 {
 	cc->x = xdir[dd];
 	cc->y = ydir[dd];
 	return;
 }
 
-int
-movecmd(sym)	/* also sets u.dz, but returns false for <> */
-char sym;
+int movecmd(char sym)	/* also sets u.dz, but returns false for <> */
 {
 	const char *dp;
 	const char *sdp;
@@ -1900,10 +1820,7 @@ char sym;
  *
  * Returns non-zero if coordinates in cc are valid.
  */
-int get_adjacent_loc(prompt,emsg,x,y,cc)
-const char *prompt, *emsg;
-xchar x,y;
-coord *cc;
+int get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y, coord *cc)
 {
 	xchar new_x, new_y;
 	if (!getdir(prompt)) {
@@ -1922,9 +1839,7 @@ coord *cc;
 	return 1;
 }
 
-int
-getdir(s)
-const char *s;
+int getdir(const char *s)
 {
 	char dirsym;
 
@@ -1955,10 +1870,7 @@ const char *s;
 	return 1;
 }
 
-static boolean
-help_dir(sym, msg)
-char sym;
-const char *msg;
+static boolean help_dir(char sym, const char *msg)
 {
 	char ctrl;
 	winid win;
@@ -2032,8 +1944,7 @@ const char *msg;
 }
 
 
-void
-confdir()
+void confdir(void)
 {
 	int x = (u.umonnum == PM_GRID_BUG) ? 2*rn2(4) : rn2(8);
 	u.dx = xdir[x];
@@ -2042,9 +1953,7 @@ confdir()
 }
 
 
-int
-isok(x,y)
-int x, y;
+int isok(int x, int y)
 {
 	/* x corresponds to curx, so x==1 is the first column. Ach. %% */
 	return x >= 1 && x <= COLNO-1 && y >= 0 && y <= ROWNO-1;
@@ -2055,9 +1964,7 @@ static int last_multi;
 /*
  * convert a MAP window position into a movecmd
  */
-const char *
-click_to_cmd(x, y, mod)
-    int x, y, mod;
+const char *click_to_cmd(int x, int y, int mod)
 {
     int dir;
     static char cmd[4];
@@ -2155,8 +2062,7 @@ click_to_cmd(x, y, mod)
     return cmd;
 }
 
-static char *
-parse()
+static char *parse(void)
 {
 	static char in_line[COLNO];
 	int foo;
@@ -2220,9 +2126,7 @@ parse()
 
 
 #ifdef UNIX
-static
-void
-end_of_input()
+static void end_of_input(void)
 {
 #ifndef NOSAVEONHANGUP
 	if (!program_state.done_hup++ && program_state.something_worth_saving)
@@ -2235,8 +2139,7 @@ end_of_input()
 #endif
 
 
-char
-readchar()
+char readchar(void)
 {
 	int sym;
 	int x = u.ux, y = u.uy, mod = 0;
@@ -2277,8 +2180,7 @@ readchar()
 	return (char) sym;
 }
 
-static int
-dotravel()
+static int dotravel(void)
 {
 	/* Keyboard travel command */
 	static char cmd[2];
@@ -2311,8 +2213,7 @@ extern void win32con_debug_keystrokes(void);
 extern void win32con_handler_info(void);
 # endif
 
-int
-wiz_port_debug()
+int wiz_port_debug(void)
 {
 	int n, k;
 	winid win;
@@ -2361,10 +2262,7 @@ wiz_port_debug()
  *   the core from sending too long a prompt string to the
  *   window port causing a buffer overflow there.
  */
-char
-yn_function(query,resp, def)
-const char *query,*resp;
-char def;
+char yn_function(const char *query,const char *resp, char def)
 {
 	char qbuf[QBUFSZ];
 	unsigned truncspot, reduction = sizeof(" [N]  ?") + 1;

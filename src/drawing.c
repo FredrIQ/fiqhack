@@ -507,9 +507,7 @@ static uchar dec_graphics[MAXPCHARS] = {
  * recognized, then MAXOCLASSES is returned.  Used in detect.c invent.c,
  * options.c, pickup.c, sp_lev.c, and lev_main.c.
  */
-int
-def_char_to_objclass(ch)
-    char ch;
+int def_char_to_objclass(char ch)
 {
     int i;
     for (i = 1; i < MAXOCLASSES; i++)
@@ -521,9 +519,7 @@ def_char_to_objclass(ch)
  * Convert a character into a monster class.  This returns the _first_
  * match made.  If there are are no matches, return MAXMCLASSES.
  */
-int
-def_char_to_monclass(ch)
-    char ch;
+int def_char_to_monclass(char ch)
 {
     int i;
     for (i = 1; i < MAXMCLASSES; i++)
@@ -531,10 +527,7 @@ def_char_to_monclass(ch)
     return i;
 }
 
-void
-assign_graphics(graph_chars, glth, maxlen, offset)
-uchar *graph_chars;
-int glth, maxlen, offset;
+void assign_graphics(uchar *graph_chars, int glth, int maxlen, int offset)
 {
     int i;
 
@@ -543,9 +536,7 @@ int glth, maxlen, offset;
 		       graph_chars[i] : defsyms[i+offset].sym);
 }
 
-void
-switch_graphics(gr_set_flag)
-int gr_set_flag;
+void switch_graphics(int gr_set_flag)
 {
     switch (gr_set_flag) {
 	default:
@@ -656,9 +647,7 @@ static const uchar IBM_r_oc_syms[MAXOCLASSES] = {	/* a la EPYX Rogue */
 };
 # endif /* ASCIIGRAPH */
 
-void
-assign_rogue_graphics(is_rlevel)
-boolean is_rlevel;
+void assign_rogue_graphics(boolean is_rlevel)
 {
     /* Adjust graphics display characters on Rogue levels */
 
