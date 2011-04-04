@@ -227,8 +227,9 @@ void
 linux_mapon()
 {
 # ifdef TTY_GRAPHICS
+	int count = 0;
 	if (!strcmp(windowprocs.name, "tty") && linux_flag_console) {
-		write(1, "\033(B", 3);
+		count = write(1, "\033(B", 3);
 	}
 # endif
 }
@@ -237,8 +238,9 @@ void
 linux_mapoff()
 {
 # ifdef TTY_GRAPHICS
+	int count = 0;
 	if (!strcmp(windowprocs.name, "tty") && linux_flag_console) {
-		write(1, "\033(U", 3);
+		count = write(1, "\033(U", 3);
 	}
 # endif
 }

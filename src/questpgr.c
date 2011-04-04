@@ -355,10 +355,11 @@ static void
 deliver_by_pline(qt_msg)
 struct qtmsg *qt_msg;
 {
-	long	size;
+	long size;
+	char *d;
 
 	for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
-	    (void) dlb_fgets(in_line, 80, msg_file);
+	    d = dlb_fgets(in_line, 80, msg_file);
 	    convert_line();
 	    pline(out_line);
 	}
@@ -370,11 +371,12 @@ deliver_by_window(qt_msg, how)
 struct qtmsg *qt_msg;
 int how;
 {
-	long	size;
+	long size;
+	char *d;
 	winid datawin = create_nhwindow(how);
 
 	for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
-	    (void) dlb_fgets(in_line, 80, msg_file);
+	    d = dlb_fgets(in_line, 80, msg_file);
 	    convert_line();
 	    putstr(datawin, 0, out_line);
 	}

@@ -237,7 +237,7 @@ int fd, mode;
 void
 savestateinlock()
 {
-	int fd, hpid;
+	int fd, hpid, count;
 	static boolean havestate = TRUE;
 	char whynot[BUFSZ];
 
@@ -268,7 +268,7 @@ savestateinlock()
 		    return;
 		}
 
-		(void) read(fd, (void *) &hpid, sizeof(hpid));
+		count = read(fd, (void *) &hpid, sizeof(hpid));
 		if (hackpid != hpid) {
 		    sprintf(whynot,
 			    "Level #0 pid (%d) doesn't match ours (%d)!",
@@ -286,11 +286,11 @@ savestateinlock()
 		    done(TRICKED);
 		    return;
 		}
-		(void) write(fd, (void *) &hackpid, sizeof(hackpid));
+		count = write(fd, (void *) &hackpid, sizeof(hackpid));
 		if (flags.ins_chkpt) {
 		    int currlev = ledger_no(&u.uz);
 
-		    (void) write(fd, (void *) &currlev, sizeof(currlev));
+		    count = write(fd, (void *) &currlev, sizeof(currlev));
 		    save_savefile_name(fd);
 		    store_version(fd);
 #ifdef STORE_PLNAME_IN_FILE

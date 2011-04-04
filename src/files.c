@@ -632,7 +632,7 @@ void
 save_savefile_name(fd)
 int fd;
 {
-	(void) write(fd, (void *) SAVEF, sizeof(SAVEF));
+	int d = write(fd, (void *) SAVEF, sizeof(SAVEF));
 }
 #endif
 

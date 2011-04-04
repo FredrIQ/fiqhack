@@ -306,10 +306,10 @@ relink_light_sources(ghostly)
 	if (ls->flags & LSF_NEEDS_FIXUP) {
 	    if (ls->type == LS_OBJECT || ls->type == LS_MONSTER) {
 		if (ghostly) {
-		    if (!lookup_id_mapping((unsigned)ls->id, &nid))
+		    if (!lookup_id_mapping((long)ls->id, &nid))
 			impossible("relink_light_sources: no id mapping");
 		} else
-		    nid = (unsigned) ls->id;
+		    nid = (long) ls->id;
 		if (ls->type == LS_OBJECT) {
 		    which = 'o';
 		    ls->id = (void *) find_oid(nid);

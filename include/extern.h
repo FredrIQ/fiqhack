@@ -1446,7 +1446,7 @@ extern NhRegion *visible_region_at(XCHAR_P,XCHAR_P);
 extern void show_region(NhRegion*, XCHAR_P, XCHAR_P);
 extern void save_regions(int,int);
 extern void rest_regions(int,BOOLEAN_P);
-extern NhRegion* create_gas_cloud(XCHAR_P, XCHAR_P, int, int);
+extern NhRegion* create_gas_cloud(XCHAR_P, XCHAR_P, int, long);
 
 /* ### restore.c ### */
 

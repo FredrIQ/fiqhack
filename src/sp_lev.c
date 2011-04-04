@@ -55,7 +55,7 @@ static boolean create_subroom(struct mkroom *, XCHAR_P, XCHAR_P,
 #define XLIM	4
 #define YLIM	3
 
-#define Fread	(void)dlb_fread
+#define Fread(ptr, size, count, stream)  if(dlb_fread(ptr,size,count,stream) != count) goto err_out;
 #define Fgetc	(schar)dlb_fgetc
 #define New(type)		(type *) alloc(sizeof(type))
 #define NewTab(type, size)	(type **) alloc(sizeof(type *) * (unsigned)size)
@@ -1735,6 +1735,9 @@ int typ;
 	    Fread((void *) lev_message, 1, (int) n, fd);
 	    lev_message[n] = 0;
 	}
+	
+err_out:
+	fprintf(stderr, "read error in load_common_data\n");
 }
 
 static void
@@ -1757,6 +1760,9 @@ monster *m;
 	    m->appear_as.str[size] = '\0';
 	} else
 	    m->appear_as.str = (char *) 0;
+	
+err_out:
+	fprintf(stderr, "read error in load_one_monster\n");
 }
 
 static void
@@ -1773,6 +1779,9 @@ object *o;
 	    o->name.str[size] = '\0';
 	} else
 	    o->name.str = (char *) 0;
+
+err_out:
+	fprintf(stderr, "read error in load_one_object\n");
 }
 
 static void
@@ -1787,6 +1796,9 @@ engraving *e;
 	e->engr.str = (char *) alloc((unsigned)size+1);
 	Fread((void *) e->engr.str, 1, size, fd);
 	e->engr.str[size] = '\0';
+	
+err_out:
+	fprintf(stderr, "read error in load_one_engraving\n");
 }
 
 static boolean
@@ -2010,6 +2022,10 @@ dlb *fd;
 	}
 
 	return TRUE;
+	
+err_out:
+	fprintf(stderr, "read error in load_rooms\n");
+	return FALSE;
 }
 
 /*
@@ -2044,7 +2060,6 @@ int humidity;
  *
  * Could be cleaner, but it works.
  */
-
 static boolean
 load_maze(fd)
 dlb *fd;
@@ -2609,6 +2624,10 @@ dlb *fd;
 	    }
     }
     return TRUE;
+	
+err_out:
+	fprintf(stderr, "read error in load_maze\n");
+	return FALSE;
 }
 
 /*
@@ -2643,9 +2662,14 @@ const char *name;
 		default:	/* ??? */
 		    result = FALSE;
 	}
- give_up:
+	
+give_up:
 	(void)dlb_fclose(fd);
 	return result;
+	
+err_out:
+	fprintf(stderr, "read error in load_special\n");
+	return FALSE;
 }
 
 /*sp_lev.c*/

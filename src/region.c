@@ -704,10 +704,10 @@ void * p1;
 void * p2;
 {
     NhRegion *reg;
-    int damage;
+    long damage;
 
     reg = (NhRegion *) p1;
-    damage = (int) reg->arg;
+    damage = (long) reg->arg;
 
     /* If it was a thick cloud, it dissipates a little first */
     if (damage >= 5) {
@@ -726,10 +726,10 @@ void * p2;
 {
     NhRegion *reg;
     struct monst *mtmp;
-    int dam;
+    long dam;
 
     reg = (NhRegion *) p1;
-    dam = (int) reg->arg;
+    dam = (long) reg->arg;
     if (p2 == NULL) {		/* This means *YOU* Bozo! */
 	if (nonliving(youmonst.data) || Breathless)
 	    return FALSE;
@@ -777,7 +777,7 @@ NhRegion *
 create_gas_cloud(x, y, radius, damage)
 xchar x, y;
 int radius;
-int damage;
+long damage;
 {
     NhRegion *cloud;
     int i, nrect;
