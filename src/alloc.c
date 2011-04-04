@@ -14,9 +14,7 @@ long *alloc(unsigned int);
 extern void panic(const char *,...);
 
 
-long *
-alloc(lth)
-unsigned int lth;
+long *alloc(unsigned int lth)
 {
 	void * ptr;
 
@@ -27,10 +25,7 @@ unsigned int lth;
 
 
 /* format a pointer for display purposes; caller supplies the result buffer */
-char *
-fmt_ptr(ptr, buf)
-const void * ptr;
-char *buf;
+char *fmt_ptr(const void * ptr, char *buf)
 {
 	sprintf(buf, "%p", (void *)ptr);
 	return buf;

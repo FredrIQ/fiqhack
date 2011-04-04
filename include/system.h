@@ -40,8 +40,8 @@ extern int srandom(unsigned int);
 #  endif
 # endif
 #else
-extern long lrand48();
-extern void srand48();
+extern long lrand48(void);
+extern void srand48(long);
 #endif /* BSD || RANDOM */
 
 #if !defined(BSD)
@@ -70,11 +70,11 @@ extern int unlink(const char *);
 #include <string.h>
 
 #if defined(SYSV)
-extern unsigned sleep();
+extern unsigned sleep(unsigned);
 #endif
 
 extern char *getenv(const char *);
-extern char *getlogin();
+extern char *getlogin(void);
 extern pid_t getpid(void);
 extern uid_t getuid(void);
 extern gid_t getgid(void);
@@ -89,7 +89,7 @@ extern int vprintf(const char *, va_list);
 
 
 extern int tgetent(char *,const char *);
-extern void tputs(const char *,int,int (*)());
+extern void tputs(const char *,int,int (*)(void));
 extern int tgetnum(const char *);
 extern int tgetflag(const char *);
 extern char *tgetstr(const char *,char **);

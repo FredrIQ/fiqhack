@@ -19,7 +19,7 @@ extern void moveloop(void);
 extern void stop_occupation(void);
 extern void display_gamewindows(void);
 extern void newgame(void);
-extern void welcome(BOOLEAN_P);
+extern void welcome(boolean);
 
 /* ### apply.c ### */
 
@@ -29,12 +29,12 @@ extern int dojump(void);
 extern int jump(int);
 extern int number_leashed(void);
 extern void o_unleash(struct obj *);
-extern void m_unleash(struct monst *,BOOLEAN_P);
+extern void m_unleash(struct monst *, boolean);
 extern void unleash_all(void);
 extern boolean next_to_u(void);
 extern struct obj *get_mleash(struct monst *);
-extern void check_leash(XCHAR_P,XCHAR_P);
-extern boolean um_dist(XCHAR_P,XCHAR_P,XCHAR_P);
+extern void check_leash(xchar, xchar);
+extern boolean um_dist(xchar, xchar, xchar);
 extern boolean snuff_candle(struct obj *);
 extern boolean snuff_lit(struct obj *);
 extern boolean catch_lit(struct obj *);
@@ -42,7 +42,7 @@ extern void use_unicorn_horn(struct obj *);
 extern boolean tinnable(struct obj *);
 extern void reset_trapset(void);
 extern void fig_transform(void *, long);
-extern int unfixable_trouble_count(BOOLEAN_P);
+extern int unfixable_trouble_count(boolean);
 
 /* ### artifact.c ### */
 
@@ -50,10 +50,10 @@ extern void init_artifacts(void);
 extern void save_artifacts(int);
 extern void restore_artifacts(int);
 extern const char *artiname(int);
-extern struct obj *mk_artifact(struct obj *,ALIGNTYP_P);
+extern struct obj *mk_artifact(struct obj *, aligntyp);
 extern const char *artifact_name(const char *,short *);
 extern boolean exist_artifact(int,const char *);
-extern void artifact_exists(struct obj *,const char *,BOOLEAN_P);
+extern void artifact_exists(struct obj *,const char *, boolean);
 extern int nartifact_exist(void);
 extern boolean spec_ability(struct obj *,unsigned long);
 extern boolean confers_luck(struct obj *);
@@ -61,31 +61,31 @@ extern boolean arti_reflects(struct obj *);
 extern boolean restrict_name(struct obj *,const char *);
 extern boolean defends(int,struct obj *);
 extern boolean protects(int,struct obj *);
-extern void set_artifact_intrinsic(struct obj *,BOOLEAN_P,long);
+extern void set_artifact_intrinsic(struct obj *, boolean, long);
 extern int touch_artifact(struct obj *,struct monst *);
 extern int spec_abon(struct obj *,struct monst *);
 extern int spec_dbon(struct obj *,struct monst *,int);
-extern void discover_artifact(XCHAR_P);
-extern boolean undiscovered_artifact(XCHAR_P);
+extern void discover_artifact(xchar);
+extern boolean undiscovered_artifact(xchar);
 extern int disp_artifact_discoveries(winid);
 extern boolean artifact_hit(struct monst *,struct monst *,struct obj *,int *,int);
 extern int doinvoke(void);
 extern void arti_speak(struct obj *);
 extern boolean artifact_light(struct obj *);
 extern long spec_m2(struct obj *);
-extern boolean artifact_has_invprop(struct obj *,UCHAR_P);
+extern boolean artifact_has_invprop(struct obj *, uchar);
 extern long arti_cost(struct obj *);
 
 /* ### attrib.c ### */
 
 extern boolean adjattrib(int,int,int);
-extern void change_luck(SCHAR_P);
-extern int stone_luck(BOOLEAN_P);
+extern void change_luck(schar);
+extern int stone_luck(boolean);
 extern void set_moreluck(void);
 extern void gainstr(struct obj *,int);
 extern void losestr(int);
 extern void restore_attrib(void);
-extern void exercise(int,BOOLEAN_P);
+extern void exercise(int,boolean);
 extern void exerchk(void);
 extern void reset_attribute_clock(void);
 extern void init_attr(int);
