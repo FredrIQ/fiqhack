@@ -11,7 +11,7 @@
 
 char *fmt_ptr(const void *,char *);
 long *alloc(unsigned int);
-extern void panic(const char *,...) PRINTF_F(1,2);
+extern void panic(const char *,...);
 
 
 long *

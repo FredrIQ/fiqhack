@@ -478,7 +478,7 @@ extern void done1(int);
 extern int done2(void);
 extern void done_in_by(struct monst *);
 #endif /* !MAKEDEFS_C && !LEV_LEX_C */
-extern void panic(const char *,...) PRINTF_F(1,2);
+extern void panic(const char *,...);
 #if !defined(MAKEDEFS_C) && !defined(LEV_LEX_C)
 extern void done(int);
 extern void container_contents(struct obj *,BOOLEAN_P,BOOLEAN_P);
@@ -1278,19 +1278,19 @@ extern boolean is_autopickup_exception(struct obj *, BOOLEAN_P);
 
 /* ### pline.c ### */
 
-extern void pline(const char *,...) PRINTF_F(1,2);
-extern void Norep(const char *,...) PRINTF_F(1,2);
+extern void pline(const char *,...);
+extern void Norep(const char *,...);
 extern void free_youbuf(void);
-extern void You(const char *,...) PRINTF_F(1,2);
-extern void Your(const char *,...) PRINTF_F(1,2);
-extern void You_feel(const char *,...) PRINTF_F(1,2);
-extern void You_cant(const char *,...) PRINTF_F(1,2);
-extern void You_hear(const char *,...) PRINTF_F(1,2);
-extern void pline_The(const char *,...) PRINTF_F(1,2);
-extern void There(const char *,...) PRINTF_F(1,2);
-extern void verbalize(const char *,...) PRINTF_F(1,2);
-extern void raw_printf(const char *,...) PRINTF_F(1,2);
-extern void impossible(const char *,...) PRINTF_F(1,2);
+extern void You(const char *,...);
+extern void Your(const char *,...);
+extern void You_feel(const char *,...);
+extern void You_cant(const char *,...);
+extern void You_hear(const char *,...);
+extern void pline_The(const char *,...);
+extern void There(const char *,...);
+extern void verbalize(const char *,...);
+extern void raw_printf(const char *,...);
+extern void impossible(const char *,...);
 extern const char *align_str(ALIGNTYP_P);
 extern void mstatusline(struct monst *);
 extern void ustatusline(void);
@@ -1805,7 +1805,7 @@ extern void settty(const char *);
 extern void setftty(void);
 extern void intron(void);
 extern void introff(void);
-extern void error(const char *,...) PRINTF_F(1,2);
+extern void error(const char *,...);
 #endif /* UNIX */
 
 /* ### unixunix.c ### */
