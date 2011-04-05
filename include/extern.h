@@ -534,8 +534,8 @@ extern void makerogueghost(void);
 
 /* ### files.c ### */
 
-extern char *fname_encode(const char *, CHAR_P, char *, char *, int);
-extern char *fname_decode(CHAR_P, char *, char *, int);
+extern char *fname_encode(const char *, char, char *, char *, int);
+extern char *fname_decode(char, char *, char *, int);
 extern const char *fqname(const char *, int, int);
 extern FILE *fopen_datafile(const char *,const char *,int);
 extern boolean uptodate(int,const char *);
@@ -577,7 +577,7 @@ extern void really_close(void);
 
 extern void floating_above(const char *);
 extern void dogushforth(int);
-extern void dryup(XCHAR_P,XCHAR_P, BOOLEAN_P);
+extern void dryup(xchar,xchar, boolean);
 extern void drinkfountain(void);
 extern void dipfountain(struct obj *);
 extern void breaksink(int,int);

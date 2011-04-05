@@ -12,15 +12,12 @@ static void dowaternymph(void);
 static void gush(int,int,void *);
 static void dofindgem(void);
 
-void
-floating_above(what)
-const char *what;
+void floating_above(const char *what)
 {
     You("are floating high above the %s.", what);
 }
 
-static void
-dowatersnakes() /* Fountain of snakes! */
+static void dowatersnakes(void) /* Fountain of snakes! */
 {
     int num = rn1(5,2);
     struct monst *mtmp;
@@ -39,9 +36,7 @@ dowatersnakes() /* Fountain of snakes! */
 	pline_The("fountain bubbles furiously for a moment, then calms.");
 }
 
-static
-void
-dowaterdemon() /* Water demon */
+static void dowaterdemon(void) /* Water demon */
 {
     struct monst *mtmp;
 
@@ -65,8 +60,7 @@ dowaterdemon() /* Water demon */
 	pline_The("fountain bubbles furiously for a moment, then calms.");
 }
 
-static void
-dowaternymph() /* Water Nymph */
+static void dowaternymph(void) /* Water Nymph */
 {
 	struct monst *mtmp;
 
@@ -86,9 +80,7 @@ dowaternymph() /* Water Nymph */
 		   You_hear("a loud pop.");
 }
 
-void
-dogushforth(drinking) /* Gushing forth along LOS from (u.ux, u.uy) */
-int drinking;
+void dogushforth(int drinking) /* Gushing forth along LOS from (u.ux, u.uy) */
 {
 	int madepool = 0;
 
@@ -101,10 +93,7 @@ int drinking;
 	}
 }
 
-static void
-gush(x, y, poolcnt)
-int x, y;
-void * poolcnt;
+static void gush(int x, int y, void *poolcnt)
 {
 	struct monst *mtmp;
 	struct trap *ttmp;
@@ -133,8 +122,7 @@ void * poolcnt;
 		newsym(x,y);
 }
 
-static void
-dofindgem() /* Find a gem in the sparkling waters. */
+static void dofindgem(void) /* Find a gem in the sparkling waters. */
 {
 	if (!Blind) You("spot a gem in the sparkling waters!");
 	else You_feel("a gem here!");
@@ -145,10 +133,7 @@ dofindgem() /* Find a gem in the sparkling waters. */
 	exercise(A_WIS, TRUE);			/* a discovery! */
 }
 
-void
-dryup(x, y, isyou)
-xchar x, y;
-boolean isyou;
+void dryup(xchar x, xchar y, boolean isyou)
 {
 	if (IS_FOUNTAIN(levl[x][y].typ) &&
 	    (!rn2(3) || FOUNTAIN_IS_WARNED(x,y))) {
@@ -191,8 +176,7 @@ boolean isyou;
 	}
 }
 
-void
-drinkfountain()
+void drinkfountain(void)
 {
 	/* What happens when you drink from a fountain? */
 	boolean mgkftn = (levl[u.ux][u.uy].blessedftn == 1);
@@ -347,9 +331,7 @@ drinkfountain()
 	dryup(u.ux, u.uy, TRUE);
 }
 
-void
-dipfountain(obj)
-struct obj *obj;
+void dipfountain(struct obj *obj)
 {
 	if (Levitation) {
 		floating_above("fountain");
@@ -492,9 +474,7 @@ struct obj *obj;
 	dryup(u.ux, u.uy, TRUE);
 }
 
-void
-breaksink(x,y)
-int x, y;
+void breaksink(int x, int y)
 {
     if(cansee(x,y) || (x == u.ux && y == u.uy))
 	pline_The("pipes break!  Water spurts out!");
@@ -505,8 +485,7 @@ int x, y;
     newsym(x,y);
 }
 
-void
-drinksink()
+void drinksink(void)
 {
 	struct obj *otmp;
 	struct monst *mtmp;
