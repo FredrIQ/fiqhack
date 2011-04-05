@@ -45,9 +45,7 @@ static void speaker(struct obj *,char *);
  * Wake every monster in range...
  */
 
-static void
-awaken_monsters(distance)
-int distance;
+static void awaken_monsters(int distance)
 {
 	struct monst *mtmp = fmon;
 	int distm;
@@ -73,9 +71,7 @@ int distance;
  * Make monsters fall asleep.  Note that they may resist the spell.
  */
 
-static void
-put_monsters_to_sleep(distance)
-int distance;
+static void put_monsters_to_sleep(int distance)
 {
 	struct monst *mtmp = fmon;
 
@@ -92,10 +88,7 @@ int distance;
 /*
  * Charm snakes in range.  Note that the snakes are NOT tamed.
  */
-
-static void
-charm_snakes(distance)
-int distance;
+static void charm_snakes(int distance)
 {
 	struct monst *mtmp = fmon;
 	int could_see_mon, was_peaceful;
@@ -126,10 +119,7 @@ int distance;
 /*
  * Calm nymphs in range.
  */
-
-static void
-calm_nymphs(distance)
-int distance;
+static void calm_nymphs(int distance)
 {
 	struct monst *mtmp = fmon;
 
@@ -149,9 +139,7 @@ int distance;
 }
 
 /* Awake only soldiers of the level. */
-
-void
-awaken_soldiers()
+void awaken_soldiers(void)
 {
 	struct monst *mtmp = fmon;
 
@@ -172,10 +160,7 @@ awaken_soldiers()
 /* Charm monsters in range.  Note that they may resist the spell.
  * If swallowed, range is reduced to 0.
  */
-
-static void
-charm_monsters(distance)
-int distance;
+static void charm_monsters(int distance)
 {
 	struct monst *mtmp, *mtmp2;
 
@@ -199,10 +184,7 @@ int distance;
 /* Generate earthquake :-) of desired force.
  * That is:  create random chasms (pits).
  */
-
-static void
-do_earthquake(force)
-int force;
+static void do_earthquake(int force)
 {
 	int x,y;
 	struct monst *mtmp;
@@ -334,10 +316,7 @@ do_pit:		    chasm = maketrap(x,y,PIT);
 /*
  * The player is trying to extract something from his/her instrument.
  */
-
-static int
-do_improvisation(instr)
-struct obj *instr;
+static int do_improvisation(struct obj *instr)
 {
 	int damage, do_spec = !Confusion;
 
@@ -436,10 +415,7 @@ struct obj *instr;
 /*
  * So you want music...
  */
-
-int
-do_play_instrument(instr)
-struct obj *instr;
+int do_play_instrument(struct obj *instr)
 {
     char buf[BUFSZ], c = 'y';
     char *s;

@@ -6,7 +6,7 @@
 
 static const char *dev_name(void);
 static void get_mplname(struct monst *, char *);
-static void mk_mplayer_armor(struct monst *, SHORT_P);
+static void mk_mplayer_armor(struct monst *, short);
 
 /* These are the names of those who
  * contributed to the development of NetHack 3.2/3.3/3.4.
@@ -38,8 +38,7 @@ static const char *developers[] = {
 
 
 /* return a randomly chosen developer name */
-static const char *
-dev_name()
+static const char *dev_name(void)
 {
 	int i, m = 0, n = SIZE(developers);
 	struct monst *mtmp;
@@ -63,10 +62,7 @@ dev_name()
 	return developers[i];
 }
 
-static void
-get_mplname(mtmp, nam)
-struct monst *mtmp;
-char *nam;
+static void get_mplname(struct monst *mtmp, char *nam)
 {
 	boolean fmlkind = is_female(mtmp->data);
 	const char *devnam;
@@ -88,10 +84,7 @@ char *nam;
 			    (boolean)mtmp->female));
 }
 
-static void
-mk_mplayer_armor(mon, typ)
-struct monst *mon;
-short typ;
+static void mk_mplayer_armor(struct monst *mon, short typ)
 {
 	struct obj *obj;
 
@@ -108,11 +101,7 @@ short typ;
 	(void) mpickobj(mon, obj);
 }
 
-struct monst *
-mk_mplayer(ptr, x, y, special)
-struct permonst *ptr;
-xchar x, y;
-boolean special;
+struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special)
 {
 	struct monst *mtmp;
 	char nam[PL_NSIZ];
@@ -286,10 +275,7 @@ boolean special;
  * developers array, otherwise a bunch of Adams and Eves will
  * fill up the overflow.
  */
-void
-create_mplayers(num, special)
-int num;
-boolean special;
+void create_mplayers(int num, boolean special)
 {
 	int pm, x, y;
 	struct monst fakemon;
@@ -315,9 +301,7 @@ boolean special;
 	}
 }
 
-void
-mplayer_talk(mtmp)
-struct monst *mtmp;
+void mplayer_talk(struct monst *mtmp)
 {
 	static const char *same_class_msg[3] = {
 		"I can't win, and neither will you!",

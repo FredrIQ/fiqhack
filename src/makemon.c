@@ -34,9 +34,7 @@ extern const int monstr[];
 #define toostrong(monindx, lev) (monstr[monindx] > lev)
 #define tooweak(monindx, lev)	(monstr[monindx] < lev)
 
-boolean
-is_home_elemental(ptr)
-struct permonst *ptr;
+boolean is_home_elemental(struct permonst *ptr)
 {
 	if (ptr->mlet == S_ELEMENTAL)
 	    switch (monsndx(ptr)) {
@@ -51,9 +49,7 @@ struct permonst *ptr;
 /*
  * Return true if the given monster cannot exist on this elemental level.
  */
-static boolean
-wrong_elem_type(ptr)
-    struct permonst *ptr;
+static boolean wrong_elem_type(struct permonst *ptr)
 {
     if (ptr->mlet == S_ELEMENTAL) {
 	return (boolean)(!is_home_elemental(ptr));
@@ -72,10 +68,8 @@ wrong_elem_type(ptr)
     return FALSE;
 }
 
-static void
-m_initgrp(mtmp, x, y, n)	/* make a group just like mtmp */
-struct monst *mtmp;
-int x, y, n;
+/* make a group just like mtmp */
+static void m_initgrp(struct monst *mtmp, int x, int y, int n)
 {
 	coord mm;
 	int cnt = rnd(n);
@@ -107,11 +101,7 @@ int x, y, n;
 	}
 }
 
-static
-void
-m_initthrow(mtmp,otyp,oquan)
-struct monst *mtmp;
-int otyp,oquan;
+static void m_initthrow(struct monst *mtmp, int otyp, int oquan)
 {
 	struct obj *otmp;
 
@@ -123,9 +113,7 @@ int otyp,oquan;
 }
 
 
-static void
-m_initweap(mtmp)
-struct monst *mtmp;
+static void m_initweap(struct monst *mtmp)
 {
 	struct permonst *ptr = mtmp->data;
 	int mm = monsndx(ptr);
@@ -434,10 +422,7 @@ struct monst *mtmp;
  *   Makes up money for monster's inventory.
  *   This will change with silver & copper coins
  */
-void 
-mkmonmoney(mtmp, amount)
-struct monst *mtmp;
-long amount;
+void mkmonmoney(struct monst *mtmp, long amount)
 {
     struct obj *gold = mksobj(GOLD_PIECE, FALSE, FALSE);
     gold->quan = amount;
@@ -445,9 +430,7 @@ long amount;
 }
 #endif
 
-static void
-m_initinv(mtmp)
-struct	monst	*mtmp;
+static void m_initinv(struct monst *mtmp)
 {
 	int cnt;
 	struct obj *otmp;
@@ -628,10 +611,8 @@ struct	monst	*mtmp;
 }
 
 /* Note: for long worms, always call cutworm (cutworm calls clone_mon) */
-struct monst *
-clone_mon(mon, x, y)
-struct monst *mon;
-xchar x, y;	/* clone's preferred location or 0 (near mon) */
+struct monst *clone_mon(struct monst *mon,
+			xchar x, xchar y)/* clone's preferred location or 0 (near mon) */
 {
 	coord mm;
 	struct monst *m2;
@@ -745,11 +726,7 @@ xchar x, y;	/* clone's preferred location or 0 (near mon) */
  * Returns FALSE propagation unsuccessful
  *         TRUE  propagation successful
  */
-boolean
-propagate(mndx, tally, ghostly)
-int mndx;
-boolean tally;
-boolean ghostly;
+boolean propagate(int mndx, boolean tally, boolean ghostly)
 {
 	boolean result;
 	uchar lim = mbirth_limit(mndx);
@@ -781,11 +758,7 @@ boolean ghostly;
  *
  *	In case we make a monster group, only return the one at [x,y].
  */
-struct monst *
-makemon(ptr, x, y, mmflags)
-struct permonst *ptr;
-int	x, y;
-int	mmflags;
+struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 {
 	struct monst *mtmp;
 	int mndx, mcham, ct, mitem, xlth;
@@ -1050,9 +1023,7 @@ int	mmflags;
 	return mtmp;
 }
 
-int
-mbirth_limit(mndx)
-int mndx;
+int mbirth_limit(int mndx)
 {
 	/* assert(MAXMONNO < 255); */
 	return mndx == PM_NAZGUL ? 9 : mndx == PM_ERINYS ? 3 : MAXMONNO; 
@@ -1060,10 +1031,8 @@ int mndx;
 
 /* used for wand/scroll/spell of create monster */
 /* returns TRUE iff you know monsters have been created */
-boolean
-create_critters(cnt, mptr)
-int cnt;
-struct permonst *mptr;		/* usually null; used for confused reading */
+boolean create_critters(int cnt,
+			struct permonst *mptr) /* usually null; used for confused reading */
 {
 	coord c;
 	int x, y;
@@ -1092,9 +1061,7 @@ struct permonst *mptr;		/* usually null; used for confused reading */
 }
 
 
-static boolean
-uncommon(mndx)
-int mndx;
+static boolean uncommon(int mndx)
 {
 	if (mons[mndx].geno & (G_NOGEN | G_UNIQ)) return TRUE;
 	if (mvitals[mndx].mvflags & G_GONE) return TRUE;
@@ -1109,9 +1076,7 @@ int mndx;
  *	comparing the dungeon alignment and monster alignment.
  *	return an integer in the range of 0-5.
  */
-static int
-align_shift(ptr)
-struct permonst *ptr;
+static int align_shift(struct permonst *ptr)
 {
     static long oldmoves = 0L;	/* != 1, starting value of moves */
     static s_level *lev;
@@ -1141,8 +1106,7 @@ static struct {
 } rndmonst_state = { -1, {0} };
 
 /* select a random monster type */
-struct permonst *
-rndmonst()
+struct permonst *rndmonst(void)
 {
 	struct permonst *ptr;
 	int mndx, ct;
@@ -1231,9 +1195,8 @@ rndmonst()
 
 /* called when you change level (experience or dungeon depth) or when
    monster species can no longer be created (genocide or extinction) */
-void
-reset_rndmonst(mndx)
-int mndx;	/* particular species that can no longer be created */
+/* mndx: particular species that can no longer be created */
+void reset_rndmonst(int mndx)
 {
 	/* cached selection info is out of date */
 	if (mndx == NON_PM) {
@@ -1252,10 +1215,7 @@ int mndx;	/* particular species that can no longer be created */
  *	in that class can be made.
  */
 
-struct permonst *
-mkclass(class,spc)
-char	class;
-int	spc;
+struct permonst *mkclass(char class, int spc)
 {
 	int	first, last, num = 0;
 	int maxmlev, mask = (G_NOGEN | G_UNIQ) & ~spc;
@@ -1303,9 +1263,8 @@ int	spc;
 	return &mons[first];
 }
 
-int
-adj_lev(ptr)	/* adjust strength of monsters based on u.uz and u.ulevel */
-struct permonst *ptr;
+/* adjust strength of monsters based on u.uz and u.ulevel */
+int adj_lev(struct permonst *ptr)
 {
 	int	tmp, tmp2;
 
@@ -1332,9 +1291,8 @@ struct permonst *ptr;
 }
 
 
-struct permonst *
-grow_up(mtmp, victim)	/* `mtmp' might "grow up" into a bigger version */
-struct monst *mtmp, *victim;
+struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" into a bigger version */
+			 struct monst *victim)
 {
 	int oldtype, newtype, max_increase, cur_increase,
 	    lev_limit, hp_threshold;
@@ -1422,10 +1380,7 @@ struct monst *mtmp, *victim;
 }
 
 
-int
-mongets(mtmp, otyp)
-struct monst *mtmp;
-int otyp;
+int mongets(struct monst *mtmp, int otyp)
 {
 	struct obj *otmp;
 	int spe;
@@ -1472,9 +1427,7 @@ int otyp;
 }
 
 
-int
-golemhp(type)
-int type;
+int golemhp(int type)
 {
 	switch(type) {
 		case PM_STRAW_GOLEM: return 20;
@@ -1497,9 +1450,7 @@ int type;
  *	Alignment vs. yours determines monster's attitude to you.
  *	( some "animal" types are co-aligned, but also hungry )
  */
-boolean
-peace_minded(ptr)
-struct permonst *ptr;
+boolean peace_minded(struct permonst *ptr)
 {
 	aligntyp mal = ptr->maligntyp, ual = u.ualign.type;
 
@@ -1540,9 +1491,7 @@ struct permonst *ptr;
  *	peaceful monsters
  *   it's never bad to kill a hostile monster, although it may not be good
  */
-void
-set_malign(mtmp)
-struct monst *mtmp;
+void set_malign(struct monst *mtmp)
 {
 	schar mal = mtmp->data->maligntyp;
 	boolean coaligned;
@@ -1597,9 +1546,7 @@ static char syms[] = {
 	S_MIMIC_DEF, S_MIMIC_DEF, S_MIMIC_DEF,
 };
 
-void
-set_mimic_sym(mtmp)		/* KAA, modified by ERS */
-struct monst *mtmp;
+void set_mimic_sym(struct monst *mtmp)
 {
 	int typ, roomno, rt;
 	unsigned appear, ap_type;
@@ -1707,9 +1654,7 @@ assign_sym:
 }
 
 /* release a monster from a bag of tricks */
-void
-bagotricks(bag)
-struct obj *bag;
+void bagotricks(struct obj *bag)
 {
     if (!bag || bag->otyp != BAG_OF_TRICKS) {
 	impossible("bad bag o' tricks");

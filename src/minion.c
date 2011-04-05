@@ -6,9 +6,8 @@
 #include "emin.h"
 #include "epri.h"
 
-void
-msummon(mon)		/* mon summons a monster */
-struct monst *mon;
+/* mon summons a monster */
+void msummon(struct monst *mon)
 {
 	struct permonst *ptr;
 	int dtype = NON_PM, cnt = 0;
@@ -83,10 +82,7 @@ struct monst *mon;
 	}
 }
 
-void
-summon_minion(alignment, talk)
-aligntyp alignment;
-boolean talk;
+void summon_minion(aligntyp alignment, boolean talk)
 {
     struct monst *mon;
     int mnum;
@@ -138,9 +134,8 @@ boolean talk;
 
 #define Athome	(Inhell && !mtmp->cham)
 
-int
-demon_talk(mtmp)		/* returns 1 if it won't attack. */
-struct monst *mtmp;
+/* returns 1 if it won't attack. */
+int demon_talk(struct monst *mtmp)
 {
 	long cash, demand, offer;
 
@@ -203,9 +198,7 @@ struct monst *mtmp;
 	return 1;
 }
 
-long
-bribe(mtmp)
-struct monst *mtmp;
+long bribe(struct monst *mtmp)
 {
 	char buf[BUFSZ];
 	long offer;
@@ -247,9 +240,7 @@ struct monst *mtmp;
 	return offer;
 }
 
-int
-dprince(atyp)
-aligntyp atyp;
+int dprince(aligntyp atyp)
 {
 	int tryct, pm;
 
@@ -262,9 +253,7 @@ aligntyp atyp;
 	return dlord(atyp);	/* approximate */
 }
 
-int
-dlord(atyp)
-aligntyp atyp;
+int dlord(aligntyp atyp)
 {
 	int tryct, pm;
 
@@ -278,8 +267,7 @@ aligntyp atyp;
 }
 
 /* create lawful (good) lord */
-int
-llord()
+int llord(void)
 {
 	if (!(mvitals[PM_ARCHON].mvflags & G_GONE))
 		return PM_ARCHON;
@@ -287,8 +275,7 @@ llord()
 	return lminion();	/* approximate */
 }
 
-int
-lminion()
+int lminion(void)
 {
 	int	tryct;
 	struct	permonst *ptr;
@@ -302,9 +289,7 @@ lminion()
 	return NON_PM;
 }
 
-int
-ndemon(atyp)
-aligntyp atyp;
+int ndemon(aligntyp atyp)
 {
 	int	tryct;
 	struct	permonst *ptr;

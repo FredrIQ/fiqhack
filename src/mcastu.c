@@ -30,7 +30,7 @@
 #define CLC_FIRE_PILLAR	 8
 #define CLC_GEYSER	 9
 
-static void cursetxt(struct monst *,BOOLEAN_P);
+static void cursetxt(struct monst *,boolean);
 static int choose_magic_spell(int);
 static int choose_clerical_spell(int);
 static void cast_wizard_spell(struct monst *, int,int);
@@ -42,11 +42,7 @@ static boolean spell_would_be_useless(struct monst *,unsigned int,int);
 extern const char * const flash_types[];	/* from zap.c */
 
 /* feedback when frustrated monster couldn't cast a spell */
-static
-void
-cursetxt(mtmp, undirected)
-struct monst *mtmp;
-boolean undirected;
+static void cursetxt(struct monst *mtmp, boolean undirected)
 {
 	if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
 	    const char *point_msg;  /* spellcasting monsters are impolite */
@@ -73,9 +69,7 @@ boolean undirected;
 
 /* convert a level based random selection into a specific mage spell;
    inappropriate choices will be screened out by spell_would_be_useless() */
-static int
-choose_magic_spell(spellval)
-int spellval;
+static int choose_magic_spell(int spellval)
 {
     switch (spellval) {
     case 22:
@@ -118,9 +112,7 @@ int spellval;
 }
 
 /* convert a level based random selection into a specific cleric spell */
-static int
-choose_clerical_spell(spellnum)
-int spellnum;
+static int choose_clerical_spell(int spellnum)
 {
     switch (spellnum) {
     case 13:
@@ -155,12 +147,10 @@ int spellnum;
  * 1: successful spell
  * 0: unsuccessful spell
  */
-int
-castmu(mtmp, mattk, thinks_it_foundyou, foundyou)
-	struct monst *mtmp;
-	struct attack *mattk;
-	boolean thinks_it_foundyou;
-	boolean foundyou;
+int castmu(struct monst *mtmp,
+	   struct attack *mattk,
+	   boolean thinks_it_foundyou,
+	   boolean foundyou)
 {
 	int	dmg, ml = mtmp->m_lev;
 	int ret;
@@ -313,12 +303,7 @@ castmu(mtmp, mattk, thinks_it_foundyou, foundyou)
    If you modify either of these, be sure to change is_undirected_spell()
    and spell_would_be_useless().
  */
-static
-void
-cast_wizard_spell(mtmp, dmg, spellnum)
-struct monst *mtmp;
-int dmg;
-int spellnum;
+static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 {
     if (dmg == 0 && !is_undirected_spell(AD_SPEL, spellnum)) {
 	impossible("cast directed wizard spell (%d) with dmg=0?", spellnum);
@@ -472,12 +457,7 @@ int spellnum;
     if (dmg) mdamageu(mtmp, dmg);
 }
 
-static
-void
-cast_cleric_spell(mtmp, dmg, spellnum)
-struct monst *mtmp;
-int dmg;
-int spellnum;
+static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 {
     if (dmg == 0 && !is_undirected_spell(AD_CLRC, spellnum)) {
 	impossible("cast directed cleric spell (%d) with dmg=0?", spellnum);
@@ -657,11 +637,7 @@ int spellnum;
     if (dmg) mdamageu(mtmp, dmg);
 }
 
-static
-boolean
-is_undirected_spell(adtyp, spellnum)
-unsigned int adtyp;
-int spellnum;
+static boolean is_undirected_spell(unsigned int adtyp, int spellnum)
 {
     if (adtyp == AD_SPEL) {
 	switch (spellnum) {
@@ -688,12 +664,8 @@ int spellnum;
 }
 
 /* Some spells are useless under some circumstances. */
-static
-boolean
-spell_would_be_useless(mtmp, adtyp, spellnum)
-struct monst *mtmp;
-unsigned int adtyp;
-int spellnum;
+static boolean spell_would_be_useless(struct monst *mtmp, unsigned int adtyp,
+				      int spellnum)
 {
     /* Some spells don't require the player to really be there and can be cast
      * by the monster when you're invisible, yet still shouldn't be cast when
@@ -751,10 +723,8 @@ int spellnum;
 /* convert 1..10 to 0..9; add 10 for second group (spell casting) */
 #define ad_to_typ(k) (10 + (int)k - 1)
 
-int
-buzzmu(mtmp, mattk)		/* monster uses spell (ranged) */
-	struct monst *mtmp;
-	struct attack  *mattk;
+/* monster uses spell (ranged) */
+int buzzmu(struct monst *mtmp, struct attack  *mattk)
 {
 	/* don't print constant stream of curse messages for 'normal'
 	   spellcasting monsters at range */
