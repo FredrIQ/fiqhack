@@ -462,7 +462,7 @@ extern void lesshungry(int);
 extern boolean is_fainted(void);
 extern void reset_faint(void);
 extern void violated_vegetarian(void);
-extern void newuhs(BOOLEAN_P);
+extern void newuhs(boolean);
 extern struct obj *floorfood(const char *,int);
 extern void vomit(void);
 extern int eaten_stat(int,struct obj *);
@@ -470,7 +470,7 @@ extern void food_disappears(struct obj *);
 extern void food_substitution(struct obj *,struct obj *);
 extern void fix_petrification(void);
 extern void consume_oeaten(struct obj *,int);
-extern boolean maybe_finished_meal(BOOLEAN_P);
+extern boolean maybe_finished_meal(boolean);
 
 /* ### end.c ### */
 
@@ -481,7 +481,7 @@ extern void done_in_by(struct monst *);
 extern void panic(const char *,...);
 #if !defined(MAKEDEFS_C) && !defined(LEV_LEX_C)
 extern void done(int);
-extern void container_contents(struct obj *,BOOLEAN_P,BOOLEAN_P);
+extern void container_contents(struct obj *,boolean,boolean);
 extern void terminate(int);
 extern int num_genocides(void);
 
@@ -492,14 +492,14 @@ extern void wipeout_text(char *,int,unsigned);
 extern boolean can_reach_floor(void);
 extern const char *surface(int,int);
 extern const char *ceiling(int,int);
-extern struct engr *engr_at(XCHAR_P,XCHAR_P);
+extern struct engr *engr_at(xchar,xchar);
 #ifdef ELBERETH
-extern int sengr_at(const char *,XCHAR_P,XCHAR_P);
+extern int sengr_at(const char *,xchar,xchar);
 #endif
 extern void u_wipe_engr(int);
-extern void wipe_engr_at(XCHAR_P,XCHAR_P,XCHAR_P);
+extern void wipe_engr_at(xchar,xchar,xchar);
 extern void read_engr_at(int,int);
-extern void make_engr_at(int,int,const char *,long,XCHAR_P);
+extern void make_engr_at(int,int,const char *,long,xchar);
 extern void del_engr_at(int,int);
 extern int freehand(void);
 extern int doengrave(void);
@@ -515,12 +515,12 @@ extern int experience(struct monst *,int);
 extern void more_experienced(int,int);
 extern void losexp(const char *);
 extern void newexplevel(void);
-extern void pluslvl(BOOLEAN_P);
-extern long rndexp(BOOLEAN_P);
+extern void pluslvl(boolean);
+extern long rndexp(boolean);
 
 /* ### explode.c ### */
 
-extern void explode(int,int,int,int,CHAR_P,int);
+extern void explode(int,int,int,int,char,int);
 extern long scatter(int, int, int, unsigned int, struct obj *);
 extern void splatter_burning_oil(int, int);
 

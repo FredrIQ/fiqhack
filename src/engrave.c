@@ -31,9 +31,7 @@ static const char *random_mesg[] = {
 	"As if!", /* Clueless */
 };
 
-char *
-random_engraving(outbuf)
-char *outbuf;
+char *random_engraving(char *outbuf)
 {
 	const char *rumor;
 
@@ -66,11 +64,9 @@ static const struct {
 	{'8', "3o"}
 };
 
-void
-wipeout_text(engr, cnt, seed)
-char *engr;
-int cnt;
-unsigned seed;		/* for semi-controlled randomization */
+void wipeout_text(char *engr,
+		  int cnt,
+		  unsigned seed) /* for semi-controlled randomization */
 {
 	char *s;
 	int i, j, nxt, use_rubout, lth = (int)strlen(engr);
@@ -126,8 +122,7 @@ unsigned seed;		/* for semi-controlled randomization */
 	while (lth && engr[lth-1] == ' ') engr[--lth] = 0;
 }
 
-boolean
-can_reach_floor()
+boolean can_reach_floor(void)
 {
 	return (boolean)(!u.uswallow &&
 			/* Restricted/unskilled riders can't reach the floor */
@@ -137,9 +132,7 @@ can_reach_floor()
 }
 
 
-const char *
-surface(x, y)
-int x, y;
+const char *surface(int x, int y)
 {
 	struct rm *lev = &levl[x][y];
 
@@ -169,9 +162,7 @@ int x, y;
 	    return "ground";
 }
 
-const char *
-ceiling(x, y)
-int x, y;
+const char *ceiling(int x, int y)
 {
 	struct rm *lev = &levl[x][y];
 	const char *what;
@@ -198,9 +189,7 @@ int x, y;
 	return what;
 }
 
-struct engr *
-engr_at(x, y)
-xchar x, y;
+struct engr *engr_at(xchar x, xchar y)
 {
 	struct engr *ep = head_engr;
 
@@ -217,10 +206,7 @@ xchar x, y;
  * location; a case-insensitive substring match used.
  * Ignore headstones, in case the player names herself "Elbereth".
  */
-int
-sengr_at(s, x, y)
-	const char *s;
-	xchar x, y;
+int sengr_at(const char *s, xchar x, xchar y)
 {
 	struct engr *ep = engr_at(x,y);
 
@@ -230,18 +216,14 @@ sengr_at(s, x, y)
 #endif /* ELBERETH */
 
 
-void
-u_wipe_engr(cnt)
-int cnt;
+void u_wipe_engr(int cnt)
 {
 	if (can_reach_floor())
 		wipe_engr_at(u.ux, u.uy, cnt);
 }
 
 
-void
-wipe_engr_at(x,y,cnt)
-xchar x,y,cnt;
+void wipe_engr_at(xchar x, xchar y, xchar cnt)
 {
 	struct engr *ep = engr_at(x,y);
 
@@ -260,9 +242,7 @@ xchar x,y,cnt;
 }
 
 
-void
-read_engr_at(x,y)
-int x,y;
+void read_engr_at(int x, int y)
 {
 	struct engr *ep = engr_at(x,y);
 	int	sensed = 0;
@@ -336,12 +316,7 @@ int x,y;
 }
 
 
-void
-make_engr_at(x,y,s,e_time,e_type)
-int x,y;
-const char *s;
-long e_time;
-xchar e_type;
+void make_engr_at(int x, int y, const char *s, long e_time, xchar e_type)
 {
 	struct engr *ep;
 
@@ -362,9 +337,7 @@ xchar e_type;
 }
 
 /* delete any engraving at location <x,y> */
-void
-del_engr_at(x, y)
-int x, y;
+void del_engr_at(int x, int y)
 {
 	struct engr *ep = engr_at(x, y);
 
@@ -374,8 +347,7 @@ int x, y;
 /*
  *	freehand - returns true if player has a free hand
  */
-int
-freehand()
+int freehand(void)
 {
 	return(!uwep || !welded(uwep) ||
 	   (!bimanual(uwep) && (!uarms || !uarms->cursed)));
@@ -418,8 +390,7 @@ static const char styluses[] =
  */
 
 /* return 1 if action took 1 (or more) moves, 0 if error or aborted */
-int
-doengrave()
+int doengrave(void)
 {
 	boolean dengr = FALSE;	/* TRUE if we wipe out the current engraving */
 	boolean doblind = FALSE;/* TRUE if engraving blinds the player */
@@ -1094,9 +1065,7 @@ doengrave()
 	return 1;
 }
 
-void
-save_engravings(fd, mode)
-int fd, mode;
+void save_engravings(int fd, int mode)
 {
 	struct engr *ep = head_engr;
 	struct engr *ep2;
@@ -1118,9 +1087,7 @@ int fd, mode;
 	    head_engr = 0;
 }
 
-void
-rest_engravings(fd)
-int fd;
+void rest_engravings(int fd)
 {
 	struct engr *ep;
 	unsigned lth;
@@ -1141,9 +1108,7 @@ int fd;
 	}
 }
 
-void
-del_engr(ep)
-struct engr *ep;
+void del_engr(struct engr *ep)
 {
 	if (ep == head_engr) {
 		head_engr = ep->nxt_engr;
@@ -1164,9 +1129,7 @@ struct engr *ep;
 }
 
 /* randomly relocate an engraving */
-void
-rloc_engr(ep)
-struct engr *ep;
+void rloc_engr(struct engr *ep)
 {
 	int tx, ty, tryct = 200;
 
@@ -1218,10 +1181,7 @@ static const char *epitaphs[] = {
 /* Create a headstone at the given location.
  * The caller is responsible for newsym(x, y).
  */
-void
-make_grave(x, y, str)
-int x, y;
-const char *str;
+void make_grave(int x, int y, const char *str)
 {
 	/* Can we put a grave here? */
 	if ((levl[x][y].typ != ROOM && levl[x][y].typ != GRAVE) || t_at(x,y)) return;

@@ -32,13 +32,13 @@ static void done_intr(int);
 static void done_hangup(int);
 # endif
 #endif
-static void disclose(int,BOOLEAN_P);
+static void disclose(int,boolean);
 static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *,int);
-static void artifact_score(struct obj *,BOOLEAN_P,winid);
+static void artifact_score(struct obj *,boolean,winid);
 static void savelife(int);
-static void list_vanquished(CHAR_P,BOOLEAN_P);
-static void list_genocided(CHAR_P,BOOLEAN_P);
+static void list_vanquished(char,boolean);
+static void list_genocided(char,boolean);
 static boolean should_query_disclose_option(int,char *);
 
 #if defined(WIN32)
@@ -81,9 +81,7 @@ static const char *ends[] = {		/* "when you..." */
 extern const char * const killed_by_prefix[];	/* from topten.c */
 
 /*ARGSUSED*/
-void
-done1(sig_unused)   /* called as signal() handler, so sent at least one arg */
-int sig_unused;
+void done1(int sig_unused) /* called as signal() handler, so sent at least one arg */
 {
 #ifndef NO_SIGNAL
 	(void) signal(SIGINT,SIG_IGN);
@@ -103,8 +101,7 @@ int sig_unused;
 
 
 /* "#quit" command or keyboard interrupt */
-int
-done2()
+int done2(void)
 {
 	if(yn("Really quit?") == 'n') {
 #ifndef NO_SIGNAL
@@ -137,9 +134,7 @@ done2()
 
 #ifndef NO_SIGNAL
 /*ARGSUSED*/
-static void
-done_intr(sig_unused) /* called as signal() handler, so sent at least one arg */
-int sig_unused;
+static void done_intr(int sig_unused) /* called as signal() handler, so sent at least one arg */
 {
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);
@@ -150,9 +145,7 @@ int sig_unused;
 }
 
 # if defined(UNIX)
-static void
-done_hangup(sig)	/* signal() handler */
-int sig;
+static void done_hangup(int sig) /* signal() handler */
 {
 	program_state.done_hup++;
 	(void)signal(SIGHUP, SIG_IGN);
@@ -162,9 +155,7 @@ int sig;
 # endif
 #endif /* NO_SIGNAL */
 
-void
-done_in_by(mtmp)
-struct monst *mtmp;
+void done_in_by(struct monst *mtmp)
 {
 	char buf[BUFSZ];
 	boolean distorted = (boolean)(Hallucination && canspotmon(mtmp));
@@ -233,8 +224,7 @@ struct monst *mtmp;
 #endif
 
 /*VARARGS1*/
-void
-panic (const char *str, ...)
+void panic (const char *str, ...)
 {
 	va_list the_args;
 	va_start(the_args, str);
@@ -287,10 +277,7 @@ panic (const char *str, ...)
 	done(PANICKED);
 }
 
-static boolean
-should_query_disclose_option(category, defquery)
-int category;
-char *defquery;
+static boolean should_query_disclose_option(int category, char *defquery)
 {
     int idx;
     char *dop = index(disclosure_options, category);
@@ -325,10 +312,7 @@ char *defquery;
     return TRUE;
 }
 
-static void
-disclose(how,taken)
-int how;
-boolean taken;
+static void disclose(int how, boolean taken)
 {
 	char	c = 0, defquery;
 	char	qbuf[QBUFSZ];
@@ -386,9 +370,7 @@ boolean taken;
 }
 
 /* try to get the player back in a viable state after being killed */
-static void
-savelife(how)
-int how;
+static void savelife(int how)
 {
 	u.uswldtim = 0;
 	u.uhp = u.uhpmax;
@@ -416,9 +398,7 @@ int how;
  * Get valuables from the given list.  Revised code: the list always remains
  * intact.
  */
-static void
-get_valuables(list)
-struct obj *list;	/* inventory or container contents */
+static void get_valuables(struct obj *list)
 {
     struct obj *obj;
     int i;
@@ -449,10 +429,8 @@ struct obj *list;	/* inventory or container contents */
  *  Sort collected valuables, most frequent to least.  We could just
  *  as easily use qsort, but we don't care about efficiency here.
  */
-static void
-sort_valuables(list, size)
-struct valuable_data list[];
-int size;		/* max value is less than 20 */
+static void sort_valuables(struct valuable_data list[],
+			   int size /* max value is less than 20 */)
 {
     int i, j;
     struct valuable_data ltmp;
@@ -472,11 +450,9 @@ int size;		/* max value is less than 20 */
 }
 
 /* called twice; first to calculate total, then to list relevant items */
-static void
-artifact_score(list, counting, endwin)
-struct obj *list;
-boolean counting;	/* true => add up points; false => display them */
-winid endwin;
+static void artifact_score(struct obj *list,
+			   boolean counting, /* true => add up points; false => display them */
+			   winid endwin)
 {
     char pbuf[BUFSZ];
     struct obj *otmp;
@@ -510,9 +486,7 @@ winid endwin;
 }
 
 /* Be careful not to call panic from here! */
-void
-done(how)
-int how;
+void done(int how)
 {
 	boolean taken;
 	char kilbuf[BUFSZ], pbuf[BUFSZ];
@@ -885,10 +859,8 @@ die:
 }
 
 
-void
-container_contents(list, identified, all_containers)
-struct obj *list;
-boolean identified, all_containers;
+void container_contents(struct obj *list,
+			boolean identified, boolean all_containers)
 {
 	struct obj *box, *obj;
 	char buf[BUFSZ];
@@ -926,9 +898,7 @@ boolean identified, all_containers;
 
 
 /* should be called with either EXIT_SUCCESS or EXIT_FAILURE */
-void
-terminate(status)
-int status;
+void terminate(int status)
 {
 	/* don't bother to try to release memory if we're in panic mode, to
 	   avoid trouble in case that happens to be due to memory problems */
@@ -940,10 +910,7 @@ int status;
 	nethack_exit(status);
 }
 
-static void
-list_vanquished(defquery, ask)
-char defquery;
-boolean ask;
+static void list_vanquished(char defquery, boolean ask)
 {
     int i, lev;
     int ntypes = 0, max_lev = 0, nkilled;
@@ -1015,8 +982,7 @@ boolean ask;
 }
 
 /* number of monster species which have been genocided */
-int
-num_genocides()
+int num_genocides(void)
 {
     int i, n = 0;
 
@@ -1026,10 +992,7 @@ num_genocides()
     return n;
 }
 
-static void
-list_genocided(defquery, ask)
-char defquery;
-boolean ask;
+static void list_genocided(char defquery, boolean ask)
 {
     int i;
     int ngenocided;

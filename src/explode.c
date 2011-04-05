@@ -19,13 +19,11 @@ static int expl[3][3] = {
  * did it, and with a wand, spell, or breath weapon?  Object types share both
  * these disadvantages....
  */
-void
-explode(x, y, type, dam, olet, expltype)
-int x, y;
-int type; /* the same as in zap.c */
-int dam;
-char olet;
-int expltype;
+void explode(int x, int y,
+	     int type, /* the same as in zap.c */
+	     int dam,
+	     char olet,
+	     int expltype)
 {
 	int i, j, k, damu = dam;
 	boolean starting = 1;
@@ -394,12 +392,10 @@ struct scatter_chain {
  */
 
 /* returns number of scattered objects */
-long
-scatter(sx,sy,blastforce,scflags, obj)
-int sx,sy;				/* location of objects to scatter */
-int blastforce;				/* force behind the scattering	*/
-unsigned int scflags;
-struct obj *obj;			/* only scatter this obj        */
+long scatter(int sx, int sy,	/* location of objects to scatter */
+             int blastforce,	/* force behind the scattering	*/
+             unsigned int scflags,
+             struct obj *obj)	/* only scatter this obj        */
 {
 	struct obj *otmp;
 	int tmp;
@@ -559,9 +555,7 @@ struct obj *obj;			/* only scatter this obj        */
  *
  * For now, just perform a "regular" explosion.
  */
-void
-splatter_burning_oil(x, y)
-    int x, y;
+void splatter_burning_oil(int x, int y)
 {
 /* ZT_SPELL(ZT_FIRE) = ZT_SPELL(AD_FIRE-1) = 10+(2-1) = 11 */
 #define ZT_SPELL_O_FIRE 11 /* value kludge, see zap.c */
