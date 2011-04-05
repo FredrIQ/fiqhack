@@ -46,39 +46,29 @@ NetHack, except that rounddiv may call panic().
 =*/
 
 
-boolean
-digit(c)		/* is 'c' a digit? */
-    char c;
+boolean digit(char c)	/* is 'c' a digit? */
 {
     return (boolean)('0' <= c && c <= '9');
 }
 
-boolean
-letter(c)		/* is 'c' a letter?  note: '@' classed as letter */
-    char c;
+boolean letter(char c)	/* is 'c' a letter?  note: '@' classed as letter */
 {
     return (boolean)(('@' <= c && c <= 'Z') || ('a' <= c && c <= 'z'));
 }
 
 
-char
-highc(c)			/* force 'c' into uppercase */
-    char c;
+char highc(char c)	/* force 'c' into uppercase */
 {
     return (char)(('a' <= c && c <= 'z') ? (c & ~040) : c);
 }
 
-char
-lowc(c)			/* force 'c' into lowercase */
-    char c;
+char lowc(char c)	/* force 'c' into lowercase */
 {
     return (char)(('A' <= c && c <= 'Z') ? (c | 040) : c);
 }
 
 
-char *
-lcase(s)		/* convert a string into all lowercase */
-    char *s;
+char *lcase(char *s)	/* convert a string into all lowercase */
 {
     char *p;
 
@@ -87,18 +77,14 @@ lcase(s)		/* convert a string into all lowercase */
     return s;
 }
 
-char *
-upstart(s)		/* convert first character of a string to uppercase */
-    char *s;
+char *upstart(char *s)	/* convert first character of a string to uppercase */
 {
     if (s) *s = highc(*s);
     return s;
 }
 
 /* remove excess whitespace from a string buffer (in place) */
-char *
-mungspaces(bp)
-char *bp;
+char *mungspaces(char *bp)
 {
     char c, *p, *p2;
     boolean was_space = TRUE;
@@ -114,19 +100,14 @@ char *bp;
 }
 
 
-char *
-eos(s)			/* return the end of a string (pointing at '\0') */
-    char *s;
+char *eos(char *s)	/* return the end of a string (pointing at '\0') */
 {
     while (*s) s++;	/* s += strlen(s); */
     return s;
 }
 
 /* strcat(s, {c,'\0'}); */
-char *
-strkitten(s, c)		/* append a character to a string (in place) */
-    char *s;
-    char c;
+char *strkitten(char *s, char c) /* append a character to a string (in place) */
 {
     char *p = eos(s);
 
@@ -135,9 +116,7 @@ strkitten(s, c)		/* append a character to a string (in place) */
     return s;
 }
 
-char *
-s_suffix(s)		/* return a name converted to possessive */
-    const char *s;
+char *s_suffix(const char *s) /* return a name converted to possessive */
 {
     static char buf[BUFSZ];
 
@@ -151,10 +130,7 @@ s_suffix(s)		/* return a name converted to possessive */
     return buf;
 }
 
-char *
-xcrypt(str, buf)	/* trivial text encryption routine (see makedefs) */
-const char *str;
-char *buf;
+char *xcrypt(const char *str, char *buf) /* trivial text encryption routine (see makedefs) */
 {
     const char *p;
     char *q;
@@ -170,9 +146,7 @@ char *buf;
 }
 
 
-boolean
-onlyspace(s)		/* is a string entirely whitespace? */
-    const char *s;
+boolean onlyspace(const char *s)	/* is a string entirely whitespace? */
 {
     for (; *s; s++)
 	if (*s != ' ' && *s != '\t') return FALSE;
@@ -180,9 +154,7 @@ onlyspace(s)		/* is a string entirely whitespace? */
 }
 
 
-char *
-tabexpand(sbuf)		/* expand tabs into proper number of spaces */
-    char *sbuf;
+char *tabexpand(char *sbuf)	/* expand tabs into proper number of spaces */
 {
     char buf[BUFSZ];
     char *bp, *s = sbuf;
@@ -202,9 +174,7 @@ tabexpand(sbuf)		/* expand tabs into proper number of spaces */
     return strcpy(sbuf, buf);
 }
 
-char *
-visctrl(c)		/* make a displayable string from a character */
-    char c;
+char *visctrl(char c)	/* make a displayable string from a character */
 {
     static char ccc[3];
 
@@ -225,9 +195,8 @@ visctrl(c)		/* make a displayable string from a character */
 }
 
 
-const char *
-ordin(n)		/* return the ordinal suffix of a number */
-    int n;			/* note: should be non-negative */
+const char *ordin(int n)	/* return the ordinal suffix of a number */
+/* note: n should be non-negative */
 {
     int dd = n % 10;
 
@@ -236,9 +205,7 @@ ordin(n)		/* return the ordinal suffix of a number */
 }
 
 
-char *
-sitoa(n)		/* make a signed digit string from a number */
-    int n;
+char *sitoa(int n)	/* make a signed digit string from a number */
 {
     static char buf[13];
 
@@ -246,18 +213,13 @@ sitoa(n)		/* make a signed digit string from a number */
     return buf;
 }
 
-int
-sgn(n)			/* return the sign of a number: -1, 0, or 1 */
-    int n;
+int sgn(int n)	/* return the sign of a number: -1, 0, or 1 */
 {
     return (n < 0) ? -1 : (n != 0);
 }
 
 
-int
-rounddiv(x, y)		/* calculate x/y, rounding as appropriate */
-    long x;
-    int  y;
+int rounddiv(long x, int y)	/* calculate x/y, rounding as appropriate */
 {
     int r, m;
     int divsgn = 1;
@@ -278,9 +240,8 @@ rounddiv(x, y)		/* calculate x/y, rounding as appropriate */
 }
 
 
-int
-distmin(x0, y0, x1, y1) /* distance between two points, in moves */
-    int x0, y0, x1, y1;
+/* distance between two points, in moves */
+int distmin(int x0, int y0, int x1, int y1)
 {
     int dx = x0 - x1, dy = y0 - y1;
     if (dx < 0) dx = -dx;
@@ -291,17 +252,15 @@ distmin(x0, y0, x1, y1) /* distance between two points, in moves */
     return (dx < dy) ? dy : dx;
 }
 
-int
-dist2(x0, y0, x1, y1)	/* square of euclidean distance between pair of pts */
-    int x0, y0, x1, y1;
+/* square of euclidean distance between pair of pts */
+int dist2(int x0, int y0, int x1, int y1)
 {
     int dx = x0 - x1, dy = y0 - y1;
     return dx * dx + dy * dy;
 }
 
-boolean
-online2(x0, y0, x1, y1) /* are two points lined up (on a straight line)? */
-    int x0, y0, x1, y1;
+/* are two points lined up (on a straight line)? */
+boolean online2(int x0, int y0, int x1, int y1)
 {
     int dx = x0 - x1, dy = y0 - y1;
     /*  If either delta is zero then they're on an orthogonal line,
@@ -311,9 +270,8 @@ online2(x0, y0, x1, y1) /* are two points lined up (on a straight line)? */
 }
 
 
-boolean
-pmatch(patrn, strng)	/* match a string against a pattern */
-    const char *patrn, *strng;
+/* match a string against a pattern */
+boolean pmatch(const char *patrn, const char *strng)
 {
     char s, p;
   /*
@@ -335,11 +293,9 @@ pmatch_top:
 
 
 #ifndef STRNCMPI
-int
-strncmpi(s1, s2, n)	/* case insensitive counted string comparison */
-    const char *s1, *s2;
-    int n; /*(should probably be size_t, which is usually unsigned)*/
-{					/*{ aka strncasecmp }*/
+/* case insensitive counted string comparison */
+int strncmpi(const char *s1, const char *s2, int n)
+{
     char t1, t2;
 
     while (n--) {
@@ -355,10 +311,8 @@ strncmpi(s1, s2, n)	/* case insensitive counted string comparison */
 
 
 #ifndef STRSTRI
-char *
-strstri(str, sub)	/* case insensitive substring search */
-    const char *str;
-    const char *sub;
+/* case insensitive substring search */
+char *strstri(const char *str, const char *sub)
 {
     const char *s1, *s2;
     int i, k;
@@ -395,11 +349,8 @@ strstri(str, sub)	/* case insensitive substring search */
 
 /* compare two strings for equality, ignoring the presence of specified
    characters (typically whitespace) and possibly ignoring case */
-boolean
-fuzzymatch(s1, s2, ignore_chars, caseblind)
-    const char *s1, *s2;
-    const char *ignore_chars;
-    boolean caseblind;
+boolean fuzzymatch(const char *s1, const char *s2,
+		   const char *ignore_chars, boolean caseblind)
 {
     char c1, c2;
 
@@ -432,8 +383,7 @@ fuzzymatch(s1, s2, ignore_chars, caseblind)
 
 static struct tm *getlt(void);
 
-void
-setrandom()
+void setrandom(void)
 {
 	/* the types are different enough here that sweeping the different
 	 * routine names into one via #defines is even more confusing
@@ -453,8 +403,7 @@ setrandom()
 #endif
 }
 
-static struct tm *
-getlt()
+static struct tm *getlt(void)
 {
 	time_t date;
 
@@ -462,15 +411,12 @@ getlt()
 	return localtime(&date);
 }
 
-int
-getyear()
+int getyear(void)
 {
 	return 1900 + getlt()->tm_year;
 }
 
-long
-yyyymmdd(date)
-time_t date;
+long yyyymmdd(time_t date)
 {
 	long datenum;
 	struct tm *lt;
@@ -506,8 +452,7 @@ time_t date;
  * 177 ~= 8 reported phases * 22
  * + 11/22 for rounding
  */
-int
-phase_of_the_moon()		/* 0-7, with 0: new, 4: full */
+int phase_of_the_moon(void)	/* 0-7, with 0: new, 4: full */
 {
 	struct tm *lt = getlt();
 	int epact, diy, goldn;
@@ -521,24 +466,21 @@ phase_of_the_moon()		/* 0-7, with 0: new, 4: full */
 	return  (((((diy + epact) * 6) + 11) % 177) / 22) & 7 ;
 }
 
-boolean
-friday_13th()
+boolean friday_13th(void)
 {
 	struct tm *lt = getlt();
 
 	return (boolean)(lt->tm_wday == 5 /* friday */ && lt->tm_mday == 13);
 }
 
-int
-night()
+int night(void)
 {
 	int hour = getlt()->tm_hour;
 
 	return hour < 6 || hour > 21;
 }
 
-int
-midnight()
+int midnight(void)
 {
 	return getlt()->tm_hour == 0;
 }

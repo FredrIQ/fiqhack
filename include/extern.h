@@ -586,24 +586,24 @@ extern void drinksink(void);
 /* ### hack.c ### */
 
 extern boolean revive_nasty(int,int,const char*);
-extern void movobj(struct obj *,XCHAR_P,XCHAR_P);
-extern boolean may_dig(XCHAR_P,XCHAR_P);
-extern boolean may_passwall(XCHAR_P,XCHAR_P);
-extern boolean bad_rock(struct permonst *,XCHAR_P,XCHAR_P);
-extern boolean invocation_pos(XCHAR_P,XCHAR_P);
+extern void movobj(struct obj *,xchar,xchar);
+extern boolean may_dig(xchar,xchar);
+extern boolean may_passwall(xchar,xchar);
+extern boolean bad_rock(struct permonst *,xchar,xchar);
+extern boolean invocation_pos(xchar,xchar);
 extern boolean test_move(int, int, int, int, int);
 extern void domove(void);
 extern void invocation_message(void);
-extern void spoteffects(BOOLEAN_P);
-extern char *in_rooms(XCHAR_P,XCHAR_P,int);
+extern void spoteffects(boolean);
+extern char *in_rooms(xchar,xchar,int);
 extern boolean in_town(int,int);
-extern void check_special_room(BOOLEAN_P);
+extern void check_special_room(boolean);
 extern int dopickup(void);
 extern void lookaround(void);
 extern int monster_nearby(void);
 extern void nomul(int);
 extern void unmul(const char *);
-extern void losehp(int,const char *,BOOLEAN_P);
+extern void losehp(int,const char *,boolean);
 extern int weight_cap(void);
 extern int inv_weight(void);
 extern int near_capacity(void);
@@ -617,20 +617,20 @@ extern long money_cnt(struct obj *);
 
 /* ### hacklib.c ### */
 
-extern boolean digit(CHAR_P);
-extern boolean letter(CHAR_P);
-extern char highc(CHAR_P);
-extern char lowc(CHAR_P);
+extern boolean digit(char);
+extern boolean letter(char);
+extern char highc(char);
+extern char lowc(char);
 extern char *lcase(char *);
 extern char *upstart(char *);
 extern char *mungspaces(char *);
 extern char *eos(char *);
-extern char *strkitten(char *,CHAR_P);
+extern char *strkitten(char *,char);
 extern char *s_suffix(const char *);
 extern char *xcrypt(const char *,char *);
 extern boolean onlyspace(const char *);
 extern char *tabexpand(char *);
-extern char *visctrl(CHAR_P);
+extern char *visctrl(char);
 extern const char *ordin(int);
 extern char *sitoa(int);
 extern int sgn(int);
@@ -645,7 +645,7 @@ extern int strncmpi(const char *,const char *,int);
 #ifndef STRSTRI
 extern char *strstri(const char *,const char *);
 #endif
-extern boolean fuzzymatch(const char *,const char *,const char *,BOOLEAN_P);
+extern boolean fuzzymatch(const char *,const char *,const char *,boolean);
 extern void setrandom(void);
 extern int getyear(void);
 extern long yyyymmdd(time_t);
