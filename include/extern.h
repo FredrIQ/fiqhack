@@ -1982,9 +1982,9 @@ extern int bhitpile(struct obj *,int (*)(struct obj*,struct obj*),int,int);
 extern int zappable(struct obj *);
 extern void zapnodir(struct obj *);
 extern int dozap(void);
-extern int zapyourself(struct obj *,BOOLEAN_P);
+extern int zapyourself(struct obj *,boolean);
 extern boolean cancel_monst(struct monst *,struct obj *,
-			       BOOLEAN_P,BOOLEAN_P,BOOLEAN_P);
+			       boolean,boolean,boolean);
 extern void weffects(struct obj *);
 extern int spell_damage_bonus(void);
 extern const char *exclam(int force);
@@ -1993,15 +1993,15 @@ extern void miss(const char *,struct monst *);
 extern struct monst *bhit(int,int,int,int,int (*)(struct monst*,struct obj*),
 			     int (*)(struct obj*,struct obj*),struct obj *);
 extern struct monst *boomhit(int,int);
-extern int burn_floor_paper(int,int,BOOLEAN_P,BOOLEAN_P);
-extern void buzz(int,int,XCHAR_P,XCHAR_P,int,int);
-extern void melt_ice(XCHAR_P,XCHAR_P);
-extern int zap_over_floor(XCHAR_P,XCHAR_P,int,boolean *);
+extern int burn_floor_paper(int,int,boolean,boolean);
+extern void buzz(int,int,xchar,xchar,int,int);
+extern void melt_ice(xchar,xchar);
+extern int zap_over_floor(xchar,xchar,int,boolean *);
 extern void fracture_rock(struct obj *);
 extern boolean break_statue(struct obj *);
 extern void destroy_item(int,int);
 extern int destroy_mitem(struct monst *,int,int);
-extern int resist(struct monst *,CHAR_P,int,int);
+extern int resist(struct monst *,char,int,int);
 extern void makewish(void);
 
 #endif /* !MAKEDEFS_C && !LEV_LEX_C */
