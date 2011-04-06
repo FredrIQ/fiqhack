@@ -33,8 +33,7 @@ static void maybe_tame(struct monst *,struct obj *);
 
 static void set_lit(int,int,void *);
 
-int
-doread()
+int doread(void)
 {
 	struct obj *scroll;
 	boolean confused;
@@ -147,9 +146,7 @@ doread()
 	return 1;
 }
 
-static void
-stripspe(obj)
-struct obj *obj;
+static void stripspe(struct obj *obj)
 {
 	if (obj->blessed) pline(nothing_happens);
 	else {
@@ -162,18 +159,13 @@ struct obj *obj;
 	}
 }
 
-static void
-p_glow1(otmp)
-struct obj	*otmp;
+static void p_glow1(struct obj *otmp)
 {
 	Your("%s %s briefly.", xname(otmp),
 	     otense(otmp, Blind ? "vibrate" : "glow"));
 }
 
-static void
-p_glow2(otmp,color)
-struct obj	*otmp;
-const char *color;
+static void p_glow2(struct obj *otmp, const char *color)
 {
 	Your("%s %s%s%s for a moment.",
 		xname(otmp),
@@ -184,9 +176,7 @@ const char *color;
 
 /* Is the object chargeable?  For purposes of inventory display; it is */
 /* possible to be able to charge things for which this returns FALSE. */
-boolean
-is_chargeable(obj)
-struct obj *obj;
+boolean is_chargeable(struct obj *obj)
 {
 	if (obj->oclass == WAND_CLASS) return TRUE;
 	/* known && !uname is possible after amnesia/mind flayer */
@@ -204,10 +194,7 @@ struct obj *obj;
  * recharge an object; curse_bless is -1 if the recharging implement
  * was cursed, +1 if blessed, 0 otherwise.
  */
-void
-recharge(obj, curse_bless)
-struct obj *obj;
-int curse_bless;
+void recharge(struct obj *obj, int curse_bless)
 {
 	int n;
 	boolean is_cursed, is_blessed;
@@ -423,9 +410,7 @@ int curse_bless;
 
 
 /* Forget known information about this object class. */
-static void
-forget_single_object(obj_id)
-	int obj_id;
+static void forget_single_object(int obj_id)
 {
 	objects[obj_id].oc_name_known = 0;
 	objects[obj_id].oc_pre_discovered = 0;	/* a discovery when relearned */
@@ -440,10 +425,7 @@ forget_single_object(obj_id)
 
 
 /* randomize the given list of numbers  0 <= i < count */
-static void
-randomize(indices, count)
-	int *indices;
-	int count;
+static void randomize(int *indices, int count)
 {
 	int i, iswap, temp;
 
@@ -457,9 +439,7 @@ randomize(indices, count)
 
 
 /* Forget % of known objects. */
-void
-forget_objects(percent)
-	int percent;
+void forget_objects(int percent)
 {
 	int i, count;
 	int indices[NUM_OBJECTS];
@@ -485,9 +465,7 @@ forget_objects(percent)
 
 
 /* Forget some or all of map (depends on parameters). */
-void
-forget_map(howmuch)
-	int howmuch;
+void forget_map(int howmuch)
 {
 	int zx, zy;
 
@@ -505,8 +483,7 @@ forget_map(howmuch)
 }
 
 /* Forget all traps on the level. */
-void
-forget_traps()
+void forget_traps(void)
 {
 	struct trap *trap;
 
@@ -520,9 +497,7 @@ forget_traps()
  * Forget given % of all levels that the hero has visited and not forgotten,
  * except this one.
  */
-void
-forget_levels(percent)
-	int percent;
+void forget_levels(int percent)
 {
 	int i, count;
 	xchar  maxl, this_lev;
@@ -577,9 +552,7 @@ forget_levels(percent)
  *	howmuch & ALL_MAP	= forget whole map
  *	howmuch & ALL_SPELLS	= forget all spells
  */
-static void
-forget(howmuch)
-int howmuch;
+static void forget(int howmuch)
 {
 
 	if (Punished) u.bc_felt = 0;	/* forget felt ball&chain */
@@ -608,10 +581,7 @@ int howmuch;
 }
 
 /* monster is hit by scroll of taming's effect */
-static void
-maybe_tame(mtmp, sobj)
-struct monst *mtmp;
-struct obj *sobj;
+static void maybe_tame(struct monst *mtmp, struct obj *sobj)
 {
 	if (sobj->cursed) {
 	    setmangry(mtmp);
@@ -623,9 +593,7 @@ struct obj *sobj;
 	}
 }
 
-int
-seffects(sobj)
-struct obj	*sobj;
+int seffects(struct obj *sobj)
 {
 	int cval;
 	boolean confused = (Confusion != 0);
@@ -1270,9 +1238,7 @@ struct obj	*sobj;
 	return 0;
 }
 
-static void
-wand_explode(obj)
-struct obj *obj;
+static void wand_explode(struct obj *obj)
 {
     obj->in_use = TRUE;	/* in case losehp() is fatal */
     Your("%s vibrates violently, and explodes!",xname(obj));
@@ -1285,10 +1251,7 @@ struct obj *obj;
 /*
  * Low-level lit-field update routine.
  */
-static void
-set_lit(x,y,val)
-int x, y;
-void * val;
+static void set_lit(int x, int y, void *val)
 {
 	if (val)
 	    levl[x][y].lit = 1;
@@ -1298,10 +1261,7 @@ void * val;
 	}
 }
 
-void
-litroom(on,obj)
-boolean on;
-struct obj *obj;
+void litroom(boolean on, struct obj *obj)
 {
 	char is_lit;	/* value is irrelevant; we use its address
 			   as a `not null' flag for set_lit() */
@@ -1393,8 +1353,8 @@ do_it:
 	vision_full_recalc = 1;	/* delayed vision recalculation */
 }
 
-static void
-do_class_genocide()
+
+static void do_class_genocide(void)
 {
 	int i, j, immunecnt, gonecnt, goodcnt, class, feel_dead = 0;
 	char buf[BUFSZ];
@@ -1548,13 +1508,11 @@ do_class_genocide()
 #define REALLY 1
 #define PLAYER 2
 #define ONTHRONE 4
-void
-do_genocide(how)
-int how;
-/* 0 = no genocide; create monsters (cursed scroll) */
-/* 1 = normal genocide */
-/* 3 = forced genocide of player */
-/* 5 (4 | 1) = normal genocide from throne */
+/* how: 0 = no genocide; create monsters (cursed scroll) */
+/*      1 = normal genocide */
+/*      3 = forced genocide of player */
+/*      5 (4 | 1) = normal genocide from throne */
+void do_genocide(int how)
 {
 	char buf[BUFSZ];
 	int	i, killplayer = 0;
@@ -1697,9 +1655,7 @@ int how;
 	}
 }
 
-void
-punish(sobj)
-struct obj	*sobj;
+void punish(struct obj *sobj)
 {
 	/* KMH -- Punishment is still okay when you are riding */
 	You("are being punished for your misbehavior!");
@@ -1728,8 +1684,7 @@ struct obj	*sobj;
 	}
 }
 
-void
-unpunish()
+void unpunish(void)
 {	    /* remove the ball and chain */
 	struct obj *savechain = uchain;
 
@@ -1745,10 +1700,7 @@ unpunish()
  * normal locations -- if the player tries to create one elsewhere, or to revive
  * one, the disoriented creature becomes a zombie
  */
-boolean
-cant_create(mtype, revival)
-int *mtype;
-boolean revival;
+boolean cant_create(int *mtype, boolean revival)
 {
 
 	/* SHOPKEEPERS can be revived now */
@@ -1771,8 +1723,7 @@ boolean revival;
  * "strange object" (']') symbol produces a random monster rather
  * than a mimic; this behavior quirk is useful so don't "fix" it...
  */
-boolean
-create_particular()
+boolean create_particular(void)
 {
 	char buf[BUFSZ], *bufp, monclass = MAXMCLASSES;
 	int which, tries, i;

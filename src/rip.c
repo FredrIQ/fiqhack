@@ -14,7 +14,6 @@ extern const char * const killed_by_prefix[];	/* from topten.c */
 
 #ifdef TEXT_TOMBSTONE
 
-#ifndef NH320_DEDICATION
 /* A normal tombstone for end of game display. */
 static const char *rip_txt[] = {
 "                       ----------",
@@ -35,28 +34,6 @@ static const char *rip_txt[] = {
 0
 };
 #define STONE_LINE_CENT 28	/* char[] element of center of stone face */
-#else	/* NH320_DEDICATION */
-/* NetHack 3.2.x displayed a dual tombstone as a tribute to Izchak. */
-static const char *rip_txt[] = {
-"              ----------                      ----------",
-"             /          \\                    /          \\",
-"            /    REST    \\                  /    This    \\",
-"           /      IN      \\                /  release of  \\",
-"          /     PEACE      \\              /   NetHack is   \\",
-"         /                  \\            /   dedicated to   \\",
-"         |                  |            |  the memory of   |",
-"         |                  |            |                  |",
-"         |                  |            |  Izchak Miller   |",
-"         |                  |            |   1935 - 1994    |",
-"         |                  |            |                  |",
-"         |                  |            |     Ascended     |",
-"         |       1001       |            |                  |",
-"      *  |     *  *  *      | *        * |      *  *  *     | *",
-" _____)/\\|\\__//(\\/(/\\)/\\//\\/|_)________)/|\\\\_/_/(\\/(/\\)/\\/\\/|_)____",
-0
-};
-#define STONE_LINE_CENT 19	/* char[] element of center of stone face */
-#endif	/* NH320_DEDICATION */
 #define STONE_LINE_LEN 16	/* # chars that fit on one line
 				 * (note 1 ' ' border)
 				 */
@@ -67,10 +44,7 @@ static const char *rip_txt[] = {
 
 static char **rip;
 
-static void
-center(line, text)
-int line;
-char *text;
+static void center(int line, char *text)
 {
 	char *ip,*op;
 	ip = text;
@@ -79,10 +53,7 @@ char *text;
 }
 
 
-void
-genl_outrip(tmpwin, how)
-winid tmpwin;
-int how;
+void genl_outrip(winid tmpwin, int how)
 {
 	char **dp;
 	char *dpx;

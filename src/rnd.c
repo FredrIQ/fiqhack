@@ -12,9 +12,8 @@
 #endif
 
 
-int
-rn2(x)		/* 0 <= rn2(x) < x */
-int x;
+/* 0 <= rn2(x) < x */
+int rn2(int x)
 {
 #ifdef DEBUG
 	if (x <= 0) {
@@ -28,10 +27,9 @@ int x;
 #endif
 }
 
-
-int
-rnl(x)		/* 0 <= rnl(x) < x; sometimes subtracting Luck */
-int x;	/* good luck approaches 0, bad luck approaches (x-1) */
+/* 0 <= rnl(x) < x; sometimes subtracting Luck */
+/* good luck approaches 0, bad luck approaches (x-1) */
+int rnl(int x)
 {
 	int i;
 
@@ -53,9 +51,8 @@ int x;	/* good luck approaches 0, bad luck approaches (x-1) */
 }
 
 
-int
-rnd(x)		/* 1 <= rnd(x) <= x */
-int x;
+/* 1 <= rnd(x) <= x */
+int rnd(int x)
 {
 #ifdef DEBUG
 	if (x <= 0) {
@@ -70,9 +67,8 @@ int x;
 }
 
 
-int
-d(n,x)		/* n <= d(n,x) <= (n*x) */
-int n, x;
+/* n <= d(n,x) <= (n*x) */
+int d(int n, int x)
 {
 	int tmp = n;
 
@@ -87,9 +83,7 @@ int n, x;
 }
 
 
-int
-rne(x)
-int x;
+int rne(int x)
 {
 	int tmp, utmp;
 
@@ -100,9 +94,7 @@ int x;
 	return tmp;
 }
 
-int
-rnz(i)
-int i;
+int rnz(int i)
 {
 	long x = i;
 	long tmp = 1000;

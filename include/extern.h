@@ -1418,11 +1418,11 @@ extern void forget_levels(int);
 extern void forget_traps(void);
 extern void forget_map(int);
 extern int seffects(struct obj *);
-extern void litroom(BOOLEAN_P,struct obj *);
+extern void litroom(boolean,struct obj *);
 extern void do_genocide(int);
 extern void punish(struct obj *);
 extern void unpunish(void);
-extern boolean cant_create(int *, BOOLEAN_P);
+extern boolean cant_create(int *, boolean);
 extern boolean create_particular(void);
 
 /* ### rect.c ### */
@@ -1434,25 +1434,25 @@ extern void remove_rect(NhRect *);
 extern void add_rect(NhRect *);
 extern void split_rects(NhRect *,NhRect *);
 
-/* ## region.c ### */
+/* ### region.c ### */
 extern void clear_regions(void);
 extern void run_regions(void);
-extern boolean in_out_region(XCHAR_P,XCHAR_P);
-extern boolean m_in_out_region(struct monst *,XCHAR_P,XCHAR_P);
+extern boolean in_out_region(xchar,xchar);
+extern boolean m_in_out_region(struct monst *,xchar,xchar);
 extern void update_player_regions(void);
 extern void update_monster_region(struct monst *);
-extern NhRegion *visible_region_at(XCHAR_P,XCHAR_P);
-extern void show_region(NhRegion*, XCHAR_P, XCHAR_P);
+extern NhRegion *visible_region_at(xchar,xchar);
+extern void show_region(NhRegion*, xchar, xchar);
 extern void save_regions(int,int);
-extern void rest_regions(int,BOOLEAN_P);
-extern NhRegion* create_gas_cloud(XCHAR_P, XCHAR_P, int, long);
+extern void rest_regions(int,boolean);
+extern NhRegion* create_gas_cloud(xchar, xchar, int, long);
 
 /* ### restore.c ### */
 
-extern void inven_inuse(BOOLEAN_P);
+extern void inven_inuse(boolean);
 extern int dorecover(int);
 extern void trickery(char *);
-extern void getlev(int,int,XCHAR_P,BOOLEAN_P);
+extern void getlev(int,int,xchar,boolean);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
 extern void mread(int,void *,unsigned int);
 
@@ -1501,9 +1501,9 @@ extern char *root_plselection_prompt(char *, int, int, int, int, int);
 
 /* ### rumors.c ### */
 
-extern char *getrumor(int,char *, BOOLEAN_P);
+extern char *getrumor(int,char *, boolean);
 extern void outrumor(int,int);
-extern void outoracle(BOOLEAN_P, BOOLEAN_P);
+extern void outoracle(boolean, boolean);
 extern void save_oracles(int,int);
 extern void restore_oracles(int);
 extern int doconsult(struct monst *);

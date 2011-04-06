@@ -25,8 +25,7 @@ static int rect_cnt;
  * new level to be build...
  */
 
-void
-init_rect()
+void init_rect(void)
 {
 	rect_cnt = 1;
 	rect[0].lx = rect[0].ly = 0;
@@ -36,12 +35,8 @@ init_rect()
 
 /*
  * Search Index of one precise NhRect.
- *
  */
-
-int
-get_rect_ind(r)
-NhRect *r;
+int get_rect_ind(NhRect *r)
 {
 	NhRect *rectp;
 	int lx, ly, hx, hy;
@@ -59,10 +54,7 @@ NhRect *r;
 /*
  * Search a free rectangle that include the one given in arg
  */
-
-NhRect *
-get_rect(r)
-NhRect *r;
+NhRect *get_rect(NhRect *r)
 {
 	NhRect *rectp;
 	int lx, ly, hx, hy;
@@ -81,8 +73,7 @@ NhRect *r;
  * Get some random NhRect from the list.
  */
 
-NhRect *
-rnd_rect()
+NhRect *rnd_rect(void)
 {
 	    return rect_cnt > 0 ? &rect[rn2(rect_cnt)] : 0;
 }
@@ -93,9 +84,7 @@ rnd_rect()
  * otherwise returns FALSE
  */
 
-static boolean
-intersect(r1, r2, r3)
-NhRect *r1, *r2, *r3;
+static boolean intersect(NhRect *r1, NhRect *r2, NhRect *r3)
 {
 	if (r2->lx > r1->hx || r2->ly > r1->hy ||
 	    r2->hx < r1->lx || r2->hy < r1->ly)
@@ -115,9 +104,7 @@ NhRect *r1, *r2, *r3;
  * Remove a rectangle from the list of free NhRect.
  */
 
-void
-remove_rect(r)
-NhRect *r;
+void remove_rect(NhRect *r)
 {
 	int ind;
 
@@ -130,9 +117,7 @@ NhRect *r;
  * Add a NhRect to the list.
  */
 
-void
-add_rect(r)
-NhRect *r;
+void add_rect(NhRect *r)
 {
 	if (rect_cnt >= MAXRECT) {
 		if (wizard) pline("MAXRECT may be too small.");
@@ -152,9 +137,7 @@ NhRect *r;
  * then remove it.
  */
 
-void
-split_rects(r1, r2)
-NhRect *r1, *r2;
+void split_rects(NhRect *r1, NhRect *r2)
 {
 	NhRect r, old_r;
 	int i;
