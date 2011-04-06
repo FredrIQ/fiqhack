@@ -20,7 +20,7 @@ static const char * neminame(void);
 static const char * guardname(void);
 static const char * homebase(void);
 static struct qtmsg * msg_in(struct qtmsg *,int);
-static void convert_arg(CHAR_P);
+static void convert_arg(char);
 static void convert_line(void);
 static void deliver_by_pline(struct qtmsg *);
 static void deliver_by_window(struct qtmsg *,int);
@@ -34,8 +34,8 @@ static char	nambuf[sizeof cvt_buf];
 #ifdef DEBUG
 static void dump_qtlist(void);
 
-static void
-dump_qtlist()	/* dump the character msg list to check appearance */
+/* dump the character msg list to check appearance */
+static void dump_qtlist(void)
 {
 	struct	qtmsg	*msg;
 	long	size;
@@ -50,11 +50,7 @@ dump_qtlist()	/* dump the character msg list to check appearance */
 }
 #endif /* DEBUG */
 
-static void
-Fread(ptr, size, nitems, stream)
-void *	ptr;
-int	size, nitems;
-dlb	*stream;
+static void Fread(void *ptr, int size, int nitems, dlb *stream)
 {
 	int cnt;
 
@@ -65,9 +61,7 @@ dlb	*stream;
 	}
 }
 
-static struct qtmsg *
-construct_qtlist(hdr_offset)
-long	hdr_offset;
+static struct qtmsg *construct_qtlist(long hdr_offset)
 {
 	struct qtmsg *msg_list;
 	int	n_msgs;
@@ -86,8 +80,7 @@ long	hdr_offset;
 	return msg_list;
 }
 
-void
-load_qtlist()
+void load_qtlist(void)
 {
 
 	int	n_classes, i;
@@ -130,8 +123,7 @@ load_qtlist()
 }
 
 /* called at program exit */
-void
-unload_qtlist()
+void unload_qtlist(void)
 {
 	if (msg_file)
 	    (void) dlb_fclose(msg_file),  msg_file = 0;
@@ -142,9 +134,7 @@ unload_qtlist()
 	return;
 }
 
-short
-quest_info(typ)
-int typ;
+short quest_info(int typ)
 {
 	switch (typ) {
 	    case 0:		return urole.questarti;
@@ -156,8 +146,8 @@ int typ;
 	return 0;
 }
 
-const char *
-ldrname()	/* return your role leader's name */
+/* return your role leader's name */
+const char *ldrname(void)
 {
 	int i = urole.ldrnum;
 
@@ -167,21 +157,19 @@ ldrname()	/* return your role leader's name */
 	return nambuf;
 }
 
-static const char *
-intermed()	/* return your intermediate target string */
+/* return your intermediate target string */
+static const char *intermed(void)
 {
 	return urole.intermed;
 }
 
-boolean
-is_quest_artifact(otmp)
-struct obj *otmp;
+boolean is_quest_artifact(struct obj *otmp)
 {
 	return (boolean)(otmp->oartifact == urole.questarti);
 }
 
-static const char *
-neminame()	/* return your role nemesis' name */
+/* return your role nemesis' name */
+static const char *neminame(void)
 {
 	int i = urole.neminum;
 
@@ -191,24 +179,21 @@ neminame()	/* return your role nemesis' name */
 	return nambuf;
 }
 
-static const char *
-guardname()	/* return your role leader's guard monster name */
+/* return your role leader's guard monster name */
+static const char *guardname(void)
 {
 	int i = urole.guardnum;
 
 	return mons[i].mname;
 }
 
-static const char *
-homebase()	/* return your role leader's location */
+/* return your role leader's location */
+static const char *homebase()
 {
 	return urole.homebase;
 }
 
-static struct qtmsg *
-msg_in(qtm_list, msgnum)
-struct qtmsg *qtm_list;
-int	msgnum;
+static struct qtmsg *msg_in(struct qtmsg *qtm_list, int	msgnum)
 {
 	struct qtmsg *qt_msg;
 
@@ -218,9 +203,7 @@ int	msgnum;
 	return (struct qtmsg *)0;
 }
 
-static void
-convert_arg(c)
-char c;
+static void convert_arg(char c)
 {
 	const char *str;
 
@@ -280,8 +263,7 @@ char c;
 	strcpy(cvt_buf, str);
 }
 
-static void
-convert_line()
+static void convert_line(void)
 {
 	char *c, *cc;
 	char xbuf[BUFSZ];
@@ -351,9 +333,7 @@ convert_line()
 	return;
 }
 
-static void
-deliver_by_pline(qt_msg)
-struct qtmsg *qt_msg;
+static void deliver_by_pline(struct qtmsg *qt_msg)
 {
 	long size;
 	char *d;
@@ -366,10 +346,7 @@ struct qtmsg *qt_msg;
 
 }
 
-static void
-deliver_by_window(qt_msg, how)
-struct qtmsg *qt_msg;
-int how;
+static void deliver_by_window(struct qtmsg *qt_msg, int how)
 {
 	long size;
 	char *d;
@@ -384,9 +361,7 @@ int how;
 	destroy_nhwindow(datawin);
 }
 
-void
-com_pager(msgnum)
-int	msgnum;
+void com_pager(int msgnum)
 {
 	struct qtmsg *qt_msg;
 
@@ -402,9 +377,7 @@ int	msgnum;
 	return;
 }
 
-void
-qt_pager(msgnum)
-int	msgnum;
+void qt_pager(int msgnum)
 {
 	struct qtmsg *qt_msg;
 
@@ -420,8 +393,7 @@ int	msgnum;
 	return;
 }
 
-struct permonst *
-qt_montype()
+struct permonst *qt_montype(void)
 {
 	int qpm;
 
