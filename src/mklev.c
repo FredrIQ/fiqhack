@@ -863,51 +863,28 @@ void mklev(void)
 	    level.flags.graveyard = 1;
 	if (!level.flags.is_maze_lev) {
 	    for (croom = &rooms[0]; croom != &rooms[nroom]; croom++)
-#ifdef SPECIALIZATION
-		topologize(croom, FALSE);
-#else
 		topologize(croom);
-#endif
 	}
 	set_wall_state();
 }
 
 
-#ifdef SPECIALIZATION
-void topologize(struct mkroom *croom, boolean do_ordinary)
-#else
 void topologize(struct mkroom *croom)
-#endif
 {
 	int x, y, roomno = (croom - rooms) + ROOMOFFSET;
 	int lowx = croom->lx, lowy = croom->ly;
 	int hix = croom->hx, hiy = croom->hy;
-#ifdef SPECIALIZATION
-	schar rtype = croom->rtype;
-#endif
 	int subindex, nsubrooms = croom->nsubrooms;
 
 	/* skip the room if already done; i.e. a shop handled out of order */
 	/* also skip if this is non-rectangular (it _must_ be done already) */
 	if ((int) levl[lowx][lowy].roomno == roomno || croom->irregular)
 	    return;
-#ifdef SPECIALIZATION
-# ifdef REINCARNATION
-	if (Is_rogue_level(&u.uz))
-	    do_ordinary = TRUE;		/* vision routine helper */
-# endif
-	if ((rtype != OROOM) || do_ordinary)
-#endif
 	{
 	    /* do innards first */
 	    for(x = lowx; x <= hix; x++)
 		for(y = lowy; y <= hiy; y++)
-#ifdef SPECIALIZATION
-		    if (rtype == OROOM)
-			levl[x][y].roomno = NO_ROOM;
-		    else
-#endif
-			levl[x][y].roomno = roomno;
+		    levl[x][y].roomno = roomno;
 	    /* top and bottom edges */
 	    for(x = lowx-1; x <= hix+1; x++)
 		for(y = lowy-1; y <= hiy+1; y += (hiy-lowy+2)) {
@@ -929,11 +906,7 @@ void topologize(struct mkroom *croom)
 	}
 	/* subrooms */
 	for (subindex = 0; subindex < nsubrooms; subindex++)
-#ifdef SPECIALIZATION
-		topologize(croom->sbrooms[subindex], (rtype != OROOM));
-#else
 		topologize(croom->sbrooms[subindex]);
-#endif
 }
 
 /* Find an unused room for a branch location. */

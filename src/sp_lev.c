@@ -1545,11 +1545,7 @@ static void build_room(room *r, room *pr)
 		for (i = 0; i < r->nengraving; i++)
 		    create_engraving(r->engravings[i], aroom);
 
-#ifdef SPECIALIZATION
-		topologize(aroom,FALSE);		/* set roomno */
-#else
 		topologize(aroom);			/* set roomno */
-#endif
 		/* MRS - 07/04/91 - This is temporary but should result
 		 * in proper filling of shops, etc.
 		 * DLC - this can fail if corridors are added to this room
@@ -2207,11 +2203,7 @@ static boolean load_maze(dlb *fd)
 		    add_room(tmpregion.x1, tmpregion.y1,
 			     tmpregion.x2, tmpregion.y2,
 			     tmpregion.rlit, tmpregion.rtype, TRUE);
-#ifdef SPECIALIZATION
-		    topologize(troom,FALSE);		/* set roomno */
-#else
 		    topologize(troom);			/* set roomno */
-#endif
 		}
 	}
 

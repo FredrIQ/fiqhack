@@ -47,8 +47,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #  define strcmpi(a,b) strncmpi((a),(b),-1)
 #endif
 
-/* #define SPECIALIZATION */	/* do "specialized" version of new topology */
-
 
 #define SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 

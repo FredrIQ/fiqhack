@@ -837,11 +837,7 @@ extern void add_subroom(struct mkroom *,int,int,int,int,
 extern void makecorridors(void);
 extern void add_door(int,int,struct mkroom *);
 extern void mklev(void);
-#ifdef SPECIALIZATION
-extern void topologize(struct mkroom *,boolean);
-#else
 extern void topologize(struct mkroom *);
-#endif
 extern void place_branch(branch *,xchar,xchar);
 extern boolean occupied(xchar,xchar);
 extern int okdoor(xchar,xchar);
