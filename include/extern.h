@@ -1857,7 +1857,7 @@ extern int hitval(struct obj *,struct monst *);
 extern int dmgval(struct obj *,struct monst *);
 extern struct obj *select_rwep(struct monst *);
 extern struct obj *select_hwep(struct monst *);
-extern void possibly_unwield(struct monst *,BOOLEAN_P);
+extern void possibly_unwield(struct monst *,boolean);
 extern int mon_wield_item(struct monst *);
 extern int abon(void);
 extern int dbon(void);
@@ -1876,9 +1876,9 @@ extern void skill_init(const struct def_skill *);
 
 extern void were_change(struct monst *);
 extern void new_were(struct monst *);
-extern int were_summon(struct permonst *,BOOLEAN_P,int *,char *);
+extern int were_summon(struct permonst *,boolean,int *,char *);
 extern void you_were(void);
-extern void you_unwere(BOOLEAN_P);
+extern void you_unwere(boolean);
 
 /* ### wield.c ### */
 
@@ -1896,7 +1896,7 @@ extern void uwepgone(void);
 extern void uswapwepgone(void);
 extern void uqwepgone(void);
 extern void untwoweapon(void);
-extern void erode_obj(struct obj *,BOOLEAN_P,BOOLEAN_P);
+extern void erode_obj(struct obj *,boolean,boolean);
 extern int chwepon(struct obj *,int);
 extern int welded(struct obj *);
 extern void weldmsg(struct obj *);
@@ -1905,7 +1905,7 @@ extern void setmnotwielded(struct monst *,struct obj *);
 /* ### windows.c ### */
 
 extern void choose_windows(const char *);
-extern char genl_message_menu(CHAR_P,int,const char *);
+extern char genl_message_menu(char,int,const char *);
 extern void genl_preference_update(const char *);
 
 /* ### wizard.c ### */
@@ -1931,14 +1931,14 @@ extern void worm_move(struct monst *);
 extern void worm_nomove(struct monst *);
 extern void wormgone(struct monst *);
 extern void wormhitu(struct monst *);
-extern void cutworm(struct monst *,XCHAR_P,XCHAR_P,struct obj *);
+extern void cutworm(struct monst *,xchar,xchar,struct obj *);
 extern void see_wsegs(struct monst *);
-extern void detect_wsegs(struct monst *,BOOLEAN_P);
+extern void detect_wsegs(struct monst *,boolean);
 extern void save_worm(int,int);
 extern void rest_worm(int);
 extern void place_wsegs(struct monst *);
 extern void remove_worm(struct monst *);
-extern void place_worm_tail_randomly(struct monst *,XCHAR_P,XCHAR_P);
+extern void place_worm_tail_randomly(struct monst *,xchar,xchar);
 extern int count_wsegs(struct monst *);
 extern boolean worm_known(struct monst *);
 
@@ -1948,11 +1948,11 @@ extern void setworn(struct obj *,long);
 extern void setnotworn(struct obj *);
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *,int,struct obj *);
-extern void update_mon_intrinsics(struct monst *,struct obj *,BOOLEAN_P,BOOLEAN_P);
+extern void update_mon_intrinsics(struct monst *,struct obj *,boolean,boolean);
 extern int find_mac(struct monst *);
-extern void m_dowear(struct monst *,BOOLEAN_P);
+extern void m_dowear(struct monst *,boolean);
 extern struct obj *which_armor(struct monst *,long);
-extern void mon_break_armor(struct monst *,BOOLEAN_P);
+extern void mon_break_armor(struct monst *,boolean);
 extern void bypass_obj(struct obj *);
 extern void clear_bypasses(void);
 extern int racial_exception(struct monst *, struct obj *);

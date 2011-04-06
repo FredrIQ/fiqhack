@@ -4,9 +4,7 @@
 
 #include "hack.h"
 
-void
-were_change(mon)
-struct monst *mon;
+void were_change(struct monst *mon)
 {
 	if (!is_were(mon->data))
 	    return;
@@ -36,9 +34,7 @@ struct monst *mon;
 
 static int counter_were(int);
 
-static int
-counter_were(pm)
-int pm;
+static int counter_were(int pm)
 {
 	switch(pm) {
 	    case PM_WEREWOLF:	      return PM_HUMAN_WEREWOLF;
@@ -51,9 +47,7 @@ int pm;
 	}
 }
 
-void
-new_were(mon)
-struct monst *mon;
+void new_were(struct monst *mon)
 {
 	int pm;
 
@@ -82,12 +76,10 @@ struct monst *mon;
 	possibly_unwield(mon, FALSE);
 }
 
-int
-were_summon(ptr,yours,visible,genbuf)	/* were-creature (even you) summons a horde */
-struct permonst *ptr;
-boolean yours;
-int *visible;			/* number of visible helpers created */
-char *genbuf;
+/* were-creature (even you) summons a horde */
+int were_summon(struct permonst *ptr, boolean yours,
+		int *visible,	/* number of visible helpers created */
+		char *genbuf)
 {
 	int i, typ, pm = monsndx(ptr);
 	struct monst *mtmp;
@@ -128,8 +120,7 @@ char *genbuf;
 	return total;
 }
 
-void
-you_were()
+void you_were(void)
 {
 	char qbuf[QBUFSZ];
 
@@ -143,9 +134,7 @@ you_were()
 	(void) polymon(u.ulycn);
 }
 
-void
-you_unwere(purify)
-boolean purify;
+void you_unwere(boolean purify)
 {
 	if (purify) {
 	    You_feel("purified.");

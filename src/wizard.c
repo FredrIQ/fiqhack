@@ -14,9 +14,9 @@
 extern const int monstr[];
 
 static short which_arti(int);
-static boolean mon_has_arti(struct monst *,SHORT_P);
-static struct monst *other_mon_has_arti(struct monst *,SHORT_P);
-static struct obj *on_ground(SHORT_P);
+static boolean mon_has_arti(struct monst *,short);
+static struct monst *other_mon_has_arti(struct monst *,short);
+static struct obj *on_ground(short);
 static boolean you_have(int);
 static long target_on(int,struct monst *);
 static long strategy(struct monst *);
@@ -46,8 +46,7 @@ static const unsigned wizapp[] = {
 /* If you've found the Amulet, make the Wizard appear after some time */
 /* Also, give hints about portal locations, if amulet is worn/wielded -dlc */
 /* pre condition: u.uhave.amulet == 1 */
-void
-amulet()
+void amulet(void)
 {
 	struct monst *mtmp;
 	struct trap *ttmp;
@@ -86,9 +85,7 @@ amulet()
 }
 
 
-int
-mon_has_amulet(mtmp)
-struct monst *mtmp;
+int mon_has_amulet(struct monst *mtmp)
 {
 	struct obj *otmp;
 
@@ -97,9 +94,7 @@ struct monst *mtmp;
 	return 0;
 }
 
-int
-mon_has_special(mtmp)
-struct monst *mtmp;
+int mon_has_special(struct monst *mtmp)
 {
 	struct obj *otmp;
 
@@ -123,9 +118,7 @@ struct monst *mtmp;
 
 #define M_Wants(mask)	(mtmp->data->mflags3 & (mask))
 
-static short
-which_arti(mask)
-	int mask;
+static short which_arti(int mask)
 {
 	switch(mask) {
 	    case M3_WANTSAMUL:	return AMULET_OF_YENDOR;
@@ -142,10 +135,7 @@ which_arti(mask)
  *	since bell, book, candle, and amulet are all objects, not really
  *	artifacts right now.	[MRS]
  */
-static boolean
-mon_has_arti(mtmp, otyp)
-	struct monst *mtmp;
-	short	otyp;
+static boolean mon_has_arti(struct monst *mtmp, short otyp)
 {
 	struct obj *otmp;
 
@@ -160,10 +150,7 @@ mon_has_arti(mtmp, otyp)
 
 }
 
-static struct monst *
-other_mon_has_arti(mtmp, otyp)
-	struct monst *mtmp;
-	short	otyp;
+static struct monst *other_mon_has_arti(struct monst *mtmp, short otyp)
 {
 	struct monst *mtmp2;
 
@@ -175,9 +162,7 @@ other_mon_has_arti(mtmp, otyp)
 	return (struct monst *)0;
 }
 
-static struct obj *
-on_ground(otyp)
-	short	otyp;
+static struct obj *on_ground(short otyp)
 {
 	struct obj *otmp;
 
@@ -190,9 +175,7 @@ on_ground(otyp)
 	return (struct obj *)0;
 }
 
-static boolean
-you_have(mask)
-	int mask;
+static boolean you_have(int mask)
 {
 	switch(mask) {
 	    case M3_WANTSAMUL:	return (boolean)(u.uhave.amulet);
@@ -205,10 +188,7 @@ you_have(mask)
 	return 0;
 }
 
-static long
-target_on(mask, mtmp)
-	int mask;
-	struct monst *mtmp;
+static long target_on(int mask, struct monst *mtmp)
 {
 	short	otyp;
 	struct obj *otmp;
@@ -228,9 +208,7 @@ target_on(mask, mtmp)
 	return STRAT_NONE;
 }
 
-static long
-strategy(mtmp)
-	struct monst *mtmp;
+static long strategy(struct monst *mtmp)
 {
 	long strat, dstrat;
 
@@ -287,9 +265,7 @@ strategy(mtmp)
 	return dstrat;
 }
 
-int
-tactics(mtmp)
-	struct monst *mtmp;
+int tactics(struct monst *mtmp)
 {
 	long strat = strategy(mtmp);
 
@@ -365,8 +341,7 @@ tactics(mtmp)
 	return 0;
 }
 
-void
-aggravate()
+void aggravate(void)
 {
 	struct monst *mtmp;
 
@@ -380,8 +355,7 @@ aggravate()
 	    }
 }
 
-void
-clonewiz()
+void clonewiz(void)
 {
 	struct monst *mtmp2;
 
@@ -399,8 +373,7 @@ clonewiz()
 }
 
 /* also used by newcham() */
-int
-pick_nasty()
+int pick_nasty(void)
 {
     /* To do?  Possibly should filter for appropriate forms when
        in the elemental planes or surrounded by water or lava. */
@@ -409,9 +382,7 @@ pick_nasty()
 
 /* create some nasty monsters, aligned or neutral with the caster */
 /* a null caster defaults to a chaotic caster (e.g. the wizard) */
-int
-nasty(mcast)
-	struct monst *mcast;
+int nasty(struct monst *mcast)
 {
     struct monst	*mtmp;
     int	i, j, tmp;
@@ -460,8 +431,7 @@ nasty(mcast)
 }
 
 /*	Let's resurrect the wizard, for some unexpected fun.	*/
-void
-resurrect()
+void resurrect(void)
 {
 	struct monst *mtmp, **mmtmp;
 	long elapsed;
@@ -510,8 +480,7 @@ resurrect()
 
 /*	Here, we make trouble for the poor shmuck who actually	*/
 /*	managed to do in the Wizard.				*/
-void
-intervene()
+void intervene(void)
 {
 	int which = Is_astralevel(&u.uz) ? rnd(4) : rn2(6);
 	/* cases 0 and 5 don't apply on the Astral level */
@@ -533,8 +502,7 @@ intervene()
 	}
 }
 
-void
-wizdead()
+void wizdead(void)
 {
 	flags.no_of_wizards--;
 	if (!u.uevent.udemigod) {
@@ -589,9 +557,7 @@ const char * const random_malediction[] = {
 };
 
 /* Insult or intimidate the player */
-void
-cuss(mtmp)
-struct monst	*mtmp;
+void cuss(struct monst *mtmp)
 {
 	if (mtmp->iswiz) {
 	    if (!rn2(5))  /* typical bad guy action */

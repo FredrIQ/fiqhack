@@ -8,9 +8,7 @@ static int cost(struct obj *);
 /*
  * returns basecost of a scroll or a spellbook
  */
-static int
-cost(otmp)
-struct obj *otmp;
+static int cost(struct obj *otmp)
 {
 
 	if (otmp->oclass == SPBOOK_CLASS)
@@ -61,9 +59,7 @@ struct obj *otmp;
 
 static const char write_on[] = { SCROLL_CLASS, SPBOOK_CLASS, 0 };
 
-int
-dowrite(pen)
-struct obj *pen;
+int dowrite(struct obj *pen)
 {
 	struct obj *paper;
 	char namebuf[BUFSZ], *nm, *bp;

@@ -80,9 +80,7 @@ static int ready_weapon(struct obj *);
  * responsibility to handle that.  It's also the caller's responsibility
  * to print the appropriate messages.
  */
-void
-setuwep(obj)
-struct obj *obj;
+void setuwep(struct obj *obj)
 {
 	struct obj *olduwep = uwep;
 
@@ -109,9 +107,7 @@ struct obj *obj;
 	update_inventory();
 }
 
-static int
-ready_weapon(wep)
-struct obj *wep;
+static int ready_weapon(struct obj *wep)
 {
 	/* Separated function so swapping works easily */
 	int res = 0;
@@ -190,17 +186,13 @@ struct obj *wep;
 	return res;
 }
 
-void
-setuqwep(obj)
-struct obj *obj;
+void setuqwep(struct obj *obj)
 {
 	setworn(obj, W_QUIVER);
 	update_inventory();
 }
 
-void
-setuswapwep(obj)
-struct obj *obj;
+void setuswapwep(struct obj *obj)
 {
 	setworn(obj, W_SWAPWEP);
 	update_inventory();
@@ -216,8 +208,7 @@ static const char ready_objs[] =
 static const char bullets[] =	/* (note: different from dothrow.c) */
 	{ ALL_CLASSES, ALLOW_NONE, GEM_CLASS, WEAPON_CLASS, 0 };
 
-int
-dowield()
+int dowield(void)
 {
 	struct obj *wep, *oldwep;
 	int result;
@@ -267,8 +258,7 @@ dowield()
 	return result;
 }
 
-int
-doswapweapon()
+int doswapweapon(void)
 {
 	struct obj *oldwep, *oldswap;
 	int result = 0;
@@ -311,8 +301,7 @@ doswapweapon()
 	return result;
 }
 
-int
-dowieldquiver()
+int dowieldquiver(void)
 {
 	struct obj *newquiver;
 	const char *quivee_types = (uslinging() ||
@@ -380,10 +369,8 @@ dowieldquiver()
 
 /* used for #rub and for applying pick-axe, whip, grappling hook, or polearm */
 /* (moved from apply.c) */
-boolean
-wield_tool(obj, verb)
-struct obj *obj;
-const char *verb;	/* "rub",&c */
+boolean wield_tool(struct obj *obj,
+		   const char *verb)	/* "rub",&c */
 {
     const char *what;
     boolean more_than_1;
@@ -446,8 +433,7 @@ const char *verb;	/* "rub",&c */
     return TRUE;
 }
 
-int
-can_twoweapon()
+int can_twoweapon(void)
 {
 	struct obj *otmp;
 
@@ -491,8 +477,7 @@ can_twoweapon()
 	return FALSE;
 }
 
-void
-drop_uswapwep()
+void drop_uswapwep(void)
 {
 	char str[BUFSZ];
 	struct obj *obj = uswapwep;
@@ -503,8 +488,7 @@ drop_uswapwep()
 	dropx(obj);
 }
 
-int
-dotwoweapon()
+int dotwoweapon(void)
 {
 	/* You can always toggle it off */
 	if (u.twoweap) {
@@ -531,8 +515,7 @@ dotwoweapon()
  * 1.  The item has been eaten, stolen, burned away, or rotted away.
  * 2.  Making an item disappear for a bones pile.
  */
-void
-uwepgone()
+void uwepgone(void)
 {
 	if (uwep) {
 		if (artifact_light(uwep) && uwep->lamplit) {
@@ -545,8 +528,7 @@ uwepgone()
 	}
 }
 
-void
-uswapwepgone()
+void uswapwepgone(void)
 {
 	if (uswapwep) {
 		setworn((struct obj *)0, W_SWAPWEP);
@@ -554,8 +536,7 @@ uswapwepgone()
 	}
 }
 
-void
-uqwepgone()
+void uqwepgone(void)
 {
 	if (uquiver) {
 		setworn((struct obj *)0, W_QUIVER);
@@ -563,8 +544,7 @@ uqwepgone()
 	}
 }
 
-void
-untwoweapon()
+void untwoweapon(void)
 {
 	if (u.twoweap) {
 		You("can no longer use two weapons at once.");
@@ -575,11 +555,9 @@ untwoweapon()
 }
 
 /* Maybe rust object, or corrode it if acid damage is called for */
-void
-erode_obj(target, acid_dmg, fade_scrolls)
-struct obj *target;		/* object (e.g. weapon or armor) to erode */
-boolean acid_dmg;
-boolean fade_scrolls;
+void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
+	       boolean acid_dmg,
+	       boolean fade_scrolls)
 {
 	int erosion;
 	struct monst *victim;
@@ -660,10 +638,7 @@ boolean fade_scrolls;
 	}
 }
 
-int
-chwepon(otmp, amount)
-struct obj *otmp;
-int amount;
+int chwepon(struct obj *otmp, int amount)
 {
 	const char *color = hcolor((amount < 0) ? NH_BLACK : NH_BLUE);
 	const char *xtime;
@@ -749,9 +724,7 @@ int amount;
 	return 1;
 }
 
-int
-welded(obj)
-struct obj *obj;
+int welded(struct obj *obj)
 {
 	if (obj && obj == uwep && will_weld(obj)) {
 		obj->bknown = TRUE;
@@ -760,9 +733,7 @@ struct obj *obj;
 	return 0;
 }
 
-void
-weldmsg(obj)
-struct obj *obj;
+void weldmsg(struct obj *obj)
 {
 	long savewornmask;
 
