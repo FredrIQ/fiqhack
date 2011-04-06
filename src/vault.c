@@ -11,16 +11,13 @@ static struct monst *findgd(void);
 	x_monnam(mtmp, ARTICLE_NONE, (char *)0, SUPPRESS_IT, FALSE)
 
 
-static boolean clear_fcorr(struct monst *,BOOLEAN_P);
+static boolean clear_fcorr(struct monst *,boolean);
 static void restfakecorr(struct monst *);
 static boolean in_fcorridor(struct monst *,int,int);
 static void move_gold(struct obj *,int);
 static void wallify_vault(struct monst *);
 
-static boolean
-clear_fcorr(grd, forceshow)
-struct monst *grd;
-boolean forceshow;
+static boolean clear_fcorr(struct monst *grd, boolean forceshow)
 {
 	int fcx, fcy, fcbeg;
 	struct monst *mtmp;
@@ -58,17 +55,14 @@ boolean forceshow;
 	return TRUE;
 }
 
-static void
-restfakecorr(grd)
-struct monst *grd;
+static void restfakecorr(struct monst *grd)
 {
 	/* it seems you left the corridor - let the guard disappear */
 	if(clear_fcorr(grd, FALSE)) mongone(grd);
 }
 
-boolean
-grddead(grd)				/* called in mon.c */
-struct monst *grd;
+/* called in mon.c */
+boolean grddead(struct monst *grd)
 {
 	boolean dispose = clear_fcorr(grd, TRUE);
 
@@ -84,10 +78,7 @@ struct monst *grd;
 	return dispose;
 }
 
-static boolean
-in_fcorridor(grd, x, y)
-struct monst *grd;
-int x, y;
+static boolean in_fcorridor(struct monst *grd, int x, int y)
 {
 	int fci;
 
@@ -98,9 +89,7 @@ int x, y;
 	return FALSE;
 }
 
-static
-struct monst *
-findgd()
+static struct monst *findgd(void)
 {
 	struct monst *mtmp;
 
@@ -111,9 +100,7 @@ findgd()
 }
 
 
-char
-vault_occupied(array)
-char *array;
+char vault_occupied(char *array)
 {
 	char *ptr;
 
@@ -123,8 +110,7 @@ char *array;
 	return '\0';
 }
 
-void
-invault()
+void invault(void)
 {
     struct monst *guard;
     int trycount, vaultroom = (int)vault_occupied(u.urooms);
@@ -341,10 +327,7 @@ fnd:
 }
 
 
-static void
-move_gold(gold, vroom)
-struct obj *gold;
-int vroom;
+static void move_gold(struct obj *gold, int vroom)
 {
 	xchar nx, ny;
 
@@ -357,9 +340,7 @@ int vroom;
 	newsym(nx,ny);
 }
 
-static void
-wallify_vault(grd)
-struct monst *grd;
+static void wallify_vault(struct monst *grd)
 {
 	int x, y, typ;
 	int vlt = EGD(grd)->vroom;
@@ -425,9 +406,7 @@ struct monst *grd;
 /*
  * return  1: guard moved,  0: guard didn't,  -1: let m_move do it,  -2: died
  */
-int
-gd_move(grd)
-struct monst *grd;
+int gd_move(struct monst *grd)
 {
 	int x, y, nx, ny, m, n;
 	int dx, dy, gx, gy, fci;
@@ -725,8 +704,7 @@ cleanup:
 }
 
 /* Routine when dying or quitting with a vault guard around */
-void
-paygd()
+void paygd(void)
 {
 	struct monst *grd = findgd();
 #ifndef GOLDOBJ
@@ -785,8 +763,7 @@ paygd()
 	mongone(grd);
 }
 
-long
-hidden_gold()
+long hidden_gold(void)
 {
 	long value = 0L;
 	struct obj *obj;
@@ -799,8 +776,8 @@ hidden_gold()
 	return value;
 }
 
-boolean
-gd_sound()  /* prevent "You hear footsteps.." when inappropriate */
+/* prevent "You hear footsteps.." when inappropriate */
+boolean gd_sound(void)
 {
 	struct monst *grd = findgd();
 

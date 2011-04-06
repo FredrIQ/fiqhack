@@ -1833,7 +1833,7 @@ extern char *version_string(char *);
 extern char *getversionstring(char *);
 extern int doversion(void);
 extern int doextversion(void);
-extern boolean check_version(struct version_info *, const char *, BOOLEAN_P);
+extern boolean check_version(struct version_info *, const char *, boolean);
 extern unsigned long get_feature_notice_ver(char *);
 extern unsigned long get_current_feature_ver(void);
 #ifdef RUNTIME_PORT_ID

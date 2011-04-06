@@ -1108,9 +1108,7 @@ static int q4_path(int,int,int,int);
 /*
  * Quadrant I (step < 0).
  */
-static int
-q1_path(srow,scol,y2,x2)
-    int scol, srow, y2, x2;
+static int q1_path(int scol, int srow, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1152,9 +1150,7 @@ q1_path(srow,scol,y2,x2)
 /*
  * Quadrant IV (step > 0).
  */
-static int
-q4_path(srow,scol,y2,x2)
-    int scol, srow, y2, x2;
+static int q4_path(int scol, int srow, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1196,9 +1192,7 @@ q4_path(srow,scol,y2,x2)
 /*
  * Quadrant II (step < 0).
  */
-static int
-q2_path(srow,scol,y2,x2)
-    int scol, srow, y2, x2;
+static int q2_path(int scol, int srow, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1240,9 +1234,7 @@ q2_path(srow,scol,y2,x2)
 /*
  * Quadrant III (step > 0).
  */
-static int
-q3_path(srow,scol,y2,x2)
-    int scol, srow, y2, x2;
+static int q3_path(int scol, int srow, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1289,9 +1281,7 @@ q3_path(srow,scol,y2,x2)
  *		m_canseeu()
  *		do_light_sources()
  */
-boolean
-clear_path(col1,row1,col2,row2)
-    int col1, row1, col2, row2;
+boolean clear_path(int col1, int row1, int col2, int row2)
 {
     int result;
 
@@ -1326,8 +1316,7 @@ static void right_side(int,int,int,char*);
 static void left_side(int,int,int,char*);
 
 /* Initialize algorithm C (nothing). */
-static void
-view_init()
+static void view_init(void)
 {
 }
 
@@ -1335,12 +1324,11 @@ view_init()
  * Mark positions as visible on one quadrant of the right side.  The
  * quadrant is determined by the value of the global variable step.
  */
-static void
-right_side(row, left, right_mark, limits)
-    int row;		/* current row */
-    int left;		/* first (left side) visible spot on prev row */
-    int right_mark;	/* last (right side) visible spot on prev row */
-    char *limits;	/* points at range limit for current row, or NULL */
+static void right_side(
+    int row,		/* current row */
+    int left,		/* first (left side) visible spot on prev row */
+    int right_mark,	/* last (right side) visible spot on prev row */
+    char *limits)	/* points at range limit for current row, or NULL */
 {
     int		  right;	/* right limit of "could see" */
     int		  right_edge;	/* right edge of an opening */
@@ -1513,10 +1501,7 @@ right_side(row, left, right_mark, limits)
  * This routine is the mirror image of right_side().  See right_side() for
  * extensive comments.
  */
-static void
-left_side(row, left_mark, right, limits)
-    int row, left_mark, right;
-    char *limits;
+static void left_side(int row, int left_mark, int right, char *limits)
 {
     int		  left, left_edge, nrow, deeper, result;
     int  i;
@@ -1631,15 +1616,14 @@ left_side(row, left_mark, right, limits)
  * (srow,scol).  NOTE this is (y,x)!  Mark the visible locations in the
  * array provided.
  */
-static void
-view_from(srow, scol, loc_cs_rows, left_most, right_most, range, func, arg)
-    int  srow, scol;	/* starting row and column */
-    char **loc_cs_rows;	/* pointers to the rows of the could_see array */
-    char *left_most;	/* min mark on each row */
-    char *right_most;	/* max mark on each row */
-    int range;		/* 0 if unlimited */
-    void (*func)(int,int,void *);
-    void * arg;
+static void view_from(
+    int  srow, int scol,/* starting row and column */
+    char **loc_cs_rows,	/* pointers to the rows of the could_see array */
+    char *left_most,	/* min mark on each row */
+    char *right_most,	/* max mark on each row */
+    int range,		/* 0 if unlimited */
+    void (*func)(int,int,void *),
+    void *arg)
 {
     int i;		/* loop counter */
     char         *rowp;		/* optimization for setting could_see */
@@ -1725,11 +1709,8 @@ view_from(srow, scol, loc_cs_rows, left_most, right_most, range, func, arg)
  * will call "func" when necessary.  If the hero is the center, use the
  * vision matrix and reduce extra work.
  */
-void
-do_clear_area(scol,srow,range,func,arg)
-    int scol, srow, range;
-    void (*func)(int,int,void *);
-    void * arg;
+void do_clear_area(int scol, int srow, int range,
+		   void (*func)(int,int,void *), void *arg)
 {
 	/* If not centered on hero, do the hard work of figuring the area */
 	if (scol != u.ux || srow != u.uy)
