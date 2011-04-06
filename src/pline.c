@@ -17,8 +17,7 @@ static char *You_buf(int);
 
 static void vpline(const char *, va_list);
 
-void
-pline(const char * line, ...)
+void pline(const char * line, ...)
 {
 	va_list the_args;
 	
@@ -27,8 +26,7 @@ pline(const char * line, ...)
 	va_end(the_args);
 }
 
-static void
-vpline(const char *line, va_list the_args)
+static void vpline(const char *line, va_list the_args)
 {
 	char pbuf[BUFSZ];
 
@@ -49,8 +47,7 @@ vpline(const char *line, va_list the_args)
 }
 
 /*VARARGS1*/
-void
-Norep (const char * line, ...)
+void Norep (const char * line, ...)
 {
 	va_list the_args;
 	
@@ -66,9 +63,7 @@ Norep (const char * line, ...)
 static char *you_buf = 0;
 static int you_buf_siz = 0;
 
-static char *
-You_buf(siz)
-int siz;
+static char * You_buf(int siz)
 {
 	if (siz > you_buf_siz) {
 		if (you_buf) free((void *) you_buf);
@@ -78,8 +73,7 @@ int siz;
 	return you_buf;
 }
 
-void
-free_youbuf()
+void free_youbuf(void)
 {
 	if (you_buf) free((void *) you_buf),  you_buf = (char *)0;
 	you_buf_siz = 0;
@@ -93,8 +87,7 @@ free_youbuf()
  strcat((YouPrefix(pointer, prefix, text), pointer), text)
 
 /*VARARGS1*/
-void
-You (const char * line, ...)
+void You (const char * line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -104,8 +97,7 @@ You (const char * line, ...)
 }
 
 /*VARARGS1*/
-void
-Your (const char *line, ...)
+void Your (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -115,8 +107,7 @@ Your (const char *line, ...)
 }
 
 /*VARARGS1*/
-void
-You_feel (const char *line, ...)
+void You_feel (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -127,8 +118,7 @@ You_feel (const char *line, ...)
 
 
 /*VARARGS1*/
-void
-You_cant (const char *line, ...)
+void You_cant (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -138,8 +128,7 @@ You_cant (const char *line, ...)
 }
 
 /*VARARGS1*/
-void
-pline_The (const char *line, ...)
+void pline_The (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -149,8 +138,7 @@ pline_The (const char *line, ...)
 }
 
 /*VARARGS1*/
-void
-There (const char *line, ...)
+void There (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -160,8 +148,7 @@ There (const char *line, ...)
 }
 
 /*VARARGS1*/
-void
-You_hear (const char *line, ...)
+void You_hear (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -177,8 +164,7 @@ You_hear (const char *line, ...)
 }
 
 /*VARARGS1*/
-void
-verbalize (const char *line, ...)
+void verbalize (const char *line, ...)
 {
 	va_list the_args;
 	char *tmp;
@@ -194,8 +180,7 @@ verbalize (const char *line, ...)
 
 static void vraw_printf(const char *,va_list);
 
-void
-raw_printf (const char *line, ...)
+void raw_printf (const char *line, ...)
 {
 	va_list the_args;
 	va_start(the_args, line);
@@ -203,8 +188,7 @@ raw_printf (const char *line, ...)
 	va_end(the_args);
 }
 
-static void
-vraw_printf(const char *line, va_list the_args)
+static void vraw_printf(const char *line, va_list the_args)
 {
 	if(!index(line, '%'))
 	    raw_print(line);
@@ -217,8 +201,7 @@ vraw_printf(const char *line, va_list the_args)
 
 
 /*VARARGS1*/
-void
-impossible (const char *s, ...)
+void impossible (const char *s, ...)
 {
 	va_list the_args;
 	va_start(the_args, s);
@@ -236,9 +219,7 @@ impossible (const char *s, ...)
 	va_end(the_args);
 }
 
-const char *
-align_str(alignment)
-    aligntyp alignment;
+const char * align_str(aligntyp alignment)
 {
     switch ((int)alignment) {
 	case A_CHAOTIC: return "chaotic";
@@ -249,9 +230,7 @@ align_str(alignment)
     return "unknown";
 }
 
-void
-mstatusline(mtmp)
-struct monst *mtmp;
+void mstatusline(struct monst *mtmp)
 {
 	aligntyp alignment;
 	char info[BUFSZ], monnambuf[BUFSZ];
@@ -319,8 +298,7 @@ struct monst *mtmp;
 		info);
 }
 
-void
-ustatusline()
+void ustatusline(void)
 {
 	char info[BUFSZ];
 
@@ -389,8 +367,7 @@ ustatusline()
 		info);
 }
 
-void
-self_invis_message()
+void self_invis_message(void)
 {
 	pline("%s %s.",
 	    Hallucination ? "Far out, man!  You" : "Gee!  All of a sudden, you",

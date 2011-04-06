@@ -20,16 +20,13 @@ static int armor_to_dragon(int);
 static void newman(void);
 
 /* update the youmonst.data structure pointer */
-void
-set_uasmon()
+void set_uasmon(void)
 {
 	set_mon_data(&youmonst, &mons[u.umonnum], 0);
 }
 
 /* make a (new) human out of the player */
-static void
-polyman(fmt, arg)
-const char *fmt, *arg;
+static void polyman(const char *fmt, const char *arg)
 {
 	boolean sticky = sticks(youmonst.data) && u.ustuck && !u.uswallow,
 		was_mimicking = (youmonst.m_ap_type == M_AP_OBJECT);
@@ -95,8 +92,7 @@ const char *fmt, *arg;
 	see_monsters();
 }
 
-void
-change_sex()
+void change_sex(void)
 {
 	/* setting u.umonster for caveman/cavewoman or priest/priestess
 	   swap unintentionally makes `Upolyd' appear to be true */
@@ -127,8 +123,7 @@ change_sex()
 	}
 }
 
-static void
-newman()
+static void newman(void)
 {
 	int tmp, oldlvl;
 
@@ -208,9 +203,7 @@ dead: /* we come directly here if their experience level went to 0 or less */
 	(void) encumber_msg();
 }
 
-void
-polyself(forcecontrol)
-boolean forcecontrol;     
+void polyself(boolean forcecontrol)
 {
 	char buf[BUFSZ];
 	int old_light, new_light;
@@ -317,9 +310,8 @@ boolean forcecontrol;
 }
 
 /* (try to) make a mntmp monster out of the player */
-int
-polymon(mntmp)	/* returns 1 if polymorph successful */
-int	mntmp;
+/* returns 1 if polymorph successful */
+int polymon(int mntmp)
 {
 	boolean sticky = sticks(youmonst.data) && u.ustuck && !u.uswallow,
 		was_blind = !!Blind, dochange = FALSE;
@@ -549,8 +541,7 @@ int	mntmp;
 	return 1;
 }
 
-static void
-break_armor()
+static void break_armor(void)
 {
     struct obj *otmp;
 
@@ -655,9 +646,7 @@ break_armor()
     }
 }
 
-static void
-drop_weapon(alone)
-int alone;
+static void drop_weapon(int alone)
 {
     struct obj *otmp;
     struct obj *otmp2;
@@ -688,8 +677,7 @@ int alone;
     }
 }
 
-void
-rehumanize()
+void rehumanize(void)
 {
 	/* You can't revert back while unchanging */
 	if (Unchanging && (u.mh < 1)) {
@@ -718,8 +706,7 @@ rehumanize()
 	(void) encumber_msg();
 }
 
-int
-dobreathe()
+int dobreathe(void)
 {
 	struct attack *mattk;
 
@@ -745,8 +732,7 @@ dobreathe()
 	return 1;
 }
 
-int
-dospit()
+int dospit(void)
 {
 	struct obj *otmp;
 
@@ -758,8 +744,7 @@ dospit()
 	return 1;
 }
 
-int
-doremove()
+int doremove(void)
 {
 	if (!Punished) {
 		You("are not chained to anything!");
@@ -769,8 +754,7 @@ doremove()
 	return 1;
 }
 
-int
-dospinweb()
+int dospinweb(void)
 {
 	struct trap *ttmp = t_at(u.ux,u.uy);
 
@@ -885,8 +869,7 @@ dospinweb()
 	return 1;
 }
 
-int
-dosummon()
+int dosummon(void)
 {
 	int placeholder;
 	if (u.uen < 10) {
@@ -903,8 +886,7 @@ dosummon()
 	return 1;
 }
 
-int
-dogaze()
+int dogaze(void)
 {
 	struct monst *mtmp;
 	int looked = 0;
@@ -1030,8 +1012,7 @@ dogaze()
 	return 1;
 }
 
-int
-dohide()
+int dohide(void)
 {
 	boolean ismimic = youmonst.data->mlet == S_MIMIC;
 
@@ -1049,8 +1030,7 @@ dohide()
 	return 1;
 }
 
-int
-domindblast()
+int domindblast(void)
 {
 	struct monst *mtmp, *nmon;
 
@@ -1087,16 +1067,13 @@ domindblast()
 	return 1;
 }
 
-static void
-uunstick()
+static void uunstick(void)
 {
 	pline("%s is no longer in your clutches.", Monnam(u.ustuck));
 	u.ustuck = 0;
 }
 
-void
-skinback(silently)
-boolean silently;
+void skinback(boolean silently)
 {
 	if (uskin) {
 		if (!silently) Your("skin returns to its original form.");
@@ -1108,10 +1085,7 @@ boolean silently;
 }
 
 
-const char *
-mbodypart(mon, part)
-struct monst *mon;
-int part;
+const char *mbodypart(struct monst *mon, int part)
 {
 	static const char
 	*humanoid_parts[] = { "arm", "eye", "face", "finger",
@@ -1221,16 +1195,13 @@ int part;
 	return animal_parts[part];
 }
 
-const char *
-body_part(part)
-int part;
+const char *body_part(int part)
 {
 	return mbodypart(&youmonst, part);
 }
 
 
-int
-poly_gender()
+int poly_gender(void)
 {
 /* Returns gender of polymorphed player; 0/1=same meaning as flags.female,
  * 2=none.
@@ -1240,9 +1211,7 @@ poly_gender()
 }
 
 
-void
-ugolemeffects(damtype, dam)
-int damtype, dam;
+void ugolemeffects(int damtype, int dam)
 {
 	int heal = 0;
 	/* We won't bother with "slow"/"haste" since players do not
@@ -1268,9 +1237,7 @@ int damtype, dam;
 	}
 }
 
-static int
-armor_to_dragon(atyp)
-int atyp;
+static int armor_to_dragon(int atyp)
 {
 	switch(atyp) {
 	    case GRAY_DRAGON_SCALE_MAIL:

@@ -1206,7 +1206,7 @@ extern int dowhatis(void);
 extern int doquickwhatis(void);
 extern int doidtrap(void);
 extern int dowhatdoes(void);
-extern char *dowhatdoes_core(CHAR_P, char *);
+extern char *dowhatdoes_core(char, char *);
 extern int dohelp(void);
 extern int dohistory(void);
 
@@ -1214,7 +1214,7 @@ extern int dohistory(void);
 
 #if defined(WIN32)
 # ifdef CHDIR
-extern void chdirx(char *,BOOLEAN_P);
+extern void chdirx(char *,boolean);
 # endif /* CHDIR */
 #endif /* WIN32 */
 
@@ -1251,17 +1251,17 @@ extern void getlock(void);
 
 #ifdef GOLDOBJ
 extern int collect_obj_classes
-	(char *,struct obj *,BOOLEAN_P,boolean (*)(struct obj*), int *);
+	(char *,struct obj *,boolean,boolean (*)(struct obj*), int *);
 #else
 extern int collect_obj_classes
-	(char *,struct obj *,BOOLEAN_P,BOOLEAN_P,boolean (*)(struct obj*), int *);
+	(char *,struct obj *,boolean,boolean,boolean (*)(struct obj*), int *);
 #endif
 extern void add_valid_menu_class(int);
 extern boolean allow_all(struct obj *);
 extern boolean allow_category(struct obj *);
 extern boolean is_worn_by_type(struct obj *);
 extern int pickup(int);
-extern int pickup_object(struct obj *, long, BOOLEAN_P);
+extern int pickup_object(struct obj *, long, boolean);
 extern int query_category(const char *, struct obj *, int,
 				menu_item **, int);
 extern int query_objlist(const char *, struct obj *, int,
@@ -1273,7 +1273,7 @@ extern int use_container(struct obj *,int);
 extern int loot_mon(struct monst *,int *,boolean *);
 extern const char *safe_qbuf(const char *,unsigned,
 				const char *,const char *,const char *);
-extern boolean is_autopickup_exception(struct obj *, BOOLEAN_P);
+extern boolean is_autopickup_exception(struct obj *, boolean);
 
 /* ### pline.c ### */
 
@@ -1290,7 +1290,7 @@ extern void There(const char *,...);
 extern void verbalize(const char *,...);
 extern void raw_printf(const char *,...);
 extern void impossible(const char *,...);
-extern const char *align_str(ALIGNTYP_P);
+extern const char *align_str(aligntyp);
 extern void mstatusline(struct monst *);
 extern void ustatusline(void);
 extern void self_invis_message(void);
@@ -1299,7 +1299,7 @@ extern void self_invis_message(void);
 
 extern void set_uasmon(void);
 extern void change_sex(void);
-extern void polyself(BOOLEAN_P);
+extern void polyself(boolean);
 extern int polymon(int);
 extern void rehumanize(void);
 extern int dobreathe(void);
@@ -1310,7 +1310,7 @@ extern int dosummon(void);
 extern int dogaze(void);
 extern int dohide(void);
 extern int domindblast(void);
-extern void skinback(BOOLEAN_P);
+extern void skinback(boolean);
 extern const char *mbodypart(struct monst *,int);
 extern const char *body_part(int);
 extern int poly_gender(void);
@@ -1320,18 +1320,18 @@ extern void ugolemeffects(int,int);
 
 extern void set_itimeout(long *,long);
 extern void incr_itimeout(long *,int);
-extern void make_confused(long,BOOLEAN_P);
-extern void make_stunned(long,BOOLEAN_P);
-extern void make_blinded(long,BOOLEAN_P);
-extern void make_sick(long, const char *, BOOLEAN_P,int);
-extern void make_vomiting(long,BOOLEAN_P);
-extern boolean make_hallucinated(long,BOOLEAN_P,long);
+extern void make_confused(long,boolean);
+extern void make_stunned(long,boolean);
+extern void make_blinded(long,boolean);
+extern void make_sick(long, const char *, boolean,int);
+extern void make_vomiting(long,boolean);
+extern boolean make_hallucinated(long,boolean,long);
 extern int dodrink(void);
 extern int dopotion(struct obj *);
 extern int peffects(struct obj *);
-extern void healup(int,int,BOOLEAN_P,BOOLEAN_P);
+extern void healup(int,int,boolean,boolean);
 extern void strange_feeling(struct obj *,const char *);
-extern void potionhit(struct monst *,struct obj *,BOOLEAN_P);
+extern void potionhit(struct monst *,struct obj *,boolean);
 extern void potionbreathe(struct obj *);
 extern boolean get_wet(struct obj *);
 extern int dodip(void);
@@ -1342,38 +1342,38 @@ extern const char *bottlename(void);
 /* ### pray.c ### */
 
 extern int dosacrifice(void);
-extern boolean can_pray(BOOLEAN_P);
+extern boolean can_pray(boolean);
 extern int dopray(void);
 extern const char *u_gname(void);
 extern int doturn(void);
 extern const char *a_gname(void);
-extern const char *a_gname_at(XCHAR_P x,XCHAR_P y);
-extern const char *align_gname(ALIGNTYP_P);
-extern const char *halu_gname(ALIGNTYP_P);
-extern const char *align_gtitle(ALIGNTYP_P);
+extern const char *a_gname_at(xchar x,xchar y);
+extern const char *align_gname(aligntyp);
+extern const char *halu_gname(aligntyp);
+extern const char *align_gtitle(aligntyp);
 extern void altar_wrath(int,int);
 
 
 /* ### priest.c ### */
 
-extern int move_special(struct monst *,BOOLEAN_P,SCHAR_P,BOOLEAN_P,BOOLEAN_P,
-			   XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P);
+extern int move_special(struct monst *,boolean,schar,boolean,boolean,
+			   xchar,xchar,xchar,xchar);
 extern char temple_occupied(char *);
 extern int pri_move(struct monst *);
-extern void priestini(d_level *,struct mkroom *,int,int,BOOLEAN_P);
+extern void priestini(d_level *,struct mkroom *,int,int,boolean);
 extern char *priestname(struct monst *,char *);
 extern boolean p_coaligned(struct monst *);
-extern struct monst *findpriest(CHAR_P);
+extern struct monst *findpriest(char);
 extern void intemple(int);
 extern void priest_talk(struct monst *);
-extern struct monst *mk_roamer(struct permonst *,ALIGNTYP_P,
-				  XCHAR_P,XCHAR_P,BOOLEAN_P);
+extern struct monst *mk_roamer(struct permonst *,aligntyp,
+				  xchar,xchar,boolean);
 extern void reset_hostility(struct monst *);
-extern boolean in_your_sanctuary(struct monst *,XCHAR_P,XCHAR_P);
+extern boolean in_your_sanctuary(struct monst *,xchar,xchar);
 extern void ghod_hitsu(struct monst *);
 extern void angry_priest(void);
 extern void clearpriests(void);
-extern void restpriest(struct monst *,BOOLEAN_P);
+extern void restpriest(struct monst *,boolean);
 
 /* ### quest.c ### */
 

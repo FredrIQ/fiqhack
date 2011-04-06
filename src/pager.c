@@ -11,17 +11,15 @@
 static boolean is_swallow_sym(int);
 static int append_str(char *, const char *);
 static struct permonst * lookat(int, int, char *, char *);
-static void checkfile(char *,struct permonst *,BOOLEAN_P,BOOLEAN_P);
-static int do_look(BOOLEAN_P);
+static void checkfile(char *,struct permonst *,boolean,boolean);
+static int do_look(boolean);
 static boolean help_menu(int *);
 #ifdef PORT_HELP
 extern void port_help(void);
 #endif
 
 /* Returns "true" for characters that could represent a monster's stomach. */
-static boolean
-is_swallow_sym(c)
-int c;
+static boolean is_swallow_sym(int c)
 {
     int i;
     for (i = S_sw_tl; i <= S_sw_br; i++)
@@ -34,10 +32,7 @@ int c;
  * a substring of buf.  Return 1 if the string was appended, 0 otherwise.
  * It is expected that buf is of size BUFSZ.
  */
-static int
-append_str(buf, new_str)
-    char *buf;
-    const char *new_str;
+static int append_str(char *buf, const char *new_str)
 {
     int space_left;	/* space remaining in buf */
 
@@ -53,10 +48,7 @@ append_str(buf, new_str)
  * Return the name of the glyph found at (x,y).
  * If not hallucinating and the glyph is a monster, also monster data.
  */
-static struct permonst *
-lookat(x, y, buf, monbuf)
-    int x, y;
-    char *buf, *monbuf;
+static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 {
     struct monst *mtmp = (struct monst *) 0;
     struct permonst *pm = (struct permonst *) 0;
@@ -295,11 +287,8 @@ lookat(x, y, buf, monbuf)
  *	 lcase() for data.base lookup so that we can have a clean key.
  *	 Therefore, we create a copy of inp _just_ for data.base lookup.
  */
-static void
-checkfile(inp, pm, user_typed_name, without_asking)
-    char *inp;
-    struct permonst *pm;
-    boolean user_typed_name, without_asking;
+static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
+		      boolean without_asking)
 {
     dlb *fp;
     char buf[BUFSZ], newstr[BUFSZ];
@@ -451,9 +440,8 @@ bad_data_file:	impossible("'data' file in wrong format");
 /* also used by getpos hack in do_name.c */
 const char what_is_an_unknown_object[] = "an unknown object";
 
-static int
-do_look(quick)
-    boolean quick;	/* use cursor && don't search for "more info" */
+/* quick: use cursor && don't search for "more info" */
+static int do_look(boolean quick)
 {
     char    out_str[BUFSZ], look_buf[BUFSZ];
     const char *x_str, *firstmatch = 0;
@@ -744,20 +732,17 @@ do_look(quick)
 }
 
 
-int
-dowhatis()
+int dowhatis(void)
 {
 	return do_look(FALSE);
 }
 
-int
-doquickwhatis()
+int doquickwhatis(void)
 {
 	return do_look(TRUE);
 }
 
-int
-doidtrap()
+int doidtrap(void)
 {
 	struct trap *trap;
 	int x, y, tt;
@@ -788,10 +773,7 @@ doidtrap()
 	return 0;
 }
 
-char *
-dowhatdoes_core(q, cbuf)
-char q;
-char *cbuf;
+char *dowhatdoes_core(char q, char *cbuf)
 {
 	dlb *fp;
 	char bufr[BUFSZ];
@@ -833,8 +815,7 @@ char *cbuf;
 	return (char *)0;
 }
 
-int
-dowhatdoes()
+int dowhatdoes(void)
 {
 	char bufr[BUFSZ];
 	char q, *reslt;
@@ -877,9 +858,7 @@ static const char *help_menu_items[] = {
 	(char *)0
 };
 
-static boolean
-help_menu(sel)
-	int *sel;
+static boolean help_menu(int *sel)
 {
 	winid tmpwin = create_nhwindow(NHW_MENU);
 #ifdef PORT_HELP
@@ -919,8 +898,7 @@ help_menu(sel)
 	return FALSE;
 }
 
-int
-dohelp()
+int dohelp(void)
 {
 	int sel = 0;
 
@@ -945,8 +923,7 @@ dohelp()
 	return 0;
 }
 
-int
-dohistory()
+int dohistory(void)
 {
 	display_file(HISTORY, TRUE);
 	return 0;
