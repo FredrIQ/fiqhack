@@ -36,9 +36,7 @@
  * since otherwise comparisons with signed quantities are done incorrectly
  */
 typedef schar	xchar;
-#ifndef SKIP_BOOLEAN
 typedef xchar	boolean;		/* 0 or 1 */
-#endif
 
 #ifndef TRUE		/* defined in some systems' native include files */
 #define TRUE	((boolean)1)
@@ -50,14 +48,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 #endif
 
 /* #define SPECIALIZATION */	/* do "specialized" version of new topology */
-
-#define CHAR_P int
-#define SCHAR_P int
-#define UCHAR_P int
-#define XCHAR_P int
-#define SHORT_P int
-#define BOOLEAN_P int
-#define ALIGNTYP_P int
 
 
 #define SIZE(x) (int)(sizeof(x) / sizeof(x[0]))

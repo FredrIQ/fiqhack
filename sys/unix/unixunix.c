@@ -19,9 +19,7 @@ extern void linux_mapoff(void);
 static struct stat buf;
 
 /* see whether we should throw away this xlock file */
-static int
-veryold(fd)
-int fd;
+static int veryold(int fd)
 {
 	time_t date;
 
@@ -52,8 +50,7 @@ int fd;
 	return 1;
 }
 
-static int
-eraseoldlocks()
+static int eraseoldlocks(void)
 {
 	int i;
 
@@ -72,8 +69,7 @@ eraseoldlocks()
 	return 1;					/* success! */
 }
 
-void
-getlock()
+void getlock(void)
 {
 	int i = 0, fd, c;
 	const char *fq_lock;
@@ -175,9 +171,8 @@ gotlock:
 	}
 }
 
-void
-regularize(s)	/* normalize file name - we don't like .'s, /'s, spaces */
-char *s;
+/* normalize file name - we don't like .'s, /'s, spaces */
+void regularize(char *s)
 {
 	char *lp;
 
@@ -194,9 +189,7 @@ char *s;
 #if defined(TIMED_DELAY) && !defined(msleep) && defined(SYSV)
 #include <poll.h>
 
-void
-msleep(msec)
-unsigned msec;				/* milliseconds */
+void msleep(unsigned msec)
 {
 	struct pollfd unused;
 	int msecs = msec;		/* poll API is signed */
@@ -215,40 +208,32 @@ extern int nh_getresgid(gid_t *, gid_t *, gid_t *);
 extern gid_t nh_getgid(void);
 extern gid_t nh_getegid(void);
 
-int
-(getresuid)(ruid, euid, suid)
-uid_t *ruid, *euid, *suid;
+int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid)
 {
     return nh_getresuid(ruid, euid, suid);
 }
 
-uid_t
-(getuid)()
+uid_t getuid(void)
 {
     return nh_getuid();
 }
 
-uid_t
-(geteuid)()
+uid_t geteuid(void)
 {
     return nh_geteuid();
 }
 
-int
-(getresgid)(rgid, egid, sgid)
-gid_t *rgid, *egid, *sgid;
+int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 {
     return nh_getresgid(rgid, egid, sgid);
 }
 
-gid_t
-(getgid)()
+gid_t getgid(void)
 {
     return nh_getgid();
 }
 
-gid_t
-(getegid)()
+gid_t getegid(void)
 {
     return nh_getegid();
 }

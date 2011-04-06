@@ -30,8 +30,7 @@ static int eraseoldlocks(void);
 #endif
 
 #ifdef PC_LOCKING
-static int
-eraseoldlocks()
+static int eraseoldlocks(void)
 {
 	int i;
 
@@ -53,8 +52,7 @@ eraseoldlocks()
 	return 1;					/* success! */
 }
 
-void
-getlock()
+void getlock(void)
 {
 	int fd, c, ci, ct, ern;
 	char tbuf[BUFSZ];
@@ -207,13 +205,11 @@ gotlock:
 #endif /* PC_LOCKING */
 
 # ifndef WIN32
-void
-regularize(s)
 /*
  * normalize file name - we don't like .'s, /'s, spaces, and
  * lots of other things
  */
-char *s;
+void regularize(char *s)
 {
 	char *lp;
 

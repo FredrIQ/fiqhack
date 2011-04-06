@@ -19,7 +19,7 @@
 #endif
 
 
-SHARED_DCL char orgdir[PATHLEN];	/* also used in pcsys.c, amidos.c */
+extern char orgdir[PATHLEN];	/* also used in pcsys.c, amidos.c */
 static void process_options(int argc,char **argv);
 static void nhusage(void);
 
@@ -42,10 +42,7 @@ int main(int,char **);
 extern void pcmain(int,char **);
 
 
-int
-main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
      pcmain(argc,argv);
 #ifdef LAN_FEATURES
@@ -58,12 +55,8 @@ char *argv[];
 }
 
 
-void
-pcmain(argc,argv)
-int argc;
-char *argv[];
+void pcmain(int argc, char *argv[])
 {
-
 	int fd;
 	char *dir;
 #if defined(WIN32)
@@ -318,13 +311,9 @@ not_recovered:
 	return;
 }
 
-static void
-process_options(argc, argv)
-int argc;
-char *argv[];
+static void process_options(int argc, char *argv[])
 {
 	int i;
-
 
 	/*
 	 * Process options.
@@ -429,8 +418,7 @@ char *argv[];
 	}
 }
 
-static void 
-nhusage()
+static void  nhusage(void)
 {
 	char buf1[BUFSZ], buf2[BUFSZ], *bufptr;
 
@@ -463,10 +451,7 @@ nhusage()
 }
 
 #ifdef CHDIR
-void
-chdirx(dir, wr)
-char *dir;
-boolean wr;
+void chdirx(char *dir, boolean wr)
 {
 	static char thisdir[] = ".";
 	if(dir && chdir(dir) < 0) {
@@ -487,8 +472,7 @@ boolean wr;
 
 #ifdef PORT_HELP
 # if defined(WIN32)
-void
-port_help()
+void port_help(void)
 {
     /* display port specific help file */
     display_file( PORT_HELP, 1 );
@@ -502,8 +486,7 @@ port_help()
 #define EXEPATHBUFSZ 256
 char exepathbuf[EXEPATHBUFSZ];
 
-char *exepath(str)
-char *str;
+char *exepath(char *str)
 {
 	char *tmp, *tmp2;
 	int bsize;

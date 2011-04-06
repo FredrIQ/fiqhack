@@ -19,8 +19,7 @@ struct termios termio;
 #include "tcap.h"	/* for LI and CO */
 #endif
 
-void
-getwindowsz()
+void getwindowsz(void)
 {
 #ifdef USE_WIN_IOCTL
     /*
@@ -42,15 +41,13 @@ getwindowsz()
 #endif
 }
 
-void
-getioctls()
+void getioctls(void)
 {
 	(void) tcgetattr(fileno(stdin), &termio);
 	getwindowsz();
 }
 
-void
-setioctls()
+void setioctls(void)
 {
 	(void) tcsetattr(fileno(stdin), TCSADRAIN, &termio);
 }

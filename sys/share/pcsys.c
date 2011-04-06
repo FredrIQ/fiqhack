@@ -26,8 +26,7 @@ extern int GUILaunched;    /* from nttty.c */
 
 #if defined(WIN32)
 
-void
-flushout()
+void flushout(void)
 {
 	(void) fflush(stdout);
 	return;
@@ -43,9 +42,7 @@ static const char *COMSPEC = "COMSPEC";
  * Add a backslash to any name not ending in /, \ or :	 There must
  * be room for the \
  */
-void
-append_slash(name)
-char *name;
+void append_slash(char *name)
 {
 	char *ptr;
 
@@ -63,9 +60,7 @@ char *name;
 boolean getreturn_enabled;
 #endif
 
-void
-getreturn(str)
-const char *str;
+void getreturn(const char *str)
 {
 #ifdef WIN32
 	if (!getreturn_enabled) return;
@@ -76,8 +71,7 @@ const char *str;
 }
 
 #ifndef WIN32CON
-void
-msmsg (const char * fmt, ...)
+void msmsg (const char * fmt, ...)
 {
 	va_list the_args;
 	va_start(the_args, fmt);
@@ -93,9 +87,7 @@ msmsg (const char * fmt, ...)
  */
 #define PATHSEP ';'
 
-FILE *
-fopenp(name, mode)
-const char *name, *mode;
+FILE *fopenp(const char *name, const char *mode)
 {
 	char buf[BUFSIZ], *bp, *pp, lastch = 0;
 	FILE *fp;
@@ -131,8 +123,7 @@ const char *name, *mode;
 }
 
 #if defined(WIN32)
-void nethack_exit(code)
-int code;
+void nethack_exit(int code)
 {
 	msexit();
 	exit(code);
@@ -140,8 +131,7 @@ int code;
 
 /* Chdir back to original directory
  */
-
-static void msexit()
+static void msexit(void)
 {
 #ifdef CHDIR
 	extern char orgdir[];

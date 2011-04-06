@@ -201,10 +201,7 @@ static  long		*end_ptr		= &randtbl[ DEG_3 + 1 ];
  * values produced by this routine.
  */
 
-void
-srandom( x )
-
-    unsigned		x;
+void srandom(unsigned x)
 {
     	 int		i;
 
@@ -240,12 +237,10 @@ srandom( x )
  * Returns a pointer to the old state.
  */
 
-char  *
-initstate( seed, arg_state, n )
-
-    unsigned		seed;			/* seed for R. N. G. */
-    char		*arg_state;		/* pointer to state array */
-    int			n;			/* # bytes of state info */
+char  *initstate(
+    unsigned		seed;,			/* seed for R. N. G. */
+    char		*arg_state,		/* pointer to state array */
+    int			n)			/* # bytes of state info */
 {
 	 char		*ostate		= (char *)( &state[ -1 ] );
 
@@ -309,10 +304,7 @@ initstate( seed, arg_state, n )
  * Returns a pointer to the old state information.
  */
 
-char  *
-setstate( arg_state )
-
-    char		*arg_state;
+char  *setstate(char *arg_state)
 {
 	 long		*new_state	= (long *)arg_state;
 	 int		type		= new_state[0]%MAX_TYPES;
@@ -362,8 +354,7 @@ setstate( arg_state )
  * Returns a 31-bit random number.
  */
 
-long
-random()
+long random(void)
 {
 	long		i;
 	

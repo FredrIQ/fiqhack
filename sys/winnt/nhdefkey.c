@@ -29,7 +29,7 @@ char dllname[512];
 char *shortdllname;
 
 int __declspec(dllexport) __stdcall ProcessKeystroke(HANDLE hConIn, INPUT_RECORD *ir, 
-    boolean *valid, BOOLEAN_P numberpad, int portdebug);
+    boolean *valid, boolean numberpad, int portdebug);
 
 int WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
 {
@@ -98,12 +98,8 @@ static const struct pad {
 static BYTE KeyState[256];
 
 int __declspec(dllexport) __stdcall
-ProcessKeystroke(hConIn,ir, valid, numberpad, portdebug)
-HANDLE hConIn;
-INPUT_RECORD *ir;
-boolean *valid;
-boolean numberpad;
-int portdebug;
+ProcessKeystroke(HANDLE hConIn, INPUT_RECORD *ir, boolean *valid, 
+		 boolean numberpad, int portdebug)
 {
 	int metaflags = 0, k = 0;
 	int keycode, vk;
@@ -195,9 +191,7 @@ int portdebug;
 
 
 int __declspec(dllexport) __stdcall
-NHkbhit(hConIn, ir)
-HANDLE hConIn;
-INPUT_RECORD *ir;
+NHkbhit(HANDLE hConIn, INPUT_RECORD *ir)
 {
 	int done = 0;	/* true =  "stop searching"        */
 	int retval;	/* true =  "we had a match"        */
@@ -249,14 +243,8 @@ INPUT_RECORD *ir;
 }
 
 int __declspec(dllexport) __stdcall
-CheckInput(hConIn, ir, count, numpad, mode, mod, cc)
-HANDLE hConIn;
-INPUT_RECORD *ir;
-DWORD *count; 
-boolean numpad;
-int mode;
-int *mod;
-coord *cc;
+CheckInput(HANDLE hConIn, INPUT_RECORD *ir, DWORD *count, boolean numpad, 
+	   int mode, int *mod, coord *cc)
 {
 	int ch;
 	boolean valid = 0, done = 0;
@@ -292,28 +280,21 @@ coord *cc;
 	return mode ? 0 : ch;
 }
 
-int __declspec(dllexport) __stdcall
-SourceWhere(buf)
-char **buf;
+int __declspec(dllexport) __stdcall SourceWhere(char **buf)
 {
 	if (!buf) return 0;
 	*buf = where_to_get_source;
 	return 1;
 }
 
-int __declspec(dllexport) __stdcall
-SourceAuthor(buf)
-char **buf;
+int __declspec(dllexport) __stdcall SourceAuthor(char **buf)
 {
 	if (!buf) return 0;
 	*buf = author;
 	return 1;
 }
 
-int __declspec(dllexport) __stdcall
-KeyHandlerName(buf, full)
-char **buf;
-int full;
+int __declspec(dllexport) __stdcall KeyHandlerName(char **buf, int full)
 {
 	if (!buf) return 0;
 	if (full) *buf = dllname;

@@ -17,7 +17,7 @@
 extern struct passwd *getpwuid(uid_t);
 extern struct passwd *getpwnam(const char *);
 #ifdef CHDIR
-static void chdirx(const char *,BOOLEAN_P);
+static void chdirx(const char *,boolean);
 #endif /* CHDIR */
 static boolean whoami(void);
 static void process_options(int, char **);
@@ -30,10 +30,7 @@ extern void init_linux_cons(void);
 static void wd_message(void);
 static boolean wiz_error_flag = FALSE;
 
-int
-main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
 	int fd;
 #ifdef CHDIR
@@ -251,13 +248,9 @@ not_recovered:
 	return 0;
 }
 
-static void
-process_options(argc, argv)
-int argc;
-char *argv[];
+static void process_options(int argc, char *argv[])
 {
 	int i;
-
 
 	/*
 	 * Process options.
@@ -366,10 +359,7 @@ char *argv[];
 }
 
 #ifdef CHDIR
-static void
-chdirx(dir, wr)
-const char *dir;
-boolean wr;
+static void chdirx(const char *dir, boolean wr)
 {
 	if (dir					/* User specified directory? */
 # ifdef HACKDIR
@@ -423,8 +413,8 @@ boolean wr;
 }
 #endif /* CHDIR */
 
-static boolean
-whoami() {
+static boolean whoami(void)
+{
 	/*
 	 * Who am i? Algorithm: 1. Use name as specified in NETHACKOPTIONS
 	 *			2. Use $USER or $LOGNAME	(if 1. fails)
@@ -449,8 +439,7 @@ whoami() {
 }
 
 #ifdef PORT_HELP
-void
-port_help()
+void port_help(void)
 {
 	/*
 	 * Display unix-specific help.   Just show contents of the helpfile
@@ -460,8 +449,7 @@ port_help()
 }
 #endif
 
-static void
-wd_message()
+static void wd_message(void)
 {
 	if (wiz_error_flag) {
 		pline("Only user \"%s\" may access debug (wizard) mode.",
@@ -476,9 +464,7 @@ wd_message()
  * Add a slash to any name not ending in /. There must
  * be room for the /
  */
-void
-append_slash(name)
-char *name;
+void append_slash(char *name)
 {
 	char *ptr;
 

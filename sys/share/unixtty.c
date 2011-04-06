@@ -63,9 +63,7 @@ unsigned
 static boolean settty_needed = FALSE;
 struct termstruct inittyb, curttyb;
 
-static int
-speednum(speed)
-speed_t speed;
+static int speednum(speed_t speed)
 {
 	switch (speed) {
 		case B0:	return 0;
@@ -89,8 +87,7 @@ speed_t speed;
 	return 0;
 }
 
-static void
-setctty()
+static void setctty(void)
 {
 	if(STTY(&curttyb) < 0 || STTY2(&curttyb2) < 0)
 		perror("NetHack (setctty)");
@@ -101,8 +98,7 @@ setctty()
  * and switch off tab expansion if necessary.
  * Called by startup() in termcap.c and after returning from ! or ^Z
  */
-void
-gettty()
+void gettty(void)
 {
 	if(GTTY(&inittyb) < 0 || GTTY2(&inittyb2) < 0)
 		perror("NetHack (gettty)");
@@ -123,9 +119,7 @@ gettty()
 }
 
 /* reset terminal to original state */
-void
-settty(s)
-const char *s;
+void settty(const char *s)
 {
 	end_screen();
 	if(s) raw_print(s);
@@ -137,8 +131,7 @@ const char *s;
 	setioctls();
 }
 
-void
-setftty()
+void setftty(void)
 {
 	int ef = 0;			/* desired value of flags & ECHO */
 	int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
@@ -187,8 +180,7 @@ setftty()
 	start_screen();
 }
 
-void
-intron()		/* enable kbd interupts if enabled when game started */
+void intron(void)		/* enable kbd interupts if enabled when game started */
 {
 #ifdef TTY_GRAPHICS
 	/* Ugly hack to keep from changing tty modes for non-tty games -dlc */
@@ -200,8 +192,7 @@ intron()		/* enable kbd interupts if enabled when game started */
 #endif
 }
 
-void
-introff()		/* disable kbd interrupts if required*/
+void introff(void)		/* disable kbd interrupts if required*/
 {
 #ifdef TTY_GRAPHICS
 	/* Ugly hack to keep from changing tty modes for non-tty games -dlc */
@@ -223,8 +214,7 @@ void linux_mapoff(void);
 void check_linux_console(void);
 void init_linux_cons(void);
 
-void
-linux_mapon()
+void linux_mapon(void)
 {
 # ifdef TTY_GRAPHICS
 	int count = 0;
@@ -234,8 +224,7 @@ linux_mapon()
 # endif
 }
 
-void
-linux_mapoff()
+void linux_mapoff(void)
 {
 # ifdef TTY_GRAPHICS
 	int count = 0;
@@ -245,8 +234,7 @@ linux_mapoff()
 # endif
 }
 
-void
-check_linux_console()
+void check_linux_console(void)
 {
 	struct vt_mode vtm;
 
@@ -255,8 +243,7 @@ check_linux_console()
 	}
 }
 
-void
-init_linux_cons()
+void init_linux_cons(void)
 {
 # ifdef TTY_GRAPHICS
 	if (!strcmp(windowprocs.name, "tty") && linux_flag_console) {
@@ -275,8 +262,7 @@ init_linux_cons()
 #ifndef __begui__	/* the Be GUI will define its own error proc */
 /* fatal error */
 /*VARARGS1*/
-void
-error (const char *s, ...)
+void error (const char *s, ...)
 {
 	va_list the_args;
 	va_start(the_args, s);

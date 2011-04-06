@@ -21,7 +21,7 @@
 void cmov(int, int);
 void nocmov(int, int);
 int process_keystroke(INPUT_RECORD *, boolean *,
-    BOOLEAN_P numberpad, int portdebug);
+    boolean numberpad, int portdebug);
 
 /*
  * The following WIN32 Console API routines are used in this file.
@@ -68,7 +68,7 @@ typedef int (__stdcall * PROCESS_KEYSTROKE)(
     HANDLE,
     INPUT_RECORD *,
     boolean *,
-    BOOLEAN_P,
+    boolean,
     int
 );
 
@@ -81,7 +81,7 @@ typedef int (__stdcall * CHECKINPUT)(
 	HANDLE,
 	INPUT_RECORD *,
 	DWORD *,
-	BOOLEAN_P,
+	boolean,
 	int,
 	int *,
 	coord *
@@ -133,8 +133,7 @@ static COORD cursor = {0,0};
 /*
  * Called after returning from ! or ^Z
  */
-void
-gettty()
+void gettty(void)
 {
 #ifndef TEXTCOLOR
 	int k;
@@ -151,9 +150,7 @@ gettty()
 }
 
 /* reset terminal to original state */
-void
-settty(s)
-const char *s;
+void settty(const char *s)
 {
 	cmov(ttyDisplay->curx, ttyDisplay->cury);
 	end_screen();
@@ -161,15 +158,12 @@ const char *s;
 }
 
 /* called by init_nhwindows() and resume_nhwindows() */
-void
-setftty()
+void setftty(void)
 {
 	start_screen();
 }
 
-void
-tty_startup(wid, hgt)
-int *wid, *hgt;
+void tty_startup(int *wid, int *hgt)
 {
 	int twid = origcsbi.srWindow.Right - origcsbi.srWindow.Left + 1;
 
@@ -179,20 +173,16 @@ int *wid, *hgt;
 	set_option_mod_status("mouse_support", SET_IN_GAME);
 }
 
-void
-tty_number_pad(state)
-int state;
+void tty_number_pad(int state)
 {
 }
 
-void
-tty_start_screen()
+void tty_start_screen(void)
 {
 	if (iflags.num_pad) tty_number_pad(1);	/* make keypad send digits */
 }
 
-void
-tty_end_screen()
+void tty_end_screen(void)
 {
 	clear_screen();
 	really_move_cursor();
@@ -214,8 +204,7 @@ tty_end_screen()
 	FlushConsoleInputBuffer(hConIn);
 }
 
-static BOOL CtrlHandler(ctrltype)
-DWORD ctrltype;
+static BOOL CtrlHandler(DWORD ctrltype)
 {
 	switch(ctrltype) {
 	/*	case CTRL_C_EVENT: */
@@ -234,8 +223,7 @@ DWORD ctrltype;
 }
 
 /* called by init_tty in wintty.c for WIN32CON port only */
-void
-nttty_open()
+void nttty_open(void)
 {
         HANDLE hStdOut;
         DWORD cmode;
@@ -287,11 +275,8 @@ nttty_open()
 	really_move_cursor();
 }
 
-int process_keystroke(ir, valid, numberpad, portdebug)
-INPUT_RECORD *ir;
-boolean *valid;
-boolean numberpad;
-int portdebug;
+int process_keystroke(INPUT_RECORD *ir, boolean *valid, 
+		      boolean numberpad, int portdebug)
 {
 	int ch = pProcessKeystroke(hConIn, ir, valid, numberpad, portdebug);
 	/* check for override */
@@ -300,15 +285,13 @@ int portdebug;
 	return ch;
 }
 
-int
-nttty_kbhit()
+int nttty_kbhit(void)
 {
 	return pNHkbhit(hConIn, &ir);
 }
 
 
-void
-get_scr_size()
+void get_scr_size(void)
 {
 	GetConsoleScreenBufferInfo(hConOut, &csbi);
   
@@ -328,8 +311,7 @@ get_scr_size()
 	}
 }
 
-int
-tgetch()
+int tgetch(void)
 {
 	int mod;
 	coord cc;
@@ -338,9 +320,7 @@ tgetch()
 	return pCheckInput(hConIn, &ir, &count, iflags.num_pad, 0, &mod, &cc);
 }
 
-int
-ntposkey(x, y, mod)
-int *x, *y, *mod;
+int ntposkey(int *x, int *y, int *mod)
 {
 	int ch;
 	coord cc;
@@ -354,8 +334,7 @@ int *x, *y, *mod;
 	return ch;
 }
 
-static void
-really_move_cursor()
+static void really_move_cursor(void)
 {
 #if defined(PORT_DEBUG)
 	char oldtitle[BUFSZ], newtitle[BUFSZ];
@@ -377,9 +356,7 @@ really_move_cursor()
 	SetConsoleCursorPosition(hConOut, cursor);
 }
 
-void
-cmov(x, y)
-int x, y;
+void cmov(int x, int y)
 {
 	ttyDisplay->cury = y;
 	ttyDisplay->curx = x;
@@ -387,9 +364,7 @@ int x, y;
 	cursor.Y = y;
 }
 
-void
-nocmov(x, y)
-int x,y;
+void nocmov(int x, int y)
 {
 	cursor.X = x;
 	cursor.Y = y;
@@ -397,9 +372,7 @@ int x,y;
 	ttyDisplay->cury = y;
 }
 
-void
-xputc_core(ch)
-char ch;
+void xputc_core(char ch)
 {
 	switch(ch) {
 	    case '\n':
@@ -420,18 +393,14 @@ char ch;
 	}
 }
 
-void
-xputc(ch)
-char ch;
+void xputc(char ch)
 {
 	cursor.X = ttyDisplay->curx;
 	cursor.Y = ttyDisplay->cury;
 	xputc_core(ch);
 }
 
-void
-xputs(s)
-const char *s;
+void xputs(const char *s)
 {
 	int k;
 	int slen = strlen(s);
@@ -452,9 +421,7 @@ const char *s;
  * Overrides wintty.c function of the same name
  * for win32. It is used for glyphs only, not text.
  */
-void
-g_putch(in_ch)
-int in_ch;
+void g_putch(int in_ch)
 {
 	char ch = (char)in_ch;
 
@@ -464,8 +431,7 @@ int in_ch;
 	WriteConsoleOutputCharacter(hConOut,&ch,1,cursor,&ccount);
 }
 
-void
-cl_end()
+void cl_end(void)
 {
 	int cx;
 	cursor.X = ttyDisplay->curx;
@@ -478,8 +444,7 @@ cl_end()
 }
 
 
-void
-clear_screen()
+void clear_screen(void)
 {
 	if (GetConsoleScreenBufferInfo(hConOut,&csbi)) {
 	    DWORD ccnt;
@@ -499,24 +464,21 @@ clear_screen()
 }
 
 
-void
-home()
+void home(void)
 {
 	cursor.X = cursor.Y = 0;
 	ttyDisplay->curx = ttyDisplay->cury = 0;
 }
 
 
-void
-backsp()
+void backsp(void)
 {
 	cursor.X = ttyDisplay->curx;
 	cursor.Y = ttyDisplay->cury;
 	xputc_core('\b');
 }
 
-void
-cl_eos()
+void cl_eos(void)
 {
 	int cy = ttyDisplay->cury+1;
 	if (GetConsoleScreenBufferInfo(hConOut,&csbi)) {
@@ -536,8 +498,7 @@ cl_eos()
 	tty_curs(BASE_WINDOW, (int)ttyDisplay->curx+1, (int)ttyDisplay->cury);
 }
 
-void
-tty_nhbell()
+void tty_nhbell(void)
 {
 	if (flags.silent) return;
 	Beep(8000,500);
@@ -545,8 +506,7 @@ tty_nhbell()
 
 volatile int junk;	/* prevent optimizer from eliminating loop below */
 
-void
-tty_delay_output()
+void tty_delay_output(void)
 {
 	/* delay 50 ms - uses ANSI C clock() function now */
 	clock_t goal;
@@ -580,8 +540,7 @@ tty_delay_output()
  * BRIGHT		8
  */
 
-static void
-init_ttycolor()
+static void init_ttycolor(void)
 {
 	ttycolors[CLR_BLACK] = FOREGROUND_INTENSITY;  /* fix by Quietust */
 	ttycolors[CLR_RED] = FOREGROUND_RED;
@@ -607,8 +566,7 @@ init_ttycolor()
 }
 # endif /* TEXTCOLOR */
 
-int
-has_color(int color)
+int has_color(int color)
 {
 # ifdef TEXTCOLOR
     return 1;
@@ -622,8 +580,7 @@ has_color(int color)
 # endif 
 }
 
-void
-term_start_attr(int attrib)
+void term_start_attr(int attrib)
 {
     switch(attrib){
         case ATR_INVERSE:
@@ -648,8 +605,7 @@ term_start_attr(int attrib)
     attr = (foreground | background);
 }
 
-void
-term_end_attr(int attrib)
+void term_end_attr(int attrib)
 {
     switch(attrib){
 
@@ -667,20 +623,17 @@ term_end_attr(int attrib)
     attr = (foreground | background);
 }
 
-void
-term_end_raw_bold(void)
+void term_end_raw_bold(void)
 {
     term_end_attr(ATR_BOLD);
 }
 
-void
-term_start_raw_bold(void)
+void term_start_raw_bold(void)
 {
     term_start_attr(ATR_BOLD);
 }
 
-void
-term_start_color(int color)
+void term_start_color(int color)
 {
 #ifdef TEXTCOLOR
         if (color >= 0 && color < CLR_MAX) {
@@ -693,8 +646,7 @@ term_start_color(int color)
 	attr = (foreground | background);
 }
 
-void
-term_end_color(void)
+void term_end_color(void)
 {
 #ifdef TEXTCOLOR
 	foreground = DEFTEXTCOLOR;
@@ -703,22 +655,19 @@ term_end_color(void)
 }
 
 
-void
-standoutbeg()
+void standoutbeg(void)
 {
     term_start_attr(ATR_BOLD);
 }
 
 
-void
-standoutend()
+void standoutend(void)
 {
     term_end_attr(ATR_BOLD);
 }
 
 #ifndef NO_MOUSE_ALLOWED
-void
-toggle_mouse_support()
+void toggle_mouse_support(void)
 {
         DWORD cmode;
 	GetConsoleMode(hConIn,&cmode);
@@ -731,8 +680,7 @@ toggle_mouse_support()
 #endif
 
 /* handle tty options updates here */
-void nttty_preference_update(pref)
-const char *pref;
+void nttty_preference_update(const char *pref)
 {
 	if( stricmp( pref, "mouse_support")==0) {
 #ifndef NO_MOUSE_ALLOWED
@@ -743,8 +691,7 @@ const char *pref;
 }
 
 #ifdef PORT_DEBUG
-void
-win32con_debug_keystrokes()
+void win32con_debug_keystrokes(void)
 {
 	DWORD count;
 	boolean valid = 0;
@@ -758,8 +705,9 @@ win32con_debug_keystrokes()
 	}
 	(void)doredraw();
 }
-void
-win32con_handler_info()
+
+
+void win32con_handler_info(void)
 {
 	char *buf;
 	int ci;
@@ -787,15 +735,13 @@ win32con_handler_info()
 	}
 }
 
-void win32con_toggle_cursor_info()
+void win32con_toggle_cursor_info(void)
 {
 	display_cursor_info = !display_cursor_info;
 }
 #endif
 
-void
-map_subkeyvalue(op)
-char *op;
+void map_subkeyvalue(char *op)
 {
 	char digits[] = "0123456789";
 	int length, i, idx, val;
@@ -823,8 +769,7 @@ char *op;
 	key_overrides[idx] = val;
 }
 
-void
-load_keyboard_handler()
+void load_keyboard_handler(void)
 {
 	char suffx[] = ".dll";
 	char *truncspot;
@@ -909,8 +854,7 @@ load_keyboard_handler()
 /* this is used as a printf() replacement when the window
  * system isn't initialized yet
  */
-void
-msmsg (const char *fmt, ...)
+void msmsg (const char *fmt, ...)
 {
 	va_list the_args;
 	char buf[ROWNO * COLNO];	/* worst case scenario */
@@ -924,8 +868,7 @@ msmsg (const char *fmt, ...)
 
 /* fatal error */
 /*VARARGS1*/
-void
-error (const char *s, ...)
+void error (const char *s, ...)
 {
 	va_list the_args;
 	char buf[BUFSZ];
@@ -940,8 +883,7 @@ error (const char *s, ...)
 	exit(EXIT_FAILURE);
 }
 
-void
-synch_cursor()
+void synch_cursor(void)
 {
 	really_move_cursor();
 }

@@ -14,8 +14,8 @@ char erase_char, kill_char;
  * and switch off tab expansion if necessary.
  * Called by startup() in termcap.c and after returning from ! or ^Z
  */
-void
-gettty(){
+void gettty(void)
+{
 	erase_char = '\b';
 	kill_char = 21;		/* cntl-U */
 	iflags.cbreak = TRUE;
@@ -23,9 +23,7 @@ gettty(){
 }
 
 /* reset terminal to original state */
-void
-settty(s)
-const char *s;
+void settty(const char *s)
 {
 	end_screen();
 	if(s) raw_print(s);
@@ -33,16 +31,13 @@ const char *s;
 }
 
 /* called by init_nhwindows() and resume_nhwindows() */
-void
-setftty()
+void setftty(void)
 {
 	start_screen();
 }
 
 #if defined(TIMED_DELAY) && defined(_MSC_VER)
-void
-msleep(mseconds)
-unsigned mseconds;
+void msleep(unsigned mseconds)
 {
 	/* now uses clock() which is ANSI C */
 	clock_t goal;
@@ -57,8 +52,7 @@ unsigned mseconds;
 /* fatal error */
 /*VARARGS1*/
 
-void
-error (const char *s, ...)
+void error (const char *s, ...)
 {
 	va_list the_args;
 	va_start(the_args, s);
