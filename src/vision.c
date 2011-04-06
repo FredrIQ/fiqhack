@@ -90,7 +90,6 @@ static char right_ptrs[ROWNO][COLNO];
 /* Forward declarations. */
 static void fill_point(int,int);
 static void dig_point(int,int);
-static void view_init(void);
 static void view_from(int,int,char **,char *,char *,int,
 			     void (*)(int,int,void *),void *);
 static void get_unused_cs(char ***,char **,char **);
@@ -129,10 +128,6 @@ vision_init()
 
     vision_full_recalc = 0;
     (void) memset((void *) could_see, 0, sizeof(could_see));
-
-    /* Initialize the vision algorithm (currently C or D). */
-    view_init();
-
 }
 
 /*
@@ -1314,11 +1309,6 @@ boolean clear_path(int col1, int row1, int col2, int row2)
  */
 static void right_side(int,int,int,char*);
 static void left_side(int,int,int,char*);
-
-/* Initialize algorithm C (nothing). */
-static void view_init(void)
-{
-}
 
 /*
  * Mark positions as visible on one quadrant of the right side.  The
