@@ -64,10 +64,6 @@ static void free_ttlist(struct toptenentry *);
 static int classmon(char *,boolean);
 static int score_wanted(boolean, int,struct toptenentry *,
 			int,const char **,int);
-#ifdef NO_SCAN_BRACK
-static void nsb_mung_line(char*);
-static void nsb_unmung_line(char*);
-#endif
 
 /* must fit with end.c; used in rip.c */
 const char * const killed_by_prefix[] = {
@@ -101,15 +97,9 @@ static xchar observable_depth(d_level *lev)
 
 static void readentry(FILE *rfile, struct toptenentry *tt)
 {
-#ifdef NO_SCAN_BRACK /* Version_ Pts DgnLevs_ Hp___ Died__Born id */
-	static const char fmt[] = "%d %d %d %ld %d %d %d %d %d %d %ld %ld %d%*c";
-	static const char fmt32[] = "%c%c %s %s%*c";
-	static const char fmt33[] = "%s %s %s %s %s %s%*c";
-#else
 	static const char fmt[] = "%d.%d.%d %ld %d %d %d %d %d %d %ld %ld %d ";
 	static const char fmt32[] = "%c%c %[^,],%[^\n]%*c";
 	static const char fmt33[] = "%s %s %s %s %[^,],%[^\n]%*c";
-#endif
 
 #ifdef UPDATE_RECORD_IN_PLACE
 	/* note: fscanf() below must read the record's terminating newline */
@@ -144,12 +134,6 @@ static void readentry(FILE *rfile, struct toptenentry *tt)
 				tt->plrole, tt->plrace, tt->plgend,
 				tt->plalign, tt->name, tt->death) != 6)
 			tt->points = 0;
-#ifdef NO_SCAN_BRACK
-		if(tt->points > 0) {
-			nsb_unmung_line(tt->name);
-			nsb_unmung_line(tt->death);
-		}
-#endif
 	}
 
 	/* check old score entries for Y2K problem and fix whenever found */
@@ -161,40 +145,20 @@ static void readentry(FILE *rfile, struct toptenentry *tt)
 
 static void writeentry(FILE *rfile, struct toptenentry *tt)
 {
-#ifdef NO_SCAN_BRACK
-	nsb_mung_line(tt->name);
-	nsb_mung_line(tt->death);
-	                   /* Version_ Pts DgnLevs_ Hp___ Died__Born id */
-	(void) fprintf(rfile,"%d %d %d %ld %d %d %d %d %d %d %ld %ld %d ",
-#else
 	(void) fprintf(rfile,"%d.%d.%d %ld %d %d %d %d %d %d %ld %ld %d ",
-#endif
 		tt->ver_major, tt->ver_minor, tt->patchlevel,
 		tt->points, tt->deathdnum, tt->deathlev,
 		tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
 		tt->deathdate, tt->birthdate, tt->uid);
 	if (tt->ver_major < 3 ||
 			(tt->ver_major == 3 && tt->ver_minor < 3))
-#ifdef NO_SCAN_BRACK
-		(void) fprintf(rfile,"%c%c %s %s\n",
-#else
 		(void) fprintf(rfile,"%c%c %s,%s\n",
-#endif
 			tt->plrole[0], tt->plgend[0],
 			onlyspace(tt->name) ? "_" : tt->name, tt->death);
 	else
-#ifdef NO_SCAN_BRACK
-		(void) fprintf(rfile,"%s %s %s %s %s %s\n",
-#else
 		(void) fprintf(rfile,"%s %s %s %s %s,%s\n",
-#endif
 			tt->plrole, tt->plrace, tt->plgend, tt->plalign,
 			onlyspace(tt->name) ? "_" : tt->name, tt->death);
-
-#ifdef NO_SCAN_BRACK
-	nsb_unmung_line(tt->name);
-	nsb_unmung_line(tt->death);
-#endif
 }
 
 static void free_ttlist(struct toptenentry *tt)
@@ -870,20 +834,5 @@ pickentry:
 	(void) fclose(rfile);
 	return otmp;
 }
-
-#ifdef NO_SCAN_BRACK
-/* Lattice scanf isn't up to reading the scorefile.  What */
-/* follows deals with that; I admit it's ugly. (KL) */
-/* Now generally available (KL) */
-static void nsb_mung_line(char *p)
-{
-	while ((p = index(p, ' ')) != 0) *p = '|';
-}
-
-static void nsb_unmung_line(char *p)
-{
-	while ((p = index(p, '|')) != 0) *p = ' ';
-}
-#endif /* NO_SCAN_BRACK */
 
 /*topten.c*/
