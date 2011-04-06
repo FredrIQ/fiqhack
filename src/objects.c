@@ -963,8 +963,7 @@ OBJECT(OBJ("acid venom", "splash of venom"),
 void objects_init(void);
 
 /* dummy routine used to force linkage */
-void
-objects_init()
+void objects_init(void)
 {
     return;
 }

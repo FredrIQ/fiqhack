@@ -334,15 +334,15 @@ static void nmcpy(char *, const char *, int);
 static void escapes(const char *, char *);
 static void rejectoption(const char *);
 static void badoption(const char *);
-static char *string_for_opt(char *,BOOLEAN_P);
-static char *string_for_env_opt(const char *, char *,BOOLEAN_P);
-static void bad_negation(const char *,BOOLEAN_P);
+static char *string_for_opt(char *,boolean);
+static char *string_for_env_opt(const char *, char *,boolean);
+static void bad_negation(const char *,boolean);
 static int change_inv_order(char *);
 static void oc_to_str(char *, char *);
 static void graphics_opts(char *,const char *,int,int);
 static int feature_alert_opts(char *, const char *);
 static const char *get_compopt_value(const char *, char *);
-static boolean special_handling(const char *, BOOLEAN_P, BOOLEAN_P);
+static boolean special_handling(const char *, boolean, boolean);
 static void warning_opts(char *,const char *);
 static void duplicate_opt_detection(const char *, int);
 
@@ -360,11 +360,8 @@ static int count_ape_maps(int *, int *);
 /* check whether a user-supplied option string is a proper leading
    substring of a particular option name; option string might have
    a colon or equals sign and arbitrary value appended to it */
-boolean
-match_optname(user_string, opt_name, min_length, val_allowed)
-const char *user_string, *opt_name;
-int min_length;
-boolean val_allowed;
+boolean match_optname(const char *user_string, const char *opt_name,
+		      int min_length, boolean val_allowed)
 {
 	int len = (int)strlen(user_string);
 
@@ -387,20 +384,17 @@ boolean val_allowed;
  * if it's put in a smaller buffer, the responsible code will have to
  * bounds-check itself.
  */
-char *
-nh_getenv(ev)
-const char *ev;
+char *nh_getenv(const char *ev)
 {
 	char *getev = getenv(ev);
 
 	if (getev && strlen(getev) <= (BUFSZ / 2))
 		return getev;
 	else
-		return (char *)0;
+		return NULL;
 }
 
-void
-initoptions()
+void initoptions(void)
 {
 	char *opts;
 	int i;
@@ -509,11 +503,7 @@ initoptions()
 	return;
 }
 
-static void
-nmcpy(dest, src, maxlen)
-	char	*dest;
-	const char *src;
-	int	maxlen;
+static void nmcpy(char *dest, const char *src, int maxlen)
 {
 	int	count;
 
@@ -531,10 +521,7 @@ nmcpy(dest, src, maxlen)
  * previous forms or by a character has the effect of 'meta'-ing the value (so
  * that the alternate character set will be enabled).
  */
-static void
-escapes(cp, tp)
-const char	*cp;
-char *tp;
+static void escapes(const char *cp, char *tp)
 {
     while (*cp)
     {
@@ -587,17 +574,13 @@ char *tp;
     *tp = '\0';
 }
 
-static void
-rejectoption(optname)
-const char *optname;
+static void rejectoption(const char *optname)
 {
 	pline("%s can be set only from NETHACKOPTIONS or %s.", optname,
 			configfile);
 }
 
-static void
-badoption(opts)
-const char *opts;
+static void badoption(const char *opts)
 {
 	if (!initial) {
 	    if (!strncmp(opts, "h", 1) || !strncmp(opts, "?", 1))
@@ -615,10 +598,7 @@ const char *opts;
 	wait_synch();
 }
 
-static char *
-string_for_opt(opts, val_optional)
-char *opts;
-boolean val_optional;
+static char *string_for_opt(char *opts, boolean val_optional)
 {
 	char *colon, *equals;
 
@@ -633,11 +613,8 @@ boolean val_optional;
 	return colon;
 }
 
-static char *
-string_for_env_opt(optname, opts, val_optional)
-const char *optname;
-char *opts;
-boolean val_optional;
+static char *string_for_env_opt(const char *optname, char *opts,
+				boolean val_optional)
 {
 	if(!initial) {
 		rejectoption(optname);
@@ -646,10 +623,7 @@ boolean val_optional;
 	return string_for_opt(opts, val_optional);
 }
 
-static void
-bad_negation(optname, with_parameter)
-const char *optname;
-boolean with_parameter;
+static void bad_negation(const char *optname, boolean with_parameter)
 {
 	pline_The("%s option may not %sbe negated.",
 		optname,
@@ -665,9 +639,7 @@ boolean with_parameter;
  * This routine returns 1 unless there is a duplicate or bad char in
  * the string.
  */
-static int
-change_inv_order(op)
-char *op;
+static int change_inv_order(char *op)
 {
     int oc_sym, num;
     char *sp, buf[BUFSZ];
@@ -703,11 +675,7 @@ char *op;
     return 1;
 }
 
-static void
-graphics_opts(opts, optype, maxlen, offset)
-char *opts;
-const char *optype;
-int maxlen, offset;
+static void graphics_opts(char *opts, const char *optype, int maxlen, int offset)
 {
 	uchar translate[MAXPCHARS+1];
 	int length, i;
@@ -724,10 +692,7 @@ int maxlen, offset;
 	assign_graphics(translate, length, maxlen, offset);
 }
 
-static void
-warning_opts(opts, optype)
-char *opts;
-const char *optype;
+static void warning_opts(char *opts, const char *optype)
 {
 	uchar translate[MAXPCHARS+1];
 	int length, i;
@@ -745,19 +710,14 @@ const char *optype;
 	assign_warnings(translate);
 }
 
-void
-assign_warnings(graph_chars)
-uchar *graph_chars;
+void assign_warnings(uchar *graph_chars)
 {
 	int i;
 	for (i = 0; i < WARNCOUNT; i++)
 	    if (graph_chars[i]) warnsyms[i] = graph_chars[i];
 }
 
-static int
-feature_alert_opts(op, optn)
-char *op;
-const char *optn;
+static int feature_alert_opts(char *op, const char *optn)
 {
 	char buf[BUFSZ];
 	boolean rejectver = FALSE;
@@ -787,9 +747,7 @@ const char *optn;
 	return 1;
 }
 
-void
-set_duplicate_opt_detection(on_or_off)
-int on_or_off;
+void set_duplicate_opt_detection(int on_or_off)
 {
 	int k, *optptr;
 	if (on_or_off != 0) {
@@ -816,10 +774,8 @@ int on_or_off;
 	} 
 }
 
-static void
-duplicate_opt_detection(opts, bool_or_comp)
-const char *opts;
-int bool_or_comp;	/* 0 == boolean option, 1 == compound */
+static void duplicate_opt_detection(const char *opts,
+				    int bool_or_comp)	/* 0 == boolean option, 1 == compound */
 {
 	int i, *optptr;
 	if ((bool_or_comp == 0) && iflags.opt_booldup && initial && from_file) {
@@ -853,10 +809,7 @@ int bool_or_comp;	/* 0 == boolean option, 1 == compound */
 	}
 }
 
-void
-parseoptions(opts, tinitial, tfrom_file)
-char *opts;
-boolean tinitial, tfrom_file;
+void parseoptions(char *opts, boolean tinitial, boolean tfrom_file)
 {
 	char *op;
 	unsigned num;
@@ -2034,9 +1987,7 @@ static const char *runmodes[] = {
  * Convert the given string of object classes to a string of default object
  * symbols.
  */
-static void
-oc_to_str(src,dest)
-    char *src, *dest;
+static void oc_to_str(char *src, char *dest)
 {
     int i;
 
@@ -2053,9 +2004,7 @@ oc_to_str(src,dest)
  * Add the given mapping to the menu command map list.  Always keep the
  * maps valid C strings.
  */
-void
-add_menu_cmd_alias(from_ch, to_ch)
-    char from_ch, to_ch;
+void add_menu_cmd_alias(char from_ch, char to_ch)
 {
     if (n_menu_mapped >= MAX_MENU_MAPPED_CMDS)
 	pline("out of menu map space.");
@@ -2072,9 +2021,7 @@ add_menu_cmd_alias(from_ch, to_ch)
  * Map the given character to its corresponding menu command.  If it
  * doesn't match anything, just return the original.
  */
-char
-map_menu_cmd(ch)
-    char ch;
+char map_menu_cmd(char ch)
 {
     char *found = index(mapped_menu_cmds, ch);
     if (found) {
@@ -2094,12 +2041,10 @@ map_menu_cmd(ch)
 static char fmtstr_doset_add_menu[] = "%s%-15s [%s]   "; 
 static char fmtstr_doset_add_menu_tab[] = "%s\t[%s]";
 
-static void
-doset_add_menu(win, option, indexoffset)
-    winid win;			/* window to add to */
-    const char *option;		/* option name */
-    int indexoffset;		/* value to add to index in compopt[], or zero
-				   if option cannot be changed */
+static void doset_add_menu(winid win,		/* window to add to */
+			   const char *option,	/* option name */
+			   int indexoffset)	/* value to add to index in compopt[], or zero
+						   if option cannot be changed */
 {
     const char *value = "unknown";		/* current value */
     char buf[BUFSZ], buf2[BUFSZ];
@@ -2133,8 +2078,7 @@ doset_add_menu(win, option, indexoffset)
 }
 
 /* Changing options via menu by Per Liboriussen */
-int
-doset()
+int doset(void)
 {
 	char buf[BUFSZ], buf2[BUFSZ];
 	int i, pass, boolcount, pick_cnt, pick_idx, opt_indx;
@@ -2293,10 +2237,9 @@ doset()
 	return 0;
 }
 
-static boolean
-special_handling(optname, setinitial, setfromfile)
-const char *optname;
-boolean setinitial,setfromfile;
+
+static boolean special_handling(const char *optname, boolean setinitial,
+				boolean setfromfile)
 {
     winid tmpwin;
     anything any;
@@ -2648,10 +2591,7 @@ ape_again:
 
 /* This is ugly. We have all the option names in the compopt[] array,
    but we need to look at each option individually to get the value. */
-static const char *
-get_compopt_value(optname, buf)
-const char *optname;
-char *buf;
+static const char *get_compopt_value(const char *optname, char *buf)
 {
 	char ocl[MAXOCLASSES+1];
 	static const char none[] = "(none)", randomrole[] = "random",
@@ -2912,9 +2852,7 @@ dotogglepickup()
 }
 
 #ifdef AUTOPICKUP_EXCEPTIONS
-int
-add_autopickup_exception(mapping)
-const char *mapping;
+int add_autopickup_exception(const char *mapping)
 {
 	struct autopickup_exception *ape, **apehead;
 	char text[256], *text2;
@@ -2948,9 +2886,7 @@ const char *mapping;
 	return 1;
 }
 
-static void
-remove_autopickup_exception(whichape)
-struct autopickup_exception *whichape;
+static void remove_autopickup_exception(struct autopickup_exception *whichape)
 {
     struct autopickup_exception *ape, *prev = 0;
     int chain = whichape->grab ? AP_GRAB : AP_LEAVE;
@@ -2970,9 +2906,7 @@ struct autopickup_exception *whichape;
     }
 }
 
-static int
-count_ape_maps(leave, grab)
-int *leave, *grab;
+static int count_ape_maps(int *leave, int *grab)
 {
 	struct autopickup_exception *ape;
 	int pass, totalapes, numapes[2] = {0,0};
@@ -2990,8 +2924,7 @@ int *leave, *grab;
 	return totalapes;
 }
 
-void
-free_autopickup_exceptions()
+void free_autopickup_exceptions(void)
 {
 	struct autopickup_exception *ape;
 	int pass;
@@ -3028,8 +2961,7 @@ static const char *opt_epilog[] = {
 	(char *)0
 };
 
-void
-option_help()
+void option_help(void)
 {
     char buf[BUFSZ], buf2[BUFSZ];
     int i;
@@ -3072,10 +3004,7 @@ option_help()
  * prints the next boolean option, on the same line if possible, on a new
  * line if not. End with next_opt("").
  */
-void
-next_opt(datawin, str)
-winid datawin;
-const char *str;
+void next_opt(winid datawin, const char *str)
 {
 	static char *buf = 0;
 	int i;
@@ -3110,9 +3039,7 @@ const char *str;
  * returns the fid of that one; if it does not exist, it adds a new fruit
  * type to the chain and returns the new one.
  */
-int
-fruitadd(str)
-char *str;
+int fruitadd(char *str)
 {
 	int i;
 	struct fruit *f;
@@ -3212,13 +3139,8 @@ nonew:
  *
  * Returns number selected.
  */
-int
-choose_classes_menu(prompt, category, way, class_list, class_select)
-const char *prompt;
-int category;
-boolean way;
-char *class_list;
-char *class_select;
+int choose_classes_menu(const char *prompt, int category, boolean way,
+			char *class_list, char *class_select)
 {
     menu_item *pick_list = (menu_item *)0;
     winid win;
@@ -3338,10 +3260,7 @@ struct wc_Opt wc2_options[] = {
  * set_option_mod_status()
  * with the second argument of 0,2, or 3 respectively.
  */
-void
-set_option_mod_status(optnam, status)
-const char *optnam;
-int status;
+void set_option_mod_status(const char *optnam, int status)
 {
 	int k;
 	if (status < SET_IN_FILE || status > SET_IN_GAME) {
@@ -3371,10 +3290,7 @@ int status;
  * prior to calling.
  *    example: set_wc_option_mod_status(WC_COLOR|WC_SCROLL_MARGIN, SET_IN_GAME);
  */
-void
-set_wc_option_mod_status(optmask, status)
-unsigned long optmask;
-int status;
+void set_wc_option_mod_status(unsigned long optmask, int status)
 {
 	int k = 0;
 	if (status < SET_IN_FILE || status > SET_IN_GAME) {
@@ -3390,9 +3306,7 @@ int status;
 	}
 }
 
-static boolean
-is_wc_option(optnam)
-const char *optnam;
+static boolean is_wc_option(const char *optnam)
 {
 	int k = 0;
 	while (wc_options[k].wc_name) {
@@ -3403,9 +3317,7 @@ const char *optnam;
 	return FALSE;
 }
 
-static boolean
-wc_supported(optnam)
-const char *optnam;
+static boolean wc_supported(const char *optnam)
 {
 	int k = 0;
 	while (wc_options[k].wc_name) {
@@ -3427,10 +3339,7 @@ const char *optnam;
  *    example: set_wc2_option_mod_status(WC2_FULLSCREEN|WC2_SOFTKEYBOARD|WC2_WRAPTEXT, SET_IN_FILE);
  */
 
-void
-set_wc2_option_mod_status(optmask, status)
-unsigned long optmask;
-int status;
+void set_wc2_option_mod_status(unsigned long optmask, int status)
 {
 	int k = 0;
 	if (status < SET_IN_FILE || status > SET_IN_GAME) {
@@ -3446,9 +3355,7 @@ int status;
 	}
 }
 
-static boolean
-is_wc2_option(optnam)
-const char *optnam;
+static boolean is_wc2_option(const char *optnam)
 {
 	int k = 0;
 	while (wc2_options[k].wc_name) {
@@ -3459,9 +3366,7 @@ const char *optnam;
 	return FALSE;
 }
 
-static boolean
-wc2_supported(optnam)
-const char *optnam;
+static boolean wc2_supported(const char *optnam)
 {
 	int k = 0;
 	while (wc2_options[k].wc_name) {
@@ -3474,10 +3379,7 @@ const char *optnam;
 }
 
 
-static void
-wc_set_font_name(wtype, fontname)
-int wtype;
-char *fontname;
+static void wc_set_font_name(int wtype, char *fontname)
 {
 	char **fn = (char **)0;
 	if (!fontname) return;
@@ -3508,9 +3410,7 @@ char *fontname;
 	return;
 }
 
-static int
-wc_set_window_colors(op)
-char *op;
+static int wc_set_window_colors(char *op)
 {
 	/* syntax:
 	 *  menu white/black message green/yellow status white/blue text white/black
