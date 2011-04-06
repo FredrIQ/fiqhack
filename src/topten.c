@@ -57,12 +57,12 @@ static void topten_print(const char *);
 static void topten_print_bold(const char *);
 static xchar observable_depth(d_level *);
 static void outheader(void);
-static void outentry(int,struct toptenentry *,BOOLEAN_P);
+static void outentry(int,struct toptenentry *,boolean);
 static void readentry(FILE *,struct toptenentry *);
 static void writeentry(FILE *,struct toptenentry *);
 static void free_ttlist(struct toptenentry *);
-static int classmon(char *,BOOLEAN_P);
-static int score_wanted(BOOLEAN_P, int,struct toptenentry *,
+static int classmon(char *,boolean);
+static int score_wanted(boolean, int,struct toptenentry *,
 			int,const char **,int);
 #ifdef NO_SCAN_BRACK
 static void nsb_mung_line(char*);
@@ -78,9 +78,7 @@ const char * const killed_by_prefix[] = {
 
 static winid toptenwin = WIN_ERR;
 
-static void
-topten_print(x)
-const char *x;
+static void topten_print(const char *x)
 {
 	if (toptenwin == WIN_ERR)
 	    raw_print(x);
@@ -88,9 +86,7 @@ const char *x;
 	    putstr(toptenwin, ATR_NONE, x);
 }
 
-static void
-topten_print_bold(x)
-const char *x;
+static void topten_print_bold(const char *x)
 {
 	if (toptenwin == WIN_ERR)
 	    raw_print_bold(x);
@@ -98,17 +94,12 @@ const char *x;
 	    putstr(toptenwin, ATR_BOLD, x);
 }
 
-static xchar
-observable_depth(lev)
-d_level *lev;
+static xchar observable_depth(d_level *lev)
 {
 	return depth(lev);
 }
 
-static void
-readentry(rfile,tt)
-FILE *rfile;
-struct toptenentry *tt;
+static void readentry(FILE *rfile, struct toptenentry *tt)
 {
 #ifdef NO_SCAN_BRACK /* Version_ Pts DgnLevs_ Hp___ Died__Born id */
 	static const char fmt[] = "%d %d %d %ld %d %d %d %d %d %d %ld %ld %d%*c";
@@ -168,10 +159,7 @@ struct toptenentry *tt;
 	}
 }
 
-static void
-writeentry(rfile,tt)
-FILE *rfile;
-struct toptenentry *tt;
+static void writeentry(FILE *rfile, struct toptenentry *tt)
 {
 #ifdef NO_SCAN_BRACK
 	nsb_mung_line(tt->name);
@@ -209,9 +197,7 @@ struct toptenentry *tt;
 #endif
 }
 
-static void
-free_ttlist(tt)
-struct toptenentry *tt;
+static void free_ttlist(struct toptenentry *tt)
 {
 	struct toptenentry *ttnext;
 
@@ -223,9 +209,7 @@ struct toptenentry *tt;
 	dealloc_ttentry(tt);
 }
 
-void
-topten(how)
-int how;
+void topten(int how)
 {
 	int uid = getuid();
 	int rank, rank0 = -1, rank1 = 0;
@@ -507,8 +491,7 @@ int how;
 	}
 }
 
-static void
-outheader()
+static void outheader(void)
 {
 	char linebuf[BUFSZ];
 	char *bp;
@@ -521,11 +504,7 @@ outheader()
 }
 
 /* so>0: standout line; so=0: ordinary line */
-static void
-outentry(rank, t1, so)
-struct toptenentry *t1;
-int rank;
-boolean so;
+static void outentry(int rank, struct toptenentry *t1, boolean so)
 {
 	boolean second_line = TRUE;
 	char linebuf[BUFSZ];
@@ -664,14 +643,8 @@ boolean so;
 	    topten_print(linebuf);
 }
 
-static int
-score_wanted(current_ver, rank, t1, playerct, players, uid)
-boolean current_ver;
-int rank;
-struct toptenentry *t1;
-int playerct;
-const char **players;
-int uid;
+static int score_wanted(boolean current_ver, int rank, struct toptenentry *t1,
+			int playerct, const char **players, int uid)
 {
 	int i;
 
@@ -711,10 +684,7 @@ int uid;
  * argc >= 2, with argv[0] untrustworthy (directory names, et al.),
  * and argv[1] starting with "-s".
  */
-void
-prscore(argc,argv)
-int argc;
-char **argv;
+void prscore(int argc, char **argv)
 {
 	const char **players;
 	int playerct, rank;
@@ -832,10 +802,7 @@ char **argv;
 	free_ttlist(tt_head);
 }
 
-static int
-classmon(plch, fem)
-	char *plch;
-	boolean fem;
+static int classmon(char *plch, boolean fem)
 {
 	int i;
 
@@ -860,9 +827,7 @@ classmon(plch, fem)
  * Get a random player name and class from the high score list,
  * and attach them to an object (for statues or morgue corpses).
  */
-struct obj *
-tt_oname(otmp)
-struct obj *otmp;
+struct obj *tt_oname(struct obj *otmp)
 {
 	int rank;
 	int i;
@@ -910,16 +875,12 @@ pickentry:
 /* Lattice scanf isn't up to reading the scorefile.  What */
 /* follows deals with that; I admit it's ugly. (KL) */
 /* Now generally available (KL) */
-static void
-nsb_mung_line(p)
-	char *p;
+static void nsb_mung_line(char *p)
 {
 	while ((p = index(p, ' ')) != 0) *p = '|';
 }
 
-static void
-nsb_unmung_line(p)
-	char *p;
+static void nsb_unmung_line(char *p)
 {
 	while ((p = index(p, '|')) != 0) *p = ' ';
 }
