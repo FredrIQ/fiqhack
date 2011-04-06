@@ -10,18 +10,14 @@ static int dochat(void);
 static int mon_in_room(struct monst *,int);
 
 /* this easily could be a macro, but it might overtax dumb compilers */
-static int
-mon_in_room(mon, rmtyp)
-struct monst *mon;
-int rmtyp;
+static int mon_in_room(struct monst *mon, int rmtyp)
 {
     int rno = levl[mon->mx][mon->my].roomno;
 
     return rooms[rno - ROOMOFFSET].rtype == rmtyp;
 }
 
-void
-dosounds()
+void dosounds(void)
 {
     struct mkroom *sroom;
     int hallu, vx, vy;
@@ -238,9 +234,7 @@ static const char * const h_sounds[] = {
     "ululate", "pop", "jingle", "sniffle", "tinkle", "eep"
 };
 
-const char *
-growl_sound(mtmp)
-struct monst *mtmp;
+const char *growl_sound(struct monst *mtmp)
 {
 	const char *ret;
 
@@ -281,9 +275,7 @@ struct monst *mtmp;
 }
 
 /* the sounds of a seriously abused pet, including player attacking it */
-void
-growl(mtmp)
-struct monst *mtmp;
+void growl(struct monst *mtmp)
 {
     const char *growl_verb = 0;
 
@@ -303,9 +295,7 @@ struct monst *mtmp;
 }
 
 /* the sounds of mistreated pets */
-void
-yelp(mtmp)
-struct monst *mtmp;
+void yelp(struct monst *mtmp)
 {
     const char *yelp_verb = 0;
 
@@ -344,9 +334,7 @@ struct monst *mtmp;
 }
 
 /* the sounds of distressed pets */
-void
-whimper(mtmp)
-struct monst *mtmp;
+void whimper(struct monst *mtmp)
 {
     const char *whimper_verb = 0;
 
@@ -376,9 +364,7 @@ struct monst *mtmp;
 }
 
 /* pet makes "I'm hungry" noises */
-void
-beg(mtmp)
-struct monst *mtmp;
+void beg(struct monst *mtmp)
 {
     if (mtmp->msleeping || !mtmp->mcanmove ||
 	    !(carnivorous(mtmp->data) || herbivorous(mtmp->data)))
@@ -394,9 +380,7 @@ struct monst *mtmp;
     }
 }
 
-static int
-domonnoise(mtmp)
-struct monst *mtmp;
+static int domonnoise(struct monst *mtmp)
 {
     const char *pline_msg = 0,	/* Monnam(mtmp) will be prepended */
 			*verbl_msg = 0;	/* verbalize() */
@@ -793,8 +777,7 @@ struct monst *mtmp;
 }
 
 
-int
-dotalk()
+int dotalk(void)
 {
     int result;
     boolean save_soundok = flags.soundok;
@@ -804,8 +787,7 @@ dotalk()
     return result;
 }
 
-static int
-dochat()
+static int dochat(void)
 {
     struct monst *mtmp;
     int tx,ty;

@@ -7,11 +7,10 @@
 static int stealarm(void);
 
 static const char *equipname(struct obj *);
-static void mdrop_obj(struct monst *,struct obj *,BOOLEAN_P);
+static void mdrop_obj(struct monst *,struct obj *,boolean);
 
-static const char *
-equipname(otmp)
-struct obj *otmp;
+
+static const char *equipname(struct obj *otmp)
 {
 	return (
 #ifdef TOURIST
@@ -25,16 +24,14 @@ struct obj *otmp;
 }
 
 #ifndef GOLDOBJ
-long		/* actually returns something that fits in an int */
-somegold()
+/* actually returns something that fits in an int */
+long somegold(void)
 {
 	return (long)( (u.ugold < 100) ? u.ugold :
 		(u.ugold > 10000) ? rnd(10000) : rnd((int) u.ugold) );
 }
 
-void
-stealgold(mtmp)
-struct monst *mtmp;
+void stealgold(struct monst *mtmp)
 {
 	struct obj *gold = g_at(u.ux, u.uy);
 	long tmp;
@@ -63,9 +60,8 @@ struct monst *mtmp;
 
 #else /* !GOLDOBJ */
 
-long		/* actually returns something that fits in an int */
-somegold(umoney)
-long umoney;
+/* actually returns something that fits in an int */
+long somegold(long umoney)
 {
 	return (long)( (umoney < 100) ? umoney :
 		(umoney > 10000) ? rnd(10000) : rnd((int) umoney) );
@@ -79,20 +75,16 @@ be seized without further searching.
 May search containers too.
 Deals in gold only, as leprechauns don't care for lesser coins.
 */
-struct obj *
-findgold(chain)
-struct obj *chain;
+struct obj *findgold(struct obj *chain)
 {
         while (chain && chain->otyp != GOLD_PIECE) chain = chain->nobj;
         return chain;
 }
 
 /* 
-Steal gold coins only.  Leprechauns don't care for lesser coins.
-*/
-void
-stealgold(mtmp)
-struct monst *mtmp;
+ * Steal gold coins only.  Leprechauns don't care for lesser coins.
+ */
+void stealgold(struct monst *mtmp)
 {
 	struct obj *fgold = g_at(u.ux, u.uy);
 	struct obj *ygold;
@@ -133,8 +125,7 @@ struct monst *mtmp;
 unsigned int stealoid;		/* object to be stolen */
 unsigned int stealmid;		/* monster doing the stealing */
 
-static int
-stealarm()
+static int stealarm(void)
 {
 	struct monst *mtmp;
 	struct obj *otmp;
@@ -167,10 +158,8 @@ botm:   stealoid = 0;
 
 /* An object you're wearing has been taken off by a monster (theft or
    seduction).  Also used if a worn item gets transformed (stone to flesh). */
-void
-remove_worn_item(obj, unchain_ball)
-struct obj *obj;
-boolean unchain_ball;	/* whether to unpunish or just unwield */
+void remove_worn_item(struct obj *obj,
+		      boolean unchain_ball) /* whether to unpunish or just unwield */
 {
 	if (donning(obj))
 	    cancel_don();
@@ -220,10 +209,7 @@ boolean unchain_ball;	/* whether to unpunish or just unwield */
  * Returns -1 if the monster died in the attempt
  * Avoid stealing the object stealoid
  */
-int
-steal(mtmp, objnambuf)
-struct monst *mtmp;
-char *objnambuf;
+int steal(struct monst *mtmp, char *objnambuf)
 {
 	struct obj *otmp;
 	int tmp, could_petrify, named = 0, armordelay;
@@ -418,10 +404,7 @@ gotobj:
 
 
 /* Returns 1 if otmp is free'd, 0 otherwise. */
-int
-mpickobj(mtmp,otmp)
-struct monst *mtmp;
-struct obj *otmp;
+int mpickobj(struct monst *mtmp, struct obj *otmp)
 {
     int freed_otmp;
 
@@ -458,9 +441,7 @@ struct obj *otmp;
 }
 
 
-void
-stealamulet(mtmp)
-struct monst *mtmp;
+void stealamulet(struct monst *mtmp)
 {
     struct obj *otmp = (struct obj *)0;
     int real=0, fake=0;
@@ -504,11 +485,7 @@ struct monst *mtmp;
 
 
 /* drop one object taken from a (possibly dead) monster's inventory */
-static void
-mdrop_obj(mon, obj, verbosely)
-struct monst *mon;
-struct obj *obj;
-boolean verbosely;
+static void mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
 {
     int omx = mon->mx, omy = mon->my;
 
@@ -537,9 +514,7 @@ boolean verbosely;
 /* some monsters bypass the normal rules for moving between levels or
    even leaving the game entirely; when that happens, prevent them from
    taking the Amulet or invocation tools with them */
-void
-mdrop_special_objs(mon)
-struct monst *mon;
+void mdrop_special_objs(struct monst *mon)
 {
     struct obj *obj, *otmp;
 
@@ -555,11 +530,8 @@ struct monst *mon;
 }
 
 /* release the objects the creature is carrying */
-void
-relobj(mtmp,show,is_pet)
-struct monst *mtmp;
-int show;
-boolean is_pet;		/* If true, pet should keep wielded/worn items */
+void relobj(struct monst *mtmp, int show, 
+	    boolean is_pet) /* If true, pet should keep wielded/worn items */
 {
 	struct obj *otmp;
 	int omx = mtmp->mx, omy = mtmp->my;

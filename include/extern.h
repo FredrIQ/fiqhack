@@ -1518,7 +1518,7 @@ extern int dosave0(void);
 #ifdef INSURANCE
 extern void savestateinlock(void);
 #endif
-extern void savelev(int,XCHAR_P,int);
+extern void savelev(int,xchar,int);
 extern void bufon(int);
 extern void bufoff(int);
 extern void bflush(int);
@@ -1536,56 +1536,56 @@ extern void money2u(struct monst *, long);
 #endif
 extern char *shkname(struct monst *);
 extern void shkgone(struct monst *);
-extern void set_residency(struct monst *,BOOLEAN_P);
+extern void set_residency(struct monst *,boolean);
 extern void replshk(struct monst *,struct monst *);
-extern void restshk(struct monst *,BOOLEAN_P);
-extern char inside_shop(XCHAR_P,XCHAR_P);
-extern void u_left_shop(char *,BOOLEAN_P);
-extern void remote_burglary(XCHAR_P,XCHAR_P);
+extern void restshk(struct monst *,boolean);
+extern char inside_shop(xchar,xchar);
+extern void u_left_shop(char *,boolean);
+extern void remote_burglary(xchar,xchar);
 extern void u_entered_shop(char *);
 extern boolean same_price(struct obj *,struct obj *);
 extern void shopper_financial_report(void);
 extern int inhishop(struct monst *);
-extern struct monst *shop_keeper(CHAR_P);
+extern struct monst *shop_keeper(char);
 extern boolean tended_shop(struct mkroom *);
 extern void delete_contents(struct obj *);
 extern void obfree(struct obj *,struct obj *);
-extern void home_shk(struct monst *,BOOLEAN_P);
-extern void make_happy_shk(struct monst *,BOOLEAN_P);
+extern void home_shk(struct monst *,boolean);
+extern void make_happy_shk(struct monst *,boolean);
 extern void hot_pursuit(struct monst *);
-extern void make_angry_shk(struct monst *,XCHAR_P,XCHAR_P);
+extern void make_angry_shk(struct monst *,xchar,xchar);
 extern int dopay(void);
 extern boolean paybill(int);
 extern void finish_paybill(void);
 extern struct obj *find_oid(unsigned);
-extern long contained_cost(struct obj *,struct monst *,long,BOOLEAN_P, BOOLEAN_P);
+extern long contained_cost(struct obj *,struct monst *,long,boolean, boolean);
 extern long contained_gold(struct obj *);
 extern void picked_container(struct obj *);
 extern long unpaid_cost(struct obj *);
-extern void addtobill(struct obj *,BOOLEAN_P,BOOLEAN_P,BOOLEAN_P);
+extern void addtobill(struct obj *,boolean,boolean,boolean);
 extern void splitbill(struct obj *,struct obj *);
 extern void subfrombill(struct obj *,struct monst *);
-extern long stolen_value(struct obj *,XCHAR_P,XCHAR_P,BOOLEAN_P,BOOLEAN_P);
+extern long stolen_value(struct obj *,xchar,xchar,boolean,boolean);
 extern void sellobj_state(int);
-extern void sellobj(struct obj *,XCHAR_P,XCHAR_P);
+extern void sellobj(struct obj *,xchar,xchar);
 extern int doinvbill(int);
-extern struct monst *shkcatch(struct obj *,XCHAR_P,XCHAR_P);
-extern void add_damage(XCHAR_P,XCHAR_P,long);
-extern int repair_damage(struct monst *,struct damage *,BOOLEAN_P);
+extern struct monst *shkcatch(struct obj *,xchar,xchar);
+extern void add_damage(xchar,xchar,long);
+extern int repair_damage(struct monst *,struct damage *,boolean);
 extern int shk_move(struct monst *);
 extern void after_shk_move(struct monst *);
 extern boolean is_fshk(struct monst *);
 extern void shopdig(int);
-extern void pay_for_damage(const char *,BOOLEAN_P);
-extern boolean costly_spot(XCHAR_P,XCHAR_P);
-extern struct obj *shop_object(XCHAR_P,XCHAR_P);
+extern void pay_for_damage(const char *,boolean);
+extern boolean costly_spot(xchar,xchar);
+extern struct obj *shop_object(xchar,xchar);
 extern void price_quote(struct obj *);
 extern void shk_chat(struct monst *);
-extern void check_unpaid_usage(struct obj *,BOOLEAN_P);
+extern void check_unpaid_usage(struct obj *,boolean);
 extern void check_unpaid(struct obj *);
-extern void costly_gold(XCHAR_P,XCHAR_P,long);
-extern boolean block_door(XCHAR_P,XCHAR_P);
-extern boolean block_entry(XCHAR_P,XCHAR_P);
+extern void costly_gold(xchar,xchar,long);
+extern boolean block_door(xchar,xchar);
+extern boolean block_entry(xchar,xchar);
 extern char *shk_your(char *,struct obj *);
 extern char *Shk_Your(char *,struct obj *);
 
@@ -1614,12 +1614,12 @@ extern int dotalk(void);
 
 /* ### sp_lev.c ### */
 
-extern boolean check_room(xchar *,xchar *,xchar *,xchar *,BOOLEAN_P);
-extern boolean create_room(XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P,
-			XCHAR_P,XCHAR_P,XCHAR_P,XCHAR_P);
-extern void create_secret_door(struct mkroom *,XCHAR_P);
-extern boolean dig_corridor(coord *,coord *,BOOLEAN_P,SCHAR_P,SCHAR_P);
-extern void fill_room(struct mkroom *,BOOLEAN_P);
+extern boolean check_room(xchar *,xchar *,xchar *,xchar *,boolean);
+extern boolean create_room(xchar,xchar,xchar,xchar,
+			xchar,xchar,xchar,xchar);
+extern void create_secret_door(struct mkroom *,xchar);
+extern boolean dig_corridor(coord *,coord *,boolean,schar,schar);
+extern void fill_room(struct mkroom *,boolean);
 extern boolean load_special(const char *);
 
 /* ### spell.c ### */
@@ -1630,7 +1630,7 @@ extern void book_substitution(struct obj *,struct obj *);
 extern void age_spells(void);
 extern int docast(void);
 extern int spell_skilltype(int);
-extern int spelleffects(int,BOOLEAN_P);
+extern int spelleffects(int,boolean);
 extern void losespells(void);
 extern int dovspell(void);
 extern void initialspell(struct obj *);
@@ -1643,12 +1643,12 @@ extern long somegold(long);
 extern long somegold(void);
 #endif
 extern void stealgold(struct monst *);
-extern void remove_worn_item(struct obj *,BOOLEAN_P);
+extern void remove_worn_item(struct obj *,boolean);
 extern int steal(struct monst *, char *);
 extern int mpickobj(struct monst *,struct obj *);
 extern void stealamulet(struct monst *);
 extern void mdrop_special_objs(struct monst *);
-extern void relobj(struct monst *,int,BOOLEAN_P);
+extern void relobj(struct monst *,int,boolean);
 #ifdef GOLDOBJ
 extern struct obj *findgold(struct obj *);
 #endif
@@ -1660,7 +1660,7 @@ extern boolean can_saddle(struct monst *);
 extern int use_saddle(struct obj *);
 extern boolean can_ride(struct monst *);
 extern int doride(void);
-extern boolean mount_steed(struct monst *, BOOLEAN_P);
+extern boolean mount_steed(struct monst *, boolean);
 extern void exercise_steed(void);
 extern void kick_steed(void);
 extern void dismount_steed(int);
@@ -1669,11 +1669,11 @@ extern void place_monster(struct monst *,int,int);
 /* ### teleport.c ### */
 
 extern boolean goodpos(int,int,struct monst *,unsigned);
-extern boolean enexto(coord *,XCHAR_P,XCHAR_P,struct permonst *);
-extern boolean enexto_core(coord *,XCHAR_P,XCHAR_P,struct permonst *,unsigned);
-extern void teleds(int,int,BOOLEAN_P);
-extern boolean safe_teleds(BOOLEAN_P);
-extern boolean teleport_pet(struct monst *,BOOLEAN_P);
+extern boolean enexto(coord *,xchar,xchar,struct permonst *);
+extern boolean enexto_core(coord *,xchar,xchar,struct permonst *,unsigned);
+extern void teleds(int,int,boolean);
+extern boolean safe_teleds(boolean);
+extern boolean teleport_pet(struct monst *,boolean);
 extern void tele(void);
 extern int dotele(void);
 extern void level_tele(void);
@@ -1681,13 +1681,13 @@ extern void domagicportal(struct trap *);
 extern void tele_trap(struct trap *);
 extern void level_tele_trap(struct trap *);
 extern void rloc_to(struct monst *,int,int);
-extern boolean rloc(struct monst *, BOOLEAN_P);
+extern boolean rloc(struct monst *, boolean);
 extern boolean tele_restrict(struct monst *);
 extern void mtele_trap(struct monst *, struct trap *,int);
-extern int mlevel_tele_trap(struct monst *, struct trap *,BOOLEAN_P,int);
+extern int mlevel_tele_trap(struct monst *, struct trap *,boolean,int);
 extern void rloco(struct obj *);
 extern int random_teleport_level(void);
-extern boolean u_teleport_mon(struct monst *,BOOLEAN_P);
+extern boolean u_teleport_mon(struct monst *,boolean);
 
 /* ### tile.c ### */
 #ifdef USE_TILES

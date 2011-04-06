@@ -21,9 +21,7 @@ rider_cant_reach()
 /*** Putting the saddle on ***/
 
 /* Can this monster wear a saddle? */
-boolean
-can_saddle(mtmp)
-	struct monst *mtmp;
+boolean can_saddle(struct monst *mtmp)
 {
 	struct permonst *ptr = mtmp->data;
 
@@ -34,9 +32,7 @@ can_saddle(mtmp)
 }
 
 
-int
-use_saddle(otmp)
-	struct obj *otmp;
+int use_saddle(struct obj *otmp)
 {
 	struct monst *mtmp;
 	struct permonst *ptr;
@@ -154,9 +150,7 @@ use_saddle(otmp)
 /*** Riding the monster ***/
 
 /* Can we ride this monster?  Caller should also check can_saddle() */
-boolean
-can_ride(mtmp)
-	struct monst *mtmp;
+boolean can_ride(struct monst *mtmp)
 {
 	return (mtmp->mtame && humanoid(youmonst.data) &&
 			!verysmall(youmonst.data) && !bigmonst(youmonst.data) &&
@@ -164,8 +158,7 @@ can_ride(mtmp)
 }
 
 
-int
-doride()
+int doride(void)
 {
 	boolean forcemount = FALSE;
 
@@ -182,10 +175,8 @@ doride()
 
 
 /* Start riding, with the given monster */
-boolean
-mount_steed(mtmp, force)
-	struct monst *mtmp;	/* The animal */
-	boolean force;		/* Quietly force this animal */
+boolean mount_steed(struct monst *mtmp,	/* The animal */
+		    boolean force)	/* Quietly force this animal */
 {
 	struct obj *otmp;
 	char buf[BUFSZ];
@@ -338,8 +329,7 @@ mount_steed(mtmp, force)
 
 
 /* You and your steed have moved */
-void
-exercise_steed()
+void exercise_steed(void)
 {
 	if (!u.usteed)
 		return;
@@ -354,8 +344,7 @@ exercise_steed()
 
 
 /* The player kicks or whips the steed */
-void
-kick_steed()
+void kick_steed(void)
 {
 	char He[4];
 	if (!u.usteed)
@@ -407,11 +396,9 @@ kick_steed()
  * room's walls, which is not what we want.
  * Adapted from mail daemon code.
  */
-static boolean
-landing_spot(spot, reason, forceit)
-coord *spot;	/* landing position (we fill it in) */
-int reason;
-int forceit;
+static boolean landing_spot(coord *spot, /* landing position (we fill it in) */
+			    int reason, 
+			    int forceit)
 {
     int i = 0, x, y, distance, min_distance = -1;
     boolean found = FALSE;
@@ -451,9 +438,7 @@ int forceit;
 }
 
 /* Stop riding the current steed */
-void
-dismount_steed(reason)
-	int reason;		/* Player was thrown off etc. */
+void dismount_steed(int reason)
 {
 	struct monst *mtmp;
 	struct obj *otmp;
@@ -613,10 +598,7 @@ dismount_steed(reason)
 	return;
 }
 
-void
-place_monster(mon, x, y)
-struct monst *mon;
-int x, y;
+void place_monster(struct monst *mon, int x, int y)
 {
     if (mon == u.usteed ||
 	    /* special case is for convoluted vault guard handling */

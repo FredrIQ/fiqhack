@@ -30,8 +30,7 @@ static void savegamestate(int,int);
 /* need to preserve these during save to avoid accessing freed memory */
 static unsigned ustuck_id = 0, usteed_id = 0;
 
-int
-dosave()
+int dosave(void)
 {
 	clear_nhwindow(WIN_MESSAGE);
 	if(yn("Really save?") == 'n') {
@@ -58,9 +57,8 @@ dosave()
 
 #if defined(UNIX) || defined(WIN32)
 /*ARGSUSED*/
-void
-hangup(sig_unused)  /* called as signal() handler, so sent at least one arg */
-int sig_unused;
+/* called as signal() handler, so sent at least one arg */
+void hangup(int sig_unused)
 {
 # ifdef NOSAVEONHANGUP
 	(void) signal(SIGINT, SIG_IGN);
@@ -79,8 +77,7 @@ int sig_unused;
 #endif
 
 /* returns 1 if save successful */
-int
-dosave0()
+int dosave0(void)
 {
 	const char *fq_save;
 	int fd, ofd;
@@ -181,9 +178,7 @@ dosave0()
 	return 1;
 }
 
-static void
-savegamestate(fd, mode)
-int fd, mode;
+static void savegamestate(int fd, int mode)
 {
 	int uid;
 
@@ -230,8 +225,7 @@ int fd, mode;
 }
 
 #ifdef INSURANCE
-void
-savestateinlock()
+void savestateinlock(void)
 {
 	int fd, hpid, count;
 	static boolean havestate = TRUE;
@@ -302,11 +296,7 @@ savestateinlock()
 }
 #endif
 
-void
-savelev(fd,lev,mode)
-int fd;
-xchar lev;
-int mode;
+void savelev(int fd, xchar lev, int mode)
 {
 	/* if we're tearing down the current level without saving anything
 	   (which happens upon entrance to the endgame or after an aborted
@@ -368,9 +358,7 @@ static int bw_fd = -1;
 static FILE *bw_FILE = 0;
 static boolean buffering = FALSE;
 
-void
-bufon(fd)
-    int fd;
+void bufon(int fd)
 {
 #ifdef UNIX
     if(bw_fd >= 0)
@@ -382,17 +370,14 @@ bufon(fd)
     buffering = TRUE;
 }
 
-void
-bufoff(fd)
-int fd;
+void bufoff(int fd)
 {
     bflush(fd);
     buffering = FALSE;
 }
 
-void
-bflush(fd)
-    int fd;
+
+void bflush(int fd)
 {
 #ifdef UNIX
     if(fd == bw_fd) {
@@ -403,11 +388,8 @@ bflush(fd)
     return;
 }
 
-void
-bwrite(fd,loc,num)
-int fd;
-void * loc;
-unsigned num;
+
+void bwrite(int fd, void *loc, unsigned num)
 {
 	boolean failed;
 
@@ -438,9 +420,8 @@ unsigned num;
 	}
 }
 
-void
-bclose(fd)
-    int fd;
+
+void bclose(int fd)
 {
     bufoff(fd);
 #ifdef UNIX
@@ -454,9 +435,7 @@ bclose(fd)
     return;
 }
 
-static void
-savelevchn(fd, mode)
-int fd, mode;
+static void savelevchn(int fd, int mode)
 {
 	s_level	*tmplev, *tmplev2;
 	int cnt = 0;
@@ -476,9 +455,7 @@ int fd, mode;
 	    sp_levchn = 0;
 }
 
-static void
-savedamage(fd, mode)
-int fd, mode;
+static void savedamage(int fd, int mode)
 {
 	struct damage *damageptr, *tmp_dam;
 	unsigned int xl = 0;
@@ -501,10 +478,7 @@ int fd, mode;
 	    level.damagelist = 0;
 }
 
-static void
-saveobjchn(fd, otmp, mode)
-int fd, mode;
-struct obj *otmp;
+static void saveobjchn(int fd, struct obj *otmp, int mode)
 {
 	struct obj *otmp2;
 	unsigned int xl;
@@ -533,10 +507,7 @@ struct obj *otmp;
 	    bwrite(fd, (void *) &minusone, sizeof(int));
 }
 
-static void
-savemonchn(fd, mtmp, mode)
-int fd, mode;
-struct monst *mtmp;
+static void savemonchn(int fd, struct monst *mtmp, int mode)
 {
 	struct monst *mtmp2;
 	unsigned int xl;
@@ -563,10 +534,7 @@ struct monst *mtmp;
 	    bwrite(fd, (void *) &minusone, sizeof(int));
 }
 
-static void
-savetrapchn(fd, trap, mode)
-int fd, mode;
-struct trap *trap;
+static void savetrapchn(int fd, struct trap *trap, int mode)
 {
 	struct trap *trap2;
 
@@ -587,9 +555,7 @@ struct trap *trap;
  * we only want to save the fruits which exist on the bones level; the bones
  * level routine marks nonexistent fruits by making the fid negative.
  */
-void
-savefruitchn(fd, mode)
-int fd, mode;
+void savefruitchn(int fd, int mode)
 {
 	struct fruit *f2, *f1;
 
@@ -609,8 +575,7 @@ int fd, mode;
 }
 
 /* also called by prscore(); this probably belongs in dungeon.c... */
-void
-free_dungeons()
+void free_dungeons(void)
 {
 #ifdef FREE_ALL_MEMORY
 	savelevchn(0, FREE_SAVE);
@@ -619,8 +584,7 @@ free_dungeons()
 	return;
 }
 
-void
-freedynamicdata()
+void freedynamicdata(void)
 {
 	unload_qtlist();
 	free_invbuf();	/* let_to_name (invent.c) */
