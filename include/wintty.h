@@ -97,7 +97,7 @@ extern void tty_startup(int*, int*);
 #ifndef NO_TERMS
 extern void tty_shutdown(void);
 #endif
-extern void xputc(CHAR_P);
+extern void xputc(char);
 extern void xputs(const char *);
 #if defined(SCREEN_VGA) || defined(SCREEN_8514)
 extern void xputg(int, int, unsigned);
@@ -160,29 +160,29 @@ extern void tty_suspend_nhwindows(const char *);
 extern void tty_resume_nhwindows(void);
 extern winid tty_create_nhwindow(int);
 extern void tty_clear_nhwindow(winid);
-extern void tty_display_nhwindow(winid, BOOLEAN_P);
+extern void tty_display_nhwindow(winid, boolean);
 extern void tty_dismiss_nhwindow(winid);
 extern void tty_destroy_nhwindow(winid);
 extern void tty_curs(winid,int,int);
 extern void tty_putstr(winid, int, const char *);
-extern void tty_display_file(const char *, BOOLEAN_P);
+extern void tty_display_file(const char *, boolean);
 extern void tty_start_menu(winid);
 extern void tty_add_menu(winid,int,const ANY_P *,
-		CHAR_P,CHAR_P,int,const char *, BOOLEAN_P);
+		char,char,int,const char *, boolean);
 extern void tty_end_menu(winid, const char *);
 extern int tty_select_menu(winid, int, MENU_ITEM_P **);
-extern char tty_message_menu(CHAR_P,int,const char *);
+extern char tty_message_menu(char,int,const char *);
 extern void tty_update_inventory(void);
 extern void tty_mark_synch(void);
 extern void tty_wait_synch(void);
-extern void tty_print_glyph(winid,XCHAR_P,XCHAR_P,int);
+extern void tty_print_glyph(winid,xchar,xchar,int);
 extern void tty_raw_print(const char *);
 extern void tty_raw_print_bold(const char *);
 extern int tty_nhgetch(void);
 extern int tty_nh_poskey(int *, int *, int *);
 extern void tty_nhbell(void);
 extern int tty_doprev_message(void);
-extern char tty_yn_function(const char *, const char *, CHAR_P);
+extern char tty_yn_function(const char *, const char *, char);
 extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(void);
 extern void tty_number_pad(int);

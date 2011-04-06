@@ -15,13 +15,12 @@
 #endif
 
 static void redotoplin(const char*);
-static void topl_putsym(CHAR_P);
+static void topl_putsym(char);
 static void remember_topl(void);
 static void removetopl(int);
 
 
-int
-tty_doprev_message()
+int tty_doprev_message(void)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
@@ -117,9 +116,7 @@ tty_doprev_message()
 }
 
 
-static void
-redotoplin(str)
-    const char *str;
+static void redotoplin(const char *str)
 {
 	int otoplin = ttyDisplay->toplin;
 	home();
@@ -137,8 +134,7 @@ redotoplin(str)
 		more();
 }
 
-static void
-remember_topl()
+static void remember_topl(void)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
     int idx = cw->maxrow;
@@ -154,9 +150,7 @@ remember_topl()
     cw->maxcol = cw->maxrow = (idx + 1) % cw->rows;
 }
 
-void
-addtopl(s)
-const char *s;
+void addtopl(const char *s)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
@@ -167,8 +161,7 @@ const char *s;
 }
 
 
-void
-more()
+void more(void)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
@@ -205,9 +198,8 @@ more()
     ttyDisplay->inmore = 0;
 }
 
-void
-update_topl(bp)
-	const char *bp;
+
+void update_topl(const char *bp)
 {
 	char *tl, *otl;
 	int n0;
@@ -253,10 +245,8 @@ update_topl(bp)
 	if(!(cw->flags & WIN_STOP)) redotoplin(toplines);
 }
 
-static
-void
-topl_putsym(c)
-    char c;
+
+static void topl_putsym(char c)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
@@ -294,17 +284,13 @@ topl_putsym(c)
 #endif
 }
 
-void
-putsyms(str)
-    const char *str;
+void putsyms(const char *str)
 {
     while(*str)
 	topl_putsym(*str++);
 }
 
-static void
-removetopl(n)
-int n;
+static void removetopl(int n)
 {
     /* assume addtopl() has been done, so ttyDisplay->toplin is already set */
     while (n-- > 0) putsyms("\b \b");
@@ -312,10 +298,7 @@ int n;
 
 extern char erase_char;		/* from xxxtty.c; don't need kill_char */
 
-char
-tty_yn_function(query,resp, def)
-const char *query,*resp;
-char def;
+char tty_yn_function(const char *query, const char *resp, char def)
 /*
  *   Generic yes/no function. 'def' is the default (returned by space or
  *   return; 'esc' returns 'q', or 'n', or the default, depending on
