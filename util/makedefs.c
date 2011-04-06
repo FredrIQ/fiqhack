@@ -115,10 +115,7 @@ static char *eos(char *);
 static FILE *ifp, *ofp, *tfp;
 
 
-int
-main(argc, argv)
-int	argc;
-char	*argv[];
+int main(int argc, char	*argv[])
 {
 	if ( (argc != 2)
 #ifdef FILE_PREFIX
@@ -142,9 +139,7 @@ char	*argv[];
 	return 0;
 }
 
-void
-do_makedefs(options)
-char	*options;
+void do_makedefs(char *options)
 {
 	boolean more_than_one;
 
@@ -207,10 +202,9 @@ char	*options;
 
 
 /* trivial text encryption routine which can't be broken with `tr' */
-static
-char *xcrypt(str)
-const char *str;
-{				/* duplicated in src/hacklib.c */
+/* duplicated in src/hacklib.c */
+static char *xcrypt(const char *str)
+{
 	static char buf[BUFSZ];
 	const char *p;
 	char *q;
@@ -225,8 +219,7 @@ const char *str;
 	return buf;
 }
 
-void
-do_rumors()
+void do_rumors(void)
 {
 	char	infile[60];
 	long	true_rumor_size;
@@ -281,20 +274,9 @@ do_rumors()
 	return;
 }
 
-/*
- * 3.4.1: way back in 3.2.1 `flags.nap' became unconditional but
- * TIMED_DELAY was erroneously left in VERSION_FEATURES and has
- * been there up through 3.4.0.  Simply removing it now would
- * break save file compatibility with 3.4.0 files, so we will
- * explicitly mask it out during version checks.
- * This should go away in the next version update.
- */
-#define IGNORED_FEATURES	( 0L \
-				| (1L << 23)	/* TIMED_DELAY */ \
-				)
 
-static void
-make_version()
+
+static void make_version(void)
 {
 	int i;
 
@@ -445,8 +427,7 @@ do_date()
 
 static char save_bones_compat_buf[BUFSZ];
 
-static void
-build_savebones_compat_string()
+static void build_savebones_compat_string(void)
 {
 #ifdef VERSION_COMPATIBILITY
 	unsigned long uver = VERSION_COMPATIBILITY;
@@ -551,8 +532,7 @@ static const char *window_opts[] = {
 		0
 	};
 
-void
-do_options()
+void do_options(void)
 {
 	int i, length;
 	const char *str, *indent = "    ";
@@ -609,9 +589,7 @@ do_options()
 }
 
 /* routine to decide whether to discard something from data.base */
-static boolean
-d_filter(line)
-    char *line;
+static boolean d_filter(char *line)
 {
     if (*line == '#') return TRUE;	/* ignore comment lines */
     return FALSE;
@@ -639,8 +617,7 @@ text-b/text-c		at fseek(0x01234567L + 456L)
     *
     */
 
-void
-do_data()
+void do_data(void)
 {
 	char	infile[60], tempfile[60];
 	boolean ok;
@@ -738,9 +715,7 @@ dead_data:  perror(in_line);	/* report the problem */
 }
 
 /* routine to decide whether to discard something from oracles.txt */
-static boolean
-h_filter(line)
-    char *line;
+static boolean h_filter(char *line)
 {
     static boolean skip = FALSE;
     char tag[sizeof in_line];
@@ -777,8 +752,7 @@ static const char *special_oracle[] = {
    "-----" lines.
  */
 
-void
-do_oracles()
+void do_oracles(void)
 {
 	char	infile[60], tempfile[60];
 	boolean in_oracle, ok;
@@ -909,9 +883,7 @@ static	struct deflist {
 #endif
 	      { 0, 0 } };
 
-static int
-check_control(s)
-	char	*s;
+static int check_control(char *s)
 {
 	int	i;
 
@@ -924,15 +896,12 @@ check_control(s)
 	return -1;
 }
 
-static char *
-without_control(s)
-	char *s;
+static char *without_control(char *s)
 {
 	return s + 1 + strlen(deflist[check_control(in_line)].defname);
 }
 
-void
-do_dungeon()
+void do_dungeon(void)
 {
 	int rcnt = 0;
 
@@ -978,9 +947,8 @@ recheck:
 	return;
 }
 
-static boolean
-ranged_attk(ptr)	/* returns TRUE if monster can attack at range */
-	struct permonst *ptr;
+/* returns TRUE if monster can attack at range */
+static boolean ranged_attk(struct permonst *ptr)
 {
 	int	i, j;
 	int atk_mask = (1<<AT_BREA) | (1<<AT_SPIT) | (1<<AT_GAZE);
@@ -997,9 +965,7 @@ ranged_attk(ptr)	/* returns TRUE if monster can attack at range */
  * an approximation of monster strength.  It uses a similar method of
  * determination as "experience()" to arrive at the strength.
  */
-static int
-mstrength(ptr)
-struct permonst *ptr;
+static int mstrength(struct permonst *ptr)
 {
 	int	i, tmp2, n, tmp = ptr->mlevel;
 
@@ -1052,8 +1018,7 @@ struct permonst *ptr;
 	return (tmp >= 0) ? tmp : 0;
 }
 
-void
-do_monstr()
+void do_monstr(void)
 {
     struct permonst *ptr;
     int i, j;
@@ -1092,8 +1057,7 @@ do_monstr()
     return;
 }
 
-void
-do_permonst()
+void do_permonst(void)
 {
 	int	i;
 	char	*c, *nam;
@@ -1143,24 +1107,18 @@ static int	qt_line;
 static boolean	in_msg;
 #define NO_MSG	1	/* strlen of a null line returned by fgets() */
 
-static boolean
-qt_comment(s)
-	char *s;
+static boolean qt_comment(char *s)
 {
 	if(s[0] == '#') return TRUE;
 	return (boolean)(!in_msg  && strlen(s) == NO_MSG);
 }
 
-static boolean
-qt_control(s)
-	char *s;
+static boolean qt_control(char *s)
 {
 	return (boolean)(s[0] == '%' && (s[1] == 'C' || s[1] == 'E'));
 }
 
-static int
-get_hdr (code)
-	char *code;
+static int get_hdr (char *code)
 {
 	int	i;
 
@@ -1170,9 +1128,7 @@ get_hdr (code)
 	return 0;
 }
 
-static boolean
-new_id (code)
-	char *code;
+static boolean new_id (char *code)
 {
 	if(qt_hdr.n_hdr >= N_HDR) {
 	    fprintf(stderr, OUT_OF_HEADERS, qt_line);
@@ -1185,9 +1141,7 @@ new_id (code)
 	return TRUE;
 }
 
-static boolean
-known_msg(num, id)
-	int num, id;
+static boolean known_msg(int num, int id)
 {
 	int i;
 
@@ -1198,10 +1152,7 @@ known_msg(num, id)
 }
 
 
-static void
-new_msg(s, num, id)
-	char *s;
-	int num, id;
+static void new_msg(char *s, int num, int id)
 {
 	struct	qtmsg	*qt_msg;
 
@@ -1217,9 +1168,7 @@ new_msg(s, num, id)
 	}
 }
 
-static void
-do_qt_control(s)
-	char *s;
+static void do_qt_control(char *s)
 {
 	char code[BUFSZ];
 	int num, id = 0;
@@ -1256,9 +1205,7 @@ do_qt_control(s)
 	}
 }
 
-static void
-do_qt_text(s)
-	char *s;
+static void do_qt_text(char *s)
 {
 	if (!in_msg) {
 	    fprintf(stderr, TEXT_NOT_IN_MSG, qt_line);
@@ -1267,8 +1214,7 @@ do_qt_text(s)
 	return;
 }
 
-static void
-adjust_qt_hdrs()
+static void adjust_qt_hdrs(void)
 {
 	int	i, j;
 	long count = 0L, hdr_offset = sizeof(int) +
@@ -1288,8 +1234,7 @@ adjust_qt_hdrs()
 	return;
 }
 
-static void
-put_qt_hdrs()
+static void put_qt_hdrs(void)
 {
 	int	i, count;
 
@@ -1344,8 +1289,7 @@ err_out:
 	exit(1);
 }
 
-void
-do_questtxt()
+void do_questtxt(void)
 {
 	sprintf(filename, DATA_IN_TEMPLATE, QTXT_I_FILE);
 	if(!(ifp = fopen(filename, RDTMODE))) {
@@ -1398,18 +1342,15 @@ do_questtxt()
 
 static	char	temp[32];
 
-static char *
-limit(name,pref)	/* limit a name to 30 characters length */
-char	*name;
-int	pref;
+/* limit a name to 30 characters length */
+static char *limit(char *name, int pref)
 {
 	(void) strncpy(temp, name, pref ? 26 : 30);
 	temp[pref ? 26 : 30] = 0;
 	return temp;
 }
 
-void
-do_objs()
+void do_objs(void)
 {
 	int i, sum = 0;
 	char *c, *objnam;
@@ -1524,9 +1465,7 @@ do_objs()
 	return;
 }
 
-static char *
-tmpdup(str)
-const char *str;
+static char *tmpdup(const char *str)
 {
 	static char buf[128];
 
@@ -1535,9 +1474,7 @@ const char *str;
 	return buf;
 }
 
-static char *
-eos(str)
-char *str;
+static char *eos(char *str)
 {
     while (*str) str++;
     return str;

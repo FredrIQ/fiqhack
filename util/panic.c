@@ -44,8 +44,7 @@ panic (char *str, ...)
  * have it then just use malloc() instead.  This may not work on some
  * systems, but they should either use yacc or get a real alloca routine.
  */
-long *alloca(cnt)
-unsigned cnt;
+long *alloca(unsigned cnt)
 {
 	return cnt ? alloc(cnt) : (long *)0;
 }
