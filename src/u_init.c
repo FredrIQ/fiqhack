@@ -14,7 +14,7 @@ struct trobj {
 
 static void ini_inv(struct trobj *);
 static void knows_object(int);
-static void knows_class(CHAR_P);
+static void knows_class(char);
 static boolean restricted_spell_discipline(int);
 
 #define UNDEF_TYP	0
@@ -474,9 +474,7 @@ static const struct def_skill Skill_W[] = {
 };
 
 
-static void
-knows_object(obj)
-int obj;
+static void knows_object(int obj)
 {
 	discover_object(obj,TRUE,FALSE);
 	objects[obj].oc_pre_discovered = 1;	/* not a "discovery" */
@@ -485,9 +483,7 @@ int obj;
 /* Know ordinary (non-magical) objects of a certain class,
  * like all gems except the loadstone and luckstone.
  */
-static void
-knows_class(sym)
-char sym;
+static void knows_class(char sym)
 {
 	int ct;
 	for (ct = 1; ct < NUM_OBJECTS; ct++)
@@ -495,8 +491,7 @@ char sym;
 			knows_object(ct);
 }
 
-void
-u_init()
+void u_init(void)
 {
 	int i;
 
@@ -797,9 +792,7 @@ u_init()
 }
 
 /* skills aren't initialized, so we use the role-specific skill lists */
-static boolean
-restricted_spell_discipline(otyp)
-int otyp;
+static boolean restricted_spell_discipline(int otyp)
 {
     const struct def_skill *skills;
     int this_skill = spell_skilltype(otyp);
@@ -830,9 +823,7 @@ int otyp;
     return TRUE;
 }
 
-static void
-ini_inv(trop)
-struct trobj *trop;
+static void ini_inv(struct trobj *trop)
 {
 	struct obj *obj;
 	int otyp, i;

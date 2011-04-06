@@ -1782,7 +1782,7 @@ extern boolean attack(struct monst *);
 extern boolean hmon(struct monst *,struct obj *,int);
 extern int damageum(struct monst *,struct attack *);
 extern void missum(struct monst *,struct attack *);
-extern int passive(struct monst *,BOOLEAN_P,int,UCHAR_P);
+extern int passive(struct monst *,boolean,int,uchar);
 extern void passive_obj(struct monst *,struct obj *,struct attack *);
 extern void stumble_onto_mimic(struct monst *);
 extern int flash_hits_mon(struct monst *,struct obj *);
