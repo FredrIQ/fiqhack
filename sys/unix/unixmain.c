@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #endif
 
+#include "wintty.h"
+
 extern struct passwd *getpwuid(uid_t);
 extern struct passwd *getpwnam(const char *);
 #ifdef CHDIR
@@ -71,7 +73,8 @@ int main(int argc, char *argv[])
 	hackpid = getpid();
 	(void) umask(0777 & ~FCMASK);
 
-	choose_windows(DEFAULT_WINDOW_SYS);
+	init_nethack(&tty_procs);
+	win_tty_init();
 
 #ifdef CHDIR			/* otherwise no chdir() */
 	/*

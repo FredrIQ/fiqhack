@@ -254,7 +254,9 @@ static struct Comp_Opt
 #endif
 	{ "windowcolors",  "the foreground/background colors of windows",	/*WC*/
 						80, DISP_IN_GAME },
+#if 0
 	{ "windowtype", "windowing system to use", WINTYPELEN, DISP_IN_GAME },
+#endif
 	{ (char *)0, (char *)0, 0, 0 }
 };
 
@@ -1762,6 +1764,7 @@ goodfruit:
 		} else if (negated) bad_negation(fullname, TRUE);
 		return;
 	}
+#if 0
 	fullname = "windowtype";
 	if (match_optname(opts, fullname, 3, TRUE)) {
 	    if (negated) {
@@ -1774,6 +1777,7 @@ goodfruit:
 	    }
 	    return;
 	}
+#endif
 
 	/* WINCAP
 	 * setting window colors

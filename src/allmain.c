@@ -11,6 +11,12 @@
 #endif
 
 
+void init_nethack(struct window_procs *procs)
+{
+    windowprocs = *procs;
+}
+
+
 void moveloop(void)
 {
 #if defined(WIN32)

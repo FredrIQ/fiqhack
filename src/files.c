@@ -100,6 +100,25 @@ static boolean copy_bytes(int, int);
 static int open_levelfile_exclusively(const char *, int, int);
 #endif
 
+
+
+void regularize(char *s)
+{
+	char *lp;
+#ifdef UNIX
+	while((lp=index(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
+		*lp = '_';
+#else
+# ifdef WIN32
+	for (lp = s; *lp; lp++)
+	    if ( *lp == '?' || *lp == '"' || *lp == '\\' ||
+		 *lp == '/' || *lp == '>' || *lp == '<'  ||
+		 *lp == '*' || *lp == '|' || *lp == ':'  || (*lp > 127))
+			*lp = '_';
+# endif
+#endif
+}
+
 /*
  * fname_encode()
  *

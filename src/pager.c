@@ -820,13 +820,8 @@ int dowhatdoes(void)
 	char bufr[BUFSZ];
 	char q, *reslt;
 
-#if defined(UNIX)
-	introff();
-#endif
 	q = yn_function("What command?", (char *)0, '\0');
-#if defined(UNIX)
-	intron();
-#endif
+
 	reslt = dowhatdoes_core(q, bufr);
 	if (reslt)
 		pline("%s", reslt);

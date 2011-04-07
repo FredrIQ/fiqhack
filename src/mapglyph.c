@@ -3,9 +3,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#if defined(TTY_GRAPHICS)
-#include "wintty.h"	/* for prototype of has_color() only */
-#endif
 #include "color.h"
 #define HI_DOMESTIC CLR_WHITE	/* monst.c */
 
@@ -18,10 +15,6 @@ int explcolors[] = {
 	CLR_ORANGE,	/* fiery   */
 	CLR_WHITE,	/* frosty  */
 };
-
-#if !defined(TTY_GRAPHICS)
-#define has_color(n)  TRUE
-#endif
 
 #ifdef TEXTCOLOR
 #define zap_color(n)  color = iflags.use_color ? zapcolors[n] : NO_COLOR
@@ -209,15 +202,15 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
     }
 
 #ifdef TEXTCOLOR
-    /* Turn off color if no color defined, or rogue level w/o PC graphics. */
+    /* Turn off color if rogue level w/o PC graphics. */
 # ifdef REINCARNATION
 #  ifdef ASCIIGRAPH
-    if (!has_color(color) || (Is_rogue_level(&u.uz) && !HAS_ROGUE_IBM_GRAPHICS))
+    if (Is_rogue_level(&u.uz) && !HAS_ROGUE_IBM_GRAPHICS)
 #  else
-    if (!has_color(color) || Is_rogue_level(&u.uz))
+    if (Is_rogue_level(&u.uz))
 #  endif
 # else
-    if (!has_color(color))
+    if (0)
 # endif
 	color = NO_COLOR;
 #endif

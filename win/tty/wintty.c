@@ -2103,6 +2103,8 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
     
     /* map glyph to character and color */
     mapglyph(glyph, &ch, &color, &special, x, y);
+    if (!has_color(color))
+	color = NO_COLOR;
 
     /* Move the cursor. */
     tty_curs(window, x,y);

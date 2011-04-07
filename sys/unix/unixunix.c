@@ -171,15 +171,6 @@ gotlock:
 	}
 }
 
-/* normalize file name - we don't like .'s, /'s, spaces */
-void regularize(char *s)
-{
-	char *lp;
-
-	while((lp=index(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
-		*lp = '_';
-}
-
 #ifdef GETRES_SUPPORT
 
 extern int nh_getresuid(uid_t *, uid_t *, uid_t *);

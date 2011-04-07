@@ -5,6 +5,8 @@
 #ifndef EXTERN_H
 #define EXTERN_H
 
+#include "winprocs.h"
+
 /* ### alloc.c ### */
 
 extern char *fmt_ptr(const void *,char *);
@@ -15,6 +17,7 @@ extern char *fmt_ptr(const void *,char *);
 
 /* ### allmain.c ### */
 
+extern void init_nethack(struct window_procs *);
 extern void moveloop(void);
 extern void stop_occupation(void);
 extern void display_gamewindows(void);

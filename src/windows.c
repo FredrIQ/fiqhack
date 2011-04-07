@@ -11,44 +11,11 @@ static void def_raw_print(const char *s);
 
 struct window_procs windowprocs;
 
-static
-struct win_choices {
-    struct window_procs *procs;
-    void (*ini_routine)(void);		/* optional (can be 0) */
-} winchoices[] = {
-#ifdef TTY_GRAPHICS
-    { &tty_procs, win_tty_init },
-#endif
-    { 0, 0 }		/* must be last */
-};
-
 static void def_raw_print(const char *s)
 {
     puts(s);
 }
 
-void choose_windows(const char *s)
-{
-    int i;
-
-    for(i=0; winchoices[i].procs; i++)
-	if (!strcmpi(s, winchoices[i].procs->name)) {
-	    windowprocs = *winchoices[i].procs;
-	    if (winchoices[i].ini_routine) (*winchoices[i].ini_routine)();
-	    return;
-	}
-
-    if (!windowprocs.win_raw_print)
-	windowprocs.win_raw_print = def_raw_print;
-
-    raw_printf("Window type %s not recognized.  Choices are:", s);
-    for(i=0; winchoices[i].procs; i++)
-	raw_printf("        %s", winchoices[i].procs->name);
-
-    if (windowprocs.win_raw_print == def_raw_print)
-	terminate(EXIT_SUCCESS);
-    wait_synch();
-}
 
 /*
  * tty_message_menu() provides a means to get feedback from the

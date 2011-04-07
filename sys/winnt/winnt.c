@@ -134,20 +134,6 @@ int def_kbhit(void)
 	return 0;
 }
 
-/* 
- * Strip out troublesome file system characters.
- */
-/* normalize file name */
-void nt_regularize(char *s)
-{
-	unsigned char *lp;
-
-	for (lp = s; *lp; lp++)
-	    if ( *lp == '?' || *lp == '"' || *lp == '\\' ||
-		 *lp == '/' || *lp == '>' || *lp == '<'  ||
-		 *lp == '*' || *lp == '|' || *lp == ':'  || (*lp > 127))
-			*lp = '_';
-}
 
 /*
  * This is used in nhlan.c to implement some of the LAN_FEATURES.
