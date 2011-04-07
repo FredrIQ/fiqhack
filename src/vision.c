@@ -1103,7 +1103,7 @@ static int q4_path(int,int,int,int);
 /*
  * Quadrant I (step < 0).
  */
-static int q1_path(int scol, int srow, int y2, int x2)
+static int q1_path(int srow, int scol, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1145,7 +1145,7 @@ static int q1_path(int scol, int srow, int y2, int x2)
 /*
  * Quadrant IV (step > 0).
  */
-static int q4_path(int scol, int srow, int y2, int x2)
+static int q4_path(int srow, int scol, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1187,7 +1187,7 @@ static int q4_path(int scol, int srow, int y2, int x2)
 /*
  * Quadrant II (step < 0).
  */
-static int q2_path(int scol, int srow, int y2, int x2)
+static int q2_path(int srow, int scol, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
@@ -1229,7 +1229,7 @@ static int q2_path(int scol, int srow, int y2, int x2)
 /*
  * Quadrant III (step > 0).
  */
-static int q3_path(int scol, int srow, int y2, int x2)
+static int q3_path(int srow, int scol, int y2, int x2)
 {
     int dx, dy;
     int k, err, x, y, dxs, dys;
