@@ -7,6 +7,12 @@
 #define MAKEDEFS_C	/* use to conditionally include file sections */
 /* #define DEBUG */	/* uncomment for debugging info */
 
+#ifdef __GNUC__
+#define noreturn __attribute__((noreturn))
+#else
+#define noreturn
+#endif
+
 #include "config.h"
 #include "permonst.h"
 #include "objclass.h"
@@ -20,35 +26,9 @@
 #include "dlb.h"
 
 /* version information */
-#ifdef SHORT_FILENAMES
-#include "patchlev.h"
-#else
 #include "patchlevel.h"
-#endif
 
 #define rewind(fp) fseek((fp),0L,SEEK_SET)	/* guarantee a return value */
-
-	/* names of files to be generated */
-#define DATE_FILE	"date.h"
-#define MONST_FILE	"pm.h"
-#define ONAME_FILE	"onames.h"
-#ifndef OPTIONS_FILE
-#define OPTIONS_FILE	"options"
-#endif
-#define ORACLE_FILE	"oracles"
-#define DATA_FILE	"data"
-#define RUMOR_FILE	"rumors"
-#define DGN_I_FILE	"dungeon.def"
-#define DGN_O_FILE	"dungeon.pdf"
-#define MON_STR_C	"monstr.c"
-#define QTXT_I_FILE	"quest.txt"
-#define QTXT_O_FILE	"quest.dat"
-	/* locations for those files */
-#define INCLUDE_TEMPLATE	"../include/%s"
-#define SOURCE_TEMPLATE		"../src/%s"
-#define DGN_TEMPLATE		"../dat/%s"  /* where dungeon.pdf file goes */
-#define DATA_TEMPLATE		"../dat/%s"
-#define DATA_IN_TEMPLATE	"../dat/%s"
 
 static const char
     *Dont_Edit_Code =
@@ -59,7 +39,7 @@ static const char
 static struct version_info version;
 
 
-static char	in_line[256], filename[60];
+static char	in_line[256];
 
 #ifdef FILE_PREFIX
 		/* if defined, a first argument not starting with - is
@@ -69,17 +49,17 @@ char *file_prefix="";
 #endif
 
 int main(int,char **);
-void do_makedefs(char *);
-void do_objs(void);
-void do_data(void);
-void do_dungeon(void);
-void do_date(void);
-void do_options(void);
-void do_monstr(void);
-void do_permonst(void);
-void do_questtxt(void);
-void do_rumors(void);
-void do_oracles(void);
+
+void do_objs(const char *);
+void do_data(const char *,const char *);
+void do_dungeon(const char *,const char *);
+void do_date(const char *);
+void do_options(const char *);
+void do_monstr(const char *);
+void do_permonst(const char *);
+void do_questtxt(const char *,const char *);
+void do_rumors(const char *,const char *,const char *);
+void do_oracles(const char *,const char *);
 
 extern void monst_init(void);		/* monst.c */
 extern void objects_init(void);	/* objects.c */
@@ -115,33 +95,37 @@ static char *eos(char *);
 static FILE *ifp, *ofp, *tfp;
 
 
-int main(int argc, char	*argv[])
-{
-	if ( (argc != 2)
-#ifdef FILE_PREFIX
-		&& (argc != 3)
-#endif
-	) {
-	    fprintf(stderr, "Bad arg count (%d).\n", argc-1);
-	    (void) fflush(stderr);
-	    return 1;
-	}
 
-#ifdef FILE_PREFIX
-	if(argc >=2 && argv[1][0]!='-'){
-	    file_prefix=argv[1];
-	    argc--;argv++;
-	}
-#endif
-	do_makedefs(&argv[1][1]);
-	exit(EXIT_SUCCESS);
-	/*NOTREACHED*/
-	return 0;
+static const char *usage_info[] = {
+    "usage: %s [MODE] [FILENAMES]\n",
+    "       %s -o [OUT (onames.h)]\n",
+    "       %s -d [IN (data.base)] [OUT (data)]\n",
+    "       %s -e [IN (dungeon.def)] [OUT (dungeon.pdf)]\n",
+    "       %s -m [OUT (monstr.c)]\n",
+    "       %s -v [OUT (date.h)] [OUT (options)]\n",
+    "       %s -p [OUT (permonst.h)]\n",
+    "       %s -q [IN (quest.txt)] [OUT (quest.dat)]\n",
+    "       %s -r [IN (rumors.tru)] [IN (rumors.fal)] [OUT (rumors)]\n",
+    "       %s -h [IN (oracles.txt)] [OUT (oracles)]\n",
+};
+
+static noreturn void usage(char *argv0, char mode, int expected)
+{
+	int i;
+	if (expected)
+	    fprintf(stderr, "Error: incorrect number of args for mode -%c: %d args required\n", mode, expected);
+	
+	for (i = 0; i < sizeof(usage_info)/sizeof(usage_info[0]); i++)
+	    fprintf(stderr, usage_info[i], argv0);
+	
+	exit(1);
 }
 
-void do_makedefs(char *options)
+
+int main(int argc, char	*argv[])
 {
-	boolean more_than_one;
+	if (argc < 3)
+	    usage(argv[0], 0, 0);
 
 	/* Note:  these initializers don't do anything except guarantee that
 		we're linked properly.
@@ -151,53 +135,70 @@ void do_makedefs(char *options)
 
 	/* construct the current version number */
 	make_version();
+	
+	switch (argv[1][1]) {
+	    case 'o':
+	    case 'O':
+		if (argc != 3) usage(argv[0], argv[1][1], 3);
+		do_objs(argv[2]);
+		    break;
+		    
+	    case 'd':
+	    case 'D':
+		if (argc != 4) usage(argv[0], argv[1][1], 4);
+		do_data(argv[2], argv[3]);
+		    break;
+		    
+	    case 'e':
+	    case 'E':	
+		if (argc != 4) usage(argv[0], argv[1][1], 4);
+		do_dungeon(argv[2], argv[3]);
+		    break;
+		    
+	    case 'm':
+	    case 'M':
+		if (argc != 3) usage(argv[0], argv[1][1], 3);
+		do_monstr(argv[2]);
+		    break;
+		    
+	    case 'v':
+	    case 'V':
+		if (argc != 4) usage(argv[0], argv[1][1], 4);
+		do_date(argv[2]);
+		do_options(argv[3]);
+		    break;
+		    
+	    case 'p':
+	    case 'P':
+		if (argc != 3) usage(argv[0], argv[1][1], 3);
+		do_permonst(argv[2]);
+		    break;
+		    
+	    case 'q':
+	    case 'Q':
+		if (argc != 4) usage(argv[0], argv[1][1], 4);
+		do_questtxt(argv[2], argv[3]);
+		    break;
+		    
+	    case 'r':
+	    case 'R':
+		if (argc != 5) usage(argv[0], argv[1][1], 5);
+		do_rumors(argv[2], argv[3], argv[4]);
+		    break;
+		    
+	    case 'h':
+	    case 'H':
+		if (argc != 4) usage(argv[0], argv[1][1], 4);
+		do_oracles(argv[2], argv[3]);
+		    break;
 
-
-	more_than_one = strlen(options) > 1;
-	while (*options) {
-	    if (more_than_one)
-		fprintf(stderr, "makedefs -%c\n", *options);
-
-	    switch (*options) {
-		case 'o':
-		case 'O':	do_objs();
-				break;
-		case 'd':
-		case 'D':	do_data();
-				break;
-		case 'e':
-		case 'E':	do_dungeon();
-				break;
-		case 'm':
-		case 'M':	do_monstr();
-				break;
-		case 'v':
-		case 'V':	do_date();
-				do_options();
-				break;
-		case 'p':
-		case 'P':	do_permonst();
-				break;
-		case 'q':
-		case 'Q':	do_questtxt();
-				break;
-		case 'r':
-		case 'R':	do_rumors();
-				break;
-		case 'h':
-		case 'H':	do_oracles();
-				break;
-
-		default:	fprintf(stderr,	"Unknown option '%c'.\n",
-					*options);
-				(void) fflush(stderr);
-				exit(EXIT_FAILURE);
-		
-	    }
-	    options++;
+	    default:
+		fprintf(stderr, "Error: unknown mode -%c\n", argv[1][1]);
+		usage(argv[0], 0, 0);
+		return 1;
 	}
-	if (more_than_one) fprintf(stderr, "Completed.\n");	/* feedback */
-
+	
+	return 0;
 }
 
 
@@ -219,28 +220,20 @@ static char *xcrypt(const char *str)
 	return buf;
 }
 
-void do_rumors(void)
+void do_rumors(const char *in_tru, const char *in_false, const char *outfile)
 {
-	char	infile[60];
 	long	true_rumor_size;
 
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename,file_prefix);
-#endif
-	sprintf(eos(filename), DATA_TEMPLATE, RUMOR_FILE);
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
 	fprintf(ofp, "%s", Dont_Edit_Data);
 
-	sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
-	strcat(infile, ".tru");
-	if (!(ifp = fopen(infile, RDTMODE))) {
-		perror(infile);
+	if (!(ifp = fopen(in_tru, RDTMODE))) {
+		perror(in_tru);
 		fclose(ofp);
-		unlink(filename);	/* kill empty output file */
+		unlink(outfile);	/* kill empty output file */
 		exit(EXIT_FAILURE);
 	}
 
@@ -256,12 +249,10 @@ void do_rumors(void)
 
 	fclose(ifp);
 
-	sprintf(infile, DATA_IN_TEMPLATE, RUMOR_FILE);
-	strcat(infile, ".fal");
-	if (!(ifp = fopen(infile, RDTMODE))) {
-		perror(infile);
+	if (!(ifp = fopen(in_false, RDTMODE))) {
+		perror(in_false);
 		fclose(ofp);
-		unlink(filename);	/* kill incomplete output file */
+		unlink(outfile);	/* kill incomplete output file */
 		exit(EXIT_FAILURE);
 	}
 
@@ -344,9 +335,7 @@ static void make_version(void)
 	return;
 }
 
-static char *
-version_string(outbuf)
-char *outbuf;
+static char *version_string(char *outbuf)
 {
     sprintf(outbuf, "%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 #ifdef BETA
@@ -355,10 +344,7 @@ char *outbuf;
     return outbuf;
 }
 
-static char *
-version_id_string(outbuf, build_date)
-char *outbuf;
-const char *build_date;
+static char *version_id_string(char *outbuf, const char *build_date)
 {
     char subbuf[64], versbuf[64];
 
@@ -376,20 +362,15 @@ const char *build_date;
     return outbuf;
 }
 
-void
-do_date()
+
+void do_date(const char *outfile)
 {
 	long clocktim = 0;
 	char *c, cbuf[60], buf[BUFSZ];
 	const char *ul_sfx;
 
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename,file_prefix);
-#endif
-	sprintf(eos(filename), INCLUDE_TEMPLATE, DATE_FILE);
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
 	fprintf(ofp,"/*\tSCCS Id: @(#)date.h\t3.4\t2002/02/03 */\n\n");
@@ -532,18 +513,13 @@ static const char *window_opts[] = {
 		0
 	};
 
-void do_options(void)
+void do_options(const char *outfile)
 {
 	int i, length;
 	const char *str, *indent = "    ";
 
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename,file_prefix);
-#endif
-	sprintf(eos(filename), DATA_TEMPLATE, OPTIONS_FILE);
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
 
@@ -617,41 +593,29 @@ text-b/text-c		at fseek(0x01234567L + 456L)
     *
     */
 
-void do_data(void)
+void do_data(const char *infile, const char *outfile)
 {
-	char	infile[60], tempfile[60];
+	char	tempfile[256];
 	boolean ok;
 	long	txt_offset;
 	int	entry_cnt, line_cnt;
 
-	sprintf(tempfile, DATA_TEMPLATE, "database.tmp");
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename,file_prefix);
-#endif
-	sprintf(eos(filename), DATA_TEMPLATE, DATA_FILE);
-	sprintf(infile, DATA_IN_TEMPLATE, DATA_FILE);
-	strcat(infile,
-#ifdef SHORT_FILENAMES
-		".bas"
-#else
-		".base"
-#endif
-		);
+	sprintf(tempfile, "%s.%s", outfile, "tmp");
+
 	if (!(ifp = fopen(infile, RDTMODE))) {		/* data.base */
 		perror(infile);
 		exit(EXIT_FAILURE);
 	}
-	if (!(ofp = fopen(filename, WRTMODE))) {	/* data */
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {	/* data */
+		perror(outfile);
 		fclose(ifp);
 		exit(EXIT_FAILURE);
 	}
-	if (!(tfp = fopen(tempfile, WRTMODE))) {	/* database.tmp */
+	if (!(tfp = fopen(tempfile, WRTMODE))) {	/* data.tmp */
 		perror(tempfile);
 		fclose(ifp);
 		fclose(ofp);
-		unlink(filename);
+		unlink(outfile);
 		exit(EXIT_FAILURE);
 	}
 
@@ -694,17 +658,17 @@ void do_data(void)
 	unlink(tempfile);	/* remove it */
 
 	/* update the first record of the output file; prepare error msg 1st */
-	sprintf(in_line, "rewind of \"%s\"", filename);
+	sprintf(in_line, "rewind of \"%s\"", outfile);
 	ok = (rewind(ofp) == 0);
 	if (ok) {
-	   sprintf(in_line, "header rewrite of \"%s\"", filename);
+	   sprintf(in_line, "header rewrite of \"%s\"", outfile);
 	   ok = (fprintf(ofp, "%s%08lx\n", Dont_Edit_Data, txt_offset) >= 0);
 	}
 	if (!ok) {
 dead_data:  perror(in_line);	/* report the problem */
 	    /* close and kill the aborted output file, then give up */
 	    fclose(ofp);
-	    unlink(filename);
+	    unlink(outfile);
 	    exit(EXIT_FAILURE);
 	}
 
@@ -752,28 +716,22 @@ static const char *special_oracle[] = {
    "-----" lines.
  */
 
-void do_oracles(void)
+void do_oracles(const char *infile, const char *outfile)
 {
-	char	infile[60], tempfile[60];
+	char	tempfile[256];
 	boolean in_oracle, ok;
 	long	txt_offset, offset, fpos;
 	int	oracle_cnt;
 	int i;
 
-	sprintf(tempfile, DATA_TEMPLATE, "oracles.tmp");
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename, file_prefix);
-#endif
-	sprintf(eos(filename), DATA_TEMPLATE, ORACLE_FILE);
-	sprintf(infile, DATA_IN_TEMPLATE, ORACLE_FILE);
-	strcat(infile, ".txt");
+	sprintf(tempfile, "%s.%s", outfile, "tmp");
+
 	if (!(ifp = fopen(infile, RDTMODE))) {
 		perror(infile);
 		exit(EXIT_FAILURE);
 	}
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		fclose(ifp);
 		exit(EXIT_FAILURE);
 	}
@@ -781,7 +739,7 @@ void do_oracles(void)
 		perror(tempfile);
 		fclose(ifp);
 		fclose(ofp);
-		unlink(filename);
+		unlink(outfile);
 		exit(EXIT_FAILURE);
 	}
 
@@ -839,14 +797,14 @@ void do_oracles(void)
 	unlink(tempfile);	/* remove it */
 
 	/* update the first record of the output file; prepare error msg 1st */
-	sprintf(in_line, "rewind of \"%s\"", filename);
+	sprintf(in_line, "rewind of \"%s\"", outfile);
 	ok = (rewind(ofp) == 0);
 	if (ok) {
-	    sprintf(in_line, "header rewrite of \"%s\"", filename);
+	    sprintf(in_line, "header rewrite of \"%s\"", outfile);
 	    ok = (fprintf(ofp, "%s%5d\n", Dont_Edit_Data, oracle_cnt) >=0);
 	}
 	if (ok) {
-	    sprintf(in_line, "data rewrite of \"%s\"", filename);
+	    sprintf(in_line, "data rewrite of \"%s\"", outfile);
 	    for (i = 0; i <= oracle_cnt; i++) {
 		if (!(ok = (fpos = ftell(ofp)) >= 0)) break;
 		if (!(ok = (fseek(ofp, fpos, SEEK_SET) >= 0))) break;
@@ -860,7 +818,7 @@ void do_oracles(void)
 dead_data:  perror(in_line);	/* report the problem */
 	    /* close and kill the aborted output file, then give up */
 	    fclose(ofp);
-	    unlink(filename);
+	    unlink(outfile);
 	    exit(EXIT_FAILURE);
 	}
 
@@ -901,24 +859,19 @@ static char *without_control(char *s)
 	return s + 1 + strlen(deflist[check_control(in_line)].defname);
 }
 
-void do_dungeon(void)
+void do_dungeon(const char *infile, const char *outfile)
 {
 	int rcnt = 0;
 
-	sprintf(filename, DATA_IN_TEMPLATE, DGN_I_FILE);
-	if (!(ifp = fopen(filename, RDTMODE))) {
-		perror(filename);
+	if (!(ifp = fopen(infile, RDTMODE))) {
+		perror(infile);
 		exit(EXIT_FAILURE);
 	}
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename, file_prefix);
-#endif
-	sprintf(eos(filename), DGN_TEMPLATE, DGN_O_FILE);
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
+	
 	fprintf(ofp, "%s", Dont_Edit_Data);
 
 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
@@ -935,7 +888,7 @@ recheck:
 			(void) fputs(without_control(in_line),ofp);
 		} else {
 		    fprintf(stderr, "Unknown control option '%s' in file %s at line %d.\n",
-			    in_line, DGN_I_FILE, rcnt);
+			    in_line, infile, rcnt);
 		    exit(EXIT_FAILURE);
 		}
 	    } else
@@ -1018,7 +971,7 @@ static int mstrength(struct permonst *ptr)
 	return (tmp >= 0) ? tmp : 0;
 }
 
-void do_monstr(void)
+void do_monstr(const char *outfile)
 {
     struct permonst *ptr;
     int i, j;
@@ -1026,15 +979,11 @@ void do_monstr(void)
     /*
      * create the source file, "monstr.c"
      */
-    filename[0]='\0';
-#ifdef FILE_PREFIX
-    strcat(filename, file_prefix);
-#endif
-    sprintf(eos(filename), SOURCE_TEMPLATE, MON_STR_C);
-    if (!(ofp = fopen(filename, WRTMODE))) {
-	perror(filename);
+    if (!(ofp = fopen(outfile, WRTMODE))) {
+	perror(outfile);
 	exit(EXIT_FAILURE);
     }
+    
     fprintf(ofp, "%s", Dont_Edit_Code);
     fprintf(ofp,"#include \"config.h\"\n");
     fprintf(ofp,"\nconst int monstr[] = {\n");
@@ -1057,20 +1006,16 @@ void do_monstr(void)
     return;
 }
 
-void do_permonst(void)
+void do_permonst(const char *outfile)
 {
 	int	i;
 	char	*c, *nam;
 
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename, file_prefix);
-#endif
-	sprintf(eos(filename), INCLUDE_TEMPLATE, MONST_FILE);
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
+	
 	fprintf(ofp,"/*\tSCCS Id: @(#)pm.h\t3.4\t2002/02/03 */\n\n");
 	fprintf(ofp,"%s", Dont_Edit_Code);
 	fprintf(ofp,"#ifndef PM_H\n#define PM_H\n");
@@ -1289,21 +1234,15 @@ err_out:
 	exit(1);
 }
 
-void do_questtxt(void)
+void do_questtxt(const char *infile, const char *outfile)
 {
-	sprintf(filename, DATA_IN_TEMPLATE, QTXT_I_FILE);
-	if(!(ifp = fopen(filename, RDTMODE))) {
-		perror(filename);
+	if(!(ifp = fopen(infile, RDTMODE))) {
+		perror(infile);
 		exit(EXIT_FAILURE);
 	}
 
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename, file_prefix);
-#endif
-	sprintf(eos(filename), DATA_TEMPLATE, QTXT_O_FILE);
-	if(!(ofp = fopen(filename, WRBMODE))) {
-		perror(filename);
+	if(!(ofp = fopen(outfile, WRBMODE))) {
+		perror(outfile);
 		fclose(ifp);
 		exit(EXIT_FAILURE);
 	}
@@ -1350,7 +1289,7 @@ static char *limit(char *name, int pref)
 	return temp;
 }
 
-void do_objs(void)
+void do_objs(const char *outfile)
 {
 	int i, sum = 0;
 	char *c, *objnam;
@@ -1359,15 +1298,11 @@ void do_objs(void)
 	char class = '\0';
 	boolean	sumerr = FALSE;
 
-	filename[0]='\0';
-#ifdef FILE_PREFIX
-	strcat(filename, file_prefix);
-#endif
-	sprintf(eos(filename), INCLUDE_TEMPLATE, ONAME_FILE);
-	if (!(ofp = fopen(filename, WRTMODE))) {
-		perror(filename);
+	if (!(ofp = fopen(outfile, WRTMODE))) {
+		perror(outfile);
 		exit(EXIT_FAILURE);
 	}
+	
 	fprintf(ofp,"/*\tSCCS Id: @(#)onames.h\t3.4\t2002/02/03 */\n\n");
 	fprintf(ofp,"%s",Dont_Edit_Code);
 	fprintf(ofp,"#ifndef ONAMES_H\n#define ONAMES_H\n\n");

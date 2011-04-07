@@ -125,11 +125,11 @@ makedefs.o: makedefs.c $(CONFIG_H) ../include/permonst.h \
 		../include/dlb.h ../include/patchlevel.h ../include/qtext.h
 
 ../include/onames.h: makedefs
-	./makedefs -o
+	./makedefs -o "../include/onames.h"
 ../include/pm.h: makedefs
-	./makedefs -p
+	./makedefs -p "../include/pm.h"
 ../src/monstr.c: makedefs
-	./makedefs -m
+	./makedefs -m "../src/monstr.c"
 
 
 # we defer this makedefs call to the src Makefile, since it knows all about

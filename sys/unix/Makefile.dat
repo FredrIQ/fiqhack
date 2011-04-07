@@ -83,20 +83,20 @@ GEM_RSC.RSC:
 
 
 data:	data.base ../util/makedefs
-	../util/makedefs -d
+	../util/makedefs -d "dungeon.def" "dungeon.pdf"
 
 rumors:	rumors.tru rumors.fal ../util/makedefs
-	../util/makedefs -r
+	../util/makedefs -r "rumors.tru" "rumors.fal" "rumors"
 
 quest.dat:	quest.txt ../util/makedefs
-	../util/makedefs -q
+	../util/makedefs -q "quest.txt" "quest"
 
 oracles:	oracles.txt ../util/makedefs
-	../util/makedefs -h
+	../util/makedefs -h "oracles.txt" "oracles"
 
 # note: 'options' should have already been made when include/date.h was created
 options:	../util/makedefs
-	../util/makedefs -v
+	../util/makedefs -v "../include/date.h" "options"
 
 
 spec_levs: ../util/lev_comp \
@@ -135,7 +135,7 @@ quest_levs: ../util/lev_comp \
 	touch quest_levs
 
 dungeon: dungeon.def ../util/makedefs ../util/dgn_comp
-	../util/makedefs -e
+	../util/makedefs -e "dungeon.def" "dungeon.pdf"
 	../util/dgn_comp dungeon.pdf
 
 spotless:

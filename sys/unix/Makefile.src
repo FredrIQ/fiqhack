@@ -326,7 +326,7 @@ tile.c: ../win/share/tilemap.c $(HACK_H)
 #	hack.h depends on makedefs' output, so we know makedefs will be
 #	up to date before being executed
 ../include/date.h:	$(VERSOURCES) $(HACK_H)
-	../util/makedefs -v
+	../util/makedefs -v "../include/date.h" "../dat/options"
 
 
 tags: $(CSOURCES)
