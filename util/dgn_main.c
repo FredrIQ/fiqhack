@@ -16,6 +16,7 @@
 extern int yyparse(void);
 extern int line_number;
 const char *fname = "(stdin)";
+static char *outprefix = "";
 int fatal_error = 0;
 
 int  main(int,char **);
@@ -45,8 +46,15 @@ int main(int argc, char **argv)
 	    (void) yyparse();
 	    if (fatal_error > 0)
 		errors_encountered = TRUE;
-	} else {		/* Otherwise every argument is a filename */
-	    for(i=1; i<argc; i++) {
+	} else {
+	    /* first two args may be "-o outprefix" */
+	    i = 1;
+	    if (!strcmp(argv[1], "-o") && argc > 3) {
+		outprefix = argv[2];
+		i = 3;
+	    }
+	    /* Otherwise every argument is a filename */
+	    for(; i<argc; i++) {
 		fname = strcpy(infile, argv[i]);
 		/* the input file had better be a .pdf file */
 		len = strlen(fname) - 4;	/* length excluding suffix */
@@ -64,10 +72,8 @@ int main(int argc, char **argv)
 		basename[len] = '\0';
 
 		outfile[0] = '\0';
-#ifdef PREFIX
-		(void) strcat(outfile, PREFIX);
-#endif
-		(void) strcat(outfile, basename);
+		strcat(outfile, outprefix);
+		strcat(outfile, basename);
 
 		fin = freopen(infile, "r", stdin);
 		if (!fin) {
