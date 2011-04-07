@@ -495,11 +495,7 @@ int dorecover(int fd)
 		if (rtmp < 2) return rtmp;  /* dorecover called recursively */
 	}
 
-#ifdef BSD
-	(void) lseek(fd, 0L, 0);
-#else
 	(void) lseek(fd, (off_t)0, 0);
-#endif
 	(void) uptodate(fd, (char *)0);		/* skip version info */
 #ifdef STORE_PLNAME_IN_FILE
 	mread(fd, (void *) plname, PL_NSIZ);
@@ -810,13 +806,8 @@ void mread(int fd, void * buf, unsigned int len)
 {
 	int rlen;
 
-#if defined(BSD)
-	rlen = read(fd, buf, (int) len);
-	if(rlen != len){
-#else /* e.g. SYSV */
 	rlen = read(fd, buf, (unsigned) len);
 	if((unsigned)rlen != len){
-#endif
 		pline("Read %d instead of %u bytes.", rlen, len);
 		if(restoring) {
 			(void) close(fd);

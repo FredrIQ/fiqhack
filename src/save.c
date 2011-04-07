@@ -403,11 +403,7 @@ void bwrite(int fd, void *loc, unsigned num)
 #endif /* UNIX */
 	{
 /* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
-#if defined(BSD)
-	    failed = (write(fd, loc, (int)num) != (int)num);
-#else /* e.g. SYSV */
 	    failed = (write(fd, loc, num) != num);
-#endif
 	}
 
 	if (failed) {

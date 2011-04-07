@@ -3281,9 +3281,6 @@ void pay_for_damage(const char *dmgstr, boolean cant_mollify)
 		    verbalize("Out of my way, scum!");
 		    wait_synch();
 #if defined(UNIX)
-# if defined(SYSV)
-		    (void)
-# endif
 			sleep(1);
 #endif
 		}

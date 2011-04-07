@@ -520,16 +520,7 @@ void commit_bonesfile(d_level *lev)
 	tempname = set_bonestemp_name();
 	tempname = fqname(tempname, BONESPREFIX, 1);
 
-#if defined(SYSV) && !defined(SVR4)
-	/* old SYSVs don't have rename.  Some SVR3's may, but since they
-	 * also have link/unlink, it doesn't matter. :-)
-	 */
-	(void) unlink(fq_bones);
-	ret = link(tempname, fq_bones);
-	ret += unlink(tempname);
-#else
 	ret = rename(tempname, fq_bones);
-#endif
 	if (wizard && ret != 0)
 		pline("couldn't rename %s to %s.", tempname, fq_bones);
 }
@@ -706,9 +697,6 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 		    HUP raw_printf(
 			    "Waiting for access to %s.  (%d retries left).",
 			    filename, retryct);
-# if defined(SYSV)
-		    (void)
-# endif
 			sleep(1);
 		} else {
 		    HUP (void) raw_print("I give up.  Sorry.");

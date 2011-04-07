@@ -391,15 +391,7 @@ void setrandom(void)
 #ifdef RANDOM	/* srandom() from sys/share/random.c */
 	srandom((unsigned int) time((time_t *)0));
 #else
-# if defined(__APPLE__) || defined(BSD) || defined(LINUX) || defined(CYGWIN32) /* system srandom() */
 	srandom((int) time((time_t *)0));
-# else
-#  ifdef UNIX	/* system srand48() */
-	srand48((long) time((time_t *)0));
-#  else		/* poor quality system routine */
-	srand((int) time((time_t *)0));
-#  endif
-# endif
 #endif
 }
 

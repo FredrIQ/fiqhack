@@ -10,9 +10,7 @@
  * Some systems may have getchar() return EOF for various reasons, and
  * we should not quit before seeing at least NR_OF_EOFS consecutive EOFs.
  */
-#if defined(SYSV)
 #define NR_OF_EOFS	20
-#endif
 
 #define CMD_TRAVEL (char)0x90
 

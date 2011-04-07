@@ -13,11 +13,9 @@
 # include <termios.h>
 # include <unistd.h>
 # define termstruct	termios
-# ifdef LINUX
-#  include <sys/ioctl.h>
-#  undef delay_output	/* curses redefines this */
-#  include <curses.h>
-# endif
+# include <sys/ioctl.h>
+# undef delay_output	/* curses redefines this */
+# include <curses.h>
 # define kill_sym	c_cc[VKILL]
 # define erase_sym	c_cc[VERASE]
 # define intr_sym	c_cc[VINTR]
@@ -41,25 +39,18 @@
 # define GTTY2(x)	1
 # define STTY2(x)	1
 
-#  if defined(BSD)
-#   define nonesuch	_POSIX_VDISABLE
-#  else
-#   define nonesuch	(fpathconf(0, _PC_VDISABLE))
-#  endif
+# define nonesuch	(fpathconf(0, _PC_VDISABLE))
 # define inittyb2	inittyb
 # define curttyb2	curttyb
 
 
-#if defined(TTY_GRAPHICS) && (!defined(SYSV) || defined(SVR4))
+#if defined(TTY_GRAPHICS)
 extern short ospeed;	/* terminal baudrate; set by gettty */
 #else
 short ospeed = 0;	/* gets around "not defined" error message */
 #endif
 
-#if defined(BSD)
-unsigned
-#endif
-	char erase_char, intr_char, kill_char;
+char erase_char, intr_char, kill_char;
 static boolean settty_needed = FALSE;
 struct termstruct inittyb, curttyb;
 

@@ -178,26 +178,7 @@ void regularize(char *s)
 
 	while((lp=index(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
 		*lp = '_';
-#if defined(SYSV) && !defined(SVR4) && !defined(LINUX) && !defined(__APPLE__)
-	/* avoid problems with 14 character file name limit */
-	if(strlen(s) > 11)
-		/* leave room for .nn appended to level files */
-		s[11] = '\0';
-#endif
 }
-
-#if defined(TIMED_DELAY) && !defined(msleep) && defined(SYSV)
-#include <poll.h>
-
-void msleep(unsigned msec)
-{
-	struct pollfd unused;
-	int msecs = msec;		/* poll API is signed */
-
-	if (msecs < 0) msecs = 0;	/* avoid infinite sleep */
-	(void) poll(&unused, (unsigned long)0, msecs);
-}
-#endif /* TIMED_DELAY for SYSV */
 
 #ifdef GETRES_SUPPORT
 

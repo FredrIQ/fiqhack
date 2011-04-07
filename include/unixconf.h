@@ -6,32 +6,9 @@
 #ifndef UNIXCONF_H
 #define UNIXCONF_H
 
-/*
- * Some include files are in a different place under SYSV
- *	BSD		   SYSV
- * <sys/time.h>		<time.h>
- * <sgtty.h>		<termio.h>
- *
- * Some routines are called differently
- * index		strchr
- * rindex		strrchr
- *
- */
-
-/* define exactly one of the following two choices */
-/* #define BSD 1 */	/* define for 4.n/Free/Open/Net BSD  */
-			/* also for relatives like SunOS 4.x, DG/UX, and */
-			/* older versions of Linux */
-#define SYSV		/* define for System V, Solaris 2.x, newer versions */
-			/* of Linux */
-			
-
 /* define any of the following that are appropriate */
-/* #define SVR4 */	/* use in addition to SYSV for System V Release 4 */
-			/* including Solaris 2+ */
 #define NETWORK		/* if running on a networked system */
 			/* e.g. Suns sharing a playground through NFS */
-#define LINUX	/* Another Unix clone */
 /* #define CYGWIN32 */	/* Unix on Win32 -- use with case sensitive defines */
 
 #define TERMINFO	/* uses terminfo rather than termcap */
@@ -79,7 +56,7 @@
  * "extra output" method is used, but not all systems provide access to
  * a fine-grained timer.
  */
-/* #define TIMED_DELAY */	/* usleep() */
+#define TIMED_DELAY	/* usleep() */
 #endif
 
 
@@ -89,12 +66,7 @@
 /*
  * The remainder of the file should not need to be changed.
  */
-
-#if defined(BSD)
-#include <sys/time.h>
-#else
 #include <time.h>
-#endif
 
 #define HLOCK	"perm"	/* an empty file used for locking purposes */
 
@@ -109,29 +81,19 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#if defined(BSD)
-#define memcpy(d, s, n)		bcopy(s, d, n)
-#define memcmp(s1, s2, n)	bcmp(s2, s1, n)
-#else	/* therefore SYSV */
-# ifndef index	/* some systems seem to do this for you */
+#ifndef index	/* some systems seem to do this for you */
 #define index	strchr
-# endif
-# ifndef rindex
+#endif
+
+#ifndef rindex
 #define rindex	strrchr
-# endif
 #endif
 
 /* Use the high quality random number routines. */
-#if defined(BSD) || defined(LINUX) || defined(CYGWIN32) || defined(RANDOM) || defined(__APPLE__)
 #define Rand()	random()
-#else
-#define Rand()	lrand48()
-#endif
 
 #ifdef TIMED_DELAY
-# if defined(LINUX) || defined(BSD)
 # define msleep(k) usleep((k)*1000)
-# endif
 #endif
 
 #endif /* UNIXCONF_H */

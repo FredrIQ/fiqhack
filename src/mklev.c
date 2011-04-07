@@ -86,11 +86,7 @@ gotit:
 
 void sort_rooms(void)
 {
-#if defined(SYSV)
-	qsort((void *) rooms, (unsigned)nroom, sizeof(struct mkroom), do_comp);
-#else
 	qsort((void *) rooms, nroom, sizeof(struct mkroom), do_comp);
-#endif
 }
 
 static void do_room_or_subroom(struct mkroom *croom,

@@ -25,42 +25,23 @@
 
 #if !defined(__cplusplus)
 
-#if defined(BSD) || defined(RANDOM)
+#if defined(RANDOM)
 # ifdef random
 # undef random
 # endif
-# if !defined(LINUX)
-extern  long random(void);
-# endif
-# if (!defined(bsdi) && !defined(__FreeBSD__)) || defined(RANDOM)
 extern void srandom(unsigned int);
-# else
-#  if !defined(bsdi) && !defined(__FreeBSD__)
-extern int srandom(unsigned int);
-#  endif
-# endif
-#else
-extern long lrand48(void);
-extern void srand48(long);
-#endif /* BSD || RANDOM */
+#endif /* RANDOM */
 
-#if !defined(BSD)
-/* real BSD wants all these to return int */
 extern void exit(int);
 extern void free(void *);
 extern void perror(const char *);
-#endif
 extern void qsort(void *,size_t,size_t,int(*)(const void *,const void *));
 
 #if !defined(__GNUC__)
 /* may already be defined */
 
-# ifndef bsdi
 extern long lseek(int,long,int);
-# endif
-# ifndef bsdi
 extern int write(int, const void *,unsigned);
-# endif
 
 extern int unlink(const char *);
 
@@ -69,9 +50,7 @@ extern int unlink(const char *);
 /* The POSIX string.h is required to define all the mem* and str* functions */
 #include <string.h>
 
-#if defined(SYSV)
 extern unsigned sleep(unsigned);
-#endif
 
 extern char *getenv(const char *);
 extern char *getlogin(void);
@@ -80,13 +59,6 @@ extern uid_t getuid(void);
 extern gid_t getgid(void);
 
 /*# string(s).h #*/
-
-# if !defined(SVR4)
-extern int vsprintf(char *, const char *, va_list);
-extern int vfprintf(FILE *, const char *, va_list);
-extern int vprintf(const char *, va_list);
-# endif
-
 
 extern int tgetent(char *,const char *);
 extern void tputs(const char *,int,int (*)(void));

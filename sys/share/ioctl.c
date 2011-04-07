@@ -9,23 +9,14 @@
 #include "hack.h"
 
 #include <termios.h>
-struct termios termio;
-#if defined(BSD)
 #include <sys/ioctl.h>
-#endif
 
-#if defined(TIOCGWINSZ) && (defined(BSD) || defined(SVR4))
-#define USE_WIN_IOCTL
+struct termios termio;
+
 #include "tcap.h"	/* for LI and CO */
-#endif
 
 void getwindowsz(void)
 {
-#ifdef USE_WIN_IOCTL
-    /*
-     * ttysize is found on Suns and BSD
-     * winsize is found on Suns, BSD, and Ultrix
-     */
     struct winsize ttsz;
 
     if (ioctl(fileno(stdin), (int)TIOCGWINSZ, (char *)&ttsz) != -1) {
@@ -38,7 +29,6 @@ void getwindowsz(void)
 	if (ttsz.ws_col)
 	    CO = ttsz.ws_col;
     }
-#endif
 }
 
 void getioctls(void)

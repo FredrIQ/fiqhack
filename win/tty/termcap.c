@@ -569,10 +569,6 @@ void cl_eos(void)
 
 #include <curses.h>
 
-#ifndef LINUX
-extern char *tparm();
-#endif
-
 #  ifdef COLOR_BLACK	/* trust include file */
 #undef COLOR_BLACK
 #  else
