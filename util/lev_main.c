@@ -140,13 +140,9 @@ static struct {
 };
 
 const char *fname = "(stdin)";
+static char *outprefix = "";
 int fatal_error = 0;
 int want_warnings = 0;
-
-#ifdef FLEX23_BUG
-/* Flex 2.3 bug work around; not needed for 2.3.6 or later */
-int yy_more_len = 0;
-#endif
 
 extern char tmpmessage[];
 extern altar *tmpaltar[];
@@ -204,13 +200,21 @@ int main(int argc, char **argv)
 	    if (fatal_error > 0) {
 		    errors_encountered = TRUE;
 	    }
-	} else {			/* Otherwise every argument is a filename */
-	    for(i=1; i<argc; i++) {
+	} else {
+	    /* first two args may be "-o outprefix" */
+	    i = 1;
+	    if (!strcmp(argv[1], "-o") && argc > 3) {
+		outprefix = argv[2];
+		i = 3;
+	    }
+	    /* Otherwise every argument is a filename */
+	    for(; i<argc; i++) {
 		    fname = argv[i];
 		    if(!strcmp(fname, "-w")) {
 			want_warnings++;
 			continue;
 		    }
+		    
 		    fin = freopen(fname, "r", stdin);
 		    if (!fin) {
 			(void) fprintf(stderr,"Can't open \"%s\" for input.\n",
@@ -986,9 +990,7 @@ boolean write_level_file(char *filename, splev *room_level, specialmaze *maze_le
 	char lbuf[60];
 
 	lbuf[0] = '\0';
-#ifdef PREFIX
-	strcat(lbuf, PREFIX);
-#endif
+	strcat(lbuf, outprefix);
 	strcat(lbuf, filename);
 	strcat(lbuf, LEV_EXT);
 
