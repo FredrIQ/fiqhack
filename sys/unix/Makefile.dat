@@ -83,13 +83,13 @@ GEM_RSC.RSC:
 
 
 data:	data.base ../util/makedefs
-	../util/makedefs -d "dungeon.def" "dungeon.pdf"
+	../util/makedefs -d "data.base" "data"
 
 rumors:	rumors.tru rumors.fal ../util/makedefs
 	../util/makedefs -r "rumors.tru" "rumors.fal" "rumors"
 
 quest.dat:	quest.txt ../util/makedefs
-	../util/makedefs -q "quest.txt" "quest"
+	../util/makedefs -q "quest.txt" "quest.dat"
 
 oracles:	oracles.txt ../util/makedefs
 	../util/makedefs -h "oracles.txt" "oracles"
