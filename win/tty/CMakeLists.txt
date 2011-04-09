@@ -34,7 +34,7 @@ add_dependencies(nethack_tty nethack)
 
 if (UNIX)
     add_custom_command(OUTPUT nethack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} HACKDIR=${DATADIR} ${BINDIR}/nethack" >> nethack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} HACKDIR=${DATADIR} ${BINDIR}/nethack $@" >> nethack.sh
                        VERBATIM)
     add_custom_target(nethack_shell_script ALL
                       DEPENDS nethack.sh)
