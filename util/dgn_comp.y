@@ -1,5 +1,4 @@
 %{
-/*	SCCS Id: @(#)dgn_comp.c	3.4	1996/06/22	*/
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /*	Copyright (c) 1990 by M. Stephenson				  */
 /* NetHack may be freely redistributed.  See license for details. */
