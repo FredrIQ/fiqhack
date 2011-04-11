@@ -6,12 +6,17 @@ project (NetHack)
 # default installation paths in $HOME/nethack
 if (NOT BINDIR)
     set (BINDIR "$ENV{HOME}/nethack/nethack-data"
-         CACHE PATH "data location" )
+         CACHE PATH "binary location" )
+endif()
+
+if (NOT LIBDIR)
+    set (LIBDIR "$ENV{HOME}/nethack/nethack-data"
+         CACHE PATH "library location" )
 endif()
 
 if (NOT DATADIR)
     set (DATADIR "$ENV{HOME}/nethack/nethack-data"
-         CACHE PATH "binary location" )
+         CACHE PATH "data location" )
 endif()
 
 if (NOT SHELLDIR)
@@ -46,7 +51,7 @@ install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
               ${NetHack_SOURCE_DIR}/dat/wizhelp
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
-        DESTINATION ${BINDIR})
+        DESTINATION ${LIBDIR})
 install(PROGRAMS ${NetHack_BINARY_DIR}/win/tty/nethack
         DESTINATION ${BINDIR})
 install(PROGRAMS ${NetHack_BINARY_DIR}/util/recover
