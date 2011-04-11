@@ -1,12 +1,17 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include "hack.h"
+#include <stdlib.h>
 
-#if defined (TTY_GRAPHICS) && !defined(NO_TERMS)
+#include "config.h"
+#include "nethack.h"
+#include "system.h"
+#include "global.h"
+#include "color.h"
+
+#if !defined(NO_TERMS)
 
 #include "wintty.h"
-
 #include "tcap.h"
 
 
@@ -117,11 +122,9 @@ void tty_startup(int *wid, int *hgt)
 #endif /* ANSI_DEFAULT */
 
 #ifdef TERMLIB
-	tptr = (char *) alloc(1024);
+	tptr = (char *) malloc(1024);
 
 	tbufptr = tbuf;
-	if(!strncmp(term, "5620", 4))
-		flags.null = FALSE;	/* this should be a termcap flag */
 	if(tgetent(tptr, term) < 1) {
 		char buf[BUFSZ];
 		(void) strncpy(buf, term,
@@ -253,7 +256,6 @@ void tty_number_pad(int state)
 }
 
 #ifdef TERMLIB
-extern void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 static void tty_decgraphics_termcap_fixup(void);
 
 /*
@@ -456,9 +458,6 @@ void backsp(void)
 
 void tty_nhbell(void)
 {
-	if (flags.silent) return;
-	(void) putchar('\007');		/* curx does not change */
-	(void) fflush(stdout);
 }
 
 
@@ -483,33 +482,18 @@ static const short tmspc10[] = {		/* from termcap */
 void tty_delay_output(void)
 {
 #ifdef TIMED_DELAY
-	if (flags.nap) {
+	 {
 		(void) fflush(stdout);
 		msleep(50);		/* sleep for 50 milliseconds */
 		return;
 	}
 #endif
-	/* BUG: if the padding character is visible, as it is on the 5620
-	   then this looks terrible. */
-	if(flags.null)
 # ifdef TERMINFO
-		/* cbosgd!cbcephus!pds for SYS V R2 */
-		tputs("$<50>", 1, (int (*)())xputc);
+	/* cbosgd!cbcephus!pds for SYS V R2 */
+	tputs("$<50>", 1, (int (*)())xputc);
 # else
-		tputs("50", 1, (int (*)())xputc);
+	tputs("50", 1, (int (*)())xputc);
 # endif
-
-	else if(ospeed > 0 && ospeed < SIZE(tmspc10) && nh_CM) {
-		/* delay by sending cm(here) an appropriate number of times */
-		int cmlen = strlen(tgoto(nh_CM, ttyDisplay->curx,
-							ttyDisplay->cury));
-		int i = 500 + tmspc10[ospeed]/2;
-
-		while(i > 0) {
-			cmov((int)ttyDisplay->curx, (int)ttyDisplay->cury);
-			i -= cmlen*tmspc10[ospeed];
-		}
-	}
 }
 
 
@@ -785,6 +769,6 @@ int has_color(int color)
 
 #endif /* TEXTCOLOR */
 
-#endif /* TTY_GRAPHICS */
+#endif /* NO_TERMS */
 
 /*termcap.c*/

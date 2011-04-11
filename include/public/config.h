@@ -101,29 +101,6 @@
 
 #include <stdarg.h>
 
-/*
- * type schar: small signed integers (8 bits suffice)
- *
- *	typedef char	schar;
- *
- *	will do when you have signed characters; otherwise use
- *
- *	typedef short int schar;
- */
-typedef signed char	schar;
-
-/*
- * type uchar: small unsigned integers (8 bits suffice - but 7 bits do not)
- *
- *	typedef unsigned char	uchar;
- *
- *	will be satisfactory if you have an "unsigned char" type;
- *	otherwise use
- *
- *	typedef unsigned short int uchar;
- */
-typedef unsigned char	uchar;
-
 /* #define STRNCMPI */	/* compiler/library has the strncmpi function */
 
 /*

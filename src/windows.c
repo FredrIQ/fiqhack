@@ -2,19 +2,8 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#ifdef TTY_GRAPHICS
-#include "wintty.h"
-#endif
-
-static void def_raw_print(const char *s);
 
 struct window_procs windowprocs;
-
-static void def_raw_print(const char *s)
-{
-    puts(s);
-}
-
 
 /*
  * tty_message_menu() provides a means to get feedback from the
@@ -36,4 +25,13 @@ void genl_preference_update(const char *pref)
 	   they support.
 	   Just return in this genl one. */
 }
+
+/* delay 50 ms: check option before calling the window sys to do the job */
+void nh_delay_output(void)
+{
+    if (flags.nap)
+	(*windowprocs.win_delay_output)();
+}
+
+
 /*windows.c*/

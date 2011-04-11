@@ -3,12 +3,16 @@
 
 /* This file collects some Unix dependencies */
 
-#include "hack.h"	/* mainly for index() which depends on BSD */
+#include "config.h"
+#include "nethack.h"	/* mainly for index() which depends on BSD */
 
 #include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+
+#include "wintty.h"
+#include "winprocs.h"
 
 #ifdef __linux__
 extern void linux_mapon(void);
@@ -73,7 +77,6 @@ void getlock(void)
 	int i = 0, fd, c;
 	const char *fq_lock;
 
-#ifdef TTY_GRAPHICS
 	/* idea from rpick%ucqais@uccba.uc.edu
 	 * prevent automated rerolling of characters
 	 * test input (fd0) so that tee'ing output to get a screen dump still
@@ -81,10 +84,8 @@ void getlock(void)
 	 * also incidentally prevents development of any hack-o-matic programs
 	 */
 	/* added check for window-system type -dlc */
-	if (!strcmp(windowprocs.name, "tty"))
-	    if (!isatty(0))
-		error("You must play from a terminal.");
-#endif
+	if (!isatty(0))
+	    error("You must play from a terminal.");
 
 	/* we ignore QUIT and INT at this point */
 	if (!lock_file(HLOCK, LOCKPREFIX, 10)) {
@@ -131,7 +132,7 @@ void getlock(void)
 		(void) close(fd);
 
 		if(iflags.window_inited) {
-		    c = yn("There is already a game in progress under your name.  Destroy old game?");
+		    c = yn_function("There is already a game in progress under your name.  Destroy old game?",ynchars, 'n');
 		} else {
 		    (void) printf("\nThere is already a game in progress under your name.");
 		    (void) printf("  Destroy old game? [yn] ");

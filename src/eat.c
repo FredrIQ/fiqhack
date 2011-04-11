@@ -461,7 +461,7 @@ static void cprefx(int pm)
 			youmonst.data != &mons[PM_GREEN_SLIME]) {
 		    You("don't feel very well.");
 		    Slimed = 10L;
-		    flags.botl = 1;
+		    botl = 1;
 		}
 		/* Fall through */
 	    default:
@@ -743,7 +743,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 		    }
 		    if (old_uen != u.uen) {
 			    You_feel("a mild buzz.");
-			    flags.botl = 1;
+			    botl = 1;
 		    }
 		}
 		break;
@@ -765,7 +765,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 	    case PM_NURSE:
 		if (Upolyd) u.mh = u.mhmax;
 		else u.uhp = u.uhpmax;
-		flags.botl = 1;
+		botl = 1;
 		break;
 	    case PM_STALKER:
 		if(!Invis) {
@@ -1461,7 +1461,7 @@ static void eataccessory(struct obj *otmp)
 		accessory_has_effect(otmp);
 		HProtection |= FROMOUTSIDE;
 		u.ublessed += otmp->spe;
-		flags.botl = 1;
+		botl = 1;
 		break;
 	    case RIN_FREE_ACTION:
 		/* Give sleep resistance instead */
@@ -1477,7 +1477,7 @@ static void eataccessory(struct obj *otmp)
 		change_sex();
 		You("are suddenly very %s!",
 		    flags.female ? "feminine" : "masculine");
-		flags.botl = 1;
+		botl = 1;
 		break;
 	    case AMULET_OF_UNCHANGING:
 		/* un-change: it's a pun */
@@ -2118,7 +2118,7 @@ static int unfaint(void)
 	if(u.uhs > FAINTING)
 		u.uhs = FAINTING;
 	stop_occupation();
-	flags.botl = 1;
+	botl = 1;
 	return 0;
 }
 
@@ -2200,7 +2200,7 @@ void newuhs(boolean incr)
 		} else
 		if(u.uhunger < -(int)(200 + 20*ACURR(A_CON))) {
 			u.uhs = STARVED;
-			flags.botl = 1;
+			botl = 1;
 			bot();
 			You("die from starvation.");
 			killer_format = KILLED_BY;
@@ -2251,7 +2251,7 @@ void newuhs(boolean incr)
 			break;
 		}
 		u.uhs = newhs;
-		flags.botl = 1;
+		botl = 1;
 		bot();
 		if ((Upolyd ? u.mh : u.uhp) < 1) {
 			You("die from hunger and exhaustion.");

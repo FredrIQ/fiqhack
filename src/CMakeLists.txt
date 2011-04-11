@@ -31,8 +31,11 @@ add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/src/monstr.c
 
 include_directories (
     ${NetHack_SOURCE_DIR}/include
+    ${NetHack_SOURCE_DIR}/include/public
     ${NetHack_BINARY_DIR}/include )
 
+#add_definitions ()
+add_definitions (-Wall -fvisibility=hidden)
 add_library(nethack SHARED ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
 
 add_dependencies (nethack makedefs_headers)

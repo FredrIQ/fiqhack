@@ -769,12 +769,12 @@ int spelleffects(int spell, boolean atme)
 	if (confused || (rnd(100) > chance)) {
 		You("fail to cast the spell correctly.");
 		u.uen -= energy / 2;
-		flags.botl = 1;
+		botl = 1;
 		return 1;
 	}
 
 	u.uen -= energy;
-	flags.botl = 1;
+	botl = 1;
 	exercise(A_WIS, TRUE);
 	/* pseudo is a temporary "false" object containing the spell stats */
 	pseudo = mksobj(spellid(spell), FALSE, FALSE);
@@ -898,7 +898,7 @@ int spelleffects(int spell, boolean atme)
 		if (Slimed) {
 		    pline_The("slime disappears!");
 		    Slimed = 0;
-		 /* flags.botl = 1; -- healup() handles this */
+		 /* botl = 1; -- healup() handles this */
 		}
 		healup(0, 0, TRUE, FALSE);
 		break;

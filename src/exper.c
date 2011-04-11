@@ -88,7 +88,7 @@ void more_experienced(int exp, int rexp)
 #ifdef SCORE_ON_BOTL
 	   || flags.showscore
 #endif
-	   ) flags.botl = 1;
+	   ) botl = 1;
 	if (u.urexp >= (Role_if(PM_WIZARD) ? 1000 : 2000))
 		flags.beginner = 0;
 }
@@ -142,7 +142,7 @@ void losexp(const char *drainer)
 
 	if (u.uexp > 0)
 		u.uexp = newuexp(u.ulevel) - 1;
-	flags.botl = 1;
+	botl = 1;
 }
 
 /*
@@ -194,7 +194,7 @@ void pluslvl(boolean incr)
 	    adjabil(u.ulevel - 1, u.ulevel);	/* give new intrinsics */
 	    reset_rndmonst(NON_PM);		/* new monster selection */
 	}
-	flags.botl = 1;
+	botl = 1;
 }
 
 /* compute a random amount of experience points suitable for the hero's

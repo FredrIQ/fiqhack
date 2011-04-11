@@ -151,7 +151,7 @@ extern void win_tty_init(void);
 
 /* external declarations */
 extern void tty_init_nhwindows(int *, char **);
-extern void tty_player_selection(void);
+extern void tty_player_selection(int,int,int,int,int);
 extern void tty_askname(void);
 extern void tty_get_nh_event(void);
 extern void tty_exit_nhwindows(const char *);
@@ -191,11 +191,27 @@ extern void tty_change_color(int color,long rgb,int reverse);
 extern char * tty_get_color_string(void);
 #endif
 
+extern void gettty(void);
+extern void settty(const char *);
+extern void setftty(void);
+extern void error(const char *,...);
+#if defined(UNIX)
+extern void intron(void);
+extern void introff(void);
+#endif /* UNIX */
+
 /* other defs that really should go away (they're tty specific) */
 extern void tty_start_screen(void);
 extern void tty_end_screen(void);
 
-extern void genl_outrip(winid,int);
+
+
+/* ioctl.c */
+#ifdef UNIX
+extern void getioctls(void);
+extern void setioctls(void);
+#endif
+
 
 #ifdef NO_TERMS
 # if defined(WIN32CON)
@@ -207,5 +223,11 @@ extern void genl_outrip(winid,int);
 #   define puts(x) xputs(x)
 # endif
 #endif/*NO_TERMS*/
+
+struct tty_flag {
+    	boolean  standout;	/* use standout for --More-- */
+};
+
+extern struct tty_flag tty_flags;
 
 #endif /* WINTTY_H */

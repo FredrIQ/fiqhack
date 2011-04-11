@@ -17,6 +17,6 @@ struct ext_func_tab {
 	boolean can_if_buried;
 };
 
-extern struct ext_func_tab extcmdlist[];
+extern EXPORT struct ext_func_tab extcmdlist[];
 
 #endif /* FUNC_TAB_H */

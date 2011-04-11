@@ -2,7 +2,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "tcap.h"
 #include <ctype.h>
 
 #define WINTYPELEN 16
@@ -91,7 +90,6 @@ static struct Bool_Opt
 #else
 	{"news", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
-	{"null", &flags.null, TRUE, SET_IN_GAME},
 	{"page_wait", (boolean *)0, FALSE, SET_IN_FILE},
 	{"perm_invent", &flags.perm_invent, FALSE, SET_IN_GAME},
 	{"popup_dialog",  &iflags.wc_popup_dialog, FALSE, SET_IN_GAME},	/*WC*/
@@ -109,12 +107,10 @@ static struct Bool_Opt
 #else
 	{"showscore", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
-	{"silent", &flags.silent, TRUE, SET_IN_GAME},
 	{"softkeyboard", &iflags.wc2_softkeyboard, FALSE, SET_IN_FILE},
 	{"sortpack", &flags.sortpack, TRUE, SET_IN_GAME},
 	{"sound", &flags.soundok, TRUE, SET_IN_GAME},
 	{"sparkle", &flags.sparkle, TRUE, SET_IN_GAME},
-	{"standout", &flags.standout, FALSE, SET_IN_GAME},
 	{"splash_screen",     &iflags.wc_splash_screen, TRUE, DISP_IN_GAME},	/*WC*/
 	{"tiled_map",     &iflags.wc_tiled_map, PREFER_TILED, DISP_IN_GAME},	/*WC*/
 	{"time", &flags.time, FALSE, SET_IN_GAME},
@@ -462,12 +458,6 @@ void initoptions(void)
 # ifdef TEXTCOLOR
 		iflags.use_color = TRUE;
 # endif
-	}
-	/* detect whether a "vt" terminal can handle alternate charsets */
-	if ((opts = nh_getenv("TERM")) &&
-	    !strncmpi(opts, "vt", 2) && AS && AE &&
-	    index(AS, '\016') && index(AE, '\017')) {
-		switch_graphics(DEC_GRAPHICS);
 	}
 #endif /* UNIX && TTY_GRAPHICS */
 
@@ -1937,7 +1927,7 @@ goodfruit:
 			 || (boolopt[i].addr) == &flags.showscore
 #endif
 			    )
-			    flags.botl = TRUE;
+			    botl = TRUE;
 
 			else if ((boolopt[i].addr) == &flags.invlet_constant) {
 			    if (flags.invlet_constant) reassign();
@@ -1953,7 +1943,7 @@ goodfruit:
 			    vision_recalc(2);		/* shut down vision */
 			    vision_full_recalc = 1;	/* delayed recalc */
 			}
-			else if ((boolopt[i].addr) == &iflags.use_inverse ||
+			else if ((boolopt[i].addr) == &iflags.wc_inverse ||
 					(boolopt[i].addr) == &iflags.showrace ||
 					(boolopt[i].addr) == &iflags.hilite_pet) {
 			    need_redraw = TRUE;

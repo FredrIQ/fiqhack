@@ -36,6 +36,7 @@ set (MAKEDEFS_HEADERS
     )
 
 include_directories (${NetHack_SOURCE_DIR}/include)
+include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (${NetHack_BINARY_DIR}/include)
 include_directories (${NetHack_BINARY_DIR}/util)
 
@@ -90,7 +91,8 @@ add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_scanner.c
                    ARGS -o ${NetHack_BINARY_DIR}/util/lev_scanner.c
                         ${NetHack_SOURCE_DIR}/util/lev_comp.l
                    DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.l)
-
+#
+add_definitions( -Wall )
 # targets
 add_executable (makedefs ${MAKEDEFS_SRC})
 add_executable (dgn_comp ${DGN_COMP_SRC})

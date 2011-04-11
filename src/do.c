@@ -452,7 +452,7 @@ static int drop(struct obj *obj)
 		if (obj->oclass != COIN_CLASS || obj == invent) freeinv(obj);
 #else
 		/* Ensure update when we drop gold objects */
-		if (obj->oclass == COIN_CLASS) flags.botl = 1;
+		if (obj->oclass == COIN_CLASS) botl = 1;
 		freeinv(obj);
 #endif
 		hitfloor(obj);
@@ -473,7 +473,7 @@ void dropx(struct obj *obj)
 	if (obj->oclass != COIN_CLASS || obj == invent) freeinv(obj);
 #else
         /* Ensure update when we drop gold objects */
-        if (obj->oclass == COIN_CLASS) flags.botl = 1;
+        if (obj->oclass == COIN_CLASS) botl = 1;
         freeinv(obj);
 #endif
 	if (!u.uswallow) {
@@ -1016,7 +1016,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			killer = whynot;
 			done(TRICKED);
 			/* we'll reach here if running in wizard mode */
-			error("Cannot continue this game.");
+			putstr(WIN_ERR,0,"Cannot continue this game.");
 		}
 		getlev(fd, hackpid, new_ledger, FALSE);
 		(void) close(fd);
@@ -1526,7 +1526,7 @@ void set_wounded_legs(long side, int timex)
 
 	if(!Wounded_legs) {
 		ATEMP(A_DEX)--;
-		flags.botl = 1;
+		botl = 1;
 	}
 
 	if(!Wounded_legs || (HWounded_legs & TIMEOUT))
@@ -1540,7 +1540,7 @@ void heal_legs(void)
 	if(Wounded_legs) {
 		if (ATEMP(A_DEX) < 0) {
 			ATEMP(A_DEX)++;
-			flags.botl = 1;
+			botl = 1;
 		}
 
 		if (!u.usteed)

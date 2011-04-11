@@ -1145,7 +1145,7 @@ void docrt(void)
     /* overlay with monsters */
     see_monsters();
 
-    flags.botlx = 1;	/* force a redraw of the bottom line */
+    botlx = 1;	/* force a redraw of the bottom line */
 }
 
 
@@ -1275,7 +1275,7 @@ void row_refresh(int start, int stop, int y)
 void cls(void)
 {
     display_nhwindow(WIN_MESSAGE, FALSE); /* flush messages */
-    flags.botlx = 1;		/* force update of botl window */
+    botlx = 1;			/* force update of botl window */
     clear_nhwindow(WIN_MAP);	/* clear physical screen */
 
     clear_glyph_buffer();	/* this is sort of an extra effort, but OK */
@@ -1311,7 +1311,7 @@ void flush_screen(int cursor_on_u)
     display_nhwindow(WIN_MAP, FALSE);
     reset_glyph_bbox();
     flushing = 0;
-    if(flags.botl || flags.botlx) bot();
+    if(botl || botlx) bot();
 }
 
 /* ========================================================================= */

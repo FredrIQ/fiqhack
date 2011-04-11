@@ -226,12 +226,6 @@ extern const struct symdef defsyms[MAXPCHARS];	/* defaults */
 extern uchar showsyms[MAXPCHARS];
 extern const struct symdef def_warnsyms[WARNCOUNT];
 
-/*
- * Graphics sets for display symbols
- */
-#define ASCII_GRAPHICS	0	/* regular characters: '-', '+', &c */
-#define IBM_GRAPHICS	1	/* PC graphic characters */
-#define DEC_GRAPHICS	2	/* VT100 line drawing characters */
 
 /*
  * The 5 possible states of doors

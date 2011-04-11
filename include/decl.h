@@ -7,12 +7,6 @@
 extern int (*occupation)(void);
 extern int (*afternmv)(void);
 
-extern const char *hname;
-extern int hackpid;
-#if defined(UNIX)
-extern int locknum;
-#endif
-
 extern char SAVEF[];
 
 extern int bases[MAXOCLASSES];
@@ -27,10 +21,6 @@ extern uchar warnsyms[WARNCOUNT];
 
 extern int x_maze_max, y_maze_max;
 extern int otg_temp;
-
-#ifdef REDO
-extern int in_doagain;
-#endif
 
 extern struct dgn_topology {		/* special dungeon levels for speed */
     d_level	d_oracle_level;
@@ -129,33 +119,12 @@ extern char tune[6];
 #define MAXLINFO (MAXDUNGEON * MAXLEVEL)
 extern struct linfo level_info[MAXLINFO];
 
-extern struct sinfo {
-	int gameover;		/* self explanatory? */
-	int stopprint;		/* inhibit further end of game disclosure */
-#if defined(UNIX) || defined(WIN32)
-	int done_hup;		/* SIGHUP or moral equivalent received
-				 * -- no more screen output */
-#endif
-	int something_worth_saving;	/* in case of panic */
-	int panicking;		/* `panic' is in progress */
-#if defined(WIN32)
-	int exiting;		/* an exit handler is executing */
-#endif
-	int in_impossible;
-#ifdef PANICLOG
-	int in_paniclog;
-#endif
-} program_state;
-
 extern boolean restoring;
 
-extern const char quitchars[];
 extern const char vowels[];
 extern const char ynchars[];
-extern const char ynqchars[];
 extern const char ynaqchars[];
 extern const char ynNaqchars[];
-extern long yn_number;
 
 extern const char disclosure_options[];
 
@@ -173,7 +142,6 @@ extern long done_money;
 #endif
 extern char killer_buf[BUFSZ];
 extern const char *configfile;
-extern char plname[PL_NSIZ];
 extern char dogname[];
 extern char catname[];
 extern char horsename[];
@@ -181,7 +149,6 @@ extern char preferred_pet;
 extern const char *occtxt;			/* defined when occupation != NULL */
 extern const char *nomovemsg;
 extern const char nul[];
-extern char lock[];
 
 extern const char sdir[], ndir[];
 extern const schar xdir[], ydir[], zdir[];
@@ -239,6 +206,7 @@ extern struct obj *migrating_objs;
 extern struct obj *billobjs;
 extern struct obj zeroobj;		/* init'd and defined in decl.c */
 
+#include "role.h"
 #include "you.h"
 extern struct you u;
 
@@ -316,14 +284,14 @@ extern boolean vision_full_recalc;	/* TRUE if need vision recalc */
 extern char **viz_array;		/* could see/in sight row pointers */
 
 /* Window system stuff */
-extern winid WIN_MESSAGE, WIN_STATUS;
-extern winid WIN_MAP, WIN_INVEN;
-extern char toplines[];
 #ifndef TCAP_H
-extern struct tc_gbl_data {	/* also declared in tcap.h */
+#if 0
+struct tc_gbl_data {	/* also declared in tcap.h */
     char *tc_AS, *tc_AE;	/* graphics start and end (tty font swapping) */
     int   tc_LI,  tc_CO;	/* lines and columns */
-} tc_gbl_data;
+};
+#endif
+// extern struct tc_gbl_data tc_gbl_data;
 #define AS tc_gbl_data.tc_AS
 #define AE tc_gbl_data.tc_AE
 #define LI tc_gbl_data.tc_LI
@@ -333,21 +301,6 @@ extern struct tc_gbl_data {	/* also declared in tcap.h */
 /* xxxexplain[] is in drawing.c */
 extern const char * const monexplain[], invisexplain[], * const objexplain[], * const oclass_names[];
 
-/* Some systems want to use full pathnames for some subsets of file names,
- * rather than assuming that they're all in the current directory.  This
- * provides all the subclasses that seem reasonable, and sets up for all
- * prefixes being null.  Port code can set those that it wants.
- */
-#define HACKPREFIX	0
-#define LEVELPREFIX	1
-#define SAVEPREFIX	2
-#define BONESPREFIX	3
-#define DATAPREFIX	4	/* this one must match hardcoded value in dlb.c */
-#define SCOREPREFIX	5
-#define LOCKPREFIX	6
-#define CONFIGPREFIX	7
-#define TROUBLEPREFIX	8
-#define PREFIX_COUNT	9
 /* used in files.c; xxconf.h can override if needed */
 # ifndef FQN_MAX_FILENAME
 #define FQN_MAX_FILENAME 512

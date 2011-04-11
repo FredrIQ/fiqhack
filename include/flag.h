@@ -17,8 +17,6 @@ struct flag {
 	boolean  autodig;       /* MRKR: Automatically dig */
 	boolean  autoquiver;	/* Automatically fill quiver */
 	boolean  beginner;
-	boolean  botl;		/* partially redo status line */
-	boolean  botlx;		/* print an entirely new bottom line */
 	boolean  confirm;	/* confirm before hitting tame monsters */
 	boolean  debug;		/* in debugging mode */
 #define wizard	 flags.debug
@@ -61,7 +59,6 @@ struct flag {
 	boolean  sortpack;	/* sorted inventory */
 	boolean  soundok;	/* ok to tell about sounds heard */
 	boolean  sparkle;	/* show "resisting" special FX (Scott Bigham) */
-	boolean  standout;	/* use standout for --More-- */
 	boolean  time;		/* display elapsed 'time' */
 	boolean  tombstone;	/* print tombstone */
 	boolean  toptenwin;	/* ending list in window instead of stdout */
@@ -127,129 +124,17 @@ struct flag {
 	int	 pantheon;	/* deity selection for priest character */
 };
 
-/*
- * Flags that are set each time the game is started.
- * These are not saved with the game.
- *
- */
-
-struct instance_flags {
-	boolean  cbreak;	/* in cbreak mode, rogue format */
-	boolean  DECgraphics;	/* use DEC VT-xxx extended character set */
-	boolean  echo;		/* 1 to echo characters */
-	boolean  IBMgraphics;	/* use IBM extended character set */
-	unsigned msg_history;	/* hint: # of top lines to save */
-	boolean  num_pad;	/* use numbers for movement commands */
-	boolean  news;		/* print news */
-	boolean  window_inited; /* true if init_nhwindows() completed */
-	boolean  vision_inited; /* true if vision is ready */
-	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
-	boolean  menu_requested; /* Flag for overloaded use of 'm' prefix
-				  * on some non-move commands */
-	uchar num_pad_mode;
-	int	menu_headings;	/* ATR for menu headings */
-	int      purge_monsters;	/* # of dead monsters still on fmon list */
-	int *opt_booldup;	/* for duplication of boolean opts in config file */
-	int *opt_compdup;	/* for duplication of compound opts in config file */
-	uchar	bouldersym;	/* symbol for boulder display */
-	boolean travel1;	/* first travel step */
-	coord	travelcc;	/* coordinates for travel_cache */
-	boolean  sanity_check;	/* run sanity checks */
-	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
-#ifdef TTY_GRAPHICS
-	char prevmsg_window;	/* type of old message window to use */
-	boolean  extmenu;	/* extended commands use menu interface */
-#endif
-#if defined(WIN32)
-	boolean  rawio;		/* whether can use rawio (IOCTL call) */
-	boolean hassound;	/* has a sound card */
-	boolean usesound;	/* use the sound card */
-	boolean usepcspeaker;	/* use the pc speaker */
-	boolean tile_view;
-	boolean over_view;
-	boolean traditional_view;
-#endif
-/*
- * Window capability support.
- */
-	boolean wc_color;		/* use color graphics                  */
-	boolean wc_hilite_pet;		/* hilight pets                        */
-	boolean wc_ascii_map;		/* show map using traditional ascii    */
-	boolean wc_tiled_map;		/* show map using tiles                */
-	boolean wc_preload_tiles;	/* preload tiles into memory           */
-	int	wc_tile_width;		/* tile width                          */
-	int	wc_tile_height;		/* tile height                         */
-	char	*wc_tile_file;		/* name of tile file;overrides default */
-	boolean wc_inverse;		/* use inverse video for some things   */
-	int	wc_align_status;	/*  status win at top|bot|right|left   */
-	int	wc_align_message;	/* message win at top|bot|right|left   */
-	int     wc_vary_msgcount;	/* show more old messages at a time    */
-	char    *wc_foregrnd_menu;	/* points to foregrnd color name for menu win   */
-	char    *wc_backgrnd_menu;	/* points to backgrnd color name for menu win   */
-	char    *wc_foregrnd_message;	/* points to foregrnd color name for msg win    */
-	char    *wc_backgrnd_message;	/* points to backgrnd color name for msg win    */
-	char    *wc_foregrnd_status;	/* points to foregrnd color name for status win */
-	char    *wc_backgrnd_status;	/* points to backgrnd color name for status win */
-	char    *wc_foregrnd_text;	/* points to foregrnd color name for text win   */
-	char    *wc_backgrnd_text;	/* points to backgrnd color name for text win   */
-	char    *wc_font_map;		/* points to font name for the map win */
-	char    *wc_font_message;	/* points to font name for message win */
-	char    *wc_font_status;	/* points to font name for status win  */
-	char    *wc_font_menu;		/* points to font name for menu win    */
-	char    *wc_font_text;		/* points to font name for text win    */
-	int     wc_fontsiz_map;		/* font size for the map win           */
-	int     wc_fontsiz_message;	/* font size for the message window    */
-	int     wc_fontsiz_status;	/* font size for the status window     */
-	int     wc_fontsiz_menu;	/* font size for the menu window       */
-	int     wc_fontsiz_text;	/* font size for text windows          */
-	int	wc_scroll_amount;	/* scroll this amount at scroll_margin */
-	int	wc_scroll_margin;	/* scroll map when this far from
-						the edge */
-	int	wc_map_mode;		/* specify map viewing options, mostly
-						for backward compatibility */
-	int	wc_player_selection;	/* method of choosing character */
-	boolean	wc_splash_screen;	/* display an opening splash screen or not */
-	boolean	wc_popup_dialog;	/* put queries in pop up dialogs instead of
-				   		in the message window */
-	boolean wc_eight_bit_input;	/* allow eight bit input               */
-	boolean wc_mouse_support;	/* allow mouse support */
-	boolean wc2_fullscreen;		/* run fullscreen */
-	boolean wc2_softkeyboard;	/* use software keyboard */
-	boolean wc2_wraptext;		/* wrap text */
-
-	boolean  cmdassist;	/* provide detailed assistance for some commands */
-	boolean	 obsolete;	/* obsolete options can point at this, it isn't used */
-	/* Items which belong in flags, but are here to allow save compatibility */
-	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
-	boolean  showrace;	/* show hero glyph by race rather than by role */
-	boolean  travelcmd;	/* allow travel command */
-	int	 runmode;	/* update screen display during run moves */
-#ifdef AUTOPICKUP_EXCEPTIONS
-	struct autopickup_exception *autopickup_exceptions[2];
-#define AP_LEAVE 0
-#define AP_GRAB	 1
-#endif
-#ifdef WIN32CON
-#define MAX_ALTKEYHANDLER 25
-	char	 altkeyhandler[MAX_ALTKEYHANDLER];
-#endif
-};
 
 /*
  * Old deprecated names
  */
-#ifdef TTY_GRAPHICS
-#define eight_bit_tty wc_eight_bit_input
-#endif
 #ifdef TEXTCOLOR
 #define use_color wc_color
 #endif
 #define hilite_pet wc_hilite_pet
-#define use_inverse wc_inverse
 #define preload_tiles wc_preload_tiles
 
 extern struct flag flags;
-extern struct instance_flags iflags;
 
 /* runmode options */
 #define RUN_TPORT	0	/* don't update display until movement stops */

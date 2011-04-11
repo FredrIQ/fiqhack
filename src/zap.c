@@ -770,19 +770,19 @@ void cancel_item(struct obj *obj)
 		case RIN_GAIN_STRENGTH:
 			if ((obj->owornmask & W_RING) && u_ring) {
 				ABON(A_STR) -= obj->spe;
-				flags.botl = 1;
+				botl = 1;
 			}
 			break;
 		case RIN_GAIN_CONSTITUTION:
 			if ((obj->owornmask & W_RING) && u_ring) {
 				ABON(A_CON) -= obj->spe;
-				flags.botl = 1;
+				botl = 1;
 			}
 			break;
 		case RIN_ADORNMENT:
 			if ((obj->owornmask & W_RING) && u_ring) {
 				ABON(A_CHA) -= obj->spe;
-				flags.botl = 1;
+				botl = 1;
 			}
 			break;
 		case RIN_INCREASE_ACCURACY:
@@ -796,14 +796,14 @@ void cancel_item(struct obj *obj)
 		case GAUNTLETS_OF_DEXTERITY:
 			if ((obj->owornmask & W_ARMG) && (obj == uarmg)) {
 				ABON(A_DEX) -= obj->spe;
-				flags.botl = 1;
+				botl = 1;
 			}
 			break;
 		case HELM_OF_BRILLIANCE:
 			if ((obj->owornmask & W_ARMH) && (obj == uarmh)) {
 				ABON(A_INT) -= obj->spe;
 				ABON(A_WIS) -= obj->spe;
-				flags.botl = 1;
+				botl = 1;
 			}
 			break;
 		/* case RIN_PROTECTION:  not needed */
@@ -884,19 +884,19 @@ boolean drain_item(struct obj *obj)
 	case RIN_GAIN_STRENGTH:
 	    if ((obj->owornmask & W_RING) && u_ring) {
 	    	ABON(A_STR)--;
-	    	flags.botl = 1;
+	    	botl = 1;
 	    }
 	    break;
 	case RIN_GAIN_CONSTITUTION:
 	    if ((obj->owornmask & W_RING) && u_ring) {
 	    	ABON(A_CON)--;
-	    	flags.botl = 1;
+	    	botl = 1;
 	    }
 	    break;
 	case RIN_ADORNMENT:
 	    if ((obj->owornmask & W_RING) && u_ring) {
 	    	ABON(A_CHA)--;
-	    	flags.botl = 1;
+	    	botl = 1;
 	    }
 	    break;
 	case RIN_INCREASE_ACCURACY:
@@ -911,17 +911,17 @@ boolean drain_item(struct obj *obj)
 	    if ((obj->owornmask & W_ARMH) && (obj == uarmh)) {
 	    	ABON(A_INT)--;
 	    	ABON(A_WIS)--;
-	    	flags.botl = 1;
+	    	botl = 1;
 	    }
 	    break;
 	case GAUNTLETS_OF_DEXTERITY:
 	    if ((obj->owornmask & W_ARMG) && (obj == uarmg)) {
 	    	ABON(A_DEX)--;
-	    	flags.botl = 1;
+	    	botl = 1;
 	    }
 	    break;
 	case RIN_PROTECTION:
-	    flags.botl = 1;
+	    botl = 1;
 	    break;
 	}
 	if (carried(obj)) update_inventory();
@@ -2137,7 +2137,7 @@ boolean cancel_monst(struct monst *mdef, struct obj *obj, boolean youattack,
 			    otmp; otmp = otmp->nobj)
 		cancel_item(otmp);
 	    if (youdefend) {
-		flags.botl = 1;	/* potential AC change */
+		botl = 1;	/* potential AC change */
 		find_ac();
 	    }
 	}

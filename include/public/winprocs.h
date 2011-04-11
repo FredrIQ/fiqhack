@@ -9,7 +9,7 @@ struct window_procs {
     unsigned long wincap;	/* window port capability options supported */
     unsigned long wincap2;	/* additional window port capability options supported */
     void (*win_init_nhwindows)(int *, char **);
-    void (*win_player_selection)(void);
+    void (*win_player_selection)(int,int,int,int,int);
     void (*win_askname)(void);
     void (*win_get_nh_event)(void);
     void (*win_exit_nhwindows)(const char *);
@@ -56,12 +56,14 @@ struct window_procs {
     void (*win_preference_update)(const char *);
 };
 
-extern struct window_procs windowprocs;
+extern EXPORT struct window_procs windowprocs;
 
 /*
  * If you wish to only support one window system and not use procedure
  * pointers, add the appropriate #ifdef below.
  */
+
+extern EXPORT void nh_delay_output(void);
 
 #define init_nhwindows (*windowprocs.win_init_nhwindows)
 #define player_selection (*windowprocs.win_player_selection)
@@ -95,7 +97,7 @@ extern struct window_procs windowprocs;
 #define getlin (*windowprocs.win_getlin)
 #define get_ext_cmd (*windowprocs.win_get_ext_cmd)
 #define number_pad (*windowprocs.win_number_pad)
-#define delay_output (*windowprocs.win_delay_output)
+#define delay_output nh_delay_output
 #ifdef CHANGE_COLOR
 #define change_color (*windowprocs.win_change_color)
 #define get_color_string (*windowprocs.win_get_color_string)

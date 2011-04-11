@@ -761,7 +761,7 @@ static boolean Mb_hit(
 		    You("lose magical energy!");
 		    u.uenmax--;
 		    if (u.uen > 0) u.uen--;
-		    flags.botl = 1;
+		    botl = 1;
 		}
 	    } else {
 		if (mdef->data == &mons[PM_CLAY_GOLEM])
@@ -770,7 +770,7 @@ static boolean Mb_hit(
 		    You("absorb magical energy!");
 		    u.uenmax++;
 		    u.uen++;
-		    flags.botl = 1;
+		    botl = 1;
 		}
 	    }
 	}
@@ -1155,7 +1155,7 @@ static int arti_invoke(struct obj *obj)
 	    if(Sick) make_sick(0L,(char *)0,FALSE,SICK_ALL);
 	    if(Slimed) Slimed = 0L;
 	    if (Blinded > creamed) make_blinded(creamed, FALSE);
-	    flags.botl = 1;
+	    botl = 1;
 	    break;
 	  }
 	case ENERGY_BOOST: {
@@ -1165,7 +1165,7 @@ static int arti_invoke(struct obj *obj)
 	    if(epboost) {
 		You_feel("re-energized.");
 		u.uen += epboost;
-		flags.botl = 1;
+		botl = 1;
 	    } else
 		goto nothing_special;
 	    break;

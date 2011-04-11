@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "nethack_types.h"
 
 /*
  * Files expected to exist in the playground directory.
@@ -28,14 +29,6 @@
 
 
 /* Assorted definitions that may depend on selections in config.h. */
-
-/*
- * type xchar: small integers in the range 0 - 127, usually coordinates
- * although they are nonnegative they must not be declared unsigned
- * since otherwise comparisons with signed quantities are done incorrectly
- */
-typedef schar	xchar;
-typedef xchar	boolean;		/* 0 or 1 */
 
 #ifndef TRUE		/* defined in some systems' native include files */
 #define TRUE	((boolean)1)
@@ -97,8 +90,6 @@ typedef xchar	boolean;		/* 0 or 1 */
 # define EXIT_FAILURE 1
 #endif
 
-
-extern long *alloc(unsigned int);		/* alloc.c */
 
 /* Used for consistency checks of various data files; declare it here so
    that utility programs which include config.h but not hack.h can see it. */

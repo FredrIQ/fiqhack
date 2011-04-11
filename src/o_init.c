@@ -159,8 +159,11 @@ void init_objects(void)
 			    objects[i].oc_prob = (1000+i-first)/(last-first);
 			goto check;
 		}
-		if(sum != 1000)
-			error("init-prob error for class %d (%d%%)", oclass, sum);
+		if(sum != 1000) {
+			char buf[BUFSZ];
+			sprintf(buf, "init-prob error for class %d (%d%%)", oclass, sum);
+			putstr(WIN_ERR, 0, buf);
+		}
 		first = last;
 	}
 	/* shuffle descriptions */

@@ -1323,7 +1323,7 @@ void domove(void)
 	if (flags.run && iflags.runmode != RUN_TPORT) {
 	    /* display every step or every 7th step depending upon mode */
 	    if (iflags.runmode != RUN_LEAP || !(moves % 7L)) {
-		if (flags.time) flags.botl = 1;
+		if (flags.time) botl = 1;
 		curs_on_u();
 		delay_output();
 		if (iflags.runmode == RUN_CRAWL) {
@@ -1998,7 +1998,7 @@ void losehp(int n, const char *knam, boolean k_format)
 	if (Upolyd) {
 		u.mh -= n;
 		if (u.mhmax < u.mh) u.mhmax = u.mh;
-		flags.botl = 1;
+		botl = 1;
 		if (u.mh < 1)
 		    rehumanize();
 		else if (n > 0 && u.mh*10 < u.mhmax && Unchanging)
@@ -2009,7 +2009,7 @@ void losehp(int n, const char *knam, boolean k_format)
 	u.uhp -= n;
 	if(u.uhp > u.uhpmax)
 		u.uhpmax = u.uhp;	/* perhaps n was negative */
-	flags.botl = 1;
+	botl = 1;
 	if(u.uhp < 1) {
 		killer_format = k_format;
 		killer = knam;		/* the thing that killed you */
@@ -2131,6 +2131,21 @@ int inv_cnt(void)
 		otmp = otmp->nobj;
 	}
 	return ct;
+}
+
+boolean check_swallowed(void)
+{
+	return u.uswallow;
+}
+
+void enter_discover_mode(void)
+{
+    discover = TRUE;
+}
+
+void enter_wizard_mode(void)
+{
+    wizard = TRUE;
 }
 
 #ifdef GOLDOBJ

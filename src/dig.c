@@ -851,7 +851,7 @@ int use_pick_axe2(struct obj *obj)
 		sprintf(buf, "%s own %s", uhis(),
 				OBJ_NAME(objects[obj->otyp]));
 		losehp(dam, buf, KILLED_BY);
-		flags.botl=1;
+		botl=1;
 		return 1;
 	} else if(u.dz == 0) {
 		if(Stunned || (Confusion && !rn2(5))) confdir();

@@ -1,9 +1,10 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include "hack.h"
-
-#ifdef TTY_GRAPHICS
+#include "config.h"
+#include "nethack.h"
+#include "color.h"
+#include "winprocs.h"
 
 #include "tcap.h"
 #include "wintty.h"
@@ -173,10 +174,10 @@ void more(void)
 	if(cw->curx >= CO - 8) topl_putsym('\n');
     }
 
-    if(flags.standout)
+    if(tty_flags.standout)
 	standoutbeg();
     putsyms(defmorestr);
-    if(flags.standout)
+    if(tty_flags.standout)
 	standoutend();
 
     xwaitforspace("\033 ");
@@ -436,7 +437,5 @@ char tty_yn_function(const char *query, const char *resp, char def)
 
 	return q;
 }
-
-#endif /* TTY_GRAPHICS */
 
 /*topl.c*/

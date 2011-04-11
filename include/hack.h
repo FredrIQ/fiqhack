@@ -7,6 +7,13 @@
 #ifndef CONFIG_H
 #include "config.h"
 #endif
+#include "nethack.h"
+
+/* FIXME these need to go away */
+#define TERMLIB	/* include termcap code */
+/* might display need graphics code? */
+#define ASCIIGRAPH
+
 
 /*	For debugging beta code.	*/
 #ifdef BETA
@@ -15,8 +22,6 @@
 
 #define TELL		1
 #define NOTELL		0
-#define ON		1
-#define OFF		0
 #define BOLT_LIM	8 /* from this distance ranged attacks will be made */
 #define MAX_CARR_CAP	1000	/* so that boulders can be heavier */
 #define DUMMY { 0 }
@@ -43,13 +48,6 @@
 #define DISMOUNT_ENGULFED	4
 #define DISMOUNT_BONES		5
 #define DISMOUNT_BYCHOICE	6
-
-/* Special returns from mapglyph() */
-#define MG_CORPSE	0x01
-#define MG_INVIS	0x02
-#define MG_DETECT	0x04
-#define MG_PET		0x08
-#define MG_RIDDEN	0x10
 
 /* sellobj_state() states */
 #define SELL_NORMAL	(0)
@@ -160,10 +158,6 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define FM_MYDOGS      0x04	/* search mydogs */
 #define FM_EVERYWHERE  (FM_FMON | FM_MIGRATE | FM_MYDOGS)
 
-/* Flags to control pick_[race,role,gend,align] routines in role.c */
-#define PICK_RANDOM	0
-#define PICK_RIGID	1
-
 /* Flags to control dotrap() in trap.c */
 #define NOWEBMSG	0x01	/* suppress stumble into web message */
 #define FORCEBUNGLE	0x02	/* adjustments appropriate for bungling */
@@ -233,9 +227,6 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define MENU_COMBINATION 1
 #define MENU_PARTIAL	 2
 #define MENU_FULL	 3
-
-#define MENU_SELECTED	TRUE
-#define MENU_UNSELECTED FALSE
 
 /*
  * Option flags

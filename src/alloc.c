@@ -7,6 +7,7 @@
  */
 #define EXTERN_H	/* comment line for pre-compiled headers */
 #include "config.h"
+#include "nethack.h"  /* for EXPORT */
 
 char *fmt_ptr(const void *,char *);
 long *alloc(unsigned int);

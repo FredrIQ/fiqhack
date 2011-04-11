@@ -99,7 +99,7 @@ long money2mon(struct monst *mon, long amount)
 	remove_worn_item(ygold, FALSE);		/* quiver */
     freeinv(ygold);
     add_to_minv(mon, ygold);
-    flags.botl = 1;
+    botl = 1;
     return amount;
 }
 
@@ -131,7 +131,7 @@ void money2u(struct monst *mon, long amount)
 	dropy(mongold);
     } else {
 	addinv(mongold);
-	flags.botl = 1;
+	botl = 1;
     }
 }
 
@@ -782,7 +782,7 @@ static void pay(long tmp, struct monst *shkp)
 	if (balance > 0) money2mon(shkp, balance);
 	else if (balance < 0) money2u(shkp, -balance);
 #endif
-	flags.botl = 1;
+	botl = 1;
 	if(robbed) {
 		robbed -= tmp;
 		if(robbed < 0) robbed = 0L;
@@ -1251,7 +1251,7 @@ proceed:
 			eshkp->debit = 0L;
 			eshkp->loan = 0L;
 			You("pay that debt.");
-			flags.botl = 1;
+			botl = 1;
 		    } else {
 			dtmp -= eshkp->credit;
 			eshkp->credit = 0L;
@@ -1265,7 +1265,7 @@ proceed:
 			eshkp->loan = 0L;
 			pline("That debt is partially offset by your credit.");
 			You("pay the remainder.");
-			flags.botl = 1;
+			botl = 1;
 		    }
 		    paid = TRUE;
 		}
@@ -1578,7 +1578,7 @@ static boolean inherits(struct monst *shkp, int numsk, int croaked)
 			if (eshkp->robbed < 0L) eshkp->robbed = 0L;
                         if (umoney > 0) money2mon(shkp, umoney);
 #endif
-			flags.botl = 1;
+			botl = 1;
 			pline("%s %s all your possessions.",
 			      shkname(shkp), takes);
 			taken = TRUE;
@@ -1591,7 +1591,7 @@ static boolean inherits(struct monst *shkp, int numsk, int croaked)
 #else
                         money2mon(shkp, loss);
 #endif
-			flags.botl = 1;
+			botl = 1;
 			pline("%s %s the %ld %s %sowed %s.",
 			      Monnam(shkp), takes,
 			      loss, currency(loss),
@@ -3318,7 +3318,7 @@ getcad:
 #else
                 money2mon(shkp, cost_of_damage);
 #endif
-		flags.botl = 1;
+		botl = 1;
 		pline("Mollified, %s accepts your restitution.",
 			shkname(shkp));
 		/* move shk back to his home loc */

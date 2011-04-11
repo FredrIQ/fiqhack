@@ -241,8 +241,6 @@ char	 **viz_array = 0;/* used in cansee() and couldsee() macros */
 winid WIN_MESSAGE = WIN_ERR, WIN_STATUS = WIN_ERR;
 winid WIN_MAP = WIN_ERR, WIN_INVEN = WIN_ERR;
 char toplines[TBUFSZ];
-/* Windowing stuff that's really tty oriented, but present for all ports */
-struct tc_gbl_data tc_gbl_data = { 0,0, 0,0 };	/* AS,AE, LI,CO */
 
 char *fqn_prefix[PREFIX_COUNT] = { (char *)0, (char *)0, (char *)0, (char *)0,
 				(char *)0, (char *)0, (char *)0, (char *)0, (char *)0 };
@@ -252,6 +250,10 @@ char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
 					"bonesdir", "datadir", "scoredir",
 					"lockdir", "configdir", "troubledir" };
 #endif
+
+boolean botl  = 0;	/* partially redo status line */
+boolean botlx = 0;	/* print an entirely new bottom line */
+
 
 /* dummy routine used to force linkage */
 void decl_init(void)

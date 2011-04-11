@@ -7,23 +7,22 @@
  * h+ 930227
  */
 
-#include "hack.h"
+#include "config.h"
+#include "nethack.h"
 #include "dlb.h"
-#ifdef SHORT_FILENAMES
-#include "patchlev.h"
-#else
+#include "winprocs.h"
+#include "color.h"
 #include "patchlevel.h"
-#endif
+#include "role.h"
 
-#ifdef TTY_GRAPHICS
+#define min(x,y) ((x) < (y) ? (x) : (y))
+#define max(a,b) ((a) > (b) ? (a) : (b))
 
 #ifndef NO_TERMS
 #include "tcap.h"
 #endif
 
 #include "wintty.h"
-
-extern char mapped_menu_cmds[]; /* from options.c */
 
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
@@ -82,6 +81,9 @@ struct window_procs tty_procs = {
     genl_preference_update,
 #endif
 };
+
+struct tc_gbl_data tc_gbl_data = { 0,0, 0,0 };	/* AS,AE, LI,CO */
+struct tty_flag tty_flags = { FALSE };
 
 static int maxwin = 0;			/* number of windows in use */
 winid BASE_WINDOW;
@@ -207,7 +209,9 @@ void tty_init_nhwindows(int* argcp, char** argv)
     tty_display_nhwindow(BASE_WINDOW, FALSE);
 }
 
-void tty_player_selection(void)
+
+void tty_player_selection(int initrole, int initrace, int initgend,
+			  int initalign, int randomall)
 {
 	int i, k, n;
 	char pick4u = 'n', thisch, lastch = 0;
@@ -220,12 +224,12 @@ void tty_player_selection(void)
 	rigid_role_checks();
 
 	/* Should we randomly pick for the player? */
-	if (!flags.randomall &&
-	    (flags.initrole == ROLE_NONE || flags.initrace == ROLE_NONE ||
-	     flags.initgend == ROLE_NONE || flags.initalign == ROLE_NONE)) {
+	if (!randomall &&
+	    (initrole == ROLE_NONE || initrace == ROLE_NONE ||
+	     initgend == ROLE_NONE || initalign == ROLE_NONE)) {
 	    int echoline;
-	    char *prompt = build_plselection_prompt(pbuf, QBUFSZ, flags.initrole,
-				flags.initrace, flags.initgend, flags.initalign);
+	    char *prompt = build_plselection_prompt(pbuf, QBUFSZ, initrole,
+				initrace, initgend, initalign);
 
 	    tty_putstr(BASE_WINDOW, 0, "");
 	    echoline = wins[BASE_WINDOW]->cury;
@@ -256,21 +260,21 @@ give_up:	/* Quit */
 	}
 
 	(void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
-			flags.initrole, flags.initrace, flags.initgend, flags.initalign);
+			initrole, initrace, initgend, initalign);
 
 	/* Select a role, if necessary */
 	/* we'll try to be compatible with pre-selected race/gender/alignment,
 	 * but may not succeed */
-	if (flags.initrole < 0) {
+	if (initrole < 0) {
 	    char rolenamebuf[QBUFSZ];
 	    /* Process the choice */
-	    if (pick4u == 'y' || flags.initrole == ROLE_RANDOM || flags.randomall) {
+	    if (pick4u == 'y' || initrole == ROLE_RANDOM || randomall) {
 		/* Pick a random role */
-		flags.initrole = pick_role(flags.initrace, flags.initgend,
-						flags.initalign, PICK_RANDOM);
-		if (flags.initrole < 0) {
+		initrole = pick_role(initrace, initgend,
+						initalign, PICK_RANDOM);
+		if (initrole < 0) {
 		    tty_putstr(BASE_WINDOW, 0, "Incompatible role!");
-		    flags.initrole = randrole();
+		    initrole = randrole();
 		}
  	    } else {
 	    	tty_clear_nhwindow(BASE_WINDOW);
@@ -280,13 +284,13 @@ give_up:	/* Quit */
 		start_menu(win);
 		any.a_void = 0;         /* zero out all bits */
 		for (i = 0; roles[i].name.m; i++) {
-		    if (ok_role(i, flags.initrace, flags.initgend,
-							flags.initalign)) {
+		    if (ok_role(i, initrace, initgend,
+							initalign)) {
 			any.a_int = i+1;	/* must be non-zero */
 			thisch = lowc(roles[i].name.m[0]);
 			if (thisch == lastch) thisch = highc(thisch);
-			if (flags.initgend != ROLE_NONE && flags.initgend != ROLE_RANDOM) {
-				if (flags.initgend == 1  && roles[i].name.f)
+			if (initgend != ROLE_NONE && initgend != ROLE_RANDOM) {
+				if (initgend == 1  && roles[i].name.f)
 					strcpy(rolenamebuf, roles[i].name.f);
 				else
 					strcpy(rolenamebuf, roles[i].name.m);
@@ -303,8 +307,8 @@ give_up:	/* Quit */
 			lastch = thisch;
 		    }
 		}
-		any.a_int = pick_role(flags.initrace, flags.initgend,
-				    flags.initalign, PICK_RANDOM)+1;
+		any.a_int = pick_role(initrace, initgend,
+				    initalign, PICK_RANDOM)+1;
 		if (any.a_int == 0)	/* must be non-zero */
 		    any.a_int = randrole()+1;
 		add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
@@ -321,39 +325,39 @@ give_up:	/* Quit */
 		if (n != 1 || selected[0].item.a_int == any.a_int)
 		    goto give_up;		/* Selected quit */
 
-		flags.initrole = selected[0].item.a_int - 1;
+		initrole = selected[0].item.a_int - 1;
 		free((void *) selected),	selected = 0;
 	    }
 	    (void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
-			flags.initrole, flags.initrace, flags.initgend, flags.initalign);
+			initrole, initrace, initgend, initalign);
 	}
 	
 	/* Select a race, if necessary */
 	/* force compatibility with role, try for compatibility with
 	 * pre-selected gender/alignment */
-	if (flags.initrace < 0 || !validrace(flags.initrole, flags.initrace)) {
+	if (initrace < 0 || !validrace(initrole, initrace)) {
 	    /* pre-selected race not valid */
-	    if (pick4u == 'y' || flags.initrace == ROLE_RANDOM || flags.randomall) {
-		flags.initrace = pick_race(flags.initrole, flags.initgend,
-							flags.initalign, PICK_RANDOM);
-		if (flags.initrace < 0) {
+	    if (pick4u == 'y' || initrace == ROLE_RANDOM || randomall) {
+		initrace = pick_race(initrole, initgend,
+							initalign, PICK_RANDOM);
+		if (initrace < 0) {
 		    tty_putstr(BASE_WINDOW, 0, "Incompatible race!");
-		    flags.initrace = randrace(flags.initrole);
+		    initrace = randrace(initrole);
 		}
 	    } else {	/* pick4u == 'n' */
 		/* Count the number of valid races */
 		n = 0;	/* number valid */
 		k = 0;	/* valid race */
 		for (i = 0; races[i].noun; i++) {
-		    if (ok_race(flags.initrole, i, flags.initgend,
-							flags.initalign)) {
+		    if (ok_race(initrole, i, initgend,
+							initalign)) {
 			n++;
 			k = i;
 		    }
 		}
 		if (n == 0) {
 		    for (i = 0; races[i].noun; i++) {
-			if (validrace(flags.initrole, i)) {
+			if (validrace(initrole, i)) {
 			    n++;
 			    k = i;
 			}
@@ -368,16 +372,16 @@ give_up:	/* Quit */
 		    start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
 		    for (i = 0; races[i].noun; i++)
-			if (ok_race(flags.initrole, i, flags.initgend,
-							flags.initalign)) {
+			if (ok_race(initrole, i, initgend,
+							initalign)) {
 			    any.a_int = i+1;	/* must be non-zero */
 			    add_menu(win, NO_GLYPH, &any, races[i].noun[0],
 				0, ATR_NONE, races[i].noun, MENU_UNSELECTED);
 			}
-		    any.a_int = pick_race(flags.initrole, flags.initgend,
-					flags.initalign, PICK_RANDOM)+1;
+		    any.a_int = pick_race(initrole, initgend,
+					initalign, PICK_RANDOM)+1;
 		    if (any.a_int == 0)	/* must be non-zero */
-			any.a_int = randrace(flags.initrole)+1;
+			any.a_int = randrace(initrole)+1;
 		    add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
 		    any.a_int = i+1;	/* must be non-zero */
@@ -393,39 +397,39 @@ give_up:	/* Quit */
 		    k = selected[0].item.a_int - 1;
 		    free((void *) selected),	selected = 0;
 		}
-		flags.initrace = k;
+		initrace = k;
 	    }
 	    (void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
-			flags.initrole, flags.initrace, flags.initgend, flags.initalign);
+			initrole, initrace, initgend, initalign);
 	}
 
 	/* Select a gender, if necessary */
 	/* force compatibility with role/race, try for compatibility with
 	 * pre-selected alignment */
-	if (flags.initgend < 0 || !validgend(flags.initrole, flags.initrace,
-						flags.initgend)) {
+	if (initgend < 0 || !validgend(initrole, initrace,
+						initgend)) {
 	    /* pre-selected gender not valid */
-	    if (pick4u == 'y' || flags.initgend == ROLE_RANDOM || flags.randomall) {
-		flags.initgend = pick_gend(flags.initrole, flags.initrace,
-						flags.initalign, PICK_RANDOM);
-		if (flags.initgend < 0) {
+	    if (pick4u == 'y' || initgend == ROLE_RANDOM || randomall) {
+		initgend = pick_gend(initrole, initrace,
+						initalign, PICK_RANDOM);
+		if (initgend < 0) {
 		    tty_putstr(BASE_WINDOW, 0, "Incompatible gender!");
-		    flags.initgend = randgend(flags.initrole, flags.initrace);
+		    initgend = randgend(initrole, initrace);
 		}
 	    } else {	/* pick4u == 'n' */
 		/* Count the number of valid genders */
 		n = 0;	/* number valid */
 		k = 0;	/* valid gender */
 		for (i = 0; i < ROLE_GENDERS; i++) {
-		    if (ok_gend(flags.initrole, flags.initrace, i,
-							flags.initalign)) {
+		    if (ok_gend(initrole, initrace, i,
+							initalign)) {
 			n++;
 			k = i;
 		    }
 		}
 		if (n == 0) {
 		    for (i = 0; i < ROLE_GENDERS; i++) {
-			if (validgend(flags.initrole, flags.initrace, i)) {
+			if (validgend(initrole, initrace, i)) {
 			    n++;
 			    k = i;
 			}
@@ -440,16 +444,16 @@ give_up:	/* Quit */
 		    start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
 		    for (i = 0; i < ROLE_GENDERS; i++)
-			if (ok_gend(flags.initrole, flags.initrace, i,
-							    flags.initalign)) {
+			if (ok_gend(initrole, initrace, i,
+							    initalign)) {
 			    any.a_int = i+1;
 			    add_menu(win, NO_GLYPH, &any, genders[i].adj[0],
 				0, ATR_NONE, genders[i].adj, MENU_UNSELECTED);
 			}
-		    any.a_int = pick_gend(flags.initrole, flags.initrace,
-					    flags.initalign, PICK_RANDOM)+1;
+		    any.a_int = pick_gend(initrole, initrace,
+					    initalign, PICK_RANDOM)+1;
 		    if (any.a_int == 0)	/* must be non-zero */
-			any.a_int = randgend(flags.initrole, flags.initrace)+1;
+			any.a_int = randgend(initrole, initrace)+1;
 		    add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
 		    any.a_int = i+1;	/* must be non-zero */
@@ -465,30 +469,30 @@ give_up:	/* Quit */
 		    k = selected[0].item.a_int - 1;
 		    free((void *) selected),	selected = 0;
 		}
-		flags.initgend = k;
+		initgend = k;
 	    }
 	    (void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
-			flags.initrole, flags.initrace, flags.initgend, flags.initalign);
+			initrole, initrace, initgend, initalign);
 	}
 
 	/* Select an alignment, if necessary */
 	/* force compatibility with role/race/gender */
-	if (flags.initalign < 0 || !validalign(flags.initrole, flags.initrace,
-							flags.initalign)) {
+	if (initalign < 0 || !validalign(initrole, initrace,
+							initalign)) {
 	    /* pre-selected alignment not valid */
-	    if (pick4u == 'y' || flags.initalign == ROLE_RANDOM || flags.randomall) {
-		flags.initalign = pick_align(flags.initrole, flags.initrace,
-							flags.initgend, PICK_RANDOM);
-		if (flags.initalign < 0) {
+	    if (pick4u == 'y' || initalign == ROLE_RANDOM || randomall) {
+		initalign = pick_align(initrole, initrace,
+							initgend, PICK_RANDOM);
+		if (initalign < 0) {
 		    tty_putstr(BASE_WINDOW, 0, "Incompatible alignment!");
-		    flags.initalign = randalign(flags.initrole, flags.initrace);
+		    initalign = randalign(initrole, initrace);
 		}
 	    } else {	/* pick4u == 'n' */
 		/* Count the number of valid alignments */
 		n = 0;	/* number valid */
 		k = 0;	/* valid alignment */
 		for (i = 0; i < ROLE_ALIGNS; i++) {
-		    if (ok_align(flags.initrole, flags.initrace, flags.initgend,
+		    if (ok_align(initrole, initrace, initgend,
 							i)) {
 			n++;
 			k = i;
@@ -496,7 +500,7 @@ give_up:	/* Quit */
 		}
 		if (n == 0) {
 		    for (i = 0; i < ROLE_ALIGNS; i++) {
-			if (validalign(flags.initrole, flags.initrace, i)) {
+			if (validalign(initrole, initrace, i)) {
 			    n++;
 			    k = i;
 			}
@@ -511,16 +515,16 @@ give_up:	/* Quit */
 		    start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
 		    for (i = 0; i < ROLE_ALIGNS; i++)
-			if (ok_align(flags.initrole, flags.initrace,
-							flags.initgend, i)) {
+			if (ok_align(initrole, initrace,
+							initgend, i)) {
 			    any.a_int = i+1;
 			    add_menu(win, NO_GLYPH, &any, aligns[i].adj[0],
 				 0, ATR_NONE, aligns[i].adj, MENU_UNSELECTED);
 			}
-		    any.a_int = pick_align(flags.initrole, flags.initrace,
-					    flags.initgend, PICK_RANDOM)+1;
+		    any.a_int = pick_align(initrole, initrace,
+					    initgend, PICK_RANDOM)+1;
 		    if (any.a_int == 0)	/* must be non-zero */
-			any.a_int = randalign(flags.initrole, flags.initrace)+1;
+			any.a_int = randalign(initrole, initrace)+1;
 		    add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
 		    any.a_int = i+1;	/* must be non-zero */
@@ -536,9 +540,14 @@ give_up:	/* Quit */
 		    k = selected[0].item.a_int - 1;
 		    free((void *) selected),	selected = 0;
 		}
-		flags.initalign = k;
+		initalign = k;
 	    }
 	}
+	set_role(initrole);
+	set_race(initrace);
+	set_gend(initgend);
+	set_align(initalign);
+	
 	/* Success! */
 	tty_display_nhwindow(BASE_WINDOW, FALSE);
 }
@@ -618,12 +627,12 @@ void tty_get_nh_event(void)
 static void getret(void)
 {
 	xputs("\n");
-	if(flags.standout)
+	if(tty_flags.standout)
 		standoutbeg();
 	xputs("Hit ");
 	xputs(iflags.cbreak ? "space" : "return");
 	xputs(" to continue: ");
-	if(flags.standout)
+	if(tty_flags.standout)
 		standoutend();
 	xwaitforspace(" ");
 }
@@ -847,7 +856,7 @@ void tty_clear_nhwindow(winid window)
 	break;
     case NHW_MAP:
 	/* cheap -- clear the whole thing and tell nethack to redraw botl */
-	flags.botlx = 1;
+	botlx = 1;
 	/* fall into ... */
     case NHW_BASE:
 	clear_screen();
@@ -870,11 +879,11 @@ static void dmore(struct WinDesc *cw,
 
     tty_curs(BASE_WINDOW,
 	     (int)ttyDisplay->curx + offset, (int)ttyDisplay->cury);
-    if(flags.standout)
+    if(tty_flags.standout)
 	standoutbeg();
     xputs(prompt);
     ttyDisplay->curx += strlen(prompt);
-    if(flags.standout)
+    if(tty_flags.standout)
 	standoutend();
 
     xwaitforspace(s);
@@ -1584,7 +1593,7 @@ void tty_putstr(winid window, int attr, const char *str)
 
     case NHW_STATUS:
 	ob = &cw->data[cw->cury][j = cw->curx];
-	if(flags.botlx) *ob = 0;
+	if(botlx) *ob = 0;
 	if(!cw->cury && (int)strlen(str) >= CO) {
 	    /* the characters before "St:" are unnecessary */
 	    nb = index(str, ':');
@@ -1594,7 +1603,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	nb = str;
 	for(i = cw->curx+1, n0 = cw->cols; i < n0; i++, nb++) {
 	    if(!*nb) {
-		if(*ob || flags.botlx) {
+		if(*ob || botlx) {
 		    /* last char printed may be in middle of line */
 		    tty_curs(WIN_STATUS, i, cw->cury);
 		    cl_end();
@@ -1707,7 +1716,7 @@ void tty_display_file(const char *fname, boolean complain)
 		home();  tty_mark_synch();  tty_raw_print("");
 		perror(fname);  tty_wait_synch();
 		pline("Cannot open \"%s\".", fname);
-	    } else if(u.ux) docrt();
+	    } else if(program_state.something_worth_saving) docrt();
 	} else {
 	    winid datawin = tty_create_nhwindow(NHW_TEXT);
 	    boolean empty = TRUE;
@@ -2015,7 +2024,7 @@ void docorner(int xmin, int ymax)
     int y;
     struct WinDesc *cw = wins[WIN_MAP];
 
-    if (u.uswallow) {	/* Can be done more efficiently */
+    if (check_swallowed()) {	/* Can be done more efficiently */
 	swallowed(1);
 	return;
     }
@@ -2030,7 +2039,7 @@ void docorner(int xmin, int ymax)
     end_glyphout();
     if (ymax >= (int) wins[WIN_STATUS]->offy) {
 					/* we have wrecked the bottom line */
-	flags.botlx = 1;
+	botlx = 1;
 	bot();
     }
 }
@@ -2057,7 +2066,7 @@ void g_putch(int in_ch)
     char ch = (char)in_ch;
 
 # if defined(ASCIIGRAPH) && !defined(NO_TERMS)
-    if (iflags.IBMgraphics || iflags.eight_bit_tty) {
+    if (iflags.IBMgraphics || iflags.wc_eight_bit_input) {
 	/* IBM-compatible displays don't need other stuff */
 	(void) putchar(ch);
     } else if (ch & 0x80) {
@@ -2126,8 +2135,8 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
 #endif /* TEXTCOLOR */
 
     /* must be after color check; term_end_color may turn off inverse too */
-    if (((special & MG_PET) && iflags.hilite_pet) ||
-	((special & MG_DETECT) && iflags.use_inverse)) {
+    if (((special & MG_PET) && iflags.wc_hilite_pet) ||
+	((special & MG_DETECT) && iflags.wc_inverse)) {
 	term_start_attr(ATR_INVERSE);
 	reverse_on = TRUE;
     }
@@ -2260,7 +2269,5 @@ static char * copy_of(const char *s)
     if (!s) s = "";
     return strcpy((char *) alloc((unsigned) (strlen(s) + 1)), s);
 }
-
-#endif /* TTY_GRAPHICS */
 
 /*wintty.c*/

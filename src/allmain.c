@@ -8,11 +8,136 @@
 #ifndef NO_SIGNAL
 #include <signal.h>
 #endif
+#include <sys/stat.h>
+
+#include "dlb.h"
+static void wd_message(boolean wiz_error_flag);
+
+static void wd_message(boolean wiz_error_flag)
+{
+	if (wiz_error_flag) {
+		pline("Only user \"%s\" may access debug (wizard) mode.",
+			WIZARD);
+		pline("Entering discovery mode instead.");
+	} else
+	if (discover)
+		You("are in non-scoring discovery mode.");
+}
 
 
-void init_nethack(struct window_procs *procs)
+void nethack_init(struct window_procs *procs)
 {
     windowprocs = *procs;
+}
+
+
+void nethack_start_game(boolean exact_username, boolean wiz_error_flag)
+{
+	int fd;
+	/*
+	 * It seems you really want to play.
+	 */
+	u.uhp = 1;	/* prevent RIP on early quits */
+	(void) signal(SIGHUP, (SIG_RET_TYPE) hangup);
+#ifdef SIGXCPU
+	(void) signal(SIGXCPU, (SIG_RET_TYPE) hangup);
+#endif
+
+	if (wizard)
+		strcpy(plname, "wizard");
+	else
+	if(!*plname || !strncmp(plname, "player", 4)
+		    || !strncmp(plname, "games", 4)) {
+		askname();
+	} else if (exact_username) {
+		/* guard against user names with hyphens in them */
+		int len = strlen(plname);
+		/* append the current role, if any, so that last dash is ours */
+		if (++len < sizeof plname)
+			(void)strncat(strcat(plname, "-"),
+				      pl_character, sizeof plname - len - 1);
+	}
+	plnamesuffix();		/* strip suffix from name; calls askname() */
+				/* again if suffix was whole name */
+				/* accepts any suffix */
+	if(!wizard) {
+		/*
+		 * check for multiple games under the same name
+		 * (if !locknum) or check max nr of players (otherwise)
+		 */
+		(void) signal(SIGQUIT,SIG_IGN);
+		(void) signal(SIGINT,SIG_IGN);
+		if(!locknum)
+			sprintf(lock, "%d%s", (int)getuid(), plname);
+		getlock();
+	} else {
+		sprintf(lock, "%d%s", (int)getuid(), plname);
+		getlock();
+	}
+
+	dlb_init();	/* must be before newgame() */
+
+	/*
+	 * Initialization of the boundaries of the mazes
+	 * Both boundaries have to be even.
+	 */
+	x_maze_max = COLNO-1;
+	if (x_maze_max % 2)
+		x_maze_max--;
+	y_maze_max = ROWNO-1;
+	if (y_maze_max % 2)
+		y_maze_max--;
+
+	/*
+	 *  Initialize the vision system.  This must be before mklev() on a
+	 *  new game or before a level restore on a saved game.
+	 */
+	vision_init();
+
+	display_gamewindows();
+
+	if ((fd = restore_saved_game()) >= 0) {
+		/* Since wizard is actually flags.debug, restoring might
+		 * overwrite it.
+		 */
+		boolean remember_wiz_mode = wizard;
+		const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
+
+		(void) chmod(fq_save,0);	/* disallow parallel restores */
+		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+#ifdef NEWS
+		if(iflags.news) {
+		    display_file(NEWS, FALSE);
+		    iflags.news = FALSE; /* in case dorecover() fails */
+		}
+#endif
+		pline("Restoring save file...");
+		mark_synch();	/* flush output */
+		if(!dorecover(fd))
+			goto not_recovered;
+		if(!wizard && remember_wiz_mode) wizard = TRUE;
+		check_special_room(FALSE);
+		wd_message(wiz_error_flag);
+
+		if (discover || wizard) {
+			if(yn("Do you want to keep the save file?") == 'n')
+			    (void) delete_savefile();
+			else {
+			    (void) chmod(fq_save,FCMASK); /* back to readable */
+			}
+		}
+		flags.move = 0;
+	} else {
+not_recovered:
+		player_selection(flags.initrole, flags.initrace, flags.initgend,
+		    flags.initalign, flags.randomall);
+		newgame();
+		wd_message(wiz_error_flag);
+
+		flags.move = 0;
+		set_wear();
+		(void) pickup(1);
+	}
 }
 
 
@@ -133,7 +258,7 @@ void moveloop(void)
 
 		    if (u.ublesscnt)  u.ublesscnt--;
 		    if(flags.time && !flags.run)
-			flags.botl = 1;
+			botl = 1;
 
 		    /* One possible result of prayer is healing.  Whether or
 		     * not you get healed depends on your current hit points.
@@ -148,7 +273,7 @@ void moveloop(void)
 		    } else if (Upolyd && youmonst.data->mlet == S_EEL && !is_pool(u.ux,u.uy) && !Is_waterlevel(&u.uz)) {
 			if (u.mh > 1) {
 			    u.mh--;
-			    flags.botl = 1;
+			    botl = 1;
 			} else if (u.mh < 1)
 			    rehumanize();
 		    } else if (Upolyd && u.mh < u.mhmax) {
@@ -156,7 +281,7 @@ void moveloop(void)
 			    rehumanize();
 			else if (Regeneration ||
 				    (wtcap < MOD_ENCUMBER && !(moves%20))) {
-			    flags.botl = 1;
+			    botl = 1;
 			    u.mh++;
 			}
 		    } else if (u.uhp < u.uhpmax &&
@@ -170,14 +295,14 @@ void moveloop(void)
 				heal = rnd(Con);
 				if (heal > u.ulevel-9) heal = u.ulevel-9;
 			    }
-			    flags.botl = 1;
+			    botl = 1;
 			    u.uhp += heal;
 			    if(u.uhp > u.uhpmax)
 				u.uhp = u.uhpmax;
 			} else if (Regeneration ||
 			     (u.ulevel <= 9 &&
 			      !(moves % ((MAXULEV+12) / (u.ulevel+2) + 1)))) {
-			    flags.botl = 1;
+			    botl = 1;
 			    u.uhp++;
 			}
 		    }
@@ -204,7 +329,7 @@ void moveloop(void)
 			 || Energy_regeneration)) {
 			u.uen += rn1((int)(ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1,1);
 			if (u.uen > u.uenmax)  u.uen = u.uenmax;
-			flags.botl = 1;
+			botl = 1;
 		    }
 
 		    if(!u.uinvulnerable) {
@@ -307,7 +432,7 @@ void moveloop(void)
 
 	    if (vision_full_recalc) vision_recalc(0);	/* vision! */
 	}
-	if(flags.botl || flags.botlx) bot();
+	if(botl || botlx) bot();
 
 	flags.move = 1;
 
@@ -374,7 +499,7 @@ void moveloop(void)
 	    if (!multi) {
 		/* lookaround may clear multi */
 		flags.move = 0;
-		if (flags.time) flags.botl = 1;
+		if (flags.time) botl = 1;
 		continue;
 	    }
 	    if (flags.mv) {
@@ -392,13 +517,13 @@ void moveloop(void)
 	    deferred_goto();	/* after rhack() */
 	/* !flags.move here: multiple movement command stopped */
 	else if (flags.time && (!flags.move || !flags.mv))
-	    flags.botl = 1;
+	    botl = 1;
 
 	if (vision_full_recalc) vision_recalc(0);	/* vision! */
 	/* when running in non-tport mode, this gets done through domove() */
 	if ((!flags.run || iflags.runmode == RUN_TPORT) &&
 		(multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
-	    if (flags.time && flags.run) flags.botl = 1;
+	    if (flags.time && flags.run) botl = 1;
 	    display_nhwindow(WIN_MAP, FALSE);
 	}
     }
@@ -411,7 +536,7 @@ void stop_occupation(void)
 		if (!maybe_finished_meal(TRUE))
 		    You("stop %s.", occtxt);
 		occupation = 0;
-		flags.botl = 1; /* in case u.uhs changed */
+		botl = 1; /* in case u.uhs changed */
 /* fainting stops your occupation, there's no reason to sync.
 		sync_hunger();
 */
@@ -476,7 +601,7 @@ void newgame(void)
 	vision_reset();		/* set up internals for level (after mklev) */
 	check_special_room(FALSE);
 
-	flags.botlx = 1;
+	botlx = 1;
 
 	/* Move the monster from under you or else
 	 * makedog() will fail when it calls makemon().

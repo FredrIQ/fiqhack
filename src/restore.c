@@ -3,7 +3,6 @@
 
 #include "hack.h"
 #include "lev.h"
-#include "tcap.h" /* for TERMLIB and ASCIIGRAPH */
 
 #ifdef USE_TILES
 extern void substitute_tiles(d_level *);       /* from tile.c */
@@ -811,7 +810,7 @@ void mread(int fd, void * buf, unsigned int len)
 		if(restoring) {
 			(void) close(fd);
 			(void) delete_savefile();
-			error("Error restoring old game.");
+			putstr(WIN_ERR, 0, "Error restoring old game.");
 		}
 		panic("Error reading level file.");
 	}

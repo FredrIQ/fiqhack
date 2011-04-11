@@ -16,8 +16,6 @@ extern char *fmt_ptr(const void *,char *);
 
 /* ### allmain.c ### */
 
-extern void init_nethack(struct window_procs *);
-extern void moveloop(void);
 extern void stop_occupation(void);
 extern void display_gamewindows(void);
 extern void newgame(void);
@@ -126,21 +124,17 @@ extern long botl_score(void);
 #endif
 extern int describe_level(char *);
 extern const char *rank_of(int, short, boolean);
-extern void bot(void);
 
 /* ### cmd.c ### */
 
 extern void reset_occupations(void);
 extern void set_occupation(int (*)(void),const char *,int);
 #ifdef REDO
-extern char pgetchar(void);
 extern void pushch(char);
-extern void savech(char);
 #endif
 extern void add_debug_extended_commands(void);
 extern void rhack(char *);
 extern int doextlist(void);
-extern int extcmd_via_menu(void);
 extern void enlightenment(int);
 extern void show_conduct(int);
 extern int xytod(schar, schar);
@@ -151,9 +145,7 @@ extern void confdir(void);
 extern int isok(int,int);
 extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *);
 extern const char *click_to_cmd(int,int,int);
-extern char readchar(void);
 extern void sanity_check(void);
-extern char yn_function(const char *, const char *, char);
 
 /* ### dbridge.c ### */
 
@@ -227,7 +219,6 @@ extern void feel_location(xchar,xchar);
 extern void newsym(int,int);
 extern void shieldeff(xchar,xchar);
 extern void tmp_at(int,int);
-extern void swallowed(int);
 extern void under_ground(int);
 extern void under_water(int);
 extern void see_monsters(void);
@@ -236,10 +227,8 @@ extern void see_objects(void);
 extern void see_traps(void);
 extern void curs_on_u(void);
 extern int doredraw(void);
-extern void docrt(void);
 extern void show_glyph(int,int,int);
 extern void clear_glyph_buffer(void);
-extern void row_refresh(int,int,int);
 extern void cls(void);
 extern void flush_screen(int);
 extern int back_to_glyph(xchar,xchar);
@@ -398,7 +387,6 @@ extern int def_char_to_objclass(char);
 extern int def_char_to_monclass(char);
 #if !defined(MAKEDEFS_C) && !defined(LEV_LEX_C)
 extern void assign_graphics(uchar *,int,int,int);
-extern void switch_graphics(int);
 #ifdef REINCARNATION
 extern void assign_rogue_graphics(boolean);
 #endif
@@ -480,11 +468,9 @@ extern void done1(int);
 extern int done2(void);
 extern void done_in_by(struct monst *);
 #endif /* !MAKEDEFS_C && !LEV_LEX_C */
-extern void panic(const char *,...);
 #if !defined(MAKEDEFS_C) && !defined(LEV_LEX_C)
 extern void done(int);
 extern void container_contents(struct obj *,boolean,boolean);
-extern void terminate(int);
 extern int num_genocides(void);
 
 /* ### engrave.c ### */
@@ -538,15 +524,12 @@ extern void makerogueghost(void);
 
 extern char *fname_encode(const char *, char, char *, char *, int);
 extern char *fname_decode(char, char *, char *, int);
-extern const char *fqname(const char *, int, int);
 extern FILE *fopen_datafile(const char *,const char *,int);
 extern boolean uptodate(int,const char *);
 extern void store_version(int);
-extern void set_levelfile_name(char *,int);
 extern int create_levelfile(int,char *);
 extern int open_levelfile(int,char *);
 extern void delete_levelfile(int);
-extern void clearlocks(void);
 extern int create_bonesfile(d_level*,char **, char *);
 extern void commit_bonesfile(d_level *);
 extern int open_bonesfile(d_level*,char **);
@@ -560,10 +543,7 @@ extern int create_savefile(void);
 extern int open_savefile(void);
 extern int delete_savefile(void);
 extern int restore_saved_game(void);
-extern boolean lock_file(const char *,int,int);
-extern void unlock_file(const char *);
 extern void read_config_file(const char *);
-extern void check_recordfile(const char *);
 extern void read_wizkit(void);
 extern void paniclog(const char *, const char *);
 extern int validate_prefix_locations(char *);
@@ -619,19 +599,13 @@ extern long money_cnt(struct obj *);
 
 /* ### hacklib.c ### */
 
-extern boolean digit(char);
 extern boolean letter(char);
-extern char highc(char);
-extern char lowc(char);
 extern char *lcase(char *);
 extern char *upstart(char *);
-extern char *mungspaces(char *);
-extern char *eos(char *);
 extern char *strkitten(char *,char);
 extern char *s_suffix(const char *);
 extern char *xcrypt(const char *,char *);
 extern boolean onlyspace(const char *);
-extern char *tabexpand(char *);
 extern char *visctrl(char);
 extern const char *ordin(int);
 extern char *sitoa(int);
@@ -641,9 +615,6 @@ extern int dist2(int,int,int,int);
 extern int distmin(int,int,int,int);
 extern boolean online2(int,int,int,int);
 extern boolean pmatch(const char *,const char *);
-#ifndef STRNCMPI
-extern int strncmpi(const char *,const char *,int);
-#endif
 #ifndef STRSTRI
 extern char *strstri(const char *,const char *);
 #endif
@@ -725,8 +696,6 @@ extern void silly_thing(const char *,struct obj *);
 
 #if defined(UNIX)
 extern void getwindowsz(void);
-extern void getioctls(void);
-extern void setioctls(void);
 #endif /* UNIX */
 
 /* ### light.c ### */
@@ -783,10 +752,6 @@ extern void mkmonmoney(struct monst *, long);
 #endif
 extern void bagotricks(struct obj *);
 extern boolean propagate(int,boolean,boolean);
-
-/* ### mapglyph.c ### */
-
-extern void mapglyph(int, int *, int *, unsigned *, int, int);
 
 /* ### mcastu.c ### */
 
@@ -1154,7 +1119,6 @@ extern char *corpse_xname(struct obj *,boolean);
 extern char *cxname(struct obj *);
 extern char *killer_xname(struct obj *);
 extern const char *singular(struct obj *,char *(*)(struct obj*));
-extern char *an(const char *);
 extern char *An(const char *);
 extern char *The(const char *);
 extern char *the(const char *);
@@ -1177,7 +1141,6 @@ extern const char *mimic_obj_name(struct monst *);
 /* ### options.c ### */
 
 extern boolean match_optname(const char *,const char *,int,boolean);
-extern void initoptions(void);
 extern void parseoptions(char *,boolean,boolean);
 extern int doset(void);
 extern int dotogglepickup(void);
@@ -1185,10 +1148,7 @@ extern void option_help(void);
 extern void next_opt(winid,const char *);
 extern int fruitadd(char *);
 extern int choose_classes_menu(const char *,int,boolean,char *,char *);
-extern void add_menu_cmd_alias(char, char);
-extern char map_menu_cmd(char);
 extern void assign_warnings(uchar *);
-extern char *nh_getenv(const char *);
 extern void set_duplicate_opt_detection(int);
 extern void set_wc_option_mod_status(unsigned long, int);
 extern void set_wc2_option_mod_status(unsigned long, int);
@@ -1227,18 +1187,6 @@ extern void msmsg(const char *,...);
 extern FILE *fopenp(const char *,const char *);
 #endif /* WIN32 */
 
-/* ### pctty.c ### */
-
-#if defined(WIN32)
-extern void gettty(void);
-extern void settty(const char *);
-extern void setftty(void);
-extern void error(const char *,...);
-#if defined(TIMED_DELAY) && defined(_MSC_VER)
-extern void msleep(unsigned);
-#endif
-#endif /* WIN32 */
-
 /* ### pcunix.c ### */
 
 #if defined(PC_LOCKING)
@@ -1275,7 +1223,6 @@ extern boolean is_autopickup_exception(struct obj *, boolean);
 
 /* ### pline.c ### */
 
-extern void pline(const char *,...);
 extern void Norep(const char *,...);
 extern void free_youbuf(void);
 extern void You(const char *,...);
@@ -1287,7 +1234,6 @@ extern void pline_The(const char *,...);
 extern void There(const char *,...);
 extern void verbalize(const char *,...);
 extern void raw_printf(const char *,...);
-extern void impossible(const char *,...);
 extern const char *align_str(aligntyp);
 extern void mstatusline(struct monst *);
 extern void ustatusline(void);
@@ -1454,10 +1400,6 @@ extern void getlev(int,int,xchar,boolean);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
 extern void mread(int,void *,unsigned int);
 
-/* ### rip.c ### */
-
-extern void genl_outrip(winid,int);
-
 /* ### rnd.c ### */
 
 extern int rn2(int);
@@ -1469,33 +1411,10 @@ extern int rnz(int);
 
 /* ### role.c ### */
 
-extern boolean validrole(int);
-extern boolean validrace(int, int);
-extern boolean validgend(int, int, int);
-extern boolean validalign(int, int, int);
-extern int randrole(void);
-extern int randrace(int);
-extern int randgend(int, int);
-extern int randalign(int, int);
-extern int str2role(char *);
-extern int str2race(char *);
-extern int str2gend(char *);
-extern int str2align(char *);
-extern boolean ok_role(int, int, int, int);
-extern int pick_role(int, int, int, int);
-extern boolean ok_race(int, int, int, int);
-extern int pick_race(int, int, int, int);
-extern boolean ok_gend(int, int, int, int);
-extern int pick_gend(int, int, int, int);
-extern boolean ok_align(int, int, int, int);
-extern int pick_align(int, int, int, int);
 extern void role_init(void);
-extern void rigid_role_checks(void);
 extern void plnamesuffix(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
-extern char *build_plselection_prompt(char *, int, int, int, int, int);
-extern char *root_plselection_prompt(char *, int, int, int, int, int);
 
 /* ### rumors.c ### */
 
@@ -1722,7 +1641,6 @@ extern void timer_sanity_check(void);
 /* ### topten.c ### */
 
 extern void topten(int);
-extern void prscore(int,char **);
 extern struct obj *tt_oname(struct obj *);
 
 /* ### track.c ### */
@@ -1793,23 +1711,10 @@ extern void port_help(void);
 # endif
 #endif /* UNIX */
 
-
-/* ### unixtty.c ### */
-
-#if defined(UNIX)
-extern void gettty(void);
-extern void settty(const char *);
-extern void setftty(void);
-extern void intron(void);
-extern void introff(void);
-extern void error(const char *,...);
-#endif /* UNIX */
-
 /* ### unixunix.c ### */
 
 #ifdef UNIX
 extern void getlock(void);
-extern void regularize(char *);
 # if defined(TIMED_DELAY) && !defined(msleep) && defined(SYSV)
 extern void msleep(unsigned);
 # endif
@@ -1899,12 +1804,6 @@ extern int chwepon(struct obj *,int);
 extern int welded(struct obj *);
 extern void weldmsg(struct obj *);
 extern void setmnotwielded(struct monst *,struct obj *);
-
-/* ### windows.c ### */
-
-extern void choose_windows(const char *);
-extern char genl_message_menu(char,int,const char *);
-extern void genl_preference_update(const char *);
 
 /* ### wizard.c ### */
 

@@ -7,14 +7,19 @@
  * arnold@ucsf-cgl, wcs@bo95b, cbcephus!pds and others.
  */
 
-#include "hack.h"
+#include "config.h"
+#include "nethack.h"
+#include "winprocs.h"
+#include "wintty.h"
 
 # include <termios.h>
 # include <unistd.h>
 # define termstruct	termios
 # include <sys/ioctl.h>
-# undef delay_output	/* curses redefines this */
-# include <curses.h>
+
+#undef delay_output	/* curses redefines this */
+#include <curses.h>
+
 # define kill_sym	c_cc[VKILL]
 # define erase_sym	c_cc[VERASE]
 # define intr_sym	c_cc[VINTR]
@@ -241,7 +246,7 @@ void init_linux_cons(void)
 		linux_mapoff();
 #  ifdef TEXTCOLOR
 		if (has_colors())
-			iflags.use_color = TRUE;
+			iflags.wc_color = TRUE;
 #  endif
 	}
 # endif

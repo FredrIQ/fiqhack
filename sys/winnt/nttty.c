@@ -499,8 +499,6 @@ void cl_eos(void)
 
 void tty_nhbell(void)
 {
-	if (flags.silent) return;
-	Beep(8000,500);
 }
 
 volatile int junk;	/* prevent optimizer from eliminating loop below */

@@ -260,7 +260,7 @@ void bot(void)
 {
 	bot1();
 	bot2();
-	flags.botl = flags.botlx = 0;
+	botl = botlx = 0;
 }
 
 /*botl.c*/

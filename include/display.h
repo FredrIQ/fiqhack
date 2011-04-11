@@ -269,8 +269,6 @@
 #define GLYPH_WARNING_OFF	((NUMMONS << 3) + GLYPH_SWALLOW_OFF)
 #define MAX_GLYPH		(WARNCOUNT      + GLYPH_WARNING_OFF)
 
-#define NO_GLYPH MAX_GLYPH
-
 #define GLYPH_INVISIBLE GLYPH_INVIS_OFF
 
 #define warning_to_glyph(mwarnlev) ((mwarnlev)+GLYPH_WARNING_OFF)

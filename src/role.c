@@ -989,6 +989,33 @@ void rigid_role_checks(void)
     }
 }
 
+
+void set_role(int role)
+{
+	flags.initrole  = role;
+}
+
+void set_race(int race)
+{
+	flags.initrace  = race;
+}
+
+void set_gend(int gend)
+{
+	flags.initgend  = gend;
+}
+
+void set_align(int align)
+{
+	flags.initalign = align;
+}
+
+void set_random_player(void)
+{
+	flags.randomall = 1;
+}
+
+
 #define BP_ALIGN	0
 #define BP_GEND		1
 #define BP_RACE		2

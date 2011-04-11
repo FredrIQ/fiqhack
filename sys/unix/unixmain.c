@@ -1,9 +1,8 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/* main.c - Unix NetHack */
-
-#include "hack.h"
+#include "config.h"
+#include "nethack.h"
 #include "dlb.h"
 
 #include <sys/stat.h>
@@ -14,6 +13,7 @@
 #endif
 
 #include "wintty.h"
+#include "winprocs.h"
 
 extern struct passwd *getpwuid(uid_t);
 extern struct passwd *getpwnam(const char *);
@@ -28,12 +28,10 @@ extern void check_linux_console(void);
 extern void init_linux_cons(void);
 #endif
 
-static void wd_message(void);
 static boolean wiz_error_flag = FALSE;
 
 int main(int argc, char *argv[])
 {
-	int fd;
 #ifdef CHDIR
 	char *dir;
 #endif
@@ -72,8 +70,8 @@ int main(int argc, char *argv[])
 	hackpid = getpid();
 	(void) umask(0777 & ~FCMASK);
 
-	init_nethack(&tty_procs);
 	win_tty_init();
+	nethack_init(&tty_procs);
 
 #ifdef CHDIR			/* otherwise no chdir() */
 	/*
@@ -138,111 +136,17 @@ int main(int argc, char *argv[])
 	init_linux_cons();
 #endif
 
-	/*
-	 * It seems you really want to play.
-	 */
-	u.uhp = 1;	/* prevent RIP on early quits */
-	(void) signal(SIGHUP, (SIG_RET_TYPE) hangup);
-#ifdef SIGXCPU
-	(void) signal(SIGXCPU, (SIG_RET_TYPE) hangup);
-#endif
-
 	process_options(argc, argv);	/* command line options */
 
-	if (wizard)
-		strcpy(plname, "wizard");
-	else
-	if(!*plname || !strncmp(plname, "player", 4)
-		    || !strncmp(plname, "games", 4)) {
-		askname();
-	} else if (exact_username) {
-		/* guard against user names with hyphens in them */
-		int len = strlen(plname);
-		/* append the current role, if any, so that last dash is ours */
-		if (++len < sizeof plname)
-			(void)strncat(strcat(plname, "-"),
-				      pl_character, sizeof plname - len - 1);
+#if defined(UNIX) && defined(TERMLIB)
+	/* detect whether a "vt" terminal can handle alternate charsets */
+	if ((opts = nh_getenv("TERM")) &&
+	    !strncmpi(opts, "vt", 2) && AS && AE &&
+	    index(AS, '\016') && index(AE, '\017')) {
+		switch_graphics(DEC_GRAPHICS);
 	}
-	plnamesuffix();		/* strip suffix from name; calls askname() */
-				/* again if suffix was whole name */
-				/* accepts any suffix */
-	if(!wizard) {
-		/*
-		 * check for multiple games under the same name
-		 * (if !locknum) or check max nr of players (otherwise)
-		 */
-		(void) signal(SIGQUIT,SIG_IGN);
-		(void) signal(SIGINT,SIG_IGN);
-		if(!locknum)
-			sprintf(lock, "%d%s", (int)getuid(), plname);
-		getlock();
-	} else {
-		sprintf(lock, "%d%s", (int)getuid(), plname);
-		getlock();
-	}
-
-	dlb_init();	/* must be before newgame() */
-
-	/*
-	 * Initialization of the boundaries of the mazes
-	 * Both boundaries have to be even.
-	 */
-	x_maze_max = COLNO-1;
-	if (x_maze_max % 2)
-		x_maze_max--;
-	y_maze_max = ROWNO-1;
-	if (y_maze_max % 2)
-		y_maze_max--;
-
-	/*
-	 *  Initialize the vision system.  This must be before mklev() on a
-	 *  new game or before a level restore on a saved game.
-	 */
-	vision_init();
-
-	display_gamewindows();
-
-	if ((fd = restore_saved_game()) >= 0) {
-		/* Since wizard is actually flags.debug, restoring might
-		 * overwrite it.
-		 */
-		boolean remember_wiz_mode = wizard;
-		const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
-
-		(void) chmod(fq_save,0);	/* disallow parallel restores */
-		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
-#ifdef NEWS
-		if(iflags.news) {
-		    display_file(NEWS, FALSE);
-		    iflags.news = FALSE; /* in case dorecover() fails */
-		}
 #endif
-		pline("Restoring save file...");
-		mark_synch();	/* flush output */
-		if(!dorecover(fd))
-			goto not_recovered;
-		if(!wizard && remember_wiz_mode) wizard = TRUE;
-		check_special_room(FALSE);
-		wd_message();
-
-		if (discover || wizard) {
-			if(yn("Do you want to keep the save file?") == 'n')
-			    (void) delete_savefile();
-			else {
-			    (void) chmod(fq_save,FCMASK); /* back to readable */
-			}
-		}
-		flags.move = 0;
-	} else {
-not_recovered:
-		player_selection();
-		newgame();
-		wd_message();
-
-		flags.move = 0;
-		set_wear();
-		(void) pickup(1);
-	}
+	nethack_start_game(exact_username, wiz_error_flag);
 
 	moveloop();
 	exit(EXIT_SUCCESS);
@@ -284,14 +188,14 @@ static void process_options(int argc, char *argv[])
 			      }
 			  }
 			  if (pw && !strcmp(pw->pw_name,WIZARD)) {
-			      wizard = TRUE;
+			      enter_wizard_mode();
 			      break;
 			  }
 			}
 			/* otherwise fall thru to discover */
 			wiz_error_flag = TRUE;
 		case 'X':
-			discover = TRUE;
+			enter_discover_mode();
 			break;
 #ifdef NEWS
 		case 'n':
@@ -321,31 +225,31 @@ static void process_options(int argc, char *argv[])
 		case 'p': /* profession (role) */
 			if (argv[0][2]) {
 			    if ((i = str2role(&argv[0][2])) >= 0)
-			    	flags.initrole = i;
+			    	set_role(i);
 			} else if (argc > 1) {
 				argc--;
 				argv++;
 			    if ((i = str2role(argv[0])) >= 0)
-			    	flags.initrole = i;
+			    	set_role(i);
 			}
 			break;
 		case 'r': /* race */
 			if (argv[0][2]) {
 			    if ((i = str2race(&argv[0][2])) >= 0)
-			    	flags.initrace = i;
+			    	set_race(i);
 			} else if (argc > 1) {
 				argc--;
 				argv++;
 			    if ((i = str2race(argv[0])) >= 0)
-			    	flags.initrace = i;
+			    	set_race(i);
 			}
 			break;
 		case '@':
-			flags.randomall = 1;
+			set_random_player();
 			break;
 		default:
 			if ((i = str2role(&argv[0][1])) >= 0) {
-			    flags.initrole = i;
+			    set_role(i);
 				break;
 			}
 			/* else raw_printf("Unknown option: %s", *argv); */
@@ -450,17 +354,6 @@ void port_help(void)
 	display_file(PORT_HELP, TRUE);
 }
 #endif
-
-static void wd_message(void)
-{
-	if (wiz_error_flag) {
-		pline("Only user \"%s\" may access debug (wizard) mode.",
-			WIZARD);
-		pline("Entering discovery mode instead.");
-	} else
-	if (discover)
-		You("are in non-scoring discovery mode.");
-}
 
 /*
  * Add a slash to any name not ending in /. There must

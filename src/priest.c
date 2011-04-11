@@ -420,7 +420,7 @@ void priest_talk(struct monst *priest)
 		    else
 			u.ugold = 1L;
 		    priest->mgold -= u.ugold;
-		    flags.botl = 1;
+		    botl = 1;
 #else
 	if(!money_cnt(invent)) {
 	    if(coaligned && !strayed) {

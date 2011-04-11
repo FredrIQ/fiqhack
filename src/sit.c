@@ -12,7 +12,7 @@ void take_gold(void)
 	} else {
 		You("notice you have no gold!");
 		u.ugold = 0;
-		flags.botl = 1;
+		botl = 1;
 	}
 #else
         struct obj *otmp, *nobj;
@@ -28,7 +28,7 @@ void take_gold(void)
 		You_feel("a strange sensation.");
 	} else {
 		You("notice you have no money!");
-		flags.botl = 1;
+		botl = 1;
 	}
 #endif
 }
@@ -180,7 +180,7 @@ int dosit(void)
 			make_blinded(0L,TRUE);
 			make_sick(0L, (char *) 0, FALSE, SICK_ALL);
 			heal_legs();
-			flags.botl = 1;
+			botl = 1;
 			break;
 		    case 5:
 			take_gold();
