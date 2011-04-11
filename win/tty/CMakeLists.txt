@@ -4,7 +4,9 @@ set (NH_TTY_SRC
     getline.c 
     termcap.c
     topl.c
-    wintty.c)
+    wintty.c
+    ioctl.c
+    unixtty.c)
 
 if (WIN32)
     # untested and probably incomplete
@@ -16,9 +18,7 @@ else()
     set (NH_SYS_SRC
         ${NetHack_SOURCE_DIR}/sys/unix/unixmain.c
         ${NetHack_SOURCE_DIR}/sys/unix/unixunix.c
-        ${NetHack_SOURCE_DIR}/sys/unix/unixres.c
-        ${NetHack_SOURCE_DIR}/sys/share/ioctl.c
-        ${NetHack_SOURCE_DIR}/sys/share/unixtty.c)
+        ${NetHack_SOURCE_DIR}/sys/unix/unixres.c)
 endif()
 
 #include_directories (${NetHack_SOURCE_DIR}/include)
