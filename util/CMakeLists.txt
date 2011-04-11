@@ -73,7 +73,7 @@ add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/dgn_parser.c
 
 add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/dgn_scanner.c
                    COMMAND ${FLEX_EXECUTABLE}
-                   ARGS -o ${NetHack_BINARY_DIR}/util/dgn_scanner.c
+                   ARGS -o${NetHack_BINARY_DIR}/util/dgn_scanner.c
                         ${NetHack_SOURCE_DIR}/util/dgn_comp.l
                    DEPENDS ${NetHack_SOURCE_DIR}/util/dgn_comp.l)
 
@@ -88,7 +88,7 @@ add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_parser.c
 
 add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_scanner.c
                    COMMAND ${FLEX_EXECUTABLE}
-                   ARGS -o ${NetHack_BINARY_DIR}/util/lev_scanner.c
+                   ARGS -o${NetHack_BINARY_DIR}/util/lev_scanner.c
                         ${NetHack_SOURCE_DIR}/util/lev_comp.l
                    DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.l)
 #
