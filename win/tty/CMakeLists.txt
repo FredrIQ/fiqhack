@@ -11,14 +11,14 @@ set (NH_TTY_SRC
 if (WIN32)
     # untested and probably incomplete
     set (NH_SYS_SRC
-        ${NetHack_SOURCE_DIR}/sys/winnt/winnt.c
-        ${NetHack_SOURCE_DIR}/sys/winnt/nttty.c
+        sys/winnt/winnt.c
+        winnt/nttty.c
         )
 else()
     set (NH_SYS_SRC
-        ${NetHack_SOURCE_DIR}/sys/unix/unixmain.c
-        ${NetHack_SOURCE_DIR}/sys/unix/unixunix.c
-        ${NetHack_SOURCE_DIR}/sys/unix/unixres.c)
+        unix/unixmain.c
+        unix/unixunix.c
+        unix/unixres.c)
 endif()
 
 #include_directories (${NetHack_SOURCE_DIR}/include)
