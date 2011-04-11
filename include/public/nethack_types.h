@@ -18,7 +18,58 @@ typedef schar	aligntyp;	/* basic alignment type */
 #include "wintype.h"
 #include "coord.h"
 
-struct window_procs;
+struct window_procs {
+    const char *name;
+    unsigned long wincap;	/* window port capability options supported */
+    unsigned long wincap2;	/* additional window port capability options supported */
+    void (*win_init_nhwindows)(int *, char **);
+    void (*win_player_selection)(int,int,int,int,int);
+    void (*win_askname)(void);
+    void (*win_get_nh_event)(void);
+    void (*win_exit_nhwindows)(const char *);
+    void (*win_suspend_nhwindows)(const char *);
+    void (*win_resume_nhwindows)(void);
+    winid (*win_create_nhwindow)(int);
+    void (*win_clear_nhwindow)(winid);
+    void (*win_display_nhwindow)(winid, boolean);
+    void (*win_destroy_nhwindow)(winid);
+    void (*win_curs)(winid,int,int);
+    void (*win_putstr)(winid, int, const char *);
+    void (*win_display_file)(const char *, boolean);
+    void (*win_start_menu)(winid);
+    void (*win_add_menu)(winid,int,const ANY_P *,
+		char,char,int,const char *, boolean);
+    void (*win_end_menu)(winid, const char *);
+    int (*win_select_menu)(winid, int, MENU_ITEM_P **);
+    char (*win_message_menu)(char,int,const char *);
+    void (*win_update_inventory)(void);
+    void (*win_mark_synch)(void);
+    void (*win_wait_synch)(void);
+    void (*win_print_glyph)(winid,xchar,xchar,int);
+    void (*win_raw_print)(const char *);
+    void (*win_raw_print_bold)(const char *);
+    int (*win_nhgetch)(void);
+    int (*win_nh_poskey)(int *, int *, int *);
+    void (*win_nhbell)(void);
+    int (*win_doprev_message)(void);
+    char (*win_yn_function)(const char *, const char *, char);
+    void (*win_getlin)(const char *,char *);
+    int (*win_get_ext_cmd)(void);
+    void (*win_number_pad)(int);
+    void (*win_delay_output)(void);
+#ifdef CHANGE_COLOR
+    void (*win_change_color)(int,long,int);
+    char * (*win_get_color_string)(void);
+#endif
+
+    /* other defs that really should go away (they're tty specific) */
+    void (*win_start_screen)(void);
+    void (*win_end_screen)(void);
+
+    void (*win_outrip)(winid,int);
+    void (*win_preference_update)(const char *);
+};
+
 
 /*
  * Flags that are set each time the game is started.

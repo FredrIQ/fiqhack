@@ -13,7 +13,6 @@
 #endif
 
 #include "wintty.h"
-#include "winprocs.h"
 
 extern struct passwd *getpwuid(uid_t);
 extern struct passwd *getpwnam(const char *);
@@ -130,7 +129,7 @@ int main(int argc, char *argv[])
 	check_linux_console();
 #endif
 	initoptions();
-	init_nhwindows(&argc,argv);
+	tty_init_nhwindows(&argc,argv);
 	exact_username = whoami();
 #ifdef __linux__
 	init_linux_cons();
@@ -210,7 +209,7 @@ static void process_options(int argc, char *argv[])
 			  argv++;
 			  (void) strncpy(plname, argv[0], sizeof(plname)-1);
 			} else
-				raw_print("Player name expected after -u");
+				tty_raw_print("Player name expected after -u");
 			break;
 		case 'I':
 		case 'i':

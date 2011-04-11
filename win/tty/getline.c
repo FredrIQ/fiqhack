@@ -6,7 +6,6 @@
 
 #include "config.h"
 #include "nethack.h"
-#include "winprocs.h"
 
 #define NEWAUTOCOMP
 
@@ -158,7 +157,7 @@ static void hooked_tty_getlin(const char *query, char *bufp, getlin_hook_proc ho
 	}
 	ttyDisplay->toplin = 2;		/* nonempty, no --More-- required */
 	ttyDisplay->inread--;
-	clear_nhwindow(WIN_MESSAGE);	/* clean up after ourselves */
+	tty_clear_nhwindow(WIN_MESSAGE);	/* clean up after ourselves */
 }
 
 

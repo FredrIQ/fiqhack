@@ -4,7 +4,6 @@
 #include "config.h"
 #include "nethack.h"
 #include "color.h"
-#include "winprocs.h"
 
 #include "tcap.h"
 #include "wintty.h"
@@ -28,19 +27,19 @@ int tty_doprev_message(void)
     int i;
     if ((iflags.prevmsg_window != 's') && !ttyDisplay->inread) { /* not single */
         if(iflags.prevmsg_window == 'f') { /* full */
-            prevmsg_win = create_nhwindow(NHW_MENU);
-            putstr(prevmsg_win, 0, "Message History");
-            putstr(prevmsg_win, 0, "");
+            prevmsg_win = tty_create_nhwindow(NHW_MENU);
+            tty_putstr(prevmsg_win, 0, "Message History");
+            tty_putstr(prevmsg_win, 0, "");
             cw->maxcol = cw->maxrow;
             i = cw->maxcol;
             do {
                 if(cw->data[i] && strcmp(cw->data[i], "") )
-                    putstr(prevmsg_win, 0, cw->data[i]);
+                    tty_putstr(prevmsg_win, 0, cw->data[i]);
                 i = (i + 1) % cw->rows;
             } while (i != cw->maxcol);
-            putstr(prevmsg_win, 0, toplines);
-            display_nhwindow(prevmsg_win, TRUE);
-            destroy_nhwindow(prevmsg_win);
+            tty_putstr(prevmsg_win, 0, toplines);
+            tty_display_nhwindow(prevmsg_win, TRUE);
+            tty_destroy_nhwindow(prevmsg_win);
         } else if (iflags.prevmsg_window == 'c') {		/* combination */
             do {
                 morc = 0;
@@ -59,41 +58,41 @@ int tty_doprev_message(void)
                     if (!cw->data[cw->maxcol])
                         cw->maxcol = cw->maxrow;
                 } else {
-                    prevmsg_win = create_nhwindow(NHW_MENU);
-                    putstr(prevmsg_win, 0, "Message History");
-                    putstr(prevmsg_win, 0, "");
+                    prevmsg_win = tty_create_nhwindow(NHW_MENU);
+                    tty_putstr(prevmsg_win, 0, "Message History");
+                    tty_putstr(prevmsg_win, 0, "");
                     cw->maxcol = cw->maxrow;
                     i = cw->maxcol;
                     do {
                         if(cw->data[i] && strcmp(cw->data[i], "") )
-                            putstr(prevmsg_win, 0, cw->data[i]);
+                            tty_putstr(prevmsg_win, 0, cw->data[i]);
                         i = (i + 1) % cw->rows;
                     } while (i != cw->maxcol);
-                    putstr(prevmsg_win, 0, toplines);
-                    display_nhwindow(prevmsg_win, TRUE);
-                    destroy_nhwindow(prevmsg_win);
+                    tty_putstr(prevmsg_win, 0, toplines);
+                    tty_display_nhwindow(prevmsg_win, TRUE);
+                    tty_destroy_nhwindow(prevmsg_win);
                 }
 
             } while (morc == C('p'));
             ttyDisplay->dismiss_more = 0;
         } else { /* reversed */
             morc = 0;
-            prevmsg_win = create_nhwindow(NHW_MENU);
-            putstr(prevmsg_win, 0, "Message History");
-            putstr(prevmsg_win, 0, "");
-            putstr(prevmsg_win, 0, toplines);
+            prevmsg_win = tty_create_nhwindow(NHW_MENU);
+            tty_putstr(prevmsg_win, 0, "Message History");
+            tty_putstr(prevmsg_win, 0, "");
+            tty_putstr(prevmsg_win, 0, toplines);
             cw->maxcol=cw->maxrow-1;
             if(cw->maxcol < 0) cw->maxcol = cw->rows-1;
             do {
-                putstr(prevmsg_win, 0, cw->data[cw->maxcol]);
+                tty_putstr(prevmsg_win, 0, cw->data[cw->maxcol]);
                 cw->maxcol--;
                 if (cw->maxcol < 0) cw->maxcol = cw->rows-1;
                 if (!cw->data[cw->maxcol])
                     cw->maxcol = cw->maxrow;
             } while (cw->maxcol != cw->maxrow);
 
-            display_nhwindow(prevmsg_win, TRUE);
-            destroy_nhwindow(prevmsg_win);
+            tty_display_nhwindow(prevmsg_win, TRUE);
+            tty_destroy_nhwindow(prevmsg_win);
             cw->maxcol = cw->maxrow;
             ttyDisplay->dismiss_more = 0;
         }

@@ -10,10 +10,10 @@
 #include "config.h"
 #include "nethack.h"
 #include "dlb.h"
-#include "winprocs.h"
 #include "color.h"
 #include "patchlevel.h"
 #include "role.h"
+#include "wincap.h"
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -280,8 +280,8 @@ give_up:	/* Quit */
 	    	tty_clear_nhwindow(BASE_WINDOW);
 		tty_putstr(BASE_WINDOW, 0, "Choosing Character's Role");
 		/* Prompt for a role */
-		win = create_nhwindow(NHW_MENU);
-		start_menu(win);
+		win = tty_create_nhwindow(NHW_MENU);
+		tty_start_menu(win);
 		any.a_void = 0;         /* zero out all bits */
 		for (i = 0; roles[i].name.m; i++) {
 		    if (ok_role(i, initrace, initgend,
@@ -302,7 +302,7 @@ give_up:	/* Quit */
 				} else 
 					strcpy(rolenamebuf, roles[i].name.m);
 			}	
-			add_menu(win, NO_GLYPH, &any, thisch,
+			tty_add_menu(win, NO_GLYPH, &any, thisch,
 			    0, ATR_NONE, an(rolenamebuf), MENU_UNSELECTED);
 			lastch = thisch;
 		    }
@@ -311,15 +311,15 @@ give_up:	/* Quit */
 				    initalign, PICK_RANDOM)+1;
 		if (any.a_int == 0)	/* must be non-zero */
 		    any.a_int = randrole()+1;
-		add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
+		tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				"Random", MENU_UNSELECTED);
 		any.a_int = i+1;	/* must be non-zero */
-		add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
+		tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				"Quit", MENU_UNSELECTED);
 		sprintf(pbuf, "Pick a role for your %s", plbuf);
-		end_menu(win, pbuf);
-		n = select_menu(win, PICK_ONE, &selected);
-		destroy_nhwindow(win);
+		tty_end_menu(win, pbuf);
+		n = tty_select_menu(win, PICK_ONE, &selected);
+		tty_destroy_nhwindow(win);
 
 		/* Process the choice */
 		if (n != 1 || selected[0].item.a_int == any.a_int)
@@ -368,29 +368,29 @@ give_up:	/* Quit */
 		if (n > 1) {
 		    tty_clear_nhwindow(BASE_WINDOW);
 		    tty_putstr(BASE_WINDOW, 0, "Choosing Race");
-		    win = create_nhwindow(NHW_MENU);
-		    start_menu(win);
+		    win = tty_create_nhwindow(NHW_MENU);
+		    tty_start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
 		    for (i = 0; races[i].noun; i++)
 			if (ok_race(initrole, i, initgend,
 							initalign)) {
 			    any.a_int = i+1;	/* must be non-zero */
-			    add_menu(win, NO_GLYPH, &any, races[i].noun[0],
+			    tty_add_menu(win, NO_GLYPH, &any, races[i].noun[0],
 				0, ATR_NONE, races[i].noun, MENU_UNSELECTED);
 			}
 		    any.a_int = pick_race(initrole, initgend,
 					initalign, PICK_RANDOM)+1;
 		    if (any.a_int == 0)	/* must be non-zero */
 			any.a_int = randrace(initrole)+1;
-		    add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
+		    tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
 		    any.a_int = i+1;	/* must be non-zero */
-		    add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
+		    tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
 		    sprintf(pbuf, "Pick the race of your %s", plbuf);
-		    end_menu(win, pbuf);
-		    n = select_menu(win, PICK_ONE, &selected);
-		    destroy_nhwindow(win);
+		    tty_end_menu(win, pbuf);
+		    n = tty_select_menu(win, PICK_ONE, &selected);
+		    tty_destroy_nhwindow(win);
 		    if (n != 1 || selected[0].item.a_int == any.a_int)
 			goto give_up;		/* Selected quit */
 
@@ -440,29 +440,29 @@ give_up:	/* Quit */
 		if (n > 1) {
 		    tty_clear_nhwindow(BASE_WINDOW);
 		    tty_putstr(BASE_WINDOW, 0, "Choosing Gender");
-		    win = create_nhwindow(NHW_MENU);
-		    start_menu(win);
+		    win = tty_create_nhwindow(NHW_MENU);
+		    tty_start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
 		    for (i = 0; i < ROLE_GENDERS; i++)
 			if (ok_gend(initrole, initrace, i,
 							    initalign)) {
 			    any.a_int = i+1;
-			    add_menu(win, NO_GLYPH, &any, genders[i].adj[0],
+			    tty_add_menu(win, NO_GLYPH, &any, genders[i].adj[0],
 				0, ATR_NONE, genders[i].adj, MENU_UNSELECTED);
 			}
 		    any.a_int = pick_gend(initrole, initrace,
 					    initalign, PICK_RANDOM)+1;
 		    if (any.a_int == 0)	/* must be non-zero */
 			any.a_int = randgend(initrole, initrace)+1;
-		    add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
+		    tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
 		    any.a_int = i+1;	/* must be non-zero */
-		    add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
+		    tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
 		    sprintf(pbuf, "Pick the gender of your %s", plbuf);
-		    end_menu(win, pbuf);
-		    n = select_menu(win, PICK_ONE, &selected);
-		    destroy_nhwindow(win);
+		    tty_end_menu(win, pbuf);
+		    n = tty_select_menu(win, PICK_ONE, &selected);
+		    tty_destroy_nhwindow(win);
 		    if (n != 1 || selected[0].item.a_int == any.a_int)
 			goto give_up;		/* Selected quit */
 
@@ -511,29 +511,29 @@ give_up:	/* Quit */
 		if (n > 1) {
 		    tty_clear_nhwindow(BASE_WINDOW);
 		    tty_putstr(BASE_WINDOW, 0, "Choosing Alignment");
-		    win = create_nhwindow(NHW_MENU);
-		    start_menu(win);
+		    win = tty_create_nhwindow(NHW_MENU);
+		    tty_start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
 		    for (i = 0; i < ROLE_ALIGNS; i++)
 			if (ok_align(initrole, initrace,
 							initgend, i)) {
 			    any.a_int = i+1;
-			    add_menu(win, NO_GLYPH, &any, aligns[i].adj[0],
+			    tty_add_menu(win, NO_GLYPH, &any, aligns[i].adj[0],
 				 0, ATR_NONE, aligns[i].adj, MENU_UNSELECTED);
 			}
 		    any.a_int = pick_align(initrole, initrace,
 					    initgend, PICK_RANDOM)+1;
 		    if (any.a_int == 0)	/* must be non-zero */
 			any.a_int = randalign(initrole, initrace)+1;
-		    add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
+		    tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
 		    any.a_int = i+1;	/* must be non-zero */
-		    add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
+		    tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
 		    sprintf(pbuf, "Pick the alignment of your %s", plbuf);
-		    end_menu(win, pbuf);
-		    n = select_menu(win, PICK_ONE, &selected);
-		    destroy_nhwindow(win);
+		    tty_end_menu(win, pbuf);
+		    n = tty_select_menu(win, PICK_ONE, &selected);
+		    tty_destroy_nhwindow(win);
 		    if (n != 1 || selected[0].item.a_int == any.a_int)
 			goto give_up;		/* Selected quit */
 

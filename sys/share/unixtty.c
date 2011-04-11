@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "nethack.h"
-#include "winprocs.h"
 #include "wintty.h"
 
 # include <termios.h>
@@ -116,8 +115,8 @@ void gettty(void)
 /* reset terminal to original state */
 void settty(const char *s)
 {
-	end_screen();
-	if(s) raw_print(s);
+	tty_end_screen();
+	if(s) tty_raw_print(s);
 	if(STTY(&inittyb) < 0 || STTY2(&inittyb2) < 0)
 		perror("NetHack (settty)");
 	iflags.echo = (inittyb.echoflgs & ECHO) ? ON : OFF;
@@ -172,31 +171,19 @@ void setftty(void)
 	}
 
 	if(change) setctty();
-	start_screen();
+	tty_start_screen();
 }
 
 void intron(void)		/* enable kbd interupts if enabled when game started */
 {
-#ifdef TTY_GRAPHICS
-	/* Ugly hack to keep from changing tty modes for non-tty games -dlc */
-	if (!strcmp(windowprocs.name, "tty") &&
-	    intr_char != nonesuch && curttyb2.intr_sym != '\003') {
-	    curttyb2.intr_sym = '\003';
-	    setctty();
-	}
-#endif
+	curttyb2.intr_sym = '\003';
+	setctty();
 }
 
 void introff(void)		/* disable kbd interrupts if required*/
 {
-#ifdef TTY_GRAPHICS
-	/* Ugly hack to keep from changing tty modes for non-tty games -dlc */
-	if (!strcmp(windowprocs.name, "tty") &&
-	   curttyb2.intr_sym != nonesuch) {
-	    curttyb2.intr_sym = nonesuch;
-	    setctty();
-	}
-#endif
+	curttyb2.intr_sym = nonesuch;
+	setctty();
 }
 
 #ifdef __linux__		/* via Jesse Thilo and Ben Gertzfield */
@@ -213,7 +200,7 @@ void linux_mapon(void)
 {
 # ifdef TTY_GRAPHICS
 	int count = 0;
-	if (!strcmp(windowprocs.name, "tty") && linux_flag_console) {
+	if (linux_flag_console) {
 		count = write(1, "\033(B", 3);
 	}
 # endif
@@ -223,7 +210,7 @@ void linux_mapoff(void)
 {
 # ifdef TTY_GRAPHICS
 	int count = 0;
-	if (!strcmp(windowprocs.name, "tty") && linux_flag_console) {
+	if (linux_flag_console) {
 		count = write(1, "\033(U", 3);
 	}
 # endif
@@ -241,7 +228,7 @@ void check_linux_console(void)
 void init_linux_cons(void)
 {
 # ifdef TTY_GRAPHICS
-	if (!strcmp(windowprocs.name, "tty") && linux_flag_console) {
+	if (linux_flag_console) {
 		atexit(linux_mapon);
 		linux_mapoff();
 #  ifdef TEXTCOLOR

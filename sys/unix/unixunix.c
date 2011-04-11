@@ -12,7 +12,6 @@
 #include <signal.h>
 
 #include "wintty.h"
-#include "winprocs.h"
 
 #ifdef __linux__
 extern void linux_mapon(void);
@@ -89,7 +88,7 @@ void getlock(void)
 
 	/* we ignore QUIT and INT at this point */
 	if (!lock_file(HLOCK, LOCKPREFIX, 10)) {
-		wait_synch();
+		tty_wait_synch();
 		error("%s", "");
 	}
 
