@@ -26,7 +26,7 @@ endif()
 include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
-add_definitions (-Wall)
+add_definitions (-Wall -g3)
 link_directories (${NetHack_BINARY_DIR}/src)
 add_executable (nethack_tty ${NH_TTY_SRC} ${NH_SYS_SRC} )
 set_target_properties(nethack_tty PROPERTIES OUTPUT_NAME nethack )

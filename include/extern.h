@@ -146,6 +146,7 @@ extern int isok(int,int);
 extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *);
 extern const char *click_to_cmd(int,int,int);
 extern void sanity_check(void);
+extern char yn_function(const char *,const char *, char);
 
 /* ### dbridge.c ### */
 

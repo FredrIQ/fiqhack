@@ -258,7 +258,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    do {
 		pick4u = lowc(readchar());
 		if (index(quitchars, pick4u)) pick4u = 'y';
-	    } while(!index(ynqchars, pick4u));
+	    } while(!index("ynq", pick4u));
 	    if ((int)strlen(prompt) + 1 < CO) {
 		/* Echo choice and move back down line */
 		tty_putsym(BASE_WINDOW, (int)strlen(prompt)+1, echoline, pick4u);

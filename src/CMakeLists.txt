@@ -35,7 +35,7 @@ include_directories (
     ${NetHack_BINARY_DIR}/include )
 
 #add_definitions ()
-add_definitions (-Wall -fvisibility=hidden)
+add_definitions (-Wall -fvisibility=hidden -g3)
 add_library(nethack SHARED ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
 
 add_dependencies (nethack makedefs_headers)

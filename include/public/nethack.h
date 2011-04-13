@@ -32,7 +32,6 @@ extern EXPORT const char *hname;
 extern EXPORT int hackpid;
 
 extern EXPORT const char quitchars[];
-extern EXPORT const char ynqchars[];
 extern EXPORT long yn_number;
 
 extern EXPORT struct instance_flags iflags;
@@ -75,7 +74,7 @@ extern EXPORT char readchar(void);
 extern EXPORT char pgetchar(void);
 extern EXPORT void savech(char);
 #endif
-extern EXPORT char yn_function(const char *, const char *, char);
+// extern EXPORT char yn_function(const char *, const char *, char);
 extern EXPORT int extcmd_via_menu(void);
 
 /* display.c */
