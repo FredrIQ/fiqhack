@@ -136,15 +136,9 @@ int main(int argc, char *argv[])
 #endif
 
 	process_options(argc, argv);	/* command line options */
+	
 
-#if defined(UNIX) && defined(TERMLIB)
-	/* detect whether a "vt" terminal can handle alternate charsets */
-	if ((opts = nh_getenv("TERM")) &&
-	    !strncmpi(opts, "vt", 2) && AS && AE &&
-	    index(AS, '\016') && index(AE, '\017')) {
-		switch_graphics(DEC_GRAPHICS);
-	}
-#endif
+
 	nethack_start_game(exact_username, wiz_error_flag);
 
 	moveloop();

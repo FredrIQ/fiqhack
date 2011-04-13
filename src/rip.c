@@ -7,11 +7,6 @@ static void center(int, char *);
 
 extern const char * const killed_by_prefix[];	/* from topten.c */
 
-#if defined(TTY_GRAPHICS)
-# define TEXT_TOMBSTONE
-#endif
-
-#ifdef TEXT_TOMBSTONE
 
 /* A normal tombstone for end of game display. */
 static const char *rip_txt[] = {
@@ -134,7 +129,5 @@ void genl_outrip(winid tmpwin, int how)
 	free((void *)rip);
 	rip = 0;
 }
-
-#endif	/* TEXT_TOMBSTONE */
 
 /*rip.c*/

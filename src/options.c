@@ -54,11 +54,7 @@ static struct Bool_Opt
 	{"DECgraphics", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
 	{"eight_bit_tty", &iflags.wc_eight_bit_input, FALSE, SET_IN_GAME},	/*WC*/
-#ifdef TTY_GRAPHICS
 	{"extmenu", &iflags.extmenu, FALSE, SET_IN_GAME},
-#else
-	{"extmenu", (boolean *)0, FALSE, SET_IN_FILE},
-#endif
 #ifdef OPT_DISPMAP
 	{"fast_map", &flags.fast_map, TRUE, SET_IN_GAME},
 #else
@@ -202,11 +198,7 @@ static struct Comp_Opt
 						MAXMCLASSES, SET_IN_FILE },
 	{ "msghistory", "number of top line messages to save",
 						5, DISP_IN_GAME },
-# ifdef TTY_GRAPHICS
-	{"msg_window", "the type of message window required",1, SET_IN_GAME},
-# else
-	{"msg_window", "the type of message window required", 1, SET_IN_FILE},
-# endif
+	{ "msg_window", "the type of message window required",1, SET_IN_GAME},
 	{ "name",     "your character's name (e.g., name:Merlin-W)",
 						PL_NSIZ, DISP_IN_GAME },
 	{ "number_pad", "use the number pad", 1, SET_IN_GAME},
@@ -411,9 +403,7 @@ void initoptions(void)
 	flags.end_around = 2;
 	iflags.runmode = RUN_LEAP;
 	iflags.msg_history = 20;
-#ifdef TTY_GRAPHICS
 	iflags.prevmsg_window = 's';
-#endif
 	iflags.menu_headings = ATR_INVERSE;
 
 	/* Use negative indices to indicate not yet selected */
@@ -444,22 +434,6 @@ void initoptions(void)
 	for (i = 0; i < NUM_DISCLOSURE_OPTIONS; i++)
 		flags.end_disclose[i] = DISCLOSE_PROMPT_DEFAULT_NO;
 	switch_graphics(ASCII_GRAPHICS);	/* set default characters */
-#if defined(UNIX) && defined(TTY_GRAPHICS)
-	/*
-	 * Set defaults for some options depending on what we can
-	 * detect about the environment's capabilities.
-	 * This has to be done after the global initialization above
-	 * and before reading user-specific initialization via
-	 * config file/environment variable below.
-	 */
-	/* this detects the IBM-compatible console on most 386 boxes */
-	if ((opts = nh_getenv("TERM")) && !strncmp(opts, "AT", 2)) {
-		switch_graphics(IBM_GRAPHICS);
-# ifdef TEXTCOLOR
-		iflags.use_color = TRUE;
-# endif
-	}
-#endif /* UNIX && TTY_GRAPHICS */
 
 	flags.menu_style = MENU_FULL;
 

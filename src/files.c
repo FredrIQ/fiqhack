@@ -4,10 +4,6 @@
 #include "hack.h"
 #include "dlb.h"
 
-// #ifdef TTY_GRAPHICS
-// #include "wintty.h" /* more() */
-// #endif
-
 #include <ctype.h>
 #include <fcntl.h>
 

@@ -159,6 +159,7 @@ static void bail(const char *mesg)
 void tty_init_nhwindows(int* argcp, char** argv)
 {
     int wid, hgt;
+    char *opts;
 
     /*
      *  Remember tty modes, to be restored on exit.
@@ -207,6 +208,26 @@ void tty_init_nhwindows(int* argcp, char** argv)
     tty_putstr(BASE_WINDOW, 0, COPYRIGHT_BANNER_C);
     tty_putstr(BASE_WINDOW, 0, "");
     tty_display_nhwindow(BASE_WINDOW, FALSE);
+    
+    
+    /*
+	* Set defaults for some options depending on what we can
+	* detect about the environment's capabilities.
+	* This has to be done after the global initialization above
+	* and before reading user-specific initialization via
+	* config file/environment variable below.
+	*/
+    /* this detects the IBM-compatible console on most 386 boxes */
+    if ((opts = nh_getenv("TERM")) && !strncmp(opts, "AT", 2)) {
+	    switch_graphics(IBM_GRAPHICS);
+	    iflags.wc_color = TRUE;
+    }
+    /* detect whether a "vt" terminal can handle alternate charsets */
+    if ((opts = nh_getenv("TERM")) &&
+	!strncmpi(opts, "vt", 2) && AS && AE &&
+	index(AS, '\016') && index(AE, '\017')) {
+	    switch_graphics(DEC_GRAPHICS);
+    }
 }
 
 
