@@ -22,9 +22,6 @@
 
 extern EXPORT struct sinfo program_state;
 
-#if defined(UNIX)
-extern EXPORT int locknum;
-#endif
 extern EXPORT char lock[];
 
 
@@ -59,7 +56,7 @@ extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.
 
 /* allmain.c */
 extern EXPORT void nethack_init(struct window_procs *);
-extern EXPORT void nethack_start_game(boolean,boolean);
+extern EXPORT void nethack_start_game(boolean,boolean,void(*)(void));
 extern EXPORT void moveloop(void);
 
 /* alloc.c, for util progs too */

@@ -28,8 +28,9 @@ extern void init_linux_cons(void);
 #endif
 
 static boolean wiz_error_flag = FALSE;
+int locknum = 0;		/* max num of simultaneous users */
 
-int main(int argc, char *argv[])
+int EXPORT main(int argc, char *argv[])
 {
 #ifdef CHDIR
 	char *dir;
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
 	
 
 
-	nethack_start_game(exact_username, wiz_error_flag);
+	nethack_start_game(exact_username, wiz_error_flag, getlock);
 
 	moveloop();
 	exit(EXIT_SUCCESS);

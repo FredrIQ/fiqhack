@@ -9,9 +9,6 @@ int (*occupation)(void);
 /* from xxxmain.c */
 const char *hname = 0;		/* name of the game (argv[0] of main) */
 int hackpid = 0;		/* current process id */
-#if defined(UNIX)
-int locknum = 0;		/* max num of simultaneous users */
-#endif
 
 int bases[MAXOCLASSES] = DUMMY;
 

@@ -82,7 +82,6 @@ void getlock(void)
 	 * works
 	 * also incidentally prevents development of any hack-o-matic programs
 	 */
-	/* added check for window-system type -dlc */
 	if (!isatty(0))
 	    error("You must play from a terminal.");
 
@@ -110,7 +109,7 @@ void getlock(void)
 			}
 
 			if(veryold(fd) /* closes fd if true */
-							&& eraseoldlocks())
+					&& eraseoldlocks())
 				goto gotlock;
 			(void) close(fd);
 		} while(i < locknum);

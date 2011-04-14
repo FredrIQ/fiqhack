@@ -1169,31 +1169,6 @@ extern char *dowhatdoes_core(char, char *);
 extern int dohelp(void);
 extern int dohistory(void);
 
-/* ### pcmain.c ### */
-
-#if defined(WIN32)
-# ifdef CHDIR
-extern void chdirx(char *,boolean);
-# endif /* CHDIR */
-#endif /* WIN32 */
-
-/* ### pcsys.c ### */
-
-#if defined(WIN32)
-extern void flushout(void);
-extern int dosh(void);
-extern void append_slash(char *);
-extern void getreturn(const char *);
-extern void msmsg(const char *,...);
-extern FILE *fopenp(const char *,const char *);
-#endif /* WIN32 */
-
-/* ### pcunix.c ### */
-
-#if defined(PC_LOCKING)
-extern void getlock(void);
-#endif
-
 /* ### pickup.c ### */
 
 #ifdef GOLDOBJ
@@ -1703,23 +1678,6 @@ extern int passive(struct monst *,boolean,int,uchar);
 extern void passive_obj(struct monst *,struct obj *,struct attack *);
 extern void stumble_onto_mimic(struct monst *);
 extern int flash_hits_mon(struct monst *,struct obj *);
-
-/* ### unixmain.c ### */
-
-#ifdef UNIX
-# ifdef PORT_HELP
-extern void port_help(void);
-# endif
-#endif /* UNIX */
-
-/* ### unixunix.c ### */
-
-#ifdef UNIX
-extern void getlock(void);
-# if defined(TIMED_DELAY) && !defined(msleep) && defined(SYSV)
-extern void msleep(unsigned);
-# endif
-#endif /* UNIX */
 
 /* ### vault.c ### */
 

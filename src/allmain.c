@@ -31,7 +31,8 @@ void nethack_init(struct window_procs *procs)
 }
 
 
-void nethack_start_game(boolean exact_username, boolean wiz_error_flag)
+void nethack_start_game(boolean exact_username, boolean wiz_error_flag,
+			void (*getlock)(void))
 {
 	int fd;
 	/*
@@ -67,13 +68,9 @@ void nethack_start_game(boolean exact_username, boolean wiz_error_flag)
 		 */
 		(void) signal(SIGQUIT,SIG_IGN);
 		(void) signal(SIGINT,SIG_IGN);
-		if(!locknum)
-			sprintf(lock, "%d%s", (int)getuid(), plname);
-		getlock();
-	} else {
-		sprintf(lock, "%d%s", (int)getuid(), plname);
-		getlock();
 	}
+	sprintf(lock, "%d%s", (int)getuid(), plname);
+	getlock();
 
 	dlb_init();	/* must be before newgame() */
 

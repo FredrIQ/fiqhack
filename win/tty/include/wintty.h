@@ -204,7 +204,9 @@ extern void introff(void);
 extern void tty_start_screen(void);
 extern void tty_end_screen(void);
 
+extern int locknum;
 
+extern void getlock(void);
 
 /* ioctl.c */
 #ifdef UNIX
