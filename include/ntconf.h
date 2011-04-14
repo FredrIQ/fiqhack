@@ -136,11 +136,6 @@ extern void load_keyboard_handler(void);
 #define ALLOCA_HACK	/* used in util/panic.c */
 #endif
 
-#ifndef REDO
-#undef	Getchar
-#define Getchar nhgetch
-#endif
-
 #ifdef _MSC_VER
 #pragma warning(disable:4761)	/* integral size mismatch in arg; conv supp*/
 #ifdef YYPREFIX

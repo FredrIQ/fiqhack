@@ -129,9 +129,6 @@ extern const char *rank_of(int, short, boolean);
 
 extern void reset_occupations(void);
 extern void set_occupation(int (*)(void),const char *,int);
-#ifdef REDO
-extern void pushch(char);
-#endif
 extern void add_debug_extended_commands(void);
 extern void rhack(char *);
 extern int doextlist(void);
@@ -1069,25 +1066,6 @@ extern boolean munstone(struct monst *,boolean);
 
 extern void awaken_soldiers(void);
 extern int do_play_instrument(struct obj *);
-
-/* ### nhlan.c ### */
-#ifdef LAN_FEATURES
-extern void init_lan_features(void);
-extern char *lan_username(void);
-#endif
-
-/* ### nttty.c ### */
-
-#ifdef WIN32CON
-extern void get_scr_size(void);
-extern int nttty_kbhit(void);
-extern void nttty_open(void);
-extern void nttty_rubout(void);
-extern int tgetch(void);
-extern int ntposkey(int *, int *, int *);
-extern void set_output_mode(int);
-extern void synch_cursor(void);
-#endif
 
 /* ### o_init.c ### */
 

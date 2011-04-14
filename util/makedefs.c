@@ -461,9 +461,6 @@ static const char *build_opts[] = {
 #ifdef NEWS
 		"news file",
 #endif
-#ifdef REDO
-		"redo command",
-#endif
 #ifdef REINCARNATION
 		"rogue level",
 #endif

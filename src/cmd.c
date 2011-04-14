@@ -122,65 +122,6 @@ void set_occupation(int (*fn)(void), const char *txt, int xtime)
 	return;
 }
 
-#ifdef REDO
-
-static char popch(void);
-
-/* Provide a means to redo the last command.  The flag `in_doagain' is set
- * to true while redoing the command.  This flag is tested in commands that
- * require additional input (like `throw' which requires a thing and a
- * direction), and the input prompt is not shown.  Also, while in_doagain is
- * TRUE, no keystrokes can be saved into the saveq.
- */
-#define BSIZE 20
-static char pushq[BSIZE], saveq[BSIZE];
-static int phead, ptail, shead, stail;
-
-static char popch(void) {
-	/* If occupied, return '\0', letting tgetch know a character should
-	 * be read from the keyboard.  If the character read is not the
-	 * ABORT character (as checked in pcmain.c), that character will be
-	 * pushed back on the pushq.
-	 */
-	if (occupation) return '\0';
-	if (in_doagain) return (char)((shead != stail) ? saveq[stail++] : '\0');
-	else		return (char)((phead != ptail) ? pushq[ptail++] : '\0');
-}
-
-char pgetchar(void)
-{		/* curtesy of aeb@cwi.nl */
-	int ch;
-
-	if(!(ch = popch()))
-		ch = nhgetch();
-	return (char)ch;
-}
-
-/* A ch == 0 resets the pushq */
-void pushch(char ch)
-{
-	if (!ch)
-		phead = ptail = 0;
-	if (phead < BSIZE)
-		pushq[phead++] = ch;
-	return;
-}
-
-/* A ch == 0 resets the saveq.	Only save keystrokes when not
- * replaying a previous command.
- */
-void savech(char ch)
-{
-	if (!in_doagain) {
-		if (!ch)
-			phead = ptail = shead = stail = 0;
-		else if (shead < BSIZE)
-			saveq[shead++] = ch;
-	}
-	return;
-}
-#endif /* REDO */
-
 
 static int doextcmd(void) /* here after # - now read a full-word command */
 {
@@ -1587,19 +1528,8 @@ void rhack(char *cmd)
 		flags.move = FALSE;
 		return;
 	}
-#ifdef REDO
-	if (*cmd == DOAGAIN && !in_doagain && saveq[0]) {
-		in_doagain = TRUE;
-		stail = 0;
-		rhack((char *)0);	/* read and execute command */
-		in_doagain = FALSE;
-		return;
-	}
-	/* Special case of *cmd == ' ' handled better below */
-	if(!*cmd || *cmd == (char)0377)
-#else
+	
 	if(!*cmd || *cmd == (char)0377 || (!flags.rest_on_space && *cmd == ' '))
-#endif
 	{
 		nhbell();
 		flags.move = FALSE;
@@ -1840,16 +1770,8 @@ int getdir(const char *s)
 {
 	char dirsym;
 
-#ifdef REDO
-	if(in_doagain || *readchar_queue)
-	    dirsym = readchar();
-	else
-#endif
-	    dirsym = yn_function ((s && *s != '^') ? s : "In what direction?",
+	dirsym = yn_function ((s && *s != '^') ? s : "In what direction?",
 					(char *)0, '\0');
-#ifdef REDO
-	savech(dirsym);
-#endif
 	if(dirsym == '.' || dirsym == 's')
 		u.dx = u.dy = u.dz = 0;
 	else if(!movecmd(dirsym) && !u.dz) {
@@ -2089,14 +2011,6 @@ static char *parse(void)
 	if (foo == '\033') {   /* esc cancels count (TH) */
 	    clear_nhwindow(WIN_MESSAGE);
 	    multi = last_multi = 0;
-# ifdef REDO
-	} else if (foo == DOAGAIN || in_doagain) {
-	    multi = last_multi;
-	} else {
-	    last_multi = multi;
-	    savech(0);	/* reset input queue */
-	    savech((char)foo);
-# endif
 	}
 
 	if (multi) {
@@ -2110,9 +2024,6 @@ static char *parse(void)
 	if (foo == 'g' || foo == 'G' || foo == 'm' || foo == 'M' ||
 	    foo == 'F' || (iflags.num_pad && (foo == '5' || foo == '-'))) {
 	    foo = readchar();
-#ifdef REDO
-	    savech((char)foo);
-#endif
 	    in_line[1] = foo;
 	    in_line[2] = 0;
 	}
@@ -2144,11 +2055,7 @@ char readchar(void)
 	if ( *readchar_queue )
 	    sym = *readchar_queue++;
 	else
-#ifdef REDO
-	    sym = in_doagain ? Getchar() : nh_poskey(&x, &y, &mod);
-#else
-	    sym = Getchar();
-#endif
+	    sym = nhgetch();
 
 #ifdef UNIX
 # ifdef NR_OF_EOFS
@@ -2161,7 +2068,7 @@ char readchar(void)
 	   */
 	    do {
 		clearerr(stdin);	/* omit if clearerr is undefined */
-		sym = Getchar();
+		sym = nhgetch();
 	    } while (--cnt && sym == EOF);
 	}
 # endif /* NR_OF_EOFS */

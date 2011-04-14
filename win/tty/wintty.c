@@ -2229,12 +2229,12 @@ int tty_nhgetch(void)
     if (WIN_MESSAGE != WIN_ERR && wins[WIN_MESSAGE])
 	    wins[WIN_MESSAGE]->flags &= ~WIN_STOP;
 #ifdef UNIX
-    i = ((++nesting == 1) ? tgetch() :
+    i = ((++nesting == 1) ? getchar() :
 	 (read(fileno(stdin), (void *)&nestbuf,1) == 1 ? (int)nestbuf :
 								EOF));
     --nesting;
 #else
-    i = tgetch();
+    i = getchar();
 #endif
     if (!i) i = '\033'; /* map NUL to ESC since nethack doesn't expect NUL */
     if (ttyDisplay && ttyDisplay->toplin == 1)

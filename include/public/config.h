@@ -120,13 +120,6 @@
 #define TOURIST		/* Tourist players with cameras and Hawaiian shirts */
 /* difficulty */
 #define ELBERETH	/* Engraving the E-word repels monsters */
-/* I/O */
-#define REDO		/* support for redoing last command - DGK */
-
-
-#ifdef REDO
-# define DOAGAIN '\001' /* ^A, the "redo" key used in cmd.c and getline.c */
-#endif
 
 /* #define SCORE_ON_BOTL */	/* added by Gary Erickson (erickson@ucivax) */
 

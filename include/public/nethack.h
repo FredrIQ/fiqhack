@@ -33,10 +33,6 @@ extern EXPORT long yn_number;
 
 extern EXPORT struct instance_flags iflags;
 
-#ifdef REDO
-extern EXPORT int in_doagain;
-#endif
-
 extern EXPORT char plname[PL_NSIZ];
 
 extern EXPORT const char ynchars[];
@@ -67,11 +63,6 @@ extern EXPORT void bot(void);
 
 /* cmd.c */
 extern EXPORT char readchar(void);
-#ifdef REDO
-extern EXPORT char pgetchar(void);
-extern EXPORT void savech(char);
-#endif
-// extern EXPORT char yn_function(const char *, const char *, char);
 extern EXPORT int extcmd_via_menu(void);
 
 /* display.c */
