@@ -13,7 +13,16 @@
 #define UNIX		/* delete if no fork(), exec() available */
 
 
-#include "config1.h"	/* should auto-detect WIN32 */
+#ifdef WIN32
+# undef UNIX
+# define STRNCMPI
+# define STRCMPI
+#endif
+
+#if defined(__linux__) && defined(__GNUC__) && !defined(_GNU_SOURCE)
+/* ensure _GNU_SOURCE is defined before including any system headers */
+# define _GNU_SOURCE
+#endif
 
 
 /* Windowing systems...
@@ -43,7 +52,7 @@
  */
 
 #ifndef WIZARD		/* allow for compile-time or Makefile changes */
-# define WIZARD  "wizard" /* the person allowed to use the -D option */
+# define WIZARD  "daniel" /* the person allowed to use the -D option */
 #endif
 
 #define LOGFILE "logfile"	/* larger file for debugging purposes */
