@@ -23,19 +23,11 @@
 extern EXPORT struct sinfo program_state;
 
 extern EXPORT char lock[];
-
-
-extern EXPORT const char *hname;
 extern EXPORT int hackpid;
 
-extern EXPORT const char quitchars[];
 extern EXPORT long yn_number;
 
 extern EXPORT struct instance_flags iflags;
-
-extern EXPORT char plname[PL_NSIZ];
-
-extern EXPORT const char ynchars[];
 
 /* window stuff */
 extern EXPORT winid WIN_MESSAGE, WIN_STATUS;
@@ -52,7 +44,7 @@ extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.
 
 /* allmain.c */
 extern EXPORT void nethack_init(struct window_procs *);
-extern EXPORT void nethack_start_game(boolean,boolean,void(*)(void));
+extern EXPORT void nethack_start_game(char*,boolean,boolean,void(*)(void));
 extern EXPORT void moveloop(void);
 
 /* alloc.c, for util progs too */
@@ -150,7 +142,7 @@ extern EXPORT char *root_plselection_prompt(char *, int, int, int, int, int);
 extern EXPORT void genl_outrip(winid,int);
 
 /* topten.c */
-extern EXPORT void prscore(int,char **);
+extern EXPORT void prscore(char*,int,char**);
 
 /* windows.c */
 extern EXPORT char genl_message_menu(char,int,const char *);

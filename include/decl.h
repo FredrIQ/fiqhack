@@ -121,6 +121,7 @@ extern struct linfo level_info[MAXLINFO];
 
 extern boolean restoring;
 
+extern const char quitchars[];
 extern const char vowels[];
 extern const char ynchars[];
 extern const char ynqchars[];
@@ -143,6 +144,7 @@ extern long done_money;
 #endif
 extern char killer_buf[BUFSZ];
 extern const char *configfile;
+extern char plname[PL_NSIZ];
 extern char dogname[];
 extern char catname[];
 extern char horsename[];

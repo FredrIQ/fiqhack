@@ -7,7 +7,6 @@ int (*afternmv)(void);
 int (*occupation)(void);
 
 /* from xxxmain.c */
-const char *hname = 0;		/* name of the game (argv[0] of main) */
 int hackpid = 0;		/* current process id */
 
 int bases[MAXOCLASSES] = DUMMY;

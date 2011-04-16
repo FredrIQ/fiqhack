@@ -647,7 +647,7 @@ static int score_wanted(boolean current_ver, int rank, struct toptenentry *t1,
  * argc >= 2, with argv[0] untrustworthy (directory names, et al.),
  * and argv[1] starting with "-s".
  */
-void prscore(int argc, char **argv)
+void prscore(char *hname, int argc, char **argv)
 {
 	const char **players;
 	int playerct, rank;
@@ -758,7 +758,6 @@ void prscore(int argc, char **argv)
 	    }
 	    raw_print(pbuf);
 	    raw_printf("Usage: %s -s [-v] <playertypes> [maxrank] [playernames]",
-
 			 hname);
 	    raw_printf("Player types are: [-p role] [-r race]");
 	}

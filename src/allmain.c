@@ -31,10 +31,13 @@ void nethack_init(struct window_procs *procs)
 }
 
 
-void nethack_start_game(boolean exact_username, boolean wiz_error_flag,
-			void (*getlock)(void))
+void nethack_start_game(char *name, boolean exact_username,
+			boolean wiz_error_flag, void (*getlock)(void))
 {
 	int fd;
+	
+	if (name && name[0])
+	    strcpy(plname, name);
 	/*
 	 * It seems you really want to play.
 	 */
@@ -49,7 +52,7 @@ void nethack_start_game(boolean exact_username, boolean wiz_error_flag,
 	else
 	if(!*plname || !strncmp(plname, "player", 4)
 		    || !strncmp(plname, "games", 4)) {
-		askname();
+		askname(plname);
 	} else if (exact_username) {
 		/* guard against user names with hyphens in them */
 		int len = strlen(plname);

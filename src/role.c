@@ -1274,7 +1274,7 @@ void plnamesuffix(void)
 		flags.initalign = i;
 	}
 	if(!plname[0]) {
-	    askname();
+	    askname(plname);
 	    plnamesuffix();
 	}
 

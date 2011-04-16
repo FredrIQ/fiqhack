@@ -24,7 +24,7 @@ struct window_procs {
     unsigned long wincap2;	/* additional window port capability options supported */
     void (*win_init_nhwindows)(int *, char **);
     void (*win_player_selection)(int,int,int,int,int);
-    void (*win_askname)(void);
+    void (*win_askname)(char*);
     void (*win_get_nh_event)(void);
     void (*win_exit_nhwindows)(const char *);
     void (*win_suspend_nhwindows)(const char *);

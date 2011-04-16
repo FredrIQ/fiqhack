@@ -98,6 +98,9 @@ static char obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
 
 static char winpanicstr[] = "Bad window id %d";
 char defmorestr[] = "--More--";
+const char quitchars[] = " \r\n\033";
+const char ynchars[] = "yn";
+// char plname[PL_NSIZ];
 
 #if defined(ASCIIGRAPH) && !defined(NO_TERMS)
 boolean GFlag = FALSE;
@@ -579,7 +582,7 @@ give_up:	/* Quit */
  * It may still contain a suffix denoting the role, etc.
  * Always called after init_nhwindows() and before display_gamewindows().
  */
-void tty_askname(void)
+void tty_askname(char *plname)
 {
     static char who_are_you[] = "Who are you? ";
     int c, ct, tryct = 0;

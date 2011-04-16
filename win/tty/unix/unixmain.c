@@ -29,6 +29,7 @@ extern void init_linux_cons(void);
 
 static boolean wiz_error_flag = FALSE;
 int locknum = 0;		/* max num of simultaneous users */
+static char plname[PL_NSIZ] = "\0";
 
 int EXPORT main(int argc, char *argv[])
 {
@@ -66,7 +67,6 @@ int EXPORT main(int argc, char *argv[])
 	}
 #endif
 
-	hname = argv[0];
 	hackpid = getpid();
 	(void) umask(0777 & ~FCMASK);
 
@@ -113,7 +113,7 @@ int EXPORT main(int argc, char *argv[])
 #ifdef CHDIR
 		chdirx(dir,0);
 #endif
-		prscore(argc, argv);
+		prscore(argv[0],argc, argv);
 		exit(EXIT_SUCCESS);
 	    }
 	}
@@ -139,8 +139,7 @@ int EXPORT main(int argc, char *argv[])
 	process_options(argc, argv);	/* command line options */
 	
 
-
-	nethack_start_game(exact_username, wiz_error_flag, getlock);
+	nethack_start_game(plname, exact_username, wiz_error_flag, getlock);
 
 	moveloop();
 	exit(EXIT_SUCCESS);
