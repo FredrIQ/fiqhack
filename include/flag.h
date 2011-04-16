@@ -22,9 +22,6 @@ struct flag {
 #define wizard	 flags.debug
 	boolean  end_own;	/* list all own scores */
 	boolean  explore;	/* in exploration mode */
-#ifdef OPT_DISPMAP
-	boolean  fast_map;	/* use optimized, less flexible map display */
-#endif
 #define discover flags.explore
 	boolean  female;
 	boolean  forcefight;

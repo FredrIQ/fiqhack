@@ -28,19 +28,15 @@ static struct Bool_Opt
 	boolean	*addr, initvalue;
 	int optflags;
 } boolopt[] = {
-	{"altmeta", (boolean *)0, TRUE, DISP_IN_GAME},
 	{"ascii_map",     &iflags.wc_ascii_map, !PREFER_TILED, SET_IN_GAME},	/*WC*/
-	{"asksavedisk", (boolean *)0, FALSE, SET_IN_FILE},
 	{"autodig", &flags.autodig, FALSE, SET_IN_GAME},
 	{"autopickup", &flags.pickup, TRUE, SET_IN_GAME},
 	{"autoquiver", &flags.autoquiver, FALSE, SET_IN_GAME},
-	{"BIOS", (boolean *)0, FALSE, SET_IN_FILE},
 #ifdef INSURANCE
 	{"checkpoint", &flags.ins_chkpt, TRUE, SET_IN_GAME},
 #else
 	{"checkpoint", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
-	{"checkspace", (boolean *)0, FALSE, SET_IN_FILE},
 	{"cmdassist", &iflags.cmdassist, TRUE, SET_IN_GAME},
 # if defined(WIN32)
 	{"color",         &iflags.wc_color,TRUE, SET_IN_GAME},		/*WC*/
@@ -55,14 +51,8 @@ static struct Bool_Opt
 #endif
 	{"eight_bit_tty", &iflags.wc_eight_bit_input, FALSE, SET_IN_GAME},	/*WC*/
 	{"extmenu", &iflags.extmenu, FALSE, SET_IN_GAME},
-#ifdef OPT_DISPMAP
-	{"fast_map", &flags.fast_map, TRUE, SET_IN_GAME},
-#else
-	{"fast_map", (boolean *)0, TRUE, SET_IN_FILE},
-#endif
 	{"female", &flags.female, FALSE, DISP_IN_GAME},
 	{"fixinv", &flags.invlet_constant, TRUE, SET_IN_GAME},
-	{"flush", (boolean *)0, FALSE, SET_IN_FILE},
 	{"fullscreen", &iflags.wc2_fullscreen, FALSE, SET_IN_FILE},
 	{"help", &flags.help, TRUE, SET_IN_GAME},
 	{"hilite_pet",    &iflags.wc_hilite_pet, FALSE, SET_IN_GAME},	/*WC*/
@@ -76,8 +66,6 @@ static struct Bool_Opt
 	{"legacy", &flags.legacy, TRUE, DISP_IN_GAME},
 	{"lit_corridor", &flags.lit_corridor, FALSE, SET_IN_GAME},
 	{"lootabc", &iflags.lootabc, FALSE, SET_IN_GAME},
-	{"Macgraphics", (boolean *)0, FALSE, SET_IN_FILE},
-	{"mail", (boolean *)0, TRUE, SET_IN_FILE},
 	/* for menu debugging only*/
 	{"menu_tab_sep", &iflags.menu_tab_sep, FALSE, SET_IN_GAME},
 	{"mouse_support", &iflags.wc_mouse_support, TRUE, DISP_IN_GAME},	/*WC*/
@@ -92,7 +80,6 @@ static struct Bool_Opt
 	{"prayconfirm", &flags.prayconfirm, TRUE, SET_IN_GAME},
 	{"preload_tiles", &iflags.wc_preload_tiles, TRUE, DISP_IN_GAME},	/*WC*/
 	{"pushweapon", &flags.pushweapon, FALSE, SET_IN_GAME},
-	{"rawio", (boolean *)0, FALSE, SET_IN_FILE},
 	{"rest_on_space", &flags.rest_on_space, FALSE, SET_IN_GAME},
 	{"safe_pet", &flags.safe_dog, TRUE, SET_IN_GAME},
 	{"sanity_check", &iflags.sanity_check, FALSE, SET_IN_GAME},
