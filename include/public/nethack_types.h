@@ -57,10 +57,6 @@ struct window_procs {
     int (*win_get_ext_cmd)(void);
     void (*win_number_pad)(int);
     void (*win_delay_output)(void);
-#ifdef CHANGE_COLOR
-    void (*win_change_color)(int,long,int);
-    char * (*win_get_color_string)(void);
-#endif
 
     /* other defs that really should go away (they're tty specific) */
     void (*win_start_screen)(void);
@@ -103,65 +99,15 @@ struct instance_flags {
 	char prevmsg_window;	/* type of old message window to use */
 	boolean  extmenu;	/* extended commands use menu interface */
 #endif
-#if defined(WIN32)
-	boolean  rawio;		/* whether can use rawio (IOCTL call) */
-	boolean hassound;	/* has a sound card */
-	boolean usesound;	/* use the sound card */
-	boolean usepcspeaker;	/* use the pc speaker */
-	boolean tile_view;
-	boolean over_view;
-	boolean traditional_view;
-#endif
+
 /*
  * Window capability support.
  */
-	boolean wc_color;		/* use color graphics                  */
 	boolean wc_hilite_pet;		/* hilight pets                        */
-	boolean wc_ascii_map;		/* show map using traditional ascii    */
-	boolean wc_tiled_map;		/* show map using tiles                */
-	boolean wc_preload_tiles;	/* preload tiles into memory           */
-	int	wc_tile_width;		/* tile width                          */
-	int	wc_tile_height;		/* tile height                         */
-	char	*wc_tile_file;		/* name of tile file;overrides default */
 	boolean wc_inverse;		/* use inverse video for some things   */
-	int	wc_align_status;	/*  status win at top|bot|right|left   */
-	int	wc_align_message;	/* message win at top|bot|right|left   */
-	int     wc_vary_msgcount;	/* show more old messages at a time    */
-	char    *wc_foregrnd_menu;	/* points to foregrnd color name for menu win   */
-	char    *wc_backgrnd_menu;	/* points to backgrnd color name for menu win   */
-	char    *wc_foregrnd_message;	/* points to foregrnd color name for msg win    */
-	char    *wc_backgrnd_message;	/* points to backgrnd color name for msg win    */
-	char    *wc_foregrnd_status;	/* points to foregrnd color name for status win */
-	char    *wc_backgrnd_status;	/* points to backgrnd color name for status win */
-	char    *wc_foregrnd_text;	/* points to foregrnd color name for text win   */
-	char    *wc_backgrnd_text;	/* points to backgrnd color name for text win   */
-	char    *wc_font_map;		/* points to font name for the map win */
-	char    *wc_font_message;	/* points to font name for message win */
-	char    *wc_font_status;	/* points to font name for status win  */
-	char    *wc_font_menu;		/* points to font name for menu win    */
-	char    *wc_font_text;		/* points to font name for text win    */
-	int     wc_fontsiz_map;		/* font size for the map win           */
-	int     wc_fontsiz_message;	/* font size for the message window    */
-	int     wc_fontsiz_status;	/* font size for the status window     */
-	int     wc_fontsiz_menu;	/* font size for the menu window       */
-	int     wc_fontsiz_text;	/* font size for text windows          */
-	int	wc_scroll_amount;	/* scroll this amount at scroll_margin */
-	int	wc_scroll_margin;	/* scroll map when this far from
-						the edge */
-	int	wc_map_mode;		/* specify map viewing options, mostly
-						for backward compatibility */
-	int	wc_player_selection;	/* method of choosing character */
-	boolean	wc_splash_screen;	/* display an opening splash screen or not */
-	boolean	wc_popup_dialog;	/* put queries in pop up dialogs instead of
-				   		in the message window */
 	boolean wc_eight_bit_input;	/* allow eight bit input               */
-	boolean wc_mouse_support;	/* allow mouse support */
-	boolean wc2_fullscreen;		/* run fullscreen */
-	boolean wc2_softkeyboard;	/* use software keyboard */
-	boolean wc2_wraptext;		/* wrap text */
 
 	boolean  cmdassist;	/* provide detailed assistance for some commands */
-	boolean	 obsolete;	/* obsolete options can point at this, it isn't used */
 	/* Items which belong in flags, but are here to allow save compatibility */
 	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
 	boolean  showrace;	/* show hero glyph by race rather than by role */
@@ -171,10 +117,6 @@ struct instance_flags {
 	struct autopickup_exception *autopickup_exceptions[2];
 #define AP_LEAVE 0
 #define AP_GRAB	 1
-#endif
-#ifdef WIN32CON
-#define MAX_ALTKEYHANDLER 25
-	char	 altkeyhandler[MAX_ALTKEYHANDLER];
 #endif
 };
 

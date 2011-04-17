@@ -630,13 +630,6 @@ void freedynamicdata(void)
 	free_waterlevel();
 	free_dungeons();
 
-	/* some pointers in iflags */
-	if (iflags.wc_font_map) free(iflags.wc_font_map);
-	if (iflags.wc_font_message) free(iflags.wc_font_message);
-	if (iflags.wc_font_text) free(iflags.wc_font_text);
-	if (iflags.wc_font_menu) free(iflags.wc_font_menu);
-	if (iflags.wc_font_status) free(iflags.wc_font_status);
-	if (iflags.wc_tile_file) free(iflags.wc_tile_file);
 #ifdef AUTOPICKUP_EXCEPTIONS
 	free_autopickup_exceptions();
 #endif

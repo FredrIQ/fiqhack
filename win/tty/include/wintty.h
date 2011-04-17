@@ -186,10 +186,6 @@ extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(void);
 extern void tty_number_pad(int);
 extern void tty_delay_output(void);
-#ifdef CHANGE_COLOR
-extern void tty_change_color(int color,long rgb,int reverse);
-extern char * tty_get_color_string(void);
-#endif
 
 extern void gettty(void);
 extern void settty(const char *);

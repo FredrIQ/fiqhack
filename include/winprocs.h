@@ -48,16 +48,6 @@ extern void nh_delay_output(void);
 #define get_ext_cmd (*windowprocs.win_get_ext_cmd)
 #define number_pad (*windowprocs.win_number_pad)
 #define delay_output nh_delay_output
-#ifdef CHANGE_COLOR
-#define change_color (*windowprocs.win_change_color)
-#define get_color_string (*windowprocs.win_get_color_string)
-#endif
-
-/* 3.4.2: There is a real yn_function() in the core now, which does
- *        some buffer length validation on the parameters prior to
- *        invoking the window port routine. yn_function() is in cmd.c
- */
-/* #define yn_function (*windowprocs.win_yn_function) */
 
 /* other defs that really should go away (they're tty specific) */
 #define start_screen (*windowprocs.win_start_screen)
@@ -75,20 +65,6 @@ extern void nh_delay_output(void);
 /* player_selection */
 #define VIA_DIALOG	0
 #define VIA_PROMPTS	1
-
-/* map_mode settings - deprecated */
-#define MAP_MODE_TILES		0
-#define MAP_MODE_ASCII4x6	1
-#define MAP_MODE_ASCII6x8	2
-#define MAP_MODE_ASCII8x8	3
-#define MAP_MODE_ASCII16x8	4
-#define MAP_MODE_ASCII7x12	5
-#define MAP_MODE_ASCII8x12	6
-#define MAP_MODE_ASCII16x12	7
-#define MAP_MODE_ASCII12x16	8
-#define MAP_MODE_ASCII10x18	9
-#define MAP_MODE_ASCII_FIT_TO_SCREEN 10
-#define MAP_MODE_TILES_FIT_TO_SCREEN 11
 
 
 struct wc_Opt {

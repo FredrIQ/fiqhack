@@ -231,10 +231,6 @@ void init_linux_cons(void)
 	if (linux_flag_console) {
 		atexit(linux_mapon);
 		linux_mapoff();
-#  ifdef TEXTCOLOR
-		if (has_colors())
-			iflags.wc_color = TRUE;
-#  endif
 	}
 # endif
 }

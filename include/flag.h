@@ -125,11 +125,7 @@ struct flag {
 /*
  * Old deprecated names
  */
-#ifdef TEXTCOLOR
-#define use_color wc_color
-#endif
 #define hilite_pet wc_hilite_pet
-#define preload_tiles wc_preload_tiles
 
 extern struct flag flags;
 

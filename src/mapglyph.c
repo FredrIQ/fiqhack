@@ -16,14 +16,14 @@ int explcolors[] = {
 };
 
 #ifdef TEXTCOLOR
-#define zap_color(n)  color = iflags.use_color ? zapcolors[n] : NO_COLOR
-#define cmap_color(n) color = iflags.use_color ? defsyms[n].color : NO_COLOR
-#define obj_color(n)  color = iflags.use_color ? objects[n].oc_color : NO_COLOR
-#define mon_color(n)  color = iflags.use_color ? mons[n].mcolor : NO_COLOR
+#define zap_color(n)  color = zapcolors[n]
+#define cmap_color(n) color = defsyms[n].color
+#define obj_color(n)  color = objects[n].oc_color
+#define mon_color(n)  color = mons[n].mcolor
 #define invis_color(n) color = NO_COLOR
-#define pet_color(n)  color = iflags.use_color ? mons[n].mcolor : NO_COLOR
-#define warn_color(n) color = iflags.use_color ? def_warnsyms[n].color : NO_COLOR
-#define explode_color(n) color = iflags.use_color ? explcolors[n] : NO_COLOR
+#define pet_color(n)  color = mons[n].mcolor
+#define warn_color(n) color = def_warnsyms[n].color
+#define explode_color(n) color = explcolors[n]
 # if defined(REINCARNATION) && defined(ASCIIGRAPH)
 #  define ROGUE_COLOR
 # endif
@@ -73,7 +73,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 	/* see swallow_to_glyph() in display.c */
 	ch = (uchar) showsyms[S_sw_tl + (offset & 0x7)];
 #ifdef ROGUE_COLOR
-	if (HAS_ROGUE_IBM_GRAPHICS && iflags.use_color)
+	if (HAS_ROGUE_IBM_GRAPHICS)
 	    color = NO_COLOR;
 	else
 #endif
@@ -82,7 +82,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 	/* see zapdir_to_glyph() in display.c */
 	ch = showsyms[S_vbeam + (offset & 0x3)];
 #ifdef ROGUE_COLOR
-	if (HAS_ROGUE_IBM_GRAPHICS && iflags.use_color)
+	if (HAS_ROGUE_IBM_GRAPHICS)
 	    color = NO_COLOR;
 	else
 #endif
@@ -93,7 +93,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
     } else if ((offset = (glyph - GLYPH_CMAP_OFF)) >= 0) {	/* cmap */
 	ch = showsyms[offset];
 #ifdef ROGUE_COLOR
-	if (HAS_ROGUE_IBM_GRAPHICS && iflags.use_color) {
+	if (HAS_ROGUE_IBM_GRAPHICS) {
 	    if (offset >= S_vwall && offset <= S_hcdoor)
 		color = CLR_BROWN;
 	    else if (offset >= S_arrow_trap && offset <= S_polymorph_trap)
@@ -109,8 +109,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 #ifdef TEXTCOLOR
 	    /* provide a visible difference if normal and lit corridor
 	     * use the same symbol */
-	    if (iflags.use_color &&
-		offset == S_litcorr && ch == showsyms[S_corr])
+	    if (offset == S_litcorr && ch == showsyms[S_corr])
 		color = CLR_WHITE;
 	    else
 #endif
@@ -119,7 +118,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 	if (offset == BOULDER && iflags.bouldersym) ch = iflags.bouldersym;
 	else ch = oc_syms[(int)objects[offset].oc_class];
 #ifdef ROGUE_COLOR
-	if (HAS_ROGUE_IBM_GRAPHICS && iflags.use_color) {
+	if (HAS_ROGUE_IBM_GRAPHICS) {
 	    switch(objects[offset].oc_class) {
 		case COIN_CLASS: color = CLR_YELLOW; break;
 		case FOOD_CLASS: color = CLR_RED; break;
@@ -143,7 +142,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
     } else if ((offset = (glyph - GLYPH_BODY_OFF)) >= 0) {	/* a corpse */
 	ch = oc_syms[(int)objects[CORPSE].oc_class];
 #ifdef ROGUE_COLOR
-	if (HAS_ROGUE_IBM_GRAPHICS && iflags.use_color)
+	if (HAS_ROGUE_IBM_GRAPHICS)
 	    color = CLR_RED;
 	else
 #endif
@@ -181,7 +180,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
     } else {							/* a monster */
 	ch = monsyms[(int)mons[glyph].mlet];
 #ifdef ROGUE_COLOR
-	if (HAS_ROGUE_IBM_GRAPHICS && iflags.use_color) {
+	if (HAS_ROGUE_IBM_GRAPHICS) {
 	    if (x == u.ux && y == u.uy)
 		/* actually player should be yellow-on-gray if in a corridor */
 		color = CLR_YELLOW;
@@ -193,8 +192,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 	    mon_color(glyph);
 	    /* special case the hero for `showrace' option */
 #ifdef TEXTCOLOR
-	    if (iflags.use_color && x == u.ux && y == u.uy &&
-		    iflags.showrace && !Upolyd)
+	    if (x == u.ux && y == u.uy && iflags.showrace && !Upolyd)
 		color = HI_DOMESTIC;
 #endif
 	}

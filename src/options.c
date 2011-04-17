@@ -28,7 +28,6 @@ static struct Bool_Opt
 	boolean	*addr, initvalue;
 	int optflags;
 } boolopt[] = {
-	{"ascii_map",     &iflags.wc_ascii_map, !PREFER_TILED, SET_IN_GAME},	/*WC*/
 	{"autodig", &flags.autodig, FALSE, SET_IN_GAME},
 	{"autopickup", &flags.pickup, TRUE, SET_IN_GAME},
 	{"autoquiver", &flags.autoquiver, FALSE, SET_IN_GAME},
@@ -38,11 +37,6 @@ static struct Bool_Opt
 	{"checkpoint", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
 	{"cmdassist", &iflags.cmdassist, TRUE, SET_IN_GAME},
-# if defined(WIN32)
-	{"color",         &iflags.wc_color,TRUE, SET_IN_GAME},		/*WC*/
-# else	/* systems that support multiple terminals, many monochrome */
-	{"color",         &iflags.wc_color, FALSE, SET_IN_GAME},	/*WC*/
-# endif
 	{"confirm",&flags.confirm, TRUE, SET_IN_GAME},
 #if defined(TERMLIB)
 	{"DECgraphics", &iflags.DECgraphics, FALSE, SET_IN_GAME},
@@ -53,7 +47,6 @@ static struct Bool_Opt
 	{"extmenu", &iflags.extmenu, FALSE, SET_IN_GAME},
 	{"female", &flags.female, FALSE, DISP_IN_GAME},
 	{"fixinv", &flags.invlet_constant, TRUE, SET_IN_GAME},
-	{"fullscreen", &iflags.wc2_fullscreen, FALSE, SET_IN_FILE},
 	{"help", &flags.help, TRUE, SET_IN_GAME},
 	{"hilite_pet",    &iflags.wc_hilite_pet, FALSE, SET_IN_GAME},	/*WC*/
 #ifdef ASCIIGRAPH
@@ -62,13 +55,11 @@ static struct Bool_Opt
 	{"IBMgraphics", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
 	{"ignintr", &flags.ignintr, FALSE, SET_IN_GAME},
-	{"large_font", &iflags.obsolete, FALSE, SET_IN_FILE},	/* OBSOLETE */
 	{"legacy", &flags.legacy, TRUE, DISP_IN_GAME},
 	{"lit_corridor", &flags.lit_corridor, FALSE, SET_IN_GAME},
 	{"lootabc", &iflags.lootabc, FALSE, SET_IN_GAME},
 	/* for menu debugging only*/
 	{"menu_tab_sep", &iflags.menu_tab_sep, FALSE, SET_IN_GAME},
-	{"mouse_support", &iflags.wc_mouse_support, TRUE, DISP_IN_GAME},	/*WC*/
 #ifdef NEWS
 	{"news", &iflags.news, TRUE, DISP_IN_GAME},
 #else
@@ -76,9 +67,7 @@ static struct Bool_Opt
 #endif
 	{"page_wait", (boolean *)0, FALSE, SET_IN_FILE},
 	{"perm_invent", &flags.perm_invent, FALSE, SET_IN_GAME},
-	{"popup_dialog",  &iflags.wc_popup_dialog, FALSE, SET_IN_GAME},	/*WC*/
 	{"prayconfirm", &flags.prayconfirm, TRUE, SET_IN_GAME},
-	{"preload_tiles", &iflags.wc_preload_tiles, TRUE, DISP_IN_GAME},	/*WC*/
 	{"pushweapon", &flags.pushweapon, FALSE, SET_IN_GAME},
 	{"rest_on_space", &flags.rest_on_space, FALSE, SET_IN_GAME},
 	{"safe_pet", &flags.safe_dog, TRUE, SET_IN_GAME},
@@ -90,12 +79,9 @@ static struct Bool_Opt
 #else
 	{"showscore", (boolean *)0, FALSE, SET_IN_FILE},
 #endif
-	{"softkeyboard", &iflags.wc2_softkeyboard, FALSE, SET_IN_FILE},
 	{"sortpack", &flags.sortpack, TRUE, SET_IN_GAME},
 	{"sound", &flags.soundok, TRUE, SET_IN_GAME},
 	{"sparkle", &flags.sparkle, TRUE, SET_IN_GAME},
-	{"splash_screen",     &iflags.wc_splash_screen, TRUE, DISP_IN_GAME},	/*WC*/
-	{"tiled_map",     &iflags.wc_tiled_map, PREFER_TILED, DISP_IN_GAME},	/*WC*/
 	{"time", &flags.time, FALSE, SET_IN_GAME},
 #ifdef TIMED_DELAY
 	{"timed_delay", &flags.nap, TRUE, SET_IN_GAME},
@@ -111,7 +97,6 @@ static struct Bool_Opt
 	{"use_inverse",   &iflags.wc_inverse, FALSE, SET_IN_GAME},		/*WC*/
 #endif
 	{"verbose", &flags.verbose, TRUE, SET_IN_GAME},
-	{"wraptext", &iflags.wc2_wraptext, FALSE, SET_IN_GAME},
 	{(char *)0, (boolean *)0, FALSE, 0}
 };
 
@@ -145,17 +130,6 @@ static struct Comp_Opt
 						MAXDCHARS+1, SET_IN_FILE },
 	{ "effects",  "the symbols to use in drawing special effects",
 						MAXECHARS+1, SET_IN_FILE },
-	{ "font_map", "the font to use in the map window", 40, DISP_IN_GAME },	/*WC*/
-	{ "font_menu", "the font to use in menus", 40, DISP_IN_GAME },		/*WC*/
-	{ "font_message", "the font to use in the message window",
-						40, DISP_IN_GAME },		/*WC*/
-	{ "font_size_map", "the size of the map font", 20, DISP_IN_GAME },	/*WC*/
-	{ "font_size_menu", "the size of the menu font", 20, DISP_IN_GAME },	/*WC*/
-	{ "font_size_message", "the size of the message font", 20, DISP_IN_GAME },	/*WC*/
-	{ "font_size_status", "the size of the status font", 20, DISP_IN_GAME },	/*WC*/
-	{ "font_size_text", "the size of the text font", 20, DISP_IN_GAME },	/*WC*/
-	{ "font_status", "the font to use in status window", 40, DISP_IN_GAME }, /*WC*/
-	{ "font_text", "the font to use in text windows", 40, DISP_IN_GAME },	/*WC*/
 	{ "fruit",    "the name of a fruit you enjoy eating",
 						PL_FSIZ, SET_IN_GAME },
 	{ "gender",   "your starting gender (male or female)",
@@ -193,10 +167,6 @@ static struct Comp_Opt
 						MAXOCLASSES, SET_IN_FILE },
 	{ "packorder", "the inventory order of the items in your pack",
 						MAXOCLASSES, SET_IN_GAME },
-#ifdef CHANGE_COLOR
-	{ "palette",  "palette (00c/880/-fff is blue/yellow/reverse white)",
-						15 , SET_IN_GAME },
-#endif
 	{ "pettype",  "your preferred initial pet type", 4, DISP_IN_GAME },
 	{ "pickup_burden",  "maximum burden picked up before prompt",
 						20, SET_IN_GAME },
@@ -228,9 +198,6 @@ static struct Comp_Opt
 #endif
 	{ "windowcolors",  "the foreground/background colors of windows",	/*WC*/
 						80, DISP_IN_GAME },
-#if 0
-	{ "windowtype", "windowing system to use", WINTYPELEN, DISP_IN_GAME },
-#endif
 	{ (char *)0, (char *)0, 0, 0 }
 };
 
@@ -322,8 +289,6 @@ static boolean special_handling(const char *, boolean, boolean);
 static void warning_opts(char *,const char *);
 static void duplicate_opt_detection(const char *, int);
 
-static void wc_set_font_name(int, char *);
-static int wc_set_window_colors(char *);
 static boolean is_wc_option(const char *);
 static boolean wc_supported(const char *);
 static boolean is_wc2_option(const char *);
@@ -963,126 +928,6 @@ void parseoptions(char *opts, boolean tinitial, boolean tfrom_file)
 		return;
 	}
 
-	/* WINCAP
-	 * setting font options  */
-	fullname = "font";
-	if (!strncmpi(opts, fullname, 4))
-	{
-		int wintype = -1;
-		char *fontopts = opts + 4;
-
-		if (!strncmpi(fontopts, "map", 3) ||
-		    !strncmpi(fontopts, "_map", 4))
-			wintype = NHW_MAP;
-		else if (!strncmpi(fontopts, "message", 7) ||
-			 !strncmpi(fontopts, "_message", 8))
-			wintype = NHW_MESSAGE;
-		else if (!strncmpi(fontopts, "text", 4) ||
-			 !strncmpi(fontopts, "_text", 5))
-			wintype = NHW_TEXT;			
-		else if (!strncmpi(fontopts, "menu", 4) ||
-			 !strncmpi(fontopts, "_menu", 5))
-			wintype = NHW_MENU;
-		else if (!strncmpi(fontopts, "status", 6) ||
-			 !strncmpi(fontopts, "_status", 7))
-			wintype = NHW_STATUS;
-		else if (!strncmpi(fontopts, "_size", 5)) {
-			if (!strncmpi(fontopts, "_size_map", 8))
-				wintype = NHW_MAP;
-			else if (!strncmpi(fontopts, "_size_message", 12))
-				wintype = NHW_MESSAGE;
-			else if (!strncmpi(fontopts, "_size_text", 9))
-				wintype = NHW_TEXT;
-			else if (!strncmpi(fontopts, "_size_menu", 9))
-				wintype = NHW_MENU;
-			else if (!strncmpi(fontopts, "_size_status", 11))
-				wintype = NHW_STATUS;
-			else {
-				badoption(opts);
-				return;
-			}
-			if (wintype > 0 && !negated &&
-			    (op = string_for_opt(opts, FALSE)) != 0) {
-			    switch(wintype)  {
-			    	case NHW_MAP:
-					iflags.wc_fontsiz_map = atoi(op);
-					break;
-			    	case NHW_MESSAGE:
-					iflags.wc_fontsiz_message = atoi(op);
-					break;
-			    	case NHW_TEXT:
-					iflags.wc_fontsiz_text = atoi(op);
-					break;
-			    	case NHW_MENU:
-					iflags.wc_fontsiz_menu = atoi(op);
-					break;
-			    	case NHW_STATUS:
-					iflags.wc_fontsiz_status = atoi(op);
-					break;
-			    }
-			}
-			return;
-		} else {
-			badoption(opts);
-		}
-		if (wintype > 0 &&
-		    (op = string_for_opt(opts, FALSE)) != 0) {
-			wc_set_font_name(wintype, op);
-			return;
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-#ifdef CHANGE_COLOR
-	if (match_optname(opts, "palette", 3, TRUE)) {
-	    int color_number, color_incr;
-
-		if (negated) {
-		    bad_negation("palette", FALSE);
-		    return;
-		}
-		color_number = 0;
-		color_incr = 1;
-	    if ((op = string_for_opt(opts, FALSE)) != (char *)0) {
-		char *pt = op;
-		int cnt, tmp, reverse;
-		long rgb;
-
-		while (*pt && color_number >= 0) {
-		    cnt = 3;
-		    rgb = 0L;
-		    if (*pt == '-') {
-			reverse = 1;
-			pt++;
-		    } else {
-			reverse = 0;
-		    }
-		    while (cnt-- > 0) {
-			if (*pt && *pt != '/') {
-			    rgb <<= 8;
-			    tmp = *(pt++);
-			    if (isalpha(tmp)) {
-				tmp = (tmp + 9) & 0xf;	/* Assumes ASCII... */
-			    } else {
-				tmp &= 0xf;	/* Digits in ASCII too... */
-			    }
-			    /* Add an extra so we fill f -> ff and 0 -> 00 */
-			    rgb += tmp << 4;
-			    rgb += tmp;
-			}
-		    }
-		    if (*pt == '/') {
-			pt++;
-		    }
-		    change_color(color_number, rgb, reverse);
-		    color_number += color_incr;
-		}
-	    }
-	    if (!initial) {
-		need_redraw = TRUE;
-	    }
-	    return;
-	}
-#endif /* CHANGE_COLOR */
 
 	if (match_optname(opts, "fruit", 2, TRUE)) {
 		char empty_str = '\0';
@@ -1305,44 +1150,7 @@ goodfruit:
 	}
 
 	/* WINCAP
-	 * align_status:[left|top|right|bottom] */
-	fullname = "align_status";
-	if (match_optname(opts, fullname, sizeof("align_status")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if (op && !negated) {
-		    if (!strncmpi (op, "left", sizeof("left")-1))
-			iflags.wc_align_status = ALIGN_LEFT;
-		    else if (!strncmpi (op, "top", sizeof("top")-1))
-			iflags.wc_align_status = ALIGN_TOP;
-		    else if (!strncmpi (op, "right", sizeof("right")-1))
-			iflags.wc_align_status = ALIGN_RIGHT;
-		    else if (!strncmpi (op, "bottom", sizeof("bottom")-1))
-			iflags.wc_align_status = ALIGN_BOTTOM;
-		    else
-			badoption(opts);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-	/* WINCAP
-	 * align_message:[left|top|right|bottom] */
-	fullname = "align_message";
-	if (match_optname(opts, fullname, sizeof("align_message")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if (op && !negated) {
-		    if (!strncmpi (op, "left", sizeof("left")-1))
-			iflags.wc_align_message = ALIGN_LEFT;
-		    else if (!strncmpi (op, "top", sizeof("top")-1))
-			iflags.wc_align_message = ALIGN_TOP;
-		    else if (!strncmpi (op, "right", sizeof("right")-1))
-			iflags.wc_align_message = ALIGN_RIGHT;
-		    else if (!strncmpi (op, "bottom", sizeof("bottom")-1))
-			iflags.wc_align_message = ALIGN_BOTTOM;
-		    else
-			badoption(opts);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-	/* align:string */
+	 * align:string */
 	fullname = "align";
 	if (match_optname(opts, fullname, sizeof("align")-1, TRUE)) {
 		if (negated) bad_negation(fullname, FALSE);
@@ -1463,21 +1271,6 @@ goodfruit:
 		    }
 		    if (badopt) badoption(opts);
 		}
-		return;
-	}
-	/* WINCAP
-	 * player_selection: dialog | prompts */
-	fullname = "player_selection";
-	if (match_optname(opts, fullname, sizeof("player_selection")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if (op && !negated) {
-		    if (!strncmpi (op, "dialog", sizeof("dialog")-1))
-			iflags.wc_player_selection = VIA_DIALOG;
-		    else if (!strncmpi (op, "prompt", sizeof("prompt")-1))
-			iflags.wc_player_selection = VIA_PROMPTS;
-		    else
-		    	badoption(opts);
-		} else if (negated) bad_negation(fullname, TRUE);
 		return;
 	}
 
@@ -1607,61 +1400,6 @@ goodfruit:
 		return;
 	}
 	
-
-	/* WINCAP
-	 * map_mode:[tiles|ascii4x6|ascii6x8|ascii8x8|ascii16x8|ascii7x12|ascii8x12|
-			ascii16x12|ascii12x16|ascii10x18|fit_to_screen] */
-	fullname = "map_mode";
-	if (match_optname(opts, fullname, sizeof("map_mode")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if (op && !negated) {
-		    if (!strncmpi (op, "tiles", sizeof("tiles")-1))
-			iflags.wc_map_mode = MAP_MODE_TILES;
-		    else if (!strncmpi (op, "ascii4x6", sizeof("ascii4x6")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII4x6;
-		    else if (!strncmpi (op, "ascii6x8", sizeof("ascii6x8")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII6x8;
-		    else if (!strncmpi (op, "ascii8x8", sizeof("ascii8x8")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII8x8;
-		    else if (!strncmpi (op, "ascii16x8", sizeof("ascii16x8")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII16x8;
-		    else if (!strncmpi (op, "ascii7x12", sizeof("ascii7x12")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII7x12;
-		    else if (!strncmpi (op, "ascii8x12", sizeof("ascii8x12")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII8x12;
-		    else if (!strncmpi (op, "ascii16x12", sizeof("ascii16x12")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII16x12;
-		    else if (!strncmpi (op, "ascii12x16", sizeof("ascii12x16")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII12x16;
-		    else if (!strncmpi (op, "ascii10x18", sizeof("ascii10x18")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII10x18;
-		    else if (!strncmpi (op, "fit_to_screen", sizeof("fit_to_screen")-1))
-			iflags.wc_map_mode = MAP_MODE_ASCII_FIT_TO_SCREEN;
-		    else
-		    	badoption(opts);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-	/* WINCAP
-	 * scroll_amount:nn */
-	fullname = "scroll_amount";
-	if (match_optname(opts, fullname, sizeof("scroll_amount")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if ((negated && !op) || (!negated && op)) {
-			iflags.wc_scroll_amount = negated ? 1 : atoi(op);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-	/* WINCAP
-	 * scroll_margin:nn */
-	fullname = "scroll_margin";
-	if (match_optname(opts, fullname, sizeof("scroll_margin")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if ((negated && !op) || (!negated && op)) {
-			iflags.wc_scroll_margin = negated ? 5 : atoi(op);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
 	fullname = "subkeyvalue";
 	if (match_optname(opts, fullname, 5, TRUE)) {
 		if (negated) bad_negation(fullname, FALSE);
@@ -1671,74 +1409,6 @@ goodfruit:
 			map_subkeyvalue(op);
 #endif
 		}
-		return;
-	}
-	/* WINCAP
-	 * tile_width:nn */
-	fullname = "tile_width";
-	if (match_optname(opts, fullname, sizeof("tile_width")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if ((negated && !op) || (!negated && op)) {
-			iflags.wc_tile_width = negated ? 0 : atoi(op);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-	/* WINCAP
-	 * tile_file:name */
-	fullname = "tile_file";
-	if (match_optname(opts, fullname, sizeof("tile_file")-1, TRUE)) {
-		if ((op = string_for_opt(opts, FALSE)) != 0) {
-			if (iflags.wc_tile_file) free(iflags.wc_tile_file);
-			iflags.wc_tile_file = (char *)alloc(strlen(op) + 1);
-			strcpy(iflags.wc_tile_file, op);
-		}
-		return;
-	}
-	/* WINCAP
-	 * tile_height:nn */
-	fullname = "tile_height";
-	if (match_optname(opts, fullname, sizeof("tile_height")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if ((negated && !op) || (!negated && op)) {
-			iflags.wc_tile_height = negated ? 0 : atoi(op);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-	/* WINCAP
-	 * vary_msgcount:nn */
-	fullname = "vary_msgcount";
-	if (match_optname(opts, fullname, sizeof("vary_msgcount")-1, TRUE)) {
-		op = string_for_opt(opts, negated);
-		if ((negated && !op) || (!negated && op)) {
-			iflags.wc_vary_msgcount = negated ? 0 : atoi(op);
-		} else if (negated) bad_negation(fullname, TRUE);
-		return;
-	}
-#if 0
-	fullname = "windowtype";
-	if (match_optname(opts, fullname, 3, TRUE)) {
-	    if (negated) {
-		bad_negation(fullname, FALSE);
-		return;
-	    } else if ((op = string_for_env_opt(fullname, opts, FALSE)) != 0) {
-		char buf[WINTYPELEN];
-		nmcpy(buf, op, WINTYPELEN);
-		choose_windows(buf);
-	    }
-	    return;
-	}
-#endif
-
-	/* WINCAP
-	 * setting window colors
-         * syntax: windowcolors=menu foregrnd/backgrnd text foregrnd/backgrnd
-         */
-	fullname = "windowcolors";
-	if (match_optname(opts, fullname, 7, TRUE)) {
-		if ((op = string_for_opt(opts, FALSE)) != 0) {
-			if (!wc_set_window_colors(op))
-				badoption(opts);
-		} else if (negated) bad_negation(fullname, TRUE);
 		return;
 	}
 
@@ -1909,11 +1579,6 @@ goodfruit:
 					(boolopt[i].addr) == &iflags.hilite_pet) {
 			    need_redraw = TRUE;
 			}
-#ifdef TEXTCOLOR
-			else if ((boolopt[i].addr) == &iflags.use_color) {
-			    need_redraw = TRUE;
-			}
-#endif
 
 			return;
 		}
@@ -2359,37 +2024,7 @@ static boolean special_handling(const char *optname, boolean setinitial,
         retval = TRUE;
     }
 #endif
-     else if (!strcmp("align_message", optname) ||
-		!strcmp("align_status", optname)) {
-	menu_item *window_pick = (menu_item *)0;
-	char abuf[BUFSZ];
-	boolean msg = (*(optname+6) == 'm');
-
-	tmpwin = create_nhwindow(NHW_MENU);
-	start_menu(tmpwin);
-	any.a_int = ALIGN_TOP;
-	add_menu(tmpwin, NO_GLYPH, &any, 't', 0,
-		ATR_NONE, "top", MENU_UNSELECTED);
-	any.a_int = ALIGN_BOTTOM;
-	add_menu(tmpwin, NO_GLYPH, &any, 'b', 0,
-		ATR_NONE, "bottom", MENU_UNSELECTED);
-	any.a_int = ALIGN_LEFT;
-	add_menu(tmpwin, NO_GLYPH, &any, 'l', 0,
-		ATR_NONE, "left", MENU_UNSELECTED);
-	any.a_int = ALIGN_RIGHT;
-	add_menu(tmpwin, NO_GLYPH, &any, 'r', 0,
-		ATR_NONE, "right", MENU_UNSELECTED);
-	sprintf(abuf, "Select %s window placement relative to the map:",
-		msg ? "message" : "status");
-	end_menu(tmpwin, abuf);
-	if (select_menu(tmpwin, PICK_ONE, &window_pick) > 0) {		
-		if (msg) iflags.wc_align_message = window_pick->item.a_int;
-		else iflags.wc_align_status = window_pick->item.a_int;
-		free((void *)window_pick);
-	}
-	destroy_nhwindow(tmpwin);
-        retval = TRUE;
-    } else if (!strcmp("number_pad", optname)) {
+    else if (!strcmp("number_pad", optname)) {
 	static const char *npchoices[3] =
 		{"0 (off)", "1 (on)", "2 (on, DOS compatible)"};
 	const char *npletters = "abc";
@@ -2549,25 +2184,11 @@ static const char *get_compopt_value(const char *optname, char *buf)
 {
 	char ocl[MAXOCLASSES+1];
 	static const char none[] = "(none)", randomrole[] = "random",
-		     to_be_done[] = "(to be done)",
-		     defopt[] = "default",
-		     defbrief[] = "def";
+		     to_be_done[] = "(to be done)";
 	int i;
 
 	buf[0] = '\0';
-	if (!strcmp(optname,"align_message"))
-		sprintf(buf, "%s", iflags.wc_align_message == ALIGN_TOP     ? "top" :
-				   iflags.wc_align_message == ALIGN_LEFT    ? "left" :
-				   iflags.wc_align_message == ALIGN_BOTTOM  ? "bottom" :
-				   iflags.wc_align_message == ALIGN_RIGHT   ? "right" :
-				   defopt);
-	else if (!strcmp(optname,"align_status"))
-		sprintf(buf, "%s", iflags.wc_align_status == ALIGN_TOP     ? "top" :
-				   iflags.wc_align_status == ALIGN_LEFT    ? "left" :
-				   iflags.wc_align_status == ALIGN_BOTTOM  ? "bottom" :
-				   iflags.wc_align_status == ALIGN_RIGHT   ? "right" :
-				   defopt);
-	else if (!strcmp(optname,"align"))
+	if (!strcmp(optname,"align"))
 		sprintf(buf, "%s", rolestring(flags.initalign, aligns, adj));
 #ifdef WIN32CON
 	else if (!strcmp(optname,"altkeyhandler"))
@@ -2596,57 +2217,12 @@ static const char *get_compopt_value(const char *optname, char *buf)
 		sprintf(buf, "%s", to_be_done);
 	else if (!strcmp(optname, "effects"))
 		sprintf(buf, "%s", to_be_done);
-	else if (!strcmp(optname, "font_map"))
-		sprintf(buf, "%s", iflags.wc_font_map ? iflags.wc_font_map : defopt);
-	else if (!strcmp(optname, "font_message"))
-		sprintf(buf, "%s", iflags.wc_font_message ? iflags.wc_font_message : defopt);
-	else if (!strcmp(optname, "font_status"))
-		sprintf(buf, "%s", iflags.wc_font_status ? iflags.wc_font_status : defopt);
-	else if (!strcmp(optname, "font_menu"))
-		sprintf(buf, "%s", iflags.wc_font_menu ? iflags.wc_font_menu : defopt);
-	else if (!strcmp(optname, "font_text"))
-		sprintf(buf, "%s", iflags.wc_font_text ? iflags.wc_font_text : defopt);
-	else if (!strcmp(optname, "font_size_map")) {
-		if (iflags.wc_fontsiz_map) sprintf(buf, "%d", iflags.wc_fontsiz_map);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "font_size_message")) {
-		if (iflags.wc_fontsiz_message) sprintf(buf, "%d",
-							iflags.wc_fontsiz_message);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "font_size_status")) {
-		if (iflags.wc_fontsiz_status) sprintf(buf, "%d", iflags.wc_fontsiz_status);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "font_size_menu")) {
-		if (iflags.wc_fontsiz_menu) sprintf(buf, "%d", iflags.wc_fontsiz_menu);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "font_size_text")) {
-		if (iflags.wc_fontsiz_text) sprintf(buf, "%d",iflags.wc_fontsiz_text);
-		else strcpy(buf, defopt);
-	}
 	else if (!strcmp(optname, "fruit")) 
 		sprintf(buf, "%s", pl_fruit);
 	else if (!strcmp(optname, "gender"))
 		sprintf(buf, "%s", rolestring(flags.initgend, genders, adj));
 	else if (!strcmp(optname, "horsename")) 
 		sprintf(buf, "%s", horsename[0] ? horsename : none);
-	else if (!strcmp(optname, "map_mode"))
-		sprintf(buf, "%s",
-			iflags.wc_map_mode == MAP_MODE_TILES      ? "tiles" :
-			iflags.wc_map_mode == MAP_MODE_ASCII4x6   ? "ascii4x6" :
-			iflags.wc_map_mode == MAP_MODE_ASCII6x8   ? "ascii6x8" :
-			iflags.wc_map_mode == MAP_MODE_ASCII8x8   ? "ascii8x8" :
-			iflags.wc_map_mode == MAP_MODE_ASCII16x8  ? "ascii16x8" :
-			iflags.wc_map_mode == MAP_MODE_ASCII7x12  ? "ascii7x12" :
-			iflags.wc_map_mode == MAP_MODE_ASCII8x12  ? "ascii8x12" :
-			iflags.wc_map_mode == MAP_MODE_ASCII16x12 ? "ascii16x12" :
-			iflags.wc_map_mode == MAP_MODE_ASCII12x16 ? "ascii12x16" :
-			iflags.wc_map_mode == MAP_MODE_ASCII10x18 ? "ascii10x18" :
-			iflags.wc_map_mode == MAP_MODE_ASCII_FIT_TO_SCREEN ?
-			"fit_to_screen" : defopt);
 	else if (!strcmp(optname, "menustyle")) 
 		sprintf(buf, "%s", menutype[(int)flags.menu_style] );
 	else if (!strcmp(optname, "menu_deselect_all"))
@@ -2699,10 +2275,6 @@ static const char *get_compopt_value(const char *optname, char *buf)
 		oc_to_str(flags.inv_order, ocl);
 		sprintf(buf, "%s", ocl);
 	     }
-#ifdef CHANGE_COLOR
-	else if (!strcmp(optname, "palette")) 
-		sprintf(buf, "%s", get_color_string());
-#endif
 	else if (!strcmp(optname, "pettype")) 
 		sprintf(buf, "%s", (preferred_pet == 'c') ? "cat" :
 				(preferred_pet == 'd') ? "dog" :
@@ -2723,16 +2295,6 @@ static const char *get_compopt_value(const char *optname, char *buf)
 		sprintf(buf, "%d top/%d around%s", flags.end_top,
 				flags.end_around, flags.end_own ? "/own" : "");
 	}
-	else if (!strcmp(optname, "scroll_amount")) {
-		if (iflags.wc_scroll_amount) sprintf(buf, "%d",iflags.wc_scroll_amount);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "scroll_margin")) {
-		if (iflags.wc_scroll_margin) sprintf(buf, "%d",iflags.wc_scroll_margin);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "player_selection"))
-		sprintf(buf, "%s", iflags.wc_player_selection ? "prompts" : "dialog");
 	else if (!strcmp(optname, "suppress_alert")) {
 	    if (flags.suppress_alert == 0L)
 		strcpy(buf, none);
@@ -2742,34 +2304,8 @@ static const char *get_compopt_value(const char *optname, char *buf)
 			FEATURE_NOTICE_VER_MIN,
 			FEATURE_NOTICE_VER_PATCH);
 	}
-	else if (!strcmp(optname, "tile_file"))
-		sprintf(buf, "%s", iflags.wc_tile_file ? iflags.wc_tile_file : defopt);
-	else if (!strcmp(optname, "tile_height")) {
-		if (iflags.wc_tile_height) sprintf(buf, "%d",iflags.wc_tile_height);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "tile_width")) {
-		if (iflags.wc_tile_width) sprintf(buf, "%d",iflags.wc_tile_width);
-		else strcpy(buf, defopt);
-	}
 	else if (!strcmp(optname, "traps"))
 		sprintf(buf, "%s", to_be_done);
-	else if (!strcmp(optname, "vary_msgcount")) {
-		if (iflags.wc_vary_msgcount) sprintf(buf, "%d",iflags.wc_vary_msgcount);
-		else strcpy(buf, defopt);
-	}
-	else if (!strcmp(optname, "windowtype"))
-		sprintf(buf, "%s", windowprocs.name);
-	else if (!strcmp(optname, "windowcolors"))
-		sprintf(buf, "%s/%s %s/%s %s/%s %s/%s",
-			iflags.wc_foregrnd_menu    ? iflags.wc_foregrnd_menu : defbrief,
-			iflags.wc_backgrnd_menu    ? iflags.wc_backgrnd_menu : defbrief,
-			iflags.wc_foregrnd_message ? iflags.wc_foregrnd_message : defbrief,
-			iflags.wc_backgrnd_message ? iflags.wc_backgrnd_message : defbrief,
-			iflags.wc_foregrnd_status  ? iflags.wc_foregrnd_status : defbrief,
-			iflags.wc_backgrnd_status  ? iflags.wc_backgrnd_status : defbrief,
-			iflags.wc_foregrnd_text    ? iflags.wc_foregrnd_text : defbrief,
-			iflags.wc_backgrnd_text    ? iflags.wc_backgrnd_text : defbrief);
 #ifdef PREFIXES_IN_USE
 	else {
 	    for (i = 0; i < PREFIX_COUNT; ++i)
@@ -3330,119 +2866,6 @@ static boolean wc2_supported(const char *optnam)
 		k++;
 	}
 	return FALSE;
-}
-
-
-static void wc_set_font_name(int wtype, char *fontname)
-{
-	char **fn = (char **)0;
-	if (!fontname) return;
-	switch(wtype) {
-	    case NHW_MAP:
-	    		fn = &iflags.wc_font_map;
-			break;
-	    case NHW_MESSAGE:
-	    		fn = &iflags.wc_font_message;
-			break;
-	    case NHW_TEXT:
-	    		fn = &iflags.wc_font_text;
-			break;
-	    case NHW_MENU:
-	    		fn = &iflags.wc_font_menu;
-			break;
-	    case NHW_STATUS:
-	    		fn = &iflags.wc_font_status;
-			break;
-	    default:
-	    		return;
-	}
-	if (fn) {
-		if (*fn) free(*fn);
-		*fn = (char *)alloc(strlen(fontname) + 1);
-		strcpy(*fn, fontname);
-	}
-	return;
-}
-
-static int wc_set_window_colors(char *op)
-{
-	/* syntax:
-	 *  menu white/black message green/yellow status white/blue text white/black
-	 */
-
-	int j;
-	char buf[BUFSZ];
-	char *wn, *tfg, *tbg, *newop;
-	static const char *wnames[] = { "menu", "message", "status", "text" };
-	static const char *shortnames[] = { "mnu", "msg", "sts", "txt" };
-	static char **fgp[] = {
-		&iflags.wc_foregrnd_menu,
-		&iflags.wc_foregrnd_message,
-		&iflags.wc_foregrnd_status,
-		&iflags.wc_foregrnd_text
-	};
-	static char **bgp[] = {
-		&iflags.wc_backgrnd_menu,
-		&iflags.wc_backgrnd_message,
-		&iflags.wc_backgrnd_status,
-		&iflags.wc_backgrnd_text
-	};
-
-	strcpy(buf, op);
-	newop = mungspaces(buf);
-	while (newop && *newop) {
-
-		wn = tfg = tbg = (char *)0;
-
-		/* until first non-space in case there's leading spaces - before colorname*/
-		while(*newop && isspace(*newop)) newop++;
-		if (*newop) wn = newop;
-		else return 0;
-
-		/* until first space - colorname*/
-		while(*newop && !isspace(*newop)) newop++;
-		if (*newop) *newop = '\0';
-		else return 0;
-		newop++;
-
-		/* until first non-space - before foreground*/
-		while(*newop && isspace(*newop)) newop++;
-		if (*newop) tfg = newop;
-		else return 0;
-
-		/* until slash - foreground */
-		while(*newop && *newop != '/') newop++;
-		if (*newop) *newop = '\0';
-		else return 0;
-		newop++;
-
-		/* until first non-space (in case there's leading space after slash) - before background */
-		while(*newop && isspace(*newop)) newop++;
-		if (*newop) tbg = newop;
-		else return 0;
-
-		/* until first space - background */
-		while(*newop && !isspace(*newop)) newop++;
-		if (*newop) *newop++ = '\0';
-
-		for (j = 0; j < 4; ++j) {
-			if (!strcmpi(wn, wnames[j]) ||
-			    !strcmpi(wn, shortnames[j])) {
-				if (tfg && !strstri(tfg, " ")) {
-					if (*fgp[j]) free(*fgp[j]);
-					*fgp[j] = (char *)alloc(strlen(tfg) + 1);
-					strcpy(*fgp[j], tfg);
-				}
-				if (tbg && !strstri(tbg, " ")) {
-					if (*bgp[j]) free(*bgp[j]);
-					*bgp[j] = (char *)alloc(strlen(tbg) + 1);
-					strcpy(*bgp[j], tbg);
-				}
- 				break;
-			}
-		}
-	}
-	return 1;
 }
 
 #endif	/* OPTION_LISTS_ONLY */

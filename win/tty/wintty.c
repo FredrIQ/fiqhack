@@ -66,10 +66,6 @@ struct window_procs tty_procs = {
     tty_get_ext_cmd,
     tty_number_pad,
     tty_delay_output,
-#ifdef CHANGE_COLOR	/* the Mac uses a palette device */
-    tty_change_color,
-    tty_get_color_string,
-#endif
 
     /* other defs that really should go away (they're tty specific) */
     tty_start_screen,
@@ -223,7 +219,6 @@ void tty_init_nhwindows(int* argcp, char** argv)
     /* this detects the IBM-compatible console on most 386 boxes */
     if ((opts = nh_getenv("TERM")) && !strncmp(opts, "AT", 2)) {
 	    switch_graphics(IBM_GRAPHICS);
-	    iflags.wc_color = TRUE;
     }
     /* detect whether a "vt" terminal can handle alternate charsets */
     if ((opts = nh_getenv("TERM")) &&
