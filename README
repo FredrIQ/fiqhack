@@ -1,12 +1,28 @@
 NetHack, experimental dev version
 
-Current goals:
-	- remove support for obsolete systems, OSes, compilers
-	- libification: NetHack should be a share library that is included by
-	window ports rather than a monolithic binary
+Changes so far:
+    - removed support for obsolete systems, OSes, compilers
+    - removed all window ports beside tty, to make changing the core easier
+    - new build system: cmake. yay!
+    - basic libification: NetHack is now a shared library (libnethack.so) that
+	is included by the tty window port binary.
+	Other window ports can each have their own binaries (eg. nethack_qt,...)
 
+Plans:
+    - improve library API: there are still far too many exports
+	(10 variables, 70 functions according to objdump -T)
+    - rename exported functions to nh_<foo> so that library calls become obvious
+    - rework option handling to give window ports the ability to store their
+	own options externally
+    - introduce "birth options" that may be set before the game starts to
+	augment/replace all SET_IN_FILE options.
+    - make ELBERETH and REINCARNATION compile options be birth options instead.
+    - break up moveloop() and externalize looping into the window port; move to
+	"push input" rather than "pull input" model by supplying next command as
+	an arg to each inner moveloop invocation
+    - create a qt4-based tile port
 
----------------Original Description ------------------
+---------------Original horribly outdated Description ------------------
                 NetHack 3.4.3 -- General information
 
 NetHack 3.4 is an enhancement to the dungeon exploration game NetHack.
