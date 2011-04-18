@@ -85,7 +85,6 @@ struct instance_flags {
 	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
 	boolean  menu_requested; /* Flag for overloaded use of 'm' prefix
 				  * on some non-move commands */
-	uchar num_pad_mode;
 	int	menu_headings;	/* ATR for menu headings */
 	int      purge_monsters;	/* # of dead monsters still on fmon list */
 	int *opt_booldup;	/* for duplication of boolean opts in config file */
