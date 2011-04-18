@@ -115,8 +115,6 @@ static struct Comp_Opt
 } compopt[] = {
 	{ "align",    "your starting alignment (lawful, neutral, or chaotic)",
 						8, DISP_IN_GAME },
-	{ "align_message", "message window alignment", 20, DISP_IN_GAME }, 	/*WC*/
-	{ "align_status", "status window alignment", 20, DISP_IN_GAME }, 	/*WC*/
 	{ "altkeyhandler", "alternate key handler", 20, DISP_IN_GAME },
 	{ "boulder",  "the symbol to use for displaying boulders",
 						1, SET_IN_GAME },
@@ -137,7 +135,6 @@ static struct Comp_Opt
 						8, DISP_IN_GAME },
 	{ "horsename", "the name of your (first) horse (e.g., horsename:Silver)",
 						PL_PSIZ, DISP_IN_GAME },
-	{ "map_mode", "map display mode under Windows", 20, DISP_IN_GAME },	/*WC*/
 	{ "menustyle", "user interface for object selection",
 						MENUTYPELEN, SET_IN_GAME },
 	{ "menu_deselect_all", "deselect all items in a menu", 4, SET_IN_FILE },
@@ -173,8 +170,6 @@ static struct Comp_Opt
 						20, SET_IN_GAME },
 	{ "pickup_types", "types of objects to pick up automatically",
 						MAXOCLASSES, SET_IN_GAME },
-	{ "player_selection", "choose character via dialog or prompts",
-						12, DISP_IN_GAME },
 	{ "race",     "your starting race (e.g., Human, Elf)",
 						PL_CSIZ, DISP_IN_GAME },
 	{ "role",     "your starting role (e.g., Barbarian, Valkyrie)",
@@ -183,19 +178,13 @@ static struct Comp_Opt
 						sizeof "teleport", SET_IN_GAME },
 	{ "scores",   "the parts of the score list you wish to see",
 						32, SET_IN_GAME },
-	{ "scroll_amount", "amount to scroll map when scroll_margin is reached",
-						20, DISP_IN_GAME }, /*WC*/
-	{ "scroll_margin", "scroll map when this far from the edge", 20, DISP_IN_GAME }, /*WC*/
 	{ "suppress_alert", "suppress alerts about version-specific features",
 						8, SET_IN_GAME },
-	{ "tile_width", "width of tiles", 20, DISP_IN_GAME},	/*WC*/
-	{ "tile_height", "height of tiles", 20, DISP_IN_GAME},	/*WC*/
-	{ "tile_file", "name of tile file", 70, DISP_IN_GAME},	/*WC*/
 	{ "traps",    "the symbols to use in drawing traps",
 						MAXTCHARS+1, SET_IN_FILE },
 	{ "vary_msgcount", "show more old messages at a time", 20, DISP_IN_GAME }, /*WC*/
 #ifdef WIN32CON
-	{"subkeyvalue", "override keystroke value", 7, SET_IN_FILE},
+	{ "subkeyvalue", "override keystroke value", 7, SET_IN_FILE},
 #endif
 	{ "windowcolors",  "the foreground/background colors of windows",	/*WC*/
 						80, DISP_IN_GAME },
@@ -2635,44 +2624,13 @@ int choose_classes_menu(const char *prompt, int category, boolean way,
 }
 
 struct wc_Opt wc_options[] = {
-	{"ascii_map", WC_ASCII_MAP},
-	{"color", WC_COLOR},
 	{"eight_bit_tty", WC_EIGHT_BIT_IN},
 	{"hilite_pet", WC_HILITE_PET},
-	{"popup_dialog", WC_POPUP_DIALOG},
-	{"player_selection", WC_PLAYER_SELECTION},
-	{"preload_tiles", WC_PRELOAD_TILES},
-	{"tiled_map", WC_TILED_MAP},
-	{"tile_file", WC_TILE_FILE},
-	{"tile_width", WC_TILE_WIDTH},
-	{"tile_height", WC_TILE_HEIGHT},
 	{"use_inverse", WC_INVERSE},
-	{"align_message", WC_ALIGN_MESSAGE},
-	{"align_status", WC_ALIGN_STATUS},
-	{"font_map", WC_FONT_MAP},
-	{"font_menu", WC_FONT_MENU},
-	{"font_message",WC_FONT_MESSAGE},
-	{"font_size_map", WC_FONTSIZ_MAP},
-	{"font_size_menu", WC_FONTSIZ_MENU},
-	{"font_size_message", WC_FONTSIZ_MESSAGE},
-	{"font_size_status", WC_FONTSIZ_STATUS},
-	{"font_size_text", WC_FONTSIZ_TEXT},
-	{"font_status", WC_FONT_STATUS},
-	{"font_text", WC_FONT_TEXT},
-	{"map_mode", WC_MAP_MODE},
-	{"scroll_amount", WC_SCROLL_AMOUNT},
-	{"scroll_margin", WC_SCROLL_MARGIN},
-	{"splash_screen", WC_SPLASH_SCREEN},
-	{"vary_msgcount",WC_VARY_MSGCOUNT},
-	{"windowcolors", WC_WINDOWCOLORS},
-	{"mouse_support", WC_MOUSE_SUPPORT},
 	{(char *)0, 0L}
 };
 
 struct wc_Opt wc2_options[] = {
-	{"fullscreen", WC2_FULLSCREEN},
-	{"softkeyboard", WC2_SOFTKEYBOARD},
-	{"wraptext", WC2_WRAPTEXT},
 	{(char *)0, 0L}
 };
 

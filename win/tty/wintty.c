@@ -27,10 +27,7 @@
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
     "tty",
-#if defined(WIN32CON)
-    WC_MOUSE_SUPPORT|
-#endif
-    WC_COLOR|WC_HILITE_PET|WC_INVERSE|WC_EIGHT_BIT_IN,
+    WC_HILITE_PET|WC_INVERSE|WC_EIGHT_BIT_IN,
     0L,
     tty_init_nhwindows,
     tty_player_selection,
