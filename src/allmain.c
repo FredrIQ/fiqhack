@@ -28,6 +28,7 @@ static void wd_message(boolean wiz_error_flag)
 void nethack_init(struct window_procs *procs)
 {
     windowprocs = *procs;
+    program_state.game_started = 0;
 }
 
 
@@ -95,6 +96,8 @@ void nethack_start_game(char *name, boolean exact_username,
 	vision_init();
 
 	display_gamewindows();
+	
+	program_state.game_started = 1;
 
 	if ((fd = restore_saved_game()) >= 0) {
 		/* Since wizard is actually flags.debug, restoring might
@@ -579,8 +582,7 @@ void newgame(void)
 	init_dungeons();	/* must be before u_init() to avoid rndmonst()
 				 * creating odd monsters for any tins and eggs
 				 * in hero's initial inventory */
-	init_artifacts();	/* before u_init() in case $WIZKIT specifies
-				 * any artifacts */
+	init_artifacts();
 	u_init();
 
 #ifndef NO_SIGNAL

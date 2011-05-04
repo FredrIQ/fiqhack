@@ -6,7 +6,8 @@ set (NH_TTY_SRC
     topl.c
     wintty.c
     ioctl.c
-    unixtty.c)
+    unixtty.c
+    optwin.c)
 
 if (WIN32)
     # untested and probably incomplete

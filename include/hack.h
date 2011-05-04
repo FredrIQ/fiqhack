@@ -228,24 +228,6 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define MENU_PARTIAL	 2
 #define MENU_FULL	 3
 
-/*
- * Option flags
- * Each higher number includes the characteristics of the numbers
- * below it.
- */
-#define SET_IN_FILE	0 /* config file option only */
-#define SET_VIA_PROG	1 /* may be set via extern program, not seen in game */
-#define DISP_IN_GAME	2 /* may be set via extern program, displayed in game */
-#define SET_IN_GAME	3 /* may be set via extern program or set in the game */
-
-#define FEATURE_NOTICE_VER(major,minor,patch) (((unsigned long)major << 24) | \
-	((unsigned long)minor << 16) | \
-	((unsigned long)patch << 8) | \
-	((unsigned long)0))
-
-#define FEATURE_NOTICE_VER_MAJ	  (flags.suppress_alert >> 24)
-#define FEATURE_NOTICE_VER_MIN	  (((unsigned long)(0x0000000000FF0000L & flags.suppress_alert)) >> 16)
-#define FEATURE_NOTICE_VER_PATCH  (((unsigned long)(0x000000000000FF00L & flags.suppress_alert)) >>  8)
 
 #ifndef max
 #define max(a,b) ((a) > (b) ? (a) : (b))

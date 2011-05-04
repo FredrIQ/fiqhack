@@ -64,7 +64,6 @@ struct flag {
 	int	 end_top, end_around;	/* describe desired score list */
 	unsigned ident;		/* social security number for each monster */
 	unsigned moonphase;
-	unsigned long suppress_alert;
 #define NEW_MOON	0
 #define FULL_MOON	4
 	unsigned no_of_wizards; /* 0, 1 or 2 (wizard and his shadow) */

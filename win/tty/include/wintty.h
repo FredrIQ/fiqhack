@@ -196,6 +196,8 @@ extern void intron(void);
 extern void introff(void);
 #endif /* UNIX */
 
+extern void display_options(void);
+
 /* other defs that really should go away (they're tty specific) */
 extern void tty_start_screen(void);
 extern void tty_end_screen(void);

@@ -541,8 +541,6 @@ extern int create_savefile(void);
 extern int open_savefile(void);
 extern int delete_savefile(void);
 extern int restore_saved_game(void);
-extern void read_config_file(const char *);
-extern void read_wizkit(void);
 extern void paniclog(const char *, const char *);
 extern int validate_prefix_locations(char *);
 extern void free_saved_games(char**);
@@ -1119,20 +1117,11 @@ extern const char *mimic_obj_name(struct monst *);
 
 /* ### options.c ### */
 
-extern boolean match_optname(const char *,const char *,int,boolean);
-extern void parseoptions(char *,boolean,boolean);
-extern int doset(void);
 extern int dotogglepickup(void);
-extern void option_help(void);
-extern void next_opt(winid,const char *);
 extern int fruitadd(char *);
-extern int choose_classes_menu(const char *,int,boolean,char *,char *);
-extern void assign_warnings(uchar *);
-extern void set_duplicate_opt_detection(int);
-extern void set_wc_option_mod_status(unsigned long, int);
-extern void set_wc2_option_mod_status(unsigned long, int);
-extern void set_option_mod_status(const char *,int);
+// extern void option_help(void);
 #ifdef AUTOPICKUP_EXCEPTIONS
+#error FIXME
 extern int add_autopickup_exception(const char *);
 extern void free_autopickup_exceptions(void);
 #endif /* AUTOPICKUP_EXCEPTIONS */
@@ -1674,8 +1663,6 @@ extern char *getversionstring(char *);
 extern int doversion(void);
 extern int doextversion(void);
 extern boolean check_version(struct version_info *, const char *, boolean);
-extern unsigned long get_feature_notice_ver(char *);
-extern unsigned long get_current_feature_ver(void);
 #ifdef RUNTIME_PORT_ID
 extern void append_port_id(char *);
 #endif

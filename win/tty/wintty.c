@@ -2180,31 +2180,34 @@ void tty_raw_print(const char *str)
 #if defined(WIN32CON)
     msmsg("%s\n", str);
 #else
-    puts(str); (void) fflush(stdout);
+    puts(str);
+    fflush(stdout);
 #endif
 }
 
 void tty_raw_print_bold(const char *str)
 {
-    if(ttyDisplay) ttyDisplay->rawprint++;
+    if(ttyDisplay)
+	ttyDisplay->rawprint++;
     term_start_raw_bold();
 #if defined(WIN32CON)
     msmsg("%s", str);
 #else
-    (void) fputs(str, stdout);
+    fputs(str, stdout);
 #endif
     term_end_raw_bold();
 #if defined(WIN32CON)
     msmsg("\n");
 #else
     puts("");
-    (void) fflush(stdout);
+    fflush(stdout);
 #endif
 }
 
 int tty_nhgetch(void)
 {
     int i;
+    boolean got_input;
 #ifdef UNIX
     /* kludge alert: Some Unix variants return funny values if getc()
      * is called, interrupted, and then called again.  There
@@ -2215,7 +2218,7 @@ int tty_nhgetch(void)
     char nestbuf;
 #endif
 
-    (void) fflush(stdout);
+    fflush(stdout);
     /* Note: if raw_print() and wait_synch() get called to report terminal
      * initialization problems, then wins[] and ttyDisplay might not be
      * available yet.  Such problems will probably be fatal before we get
@@ -2223,14 +2226,23 @@ int tty_nhgetch(void)
      */
     if (WIN_MESSAGE != WIN_ERR && wins[WIN_MESSAGE])
 	    wins[WIN_MESSAGE]->flags &= ~WIN_STOP;
+    
+    got_input = FALSE;
+    do {
 #ifdef UNIX
-    i = ((++nesting == 1) ? getchar() :
-	 (read(fileno(stdin), (void *)&nestbuf,1) == 1 ? (int)nestbuf :
-								EOF));
-    --nesting;
+	i = ((++nesting == 1) ? getchar() :
+	    (read(fileno(stdin), (void *)&nestbuf,1) == 1 ? (int)nestbuf :
+								    EOF));
+	--nesting;
 #else
-    i = getchar();
+	i = getchar();
 #endif
+	if (i == 'O')
+	    display_options();
+	else
+	    got_input = TRUE;
+    
+    } while(!got_input);
     if (!i) i = '\033'; /* map NUL to ESC since nethack doesn't expect NUL */
     if (ttyDisplay && ttyDisplay->toplin == 1)
 	ttyDisplay->toplin = 2;

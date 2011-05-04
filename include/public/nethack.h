@@ -103,6 +103,8 @@ extern EXPORT void initoptions(void);
 extern EXPORT void add_menu_cmd_alias(char, char);
 extern EXPORT char map_menu_cmd(char);
 extern EXPORT char *nh_getenv(const char *);
+extern EXPORT boolean nh_set_option(const char *name, union optvalue value);
+extern EXPORT struct nh_option_desc *nh_get_options(boolean birth);
 
 /* pline.c */
 extern EXPORT void pline(const char *,...);
@@ -147,6 +149,5 @@ extern EXPORT void prscore(char*,int,char**);
 /* windows.c */
 extern EXPORT char genl_message_menu(char,int,const char *);
 extern EXPORT void genl_preference_update(const char *);
-
 
 #endif

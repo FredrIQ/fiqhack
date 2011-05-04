@@ -1166,7 +1166,6 @@ static const struct func_tab cmdlist[] = {
 	{M('n'), TRUE, ddocall},
 	{M('N'), TRUE, ddocall},
 	{'o', FALSE, doopen},
-	{'O', TRUE, doset},
 	{M('o'), FALSE, dosacrifice},
 	{'p', FALSE, dopay},
 	{'P', FALSE, doputon},

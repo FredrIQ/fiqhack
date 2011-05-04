@@ -756,9 +756,6 @@ void u_init(void)
 	if (discover)
 		ini_inv(Wishing);
 
-	if (wizard)
-		read_wizkit();
-
 #ifndef GOLDOBJ
 	u.ugold0 += hidden_gold();	/* in case sack has gold in it */
 #else

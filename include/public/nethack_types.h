@@ -87,8 +87,6 @@ struct instance_flags {
 				  * on some non-move commands */
 	int	menu_headings;	/* ATR for menu headings */
 	int      purge_monsters;	/* # of dead monsters still on fmon list */
-	int *opt_booldup;	/* for duplication of boolean opts in config file */
-	int *opt_compdup;	/* for duplication of compound opts in config file */
 	uchar	bouldersym;	/* symbol for boulder display */
 	boolean travel1;	/* first travel step */
 	coord	travelcc;	/* coordinates for travel_cache */
@@ -120,6 +118,7 @@ struct instance_flags {
 };
 
 struct sinfo {
+	int game_started;
 	int gameover;		/* self explanatory? */
 	int stopprint;		/* inhibit further end of game disclosure */
 #if defined(UNIX) || defined(WIN32)
@@ -188,6 +187,58 @@ struct sinfo {
 #define CONFIGPREFIX	7
 #define TROUBLEPREFIX	8
 #define PREFIX_COUNT	9
+
+
+enum nh_opttype {
+    OPTTYPE_NONE,
+    OPTTYPE_BOOL,
+    OPTTYPE_INT,
+    OPTTYPE_ENUM,
+    OPTTYPE_STRING
+};
+
+struct nh_listitem {
+    int id;
+    char *caption;
+};
+
+struct nh_int_option {
+	int max;
+	int min;
+};
+
+struct nh_enum_option {
+	struct nh_listitem *choices;
+	int numchoices;
+};
+
+struct nh_string_option {
+	int maxlen;
+};
+
+union optvalue {
+	void *dummy; /* for static initialisation */
+	boolean b;
+	int i;
+	int e;
+	char *s;
+};
+
+struct nh_option_desc
+{
+	const char *name;
+	const char *helptxt;
+	enum nh_opttype type;
+	union optvalue value;
+	union {
+	    /* only the first element of a union can be initialized at compile
+	     * time (without C99), so boolean args go first, there are more of those ...*/
+	    struct nh_int_option i;
+	    struct nh_enum_option e;
+	    struct nh_string_option s;
+	};
+};
+
 
 #endif
 

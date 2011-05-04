@@ -31,8 +31,8 @@
 /* Assorted definitions that may depend on selections in config.h. */
 
 #ifndef TRUE		/* defined in some systems' native include files */
-#define TRUE	((boolean)1)
 #define FALSE	((boolean)0)
+#define TRUE	((boolean)!0)
 #endif
 
 #ifndef STRNCMPI
