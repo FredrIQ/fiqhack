@@ -277,10 +277,10 @@ int tactics(struct monst *mtmp)
 		mtmp->mavenge = 1; /* covetous monsters attack while fleeing */
 		if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
 			(mtmp->iswiz && !xupstair && !mon_has_amulet(mtmp))) {
-		    if (!rn2(3 + mtmp->mhp/10)) (void) rloc(mtmp, FALSE);
+		    if (!rn2(3 + mtmp->mhp/10)) rloc(mtmp, FALSE);
 		} else if (xupstair &&
 			 (mtmp->mx != xupstair || mtmp->my != yupstair)) {
-		    (void) mnearto(mtmp, xupstair, yupstair, TRUE);
+		    mnearto(mtmp, xupstair, yupstair, TRUE);
 		}
 		/* if you're not around, cast healing spells */
 		if (distu(mtmp->mx,mtmp->my) > (BOLT_LIM * BOLT_LIM))
@@ -322,7 +322,7 @@ int tactics(struct monst *mtmp)
 				    (distu(mtmp->mx, mtmp->my) <= 5) ?
 				     doname(otmp) : distant_name(otmp, doname));
 			    obj_extract_self(otmp);
-			    (void) mpickobj(mtmp, otmp);
+			    mpickobj(mtmp, otmp);
 			    return 1;
 			} else return 0;
 		    } else {
@@ -331,7 +331,7 @@ int tactics(struct monst *mtmp)
 			return 0;
 		    }
 	        } else { /* a monster has it - 'port beside it. */
-		    (void) mnearto(mtmp, tx, ty, FALSE);
+		    mnearto(mtmp, tx, ty, FALSE);
 		    return 0;
 		}
 	    }
@@ -362,7 +362,7 @@ void clonewiz(void)
 				u.ux, u.uy, NO_MM_FLAGS)) != 0) {
 	    mtmp2->msleeping = mtmp2->mtame = mtmp2->mpeaceful = 0;
 	    if (!u.uhave.amulet && rn2(2)) {  /* give clone a fake */
-		(void) add_to_minv(mtmp2, mksobj(FAKE_AMULET_OF_YENDOR,
+		add_to_minv(mtmp2, mksobj(FAKE_AMULET_OF_YENDOR,
 					TRUE, FALSE));
 	    }
 	    mtmp2->m_ap_type = M_AP_MONSTER;
@@ -494,7 +494,7 @@ void intervene(void)
 			break;
 	    case 3:	aggravate();
 			break;
-	    case 4:	(void)nasty((struct monst *)0);
+	    case 4:	nasty((struct monst *)0);
 			break;
 	    case 5:	resurrect();
 			break;

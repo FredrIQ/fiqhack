@@ -398,7 +398,7 @@ static struct tm *getlt(void)
 {
 	time_t date;
 
-	(void) time(&date);
+	time(&date);
 	return localtime(&date);
 }
 

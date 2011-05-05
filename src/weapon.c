@@ -555,7 +555,7 @@ int mon_wield_item(struct monst *mon)
 			obj = select_hwep(mon);
 			break;
 		case NEED_RANGED_WEAPON:
-			(void)select_rwep(mon);
+			select_rwep(mon);
 			obj = propellor;
 			break;
 		case NEED_PICK_AXE:
@@ -878,7 +878,7 @@ int enhance_weapon_skill(void)
 		else
 		    prefix = (to_advance + eventually_advance +
 				maxxed_cnt > 0) ? "    " : "";
-		(void) skill_level_name(i, sklnambuf);
+		skill_level_name(i, sklnambuf);
 		if (wizard) {
 		    if (!iflags.menu_tab_sep)
 			sprintf(buf, " %s%-*s %-12s %5d(%4d)",

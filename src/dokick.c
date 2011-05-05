@@ -102,7 +102,7 @@ static void kickdmg(struct monst *mon, boolean clumsy)
 		}
 	}
 
-	(void) passive(mon, TRUE, mon->mhp > 0, AT_KICK);
+	passive(mon, TRUE, mon->mhp > 0, AT_KICK);
 	if (mon->mhp <= 0 && !trapkilled) killed(mon);
 
 	/* may bring up a dialog, so put this after all messages */
@@ -150,12 +150,12 @@ static void kick_monster(xchar x, xchar y)
 		} else if (tmp > rnd(20)) {
 		    You("kick %s.", mon_nam(mon));
 		    sum = damageum(mon, uattk);
-		    (void)passive(mon, (boolean)(sum > 0), (sum != 2), AT_KICK);
+		    passive(mon, (boolean)(sum > 0), (sum != 2), AT_KICK);
 		    if (sum == 2)
 			break;		/* Defender died */
 		} else {
 		    missum(mon, uattk);
-		    (void)passive(mon, 0, 1, AT_KICK);
+		    passive(mon, 0, 1, AT_KICK);
 		}
 	    }
 	    return;
@@ -165,7 +165,7 @@ static void kick_monster(xchar x, xchar y)
 	   !is_flyer(mon->data)) {
 		pline("Floating in the air, you miss wildly!");
 		exercise(A_DEX, FALSE);
-		(void) passive(mon, FALSE, 1, AT_KICK);
+		passive(mon, FALSE, 1, AT_KICK);
 		return;
 	}
 
@@ -176,7 +176,7 @@ static void kick_monster(xchar x, xchar y)
 		if(!rn2((i < j/10) ? 2 : (i < j/5) ? 3 : 4)) {
 			if(martial() && !rn2(2)) goto doit;
 			Your("clumsy kick does no damage.");
-			(void) passive(mon, FALSE, 1, AT_KICK);
+			passive(mon, FALSE, 1, AT_KICK);
 			return;
 		}
 		if(i < j/10) clumsy = TRUE;
@@ -197,7 +197,7 @@ doit:
 		if(!nohands(mon->data) && !rn2(martial() ? 5 : 3)) {
 		    pline("%s blocks your %skick.", Monnam(mon),
 				clumsy ? "clumsy " : "");
-		    (void) passive(mon, FALSE, 1, AT_KICK);
+		    passive(mon, FALSE, 1, AT_KICK);
 		    return;
 		} else {
 		    mnexto(mon);
@@ -214,7 +214,7 @@ doit:
 					"slides" : "jumps"),
 				clumsy ? "easily" : "nimbly",
 				clumsy ? "clumsy " : "");
-			(void) passive(mon, FALSE, 1, AT_KICK);
+			passive(mon, FALSE, 1, AT_KICK);
 			return;
 		    }
 		}
@@ -502,13 +502,13 @@ static int kick_object(xchar x, xchar y)
 			You("break open the lock!");
 			kickobj->olocked = 0;
 			kickobj->obroken = 1;
-			if (otrp) (void) chest_trap(kickobj, LEG, FALSE);
+			if (otrp) chest_trap(kickobj, LEG, FALSE);
 			return 1;
 		    }
 		} else {
 		    if (!rn2(3) || (martial() && !rn2(2))) {
 			pline_The("lid slams open, then falls shut.");
-			if (otrp) (void) chest_trap(kickobj, LEG, FALSE);
+			if (otrp) chest_trap(kickobj, LEG, FALSE);
 			return 1;
 		    }
 		}
@@ -535,7 +535,7 @@ static int kick_object(xchar x, xchar y)
 		  otense(kickobj, "slide"), surface(x,y));
 
 	obj_extract_self(kickobj);
-	(void) snuff_candle(kickobj);
+	snuff_candle(kickobj);
 	newsym(x, y);
 	mon = bhit(u.dx, u.dy, range, KICKED_WEAPON,
 		   (int (*)(struct monst*,struct obj*))0,
@@ -557,7 +557,7 @@ static int kick_object(xchar x, xchar y)
 	    if (costly) {
 		if(isgold)
 		    costly_gold(x, y, kickobj->quan);
-		else (void)stolen_value(kickobj, x, y,
+		else stolen_value(kickobj, x, y,
 					(boolean)shkp->mpeaceful, FALSE);
 	    }
 	    return 1;
@@ -568,7 +568,7 @@ static int kick_object(xchar x, xchar y)
 			*in_rooms(x, y, SHOPBASE) != bhitroom)) {
 	    if(isgold)
 		costly_gold(x, y, kickobj->quan);
-	    else (void)stolen_value(kickobj, x, y,
+	    else stolen_value(kickobj, x, y,
 				    (boolean)shkp->mpeaceful, FALSE);
 	}
 
@@ -811,7 +811,7 @@ int dokick(void)
 		    if((Luck < 0 || maploc->doormask) && !rn2(3)) {
 			maploc->typ = ROOM;
 			maploc->doormask = 0; /* don't leave loose ends.. */
-			(void) mkgold((long)rnd(200), x, y);
+			mkgold((long)rnd(200), x, y);
 			if (Blind)
 			    pline("CRASH!  You destroy it.");
 			else {
@@ -821,11 +821,11 @@ int dokick(void)
 			exercise(A_DEX, TRUE);
 			return 1;
 		    } else if(Luck > 0 && !rn2(3) && !maploc->looted) {
-			(void) mkgold((long) rn1(201, 300), x, y);
+			mkgold((long) rn1(201, 300), x, y);
 			i = Luck + 1;
 			if(i > 6) i = 6;
 			while(i--)
-			    (void) mksobj_at(rnd_class(DILITHIUM_CRYSTAL,
+			    mksobj_at(rnd_class(DILITHIUM_CRYSTAL,
 					LUCKSTONE-1), x, y, FALSE, TRUE);
 			if (Blind)
 			    You("kick %s loose!", something);
@@ -938,7 +938,7 @@ int dokick(void)
 			else
 			    pline("A %s ooze gushes up from the drain!",
 					 hcolor(NH_BLACK));
-			(void) makemon(&mons[PM_BLACK_PUDDING],
+			makemon(&mons[PM_BLACK_PUDDING],
 					 x, y, NO_MM_FLAGS);
 			exercise(A_DEX, TRUE);
 			newsym(x,y);
@@ -961,7 +961,7 @@ int dokick(void)
 			if(!(maploc->looted & S_LRING)) { /* once per sink */
 			    if (!Blind)
 				You("see a ring shining in its midst.");
-			    (void) mkobj_at(RING_CLASS, x, y, TRUE);
+			    mkobj_at(RING_CLASS, x, y, TRUE);
 			    newsym(x, y);
 			    exercise(A_DEX, TRUE);
 			    exercise(A_WIS, TRUE);	/* a discovery! */
@@ -984,7 +984,7 @@ ouch:
 		    if (is_drawbridge_wall(x,y) >= 0) {
 			pline_The("drawbridge is unaffected.");
 			/* update maploc to refer to the drawbridge */
-			(void) find_drawbridge(&x,&y);
+			find_drawbridge(&x,&y);
 			maploc = &levl[x][y];
 		    }
 		    if(!rn2(3)) set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
@@ -1060,7 +1060,7 @@ dumb:
 			else
 			    You_hear("someone yell:");
 			verbalize("Halt, thief!  You're under arrest!");
-			(void) angry_guards(FALSE);
+			angry_guards(FALSE);
 			break;
 		    }
 		  }
@@ -1080,7 +1080,7 @@ dumb:
 			    You_hear("someone yell:");
 			if(levl[x][y].looted & D_WARNED) {
 			    verbalize("Halt, vandal!  You're under arrest!");
-			    (void) angry_guards(FALSE);
+			    angry_guards(FALSE);
 			} else {
 			    verbalize("Hey, stop damaging that door!");
 			    levl[x][y].looted |= D_WARNED;
@@ -1217,14 +1217,14 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 		    You("removed %ld %s worth of goods!", price, currency(price));
 		    if(cansee(shkp->mx, shkp->my)) {
 			if(ESHK(shkp)->customer[0] == 0)
-			    (void) strncpy(ESHK(shkp)->customer,
+			    strncpy(ESHK(shkp)->customer,
 					   plname, PL_NSIZ);
 			if(angry)
 			    pline("%s is infuriated!", Monnam(shkp));
 			else pline("\"%s, you are a thief!\"", plname);
 		    } else  You_hear("a scream, \"Thief!\"");
 		    hot_pursuit(shkp);
-		    (void) angry_guards(FALSE);
+		    angry_guards(FALSE);
 		    return;
 		}
 		if(ESHK(shkp)->debit > debit) {
@@ -1289,11 +1289,11 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 	if(unpaid || shop_floor_obj) {
 	    if(unpaid) {
 		subfrombill(otmp, shop_keeper(*u.ushops));
-		(void)stolen_value(otmp, u.ux, u.uy, TRUE, FALSE);
+		stolen_value(otmp, u.ux, u.uy, TRUE, FALSE);
 	    } else {
 		ox = otmp->ox;
 		oy = otmp->oy;
-		(void)stolen_value(otmp, ox, oy,
+		stolen_value(otmp, ox, oy,
 			  (costly_spot(u.ux, u.uy) &&
 			      index(u.urooms, *in_rooms(ox, oy, SHOPBASE))),
 			  FALSE);
@@ -1386,7 +1386,7 @@ void obj_delivery(void)
 	    if (nx > 0) {
 		place_object(otmp, nx, ny);
 		stackobj(otmp);
-		(void)scatter(nx, ny, rnd(2), 0, otmp);
+		scatter(nx, ny, rnd(2), 0, otmp);
 	    } else {		/* random location */
 		/* set dummy coordinates because there's no
 		   current position for rloco() to update */

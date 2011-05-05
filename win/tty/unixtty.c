@@ -247,7 +247,7 @@ void error (const char *s, ...)
 	if(settty_needed)
 		settty((char *)0);
 	vprintf(s, the_args);
-	(void) putchar('\n');
+	putchar('\n');
 	va_end(the_args);
 	exit(EXIT_FAILURE);
 }

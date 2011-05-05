@@ -43,9 +43,9 @@ void nethack_start_game(char *name, boolean exact_username,
 	 * It seems you really want to play.
 	 */
 	u.uhp = 1;	/* prevent RIP on early quits */
-	(void) signal(SIGHUP, (SIG_RET_TYPE) hangup);
+	signal(SIGHUP, (SIG_RET_TYPE) hangup);
 #ifdef SIGXCPU
-	(void) signal(SIGXCPU, (SIG_RET_TYPE) hangup);
+	signal(SIGXCPU, (SIG_RET_TYPE) hangup);
 #endif
 
 	if (wizard)
@@ -59,7 +59,7 @@ void nethack_start_game(char *name, boolean exact_username,
 		int len = strlen(plname);
 		/* append the current role, if any, so that last dash is ours */
 		if (++len < sizeof plname)
-			(void)strncat(strcat(plname, "-"),
+			strncat(strcat(plname, "-"),
 				      pl_character, sizeof plname - len - 1);
 	}
 	plnamesuffix();		/* strip suffix from name; calls askname() */
@@ -70,8 +70,8 @@ void nethack_start_game(char *name, boolean exact_username,
 		 * check for multiple games under the same name
 		 * (if !locknum) or check max nr of players (otherwise)
 		 */
-		(void) signal(SIGQUIT,SIG_IGN);
-		(void) signal(SIGINT,SIG_IGN);
+		signal(SIGQUIT,SIG_IGN);
+		signal(SIGINT,SIG_IGN);
 	}
 	sprintf(lock, "%d%s", (int)getuid(), plname);
 	getlock();
@@ -106,8 +106,8 @@ void nethack_start_game(char *name, boolean exact_username,
 		boolean remember_wiz_mode = wizard;
 		const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
 
-		(void) chmod(fq_save,0);	/* disallow parallel restores */
-		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+		chmod(fq_save,0);	/* disallow parallel restores */
+		signal(SIGINT, (SIG_RET_TYPE) done1);
 #ifdef NEWS
 		if(iflags.news) {
 		    display_file(NEWS, FALSE);
@@ -124,9 +124,9 @@ void nethack_start_game(char *name, boolean exact_username,
 
 		if (discover || wizard) {
 			if(yn("Do you want to keep the save file?") == 'n')
-			    (void) delete_savefile();
+			    delete_savefile();
 			else {
-			    (void) chmod(fq_save,FCMASK); /* back to readable */
+			    chmod(fq_save,FCMASK); /* back to readable */
 			}
 		}
 		flags.move = 0;
@@ -139,7 +139,7 @@ not_recovered:
 
 		flags.move = 0;
 		set_wear();
-		(void) pickup(1);
+		pickup(1);
 	}
 }
 
@@ -175,7 +175,7 @@ static void you_moved(void)
 
 		if(!rn2(u.uevent.udemigod ? 25 :
 			(depth(&u.uz) > depth(&stronghold_level)) ? 50 : 70))
-		    (void) makemon((struct permonst *)0, 0, 0, NO_MM_FLAGS);
+		    makemon((struct permonst *)0, 0, 0, NO_MM_FLAGS);
 
 		/* calculate how much time passed. */
 		if (u.usteed && u.umoved) {
@@ -327,7 +327,7 @@ static void you_moved(void)
 		    }
 		}
 
-		if(Searching && multi >= 0) (void) dosearch0(1);
+		if(Searching && multi >= 0) dosearch0(1);
 		dosounds();
 		do_storms();
 		gethungry();
@@ -407,7 +407,7 @@ void moveloop(void)
 
     if (wizard) add_debug_extended_commands();
 
-    (void) encumber_msg(); /* in case they auto-picked up something */
+    encumber_msg(); /* in case they auto-picked up something */
 
     u.uz0.dlevel = u.uz.dlevel;
     youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
@@ -586,7 +586,7 @@ void newgame(void)
 	u_init();
 
 #ifndef NO_SIGNAL
-	(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+	signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 #ifdef NEWS
 	if(iflags.news) display_file(NEWS, FALSE);
@@ -606,7 +606,7 @@ void newgame(void)
 	 *			- ucsfcgl!kneller
 	 */
 	if(MON_AT(u.ux, u.uy)) mnexto(m_at(u.ux, u.uy));
-	(void) makedog();
+	makedog();
 	docrt();
 
 	if (flags.legacy) {

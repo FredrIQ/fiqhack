@@ -371,7 +371,7 @@ void beg(struct monst *mtmp)
 
     /* presumably nearness and soundok checks have already been made */
     if (!is_silent(mtmp->data) && mtmp->data->msound <= MS_ANIMAL)
-	(void) domonnoise(mtmp);
+	domonnoise(mtmp);
     else if (mtmp->data->msound >= MS_HUMANOID) {
 	if (!canspotmon(mtmp))
 	    map_invisible(mtmp->mx, mtmp->my);
@@ -678,7 +678,7 @@ static int domonnoise(struct monst *mtmp)
 #ifdef SEDUCE
 	    if (ptr->mlet != S_NYMPH &&
 		could_seduce(mtmp, &youmonst, (struct attack *)0) == 1) {
-			(void) doseduce(mtmp);
+			doseduce(mtmp);
 			break;
 	    }
 	    switch ((poly_gender() != (int) mtmp->female) ? rn2(3) : 0)
@@ -713,7 +713,7 @@ static int domonnoise(struct monst *mtmp)
 #endif
 	case MS_BRIBE:
 	    if (mtmp->mpeaceful && !mtmp->mtame) {
-		(void) demon_talk(mtmp);
+		demon_talk(mtmp);
 		break;
 	    }
 	    /* fall through */

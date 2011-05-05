@@ -782,7 +782,7 @@ void use_crystal_ball(struct obj *obj)
 	    }
 	    break;
 	case 4 : pline("%s your mind!", Tobjnam(obj, "zap"));
-	    (void) make_hallucinated(HHallucination + rnd(100),FALSE,0L);
+	    make_hallucinated(HHallucination + rnd(100),FALSE,0L);
 	    break;
 	case 5 : pline("%s!", Tobjnam(obj, "explode"));
 	    useup(obj);

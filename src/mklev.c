@@ -439,9 +439,9 @@ static void makeniche(int trap_type)
 		    dosdoor(xx, yy, aroom, rn2(5) ? SDOOR : DOOR);
 		else {
 		    if (!level.flags.noteleport)
-			(void) mksobj_at(SCR_TELEPORTATION,
+			mksobj_at(SCR_TELEPORTATION,
 					 xx, yy+dy, TRUE, FALSE);
-		    if (!rn2(3)) (void) mkobj_at(0, xx, yy+dy, TRUE);
+		    if (!rn2(3)) mkobj_at(0, xx, yy+dy, TRUE);
 		}
 	    }
 	    return;
@@ -489,8 +489,8 @@ static void clear_level_structures(void)
 		*lev++ = zerorm;
 	    }
 	}
-	(void) memset((void *)level.objects, 0, sizeof(level.objects));
-	(void) memset((void *)level.monsters, 0, sizeof(level.monsters));
+	memset((void *)level.objects, 0, sizeof(level.objects));
+	memset((void *)level.monsters, 0, sizeof(level.monsters));
 	level.objlist = (struct obj *)0;
 	level.buriedobjlist = (struct obj *)0;
 	level.monlist = (struct monst *)0;
@@ -692,7 +692,7 @@ skip0:
 		    tmonst = makemon((struct permonst *) 0, x,y,NO_MM_FLAGS);
 		    if (tmonst && tmonst->data == &mons[PM_GIANT_SPIDER] &&
 			    !occupied(x, y))
-			(void) maketrap(x, y, WEB);
+			maketrap(x, y, WEB);
 		}
 		/* put traps and mimics inside */
 		goldseen = FALSE;
@@ -701,7 +701,7 @@ skip0:
 		while (!rn2(x))
 		    mktrap(0,0,croom,(coord*)0);
 		if (!goldseen && !rn2(3))
-		    (void) mkgold(0L, somex(croom), somey(croom));
+		    mkgold(0L, somex(croom), somey(croom));
 #ifdef REINCARNATION
 		if(Is_rogue_level(&u.uz)) goto skip_nonrogue;
 #endif
@@ -714,7 +714,7 @@ skip0:
 
 		/* put statues inside */
 		if(!rn2(20))
-		    (void) mkcorpstat(STATUE, (struct monst *)0,
+		    mkcorpstat(STATUE, (struct monst *)0,
 				      (struct permonst *)0,
 				      somex(croom), somey(croom), TRUE);
 		/* put box/chest inside;
@@ -723,7 +723,7 @@ skip0:
 		 *  when few rooms; chance for 3 or more is neglible.
 		 */
 		if(!rn2(nroom * 5 / 2))
-		    (void) mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
+		    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 				     somex(croom), somey(croom), TRUE, FALSE);
 
 		/* maybe make some graffiti */
@@ -744,14 +744,14 @@ skip0:
 	skip_nonrogue:
 #endif
 		if(!rn2(3)) {
-		    (void) mkobj_at(0, somex(croom), somey(croom), TRUE);
+		    mkobj_at(0, somex(croom), somey(croom), TRUE);
 		    tryct = 0;
 		    while(!rn2(5)) {
 			if(++tryct > 100) {
 			    impossible("tryct overflow4");
 			    break;
 			}
-			(void) mkobj_at(0, somex(croom), somey(croom), TRUE);
+			mkobj_at(0, somex(croom), somey(croom), TRUE);
 		    }
 		}
 	}
@@ -775,7 +775,7 @@ static void mineralize(void)
 	    for (y = 1; y < (ROWNO - 1); y++)
 		if ((levl[x][y].typ == POOL && !rn2(10)) ||
 			(levl[x][y].typ == MOAT && !rn2(30)))
-		    (void) mksobj_at(KELP_FROND, x, y, TRUE, FALSE);
+		    mksobj_at(KELP_FROND, x, y, TRUE, FALSE);
 
 	/* determine if it is even allowed;
 	   almost all special levels are excluded */
@@ -1136,8 +1136,8 @@ void mktrap(int num, int mazeflag, struct mkroom *croom, coord *tm)
 			(avoid_boulder && sobj_at(BOULDER, m.x, m.y)));
 	}
 
-	(void) maketrap(m.x, m.y, kind);
-	if (kind == WEB) (void) makemon(&mons[PM_GIANT_SPIDER],
+	maketrap(m.x, m.y, kind);
+	if (kind == WEB) makemon(&mons[PM_GIANT_SPIDER],
 						m.x, m.y, NO_MM_FLAGS);
 }
 
@@ -1254,7 +1254,7 @@ static void mkgrave(struct mkroom *croom)
 	make_grave(m.x, m.y, dobell ? "Saved by the bell!" : (char *) 0);
 
 	/* Possibly fill it with objects */
-	if (!rn2(3)) (void) mkgold(0L, m.x, m.y);
+	if (!rn2(3)) mkgold(0L, m.x, m.y);
 	for (tryct = rn2(5); tryct; tryct--) {
 	    otmp = mkobj(RANDOM_CLASS, TRUE);
 	    if (!otmp) return;
@@ -1265,7 +1265,7 @@ static void mkgrave(struct mkroom *croom)
 	}
 
 	/* Leave a bell, in case we accidentally buried someone alive */
-	if (dobell) (void) mksobj_at(BELL, m.x, m.y, TRUE, FALSE);
+	if (dobell) mksobj_at(BELL, m.x, m.y, TRUE, FALSE);
 	return;
 }
 

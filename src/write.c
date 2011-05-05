@@ -99,7 +99,7 @@ int dowrite(struct obj *pen)
 	/* what to write */
 	sprintf(qbuf, "What type of %s do you want to write?", typeword);
 	getlin(qbuf, namebuf);
-	(void)mungspaces(namebuf);	/* remove any excess whitespace */
+	mungspaces(namebuf);	/* remove any excess whitespace */
 	if(namebuf[0] == '\033' || !namebuf[0])
 		return 1;
 	nm = namebuf;
@@ -108,8 +108,8 @@ int dowrite(struct obj *pen)
 	if (!strncmpi(nm, "of ", 3)) nm += 3;
 
 	if ((bp = strstri(nm, " armour")) != 0) {
-		(void)strncpy(bp, " armor ", 7);	/* won't add '\0' */
-		(void)mungspaces(bp + 1);	/* remove the extra space */
+		strncpy(bp, " armor ", 7);	/* won't add '\0' */
+		mungspaces(bp + 1);	/* remove the extra space */
 	}
 
 	first = bases[(int)paper->oclass];

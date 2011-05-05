@@ -69,8 +69,8 @@ static void hack_artifacts(void)
 /* zero out the artifact existence list */
 void init_artifacts(void)
 {
-	(void) memset((void *) artiexist, 0, sizeof artiexist);
-	(void) memset((void *) artidisco, 0, sizeof artidisco);
+	memset((void *) artiexist, 0, sizeof artiexist);
+	memset((void *) artidisco, 0, sizeof artidisco);
 	hack_artifacts();
 }
 
@@ -367,7 +367,7 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 	     * that can print a message--need to guard against being printed
 	     * when restoring a game
 	     */
-	    (void) make_hallucinated((long)!on, restoring ? FALSE : TRUE, wp_mask);
+	    make_hallucinated((long)!on, restoring ? FALSE : TRUE, wp_mask);
 	}
 	if (spfx & SPFX_ESP) {
 	    if(on) ETelepat |= wp_mask;
@@ -428,7 +428,7 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 	    /* might have to turn off invoked power too */
 	    if (oart->inv_prop <= LAST_PROP &&
 		(u.uprops[oart->inv_prop].extrinsic & W_ARTI))
-		(void) arti_invoke(otmp);
+		arti_invoke(otmp);
 	}
 }
 
@@ -828,7 +828,7 @@ static boolean Mb_hit(
     }
 
     if (youattack || youdefend || vis) {
-	(void) upstart(hittee);	/* capitalize */
+	upstart(hittee);	/* capitalize */
 	if (resisted) {
 	    pline("%s %s!", hittee, vtense(hittee, "resist"));
 	    shieldeff(youdefend ? u.ux : mdef->mx,
@@ -900,9 +900,9 @@ boolean artifact_hit(
 			(mdef->data == &mons[PM_WATER_ELEMENTAL]) ?
 			"vaporizes part of" : "burns",
 			hittee, !spec_dbon_applies ? '.' : '!');
-	    if (!rn2(4)) (void) destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
-	    if (!rn2(4)) (void) destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
-	    if (!rn2(7)) (void) destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
+	    if (!rn2(4)) destroy_mitem(mdef, POTION_CLASS, AD_FIRE);
+	    if (!rn2(4)) destroy_mitem(mdef, SCROLL_CLASS, AD_FIRE);
+	    if (!rn2(7)) destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
 	    if (youdefend && Slimed) burn_away_slime();
 	    return realizes_damage;
 	}
@@ -911,7 +911,7 @@ boolean artifact_hit(
 		pline_The("ice-cold blade %s %s%c",
 			!spec_dbon_applies ? "hits" : "freezes",
 			hittee, !spec_dbon_applies ? '.' : '!');
-	    if (!rn2(4)) (void) destroy_mitem(mdef, POTION_CLASS, AD_COLD);
+	    if (!rn2(4)) destroy_mitem(mdef, POTION_CLASS, AD_COLD);
 	    return realizes_damage;
 	}
 	if (attacks(AD_ELEC, otmp)) {
@@ -919,8 +919,8 @@ boolean artifact_hit(
 		pline_The("massive hammer hits%s %s%c",
 			  !spec_dbon_applies ? "" : "!  Lightning strikes",
 			  hittee, !spec_dbon_applies ? '.' : '!');
-	    if (!rn2(5)) (void) destroy_mitem(mdef, RING_CLASS, AD_ELEC);
-	    if (!rn2(5)) (void) destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
+	    if (!rn2(5)) destroy_mitem(mdef, RING_CLASS, AD_ELEC);
+	    if (!rn2(5)) destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
 	    return realizes_damage;
 	}
 	if (attacks(AD_MAGM, otmp)) {
@@ -1136,7 +1136,7 @@ static int arti_invoke(struct obj *obj)
 
 	    pseudo = zeroobj;	/* neither cursed nor blessed */
 	    pseudo.otyp = SCR_TAMING;
-	    (void) seffects(&pseudo);
+	    seffects(&pseudo);
 	    break;
 	  }
 	case HEALING: {
@@ -1308,7 +1308,7 @@ nothing_special:
 	    if(on) {
 		float_up();
 		spoteffects(FALSE);
-	    } else (void) float_down(I_SPECIAL|TIMEOUT, W_ARTI);
+	    } else float_down(I_SPECIAL|TIMEOUT, W_ARTI);
 	    break;
 	case INVIS:
 	    if (BInvis || Blind) goto nothing_special;

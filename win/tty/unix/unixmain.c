@@ -68,7 +68,7 @@ int EXPORT main(int argc, char *argv[])
 #endif
 
 	hackpid = getpid();
-	(void) umask(0777 & ~FCMASK);
+	umask(0777 & ~FCMASK);
 
 	win_tty_init();
 	nethack_init(&tty_procs);
@@ -197,11 +197,11 @@ static void process_options(int argc, char *argv[])
 #endif
 		case 'u':
 			if(argv[0][2])
-			  (void) strncpy(plname, argv[0]+2, sizeof(plname)-1);
+			  strncpy(plname, argv[0]+2, sizeof(plname)-1);
 			else if(argc > 1) {
 			  argc--;
 			  argv++;
-			  (void) strncpy(plname, argv[0], sizeof(plname)-1);
+			  strncpy(plname, argv[0], sizeof(plname)-1);
 			} else
 				tty_raw_print("Player name expected after -u");
 			break;
@@ -266,8 +266,8 @@ static void chdirx(const char *dir, boolean wr)
 # endif
 		) {
 # ifdef SECURE
-	    (void) setgid(getgid());
-	    (void) setuid(getuid());		/* Ron Wessels */
+	    setgid(getgid());
+	    setuid(getuid());		/* Ron Wessels */
 # endif
 	} else {
 	    /* non-default data files is a sign that scores may not be
@@ -329,11 +329,11 @@ static boolean whoami(void)
 
 	if (*plname) return FALSE;
 	if(/* !*plname && */ (s = nh_getenv("USER")))
-		(void) strncpy(plname, s, sizeof(plname)-1);
+		strncpy(plname, s, sizeof(plname)-1);
 	if(!*plname && (s = nh_getenv("LOGNAME")))
-		(void) strncpy(plname, s, sizeof(plname)-1);
+		strncpy(plname, s, sizeof(plname)-1);
 	if(!*plname && (s = getlogin()))
-		(void) strncpy(plname, s, sizeof(plname)-1);
+		strncpy(plname, s, sizeof(plname)-1);
 	return TRUE;
 }
 

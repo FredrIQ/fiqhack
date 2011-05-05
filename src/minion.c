@@ -155,7 +155,7 @@ int demon_talk(struct monst *mtmp)
 	if (youmonst.data->mlet == S_DEMON) {	/* Won't blackmail their own. */
 	    pline("%s says, \"Good hunting, %s.\"",
 		  Amonnam(mtmp), flags.female ? "Sister" : "Brother");
-	    if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+	    if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 	    return 1;
 	}
 #ifndef GOLDOBJ
@@ -233,7 +233,7 @@ long bribe(struct monst *mtmp)
 	} else {
 		You("give %s %ld %s.", mon_nam(mtmp), offer, currency(offer));
 	}
-	(void) money2mon(mtmp, offer);
+	money2mon(mtmp, offer);
 #endif
 	botl = 1;
 	return offer;

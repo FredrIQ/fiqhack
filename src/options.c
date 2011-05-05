@@ -375,7 +375,7 @@ void initoptions(void)
 	flags.warntype = 0L;
 
      /* assert( sizeof flags.inv_order == sizeof def_inv_order ); */
-	(void)memcpy((void *)flags.inv_order,
+	memcpy((void *)flags.inv_order,
 		     (void *)def_inv_order, sizeof flags.inv_order);
 	flags.pickup_types[0] = '\0';
 
@@ -387,7 +387,7 @@ void initoptions(void)
 	objects[SLIME_MOLD].oc_name_idx = SLIME_MOLD;
 	strncpy(pl_fruit, OBJ_NAME(objects[SLIME_MOLD]), PL_FSIZ);
 
-	(void)fruitadd(pl_fruit);
+	fruitadd(pl_fruit);
 	/* Remove "slime mold" from list of object names; this will	*/
 	/* prevent it from being wished unless it's actually present	*/
 	/* as a named (or default) fruit.  Wishing for "fruit" will	*/

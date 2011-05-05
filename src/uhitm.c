@@ -55,14 +55,14 @@ void hurtmarmor(struct monst *mdef, int attk)
 	    case 1:
 		target = which_armor(mdef, W_ARMC);
 		if (target) {
-		    (void)rust_dmg(target, xname(target), hurt, TRUE, mdef);
+		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
 		    break;
 		}
 		if ((target = which_armor(mdef, W_ARM)) != (struct obj *)0) {
-		    (void)rust_dmg(target, xname(target), hurt, TRUE, mdef);
+		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
 #ifdef TOURIST
 		} else if ((target = which_armor(mdef, W_ARMU)) != (struct obj *)0) {
-		    (void)rust_dmg(target, xname(target), hurt, TRUE, mdef);
+		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
 #endif
 		}
 		break;
@@ -375,9 +375,9 @@ boolean attack(struct monst *mtmp)
 
 	tmp = find_roll_to_hit(mtmp);
 	if (Upolyd)
-		(void) hmonas(mtmp, tmp);
+		hmonas(mtmp, tmp);
 	else
-		(void) hitum(mtmp, tmp, youmonst.data->mattk);
+		hitum(mtmp, tmp, youmonst.data->mattk);
 	mtmp->mstrategy &= ~STRAT_WAITMASK;
 
 atk_done:
@@ -459,7 +459,7 @@ static boolean hitum(struct monst *mon, int tmp, struct attack *uattk)
 
 	if(tmp > dieroll) exercise(A_DEX, TRUE);
 	malive = known_hitum(mon, &mhit, uattk);
-	(void) passive(mon, mhit, malive, AT_WEAP);
+	passive(mon, mhit, malive, AT_WEAP);
 	return malive;
 }
 
@@ -475,7 +475,7 @@ boolean hmon(struct monst *mon, struct obj *obj, int thrown)
 			     mon->data == &mons[PM_WATCH_CAPTAIN]));
 	result = hmon_hitmon(mon, obj, thrown);
 	if (mon->ispriest && !rn2(2)) ghod_hitsu(mon);
-	if (anger_guards) (void)angry_guards(!flags.soundok);
+	if (anger_guards) angry_guards(!flags.soundok);
 	return result;
 }
 
@@ -1129,7 +1129,7 @@ static void demonpet(void)
 	i = !rn2(6) ? ndemon(u.ualign.type) : NON_PM;
 	pm = i != NON_PM ? &mons[i] : youmonst.data;
 	if ((dtmp = makemon(pm, u.ux, u.uy, NO_MM_FLAGS)) != 0)
-	    (void)tamedog(dtmp, (struct obj *)0);
+	    tamedog(dtmp, (struct obj *)0);
 	exercise(A_WIS, TRUE);
 }
 
@@ -1557,7 +1557,7 @@ int damageum(struct monst *mdef, struct attack *mattk)
 		if (!rn2(4) && !flaming(mdef->data) &&
 				mdef->data != &mons[PM_GREEN_SLIME]) {
 		    You("turn %s into slime.", mon_nam(mdef));
-		    (void) newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, FALSE);
+		    newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, FALSE);
 		    tmp = 0;
 		}
 		break;
@@ -1690,7 +1690,7 @@ static int gulpum(struct monst *mdef, struct attack *mattk)
 
 	if(u.uhunger < 1500 && !u.uswallow) {
 	    for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
-		(void) snuff_lit(otmp);
+		snuff_lit(otmp);
 
 	    if(!touch_petrifies(mdef->data) || Stone_resistance) {
 		static char msgbuf[BUFSZ];
@@ -2045,7 +2045,7 @@ use_weapon:
 		return (boolean)passive(mon, 1, 0, mattk->aatyp);
 							/* defender dead */
 	    else {
-		(void) passive(mon, sum[i], 1, mattk->aatyp);
+		passive(mon, sum[i], 1, mattk->aatyp);
 		nsum |= sum[i];
 	    }
 	    if (!Upolyd)
@@ -2092,7 +2092,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 	    if (mhit) {
 		if (aatyp == AT_KICK) {
 		    if (uarmf && !rn2(6))
-			(void)rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
+			rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
 		} else if (aatyp == AT_WEAP || aatyp == AT_CLAW ||
 			   aatyp == AT_MAGC || aatyp == AT_TUCH)
 		    passive_obj(mon, (struct obj*)0, &(ptr->mattk[i]));
@@ -2126,7 +2126,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 	    if(mhit && !mon->mcan) {
 		if (aatyp == AT_KICK) {
 		    if (uarmf)
-			(void)rust_dmg(uarmf, xname(uarmf), 1, TRUE, &youmonst);
+			rust_dmg(uarmf, xname(uarmf), 1, TRUE, &youmonst);
 		} else if (aatyp == AT_WEAP || aatyp == AT_CLAW ||
 			   aatyp == AT_MAGC || aatyp == AT_TUCH)
 		    passive_obj(mon, (struct obj*)0, &(ptr->mattk[i]));
@@ -2136,7 +2136,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 	    if(mhit && !mon->mcan) {
 		if (aatyp == AT_KICK) {
 		    if (uarmf)
-			(void)rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
+			rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
 		} else if (aatyp == AT_WEAP || aatyp == AT_CLAW ||
 			   aatyp == AT_MAGC || aatyp == AT_TUCH)
 		    passive_obj(mon, (struct obj*)0, &(ptr->mattk[i]));
@@ -2222,7 +2222,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 		    if (mon->mhpmax < mon->mhp) mon->mhpmax = mon->mhp;
 		/* at a certain point, the monster will reproduce! */
 		    if(mon->mhpmax > ((int) (mon->m_lev+1) * 8))
-			(void)split_mon(mon, &youmonst);
+			split_mon(mon, &youmonst);
 		}
 		break;
 	      case AD_STUN:		/* specifically yellow mold */

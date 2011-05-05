@@ -403,7 +403,7 @@ void tele(void)
 		}
 	}
 
-	(void) safe_teleds(FALSE);
+	safe_teleds(FALSE);
 }
 
 int dotele(void)
@@ -491,7 +491,7 @@ int dotele(void)
 	if (next_to_u()) {
 		if (trap && trap->once) vault_tele();
 		else tele();
-		(void) next_to_u();
+		next_to_u();
 	} else {
 		You(shudder_for_moment);
 		return 0;
@@ -950,7 +950,7 @@ static void mvault_tele(struct monst *mtmp)
 		rloc_to(mtmp, c.x, c.y);
 		return;
 	}
-	(void) rloc(mtmp, FALSE);
+	rloc(mtmp, FALSE);
 }
 
 boolean tele_restrict(struct monst *mon)
@@ -978,7 +978,7 @@ void mtele_trap(struct monst *mtmp, struct trap *trap, int in_sight)
 	     * the guard isn't going to come for it...
 	     */
 	    if (trap->once) mvault_tele(mtmp);
-	    else (void) rloc(mtmp, FALSE);
+	    else rloc(mtmp, FALSE);
 
 	    if (in_sight) {
 		if (canseemon(mtmp))
@@ -1095,7 +1095,7 @@ void rloco(struct obj *obj)
 		if (costly_spot(u.ux, u.uy) &&
 			    index(u.urooms, *in_rooms(otx, oty, 0)))
 		    addtobill(obj, FALSE, FALSE, FALSE);
-		else (void)stolen_value(obj, otx, oty, FALSE, FALSE);
+		else stolen_value(obj, otx, oty, FALSE, FALSE);
 	    }
 	    newsym(otx, oty);	/* update old location */
 	}
@@ -1172,12 +1172,12 @@ boolean u_teleport_mon(struct monst *mtmp, boolean give_feedback)
 	    if (give_feedback)
 		You("are no longer inside %s!", mon_nam(mtmp));
 	    unstuck(mtmp);
-	    (void) rloc(mtmp, FALSE);
+	    rloc(mtmp, FALSE);
 	} else if (is_rider(mtmp->data) && rn2(13) &&
 		   enexto(&cc, u.ux, u.uy, mtmp->data))
 	    rloc_to(mtmp, cc.x, cc.y);
 	else
-	    (void) rloc(mtmp, FALSE);
+	    rloc(mtmp, FALSE);
 	return TRUE;
 }
 

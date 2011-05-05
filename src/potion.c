@@ -113,7 +113,7 @@ void make_sick(long xtime, const char *cause, boolean talk, int type)
 	if (Sick) {
 	    exercise(A_CON, FALSE);
 	    if (cause) {
-		(void) strncpy(u.usick_cause, cause, sizeof(u.usick_cause));
+		strncpy(u.usick_cause, cause, sizeof(u.usick_cause));
 		u.usick_cause[sizeof(u.usick_cause)-1] = 0;
 		}
 	    else
@@ -410,7 +410,7 @@ int peffects(struct obj *otmp)
 		break;
 	case POT_HALLUCINATION:
 		if (Hallucination || Halluc_resistance) nothing++;
-		(void) make_hallucinated(itimeout_incr(HHallucination,
+		make_hallucinated(itimeout_incr(HHallucination,
 					   rn1(200, 600 - 300 * bcsign(otmp))),
 				  TRUE, 0L);
 		break;
@@ -487,8 +487,8 @@ int peffects(struct obj *otmp)
 			exercise(A_WIS, FALSE);
 		} else {
 			if (otmp->blessed) {
-				(void) adjattrib(A_INT, 1, FALSE);
-				(void) adjattrib(A_WIS, 1, FALSE);
+				adjattrib(A_INT, 1, FALSE);
+				adjattrib(A_WIS, 1, FALSE);
 			}
 			You_feel("self-knowledgeable...");
 			display_nhwindow(WIN_MESSAGE, FALSE);
@@ -639,7 +639,7 @@ int peffects(struct obj *otmp)
 
 			if (!Fixed_abil) {
 			    poisontell(typ);
-			    (void) adjattrib(typ,
+			    adjattrib(typ,
 			    		Poison_resistance ? -1 : -rn1(4,3),
 			    		TRUE);
 			}
@@ -656,7 +656,7 @@ int peffects(struct obj *otmp)
 		}
 		if(Hallucination) {
 			You("are shocked back to your senses!");
-			(void) make_hallucinated(0L,FALSE,0L);
+			make_hallucinated(0L,FALSE,0L);
 		}
 		break;
 	case POT_CONFUSION:
@@ -758,7 +758,7 @@ int peffects(struct obj *otmp)
 		healup(d(6 + 2 * bcsign(otmp), 8),
 		       otmp->blessed ? 5 : !otmp->cursed ? 2 : 0,
 		       !otmp->cursed, TRUE);
-		(void) make_hallucinated(0L,TRUE,0L);
+		make_hallucinated(0L,TRUE,0L);
 		exercise(A_CON, TRUE);
 		exercise(A_STR, TRUE);
 		break;
@@ -772,7 +772,7 @@ int peffects(struct obj *otmp)
 		    u.ulevelmax -= 1;
 		    pluslvl(FALSE);
 		}
-		(void) make_hallucinated(0L,TRUE,0L);
+		make_hallucinated(0L,TRUE,0L);
 		exercise(A_STR, TRUE);
 		exercise(A_CON, TRUE);
 		break;
@@ -796,7 +796,7 @@ int peffects(struct obj *otmp)
 					losehp(uarmh ? 1 : rnd(10),
 						"colliding with the ceiling",
 						KILLED_BY);
-				} else (void) doup();
+				} else doup();
 			}
 		} else
 			nothing++;
@@ -1064,7 +1064,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		    }
 		} else if(mon->data == &mons[PM_GREMLIN]) {
 		    angermon = FALSE;
-		    (void)split_mon(mon, (struct monst *)0);
+		    split_mon(mon, (struct monst *)0);
 		} else if(mon->data == &mons[PM_IRON_GOLEM]) {
 		    if (canseemon(mon))
 			pline("%s rusts.", Monnam(mon));
@@ -1091,7 +1091,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		}
 		break;
 	case POT_POLYMORPH:
-		(void) bhitm(mon, obj);
+		bhitm(mon, obj);
 		break;
 /*
 	case POT_GAIN_LEVEL:
@@ -1122,7 +1122,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		if(!shkp)
 		    obj->unpaid = 0;
 		else {
-		    (void)stolen_value(obj, u.ux, u.uy,
+		    stolen_value(obj, u.ux, u.uy,
 				 (boolean)shkp->mpeaceful, FALSE);
 		    subfrombill(obj, shkp);
 		}
@@ -1236,7 +1236,7 @@ void potionbreathe(struct obj *obj)
 		break;
 	case POT_WATER:
 		if(u.umonnum == PM_GREMLIN) {
-		    (void)split_mon(&youmonst, (struct monst *)0);
+		    split_mon(&youmonst, (struct monst *)0);
 		} else if (u.ulycn >= LOW_PM) {
 		    /* vapor from [un]holy water will trigger
 		       transformation but won't cure lycanthropy */
@@ -1378,7 +1378,7 @@ boolean get_wet(struct obj *obj)
 		grease_protect(obj,(char *)0,&youmonst);
 		return FALSE;
 	}
-	(void) Shk_Your(Your_buf, obj);
+	Shk_Your(Your_buf, obj);
 	/* (Rusting shop goods ought to be charged for.) */
 	switch (obj->oclass) {
 	    case POTION_CLASS:
@@ -1493,7 +1493,7 @@ int dodip(void)
 			    P_SKILL(P_RIDING) < P_BASIC) {
 			rider_cant_reach(); /* not skilled enough to reach */
 		    } else {
-			(void) get_wet(obj);
+			get_wet(obj);
 			if (obj->otyp == POT_ACID) useup(obj);
 		    }
 		    return 1;
@@ -1509,7 +1509,7 @@ int dodip(void)
 	potion->in_use = TRUE;		/* assume it will be used up */
 	if(potion->otyp == POT_WATER) {
 		boolean useeit = !Blind;
-		if (useeit) (void) Shk_Your(Your_buf, obj);
+		if (useeit) Shk_Your(Your_buf, obj);
 		if (potion->blessed) {
 			if (obj->cursed) {
 				if (useeit)
@@ -1893,7 +1893,7 @@ void djinni_from_bottle(struct obj *obj)
 		mongone(mtmp);
 		break;
 	case 1 : verbalize("Thank you for freeing me!");
-		(void) tamedog(mtmp, (struct obj *)0);
+		tamedog(mtmp, (struct obj *)0);
 		break;
 	case 2 : verbalize("You freed me!");
 		mtmp->mpeaceful = TRUE;

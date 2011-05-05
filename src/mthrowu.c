@@ -141,7 +141,7 @@ int ohitmon(struct monst *mtmp,	/* accidental target */
 		else if (verbose) pline("It is missed.");
 	    }
 	    if (!range) { /* Last position; object drops */
-		(void) drop_throw(otmp, 0, mtmp->mx, mtmp->my);
+		drop_throw(otmp, 0, mtmp->mx, mtmp->my);
 		return 1;
 	    }
 	} else if (otmp->oclass == POTION_CLASS) {
@@ -273,7 +273,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	    dy = rn2(3)-1;
 	    /* check validity of new direction */
 	    if (!dx && !dy) {
-		(void) drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
+		drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 		return;
 	    }
 	}
@@ -287,7 +287,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	    || closed_door(bhitpos.x+dx, bhitpos.y+dy)
 	    || (levl[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS &&
 		hits_bars(&singleobj, bhitpos.x, bhitpos.y, 0, 0))) {
-	    (void) drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
+	    drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 	    return;
 	}
 
@@ -317,7 +317,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			} else {
 			    You("accept %s gift in the spirit in which it was intended.",
 				s_suffix(mon_nam(mon)));
-			    (void)hold_another_object(singleobj,
+			    hold_another_object(singleobj,
 				"You catch, but drop, %s.", xname(singleobj),
 				"You catch:");
 			}
@@ -397,7 +397,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 		    }
 		    stop_occupation();
 		    if (hitu || !range) {
-			(void) drop_throw(singleobj, hitu, u.ux, u.uy);
+			drop_throw(singleobj, hitu, u.ux, u.uy);
 			break;
 		    }
 		} else if (!range	/* reached end of path */
@@ -413,7 +413,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			/* Thrown objects "sink" */
 			|| IS_SINK(levl[bhitpos.x][bhitpos.y].typ)) {
 		    if (singleobj) /* hits_bars might have destroyed it */
-			(void) drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
+			drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 		    break;
 		}
 		tmp_at(bhitpos.x, bhitpos.y);
@@ -489,7 +489,7 @@ void thrwmu(struct monst *mtmp)
 	    hitv += 8 + otmp->spe;
 	    if (dam < 1) dam = 1;
 
-	    (void) thitu(hitv, dam, otmp, (char *)0);
+	    thitu(hitv, dam, otmp, (char *)0);
 	    stop_occupation();
 	    return;
 	}

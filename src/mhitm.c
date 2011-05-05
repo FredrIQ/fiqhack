@@ -144,7 +144,7 @@ int fightm(struct monst *mtmp)		/* have monsters fight each other */
 			rn2(4) && mon->movement >= NORMAL_SPEED) {
 			mon->movement -= NORMAL_SPEED;
 			notonhead = 0;
-			(void) mattackm(mon, mtmp);	/* return attack */
+			mattackm(mon, mtmp);	/* return attack */
 		    }
 
 		    return (result & MM_HIT) ? 1 : 0;
@@ -431,12 +431,12 @@ static int gazemm(struct monst *magr, struct monst *mdef, struct attack *mattk)
 	/* call mon_reflects 2x, first test, then, if visible, print message */
 	if (magr->data == &mons[PM_MEDUSA] && mon_reflects(mdef, (char *)0)) {
 	    if (canseemon(mdef))
-		(void) mon_reflects(mdef,
+		mon_reflects(mdef,
 				    "The gaze is reflected away by %s %s.");
 	    if (mdef->mcansee) {
 		if (mon_reflects(magr, (char *)0)) {
 		    if (canseemon(magr))
-			(void) mon_reflects(magr,
+			mon_reflects(magr,
 					"The gaze is reflected away by %s %s.");
 		    return MM_MISS;
 		}
@@ -473,7 +473,7 @@ static int gulpmm(struct monst *magr, struct monst *mdef, struct attack *mattk)
 		pline("%s %s.", buf, mon_nam(mdef));
 	}
 	for (obj = mdef->minvent; obj; obj = obj->nobj)
-	    (void) snuff_lit(obj);
+	    snuff_lit(obj);
 
 	/*
 	 *  All of this maniuplation is needed to keep the display correct.
@@ -659,7 +659,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 			    goto do_stone;
 			tmp += dmgval(otmp, mdef);
 			if (otmp->oartifact) {
-			    (void)artifact_hit(magr,mdef, otmp, &tmp, dieroll);
+			    artifact_hit(magr,mdef, otmp, &tmp, dieroll);
 			    if (mdef->mhp <= 0)
 				return (MM_DEF_DIED |
 					(grow_up(magr,mdef) ? 0 : MM_AGR_DIED));
@@ -821,7 +821,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		       we'll get "it" in the suddenly disappears message */
 		    if (vis) strcpy(mdef_Monnam, Monnam(mdef));
 		    mdef->mstrategy &= ~STRAT_WAITFORU;
-		    (void) rloc(mdef, FALSE);
+		    rloc(mdef, FALSE);
 		    if (vis && !canspotmon(mdef) && mdef != u.usteed)
 			pline("%s suddenly disappears!", mdef_Monnam);
 		}
@@ -945,7 +945,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		    pline("%s steals some gold from %s.", buf, mon_nam(mdef));
 		}
 		if (!tele_restrict(magr)) {
-		    (void) rloc(magr, FALSE);
+		    rloc(magr, FALSE);
 		    if (vis && !canspotmon(magr))
 			pline("%s suddenly disappears!", buf);
 		}
@@ -996,7 +996,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 			/* add_to_minv() might free otmp [if it merges] */
 			if (vis)
 				strcpy(onambuf, doname(otmp));
-			(void) add_to_minv(magr, otmp);
+			add_to_minv(magr, otmp);
 			if (vis) {
 				strcpy(buf, Monnam(magr));
 				pline("%s steals %s from %s!", buf,
@@ -1010,7 +1010,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 							0 : MM_AGR_DIED));
 			if (magr->data->mlet == S_NYMPH &&
 			    !tele_restrict(magr)) {
-			    (void) rloc(magr, FALSE);
+			    rloc(magr, FALSE);
 			    if (vis && !canspotmon(magr))
 				pline("%s suddenly disappears!", buf);
 			}
@@ -1071,7 +1071,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		if (cancelled) break;	/* physical damage only */
 		if (!rn2(4) && !flaming(mdef->data) &&
 				mdef->data != &mons[PM_GREEN_SLIME]) {
-		    (void) newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, vis);
+		    newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, vis);
 		    mdef->mstrategy &= ~STRAT_WAITFORU;
 		    tmp = 0;
 		}
@@ -1105,11 +1105,11 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		/* various checks similar to dog_eat and meatobj.
 		 * after monkilled() to provide better message ordering */
 		if (mdef->cham != CHAM_ORDINARY) {
-		    (void) newcham(magr, (struct permonst *)0, FALSE, TRUE);
+		    newcham(magr, (struct permonst *)0, FALSE, TRUE);
 		} else if (mdef->data == &mons[PM_GREEN_SLIME]) {
-		    (void) newcham(magr, &mons[PM_GREEN_SLIME], FALSE, TRUE);
+		    newcham(magr, &mons[PM_GREEN_SLIME], FALSE, TRUE);
 		} else if (mdef->data == &mons[PM_WRAITH]) {
-		    (void) grow_up(magr, (struct monst *)0);
+		    grow_up(magr, (struct monst *)0);
 		    /* don't grow up twice */
 		    return MM_DEF_DIED | (magr->mhp > 0 ? 0 : MM_AGR_DIED);
 		} else if (mdef->data == &mons[PM_NURSE]) {
@@ -1248,7 +1248,7 @@ static int passivemm(struct monst *magr, struct monst *mdef,
 		goto assess_dmg;
 	    case AD_ENCH:	/* KMH -- remove enchantment (disenchanter) */
 		if (mhit && !mdef->mcan && otmp) {
-		    (void) drain_item(otmp);
+		    drain_item(otmp);
 		    /* No message */
 		}
 		break;
@@ -1301,7 +1301,7 @@ static int passivemm(struct monst *magr, struct monst *mdef,
 		mdef->mhp += tmp / 2;
 		if (mdef->mhpmax < mdef->mhp) mdef->mhpmax = mdef->mhp;
 		if (mdef->mhpmax > ((int) (mdef->m_lev+1) * 8))
-		    (void)split_mon(mdef, magr);
+		    split_mon(mdef, magr);
 		break;
 	    case AD_STUN:
 		if (!magr->mstun) {

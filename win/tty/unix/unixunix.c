@@ -29,7 +29,7 @@ static int veryold(int fd)
 #ifndef INSURANCE
 	if(buf.st_size != sizeof(int)) return 0;	/* not an xlock file */
 #endif
-	(void) time(&date);
+	time(&date);
 	if(date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
 		int lockedpid;	/* should be the same size as hackpid */
 
@@ -48,7 +48,7 @@ static int veryold(int fd)
 #endif
 			return 0;
 	}
-	(void) close(fd);
+	close(fd);
 	return 1;
 }
 
@@ -63,7 +63,7 @@ static int eraseoldlocks(void)
 	for(i = 1; i <= MAXDUNGEON*MAXLEVEL + 1; i++) {
 		/* try to remove all */
 		set_levelfile_name(lock, i);
-		(void) unlink(fqname(lock, LEVELPREFIX, 0));
+		unlink(fqname(lock, LEVELPREFIX, 0));
 	}
 	set_levelfile_name(lock, 0);
 	if (unlink(fqname(lock, LEVELPREFIX, 0)))
@@ -111,7 +111,7 @@ void getlock(void)
 			if(veryold(fd) /* closes fd if true */
 					&& eraseoldlocks())
 				goto gotlock;
-			(void) close(fd);
+			close(fd);
 		} while(i < locknum);
 
 		unlock_file(HLOCK);
@@ -127,17 +127,17 @@ void getlock(void)
 
 		if(veryold(fd) /* closes fd if true */ && eraseoldlocks())
 			goto gotlock;
-		(void) close(fd);
+		close(fd);
 
 		if(iflags.window_inited) {
 		    c = tty_yn_function("There is already a game in progress under your name.  Destroy old game?",ynchars, 'n');
 		} else {
-		    (void) printf("\nThere is already a game in progress under your name.");
-		    (void) printf("  Destroy old game? [yn] ");
-		    (void) fflush(stdout);
+		    printf("\nThere is already a game in progress under your name.");
+		    printf("  Destroy old game? [yn] ");
+		    fflush(stdout);
 		    c = getchar();
-		    (void) putchar(c);
-		    (void) fflush(stdout);
+		    putchar(c);
+		    fflush(stdout);
 		    while (getchar() != '\n') ; /* eat rest of line and newline */
 		}
 		if(c == 'y' || c == 'Y')

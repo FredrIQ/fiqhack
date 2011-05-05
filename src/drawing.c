@@ -652,11 +652,11 @@ void assign_rogue_graphics(boolean is_rlevel)
     if (is_rlevel) {
 	int i;
 
-	(void) memcpy((void *)save_showsyms,
+	memcpy((void *)save_showsyms,
 		      (void *)showsyms, sizeof showsyms);
-	(void) memcpy((void *)save_oc_syms,
+	memcpy((void *)save_oc_syms,
 		      (void *)oc_syms, sizeof oc_syms);
-	(void) memcpy((void *)save_monsyms,
+	memcpy((void *)save_monsyms,
 		      (void *)monsyms, sizeof monsyms);
 
 	/* Use a loop: char != uchar on some machines. */
@@ -736,11 +736,11 @@ void assign_rogue_graphics(boolean is_rlevel)
 		oc_syms[i] = r_oc_syms[i];
 	}
     } else {
-	(void) memcpy((void *)showsyms,
+	memcpy((void *)showsyms,
 		      (void *)save_showsyms, sizeof showsyms);
-	(void) memcpy((void *)oc_syms,
+	memcpy((void *)oc_syms,
 		      (void *)save_oc_syms, sizeof oc_syms);
-	(void) memcpy((void *)monsyms,
+	memcpy((void *)monsyms,
 		      (void *)save_monsyms, sizeof monsyms);
     }
 }

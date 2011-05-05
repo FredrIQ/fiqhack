@@ -316,7 +316,7 @@ static void prisoner_speaks(struct monst *mtmp)
 	    adjalign(3);
 
 		/* ...But the guards are not */
-	    (void) angry_guards(FALSE);
+	    angry_guards(FALSE);
 	}
 	return;
 }

@@ -43,7 +43,7 @@ static void dump_qtlist(void)
 		pline("msgnum %d: delivery %c",
 			msg->msgnum, msg->delivery);
 		more();
-		(void) dlb_fseek(msg_file, msg->offset, SEEK_SET);
+		dlb_fseek(msg_file, msg->offset, SEEK_SET);
 		deliver_by_window(msg, NHW_TEXT);
 	}
 }
@@ -65,7 +65,7 @@ static struct qtmsg *construct_qtlist(long hdr_offset)
 	struct qtmsg *msg_list;
 	int	n_msgs;
 
-	(void) dlb_fseek(msg_file, hdr_offset, SEEK_SET);
+	dlb_fseek(msg_file, hdr_offset, SEEK_SET);
 	Fread(&n_msgs, sizeof(int), 1, msg_file);
 	msg_list = (struct qtmsg *)
 		alloc((unsigned)(n_msgs+1)*sizeof(struct qtmsg));
@@ -125,7 +125,7 @@ void load_qtlist(void)
 void unload_qtlist(void)
 {
 	if (msg_file)
-	    (void) dlb_fclose(msg_file),  msg_file = 0;
+	    dlb_fclose(msg_file),  msg_file = 0;
 	if (qt_list.common)
 	    free((void *) qt_list.common),  qt_list.common = 0;
 	if (qt_list.chrole)
@@ -369,7 +369,7 @@ void com_pager(int msgnum)
 		return;
 	}
 
-	(void) dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
+	dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
 	if (qt_msg->delivery == 'p') deliver_by_pline(qt_msg);
 	else if (msgnum == 1) deliver_by_window(qt_msg, NHW_MENU);
 	else		     deliver_by_window(qt_msg, NHW_TEXT);
@@ -385,7 +385,7 @@ void qt_pager(int msgnum)
 		return;
 	}
 
-	(void) dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
+	dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
 	if (qt_msg->delivery == 'p' && strcmp(windowprocs.name, "X11"))
 		deliver_by_pline(qt_msg);
 	else	deliver_by_window(qt_msg, NHW_TEXT);

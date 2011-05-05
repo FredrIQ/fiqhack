@@ -266,7 +266,7 @@ raise_dead:
 	    set_malign(mtmp);
 	}
 	/* next handle the affect on things you're carrying */
-	(void) unturn_dead(&youmonst);
+	unturn_dead(&youmonst);
 	/* last place some monsters around you */
 	mm.x = u.ux;
 	mm.y = u.uy;
@@ -284,7 +284,7 @@ raise_dead:
 			if (mtmp->mtame < 20)
 			    mtmp->mtame++;
 		    } else
-			(void) tamedog(mtmp, (struct obj *)0);
+			tamedog(mtmp, (struct obj *)0);
 		else monflee(mtmp, 0, FALSE, TRUE);
 	    }
 	}
@@ -313,7 +313,7 @@ static int learn(void)
 	/* JDS: lenses give 50% faster reading; 33% smaller read time */
 	if (delay && ublindf && ublindf->otyp == LENSES && rn2(2)) delay++;
 	if (Confusion) {		/* became confused while learning */
-	    (void) confused_book(book);
+	    confused_book(book);
 	    book = 0;			/* no longer studying */
 	    nomul(delay);		/* remaining delay is uninterrupted */
 	    delay = 0;
@@ -874,7 +874,7 @@ int spelleffects(int spell, boolean atme)
 	case SPE_MAGIC_MAPPING:
 	case SPE_CREATE_MONSTER:
 	case SPE_IDENTIFY:
-		(void) seffects(pseudo);
+		seffects(pseudo);
 		break;
 
 	/* these are all duplicates of potion effects */
@@ -887,7 +887,7 @@ int spelleffects(int spell, boolean atme)
 		if (role_skill >= P_SKILLED) pseudo->blessed = 1;
 		/* fall through */
 	case SPE_INVISIBILITY:
-		(void) peffects(pseudo);
+		peffects(pseudo);
 		break;
 
 	case SPE_CURE_BLINDNESS:
@@ -903,7 +903,7 @@ int spelleffects(int spell, boolean atme)
 		healup(0, 0, TRUE, FALSE);
 		break;
 	case SPE_CREATE_FAMILIAR:
-		(void) make_familiar((struct obj *)0, u.ux, u.uy, FALSE);
+		make_familiar((struct obj *)0, u.ux, u.uy, FALSE);
 		break;
 	case SPE_CLAIRVOYANCE:
 		if (!BClairvoyant)

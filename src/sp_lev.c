@@ -921,7 +921,7 @@ static void create_object(object *o, struct mkroom *croom)
 		    break;
 		}
 		remove_object(otmp);
-		(void) add_to_container(container, otmp);
+		add_to_container(container, otmp);
 		goto o_done;		/* don't stack, but do other cleanup */
 	    /* container */
 	    case 2:
@@ -959,7 +959,7 @@ static void create_object(object *o, struct mkroom *croom)
 		obj = was->minvent;
 		obj->owornmask = 0;
 		obj_extract_self(obj);
-		(void) add_to_container(otmp, obj);
+		add_to_container(otmp, obj);
 	    }
 	    otmp->owt = weight(otmp);
 	    mongone(was);
@@ -1082,7 +1082,7 @@ static void create_gold(gold *g, struct mkroom *croom)
 
 	if (g->amount == -1)
 	    g->amount = rnd(200);
-	(void) mkgold((long) g->amount, x, y);
+	mkgold((long) g->amount, x, y);
 }
 
 /*
@@ -1213,7 +1213,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 		if(ftyp != CORR || rn2(100)) {
 			crm->typ = ftyp;
 			if(nxcor && !rn2(50))
-				(void) mksobj_at(BOULDER, xx, yy, TRUE, FALSE);
+				mksobj_at(BOULDER, xx, yy, TRUE, FALSE);
 		} else {
 			crm->typ = SCORR;
 		}
@@ -1347,7 +1347,7 @@ static void create_corridor(corridor *c)
 		      case W_WEST:  dest.x--; break;
 		      case W_EAST:  dest.x++; break;
 		}
-		(void) dig_corridor(&org, &dest, FALSE, CORR, STONE);
+		dig_corridor(&org, &dest, FALSE, CORR, STONE);
 	}
 }
 
@@ -1374,7 +1374,7 @@ void fill_room(struct mkroom *croom, boolean prefilled)
 		case VAULT:
 		    for (x=croom->lx;x<=croom->hx;x++)
 			for (y=croom->ly;y<=croom->hy;y++)
-			    (void) mkgold((long)rn1(abs(depth(&u.uz))*100, 51), x, y);
+			    mkgold((long)rn1(abs(depth(&u.uz))*100, 51), x, y);
 		    break;
 		case COURT:
 		case ZOO:
@@ -1970,7 +1970,7 @@ static boolean load_maze(dlb *fd)
     struct trap *badtrap;
     boolean has_bounds;
 
-    (void) memset((void *)&Map[0][0], 0, sizeof Map);
+    memset((void *)&Map[0][0], 0, sizeof Map);
     load_common_data(fd, SP_LEV_MAZE);
 
     /* Initialize map */
@@ -2093,7 +2093,7 @@ static boolean load_maze(dlb *fd)
 		/* don't really free it up until the whole level is done */
 		lev_region *newl = (lev_region *) alloc(sizeof(lev_region) *
 						(unsigned)(n+num_lregions));
-		(void) memcpy((void *)(newl+n), (void *)lregions,
+		memcpy((void *)(newl+n), (void *)lregions,
 					sizeof(lev_region) * num_lregions);
 		Free(lregions);
 		num_lregions += n;
@@ -2150,7 +2150,7 @@ static boolean load_maze(dlb *fd)
 		sp_lev_shuffle(rmonst, (char *)0, (int)n);
 	}
 
-	(void) memset((void *)mustfill, 0, sizeof(mustfill));
+	memset((void *)mustfill, 0, sizeof(mustfill));
 	Fread((void *) &n, 1, sizeof(n), fd);
 						/* Number of subrooms */
 	while(n--) {
@@ -2463,24 +2463,24 @@ static boolean load_maze(dlb *fd)
 	    mapfact = (int) ((mapcount * 100L) / mapcountmax);
 	    for(x = rnd((int) (20 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, DRY);
-		    (void) mkobj_at(rn2(2) ? GEM_CLASS : RANDOM_CLASS,
+		    mkobj_at(rn2(2) ? GEM_CLASS : RANDOM_CLASS,
 							mm.x, mm.y, TRUE);
 	    }
 	    for(x = rnd((int) (12 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, DRY);
-		    (void) mksobj_at(BOULDER, mm.x, mm.y, TRUE, FALSE);
+		    mksobj_at(BOULDER, mm.x, mm.y, TRUE, FALSE);
 	    }
 	    for (x = rn2(2); x; x--) {
 		maze1xy(&mm, DRY);
-		(void) makemon(&mons[PM_MINOTAUR], mm.x, mm.y, NO_MM_FLAGS);
+		makemon(&mons[PM_MINOTAUR], mm.x, mm.y, NO_MM_FLAGS);
 	    }
 	    for(x = rnd((int) (12 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, WET|DRY);
-		    (void) makemon((struct permonst *) 0, mm.x, mm.y, NO_MM_FLAGS);
+		    makemon((struct permonst *) 0, mm.x, mm.y, NO_MM_FLAGS);
 	    }
 	    for(x = rn2((int) (15 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, DRY);
-		    (void) mkgold(0L,mm.x,mm.y);
+		    mkgold(0L,mm.x,mm.y);
 	    }
 	    for(x = rn2((int) (15 * mapfact) / 100); x; x--) {
 		    int trytrap;
@@ -2491,7 +2491,7 @@ static boolean load_maze(dlb *fd)
 			while (trytrap == PIT || trytrap == SPIKED_PIT ||
 				trytrap == TRAPDOOR || trytrap == HOLE)
 			    trytrap = rndtrap();
-		    (void) maketrap(mm.x, mm.y, trytrap);
+		    maketrap(mm.x, mm.y, trytrap);
 	    }
     }
     return TRUE;
@@ -2532,7 +2532,7 @@ boolean load_special(const char *name)
 	}
 	
 give_up:
-	(void)dlb_fclose(fd);
+	dlb_fclose(fd);
 	return result;
 	
 err_out:

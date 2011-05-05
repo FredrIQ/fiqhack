@@ -216,7 +216,7 @@ void fill_zoo(struct mkroom *sroom)
 		}
 		i = 100;
 		do {	/* don't place throne on top of stairs */
-			(void) somexy(sroom, &mm);
+			somexy(sroom, &mm);
 			tx = mm.x; ty = mm.y;
 		} while (occupied((xchar)tx, (xchar)ty) && --i > 0);
 	    throne_placed:
@@ -229,7 +229,7 @@ void fill_zoo(struct mkroom *sroom)
 		    /* center might not be valid, so put queen elsewhere */
 		    if ((int) levl[tx][ty].roomno != rmno ||
 			    levl[tx][ty].edge) {
-			(void) somexy(sroom, &mm);
+			somexy(sroom, &mm);
 			tx = mm.x; ty = mm.y;
 		    }
 		}
@@ -288,25 +288,25 @@ void fill_zoo(struct mkroom *sroom)
 			    i = goldlim;
 			if(i >= goldlim) i = 5*level_difficulty();
 			goldlim -= i;
-			(void) mkgold((long) rn1(i, 10), sx, sy);
+			mkgold((long) rn1(i, 10), sx, sy);
 			break;
 		    case MORGUE:
 			if(!rn2(5))
-			    (void) mk_tt_object(CORPSE, sx, sy);
+			    mk_tt_object(CORPSE, sx, sy);
 			if(!rn2(10))	/* lots of treasure buried with dead */
-			    (void) mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
+			    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 					     sx, sy, TRUE, FALSE);
 			if (!rn2(5))
 			    make_grave(sx, sy, (char *)0);
 			break;
 		    case BEEHIVE:
 			if(!rn2(3))
-			    (void) mksobj_at(LUMP_OF_ROYAL_JELLY,
+			    mksobj_at(LUMP_OF_ROYAL_JELLY,
 					     sx, sy, TRUE, FALSE);
 			break;
 		    case BARRACKS:
 			if(!rn2(20))	/* the payroll and some loot */
-			    (void) mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
+			    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 					     sx, sy, TRUE, FALSE);
 			break;
 		    case COCKNEST:
@@ -315,7 +315,7 @@ void fill_zoo(struct mkroom *sroom)
 
 			    if (sobj) {
 				for (i = rn2(5); i; i--)
-				    (void) add_to_container(sobj,
+				    add_to_container(sobj,
 						mkobj(RANDOM_CLASS, FALSE));
 				sobj->owt = weight(sobj);
 			    }
@@ -323,7 +323,7 @@ void fill_zoo(struct mkroom *sroom)
 			break;
 		    case ANTHOLE:
 			if(!rn2(3))
-			    (void) mkobj_at(FOOD_CLASS, sx, sy, FALSE);
+			    mkobj_at(FOOD_CLASS, sx, sy, FALSE);
 			break;
 		}
 	    }
@@ -332,8 +332,8 @@ void fill_zoo(struct mkroom *sroom)
 		{
 		  struct obj *chest;
 		  levl[tx][ty].typ = THRONE;
-		  (void) somexy(sroom, &mm);
-		  (void) mkgold((long) rn1(50 * level_difficulty(),10), mm.x, mm.y);
+		  somexy(sroom, &mm);
+		  mkgold((long) rn1(50 * level_difficulty(),10), mm.x, mm.y);
 		  /* the royal coffers */
 		  chest = mksobj_at(CHEST, mm.x, mm.y, TRUE, FALSE);
 		  chest->spe = 2; /* so it can be found later */
@@ -372,7 +372,7 @@ void mkundead(coord *mm, boolean revive_corpses, int mm_flags)
 		    (!revive_corpses ||
 		     !(otmp = sobj_at(CORPSE, cc.x, cc.y)) ||
 		     !revive(otmp)))
-		(void) makemon(mdat, cc.x, cc.y, mm_flags);
+		makemon(mdat, cc.x, cc.y, mm_flags);
 	}
 	level.flags.graveyard = TRUE;	/* reduced chance for undead corpse */
 }
@@ -425,7 +425,7 @@ static void mkswamp(void)
 			levl[sx][sy].typ = POOL;
 			if(!eelct || !rn2(4)) {
 			    /* mkclass() won't do, as we might get kraken */
-			    (void) makemon(rn2(5) ? &mons[PM_GIANT_EEL]
+			    makemon(rn2(5) ? &mons[PM_GIANT_EEL]
 						  : rn2(2) ? &mons[PM_PIRANHA]
 						  : &mons[PM_ELECTRIC_EEL],
 						sx, sy, NO_MM_FLAGS);
@@ -433,7 +433,7 @@ static void mkswamp(void)
 			}
 		    } else
 			if(!rn2(4))	/* swamps tend to be moldy */
-			    (void) makemon(mkclass(S_FUNGUS,0),
+			    makemon(mkclass(S_FUNGUS,0),
 						sx, sy, NO_MM_FLAGS);
 		}
 		level.flags.has_swamp = 1;

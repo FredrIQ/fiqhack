@@ -58,7 +58,7 @@ static int use_camera(struct obj *obj)
 	consume_obj_charge(obj, TRUE);
 
 	if (obj->cursed && !rn2(2)) {
-		(void) zapyourself(obj, TRUE);
+		zapyourself(obj, TRUE);
 	} else if (u.uswallow) {
 		You("take a picture of %s %s.", s_suffix(mon_nam(u.ustuck)),
 		    mbodypart(u.ustuck, STOMACH));
@@ -66,13 +66,13 @@ static int use_camera(struct obj *obj)
 		You("take a picture of the %s.",
 			(u.dz > 0) ? surface(u.ux,u.uy) : ceiling(u.ux,u.uy));
 	} else if (!u.dx && !u.dy) {
-		(void) zapyourself(obj, TRUE);
+		zapyourself(obj, TRUE);
 	} else if ((mtmp = bhit(u.dx, u.dy, COLNO, FLASHED_LIGHT,
 				(int (*)(struct monst*,struct obj*))0,
 				(int (*)(struct obj*,struct obj*))0,
 				obj)) != 0) {
 		obj->ox = u.ux,  obj->oy = u.uy;
-		(void) flash_hits_mon(mtmp, obj);
+		flash_hits_mon(mtmp, obj);
 	}
 	return 1;
 }
@@ -667,8 +667,8 @@ static int use_mirror(struct obj *obj)
 		} else pline ("It steals your mirror!");
 		setnotworn(obj); /* in case mirror was wielded */
 		freeinv(obj);
-		(void) mpickobj(mtmp,obj);
-		if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+		mpickobj(mtmp,obj);
+		if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 	} else if (!is_unicorn(mtmp->data) && !humanoid(mtmp->data) &&
 			(!mtmp->minvis || perceives(mtmp->data)) && rn2(5)) {
 		if (vis)
@@ -740,7 +740,7 @@ static void use_bell(struct obj **optr)
 
 	    if (u.uswallow) {
 		if (!obj->cursed)
-		    (void) openit();
+		    openit();
 		else
 		    pline(nothing_happens);
 
@@ -910,7 +910,7 @@ boolean snuff_candle(struct obj *otmp)  /* call in drop, throw, and put in box, 
 	    xchar x, y;
 	    boolean many = candle ? otmp->quan > 1L : otmp->spe > 1;
 
-	    (void) get_obj_location(otmp, &x, &y, 0);
+	    get_obj_location(otmp, &x, &y, 0);
 	    if (otmp->where == OBJ_MINVENT ? cansee(x,y) : !Blind)
 		pline("%s %scandle%s flame%s extinguished.",
 		      Shk_Your(buf, otmp),
@@ -932,7 +932,7 @@ boolean snuff_lit(struct obj *obj)
 	if (obj->lamplit) {
 	    if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
 		    obj->otyp == BRASS_LANTERN || obj->otyp == POT_OIL) {
-		(void) get_obj_location(obj, &x, &y, 0);
+		get_obj_location(obj, &x, &y, 0);
 		if (obj->where == OBJ_MINVENT ? cansee(x,y) : !Blind)
 		    pline("%s %s out!", Yname2(obj), otense(obj, "go"));
 		end_burn(obj, TRUE);
@@ -1046,7 +1046,7 @@ static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
 	     * but its easy.
 	     */
 	    freeinv(obj);
-	    (void) addinv(obj);
+	    addinv(obj);
 	    return;
 	} else if (Underwater) {
 	    There("is not enough oxygen to sustain a fire.");
@@ -1262,7 +1262,7 @@ int jump(
 	    if (temp < 0) temp = -temp;
 	    if (range < temp)
 		range = temp;
-	    (void) walk_path(&uc, &cc, hurtle_step, (void *)&range);
+	    walk_path(&uc, &cc, hurtle_step, (void *)&range);
 
 	    /* A little Sokoban guilt... */
 	    if (In_sokoban(&u.uz))
@@ -1315,7 +1315,7 @@ static void use_tinning_kit(struct obj *obj)
 	    instapetrify(kbuf);
 	}
 	if (is_rider(&mons[corpse->corpsenm])) {
-		(void) revive_corpse(corpse);
+		revive_corpse(corpse);
 		verbalize("Yes...  But War does not preserve its enemies...");
 		return;
 	}
@@ -1372,9 +1372,9 @@ void use_unicorn_horn(struct obj *obj)
 		    break;
 	    case 3: make_stunned(HStun + lcount, TRUE);
 		    break;
-	    case 4: (void) adjattrib(rn2(A_MAX), -1, FALSE);
+	    case 4: adjattrib(rn2(A_MAX), -1, FALSE);
 		    break;
-	    case 5: (void) make_hallucinated(HHallucination + lcount, TRUE, 0L);
+	    case 5: make_hallucinated(HHallucination + lcount, TRUE, 0L);
 		    break;
 	    }
 	    return;
@@ -1451,7 +1451,7 @@ void use_unicorn_horn(struct obj *obj)
 		did_prop++;
 		break;
 	    case prop2trbl(HALLUC):
-		(void) make_hallucinated(0L, TRUE, 0L);
+		make_hallucinated(0L, TRUE, 0L);
 		did_prop++;
 		break;
 	    case prop2trbl(VOMITING):
@@ -1519,7 +1519,7 @@ void fig_transform(void *arg, long timeout)
 	if (!okay_spot ||
 	    !figurine_location_checks(figurine,&cc, TRUE)) {
 		/* reset the timer to try again later */
-		(void) start_timer((long)rnd(5000), TIMER_OBJECT,
+		start_timer((long)rnd(5000), TIMER_OBJECT,
 				FIG_TRANSFORM, (void *)figurine);
 		return;
 	}
@@ -1637,8 +1637,8 @@ static void use_figurine(struct obj **optr)
 	    (u.dz < 0 ?
 		"toss the figurine into the air" :
 		"set the figurine on the ground"));
-	(void) make_familiar(obj, cc.x, cc.y, FALSE);
-	(void) stop_timer(FIG_TRANSFORM, (void *)obj);
+	make_familiar(obj, cc.x, cc.y, FALSE);
+	stop_timer(FIG_TRANSFORM, (void *)obj);
 	useup(obj);
 	*optr = 0;
 }
@@ -2275,7 +2275,7 @@ static int use_pole (struct obj *obj)
 
 	    bhitpos = cc;
 	    check_caitiff(mtmp);
-	    (void) thitmonst(mtmp, uwep);
+	    thitmonst(mtmp, uwep);
 	    /* check the monster's HP because thitmonst() doesn't return
 	     * an indication of whether it hit.  Not perfect (what if it's a
 	     * non-silver weapon on a shade?)
@@ -2407,7 +2407,7 @@ static int use_grapple (struct obj *obj)
 	case 1:	/* Object */
 	    if ((otmp = level.objects[cc.x][cc.y]) != 0) {
 		You("snag an object from the %s!", surface(cc.x, cc.y));
-		(void) pickup_object(otmp, 1L, FALSE);
+		pickup_object(otmp, 1L, FALSE);
 		/* If pickup fails, leave it alone */
 		newsym(cc.x, cc.y);
 		return 1;
@@ -2423,7 +2423,7 @@ static int use_grapple (struct obj *obj)
 		return 1;
 	    } else if ((!bigmonst(mtmp->data) && !strongmonst(mtmp->data)) ||
 		       rn2(4)) {
-		(void) thitmonst(mtmp, uwep);
+		thitmonst(mtmp, uwep);
 		return 1;
 	    }
 	    /* FALL THROUGH */
@@ -2563,7 +2563,7 @@ static int do_break_wand(struct obj *obj)
 	    continue;
 	} else if(obj->otyp == WAN_CREATE_MONSTER) {
 	    /* u.ux,u.uy creates it near you--x,y might create it in rock */
-	    (void) makemon((struct permonst *)0, u.ux, u.uy, NO_MM_FLAGS);
+	    makemon((struct permonst *)0, u.ux, u.uy, NO_MM_FLAGS);
 	    continue;
 	} else {
 	    if (x == u.ux && y == u.uy) {
@@ -2572,7 +2572,7 @@ static int do_break_wand(struct obj *obj)
 		   possible wand damage is assessed */
 		if (obj->otyp == WAN_TELEPORTATION &&
 		    affects_objects && level.objects[x][y]) {
-		    (void) bhitpile(obj, bhito, x, y);
+		    bhitpile(obj, bhito, x, y);
 		    if (botl) bot();		/* potion effects */
 		}
 		damage = zapyourself(obj, FALSE);
@@ -2582,11 +2582,11 @@ static int do_break_wand(struct obj *obj)
 		}
 		if (botl) bot();		/* blindness */
 	    } else if ((mon = m_at(x, y)) != 0) {
-		(void) bhitm(mon, obj);
+		bhitm(mon, obj);
 	     /* if (botl) bot(); */
 	    }
 	    if (affects_objects && level.objects[x][y]) {
-		(void) bhitpile(obj, bhito, x, y);
+		bhitpile(obj, bhito, x, y);
 		if (botl) bot();		/* potion effects */
 	    }
 	}
@@ -2691,7 +2691,7 @@ int doapply(void)
 	case CREDIT_CARD:
 #endif
 	case SKELETON_KEY:
-		(void) pick_lock(obj);
+		pick_lock(obj);
 		break;
 	case PICK_AXE:
 	case DWARVISH_MATTOCK:

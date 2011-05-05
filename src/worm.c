@@ -281,7 +281,7 @@ void wormhitu(struct monst *worm)
  */
     for (seg = wtails[wnum]; seg; seg = seg->nseg)
 	if (distu(seg->wx, seg->wy) < 3)
-	    (void) mattacku(worm);
+	    mattacku(worm);
 }
 
 /*  cutworm()

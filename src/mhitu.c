@@ -690,7 +690,7 @@ static void hurtarmor(int attk)
 		break;
 	    case 1:
 		if (uarmc) {
-		    (void)rust_dmg(uarmc, xname(uarmc), hurt, TRUE, &youmonst);
+		    rust_dmg(uarmc, xname(uarmc), hurt, TRUE, &youmonst);
 		    break;
 		}
 		/* Note the difference between break and continue;
@@ -699,10 +699,10 @@ static void hurtarmor(int attk)
 		 * something else did.
 		 */
 		if (uarm)
-		    (void)rust_dmg(uarm, xname(uarm), hurt, TRUE, &youmonst);
+		    rust_dmg(uarm, xname(uarm), hurt, TRUE, &youmonst);
 #ifdef TOURIST
 		else if (uarmu)
-		    (void)rust_dmg(uarmu, xname(uarmu), hurt, TRUE, &youmonst);
+		    rust_dmg(uarmu, xname(uarmu), hurt, TRUE, &youmonst);
 #endif
 		break;
 	    case 2:
@@ -1058,7 +1058,7 @@ dopois:
 		    }
 		}
 		/* adjattrib gives dunce cap message when appropriate */
-		(void) adjattrib(A_INT, -rnd(2), FALSE);
+		adjattrib(A_INT, -rnd(2), FALSE);
 		forget_levels(25);	/* lose memory of 25% of levels */
 		forget_objects(25);	/* lose memory of 25% of objects */
 		exercise(A_WIS, FALSE);
@@ -1229,7 +1229,7 @@ dopois:
 			pline("%s %s.", Monnam(mtmp), mtmp->minvent ?
 		    "brags about the goods some dungeon explorer provided" :
 		    "makes some remarks about how difficult theft is lately");
-			if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+			if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 			return 3;
 		} else if (mtmp->mcan) {
 		    if (!Blind) {
@@ -1239,7 +1239,7 @@ dopois:
 			    flags.female ? "unaffected" : "uninterested");
 		    }
 		    if(rn2(3)) {
-			if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+			if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 			return 3;
 		    }
 		    break;
@@ -1252,7 +1252,7 @@ dopois:
 			break;
 		  default:
 			if (!is_animal(mtmp->data) && !tele_restrict(mtmp))
-			    (void) rloc(mtmp, FALSE);
+			    rloc(mtmp, FALSE);
 			if (is_animal(mtmp->data) && *buf) {
 			    if (canseemon(mtmp))
 				pline("%s tries to %s away with %s.",
@@ -1356,7 +1356,7 @@ dopois:
 			mongone(mtmp);
 			return 2;
 		    } else if (!rn2(33)) {
-			if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+			if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 			monflee(mtmp, d(3, 6), TRUE, FALSE);
 			return 3;
 		    }
@@ -1458,7 +1458,7 @@ dopois:
 	    case AD_PEST:
 		pline("%s reaches out, and you feel fever and chills.",
 			Monnam(mtmp));
-		(void) diseasemu(mdat); /* plus the normal damage */
+		diseasemu(mdat); /* plus the normal damage */
 		break;
 	    case AD_FAMN:
 		pline("%s reaches out, and your body shrivels.",
@@ -1630,7 +1630,7 @@ static int gulpmu(struct monst *mtmp, struct attack  *mattk)
 		u.uswldtim = (unsigned)((tim_tmp < 2) ? 2 : tim_tmp);
 		swallowed(1);
 		for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)
-		    (void) snuff_lit(otmp2);
+		    snuff_lit(otmp2);
 	}
 
 	if (mtmp != u.ustuck) return 0;
@@ -1851,7 +1851,7 @@ gazemu(mtmp, mattk)	/* monster gazes at you */
 		    boolean useeit = canseemon(mtmp);
 
 		    if (useeit)
-			(void) ureflects("%s gaze is reflected by your %s.",
+			ureflects("%s gaze is reflected by your %s.",
 					 s_suffix(Monnam(mtmp)));
 		    if (mon_reflects(mtmp, !useeit ? (char *)0 :
 				     "The gaze is reflected away by %s %s!"))
@@ -2117,7 +2117,7 @@ int doseduce(struct monst *mon)
 		if (ring==uswapwep) setuswapwep((struct obj *)0);
 		if (ring==uquiver) setuqwep((struct obj *)0);
 		freeinv(ring);
-		(void) mpickobj(mon,ring);
+		mpickobj(mon,ring);
 	    } else {
 		char buf[BUFSZ];
 
@@ -2190,7 +2190,7 @@ int doseduce(struct monst *mon)
 	if (uarm || uarmc) {
 		verbalize("You're such a %s; I wish...",
 				flags.female ? "sweet lady" : "nice guy");
-		if (!tele_restrict(mon)) (void) rloc(mon, FALSE);
+		if (!tele_restrict(mon)) rloc(mon, FALSE);
 		return 1;
 	}
 	if (u.ualign.type == A_CHAOTIC)
@@ -2211,12 +2211,12 @@ int doseduce(struct monst *mon)
 				if (u.uenmax < 0) u.uenmax = 0;
 				break;
 			case 1: You("are down in the dumps.");
-				(void) adjattrib(A_CON, -1, TRUE);
+				adjattrib(A_CON, -1, TRUE);
 			        exercise(A_CON, FALSE);
 				botl = 1;
 				break;
 			case 2: Your("senses are dulled.");
-				(void) adjattrib(A_WIS, -1, TRUE);
+				adjattrib(A_WIS, -1, TRUE);
 			        exercise(A_WIS, FALSE);
 				botl = 1;
 				break;
@@ -2248,12 +2248,12 @@ int doseduce(struct monst *mon)
 			u.uen = (u.uenmax += rnd(5));
 			break;
 		case 1: You_feel("good enough to do it again.");
-			(void) adjattrib(A_CON, 1, TRUE);
+			adjattrib(A_CON, 1, TRUE);
 			exercise(A_CON, TRUE);
 			botl = 1;
 			break;
 		case 2: You("will always remember %s...", noit_mon_nam(mon));
-			(void) adjattrib(A_WIS, 1, TRUE);
+			adjattrib(A_WIS, 1, TRUE);
 			exercise(A_WIS, TRUE);
 			botl = 1;
 			break;
@@ -2322,7 +2322,7 @@ int doseduce(struct monst *mon)
 #endif
 	}
 	if (!rn2(25)) mon->mcan = 1; /* monster is worn out */
-	if (!tele_restrict(mon)) (void) rloc(mon, FALSE);
+	if (!tele_restrict(mon)) rloc(mon, FALSE);
 	return 1;
 }
 
@@ -2414,7 +2414,7 @@ static int passiveum(struct permonst *olduasmon, struct monst *mtmp,
 	    }
 	    case AD_ENCH:	/* KMH -- remove enchantment (disenchanter) */
 	    	if (otmp) {
-	    	    (void) drain_item(otmp);
+	    	    drain_item(otmp);
 	    	    /* No message */
 	    	}
 	    	return 1;
@@ -2471,7 +2471,7 @@ static int passiveum(struct permonst *olduasmon, struct monst *mtmp,
 		u.mh += tmp / 2;
 		if (u.mhmax < u.mh) u.mhmax = u.mh;
 		if (u.mhmax > ((youmonst.data->mlevel+1) * 8))
-		    (void)split_mon(&youmonst, mtmp);
+		    split_mon(&youmonst, mtmp);
 		break;
 	    case AD_STUN: /* Yellow mold */
 		if (!mtmp->mstun) {

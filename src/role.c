@@ -1209,7 +1209,7 @@ char *build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 	}
 	/* <your> */
 
-	(void)  root_plselection_prompt(eos(tmpbuf), buflen - strlen(tmpbuf),
+	root_plselection_prompt(eos(tmpbuf), buflen - strlen(tmpbuf),
 					rolenum, racenum, gendnum, alignnum);
 	sprintf(buf, "%s", s_suffix(tmpbuf));
 
@@ -1223,19 +1223,19 @@ char *build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 	num_post_attribs = post_attribs;
 	if (post_attribs) {
 		if (pa[BP_RACE]) {
-			(void) promptsep(eos(buf), num_post_attribs);
+			promptsep(eos(buf), num_post_attribs);
 			strcat(buf, "race");
 		}
 		if (pa[BP_ROLE]) {
-			(void) promptsep(eos(buf), num_post_attribs);
+			promptsep(eos(buf), num_post_attribs);
 			strcat(buf, "role");
 		}
 		if (pa[BP_GEND]) {
-			(void) promptsep(eos(buf), num_post_attribs);
+			promptsep(eos(buf), num_post_attribs);
 			strcat(buf, "gender");
 		}
 		if (pa[BP_ALIGN]) {
-			(void) promptsep(eos(buf), num_post_attribs);
+			promptsep(eos(buf), num_post_attribs);
 			strcat(buf, "alignment");
 		}
 	}

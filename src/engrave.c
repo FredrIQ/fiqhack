@@ -302,7 +302,7 @@ void read_engr_at(int x, int y)
 	    	char *et;
 	    	unsigned maxelen = BUFSZ - sizeof("You feel the words: \"\". ");
 	    	if (strlen(ep->engr_txt) > maxelen) {
-	    		(void) strncpy(buf,  ep->engr_txt, (int)maxelen);
+	    		strncpy(buf,  ep->engr_txt, (int)maxelen);
 			buf[maxelen] = '\0';
 			et = buf;
 		} else
@@ -492,7 +492,7 @@ int doengrave(void)
 	    } else if (!levl[u.ux][u.uy].disturbed) {
 		You("disturb the undead!");
 		levl[u.ux][u.uy].disturbed = 1;
-		(void) makemon(&mons[PM_GHOUL], u.ux, u.uy, NO_MM_FLAGS);
+		makemon(&mons[PM_GHOUL], u.ux, u.uy, NO_MM_FLAGS);
 		exercise(A_WIS, FALSE);
 		return 1;
 	    }
@@ -597,7 +597,7 @@ int doengrave(void)
 			if(oep)  {
 			    if (!Blind) {
 				type = (xchar)0;	/* random */
-				(void) random_engraving(buf);
+				random_engraving(buf);
 			    }
 			    dengr = TRUE;
 			}
@@ -1049,7 +1049,7 @@ int doengrave(void)
 	/* Add to existing engraving */
 	if (oep) strcpy(buf, oep->engr_txt);
 
-	(void) strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
+	strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
 
 	make_engr_at(u.ux, u.uy, buf, (moves - multi), type);
 

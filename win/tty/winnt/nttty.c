@@ -345,7 +345,7 @@ static void really_move_cursor(void)
 		sprintf(newtitle, "%-55s tty=(%02d,%02d) nttty=(%02d,%02d)",
 			oldtitle, ttyDisplay->curx, ttyDisplay->cury,
 			cursor.X, cursor.Y);
-		(void)SetConsoleTitle(newtitle);
+		SetConsoleTitle(newtitle);
 	}
 #endif
 	if (ttyDisplay) {
@@ -700,7 +700,7 @@ void win32con_debug_keystrokes(void)
 	   if ((ir.EventType == KEY_EVENT) && ir.Event.KeyEvent.bKeyDown)
 		ch = process_keystroke(&ir, &valid, iflags.num_pad, 1);
 	}
-	(void)doredraw();
+	doredraw();
 }
 
 
@@ -728,7 +728,7 @@ void win32con_handler_info(void)
 		}
 		xputs("\nPress any key to resume.");
 		ci=nhgetch();
-		(void)doredraw();
+		doredraw();
 	}
 }
 
@@ -785,7 +785,7 @@ void load_keyboard_handler(void)
 		}
 		if ((truncspot = strstri(iflags.altkeyhandler, suffx)) != 0)
 			*truncspot = '\0';
-		(void) strncpy(kh, iflags.altkeyhandler,
+		strncpy(kh, iflags.altkeyhandler,
 				(MAX_ALTKEYHANDLER - sizeof suffx) - 1);
 		kh[(MAX_ALTKEYHANDLER - sizeof suffx) - 1] = '\0';
 		strcat(kh, suffx);
@@ -817,7 +817,7 @@ void load_keyboard_handler(void)
 			pKeyHandlerName = (KEYHANDLERNAME)0; 
 			pProcessKeystroke = (PROCESS_KEYSTROKE)0;
 		}
-		(void)strncpy(kh, "nhdefkey.dll", (MAX_ALTKEYHANDLER - sizeof suffx) - 1);
+		strncpy(kh, "nhdefkey.dll", (MAX_ALTKEYHANDLER - sizeof suffx) - 1);
 		kh[(MAX_ALTKEYHANDLER - sizeof suffx) - 1] = '\0';
 		strcpy(iflags.altkeyhandler, kh);
 		hLibrary = LoadLibrary(kh);
@@ -873,7 +873,7 @@ void error (const char *s, ...)
 	/* error() may get called before tty is initialized */
 	if (iflags.window_inited) end_screen();
 	buf[0] = '\n';
-	(void) vsprintf(&buf[1], s, the_args);
+	vsprintf(&buf[1], s, the_args);
 	va_end(the_args);
 	msmsg(buf);
 	really_move_cursor();

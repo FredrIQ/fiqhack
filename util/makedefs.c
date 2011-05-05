@@ -237,14 +237,14 @@ void do_rumors(const char *in_tru, const char *in_false, const char *outfile)
 	}
 
 	/* get size of true rumors file */
-	(void) fseek(ifp, 0L, SEEK_END);
+	fseek(ifp, 0L, SEEK_END);
 	true_rumor_size = ftell(ifp);
 	fprintf(ofp,"%06lx\n", true_rumor_size);
-	(void) fseek(ifp, 0L, SEEK_SET);
+	fseek(ifp, 0L, SEEK_SET);
 
 	/* copy true rumors */
 	while (fgets(in_line, sizeof in_line, ifp) != 0)
-		(void) fputs(xcrypt(in_line), ofp);
+		fputs(xcrypt(in_line), ofp);
 
 	fclose(ifp);
 
@@ -257,7 +257,7 @@ void do_rumors(const char *in_tru, const char *in_false, const char *outfile)
 
 	/* copy false rumors */
 	while (fgets(in_line, sizeof in_line, ifp) != 0)
-		(void) fputs(xcrypt(in_line), ofp);
+		fputs(xcrypt(in_line), ofp);
 
 	fclose(ifp);
 	fclose(ofp);
@@ -374,7 +374,7 @@ void do_date(const char *outfile)
 	}
 	fprintf(ofp, "%s", Dont_Edit_Code);
 
-	(void) time((time_t *)&clocktim);
+	time((time_t *)&clocktim);
 	strcpy(cbuf, ctime((time_t *)&clocktim));
 	for (c = cbuf; *c; c++) if (*c == '\n') break;
 	*c = '\0';	/* strip off the '\n' */
@@ -625,13 +625,13 @@ void do_data(const char *infile, const char *outfile)
 		/* first finish previous entry */
 		if (line_cnt)  fprintf(ofp, "%d\n", line_cnt),  line_cnt = 0;
 		/* output the entry name */
-		(void) fputs(in_line, ofp);
+		fputs(in_line, ofp);
 		entry_cnt++;		/* update number of entries */
 	    } else if (entry_cnt) {	/* got some descriptive text */
 		/* update previous entry with current text offset */
 		if (!line_cnt)  fprintf(ofp, "%ld,", ftell(tfp));
 		/* save the text line in the scratch file */
-		(void) fputs(in_line, tfp);
+		fputs(in_line, tfp);
 		line_cnt++;		/* update line counter */
 	    }
 	}
@@ -646,7 +646,7 @@ void do_data(const char *infile, const char *outfile)
 	if (rewind(tfp) != 0)  goto dead_data;
 	/* copy all lines of text from the scratch file into the output file */
 	while (fgets(in_line, sizeof in_line, tfp))
-	    (void) fputs(in_line, ofp);
+	    fputs(in_line, ofp);
 
 	/* finished with scratch file */
 	fclose(tfp);
@@ -742,15 +742,15 @@ void do_oracles(const char *infile, const char *outfile)
 	fprintf(ofp, "%s%5d\n", Dont_Edit_Data, 0);
 
 	/* handle special oracle; it must come first */
-	(void) fputs("---\n", tfp);
+	fputs("---\n", tfp);
 	fprintf(ofp, "%05lx\n", ftell(tfp));  /* start pos of special oracle */
 	for (i = 0; i < SIZE(special_oracle); i++) {
-	    (void) fputs(xcrypt(special_oracle[i]), tfp);
-	    (void) fputc('\n', tfp);
+	    fputs(xcrypt(special_oracle[i]), tfp);
+	    fputc('\n', tfp);
 	}
 
 	oracle_cnt = 1;
-	(void) fputs("---\n", tfp);
+	fputs("---\n", tfp);
 	fprintf(ofp, "%05lx\n", ftell(tfp));	/* start pos of first oracle */
 	in_oracle = FALSE;
 
@@ -761,18 +761,18 @@ void do_oracles(const char *infile, const char *outfile)
 		if (!in_oracle) continue;
 		in_oracle = FALSE;
 		oracle_cnt++;
-		(void) fputs("---\n", tfp);
+		fputs("---\n", tfp);
 		fprintf(ofp, "%05lx\n", ftell(tfp));
 		/* start pos of this oracle */
 	    } else {
 		in_oracle = TRUE;
-		(void) fputs(xcrypt(in_line), tfp);
+		fputs(xcrypt(in_line), tfp);
 	    }
 	}
 
 	if (in_oracle) {	/* need to terminate last oracle */
 	    oracle_cnt++;
-	    (void) fputs("---\n", tfp);
+	    fputs("---\n", tfp);
 	    fprintf(ofp, "%05lx\n", ftell(tfp));	/* eof position */
 	}
 
@@ -785,7 +785,7 @@ void do_oracles(const char *infile, const char *outfile)
 	if (rewind(tfp) != 0)  goto dead_data;
 	/* copy all lines of text from the scratch file into the output file */
 	while (fgets(in_line, sizeof in_line, tfp))
-	    (void) fputs(in_line, ofp);
+	    fputs(in_line, ofp);
 
 	/* finished with scratch file */
 	fclose(tfp);
@@ -880,14 +880,14 @@ recheck:
 			while (fgets(in_line, sizeof in_line, ifp) != 0)
 			    if(check_control(in_line) != i) goto recheck;
 		    } else
-			(void) fputs(without_control(in_line),ofp);
+			fputs(without_control(in_line),ofp);
 		} else {
 		    fprintf(stderr, "Unknown control option '%s' in file %s at line %d.\n",
 			    in_line, infile, rcnt);
 		    exit(EXIT_FAILURE);
 		}
 	    } else
-		(void) fputs(in_line,ofp);
+		fputs(in_line,ofp);
 	}
 	fclose(ifp);
 	fclose(ofp);
@@ -1252,7 +1252,7 @@ void do_questtxt(const char *infile, const char *outfile)
 	    else		    do_qt_text(in_line);
 	}
 
-	(void) rewind(ifp);
+	rewind(ifp);
 	in_msg = FALSE;
 	adjust_qt_hdrs();
 	put_qt_hdrs();
@@ -1265,7 +1265,7 @@ void do_questtxt(const char *infile, const char *outfile)
 #ifdef DEBUG
 		fprintf(stderr, "%ld: %s", ftell(stdout), in_line);
 #endif
-		(void) fputs(xcrypt(in_line), ofp);
+		fputs(xcrypt(in_line), ofp);
 	}
 	fclose(ifp);
 	fclose(ofp);
@@ -1278,7 +1278,7 @@ static	char	temp[32];
 /* limit a name to 30 characters length */
 static char *limit(char *name, int pref)
 {
-	(void) strncpy(temp, name, pref ? 26 : 30);
+	strncpy(temp, name, pref ? 26 : 30);
 	temp[pref ? 26 : 30] = 0;
 	return temp;
 }
@@ -1309,7 +1309,7 @@ void do_objs(const char *outfile)
 			if (sum && sum != 1000) {
 			    fprintf(stderr, "prob error for class %d (%d%%)",
 				    class, sum);
-			    (void) fflush(stderr);
+			    fflush(stderr);
 			    sumerr = TRUE;
 			}
 			class = objects[i].oc_class;
@@ -1361,7 +1361,7 @@ void do_objs(const char *outfile)
 	/* check last set of probabilities */
 	if (sum && sum != 1000) {
 	    fprintf(stderr, "prob error for class %d (%d%%)", class, sum);
-	    (void) fflush(stderr);
+	    fflush(stderr);
 	    sumerr = TRUE;
 	}
 
@@ -1398,7 +1398,7 @@ static char *tmpdup(const char *str)
 	static char buf[128];
 
 	if (!str) return (char *)0;
-	(void)strncpy(buf, str, 127);
+	strncpy(buf, str, 127);
 	return buf;
 }
 

@@ -163,7 +163,7 @@ int Boots_off(void)
 		break;
 	case LEVITATION_BOOTS:
 		if (!oldprop && !HLevitation && !cancelled_don) {
-			(void) float_down(0L, 0L);
+			float_down(0L, 0L);
 			makeknown(otyp);
 		}
 		break;
@@ -418,7 +418,7 @@ int Gloves_off(void)
     }
     setworn((struct obj *)0, W_ARMG);
     cancelled_don = FALSE;
-    (void) encumber_msg();		/* immediate feedback for GoP */
+    encumber_msg();		/* immediate feedback for GoP */
 
     /* Prevent wielding cockatrice when not wearing gloves */
     if (uwep && uwep->otyp == CORPSE &&
@@ -582,7 +582,7 @@ void Amulet_off(void)
 		    if (!breathless(youmonst.data) && !amphibious(youmonst.data)
 						&& !Swimming) {
 			You("suddenly inhale an unhealthy amount of water!");
-		    	(void) drown();
+		    	drown();
 		    }
 		    return;
 		}
@@ -769,7 +769,7 @@ static void Ring_off_or_gone(struct obj *obj, boolean gone)
 		}
 		break;
 	case RIN_LEVITATION:
-		(void) float_down(0L, 0L);
+		float_down(0L, 0L);
 		if (!Levitation) makeknown(RIN_LEVITATION);
 		break;
 	case RIN_GAIN_STRENGTH:
@@ -891,14 +891,14 @@ void Blindf_off(struct obj *otmp)
 void set_wear(void)
 {
 #ifdef TOURIST
-	if (uarmu) (void) Shirt_on();
+	if (uarmu) Shirt_on();
 #endif
-	if (uarm)  (void) Armor_on();
-	if (uarmc) (void) Cloak_on();
-	if (uarmf) (void) Boots_on();
-	if (uarmg) (void) Gloves_on();
-	if (uarmh) (void) Helmet_on();
-	if (uarms) (void) Shield_on();
+	if (uarm)  Armor_on();
+	if (uarmc) Cloak_on();
+	if (uarmf) Boots_on();
+	if (uarmg) Gloves_on();
+	if (uarmh) Helmet_on();
+	if (uarms) Shield_on();
 }
 
 /* check whether the target object is currently being put on (or taken off) */
@@ -1007,11 +1007,11 @@ int dotakeoff(void)
 	}
 
 	reset_remarm();		/* clear takeoff_mask and taking_off */
-	(void) select_off(otmp);
+	select_off(otmp);
 	if (!takeoff_mask) return 0;
 	reset_remarm();		/* armoroff() doesn't use takeoff_mask */
 
-	(void) armoroff(otmp);
+	armoroff(otmp);
 	return 1;
 }
 
@@ -1045,7 +1045,7 @@ int doremring(void)
 	}
 
 	reset_remarm();		/* clear takeoff_mask and taking_off */
-	(void) select_off(otmp);
+	select_off(otmp);
 	if (!takeoff_mask) return 0;
 	reset_remarm();		/* not used by Ring_/Amulet_/Blindf_off() */
 
@@ -1123,9 +1123,9 @@ int armoroff(struct obj *otmp)
 		 * fire resistance is not needed for Gehennom.
 		 */
 		if(is_cloak(otmp))
-			(void) Cloak_off();
+			Cloak_off();
 		else if(is_shield(otmp))
-			(void) Shield_off();
+			Shield_off();
 		else setworn((struct obj *)0, otmp->owornmask & W_ARMOR);
 		off_msg(otmp);
 	}
@@ -1344,10 +1344,10 @@ int dowear(void)
 		if(otmp == uarm) afternmv = Armor_on;
 		nomovemsg = "You finish your dressing maneuver.";
 	} else {
-		if(is_cloak(otmp)) (void) Cloak_on();
-		if (is_shield(otmp)) (void) Shield_on();
+		if(is_cloak(otmp)) Cloak_on();
+		if (is_shield(otmp)) Shield_on();
 #ifdef TOURIST
-		if (is_shirt(otmp)) (void) Shirt_on();
+		if (is_shirt(otmp)) Shirt_on();
 #endif
 		on_msg(otmp);
 	}
@@ -1763,26 +1763,26 @@ static struct obj *do_takeoff(void)
 	  You("no longer have ammunition readied.");
 	} else if (taking_off == WORN_ARMOR) {
 	  otmp = uarm;
-	  if(!cursed(otmp)) (void) Armor_off();
+	  if(!cursed(otmp)) Armor_off();
 	} else if (taking_off == WORN_CLOAK) {
 	  otmp = uarmc;
-	  if(!cursed(otmp)) (void) Cloak_off();
+	  if(!cursed(otmp)) Cloak_off();
 	} else if (taking_off == WORN_BOOTS) {
 	  otmp = uarmf;
-	  if(!cursed(otmp)) (void) Boots_off();
+	  if(!cursed(otmp)) Boots_off();
 	} else if (taking_off == WORN_GLOVES) {
 	  otmp = uarmg;
-	  if(!cursed(otmp)) (void) Gloves_off();
+	  if(!cursed(otmp)) Gloves_off();
 	} else if (taking_off == WORN_HELMET) {
 	  otmp = uarmh;
-	  if(!cursed(otmp)) (void) Helmet_off();
+	  if(!cursed(otmp)) Helmet_off();
 	} else if (taking_off == WORN_SHIELD) {
 	  otmp = uarms;
-	  if(!cursed(otmp)) (void) Shield_off();
+	  if(!cursed(otmp)) Shield_off();
 #ifdef TOURIST
 	} else if (taking_off == WORN_SHIRT) {
 	  otmp = uarmu;
-	  if (!cursed(otmp)) (void) Shirt_off();
+	  if (!cursed(otmp)) Shirt_off();
 #endif
 	} else if (taking_off == WORN_AMUL) {
 	  otmp = uamul;
@@ -1919,7 +1919,7 @@ int doddoremarm(void)
 	/* specific activity when handling weapons only */
 	if (!(takeoff_mask & ~(W_WEP|W_SWAPWEP|W_QUIVER)))
 	    disrobing = "disarming";
-	(void) take_off();
+	take_off();
     }
     /* The time to perform the command is already completely accounted for
      * in take_off(); if we return 1, that would add an extra turn to each
@@ -1960,7 +1960,7 @@ static int menu_remarm(int retry)
 			all_worn_categories ? is_worn : is_worn_by_type);
     if (n > 0) {
 	for (i = 0; i < n; i++)
-	    (void) select_off(pick_list[i].item.a_obj);
+	    select_off(pick_list[i].item.a_obj);
 	free((void *) pick_list);
     } else if (n < 0 && flags.menu_style != MENU_COMBINATION) {
 	There("is nothing else you can remove or unwield.");
@@ -1980,41 +1980,41 @@ int destroy_arm(struct obj *atmp)
 		if (donning(otmp)) cancel_don();
 		Your("%s crumbles and turns to dust!",
 		     cloak_simple_name(uarmc));
-		(void) Cloak_off();
+		Cloak_off();
 		useup(otmp);
 	} else if (DESTROY_ARM(uarm)) {
 		if (donning(otmp)) cancel_don();
 		Your("armor turns to dust and falls to the %s!",
 			surface(u.ux,u.uy));
-		(void) Armor_gone();
+		Armor_gone();
 		useup(otmp);
 #ifdef TOURIST
 	} else if (DESTROY_ARM(uarmu)) {
 		if (donning(otmp)) cancel_don();
 		Your("shirt crumbles into tiny threads and falls apart!");
-		(void) Shirt_off();
+		Shirt_off();
 		useup(otmp);
 #endif
 	} else if (DESTROY_ARM(uarmh)) {
 		if (donning(otmp)) cancel_don();
 		Your("helmet turns to dust and is blown away!");
-		(void) Helmet_off();
+		Helmet_off();
 		useup(otmp);
 	} else if (DESTROY_ARM(uarmg)) {
 		if (donning(otmp)) cancel_don();
 		Your("gloves vanish!");
-		(void) Gloves_off();
+		Gloves_off();
 		useup(otmp);
 		selftouch("You");
 	} else if (DESTROY_ARM(uarmf)) {
 		if (donning(otmp)) cancel_don();
 		Your("boots disintegrate!");
-		(void) Boots_off();
+		Boots_off();
 		useup(otmp);
 	} else if (DESTROY_ARM(uarms)) {
 		if (donning(otmp)) cancel_don();
 		Your("shield crumbles away!");
-		(void) Shield_off();
+		Shield_off();
 		useup(otmp);
 	} else {
 		return 0;		/* could not destroy anything */

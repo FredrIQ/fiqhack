@@ -588,7 +588,7 @@ static void maybe_tame(struct monst *mtmp, struct obj *sobj)
 	    if (mtmp->isshk)
 		make_happy_shk(mtmp, FALSE);
 	    else if (!resist(mtmp, sobj->oclass, 0, NOTELL))
-		(void) tamedog(mtmp, (struct obj *) 0);
+		tamedog(mtmp, (struct obj *) 0);
 	}
 }
 
@@ -664,12 +664,12 @@ int seffects(struct obj *sobj)
 		     (Blind || same_color) ? nul :
 			hcolor(sobj->cursed ? NH_BLACK : NH_SILVER),
 		     otense(otmp, "evaporate"));
-			if(is_cloak(otmp)) (void) Cloak_off();
-			if(is_boots(otmp)) (void) Boots_off();
-			if(is_helmet(otmp)) (void) Helmet_off();
-			if(is_gloves(otmp)) (void) Gloves_off();
-			if(is_shield(otmp)) (void) Shield_off();
-			if(otmp == uarm) (void) Armor_gone();
+			if(is_cloak(otmp)) Cloak_off();
+			if(is_boots(otmp)) Boots_off();
+			if(is_helmet(otmp)) Helmet_off();
+			if(is_gloves(otmp)) Gloves_off();
+			if(is_shield(otmp)) Shield_off();
+			if(otmp == uarm) Armor_gone();
 			useup(otmp);
 			break;
 		}
@@ -1227,7 +1227,7 @@ int seffects(struct obj *sobj)
 		    You("smell rotten eggs.");
 		    return 0;
 		}
-		(void) create_gas_cloud(cc.x, cc.y, 3+bcsign(sobj),
+		create_gas_cloud(cc.x, cc.y, 3+bcsign(sobj),
 						8+4*bcsign(sobj));
 		break;
 	}
@@ -1284,7 +1284,7 @@ void litroom(boolean on, struct obj *obj)
 		/* the magic douses lamps, et al, too */
 		for(otmp = invent; otmp; otmp = otmp->nobj)
 		    if (otmp->lamplit)
-			(void) snuff_lit(otmp);
+			snuff_lit(otmp);
 		if (Blind) goto do_it;
 	} else {
 		if (Blind) goto do_it;
@@ -1367,7 +1367,7 @@ static void do_class_genocide(void)
 		do {
 		    getlin("What class of monsters do you wish to genocide?",
 			buf);
-		    (void)mungspaces(buf);
+		    mungspaces(buf);
 		} while (buf[0]=='\033' || !buf[0]);
 		/* choosing "none" preserves genocideless conduct */
 		if (!strcmpi(buf, "none") ||
@@ -1532,7 +1532,7 @@ void do_genocide(int how)
 		}
 		getlin("What monster do you want to genocide? [type the name]",
 			buf);
-		(void)mungspaces(buf);
+		mungspaces(buf);
 		/* choosing "none" preserves genocideless conduct */
 		if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing")) {
 		    /* ... but no free pass if cursed */
@@ -1765,7 +1765,7 @@ boolean create_particular(void)
 	if (tries == 5) {
 	    pline(thats_enough_tries);
 	} else {
-	    (void) cant_create(&which, FALSE);
+	    cant_create(&which, FALSE);
 	    whichpm = &mons[which];
 	    for (i = 0; i <= multi; i++) {
 		if (monclass != MAXMCLASSES)

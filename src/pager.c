@@ -38,8 +38,8 @@ static int append_str(char *buf, const char *new_str)
     if (strstri(buf, new_str)) return 0;
 
     space_left = BUFSZ - strlen(buf) - 1;
-    (void) strncat(buf, " or ", space_left);
-    (void) strncat(buf, new_str, space_left - 4);
+    strncat(buf, " or ", space_left);
+    strncat(buf, new_str, space_left - 4);
     return 1;
 }
 
@@ -309,7 +309,7 @@ static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
     if (pm != (struct permonst *) 0 && !user_typed_name)
 	dbase_str = strcpy(newstr, pm->mname);
     else dbase_str = strcpy(newstr, inp);
-    (void) lcase(dbase_str);
+    lcase(dbase_str);
 
     if (!strncmp(dbase_str, "interior of ", 12))
 	dbase_str += 12;
@@ -354,13 +354,13 @@ static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
 	    alt = makesingular(dbase_str);
 	else
 	    if (user_typed_name)
-		(void) lcase(alt);
+		lcase(alt);
 
 	/* skip first record; read second */
 	txt_offset = 0L;
 	if (!dlb_fgets(buf, BUFSZ, fp) || !dlb_fgets(buf, BUFSZ, fp)) {
 	    impossible("can't read 'data' file");
-	    (void) dlb_fclose(fp);
+	    dlb_fclose(fp);
 	    return;
 	} else if (sscanf(buf, "%8lx\n", &txt_offset) < 1 || txt_offset <= 0)
 	    goto bad_data_file;
@@ -402,7 +402,7 @@ static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
 	} while (!digit(*buf));
 	if (sscanf(buf, "%ld,%d\n", &entry_offset, &entry_count) < 2) {
 bad_data_file:	impossible("'data' file in wrong format");
-		(void) dlb_fclose(fp);
+		dlb_fclose(fp);
 		return;
 	}
 
@@ -411,14 +411,14 @@ bad_data_file:	impossible("'data' file in wrong format");
 
 	    if (dlb_fseek(fp, txt_offset + entry_offset, SEEK_SET) < 0) {
 		pline("? Seek error on 'data' file!");
-		(void) dlb_fclose(fp);
+		dlb_fclose(fp);
 		return;
 	    }
 	    datawin = create_nhwindow(NHW_MENU);
 	    for (i = 0; i < entry_count; i++) {
 		if (!dlb_fgets(buf, BUFSZ, fp)) goto bad_data_file;
 		if ((ep = index(buf, '\n')) != 0) *ep = 0;
-		if (index(buf+1, '\t') != 0) (void) tabexpand(buf+1);
+		if (index(buf+1, '\t') != 0) tabexpand(buf+1);
 		putstr(datawin, 0, buf+1);
 	    }
 	    display_nhwindow(datawin, FALSE);
@@ -427,7 +427,7 @@ bad_data_file:	impossible("'data' file in wrong format");
     } else if (user_typed_name)
 	pline("I don't have any information on those things.");
 
-    (void) dlb_fclose(fp);
+    dlb_fclose(fp);
 }
 
 /* getpos() return values */
@@ -700,12 +700,12 @@ static int do_look(boolean quick)
 		firstmatch = look_buf;
 		if (*firstmatch) {
 		    sprintf(temp_buf, " (%s)", firstmatch);
-		    (void)strncat(out_str, temp_buf, BUFSZ-strlen(out_str)-1);
+		    strncat(out_str, temp_buf, BUFSZ-strlen(out_str)-1);
 		    found = 1;	/* we have something to look up */
 		}
 		if (monbuf[0]) {
 		    sprintf(temp_buf, " [seen: %s]", monbuf);
-		    (void)strncat(out_str, temp_buf, BUFSZ-strlen(out_str)-1);
+		    strncat(out_str, temp_buf, BUFSZ-strlen(out_str)-1);
 		}
 	    }
 	}
@@ -794,23 +794,23 @@ char *dowhatdoes_core(char q, char *cbuf)
 		if(ep) *ep = 0;
 		if (ctrl && buf[2] == '\t'){
 			buf = bufr + 1;
-			(void) strncpy(buf, "^?      ", 8);
+			strncpy(buf, "^?      ", 8);
 			buf[1] = ctrl;
 		} else if (meta && buf[3] == '\t'){
 			buf = bufr + 2;
-			(void) strncpy(buf, "M-?     ", 8);
+			strncpy(buf, "M-?     ", 8);
 			buf[2] = meta;
 		} else if(buf[1] == '\t'){
 			buf = bufr;
 			buf[0] = q;
-			(void) strncpy(buf+1, "       ", 7);
+			strncpy(buf+1, "       ", 7);
 		}
-		(void) dlb_fclose(fp);
+		dlb_fclose(fp);
 		strcpy(cbuf, buf);
 		return cbuf;
 	    }
 	}
-	(void) dlb_fclose(fp);
+	dlb_fclose(fp);
 	return (char *)0;
 }
 
@@ -899,11 +899,11 @@ int dohelp(void)
 		switch (sel) {
 			case  0:  display_file(HELP, TRUE);  break;
 			case  1:  display_file(SHELP, TRUE);  break;
-			case  2:  (void) dohistory();  break;
-			case  3:  (void) dowhatis();  break;
-			case  4:  (void) dowhatdoes();  break;
+			case  2:  dohistory();  break;
+			case  3:  dowhatis();  break;
+			case  4:  dowhatdoes();  break;
 			case  5:  display_file(OPTIONFILE, TRUE);  break;
-			case  6:  (void) doextlist();  break;
+			case  6:  doextlist();  break;
 			case  7:  display_file(LICENSE, TRUE);  break;
 			/* handle slot 9 or 10 */
 			default: display_file(DEBUGHELP, TRUE);  break;

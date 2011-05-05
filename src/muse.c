@@ -572,7 +572,7 @@ mon_tele:
 		    return 2;
 		}
 		if (oseen && how) makeknown(how);
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 		return 2;
 	case MUSE_WAN_TELEPORTATION:
 		zap_oseen = oseen;
@@ -1088,7 +1088,7 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 		} else if (rnd(20) < 10+find_mac(mtmp)) {
 			tmp = d(2,12);
 			hit("wand", mtmp, exclam(tmp));
-			(void) resist(mtmp, otmp->oclass, tmp, TELL);
+			resist(mtmp, otmp->oclass, tmp, TELL);
 			if (cansee(mtmp->mx, mtmp->my) && zap_oseen)
 				makeknown(WAN_STRIKING);
 		} else {
@@ -1110,12 +1110,12 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 			    mtmp->msleeping = 0;
 			    if(mtmp->m_ap_type) seemimic(mtmp);
 			} else if (!tele_restrict(mtmp))
-			    (void) rloc(mtmp, FALSE);
+			    rloc(mtmp, FALSE);
 		}
 		break;
 	case WAN_CANCELLATION:
 	case SPE_CANCELLATION:
-		(void) cancel_monst(mtmp, otmp, FALSE, TRUE, FALSE);
+		cancel_monst(mtmp, otmp, FALSE, TRUE, FALSE);
 		break;
 	}
 	if (reveal_invis) {
@@ -1689,13 +1689,13 @@ skipmsg:
 	case MUSE_WAN_POLYMORPH:
 		mzapmsg(mtmp, otmp, TRUE);
 		otmp->spe--;
-		(void) newcham(mtmp, muse_newcham_mon(mtmp), TRUE, FALSE);
+		newcham(mtmp, muse_newcham_mon(mtmp), TRUE, FALSE);
 		if (oseen) makeknown(WAN_POLYMORPH);
 		return 2;
 	case MUSE_POT_POLYMORPH:
 		mquaffmsg(mtmp, otmp);
 		if (vismon) pline("%s suddenly mutates!", Monnam(mtmp));
-		(void) newcham(mtmp, muse_newcham_mon(mtmp), FALSE, FALSE);
+		newcham(mtmp, muse_newcham_mon(mtmp), FALSE, FALSE);
 		if (oseen) makeknown(POT_POLYMORPH);
 		m_useup(mtmp, otmp);
 		return 2;
@@ -1713,7 +1713,7 @@ skipmsg:
 		if (mtmp->wormno) worm_move(mtmp);
 		newsym(trapx, trapy);
 
-		(void) newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
+		newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
 		return 2;
 	case MUSE_BULLWHIP:
 		/* attempt to disarm hero */
@@ -1770,7 +1770,7 @@ skipmsg:
 			case 3:		/* into mon's inventory */
 			    pline("%s snatches %s!", Monnam(mtmp),
 				  the_weapon);
-			    (void) mpickobj(mtmp,obj);
+			    mpickobj(mtmp,obj);
 			    break;
 		    }
 		    return 1;

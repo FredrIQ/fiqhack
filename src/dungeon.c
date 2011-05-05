@@ -778,7 +778,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 		Fread((void *)&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 	}
-	(void) dlb_fclose(dgn_file);
+	dlb_fclose(dgn_file);
 
 	for (i = 0; i < 5; i++) tune[i] = 'A' + rn2(7);
 	tune[5] = 0;

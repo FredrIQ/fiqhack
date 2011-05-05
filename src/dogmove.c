@@ -172,7 +172,7 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 	    delobj(obj);
 
 	if (poly) {
-	    (void) newcham(mtmp, (struct permonst *)0, FALSE,
+	    newcham(mtmp, (struct permonst *)0, FALSE,
 			   cansee(mtmp->mx, mtmp->my));
 	}
 	/* limit "instant" growth to prevent potential abuse */
@@ -270,11 +270,11 @@ static int dog_invent(struct monst *mtmp, struct edog *edog, int udist)
 				    distant_name(obj, doname));
 			    obj_extract_self(obj);
 			    newsym(omx,omy);
-			    (void) mpickobj(mtmp,obj);
+			    mpickobj(mtmp,obj);
 			    if (attacktype(mtmp->data, AT_WEAP) &&
 					mtmp->weapon_check == NEED_WEAPON) {
 				mtmp->weapon_check = NEED_HTH_WEAPON;
-				(void) mon_wield_item(mtmp);
+				mon_wield_item(mtmp);
 			    }
 			    m_dowear(mtmp, FALSE);
 			}
@@ -513,7 +513,7 @@ int dog_move(struct monst *mtmp,
 		    mm.x = u.ux;
 		    mm.y = u.uy;
 		    if(enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL]))
-			(void) mk_roamer(&mons[PM_ANGEL], u.ualign.type,
+			mk_roamer(&mons[PM_ANGEL], u.ualign.type,
 					 mm.x, mm.y, FALSE);
 		}
 		return 2;
@@ -671,7 +671,7 @@ newdogpos:
 				      Monnam(mtmp), mhis(mtmp));
 				m_unleash(mtmp, FALSE);
 			}
-			(void) mattacku(mtmp);
+			mattacku(mtmp);
 			return 0;
 		}
 		if (!m_in_out_region(mtmp, nix, niy))

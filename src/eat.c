@@ -276,7 +276,7 @@ static struct obj *touchfood(struct obj *otmp)
 {
 	if (otmp->quan > 1L) {
 	    if(!carried(otmp))
-		(void) splitobj(otmp, otmp->quan - 1L);
+		splitobj(otmp, otmp->quan - 1L);
 	    else
 		otmp = splitobj(otmp, 1L);
 #ifdef DEBUG
@@ -409,7 +409,7 @@ static boolean maybe_cannibal(int pm, boolean allowmsg)
 
 static void cprefx(int pm)
 {
-	(void) maybe_cannibal(pm,TRUE);
+	maybe_cannibal(pm,TRUE);
 	if (touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) {
 	    if (!Stone_resistance &&
 		!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
@@ -729,7 +729,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 
 	/* in case `afternmv' didn't get called for previously mimicking
 	   gold, clean up now to avoid `eatmbuf' memory leak */
-	if (eatmbuf) (void)eatmdone();
+	if (eatmbuf) eatmdone();
 
 	switch(pm) {
 	    case PM_NEWT:
@@ -844,7 +844,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 		if (ABASE(A_INT) < ATTRMAX(A_INT)) {
 			if (!rn2(2)) {
 				pline("Yum! That was real brain food!");
-				(void) adjattrib(A_INT, 1, FALSE);
+				adjattrib(A_INT, 1, FALSE);
 				break;	/* don't give them telepathy, too */
 			}
 		}
@@ -1233,7 +1233,7 @@ static int eatcorpse(struct obj *otmp)
 			(otmp->orotten || !rn2(7))) {
 	    if (rottenfood(otmp)) {
 		otmp->orotten = TRUE;
-		(void)touchfood(otmp);
+		touchfood(otmp);
 		retcode = 1;
 	    }
 
@@ -1531,7 +1531,7 @@ static void eatspecial(void) /* called after eating non-food */
 	}
 	if (otmp->oclass == POTION_CLASS) {
 		otmp->quan++; /* dopotion() does a useup() */
-		(void)dopotion(otmp);
+		dopotion(otmp);
 	}
 	if (otmp->oclass == RING_CLASS || otmp->oclass == AMULET_CLASS)
 		eataccessory(otmp);
@@ -1811,7 +1811,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    	otmp->rknown = TRUE;
 		if (otmp->quan > 1L) {
 		    if(!carried(otmp))
-			(void) splitobj(otmp, otmp->quan - 1L);
+			splitobj(otmp, otmp->quan - 1L);
 		    else
 			otmp = splitobj(otmp, 1L);
 		}
@@ -1831,7 +1831,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	/* KMH -- Slow digestion is... indigestible */
 	if (otmp->otyp == RIN_SLOW_DIGESTION) {
 		pline("This ring is indigestible!");
-		(void) rottenfood(otmp);
+		rottenfood(otmp);
 		if (otmp->dknown && !objects[otmp->otyp].oc_name_known
 				&& !objects[otmp->otyp].oc_uname)
 			docall(otmp);
@@ -1866,7 +1866,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    u.uconduct.food++;
 	    
 	    if (otmp->cursed)
-		(void) rottenfood(otmp);
+		rottenfood(otmp);
 
 	    if (otmp->oclass == WEAPON_CLASS && otmp->opoisoned) {
 		pline("Ecch - that must have been poisonous!");
@@ -2114,7 +2114,7 @@ void lesshungry(int num)
 
 static int unfaint(void)
 {
-	(void) Hear_again();
+	Hear_again();
 	if(u.uhs > FAINTING)
 		u.uhs = FAINTING;
 	stop_occupation();
@@ -2431,7 +2431,7 @@ boolean maybe_finished_meal(boolean stopping)
 	/* in case consume_oeaten() has decided that the food is all gone */
 	if (occupation == eatfood && victual.usedtime >= victual.reqtime) {
 	    if (stopping) occupation = 0;	/* for do_reset_eat */
-	    (void) eatfood(); /* calls done_eating() to use up victual.piece */
+	    eatfood(); /* calls done_eating() to use up victual.piece */
 	    return TRUE;
 	}
 	return FALSE;

@@ -225,7 +225,7 @@ void explode(int x, int y,
 			uhurt = (explmask[i][j] == 1) ? 1 : 2;
 		idamres = idamnonres = 0;
 		if (type >= 0)
-		    (void)zap_over_floor((xchar)(i+x-1), (xchar)(j+y-1),
+		    zap_over_floor((xchar)(i+x-1), (xchar)(j+y-1),
 		    		type, &shopdamage);
 
 		mtmp = m_at(i+x-1, j+y-1);
@@ -309,7 +309,7 @@ void explode(int x, int y,
 		    You("are unharmed!");
 		} else if (Half_physical_damage && adtyp == AD_PHYS)
 		    damu = (damu+1) / 2;
-		if (adtyp == AD_FIRE) (void) burnarmor(&youmonst);
+		if (adtyp == AD_FIRE) burnarmor(&youmonst);
 		destroy_item(SCROLL_CLASS, (int) adtyp);
 		destroy_item(SPBOOK_CLASS, (int) adtyp);
 		destroy_item(POTION_CLASS, (int) adtyp);
@@ -439,7 +439,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 		    if ((trap = t_at(sx,sy)) && trap->ttyp == STATUE_TRAP)
 			    deltrap(trap);
 		    pline("%s.", Tobjnam(otmp, "crumble"));
-		    (void) break_statue(otmp);
+		    break_statue(otmp);
 		    place_object(otmp, sx, sy);	/* put fragments on floor */
 		}
 		used_up = TRUE;

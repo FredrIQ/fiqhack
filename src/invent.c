@@ -473,7 +473,7 @@ void freeinv_core(struct obj *obj)
 		set_moreluck();
 		botl = 1;
 	} else if (obj->otyp == FIGURINE && obj->timed) {
-		(void) stop_timer(FIG_TRANSFORM, (void *) obj);
+		stop_timer(FIG_TRANSFORM, (void *) obj);
 	}
 }
 
@@ -1124,9 +1124,9 @@ int ggetobj(const char *word, int (*fn)(struct obj*), int mx,
 	if (takeoff) {
 	    /* arbitrary types of items can be placed in the weapon slots
 	       [any duplicate entries in extra_removeables[] won't matter] */
-	    if (uwep) (void)strkitten(extra_removeables, uwep->oclass);
-	    if (uswapwep) (void)strkitten(extra_removeables, uswapwep->oclass);
-	    if (uquiver) (void)strkitten(extra_removeables, uquiver->oclass);
+	    if (uwep) strkitten(extra_removeables, uwep->oclass);
+	    if (uswapwep) strkitten(extra_removeables, uswapwep->oclass);
+	    if (uquiver) strkitten(extra_removeables, uquiver->oclass);
 	}
 
 	ip = buf;
@@ -1303,7 +1303,7 @@ nextclass:
 			if(tmp < 0) {
 			    if (otmp != otmpo) {
 				/* split occurred, merge again */
-				(void) merged(&otmpo, &otmp);
+				merged(&otmpo, &otmp);
 			    }
 			    goto ret;
 			}
@@ -1367,7 +1367,7 @@ static void menu_identify(int id_limit)
 	if (n > 0) {
 	    if (n > id_limit) n = id_limit;
 	    for (i = 0; i < n; i++, id_limit--)
-		(void) identify(pick_list[i].item.a_obj);
+		identify(pick_list[i].item.a_obj);
 	    free((void *) pick_list);
 	    mark_synch(); /* Before we loop to pop open another menu */
 	} else {
@@ -1394,12 +1394,12 @@ void identify_pack(int id_limit)
     } else if (!id_limit) {
 	/* identify everything */
 	if (unid_cnt == 1) {
-	    (void) identify(the_obj);
+	    identify(the_obj);
 	} else {
 
 	    /* TODO:  use fully_identify_obj and cornline/menu/whatever here */
 	    for (obj = invent; obj; obj = obj->nobj)
-		if (not_fully_identified(obj)) (void) identify(obj);
+		if (not_fully_identified(obj)) identify(obj);
 
 	}
     } else {
@@ -1492,7 +1492,7 @@ char *xprname(struct obj *obj,
 /* the 'i' command */
 int ddoinv(void)
 {
-	(void) display_inventory(NULL, FALSE);
+	display_inventory(NULL, FALSE);
 	return 0;
 }
 
@@ -1875,7 +1875,7 @@ int dotypeinv(void)
 	}
 	if (c == 'x') {
 	    if (billx)
-		(void) doinvbill(1);
+		doinvbill(1);
 	    else
 		pline("No used-up objects on your shopping bill.");
 	    return 0;
@@ -1993,7 +1993,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		}
 		if (Blind) strcpy(fbuf, "You feel");
 		strcat(fbuf,":");
-	    	(void) display_minventory(mtmp, MINV_ALL, fbuf);
+	    	display_minventory(mtmp, MINV_ALL, fbuf);
 	    } else {
 		You("%s no objects here.", verb);
 	    }
@@ -2253,7 +2253,7 @@ int doprarm(void)
 		if(uarmg) lets[ct++] = obj_to_let(uarmg);
 		if(uarmf) lets[ct++] = obj_to_let(uarmf);
 		lets[ct] = 0;
-		(void) display_inventory(lets, FALSE);
+		display_inventory(lets, FALSE);
 	}
 	return 0;
 }
@@ -2269,7 +2269,7 @@ int doprring(void)
 		if(uleft) lets[ct++] = obj_to_let(uleft);
 		if(uright) lets[ct++] = obj_to_let(uright);
 		lets[ct] = 0;
-		(void) display_inventory(lets, FALSE);
+		display_inventory(lets, FALSE);
 	}
 	return 0;
 }
@@ -2303,7 +2303,7 @@ int doprtool(void)
 		lets[ct++] = obj_to_let(otmp);
 	lets[ct] = '\0';
 	if (!ct) You("are not using any tools.");
-	else (void) display_inventory(lets, FALSE);
+	else display_inventory(lets, FALSE);
 	return 0;
 }
 
@@ -2320,7 +2320,7 @@ int doprinuse(void)
 		lets[ct++] = obj_to_let(otmp);
 	lets[ct] = '\0';
 	if (!ct) You("are not wearing or wielding anything.");
-	else (void) display_inventory(lets, FALSE);
+	else display_inventory(lets, FALSE);
 	return 0;
 }
 
@@ -2341,7 +2341,7 @@ void useupf(struct obj *obj, long numused)
 	if(costly_spot(otmp->ox, otmp->oy)) {
 	    if(index(u.urooms, *in_rooms(otmp->ox, otmp->oy, 0)))
 	        addtobill(otmp, FALSE, FALSE, FALSE);
-	    else (void)stolen_value(otmp, otmp->ox, otmp->oy, FALSE, FALSE);
+	    else stolen_value(otmp, otmp->ox, otmp->oy, FALSE, FALSE);
 	}
 	delobj(otmp);
 	if (at_u && u.uundetected && hides_under(youmonst.data))

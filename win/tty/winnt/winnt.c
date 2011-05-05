@@ -174,11 +174,11 @@ void error (const char *s, ...)
 	if (iflags.window_inited) end_screen();
 	if (!strncmpi(windowprocs.name, "tty", 3)) {
 		buf[0] = '\n';
-		(void) vsprintf(&buf[1], s, the_args);
+		vsprintf(&buf[1], s, the_args);
 		strcat(buf, "\n");
 		msmsg(buf);
 	} else {
-		(void) vsprintf(buf, s, the_args);
+		vsprintf(buf, s, the_args);
 		strcat(buf, "\n");
 		raw_printf(buf);
 	}
@@ -189,7 +189,7 @@ void error (const char *s, ...)
 
 void Delay(int ms)
 {
-	(void)Sleep(ms);
+	Sleep(ms);
 }
 
 #ifdef WIN32CON
@@ -209,7 +209,7 @@ void win32_abort(void)
 		while ((ci=nhgetch()) != '\n') {
 		    if (ct > 0) {
 			backsp();       /* \b is visible on NT */
-			(void) putchar(' ');
+			putchar(' ');
 			backsp();
 			ct = 0;
 			c = 'n';
@@ -254,7 +254,7 @@ void interject_assistance(int num, int interjection_type, void * ptr1, void * pt
 		    if (!strncmpi(datadir, "C:\\WINDOWS\\TEMP", 15) ||
 			    strstri(datadir, "TEMP")   ||
 			    (tempdir && strstri(datadir, tempdir))) {
-			(void)strncpy(interjection_buf[INTERJECT_PANIC],
+			strncpy(interjection_buf[INTERJECT_PANIC],
 			"\nOne common cause of this error is attempting to execute\n"
 			"the game by double-clicking on it while it is displayed\n"
 			"inside an unzip utility.\n\n"

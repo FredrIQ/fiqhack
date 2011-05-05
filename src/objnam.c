@@ -55,7 +55,7 @@ static char *strprepend(char *s, const char *pref)
 		return s;
 	}
 	s -= i;
-	(void) strncpy(s, pref, i);	/* do not copy trailing 0 */
+	strncpy(s, pref, i);	/* do not copy trailing 0 */
 	return s;
 }
 
@@ -1677,7 +1677,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 
 	if (!bp) goto any;
 	/* first, remove extra whitespace they may have typed */
-	(void)mungspaces(bp);
+	mungspaces(bp);
 	/* allow wishing for "nothing" to preserve wishless conduct...
 	   [now requires "wand of nothing" if that's what was really wanted] */
 	if (!strcmpi(bp, "nothing") || !strcmpi(bp, "nil") ||
@@ -2178,7 +2178,7 @@ srch:
 				/* avoid stupid mistakes */
 				if((trap == TRAPDOOR || trap == HOLE)
 				      && !Can_fall_thru(&u.uz)) trap = ROCKTRAP;
-				(void) maketrap(u.ux, u.uy, trap);
+				maketrap(u.ux, u.uy, trap);
 				pline("%s.", An(tname));
 				return &zeroobj;
 			}
@@ -2221,7 +2221,7 @@ srch:
 			levl[u.ux][u.uy].typ = LAVAPOOL;
 			del_engr_at(u.ux, u.uy);
 			pline("A pool of molten lava.");
-			if (!(Levitation || Flying)) (void) lava_effects();
+			if (!(Levitation || Flying)) lava_effects();
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}

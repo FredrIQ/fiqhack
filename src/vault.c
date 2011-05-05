@@ -39,7 +39,7 @@ static boolean clear_fcorr(struct monst *grd, boolean forceshow)
 			if(mtmp->isgd) return FALSE;
 			else if(!in_fcorridor(grd, u.ux, u.uy)) {
 			    if(mtmp->mtame) yelp(mtmp);
-			    (void) rloc(mtmp, FALSE);
+			    rloc(mtmp, FALSE);
 			}
 		}
 		levl[fcx][fcy].typ = EGD(grd)->fakecorr[fcbeg].ftyp;
@@ -243,7 +243,7 @@ fnd:
 	trycount = 5;
 	do {
 	    getlin("\"Hello stranger, who are you?\" -", buf);
-	    (void) mungspaces(buf);
+	    mungspaces(buf);
 	} while (!letter(buf[0]) && --trycount > 0);
 
 	if (u.ualign.type == A_LAWFUL &&
@@ -266,7 +266,7 @@ fnd:
 		/* don't want guard to waste next turn wielding a weapon */
 		if (!MON_WEP(guard)) {
 		    guard->weapon_check = NEED_HTH_WEAPON;
-		    (void) mon_wield_item(guard);
+		    mon_wield_item(guard);
 		}
 	    }
 	    return;
@@ -360,7 +360,7 @@ static void wallify_vault(struct monst *grd)
 		if (!IS_WALL(levl[x][y].typ) && !in_fcorridor(grd, x, y)) {
 		    if ((mon = m_at(x, y)) != 0 && mon != grd) {
 			if (mon->mtame) yelp(mon);
-			(void) rloc(mon, FALSE);
+			rloc(mon, FALSE);
 		    }
 		    if ((gold = g_at(x, y)) != 0) {
 			move_gold(gold, EGD(grd)->vroom);
@@ -439,13 +439,13 @@ int gd_move(struct monst *grd)
 	       (grd_in_vault ||
 		(in_fcorridor(grd, grd->mx, grd->my) &&
 		 !in_fcorridor(grd, u.ux, u.uy)))) {
-		(void) rloc(grd, FALSE);
+		rloc(grd, FALSE);
 		wallify_vault(grd);
-		(void) clear_fcorr(grd, TRUE);
+		clear_fcorr(grd, TRUE);
 		goto letknow;
 	    }
 	    if(!in_fcorridor(grd, grd->mx, grd->my))
-		(void) clear_fcorr(grd, TRUE);
+		clear_fcorr(grd, TRUE);
 	    return -1;
 	}
 	if(abs(egrd->ogx - grd->mx) > 1 ||
@@ -485,7 +485,7 @@ int gd_move(struct monst *grd)
 		if (u_carry_gold) {	/* player teleported */
 		    m = grd->mx;
 		    n = grd->my;
-		    (void) rloc(grd, FALSE);
+		    rloc(grd, FALSE);
 		    levl[m][n].typ = egrd->fakecorr[0].ftyp;
 		    newsym(m,n);
 		    grd->mpeaceful = 0;
@@ -561,7 +561,7 @@ letknow:
 		    /* just for insurance... */
 		    if (MON_AT(m, n) && m != grd->mx && n != grd->my) {
 			verbalize("Out of my way, scum!");
-			(void) rloc(m_at(m, n), FALSE);
+			rloc(m_at(m, n), FALSE);
 		    }
 		    remove_monster(grd->mx, grd->my);
 		    newsym(grd->mx, grd->my);

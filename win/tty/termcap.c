@@ -127,7 +127,7 @@ void tty_startup(int *wid, int *hgt)
 	tbufptr = tbuf;
 	if(tgetent(tptr, term) < 1) {
 		char buf[BUFSZ];
-		(void) strncpy(buf, term,
+		strncpy(buf, term,
 				(BUFSZ - 1) - (sizeof("Unknown terminal type: .  ")));
 		buf[BUFSZ-1] = '\0';
 		error("Unknown terminal type: %s.", term);
@@ -387,13 +387,13 @@ void cmov(int x, int y)
 
 void xputc(char c)
 {
-	(void) putchar(c);
+	putchar(c);
 }
 
 void xputs(const char *s)
 {
 # ifndef TERMLIB
-	(void) fputs(s, stdout);
+	fputs(s, stdout);
 # else
 	tputs(s, 1, (int (*)())xputc);
 # endif
@@ -483,7 +483,7 @@ void tty_delay_output(void)
 {
 #ifdef TIMED_DELAY
 	 {
-		(void) fflush(stdout);
+		fflush(stdout);
 		msleep(50);		/* sleep for 50 milliseconds */
 		return;
 	}

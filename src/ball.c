@@ -100,13 +100,13 @@ void placebc(void)
 	return;
     }
 
-    (void) flooreffects(uchain, u.ux, u.uy, "");	/* chain might rust */
+    flooreffects(uchain, u.ux, u.uy, "");	/* chain might rust */
 
     if (carried(uball))		/* the ball is carried */
 	u.bc_order = BCPOS_DIFFER;
     else {
 	/* ball might rust -- already checked when carried */
-	(void) flooreffects(uball, u.ux, u.uy, "");
+	flooreffects(uball, u.ux, u.uy, "");
 	place_object(uball, u.ux, u.uy);
 	u.bc_order = BCPOS_CHAIN;
     }
@@ -569,7 +569,7 @@ drag:
 		    tmp = -2 + Luck + find_mac(victim);
 		    tmp += omon_adj(victim, uball, TRUE);
 		    if (tmp >= rnd(20))
-			(void) hmon(victim,uball,1);
+			hmon(victim,uball,1);
 		    else
 			miss(xname(uball), victim);
 

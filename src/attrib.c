@@ -155,7 +155,7 @@ boolean adjattrib(
 		  (incr > 0) ? plusattr[ndx] : minusattr[ndx]);
 	botl = 1;
 	if (moves > 1 && (ndx == A_STR || ndx == A_CON))
-		(void)encumber_msg();
+		encumber_msg();
 	return TRUE;
 }
 
@@ -168,7 +168,7 @@ void gainstr(struct obj *otmp, int incr)
 	    if(ABASE(A_STR) < 18) num = (rn2(4) ? 1 : rnd(6) );
 	    else if (ABASE(A_STR) < STR18(85)) num = rnd(10);
 	}
-	(void) adjattrib(A_STR, (otmp && otmp->cursed) ? -num : num, TRUE);
+	adjattrib(A_STR, (otmp && otmp->cursed) ? -num : num, TRUE);
 }
 
 void losestr(int num)	/* may kill you; cause may be poison or monster like 'a' */
@@ -186,7 +186,7 @@ void losestr(int num)	/* may kill you; cause may be poison or monster like 'a' *
 		u.uhpmax -= 6;
 	    }
 	}
-	(void) adjattrib(A_STR, -num, TRUE);
+	adjattrib(A_STR, -num, TRUE);
 }
 
 void change_luck(schar n)
@@ -237,7 +237,7 @@ void restore_attrib(void)
 		}
 	    }
 	}
-	(void)encumber_msg();
+	encumber_msg();
 }
 
 
@@ -272,7 +272,7 @@ exercise(int i, boolean inc_or_dec)
 			(inc_or_dec) ? "inc" : "dec", AEXE(i));
 #endif
 	}
-	if (moves > 0 && (i == A_STR || i == A_CON)) (void)encumber_msg();
+	if (moves > 0 && (i == A_STR || i == A_CON)) encumber_msg();
 }
 
 /* hunger values - from eat.c */
@@ -494,7 +494,7 @@ void redist_attr(void)
 	    /* ABASE(i) > ATTRMAX(i) is impossible */
 	    if (ABASE(i) < ATTRMIN(i)) ABASE(i) = ATTRMIN(i);
 	}
-	(void)encumber_msg();
+	encumber_msg();
 }
 
 static void postadjabil(long *ability)

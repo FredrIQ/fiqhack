@@ -148,7 +148,7 @@ static boolean readlibdir(library *lp)
 	    lp->dir[i].fsize = lp->dir[i+1].foffset - lp->dir[i].foffset;
     }
 
-    (void) fseek(lp->fdata, 0L, SEEK_SET);	/* reset back to zero */
+    fseek(lp->fdata, 0L, SEEK_SET);	/* reset back to zero */
     lp->fmark = 0;
 
     return TRUE;
@@ -192,7 +192,7 @@ boolean open_library(const char *lib_name, library *lp)
 	if (readlibdir(lp)) {
 	    status = TRUE;
 	} else {
-	    (void) fclose(lp->fdata);
+	    fclose(lp->fdata);
 	    lp->fdata = (FILE *) 0;
 	}
     }
@@ -201,11 +201,11 @@ boolean open_library(const char *lib_name, library *lp)
 
 void close_library(library * lp)
 {
-    (void) fclose(lp->fdata);
+    fclose(lp->fdata);
     free((void *) lp->dir);
     free((void *) lp->sspace);
 
-    (void) memset((char *)lp, 0, sizeof(library));
+    memset((char *)lp, 0, sizeof(library));
 }
 
 /*
@@ -215,7 +215,7 @@ void close_library(library * lp)
 static boolean lib_dlb_init(void)
 {
     /* zero out array */
-    (void) memset((char *)&dlb_libs[0], 0, sizeof(dlb_libs));
+    memset((char *)&dlb_libs[0], 0, sizeof(dlb_libs));
 
     /* To open more than one library, add open library calls here. */
     if (!open_library(DLBFILE, &dlb_libs[0])) return FALSE;

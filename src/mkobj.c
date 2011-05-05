@@ -146,8 +146,8 @@ static void mkbox_cnts(struct obj *box)
 		 */
 		otmp->age = 0L;
 		if (otmp->timed) {
-		    (void) stop_timer(ROT_CORPSE, (void *)otmp);
-		    (void) stop_timer(REVIVE_MON, (void *)otmp);
+		    stop_timer(ROT_CORPSE, (void *)otmp);
+		    stop_timer(REVIVE_MON, (void *)otmp);
 		}
 	    } else {
 		int tprob;
@@ -176,7 +176,7 @@ static void mkbox_cnts(struct obj *box)
 			    otmp->otyp = rnd_class(WAN_LIGHT, WAN_LIGHTNING);
 		}
 	    }
-	    (void) add_to_container(box, otmp);
+	    add_to_container(box, otmp);
 	}
 }
 
@@ -228,10 +228,10 @@ struct obj *splitobj(struct obj *obj, long num)
 	if (obj->where == OBJ_FLOOR)
 	    obj->nexthere = otmp;
 	if (obj->oxlth)
-	    (void)memcpy((void *)otmp->oextra, (void *)obj->oextra,
+	    memcpy((void *)otmp->oextra, (void *)obj->oextra,
 			obj->oxlth);
 	if (obj->onamelth)
-	    (void)strncpy(ONAME(otmp), ONAME(obj), (int)obj->onamelth);
+	    strncpy(ONAME(otmp), ONAME(obj), (int)obj->onamelth);
 	if (obj->unpaid) splitbill(obj,otmp);
 	if (obj->timed) obj_split_timers(obj, otmp);
 	if (obj_sheds_light(obj)) obj_split_light_source(obj, otmp);
@@ -314,10 +314,10 @@ void bill_dummy_object(struct obj *otmp)
 	if (!dummy->o_id) dummy->o_id = flags.ident++;	/* ident overflowed */
 	dummy->timed = 0;
 	if (otmp->oxlth)
-	    (void)memcpy((void *)dummy->oextra,
+	    memcpy((void *)dummy->oextra,
 			(void *)otmp->oextra, otmp->oxlth);
 	if (otmp->onamelth)
-	    (void)strncpy(ONAME(dummy), ONAME(otmp), (int)otmp->onamelth);
+	    strncpy(ONAME(dummy), ONAME(otmp), (int)otmp->onamelth);
 	if (Is_candle(dummy)) dummy->lamplit = 0;
 	addtobill(dummy, FALSE, TRUE, TRUE);
 	otmp->no_charge = 1;
@@ -565,7 +565,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 			otmp->corpsenm = rndmonnum();
 			if (!verysmall(&mons[otmp->corpsenm]) &&
 				rn2(level_difficulty()/2 + 10) > 10)
-			    (void) add_to_container(otmp,
+			    add_to_container(otmp,
 						    mkobj(SPBOOK_CLASS,FALSE));
 		}
 		break;
@@ -638,7 +638,7 @@ void start_corpse_timeout(struct obj *body)
 	}
 	
 	if (body->norevive) body->norevive = 0;
-	(void) start_timer(when, TIMER_OBJECT, action, (void *)body);
+	start_timer(when, TIMER_OBJECT, action, (void *)body);
 }
 
 void bless(struct obj *otmp)
@@ -653,7 +653,7 @@ void bless(struct obj *otmp)
 	else if (otmp->otyp == BAG_OF_HOLDING)
 	    otmp->owt = weight(otmp);
 	else if (otmp->otyp == FIGURINE && otmp->timed)
-		(void) stop_timer(FIG_TRANSFORM, (void *) otmp);
+		stop_timer(FIG_TRANSFORM, (void *) otmp);
 	return;
 }
 
@@ -701,7 +701,7 @@ void uncurse(struct obj *otmp)
 	else if (otmp->otyp == BAG_OF_HOLDING)
 	    otmp->owt = weight(otmp);
 	else if (otmp->otyp == FIGURINE && otmp->timed)
-	    (void) stop_timer(FIG_TRANSFORM, (void *) otmp);
+	    stop_timer(FIG_TRANSFORM, (void *) otmp);
 	return;
 }
 
@@ -889,7 +889,7 @@ struct obj *obj_attach_mid(struct obj *obj, unsigned mid)
     else {
 	otmp = obj;
 	otmp->oxlth = sizeof(mid);
-	(void) memcpy((void *)otmp->oextra, (void *)&mid,
+	memcpy((void *)otmp->oextra, (void *)&mid,
 								sizeof(mid));
     }
     if (otmp && otmp->oxlth) otmp->oattached = OATTACHED_M_ID;	/* mark it */
@@ -933,7 +933,7 @@ struct monst *get_mtraits(struct obj *obj, boolean copyof)
 		int lth = mtmp->mxlth + mtmp->mnamelth;
 		mnew = newmonst(lth);
 		lth += sizeof(struct monst);
-		(void) memcpy((void *)mnew,
+		memcpy((void *)mnew,
 				(void *)mtmp, lth);
 	    } else {
 	      /* Never insert this returned pointer into mon chains! */
@@ -1139,7 +1139,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
     }
     /* now re-start the timer with the appropriate modifications */ 
     if (restart_timer)
-	(void) start_timer(tleft, TIMER_OBJECT, action, (void *)otmp);
+	start_timer(tleft, TIMER_OBJECT, action, (void *)otmp);
 }
 
 #undef ON_ICE

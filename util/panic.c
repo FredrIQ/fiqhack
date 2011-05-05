@@ -20,9 +20,9 @@ panic (char *str, ...)
 	if(panicking++)
 	    abort();    /* avoid loops - this should never happen*/
 
-	(void) fputs(" ERROR:  ", stderr);
+	fputs(" ERROR:  ", stderr);
 	vfprintf(stderr, str, the_args);
-	(void) fflush(stderr);
+	fflush(stderr);
 #if defined(UNIX)
 	    abort();	/* generate core dump */
 #endif

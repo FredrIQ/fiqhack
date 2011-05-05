@@ -465,8 +465,8 @@ int dorecover(int fd)
 	if (!restgamestate(fd, &stuckid, &steedid)) {
 		display_nhwindow(WIN_MESSAGE, TRUE);
 		savelev(-1, 0, FREE_SAVE);	/* discard current level */
-		(void) close(fd);
-		(void) delete_savefile();
+		close(fd);
+		delete_savefile();
 		restoring = FALSE;
 		return 0;
 	}
@@ -493,16 +493,16 @@ int dorecover(int fd)
 		if (rtmp < 2) return rtmp;  /* dorecover called recursively */
 	}
 
-	(void) lseek(fd, (off_t)0, 0);
-	(void) uptodate(fd, (char *)0);		/* skip version info */
+	lseek(fd, (off_t)0, 0);
+	uptodate(fd, (char *)0);		/* skip version info */
 #ifdef STORE_PLNAME_IN_FILE
 	mread(fd, (void *) plname, PL_NSIZ);
 #endif
 	getlev(fd, 0, (xchar)0, FALSE);
-	(void) close(fd);
+	close(fd);
 
 	if (!wizard && !discover)
-		(void) delete_savefile();
+		delete_savefile();
 #ifdef REINCARNATION
 	if (Is_rogue_level(&u.uz)) assign_rogue_graphics(TRUE);
 #endif
@@ -789,10 +789,10 @@ static void reset_oattached_mids(boolean ghostly)
 	    mtmp->mpeaceful = mtmp->mtame = 0;	/* pet's owner died! */
 	}
 	if (ghostly && otmp->oattached == OATTACHED_M_ID) {
-	    (void) memcpy((void *)&oldid, (void *)otmp->oextra,
+	    memcpy((void *)&oldid, (void *)otmp->oextra,
 								sizeof(oldid));
 	    if (lookup_id_mapping(oldid, &nid))
-		(void) memcpy((void *)otmp->oextra, (void *)&nid,
+		memcpy((void *)otmp->oextra, (void *)&nid,
 								sizeof(nid));
 	    else
 		otmp->oattached = OATTACHED_NOTHING;
@@ -808,8 +808,8 @@ void mread(int fd, void * buf, unsigned int len)
 	if((unsigned)rlen != len){
 		pline("Read %d instead of %u bytes.", rlen, len);
 		if(restoring) {
-			(void) close(fd);
-			(void) delete_savefile();
+			close(fd);
+			delete_savefile();
 			putstr(WIN_ERR, 0, "Error restoring old game.");
 		}
 		panic("Error reading level file.");

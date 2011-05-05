@@ -112,7 +112,7 @@ static int picklock(void)
 	} else {
 	    xlock.box->olocked = !xlock.box->olocked;
 	    if(xlock.box->otrapped)	
-		(void) chest_trap(xlock.box, FINGER, FALSE);
+		chest_trap(xlock.box, FINGER, FALSE);
 	}
 	exercise(A_DEX, TRUE);
 	return (xlock.usedtime = 0);
@@ -805,7 +805,7 @@ boolean doorlock(struct obj *otmp, int x, int y)
 	    if (door->doormask & (D_LOCKED | D_CLOSED)) {
 		if (door->doormask & D_TRAPPED) {
 		    if (MON_AT(x, y))
-			(void) mb_trapped(m_at(x,y));
+			mb_trapped(m_at(x,y));
 		    else if (flags.verbose) {
 			if (cansee(x,y))
 			    pline("KABOOM!!  You see a door explode.");

@@ -166,10 +166,10 @@ static struct obj *make_corpse(struct monst *mtmp)
 			   pline("%s recently regrown horn crumbles to dust.",
 				s_suffix(Monnam(mtmp)));
 		} else
-			(void) mksobj_at(UNICORN_HORN, x, y, TRUE, FALSE);
+			mksobj_at(UNICORN_HORN, x, y, TRUE, FALSE);
 		goto default_1;
 	    case PM_LONG_WORM:
-		(void) mksobj_at(WORM_TOOTH, x, y, TRUE, FALSE);
+		mksobj_at(WORM_TOOTH, x, y, TRUE, FALSE);
 		goto default_1;
 	    case PM_VAMPIRE:
 	    case PM_VAMPIRE_LORD:
@@ -346,9 +346,9 @@ int minliquid(struct monst *mtmp)
 		    pline("%s burns slightly.", Monnam(mtmp));
 	    }
 	    if (mtmp->mhp > 0) {
-		(void) fire_damage(mtmp->minvent, FALSE, FALSE,
+		fire_damage(mtmp->minvent, FALSE, FALSE,
 						mtmp->mx, mtmp->my);
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 		return 0;
 	    }
 	    return 1;
@@ -371,7 +371,7 @@ int minliquid(struct monst *mtmp)
 	    }
 	    mondead(mtmp);
 	    if (mtmp->mhp > 0) {
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 		water_damage(mtmp->minvent, FALSE, FALSE);
 		return 0;
 	    }
@@ -433,7 +433,7 @@ void mcalcdistress(void)
 
 	/* possibly polymorph shapechangers and lycanthropes */
 	if (mtmp->cham && !rn2(6))
-	    (void) newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
+	    newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
 	were_change(mtmp);
 
 	/* gradually time out temporary problems */
@@ -621,7 +621,7 @@ int meatmetal(struct monst *mtmp)
 		    }
 		    /* Left behind a pile? */
 		    if (rnd(25) < 3)
-			(void)mksobj_at(ROCK, mtmp->mx, mtmp->my, TRUE, FALSE);
+			mksobj_at(ROCK, mtmp->mx, mtmp->my, TRUE, FALSE);
 		    newsym(mtmp->mx, mtmp->my);
 		    return 1;
 		}
@@ -675,7 +675,7 @@ int meatobj(struct monst *mtmp)
 			    otmp3->age = monstermoves - otmp3->age;
 			    start_corpse_timeout(otmp3);
 			}
-			(void) mpickobj(mtmp, otmp3);
+			mpickobj(mtmp, otmp3);
 		    }
 		}
 		poly = polyfodder(otmp);
@@ -703,7 +703,7 @@ int meatobj(struct monst *mtmp)
 		} else if (ecount == 2)
 			sprintf(buf, "%s engulfs several objects.", Monnam(mtmp));
 		obj_extract_self(otmp);
-		(void) mpickobj(mtmp, otmp);	/* slurp */
+		mpickobj(mtmp, otmp);	/* slurp */
 	    }
 	    /* Engulf & devour is instant, so don't set meating */
 	    if (mtmp->minvis) newsym(mtmp->mx, mtmp->my);
@@ -774,7 +774,7 @@ boolean mpickstuff(struct monst *mtmp, const char *str)
 		/* unblock point after extract, before pickup */
 		if (otmp->otyp == BOULDER)
 		    unblock_point(otmp->ox,otmp->oy);	/* vision */
-		(void) mpickobj(mtmp, otmp);	/* may merge and free otmp */
+		mpickobj(mtmp, otmp);	/* may merge and free otmp */
 		m_dowear(mtmp, FALSE);
 		newsym(mtmp->mx, mtmp->my);
 		return TRUE;			/* pick only one object */
@@ -1302,10 +1302,10 @@ void mondead(struct monst *mtmp)
 	    /* Dead Kops may come back. */
 	    switch(rnd(5)) {
 		case 1:	     /* returns near the stairs */
-			(void) makemon(mtmp->data,xdnstair,ydnstair,NO_MM_FLAGS);
+			makemon(mtmp->data,xdnstair,ydnstair,NO_MM_FLAGS);
 			break;
 		case 2:	     /* randomly */
-			(void) makemon(mtmp->data,0,0,NO_MM_FLAGS);
+			makemon(mtmp->data,0,0,NO_MM_FLAGS);
 			break;
 		default:
 			break;
@@ -1396,7 +1396,7 @@ void mondied(struct monst *mdef)
 
 	if (corpse_chance(mdef, (struct monst *)0, FALSE) &&
 	    (accessible(mdef->mx, mdef->my) || is_pool(mdef->mx, mdef->my)))
-		(void) make_corpse(mdef);
+		make_corpse(mdef);
 }
 
 /* monster disappears, not dies */
@@ -1464,7 +1464,7 @@ void monstone(struct monst *mdef)
 		if (mdef->mnamelth) otmp = oname(otmp, NAME(mdef));
 		while ((obj = oldminvent) != 0) {
 		    oldminvent = obj->nobj;
-		    (void) add_to_container(otmp, obj);
+		    add_to_container(otmp, obj);
 		}
 #ifndef GOLDOBJ
 		if (mdef->mgold) {
@@ -1472,7 +1472,7 @@ void monstone(struct monst *mdef)
 			au = mksobj(GOLD_PIECE, FALSE, FALSE);
 			au->quan = mdef->mgold;
 			au->owt = weight(au);
-			(void) add_to_container(otmp, au);
+			add_to_container(otmp, au);
 			mdef->mgold = 0;
 		}
 #endif
@@ -1651,7 +1651,7 @@ void xkilled(struct monst *mtmp, int dest)
 		 * if we want both, we have to specify it explicitly.
 		 */
 		if (corpse_chance(mtmp, (struct monst *)0, FALSE))
-			(void) make_corpse(mtmp);
+			make_corpse(mtmp);
 	}
 	if(redisp) newsym(x,y);
 cleanup:
@@ -1781,7 +1781,7 @@ boolean mnearto(struct monst *mtmp,
 
 	if (move_other && othermon) {
 	    othermon->mx = othermon->my = 0;
-	    (void) mnearto(othermon, x, y, FALSE);
+	    mnearto(othermon, x, y, FALSE);
 	    if ((othermon->mx != x) || (othermon->my != y))
 		return TRUE;
 	}
@@ -1851,7 +1851,7 @@ void poisoned(const char *string, int typ, const char *pname, int fatal)
 		/* "Poisoned by a poisoned ___" is redundant */
 		done(strstri(pname, "poison") ? DIED : POISONING);
 	}
-	(void) encumber_msg();
+	encumber_msg();
 }
 
 /* monster responds to player action; not the same as a passive attack */
@@ -1865,9 +1865,9 @@ void m_respond(struct monst *mtmp)
 	}
 	if (!rn2(10)) {
 	    if (!rn2(13))
-		(void) makemon(&mons[PM_PURPLE_WORM], 0, 0, NO_MM_FLAGS);
+		makemon(&mons[PM_PURPLE_WORM], 0, 0, NO_MM_FLAGS);
 	    else
-		(void) makemon((struct permonst *)0, 0, 0, NO_MM_FLAGS);
+		makemon((struct permonst *)0, 0, 0, NO_MM_FLAGS);
 
 	}
 	aggravate();
@@ -1876,7 +1876,7 @@ void m_respond(struct monst *mtmp)
 	int i;
 	for(i = 0; i < NATTK; i++)
 	     if(mtmp->data->mattk[i].aatyp == AT_GAZE) {
-		 (void) gazemu(mtmp, &mtmp->data->mattk[i]);
+		 gazemu(mtmp, &mtmp->data->mattk[i]);
 		 break;
 	     }
     }
@@ -1992,7 +1992,7 @@ void rescham(void)
 		mcham = (int) mtmp->cham;
 		if (mcham) {
 			mtmp->cham = CHAM_ORDINARY;
-			(void) newcham(mtmp, &mons[cham_to_pm[mcham]],
+			newcham(mtmp, &mons[cham_to_pm[mcham]],
 				       FALSE, FALSE);
 		}
 		if(is_were(mtmp->data) && mtmp->data->mlet != S_HUMAN)
@@ -2033,7 +2033,7 @@ void restore_cham(struct monst *mon)
 	    mcham = (int) mon->cham;
 	    if (mcham) {
 		mon->cham = CHAM_ORDINARY;
-		(void) newcham(mon, &mons[cham_to_pm[mcham]], FALSE, FALSE);
+		newcham(mon, &mons[cham_to_pm[mcham]], FALSE, FALSE);
 	    } else if (is_were(mon->data) && !is_human(mon->data)) {
 		new_were(mon);
 	    }
@@ -2078,7 +2078,7 @@ void mon_animal_list(boolean construct)
 	 /* if (n == 0) animal_temp[n++] = NON_PM; */
 
 	    animal_list = (short *)alloc(n * sizeof *animal_list);
-	    (void) memcpy((void *)animal_list,
+	    memcpy((void *)animal_list,
 			  (void *)animal_temp,
 			  n * sizeof *animal_list);
 	    animal_list_count = n;
@@ -2426,7 +2426,7 @@ void kill_genocided_monsters(void)
 	    mndx = monsndx(mtmp->data);
 	    if ((mvitals[mndx].mvflags & G_GENOD) || kill_cham[mtmp->cham]) {
 		if (mtmp->cham && !kill_cham[mtmp->cham])
-		    (void) newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
+		    newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
 		else
 		    mondead(mtmp);
 	    }

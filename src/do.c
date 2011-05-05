@@ -61,7 +61,7 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 		} else
 		    levl[rx][ry].typ = ROOM;
 
-		if (ttmp) (void) delfloortrap(ttmp);
+		if (ttmp) delfloortrap(ttmp);
 		bury_objs(rx, ry);
 		
 		newsym(rx,ry);
@@ -507,10 +507,10 @@ void dropy(struct obj *obj)
 		    could_grow = (obj->corpsenm == PM_WRAITH);
 		    could_heal = (obj->corpsenm == PM_NURSE);
 		}
-		(void) mpickobj(u.ustuck,obj);
+		mpickobj(u.ustuck,obj);
 		if (is_animal(u.ustuck->data)) {
 		    if (could_poly || could_slime) {
-			(void) newcham(u.ustuck,
+			newcham(u.ustuck,
 				       could_poly ? (struct permonst *)0 :
 				       &mons[PM_GREEN_SLIME],
 				       FALSE, could_slime);
@@ -520,7 +520,7 @@ void dropy(struct obj *obj)
 			/* Don't leave a cockatrice corpse in a statue */
 			if (!u.uswallow) delobj(obj);
 		    } else if (could_grow) {
-			(void) grow_up(u.ustuck, (struct monst *)0);
+			grow_up(u.ustuck, (struct monst *)0);
 			delobj(obj);	/* corpse is digested */
 		    } else if (could_heal) {
 			u.ustuck->mhp = u.ustuck->mhpmax;
@@ -659,7 +659,7 @@ static int menu_drop(int retry)
 		    } else {
 #ifndef GOLDOBJ
 			if (otmp->oclass == COIN_CLASS)
-			    (void) splitobj(otmp, otmp->quan - cnt);
+			    splitobj(otmp, otmp->quan - cnt);
 			else
 #endif
 			    otmp = splitobj(otmp, cnt);
@@ -917,8 +917,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 		    pline("A mysterious force momentarily surrounds you...");
 		    if (on_level(newlevel, &u.uz)) {
-			(void) safe_teleds(FALSE);
-			(void) next_to_u();
+			safe_teleds(FALSE);
+			next_to_u();
 			return;
 		    } else
 			at_stairs = at_ladder = FALSE;
@@ -996,8 +996,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	/* set default level change destination areas */
 	/* the special level code may override these */
-	(void) memset((void *) &updest, 0, sizeof updest);
-	(void) memset((void *) &dndest, 0, sizeof dndest);
+	memset((void *) &updest, 0, sizeof updest);
+	memset((void *) &dndest, 0, sizeof dndest);
 
 	if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
 		/* entering this level for first time; make it now */
@@ -1019,7 +1019,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			putstr(WIN_ERR,0,"Cannot continue this game.");
 		}
 		getlev(fd, hackpid, new_ledger, FALSE);
-		(void) close(fd);
+		close(fd);
 	}
 	/* do this prior to level-change pline messages */
 	vision_reset();		/* clear old level's line-of-sight */
@@ -1150,7 +1150,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	    if ((mtmp = m_at(u.ux, u.uy)) != 0) {
 		impossible("mnexto failed (do.c)?");
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 	    }
 	}
 
@@ -1255,8 +1255,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 #endif
 
 	/* assume this will always return TRUE when changing level */
-	(void) in_out_region(u.ux, u.uy);
-	(void) pickup(1);
+	in_out_region(u.ux, u.uy);
+	pickup(1);
 }
 
 static void final_level(void)
@@ -1281,7 +1281,7 @@ static void final_level(void)
 		mm.x = u.ux;
 		mm.y = u.uy;
 		if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL]))
-		    (void) mk_roamer(&mons[PM_ANGEL], u.ualign.type,
+		    mk_roamer(&mons[PM_ANGEL], u.ualign.type,
 				     mm.x, mm.y, FALSE);
 	    }
 
@@ -1314,7 +1314,7 @@ static void final_level(void)
 		    if (otmp->spe < 4) otmp->spe += rnd(4);
 		    if ((otmp = which_armor(mtmp, W_ARMS)) == 0 ||
 			    otmp->otyp != SHIELD_OF_REFLECTION) {
-			(void) mongets(mtmp, AMULET_OF_REFLECTION);
+			mongets(mtmp, AMULET_OF_REFLECTION);
 			m_dowear(mtmp, TRUE);
 		    }
 		}
@@ -1470,7 +1470,7 @@ void revive_mon(void *arg, long timeout)
     if (!revive_corpse(body)) {
 	if (is_rider(&mons[body->corpsenm]))
 	    You_feel("less hassled.");
-	(void) start_timer(250L - (monstermoves-body->age),
+	start_timer(250L - (monstermoves-body->age),
 					TIMER_OBJECT, ROT_CORPSE, arg);
     }
 }
@@ -1532,7 +1532,7 @@ void set_wounded_legs(long side, int timex)
 	if(!Wounded_legs || (HWounded_legs & TIMEOUT))
 		HWounded_legs = timex;
 	EWounded_legs = side;
-	(void)encumber_msg();
+	encumber_msg();
 }
 
 void heal_legs(void)
@@ -1556,7 +1556,7 @@ void heal_legs(void)
 		}
 		HWounded_legs = EWounded_legs = 0;
 	}
-	(void)encumber_msg();
+	encumber_msg();
 }
 
 /*do.c*/

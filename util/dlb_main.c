@@ -69,9 +69,9 @@ static const char *list_file = LIBLISTFILE;
 static void
 usage()
 {
-    (void) printf("Usage: %s [ctxCIfv] arguments... [files...]\n", progname);
-    (void) printf("  default library is %s\n", library_file);
-    (void) printf("  default list file is %s\n", list_file);
+    printf("Usage: %s [ctxCIfv] arguments... [files...]\n", progname);
+    printf("  default library is %s\n", library_file);
+    printf("  default list file is %s\n", list_file);
     xexit(EXIT_FAILURE);
 }
 
@@ -98,7 +98,7 @@ verbose_help()
     const char **str;
 
     for (str = long_help; *str; str++)
-	(void) printf("%s\n", *str);
+	printf("%s\n", *str);
     usage();
 }
 
@@ -286,7 +286,7 @@ main(argc, argv)
 		total_read += n;
 	    } while (total_read != lib.dir[i].fsize);
 
-	    (void) close(f);
+	    close(f);
 
 	    if (verbose) printf("x %s\n", lib.dir[i].fname);
 	}
@@ -404,7 +404,7 @@ main(argc, argv)
 		}
 		fsiz += r;
 	    }
-	    (void) close(fd);
+	    close(fd);
 	    if (fsiz != ld[i].fsize) rewrite_directory = TRUE;
 	    /* in case directory rewrite is needed */
 	    ld[i].fsize = fsiz;
@@ -414,14 +414,14 @@ main(argc, argv)
 
 	if (rewrite_directory) {
 	    if (verbose) printf("(rewriting dlb directory info)\n");
-	    (void) lseek(out, 0, SEEK_SET);	/* rewind */
+	    lseek(out, 0, SEEK_SET);	/* rewind */
 	    write_dlb_directory(out, nfiles, ld, slen, dir_size, flen);
 	}
 
 	for (i = 0; i < nfiles; i++)
 	    free((void *) ld[i].fname),  ld[i].fname = 0;
 
-	(void) close(out);
+	close(out);
 	xexit(EXIT_SUCCESS);
 	}
     }

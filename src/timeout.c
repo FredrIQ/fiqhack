@@ -289,7 +289,7 @@ void nh_timeout(void)
 			break;
 		case HALLUC:
 			HHallucination = 1;
-			(void) make_hallucinated(0L, TRUE, 0L);
+			make_hallucinated(0L, TRUE, 0L);
 			stop_occupation();
 			break;
 		case SLEEPING:
@@ -303,7 +303,7 @@ void nh_timeout(void)
 			}
 			break;
 		case LEVITATION:
-			(void) float_down(I_SPECIAL|TIMEOUT, 0L);
+			float_down(I_SPECIAL|TIMEOUT, 0L);
 			break;
 		case STRANGLED:
 			killer_format = KILLED_BY;
@@ -364,7 +364,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 	int i;
 
 	/* stop previous timer, if any */
-	(void) stop_timer(HATCH_EGG, (void *) egg);
+	stop_timer(HATCH_EGG, (void *) egg);
 
 	/*
 	 * Decide if and when to hatch the egg.  The old hatch_it() code tried
@@ -375,7 +375,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 	for (i = (MAX_EGG_HATCH_TIME-50)+1; i <= MAX_EGG_HATCH_TIME; i++)
 	    if (rnd(i) > 150) {
 		/* egg will hatch */
-		(void) start_timer((long)i, TIMER_OBJECT,
+		start_timer((long)i, TIMER_OBJECT,
 						HATCH_EGG, (void *)egg);
 		break;
 	    }
@@ -385,7 +385,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 void kill_egg(struct obj *egg)
 {
 	/* stop previous timer, if any */
-	(void) stop_timer(HATCH_EGG, (void *) egg);
+	stop_timer(HATCH_EGG, (void *) egg);
 }
 
 /* timer callback routine: hatch the given egg */
@@ -512,8 +512,8 @@ void hatch_egg(void *arg, long timeout)
 		attach_egg_hatch_timeout(egg);
 		if (egg->timed) {
 		    /* replace ordinary egg timeout with a short one */
-		    (void) stop_timer(HATCH_EGG, (void *)egg);
-		    (void) start_timer((long)rnd(12), TIMER_OBJECT,
+		    stop_timer(HATCH_EGG, (void *)egg);
+		    start_timer((long)rnd(12), TIMER_OBJECT,
 					HATCH_EGG, (void *)egg);
 		}
 	    } else if (carried(egg)) {
@@ -543,14 +543,14 @@ void attach_fig_transform_timeout(struct obj *figurine)
 	int i;
 
 	/* stop previous timer, if any */
-	(void) stop_timer(FIG_TRANSFORM, (void *) figurine);
+	stop_timer(FIG_TRANSFORM, (void *) figurine);
 
 	/*
 	 * Decide when to transform the figurine.
 	 */
 	i = rnd(9000) + 200;
 	/* figurine will transform */
-	(void) start_timer((long)i, TIMER_OBJECT,
+	start_timer((long)i, TIMER_OBJECT,
 				FIG_TRANSFORM, (void *)figurine);
 }
 
@@ -708,7 +708,7 @@ void burn_object(void *arg, long timeout)
 	if (get_obj_location(obj, &x, &y, 0)) {
 	    canseeit = !Blind && cansee(x, y);
 	    /* set up `whose[]' to be "Your" or "Fred's" or "The goblin's" */
-	    (void) Shk_Your(whose, obj);
+	    Shk_Your(whose, obj);
 	} else {
 	    canseeit = FALSE;
 	}
@@ -1412,7 +1412,7 @@ void obj_split_timers(struct obj *src, struct obj *dest)
     for (curr = timer_base; curr; curr = next_timer) {
 	next_timer = curr->next;	/* things may be inserted */
 	if (curr->kind == TIMER_OBJECT && curr->arg == (void *)src) {
-	    (void) start_timer(curr->timeout-monstermoves, TIMER_OBJECT,
+	    start_timer(curr->timeout-monstermoves, TIMER_OBJECT,
 					curr->func_index, (void *)dest);
 	}
     }
@@ -1637,7 +1637,7 @@ void save_timers(int fd, int mode, int range)
 
 	count = maybe_write_timer(fd, range, FALSE);
 	bwrite(fd, (void *) &count, sizeof count);
-	(void) maybe_write_timer(fd, range, TRUE);
+	maybe_write_timer(fd, range, TRUE);
     }
 
     if (release_data(mode)) {

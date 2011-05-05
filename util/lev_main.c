@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 	init_yyout(stdout);
 	if (argc == 1) {		/* Read standard input */
 	    init_yyin(stdin);
-	    (void) yyparse();
+	    yyparse();
 	    if (fatal_error > 0) {
 		    errors_encountered = TRUE;
 	    }
@@ -216,13 +216,13 @@ int main(int argc, char **argv)
 		    
 		    fin = freopen(fname, "r", stdin);
 		    if (!fin) {
-			(void) fprintf(stderr,"Can't open \"%s\" for input.\n",
+			fprintf(stderr,"Can't open \"%s\" for input.\n",
 						fname);
 			perror(fname);
 			errors_encountered = TRUE;
 		    } else {
 			init_yyin(fin);
-			(void) yyparse();
+			yyparse();
 			line_number = 1;
 			if (fatal_error > 0) {
 				errors_encountered = TRUE;
@@ -246,10 +246,10 @@ int main(int argc, char **argv)
  */
 void yyerror(const char *s)
 {
-	(void) fprintf(stderr, "%s: line %d : %s\n", fname,
+	fprintf(stderr, "%s: line %d : %s\n", fname,
 		(*s >= 'A' && *s <= 'Z') ? colon_line_number : line_number, s);
 	if (++fatal_error > MAX_ERRORS) {
-		(void) fprintf(stderr,"Too many errors, good bye!\n");
+		fprintf(stderr,"Too many errors, good bye!\n");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -259,7 +259,7 @@ void yyerror(const char *s)
  */
 void yywarning(const char *s)
 {
-	(void) fprintf(stderr, "%s: line %d : WARNING : %s\n",
+	fprintf(stderr, "%s: line %d : WARNING : %s\n",
 				fname, colon_line_number, s);
 }
 
@@ -1005,7 +1005,7 @@ boolean write_level_file(char *filename, splev *room_level, specialmaze *maze_le
 	} else
 	    panic("write_level_file");
 
-	(void) close(fout);
+	close(fout);
 	return TRUE;
 }
 

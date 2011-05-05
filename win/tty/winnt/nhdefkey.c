@@ -35,7 +35,7 @@ int WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID pvReserved)
 	char dlltmpname[512];
 	char *tmp = dlltmpname, *tmp2;
 	*(tmp + GetModuleFileName(hInstance, tmp, 511)) = '\0';
-	(void)strcpy(dllname, tmp);
+	strcpy(dllname, tmp);
 	tmp2 = strrchr(dllname, '\\');
 	if (tmp2) {
 		tmp2++;

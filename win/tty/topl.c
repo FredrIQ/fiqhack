@@ -226,7 +226,7 @@ void update_topl(const char *bp)
 	    }
 	}
 	remember_topl();
-	(void) strncpy(toplines, bp, TBUFSZ);
+	strncpy(toplines, bp, TBUFSZ);
 	toplines[TBUFSZ - 1] = 0;
 
 	for(tl = toplines; n0 >= CO; ){
@@ -265,21 +265,21 @@ static void topl_putsym(char c)
 	ttyDisplay->cury++;
 	cw->cury = ttyDisplay->cury;
 #ifdef WIN32CON
-    (void) putchar(c);
+    putchar(c);
 #endif
 	break;
     default:
 	if(ttyDisplay->curx == CO-1)
 	    topl_putsym('\n'); /* 1 <= curx <= CO; avoid CO */
 #ifdef WIN32CON
-    (void) putchar(c);
+    putchar(c);
 #endif
 	ttyDisplay->curx++;
     }
     cw->curx = ttyDisplay->curx;
     if(cw->curx == 0) cl_end();
 #ifndef WIN32CON
-    (void) putchar(c);
+    putchar(c);
 #endif
 }
 
@@ -343,15 +343,15 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		if (iflags.prevmsg_window != 's') {
 		    int sav = ttyDisplay->inread;
 		    ttyDisplay->inread = 0;
-		    (void) tty_doprev_message();
+		    tty_doprev_message();
 		    ttyDisplay->inread = sav;
 		    tty_clear_nhwindow(WIN_MESSAGE);
 		    cw->maxcol = cw->maxrow;
 		    addtopl(prompt);
 		} else {
 		    if(!doprev)
-			(void) tty_doprev_message(); /* need two initially */
-		    (void) tty_doprev_message();
+			tty_doprev_message(); /* need two initially */
+		    tty_doprev_message();
 		    doprev = 1;
 		}
 		q = '\0';	/* force another loop iteration */

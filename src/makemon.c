@@ -108,7 +108,7 @@ static void m_initthrow(struct monst *mtmp, int otyp, int oquan)
 	otmp->quan = (long) rn1(oquan, 3);
 	otmp->owt = weight(otmp);
 	if (otyp == ORCISH_ARROW) otmp->opoisoned = TRUE;
-	(void) mpickobj(mtmp, otmp);
+	mpickobj(mtmp, otmp);
 }
 
 
@@ -133,7 +133,7 @@ static void m_initweap(struct monst *mtmp)
  */
 	switch (ptr->mlet) {
 	    case S_GIANT:
-		if (rn2(2)) (void)mongets(mtmp, (mm != PM_ETTIN) ?
+		if (rn2(2)) mongets(mtmp, (mm != PM_ETTIN) ?
 				    BOULDER : CLUB);
 		break;
 	    case S_HUMAN:
@@ -163,38 +163,38 @@ static void m_initweap(struct monst *mtmp)
 			  if (!rn2(7)) w2 = SPEAR;
 			  break;
 		    }
-		    if (w1) (void)mongets(mtmp, w1);
+		    if (w1) mongets(mtmp, w1);
 		    if (!w2 && w1 != DAGGER && !rn2(4)) w2 = KNIFE;
-		    if (w2) (void)mongets(mtmp, w2);
+		    if (w2) mongets(mtmp, w2);
 		} else if (is_elf(ptr)) {
 		    if (rn2(2))
-			(void) mongets(mtmp,
+			mongets(mtmp,
 				   rn2(2) ? ELVEN_MITHRIL_COAT : ELVEN_CLOAK);
-		    if (rn2(2)) (void)mongets(mtmp, ELVEN_LEATHER_HELM);
-		    else if (!rn2(4)) (void)mongets(mtmp, ELVEN_BOOTS);
-		    if (rn2(2)) (void)mongets(mtmp, ELVEN_DAGGER);
+		    if (rn2(2)) mongets(mtmp, ELVEN_LEATHER_HELM);
+		    else if (!rn2(4)) mongets(mtmp, ELVEN_BOOTS);
+		    if (rn2(2)) mongets(mtmp, ELVEN_DAGGER);
 		    switch (rn2(3)) {
 			case 0:
-			    if (!rn2(4)) (void)mongets(mtmp, ELVEN_SHIELD);
-			    if (rn2(3)) (void)mongets(mtmp, ELVEN_SHORT_SWORD);
-			    (void)mongets(mtmp, ELVEN_BOW);
+			    if (!rn2(4)) mongets(mtmp, ELVEN_SHIELD);
+			    if (rn2(3)) mongets(mtmp, ELVEN_SHORT_SWORD);
+			    mongets(mtmp, ELVEN_BOW);
 			    m_initthrow(mtmp, ELVEN_ARROW, 12);
 			    break;
 			case 1:
-			    (void)mongets(mtmp, ELVEN_BROADSWORD);
-			    if (rn2(2)) (void)mongets(mtmp, ELVEN_SHIELD);
+			    mongets(mtmp, ELVEN_BROADSWORD);
+			    if (rn2(2)) mongets(mtmp, ELVEN_SHIELD);
 			    break;
 			case 2:
 			    if (rn2(2)) {
-				(void)mongets(mtmp, ELVEN_SPEAR);
-				(void)mongets(mtmp, ELVEN_SHIELD);
+				mongets(mtmp, ELVEN_SPEAR);
+				mongets(mtmp, ELVEN_SHIELD);
 			    }
 			    break;
 		    }
 		    if (mm == PM_ELVENKING) {
 			if (rn2(3) || (in_mklev && Is_earthlevel(&u.uz)))
-			    (void)mongets(mtmp, PICK_AXE);
-			if (!rn2(50)) (void)mongets(mtmp, CRYSTAL_BALL);
+			    mongets(mtmp, PICK_AXE);
+			if (!rn2(50)) mongets(mtmp, CRYSTAL_BALL);
 		    }
 		} else if (ptr->msound == MS_PRIEST ||
 			quest_mon_represents_role(ptr,PM_PRIEST)) {
@@ -202,7 +202,7 @@ static void m_initweap(struct monst *mtmp)
 		    if(otmp) {
 			otmp->spe = rnd(3);
 			if(!rn2(2)) curse(otmp);
-			(void) mpickobj(mtmp, otmp);
+			mpickobj(mtmp, otmp);
 		    }
 		}
 		break;
@@ -222,7 +222,7 @@ static void m_initweap(struct monst *mtmp)
 		    otmp->oerodeproof = TRUE;
 		    spe2 = rn2(4);
 		    otmp->spe = max(otmp->spe, spe2);
-		    (void) mpickobj(mtmp, otmp);
+		    mpickobj(mtmp, otmp);
 
 		    otmp = mksobj(!rn2(4) || is_lord(ptr) ?
 				  SHIELD_OF_REFLECTION : LARGE_SHIELD,
@@ -230,7 +230,7 @@ static void m_initweap(struct monst *mtmp)
 		    otmp->cursed = FALSE;
 		    otmp->oerodeproof = TRUE;
 		    otmp->spe = 0;
-		    (void) mpickobj(mtmp, otmp);
+		    mpickobj(mtmp, otmp);
 		}
 		break;
 
@@ -238,33 +238,33 @@ static void m_initweap(struct monst *mtmp)
 		if (mm == PM_HOBBIT) {
 		    switch (rn2(3)) {
 			case 0:
-			    (void)mongets(mtmp, DAGGER);
+			    mongets(mtmp, DAGGER);
 			    break;
 			case 1:
-			    (void)mongets(mtmp, ELVEN_DAGGER);
+			    mongets(mtmp, ELVEN_DAGGER);
 			    break;
 			case 2:
-			    (void)mongets(mtmp, SLING);
+			    mongets(mtmp, SLING);
 			    break;
 		      }
-		    if (!rn2(10)) (void)mongets(mtmp, ELVEN_MITHRIL_COAT);
-		    if (!rn2(10)) (void)mongets(mtmp, DWARVISH_CLOAK);
+		    if (!rn2(10)) mongets(mtmp, ELVEN_MITHRIL_COAT);
+		    if (!rn2(10)) mongets(mtmp, DWARVISH_CLOAK);
 		} else if (is_dwarf(ptr)) {
-		    if (rn2(7)) (void)mongets(mtmp, DWARVISH_CLOAK);
-		    if (rn2(7)) (void)mongets(mtmp, IRON_SHOES);
+		    if (rn2(7)) mongets(mtmp, DWARVISH_CLOAK);
+		    if (rn2(7)) mongets(mtmp, IRON_SHOES);
 		    if (!rn2(4)) {
-			(void)mongets(mtmp, DWARVISH_SHORT_SWORD);
+			mongets(mtmp, DWARVISH_SHORT_SWORD);
 			/* note: you can't use a mattock with a shield */
-			if (rn2(2)) (void)mongets(mtmp, DWARVISH_MATTOCK);
+			if (rn2(2)) mongets(mtmp, DWARVISH_MATTOCK);
 			else {
-				(void)mongets(mtmp, AXE);
-				(void)mongets(mtmp, DWARVISH_ROUNDSHIELD);
+				mongets(mtmp, AXE);
+				mongets(mtmp, DWARVISH_ROUNDSHIELD);
 			}
-			(void)mongets(mtmp, DWARVISH_IRON_HELM);
+			mongets(mtmp, DWARVISH_IRON_HELM);
 			if (!rn2(3))
-			    (void)mongets(mtmp, DWARVISH_MITHRIL_COAT);
+			    mongets(mtmp, DWARVISH_MITHRIL_COAT);
 		    } else {
-			(void)mongets(mtmp, !rn2(3) ? PICK_AXE : DAGGER);
+			mongets(mtmp, !rn2(3) ? PICK_AXE : DAGGER);
 		    }
 		}
 		break;
@@ -273,47 +273,47 @@ static void m_initweap(struct monst *mtmp)
 				 * throw. As suggested by KAA.	   [MRS]
 				 */
 		if (!rn2(4)) m_initthrow(mtmp, CREAM_PIE, 2);
-		if (!rn2(3)) (void)mongets(mtmp,(rn2(2)) ? CLUB : RUBBER_HOSE);
+		if (!rn2(3)) mongets(mtmp,(rn2(2)) ? CLUB : RUBBER_HOSE);
 		break;
 # endif
 	    case S_ORC:
-		if(rn2(2)) (void)mongets(mtmp, ORCISH_HELM);
+		if(rn2(2)) mongets(mtmp, ORCISH_HELM);
 		switch (mm != PM_ORC_CAPTAIN ? mm :
 			rn2(2) ? PM_MORDOR_ORC : PM_URUK_HAI) {
 		    case PM_MORDOR_ORC:
-			if(!rn2(3)) (void)mongets(mtmp, SCIMITAR);
-			if(!rn2(3)) (void)mongets(mtmp, ORCISH_SHIELD);
-			if(!rn2(3)) (void)mongets(mtmp, KNIFE);
-			if(!rn2(3)) (void)mongets(mtmp, ORCISH_CHAIN_MAIL);
+			if(!rn2(3)) mongets(mtmp, SCIMITAR);
+			if(!rn2(3)) mongets(mtmp, ORCISH_SHIELD);
+			if(!rn2(3)) mongets(mtmp, KNIFE);
+			if(!rn2(3)) mongets(mtmp, ORCISH_CHAIN_MAIL);
 			break;
 		    case PM_URUK_HAI:
-			if(!rn2(3)) (void)mongets(mtmp, ORCISH_CLOAK);
-			if(!rn2(3)) (void)mongets(mtmp, ORCISH_SHORT_SWORD);
-			if(!rn2(3)) (void)mongets(mtmp, IRON_SHOES);
+			if(!rn2(3)) mongets(mtmp, ORCISH_CLOAK);
+			if(!rn2(3)) mongets(mtmp, ORCISH_SHORT_SWORD);
+			if(!rn2(3)) mongets(mtmp, IRON_SHOES);
 			if(!rn2(3)) {
-			    (void)mongets(mtmp, ORCISH_BOW);
+			    mongets(mtmp, ORCISH_BOW);
 			    m_initthrow(mtmp, ORCISH_ARROW, 12);
 			}
-			if(!rn2(3)) (void)mongets(mtmp, URUK_HAI_SHIELD);
+			if(!rn2(3)) mongets(mtmp, URUK_HAI_SHIELD);
 			break;
 		    default:
 			if (mm != PM_ORC_SHAMAN && rn2(2))
-			  (void)mongets(mtmp, (mm == PM_GOBLIN || rn2(2) == 0)
+			  mongets(mtmp, (mm == PM_GOBLIN || rn2(2) == 0)
 						   ? ORCISH_DAGGER : SCIMITAR);
 		}
 		break;
 	    case S_OGRE:
 		if (!rn2(mm == PM_OGRE_KING ? 3 : mm == PM_OGRE_LORD ? 6 : 12))
-		    (void) mongets(mtmp, BATTLE_AXE);
+		    mongets(mtmp, BATTLE_AXE);
 		else
-		    (void) mongets(mtmp, CLUB);
+		    mongets(mtmp, CLUB);
 		break;
 	    case S_TROLL:
 		if (!rn2(2)) switch (rn2(4)) {
-		    case 0: (void)mongets(mtmp, RANSEUR); break;
-		    case 1: (void)mongets(mtmp, PARTISAN); break;
-		    case 2: (void)mongets(mtmp, GLAIVE); break;
-		    case 3: (void)mongets(mtmp, SPETUM); break;
+		    case 0: mongets(mtmp, RANSEUR); break;
+		    case 1: mongets(mtmp, PARTISAN); break;
+		    case 2: mongets(mtmp, GLAIVE); break;
+		    case 3: mongets(mtmp, SPETUM); break;
 		}
 		break;
 	    case S_KOBOLD:
@@ -323,45 +323,45 @@ static void m_initweap(struct monst *mtmp)
 	    case S_CENTAUR:
 		if (rn2(2)) {
 		    if(ptr == &mons[PM_FOREST_CENTAUR]) {
-			(void)mongets(mtmp, BOW);
+			mongets(mtmp, BOW);
 			m_initthrow(mtmp, ARROW, 12);
 		    } else {
-			(void)mongets(mtmp, CROSSBOW);
+			mongets(mtmp, CROSSBOW);
 			m_initthrow(mtmp, CROSSBOW_BOLT, 12);
 		    }
 		}
 		break;
 	    case S_WRAITH:
-		(void)mongets(mtmp, KNIFE);
-		(void)mongets(mtmp, LONG_SWORD);
+		mongets(mtmp, KNIFE);
+		mongets(mtmp, LONG_SWORD);
 		break;
 	    case S_ZOMBIE:
-		if (!rn2(4)) (void)mongets(mtmp, LEATHER_ARMOR);
+		if (!rn2(4)) mongets(mtmp, LEATHER_ARMOR);
 		if (!rn2(4))
-			(void)mongets(mtmp, (rn2(3) ? KNIFE : SHORT_SWORD));
+			mongets(mtmp, (rn2(3) ? KNIFE : SHORT_SWORD));
 		break;
 	    case S_LIZARD:
 		if (mm == PM_SALAMANDER)
-			(void)mongets(mtmp, (rn2(7) ? SPEAR : rn2(3) ?
+			mongets(mtmp, (rn2(7) ? SPEAR : rn2(3) ?
 					     TRIDENT : STILETTO));
 		break;
 	    case S_DEMON:
 		switch (mm) {
 		    case PM_BALROG:
-			(void)mongets(mtmp, BULLWHIP);
-			(void)mongets(mtmp, BROADSWORD);
+			mongets(mtmp, BULLWHIP);
+			mongets(mtmp, BROADSWORD);
 			break;
 		    case PM_ORCUS:
-			(void)mongets(mtmp, WAN_DEATH); /* the Wand of Orcus */
+			mongets(mtmp, WAN_DEATH); /* the Wand of Orcus */
 			break;
 		    case PM_HORNED_DEVIL:
-			(void)mongets(mtmp, rn2(4) ? TRIDENT : BULLWHIP);
+			mongets(mtmp, rn2(4) ? TRIDENT : BULLWHIP);
 			break;
 		    case PM_DISPATER:
-			(void)mongets(mtmp, WAN_STRIKING);
+			mongets(mtmp, WAN_STRIKING);
 			break;
 		    case PM_YEENOGHU:
-			(void)mongets(mtmp, FLAIL);
+			mongets(mtmp, FLAIL);
 			break;
 		}
 		/* prevent djinnis and mail daemons from leaving objects when
@@ -381,29 +381,29 @@ static void m_initweap(struct monst *mtmp)
 		bias = is_lord(ptr) + is_prince(ptr) * 2 + extra_nasty(ptr);
 		switch(rnd(14 - (2 * bias))) {
 		    case 1:
-			if(strongmonst(ptr)) (void) mongets(mtmp, BATTLE_AXE);
+			if(strongmonst(ptr)) mongets(mtmp, BATTLE_AXE);
 			else m_initthrow(mtmp, DART, 12);
 			break;
 		    case 2:
 			if(strongmonst(ptr))
-			    (void) mongets(mtmp, TWO_HANDED_SWORD);
+			    mongets(mtmp, TWO_HANDED_SWORD);
 			else {
-			    (void) mongets(mtmp, CROSSBOW);
+			    mongets(mtmp, CROSSBOW);
 			    m_initthrow(mtmp, CROSSBOW_BOLT, 12);
 			}
 			break;
 		    case 3:
-			(void) mongets(mtmp, BOW);
+			mongets(mtmp, BOW);
 			m_initthrow(mtmp, ARROW, 12);
 			break;
 		    case 4:
-			if(strongmonst(ptr)) (void) mongets(mtmp, LONG_SWORD);
+			if(strongmonst(ptr)) mongets(mtmp, LONG_SWORD);
 			else m_initthrow(mtmp, DAGGER, 3);
 			break;
 		    case 5:
 			if(strongmonst(ptr))
-			    (void) mongets(mtmp, LUCERN_HAMMER);
-			else (void) mongets(mtmp, AKLYS);
+			    mongets(mtmp, LUCERN_HAMMER);
+			else mongets(mtmp, AKLYS);
 			break;
 		    default:
 			break;
@@ -412,7 +412,7 @@ static void m_initweap(struct monst *mtmp)
 	      break;
 	}
 	if ((int) mtmp->m_lev > rn2(75))
-		(void) mongets(mtmp, rnd_offensive_item(mtmp));
+		mongets(mtmp, rnd_offensive_item(mtmp));
 }
 
 
@@ -492,53 +492,53 @@ static void m_initinv(struct monst *mtmp)
 		    if(ptr != &mons[PM_GUARD] &&
 			ptr != &mons[PM_WATCHMAN] &&
 			ptr != &mons[PM_WATCH_CAPTAIN]) {
-			if (!rn2(3)) (void) mongets(mtmp, K_RATION);
-			if (!rn2(2)) (void) mongets(mtmp, C_RATION);
+			if (!rn2(3)) mongets(mtmp, K_RATION);
+			if (!rn2(2)) mongets(mtmp, C_RATION);
 			if (ptr != &mons[PM_SOLDIER] && !rn2(3))
-				(void) mongets(mtmp, BUGLE);
+				mongets(mtmp, BUGLE);
 		    } else
 			   if (ptr == &mons[PM_WATCHMAN] && rn2(3))
-				(void) mongets(mtmp, TIN_WHISTLE);
+				mongets(mtmp, TIN_WHISTLE);
 		} else if (ptr == &mons[PM_SHOPKEEPER]) {
-		    (void) mongets(mtmp,SKELETON_KEY);
+		    mongets(mtmp,SKELETON_KEY);
 		    switch (rn2(4)) {
 		    /* MAJOR fall through ... */
-		    case 0: (void) mongets(mtmp, WAN_MAGIC_MISSILE);
-		    case 1: (void) mongets(mtmp, POT_EXTRA_HEALING);
-		    case 2: (void) mongets(mtmp, POT_HEALING);
-		    case 3: (void) mongets(mtmp, WAN_STRIKING);
+		    case 0: mongets(mtmp, WAN_MAGIC_MISSILE);
+		    case 1: mongets(mtmp, POT_EXTRA_HEALING);
+		    case 2: mongets(mtmp, POT_HEALING);
+		    case 3: mongets(mtmp, WAN_STRIKING);
 		    }
 		} else if (ptr->msound == MS_PRIEST ||
 			quest_mon_represents_role(ptr,PM_PRIEST)) {
-		    (void) mongets(mtmp, rn2(7) ? ROBE :
+		    mongets(mtmp, rn2(7) ? ROBE :
 					     rn2(3) ? CLOAK_OF_PROTECTION :
 						 CLOAK_OF_MAGIC_RESISTANCE);
-		    (void) mongets(mtmp, SMALL_SHIELD);
+		    mongets(mtmp, SMALL_SHIELD);
 #ifndef GOLDOBJ
 		    mtmp->mgold = (long)rn1(10,20);
 #else
 		    mkmonmoney(mtmp,(long)rn1(10,20));
 #endif
 		} else if (quest_mon_represents_role(ptr,PM_MONK)) {
-		    (void) mongets(mtmp, rn2(11) ? ROBE :
+		    mongets(mtmp, rn2(11) ? ROBE :
 					     CLOAK_OF_MAGIC_RESISTANCE);
 		}
 		break;
 	    case S_NYMPH:
-		if(!rn2(2)) (void) mongets(mtmp, MIRROR);
-		if(!rn2(2)) (void) mongets(mtmp, POT_OBJECT_DETECTION);
+		if(!rn2(2)) mongets(mtmp, MIRROR);
+		if(!rn2(2)) mongets(mtmp, POT_OBJECT_DETECTION);
 		break;
 	    case S_GIANT:
 		if (ptr == &mons[PM_MINOTAUR]) {
 		    if (!rn2(3) || (in_mklev && Is_earthlevel(&u.uz)))
-			(void) mongets(mtmp, WAN_DIGGING);
+			mongets(mtmp, WAN_DIGGING);
 		} else if (is_giant(ptr)) {
 		    for (cnt = rn2((int)(mtmp->m_lev / 2)); cnt; cnt--) {
 			otmp = mksobj(rnd_class(DILITHIUM_CRYSTAL,LUCKSTONE-1),
 				      FALSE, FALSE);
 			otmp->quan = (long) rn1(2, 3);
 			otmp->owt = weight(otmp);
-			(void) mpickobj(mtmp, otmp);
+			mpickobj(mtmp, otmp);
 		    }
 		}
 		break;
@@ -546,29 +546,29 @@ static void m_initinv(struct monst *mtmp)
 		if (ptr == &mons[PM_NAZGUL]) {
 			otmp = mksobj(RIN_INVISIBILITY, FALSE, FALSE);
 			curse(otmp);
-			(void) mpickobj(mtmp, otmp);
+			mpickobj(mtmp, otmp);
 		}
 		break;
 	    case S_LICH:
 		if (ptr == &mons[PM_MASTER_LICH] && !rn2(13))
-			(void)mongets(mtmp, (rn2(7) ? ATHAME : WAN_NOTHING));
+			mongets(mtmp, (rn2(7) ? ATHAME : WAN_NOTHING));
 		else if (ptr == &mons[PM_ARCH_LICH] && !rn2(3)) {
 			otmp = mksobj(rn2(3) ? ATHAME : QUARTERSTAFF,
 				      TRUE, rn2(13) ? FALSE : TRUE);
 			if (otmp->spe < 2) otmp->spe = rnd(3);
 			if (!rn2(4)) otmp->oerodeproof = 1;
-			(void) mpickobj(mtmp, otmp);
+			mpickobj(mtmp, otmp);
 		}
 		break;
 	    case S_MUMMY:
-		if (rn2(7)) (void)mongets(mtmp, MUMMY_WRAPPING);
+		if (rn2(7)) mongets(mtmp, MUMMY_WRAPPING);
 		break;
 	    case S_QUANTMECH:
 		if (!rn2(20)) {
 			otmp = mksobj(LARGE_BOX, FALSE, FALSE);
 			otmp->spe = 1; /* flag for special box */
 			otmp->owt = weight(otmp);
-			(void) mpickobj(mtmp, otmp);
+			mpickobj(mtmp, otmp);
 		}
 		break;
 	    case S_LEPRECHAUN:
@@ -582,10 +582,10 @@ static void m_initinv(struct monst *mtmp)
 	    	/* moved here from m_initweap() because these don't
 		   have AT_WEAP so m_initweap() is not called for them */
 		if (ptr == &mons[PM_ICE_DEVIL] && !rn2(4)) {
-			(void)mongets(mtmp, SPEAR);
+			mongets(mtmp, SPEAR);
 		} else if (ptr == &mons[PM_ASMODEUS]) {
-			(void)mongets(mtmp, WAN_COLD);
-			(void)mongets(mtmp, WAN_FIRE);
+			mongets(mtmp, WAN_COLD);
+			mongets(mtmp, WAN_FIRE);
 		}
 		break;
 	    default:
@@ -596,9 +596,9 @@ static void m_initinv(struct monst *mtmp)
 	if (ptr == &mons[PM_SOLDIER] && rn2(13)) return;
 
 	if ((int) mtmp->m_lev > rn2(50))
-		(void) mongets(mtmp, rnd_defensive_item(mtmp));
+		mongets(mtmp, rnd_defensive_item(mtmp));
 	if ((int) mtmp->m_lev > rn2(100))
-		(void) mongets(mtmp, rnd_misc_item(mtmp));
+		mongets(mtmp, rnd_misc_item(mtmp));
 #ifndef GOLDOBJ
 	if (likes_gold(ptr) && !mtmp->mgold && !rn2(5))
 		mtmp->mgold =
@@ -830,13 +830,13 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 		} while(!goodpos(x, y, &fakemon, gpflags) && tryct++ < 50);
 		mndx = monsndx(ptr);
 	}
-	(void) propagate(mndx, countbirth, FALSE);
+	propagate(mndx, countbirth, FALSE);
 	xlth = ptr->pxlth;
 	if (mmflags & MM_EDOG) xlth += sizeof(struct edog);
 	else if (mmflags & MM_EMIN) xlth += sizeof(struct emin);
 	mtmp = newmonst(xlth);
 	*mtmp = zeromonst;		/* clear all entries in structure */
-	(void)memset((void *)mtmp->mextra, 0, xlth);
+	memset((void *)mtmp->mextra, 0, xlth);
 	mtmp->nmon = fmon;
 	fmon = mtmp;
 	mtmp->m_id = flags.ident++;
@@ -893,7 +893,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 		case S_SNAKE:
 			if(in_mklev)
 			    if(x && y)
-				(void) mkobj_at(0, x, y, TRUE);
+				mkobj_at(0, x, y, TRUE);
 			if(hides_under(ptr) && OBJ_AT(x, y))
 			    mtmp->mundetected = TRUE;
 			break;
@@ -941,7 +941,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 			mtmp->cham = CHAM_ORDINARY;
 		else {
 			mtmp->cham = mcham;
-			(void) newcham(mtmp, rndmonst(), FALSE, FALSE);
+			newcham(mtmp, rndmonst(), FALSE, FALSE);
 		}
 	} else if (mndx == PM_WIZARD_OF_YENDOR) {
 		mtmp->iswiz = TRUE;
@@ -963,7 +963,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	} else if (mndx == PM_PESTILENCE) {
 		mitem = POT_SICKNESS;
 	}
-	if (mitem && allow_minvent) (void) mongets(mtmp, mitem);
+	if (mitem && allow_minvent) mongets(mtmp, mitem);
 
 	if(in_mklev) {
 		if(((is_ndemon(ptr)) ||
@@ -1420,7 +1420,7 @@ int mongets(struct monst *mtmp, int otyp)
 	    }
 
 	    spe = otmp->spe;
-	    (void) mpickobj(mtmp, otmp);	/* might free otmp */
+	    mpickobj(mtmp, otmp);	/* might free otmp */
 	    return spe;
 	} else return 0;
 }

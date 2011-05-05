@@ -86,7 +86,7 @@ void pcmain(int argc, char *argv[])
 		dir = exepath(argv[0]);
 #endif
 	if (dir != (char *)0) {
-		(void) strncpy(hackdir, dir, PATHLEN - 1);
+		strncpy(hackdir, dir, PATHLEN - 1);
 		hackdir[PATHLEN-1] = '\0';
 #ifdef NOCWD_ASSUMPTIONS
 		{
@@ -205,7 +205,7 @@ void pcmain(int argc, char *argv[])
 	/* Obtain the name of the logged on user and incorporate
 	 * it into the name. */
 	sprintf(fnamebuf, "%s-%s", get_username(0), plname);
-	(void)fname_encode("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.",
+	fname_encode("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.",
 				'%', fnamebuf, encodedfnamebuf, BUFSZ);
 	sprintf(lock, "%s",encodedfnamebuf);
 	/* regularize(lock); */ /* we encode now, rather than substitute */
@@ -266,7 +266,7 @@ void pcmain(int argc, char *argv[])
 		 */
 		boolean remember_wiz_mode = wizard;
 #ifndef NO_SIGNAL
-		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 #ifdef NEWS
 		if(iflags.news){
@@ -286,7 +286,7 @@ void pcmain(int argc, char *argv[])
 
 		if (discover || wizard) {
 			if(yn("Do you want to keep the save file?") == 'n'){
-				(void) delete_savefile();
+				delete_savefile();
 			}
 		}
 
@@ -300,12 +300,12 @@ not_recovered:
 
 		flags.move = 0;
 		set_wear();
-		(void) pickup(1);
+		pickup(1);
 		read_engr_at(u.ux,u.uy);
 	}
 
 #ifndef NO_SIGNAL
-	(void) signal(SIGINT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
 #endif
 	return;
 }
@@ -350,11 +350,11 @@ static void process_options(int argc, char *argv[])
 #endif
 		case 'u':
 			if(argv[0][2])
-			  (void) strncpy(plname, argv[0]+2, sizeof(plname)-1);
+			  strncpy(plname, argv[0]+2, sizeof(plname)-1);
 			else if(argc > 1) {
 			  argc--;
 			  argv++;
-			  (void) strncpy(plname, argv[0], sizeof(plname)-1);
+			  strncpy(plname, argv[0], sizeof(plname)-1);
 			} else
 				raw_print("Player name expected after -u");
 			break;
@@ -429,12 +429,12 @@ static void  nhusage(void)
 	/* -role still works for those cases which aren't already taken, but
 	 * is deprecated and will not be listed here.
 	 */
-	(void) sprintf(buf2,
+	sprintf(buf2,
 "\nUsage:\n%s [-d dir] -s [-r race] [-p profession] [maxrank] [name]...\n       or",
 		hname);
 	ADD_USAGE(buf2);
 
-	(void) sprintf(buf2,
+	sprintf(buf2,
 	 "\n%s [-d dir] [-u name] [-r race] [-p profession] [-[DX]]",
 		hname);
 	ADD_USAGE(buf2);
@@ -445,7 +445,7 @@ static void  nhusage(void)
 	if (!iflags.window_inited)
 		raw_printf("%s\n",buf1);
 	else
-		(void) printf("%s\n",buf1);
+		printf("%s\n",buf1);
 #undef ADD_USAGE
 }
 

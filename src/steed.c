@@ -135,7 +135,7 @@ int use_saddle(struct obj *otmp)
 	    freeinv(otmp);
 	    /* mpickobj may free otmp it if merges, but we have already
 	       checked for a saddle above, so no merger should happen */
-	    (void) mpickobj(mtmp, otmp);
+	    mpickobj(mtmp, otmp);
 	    mtmp->misc_worn_check |= W_SADDLE;
 	    otmp->owornmask = W_SADDLE;
 	    otmp->leashmon = mtmp->m_id;
@@ -514,7 +514,7 @@ void dismount_steed(int reason)
 	    if (enexto(&cc, u.ux, u.uy, mtmp->data))
 		rloc_to(mtmp, cc.x, cc.y);
 	    else	/* evidently no room nearby; move steed elsewhere */
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 	    return;
 	}
 	if (!DEADMONSTER(mtmp)) {
@@ -568,7 +568,7 @@ void dismount_steed(int reason)
 
 		    /* Put your steed in your trap */
 		    if (save_utrap)
-			(void) mintrap(mtmp);
+			mintrap(mtmp);
 		}
 	    /* Couldn't... try placing the steed */
 	    } else if (enexto(&cc, u.ux, u.uy, mtmp->data)) {
@@ -585,10 +585,10 @@ void dismount_steed(int reason)
 	/* Return the player to the floor */
 	if (reason != DISMOUNT_ENGULFED) {
 	    in_steed_dismounting = TRUE;
-	    (void) float_down(0L, W_SADDLE);
+	    float_down(0L, W_SADDLE);
 	    in_steed_dismounting = FALSE;
 	    botl = 1;
-	    (void)encumber_msg();
+	    encumber_msg();
 	    vision_full_recalc = 1;
 	} else
 	    botl = 1;

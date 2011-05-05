@@ -94,7 +94,7 @@ pick_move:
 			    pline("%s picks up %s.", Monnam(mtmp),
 				distant_name(ib,doname));
 			obj_extract_self(ib);
-			(void) mpickobj(mtmp, ib);
+			mpickobj(mtmp, ib);
 		}
 		return 1;
 	}
@@ -147,7 +147,7 @@ int pri_move(struct monst *priest)
 			if(Displaced)
 				Your("displaced image doesn't fool %s!",
 					mon_nam(priest));
-			(void) mattacku(priest);
+			mattacku(priest);
 			return 0;
 		} else if(index(u.urooms, temple)) {
 			/* chase player if inside temple & can see him */
@@ -171,7 +171,7 @@ void priestini(d_level *lvl, struct mkroom *sroom, int sx, int sy,
 	int cnt;
 
 	if(MON_AT(sx+1, sy))
-		(void) rloc(m_at(sx+1, sy), FALSE); /* insurance */
+		rloc(m_at(sx+1, sy), FALSE); /* insurance */
 
 	priest = makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST],
 			 sx + 1, sy, NO_MM_FLAGS);
@@ -190,11 +190,11 @@ void priestini(d_level *lvl, struct mkroom *sroom, int sx, int sy,
 		/* now his/her goodies... */
 		if(sanctum && EPRI(priest)->shralign == A_NONE &&
 		     on_level(&sanctum_level, &u.uz)) {
-			(void) mongets(priest, AMULET_OF_YENDOR);
+			mongets(priest, AMULET_OF_YENDOR);
 		}
 		/* 2 to 4 spellbooks */
 		for (cnt = rn1(3,2); cnt > 0; --cnt) {
-		    (void) mpickobj(priest, mkobj(SPBOOK_CLASS, FALSE));
+		    mpickobj(priest, mkobj(SPBOOK_CLASS, FALSE));
 		}
 		/* robe [via makemon()] */
 		if (rn2(2) && (otmp = which_armor(priest, W_ARMC)) != 0) {
@@ -503,7 +503,7 @@ struct monst *mk_roamer(struct permonst *ptr, aligntyp alignment,
 	if (ptr != &mons[PM_ALIGNED_PRIEST] && ptr != &mons[PM_ANGEL])
 		return (struct monst *)0;
 	
-	if (MON_AT(x, y)) (void) rloc(m_at(x, y), FALSE);	/* insurance */
+	if (MON_AT(x, y)) rloc(m_at(x, y), FALSE);	/* insurance */
 
 	if (!(roamer = makemon(ptr, x, y, NO_MM_FLAGS)))
 		return (struct monst *)0;

@@ -53,7 +53,7 @@ static void mkcavepos(xchar x, xchar y, int dist, boolean waslit, boolean rockit
 	if(IS_ROCK(lev->typ)) return;
 	if(t_at(x, y)) return; /* don't cover the portal */
 	if ((mtmp = m_at(x, y)) != 0)	/* make sure crucial monsters survive */
-	    if(!passes_walls(mtmp->data)) (void) rloc(mtmp, FALSE);
+	    if(!passes_walls(mtmp->data)) rloc(mtmp, FALSE);
     } else if(lev->typ == ROOM) return;
 
     unblock_point(x,y);	/* make sure vision knows this location is open */
@@ -256,8 +256,8 @@ static int dig(void)
 		struct trap *ttmp;
 
 		if (digging.effort > 250) {
-		    (void) dighole(FALSE);
-		    (void) memset((void *)&digging, 0, sizeof digging);
+		    dighole(FALSE);
+		    memset((void *)&digging, 0, sizeof digging);
 		    return 0;	/* done with digging */
 		}
 
@@ -317,7 +317,7 @@ static int dig(void)
 			if (IS_TREE(lev->typ)) {
 			    digtxt = "You cut down the tree.";
 			    lev->typ = ROOM;
-			    if (!rn2(5)) (void) rnd_treefruit_at(dpx, dpy);
+			    if (!rn2(5)) rnd_treefruit_at(dpx, dpy);
 			} else {
 			    digtxt = "You succeed in cutting away some rock.";
 			    lev->typ = CORR;
@@ -479,7 +479,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 		   (is_drawbridge_wall(x, y) >= 0)) {
 	    int bx = x, by = y;
 	    /* if under the portcullis, the bridge is adjacent */
-	    (void) find_drawbridge(&bx, &by);
+	    find_drawbridge(&bx, &by);
 	    destroy_drawbridge(bx, by);
 	    return;
 	}
@@ -524,7 +524,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 		} else
 		    u.utrap = 0;
 		if (oldobjs != newobjs)	/* something unearthed */
-			(void) pickup(1);	/* detects pit */
+			pickup(1);	/* detects pit */
 	    } else if(mtmp) {
 		if(is_flyer(mtmp->data) || is_floater(mtmp->data)) {
 		    if(canseemon(mtmp))
@@ -532,7 +532,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 						     (is_flyer(mtmp->data)) ?
 						     "flies" : "floats");
 		} else if(mtmp != madeby)
-		    (void) mintrap(mtmp);
+		    mintrap(mtmp);
 	    }
 	} else {	/* was TRAPDOOR now a HOLE*/
 
@@ -558,7 +558,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 		    if (newobjs)
 			impact_drop((struct obj *)0, x, y, 0);
 		    if (oldobjs != newobjs)
-			(void) pickup(1);
+			pickup(1);
 		    if (shopdoor && madeby_u) pay_for_damage("ruin", FALSE);
 
 		} else {
@@ -643,7 +643,7 @@ boolean dighole(boolean pit_only)
 		} else {
 		    int x = u.ux, y = u.uy;
 		    /* if under the portcullis, the bridge is adjacent */
-		    (void) find_drawbridge(&x, &y);
+		    find_drawbridge(&x, &y);
 		    destroy_drawbridge(x, y);
 		    return TRUE;
 		}
@@ -659,7 +659,7 @@ boolean dighole(boolean pit_only)
 			 * fills it.  Final outcome:  no hole, no boulder.
 			 */
 			pline("KADOOM! The boulder falls in!");
-			(void) delfloortrap(ttmp);
+			delfloortrap(ttmp);
 		}
 		delobj(boulder_here);
 		return TRUE;
@@ -687,7 +687,7 @@ boolean dighole(boolean pit_only)
 		lev->drawbridgemask |= (typ == LAVAPOOL) ? DB_LAVA : DB_MOAT;
 
  liquid_flow:
-		if (ttmp) (void) delfloortrap(ttmp);
+		if (ttmp) delfloortrap(ttmp);
 		/* if any objects were frozen here, they're released now */
 		unearth_objs(u.ux, u.uy);
 
@@ -695,9 +695,9 @@ boolean dighole(boolean pit_only)
 		      typ == LAVAPOOL ? "lava" : "water");
 		if (!Levitation && !Flying) {
 		    if (typ == LAVAPOOL)
-			(void) lava_effects();
+			lava_effects();
 		    else if (!Wwalking)
-			(void) drown();
+			drown();
 		}
 		return TRUE;
 
@@ -755,12 +755,12 @@ static void dig_up_grave(void)
 	case 2:
 	    if (!Blind) pline(Hallucination ? "Dude!  The living dead!" :
  			"The grave's owner is very upset!");
- 	    (void) makemon(mkclass(S_ZOMBIE,0), u.ux, u.uy, NO_MM_FLAGS);
+ 	    makemon(mkclass(S_ZOMBIE,0), u.ux, u.uy, NO_MM_FLAGS);
 	    break;
 	case 3:
 	    if (!Blind) pline(Hallucination ? "I want my mummy!" :
  			"You've disturbed a tomb!");
- 	    (void) makemon(mkclass(S_MUMMY,0), u.ux, u.uy, NO_MM_FLAGS);
+ 	    makemon(mkclass(S_MUMMY,0), u.ux, u.uy, NO_MM_FLAGS);
 	    break;
 	default:
 	    /* No corpse */
@@ -802,7 +802,7 @@ int use_pick_axe(struct obj *obj)
 	}
 
 	while(*sdp) {
-		(void) movecmd(*sdp);	/* sets u.dx and u.dy and u.dz */
+		movecmd(*sdp);	/* sets u.dx and u.dy and u.dz */
 		rx = u.ux + u.dx;
 		ry = u.uy + u.dy;
 		/* Include down even with axe, so we have at least one direction */
@@ -996,7 +996,7 @@ void watch_dig(struct monst *mtmp, xchar x, xchar y, boolean zap)
 	    if (mtmp) {
 		if(zap || digging.warned) {
 		    verbalize("Halt, vandal!  You're under arrest!");
-		    (void) angry_guards(!(flags.soundok));
+		    angry_guards(!(flags.soundok));
 		} else {
 		    const char *str;
 
@@ -1075,11 +1075,11 @@ boolean mdig_tunnel(struct monst *mtmp)
 	} else if (IS_TREE(here->typ)) {
 	    here->typ = ROOM;
 	    if (pile && pile < 5)
-		(void) rnd_treefruit_at(mtmp->mx, mtmp->my);
+		rnd_treefruit_at(mtmp->mx, mtmp->my);
 	} else {
 	    here->typ = CORR;
 	    if (pile && pile < 5)
-		(void) mksobj_at((pile == 1) ? BOULDER : ROCK,
+		mksobj_at((pile == 1) ? BOULDER : ROCK,
 			     mtmp->mx, mtmp->my, TRUE, FALSE);
 	}
 	newsym(mtmp->mx, mtmp->my);
@@ -1133,13 +1133,13 @@ void zap_dig(void)
 			   "falling rock", KILLED_BY_AN);
 		    otmp = mksobj_at(ROCK, u.ux, u.uy, FALSE, FALSE);
 		    if (otmp) {
-			(void)xname(otmp);	/* set dknown, maybe bknown */
+			xname(otmp);	/* set dknown, maybe bknown */
 			stackobj(otmp);
 		    }
 		    newsym(u.ux, u.uy);
 		} else {
 		    watch_dig((struct monst *)0, u.ux, u.uy, TRUE);
-		    (void) dighole(FALSE);
+		    dighole(FALSE);
 		}
 	    }
 	    return;
@@ -1278,7 +1278,7 @@ struct obj *bury_an_obj(struct obj *otmp)
 	    ;		/* should cancel timer if under_ice */
 	} else if ((under_ice ? otmp->oclass == POTION_CLASS : is_organic(otmp))
 		&& !obj_resists(otmp, 5, 95)) {
-	    (void) start_timer((under_ice ? 0L : 250L) + (long)rnd(250),
+	    start_timer((under_ice ? 0L : 250L) + (long)rnd(250),
 			       TIMER_OBJECT, ROT_ORGANIC, (void *)otmp);
 	}
 	add_to_buried(otmp);
@@ -1314,7 +1314,7 @@ void unearth_objs(int x, int y)
 		if (otmp->ox == x && otmp->oy == y) {
 		    obj_extract_self(otmp);
 		    if (otmp->timed)
-			(void) stop_timer(ROT_ORGANIC, (void *)otmp);
+			stop_timer(ROT_ORGANIC, (void *)otmp);
 		    place_object(otmp, x, y);
 		    stackobj(otmp);
 		}
@@ -1345,7 +1345,7 @@ void rot_organic(void *arg,
 	    /* Everything which can be held in a container can also be
 	       buried, so bury_an_obj's use of obj_extract_self insures
 	       that Has_contents(obj) will eventually become false. */
-	    (void)bury_an_obj(obj->cobj);
+	    bury_an_obj(obj->cobj);
 	}
 	obj_extract_self(obj);
 	obfree(obj, NULL);

@@ -34,11 +34,11 @@ void getwindowsz(void)
 
 void getioctls(void)
 {
-	(void) tcgetattr(fileno(stdin), &termio);
+	tcgetattr(fileno(stdin), &termio);
 	getwindowsz();
 }
 
 void setioctls(void)
 {
-	(void) tcsetattr(fileno(stdin), TCSADRAIN, &termio);
+	tcsetattr(fileno(stdin), TCSADRAIN, &termio);
 }

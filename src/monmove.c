@@ -53,7 +53,7 @@ static void watch_on_duty(struct monst *mtmp)
 		  pline("%s yells:", Amonnam(mtmp));
 		  if(levl[x][y].looted & D_WARNED) {
 			verbalize("Halt, thief!  You're under arrest!");
-			(void) angry_guards(!(flags.soundok));
+			angry_guards(!(flags.soundok));
 		  } else {
 			verbalize("Hey, stop picking that lock!");
 			levl[x][y].looted |=  D_WARNED;
@@ -287,7 +287,7 @@ int dochug(struct monst *mtmp)
 	/* some monsters teleport */
 	if (mtmp->mflee && !rn2(40) && can_teleport(mdat) && !mtmp->iswiz &&
 	    !level.flags.noteleport) {
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 		return 0;
 	}
 	if (mdat->msound == MS_SHRIEK && !um_dist(mtmp->mx, mtmp->my, 1))
@@ -308,7 +308,7 @@ int dochug(struct monst *mtmp)
 
 	/* Monsters that want to acquire things */
 	/* may teleport, so do it before inrange is set */
-	if(is_covetous(mdat)) (void) tactics(mtmp);
+	if(is_covetous(mdat)) tactics(mtmp);
 
 	/* check distance and scariness of attacks */
 	distfleeck(mtmp,&inrange,&nearby,&scared);
@@ -330,7 +330,7 @@ int dochug(struct monst *mtmp)
 
 			if (is_demon(youmonst.data)) {
 			  /* "Good hunting, brother" */
-			    if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+			    if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 			} else {
 			    mtmp->minvis = mtmp->perminvis = 0;
 			    /* Why?  For the same reason in real demon talk */
@@ -630,7 +630,7 @@ int m_move(struct monst *mtmp, int after)
 	if(ptr == &mons[PM_TENGU] && !rn2(5) && !mtmp->mcan &&
 	   !tele_restrict(mtmp)) {
 	    if(mtmp->mhp < 7 || mtmp->mpeaceful || rn2(2))
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 	    else
 		mnexto(mtmp);
 	    mmoved = 1;
@@ -964,7 +964,7 @@ not_special:
 	    if (mtmp->wormno) worm_move(mtmp);
 	} else {
 	    if(is_unicorn(ptr) && rn2(2) && !tele_restrict(mtmp)) {
-		(void) rloc(mtmp, FALSE);
+		rloc(mtmp, FALSE);
 		return 1;
 	    }
 	    if(mtmp->wormno) worm_nomove(mtmp);

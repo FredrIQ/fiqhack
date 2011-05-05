@@ -165,7 +165,7 @@ static void charm_monsters(int distance)
 
 	if (u.uswallow) {
 	    if (!resist(u.ustuck, TOOL_CLASS, 0, NOTELL))
-		(void) tamedog(u.ustuck, (struct obj *) 0);
+		tamedog(u.ustuck, (struct obj *) 0);
 	} else {
 	    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
@@ -173,7 +173,7 @@ static void charm_monsters(int distance)
 
 		if (distu(mtmp->mx, mtmp->my) <= distance) {
 		    if (!resist(mtmp, TOOL_CLASS, 0, NOTELL))
-			(void) tamedog(mtmp, (struct obj *) 0);
+			tamedog(mtmp, (struct obj *) 0);
 		}
 	    }
 	}
@@ -255,7 +255,7 @@ do_pit:		    chasm = maketrap(x,y,PIT);
 			if (mtmp)
 				mtmp->mtrapped = 0;
 			obj_extract_self(otmp);
-			(void) flooreffects(otmp, x, y, "");
+			flooreffects(otmp, x, y, "");
 			break;
 		    }
 
@@ -433,7 +433,7 @@ int do_play_instrument(struct obj *instr)
 	    strcpy(buf, tune);
 	} else {
 	    getlin("What tune are you playing? [5 notes, A-G]", buf);
-	    (void)mungspaces(buf);
+	    mungspaces(buf);
 	    /* convert to uppercase and change any "H" to the expected "B" */
 	    for (s = buf; *s; s++) {
 		*s = highc(*s);

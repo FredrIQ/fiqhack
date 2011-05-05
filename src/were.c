@@ -114,7 +114,7 @@ int were_summon(struct permonst *ptr, boolean yours,
 		if (canseemon(mtmp)) *visible += 1;
 	    }
 	    if (yours && mtmp)
-		(void) tamedog(mtmp, (struct obj *) 0);
+		tamedog(mtmp, (struct obj *) 0);
 	}
 	return total;
 }
@@ -130,7 +130,7 @@ void you_were(void)
 		    an(mons[u.ulycn].mname+4));
 	    if(yn(qbuf) == 'n') return;
 	}
-	(void) polymon(u.ulycn);
+	polymon(u.ulycn);
 }
 
 void you_unwere(boolean purify)

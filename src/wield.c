@@ -412,7 +412,7 @@ boolean wield_tool(struct obj *obj,
     }
     if (uquiver == obj) setuqwep((struct obj *)0);
     if (uswapwep == obj) {
-	(void) doswapweapon();
+	doswapweapon();
 	/* doswapweapon might fail */
 	if (uswapwep == obj) return FALSE;
     } else {

@@ -144,18 +144,18 @@ static void readentry(FILE *rfile, struct toptenentry *tt)
 
 static void writeentry(FILE *rfile, struct toptenentry *tt)
 {
-	(void) fprintf(rfile,"%d.%d.%d %ld %d %d %d %d %d %d %ld %ld %d ",
+	fprintf(rfile,"%d.%d.%d %ld %d %d %d %d %d %d %ld %ld %d ",
 		tt->ver_major, tt->ver_minor, tt->patchlevel,
 		tt->points, tt->deathdnum, tt->deathlev,
 		tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
 		tt->deathdate, tt->birthdate, tt->uid);
 	if (tt->ver_major < 3 ||
 			(tt->ver_major == 3 && tt->ver_minor < 3))
-		(void) fprintf(rfile,"%c%c %s,%s\n",
+		fprintf(rfile,"%c%c %s,%s\n",
 			tt->plrole[0], tt->plgend[0],
 			onlyspace(tt->name) ? "_" : tt->name, tt->death);
 	else
-		(void) fprintf(rfile,"%s %s %s %s %s,%s\n",
+		fprintf(rfile,"%s %s %s %s %s,%s\n",
 			tt->plrole, tt->plrace, tt->plgend, tt->plalign,
 			onlyspace(tt->name) ? "_" : tt->name, tt->death);
 }
@@ -222,31 +222,31 @@ void topten(int how)
 	t0->maxhp = u.uhpmax;
 	t0->deaths = u.umortality;
 	t0->uid = uid;
-	(void) strncpy(t0->plrole, urole.filecode, ROLESZ);
+	strncpy(t0->plrole, urole.filecode, ROLESZ);
 	t0->plrole[ROLESZ] = '\0';
-	(void) strncpy(t0->plrace, urace.filecode, ROLESZ);
+	strncpy(t0->plrace, urace.filecode, ROLESZ);
 	t0->plrace[ROLESZ] = '\0';
-	(void) strncpy(t0->plgend, genders[flags.female].filecode, ROLESZ);
+	strncpy(t0->plgend, genders[flags.female].filecode, ROLESZ);
 	t0->plgend[ROLESZ] = '\0';
-	(void) strncpy(t0->plalign, aligns[1-u.ualign.type].filecode, ROLESZ);
+	strncpy(t0->plalign, aligns[1-u.ualign.type].filecode, ROLESZ);
 	t0->plalign[ROLESZ] = '\0';
-	(void) strncpy(t0->name, plname, NAMSZ);
+	strncpy(t0->name, plname, NAMSZ);
 	t0->name[NAMSZ] = '\0';
 	t0->death[0] = '\0';
 	switch (killer_format) {
 		default: impossible("bad killer format?");
 		case KILLED_BY_AN:
 			strcat(t0->death, killed_by_prefix[how]);
-			(void) strncat(t0->death, an(killer),
+			strncat(t0->death, an(killer),
 						DTHSZ-strlen(t0->death));
 			break;
 		case KILLED_BY:
 			strcat(t0->death, killed_by_prefix[how]);
-			(void) strncat(t0->death, killer,
+			strncat(t0->death, killer,
 						DTHSZ-strlen(t0->death));
 			break;
 		case NO_KILLER_PREFIX:
-			(void) strncat(t0->death, killer, DTHSZ);
+			strncat(t0->death, killer, DTHSZ);
 			break;
 	}
 	t0->birthdate = yyyymmdd(u.ubirthday);
@@ -262,7 +262,7 @@ void topten(int how)
 		HUP raw_print("Cannot open log file!");
 	    } else {
 		writeentry(lfile, t0);
-		(void) fclose(lfile);
+		fclose(lfile);
 	    }
 	    unlock_file(LOGFILE);
 	}
@@ -359,10 +359,10 @@ void topten(int how)
 	}
 	if(flg) {	/* rewrite record file */
 #ifdef UPDATE_RECORD_IN_PLACE
-		(void) fseek(rfile, (t0->fpos >= 0 ?
+		fseek(rfile, (t0->fpos >= 0 ?
 				     t0->fpos : final_fpos), SEEK_SET);
 #else
-		(void) fclose(rfile);
+		fclose(rfile);
 		if(!(rfile = fopen_datafile(RECORD, "w", SCOREPREFIX))){
 			HUP raw_print("Cannot write record file");
 			unlock_file(RECORD);
@@ -436,11 +436,11 @@ void topten(int how)
 	    strcpy(t1->name, "@");
 	    strcpy(t1->death, "<eod>\n");
 	    writeentry(rfile, t1);
-	    (void) fflush(rfile);
+	    fflush(rfile);
 # endif	/* TRUNCATE_FILE */
 	}
 #endif	/* UPDATE_RECORD_IN_PLACE */
-	(void) fclose(rfile);
+	fclose(rfile);
 	unlock_file(RECORD);
 	free_ttlist(tt_head);
 
@@ -721,7 +721,7 @@ void prscore(char *hname, int argc, char **argv)
 	    t1 = t1->tt_next;
 	}
 
-	(void) fclose(rfile);
+	fclose(rfile);
 	if (init_done) {
 	    free_dungeons();
 	    dlb_cleanup();
@@ -732,7 +732,7 @@ void prscore(char *hname, int argc, char **argv)
 	    t1 = tt_head;
 	    for (rank = 1; t1->points != 0; rank++, t1 = t1->tt_next) {
 		if (score_wanted(current_ver, rank, t1, playerct, players, uid))
-		    (void) outentry(rank, t1, 0);
+		    outentry(rank, t1, 0);
 	    }
 	} else {
 	    sprintf(pbuf, "Cannot find any %sentries for ",
@@ -829,7 +829,7 @@ pickentry:
 		if (otmp->otyp == CORPSE) start_corpse_timeout(otmp);
 	}
 
-	(void) fclose(rfile);
+	fclose(rfile);
 	return otmp;
 }
 

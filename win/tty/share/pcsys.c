@@ -27,7 +27,7 @@ extern int GUILaunched;    /* from nttty.c */
 
 void flushout(void)
 {
-	(void) fflush(stdout);
+	fflush(stdout);
 	return;
 }
 
@@ -93,7 +93,7 @@ FILE *fopenp(const char *name, const char *mode)
 
 	/* Try the default directory first.  Then look along PATH.
 	 */
-	(void) strncpy(buf, name, BUFSIZ - 1);
+	strncpy(buf, name, BUFSIZ - 1);
 	buf[BUFSIZ-1] = '\0';
 	if ((fp = fopen(buf, mode)))
 		return fp;
@@ -110,7 +110,7 @@ FILE *fopenp(const char *name, const char *mode)
 				*bp++ = '\\';
 				ccnt++;
 			}
-			(void) strncpy(bp, name, (BUFSIZ - ccnt) - 2);
+			strncpy(bp, name, (BUFSIZ - ccnt) - 2);
 			bp[BUFSIZ - ccnt - 1] = '\0';
 			if ((fp = fopen(buf, mode)))
 				return fp;

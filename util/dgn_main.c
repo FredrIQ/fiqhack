@@ -25,7 +25,7 @@ int  yywrap(void);
 void init_yyin(FILE *);
 void init_yyout(FILE *);
 
-#define Fprintf (void)fprintf
+#define Fprintf fprintf
 
 int main(int argc, char **argv)
 {
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	if (argc == 1) {	/* Read standard input */
 	    init_yyin(fin);
 	    init_yyout(fout);
-	    (void) yyparse();
+	    yyparse();
 	    if (fatal_error > 0)
 		errors_encountered = TRUE;
 	} else {
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
 		/* build output file name */
 		/* Use the whole name - strip off the last 3 or 4 chars. */
-		(void) strncpy(basename, infile, len);
+		strncpy(basename, infile, len);
 		basename[len] = '\0';
 
 		outfile[0] = '\0';
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 		}
 		init_yyin(fin);
 		init_yyout(fout);
-		(void) yyparse();
+		yyparse();
 		line_number = 1;
 		if (fatal_error > 0) {
 			errors_encountered = TRUE;
@@ -116,9 +116,9 @@ int main(int argc, char **argv)
 
 void yyerror(const char *s)
 {
-	(void) fprintf(stderr,"%s : line %d : %s\n",fname,line_number, s);
+	fprintf(stderr,"%s : line %d : %s\n",fname,line_number, s);
 	if (++fatal_error > MAX_ERRORS) {
-		(void) fprintf(stderr,"Too many errors, good bye!\n");
+		fprintf(stderr,"Too many errors, good bye!\n");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -129,7 +129,7 @@ void yyerror(const char *s)
 
 void yywarning(const char *s)
 {
-	(void) fprintf(stderr,"%s : line %d : WARNING : %s\n",fname,line_number,s);
+	fprintf(stderr,"%s : line %d : WARNING : %s\n",fname,line_number,s);
 }
 
 int yywrap(void)

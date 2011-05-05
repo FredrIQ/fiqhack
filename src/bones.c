@@ -123,9 +123,9 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 
 		if(rn2(5)) curse(otmp);
 		if (mtmp)
-			(void) add_to_minv(mtmp, otmp);
+			add_to_minv(mtmp, otmp);
 		else if (cont)
-			(void) add_to_container(cont, otmp);
+			add_to_container(cont, otmp);
 		else
 			place_object(otmp, u.ux, u.uy);
 	}
@@ -133,8 +133,8 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 	if(u.ugold) {
 		long ugold = u.ugold;
 		if (mtmp) mtmp->mgold = ugold;
-		else if (cont) (void) add_to_container(cont, mkgoldobj(ugold));
-		else (void)mkgold(ugold, u.ux, u.uy);
+		else if (cont) add_to_container(cont, mkgoldobj(ugold));
+		else mkgold(ugold, u.ux, u.uy);
 		u.ugold = ugold;	/* undo mkgoldobj()'s removal */
 	}
 #endif
@@ -186,7 +186,7 @@ void savebones(struct obj *corpse)
 	clear_bypasses();
 	fd = open_bonesfile(&u.uz, &bonesid);
 	if (fd >= 0) {
-		(void) close(fd);
+		close(fd);
 		if (wizard) {
 		    if (yn("Bones file already exists.  Replace it?") == 'y') {
 			if (delete_bonesfile(&u.uz)) goto make_bones;
@@ -241,7 +241,7 @@ void savebones(struct obj *corpse)
 		if (!mtmp) return;
 		mtmp = christen_monst(mtmp, plname);
 		if (corpse)
-			(void) obj_attach_mid(corpse, mtmp->m_id); 
+			obj_attach_mid(corpse, mtmp->m_id); 
 	} else {
 		/* give your possessions to the monster you become */
 		in_mklev = TRUE;
@@ -335,7 +335,7 @@ int getbones(void)
 
 		if(wizard)  {
 			if(yn("Get bones?") == 'n') {
-				(void) close(fd);
+				close(fd);
 				return 0;
 			}
 		}
@@ -382,7 +382,7 @@ int getbones(void)
 			resetobjs(level.buriedobjlist,TRUE);
 		}
 	}
-	(void) close(fd);
+	close(fd);
 
 	if(wizard) {
 		if(yn("Unlink bones?") == 'n') {

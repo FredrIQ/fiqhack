@@ -338,7 +338,7 @@ static int wiz_wish(void)	/* Unlimited wishes for debug mode by Paul Polderman *
 	    flags.verbose = FALSE;
 	    makewish();
 	    flags.verbose = save_verbose;
-	    (void) encumber_msg();
+	    encumber_msg();
 	} else
 	    pline("Unavailable command '^W'.");
 	return 0;
@@ -376,7 +376,7 @@ static int wiz_map(void)
 /* ^G command - generate monster(s); a count prefix will be honored */
 static int wiz_genesis(void)
 {
-	if (wizard)	(void) create_particular();
+	if (wizard)	create_particular();
 	else		pline("Unavailable command '^G'.");
 	return 0;
 }
@@ -384,7 +384,7 @@ static int wiz_genesis(void)
 /* ^O command - display dungeon layout */
 static int wiz_where(void)
 {
-	if (wizard) (void) print_dungeon(FALSE, (schar *)0, (xchar *)0);
+	if (wizard) print_dungeon(FALSE, (schar *)0, (xchar *)0);
 	else	    pline("Unavailable command '^O'.");
 	return 0;
 }
@@ -392,7 +392,7 @@ static int wiz_where(void)
 /* ^E command - detect unseen (secret doors, traps, hidden monsters) */
 static int wiz_detect(void)
 {
-	if(wizard)  (void) findit();
+	if(wizard)  findit();
 	else	    pline("Unavailable command '^E'.");
 	return 0;
 }
@@ -422,7 +422,7 @@ static int wiz_level_change(void)
     int ret;
 
     getlin("To what experience level do you want to be set?", buf);
-    (void)mungspaces(buf);
+    mungspaces(buf);
     if (buf[0] == '\033' || buf[0] == '\0') ret = 0;
     else ret = sscanf(buf, "%d", &newlevel);
 
@@ -1579,7 +1579,7 @@ void rhack(char *cmd)
 			prefix_seen = TRUE;
 		    break;
 	 case '0':  if (!iflags.num_pad) break;
-		    (void)ddoinv(); /* a convenience borrowed from the PC */
+		    ddoinv(); /* a convenience borrowed from the PC */
 		    flags.move = FALSE;
 		    multi = 0;
 		    return;
@@ -2025,7 +2025,7 @@ static void end_of_input(void)
 {
 #ifndef NOSAVEONHANGUP
 	if (!program_state.done_hup++ && program_state.something_worth_saving)
-	    (void) dosave0();
+	    dosave0();
 #endif
 	exit_nhwindows((char *)0);
 	clearlocks();
@@ -2164,7 +2164,7 @@ char yn_function(const char *query,const char *resp, char def)
 	paniclog("Query truncated: ", query);
 	reduction += sizeof("...");
 	truncspot = QBUFSZ - reduction;
-	(void) strncpy(qbuf, query, (int)truncspot);
+	strncpy(qbuf, query, (int)truncspot);
 	qbuf[truncspot] = '\0';
 	strcat(qbuf,"...");
 	return (*windowprocs.win_yn_function)(qbuf, resp, def);

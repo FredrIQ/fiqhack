@@ -42,7 +42,7 @@ void stealgold(struct monst *mtmp)
 	    pline("%s quickly snatches some gold from between your %s!",
 		    Monnam(mtmp), makeplural(body_part(FOOT)));
 	    if(!u.ugold || !rn2(5)) {
-		if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+		if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 		/* do not set mtmp->mavenge here; gold on the floor is fair game */
 		monflee(mtmp, 0, FALSE, FALSE);
 	    }
@@ -50,7 +50,7 @@ void stealgold(struct monst *mtmp)
 	    u.ugold -= (tmp = somegold());
 	    Your("purse feels lighter.");
 	    mtmp->mgold += tmp;
-	if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+	if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 	    mtmp->mavenge = 1;
 	    monflee(mtmp, 0, FALSE, FALSE);
 	    botl = 1;
@@ -102,7 +102,7 @@ void stealgold(struct monst *mtmp)
 	    pline("%s quickly snatches some gold from between your %s!",
 		    Monnam(mtmp), makeplural(body_part(FOOT)));
 	    if(!ygold || !rn2(5)) {
-		if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+		if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 		monflee(mtmp, 0, FALSE, FALSE);
 	    }
 	} else if(ygold) {
@@ -113,7 +113,7 @@ void stealgold(struct monst *mtmp)
             freeinv(ygold);
             add_to_minv(mtmp, ygold);
 	    Your("purse feels lighter.");
-	    if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+	    if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 	    monflee(mtmp, 0, FALSE, FALSE);
 	    botl = 1;
 	}
@@ -140,11 +140,11 @@ static int stealarm(void)
 			    subfrombill(otmp, shop_keeper(*u.ushops));
 			freeinv(otmp);
 			pline("%s steals %s!", Monnam(mtmp), doname(otmp));
-			(void) mpickobj(mtmp,otmp);	/* may free otmp */
+			mpickobj(mtmp,otmp);	/* may free otmp */
 			/* Implies seduction, "you gladly hand over ..."
 			   so we don't set mavenge bit here. */
 			monflee(mtmp, 0, FALSE, FALSE);
-			if (!tele_restrict(mtmp)) (void) rloc(mtmp, FALSE);
+			if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 		        break;
 		    }
 		}
@@ -170,14 +170,14 @@ void remove_worn_item(struct obj *obj,
 		impossible("Removing embedded scales?");
 		skinback(TRUE);		/* uarm = uskin; uskin = 0; */
 	    }
-	    if (obj == uarm) (void) Armor_off();
-	    else if (obj == uarmc) (void) Cloak_off();
-	    else if (obj == uarmf) (void) Boots_off();
-	    else if (obj == uarmg) (void) Gloves_off();
-	    else if (obj == uarmh) (void) Helmet_off();
-	    else if (obj == uarms) (void) Shield_off();
+	    if (obj == uarm) Armor_off();
+	    else if (obj == uarmc) Cloak_off();
+	    else if (obj == uarmf) Boots_off();
+	    else if (obj == uarmg) Gloves_off();
+	    else if (obj == uarmh) Helmet_off();
+	    else if (obj == uarms) Shield_off();
 #ifdef TOURIST
-	    else if (obj == uarmu) (void) Shirt_off();
+	    else if (obj == uarmu) Shirt_off();
 #endif
 	    /* catchall -- should never happen */
 	    else setworn((struct obj *)0, obj->owornmask & W_ARMOR);
@@ -221,7 +221,7 @@ int steal(struct monst *mtmp, char *objnambuf)
 	/* food being eaten might already be used up but will not have
 	   been removed from inventory yet; we don't want to steal that,
 	   so this will cause it to be removed now */
-	if (occupation) (void) maybe_finished_meal(FALSE);
+	if (occupation) maybe_finished_meal(FALSE);
 
 	if (!invent || (inv_cnt() == 1 && uskin)) {
 nothing_to_steal:
@@ -393,7 +393,7 @@ gotobj:
 	pline("%s stole %s.", named ? "She" : Monnam(mtmp), doname(otmp));
 	could_petrify = (otmp->otyp == CORPSE &&
 			 touch_petrifies(&mons[otmp->corpsenm]));
-	(void) mpickobj(mtmp,otmp);	/* may free otmp */
+	mpickobj(mtmp,otmp);	/* may free otmp */
 	if (could_petrify && !(mtmp->misc_worn_check & W_ARMG)) {
 	    minstapetrify(mtmp, TRUE);
 	    return -1;
@@ -475,10 +475,10 @@ void stealamulet(struct monst *mtmp)
 	freeinv(otmp);
 	/* mpickobj wont merge otmp because none of the above things
 	   to steal are mergable */
-	(void) mpickobj(mtmp,otmp);	/* may merge and free otmp */
+	mpickobj(mtmp,otmp);	/* may merge and free otmp */
 	pline("%s stole %s!", Monnam(mtmp), doname(otmp));
 	if (can_teleport(mtmp->data) && !tele_restrict(mtmp))
-	    (void) rloc(mtmp, FALSE);
+	    rloc(mtmp, FALSE);
     }
 }
 
@@ -567,12 +567,12 @@ void relobj(struct monst *mtmp, int show,
 	/* put kept objects back */
 	while ((otmp = keepobj) != (struct obj *)0) {
 	    keepobj = otmp->nobj;
-	    (void) add_to_minv(mtmp, otmp);
+	    add_to_minv(mtmp, otmp);
 	}
 #ifndef GOLDOBJ
 	if (mtmp->mgold) {
 		long g = mtmp->mgold;
-		(void) mkgold(g, omx, omy);
+		mkgold(g, omx, omy);
 		if (is_pet && cansee(omx, omy) && flags.verbose)
 			pline("%s drops %ld gold piece%s.", Monnam(mtmp),
 				g, plur(g));

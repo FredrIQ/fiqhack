@@ -40,7 +40,7 @@ static int eraseoldlocks(void)
 	for(i = 1; i <= MAXDUNGEON*MAXLEVEL + 1; i++) {
 		/* try to remove all */
 		set_levelfile_name(lock, i);
-		(void) unlink(fqname(lock, LEVELPREFIX, 0));
+		unlink(fqname(lock, LEVELPREFIX, 0));
 	}
 	set_levelfile_name(lock, 0);
 #ifdef HOLD_LOCKFILE_OPEN
@@ -99,7 +99,7 @@ void getlock(void)
 		error("Cannot open %s", fq_lock);
 	}
 
-	(void) close(fd);
+	close(fd);
 
 	if(iflags.window_inited) { 
 # ifdef SELF_RECOVER

@@ -48,7 +48,7 @@ int dosave(void)
 			display_nhwindow(WIN_MESSAGE, TRUE);
 			exit_nhwindows("Be seeing you...");
 			terminate(EXIT_SUCCESS);
-		} else (void)doredraw();
+		} else doredraw();
 	}
 	return 0;
 }
@@ -60,13 +60,13 @@ int dosave(void)
 void hangup(int sig_unused)
 {
 # ifdef NOSAVEONHANGUP
-	(void) signal(SIGINT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
 	clearlocks();
 	terminate(EXIT_FAILURE);
 # else	/* SAVEONHANGUP */
 	if (!program_state.done_hup++) {
 	    if (program_state.something_worth_saving)
-		(void) dosave0();
+		dosave0();
 	    clearlocks();
 	    terminate(EXIT_FAILURE);
 	}
@@ -89,16 +89,16 @@ int dosave0(void)
 	fq_save = fqname(SAVEF, SAVEPREFIX, 1);	/* level files take 0 */
 
 #if defined(UNIX)
-	(void) signal(SIGHUP, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 #endif
 #ifndef NO_SIGNAL
-	(void) signal(SIGINT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
 #endif
 
 	HUP if (iflags.window_inited) {
 	    fd = open_savefile();
 	    if (fd > 0) {
-		(void) close(fd);
+		close(fd);
 		clear_nhwindow(WIN_MESSAGE);
 		There("seems to be an old save file.");
 		if (yn("Overwrite the old file?") == 'n') {
@@ -112,7 +112,7 @@ int dosave0(void)
 	fd = create_savefile();
 	if(fd < 0) {
 		HUP pline("Cannot open save file.");
-		(void) delete_savefile();	/* ab@unido */
+		delete_savefile();	/* ab@unido */
 		return 0;
 	}
 
@@ -155,14 +155,14 @@ int dosave0(void)
 		ofd = open_levelfile(ltmp, whynot);
 		if (ofd < 0) {
 		    HUP pline("%s", whynot);
-		    (void) close(fd);
-		    (void) delete_savefile();
+		    close(fd);
+		    delete_savefile();
 		    HUP killer = whynot;
 		    HUP done(TRICKED);
 		    return 0;
 		}
 		getlev(ofd, hackpid, ltmp, FALSE);
-		(void) close(ofd);
+		close(ofd);
 		bwrite(fd, (void *) &ltmp, sizeof ltmp); /* level number*/
 		savelev(fd, ltmp, WRITE_SAVE | FREE_SAVE);     /* actual level*/
 		delete_levelfile(ltmp);
@@ -266,7 +266,7 @@ void savestateinlock(void)
 		    killer = whynot;
 		    done(TRICKED);
 		}
-		(void) close(fd);
+		close(fd);
 
 		fd = create_levelfile(0, whynot);
 		if (fd < 0) {
@@ -421,12 +421,12 @@ void bclose(int fd)
     bufoff(fd);
 #ifdef UNIX
     if (fd == bw_fd) {
-	(void) fclose(bw_FILE);
+	fclose(bw_FILE);
 	bw_fd = -1;
 	bw_FILE = 0;
     } else
 #endif
-	(void) close(fd);
+	close(fd);
     return;
 }
 

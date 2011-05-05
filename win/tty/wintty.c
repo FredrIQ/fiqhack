@@ -275,7 +275,7 @@ give_up:	/* Quit */
 	    }
 	}
 
-	(void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
+	root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 
 	/* Select a role, if necessary */
@@ -344,7 +344,7 @@ give_up:	/* Quit */
 		initrole = selected[0].item.a_int - 1;
 		free((void *) selected),	selected = 0;
 	    }
-	    (void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
+	    root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 	}
 	
@@ -415,7 +415,7 @@ give_up:	/* Quit */
 		}
 		initrace = k;
 	    }
-	    (void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
+	    root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 	}
 
@@ -487,7 +487,7 @@ give_up:	/* Quit */
 		}
 		initgend = k;
 	    }
-	    (void)  root_plselection_prompt(plbuf, QBUFSZ - 1,
+	    root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 	}
 
@@ -605,12 +605,12 @@ void tty_askname(char *plname)
 #ifdef WIN32CON
 				ttyDisplay->curx--;
 				backsp();       /* \b is visible on NT */
-				(void) putchar(' ');
+				putchar(' ');
 				backsp();
 #else
-				(void) putchar('\b');
-				(void) putchar(' ');
-				(void) putchar('\b');
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
 #endif
 			}
 			continue;
@@ -620,7 +620,7 @@ void tty_askname(char *plname)
 		if(c < 'A' || (c > 'Z' && c < 'a') || c > 'z') c = '_';
 #endif
 		if (ct < (int)(sizeof plname) - 1) {
-			(void) putchar(c);
+			putchar(c);
 			plname[ct++] = c;
 #ifdef WIN32CON
 			ttyDisplay->curx++;
@@ -910,7 +910,7 @@ static void set_item_state(winid window, int lineno, tty_menu_item *item)
     char ch = item->selected ? (item->count == -1L ? '+' : '#') : '-';
     tty_curs(window, 4, lineno);
     term_start_attr(item->attr);
-    (void) putchar(ch);
+    putchar(ch);
     ttyDisplay->curx++;
     term_end_attr(item->attr);
 }
@@ -1073,7 +1073,7 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 		    tty_curs(window, 1, page_lines);
 		    if (cw->offx) cl_end();
 
-		    (void) putchar(' ');
+		    putchar(' ');
 		    ++ttyDisplay->curx;
 		    /*
 		     * Don't use xputs() because (1) under unix it calls
@@ -1094,11 +1094,11 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 			if (n == 2 && curr->identifier.a_void != 0 &&
 							curr->selected) {
 			    if (curr->count == -1L)
-				(void) putchar('+'); /* all selected */
+				putchar('+'); /* all selected */
 			    else
-				(void) putchar('#'); /* count selected */
+				putchar('#'); /* count selected */
 			} else
-			    (void) putchar(*cp);
+			    putchar(*cp);
 		    term_end_attr(curr->attr);
 		}
 	    } else {
@@ -1320,7 +1320,7 @@ static void process_text_window(winid window, struct WinDesc *cw)
 	if (cw->data[i]) {
 	    attr = cw->data[i][0] - 1;
 	    if (cw->offx) {
-		(void) putchar(' '); ++ttyDisplay->curx;
+		putchar(' '); ++ttyDisplay->curx;
 	    }
 	    term_start_attr(attr);
 	    for (cp = &cw->data[i][1];
@@ -1331,7 +1331,7 @@ static void process_text_window(winid window, struct WinDesc *cw)
 		    *cp && (int) ttyDisplay->curx < (int) ttyDisplay->cols;
 		    cp++, ttyDisplay->curx++)
 #endif
-		(void) putchar(*cp);
+		putchar(*cp);
 	    term_end_attr(attr);
 	}
     }
@@ -1378,7 +1378,7 @@ void tty_display_nhwindow(winid window,
 	    return;
 	}
     case NHW_BASE:
-	(void) fflush(stdout);
+	fflush(stdout);
 	break;
     case NHW_TEXT:
 	cw->maxcol = ttyDisplay->cols; /* force full-screen mode */
@@ -1523,7 +1523,7 @@ void tty_curs(winid window,
 	nocmov(x, y);
 #ifndef NO_TERMS
     } else if ((x <= 3 && cy <= 3) || (!nh_CM && x < cx)) {
-	(void) putchar('\r');
+	putchar('\r');
 	ttyDisplay->curx = 0;
 	nocmov(x, y);
     } else if (!nh_CM) {
@@ -1548,7 +1548,7 @@ static void tty_putsym(winid window, int x, int y, char ch)
     case NHW_MAP:
     case NHW_BASE:
 	tty_curs(window, x, y);
-	(void) putchar(ch);
+	putchar(ch);
 	ttyDisplay->curx++;
 	cw->curx++;
 	break;
@@ -1631,7 +1631,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	    if(*ob) ob++;
 	}
 
-	(void) strncpy(&cw->data[cw->cury][j], str, cw->cols - j - 1);
+	strncpy(&cw->data[cw->cury][j], str, cw->cols - j - 1);
 	cw->data[cw->cury][cw->cols-1] = '\0'; /* null terminate */
 	cw->cury = (cw->cury+1) % 2;
 	cw->curx = 0;
@@ -1640,7 +1640,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	tty_curs(window, cw->curx+1, cw->cury);
 	term_start_attr(attr);
 	while(*str && (int) ttyDisplay->curx < (int) ttyDisplay->cols-1) {
-	    (void) putchar(*str);
+	    putchar(*str);
 	    str++;
 	    ttyDisplay->curx++;
 	}
@@ -1657,7 +1657,7 @@ void tty_putstr(winid window, int attr, const char *str)
 		cw->cury++;
 		tty_curs(window, cw->curx+1, cw->cury);
 	    }
-	    (void) putchar(*str);
+	    putchar(*str);
 	    str++;
 	    ttyDisplay->curx++;
 	}
@@ -1749,7 +1749,7 @@ void tty_display_file(const char *fname, boolean complain)
 	    }
 	    while (dlb_fgets(buf, BUFSZ, f)) {
 		if ((cr = index(buf, '\n')) != 0) *cr = 0;
-		if (index(buf, '\t') != 0) (void) tabexpand(buf);
+		if (index(buf, '\t') != 0) tabexpand(buf);
 		empty = FALSE;
 		tty_putstr(datawin, 0, buf);
 		if(wins[datawin]->flags & WIN_CANCELLED)
@@ -1757,7 +1757,7 @@ void tty_display_file(const char *fname, boolean complain)
 	    }
 	    if (!empty) tty_display_nhwindow(datawin, FALSE);
 	    tty_destroy_nhwindow(datawin);
-	    (void) dlb_fclose(f);
+	    dlb_fclose(f);
 	}
 }
 
@@ -1803,7 +1803,7 @@ void tty_add_menu(
 	    len = BUFSZ - 1;
 	}
 	sprintf(buf, "%c - ", ch ? ch : '?');
-	(void) strncpy(buf+4, str, len);
+	strncpy(buf+4, str, len);
 	buf[4+len] = '\0';
 	newstr = buf;
     } else
@@ -2009,7 +2009,7 @@ void tty_update_inventory(void)
 
 void tty_mark_synch(void)
 {
-    (void) fflush(stdout);
+    fflush(stdout);
 }
 
 void tty_wait_synch(void)
@@ -2022,15 +2022,15 @@ void tty_wait_synch(void)
 	tty_display_nhwindow(WIN_MAP, FALSE);
 	if(ttyDisplay->inmore) {
 	    addtopl("--More--");
-	    (void) fflush(stdout);
+	    fflush(stdout);
 	} else if(ttyDisplay->inread > program_state.gameover) {
 	    /* this can only happen if we were reading and got interrupted */
 	    ttyDisplay->toplin = 3;
 	    /* do this twice; 1st time gets the Quit? message again */
-	    (void) tty_doprev_message();
-	    (void) tty_doprev_message();
+	    tty_doprev_message();
+	    tty_doprev_message();
 	    ttyDisplay->intr++;
-	    (void) fflush(stdout);
+	    fflush(stdout);
 	}
     }
 }
@@ -2084,23 +2084,23 @@ void g_putch(int in_ch)
 # if defined(ASCIIGRAPH) && !defined(NO_TERMS)
     if (iflags.IBMgraphics || iflags.wc_eight_bit_input) {
 	/* IBM-compatible displays don't need other stuff */
-	(void) putchar(ch);
+	putchar(ch);
     } else if (ch & 0x80) {
 	if (!GFlag || HE_resets_AS) {
 	    graph_on();
 	    GFlag = TRUE;
 	}
-	(void) putchar((ch ^ 0x80)); /* Strip 8th bit */
+	putchar((ch ^ 0x80)); /* Strip 8th bit */
     } else {
 	if (GFlag) {
 	    graph_off();
 	    GFlag = FALSE;
 	}
-	(void) putchar(ch);
+	putchar(ch);
     }
 
 #else
-    (void) putchar(ch);
+    putchar(ch);
 
 #endif	/* ASCIIGRAPH && !NO_TERMS */
 
@@ -2135,7 +2135,7 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
 
 #ifndef NO_TERMS
     if (ul_hack && ch == '_') {		/* non-destructive underscore */
-	(void) putchar((char) ' ');
+	putchar((char) ' ');
 	backsp();
     }
 #endif

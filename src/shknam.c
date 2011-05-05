@@ -236,9 +236,9 @@ static void mkshobj_at(const struct shclass *shp, int sx, int sy)
 	} else {
 	    atype = get_shop_item(shp - shtypes);
 	    if (atype < 0)
-		(void) mksobj_at(-atype, sx, sy, TRUE, TRUE);
+		mksobj_at(-atype, sx, sy, TRUE, TRUE);
 	    else
-		(void) mkobj_at(atype, sx, sy, TRUE);
+		mkobj_at(atype, sx, sy, TRUE);
 	}
 }
 
@@ -297,7 +297,7 @@ static void nameshk(struct monst *shk, const char * const *nlp)
 		if (!mtmp) break;	/* new name */
 	    }
 	}
-	(void) strncpy(ESHK(shk)->shknam, shname, PL_NSIZ);
+	strncpy(ESHK(shk)->shknam, shname, PL_NSIZ);
 	ESHK(shk)->shknam[PL_NSIZ-1] = 0;
 }
 
@@ -353,7 +353,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 	    return -1;
 	}
 
-	if(MON_AT(sx, sy)) (void) rloc(m_at(sx, sy), FALSE); /* insurance */
+	if(MON_AT(sx, sy)) rloc(m_at(sx, sy), FALSE); /* insurance */
 
 	/* now initialize the shopkeeper monster structure */
 	if(!(shk = makemon(&mons[PM_SHOPKEEPER], sx, sy, NO_MM_FLAGS)))
@@ -382,7 +382,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
         mkmonmoney(shk, 1000L + 30L*(long)rnd(100));	/* initial capital */
 #endif
 	if (shp->shknms == shkrings)
-	    (void) mongets(shk, TOUCHSTONE);
+	    mongets(shk, TOUCHSTONE);
 	nameshk(shk, shp->shknms);
 
 	return sh;

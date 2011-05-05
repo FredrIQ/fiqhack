@@ -385,7 +385,7 @@ void u_left_shop(char *leavestring, boolean newlev)
 #ifdef KOPS
 	    call_kops(shkp, (!newlev && levl[u.ux0][u.uy0].edge));
 #else
-	    (void) angry_guards(FALSE);
+	    angry_guards(FALSE);
 #endif
 	}
 }
@@ -409,7 +409,7 @@ void remote_burglary(xchar x, xchar y)
 	    /*[might want to set 2nd arg based on distance from shop doorway]*/
 	    call_kops(shkp, FALSE);
 #else
-	    (void) angry_guards(FALSE);
+	    angry_guards(FALSE);
 #endif
 	}
 }
@@ -487,7 +487,7 @@ void u_entered_shop(char *enterstring)
 	    /* You seem to be new here */
 	    eshkp->visitct = 0;
 	    eshkp->following = 0;
-	    (void) strncpy(eshkp->customer,plname,PL_NSIZ);
+	    strncpy(eshkp->customer,plname,PL_NSIZ);
 	    pacify_shk(shkp);
 	}
 
@@ -555,7 +555,7 @@ void u_entered_shop(char *enterstring)
 		should_block = (Fast && (sobj_at(PICK_AXE, u.ux, u.uy) ||
 				      sobj_at(DWARVISH_MATTOCK, u.ux, u.uy)));
 	    }
-	    if (should_block) (void) dochug(shkp);  /* shk gets extra move */
+	    if (should_block) dochug(shkp);  /* shk gets extra move */
 	}
 	return;
 }
@@ -796,7 +796,7 @@ void home_shk(struct monst *shkp, boolean killkops)
 {
 	xchar x = ESHK(shkp)->shk.x, y = ESHK(shkp)->shk.y;
 
-	(void) mnearto(shkp, x, y, TRUE);
+	mnearto(shkp, x, y, TRUE);
 	level.flags.has_shop = 1;
 	if (killkops) {
 #ifdef KOPS
@@ -914,7 +914,7 @@ void hot_pursuit(struct monst *shkp)
 	if(!shkp->isshk) return;
 
 	rile_shk(shkp);
-	(void) strncpy(ESHK(shkp)->customer, plname, PL_NSIZ);
+	strncpy(ESHK(shkp)->customer, plname, PL_NSIZ);
 	ESHK(shkp)->following = 1;
 }
 
@@ -2308,7 +2308,7 @@ long stolen_value(struct obj *obj, xchar x, xchar y, boolean peaceful,
 		} else  Norep("You hear a scream, \"Thief!\"");
 	    }
 	    hot_pursuit(shkp);
-	    (void) angry_guards(FALSE);
+	    angry_guards(FALSE);
 	}
 	return value;
 }
@@ -2687,7 +2687,7 @@ struct monst *shkcatch(struct obj *obj, xchar x, xchar y)
 		    mark_synch();
 		}
 		subfrombill(obj, shkp);
-		(void) mpickobj(shkp, obj);
+		mpickobj(shkp, obj);
 		return shkp;
 	}
 	return (struct monst *)0;
@@ -2861,7 +2861,7 @@ int repair_damage(struct monst *shkp, struct damage *tmp_dam,
 				BEARTRAP, TRUE, FALSE);
 		otmp->quan= 1;
 		otmp->owt = weight(otmp);
-		(void) mpickobj(shkp, otmp);
+		mpickobj(shkp, otmp);
 	    }
 	    deltrap(ttmp);
 	    if(IS_DOOR(tmp_dam->typ)) {
@@ -2883,7 +2883,7 @@ int repair_damage(struct monst *shkp, struct damage *tmp_dam,
 	    /* No messages if player already replaced shop door */
 	    return 1;
 	levl[x][y].typ = tmp_dam->typ;
-	(void) memset((void *)litter, 0, sizeof(litter));
+	memset((void *)litter, 0, sizeof(litter));
 	if ((otmp = level.objects[x][y]) != 0) {
 	    /* Scatter objects haphazardly into the shop */
 #define NEED_UPDATE 1
@@ -2977,7 +2977,7 @@ int shk_move(struct monst *shkp)
 			if(Displaced)
 			  Your("displaced image doesn't fool %s!",
 				mon_nam(shkp));
-			(void) mattacku(shkp);
+			mattacku(shkp);
 			return 0;
 		}
 		if(eshkp->following) {
@@ -3150,7 +3150,7 @@ void shopdig(int fall)
 		setnotworn(obj);
 		freeinv(obj);
 		subfrombill(obj, shkp);
-		(void) add_to_minv(shkp, obj);	/* may free obj */
+		add_to_minv(shkp, obj);	/* may free obj */
 	    }
     }
 }
@@ -3175,7 +3175,7 @@ static void makekops(coord *mm)
 
 	    while (cnt--)
 		if (enexto(mm, mm->x, mm->y, &mons[mndx]))
-		    (void) makemon(&mons[mndx], mm->x, mm->y, NO_MM_FLAGS);
+		    makemon(&mons[mndx], mm->x, mm->y, NO_MM_FLAGS);
 	}
 }
 #endif	/* KOPS */
@@ -3245,7 +3245,7 @@ void pay_for_damage(const char *dmgstr, boolean cant_mollify)
 	y = appear_here->place.y;
 
 	/* not the best introduction to the shk... */
-	(void) strncpy(ESHK(shkp)->customer,plname,PL_NSIZ);
+	strncpy(ESHK(shkp)->customer,plname,PL_NSIZ);
 
 	/* if the shk is already on the war path, be sure it's all out */
 	if(ANGRY(shkp) || ESHK(shkp)->following) {
@@ -3284,7 +3284,7 @@ void pay_for_damage(const char *dmgstr, boolean cant_mollify)
 #endif
 		}
 	    }
-	    (void) mnearto(shkp, x, y, TRUE);
+	    mnearto(shkp, x, y, TRUE);
 	}
 
 	if((um_dist(x, y, 1) && !uinshp) || cant_mollify ||
@@ -3736,7 +3736,7 @@ char *shk_your(char *buf, struct obj *obj)
 
 char *Shk_Your(char *buf, struct obj *obj)
 {
-	(void) shk_your(buf, obj);
+	shk_your(buf, obj);
 	*buf = highc(*buf);
 	return buf;
 }

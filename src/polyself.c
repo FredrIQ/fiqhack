@@ -199,7 +199,7 @@ dead: /* we come directly here if their experience level went to 0 or less */
 	}
 	botl = 1;
 	see_monsters();
-	(void) encumber_msg();
+	encumber_msg();
 }
 
 void polyself(boolean forcecontrol)
@@ -271,7 +271,7 @@ void polyself(boolean forcecontrol)
 		/* if polymon fails, "you feel" message has been given
 		   so don't follow up with another polymon or newman */
 		if (mntmp == PM_HUMAN) newman();	/* werecritter */
-		else (void) polymon(mntmp);
+		else polymon(mntmp);
 		goto made_change;    /* maybe not, but this is right anyway */
 	}
 
@@ -536,7 +536,7 @@ int polymon(int mntmp)
 	see_monsters();
 	exercise(A_CON, FALSE);
 	exercise(A_WIS, TRUE);
-	(void) encumber_msg();
+	encumber_msg();
 	return 1;
 }
 
@@ -549,17 +549,17 @@ static void break_armor(void)
 		if (donning(otmp)) cancel_don();
 		You("break out of your armor!");
 		exercise(A_STR, FALSE);
-		(void) Armor_gone();
+		Armor_gone();
 		useup(otmp);
 	}
 	if ((otmp = uarmc) != 0) {
 	    if(otmp->oartifact) {
 		Your("%s falls off!", cloak_simple_name(otmp));
-		(void) Cloak_off();
+		Cloak_off();
 		dropx(otmp);
 	    } else {
 		Your("%s tears apart!", cloak_simple_name(otmp));
-		(void) Cloak_off();
+		Cloak_off();
 		useup(otmp);
 	    }
 	}
@@ -573,14 +573,14 @@ static void break_armor(void)
 	if (((otmp = uarm) != 0) && (racial_exception(&youmonst, otmp) < 1)) {
 		if (donning(otmp)) cancel_don();
 		Your("armor falls around you!");
-		(void) Armor_gone();
+		Armor_gone();
 		dropx(otmp);
 	}
 	if ((otmp = uarmc) != 0) {
 		if (is_whirly(youmonst.data))
 			Your("%s falls, unsupported!", cloak_simple_name(otmp));
 		else You("shrink out of your %s!", cloak_simple_name(otmp));
-		(void) Cloak_off();
+		Cloak_off();
 		dropx(otmp);
 	}
 #ifdef TOURIST
@@ -605,7 +605,7 @@ static void break_armor(void)
 	    } else {
 		if (donning(otmp)) cancel_don();
 		Your("helmet falls to the %s!", surface(u.ux, u.uy));
-		(void) Helmet_off();
+		Helmet_off();
 		dropx(otmp);
 	    }
 	}
@@ -616,18 +616,18 @@ static void break_armor(void)
 	    /* Drop weapon along with gloves */
 	    You("drop your gloves%s!", uwep ? " and weapon" : "");
 	    drop_weapon(0);
-	    (void) Gloves_off();
+	    Gloves_off();
 	    dropx(otmp);
 	}
 	if ((otmp = uarms) != 0) {
 	    You("can no longer hold your shield!");
-	    (void) Shield_off();
+	    Shield_off();
 	    dropx(otmp);
 	}
 	if ((otmp = uarmh) != 0) {
 	    if (donning(otmp)) cancel_don();
 	    Your("helmet falls to the %s!", surface(u.ux, u.uy));
-	    (void) Helmet_off();
+	    Helmet_off();
 	    dropx(otmp);
 	}
     }
@@ -639,7 +639,7 @@ static void break_armor(void)
 		Your("boots fall away!");
 	    else Your("boots %s off your feet!",
 			verysmall(youmonst.data) ? "slide" : "are pushed");
-	    (void) Boots_off();
+	    Boots_off();
 	    dropx(otmp);
 	}
     }
@@ -702,7 +702,7 @@ void rehumanize(void)
 
 	botl = 1;
 	vision_full_recalc = 1;
-	(void) encumber_msg();
+	encumber_msg();
 }
 
 int dobreathe(void)
@@ -963,11 +963,11 @@ int dogaze(void)
 			    dmg = 0;
 			}
 			if((int) u.ulevel > rn2(20))
-			    (void) destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
+			    destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
 			if((int) u.ulevel > rn2(20))
-			    (void) destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
+			    destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
 			if((int) u.ulevel > rn2(25))
-			    (void) destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
+			    destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
 			if (dmg && !DEADMONSTER(mtmp)) mtmp->mhp -= dmg;
 			if (mtmp->mhp <= 0) killed(mtmp);
 		    }

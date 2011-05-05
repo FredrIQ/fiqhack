@@ -499,7 +499,7 @@ void u_init(void)
 
 	/* zero u, including pointer values --
 	 * necessary when aborting from a failed restore */
-	(void) memset((void *)&u, 0, sizeof(u));
+	memset((void *)&u, 0, sizeof(u));
 	u.ustuck = (struct monst *)0;
 
 	u.uz.dlevel = 1;
@@ -534,7 +534,7 @@ void u_init(void)
 			aligns[flags.initalign].value;
 	u.ulycn = NON_PM;
 
-	(void) time(&u.ubirthday);
+	time(&u.ubirthday);
 
 	/*
 	 *  For now, everyone starts out with a night vision range of 1 and
@@ -772,7 +772,7 @@ void u_init(void)
 	for(i = 0; i < A_MAX; i++)
 	    if(!rn2(20)) {
 		int xd = rn2(7) - 2;	/* biased variation */
-		(void) adjattrib(i, xd, TRUE);
+		adjattrib(i, xd, TRUE);
 		if (ABASE(i) < AMAX(i)) AMAX(i) = ABASE(i);
 	    }
 

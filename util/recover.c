@@ -21,9 +21,9 @@ int open_levelfile(int);
 int create_savefile(void);
 void copy_bytes(int,int);
 
-#define Fprintf	(void)fprintf
+#define Fprintf	fprintf
 
-#define Close	(void)close
+#define Close	close
 
 #ifdef UNIX
 #define SAVESIZE	(PL_NSIZ + 13)	/* save/99999player.e */
@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
 		&& strcmp(dir, HACKDIR)
 # endif
 		) {
-		(void) setgid(getgid());
-		(void) setuid(getuid());
+		setgid(getgid());
+		setuid(getuid());
 	}
 #endif	/* SECURE */
 
@@ -117,7 +117,7 @@ void set_levelfile_name(int lev)
 
 	tf = rindex(lock, '.');
 	if (!tf) tf = lock + strlen(lock);
-	(void) sprintf(tf, ".%d", lev);
+	sprintf(tf, ".%d", lev);
 }
 
 int open_levelfile(int lev)
@@ -173,7 +173,7 @@ int restore_savefile(char *basename)
 	 *	name of save file nethack would have created
 	 *	and game state
 	 */
-	(void) strcpy(lock, basename);
+	strcpy(lock, basename);
 	gfd = open_levelfile(0);
 	if (gfd < 0) {
 #if defined(WIN32)
@@ -244,12 +244,12 @@ int restore_savefile(char *basename)
 
 	copy_bytes(lfd, sfd);
 	Close(lfd);
-	(void) unlink(lock);
+	unlink(lock);
 
 	copy_bytes(gfd, sfd);
 	Close(gfd);
 	set_levelfile_name(0);
-	(void) unlink(lock);
+	unlink(lock);
 
 	for (lev = 1; lev < 256; lev++) {
 		/* level numbers are kept in xchars in save.c, so the
@@ -263,7 +263,7 @@ int restore_savefile(char *basename)
 				write(sfd, (void *) &levc, sizeof(levc));
 				copy_bytes(lfd, sfd);
 				Close(lfd);
-				(void) unlink(lock);
+				unlink(lock);
 			}
 		}
 	}

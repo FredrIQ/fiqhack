@@ -66,14 +66,14 @@ int nh_getresuid(uid_t *ruid, uid_t *euid, uid_t *suid)
 uid_t nh_getuid(void)
 {
     uid_t ruid, euid, suid;
-    (void) real_getresuid(&ruid, &euid, &suid);
+    real_getresuid(&ruid, &euid, &suid);
     return ruid;
 }
 
 uid_t nh_geteuid(void)
 {
     uid_t ruid, euid, suid;
-    (void) real_getresuid(&ruid, &euid, &suid);
+    real_getresuid(&ruid, &euid, &suid);
     if (hiding_privileges)
 	euid = ruid;
     return euid;
@@ -90,14 +90,14 @@ int nh_getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid)
 gid_t nh_getgid(void)
 {
     gid_t rgid, egid, sgid;
-    (void) real_getresgid(&rgid, &egid, &sgid);
+    real_getresgid(&rgid, &egid, &sgid);
     return rgid;
 }
 
 gid_t nh_getegid(void)
 {
     gid_t rgid, egid, sgid;
-    (void) real_getresgid(&rgid, &egid, &sgid);
+    real_getresgid(&rgid, &egid, &sgid);
     if (hiding_privileges)
 	egid = rgid;
     return egid;

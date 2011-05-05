@@ -122,7 +122,7 @@ void add_rect_to_reg(NhRegion *reg, NhRect *rect)
 
     tmp_rect = (NhRect *) alloc(sizeof (NhRect) * (reg->nrects + 1));
     if (reg->nrects > 0) {
-	(void) memcpy((void *) tmp_rect, (void *) reg->rects,
+	memcpy((void *) tmp_rect, (void *) reg->rects,
 		      (sizeof (NhRect) * reg->nrects));
 	free((void *) reg->rects);
     }
@@ -220,7 +220,7 @@ void add_region(NhRegion *reg)
 	tmp_reg = regions;
 	regions = (NhRegion **)alloc(sizeof (NhRegion *) * (max_regions + 10));
 	if (max_regions > 0) {
-	    (void) memcpy((void *) regions, (void *) tmp_reg,
+	    memcpy((void *) regions, (void *) tmp_reg,
 			  max_regions * sizeof (NhRegion *));
 	    free((void *) tmp_reg);
 	}

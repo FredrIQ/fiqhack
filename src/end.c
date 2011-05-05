@@ -79,18 +79,18 @@ extern const char * const killed_by_prefix[];	/* from topten.c */
 void done1(int sig_unused) /* called as signal() handler, so sent at least one arg */
 {
 #ifndef NO_SIGNAL
-	(void) signal(SIGINT,SIG_IGN);
+	signal(SIGINT,SIG_IGN);
 #endif
 	if(flags.ignintr) {
 #ifndef NO_SIGNAL
-		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 		clear_nhwindow(WIN_MESSAGE);
 		curs_on_u();
 		wait_synch();
 		if(multi > 0) nomul(0);
 	} else {
-		(void)done2();
+		done2();
 	}
 }
 
@@ -100,7 +100,7 @@ int done2(void)
 {
 	if(yn("Really quit?") == 'n') {
 #ifndef NO_SIGNAL
-		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 		clear_nhwindow(WIN_MESSAGE);
 		curs_on_u();
@@ -117,7 +117,7 @@ int done2(void)
 	    int c;
 	    const char *tmp = "Dump core?";
 	    if ((c = ynq(tmp)) == 'y') {
-		(void) signal(SIGINT, (SIG_RET_TYPE) done1);
+		signal(SIGINT, (SIG_RET_TYPE) done1);
 		exit_nhwindows((char *)0);
 		NH_abort();
 	    } else if (c == 'q') done_stopprint++;
@@ -132,9 +132,9 @@ int done2(void)
 static void done_intr(int sig_unused) /* called as signal() handler, so sent at least one arg */
 {
 	done_stopprint++;
-	(void) signal(SIGINT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
 # if defined(UNIX)
-	(void) signal(SIGQUIT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
 # endif
 	return;
 }
@@ -143,7 +143,7 @@ static void done_intr(int sig_unused) /* called as signal() handler, so sent at 
 static void done_hangup(int sig) /* signal() handler */
 {
 	program_state.done_hup++;
-	(void)signal(SIGHUP, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 	done_intr(sig);
 	return;
 }
@@ -254,7 +254,7 @@ void panic (const char *str, ...)
 # endif
 	if (program_state.something_worth_saving) {
 	    set_error_savefile();
-	    (void) dosave0();
+	    dosave0();
 	}
 	
 	char buf[BUFSZ];
@@ -330,7 +330,7 @@ static void disclose(int how, boolean taken)
 			    makeknown(obj->otyp);
 			    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
 			}
-			(void) display_inventory((char *)0, TRUE);
+			display_inventory((char *)0, TRUE);
 			container_contents(invent, TRUE, TRUE);
 		}
 		if (c == 'q')  done_stopprint++;
@@ -525,7 +525,7 @@ void done(int how)
 		pline_The("medallion crumbles to dust!");
 		if (uamul) useup(uamul);
 
-		(void) adjattrib(A_CON, -1, TRUE);
+		adjattrib(A_CON, -1, TRUE);
 		if(u.uhpmax <= 0) u.uhpmax = 10;	/* arbitrary */
 		savelife(how);
 		if (how == GENOCIDED)
@@ -570,10 +570,10 @@ die:
 
 	if (have_windows) wait_synch();	/* flush screen output */
 #ifndef NO_SIGNAL
-	(void) signal(SIGINT, (SIG_RET_TYPE) done_intr);
+	signal(SIGINT, (SIG_RET_TYPE) done_intr);
 # if defined(UNIX)
-	(void) signal(SIGQUIT, (SIG_RET_TYPE) done_intr);
-	(void) signal(SIGHUP, (SIG_RET_TYPE) done_hangup);
+	signal(SIGQUIT, (SIG_RET_TYPE) done_intr);
+	signal(SIGHUP, (SIG_RET_TYPE) done_hangup);
 # endif
 #endif /* NO_SIGNAL */
 
