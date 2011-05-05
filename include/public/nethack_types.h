@@ -190,7 +190,6 @@ struct sinfo {
 
 
 enum nh_opttype {
-    OPTTYPE_NONE,
     OPTTYPE_BOOL,
     OPTTYPE_INT,
     OPTTYPE_ENUM,
@@ -216,12 +215,11 @@ struct nh_string_option {
 	int maxlen;
 };
 
-union optvalue {
-	void *dummy; /* for static initialisation */
+union nh_optvalue {
+	char *s; /* largest element first for static initialisation */
 	boolean b;
 	int i;
 	int e;
-	char *s;
 };
 
 struct nh_option_desc
@@ -229,7 +227,7 @@ struct nh_option_desc
 	const char *name;
 	const char *helptxt;
 	enum nh_opttype type;
-	union optvalue value;
+	union nh_optvalue value;
 	union {
 	    /* only the first element of a union can be initialized at compile
 	     * time (without C99), so boolean args go first, there are more of those ...*/

@@ -156,7 +156,7 @@ struct nh_option_desc options[] = {
     {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
     {"suppress_alert", "suppress alerts about version-specific features", OPTTYPE_STRING, {}},
     
-    {NULL, NULL, OPTTYPE_NONE, { NULL }}
+    {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
 
@@ -166,7 +166,7 @@ struct nh_option_desc birth_options[] = {
     { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_RANDOM}},
     { "role",     "your starting role", OPTTYPE_ENUM, {(void*)ROLE_RANDOM}},
     { "catname",  "the name of your (first) cat", OPTTYPE_STRING, {NULL}},
-    { "dogname",  "the name of your (first) dogname", OPTTYPE_STRING, {NULL}},
+    { "dogname",  "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
     { "horsename", "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
     { "dungeon",  "the symbols to use in drawing the dungeon map", OPTTYPE_STRING, {NULL}},
     { "traps",    "the symbols to use in drawing traps", OPTTYPE_STRING, {NULL}},
@@ -174,9 +174,9 @@ struct nh_option_desc birth_options[] = {
     { "monsters", "the symbols to use for monsters", OPTTYPE_STRING, {NULL}},
     { "warnings", "the symbols to use for warnings", OPTTYPE_STRING, {NULL}},
     { "pettype",  "your preferred initial pet type", OPTTYPE_ENUM, {0}},
-    { "scores_own", "the parts of the score list you wish to see", OPTTYPE_BOOL, { VFALSE }},
-    { "scores_top", "the parts of the score list you wish to see", OPTTYPE_INT, {(void*)3}},
-    { "scores_around", "the parts of the score list you wish to see", OPTTYPE_INT, {(void*)2}},
+    { "scores_own", "show only your own scores in the list", OPTTYPE_BOOL, { VFALSE }},
+    { "scores_top", "how many top scores to show", OPTTYPE_INT, {(void*)3}},
+    { "scores_around", "the number of scores around the top scores", OPTTYPE_INT, {(void*)2}},
     
 #if 0
     { "menu_deselect_all", "deselect all items in a menu"
@@ -193,7 +193,7 @@ struct nh_option_desc birth_options[] = {
     { "menu_select_page", "select all items on this page of a menu"
 #endif
     
-    {NULL, NULL, OPTTYPE_NONE, { NULL }}
+    {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
 
@@ -398,45 +398,41 @@ void initoptions(void)
 }
 
 
-static boolean option_value_ok(struct nh_option_desc *option, union optvalue value)
+static boolean option_value_ok(struct nh_option_desc *option,
+			       union nh_optvalue value)
 {
 	int i;
 	
 	switch (option->type) {
-    	case OPTTYPE_BOOL:
-    		if (value.b == !!value.b)
-    			return TRUE;
-    		break;
-    		
-    	case OPTTYPE_INT:
-    		if (value.i >= option->i.min || value.i <= option->i.max)
-    			return TRUE;
-    		break;
-    		
-    	case OPTTYPE_ENUM:
-    		for (i = 0; i < option->e.numchoices; i++)
-    			if (value.e == option->e.choices[i].id)
-    				return TRUE;
-    		break;
-    		
-    	case OPTTYPE_STRING:
+	    case OPTTYPE_BOOL:
+		if (value.b == !!value.b)
+			return TRUE;
+		break;
+		
+	    case OPTTYPE_INT:
+		if (value.i >= option->i.min || value.i <= option->i.max)
+			return TRUE;
+		break;
+		
+	    case OPTTYPE_ENUM:
+		for (i = 0; i < option->e.numchoices; i++)
+			if (value.e == option->e.choices[i].id)
+				return TRUE;
+		break;
+		
+	    case OPTTYPE_STRING:
 		if (!value.s)
 		    break;
 		
-    		if (strlen(value.s) <= option->s.maxlen)
-    			return TRUE;
-     		break;
-    		
-		case OPTTYPE_NONE:
-		default:
-			/* do nothing, but prevent "OPTTYPE_NONE not handled" */
-			break;
+		if (strlen(value.s) <= option->s.maxlen)
+			return TRUE;
+		break;
 	}
 	
 	return FALSE;
 }
 
-boolean nh_set_option(const char *name, union optvalue value)
+boolean nh_set_option(const char *name, union nh_optvalue value)
 {
 	int i;
 	struct nh_option_desc *option = find_option(options, name);

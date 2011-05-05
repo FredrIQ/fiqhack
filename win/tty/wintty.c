@@ -592,7 +592,7 @@ void tty_askname(char *plname)
 	tty_curs(BASE_WINDOW, (int)(sizeof who_are_you),
 		 wins[BASE_WINDOW]->cury - 1);
 	ct = 0;
-	while((c = tty_nhgetch()) != '\n') {
+	while((c = base_nhgetch()) != '\n') {
 		if(c == EOF) error("End of input\n");
 		if (c == '\033') { ct = 0; break; }  /* continue outer loop */
 #if defined(WIN32CON)
@@ -2204,10 +2204,9 @@ void tty_raw_print_bold(const char *str)
 #endif
 }
 
-int tty_nhgetch(void)
+int base_nhgetch(void)
 {
     int i;
-    boolean got_input;
 #ifdef UNIX
     /* kludge alert: Some Unix variants return funny values if getc()
      * is called, interrupted, and then called again.  There
@@ -2227,22 +2226,30 @@ int tty_nhgetch(void)
     if (WIN_MESSAGE != WIN_ERR && wins[WIN_MESSAGE])
 	    wins[WIN_MESSAGE]->flags &= ~WIN_STOP;
     
-    got_input = FALSE;
-    do {
 #ifdef UNIX
-	i = ((++nesting == 1) ? getchar() :
-	    (read(fileno(stdin), (void *)&nestbuf,1) == 1 ? (int)nestbuf :
-								    EOF));
-	--nesting;
+    i = ((++nesting == 1) ? getchar() :
+	(read(fileno(stdin), (void *)&nestbuf,1) == 1 ? (int)nestbuf :
+								EOF));
+    --nesting;
 #else
-	i = getchar();
+    i = getchar();
 #endif
-	if (i == 'O')
-	    display_options();
-	else
-	    got_input = TRUE;
     
-    } while(!got_input);
+    return i;
+}
+
+
+int tty_nhgetch(void)
+{
+    int i;
+
+    i = base_nhgetch();
+
+    if (i == 'O') {
+	display_options(FALSE);
+	i = '\033'; /* NetHack doesn't know 'O' */
+    }
+    
     if (!i) i = '\033'; /* map NUL to ESC since nethack doesn't expect NUL */
     if (ttyDisplay && ttyDisplay->toplin == 1)
 	ttyDisplay->toplin = 2;
@@ -2259,7 +2266,7 @@ int tty_nh_poskey(int *x, int *y, int *mod)
 {
 # if defined(WIN32CON)
     int i;
-    (void) fflush(stdout);
+    fflush(stdout);
     /* Note: if raw_print() and wait_synch() get called to report terminal
      * initialization problems, then wins[] and ttyDisplay might not be
      * available yet.  Such problems will probably be fatal before we get
@@ -2274,7 +2281,7 @@ int tty_nh_poskey(int *x, int *y, int *mod)
 		ttyDisplay->toplin = 2;
     return i;
 # else
-    return tty_nhgetch();
+    return base_nhgetch();
 # endif
 }
 

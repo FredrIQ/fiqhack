@@ -103,7 +103,7 @@ extern EXPORT void initoptions(void);
 extern EXPORT void add_menu_cmd_alias(char, char);
 extern EXPORT char map_menu_cmd(char);
 extern EXPORT char *nh_getenv(const char *);
-extern EXPORT boolean nh_set_option(const char *name, union optvalue value);
+extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value);
 extern EXPORT struct nh_option_desc *nh_get_options(boolean birth);
 
 /* pline.c */

@@ -49,7 +49,7 @@ static void hooked_tty_getlin(const char *query, char *bufp, getlin_hook_proc ho
 		(void) fflush(stdout);
 		sprintf(toplines, "%s ", query);
 		strcat(toplines, obufp);
-		if((c = tty_nhgetch()) == EOF) {
+		if((c = base_nhgetch()) == EOF) {
 #ifndef NEWAUTOCOMP
 			*bufp = 0;
 #endif /* not NEWAUTOCOMP */
@@ -168,7 +168,7 @@ void xwaitforspace(const char *s)
 
     morc = 0;
 
-    while((c = tty_nhgetch()) != '\n') {
+    while((c = base_nhgetch()) != '\n') {
 	if(iflags.cbreak) {
 	    if ((s && index(s,c)) || c == x) {
 		morc = (char) c;
