@@ -29,6 +29,7 @@ static char map[4096];
 static int map_cnt = 0;
 
 %}
+%option nounput
 %e 1500
 %p 5000
 %n 700

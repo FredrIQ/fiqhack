@@ -31,6 +31,7 @@ extern YYSTYPE yylval;
 int line_number = 1;
 
 %}
+%option nounput
 %%
 DUNGEON		return A_DUNGEON;
 up		{ yylval.i=1; return UP_OR_DOWN; }
