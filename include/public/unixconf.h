@@ -6,17 +6,6 @@
 #define UNIXCONF_H
 
 /* define any of the following that are appropriate */
-#define NETWORK		/* if running on a networked system */
-			/* e.g. Suns sharing a playground through NFS */
-/* #define CYGWIN32 */	/* Unix on Win32 -- use with case sensitive defines */
-
-#define TERMINFO	/* uses terminfo rather than termcap */
-			/* Should be defined for most SYSV, SVR4 (including
-			 * Solaris 2+), and Linux systems. */
-#define TEXTCOLOR	/* Use System V r3.2 terminfo color support */
-			/* and/or ANSI color support on termcap systems */
-			/* and/or X11 color */
-
 /* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
 				   is available from your system */
 
@@ -46,7 +35,6 @@
  */
 /* #define PORT_HELP "Unixhelp" */
 
-#ifdef TTY_GRAPHICS
 /*
  * To enable the `timed_delay' option for using a timer rather than extra
  * screen output when pausing for display effect.  Requires that `msleep'
@@ -56,7 +44,6 @@
  * a fine-grained timer.
  */
 #define TIMED_DELAY	/* usleep() */
-#endif
 
 
 #define FCMASK	0660	/* file creation mask */

@@ -25,24 +25,6 @@
 #endif
 
 
-/* Windowing systems...
- * Define all of those you want supported in your binary.
- * Some combinations make no sense.  See the installation document.
- */
-#define TTY_GRAPHICS	/* good old tty based graphics */
-
-/*
- * Define the default window system.  This should be one that is compiled
- * into your system (see defines above).  Known window systems are:
- *
- *	tty
- */
-
-#ifndef DEFAULT_WINDOW_SYS
-# define DEFAULT_WINDOW_SYS "tty"
-#endif
-
-
 /*
  * Section 2:	Some global parameters and filenames.
  *		Commenting out WIZARD, LOGFILE, NEWS or PANICLOG removes that

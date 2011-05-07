@@ -15,7 +15,6 @@ int explcolors[] = {
 	CLR_WHITE,	/* frosty  */
 };
 
-#ifdef TEXTCOLOR
 #define zap_color(n)  color = zapcolors[n]
 #define cmap_color(n) color = defsyms[n].color
 #define obj_color(n)  color = objects[n].oc_color
@@ -24,21 +23,9 @@ int explcolors[] = {
 #define pet_color(n)  color = mons[n].mcolor
 #define warn_color(n) color = def_warnsyms[n].color
 #define explode_color(n) color = explcolors[n]
-# if defined(REINCARNATION) && defined(ASCIIGRAPH)
+# if defined(REINCARNATION)
 #  define ROGUE_COLOR
 # endif
-
-#else	/* no text color */
-
-#define zap_color(n)
-#define cmap_color(n)
-#define obj_color(n)
-#define mon_color(n)
-#define invis_color(n)
-#define pet_color(c)
-#define warn_color(n)
-#define explode_color(n)
-#endif
 
 #ifdef ROGUE_COLOR
 #define HAS_ROGUE_IBM_GRAPHICS (iflags.IBMgraphics && Is_rogue_level(&u.uz))
@@ -49,9 +36,7 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 	      unsigned *ospecial, int x, int y)
 {
 	int offset;
-#if defined(TEXTCOLOR) || defined(ROGUE_COLOR)
 	int color = NO_COLOR;
-#endif
 	uchar ch;
 	unsigned special = 0;
 
@@ -106,14 +91,12 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 		color = NO_COLOR;
 	} else
 #endif
-#ifdef TEXTCOLOR
 	    /* provide a visible difference if normal and lit corridor
 	     * use the same symbol */
 	    if (offset == S_litcorr && ch == showsyms[S_corr])
 		color = CLR_WHITE;
 	    else
-#endif
-	    cmap_color(offset);
+		cmap_color(offset);
     } else if ((offset = (glyph - GLYPH_OBJ_OFF)) >= 0) {	/* object */
 	if (offset == BOULDER && iflags.bouldersym) ch = iflags.bouldersym;
 	else ch = oc_syms[(int)objects[offset].oc_class];
@@ -191,32 +174,22 @@ void mapglyph(int glyph, int *ochar, int *ocolor,
 	{
 	    mon_color(glyph);
 	    /* special case the hero for `showrace' option */
-#ifdef TEXTCOLOR
 	    if (x == u.ux && y == u.uy && iflags.showrace && !Upolyd)
 		color = HI_DOMESTIC;
-#endif
 	}
     }
 
-#ifdef TEXTCOLOR
     /* Turn off color if rogue level w/o PC graphics. */
 # ifdef REINCARNATION
-#  ifdef ASCIIGRAPH
     if (Is_rogue_level(&u.uz) && !HAS_ROGUE_IBM_GRAPHICS)
-#  else
-    if (Is_rogue_level(&u.uz))
-#  endif
 # else
     if (0)
 # endif
 	color = NO_COLOR;
-#endif
 
     *ochar = (int)ch;
     *ospecial = special;
-#ifdef TEXTCOLOR
     *ocolor = color;
-#endif
     return;
 }
 

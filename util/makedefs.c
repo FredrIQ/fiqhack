@@ -301,9 +301,6 @@ static void make_version(void)
 			| (1L << 12)
 #endif
 		/* flag bits and/or other global variables (15..26) */
-#ifdef TEXTCOLOR
-			| (1L << 17)
-#endif
 #ifdef INSURANCE
 			| (1L << 18)
 #endif
@@ -431,9 +428,6 @@ static const char *build_opts[] = {
 #ifdef AUTOPICKUP_EXCEPTIONS
 		"autopickup_exceptions",
 #endif
-#ifdef TEXTCOLOR
-		"color",
-#endif
 #ifdef COM_COMPL
 		"command line completion",
 #endif
@@ -478,13 +472,6 @@ static const char *build_opts[] = {
 #ifdef SEDUCE
 		"seduction",
 #endif
-#ifdef TERMINFO
-		"terminal info library",
-#else
-# if defined(TERMLIB) || (!defined(WIN32) && defined(TTY_GRAPHICS))
-		"terminal capability library",
-# endif
-#endif
 #ifdef TIMED_DELAY
 		"timed wait for display effects",
 #endif
@@ -501,13 +488,7 @@ static const char *build_opts[] = {
 		"basic NetHack features"
 	};
 
-static const char *window_opts[] = {
-#ifdef TTY_GRAPHICS
-		"traditional tty-based graphics",
-#endif
-		0
-	};
-
+	
 void do_options(const char *outfile)
 {
 	int i, length;
@@ -540,19 +521,6 @@ void do_options(const char *outfile)
 	    fprintf(ofp,(i < SIZE(build_opts) - 1) ? "," : "."),  length++;
 	}
 
-	fprintf(ofp,"\n\nSupported windowing systems:\n");
-
-	length = COLNO + 1;	/* force 1st item onto new line */
-	for (i = 0; i < SIZE(window_opts) - 1; i++) {
-	    str = window_opts[i];
-	    if (length + strlen(str) > COLNO - 5)
-		fprintf(ofp,"\n%s", indent),  length = strlen(indent);
-	    else
-		fprintf(ofp," "),  length++;
-	    fprintf(ofp,"%s", str),  length += strlen(str);
-	    fprintf(ofp, ","),  length++;
-	}
-	fprintf(ofp, "\n%swith a default of %s.", indent, DEFAULT_WINDOW_SYS);
 	fprintf(ofp,"\n\n");
 
 	fclose(ofp);

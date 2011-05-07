@@ -47,11 +47,7 @@
 # define curttyb2	curttyb
 
 
-#if defined(TTY_GRAPHICS)
 extern short ospeed;	/* terminal baudrate; set by gettty */
-#else
-short ospeed = 0;	/* gets around "not defined" error message */
-#endif
 
 char erase_char, intr_char, kill_char;
 static boolean settty_needed = FALSE;
@@ -196,22 +192,18 @@ void init_linux_cons(void);
 
 void linux_mapon(void)
 {
-# ifdef TTY_GRAPHICS
 	int count = 0;
 	if (linux_flag_console) {
 		count = write(1, "\033(B", 3);
 	}
-# endif
 }
 
 void linux_mapoff(void)
 {
-# ifdef TTY_GRAPHICS
 	int count = 0;
 	if (linux_flag_console) {
 		count = write(1, "\033(U", 3);
 	}
-# endif
 }
 
 void check_linux_console(void)
@@ -225,12 +217,10 @@ void check_linux_console(void)
 
 void init_linux_cons(void)
 {
-# ifdef TTY_GRAPHICS
 	if (linux_flag_console) {
 		atexit(linux_mapon);
 		linux_mapoff();
 	}
-# endif
 }
 #endif	/* __linux__ */
 

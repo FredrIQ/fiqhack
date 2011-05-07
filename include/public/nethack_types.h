@@ -90,10 +90,9 @@ struct instance_flags {
 	coord	travelcc;	/* coordinates for travel_cache */
 	boolean  sanity_check;	/* run sanity checks */
 	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
-#ifdef TTY_GRAPHICS
+
 	char prevmsg_window;	/* type of old message window to use */
 	boolean  extmenu;	/* extended commands use menu interface */
-#endif
 
 /*
  * Window capability support.

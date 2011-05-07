@@ -111,9 +111,7 @@ KEYHANDLERNAME pKeyHandlerName;
 #define CLR_MAX 16
 #endif
 int ttycolors[CLR_MAX];
-# ifdef TEXTCOLOR
 static void init_ttycolor(void);
-# endif
 static void really_move_cursor(void);
 
 #define MAX_OVERRIDES	256
@@ -134,18 +132,10 @@ static COORD cursor = {0,0};
  */
 void gettty(void)
 {
-#ifndef TEXTCOLOR
-	int k;
-#endif
 	erase_char = '\b';
 	kill_char = 21;		/* cntl-U */
 	iflags.cbreak = TRUE;
-#ifdef TEXTCOLOR
 	init_ttycolor();
-#else
-	for(k=0; k < CLR_MAX; ++k)
-		ttycolors[k] = 7;
-#endif
 }
 
 /* reset terminal to original state */
@@ -515,7 +505,6 @@ void tty_delay_output(void)
 	}
 }
 
-# ifdef TEXTCOLOR
 /*
  * CLR_BLACK		0
  * CLR_RED		1
@@ -561,20 +550,10 @@ static void init_ttycolor(void)
 	ttycolors[CLR_WHITE] = FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_RED|\
 						FOREGROUND_INTENSITY;
 }
-# endif /* TEXTCOLOR */
 
 int has_color(int color)
 {
-# ifdef TEXTCOLOR
     return 1;
-# else
-    if (color == CLR_BLACK)
-    	return 1;
-    else if (color == CLR_WHITE)
-	return 1;
-    else
-	return 0;
-# endif 
 }
 
 void term_start_attr(int attrib)
@@ -632,22 +611,16 @@ void term_start_raw_bold(void)
 
 void term_start_color(int color)
 {
-#ifdef TEXTCOLOR
         if (color >= 0 && color < CLR_MAX) {
 	    foreground = (background != 0 && (color == CLR_GRAY || color == CLR_WHITE)) ?
 			ttycolors[0] : ttycolors[color];
 	}
-#else
-	foreground = DEFTEXTCOLOR;
-#endif
 	attr = (foreground | background);
 }
 
 void term_end_color(void)
 {
-#ifdef TEXTCOLOR
 	foreground = DEFTEXTCOLOR;
-#endif
 	attr = (foreground | background);
 }
 

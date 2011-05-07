@@ -185,9 +185,7 @@ extern const int shield_static[];
 extern struct spell spl_book[];	/* sized in decl.c */
 
 #include "color.h"
-#ifdef TEXTCOLOR
 extern const int zapcolors[];
-#endif
 
 extern const char def_oc_syms[MAXOCLASSES];	/* default class symbols */
 extern uchar oc_syms[MAXOCLASSES];		/* current class symbols */

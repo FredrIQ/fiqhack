@@ -62,7 +62,6 @@ news       print any news from game administrator on startup      [TRUE]
 Boolean option if SCORE_ON_BOTL was set at compile time:
 showscore  display your approximate accumulated score             [FALSE]
 
-Boolean options if TEXTCOLOR was set at compile time:
 color      use different colors for objects on screen   [TRUE for micros]
 hilite_pet display pets in a highlighted manner                   [FALSE]
 
@@ -204,9 +203,6 @@ traps      like dungeon, but for trap symbols
            magic_trap anti_magic_trap polymorph_trap
            default:  ^^^^^^^^^^^^^^^^^"^^^^
 
-windowtype windowing system to be used  [depends on operating system]
-
-Compound option if TTY_GRAPHICS was set at compile time:
 msg_window the type of message window to use:
            single      -- One message at a time
            full        -- Full window with all saved top line messages

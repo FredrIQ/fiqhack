@@ -9,12 +9,6 @@
 #endif
 #include "nethack.h"
 
-/* FIXME these need to go away */
-#define TERMLIB	/* include termcap code */
-/* might display need graphics code? */
-#define ASCIIGRAPH
-
-
 /*	For debugging beta code.	*/
 #ifdef BETA
 #define Dpline	pline

@@ -97,7 +97,7 @@ const char quitchars[] = " \r\n\033";
 const char ynchars[] = "yn";
 // char plname[PL_NSIZ];
 
-#if defined(ASCIIGRAPH) && !defined(NO_TERMS)
+#if !defined(NO_TERMS)
 boolean GFlag = FALSE;
 boolean HE_resets_AS;	/* see termcap.c */
 #endif
@@ -184,9 +184,7 @@ void tty_init_nhwindows(int* argcp, char** argv)
     ttyDisplay->curx = ttyDisplay->cury = 0;
     ttyDisplay->inmore = ttyDisplay->inread = ttyDisplay->intr = 0;
     ttyDisplay->dismiss_more = 0;
-#ifdef TEXTCOLOR
     ttyDisplay->color = NO_COLOR;
-#endif
     ttyDisplay->attrs = 0;
 
     /* set up the default windows */
@@ -2064,18 +2062,16 @@ void docorner(int xmin, int ymax)
 
 void end_glyphout(void)
 {
-#if defined(ASCIIGRAPH) && !defined(NO_TERMS)
+#if !defined(NO_TERMS)
     if (GFlag) {
 	GFlag = FALSE;
 	graph_off();
     }
 #endif
-#ifdef TEXTCOLOR
     if(ttyDisplay->color != NO_COLOR) {
 	term_end_color();
 	ttyDisplay->color = NO_COLOR;
     }
-#endif
 }
 
 #ifndef WIN32
@@ -2083,7 +2079,7 @@ void g_putch(int in_ch)
 {
     char ch = (char)in_ch;
 
-# if defined(ASCIIGRAPH) && !defined(NO_TERMS)
+# if !defined(NO_TERMS)
     if (iflags.IBMgraphics || iflags.wc_eight_bit_input) {
 	/* IBM-compatible displays don't need other stuff */
 	putchar(ch);
@@ -2104,7 +2100,7 @@ void g_putch(int in_ch)
 #else
     putchar(ch);
 
-#endif	/* ASCIIGRAPH && !NO_TERMS */
+#endif	/* !NO_TERMS */
 
     return;
 }
@@ -2142,7 +2138,6 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
     }
 #endif
 
-#ifdef TEXTCOLOR
     if (color != ttyDisplay->color) {
 	if(ttyDisplay->color != NO_COLOR)
 	    term_end_color();
@@ -2150,7 +2145,6 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
 	if(color != NO_COLOR)
 	    term_start_color(color);
     }
-#endif /* TEXTCOLOR */
 
     /* must be after color check; term_end_color may turn off inverse too */
     if (((special & MG_PET) && iflags.wc_hilite_pet) ||
@@ -2163,13 +2157,11 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
 
     if (reverse_on) {
     	term_end_attr(ATR_INVERSE);
-#ifdef TEXTCOLOR
 	/* turn off color as well, ATR_INVERSE may have done this already */
 	if(ttyDisplay->color != NO_COLOR) {
 	    term_end_color();
 	    ttyDisplay->color = NO_COLOR;
 	}
-#endif
     }
 
     wins[window]->curx++;	/* one character over */

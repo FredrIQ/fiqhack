@@ -50,9 +50,7 @@ struct WinDesc {
 struct DisplayDesc {
     uchar rows, cols;		/* width and height of tty display */
     uchar curx, cury;		/* current cursor position on the screen */
-#ifdef TEXTCOLOR
     int color;			/* current color */
-#endif
     int attrs;			/* attributes in effect */
     int toplin;			/* flag for topl stuff */
     int rawprint;		/* number of raw_printed lines since synch */
@@ -135,11 +133,9 @@ extern void term_end_attr(int attr);
 extern void term_start_raw_bold(void);
 extern void term_end_raw_bold(void);
 
-#ifdef TEXTCOLOR
 extern void term_end_color(void);
 extern void term_start_color(int color);
 extern int has_color(int color);
-#endif /* TEXTCOLOR */
 
 
 /* ### topl.c ### */

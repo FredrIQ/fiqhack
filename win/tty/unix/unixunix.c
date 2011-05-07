@@ -38,15 +38,7 @@ static int veryold(int fd)
 			/* strange ... */
 			return 0;
 
-		/* From: Rick Adams <seismo!rick> */
-		/* This will work on 4.1cbsd, 4.2bsd and system 3? & 5. */
-		/* It will do nothing on V7 or 4.1bsd. */
-#ifndef NETWORK
-		/* It will do a VERY BAD THING if the playground is shared
-		   by more than one machine! -pem */
-		if(!(kill(lockedpid, 0) == -1 && errno == ESRCH))
-#endif
-			return 0;
+		return 0;
 	}
 	close(fd);
 	return 1;

@@ -217,9 +217,7 @@
 struct symdef {
     uchar sym;
     const char	*explanation;
-#ifdef TEXTCOLOR
     uchar color;
-#endif
 };
 
 extern const struct symdef defsyms[MAXPCHARS];	/* defaults */

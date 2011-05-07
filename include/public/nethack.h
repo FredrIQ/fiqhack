@@ -38,9 +38,7 @@ extern EXPORT boolean botlx;
 
 extern EXPORT char mapped_menu_cmds[]; /* from options.c */
 
-#ifdef TTY_GRAPHICS
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
-#endif
 
 /* allmain.c */
 extern EXPORT void nethack_init(struct window_procs *);

@@ -5,7 +5,6 @@
 #define NTCONF_H
 
 #define RANDOM		/* have Berkeley random(3) */
-#define TEXTCOLOR	/* Color text */
 
 #define EXEPATH			/* Allow .exe location to be used as HACKDIR */
 #define TRADITIONAL_GLYPHMAP	/* Store glyph mappings at level change time */
@@ -33,7 +32,6 @@
 				   LEVELDIR, SAVEDIR, BONESDIR, DATADIR,
 				   SCOREDIR, LOCKDIR, CONFIGDIR, and TROUBLEDIR */
 #define NO_TERMS
-#define ASCIIGRAPH
 
 #ifdef OPTIONS_USED
 #undef OPTIONS_USED
