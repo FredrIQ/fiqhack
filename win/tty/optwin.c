@@ -89,7 +89,7 @@ static int menu_add_options(winid window, int firstid,
 	any.a_void = NULL;
 	tty_add_menu(window, NO_GLYPH, &any, 0, 0, 0, "", MENU_UNSELECTED);
 	
-	return i;
+	return i + firstid;
 }
 
 
