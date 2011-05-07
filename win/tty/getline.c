@@ -169,7 +169,7 @@ void xwaitforspace(const char *s)
     morc = 0;
 
     while((c = base_nhgetch()) != '\n') {
-	if(iflags.cbreak) {
+	if(ui_flags.cbreak) {
 	    if ((s && index(s,c)) || c == x) {
 		morc = (char) c;
 		break;

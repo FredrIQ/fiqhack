@@ -8,6 +8,12 @@
 
 static int change_inv_order(char *op);
 
+enum graphics_enum {
+    GRAPHICS_PLAIN,
+    GRAPHICS_DEC,
+    GRAPHICS_IBM
+};
+
 /* -------------------------------------------------------------------------- */
 
 #define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
@@ -55,6 +61,13 @@ static struct nh_listitem runmode_list[] = {
 };
 static struct nh_enum_option runmode_spec = {runmode_list, listlen(runmode_list)};
 
+static struct nh_listitem graphics_list[] = {
+	{GRAPHICS_PLAIN, "plain"},
+	{GRAPHICS_DEC, "DEC graphics"},
+	{GRAPHICS_IBM, "IBM graphics"}
+};
+static struct nh_enum_option graphics_spec = {graphics_list, listlen(graphics_list)};
+
 static struct nh_listitem align_list[] = {
 	{ROLE_LAWFUL, "lawful"},
 	{ROLE_NEUTRAL, "neutral"},
@@ -93,13 +106,11 @@ struct nh_option_desc options[] = {
     {"checkpoint",	"",	OPTTYPE_BOOL, { VTRUE }},
     {"cmdassist",	"give help for errors on direction & other commands",	OPTTYPE_BOOL, { VTRUE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
-    {"DECgraphics",	"use DEC/VT line-drawing characters for the dungeon",	OPTTYPE_BOOL, { VFALSE }},
     {"eight_bit_tty",	"send 8-bit characters straight to terminal",	OPTTYPE_BOOL, { VFALSE }},
     {"extmenu",		"use a menu for selecting extended commands (#)",	OPTTYPE_BOOL, { VFALSE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
     {"help",		"print all available info when using the / command",	OPTTYPE_BOOL, { VTRUE }},
     {"hilite_pet",	"",	OPTTYPE_BOOL, { VFALSE }},
-    {"IBMgraphics",	"use IBM extended characters for the dungeon",	OPTTYPE_BOOL, { VFALSE }},
     {"ignintr",		"ignore interrupt signal, including breaks",	OPTTYPE_BOOL, { VFALSE }},
     {"legacy",		"print introductory message",	OPTTYPE_BOOL, { VTRUE }},
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
@@ -142,6 +153,9 @@ struct nh_option_desc options[] = {
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
     {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
     {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
+    
+    /* TODO: following items really should be ui options */
+    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)GRAPHICS_PLAIN}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -194,18 +208,12 @@ static struct nh_boolopt_map boolopt_map[] = {
 #endif
 	{"cmdassist", &iflags.cmdassist},
 	{"confirm",&flags.confirm},
-#if defined(TERMLIB)
-	{"DECgraphics", &iflags.DECgraphics},
-#endif
 	{"eight_bit_tty", &iflags.wc_eight_bit_input},	/*WC*/
 	{"extmenu", &iflags.extmenu},
 	{"female", &flags.female},
 	{"fixinv", &flags.invlet_constant},
 	{"help", &flags.help},
 	{"hilite_pet",    &iflags.wc_hilite_pet},	/*WC*/
-#ifdef ASCIIGRAPH
-	{"IBMgraphics", &iflags.IBMgraphics},
-#endif
 	{"ignintr", &flags.ignintr},
 	{"legacy", &flags.legacy},
 	{"lit_corridor", &flags.lit_corridor},
@@ -245,6 +253,13 @@ static struct nh_boolopt_map boolopt_map[] = {
 	/* birth options */
 	{"scores_own", &flags.end_own},
 	{NULL, NULL}
+};
+
+
+static char def_inv_order[MAXOCLASSES] = {
+	COIN_CLASS, AMULET_CLASS, WEAPON_CLASS, ARMOR_CLASS, FOOD_CLASS,
+	SCROLL_CLASS, SPBOOK_CLASS, POTION_CLASS, RING_CLASS, WAND_CLASS,
+	TOOL_CLASS, GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, 0,
 };
 
 
@@ -328,6 +343,7 @@ void initoptions(void)
 	find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
 	find_option(options, "runmode")->e = runmode_spec;
 	find_option(options, "boulder")->s.maxlen = 1;
+	find_option(options, "graphics")->e = graphics_spec;
 	
 	find_option(birth_options, "align")->e = align_spec;
 	find_option(birth_options, "gender")->e = gender_spec;
@@ -358,6 +374,10 @@ void initoptions(void)
 	flags.warnlevel = 1;
 	flags.warntype = 0L;
 	flags.pickup_types[0] = '\0';
+	
+	/* init flags.inv_order this way, as setting it via the option
+	 * requires a preexisting order */
+	memcpy(flags.inv_order, def_inv_order, sizeof flags.inv_order);
 
 	switch_graphics(ASCII_GRAPHICS);	/* set default characters */
 
@@ -605,7 +625,19 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	else if(!strcmp("runmode", option->name)) {
 		iflags.runmode = option->value.e;
 	}
-	else if(!strcmp("suppress_alert", option->name)) {
+	else if(!strcmp("graphics", option->name)) {
+		iflags.DECgraphics = FALSE;
+		iflags.IBMgraphics = FALSE;
+		if (option->value.e == GRAPHICS_DEC) {
+		    iflags.DECgraphics = TRUE;
+		    switch_graphics(DEC_GRAPHICS);
+		}
+		else if (option->value.e == GRAPHICS_IBM) {
+		    iflags.IBMgraphics = TRUE;
+		    switch_graphics(IBM_GRAPHICS);
+		}
+		else
+		    switch_graphics(ASCII_GRAPHICS);
 	}
 	
 	/* birth options */

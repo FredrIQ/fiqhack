@@ -65,6 +65,12 @@ struct DisplayDesc {
 
 #endif /* WINDOW_STRUCTS */
 
+struct interface_flags {
+	boolean  cbreak;	/* in cbreak mode, rogue format */    
+};
+
+extern struct interface_flags ui_flags;
+
 #define MAXWIN 20		/* maximum number of windows, cop-out */
 
 /* tty dependent window types */

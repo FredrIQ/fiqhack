@@ -73,9 +73,7 @@ struct window_procs {
  *
  */
 struct instance_flags {
-	boolean  cbreak;	/* in cbreak mode, rogue format */
 	boolean  DECgraphics;	/* use DEC VT-xxx extended character set */
-	boolean  echo;		/* 1 to echo characters */
 	boolean  IBMgraphics;	/* use IBM extended character set */
 	unsigned msg_history;	/* hint: # of top lines to save */
 	boolean  num_pad;	/* use numbers for movement commands */

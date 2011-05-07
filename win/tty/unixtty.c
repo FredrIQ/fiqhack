@@ -119,8 +119,7 @@ void settty(const char *s)
 	if(s) tty_raw_print(s);
 	if(STTY(&inittyb) < 0 || STTY2(&inittyb2) < 0)
 		perror("NetHack (settty)");
-	iflags.echo = (inittyb.echoflgs & ECHO) ? ON : OFF;
-	iflags.cbreak = (CBRKON(inittyb.cbrkflgs & CBRKMASK)) ? ON : OFF;
+	ui_flags.cbreak = (CBRKON(inittyb.cbrkflgs & CBRKMASK)) ? ON : OFF;
 	curttyb.inputflags |= STRIPHI;
 	setioctls();
 }
@@ -130,8 +129,7 @@ void setftty(void)
 	int ef = 0;			/* desired value of flags & ECHO */
 	int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
 	int change = 0;
-	iflags.cbreak = ON;
-	iflags.echo = OFF;
+	ui_flags.cbreak = ON;
 	/* Should use (ECHO|CRMOD) here instead of ECHO */
 	if((curttyb.echoflgs & ECHO) != ef){
 		curttyb.echoflgs &= ~ECHO;

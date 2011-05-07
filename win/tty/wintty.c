@@ -24,6 +24,8 @@
 
 #include "wintty.h"
 
+struct interface_flags ui_flags;
+
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
     "tty",
@@ -646,7 +648,7 @@ static void getret(void)
 	if(tty_flags.standout)
 		standoutbeg();
 	xputs("Hit ");
-	xputs(iflags.cbreak ? "space" : "return");
+	xputs(ui_flags.cbreak ? "space" : "return");
 	xputs(" to continue: ");
 	if(tty_flags.standout)
 		standoutend();
