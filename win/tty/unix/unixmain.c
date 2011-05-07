@@ -135,10 +135,11 @@ int EXPORT main(int argc, char *argv[])
 #ifdef __linux__
 	init_linux_cons();
 #endif
+	tty_init_options();
+	read_config();
 
 	process_options(argc, argv);	/* command line options */
 	
-
 	nethack_start_game(plname, exact_username, wiz_error_flag, getlock);
 
 	moveloop();

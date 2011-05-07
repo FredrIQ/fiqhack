@@ -6,21 +6,9 @@
 
 #define WINTYPELEN 16
 
-#ifdef DEFAULT_WC_TILED_MAP
-#define PREFER_TILED VTRUE
-#else
-#define PREFER_TILED VFALSE
-#endif
-
 static int change_inv_order(char *op);
 
 /* -------------------------------------------------------------------------- */
-
-static char def_inv_order[MAXOCLASSES] = {
-	COIN_CLASS, AMULET_CLASS, WEAPON_CLASS, ARMOR_CLASS, FOOD_CLASS,
-	SCROLL_CLASS, SPBOOK_CLASS, POTION_CLASS, RING_CLASS, WAND_CLASS,
-	TOOL_CLASS, GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, 0,
-};
 
 #define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
 
@@ -140,7 +128,7 @@ struct nh_option_desc options[] = {
     {"verbose",		"print more commentary during the game",	OPTTYPE_BOOL, { VTRUE }},
     
     /* complicated options */
-    {"boulder", "the symbol to use for displaying boulders", OPTTYPE_STRING, {NULL}},
+    {"boulder", "the symbol to use for displaying boulders", OPTTYPE_STRING, {"`"}},
     {"disclose_inventory", "the kinds of information to disclose at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"disclose_attribs", "disclose your attributes at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"disclose_vanquished", "disclose the list of vanquished enemies at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
@@ -150,11 +138,10 @@ struct nh_option_desc options[] = {
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
     {"msghistory", "number of top line messages to save", OPTTYPE_INT, {(void*)20}},
     {"msg_window", "the type of message window required", OPTTYPE_ENUM, {(void*)'s'}},
-    {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {def_inv_order}},
+    {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"\")[%?+!=/(*`0_"}},
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
-    {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {}},
+    {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
     {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
-    {"suppress_alert", "suppress alerts about version-specific features", OPTTYPE_STRING, {}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -198,11 +185,7 @@ struct nh_option_desc birth_options[] = {
 
 
 /* associate boolean options with variables directly */
-static struct boolopt_map
-{
-	const char *optname;
-	boolean	*addr;
-} boolopt_map[] = {
+static struct nh_boolopt_map boolopt_map[] = {
 	{"autodig", &flags.autodig},
 	{"autopickup", &flags.pickup},
 	{"autoquiver", &flags.autoquiver},
@@ -265,6 +248,10 @@ static struct boolopt_map
 };
 
 
+struct nh_option_desc *ui_options;
+struct nh_boolopt_map *ui_boolopt_map;
+boolean(*ui_option_callback)(struct nh_option_desc *);
+
 /* most environment variables will eventually be printed in an error
  * message if they don't work, and most error message paths go through
  * BUFSZ buffers, which could be overflowed by a maliciously long
@@ -287,8 +274,8 @@ static struct nh_option_desc *find_option(struct nh_option_desc *optlist, const 
 {
 	int i;
 	for (i = 0; optlist[i].name; i++)
-		if (!strcmp(name, optlist[i].name))
-			return &optlist[i];
+	    if (!strcmp(name, optlist[i].name))
+		return &optlist[i];
 	
 	return NULL;
 }
@@ -297,6 +284,8 @@ static struct nh_option_desc *find_option(struct nh_option_desc *optlist, const 
 void initoptions(void)
 {
 	int i;
+	union nh_optvalue value, nullvalue;
+	nullvalue.s = NULL;
 
 	/* initialize the random number generator */
 	setrandom();
@@ -336,7 +325,9 @@ void initoptions(void)
 	find_option(options, "msg_window")->e = msg_window_spec;
 	find_option(options, "pickup_burden")->e = pickup_burden_spec;
 	find_option(options, "pickup_types")->s.maxlen = MAXOCLASSES;
+	find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
 	find_option(options, "runmode")->e = runmode_spec;
+	find_option(options, "boulder")->s.maxlen = 1;
 	
 	find_option(birth_options, "align")->e = align_spec;
 	find_option(birth_options, "gender")->e = gender_spec;
@@ -353,13 +344,6 @@ void initoptions(void)
 	find_option(birth_options, "warnings")->s.maxlen = WARNCOUNT;
 	find_option(birth_options, "scores_top")->i.max = 100;
 	find_option(birth_options, "scores_around")->i.max = 100;
-	
-	/* init from option definitions */
-	for (i = 0; birth_options[i].name; i++)
-		nh_set_option(birth_options[i].name, birth_options[i].value);
-	
-	for (i = 0; options[i].name; i++)
-		nh_set_option(options[i].name, options[i].value);
 
 	iflags.menu_headings = ATR_INVERSE;
 
@@ -373,14 +357,8 @@ void initoptions(void)
 	iflags.travelcc.x = iflags.travelcc.y = -1;
 	flags.warnlevel = 1;
 	flags.warntype = 0L;
-
-     /* assert( sizeof flags.inv_order == sizeof def_inv_order ); */
-	memcpy((void *)flags.inv_order,
-		     (void *)def_inv_order, sizeof flags.inv_order);
 	flags.pickup_types[0] = '\0';
 
-	for (i = 0; i < NUM_DISCLOSURE_OPTIONS; i++)
-		flags.end_disclose[i] = DISCLOSE_PROMPT_DEFAULT_NO;
 	switch_graphics(ASCII_GRAPHICS);	/* set default characters */
 
 	/* since this is done before init_objects(), do partial init here */
@@ -393,6 +371,22 @@ void initoptions(void)
 	/* as a named (or default) fruit.  Wishing for "fruit" will	*/
 	/* result in the player's preferred fruit [better than "\033"].	*/
 	obj_descr[SLIME_MOLD].oc_name = "fruit";
+	
+	/* init from option definitions */
+	for (i = 0; birth_options[i].name; i++) {
+		/* ensure that string pointers are initially NULL in nh_set_option
+		 * to prevent that code from trying to free() them */
+		value = birth_options[i].value;
+		birth_options[i].value = nullvalue;
+		nh_set_option(birth_options[i].name, value, FALSE);
+	}
+	
+	for (i = 0; options[i].name; i++) {
+		/* same string pointer dance as above */
+		value = options[i].value;
+		options[i].value = nullvalue;
+		nh_set_option(options[i].name, value, FALSE);
+	}
 
 	return;
 }
@@ -406,55 +400,126 @@ static boolean option_value_ok(struct nh_option_desc *option,
 	switch (option->type) {
 	    case OPTTYPE_BOOL:
 		if (value.b == !!value.b)
-			return TRUE;
+		    return TRUE;
 		break;
 		
 	    case OPTTYPE_INT:
 		if (value.i >= option->i.min || value.i <= option->i.max)
-			return TRUE;
+		    return TRUE;
 		break;
 		
 	    case OPTTYPE_ENUM:
 		for (i = 0; i < option->e.numchoices; i++)
-			if (value.e == option->e.choices[i].id)
-				return TRUE;
+		    if (value.e == option->e.choices[i].id)
+			return TRUE;
 		break;
 		
 	    case OPTTYPE_STRING:
 		if (!value.s)
 		    break;
 		
-		if (strlen(value.s) <= option->s.maxlen)
-			return TRUE;
-		break;
+		if (strlen(value.s) > option->s.maxlen)
+		    break;
+		
+		if (strlen(value.s) == 0)
+		    value.s = NULL;
+		
+		return TRUE;
 	}
 	
 	return FALSE;
 }
 
-boolean nh_set_option(const char *name, union nh_optvalue value)
+
+static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char *str)
+{
+	union nh_optvalue value;
+	int i;
+    
+	switch (option->type) {
+	    case OPTTYPE_BOOL:
+		if (!strcmp(str, "TRUE") || !strcmp(str, "true") || !strcmp(str, "1"))
+		    value.b = TRUE;
+		else if  (!strcmp(str, "FALSE") || !strcmp(str, "false") || !strcmp(str, "0"))
+		    value.b = FALSE;
+		else
+		    value.i = 2; /* intentionally invalid */
+		
+		break;
+		
+	    case OPTTYPE_INT:
+		sscanf(str, "%d", &value.i);
+		break;
+		
+	    case OPTTYPE_ENUM:
+		for (i = 0; i < option->e.numchoices; i++)
+		    if (!strcmp(str, option->e.choices[i].caption))
+			value.e = option->e.choices[i].id;
+		break;
+		
+	    case OPTTYPE_STRING:
+		if (strlen(str) > 0)
+		    value.s = str;
+		else
+		    value.s = NULL;
+		break;
+	}
+	
+	return value;
+}
+
+
+/* copy values carefully: copying pointers to strings on the stack is not good */
+static void copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
+{
+	if (option->type == OPTTYPE_STRING) {
+	    if (option->value.s)
+		free(option->value.s);
+	    option->value.s = NULL;
+	    if (value.s) {
+		option->value.s = malloc(strlen(value.s));
+		strcpy(option->value.s, value.s);
+	    }
+	} else
+	    option->value = value;
+}
+
+
+boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
 {
 	int i;
+	boolean is_ui = FALSE;
 	struct nh_option_desc *option = find_option(options, name);
 	
 	if (!option && !program_state.game_started)
 		option = find_option(birth_options, name);
 	
+	if (!option && ui_options) {
+	    option = find_option(ui_options, name);
+	    is_ui = TRUE;
+	}
+	    
 	if (!option)
 		return FALSE;
+	
+	if (isstring)
+	    value = string_to_optvalue(option, value.s);
 	
 	if (!option_value_ok(option, value))
 		return FALSE;
 	
-	option->value = value;
+	copy_option_value(option, value);
 	
 	if (option->type == OPTTYPE_BOOL) {
 		int i;
 		boolean *bvar = NULL;
+		struct nh_boolopt_map *boolmap = boolopt_map;
+		if (is_ui)
+		    boolmap = ui_boolopt_map;
 		
-		for (i = 0; boolopt_map[i].optname && !bvar; i++)
-			if (!strcmp(option->name, boolopt_map[i].optname))
-				bvar = boolopt_map[i].addr;
+		for (i = 0; boolmap[i].optname && !bvar; i++)
+			if (!strcmp(option->name, boolmap[i].optname))
+				bvar = boolmap[i].addr;
 				
 		if (!bvar)
 			/* shouldn't happen */
@@ -463,29 +528,29 @@ boolean nh_set_option(const char *name, union nh_optvalue value)
 		*bvar = option->value.b;
 		return TRUE;
 	}
-	
+	else if(is_ui)
+	    return ui_option_callback(option);
 	/* regular non-boolean options */
 	else if(!strcmp("boulder", option->name)) {
-		int clash = 0;
-		if (def_char_to_monclass(option->value.s[0]) != MAXMCLASSES)
-			clash = 1;
-		else if (option->value.s[0] >= '1' && option->value.s[0] <= '5')
-			clash = 2;
-		if (clash) {
-			/* symbol chosen matches a used monster or warning
-			   symbol which is not good - reject it*/
-			pline(
-		  "Bad option - boulder symbol '%c' conflicts with a %s symbol.",
-			option->value.s[0], (clash == 1) ? "monster" : "warning");
-			return FALSE;
-		} else {
-			/*
-			 * Override the default boulder symbol.
-			 */
-			iflags.bouldersym = (uchar) option->value.s[0];
-		}
-		if (program_state.game_started)
-			doredraw();
+	    int clash = 0;
+	    if (def_char_to_monclass(option->value.s[0]) != MAXMCLASSES)
+		clash = 1;
+	    else if (option->value.s[0] >= '1' && option->value.s[0] <= '5')
+		clash = 2;
+	    if (clash) {
+		/* symbol chosen matches a used monster or warning
+		    symbol which is not good - reject it*/
+		pline("Bad option - boulder symbol '%c' conflicts with a %s symbol.",
+		      option->value.s[0], (clash == 1) ? "monster" : "warning");
+		return FALSE;
+	    } else {
+		/*
+		 * Override the default boulder symbol.
+		 */
+		iflags.bouldersym = (uchar) option->value.s[0];
+	    }
+	    if (program_state.game_started)
+		doredraw();
 	}
 	else if(!strcmp("disclose_inventory", option->name)) {
 		flags.end_disclose[0] = option->value.e;
@@ -524,7 +589,7 @@ boolean nh_set_option(const char *name, union nh_optvalue value)
 	}
 	else if(!strcmp("pickup_types", option->name)) {
 		int num = 0;
-		char *op = option->value.s;
+		const char *op = option->value.s;
 		while (*op) {
 		    int oc_sym = def_char_to_objclass(*op);
 		    /* make sure all are valid obj symbols occuring once */
@@ -663,17 +728,17 @@ int fruitadd(char *str)
 		    !strncmp(str, "blessed ", 8) ||
 		    !strncmp(str, "partly eaten ", 13) ||
 		    (!strncmp(str, "tin of ", 7) &&
-			(!strcmp(str+7, "spinach") ||
+		        (!strcmp(str+7, "spinach") ||
 			 name_to_mon(str+7) >= LOW_PM)) ||
 		    !strcmp(str, "empty tin") ||
 		    ((!strncmp(eos(str)-7," corpse",7) ||
 			    !strncmp(eos(str)-4, " egg",4)) &&
 			name_to_mon(str) >= LOW_PM))
 			{
-				strcpy(buf, pl_fruit);
-				strcpy(pl_fruit, "candied ");
-				strncat(pl_fruit+8, buf, PL_FSIZ-8);
-		}
+			    strcpy(buf, pl_fruit);
+			    strcpy(pl_fruit, "candied ");
+			    strncat(pl_fruit+8, buf, PL_FSIZ-8);
+			}
 	}
 	for(f=ffruit; f; f = f->nextf) {
 		lastf = f;
@@ -772,6 +837,17 @@ static int change_inv_order(char *op)
 
     strcpy(flags.inv_order, buf);
     return 1;
+}
+
+
+/* convenience function: allows the ui to share option handling code */
+void nh_setup_ui_options(struct nh_option_desc *options,
+			 struct nh_boolopt_map *boolmap,
+			 boolean(*callback)(struct nh_option_desc *))
+{
+    ui_options = options;
+    ui_boolopt_map = boolmap;
+    ui_option_callback = callback;
 }
 
 /*******************************************************************************
