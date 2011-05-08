@@ -1357,7 +1357,6 @@ extern int rnz(int);
 /* ### role.c ### */
 
 extern void role_init(void);
-extern void plnamesuffix(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
 

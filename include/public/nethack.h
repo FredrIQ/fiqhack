@@ -41,7 +41,7 @@ extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.
 
 /* allmain.c */
 extern EXPORT void nh_init(int pid, struct window_procs *, char **paths);
-extern EXPORT void nh_start_game(char*,boolean,void(*)(void));
+extern EXPORT void nh_start_game(char*, void(*)(void));
 extern EXPORT void moveloop(void);
 
 /* alloc.c, for util progs too */

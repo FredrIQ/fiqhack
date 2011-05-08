@@ -36,8 +36,7 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 }
 
 
-void nh_start_game(char *name, boolean exact_username,
-			void (*getlock)(void))
+void nh_start_game(char *name, void (*getlock)(void))
 {
 	int fd;
 	
@@ -54,21 +53,7 @@ void nh_start_game(char *name, boolean exact_username,
 
 	if (wizard)
 		strcpy(plname, "wizard");
-	else
-	if(!*plname || !strncmp(plname, "player", 4)
-		    || !strncmp(plname, "games", 4)) {
-		askname(plname);
-	} else if (exact_username) {
-		/* guard against user names with hyphens in them */
-		int len = strlen(plname);
-		/* append the current role, if any, so that last dash is ours */
-		if (++len < sizeof plname)
-			strncat(strcat(plname, "-"),
-				      pl_character, sizeof plname - len - 1);
-	}
-	plnamesuffix();		/* strip suffix from name; calls askname() */
-				/* again if suffix was whole name */
-				/* accepts any suffix */
+
 	if(!wizard) {
 		/*
 		 * check for multiple games under the same name

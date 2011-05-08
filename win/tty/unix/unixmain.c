@@ -15,7 +15,7 @@
 
 extern struct passwd *getpwuid(uid_t);
 extern struct passwd *getpwnam(const char *);
-static boolean whoami(void);
+static void whoami(char *name);
 static void process_options(int, char **);
 void append_slash(char *name);
 
@@ -73,7 +73,6 @@ static char** init_game_paths(void)
 EXPORT int main(int argc, char *argv[])
 {
 	char **gamepaths;
-	boolean exact_username;
 
 	hackpid = getpid();
 	umask(0777 & ~FCMASK);
@@ -98,17 +97,19 @@ EXPORT int main(int argc, char *argv[])
 
 #ifdef __linux__
 	check_linux_console();
-#endif
-	tty_init_nhwindows(&argc,argv);
-	exact_username = whoami();
-#ifdef __linux__
 	init_linux_cons();
 #endif
+	
+	tty_init_nhwindows();
+	whoami(plname);
 	read_config();
 
 	process_options(argc, argv);	/* command line options */
 	
-	nh_start_game(plname, exact_username, getlock);
+	while (!plname[0])
+	    tty_askname(plname);
+	
+	nh_start_game(plname, getlock);
 
 	moveloop();
 	exit(EXIT_SUCCESS);
@@ -202,7 +203,7 @@ static void process_options(int argc, char *argv[])
 }
 
 
-static boolean whoami(void)
+static void whoami(char *name)
 {
 	/*
 	 * Who am i? Algorithm: 1. Use name as specified in NETHACKOPTIONS
@@ -217,14 +218,15 @@ static boolean whoami(void)
 	 */
 	char *s;
 
-	if (*plname) return FALSE;
-	if(/* !*plname && */ (s = nh_getenv("USER")))
-		strncpy(plname, s, sizeof(plname)-1);
-	if(!*plname && (s = nh_getenv("LOGNAME")))
-		strncpy(plname, s, sizeof(plname)-1);
-	if(!*plname && (s = getlogin()))
-		strncpy(plname, s, sizeof(plname)-1);
-	return TRUE;
+	if (*name)
+	    return;
+	
+	if(/* !*name && */ (s = nh_getenv("USER")))
+		strncpy(name, s, PL_NSIZ);
+	if(!*name && (s = nh_getenv("LOGNAME")))
+		strncpy(name, s, PL_NSIZ);
+	if(!*name && (s = getlogin()))
+		strncpy(name, s, PL_NSIZ);
 }
 
 #ifdef PORT_HELP

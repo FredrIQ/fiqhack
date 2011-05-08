@@ -159,7 +159,7 @@ extern void g_putch(int);
 extern void win_tty_init(void);
 
 /* external declarations */
-extern void tty_init_nhwindows(int *, char **);
+extern void tty_init_nhwindows(void);
 extern void tty_player_selection(int,int,int,int,int);
 extern void tty_askname(char*);
 extern void tty_get_nh_event(void);

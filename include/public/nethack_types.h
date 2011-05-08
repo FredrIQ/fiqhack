@@ -22,7 +22,6 @@ struct window_procs {
     const char *name;
     unsigned long wincap;	/* window port capability options supported */
     unsigned long wincap2;	/* additional window port capability options supported */
-    void (*win_init_nhwindows)(int *, char **);
     void (*win_player_selection)(int,int,int,int,int);
     void (*win_askname)(char*);
     void (*win_get_nh_event)(void);

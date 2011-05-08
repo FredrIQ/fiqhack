@@ -1249,41 +1249,6 @@ char *build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 #undef BP_ROLE
 #undef NUM_BP
 
-void plnamesuffix(void)
-{
-	char *sptr, *eptr;
-	int i;
-
-	/* Look for tokens delimited by '-' */
-	if ((eptr = index(plname, '-')) != (char *) 0)
-	    *eptr++ = '\0';
-	while (eptr) {
-	    /* Isolate the next token */
-	    sptr = eptr;
-	    if ((eptr = index(sptr, '-')) != (char *)0)
-		*eptr++ = '\0';
-
-	    /* Try to match it to something */
-	    if ((i = str2role(sptr)) != ROLE_NONE)
-		flags.initrole = i;
-	    else if ((i = str2race(sptr)) != ROLE_NONE)
-		flags.initrace = i;
-	    else if ((i = str2gend(sptr)) != ROLE_NONE)
-		flags.initgend = i;
-	    else if ((i = str2align(sptr)) != ROLE_NONE)
-		flags.initalign = i;
-	}
-	if(!plname[0]) {
-	    askname(plname);
-	    plnamesuffix();
-	}
-
-	/* commas in the plname confuse the record file, convert to spaces */
-	for (sptr = plname; *sptr; sptr++) {
-		if (*sptr == ',') *sptr = ' ';
-	}
-}
-
 
 /*
  *	Special setup modifications here:
@@ -1304,11 +1269,6 @@ void plnamesuffix(void)
 void role_init(void)
 {
 	int alignmnt;
-
-	/* Strip the role letter out of the player name.
-	 * This is included for backwards compatibility.
-	 */
-	plnamesuffix();
 
 	/* Check for a valid role.  Try flags.initrole first. */
 	if (!validrole(flags.initrole)) {
