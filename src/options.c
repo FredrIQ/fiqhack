@@ -72,14 +72,16 @@ static struct nh_listitem align_list[] = {
 	{ROLE_LAWFUL, "lawful"},
 	{ROLE_NEUTRAL, "neutral"},
 	{ROLE_CHAOTIC, "chaotic"},
-	{ROLE_NONE, "random"}
+	{ROLE_NONE, "ask"},
+	{ROLE_RANDOM, "random"}
 };
 static struct nh_enum_option align_spec = {align_list, listlen(align_list)};
 
 static struct nh_listitem gender_list[] = {
 	{ROLE_FEMALE, "female"},
 	{ROLE_MALE, "male"},
-	{ROLE_NONE, "random"}
+	{ROLE_NONE, "ask"},
+	{ROLE_RANDOM, "random"}
 };
 static struct nh_enum_option gender_spec = {gender_list, listlen(gender_list)};
 
@@ -162,10 +164,10 @@ struct nh_option_desc options[] = {
 
 
 struct nh_option_desc birth_options[] = {
-    { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_RANDOM}},
-    { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_RANDOM}},
-    { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_RANDOM}},
-    { "role",     "your starting role", OPTTYPE_ENUM, {(void*)ROLE_RANDOM}},
+    { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "role",     "your starting role", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "catname",  "the name of your (first) cat", OPTTYPE_STRING, {NULL}},
     { "dogname",  "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
     { "horsename", "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
@@ -296,6 +298,47 @@ static struct nh_option_desc *find_option(struct nh_option_desc *optlist, const 
 }
 
 
+static void build_role_spec(void)
+{
+	int i;
+	
+	/* build list of roles */
+	for (i = 0; roles[i].name.m || roles[i].name.f; i++)
+	    ; /* just count em */
+	role_spec.numchoices = i + 2;
+	role_spec.choices = malloc((i+2) * sizeof(struct nh_listitem));
+	for (i = 0; roles[i].name.m || roles[i].name.f; i++) {
+	    role_spec.choices[i].id = i;
+	    if (roles[i].name.m)
+		role_spec.choices[i].caption = (char*)roles[i].name.m;
+	    else
+		role_spec.choices[i].caption = (char*)roles[i].name.f;
+	}
+	role_spec.choices[i].id = ROLE_NONE;
+	role_spec.choices[i].caption = "ask";
+	role_spec.choices[i+1].id = ROLE_RANDOM;
+	role_spec.choices[i+1].caption = "random";
+}
+
+static void build_race_spec(void)
+{
+	int i;
+	
+	/* build list of races */
+	for (i = 0; races[i].noun; i++)
+	    ; /* just count em */
+	race_spec.numchoices = i+2;
+	race_spec.choices = malloc((i+2) * sizeof(struct nh_listitem));
+	for (i = 0; races[i].noun; i++) {
+	    race_spec.choices[i].id = i;
+	    race_spec.choices[i].caption = (char*)races[i].noun;
+	}
+	race_spec.choices[i].id = ROLE_NONE;
+	race_spec.choices[i].caption = "ask";
+	race_spec.choices[i+1].id = ROLE_RANDOM;
+	race_spec.choices[i+1].caption = "random";
+}
+
 void initoptions(void)
 {
 	int i;
@@ -305,28 +348,8 @@ void initoptions(void)
 	/* initialize the random number generator */
 	setrandom();
 	
-	/* build list of roles */
-	for (i = 0; roles[i].name.m || roles[i].name.f; i++)
-	    ; /* just count em */
-	role_spec.numchoices = i;
-	role_spec.choices = malloc(i * sizeof(struct nh_listitem));
-	for (i = 0; roles[i].name.m || roles[i].name.f; i++) {
-	    role_spec.choices[i].id = i;
-	    if (roles[i].name.m)
-		role_spec.choices[i].caption = (char*)roles[i].name.m;
-	    else
-		role_spec.choices[i].caption = (char*)roles[i].name.f;
-	}
-	
-	/* build list of races */
-	for (i = 0; races[i].noun; i++)
-	    ; /* just count em */
-	race_spec.numchoices = i;
-	race_spec.choices = malloc(i * sizeof(struct nh_listitem));
-	for (i = 0; races[i].noun; i++) {
-	    race_spec.choices[i].id = i;
-	    race_spec.choices[i].caption = (char*)races[i].noun;
-	}
+	build_role_spec();
+	build_race_spec();
 	
 	/* initialize option definitions */
 	find_option(options, "disclose_inventory")->e = disclose_spec;
