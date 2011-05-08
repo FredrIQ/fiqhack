@@ -1117,6 +1117,7 @@ extern const char *mimic_obj_name(struct monst *);
 
 /* ### options.c ### */
 
+extern void initoptions(void);
 extern int dotogglepickup(void);
 extern int fruitadd(char *);
 // extern void option_help(void);

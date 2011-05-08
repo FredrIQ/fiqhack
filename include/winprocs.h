@@ -54,7 +54,6 @@ extern void nh_delay_output(void);
 #define end_screen (*windowprocs.win_end_screen)
 
 #define outrip (*windowprocs.win_outrip)
-#define preference_update (*windowprocs.win_preference_update)
 
 
 #define ALIGN_LEFT	1

@@ -96,7 +96,6 @@ extern EXPORT void mapglyph(int, int *, int *, unsigned *, int, int);
 extern EXPORT char *an(const char *);
 
 /* options.c */
-extern EXPORT void initoptions(void);
 extern EXPORT void add_menu_cmd_alias(char, char);
 extern EXPORT char map_menu_cmd(char);
 extern EXPORT char *nh_getenv(const char *);
