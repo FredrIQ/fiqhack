@@ -9,24 +9,6 @@
 /* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
 				   is available from your system */
 
-
-/*
- * The next two defines are intended mainly for the Andrew File System,
- * which does not allow hard links.  Lock files
- * will be created in LOCKDIR using open() instead of in the playground using
- * link().
- *		Ralf Brown, 7/26/89 (from v2.3 hack of 10/10/88)
- */
-
-/* #define LOCKDIR "/usr/games/lib/nethackdir" */	/* where to put locks */
-
-/*
- * If you want the static parts of your playground on a read-only file
- * system, define VAR_PLAYGROUND to be where the variable parts are kept.
- */
-/* #define VAR_PLAYGROUND "/var/lib/games/nethack" */
-
-
 /*
  * Define PORT_HELP to be the name of the port-specfic help file.
  * This file is found in HACKDIR.

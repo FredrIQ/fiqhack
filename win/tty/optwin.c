@@ -8,7 +8,12 @@
 #include "nethack.h"
 #include "wintty.h"
 
+static void read_ui_config(void);
+
+
 struct nh_option_desc tty_options[] = {
+    {"hackdir", "game data directory", OPTTYPE_STRING, {NULL}},
+    {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
@@ -19,13 +24,25 @@ struct nh_boolopt_map boolopt_map[] = {
 
 boolean option_change_callback(struct nh_option_desc *option)
 {
-	return FALSE;
+	if (!strcmp(option->name, "hackdir")) {
+	    hackdir = option->value.s;
+	    pline ("This option will take effect when the game is restarted");
+	}
+	else if (!strcmp(option->name, "playground")) {
+	    var_playground = option->value.s;
+	    pline ("This option will take effect when the game is restarted");
+	}
+	else
+	    return FALSE;
+	
+	return TRUE;
 }
 
 
 void tty_init_options(void)
 {
 	nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
+	read_ui_config();
 }
 
 
@@ -324,22 +341,8 @@ static void get_config_name(char *buf, boolean ui)
 	    snprintf(buf, BUFSZ, "%s/.config/NetHack/%s", envval,
 		     ui ? "tty.conf" : "NetHack.conf");
 	}
-}
-
-
-void read_config(void)
-{
-#if defined(UNIX)
-	char filename[BUFSZ];
-	char uiconfname[BUFSZ];
 	
-	get_config_name(filename, FALSE);
-	get_config_name(uiconfname, TRUE);
-	
-	read_config_file(filename);
-	read_config_file(uiconfname);
-	
-#elif defined(WIN32)
+#if defined(WIN32)
 	TCHAR szPath[MAX_PATH];
 	/* get the application data directory: 
 	 * C:\Users\somename\AppData\roaming\ on Vista and 7 */
@@ -347,6 +350,21 @@ void read_config(void)
 	    return;
 	PathAppend( szPath, _T("\\NetHack\\NetHack.conf") );
 #endif
+}
+
+
+void read_config(void)
+{
+	char filename[BUFSZ];
+	get_config_name(filename, FALSE);
+	read_config_file(filename);
+}
+
+void read_ui_config(void)
+{
+	char uiconfname[BUFSZ];
+	get_config_name(uiconfname, TRUE);
+	read_config_file(uiconfname);    
 }
 
 

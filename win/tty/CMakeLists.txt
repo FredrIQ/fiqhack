@@ -27,7 +27,7 @@ endif()
 include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
-add_definitions (-Wall -fvisibility=hidden -g3)
+add_definitions (-Wall -fvisibility=hidden -g3 -DNETHACKDIR="${DATADIR}")
 link_directories (${NetHack_BINARY_DIR}/src)
 add_executable (nethack_tty ${NH_TTY_SRC} ${NH_SYS_SRC} )
 set_target_properties(nethack_tty PROPERTIES OUTPUT_NAME nethack )
@@ -38,7 +38,7 @@ add_dependencies(nethack_tty nethack)
 
 if (UNIX)
     add_custom_command(OUTPUT nethack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} HACKDIR=${DATADIR} ${BINDIR}/nethack $@" >> nethack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nethack $@" >> nethack.sh
                        VERBATIM)
     add_custom_target(nethack_shell_script ALL
                       DEPENDS nethack.sh)

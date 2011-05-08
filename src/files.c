@@ -30,10 +30,8 @@ extern int errno;
 # define O_BINARY 0
 #endif
 
-#ifdef PREFIXES_IN_USE
 #define FQN_NUMBUF 4
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
-#endif
 
 #if !defined(WIN32)
 char bones[] = "bonesnn.xxx";
@@ -202,14 +200,8 @@ char *fname_decode(char quotechar, char *s, char *callerbuf, int bufsz)
 	return callerbuf;
 }
 
-#ifndef PREFIXES_IN_USE
-/*ARGSUSED*/
-#endif
 const char *fqname(const char *basename, int whichprefix, int buffnum)
 {
-#ifndef PREFIXES_IN_USE
-	return basename;
-#else
 	if (!basename || whichprefix < 0 || whichprefix >= PREFIX_COUNT)
 		return basename;
 	if (!fqn_prefix[whichprefix])
@@ -227,14 +219,12 @@ const char *fqname(const char *basename, int whichprefix, int buffnum)
 	}
 	strcpy(fqn_filename_buffer[buffnum], fqn_prefix[whichprefix]);
 	return strcat(fqn_filename_buffer[buffnum], basename);
-#endif
 }
 
 /* reasonbuf must be at least BUFSZ, supplied by caller */
 /*ARGSUSED*/
 int validate_prefix_locations(char *reasonbuf)
 {
-#if defined(NOCWD_ASSUMPTIONS)
 	FILE *fp;
 	const char *filename;
 	int prefcnt, failcount = 0;
@@ -243,7 +233,8 @@ int validate_prefix_locations(char *reasonbuf)
 	if (reasonbuf) reasonbuf[0] = '\0';
 	for (prefcnt = 1; prefcnt < PREFIX_COUNT; prefcnt++) {
 		/* don't test writing to configdir or datadir; they're readonly */
-		if (prefcnt == CONFIGPREFIX || prefcnt == DATAPREFIX) continue;
+		if (prefcnt == DATAPREFIX)
+		    continue;
 		filename = fqname("validate", prefcnt, 3);
 		if ((fp = fopen(filename, "w"))) {
 			fclose(fp);
@@ -266,8 +257,7 @@ int validate_prefix_locations(char *reasonbuf)
 	}
 	if (failcount)
 		return 0;
-	else
-#endif
+	
 	return 1;
 }
 

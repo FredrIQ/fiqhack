@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 
 #include "dlb.h"
+#include "hack.h"
 static void wd_message(boolean wiz_error_flag);
 
 static void wd_message(boolean wiz_error_flag)
@@ -25,10 +26,18 @@ static void wd_message(boolean wiz_error_flag)
 }
 
 
-void nethack_init(struct window_procs *procs)
+void nh_init(int pid, struct window_procs *procs, char **paths)
 {
-    windowprocs = *procs;
-    program_state.game_started = 0;
+	int i;
+	
+	hackpid = pid;
+	windowprocs = *procs;
+	
+	for (i = 0; i < PREFIX_COUNT; i++)
+	    fqn_prefix[i] = paths[i];
+	
+	program_state.game_started = 0;
+	initoptions();
 }
 
 

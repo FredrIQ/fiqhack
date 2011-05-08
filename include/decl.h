@@ -11,6 +11,7 @@ extern char SAVEF[];
 
 extern int bases[MAXOCLASSES];
 
+extern int hackpid;
 extern int multi;
 extern int nroom;
 extern int nsubroom;
@@ -286,13 +287,6 @@ extern char **viz_array;		/* could see/in sight row pointers */
 
 /* Window system stuff */
 #ifndef TCAP_H
-#if 0
-struct tc_gbl_data {	/* also declared in tcap.h */
-    char *tc_AS, *tc_AE;	/* graphics start and end (tty font swapping) */
-    int   tc_LI,  tc_CO;	/* lines and columns */
-};
-#endif
-// extern struct tc_gbl_data tc_gbl_data;
 #define AS tc_gbl_data.tc_AS
 #define AE tc_gbl_data.tc_AE
 #define LI tc_gbl_data.tc_LI
@@ -307,17 +301,9 @@ extern const char * const monexplain[], invisexplain[], * const objexplain[], * 
 #define FQN_MAX_FILENAME 512
 # endif
 
-#if defined(NOCWD_ASSUMPTIONS) || defined(VAR_PLAYGROUND)
-/* the bare-bones stuff is unconditional above to simplify coding; for
- * ports that actually use prefixes, add some more localized things
- */
-#define PREFIXES_IN_USE
-#endif
 
 extern char *fqn_prefix[PREFIX_COUNT];
-#ifdef PREFIXES_IN_USE
 extern char *fqn_prefix_names[PREFIX_COUNT];
-#endif
 
 #ifdef AUTOPICKUP_EXCEPTIONS
 struct autopickup_exception {

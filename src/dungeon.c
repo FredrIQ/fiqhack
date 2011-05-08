@@ -603,12 +603,8 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 		DUNGEON_FILE);
 # if defined(DLB)
 	    strcat(tbuf, "\" from ");
-#  ifdef PREFIXES_IN_USE
 	    strcat(tbuf, "\n\"");
 	    if (fqn_prefix[DATAPREFIX]) strcat(tbuf, fqn_prefix[DATAPREFIX]);
-#  else
-	    strcat(tbuf, "\"");
-#  endif
 	    strcat(tbuf, DLBFILE);
 # endif
 	    strcat(tbuf, "\" file!");

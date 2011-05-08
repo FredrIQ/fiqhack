@@ -232,14 +232,12 @@ winid WIN_MESSAGE = WIN_ERR, WIN_STATUS = WIN_ERR;
 winid WIN_MAP = WIN_ERR, WIN_INVEN = WIN_ERR;
 char toplines[TBUFSZ];
 
-char *fqn_prefix[PREFIX_COUNT] = { (char *)0, (char *)0, (char *)0, (char *)0,
-				(char *)0, (char *)0, (char *)0, (char *)0, (char *)0 };
+char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,
+				NULL, NULL, NULL, NULL };
 
-#ifdef PREFIXES_IN_USE
 char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
 					"bonesdir", "datadir", "scoredir",
-					"lockdir", "configdir", "troubledir" };
-#endif
+					"lockdir", "troubledir" };
 
 boolean botl  = 0;	/* partially redo status line */
 boolean botlx = 0;	/* print an entirely new bottom line */

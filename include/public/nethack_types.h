@@ -181,9 +181,8 @@ struct sinfo {
 #define DATAPREFIX	4	/* this one must match hardcoded value in dlb.c */
 #define SCOREPREFIX	5
 #define LOCKPREFIX	6
-#define CONFIGPREFIX	7
-#define TROUBLEPREFIX	8
-#define PREFIX_COUNT	9
+#define TROUBLEPREFIX	7
+#define PREFIX_COUNT	8
 
 
 enum nh_opttype {

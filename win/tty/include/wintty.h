@@ -4,6 +4,10 @@
 #ifndef WINTTY_H
 #define WINTTY_H
 
+#ifndef NETHACKDIR
+#define NETHACKDIR "/usr/share/NetHack/"
+#endif
+
 #ifndef WINDOW_STRUCTS
 #define WINDOW_STRUCTS
 
@@ -77,7 +81,10 @@ extern struct interface_flags ui_flags;
 #endif
 #define NHW_BASE    6
 
+extern char *hackdir;
+extern char *var_playground;
 extern struct window_procs tty_procs;
+extern int hackpid;
 
 /* port specific variable declarations */
 extern winid BASE_WINDOW;

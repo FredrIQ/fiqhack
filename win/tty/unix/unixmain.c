@@ -16,11 +16,9 @@
 
 extern struct passwd *getpwuid(uid_t);
 extern struct passwd *getpwnam(const char *);
-#ifdef CHDIR
-static void chdirx(const char *,boolean);
-#endif /* CHDIR */
 static boolean whoami(void);
 static void process_options(int, char **);
+void append_slash(char *name);
 
 #ifdef __linux__
 extern void check_linux_console(void);
@@ -30,112 +28,83 @@ extern void init_linux_cons(void);
 static boolean wiz_error_flag = FALSE;
 int locknum = 0;		/* max num of simultaneous users */
 static char plname[PL_NSIZ] = "\0";
+char *hackdir, *var_playground;
+int hackpid;
 
-int EXPORT main(int argc, char *argv[])
+
+static char** init_game_paths(void)
 {
-#ifdef CHDIR
+	char **pathlist = malloc(sizeof(char*) * PREFIX_COUNT);
 	char *dir;
-#endif
-	boolean exact_username;
+	int i;
+	
+	dir = getenv("NETHACKDIR");
+	if (!dir)
+	    dir = getenv("HACKDIR");
+	
+	if (!dir)
+	    dir = hackdir;
 
-#if defined(__APPLE__)
-	/* special hack to change working directory to a resource fork when
-	   running from finder --sam */
-#define MAC_PATH_VALUE ".app/Contents/MacOS/"
-	char mac_cwd[1024], *mac_exe = argv[0], *mac_tmp;
-	int arg0_len = strlen(mac_exe), mac_tmp_len, mac_lhs_len=0;
-	getcwd(mac_cwd, 1024);
-	if(mac_exe[0] == '/' && !strcmp(mac_cwd, "/")) {
-	    if((mac_exe = strrchr(mac_exe, '/')))
-		mac_exe++;
-	    else
-		mac_exe = argv[0];
-	    mac_tmp_len = (strlen(mac_exe) * 2) + strlen(MAC_PATH_VALUE);
-	    if(mac_tmp_len <= arg0_len) {
-		mac_tmp = malloc(mac_tmp_len + 1);
-		sprintf(mac_tmp, "%s%s%s", mac_exe, MAC_PATH_VALUE, mac_exe);
-		if(!strcmp(argv[0] + (arg0_len - mac_tmp_len), mac_tmp)) {
-		    mac_lhs_len = (arg0_len - mac_tmp_len) + strlen(mac_exe) + 5;
-		    if(mac_lhs_len > mac_tmp_len - 1)
-			mac_tmp = realloc(mac_tmp, mac_lhs_len);
-		    strncpy(mac_tmp, argv[0], mac_lhs_len);
-		    mac_tmp[mac_lhs_len] = '\0';
-		    chdir(mac_tmp);
-		}
-		free(mac_tmp);
-	    }
+	if (!dir)
+	    dir = NETHACKDIR;
+	
+	for (i = 0; i < PREFIX_COUNT; i++)
+	    pathlist[i] = dir;
+	
+	if (var_playground) {
+	    pathlist[SCOREPREFIX] = var_playground;
+	    pathlist[LEVELPREFIX] = var_playground;
+	    pathlist[SAVEPREFIX] = var_playground;
+	    pathlist[BONESPREFIX] = var_playground;
+	    pathlist[LOCKPREFIX] = var_playground;
+	    pathlist[TROUBLEPREFIX] = var_playground;
 	}
-#endif
+
+	/* alloc memory for the paths and append slashes as required */
+	for (i = 0; i < PREFIX_COUNT; i++) {
+	    char *tmp = pathlist[i];
+	    pathlist[i] = malloc(strlen(tmp) + 1);
+	    strcpy(pathlist[i], tmp);
+	    append_slash(pathlist[i]);
+	}
+	
+	return pathlist;
+}
+
+
+EXPORT int main(int argc, char *argv[])
+{
+	char **gamepaths;
+	boolean exact_username;
 
 	hackpid = getpid();
 	umask(0777 & ~FCMASK);
+	
+	tty_init_options();
+	gamepaths = init_game_paths();
 
 	win_tty_init();
-	nethack_init(&tty_procs);
+	nh_init(hackpid, &tty_procs, gamepaths);
 
-#ifdef CHDIR			/* otherwise no chdir() */
-	/*
-	 * See if we must change directory to the playground.
-	 * (Perhaps hack runs suid and playground is inaccessible
-	 *  for the player.)
-	 * The environment variable HACKDIR is overridden by a
-	 *  -d command line option (must be the first option given)
-	 */
-	dir = nh_getenv("NETHACKDIR");
-	if (!dir) dir = nh_getenv("HACKDIR");
-#endif
 	if(argc > 1) {
-#ifdef CHDIR
-	    if (!strncmp(argv[1], "-d", 2) && argv[1][2] != 'e') {
-		/* avoid matching "-dec" for DECgraphics; since the man page
-		 * says -d directory, hope nobody's using -desomething_else
-		 */
-		argc--;
-		argv++;
-		dir = argv[0]+2;
-		if(*dir == '=' || *dir == ':') dir++;
-		if(!*dir && argc > 1) {
-			argc--;
-			argv++;
-			dir = argv[0];
-		}
-		if(!*dir)
-		    error("Flag -d must be followed by a directory name.");
-	    }
-	    if (argc > 1)
-#endif /* CHDIR */
-
 	    /*
 	     * Now we know the directory containing 'record' and
 	     * may do a prscore().  Exclude `-style' - it's a Qt option.
 	     */
 	    if (!strncmp(argv[1], "-s", 2) && strncmp(argv[1], "-style", 6)) {
-#ifdef CHDIR
-		chdirx(dir,0);
-#endif
 		prscore(argv[0],argc, argv);
 		exit(EXIT_SUCCESS);
 	    }
 	}
 
-	/*
-	 * Change directories before we initialize the window system so
-	 * we can find the tile file.
-	 */
-#ifdef CHDIR
-	chdirx(dir,1);
-#endif
-
 #ifdef __linux__
 	check_linux_console();
 #endif
-	initoptions();
 	tty_init_nhwindows(&argc,argv);
 	exact_username = whoami();
 #ifdef __linux__
 	init_linux_cons();
 #endif
-	tty_init_options();
 	read_config();
 
 	process_options(argc, argv);	/* command line options */
@@ -258,60 +227,6 @@ static void process_options(int argc, char *argv[])
 #endif
 }
 
-#ifdef CHDIR
-static void chdirx(const char *dir, boolean wr)
-{
-	if (dir					/* User specified directory? */
-# ifdef HACKDIR
-	       && strcmp(dir, HACKDIR)		/* and not the default? */
-# endif
-		) {
-# ifdef SECURE
-	    setgid(getgid());
-	    setuid(getuid());		/* Ron Wessels */
-# endif
-	} else {
-	    /* non-default data files is a sign that scores may not be
-	     * compatible, or perhaps that a binary not fitting this
-	     * system's layout is being used.
-	     */
-# ifdef VAR_PLAYGROUND
-	    int len = strlen(VAR_PLAYGROUND);
-
-	    fqn_prefix[SCOREPREFIX] = (char *)alloc(len+2);
-	    strcpy(fqn_prefix[SCOREPREFIX], VAR_PLAYGROUND);
-	    if (fqn_prefix[SCOREPREFIX][len-1] != '/') {
-		fqn_prefix[SCOREPREFIX][len] = '/';
-		fqn_prefix[SCOREPREFIX][len+1] = '\0';
-	    }
-# endif
-	}
-
-# ifdef HACKDIR
-	if (dir == (const char *)0)
-	    dir = HACKDIR;
-# endif
-
-	if (dir && chdir(dir) < 0) {
-	    perror(dir);
-	    error("Cannot chdir to %s.", dir);
-	}
-
-	/* warn the player if we can't write the record file */
-	/* perhaps we should also test whether . is writable */
-	/* unfortunately the access system-call is worthless */
-	if (wr) {
-# ifdef VAR_PLAYGROUND
-	    fqn_prefix[LEVELPREFIX] = fqn_prefix[SCOREPREFIX];
-	    fqn_prefix[SAVEPREFIX] = fqn_prefix[SCOREPREFIX];
-	    fqn_prefix[BONESPREFIX] = fqn_prefix[SCOREPREFIX];
-	    fqn_prefix[LOCKPREFIX] = fqn_prefix[SCOREPREFIX];
-	    fqn_prefix[TROUBLEPREFIX] = fqn_prefix[SCOREPREFIX];
-# endif
-	    check_recordfile(dir);
-	}
-}
-#endif /* CHDIR */
 
 static boolean whoami(void)
 {

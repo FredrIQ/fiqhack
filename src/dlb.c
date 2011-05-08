@@ -6,6 +6,9 @@
 
 #define DATAPREFIX 4
 
+/* without extern.h via hack.h, these haven't been declared for us */
+extern FILE *fopen_datafile(const char *,const char *,int);
+
 #ifdef DLB
 /*
  * Data librarian.  Present a STDIO-like interface to NetHack while
@@ -25,8 +28,6 @@ typedef struct dlb_procs {
     long (*dlb_ftell_proc)(DLB_P);
 } dlb_procs_t;
 
-/* without extern.h via hack.h, these haven't been declared for us */
-extern FILE *fopen_datafile(const char *,const char *,int);
 
 /*
  * Library Implementation:
@@ -454,6 +455,13 @@ long dlb_ftell(dlb *dp)
     if (!dlb_initialized) return 0;
     if (dp->fp) return ftell(dp->fp);
     return do_dlb_ftell(dp);
+}
+
+#else
+
+FILE* dlb_fopen(const char *filename, const char *mode)
+{
+    return fopen_datafile(filename, mode, DATAPREFIX);
 }
 
 #endif /* DLB */

@@ -23,7 +23,6 @@
 extern EXPORT struct sinfo program_state;
 
 extern EXPORT char lock[];
-extern EXPORT int hackpid;
 
 extern EXPORT long yn_number;
 
@@ -41,7 +40,7 @@ extern EXPORT char mapped_menu_cmds[]; /* from options.c */
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
 /* allmain.c */
-extern EXPORT void nethack_init(struct window_procs *);
+extern EXPORT void nh_init(int pid, struct window_procs *, char **paths);
 extern EXPORT void nethack_start_game(char*,boolean,boolean,void(*)(void));
 extern EXPORT void moveloop(void);
 
