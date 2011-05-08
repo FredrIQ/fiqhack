@@ -520,6 +520,7 @@ extern void makerogueghost(void);
 
 /* ### files.c ### */
 
+extern void display_file(const char *, boolean);
 extern char *fname_encode(const char *, char, char *, char *, int);
 extern char *fname_decode(char, char *, char *, int);
 extern FILE *fopen_datafile(const char *,const char *,int);

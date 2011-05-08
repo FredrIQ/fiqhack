@@ -5,18 +5,6 @@
 #define DLB_H
 /* definitions for data library */
 
-#ifndef EXPORT
-# if nethack_EXPORTS
-#  define EXPORT __attribute__((__visibility__("default")))
-# elif nethack_EXPORTS && defined _MSC_VER
-#  define EXPORT __declspec(dllexport)
-# elif defined _MSC_VER
-#  define EXPORT __declspec(dllimport)
-# else
-#  define EXPORT
-# endif
-#endif
-
 #ifdef DLB
 
 /* directory structure in memory */
@@ -61,7 +49,7 @@ typedef struct dlb_handle {
 boolean dlb_init(void);
 void dlb_cleanup(void);
 
-EXPORT dlb *dlb_fopen(const char *,const char *);
+dlb *dlb_fopen(const char *,const char *);
 int dlb_fclose(DLB_P);
 int dlb_fread(char *,int,int,DLB_P);
 int dlb_fseek(DLB_P,long,int);
@@ -77,8 +65,7 @@ long dlb_ftell(DLB_P);
 # define dlb_init()
 # define dlb_cleanup()
 
-/* # define dlb_fopen	fopen */
-EXPORT FILE *dlb_fopen(const char*, const char*);
+FILE *dlb_fopen(const char*, const char*);
 # define dlb_fclose	fclose
 # define dlb_fread	fread
 # define dlb_fseek	fseek

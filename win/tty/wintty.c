@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "nethack.h"
-#include "dlb.h"
 #include "color.h"
 #include "patchlevel.h"
 #include "role.h"
@@ -44,7 +43,7 @@ struct window_procs tty_procs = {
     tty_destroy_nhwindow,
     tty_curs,
     tty_putstr,
-    tty_display_file,
+    tty_display_buffer,
     tty_start_menu,
     tty_add_menu,
     tty_end_menu,
@@ -1719,46 +1718,42 @@ void tty_putstr(winid window, int attr, const char *str)
 }
 
 
-void tty_display_file(const char *fname, boolean complain)
+void tty_display_buffer(char *buf, boolean trymove)
 {
-	dlb *f;
-	char buf[BUFSZ];
-	char *cr;
+	char *line;
+	char linebuf[BUFSZ];
 
 	tty_clear_nhwindow(WIN_MESSAGE);
-	f = dlb_fopen(fname, "r");
-	if (!f) {
-	    if(complain) {
-		home();  tty_mark_synch();  tty_raw_print("");
-		perror(fname);  tty_wait_synch();
-		pline("Cannot open \"%s\".", fname);
-	    } else if(program_state.something_worth_saving) docrt();
-	} else {
-	    winid datawin = tty_create_nhwindow(NHW_TEXT);
-	    boolean empty = TRUE;
+	winid datawin = tty_create_nhwindow(NHW_TEXT);
+	boolean empty = TRUE;
 
-	    if(complain
+	if(trymove
 #ifndef NO_TERMS
-		&& nh_CD
+	    && nh_CD
 #endif
-	    ) {
-		/* attempt to scroll text below map window if there's room */
-		wins[datawin]->offy = wins[WIN_STATUS]->offy+3;
-		if((int) wins[datawin]->offy + 12 > (int) ttyDisplay->rows)
-		    wins[datawin]->offy = 0;
-	    }
-	    while (dlb_fgets(buf, BUFSZ, f)) {
-		if ((cr = index(buf, '\n')) != 0) *cr = 0;
-		if (index(buf, '\t') != 0) tabexpand(buf);
-		empty = FALSE;
-		tty_putstr(datawin, 0, buf);
-		if(wins[datawin]->flags & WIN_CANCELLED)
-		    break;
-	    }
-	    if (!empty) tty_display_nhwindow(datawin, FALSE);
-	    tty_destroy_nhwindow(datawin);
-	    dlb_fclose(f);
+	) {
+	    /* attempt to scroll text below map window if there's room */
+	    wins[datawin]->offy = wins[WIN_STATUS]->offy+3;
+	    if((int) wins[datawin]->offy + 12 > (int) ttyDisplay->rows)
+		wins[datawin]->offy = 0;
 	}
+	
+	line = strtok(buf, "\n");
+	do {
+	    strncpy(linebuf, line, BUFSZ);
+	    if (index(linebuf, '\t') != 0)
+		tabexpand(linebuf);
+	    empty = FALSE;
+	    tty_putstr(datawin, 0, linebuf);
+	    
+	    if(wins[datawin]->flags & WIN_CANCELLED)
+		break;
+	    
+	    line = strtok(NULL, "\n");
+	} while (line);
+	
+	if (!empty) tty_display_nhwindow(datawin, FALSE);
+	tty_destroy_nhwindow(datawin);
 }
 
 void tty_start_menu(winid window)

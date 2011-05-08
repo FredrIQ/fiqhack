@@ -3,7 +3,6 @@
 
 #include "config.h"
 #include "nethack.h"
-#include "dlb.h"
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -81,10 +80,11 @@ EXPORT int main(int argc, char *argv[])
 	umask(0777 & ~FCMASK);
 	
 	tty_init_options();
-	gamepaths = init_game_paths();
-
 	win_tty_init();
+	
+	gamepaths = init_game_paths();
 	nh_init(hackpid, &tty_procs, gamepaths);
+	free(gamepaths);
 
 	if(argc > 1) {
 	    /*

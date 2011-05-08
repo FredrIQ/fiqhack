@@ -85,6 +85,34 @@ static int open_levelfile_exclusively(const char *, int, int);
 
 
 
+void display_file(const char *fname, boolean complain)
+{
+	dlb *fp;
+	char *buf;
+	int fsize;
+
+	fp = dlb_fopen(fname, "r");
+	if (!fp) {
+	    if(complain) {
+		pline("Cannot open \"%s\".", fname);
+	    } else if(program_state.something_worth_saving) docrt();
+	} else {
+	    dlb_fseek(fp, 0, SEEK_END);
+	    fsize = dlb_ftell(fp);
+	    dlb_fseek(fp, 0, SEEK_SET);
+	    
+	    buf = malloc(fsize);
+	    dlb_fread(buf, fsize, 1, fp);
+	    
+	    dlb_fclose(fp);
+	    
+	    display_buffer(buf, complain);
+	    
+	    free(buf);
+	}
+}
+
+
 void regularize(char *s)
 {
 	char *lp;

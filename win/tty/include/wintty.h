@@ -173,7 +173,7 @@ extern void tty_dismiss_nhwindow(winid);
 extern void tty_destroy_nhwindow(winid);
 extern void tty_curs(winid,int,int);
 extern void tty_putstr(winid, int, const char *);
-extern void tty_display_file(const char *, boolean);
+extern void tty_display_buffer(char *,boolean);
 extern void tty_start_menu(winid);
 extern void tty_add_menu(winid,int,const ANY_P *,
 		char,char,int,const char *, boolean);
