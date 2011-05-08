@@ -24,7 +24,6 @@ extern void check_linux_console(void);
 extern void init_linux_cons(void);
 #endif
 
-static boolean wiz_error_flag = FALSE;
 int locknum = 0;		/* max num of simultaneous users */
 static char plname[PL_NSIZ] = "\0";
 char *hackdir, *var_playground;
@@ -109,7 +108,7 @@ EXPORT int main(int argc, char *argv[])
 
 	process_options(argc, argv);	/* command line options */
 	
-	nethack_start_game(plname, exact_username, wiz_error_flag, getlock);
+	nh_start_game(plname, exact_username, getlock);
 
 	moveloop();
 	exit(EXIT_SUCCESS);
@@ -129,34 +128,9 @@ static void process_options(int argc, char *argv[])
 		argc--;
 		switch(argv[0][1]){
 		case 'D':
-			{
-			  char *user;
-			  int uid;
-			  struct passwd *pw = (struct passwd *)0;
-
-			  uid = getuid();
-			  user = getlogin();
-			  if (user) {
-			      pw = getpwnam(user);
-			      if (pw && (pw->pw_uid != uid)) pw = 0;
-			  }
-			  if (pw == 0) {
-			      user = nh_getenv("USER");
-			      if (user) {
-				  pw = getpwnam(user);
-				  if (pw && (pw->pw_uid != uid)) pw = 0;
-			      }
-			      if (pw == 0) {
-				  pw = getpwuid(uid);
-			      }
-			  }
-			  if (pw && !strcmp(pw->pw_name,WIZARD)) {
-			      enter_wizard_mode();
-			      break;
-			  }
-			}
-			/* otherwise fall thru to discover */
-			wiz_error_flag = TRUE;
+			enter_wizard_mode();
+			break;
+			
 		case 'X':
 			enter_discover_mode();
 			break;

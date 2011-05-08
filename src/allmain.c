@@ -12,15 +12,10 @@
 
 #include "dlb.h"
 #include "hack.h"
-static void wd_message(boolean wiz_error_flag);
+static void wd_message(void);
 
-static void wd_message(boolean wiz_error_flag)
+static void wd_message(void)
 {
-	if (wiz_error_flag) {
-		pline("Only user \"%s\" may access debug (wizard) mode.",
-			WIZARD);
-		pline("Entering discovery mode instead.");
-	} else
 	if (discover)
 		You("are in non-scoring discovery mode.");
 }
@@ -41,8 +36,8 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 }
 
 
-void nethack_start_game(char *name, boolean exact_username,
-			boolean wiz_error_flag, void (*getlock)(void))
+void nh_start_game(char *name, boolean exact_username,
+			void (*getlock)(void))
 {
 	int fd;
 	
@@ -129,7 +124,7 @@ void nethack_start_game(char *name, boolean exact_username,
 			goto not_recovered;
 		if(!wizard && remember_wiz_mode) wizard = TRUE;
 		check_special_room(FALSE);
-		wd_message(wiz_error_flag);
+		wd_message();
 
 		if (discover || wizard) {
 			if(yn("Do you want to keep the save file?") == 'n')
@@ -144,7 +139,7 @@ not_recovered:
 		player_selection(flags.initrole, flags.initrace, flags.initgend,
 		    flags.initalign, flags.randomall);
 		newgame();
-		wd_message(wiz_error_flag);
+		wd_message();
 
 		flags.move = 0;
 		set_wear();
