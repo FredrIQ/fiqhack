@@ -1097,6 +1097,7 @@ extern char *corpse_xname(struct obj *,boolean);
 extern char *cxname(struct obj *);
 extern char *killer_xname(struct obj *);
 extern const char *singular(struct obj *,char *(*)(struct obj*));
+extern char *an(const char *);
 extern char *An(const char *);
 extern char *The(const char *);
 extern char *the(const char *);
@@ -1356,9 +1357,22 @@ extern int rnz(int);
 
 /* ### role.c ### */
 
+extern boolean ok_role(int, int, int, int);
+extern boolean ok_race(int, int, int, int);
+extern boolean ok_gend(int, int, int, int);
+extern boolean ok_align(int, int, int, int);
+extern int pick_role(int, int, int, int);
+extern int pick_race(int, int, int, int);
+extern int pick_gend(int, int, int, int);
+extern int pick_align(int, int, int, int);
+extern int randrole(void);
+extern int randrace(int);
+extern int randgend(int, int);
+extern int randalign(int, int);
 extern void role_init(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
+extern void rigid_role_checks(void);
 
 /* ### rumors.c ### */
 

@@ -8,8 +8,6 @@
 
 /* used during initialization for race, gender, and alignment
    as well as for character class */
-#define ROLE_NONE	(-1)
-#define ROLE_RANDOM	(-2)
 #define ROLE_GENDERS	2	/* number of permitted player genders */
 				/* increment to 3 if you allow neuter roles */
 #define ROLE_ALIGNS	3	/* number of permitted player alignments */
@@ -92,7 +90,7 @@ struct Role {
 	/* dictionary entries (dat/data.bas) */
 };
 
-extern EXPORT const struct Role roles[];	/* table of available roles */
+extern const struct Role roles[];	/* table of available roles */
 extern struct Role urole;
 #define Role_if(X)	(urole.malenum == (X))
 #define Role_switch	(urole.malenum)
@@ -135,7 +133,7 @@ struct Race {
 	/* dictionary entries (dat/data.bas) */
 };
 
-extern EXPORT const struct Race races[];	/* Table of available races */
+extern const struct Race races[];	/* Table of available races */
 extern struct Race urace;
 #define Race_if(X)	(urace.malenum == (X))
 #define Race_switch	(urace.malenum)
@@ -150,7 +148,7 @@ struct Gender {
 	short allow;		/* equivalent ROLE_ mask */
 };
 
-extern EXPORT const struct Gender genders[];	/* table of available genders */
+extern const struct Gender genders[];	/* table of available genders */
 #define uhe()	(genders[flags.female ? 1 : 0].he)
 #define uhim()	(genders[flags.female ? 1 : 0].him)
 #define uhis()	(genders[flags.female ? 1 : 0].his)
@@ -169,7 +167,7 @@ struct Align {
 };
 
 
-extern EXPORT const struct Align aligns[];	/* table of available alignments */
+extern const struct Align aligns[];	/* table of available alignments */
 
 
 #endif

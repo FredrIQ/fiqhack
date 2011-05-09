@@ -161,32 +161,32 @@ static void process_options(int argc, char *argv[])
 			break;
 		case 'p': /* profession (role) */
 			if (argv[0][2]) {
-			    if ((i = str2role(&argv[0][2])) >= 0)
-			    	set_role(i);
+			    if ((i = nh_str2role(&argv[0][2])) >= 0)
+			    	nh_set_role(i);
 			} else if (argc > 1) {
 				argc--;
 				argv++;
-			    if ((i = str2role(argv[0])) >= 0)
-			    	set_role(i);
+			    if ((i = nh_str2role(argv[0])) >= 0)
+			    	nh_set_role(i);
 			}
 			break;
 		case 'r': /* race */
 			if (argv[0][2]) {
-			    if ((i = str2race(&argv[0][2])) >= 0)
-			    	set_race(i);
+			    if ((i = nh_str2race(&argv[0][2])) >= 0)
+			    	nh_set_race(i);
 			} else if (argc > 1) {
 				argc--;
 				argv++;
-			    if ((i = str2race(argv[0])) >= 0)
-			    	set_race(i);
+			    if ((i = nh_str2race(argv[0])) >= 0)
+			    	nh_set_race(i);
 			}
 			break;
 		case '@':
-			set_random_player();
+			nh_set_random_player();
 			break;
 		default:
-			if ((i = str2role(&argv[0][1])) >= 0) {
-			    set_role(i);
+			if ((i = nh_str2role(&argv[0][1])) >= 0) {
+			    nh_set_role(i);
 				break;
 			}
 			/* else raw_printf("Unknown option: %s", *argv); */

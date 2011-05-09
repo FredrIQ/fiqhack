@@ -16,16 +16,6 @@ char genl_message_menu(char let, int how, const char *mesg)
     return 0;
 }
 
-/*ARGSUSED*/
-void genl_preference_update(const char *pref)
-{
-	/* window ports are expected to provide
-	   their own preference update routine
-	   for the preference capabilities that
-	   they support.
-	   Just return in this genl one. */
-}
-
 /* delay 50 ms: check option before calling the window sys to do the job */
 void nh_delay_output(void)
 {

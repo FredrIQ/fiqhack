@@ -61,7 +61,6 @@ struct window_procs {
     void (*win_end_screen)(void);
 
     void (*win_outrip)(winid,int);
-    void (*win_preference_update)(const char *);
 };
 
 
@@ -182,6 +181,8 @@ struct sinfo {
 #define TROUBLEPREFIX	7
 #define PREFIX_COUNT	8
 
+#define ROLE_NONE	(-1)
+#define ROLE_RANDOM	(-2)
 
 enum nh_opttype {
     OPTTYPE_BOOL,

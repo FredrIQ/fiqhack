@@ -124,7 +124,7 @@ static void readentry(FILE *rfile, struct toptenentry *tt)
 				tt->name, tt->death) != 4)
 			tt->points = 0;
 		    tt->plrole[1] = '\0';
-		    if ((i = str2role(tt->plrole)) >= 0)
+		    if ((i = nh_str2role(tt->plrole)) >= 0)
 			strcpy(tt->plrole, roles[i].filecode);
 		    strcpy(tt->plrace, "?");
 		    strcpy(tt->plgend, (tt->plgend[0] == 'M') ? "Mal" : "Fem");
@@ -626,9 +626,9 @@ static int score_wanted(boolean current_ver, int rank, struct toptenentry *t1,
                 players[i][2] == 0 && i + 1 < playerct) {
 		char *arg = (char *)players[i + 1];
 		if ((players[i][1] == 'p' &&
-		     str2role(arg) == str2role(t1->plrole)) ||
+		     nh_str2role(arg) == nh_str2role(t1->plrole)) ||
 		    (players[i][1] == 'r' &&
-		     str2race(arg) == str2race(t1->plrace)))
+		     nh_str2race(arg) == nh_str2race(t1->plrace)))
 		    return 1;
 		i++;
 	    } else if (strcmp(players[i], "all") == 0 ||

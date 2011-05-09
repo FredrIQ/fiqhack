@@ -11,7 +11,6 @@
 #include "nethack.h"
 #include "color.h"
 #include "patchlevel.h"
-#include "role.h"
 #include "wincap.h"
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
@@ -67,11 +66,6 @@ struct window_procs tty_procs = {
     tty_start_screen,
     tty_end_screen,
     genl_outrip,
-#if defined(WIN32CON)
-    nttty_preference_update,
-#else
-    genl_preference_update,
-#endif
 };
 
 struct tc_gbl_data tc_gbl_data = { 0,0, 0,0 };	/* AS,AE, LI,CO */
@@ -222,25 +216,30 @@ void tty_init_nhwindows(void)
 }
 
 
+#define LISTSZ 32
 void tty_player_selection(int initrole, int initrace, int initgend,
 			  int initalign, int randomall)
 {
-	int i, k, n;
+	int i, k, n, listlen;
 	char pick4u = 'n', thisch, lastch = 0;
 	char pbuf[QBUFSZ], plbuf[QBUFSZ];
 	winid win;
 	anything any;
 	menu_item *selected = 0;
-
-	/* prevent an unnecessary prompt */
-	rigid_role_checks();
+	struct nh_listitem list[LISTSZ]; /* need enough space for lists of roles or races */
+	char listbuffers[LISTSZ][256];
+	
+	for (i = 0; i < LISTSZ; i++) {
+	    list[i].caption = listbuffers[i];
+	    list[i].caption[0] = '\0';
+	}
 
 	/* Should we randomly pick for the player? */
 	if (!randomall &&
 	    (initrole == ROLE_NONE || initrace == ROLE_NONE ||
 	     initgend == ROLE_NONE || initalign == ROLE_NONE)) {
 	    int echoline;
-	    char *prompt = build_plselection_prompt(pbuf, QBUFSZ, initrole,
+	    char *prompt = nh_build_plselection_prompt(pbuf, QBUFSZ, initrole,
 				initrace, initgend, initalign);
 
 	    tty_putstr(BASE_WINDOW, 0, "");
@@ -271,64 +270,48 @@ give_up:	/* Quit */
 	    }
 	}
 
-	root_plselection_prompt(plbuf, QBUFSZ - 1,
+	nh_root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 
 	/* Select a role, if necessary */
 	/* we'll try to be compatible with pre-selected race/gender/alignment,
 	 * but may not succeed */
 	if (initrole < 0) {
-	    char rolenamebuf[QBUFSZ];
+	    listlen = nh_get_valid_roles(initrace, initgend, initalign, list, LISTSZ);
+	    if (listlen == 0) {
+		tty_putstr(BASE_WINDOW, 0, "Incompatible role!");
+		listlen = nh_get_valid_roles(ROLE_NONE, ROLE_NONE, ROLE_NONE, list, LISTSZ);
+	    }
+	    
 	    /* Process the choice */
 	    if (pick4u == 'y' || initrole == ROLE_RANDOM || randomall) {
 		/* Pick a random role */
-		initrole = pick_role(initrace, initgend,
-						initalign, PICK_RANDOM);
-		if (initrole < 0) {
-		    tty_putstr(BASE_WINDOW, 0, "Incompatible role!");
-		    initrole = randrole();
-		}
+		initrole = list[random() % listlen].id;
  	    } else {
 	    	tty_clear_nhwindow(BASE_WINDOW);
 		tty_putstr(BASE_WINDOW, 0, "Choosing Character's Role");
 		/* Prompt for a role */
+		
 		win = tty_create_nhwindow(NHW_MENU);
 		tty_start_menu(win);
-		any.a_void = 0;         /* zero out all bits */
-		for (i = 0; roles[i].name.m; i++) {
-		    if (ok_role(i, initrace, initgend,
-							initalign)) {
-			any.a_int = i+1;	/* must be non-zero */
-			thisch = lowc(roles[i].name.m[0]);
-			if (thisch == lastch) thisch = highc(thisch);
-			if (initgend != ROLE_NONE && initgend != ROLE_RANDOM) {
-				if (initgend == 1  && roles[i].name.f)
-					strcpy(rolenamebuf, roles[i].name.f);
-				else
-					strcpy(rolenamebuf, roles[i].name.m);
-			} else {
-				if (roles[i].name.f) {
-					strcpy(rolenamebuf, roles[i].name.m);
-					strcat(rolenamebuf, "/");
-					strcat(rolenamebuf, roles[i].name.f);
-				} else 
-					strcpy(rolenamebuf, roles[i].name.m);
-			}	
-			tty_add_menu(win, NO_GLYPH, &any, thisch,
-			    0, ATR_NONE, an(rolenamebuf), MENU_UNSELECTED);
-			lastch = thisch;
-		    }
+		any.a_void = 0;
+		for (i = 0; i < listlen; i++) {
+		    any.a_int = list[i].id + 1; /* list[i].id starts at 0 */
+		    thisch = lowc(*list[i].caption);
+		    if (thisch == lastch)
+			thisch = highc(thisch);
+		    tty_add_menu(win, NO_GLYPH, &any, thisch,
+			0, ATR_NONE, list[i].caption, MENU_UNSELECTED);
+		    lastch = thisch;
 		}
-		any.a_int = pick_role(initrace, initgend,
-				    initalign, PICK_RANDOM)+1;
-		if (any.a_int == 0)	/* must be non-zero */
-		    any.a_int = randrole()+1;
+		any.a_int = list[random() % listlen].id+1;
 		tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				"Random", MENU_UNSELECTED);
-		any.a_int = i+1;	/* must be non-zero */
+		any.a_int = -1;	/* must be non-zero */
 		tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				"Quit", MENU_UNSELECTED);
 		sprintf(pbuf, "Pick a role for your %s", plbuf);
+		
 		tty_end_menu(win, pbuf);
 		n = tty_select_menu(win, PICK_ONE, &selected);
 		tty_destroy_nhwindow(win);
@@ -338,68 +321,50 @@ give_up:	/* Quit */
 		    goto give_up;		/* Selected quit */
 
 		initrole = selected[0].item.a_int - 1;
-		free((void *) selected),	selected = 0;
+		free(selected);
+		selected = NULL;
 	    }
-	    root_plselection_prompt(plbuf, QBUFSZ - 1,
+	    nh_root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 	}
 	
 	/* Select a race, if necessary */
 	/* force compatibility with role, try for compatibility with
 	 * pre-selected gender/alignment */
-	if (initrace < 0 || !validrace(initrole, initrace)) {
-	    /* pre-selected race not valid */
+	if (initrace < 0 || !nh_validrace(initrole, initrace)) {
+	    listlen = nh_get_valid_races(initrole, initgend, initalign, list, LISTSZ);
+	    if (listlen == 0) {
+		/* pre-selected race not valid */
+		tty_putstr(BASE_WINDOW, 0, "Incompatible race!");
+		listlen = nh_get_valid_races(initrole, ROLE_NONE, ROLE_NONE, list, LISTSZ);
+	    }
+	    
 	    if (pick4u == 'y' || initrace == ROLE_RANDOM || randomall) {
-		initrace = pick_race(initrole, initgend,
-							initalign, PICK_RANDOM);
-		if (initrace < 0) {
-		    tty_putstr(BASE_WINDOW, 0, "Incompatible race!");
-		    initrace = randrace(initrole);
-		}
+		initrace = list[random() % listlen].id;
 	    } else {	/* pick4u == 'n' */
 		/* Count the number of valid races */
-		n = 0;	/* number valid */
-		k = 0;	/* valid race */
-		for (i = 0; races[i].noun; i++) {
-		    if (ok_race(initrole, i, initgend,
-							initalign)) {
-			n++;
-			k = i;
-		    }
-		}
-		if (n == 0) {
-		    for (i = 0; races[i].noun; i++) {
-			if (validrace(initrole, i)) {
-			    n++;
-			    k = i;
-			}
-		    }
-		}
+		k = list[0].id;	/* valid race */
 
 		/* Permit the user to pick, if there is more than one */
-		if (n > 1) {
+		if (listlen > 1) {
 		    tty_clear_nhwindow(BASE_WINDOW);
 		    tty_putstr(BASE_WINDOW, 0, "Choosing Race");
 		    win = tty_create_nhwindow(NHW_MENU);
 		    tty_start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
-		    for (i = 0; races[i].noun; i++)
-			if (ok_race(initrole, i, initgend,
-							initalign)) {
-			    any.a_int = i+1;	/* must be non-zero */
-			    tty_add_menu(win, NO_GLYPH, &any, races[i].noun[0],
-				0, ATR_NONE, races[i].noun, MENU_UNSELECTED);
-			}
-		    any.a_int = pick_race(initrole, initgend,
-					initalign, PICK_RANDOM)+1;
-		    if (any.a_int == 0)	/* must be non-zero */
-			any.a_int = randrace(initrole)+1;
+		    for (i = 0; i < listlen; i++) {
+			any.a_int = list[i].id + 1;
+			tty_add_menu(win, NO_GLYPH, &any, list[i].caption[0],
+			    0, ATR_NONE, list[i].caption, MENU_UNSELECTED);
+		    }
+		    any.a_int = list[random() % listlen].id+1;
 		    tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
-		    any.a_int = i+1;	/* must be non-zero */
+		    any.a_int = -1;	/* must be non-zero */
 		    tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
 		    sprintf(pbuf, "Pick the race of your %s", plbuf);
+		    
 		    tty_end_menu(win, pbuf);
 		    n = tty_select_menu(win, PICK_ONE, &selected);
 		    tty_destroy_nhwindow(win);
@@ -407,139 +372,95 @@ give_up:	/* Quit */
 			goto give_up;		/* Selected quit */
 
 		    k = selected[0].item.a_int - 1;
-		    free((void *) selected),	selected = 0;
+		    free(selected);
+		    selected = NULL;
 		}
 		initrace = k;
 	    }
-	    root_plselection_prompt(plbuf, QBUFSZ - 1,
+	    nh_root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 	}
 
 	/* Select a gender, if necessary */
 	/* force compatibility with role/race, try for compatibility with
 	 * pre-selected alignment */
-	if (initgend < 0 || !validgend(initrole, initrace,
-						initgend)) {
-	    /* pre-selected gender not valid */
+	if (initgend < 0 || !nh_validgend(initrole, initrace, initgend)) {
+	    listlen = nh_get_valid_genders(initrole, initrace, initalign, list, LISTSZ);
+	    if (listlen == 0) {
+		/* pre-selected gender not valid */
+		tty_putstr(BASE_WINDOW, 0, "Incompatible gender!");
+		listlen = nh_get_valid_genders(initrole, initrace, ROLE_NONE, list, LISTSZ);
+	    }
 	    if (pick4u == 'y' || initgend == ROLE_RANDOM || randomall) {
-		initgend = pick_gend(initrole, initrace,
-						initalign, PICK_RANDOM);
-		if (initgend < 0) {
-		    tty_putstr(BASE_WINDOW, 0, "Incompatible gender!");
-		    initgend = randgend(initrole, initrace);
-		}
+		initgend = list[random() % listlen].id;
 	    } else {	/* pick4u == 'n' */
 		/* Count the number of valid genders */
-		n = 0;	/* number valid */
-		k = 0;	/* valid gender */
-		for (i = 0; i < ROLE_GENDERS; i++) {
-		    if (ok_gend(initrole, initrace, i,
-							initalign)) {
-			n++;
-			k = i;
-		    }
-		}
-		if (n == 0) {
-		    for (i = 0; i < ROLE_GENDERS; i++) {
-			if (validgend(initrole, initrace, i)) {
-			    n++;
-			    k = i;
-			}
-		    }
-		}
+		k = list[0].id;	/* valid gender */
 
 		/* Permit the user to pick, if there is more than one */
-		if (n > 1) {
+		if (listlen > 1) {
 		    tty_clear_nhwindow(BASE_WINDOW);
 		    tty_putstr(BASE_WINDOW, 0, "Choosing Gender");
 		    win = tty_create_nhwindow(NHW_MENU);
 		    tty_start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
-		    for (i = 0; i < ROLE_GENDERS; i++)
-			if (ok_gend(initrole, initrace, i,
-							    initalign)) {
-			    any.a_int = i+1;
-			    tty_add_menu(win, NO_GLYPH, &any, genders[i].adj[0],
-				0, ATR_NONE, genders[i].adj, MENU_UNSELECTED);
-			}
-		    any.a_int = pick_gend(initrole, initrace,
-					    initalign, PICK_RANDOM)+1;
-		    if (any.a_int == 0)	/* must be non-zero */
-			any.a_int = randgend(initrole, initrace)+1;
+		    for (i = 0; i < listlen; i++) {
+			any.a_int = list[i].id + 1;
+			tty_add_menu(win, NO_GLYPH, &any, list[i].caption[0],
+			    0, ATR_NONE, list[i].caption, MENU_UNSELECTED);
+		    }
+		    any.a_int = list[random() % listlen].id + 1;
 		    tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
-		    any.a_int = i+1;	/* must be non-zero */
+		    any.a_int = -1;	/* must be non-zero */
 		    tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
 		    sprintf(pbuf, "Pick the gender of your %s", plbuf);
+		    
 		    tty_end_menu(win, pbuf);
 		    n = tty_select_menu(win, PICK_ONE, &selected);
 		    tty_destroy_nhwindow(win);
+		    
 		    if (n != 1 || selected[0].item.a_int == any.a_int)
 			goto give_up;		/* Selected quit */
 
 		    k = selected[0].item.a_int - 1;
-		    free((void *) selected),	selected = 0;
+		    free(selected);
+		    selected = NULL;
 		}
 		initgend = k;
 	    }
-	    root_plselection_prompt(plbuf, QBUFSZ - 1,
+	    nh_root_plselection_prompt(plbuf, QBUFSZ - 1,
 			initrole, initrace, initgend, initalign);
 	}
 
 	/* Select an alignment, if necessary */
 	/* force compatibility with role/race/gender */
-	if (initalign < 0 || !validalign(initrole, initrace,
-							initalign)) {
-	    /* pre-selected alignment not valid */
+	if (initalign < 0 || !nh_validalign(initrole, initrace, initalign)) {
+	    listlen = nh_get_valid_aligns(initrole, initrace, initgend, list, LISTSZ);
+	    
 	    if (pick4u == 'y' || initalign == ROLE_RANDOM || randomall) {
-		initalign = pick_align(initrole, initrace,
-							initgend, PICK_RANDOM);
-		if (initalign < 0) {
-		    tty_putstr(BASE_WINDOW, 0, "Incompatible alignment!");
-		    initalign = randalign(initrole, initrace);
-		}
+		initalign = list[random() % listlen].id;
 	    } else {	/* pick4u == 'n' */
 		/* Count the number of valid alignments */
-		n = 0;	/* number valid */
-		k = 0;	/* valid alignment */
-		for (i = 0; i < ROLE_ALIGNS; i++) {
-		    if (ok_align(initrole, initrace, initgend,
-							i)) {
-			n++;
-			k = i;
-		    }
-		}
-		if (n == 0) {
-		    for (i = 0; i < ROLE_ALIGNS; i++) {
-			if (validalign(initrole, initrace, i)) {
-			    n++;
-			    k = i;
-			}
-		    }
-		}
+		k = list[0].id;	/* valid alignment */
 
 		/* Permit the user to pick, if there is more than one */
-		if (n > 1) {
+		if (listlen > 1) {
 		    tty_clear_nhwindow(BASE_WINDOW);
 		    tty_putstr(BASE_WINDOW, 0, "Choosing Alignment");
 		    win = tty_create_nhwindow(NHW_MENU);
 		    tty_start_menu(win);
 		    any.a_void = 0;         /* zero out all bits */
-		    for (i = 0; i < ROLE_ALIGNS; i++)
-			if (ok_align(initrole, initrace,
-							initgend, i)) {
-			    any.a_int = i+1;
-			    tty_add_menu(win, NO_GLYPH, &any, aligns[i].adj[0],
-				 0, ATR_NONE, aligns[i].adj, MENU_UNSELECTED);
-			}
-		    any.a_int = pick_align(initrole, initrace,
-					    initgend, PICK_RANDOM)+1;
-		    if (any.a_int == 0)	/* must be non-zero */
-			any.a_int = randalign(initrole, initrace)+1;
+		    for (i = 0; i < listlen; i++) {
+			any.a_int = list[i].id + 1;
+			tty_add_menu(win, NO_GLYPH, &any, list[i].caption[0],
+				0, ATR_NONE, list[i].caption, MENU_UNSELECTED);
+		    }
+		    any.a_int = list[random() % listlen].id + 1;
 		    tty_add_menu(win, NO_GLYPH, &any , '*', 0, ATR_NONE,
 				    "Random", MENU_UNSELECTED);
-		    any.a_int = i+1;	/* must be non-zero */
+		    any.a_int = -1;	/* must be non-zero */
 		    tty_add_menu(win, NO_GLYPH, &any , 'q', 0, ATR_NONE,
 				    "Quit", MENU_UNSELECTED);
 		    sprintf(pbuf, "Pick the alignment of your %s", plbuf);
@@ -550,15 +471,16 @@ give_up:	/* Quit */
 			goto give_up;		/* Selected quit */
 
 		    k = selected[0].item.a_int - 1;
-		    free((void *) selected),	selected = 0;
+		    free(selected);
+		    selected = NULL;
 		}
 		initalign = k;
 	    }
 	}
-	set_role(initrole);
-	set_race(initrace);
-	set_gend(initgend);
-	set_align(initalign);
+	nh_set_role(initrole);
+	nh_set_race(initrace);
+	nh_set_gend(initgend);
+	nh_set_align(initalign);
 	
 	/* Success! */
 	tty_display_nhwindow(BASE_WINDOW, FALSE);

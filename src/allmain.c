@@ -121,6 +121,8 @@ void nh_start_game(char *name, void (*getlock)(void))
 		flags.move = 0;
 	} else {
 not_recovered:
+		/* prevent an unnecessary prompt in player selection */
+		rigid_role_checks();
 		player_selection(flags.initrole, flags.initrace, flags.initgend,
 		    flags.initalign, flags.randomall);
 		newgame();

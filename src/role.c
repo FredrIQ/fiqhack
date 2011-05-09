@@ -491,11 +491,11 @@ static char * promptsep(char *, int);
 static int role_gendercount(int);
 static int race_alignmentcount(int);
 
-/* used by str2XXX() */
+/* used by nh_str2XXX() */
 static char randomstr[] = "random";
 
 
-boolean validrole(int rolenum)
+boolean nh_validrole(int rolenum)
 {
 	return rolenum >= 0 && rolenum < SIZE(roles)-1;
 }
@@ -507,7 +507,7 @@ int randrole(void)
 }
 
 
-int str2role(char *str)
+int nh_str2role(char *str)
 {
 	int i, len;
 
@@ -538,9 +538,9 @@ int str2role(char *str)
 }
 
 
-boolean validrace(int rolenum, int racenum)
+boolean nh_validrace(int rolenum, int racenum)
 {
-	/* Assumes validrole */
+	/* Assumes nh_validrole */
 	return (racenum >= 0 && racenum < SIZE(races)-1 &&
 		(roles[rolenum].allow & races[racenum].allow & ROLE_RACEMASK));
 }
@@ -569,7 +569,7 @@ int randrace(int rolenum)
 }
 
 
-int str2race(char *str)
+int nh_str2race(char *str)
 {
 	int i, len;
 
@@ -597,9 +597,9 @@ int str2race(char *str)
 }
 
 
-boolean validgend(int rolenum, int racenum, int gendnum)
+boolean nh_validgend(int rolenum, int racenum, int gendnum)
 {
-	/* Assumes validrole and validrace */
+	/* Assumes nh_validrole and nh_validrace */
 	return (gendnum >= 0 && gendnum < ROLE_GENDERS &&
 		(roles[rolenum].allow & races[racenum].allow &
 		 genders[gendnum].allow & ROLE_GENDMASK));
@@ -630,7 +630,7 @@ int randgend(int rolenum, int racenum)
 }
 
 
-int str2gend(char *str)
+int nh_str2gend(char *str)
 {
 	int i, len;
 
@@ -657,9 +657,9 @@ int str2gend(char *str)
 }
 
 
-boolean validalign(int rolenum, int racenum, int alignnum)
+boolean nh_validalign(int rolenum, int racenum, int alignnum)
 {
-	/* Assumes validrole and validrace */
+	/* Assumes nh_validrole and nh_validrace */
 	return (alignnum >= 0 && alignnum < ROLE_ALIGNS &&
 		(roles[rolenum].allow & races[racenum].allow &
 		 aligns[alignnum].allow & ROLE_ALIGNMASK));
@@ -690,7 +690,7 @@ int randalign(int rolenum, int racenum)
 }
 
 
-int str2align(char *str)
+int nh_str2align(char *str)
 {
 	int i, len;
 
@@ -990,27 +990,27 @@ void rigid_role_checks(void)
 }
 
 
-void set_role(int role)
+void nh_set_role(int role)
 {
 	flags.initrole  = role;
 }
 
-void set_race(int race)
+void nh_set_race(int race)
 {
 	flags.initrace  = race;
 }
 
-void set_gend(int gend)
+void nh_set_gend(int gend)
 {
 	flags.initgend  = gend;
 }
 
-void set_align(int align)
+void nh_set_align(int align)
 {
 	flags.initalign = align;
 }
 
-void set_random_player(void)
+void nh_set_random_player(void)
 {
 	flags.randomall = 1;
 }
@@ -1039,7 +1039,7 @@ static char *promptsep(char *buf, int num_post_attribs)
 static int role_gendercount(int rolenum)
 {
 	int gendcount = 0;
-	if (validrole(rolenum)) {
+	if (nh_validrole(rolenum)) {
 		if (roles[rolenum].allow & ROLE_MALE) ++gendcount;
 		if (roles[rolenum].allow & ROLE_FEMALE) ++gendcount;
 		if (roles[rolenum].allow & ROLE_NEUTER) ++gendcount;
@@ -1058,7 +1058,106 @@ static int race_alignmentcount(int racenum)
 	return aligncount;
 }
 
-char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
+
+int nh_get_valid_roles(int racenum, int gendnum, int alignnum,
+		       struct nh_listitem *list, int maxlen)
+{
+	char rolenamebuf[BUFSZ];
+	int count = 0, rolenum;
+	
+	for (rolenum = 0; roles[rolenum].name.m; rolenum++) {
+	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
+		ok_race(rolenum, racenum, gendnum, alignnum) &&
+		ok_gend(rolenum, racenum, gendnum, alignnum) &&
+		ok_align(rolenum, racenum, gendnum, alignnum)) {
+		
+		if (gendnum != ROLE_NONE && gendnum != ROLE_RANDOM) {
+			if (gendnum == 1  && roles[rolenum].name.f)
+				strcpy(rolenamebuf, roles[rolenum].name.f);
+			else
+				strcpy(rolenamebuf, roles[rolenum].name.m);
+		} else {
+			if (roles[rolenum].name.f) {
+				strcpy(rolenamebuf, roles[rolenum].name.m);
+				strcat(rolenamebuf, "/");
+				strcat(rolenamebuf, roles[rolenum].name.f);
+			} else 
+				strcpy(rolenamebuf, roles[rolenum].name.m);
+		}
+		strcpy(list[count].caption, rolenamebuf);
+		list[count].id = rolenum;
+		count++;
+	    }
+	}
+	
+	return count;
+}
+
+
+int nh_get_valid_races(int rolenum, int gendnum, int alignnum,
+		       struct nh_listitem *list, int maxlen)
+{
+	int count = 0, racenum;
+	
+	for (racenum = 0; races[racenum].noun; racenum++) {
+	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
+		ok_race(rolenum, racenum, gendnum, alignnum) &&
+		ok_gend(rolenum, racenum, gendnum, alignnum) &&
+		ok_align(rolenum, racenum, gendnum, alignnum)) {
+		
+		strcpy(list[count].caption, races[racenum].noun);
+		list[count].id = racenum;
+		count++;
+	    }
+	}
+	
+	return count;
+}
+
+
+int nh_get_valid_genders(int rolenum, int racenum, int alignnum,
+			 struct nh_listitem *list, int maxlen)
+{
+	int count = 0, gendnum;
+	
+	for (gendnum = 0; gendnum < ROLE_GENDERS; gendnum++) {
+	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
+		ok_race(rolenum, racenum, gendnum, alignnum) &&
+		ok_gend(rolenum, racenum, gendnum, alignnum) &&
+		ok_align(rolenum, racenum, gendnum, alignnum)) {
+		
+		strcpy(list[count].caption, genders[gendnum].adj);
+		list[count].id = gendnum;
+		count++;
+	    }
+	}
+	
+	return count;
+}
+
+
+int nh_get_valid_aligns(int rolenum, int racenum, int gendnum,
+			struct nh_listitem *list, int maxlen)
+{
+	int count = 0, alignnum;
+	
+	for (alignnum = 0; alignnum < ROLE_ALIGNS; alignnum++) {
+	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
+		ok_race(rolenum, racenum, gendnum, alignnum) &&
+		ok_gend(rolenum, racenum, gendnum, alignnum) &&
+		ok_align(rolenum, racenum, gendnum, alignnum)) {
+		
+		strcpy(list[count].caption, aligns[alignnum].adj);
+		list[count].id = alignnum;
+		count++;
+	    }
+	}
+	
+	return count;
+}
+
+
+char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 			      int racenum, int gendnum, int alignnum)
 {
 	int k, gendercount = 0, aligncount = 0;
@@ -1105,11 +1204,11 @@ char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 	/* <your lawful> */
 
 	/* How many genders are allowed for the desired role? */
-	if (validrole(rolenum))
+	if (nh_validrole(rolenum))
 		gendercount = role_gendercount(rolenum);
 
 	if (gendnum != ROLE_NONE  && gendnum != ROLE_RANDOM) {
-		if (validrole(rolenum)) {
+		if (nh_validrole(rolenum)) {
 		     /* if role specified, and multiple choice of genders for it,
 			and name of role itself does not distinguish gender */
 			if ((rolenum != ROLE_NONE) && (gendercount > 1)
@@ -1127,7 +1226,7 @@ char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 		/* if gender not specified, but role is specified
 			and only one choice of gender then
 			don't include it in the later list */
-		if ((validrole(rolenum) && (gendercount > 1)) || !validrole(rolenum)) {
+		if ((nh_validrole(rolenum) && (gendercount > 1)) || !nh_validrole(rolenum)) {
 			pa[BP_GEND] = 1;
 			post_attribs++;
 		}
@@ -1135,13 +1234,13 @@ char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 	/* <your lawful female> */
 
 	if (racenum != ROLE_NONE && racenum != ROLE_RANDOM) {
-		if (validrole(rolenum) && ok_race(rolenum, racenum, gendnum, alignnum)) {
+		if (nh_validrole(rolenum) && ok_race(rolenum, racenum, gendnum, alignnum)) {
 			if (donefirst) strcat(buf, " "); 
 			strcat(buf, (rolenum == ROLE_NONE) ?
 				races[racenum].noun :
 				races[racenum].adj);
 			donefirst = TRUE;
-		} else if (!validrole(rolenum)) {
+		} else if (!nh_validrole(rolenum)) {
 			if (donefirst) strcat(buf, " ");
 			strcat(buf, races[racenum].noun);
 			donefirst = TRUE;
@@ -1155,7 +1254,7 @@ char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 	}
 	/* <your lawful female gnomish> || <your lawful female gnome> */
 
-	if (validrole(rolenum)) {
+	if (nh_validrole(rolenum)) {
 		if (donefirst) strcat(buf, " ");
 		if (gendnum != ROLE_NONE) {
 		    if (gendnum == 1  && roles[rolenum].name.f)
@@ -1176,7 +1275,7 @@ char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 		post_attribs++;
 	}
 	
-	if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) && !validrole(rolenum)) {
+	if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) && !nh_validrole(rolenum)) {
 		if (donefirst) strcat(buf, " ");
 		strcat(buf, "character");
 		donefirst = TRUE;
@@ -1191,7 +1290,7 @@ char *root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 		return err_ret;
 }
 
-char *build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
+char *nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 			       int gendnum, int alignnum)
 {
 	const char *defprompt = "Shall I pick a character for you? [ynq] ";
@@ -1202,14 +1301,14 @@ char *build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 		return (char *)defprompt;
 
 	strcpy(tmpbuf, "Shall I pick ");
-	if (racenum != ROLE_NONE || validrole(rolenum))
+	if (racenum != ROLE_NONE || nh_validrole(rolenum))
 		strcat(tmpbuf, "your ");
 	else {
 		strcat(tmpbuf, "a ");
 	}
 	/* <your> */
 
-	root_plselection_prompt(eos(tmpbuf), buflen - strlen(tmpbuf),
+	nh_root_plselection_prompt(eos(tmpbuf), buflen - strlen(tmpbuf),
 					rolenum, racenum, gendnum, alignnum);
 	sprintf(buf, "%s", s_suffix(tmpbuf));
 
@@ -1271,9 +1370,9 @@ void role_init(void)
 	int alignmnt;
 
 	/* Check for a valid role.  Try flags.initrole first. */
-	if (!validrole(flags.initrole)) {
+	if (!nh_validrole(flags.initrole)) {
 	    /* Try the player letter second */
-	    if ((flags.initrole = str2role(pl_character)) < 0)
+	    if ((flags.initrole = nh_str2role(pl_character)) < 0)
 	    	/* None specified; pick a random role */
 	    	flags.initrole = randrole();
 	}
@@ -1284,21 +1383,21 @@ void role_init(void)
 	pl_character[PL_CSIZ-1] = '\0';
 
 	/* Check for a valid race */
-	if (!validrace(flags.initrole, flags.initrace))
+	if (!nh_validrace(flags.initrole, flags.initrace))
 	    flags.initrace = randrace(flags.initrole);
 
 	/* Check for a valid gender.  If new game, check both initgend
 	 * and female.  On restore, assume flags.female is correct. */
 	if (flags.pantheon == -1) {	/* new game */
-	    if (!validgend(flags.initrole, flags.initrace, flags.female))
+	    if (!nh_validgend(flags.initrole, flags.initrace, flags.female))
 		flags.female = !flags.female;
 	}
-	if (!validgend(flags.initrole, flags.initrace, flags.initgend))
+	if (!nh_validgend(flags.initrole, flags.initrace, flags.initgend))
 	    /* Note that there is no way to check for an unspecified gender. */
 	    flags.initgend = flags.female;
 
 	/* Check for a valid alignment */
-	if (!validalign(flags.initrole, flags.initrace, flags.initalign))
+	if (!nh_validalign(flags.initrole, flags.initrace, flags.initalign))
 	    /* Pick a random alignment */
 	    flags.initalign = randalign(flags.initrole, flags.initrace);
 	alignmnt = aligns[flags.initalign].value;

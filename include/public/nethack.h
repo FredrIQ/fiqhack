@@ -92,9 +92,6 @@ extern EXPORT int strncmpi(const char *,const char *,int);
 /* mapglyph.c */
 extern EXPORT void mapglyph(int, int *, int *, unsigned *, int, int);
 
-/* objnam.c */
-extern EXPORT char *an(const char *);
-
 /* options.c */
 extern EXPORT char *nh_getenv(const char *);
 extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);
@@ -108,34 +105,25 @@ extern EXPORT void pline(const char *,...);
 extern EXPORT void impossible(const char *,...);
 
 /* role.c */
-extern EXPORT int str2role(char *);
-extern EXPORT int str2race(char *);
-extern EXPORT int str2gend(char *);
-extern EXPORT int str2align(char *);
-extern EXPORT void set_role(int);
-extern EXPORT void set_race(int);
-extern EXPORT void set_gend(int);
-extern EXPORT void set_align(int);
-extern EXPORT void set_random_player(void);
-extern EXPORT boolean ok_role(int, int, int, int);
-extern EXPORT boolean ok_race(int, int, int, int);
-extern EXPORT boolean ok_gend(int, int, int, int);
-extern EXPORT boolean ok_align(int, int, int, int);
-extern EXPORT int pick_role(int, int, int, int);
-extern EXPORT int pick_race(int, int, int, int);
-extern EXPORT int pick_gend(int, int, int, int);
-extern EXPORT int pick_align(int, int, int, int);
-extern EXPORT boolean validrole(int);
-extern EXPORT boolean validrace(int, int);
-extern EXPORT boolean validgend(int, int, int);
-extern EXPORT boolean validalign(int, int, int);
-extern EXPORT int randrole(void);
-extern EXPORT int randrace(int);
-extern EXPORT int randgend(int, int);
-extern EXPORT int randalign(int, int);
-extern EXPORT void rigid_role_checks(void);
-extern EXPORT char *build_plselection_prompt(char *, int, int, int, int, int);
-extern EXPORT char *root_plselection_prompt(char *, int, int, int, int, int);
+extern EXPORT int nh_get_valid_roles(int, int, int, struct nh_listitem*, int);
+extern EXPORT int nh_get_valid_races(int, int, int, struct nh_listitem*, int);
+extern EXPORT int nh_get_valid_genders(int, int, int, struct nh_listitem*, int);
+extern EXPORT int nh_get_valid_aligns(int, int, int, struct nh_listitem*, int);
+extern EXPORT boolean nh_validrole(int);
+extern EXPORT boolean nh_validrace(int, int);
+extern EXPORT boolean nh_validgend(int, int, int);
+extern EXPORT boolean nh_validalign(int, int, int);
+extern EXPORT int nh_str2role(char *);
+extern EXPORT int nh_str2race(char *);
+extern EXPORT int nh_str2gend(char *);
+extern EXPORT int nh_str2align(char *);
+extern EXPORT void nh_set_role(int);
+extern EXPORT void nh_set_race(int);
+extern EXPORT void nh_set_gend(int);
+extern EXPORT void nh_set_align(int);
+extern EXPORT void nh_set_random_player(void);
+extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int);
+extern EXPORT char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 
 /* rip.c */
 extern EXPORT void genl_outrip(winid,int);
@@ -145,6 +133,5 @@ extern EXPORT void prscore(char*,int,char**);
 
 /* windows.c */
 extern EXPORT char genl_message_menu(char,int,const char *);
-extern EXPORT void genl_preference_update(const char *);
 
 #endif
