@@ -449,3 +449,43 @@ void write_config(void)
 	    fclose(fp);
 	}
 }
+
+/*
+ * Allow the user to map incoming characters to various menu commands.
+ * The accelerator list must be a valid C string.
+ */
+#define MAX_MENU_MAPPED_CMDS 32	/* some number */
+       char mapped_menu_cmds[MAX_MENU_MAPPED_CMDS+1];	/* exported */
+static char mapped_menu_op[MAX_MENU_MAPPED_CMDS+1];
+static short n_menu_mapped = 0;
+
+/*
+ * Add the given mapping to the menu command map list.  Always keep the
+ * maps valid C strings.
+ */
+void add_menu_cmd_alias(char from_ch, char to_ch)
+{
+    if (n_menu_mapped >= MAX_MENU_MAPPED_CMDS)
+	pline("out of menu map space.");
+    else {
+	mapped_menu_cmds[n_menu_mapped] = from_ch;
+	mapped_menu_op[n_menu_mapped] = to_ch;
+	n_menu_mapped++;
+	mapped_menu_cmds[n_menu_mapped] = 0;
+	mapped_menu_op[n_menu_mapped] = 0;
+    }
+}
+
+/*
+ * Map the given character to its corresponding menu command.  If it
+ * doesn't match anything, just return the original.
+ */
+char map_menu_cmd(char ch)
+{
+    char *found = index(mapped_menu_cmds, ch);
+    if (found) {
+	int idx = found - mapped_menu_cmds;
+	ch = mapped_menu_op[idx];
+    }
+    return ch;
+}

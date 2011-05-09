@@ -207,14 +207,17 @@ extern void introff(void);
 
 extern int base_nhgetch(void);
 
+/* other defs that really should go away (they're tty specific) */
+extern void tty_start_screen(void);
+extern void tty_end_screen(void);
+
+/* optwin.c */
 extern void tty_init_options(void);
 extern void display_options(boolean);
 extern void read_config(void);
 extern void write_config(void);
-
-/* other defs that really should go away (they're tty specific) */
-extern void tty_start_screen(void);
-extern void tty_end_screen(void);
+extern EXPORT void add_menu_cmd_alias(char, char);
+extern EXPORT char map_menu_cmd(char);
 
 extern int locknum;
 extern const char quitchars[];
@@ -244,5 +247,18 @@ struct tty_flag {
 };
 
 extern struct tty_flag tty_flags;
+
+/* menu window keyboard commands (may be mapped) */
+#define MENU_FIRST_PAGE		'^'
+#define MENU_LAST_PAGE		'|'
+#define MENU_NEXT_PAGE		'>'
+#define MENU_PREVIOUS_PAGE	'<'
+#define MENU_SELECT_ALL		'.'
+#define MENU_UNSELECT_ALL	'-'
+#define MENU_INVERT_ALL		'@'
+#define MENU_SELECT_PAGE	','
+#define MENU_UNSELECT_PAGE	'\\'
+#define MENU_INVERT_PAGE	'~'
+#define MENU_SEARCH		':'
 
 #endif /* WINTTY_H */
