@@ -85,12 +85,11 @@ EXPORT int main(int argc, char *argv[])
 	free(gamepaths);
 
 	if(argc > 1) {
-	    /*
-	     * Now we know the directory containing 'record' and
-	     * may do a prscore().  Exclude `-style' - it's a Qt option.
+	    /* Now we know the directory containing 'record' and
+	     * may do a prscore().
 	     */
-	    if (!strncmp(argv[1], "-s", 2) && strncmp(argv[1], "-style", 6)) {
-		prscore(argv[0],argc, argv);
+	    if (!strncmp(argv[1], "-s", 2)) {
+		prscore(argv[0], argc, argv);
 		exit(EXIT_SUCCESS);
 	    }
 	}
