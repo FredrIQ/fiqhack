@@ -31,7 +31,6 @@ struct window_procs tty_procs = {
     WC_HILITE_PET|WC_INVERSE|WC_EIGHT_BIT_IN,
     0L,
     tty_player_selection,
-    tty_askname,
     tty_get_nh_event,
     tty_exit_nhwindows,
     tty_suspend_nhwindows,
@@ -151,7 +150,6 @@ static void bail(const char *mesg)
 }
 
 
-/*ARGSUSED*/
 void tty_init_nhwindows(void)
 {
     int wid, hgt;
