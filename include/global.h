@@ -30,10 +30,6 @@
 
 /* Assorted definitions that may depend on selections in config.h. */
 
-#ifndef TRUE		/* defined in some systems' native include files */
-#define FALSE	((boolean)0)
-#define TRUE	((boolean)!0)
-#endif
 
 #ifndef STRNCMPI
 #  define strcmpi(a,b) strncmpi((a),(b),-1)
@@ -104,20 +100,11 @@ struct version_info {
  * executable inoperative.
  */
 
-/* size of terminal screen is (at least) (ROWNO+3) by COLNO */
-#define COLNO	80
-#define ROWNO	21
 
 #define MAXNROFROOMS	40	/* max number of rooms per level */
 #define MAX_SUBROOMS	24	/* max # of subrooms in a given room */
 #define DOORMAX		120	/* max number of doors per level */
 
-#define BUFSZ		256	/* for getlin buffers */
-#define QBUFSZ		128	/* for building question text */
-#define TBUFSZ		300	/* toplines[] buffer max msg: 3 81char names */
-				/* plus longest prefix plus a few extra words */
-
-#define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
 #define PL_CSIZ		32	/* sizeof pl_character */
 #define PL_FSIZ		32	/* fruit name */
 #define PL_PSIZ		63	/* player-given names for pets, other

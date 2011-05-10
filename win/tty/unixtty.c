@@ -3,11 +3,8 @@
 
 /* tty.c - (Unix) version */
 
-/* With thanks to the people who sent code for SYSV - hpscdi!jon,
- * arnold@ucsf-cgl, wcs@bo95b, cbcephus!pds and others.
- */
+#include <stdlib.h>
 
-#include "config.h"
 #include "nethack.h"
 #include "wintty.h"
 

@@ -241,9 +241,7 @@ static struct nh_boolopt_map boolopt_map[] = {
 	{"sound", &flags.soundok},
 	{"sparkle", &flags.sparkle},
 	{"time", &flags.time},
-#ifdef TIMED_DELAY
 	{"timed_delay", &flags.nap},
-#endif
 	{"tombstone",&flags.tombstone},
 	{"toptenwin",&flags.toptenwin},
 	{"travel", &iflags.travelcmd},

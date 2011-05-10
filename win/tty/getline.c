@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include "config.h"
 #include "nethack.h"
 
 #define NEWAUTOCOMP
@@ -351,7 +351,7 @@ int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen)
 	    return -1;
 
 	for (i = 0; i < listlen; i++)
-		if (!strcmpi(buf, namelist[i])) break;
+		if (!strcmp(buf, namelist[i])) break;
 
 
 	if (namelist[i] == NULL) {

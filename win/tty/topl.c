@@ -1,7 +1,9 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-#include "config.h"
 #include "nethack.h"
 #include "color.h"
 

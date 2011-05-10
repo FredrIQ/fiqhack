@@ -3,20 +3,24 @@
 
 /* This file collects some Unix dependencies */
 
-#include "config.h"
-#include "nethack.h"	/* mainly for index() which depends on BSD */
-
+#include <stdio.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
+#include <time.h>
 
+#include "nethack.h"
 #include "wintty.h"
 
 #ifdef __linux__
 extern void linux_mapon(void);
 extern void linux_mapoff(void);
 #endif
+
+/* MAXLOCKNO must be greater than MAXDUNGEON * MAXLEVEL */
+#define MAXLOCKNO 1024
 
 static struct stat buf;
 
@@ -52,7 +56,7 @@ static int eraseoldlocks(void)
 	 * before starting everything (including the dungeon initialization
 	 * that sets astral_level, needed for maxledgerno()) up
 	 */
-	for(i = 1; i <= MAXDUNGEON*MAXLEVEL + 1; i++) {
+	for(i = 1; i <= MAXLOCKNO; i++) {
 		/* try to remove all */
 		set_levelfile_name(lock, i);
 		unlink(fqname(lock, LEVELPREFIX, 0));

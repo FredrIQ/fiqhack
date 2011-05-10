@@ -57,14 +57,6 @@ extern pid_t getpid(void);
 extern uid_t getuid(void);
 extern gid_t getgid(void);
 
-/*# string(s).h #*/
-
-extern int tgetent(char *,const char *);
-extern void tputs(const char *,int,int (*)(void));
-extern int tgetnum(const char *);
-extern int tgetflag(const char *);
-extern char *tgetstr(const char *,char **);
-extern char *tgoto(const char *,int,int);
 
 /* time functions */
 

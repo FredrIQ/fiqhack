@@ -472,9 +472,6 @@ static const char *build_opts[] = {
 #ifdef SEDUCE
 		"seduction",
 #endif
-#ifdef TIMED_DELAY
-		"timed wait for display effects",
-#endif
 #ifdef TOURIST
 		"tourists",
 #endif

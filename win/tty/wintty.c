@@ -1,17 +1,13 @@
 /* Copyright (c) David Cohrs, 1991				  */
 /* NetHack may be freely redistributed.  See license for details. */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
-/*
- * Neither a standard out nor character-based control codes should be
- * part of the "tty look" windowing implementation.
- * h+ 930227
- */
-
-#include "config.h"
 #include "nethack.h"
 #include "color.h"
 #include "patchlevel.h"
-#include "wincap.h"
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -21,6 +17,8 @@
 #endif
 
 #include "wintty.h"
+
+#define SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 
 struct interface_flags ui_flags;
 

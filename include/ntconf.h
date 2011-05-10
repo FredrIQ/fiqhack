@@ -89,9 +89,7 @@ extern void interject(int);
 #define Rand()	rand()
 #endif
 
-#define FCMASK	0660	/* file creation mask */
 #define regularize	nt_regularize
-#define HLOCK "NHPERM"
 
 #ifndef M
 #define M(c)		((char) (0x80 | (c)))

@@ -1,6 +1,16 @@
 #ifndef NETHACK_TYPES_H
 #define NETHACK_TYPES_H
 
+/*
+ * System autodetection: greatly simplified, as we only care about
+ * Unix (in all its variations) and Windows */
+#define UNIX
+#ifdef WIN32
+# undef UNIX
+# define STRNCMPI
+# define STRCMPI
+#endif
+
 typedef signed char	schar;
 typedef unsigned char	uchar;
 
@@ -14,6 +24,26 @@ typedef xchar	boolean;		/* 0 or 1 */
 
 typedef schar	aligntyp;	/* basic alignment type */
 
+#ifndef TRUE		/* defined in some systems' native include files */
+#define FALSE	((boolean)0)
+#define TRUE	((boolean)!0)
+#endif
+
+/* size of terminal screen is (at least) (ROWNO+3) by COLNO */
+#define COLNO	80
+#define ROWNO	21
+
+#define BUFSZ		256	/* for getlin buffers */
+#define QBUFSZ		128	/* for building question text */
+#define TBUFSZ		300	/* toplines[] buffer max msg: 3 81char names */
+				/* plus longest prefix plus a few extra words */
+#define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
+
+#define FCMASK	0660	/* file creation mask */
+
+#define HLOCK	"perm"	/* an empty file used for locking purposes */
+
+#define msleep(k) usleep((k)*1000)
 
 #include "wintype.h"
 #include "coord.h"

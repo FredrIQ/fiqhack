@@ -2,11 +2,11 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "config.h"
 #include "nethack.h"
-#include "system.h"
-#include "global.h"
 #include "color.h"
 
 #if !defined(NO_TERMS)
@@ -14,7 +14,7 @@
 #include "wintty.h"
 #include "tcap.h"
 
-
+#define SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 #define Tgetstr(key) (tgetstr(key,&tbufptr))
 
 static char * s_atr2str(int);
@@ -435,14 +435,9 @@ static const short tmspc10[] = {		/* from termcap */
 /* delay 50 ms */
 void tty_delay_output(void)
 {
-#ifdef TIMED_DELAY
-	 {
-		fflush(stdout);
-		msleep(50);		/* sleep for 50 milliseconds */
-		return;
-	}
-#endif
-	tputs("$<50>", 1, (int (*)())xputc);
+	fflush(stdout);
+	msleep(50);		/* sleep for 50 milliseconds */
+	return;
 }
 
 

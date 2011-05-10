@@ -5,7 +5,8 @@
    systems (e.g. MUNIX) the include files <termio.h> and <sgtty.h>
    define the same constants, and the C preprocessor complains. */
 
-#include "config.h"
+#include <stdio.h>
+
 #include "nethack.h"
 #include "color.h"
 

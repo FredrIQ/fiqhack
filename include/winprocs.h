@@ -4,8 +4,6 @@
 #ifndef WINPROCS_H
 #define WINPROCS_H
 
-#include "wincap.h"
-
 extern struct window_procs windowprocs;
 
 /*

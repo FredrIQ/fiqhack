@@ -263,4 +263,14 @@ extern struct tty_flag tty_flags;
 #define MENU_INVERT_PAGE	'~'
 #define MENU_SEARCH		':'
 
+
+/* system terminal functions */
+extern int tgetent(char *,const char *);
+extern void tputs(const char *,int,int (*)(void));
+extern int tgetnum(const char *);
+extern int tgetflag(const char *);
+extern char *tgetstr(const char *,char **);
+extern char *tgoto(const char *,int,int);
+
+
 #endif /* WINTTY_H */

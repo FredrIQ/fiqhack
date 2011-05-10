@@ -13,8 +13,6 @@
  * hide them.
  */
 
-#include "config.h"
-
 #ifdef GETRES_SUPPORT
 
 /* requires dynamic linking with libc */
