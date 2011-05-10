@@ -26,9 +26,6 @@ struct interface_flags ui_flags;
 
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
-    "tty",
-    WC_HILITE_PET|WC_INVERSE|WC_EIGHT_BIT_IN,
-    0L,
     tty_player_selection,
     tty_get_nh_event,
     tty_exit_nhwindows,

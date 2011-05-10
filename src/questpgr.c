@@ -386,7 +386,7 @@ void qt_pager(int msgnum)
 	}
 
 	dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
-	if (qt_msg->delivery == 'p' && strcmp(windowprocs.name, "X11"))
+	if (qt_msg->delivery == 'p')
 		deliver_by_pline(qt_msg);
 	else	deliver_by_window(qt_msg, NHW_TEXT);
 	return;

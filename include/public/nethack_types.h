@@ -19,9 +19,6 @@ typedef schar	aligntyp;	/* basic alignment type */
 #include "coord.h"
 
 struct window_procs {
-    const char *name;
-    unsigned long wincap;	/* window port capability options supported */
-    unsigned long wincap2;	/* additional window port capability options supported */
     void (*win_player_selection)(int,int,int,int,int);
     void (*win_get_nh_event)(void);
     void (*win_exit_nhwindows)(const char *);
