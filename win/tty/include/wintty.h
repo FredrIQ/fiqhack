@@ -192,7 +192,7 @@ extern void tty_nhbell(void);
 extern int tty_doprev_message(void);
 extern char tty_yn_function(const char *, const char *, char);
 extern void tty_getlin(const char *,char *);
-extern int tty_get_ext_cmd(void);
+extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen);
 extern void tty_number_pad(int);
 extern void tty_delay_output(void);
 
@@ -218,6 +218,8 @@ extern void read_config(void);
 extern void write_config(void);
 extern EXPORT void add_menu_cmd_alias(char, char);
 extern EXPORT char map_menu_cmd(char);
+
+extern char mapped_menu_cmds[];
 
 extern int locknum;
 extern const char quitchars[];

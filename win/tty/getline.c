@@ -10,14 +10,19 @@
 #define NEWAUTOCOMP
 
 #include "wintty.h"
-#include "func_tab.h"
+
+struct extcmd_hook_args {
+    const char **namelist;
+    const char **desclist;
+    int listlen;
+};
 
 char morc = 0;	/* tell the outside world what char you chose */
-static boolean ext_cmd_getlin_hook(char *);
+static boolean ext_cmd_getlin_hook(char *, void *);
 
-typedef boolean (*getlin_hook_proc)(char *);
+typedef boolean (*getlin_hook_proc)(char *, void *);
 
-static void hooked_tty_getlin(const char*,char*,getlin_hook_proc);
+static void hooked_tty_getlin(const char*, char*, getlin_hook_proc, void *);
 
 extern char erase_char, kill_char;	/* from appropriate tty.c file */
 
@@ -29,10 +34,11 @@ extern char erase_char, kill_char;	/* from appropriate tty.c file */
  */
 void tty_getlin(const char *query, char *bufp)
 {
-    hooked_tty_getlin(query, bufp, (getlin_hook_proc) 0);
+    hooked_tty_getlin(query, bufp, NULL, NULL);
 }
 
-static void hooked_tty_getlin(const char *query, char *bufp, getlin_hook_proc hook)
+static void hooked_tty_getlin(const char *query, char *bufp,
+			      getlin_hook_proc hook, void *hook_proc_arg)
 {
 	char *obufp = bufp;
 	int c;
@@ -125,7 +131,7 @@ static void hooked_tty_getlin(const char *query, char *bufp, getlin_hook_proc ho
 			bufp[1] = 0;
 			putsyms(bufp);
 			bufp++;
-			if (hook && (*hook)(obufp)) {
+			if (hook && (*hook)(obufp, hook_proc_arg)) {
 			    putsyms(bufp);
 #ifndef NEWAUTOCOMP
 			    bufp = eos(bufp);
@@ -182,6 +188,117 @@ void xwaitforspace(const char *s)
 
 
 /*
+ * This is controlled via runtime option 'extmenu'
+ * we get here after # - now show pick-list of possible commands */
+static int extcmd_via_menu(const char **namelist, const char **desclist, int listlen)	
+{
+    menu_item *pick_list = (menu_item *)0;
+    winid win;
+    anything any;
+    int choices[listlen+1];
+    char buf[BUFSZ];
+    char cbuf[QBUFSZ], prompt[QBUFSZ], fmtstr[20];
+    int i, n, nchoices, acount;
+    int ret,  biggest;
+    int accelerator, prevaccelerator;
+    int  matchlevel = 0;
+
+    ret = 0;
+    cbuf[0] = '\0';
+    biggest = 0;
+    while (!ret) {
+	    nchoices = n = 0;
+	    accelerator = 0;
+	    any.a_void = 0;
+	    /* populate choices */
+	    for (i = 0; i < listlen; i++) {
+// 	    for(efp = extcmdlist; efp->ef_txt; efp++) {
+		if (!matchlevel || !strncmp(namelist[i], cbuf, matchlevel)) {
+			choices[nchoices++] = i;
+			if (strlen(desclist[i]) > biggest) {
+				biggest = strlen(desclist[i]);
+				sprintf(fmtstr,"%%-%ds", biggest + 15);
+			}
+		}
+	    }
+	    choices[nchoices] = -1;
+	    
+	    /* if we're down to one, we have our selection so get out of here */
+	    if (nchoices == 1) {
+		for (i = 0; i < listlen; i++)
+			if (!strncmpi(namelist[i], cbuf, matchlevel)) {
+				ret = i;
+				break;
+			}
+		break;
+	    }
+
+	    /* otherwise... */
+	    win = tty_create_nhwindow(NHW_MENU);
+	    tty_start_menu(win);
+	    prevaccelerator = 0;
+	    acount = 0;
+	    for(i = 0; i < listlen && choices[i] >= 0; ++i) {
+		accelerator = namelist[choices[i]][matchlevel];
+		if (accelerator != prevaccelerator || nchoices < (ROWNO - 3)) {
+		    if (acount) {
+ 			/* flush the extended commands for that letter already in buf */
+			sprintf(buf, fmtstr, prompt);
+			any.a_char = prevaccelerator;
+			tty_add_menu(win, NO_GLYPH, &any, any.a_char, 0,
+					ATR_NONE, buf, FALSE);
+			acount = 0;
+		    }
+		}
+		prevaccelerator = accelerator;
+		if (!acount || nchoices < (ROWNO - 3)) {
+		    sprintf(prompt, "%s [%s]", namelist[choices[i]],
+				desclist[choices[i]]);
+		} else if (acount == 1) {
+		    sprintf(prompt, "%s or %s", namelist[choices[i-1]],
+				namelist[choices[i]]);
+		} else {
+		    strcat(prompt," or ");
+		    strcat(prompt, namelist[choices[i]]);
+		}
+		++acount;
+	    }
+	    if (acount) {
+		/* flush buf */
+		sprintf(buf, fmtstr, prompt);
+		any.a_char = prevaccelerator;
+		tty_add_menu(win, NO_GLYPH, &any, any.a_char, 0, ATR_NONE, buf, FALSE);
+	    }
+	    sprintf(prompt, "Extended Command: %s", cbuf);
+	    tty_end_menu(win, prompt);
+	    n = tty_select_menu(win, PICK_ONE, &pick_list);
+	    tty_destroy_nhwindow(win);
+	    if (n==1) {
+		if (matchlevel > (QBUFSZ - 2)) {
+			free((void *)pick_list);
+#ifdef DEBUG
+			impossible("Too many characters (%d) entered in extcmd_via_menu()",
+				matchlevel);
+#endif
+			ret = -1;
+		} else {
+			cbuf[matchlevel++] = pick_list[0].item.a_char;
+			cbuf[matchlevel] = '\0';
+			free(pick_list);
+		}
+	    } else {
+		if (matchlevel) {
+			ret = 0;
+			matchlevel = 0;
+		} else
+			ret = -1;
+	    }
+    }
+    return ret;
+}
+
+
+/*
  * Implement extended command completion by using this hook into
  * tty_getlin.  Check the characters already typed, if they uniquely
  * identify an extended command, expand the string to the whole
@@ -193,13 +310,14 @@ void xwaitforspace(const char *s)
  *	+ we don't change the characters that are already in base
  *	+ base has enough room to hold our string
  */
-static boolean ext_cmd_getlin_hook(char *base)
+static boolean ext_cmd_getlin_hook(char *base, void *hook_arg)
 {
 	int oindex, com_index;
+	struct extcmd_hook_args *hpa = hook_arg;
 
 	com_index = -1;
-	for (oindex = 0; extcmdlist[oindex].ef_txt != (char *)0; oindex++) {
-		if (!strncmpi(base, extcmdlist[oindex].ef_txt, strlen(base))) {
+	for (oindex = 0; oindex < hpa->listlen; oindex++) {
+		if (!strncmpi(base, hpa->namelist[oindex], strlen(base))) {
 			if (com_index == -1)	/* no matches yet */
 			    com_index = oindex;
 			else			/* more than 1 match */
@@ -207,7 +325,7 @@ static boolean ext_cmd_getlin_hook(char *base)
 		}
 	}
 	if (com_index >= 0) {
-		strcpy(base, extcmdlist[com_index].ef_txt);
+		strcpy(base, hpa->namelist[com_index]);
 		return TRUE;
 	}
 
@@ -218,22 +336,25 @@ static boolean ext_cmd_getlin_hook(char *base)
  * Read in an extended command, doing command line completion.  We
  * stop when we have found enough characters to make a unique command.
  */
-int tty_get_ext_cmd(void)
+int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen)
 {
 	int i;
 	char buf[BUFSZ];
+	struct extcmd_hook_args hpa = {namelist, desclist, listlen};
 
-	if (iflags.extmenu) return extcmd_via_menu();
+	if (iflags.extmenu)
+	    return extcmd_via_menu(namelist, desclist, listlen);
 	/* maybe a runtime option? */
-	hooked_tty_getlin("#", buf, ext_cmd_getlin_hook);
+	hooked_tty_getlin("#", buf, ext_cmd_getlin_hook, &hpa);
 	mungspaces(buf);
-	if (buf[0] == 0 || buf[0] == '\033') return -1;
+	if (buf[0] == 0 || buf[0] == '\033')
+	    return -1;
 
-	for (i = 0; extcmdlist[i].ef_txt != (char *)0; i++)
-		if (!strcmpi(buf, extcmdlist[i].ef_txt)) break;
+	for (i = 0; i < listlen; i++)
+		if (!strcmpi(buf, namelist[i])) break;
 
 
-	if (extcmdlist[i].ef_txt == (char *)0) {
+	if (namelist[i] == NULL) {
 		pline("%s: unknown extended command.", buf);
 		i = -1;
 	}

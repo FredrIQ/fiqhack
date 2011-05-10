@@ -52,7 +52,7 @@ struct window_procs {
     int (*win_doprev_message)(void);
     char (*win_yn_function)(const char *, const char *, char);
     void (*win_getlin)(const char *,char *);
-    int (*win_get_ext_cmd)(void);
+    int (*win_get_ext_cmd)(const char**, const char**, int);
     void (*win_number_pad)(int);
     void (*win_delay_output)(void);
 

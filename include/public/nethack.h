@@ -35,8 +35,6 @@ extern EXPORT char toplines[];
 extern EXPORT boolean botl;
 extern EXPORT boolean botlx;
 
-extern EXPORT char mapped_menu_cmds[]; /* from options.c */
-
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
 /* allmain.c */
@@ -52,7 +50,6 @@ extern EXPORT void bot(void);
 
 /* cmd.c */
 extern EXPORT char readchar(void);
-extern EXPORT int extcmd_via_menu(void);
 
 /* display.c */
 extern EXPORT void row_refresh(int,int,int);

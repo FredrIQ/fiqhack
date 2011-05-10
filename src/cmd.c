@@ -125,16 +125,32 @@ void set_occupation(int (*fn)(void), const char *txt, int xtime)
 
 static int doextcmd(void) /* here after # - now read a full-word command */
 {
-	int idx, retval;
+	int idx, size, retval;
+	const char **namelist, **desclist;
+	
+	size = 0;
+	while (extcmdlist[size].ef_txt)
+	    size++;
+	namelist = malloc((size+1) * sizeof(char*));
+	desclist = malloc((size+1) * sizeof(char*));
+	
+	for (idx = 0; idx < size; idx++) {
+	    namelist[idx] = extcmdlist[idx].ef_txt;
+	    desclist[idx] = extcmdlist[idx].ef_desc;
+	}
+	    
 
 	/* keep repeating until we don't run help or quit */
 	do {
-	    idx = get_ext_cmd();
+	    idx = get_ext_cmd(namelist, desclist, size);
 	    if (idx < 0) return 0;	/* quit */
 
 	    retval = (*extcmdlist[idx].ef_funct)();
 	} while (extcmdlist[idx].ef_funct == doextlist);
 
+	free(namelist);
+	free(desclist);
+	
 	return retval;
 }
 
@@ -158,126 +174,6 @@ int doextlist(void)	/* here after #? - now list all full-word commands */
 	display_nhwindow(datawin, FALSE);
 	destroy_nhwindow(datawin);
 	return 0;
-}
-
-
-#define MAX_EXT_CMD 40		/* Change if we ever have > 40 ext cmds */
-/*
- * This is currently used only by the tty port and is
- * controlled via runtime option 'extmenu'
- */
-int extcmd_via_menu(void)	/* here after # - now show pick-list of possible commands */
-{
-    const struct ext_func_tab *efp;
-    menu_item *pick_list = (menu_item *)0;
-    winid win;
-    anything any;
-    const struct ext_func_tab *choices[MAX_EXT_CMD];
-    char buf[BUFSZ];
-    char cbuf[QBUFSZ], prompt[QBUFSZ], fmtstr[20];
-    int i, n, nchoices, acount;
-    int ret,  biggest;
-    int accelerator, prevaccelerator;
-    int  matchlevel = 0;
-
-    ret = 0;
-    cbuf[0] = '\0';
-    biggest = 0;
-    while (!ret) {
-	    i = n = 0;
-	    accelerator = 0;
-	    any.a_void = 0;
-	    /* populate choices */
-	    for(efp = extcmdlist; efp->ef_txt; efp++) {
-		if (!matchlevel || !strncmp(efp->ef_txt, cbuf, matchlevel)) {
-			choices[i++] = efp;
-			if ((int)strlen(efp->ef_desc) > biggest) {
-				biggest = strlen(efp->ef_desc);
-				sprintf(fmtstr,"%%-%ds", biggest + 15);
-			}
-#ifdef DEBUG
-			if (i >= MAX_EXT_CMD - 2) {
-			    impossible("Exceeded %d extended commands in doextcmd() menu",
-					MAX_EXT_CMD - 2);
-			    return 0;
-			}
-#endif
-		}
-	    }
-	    choices[i] = (struct ext_func_tab *)0;
-	    nchoices = i;
-	    /* if we're down to one, we have our selection so get out of here */
-	    if (nchoices == 1) {
-		for (i = 0; extcmdlist[i].ef_txt != (char *)0; i++)
-			if (!strncmpi(extcmdlist[i].ef_txt, cbuf, matchlevel)) {
-				ret = i;
-				break;
-			}
-		break;
-	    }
-
-	    /* otherwise... */
-	    win = create_nhwindow(NHW_MENU);
-	    start_menu(win);
-	    prevaccelerator = 0;
-	    acount = 0;
-	    for(i = 0; choices[i]; ++i) {
-		accelerator = choices[i]->ef_txt[matchlevel];
-		if (accelerator != prevaccelerator || nchoices < (ROWNO - 3)) {
-		    if (acount) {
- 			/* flush the extended commands for that letter already in buf */
-			sprintf(buf, fmtstr, prompt);
-			any.a_char = prevaccelerator;
-			add_menu(win, NO_GLYPH, &any, any.a_char, 0,
-					ATR_NONE, buf, FALSE);
-			acount = 0;
-		    }
-		}
-		prevaccelerator = accelerator;
-		if (!acount || nchoices < (ROWNO - 3)) {
-		    sprintf(prompt, "%s [%s]", choices[i]->ef_txt,
-				choices[i]->ef_desc);
-		} else if (acount == 1) {
-		    sprintf(prompt, "%s or %s", choices[i-1]->ef_txt,
-				choices[i]->ef_txt);
-		} else {
-		    strcat(prompt," or ");
-		    strcat(prompt, choices[i]->ef_txt);
-		}
-		++acount;
-	    }
-	    if (acount) {
-		/* flush buf */
-		sprintf(buf, fmtstr, prompt);
-		any.a_char = prevaccelerator;
-		add_menu(win, NO_GLYPH, &any, any.a_char, 0, ATR_NONE, buf, FALSE);
-	    }
-	    sprintf(prompt, "Extended Command: %s", cbuf);
-	    end_menu(win, prompt);
-	    n = select_menu(win, PICK_ONE, &pick_list);
-	    destroy_nhwindow(win);
-	    if (n==1) {
-		if (matchlevel > (QBUFSZ - 2)) {
-			free((void *)pick_list);
-#ifdef DEBUG
-			impossible("Too many characters (%d) entered in extcmd_via_menu()",
-				matchlevel);
-#endif
-			ret = -1;
-		} else {
-			cbuf[matchlevel++] = pick_list[0].item.a_char;
-			cbuf[matchlevel] = '\0';
-			free((void *)pick_list);
-		}
-	    } else {
-		if (matchlevel) {
-			ret = 0;
-			matchlevel = 0;
-		} else
-			ret = -1;
-	    }
-    }
-    return ret;
 }
 
 
