@@ -68,9 +68,7 @@ static const char * const barehands_or_martial[] = {
     "bare handed combat", "martial arts"
 };
 
-static void
-give_may_advance_msg(skill)
-int skill;
+static void give_may_advance_msg(int skill)
 {
 	You_feel("more confident in your %sskills.",
 		skill == P_NONE ?
