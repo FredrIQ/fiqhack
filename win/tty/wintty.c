@@ -7,7 +7,6 @@
 
 #include "nethack.h"
 #include "color.h"
-#include "patchlevel.h"
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -143,6 +142,7 @@ void tty_init_nhwindows(void)
 {
     int wid, hgt;
     char *opts;
+    const char **banner;
 
     /*
      *  Remember tty modes, to be restored on exit.
@@ -183,10 +183,11 @@ void tty_init_nhwindows(void)
 
     tty_clear_nhwindow(BASE_WINDOW);
 
+    banner = nh_get_copyright_banner();
     tty_putstr(BASE_WINDOW, 0, "");
-    tty_putstr(BASE_WINDOW, 0, COPYRIGHT_BANNER_A);
-    tty_putstr(BASE_WINDOW, 0, COPYRIGHT_BANNER_B);
-    tty_putstr(BASE_WINDOW, 0, COPYRIGHT_BANNER_C);
+    tty_putstr(BASE_WINDOW, 0, banner[0]);
+    tty_putstr(BASE_WINDOW, 0, banner[1]);
+    tty_putstr(BASE_WINDOW, 0, banner[2]);
     tty_putstr(BASE_WINDOW, 0, "");
     tty_display_nhwindow(BASE_WINDOW, FALSE);
     

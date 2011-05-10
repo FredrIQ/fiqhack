@@ -12,6 +12,11 @@
 
 #include "dlb.h"
 #include "hack.h"
+#include "patchlevel.h"
+
+static const char *copyright_banner[] =
+{COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C};
+
 static void wd_message(void);
 
 static void wd_message(void)
@@ -20,6 +25,11 @@ static void wd_message(void)
 		You("are in non-scoring discovery mode.");
 }
 
+
+const char **nh_get_copyright_banner(void)
+{
+	return copyright_banner;
+}
 
 void nh_init(int pid, struct window_procs *procs, char **paths)
 {
