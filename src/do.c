@@ -589,7 +589,8 @@ static int menu_drop(int retry)
 #ifndef GOLDOBJ
     struct obj *u_gold = 0;
 #endif
-    menu_item *pick_list;
+    int pick_list[30];
+    struct object_pick *obj_pick_list;
     boolean all_categories = TRUE;
     boolean drop_everything = FALSE;
 
@@ -613,17 +614,16 @@ static int menu_drop(int retry)
 			invent,
 			UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL |
 			BUC_BLESSED | BUC_CURSED | BUC_UNCURSED | BUC_UNKNOWN,
-			&pick_list, PICK_ANY);
+			pick_list, PICK_ANY);
 	if (!n) goto drop_done;
 	for (i = 0; i < n; i++) {
-	    if (pick_list[i].item.a_int == ALL_TYPES_SELECTED)
+	    if (pick_list[i] == ALL_TYPES_SELECTED)
 		all_categories = TRUE;
-	    else if (pick_list[i].item.a_int == 'A')
+	    else if (pick_list[i] == 'A')
 		drop_everything = TRUE;
 	    else
-		add_valid_menu_class(pick_list[i].item.a_int);
+		add_valid_menu_class(pick_list[i]);
 	}
-	free((void *) pick_list);
     } else if (flags.menu_style == MENU_COMBINATION) {
 	unsigned ggoresults = 0;
 	all_categories = FALSE;
@@ -644,12 +644,12 @@ static int menu_drop(int retry)
     } else {
 	/* should coordinate with perm invent, maybe not show worn items */
 	n = query_objlist("What would you like to drop?", invent,
-			USE_INVLET|INVORDER_SORT, &pick_list,
+			USE_INVLET|INVORDER_SORT, &obj_pick_list,
 			PICK_ANY, all_categories ? allow_all : allow_category);
 	if (n > 0) {
 	    for (i = 0; i < n; i++) {
-		otmp = pick_list[i].item.a_obj;
-		cnt = pick_list[i].count;
+		otmp = obj_pick_list[i].obj;
+		cnt = obj_pick_list[i].count;
 		if (cnt < otmp->quan) {
 		    if (welded(otmp)) {
 			;	/* don't split */
@@ -667,7 +667,7 @@ static int menu_drop(int retry)
 		}
 		n_dropped += drop(otmp);
 	    }
-	    free((void *) pick_list);
+	    free(obj_pick_list);
 	}
     }
 

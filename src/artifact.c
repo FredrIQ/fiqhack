@@ -1198,36 +1198,33 @@ static int arti_invoke(struct obj *obj)
 	    int i, num_ok_dungeons, last_ok_dungeon = 0;
 	    d_level newlev;
 	    extern int n_dgns; /* from dungeon.c */
-	    winid tmpwin = create_nhwindow(NHW_MENU);
-	    anything any;
+	    struct nh_menuitem items[n_dgns];
 
-	    any.a_void = 0;	/* set all bits to zero */
-	    start_menu(tmpwin);
-	    /* use index+1 (cant use 0) as identifier */
-	    for (i = num_ok_dungeons = 0; i < n_dgns; i++) {
-		if (!dungeons[i].dunlev_ureached) continue;
-		any.a_int = i+1;
-		add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			 dungeons[i].dname, MENU_UNSELECTED);
+	    num_ok_dungeons = 0;
+	    for (i = 0; i < n_dgns; i++) {
+		if (!dungeons[i].dunlev_ureached)
+		    continue;
+		items[num_ok_dungeons].id = i+1;
+		items[num_ok_dungeons].accel = 0;
+		items[num_ok_dungeons].role = MI_NORMAL;
+		items[num_ok_dungeons].selected = FALSE;
+		strcpy(items[num_ok_dungeons].caption, dungeons[i].dname);
 		num_ok_dungeons++;
 		last_ok_dungeon = i;
 	    }
-	    end_menu(tmpwin, "Open a portal to which dungeon?");
+
 	    if (num_ok_dungeons > 1) {
 		/* more than one entry; display menu for choices */
-		menu_item *selected;
 		int n;
+		int selected[n_dgns];
 
-		n = select_menu(tmpwin, PICK_ONE, &selected);
-		if (n <= 0) {
-		    destroy_nhwindow(tmpwin);
+		n = display_menu(items, num_ok_dungeons, "Open a portal to which dungeon?", PICK_ONE, selected);
+		if (n <= 0)
 		    goto nothing_special;
-		}
-		i = selected[0].item.a_int - 1;
-		free((void *)selected);
+		
+		i = selected[0] - 1;
 	    } else
 		i = last_ok_dungeon;	/* also first & only OK dungeon */
-	    destroy_nhwindow(tmpwin);
 
 	    /*
 	     * i is now index into dungeon structure for the new dungeon.

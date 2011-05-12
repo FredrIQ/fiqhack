@@ -52,9 +52,6 @@ static void mon_invent_chain(winid, const char *, struct monst *, long *, long *
 static void mon_chain(winid, const char *, struct monst *, long *, long *);
 static void contained(winid, const char *, long *, long *);
 static int wiz_show_stats(void);
-#ifdef PORT_DEBUG
-static int wiz_port_debug(void);
-#endif
 static int enter_explore_mode(void);
 static int doattributes(void);
 static int doconduct(void); /**/
@@ -811,10 +808,7 @@ void enlightenment(int final)
  */
 static boolean minimal_enlightenment(void)
 {
-	winid tmpwin;
-	menu_item *selected;
-	anything any;
-	int genidx, n;
+	int genidx, n, i = 0;
 	char buf[BUFSZ], buf2[BUFSZ];
 	static const char untabbed_fmtstr[] = "%-15s: %-12s";
 	static const char untabbed_deity_fmtstr[] = "%-17s%s";
@@ -822,68 +816,66 @@ static boolean minimal_enlightenment(void)
 	static const char tabbed_deity_fmtstr[] = "%s\t%s";
 	static const char *fmtstr;
 	static const char *deity_fmtstr;
+	struct nh_menuitem items[18];
 
 	fmtstr = iflags.menu_tab_sep ? tabbed_fmtstr : untabbed_fmtstr;
 	deity_fmtstr = iflags.menu_tab_sep ?
 			tabbed_deity_fmtstr : untabbed_deity_fmtstr; 
-	any.a_void = 0;
+
 	buf[0] = buf2[0] = '\0';
-	tmpwin = create_nhwindow(NHW_MENU);
-	start_menu(tmpwin);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings, "Starting", FALSE);
+	set_menuitem(&items[i++], 0, MI_HEADING, "Starting", 0, FALSE);
 
 	/* Starting name, race, role, gender */
 	sprintf(buf, fmtstr, "name", plname);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	sprintf(buf, fmtstr, "race", urace.noun);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	sprintf(buf, fmtstr, "role",
 		(flags.initgend && urole.name.f) ? urole.name.f : urole.name.m);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	sprintf(buf, fmtstr, "gender", genders[flags.initgend].adj);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
 	/* Starting alignment */
 	sprintf(buf, fmtstr, "alignment", align_str(u.ualignbase[A_ORIGINAL]));
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
 	/* Current name, race, role, gender */
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, "", FALSE);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings, "Current", FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, "", 0, FALSE);
+	set_menuitem(&items[i++], 0, MI_HEADING, "Current", 0, FALSE);
 	sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-	if (Upolyd) {
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
+	if (Upolyd)
 	    sprintf(buf, fmtstr, "role (base)",
 		(u.mfemale && urole.name.f) ? urole.name.f : urole.name.m);
-	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-	} else {
+	else
 	    sprintf(buf, fmtstr, "role",
 		(flags.female && urole.name.f) ? urole.name.f : urole.name.m);
-	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
-	}
+	
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	/* don't want poly_gender() here; it forces `2' for non-humanoids */
 	genidx = is_neuter(youmonst.data) ? 2 : flags.female;
 	sprintf(buf, fmtstr, "gender", genders[genidx].adj);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	if (Upolyd && (int)u.mfemale != genidx) {
 	    sprintf(buf, fmtstr, "gender (base)", genders[u.mfemale].adj);
-	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	    set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	}
 
 	/* Current alignment */
 	sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type));
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
 	/* Deity list */
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, "", FALSE);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings, "Deities", FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, "", 0, FALSE);
+	set_menuitem(&items[i++], 0, MI_HEADING, "Deities", 0, FALSE);
 	sprintf(buf2, deity_fmtstr, align_gname(A_CHAOTIC),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type
 		&& u.ualign.type == A_CHAOTIC) ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_CHAOTIC)       ? " (s)" :
 	    (u.ualign.type   == A_CHAOTIC)       ? " (c)" : "");
 	sprintf(buf, fmtstr, "Chaotic", buf2);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
 	sprintf(buf2, deity_fmtstr, align_gname(A_NEUTRAL),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type
@@ -891,7 +883,7 @@ static boolean minimal_enlightenment(void)
 	    (u.ualignbase[A_ORIGINAL] == A_NEUTRAL)       ? " (s)" :
 	    (u.ualign.type   == A_NEUTRAL)       ? " (c)" : "");
 	sprintf(buf, fmtstr, "Neutral", buf2);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
 	sprintf(buf2, deity_fmtstr, align_gname(A_LAWFUL),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
@@ -899,11 +891,9 @@ static boolean minimal_enlightenment(void)
 	    (u.ualignbase[A_ORIGINAL] == A_LAWFUL)        ? " (s)" :
 	    (u.ualign.type   == A_LAWFUL)        ? " (c)" : "");
 	sprintf(buf, fmtstr, "Lawful", buf2);
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE, buf, FALSE);
+	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
-	end_menu(tmpwin, "Base Attributes");
-	n = select_menu(tmpwin, PICK_NONE, &selected);
-	destroy_nhwindow(tmpwin);
+	n = display_menu(items, i, "Base Attributes", PICK_NONE, NULL);
 	return n != -1;
 }
 
@@ -1159,9 +1149,6 @@ struct ext_func_tab extcmdlist[] = {
 	{(char *)0, (char *)0, donull, TRUE},
 	{(char *)0, (char *)0, donull, TRUE},
 	{(char *)0, (char *)0, donull, TRUE},
-#ifdef PORT_DEBUG
-	{(char *)0, (char *)0, donull, TRUE},
-#endif
 	{(char *)0, (char *)0, donull, TRUE},
         {(char *)0, (char *)0, donull, TRUE},
 	{(char *)0, (char *)0, donull, TRUE},
@@ -1183,9 +1170,6 @@ static const struct ext_func_tab debug_extcmdlist[] = {
 	{"monpolycontrol", "control monster polymorphs", wiz_mon_polycontrol, TRUE},
 	{"panic", "test panic routine (fatal to game)", wiz_panic, TRUE},
 	{"polyself", "polymorph self", wiz_polyself, TRUE},
-#ifdef PORT_DEBUG
-	{"portdebug", "wizard port debug command", wiz_port_debug, TRUE},
-#endif
 	{"seenv", "show seen vectors", wiz_show_seenv, TRUE},
 	{"stats", "show memory statistics", wiz_show_stats, TRUE},
 	{"timeout", "look at timeout queue", wiz_timeout_queue, TRUE},
@@ -1993,55 +1977,6 @@ static int dotravel(void)
 	readchar_queue = cmd;
 	return 0;
 }
-
-#ifdef PORT_DEBUG
-# ifdef WIN32CON
-extern void win32con_debug_keystrokes(void);
-extern void win32con_handler_info(void);
-# endif
-
-int wiz_port_debug(void)
-{
-	int n, k;
-	winid win;
-	anything any;
-	int item = 'a';
-	int num_menu_selections;
-	struct menu_selection_struct {
-		char *menutext;
-		void (*fn)(void);
-	} menu_selections[] = {
-#ifdef WIN32CON
-		{"test win32 keystrokes", win32con_debug_keystrokes},
-		{"show keystroke handler information", win32con_handler_info},
-#endif
-		{(char *)0, (void (*)(void))0}		/* array terminator */
-	};
-
-	num_menu_selections = SIZE(menu_selections) - 1;
-	if (num_menu_selections > 0) {
-		menu_item *pick_list;
-		win = create_nhwindow(NHW_MENU);
-		start_menu(win);
-		for (k=0; k < num_menu_selections; ++k) {
-			any.a_int = k+1;
-			add_menu(win, NO_GLYPH, &any, item++, 0, ATR_NONE,
-				menu_selections[k].menutext, MENU_UNSELECTED);
-		}
-		end_menu(win, "Which port debugging feature?");
-		n = select_menu(win, PICK_ONE, &pick_list);
-		destroy_nhwindow(win);
-		if (n > 0) {
-			n = pick_list[0].item.a_int - 1;
-			free((void *) pick_list);
-			/* execute the function */
-			(*menu_selections[n].fn)();
-		}
-	} else
-		pline("No port-specific debug capability defined.");
-	return 0;
-}
-# endif /*PORT_DEBUG*/
 
 
 /*

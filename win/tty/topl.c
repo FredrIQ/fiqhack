@@ -331,7 +331,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	    /* any acceptable responses that follow <esc> aren't displayed */
 	    if ((rb = index(respbuf, '\033')) != 0) *rb = '\0';
 	    sprintf(prompt, "%s [%s] ", query, respbuf);
-	    if (def) sprintf(eos(prompt), "(%c) ", def);
+	    if (def) sprintf(prompt + strlen(prompt), "(%c) ", def);
 	    pline("%s", prompt);
 	} else {
 	    pline("%s ", query);
@@ -340,7 +340,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	}
 
 	do {	/* loop until we get valid input */
-	    q = lowc(readchar());
+	    q = tolower(readchar());
 	    if (q == '\020') { /* ctrl-P */
 		if (iflags.prevmsg_window != 's') {
 		    int sav = ttyDisplay->inread;
@@ -369,7 +369,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		q = '\0';	/* force another loop iteration */
 		continue;
 	    }
-	    digit_ok = allow_num && digit(q);
+	    digit_ok = allow_num && isdigit(q);
 	    if (q == '\033') {
 		if (index(resp, 'q'))
 		    q = 'q';
@@ -398,8 +398,8 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		    q = '#';
 		}
 		do {	/* loop until we get a non-digit */
-		    z = lowc(readchar());
-		    if (digit(z)) {
+		    z = tolower(readchar());
+		    if (isdigit(z)) {
 			value = (10 * value) + (z - '0');
 			if (value < 0) break;	/* overflow: try again */
 			digit_string[0] = z;

@@ -108,7 +108,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 			    (bufp-obufp < BUFSZ-1 && bufp-obufp < COLNO)) {
 				/* avoid isprint() - some people don't have it
 				   ' ' is not always a printing char */
-			char *i = eos(bufp);
+			char *i = bufp + strlen(bufp);
 
 			*bufp = c;
 			bufp[1] = 0;

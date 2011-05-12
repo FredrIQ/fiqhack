@@ -229,17 +229,6 @@ static void whoami(char *name)
 		strncpy(name, s, PL_NSIZ);
 }
 
-#ifdef PORT_HELP
-void port_help(void)
-{
-	/*
-	 * Display unix-specific help.   Just show contents of the helpfile
-	 * named by PORT_HELP.
-	 */
-	display_file(PORT_HELP, TRUE);
-}
-#endif
-
 /*
  * Add a slash to any name not ending in /. There must
  * be room for the /

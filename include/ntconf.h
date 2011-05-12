@@ -39,12 +39,6 @@
 #define OPTIONS_USED	"ttyoptions"
 #define OPTIONS_FILE OPTIONS_USED
 
-#define PORT_HELP	"porthelp"
-
-#ifdef WIN32CON
-#define PORT_DEBUG	/* include ability to debug international keyboard issues */
-#endif
-
 /* Stuff to help the user with some common, yet significant errors */
 #define INTERJECT_PANIC		0
 #define INTERJECTION_TYPES	(INTERJECT_PANIC + 1)

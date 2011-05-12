@@ -13,9 +13,6 @@ static struct permonst * lookat(int, int, char *, char *);
 static void checkfile(char *,struct permonst *,boolean,boolean);
 static int do_look(boolean);
 static boolean help_menu(int *);
-#ifdef PORT_HELP
-extern void port_help(void);
-#endif
 
 /* Returns "true" for characters that could represent a monster's stomach. */
 static boolean is_swallow_sym(int c)
@@ -839,13 +836,7 @@ static const char *help_menu_items[] = {
 /* 5*/	"Longer explanation of game options.",
 /* 6*/	"List of extended commands.",
 /* 7*/	"The NetHack license.",
-#ifdef PORT_HELP
-	"%s-specific help and commands.",
-#define PORT_HELP_ID 100
-#define WIZHLP_SLOT 10
-#else
-#define WIZHLP_SLOT 9
-#endif
+#define WIZHLP_SLOT 8
 	"List of wizard-mode commands.",
 	"",
 	(char *)0
@@ -853,39 +844,20 @@ static const char *help_menu_items[] = {
 
 static boolean help_menu(int *sel)
 {
-	winid tmpwin = create_nhwindow(NHW_MENU);
-#ifdef PORT_HELP
-	char helpbuf[QBUFSZ];
-#endif
+	struct nh_menuitem items[SIZE(help_menu_items)];
+	int results[SIZE(help_menu_items)];
 	int i, n;
-	menu_item *selected;
-	anything any;
-
-	any.a_void = 0;		/* zero all bits */
-	start_menu(tmpwin);
+	
 	if (!wizard) help_menu_items[WIZHLP_SLOT] = "",
 		     help_menu_items[WIZHLP_SLOT+1] = (char *)0;
+
 	for (i = 0; help_menu_items[i]; i++)
-#ifdef PORT_HELP
-	    /* port-specific line has a %s in it for the PORT_ID */
-	    if (help_menu_items[i][0] == '%') {
-		sprintf(helpbuf, help_menu_items[i], PORT_ID);
-		any.a_int = PORT_HELP_ID + 1;
-		add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			 helpbuf, MENU_UNSELECTED);
-	    } else
-#endif
-	    {
-		any.a_int = (*help_menu_items[i]) ? i+1 : 0;
-		add_menu(tmpwin, NO_GLYPH, &any, 0, 0,
-			ATR_NONE, help_menu_items[i], MENU_UNSELECTED);
-	    }
-	end_menu(tmpwin, "Select one item:");
-	n = select_menu(tmpwin, PICK_ONE, &selected);
-	destroy_nhwindow(tmpwin);
+	    set_menuitem(&items[i], (*help_menu_items[i]) ? i+1 : 0, MI_NORMAL,
+			 help_menu_items[i], 0, FALSE);
+	
+	n = display_menu(items, i, "Select one item:", PICK_ONE, results);
 	if (n > 0) {
-	    *sel = selected[0].item.a_int - 1;
-	    free((void *)selected);
+	    *sel = results[0] - 1;
 	    return TRUE;
 	}
 	return FALSE;
@@ -907,9 +879,6 @@ int dohelp(void)
 			case  7:  display_file(LICENSE, TRUE);  break;
 			/* handle slot 9 or 10 */
 			default: display_file(DEBUGHELP, TRUE);  break;
-#ifdef PORT_HELP
-			case PORT_HELP_ID:  port_help();  break;
-#endif
 		}
 	}
 	return 0;

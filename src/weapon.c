@@ -794,137 +794,135 @@ const static struct skill_range {
  */
 int enhance_weapon_skill(void)
 {
-    int pass, i, n, len, longest,
+    int pass, i, n, len, longest, id,
 	to_advance, eventually_advance, maxxed_cnt;
     char buf[BUFSZ], sklnambuf[BUFSZ];
     const char *prefix;
-    menu_item *selected;
-    anything any;
-    winid win;
+    int nr_items = 10, cur_item;
+    struct nh_menuitem *items = malloc(nr_items * sizeof(struct nh_menuitem));
     boolean speedy = FALSE;
 
-	if (wizard && yn("Advance skills without practice?") == 'y')
-	    speedy = TRUE;
+    if (wizard && yn("Advance skills without practice?") == 'y')
+	speedy = TRUE;
 
-	do {
-	    /* find longest available skill name, count those that can advance */
-	    to_advance = eventually_advance = maxxed_cnt = 0;
-	    for (longest = 0, i = 0; i < P_NUM_SKILLS; i++) {
-		if (P_RESTRICTED(i)) continue;
-		if ((len = strlen(P_NAME(i))) > longest)
-		    longest = len;
-		if (can_advance(i, speedy)) to_advance++;
-		else if (could_advance(i)) eventually_advance++;
-		else if (peaked_skill(i)) maxxed_cnt++;
+    do {
+	cur_item = 0;
+	/* find longest available skill name, count those that can advance */
+	to_advance = eventually_advance = maxxed_cnt = 0;
+	for (longest = 0, i = 0; i < P_NUM_SKILLS; i++) {
+	    if (P_RESTRICTED(i))
+		continue;
+	    if ((len = strlen(P_NAME(i))) > longest)
+		longest = len;
+	    if (can_advance(i, speedy)) to_advance++;
+	    else if (could_advance(i)) eventually_advance++;
+	    else if (peaked_skill(i)) maxxed_cnt++;
+	}
+
+	/* start with a legend if any entries will be annotated
+	    with "*" or "#" below */
+	if (eventually_advance > 0 || maxxed_cnt > 0) {
+	    if (eventually_advance > 0) {
+		sprintf(buf,
+			"(Skill%s flagged by \"*\" may be enhanced %s.)",
+			plur(eventually_advance),
+			(u.ulevel < MAXULEV) ?
+			    "when you're more experienced" :
+			    "if skill slots become available");
+		add_menuitem(&items, &nr_items, cur_item++, 0, MI_NORMAL, buf,
+				0, FALSE);
 	    }
-
-	    win = create_nhwindow(NHW_MENU);
-	    start_menu(win);
-
-	    /* start with a legend if any entries will be annotated
-	       with "*" or "#" below */
-	    if (eventually_advance > 0 || maxxed_cnt > 0) {
-		any.a_void = 0;
-		if (eventually_advance > 0) {
-		    sprintf(buf,
-			    "(Skill%s flagged by \"*\" may be enhanced %s.)",
-			    plur(eventually_advance),
-			    (u.ulevel < MAXULEV) ?
-				"when you're more experienced" :
-				"if skill slots become available");
-		    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			     buf, MENU_UNSELECTED);
-		}
-		if (maxxed_cnt > 0) {
-		    sprintf(buf,
-		  "(Skill%s flagged by \"#\" cannot be enhanced any further.)",
-			    plur(maxxed_cnt));
-		    add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			     buf, MENU_UNSELECTED);
-		}
-		add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			     "", MENU_UNSELECTED);
+	    if (maxxed_cnt > 0) {
+		sprintf(buf,
+		"(Skill%s flagged by \"#\" cannot be enhanced any further.)",
+			plur(maxxed_cnt));
+		add_menuitem(&items, &nr_items, cur_item++, 0, MI_NORMAL, buf,
+				0, FALSE);
 	    }
+	    add_menuitem(&items, &nr_items, cur_item++, 0, MI_NORMAL, "",
+			    0, FALSE);
+	}
 
-	    /* List the skills, making ones that could be advanced
-	       selectable.  List the miscellaneous skills first.
-	       Possible future enhancement:  list spell skills before
-	       weapon skills for spellcaster roles. */
-	  for (pass = 0; pass < SIZE(skill_ranges); pass++)
+	/* List the skills, making ones that could be advanced
+	    selectable.  List the miscellaneous skills first.
+	    Possible future enhancement:  list spell skills before
+	    weapon skills for spellcaster roles. */
+	for (pass = 0; pass < SIZE(skill_ranges); pass++)
 	    for (i = skill_ranges[pass].first;
-		 i <= skill_ranges[pass].last; i++) {
-		/* Print headings for skill types */
-		any.a_void = 0;
-		if (i == skill_ranges[pass].first)
-		    add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
-			     skill_ranges[pass].name, MENU_UNSELECTED);
+		i <= skill_ranges[pass].last; i++) {
+	    /* Print headings for skill types */
+	    if (i == skill_ranges[pass].first)
+		add_menuitem(&items, &nr_items, cur_item++, 0, MI_HEADING,
+				skill_ranges[pass].name, 0, FALSE);
 
-		if (P_RESTRICTED(i)) continue;
-		/*
-		 * Sigh, this assumes a monospaced font unless
-		 * iflags.menu_tab_sep is set in which case it puts
-		 * tabs between columns.
-		 * The 12 is the longest skill level name.
-		 * The "    " is room for a selection letter and dash, "a - ".
-		 */
-		if (can_advance(i, speedy))
-		    prefix = "";	/* will be preceded by menu choice */
-		else if (could_advance(i))
-		    prefix = "  * ";
-		else if (peaked_skill(i))
-		    prefix = "  # ";
+	    if (P_RESTRICTED(i))
+		continue;
+	    /*
+		* Sigh, this assumes a monospaced font unless
+		* iflags.menu_tab_sep is set in which case it puts
+		* tabs between columns.
+		* The 12 is the longest skill level name.
+		* The "    " is room for a selection letter and dash, "a - ".
+		*/
+	    if (can_advance(i, speedy))
+		prefix = "";	/* will be preceded by menu choice */
+	    else if (could_advance(i))
+		prefix = "  * ";
+	    else if (peaked_skill(i))
+		prefix = "  # ";
+	    else
+		prefix = (to_advance + eventually_advance +
+			    maxxed_cnt > 0) ? "    " : "";
+	    skill_level_name(i, sklnambuf);
+	    if (wizard) {
+		if (!iflags.menu_tab_sep)
+		    sprintf(buf, " %s%-*s %-12s %5d(%4d)",
+			prefix, longest, P_NAME(i), sklnambuf,
+			P_ADVANCE(i),
+			practice_needed_to_advance(P_SKILL(i)));
 		else
-		    prefix = (to_advance + eventually_advance +
-				maxxed_cnt > 0) ? "    " : "";
-		skill_level_name(i, sklnambuf);
-		if (wizard) {
-		    if (!iflags.menu_tab_sep)
-			sprintf(buf, " %s%-*s %-12s %5d(%4d)",
-			    prefix, longest, P_NAME(i), sklnambuf,
-			    P_ADVANCE(i),
-			    practice_needed_to_advance(P_SKILL(i)));
-		    else
-			sprintf(buf, " %s%s\t%s\t%5d(%4d)",
-			    prefix, P_NAME(i), sklnambuf,
-			    P_ADVANCE(i),
-			    practice_needed_to_advance(P_SKILL(i)));
-		 } else
-		{
-		    if (!iflags.menu_tab_sep)
-			sprintf(buf, " %s %-*s [%s]",
-			    prefix, longest, P_NAME(i), sklnambuf);
-		    else
-			sprintf(buf, " %s%s\t[%s]",
-			    prefix, P_NAME(i), sklnambuf);
-		}
-		any.a_int = can_advance(i, speedy) ? i+1 : 0;
-		add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			 buf, MENU_UNSELECTED);
+		    sprintf(buf, " %s%s\t%s\t%5d(%4d)",
+			prefix, P_NAME(i), sklnambuf,
+			P_ADVANCE(i),
+			practice_needed_to_advance(P_SKILL(i)));
+		} else
+	    {
+		if (!iflags.menu_tab_sep)
+		    sprintf(buf, " %s %-*s [%s]",
+			prefix, longest, P_NAME(i), sklnambuf);
+		else
+		    sprintf(buf, " %s%s\t[%s]",
+			prefix, P_NAME(i), sklnambuf);
 	    }
+	    id = can_advance(i, speedy) ? i+1 : 0;
+	    add_menuitem(&items, &nr_items, cur_item++, id, MI_NORMAL, buf,
+			    0, FALSE);
+	}
 
-	    strcpy(buf, (to_advance > 0) ? "Pick a skill to advance:" :
-					   "Current skills:");
-	    if (wizard && !speedy)
-		sprintf(eos(buf), "  (%d slot%s available)",
-			u.weapon_slots, plur(u.weapon_slots));
-	    end_menu(win, buf);
-	    n = select_menu(win, to_advance ? PICK_ONE : PICK_NONE, &selected);
-	    destroy_nhwindow(win);
-	    if (n > 0) {
-		n = selected[0].item.a_int - 1;	/* get item selected */
-		free((void *)selected);
-		skill_advance(n);
-		/* check for more skills able to advance, if so then .. */
-		for (n = i = 0; i < P_NUM_SKILLS; i++) {
-		    if (can_advance(i, speedy)) {
-			if (!speedy) You_feel("you could be more dangerous!");
-			n++;
-			break;
-		    }
+	strcpy(buf, (to_advance > 0) ? "Pick a skill to advance:" :
+					"Current skills:");
+	if (wizard && !speedy)
+	    sprintf(eos(buf), "  (%d slot%s available)",
+		    u.weapon_slots, plur(u.weapon_slots));
+	int selected[1];
+	n = display_menu(items, cur_item, buf,
+			    to_advance ? PICK_ONE : PICK_NONE, selected);
+	if (n == 1) {
+	    n = selected[0] - 1;	/* get item selected */
+	    skill_advance(n);
+	    /* check for more skills able to advance, if so then .. */
+	    for (n = i = 0; i < P_NUM_SKILLS; i++) {
+		if (can_advance(i, speedy)) {
+		    if (!speedy) You_feel("you could be more dangerous!");
+		    n++;
+		    break;
 		}
 	    }
-	} while (speedy && n > 0);
-	return 0;
+	}
+    } while (speedy && n > 0);
+    
+    free(items);
+    return 0;
 }
 
 /*

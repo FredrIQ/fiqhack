@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "nethack.h"
 #include "color.h"
@@ -35,10 +36,8 @@ struct window_procs tty_procs = {
     tty_curs,
     tty_putstr,
     tty_display_buffer,
-    tty_start_menu,
-    tty_add_menu,
-    tty_end_menu,
-    tty_select_menu,
+    tty_display_menu,
+    tty_display_objects,
     tty_message_menu,
     tty_update_inventory,
     tty_mark_synch,
@@ -242,7 +241,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    echoline = wins[BASE_WINDOW]->cury;
 	    tty_putstr(BASE_WINDOW, 0, prompt);
 	    do {
-		pick4u = lowc(readchar());
+		pick4u = tolower(readchar());
 		if (index(quitchars, pick4u)) pick4u = 'y';
 	    } while(!index("ynq", pick4u));
 	    if ((int)strlen(prompt) + 1 < CO) {
@@ -293,9 +292,9 @@ give_up:	/* Quit */
 		any.a_void = 0;
 		for (i = 0; i < listlen; i++) {
 		    any.a_int = list[i].id + 1; /* list[i].id starts at 0 */
-		    thisch = lowc(*list[i].caption);
+		    thisch = tolower(*list[i].caption);
 		    if (thisch == lastch)
-			thisch = highc(thisch);
+			thisch = toupper(thisch);
 		    tty_add_menu(win, NO_GLYPH, &any, thisch,
 			0, ATR_NONE, list[i].caption, MENU_UNSELECTED);
 		    lastch = thisch;
@@ -1882,6 +1881,88 @@ int tty_select_menu(winid window, int how, menu_item **menu_list)
 
     return n;
 }
+
+
+int tty_display_menu(struct nh_menuitem *items, int icount, const char *title,
+		     int how, int *results)
+{
+    int i, n;
+    menu_item *selected = NULL;
+    anything any;
+    winid win;
+    boolean is_text = TRUE;
+    
+    for (i = 0; i < icount; i++)
+	is_text = is_text && (items[i].role == MI_TEXT);
+    
+    any.a_void = NULL;
+    win = tty_create_nhwindow(NHW_MENU);
+    if (!is_text)
+	tty_start_menu(win);
+    
+    for (i = 0; i < icount; i++) {
+	any.a_int = items[i].id;
+	if (items[i].role == MI_HEADING)
+	    tty_add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+			    items[i].caption, MENU_UNSELECTED);
+	else if (items[i].role == MI_TEXT)
+	    tty_putstr(win, 0, items[i].caption);
+	else
+	    tty_add_menu(win, NO_GLYPH, &any, items[i].accel,
+			 items[i].group_accel, ATR_NONE, items[i].caption,
+			 items[i].selected);
+    }
+    
+    if (!is_text) {
+	tty_end_menu(win, title);
+	n = tty_select_menu(win, how, &selected);
+	for (i = 0; i < n && results; i++)
+	    results[i] = selected[i].item.a_int;
+	
+	free(selected);
+    } else
+	tty_display_nhwindow(win, TRUE);
+    tty_destroy_nhwindow(win);
+    
+    return n;
+}
+
+
+int tty_display_objects(struct nh_objitem *items, int icount, const char *title,
+			int how, struct nh_objresult *pick_list)
+{
+    int i, n;
+    menu_item *selected = NULL;
+    anything any;
+    winid win;
+    
+    any.a_void = NULL;
+    win = tty_create_nhwindow(NHW_MENU);
+    tty_start_menu(win);
+    
+    for (i = 0; i < icount; i++) {
+	any.a_int = items[i].id;
+	if (items[i].id == 0 && items[i].otype == -1)
+	    tty_add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+			    items[i].caption, MENU_UNSELECTED);
+	else
+	    tty_add_menu(win, items[i].glyph, &any, items[i].accel,
+			items[i].group_accel, ATR_NONE, items[i].caption,
+			MENU_UNSELECTED);
+    }
+    
+    tty_end_menu(win, title);
+    n = tty_select_menu(win, how, &selected);
+    for (i = 0; i < n; i++) {
+	pick_list[i].id = selected[i].item.a_int;
+	pick_list[i].count = selected[i].count;
+    }
+    free(selected);
+    
+    tty_destroy_nhwindow(win);
+    return n;
+}
+
 
 /* special hack for treating top line --More-- as a one item menu */
 char tty_message_menu(char let, int how, const char *mesg)

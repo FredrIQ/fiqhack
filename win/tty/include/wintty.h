@@ -8,6 +8,24 @@
 #define NETHACKDIR "/usr/share/NetHack/"
 #endif
 
+/* generic parameter - must not be any larger than a pointer */
+typedef union any {
+    void * a_void;
+    struct obj *a_obj;
+    int  a_int;
+    char a_char;
+    schar a_schar;
+    /* add types as needed */
+} anything;
+#define ANY_P union any /* avoid typedef in prototypes */
+
+/* menu return list */
+typedef struct mi {
+    anything item;		/* identifier */
+    long count;			/* count */
+} menu_item;
+#define MENU_ITEM_P struct mi
+
 #ifndef WINDOW_STRUCTS
 #define WINDOW_STRUCTS
 
@@ -179,6 +197,8 @@ extern void tty_add_menu(winid,int,const ANY_P *,
 		char,char,int,const char *, boolean);
 extern void tty_end_menu(winid, const char *);
 extern int tty_select_menu(winid, int, MENU_ITEM_P **);
+extern int tty_display_menu(struct nh_menuitem*, int, const char*, int, int*);
+extern int tty_display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
 extern char tty_message_menu(char,int,const char *);
 extern void tty_update_inventory(void);
 extern void tty_mark_synch(void);

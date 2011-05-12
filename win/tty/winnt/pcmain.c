@@ -469,16 +469,6 @@ void chdirx(char *dir, boolean wr)
 #endif /* CHDIR */
 
 
-#ifdef PORT_HELP
-# if defined(WIN32)
-void port_help(void)
-{
-    /* display port specific help file */
-    display_file( PORT_HELP, 1 );
-}
-# endif /* WIN32 */
-#endif /* PORT_HELP */
-
 #ifdef EXEPATH
 #define PATH_SEPARATOR '\\'
 

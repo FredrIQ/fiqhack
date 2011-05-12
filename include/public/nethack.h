@@ -77,10 +77,6 @@ extern EXPORT void enter_discover_mode(void);
 extern EXPORT void enter_wizard_mode(void);
 
 /* hacklib.c */
-extern EXPORT boolean digit(char);
-extern EXPORT char *eos(char *);
-extern EXPORT char lowc(char);
-extern EXPORT char highc(char);
 extern EXPORT char *mungspaces(char *);
 extern EXPORT char *tabexpand(char *);
 #ifndef STRNCMPI

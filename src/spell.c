@@ -1015,15 +1015,10 @@ static boolean dospellmenu(const char *prompt,
 			   int splaction, /* SPELLMENU_CAST, SPELLMENU_VIEW, or spl_book[] index */
 			   int *spell_no)
 {
-	winid tmpwin;
-	int i, n, how;
+	int i, n, how, count = 0;
 	char buf[BUFSZ];
-	menu_item *selected;
-	anything any;
-
-	tmpwin = create_nhwindow(NHW_MENU);
-	start_menu(tmpwin);
-	any.a_void = 0;		/* zero out all bits */
+	struct nh_menuitem items[MAXSPELL+1];
+	int selected[MAXSPELL+1];
 
 	/*
 	 * The correct spacing of the columns depends on the
@@ -1038,7 +1033,7 @@ static boolean dospellmenu(const char *prompt,
 		sprintf(buf, "%-20s     Level  %-12s Fail", "    Name", "Category");
 	else
 		sprintf(buf, "Name\tLevel\tCategory\tFail");
-	add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_BOLD, buf, MENU_UNSELECTED);
+	set_menuitem(&items[count++], 0, MI_HEADING, buf, 0, FALSE);
 	for (i = 0; i < MAXSPELL && spellid(i) != NO_SPELL; i++) {
 		sprintf(buf, iflags.menu_tab_sep ?
 			"%s\t%-d%s\t%s\t%-d%%" : "%-20s  %2d%s   %-12s %3d%%",
@@ -1047,28 +1042,24 @@ static boolean dospellmenu(const char *prompt,
 			spelltypemnemonic(spell_skilltype(spellid(i))),
 			100 - percent_success(i));
 
-		any.a_int = i+1;	/* must be non-zero */
-		add_menu(tmpwin, NO_GLYPH, &any,
-			 spellet(i), 0, ATR_NONE, buf,
-			 (i == splaction) ? MENU_SELECTED : MENU_UNSELECTED);
+		set_menuitem(&items[count++], i+1, MI_NORMAL, buf, 0,
+			     (i == splaction) ? TRUE : FALSE);
 	      }
-	end_menu(tmpwin, prompt);
 
 	how = PICK_ONE;
 	if (splaction == SPELLMENU_VIEW && spellid(1) == NO_SPELL)
 	    how = PICK_NONE;	/* only one spell => nothing to swap with */
-	n = select_menu(tmpwin, how, &selected);
-	destroy_nhwindow(tmpwin);
+	n = display_menu(items, count, prompt, how, selected);
 	if (n > 0) {
-		*spell_no = selected[0].item.a_int - 1;
+		*spell_no = selected[0] - 1;
 		/* menu selection for `PICK_ONE' does not
 		   de-select any preselected entry */
 		if (n > 1 && *spell_no == splaction)
-		    *spell_no = selected[1].item.a_int - 1;
-		free((void *)selected);
+		    *spell_no = selected[1] - 1;
 		/* default selection of preselected spell means that
 		   user chose not to swap it with anything */
-		if (*spell_no == splaction) return FALSE;
+		if (*spell_no == splaction)
+		    return FALSE;
 		return TRUE;
 	} else if (splaction >= 0) {
 	    /* explicit de-selection of preselected spell means that

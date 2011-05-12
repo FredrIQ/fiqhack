@@ -6,24 +6,6 @@
 
 typedef int winid;		/* a window identifier */
 
-/* generic parameter - must not be any larger than a pointer */
-typedef union any {
-    void * a_void;
-    struct obj *a_obj;
-    int  a_int;
-    char a_char;
-    schar a_schar;
-    /* add types as needed */
-} anything;
-#define ANY_P union any /* avoid typedef in prototypes */
-
-/* menu return list */
-typedef struct mi {
-    anything item;		/* identifier */
-    long count;			/* count */
-} menu_item;
-#define MENU_ITEM_P struct mi
-
 /* select_menu() "how" argument types */
 #define PICK_NONE 0	/* user picks nothing (display only) */
 #define PICK_ONE  1	/* only pick one */

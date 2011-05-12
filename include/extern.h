@@ -596,7 +596,15 @@ extern long money_cnt(struct obj *);
 
 /* ### hacklib.c ### */
 
+extern void set_menuitem(struct nh_menuitem *, int, enum nh_menuitem_role,
+			 const char *, char, boolean);
+extern void add_menuitem(struct nh_menuitem**, int*, int, int,
+			 enum nh_menuitem_role, const char *, char, boolean);
 extern boolean letter(char);
+extern boolean digit(char);
+extern char *eos(char *);
+extern char lowc(char);
+extern char highc(char);
 extern char *lcase(char *);
 extern char *upstart(char *);
 extern char *strkitten(char *,char);
@@ -1155,9 +1163,11 @@ extern boolean is_worn_by_type(struct obj *);
 extern int pickup(int);
 extern int pickup_object(struct obj *, long, boolean);
 extern int query_category(const char *, struct obj *, int,
-				menu_item **, int);
+				int*, int);
 extern int query_objlist(const char *, struct obj *, int,
-				menu_item **, int, boolean (*)(struct obj*));
+				struct object_pick **, int, boolean (*)(struct obj*));
+extern void add_objitem(struct nh_objitem**, int*, int, int, char*,
+			struct obj*, boolean);
 extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(void);
 extern int doloot(void);

@@ -44,6 +44,35 @@ NetHack, except that rounddiv may call panic().
 	int		midnight	(void)
 =*/
 
+void set_menuitem(struct nh_menuitem *item, int id, enum nh_menuitem_role role,
+		  const char *caption, char accel, boolean selected)
+{
+	item->id = id;
+	item->role = role;
+	item->accel = accel;
+	item->group_accel = 0;
+	item->selected = selected;
+	strcpy(item->caption, caption);
+}
+
+
+void add_menuitem(struct nh_menuitem **itemlist, int *nr_items, int idx,
+		  int id, enum nh_menuitem_role role, const char *caption,
+		  char accel, boolean selected)
+{
+	struct nh_menuitem *items = *itemlist;
+	
+	if (idx >= *nr_items) {
+	    int newsize = max(*nr_items * 2, idx + 1);
+	    items = malloc(newsize * sizeof(struct nh_menuitem));
+	    memcpy(items, *itemlist, *nr_items * sizeof(struct nh_menuitem));
+	    free(*itemlist);
+	    *nr_items = newsize;
+	    *itemlist = items;
+	}
+	
+	set_menuitem(&items[idx], id, role, caption, accel, selected);
+}
 
 boolean digit(char c)	/* is 'c' a digit? */
 {

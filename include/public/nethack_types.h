@@ -48,6 +48,10 @@ typedef schar	aligntyp;	/* basic alignment type */
 #include "wintype.h"
 #include "coord.h"
 
+struct nh_menuitem;
+struct nh_objitem;
+struct nh_objresult;
+
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
     void (*win_get_nh_event)(void);
@@ -61,11 +65,10 @@ struct window_procs {
     void (*win_curs)(winid,int,int);
     void (*win_putstr)(winid, int, const char *);
     void (*win_display_buffer)(char *,boolean);
-    void (*win_start_menu)(winid);
-    void (*win_add_menu)(winid,int,const ANY_P *,
-		char,char,int,const char *, boolean);
-    void (*win_end_menu)(winid, const char *);
-    int (*win_select_menu)(winid, int, MENU_ITEM_P **);
+    
+    int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
+    int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
+    
     char (*win_message_menu)(char,int,const char *);
     void (*win_update_inventory)(void);
     void (*win_mark_synch)(void);
@@ -249,8 +252,7 @@ union nh_optvalue {
 	int e;
 };
 
-struct nh_option_desc
-{
+struct nh_option_desc {
 	const char *name;
 	const char *helptxt;
 	enum nh_opttype type;
@@ -262,6 +264,46 @@ struct nh_option_desc
 	    struct nh_enum_option e;
 	    struct nh_string_option s;
 	};
+};
+
+enum nh_menuitem_role {
+	MI_NORMAL,
+	MI_TEXT,
+	MI_HEADING
+};
+
+struct nh_menuitem {
+	int id;
+	enum nh_menuitem_role role;
+	char caption[COLNO];
+	char accel;
+	char group_accel;
+	boolean selected;
+};
+
+enum nh_bucstatus {
+    BUC_UNKNOWN,
+    BUC_BLESSED,
+    BUC_UNCURSED,
+    BUC_CURSED
+};
+
+struct nh_objitem {
+	char caption[COLNO];
+	int id;
+	int count;
+	int glyph;
+	char accel;
+	char group_accel;
+	int otype;
+	int oclass;
+	enum nh_bucstatus buc;
+	boolean worn;
+};
+
+struct nh_objresult {
+	int id;
+	int count;
 };
 
 

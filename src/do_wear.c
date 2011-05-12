@@ -1931,7 +1931,8 @@ int doddoremarm(void)
 static int menu_remarm(int retry)
 {
     int n, i = 0;
-    menu_item *pick_list;
+    int pick_list[30];
+    struct object_pick *obj_pick_list;
     boolean all_worn_categories = TRUE;
 
     if (retry) {
@@ -1939,29 +1940,28 @@ static int menu_remarm(int retry)
     } else if (flags.menu_style == MENU_FULL) {
 	all_worn_categories = FALSE;
 	n = query_category("What type of things do you want to take off?",
-			   invent, WORN_TYPES|ALL_TYPES, &pick_list, PICK_ANY);
+			   invent, WORN_TYPES|ALL_TYPES, pick_list, PICK_ANY);
 	if (!n) return 0;
 	for (i = 0; i < n; i++) {
-	    if (pick_list[i].item.a_int == ALL_TYPES_SELECTED)
+	    if (pick_list[i] == ALL_TYPES_SELECTED)
 		all_worn_categories = TRUE;
 	    else
-		add_valid_menu_class(pick_list[i].item.a_int);
+		add_valid_menu_class(pick_list[i]);
 	}
-	free((void *) pick_list);
     } else if (flags.menu_style == MENU_COMBINATION) {
 	all_worn_categories = FALSE;
-	if (ggetobj("take off", select_off, 0, TRUE, (unsigned *)0) == -2)
+	if (ggetobj("take off", select_off, 0, TRUE, NULL) == -2)
 	    all_worn_categories = TRUE;
     }
 
     n = query_objlist("What do you want to take off?", invent,
 			SIGNAL_NOMENU|USE_INVLET|INVORDER_SORT,
-			&pick_list, PICK_ANY,
+			&obj_pick_list, PICK_ANY,
 			all_worn_categories ? is_worn : is_worn_by_type);
     if (n > 0) {
 	for (i = 0; i < n; i++)
-	    select_off(pick_list[i].item.a_obj);
-	free((void *) pick_list);
+	    select_off(obj_pick_list[i].obj);
+	free(obj_pick_list);
     } else if (n < 0 && flags.menu_style != MENU_COMBINATION) {
 	There("is nothing else you can remove or unwield.");
     }

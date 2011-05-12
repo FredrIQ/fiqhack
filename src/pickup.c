@@ -18,7 +18,7 @@ static boolean query_classes(char *,boolean *,boolean *,
 static void check_here(boolean);
 static boolean n_or_more(struct obj *);
 static boolean all_but_uchain(struct obj *);
-static int autopick(struct obj*, int, menu_item **);
+static int autopick(struct obj*, int, struct object_pick **);
 static int count_categories(struct obj *,int);
 static long carry_count (struct obj *,struct obj *,long,boolean,int *,int *);
 static int lift_object(struct obj *,struct obj *,long *,boolean);
@@ -330,7 +330,7 @@ boolean is_worn_by_type(struct obj *otmp)
 int pickup(int what)		/* should be a long */
 {
 	int i, n, res, count, n_tried = 0, n_picked = 0;
-	menu_item *pick_list = (menu_item *) 0;
+	struct object_pick *pick_list = NULL;
 	boolean autopickup = what > 0;
 	struct obj *objchain;
 	int traverse_how;
@@ -427,12 +427,13 @@ int pickup(int what)		/* should be a long */
 menu_pickup:
 	    n_tried = n;
 	    for (n_picked = i = 0 ; i < n; i++) {
-		res = pickup_object(pick_list[i].item.a_obj,pick_list[i].count,
+		res = pickup_object(pick_list[i].obj, pick_list[i].count,
 					FALSE);
 		if (res < 0) break;	/* can't continue */
 		n_picked += res;
 	    }
-	    if (pick_list) free((void *)pick_list);
+	    if (pick_list)
+		free(pick_list);
 
 	} else {
 	    /* old style interface */
@@ -472,7 +473,8 @@ menu_pickup:
 				   FALSE,
 #endif
 				   &via_menu)) {
-		    if (!via_menu) return 0;
+		    if (!via_menu)
+			return 0;
 		    n = query_objlist("Pick up what?",
 				  objchain,
 				  traverse_how|(selective ? 0 : INVORDER_SORT),
@@ -567,9 +569,9 @@ boolean is_autopickup_exception(struct obj *obj,
  */
 static int autopick(struct obj *olist,	/* the object list */
 		    int follow,		/* how to follow the object list */
-		    menu_item **pick_list) /* list of objects and counts to pick up */
+		    struct object_pick **pick_list) /* list of objects and counts to pick up */
 {
-	menu_item *pi;	/* pick item */
+	struct object_pick *pi;	/* pick item */
 	struct obj *curr;
 	int n;
 	const char *otypes = flags.pickup_types;
@@ -588,7 +590,7 @@ static int autopick(struct obj *olist,	/* the object list */
 		n++;
 
 	if (n) {
-	    *pick_list = pi = (menu_item *) alloc(sizeof(menu_item) * n);
+	    *pick_list = pi = malloc(sizeof(struct object_pick) * n);
 	    for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
 #ifndef AUTOPICKUP_EXCEPTIONS
 		if (!*otypes || index(otypes, curr->oclass)) {
@@ -597,7 +599,7 @@ static int autopick(struct obj *olist,	/* the object list */
 		 is_autopickup_exception(curr, TRUE)) &&
 	    	 !is_autopickup_exception(curr, FALSE)) {
 #endif
-		    pi[n].item.a_obj = curr;
+		    pi[n].obj = curr;
 		    pi[n].count = curr->quan;
 		    n++;
 		}
@@ -605,6 +607,40 @@ static int autopick(struct obj *olist,	/* the object list */
 	return n;
 }
 
+
+void add_objitem(struct nh_objitem **items, int *nr_items, int idx, int id,
+		 char *caption, struct obj *obj, boolean use_invlet)
+{
+	if (idx >= *nr_items) {
+	    *nr_items = *nr_items * 2;
+	    *items = realloc(*items, *nr_items * sizeof(struct nh_objitem));
+	}
+	
+	struct nh_objitem *it = &((*items)[idx]);
+	it->id = id;
+	strcpy(it->caption, caption);
+	
+	if (obj) {
+	    it->count = obj->quan;
+	    it->glyph = obj_to_glyph(obj);
+	    it->accel = use_invlet ? obj->invlet : 0;
+	    it->group_accel = def_oc_syms[(int)objects[obj->otyp].oc_class];
+	    it->otype = obj->otyp;
+	    it->oclass = obj->oclass;
+	
+	    if (!obj->bknown)
+		it->buc = BUC_UNKNOWN;
+	    else if (obj->blessed)
+		it->buc = BUC_BLESSED;
+	    else if (obj->cursed)
+		it->buc = BUC_CURSED;
+	    else
+		it->buc = BUC_UNCURSED;
+	} else {
+	    it->accel = it->group_accel = 0;
+	    it->otype = it->oclass = it->glyph = -1;
+	}
+}
 
 /*
  * Put up a menu using the given object list.  Only those objects on the
@@ -624,19 +660,22 @@ static int autopick(struct obj *olist,	/* the object list */
 int query_objlist(const char *qstr,	/* query string */
 		  struct obj *olist,	/* the list to pick from */
 		  int qflags,		/* options to control the query */
-		  menu_item **pick_list,/* return list of items picked */
+		  struct object_pick **pick_list,/* return list of items picked */
 		  int how,		/* type of query */
 		  boolean (*allow)(struct obj*)) /* allow function */
 {
 	int n;
-	winid win;
 	struct obj *curr, *last;
 	char *pack;
-	anything any;
 	boolean printed_type_name;
+	int nr_items = 0, cur_entry = 0;
+	struct nh_objitem *items = NULL;
+	struct obj **id_to_obj = NULL;
+	struct nh_objresult *selection = NULL;
 
-	*pick_list = (menu_item *) 0;
-	if (!olist) return 0;
+	*pick_list = NULL;
+	if (!olist)
+	    return 0;
 
 	/* count the number of items allowed */
 	for (n = 0, last = 0, curr = olist; curr; curr = FOLLOW(curr, qflags))
@@ -649,16 +688,15 @@ int query_objlist(const char *qstr,	/* query string */
 	    return (qflags & SIGNAL_NOMENU) ? -1 : 0;
 
 	if (n == 1 && (qflags & AUTOSELECT_SINGLE)) {
-	    *pick_list = (menu_item *) alloc(sizeof(menu_item));
-	    (*pick_list)->item.a_obj = last;
+	    *pick_list = malloc(sizeof(struct object_pick));
+	    (*pick_list)->obj = last;
 	    (*pick_list)->count = last->quan;
 	    return 1;
 	}
 
-	win = create_nhwindow(NHW_MENU);
-	start_menu(win);
-	any.a_obj = (struct obj *) 0;
-
+	nr_items = 10;
+	items = malloc(nr_items * sizeof(struct nh_objitem));
+	id_to_obj = malloc(nr_items * sizeof(struct obj*));
 	/*
 	 * Run through the list and add the objects to the menu.  If
 	 * INVORDER_SORT is set, we'll run through the list once for
@@ -671,7 +709,8 @@ int query_objlist(const char *qstr,	/* query string */
 	    for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
 		if ((qflags & FEEL_COCKATRICE) && curr->otyp == CORPSE &&
 		     will_feel_cockatrice(curr, FALSE)) {
-			destroy_nhwindow(win);	/* stop the menu and revert */
+			free(items);
+			free(id_to_obj);
 			look_here(0, FALSE);
 			return 0;
 		}
@@ -680,37 +719,47 @@ int query_objlist(const char *qstr,	/* query string */
 
 		    /* if sorting, print type name (once only) */
 		    if (qflags & INVORDER_SORT && !printed_type_name) {
-			any.a_obj = (struct obj *) 0;
-			add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
-					let_to_name(*pack, FALSE), MENU_UNSELECTED);
+			add_objitem(&items, &nr_items, cur_entry, 0,
+				    let_to_name(*pack, FALSE), NULL, FALSE);
+			id_to_obj = realloc(id_to_obj, 
+					    nr_items * sizeof(struct obj*));
+			id_to_obj[cur_entry] = NULL;
+			cur_entry++;
 			printed_type_name = TRUE;
 		    }
-
-		    any.a_obj = curr;
-		    add_menu(win, obj_to_glyph(curr), &any,
-			    qflags & USE_INVLET ? curr->invlet : 0,
-			    def_oc_syms[(int)objects[curr->otyp].oc_class],
-			    ATR_NONE, doname(curr), MENU_UNSELECTED);
+		    
+		    add_objitem(&items, &nr_items, cur_entry, cur_entry+1,
+				doname(curr), curr, (qflags & USE_INVLET) != 0);
+		    id_to_obj = realloc(id_to_obj, nr_items * sizeof(struct obj*));
+		    id_to_obj[cur_entry] = curr;
+		    cur_entry++;
 		}
 	    }
 	    pack++;
 	} while (qflags & INVORDER_SORT && *pack);
 
-	end_menu(win, qstr);
-	n = select_menu(win, how, pick_list);
-	destroy_nhwindow(win);
-
+	selection = malloc(cur_entry * sizeof(struct nh_objresult));
+	n = display_objects(items, cur_entry, qstr, how, selection);
+	
 	if (n > 0) {
-	    menu_item *mi;
 	    int i;
-
-	    /* fix up counts:  -1 means no count used => pick all */
-	    for (i = 0, mi = *pick_list; i < n; i++, mi++)
-		if (mi->count == -1L || mi->count > mi->item.a_obj->quan)
-		    mi->count = mi->item.a_obj->quan;
+	    *pick_list = malloc(n * sizeof(struct object_pick));
+	    
+	    for (i = 0; i < n; i++) {
+		curr = id_to_obj[selection[i].id - 1];
+		(*pick_list)[i].obj = curr;
+		if (selection[i].count == -1 || selection[i].count > curr->quan)
+		    (*pick_list)[i].count = curr->quan;
+		else
+		    (*pick_list)[i].count = selection[i].count;
+	    }
 	} else if (n < 0) {
 	    n = 0;	/* caller's don't expect -1 */
 	}
+	free(selection);
+	free(id_to_obj);
+	free(items);
+	
 	return n;
 }
 
@@ -721,14 +770,12 @@ int query_objlist(const char *qstr,	/* query string */
 int query_category(const char *qstr,	/* query string */
 		   struct obj *olist,	/* the list to pick from */
 		   int qflags,		/* behaviour modification flags */
-		   menu_item **pick_list,/* return list of items picked */
+		   int *pick_list,	/* return list of items picked */
 		   int how)		/* type of query */
 {
 	int n;
-	winid win;
 	struct obj *curr;
 	char *pack;
-	anything any;
 	boolean collected_type_name;
 	char invlet;
 	int ccount;
@@ -736,10 +783,13 @@ int query_category(const char *qstr,	/* query string */
 	boolean do_blessed = FALSE, do_cursed = FALSE, do_uncursed = FALSE,
 	    do_buc_unknown = FALSE;
 	int num_buc_types = 0;
+	int nr_items = 10, cur_item = 0;
+	struct nh_menuitem *items = NULL;
 
-	*pick_list = (menu_item *) 0;
-	if (!olist) return 0;
-	if ((qflags & UNPAID_TYPES) && count_unpaid(olist)) do_unpaid = TRUE;
+	if (!olist)
+	    return 0;
+	if ((qflags & UNPAID_TYPES) && count_unpaid(olist))
+	    do_unpaid = TRUE;
 	if ((qflags & BUC_BLESSED) && count_buc(olist, BUC_BLESSED)) {
 	    do_blessed = TRUE;
 	    num_buc_types++;
@@ -759,7 +809,8 @@ int query_category(const char *qstr,	/* query string */
 
 	ccount = count_categories(olist, qflags);
 	/* no point in actually showing a menu for a single category */
-	if (ccount == 1 && !do_unpaid && num_buc_types <= 1 && !(qflags & BILLED_TYPES)) {
+	if (ccount == 1 && !do_unpaid && num_buc_types <= 1 &&
+	    !(qflags & BILLED_TYPES)) {
 	    for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
 		if ((qflags & WORN_TYPES) &&
 		    !(curr->owornmask & (W_ARMOR|W_RING|W_AMUL|W_TOOL|W_WEP|W_SWAPWEP|W_QUIVER)))
@@ -767,8 +818,7 @@ int query_category(const char *qstr,	/* query string */
 		break;
 	    }
 	    if (curr) {
-		*pick_list = (menu_item *) alloc(sizeof(menu_item));
-		(*pick_list)->item.a_int = curr->oclass;
+		pick_list[0] = curr->oclass;
 		return 1;
 	    } else {
 #ifdef DEBUG
@@ -777,20 +827,18 @@ int query_category(const char *qstr,	/* query string */
 	    }
 	    return 0;
 	}
+	
+	items = malloc(nr_items * sizeof(struct nh_menuitem));
 
-	win = create_nhwindow(NHW_MENU);
-	start_menu(win);
 	pack = flags.inv_order;
+	invlet = 'a';
 	if ((qflags & ALL_TYPES) && (ccount > 1)) {
-		invlet = 'a';
-		any.a_void = 0;
-		any.a_int = ALL_TYPES_SELECTED;
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-		       (qflags & WORN_TYPES) ? "All worn types" : "All types",
-			MENU_UNSELECTED);
+		add_menuitem(&items, &nr_items, cur_item++, ALL_TYPES_SELECTED, 
+			     MI_NORMAL, (qflags & WORN_TYPES) ?
+			     "All worn types" : "All types", invlet, FALSE);
 		invlet = 'b';
-	} else
-		invlet = 'a';
+	}
+	
 	do {
 	    collected_type_name = FALSE;
 	    for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
@@ -800,82 +848,60 @@ int query_category(const char *qstr,	/* query string */
 		    	W_WEP | W_SWAPWEP | W_QUIVER)))
 			 continue;
 		   if (!collected_type_name) {
-			any.a_void = 0;
-			any.a_int = curr->oclass;
-			add_menu(win, NO_GLYPH, &any, invlet++,
-				def_oc_syms[(int)objects[curr->otyp].oc_class],
-				ATR_NONE, let_to_name(*pack, FALSE),
-				MENU_UNSELECTED);
+			add_menuitem(&items, &nr_items, cur_item, curr->oclass,
+			    MI_NORMAL, let_to_name(*pack, FALSE), invlet++, FALSE);
+			items[cur_item].group_accel =
+			    def_oc_syms[(int)objects[curr->otyp].oc_class];
+			cur_item++;
 			collected_type_name = TRUE;
 		   }
 		}
 	    }
 	    pack++;
 	    if (invlet >= 'u') {
+		free(items);
 		impossible("query_category: too many categories");
 		return 0;
 	    }
 	} while (*pack);
 	/* unpaid items if there are any */
-	if (do_unpaid) {
-		invlet = 'u';
-		any.a_void = 0;
-		any.a_int = 'u';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			"Unpaid items", MENU_UNSELECTED);
-	}
+	if (do_unpaid)
+	    add_menuitem(&items, &nr_items, cur_item++, 'u', MI_NORMAL,
+		"Unpaid items", 'u', FALSE);
+	
 	/* billed items: checked by caller, so always include if BILLED_TYPES */
-	if (qflags & BILLED_TYPES) {
-		invlet = 'x';
-		any.a_void = 0;
-		any.a_int = 'x';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			 "Unpaid items already used up", MENU_UNSELECTED);
-	}
-	if (qflags & CHOOSE_ALL) {
-		invlet = 'A';
-		any.a_void = 0;
-		any.a_int = 'A';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			(qflags & WORN_TYPES) ?
-			"Auto-select every item being worn" :
-			"Auto-select every item", MENU_UNSELECTED);
-	}
+	if (qflags & BILLED_TYPES)
+	    add_menuitem(&items, &nr_items, cur_item++, 'x', MI_NORMAL,
+		"Unpaid items already used up", 'x', FALSE);
+	
+	if (qflags & CHOOSE_ALL)
+	    add_menuitem(&items, &nr_items, cur_item++, 'A', MI_NORMAL,
+		(qflags & WORN_TYPES) ?
+		    "Auto-select every item being worn" :
+		    "Auto-select every item", 'A', FALSE);
+	
 	/* items with b/u/c/unknown if there are any */
-	if (do_blessed) {
-		invlet = 'B';
-		any.a_void = 0;
-		any.a_int = 'B';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			"Items known to be Blessed", MENU_UNSELECTED);
-	}
-	if (do_cursed) {
-		invlet = 'C';
-		any.a_void = 0;
-		any.a_int = 'C';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			"Items known to be Cursed", MENU_UNSELECTED);
-	}
-	if (do_uncursed) {
-		invlet = 'U';
-		any.a_void = 0;
-		any.a_int = 'U';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			"Items known to be Uncursed", MENU_UNSELECTED);
-	}
-	if (do_buc_unknown) {
-		invlet = 'X';
-		any.a_void = 0;
-		any.a_int = 'X';
-		add_menu(win, NO_GLYPH, &any, invlet, 0, ATR_NONE,
-			"Items of unknown B/C/U status",
-			MENU_UNSELECTED);
-	}
-	end_menu(win, qstr);
-	n = select_menu(win, how, pick_list);
-	destroy_nhwindow(win);
+	if (do_blessed)
+	    add_menuitem(&items, &nr_items, cur_item++, 'B', MI_NORMAL,
+		"Items known to be Blessed", 'B', FALSE);
+	
+	if (do_cursed)
+	    add_menuitem(&items, &nr_items, cur_item++, 'C', MI_NORMAL,
+		"Items known to be Cursed", 'C', FALSE);
+	
+	if (do_uncursed)
+	    add_menuitem(&items, &nr_items, cur_item++, 'U', MI_NORMAL,
+		"Items known to be Uncursed", 'U', FALSE);
+	
+	if (do_buc_unknown)
+	    add_menuitem(&items, &nr_items, cur_item++, 'X', MI_NORMAL,
+		"Items of unknown B/C/U status", 'X', FALSE);
+	
+	n = display_menu(items, cur_item, qstr, how, pick_list);
+	free(items);
 	if (n < 0)
-	    n = 0;	/* caller's don't expect -1 */
+	    n = 0;	/* callers don't expect -1 */
+	
 	return n;
 }
 
@@ -2193,7 +2219,8 @@ static int menu_loot(int retry, struct obj *container, boolean put_in)
     char buf[BUFSZ];
     const char *takeout = "Take out", *putin = "Put in";
     struct obj *otmp, *otmp2;
-    menu_item *pick_list;
+    int pick_list[30];
+    struct object_pick *obj_pick_list;
     int mflags, res;
     long count;
 
@@ -2205,17 +2232,16 @@ static int menu_loot(int retry, struct obj *container, boolean put_in)
 	mflags = put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN :
 		          ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN;
 	n = query_category(buf, put_in ? invent : container->cobj,
-			   mflags, &pick_list, PICK_ANY);
+			   mflags, pick_list, PICK_ANY);
 	if (!n) return 0;
 	for (i = 0; i < n; i++) {
-	    if (pick_list[i].item.a_int == 'A')
+	    if (pick_list[i] == 'A')
 		loot_everything = TRUE;
-	    else if (pick_list[i].item.a_int == ALL_TYPES_SELECTED)
+	    else if (pick_list[i] == ALL_TYPES_SELECTED)
 		all_categories = TRUE;
 	    else
-		add_valid_menu_class(pick_list[i].item.a_int);
+		add_valid_menu_class(pick_list[i]);
 	}
-	free((void *) pick_list);
     }
 
     if (loot_everything) {
@@ -2229,27 +2255,27 @@ static int menu_loot(int retry, struct obj *container, boolean put_in)
 	if (put_in && flags.invlet_constant) mflags |= USE_INVLET;
 	sprintf(buf,"%s what?", put_in ? putin : takeout);
 	n = query_objlist(buf, put_in ? invent : container->cobj,
-			  mflags, &pick_list, PICK_ANY,
+			  mflags, &obj_pick_list, PICK_ANY,
 			  all_categories ? allow_all : allow_category);
 	if (n) {
 		n_looted = n;
 		for (i = 0; i < n; i++) {
-		    otmp = pick_list[i].item.a_obj;
-		    count = pick_list[i].count;
+		    otmp = obj_pick_list[i].obj;
+		    count = obj_pick_list[i].count;
 		    if (count > 0 && count < otmp->quan) {
 			otmp = splitobj(otmp, count);
 			/* special split case also handled by askchain() */
 		    }
 		    res = put_in ? in_container(otmp) : out_container(otmp);
 		    if (res < 0) {
-			if (otmp != pick_list[i].item.a_obj) {
+			if (otmp != obj_pick_list[i].obj) {
 			    /* split occurred, merge again */
-			    merged(&pick_list[i].item.a_obj, &otmp);
+			    merged(&obj_pick_list[i].obj, &otmp);
 			}
 			break;
 		    }
 		}
-		free((void *)pick_list);
+		free(obj_pick_list);
 	}
     }
     return n_looted;
@@ -2258,41 +2284,31 @@ static int menu_loot(int retry, struct obj *container, boolean put_in)
 static int in_or_out_menu(const char *prompt, struct obj *obj,
 			  boolean outokay, boolean inokay)
 {
-    winid win;
-    anything any;
-    menu_item *pick_list;
+    struct nh_menuitem items[3];
+    int selection[1];
     char buf[BUFSZ];
     int n;
     const char *menuselector = iflags.lootabc ? "abc" : "oib";
 
-    any.a_void = 0;
-    win = create_nhwindow(NHW_MENU);
-    start_menu(win);
     if (outokay) {
-	any.a_int = 1;
 	sprintf(buf,"Take %s out of %s", something, the(xname(obj)));
-	add_menu(win, NO_GLYPH, &any, *menuselector, 0, ATR_NONE,
-			buf, MENU_UNSELECTED);
+	set_menuitem(&items[0], 1, MI_NORMAL, buf, menuselector[0], FALSE);
     }
-    menuselector++;
+    
     if (inokay) {
-	any.a_int = 2;
 	sprintf(buf,"Put %s into %s", something, the(xname(obj)));
-	add_menu(win, NO_GLYPH, &any, *menuselector, 0, ATR_NONE, buf, MENU_UNSELECTED);
+	set_menuitem(&items[1], 2, MI_NORMAL, buf, menuselector[1], FALSE);
     }
-    menuselector++;
-    if (outokay && inokay) {
-	any.a_int = 3;
-	add_menu(win, NO_GLYPH, &any, *menuselector, 0, ATR_NONE,
-			"Both of the above", MENU_UNSELECTED);
-    }
-    end_menu(win, prompt);
-    n = select_menu(win, PICK_ONE, &pick_list);
-    destroy_nhwindow(win);
-    if (n > 0) {
-	n = pick_list[0].item.a_int;
-	free((void *) pick_list);
-    }
+    
+    if (outokay && inokay)
+	set_menuitem(&items[2], 3, MI_NORMAL, "Both of the above",
+		     menuselector[2], FALSE);
+    
+
+    n = display_menu(items, 3, prompt, PICK_ONE, selection);
+    if (n > 0)
+	n = selection[0];
+    
     return n;
 }
 

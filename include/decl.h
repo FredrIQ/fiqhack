@@ -313,4 +313,9 @@ struct autopickup_exception {
 };
 #endif /* AUTOPICKUP_EXCEPTIONS */
 
+struct object_pick {
+    struct obj *obj;
+    int count;
+};
+
 #endif /* DECL_H */

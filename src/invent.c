@@ -1353,7 +1353,7 @@ int identify(struct obj *otmp)
 /* menu of unidentified objects; select and identify up to id_limit of them */
 static void menu_identify(int id_limit)
 {
-    menu_item *pick_list;
+    struct object_pick *pick_list;
     int n, i, first = 1;
     char buf[BUFSZ];
     /* assumptions:  id_limit > 0 and at least one unID'd item is present */
@@ -1367,8 +1367,8 @@ static void menu_identify(int id_limit)
 	if (n > 0) {
 	    if (n > id_limit) n = id_limit;
 	    for (i = 0; i < n; i++, id_limit--)
-		identify(pick_list[i].item.a_obj);
-	    free((void *) pick_list);
+		identify(pick_list[i].obj);
+	    free(pick_list);
 	    mark_synch(); /* Before we loop to pop open another menu */
 	} else {
 	    if (n < 0) pline("That was all.");
@@ -1538,19 +1538,9 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	char ilet, ret;
 	char *invlet = flags.inv_order;
 	int n, classcount;
-	winid win;				/* windows being used */
-	static winid local_win = WIN_ERR;	/* window for partial menus */
-	anything any;
-	menu_item *selected;
-
-	/* overriden by global flag */
-	if (flags.perm_invent) {
-	    win = (lets && *lets) ? local_win : WIN_INVEN;
-	    /* create the first time used */
-	    if (win == WIN_ERR)
-		win = local_win = create_nhwindow(NHW_MENU);
-	} else
-	    win = WIN_INVEN;
+	int nr_items = 0, cur_entry = 0;
+	struct nh_objitem *items = NULL;
+	struct nh_objresult *selected = NULL;
 
 	/*
 	Exit early if no inventory -- but keep going if we are doing
@@ -1592,26 +1582,24 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	    return ret;
 	}
 
-	start_menu(win);
+	nr_items = 10;
+	items = malloc(nr_items * sizeof(struct nh_objitem));
+	
 nextclass:
 	classcount = 0;
-	any.a_void = 0;		/* set all bits to zero */
 	for(otmp = invent; otmp; otmp = otmp->nobj) {
-		ilet = otmp->invlet;
-		if(!lets || !*lets || index(lets, ilet)) {
-			if (!flags.sortpack || otmp->oclass == *invlet) {
-			    if (flags.sortpack && !classcount) {
-				any.a_void = 0;		/* zero */
-				add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
-				    let_to_name(*invlet, FALSE), MENU_UNSELECTED);
-				classcount++;
-			    }
-			    any.a_char = ilet;
-			    add_menu(win, obj_to_glyph(otmp),
-					&any, ilet, 0, ATR_NONE, doname(otmp),
-					MENU_UNSELECTED);
-			}
+	    ilet = otmp->invlet;
+	    if(!lets || !*lets || index(lets, ilet)) {
+		if (!flags.sortpack || otmp->oclass == *invlet) {
+		    if (flags.sortpack && !classcount) {
+			add_objitem(&items, &nr_items, cur_entry++, 0,
+				    let_to_name(*invlet, FALSE), NULL, FALSE);
+			classcount++;
+		    }
+		    add_objitem(&items, &nr_items, cur_entry++, ilet, doname(otmp),
+				otmp, TRUE);
 		}
+	    }
 	}
 	if (flags.sortpack) {
 		if (*++invlet)
@@ -1621,16 +1609,19 @@ nextclass:
 			goto nextclass;
 		}
 	}
-	end_menu(win, (char *) 0);
 
-	n = select_menu(win, want_reply ? PICK_ONE : PICK_NONE, &selected);
+	selected = malloc(cur_entry * sizeof(struct nh_objresult));
+	n = display_objects(items, cur_entry, NULL,
+			    want_reply ? PICK_ONE : PICK_NONE, selected);
 	if (n > 0) {
-	    ret = selected[0].item.a_char;
-	    if (out_cnt) *out_cnt = selected[0].count;
-	    free((void *)selected);
+	    ret = (char)selected[0].id;
+	    if (out_cnt)
+		*out_cnt = selected[0].count;
 	} else
 	    ret = !n ? '\0' : '\033';	/* cancelled */
-
+	    
+	free(selected);
+	free(items);
 	return ret;
 }
 
@@ -1803,7 +1794,7 @@ int dotypeinv(void)
 	char *extra_types, types[BUFSZ];
 	int class_count, oclass, unpaid_count, itemcount;
 	boolean billx = *u.ushops && doinvbill(0);
-	menu_item *pick_list;
+	int pick_list[30];
 	boolean traditional = TRUE;
 	const char *prompt = "What type of object do you want an inventory of?";
 
@@ -1822,10 +1813,10 @@ int dotypeinv(void)
 		traditional = FALSE;
 		i = UNPAID_TYPES;
 		if (billx) i |= BILLED_TYPES;
-		n = query_category(prompt, invent, i, &pick_list, PICK_ONE);
-		if (!n) return 0;
-		this_type = c = pick_list[0].item.a_int;
-		free((void *) pick_list);
+		n = query_category(prompt, invent, i, pick_list, PICK_ONE);
+		if (!n)
+		    return 0;
+		this_type = c = pick_list[0];
 	    }
 	}
 	if (traditional) {
@@ -1836,7 +1827,7 @@ int dotypeinv(void)
 #ifndef GOLDOBJ
 					      (u.ugold != 0),
 #endif
-					      (boolean (*)(struct obj*)) 0, &itemcount);
+					      NULL, &itemcount);
 	    if (unpaid_count) {
 		strcat(types, "u");
 		class_count++;
@@ -1848,8 +1839,10 @@ int dotypeinv(void)
 	    /* add everything not already included; user won't see these */
 	    extra_types = eos(types);
 	    *extra_types++ = '\033';
-	    if (!unpaid_count) *extra_types++ = 'u';
-	    if (!billx) *extra_types++ = 'x';
+	    if (!unpaid_count)
+		*extra_types++ = 'u';
+	    if (!billx)
+		*extra_types++ = 'x';
 	    *extra_types = '\0';	/* for index() */
 	    for (i = 0; i < MAXOCLASSES; i++)
 		if (!index(types, def_oc_syms[i])) {
@@ -1897,10 +1890,11 @@ int dotypeinv(void)
 	    }
 	    this_type = oclass;
 	}
-	if (query_objlist((char *) 0, invent,
+	struct object_pick *dummy;
+	if (query_objlist(NULL, invent,
 		    (flags.invlet_constant ? USE_INVLET : 0)|INVORDER_SORT,
-		    &pick_list, PICK_NONE, this_type_only) > 0)
-	    free((void *)pick_list);
+		    &dummy, PICK_NONE, this_type_only) > 0)
+	    free(dummy);
 	return 0;
 }
 
@@ -2505,20 +2499,14 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 /* common to display_minventory and display_cinventory */
 static void invdisp_nothing(const char *hdr, const char *txt)
 {
-	winid win;
-	anything any;
-	menu_item *selected;
-
-	any.a_void = 0;
-	win = create_nhwindow(NHW_MENU);
-	start_menu(win);
-	add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings, hdr, MENU_UNSELECTED);
-	add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, "", MENU_UNSELECTED);
-	add_menu(win, NO_GLYPH, &any, 0, 0, ATR_NONE, txt, MENU_UNSELECTED);
-	end_menu(win, (char *)0);
-	if (select_menu(win, PICK_NONE, &selected) > 0)
-	    free((void *)selected);
-	destroy_nhwindow(win);
+	struct nh_menuitem items[3];
+	
+	set_menuitem(&items[0], 0, MI_HEADING, hdr, 0, FALSE);
+	set_menuitem(&items[1], 0, MI_NORMAL, "", 0, FALSE);
+	set_menuitem(&items[2], 0, MI_NORMAL, txt, 0, FALSE);
+	
+	display_menu(items, 3, NULL, PICK_NONE, NULL);
+	
 	return;
 }
 
@@ -2551,7 +2539,7 @@ struct obj *display_minventory(struct monst *mon, int dflags, char *title)
 #endif
 	char tmp[QBUFSZ];
 	int n;
-	menu_item *selected = 0;
+	struct object_pick *selected = NULL;
 #ifndef GOLDOBJ
 	int do_all = (dflags & MINV_ALL) != 0,
 	    do_gold = (do_all && mon->mgold);
@@ -2606,18 +2594,19 @@ struct obj *display_minventory(struct monst *mon, int dflags, char *title)
 	}
 
 	if (n > 0) {
-	    ret = selected[0].item.a_obj;
-	    free((void *)selected);
+	    ret = selected[0].obj;
+	    free(selected);
 #ifndef GOLDOBJ
 	    /*
 	     * Unfortunately, we can't return a pointer to our temporary
 	     * gold object.  We'll have to work out a scheme where this
 	     * can happen.  Maybe even put gold in the inventory list...
 	     */
-	    if (ret == &m_gold) ret = (struct obj *) 0;
+	    if (ret == &m_gold)
+		ret = NULL;
 #endif
 	} else
-	    ret = (struct obj *) 0;
+	    ret = NULL;
 	return ret;
 }
 
@@ -2627,10 +2616,10 @@ struct obj *display_minventory(struct monst *mon, int dflags, char *title)
  */
 struct obj *display_cinventory(struct obj *obj)
 {
-	struct obj *ret;
+	struct obj *ret = NULL;
 	char tmp[QBUFSZ];
 	int n;
-	menu_item *selected = 0;
+	struct object_pick *selected = 0;
 
 	sprintf(tmp,"Contents of %s:", doname(obj));
 
@@ -2641,11 +2630,12 @@ struct obj *display_cinventory(struct obj *obj)
 	    invdisp_nothing(tmp, "(empty)");
 	    n = 0;
 	}
+	
 	if (n > 0) {
-	    ret = selected[0].item.a_obj;
-	    free((void *)selected);
-	} else
-	    ret = (struct obj *) 0;
+	    ret = selected[0].obj;
+	    free(selected);
+	}
+	
 	return ret;
 }
 
@@ -2666,7 +2656,7 @@ static boolean only_here(struct obj *obj)
 int display_binventory(int x, int y, boolean as_if_seen)
 {
 	struct obj *obj;
-	menu_item *selected = 0;
+	struct object_pick *selected = NULL;
 	int n;
 
 	/* count # of objects here */
@@ -2682,7 +2672,7 @@ int display_binventory(int x, int y, boolean as_if_seen)
 	    if (query_objlist("Things that are buried here:",
 			      level.buriedobjlist, INVORDER_SORT,
 			      &selected, PICK_NONE, only_here) > 0)
-		free((void *)selected);
+		free(selected);
 	    only.x = only.y = 0;
 	}
 	return n;

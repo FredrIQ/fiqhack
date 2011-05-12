@@ -2371,32 +2371,20 @@ static int use_grapple (struct obj *obj)
 	/* What do you want to hit? */
 	tohit = rn2(5);
 	if (typ != P_NONE && P_SKILL(typ) >= P_SKILLED) {
-	    winid tmpwin = create_nhwindow(NHW_MENU);
-	    anything any;
-	    char buf[BUFSZ];
-	    menu_item *selected;
-
-	    any.a_void = 0;	/* set all bits to zero */
-	    any.a_int = 1;	/* use index+1 (cant use 0) as identifier */
-	    start_menu(tmpwin);
-	    any.a_int++;
-	    sprintf(buf, "an object on the %s", surface(cc.x, cc.y));
-	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			 buf, MENU_UNSELECTED);
-	    any.a_int++;
-	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			"a monster", MENU_UNSELECTED);
-	    any.a_int++;
-	    sprintf(buf, "the %s", surface(cc.x, cc.y));
-	    add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ATR_NONE,
-			 buf, MENU_UNSELECTED);
-	    end_menu(tmpwin, "Aim for what?");
-	    tohit = rn2(4);
-	    if (select_menu(tmpwin, PICK_ONE, &selected) > 0 &&
+	    struct nh_menuitem items[3];
+	    int selected[3];
+	    
+	    sprintf(items[0].caption, "an object on the %s", surface(cc.x, cc.y));
+	    set_menuitem(&items[0], 1, MI_NORMAL, "", 0, FALSE);
+	    
+	    set_menuitem(&items[1], 2, MI_NORMAL, "a monster", 0, FALSE);
+	    
+	    sprintf(items[2].caption, "the %s", surface(cc.x, cc.y));
+	    set_menuitem(&items[2], 3, MI_NORMAL, "a monster", 0, FALSE);
+	    
+	    if (display_menu(items, 3, "Aim for what?", PICK_ONE, selected)&&
 			rn2(P_SKILL(typ) > P_SKILLED ? 20 : 2))
-		tohit = selected[0].item.a_int - 1;
-	    free((void *)selected);
-	    destroy_nhwindow(tmpwin);
+		tohit = selected[0] - 1;
 	}
 
 	/* What did you hit? */

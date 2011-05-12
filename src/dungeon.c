@@ -49,7 +49,10 @@ static int possible_places(int, boolean *, struct proto_dungeon *);
 static xchar pick_level(boolean *, int);
 static boolean place_level(int, struct proto_dungeon *);
 static const char *br_string(int);
-static void print_branch(winid, int, int, int, boolean, struct lchoice *);
+static void print_branch(struct nh_menuitem **items, int *num_items,
+			 int *cur_item, int dnum, int lower_bound, int upper_bound,
+			 boolean bymenu, struct lchoice *lchoices);
+
 
 #ifdef DEBUG
 #define DD	dungeons[i]
@@ -1388,13 +1391,14 @@ static const char *br_string(int type)
     return " (unknown)";
 }
 
+
 /* Print all child branches between the lower and upper bounds. */
-static void print_branch(winid win, int dnum, int lower_bound, int upper_bound,
+static void print_branch(struct nh_menuitem **items, int *nr_items,
+			 int *cur_item, int dnum, int lower_bound, int upper_bound,
 			 boolean bymenu, struct lchoice *lchoices)
 {
     branch *br;
     char buf[BUFSZ];
-    anything any;
 
     /* This assumes that end1 is the "parent". */
     for (br = branches; br; br = br->next) {
@@ -1408,15 +1412,15 @@ static void print_branch(winid win, int dnum, int lower_bound, int upper_bound,
 		lchoices->lev[lchoices->idx] = br->end1.dlevel;
 		lchoices->dgn[lchoices->idx] = br->end1.dnum;
 		lchoices->playerlev[lchoices->idx] = depth(&br->end1);
-		any.a_void = 0;
-		any.a_int = lchoices->idx + 1;
-		add_menu(win, NO_GLYPH, &any, lchoices->menuletter,
-				0, ATR_NONE, buf, MENU_UNSELECTED);
+
+		add_menuitem(items, nr_items, (*cur_item)++, lchoices->idx + 1,
+			     MI_NORMAL, buf, lchoices->menuletter, FALSE);
 		if (lchoices->menuletter == 'z') lchoices->menuletter = 'A';
 		else lchoices->menuletter++;
 		lchoices->idx++;
 	    } else
-		putstr(win, 0, buf);
+		add_menuitem(items, nr_items, (*cur_item)++, 0,
+			     MI_TEXT, buf, 0, FALSE);
 	}
     }
 }
@@ -1430,12 +1434,12 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
     s_level *slev;
     dungeon *dptr;
     branch  *br;
-    anything any;
     struct lchoice lchoices;
+    int nr_items = 10;
+    struct nh_menuitem *items = malloc(nr_items * sizeof(struct nh_menuitem));
+    int cur_item = 0;
 
-    winid   win = create_nhwindow(NHW_MENU);
     if (bymenu) {
-	start_menu(win);
 	lchoices.idx = 0;
 	lchoices.menuletter = 'a';
     }
@@ -1457,20 +1461,21 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 			dptr->depth_start + dptr->entry_lev - 1);
 	}
 	if (bymenu) {
-	    any.a_void = 0;
-	    add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings, buf, MENU_UNSELECTED);
+	    add_menuitem(&items, &nr_items, cur_item++, 0, MI_HEADING, buf, 0, FALSE);
 	} else
-	    putstr(win, 0, buf);
+	    add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, buf, 0, FALSE);
 
 	/*
 	 * Circle through the special levels to find levels that are in
 	 * this dungeon.
 	 */
 	for (slev = sp_levchn, last_level = 0; slev; slev = slev->next) {
-	    if (slev->dlevel.dnum != i) continue;
+	    if (slev->dlevel.dnum != i)
+		continue;
 
 	    /* print any branches before this level */
-	    print_branch(win, i, last_level, slev->dlevel.dlevel, bymenu, &lchoices);
+	    print_branch(&items, &nr_items, &cur_item, i, last_level,
+			 slev->dlevel.dlevel, bymenu, &lchoices);
 
 	    sprintf(buf, "   %s: %d", slev->proto, depth(&slev->dlevel));
 	    if (Is_stronghold(&slev->dlevel))
@@ -1485,20 +1490,21 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 			lchoices.dgn[lchoices.idx] = 0;
 		}
 		lchoices.playerlev[lchoices.idx] = depth(&slev->dlevel);
-		any.a_void = 0;
-		any.a_int = lchoices.idx + 1;
-		add_menu(win, NO_GLYPH, &any, lchoices.menuletter,
-				0, ATR_NONE, buf, MENU_UNSELECTED);
-		if (lchoices.menuletter == 'z') lchoices.menuletter = 'A';
+		
+		add_menuitem(&items, &nr_items, cur_item++, lchoices.idx + 1,
+			     MI_NORMAL, buf, lchoices.menuletter, FALSE);
+		if (lchoices.menuletter == 'z')
+		    lchoices.menuletter = 'A';
 		else lchoices.menuletter++;
 		lchoices.idx++;
 	    } else
-		putstr(win, 0, buf);
+		add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, buf, 0, FALSE);
 
 	    last_level = slev->dlevel.dlevel;
 	}
 	/* print branches after the last special level */
-	print_branch(win, i, last_level, MAXLEVEL, bymenu, &lchoices);
+	print_branch(&items, &nr_items, &cur_item, i, last_level, MAXLEVEL,
+		     bymenu, &lchoices);
     }
 
     /* Print out floating branches (if any). */
@@ -1506,28 +1512,28 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 	if (br->end1.dnum == n_dgns) {
 	    if (first) {
 	    	if (!bymenu) {
-		    putstr(win, 0, "");
-		    putstr(win, 0, "Floating branches");
+		    add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, "", 0, FALSE);
+		    add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, "Floating branches", 0, FALSE);
 		}
 		first = FALSE;
 	    }
 	    sprintf(buf, "   %s to %s",
 			br_string(br->type), dungeons[br->end2.dnum].dname);
 	    if (!bymenu)
-		putstr(win, 0, buf);
+		add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, buf, 0, FALSE);
 	}
     }
+    
     if (bymenu) {
     	int n;
-	menu_item *selected;
+	int selected[cur_item];
 	int idx;
-
-	end_menu(win, "Level teleport to where:");
-	n = select_menu(win, PICK_ONE, &selected);
-	destroy_nhwindow(win);
+	
+	n = display_menu(items, cur_item, "Level teleport to where:", PICK_ONE,
+			 selected);
+	free(items);
 	if (n > 0) {
-		idx = selected[0].item.a_int - 1;
-		free((void *)selected);
+		idx = selected[0] - 1;
 		if (rlev && rdgn) {
 			*rlev = lchoices.lev[idx];
 			*rdgn = lchoices.dgn[idx];
@@ -1539,10 +1545,10 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 
     /* I hate searching for the invocation pos while debugging. -dean */
     if (Invocation_lev(&u.uz)) {
-	putstr(win, 0, "");
+	add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, "", 0, FALSE);
 	sprintf(buf, "Invocation position @ (%d,%d), hero @ (%d,%d)",
 		inv_pos.x, inv_pos.y, u.ux, u.uy);
-	putstr(win, 0, buf);
+	add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, buf, 0, FALSE);
     }
     /*
      * The following is based on the assumption that the inter-level portals
@@ -1553,19 +1559,20 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 				|| Is_firelevel(&u.uz) || Is_airlevel(&u.uz)) {
 	struct trap *trap;
 	for (trap = ftrap; trap; trap = trap->ntrap)
-	    if (trap->ttyp == MAGIC_PORTAL) break;
+	    if (trap->ttyp == MAGIC_PORTAL)
+		break;
 
-	putstr(win, 0, "");
+	add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, "", 0, FALSE);
 	if (trap)
 	    sprintf(buf, "Portal @ (%d,%d), hero @ (%d,%d)",
 		trap->tx, trap->ty, u.ux, u.uy);
 	else
 	    sprintf(buf, "No portal found.");
-	putstr(win, 0, buf);
+	add_menuitem(&items, &nr_items, cur_item++, 0, MI_TEXT, buf, 0, FALSE);
     }
-
-    display_nhwindow(win, TRUE);
-    destroy_nhwindow(win);
+    
+    display_menu(items, cur_item, "Level teleport to where:", PICK_NONE, NULL);
+    free(items);
     return 0;
 }
 

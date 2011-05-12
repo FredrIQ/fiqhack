@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "nethack.h"
 #include "color.h"
@@ -174,10 +175,10 @@ void tty_startup(int *wid, int *hgt)
 	nh_HI = (char *) alloc((unsigned)(strlen(SO)+1));
 	nh_HE = (char *) alloc((unsigned)(strlen(ME)+1));
 	i = 0;
-	while (digit(SO[i])) i++;
+	while (isdigit(SO[i])) i++;
 	strcpy(nh_HI, &SO[i]);
 	i = 0;
-	while (digit(ME[i])) i++;
+	while (isdigit(ME[i])) i++;
 	strcpy(nh_HE, &ME[i]);
 	AS = Tgetstr("as");
 	AE = Tgetstr("ae");
@@ -254,9 +255,9 @@ static void tty_decgraphics_termcap_fixup(void)
 	const char *nh_he = nh_HE, *ae = AE;
 	int he_limit, ae_length;
 
-	if (digit(*ae)) {	/* skip over delay prefix, if any */
-	    do ++ae; while (digit(*ae));
-	    if (*ae == '.') { ++ae; if (digit(*ae)) ++ae; }
+	if (isdigit(*ae)) {	/* skip over delay prefix, if any */
+	    do ++ae; while (isdigit(*ae));
+	    if (*ae == '.') { ++ae; if (isdigit(*ae)) ++ae; }
 	    if (*ae == '*') ++ae;
 	}
 	/* can't use nethack's case-insensitive strstri() here, and some old

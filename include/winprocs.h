@@ -25,10 +25,10 @@ extern void nh_delay_output(void);
 #define curs (*windowprocs.win_curs)
 #define putstr (*windowprocs.win_putstr)
 #define display_buffer (*windowprocs.win_display_buffer)
-#define start_menu (*windowprocs.win_start_menu)
-#define add_menu (*windowprocs.win_add_menu)
-#define end_menu (*windowprocs.win_end_menu)
-#define select_menu (*windowprocs.win_select_menu)
+
+#define display_menu (*windowprocs.win_display_menu)
+#define display_objects (*windowprocs.win_display_objects)
+
 #define message_menu (*windowprocs.win_message_menu)
 #define update_inventory (*windowprocs.win_update_inventory)
 #define mark_synch (*windowprocs.win_mark_synch)
