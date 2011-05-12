@@ -280,7 +280,7 @@ static int still_chewing(xchar x, xchar y)
     const char *digtxt = (char *)0, *dmgtxt = (char *)0;
 
     if (digging.down)		/* not continuing previous dig (w/ pick-axe) */
-	memset((void *)&digging, 0, sizeof digging);
+	memset(&digging, 0, sizeof digging);
 
     if (!boulder && IS_ROCK(lev->typ) && !may_dig(x,y)) {
 	You("hurt your teeth on the %s.",
@@ -334,7 +334,7 @@ static int still_chewing(xchar x, xchar y)
 	if (IS_ROCK(lev->typ) || closed_door(x,y) || sobj_at(BOULDER,x,y)) {
 	    block_point(x,y);	/* delobj will unblock the point */
 	    /* reset dig state */
-	    memset((void *)&digging, 0, sizeof digging);
+	    memset(&digging, 0, sizeof digging);
 	    return 1;
 	}
 
@@ -387,7 +387,7 @@ static int still_chewing(xchar x, xchar y)
     newsym(x, y);
     if (digtxt) You(digtxt);	/* after newsym */
     if (dmgtxt) pay_for_damage(dmgtxt, FALSE);
-    memset((void *)&digging, 0, sizeof digging);
+    memset(&digging, 0, sizeof digging);
     return 0;
 }
 
@@ -679,7 +679,7 @@ static boolean findtravelpath(boolean guess)
 	}
 
     noguess:
-	memset((void *)travel, 0, sizeof(travel));
+	memset(travel, 0, sizeof(travel));
 	travelstepx[0][0] = tx;
 	travelstepy[0][0] = ty;
 

@@ -641,12 +641,12 @@ void assign_rogue_graphics(boolean is_rlevel)
     if (is_rlevel) {
 	int i;
 
-	memcpy((void *)save_showsyms,
-		      (void *)showsyms, sizeof showsyms);
-	memcpy((void *)save_oc_syms,
-		      (void *)oc_syms, sizeof oc_syms);
-	memcpy((void *)save_monsyms,
-		      (void *)monsyms, sizeof monsyms);
+	memcpy(save_showsyms,
+		      showsyms, sizeof showsyms);
+	memcpy(save_oc_syms,
+		      oc_syms, sizeof oc_syms);
+	memcpy(save_monsyms,
+		      monsyms, sizeof monsyms);
 
 	/* Use a loop: char != uchar on some machines. */
 	for (i = 0; i < MAXMCLASSES; i++)
@@ -717,12 +717,12 @@ void assign_rogue_graphics(boolean is_rlevel)
 		oc_syms[i] = r_oc_syms[i];
 	}
     } else {
-	memcpy((void *)showsyms,
-		      (void *)save_showsyms, sizeof showsyms);
-	memcpy((void *)oc_syms,
-		      (void *)save_oc_syms, sizeof oc_syms);
-	memcpy((void *)monsyms,
-		      (void *)save_monsyms, sizeof monsyms);
+	memcpy(showsyms,
+		      save_showsyms, sizeof showsyms);
+	memcpy(oc_syms,
+		      save_oc_syms, sizeof oc_syms);
+	memcpy(monsyms,
+		      save_monsyms, sizeof monsyms);
     }
 }
 #endif /* REINCARNATION */

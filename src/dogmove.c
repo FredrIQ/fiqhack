@@ -412,7 +412,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 		    int fardist = FARAWAY * FARAWAY;
 		    gx = gy = FARAWAY; /* random */
 		    do_clear_area(omx, omy, 9, wantdoor,
-				  (void *)&fardist);
+				  &fardist);
 
 		    /* here gx == FARAWAY e.g. when dog is in a vault */
 		    if (gx == FARAWAY || (gx == omx && gy == omy)) {

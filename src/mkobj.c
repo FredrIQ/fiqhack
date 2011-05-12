@@ -146,8 +146,8 @@ static void mkbox_cnts(struct obj *box)
 		 */
 		otmp->age = 0L;
 		if (otmp->timed) {
-		    stop_timer(ROT_CORPSE, (void *)otmp);
-		    stop_timer(REVIVE_MON, (void *)otmp);
+		    stop_timer(ROT_CORPSE, otmp);
+		    stop_timer(REVIVE_MON, otmp);
 		}
 	    } else {
 		int tprob;
@@ -228,7 +228,7 @@ struct obj *splitobj(struct obj *obj, long num)
 	if (obj->where == OBJ_FLOOR)
 	    obj->nexthere = otmp;
 	if (obj->oxlth)
-	    memcpy((void *)otmp->oextra, (void *)obj->oextra,
+	    memcpy(otmp->oextra, (void *)obj->oextra,
 			obj->oxlth);
 	if (obj->onamelth)
 	    strncpy(ONAME(otmp), ONAME(obj), (int)obj->onamelth);
@@ -314,8 +314,8 @@ void bill_dummy_object(struct obj *otmp)
 	if (!dummy->o_id) dummy->o_id = flags.ident++;	/* ident overflowed */
 	dummy->timed = 0;
 	if (otmp->oxlth)
-	    memcpy((void *)dummy->oextra,
-			(void *)otmp->oextra, otmp->oxlth);
+	    memcpy(dummy->oextra,
+			otmp->oextra, otmp->oxlth);
 	if (otmp->onamelth)
 	    strncpy(ONAME(dummy), ONAME(otmp), (int)otmp->onamelth);
 	if (Is_candle(dummy)) dummy->lamplit = 0;
@@ -638,7 +638,7 @@ void start_corpse_timeout(struct obj *body)
 	}
 	
 	if (body->norevive) body->norevive = 0;
-	start_timer(when, TIMER_OBJECT, action, (void *)body);
+	start_timer(when, TIMER_OBJECT, action, body);
 }
 
 void bless(struct obj *otmp)
@@ -653,7 +653,7 @@ void bless(struct obj *otmp)
 	else if (otmp->otyp == BAG_OF_HOLDING)
 	    otmp->owt = weight(otmp);
 	else if (otmp->otyp == FIGURINE && otmp->timed)
-		stop_timer(FIG_TRANSFORM, (void *) otmp);
+		stop_timer(FIG_TRANSFORM, otmp);
 	return;
 }
 
@@ -701,7 +701,7 @@ void uncurse(struct obj *otmp)
 	else if (otmp->otyp == BAG_OF_HOLDING)
 	    otmp->owt = weight(otmp);
 	else if (otmp->otyp == FIGURINE && otmp->timed)
-	    stop_timer(FIG_TRANSFORM, (void *) otmp);
+	    stop_timer(FIG_TRANSFORM, otmp);
 	return;
 }
 
@@ -885,11 +885,11 @@ struct obj *obj_attach_mid(struct obj *obj, unsigned mid)
     lth = sizeof(mid);
     namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
     if (namelth) 
-	otmp = realloc_obj(obj, lth, (void *) &mid, namelth, ONAME(obj));
+	otmp = realloc_obj(obj, lth, &mid, namelth, ONAME(obj));
     else {
 	otmp = obj;
 	otmp->oxlth = sizeof(mid);
-	memcpy((void *)otmp->oextra, (void *)&mid,
+	memcpy(otmp->oextra, (void *)&mid,
 								sizeof(mid));
     }
     if (otmp && otmp->oxlth) otmp->oattached = OATTACHED_M_ID;	/* mark it */
@@ -903,7 +903,7 @@ static struct obj *save_mtraits(struct obj *obj, struct monst *mtmp)
 
 	lth = sizeof(struct monst) + mtmp->mxlth + mtmp->mnamelth;
 	namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
-	otmp = realloc_obj(obj, lth, (void *) mtmp, namelth, ONAME(obj));
+	otmp = realloc_obj(obj, lth, mtmp, namelth, ONAME(obj));
 	if (otmp && otmp->oxlth) {
 		struct monst *mtmp2 = (struct monst *)otmp->oextra;
 		if (mtmp->data) mtmp2->mnum = monsndx(mtmp->data);
@@ -933,8 +933,8 @@ struct monst *get_mtraits(struct obj *obj, boolean copyof)
 		int lth = mtmp->mxlth + mtmp->mnamelth;
 		mnew = newmonst(lth);
 		lth += sizeof(struct monst);
-		memcpy((void *)mnew,
-				(void *)mtmp, lth);
+		memcpy(mnew,
+				mtmp, lth);
 	    } else {
 	      /* Never insert this returned pointer into mon chains! */
 	    	mnew = mtmp;
@@ -1090,10 +1090,10 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 
     /* Check for corpses just placed on or in ice */
     if (otmp->otyp == CORPSE && (on_floor || buried) && is_ice(x,y)) {
-	tleft = stop_timer(action, (void *)otmp);
+	tleft = stop_timer(action, otmp);
 	if (tleft == 0L) {
 		action = REVIVE_MON;
-		tleft = stop_timer(action, (void *)otmp);
+		tleft = stop_timer(action, otmp);
 	} 
 	if (tleft != 0L) {
 	    long age;
@@ -1116,10 +1116,10 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
     else if ((force < 0) ||
 	     (otmp->otyp == CORPSE && ON_ICE(otmp) &&
 	     ((on_floor && !is_ice(x,y)) || !on_floor))) {
-	tleft = stop_timer(action, (void *)otmp);
+	tleft = stop_timer(action, otmp);
 	if (tleft == 0L) {
 		action = REVIVE_MON;
-		tleft = stop_timer(action, (void *)otmp);
+		tleft = stop_timer(action, otmp);
 	}
 	if (tleft != 0L) {
 		long age;
@@ -1139,7 +1139,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
     }
     /* now re-start the timer with the appropriate modifications */ 
     if (restart_timer)
-	start_timer(tleft, TIMER_OBJECT, action, (void *)otmp);
+	start_timer(tleft, TIMER_OBJECT, action, otmp);
 }
 
 #undef ON_ICE
@@ -1365,11 +1365,11 @@ void dealloc_obj(struct obj *obj)
      * attached to it (and also requires lamplit to be set).
      */
     if (obj_sheds_light(obj))
-	del_light_source(LS_OBJECT, (void *) obj);
+	del_light_source(LS_OBJECT, obj);
 
     if (obj == thrownobj) thrownobj = (struct obj*)0;
 
-    free((void *) obj);
+    free(obj);
 }
 
 

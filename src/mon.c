@@ -1147,9 +1147,9 @@ void replmon(struct monst *mtmp, struct monst *mtmp2)
 	/* since this is so rare, we don't have any `mon_move_light_source' */
 	new_light_source(mtmp2->mx, mtmp2->my,
 			 emits_light(mtmp2->data),
-			 LS_MONSTER, (void *)mtmp2);
+			 LS_MONSTER, mtmp2);
 	/* here we rely on the fact that `mtmp' hasn't actually been deleted */
-	del_light_source(LS_MONSTER, (void *)mtmp);
+	del_light_source(LS_MONSTER, mtmp);
     }
     mtmp2->nmon = fmon;
     fmon = mtmp2;
@@ -1189,7 +1189,7 @@ static void m_detach(struct monst *mtmp,
 	relobj(mtmp, 0, FALSE);
 	remove_monster(mtmp->mx, mtmp->my);
 	if (emits_light(mptr))
-	    del_light_source(LS_MONSTER, (void *)mtmp);
+	    del_light_source(LS_MONSTER, mtmp);
 	newsym(mtmp->mx,mtmp->my);
 	unstuck(mtmp);
 	fill_pit(mtmp->mx, mtmp->my);
@@ -2078,12 +2078,12 @@ void mon_animal_list(boolean construct)
 	 /* if (n == 0) animal_temp[n++] = NON_PM; */
 
 	    animal_list = malloc(n * sizeof *animal_list);
-	    memcpy((void *)animal_list,
-			  (void *)animal_temp,
+	    memcpy(animal_list,
+			  animal_temp,
 			  n * sizeof *animal_list);
 	    animal_list_count = n;
 	} else {	/* release */
-	    if (animal_list) free((void *)animal_list), animal_list = 0;
+	    if (animal_list) free(animal_list), animal_list = 0;
 	    animal_list_count = 0;
 	}
 }
@@ -2239,10 +2239,10 @@ int newcham(struct monst *mtmp,
 	    /* used to give light, now doesn't, or vice versa,
 	       or light's range has changed */
 	    if (emits_light(olddata))
-		del_light_source(LS_MONSTER, (void *)mtmp);
+		del_light_source(LS_MONSTER, mtmp);
 	    if (emits_light(mtmp->data))
 		new_light_source(mtmp->mx, mtmp->my, emits_light(mtmp->data),
-				 LS_MONSTER, (void *)mtmp);
+				 LS_MONSTER, mtmp);
 	}
 	if (!mtmp->perminvis || pm_invisible(olddata))
 	    mtmp->perminvis = pm_invisible(mdat);

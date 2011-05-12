@@ -669,7 +669,7 @@ struct monst *clone_mon(struct monst *mon,
 	place_monster(m2, m2->mx, m2->my);
 	if (emits_light(m2->data))
 	    new_light_source(m2->mx, m2->my, emits_light(m2->data),
-			     LS_MONSTER, (void *)m2);
+			     LS_MONSTER, m2);
 	if (m2->mnamelth) {
 	    m2->mnamelth = 0; /* or it won't get allocated */
 	    m2 = christen_monst(m2, NAME(mon));
@@ -836,7 +836,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	else if (mmflags & MM_EMIN) xlth += sizeof(struct emin);
 	mtmp = newmonst(xlth);
 	*mtmp = zeromonst;		/* clear all entries in structure */
-	memset((void *)mtmp->mextra, 0, xlth);
+	memset(mtmp->mextra, 0, xlth);
 	mtmp->nmon = fmon;
 	fmon = mtmp;
 	mtmp->m_id = flags.ident++;
@@ -930,7 +930,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	}
 	if ((ct = emits_light(mtmp->data)) > 0)
 		new_light_source(mtmp->mx, mtmp->my, ct,
-				 LS_MONSTER, (void *)mtmp);
+				 LS_MONSTER, mtmp);
 	mitem = 0;	/* extra inventory item for this monster */
 
 	if ((mcham = pm_to_cham(mndx)) != CHAM_ORDINARY) {

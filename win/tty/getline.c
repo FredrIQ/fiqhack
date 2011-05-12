@@ -247,7 +247,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 	    tty_destroy_nhwindow(win);
 	    if (n==1) {
 		if (matchlevel > (QBUFSZ - 2)) {
-			free((void *)pick_list);
+			free(pick_list);
 #ifdef DEBUG
 			impossible("Too many characters (%d) entered in extcmd_via_menu()",
 				matchlevel);

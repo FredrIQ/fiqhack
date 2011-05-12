@@ -370,7 +370,7 @@ static void fixup_special(void)
 	    break;
 	}
 
-	if (r->rname.str) free((void *) r->rname.str),  r->rname.str = 0;
+	if (r->rname.str) free(r->rname.str),  r->rname.str = 0;
     }
 
     /* place dungeon branch if not placed above */
@@ -456,12 +456,12 @@ static void fixup_special(void)
 	}
 	if(*str)
 	    pline("%s", str);
-	free((void *)lev_message);
+	free(lev_message);
 	lev_message = 0;
     }
 
     if (lregions)
-	free((void *) lregions),  lregions = 0;
+	free(lregions),  lregions = 0;
     num_lregions = 0;
 }
 
@@ -887,7 +887,7 @@ void movebubbles(void)
 			    cons->x = x;
 			    cons->y = y;
 			    cons->what = CONS_MON;
-			    cons->list = (void *) mon;
+			    cons->list = mon;
 
 			    cons->next = b->cons;
 			    b->cons = cons;
@@ -992,13 +992,13 @@ void save_waterlevel(int fd, int mode)
 	if (perform_bwrite(mode)) {
 	    int n = 0;
 	    for (b = bbubbles; b; b = b->next) ++n;
-	    bwrite(fd, (void *)&n, sizeof (int));
-	    bwrite(fd, (void *)&xmin, sizeof (int));
-	    bwrite(fd, (void *)&ymin, sizeof (int));
-	    bwrite(fd, (void *)&xmax, sizeof (int));
-	    bwrite(fd, (void *)&ymax, sizeof (int));
+	    bwrite(fd, &n, sizeof (int));
+	    bwrite(fd, &xmin, sizeof (int));
+	    bwrite(fd, &ymin, sizeof (int));
+	    bwrite(fd, &xmax, sizeof (int));
+	    bwrite(fd, &ymax, sizeof (int));
 	    for (b = bbubbles; b; b = b->next)
-		bwrite(fd, (void *)b, sizeof (struct bubble));
+		bwrite(fd, b, sizeof (struct bubble));
 	}
 	if (release_data(mode))
 	    unsetup_waterlevel();
@@ -1013,15 +1013,15 @@ void restore_waterlevel(int fd)
 	if (!Is_waterlevel(&u.uz)) return;
 
 	set_wportal();
-	mread(fd,(void *)&n,sizeof(int));
-	mread(fd,(void *)&xmin,sizeof(int));
-	mread(fd,(void *)&ymin,sizeof(int));
-	mread(fd,(void *)&xmax,sizeof(int));
-	mread(fd,(void *)&ymax,sizeof(int));
+	mread(fd,&n,sizeof(int));
+	mread(fd,&xmin,sizeof(int));
+	mread(fd,&ymin,sizeof(int));
+	mread(fd,&xmax,sizeof(int));
+	mread(fd,&ymax,sizeof(int));
 	for (i = 0; i < n; i++) {
 		btmp = b;
 		b = malloc(sizeof(struct bubble));
-		mread(fd,(void *)b,sizeof(struct bubble));
+		mread(fd,b,sizeof(struct bubble));
 		if (bbubbles) {
 			btmp->next = b;
 			b->prev = btmp;
@@ -1107,7 +1107,7 @@ static void unsetup_waterlevel(void)
 
 	for (b = bbubbles; b; b = bb) {
 		bb = b->next;
-		free((void *)b);
+		free(b);
 	}
 	bbubbles = ebubbles = (struct bubble *)0;
 }
@@ -1274,7 +1274,7 @@ static void mv_bubble(struct bubble *b, int dx, int dy, boolean ini)
 		    impossible("mv_bubble: unknown bubble contents");
 		    break;
 	    }
-	    free((void *)cons);
+	    free(cons);
 	}
 	b->cons = 0;
 

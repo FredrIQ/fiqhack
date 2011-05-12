@@ -83,7 +83,7 @@ void dogushforth(int drinking) /* Gushing forth along LOS from (u.ux, u.uy) */
 {
 	int madepool = 0;
 
-	do_clear_area(u.ux, u.uy, 7, gush, (void *)&madepool);
+	do_clear_area(u.ux, u.uy, 7, gush, &madepool);
 	if (!madepool) {
 	    if (drinking)
 		Your("thirst is quenched.");

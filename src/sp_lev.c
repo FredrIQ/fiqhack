@@ -58,7 +58,7 @@ static boolean create_subroom(struct mkroom *, xchar, xchar,
 #define Fgetc	(schar)dlb_fgetc
 #define New(type)		malloc(sizeof(type))
 #define NewTab(type, size)	malloc(sizeof(type *) * (unsigned)size)
-#define Free(ptr)		if(ptr) free((void *) (ptr))
+#define Free(ptr)		if(ptr) free((ptr))
 
 static walk walklist[50];
 extern int min_rx, max_rx, min_ry, max_ry; /* from mkmap.c */
@@ -986,7 +986,7 @@ static void create_engraving(engraving *e, struct mkroom *croom)
 	    get_location(&x, &y, DRY);
 
 	make_engr_at(x, y, e->engr.str, 0L, e->etype);
-	free((void *) e->engr.str);
+	free(e->engr.str);
 }
 
 /*
@@ -1600,7 +1600,7 @@ static void load_common_data(dlb *fd, int typ)
 	level.flags.is_maze_lev = typ == SP_LEV_MAZE;
 
 	/* Read the level initialization data */
-	Fread((void *) &init_lev, 1, sizeof(lev_init), fd);
+	Fread(&init_lev, 1, sizeof(lev_init), fd);
 	if(init_lev.init_present) {
 	    if(init_lev.lit < 0)
 		init_lev.lit = rn2(2);
@@ -1608,7 +1608,7 @@ static void load_common_data(dlb *fd, int typ)
 	}
 
 	/* Read the per level flags */
-	Fread((void *) &lev_flags, 1, sizeof(lev_flags), fd);
+	Fread(&lev_flags, 1, sizeof(lev_flags), fd);
 	if (lev_flags & NOTELEPORT)
 	    level.flags.noteleport = 1;
 	if (lev_flags & HARDFLOOR)
@@ -1621,10 +1621,10 @@ static void load_common_data(dlb *fd, int typ)
 	    level.flags.arboreal = 1;
 
 	/* Read message */
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 	if (n) {
 	    lev_message = malloc(n + 1);
-	    Fread((void *) lev_message, 1, (int) n, fd);
+	    Fread(lev_message, 1, (int) n, fd);
 	    lev_message[n] = 0;
 	}
 	
@@ -1636,16 +1636,16 @@ static void load_one_monster(dlb *fd, monster *m)
 {
 	int size;
 
-	Fread((void *) m, 1, sizeof *m, fd);
+	Fread(m, 1, sizeof *m, fd);
 	if ((size = m->name.len) != 0) {
 	    m->name.str = malloc((unsigned)size + 1);
-	    Fread((void *) m->name.str, 1, size, fd);
+	    Fread(m->name.str, 1, size, fd);
 	    m->name.str[size] = '\0';
 	} else
 	    m->name.str = (char *) 0;
 	if ((size = m->appear_as.len) != 0) {
 	    m->appear_as.str = malloc((unsigned)size + 1);
-	    Fread((void *) m->appear_as.str, 1, size, fd);
+	    Fread(m->appear_as.str, 1, size, fd);
 	    m->appear_as.str[size] = '\0';
 	} else
 	    m->appear_as.str = (char *) 0;
@@ -1658,10 +1658,10 @@ static void load_one_object(dlb *fd, object *o)
 {
 	int size;
 
-	Fread((void *) o, 1, sizeof *o, fd);
+	Fread(o, 1, sizeof *o, fd);
 	if ((size = o->name.len) != 0) {
 	    o->name.str = malloc((unsigned)size + 1);
-	    Fread((void *) o->name.str, 1, size, fd);
+	    Fread(o->name.str, 1, size, fd);
 	    o->name.str[size] = '\0';
 	} else
 	    o->name.str = (char *) 0;
@@ -1674,10 +1674,10 @@ static void load_one_engraving(dlb *fd, engraving *e)
 {
 	int size;
 
-	Fread((void *) e, 1, sizeof *e, fd);
+	Fread(e, 1, sizeof *e, fd);
 	size = e->engr.len;
 	e->engr.str = malloc((unsigned)size+1);
-	Fread((void *) e->engr.str, 1, size, fd);
+	Fread(e->engr.str, 1, size, fd);
 	e->engr.str[size] = '\0';
 	
 err_out:
@@ -1695,19 +1695,19 @@ static boolean load_rooms(dlb *fd)
 
 	load_common_data(fd, SP_LEV_ROOMS);
 
-	Fread((void *) &n, 1, sizeof(n), fd); /* nrobjects */
+	Fread(&n, 1, sizeof(n), fd); /* nrobjects */
 	if (n) {
-		Fread((void *)robjects, sizeof(*robjects), n, fd);
+		Fread(robjects, sizeof(*robjects), n, fd);
 		sp_lev_shuffle(robjects, (char *)0, (int)n);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd); /* nrmonst */
+	Fread(&n, 1, sizeof(n), fd); /* nrmonst */
 	if (n) {
-		Fread((void *)rmonst, sizeof(*rmonst), n, fd);
+		Fread(rmonst, sizeof(*rmonst), n, fd);
 		sp_lev_shuffle(rmonst, (char *)0, (int)n);
 	}
 
-	Fread((void *) &nrooms, 1, sizeof(nrooms), fd);
+	Fread(&nrooms, 1, sizeof(nrooms), fd);
 						/* Number of rooms to read */
 	tmproom = NewTab(room,nrooms);
 	for (i=0;i<nrooms;i++) {
@@ -1716,115 +1716,115 @@ static boolean load_rooms(dlb *fd)
 		r = tmproom[i] = New(room);
 
 		/* Let's see if this room has a name */
-		Fread((void *) &size, 1, sizeof(size), fd);
+		Fread(&size, 1, sizeof(size), fd);
 		if (size > 0) {	/* Yup, it does! */
 			r->name = malloc((unsigned)size + 1);
-			Fread((void *) r->name, 1, size, fd);
+			Fread(r->name, 1, size, fd);
 			r->name[size] = 0;
 		} else
 		    r->name = (char *) 0;
 
 		/* Let's see if this room has a parent */
-		Fread((void *) &size, 1, sizeof(size), fd);
+		Fread(&size, 1, sizeof(size), fd);
 		if (size > 0) {	/* Yup, it does! */
 			r->parent = malloc((unsigned)size + 1);
-			Fread((void *) r->parent, 1, size, fd);
+			Fread(r->parent, 1, size, fd);
 			r->parent[size] = 0;
 		} else
 		    r->parent = (char *) 0;
 
-		Fread((void *) &r->x, 1, sizeof(r->x), fd);
+		Fread(&r->x, 1, sizeof(r->x), fd);
 					/* x pos on the grid (1-5) */
-		Fread((void *) &r->y, 1, sizeof(r->y), fd);
+		Fread(&r->y, 1, sizeof(r->y), fd);
 					 /* y pos on the grid (1-5) */
-		Fread((void *) &r->w, 1, sizeof(r->w), fd);
+		Fread(&r->w, 1, sizeof(r->w), fd);
 					 /* width of the room */
-		Fread((void *) &r->h, 1, sizeof(r->h), fd);
+		Fread(&r->h, 1, sizeof(r->h), fd);
 					 /* height of the room */
-		Fread((void *) &r->xalign, 1, sizeof(r->xalign), fd);
+		Fread(&r->xalign, 1, sizeof(r->xalign), fd);
 					 /* horizontal alignment */
-		Fread((void *) &r->yalign, 1, sizeof(r->yalign), fd);
+		Fread(&r->yalign, 1, sizeof(r->yalign), fd);
 					 /* vertical alignment */
-		Fread((void *) &r->rtype, 1, sizeof(r->rtype), fd);
+		Fread(&r->rtype, 1, sizeof(r->rtype), fd);
 					 /* type of room (zoo, shop, etc.) */
-		Fread((void *) &r->chance, 1, sizeof(r->chance), fd);
+		Fread(&r->chance, 1, sizeof(r->chance), fd);
 					 /* chance of room being special. */
-		Fread((void *) &r->rlit, 1, sizeof(r->rlit), fd);
+		Fread(&r->rlit, 1, sizeof(r->rlit), fd);
 					 /* lit or not ? */
-		Fread((void *) &r->filled, 1, sizeof(r->filled), fd);
+		Fread(&r->filled, 1, sizeof(r->filled), fd);
 					 /* to be filled? */
 		r->nsubroom= 0;
 
 		/* read the doors */
-		Fread((void *) &r->ndoor, 1, sizeof(r->ndoor), fd);
+		Fread(&r->ndoor, 1, sizeof(r->ndoor), fd);
 		if ((n = r->ndoor) != 0)
 		    r->doors = NewTab(room_door, n);
 		while(n--) {
 			r->doors[(int)n] = New(room_door);
-			Fread((void *) r->doors[(int)n], 1,
+			Fread(r->doors[(int)n], 1,
 				sizeof(room_door), fd);
 		}
 
 		/* read the stairs */
-		Fread((void *) &r->nstair, 1, sizeof(r->nstair), fd);
+		Fread(&r->nstair, 1, sizeof(r->nstair), fd);
 		if ((n = r->nstair) != 0)
 		    r->stairs = NewTab(stair, n);
 		while (n--) {
 			r->stairs[(int)n] = New(stair);
-			Fread((void *) r->stairs[(int)n], 1,
+			Fread(r->stairs[(int)n], 1,
 				sizeof(stair), fd);
 		}
 
 		/* read the altars */
-		Fread((void *) &r->naltar, 1, sizeof(r->naltar), fd);
+		Fread(&r->naltar, 1, sizeof(r->naltar), fd);
 		if ((n = r->naltar) != 0)
 		    r->altars = NewTab(altar, n);
 		while (n--) {
 			r->altars[(int)n] = New(altar);
-			Fread((void *) r->altars[(int)n], 1,
+			Fread(r->altars[(int)n], 1,
 				sizeof(altar), fd);
 		}
 
 		/* read the fountains */
-		Fread((void *) &r->nfountain, 1,
+		Fread(&r->nfountain, 1,
 			sizeof(r->nfountain), fd);
 		if ((n = r->nfountain) != 0)
 		    r->fountains = NewTab(fountain, n);
 		while (n--) {
 			r->fountains[(int)n] = New(fountain);
-			Fread((void *) r->fountains[(int)n], 1,
+			Fread(r->fountains[(int)n], 1,
 				sizeof(fountain), fd);
 		}
 
 		/* read the sinks */
-		Fread((void *) &r->nsink, 1, sizeof(r->nsink), fd);
+		Fread(&r->nsink, 1, sizeof(r->nsink), fd);
 		if ((n = r->nsink) != 0)
 		    r->sinks = NewTab(sink, n);
 		while (n--) {
 			r->sinks[(int)n] = New(sink);
-			Fread((void *) r->sinks[(int)n], 1, sizeof(sink), fd);
+			Fread(r->sinks[(int)n], 1, sizeof(sink), fd);
 		}
 
 		/* read the pools */
-		Fread((void *) &r->npool, 1, sizeof(r->npool), fd);
+		Fread(&r->npool, 1, sizeof(r->npool), fd);
 		if ((n = r->npool) != 0)
 		    r->pools = NewTab(pool,n);
 		while (n--) {
 			r->pools[(int)n] = New(pool);
-			Fread((void *) r->pools[(int)n], 1, sizeof(pool), fd);
+			Fread(r->pools[(int)n], 1, sizeof(pool), fd);
 		}
 
 		/* read the traps */
-		Fread((void *) &r->ntrap, 1, sizeof(r->ntrap), fd);
+		Fread(&r->ntrap, 1, sizeof(r->ntrap), fd);
 		if ((n = r->ntrap) != 0)
 		    r->traps = NewTab(trap, n);
 		while(n--) {
 			r->traps[(int)n] = New(trap);
-			Fread((void *) r->traps[(int)n], 1, sizeof(trap), fd);
+			Fread(r->traps[(int)n], 1, sizeof(trap), fd);
 		}
 
 		/* read the monsters */
-		Fread((void *) &r->nmonster, 1, sizeof(r->nmonster), fd);
+		Fread(&r->nmonster, 1, sizeof(r->nmonster), fd);
 		if ((n = r->nmonster) != 0) {
 		    r->monsters = NewTab(monster, n);
 		    while(n--) {
@@ -1835,7 +1835,7 @@ static boolean load_rooms(dlb *fd)
 		    r->monsters = 0;
 
 		/* read the objects, in same order as mazes */
-		Fread((void *) &r->nobject, 1, sizeof(r->nobject), fd);
+		Fread(&r->nobject, 1, sizeof(r->nobject), fd);
 		if ((n = r->nobject) != 0) {
 		    r->objects = NewTab(object, n);
 		    for (j = 0; j < n; ++j) {
@@ -1846,16 +1846,16 @@ static boolean load_rooms(dlb *fd)
 		    r->objects = 0;
 
 		/* read the gold piles */
-		Fread((void *) &r->ngold, 1, sizeof(r->ngold), fd);
+		Fread(&r->ngold, 1, sizeof(r->ngold), fd);
 		if ((n = r->ngold) != 0)
 		    r->golds = NewTab(gold, n);
 		while (n--) {
 			r->golds[(int)n] = New(gold);
-			Fread((void *) r->golds[(int)n], 1, sizeof(gold), fd);
+			Fread(r->golds[(int)n], 1, sizeof(gold), fd);
 		}
 
 		/* read the engravings */
-		Fread((void *) &r->nengraving, 1,
+		Fread(&r->nengraving, 1,
 			sizeof(r->nengraving), fd);
 		if ((n = r->nengraving) != 0) {
 		    r->engravings = NewTab(engraving,n);
@@ -1896,9 +1896,9 @@ static boolean load_rooms(dlb *fd)
 
 	/* read the corridors */
 
-	Fread((void *) &ncorr, sizeof(ncorr), 1, fd);
+	Fread(&ncorr, sizeof(ncorr), 1, fd);
 	for (i=0; i<ncorr; i++) {
-		Fread((void *) &tmpcor, 1, sizeof(tmpcor), fd);
+		Fread(&tmpcor, 1, sizeof(tmpcor), fd);
 		create_corridor(&tmpcor);
 	}
 
@@ -1970,11 +1970,11 @@ static boolean load_maze(dlb *fd)
     struct trap *badtrap;
     boolean has_bounds;
 
-    memset((void *)&Map[0][0], 0, sizeof Map);
+    memset(&Map[0][0], 0, sizeof Map);
     load_common_data(fd, SP_LEV_MAZE);
 
     /* Initialize map */
-    Fread((void *) &filling, 1, sizeof(filling), fd);
+    Fread(&filling, 1, sizeof(filling), fd);
     if (!init_lev.init_present) { /* don't init if mkmap() has been called */
       for(x = 2; x <= x_maze_max; x++)
 	for(y = 0; y <= y_maze_max; y++)
@@ -1991,19 +1991,19 @@ static boolean load_maze(dlb *fd)
     }
 
     /* Start reading the file */
-    Fread((void *) &numpart, 1, sizeof(numpart), fd);
+    Fread(&numpart, 1, sizeof(numpart), fd);
 						/* Number of parts */
     if (!numpart || numpart > 9)
 	panic("load_maze error: numpart = %d", (int) numpart);
 
     while (numpart--) {
-	Fread((void *) &halign, 1, sizeof(halign), fd);
+	Fread(&halign, 1, sizeof(halign), fd);
 					/* Horizontal alignment */
-	Fread((void *) &valign, 1, sizeof(valign), fd);
+	Fread(&valign, 1, sizeof(valign), fd);
 					/* Vertical alignment */
-	Fread((void *) &xsize, 1, sizeof(xsize), fd);
+	Fread(&xsize, 1, sizeof(xsize), fd);
 					/* size in X */
-	Fread((void *) &ysize, 1, sizeof(ysize), fd);
+	Fread(&ysize, 1, sizeof(ysize), fd);
 					/* size in Y */
 	switch((int) halign) {
 	    case LEFT:	    xstart = 3;					break;
@@ -2085,7 +2085,7 @@ static boolean load_maze(dlb *fd)
 		remove_rooms(xstart, ystart, xstart+xsize, ystart+ysize);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of level regions */
 	if(n) {
 	    if(num_lregions) {
@@ -2093,7 +2093,7 @@ static boolean load_maze(dlb *fd)
 		/* don't really free it up until the whole level is done */
 		lev_region *newl = malloc(sizeof(lev_region) *
 						(unsigned)(n+num_lregions));
-		memcpy((void *)(newl+n), (void *)lregions,
+		memcpy((newl+n), (void *)lregions,
 					sizeof(lev_region) * num_lregions);
 		Free(lregions);
 		num_lregions += n;
@@ -2105,10 +2105,10 @@ static boolean load_maze(dlb *fd)
 	}
 
 	while(n--) {
-	    Fread((void *) &tmplregion, sizeof(tmplregion), 1, fd);
+	    Fread(&tmplregion, sizeof(tmplregion), 1, fd);
 	    if ((size = tmplregion.rname.len) != 0) {
 		tmplregion.rname.str = malloc((unsigned)size + 1);
-		Fread((void *) tmplregion.rname.str, size, 1, fd);
+		Fread(tmplregion.rname.str, size, 1, fd);
 		tmplregion.rname.str[size] = '\0';
 	    } else
 		tmplregion.rname.str = (char *) 0;
@@ -2127,35 +2127,35 @@ static boolean load_maze(dlb *fd)
 	    lregions[(int)n] = tmplregion;
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Random objects */
 	if(n) {
-		Fread((void *)robjects, sizeof(*robjects), (int) n, fd);
+		Fread(robjects, sizeof(*robjects), (int) n, fd);
 		sp_lev_shuffle(robjects, (char *)0, (int)n);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Random locations */
 	if(n) {
-		Fread((void *)rloc_x, sizeof(*rloc_x), (int) n, fd);
-		Fread((void *)rloc_y, sizeof(*rloc_y), (int) n, fd);
+		Fread(rloc_x, sizeof(*rloc_x), (int) n, fd);
+		Fread(rloc_y, sizeof(*rloc_y), (int) n, fd);
 		sp_lev_shuffle(rloc_x, rloc_y, (int)n);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Random monsters */
 	if(n) {
-		Fread((void *)rmonst, sizeof(*rmonst), (int) n, fd);
+		Fread(rmonst, sizeof(*rmonst), (int) n, fd);
 		sp_lev_shuffle(rmonst, (char *)0, (int)n);
 	}
 
-	memset((void *)mustfill, 0, sizeof(mustfill));
-	Fread((void *) &n, 1, sizeof(n), fd);
+	memset(mustfill, 0, sizeof(mustfill));
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of subrooms */
 	while(n--) {
 		struct mkroom *troom;
 
-		Fread((void *)&tmpregion, 1, sizeof(tmpregion), fd);
+		Fread(&tmpregion, 1, sizeof(tmpregion), fd);
 
 		if(tmpregion.rtype > MAXRTYPE) {
 		    tmpregion.rtype -= MAXRTYPE+1;
@@ -2205,12 +2205,12 @@ static boolean load_maze(dlb *fd)
 		}
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of doors */
 	while(n--) {
 		struct mkroom *croom = &rooms[0];
 
-		Fread((void *)&tmpdoor, 1, sizeof(tmpdoor), fd);
+		Fread(&tmpdoor, 1, sizeof(tmpdoor), fd);
 
 		x = tmpdoor.x;	y = tmpdoor.y;
 		typ = tmpdoor.mask == -1 ? rnddoor() : tmpdoor.mask;
@@ -2249,10 +2249,10 @@ static boolean load_maze(dlb *fd)
 			levl[x][y].typ = ROOM;
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of drawbridges */
 	while(n--) {
-		Fread((void *)&tmpdb, 1, sizeof(tmpdb), fd);
+		Fread(&tmpdb, 1, sizeof(tmpdb), fd);
 
 		x = tmpdb.x;  y = tmpdb.y;
 		get_location(&x, &y, DRY|WET);
@@ -2261,20 +2261,20 @@ static boolean load_maze(dlb *fd)
 		    impossible("Cannot create drawbridge.");
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of mazewalks */
 	while(n--) {
-		Fread((void *)&tmpwalk, 1, sizeof(tmpwalk), fd);
+		Fread(&tmpwalk, 1, sizeof(tmpwalk), fd);
 
 		get_location(&tmpwalk.x, &tmpwalk.y, DRY|WET);
 
 		walklist[nwalk++] = tmpwalk;
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of non_diggables */
 	while(n--) {
-		Fread((void *)&tmpdig, 1, sizeof(tmpdig), fd);
+		Fread(&tmpdig, 1, sizeof(tmpdig), fd);
 
 		get_location(&tmpdig.x1, &tmpdig.y1, DRY|WET);
 		get_location(&tmpdig.x2, &tmpdig.y2, DRY|WET);
@@ -2283,10 +2283,10 @@ static boolean load_maze(dlb *fd)
 				  tmpdig.x2, tmpdig.y2, W_NONDIGGABLE);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of non_passables */
 	while(n--) {
-		Fread((void *)&tmpdig, 1, sizeof(tmpdig), fd);
+		Fread(&tmpdig, 1, sizeof(tmpdig), fd);
 
 		get_location(&tmpdig.x1, &tmpdig.y1, DRY|WET);
 		get_location(&tmpdig.x2, &tmpdig.y2, DRY|WET);
@@ -2295,10 +2295,10 @@ static boolean load_maze(dlb *fd)
 				  tmpdig.x2, tmpdig.y2, W_NONPASSWALL);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of ladders */
 	while(n--) {
-		Fread((void *)&tmplad, 1, sizeof(tmplad), fd);
+		Fread(&tmplad, 1, sizeof(tmplad), fd);
 
 		x = tmplad.x;  y = tmplad.y;
 		get_location(&x, &y, DRY);
@@ -2314,10 +2314,10 @@ static boolean load_maze(dlb *fd)
 	}
 
 	prevstair.x = prevstair.y = 0;
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of stairs */
 	while(n--) {
-		Fread((void *)&tmpstair, 1, sizeof(tmpstair), fd);
+		Fread(&tmpstair, 1, sizeof(tmpstair), fd);
 
 		xi = 0;
 		do {
@@ -2331,32 +2331,32 @@ static boolean load_maze(dlb *fd)
 		prevstair.y = y;
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of altars */
 	while(n--) {
-		Fread((void *)&tmpaltar, 1, sizeof(tmpaltar), fd);
+		Fread(&tmpaltar, 1, sizeof(tmpaltar), fd);
 
 		create_altar(&tmpaltar, (struct mkroom *)0);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of fountains */
 	while (n--) {
-		Fread((void *)&tmpfountain, 1, sizeof(tmpfountain), fd);
+		Fread(&tmpfountain, 1, sizeof(tmpfountain), fd);
 
 		create_feature(tmpfountain.x, tmpfountain.y,
 			       (struct mkroom *)0, FOUNTAIN);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of traps */
 	while(n--) {
-		Fread((void *)&tmptrap, 1, sizeof(tmptrap), fd);
+		Fread(&tmptrap, 1, sizeof(tmptrap), fd);
 
 		create_trap(&tmptrap, (struct mkroom *)0);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of monsters */
 	while(n--) {
 		load_one_monster(fd, &tmpmons);
@@ -2364,7 +2364,7 @@ static boolean load_maze(dlb *fd)
 		create_monster(&tmpmons, (struct mkroom *)0);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of objects */
 	while(n--) {
 		load_one_object(fd, &tmpobj);
@@ -2372,15 +2372,15 @@ static boolean load_maze(dlb *fd)
 		create_object(&tmpobj, (struct mkroom *)0);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of gold piles */
 	while (n--) {
-		Fread((void *)&tmpgold, 1, sizeof(tmpgold), fd);
+		Fread(&tmpgold, 1, sizeof(tmpgold), fd);
 
 		create_gold(&tmpgold, (struct mkroom *)0);
 	}
 
-	Fread((void *) &n, 1, sizeof(n), fd);
+	Fread(&n, 1, sizeof(n), fd);
 						/* Number of engravings */
 	while(n--) {
 		load_one_engraving(fd, &tmpengraving);
@@ -2513,11 +2513,11 @@ boolean load_special(const char *name)
 	fd = dlb_fopen(name, RDBMODE);
 	if (!fd) return FALSE;
 
-	Fread((void *) &vers_info, sizeof vers_info, 1, fd);
+	Fread(&vers_info, sizeof vers_info, 1, fd);
 	if (!check_version(&vers_info, name, TRUE))
 	    goto give_up;
 
-	Fread((void *) &c, sizeof c, 1, fd); /* c Header */
+	Fread(&c, sizeof c, 1, fd); /* c Header */
 
 	switch (c) {
 		case SP_LEV_ROOMS:

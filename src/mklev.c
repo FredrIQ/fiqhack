@@ -85,7 +85,7 @@ gotit:
 
 void sort_rooms(void)
 {
-	qsort((void *) rooms, nroom, sizeof(struct mkroom), do_comp);
+	qsort(rooms, nroom, sizeof(struct mkroom), do_comp);
 }
 
 static void do_room_or_subroom(struct mkroom *croom,
@@ -489,8 +489,8 @@ static void clear_level_structures(void)
 		*lev++ = zerorm;
 	    }
 	}
-	memset((void *)level.objects, 0, sizeof(level.objects));
-	memset((void *)level.monsters, 0, sizeof(level.monsters));
+	memset(level.objects, 0, sizeof(level.objects));
+	memset(level.monsters, 0, sizeof(level.monsters));
 	level.objlist = (struct obj *)0;
 	level.buriedobjlist = (struct obj *)0;
 	level.monlist = (struct monst *)0;

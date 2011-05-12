@@ -32,7 +32,6 @@ extern void srandom(unsigned int);
 #endif /* RANDOM */
 
 extern void exit(int);
-extern void free(void *);
 extern void perror(const char *);
 extern void qsort(void *,size_t,size_t,int(*)(const void *,const void *));
 

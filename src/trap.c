@@ -1263,7 +1263,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 	   next dig attempt never thinks you're resuming previous effort */
 	if ((otyp == BOULDER || otyp == STATUE) &&
 	    singleobj->ox == digging.pos.x && singleobj->oy == digging.pos.y)
-	    memset((void *)&digging, 0, sizeof digging);
+	    memset(&digging, 0, sizeof digging);
 
 	dist = distmin(x1,y1,x2,y2);
 	bhitpos.x = x1;

@@ -1060,7 +1060,7 @@ int findit(void)	/* returns number of things found */
 	int num = 0;
 
 	if(u.uswallow) return 0;
-	do_clear_area(u.ux, u.uy, BOLT_LIM, findone, (void *) &num);
+	do_clear_area(u.ux, u.uy, BOLT_LIM, findone, &num);
 	return num;
 }
 
@@ -1077,7 +1077,7 @@ int openit(void)	/* returns number of things found and opened */
 		return -1;
 	}
 
-	do_clear_area(u.ux, u.uy, BOLT_LIM, openone, (void *) &num);
+	do_clear_area(u.ux, u.uy, BOLT_LIM, openone, &num);
 	return num;
 }
 

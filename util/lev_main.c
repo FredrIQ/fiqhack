@@ -35,7 +35,7 @@
 
 #define NewTab(type, size)	malloc(sizeof(type *) * size)
 #define Free(ptr)		if(ptr) free((ptr))
-#define Write(fd, item, size)	if (write(fd, (void *)(item), size) != size) return FALSE;
+#define Write(fd, item, size)	if (write(fd, (item), size) != size) return FALSE;
 
 #define MAX_ERRORS	25
 
@@ -1044,7 +1044,7 @@ static boolean write_maze(int fd, specialmaze *maze)
 			 * warning '!=' : signed/unsigned mismatch
 			 */
 			unsigned reslt, sz = pt->xsize * sizeof *pt->map[j];
-			reslt = write(fd, (void *)(pt->map[j]), sz);
+			reslt = write(fd, (pt->map[j]), sz);
 			if (reslt != sz) return FALSE;
 #endif
 		}

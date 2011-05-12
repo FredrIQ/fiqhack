@@ -115,29 +115,29 @@ void save_dungeon(int fd, boolean perform_write, boolean free_data)
     int    count;
 
     if (perform_write) {
-	bwrite(fd, (void *) &n_dgns, sizeof n_dgns);
-	bwrite(fd, (void *) dungeons, sizeof(dungeon) * (unsigned)n_dgns);
-	bwrite(fd, (void *) &dungeon_topology, sizeof dungeon_topology);
-	bwrite(fd, (void *) tune, sizeof tune);
+	bwrite(fd, &n_dgns, sizeof n_dgns);
+	bwrite(fd, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+	bwrite(fd, &dungeon_topology, sizeof dungeon_topology);
+	bwrite(fd, tune, sizeof tune);
 
 	for (count = 0, curr = branches; curr; curr = curr->next)
 	    count++;
-	bwrite(fd, (void *) &count, sizeof(count));
+	bwrite(fd, &count, sizeof(count));
 
 	for (curr = branches; curr; curr = curr->next)
-	    bwrite(fd, (void *) curr, sizeof (branch));
+	    bwrite(fd, curr, sizeof (branch));
 
 	count = maxledgerno();
-	bwrite(fd, (void *) &count, sizeof count);
-	bwrite(fd, (void *) level_info,
+	bwrite(fd, &count, sizeof count);
+	bwrite(fd, level_info,
 			(unsigned)count * sizeof (struct linfo));
-	bwrite(fd, (void *) &inv_pos, sizeof inv_pos);
+	bwrite(fd, &inv_pos, sizeof inv_pos);
     }
 
     if (free_data) {
 	for (curr = branches; curr; curr = next) {
 	    next = curr->next;
-	    free((void *) curr);
+	    free(curr);
 	}
 	branches = 0;
     }
@@ -149,17 +149,17 @@ void restore_dungeon(int fd)
     branch *curr, *last;
     int    count, i;
 
-    mread(fd, (void *) &n_dgns, sizeof(n_dgns));
-    mread(fd, (void *) dungeons, sizeof(dungeon) * (unsigned)n_dgns);
-    mread(fd, (void *) &dungeon_topology, sizeof dungeon_topology);
-    mread(fd, (void *) tune, sizeof tune);
+    mread(fd, &n_dgns, sizeof(n_dgns));
+    mread(fd, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+    mread(fd, &dungeon_topology, sizeof dungeon_topology);
+    mread(fd, tune, sizeof tune);
 
     last = branches = (branch *) 0;
 
-    mread(fd, (void *) &count, sizeof(count));
+    mread(fd, &count, sizeof(count));
     for (i = 0; i < count; i++) {
 	curr = malloc(sizeof(branch));
-	mread(fd, (void *) curr, sizeof(branch));
+	mread(fd, curr, sizeof(branch));
 	curr->next = (branch *) 0;
 	if (last)
 	    last->next = curr;
@@ -168,11 +168,11 @@ void restore_dungeon(int fd)
 	last = curr;
     }
 
-    mread(fd, (void *) &count, sizeof(count));
+    mread(fd, &count, sizeof(count));
     if (count >= MAXLINFO)
 	panic("level information count larger (%d) than allocated size", count);
-    mread(fd, (void *) level_info, (unsigned)count*sizeof(struct linfo));
-    mread(fd, (void *) &inv_pos, sizeof inv_pos);
+    mread(fd, level_info, (unsigned)count*sizeof(struct linfo));
+    mread(fd, &inv_pos, sizeof inv_pos);
 }
 
 static void Fread(void *ptr, int size, int nitems, dlb *stream)
@@ -612,14 +612,14 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 # endif
 	    strcat(tbuf, "\" file!");
 #ifdef WIN32
-	    interject_assistance(1, INTERJECT_PANIC, (void *)tbuf,
-				 (void *)fqn_prefix[DATAPREFIX]);
+	    interject_assistance(1, INTERJECT_PANIC, tbuf,
+				 fqn_prefix[DATAPREFIX]);
 #endif
 	    panic(tbuf);
 	}
 
 	/* validate the data's version against the program's version */
-	Fread((void *) &vers_info, sizeof vers_info, 1, dgn_file);
+	Fread(&vers_info, sizeof vers_info, 1, dgn_file);
 	/* we'd better clear the screen now, since when error messages come from
 	 * check_version() they will be printed using pline(), which doesn't
 	 * mix with the raw messages that might be already on the screen
@@ -633,12 +633,12 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	 * dungeon arrays.
 	 */
 	sp_levchn = (s_level *) 0;
-	Fread((void *)&n_dgns, sizeof(int), 1, dgn_file);
+	Fread(&n_dgns, sizeof(int), 1, dgn_file);
 	if (n_dgns >= MAXDUNGEON)
 	    panic("init_dungeons: too many dungeons");
 
 	for (i = 0; i < n_dgns; i++) {
-	    Fread((void *)&pd.tmpdungeon[i],
+	    Fread(&pd.tmpdungeon[i],
 				    sizeof(struct tmpdungeon), 1, dgn_file);
 	    if(!wizard)
 	      if(pd.tmpdungeon[i].chance && (pd.tmpdungeon[i].chance <= rn2(100))) {
@@ -646,11 +646,11 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 
 		/* skip over any levels or branches */
 		for(j = 0; j < pd.tmpdungeon[i].levels; j++)
-		    Fread((void *)&pd.tmplevel[cl], sizeof(struct tmplevel),
+		    Fread(&pd.tmplevel[cl], sizeof(struct tmplevel),
 							1, dgn_file);
 
 		for(j = 0; j < pd.tmpdungeon[i].branches; j++)
-		    Fread((void *)&pd.tmpbranch[cb],
+		    Fread(&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 		n_dgns--; i--;
 		continue;
@@ -750,7 +750,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	     * special levels until they are all placed.
 	     */
 	    for(; cl < pd.n_levs; cl++) {
-		Fread((void *)&pd.tmplevel[cl],
+		Fread(&pd.tmplevel[cl],
 					sizeof(struct tmplevel), 1, dgn_file);
 		init_level(i, cl, &pd);
 	    }
@@ -774,7 +774,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    if (pd.n_brs > BRANCH_LIMIT)
 		panic("init_dungeon: too many branches");
 	    for(; cb < pd.n_brs; cb++)
-		Fread((void *)&pd.tmpbranch[cb],
+		Fread(&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 	}
 	dlb_fclose(dgn_file);

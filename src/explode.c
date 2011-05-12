@@ -533,7 +533,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 			place_object(stmp->obj, x, y);
 			stackobj(stmp->obj);
 		}
-		free((void *)stmp);
+		free(stmp);
 		newsym(x,y);
 	}
 

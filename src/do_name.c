@@ -112,7 +112,7 @@ int getpos(coord *cc, boolean force, const char *goal)
 	    if (!index(quitchars, c)) {
 		char matching[MAXPCHARS];
 		int pass, lo_x, lo_y, hi_x, hi_y, k = 0;
-		memset((void *)matching, 0, sizeof matching);
+		memset(matching, 0, sizeof matching);
 		for (sidx = 1; sidx < MAXPCHARS; sidx++)
 		    if (c == defsyms[sidx].sym || c == (int)showsyms[sidx])
 			matching[sidx] = (char) ++k;
@@ -189,8 +189,8 @@ struct monst *christen_monst(struct monst *mtmp, const char *name)
 	}
 	mtmp2 = newmonst(mtmp->mxlth + lth);
 	*mtmp2 = *mtmp;
-	memcpy((void *)mtmp2->mextra,
-		      (void *)mtmp->mextra, mtmp->mxlth);
+	memcpy(mtmp2->mextra,
+		      mtmp->mextra, mtmp->mxlth);
 	mtmp2->mnamelth = lth;
 	if (lth) strcpy(NAME(mtmp2), name);
 	replmon(mtmp,mtmp2);
@@ -305,7 +305,7 @@ struct obj *realloc_obj(struct obj *obj, int oextra_size, void *oextra_src,
 	*otmp = *obj;	/* the cobj pointer is copied to otmp */
 	if (oextra_size) {
 	    if (oextra_src)
-		memcpy((void *)otmp->oextra, oextra_src,
+		memcpy(otmp->oextra, oextra_src,
 							oextra_size);
 	} else {
 	    otmp->oattached = OATTACHED_NOTHING;
@@ -384,7 +384,7 @@ struct obj *oname(struct obj *obj, const char *name)
 		if (lth) strcpy(ONAME(obj), name);
 	} else {
 		obj = realloc_obj(obj, obj->oxlth,
-			      (void *)obj->oextra, lth, name);
+			      obj->oextra, lth, name);
 	}
 	if (lth) artifact_exists(obj, name, TRUE);
 	if (obj->oartifact) {
@@ -458,7 +458,7 @@ void docall(struct obj *obj)
 
 	/* clear old name */
 	str1 = &(objects[obj->otyp].oc_uname);
-	if(*str1) free((void *)*str1);
+	if(*str1) free(*str1);
 
 	/* strip leading and trailing spaces; uncalls item if all spaces */
 	mungspaces(buf);

@@ -1798,8 +1798,8 @@ static int in_container(struct obj *obj)
 		obj->age = monstermoves - obj->age; /* actual age */
 		/* stop any corpse timeouts when frozen */
 		if (obj->otyp == CORPSE && obj->timed) {
-			long rot_alarm = stop_timer(ROT_CORPSE, (void *)obj);
-			stop_timer(REVIVE_MON, (void *)obj);
+			long rot_alarm = stop_timer(ROT_CORPSE, obj);
+			stop_timer(REVIVE_MON, obj);
 			/* mark a non-reviving corpse as such */
 			if (rot_alarm) obj->norevive = 1;
 		}

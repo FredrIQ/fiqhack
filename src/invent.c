@@ -473,7 +473,7 @@ void freeinv_core(struct obj *obj)
 		set_moreluck();
 		botl = 1;
 	} else if (obj->otyp == FIGURINE && obj->timed) {
-		stop_timer(FIG_TRANSFORM, (void *) obj);
+		stop_timer(FIG_TRANSFORM, obj);
 	}
 }
 
@@ -2383,7 +2383,7 @@ char *let_to_name(char let, boolean unpaid)
 
 	len = strlen(class_name) + (unpaid ? sizeof "unpaid_" : sizeof "");
 	if (len > invbufsiz) {
-	    if (invbuf) free((void *)invbuf);
+	    if (invbuf) free(invbuf);
 	    invbufsiz = len + 10; /* add slop to reduce incremental realloc */
 	    invbuf = malloc(invbufsiz);
 	}
@@ -2396,7 +2396,7 @@ char *let_to_name(char let, boolean unpaid)
 
 void free_invbuf(void)
 {
-	if (invbuf) free((void *)invbuf),  invbuf = (char *)0;
+	if (invbuf) free(invbuf),  invbuf = (char *)0;
 	invbufsiz = 0;
 }
 

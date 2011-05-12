@@ -257,7 +257,7 @@ static int dig(void)
 
 		if (digging.effort > 250) {
 		    dighole(FALSE);
-		    memset((void *)&digging, 0, sizeof digging);
+		    memset(&digging, 0, sizeof digging);
 		    return 0;	/* done with digging */
 		}
 
@@ -1279,7 +1279,7 @@ struct obj *bury_an_obj(struct obj *otmp)
 	} else if ((under_ice ? otmp->oclass == POTION_CLASS : is_organic(otmp))
 		&& !obj_resists(otmp, 5, 95)) {
 	    start_timer((under_ice ? 0L : 250L) + (long)rnd(250),
-			       TIMER_OBJECT, ROT_ORGANIC, (void *)otmp);
+			       TIMER_OBJECT, ROT_ORGANIC, otmp);
 	}
 	add_to_buried(otmp);
 	return otmp2;
@@ -1314,7 +1314,7 @@ void unearth_objs(int x, int y)
 		if (otmp->ox == x && otmp->oy == y) {
 		    obj_extract_self(otmp);
 		    if (otmp->timed)
-			stop_timer(ROT_ORGANIC, (void *)otmp);
+			stop_timer(ROT_ORGANIC, otmp);
 		    place_object(otmp, x, y);
 		    stackobj(otmp);
 		}

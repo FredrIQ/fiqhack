@@ -69,21 +69,21 @@ static void hack_artifacts(void)
 /* zero out the artifact existence list */
 void init_artifacts(void)
 {
-	memset((void *) artiexist, 0, sizeof artiexist);
-	memset((void *) artidisco, 0, sizeof artidisco);
+	memset(artiexist, 0, sizeof artiexist);
+	memset(artidisco, 0, sizeof artidisco);
 	hack_artifacts();
 }
 
 void save_artifacts(int fd)
 {
-	bwrite(fd, (void *) artiexist, sizeof artiexist);
-	bwrite(fd, (void *) artidisco, sizeof artidisco);
+	bwrite(fd, artiexist, sizeof artiexist);
+	bwrite(fd, artidisco, sizeof artidisco);
 }
 
 void restore_artifacts(int fd)
 {
-	mread(fd, (void *) artiexist, sizeof artiexist);
-	mread(fd, (void *) artidisco, sizeof artidisco);
+	mread(fd, artiexist, sizeof artiexist);
+	mread(fd, artidisco, sizeof artidisco);
 	hack_artifacts();	/* redo non-saved special cases */
 }
 

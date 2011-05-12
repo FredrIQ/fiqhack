@@ -129,7 +129,7 @@ int dosave0(void)
 
 	store_version(fd);
 #ifdef STORE_PLNAME_IN_FILE
-	bwrite(fd, (void *) plname, PL_NSIZ);
+	bwrite(fd, plname, PL_NSIZ);
 #endif
 	ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
 	usteed_id = (u.usteed ? u.usteed->m_id : 0);
@@ -163,7 +163,7 @@ int dosave0(void)
 		}
 		getlev(ofd, hackpid, ltmp, FALSE);
 		close(ofd);
-		bwrite(fd, (void *) &ltmp, sizeof ltmp); /* level number*/
+		bwrite(fd, &ltmp, sizeof ltmp); /* level number*/
 		savelev(fd, ltmp, WRITE_SAVE | FREE_SAVE);     /* actual level*/
 		delete_levelfile(ltmp);
 	}
@@ -182,9 +182,9 @@ static void savegamestate(int fd, int mode)
 	int uid;
 
 	uid = getuid();
-	bwrite(fd, (void *) &uid, sizeof uid);
-	bwrite(fd, (void *) &flags, sizeof(struct flag));
-	bwrite(fd, (void *) &u, sizeof(struct you));
+	bwrite(fd, &uid, sizeof uid);
+	bwrite(fd, &flags, sizeof(struct flag));
+	bwrite(fd, &u, sizeof(struct you));
 
 	/* must come before migrating_objs and migrating_mons are freed */
 	save_timers(fd, mode, RANGE_GLOBAL);
@@ -198,25 +198,25 @@ static void savegamestate(int fd, int mode)
 	    migrating_objs = 0;
 	    migrating_mons = 0;
 	}
-	bwrite(fd, (void *) mvitals, sizeof(mvitals));
+	bwrite(fd, mvitals, sizeof(mvitals));
 
 	save_dungeon(fd, (boolean)!!perform_bwrite(mode),
 			 (boolean)!!release_data(mode));
 	savelevchn(fd, mode);
-	bwrite(fd, (void *) &moves, sizeof moves);
-	bwrite(fd, (void *) &monstermoves, sizeof monstermoves);
-	bwrite(fd, (void *) &quest_status, sizeof(struct q_score));
-	bwrite(fd, (void *) spl_book,
+	bwrite(fd, &moves, sizeof moves);
+	bwrite(fd, &monstermoves, sizeof monstermoves);
+	bwrite(fd, &quest_status, sizeof(struct q_score));
+	bwrite(fd, spl_book,
 				sizeof(struct spell) * (MAXSPELL + 1));
 	save_artifacts(fd);
 	save_oracles(fd, mode);
 	if(ustuck_id)
-	    bwrite(fd, (void *) &ustuck_id, sizeof ustuck_id);
+	    bwrite(fd, &ustuck_id, sizeof ustuck_id);
 	if(usteed_id)
-	    bwrite(fd, (void *) &usteed_id, sizeof usteed_id);
-	bwrite(fd, (void *) pl_character, sizeof pl_character);
-	bwrite(fd, (void *) pl_fruit, sizeof pl_fruit);
-	bwrite(fd, (void *) &current_fruit, sizeof current_fruit);
+	    bwrite(fd, &usteed_id, sizeof usteed_id);
+	bwrite(fd, pl_character, sizeof pl_character);
+	bwrite(fd, pl_fruit, sizeof pl_fruit);
+	bwrite(fd, &current_fruit, sizeof current_fruit);
 	savefruitchn(fd, mode);
 	savenames(fd, mode);
 	save_waterlevel(fd, mode);
@@ -257,7 +257,7 @@ void savestateinlock(void)
 		    return;
 		}
 
-		count = read(fd, (void *) &hpid, sizeof(hpid));
+		count = read(fd, &hpid, sizeof(hpid));
 		if (hackpid != hpid) {
 		    sprintf(whynot,
 			    "Level #0 pid (%d) doesn't match ours (%d)!",
@@ -275,15 +275,15 @@ void savestateinlock(void)
 		    done(TRICKED);
 		    return;
 		}
-		count = write(fd, (void *) &hackpid, sizeof(hackpid));
+		count = write(fd, &hackpid, sizeof(hackpid));
 		if (flags.ins_chkpt) {
 		    int currlev = ledger_no(&u.uz);
 
-		    count = write(fd, (void *) &currlev, sizeof(currlev));
+		    count = write(fd, &currlev, sizeof(currlev));
 		    save_savefile_name(fd);
 		    store_version(fd);
 #ifdef STORE_PLNAME_IN_FILE
-		    bwrite(fd, (void *) plname, PL_NSIZ);
+		    bwrite(fd, plname, PL_NSIZ);
 #endif
 		    ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
 		    usteed_id = (u.usteed ? u.usteed->m_id : 0);
@@ -312,19 +312,19 @@ void savelev(int fd, xchar lev, int mode)
 	if(fd < 0) panic("Save on bad file!");	/* impossible */
 	if (lev >= 0 && lev <= maxledgerno())
 	    level_info[lev].flags |= VISITED;
-	bwrite(fd,(void *) &hackpid,sizeof(hackpid));
-	bwrite(fd,(void *) &lev,sizeof(lev));
-	bwrite(fd,(void *) levl,sizeof(levl));
-	bwrite(fd,(void *) &monstermoves,sizeof(monstermoves));
-	bwrite(fd,(void *) &upstair,sizeof(stairway));
-	bwrite(fd,(void *) &dnstair,sizeof(stairway));
-	bwrite(fd,(void *) &upladder,sizeof(stairway));
-	bwrite(fd,(void *) &dnladder,sizeof(stairway));
-	bwrite(fd,(void *) &sstairs,sizeof(stairway));
-	bwrite(fd,(void *) &updest,sizeof(dest_area));
-	bwrite(fd,(void *) &dndest,sizeof(dest_area));
-	bwrite(fd,(void *) &level.flags,sizeof(level.flags));
-	bwrite(fd, (void *) doors, sizeof(doors));
+	bwrite(fd,&hackpid,sizeof(hackpid));
+	bwrite(fd,&lev,sizeof(lev));
+	bwrite(fd,levl,sizeof(levl));
+	bwrite(fd,&monstermoves,sizeof(monstermoves));
+	bwrite(fd,&upstair,sizeof(stairway));
+	bwrite(fd,&dnstair,sizeof(stairway));
+	bwrite(fd,&upladder,sizeof(stairway));
+	bwrite(fd,&dnladder,sizeof(stairway));
+	bwrite(fd,&sstairs,sizeof(stairway));
+	bwrite(fd,&updest,sizeof(dest_area));
+	bwrite(fd,&dndest,sizeof(dest_area));
+	bwrite(fd,&level.flags,sizeof(level.flags));
+	bwrite(fd, doors, sizeof(doors));
 	save_rooms(fd);	/* no dynamic memory to reclaim */
 
 	/* from here on out, saving also involves allocated memory cleanup */
@@ -437,14 +437,14 @@ static void savelevchn(int fd, int mode)
 
 	for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next) cnt++;
 	if (perform_bwrite(mode))
-	    bwrite(fd, (void *) &cnt, sizeof(int));
+	    bwrite(fd, &cnt, sizeof(int));
 
 	for (tmplev = sp_levchn; tmplev; tmplev = tmplev2) {
 	    tmplev2 = tmplev->next;
 	    if (perform_bwrite(mode))
-		bwrite(fd, (void *) tmplev, sizeof(s_level));
+		bwrite(fd, tmplev, sizeof(s_level));
 	    if (release_data(mode))
-		free((void *) tmplev);
+		free(tmplev);
 	}
 	if (release_data(mode))
 	    sp_levchn = 0;
@@ -459,15 +459,15 @@ static void savedamage(int fd, int mode)
 	for (tmp_dam = damageptr; tmp_dam; tmp_dam = tmp_dam->next)
 	    xl++;
 	if (perform_bwrite(mode))
-	    bwrite(fd, (void *) &xl, sizeof(xl));
+	    bwrite(fd, &xl, sizeof(xl));
 
 	while (xl--) {
 	    if (perform_bwrite(mode))
-		bwrite(fd, (void *) damageptr, sizeof(*damageptr));
+		bwrite(fd, damageptr, sizeof(*damageptr));
 	    tmp_dam = damageptr;
 	    damageptr = damageptr->next;
 	    if (release_data(mode))
-		free((void *)tmp_dam);
+		free(tmp_dam);
 	}
 	if (release_data(mode))
 	    level.damagelist = 0;
@@ -483,8 +483,8 @@ static void saveobjchn(int fd, struct obj *otmp, int mode)
 	    otmp2 = otmp->nobj;
 	    if (perform_bwrite(mode)) {
 		xl = otmp->oxlth + otmp->onamelth;
-		bwrite(fd, (void *) &xl, sizeof(int));
-		bwrite(fd, (void *) otmp, xl + sizeof(struct obj));
+		bwrite(fd, &xl, sizeof(int));
+		bwrite(fd, otmp, xl + sizeof(struct obj));
 	    }
 	    if (Has_contents(otmp))
 		saveobjchn(fd,otmp->cobj,mode);
@@ -499,7 +499,7 @@ static void saveobjchn(int fd, struct obj *otmp, int mode)
 	    otmp = otmp2;
 	}
 	if (perform_bwrite(mode))
-	    bwrite(fd, (void *) &minusone, sizeof(int));
+	    bwrite(fd, &minusone, sizeof(int));
 }
 
 static void savemonchn(int fd, struct monst *mtmp, int mode)
@@ -510,14 +510,14 @@ static void savemonchn(int fd, struct monst *mtmp, int mode)
 	struct permonst *monbegin = &mons[0];
 
 	if (perform_bwrite(mode))
-	    bwrite(fd, (void *) &monbegin, sizeof(monbegin));
+	    bwrite(fd, &monbegin, sizeof(monbegin));
 
 	while (mtmp) {
 	    mtmp2 = mtmp->nmon;
 	    if (perform_bwrite(mode)) {
 		xl = mtmp->mxlth + mtmp->mnamelth;
-		bwrite(fd, (void *) &xl, sizeof(int));
-		bwrite(fd, (void *) mtmp, xl + sizeof(struct monst));
+		bwrite(fd, &xl, sizeof(int));
+		bwrite(fd, mtmp, xl + sizeof(struct monst));
 	    }
 	    if (mtmp->minvent)
 		saveobjchn(fd,mtmp->minvent,mode);
@@ -526,7 +526,7 @@ static void savemonchn(int fd, struct monst *mtmp, int mode)
 	    mtmp = mtmp2;
 	}
 	if (perform_bwrite(mode))
-	    bwrite(fd, (void *) &minusone, sizeof(int));
+	    bwrite(fd, &minusone, sizeof(int));
 }
 
 static void savetrapchn(int fd, struct trap *trap, int mode)
@@ -536,7 +536,7 @@ static void savetrapchn(int fd, struct trap *trap, int mode)
 	while (trap) {
 	    trap2 = trap->ntrap;
 	    if (perform_bwrite(mode))
-		bwrite(fd, (void *) trap, sizeof(struct trap));
+		bwrite(fd, trap, sizeof(struct trap));
 	    if (release_data(mode))
 		dealloc_trap(trap);
 	    trap = trap2;
@@ -558,7 +558,7 @@ void savefruitchn(int fd, int mode)
 	while (f1) {
 	    f2 = f1->nextf;
 	    if (f1->fid >= 0 && perform_bwrite(mode))
-		bwrite(fd, (void *) f1, sizeof(struct fruit));
+		bwrite(fd, f1, sizeof(struct fruit));
 	    if (release_data(mode))
 		dealloc_fruit(f1);
 	    f1 = f2;

@@ -996,8 +996,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	/* set default level change destination areas */
 	/* the special level code may override these */
-	memset((void *) &updest, 0, sizeof updest);
-	memset((void *) &dndest, 0, sizeof dndest);
+	memset(&updest, 0, sizeof updest);
+	memset(&dndest, 0, sizeof dndest);
 
 	if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
 		/* entering this level for first time; make it now */
@@ -1368,9 +1368,9 @@ void deferred_goto(void)
 	}
 	u.utotype = 0;		/* our caller keys off of this */
 	if (dfr_pre_msg)
-	    free((void *)dfr_pre_msg),  dfr_pre_msg = 0;
+	    free(dfr_pre_msg),  dfr_pre_msg = 0;
 	if (dfr_post_msg)
-	    free((void *)dfr_post_msg),  dfr_post_msg = 0;
+	    free(dfr_post_msg),  dfr_post_msg = 0;
 }
 
 

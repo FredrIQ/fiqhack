@@ -193,7 +193,7 @@ void tty_startup(int *wid, int *hgt)
 		error("NetHack needs CL.");
 	if ((int)(tbufptr - tbuf) > (int)(sizeof tbuf))
 		error("TERMCAP entry too big...\n");
-	free((void *)tptr);
+	free(tptr);
 }
 
 /* note: at present, this routine is not part of the formal window interface */
@@ -621,9 +621,9 @@ static void kill_hilite(void)
 	for (c = 0; c < CLR_MAX / 2; c++) {
 	    if (hilites[c|BRIGHT] == hilites[c])  hilites[c|BRIGHT] = 0;
 	    if (hilites[c] && (hilites[c] != nh_HI))
-		free((void *) hilites[c]),  hilites[c] = 0;
+		free(hilites[c]),  hilites[c] = 0;
 	    if (hilites[c|BRIGHT] && (hilites[c|BRIGHT] != nh_HI))
-		free((void *) hilites[c|BRIGHT]),  hilites[c|BRIGHT] = 0;
+		free(hilites[c|BRIGHT]),  hilites[c|BRIGHT] = 0;
 	}
 	return;
 }

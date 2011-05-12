@@ -5,7 +5,7 @@
 #include "lev.h"
 
 #define newseg()		malloc(sizeof(struct wseg))
-#define dealloc_seg(wseg)	free((void *) (wseg))
+#define dealloc_seg(wseg)	free((wseg))
 
 /* worm segment structure */
 struct wseg {
@@ -443,16 +443,16 @@ void save_worm(int fd, int mode)
 	for (i = 1; i < MAX_NUM_WORMS; i++) {
 	    for (count = 0, curr = wtails[i]; curr; curr = curr->nseg) count++;
 	    /* Save number of segments */
-	    bwrite(fd, (void *) &count, sizeof(int));
+	    bwrite(fd, &count, sizeof(int));
 	    /* Save segment locations of the monster. */
 	    if (count) {
 		for (curr = wtails[i]; curr; curr = curr->nseg) {
-		    bwrite(fd, (void *) &(curr->wx), sizeof(xchar));
-		    bwrite(fd, (void *) &(curr->wy), sizeof(xchar));
+		    bwrite(fd, &(curr->wx), sizeof(xchar));
+		    bwrite(fd, &(curr->wy), sizeof(xchar));
 		}
 	    }
 	}
-	bwrite(fd, (void *) wgrowtime, sizeof(wgrowtime));
+	bwrite(fd, wgrowtime, sizeof(wgrowtime));
     }
 
     if (release_data(mode)) {
@@ -483,15 +483,15 @@ void rest_worm(int fd)
     struct wseg *curr, *temp;
 
     for (i = 1; i < MAX_NUM_WORMS; i++) {
-	mread(fd, (void *) &count, sizeof(int));
+	mread(fd, &count, sizeof(int));
 	if (!count) continue;	/* none */
 
 	/* Get the segments. */
 	for (curr = (struct wseg *) 0, j = 0; j < count; j++) {
 	    temp = newseg();
 	    temp->nseg = (struct wseg *) 0;
-	    mread(fd, (void *) &(temp->wx), sizeof(xchar));
-	    mread(fd, (void *) &(temp->wy), sizeof(xchar));
+	    mread(fd, &(temp->wx), sizeof(xchar));
+	    mread(fd, &(temp->wy), sizeof(xchar));
 	    if (curr)
 		curr->nseg = temp;
 	    else
@@ -500,7 +500,7 @@ void rest_worm(int fd)
 	}
 	wheads[i] = curr;
     }
-    mread(fd, (void *) wgrowtime, sizeof(wgrowtime));
+    mread(fd, wgrowtime, sizeof(wgrowtime));
 }
 
 /*

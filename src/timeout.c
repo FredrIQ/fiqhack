@@ -364,7 +364,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 	int i;
 
 	/* stop previous timer, if any */
-	stop_timer(HATCH_EGG, (void *) egg);
+	stop_timer(HATCH_EGG, egg);
 
 	/*
 	 * Decide if and when to hatch the egg.  The old hatch_it() code tried
@@ -376,7 +376,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 	    if (rnd(i) > 150) {
 		/* egg will hatch */
 		start_timer((long)i, TIMER_OBJECT,
-						HATCH_EGG, (void *)egg);
+						HATCH_EGG, egg);
 		break;
 	    }
 }
@@ -385,7 +385,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 void kill_egg(struct obj *egg)
 {
 	/* stop previous timer, if any */
-	stop_timer(HATCH_EGG, (void *) egg);
+	stop_timer(HATCH_EGG, egg);
 }
 
 /* timer callback routine: hatch the given egg */
@@ -512,9 +512,9 @@ void hatch_egg(void *arg, long timeout)
 		attach_egg_hatch_timeout(egg);
 		if (egg->timed) {
 		    /* replace ordinary egg timeout with a short one */
-		    stop_timer(HATCH_EGG, (void *)egg);
+		    stop_timer(HATCH_EGG, egg);
 		    start_timer((long)rnd(12), TIMER_OBJECT,
-					HATCH_EGG, (void *)egg);
+					HATCH_EGG, egg);
 		}
 	    } else if (carried(egg)) {
 		useup(egg);
@@ -543,7 +543,7 @@ void attach_fig_transform_timeout(struct obj *figurine)
 	int i;
 
 	/* stop previous timer, if any */
-	stop_timer(FIG_TRANSFORM, (void *) figurine);
+	stop_timer(FIG_TRANSFORM, figurine);
 
 	/*
 	 * Decide when to transform the figurine.
@@ -551,7 +551,7 @@ void attach_fig_transform_timeout(struct obj *figurine)
 	i = rnd(9000) + 200;
 	/* figurine will transform */
 	start_timer((long)i, TIMER_OBJECT,
-				FIG_TRANSFORM, (void *)figurine);
+				FIG_TRANSFORM, figurine);
 }
 
 /* give a fumble message */
@@ -1029,7 +1029,7 @@ void begin_burn(struct obj *obj, boolean already_lit)
 
 	if (do_timer) {
 	    if (start_timer(turns, TIMER_OBJECT,
-					BURN_OBJECT, (void *)obj)) {
+					BURN_OBJECT, obj)) {
 		obj->lamplit = 1;
 		obj->age -= turns;
 		if (carried(obj) && !already_lit)
@@ -1046,7 +1046,7 @@ void begin_burn(struct obj *obj, boolean already_lit)
 	    xchar x, y;
 
 	    if (get_obj_location(obj, &x, &y, CONTAINED_TOO|BURIED_TOO))
-		new_light_source(x, y, radius, LS_OBJECT, (void *) obj);
+		new_light_source(x, y, radius, LS_OBJECT, obj);
 	    else
 		impossible("begin_burn: can't get obj position");
 	}
@@ -1068,11 +1068,11 @@ void end_burn(struct obj *obj, boolean timer_attached)
 
 	if (!timer_attached) {
 	    /* [DS] Cleanup explicitly, since timer cleanup won't happen */
-	    del_light_source(LS_OBJECT, (void *)obj);
+	    del_light_source(LS_OBJECT, obj);
 	    obj->lamplit = 0;
 	    if (obj->where == OBJ_INVENT)
 		update_inventory();
-	} else if (!stop_timer(BURN_OBJECT, (void *) obj))
+	} else if (!stop_timer(BURN_OBJECT, obj))
 	    impossible("end_burn: obj %s not timed!", xname(obj));
 }
 
@@ -1323,7 +1323,7 @@ void run_timers(void)
 
 	if (curr->kind == TIMER_OBJECT) ((struct obj *)(curr->arg))->timed--;
 	(*timeout_funcs[curr->func_index].f)(curr->arg, curr->timeout);
-	free((void *) curr);
+	free(curr);
     }
 }
 
@@ -1373,7 +1373,7 @@ long stop_timer(short func_index, void *arg)
 	    ((struct obj *)arg)->timed--;
 	if (timeout_funcs[doomed->func_index].cleanup)
 	    (*timeout_funcs[doomed->func_index].cleanup)(arg, timeout);
-	free((void *) doomed);
+	free(doomed);
 	return timeout;
     }
     return 0;
@@ -1389,8 +1389,8 @@ void obj_move_timers(struct obj *src, struct obj *dest)
     timer_element *curr;
 
     for (count = 0, curr = timer_base; curr; curr = curr->next)
-	if (curr->kind == TIMER_OBJECT && curr->arg == (void *)src) {
-	    curr->arg = (void *) dest;
+	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
+	    curr->arg = dest;
 	    dest->timed++;
 	    count++;
 	}
@@ -1409,9 +1409,9 @@ void obj_split_timers(struct obj *src, struct obj *dest)
 
     for (curr = timer_base; curr; curr = next_timer) {
 	next_timer = curr->next;	/* things may be inserted */
-	if (curr->kind == TIMER_OBJECT && curr->arg == (void *)src) {
+	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
 	    start_timer(curr->timeout-monstermoves, TIMER_OBJECT,
-					curr->func_index, (void *)dest);
+					curr->func_index, dest);
 	}
     }
 }
@@ -1427,7 +1427,7 @@ void obj_stop_timers(struct obj *obj)
 
     for (prev = 0, curr = timer_base; curr; curr = next_timer) {
 	next_timer = curr->next;
-	if (curr->kind == TIMER_OBJECT && curr->arg == (void *)obj) {
+	if (curr->kind == TIMER_OBJECT && curr->arg == obj) {
 	    if (prev)
 		prev->next = curr->next;
 	    else
@@ -1435,7 +1435,7 @@ void obj_stop_timers(struct obj *obj)
 	    if (timeout_funcs[curr->func_index].cleanup)
 		(*timeout_funcs[curr->func_index].cleanup)(curr->arg,
 			curr->timeout);
-	    free((void *) curr);
+	    free(curr);
 	} else {
 	    prev = curr;
 	}
@@ -1487,18 +1487,18 @@ static void write_timer(int fd, timer_element *timer)
 	case TIMER_GLOBAL:
 	case TIMER_LEVEL:
 	    /* assume no pointers in arg */
-	    bwrite(fd, (void *) timer, sizeof(timer_element));
+	    bwrite(fd, timer, sizeof(timer_element));
 	    break;
 
 	case TIMER_OBJECT:
 	    if (timer->needs_fixup)
-		bwrite(fd, (void *)timer, sizeof(timer_element));
+		bwrite(fd, timer, sizeof(timer_element));
 	    else {
 		/* replace object pointer with id */
 		arg_save = timer->arg;
 		timer->arg = (void *)((struct obj *)timer->arg)->o_id;
 		timer->needs_fixup = 1;
-		bwrite(fd, (void *)timer, sizeof(timer_element));
+		bwrite(fd, timer, sizeof(timer_element));
 		timer->arg = arg_save;
 		timer->needs_fixup = 0;
 	    }
@@ -1506,13 +1506,13 @@ static void write_timer(int fd, timer_element *timer)
 
 	case TIMER_MONSTER:
 	    if (timer->needs_fixup)
-		bwrite(fd, (void *)timer, sizeof(timer_element));
+		bwrite(fd, timer, sizeof(timer_element));
 	    else {
 		/* replace monster pointer with id */
 		arg_save = timer->arg;
 		timer->arg = (void *)((struct monst *)timer->arg)->m_id;
 		timer->needs_fixup = 1;
-		bwrite(fd, (void *)timer, sizeof(timer_element));
+		bwrite(fd, timer, sizeof(timer_element));
 		timer->arg = arg_save;
 		timer->needs_fixup = 0;
 	    }
@@ -1631,10 +1631,10 @@ void save_timers(int fd, int mode, int range)
 
     if (perform_bwrite(mode)) {
 	if (range == RANGE_GLOBAL)
-	    bwrite(fd, (void *) &timer_id, sizeof(timer_id));
+	    bwrite(fd, &timer_id, sizeof(timer_id));
 
 	count = maybe_write_timer(fd, range, FALSE);
-	bwrite(fd, (void *) &count, sizeof count);
+	bwrite(fd, &count, sizeof count);
 	maybe_write_timer(fd, range, TRUE);
     }
 
@@ -1647,7 +1647,7 @@ void save_timers(int fd, int mode, int range)
 		    prev->next = curr->next;
 		else
 		    timer_base = curr->next;
-		free((void *) curr);
+		free(curr);
 		/* prev stays the same */
 	    } else {
 		prev = curr;
@@ -1669,13 +1669,13 @@ void restore_timers(int fd, int range,
     timer_element *curr;
 
     if (range == RANGE_GLOBAL)
-	mread(fd, (void *) &timer_id, sizeof timer_id);
+	mread(fd, &timer_id, sizeof timer_id);
 
     /* restore elements */
-    mread(fd, (void *) &count, sizeof count);
+    mread(fd, &count, sizeof count);
     while (count-- > 0) {
 	curr = malloc(sizeof(timer_element));
-	mread(fd, (void *) curr, sizeof(timer_element));
+	mread(fd, curr, sizeof(timer_element));
 	if (ghostly)
 	    curr->timeout += adjust;
 	insert_timer(curr);
@@ -1697,7 +1697,7 @@ void relink_timers(boolean ghostly)
 			panic("relink_timers 1");
 		} else
 		    nid = (long) curr->arg;
-		curr->arg = (void *) find_oid(nid);
+		curr->arg = find_oid(nid);
 		if (!curr->arg) panic("cant find o_id %d", nid);
 		curr->needs_fixup = 0;
 	    } else if (curr->kind == TIMER_MONSTER) {

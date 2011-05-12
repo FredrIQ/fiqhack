@@ -619,7 +619,7 @@ void hurtle(int dx, int dy, int range, boolean verbose)
     /* this setting of cc is only correct if dx and dy are [-1,0,1] only */
     cc.x = u.ux + (dx * range);
     cc.y = u.uy + (dy * range);
-    walk_path(&uc, &cc, hurtle_step, (void *)&range);
+    walk_path(&uc, &cc, hurtle_step, &range);
 }
 
 /* Move a monster through the air for a few squares.
@@ -648,7 +648,7 @@ void mhurtle(struct monst *mon, int dx, int dy, int range)
 	mc.y = mon->my;
 	cc.x = mon->mx + (dx * range);
 	cc.y = mon->my + (dy * range);
-	walk_path(&mc, &cc, mhurtle_step, (void *)mon);
+	walk_path(&mc, &cc, mhurtle_step, mon);
 	return;
 }
 

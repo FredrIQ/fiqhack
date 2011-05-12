@@ -499,7 +499,7 @@ void u_init(void)
 
 	/* zero u, including pointer values --
 	 * necessary when aborting from a failed restore */
-	memset((void *)&u, 0, sizeof(u));
+	memset(&u, 0, sizeof(u));
 	u.ustuck = (struct monst *)0;
 
 	u.uz.dlevel = 1;

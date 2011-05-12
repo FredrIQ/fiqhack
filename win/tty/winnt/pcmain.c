@@ -231,7 +231,7 @@ void pcmain(int argc, char *argv[])
 #else
 		hackpid = 1;
 #endif
-		write(fd, (void *) &hackpid, sizeof(hackpid));
+		write(fd, &hackpid, sizeof(hackpid));
 		close(fd);
 	}
 

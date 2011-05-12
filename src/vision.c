@@ -126,7 +126,7 @@ vision_init()
     viz_rmax  = cs_rmax0;
 
     vision_full_recalc = 0;
-    memset((void *) could_see, 0, sizeof(could_see));
+    memset(could_see, 0, sizeof(could_see));
 }
 
 /*
@@ -184,10 +184,10 @@ vision_reset()
     viz_rmin  = cs_rmin0;
     viz_rmax  = cs_rmax0;
 
-    memset((void *) could_see, 0, sizeof(could_see));
+    memset(could_see, 0, sizeof(could_see));
 
     /* Reset the pointers and clear so that we have a "full" dungeon. */
-    memset((void *) viz_clear,        0, sizeof(viz_clear));
+    memset(viz_clear,        0, sizeof(viz_clear));
 
     /* Dig the level */
     for (y = 0; y < ROWNO; y++) {
@@ -256,7 +256,7 @@ get_unused_cs(rows, rmin, rmax)
     nrmin = *rmin;
     nrmax = *rmax;
 
-    memset((void *)**rows, 0, ROWNO*COLNO);  /* we see nothing */
+    memset(**rows, 0, ROWNO*COLNO);  /* we see nothing */
     for (row = 0; row < ROWNO; row++) {		/* set row min & max */
 	*nrmin++ = COLNO-1;
 	*nrmax++ = 0;
@@ -520,7 +520,7 @@ vision_recalc(control)
 	 *	+ Monsters can see you even when you're in a pit.
 	 */
 	view_from(u.uy, u.ux, next_array, next_rmin, next_rmax,
-		0, (void (*)(int,int,void *))0, (void *)0);
+		0, (void (*)(int,int,void *))0, 0);
 
 	/*
 	 * Our own version of the update loop below.  We know we can't see
@@ -584,7 +584,7 @@ vision_recalc(control)
 	    }
 	} else
 	    view_from(u.uy, u.ux, next_array, next_rmin, next_rmax,
-		0, (void (*)(int,int,void *))0, (void *)0);
+		0, (void (*)(int,int,void *))0, 0);
 
 	/*
 	 * Set the IN_SIGHT bit for xray and night vision.

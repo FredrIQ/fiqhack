@@ -593,7 +593,7 @@ void set_savefile_name(void)
 void save_savefile_name(int fd)
 {
 	int d;
-	d = write(fd, (void *) SAVEF, sizeof(SAVEF));
+	d = write(fd, SAVEF, sizeof(SAVEF));
 }
 #endif
 
@@ -665,8 +665,8 @@ void free_saved_games(char **saved)
 {
     if ( saved ) {
 	int i=0;
-	while (saved[i]) free((void *)saved[i++]);
-	free((void *)saved);
+	while (saved[i]) free(saved[i++]);
+	free(saved);
     }
 }
 
@@ -888,22 +888,22 @@ boolean recover_savefile(void)
 	    raw_printf("%s\n", errbuf);
 	    return FALSE;
 	}
-	if (read(gfd, (void *) &hpid, sizeof hpid) != sizeof hpid) {
+	if (read(gfd, &hpid, sizeof hpid) != sizeof hpid) {
 	    raw_printf(
 "\nCheckpoint data incompletely written or subsequently clobbered. Recovery impossible.");
 	    close(gfd);
 	    return FALSE;
 	}
-	if (read(gfd, (void *) &savelev, sizeof(savelev))
+	if (read(gfd, &savelev, sizeof(savelev))
 							!= sizeof(savelev)) {
 	    raw_printf("\nCheckpointing was not in effect for %s -- recovery impossible.\n",
 			lock);
 	    close(gfd);
 	    return FALSE;
 	}
-	if ((read(gfd, (void *) savename, sizeof savename)
+	if ((read(gfd, savename, sizeof savename)
 		!= sizeof savename) ||
-	    (read(gfd, (void *) &version_data, sizeof version_data)
+	    (read(gfd, &version_data, sizeof version_data)
 		!= sizeof version_data)) {
 	    raw_printf("\nError reading %s -- can't recover.\n", lock);
 	    close(gfd);
@@ -933,7 +933,7 @@ boolean recover_savefile(void)
 	    return FALSE;
 	}
 
-	if (write(sfd, (void *) &version_data, sizeof version_data)
+	if (write(sfd, &version_data, sizeof version_data)
 		!= sizeof version_data) {
 	    raw_printf("\nError writing %s; recovery failed.", SAVEF);
 	    close(gfd);
@@ -969,7 +969,7 @@ boolean recover_savefile(void)
 			if (lfd >= 0) {
 				/* any or all of these may not exist */
 				levc = (xchar) lev;
-				write(sfd, (void *) &levc, sizeof(levc));
+				write(sfd, &levc, sizeof(levc));
 				if (!copy_bytes(lfd, sfd)) {
 					close(lfd);
 					close(sfd);

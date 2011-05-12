@@ -87,7 +87,7 @@ boolean uptodate(int fd, const char *name)
     struct version_info vers_info;
     boolean verbose = name ? TRUE : FALSE;
 
-    rlen = read(fd, (void *) &vers_info, sizeof vers_info);
+    rlen = read(fd, &vers_info, sizeof vers_info);
     if (rlen == 0) {
 	if (verbose) {
 	    pline("File \"%s\" is empty?", name);
@@ -111,7 +111,7 @@ void store_version(int fd)
 
 	bufoff(fd);
 	/* bwrite() before bufon() uses plain write() */
-	bwrite(fd,(void *)&version_data,(unsigned)(sizeof version_data));
+	bwrite(fd,(void *)&version_data, sizeof version_data);
 	bufon(fd);
 	return;
 }

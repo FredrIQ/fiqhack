@@ -258,7 +258,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    
 	    if (pick4u != 'y' && pick4u != 'n') {
 give_up:	/* Quit */
-		if (selected) free((void *) selected);
+		if (selected) free(selected);
 		bail((char *)0);
 		/*NOTREACHED*/
 		return;
@@ -592,7 +592,7 @@ void tty_exit_nhwindows(const char *str)
 	if (wins[i] && (i != BASE_WINDOW)) {
 #ifdef FREE_ALL_MEMORY
 	    free_window_info(wins[i], TRUE);
-	    free((void *) wins[i]);
+	    free(wins[i]);
 #endif
 	    wins[i] = 0;
 	}
@@ -727,14 +727,14 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
 	    cw->maxrow = cw->rows;		/* topl data */
 	for(i=0; i<cw->maxrow; i++)
 	    if(cw->data[i]) {
-		free((void *)cw->data[i]);
+		free(cw->data[i]);
 		cw->data[i] = (char *)0;
 		if (cw->datlen) cw->datlen[i] = 0;
 	    }
 	if (free_data) {
-	    free((void *)cw->data);
+	    free(cw->data);
 	    cw->data = (char **)0;
-	    if (cw->datlen) free((void *)cw->datlen);
+	    if (cw->datlen) free(cw->datlen);
 	    cw->datlen = (short *)0;
 	    cw->rows = 0;
 	}
@@ -744,17 +744,17 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
 	tty_menu_item *temp;
 	while ((temp = cw->mlist) != 0) {
 	    cw->mlist = cw->mlist->next;
-	    if (temp->str) free((void *)temp->str);
-	    free((void *)temp);
+	    if (temp->str) free(temp->str);
+	    free(temp);
 	}
     }
     if (cw->plist) {
-	free((void *)cw->plist);
+	free(cw->plist);
 	cw->plist = 0;
     }
     cw->plist_size = cw->npages = cw->nitems = cw->how = 0;
     if(cw->morestr) {
-	free((void *)cw->morestr);
+	free(cw->morestr);
 	cw->morestr = 0;
     }
 }
@@ -1203,7 +1203,7 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 
     } /* while */
     cw->morestr = msave;
-    free((void *)morestr);
+    free(morestr);
 }
 
 
@@ -1381,7 +1381,7 @@ void tty_destroy_nhwindow(winid window)
 	clear_screen();
 
     free_window_info(cw, TRUE);
-    free((void *)cw);
+    free(cw);
     wins[window] = 0;
 }
 
@@ -1586,7 +1586,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	    tty_display_nhwindow(window, TRUE);
 	    for(i=0; i<cw->maxrow; i++)
 		if(cw->data[i]){
-		    free((void *)cw->data[i]);
+		    free(cw->data[i]);
 		    cw->data[i] = 0;
 		}
 	    cw->maxrow = cw->cury = 0;
@@ -1600,14 +1600,14 @@ void tty_putstr(winid window, int attr, const char *str)
 	    for(i=0; i<cw->maxrow; i++)
 		tmp[i] = cw->data[i];
 	    if(cw->data)
-		free((void *)cw->data);
+		free(cw->data);
 	    cw->data = tmp;
 
 	    for(i=cw->maxrow; i<cw->rows; i++)
 		cw->data[i] = 0;
 	}
 	if(cw->data[cw->cury])
-	    free((void *)cw->data[cw->cury]);
+	    free(cw->data[cw->cury]);
 	n0 = strlen(str) + 1;
 	ob = cw->data[cw->cury] = malloc((unsigned)n0 + 1);
 	*ob++ = (char)(attr + 1);	/* avoid nuls, for convenience */
@@ -1781,7 +1781,7 @@ void tty_end_menu(winid window,		/* menu to use */
 
     /* make sure page list is large enough */
     if (cw->plist_size < cw->npages+1 /*need 1 slot beyond last*/) {
-	if (cw->plist) free((void *)cw->plist);
+	if (cw->plist) free(cw->plist);
 	cw->plist_size = cw->npages + 1;
 	cw->plist = malloc(cw->plist_size * sizeof(tty_menu_item *));
     }
@@ -2212,7 +2212,7 @@ int base_nhgetch(void)
     
 #ifdef UNIX
     i = ((++nesting == 1) ? getchar() :
-	(read(fileno(stdin), (void *)&nestbuf,1) == 1 ? (int)nestbuf :
+	(read(fileno(stdin), &nestbuf,1) == 1 ? (int)nestbuf :
 								EOF));
     --nesting;
 #else

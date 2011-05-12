@@ -1262,7 +1262,7 @@ int jump(
 	    if (temp < 0) temp = -temp;
 	    if (range < temp)
 		range = temp;
-	    walk_path(&uc, &cc, hurtle_step, (void *)&range);
+	    walk_path(&uc, &cc, hurtle_step, &range);
 
 	    /* A little Sokoban guilt... */
 	    if (In_sokoban(&u.uz))
@@ -1520,7 +1520,7 @@ void fig_transform(void *arg, long timeout)
 	    !figurine_location_checks(figurine,&cc, TRUE)) {
 		/* reset the timer to try again later */
 		start_timer((long)rnd(5000), TIMER_OBJECT,
-				FIG_TRANSFORM, (void *)figurine);
+				FIG_TRANSFORM, figurine);
 		return;
 	}
 
@@ -1638,7 +1638,7 @@ static void use_figurine(struct obj **optr)
 		"toss the figurine into the air" :
 		"set the figurine on the ground"));
 	make_familiar(obj, cc.x, cc.y, FALSE);
-	stop_timer(FIG_TRANSFORM, (void *)obj);
+	stop_timer(FIG_TRANSFORM, obj);
 	useup(obj);
 	*optr = 0;
 }

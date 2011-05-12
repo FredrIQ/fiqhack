@@ -189,14 +189,14 @@ int restore_savefile(char *basename)
 	    Fprintf(stderr, "Cannot open level 0 for %s.\n", basename);
 	    return -1;
 	}
-	if (read(gfd, (void *) &hpid, sizeof hpid) != sizeof hpid) {
+	if (read(gfd, &hpid, sizeof hpid) != sizeof hpid) {
 	    Fprintf(stderr, "%s\n%s%s%s\n",
 	     "Checkpoint data incompletely written or subsequently clobbered;",
 		    "recovery for \"", basename, "\" impossible.");
 	    Close(gfd);
 	    return -1;
 	}
-	if (read(gfd, (void *) &savelev, sizeof(savelev))
+	if (read(gfd, &savelev, sizeof(savelev))
 							!= sizeof(savelev)) {
 	    Fprintf(stderr,
 	    "Checkpointing was not in effect for %s -- recovery impossible.\n",
@@ -204,9 +204,9 @@ int restore_savefile(char *basename)
 	    Close(gfd);
 	    return -1;
 	}
-	if ((read(gfd, (void *) savename, sizeof savename)
+	if ((read(gfd, savename, sizeof savename)
 		!= sizeof savename) ||
-	    (read(gfd, (void *) &version_data, sizeof version_data)
+	    (read(gfd, &version_data, sizeof version_data)
 		!= sizeof version_data)) {
 	    Fprintf(stderr, "Error reading %s -- can't recover.\n", lock);
 	    Close(gfd);
@@ -234,7 +234,7 @@ int restore_savefile(char *basename)
 	    return -1;
 	}
 
-	if (write(sfd, (void *) &version_data, sizeof version_data)
+	if (write(sfd, &version_data, sizeof version_data)
 		!= sizeof version_data) {
 	    Fprintf(stderr, "Error writing %s; recovery failed.\n", savename);
 	    Close(gfd);
@@ -260,7 +260,7 @@ int restore_savefile(char *basename)
 			if (lfd >= 0) {
 				/* any or all of these may not exist */
 				levc = (xchar) lev;
-				write(sfd, (void *) &levc, sizeof(levc));
+				write(sfd, &levc, sizeof(levc));
 				copy_bytes(lfd, sfd);
 				Close(lfd);
 				unlink(lock);

@@ -242,9 +242,9 @@ void savenames(int fd, int mode)
 	unsigned int len;
 
 	if (perform_bwrite(mode)) {
-	    bwrite(fd, (void *)bases, sizeof bases);
-	    bwrite(fd, (void *)disco, sizeof disco);
-	    bwrite(fd, (void *)objects,
+	    bwrite(fd, bases, sizeof bases);
+	    bwrite(fd, disco, sizeof disco);
+	    bwrite(fd, objects,
 		   sizeof(struct objclass) * NUM_OBJECTS);
 	}
 	/* as long as we use only one version of Hack we
@@ -254,11 +254,11 @@ void savenames(int fd, int mode)
 	    if (objects[i].oc_uname) {
 		if (perform_bwrite(mode)) {
 		    len = strlen(objects[i].oc_uname)+1;
-		    bwrite(fd, (void *)&len, sizeof len);
-		    bwrite(fd, (void *)objects[i].oc_uname, len);
+		    bwrite(fd, &len, sizeof len);
+		    bwrite(fd, objects[i].oc_uname, len);
 		}
 		if (release_data(mode)) {
-		    free((void *)objects[i].oc_uname);
+		    free(objects[i].oc_uname);
 		    objects[i].oc_uname = 0;
 		}
 	    }
@@ -269,14 +269,14 @@ void restnames(int fd)
 	int i;
 	unsigned int len;
 
-	mread(fd, (void *) bases, sizeof bases);
-	mread(fd, (void *) disco, sizeof disco);
-	mread(fd, (void *) objects, sizeof(struct objclass) * NUM_OBJECTS);
+	mread(fd, bases, sizeof bases);
+	mread(fd, disco, sizeof disco);
+	mread(fd, objects, sizeof(struct objclass) * NUM_OBJECTS);
 	for (i = 0; i < NUM_OBJECTS; i++)
 	    if (objects[i].oc_uname) {
-		mread(fd, (void *) &len, sizeof len);
+		mread(fd, &len, sizeof len);
 		objects[i].oc_uname = malloc(len);
-		mread(fd, (void *)objects[i].oc_uname, len);
+		mread(fd, objects[i].oc_uname, len);
 	    }
 #ifdef USE_TILES
 	shuffle_tiles();

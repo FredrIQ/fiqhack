@@ -1073,15 +1073,15 @@ void save_engravings(int fd, int mode)
 	while (ep) {
 	    ep2 = ep->nxt_engr;
 	    if (ep->engr_lth && ep->engr_txt[0] && perform_bwrite(mode)) {
-		bwrite(fd, (void *)&(ep->engr_lth), sizeof(ep->engr_lth));
-		bwrite(fd, (void *)ep, sizeof(struct engr) + ep->engr_lth);
+		bwrite(fd, &(ep->engr_lth), sizeof(ep->engr_lth));
+		bwrite(fd, ep, sizeof(struct engr) + ep->engr_lth);
 	    }
 	    if (release_data(mode))
 		dealloc_engr(ep);
 	    ep = ep2;
 	}
 	if (perform_bwrite(mode))
-	    bwrite(fd, (void *)&no_more_engr, sizeof no_more_engr);
+	    bwrite(fd, &no_more_engr, sizeof no_more_engr);
 	if (release_data(mode))
 	    head_engr = 0;
 }
@@ -1093,10 +1093,10 @@ void rest_engravings(int fd)
 
 	head_engr = 0;
 	while(1) {
-		mread(fd, (void *) &lth, sizeof(unsigned));
+		mread(fd, &lth, sizeof(unsigned));
 		if(lth == 0) return;
 		ep = newengr(lth);
-		mread(fd, (void *) ep, sizeof(struct engr) + lth);
+		mread(fd, ep, sizeof(struct engr) + lth);
 		ep->nxt_engr = head_engr;
 		head_engr = ep;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */

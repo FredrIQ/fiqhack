@@ -2789,10 +2789,10 @@ static void remove_damage(struct monst *shkp, boolean croaked)
 
 	    tmp_dam = tmp_dam->next;
 	    if (!tmp2_dam) {
-		free((void *)level.damagelist);
+		free(level.damagelist);
 		level.damagelist = tmp_dam;
 	    } else {
-		free((void *)tmp2_dam->next);
+		free(tmp2_dam->next);
 		tmp2_dam->next = tmp_dam;
 	    }
 	}
@@ -2883,7 +2883,7 @@ int repair_damage(struct monst *shkp, struct damage *tmp_dam,
 	    /* No messages if player already replaced shop door */
 	    return 1;
 	levl[x][y].typ = tmp_dam->typ;
-	memset((void *)litter, 0, sizeof(litter));
+	memset(litter, 0, sizeof(litter));
 	if ((otmp = level.objects[x][y]) != 0) {
 	    /* Scatter objects haphazardly into the shop */
 #define NEED_UPDATE 1

@@ -24,7 +24,7 @@ void init_branch(void);
 void init_level(void);
 void output_dgn(void);
 
-#define Free(ptr)		free((void *)ptr)
+#define Free(ptr)		free(ptr)
 
 #define ERR		(-1)
 

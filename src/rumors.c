@@ -196,13 +196,13 @@ static void init_oracles(dlb *fp)
 void save_oracles(int fd, int mode)
 {
 	if (perform_bwrite(mode)) {
-	    bwrite(fd, (void *) &oracle_cnt, sizeof oracle_cnt);
+	    bwrite(fd, &oracle_cnt, sizeof oracle_cnt);
 	    if (oracle_cnt)
-		bwrite(fd, (void *)oracle_loc, oracle_cnt*sizeof (long));
+		bwrite(fd, oracle_loc, oracle_cnt*sizeof (long));
 	}
 	if (release_data(mode)) {
 	    if (oracle_cnt) {
-		free((void *)oracle_loc);
+		free(oracle_loc);
 		oracle_loc = 0,  oracle_cnt = 0,  oracle_flg = 0;
 	    }
 	}
@@ -210,10 +210,10 @@ void save_oracles(int fd, int mode)
 
 void restore_oracles(int fd)
 {
-	mread(fd, (void *) &oracle_cnt, sizeof oracle_cnt);
+	mread(fd, &oracle_cnt, sizeof oracle_cnt);
 	if (oracle_cnt) {
 	    oracle_loc = malloc(oracle_cnt * sizeof (long));
-	    mread(fd, (void *) oracle_loc, oracle_cnt * sizeof (long));
+	    mread(fd, oracle_loc, oracle_cnt * sizeof (long));
 	    oracle_flg = 1;	/* no need to call init_oracles() */
 	}
 }

@@ -384,7 +384,7 @@ static void remove_room(unsigned roomno)
 	/* since the order in the array only matters for making corridors,
 	 * copy the last room over the one being removed on the assumption
 	 * that corridors have already been dug. */
-	memcpy((void *)croom, (void *)maxroom,
+	memcpy(croom, (void *)maxroom,
 		      sizeof(struct mkroom));
 
 	/* since maxroom moved, update affected level roomno values */

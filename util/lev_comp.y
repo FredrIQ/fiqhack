@@ -174,8 +174,8 @@ maze_level	: maze_def flags lev_init messages regions
 					fname, fatal_error);
 			} else {
 				maze.flags = $2;
-				(void) memcpy((void *)&(maze.init_lev),
-						(void *)&(init_lev),
+				(void) memcpy(&(maze.init_lev),
+						&(init_lev),
 						sizeof(lev_init));
 				maze.numpart = npart;
 				maze.parts = NewTab(mazepart, npart);
@@ -202,8 +202,8 @@ room_level	: level_def flags lev_init messages rreg_init rooms corridors_def
 			} else {
 				special_lev.flags = (long) $2;
 				(void) memcpy(
-					(void *)&(special_lev.init_lev),
-					(void *)&(init_lev),
+					&(special_lev.init_lev),
+					&(init_lev),
 					sizeof(lev_init));
 				special_lev.nroom = nrooms;
 				special_lev.rooms = NewTab(room, nrooms);
@@ -244,7 +244,7 @@ lev_init	: /* nothing */
 		  {
 			/* in case we're processing multiple files,
 			   explicitly clear any stale settings */
-			(void) memset((void *) &init_lev, 0,
+			(void) memset(&init_lev, 0,
 					sizeof init_lev);
 			init_lev.init_present = FALSE;
 			$$ = 0;

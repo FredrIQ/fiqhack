@@ -37,7 +37,7 @@ static int veryold(int fd)
 	if(date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
 		int lockedpid;	/* should be the same size as hackpid */
 
-		if(read(fd, (void *)&lockedpid, sizeof(lockedpid)) !=
+		if(read(fd, &lockedpid, sizeof(lockedpid)) !=
 			sizeof(lockedpid))
 			/* strange ... */
 			return 0;
@@ -155,7 +155,7 @@ gotlock:
 	if(fd == -1) {
 		error("cannot creat lock file (%s).", fq_lock);
 	} else {
-		if(write(fd, (void *) &hackpid, sizeof(hackpid))
+		if(write(fd, &hackpid, sizeof(hackpid))
 		    != sizeof(hackpid)){
 			error("cannot write lock (%s)", fq_lock);
 		}

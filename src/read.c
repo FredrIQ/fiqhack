@@ -414,7 +414,7 @@ static void forget_single_object(int obj_id)
 	objects[obj_id].oc_name_known = 0;
 	objects[obj_id].oc_pre_discovered = 0;	/* a discovery when relearned */
 	if (objects[obj_id].oc_uname) {
-	    free((void *)objects[obj_id].oc_uname);
+	    free(objects[obj_id].oc_uname);
 	    objects[obj_id].oc_uname = 0;
 	}
 	undiscover_object(obj_id);	/* after clearing oc_name_known */
@@ -1325,7 +1325,7 @@ do_it:
 		for(rx = rooms[rnum].lx-1; rx <= rooms[rnum].hx+1; rx++)
 		    for(ry = rooms[rnum].ly-1; ry <= rooms[rnum].hy+1; ry++)
 			set_lit(rx, ry,
-				(void *)(on ? &is_lit : (char *)0));
+				(on ? &is_lit : (char *)0));
 		rooms[rnum].rlit = on;
 	    }
 	    /* hallways remain dark on the rogue level */
@@ -1333,7 +1333,7 @@ do_it:
 #endif
 	    do_clear_area(u.ux,u.uy,
 		(obj && obj->oclass==SCROLL_CLASS && obj->blessed) ? 9 : 5,
-		set_lit, (void *)(on ? &is_lit : (char *)0));
+		set_lit, (on ? &is_lit : (char *)0));
 
 	/*
 	 *  If we are not blind, then force a redraw on all positions in sight
