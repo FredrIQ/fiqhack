@@ -1359,7 +1359,7 @@ static char *tmpdup(const char *str)
 {
 	static char buf[128];
 
-	if (!str) return (char *)0;
+	if (!str) return NULL;
 	strncpy(buf, str, 127);
 	return buf;
 }

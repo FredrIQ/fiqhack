@@ -123,7 +123,7 @@ static void mkbox_cnts(struct obj *box)
 	int n;
 	struct obj *otmp;
 
-	box->cobj = (struct obj *) 0;
+	box->cobj = NULL;
 
 	switch (box->otyp) {
 	case ICE_BOX:		n = 20; break;
@@ -574,7 +574,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 	default:
 		impossible("impossible mkobj %d, sym '%c'.", otmp->otyp,
 						objects[otmp->otyp].oc_class);
-		return (struct obj *)0;
+		return NULL;
 	}
 
 	/* Some things must get done (timers) even if init = 0 */
@@ -881,7 +881,7 @@ struct obj *obj_attach_mid(struct obj *obj, unsigned mid)
     struct obj *otmp;
      int lth, namelth;
 
-    if (!mid || !obj) return (struct obj *)0;
+    if (!mid || !obj) return NULL;
     lth = sizeof(mid);
     namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
     if (namelth) 
@@ -910,9 +910,9 @@ static struct obj *save_mtraits(struct obj *obj, struct monst *mtmp)
 		/* invalidate pointers */
 		/* m_id is needed to know if this is a revived quest leader */
 		/* but m_id must be cleared when loading bones */
-		mtmp2->nmon     = (struct monst *)0;
-		mtmp2->data     = (struct permonst *)0;
-		mtmp2->minvent  = (struct obj *)0;
+		mtmp2->nmon     = NULL;
+		mtmp2->data     = NULL;
+		mtmp2->minvent  = NULL;
 		otmp->oattached = OATTACHED_MONST;	/* mark it */
 	}
 	return otmp;
@@ -923,8 +923,8 @@ static struct obj *save_mtraits(struct obj *obj, struct monst *mtmp)
  */
 struct monst *get_mtraits(struct obj *obj, boolean copyof)
 {
-	struct monst *mtmp = (struct monst *)0;
-	struct monst *mnew = (struct monst *)0;
+	struct monst *mtmp = NULL;
+	struct monst *mnew = NULL;
 
 	if (obj->oxlth && obj->oattached == OATTACHED_MONST)
 		mtmp = (struct monst *)obj->oextra;
@@ -968,7 +968,7 @@ struct obj *mk_named_object(int objtype,	/* CORPSE or STATUE */
 {
 	struct obj *otmp;
 
-	otmp = mkcorpstat(objtype, (struct monst *)0, ptr,
+	otmp = mkcorpstat(objtype, NULL, ptr,
 				x, y, (boolean)(objtype != STATUE));
 	if (nm)
 		otmp = oname(otmp, nm);
@@ -1165,7 +1165,7 @@ void discard_minvent(struct monst *mtmp)
 
     while ((otmp = mtmp->minvent) != 0) {
 	obj_extract_self(otmp);
-	obfree(otmp, (struct obj *)0);	/* dealloc_obj() isn't sufficient */
+	obfree(otmp, NULL);	/* dealloc_obj() isn't sufficient */
     }
 }
 
@@ -1225,7 +1225,7 @@ void extract_nobj(struct obj *obj, struct obj **head_ptr)
     struct obj *curr, *prev;
 
     curr = *head_ptr;
-    for (prev = (struct obj *) 0; curr; prev = curr, curr = curr->nobj) {
+    for (prev = NULL; curr; prev = curr, curr = curr->nobj) {
 	if (curr == obj) {
 	    if (prev)
 		prev->nobj = curr->nobj;
@@ -1250,7 +1250,7 @@ void extract_nexthere(struct obj *obj, struct obj **head_ptr)
     struct obj *curr, *prev;
 
     curr = *head_ptr;
-    for (prev = (struct obj *) 0; curr; prev = curr, curr = curr->nexthere) {
+    for (prev = NULL; curr; prev = curr, curr = curr->nexthere) {
 	if (curr == obj) {
 	    if (prev)
 		prev->nexthere = curr->nexthere;
@@ -1367,7 +1367,7 @@ void dealloc_obj(struct obj *obj)
     if (obj_sheds_light(obj))
 	del_light_source(LS_OBJECT, obj);
 
-    if (obj == thrownobj) thrownobj = (struct obj*)0;
+    if (obj == thrownobj) thrownobj = NULL;
 
     free(obj);
 }

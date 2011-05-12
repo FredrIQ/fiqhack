@@ -714,7 +714,7 @@ ring:
 	if(obj->unpaid) {
 		xchar ox, oy; 
 		long quotedprice = unpaid_cost(obj);
-		struct monst *shkp = (struct monst *)0;
+		struct monst *shkp = NULL;
 
 		if (Has_contents(obj) &&
 		    get_obj_location(obj, &ox, &oy, BURIED_TOO|CONTAINED_TOO) &&
@@ -976,7 +976,7 @@ char *otense(struct obj *otmp, const char *verb)
 	 * recomputing xname(otmp) at this time.
 	 */
 	if (!is_plural(otmp))
-	    return vtense((char *)0, verb);
+	    return vtense(NULL, verb);
 
 	buf = nextobuf();
 	strcpy(buf, verb);
@@ -1017,7 +1017,7 @@ char *vtense(const char *subj, const char *verb)
 	if (subj) {
 	    if (!strncmpi(subj, "a ", 2) || !strncmpi(subj, "an ", 3))
 		goto sing;
-	    spot = (const char *)0;
+	    spot = NULL;
 	    for (sp = subj; (sp = index(sp, ' ')) != 0; ++sp) {
 		if (!strncmp(sp, " of ", 4) ||
 		    !strncmp(sp, " from ", 6) ||
@@ -1167,7 +1167,7 @@ char *makeplural(const char *oldstr)
 	/* Note: cannot use strcmpi here -- it'd give MATZot, CAVEMeN,... */
 	char *spot;
 	char *str = nextobuf();
-	const char *excess = (char *)0;
+	const char *excess = NULL;
 	int len;
 
 	while (*oldstr==' ') oldstr++;
@@ -1614,7 +1614,7 @@ struct alt_spellings {
 	{ "kelp", KELP_FROND },
 	{ "eucalyptus", EUCALYPTUS_LEAF },
 	{ "grapple", GRAPPLING_HOOK },
-	{ (const char *)0, 0 },
+	{ NULL, 0 },
 };
 
 /*
@@ -1890,7 +1890,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 	    (mntmp = name_to_mon(bp)) >= LOW_PM) {
 		int mntmptoo, mntmplen;	/* double check for rank title */
 		char *obp = bp;
-		mntmptoo = title_to_mon(bp, (int *)0, &mntmplen);
+		mntmptoo = title_to_mon(bp, NULL, &mntmplen);
 		bp += mntmp != mntmptoo ? (int)strlen(mons[mntmp].mname) : mntmplen;
 		if (*bp == ' ') bp++;
 		else if (!strncmpi(bp, "s ", 2)) bp += 2;
@@ -2033,7 +2033,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 		;	/* avoid false hit on "* glass" */
 	} else if (!BSTRCMPI(bp, p-6, " glass") || !strcmpi(bp, "glass")) {
 		char *g = bp;
-		if (strstri(g, "broken")) return (struct obj *)0;
+		if (strstri(g, "broken")) return NULL;
 		if (!strncmpi(g, "worthless ", 10)) g += 10;
 		if (!strncmpi(g, "piece of ", 9)) g += 9;
 		if (!strncmpi(g, "colored ", 8)) g += 8;
@@ -2077,7 +2077,7 @@ srch:
 		if (dn && (zn = OBJ_DESCR(objects[i])) != 0 &&
 			    wishymatch(dn, zn, FALSE)) {
 			/* don't match extra descriptions (w/o real name) */
-			if (!OBJ_NAME(objects[i])) return (struct obj *)0;
+			if (!OBJ_NAME(objects[i])) return NULL;
 			typ = i;
 			goto typfnd;
 		}
@@ -2247,7 +2247,7 @@ srch:
 		}
 
 		if(!BSTRCMP(bp, p-5, "grave") || !BSTRCMP(bp, p-9, "headstone")) {
-		    make_grave(u.ux, u.uy, (char *) 0);
+		    make_grave(u.ux, u.uy, NULL);
 		    pline("A grave.");
 		    newsym(u.ux, u.uy);
 		    return &zeroobj;
@@ -2269,7 +2269,7 @@ srch:
 		}
 	}
 
-	if(!oclass) return (struct obj *)0;
+	if(!oclass) return NULL;
 any:
 	if(!oclass) oclass = wrpsym[rn2((int)sizeof(wrpsym))];
 typfnd:
@@ -2296,7 +2296,7 @@ typfnd:
 
 	/* catch any other non-wishable objects */
 	if (objects[typ].oc_nowish && !wizard)
-	    return (struct obj *)0;
+	    return NULL;
 
 	/* convert magic lamps to regular lamps before lighting them or setting
 	   the charges */
@@ -2506,7 +2506,7 @@ typfnd:
 	if ((is_quest_artifact(otmp) ||
 	     (otmp->oartifact && rn2(nartifact_exist()) > 1)) && !wizard) {
 	    artifact_exists(otmp, ONAME(otmp), FALSE);
-	    obfree(otmp, (struct obj *) 0);
+	    obfree(otmp, NULL);
 	    otmp = &zeroobj;
 	    pline("For a moment, you feel %s in your %s, but it disappears!",
 		  something,
@@ -2552,7 +2552,7 @@ static const char *Japanese_item_name(int i)
 			return j->name;
 		j++;
 	}
-	return (const char *)0;
+	return NULL;
 }
 
 const char *cloak_simple_name(struct obj *cloak)

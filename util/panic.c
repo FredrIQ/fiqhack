@@ -39,7 +39,7 @@ panic (char *str, ...)
  */
 long *alloca(unsigned cnt)
 {
-	return cnt ? alloc(cnt) : (long *)0;
+	return cnt ? alloc(cnt) : NULL;
 }
 #endif
 

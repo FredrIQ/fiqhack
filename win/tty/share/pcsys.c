@@ -118,7 +118,7 @@ FILE *fopenp(const char *name, const char *mode)
 				pp++;
 		}
 	}
-	return (FILE *)0;
+	return NULL;
 }
 
 #if defined(WIN32)

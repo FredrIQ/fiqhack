@@ -130,7 +130,7 @@ static void do_room_or_subroom(struct mkroom *croom,
 	croom->irregular = FALSE;
 
 	croom->nsubrooms = 0;
-	croom->sbrooms[0] = (struct mkroom *) 0;
+	croom->sbrooms[0] = NULL;
 	if (!special) {
 	    for(x = lowx-1; x <= hix+1; x++)
 		for(y = lowy-1; y <= hiy+1; y += (hiy-lowy+2)) {
@@ -390,13 +390,13 @@ static boolean place_niche(struct mkroom *aroom, int *dy, int *xx, int *yy)
 
 /* there should be one of these per trap, in the same order as trap.h */
 static const char *trap_engravings[TRAPNUM] = {
-			(char *)0, (char *)0, (char *)0, (char *)0, (char *)0,
-			(char *)0, (char *)0, (char *)0, (char *)0, (char *)0,
-			(char *)0, (char *)0, (char *)0, (char *)0,
+			NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL,
 			/* 14..16: trap door, teleport, level-teleport */
 			"Vlad was here", "ad aerarium", "ad aerarium",
-			(char *)0, (char *)0, (char *)0, (char *)0, (char *)0,
-			(char *)0,
+			NULL, NULL, NULL, NULL, NULL,
+			NULL,
 };
 
 static void makeniche(int trap_type)
@@ -491,10 +491,10 @@ static void clear_level_structures(void)
 	}
 	memset(level.objects, 0, sizeof(level.objects));
 	memset(level.monsters, 0, sizeof(level.monsters));
-	level.objlist = (struct obj *)0;
-	level.buriedobjlist = (struct obj *)0;
-	level.monlist = (struct monst *)0;
-	level.damagelist = (struct damage *)0;
+	level.objlist = NULL;
+	level.buriedobjlist = NULL;
+	level.monlist = NULL;
+	level.damagelist = NULL;
 
 	level.flags.nfountains = 0;
 	level.flags.nsinks = 0;
@@ -689,7 +689,7 @@ skip0:
 
 		if(u.uhave.amulet || !rn2(3)) {
 		    x = somex(croom); y = somey(croom);
-		    tmonst = makemon((struct permonst *) 0, x,y,NO_MM_FLAGS);
+		    tmonst = makemon(NULL, x,y,NO_MM_FLAGS);
 		    if (tmonst && tmonst->data == &mons[PM_GIANT_SPIDER] &&
 			    !occupied(x, y))
 			maketrap(x, y, WEB);
@@ -699,7 +699,7 @@ skip0:
 		x = 8 - (level_difficulty()/6);
 		if (x <= 1) x = 2;
 		while (!rn2(x))
-		    mktrap(0,0,croom,(coord*)0);
+		    mktrap(0,0,croom,NULL);
 		if (!goldseen && !rn2(3))
 		    mkgold(0L, somex(croom), somey(croom));
 #ifdef REINCARNATION
@@ -714,8 +714,8 @@ skip0:
 
 		/* put statues inside */
 		if(!rn2(20))
-		    mkcorpstat(STATUE, (struct monst *)0,
-				      (struct permonst *)0,
+		    mkcorpstat(STATUE, NULL,
+				      NULL,
 				      somex(croom), somey(croom), TRUE);
 		/* put box/chest inside;
 		 *  40% chance for at least 1 box, regardless of number
@@ -940,7 +940,7 @@ static struct mkroom *pos_to_room(xchar x, xchar y)
 
     for (curr = rooms, i = 0; i < nroom; curr++, i++)
 	if (inside_room(curr, x, y)) return curr;;
-    return (struct mkroom *) 0;
+    return NULL;
 }
 
 
@@ -1251,7 +1251,7 @@ static void mkgrave(struct mkroom *croom)
 	} while (occupied(m.x, m.y) || bydoor(m.x, m.y));
 
 	/* Put a grave at m.x, m.y */
-	make_grave(m.x, m.y, dobell ? "Saved by the bell!" : (char *) 0);
+	make_grave(m.x, m.y, dobell ? "Saved by the bell!" : NULL);
 
 	/* Possibly fill it with objects */
 	if (!rn2(3)) mkgold(0L, m.x, m.y);
@@ -1317,7 +1317,7 @@ void mkinvokearea(void)
     }
 
     You("are standing at the top of a stairwell leading down!");
-    mkstairs(u.ux, u.uy, 0, (struct mkroom *)0); /* down */
+    mkstairs(u.ux, u.uy, 0, NULL); /* down */
     newsym(u.ux, u.uy);
     vision_full_recalc = 1;	/* everything changed */
 }
@@ -1352,7 +1352,7 @@ static void mkinvpos(xchar x, xchar y, int dist)
 	    make_rocks = FALSE;		/* don't bother with more rocks */
 	} else {
 	    obj_extract_self(otmp);
-	    obfree(otmp, (struct obj *)0);
+	    obfree(otmp, NULL);
 	}
     }
     unblock_point(x,y);	/* make sure vision knows this location is open */

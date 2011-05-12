@@ -418,7 +418,7 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	dmg = 0;
 	break;
     case MGC_HASTE_SELF:
-	mon_adjust_speed(mtmp, 1, (struct obj *)0);
+	mon_adjust_speed(mtmp, 1, NULL);
 	dmg = 0;
 	break;
     case MGC_CURE_SELF:
@@ -513,7 +513,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	/* Try for insects, and if there are none
 	   left, go for (sticks to) snakes.  -3. */
 	struct permonst *pm = mkclass(S_ANT,0);
-	struct monst *mtmp2 = (struct monst *)0;
+	struct monst *mtmp2 = NULL;
 	char let = (pm ? S_ANT : S_SNAKE);
 	boolean success;
 	int i;

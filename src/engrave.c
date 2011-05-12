@@ -197,7 +197,7 @@ struct engr *engr_at(xchar x, xchar y)
 			return ep;
 		ep = ep->nxt_engr;
 	}
-	return (struct engr *) 0;
+	return NULL;
 }
 
 #ifdef ELBERETH
@@ -415,7 +415,7 @@ int doengrave(void)
 	char *writer;
 
 	multi = 0;		/* moves consumed */
-	nomovemsg = (char *)0;	/* occupation end message */
+	nomovemsg = NULL;	/* occupation end message */
 
 	buf[0] = (char)0;
 	ebuf[0] = (char)0;
@@ -450,7 +450,7 @@ int doengrave(void)
 		You_cant("even hold anything!");
 		return 0;
 	}
-	if (check_capacity((char *)0)) return 0;
+	if (check_capacity(NULL)) return 0;
 
 	/* One may write with finger, or weapon, or wand, or..., or...
 	 * Edited by GAN 10/20/86 so as not to change weapon wielded.
@@ -795,12 +795,12 @@ int doengrave(void)
 
 	if (teleengr) {
 	    rloc_engr(oep);
-	    oep = (struct engr *)0;
+	    oep = NULL;
 	}
 
 	if (dengr) {
 	    del_engr(oep);
-	    oep = (struct engr *)0;
+	    oep = NULL;
 	}
 
 	/* Something has changed the engraving here */
@@ -858,7 +858,7 @@ int doengrave(void)
 			    ((oep->engr_type == ENGR_BLOOD) ? "scrawled in blood"   :
 							 "written")));
 			del_engr(oep);
-			oep = (struct engr *)0;
+			oep = NULL;
 		    } else
 		   /* Don't delete engr until after we *know* we're engraving */
 			eow = TRUE;
@@ -959,7 +959,7 @@ int doengrave(void)
 	/* Previous engraving is overwritten */
 	if (eow) {
 	    del_engr(oep);
-	    oep = (struct engr *)0;
+	    oep = NULL;
 	}
 
 	/* Figure out how long it took to engrave, and if player has
@@ -1137,7 +1137,7 @@ void rloc_engr(struct engr *ep)
 	    tx = rn1(COLNO-3,2);
 	    ty = rn2(ROWNO);
 	} while (engr_at(tx, ty) ||
-		!goodpos(tx, ty, (struct monst *)0, 0));
+		!goodpos(tx, ty, NULL, 0));
 
 	ep->engr_x = tx;
 	ep->engr_y = ty;

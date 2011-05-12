@@ -17,11 +17,11 @@ void ballfall(void)
 	if (carried(uball)) {
 		pline("Startled, you drop the iron ball.");
 		if (uwep == uball)
-			setuwep((struct obj *)0);
+			setuwep(NULL);
 		if (uswapwep == uball)
-			setuswapwep((struct obj *)0);
+			setuswapwep(NULL);
 		if (uquiver == uball)
-			setuqwep((struct obj *)0);;
+			setuqwep(NULL);;
 		if (uwep != uball)
 			freeinv(uball);
 	}
@@ -349,7 +349,7 @@ void move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx, xc
 boolean drag_ball(xchar x, xchar y, int *bc_control, xchar *ballx, xchar *bally,
 	xchar *chainx, xchar *chainy, boolean *cause_delay, boolean allow_drag)
 {
-	struct trap *t = (struct trap *)0;
+	struct trap *t = NULL;
 	boolean already_in_rock;
 
 	*ballx  = uball->ox;

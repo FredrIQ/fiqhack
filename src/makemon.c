@@ -618,21 +618,21 @@ struct monst *clone_mon(struct monst *mon,
 
 	/* may be too weak or have been extinguished for population control */
 	if (mon->mhp <= 1 || (mvitals[monsndx(mon->data)].mvflags & G_EXTINCT))
-	    return (struct monst *)0;
+	    return NULL;
 
 	if (x == 0) {
 	    mm.x = mon->mx;
 	    mm.y = mon->my;
 	    if (!enexto(&mm, mm.x, mm.y, mon->data) || MON_AT(mm.x, mm.y))
-		return (struct monst *)0;
+		return NULL;
 	} else if (!isok(x, y)) {
-	    return (struct monst *)0;	/* paranoia */
+	    return NULL;	/* paranoia */
 	} else {
 	    mm.x = x;
 	    mm.y = y;
 	    if (MON_AT(mm.x, mm.y)) {
 		if (!enexto(&mm, mm.x, mm.y, mon->data) || MON_AT(mm.x, mm.y))
-		    return (struct monst *)0;
+		    return NULL;
 	    }
 	}
 	m2 = newmonst(0);
@@ -644,7 +644,7 @@ struct monst *clone_mon(struct monst *mon,
 	m2->mx = mm.x;
 	m2->my = mm.y;
 
-	m2->minvent = (struct obj *) 0; /* objects don't clone */
+	m2->minvent = NULL; /* objects don't clone */
 	m2->mleashed = FALSE;
 #ifndef GOLDOBJ
 	m2->mgold = 0L;
@@ -703,7 +703,7 @@ struct monst *clone_mon(struct monst *mon,
 		 * must be made non-tame to get initialized properly.
 		 */
 		m2->mtame = 0;
-		if ((m3 = tamedog(m2, (struct obj *)0)) != 0) {
+		if ((m3 = tamedog(m2, NULL)) != 0) {
 		    m2 = m3;
 		    *(EDOG(m2)) = *(EDOG(mon));
 		}
@@ -776,7 +776,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 		do {
 			x = rn1(COLNO-3,2);
 			y = rn2(ROWNO);
-		} while(!goodpos(x, y, ptr ? &fakemon : (struct monst *)0, gpflags) ||
+		} while(!goodpos(x, y, ptr ? &fakemon : NULL, gpflags) ||
 			(!in_mklev && tryct++ < 50 && cansee(x, y)));
 	} else if (byyou && !in_mklev) {
 		coord bypos;
@@ -785,7 +785,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 			x = bypos.x;
 			y = bypos.y;
 		} else
-			return (struct monst *)0;
+			return NULL;
 	}
 
 	/* Does monster already exist at the position? */
@@ -796,16 +796,16 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 				x = bypos.x;
 				y = bypos.y;
 			} else
-				return (struct monst *) 0;
+				return NULL;
 		} else 
-			return (struct monst *) 0;
+			return NULL;
 	}
 
 	if(ptr){
 		mndx = monsndx(ptr);
 		/* if you are to make a specific monster and it has
 		   already been genocided, return */
-		if (mvitals[mndx].mvflags & G_GENOD) return (struct monst *) 0;
+		if (mvitals[mndx].mvflags & G_GENOD) return NULL;
 #if defined(DEBUG)
 		if (wizard && (mvitals[mndx].mvflags & G_EXTINCT))
 		    pline("Explicitly creating extinct monster %s.",
@@ -824,7 +824,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 #ifdef DEBUG
 			    pline("Warning: no monster.");
 #endif
-			    return (struct monst *) 0;	/* no more monsters! */
+			    return NULL;	/* no more monsters! */
 			}
 			fakemon.data = ptr;	/* set up for goodpos */
 		} while(!goodpos(x, y, &fakemon, gpflags) && tryct++ < 50);
@@ -925,7 +925,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 			break;
 		case S_BAT:
 			if (Inhell && is_bat(ptr))
-			    mon_adjust_speed(mtmp, 2, (struct obj *)0);
+			    mon_adjust_speed(mtmp, 2, NULL);
 			break;
 	}
 	if ((ct = emits_light(mtmp->data)) > 0)
@@ -1007,7 +1007,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	} else {
 	    /* no initial inventory is allowed */
 	    if (mtmp->minvent) discard_minvent(mtmp);
-	    mtmp->minvent = (struct obj *)0;    /* caller expects this */
+	    mtmp->minvent = NULL;    /* caller expects this */
 	}
 	if ((ptr->mflags3 & M3_WAITMASK) && !(mmflags & MM_NOWAIT)) {
 		if (ptr->mflags3 & M3_WAITFORU)
@@ -1131,7 +1131,7 @@ struct permonst *rndmonst(void)
 #ifdef DEBUG
 		pline("rndmonst: no common mons!");
 #endif
-		return (struct permonst *)0;
+		return NULL;
 	    } /* else `mndx' now ready for use below */
 	    zlevel = level_difficulty();
 	    /* determine the level of the weakest monster to make. */
@@ -1175,7 +1175,7 @@ struct permonst *rndmonst(void)
 #ifdef DEBUG
 	    Norep("rndmonst: choice_count=%d", rndmonst_state.choice_count);
 #endif
-	    return (struct permonst *)0;
+	    return NULL;
 	}
 
 /*
@@ -1187,7 +1187,7 @@ struct permonst *rndmonst(void)
 
 	if (mndx == SPECIAL_PM || uncommon(mndx)) {	/* shouldn't happen */
 	    impossible("rndmonst: bad `mndx' [#%d]", mndx);
-	    return (struct permonst *)0;
+	    return NULL;
 	}
 	return &mons[mndx];
 }
@@ -1222,14 +1222,14 @@ struct permonst *mkclass(char class, int spc)
 	maxmlev = level_difficulty() >> 1;
 	if(class < 1 || class >= MAXMCLASSES) {
 	    impossible("mkclass called with bad class!");
-	    return (struct permonst *) 0;
+	    return NULL;
 	}
 /*	Assumption #1:	monsters of a given class are contiguous in the
  *			mons[] array.
  */
 	for (first = LOW_PM; first < SPECIAL_PM; first++)
 	    if (mons[first].mlet == class) break;
-	if (first == SPECIAL_PM) return (struct permonst *) 0;
+	if (first == SPECIAL_PM) return NULL;
 
 	for (last = first;
 		last < SPECIAL_PM && mons[last].mlet == class; last++)
@@ -1241,7 +1241,7 @@ struct permonst *mkclass(char class, int spc)
 		num += mons[last].geno & G_FREQ;
 	    }
 
-	if(!num) return (struct permonst *) 0;
+	if(!num) return NULL;
 
 /*	Assumption #2:	monsters of a given class are presented in ascending
  *			order of strength.
@@ -1300,7 +1300,7 @@ struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" into a bi
 	/* monster died after killing enemy but before calling this function */
 	/* currently possible if killing a gas spore */
 	if (mtmp->mhp <= 0)
-	    return (struct permonst *)0;
+	    return NULL;
 
 	/* note:  none of the monsters with special hit point calculations
 	   have both little and big forms */
@@ -1360,7 +1360,7 @@ struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" into a bi
 			nonliving(ptr) ? "expires" : "dies");
 		set_mon_data(mtmp, ptr, -1);	/* keep mvitals[] accurate */
 		mondied(mtmp);
-		return (struct permonst *)0;
+		return NULL;
 	    }
 	    set_mon_data(mtmp, ptr, 1);		/* preserve intrinsics */
 	    newsym(mtmp->mx, mtmp->my);		/* color may change */
@@ -1640,7 +1640,7 @@ assign_sym:
 				otmp = mkobj( (char) s_sym, FALSE );
 				appear = otmp->otyp;
 				/* make sure container contents are free'ed */
-				obfree(otmp, (struct obj *) 0);
+				obfree(otmp, NULL);
 			}
 		}
 	}
@@ -1663,7 +1663,7 @@ void bagotricks(struct obj *bag)
 
 	if (!rn2(23)) cnt += rn1(7, 1);
 	while (cnt-- > 0) {
-	    if (makemon((struct permonst *)0, u.ux, u.uy, NO_MM_FLAGS))
+	    if (makemon(NULL, u.ux, u.uy, NO_MM_FLAGS))
 		gotone = TRUE;
 	}
 	if (gotone) makeknown(BAG_OF_TRICKS);

@@ -532,7 +532,7 @@ void switch_graphics(int gr_set_flag)
     switch (gr_set_flag) {
 	default:
 	case ASCII_GRAPHICS:
-	    assign_graphics((uchar *)0, 0, MAXPCHARS, 0);
+	    assign_graphics(NULL, 0, MAXPCHARS, 0);
 	    break;
 	    
 	case IBM_GRAPHICS:

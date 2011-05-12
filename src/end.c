@@ -118,7 +118,7 @@ int done2(void)
 	    const char *tmp = "Dump core?";
 	    if ((c = ynq(tmp)) == 'y') {
 		signal(SIGINT, (SIG_RET_TYPE) done1);
-		exit_nhwindows((char *)0);
+		exit_nhwindows(NULL);
 		NH_abort();
 	    } else if (c == 'q') done_stopprint++;
 	}
@@ -230,7 +230,7 @@ void panic (const char *str, ...)
 	if (iflags.window_inited) {
 	    raw_print("\r\nOops...");
 	    wait_synch();	/* make sure all pending output gets flushed */
-	    exit_nhwindows((char *)0);
+	    exit_nhwindows(NULL);
 	    iflags.window_inited = 0; /* they're gone; force raw_print()ing */
 	}
 
@@ -330,7 +330,7 @@ static void disclose(int how, boolean taken)
 			    makeknown(obj->otyp);
 			    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
 			}
-			display_inventory((char *)0, TRUE);
+			display_inventory(NULL, TRUE);
 			container_contents(invent, TRUE, TRUE);
 		}
 		if (c == 'q')  done_stopprint++;
@@ -487,7 +487,7 @@ void done(int how)
 	char kilbuf[BUFSZ], pbuf[BUFSZ];
 	winid endwin = WIN_ERR;
 	boolean bones_ok, have_windows = iflags.window_inited;
-	struct obj *corpse = (struct obj *)0;
+	struct obj *corpse = NULL;
 	long umoney;
 
 	if (how == TRICKED) {
@@ -669,7 +669,7 @@ die:
 		savebones(corpse);
 	    /* corpse may be invalid pointer now so
 		ensure that it isn't used again */
-	    corpse = (struct obj *)0;
+	    corpse = NULL;
 	}
 
 	/* update gold for the rip output, which can't use hidden_gold()
@@ -787,7 +787,7 @@ die:
 			sprintf(pbuf, "%8ld %s (worth %ld %s),",
 				count, xname(otmp),
 				count * (long)objects[typ].oc_cost, currency(2L));
-			obfree(otmp, (struct obj *)0);
+			obfree(otmp, NULL);
 		    } else {
 			sprintf(pbuf,
 				"%8ld worthless piece%s of colored glass,",
@@ -842,10 +842,10 @@ die:
 	if (flags.toptenwin) {
 	    topten(how);
 	    if (have_windows)
-		exit_nhwindows((char *)0);
+		exit_nhwindows(NULL);
 	} else {
 	    if (have_windows)
-		exit_nhwindows((char *)0);
+		exit_nhwindows(NULL);
 	    topten(how);
 	}
 

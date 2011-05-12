@@ -214,7 +214,7 @@ static struct entity *e_at(int x, int y)
 		    (occupants[entitycnt].ey == y))
 			break;
 	return((entitycnt == ENTITIES)?
-	       (struct entity *)0 : &(occupants[entitycnt]));
+	       NULL : &(occupants[entitycnt]));
 }
 
 static void m_to_e(struct monst *mtmp, int x, int y, struct entity *etmp)
@@ -228,7 +228,7 @@ static void m_to_e(struct monst *mtmp, int x, int y, struct entity *etmp)
 		else
 			etmp->edata = mtmp->data;
 	} else
-		etmp->edata = (struct permonst *)0;
+		etmp->edata = NULL;
 }
 
 static void u_to_e(struct entity *etmp)
@@ -246,7 +246,7 @@ static void set_entity(int x, int y, struct entity *etmp)
 	else if (MON_AT(x, y))
 		m_to_e(m_at(x, y), x, y, etmp);
 	else
-		etmp->edata = (struct permonst *)0;
+		etmp->edata = NULL;
 }
 
 #define is_u(etmp) (etmp->emon == &youmonst)
@@ -257,7 +257,7 @@ static void set_entity(int x, int y, struct entity *etmp)
  * the specialized routines below suffice for all current purposes.
  */
 
-/* #define e_strg(etmp, func) (is_u(etmp)? (char *)0 : func(etmp->emon)) */
+/* #define e_strg(etmp, func) (is_u(etmp)? NULL : func(etmp->emon)) */
 
 static const char *e_nam(struct entity *etmp)
 {
@@ -278,7 +278,7 @@ static const char *E_phrase(struct entity *etmp, const char *verb)
 	if (is_u(etmp))
 	    strcat(wholebuf, verb);
 	else
-	    strcat(wholebuf, vtense((char *)0, verb));
+	    strcat(wholebuf, vtense(NULL, verb));
 	return wholebuf;
 }
 
@@ -342,20 +342,20 @@ static void e_died(struct entity *etmp, int dest, int how)
 
 		killer = 0;
 		/* fake "digested to death" damage-type suppresses corpse */
-#define mk_message(dest) ((dest & 1) ? "" : (char *)0)
+#define mk_message(dest) ((dest & 1) ? "" : NULL)
 #define mk_corpse(dest)  ((dest & 2) ? AD_DGST : AD_PHYS)
 		/* if monsters are moving, one of them caused the destruction */
 		if (flags.mon_moving)
 		    monkilled(etmp->emon, mk_message(dest), mk_corpse(dest));
 		else		/* you caused it */
 		    xkilled(etmp->emon, dest);
-		etmp->edata = (struct permonst *)0;
+		etmp->edata = NULL;
 
 		/* dead long worm handling */
 		for (entitycnt = 0; entitycnt < ENTITIES; entitycnt++) {
 		    if (etmp != &(occupants[entitycnt]) &&
 			etmp->emon == occupants[entitycnt].emon)
-			occupants[entitycnt].edata = (struct permonst *)0;
+			occupants[entitycnt].edata = NULL;
 		}
 #undef mk_message
 #undef mk_corpse
@@ -626,8 +626,8 @@ void close_drawbridge(int x, int y)
 	do_entity(&(occupants[1]));
 	if(OBJ_AT(x,y) && flags.soundok)
 	    You_hear("smashing and crushing.");
-	revive_nasty(x,y,(char *)0);
-	revive_nasty(x2,y2,(char *)0);
+	revive_nasty(x,y,NULL);
+	revive_nasty(x2,y2,NULL);
 	delallobj(x, y);
 	delallobj(x2, y2);
 	if ((t = t_at(x, y)) != 0) deltrap(t);
@@ -662,7 +662,7 @@ void open_drawbridge(int x, int y)
 	do_entity(&(occupants[0]));		/* do set_entity after first */
 	set_entity(x2, y2, &(occupants[1]));	/* do_entity for worm tails */
 	do_entity(&(occupants[1]));
-	revive_nasty(x,y,(char *)0);
+	revive_nasty(x,y,NULL);
 	delallobj(x, y);
 	if ((t = t_at(x, y)) != 0) deltrap(t);
 	if ((t = t_at(x2, y2)) != 0) deltrap(t);

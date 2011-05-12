@@ -57,7 +57,7 @@ static const char *dev_name(void)
 	    m++;
 	} while (match && m < 100); /* m for insurance */
 
-	if (match) return (const char *)0;
+	if (match) return NULL;
 	return developers[i];
 }
 
@@ -106,7 +106,7 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 	char nam[PL_NSIZ];
 
 	if(!is_mplayer(ptr))
-		return (struct monst *)0;
+		return NULL;
 
 	if(MON_AT(x, y))
 		rloc(m_at(x, y), FALSE); /* insurance */

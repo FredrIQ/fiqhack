@@ -163,7 +163,7 @@ void make_blinded(long xtime, boolean talk)
 	    /* clearing temporary blindness without toggling blindness */
 	    if (talk) {
 		if (!haseyes(youmonst.data)) {
-		    strange_feeling((struct obj *)0, (char *)0);
+		    strange_feeling(NULL, NULL);
 		} else if (Blindfolded) {
 		    strcpy(buf, body_part(EYE));
 		    eyecnt = eyecount(youmonst.data);
@@ -189,7 +189,7 @@ void make_blinded(long xtime, boolean talk)
 	    /* setting temporary blindness without toggling blindness */
 	    if (talk) {
 		if (!haseyes(youmonst.data)) {
-		    strange_feeling((struct obj *)0, (char *)0);
+		    strange_feeling(NULL, NULL);
 		} else if (Blindfolded) {
 		    strcpy(buf, body_part(EYE));
 		    eyecnt = eyecount(youmonst.data);
@@ -237,7 +237,7 @@ boolean make_hallucinated(long xtime, /* nonzero if this is an attempt to turn o
 	    /* clearing temporary hallucination without toggling vision */
 	    if (!changed && !HHallucination && old && talk) {
 		if (!haseyes(youmonst.data)) {
-		    strange_feeling((struct obj *)0, (char *)0);
+		    strange_feeling(NULL, NULL);
 		} else if (Blind) {
 		    char buf[BUFSZ];
 		    int eyecnt = eyecount(youmonst.data);
@@ -444,7 +444,7 @@ int peffects(struct obj *otmp)
 		} else {
 		    if(otmp->blessed) {
 			You_feel("full of awe.");
-			make_sick(0L, (char *) 0, TRUE, SICK_ALL);
+			make_sick(0L, NULL, TRUE, SICK_ALL);
 			exercise(A_WIS, TRUE);
 			exercise(A_CON, TRUE);
 			if (u.ulycn >= LOW_PM)
@@ -878,7 +878,7 @@ void healup(int nhp, int nxtra, boolean curesick, boolean cureblind)
 		}
 	}
 	if(cureblind)	make_blinded(0L,TRUE);
-	if(curesick)	make_sick(0L, (char *) 0, TRUE, SICK_ALL);
+	if(curesick)	make_sick(0L, NULL, TRUE, SICK_ALL);
 	botl = 1;
 	return;
 }
@@ -1064,7 +1064,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		    }
 		} else if(mon->data == &mons[PM_GREMLIN]) {
 		    angermon = FALSE;
-		    split_mon(mon, (struct monst *)0);
+		    split_mon(mon, NULL);
 		} else if(mon->data == &mons[PM_IRON_GOLEM]) {
 		    if (canseemon(mon))
 			pline("%s rusts.", Monnam(mon));
@@ -1127,7 +1127,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		    subfrombill(obj, shkp);
 		}
 	}
-	obfree(obj, (struct obj *)0);
+	obfree(obj, NULL);
 }
 
 
@@ -1236,7 +1236,7 @@ void potionbreathe(struct obj *obj)
 		break;
 	case POT_WATER:
 		if(u.umonnum == PM_GREMLIN) {
-		    split_mon(&youmonst, (struct monst *)0);
+		    split_mon(&youmonst, NULL);
 		} else if (u.ulycn >= LOW_PM) {
 		    /* vapor from [un]holy water will trigger
 		       transformation but won't cure lycanthropy */
@@ -1375,7 +1375,7 @@ boolean get_wet(struct obj *obj)
 	if (snuff_lit(obj)) return TRUE;
 
 	if (obj->greased) {
-		grease_protect(obj,(char *)0,&youmonst);
+		grease_protect(obj,NULL,&youmonst);
 		return FALSE;
 	}
 	Shk_Your(Your_buf, obj);
@@ -1591,7 +1591,7 @@ int dodip(void)
 		if (obj->otyp != save_otyp) {
 			makeknown(POT_POLYMORPH);
 			useup(potion);
-			prinv((char *)0, obj, 0L);
+			prinv(NULL, obj, 0L);
 			return 1;
 		} else {
 			pline("Nothing seems to happen.");
@@ -1634,7 +1634,7 @@ int dodip(void)
 				  struct obj *otmp;
 				  otmp = mkobj(POTION_CLASS,FALSE);
 				  obj->otyp = otmp->otyp;
-				  obfree(otmp, (struct obj *)0);
+				  obfree(otmp, NULL);
 				}
 				break;
 			default:
@@ -1722,8 +1722,8 @@ int dodip(void)
 			    yname(obj));
 		    if (obj->oeroded == MAX_ERODE) {
 			obj_extract_self(obj);
-			obfree(obj, (struct obj *)0);
-			obj = (struct obj *) 0;
+			obfree(obj, NULL);
+			obj = NULL;
 		    } else {
 			/* we know it's carried */
 			if (obj->unpaid) {
@@ -1854,7 +1854,7 @@ int dodip(void)
 		obj_extract_self(singlepotion);
 		singlepotion = hold_another_object(singlepotion,
 					"You juggle and drop %s!",
-					doname(singlepotion), (const char *)0);
+					doname(singlepotion), NULL);
 		update_inventory();
 		return 1;
 	}
@@ -1893,7 +1893,7 @@ void djinni_from_bottle(struct obj *obj)
 		mongone(mtmp);
 		break;
 	case 1 : verbalize("Thank you for freeing me!");
-		tamedog(mtmp, (struct obj *)0);
+		tamedog(mtmp, NULL);
 		break;
 	case 2 : verbalize("You freed me!");
 		mtmp->mpeaceful = TRUE;

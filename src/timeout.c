@@ -403,7 +403,7 @@ void hatch_egg(void *arg, long timeout)
 	/* sterilized while waiting */
 	if (egg->corpsenm == NON_PM) return;
 
-	mon = mon2 = (struct monst *)0;
+	mon = mon2 = NULL;
 	mnum = big_to_little(egg->corpsenm);
 	/* The identity of one's father is learned, not innate */
 	yours = (egg->spe || (!flags.female && carried(egg) && !rn2(2)));
@@ -424,7 +424,7 @@ void hatch_egg(void *arg, long timeout)
 		       while it's in your inventory */
 		    if ((yours && !silent) ||
 			(carried(egg) && mon->data->mlet == S_DRAGON)) {
-			if ((mon2 = tamedog(mon, (struct obj *)0)) != 0) {
+			if ((mon2 = tamedog(mon, NULL)) != 0) {
 			    mon = mon2;
 			    if (carried(egg) && mon->data->mlet != S_DRAGON)
 				mon->mtame = 20;
@@ -521,7 +521,7 @@ void hatch_egg(void *arg, long timeout)
 	    } else {
 		/* free egg here because we use it above */
 		obj_extract_self(egg);
-		obfree(egg, (struct obj *)0);
+		obfree(egg, NULL);
 	    }
 	    if (redraw) newsym(x, y);
 	}
@@ -591,7 +591,7 @@ static void slip_or_trip(void)
 	    pline("%s %s%s on the ice.",
 		u.usteed ? upstart(x_monnam(u.usteed,
 				u.usteed->mnamelth ? ARTICLE_NONE : ARTICLE_THE,
-				(char *)0, SUPPRESS_SADDLE, FALSE)) :
+				NULL, SUPPRESS_SADDLE, FALSE)) :
 		"You", rn2(2) ? "slip" : "slide", on_foot ? "" : "s");
 	} else {
 	    if (on_foot) {
@@ -693,8 +693,8 @@ void burn_object(void *arg, long timeout)
 		} else if (Is_candle(obj) || obj->otyp == POT_OIL) {
 		    /* get rid of candles and burning oil potions */
 		    obj_extract_self(obj);
-		    obfree(obj, (struct obj *)0);
-		    obj = (struct obj *) 0;
+		    obfree(obj, NULL);
+		    obj = NULL;
 		}
 
 	    } else {
@@ -733,8 +733,8 @@ void burn_object(void *arg, long timeout)
 		    }
 		    end_burn(obj, FALSE);	/* turn off light source */
 		    obj_extract_self(obj);
-		    obfree(obj, (struct obj *)0);
-		    obj = (struct obj *) 0;
+		    obfree(obj, NULL);
+		    obj = NULL;
 		    break;
 
 	    case BRASS_LANTERN:
@@ -909,8 +909,8 @@ void burn_object(void *arg, long timeout)
 			    obj->spe = 0;
 			} else {
 			    obj_extract_self(obj);
-			    obfree(obj, (struct obj *)0);
-			    obj = (struct obj *) 0;
+			    obfree(obj, NULL);
+			    obj = NULL;
 			}
 			break;
 

@@ -287,7 +287,7 @@ void growl(struct monst *mtmp)
     else
 	growl_verb = growl_sound(mtmp);
     if (growl_verb) {
-	pline("%s %s!", Monnam(mtmp), vtense((char *)0, growl_verb));
+	pline("%s %s!", Monnam(mtmp), vtense(NULL, growl_verb));
 	if(flags.run) nomul(0);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 18);
     }
@@ -326,7 +326,7 @@ void yelp(struct monst *mtmp)
 	    break;
     }
     if (yelp_verb) {
-	pline("%s %s!", Monnam(mtmp), vtense((char *)0, yelp_verb));
+	pline("%s %s!", Monnam(mtmp), vtense(NULL, yelp_verb));
 	if(flags.run) nomul(0);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 12);
     }
@@ -356,7 +356,7 @@ void whimper(struct monst *mtmp)
 	    break;
     }
     if (whimper_verb) {
-	pline("%s %s.", Monnam(mtmp), vtense((char *)0, whimper_verb));
+	pline("%s %s.", Monnam(mtmp), vtense(NULL, whimper_verb));
 	if(flags.run) nomul(0);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 6);
     }
@@ -677,7 +677,7 @@ static int domonnoise(struct monst *mtmp)
 	case MS_SEDUCE:
 #ifdef SEDUCE
 	    if (ptr->mlet != S_NYMPH &&
-		could_seduce(mtmp, &youmonst, (struct attack *)0) == 1) {
+		could_seduce(mtmp, &youmonst, NULL) == 1) {
 			doseduce(mtmp);
 			break;
 	    }
@@ -809,7 +809,7 @@ static int dochat(void)
 	return 0;
     }
 
-    if (!Blind && (otmp = shop_object(u.ux, u.uy)) != (struct obj *)0) {
+    if (!Blind && (otmp = shop_object(u.ux, u.uy)) != NULL) {
 	/* standing on something in a shop and chatting causes the shopkeeper
 	   to describe the price(s).  This can inhibit other chatting inside
 	   a shop, but that shouldn't matter much.  shop_object() returns an

@@ -844,7 +844,7 @@ int dotogglepickup(void)
 #ifdef AUTOPICKUP_EXCEPTIONS
 			(iflags.autopickup_exceptions[AP_LEAVE] ||
 			 iflags.autopickup_exceptions[AP_GRAB]) ?
-			 ((count_ape_maps((int *)0, (int *)0) == 1) ?
+			 ((count_ape_maps(NULL, NULL) == 1) ?
 			    ", with one exception" : ", with some exceptions") :
 #endif
 			"");

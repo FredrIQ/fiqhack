@@ -93,7 +93,7 @@ verbose_help()
 	"    I file  specify file for list of file names",
 	"    C dir   change directory before processing any files",
 	"",
-	(char *)0
+	NULL
     };
     const char **str;
 

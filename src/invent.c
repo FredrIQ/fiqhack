@@ -113,7 +113,7 @@ struct obj *merge_choice(struct obj *objlist, struct obj *obj)
 	int save_nocharge;
 
 	if (obj->otyp == SCR_SCARE_MONSTER)	/* punt on these */
-	    return (struct obj *)0;
+	    return NULL;
 	/* if this is an item on the shop floor, the attributes it will
 	   have when carried are different from what they are now; prevent
 	   that from eliciting an incorrect result from mergable() */
@@ -128,7 +128,7 @@ struct obj *merge_choice(struct obj *objlist, struct obj *obj)
 	       another unpaid object, but we can't check that here (depends
 	       too much upon shk's bill) and if it doesn't merge it would
 	       end up in the '#' overflow inventory slot, so reject it now. */
-	    else if (inhishop(shkp)) return (struct obj *)0;
+	    else if (inhishop(shkp)) return NULL;
 	}
 	while (objlist) {
 	    if (mergable(objlist, obj)) break;
@@ -403,7 +403,7 @@ void useupall(struct obj *obj)
 {
 	setnotworn(obj);
 	freeinv(obj);
-	obfree(obj, (struct obj *)0);	/* deletes contents also */
+	obfree(obj, NULL);	/* deletes contents also */
 }
 
 void useup(struct obj *obj)
@@ -520,7 +520,7 @@ void delobj(struct obj *obj)
 	update_map = (obj->where == OBJ_FLOOR);
 	obj_extract_self(obj);
 	if (update_map) newsym(obj->ox, obj->oy);
-	obfree(obj, (struct obj *) 0);	/* frees contents also */
+	obfree(obj, NULL);	/* frees contents also */
 }
 
 
@@ -531,7 +531,7 @@ struct obj *sobj_at(int n, int x, int y)
 	for(otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
 		if(otmp->otyp == n)
 		    return otmp;
-	return (struct obj *)0;
+	return NULL;
 }
 
 
@@ -542,7 +542,7 @@ struct obj *carrying(int type)
 	for(otmp = invent; otmp; otmp = otmp->nobj)
 		if(otmp->otyp == type)
 			return otmp;
-	return (struct obj *) 0;
+	return NULL;
 }
 
 const char *currency(long amount)
@@ -571,7 +571,7 @@ struct obj *o_on(unsigned int id, struct obj *objchn)
 			return temp;
 		objchn = objchn->nobj;
 	}
-	return (struct obj *) 0;
+	return NULL;
 }
 
 boolean obj_here(struct obj *obj, int x, int y)
@@ -591,7 +591,7 @@ struct obj *g_at(int x, int y)
 	    if (obj->oclass == COIN_CLASS) return obj;
 	    obj = obj->nexthere;
 	}
-	return (struct obj *)0;
+	return NULL;
 }
 
 
@@ -653,7 +653,7 @@ static boolean putting_on(const char *action)
 /*
  * getobj returns:
  *	struct obj *xxx:	object to do something with.
- *	(struct obj *) 0	error return: no object.
+ *	NULL	error return: no object.
  *	&zeroobj		explicitly no object (as in w-).
 #ifdef GOLDOBJ
 !!!! test if gold can be used in unusual ways (eaten etc.)
@@ -843,7 +843,7 @@ struct obj *getobj(const char *let, const char *word)
 #endif
 		You("don't have anything %sto %s.",
 			foox ? "else " : "", word);
-		return (struct obj *)0;
+		return NULL;
 	}
 	for(;;) {
 		cnt = 0;
@@ -854,7 +854,7 @@ struct obj *getobj(const char *let, const char *word)
 			sprintf(qbuf, "What do you want to %s? [%s or ?*]",
 				word, buf);
 		}
-		    ilet = yn_function(qbuf, (char *)0, '\0');
+		    ilet = yn_function(qbuf, NULL, '\0');
 		if(ilet == '0') prezero = TRUE;
 		while(digit(ilet) && allowcnt) {
 			cnt = 10*cnt + (ilet - '0');
@@ -868,10 +868,10 @@ struct obj *getobj(const char *let, const char *word)
 		if(index(quitchars,ilet)) {
 		    if(flags.verbose)
 			pline(Never_mind);
-		    return (struct obj *)0;
+		    return NULL;
 		}
 		if(ilet == '-') {
-			return allownone ? &zeroobj : (struct obj *) 0;
+			return allownone ? &zeroobj : NULL;
 		}
 		if(ilet == def_oc_syms[COIN_CLASS]) {
 			if (!usegold) {
@@ -881,14 +881,14 @@ struct obj *getobj(const char *let, const char *word)
 			    } else {
 				You("cannot %s gold.", word);
 			    }
-			    return(struct obj *)0;
+			    return NULL;
 #ifndef GOLDOBJ
 			} else if (!allowgold) {
 				You("are not carrying any gold.");
-				return(struct obj *)0;
+				return NULL;
 #endif
 			} 
-			if(cnt == 0 && prezero) return (struct obj *)0;
+			if(cnt == 0 && prezero) return NULL;
 			/* Historic note: early Nethack had a bug which was
 			 * first reported for Larn, where trying to drop 2^32-n
 			 * gold pieces was allowed, and did interesting things
@@ -897,7 +897,7 @@ struct obj *getobj(const char *let, const char *word)
 			 */
 			if(cnt < 0) {
 	pline_The("LRS would be very interested to know you have that much.");
-				return(struct obj *)0;
+				return NULL;
 			}
 
 #ifndef GOLDOBJ
@@ -907,13 +907,13 @@ struct obj *getobj(const char *let, const char *word)
 #endif
 		}
 		if(ilet == '?' || ilet == '*') {
-		    char *allowed_choices = (ilet == '?') ? lets : (char *)0;
+		    char *allowed_choices = (ilet == '?') ? lets : NULL;
 		    long ctmp = 0;
 
 		    if (ilet == '?' && !*lets && *altlets)
 			allowed_choices = altlets;
 		    ilet = display_pickinv(allowed_choices, TRUE,
-					   allowcnt ? &ctmp : (long *)0);
+					   allowcnt ? &ctmp : NULL);
 		    if(!ilet) continue;
 		    if (allowcnt && ctmp >= 0) {
 			cnt = ctmp;
@@ -923,7 +923,7 @@ struct obj *getobj(const char *let, const char *word)
 		    if(ilet == '\033') {
 			if(flags.verbose)
 			    pline(Never_mind);
-			return (struct obj *)0;
+			return NULL;
 		    }
 		    /* they typed a letter (not a space) at the prompt */
 		}
@@ -935,7 +935,7 @@ struct obj *getobj(const char *let, const char *word)
 		    if (ilet != def_oc_syms[COIN_CLASS])
 #endif
 			allowcnt = 1;
-		    if(cnt == 0 && prezero) return (struct obj *)0;
+		    if(cnt == 0 && prezero) return NULL;
 		    if(cnt > 1) {
 			You("can only throw one item at a time.");
 			continue;
@@ -962,10 +962,10 @@ struct obj *getobj(const char *let, const char *word)
 #endif
 	   ) {
 		silly_thing(word, otmp);
-		return (struct obj *)0;
+		return NULL;
 	}
 	if(allowcnt == 2) {	/* cnt given */
-	    if(cnt == 0) return (struct obj *)0;
+	    if(cnt == 0) return NULL;
 	    if(cnt != otmp->quan) {
 		/* don't split a stack of cursed loadstones */
 		if (otmp->otyp == LOADSTONE && otmp->cursed)
@@ -1115,7 +1115,7 @@ int ggetobj(const char *word, int (*fn)(struct obj*), int mx,
 	    getlin(qbuf, buf);
 	    if (buf[0] == '\033') return 0;
 	    if (index(buf, 'i')) {
-		if (display_inventory((char *)0, TRUE) == '\033') return 0;
+		if (display_inventory(NULL, TRUE) == '\033') return 0;
 	    } else
 		break;
 	}
@@ -1270,7 +1270,7 @@ nextclass:
 		if (ckfn && !(*ckfn)(otmp)) continue;
 		if (!allflag) {
 			strcpy(qbuf, !ininv ? doname(otmp) :
-				xprname(otmp, (char *)0, ilet, !nodot, 0L, 0L));
+				xprname(otmp, NULL, ilet, !nodot, 0L, 0L));
 			strcat(qbuf, "?");
 			sym = (takeoff || ident || otmp->quan < 2L) ?
 				nyaq(qbuf) : nyNaq(qbuf);
@@ -1346,7 +1346,7 @@ void fully_identify_obj(struct obj *otmp)
 int identify(struct obj *otmp)
 {
     fully_identify_obj(otmp);
-    prinv((char *)0, otmp, 0L);
+    prinv(NULL, otmp, 0L);
     return 1;
 }
 
@@ -1407,7 +1407,7 @@ void identify_pack(int id_limit)
 	n = 0;
 	if (flags.menu_style == MENU_TRADITIONAL)
 	    do {
-		n = ggetobj("identify", identify, id_limit, FALSE, (unsigned *)0);
+		n = ggetobj("identify", identify, id_limit, FALSE, NULL);
 		if (n < 0) break; /* quit or no eligible items */
 	    } while ((id_limit -= n) > 0);
 	if (n == 0 || n < -1)
@@ -1440,7 +1440,7 @@ void prinv(const char *prefix, struct obj *obj, long quan)
 	if (!prefix) prefix = "";
 	pline("%s%s%s",
 	      prefix, *prefix ? " " : "",
-	      xprname(obj, (char *)0, obj_to_let(obj), TRUE, 0L, quan));
+	      xprname(obj, NULL, obj_to_let(obj), TRUE, 0L, quan));
 }
 
 
@@ -1514,7 +1514,7 @@ static struct obj *find_unpaid(struct obj *list, struct obj **last_found)
 	    if (*last_found) {
 		/* still looking for previous unpaid object */
 		if (list == *last_found)
-		    *last_found = (struct obj *) 0;
+		    *last_found = NULL;
 	    } else
 		return *last_found = list;
 	}
@@ -1524,7 +1524,7 @@ static struct obj *find_unpaid(struct obj *list, struct obj **last_found)
 	}
 	list = list->nobj;
     }
-    return (struct obj *) 0;
+    return NULL;
 }
 
 /*
@@ -1574,7 +1574,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 		if (otmp->invlet == lets[0]) {
 		    ret = message_menu(lets[0],
 			  want_reply ? PICK_ONE : PICK_NONE,
-			  xprname(otmp, (char *)0, lets[0], TRUE, 0L, 0L));
+			  xprname(otmp, NULL, lets[0], TRUE, 0L, 0L));
 		    if (out_cnt) *out_cnt = -1L;	/* select all */
 		    break;
 		}
@@ -1634,7 +1634,7 @@ nextclass:
  */
 char display_inventory(const char *lets, boolean want_reply)
 {
-	return display_pickinv(lets, want_reply, (long *)0);
+	return display_pickinv(lets, want_reply, NULL);
 }
 
 /*
@@ -1704,7 +1704,7 @@ static void dounpaid(void)
     count = count_unpaid(invent);
 
     if (count == 1) {
-	marker = (struct obj *) 0;
+	marker = NULL;
 	otmp = find_unpaid(invent, &marker);
 
 	/* see if the unpaid item is in the top level inventory */
@@ -1757,7 +1757,7 @@ static void dounpaid(void)
 	 */
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    if (Has_contents(otmp)) {
-		marker = (struct obj *) 0;	/* haven't found any */
+		marker = NULL;	/* haven't found any */
 		while (find_unpaid(otmp->cobj, &marker)) {
 		    totcost += cost = unpaid_cost(marker);
 		    save_unpaid = marker->unpaid;
@@ -1772,7 +1772,7 @@ static void dounpaid(void)
     }
 
     putstr(win, 0, "");
-    putstr(win, 0, xprname((struct obj *)0, "Total:", '*', FALSE, totcost, 0L));
+    putstr(win, 0, xprname(NULL, "Total:", '*', FALSE, totcost, 0L));
     display_nhwindow(win, FALSE);
     destroy_nhwindow(win);
 }
@@ -1967,7 +1967,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	struct obj *otmp;
 	struct trap *trap;
 	const char *verb = Blind ? "feel" : "see";
-	const char *dfeature = (char *)0;
+	const char *dfeature = NULL;
 	char fbuf[BUFSZ], fbuf2[BUFSZ];
 	winid tmpwin;
 	boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
@@ -2219,8 +2219,8 @@ int doprwep(void)
     if (!uwep) {
 	You("are empty %s.", body_part(HANDED));
     } else {
-	prinv((char *)0, uwep, 0L);
-	if (u.twoweap) prinv((char *)0, uswapwep, 0L);
+	prinv(NULL, uwep, 0L);
+	if (u.twoweap) prinv(NULL, uswapwep, 0L);
     }
     return 0;
 }
@@ -2273,7 +2273,7 @@ int dopramulet(void)
 	if (!uamul)
 		You("are not wearing an amulet.");
 	else
-		prinv((char *)0, uamul, 0L);
+		prinv(NULL, uamul, 0L);
 	return 0;
 }
 
@@ -2364,7 +2364,7 @@ static const char *oth_names[] = {
 	"Bagged/Boxed items"
 };
 
-static char *invbuf = (char *)0;
+static char *invbuf = NULL;
 static unsigned invbufsiz = 0;
 
 char *let_to_name(char let, boolean unpaid)
@@ -2396,7 +2396,7 @@ char *let_to_name(char let, boolean unpaid)
 
 void free_invbuf(void)
 {
-	if (invbuf) free(invbuf),  invbuf = (char *)0;
+	if (invbuf) free(invbuf),  invbuf = NULL;
 	invbufsiz = 0;
 }
 
@@ -2450,7 +2450,7 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	/* get new letter to use as inventory letter */
 	for (;;) {
 		sprintf(qbuf, "Adjust letter to what [%s]?",buf);
-		let = yn_function(qbuf, (char *)0, '\0');
+		let = yn_function(qbuf, NULL, '\0');
 		if(index(quitchars,let)) {
 			pline(Never_mind);
 			return 0;

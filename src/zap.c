@@ -177,7 +177,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 			/* flags.bypasses = TRUE; ## for make_corpse() */
 			/* no corpse after system shock */
 			xkilled(mtmp, 3);
-		    } else if (newcham(mtmp, (struct permonst *)0,
+		    } else if (newcham(mtmp, NULL,
 				       (otyp != POT_POLYMORPH), FALSE)) {
 			if (!Hallucination && canspotmon(mtmp))
 			    makeknown(otyp);
@@ -356,7 +356,7 @@ void probe_monster(struct monst *mtmp)
 #endif
 	    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 		otmp->dknown = 1;	/* treat as "seen" */
-	    display_minventory(mtmp, MINV_ALL, (char *)0);
+	    display_minventory(mtmp, MINV_ALL, NULL);
 	} else {
 	    pline("%s is not carrying anything.", noit_Monnam(mtmp));
 	}
@@ -428,8 +428,8 @@ boolean get_mon_location(struct monst *mon, xchar *xp, xchar *yp, int locflags)
 /* used by revive() and animate_statue() */
 struct monst *montraits(struct obj *obj, coord *cc)
 {
-	struct monst *mtmp = (struct monst *)0;
-	struct monst *mtmp2 = (struct monst *)0;
+	struct monst *mtmp = NULL;
+	struct monst *mtmp2 = NULL;
 
 	if (obj->oxlth && (obj->oattached == OATTACHED_MONST))
 		mtmp2 = get_mtraits(obj, TRUE);
@@ -437,7 +437,7 @@ struct monst *montraits(struct obj *obj, coord *cc)
 		/* save_mtraits() validated mtmp2->mnum */
 		mtmp2->data = &mons[mtmp2->mnum];
 		if (mtmp2->mhpmax <= 0 && !is_rider(mtmp2->data))
-			return (struct monst *)0;
+			return NULL;
 		mtmp = makemon(mtmp2->data,
 				cc->x, cc->y, NO_MINVENT|MM_NOWAIT|MM_NOCOUNTBIRTH);
 		if (!mtmp) return mtmp;
@@ -518,7 +518,7 @@ struct monst *get_container_location(struct obj *obj, int *loc,
 	    *loc = obj->where;	/* outermost container's location */
 	    if (obj->where == OBJ_MINVENT) return obj->ocarry;
 	}
-	return (struct monst *)0;
+	return NULL;
 }
 
 /*
@@ -527,8 +527,8 @@ struct monst *get_container_location(struct obj *obj, int *loc,
  */
 struct monst *revive(struct obj *obj)
 {
-	struct monst *mtmp = (struct monst *)0;
-	struct obj *container = (struct obj *)0;
+	struct monst *mtmp = NULL;
+	struct obj *container = NULL;
 	int container_nesting = 0;
 	schar savetame = 0;
 	boolean recorporealization = FALSE;
@@ -556,16 +556,16 @@ struct monst *revive(struct obj *obj)
 				break;
 			    case OBJ_FLOOR:
 				if (!get_obj_location(obj, &x, &y, CONTAINED_TOO))
-					return (struct monst *) 0;
+					return NULL;
 				in_container = TRUE;
 				break;
 			    default:
-			    	return (struct monst *)0;
+			    	return NULL;
 			}
 		} else {
 			/* only for invent, minvent, or floor */
 			if (!get_obj_location(obj, &x, &y, 0))
-			    return (struct monst *) 0;
+			    return NULL;
 		}
 		if (in_container) {
 			/* Rules for revival from containers:
@@ -577,7 +577,7 @@ struct monst *revive(struct obj *obj)
 			if (!x || !y || container->olocked || container_nesting > 2 ||
 			    container->otyp == STATUE ||
 			    (container->otyp == BAG_OF_HOLDING && rn2(40)))
-				return (struct monst *)0;
+				return NULL;
 		}
 
 		if (MON_AT(x,y)) {
@@ -593,7 +593,7 @@ struct monst *revive(struct obj *obj)
 				       NO_MINVENT|MM_NOWAIT);
 			if (mtmp) {
 				mtmp->mhp = mtmp->mhpmax = 100;
-				mon_adjust_speed(mtmp, 2, (struct obj *)0); /* MFAST */
+				mon_adjust_speed(mtmp, 2, NULL); /* MFAST */
 			}
 		} else {
 		    if (obj->oxlth && (obj->oattached == OATTACHED_MONST)) {
@@ -645,7 +645,7 @@ struct monst *revive(struct obj *obj)
 			if (recorporealization) {
 				/* If mtmp is revivification of former tame ghost*/
 				if (savetame) {
-				    struct monst *mtmp2 = tamedog(mtmp, (struct obj *)0);
+				    struct monst *mtmp2 = tamedog(mtmp, NULL);
 				    if (mtmp2) {
 					mtmp2->mtame = savetame;
 					mtmp = mtmp2;
@@ -673,7 +673,7 @@ struct monst *revive(struct obj *obj)
 				break;
 			    case OBJ_CONTAINED:
 				obj_extract_self(obj);
-				obfree(obj, (struct obj *) 0);
+				obfree(obj, NULL);
 				break;
 			    default:
 				panic("revive");
@@ -734,7 +734,7 @@ static const char charged_objs[] = { WAND_CLASS, WEAPON_CLASS, ARMOR_CLASS, 0 };
 static void costly_cancel(struct obj *obj)
 {
 	char objroom;
-	struct monst *shkp = (struct monst *)0;
+	struct monst *shkp = NULL;
 
 	if (obj->no_charge) return;
 
@@ -1003,7 +1003,7 @@ static void polyuse(struct obj *objhdr, int mat, int minwt)
  */
 static void create_polymon(struct obj *obj, int okind)
 {
-	struct permonst *mdat = (struct permonst *)0;
+	struct permonst *mdat = NULL;
 	struct monst *mtmp;
 	const char *material;
 	int pm_index;
@@ -1141,7 +1141,7 @@ struct obj *poly_obj(struct obj *obj, int id)
 	    int try_limit = 3;
 	    /* Try up to 3 times to make the magic-or-not status of
 	       the new item be the same as it was for the old one. */
-	    otmp = (struct obj *)0;
+	    otmp = NULL;
 	    do {
 		if (otmp) delobj(otmp);
 		otmp = mkobj(obj->oclass, FALSE);
@@ -1539,7 +1539,7 @@ int bhito(struct obj *obj, struct obj *otmp)
 			    	goto smell;
 			    }
 			    if (!animate_statue(obj, oox, ooy,
-						ANIMATE_SPELL, (int *)0)) {
+						ANIMATE_SPELL, NULL)) {
 				struct obj *item;
 makecorpse:			if (mons[obj->corpsenm].geno &
 							(G_NOCORPSE|G_UNIQ)) {
@@ -1689,7 +1689,7 @@ void zapnodir(struct obj *obj)
 			break;
 		case WAN_CREATE_MONSTER:
 			known = create_critters(rn2(23) ? 1 : rn1(7,2),
-					(struct permonst *)0);
+					NULL);
 			break;
 		case WAN_WISHING:
 			known = TRUE;
@@ -1730,7 +1730,7 @@ int dozap(void)
 	struct obj *obj;
 	int	damage;
 
-	if(check_capacity((char *)0)) return 0;
+	if(check_capacity(NULL)) return 0;
 	obj = getobj(zap_syms, "zap");
 	if(!obj) return 0;
 
@@ -1742,7 +1742,7 @@ int dozap(void)
 		backfire(obj);	/* the wand blows up in your face! */
 		exercise(A_STR, FALSE);
 		return 1;
-	} else if(!(objects[obj->otyp].oc_dir == NODIR) && !getdir((char *)0)) {
+	} else if(!(objects[obj->otyp].oc_dir == NODIR) && !getdir(NULL)) {
 		if (!Blind)
 		    pline("%s glows and fades.", The(xname(obj)));
 		/* make him pay for knowing !NODIR */
@@ -2256,7 +2256,7 @@ static boolean zap_updown(struct obj *obj)
 			You_hear("a twang followed by a thud.");
 		}
 		deltrap(ttmp);
-		ttmp = (struct trap *)0;
+		ttmp = NULL;
 		newsym(x, y);
 	    }
 	    break;
@@ -2618,7 +2618,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 			    ship_object(obj, bhitpos.x, bhitpos.y,
 					costly_spot(bhitpos.x, bhitpos.y)))) {
 			tmp_at(DISP_END, 0);
-			return (struct monst *)0;
+			return NULL;
 		}
 	    }
 	    if(weapon == ZAPPED_WAND && (IS_DOOR(typ) || typ == SDOOR)) {
@@ -2700,7 +2700,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 	if(shopdoor)
 	    pay_for_damage("destroy", FALSE);
 
-	return (struct monst *)0;
+	return NULL;
 }
 
 struct monst *boomhit(int dx, int dy)
@@ -2737,7 +2737,7 @@ struct monst *boomhit(int dx, int dy)
 		if(bhitpos.x == u.ux && bhitpos.y == u.uy) { /* ct == 9 */
 			if(Fumbling || rn2(20) >= ACURR(A_DEX)) {
 				/* we hit ourselves */
-				thitu(10, rnd(10), (struct obj *)0,
+				thitu(10, rnd(10), NULL,
 					"boomerang");
 				break;
 			} else {	/* we catch it */
@@ -2753,7 +2753,7 @@ struct monst *boomhit(int dx, int dy)
 			break;	/* boomerang falls on sink */
 	}
 	tmp_at(DISP_END, 0);	/* do not leave last symbol */
-	return (struct monst *)0;
+	return NULL;
 }
 
 /* returns damage to mon */
@@ -2765,7 +2765,7 @@ static int zhitm(struct monst *mon, int type, int nd,
 	boolean sho_shieldeff = FALSE;
 	boolean spellcaster = is_hero_spell(type); /* maybe get a bonus! */
 
-	*ootmp = (struct obj *)0;
+	*ootmp = NULL;
 	switch(abstype) {
 	case ZT_MAGIC_MISSILE:
 		if (resists_magm(mon)) {
@@ -3187,7 +3187,7 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 	    if (type >= 0) mon->mstrategy &= ~STRAT_WAITMASK;
 buzzmonst:
 	    if (zap_hit(find_mac(mon), spell_type)) {
-		if (mon_reflects(mon, (char *)0)) {
+		if (mon_reflects(mon, NULL)) {
 		    if(cansee(mon->mx,mon->my)) {
 			hit(fltxt, mon, exclam(0));
 			shieldeff(mon->mx, mon->my);
@@ -3246,12 +3246,12 @@ buzzmonst:
 			    otmp2 = otmp->nobj;
 			    if (!oresist_disintegration(otmp)) {
 				obj_extract_self(otmp);
-				obfree(otmp, (struct obj *)0);
+				obfree(otmp, NULL);
 			    }
 			}
 
 			if (type < 0)
-			    monkilled(mon, (char *)0, -AD_RBRE);
+			    monkilled(mon, NULL, -AD_RBRE);
 			else
 			    xkilled(mon, 2);
 		    } else if(mon->mhp < 1) {
@@ -3281,7 +3281,7 @@ buzzmonst:
 	    }
 	} else if (sx == u.ux && sy == u.uy && range >= 0) {
 	    nomul(0);
-	    if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, (char *)0)) {
+	    if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, NULL)) {
 		    mon = u.usteed;
 		    goto buzzmonst;
 	    } else if (zap_hit((int) u.uac, 0)) {
@@ -3919,7 +3919,7 @@ retry:
 	    pline("Nothing fitting that description exists in the game.");
 	    if (++tries < 5) goto retry;
 	    pline(thats_enough_tries);
-	    otmp = readobjnam((char *)0, (struct obj *)0, TRUE);
+	    otmp = readobjnam(NULL, NULL, TRUE);
 	    if (!otmp) return;	/* for safety; should never happen */
 	} else if (otmp == &nothing) {
 	    /* explicitly wished for "nothing", presumeably attempting
@@ -3943,7 +3943,7 @@ retry:
 				       The(aobjnam(otmp,
 					     Is_airlevel(&u.uz) || u.uinwater ?
 						   "slip" : "drop")),
-				       (const char *)0);
+				       NULL);
 	    u.ublesscnt += rn1(100,50);  /* the gods take notice */
 	}
 }

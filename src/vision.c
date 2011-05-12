@@ -1654,7 +1654,7 @@ static void view_from(
 	if(left < scol - range) left = scol - range;
 	if(right > scol + range) right = scol + range;
     } else
-	limits = (char*) 0;
+	limits = NULL;
 
     if(func) {
 	for (i = left; i <= right; i++) (*func)(i, srow, arg);
@@ -1703,7 +1703,7 @@ void do_clear_area(int scol, int srow, int range,
 {
 	/* If not centered on hero, do the hard work of figuring the area */
 	if (scol != u.ux || srow != u.uy)
-	    view_from(srow, scol, (char **)0, (char *)0, (char *)0,
+	    view_from(srow, scol, NULL, NULL, NULL,
 							range, func, arg);
 	else {
 	    int x;

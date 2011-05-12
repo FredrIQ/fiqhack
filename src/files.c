@@ -456,7 +456,7 @@ int close(int fd)
 {
  	if (lftrack.fd == fd) {
 		really_close();	/* close it, but reopen it to hold it */
-		fd = open_levelfile(0, (char *)0);
+		fd = open_levelfile(0, NULL);
 		lftrack.nethack_thinks_it_is_open = FALSE;
 		return 0;
 	}
@@ -688,7 +688,7 @@ static char *make_lockname(const char *filename, char *lockname)
 	return lockname;
 # else
 	lockname[0] = '\0';
-	return (char*)0;
+	return NULL;
 #endif  /* UNIX || WIN32 */
 }
 
@@ -965,7 +965,7 @@ boolean recover_savefile(void)
 		 * maximum level number (for the endlevel) must be < 256
 		 */
 		if (lev != savelev) {
-			lfd = open_levelfile(lev, (char *)0);
+			lfd = open_levelfile(lev, NULL);
 			if (lfd >= 0) {
 				/* any or all of these may not exist */
 				levc = (xchar) lev;

@@ -118,7 +118,7 @@ void initworm(struct monst *worm, int wseg_count)
 	wheads[wnum] = seg;
     } else {
 	wtails[wnum] = wheads[wnum] = seg = newseg();
-	seg->nseg    = (struct wseg *) 0;
+	seg->nseg    = NULL;
 	seg->wx      = worm->mx;
 	seg->wy      = worm->my;
     }
@@ -170,7 +170,7 @@ static void shrink_worm(int wnum)
 
     seg = wtails[wnum];
     wtails[wnum] = seg->nseg;
-    seg->nseg = (struct wseg *) 0;
+    seg->nseg = NULL;
     toss_wsegs(seg, TRUE);
 }
 
@@ -202,7 +202,7 @@ void worm_move(struct monst *worm)
     new_seg       = newseg();
     new_seg->wx   = worm->mx;
     new_seg->wy   = worm->my;
-    new_seg->nseg = (struct wseg *) 0;
+    new_seg->nseg = NULL;
     seg->nseg     = new_seg;		/* attach it to the end of the list */
     wheads[wnum]  = new_seg;		/* move the end pointer */
 
@@ -257,7 +257,7 @@ void wormgone(struct monst *worm)
      */
     toss_wsegs(wtails[wnum], TRUE);
 
-    wheads[wnum] = wtails[wnum] = (struct wseg *) 0;
+    wheads[wnum] = wtails[wnum] = NULL;
 }
 
 /*
@@ -336,7 +336,7 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
      */
     new_tail = wtails[wnum];
     wtails[wnum] = curr->nseg;
-    curr->nseg = (struct wseg *) 0;	/* split the worm */
+    curr->nseg = NULL;	/* split the worm */
 
     /*
      *  At this point, the old worm is correct.  Any new worm will have
@@ -466,7 +466,7 @@ void save_worm(int fd, int mode)
 		dealloc_seg(curr);		/* free the segment */
 		curr = temp;
 	    }
-	    wheads[i] = wtails[i] = (struct wseg *) 0;
+	    wheads[i] = wtails[i] = NULL;
 	}
     }
 
@@ -487,9 +487,9 @@ void rest_worm(int fd)
 	if (!count) continue;	/* none */
 
 	/* Get the segments. */
-	for (curr = (struct wseg *) 0, j = 0; j < count; j++) {
+	for (curr = NULL, j = 0; j < count; j++) {
 	    temp = newseg();
-	    temp->nseg = (struct wseg *) 0;
+	    temp->nseg = NULL;
 	    mread(fd, &(temp->wx), sizeof(xchar));
 	    mread(fd, &(temp->wy), sizeof(xchar));
 	    if (curr)
@@ -566,7 +566,7 @@ void place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
 
     wheads[wnum] = new_tail = curr;
     curr = curr->nseg;
-    new_tail->nseg = (struct wseg *) 0;
+    new_tail->nseg = NULL;
     new_tail->wx = x;
     new_tail->wy = y;
 
@@ -591,7 +591,7 @@ void place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
 	    newsym(nx, ny);
 	} else {			/* Oops.  Truncate because there was */
 	    toss_wsegs(curr, FALSE);    /* no place for the rest of it */
-	    curr = (struct wseg *) 0;
+	    curr = NULL;
 	}
     }
 }
@@ -659,17 +659,17 @@ static struct wseg *create_worm_tail(int num_segs)
     int i=0;
     struct wseg *new_tail, *curr;
 
-    if (!num_segs) return (struct wseg *)0;
+    if (!num_segs) return NULL;
 
     new_tail = curr = newseg();
-    curr->nseg = (struct wseg *)0;
+    curr->nseg = NULL;
     curr->wx = 0;
     curr->wy = 0;
 
     while (i < num_segs) {
 	curr->nseg = newseg();
 	curr = curr->nseg;
-	curr->nseg = (struct wseg *)0;
+	curr->nseg = NULL;
 	curr->wx = 0;
 	curr->wy = 0;
 	i++;

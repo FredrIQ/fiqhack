@@ -500,7 +500,7 @@ void u_init(void)
 	/* zero u, including pointer values --
 	 * necessary when aborting from a failed restore */
 	memset(&u, 0, sizeof(u));
-	u.ustuck = (struct monst *)0;
+	u.ustuck = NULL;
 
 	u.uz.dlevel = 1;
 	u.uz0.dlevel = 0;
@@ -956,7 +956,7 @@ static void ini_inv(struct trobj *trop)
 		if(obj->oclass == ARMOR_CLASS){
 			if (is_shield(obj) && !uarms) {
 				setworn(obj, W_ARMS);
-				if (uswapwep) setuswapwep((struct obj *) 0);
+				if (uswapwep) setuswapwep(NULL);
 			} else if (is_helmet(obj) && !uarmh)
 				setworn(obj, W_ARMH);
 			else if (is_gloves(obj) && !uarmg)

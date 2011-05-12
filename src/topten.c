@@ -696,7 +696,7 @@ void prscore(char *hname, int argc, char **argv)
 #ifdef PERS_IS_UID
 		uid = getuid();
 		playerct = 0;
-		players = (const char **)0;
+		players = NULL;
 #else
 		player0 = plname;
 		if (!*player0)
@@ -797,12 +797,12 @@ struct obj *tt_oname(struct obj *otmp)
 	FILE *rfile;
 	struct toptenentry tt_buf;
 
-	if (!otmp) return (struct obj *) 0;
+	if (!otmp) return NULL;
 
 	rfile = fopen_datafile(RECORD, "r", SCOREPREFIX);
 	if (!rfile) {
 		impossible("Cannot open record file!");
-		return (struct obj *)0;
+		return NULL;
 	}
 
 	tt = &tt_buf;
@@ -819,7 +819,7 @@ pickentry:
 			rewind(rfile);
 			goto pickentry;
 		}
-		otmp = (struct obj *) 0;
+		otmp = NULL;
 	} else {
 		/* reset timer in case corpse started out as lizard or troll */
 		if (otmp->otyp == CORPSE) obj_stop_timers(otmp);

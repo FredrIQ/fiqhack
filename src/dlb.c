@@ -134,8 +134,8 @@ static boolean readlibdir(library *lp)
 			&lp->dir[i].handling, sp, &lp->dir[i].foffset) != 3) {
 	    free(lp->dir);
 	    free(lp->sspace);
-	    lp->dir = (libdir *) 0;
-	    lp->sspace = (char *) 0;
+	    lp->dir = NULL;
+	    lp->sspace = NULL;
 	    return FALSE;
 	}
 	sp = eos(sp) + 1;
@@ -175,7 +175,7 @@ static boolean find_file(const char *name, library **lib, long *startp, *sizep)
 	    }
 	}
     }
-    *lib = (library *) 0;
+    *lib = NULL;
     *startp = *sizep = 0;
     return FALSE;
 }
@@ -194,7 +194,7 @@ boolean open_library(const char *lib_name, library *lp)
 	    status = TRUE;
 	} else {
 	    fclose(lp->fdata);
-	    lp->fdata = (FILE *) 0;
+	    lp->fdata = NULL;
 	}
     }
     return status;
@@ -308,7 +308,7 @@ static char *lib_dlb_fgets(char *buf, int len, dlb *dp)
     if (len <= 0) return buf;	/* sanity check */
 
     /* return NULL on EOF */
-    if (dp->mark >= dp->size) return (char *) 0;
+    if (dp->mark >= dp->size) return NULL;
 
     len--;	/* save room for null */
     for (i = 0, bp = buf;
@@ -393,17 +393,17 @@ dlb *dlb_fopen(const char *name, const char *mode)
     FILE *fp;
     dlb *dp;
 
-    if (!dlb_initialized) return (dlb *) 0;
+    if (!dlb_initialized) return NULL;
 
     dp = malloc(sizeof(dlb));
     if (do_dlb_fopen(dp, name, mode))
-    	dp->fp = (FILE *) 0;
+    	dp->fp = NULL;
     else if ((fp = fopen_datafile(name, mode, DATAPREFIX)) != 0)
 	dp->fp = fp;
     else {
 	/* can't find anything */
 	free(dp);
-	dp = (dlb *) 0;
+	dp = NULL;
 	}
 
     return dp;
@@ -438,7 +438,7 @@ int dlb_fseek(dlb *dp, long pos, int whence)
 
 char *dlb_fgets(char *buf, int len, dlb *dp)
 {
-    if (!dlb_initialized) return (char *) 0;
+    if (!dlb_initialized) return NULL;
     if (dp->fp) return fgets(buf, len, dp->fp);
     return do_dlb_fgets(buf, len, dp);
 }

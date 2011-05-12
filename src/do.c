@@ -101,7 +101,7 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 
 	    /* boulder is now gone */
 	    if (pushing) delobj(otmp);
-	    else obfree(otmp, (struct obj *)0);
+	    else obfree(otmp, NULL);
 	    return TRUE;
 	}
 	return FALSE;
@@ -120,7 +120,7 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 	    panic("flooreffects: obj not free");
 
 	/* make sure things like water_damage() have no pointers to follow */
-	obj->nobj = obj->nexthere = (struct obj *)0;
+	obj->nobj = obj->nexthere = NULL;
 
 	if (obj->otyp == BOULDER && boulder_hits_pool(obj, x, y, FALSE))
 		return TRUE;
@@ -131,7 +131,7 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 			(u.utrap && u.ux == x && u.uy == y)) {
 		    if (*verb)
 			pline_The("boulder %s into the pit%s.",
-				vtense((const char *)0, verb),
+				vtense(NULL, verb),
 				(mtmp) ? "" : " with you");
 		    if (mtmp) {
 			if (!passes_walls(mtmp->data) &&
@@ -163,7 +163,7 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 			}
 		}
 		deltrap(t);
-		obfree(obj, (struct obj *)0);
+		obfree(obj, NULL);
 		bury_objs(x, y);
 		newsym(x,y);
 		return TRUE;
@@ -420,13 +420,13 @@ static int drop(struct obj *obj)
 			weldmsg(obj);
 			return 0;
 		}
-		setuwep((struct obj *)0);
+		setuwep(NULL);
 	}
 	if(obj == uquiver) {
-		setuqwep((struct obj *)0);
+		setuqwep(NULL);
 	}
 	if (obj == uswapwep) {
-		setuswapwep((struct obj *)0);
+		setuswapwep(NULL);
 	}
 
 	if (u.uswallow) {
@@ -486,9 +486,9 @@ void dropx(struct obj *obj)
 
 void dropy(struct obj *obj)
 {
-	if (obj == uwep) setuwep((struct obj *)0);
-	if (obj == uquiver) setuqwep((struct obj *)0);
-	if (obj == uswapwep) setuswapwep((struct obj *)0);
+	if (obj == uwep) setuwep(NULL);
+	if (obj == uquiver) setuqwep(NULL);
+	if (obj == uswapwep) setuswapwep(NULL);
 
 	if (!u.uswallow && flooreffects(obj,u.ux,u.uy,"drop")) return;
 	/* uswallow check done by GAN 01/29/87 */
@@ -511,7 +511,7 @@ void dropy(struct obj *obj)
 		if (is_animal(u.ustuck->data)) {
 		    if (could_poly || could_slime) {
 			newcham(u.ustuck,
-				       could_poly ? (struct permonst *)0 :
+				       could_poly ? NULL :
 				       &mons[PM_GREEN_SLIME],
 				       FALSE, could_slime);
 			delobj(obj);	/* corpse is digested */
@@ -520,7 +520,7 @@ void dropy(struct obj *obj)
 			/* Don't leave a cockatrice corpse in a statue */
 			if (!u.uswallow) delobj(obj);
 		    } else if (could_grow) {
-			grow_up(u.ustuck, (struct monst *)0);
+			grow_up(u.ustuck, NULL);
 			delobj(obj);	/* corpse is digested */
 		    } else if (could_heal) {
 			u.ustuck->mhp = u.ustuck->mhpmax;
@@ -572,7 +572,7 @@ int doddrop(void)
 	add_valid_menu_class(0); /* clear any classes already there */
 	if (*u.ushops) sellobj_state(SELL_DELIBERATE);
 	if (flags.menu_style != MENU_TRADITIONAL ||
-		(result = ggetobj("drop", drop, 0, FALSE, (unsigned *)0)) < -1)
+		(result = ggetobj("drop", drop, 0, FALSE, NULL)) < -1)
 	    result = menu_drop(result);
 	if (*u.ushops) sellobj_state(SELL_NORMAL);
 	reset_occupations();
@@ -939,7 +939,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	if (fd < 0) return;
 
 	if (falling) /* assuming this is only trap door or hole */
-	    impact_drop((struct obj *)0, u.ux, u.uy, newlevel->dlevel);
+	    impact_drop(NULL, u.ux, u.uy, newlevel->dlevel);
 
 	check_special_room(TRUE);		/* probably was a trap door */
 	if (Punished) unplacebc();
@@ -1077,11 +1077,11 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			drag_down();
 			if (carried(uball)) {
 			    if (uwep == uball)
-				setuwep((struct obj *)0);
+				setuwep(NULL);
 			    if (uswapwep == uball)
-				setuswapwep((struct obj *)0);
+				setuswapwep(NULL);
 			    if (uquiver == uball)
-				setuqwep((struct obj *)0);
+				setuqwep(NULL);
 			    freeinv(uball);
 			}
 		    }
@@ -1100,19 +1100,19 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		/* Note: up vs down doesn't really matter in this case. */
 		place_lregion(dndest.nlx, dndest.nly,
 				dndest.nhx, dndest.nhy,
-				0,0, 0,0, LR_DOWNTELE, (d_level *) 0);
+				0,0, 0,0, LR_DOWNTELE, NULL);
 	    else if (up)
 		place_lregion(updest.lx, updest.ly,
 				updest.hx, updest.hy,
 				updest.nlx, updest.nly,
 				updest.nhx, updest.nhy,
-				LR_UPTELE, (d_level *) 0);
+				LR_UPTELE, NULL);
 	    else
 		place_lregion(dndest.lx, dndest.ly,
 				dndest.hx, dndest.hy,
 				dndest.nlx, dndest.nly,
 				dndest.nhx, dndest.nhy,
-				LR_DOWNTELE, (d_level *) 0);
+				LR_DOWNTELE, NULL);
 	    if (falling) {
 		if (Punished) ballfall();
 		selftouch("Falling, you");
@@ -1384,7 +1384,7 @@ boolean revive_corpse(struct obj *corpse)
     boolean is_uwep, chewed;
     xchar where;
     char *cname, cname_buf[BUFSZ];
-    struct obj *container = (struct obj *)0;
+    struct obj *container = NULL;
     int container_where = 0;
     
     where = corpse->where;
@@ -1394,9 +1394,9 @@ boolean revive_corpse(struct obj *corpse)
     mcarry = (where == OBJ_MINVENT) ? corpse->ocarry : 0;
 
     if (where == OBJ_CONTAINED) {
-    	struct monst *mtmp2 = (struct monst *)0;
+    	struct monst *mtmp2 = NULL;
 	container = corpse->ocontainer;
-    	mtmp2 = get_container_location(container, &container_where, (int *)0);
+    	mtmp2 = get_container_location(container, &container_where, NULL);
 	/* container_where is the outermost container's location even if nested */
 	if (container_where == OBJ_MINVENT && mtmp2) mcarry = mtmp2;
     }

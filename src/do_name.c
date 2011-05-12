@@ -329,7 +329,7 @@ struct obj *realloc_obj(struct obj *obj, int oextra_size, void *oextra_src,
 		boolean save_twoweap = u.twoweap;
 		/* unwearing the old instance will clear dual-wield mode
 		   if this object is either of the two weapons */
-		setworn((struct obj *)0, obj->owornmask);
+		setworn(NULL, obj->owornmask);
 		setworn(otmp, otmp->owornmask);
 		u.twoweap = save_twoweap;
 	}
@@ -466,7 +466,7 @@ void docall(struct obj *obj)
 	    if (*str1) {	/* had name, so possibly remove from disco[] */
 		/* strip name first, for the update_inventory() call
 		   from undiscover_object() */
-		*str1 = (char *)0;
+		*str1 = NULL;
 		undiscover_object(obj->otyp);
 	    }
 	} else {
@@ -688,14 +688,14 @@ char *x_monnam(struct monst *mtmp,
 
 char *l_monnam(struct monst *mtmp)
 {
-	return(x_monnam(mtmp, ARTICLE_NONE, (char *)0, 
+	return(x_monnam(mtmp, ARTICLE_NONE, NULL, 
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, TRUE));
 }
 
 
 char *mon_nam(struct monst *mtmp)
 {
-	return(x_monnam(mtmp, ARTICLE_THE, (char *)0,
+	return(x_monnam(mtmp, ARTICLE_THE, NULL,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE));
 }
 
@@ -705,7 +705,7 @@ char *mon_nam(struct monst *mtmp)
  */
 char *noit_mon_nam(struct monst *mtmp)
 {
-	return(x_monnam(mtmp, ARTICLE_THE, (char *)0,
+	return(x_monnam(mtmp, ARTICLE_THE, NULL,
 		mtmp->mnamelth ? (SUPPRESS_SADDLE|SUPPRESS_IT) :
 		    SUPPRESS_IT, FALSE));
 }
@@ -729,7 +729,7 @@ char *noit_Monnam(struct monst *mtmp)
 /* monster's own name */
 char *m_monnam(struct monst *mtmp)
 {
-	return x_monnam(mtmp, ARTICLE_NONE, (char *)0, EXACT_NAME, FALSE);
+	return x_monnam(mtmp, ARTICLE_NONE, NULL, EXACT_NAME, FALSE);
 }
 
 /* pet name: "your little dog" */
@@ -741,7 +741,7 @@ char *y_monnam(struct monst *mtmp)
 	/* "saddled" is redundant when mounted */
 	suppression_flag = (mtmp->mnamelth || mtmp == u.usteed) ? SUPPRESS_SADDLE : 0;
 
-	return x_monnam(mtmp, prefix, (char *)0, suppression_flag, FALSE);
+	return x_monnam(mtmp, prefix, NULL, suppression_flag, FALSE);
 }
 
 
@@ -756,7 +756,7 @@ char *Adjmonnam(struct monst *mtmp, const char *adj)
 
 char *a_monnam(struct monst *mtmp)
 {
-	return x_monnam(mtmp, ARTICLE_A, (char *)0,
+	return x_monnam(mtmp, ARTICLE_A, NULL,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
 }
 
@@ -781,7 +781,7 @@ char *distant_monnam(struct monst *mon, int article, char *outbuf)
 	strcpy(outbuf, article == ARTICLE_THE ? "the " : "");
 	strcat(outbuf, mon->female ? "high priestess" : "high priest");
     } else {
-	strcpy(outbuf, x_monnam(mon, article, (char *)0, 0, TRUE));
+	strcpy(outbuf, x_monnam(mon, article, NULL, 0, TRUE));
     }
     return outbuf;
 }
@@ -900,7 +900,7 @@ const char *hcolor(const char *colorpref)
 const char *rndcolor(void)
 {
 	int k = rn2(CLR_MAX);
-	return Hallucination ? hcolor((char *)0) : (k == NO_COLOR) ?
+	return Hallucination ? hcolor(NULL) : (k == NO_COLOR) ?
 		"colorless" : c_obj_colors[k];
 }
 
@@ -924,7 +924,7 @@ char *coyotename(struct monst *mtmp, char *buf)
 {
     if (mtmp && buf) {
 	sprintf(buf, "%s - %s",
-	    x_monnam(mtmp, ARTICLE_NONE, (char *)0, 0, TRUE),
+	    x_monnam(mtmp, ARTICLE_NONE, NULL, 0, TRUE),
 	    mtmp->mcan ? coynames[SIZE(coynames)-1] : coynames[rn2(SIZE(coynames)-1)]);
     }
     return buf;

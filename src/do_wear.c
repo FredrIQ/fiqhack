@@ -134,7 +134,7 @@ int Boots_off(void)
 	/* For levitation, float_down() returns if Levitation, so we
 	 * must do a setworn() _before_ the levitation case.
 	 */
-    setworn((struct obj *)0, W_ARMF);
+    setworn(NULL, W_ARMF);
     switch (otyp) {
 	case SPEED_BOOTS:
 		if (!Very_fast && !cancelled_don) {
@@ -234,7 +234,7 @@ int Cloak_off(void)
 
     takeoff_mask &= ~W_ARMC;
 	/* For mummy wrapping, taking it off first resets `Invisible'. */
-    setworn((struct obj *)0, W_ARMC);
+    setworn(NULL, W_ARMC);
     switch (otyp) {
 	case ELVEN_CLOAK:
 	case ORCISH_CLOAK:
@@ -351,7 +351,7 @@ int Helmet_off(void)
 	    break;
 	case HELM_OF_TELEPATHY:
 	    /* need to update ability before calling see_monsters() */
-	    setworn((struct obj *)0, W_ARMH);
+	    setworn(NULL, W_ARMH);
 	    see_monsters();
 	    return 0;
 	case HELM_OF_BRILLIANCE:
@@ -364,7 +364,7 @@ int Helmet_off(void)
 	    break;
 	default: impossible(unknown_type, c_helmet, uarmh->otyp);
     }
-    setworn((struct obj *)0, W_ARMH);
+    setworn(NULL, W_ARMH);
     cancelled_don = FALSE;
     return 0;
 }
@@ -416,7 +416,7 @@ int Gloves_off(void)
 	    break;
 	default: impossible(unknown_type, c_gloves, uarmg->otyp);
     }
-    setworn((struct obj *)0, W_ARMG);
+    setworn(NULL, W_ARMG);
     cancelled_don = FALSE;
     encumber_msg();		/* immediate feedback for GoP */
 
@@ -457,7 +457,7 @@ int Shield_off(void)
 {
     takeoff_mask &= ~W_ARMS;
 
-    setworn((struct obj *)0, W_ARMS);
+    setworn(NULL, W_ARMS);
     return 0;
 }
 
@@ -471,7 +471,7 @@ int Shirt_off(void)
 {
     takeoff_mask &= ~W_ARMU;
 
-    setworn((struct obj *)0, W_ARMU);
+    setworn(NULL, W_ARMU);
     return 0;
 }
 #endif	/*TOURIST*/
@@ -488,7 +488,7 @@ static int Armor_on(void)
 int Armor_off(void)
 {
     takeoff_mask &= ~W_ARM;
-    setworn((struct obj *)0, W_ARM);
+    setworn(NULL, W_ARM);
     cancelled_don = FALSE;
     return 0;
 }
@@ -564,7 +564,7 @@ void Amulet_off(void)
     switch(uamul->otyp) {
 	case AMULET_OF_ESP:
 		/* need to update ability before calling see_monsters() */
-		setworn((struct obj *)0, W_AMUL);
+		setworn(NULL, W_AMUL);
 		see_monsters();
 		return;
 	case AMULET_OF_LIFE_SAVING:
@@ -578,7 +578,7 @@ void Amulet_off(void)
 		if (Underwater) {
 		    /* HMagical_breathing must be set off
 			before calling drown() */
-		    setworn((struct obj *)0, W_AMUL);
+		    setworn(NULL, W_AMUL);
 		    if (!breathless(youmonst.data) && !amphibious(youmonst.data)
 						&& !Swimming) {
 			You("suddenly inhale an unhealthy amount of water!");
@@ -594,14 +594,14 @@ void Amulet_off(void)
 		}
 		break;
 	case AMULET_OF_RESTFUL_SLEEP:
-		setworn((struct obj *)0, W_AMUL);
+		setworn(NULL, W_AMUL);
 		if (!ESleeping)
 			HSleeping = 0;
 		return;
 	case AMULET_OF_YENDOR:
 		break;
     }
-    setworn((struct obj *)0, W_AMUL);
+    setworn(NULL, W_AMUL);
     return;
 }
 
@@ -610,9 +610,9 @@ void Ring_on(struct obj *obj)
     long oldprop = u.uprops[objects[obj->otyp].oc_oprop].extrinsic;
     int old_attrib, which;
 
-    if (obj == uwep) setuwep((struct obj *) 0);
-    if (obj == uswapwep) setuswapwep((struct obj *) 0);
-    if (obj == uquiver) setuqwep((struct obj *) 0);
+    if (obj == uwep) setuwep(NULL);
+    if (obj == uswapwep) setuswapwep(NULL);
+    if (obj == uquiver) setuqwep(NULL);
 
     /* only mask out W_RING when we don't have both
        left and right rings of the same type */
@@ -719,7 +719,7 @@ static void Ring_off_or_gone(struct obj *obj, boolean gone)
     if(!(u.uprops[objects[obj->otyp].oc_oprop].extrinsic & mask))
 	impossible("Strange... I didn't know you had that ring.");
     if(gone) setnotworn(obj);
-    else setworn((struct obj *)0, obj->owornmask);
+    else setworn(NULL, obj->owornmask);
 
     switch(obj->otyp) {
 	case RIN_TELEPORTATION:
@@ -828,11 +828,11 @@ void Blindf_on(struct obj *otmp)
 	boolean already_blind = Blind, changed = FALSE;
 
 	if (otmp == uwep)
-	    setuwep((struct obj *) 0);
+	    setuwep(NULL);
 	if (otmp == uswapwep)
-	    setuswapwep((struct obj *) 0);
+	    setuswapwep(NULL);
 	if (otmp == uquiver)
-	    setuqwep((struct obj *) 0);
+	    setuqwep(NULL);
 	setworn(otmp, W_TOOL);
 	on_msg(otmp);
 
@@ -859,7 +859,7 @@ void Blindf_off(struct obj *otmp)
 	boolean was_blind = Blind, changed = FALSE;
 
 	takeoff_mask &= ~W_TOOL;
-	setworn((struct obj *)0, otmp->owornmask);
+	setworn(NULL, otmp->owornmask);
 	off_msg(otmp);
 
 	if (Blind) {
@@ -944,7 +944,7 @@ void cancel_don(void)
 	cancelled_don = (afternmv == Boots_on || afternmv == Helmet_on ||
 			 afternmv == Gloves_on || afternmv == Armor_on);
 	afternmv = 0;
-	nomovemsg = (char *)0;
+	nomovemsg = NULL;
 	multi = 0;
 	todelay = 0;
 	taking_off = 0L;
@@ -956,7 +956,7 @@ static const char accessories[] = {RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CL
 /* the 'T' command */
 int dotakeoff(void)
 {
-	struct obj *otmp = (struct obj *)0;
+	struct obj *otmp = NULL;
 	int armorpieces = 0;
 
 #define MOREARM(x) if (x) { armorpieces++; otmp = x; }
@@ -1126,7 +1126,7 @@ int armoroff(struct obj *otmp)
 			Cloak_off();
 		else if(is_shield(otmp))
 			Shield_off();
-		else setworn((struct obj *)0, otmp->owornmask & W_ARMOR);
+		else setworn(NULL, otmp->owornmask & W_ARMOR);
 		off_msg(otmp);
 	}
 	takeoff_mask = taking_off = 0L;
@@ -1329,11 +1329,11 @@ int dowear(void)
 
 	otmp->known = TRUE;
 	if(otmp == uwep)
-		setuwep((struct obj *)0);
+		setuwep(NULL);
 	if (otmp == uswapwep)
-		setuswapwep((struct obj *) 0);
+		setuswapwep(NULL);
 	if (otmp == uquiver)
-		setuqwep((struct obj *) 0);
+		setuqwep(NULL);
 	setworn(otmp, mask);
 	delay = -objects[otmp->otyp].oc_delay;
 	if(delay){
@@ -1378,11 +1378,11 @@ int doputon(void)
 		return 0;
 	}
 	if(otmp == uwep)
-		setuwep((struct obj *)0);
+		setuwep(NULL);
 	if(otmp == uswapwep)
-		setuswapwep((struct obj *) 0);
+		setuswapwep(NULL);
 	if(otmp == uquiver)
-		setuqwep((struct obj *) 0);
+		setuqwep(NULL);
 	if(otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING) {
 		if(nolimbs(youmonst.data)) {
 			You("cannot make the ring stick to your body.");
@@ -1478,7 +1478,7 @@ int doputon(void)
 		return 1;
 	}
 	if (is_worn(otmp))
-	    prinv((char *)0, otmp, 0L);
+	    prinv(NULL, otmp, 0L);
 	return 1;
 }
 
@@ -1545,7 +1545,7 @@ void glibr(void)
 			otherwep,
 			xfl ? "also " : "",
 			makeplural(body_part(HAND)));
-		setuswapwep((struct obj *)0);
+		setuswapwep(NULL);
 		xfl++;
 		if (otmp->otyp != LOADSTONE || !otmp->cursed)
 			dropx(otmp);
@@ -1564,7 +1564,7 @@ void glibr(void)
 			otherwep ? "other " : "", thiswep,
 			xfl ? "also " : "",
 			makeplural(body_part(HAND)));
-		setuwep((struct obj *)0);
+		setuwep(NULL);
 		if (otmp->otyp != LOADSTONE || !otmp->cursed)
 			dropx(otmp);
 	}
@@ -1609,7 +1609,7 @@ struct obj *stuck_ring(struct obj *ring, int otyp)
 {
     if (ring != uleft && ring != uright) {
 	impossible("stuck_ring: neither left nor right?");
-	return (struct obj *)0;
+	return NULL;
     }
 
     if (ring && ring->otyp == otyp) {
@@ -1623,7 +1623,7 @@ struct obj *stuck_ring(struct obj *ring, int otyp)
 	if (ring->cursed) return ring;
     }
     /* either no ring or not right type or nothing prevents its removal */
-    return (struct obj *)0;
+    return NULL;
 }
 
 /* also for praying; find worn item that confers "Unchanging" attribute */
@@ -1746,20 +1746,20 @@ static int select_off(struct obj *otmp)
 
 static struct obj *do_takeoff(void)
 {
-	struct obj *otmp = (struct obj *)0;
+	struct obj *otmp = NULL;
 
 	if (taking_off == W_WEP) {
 	  if(!cursed(uwep)) {
-	    setuwep((struct obj *) 0);
+	    setuwep(NULL);
 	    You("are empty %s.", body_part(HANDED));
 	    u.twoweap = FALSE;
 	  }
 	} else if (taking_off == W_SWAPWEP) {
-	  setuswapwep((struct obj *) 0);
+	  setuswapwep(NULL);
 	  You("no longer have a second weapon readied.");
 	  u.twoweap = FALSE;
 	} else if (taking_off == W_QUIVER) {
-	  setuqwep((struct obj *) 0);
+	  setuqwep(NULL);
 	  You("no longer have ammunition readied.");
 	} else if (taking_off == WORN_ARMOR) {
 	  otmp = uarm;
@@ -1824,7 +1824,7 @@ static int take_off(void)
 		break;
 	    }
 
-	otmp = (struct obj *) 0;
+	otmp = NULL;
 	todelay = 0;
 
 	if (taking_off == 0L) {
@@ -1909,7 +1909,7 @@ int doddoremarm(void)
 
     add_valid_menu_class(0); /* reset */
     if (flags.menu_style != MENU_TRADITIONAL ||
-	    (result = ggetobj("take off", select_off, 0, FALSE, (unsigned *)0)) < -1)
+	    (result = ggetobj("take off", select_off, 0, FALSE, NULL)) < -1)
 	result = menu_remarm(result);
 
     if (takeoff_mask) {

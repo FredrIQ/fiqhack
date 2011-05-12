@@ -72,20 +72,20 @@ void pcmain(int argc, char *argv[])
 	/* Save current directory and make sure it gets restored when
 	 * the game is exited.
 	 */
-	if (getcwd(orgdir, sizeof orgdir) == (char *)0)
+	if (getcwd(orgdir, sizeof orgdir) == NULL)
 		error("NetHack: current directory path too long");
 # ifndef NO_SIGNAL
 	signal(SIGINT, (SIG_RET_TYPE) nethack_exit);	/* restore original directory */
 # endif
 
 	dir = nh_getenv("NETHACKDIR");
-	if (dir == (char *)0)
+	if (dir == NULL)
 		dir = nh_getenv("HACKDIR");
 #ifdef EXEPATH
-	if (dir == (char *)0)
+	if (dir == NULL)
 		dir = exepath(argv[0]);
 #endif
-	if (dir != (char *)0) {
+	if (dir != NULL) {
 		strncpy(hackdir, dir, PATHLEN - 1);
 		hackdir[PATHLEN-1] = '\0';
 #ifdef NOCWD_ASSUMPTIONS
@@ -222,7 +222,7 @@ void pcmain(int argc, char *argv[])
 
 	/* Set up level 0 file to keep the game state.
 	 */
-	fd = create_levelfile(0, (char *)0);
+	fd = create_levelfile(0, NULL);
 	if (fd < 0) {
 		raw_print("Cannot create lock file");
 	} else {
@@ -480,7 +480,7 @@ char *exepath(char *str)
 	char *tmp, *tmp2;
 	int bsize;
 
-	if (!str) return (char *)0;
+	if (!str) return NULL;
 	bsize = EXEPATHBUFSZ;
 	tmp = exepathbuf;
 # ifndef WIN32

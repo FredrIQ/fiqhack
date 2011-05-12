@@ -79,10 +79,10 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 	    }
 	} while (!mtmp && --trycnt > 0);
 
-	if (!mtmp) return (struct monst *)0;
+	if (!mtmp) return NULL;
 
 	if (is_pool(mtmp->mx, mtmp->my) && minliquid(mtmp))
-		return (struct monst *)0;
+		return NULL;
 
 	initedog(mtmp);
 	mtmp->msleeping = 0;
@@ -122,7 +122,7 @@ struct monst *makedog(void)
 	int   pettype;
 	static int petname_used = 0;
 
-	if (preferred_pet == 'n') return (struct monst *) 0;
+	if (preferred_pet == 'n') return NULL;
 
 	pettype = pet_type();
 	if (pettype == PM_LITTLE_DOG)
@@ -143,7 +143,7 @@ struct monst *makedog(void)
 
 	mtmp = makemon(&mons[pettype], u.ux, u.uy, MM_EDOG);
 
-	if(!mtmp) return (struct monst *) 0; /* pets were genocided */
+	if(!mtmp) return NULL; /* pets were genocided */
 
 	/* Horses already wear a saddle */
 	if (pettype == PM_PONY && !!(otmp = mksobj(SADDLE, TRUE, FALSE))) {
@@ -353,7 +353,7 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 			get_obj_location(obj, &xlocale, &ylocale, 0);
 		    }
 		}
-		corpse = mkcorpstat(CORPSE, (struct monst *)0, mtmp->data,
+		corpse = mkcorpstat(CORPSE, NULL, mtmp->data,
 				xlocale, ylocale, FALSE);
 #ifndef GOLDOBJ
 		if (mtmp->mgold) {
@@ -531,7 +531,7 @@ void keepdogs(boolean pets_only)
 		   chance comes up, but have him resume his present location
 		   if player returns to this level before that time */
 		migrate_to_level(mtmp, ledger_no(&u.uz),
-				 MIGR_EXACT_XY, (coord *)0);
+				 MIGR_EXACT_XY, NULL);
 	    } else if (mtmp->mleashed) {
 		/* this can happen if your quest leader ejects you from the
 		   "home" level while a leashed pet isn't next to you */
@@ -700,14 +700,14 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 	/* The Wiz, Medusa and the quest nemeses aren't even made peaceful. */
 	if (mtmp->iswiz || mtmp->data == &mons[PM_MEDUSA]
 				|| (mtmp->data->mflags3 & M3_WANTSARTI))
-		return (struct monst *)0;
+		return NULL;
 
 	/* worst case, at least it'll be peaceful. */
 	mtmp->mpeaceful = 1;
 	set_malign(mtmp);
 	if(flags.moonphase == FULL_MOON && night() && rn2(6) && obj
 						&& mtmp->data->mlet == S_DOG)
-		return (struct monst *)0;
+		return NULL;
 
 	/* If we cannot tame it, at least it's no longer afraid. */
 	mtmp->mflee = 0;
@@ -746,7 +746,7 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 		   food and also implies that the object has been deleted */
 		return mtmp;
 	    } else
-		return (struct monst *)0;
+		return NULL;
 	}
 
 	if (mtmp->mtame || !mtmp->mcanmove ||
@@ -754,10 +754,10 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 	    mtmp->isshk || mtmp->isgd || mtmp->ispriest || mtmp->isminion ||
 	    is_covetous(mtmp->data) || is_human(mtmp->data) ||
 	    (is_demon(mtmp->data) && !is_demon(youmonst.data)) ||
-	    (obj && dogfood(mtmp, obj) >= MANFOOD)) return (struct monst *)0;
+	    (obj && dogfood(mtmp, obj) >= MANFOOD)) return NULL;
 
 	if (mtmp->m_id == quest_status.leader_m_id)
-	    return (struct monst *)0;
+	    return NULL;
 
 	/* make a new monster which has the pet extension */
 	mtmp2 = newmonst(sizeof(struct edog) + mtmp->mnamelth);

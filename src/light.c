@@ -208,7 +208,7 @@ struct monst *find_mid(unsigned nid, unsigned fmflags)
 	if (fmflags & FM_MYDOGS)
 		for (mtmp = mydogs; mtmp; mtmp = mtmp->nmon)
 	    	    if (mtmp->m_id == nid) return mtmp;
-	return (struct monst *) 0;
+	return NULL;
 }
 
 /* Save all light sources of the given range. */
@@ -400,7 +400,7 @@ void obj_move_light_source(struct obj *src, struct obj *dest)
 /* return true if there exist any light sources */
 boolean any_light_source(void)
 {
-    return light_base != (light_source *) 0;
+    return light_base != NULL;
 }
 
 /*

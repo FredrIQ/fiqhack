@@ -360,9 +360,9 @@ char *strstri(const char *str, const char *sub)
     for (	s2 = sub; *s2; --k)  tsub[*s2++ & (TABSIZ-1)]++;
 
     /* evaluate the info we've collected */
-    if (k < 0)	return (char *) 0;  /* sub longer than str, so can't match */
+    if (k < 0)	return NULL;  /* sub longer than str, so can't match */
     for (i = 0; i < TABSIZ; i++)	/* does sub have more 'x's than str? */
-	if (tsub[i] > tstr[i])	return (char *) 0;  /* match not possible */
+	if (tsub[i] > tstr[i])	return NULL;  /* match not possible */
 
     /* now actually compare the substring repeatedly to parts of the string */
     for (i = 0; i <= k; i++) {
@@ -371,7 +371,7 @@ char *strstri(const char *str, const char *sub)
 	while (lowc(*s1++) == lowc(*s2++))
 	    if (!*s2)  return (char *) &str[i];		/* full match */
     }
-    return (char *) 0;	/* not found */
+    return NULL;	/* not found */
 }
 #endif	/* STRSTRI */
 
@@ -417,9 +417,9 @@ void setrandom(void)
 	 * routine names into one via #defines is even more confusing
 	 */
 #ifdef RANDOM	/* srandom() from sys/share/random.c */
-	srandom((unsigned int) time((time_t *)0));
+	srandom((unsigned int) time(NULL));
 #else
-	srandom((int) time((time_t *)0));
+	srandom((int) time(NULL));
 #endif
 }
 

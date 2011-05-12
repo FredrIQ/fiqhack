@@ -74,7 +74,7 @@ static char * You_buf(int siz)
 
 void free_youbuf(void)
 {
-	if (you_buf) free(you_buf),  you_buf = (char *)0;
+	if (you_buf) free(you_buf),  you_buf = NULL;
 	you_buf_siz = 0;
 }
 
@@ -284,7 +284,7 @@ void mstatusline(struct monst *mtmp)
 
 	/* avoid "Status of the invisible newt ..., invisible" */
 	/* and unlike a normal mon_nam, use "saddled" even if it has a name */
-	strcpy(monnambuf, x_monnam(mtmp, ARTICLE_THE, (char *)0,
+	strcpy(monnambuf, x_monnam(mtmp, ARTICLE_THE, NULL,
 	    (SUPPRESS_IT|SUPPRESS_INVISIBLE), FALSE));
 
 	pline("Status of %s (%s):  Level %d  HP %d(%d)  AC %d%s.",

@@ -164,7 +164,7 @@ void xwaitforspace(const char *s)
  * we get here after # - now show pick-list of possible commands */
 static int extcmd_via_menu(const char **namelist, const char **desclist, int listlen)	
 {
-    menu_item *pick_list = (menu_item *)0;
+    menu_item *pick_list = NULL;
     winid win;
     anything any;
     int choices[listlen+1];

@@ -176,7 +176,7 @@ static int forcelock(void)
 		        loss += stolen_value(otmp, u.ux, u.uy,
 					     (boolean)shkp->mpeaceful, TRUE);
 		    if (otmp->quan == 1L) {
-			obfree(otmp, (struct obj *) 0);
+			obfree(otmp, NULL);
 			continue;
 		    }
 		    useup(otmp);
@@ -257,7 +257,7 @@ int pick_lock(struct obj *pick)
 	}
 	ch = 0;		/* lint suppression */
 
-	if(!get_adjacent_loc((char *)0, "Invalid location!", u.ux, u.uy, &cc)) return 0;
+	if(!get_adjacent_loc(NULL, "Invalid location!", u.ux, u.uy, &cc)) return 0;
 	if (cc.x == u.ux && cc.y == u.uy) {	/* pick lock on a container */
 	    const char *verb;
 	    boolean it;
@@ -447,7 +447,7 @@ int doforce(void)
 	}
 
 	/* A lock is made only for the honest man, the thief will break it. */
-	xlock.box = (struct obj *)0;
+	xlock.box = NULL;
 	for(otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere)
 	    if(Is_box(otmp)) {
 		if (otmp->obroken || !otmp->olocked) {
@@ -497,7 +497,7 @@ int doopen(void)
 	    return 0;
 	}
 
-	if(!get_adjacent_loc((char *)0, (char *)0, u.ux, u.uy, &cc)) return 0;
+	if(!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc)) return 0;
 
 	if((cc.x == u.ux) && (cc.y == u.uy)) return 0;
 
@@ -600,7 +600,7 @@ int doclose(void)
 	    return 0;
 	}
 
-	if(!getdir((char *)0)) return 0;
+	if(!getdir(NULL)) return 0;
 
 	x = u.ux + u.dx;
 	y = u.uy + u.dy;
@@ -714,7 +714,7 @@ boolean doorlock(struct obj *otmp, int x, int y)
 	struct rm *door = &levl[x][y];
 	boolean res = TRUE;
 	int loudness = 0;
-	const char *msg = (const char *)0;
+	const char *msg = NULL;
 	const char *dustcloud = "A cloud of dust";
 	const char *quickly_dissipates = "quickly dissipates";
 	

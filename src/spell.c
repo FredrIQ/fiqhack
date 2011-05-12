@@ -284,7 +284,7 @@ raise_dead:
 			if (mtmp->mtame < 20)
 			    mtmp->mtame++;
 		    } else
-			tamedog(mtmp, (struct obj *)0);
+			tamedog(mtmp, NULL);
 		else monflee(mtmp, 0, FALSE, TRUE);
 	    }
 	}
@@ -486,7 +486,7 @@ int study_book(struct obj *spellbook)
    the stored address for the current book is no longer valid */
 void book_disappears(struct obj *obj)
 {
-	if (obj == book) book = (struct obj *)0;
+	if (obj == book) book = NULL;
 }
 
 /* renaming an object usually results in it having a different address;
@@ -539,7 +539,7 @@ static boolean getspell(int *spell_no)
 
 	    for(;;)  {
 		sprintf(qbuf, "Cast which spell? [%s ?]", lets);
-		if ((ilet = yn_function(qbuf, (char *)0, '\0')) == '?')
+		if ((ilet = yn_function(qbuf, NULL, '\0')) == '?')
 		    break;
 
 		if (index(quitchars, ilet))
@@ -847,7 +847,7 @@ int spelleffects(int spell, boolean atme)
 	case SPE_STONE_TO_FLESH:
 		if (!(objects[pseudo->otyp].oc_dir == NODIR)) {
 			if (atme) u.dx = u.dy = u.dz = 0;
-			else if (!getdir((char *)0)) {
+			else if (!getdir(NULL)) {
 			    /* getdir cancelled, re-use previous direction */
 			    pline_The("magical energy is released!");
 			}
@@ -903,7 +903,7 @@ int spelleffects(int spell, boolean atme)
 		healup(0, 0, TRUE, FALSE);
 		break;
 	case SPE_CREATE_FAMILIAR:
-		make_familiar((struct obj *)0, u.ux, u.uy, FALSE);
+		make_familiar(NULL, u.ux, u.uy, FALSE);
 		break;
 	case SPE_CLAIRVOYANCE:
 		if (!BClairvoyant)
@@ -922,14 +922,14 @@ int spelleffects(int spell, boolean atme)
 		break;
 	default:
 		impossible("Unknown spell %d attempted.", spell);
-		obfree(pseudo, (struct obj *)0);
+		obfree(pseudo, NULL);
 		return 0;
 	}
 
 	/* gain skill for successful cast */
 	use_skill(skill, spellev(spell));
 
-	obfree(pseudo, (struct obj *)0);	/* now, get rid of it */
+	obfree(pseudo, NULL);	/* now, get rid of it */
 	return 1;
 }
 

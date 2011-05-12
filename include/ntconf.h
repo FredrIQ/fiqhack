@@ -102,7 +102,7 @@ extern const char *alllevels, *allbones;
 extern char hackdir[];
 #define ABORT C('a')
 #define getuid() 1
-#define getlogin() ((char *)0)
+#define getlogin() (NULL)
 extern void win32_abort(void);
 #ifdef WIN32CON
 extern void nttty_preference_update(const char *);

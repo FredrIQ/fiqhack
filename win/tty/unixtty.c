@@ -230,7 +230,7 @@ void error (const char *s, ...)
 	va_list the_args;
 	va_start(the_args, s);
 	if(settty_needed)
-		settty((char *)0);
+		settty(NULL);
 	vprintf(s, the_args);
 	putchar('\n');
 	va_end(the_args);

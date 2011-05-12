@@ -182,7 +182,7 @@ static void mreadmsg(struct monst *mtmp, struct obj *otmp)
 	    pline("%s reads %s!", Monnam(mtmp), onambuf);
 	else
 	    You_hear("%s reading %s.",
-		x_monnam(mtmp, ARTICLE_A, (char *)0,
+		x_monnam(mtmp, ARTICLE_A, NULL,
 		    (SUPPRESS_IT|SUPPRESS_INVISIBLE|SUPPRESS_SADDLE), FALSE),
 		onambuf);
 
@@ -250,7 +250,7 @@ boolean find_defensive(struct monst *mtmp)
 		return FALSE;
 	if (u.uswallow && stuck) return FALSE;
 
-	m.defensive = (struct obj *)0;
+	m.defensive = NULL;
 	m.has_defense = 0;
 
 	/* since unicorn horns don't get used up, the monster would look
@@ -613,7 +613,7 @@ mon_tele:
 			}
 			get_level(&flev, nlev);
 			migrate_to_level(mtmp, ledger_no(&flev), MIGR_RANDOM,
-				(coord *)0);
+				NULL);
 			if (oseen) makeknown(SCR_TELEPORTATION);
 		} else goto mon_tele;
 		return 2;
@@ -652,7 +652,7 @@ mon_tele:
 				surface(mtmp->mx, mtmp->my));
 		/* we made sure that there is a level for mtmp to go to */
 		migrate_to_level(mtmp, ledger_no(&u.uz) + 1,
-				 MIGR_RANDOM, (coord *)0);
+				 MIGR_RANDOM, NULL);
 		return 2;
 	    }
 	case MUSE_WAN_CREATE_MONSTER:
@@ -665,7 +665,7 @@ mon_tele:
 		if (!enexto(&cc, mtmp->mx, mtmp->my, pm)) return 0;
 		mzapmsg(mtmp, otmp, FALSE);
 		otmp->spe--;
-		mon = makemon((struct permonst *)0, cc.x, cc.y, NO_MM_FLAGS);
+		mon = makemon(NULL, cc.x, cc.y, NO_MM_FLAGS);
 		if (mon && canspotmon(mon) && oseen)
 		    makeknown(WAN_CREATE_MONSTER);
 		return 2;
@@ -731,7 +731,7 @@ mon_tele:
 		newsym(trapx, trapy);
 
 		migrate_to_level(mtmp, ledger_no(&u.uz) + 1,
-				 MIGR_RANDOM, (coord *)0);
+				 MIGR_RANDOM, NULL);
 		return 2;
 	case MUSE_UPSTAIRS:
 		/* Monsters without amulets escape the dungeon and are
@@ -759,30 +759,30 @@ mon_tele:
 		       upstairs, so there's not much point in having any
 		       chance for a random position on the current level */
 		    migrate_to_level(mtmp, ledger_no(&u.uz) + 1,
-				     MIGR_RANDOM, (coord *)0);
+				     MIGR_RANDOM, NULL);
 		} else {
 		    if (vismon) pline("%s escapes upstairs!", Monnam(mtmp));
 		    migrate_to_level(mtmp, ledger_no(&u.uz) - 1,
-				     MIGR_STAIRS_DOWN, (coord *)0);
+				     MIGR_STAIRS_DOWN, NULL);
 		}
 		return 2;
 	case MUSE_DOWNSTAIRS:
 		m_flee(mtmp);
 		if (vismon) pline("%s escapes downstairs!", Monnam(mtmp));
 		migrate_to_level(mtmp, ledger_no(&u.uz) + 1,
-				 MIGR_STAIRS_UP, (coord *)0);
+				 MIGR_STAIRS_UP, NULL);
 		return 2;
 	case MUSE_UP_LADDER:
 		m_flee(mtmp);
 		if (vismon) pline("%s escapes up the ladder!", Monnam(mtmp));
 		migrate_to_level(mtmp, ledger_no(&u.uz) - 1,
-				 MIGR_LADDER_DOWN, (coord *)0);
+				 MIGR_LADDER_DOWN, NULL);
 		return 2;
 	case MUSE_DN_LADDER:
 		m_flee(mtmp);
 		if (vismon) pline("%s escapes down the ladder!", Monnam(mtmp));
 		migrate_to_level(mtmp, ledger_no(&u.uz) + 1,
-				 MIGR_LADDER_UP, (coord *)0);
+				 MIGR_LADDER_UP, NULL);
 		return 2;
 	case MUSE_SSTAIRS:
 		m_flee(mtmp);
@@ -793,13 +793,13 @@ mon_tele:
 			    pline("%s escapes upstairs!", Monnam(mtmp));
 			if(Inhell) {
 			    migrate_to_level(mtmp, ledger_no(&sstairs.tolev),
-					     MIGR_RANDOM, (coord *)0);
+					     MIGR_RANDOM, NULL);
 			    return 2;
 			}
 		} else	if (vismon)
 		    pline("%s escapes downstairs!", Monnam(mtmp));
 		migrate_to_level(mtmp, ledger_no(&sstairs.tolev),
-				 MIGR_SSTAIRS, (coord *)0);
+				 MIGR_SSTAIRS, NULL);
 		return 2;
 	case MUSE_TELEPORT_TRAP:
 		m_flee(mtmp);
@@ -943,7 +943,7 @@ boolean find_offensive(struct monst *mtmp)
 	boolean reflection_skip = (Reflecting && rn2(2));
 	struct obj *helmet = which_armor(mtmp, W_ARMH);
 
-	m.offensive = (struct obj *)0;
+	m.offensive = NULL;
 	m.has_offense = 0;
 	if (mtmp->mpeaceful || is_animal(mtmp->data) ||
 				mindless(mtmp->data) || nohands(mtmp->data))
@@ -1482,7 +1482,7 @@ boolean find_misc(struct monst *mtmp)
 	boolean immobile = (mdat->mmove == 0);
 	boolean stuck = (mtmp == u.ustuck);
 
-	m.misc = (struct obj *)0;
+	m.misc = NULL;
 	m.has_misc = 0;
 	if (is_animal(mdat) || mindless(mdat))
 		return 0;
@@ -1628,7 +1628,7 @@ int use_misc(struct monst *mtmp)
 			}
 			m_useup(mtmp, otmp);
 			migrate_to_level(mtmp, ledger_no(&tolevel),
-					 MIGR_RANDOM, (coord *)0);
+					 MIGR_RANDOM, NULL);
 			return 2;
 		    } else {
 skipmsg:
@@ -1645,7 +1645,7 @@ skipmsg:
 		if (vismon) pline("%s seems more experienced.", Monnam(mtmp));
 		if (oseen) makeknown(POT_GAIN_LEVEL);
 		m_useup(mtmp, otmp);
-		if (!grow_up(mtmp,(struct monst *)0)) return 1;
+		if (!grow_up(mtmp,NULL)) return 1;
 			/* grew into genocided monster */
 		return 2;
 	case MUSE_WAN_MAKE_INVISIBLE:
@@ -1713,7 +1713,7 @@ skipmsg:
 		if (mtmp->wormno) worm_move(mtmp);
 		newsym(trapx, trapy);
 
-		newcham(mtmp, (struct permonst *)0, FALSE, FALSE);
+		newcham(mtmp, NULL, FALSE, FALSE);
 		return 2;
 	case MUSE_BULLWHIP:
 		/* attempt to disarm hero */
@@ -2014,7 +2014,7 @@ static void mon_consume_unstone(struct monst *mon, struct obj *obj,
 
     /* give a "<mon> is slowing down" message and also remove
        intrinsic speed (comparable to similar effect on the hero) */
-    mon_adjust_speed(mon, -3, (struct obj *)0);
+    mon_adjust_speed(mon, -3, NULL);
 
     if (canseemon(mon)) {
 	long save_quan = obj->quan;

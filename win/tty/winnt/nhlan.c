@@ -36,7 +36,7 @@ char *lan_username()
 	if (lu) {
 	 strcpy(lusername, lu);
 	 return lusername;
-	} else return (char *)0;
+	} else return NULL;
 }
 
 #endif /*LAN_FEATURES*/

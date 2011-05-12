@@ -259,7 +259,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    if (pick4u != 'y' && pick4u != 'n') {
 give_up:	/* Quit */
 		if (selected) free(selected);
-		bail((char *)0);
+		bail(NULL);
 		/*NOTREACHED*/
 		return;
 	    }
@@ -617,8 +617,8 @@ winid tty_create_nhwindow(int type)
     newwin->active = FALSE;
     newwin->curx = newwin->cury = 0;
     newwin->morestr = 0;
-    newwin->mlist = (tty_menu_item *) 0;
-    newwin->plist = (tty_menu_item **) 0;
+    newwin->mlist = NULL;
+    newwin->plist = NULL;
     newwin->npages = newwin->plist_size = newwin->nitems = newwin->how = 0;
     switch(type) {
     case NHW_BASE:
@@ -690,15 +690,15 @@ winid tty_create_nhwindow(int type)
 	    }
 	} else {
 	    for (i = 0; i < newwin->maxrow; i++) {
-		newwin->data[i] = (char *) 0;
+		newwin->data[i] = NULL;
 		newwin->datlen[i] = 0;
 	    }
 	}
 	if(newwin->type == NHW_MESSAGE)
 	    newwin->maxrow = 0;
     } else {
-	newwin->data = (char **)0;
-	newwin->datlen = (short *)0;
+	newwin->data = NULL;
+	newwin->datlen = NULL;
     }
 
     return newid;
@@ -728,14 +728,14 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
 	for(i=0; i<cw->maxrow; i++)
 	    if(cw->data[i]) {
 		free(cw->data[i]);
-		cw->data[i] = (char *)0;
+		cw->data[i] = NULL;
 		if (cw->datlen) cw->datlen[i] = 0;
 	    }
 	if (free_data) {
 	    free(cw->data);
-	    cw->data = (char **)0;
+	    cw->data = NULL;
 	    if (cw->datlen) free(cw->datlen);
-	    cw->datlen = (short *)0;
+	    cw->datlen = NULL;
 	    cw->rows = 0;
 	}
     }
@@ -763,7 +763,7 @@ void tty_clear_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0)
+    if(window == WIN_ERR || (cw = wins[window]) == NULL)
 	panic(winpanicstr,  window);
     ttyDisplay->lastwin = window;
 
@@ -1264,7 +1264,7 @@ void tty_display_nhwindow(winid window,
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0)
+    if(window == WIN_ERR || (cw = wins[window]) == NULL)
 	panic(winpanicstr,  window);
     if(cw->flags & WIN_CANCELLED)
 	return;
@@ -1329,7 +1329,7 @@ void tty_dismiss_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0)
+    if(window == WIN_ERR || (cw = wins[window]) == NULL)
 	panic(winpanicstr,  window);
 
     switch(cw->type) {
@@ -1370,7 +1370,7 @@ void tty_destroy_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0)
+    if(window == WIN_ERR || (cw = wins[window]) == NULL)
 	panic(winpanicstr,  window);
 
     if(cw->active)
@@ -1393,7 +1393,7 @@ void tty_curs(winid window,
     int cx = ttyDisplay->curx;
     int cy = ttyDisplay->cury;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0)
+    if(window == WIN_ERR || (cw = wins[window]) == NULL)
 	panic(winpanicstr,  window);
     ttyDisplay->lastwin = window;
 
@@ -1453,7 +1453,7 @@ static void tty_putsym(winid window, int x, int y, char ch)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0)
+    if(window == WIN_ERR || (cw = wins[window]) == NULL)
 	panic(winpanicstr,  window);
 
     switch(cw->type) {
@@ -1501,12 +1501,12 @@ void tty_putstr(winid window, int attr, const char *str)
     /* Assume there's a real problem if the window is missing --
      * probably a panic message
      */
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0) {
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
 	tty_raw_print(str);
 	return;
     }
 
-    if(str == (const char*)0 ||
+    if(str == NULL ||
 	((cw->flags & WIN_CANCELLED) && (cw->type != NHW_MESSAGE)))
 	return;
     if(cw->type != NHW_MESSAGE)
@@ -1696,10 +1696,10 @@ void tty_add_menu(
     const char *newstr;
     char buf[4+BUFSZ];
 
-    if (str == (const char*) 0)
+    if (str == NULL)
 	return;
 
-    if (window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0
+    if (window == WIN_ERR || (cw = wins[window]) == NULL
 		|| cw->type != NHW_MENU)
 	panic(winpanicstr,  window);
 
@@ -1760,7 +1760,7 @@ void tty_end_menu(winid window,		/* menu to use */
     int lmax, n;
     char menu_ch;
 
-    if (window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0 ||
+    if (window == WIN_ERR || (cw = wins[window]) == NULL ||
 		cw->type != NHW_MENU)
 	panic(winpanicstr,  window);
 
@@ -1850,11 +1850,11 @@ int tty_select_menu(winid window, int how, menu_item **menu_list)
     menu_item *mi;
     int n, cancelled;
 
-    if(window == WIN_ERR || (cw = wins[window]) == (struct WinDesc *) 0
+    if(window == WIN_ERR || (cw = wins[window]) == NULL
        || cw->type != NHW_MENU)
 	panic(winpanicstr,  window);
 
-    *menu_list = (menu_item *) 0;
+    *menu_list = NULL;
     cw->how = (short) how;
     morc = 0;
     tty_display_nhwindow(window, TRUE);

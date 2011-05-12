@@ -305,7 +305,7 @@ static struct obj *oselect(struct monst *mtmp, int x)
 		    (!otmp->oartifact || touch_artifact(otmp,mtmp)))
 		return otmp;
 	}
-	return (struct obj *)0;
+	return NULL;
 }
 
 static const int rwep[] =
@@ -430,7 +430,7 @@ struct obj *select_rwep(struct monst *mtmp)
 	  }
 
 	/* failure */
-	return (struct obj *)0;
+	return NULL;
 }
 
 /* Weapons in order of preference */
@@ -484,7 +484,7 @@ struct obj *select_hwep(struct monst *mtmp)
 	}
 
 	/* failure */
-	return (struct obj *)0;
+	return NULL;
 }
 
 /* Called after polymorphing a monster, robbing it, etc....  Monsters

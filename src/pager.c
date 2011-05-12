@@ -46,8 +46,8 @@ static int append_str(char *buf, const char *new_str)
  */
 static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 {
-    struct monst *mtmp = (struct monst *) 0;
-    struct permonst *pm = (struct permonst *) 0;
+    struct monst *mtmp = NULL;
+    struct permonst *pm = NULL;
     int glyph;
 
     buf[0] = monbuf[0] = 0;
@@ -109,7 +109,7 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 	bhitpos.x = x;
 	bhitpos.y = y;
 	mtmp = m_at(x,y);
-	if (mtmp != (struct monst *) 0) {
+	if (mtmp != NULL) {
 	    char *name, monnambuf[BUFSZ];
 	    boolean accurate = !Hallucination;
 
@@ -270,7 +270,7 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 	break;
     }
 
-    return (pm && !Hallucination) ? pm : (struct permonst *) 0;
+    return (pm && !Hallucination) ? pm : NULL;
 }
 
 /*
@@ -303,7 +303,7 @@ static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
      * for Angel and angel, make the lookup string the same for both
      * user_typed_name and picked name.
      */
-    if (pm != (struct permonst *) 0 && !user_typed_name)
+    if (pm != NULL && !user_typed_name)
 	dbase_str = strcpy(newstr, pm->mname);
     else dbase_str = strcpy(newstr, inp);
     lcase(dbase_str);
@@ -486,7 +486,7 @@ static int do_look(boolean quick)
     do {
 	/* Reset some variables. */
 	need_to_look = FALSE;
-	pm = (struct permonst *)0;
+	pm = NULL;
 	skipped_venom = 0;
 	found = 0;
 	out_str[0] = '\0';
@@ -808,7 +808,7 @@ char *dowhatdoes_core(char q, char *cbuf)
 	    }
 	}
 	dlb_fclose(fp);
-	return (char *)0;
+	return NULL;
 }
 
 int dowhatdoes(void)
@@ -816,7 +816,7 @@ int dowhatdoes(void)
 	char bufr[BUFSZ];
 	char q, *reslt;
 
-	q = yn_function("What command?", (char *)0, '\0');
+	q = yn_function("What command?", NULL, '\0');
 
 	reslt = dowhatdoes_core(q, bufr);
 	if (reslt)
@@ -839,7 +839,7 @@ static const char *help_menu_items[] = {
 #define WIZHLP_SLOT 8
 	"List of wizard-mode commands.",
 	"",
-	(char *)0
+	NULL
 };
 
 static boolean help_menu(int *sel)
@@ -849,7 +849,7 @@ static boolean help_menu(int *sel)
 	int i, n;
 	
 	if (!wizard) help_menu_items[WIZHLP_SLOT] = "",
-		     help_menu_items[WIZHLP_SLOT+1] = (char *)0;
+		     help_menu_items[WIZHLP_SLOT+1] = NULL;
 
 	for (i = 0; help_menu_items[i]; i++)
 	    set_menuitem(&items[i], (*help_menu_items[i]) ? i+1 : 0, MI_NORMAL,

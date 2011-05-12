@@ -49,7 +49,7 @@ static int use_camera(struct obj *obj)
 		pline("Using your camera underwater would void the warranty.");
 		return 0;
 	}
-	if(!getdir((char *)0)) return 0;
+	if(!getdir(NULL)) return 0;
 
 	if (obj->spe <= 0) {
 		pline(nothing_happens);
@@ -203,7 +203,7 @@ static int use_stethoscope(struct obj *obj)
 		You("have no free %s.", body_part(HAND));
 		return 0;
 	}
-	if (!getdir((char *)0)) return 0;
+	if (!getdir(NULL)) return 0;
 
 	res = (moves == last_used_move) &&
 	      (youmonst.movement == last_used_movement);
@@ -391,7 +391,7 @@ static void use_leash(struct obj *obj)
 		return;
 	}
 
-	if(!get_adjacent_loc((char *)0, (char *)0, u.ux, u.uy, &cc)) return;
+	if(!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc)) return;
 
 	if((cc.x == u.ux) && (cc.y == u.uy)) {
 		if (u.usteed && u.dz > 0) {
@@ -459,7 +459,7 @@ struct obj *get_mleash(struct monst *mtmp)	/* assuming mtmp->mleashed has been c
 			return otmp;
 		otmp = otmp->nobj;
 	}
-	return (struct obj *)0;
+	return NULL;
 }
 
 
@@ -559,7 +559,7 @@ static int use_mirror(struct obj *obj)
 	char mlet;
 	boolean vis;
 
-	if(!getdir((char *)0)) return 0;
+	if(!getdir(NULL)) return 0;
 	if(obj->cursed && !rn2(2)) {
 		if (!Blind)
 			pline_The("mirror fogs up and doesn't reflect!");
@@ -580,7 +580,7 @@ static int use_mirror(struct obj *obj)
 			pline("Huh?  That doesn't look like you!");
 			make_confused(HConfusion + d(3,4),FALSE);
 		    } else if (Hallucination)
-			You(look_str, hcolor((char *)0));
+			You(look_str, hcolor(NULL));
 		    else if (Sick)
 			You(look_str, "peaked");
 		    else if (u.uhs >= WEAK)
@@ -724,7 +724,7 @@ static void use_bell(struct obj **optr)
 			default:
 				break;
 			case 1:
-				mon_adjust_speed(mtmp, 2, (struct obj *)0);
+				mon_adjust_speed(mtmp, 2, NULL);
 				break;
 			case 2: /* no explanation; it just happens... */
 				nomovemsg = "";
@@ -1072,7 +1072,7 @@ static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
 
 	    /* shouldn't merge */
 	    obj = hold_another_object(obj, "You drop %s!",
-				      doname(obj), (const char *)0);
+				      doname(obj), NULL);
 	} else
 	    begin_burn(obj, FALSE);
 }
@@ -1344,7 +1344,7 @@ static void use_tinning_kit(struct obj *obj)
 		useupf(corpse, 1L);
 	    }
 	    can = hold_another_object(can, "You make, but cannot pick up, %s.",
-				      doname(can), (const char *)0);
+				      doname(can), NULL);
 	} else impossible("Tinning failed.");
 }
 
@@ -1443,7 +1443,7 @@ void use_unicorn_horn(struct obj *obj)
 
 	    switch (idx) {
 	    case prop2trbl(SICK):
-		make_sick(0L, (char *) 0, TRUE, SICK_ALL);
+		make_sick(0L, NULL, TRUE, SICK_ALL);
 		did_prop++;
 		break;
 	    case prop2trbl(BLINDED):
@@ -1573,7 +1573,7 @@ void fig_transform(void *arg, long timeout)
 	}
 	/* free figurine now */
 	obj_extract_self(figurine);
-	obfree(figurine, (struct obj *)0);
+	obfree(figurine, NULL);
 	if (redraw) newsym(cc.x, cc.y);
 }
 
@@ -1618,10 +1618,10 @@ static void use_figurine(struct obj **optr)
 
 	if (u.uswallow) {
 		/* can't activate a figurine while swallowed */
-		if (!figurine_location_checks(obj, (coord *)0, FALSE))
+		if (!figurine_location_checks(obj, NULL, FALSE))
 			return;
 	}
-	if(!getdir((char *)0)) {
+	if(!getdir(NULL)) {
 		flags.move = multi = 0;
 		return;
 	}
@@ -1797,7 +1797,7 @@ static void use_stone(struct obj *tstone)
 		    (Role_if(PM_ARCHEOLOGIST) || Race_if(PM_GNOME))))) {
 	    makeknown(TOUCHSTONE);
 	    makeknown(obj->otyp);
-	    prinv((char *)0, obj, 0L);
+	    prinv(NULL, obj, 0L);
 	    return;
 	} else {
 	    /* either a ring or the touchstone was not effective */
@@ -1863,7 +1863,7 @@ static void use_stone(struct obj *tstone)
 static void use_trap(struct obj *otmp)
 {
 	int ttyp, tmp;
-	const char *what = (char *)0;
+	const char *what = NULL;
 	char buf[BUFSZ];
 	const char *occutext = "setting the trap";
 
@@ -2005,7 +2005,7 @@ static int use_whip(struct obj *obj)
 	if (!wield_tool(obj, "lash")) return 0;
 	else res = 1;
     }
-    if (!getdir((char *)0)) return res;
+    if (!getdir(NULL)) return res;
 
     if (Stunned || (Confusion && !rn2(5))) confdir();
     rx = u.ux + u.dx;
@@ -2085,7 +2085,7 @@ static int use_whip(struct obj *obj)
 	 *		- you only end up hitting.
 	 *
 	 */
-	const char *wrapped_what = (char *)0;
+	const char *wrapped_what = NULL;
 
 	if (mtmp) {
 	    if (bigmonst(mtmp->data)) {
@@ -2178,7 +2178,7 @@ static int use_whip(struct obj *obj)
 			instapetrify(kbuf);
 		    }
 		    otmp = hold_another_object(otmp, "You drop %s!",
-					       doname(otmp), (const char *)0);
+					       doname(otmp), NULL);
 		    break;
 		default:
 		    /* to floor beneath mon */
@@ -2260,7 +2260,7 @@ static int use_pole (struct obj *obj)
 	    pline("Too close!");
 	    return res;
 	} else if (!cansee(cc.x, cc.y) &&
-		   ((mtmp = m_at(cc.x, cc.y)) == (struct monst *)0 ||
+		   ((mtmp = m_at(cc.x, cc.y)) == NULL ||
 		    !canseemon(mtmp))) {
 	    You(cant_see_spot);
 	    return res;
@@ -2270,7 +2270,7 @@ static int use_pole (struct obj *obj)
 	}
 
 	/* Attack the monster there */
-	if ((mtmp = m_at(cc.x, cc.y)) != (struct monst *)0) {
+	if ((mtmp = m_at(cc.x, cc.y)) != NULL) {
 	    int oldhp = mtmp->mhp;
 
 	    bhitpos = cc;
@@ -2305,7 +2305,7 @@ static int use_cream_pie(struct obj *obj)
 		pline("You immerse your %s in %s%s.", body_part(FACE),
 			several ? "one of " : "",
 			several ? makeplural(the(xname(obj))) : the(xname(obj)));
-	if(can_blnd((struct monst*)0, &youmonst, AT_WEAP, obj)) {
+	if(can_blnd(NULL, &youmonst, AT_WEAP, obj)) {
 		int blindinc = rnd(25);
 		u.ucreamed += blindinc;
 		make_blinded(Blinded + (long)blindinc, FALSE);
@@ -2402,9 +2402,9 @@ static int use_grapple (struct obj *obj)
 	    }
 	    break;
 	case 2:	/* Monster */
-	    if ((mtmp = m_at(cc.x, cc.y)) == (struct monst *)0) break;
+	    if ((mtmp = m_at(cc.x, cc.y)) == NULL) break;
 	    if (verysmall(mtmp->data) && !rn2(4) &&
-			enexto(&cc, u.ux, u.uy, (struct permonst *)0)) {
+			enexto(&cc, u.ux, u.uy, NULL)) {
 		You("pull in %s!", mon_nam(mtmp));
 		mtmp->mundetected = 0;
 		rloc_to(mtmp, cc.x, cc.y);
@@ -2437,7 +2437,7 @@ static int use_grapple (struct obj *obj)
 }
 
 
-#define BY_OBJECT	((struct monst *)0)
+#define BY_OBJECT	(NULL)
 
 /* return 1 if the wand is broken, hence some time elapsed */
 static int do_break_wand(struct obj *obj)
@@ -2541,7 +2541,7 @@ static int do_break_wand(struct obj *obj)
 		if (IS_WALL(levl[x][y].typ) || IS_DOOR(levl[x][y].typ)) {
 		    /* normally, pits and holes don't anger guards, but they
 		     * do if it's a wall or door that's being dug */
-		    watch_dig((struct monst *)0, x, y, TRUE);
+		    watch_dig(NULL, x, y, TRUE);
 		    if (*in_rooms(x,y,SHOPBASE)) shop_damage = TRUE;
 		}		    
 		digactualhole(x, y, BY_OBJECT,
@@ -2551,7 +2551,7 @@ static int do_break_wand(struct obj *obj)
 	    continue;
 	} else if(obj->otyp == WAN_CREATE_MONSTER) {
 	    /* u.ux,u.uy creates it near you--x,y might create it in rock */
-	    makemon((struct permonst *)0, u.ux, u.uy, NO_MM_FLAGS);
+	    makemon(NULL, u.ux, u.uy, NO_MM_FLAGS);
 	    continue;
 	} else {
 	    if (x == u.ux && y == u.uy) {
@@ -2620,7 +2620,7 @@ int doapply(void)
 	int res = 1;
 	char class_list[MAXOCLASSES+2];
 
-	if(check_capacity((char *)0)) return 0;
+	if(check_capacity(NULL)) return 0;
 
 	if (carrying(POT_OIL) || uhave_graystone())
 		strcpy(class_list, tools_too);
@@ -2821,7 +2821,7 @@ int doapply(void)
 					       "Oops!  %s away from you!" :
 					       "Oops!  %s to the floor!",
 					       The(aobjnam(otmp, "slip")),
-					       (const char *)0);
+					       NULL);
 		    makeknown(HORN_OF_PLENTY);
 		} else
 		    pline(nothing_happens);

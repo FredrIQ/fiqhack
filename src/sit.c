@@ -178,7 +178,7 @@ int dosit(void)
 			if(u.uhp >= (u.uhpmax - 5))  u.uhpmax += 4;
 			u.uhp = u.uhpmax;
 			make_blinded(0L,TRUE);
-			make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+			make_sick(0L, NULL, FALSE, SICK_ALL);
 			heal_legs();
 			botl = 1;
 			break;

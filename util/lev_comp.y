@@ -181,7 +181,7 @@ maze_level	: maze_def flags lev_init messages regions
 				maze.parts = NewTab(mazepart, npart);
 				for(i=0;i<npart;i++)
 				    maze.parts[i] = tmppart[i];
-				if (!write_level_file($1, (splev *)0, &maze)) {
+				if (!write_level_file($1, NULL, &maze)) {
 					yyerror("Can't write output file!!");
 					exit(EXIT_FAILURE);
 				}
@@ -215,7 +215,7 @@ room_level	: level_def flags lev_init messages rreg_init rooms corridors_def
 				    special_lev.corrs[i] = tmpcor[i];
 				if (check_subrooms()) {
 				    if (!write_level_file($1, &special_lev,
-							  (specialmaze *)0)) {
+							  NULL)) {
 					yyerror("Can't write output file!!");
 					exit(EXIT_FAILURE);
 				    }
@@ -346,8 +346,8 @@ init_rreg	: RANDOM_OBJECTS_ID ':' object_list
 rooms		: /* Nothing  -  dummy room for use with INIT_MAP */
 		  {
 			tmproom[nrooms] = New(room);
-			tmproom[nrooms]->name = (char *) 0;
-			tmproom[nrooms]->parent = (char *) 0;
+			tmproom[nrooms]->name = NULL;
+			tmproom[nrooms]->parent = NULL;
 			tmproom[nrooms]->rtype = 0;
 			tmproom[nrooms]->rlit = 0;
 			tmproom[nrooms]->xalign = ERR;
@@ -436,7 +436,7 @@ subroom_def	: SUBROOM_ID ':' room_type ',' light_state ',' subroom_pos ',' room_
 		  {
 			tmproom[nrooms] = New(room);
 			tmproom[nrooms]->parent = $11;
-			tmproom[nrooms]->name = (char *) 0;
+			tmproom[nrooms]->name = NULL;
 			tmproom[nrooms]->rtype = $3;
 			tmproom[nrooms]->rlit = $5;
 			tmproom[nrooms]->filled = $12;
@@ -453,8 +453,8 @@ subroom_def	: SUBROOM_ID ':' room_type ',' light_state ',' subroom_pos ',' room_
 room_def	: ROOM_ID ':' room_type ',' light_state ',' room_pos ',' room_align ',' room_size roomfill
 		  {
 			tmproom[nrooms] = New(room);
-			tmproom[nrooms]->name = (char *) 0;
-			tmproom[nrooms]->parent = (char *) 0;
+			tmproom[nrooms]->name = NULL;
+			tmproom[nrooms]->parent = NULL;
 			tmproom[nrooms]->rtype = $3;
 			tmproom[nrooms]->rlit = $5;
 			tmproom[nrooms]->filled = $12;
@@ -1470,14 +1470,14 @@ object_c	: object
 m_name		: string
 		| RANDOM_TYPE
 		  {
-			$$ = (char *) 0;
+			$$ = NULL;
 		  }
 		;
 
 o_name		: string
 		| RANDOM_TYPE
 		  {
-			$$ = (char *) 0;
+			$$ = NULL;
 		  }
 		;
 

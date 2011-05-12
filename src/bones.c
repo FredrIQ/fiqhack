@@ -226,12 +226,12 @@ void savebones(struct obj *corpse)
 		otmp = mk_named_object(STATUE, &mons[u.umonnum],
 				       u.ux, u.uy, plname);
 
-		drop_upon_death((struct monst *)0, otmp);
+		drop_upon_death(NULL, otmp);
 		if (!otmp) return;	/* couldn't make statue */
-		mtmp = (struct monst *)0;
+		mtmp = NULL;
 	} else if (u.ugrave_arise < LOW_PM) {
 		/* drop everything */
-		drop_upon_death((struct monst *)0, (struct obj *)0);
+		drop_upon_death(NULL, NULL);
 		/* trick makemon() into allowing monster creation
 		 * on your location
 		 */
@@ -248,7 +248,7 @@ void savebones(struct obj *corpse)
 		mtmp = makemon(&mons[u.ugrave_arise], u.ux, u.uy, NO_MM_FLAGS);
 		in_mklev = FALSE;
 		if (!mtmp) {
-			drop_upon_death((struct monst *)0, (struct obj *)0);
+			drop_upon_death(NULL, NULL);
 			return;
 		}
 		mtmp = christen_monst(mtmp, plname);
@@ -256,7 +256,7 @@ void savebones(struct obj *corpse)
 		Your("body rises from the dead as %s...",
 			an(mons[u.ugrave_arise].mname));
 		display_nhwindow(WIN_MESSAGE, FALSE);
-		drop_upon_death(mtmp, (struct obj *)0);
+		drop_upon_death(mtmp, NULL);
 		m_dowear(mtmp, TRUE);
 	}
 	if (mtmp) {

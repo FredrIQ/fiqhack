@@ -139,7 +139,7 @@ static void wildmiss(struct monst *mtmp, struct attack *mattk)
 		/* maybe it's attacking an image around the corner? */
 
 	compat = (mattk->adtyp == AD_SEDU || mattk->adtyp == AD_SSEX) &&
-		 could_seduce(mtmp, &youmonst, (struct attack *)0);
+		 could_seduce(mtmp, &youmonst, NULL);
 
 	if (!mtmp->mcansee || (Invis && !perceives(mtmp->data))) {
 	    const char *swings =
@@ -983,7 +983,7 @@ static int hitmu(struct monst *mtmp, struct attack  *mattk)
 		}
 		break;
 	    case AD_BLND:
-		if (can_blnd(mtmp, &youmonst, mattk->aatyp, (struct obj*)0)) {
+		if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
 		    if (!Blind) pline("%s blinds you!", Monnam(mtmp));
 		    make_blinded(Blinded+(long)dmg,FALSE);
 		    if (!Blind) Your(vision_clears);
@@ -1350,7 +1350,7 @@ dopois:
 		    }
 		    if (!rn2(3)) exercise(A_STR, TRUE);
 		    if (!rn2(3)) exercise(A_CON, TRUE);
-		    if (Sick) make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+		    if (Sick) make_sick(0L, NULL, FALSE, SICK_ALL);
 		    botl = 1;
 		    if (goaway) {
 			mongone(mtmp);
@@ -1679,7 +1679,7 @@ static int gulpmu(struct monst *mtmp, struct attack  *mattk)
 		    }
 		    break;
 		case AD_BLND:
-		    if (can_blnd(mtmp, &youmonst, mattk->aatyp, (struct obj*)0)) {
+		    if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
 			if(!Blind) {
 			    You_cant("see in here!");
 			    make_blinded((long)tmp,FALSE);
@@ -1853,7 +1853,7 @@ gazemu(mtmp, mattk)	/* monster gazes at you */
 		    if (useeit)
 			ureflects("%s gaze is reflected by your %s.",
 					 s_suffix(Monnam(mtmp)));
-		    if (mon_reflects(mtmp, !useeit ? (char *)0 :
+		    if (mon_reflects(mtmp, !useeit ? NULL :
 				     "The gaze is reflected away by %s %s!"))
 			break;
 		    if (!m_canseeu(mtmp)) { /* probably you're invisible */
@@ -2113,9 +2113,9 @@ int doseduce(struct monst *mon)
 			Blind ? "She" : Monnam(mon), xname(ring));
 		makeknown(RIN_ADORNMENT);
 		if (ring==uleft || ring==uright) Ring_gone(ring);
-		if (ring==uwep) setuwep((struct obj *)0);
-		if (ring==uswapwep) setuswapwep((struct obj *)0);
-		if (ring==uquiver) setuqwep((struct obj *)0);
+		if (ring==uwep) setuwep(NULL);
+		if (ring==uswapwep) setuswapwep(NULL);
+		if (ring==uquiver) setuqwep(NULL);
 		freeinv(ring);
 		mpickobj(mon,ring);
 	    } else {
@@ -2160,7 +2160,7 @@ int doseduce(struct monst *mon)
 		    setworn(ring, LEFT_RING);
 		} else impossible("ring replacement");
 		Ring_on(ring);
-		prinv((char *)0, ring, 0L);
+		prinv(NULL, ring, 0L);
 	    }
 	}
 
@@ -2523,8 +2523,11 @@ struct monst *cloneu(void)
 	struct monst *mon;
 	int mndx = monsndx(youmonst.data);
 
-	if (u.mh <= 1) return(struct monst *)0;
-	if (mvitals[mndx].mvflags & G_EXTINCT) return(struct monst *)0;
+	if (u.mh <= 1)
+	    return NULL;
+	if (mvitals[mndx].mvflags & G_EXTINCT)
+	    return NULL;
+	
 	mon = makemon(youmonst.data, u.ux, u.uy, NO_MINVENT|MM_EDOG);
 	mon = christen_monst(mon, plname);
 	initedog(mon);

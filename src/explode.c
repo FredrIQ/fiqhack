@@ -405,7 +405,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 	boolean individual_object = obj ? TRUE : FALSE;
 	struct monst *mtmp;
 	struct scatter_chain *stmp, *stmp2 = 0;
-	struct scatter_chain *schain = (struct scatter_chain *)0;
+	struct scatter_chain *schain = NULL;
 	long total = 0L;
 
 	while ((otmp = individual_object ? obj : level.objects[sx][sy]) != 0) {
@@ -415,7 +415,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 		qtmp = (long)rnd((int)qtmp);
 		otmp = splitobj(otmp, qtmp);
 	    } else {
-		obj = (struct obj *)0; /* all used */
+		obj = NULL; /* all used */
 	    }
 	    obj_extract_self(otmp);
 	    used_up = FALSE;
@@ -492,7 +492,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 				if (scflags & MAY_HITMON) {
 				    stmp->range--;
 				    if (ohitmon(mtmp, stmp->obj, 1, FALSE)) {
-					stmp->obj = (struct obj *)0;
+					stmp->obj = NULL;
 					stmp->stopped = TRUE;
 				    }
 				}
@@ -505,7 +505,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 				    if (bigmonst(youmonst.data)) hitvalu++;
 				    hitu = thitu(hitvalu,
 						 dmgval(stmp->obj, &youmonst),
-						 stmp->obj, (char *)0);
+						 stmp->obj, NULL);
 				    if (hitu) {
 					stmp->range -= 3;
 					stop_occupation();

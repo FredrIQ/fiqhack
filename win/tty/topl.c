@@ -251,7 +251,7 @@ static void topl_putsym(char c)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
-    if(cw == (struct WinDesc *) 0) panic("Putsym window MESSAGE nonexistant");
+    if(cw == NULL) panic("Putsym window MESSAGE nonexistant");
 	
     switch(c) {
     case '\b':

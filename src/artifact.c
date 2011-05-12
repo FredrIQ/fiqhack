@@ -101,7 +101,7 @@ const char *artiname(int artinum)
    If no alignment is given, then 'otmp' is converted
    into an artifact of matching type, or returned as-is if that's not possible.
    For the 2nd case, caller should use ``obj = mk_artifact(obj, A_NONE);''
-   for the 1st, ``obj = mk_artifact((struct obj *)0, some_alignment);''.
+   for the 1st, ``obj = mk_artifact(NULL, some_alignment);''.
  */
 struct obj *mk_artifact(
     struct obj *otmp,	/* existing object; ignored if alignment specified */
@@ -168,7 +168,7 @@ const char *artifact_name(const char *name, short *otyp)
 	}
     }
 
-    return (char *)0;
+    return NULL;
 }
 
 boolean exist_artifact(int otyp, const char *name)
@@ -334,7 +334,7 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 		if(obj != otmp && obj->oartifact) {
 		    const struct artifact *art = get_artifact(obj);
 		    if(art->cary.adtyp == dtyp) {
-			mask = (long *) 0;
+			mask = NULL;
 			break;
 		    }
 		}
@@ -735,7 +735,7 @@ static boolean Mb_hit(
     if (youattack || youdefend || vis) {
 	result = TRUE;
 	pline_The("magic-absorbing blade %s %s!",
-		  vtense((const char *)0, verb), hittee);
+		  vtense(NULL, verb), hittee);
 	/* assume probing has some sort of noticeable feedback
 	   even if it is being done by one monster to another */
 	if (attack_indx == MB_INDEX_PROBE && !canspotmon(mdef))
@@ -784,7 +784,7 @@ static boolean Mb_hit(
 		nomul(-3);
 		nomovemsg = "";
 		if (magr && magr == u.ustuck && sticks(youmonst.data)) {
-		    u.ustuck = (struct monst *)0;
+		    u.ustuck = NULL;
 		    You("release %s!", mon_nam(magr));
 		}
 	    }
@@ -1152,7 +1152,7 @@ static int arti_invoke(struct obj *obj)
 		if (Upolyd) u.mh += healamt;
 		else u.uhp += healamt;
 	    }
-	    if(Sick) make_sick(0L,(char *)0,FALSE,SICK_ALL);
+	    if(Sick) make_sick(0L,NULL,FALSE,SICK_ALL);
 	    if(Slimed) Slimed = 0L;
 	    if (Blinded > creamed) make_blinded(creamed, FALSE);
 	    botl = 1;
@@ -1266,7 +1266,7 @@ static int arti_invoke(struct obj *obj)
 		otmp->quan += rnd(5);
 	    otmp->owt = weight(otmp);
 	    otmp = hold_another_object(otmp, "Suddenly %s out.",
-				       aobjnam(otmp, "fall"), (const char *)0);
+				       aobjnam(otmp, "fall"), NULL);
 	    break;
 	  }
 	}

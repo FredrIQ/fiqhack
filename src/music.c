@@ -165,7 +165,7 @@ static void charm_monsters(int distance)
 
 	if (u.uswallow) {
 	    if (!resist(u.ustuck, TOOL_CLASS, 0, NOTELL))
-		tamedog(u.ustuck, (struct obj *) 0);
+		tamedog(u.ustuck, NULL);
 	} else {
 	    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
@@ -173,7 +173,7 @@ static void charm_monsters(int distance)
 
 		if (distu(mtmp->mx, mtmp->my) <= distance) {
 		    if (!resist(mtmp, TOOL_CLASS, 0, NOTELL))
-			tamedog(mtmp, (struct obj *) 0);
+			tamedog(mtmp, NULL);
 		}
 	    }
 	}
@@ -345,7 +345,7 @@ static int do_improvisation(struct obj *instr)
 	    if (do_spec && instr->spe > 0) {
 		consume_obj_charge(instr, TRUE);
 
-		if (!getdir((char *)0)) {
+		if (!getdir(NULL)) {
 		    pline("%s.", Tobjnam(instr, "vibrate"));
 		    break;
 		} else if (!u.dx && !u.dy && !u.dz) {

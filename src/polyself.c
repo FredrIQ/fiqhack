@@ -172,7 +172,7 @@ static void newman(void)
 	redist_attr();
 	u.uhunger = rn1(500,500);
 	if (Sick)
-		make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+		make_sick(0L, NULL, FALSE, SICK_ALL);
 	Stoned = 0;
 	delayed_killer = 0;
 	if (u.uhp <= 0 || u.uhpmax <= 0) {
@@ -253,7 +253,7 @@ void polyself(boolean forcecontrol)
 				/* allow G_EXTINCT */
 				You("merge with your scaly armor.");
 				uskin = uarm;
-				uarm = (struct obj *)0;
+				uarm = NULL;
 				/* save/restore hack */
 				uskin->owornmask |= I_SPECIAL;
 			}
@@ -390,7 +390,7 @@ int polymon(int mntmp)
 		You("no longer seem to be petrifying.");
 	}
 	if (Sick_resistance && Sick) {
-		make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+		make_sick(0L, NULL, FALSE, SICK_ALL);
 		You("no longer feel sick.");
 	}
 	if (Slimed) {
@@ -588,7 +588,7 @@ static void break_armor(void)
 		if (is_whirly(youmonst.data))
 			You("seep right through your shirt!");
 		else You("become much too small for your shirt!");
-		setworn((struct obj *)0, otmp->owornmask & W_ARMU);
+		setworn(NULL, otmp->owornmask & W_ARMU);
 		dropx(otmp);
 	}
 #endif
@@ -720,7 +720,7 @@ int dobreathe(void)
 	u.uen -= 15;
 	botl = 1;
 
-	if (!getdir((char *)0)) return 0;
+	if (!getdir(NULL)) return 0;
 
 	mattk = attacktype_fordmg(youmonst.data, AT_BREA, AD_ANY);
 	if (!mattk)
@@ -735,7 +735,7 @@ int dospit(void)
 {
 	struct obj *otmp;
 
-	if (!getdir((char *)0)) return 0;
+	if (!getdir(NULL)) return 0;
 	otmp = mksobj(u.umonnum==PM_COBRA ? BLINDING_VENOM : ACID_VENOM,
 			TRUE, FALSE);
 	otmp->spe = 1; /* to indicate it's yours */
@@ -880,7 +880,7 @@ int dosummon(void)
 
 	You("call upon your brethren for help!");
 	exercise(A_WIS, TRUE);
-	if (!were_summon(youmonst.data, TRUE, &placeholder, (char *)0))
+	if (!were_summon(youmonst.data, TRUE, &placeholder, NULL))
 		pline("But none arrive.");
 	return 1;
 }
@@ -1077,7 +1077,7 @@ void skinback(boolean silently)
 	if (uskin) {
 		if (!silently) Your("skin returns to its original form.");
 		uarm = uskin;
-		uskin = (struct obj *)0;
+		uskin = NULL;
 		/* undo save/restore hack */
 		uarm->owornmask &= ~I_SPECIAL;
 	}

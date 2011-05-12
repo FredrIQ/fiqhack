@@ -257,7 +257,7 @@ static void fix_worst_trouble(int trouble)
 {
 	int i;
 	struct obj *otmp = 0;
-	const char *what = (const char *)0;
+	const char *what = NULL;
 	static const char leftglow[] = "left ring softly glows",
 				   rightglow[] = "right ring softly glows";
 
@@ -301,7 +301,7 @@ static void fix_worst_trouble(int trouble)
 		    break;
 	    case TROUBLE_SICK:
 		    You_feel("better.");
-		    make_sick(0L, (char *) 0, FALSE, SICK_ALL);
+		    make_sick(0L, NULL, FALSE, SICK_ALL);
 		    break;
 	    case TROUBLE_HIT:
 		    /* "fix all troubles" will keep trying if hero has
@@ -557,7 +557,7 @@ static void angrygods(aligntyp resp_god)
 			break;
 	    case 2:
 	    case 3:
-			godvoice(resp_god,(char *)0);
+			godvoice(resp_god,NULL);
 			pline("\"Thou %s, %s.\"",
 			    (ugod_is_angry() && resp_god == u.ualign.type)
 				? "hast strayed from the path" :
@@ -565,11 +565,11 @@ static void angrygods(aligntyp resp_god)
 			      youmonst.data->mlet == S_HUMAN ? "mortal" : "creature");
 			verbalize("Thou must relearn thy lessons!");
 			adjattrib(A_WIS, -1, FALSE);
-			losexp((char *)0);
+			losexp(NULL);
 			break;
 	    case 6:	if (!Punished) {
 			    gods_angry(resp_god);
-			    punish((struct obj *)0);
+			    punish(NULL);
 			    break;
 			} /* else fall thru */
 	    case 4:
@@ -580,7 +580,7 @@ static void angrygods(aligntyp resp_god)
 			rndcurse();
 			break;
 	    case 7:
-	    case 8:	godvoice(resp_god,(char *)0);
+	    case 8:	godvoice(resp_god,NULL);
 			verbalize("Thou durst %s me?",
 				  (on_altar() &&
 				   (a_align(u.ux,u.uy) != resp_god)) ?
@@ -629,7 +629,7 @@ static void gcrownu(void)
     HShock_resistance |= FROMOUTSIDE;
     HSleep_resistance |= FROMOUTSIDE;
     HPoison_resistance |= FROMOUTSIDE;
-    godvoice(u.ualign.type, (char *)0);
+    godvoice(u.ualign.type, NULL);
 
     obj = ok_wep(uwep) ? uwep : 0;
     already_exists = in_hand = FALSE;	/* lint suppression */
@@ -875,7 +875,7 @@ static void pleased(aligntyp g_align)
 	    /* takes 2 hints to get the music to enter the stronghold */
 	    if (!u.uevent.uopened_dbridge) {
 		if (u.uevent.uheard_tune < 1) {
-		    godvoice(g_align,(char *)0);
+		    godvoice(g_align,NULL);
 		    verbalize("Hark, %s!",
 			  youmonst.data->mlet == S_HUMAN ? "mortal" : "creature");
 		    verbalize(
@@ -1187,7 +1187,7 @@ int dosacrifice(void)
 	    else useupf(otmp, 1L);
 	    return 1;
 	} else if (otmp->oxlth && otmp->oattached == OATTACHED_MONST
-		    && ((mtmp = get_mtraits(otmp, FALSE)) != (struct monst *)0)
+		    && ((mtmp = get_mtraits(otmp, FALSE)) != NULL)
 		    && mtmp->mtame) {
 	    /* mtmp is a temporary pointer to a tame monster's attributes,
 	     * not a real monster */
@@ -1434,7 +1434,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 	    /* The chance goes down as the number of artifacts goes up */
 	    if (u.ulevel > 2 && u.uluck >= 0 &&
 		!rn2(10 + (2 * u.ugifts * nartifacts))) {
-		otmp = mk_artifact((struct obj *)0, a_align(u.ux,u.uy));
+		otmp = mk_artifact(NULL, a_align(u.ux,u.uy));
 		if (otmp) {
 		    if (otmp->spe < 0) otmp->spe = 0;
 		    if (otmp->cursed) uncurse(otmp);
@@ -1712,7 +1712,7 @@ const char *a_gname(void)
 /* returns the name of an altar's deity */
 const char *a_gname_at(xchar x, xchar y)
 {
-    if(!IS_ALTAR(levl[x][y].typ)) return (char *)0;
+    if(!IS_ALTAR(levl[x][y].typ)) return NULL;
 
     return align_gname(a_align(x,y));
 }

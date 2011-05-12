@@ -44,7 +44,7 @@ static char tbuf[512];
 
 char *hilites[CLR_MAX]; /* terminal escapes for the various colors */
 
-static char *KS = (char *)0, *KE = (char *)0;	/* keypad sequences */
+static char *KS = NULL, *KE = NULL;	/* keypad sequences */
 static char nullstr[] = "";
 
 #if !defined(NO_TERMS)
@@ -520,11 +520,11 @@ static void init_hilite(void)
 
 	for (c = 0; c < SIZE(hilites); c++)
 		hilites[c] = nh_HI;
-	hilites[CLR_GRAY] = hilites[NO_COLOR] = (char *)0;
+	hilites[CLR_GRAY] = hilites[NO_COLOR] = NULL;
 
 	if (tgetnum("Co") < 8
-	    || ((setf = tgetstr("AF", (char **)0)) == (char *)0
-		 && (setf = tgetstr("Sf", (char **)0)) == (char *)0))
+	    || ((setf = tgetstr("AF", NULL)) == NULL
+		 && (setf = tgetstr("Sf", NULL)) == NULL))
 		return;
 
 	for (c = 0; c < CLR_MAX / 2; c++) {
@@ -591,7 +591,7 @@ static void init_hilite(void)
 
 	for (c = 0; c < SIZE(hilites); c++)
 	    hilites[c] = nh_HI;
-	hilites[CLR_GRAY] = hilites[NO_COLOR] = (char *)0;
+	hilites[CLR_GRAY] = hilites[NO_COLOR] = NULL;
 
 	analyze_seq(nh_HI, &hi_foreg, &hi_backg);
 	analyze_seq(nh_HE, &foreg, &backg);
@@ -600,7 +600,7 @@ static void init_hilite(void)
 	    /* avoid invisibility */
 	    if ((backg & ~BRIGHT) != c) {
 		if (c == foreg)
-		    hilites[c] = (char *)0;
+		    hilites[c] = NULL;
 		else if (c != hi_foreg || backg != hi_backg) {
 		    hilites[c] = malloc(sizeof("\033[%d;3%d;4%dm"));
 		    sprintf(hilites[c], "\033[%d", !!(c & BRIGHT));
@@ -704,7 +704,7 @@ void term_start_color(int color)
 
 int has_color(int color)
 {
-	return hilites[color] != (char *)0;
+	return hilites[color] != NULL;
 }
 
 #endif /* NO_TERMS */

@@ -118,7 +118,7 @@ static void kick_monster(xchar x, xchar y)
 
 	bhitpos.x = x;
 	bhitpos.y = y;
-	if (attack_checks(mon, (struct obj *)0)) return;
+	if (attack_checks(mon, NULL)) return;
 	setmangry(mon);
 
 	/* Kick attacks by kicking monsters are normal attacks, not special.
@@ -346,7 +346,7 @@ void container_impact_dmg(struct obj *obj)
 		   *in_rooms(x, y, SHOPBASE) == *u.ushops);
 
 	for (otmp = obj->cobj; otmp; otmp = otmp2) {
-	    const char *result = (char *)0;
+	    const char *result = NULL;
 
 	    otmp2 = otmp->nobj;
 	    if (objects[otmp->otyp].oc_material == GLASS &&
@@ -370,7 +370,7 @@ void container_impact_dmg(struct obj *obj)
 		    useup(otmp);
 		else {
 		    obj_extract_self(otmp);
-		    obfree(otmp, (struct obj *) 0);
+		    obfree(otmp, NULL);
 		}
 	    }
 	}
@@ -664,7 +664,7 @@ int dokick(void)
 		return 0;
 	}
 
-	if(!getdir((char *)0)) return 0;
+	if(!getdir(NULL)) return 0;
 	if(!u.dx && !u.dy) return 0;
 
 	x = u.ux + u.dx;
@@ -754,7 +754,7 @@ int dokick(void)
 		return 1;
 	}
 
-	kickobj = (struct obj *)0;
+	kickobj = NULL;
 	if (OBJ_AT(x, y) &&
 	    (!Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
 	     || sobj_at(BOULDER,x,y))) {
@@ -1148,7 +1148,7 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 	costly = costly_spot(x, y);
 	price = debit = robbed = 0L;
 	angry = FALSE;
-	shkp = (struct monst *) 0;
+	shkp = NULL;
 	/* if 'costly', we must keep a record of ESHK(shkp) before
 	 * it undergoes changes through the calls to stolen_value.
 	 * the angry bit must be reset, if needed, in this fn, since
@@ -1305,9 +1305,9 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 		otmp->no_charge = 0;
 	}
 
-	if (otmp == uwep) setuwep((struct obj *)0);
-	if (otmp == uquiver) setuqwep((struct obj *)0);
-	if (otmp == uswapwep) setuswapwep((struct obj *)0);
+	if (otmp == uwep) setuwep(NULL);
+	if (otmp == uquiver) setuqwep(NULL);
+	if (otmp == uswapwep) setuswapwep(NULL);
 
 	/* some things break rather than ship */
 	if (breaktest(otmp)) {
@@ -1329,7 +1329,7 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 	    }
 	    You_hear("a muffled %s.",result);
 	    obj_extract_self(otmp);
-	    obfree(otmp, (struct obj *) 0);
+	    obfree(otmp, NULL);
 	    return TRUE;
 	}
 

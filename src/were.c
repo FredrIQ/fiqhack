@@ -19,7 +19,7 @@ void were_change(struct monst *mon)
 		    switch (monsndx(mon->data)) {
 		    case PM_WEREWOLF:	howler = "wolf";    break;
 		    case PM_WEREJACKAL: howler = "jackal";  break;
-		    default:		howler = (char *)0; break;
+		    default:		howler = NULL; break;
 		    }
 		    if (howler)
 			You_hear("a %s howling at the moon.", howler);
@@ -114,7 +114,7 @@ int were_summon(struct permonst *ptr, boolean yours,
 		if (canseemon(mtmp)) *visible += 1;
 	    }
 	    if (yours && mtmp)
-		tamedog(mtmp, (struct obj *) 0);
+		tamedog(mtmp, NULL);
 	}
 	return total;
 }

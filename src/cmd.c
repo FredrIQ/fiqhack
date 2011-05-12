@@ -187,11 +187,11 @@ static int domonability(void)
 	else if (is_mind_flayer(youmonst.data)) return domindblast();
 	else if (u.umonnum == PM_GREMLIN) {
 	    if(IS_FOUNTAIN(levl[u.ux][u.uy].typ)) {
-		if (split_mon(&youmonst, (struct monst *)0))
+		if (split_mon(&youmonst, NULL))
 		    dryup(u.ux, u.uy, TRUE);
 	    } else There("is no fountain here.");
 	} else if (is_unicorn(youmonst.data)) {
-	    use_unicorn_horn((struct obj *)0);
+	    use_unicorn_horn(NULL);
 	    return 1;
 	} else if (youmonst.data->msound == MS_SHRIEK) {
 	    You("shriek.");
@@ -277,7 +277,7 @@ static int wiz_genesis(void)
 /* ^O command - display dungeon layout */
 static int wiz_where(void)
 {
-	if (wizard) print_dungeon(FALSE, (schar *)0, (xchar *)0);
+	if (wizard) print_dungeon(FALSE, NULL, NULL);
 	else	    pline("Unavailable command '^O'.");
 	return 0;
 }
@@ -609,7 +609,7 @@ void enlightenment(int final)
 		you_have(buf);
 	}
 	if (Wounded_legs && u.usteed && wizard) {
-	    strcpy(buf, x_monnam(u.usteed, ARTICLE_YOUR, (char *)0, 
+	    strcpy(buf, x_monnam(u.usteed, ARTICLE_YOUR, NULL, 
 		    SUPPRESS_SADDLE | SUPPRESS_HALLUCINATION, FALSE));
 	    *buf = highc(*buf);
 	    enl_msg(buf, " has", " had", " wounded legs");
@@ -776,7 +776,7 @@ void enlightenment(int final)
 	if (final < 2) {    /* still in progress, or quit/escaped/ascended */
 	    p = "survived after being killed ";
 	    switch (u.umortality) {
-	    case 0:  p = !final ? (char *)0 : "survived";  break;
+	    case 0:  p = !final ? NULL : "survived";  break;
 	    case 1:  strcpy(buf, "once");  break;
 	    case 2:  strcpy(buf, "twice");  break;
 	    case 3:  strcpy(buf, "thrice");  break;
@@ -1141,23 +1141,23 @@ struct ext_func_tab extcmdlist[] = {
 	 * There must be a blank entry here for every entry in the table
 	 * below.
 	 */
-	{(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
 #ifdef DEBUG_MIGRATING_MONS
-	{(char *)0, (char *)0, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
 #endif
-	{(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE},
-        {(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
+        {NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
 #ifdef DEBUG
-	{(char *)0, (char *)0, donull, TRUE},
+	{NULL, NULL, donull, TRUE},
 #endif
-	{(char *)0, (char *)0, donull, TRUE},
-	{(char *)0, (char *)0, donull, TRUE}	/* sentinel */
+	{NULL, NULL, donull, TRUE},
+	{NULL, NULL, donull, TRUE}	/* sentinel */
 };
 
 
@@ -1178,7 +1178,7 @@ static const struct ext_func_tab debug_extcmdlist[] = {
 	{"wizdebug", "wizard debug command", wiz_debug_cmd, TRUE},
 #endif
 	{"wmode", "show wall modes", wiz_show_wmodes, TRUE},
-	{(char *)0, (char *)0, donull, TRUE}
+	{NULL, NULL, donull, TRUE}
 };
 
 /*
@@ -1381,7 +1381,7 @@ static int wiz_migrate_mons(void)
 		ptr = rndmonst();
 		mtmp = makemon(ptr, 0, 0, NO_MM_FLAGS);
 		if (mtmp) migrate_to_level(mtmp, ledger_no(&tolevel),
-				MIGR_RANDOM, (coord *)0);
+				MIGR_RANDOM, NULL);
 		mcount--;
 	}
 	return 0;
@@ -1638,7 +1638,7 @@ int getdir(const char *s)
 	char dirsym;
 
 	dirsym = yn_function ((s && *s != '^') ? s : "In what direction?",
-					(char *)0, '\0');
+					NULL, '\0');
 	if(dirsym == '.' || dirsym == 's')
 		u.dx = u.dy = u.dz = 0;
 	else if(!movecmd(dirsym) && !u.dz) {
@@ -1884,7 +1884,7 @@ static char *parse(void)
 	    multi--;
 	    save_cm = in_line;
 	} else {
-	    save_cm = (char *)0;
+	    save_cm = NULL;
 	}
 	in_line[0] = foo;
 	in_line[1] = '\0';
@@ -1907,7 +1907,7 @@ static void end_of_input(void)
 	if (!program_state.done_hup++ && program_state.something_worth_saving)
 	    dosave0();
 #endif
-	exit_nhwindows((char *)0);
+	exit_nhwindows(NULL);
 	clearlocks();
 	terminate(EXIT_SUCCESS);
 }

@@ -42,7 +42,7 @@ coord *gettrack(int x, int y)
 	    ndist -= 2; /* be careful due to extra decrement at top of loop */
 	    cnt -= ndist;
 	    if(cnt <= 0)
-		return (coord *) 0; /* too far away, no matches possible */
+		return NULL; /* too far away, no matches possible */
 	    if(tc < &utrack[ndist])
 		tc += (UTSZ-ndist);
 	    else
@@ -50,7 +50,7 @@ coord *gettrack(int x, int y)
 	} else if(ndist <= 1)
 	    return ndist ? tc : 0;
     }
-    return (coord *)0;
+    return NULL;
 }
 
 /*track.c*/

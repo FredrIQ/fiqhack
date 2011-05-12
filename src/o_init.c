@@ -54,7 +54,7 @@ static void setgemprobs(d_level *dlev)
 		objects[first+j].oc_prob = 0;
 	first += j;
 	if (first > LAST_GEM || objects[first].oc_class != GEM_CLASS ||
-	    OBJ_NAME(objects[first]) == (char *)0) {
+	    OBJ_NAME(objects[first]) == NULL) {
 		raw_printf("Not enough gems? - first=%d j=%d LAST_GEM=%d",
 			first, j, LAST_GEM);
 		wait_synch();
@@ -126,7 +126,7 @@ void init_objects(void)
 		bases[(int)oclass] = first;
 
 		if (oclass == GEM_CLASS) {
-			setgemprobs((d_level *)0);
+			setgemprobs(NULL);
 
 			if (rn2(2)) { /* change turquoise from green to blue? */
 			    COPY_OBJ_DESCR(objects[TURQUOISE],objects[SAPPHIRE]);
@@ -179,7 +179,7 @@ static void shuffle_all(void)
 		while (last < NUM_OBJECTS && objects[last].oc_class == oclass)
 			last++;
 
-		if (OBJ_DESCR(objects[first]) != (char *)0 &&
+		if (OBJ_DESCR(objects[first]) != NULL &&
 				oclass != TOOL_CLASS &&
 				oclass != WEAPON_CLASS &&
 				oclass != ARMOR_CLASS &&
@@ -330,8 +330,8 @@ void undiscover_object(int oindx)
 static boolean interesting_to_discover(int i)
 {
 	/* Pre-discovered objects are now printed with a '*' */
-    return((boolean)(objects[i].oc_uname != (char *)0 ||
-	    (objects[i].oc_name_known && OBJ_DESCR(objects[i]) != (char *)0)));
+    return((boolean)(objects[i].oc_uname != NULL ||
+	    (objects[i].oc_name_known && OBJ_DESCR(objects[i]) != NULL)));
 }
 
 /* items that should stand out once they're known */

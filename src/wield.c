@@ -115,7 +115,7 @@ static int ready_weapon(struct obj *wep)
 	    /* No weapon */
 	    if (uwep) {
 		You("are empty %s.", body_part(HANDED));
-		setuwep((struct obj *) 0);
+		setuwep(NULL);
 		res++;
 	    } else
 		You("are already empty %s.", body_part(HANDED));
@@ -157,7 +157,7 @@ static int ready_weapon(struct obj *wep)
 		 */
 		long dummy = wep->owornmask;
 		wep->owornmask |= W_WEP;
-		prinv((char *)0, wep, 0L);
+		prinv(NULL, wep, 0L);
 		wep->owornmask = dummy;
 	    }
 	    setuwep(wep);
@@ -175,7 +175,7 @@ static int ready_weapon(struct obj *wep)
 		struct monst *this_shkp;
 
 		if ((this_shkp = shop_keeper(inside_shop(u.ux, u.uy))) !=
-		    (struct monst *)0) {
+		    NULL) {
 		    pline("%s says \"You be careful with my %s!\"",
 			  shkname(this_shkp),
 			  xname(wep));
@@ -236,11 +236,11 @@ int dowield(void)
 
 	/* Handle no object, or object in other slot */
 	if (wep == &zeroobj)
-		wep = (struct obj *) 0;
+		wep = NULL;
 	else if (wep == uswapwep)
 		return doswapweapon();
 	else if (wep == uquiver)
-		setuqwep((struct obj *) 0);
+		setuqwep(NULL);
 	else if (wep->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL
 			| W_SADDLE)) {
 		You("cannot wield that!");
@@ -277,7 +277,7 @@ int doswapweapon(void)
 	/* Unwield your current secondary weapon */
 	oldwep = uwep;
 	oldswap = uswapwep;
-	setuswapwep((struct obj *) 0);
+	setuswapwep(NULL);
 
 	/* Set your new primary weapon */
 	result = ready_weapon(oldswap);
@@ -289,7 +289,7 @@ int doswapweapon(void)
 	else {
 		setuswapwep(oldwep);
 		if (uswapwep)
-			prinv((char *)0, uswapwep, 0L);
+			prinv(NULL, uswapwep, 0L);
 		else
 			You("have no secondary weapon readied.");
 	}
@@ -322,7 +322,7 @@ int dowieldquiver(void)
 		/* Explicitly nothing */
 		if (uquiver) {
 			You("now have no ammunition readied.");
-			setuqwep(newquiver = (struct obj *) 0);
+			setuqwep(newquiver = NULL);
 		} else {
 			You("already have no ammunition readied!");
 			return 0;
@@ -345,14 +345,14 @@ int dowieldquiver(void)
 
 		/* Check if it's the secondary weapon */
 		if (newquiver == uswapwep) {
-			setuswapwep((struct obj *) 0);
+			setuswapwep(NULL);
 			untwoweapon();
 		}
 
 		/* Okay to put in quiver; print it */
 		dummy = newquiver->owornmask;
 		newquiver->owornmask |= W_QUIVER;
-		prinv((char *)0, newquiver, 0L);
+		prinv(NULL, newquiver, 0L);
 		newquiver->owornmask = dummy;
 	}
 
@@ -410,7 +410,7 @@ boolean wield_tool(struct obj *obj,
 	    verb, (obj->oclass == WEAPON_CLASS) ? "weapon" : "tool");
 	return FALSE;
     }
-    if (uquiver == obj) setuqwep((struct obj *)0);
+    if (uquiver == obj) setuqwep(NULL);
     if (uswapwep == obj) {
 	doswapweapon();
 	/* doswapweapon might fail */
@@ -517,7 +517,7 @@ void uwepgone(void)
 		    end_burn(uwep, FALSE);
 		    if (!Blind) pline("%s glowing.", Tobjnam(uwep, "stop"));
 		}
-		setworn((struct obj *)0, W_WEP);
+		setworn(NULL, W_WEP);
 		unweapon = TRUE;
 		update_inventory();
 	}
@@ -526,7 +526,7 @@ void uwepgone(void)
 void uswapwepgone(void)
 {
 	if (uswapwep) {
-		setworn((struct obj *)0, W_SWAPWEP);
+		setworn(NULL, W_SWAPWEP);
 		update_inventory();
 	}
 }
@@ -534,7 +534,7 @@ void uswapwepgone(void)
 void uqwepgone(void)
 {
 	if (uquiver) {
-		setworn((struct obj *)0, W_QUIVER);
+		setworn(NULL, W_QUIVER);
 		update_inventory();
 	}
 }
@@ -562,14 +562,14 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 	if (!target)
 	    return;
 	victim = carried(target) ? &youmonst :
-	    mcarried(target) ? target->ocarry : (struct monst *)0;
+	    mcarried(target) ? target->ocarry : NULL;
 	vismon = victim && (victim != &youmonst) && canseemon(victim);
 	visobj = !victim && cansee(bhitpos.x, bhitpos.y); /* assume thrown */
 
 	erosion = acid_dmg ? target->oeroded2 : target->oeroded;
 
 	if (target->greased) {
-	    grease_protect(target,(char *)0,victim);
+	    grease_protect(target,NULL,victim);
 	} else if (target->oclass == SCROLL_CLASS) {
 	    if(fade_scrolls && target->otyp != SCR_BLANK_PAPER)
 	    {

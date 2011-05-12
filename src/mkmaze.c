@@ -292,7 +292,7 @@ static boolean put_lregion_here(xchar x, xchar y, xchar nlx, xchar nly,
 	break;
     case LR_DOWNSTAIR:
     case LR_UPSTAIR:
-	mkstairs(x, y, (char)rtype, (struct mkroom *)0);
+	mkstairs(x, y, (char)rtype, NULL);
 	break;
     case LR_BRANCH:
 	place_branch(Is_branchlev(&u.uz), x, y);
@@ -375,7 +375,7 @@ static void fixup_special(void)
 
     /* place dungeon branch if not placed above */
     if (!added_branch && Is_branchlev(&u.uz)) {
-	place_lregion(0,0,0,0,0,0,0,0,LR_BRANCH,(d_level *)0);
+	place_lregion(0,0,0,0,0,0,0,0,LR_BRANCH,NULL);
     }
 
 	/* KMH -- Sokoban levels */
@@ -390,7 +390,7 @@ static void fixup_special(void)
 	croom = &rooms[0]; /* only one room on the medusa level */
 	for (tryct = rnd(4); tryct; tryct--) {
 	    x = somex(croom); y = somey(croom);
-	    if (goodpos(x, y, (struct monst *)0, 0)) {
+	    if (goodpos(x, y, NULL, 0)) {
 		otmp = mk_tt_object(STATUE, x, y);
 		while (otmp && (poly_when_stoned(&mons[otmp->corpsenm]) ||
 				pm_resistance(&mons[otmp->corpsenm],MR_STONE))) {
@@ -403,7 +403,7 @@ static void fixup_special(void)
 	if (rn2(2))
 	    otmp = mk_tt_object(STATUE, somex(croom), somey(croom));
 	else /* Medusa statues don't contain books */
-	    otmp = mkcorpstat(STATUE, (struct monst *)0, (struct permonst *)0,
+	    otmp = mkcorpstat(STATUE, NULL, NULL,
 			      somex(croom), somey(croom), FALSE);
 	if (otmp) {
 	    while (pm_resistance(&mons[otmp->corpsenm],MR_STONE)
@@ -546,10 +546,10 @@ void makemaz(const char *s)
 	wallification(2, 2, x_maze_max, y_maze_max);
 #endif
 	mazexy(&mm);
-	mkstairs(mm.x, mm.y, 1, (struct mkroom *)0);		/* up */
+	mkstairs(mm.x, mm.y, 1, NULL);		/* up */
 	if (!Invocation_lev(&u.uz)) {
 	    mazexy(&mm);
-	    mkstairs(mm.x, mm.y, 0, (struct mkroom *)0);	/* down */
+	    mkstairs(mm.x, mm.y, 0, NULL);	/* down */
 	} else {	/* choose "vibrating square" location */
 #define x_maze_min 2
 #define y_maze_min 2
@@ -611,14 +611,14 @@ void makemaz(const char *s)
 	}
 	for(x = rn1(5,7); x; x--) {
 		mazexy(&mm);
-		makemon((struct permonst *) 0, mm.x, mm.y, NO_MM_FLAGS);
+		makemon(NULL, mm.x, mm.y, NO_MM_FLAGS);
 	}
 	for(x = rn1(6,7); x; x--) {
 		mazexy(&mm);
 		mkgold(0L,mm.x,mm.y);
 	}
 	for(x = rn1(6,7); x; x--)
-		mktrap(0,1,(struct mkroom *) 0, (coord*) 0);
+		mktrap(0,1,NULL, NULL);
 }
 
 void walkfrom(int x, int y)
@@ -1006,7 +1006,7 @@ void save_waterlevel(int fd, int mode)
 
 void restore_waterlevel(int fd)
 {
-	struct bubble *b = (struct bubble *)0, *btmp;
+	struct bubble *b = NULL, *btmp;
 	int i;
 	int n;
 
@@ -1027,12 +1027,12 @@ void restore_waterlevel(int fd)
 			b->prev = btmp;
 		} else {
 			bbubbles = b;
-			b->prev = (struct bubble *)0;
+			b->prev = NULL;
 		}
 		mv_bubble(b,0,0,TRUE);
 	}
 	ebubbles = b;
-	b->next = (struct bubble *)0;
+	b->next = NULL;
 	was_waterlevel = TRUE;
 }
 
@@ -1109,7 +1109,7 @@ static void unsetup_waterlevel(void)
 		bb = b->next;
 		free(b);
 	}
-	bbubbles = ebubbles = (struct bubble *)0;
+	bbubbles = ebubbles = NULL;
 }
 
 static void mk_bubble(int x, int y, int n)
@@ -1153,8 +1153,8 @@ static void mk_bubble(int x, int y, int n)
 		b->prev = ebubbles;
 	}
 	else
-		b->prev = (struct bubble *)0;
-	b->next =  (struct bubble *)0;
+		b->prev = NULL;
+	b->next =  NULL;
 	ebubbles = b;
 	mv_bubble(b,0,0,TRUE);
 }

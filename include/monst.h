@@ -173,7 +173,7 @@ struct monst {
 #define NAME(mtmp)	(((char *)(mtmp)->mextra) + (mtmp)->mxlth)
 
 #define MON_WEP(mon)	((mon)->mw)
-#define MON_NOWEP(mon)	((mon)->mw = (struct obj *)0)
+#define MON_NOWEP(mon)	((mon)->mw = NULL)
 
 #define DEADMONSTER(mon)	((mon)->mhp < 1)
 

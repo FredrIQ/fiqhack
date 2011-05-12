@@ -487,19 +487,19 @@ extern dlevel_t level;	/* structure describing the current level */
 #define trap_to_defsym(t) (S_arrow_trap+(t)-1)
 #define defsym_to_trap(d) ((d)-S_arrow_trap+1)
 
-#define OBJ_AT(x,y)	(level.objects[x][y] != (struct obj *)0)
+#define OBJ_AT(x,y)	(level.objects[x][y] != NULL)
 /*
  * Macros for encapsulation of level.monsters references.
  */
-#define MON_AT(x,y)	(level.monsters[x][y] != (struct monst *)0 && \
+#define MON_AT(x,y)	(level.monsters[x][y] != NULL && \
 			 !(level.monsters[x][y])->mburied)
-#define MON_BURIED_AT(x,y)	(level.monsters[x][y] != (struct monst *)0 && \
+#define MON_BURIED_AT(x,y)	(level.monsters[x][y] != NULL && \
 				(level.monsters[x][y])->mburied)
 #define place_worm_seg(m,x,y)	level.monsters[x][y] = m
-#define remove_monster(x,y)	level.monsters[x][y] = (struct monst *)0
+#define remove_monster(x,y)	level.monsters[x][y] = NULL
 #define m_at(x,y)		(MON_AT(x,y) ? level.monsters[x][y] : \
-						(struct monst *)0)
+						NULL)
 #define m_buried_at(x,y)	(MON_BURIED_AT(x,y) ? level.monsters[x][y] : \
-						       (struct monst *)0)
+						       NULL)
 
 #endif /* RM_H */

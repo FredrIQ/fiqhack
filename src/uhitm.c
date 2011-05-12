@@ -58,10 +58,10 @@ void hurtmarmor(struct monst *mdef, int attk)
 		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
 		    break;
 		}
-		if ((target = which_armor(mdef, W_ARM)) != (struct obj *)0) {
+		if ((target = which_armor(mdef, W_ARM)) != NULL) {
 		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
 #ifdef TOURIST
-		} else if ((target = which_armor(mdef, W_ARMU)) != (struct obj *)0) {
+		} else if ((target = which_armor(mdef, W_ARMU)) != NULL) {
 		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
 #endif
 		}
@@ -354,7 +354,7 @@ boolean attack(struct monst *mtmp)
 	    if(flags.verbose) {
 		if(uwep)
 		    You("begin bashing monsters with your %s.",
-			aobjnam(uwep, (char *)0));
+			aobjnam(uwep, NULL));
 		else if (!cantwield(youmonst.data))
 		    You("begin %sing monsters with your %s %s.",
 			Role_if(PM_MONK) ? "strik" : "bash",
@@ -560,7 +560,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			      shk_your(yourbuf, obj), xname(obj));
 			if (!more_than_1) uwepgone();	/* set unweapon */
 			useup(obj);
-			if (!more_than_1) obj = (struct obj *) 0;
+			if (!more_than_1) obj = NULL;
 			hittxt = TRUE;
 			if (mdat != &mons[PM_SHADE])
 			    tmp++;
@@ -644,7 +644,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 		if (obj->quan > 1L)
 		    obj = splitobj(obj, 1L);
 		else
-		    setuwep((struct obj *)0);
+		    setuwep(NULL);
 		freeinv(obj);
 		potionhit(mon, obj, TRUE);
 		if (mon->mhp <= 0) return FALSE;	/* killed */
@@ -669,7 +669,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 				shk_your(yourbuf, obj));
 			    change_luck(-2);
 			    useup(obj);
-			    obj = (struct obj *) 0;
+			    obj = NULL;
 			    unarmed = FALSE;	/* avoid obj==0 confusion */
 			    get_dmg_bonus = FALSE;
 			    hittxt = TRUE;
@@ -705,9 +705,9 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			break;
 		    case EGG:
 		      {
-#define useup_eggs(o)	{ if (thrown) obfree(o,(struct obj *)0); \
+#define useup_eggs(o)	{ if (thrown) obfree(o,NULL); \
 			  else useupall(o); \
-			  o = (struct obj *)0; }	/* now gone */
+			  o = NULL; }	/* now gone */
 			long cnt = obj->quan;
 
 			tmp = 1;		/* nominal physical damage */
@@ -805,7 +805,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			    pline(obj->otyp==CREAM_PIE ? "Splat!" : "Splash!");
 			    setmangry(mon);
 			}
-			if (thrown) obfree(obj, (struct obj *)0);
+			if (thrown) obfree(obj, NULL);
 			else useup(obj);
 			hittxt = TRUE;
 			get_dmg_bonus = FALSE;
@@ -820,7 +820,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 				Your("venom burns %s!", mon_nam(mon));
 				tmp = dmgval(obj, mon);
 			}
-			if (thrown) obfree(obj, (struct obj *)0);
+			if (thrown) obfree(obj, NULL);
 			else useup(obj);
 			hittxt = TRUE;
 			get_dmg_bonus = FALSE;
@@ -1129,7 +1129,7 @@ static void demonpet(void)
 	i = !rn2(6) ? ndemon(u.ualign.type) : NON_PM;
 	pm = i != NON_PM ? &mons[i] : youmonst.data;
 	if ((dtmp = makemon(pm, u.ux, u.uy, NO_MM_FLAGS)) != 0)
-	    tamedog(dtmp, (struct obj *)0);
+	    tamedog(dtmp, NULL);
 	exercise(A_WIS, TRUE);
 }
 
@@ -1153,7 +1153,7 @@ static void steal_it(struct monst *mdef, struct attack *mattk)
 	if (!mdef->minvent) return;		/* nothing to take */
 
 	/* look for worn body armor */
-	stealoid = (struct obj *)0;
+	stealoid = NULL;
 	if (could_seduce(&youmonst, mdef, mattk)) {
 	    /* find armor, and move it to end of inventory in the process */
 	    minvent_ptr = &mdef->minvent;
@@ -1162,7 +1162,7 @@ static void steal_it(struct monst *mdef, struct attack *mattk)
 		    if (stealoid) panic("steal_it: multiple worn suits");
 		    *minvent_ptr = otmp->nobj;	/* take armor out of minvent */
 		    stealoid = otmp;
-		    stealoid->nobj = (struct obj *)0;
+		    stealoid->nobj = NULL;
 		} else {
 		    minvent_ptr = &otmp->nobj;
 		}
@@ -1212,7 +1212,7 @@ static void steal_it(struct monst *mdef, struct attack *mattk)
 	    if (unwornmask & W_WEP) {		/* stole wielded weapon */
 		possibly_unwield(mdef, FALSE);
 	    } else if (unwornmask & W_ARMG) {	/* stole worn gloves */
-		mselftouch(mdef, (const char *)0, TRUE);
+		mselftouch(mdef, NULL, TRUE);
 		if (mdef->mhp <= 0)	/* it's now a statue */
 		    return;		/* can't continue stealing */
 	    }
@@ -1386,7 +1386,7 @@ int damageum(struct monst *mdef, struct attack *mattk)
 		}
 		break;
 	    case AD_BLND:
-		if (can_blnd(&youmonst, mdef, mattk->aatyp, (struct obj*)0)) {
+		if (can_blnd(&youmonst, mdef, mattk->aatyp, NULL)) {
 		    if(!Blind && mdef->mcansee)
 			pline("%s is blinded.", Monnam(mdef));
 		    mdef->mcansee = 0;
@@ -1569,7 +1569,7 @@ int damageum(struct monst *mdef, struct attack *mattk)
 		if (!negated && mdef->mspeed != MSLOW) {
 		    unsigned int oldspeed = mdef->mspeed;
 
-		    mon_adjust_speed(mdef, -1, (struct obj *)0);
+		    mon_adjust_speed(mdef, -1, NULL);
 		    if (mdef->mspeed != oldspeed && canseemon(mdef))
 			pline("%s slows down.", Monnam(mdef));
 		}
@@ -1783,7 +1783,7 @@ static int gulpum(struct monst *mdef, struct attack *mattk)
 			}
 			break;
 		    case AD_BLND:
-			if (can_blnd(&youmonst, mdef, mattk->aatyp, (struct obj *)0)) {
+			if (can_blnd(&youmonst, mdef, mattk->aatyp, NULL)) {
 			    if (mdef->mcansee)
 				pline("%s can't see in there!", Monnam(mdef));
 			    mdef->mcansee = 0;
@@ -2095,7 +2095,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 			rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
 		} else if (aatyp == AT_WEAP || aatyp == AT_CLAW ||
 			   aatyp == AT_MAGC || aatyp == AT_TUCH)
-		    passive_obj(mon, (struct obj*)0, &(ptr->mattk[i]));
+		    passive_obj(mon, NULL, &(ptr->mattk[i]));
 	    }
 	    exercise(A_STR, FALSE);
 	    break;
@@ -2129,7 +2129,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 			rust_dmg(uarmf, xname(uarmf), 1, TRUE, &youmonst);
 		} else if (aatyp == AT_WEAP || aatyp == AT_CLAW ||
 			   aatyp == AT_MAGC || aatyp == AT_TUCH)
-		    passive_obj(mon, (struct obj*)0, &(ptr->mattk[i]));
+		    passive_obj(mon, NULL, &(ptr->mattk[i]));
 	    }
 	    break;
 	  case AD_CORR:
@@ -2139,7 +2139,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 			rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
 		} else if (aatyp == AT_WEAP || aatyp == AT_CLAW ||
 			   aatyp == AT_MAGC || aatyp == AT_TUCH)
-		    passive_obj(mon, (struct obj*)0, &(ptr->mattk[i]));
+		    passive_obj(mon, NULL, &(ptr->mattk[i]));
 	    }
 	    break;
 	  case AD_MAGM:
@@ -2154,7 +2154,7 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 	    break;
 	  case AD_ENCH:	/* KMH -- remove enchantment (disenchanter) */
 	    if (mhit) {
-		struct obj *obj = (struct obj *)0;
+		struct obj *obj = NULL;
 
 		if (aatyp == AT_KICK) {
 		    obj = uarmf;
@@ -2402,7 +2402,7 @@ int flash_hits_mon(struct monst *mtmp,
 			  "wails in agony" : "cries out in pain");
 		    if ((mtmp->mhp -= amt) <= 0) {
 			if (flags.mon_moving)
-			    monkilled(mtmp, (char *)0, AD_BLND);
+			    monkilled(mtmp, NULL, AD_BLND);
 			else
 			    killed(mtmp);
 		    } else if (cansee(mtmp->mx,mtmp->my) && !canspotmon(mtmp)){

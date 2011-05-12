@@ -52,12 +52,12 @@ static long omoves;
 /* Recalculate level.objects[x][y], since this info was not saved. */
 static void find_lev_obj(void)
 {
-	struct obj *fobjtmp = (struct obj *)0;
+	struct obj *fobjtmp = NULL;
 	struct obj *otmp;
 	int x,y;
 
 	for(x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++)
-		level.objects[x][y] = (struct obj *)0;
+		level.objects[x][y] = NULL;
 
 	/*
 	 * Reverse the entire fobj chain, which is necessary so that we can
@@ -111,7 +111,7 @@ static void restlevchn(int fd)
 	int cnt;
 	s_level	*tmplev, *x;
 
-	sp_levchn = (s_level *) 0;
+	sp_levchn = NULL;
 	mread(fd, &cnt, sizeof(int));
 	for(; cnt > 0; cnt--) {
 
@@ -123,7 +123,7 @@ static void restlevchn(int fd)
 		for(x = sp_levchn; x->next; x = x->next);
 		x->next = tmplev;
 	    }
-	    tmplev->next = (s_level *)0;
+	    tmplev->next = NULL;
 	}
 }
 
@@ -138,7 +138,7 @@ static void restdamage(int fd, boolean ghostly)
 	    return;
 	tmp_dam = malloc(sizeof(struct damage));
 	while (--counter >= 0) {
-	    char damaged_shops[5], *shp = (char *)0;
+	    char damaged_shops[5], *shp = NULL;
 
 	    mread(fd, tmp_dam, sizeof(*tmp_dam));
 	    if (ghostly)
@@ -172,7 +172,7 @@ static void restdamage(int fd, boolean ghostly)
 static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 {
 	struct obj *otmp, *otmp2 = 0;
-	struct obj *first = (struct obj *)0;
+	struct obj *first = NULL;
 	int xl;
 
 	while(1) {
@@ -220,7 +220,7 @@ static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 static struct monst *restmonchn(int fd, boolean ghostly)
 {
 	struct monst *mtmp, *mtmp2 = 0;
-	struct monst *first = (struct monst *)0;
+	struct monst *first = NULL;
 	int xl;
 	struct permonst *monbegin;
 	boolean moved;
@@ -482,8 +482,8 @@ int dorecover(int fd)
 	 * afterwards, and in the meantime at least u.usteed may mislead
 	 * place_monster() on other levels
 	 */
-	u.ustuck = (struct monst *)0;
-	u.usteed = (struct monst *)0;
+	u.ustuck = NULL;
+	u.usteed = NULL;
 
 	while(1) {
 		if(read(fd, &ltmp, sizeof ltmp) != sizeof ltmp)
@@ -494,7 +494,7 @@ int dorecover(int fd)
 	}
 
 	lseek(fd, (off_t)0, 0);
-	uptodate(fd, (char *)0);		/* skip version info */
+	uptodate(fd, NULL);		/* skip version info */
 #ifdef STORE_PLNAME_IN_FILE
 	mread(fd, plname, PL_NSIZ);
 #endif
@@ -646,7 +646,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	/* reset level.monsters for new level */
 	for (x = 0; x < COLNO; x++)
 	    for (y = 0; y < ROWNO; y++)
-		level.monsters[x][y] = (struct monst *) 0;
+		level.monsters[x][y] = NULL;
 	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (mtmp->isshk)
 		set_residency(mtmp, FALSE);

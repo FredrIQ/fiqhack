@@ -62,7 +62,7 @@ static void mkshop(void)
 {
 	struct mkroom *sroom;
 	int i = -1;
-	char *ep = (char *)0;	/* (init == lint suppression) */
+	char *ep = NULL;	/* (init == lint suppression) */
 
 	/* first determine shoptype */
 	if(wizard){
@@ -267,7 +267,7 @@ void fill_zoo(struct mkroom *sroom)
 		    (type == LEPREHALL) ? &mons[PM_LEPRECHAUN] :
 		    (type == COCKNEST) ? &mons[PM_COCKATRICE] :
 		    (type == ANTHOLE) ? antholemon() :
-		    (struct permonst *) 0,
+		    NULL,
 		   sx, sy, NO_MM_FLAGS);
 		if(mon) {
 			mon->msleeping = 1;
@@ -297,7 +297,7 @@ void fill_zoo(struct mkroom *sroom)
 			    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 					     sx, sy, TRUE, FALSE);
 			if (!rn2(5))
-			    make_grave(sx, sy, (char *)0);
+			    make_grave(sx, sy, NULL);
 			break;
 		    case BEEHIVE:
 			if(!rn2(3))
@@ -590,7 +590,7 @@ struct mkroom *search_special(schar type)
 	       (type == ANY_SHOP && croom->rtype >= SHOPBASE) ||
 	       croom->rtype == type)
 		return croom;
-	return (struct mkroom *) 0;
+	return NULL;
 }
 
 
@@ -634,7 +634,7 @@ static struct permonst *squadmon(void)	/* return soldier types. */
 	mndx = squadprob[rn2(NSTYPES)].pm;
 gotone:
 	if (!(mvitals[mndx].mvflags & G_GONE)) return &mons[mndx];
-	else			    return (struct permonst *) 0;
+	else			    return NULL;
 }
 
 /*
@@ -675,7 +675,7 @@ static void rest_room(int fd, struct mkroom *r)
 	for(i=0; i<r->nsubrooms; i++) {
 		r->sbrooms[i] = &subrooms[nsubroom];
 		rest_room(fd, &subrooms[nsubroom]);
-		subrooms[nsubroom++].resident = (struct monst *)0;
+		subrooms[nsubroom++].resident = NULL;
 	}
 }
 
@@ -691,7 +691,7 @@ void rest_rooms(int fd)
 	nsubroom = 0;
 	for(i = 0; i<nroom; i++) {
 	    rest_room(fd, &rooms[i]);
-	    rooms[i].resident = (struct monst *)0;
+	    rooms[i].resident = NULL;
 	}
 	rooms[nroom].hx = -1;		/* restore ending flags */
 	subrooms[nsubroom].hx = -1;

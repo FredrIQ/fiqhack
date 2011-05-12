@@ -232,7 +232,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
     for (i = 0; i < NATTK; i++) {
 	res[i] = MM_MISS;
 	mattk = getmattk(pa, i, res, &alt_attk);
-	otmp = (struct obj *)0;
+	otmp = NULL;
 	attk = 1;
 	switch (mattk->aatyp) {
 	    case AT_WEAP:		/* "hand to hand" attacks */
@@ -429,12 +429,12 @@ static int gazemm(struct monst *magr, struct monst *mdef, struct attack *mattk)
 	    return MM_MISS;
 	}
 	/* call mon_reflects 2x, first test, then, if visible, print message */
-	if (magr->data == &mons[PM_MEDUSA] && mon_reflects(mdef, (char *)0)) {
+	if (magr->data == &mons[PM_MEDUSA] && mon_reflects(mdef, NULL)) {
 	    if (canseemon(mdef))
 		mon_reflects(mdef,
 				    "The gaze is reflected away by %s %s.");
 	    if (mdef->mcansee) {
-		if (mon_reflects(magr, (char *)0)) {
+		if (mon_reflects(magr, NULL)) {
 		    if (canseemon(magr))
 			mon_reflects(magr,
 					"The gaze is reflected away by %s %s.");
@@ -852,7 +852,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		if (!cancelled && mdef->mspeed != MSLOW) {
 		    unsigned int oldspeed = mdef->mspeed;
 
-		    mon_adjust_speed(mdef, -1, (struct obj *)0);
+		    mon_adjust_speed(mdef, -1, NULL);
 		    mdef->mstrategy &= ~STRAT_WAITFORU;
 		    if (mdef->mspeed != oldspeed && vis)
 			pline("%s slows down.", Monnam(mdef));
@@ -870,7 +870,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		}
 		break;
 	    case AD_BLND:
-		if (can_blnd(magr, mdef, mattk->aatyp, (struct obj*)0)) {
+		if (can_blnd(magr, mdef, mattk->aatyp, NULL)) {
 		    unsigned rnd_tmp;
 
 		    if (vis && mdef->mcansee)
@@ -978,7 +978,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 
 			/* make a special x_monnam() call that never omits
 			   the saddle, and save it for later messages */
-			strcpy(mdefnambuf, x_monnam(mdef, ARTICLE_THE, (char *)0, 0, FALSE));
+			strcpy(mdefnambuf, x_monnam(mdef, ARTICLE_THE, NULL, 0, FALSE));
 
 			otmp = obj;
 			if (u.usteed == mdef &&
@@ -1004,7 +1004,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 			}
 			possibly_unwield(mdef, FALSE);
 			mdef->mstrategy &= ~STRAT_WAITFORU;
-			mselftouch(mdef, (const char *)0, FALSE);
+			mselftouch(mdef, NULL, FALSE);
 			if (mdef->mhp <= 0)
 				return (MM_DEF_DIED | (grow_up(magr,mdef) ?
 							0 : MM_AGR_DIED));
@@ -1105,11 +1105,11 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		/* various checks similar to dog_eat and meatobj.
 		 * after monkilled() to provide better message ordering */
 		if (mdef->cham != CHAM_ORDINARY) {
-		    newcham(magr, (struct permonst *)0, FALSE, TRUE);
+		    newcham(magr, NULL, FALSE, TRUE);
 		} else if (mdef->data == &mons[PM_GREEN_SLIME]) {
 		    newcham(magr, &mons[PM_GREEN_SLIME], FALSE, TRUE);
 		} else if (mdef->data == &mons[PM_WRAITH]) {
-		    grow_up(magr, (struct monst *)0);
+		    grow_up(magr, NULL);
 		    /* don't grow up twice */
 		    return MM_DEF_DIED | (magr->mhp > 0 ? 0 : MM_AGR_DIED);
 		} else if (mdef->data == &mons[PM_NURSE]) {
@@ -1268,7 +1268,7 @@ static int passivemm(struct monst *magr, struct monst *mdef,
 			sprintf(buf, "%s gaze is reflected by %%s %%s.",
 				s_suffix(mon_nam(mdef)));
 			if (mon_reflects(magr,
-					 canseemon(magr) ? buf : (char *)0))
+					 canseemon(magr) ? buf : NULL))
 				return mdead|mhit;
 			strcpy(buf, Monnam(magr));
 			if(canseemon(magr))
