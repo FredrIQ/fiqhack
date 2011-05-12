@@ -69,7 +69,7 @@ NhRegion *create_region(NhRect *rects, int nrect)
     int i;
     NhRegion *reg;
 
-    reg = (NhRegion *) alloc(sizeof (NhRegion));
+    reg = malloc(sizeof (NhRegion));
     /* Determines bounding box */
     if (nrect > 0) {
 	reg->bounding_box = rects[0];
@@ -80,7 +80,7 @@ NhRegion *create_region(NhRect *rects, int nrect)
 	reg->bounding_box.hy = 0;
     }
     reg->nrects = nrect;
-    reg->rects = nrect > 0 ? (NhRect *)alloc((sizeof (NhRect)) * nrect) : NULL;
+    reg->rects = nrect > 0 ? malloc((sizeof (NhRect)) * nrect) : NULL;
     for (i = 0; i < nrect; i++) {
 	if (rects[i].lx < reg->bounding_box.lx)
 	    reg->bounding_box.lx = rects[i].lx;
@@ -120,11 +120,11 @@ void add_rect_to_reg(NhRegion *reg, NhRect *rect)
 {
     NhRect *tmp_rect;
 
-    tmp_rect = (NhRect *) alloc(sizeof (NhRect) * (reg->nrects + 1));
+    tmp_rect = malloc(sizeof (NhRect) * (reg->nrects + 1));
     if (reg->nrects > 0) {
-	memcpy((void *) tmp_rect, (void *) reg->rects,
+	memcpy(tmp_rect, reg->rects,
 		      (sizeof (NhRect) * reg->nrects));
-	free((void *) reg->rects);
+	free(reg->rects);
     }
     tmp_rect[reg->nrects] = *rect;
     reg->nrects++;
@@ -149,12 +149,11 @@ void add_mon_to_reg(NhRegion *reg, struct monst *mon)
     unsigned *tmp_m;
 
     if (reg->max_monst <= reg->n_monst) {
-	tmp_m = (unsigned *)
-		    alloc(sizeof (unsigned) * (reg->max_monst + MONST_INC));
+	tmp_m = malloc(sizeof (unsigned) * (reg->max_monst + MONST_INC));
 	if (reg->max_monst > 0) {
 	    for (i = 0; i < reg->max_monst; i++)
 		tmp_m[i] = reg->monsters[i];
-	    free((void *) reg->monsters);
+	    free(reg->monsters);
 	}
 	reg->monsters = tmp_m;
 	reg->max_monst += MONST_INC;
@@ -200,10 +199,10 @@ void free_region(NhRegion *reg)
 {
     if (reg) {
 	if (reg->rects)
-	    free((void *) reg->rects);
+	    free(reg->rects);
 	if (reg->monsters)
-	    free((void *) reg->monsters);
-	free((void *) reg);
+	    free(reg->monsters);
+	free(reg);
     }
 }
 
@@ -218,11 +217,11 @@ void add_region(NhRegion *reg)
 
     if (max_regions <= n_regions) {
 	tmp_reg = regions;
-	regions = (NhRegion **)alloc(sizeof (NhRegion *) * (max_regions + 10));
+	regions = malloc(sizeof (NhRegion *) * (max_regions + 10));
 	if (max_regions > 0) {
-	    memcpy((void *) regions, (void *) tmp_reg,
+	    memcpy(regions, tmp_reg,
 			  max_regions * sizeof (NhRegion *));
-	    free((void *) tmp_reg);
+	    free(tmp_reg);
 	}
 	max_regions += 10;
     }
@@ -547,23 +546,22 @@ void rest_regions(int fd,
     mread(fd, (void *) &n_regions, sizeof (n_regions));
     max_regions = n_regions;
     if (n_regions > 0)
-	regions = (NhRegion **) alloc(sizeof (NhRegion *) * n_regions);
+	regions = malloc(sizeof (NhRegion *) * n_regions);
     for (i = 0; i < n_regions; i++) {
-	regions[i] = (NhRegion *) alloc(sizeof (NhRegion));
-	mread(fd, (void *) &regions[i]->bounding_box, sizeof (NhRect));
-	mread(fd, (void *) &regions[i]->nrects, sizeof (short));
+	regions[i] = malloc(sizeof (NhRegion));
+	mread(fd, &regions[i]->bounding_box, sizeof (NhRect));
+	mread(fd, &regions[i]->nrects, sizeof (short));
 
 	if (regions[i]->nrects > 0)
-	    regions[i]->rects = (NhRect *)
-				  alloc(sizeof (NhRect) * regions[i]->nrects);
+	    regions[i]->rects = malloc(sizeof (NhRect) * regions[i]->nrects);
 	for (j = 0; j < regions[i]->nrects; j++)
-	    mread(fd, (void *) &regions[i]->rects[j], sizeof (NhRect));
-	mread(fd, (void *) &regions[i]->attach_2_u, sizeof (boolean));
-	mread(fd, (void *) &regions[i]->attach_2_m, sizeof (unsigned));
+	    mread(fd, &regions[i]->rects[j], sizeof (NhRect));
+	mread(fd, &regions[i]->attach_2_u, sizeof (boolean));
+	mread(fd, &regions[i]->attach_2_m, sizeof (unsigned));
 
-	mread(fd, (void *) &n, sizeof n);
+	mread(fd, &n, sizeof n);
 	if (n > 0) {
-	    msg_buf = (char *) alloc(n + 1);
+	    msg_buf = malloc(n + 1);
 	    mread(fd, (void *) msg_buf, n);
 	    msg_buf[n] = '\0';
 	    regions[i]->enter_msg = (const char *) msg_buf;
@@ -572,7 +570,7 @@ void rest_regions(int fd,
 
 	mread(fd, (void *) &n, sizeof n);
 	if (n > 0) {
-	    msg_buf = (char *) alloc(n + 1);
+	    msg_buf = malloc(n + 1);
 	    mread(fd, (void *) msg_buf, n);
 	    msg_buf[n] = '\0';
 	    regions[i]->leave_msg = (const char *) msg_buf;
@@ -598,7 +596,7 @@ void rest_regions(int fd,
 	mread(fd, (void *) &regions[i]->n_monst, sizeof (short));
 	if (regions[i]->n_monst > 0)
 	    regions[i]->monsters =
-		(unsigned *) alloc(sizeof (unsigned) * regions[i]->n_monst);
+		malloc(sizeof (unsigned) * regions[i]->n_monst);
 	else
 	    regions[i]->monsters = NULL;
 	regions[i]->max_monst = regions[i]->n_monst;

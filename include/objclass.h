@@ -170,8 +170,8 @@ struct fruit {
 	int fid;
 	struct fruit *nextf;
 };
-#define newfruit() (struct fruit *)alloc(sizeof(struct fruit))
-#define dealloc_fruit(rind) free((void *) (rind))
+#define newfruit() malloc(sizeof(struct fruit))
+#define dealloc_fruit(rind) free(rind)
 
 #define OBJ_NAME(obj)  (obj_descr[(obj).oc_name_idx].oc_name)
 #define OBJ_DESCR(obj) (obj_descr[(obj).oc_descr_idx].oc_descr)

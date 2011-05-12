@@ -1245,7 +1245,7 @@ static const char *kind_name(short kind)
 static void print_queue(winid win, timer_element *base)
 {
     timer_element *curr;
-    char buf[BUFSZ], arg_address[20];
+    char buf[BUFSZ];
 
     if (!base) {
 	putstr(win, 0, "<empty>");
@@ -1253,15 +1253,14 @@ static void print_queue(winid win, timer_element *base)
 	putstr(win, 0, "timeout  id   kind   call");
 	for (curr = base; curr; curr = curr->next) {
 #ifdef VERBOSE_TIMER
-	    sprintf(buf, " %4ld   %4ld  %-6s %s(%s)",
+	    sprintf(buf, " %4ld   %4ld  %-6s %s(%p)",
 		curr->timeout, curr->tid, kind_name(curr->kind),
 		timeout_funcs[curr->func_index].name,
-		fmt_ptr((void *)curr->arg, arg_address));
+		curr->arg);
 #else
-	    sprintf(buf, " %4ld   %4ld  %-6s #%d(%s)",
+	    sprintf(buf, " %4ld   %4ld  %-6s #%d(%p)",
 		curr->timeout, curr->tid, kind_name(curr->kind),
-		curr->func_index,
-		fmt_ptr((void *)curr->arg, arg_address));
+		curr->func_index, curr->arg);
 #endif
 	    putstr(win, 0, buf);
 	}
@@ -1292,15 +1291,14 @@ int wiz_timeout_queue(void)
 void timer_sanity_check(void)
 {
     timer_element *curr;
-    char obj_address[20];
 
     /* this should be much more complete */
     for (curr = timer_base; curr; curr = curr->next)
 	if (curr->kind == TIMER_OBJECT) {
 	    struct obj *obj = (struct obj *) curr->arg;
 	    if (obj->timed == 0) {
-		pline("timer sanity: untimed obj %s, timer %ld",
-		      fmt_ptr((void *)obj, obj_address), curr->tid);
+		pline("timer sanity: untimed obj %p, timer %ld",
+		      obj, curr->tid);
 	    }
 	}
 }
@@ -1340,7 +1338,7 @@ boolean start_timer(long when, short kind, short func_index,void *arg)
     if (func_index < 0 || func_index >= NUM_TIME_FUNCS)
 	panic("start_timer");
 
-    gnu = (timer_element *) alloc(sizeof(timer_element));
+    gnu = malloc(sizeof(timer_element));
     gnu->next = 0;
     gnu->tid = timer_id++;
     gnu->timeout = monstermoves + when;
@@ -1676,7 +1674,7 @@ void restore_timers(int fd, int range,
     /* restore elements */
     mread(fd, (void *) &count, sizeof count);
     while (count-- > 0) {
-	curr = (timer_element *) alloc(sizeof(timer_element));
+	curr = malloc(sizeof(timer_element));
 	mread(fd, (void *) curr, sizeof(timer_element));
 	if (ghostly)
 	    curr->timeout += adjust;

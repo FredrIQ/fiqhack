@@ -808,7 +808,7 @@ void tmp_at(int x, int y)
 	    if (!tglyph)
 		tmp = &tgfirst;
 	    else	/* nested effect; we need dynamic memory */
-		tmp = (struct tmp_glyph *)alloc(sizeof (struct tmp_glyph));
+		tmp = malloc(sizeof (struct tmp_glyph));
 	    tmp->prev = tglyph;
 	    tglyph = tmp;
 	    tglyph->sidx = 0;

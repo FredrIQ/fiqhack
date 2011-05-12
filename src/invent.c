@@ -2385,7 +2385,7 @@ char *let_to_name(char let, boolean unpaid)
 	if (len > invbufsiz) {
 	    if (invbuf) free((void *)invbuf);
 	    invbufsiz = len + 10; /* add slop to reduce incremental realloc */
-	    invbuf = (char *) alloc(invbufsiz);
+	    invbuf = malloc(invbufsiz);
 	}
 	if (unpaid)
 	    strcat(strcpy(invbuf, "Unpaid "), class_name);

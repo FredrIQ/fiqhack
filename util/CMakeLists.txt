@@ -12,7 +12,6 @@ set ( MAKEDEFS_SRC
 set ( DGN_COMP_SRC
     dgn_main.c
     panic.c
-    ${NetHack_SOURCE_DIR}/src/alloc.c
     ${NetHack_BINARY_DIR}/util/dgn_parser.c
     ${NetHack_BINARY_DIR}/util/dgn_scanner.c    
     )
@@ -20,7 +19,6 @@ set ( DGN_COMP_SRC
 set ( LEV_COMP_SRC
     lev_main.c
     panic.c
-    ${NetHack_SOURCE_DIR}/src/alloc.c
     ${NetHack_SOURCE_DIR}/src/drawing.c
     ${NetHack_SOURCE_DIR}/src/decl.c
     ${NetHack_SOURCE_DIR}/src/monst.c

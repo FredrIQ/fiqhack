@@ -4,7 +4,7 @@
 #include "hack.h"
 #include "lev.h"
 
-#define newseg()		(struct wseg *) alloc(sizeof(struct wseg))
+#define newseg()		malloc(sizeof(struct wseg))
 #define dealloc_seg(wseg)	free((void *) (wseg))
 
 /* worm segment structure */

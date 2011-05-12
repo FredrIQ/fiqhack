@@ -86,11 +86,11 @@ void tty_startup(int *wid, int *hgt)
 		TE = VS = VE = nullstr;
 		for (i = 0; i < CLR_MAX / 2; i++)
 		    if (i != CLR_BLACK) {
-			hilites[i|BRIGHT] = (char *) alloc(sizeof("\033[1;3%dm"));
+			hilites[i|BRIGHT] = malloc(sizeof("\033[1;3%dm"));
 			sprintf(hilites[i|BRIGHT], "\033[1;3%dm", i);
 			if (i != CLR_GRAY)
 			    {
-				hilites[i] = (char *) alloc(sizeof("\033[0;3%dm"));
+				hilites[i] = malloc(sizeof("\033[0;3%dm"));
 				sprintf(hilites[i], "\033[0;3%dm", i);
 			    }
 		    }
@@ -172,8 +172,8 @@ void tty_startup(int *wid, int *hgt)
 	 * pager as a string - so how can you send it NULs???
 	 *  -jsb
 	 */
-	nh_HI = (char *) alloc((unsigned)(strlen(SO)+1));
-	nh_HE = (char *) alloc((unsigned)(strlen(ME)+1));
+	nh_HI = malloc((unsigned)(strlen(SO)+1));
+	nh_HE = malloc((unsigned)(strlen(ME)+1));
 	i = 0;
 	while (isdigit(SO[i])) i++;
 	strcpy(nh_HI, &SO[i]);
@@ -530,11 +530,11 @@ static void init_hilite(void)
 	for (c = 0; c < CLR_MAX / 2; c++) {
 	    scratch = tparm(setf, ti_map[c]);
 	    if (c != CLR_GRAY) {
-		hilites[c] = (char *) alloc(strlen(scratch) + 1);
+		hilites[c] = malloc(strlen(scratch) + 1);
 		strcpy(hilites[c], scratch);
 	    }
 	    if (c != CLR_BLACK) {
-		hilites[c|BRIGHT] = (char*) alloc(strlen(scratch)+strlen(MD)+1);
+		hilites[c|BRIGHT] = malloc(strlen(scratch)+strlen(MD)+1);
 		strcpy(hilites[c|BRIGHT], MD);
 		strcat(hilites[c|BRIGHT], scratch);
 	    }
@@ -602,7 +602,7 @@ static void init_hilite(void)
 		if (c == foreg)
 		    hilites[c] = (char *)0;
 		else if (c != hi_foreg || backg != hi_backg) {
-		    hilites[c] = (char *) alloc(sizeof("\033[%d;3%d;4%dm"));
+		    hilites[c] = malloc(sizeof("\033[%d;3%d;4%dm"));
 		    sprintf(hilites[c], "\033[%d", !!(c & BRIGHT));
 		    if ((c | BRIGHT) != (foreg | BRIGHT))
 			sprintf(eos(hilites[c]), ";3%d", c & ~BRIGHT);

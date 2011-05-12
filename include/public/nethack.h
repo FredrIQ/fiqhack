@@ -43,9 +43,6 @@ extern EXPORT void nh_start_game(char*, void(*)(void));
 extern EXPORT void moveloop(void);
 extern EXPORT const char **nh_get_copyright_banner(void);
 
-/* alloc.c, for util progs too */
-extern EXPORT long *alloc(unsigned int);
-
 /* botl.c */
 extern EXPORT void bot(void);
 

@@ -19,9 +19,9 @@
 #define MAX_OF_TYPE	128
 
 #define New(type)		\
-	(type *) memset((void *)alloc(sizeof(type)), 0, sizeof(type))
-#define NewTab(type, size)	(type **) alloc(sizeof(type *) * size)
-#define Free(ptr)		free((void *)ptr)
+	(type *) memset(malloc(sizeof(type)), 0, sizeof(type))
+#define NewTab(type, size)	malloc(sizeof(type *) * size)
+#define Free(ptr)		free(ptr)
 
 extern void yyerror(const char *);
 extern void yywarning(const char *);
@@ -325,9 +325,9 @@ init_rreg	: RANDOM_OBJECTS_ID ':' object_list
 			    yyerror("Object registers already initialized!");
 			} else {
 			    special_lev.nrobjects = n_olist;
-			    special_lev.robjects = (char *) alloc(n_olist);
-			    (void) memcpy((void *)special_lev.robjects,
-					  (void *)olist, n_olist);
+			    special_lev.robjects = malloc(n_olist);
+			    (void) memcpy(special_lev.robjects,
+					  olist, n_olist);
 			}
 		  }
 		| RANDOM_MONSTERS_ID ':' monster_list
@@ -336,9 +336,9 @@ init_rreg	: RANDOM_OBJECTS_ID ':' object_list
 			    yyerror("Monster registers already initialized!");
 			} else {
 			    special_lev.nrmonst = n_mlist;
-			    special_lev.rmonst = (char *) alloc(n_mlist);
-			    (void) memcpy((void *)special_lev.rmonst,
-					  (void *)mlist, n_mlist);
+			    special_lev.rmonst = malloc(n_mlist);
+			    (void) memcpy(special_lev.rmonst,
+					  mlist, n_mlist);
 			  }
 		  }
 		;
@@ -647,8 +647,8 @@ map_definition	: NOMAP_ID
 			tmppart[npart]->nrmonst = 0;
 			tmppart[npart]->xsize = 1;
 			tmppart[npart]->ysize = 1;
-			tmppart[npart]->map = (char **) alloc(sizeof(char *));
-			tmppart[npart]->map[0] = (char *) alloc(1);
+			tmppart[npart]->map = malloc(sizeof(char *));
+			tmppart[npart]->map[0] = malloc(1);
 			tmppart[npart]->map[0][0] = STONE;
 			max_x_map = COLNO-1;
 			max_y_map = ROWNO;
@@ -689,9 +689,9 @@ init_reg	: RANDOM_OBJECTS_ID ':' object_list
 			if (tmppart[npart]->nrobjects) {
 			    yyerror("Object registers already initialized!");
 			} else {
-			    tmppart[npart]->robjects = (char *)alloc(n_olist);
-			    (void) memcpy((void *)tmppart[npart]->robjects,
-					  (void *)olist, n_olist);
+			    tmppart[npart]->robjects = malloc(n_olist);
+			    (void) memcpy(tmppart[npart]->robjects,
+					  olist, n_olist);
 			    tmppart[npart]->nrobjects = n_olist;
 			}
 		  }
@@ -701,8 +701,8 @@ init_reg	: RANDOM_OBJECTS_ID ':' object_list
 			    yyerror("Location registers already initialized!");
 			} else {
 			    int i;
-			    tmppart[npart]->rloc_x = (char *) alloc(n_plist);
-			    tmppart[npart]->rloc_y = (char *) alloc(n_plist);
+			    tmppart[npart]->rloc_x = malloc(n_plist);
+			    tmppart[npart]->rloc_y = malloc(n_plist);
 			    for(i=0;i<n_plist;i++) {
 				tmppart[npart]->rloc_x[i] = plist[i].x;
 				tmppart[npart]->rloc_y[i] = plist[i].y;
@@ -715,9 +715,9 @@ init_reg	: RANDOM_OBJECTS_ID ':' object_list
 			if (tmppart[npart]->nrmonst) {
 			    yyerror("Monster registers already initialized!");
 			} else {
-			    tmppart[npart]->rmonst = (char *) alloc(n_mlist);
-			    (void) memcpy((void *)tmppart[npart]->rmonst,
-					  (void *)mlist, n_mlist);
+			    tmppart[npart]->rmonst = malloc(n_mlist);
+			    (void) memcpy(tmppart[npart]->rmonst,
+					  mlist, n_mlist);
 			    tmppart[npart]->nrmonst = n_mlist;
 			}
 		  }

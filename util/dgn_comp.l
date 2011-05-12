@@ -9,8 +9,6 @@
 #include "dgn_comp.h"
 #include "dgn_file.h"
 
-extern long *alloc(unsigned int);
-
 #ifdef FLEX_SCANNER
 #define YY_MALLOC_DECL \
 	       void * malloc(size_t); \
@@ -63,7 +61,7 @@ CHAINLEVEL	return CHLEVEL;
 RNDCHLEVEL	return RNDCHLEVEL;
 [-0-9]+		{ yylval.i=atoi(yytext); return INTEGER; }
 \"[^"]*\"	{ yytext[yyleng-1] = 0; /* Discard the trailing \" */
-		  yylval.str = (char *) alloc(strlen(yytext+1)+1);
+		  yylval.str = malloc(strlen(yytext+1)+1);
 		  strcpy(yylval.str, yytext+1); /* Discard the first \" */
 		  return STRING; }
 ^#.*\n		{ line_number++; }

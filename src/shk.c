@@ -2713,7 +2713,7 @@ void add_damage(xchar x, xchar y, long cost)
 		tmp_dam->cost += cost;
 		return;
 	    }
-	tmp_dam = (struct damage *)alloc((unsigned)sizeof(struct damage));
+	tmp_dam = malloc((unsigned)sizeof(struct damage));
 	tmp_dam->when = monstermoves;
 	tmp_dam->place.x = x;
 	tmp_dam->place.y = y;

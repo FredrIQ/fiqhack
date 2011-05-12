@@ -452,9 +452,8 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 	    }
 
 	    if (!used_up) {
-		stmp = (struct scatter_chain *)
-					alloc(sizeof(struct scatter_chain));
-		stmp->next = (struct scatter_chain *)0;
+		stmp = malloc(sizeof(struct scatter_chain));
+		stmp->next = NULL;
 		stmp->obj = otmp;
 		stmp->ox = sx;
 		stmp->oy = sy;

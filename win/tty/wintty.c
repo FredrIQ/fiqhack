@@ -161,7 +161,7 @@ void tty_init_nhwindows(void)
     setftty();			/* calls start_screen */
 
     /* set up tty descriptor */
-    ttyDisplay = (struct DisplayDesc*) alloc(sizeof(struct DisplayDesc));
+    ttyDisplay = malloc(sizeof(struct DisplayDesc));
     ttyDisplay->toplin = 0;
     ttyDisplay->rows = hgt;
     ttyDisplay->cols = wid;
@@ -611,7 +611,7 @@ winid tty_create_nhwindow(int type)
     if(maxwin == MAXWIN)
 	return WIN_ERR;
 
-    newwin = (struct WinDesc*) alloc(sizeof(struct WinDesc));
+    newwin = malloc(sizeof(struct WinDesc));
     newwin->type = type;
     newwin->flags = 0;
     newwin->active = FALSE;
@@ -680,12 +680,12 @@ winid tty_create_nhwindow(int type)
 
     if(newwin->maxrow) {
 	newwin->data =
-		(char **) alloc(sizeof(char *) * (unsigned)newwin->maxrow);
+		malloc(sizeof(char *) * (unsigned)newwin->maxrow);
 	newwin->datlen =
-		(short *) alloc(sizeof(short) * (unsigned)newwin->maxrow);
+		malloc(sizeof(short) * (unsigned)newwin->maxrow);
 	if(newwin->maxcol) {
 	    for (i = 0; i < newwin->maxrow; i++) {
-		newwin->data[i] = (char *) alloc((unsigned)newwin->maxcol);
+		newwin->data[i] = malloc((unsigned)newwin->maxcol);
 		newwin->datlen[i] = newwin->maxcol;
 	    }
 	} else {
@@ -919,7 +919,7 @@ static void process_menu_window(winid window, struct WinDesc *cw)
     curr_page = page_lines = 0;
     page_start = page_end = 0;
     msave = cw->morestr;	/* save the morestr */
-    cw->morestr = morestr = (char*) alloc((unsigned) QBUFSZ);
+    cw->morestr = morestr = malloc((unsigned) QBUFSZ);
     counting = FALSE;
     count = 0L;
     reset_count = TRUE;
@@ -1596,7 +1596,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	    char **tmp;
 
 	    cw->rows += 12;
-	    tmp = (char **) alloc(sizeof(char *) * (unsigned)cw->rows);
+	    tmp = malloc(sizeof(char *) * (unsigned)cw->rows);
 	    for(i=0; i<cw->maxrow; i++)
 		tmp[i] = cw->data[i];
 	    if(cw->data)
@@ -1609,7 +1609,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	if(cw->data[cw->cury])
 	    free((void *)cw->data[cw->cury]);
 	n0 = strlen(str) + 1;
-	ob = cw->data[cw->cury] = (char *)alloc((unsigned)n0 + 1);
+	ob = cw->data[cw->cury] = malloc((unsigned)n0 + 1);
 	*ob++ = (char)(attr + 1);	/* avoid nuls, for convenience */
 	strcpy(ob, str);
 
@@ -1718,7 +1718,7 @@ void tty_add_menu(
     } else
 	newstr = str;
 
-    item = (tty_menu_item *) alloc(sizeof(tty_menu_item));
+    item = malloc(sizeof(tty_menu_item));
     item->identifier = *identifier;
     item->count = -1L;
     item->selected = preselected;
@@ -1783,8 +1783,7 @@ void tty_end_menu(winid window,		/* menu to use */
     if (cw->plist_size < cw->npages+1 /*need 1 slot beyond last*/) {
 	if (cw->plist) free((void *)cw->plist);
 	cw->plist_size = cw->npages + 1;
-	cw->plist = (tty_menu_item **)
-			alloc(cw->plist_size * sizeof(tty_menu_item *));
+	cw->plist = malloc(cw->plist_size * sizeof(tty_menu_item *));
     }
 
     cw->cols = 0; /* cols is set when the win is initialized... (why?) */
@@ -1870,7 +1869,7 @@ int tty_select_menu(winid window, int how, menu_item **menu_list)
     }
 
     if (n > 0) {
-	*menu_list = (menu_item *) alloc(n * sizeof(menu_item));
+	*menu_list = malloc(n * sizeof(menu_item));
 	for (mi = *menu_list, curr = cw->mlist; curr; curr = curr->next)
 	    if (curr->selected) {
 		mi->item = curr->identifier;
@@ -2287,7 +2286,7 @@ void win_tty_init(void)
 static char * copy_of(const char *s)
 {
     if (!s) s = "";
-    return strcpy((char *) alloc((unsigned) (strlen(s) + 1)), s);
+    return strcpy(malloc((unsigned) (strlen(s) + 1)), s);
 }
 
 /*wintty.c*/

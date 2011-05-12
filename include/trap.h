@@ -32,8 +32,8 @@ struct trap {
 };
 
 extern struct trap *ftrap;
-#define newtrap()	(struct trap *) alloc(sizeof(struct trap))
-#define dealloc_trap(trap) free((void *) (trap))
+#define newtrap()	malloc(sizeof(struct trap))
+#define dealloc_trap(trap) free(trap)
 
 /* reasons for statue animation */
 #define ANIMATE_NORMAL	0

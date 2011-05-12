@@ -61,7 +61,7 @@ void new_light_source(xchar x, xchar y, int range, int type, void *id)
 	return;
     }
 
-    ls = (light_source *) alloc(sizeof(light_source));
+    ls = malloc(sizeof(light_source));
 
     ls->next = light_base;
     ls->x = x;
@@ -269,7 +269,7 @@ void restore_light_sources(int fd)
     mread(fd, (void *) &count, sizeof count);
 
     while (count-- > 0) {
-	ls = (light_source *) alloc(sizeof(light_source));
+	ls = malloc(sizeof(light_source));
 	mread(fd, (void *) ls, sizeof(light_source));
 	ls->next = light_base;
 	light_base = ls;
@@ -464,7 +464,7 @@ void obj_split_light_source(struct obj *src, struct obj *dest)
 	     * never interfere us walking down the list - we are already
 	     * past the insertion point.
 	     */
-	    new_ls = (light_source *) alloc(sizeof(light_source));
+	    new_ls = malloc(sizeof(light_source));
 	    *new_ls = *ls;
 	    if (Is_candle(src)) {
 		/* split candles may emit less light than original group */
@@ -535,12 +535,11 @@ int candle_light_range(struct obj *obj)
     return radius;
 }
 
-extern char *fmt_ptr(const void *, char *);  /* from alloc.c */
 
 int wiz_light_sources(void)
 {
     winid win;
-    char buf[BUFSZ], arg_address[20];
+    char buf[BUFSZ];
     light_source *ls;
 
     win = create_nhwindow(NHW_MENU);	/* corner text window */
@@ -554,7 +553,7 @@ int wiz_light_sources(void)
 	putstr(win, 0, "location range flags  type    id");
 	putstr(win, 0, "-------- ----- ------ ----  -------");
 	for (ls = light_base; ls; ls = ls->next) {
-	    sprintf(buf, "  %2d,%2d   %2d   0x%04x  %s  %s",
+	    sprintf(buf, "  %2d,%2d   %2d   0x%04x  %s  %p",
 		ls->x, ls->y, ls->range, ls->flags,
 		(ls->type == LS_OBJECT ? "obj" :
 		 ls->type == LS_MONSTER ?
@@ -562,7 +561,7 @@ int wiz_light_sources(void)
 		     ((struct monst *)ls->id == &youmonst) ? "you" :
 		     "<m>") :		/* migrating monster */
 		 "???"),
-		fmt_ptr(ls->id, arg_address));
+		ls->id);
 	    putstr(win, 0, buf);
 	}
     } else

@@ -275,7 +275,7 @@ void restnames(int fd)
 	for (i = 0; i < NUM_OBJECTS; i++)
 	    if (objects[i].oc_uname) {
 		mread(fd, (void *) &len, sizeof len);
-		objects[i].oc_uname = (char *) alloc(len);
+		objects[i].oc_uname = malloc(len);
 		mread(fd, (void *)objects[i].oc_uname, len);
 	    }
 #ifdef USE_TILES

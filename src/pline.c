@@ -67,7 +67,7 @@ static char * You_buf(int siz)
 	if (siz > you_buf_siz) {
 		if (you_buf) free((void *) you_buf);
 		you_buf_siz = siz + 10;
-		you_buf = (char *) alloc((unsigned) you_buf_siz);
+		you_buf = malloc((unsigned) you_buf_siz);
 	}
 	return you_buf;
 }

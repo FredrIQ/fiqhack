@@ -6,10 +6,6 @@
 
 #include "winprocs.h"
 
-/* ### alloc.c ### */
-
-extern char *fmt_ptr(const void *,char *);
-
 /* This next pre-processor directive covers almost the entire file,
  * interrupted only occasionally to pick up specific functions as needed. */
 #if !defined(MAKEDEFS_C) && !defined(LEV_LEX_C)

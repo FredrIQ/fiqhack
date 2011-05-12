@@ -37,8 +37,8 @@ static int map_cnt = 0;
 %%
 <MAPC>ENDMAP	{
 		  BEGIN(INITIAL);
-		  yylval.map = (char *) alloc(map_cnt + 1);
-		  (void) strncpy(yylval.map, map, map_cnt);
+		  yylval.map = malloc(map_cnt + 1);
+		  strncpy(yylval.map, map, map_cnt);
 		  yylval.map[map_cnt] = 0;
 		  map_cnt = 0;
 		  return MAP_ID;
@@ -48,7 +48,7 @@ static int map_cnt = 0;
 		  /* convert \r\n to \n */
 		  if (len >= 2 && yytext[len - 2] == '\r') len -= 1;
 		  line_number++;
-		  (void) strncpy(map + map_cnt, yytext, len);
+		  strncpy(map + map_cnt, yytext, len);
 		  map_cnt += len;
 		  map[map_cnt - 1] = '\n';
 		  map[map_cnt] = '\0';
@@ -157,7 +157,7 @@ shortsighted	{ yylval.i=SHORTSIGHTED; return FLAG_TYPE; }
 \[\ *[0-9]+\%\ *\] { yylval.i = atoi(yytext + 1); return PERCENT; }
 [+\-]?[0-9]+	{ yylval.i=atoi(yytext); return INTEGER; }
 \"[^"]*\"	{ yytext[yyleng-1] = 0; /* Discard the trailing \" */
-		  yylval.map = (char *) alloc(strlen(yytext+1)+1);
+		  yylval.map = malloc(strlen(yytext+1)+1);
 		  strcpy(yylval.map, yytext+1); /* Discard the first \" */
 		  return STRING; }
 \r?\n		{ line_number++; }

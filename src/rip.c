@@ -55,9 +55,9 @@ void genl_outrip(winid tmpwin, int how)
 	int x;
 	int line;
 
-	rip = dp = (char **) alloc(sizeof(rip_txt));
+	rip = dp = malloc(sizeof(rip_txt));
 	for (x = 0; rip_txt[x]; x++) {
-		dp[x] = (char *) alloc((unsigned int)(strlen(rip_txt[x]) + 1));
+		dp[x] = malloc((unsigned int)(strlen(rip_txt[x]) + 1));
 		strcpy(dp[x], rip_txt[x]);
 	}
 	dp[x] = (char *)0;
