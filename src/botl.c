@@ -143,6 +143,7 @@ void bot(void)
 
 	memset(&status, 0, sizeof(status));
 	
+	status.moves = moves;
 	strncpy(status.plname, plname, sizeof(status.plname));
 	
 	if (Upolyd) {
