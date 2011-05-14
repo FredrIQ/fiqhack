@@ -49,7 +49,7 @@ int getpos(coord *cc, boolean force, const char *goal)
     }
     cx = cc->x;
     cy = cc->y;
-    curs(WIN_MAP, cx,cy);
+    curs(cx,cy);
     flush_screen(0);
     for (;;) {
 	c = nh_poskey(&tx, &ty, &sidx);
@@ -130,7 +130,7 @@ int getpos(coord *cc, boolean force, const char *goal)
 					matching[glyph_to_cmap(k)]) {
 				    cx = tx,  cy = ty;
 				    if (msg_given) {
-					clear_nhwindow(WIN_MESSAGE);
+					clear_nhwindow(NHW_MESSAGE);
 					msg_given = FALSE;
 				    }
 				    goto nxtc;
@@ -158,10 +158,10 @@ int getpos(coord *cc, boolean force, const char *goal)
 	    break;
 	}
     nxtc:	;
-	curs(WIN_MAP,cx,cy);
+	curs(cx,cy);
 	flush_screen(0);
     }
-    if (msg_given) clear_nhwindow(WIN_MESSAGE);
+    if (msg_given) clear_nhwindow(NHW_MESSAGE);
     cc->x = cx;
     cc->y = cy;
     return result;
@@ -286,7 +286,7 @@ static void do_oname(struct obj *obj)
 		do c2 = 'a' + rn2('z'-'a'); while (c1 == c2);
 		buf[n] = (buf[n] == c1) ? c2 : highc(c2);  /* keep same case */
 		pline("While engraving your %s slips.", body_part(HAND));
-		display_nhwindow(WIN_MESSAGE, FALSE);
+		display_nhwindow(NHW_MESSAGE, FALSE);
 		You("engrave: \"%s\".",buf);
 	}
 	obj = oname(obj, buf);

@@ -70,7 +70,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 			ttyDisplay->inread = 0;
 			tty_doprev_message();
 			ttyDisplay->inread = sav;
-			tty_clear_nhwindow(WIN_MESSAGE);
+			clear_nhwindow(WIN_MESSAGE);
 			cw->maxcol = cw->maxrow;
 			addtopl(query);
 			addtopl(" ");
@@ -84,7 +84,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 			continue;
 		    }
 		} else if (doprev && iflags.prevmsg_window == 's') {
-		    tty_clear_nhwindow(WIN_MESSAGE);
+		    clear_nhwindow(WIN_MESSAGE);
 		    cw->maxcol = cw->maxrow;
 		    doprev = 0;
 		    addtopl(query);
@@ -135,7 +135,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 	}
 	ttyDisplay->toplin = 2;		/* nonempty, no --More-- required */
 	ttyDisplay->inread--;
-	tty_clear_nhwindow(WIN_MESSAGE);	/* clean up after ourselves */
+	clear_nhwindow(WIN_MESSAGE);	/* clean up after ourselves */
 }
 
 

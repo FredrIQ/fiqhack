@@ -203,7 +203,7 @@ void drinkfountain(void)
 			break;
 		    if (++i >= A_MAX) i = 0;
 		}
-		display_nhwindow(WIN_MESSAGE, FALSE);
+		display_nhwindow(NHW_MESSAGE, FALSE);
 		pline("A wisp of vapor escapes the fountain...");
 		exercise(A_WIS, TRUE);
 		levl[u.ux][u.uy].blessedftn = 0;
@@ -221,7 +221,7 @@ void drinkfountain(void)
 		case 19: /* Self-knowledge */
 
 			You_feel("self-knowledgeable...");
-			display_nhwindow(WIN_MESSAGE, FALSE);
+			display_nhwindow(NHW_MESSAGE, FALSE);
 			enlightenment(0);
 			exercise(A_WIS, TRUE);
 			pline_The("feeling subsides.");

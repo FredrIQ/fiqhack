@@ -59,11 +59,11 @@ struct window_procs {
     void (*win_exit_nhwindows)(const char *);
     void (*win_suspend_nhwindows)(const char *);
     void (*win_resume_nhwindows)(void);
-    winid (*win_create_nhwindow)(int);
-    void (*win_clear_nhwindow)(winid);
-    void (*win_display_nhwindow)(winid, boolean);
-    void (*win_destroy_nhwindow)(winid);
-    void (*win_curs)(winid,int,int);
+    void (*win_create_game_windows)(void);
+    void (*win_destroy_game_windows)(void);
+    void (*win_clear_nhwindow)(int);
+    void (*win_display_nhwindow)(int, boolean);
+    void (*win_curs)(int,int);
     void (*win_display_buffer)(char *,boolean);
     void (*win_update_status)(struct nh_status_info *);
     void (*win_print_message)(const char *);
@@ -75,7 +75,7 @@ struct window_procs {
     void (*win_update_inventory)(void);
     void (*win_mark_synch)(void);
     void (*win_wait_synch)(void);
-    void (*win_print_glyph)(winid,xchar,xchar,int);
+    void (*win_print_glyph)(xchar,xchar,int);
     void (*win_raw_print)(const char *);
     void (*win_raw_print_bold)(const char *);
     int (*win_nhgetch)(void);

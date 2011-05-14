@@ -465,7 +465,7 @@ void moveloop(void)
 	    }
 #if defined(WIN32)
 	    if (!(++occtime % 7))
-		display_nhwindow(WIN_MAP, FALSE);
+		display_nhwindow(NHW_MAP, FALSE);
 #endif
 	    continue;
 	}
@@ -527,7 +527,7 @@ void moveloop(void)
 	if ((!flags.run || iflags.runmode == RUN_TPORT) &&
 		(multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
 	    if (flags.run) botl = 1;
-	    display_nhwindow(WIN_MAP, FALSE);
+	    display_nhwindow(NHW_MAP, FALSE);
 	}
     }
 }
@@ -549,19 +549,16 @@ void stop_occupation(void)
 
 void display_gamewindows(void)
 {
-    WIN_MESSAGE = create_nhwindow(NHW_MESSAGE);
-    WIN_STATUS = create_nhwindow(NHW_STATUS);
-    WIN_MAP = create_nhwindow(NHW_MAP);
-    WIN_INVEN = create_nhwindow(NHW_MENU);
+    create_game_windows();
 
     /*
      * The mac port is not DEPENDENT on the order of these
      * displays, but it looks a lot better this way...
      */
-    display_nhwindow(WIN_STATUS, FALSE);
-    display_nhwindow(WIN_MESSAGE, FALSE);
+    display_nhwindow(NHW_STATUS, FALSE);
+    display_nhwindow(NHW_MESSAGE, FALSE);
     clear_glyph_buffer();
-    display_nhwindow(WIN_MAP, FALSE);
+    display_nhwindow(NHW_MAP, FALSE);
 }
 
 void newgame(void)

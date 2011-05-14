@@ -1792,7 +1792,7 @@ static void you_aggravate(struct monst *mtmp)
 	show_glyph(mtmp->mx, mtmp->my, mon_to_glyph(mtmp));
 	display_self();
 	You_feel("aggravated at %s.", noit_mon_nam(mtmp));
-	display_nhwindow(WIN_MAP, TRUE);
+	display_nhwindow(NHW_MAP, TRUE);
 	docrt();
 	if (unconscious()) {
 		multi = -1;

@@ -178,7 +178,7 @@ static boolean confused_book(struct obj *spellbook)
 	    spellbook->in_use = TRUE;	/* in case called from learn */
 	    pline(
 	"Being confused you have difficulties in controlling your actions.");
-	    display_nhwindow(WIN_MESSAGE, FALSE);
+	    display_nhwindow(NHW_MESSAGE, FALSE);
 	    You("accidentally tear the spellbook to pieces.");
 	    if (!objects[spellbook->otyp].oc_name_known &&
 		!objects[spellbook->otyp].oc_uname)

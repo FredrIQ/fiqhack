@@ -29,8 +29,6 @@ extern EXPORT long yn_number;
 extern EXPORT struct instance_flags iflags;
 
 /* window stuff */
-extern EXPORT winid WIN_MESSAGE, WIN_STATUS;
-extern EXPORT winid WIN_MAP, WIN_INVEN;
 extern EXPORT char toplines[];
 extern EXPORT boolean botl;
 extern EXPORT boolean botlx;

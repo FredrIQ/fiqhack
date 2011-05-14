@@ -463,7 +463,7 @@ int dorecover(int fd)
 	restoring = TRUE;
 	getlev(fd, 0, (xchar)0, FALSE);
 	if (!restgamestate(fd, &stuckid, &steedid)) {
-		display_nhwindow(WIN_MESSAGE, TRUE);
+		display_nhwindow(NHW_MESSAGE, TRUE);
 		savelev(-1, 0, FREE_SAVE);	/* discard current level */
 		close(fd);
 		delete_savefile();
@@ -533,7 +533,7 @@ int dorecover(int fd)
 	run_timers();	/* expire all timers that have gone off while away */
 	docrt();
 	restoring = FALSE;
-	clear_nhwindow(WIN_MESSAGE);
+	clear_nhwindow(NHW_MESSAGE);
 	program_state.something_worth_saving++;	/* useful data now exists */
 
 	/* Success! */

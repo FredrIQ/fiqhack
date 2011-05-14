@@ -660,7 +660,7 @@ int dokick(void)
 
 	if (no_kick) {
 		/* ignore direction typed before player notices kick failed */
-		display_nhwindow(WIN_MESSAGE, TRUE);	/* --More-- */
+		display_nhwindow(NHW_MESSAGE, TRUE);	/* --More-- */
 		return 0;
 	}
 

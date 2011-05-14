@@ -1269,14 +1269,14 @@ void row_refresh(int start, int stop, int y)
 
     for (x = start; x <= stop; x++)
 	if (gbuf[y][x].glyph != cmap_to_glyph(S_stone))
-	    print_glyph(WIN_MAP,x,y,gbuf[y][x].glyph);
+	    print_glyph(x,y,gbuf[y][x].glyph);
 }
 
 void cls(void)
 {
-    display_nhwindow(WIN_MESSAGE, FALSE); /* flush messages */
+    display_nhwindow(NHW_MESSAGE, FALSE); /* flush messages */
     botlx = 1;			/* force update of botl window */
-    clear_nhwindow(WIN_MAP);	/* clear physical screen */
+    clear_nhwindow(NHW_MAP);	/* clear physical screen */
 
     clear_glyph_buffer();	/* this is sort of an extra effort, but OK */
 }
@@ -1302,13 +1302,14 @@ void flush_screen(int cursor_on_u)
 	gbuf_entry *gptr = &gbuf[y][x = gbuf_start[y]];
 	for (; x <= gbuf_stop[y]; gptr++, x++)
 	    if (gptr->new) {
-		print_glyph(WIN_MAP,x,y,gptr->glyph);
+		print_glyph(x,y,gptr->glyph);
 		gptr->new = 0;
 	    }
     }
 
-    if (cursor_on_u) curs(WIN_MAP, u.ux,u.uy); /* move cursor to the hero */
-    display_nhwindow(WIN_MAP, FALSE);
+    if (cursor_on_u)
+	curs(u.ux,u.uy); /* move cursor to the hero */
+    display_nhwindow(NHW_MAP, FALSE);
     reset_glyph_bbox();
     flushing = 0;
     if(botl || botlx) bot();

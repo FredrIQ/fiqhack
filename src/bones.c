@@ -255,7 +255,7 @@ void savebones(struct obj *corpse)
 		newsym(u.ux, u.uy);
 		Your("body rises from the dead as %s...",
 			an(mons[u.ugrave_arise].mname));
-		display_nhwindow(WIN_MESSAGE, FALSE);
+		display_nhwindow(NHW_MESSAGE, FALSE);
 		drop_upon_death(mtmp, NULL);
 		m_dowear(mtmp, TRUE);
 	}

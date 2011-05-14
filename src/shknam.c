@@ -346,7 +346,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 		    pline("door [%d,%d]", doors[sh].x, doors[sh].y);
 		    sh++;
 		}
-		display_nhwindow(WIN_MESSAGE, FALSE);
+		display_nhwindow(NHW_MESSAGE, FALSE);
 	    }
 #endif
 

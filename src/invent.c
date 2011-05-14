@@ -1856,7 +1856,7 @@ int dotypeinv(void)
 	    if(class_count > 1) {
 		c = yn_function(prompt, types, '\0');
 		if(c == '\0') {
-			clear_nhwindow(WIN_MESSAGE);
+			clear_nhwindow(NHW_MESSAGE);
 			return 0;
 		}
 	    } else {

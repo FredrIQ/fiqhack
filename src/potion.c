@@ -491,7 +491,7 @@ int peffects(struct obj *otmp)
 				adjattrib(A_WIS, 1, FALSE);
 			}
 			You_feel("self-knowledgeable...");
-			display_nhwindow(WIN_MESSAGE, FALSE);
+			display_nhwindow(NHW_MESSAGE, FALSE);
 			enlightenment(0);
 			pline_The("feeling subsides.");
 			exercise(A_WIS, TRUE);

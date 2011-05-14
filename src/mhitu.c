@@ -1619,7 +1619,7 @@ static int gulpmu(struct monst *mtmp, struct attack  *mattk)
 			else return 2;
 		}
 
-		display_nhwindow(WIN_MESSAGE, FALSE);
+		display_nhwindow(NHW_MESSAGE, FALSE);
 		vision_recalc(2);	/* hero can't see anything */
 		u.uswallow = 1;
 		/* u.uswldtim always set > 1 */

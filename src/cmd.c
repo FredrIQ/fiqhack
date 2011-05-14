@@ -210,12 +210,12 @@ static int enter_explore_mode(void)
 	if(!discover && !wizard) {
 		pline("Beware!  From explore mode there will be no return to normal game.");
 		if (yn("Do you want to enter explore mode?") == 'y') {
-			clear_nhwindow(WIN_MESSAGE);
+			clear_nhwindow(NHW_MESSAGE);
 			You("are now in non-scoring explore mode.");
 			discover = TRUE;
 		}
 		else {
-			clear_nhwindow(WIN_MESSAGE);
+			clear_nhwindow(NHW_MESSAGE);
 			pline("Resuming normal game.");
 		}
 	}
@@ -1868,7 +1868,7 @@ static char *parse(void)
 		    multi = 10 * multi + foo - '0';
 		    if (multi < 0 || multi >= LARGEST_INT) multi = LARGEST_INT;
 		    if (multi > 9) {
-			clear_nhwindow(WIN_MESSAGE);
+			clear_nhwindow(NHW_MESSAGE);
 			sprintf(in_line, "Count: %d", multi);
 			pline(in_line);
 			mark_synch();
@@ -1879,7 +1879,7 @@ static char *parse(void)
 	    }
 
 	if (foo == '\033') {   /* esc cancels count (TH) */
-	    clear_nhwindow(WIN_MESSAGE);
+	    clear_nhwindow(NHW_MESSAGE);
 	    multi = last_multi = 0;
 	}
 
@@ -1897,7 +1897,7 @@ static char *parse(void)
 	    in_line[1] = foo;
 	    in_line[2] = 0;
 	}
-	clear_nhwindow(WIN_MESSAGE);
+	clear_nhwindow(NHW_MESSAGE);
 	if (prezero) in_line[0] = '\033';
 	return in_line;
 }

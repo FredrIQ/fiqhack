@@ -306,7 +306,7 @@ void nocmov(int x, int y)
 			cmov(x, y);
 		} else if(HO) {
 			home();
-			tty_curs(BASE_WINDOW, x+1, y);
+			move_cursor(BASE_WINDOW, x+1, y);
 		} /* else impossible("..."); */
 	} else if ((int) ttyDisplay->cury < y) {
 		if(XD) {
@@ -369,7 +369,7 @@ void cl_end(void)
 			xputc(' ');
 			cx++;
 		}
-		tty_curs(BASE_WINDOW, (int)ttyDisplay->curx+1,
+		move_cursor(BASE_WINDOW, (int)ttyDisplay->curx+1,
 						(int)ttyDisplay->cury);
 	}
 }
@@ -394,7 +394,7 @@ void home(void)
 	else if(nh_CM)
 		xputs(tgoto(nh_CM, 0, 0));
 	else
-		tty_curs(BASE_WINDOW, 1, 0);	/* using UP ... */
+		move_cursor(BASE_WINDOW, 1, 0);	/* using UP ... */
 	ttyDisplay->curx = ttyDisplay->cury = 0;
 }
 
@@ -455,7 +455,7 @@ void cl_eos(void)
 			cy++;
 		}
 		cl_end();
-		tty_curs(BASE_WINDOW, (int)ttyDisplay->curx+1,
+		move_cursor(BASE_WINDOW, (int)ttyDisplay->curx+1,
 						(int)ttyDisplay->cury);
 	}
 }

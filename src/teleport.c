@@ -579,7 +579,7 @@ void level_tele(void)
 		if (ynq("Go to Nowhere.  Are you sure?") != 'y') return;
 		You("%s in agony as your body begins to warp...",
 		    is_silent(youmonst.data) ? "writhe" : "scream");
-		display_nhwindow(WIN_MESSAGE, FALSE);
+		display_nhwindow(NHW_MESSAGE, FALSE);
 		You("cease to exist.");
 		if (invent) Your("possessions land on the %s with a thud.",
 				surface(u.ux, u.uy));
@@ -655,7 +655,7 @@ void level_tele(void)
 		} else if (newlev == -9) {
 			You_feel("deliriously happy. ");
 			pline("(In fact, you're on Cloud 9!) ");
-			display_nhwindow(WIN_MESSAGE, FALSE);
+			display_nhwindow(NHW_MESSAGE, FALSE);
 		} else
 			You("are now high above the clouds...");
 

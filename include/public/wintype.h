@@ -4,8 +4,6 @@
 #ifndef WINTYPE_H
 #define WINTYPE_H
 
-typedef int winid;		/* a window identifier */
-
 /* select_menu() "how" argument types */
 #define PICK_NONE 0	/* user picks nothing (display only) */
 #define PICK_ONE  1	/* only pick one */
@@ -18,14 +16,6 @@ typedef int winid;		/* a window identifier */
 #define NHW_MAP     3
 #define NHW_MENU    4
 #define NHW_TEXT    5
-
-/* attribute types for putstr; the same as the ANSI value, for convenience */
-#define ATR_NONE    0
-#define ATR_BOLD    1
-#define ATR_DIM     2
-#define ATR_ULINE   4
-#define ATR_BLINK   5
-#define ATR_INVERSE 7
 
 /* nh_poskey() modifier types */
 #define CLICK_1     1

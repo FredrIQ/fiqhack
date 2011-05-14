@@ -86,7 +86,7 @@ static void mkcavearea(boolean rockit)
     if(rockit) pline("Crash!  The ceiling collapses around you!");
     else pline("A mysterious force %s cave around you!",
 	     (levl[u.ux][u.uy].typ == CORR) ? "creates a" : "extends the");
-    display_nhwindow(WIN_MESSAGE, TRUE);
+    display_nhwindow(NHW_MESSAGE, TRUE);
 
     for(dist = 1; dist <= 2; dist++) {
 	xmin--; xmax++;

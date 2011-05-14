@@ -8,6 +8,8 @@
 #define NETHACKDIR "/usr/share/NetHack/"
 #endif
 
+typedef int winid;		/* a window identifier */
+
 /* generic parameter - must not be any larger than a pointer */
 typedef union any {
     void * a_void;
@@ -17,14 +19,25 @@ typedef union any {
     schar a_schar;
     /* add types as needed */
 } anything;
-#define ANY_P union any /* avoid typedef in prototypes */
 
 /* menu return list */
 typedef struct mi {
     anything item;		/* identifier */
     long count;			/* count */
 } menu_item;
-#define MENU_ITEM_P struct mi
+
+extern winid WIN_MESSAGE;
+extern winid WIN_STATUS;
+extern winid WIN_MAP;
+
+
+/* attribute types for putstr; the same as the ANSI value, for convenience */
+#define ATR_NONE    0
+#define ATR_BOLD    1
+#define ATR_DIM     2
+#define ATR_ULINE   4
+#define ATR_BLINK   5
+#define ATR_INVERSE 7
 
 #ifndef WINDOW_STRUCTS
 #define WINDOW_STRUCTS
@@ -184,28 +197,32 @@ extern void tty_get_nh_event(void);
 extern void tty_exit_nhwindows(const char *);
 extern void tty_suspend_nhwindows(const char *);
 extern void tty_resume_nhwindows(void);
+extern void tty_create_game_windows(void);
+extern void tty_destroy_game_windows(void);
 extern winid tty_create_nhwindow(int);
-extern void tty_clear_nhwindow(winid);
-extern void tty_display_nhwindow(winid, boolean);
+extern void tty_clear_nhwindow(int);
+extern void clear_nhwindow(winid);
+extern void tty_display_nhwindow(int, boolean);
+extern void display_nhwindow(winid, boolean);
 extern void tty_dismiss_nhwindow(winid);
 extern void tty_destroy_nhwindow(winid);
-extern void tty_curs(winid,int,int);
+extern void tty_curs(int,int);
 extern void tty_putstr(winid, int, const char *);
 extern void tty_display_buffer(char *,boolean);
 extern void tty_update_status(struct nh_status_info *status);
 extern void tty_print_message(const char *);
 extern void tty_start_menu(winid);
-extern void tty_add_menu(winid,int,const ANY_P *,
+extern void tty_add_menu(winid,int,const anything *,
 		char,char,int,const char *, boolean);
 extern void tty_end_menu(winid, const char *);
-extern int tty_select_menu(winid, int, MENU_ITEM_P **);
+extern int tty_select_menu(winid, int, menu_item **);
 extern int tty_display_menu(struct nh_menuitem*, int, const char*, int, int*);
 extern int tty_display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
 extern char tty_message_menu(char,int,const char *);
 extern void tty_update_inventory(void);
 extern void tty_mark_synch(void);
 extern void tty_wait_synch(void);
-extern void tty_print_glyph(winid,xchar,xchar,int);
+extern void tty_print_glyph(xchar,xchar,int);
 extern void tty_raw_print(const char *);
 extern void tty_raw_print_bold(const char *);
 extern int tty_nhgetch(void);
@@ -219,6 +236,8 @@ extern void tty_number_pad(int);
 extern void tty_delay_output(void);
 extern void tty_outrip(struct nh_menuitem *items,int icount, int how,
 		       char *plname, long gold, char *killbuf, int year);
+
+extern void move_cursor(winid,int,int);
 
 extern void gettty(void);
 extern void settty(const char *);
@@ -240,8 +259,8 @@ extern void tty_init_options(void);
 extern void display_options(boolean);
 extern void read_config(void);
 extern void write_config(void);
-extern EXPORT void add_menu_cmd_alias(char, char);
-extern EXPORT char map_menu_cmd(char);
+extern void add_menu_cmd_alias(char, char);
+extern char map_menu_cmd(char);
 
 extern char mapped_menu_cmds[];
 

@@ -31,12 +31,12 @@ static unsigned ustuck_id = 0, usteed_id = 0;
 
 int dosave(void)
 {
-	clear_nhwindow(WIN_MESSAGE);
+	clear_nhwindow(NHW_MESSAGE);
 	if(yn("Really save?") == 'n') {
-		clear_nhwindow(WIN_MESSAGE);
+		clear_nhwindow(NHW_MESSAGE);
 		if(multi > 0) nomul(0);
 	} else {
-		clear_nhwindow(WIN_MESSAGE);
+		clear_nhwindow(NHW_MESSAGE);
 		pline("Saving...");
 #if defined(UNIX)
 		program_state.done_hup = 0;
@@ -45,7 +45,7 @@ int dosave(void)
 			program_state.something_worth_saving = 0;
 			u.uhp = -1;		/* universal game's over indicator */
 			/* make sure they see the Saving message */
-			display_nhwindow(WIN_MESSAGE, TRUE);
+			display_nhwindow(NHW_MESSAGE, TRUE);
 			exit_nhwindows("Be seeing you...");
 			terminate(EXIT_SUCCESS);
 		} else doredraw();
@@ -99,7 +99,7 @@ int dosave0(void)
 	    fd = open_savefile();
 	    if (fd > 0) {
 		close(fd);
-		clear_nhwindow(WIN_MESSAGE);
+		clear_nhwindow(NHW_MESSAGE);
 		There("seems to be an old save file.");
 		if (yn("Overwrite the old file?") == 'n') {
 		    return 0;
@@ -125,7 +125,7 @@ int dosave0(void)
 	if(flags.friday13)
 		change_luck(1);
 	if(iflags.window_inited)
-	    HUP clear_nhwindow(WIN_MESSAGE);
+	    HUP clear_nhwindow(NHW_MESSAGE);
 
 	store_version(fd);
 #ifdef STORE_PLNAME_IN_FILE

@@ -40,7 +40,7 @@ int tty_doprev_message(void)
                 i = (i + 1) % cw->rows;
             } while (i != cw->maxcol);
             tty_putstr(prevmsg_win, 0, toplines);
-            tty_display_nhwindow(prevmsg_win, TRUE);
+            display_nhwindow(prevmsg_win, TRUE);
             tty_destroy_nhwindow(prevmsg_win);
         } else if (iflags.prevmsg_window == 'c') {		/* combination */
             do {
@@ -71,7 +71,7 @@ int tty_doprev_message(void)
                         i = (i + 1) % cw->rows;
                     } while (i != cw->maxcol);
                     tty_putstr(prevmsg_win, 0, toplines);
-                    tty_display_nhwindow(prevmsg_win, TRUE);
+                    display_nhwindow(prevmsg_win, TRUE);
                     tty_destroy_nhwindow(prevmsg_win);
                 }
 
@@ -93,7 +93,7 @@ int tty_doprev_message(void)
                     cw->maxcol = cw->maxrow;
             } while (cw->maxcol != cw->maxrow);
 
-            tty_display_nhwindow(prevmsg_win, TRUE);
+            display_nhwindow(prevmsg_win, TRUE);
             tty_destroy_nhwindow(prevmsg_win);
             cw->maxcol = cw->maxrow;
             ttyDisplay->dismiss_more = 0;
@@ -155,7 +155,7 @@ void addtopl(const char *s)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
-    tty_curs(BASE_WINDOW,cw->curx+1,cw->cury);
+    move_cursor(BASE_WINDOW,cw->curx+1,cw->cury);
     putsyms(s);
     cl_end();
     ttyDisplay->toplin = 1;
@@ -171,7 +171,7 @@ void more(void)
 	return;
 
     if(ttyDisplay->toplin) {
-	tty_curs(BASE_WINDOW, cw->curx+1, cw->cury);
+	move_cursor(BASE_WINDOW, cw->curx+1, cw->cury);
 	if(cw->curx >= CO - 8) topl_putsym('\n');
     }
 
@@ -256,7 +256,7 @@ static void topl_putsym(char c)
     switch(c) {
     case '\b':
 	if(ttyDisplay->curx == 0 && ttyDisplay->cury > 0)
-	    tty_curs(BASE_WINDOW, CO, (int)ttyDisplay->cury-1);
+	    move_cursor(BASE_WINDOW, CO, (int)ttyDisplay->cury-1);
 	backsp();
 	ttyDisplay->curx--;
 	cw->curx = ttyDisplay->curx;
@@ -347,7 +347,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		    ttyDisplay->inread = 0;
 		    tty_doprev_message();
 		    ttyDisplay->inread = sav;
-		    tty_clear_nhwindow(WIN_MESSAGE);
+		    clear_nhwindow(WIN_MESSAGE);
 		    cw->maxcol = cw->maxrow;
 		    addtopl(prompt);
 		} else {
@@ -362,7 +362,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		/* BUG[?]: this probably ought to check whether the
 		   character which has just been read is an acceptable
 		   response; if so, skip the reprompt and use it. */
-		tty_clear_nhwindow(WIN_MESSAGE);
+		clear_nhwindow(WIN_MESSAGE);
 		cw->maxcol = cw->maxrow;
 		doprev = 0;
 		addtopl(prompt);
@@ -434,7 +434,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	ttyDisplay->toplin = 2;
 	if (ttyDisplay->intr) ttyDisplay->intr--;
 	if(wins[WIN_MESSAGE]->cury)
-	    tty_clear_nhwindow(WIN_MESSAGE);
+	    clear_nhwindow(WIN_MESSAGE);
 
 	return q;
 }

@@ -1067,8 +1067,8 @@ void domove(void)
 		if(u.utraptype == TT_PIT) {
 		    if (!rn2(2) && sobj_at(BOULDER, u.ux, u.uy)) {
 			Your("%s gets stuck in a crevice.", body_part(LEG));
-			display_nhwindow(WIN_MESSAGE, FALSE);
-			clear_nhwindow(WIN_MESSAGE);
+			display_nhwindow(NHW_MESSAGE, FALSE);
+			clear_nhwindow(NHW_MESSAGE);
 			You("free your %s.", body_part(LEG));
 		    } else if (!(--u.utrap)) {
 			You("%s to the edge of the pit.",

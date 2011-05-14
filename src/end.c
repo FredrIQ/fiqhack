@@ -85,7 +85,7 @@ void done1(int sig_unused) /* called as signal() handler, so sent at least one a
 #ifndef NO_SIGNAL
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
-		clear_nhwindow(WIN_MESSAGE);
+		clear_nhwindow(NHW_MESSAGE);
 		curs_on_u();
 		wait_synch();
 		if(multi > 0) nomul(0);
@@ -102,7 +102,7 @@ int done2(void)
 #ifndef NO_SIGNAL
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
-		clear_nhwindow(WIN_MESSAGE);
+		clear_nhwindow(NHW_MESSAGE);
 		curs_on_u();
 		wait_synch();
 		if(multi > 0) nomul(0);
@@ -633,7 +633,7 @@ die:
 
 	clearlocks();
 
-	if (have_windows) display_nhwindow(WIN_MESSAGE, FALSE);
+	if (have_windows) display_nhwindow(NHW_MESSAGE, FALSE);
 
 	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
 		disclose(how, taken);
@@ -686,11 +686,8 @@ die:
 	/* clean up unneeded windows */
 	if (have_windows) {
 	    wait_synch();
-	    display_nhwindow(WIN_MESSAGE, TRUE);
-	    destroy_nhwindow(WIN_MAP);
-	    destroy_nhwindow(WIN_STATUS);
-	    destroy_nhwindow(WIN_MESSAGE);
-	    WIN_MESSAGE = WIN_STATUS = WIN_MAP = WIN_ERR;
+	    display_nhwindow(NHW_MESSAGE, TRUE);
+	    destroy_game_windows();
 
 	    if(!done_stopprint || flags.tombstone)
 		show_endwin = TRUE;
@@ -905,7 +902,7 @@ void container_contents(struct obj *list,
 			container_contents(box->cobj, identified, TRUE);
 		} else {
 		    pline("%s empty.", Tobjnam(box, "are"));
-		    display_nhwindow(WIN_MESSAGE, FALSE);
+		    display_nhwindow(NHW_MESSAGE, FALSE);
 		}
 	    }
 	    if (!all_containers)

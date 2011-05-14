@@ -227,9 +227,6 @@ const char *materialnm[] = {
 boolean vision_full_recalc = 0;
 char	 **viz_array = 0;/* used in cansee() and couldsee() macros */
 
-/* Global windowing data, defined here for multi-window-system support */
-winid WIN_MESSAGE = WIN_ERR, WIN_STATUS = WIN_ERR;
-winid WIN_MAP = WIN_ERR, WIN_INVEN = WIN_ERR;
 char toplines[TBUFSZ];
 
 char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,

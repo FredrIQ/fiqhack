@@ -428,7 +428,7 @@ void cl_end(void)
 	cx = CO - cursor.X;
 	FillConsoleOutputAttribute(hConOut, DEFTEXTCOLOR, cx, cursor, &acount);
 	FillConsoleOutputCharacter(hConOut,' ', cx, cursor,&ccount);
-	tty_curs(BASE_WINDOW, (int)ttyDisplay->curx+1,
+	move_cursor(BASE_WINDOW, (int)ttyDisplay->curx+1,
 			(int)ttyDisplay->cury);
 }
 
@@ -484,7 +484,7 @@ void cl_eos(void)
 			csbi.dwSize.X * csbi.dwSize.Y - cy,
 			newcoord, &ccnt);
 	}
-	tty_curs(BASE_WINDOW, (int)ttyDisplay->curx+1, (int)ttyDisplay->cury);
+	move_cursor(BASE_WINDOW, (int)ttyDisplay->curx+1, (int)ttyDisplay->cury);
 }
 
 void tty_nhbell(void)
