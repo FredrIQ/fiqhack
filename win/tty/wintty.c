@@ -1899,7 +1899,7 @@ int tty_display_menu(struct nh_menuitem *items, int icount, const char *title,
     if (is_text) {
 	for (i = 0; i < icount; i++) {
 	    if (items[i].role == MI_HEADING)
-		tty_putstr(win, iflags.menu_headings, items[i].caption);
+		tty_putstr(win, ui_flags.menu_headings, items[i].caption);
 	    else
 		tty_putstr(win, 0, items[i].caption);
 	}
@@ -1910,7 +1910,7 @@ int tty_display_menu(struct nh_menuitem *items, int icount, const char *title,
 	for (i = 0; i < icount; i++) {
 	    any.a_int = items[i].id;
 	    if (items[i].role == MI_HEADING)
-		tty_add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+		tty_add_menu(win, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 				items[i].caption, MENU_UNSELECTED);
 	    else
 		tty_add_menu(win, NO_GLYPH, &any, items[i].accel,
@@ -1947,7 +1947,7 @@ int tty_display_objects(struct nh_objitem *items, int icount, const char *title,
     for (i = 0; i < icount; i++) {
 	any.a_int = items[i].id;
 	if (items[i].id == 0 && items[i].otype == -1)
-	    tty_add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+	    tty_add_menu(win, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 			    items[i].caption, MENU_UNSELECTED);
 	else
 	    tty_add_menu(win, items[i].glyph, &any, items[i].accel,
@@ -2143,7 +2143,7 @@ void tty_print_glyph(winid window, xchar x, xchar y, int glyph)
 
     /* must be after color check; term_end_color may turn off inverse too */
     if (((special & MG_PET) && iflags.wc_hilite_pet) ||
-	((special & MG_DETECT) && iflags.wc_inverse)) {
+	((special & MG_DETECT) && ui_flags.use_inverse)) {
 	term_start_attr(ATR_INVERSE);
 	reverse_on = TRUE;
     }

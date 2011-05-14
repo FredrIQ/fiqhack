@@ -91,6 +91,8 @@ struct interface_flags {
 	boolean  showscore;	/* show score */
     	boolean  standout;	/* use standout for --More-- */
 	boolean  time;		/* display elapsed 'time' */
+	boolean  use_inverse;	/* use inverse video for some things   */
+	int menu_headings;	/* ATR for menu headings */
 };
 
 extern struct interface_flags ui_flags;

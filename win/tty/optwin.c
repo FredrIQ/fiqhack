@@ -14,14 +14,30 @@
 
 static void read_ui_config(void);
 
+/*----------------------------------------------------------------------------*/
+
+#define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
+
+static struct nh_listitem menu_headings_list[] = {
+	{ATR_NONE, "none"},
+	{ATR_INVERSE, "inverse"},
+	{ATR_BOLD, "bold"},
+	{ATR_ULINE, "underline"}
+};
+static struct nh_enum_option menu_headings_spec =
+    {menu_headings_list, listlen(menu_headings_list)};
+
+
 #define VTRUE (void*)TRUE
 
 struct nh_option_desc tty_options[] = {
     {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
     {"showscore", "show your score in the status line", OPTTYPE_BOOL, {FALSE}},
     {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
-    {"time", "display elapsed 'time'", OPTTYPE_BOOL, {VTRUE}},
+    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
+    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
     
+    {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)ATR_INVERSE}},
     {"hackdir", "game data directory", OPTTYPE_STRING, {NULL}},
     {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
@@ -32,6 +48,7 @@ struct nh_boolopt_map boolopt_map[] = {
     {"showscore", &ui_flags.showscore},
     {"standout", &ui_flags.standout},
     {"time", &ui_flags.time},
+    {"use_inverse", &ui_flags.use_inverse},
     {NULL, NULL}
 };
 
@@ -46,6 +63,9 @@ boolean option_change_callback(struct nh_option_desc *option)
 	    var_playground = option->value.s;
 	    pline ("This option will take effect when the game is restarted");
 	}
+	else if (!strcmp(option->name, "menu_headings")) {
+	    ui_flags.menu_headings = option->value.e;
+	}
 	else
 	    return FALSE;
 	
@@ -53,8 +73,21 @@ boolean option_change_callback(struct nh_option_desc *option)
 }
 
 
+static struct nh_option_desc *find_option(const char *name)
+{
+	int i;
+	for (i = 0; tty_options[i].name; i++)
+	    if (!strcmp(name, tty_options[i].name))
+		return &tty_options[i];
+	
+	return NULL;
+}
+
+
 void tty_init_options(void)
 {
+	find_option("menu_headings")->e = menu_headings_spec;
+	
 	nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
 	read_ui_config();
 }
@@ -202,19 +235,19 @@ void display_options(boolean change_birth_opt)
 	/* add general game options */
 	gameoptidx = 1;
 	any.a_void = NULL;
-	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 		 "Game options:", MENU_UNSELECTED);
 	birthoptidx = menu_add_options(tmpwin, gameoptidx, nhoptions, FALSE);
 	
 	/* add or display birth options */
-	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 		 "Birth options:", MENU_UNSELECTED);
-	ttyoptidx = menu_add_options(tmpwin, gameoptidx, birthoptions, !change_birth_opt);
+	ttyoptidx = menu_add_options(tmpwin, birthoptidx, birthoptions, !change_birth_opt);
 	
 	/* add tty-specific options */
-	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 		 "TTY interface options:", MENU_UNSELECTED);
-	menu_add_options(tmpwin, gameoptidx, tty_options, FALSE);
+	menu_add_options(tmpwin, ttyoptidx, tty_options, FALSE);
 	
 	tty_end_menu(tmpwin, "Set what options?");
 	

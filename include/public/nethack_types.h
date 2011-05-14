@@ -112,7 +112,6 @@ struct instance_flags {
 	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
 	boolean  menu_requested; /* Flag for overloaded use of 'm' prefix
 				  * on some non-move commands */
-	int	menu_headings;	/* ATR for menu headings */
 	int      purge_monsters;	/* # of dead monsters still on fmon list */
 	uchar	bouldersym;	/* symbol for boulder display */
 	boolean travel1;	/* first travel step */
@@ -127,7 +126,6 @@ struct instance_flags {
  * Window capability support.
  */
 	boolean wc_hilite_pet;		/* hilight pets                        */
-	boolean wc_inverse;		/* use inverse video for some things   */
 	boolean wc_eight_bit_input;	/* allow eight bit input               */
 
 	boolean  cmdassist;	/* provide detailed assistance for some commands */

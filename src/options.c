@@ -126,18 +126,14 @@ struct nh_option_desc options[] = {
     {"rest_on_space",	"count the space bar as a rest character",	OPTTYPE_BOOL, { VFALSE }},
     {"safe_pet",	"prevent you from (knowingly) attacking your pet(s)",	OPTTYPE_BOOL, { VTRUE }},
     {"sanity_check",	"",	OPTTYPE_BOOL, { VFALSE }},
-    {"showexp",		"display your accumulated experience points",	OPTTYPE_BOOL, { VFALSE }},
     {"showrace",	"show yourself by your race rather than by role",	OPTTYPE_BOOL, { VFALSE }},
-    {"showscore",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"sortpack",	"group similar kinds of objects in inventory",	OPTTYPE_BOOL, { VTRUE }},
     {"sound",		"enable messages about what your character hears",	OPTTYPE_BOOL, { VTRUE }},
     {"sparkle",		"display sparkly effect for resisted magical attacks",	OPTTYPE_BOOL, { VTRUE }},
-    {"time",		"display elapsed game time, in moves",	OPTTYPE_BOOL, { VFALSE }},
     {"timed_delay",	"",	OPTTYPE_BOOL, { VTRUE }},
     {"tombstone",	"print tombstone when you die",	OPTTYPE_BOOL, { VTRUE }},
     {"toptenwin",	"print topten in a window rather than stdout",	OPTTYPE_BOOL, { VFALSE }},
     {"travel",		"enable the command to travel to a map location",	OPTTYPE_BOOL, { VTRUE }},
-    {"use_inverse",	"",	OPTTYPE_BOOL, { VTRUE }},
     {"verbose",		"print more commentary during the game",	OPTTYPE_BOOL, { VTRUE }},
     
     /* complicated options */
@@ -180,21 +176,6 @@ struct nh_option_desc birth_options[] = {
     { "scores_own", "show only your own scores in the list", OPTTYPE_BOOL, { VFALSE }},
     { "scores_top", "how many top scores to show", OPTTYPE_INT, {(void*)3}},
     { "scores_around", "the number of scores around the top scores", OPTTYPE_INT, {(void*)2}},
-    
-#if 0
-    { "menu_deselect_all", "deselect all items in a menu"
-    { "menu_deselect_page", "deselect all items on this page of a menu"
-    { "menu_first_page", "jump to the first page in a menu"
-    { "menu_headings", "bold, inverse, or underline headings"
-    { "menu_invert_all", "invert all items in a menu"
-    { "menu_invert_page", "invert all items on this page of a menu"
-    { "menu_last_page", "jump to the last page in a menu"
-    { "menu_next_page", "goto the next menu page"
-    { "menu_previous_page", "goto the previous menu page"
-    { "menu_search", "search for a menu item"
-    { "menu_select_all", "select all items in a menu"
-    { "menu_select_page", "select all items on this page of a menu"
-#endif
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -240,9 +221,6 @@ static struct nh_boolopt_map boolopt_map[] = {
 	{"tombstone",&flags.tombstone},
 	{"toptenwin",&flags.toptenwin},
 	{"travel", &iflags.travelcmd},
-#ifdef WIN32CON
-	{"use_inverse", &iflags.wc_inverse},	/*WC*/
-#endif
 	{"verbose", &flags.verbose},
 
 	/* birth options */
@@ -376,8 +354,6 @@ void initoptions(void)
 	find_option(birth_options, "warnings")->s.maxlen = WARNCOUNT;
 	find_option(birth_options, "scores_top")->i.max = 100;
 	find_option(birth_options, "scores_around")->i.max = 100;
-
-	iflags.menu_headings = ATR_INVERSE;
 
 	/* Set the default monster and object class symbols. */
 	for (i = 0; i < MAXOCLASSES; i++)
