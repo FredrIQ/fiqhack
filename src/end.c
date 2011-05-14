@@ -34,7 +34,7 @@ static void done_hangup(int);
 static void disclose(int,boolean);
 static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *,int);
-static void artifact_score(struct obj *,boolean,winid);
+static void artifact_score(struct obj *,boolean,struct menulist *);
 static void savelife(int);
 static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
@@ -447,7 +447,7 @@ static void sort_valuables(struct valuable_data list[],
 /* called twice; first to calculate total, then to list relevant items */
 static void artifact_score(struct obj *list,
 			   boolean counting, /* true => add up points; false => display them */
-			   winid endwin)
+			   struct menulist *menu)
 {
     char pbuf[BUFSZ];
     struct obj *otmp;
@@ -472,11 +472,11 @@ static void artifact_score(struct obj *list,
 			otmp->oartifact ? artifact_name(xname(otmp), &dummy) :
 				OBJ_NAME(objects[otmp->otyp]),
 			value, currency(value), points);
-		putstr(endwin, 0, pbuf);
+		add_menutext(menu, pbuf);
 	    }
 	}
 	if (Has_contents(otmp))
-	    artifact_score(otmp->cobj, counting, endwin);
+	    artifact_score(otmp->cobj, counting, menu);
     }
 }
 
@@ -485,7 +485,9 @@ void done(int how)
 {
 	boolean taken;
 	char kilbuf[BUFSZ], pbuf[BUFSZ];
-	winid endwin = WIN_ERR;
+	char outrip_buf[BUFSZ];
+	struct menulist menu;
+	boolean show_endwin = FALSE;
 	boolean bones_ok, have_windows = iflags.window_inited;
 	struct obj *corpse = NULL;
 	long umoney;
@@ -680,6 +682,7 @@ die:
 	done_money = umoney;
 #endif
 
+	init_menulist(&menu);
 	/* clean up unneeded windows */
 	if (have_windows) {
 	    wait_synch();
@@ -690,10 +693,27 @@ die:
 	    WIN_MESSAGE = WIN_STATUS = WIN_MAP = WIN_ERR;
 
 	    if(!done_stopprint || flags.tombstone)
-		endwin = create_nhwindow(NHW_TEXT);
+		show_endwin = TRUE;
 
-	    if (how < GENOCIDED && flags.tombstone && endwin != WIN_ERR)
-		outrip(endwin, how);
+	    if (how < GENOCIDED && flags.tombstone && show_endwin) {
+		/* Put together death description */
+		switch (killer_format) {
+			default: impossible("bad killer format?");
+			case KILLED_BY_AN:
+				strcpy(outrip_buf, killed_by_prefix[how]);
+				strcat(outrip_buf, an(killer));
+				break;
+			case KILLED_BY:
+				strcpy(outrip_buf, killed_by_prefix[how]);
+				strcat(outrip_buf, killer);
+				break;
+			case NO_KILLER_PREFIX:
+				strcpy(outrip_buf, killer);
+				break;
+		}
+
+		
+	    }
 	} else
 	    done_stopprint = 1; /* just avoid any more output */
 
@@ -715,8 +735,8 @@ die:
 		      (const char *) ((flags.female && urole.name.f) ?
 		         urole.name.f : urole.name.m) :
 		      (const char *) (flags.female ? "Demigoddess" : "Demigod"));
-	    putstr(endwin, 0, pbuf);
-	    putstr(endwin, 0, "");
+	    add_menutext(&menu, pbuf);
+	    add_menutext(&menu, "");
 	}
 
 	if (how == ESCAPED || how == ASCENDED) {
@@ -739,7 +759,7 @@ die:
 				  * (long)objects[val->list[i].typ].oc_cost;
 
 	    /* count the points for artifacts */
-	    artifact_score(invent, TRUE, endwin);
+	    artifact_score(invent, TRUE, &menu);
 
 	    keepdogs(TRUE);
 	    viz_array[0][0] |= IN_SIGHT; /* need visibility for naming */
@@ -753,7 +773,7 @@ die:
 			u.urexp += mtmp->mhp;
 		    mtmp = mtmp->nmon;
 		}
-		if (!done_stopprint) putstr(endwin, 0, pbuf);
+		if (!done_stopprint) add_menutext(&menu, pbuf);
 		pbuf[0] = '\0';
 	    } else {
 		if (!done_stopprint) strcat(pbuf, " ");
@@ -763,11 +783,11 @@ die:
 			how==ASCENDED ? "went to your reward" :
 					"escaped from the dungeon",
 			u.urexp, plur(u.urexp));
-		putstr(endwin, 0, pbuf);
+		add_menutext(&menu, pbuf);
 	    }
 
 	    if (!done_stopprint)
-		artifact_score(invent, FALSE, endwin);	/* list artifacts */
+		artifact_score(invent, FALSE, &menu);	/* list artifacts */
 
 	    /* list valuables here */
 	    for (val = valuables; val->list; val++) {
@@ -793,7 +813,7 @@ die:
 				"%8ld worthless piece%s of colored glass,",
 				count, plur(count));
 		    }
-		    putstr(endwin, 0, pbuf);
+		    add_menutext(&menu, pbuf);
 		}
 	    }
 
@@ -817,25 +837,26 @@ die:
 
 	    sprintf(eos(pbuf), " with %ld point%s,",
 		    u.urexp, plur(u.urexp));
-	    putstr(endwin, 0, pbuf);
+	    add_menutext(&menu, pbuf);
 	}
 
 	if (!done_stopprint) {
 	    sprintf(pbuf, "and %ld piece%s of gold, after %ld move%s.",
 		    umoney, plur(umoney), moves, plur(moves));
-	    putstr(endwin, 0, pbuf);
+	    add_menutext(&menu, pbuf);
 	}
 	if (!done_stopprint) {
 	    sprintf(pbuf,
 	     "You were level %d with a maximum of %d hit point%s when you %s.",
 		    u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
-	    putstr(endwin, 0, pbuf);
-	    putstr(endwin, 0, "");
+	    add_menutext(&menu, pbuf);
+	    add_menutext(&menu, "");
 	}
 	if (!done_stopprint)
-	    display_nhwindow(endwin, TRUE);
-	if (endwin != WIN_ERR)
-	    destroy_nhwindow(endwin);
+	    outrip(menu.items, menu.icount, how, plname, umoney, outrip_buf,
+		   getyear());
+	
+	free(menu.items);
 
 	/* "So when I die, the first thing I will see in Heaven is a
 	 * score list?" */
@@ -859,26 +880,27 @@ void container_contents(struct obj *list,
 {
 	struct obj *box, *obj;
 	char buf[BUFSZ];
+	struct menulist menu;
 
 	for (box = list; box; box = box->nobj) {
 	    if (Is_container(box) || box->otyp == STATUE) {
 		if (box->otyp == BAG_OF_TRICKS) {
 		    continue;	/* wrong type of container */
 		} else if (box->cobj) {
-		    winid tmpwin = create_nhwindow(NHW_MENU);
+		    init_menulist(&menu);
 		    sprintf(buf, "Contents of %s:", the(xname(box)));
-		    putstr(tmpwin, 0, buf);
-		    putstr(tmpwin, 0, "");
+		    add_menutext(&menu, buf);
+		    add_menutext(&menu, "");
 		    for (obj = box->cobj; obj; obj = obj->nobj) {
 			if (identified) {
 			    makeknown(obj->otyp);
 			    obj->known = obj->bknown =
 			    obj->dknown = obj->rknown = 1;
 			}
-			putstr(tmpwin, 0, doname(obj));
+			add_menutext(&menu, doname(obj));
 		    }
-		    display_nhwindow(tmpwin, TRUE);
-		    destroy_nhwindow(tmpwin);
+		    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+		    free(menu.items);
 		    if (all_containers)
 			container_contents(box->cobj, identified, TRUE);
 		} else {
@@ -911,8 +933,8 @@ static void list_vanquished(char defquery, boolean ask)
     int ntypes = 0, max_lev = 0, nkilled;
     long total_killed = 0L;
     char c;
-    winid klwin;
     char buf[BUFSZ];
+    struct menulist menu;
 
     /* get totals first */
     for (i = LOW_PM; i < NUMMONS; i++) {
@@ -929,9 +951,9 @@ static void list_vanquished(char defquery, boolean ask)
 			      ynqchars, defquery) : defquery;
 	if (c == 'q') done_stopprint++;
 	if (c == 'y') {
-	    klwin = create_nhwindow(NHW_MENU);
-	    putstr(klwin, 0, "Vanquished creatures:");
-	    putstr(klwin, 0, "");
+	    init_menulist(&menu);
+	    add_menutext(&menu,  "Vanquished creatures:");
+	    add_menutext(&menu,  "");
 
 	    /* countdown by monster "toughness" */
 	    for (lev = max_lev; lev >= 0; lev--)
@@ -959,19 +981,19 @@ static void list_vanquished(char defquery, boolean ask)
 			    sprintf(buf, "%d %s",
 				    nkilled, makeplural(mons[i].mname));
 		    }
-		    putstr(klwin, 0, buf);
+		    add_menutext(&menu,  buf);
 		}
 	    /*
 	     * if (Hallucination)
-	     *     putstr(klwin, 0, "and a partridge in a pear tree");
+	     *     add_menutext(menu, "and a partridge in a pear tree");
 	     */
 	    if (ntypes > 1) {
-		putstr(klwin, 0, "");
+		add_menutext(&menu,  "");
 		sprintf(buf, "%ld creatures vanquished.", total_killed);
-		putstr(klwin, 0, buf);
+		add_menutext(&menu,  buf);
 	    }
-	    display_nhwindow(klwin, TRUE);
-	    destroy_nhwindow(klwin);
+	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	    free(menu.items);
 	}
     }
 }
@@ -992,8 +1014,8 @@ static void list_genocided(char defquery, boolean ask)
     int i;
     int ngenocided;
     char c;
-    winid klwin;
     char buf[BUFSZ];
+    struct menulist menu;
 
     ngenocided = num_genocides();
 
@@ -1003,9 +1025,9 @@ static void list_genocided(char defquery, boolean ask)
 			      ynqchars, defquery) : defquery;
 	if (c == 'q') done_stopprint++;
 	if (c == 'y') {
-	    klwin = create_nhwindow(NHW_MENU);
-	    putstr(klwin, 0, "Genocided species:");
-	    putstr(klwin, 0, "");
+	    init_menulist(&menu);
+	    add_menutext(&menu, "Genocided species:");
+	    add_menutext(&menu, "");
 
 	    for (i = LOW_PM; i < NUMMONS; i++)
 		if (mvitals[i].mvflags & G_GENOD) {
@@ -1015,15 +1037,15 @@ static void list_genocided(char defquery, boolean ask)
 				mons[i].mname);
 		    else
 			strcpy(buf, makeplural(mons[i].mname));
-		    putstr(klwin, 0, buf);
+		    add_menutext(&menu, buf);
 		}
 
-	    putstr(klwin, 0, "");
+	    add_menutext(&menu, "");
 	    sprintf(buf, "%d species genocided.", ngenocided);
-	    putstr(klwin, 0, buf);
+	    add_menutext(&menu, buf);
 
-	    display_nhwindow(klwin, TRUE);
-	    destroy_nhwindow(klwin);
+	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	    free(menu.items);
 	}
     }
 }

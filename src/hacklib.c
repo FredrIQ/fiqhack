@@ -55,23 +55,35 @@ void set_menuitem(struct nh_menuitem *item, int id, enum nh_menuitem_role role,
 	strcpy(item->caption, caption);
 }
 
+void init_menulist(struct menulist *m)
+{
+	m->size = 10;
+	m->icount = 0;
+	m->items = malloc(m->size * sizeof(struct nh_menuitem));
+}
 
-void add_menuitem(struct nh_menuitem **itemlist, int *nr_items, int idx,
-		  int id, enum nh_menuitem_role role, const char *caption,
+void add_menuitem(struct menulist *m, int id, const char *caption,
 		  char accel, boolean selected)
 {
-	struct nh_menuitem *items = *itemlist;
-	
-	if (idx >= *nr_items) {
-	    int newsize = max(*nr_items * 2, idx + 1);
-	    items = malloc(newsize * sizeof(struct nh_menuitem));
-	    memcpy(items, *itemlist, *nr_items * sizeof(struct nh_menuitem));
-	    free(*itemlist);
-	    *nr_items = newsize;
-	    *itemlist = items;
+	if (m->icount >= m->size) {
+	    m->size *= 2;
+	    m->items = realloc(m->items, m->size * sizeof(struct nh_menuitem));
 	}
-	
-	set_menuitem(&items[idx], id, role, caption, accel, selected);
+    
+	set_menuitem(&m->items[m->icount], id, MI_NORMAL, caption, accel, selected);
+	m->icount++;
+}
+
+void add_menu_simple(struct menulist *m, const char *caption,
+		     enum nh_menuitem_role role)
+{
+	if (m->icount >= m->size) {
+	    m->size *= 2;
+	    m->items = realloc(m->items, m->size * sizeof(struct nh_menuitem));
+	}
+    
+	set_menuitem(&m->items[m->icount], 0, role, caption, 0, FALSE);
+	m->icount++;
 }
 
 boolean digit(char c)	/* is 'c' a digit? */

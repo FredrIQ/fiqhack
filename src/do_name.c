@@ -11,26 +11,25 @@ extern const char what_is_an_unknown_object[];		/* from pager.c */
 /* the response for '?' help request in getpos() */
 static void getpos_help(boolean force, const char *goal)
 {
-    char sbuf[BUFSZ];
     boolean doing_what_is;
-    winid tmpwin = create_nhwindow(NHW_MENU);
+    struct nh_menuitem items[6], *it = items;
+    memset(items, 0, sizeof(items));
 
-    sprintf(sbuf, "Use [%s] to move the cursor to %s.",
+    sprintf((it++)->caption, "Use [%s] to move the cursor to %s.",
 	    iflags.num_pad ? "2468" : "hjkl", goal);
-    putstr(tmpwin, 0, sbuf);
-    putstr(tmpwin, 0, "Use [HJKL] to move the cursor 8 units at a time.");
-    putstr(tmpwin, 0, "Or enter a background symbol (ex. <).");
+    strcpy((it++)->caption, "Use [HJKL] to move the cursor 8 units at a time.");
+    strcpy((it++)->caption, "Or enter a background symbol (ex. <).");
+
     /* disgusting hack; the alternate selection characters work for any
        getpos call, but they only matter for dowhatis (and doquickwhatis) */
     doing_what_is = (goal == what_is_an_unknown_object);
-    sprintf(sbuf, "Type a .%s when you are at the right place.",
+    sprintf((it++)->caption, "Type a .%s when you are at the right place.",
             doing_what_is ? " or , or ; or :" : "");
-    putstr(tmpwin, 0, sbuf);
     if (!force)
-	putstr(tmpwin, 0, "Type Space or Escape when you're done.");
-    putstr(tmpwin, 0, "");
-    display_nhwindow(tmpwin, TRUE);
-    destroy_nhwindow(tmpwin);
+	strcpy((it++)->caption, "Type Space or Escape when you're done.");
+    strcpy((it++)->caption, "");
+
+    display_menu(items, !force ? 6 : 5, NULL, PICK_NONE, NULL);
 }
 
 int getpos(coord *cc, boolean force, const char *goal)

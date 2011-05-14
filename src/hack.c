@@ -1323,7 +1323,7 @@ void domove(void)
 	if (flags.run && iflags.runmode != RUN_TPORT) {
 	    /* display every step or every 7th step depending upon mode */
 	    if (iflags.runmode != RUN_LEAP || !(moves % 7L)) {
-		if (flags.time) botl = 1;
+		botl = 1;
 		curs_on_u();
 		delay_output();
 		if (iflags.runmode == RUN_CRAWL) {

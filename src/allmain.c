@@ -221,8 +221,7 @@ static void you_moved(void)
 		run_regions();
 
 		if (u.ublesscnt)  u.ublesscnt--;
-		if(flags.time && !flags.run)
-		    botl = 1;
+		botl = 1;
 
 		/* One possible result of prayer is healing.  Whether or
 		    * not you get healed depends on your current hit points.
@@ -503,7 +502,7 @@ void moveloop(void)
 	    if (!multi) {
 		/* lookaround may clear multi */
 		flags.move = 0;
-		if (flags.time) botl = 1;
+		botl = 1;
 		continue;
 	    }
 	    if (flags.mv) {
@@ -520,14 +519,14 @@ void moveloop(void)
 	if (u.utotype)		/* change dungeon level */
 	    deferred_goto();	/* after rhack() */
 	/* !flags.move here: multiple movement command stopped */
-	else if (flags.time && (!flags.move || !flags.mv))
+	else if (!flags.move || !flags.mv)
 	    botl = 1;
 
 	if (vision_full_recalc) vision_recalc(0);	/* vision! */
 	/* when running in non-tport mode, this gets done through domove() */
 	if ((!flags.run || iflags.runmode == RUN_TPORT) &&
 		(multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
-	    if (flags.time && flags.run) botl = 1;
+	    if (flags.run) botl = 1;
 	    display_nhwindow(WIN_MAP, FALSE);
 	}
     }

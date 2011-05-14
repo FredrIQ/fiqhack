@@ -51,6 +51,7 @@ typedef schar	aligntyp;	/* basic alignment type */
 struct nh_menuitem;
 struct nh_objitem;
 struct nh_objresult;
+struct nh_status_info;
 
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
@@ -63,8 +64,9 @@ struct window_procs {
     void (*win_display_nhwindow)(winid, boolean);
     void (*win_destroy_nhwindow)(winid);
     void (*win_curs)(winid,int,int);
-    void (*win_putstr)(winid, int, const char *);
     void (*win_display_buffer)(char *,boolean);
+    void (*win_update_status)(struct nh_status_info *);
+    void (*win_print_message)(const char *);
     
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
@@ -90,7 +92,7 @@ struct window_procs {
     void (*win_start_screen)(void);
     void (*win_end_screen)(void);
 
-    void (*win_outrip)(winid,int);
+    void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
 };
 
 
@@ -214,6 +216,10 @@ struct sinfo {
 #define ROLE_NONE	(-1)
 #define ROLE_RANDOM	(-2)
 
+#define A_CHAOTIC	(-1)
+#define A_NEUTRAL	 0
+#define A_LAWFUL	 1
+
 enum nh_opttype {
     OPTTYPE_BOOL,
     OPTTYPE_INT,
@@ -267,8 +273,8 @@ struct nh_option_desc {
 };
 
 enum nh_menuitem_role {
+	MI_TEXT = 0,
 	MI_NORMAL,
-	MI_TEXT,
 	MI_HEADING
 };
 
@@ -306,6 +312,21 @@ struct nh_objresult {
 	int count;
 };
 
+
+#define ITEMLEN 12
+
+struct nh_status_info {
+    char plname[PL_NSIZ];
+    char rank[PL_NSIZ];
+    char level_desc[COLNO];
+    char items[12][ITEMLEN];
+    long score, xp, gold, moves;
+    int mrank_sz, st, st_extra, dx, co, in, wi, ch, align, nr_items;
+    int hp, hpmax, en, enmax, ac, level;
+    char coinsym;
+    boolean polyd;
+
+};
 
 #endif
 

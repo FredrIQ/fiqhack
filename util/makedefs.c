@@ -307,9 +307,6 @@ static void make_version(void)
 #ifdef ELBERETH
 			| (1L << 19)
 #endif
-#ifdef SCORE_ON_BOTL
-			| (1L << 21)
-#endif
 			);
 	/*
 	 * Value used for object & monster sanity check.
@@ -457,9 +454,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef REINCARNATION
 		"rogue level",
-#endif
-#ifdef SCORE_ON_BOTL
-		"score on status line",
 #endif
 #ifdef NO_TERMS
 # ifdef SCREEN_VGA

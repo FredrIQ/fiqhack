@@ -1194,7 +1194,7 @@ void do_storms(void)
  */
 
 static const char *kind_name(short);
-static void print_queue(winid, timer_element *);
+static void print_queue(struct menulist *menu, timer_element *);
 static void insert_timer(timer_element *);
 static timer_element *remove_timer(timer_element **, short,void *);
 static void write_timer(int, timer_element *);
@@ -1242,15 +1242,15 @@ static const char *kind_name(short kind)
     return "unknown";
 }
 
-static void print_queue(winid win, timer_element *base)
+static void print_queue(struct menulist *menu, timer_element *base)
 {
     timer_element *curr;
     char buf[BUFSZ];
 
     if (!base) {
-	putstr(win, 0, "<empty>");
+	add_menutext(menu, "<empty>");
     } else {
-	putstr(win, 0, "timeout  id   kind   call");
+	add_menutext(menu, "timeout  id   kind   call");
 	for (curr = base; curr; curr = curr->next) {
 #ifdef VERBOSE_TIMER
 	    sprintf(buf, " %4ld   %4ld  %-6s %s(%p)",
@@ -1262,28 +1262,27 @@ static void print_queue(winid win, timer_element *base)
 		curr->timeout, curr->tid, kind_name(curr->kind),
 		curr->func_index, curr->arg);
 #endif
-	    putstr(win, 0, buf);
+	    add_menutext(menu, buf);
 	}
     }
 }
 
 int wiz_timeout_queue(void)
 {
-    winid win;
     char buf[BUFSZ];
+    struct menulist menu;
 
-    win = create_nhwindow(NHW_MENU);	/* corner text window */
-    if (win == WIN_ERR) return 0;
+    init_menulist(&menu);
 
     sprintf(buf, "Current time = %ld.", monstermoves);
-    putstr(win, 0, buf);
-    putstr(win, 0, "");
-    putstr(win, 0, "Active timeout queue:");
-    putstr(win, 0, "");
-    print_queue(win, timer_base);
+    add_menutext(&menu, buf);
+    add_menutext(&menu, "");
+    add_menutext(&menu, "Active timeout queue:");
+    add_menutext(&menu, "");
+    print_queue(&menu, timer_base);
 
-    display_nhwindow(win, FALSE);
-    destroy_nhwindow(win);
+    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    free(menu.items);
 
     return 0;
 }

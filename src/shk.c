@@ -2557,7 +2557,7 @@ int doinvbill(int mode)
 	struct obj *obj;
 	long totused;
 	char *buf_p;
-	winid datawin;
+	struct menulist menu;
 
 	shkp = shop_keeper(*u.ushops);
 	if (!shkp || !inhishop(shkp)) {
@@ -2579,9 +2579,9 @@ int doinvbill(int mode)
 	    return cnt;
 	}
 
-	datawin = create_nhwindow(NHW_MENU);
-	putstr(datawin, 0, "Unpaid articles already used up:");
-	putstr(datawin, 0, "");
+	init_menulist(&menu);
+	add_menutext(&menu, "Unpaid articles already used up:");
+	add_menutext(&menu, "");
 
 	totused = 0L;
 	for (bp = eshkp->bill_p, end_bp = &eshkp->bill_p[eshkp->billct];
@@ -2604,24 +2604,25 @@ int doinvbill(int mode)
 		/* Why 'x'?  To match `I x', more or less. */
 		buf_p = xprname(obj, NULL, 'x', FALSE, thisused, uquan);
 		obj->unpaid = save_unpaid;
-		putstr(datawin, 0, buf_p);
+		add_menutext(&menu, buf_p);
 	    }
 	}
 	if (eshkp->debit) {
 	    /* additional shop debt which has no itemization available */
-	    if (totused) putstr(datawin, 0, "");
+	    if (totused) add_menutext(&menu, "");
 	    totused += eshkp->debit;
 	    buf_p = xprname(NULL,
 			    "usage charges and/or other fees",
 			    GOLD_SYM, FALSE, eshkp->debit, 0L);
-	    putstr(datawin, 0, buf_p);
+	    add_menutext(&menu, buf_p);
 	}
 	buf_p = xprname(NULL, "Total:", '*', FALSE, totused, 0L);
-	putstr(datawin, 0, "");
-	putstr(datawin, 0, buf_p);
-	display_nhwindow(datawin, FALSE);
+	add_menutext(&menu, "");
+	add_menutext(&menu, buf_p);
+	
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
     quit:
-	destroy_nhwindow(datawin);
+	free(menu.items);
 	return 0;
 }
 
@@ -3372,12 +3373,12 @@ void price_quote(struct obj *first_obj)
     char buf[BUFSZ], price[40];
     long cost;
     int cnt = 0;
-    winid tmpwin;
+    struct menulist menu;
     struct monst *shkp = shop_keeper(inside_shop(u.ux, u.uy));
 
-    tmpwin = create_nhwindow(NHW_MENU);
-    putstr(tmpwin, 0, "Fine goods for sale:");
-    putstr(tmpwin, 0, "");
+    init_menulist(&menu);
+    add_menutext(&menu, "Fine goods for sale:");
+    add_menutext(&menu, "");
     for (otmp = first_obj; otmp; otmp = otmp->nexthere) {
 	if (otmp->oclass == COIN_CLASS) continue;
 	cost = (otmp->no_charge || otmp == uball || otmp == uchain) ? 0L :
@@ -3391,10 +3392,10 @@ void price_quote(struct obj *first_obj)
 		    otmp->quan > 1L ? " each" : "");
 	}
 	sprintf(buf, "%s, %s", doname(otmp), price);
-	putstr(tmpwin, 0, buf),  cnt++;
+	add_menutext(&menu, buf),  cnt++;
     }
     if (cnt > 1) {
-	display_nhwindow(tmpwin, TRUE);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
     } else if (cnt == 1) {
 	if (first_obj->no_charge || first_obj == uball || first_obj == uchain){
 	    pline("%s!", buf);	/* buf still contains the string */
@@ -3408,7 +3409,7 @@ void price_quote(struct obj *first_obj)
 		shk_embellish(first_obj, cost));
 	}
     }
-    destroy_nhwindow(tmpwin);
+    free(menu.items);
 }
 
 

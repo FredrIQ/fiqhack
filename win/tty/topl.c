@@ -175,10 +175,10 @@ void more(void)
 	if(cw->curx >= CO - 8) topl_putsym('\n');
     }
 
-    if(tty_flags.standout)
+    if(ui_flags.standout)
 	standoutbeg();
     putsyms(defmorestr);
-    if(tty_flags.standout)
+    if(ui_flags.standout)
 	standoutend();
 
     xwaitforspace("\033 ");

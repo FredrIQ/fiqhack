@@ -71,22 +71,22 @@ const char * const killed_by_prefix[] = {
 	"turned to slime by ", "killed by ", "", "", "", "", ""
 };
 
-static winid toptenwin = WIN_ERR;
+static struct menulist ttmenu = {NULL, 0, 0};
 
 static void topten_print(const char *x)
 {
-	if (toptenwin == WIN_ERR)
+	if (ttmenu.size == 0)
 	    raw_print(x);
 	else
-	    putstr(toptenwin, ATR_NONE, x);
+	    add_menutext(&ttmenu, x);
 }
 
 static void topten_print_bold(const char *x)
 {
-	if (toptenwin == WIN_ERR)
+	if (ttmenu.size == 0)
 	    raw_print_bold(x);
 	else
-	    putstr(toptenwin, ATR_BOLD, x);
+	    add_menuheading(&ttmenu, x);
 }
 
 static xchar observable_depth(d_level *lev)
@@ -194,7 +194,7 @@ void topten(int how)
 		return;
 
 	if (flags.toptenwin) {
-	    toptenwin = create_nhwindow(NHW_TEXT);
+	    init_menulist(&ttmenu);
 	}
 
 #if defined(UNIX)
@@ -445,12 +445,14 @@ void topten(int how)
 	free_ttlist(tt_head);
 
   showwin:
-	if (flags.toptenwin && !done_stopprint) display_nhwindow(toptenwin, 1);
+	if (flags.toptenwin && !done_stopprint)
+	    display_menu(ttmenu.items, ttmenu.icount, NULL, PICK_NONE, NULL);
   destroywin:
 	if (!t0_used) dealloc_ttentry(t0);
 	if (flags.toptenwin) {
-	    destroy_nhwindow(toptenwin);
-	    toptenwin=WIN_ERR;
+	    free(ttmenu.items);
+	    ttmenu.items = NULL;
+	    ttmenu.icount = ttmenu.size = 0;
 	}
 }
 

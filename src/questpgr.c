@@ -348,15 +348,16 @@ static void deliver_by_window(struct qtmsg *qt_msg, int how)
 {
 	long size;
 	char *d;
-	winid datawin = create_nhwindow(how);
+	struct menulist menu;
+	init_menulist(&menu);
 
 	for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
 	    d = dlb_fgets(in_line, 80, msg_file);
 	    convert_line();
-	    putstr(datawin, 0, out_line);
+	    add_menutext(&menu, out_line);
 	}
-	display_nhwindow(datawin, TRUE);
-	destroy_nhwindow(datawin);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 }
 
 void com_pager(int msgnum)

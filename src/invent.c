@@ -1693,13 +1693,13 @@ int count_buc(struct obj *list, int type)
 
 static void dounpaid(void)
 {
-    winid win;
     struct obj *otmp, *marker;
     char ilet;
     char *invlet = flags.inv_order;
     int classcount, count, num_so_far;
     int save_unpaid = 0;	/* lint init */
     long cost, totcost;
+    struct menulist menu;
 
     count = count_unpaid(invent);
 
@@ -1717,11 +1717,12 @@ static void dounpaid(void)
 	return;
     }
 
-    win = create_nhwindow(NHW_MENU);
     cost = totcost = 0;
     num_so_far = 0;	/* count of # printed so far */
-    if (!flags.invlet_constant) reassign();
+    if (!flags.invlet_constant)
+	reassign();
 
+    init_menulist(&menu);
     do {
 	classcount = 0;
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
@@ -1729,7 +1730,7 @@ static void dounpaid(void)
 	    if (otmp->unpaid) {
 		if (!flags.sortpack || otmp->oclass == *invlet) {
 		    if (flags.sortpack && !classcount) {
-			putstr(win, 0, let_to_name(*invlet, TRUE));
+			add_menutext(&menu, let_to_name(*invlet, TRUE));
 			classcount++;
 		    }
 
@@ -1737,8 +1738,8 @@ static void dounpaid(void)
 		    /* suppress "(unpaid)" suffix */
 		    save_unpaid = otmp->unpaid;
 		    otmp->unpaid = 0;
-		    putstr(win, 0, xprname(otmp, distant_name(otmp, doname),
-					   ilet, TRUE, cost, 0L));
+		    add_menutext(&menu, xprname(otmp, distant_name(otmp, doname),
+						ilet, TRUE, cost, 0L));
 		    otmp->unpaid = save_unpaid;
 		    num_so_far++;
 		}
@@ -1749,7 +1750,8 @@ static void dounpaid(void)
     if (count > num_so_far) {
 	/* something unpaid is contained */
 	if (flags.sortpack)
-	    putstr(win, 0, let_to_name(CONTAINED_SYM, TRUE));
+	    add_menutext(&menu, let_to_name(CONTAINED_SYM, TRUE));
+	    
 	/*
 	 * Search through the container objects in the inventory for
 	 * unpaid items.  The top level inventory items have already
@@ -1762,19 +1764,20 @@ static void dounpaid(void)
 		    totcost += cost = unpaid_cost(marker);
 		    save_unpaid = marker->unpaid;
 		    marker->unpaid = 0;    /* suppress "(unpaid)" suffix */
-		    putstr(win, 0,
-			   xprname(marker, distant_name(marker, doname),
-				   CONTAINED_SYM, TRUE, cost, 0L));
+		    add_menutext(&menu,
+				 xprname(marker, distant_name(marker, doname),
+					 CONTAINED_SYM, TRUE, cost, 0L));
 		    marker->unpaid = save_unpaid;
 		}
 	    }
 	}
     }
 
-    putstr(win, 0, "");
-    putstr(win, 0, xprname(NULL, "Total:", '*', FALSE, totcost, 0L));
-    display_nhwindow(win, FALSE);
-    destroy_nhwindow(win);
+    add_menutext(&menu, "");
+    add_menutext(&menu, xprname(NULL, "Total:", '*', FALSE, totcost, 0L));
+    
+    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    free(menu.items);
 }
 
 
@@ -1969,7 +1972,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	const char *verb = Blind ? "feel" : "see";
 	const char *dfeature = NULL;
 	char fbuf[BUFSZ], fbuf2[BUFSZ];
-	winid tmpwin;
+	struct menulist menu;
 	boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
 
 	if (u.uswallow && u.ustuck) {
@@ -2000,7 +2003,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	otmp = level.objects[u.ux][u.uy];
 	dfeature = dfeature_at(u.ux, u.uy, fbuf2);
 	if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
-		dfeature = 0;
+		dfeature = NULL;
 
 	if (Blind) {
 		boolean drift = Is_airlevel(&u.uz) || Is_waterlevel(&u.uz);
@@ -2046,30 +2049,34 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	    if (otmp->oinvis && !See_invisible) verb = "feel";
 #endif
 	    You("%s here %s.", verb, doname(otmp));
-	    if (otmp->otyp == CORPSE) feel_cockatrice(otmp, FALSE);
+	    if (otmp->otyp == CORPSE)
+		feel_cockatrice(otmp, FALSE);
 	} else {
-	    display_nhwindow(WIN_MESSAGE, FALSE);
-	    tmpwin = create_nhwindow(NHW_MENU);
+	    init_menulist(&menu);
+	    
 	    if(dfeature) {
-		putstr(tmpwin, 0, fbuf);
-		putstr(tmpwin, 0, "");
+		add_menutext(&menu, fbuf);
+		add_menutext(&menu, "");
 	    }
-	    putstr(tmpwin, 0, Blind ? "Things that you feel here:" :
-				      "Things that are here:");
+	    add_menutext(&menu, Blind ? "Things that you feel here:" :
+					"Things that are here:");
+	    
 	    for ( ; otmp; otmp = otmp->nexthere) {
 		if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, FALSE)) {
 			char buf[BUFSZ];
 			felt_cockatrice = TRUE;
 			strcpy(buf, doname(otmp));
 			strcat(buf, "...");
-			putstr(tmpwin, 0, buf);
+			add_menutext(&menu, buf);
 			break;
 		}
-		putstr(tmpwin, 0, doname(otmp));
+		add_menutext(&menu, doname(otmp));
 	    }
-	    display_nhwindow(tmpwin, TRUE);
-	    destroy_nhwindow(tmpwin);
-	    if (felt_cockatrice) feel_cockatrice(otmp, FALSE);
+	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	    free(menu.items);
+	    
+	    if (felt_cockatrice)
+		feel_cockatrice(otmp, FALSE);
 	    read_engr_at(u.ux, u.uy); /* Eric Backus */
 	}
 	return !!Blind;

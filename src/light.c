@@ -538,20 +538,19 @@ int candle_light_range(struct obj *obj)
 
 int wiz_light_sources(void)
 {
-    winid win;
+    struct menulist menu;
     char buf[BUFSZ];
     light_source *ls;
 
-    win = create_nhwindow(NHW_MENU);	/* corner text window */
-    if (win == WIN_ERR) return 0;
+    init_menulist(&menu);
 
     sprintf(buf, "Mobile light sources: hero @ (%2d,%2d)", u.ux, u.uy);
-    putstr(win, 0, buf);
-    putstr(win, 0, "");
+    add_menutext(&menu, buf);
+    add_menutext(&menu, "");
 
     if (light_base) {
-	putstr(win, 0, "location range flags  type    id");
-	putstr(win, 0, "-------- ----- ------ ----  -------");
+	add_menutext(&menu, "location range flags  type    id");
+	add_menutext(&menu, "-------- ----- ------ ----  -------");
 	for (ls = light_base; ls; ls = ls->next) {
 	    sprintf(buf, "  %2d,%2d   %2d   0x%04x  %s  %p",
 		ls->x, ls->y, ls->range, ls->flags,
@@ -562,14 +561,14 @@ int wiz_light_sources(void)
 		     "<m>") :		/* migrating monster */
 		 "???"),
 		ls->id);
-	    putstr(win, 0, buf);
+	    add_menutext(&menu, buf);
 	}
     } else
-	putstr(win, 0, "<none>");
+	add_menutext(&menu, "<none>");
 
 
-    display_nhwindow(win, FALSE);
-    destroy_nhwindow(win);
+    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    free(menu.items);
 
     return 0;
 }

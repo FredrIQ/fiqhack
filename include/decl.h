@@ -318,4 +318,13 @@ struct object_pick {
     int count;
 };
 
+struct menulist {
+    struct nh_menuitem *items;
+    int size;
+    int icount;
+};
+
+#define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
+#define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)
+
 #endif /* DECL_H */

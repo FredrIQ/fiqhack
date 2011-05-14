@@ -14,14 +14,24 @@
 
 static void read_ui_config(void);
 
+#define VTRUE (void*)TRUE
 
 struct nh_option_desc tty_options[] = {
+    {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
+    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {FALSE}},
+    {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
+    {"time", "display elapsed 'time'", OPTTYPE_BOOL, {VTRUE}},
+    
     {"hackdir", "game data directory", OPTTYPE_STRING, {NULL}},
     {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
 struct nh_boolopt_map boolopt_map[] = {
+    {"showexp", &ui_flags.showexp},
+    {"showscore", &ui_flags.showscore},
+    {"standout", &ui_flags.standout},
+    {"time", &ui_flags.time},
     {NULL, NULL}
 };
 

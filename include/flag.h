@@ -48,15 +48,10 @@ struct flag {
 	boolean  pushweapon;	/* When wielding, push old weapon into second slot */
 	boolean  rest_on_space; /* space means rest */
 	boolean  safe_dog;	/* give complete protection to the dog */
-	boolean  showexp;	/* show experience points */
-#ifdef SCORE_ON_BOTL
-	boolean  showscore;	/* show score */
-#endif
 	boolean  silent;	/* whether the bell rings or not */
 	boolean  sortpack;	/* sorted inventory */
 	boolean  soundok;	/* ok to tell about sounds heard */
 	boolean  sparkle;	/* show "resisting" special FX (Scott Bigham) */
-	boolean  time;		/* display elapsed 'time' */
 	boolean  tombstone;	/* print tombstone */
 	boolean  toptenwin;	/* ending list in window instead of stdout */
 	boolean  verbose;	/* max battle info */

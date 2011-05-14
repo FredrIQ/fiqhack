@@ -70,14 +70,17 @@ static void simple_look(struct obj *otmp,	/* list of objects */
 	} else if (!(here ? otmp->nexthere : otmp->nobj)) {
 	    pline("%s", doname(otmp));
 	} else {
-	    winid tmpwin = create_nhwindow(NHW_MENU);
-	    putstr(tmpwin, 0, "");
+	    struct menulist menu;
+	    init_menulist(&menu);
+	    
+	    add_menutext(&menu, "");
 	    do {
-		putstr(tmpwin, 0, doname(otmp));
+		add_menutext(&menu, doname(otmp));
 		otmp = here ? otmp->nexthere : otmp->nobj;
 	    } while (otmp);
-	    display_nhwindow(tmpwin, TRUE);
-	    destroy_nhwindow(tmpwin);
+	    
+	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	    free(menu.items);
 	}
 }
 
@@ -783,8 +786,7 @@ int query_category(const char *qstr,	/* query string */
 	boolean do_blessed = FALSE, do_cursed = FALSE, do_uncursed = FALSE,
 	    do_buc_unknown = FALSE;
 	int num_buc_types = 0;
-	int nr_items = 10, cur_item = 0;
-	struct nh_menuitem *items = NULL;
+	struct menulist menu;
 
 	if (!olist)
 	    return 0;
@@ -828,14 +830,13 @@ int query_category(const char *qstr,	/* query string */
 	    return 0;
 	}
 	
-	items = malloc(nr_items * sizeof(struct nh_menuitem));
+	init_menulist(&menu);
 
 	pack = flags.inv_order;
 	invlet = 'a';
 	if ((qflags & ALL_TYPES) && (ccount > 1)) {
-		add_menuitem(&items, &nr_items, cur_item++, ALL_TYPES_SELECTED, 
-			     MI_NORMAL, (qflags & WORN_TYPES) ?
-			     "All worn types" : "All types", invlet, FALSE);
+		add_menuitem(&menu, ALL_TYPES_SELECTED, (qflags & WORN_TYPES) ?
+		             "All worn types" : "All types", invlet, FALSE);
 		invlet = 'b';
 	}
 	
@@ -848,57 +849,49 @@ int query_category(const char *qstr,	/* query string */
 		    	W_WEP | W_SWAPWEP | W_QUIVER)))
 			 continue;
 		   if (!collected_type_name) {
-			add_menuitem(&items, &nr_items, cur_item, curr->oclass,
-			    MI_NORMAL, let_to_name(*pack, FALSE), invlet++, FALSE);
-			items[cur_item].group_accel =
+			add_menuitem(&menu, curr->oclass,
+				     let_to_name(*pack, FALSE), invlet++, FALSE);
+			menu.items[menu.icount - 1].group_accel =
 			    def_oc_syms[(int)objects[curr->otyp].oc_class];
-			cur_item++;
 			collected_type_name = TRUE;
 		   }
 		}
 	    }
 	    pack++;
 	    if (invlet >= 'u') {
-		free(items);
+		free(menu.items);
 		impossible("query_category: too many categories");
 		return 0;
 	    }
 	} while (*pack);
 	/* unpaid items if there are any */
 	if (do_unpaid)
-	    add_menuitem(&items, &nr_items, cur_item++, 'u', MI_NORMAL,
-		"Unpaid items", 'u', FALSE);
+	    add_menuitem(&menu, 'u', "Unpaid items", 'u', FALSE);
 	
 	/* billed items: checked by caller, so always include if BILLED_TYPES */
 	if (qflags & BILLED_TYPES)
-	    add_menuitem(&items, &nr_items, cur_item++, 'x', MI_NORMAL,
-		"Unpaid items already used up", 'x', FALSE);
+	    add_menuitem(&menu, 'x', "Unpaid items already used up", 'x', FALSE);
 	
 	if (qflags & CHOOSE_ALL)
-	    add_menuitem(&items, &nr_items, cur_item++, 'A', MI_NORMAL,
-		(qflags & WORN_TYPES) ?
+	    add_menuitem(&menu, 'A', (qflags & WORN_TYPES) ?
 		    "Auto-select every item being worn" :
 		    "Auto-select every item", 'A', FALSE);
 	
 	/* items with b/u/c/unknown if there are any */
 	if (do_blessed)
-	    add_menuitem(&items, &nr_items, cur_item++, 'B', MI_NORMAL,
-		"Items known to be Blessed", 'B', FALSE);
+	    add_menuitem(&menu, 'B', "Items known to be Blessed", 'B', FALSE);
 	
 	if (do_cursed)
-	    add_menuitem(&items, &nr_items, cur_item++, 'C', MI_NORMAL,
-		"Items known to be Cursed", 'C', FALSE);
+	    add_menuitem(&menu, 'C', "Items known to be Cursed", 'C', FALSE);
 	
 	if (do_uncursed)
-	    add_menuitem(&items, &nr_items, cur_item++, 'U', MI_NORMAL,
-		"Items known to be Uncursed", 'U', FALSE);
+	    add_menuitem(&menu, 'U', "Items known to be Uncursed", 'U', FALSE);
 	
 	if (do_buc_unknown)
-	    add_menuitem(&items, &nr_items, cur_item++, 'X', MI_NORMAL,
-		"Items of unknown B/C/U status", 'X', FALSE);
+	    add_menuitem(&menu, 'X', "Items of unknown B/C/U status", 'X', FALSE);
 	
-	n = display_menu(items, cur_item, qstr, how, pick_list);
-	free(items);
+	n = display_menu(menu.items, menu.icount, qstr, how, pick_list);
+	free(menu.items);
 	if (n < 0)
 	    n = 0;	/* callers don't expect -1 */
 	

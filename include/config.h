@@ -98,8 +98,6 @@
 /* difficulty */
 #define ELBERETH	/* Engraving the E-word repels monsters */
 
-/* #define SCORE_ON_BOTL */	/* added by Gary Erickson (erickson@ucivax) */
-
 /*
  * Section 5:  EXPERIMENTAL STUFF
  *

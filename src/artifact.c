@@ -627,7 +627,7 @@ boolean undiscovered_artifact(xchar m)
 
 /* display a list of discovered artifacts; return their count */
 int disp_artifact_discoveries(
-    winid tmpwin /* supplied by dodiscover() */
+    struct menulist *menu /* supplied by dodiscover() */
     )
 {
     int i, m, otyp;
@@ -635,12 +635,13 @@ int disp_artifact_discoveries(
 
     for (i = 0; i < NROFARTIFACTS; i++) {
 	if (artidisco[i] == 0) break;	/* empty slot implies end of list */
-	if (i == 0) putstr(tmpwin, iflags.menu_headings, "Artifacts");
+	if (i == 0)
+	    add_menuheading(menu, "Artifacts");
 	m = artidisco[i];
 	otyp = artilist[m].otyp;
 	sprintf(buf, "  %s [%s %s]", artiname(m),
 		align_str(artilist[m].alignment), simple_typename(otyp));
-	putstr(tmpwin, 0, buf);
+	add_menutext(menu, buf);
     }
     return i;
 }

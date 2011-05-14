@@ -395,8 +395,10 @@ static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
 
 	/* skip over other possible matches for the info */
 	do {
-	    if (!dlb_fgets(buf, BUFSZ, fp)) goto bad_data_file;
+	    if (!dlb_fgets(buf, BUFSZ, fp))
+		goto bad_data_file;
 	} while (!digit(*buf));
+	
 	if (sscanf(buf, "%ld,%d\n", &entry_offset, &entry_count) < 2) {
 bad_data_file:	impossible("'data' file in wrong format");
 		dlb_fclose(fp);
@@ -404,22 +406,27 @@ bad_data_file:	impossible("'data' file in wrong format");
 	}
 
 	if (user_typed_name || without_asking || yn("More info?") == 'y') {
-	    winid datawin;
+	    struct menulist menu;
 
 	    if (dlb_fseek(fp, txt_offset + entry_offset, SEEK_SET) < 0) {
 		pline("? Seek error on 'data' file!");
 		dlb_fclose(fp);
 		return;
 	    }
-	    datawin = create_nhwindow(NHW_MENU);
+	    
+	    init_menulist(&menu);
 	    for (i = 0; i < entry_count; i++) {
-		if (!dlb_fgets(buf, BUFSZ, fp)) goto bad_data_file;
-		if ((ep = index(buf, '\n')) != 0) *ep = 0;
-		if (index(buf+1, '\t') != 0) tabexpand(buf+1);
-		putstr(datawin, 0, buf+1);
+		if (!dlb_fgets(buf, BUFSZ, fp))
+		    goto bad_data_file;
+		if ((ep = index(buf, '\n')) != 0)
+		    *ep = 0;
+		if (index(buf+1, '\t') != 0)
+		    tabexpand(buf+1);
+		add_menutext(&menu, buf+1);
 	    }
-	    display_nhwindow(datawin, FALSE);
-	    destroy_nhwindow(datawin);
+	    
+	    display_menu(menu.items, menu.icount, NULL, FALSE, NULL);
+	    free(menu.items);
 	}
     } else if (user_typed_name)
 	pline("I don't have any information on those things.");

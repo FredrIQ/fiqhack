@@ -810,7 +810,7 @@ void mread(int fd, void * buf, unsigned int len)
 		if(restoring) {
 			close(fd);
 			delete_savefile();
-			putstr(WIN_ERR, 0, "Error restoring old game.");
+			raw_print("Error restoring old game.");
 		}
 		panic("Error reading level file.");
 	}

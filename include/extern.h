@@ -63,7 +63,7 @@ extern int spec_abon(struct obj *,struct monst *);
 extern int spec_dbon(struct obj *,struct monst *,int);
 extern void discover_artifact(xchar);
 extern boolean undiscovered_artifact(xchar);
-extern int disp_artifact_discoveries(winid);
+extern int disp_artifact_discoveries(struct menulist *);
 extern boolean artifact_hit(struct monst *,struct monst *,struct obj *,int *,int);
 extern int doinvoke(void);
 extern void arti_speak(struct obj *);
@@ -115,9 +115,7 @@ extern int getbones(void);
 extern int xlev_to_rank(int);
 extern int title_to_mon(const char *,int *,int *);
 extern void max_rank_sz(void);
-#ifdef SCORE_ON_BOTL
 extern long botl_score(void);
-#endif
 extern int describe_level(char *);
 extern const char *rank_of(int, short, boolean);
 
@@ -594,8 +592,9 @@ extern long money_cnt(struct obj *);
 
 extern void set_menuitem(struct nh_menuitem *, int, enum nh_menuitem_role,
 			 const char *, char, boolean);
-extern void add_menuitem(struct nh_menuitem**, int*, int, int,
-			 enum nh_menuitem_role, const char *, char, boolean);
+extern void init_menulist(struct menulist*);
+extern void add_menuitem(struct menulist*,int, const char*,char,boolean);
+extern void add_menu_simple(struct menulist*,const char*,enum nh_menuitem_role);
 extern boolean letter(char);
 extern boolean digit(char);
 extern char *eos(char *);

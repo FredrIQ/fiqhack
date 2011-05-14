@@ -34,8 +34,9 @@ struct window_procs tty_procs = {
     tty_display_nhwindow,
     tty_destroy_nhwindow,
     tty_curs,
-    tty_putstr,
     tty_display_buffer,
+    tty_update_status,
+    tty_print_message,
     tty_display_menu,
     tty_display_objects,
     tty_message_menu,
@@ -58,11 +59,10 @@ struct window_procs tty_procs = {
     /* other defs that really should go away (they're tty specific) */
     tty_start_screen,
     tty_end_screen,
-    genl_outrip,
+    tty_outrip,
 };
 
 struct tc_gbl_data tc_gbl_data = { 0,0, 0,0 };	/* AS,AE, LI,CO */
-struct tty_flag tty_flags = { FALSE };
 
 static int maxwin = 0;			/* number of windows in use */
 winid BASE_WINDOW;
@@ -556,12 +556,12 @@ void tty_get_nh_event(void)
 static void getret(void)
 {
 	xputs("\n");
-	if(tty_flags.standout)
+	if(ui_flags.standout)
 		standoutbeg();
 	xputs("Hit ");
 	xputs(ui_flags.cbreak ? "space" : "return");
 	xputs(" to continue: ");
-	if(tty_flags.standout)
+	if(ui_flags.standout)
 		standoutend();
 	xwaitforspace(" ");
 }
@@ -808,11 +808,11 @@ static void dmore(struct WinDesc *cw,
 
     tty_curs(BASE_WINDOW,
 	     (int)ttyDisplay->curx + offset, (int)ttyDisplay->cury);
-    if(tty_flags.standout)
+    if(ui_flags.standout)
 	standoutbeg();
     xputs(prompt);
     ttyDisplay->curx += strlen(prompt);
-    if(tty_flags.standout)
+    if(ui_flags.standout)
 	standoutend();
 
     xwaitforspace(s);
@@ -1885,42 +1885,47 @@ int tty_select_menu(winid window, int how, menu_item **menu_list)
 int tty_display_menu(struct nh_menuitem *items, int icount, const char *title,
 		     int how, int *results)
 {
-    int i, n;
+    int i, n = 0;
     menu_item *selected = NULL;
     anything any;
     winid win;
     boolean is_text = TRUE;
     
     for (i = 0; i < icount; i++)
-	is_text = is_text && (items[i].role == MI_TEXT);
+	is_text = is_text && (items[i].role != MI_NORMAL);
     
     any.a_void = NULL;
     win = tty_create_nhwindow(NHW_MENU);
-    if (!is_text)
+    if (is_text) {
+	for (i = 0; i < icount; i++) {
+	    if (items[i].role == MI_HEADING)
+		tty_putstr(win, iflags.menu_headings, items[i].caption);
+	    else
+		tty_putstr(win, 0, items[i].caption);
+	}
+	
+	tty_display_nhwindow(win, TRUE);
+    } else {
 	tty_start_menu(win);
-    
-    for (i = 0; i < icount; i++) {
-	any.a_int = items[i].id;
-	if (items[i].role == MI_HEADING)
-	    tty_add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
-			    items[i].caption, MENU_UNSELECTED);
-	else if (items[i].role == MI_TEXT)
-	    tty_putstr(win, 0, items[i].caption);
-	else
-	    tty_add_menu(win, NO_GLYPH, &any, items[i].accel,
-			 items[i].group_accel, ATR_NONE, items[i].caption,
-			 items[i].selected);
-    }
-    
-    if (!is_text) {
+	for (i = 0; i < icount; i++) {
+	    any.a_int = items[i].id;
+	    if (items[i].role == MI_HEADING)
+		tty_add_menu(win, NO_GLYPH, &any, 0, 0, iflags.menu_headings,
+				items[i].caption, MENU_UNSELECTED);
+	    else
+		tty_add_menu(win, NO_GLYPH, &any, items[i].accel,
+			    items[i].group_accel, ATR_NONE, items[i].caption,
+			    items[i].selected);
+	}
+	
 	tty_end_menu(win, title);
 	n = tty_select_menu(win, how, &selected);
 	for (i = 0; i < n && results; i++)
 	    results[i] = selected[i].item.a_int;
 	
 	free(selected);
-    } else
-	tty_display_nhwindow(win, TRUE);
+    }
+    
     tty_destroy_nhwindow(win);
     
     return n;
@@ -2287,6 +2292,219 @@ static char * copy_of(const char *s)
 {
     if (!s) s = "";
     return strcpy(malloc((unsigned) (strlen(s) + 1)), s);
+}
+
+/*============================================================================*/
+
+/* A normal tombstone for end of game display. */
+static const char *rip_txt[] = {
+"                       ----------",
+"                      /          \\",
+"                     /    REST    \\",
+"                    /      IN      \\",
+"                   /     PEACE      \\",
+"                  /                  \\",
+"                  |                  |", /* Name of player */
+"                  |                  |", /* Amount of $ */
+"                  |                  |", /* Type of death */
+"                  |                  |", /* . */
+"                  |                  |", /* . */
+"                  |                  |", /* . */
+"                  |       1001       |", /* Real year of death */
+"                 *|     *  *  *      | *",
+"        _________)/\\\\_//(\\/(/\\)/\\//\\/|_)_______",
+0
+};
+#define STONE_LINE_CENT 28	/* char[] element of center of stone face */
+#define STONE_LINE_LEN 16	/* # chars that fit on one line
+				 * (note 1 ' ' border)
+				 */
+#define NAME_LINE 6		/* *char[] line # for player name */
+#define GOLD_LINE 7		/* *char[] line # for amount of gold */
+#define DEATH_LINE 8		/* *char[] line # for death description */
+#define YEAR_LINE 12		/* *char[] line # for year */
+
+static void center(char *line, char *text)
+{
+	char *ip,*op;
+	ip = text;
+	op = &line[STONE_LINE_CENT - ((strlen(text)+1)>>1)];
+	while(*ip) *op++ = *ip++;
+}
+
+
+void tty_outrip(struct nh_menuitem *items,int icount, int how, char *plname, long gold,
+		char *killbuf, int year)
+{
+	char **dp, **rip;
+	char *dpx;
+	char buf[BUFSZ];
+	int x, i;
+	int line;
+	winid tmpwin = tty_create_nhwindow(NHW_TEXT);
+	
+
+	rip = dp = malloc(sizeof(rip_txt));
+	for (x = 0; rip_txt[x]; x++) {
+		dp[x] = malloc((unsigned int)(strlen(rip_txt[x]) + 1));
+		strcpy(dp[x], rip_txt[x]);
+	}
+	dp[x] = NULL;
+
+	/* Put name on stone */
+	sprintf(buf, "%s", plname);
+	buf[STONE_LINE_LEN] = 0;
+	center(rip[NAME_LINE], buf);
+
+	/* Put $ on stone */
+	sprintf(buf, "%ld Au", gold);
+// #ifndef GOLDOBJ
+// 	sprintf(buf, "%ld Au", u.ugold);
+// #else
+// 	sprintf(buf, "%ld Au", done_money);
+// #endif
+	buf[STONE_LINE_LEN] = 0; /* It could be a *lot* of gold :-) */
+	center(rip[GOLD_LINE], buf);
+
+	strcpy(buf, killbuf);
+	/* Put death type on stone */
+	for (line=DEATH_LINE, dpx = buf; line<YEAR_LINE; line++) {
+		int i,i0;
+		char tmpchar;
+
+		if ( (i0=strlen(dpx)) > STONE_LINE_LEN) {
+				for(i = STONE_LINE_LEN;
+				    ((i0 > STONE_LINE_LEN) && i); i--)
+					if(dpx[i] == ' ') i0 = i;
+				if(!i) i0 = STONE_LINE_LEN;
+		}
+		tmpchar = dpx[i0];
+		dpx[i0] = 0;
+		center(rip[line], dpx);
+		if (tmpchar != ' ') {
+			dpx[i0] = tmpchar;
+			dpx= &dpx[i0];
+		} else  dpx= &dpx[i0+1];
+	}
+
+	/* Put year on stone */
+	sprintf(buf, "%4d", year);
+	center(rip[YEAR_LINE], buf);
+
+	tty_putstr(tmpwin, 0, "");
+	for(; *dp; dp++)
+		tty_putstr(tmpwin, 0, *dp);
+
+	tty_putstr(tmpwin, 0, "");
+	tty_putstr(tmpwin, 0, "");
+
+	for (x = 0; rip_txt[x]; x++) {
+		free(rip[x]);
+	}
+	free(rip);
+	rip = NULL;
+	
+	for (i = 0; i < icount; i++)
+	    tty_putstr(tmpwin, 0, items[i].caption);
+	
+	tty_display_nhwindow(tmpwin, TRUE);
+	tty_destroy_nhwindow(tmpwin);
+}
+
+
+/*============================================================================*/
+
+/* MAXCO must hold longest uncompressed status line, and must be larger
+ * than COLNO
+ *
+ * longest practical second status line at the moment is
+ *	Astral Plane $:12345 HP:700(700) Pw:111(111) AC:-127 Xp:30/123456789
+ *	T:123456 Satiated Conf FoodPois Ill Blind Stun Hallu Overloaded
+ * -- or somewhat over 130 characters
+ */
+#if COLNO <= 140
+#define MAXCO 160
+#else
+#define MAXCO (COLNO+20)
+#endif
+
+static void bot1(struct nh_status_info *s)
+{
+	char newbot1[MAXCO];
+	char *nb = newbot1;
+	int i,j;
+
+	strcpy(newbot1, s->plname);
+	if('a' <= newbot1[0] && newbot1[0] <= 'z')
+	    newbot1[0] += 'A'-'a';
+	newbot1[10] = '\0';
+	nb += strlen(newbot1);
+	sprintf(nb, " the %s", s->rank);
+
+	strncat(nb, "  ", MAXCO);
+	i = s->mrank_sz + 15;
+	j = strlen(newbot1);
+	if((i - j) > 0)
+		sprintf(nb += strlen(nb), "%*s", i-j, " ");	/* pad with spaces */
+	
+	if (s->st == 18) {
+		if (s->st_extra < 100)
+		    sprintf(nb += strlen(nb), "St:18/%02d ", s->st_extra);
+		else
+		    sprintf(nb += strlen(nb),"St:18/** ");
+	} else
+		sprintf(nb += strlen(nb), "St:%-1d ", s->st);
+	
+	sprintf(nb += strlen(nb), "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+		s->dx, s->co, s->in, s->wi, s->ch);
+	sprintf(nb += strlen(nb), (s->align == A_CHAOTIC) ? "  Chaotic" :
+			(s->align == A_NEUTRAL) ? "  Neutral" : "  Lawful");
+	
+	if (ui_flags.showscore)
+	    sprintf(nb += strlen(nb), " S:%ld", s->score);
+	
+	tty_curs(WIN_STATUS, 1, 0);
+	tty_putstr(WIN_STATUS, 0, newbot1);
+}
+
+static void bot2(struct nh_status_info *s)
+{
+	char newbot2[MAXCO];
+	char *nb = newbot2;
+	int i;
+
+	strncpy(newbot2, s->level_desc, MAXCO);
+	sprintf(nb += strlen(newbot2),
+		"%c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", s->coinsym,
+		s->gold, s->hp, s->hpmax, s->en, s->enmax, s->ac);
+
+	if (s->polyd)
+		sprintf(nb += strlen(nb), " HD:%d", s->level);
+	else if(ui_flags.showexp)
+		sprintf(nb += strlen(nb), " Xp:%u/%-1ld", s->level, s->xp);
+	else
+		sprintf(nb += strlen(nb), " Exp:%u", s->level);
+
+	if(ui_flags.time)
+	    sprintf(nb += strlen(nb), " T:%ld", s->moves);
+	
+	for (i = 0; i < s->nr_items; i++)
+	    sprintf(nb += strlen(nb), " %s", s->items[i]);
+	
+	tty_curs(WIN_STATUS, 1, 1);
+	tty_putstr(WIN_STATUS, 0, newbot2);
+}
+
+void tty_update_status(struct nh_status_info *status)
+{
+    bot1(status);
+    bot2(status);
+}
+
+
+void tty_print_message(const char *msg)
+{
+    tty_putstr(WIN_MESSAGE, 0, msg);
 }
 
 /*wintty.c*/

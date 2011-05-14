@@ -40,9 +40,11 @@ static void vpline(const char *line, va_list the_args)
 	}
 	if (no_repeat && !strcmp(line, toplines))
 	    return;
-	if (vision_full_recalc) vision_recalc(0);
-	if (u.ux) flush_screen(1);		/* %% */
-	putstr(WIN_MESSAGE, 0, line);
+	if (vision_full_recalc)
+	    vision_recalc(0);
+	if (u.ux)
+	    flush_screen(1);		/* %% */
+	print_message(line);
 }
 
 /*VARARGS1*/

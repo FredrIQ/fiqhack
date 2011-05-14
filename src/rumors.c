@@ -233,34 +233,38 @@ void outoracle(boolean special, boolean delphi)
 	oracles = dlb_fopen(ORACLEFILE, "r");
 
 	if (oracles) {
-		winid tmpwin;
+		struct menulist menu;
+		
 		if (oracle_flg == 0) {	/* if this is the first outoracle() */
 			init_oracles(oracles);
 			oracle_flg = 1;
-			if (oracle_cnt == 0) return;
+			if (oracle_cnt == 0)
+			    return;
 		}
 		/* oracle_loc[0] is the special oracle;		*/
 		/* oracle_loc[1..oracle_cnt-1] are normal ones	*/
-		if (oracle_cnt <= 1 && !special) return;  /*(shouldn't happen)*/
+		if (oracle_cnt <= 1 && !special)
+		    return;  /*(shouldn't happen)*/
 		oracle_idx = special ? 0 : rnd((int) oracle_cnt - 1);
 		dlb_fseek(oracles, oracle_loc[oracle_idx], SEEK_SET);
-		if (!special) oracle_loc[oracle_idx] = oracle_loc[--oracle_cnt];
+		if (!special)
+		    oracle_loc[oracle_idx] = oracle_loc[--oracle_cnt];
 
-		tmpwin = create_nhwindow(NHW_TEXT);
+		init_menulist(&menu);
 		if (delphi)
-		    putstr(tmpwin, 0, special ?
+		    add_menutext(&menu, special ?
 		          "The Oracle scornfully takes all your money and says:" :
 		          "The Oracle meditates for a moment and then intones:");
 		else
-		    putstr(tmpwin, 0, "The message reads:");
-		putstr(tmpwin, 0, "");
+		    add_menutext(&menu, "The message reads:");
+		add_menutext(&menu, "");
 
 		while(dlb_fgets(line, COLNO, oracles) && strcmp(line,"---\n")) {
 			if ((endp = index(line, '\n')) != 0) *endp = 0;
-			putstr(tmpwin, 0, xcrypt(line, xbuf));
+			add_menutext(&menu, xcrypt(line, xbuf));
 		}
-		display_nhwindow(tmpwin, TRUE);
-		destroy_nhwindow(tmpwin);
+		display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+		free(menu.items);
 		dlb_fclose(oracles);
 	} else {
 		pline("Can't open oracles file!");

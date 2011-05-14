@@ -117,7 +117,7 @@ extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int)
 extern EXPORT char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 
 /* rip.c */
-extern EXPORT void genl_outrip(winid,int);
+// extern EXPORT void genl_outrip(winid,int);
 
 /* topten.c */
 extern EXPORT void prscore(char*,int,char**);

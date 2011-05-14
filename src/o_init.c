@@ -158,7 +158,7 @@ void init_objects(void)
 		if(sum != 1000) {
 			char buf[BUFSZ];
 			sprintf(buf, "init-prob error for class %d (%d%%)", oclass, sum);
-			putstr(WIN_ERR, 0, buf);
+			raw_print(buf);
 		}
 		first = last;
 	}
@@ -347,25 +347,25 @@ int dodiscovered(void)
     int i, dis;
     int	ct = 0;
     char *s, oclass, prev_class, classes[MAXOCLASSES];
-    winid tmpwin;
-	char buf[BUFSZ];
+    struct menulist menu;
+    char buf[BUFSZ];
 
-    tmpwin = create_nhwindow(NHW_MENU);
-    putstr(tmpwin, 0, "Discoveries");
-    putstr(tmpwin, 0, "");
+    init_menulist(&menu);
+    add_menutext(&menu, "Discoveries");
+    add_menutext(&menu, "");
 
     /* gather "unique objects" into a pseudo-class; note that they'll
        also be displayed individually within their regular class */
     for (i = dis = 0; i < SIZE(uniq_objs); i++)
 	if (objects[uniq_objs[i]].oc_name_known) {
 	    if (!dis++)
-		putstr(tmpwin, iflags.menu_headings, "Unique Items");
-		sprintf(buf, "  %s", OBJ_NAME(objects[uniq_objs[i]]));
-	    putstr(tmpwin, 0, buf);
+		add_menuheading(&menu, "Unique Items");
+	    sprintf(buf, "  %s", OBJ_NAME(objects[uniq_objs[i]]));
+	    add_menutext(&menu, buf);
 	    ++ct;
 	}
     /* display any known artifacts as another pseudo-class */
-    ct += disp_artifact_discoveries(tmpwin);
+    ct += disp_artifact_discoveries(&menu);
 
     /* several classes are omitted from packorder; one is of interest here */
     strcpy(classes, flags.inv_order);
@@ -383,20 +383,20 @@ int dodiscovered(void)
 	    if ((dis = disco[i]) && interesting_to_discover(dis)) {
 		ct++;
 		if (oclass != prev_class) {
-		    putstr(tmpwin, iflags.menu_headings, let_to_name(oclass, FALSE));
+		    add_menuheading(&menu, let_to_name(oclass, FALSE));
 		    prev_class = oclass;
 		}
 		sprintf(buf, "%s %s",(objects[dis].oc_pre_discovered ? "*" : " "),
 				obj_typename(dis));
-		putstr(tmpwin, 0, buf);
+		add_menutext(&menu, buf);
 	    }
 	}
     }
     if (ct == 0) {
 	You("haven't discovered anything yet...");
     } else
-	display_nhwindow(tmpwin, TRUE);
-    destroy_nhwindow(tmpwin);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    free(menu.items);
 
     return 0;
 }

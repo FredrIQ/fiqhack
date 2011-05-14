@@ -23,8 +23,9 @@ extern void nh_delay_output(void);
 #define display_nhwindow (*windowprocs.win_display_nhwindow)
 #define destroy_nhwindow (*windowprocs.win_destroy_nhwindow)
 #define curs (*windowprocs.win_curs)
-#define putstr (*windowprocs.win_putstr)
 #define display_buffer (*windowprocs.win_display_buffer)
+#define update_status (*windowprocs.win_update_status)
+#define print_message (*windowprocs.win_print_message)
 
 #define display_menu (*windowprocs.win_display_menu)
 #define display_objects (*windowprocs.win_display_objects)

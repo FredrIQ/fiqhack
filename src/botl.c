@@ -14,23 +14,7 @@ const char * const enc_stat[] = {
 	"Overloaded"
 };
 
-static void bot1(void);
-static void bot2(void);
 
-
-/* MAXCO must hold longest uncompressed status line, and must be larger
- * than COLNO
- *
- * longest practical second status line at the moment is
- *	Astral Plane $:12345 HP:700(700) Pw:111(111) AC:-127 Xp:30/123456789
- *	T:123456 Satiated Conf FoodPois Ill Blind Stun Hallu Overloaded
- * -- or somewhat over 130 characters
- */
-#if COLNO <= 140
-#define MAXCO 160
-#else
-#define MAXCO (COLNO+20)
-#endif
 
 static int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
 static const char *rank(void);
@@ -111,7 +95,6 @@ void max_rank_sz(void)
 }
 
 
-#ifdef SCORE_ON_BOTL
 long botl_score(void)
 {
     int deepest = deepest_lev_reached(FALSE);
@@ -129,60 +112,7 @@ long botl_score(void)
 			  + (long)(deepest > 30 ? 10000 :
 				   deepest > 20 ? 1000*(deepest - 20) : 0);
 }
-#endif
 
-static void bot1(void)
-{
-	char newbot1[MAXCO];
-	char *nb;
-	int i,j;
-
-	strcpy(newbot1, plname);
-	if('a' <= newbot1[0] && newbot1[0] <= 'z') newbot1[0] += 'A'-'a';
-	newbot1[10] = 0;
-	sprintf(nb = eos(newbot1)," the ");
-
-	if (Upolyd) {
-		char mbot[BUFSZ];
-		int k = 0;
-
-		strcpy(mbot, mons[u.umonnum].mname);
-		while(mbot[k] != 0) {
-		    if ((k == 0 || (k > 0 && mbot[k-1] == ' ')) &&
-					'a' <= mbot[k] && mbot[k] <= 'z')
-			mbot[k] += 'A' - 'a';
-		    k++;
-		}
-		sprintf(nb = eos(nb), "%s", mbot);
-	} else
-		sprintf(nb = eos(nb), "%s", rank());
-
-	sprintf(nb = eos(nb),"  ");
-	i = mrank_sz + 15;
-	j = (nb + 2) - newbot1; /* aka strlen(newbot1) but less computation */
-	if((i - j) > 0)
-		sprintf(nb = eos(nb),"%*s", i-j, " ");	/* pad with spaces */
-	if (ACURR(A_STR) > 18) {
-		if (ACURR(A_STR) > STR18(100))
-		    sprintf(nb = eos(nb),"St:%2d ",ACURR(A_STR)-100);
-		else if (ACURR(A_STR) < STR18(100))
-		    sprintf(nb = eos(nb), "St:18/%02d ",ACURR(A_STR)-18);
-		else
-		    sprintf(nb = eos(nb),"St:18/** ");
-	} else
-		sprintf(nb = eos(nb), "St:%-1d ",ACURR(A_STR));
-	sprintf(nb = eos(nb),
-		"Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
-		ACURR(A_DEX), ACURR(A_CON), ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
-	sprintf(nb = eos(nb), (u.ualign.type == A_CHAOTIC) ? "  Chaotic" :
-			(u.ualign.type == A_NEUTRAL) ? "  Neutral" : "  Lawful");
-#ifdef SCORE_ON_BOTL
-	if (flags.showscore)
-	    sprintf(nb = eos(nb), " S:%ld", botl_score());
-#endif
-	curs(WIN_STATUS, 1, 0);
-	putstr(WIN_STATUS, 0, newbot1);
-}
 
 /* provide the name of the current level for display by various ports */
 int describe_level(char *buf)
@@ -205,61 +135,97 @@ int describe_level(char *buf)
 	return ret;
 }
 
-static void bot2(void)
-{
-	char  newbot2[MAXCO];
-	char *nb;
-	int hp, hpmax;
-	int cap = near_capacity();
-
-	hp = Upolyd ? u.mh : u.uhp;
-	hpmax = Upolyd ? u.mhmax : u.uhpmax;
-
-	if(hp < 0) hp = 0;
-	describe_level(newbot2);
-	sprintf(nb = eos(newbot2),
-		"%c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", oc_syms[COIN_CLASS],
-#ifndef GOLDOBJ
-		u.ugold,
-#else
-		money_cnt(invent),
-#endif
-		hp, hpmax, u.uen, u.uenmax, u.uac);
-
-	if (Upolyd)
-		sprintf(nb = eos(nb), " HD:%d", mons[u.umonnum].mlevel);
-	else if(flags.showexp)
-		sprintf(nb = eos(nb), " Xp:%u/%-1ld", u.ulevel,u.uexp);
-	else
-		sprintf(nb = eos(nb), " Exp:%u", u.ulevel);
-
-	if(flags.time)
-	    sprintf(nb = eos(nb), " T:%ld", moves);
-	if(strcmp(hu_stat[u.uhs], "        ")) {
-		sprintf(nb = eos(nb), " ");
-		strcat(newbot2, hu_stat[u.uhs]);
-	}
-	if(Confusion)	   sprintf(nb = eos(nb), " Conf");
-	if(Sick) {
-		if (u.usick_type & SICK_VOMITABLE)
-			   sprintf(nb = eos(nb), " FoodPois");
-		if (u.usick_type & SICK_NONVOMITABLE)
-			   sprintf(nb = eos(nb), " Ill");
-	}
-	if(Blind)	   sprintf(nb = eos(nb), " Blind");
-	if(Stunned)	   sprintf(nb = eos(nb), " Stun");
-	if(Hallucination)  sprintf(nb = eos(nb), " Hallu");
-	if(Slimed)         sprintf(nb = eos(nb), " Slime");
-	if(cap > UNENCUMBERED)
-		sprintf(nb = eos(nb), " %s", enc_stat[cap]);
-	curs(WIN_STATUS, 1, 1);
-	putstr(WIN_STATUS, 0, newbot2);
-}
 
 void bot(void)
 {
-	bot1();
-	bot2();
+	struct nh_status_info status;
+	int cap = near_capacity();
+
+	memset(&status, 0, sizeof(status));
+	
+	strncpy(status.plname, plname, sizeof(status.plname));
+	
+	if (Upolyd) {
+		char mbot[BUFSZ];
+		int k = 0;
+
+		strcpy(mbot, mons[u.umonnum].mname);
+		while(mbot[k] != 0) {
+		    if ((k == 0 || (k > 0 && mbot[k-1] == ' ')) &&
+					'a' <= mbot[k] && mbot[k] <= 'z')
+			mbot[k] += 'A' - 'a';
+		    k++;
+		}
+		strncpy(status.rank, mbot, sizeof(status.rank));
+	} else
+		strncpy(status.rank, rank(), sizeof(status.rank));
+	
+	status.mrank_sz = mrank_sz;
+	
+	status.st = ACURR(A_STR);
+	status.st_extra = 0;
+	if (ACURR(A_STR) > 18) {
+		status.st = ACURR(A_STR) - 100;
+		status.st_extra = ACURR(A_STR) - 18;
+	}
+	
+	status.dx = ACURR(A_DEX);
+	status.co = ACURR(A_CON);
+	status.in = ACURR(A_INT);
+	status.wi = ACURR(A_WIS);
+	status.ch = ACURR(A_CHA);
+	
+	status.score = botl_score();
+	
+	status.hp = Upolyd ? u.mh : u.uhp;
+	status.hpmax = Upolyd ? u.mhmax : u.uhpmax;
+	if (status.hp < 0)
+	    status.hp = 0;
+	
+	status.en = u.uen;
+	status.enmax = u.uenmax;
+	status.ac = u.uac;
+	
+#ifndef GOLDOBJ
+	status.gold = u.ugold;
+#else
+	status.gold = money_cnt(invent);
+#endif
+	status.coinsym = oc_syms[COIN_CLASS];
+	describe_level(status.level_desc);
+	
+	status.polyd = Upolyd;
+	if (Upolyd)
+	    status.level = mons[u.umonnum].mlevel;
+	else
+	    status.level = u.ulevel;
+	status.xp = u.uexp;
+
+	
+	if(strcmp(hu_stat[u.uhs], "        "))
+	    strncpy(status.items[status.nr_items++], hu_stat[u.uhs], ITEMLEN);
+	
+	if(Confusion)
+	    strncpy(status.items[status.nr_items++], "Conf", ITEMLEN);
+	
+	if(Sick) {
+	    if (u.usick_type & SICK_VOMITABLE)
+		strncpy(status.items[status.nr_items++], "FoodPois", ITEMLEN);
+	    if (u.usick_type & SICK_NONVOMITABLE)
+		strncpy(status.items[status.nr_items++], "Ill", ITEMLEN);
+	}
+	if(Blind)
+	    strncpy(status.items[status.nr_items++], "Blind", ITEMLEN);
+	if(Stunned)
+	    strncpy(status.items[status.nr_items++], "Stun", ITEMLEN);
+	if(Hallucination)
+	    strncpy(status.items[status.nr_items++], "Hallu", ITEMLEN);
+	if(Slimed)
+	    strncpy(status.items[status.nr_items++], "Slime", ITEMLEN);
+	if(cap > UNENCUMBERED)
+	    strncpy(status.items[status.nr_items++], enc_stat[cap], ITEMLEN);
+	
+	update_status(&status);
 	botl = botlx = 0;
 }
 

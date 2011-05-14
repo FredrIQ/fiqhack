@@ -798,15 +798,15 @@ int enhance_weapon_skill(void)
 	to_advance, eventually_advance, maxxed_cnt;
     char buf[BUFSZ], sklnambuf[BUFSZ];
     const char *prefix;
-    int nr_items = 10, cur_item;
-    struct nh_menuitem *items = malloc(nr_items * sizeof(struct nh_menuitem));
+    struct menulist menu;
     boolean speedy = FALSE;
 
     if (wizard && yn("Advance skills without practice?") == 'y')
 	speedy = TRUE;
 
+    init_menulist(&menu);
     do {
-	cur_item = 0;
+	menu.icount = 0;
 	/* find longest available skill name, count those that can advance */
 	to_advance = eventually_advance = maxxed_cnt = 0;
 	for (longest = 0, i = 0; i < P_NUM_SKILLS; i++) {
@@ -829,18 +829,15 @@ int enhance_weapon_skill(void)
 			(u.ulevel < MAXULEV) ?
 			    "when you're more experienced" :
 			    "if skill slots become available");
-		add_menuitem(&items, &nr_items, cur_item++, 0, MI_NORMAL, buf,
-				0, FALSE);
+		add_menutext(&menu, buf);
 	    }
 	    if (maxxed_cnt > 0) {
 		sprintf(buf,
 		"(Skill%s flagged by \"#\" cannot be enhanced any further.)",
 			plur(maxxed_cnt));
-		add_menuitem(&items, &nr_items, cur_item++, 0, MI_NORMAL, buf,
-				0, FALSE);
+		add_menutext(&menu, buf);
 	    }
-	    add_menuitem(&items, &nr_items, cur_item++, 0, MI_NORMAL, "",
-			    0, FALSE);
+	    add_menutext(&menu, "");
 	}
 
 	/* List the skills, making ones that could be advanced
@@ -852,8 +849,7 @@ int enhance_weapon_skill(void)
 		i <= skill_ranges[pass].last; i++) {
 	    /* Print headings for skill types */
 	    if (i == skill_ranges[pass].first)
-		add_menuitem(&items, &nr_items, cur_item++, 0, MI_HEADING,
-				skill_ranges[pass].name, 0, FALSE);
+		add_menuheading(&menu, skill_ranges[pass].name);
 
 	    if (P_RESTRICTED(i))
 		continue;
@@ -895,8 +891,7 @@ int enhance_weapon_skill(void)
 			prefix, P_NAME(i), sklnambuf);
 	    }
 	    id = can_advance(i, speedy) ? i+1 : 0;
-	    add_menuitem(&items, &nr_items, cur_item++, id, MI_NORMAL, buf,
-			    0, FALSE);
+	    add_menuitem(&menu, id, buf, 0, FALSE);
 	}
 
 	strcpy(buf, (to_advance > 0) ? "Pick a skill to advance:" :
@@ -905,7 +900,7 @@ int enhance_weapon_skill(void)
 	    sprintf(eos(buf), "  (%d slot%s available)",
 		    u.weapon_slots, plur(u.weapon_slots));
 	int selected[1];
-	n = display_menu(items, cur_item, buf,
+	n = display_menu(menu.items, menu.icount, buf,
 			    to_advance ? PICK_ONE : PICK_NONE, selected);
 	if (n == 1) {
 	    n = selected[0] - 1;	/* get item selected */
@@ -921,7 +916,7 @@ int enhance_weapon_skill(void)
 	}
     } while (speedy && n > 0);
     
-    free(items);
+    free(menu.items);
     return 0;
 }
 

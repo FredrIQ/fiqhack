@@ -87,6 +87,10 @@ struct DisplayDesc {
 
 struct interface_flags {
 	boolean  cbreak;	/* in cbreak mode, rogue format */    
+	boolean  showexp;	/* show experience points */
+	boolean  showscore;	/* show score */
+    	boolean  standout;	/* use standout for --More-- */
+	boolean  time;		/* display elapsed 'time' */
 };
 
 extern struct interface_flags ui_flags;
@@ -135,13 +139,7 @@ extern void clear_screen(void);
 extern void home(void);
 extern void standoutbeg(void);
 extern void standoutend(void);
-# if 0
-extern void revbeg(void);
-extern void boldbeg(void);
-extern void blinkbeg(void);
-extern void dimbeg(void);
-extern void m_end(void);
-# endif
+
 extern void backsp(void);
 extern void graph_on(void);
 extern void graph_off(void);
@@ -192,6 +190,8 @@ extern void tty_destroy_nhwindow(winid);
 extern void tty_curs(winid,int,int);
 extern void tty_putstr(winid, int, const char *);
 extern void tty_display_buffer(char *,boolean);
+extern void tty_update_status(struct nh_status_info *status);
+extern void tty_print_message(const char *);
 extern void tty_start_menu(winid);
 extern void tty_add_menu(winid,int,const ANY_P *,
 		char,char,int,const char *, boolean);
@@ -215,6 +215,8 @@ extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen);
 extern void tty_number_pad(int);
 extern void tty_delay_output(void);
+extern void tty_outrip(struct nh_menuitem *items,int icount, int how,
+		       char *plname, long gold, char *killbuf, int year);
 
 extern void gettty(void);
 extern void settty(const char *);
@@ -263,12 +265,6 @@ extern void setioctls(void);
 #   define puts(x) xputs(x)
 # endif
 #endif/*NO_TERMS*/
-
-struct tty_flag {
-    	boolean  standout;	/* use standout for --More-- */
-};
-
-extern struct tty_flag tty_flags;
 
 /* menu window keyboard commands (may be mapped) */
 #define MENU_FIRST_PAGE		'^'

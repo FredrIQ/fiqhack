@@ -232,15 +232,10 @@ static struct nh_boolopt_map boolopt_map[] = {
 	{"rest_on_space", &flags.rest_on_space},
 	{"safe_pet", &flags.safe_dog},
 	{"sanity_check", &iflags.sanity_check},
-	{"showexp", &flags.showexp},
 	{"showrace", &iflags.showrace},
-#ifdef SCORE_ON_BOTL
-	{"showscore", &flags.showscore},
-#endif
 	{"sortpack", &flags.sortpack},
 	{"sound", &flags.soundok},
 	{"sparkle", &flags.sparkle},
-	{"time", &flags.time},
 	{"timed_delay", &flags.nap},
 	{"tombstone",&flags.tombstone},
 	{"toptenwin",&flags.toptenwin},

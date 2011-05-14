@@ -47,17 +47,18 @@ static int wiz_show_wmodes(void);
 static int wiz_migrate_mons(void);
 #endif
 static void count_obj(struct obj *, long *, long *, boolean, boolean);
-static void obj_chain(winid, const char *, struct obj *, long *, long *);
-static void mon_invent_chain(winid, const char *, struct monst *, long *, long *);
-static void mon_chain(winid, const char *, struct monst *, long *, long *);
-static void contained(winid, const char *, long *, long *);
+static void obj_chain(struct menulist *, const char *, struct obj *, long *, long *);
+static void mon_invent_chain(struct menulist *, const char *, struct monst *,
+			     long *, long *);
+static void mon_chain(struct menulist *, const char *, struct monst *, long *, long *);
+static void contained(struct menulist *, const char *, long *, long *);
 static int wiz_show_stats(void);
 static int enter_explore_mode(void);
 static int doattributes(void);
 static int doconduct(void); /**/
 static boolean minimal_enlightenment(void);
 
-static void enlght_line(const char *,const char *,const char *);
+static void enlght_line(struct menulist *,const char *,const char *,const char *);
 static char *enlght_combatinc(const char *,int,int,char *);
 #ifdef UNIX
 static void end_of_input(void);
@@ -155,21 +156,21 @@ int doextlist(void)	/* here after #? - now list all full-word commands */
 {
 	const struct ext_func_tab *efp;
 	char	 buf[BUFSZ];
-	winid datawin;
-
-	datawin = create_nhwindow(NHW_TEXT);
-	putstr(datawin, 0, "");
-	putstr(datawin, 0, "            Extended Commands List");
-	putstr(datawin, 0, "");
-	putstr(datawin, 0, "    Press '#', then type:");
-	putstr(datawin, 0, "");
+	struct menulist menu;
+	init_menulist(&menu);
+	
+	add_menutext(&menu, "");
+	add_menutext(&menu, "            Extended Commands List");
+	add_menutext(&menu, "");
+	add_menutext(&menu, "    Press '#', then type:");
+	add_menutext(&menu, "");
 
 	for(efp = extcmdlist; efp->ef_txt; efp++) {
 		sprintf(buf, "    %-15s - %s.", efp->ef_txt, efp->ef_desc);
-		putstr(datawin, 0, buf);
+		add_menutext(&menu, buf);
 	}
-	display_nhwindow(datawin, FALSE);
-	destroy_nhwindow(datawin);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return 0;
 }
 
@@ -364,11 +365,11 @@ static int wiz_polyself(void)
 /* #seenv command */
 static int wiz_show_seenv(void)
 {
-	winid win;
+	struct menulist menu;
 	int x, y, v, startx, stopx, curx;
 	char row[COLNO+1];
 
-	win = create_nhwindow(NHW_TEXT);
+	init_menulist(&menu);
 	/*
 	 * Each seenv description takes up 2 characters, so center
 	 * the seenv display around the hero.
@@ -395,25 +396,25 @@ static int wiz_show_seenv(void)
 		if (row[x] != ' ') break;
 	    row[x+1] = '\0';
 
-	    putstr(win, 0, row);
+	    add_menutext(&menu, row);
 	}
-	display_nhwindow(win, TRUE);
-	destroy_nhwindow(win);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return 0;
 }
 
 /* #vision command */
 static int wiz_show_vision(void)
 {
-	winid win;
+	struct menulist menu;
 	int x, y, v;
 	char row[COLNO+1];
 
-	win = create_nhwindow(NHW_TEXT);
+	init_menulist(&menu);
 	sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit",
 		COULD_SEE, IN_SIGHT, TEMP_LIT);
-	putstr(win, 0, row);
-	putstr(win, 0, "");
+	add_menutext(&menu, row);
+	add_menutext(&menu, "");
 	for (y = 0; y < ROWNO; y++) {
 	    for (x = 1; x < COLNO; x++) {
 		if (x == u.ux && y == u.uy)
@@ -431,22 +432,22 @@ static int wiz_show_vision(void)
 		if (row[x] != ' ') break;
 	    row[x+1] = '\0';
 
-	    putstr(win, 0, &row[1]);
+	    add_menutext(&menu, &row[1]);
 	}
-	display_nhwindow(win, TRUE);
-	destroy_nhwindow(win);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return 0;
 }
 
 /* #wmode command */
 static int wiz_show_wmodes(void)
 {
-	winid win;
+	struct menulist menu;
 	int x,y;
 	char row[COLNO+1];
 	struct rm *lev;
 
-	win = create_nhwindow(NHW_TEXT);
+	init_menulist(&menu);
 	for (y = 0; y < ROWNO; y++) {
 	    for (x = 0; x < COLNO; x++) {
 		lev = &levl[x][y];
@@ -462,16 +463,15 @@ static int wiz_show_wmodes(void)
 		    row[x] = 'x';
 	    }
 	    row[COLNO] = '\0';
-	    putstr(win, 0, row);
+	    add_menutext(&menu, row);
 	}
-	display_nhwindow(win, TRUE);
-	destroy_nhwindow(win);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return 0;
 }
 
 
 /* -enlightenment and conduct- */
-static winid en_win;
 static const char
 	You_[] = "You ",
 	are[]  = "are ",  were[]  = "were ",
@@ -481,21 +481,22 @@ static const char
 	have_been[]  = "have been ",
 	have_never[] = "have never ", never[] = "never ";
 
-#define enl_msg(prefix,present,past,suffix) \
-			enlght_line(prefix, final ? past : present, suffix)
-#define you_are(attr)	enl_msg(You_,are,were,attr)
-#define you_have(attr)	enl_msg(You_,have,had,attr)
-#define you_can(attr)	enl_msg(You_,can,could,attr)
-#define you_have_been(goodthing) enl_msg(You_,have_been,were,goodthing)
-#define you_have_never(badthing) enl_msg(You_,have_never,never,badthing)
-#define you_have_X(something)	enl_msg(You_,have,(const char *)"",something)
+#define enl_msg(menu,prefix,present,past,suffix) \
+			enlght_line(menu,prefix, final ? past : present, suffix)
+#define you_are(menu,attr)	enl_msg(menu,You_,are,were,attr)
+#define you_have(menu,attr)	enl_msg(menu,You_,have,had,attr)
+#define you_can(menu,attr)	enl_msg(menu,You_,can,could,attr)
+#define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were,goodthing)
+#define you_have_never(menu,badthing) enl_msg(menu,You_,have_never,never,badthing)
+#define you_have_X(menu,something)	enl_msg(menu,You_,have,(const char *)"",something)
 
-static void enlght_line(const char *start, const char *middle, const char *end)
+static void enlght_line(struct menulist *menu,
+			const char *start, const char *middle, const char *end)
 {
 	char buf[BUFSZ];
 
 	sprintf(buf, "%s%s%s.", start, middle, end);
-	putstr(en_win, 0, buf);
+	add_menutext(menu, buf);
 }
 
 /* format increased damage or chance to hit */
@@ -533,10 +534,11 @@ void enlightenment(int final)
 {
 	int ltmp;
 	char buf[BUFSZ];
+	struct menulist menu;
 
-	en_win = create_nhwindow(NHW_MENU);
-	putstr(en_win, 0, final ? "Final Attributes:" : "Current Attributes:");
-	putstr(en_win, 0, "");
+	init_menulist(&menu);
+	add_menutext(&menu, final ? "Final Attributes:" : "Current Attributes:");
+	add_menutext(&menu, "");
 
 #ifdef ELBERETH
 	if (u.uevent.uhand_of_elbereth) {
@@ -545,96 +547,96 @@ void enlightenment(int final)
 				"the Envoy of Balance",
 				"the Glory of Arioch"
 	    };
-	    you_are(hofe_titles[u.uevent.uhand_of_elbereth - 1]);
+	    you_are(&menu, hofe_titles[u.uevent.uhand_of_elbereth - 1]);
 	}
 #endif
 
 	/* note: piousness 20 matches MIN_QUEST_ALIGN (quest.h) */
-	if (u.ualign.record >= 20)	you_are("piously aligned");
-	else if (u.ualign.record > 13)	you_are("devoutly aligned");
-	else if (u.ualign.record > 8)	you_are("fervently aligned");
-	else if (u.ualign.record > 3)	you_are("stridently aligned");
-	else if (u.ualign.record == 3)	you_are("aligned");
-	else if (u.ualign.record > 0)	you_are("haltingly aligned");
-	else if (u.ualign.record == 0)	you_are("nominally aligned");
-	else if (u.ualign.record >= -3)	you_have("strayed");
-	else if (u.ualign.record >= -8)	you_have("sinned");
-	else you_have("transgressed");
+	if (u.ualign.record >= 20)	you_are(&menu, "piously aligned");
+	else if (u.ualign.record > 13)	you_are(&menu, "devoutly aligned");
+	else if (u.ualign.record > 8)	you_are(&menu, "fervently aligned");
+	else if (u.ualign.record > 3)	you_are(&menu, "stridently aligned");
+	else if (u.ualign.record == 3)	you_are(&menu, "aligned");
+	else if (u.ualign.record > 0)	you_are(&menu, "haltingly aligned");
+	else if (u.ualign.record == 0)	you_are(&menu, "nominally aligned");
+	else if (u.ualign.record >= -3)	you_have(&menu, "strayed");
+	else if (u.ualign.record >= -8)	you_have(&menu, "sinned");
+	else you_have(&menu, "transgressed");
 	if (wizard) {
 		sprintf(buf, " %d", u.ualign.record);
-		enl_msg("Your alignment ", "is", "was", buf);
+		enl_msg(&menu, "Your alignment ", "is", "was", buf);
 	}
 
 	/*** Resistances to troubles ***/
-	if (Fire_resistance) you_are("fire resistant");
-	if (Cold_resistance) you_are("cold resistant");
-	if (Sleep_resistance) you_are("sleep resistant");
-	if (Disint_resistance) you_are("disintegration-resistant");
-	if (Shock_resistance) you_are("shock resistant");
-	if (Poison_resistance) you_are("poison resistant");
-	if (Drain_resistance) you_are("level-drain resistant");
-	if (Sick_resistance) you_are("immune to sickness");
-	if (Antimagic) you_are("magic-protected");
-	if (Acid_resistance) you_are("acid resistant");
+	if (Fire_resistance) you_are(&menu, "fire resistant");
+	if (Cold_resistance) you_are(&menu, "cold resistant");
+	if (Sleep_resistance) you_are(&menu, "sleep resistant");
+	if (Disint_resistance) you_are(&menu, "disintegration-resistant");
+	if (Shock_resistance) you_are(&menu, "shock resistant");
+	if (Poison_resistance) you_are(&menu, "poison resistant");
+	if (Drain_resistance) you_are(&menu, "level-drain resistant");
+	if (Sick_resistance) you_are(&menu, "immune to sickness");
+	if (Antimagic) you_are(&menu, "magic-protected");
+	if (Acid_resistance) you_are(&menu, "acid resistant");
 	if (Stone_resistance)
-		you_are("petrification resistant");
-	if (Invulnerable) you_are("invulnerable");
-	if (u.uedibility) you_can("recognize detrimental food");
+		you_are(&menu, "petrification resistant");
+	if (Invulnerable) you_are(&menu, "invulnerable");
+	if (u.uedibility) you_can(&menu, "recognize detrimental food");
 
 	/*** Troubles ***/
 	if (Halluc_resistance)
-		enl_msg("You resist", "", "ed", " hallucinations");
+		enl_msg(&menu, "You resist", "", "ed", " hallucinations");
 	if (final) {
-		if (Hallucination) you_are("hallucinating");
-		if (Stunned) you_are("stunned");
-		if (Confusion) you_are("confused");
-		if (Blinded) you_are("blinded");
+		if (Hallucination) you_are(&menu, "hallucinating");
+		if (Stunned) you_are(&menu, "stunned");
+		if (Confusion) you_are(&menu, "confused");
+		if (Blinded) you_are(&menu, "blinded");
 		if (Sick) {
 			if (u.usick_type & SICK_VOMITABLE)
-				you_are("sick from food poisoning");
+				you_are(&menu, "sick from food poisoning");
 			if (u.usick_type & SICK_NONVOMITABLE)
-				you_are("sick from illness");
+				you_are(&menu, "sick from illness");
 		}
 	}
-	if (Stoned) you_are("turning to stone");
-	if (Slimed) you_are("turning into slime");
-	if (Strangled) you_are((u.uburied) ? "buried" : "being strangled");
+	if (Stoned) you_are(&menu, "turning to stone");
+	if (Slimed) you_are(&menu, "turning into slime");
+	if (Strangled) you_are(&menu, (u.uburied) ? "buried" : "being strangled");
 	if (Glib) {
 		sprintf(buf, "slippery %s", makeplural(body_part(FINGER)));
-		you_have(buf);
+		you_have(&menu, buf);
 	}
-	if (Fumbling) enl_msg("You fumble", "", "d", "");
+	if (Fumbling) enl_msg(&menu, "You fumble", "", "d", "");
 	if (Wounded_legs && !u.usteed) {
 		sprintf(buf, "wounded %s", makeplural(body_part(LEG)));
-		you_have(buf);
+		you_have(&menu, buf);
 	}
 	if (Wounded_legs && u.usteed && wizard) {
 	    strcpy(buf, x_monnam(u.usteed, ARTICLE_YOUR, NULL, 
 		    SUPPRESS_SADDLE | SUPPRESS_HALLUCINATION, FALSE));
 	    *buf = highc(*buf);
-	    enl_msg(buf, " has", " had", " wounded legs");
+	    enl_msg(&menu, buf, " has", " had", " wounded legs");
 	}
 	
-	if (Sleeping) enl_msg("You ", "fall", "fell", " asleep");
-	if (Hunger) enl_msg("You hunger", "", "ed", " rapidly");
+	if (Sleeping) enl_msg(&menu, "You ", "fall", "fell", " asleep");
+	if (Hunger) enl_msg(&menu, "You hunger", "", "ed", " rapidly");
 
 	/*** Vision and senses ***/
-	if (See_invisible) enl_msg(You_, "see", "saw", " invisible");
-	if (Blind_telepat) you_are("telepathic");
-	if (Warning) you_are("warned");
+	if (See_invisible) enl_msg(&menu, You_, "see", "saw", " invisible");
+	if (Blind_telepat) you_are(&menu, "telepathic");
+	if (Warning) you_are(&menu, "warned");
 	if (Warn_of_mon && flags.warntype) {
 		sprintf(buf, "aware of the presence of %s",
 			(flags.warntype & M2_ORC) ? "orcs" :
 			(flags.warntype & M2_DEMON) ? "demons" :
 			something); 
-		you_are(buf);
+		you_are(&menu, buf);
 	}
-	if (Undead_warning) you_are("warned of undead");
-	if (Searching) you_have("automatic searching");
-	if (Clairvoyant) you_are("clairvoyant");
-	if (Infravision) you_have("infravision");
-	if (Detect_monsters) you_are("sensing the presence of monsters");
-	if (u.umconf) you_are("going to confuse monsters");
+	if (Undead_warning) you_are(&menu, "warned of undead");
+	if (Searching) you_have(&menu, "automatic searching");
+	if (Clairvoyant) you_are(&menu, "clairvoyant");
+	if (Infravision) you_have(&menu, "infravision");
+	if (Detect_monsters) you_are(&menu, "sensing the presence of monsters");
+	if (u.umconf) you_are(&menu, "going to confuse monsters");
 
 	/*** Appearance and behavior ***/
 	if (Adornment) {
@@ -643,59 +645,59 @@ void enlightenment(int final)
 	    if(uleft && uleft->otyp == RIN_ADORNMENT) adorn += uleft->spe;
 	    if(uright && uright->otyp == RIN_ADORNMENT) adorn += uright->spe;
 	    if (adorn < 0)
-		you_are("poorly adorned");
+		you_are(&menu, "poorly adorned");
 	    else
-		you_are("adorned");
+		you_are(&menu, "adorned");
 	}
-	if (Invisible) you_are("invisible");
-	else if (Invis) you_are("invisible to others");
+	if (Invisible) you_are(&menu, "invisible");
+	else if (Invis) you_are(&menu, "invisible to others");
 	/* ordinarily "visible" is redundant; this is a special case for
 	   the situation when invisibility would be an expected attribute */
 	else if ((HInvis || EInvis || pm_invisible(youmonst.data)) && BInvis)
-	    you_are("visible");
-	if (Displaced) you_are("displaced");
-	if (Stealth) you_are("stealthy");
-	if (Aggravate_monster) enl_msg("You aggravate", "", "d", " monsters");
-	if (Conflict) enl_msg("You cause", "", "d", " conflict");
+	    you_are(&menu, "visible");
+	if (Displaced) you_are(&menu, "displaced");
+	if (Stealth) you_are(&menu, "stealthy");
+	if (Aggravate_monster) enl_msg(&menu, "You aggravate", "", "d", " monsters");
+	if (Conflict) enl_msg(&menu, "You cause", "", "d", " conflict");
 
 	/*** Transportation ***/
-	if (Jumping) you_can("jump");
-	if (Teleportation) you_can("teleport");
-	if (Teleport_control) you_have("teleport control");
-	if (Lev_at_will) you_are("levitating, at will");
-	else if (Levitation) you_are("levitating");	/* without control */
-	else if (Flying) you_can("fly");
-	if (Wwalking) you_can("walk on water");
-	if (Swimming) you_can("swim");        
-	if (Breathless) you_can("survive without air");
-	else if (Amphibious) you_can("breathe water");
-	if (Passes_walls) you_can("walk through walls");
+	if (Jumping) you_can(&menu, "jump");
+	if (Teleportation) you_can(&menu, "teleport");
+	if (Teleport_control) you_have(&menu, "teleport control");
+	if (Lev_at_will) you_are(&menu, "levitating, at will");
+	else if (Levitation) you_are(&menu, "levitating");	/* without control */
+	else if (Flying) you_can(&menu, "fly");
+	if (Wwalking) you_can(&menu, "walk on water");
+	if (Swimming) you_can(&menu, "swim");        
+	if (Breathless) you_can(&menu, "survive without air");
+	else if (Amphibious) you_can(&menu, "breathe water");
+	if (Passes_walls) you_can(&menu, "walk through walls");
 	
 	/* If you die while dismounting, u.usteed is still set.  Since several
 	 * places in the done() sequence depend on u.usteed, just detect this
 	 * special case. */
 	if (u.usteed && (final < 2 || strcmp(killer, "riding accident"))) {
 	    sprintf(buf, "riding %s", y_monnam(u.usteed));
-	    you_are(buf);
+	    you_are(&menu, buf);
 	}
 	if (u.uswallow) {
 	    sprintf(buf, "swallowed by %s", a_monnam(u.ustuck));
 	    if (wizard) sprintf(eos(buf), " (%u)", u.uswldtim);
-	    you_are(buf);
+	    you_are(&menu, buf);
 	} else if (u.ustuck) {
 	    sprintf(buf, "%s %s",
 		    (Upolyd && sticks(youmonst.data)) ? "holding" : "held by",
 		    a_monnam(u.ustuck));
-	    you_are(buf);
+	    you_are(&menu, buf);
 	}
 
 	/*** Physical attributes ***/
 	if (u.uhitinc)
-	    you_have(enlght_combatinc("to hit", u.uhitinc, final, buf));
+	    you_have(&menu, enlght_combatinc("to hit", u.uhitinc, final, buf));
 	if (u.udaminc)
-	    you_have(enlght_combatinc("damage", u.udaminc, final, buf));
-	if (Slow_digestion) you_have("slower digestion");
-	if (Regeneration) enl_msg("You regenerate", "", "d", "");
+	    you_have(&menu, enlght_combatinc("damage", u.udaminc, final, buf));
+	if (Slow_digestion) you_have(&menu, "slower digestion");
+	if (Regeneration) enl_msg(&menu, "You regenerate", "", "d", "");
 	if (u.uspellprot || Protection) {
 	    int prot = 0;
 
@@ -705,32 +707,32 @@ void enlightenment(int final)
 	    prot += u.uspellprot;
 
 	    if (prot < 0)
-		you_are("ineffectively protected");
+		you_are(&menu, "ineffectively protected");
 	    else
-		you_are("protected");
+		you_are(&menu, "protected");
 	}
 	if (Protection_from_shape_changers)
-		you_are("protected from shape changers");
-	if (Polymorph) you_are("polymorphing");
-	if (Polymorph_control) you_have("polymorph control");
+		you_are(&menu, "protected from shape changers");
+	if (Polymorph) you_are(&menu, "polymorphing");
+	if (Polymorph_control) you_have(&menu, "polymorph control");
 	if (u.ulycn >= LOW_PM) {
 		strcpy(buf, an(mons[u.ulycn].mname));
-		you_are(buf);
+		you_are(&menu, buf);
 	}
 	if (Upolyd) {
 	    if (u.umonnum == u.ulycn) strcpy(buf, "in beast form");
 	    else sprintf(buf, "polymorphed into %s", an(youmonst.data->mname));
 	    if (wizard) sprintf(eos(buf), " (%d)", u.mtimedone);
-	    you_are(buf);
+	    you_are(&menu, buf);
 	}
-	if (Unchanging) you_can("not change from your current form");
-	if (Fast) you_are(Very_fast ? "very fast" : "fast");
-	if (Reflecting) you_have("reflection");
-	if (Free_action) you_have("free action");
-	if (Fixed_abil) you_have("fixed abilities");
+	if (Unchanging) you_can(&menu, "not change from your current form");
+	if (Fast) you_are(&menu, Very_fast ? "very fast" : "fast");
+	if (Reflecting) you_have(&menu, "reflection");
+	if (Free_action) you_have(&menu, "free action");
+	if (Fixed_abil) you_have(&menu, "fixed abilities");
 	if (Lifesaved)
-		enl_msg("Your life ", "will be", "would have been", " saved");
-	if (u.twoweap) you_are("wielding two weapons at once");
+		enl_msg(&menu, "Your life ", "will be", "would have been", " saved");
+	if (u.twoweap) you_are(&menu, "wielding two weapons at once");
 
 	/*** Miscellany ***/
 	if (Luck) {
@@ -739,24 +741,24 @@ void enlightenment(int final)
 		    ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
 		    Luck < 0 ? "un" : "");
 	    if (wizard) sprintf(eos(buf), " (%d)", Luck);
-	    you_are(buf);
+	    you_are(&menu, buf);
 	}
-	 else if (wizard) enl_msg("Your luck ", "is", "was", " zero");
-	if (u.moreluck > 0) you_have("extra luck");
-	else if (u.moreluck < 0) you_have("reduced luck");
+	 else if (wizard) enl_msg(&menu, "Your luck ", "is", "was", " zero");
+	if (u.moreluck > 0) you_have(&menu, "extra luck");
+	else if (u.moreluck < 0) you_have(&menu, "reduced luck");
 	if (carrying(LUCKSTONE) || stone_luck(TRUE)) {
 	    ltmp = stone_luck(FALSE);
 	    if (ltmp <= 0)
-		enl_msg("Bad luck ", "does", "did", " not time out for you");
+		enl_msg(&menu, "Bad luck ", "does", "did", " not time out for you");
 	    if (ltmp >= 0)
-		enl_msg("Good luck ", "does", "did", " not time out for you");
+		enl_msg(&menu, "Good luck ", "does", "did", " not time out for you");
 	}
 
 	if (u.ugangr) {
 	    sprintf(buf, " %sangry with you",
 		    u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
 	    if (wizard) sprintf(eos(buf), " (%d)", u.ugangr);
-	    enl_msg(u_gname(), " is", " was", buf);
+	    enl_msg(&menu, u_gname(), " is", " was", buf);
 	} else
 	    /*
 	     * We need to suppress this when the game is over, because death
@@ -766,7 +768,7 @@ void enlightenment(int final)
 	  if (!final) {
 	    sprintf(buf, "%ssafely pray", can_pray(FALSE) ? "" : "not ");
 	    if (wizard) sprintf(eos(buf), " (%d)", u.ublesscnt);
-	    you_can(buf);
+	    you_can(&menu, buf);
 	}
 
     {
@@ -793,11 +795,11 @@ void enlightenment(int final)
 		     break;
 	    }
 	}
-	if (p) enl_msg(You_, "have been killed ", p, buf);
+	if (p) enl_msg(&menu, You_, "have been killed ", p, buf);
     }
 
-	display_nhwindow(en_win, TRUE);
-	destroy_nhwindow(en_win);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return;
 }
 
@@ -919,81 +921,82 @@ void show_conduct(int final)
 {
 	char buf[BUFSZ];
 	int ngenocided;
+	struct menulist menu;
 
 	/* Create the conduct window */
-	en_win = create_nhwindow(NHW_MENU);
-	putstr(en_win, 0, "Voluntary challenges:");
-	putstr(en_win, 0, "");
+	init_menulist(&menu);
+	add_menutext(&menu, "Voluntary challenges:");
+	add_menutext(&menu, "");
 
 	if (!u.uconduct.food)
-	    enl_msg(You_, "have gone", "went", " without food");
+	    enl_msg(&menu, You_, "have gone", "went", " without food");
 	    /* But beverages are okay */
 	else if (!u.uconduct.unvegan)
-	    you_have_X("followed a strict vegan diet");
+	    you_have_X(&menu, "followed a strict vegan diet");
 	else if (!u.uconduct.unvegetarian)
-	    you_have_been("vegetarian");
+	    you_have_been(&menu, "vegetarian");
 
 	if (!u.uconduct.gnostic)
-	    you_have_been("an atheist");
+	    you_have_been(&menu, "an atheist");
 
 	if (!u.uconduct.weaphit)
-	    you_have_never("hit with a wielded weapon");
+	    you_have_never(&menu, "hit with a wielded weapon");
 	else if (wizard) {
 	    sprintf(buf, "used a wielded weapon %ld time%s",
 		    u.uconduct.weaphit, plur(u.uconduct.weaphit));
-	    you_have_X(buf);
+	    you_have_X(&menu, buf);
 	}
 	if (!u.uconduct.killer)
-	    you_have_been("a pacifist");
+	    you_have_been(&menu, "a pacifist");
 
 	if (!u.uconduct.literate)
-	    you_have_been("illiterate");
+	    you_have_been(&menu, "illiterate");
 	else if (wizard) {
 	    sprintf(buf, "read items or engraved %ld time%s",
 		    u.uconduct.literate, plur(u.uconduct.literate));
-	    you_have_X(buf);
+	    you_have_X(&menu, buf);
 	}
 
 	ngenocided = num_genocides();
 	if (ngenocided == 0) {
-	    you_have_never("genocided any monsters");
+	    you_have_never(&menu, "genocided any monsters");
 	} else {
 	    sprintf(buf, "genocided %d type%s of monster%s",
 		    ngenocided, plur(ngenocided), plur(ngenocided));
-	    you_have_X(buf);
+	    you_have_X(&menu, buf);
 	}
 
 	if (!u.uconduct.polypiles)
-	    you_have_never("polymorphed an object");
+	    you_have_never(&menu, "polymorphed an object");
 	else if (wizard) {
 	    sprintf(buf, "polymorphed %ld item%s",
 		    u.uconduct.polypiles, plur(u.uconduct.polypiles));
-	    you_have_X(buf);
+	    you_have_X(&menu, buf);
 	}
 
 	if (!u.uconduct.polyselfs)
-	    you_have_never("changed form");
+	    you_have_never(&menu, "changed form");
 	else if (wizard) {
 	    sprintf(buf, "changed form %ld time%s",
 		    u.uconduct.polyselfs, plur(u.uconduct.polyselfs));
-	    you_have_X(buf);
+	    you_have_X(&menu, buf);
 	}
 
 	if (!u.uconduct.wishes)
-	    you_have_X("used no wishes");
+	    you_have_X(&menu, "used no wishes");
 	else {
 	    sprintf(buf, "used %ld wish%s",
 		    u.uconduct.wishes, (u.uconduct.wishes > 1L) ? "es" : "");
-	    you_have_X(buf);
+	    you_have_X(&menu, buf);
 
 	    if (!u.uconduct.wisharti)
-		enl_msg(You_, "have not wished", "did not wish",
+		enl_msg(&menu, You_, "have not wished", "did not wish",
 			" for any artifacts");
 	}
 
 	/* Pop up the window and wait for a key */
-	display_nhwindow(en_win, TRUE);
-	destroy_nhwindow(en_win);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 }
 
 
@@ -1231,7 +1234,7 @@ static void count_obj(struct obj *chain, long *total_count, long *total_size,
 	*total_size += size;
 }
 
-static void obj_chain(winid win, const char *src, struct obj *chain,
+static void obj_chain(struct menulist *menu, const char *src, struct obj *chain,
 		      long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
@@ -1241,10 +1244,10 @@ static void obj_chain(winid win, const char *src, struct obj *chain,
 	*total_count += count;
 	*total_size += size;
 	sprintf(buf, template, src, count, size);
-	putstr(win, 0, buf);
+	add_menutext(menu, buf);
 }
 
-static void mon_invent_chain(winid win, const char *src, struct monst *chain,
+static void mon_invent_chain(struct menulist *menu, const char *src, struct monst *chain,
 			     long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
@@ -1256,10 +1259,10 @@ static void mon_invent_chain(winid win, const char *src, struct monst *chain,
 	*total_count += count;
 	*total_size += size;
 	sprintf(buf, template, src, count, size);
-	putstr(win, 0, buf);
+	add_menutext(menu, buf);
 }
 
-static void contained(winid win, const char *src, long *total_count, long *total_size)
+static void contained(struct menulist *menu, const char *src, long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
 	long count = 0, size = 0;
@@ -1278,10 +1281,10 @@ static void contained(winid win, const char *src, long *total_count, long *total
 	*total_count += count; *total_size += size;
 
 	sprintf(buf, template, src, count, size);
-	putstr(win, 0, buf);
+	add_menutext(menu, buf);
 }
 
-static void mon_chain(winid win, const char *src, struct monst *chain,
+static void mon_chain(struct menulist *menu, const char *src, struct monst *chain,
 		      long *total_count, long *total_size)
 {
 	char buf[BUFSZ];
@@ -1295,7 +1298,7 @@ static void mon_chain(winid win, const char *src, struct monst *chain,
 	*total_count += count;
 	*total_size += size;
 	sprintf(buf, template, src, count, size);
-	putstr(win, 0, buf);
+	add_menutext(menu, buf);
 }
 
 /*
@@ -1304,53 +1307,53 @@ static void mon_chain(winid win, const char *src, struct monst *chain,
 static int wiz_show_stats(void)
 {
 	char buf[BUFSZ];
-	winid win;
+	struct menulist menu;
 	long total_obj_size = 0, total_obj_count = 0;
 	long total_mon_size = 0, total_mon_count = 0;
 
-	win = create_nhwindow(NHW_TEXT);
-	putstr(win, 0, "Current memory statistics:");
-	putstr(win, 0, "");
+	init_menulist(&menu);
+	add_menutext(&menu, "Current memory statistics:");
+	add_menutext(&menu, "");
 	sprintf(buf, "Objects, size %d", (int) sizeof(struct obj));
-	putstr(win, 0, buf);
-	putstr(win, 0, "");
-	putstr(win, 0, count_str);
+	add_menutext(&menu, buf);
+	add_menutext(&menu, "");
+	add_menutext(&menu, count_str);
 
-	obj_chain(win, "invent", invent, &total_obj_count, &total_obj_size);
-	obj_chain(win, "fobj", fobj, &total_obj_count, &total_obj_size);
-	obj_chain(win, "buried", level.buriedobjlist,
+	obj_chain(&menu, "invent", invent, &total_obj_count, &total_obj_size);
+	obj_chain(&menu, "fobj", fobj, &total_obj_count, &total_obj_size);
+	obj_chain(&menu, "buried", level.buriedobjlist,
 				&total_obj_count, &total_obj_size);
-	obj_chain(win, "migrating obj", migrating_objs,
+	obj_chain(&menu, "migrating obj", migrating_objs,
 				&total_obj_count, &total_obj_size);
-	mon_invent_chain(win, "minvent", fmon,
+	mon_invent_chain(&menu, "minvent", fmon,
 				&total_obj_count,&total_obj_size);
-	mon_invent_chain(win, "migrating minvent", migrating_mons,
+	mon_invent_chain(&menu, "migrating minvent", migrating_mons,
 				&total_obj_count, &total_obj_size);
 
-	contained(win, "contained",
+	contained(&menu, "contained",
 				&total_obj_count, &total_obj_size);
 
-	putstr(win, 0, separator);
+	add_menutext(&menu, separator);
 	sprintf(buf, template, "Total", total_obj_count, total_obj_size);
-	putstr(win, 0, buf);
+	add_menutext(&menu, buf);
 
-	putstr(win, 0, "");
-	putstr(win, 0, "");
+	add_menutext(&menu, "");
+	add_menutext(&menu, "");
 	sprintf(buf, "Monsters, size %d", (int) sizeof(struct monst));
-	putstr(win, 0, buf);
-	putstr(win, 0, "");
+	add_menutext(&menu, buf);
+	add_menutext(&menu, "");
 
-	mon_chain(win, "fmon", fmon,
+	mon_chain(&menu, "fmon", fmon,
 				&total_mon_count, &total_mon_size);
-	mon_chain(win, "migrating", migrating_mons,
+	mon_chain(&menu, "migrating", migrating_mons,
 				&total_mon_count, &total_mon_size);
 
-	putstr(win, 0, separator);
+	add_menutext(&menu, separator);
 	sprintf(buf, template, "Total", total_mon_count, total_mon_size);
-	putstr(win, 0, buf);
+	add_menutext(&menu, buf);
 
-	display_nhwindow(win, FALSE);
-	destroy_nhwindow(win);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return 0;
 }
 
@@ -1659,16 +1662,16 @@ int getdir(const char *s)
 static boolean help_dir(char sym, const char *msg)
 {
 	char ctrl;
-	winid win;
+	struct menulist menu;
 	static const char wiz_only_list[] = "EFGIOVW";
 	char buf[BUFSZ], buf2[BUFSZ], *expl;
 
-	win = create_nhwindow(NHW_TEXT);
-	if (!win) return FALSE;
+	init_menulist(&menu);
+
 	if (msg) {
 		sprintf(buf, "cmdassist: %s", msg);
-		putstr(win, 0, buf);
-		putstr(win, 0, "");
+		add_menutext(&menu, buf);
+		add_menutext(&menu, "");
 	}
 	if (letter(sym)) { 
 	    sym = highc(sym);
@@ -1678,54 +1681,54 @@ static boolean help_dir(char sym, const char *msg)
 		sprintf(buf, "Are you trying to use ^%c%s?", sym,
 			index(wiz_only_list, sym) ? "" :
 			" as specified in the Guidebook");
-		putstr(win, 0, buf);
-		putstr(win, 0, "");
-		putstr(win, 0, expl);
-		putstr(win, 0, "");
-		putstr(win, 0, "To use that command, you press");
+		add_menutext(&menu, buf);
+		add_menutext(&menu, "");
+		add_menutext(&menu, expl);
+		add_menutext(&menu, "");
+		add_menutext(&menu, "To use that command, you press");
 		sprintf(buf,
 			"the <Ctrl> key, and the <%c> key at the same time.", sym);
-		putstr(win, 0, buf);
-		putstr(win, 0, "");
+		add_menutext(&menu, buf);
+		add_menutext(&menu, "");
 	    }
 	}
 	if (iflags.num_pad && u.umonnum == PM_GRID_BUG) {
-	    putstr(win, 0, "Valid direction keys in your current form (with number_pad on) are:");
-	    putstr(win, 0, "             8   ");
-	    putstr(win, 0, "             |   ");
-	    putstr(win, 0, "          4- . -6");
-	    putstr(win, 0, "             |   ");
-	    putstr(win, 0, "             2   ");
+	    add_menutext(&menu, "Valid direction keys in your current form (with number_pad on) are:");
+	    add_menutext(&menu, "             8   ");
+	    add_menutext(&menu, "             |   ");
+	    add_menutext(&menu, "          4- . -6");
+	    add_menutext(&menu, "             |   ");
+	    add_menutext(&menu, "             2   ");
 	} else if (u.umonnum == PM_GRID_BUG) {
-	    putstr(win, 0, "Valid direction keys in your current form are:");
-	    putstr(win, 0, "             k   ");
-	    putstr(win, 0, "             |   ");
-	    putstr(win, 0, "          h- . -l");
-	    putstr(win, 0, "             |   ");
-	    putstr(win, 0, "             j   ");
+	    add_menutext(&menu, "Valid direction keys in your current form are:");
+	    add_menutext(&menu, "             k   ");
+	    add_menutext(&menu, "             |   ");
+	    add_menutext(&menu, "          h- . -l");
+	    add_menutext(&menu, "             |   ");
+	    add_menutext(&menu, "             j   ");
 	} else if (iflags.num_pad) {
-	    putstr(win, 0, "Valid direction keys (with number_pad on) are:");
-	    putstr(win, 0, "          7  8  9");
-	    putstr(win, 0, "           \\ | / ");
-	    putstr(win, 0, "          4- . -6");
-	    putstr(win, 0, "           / | \\ ");
-	    putstr(win, 0, "          1  2  3");
+	    add_menutext(&menu, "Valid direction keys (with number_pad on) are:");
+	    add_menutext(&menu, "          7  8  9");
+	    add_menutext(&menu, "           \\ | / ");
+	    add_menutext(&menu, "          4- . -6");
+	    add_menutext(&menu, "           / | \\ ");
+	    add_menutext(&menu, "          1  2  3");
 	} else {
-	    putstr(win, 0, "Valid direction keys are:");
-	    putstr(win, 0, "          y  k  u");
-	    putstr(win, 0, "           \\ | / ");
-	    putstr(win, 0, "          h- . -l");
-	    putstr(win, 0, "           / | \\ ");
-	    putstr(win, 0, "          b  j  n");
+	    add_menutext(&menu, "Valid direction keys are:");
+	    add_menutext(&menu, "          y  k  u");
+	    add_menutext(&menu, "           \\ | / ");
+	    add_menutext(&menu, "          h- . -l");
+	    add_menutext(&menu, "           / | \\ ");
+	    add_menutext(&menu, "          b  j  n");
 	};
-	putstr(win, 0, "");
-	putstr(win, 0, "          <  up");
-	putstr(win, 0, "          >  down");
-	putstr(win, 0, "          .  direct at yourself");
-	putstr(win, 0, "");
-	putstr(win, 0, "(Suppress this message with !cmdassist in config file.)");
-	display_nhwindow(win, FALSE);
-	destroy_nhwindow(win);
+	add_menutext(&menu, "");
+	add_menutext(&menu, "          <  up");
+	add_menutext(&menu, "          >  down");
+	add_menutext(&menu, "          .  direct at yourself");
+	add_menutext(&menu, "");
+	add_menutext(&menu, "(Suppress this message with !cmdassist in config file.)");
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	free(menu.items);
 	return TRUE;
 }
 
