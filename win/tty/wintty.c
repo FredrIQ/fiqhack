@@ -79,7 +79,6 @@ extern void nocmov(int,int); /* from termcap.c */
 static char obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
 #endif
 
-static char winpanicstr[] = "Bad window id %d";
 char defmorestr[] = "--More--";
 const char quitchars[] = " \r\n\033";
 const char ynchars[] = "yn";
@@ -133,12 +132,20 @@ static const char default_menu_cmds[] = {
 };
 
 
+static void winerror(int win)
+{
+    char buf[BUFSZ];
+    sprintf(buf, "Bad window id %d", win);
+    tty_raw_print(buf);
+}
+
+
 /* clean up and quit */
 static void bail(const char *mesg)
 {
     clearlocks();
     tty_exit_nhwindows(mesg);
-    terminate(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
     /*NOTREACHED*/
 }
 
@@ -687,7 +694,6 @@ winid tty_create_nhwindow(int type)
 	newwin->maxrow = newwin->maxcol = 0;
 	break;
    default:
-	panic("Tried to create window type %d\n", (int) type);
 	return WIN_ERR;
     }
 
@@ -698,7 +704,6 @@ winid tty_create_nhwindow(int type)
 	}
     }
     if(newid == MAXWIN) {
-	panic("No window slots!");
 	return WIN_ERR;
     }
 
@@ -798,8 +803,10 @@ void clear_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL)
-	panic(winpanicstr,  window);
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+	winerror(window);
+	return;
+    }
     ttyDisplay->lastwin = window;
 
     switch(cw->type) {
@@ -997,7 +1004,7 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 	if (!page_start) {
 	    /* new page to be displayed */
 	    if (curr_page < 0 || (cw->npages > 0 && curr_page >= cw->npages))
-		panic("bad menu screen page #%d", curr_page);
+		return;
 
 	    /* clear screen */
 	    if (!cw->offx) {	/* if not corner, do clearscreen */
@@ -1311,8 +1318,10 @@ void display_nhwindow(winid window,
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL)
-	panic(winpanicstr,  window);
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+	winerror(window);
+	return;
+    }
     if(cw->flags & WIN_CANCELLED)
 	return;
     ttyDisplay->lastwin = window;
@@ -1376,8 +1385,10 @@ void tty_dismiss_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL)
-	panic(winpanicstr,  window);
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+	winerror(window);
+	return;
+    }
 
     switch(cw->type) {
     case NHW_MESSAGE:
@@ -1417,8 +1428,10 @@ void tty_destroy_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL)
-	panic(winpanicstr,  window);
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+	winerror(window);
+	return;
+    }
 
     if(cw->active)
 	tty_dismiss_nhwindow(window);
@@ -1447,8 +1460,10 @@ void move_cursor(winid window,
     int cx = ttyDisplay->curx;
     int cy = ttyDisplay->cury;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL)
-	panic(winpanicstr,  window);
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+	winerror(window);
+	return;
+    }
     ttyDisplay->lastwin = window;
 
     cw->curx = --x;	/* column 0 is never used */
@@ -1507,8 +1522,10 @@ static void tty_putsym(winid window, int x, int y, char ch)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL)
-	panic(winpanicstr,  window);
+    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+	winerror(window);
+	return;
+    }
 
     switch(cw->type) {
     case NHW_STATUS:
@@ -1752,8 +1769,10 @@ void tty_add_menu(
 	return;
 
     if (window == WIN_ERR || (cw = wins[window]) == NULL
-		|| cw->type != NHW_MENU)
-	panic(winpanicstr,  window);
+		|| cw->type != NHW_MENU) {
+	winerror(window);
+	return;
+    }
 
     cw->nitems++;
     if (identifier->a_void) {
@@ -1813,8 +1832,10 @@ void tty_end_menu(winid window,		/* menu to use */
     char menu_ch;
 
     if (window == WIN_ERR || (cw = wins[window]) == NULL ||
-		cw->type != NHW_MENU)
-	panic(winpanicstr,  window);
+		cw->type != NHW_MENU) {
+	winerror(window);
+	return;
+    }
 
     /* Reverse the list so that items are in correct order. */
     cw->mlist = reverse(cw->mlist);
@@ -1903,8 +1924,10 @@ int tty_select_menu(winid window, int how, menu_item **menu_list)
     int n, cancelled;
 
     if(window == WIN_ERR || (cw = wins[window]) == NULL
-       || cw->type != NHW_MENU)
-	panic(winpanicstr,  window);
+       || cw->type != NHW_MENU) {
+	winerror(window);
+	return -1;
+    }
 
     *menu_list = NULL;
     cw->how = (short) how;

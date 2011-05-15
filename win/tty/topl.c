@@ -251,8 +251,6 @@ static void topl_putsym(char c)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
 
-    if(cw == NULL) panic("Putsym window MESSAGE nonexistant");
-	
     switch(c) {
     case '\b':
 	if(ttyDisplay->curx == 0 && ttyDisplay->cury > 0)

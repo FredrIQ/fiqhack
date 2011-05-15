@@ -46,8 +46,6 @@ extern EXPORT void docrt(void);
 extern EXPORT void switch_graphics(int);
 
 /* end.c */
-extern EXPORT void terminate(int);
-extern EXPORT void panic(const char *,...);
 
 /* files.c */
 extern EXPORT void clearlocks(void);
