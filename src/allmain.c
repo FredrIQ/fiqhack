@@ -46,9 +46,14 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 }
 
 
-void nh_start_game(char *name, int locknum)
+void nh_start_game(char *name, int locknum, int playmode)
 {
 	int fd;
+	
+	if (playmode == MODE_EXPLORE)
+	    discover = TRUE;
+	else if (playmode == MODE_WIZARD)
+	    wizard = TRUE;
 	
 	if (name && name[0])
 	    strcpy(plname, name);

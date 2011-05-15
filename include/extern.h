@@ -612,6 +612,7 @@ extern char lowc(char);
 extern char highc(char);
 extern char *lcase(char *);
 extern char *upstart(char *);
+extern char *mungspaces(char *);
 extern char *strkitten(char *,char);
 extern char *s_suffix(const char *);
 extern char *xcrypt(const char *,char *);

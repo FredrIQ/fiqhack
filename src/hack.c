@@ -2138,16 +2138,6 @@ boolean check_swallowed(void)
 	return u.uswallow;
 }
 
-void enter_discover_mode(void)
-{
-    discover = TRUE;
-}
-
-void enter_wizard_mode(void)
-{
-    wizard = TRUE;
-}
-
 #ifdef GOLDOBJ
 /* Counts the money in an object chain. */
 /* Intended use is for your or some monsters inventory, */

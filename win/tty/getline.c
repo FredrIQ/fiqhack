@@ -306,6 +306,22 @@ static boolean ext_cmd_getlin_hook(char *base, void *hook_arg)
 	return FALSE;	/* didn't match anything */
 }
 
+/* remove excess whitespace from a string buffer (in place) */
+char *mungspaces(char *bp)
+{
+    char c, *p, *p2;
+    boolean was_space = TRUE;
+
+    for (p = p2 = bp; (c = *p) != '\0'; p++) {
+	if (c == '\t') c = ' ';
+	if (c != ' ' || !was_space) *p2++ = c;
+	was_space = (c == ' ');
+    }
+    if (was_space && p2 > bp) p2--;
+    *p2 = '\0';
+    return bp;
+}
+
 /*
  * Read in an extended command, doing command line completion.  We
  * stop when we have found enough characters to make a unique command.

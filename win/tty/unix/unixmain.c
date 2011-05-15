@@ -19,6 +19,7 @@ extern struct passwd *getpwnam(const char *);
 static void whoami(char *name);
 static void process_options(int, char **);
 void append_slash(char *name);
+int playmode = MODE_NORMAL;
 
 #ifdef __linux__
 extern void check_linux_console(void);
@@ -118,7 +119,7 @@ EXPORT int main(int argc, char *argv[])
 	while (!plname[0])
 	    tty_askname(plname);
 	
-	nh_start_game(plname, locknum);
+	nh_start_game(plname, locknum, playmode);
 
 	moveloop();
 	exit(EXIT_SUCCESS);
@@ -138,11 +139,11 @@ static void process_options(int argc, char *argv[])
 		argc--;
 		switch(argv[0][1]){
 		case 'D':
-			enter_wizard_mode();
+			playmode = MODE_WIZARD;
 			break;
 			
 		case 'X':
-			enter_discover_mode();
+			playmode = MODE_EXPLORE;
 			break;
 #ifdef NEWS
 		case 'n':

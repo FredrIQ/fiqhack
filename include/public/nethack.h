@@ -33,7 +33,7 @@ extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.
 
 /* allmain.c */
 extern EXPORT void nh_init(int pid, struct window_procs *, char **paths);
-extern EXPORT void nh_start_game(char*, int);
+extern EXPORT void nh_start_game(char*, int, int);
 extern EXPORT void moveloop(void);
 extern EXPORT const char **nh_get_copyright_banner(void);
 
@@ -48,11 +48,8 @@ extern EXPORT void clearlocks(void);
 
 /* hack.c */
 extern EXPORT boolean check_swallowed(void);
-extern EXPORT void enter_discover_mode(void);
-extern EXPORT void enter_wizard_mode(void);
 
 /* hacklib.c */
-extern EXPORT char *mungspaces(char *);
 extern EXPORT char *tabexpand(char *);
 #ifndef STRNCMPI
 extern EXPORT int strncmpi(const char *,const char *,int);

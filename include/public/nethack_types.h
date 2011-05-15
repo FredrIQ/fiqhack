@@ -218,6 +218,12 @@ struct sinfo {
 #define A_NEUTRAL	 0
 #define A_LAWFUL	 1
 
+enum nh_game_modes {
+    MODE_NORMAL,
+    MODE_EXPLORE,
+    MODE_WIZARD
+};
+
 enum nh_opttype {
     OPTTYPE_BOOL,
     OPTTYPE_INT,
