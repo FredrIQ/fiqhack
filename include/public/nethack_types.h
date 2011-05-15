@@ -46,7 +46,6 @@ typedef schar	aligntyp;	/* basic alignment type */
 #define msleep(k) usleep((k)*1000)
 
 #include "wintype.h"
-#include "coord.h"
 
 struct nh_menuitem;
 struct nh_objitem;
