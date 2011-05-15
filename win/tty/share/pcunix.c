@@ -101,7 +101,7 @@ void getlock(void)
 
 	close(fd);
 
-	if(iflags.window_inited) { 
+	if(iflags2.window_inited) { 
 # ifdef SELF_RECOVER
 	  c = yn("There are files from a game in progress under your name. Recover?");
 # else

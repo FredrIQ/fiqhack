@@ -34,7 +34,7 @@ static void vpline(const char *line, va_list the_args)
 	    vsprintf(pbuf,line,the_args);
 	    line = pbuf;
 	}
-	if (!iflags.window_inited) {
+	if (!iflags2.window_inited) {
 	    raw_print(line);
 	    return;
 	}

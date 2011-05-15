@@ -28,7 +28,7 @@ int explcolors[] = {
 # endif
 
 #ifdef ROGUE_COLOR
-#define HAS_ROGUE_IBM_GRAPHICS (iflags.IBMgraphics && Is_rogue_level(&u.uz))
+#define HAS_ROGUE_IBM_GRAPHICS (iflags2.IBMgraphics && Is_rogue_level(&u.uz))
 #endif
 
 /*ARGSUSED*/

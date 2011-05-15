@@ -95,43 +95,12 @@ struct window_procs {
     void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
 };
 
-
-/*
- * Flags that are set each time the game is started.
- * These are not saved with the game.
- *
- */
-struct instance_flags {
-	boolean  DECgraphics;	/* use DEC VT-xxx extended character set */
-	boolean  IBMgraphics;	/* use IBM extended character set */
-	boolean  num_pad;	/* use numbers for movement commands */
-	boolean  news;		/* print news */
-	boolean  window_inited; /* true if init_nhwindows() completed */
-	boolean  vision_inited; /* true if vision is ready */
-	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
-	boolean  menu_requested; /* Flag for overloaded use of 'm' prefix
-				  * on some non-move commands */
-	int      purge_monsters;	/* # of dead monsters still on fmon list */
-	uchar	bouldersym;	/* symbol for boulder display */
-	boolean travel1;	/* first travel step */
-	coord	travelcc;	/* coordinates for travel_cache */
-	boolean  sanity_check;	/* run sanity checks */
-	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
-
-/*
- * Window capability support.
- */
-	boolean  cmdassist;	/* provide detailed assistance for some commands */
-	/* Items which belong in flags, but are here to allow save compatibility */
-	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
-	boolean  showrace;	/* show hero glyph by race rather than by role */
-	boolean  travelcmd;	/* allow travel command */
-	int	 runmode;	/* update screen display during run moves */
-#ifdef AUTOPICKUP_EXCEPTIONS
-	struct autopickup_exception *autopickup_exceptions[2];
-#define AP_LEAVE 0
-#define AP_GRAB	 1
-#endif
+struct instance_flags2 {
+    boolean  DECgraphics;	/* use DEC VT-xxx extended character set */
+    boolean  IBMgraphics;	/* use IBM extended character set */
+    boolean  num_pad;	/* use numbers for movement commands */
+    boolean  news;		/* print news */
+    boolean  window_inited; /* true if init_nhwindows() completed */
 };
 
 struct sinfo {

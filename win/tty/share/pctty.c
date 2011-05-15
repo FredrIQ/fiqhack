@@ -56,7 +56,7 @@ void error (const char *s, ...)
 	va_list the_args;
 	va_start(the_args, s);
 	/* error() may get called before tty is initialized */
-	if (iflags.window_inited) end_screen();
+	if (iflags2.window_inited) end_screen();
 	putchar('\n');
 	vprintf(s, the_args);
 	putchar('\n');

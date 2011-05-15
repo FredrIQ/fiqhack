@@ -227,11 +227,11 @@ void panic (const char *str, ...)
 	if (program_state.panicking++)
 	    NH_abort();	/* avoid loops - this should never happen*/
 
-	if (iflags.window_inited) {
+	if (iflags2.window_inited) {
 	    raw_print("\r\nOops...");
 	    wait_synch();	/* make sure all pending output gets flushed */
 	    exit_nhwindows(NULL);
-	    iflags.window_inited = 0; /* they're gone; force raw_print()ing */
+	    iflags2.window_inited = 0; /* they're gone; force raw_print()ing */
 	}
 
 	raw_print(program_state.gameover ?
@@ -488,7 +488,7 @@ void done(int how)
 	char outrip_buf[BUFSZ];
 	struct menulist menu;
 	boolean show_endwin = FALSE;
-	boolean bones_ok, have_windows = iflags.window_inited;
+	boolean bones_ok, have_windows = iflags2.window_inited;
 	struct obj *corpse = NULL;
 	long umoney;
 

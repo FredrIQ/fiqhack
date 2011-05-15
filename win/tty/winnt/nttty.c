@@ -168,7 +168,7 @@ void tty_number_pad(int state)
 
 void tty_start_screen(void)
 {
-	if (iflags.num_pad) tty_number_pad(1);	/* make keypad send digits */
+	if (iflags2.num_pad) tty_number_pad(1);	/* make keypad send digits */
 }
 
 void tty_end_screen(void)
@@ -306,7 +306,7 @@ int tgetch(void)
 	coord cc;
 	DWORD count;
 	really_move_cursor();
-	return pCheckInput(hConIn, &ir, &count, iflags.num_pad, 0, &mod, &cc);
+	return pCheckInput(hConIn, &ir, &count, iflags2.num_pad, 0, &mod, &cc);
 }
 
 int ntposkey(int *x, int *y, int *mod)
@@ -315,7 +315,7 @@ int ntposkey(int *x, int *y, int *mod)
 	coord cc;
 	DWORD count;
 	really_move_cursor();
-	ch = pCheckInput(hConIn, &ir, &count, iflags.num_pad, 1, mod, &cc);
+	ch = pCheckInput(hConIn, &ir, &count, iflags2.num_pad, 1, mod, &cc);
 	if (!ch) {
 		*x = cc.x;
 		*y = cc.y;
@@ -560,7 +560,7 @@ void term_start_attr(int attrib)
 {
     switch(attrib){
         case ATR_INVERSE:
-		if (iflags.wc_inverse) {
+		if (iflags2.wc_inverse) {
 		   /* Suggestion by Lee Berger */
 		   if ((foreground & (FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_RED)) ==
 			(FOREGROUND_GREEN|FOREGROUND_BLUE|FOREGROUND_RED))
@@ -641,7 +641,7 @@ void toggle_mouse_support(void)
 {
         DWORD cmode;
 	GetConsoleMode(hConIn,&cmode);
-	if (iflags.wc_mouse_support)
+	if (iflags2.wc_mouse_support)
 		cmode |= ENABLE_MOUSE_INPUT;
 	else
 		cmode &= ~ENABLE_MOUSE_INPUT;
@@ -671,7 +671,7 @@ void win32con_debug_keystrokes(void)
 	   nocmov(ttyDisplay->curx, ttyDisplay->cury);
 	   ReadConsoleInput(hConIn,&ir,1,&count);
 	   if ((ir.EventType == KEY_EVENT) && ir.Event.KeyEvent.bKeyDown)
-		ch = process_keystroke(&ir, &valid, iflags.num_pad, 1);
+		ch = process_keystroke(&ir, &valid, iflags2.num_pad, 1);
 	}
 	doredraw();
 }
@@ -745,7 +745,7 @@ void load_keyboard_handler(void)
 	char *truncspot;
 #define MAX_DLLNAME 25
 	char kh[MAX_ALTKEYHANDLER];
-	if (iflags.altkeyhandler[0]) {
+	if (iflags2.altkeyhandler[0]) {
 		if (hLibrary) {	/* already one loaded apparently */
 			FreeLibrary(hLibrary);
 			hLibrary = (HANDLE)0;
@@ -756,13 +756,13 @@ void load_keyboard_handler(void)
 		   pKeyHandlerName = (KEYHANDLERNAME)0; 
 		   pProcessKeystroke = (PROCESS_KEYSTROKE)0;
 		}
-		if ((truncspot = strstri(iflags.altkeyhandler, suffx)) != 0)
+		if ((truncspot = strstri(iflags2.altkeyhandler, suffx)) != 0)
 			*truncspot = '\0';
-		strncpy(kh, iflags.altkeyhandler,
+		strncpy(kh, iflags2.altkeyhandler,
 				(MAX_ALTKEYHANDLER - sizeof suffx) - 1);
 		kh[(MAX_ALTKEYHANDLER - sizeof suffx) - 1] = '\0';
 		strcat(kh, suffx);
-		strcpy(iflags.altkeyhandler, kh);
+		strcpy(iflags2.altkeyhandler, kh);
 		hLibrary = LoadLibrary(kh);
 		if (hLibrary) {
 		   pProcessKeystroke =
@@ -792,7 +792,7 @@ void load_keyboard_handler(void)
 		}
 		strncpy(kh, "nhdefkey.dll", (MAX_ALTKEYHANDLER - sizeof suffx) - 1);
 		kh[(MAX_ALTKEYHANDLER - sizeof suffx) - 1] = '\0';
-		strcpy(iflags.altkeyhandler, kh);
+		strcpy(iflags2.altkeyhandler, kh);
 		hLibrary = LoadLibrary(kh);
 		if (hLibrary) {
 		   pProcessKeystroke =
@@ -844,7 +844,7 @@ void error (const char *s, ...)
 	char buf[BUFSZ];
 	va_start(the_args, s);
 	/* error() may get called before tty is initialized */
-	if (iflags.window_inited) end_screen();
+	if (iflags2.window_inited) end_screen();
 	buf[0] = '\n';
 	vsprintf(&buf[1], s, the_args);
 	va_end(the_args);

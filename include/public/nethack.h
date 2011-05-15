@@ -24,7 +24,7 @@ extern EXPORT struct sinfo program_state;
 
 extern EXPORT long yn_number;
 
-extern EXPORT struct instance_flags iflags;
+extern EXPORT struct instance_flags2 iflags2;
 
 /* window stuff */
 extern EXPORT char toplines[];

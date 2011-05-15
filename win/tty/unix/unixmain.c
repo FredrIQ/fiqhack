@@ -147,7 +147,7 @@ static void process_options(int argc, char *argv[])
 			break;
 #ifdef NEWS
 		case 'n':
-			iflags.news = FALSE;
+			iflags2.news = FALSE;
 			break;
 #endif
 		case 'u':

@@ -117,11 +117,37 @@ struct flag {
 
 
 /*
- * Old deprecated names
+ * Flags that are set each time the game is started.
+ * These are not saved with the game.
+ *
  */
-#define hilite_pet wc_hilite_pet
+struct instance_flags {
+	boolean  vision_inited; /* true if vision is ready */
+	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
+	boolean  menu_requested; /* Flag for overloaded use of 'm' prefix
+				  * on some non-move commands */
+	int      purge_monsters;	/* # of dead monsters still on fmon list */
+	uchar	bouldersym;	/* symbol for boulder display */
+	boolean travel1;	/* first travel step */
+	coord	travelcc;	/* coordinates for travel_cache */
+	boolean  sanity_check;	/* run sanity checks */
+	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
+
+	boolean  cmdassist;	/* provide detailed assistance for some commands */
+	/* Items which belong in flags, but are here to allow save compatibility */
+	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
+	boolean  showrace;	/* show hero glyph by race rather than by role */
+	boolean  travelcmd;	/* allow travel command */
+	int	 runmode;	/* update screen display during run moves */
+#ifdef AUTOPICKUP_EXCEPTIONS
+	struct autopickup_exception *autopickup_exceptions[2];
+#define AP_LEAVE 0
+#define AP_GRAB	 1
+#endif
+};
 
 extern struct flag flags;
+extern struct instance_flags iflags;
 
 /* runmode options */
 #define RUN_TPORT	0	/* don't update display until movement stops */

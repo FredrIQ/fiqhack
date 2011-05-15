@@ -1427,14 +1427,14 @@ void rhack(char *cmd)
 		    } else
 			prefix_seen = TRUE;
 		    break;
-	 case '5':  if (!iflags.num_pad) break;	/* else FALLTHRU */
+	 case '5':  if (!iflags2.num_pad) break;	/* else FALLTHRU */
 	 case 'G':  if (movecmd(lowc(cmd[1]))) {
 			flags.run = 3;
 			do_rush = TRUE;
 		    } else
 			prefix_seen = TRUE;
 		    break;
-	 case '-':  if (!iflags.num_pad) break;	/* else FALLTHRU */
+	 case '-':  if (!iflags2.num_pad) break;	/* else FALLTHRU */
 	/* Effects of movement commands and invisible monsters:
 	 * m: always move onto space (even if 'I' remembered)
 	 * F: always attack space (even if 'I' not remembered)
@@ -1461,7 +1461,7 @@ void rhack(char *cmd)
 		    } else
 			prefix_seen = TRUE;
 		    break;
-	 case '0':  if (!iflags.num_pad) break;
+	 case '0':  if (!iflags2.num_pad) break;
 		    ddoinv(); /* a convenience borrowed from the PC */
 		    flags.move = FALSE;
 		    multi = 0;
@@ -1479,7 +1479,7 @@ void rhack(char *cmd)
 	 default:   if (movecmd(*cmd)) {	/* ordinary movement */
 			flags.run = 0;	/* only matters here if it was 8 */
 			do_walk = TRUE;
-		    } else if (movecmd(iflags.num_pad ?
+		    } else if (movecmd(iflags2.num_pad ?
 				       unmeta(*cmd) : lowc(*cmd))) {
 			flags.run = 1;
 			do_rush = TRUE;
@@ -1593,7 +1593,7 @@ int movecmd(char sym)	/* also sets u.dz, but returns false for <> */
 {
 	const char *dp;
 	const char *sdp;
-	if(iflags.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
+	if(iflags2.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
 
 	u.dz = 0;
 	if(!(dp = index(sdp, sym))) return 0;
@@ -1692,7 +1692,7 @@ static boolean help_dir(char sym, const char *msg)
 		add_menutext(&menu, "");
 	    }
 	}
-	if (iflags.num_pad && u.umonnum == PM_GRID_BUG) {
+	if (iflags2.num_pad && u.umonnum == PM_GRID_BUG) {
 	    add_menutext(&menu, "Valid direction keys in your current form (with number_pad on) are:");
 	    add_menutext(&menu, "             8   ");
 	    add_menutext(&menu, "             |   ");
@@ -1706,7 +1706,7 @@ static boolean help_dir(char sym, const char *msg)
 	    add_menutext(&menu, "          h- . -l");
 	    add_menutext(&menu, "             |   ");
 	    add_menutext(&menu, "             j   ");
-	} else if (iflags.num_pad) {
+	} else if (iflags2.num_pad) {
 	    add_menutext(&menu, "Valid direction keys (with number_pad on) are:");
 	    add_menutext(&menu, "          7  8  9");
 	    add_menutext(&menu, "           \\ | / ");
@@ -1801,7 +1801,7 @@ const char *click_to_cmd(int x, int y, int mod)
         dir = xytod(x, y);
 
 	if (!m_at(u.ux+x, u.uy+y) && !test_move(u.ux, u.uy, x, y, TEST_MOVE)) {
-            cmd[1] = (iflags.num_pad ? ndir[dir] : sdir[dir]);
+            cmd[1] = (iflags2.num_pad ? ndir[dir] : sdir[dir]);
             cmd[2] = 0;
             if (IS_DOOR(levl[u.ux+x][u.uy+y].typ)) {
                 /* slight assistance to the player: choose kick/open for them */
@@ -1842,9 +1842,9 @@ const char *click_to_cmd(int x, int y, int mod)
     /* move, attack, etc. */
     cmd[1] = 0;
     if(mod == CLICK_1) {
-	cmd[0] = (iflags.num_pad ? ndir[dir] : sdir[dir]);
+	cmd[0] = (iflags2.num_pad ? ndir[dir] : sdir[dir]);
     } else {
-	cmd[0] = (iflags.num_pad ? M(ndir[dir]) :
+	cmd[0] = (iflags2.num_pad ? M(ndir[dir]) :
 		(sdir[dir] - 'a' + 'A')); /* run command */
     }
 
@@ -1861,7 +1861,7 @@ static char *parse(void)
 	flags.move = 1;
 	flush_screen(1); /* Flush screen buffer. Put the cursor on the hero. */
 
-	if (!iflags.num_pad || (foo = readchar()) == 'n')
+	if (!iflags2.num_pad || (foo = readchar()) == 'n')
 	    for (;;) {
 		foo = readchar();
 		if (foo >= '0' && foo <= '9') {
@@ -1892,7 +1892,7 @@ static char *parse(void)
 	in_line[0] = foo;
 	in_line[1] = '\0';
 	if (foo == 'g' || foo == 'G' || foo == 'm' || foo == 'M' ||
-	    foo == 'F' || (iflags.num_pad && (foo == '5' || foo == '-'))) {
+	    foo == 'F' || (iflags2.num_pad && (foo == '5' || foo == '-'))) {
 	    foo = readchar();
 	    in_line[1] = foo;
 	    in_line[2] = 0;

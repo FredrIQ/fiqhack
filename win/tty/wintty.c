@@ -612,7 +612,7 @@ void tty_exit_nhwindows(const char *str)
 #ifndef NO_TERMS		/*(until this gets added to the window interface)*/
     tty_shutdown();		/* cleanup termcap/terminfo/whatever */
 #endif
-    iflags.window_inited = 0;
+    iflags2.window_inited = 0;
 }
 
 
@@ -1337,7 +1337,7 @@ void display_nhwindow(winid window,
 	    ttyDisplay->toplin = 0;
 	cw->curx = cw->cury = 0;
 	if(!cw->active)
-	    iflags.window_inited = TRUE;
+	    iflags2.window_inited = TRUE;
 	break;
     case NHW_MAP:
 	end_glyphout();
@@ -1408,7 +1408,7 @@ void tty_dismiss_nhwindow(winid window)
     case NHW_MENU:
     case NHW_TEXT:
 	if(cw->active) {
-	    if (iflags.window_inited) {
+	    if (iflags2.window_inited) {
 		/* otherwise dismissing the text endwin after other windows
 		 * are dismissed tries to redraw the map and panics.  since
 		 * the whole reason for dismissing the other windows was to
@@ -1436,7 +1436,7 @@ void tty_destroy_nhwindow(winid window)
     if(cw->active)
 	tty_dismiss_nhwindow(window);
     if(cw->type == NHW_MESSAGE)
-	iflags.window_inited = 0;
+	iflags2.window_inited = 0;
     if(cw->type == NHW_MAP)
 	clear_screen();
 
@@ -2147,7 +2147,7 @@ void g_putch(int in_ch)
     char ch = (char)in_ch;
 
 # if !defined(NO_TERMS)
-    if (iflags.IBMgraphics || ui_flags.eight_bit_input) {
+    if (iflags2.IBMgraphics || ui_flags.eight_bit_input) {
 	/* IBM-compatible displays don't need other stuff */
 	putchar(ch);
     } else if (ch & 0x80) {

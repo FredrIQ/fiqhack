@@ -171,7 +171,7 @@ void error (const char *s, ...)
 	char buf[BUFSZ];
 	va_start(the_args, s);
 	/* error() may get called before tty is initialized */
-	if (iflags.window_inited) end_screen();
+	if (iflags2.window_inited) end_screen();
 	if (!strncmpi(windowprocs.name, "tty", 3)) {
 		buf[0] = '\n';
 		vsprintf(&buf[1], s, the_args);
@@ -202,7 +202,7 @@ void win32_abort(void)
 # ifdef WIN32CON
 	    int c, ci, ct;
 
-   	    if (!iflags.window_inited)
+   	    if (!iflags2.window_inited)
 		c = 'n';
 		ct = 0;
 		msmsg("Execute debug breakpoint wizard?");

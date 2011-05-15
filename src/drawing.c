@@ -543,8 +543,8 @@ void switch_graphics(int gr_set_flag)
  * to the ISO 8859 character set.  We should probably do a VioSetCp() call to
  * set the codepage to 437.
  */
-	    iflags.IBMgraphics = TRUE;
-	    iflags.DECgraphics = FALSE;
+	    iflags2.IBMgraphics = TRUE;
+	    iflags2.DECgraphics = FALSE;
 	    assign_graphics(ibm_graphics, SIZE(ibm_graphics), MAXPCHARS, 0);
 	    break;
 	    
@@ -552,8 +552,8 @@ void switch_graphics(int gr_set_flag)
 /*
  * Use the VT100 line drawing character set.
  */
-	    iflags.DECgraphics = TRUE;
-	    iflags.IBMgraphics = FALSE;
+	    iflags2.DECgraphics = TRUE;
+	    iflags2.IBMgraphics = FALSE;
 	    assign_graphics(dec_graphics, SIZE(dec_graphics), MAXPCHARS, 0);
 	    if (decgraphics_mode_callback) (*decgraphics_mode_callback)();
 	    break;
@@ -651,7 +651,7 @@ void assign_rogue_graphics(boolean is_rlevel)
 	/* Use a loop: char != uchar on some machines. */
 	for (i = 0; i < MAXMCLASSES; i++)
 	    monsyms[i] = def_monsyms[i];
-	if (iflags.IBMgraphics)
+	if (iflags2.IBMgraphics)
 	    monsyms[S_HUMAN] = 0x01; /* smiley face */
 	for (i = 0; i < MAXPCHARS; i++)
 	    showsyms[i] = defsyms[i].sym;
@@ -662,7 +662,7 @@ void assign_rogue_graphics(boolean is_rlevel)
  * all of this info and to simply initialize it via a for() loop like r_oc_syms.
  */
 
-	if (!iflags.IBMgraphics) {
+	if (!iflags2.IBMgraphics) {
 	    showsyms[S_vodoor]  = showsyms[S_hodoor]  = showsyms[S_ndoor] = '+';
 	    showsyms[S_upstair] = showsyms[S_dnstair] = '%';
 	} else {
@@ -711,7 +711,7 @@ void assign_rogue_graphics(boolean is_rlevel)
 	}
 
 	for (i = 0; i < MAXOCLASSES; i++) {
-	    if (iflags.IBMgraphics)
+	    if (iflags2.IBMgraphics)
 		oc_syms[i] = IBM_r_oc_syms[i];
 	    else
 		oc_syms[i] = r_oc_syms[i];

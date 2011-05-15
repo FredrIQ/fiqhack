@@ -269,9 +269,9 @@ void pcmain(int argc, char *argv[])
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 #ifdef NEWS
-		if(iflags.news){
+		if(iflags2.news){
 		    display_file(NEWS, FALSE);
-		    iflags.news = FALSE;
+		    iflags2.news = FALSE;
 		}
 #endif
 		pline("Restoring save file...");
@@ -345,7 +345,7 @@ static void process_options(int argc, char *argv[])
 			break;
 #ifdef NEWS
 		case 'n':
-			iflags.news = FALSE;
+			iflags2.news = FALSE;
 			break;
 #endif
 		case 'u':
@@ -442,7 +442,7 @@ static void  nhusage(void)
 	ADD_USAGE(" [-n]");
 #endif
 	ADD_USAGE(" [-I] [-i] [-d]");
-	if (!iflags.window_inited)
+	if (!iflags2.window_inited)
 		raw_printf("%s\n",buf1);
 	else
 		printf("%s\n",buf1);

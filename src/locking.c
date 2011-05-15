@@ -105,7 +105,7 @@ void getlock(int locknum)
 			goto gotlock;
 		close(fd);
 
-		if(iflags.window_inited) {
+		if(iflags2.window_inited) {
 		    c = yn_function("There is already a game in progress under your name.  Destroy old game?",ynchars, 'n');
 		} else {
 		    printf("\nThere is already a game in progress under your name.");

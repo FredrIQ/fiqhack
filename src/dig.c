@@ -783,7 +783,7 @@ int use_pick_axe(struct obj *obj)
 	int res = 0;
 	const char *sdp, *verb;
 
-	if(iflags.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
+	if(iflags2.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
 
 	/* Check tool */
 	if (obj != uwep) {

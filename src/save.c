@@ -95,7 +95,7 @@ int dosave0(void)
 	signal(SIGINT, SIG_IGN);
 #endif
 
-	HUP if (iflags.window_inited) {
+	HUP if (iflags2.window_inited) {
 	    fd = open_savefile();
 	    if (fd > 0) {
 		close(fd);
@@ -124,7 +124,7 @@ int dosave0(void)
 		change_luck(-1);		/* and unido!ab */
 	if(flags.friday13)
 		change_luck(1);
-	if(iflags.window_inited)
+	if(iflags2.window_inited)
 	    HUP clear_nhwindow(NHW_MESSAGE);
 
 	store_version(fd);

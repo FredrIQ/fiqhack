@@ -16,7 +16,7 @@ static void getpos_help(boolean force, const char *goal)
     memset(items, 0, sizeof(items));
 
     sprintf((it++)->caption, "Use [%s] to move the cursor to %s.",
-	    iflags.num_pad ? "2468" : "hjkl", goal);
+	    iflags2.num_pad ? "2468" : "hjkl", goal);
     strcpy((it++)->caption, "Use [HJKL] to move the cursor 8 units at a time.");
     strcpy((it++)->caption, "Or enter a background symbol (ex. <).");
 
@@ -41,7 +41,7 @@ int getpos(coord *cc, boolean force, const char *goal)
     static const char pick_chars[] = ".,;:";
     const char *cp;
     const char *sdp;
-    if(iflags.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
+    if(iflags2.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
 
     if (flags.verbose) {
 	pline("(For instructions type a ?)");
@@ -145,7 +145,7 @@ int getpos(coord *cc, boolean force, const char *goal)
 		    pline("Unknown direction: '%s' (%s).",
 			  visctrl((char)c),
 			  !force ? "aborted" :
-			  iflags.num_pad ? "use 2468 or ." : "use hjkl or .");
+			  iflags2.num_pad ? "use 2468 or ." : "use hjkl or .");
 		    msg_given = TRUE;
 		} /* k => matching */
 	    } /* !quitchars */

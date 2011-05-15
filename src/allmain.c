@@ -113,9 +113,9 @@ void nh_start_game(char *name, int locknum, int playmode)
 		chmod(fq_save,0);	/* disallow parallel restores */
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #ifdef NEWS
-		if(iflags.news) {
+		if(iflags2.news) {
 		    display_file(NEWS, FALSE);
-		    iflags.news = FALSE; /* in case dorecover() fails */
+		    iflags2.news = FALSE; /* in case dorecover() fails */
 		}
 #endif
 		pline("Restoring save file...");
@@ -591,7 +591,7 @@ void newgame(void)
 	signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 #ifdef NEWS
-	if(iflags.news) display_file(NEWS, FALSE);
+	if(iflags2.news) display_file(NEWS, FALSE);
 #endif
 	load_qtlist();	/* load up the quest text info */
 /*	quest_init();*/	/* Now part of role_init() */

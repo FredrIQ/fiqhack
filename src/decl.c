@@ -116,6 +116,7 @@ struct trap *ftrap = NULL;
 struct monst youmonst = DUMMY;
 struct flag flags = DUMMY;
 struct instance_flags iflags = DUMMY;
+struct instance_flags2 iflags2;
 struct you u = DUMMY;
 
 struct obj *invent = NULL,

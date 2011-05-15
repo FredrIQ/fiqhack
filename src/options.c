@@ -188,9 +188,9 @@ static struct nh_boolopt_map boolopt_map[] = {
 	/* for menu debugging only*/
 	{"menu_tab_sep", &iflags.menu_tab_sep},
 #ifdef NEWS
-	{"news", &iflags.news},
+	{"news", &iflags2.news},
 #endif
-	{"number_pad", &iflags.num_pad},
+	{"number_pad", &iflags2.num_pad},
 	{"perm_invent", &flags.perm_invent},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},
@@ -594,14 +594,14 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 		iflags.runmode = option->value.e;
 	}
 	else if(!strcmp("graphics", option->name)) {
-		iflags.DECgraphics = FALSE;
-		iflags.IBMgraphics = FALSE;
+		iflags2.DECgraphics = FALSE;
+		iflags2.IBMgraphics = FALSE;
 		if (option->value.e == GRAPHICS_DEC) {
-		    iflags.DECgraphics = TRUE;
+		    iflags2.DECgraphics = TRUE;
 		    switch_graphics(DEC_GRAPHICS);
 		}
 		else if (option->value.e == GRAPHICS_IBM) {
-		    iflags.IBMgraphics = TRUE;
+		    iflags2.IBMgraphics = TRUE;
 		    switch_graphics(IBM_GRAPHICS);
 		}
 		else

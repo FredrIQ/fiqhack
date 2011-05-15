@@ -246,7 +246,7 @@ static void tty_decgraphics_termcap_fixup(void)
 	 * Do not select NA ASCII as the primary font since people may
 	 * reasonably be using the UK character set.
 	 */
-	if (iflags.DECgraphics) xputs("\033)0");
+	if (iflags2.DECgraphics) xputs("\033)0");
 
 #if !defined(NO_TERMS)
 	/* some termcaps suffer from the bizarre notion that resetting
@@ -278,10 +278,10 @@ void tty_start_screen(void)
 {
 	xputs(TI);
 	xputs(VS);
-	if (iflags.DECgraphics) tty_decgraphics_termcap_fixup();
+	if (iflags2.DECgraphics) tty_decgraphics_termcap_fixup();
 	/* set up callback in case option is not set yet but toggled later */
 	decgraphics_mode_callback = tty_decgraphics_termcap_fixup;
-	if (iflags.num_pad) tty_number_pad(1);	/* make keypad send digits */
+	if (iflags2.num_pad) tty_number_pad(1);	/* make keypad send digits */
 }
 
 void tty_end_screen(void)
