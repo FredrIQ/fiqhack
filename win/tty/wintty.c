@@ -1539,7 +1539,6 @@ static void tty_putsym(winid window, int x, int y, char ch)
     case NHW_MESSAGE:
     case NHW_MENU:
     case NHW_TEXT:
-	impossible("Can't putsym to window type %d", cw->type);
 	break;
     }
 }
@@ -1779,7 +1778,6 @@ void tty_add_menu(
 	int len = strlen(str);
 	if (len >= BUFSZ) {
 	    /* We *think* everything's coming in off at most BUFSZ bufs... */
-	    impossible("Menu item too long (%d).", len);
 	    len = BUFSZ - 1;
 	}
 	sprintf(buf, "%c - ", ch ? ch : '?');

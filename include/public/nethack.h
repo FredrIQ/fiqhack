@@ -80,7 +80,6 @@ extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 
 /* pline.c */
 extern EXPORT void pline(const char *,...);
-extern EXPORT void impossible(const char *,...);
 
 /* role.c */
 extern EXPORT int nh_get_valid_roles(int, int, int, struct nh_listitem*, int);
