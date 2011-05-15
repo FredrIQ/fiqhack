@@ -67,7 +67,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 		    *bufp = 0;
 		}
 		if(c == '\020') { /* ctrl-P */
-		    if (iflags.prevmsg_window != 's') {
+		    if (ui_flags.prevmsg_window != 's') {
 			int sav = ttyDisplay->inread;
 			ttyDisplay->inread = 0;
 			tty_doprev_message();
@@ -85,7 +85,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 			doprev = 1;
 			continue;
 		    }
-		} else if (doprev && iflags.prevmsg_window == 's') {
+		} else if (doprev && ui_flags.prevmsg_window == 's') {
 		    clear_nhwindow(WIN_MESSAGE);
 		    cw->maxcol = cw->maxrow;
 		    doprev = 0;

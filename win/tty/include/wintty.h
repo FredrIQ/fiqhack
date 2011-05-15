@@ -99,6 +99,7 @@ struct DisplayDesc {
 
 struct interface_flags {
 	boolean  cbreak;	/* in cbreak mode, rogue format */    
+	char     prevmsg_window;/* type of old message window to use */
 	boolean  showexp;	/* show experience points */
 	boolean  showscore;	/* show score */
     	boolean  standout;	/* use standout for --More-- */

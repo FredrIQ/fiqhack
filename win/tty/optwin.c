@@ -27,6 +27,14 @@ static struct nh_listitem menu_headings_list[] = {
 static struct nh_enum_option menu_headings_spec =
     {menu_headings_list, listlen(menu_headings_list)};
 
+static struct nh_listitem msg_window_list[] = {
+	{'s', "single"},
+	{'c', "combo"},
+	{'f', "full page"},
+	{'r', "reversed"}
+};
+static struct nh_enum_option msg_window_spec = {msg_window_list, listlen(msg_window_list)};
+
 
 #define VTRUE (void*)TRUE
 
@@ -38,6 +46,7 @@ struct nh_option_desc tty_options[] = {
     {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
     
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)ATR_INVERSE}},
+    {"msg_window", "the type of message window required", OPTTYPE_ENUM, {(void*)'s'}},
     {"hackdir", "game data directory", OPTTYPE_STRING, {NULL}},
     {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
@@ -63,6 +72,9 @@ boolean option_change_callback(struct nh_option_desc *option)
 	    var_playground = option->value.s;
 	    tty_print_message("This option will take effect when the game is restarted");
 	}
+	else if(!strcmp(option->name, "msg_window")) {
+	    ui_flags.prevmsg_window = (char)option->value.e;
+	}
 	else if (!strcmp(option->name, "menu_headings")) {
 	    ui_flags.menu_headings = option->value.e;
 	}
@@ -87,6 +99,7 @@ static struct nh_option_desc *find_option(const char *name)
 void tty_init_options(void)
 {
 	find_option("menu_headings")->e = menu_headings_spec;
+	find_option("msg_window")->e = msg_window_spec;
 	
 	nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
 	read_ui_config();

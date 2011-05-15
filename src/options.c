@@ -34,14 +34,6 @@ static struct nh_listitem menustyle_list[] = {
 };
 static struct nh_enum_option menustyle_spec = {menustyle_list, listlen(menustyle_list)};
 
-static struct nh_listitem msg_window_list[] = {
-	{'s', "single"},
-	{'c', "combo"},
-	{'f', "full page"},
-	{'r', "reversed"}
-};
-static struct nh_enum_option msg_window_spec = {msg_window_list, listlen(msg_window_list)};
-
 static struct nh_listitem pickup_burden_list[] = {
 	{UNENCUMBERED, "unencumbered"},
 	{SLT_ENCUMBER, "burdened"},
@@ -146,7 +138,6 @@ struct nh_option_desc options[] = {
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
     {"msghistory", "number of top line messages to save", OPTTYPE_INT, {(void*)20}},
-    {"msg_window", "the type of message window required", OPTTYPE_ENUM, {(void*)'s'}},
     {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"\")[%?+!=/(*`0_"}},
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
     {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
@@ -331,7 +322,6 @@ void initoptions(void)
 	find_option(options, "fruit")->s.maxlen = PL_FSIZ;
 	find_option(options, "menustyle")->e = menustyle_spec;
 	find_option(options, "msghistory")->i.max = 100000; /* arbitrary value */
-	find_option(options, "msg_window")->e = msg_window_spec;
 	find_option(options, "pickup_burden")->e = pickup_burden_spec;
 	find_option(options, "pickup_types")->s.maxlen = MAXOCLASSES;
 	find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
@@ -588,9 +578,6 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	}
 	else if(!strcmp("msghistory", option->name)) {
 		iflags.msg_history = option->value.i;
-	}
-	else if(!strcmp("msg_window", option->name)) {
-		iflags.prevmsg_window = (char)option->value.e;
 	}
 	else if(!strcmp("packorder", option->name)) {
 		if (!change_inv_order(option->value.s))

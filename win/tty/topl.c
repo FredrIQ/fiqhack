@@ -27,8 +27,8 @@ int tty_doprev_message(void)
 
     winid prevmsg_win;
     int i;
-    if ((iflags.prevmsg_window != 's') && !ttyDisplay->inread) { /* not single */
-        if(iflags.prevmsg_window == 'f') { /* full */
+    if ((ui_flags.prevmsg_window != 's') && !ttyDisplay->inread) { /* not single */
+        if(ui_flags.prevmsg_window == 'f') { /* full */
             prevmsg_win = tty_create_nhwindow(NHW_MENU);
             tty_putstr(prevmsg_win, 0, "Message History");
             tty_putstr(prevmsg_win, 0, "");
@@ -42,7 +42,7 @@ int tty_doprev_message(void)
             tty_putstr(prevmsg_win, 0, toplines);
             display_nhwindow(prevmsg_win, TRUE);
             tty_destroy_nhwindow(prevmsg_win);
-        } else if (iflags.prevmsg_window == 'c') {		/* combination */
+        } else if (ui_flags.prevmsg_window == 'c') {		/* combination */
             do {
                 morc = 0;
                 if (cw->maxcol == cw->maxrow) {
@@ -98,7 +98,7 @@ int tty_doprev_message(void)
             cw->maxcol = cw->maxrow;
             ttyDisplay->dismiss_more = 0;
         }
-    } else if(iflags.prevmsg_window == 's') { /* single */
+    } else if(ui_flags.prevmsg_window == 's') { /* single */
         ttyDisplay->dismiss_more = C('p');  /* <ctrl/P> allowed at --More-- */
         do {
             morc = 0;
@@ -342,7 +342,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	do {	/* loop until we get valid input */
 	    q = tolower(tty_nhgetch());
 	    if (q == '\020') { /* ctrl-P */
-		if (iflags.prevmsg_window != 's') {
+		if (ui_flags.prevmsg_window != 's') {
 		    int sav = ttyDisplay->inread;
 		    ttyDisplay->inread = 0;
 		    tty_doprev_message();
