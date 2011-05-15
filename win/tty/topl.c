@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "nethack.h"
-#include "color.h"
 
 #include "tcap.h"
 #include "wintty.h"

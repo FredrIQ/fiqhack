@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include "nethack.h"
-#include "color.h"
 
 #include <termios.h>
 #include <sys/ioctl.h>

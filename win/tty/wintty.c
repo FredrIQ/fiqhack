@@ -7,7 +7,6 @@
 #include <ctype.h>
 
 #include "nethack.h"
-#include "color.h"
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(a,b) ((a) > (b) ? (a) : (b))

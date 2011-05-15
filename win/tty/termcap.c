@@ -8,7 +8,6 @@
 #include <ctype.h>
 
 #include "nethack.h"
-#include "color.h"
 
 #if !defined(NO_TERMS)
 

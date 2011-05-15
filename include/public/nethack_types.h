@@ -179,6 +179,30 @@ struct sinfo {
 #define A_NEUTRAL	 0
 #define A_LAWFUL	 1
 
+/*
+ * The color scheme used is tailored for an IBM PC.  It consists of the
+ * standard 8 colors, folowed by their bright counterparts.  There are
+ * exceptions, these are listed below.	Bright black doesn't mean very
+ * much, so it is used as the "default" foreground color of the screen.
+ */
+#define CLR_BLACK		0
+#define CLR_RED			1
+#define CLR_GREEN		2
+#define CLR_BROWN		3 /* on IBM, low-intensity yellow is brown */
+#define CLR_BLUE		4
+#define CLR_MAGENTA		5
+#define CLR_CYAN		6
+#define CLR_GRAY		7 /* low-intensity white */
+#define NO_COLOR		8
+#define CLR_ORANGE		9
+#define CLR_BRIGHT_GREEN	10
+#define CLR_YELLOW		11
+#define CLR_BRIGHT_BLUE		12
+#define CLR_BRIGHT_MAGENTA	13
+#define CLR_BRIGHT_CYAN		14
+#define CLR_WHITE		15
+#define CLR_MAX			16
+
 enum nh_game_modes {
     MODE_NORMAL,
     MODE_EXPLORE,

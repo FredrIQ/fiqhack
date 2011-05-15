@@ -306,6 +306,10 @@ extern void setioctls(void);
 #define MENU_INVERT_PAGE	'~'
 #define MENU_SEARCH		':'
 
+/* The "half-way" point for tty based color systems.  This is used in */
+/* the tty color setup code. */
+#define BRIGHT		8
+
 
 /* system terminal functions */
 extern int tgetent(char *,const char *);
