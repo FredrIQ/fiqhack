@@ -112,6 +112,7 @@ extern int getbones(void);
 
 /* ### botl.c ### */
 
+extern void bot(void);
 extern int xlev_to_rank(int);
 extern int title_to_mon(const char *,int *,int *);
 extern void max_rank_sz(void);

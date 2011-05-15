@@ -85,6 +85,8 @@ const char quitchars[] = " \r\n\033";
 const char ynchars[] = "yn";
 // char plname[PL_NSIZ];
 
+struct nh_status_info cached_status;
+
 #if !defined(NO_TERMS)
 boolean GFlag = FALSE;
 boolean HE_resets_AS;	/* see termcap.c */
@@ -818,8 +820,9 @@ void clear_nhwindow(winid window)
 	break;
     case NHW_MAP:
 	/* cheap -- clear the whole thing and tell nethack to redraw botl */
-	botlx = 1;
-	/* fall into ... */
+	clear_screen();
+	tty_update_status(&cached_status);
+	break;
     case NHW_BASE:
 	clear_screen();
 	break;
@@ -1573,8 +1576,8 @@ void tty_putstr(winid window, int attr, const char *str)
 
     case NHW_STATUS:
 	ob = &cw->data[cw->cury][j = cw->curx];
-	if(botlx) *ob = 0;
-	if(!cw->cury && (int)strlen(str) >= CO) {
+	*ob = 0;
+	if(!cw->cury && strlen(str) >= CO) {
 	    /* the characters before "St:" are unnecessary */
 	    nb = index(str, ':');
 	    if(nb && nb > str+2)
@@ -1583,11 +1586,9 @@ void tty_putstr(winid window, int attr, const char *str)
 	nb = str;
 	for(i = cw->curx+1, n0 = cw->cols; i < n0; i++, nb++) {
 	    if(!*nb) {
-		if(*ob || botlx) {
-		    /* last char printed may be in middle of line */
-		    move_cursor(WIN_STATUS, i, cw->cury);
-		    cl_end();
-		}
+		/* last char printed may be in middle of line */
+		move_cursor(WIN_STATUS, i, cw->cury);
+		cl_end();
 		break;
 	    }
 	    if(*ob != *nb)
@@ -2101,8 +2102,7 @@ void docorner(int xmin, int ymax)
     end_glyphout();
     if (ymax >= (int) wins[WIN_STATUS]->offy) {
 					/* we have wrecked the bottom line */
-	botlx = 1;
-	bot();
+	tty_update_status(&cached_status);
     }
 }
 
@@ -2549,6 +2549,9 @@ static void bot2(struct nh_status_info *s)
 
 void tty_update_status(struct nh_status_info *status)
 {
+    if (status != &cached_status)
+	memcpy(&cached_status, status, sizeof(*status));
+    
     bot1(status);
     bot2(status);
 }

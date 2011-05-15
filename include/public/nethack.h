@@ -30,8 +30,6 @@ extern EXPORT struct instance_flags iflags;
 
 /* window stuff */
 extern EXPORT char toplines[];
-extern EXPORT boolean botl;
-extern EXPORT boolean botlx;
 
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
@@ -40,9 +38,6 @@ extern EXPORT void nh_init(int pid, struct window_procs *, char **paths);
 extern EXPORT void nh_start_game(char*, void(*)(void));
 extern EXPORT void moveloop(void);
 extern EXPORT const char **nh_get_copyright_banner(void);
-
-/* botl.c */
-extern EXPORT void bot(void);
 
 /* cmd.c */
 extern EXPORT char readchar(void);

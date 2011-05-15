@@ -30,7 +30,6 @@ extern winid WIN_MESSAGE;
 extern winid WIN_STATUS;
 extern winid WIN_MAP;
 
-
 /* attribute types for putstr; the same as the ANSI value, for convenience */
 #define ATR_NONE    0
 #define ATR_BOLD    1
@@ -132,6 +131,8 @@ extern struct DisplayDesc *ttyDisplay;	/* the tty display descriptor */
 
 extern char morc;		/* last character typed to xwaitforspace */
 extern char defmorestr[];	/* default --more-- prompt */
+
+extern struct nh_status_info cached_status;
 
 /* port specific external function references */
 
