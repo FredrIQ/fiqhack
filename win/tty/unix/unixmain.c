@@ -221,9 +221,9 @@ static void whoami(char *name)
 	if (*name)
 	    return;
 	
-	if(/* !*name && */ (s = nh_getenv("USER")))
+	if(/* !*name && */ (s = getenv("USER")))
 		strncpy(name, s, PL_NSIZ);
-	if(!*name && (s = nh_getenv("LOGNAME")))
+	if(!*name && (s = getenv("LOGNAME")))
 		strncpy(name, s, PL_NSIZ);
 	if(!*name && (s = getlogin()))
 		strncpy(name, s, PL_NSIZ);

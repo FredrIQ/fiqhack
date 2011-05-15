@@ -77,7 +77,6 @@ extern EXPORT int strncmpi(const char *,const char *,int);
 extern EXPORT void mapglyph(int, int *, int *, unsigned *, int, int);
 
 /* options.c */
-extern EXPORT char *nh_getenv(const char *);
 extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);
 extern EXPORT struct nh_option_desc *nh_get_options(boolean birth);
 extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
