@@ -39,9 +39,6 @@ extern EXPORT void nh_start_game(char*, void(*)(void));
 extern EXPORT void moveloop(void);
 extern EXPORT const char **nh_get_copyright_banner(void);
 
-/* cmd.c */
-extern EXPORT char readchar(void);
-
 /* display.c */
 extern EXPORT void row_refresh(int,int,int);
 extern EXPORT void swallowed(int);
@@ -108,13 +105,7 @@ extern EXPORT void nh_set_random_player(void);
 extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int);
 extern EXPORT char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 
-/* rip.c */
-// extern EXPORT void genl_outrip(winid,int);
-
 /* topten.c */
 extern EXPORT void prscore(char*,int,char**);
-
-/* windows.c */
-extern EXPORT char genl_message_menu(char,int,const char *);
 
 #endif

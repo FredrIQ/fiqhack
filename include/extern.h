@@ -131,6 +131,7 @@ extern void enlightenment(int);
 extern void show_conduct(int);
 extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);
+extern char readchar(void);
 extern int movecmd(char);
 extern int getdir(const char *);
 extern void confdir(void);

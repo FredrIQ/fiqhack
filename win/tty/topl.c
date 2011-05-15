@@ -335,12 +335,12 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	    pline("%s", prompt);
 	} else {
 	    pline("%s ", query);
-	    q = readchar();
+	    q = tty_nhgetch();
 	    goto clean_up;
 	}
 
 	do {	/* loop until we get valid input */
-	    q = tolower(readchar());
+	    q = tolower(tty_nhgetch());
 	    if (q == '\020') { /* ctrl-P */
 		if (iflags.prevmsg_window != 's') {
 		    int sav = ttyDisplay->inread;
@@ -398,7 +398,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		    q = '#';
 		}
 		do {	/* loop until we get a non-digit */
-		    z = tolower(readchar());
+		    z = tolower(tty_nhgetch());
 		    if (isdigit(z)) {
 			value = (10 * value) + (z - '0');
 			if (value < 0) break;	/* overflow: try again */

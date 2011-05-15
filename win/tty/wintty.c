@@ -247,7 +247,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    echoline = wins[BASE_WINDOW]->cury;
 	    tty_putstr(BASE_WINDOW, 0, prompt);
 	    do {
-		pick4u = tolower(readchar());
+		pick4u = tolower(tty_nhgetch());
 		if (index(quitchars, pick4u)) pick4u = 'y';
 	    } while(!index("ynq", pick4u));
 	    if ((int)strlen(prompt) + 1 < CO) {
