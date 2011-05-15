@@ -46,7 +46,7 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 }
 
 
-void nh_start_game(char *name, void (*getlock)(void))
+void nh_start_game(char *name, int locknum)
 {
 	int fd;
 	
@@ -73,7 +73,7 @@ void nh_start_game(char *name, void (*getlock)(void))
 		signal(SIGINT,SIG_IGN);
 	}
 	sprintf(lock, "%d%s", (int)getuid(), plname);
-	getlock();
+	getlock(locknum);
 
 	dlb_init();	/* must be before newgame() */
 

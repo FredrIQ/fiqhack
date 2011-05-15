@@ -6,7 +6,7 @@ set (LIBNETHACK_SRC
     dlb.c      do.c       dog.c      dogmove.c  dokick.c  do_name.c  dothrow.c
     do_wear.c  drawing.c  dungeon.c  eat.c      end.c     engrave.c  exper.c
     explode.c  extralev.c files.c    fountain.c hack.c    hacklib.c  invent.c
-    light.c    lock.c     makemon.c  mapglyph.c mcastu.c  mhitm.c    mhitu.c
+    light.c    lock.c     locking.c  makemon.c  mapglyph.c mcastu.c  mhitm.c    mhitu.c
     minion.c   mklev.c    mkmap.c    mkmaze.c   mkobj.c   mkroom.c   mon.c
     mondata.c  monmove.c  monst.c    mplayer.c  mthrowu.c muse.c     music.c
     objects.c  objnam.c   o_init.c   options.c  pager.c   pickup.c   pline.c

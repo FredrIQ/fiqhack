@@ -549,6 +549,12 @@ extern boolean recover_savefile(void);
 #ifdef HOLD_LOCKFILE_OPEN
 extern void really_close(void);
 #endif
+extern void regularize(char *);
+extern const char *fqname(const char *, int, int);
+extern void check_recordfile(const char *);
+extern void set_levelfile_name(char *,int);
+extern boolean lock_file(const char *,int,int);
+extern void unlock_file(const char *);
 
 /* ### fountain.c ### */
 
@@ -732,6 +738,10 @@ extern boolean boxlock(struct obj *,struct obj *);
 extern boolean doorlock(struct obj *,int,int);
 extern int doopen(void);
 extern int doclose(void);
+
+/* ### locking.c ### */
+
+extern void getlock(int locknum);
 
 /* ### makemon.c ### */
 

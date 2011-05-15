@@ -307,6 +307,8 @@ extern boolean botlx;
 extern char *fqn_prefix[PREFIX_COUNT];
 extern char *fqn_prefix_names[PREFIX_COUNT];
 
+extern char lock[];
+
 #ifdef AUTOPICKUP_EXCEPTIONS
 struct autopickup_exception {
 	char *pattern;

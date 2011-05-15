@@ -75,6 +75,15 @@ EXPORT int main(int argc, char *argv[])
 {
 	char **gamepaths;
 
+	/* idea from rpick%ucqais@uccba.uc.edu
+	 * prevent automated rerolling of characters
+	 * test input (fd0) so that tee'ing output to get a screen dump still
+	 * works
+	 * also incidentally prevents development of any hack-o-matic programs
+	 */
+	if (!isatty(0))
+	    error("You must play from a terminal.");
+
 	hackpid = getpid();
 	umask(0777 & ~FCMASK);
 	
@@ -109,7 +118,7 @@ EXPORT int main(int argc, char *argv[])
 	while (!plname[0])
 	    tty_askname(plname);
 	
-	nh_start_game(plname, getlock);
+	nh_start_game(plname, locknum);
 
 	moveloop();
 	exit(EXIT_SUCCESS);

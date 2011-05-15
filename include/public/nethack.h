@@ -22,8 +22,6 @@
 
 extern EXPORT struct sinfo program_state;
 
-extern EXPORT char lock[];
-
 extern EXPORT long yn_number;
 
 extern EXPORT struct instance_flags iflags;
@@ -35,7 +33,7 @@ extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.
 
 /* allmain.c */
 extern EXPORT void nh_init(int pid, struct window_procs *, char **paths);
-extern EXPORT void nh_start_game(char*, void(*)(void));
+extern EXPORT void nh_start_game(char*, int);
 extern EXPORT void moveloop(void);
 extern EXPORT const char **nh_get_copyright_banner(void);
 
@@ -45,16 +43,8 @@ extern EXPORT void swallowed(int);
 extern EXPORT void docrt(void);
 extern EXPORT void switch_graphics(int);
 
-/* end.c */
-
 /* files.c */
 extern EXPORT void clearlocks(void);
-extern EXPORT void check_recordfile(const char *);
-extern EXPORT void set_levelfile_name(char *,int);
-extern EXPORT const char *fqname(const char *, int, int);
-extern EXPORT boolean lock_file(const char *,int,int);
-extern EXPORT void unlock_file(const char *);
-extern EXPORT void regularize(char *);
 
 /* hack.c */
 extern EXPORT boolean check_swallowed(void);
