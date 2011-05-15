@@ -121,9 +121,6 @@ struct instance_flags {
 /*
  * Window capability support.
  */
-	boolean wc_hilite_pet;		/* hilight pets                        */
-	boolean wc_eight_bit_input;	/* allow eight bit input               */
-
 	boolean  cmdassist;	/* provide detailed assistance for some commands */
 	/* Items which belong in flags, but are here to allow save compatibility */
 	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */

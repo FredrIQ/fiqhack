@@ -100,10 +100,8 @@ struct nh_option_desc options[] = {
     {"checkpoint",	"",	OPTTYPE_BOOL, { VTRUE }},
     {"cmdassist",	"give help for errors on direction & other commands",	OPTTYPE_BOOL, { VTRUE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
-    {"eight_bit_tty",	"send 8-bit characters straight to terminal",	OPTTYPE_BOOL, { VFALSE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
     {"help",		"print all available info when using the / command",	OPTTYPE_BOOL, { VTRUE }},
-    {"hilite_pet",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"ignintr",		"ignore interrupt signal, including breaks",	OPTTYPE_BOOL, { VFALSE }},
     {"legacy",		"print introductory message",	OPTTYPE_BOOL, { VTRUE }},
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
@@ -180,11 +178,9 @@ static struct nh_boolopt_map boolopt_map[] = {
 #endif
 	{"cmdassist", &iflags.cmdassist},
 	{"confirm",&flags.confirm},
-	{"eight_bit_tty", &iflags.wc_eight_bit_input},	/*WC*/
 	{"female", &flags.female},
 	{"fixinv", &flags.invlet_constant},
 	{"help", &flags.help},
-	{"hilite_pet",    &iflags.wc_hilite_pet},	/*WC*/
 	{"ignintr", &flags.ignintr},
 	{"legacy", &flags.legacy},
 	{"lit_corridor", &flags.lit_corridor},

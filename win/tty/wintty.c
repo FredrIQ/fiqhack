@@ -2147,7 +2147,7 @@ void g_putch(int in_ch)
     char ch = (char)in_ch;
 
 # if !defined(NO_TERMS)
-    if (iflags.IBMgraphics || iflags.wc_eight_bit_input) {
+    if (iflags.IBMgraphics || ui_flags.eight_bit_input) {
 	/* IBM-compatible displays don't need other stuff */
 	putchar(ch);
     } else if (ch & 0x80) {
@@ -2215,7 +2215,7 @@ void tty_print_glyph(xchar x, xchar y, int glyph)
     }
 
     /* must be after color check; term_end_color may turn off inverse too */
-    if (((special & MG_PET) && iflags.wc_hilite_pet) ||
+    if (((special & MG_PET) && ui_flags.hilite_pet) ||
 	((special & MG_DETECT) && ui_flags.use_inverse)) {
 	term_start_attr(ATR_INVERSE);
 	reverse_on = TRUE;

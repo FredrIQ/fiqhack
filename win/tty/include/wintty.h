@@ -99,7 +99,9 @@ struct DisplayDesc {
 
 struct interface_flags {
 	boolean  cbreak;	/* in cbreak mode, rogue format */    
+	boolean  eight_bit_input;/* allow eight bit input               */
 	boolean  extmenu;	/* extended commands use menu interface */
+	boolean  hilite_pet;	/* hilight pets                        */
 	unsigned msg_history;	/* hint: # of top lines to save */
 	char     prevmsg_window;/* type of old message window to use */
 	boolean  showexp;	/* show experience points */
