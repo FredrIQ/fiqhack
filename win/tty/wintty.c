@@ -663,9 +663,9 @@ winid tty_create_nhwindow(int type)
 	/* message window, 1 line long, very wide, top of screen */
 	newwin->offx = newwin->offy = 0;
 	/* sanity check */
-	if(iflags.msg_history < 20) iflags.msg_history = 20;
-	else if(iflags.msg_history > 60) iflags.msg_history = 60;
-	newwin->maxrow = newwin->rows = iflags.msg_history;
+	if(ui_flags.msg_history < 20) ui_flags.msg_history = 20;
+	else if(ui_flags.msg_history > 60) ui_flags.msg_history = 60;
+	newwin->maxrow = newwin->rows = ui_flags.msg_history;
 	newwin->maxcol = newwin->cols = 0;
 	break;
     case NHW_STATUS:

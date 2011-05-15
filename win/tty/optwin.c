@@ -47,6 +47,7 @@ struct nh_option_desc tty_options[] = {
     
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)ATR_INVERSE}},
     {"msg_window", "the type of message window required", OPTTYPE_ENUM, {(void*)'s'}},
+    {"msghistory", "number of top line messages to save", OPTTYPE_INT, {(void*)20}},
     {"hackdir", "game data directory", OPTTYPE_STRING, {NULL}},
     {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
@@ -71,6 +72,9 @@ boolean option_change_callback(struct nh_option_desc *option)
 	else if (!strcmp(option->name, "playground")) {
 	    var_playground = option->value.s;
 	    tty_print_message("This option will take effect when the game is restarted");
+	}
+	else if(!strcmp(option->name, "msghistory")) {
+	    ui_flags.msg_history = option->value.i;
 	}
 	else if(!strcmp(option->name, "msg_window")) {
 	    ui_flags.prevmsg_window = (char)option->value.e;
@@ -100,6 +104,7 @@ void tty_init_options(void)
 {
 	find_option("menu_headings")->e = menu_headings_spec;
 	find_option("msg_window")->e = msg_window_spec;
+	find_option("msghistory")->i.max = 1000; /* arbitrary value */
 	
 	nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
 	read_ui_config();

@@ -137,7 +137,6 @@ struct nh_option_desc options[] = {
     {"disclose_conduct", "disclose your conduct at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
-    {"msghistory", "number of top line messages to save", OPTTYPE_INT, {(void*)20}},
     {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"\")[%?+!=/(*`0_"}},
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
     {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
@@ -321,7 +320,6 @@ void initoptions(void)
 	find_option(options, "disclose_conduct")->e = disclose_spec;
 	find_option(options, "fruit")->s.maxlen = PL_FSIZ;
 	find_option(options, "menustyle")->e = menustyle_spec;
-	find_option(options, "msghistory")->i.max = 100000; /* arbitrary value */
 	find_option(options, "pickup_burden")->e = pickup_burden_spec;
 	find_option(options, "pickup_types")->s.maxlen = MAXOCLASSES;
 	find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
@@ -575,9 +573,6 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	}
 	else if(!strcmp("menustyle", option->name)) {
 		flags.menu_style = option->value.e;
-	}
-	else if(!strcmp("msghistory", option->name)) {
-		iflags.msg_history = option->value.i;
 	}
 	else if(!strcmp("packorder", option->name)) {
 		if (!change_inv_order(option->value.s))
