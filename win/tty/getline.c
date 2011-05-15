@@ -38,6 +38,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 			      getlin_hook_proc hook, void *hook_proc_arg)
 {
 	char *obufp = bufp;
+	char qbuf[BUFSZ];
 	int c;
 	struct WinDesc *cw = wins[WIN_MESSAGE];
 	boolean doprev = 0;
@@ -46,7 +47,8 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 	cw->flags &= ~WIN_STOP;
 	ttyDisplay->toplin = 3; /* special prompt state */
 	ttyDisplay->inread++;
-	pline("%s ", query);
+	sprintf(qbuf, "%s ", query);
+	tty_putstr(WIN_MESSAGE, 0, qbuf);
 	*obufp = 0;
 	for(;;) {
 		fflush(stdout);
@@ -323,12 +325,14 @@ int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen)
 	    return -1;
 
 	for (i = 0; i < listlen; i++)
-		if (!strcmp(buf, namelist[i])) break;
+	    if (!strcmp(buf, namelist[i])) break;
 
 
 	if (namelist[i] == NULL) {
-		pline("%s: unknown extended command.", buf);
-		i = -1;
+	    char msg[BUFSZ];
+	    sprintf(msg, "%s: unknown extended command.", buf);
+	    tty_putstr(WIN_MESSAGE, 0, msg);
+	    i = -1;
 	}
 
 	return i;

@@ -330,9 +330,11 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	    if ((rb = index(respbuf, '\033')) != 0) *rb = '\0';
 	    sprintf(prompt, "%s [%s] ", query, respbuf);
 	    if (def) sprintf(prompt + strlen(prompt), "(%c) ", def);
-	    pline("%s", prompt);
+	    tty_print_message(prompt);
 	} else {
-	    pline("%s ", query);
+	    char qbuf[BUFSZ];
+	    sprintf(qbuf, "%s ", query);
+	    tty_print_message(qbuf);
 	    q = tty_nhgetch();
 	    goto clean_up;
 	}

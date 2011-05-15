@@ -1179,6 +1179,7 @@ extern boolean is_autopickup_exception(struct obj *, boolean);
 
 /* ### pline.c ### */
 
+extern void pline(const char *,...);
 extern void impossible(const char *,...);
 extern void Norep(const char *,...);
 extern void free_youbuf(void);

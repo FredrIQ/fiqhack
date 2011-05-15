@@ -2046,7 +2046,7 @@ char tty_message_menu(char let, int how, const char *mesg)
 {
     /* "menu" without selection; use ordinary pline, no more() */
     if (how == PICK_NONE) {
-	pline("%s", mesg);
+	tty_print_message(mesg);
 	return 0;
     }
 
