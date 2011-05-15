@@ -39,6 +39,7 @@ static struct nh_enum_option msg_window_spec = {msg_window_list, listlen(msg_win
 #define VTRUE (void*)TRUE
 
 struct nh_option_desc tty_options[] = {
+    {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
     {"showscore", "show your score in the status line", OPTTYPE_BOOL, {FALSE}},
     {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
@@ -54,6 +55,7 @@ struct nh_option_desc tty_options[] = {
 };
 
 struct nh_boolopt_map boolopt_map[] = {
+    {"extmenu", &ui_flags.extmenu},
     {"showexp", &ui_flags.showexp},
     {"showscore", &ui_flags.showscore},
     {"standout", &ui_flags.standout},

@@ -332,7 +332,7 @@ int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen)
 	char buf[BUFSZ];
 	struct extcmd_hook_args hpa = {namelist, desclist, listlen};
 
-	if (iflags.extmenu)
+	if (ui_flags.extmenu)
 	    return extcmd_via_menu(namelist, desclist, listlen);
 	/* maybe a runtime option? */
 	hooked_tty_getlin("#", buf, ext_cmd_getlin_hook, &hpa);

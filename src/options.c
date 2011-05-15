@@ -101,7 +101,6 @@ struct nh_option_desc options[] = {
     {"cmdassist",	"give help for errors on direction & other commands",	OPTTYPE_BOOL, { VTRUE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"eight_bit_tty",	"send 8-bit characters straight to terminal",	OPTTYPE_BOOL, { VFALSE }},
-    {"extmenu",		"use a menu for selecting extended commands (#)",	OPTTYPE_BOOL, { VFALSE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
     {"help",		"print all available info when using the / command",	OPTTYPE_BOOL, { VTRUE }},
     {"hilite_pet",	"",	OPTTYPE_BOOL, { VFALSE }},
@@ -182,7 +181,6 @@ static struct nh_boolopt_map boolopt_map[] = {
 	{"cmdassist", &iflags.cmdassist},
 	{"confirm",&flags.confirm},
 	{"eight_bit_tty", &iflags.wc_eight_bit_input},	/*WC*/
-	{"extmenu", &iflags.extmenu},
 	{"female", &flags.female},
 	{"fixinv", &flags.invlet_constant},
 	{"help", &flags.help},

@@ -118,8 +118,6 @@ struct instance_flags {
 	boolean  sanity_check;	/* run sanity checks */
 	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
 
-	boolean  extmenu;	/* extended commands use menu interface */
-
 /*
  * Window capability support.
  */

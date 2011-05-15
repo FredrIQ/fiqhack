@@ -134,7 +134,7 @@ void gettty(void)
 {
 	erase_char = '\b';
 	kill_char = 21;		/* cntl-U */
-	iflags.cbreak = TRUE;
+	ui_flags.cbreak = TRUE;
 	init_ttycolor();
 }
 
