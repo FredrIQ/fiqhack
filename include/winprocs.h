@@ -44,10 +44,6 @@ extern void nh_delay_output(void);
 #define number_pad (*windowprocs.win_number_pad)
 #define delay_output nh_delay_output
 
-/* other defs that really should go away (they're tty specific) */
-#define start_screen (*windowprocs.win_start_screen)
-#define end_screen (*windowprocs.win_end_screen)
-
 #define outrip (*windowprocs.win_outrip)
 
 

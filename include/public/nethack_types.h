@@ -85,10 +85,6 @@ struct window_procs {
     void (*win_number_pad)(int);
     void (*win_delay_output)(void);
 
-    /* other defs that really should go away (they're tty specific) */
-    void (*win_start_screen)(void);
-    void (*win_end_screen)(void);
-
     void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
 };
 

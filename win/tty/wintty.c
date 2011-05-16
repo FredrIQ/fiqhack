@@ -52,10 +52,6 @@ struct window_procs tty_procs = {
     tty_get_ext_cmd,
     tty_number_pad,
     tty_delay_output,
-
-    /* other defs that really should go away (they're tty specific) */
-    tty_start_screen,
-    tty_end_screen,
     tty_outrip,
 };
 

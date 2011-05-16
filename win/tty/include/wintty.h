@@ -254,7 +254,6 @@ extern void introff(void);
 
 extern int base_nhgetch(void);
 
-/* other defs that really should go away (they're tty specific) */
 extern void tty_start_screen(void);
 extern void tty_end_screen(void);
 
