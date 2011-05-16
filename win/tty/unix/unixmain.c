@@ -119,7 +119,8 @@ EXPORT int main(int argc, char *argv[])
 	while (!plname[0])
 	    tty_askname(plname);
 	
-	nh_start_game(plname, locknum, playmode);
+	if(!nh_restore_save(plname, locknum, playmode))
+	    nh_start_game(plname, locknum, playmode);
 
 	moveloop();
 	exit(EXIT_SUCCESS);

@@ -43,42 +43,6 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 	
 	program_state.game_started = 0;
 	initoptions();
-}
-
-
-void nh_start_game(char *name, int locknum, int playmode)
-{
-	int fd;
-	
-	if (playmode == MODE_EXPLORE)
-	    discover = TRUE;
-	else if (playmode == MODE_WIZARD)
-	    wizard = TRUE;
-	
-	if (name && name[0])
-	    strcpy(plname, name);
-	/*
-	 * It seems you really want to play.
-	 */
-	u.uhp = 1;	/* prevent RIP on early quits */
-	signal(SIGHUP, (SIG_RET_TYPE) hangup);
-#ifdef SIGXCPU
-	signal(SIGXCPU, (SIG_RET_TYPE) hangup);
-#endif
-
-	if (wizard)
-		strcpy(plname, "wizard");
-
-	if(!wizard) {
-		/*
-		 * check for multiple games under the same name
-		 * (if !locknum) or check max nr of players (otherwise)
-		 */
-		signal(SIGQUIT,SIG_IGN);
-		signal(SIGINT,SIG_IGN);
-	}
-	sprintf(lock, "%d%s", (int)getuid(), plname);
-	getlock(locknum);
 
 	dlb_init();	/* must be before newgame() */
 
@@ -98,55 +62,110 @@ void nh_start_game(char *name, int locknum, int playmode)
 	 *  new game or before a level restore on a saved game.
 	 */
 	vision_init();
+	
+	u.uhp = 1;	/* prevent RIP on early quits */
+	signal(SIGHUP, (SIG_RET_TYPE) hangup);
+#ifdef SIGXCPU
+	signal(SIGXCPU, (SIG_RET_TYPE) hangup);
+#endif
+}
+
+
+static void startup_common(char *name, int locknum, int playmode)
+{
+	if (playmode == MODE_EXPLORE)
+	    discover = TRUE;
+	else if (playmode == MODE_WIZARD)
+	    wizard = TRUE;
+	
+	if (name && name[0])
+	    strcpy(plname, name);
+
+	if (wizard)
+		strcpy(plname, "wizard");
+
+	if(!wizard) {
+		/*
+		 * check for multiple games under the same name
+		 * (if !locknum) or check max nr of players (otherwise)
+		 */
+		signal(SIGQUIT,SIG_IGN);
+		signal(SIGINT,SIG_IGN);
+	}
+	sprintf(lock, "%d%s", (int)getuid(), plname);
+	getlock(locknum);
 
 	display_gamewindows();
+}
+
+
+boolean nh_restore_save(char *name, int locknum, int playmode)
+{
+	int fd;
+	
+	startup_common(name, locknum, playmode);
+	
+	fd = restore_saved_game();
+	if (fd < 0)
+	    goto not_recovered;
+	    
+	/* Since wizard is actually flags.debug, restoring might
+	    * overwrite it.
+	    */
+	boolean remember_wiz_mode = wizard;
+	const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
+
+	chmod(fq_save,0);	/* disallow parallel restores */
+	signal(SIGINT, (SIG_RET_TYPE) done1);
+#ifdef NEWS
+	if(iflags2.news) {
+	    display_file(NEWS, FALSE);
+	    iflags2.news = FALSE; /* in case dorecover() fails */
+	}
+#endif
+	pline("Restoring save file...");
+	mark_synch();	/* flush output */
+	if(!dorecover(fd))
+		goto not_recovered;
+	if(!wizard && remember_wiz_mode) wizard = TRUE;
+	check_special_room(FALSE);
+	wd_message();
+
+	if (discover || wizard) {
+		if(yn("Do you want to keep the save file?") == 'n')
+		    delete_savefile();
+		else {
+		    chmod(fq_save,FCMASK); /* back to readable */
+		}
+	}
+	flags.move = 0;
 	
 	program_state.game_started = 1;
-
-	if ((fd = restore_saved_game()) >= 0) {
-		/* Since wizard is actually flags.debug, restoring might
-		 * overwrite it.
-		 */
-		boolean remember_wiz_mode = wizard;
-		const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
-
-		chmod(fq_save,0);	/* disallow parallel restores */
-		signal(SIGINT, (SIG_RET_TYPE) done1);
-#ifdef NEWS
-		if(iflags2.news) {
-		    display_file(NEWS, FALSE);
-		    iflags2.news = FALSE; /* in case dorecover() fails */
-		}
-#endif
-		pline("Restoring save file...");
-		mark_synch();	/* flush output */
-		if(!dorecover(fd))
-			goto not_recovered;
-		if(!wizard && remember_wiz_mode) wizard = TRUE;
-		check_special_room(FALSE);
-		wd_message();
-
-		if (discover || wizard) {
-			if(yn("Do you want to keep the save file?") == 'n')
-			    delete_savefile();
-			else {
-			    chmod(fq_save,FCMASK); /* back to readable */
-			}
-		}
-		flags.move = 0;
-	} else {
+	return TRUE;
 not_recovered:
-		/* prevent an unnecessary prompt in player selection */
-		rigid_role_checks();
-		player_selection(flags.initrole, flags.initrace, flags.initgend,
-		    flags.initalign, flags.randomall);
-		newgame();
-		wd_message();
+	
+	clearlocks();
+	program_state.game_started = 0;
+	return FALSE;
+}
 
-		flags.move = 0;
-		set_wear();
-		pickup(1);
-	}
+
+void nh_start_game(char *name, int locknum, int playmode)
+{
+	startup_common(name, locknum, playmode);
+	
+	/* prevent an unnecessary prompt in player selection */
+	rigid_role_checks();
+	player_selection(flags.initrole, flags.initrace, flags.initgend,
+	    flags.initalign, flags.randomall);
+	newgame();
+	wd_message();
+
+	flags.move = 0;
+	set_wear();
+	pickup(1);
+	
+	program_state.game_started = 1;
 }
 
 

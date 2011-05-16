@@ -28,7 +28,8 @@ extern EXPORT struct instance_flags2 iflags2;
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
 /* allmain.c */
-extern EXPORT void nh_init(int pid, struct window_procs *, char **paths);
+extern EXPORT void nh_init(int, struct window_procs *, char **);
+extern EXPORT boolean nh_restore_save(char *, int, int);
 extern EXPORT void nh_start_game(char*, int, int);
 extern EXPORT void moveloop(void);
 extern EXPORT const char **nh_get_copyright_banner(void);
