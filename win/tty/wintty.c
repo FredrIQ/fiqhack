@@ -26,8 +26,6 @@ struct window_procs tty_procs = {
     tty_player_selection,
     tty_get_nh_event,
     tty_exit_nhwindows,
-    tty_suspend_nhwindows,
-    tty_resume_nhwindows,
     tty_create_game_windows,
     tty_destroy_game_windows,
     tty_clear_nhwindow,
@@ -583,13 +581,6 @@ void tty_suspend_nhwindows(const char *str)
 {
     settty(str);		/* calls end_screen, perhaps raw_print */
     if (!str) tty_raw_print("");	/* calls fflush(stdout) */
-}
-
-void tty_resume_nhwindows(void)
-{
-    gettty();
-    setftty();			/* calls start_screen */
-    docrt();
 }
 
 void tty_exit_nhwindows(const char *str)
