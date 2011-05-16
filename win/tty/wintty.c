@@ -64,6 +64,7 @@ struct tc_gbl_data tc_gbl_data = { 0,0, 0,0 };	/* AS,AE, LI,CO */
 winid WIN_MESSAGE = WIN_ERR;
 winid WIN_STATUS = WIN_ERR;
 winid WIN_MAP = WIN_ERR;
+char toplines[TBUFSZ];
 
 static int maxwin = 0;			/* number of windows in use */
 winid BASE_WINDOW;

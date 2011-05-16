@@ -271,6 +271,7 @@ extern char mapped_menu_cmds[];
 extern int locknum;
 extern const char quitchars[];
 extern const char ynchars[];
+extern char toplines[];
 extern void getlock(void);
 
 /* ioctl.c */

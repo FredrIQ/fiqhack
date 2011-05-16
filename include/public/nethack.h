@@ -24,14 +24,8 @@
 # endif
 #endif
 
-
 extern EXPORT long yn_number;
-
 extern EXPORT struct instance_flags2 iflags2;
-
-/* window stuff */
-extern EXPORT char toplines[];
-
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
 /* allmain.c */

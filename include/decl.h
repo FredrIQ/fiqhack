@@ -304,14 +304,6 @@ extern const char *materialnm[];
 extern boolean vision_full_recalc;	/* TRUE if need vision recalc */
 extern char **viz_array;		/* could see/in sight row pointers */
 
-/* Window system stuff */
-#ifndef TCAP_H
-#define AS tc_gbl_data.tc_AS
-#define AE tc_gbl_data.tc_AE
-#define LI tc_gbl_data.tc_LI
-#define CO tc_gbl_data.tc_CO
-#endif
-
 /* xxxexplain[] is in drawing.c */
 extern const char * const monexplain[], invisexplain[], * const objexplain[], * const oclass_names[];
 

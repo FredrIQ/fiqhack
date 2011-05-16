@@ -228,8 +228,6 @@ const char *materialnm[] = {
 boolean vision_full_recalc = 0;
 char	 **viz_array = 0;/* used in cansee() and couldsee() macros */
 
-char toplines[TBUFSZ];
-
 char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,
 				NULL, NULL, NULL, NULL };
 
