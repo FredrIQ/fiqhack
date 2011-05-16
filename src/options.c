@@ -147,6 +147,7 @@ struct nh_option_desc options[] = {
 
 
 struct nh_option_desc birth_options[] = {
+    { "elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL, { VTRUE }},
     { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
@@ -209,6 +210,7 @@ static struct nh_boolopt_map boolopt_map[] = {
 
 	/* birth options */
 	{"scores_own", &flags.end_own},
+	{"elbereth", &flags.elbereth_enabled},
 	{NULL, NULL}
 };
 
@@ -383,6 +385,34 @@ void initoptions(void)
 	}
 
 	return;
+}
+
+
+/* sync_options: fix up option values after dorecover()
+ * after a save is restored, the stored option values might not reflect the
+ * actual values in the associated data structures.
+ */
+void sync_options(void)
+{
+	int i, j;
+	
+	/* step 1: update birth option fields to match the loaded values */
+	for (i = 0; birth_options[i].name; i++) {
+	    /* doing this automatically is only possible for booleans */
+	    if (birth_options[i].type == OPTTYPE_BOOL) {
+		boolean *bvar = NULL;
+		
+		for (j = 0; boolopt_map[j].optname && !bvar; j++)
+			if (!strcmp(birth_options[i].name, boolopt_map[j].optname))
+				bvar = boolopt_map[j].addr;
+			
+		birth_options[i].value.b = *bvar;
+	    }
+	}
+	
+	/* step 2: re-apply all game options */
+	for (i = 0; options[i].name; i++)
+	    nh_set_option(options[i].name, options[i].value, FALSE);
 }
 
 

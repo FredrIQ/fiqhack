@@ -33,9 +33,7 @@ struct u_event {
 
 	unsigned invoked:1;		/* invoked Gate to the Sanctum level */
 	unsigned gehennom_entered:1;	/* entered Gehennom via Valley */
-#ifdef ELBERETH
 	unsigned uhand_of_elbereth:2;	/* became Hand of Elbereth */
-#endif
 	unsigned udemigod:1;		/* killed the wiz */
 	unsigned ascended:1;		/* has offered the Amulet */
 };

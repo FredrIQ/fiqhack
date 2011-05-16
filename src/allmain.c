@@ -140,6 +140,8 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
 	}
 	flags.move = 0;
 	
+	sync_options();
+	
 	program_state.game_started = 1;
 	return TRUE;
 not_recovered:

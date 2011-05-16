@@ -103,9 +103,7 @@ boolean onscary(int x, int y, struct monst *mtmp)
 		return FALSE;
 
 	return (boolean)(sobj_at(SCR_SCARE_MONSTER, x, y)
-#ifdef ELBERETH
-			 || sengr_at("Elbereth", x, y)
-#endif
+			 || (sengr_at("Elbereth", x, y) && flags.elbereth_enabled)
 			 || (mtmp->data->mlet == S_VAMPIRE
 			     && IS_ALTAR(levl[x][y].typ)));
 }

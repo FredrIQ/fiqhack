@@ -304,9 +304,6 @@ static void make_version(void)
 #ifdef INSURANCE
 			| (1L << 18)
 #endif
-#ifdef ELBERETH
-			| (1L << 19)
-#endif
 			);
 	/*
 	 * Value used for object & monster sanity check.
@@ -430,9 +427,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef DLB
 		"data librarian",
-#endif
-#ifdef ELBERETH
-		"Elbereth",
 #endif
 #ifdef GOLDOBJ
 		"gold object in inventories",
@@ -638,9 +632,6 @@ static boolean h_filter(char *line)
     if (*line == '#') return TRUE;	/* ignore comment lines */
     if (sscanf(line, "----- %s", tag) == 1) {
 	skip = FALSE;
-#ifndef ELBERETH
-	if (!strcmp(tag, "ELBERETH")) skip = TRUE;
-#endif
     } else if (skip && !strncmp(line, "-----", 5))
 	skip = FALSE;
     return skip;

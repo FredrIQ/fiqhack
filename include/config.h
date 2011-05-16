@@ -95,8 +95,6 @@
 #define KOPS		/* Keystone Kops by Scott R. Turner */
 #define SEDUCE		/* Succubi/incubi seduction, by KAA, suggested by IM */
 #define TOURIST		/* Tourist players with cameras and Hawaiian shirts */
-/* difficulty */
-#define ELBERETH	/* Engraving the E-word repels monsters */
 
 /*
  * Section 5:  EXPERIMENTAL STUFF

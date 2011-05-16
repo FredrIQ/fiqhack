@@ -113,6 +113,9 @@ struct flag {
 	int	 initalign;	/* starting alignment (index into aligns[])  */
 	int	 randomall;	/* randomly assign everything not specified */
 	int	 pantheon;	/* deity selection for priest character */
+	
+	/* birth option flags */
+	boolean  elbereth_enabled; /* should the E-word repel monsters? */
 };
 
 
