@@ -245,7 +245,9 @@ void display_options(boolean change_birth_opt)
 {
 	winid tmpwin;
 	anything any;
-	int gameoptidx, birthoptidx, ttyoptidx, pick_cnt, i;
+	int gidx_start, bidx_start, tidx_start;
+	int gidx_end, bidx_end;
+	int pick_cnt, i;
 	menu_item *pick_list;
 	struct nh_option_desc *nhoptions = nh_get_options(FALSE);
 	struct nh_option_desc *birthoptions = nh_get_options(TRUE);
@@ -256,22 +258,41 @@ void display_options(boolean change_birth_opt)
 	tmpwin = tty_create_nhwindow(NHW_MENU);
 	tty_start_menu(tmpwin);
 	
-	/* add general game options */
-	gameoptidx = 1;
 	any.a_void = NULL;
-	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
-		 "Game options:", MENU_UNSELECTED);
-	birthoptidx = menu_add_options(tmpwin, gameoptidx, nhoptions, FALSE);
+	if (!change_birth_opt) {
+	    /* add general game options */
+	    gidx_start = 1;
+	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
+		    "Game options:", MENU_UNSELECTED);
+	    gidx_end = menu_add_options(tmpwin, gidx_start, nhoptions, FALSE);
+	    
+	    /* add or display birth options */
+	    bidx_start = gidx_end;
+	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
+		    "Birth options:", MENU_UNSELECTED);
+	    bidx_end = menu_add_options(tmpwin, bidx_start, birthoptions, TRUE);
+	    
+	    tidx_start = bidx_end;
 	
-	/* add or display birth options */
-	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
-		 "Birth options:", MENU_UNSELECTED);
-	ttyoptidx = menu_add_options(tmpwin, birthoptidx, birthoptions, !change_birth_opt);
+	} else {
+	    /* add or display birth options */
+	    bidx_start = 1;
+	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
+		    "Birth options:", MENU_UNSELECTED);
+	    bidx_end = menu_add_options(tmpwin, bidx_start, birthoptions, FALSE);
+	    
+	    gidx_start = bidx_end;
+	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
+		    "Game options:", MENU_UNSELECTED);
+	    gidx_end = menu_add_options(tmpwin, gidx_start, nhoptions, FALSE);
+	    
+	    tidx_start = gidx_end;
+	}
 	
 	/* add tty-specific options */
 	tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 		 "TTY interface options:", MENU_UNSELECTED);
-	menu_add_options(tmpwin, ttyoptidx, tty_options, FALSE);
+	menu_add_options(tmpwin, tidx_start, tty_options, FALSE);
 	
 	tty_end_menu(tmpwin, "Set what options?");
 	
@@ -283,14 +304,14 @@ void display_options(boolean change_birth_opt)
 	for (i = 0; i < pick_cnt; ++i) {
 	    int idx = pick_list[i].item.a_int;
 	    
-	    if (idx < birthoptidx)
-		option = &nhoptions[idx - gameoptidx];
+	    if (gidx_start <= idx && idx < gidx_end)
+		option = &nhoptions[idx - gidx_start];
 		
-	    else if (idx < ttyoptidx)
-		option = &birthoptions[idx - birthoptidx];
+	    else if (bidx_start <= idx && idx < bidx_end)
+		option = &birthoptions[idx - bidx_start];
 		
 	    else
-		option = &tty_options[idx - ttyoptidx];
+		option = &tty_options[idx - tidx_start];
 	    
 	    get_option_value(&value, option);
 	    if (!nh_set_option(option->name, value, FALSE)) {

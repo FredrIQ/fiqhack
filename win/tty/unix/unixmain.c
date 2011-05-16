@@ -1,6 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -10,6 +11,7 @@
 #include <fcntl.h>
 #endif
 #include <unistd.h>
+#include <ctype.h>
 
 #include "nethack.h"
 #include "wintty.h"
@@ -72,6 +74,28 @@ static char** init_game_paths(void)
 }
 
 
+static void query_birth_options(void)
+{
+	char *prompt, resp = 0;
+	
+	move_cursor(BASE_WINDOW, 1, 5);
+	prompt = "Do you want to modify your birth options? [yn] ";
+	tty_putstr(BASE_WINDOW, 0, prompt);
+	
+	while (resp != 'y' && resp != 'n')
+	    resp = tolower(tty_nhgetch());
+	
+	if (resp == 'y') {
+	    display_options(TRUE);
+	    clear_screen();
+	    
+	    move_cursor(BASE_WINDOW, 1, 0);
+	    tty_putstr(BASE_WINDOW, 0, prompt);
+	}
+	putchar(resp);
+}
+
+
 EXPORT int main(int argc, char *argv[])
 {
 	char **gamepaths;
@@ -119,8 +143,10 @@ EXPORT int main(int argc, char *argv[])
 	while (!plname[0])
 	    tty_askname(plname);
 	
-	if(!nh_restore_save(plname, locknum, playmode))
+	if(!nh_restore_save(plname, locknum, playmode)) {
+	    query_birth_options();
 	    nh_start_game(plname, locknum, playmode);
+	}
 
 	moveloop();
 	exit(EXIT_SUCCESS);
