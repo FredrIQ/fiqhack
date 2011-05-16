@@ -162,12 +162,12 @@ static void process_options(int argc, char *argv[])
 			break;
 		case 'I':
 		case 'i':
-			if (!strncmpi(argv[0]+1, "IBM", 3))
+			if (!strncmp(argv[0]+1, "IBM", 3))
 				switch_graphics(IBM_GRAPHICS);
 			break;
 	    /*  case 'D': */
 		case 'd':
-			if (!strncmpi(argv[0]+1, "DEC", 3))
+			if (!strncmp(argv[0]+1, "DEC", 3))
 				switch_graphics(DEC_GRAPHICS);
 			break;
 		case 'p': /* profession (role) */

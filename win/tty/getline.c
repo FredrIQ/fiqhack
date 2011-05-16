@@ -200,7 +200,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 	    /* if we're down to one, we have our selection so get out of here */
 	    if (nchoices == 1) {
 		for (i = 0; i < listlen; i++)
-			if (!strncmpi(namelist[i], cbuf, matchlevel)) {
+			if (!strncmp(namelist[i], cbuf, matchlevel)) {
 				ret = i;
 				break;
 			}
@@ -291,7 +291,7 @@ static boolean ext_cmd_getlin_hook(char *base, void *hook_arg)
 
 	com_index = -1;
 	for (oindex = 0; oindex < hpa->listlen; oindex++) {
-		if (!strncmpi(base, hpa->namelist[oindex], strlen(base))) {
+		if (!strncmp(base, hpa->namelist[oindex], strlen(base))) {
 			if (com_index == -1)	/* no matches yet */
 			    com_index = oindex;
 			else			/* more than 1 match */

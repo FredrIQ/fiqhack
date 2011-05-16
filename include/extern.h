@@ -600,6 +600,9 @@ extern long money_cnt(struct obj *);
 
 /* ### hacklib.c ### */
 
+#ifndef STRNCMPI
+extern int strncmpi(const char *,const char *,int);
+#endif
 extern void set_menuitem(struct nh_menuitem *, int, enum nh_menuitem_role,
 			 const char *, char, boolean);
 extern void init_menulist(struct menulist*);
