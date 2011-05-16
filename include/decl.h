@@ -147,6 +147,7 @@ extern const char ynchars[];
 extern const char ynqchars[];
 extern const char ynaqchars[];
 extern const char ynNaqchars[];
+extern long yn_number;
 
 extern const char disclosure_options[];
 

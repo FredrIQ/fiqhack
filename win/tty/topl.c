@@ -296,7 +296,7 @@ static void removetopl(int n)
 
 extern char erase_char;		/* from xxxtty.c; don't need kill_char */
 
-char tty_yn_function(const char *query, const char *resp, char def)
+char tty_yn_function(const char *query, const char *resp, char def, long *yn_number)
 /*
  *   Generic yes/no function. 'def' is the default (returned by space or
  *   return; 'esc' returns 'q', or 'n', or the default, depending on
@@ -415,7 +415,8 @@ char tty_yn_function(const char *query, const char *resp, char def)
 			break;
 		    }
 		} while (z != '\n');
-		if (value > 0) yn_number = value;
+		if (value > 0 && yn_number)
+		    *yn_number = value;
 		else if (value == 0) q = 'n';		/* 0 => "no" */
 		else {	/* remove number from top line, then try again */
 			removetopl(n_len),  n_len = 0;

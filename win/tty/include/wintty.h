@@ -233,7 +233,7 @@ extern int tty_nhgetch(void);
 extern int tty_nh_poskey(int *, int *, int *);
 extern void tty_nhbell(void);
 extern int tty_doprev_message(void);
-extern char tty_yn_function(const char *, const char *, char);
+extern char tty_yn_function(const char *, const char *, char, long*);
 extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen);
 extern void tty_number_pad(int);

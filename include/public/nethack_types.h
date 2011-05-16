@@ -79,7 +79,7 @@ struct window_procs {
     int (*win_nh_poskey)(int *, int *, int *);
     void (*win_nhbell)(void);
     int (*win_doprev_message)(void);
-    char (*win_yn_function)(const char *, const char *, char);
+    char (*win_yn_function)(const char *, const char *, char, long*);
     void (*win_getlin)(const char *,char *);
     int (*win_get_ext_cmd)(const char**, const char**, int);
     void (*win_number_pad)(int);

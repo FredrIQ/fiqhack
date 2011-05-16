@@ -24,7 +24,6 @@
 # endif
 #endif
 
-extern EXPORT long yn_number;
 extern EXPORT struct instance_flags2 iflags2;
 extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
