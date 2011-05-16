@@ -115,6 +115,25 @@ extern char pl_fruit[PL_FSIZ];
 extern int current_fruit;
 extern struct fruit *ffruit;
 
+extern struct sinfo {
+	int game_started;
+	int gameover;		/* self explanatory? */
+	int stopprint;		/* inhibit further end of game disclosure */
+#if defined(UNIX) || defined(WIN32)
+	int done_hup;		/* SIGHUP or moral equivalent received
+				 * -- no more screen output */
+#endif
+	int something_worth_saving;	/* in case of panic */
+	int panicking;		/* `panic' is in progress */
+#if defined(WIN32)
+	int exiting;		/* an exit handler is executing */
+#endif
+	int in_impossible;
+#ifdef PANICLOG
+	int in_paniclog;
+#endif
+} program_state;
+
 extern char tune[6];
 
 #define MAXLINFO (MAXDUNGEON * MAXLEVEL)

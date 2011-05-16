@@ -20,7 +20,6 @@
 #define EXPORT
 #endif
 
-extern EXPORT struct sinfo program_state;
 
 extern EXPORT long yn_number;
 
