@@ -6,6 +6,16 @@
 #ifndef ATTRIB_H
 #define ATTRIB_H
 
+/* attribute IDs */
+#define A_STR	0
+#define A_INT	1
+#define A_WIS	2
+#define A_DEX	3
+#define A_CON	4
+#define A_CHA	5
+
+#define A_MAX	6	/* used in rn2() selection of attrib */
+
 #define ABASE(x)	(u.acurr.a[x])
 #define ABON(x)		(u.abon.a[x])
 #define AEXE(x)		(u.aexe.a[x])

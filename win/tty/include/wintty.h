@@ -41,6 +41,16 @@ extern winid WIN_MAP;
 #ifndef WINDOW_STRUCTS
 #define WINDOW_STRUCTS
 
+#define MENU_SELECTED	TRUE
+#define MENU_UNSELECTED FALSE
+
+/* invalid winid */
+#define WIN_ERR ((winid) -1)
+
+#define ON		1
+#define OFF		0
+
+
 /* menu structure */
 typedef struct tty_mi {
     struct tty_mi *next;

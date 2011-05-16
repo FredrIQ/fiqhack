@@ -11,6 +11,142 @@
 # define STRCMPI
 #endif
 
+#ifndef TRUE	/* defined in some systems' native include files */
+#define FALSE	((boolean)0)
+#define TRUE	((boolean)!0)
+#endif
+
+/* size of terminal screen is (at least) (ROWNO+3) by COLNO */
+#define COLNO		80
+#define ROWNO		21
+
+#define BUFSZ		256	/* for getlin buffers */
+#define QBUFSZ		128	/* for building question text */
+#define TBUFSZ		300	/* toplines[] buffer max msg: 3 81char names */
+				/* plus longest prefix plus a few extra words */
+#define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
+
+#define FCMASK		0660	/* file creation mask */
+#define HLOCK		"perm"	/* an empty file used for locking purposes */
+#define msleep(k) usleep((k)*1000)
+
+/* default glyph value for all menus that don't need glyphs */
+#define NO_GLYPH	(-1)
+
+/* Special returns from mapglyph() */
+#define MG_CORPSE	0x01
+#define MG_INVIS	0x02
+#define MG_DETECT	0x04
+#define MG_PET		0x08
+#define MG_RIDDEN	0x10
+
+#define ROLE_NONE	(-1)
+#define ROLE_RANDOM	(-2)
+
+#define A_CHAOTIC	(-1)
+#define A_NEUTRAL	 0
+#define A_LAWFUL	 1
+
+/*
+ * The color scheme used is tailored for an IBM PC.  It consists of the
+ * standard 8 colors, folowed by their bright counterparts.  There are
+ * exceptions, these are listed below.	Bright black doesn't mean very
+ * much, so it is used as the "default" foreground color of the screen.
+ */
+#define CLR_BLACK		0
+#define CLR_RED			1
+#define CLR_GREEN		2
+#define CLR_BROWN		3 /* on IBM, low-intensity yellow is brown */
+#define CLR_BLUE		4
+#define CLR_MAGENTA		5
+#define CLR_CYAN		6
+#define CLR_GRAY		7 /* low-intensity white */
+#define NO_COLOR		8
+#define CLR_ORANGE		9
+#define CLR_BRIGHT_GREEN	10
+#define CLR_YELLOW		11
+#define CLR_BRIGHT_BLUE		12
+#define CLR_BRIGHT_MAGENTA	13
+#define CLR_BRIGHT_CYAN		14
+#define CLR_WHITE		15
+#define CLR_MAX			16
+
+/* select_menu() "how" argument types */
+enum nh_pick_type {
+    PICK_NONE,	/* user picks nothing (display only) */
+    PICK_ONE,	/* only pick one */
+    PICK_ANY,	/* can pick any amount */
+};
+
+/* window types */
+enum nh_window_type {
+    NHW_MESSAGE,
+    NHW_STATUS,
+    NHW_MAP,
+    /* the following 2 only have meaning inside the tty port. remove when possible */
+    NHW_MENU,
+    NHW_TEXT
+};
+
+/* nh_poskey() modifier types */
+enum nh_click_type {
+    CLICK_1,
+    CLICK_2
+};
+
+/*
+ * Graphics sets for display symbols
+ */
+enum nh_text_mode {
+    ASCII_GRAPHICS,	/* regular characters: '-', '+', &c */
+    IBM_GRAPHICS,	/* PC graphic characters */
+    DEC_GRAPHICS	/* VT100 line drawing characters */
+};
+
+/* Always use full pathnames for file names,
+ * rather than assuming that they're all in the current directory.  This
+ * provides all the subclasses that seem reasonable.
+ * An array listing a path for each prefix must be passed to nh_init().
+ */
+enum nh_path_prefix {
+    HACKPREFIX,
+    LEVELPREFIX,
+    SAVEPREFIX,
+    BONESPREFIX,
+    DATAPREFIX,
+    SCOREPREFIX,
+    LOCKPREFIX,
+    TROUBLEPREFIX,
+    PREFIX_COUNT
+};
+
+enum nh_game_modes {
+    MODE_NORMAL,
+    MODE_EXPLORE,
+    MODE_WIZARD
+};
+
+enum nh_opttype {
+    OPTTYPE_BOOL,
+    OPTTYPE_INT,
+    OPTTYPE_ENUM,
+    OPTTYPE_STRING
+};
+
+enum nh_bucstatus {
+    BUC_UNKNOWN,
+    BUC_BLESSED,
+    BUC_UNCURSED,
+    BUC_CURSED
+};
+
+enum nh_menuitem_role {
+	MI_TEXT = 0,
+	MI_NORMAL,
+	MI_HEADING
+};
+
+
 typedef signed char	schar;
 typedef unsigned char	uchar;
 
@@ -22,35 +158,93 @@ typedef unsigned char	uchar;
 typedef schar	xchar;
 typedef xchar	boolean;		/* 0 or 1 */
 
-typedef schar	aligntyp;	/* basic alignment type */
 
-#ifndef TRUE		/* defined in some systems' native include files */
-#define FALSE	((boolean)0)
-#define TRUE	((boolean)!0)
-#endif
+struct nh_listitem {
+    int id;
+    char *caption;
+};
 
-/* size of terminal screen is (at least) (ROWNO+3) by COLNO */
-#define COLNO	80
-#define ROWNO	21
+struct nh_boolopt_map {
+    const char *optname;
+    boolean	*addr;
+};
 
-#define BUFSZ		256	/* for getlin buffers */
-#define QBUFSZ		128	/* for building question text */
-#define TBUFSZ		300	/* toplines[] buffer max msg: 3 81char names */
-				/* plus longest prefix plus a few extra words */
-#define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
+struct nh_int_option {
+    int max;
+    int min;
+};
 
-#define FCMASK	0660	/* file creation mask */
+struct nh_enum_option {
+    struct nh_listitem *choices;
+    int numchoices;
+};
 
-#define HLOCK	"perm"	/* an empty file used for locking purposes */
+struct nh_string_option {
+    int maxlen;
+};
 
-#define msleep(k) usleep((k)*1000)
+union nh_optvalue {
+    char *s; /* largest element first for static initialisation */
+    boolean b;
+    int i;
+    int e;
+};
 
-#include "wintype.h"
+struct nh_option_desc {
+    const char *name;
+    const char *helptxt;
+    enum nh_opttype type;
+    union nh_optvalue value;
+    union {
+	/* only the first element of a union can be initialized at compile
+	    * time (without C99), so boolean args go first, there are more of those ...*/
+	struct nh_int_option i;
+	struct nh_enum_option e;
+	struct nh_string_option s;
+    };
+};
 
-struct nh_menuitem;
-struct nh_objitem;
-struct nh_objresult;
-struct nh_status_info;
+struct nh_menuitem {
+    int id;
+    enum nh_menuitem_role role;
+    char caption[COLNO];
+    char accel;
+    char group_accel;
+    boolean selected;
+};
+
+struct nh_objitem {
+    char caption[COLNO];
+    int id;
+    int count;
+    int glyph;
+    char accel;
+    char group_accel;
+    int otype;
+    int oclass;
+    enum nh_bucstatus buc;
+    boolean worn;
+};
+
+struct nh_objresult {
+    int id;
+    int count;
+};
+
+#define ITEMLEN 12
+struct nh_status_info {
+    char plname[PL_NSIZ];
+    char rank[PL_NSIZ];
+    char level_desc[COLNO];
+    char items[12][ITEMLEN];
+    long score, xp, gold, moves;
+    int mrank_sz, st, st_extra, dx, co, in, wi, ch, align, nr_items;
+    int hp, hpmax, en, enmax, ac, level;
+    char coinsym;
+    boolean polyd;
+
+};
+
 
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
@@ -96,201 +290,4 @@ struct instance_flags2 {
     boolean  window_inited; /* true if init_nhwindows() completed */
 };
 
-#define ON		1
-#define OFF		0
-
-/* attribute IDs; window port code should only need A_MAX */
-#define A_STR	0
-#define A_INT	1
-#define A_WIS	2
-#define A_DEX	3
-#define A_CON	4
-#define A_CHA	5
-
-#define A_MAX	6	/* used in rn2() selection of attrib */
-
-
-/* Special returns from mapglyph() */
-#define MG_CORPSE	0x01
-#define MG_INVIS	0x02
-#define MG_DETECT	0x04
-#define MG_PET		0x08
-#define MG_RIDDEN	0x10
-
-/* default glyph value for all menus that don't need glyphs */
-#define NO_GLYPH	(-1)
-
-
-#define MENU_SELECTED	TRUE
-#define MENU_UNSELECTED FALSE
-
-
-/*
- * Graphics sets for display symbols
- */
-#define ASCII_GRAPHICS	0	/* regular characters: '-', '+', &c */
-#define IBM_GRAPHICS	1	/* PC graphic characters */
-#define DEC_GRAPHICS	2	/* VT100 line drawing characters */
-
-/* Some systems want to use full pathnames for some subsets of file names,
- * rather than assuming that they're all in the current directory.  This
- * provides all the subclasses that seem reasonable, and sets up for all
- * prefixes being null.  Port code can set those that it wants.
- */
-#define HACKPREFIX	0
-#define LEVELPREFIX	1
-#define SAVEPREFIX	2
-#define BONESPREFIX	3
-#define DATAPREFIX	4	/* this one must match hardcoded value in dlb.c */
-#define SCOREPREFIX	5
-#define LOCKPREFIX	6
-#define TROUBLEPREFIX	7
-#define PREFIX_COUNT	8
-
-#define ROLE_NONE	(-1)
-#define ROLE_RANDOM	(-2)
-
-#define A_CHAOTIC	(-1)
-#define A_NEUTRAL	 0
-#define A_LAWFUL	 1
-
-/*
- * The color scheme used is tailored for an IBM PC.  It consists of the
- * standard 8 colors, folowed by their bright counterparts.  There are
- * exceptions, these are listed below.	Bright black doesn't mean very
- * much, so it is used as the "default" foreground color of the screen.
- */
-#define CLR_BLACK		0
-#define CLR_RED			1
-#define CLR_GREEN		2
-#define CLR_BROWN		3 /* on IBM, low-intensity yellow is brown */
-#define CLR_BLUE		4
-#define CLR_MAGENTA		5
-#define CLR_CYAN		6
-#define CLR_GRAY		7 /* low-intensity white */
-#define NO_COLOR		8
-#define CLR_ORANGE		9
-#define CLR_BRIGHT_GREEN	10
-#define CLR_YELLOW		11
-#define CLR_BRIGHT_BLUE		12
-#define CLR_BRIGHT_MAGENTA	13
-#define CLR_BRIGHT_CYAN		14
-#define CLR_WHITE		15
-#define CLR_MAX			16
-
-enum nh_game_modes {
-    MODE_NORMAL,
-    MODE_EXPLORE,
-    MODE_WIZARD
-};
-
-enum nh_opttype {
-    OPTTYPE_BOOL,
-    OPTTYPE_INT,
-    OPTTYPE_ENUM,
-    OPTTYPE_STRING
-};
-
-struct nh_listitem {
-    int id;
-    char *caption;
-};
-
-struct nh_boolopt_map {
-	const char *optname;
-	boolean	*addr;
-} ;
-
-struct nh_int_option {
-	int max;
-	int min;
-};
-
-struct nh_enum_option {
-	struct nh_listitem *choices;
-	int numchoices;
-};
-
-struct nh_string_option {
-	int maxlen;
-};
-
-union nh_optvalue {
-	char *s; /* largest element first for static initialisation */
-	boolean b;
-	int i;
-	int e;
-};
-
-struct nh_option_desc {
-	const char *name;
-	const char *helptxt;
-	enum nh_opttype type;
-	union nh_optvalue value;
-	union {
-	    /* only the first element of a union can be initialized at compile
-	     * time (without C99), so boolean args go first, there are more of those ...*/
-	    struct nh_int_option i;
-	    struct nh_enum_option e;
-	    struct nh_string_option s;
-	};
-};
-
-enum nh_menuitem_role {
-	MI_TEXT = 0,
-	MI_NORMAL,
-	MI_HEADING
-};
-
-struct nh_menuitem {
-	int id;
-	enum nh_menuitem_role role;
-	char caption[COLNO];
-	char accel;
-	char group_accel;
-	boolean selected;
-};
-
-enum nh_bucstatus {
-    BUC_UNKNOWN,
-    BUC_BLESSED,
-    BUC_UNCURSED,
-    BUC_CURSED
-};
-
-struct nh_objitem {
-	char caption[COLNO];
-	int id;
-	int count;
-	int glyph;
-	char accel;
-	char group_accel;
-	int otype;
-	int oclass;
-	enum nh_bucstatus buc;
-	boolean worn;
-};
-
-struct nh_objresult {
-	int id;
-	int count;
-};
-
-
-#define ITEMLEN 12
-
-struct nh_status_info {
-    char plname[PL_NSIZ];
-    char rank[PL_NSIZ];
-    char level_desc[COLNO];
-    char items[12][ITEMLEN];
-    long score, xp, gold, moves;
-    int mrank_sz, st, st_extra, dx, co, in, wi, ch, align, nr_items;
-    int hp, hpmax, en, enmax, ac, level;
-    char coinsym;
-    boolean polyd;
-
-};
-
 #endif
-

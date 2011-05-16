@@ -1,6 +1,7 @@
 #ifndef ROLE_H
 #define ROLE_H
 
+#include "attrib.h"
 
 /* Flags to control pick_[race,role,gend,align] routines in role.c */
 #define PICK_RANDOM	0

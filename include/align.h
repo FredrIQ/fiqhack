@@ -4,6 +4,7 @@
 #ifndef ALIGN_H
 #define ALIGN_H
 
+typedef schar	aligntyp;	/* basic alignment type */
 
 typedef struct	align {		/* alignment & record */
 	aligntyp	type;
