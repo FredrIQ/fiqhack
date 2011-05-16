@@ -600,6 +600,7 @@ extern long money_cnt(struct obj *);
 
 /* ### hacklib.c ### */
 
+extern char *tabexpand(char *);
 #ifndef STRNCMPI
 extern int strncmpi(const char *,const char *,int);
 #endif

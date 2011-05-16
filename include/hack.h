@@ -76,7 +76,6 @@
 #include "mkroom.h"
 #include "objclass.h"
 #include "youprop.h"
-#include "wintype.h"
 #include "decl.h"
 #include "timeout.h"
 

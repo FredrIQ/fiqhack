@@ -1686,6 +1686,27 @@ void tty_putstr(winid window, int attr, const char *str)
     }
 }
 
+/* expand tabs into proper number of spaces */
+static char *tabexpand(char *sbuf)
+{
+    char buf[BUFSZ];
+    char *bp, *s = sbuf;
+    int idx;
+
+    if (!*s) return sbuf;
+
+    /* warning: no bounds checking performed */
+    for (bp = buf, idx = 0; *s; s++)
+	if (*s == '\t') {
+	    do *bp++ = ' '; while (++idx % 8);
+	} else {
+	    *bp++ = *s;
+	    idx++;
+	}
+    *bp = 0;
+    return strcpy(sbuf, buf);
+}
+
 
 void tty_display_buffer(char *buf, boolean trymove)
 {

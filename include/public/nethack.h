@@ -45,9 +45,6 @@ extern EXPORT void clearlocks(void);
 /* hack.c */
 extern EXPORT boolean check_swallowed(void);
 
-/* hacklib.c */
-extern EXPORT char *tabexpand(char *);
-
 /* mapglyph.c */
 extern EXPORT void mapglyph(int, int *, int *, unsigned *, int, int);
 
