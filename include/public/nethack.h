@@ -9,15 +9,19 @@
 
 #include "nethack_types.h"
 
-/* nethack_EXPORTS is defined by cmake while building libnethack */
-#if nethack_EXPORTS
-#define EXPORT __attribute__((__visibility__("default")))
-#elif nethack_EXPORTS && defined _MSC_VER
-#define EXPORT __declspec(dllexport)
-#elif defined _MSC_VER
-#define EXPORT __declspec(dllimport)
-#else
-#define EXPORT
+#if defined (nethack_EXPORTS)/* defined by cmake while building libnethack */
+# if defined (_MSC_VER)
+#  define EXPORT __declspec(dllexport)
+# else /* gcc & clang with -fvisibility=hidden need this for exported syms */
+#  define EXPORT __attribute__((__visibility__("default")))
+# endif
+
+#else /* building a window port */
+# if defined (_MSC_VER)
+#  define EXPORT __declspec(dllimport)
+# else
+#  define EXPORT
+# endif
 #endif
 
 
