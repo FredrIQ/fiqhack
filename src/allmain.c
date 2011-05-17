@@ -532,52 +532,50 @@ static boolean pre_move_tasks(boolean didmove)
 }
 
 
-void moveloop(void)
+void nh_do_move(void)
 {
     boolean didmove = FALSE;
 
-    for(;;) {
-	get_nh_event();
+    get_nh_event();
 
-	didmove = flags.move;
-	if(didmove) {
-	    you_moved();
-	} /* actual time passed */
+    didmove = flags.move;
+    if(didmove) {
+	you_moved();
+    } /* actual time passed */
 
-	/****************************************/
-	/* once-per-player-input things go here */
-	/****************************************/
+    /****************************************/
+    /* once-per-player-input things go here */
+    /****************************************/
 
-	if (pre_move_tasks(didmove))
-	    continue;
-	
-	if (multi > 0) {
-	    if (flags.mv) {
-		if(multi < COLNO && !--multi)
-		    flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-		domove();
-	    } else {
-		--multi;
-		rhack(save_cm);
-	    }
-	} else if (multi == 0) {
-	    rhack(NULL);
+    if (pre_move_tasks(didmove))
+	return;
+    
+    if (multi > 0) {
+	if (flags.mv) {
+	    if(multi < COLNO && !--multi)
+		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
+	    domove();
+	} else {
+	    --multi;
+	    rhack(save_cm);
 	}
-	if (u.utotype)		/* change dungeon level */
-	    deferred_goto();	/* after rhack() */
-	/* !flags.move here: multiple movement command stopped */
-	else if (!flags.move || !flags.mv)
+    } else if (multi == 0) {
+	rhack(NULL);
+    }
+    if (u.utotype)		/* change dungeon level */
+	deferred_goto();	/* after rhack() */
+    /* !flags.move here: multiple movement command stopped */
+    else if (!flags.move || !flags.mv)
+	botl = 1;
+
+    if (vision_full_recalc)
+	vision_recalc(0);	/* vision! */
+    /* when running in non-tport mode, this gets done through domove() */
+    if ((!flags.run || iflags.runmode == RUN_TPORT) &&
+	    (multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
+	if (flags.run)
 	    botl = 1;
-
-	if (vision_full_recalc)
-	    vision_recalc(0);	/* vision! */
-	/* when running in non-tport mode, this gets done through domove() */
-	if ((!flags.run || iflags.runmode == RUN_TPORT) &&
-		(multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
-	    if (flags.run)
-		botl = 1;
-	    display_nhwindow(NHW_MAP, FALSE);
-	}
+	display_nhwindow(NHW_MAP, FALSE);
     }
 }
 

@@ -148,7 +148,10 @@ EXPORT int main(int argc, char *argv[])
 	    nh_start_game(plname, locknum, playmode);
 	}
 
-	moveloop();
+	for (;;) {
+	    nh_do_move();
+	}
+	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/
 	return 0;
