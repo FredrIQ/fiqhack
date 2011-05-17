@@ -13,6 +13,10 @@ Changes so far:
 	New location: $XDG_CONFIG_HOME/NetHack/ or $HOME/.config/NetHack/
     - automatcally updated config files
 	Option changes are written back to the config file
+    - introduced "birth options" that may be set before the game starts. They
+	replace all options that could previously only be changed by editing the
+	config file.
+    - converted ELBERETH and REINCARNATION compile options to birth options.
 
 Plans:
     - improve library API
@@ -20,9 +24,6 @@ Plans:
 	and should be part of the tty port (IBMgraphics, DECgraphics)
     - rename exported functions to nh_<foo> so that library calls become obvious
 	functions that have not been renamed need review (remove? replace?)
-    - introduce "birth options" that may be set before the game starts to
-	augment/replace all SET_IN_FILE options.
-    - make ELBERETH and REINCARNATION compile options be birth options instead.
     - break up moveloop() and externalize looping into the window port; move to
 	"push input" rather than "pull input" model by supplying next command as
 	an arg to each inner moveloop invocation
