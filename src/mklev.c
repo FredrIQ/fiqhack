@@ -547,12 +547,7 @@ static void makelevel(void)
 	    s_level *slev = Is_special(&u.uz);
 
 	    /* check for special levels */
-#ifdef REINCARNATION
-	    if (slev && !Is_rogue_level(&u.uz))
-#else
-	    if (slev)
-#endif
-	    {
+	    if (slev && !Is_rogue_level(&u.uz)) {
 		    makemaz(slev->proto);
 		    return;
 	    } else if (dungeons[u.uz.dnum].proto[0]) {
@@ -583,12 +578,10 @@ static void makelevel(void)
 
 	/* otherwise, fall through - it's a "regular" level. */
 
-#ifdef REINCARNATION
 	if (Is_rogue_level(&u.uz)) {
 		makeroguerooms();
 		makerogueghost();
 	} else
-#endif
 		makerooms();
 	sort_rooms();
 
@@ -614,9 +607,8 @@ static void makelevel(void)
 	branchp = Is_branchlev(&u.uz);	/* possible dungeon branch */
 	room_threshold = branchp ? 4 : 3; /* minimum number of rooms needed
 					     to allow a random special room */
-#ifdef REINCARNATION
-	if (Is_rogue_level(&u.uz)) goto skip0;
-#endif
+	if (Is_rogue_level(&u.uz))
+	    goto skip0;
 	makecorridors();
 	make_niches();
 
@@ -671,9 +663,7 @@ static void makelevel(void)
 	   !(mvitals[PM_COCKATRICE].mvflags & G_GONE)) mkroom(COCKNEST);
     }
 
-#ifdef REINCARNATION
 skip0:
-#endif
 	/* Place multi-dungeon branch. */
 	place_branch(branchp, 0, 0);
 
@@ -702,9 +692,7 @@ skip0:
 		    mktrap(0,0,croom,NULL);
 		if (!goldseen && !rn2(3))
 		    mkgold(0L, somex(croom), somey(croom));
-#ifdef REINCARNATION
 		if(Is_rogue_level(&u.uz)) goto skip_nonrogue;
-#endif
 		if(!rn2(10)) mkfount(0,croom);
 		if(!rn2(60)) mksink(croom);
 		if(!rn2(60)) mkaltar(croom);
@@ -740,9 +728,7 @@ skip0:
 		    }
 		}
 
-#ifdef REINCARNATION
 	skip_nonrogue:
-#endif
 		if(!rn2(3)) {
 		    mkobj_at(0, somex(croom), somey(croom), TRUE);
 		    tryct = 0;
@@ -780,9 +766,7 @@ static void mineralize(void)
 	/* determine if it is even allowed;
 	   almost all special levels are excluded */
 	if (In_hell(&u.uz) || In_V_tower(&u.uz) ||
-#ifdef REINCARNATION
 		Is_rogue_level(&u.uz) ||
-#endif
 		level.flags.arboreal ||
 		((sp = Is_special(&u.uz)) != 0 && !Is_oracle_level(&u.uz)
 					&& (!In_mines(&u.uz) || sp->flags.town)
@@ -1065,7 +1049,6 @@ void mktrap(int num, int mazeflag, struct mkroom *croom, coord *tm)
 
 	if (num > 0 && num < TRAPNUM) {
 	    kind = num;
-#ifdef REINCARNATION
 	} else if (Is_rogue_level(&u.uz)) {
 	    switch (rn2(7)) {
 		default: kind = BEAR_TRAP; break; /* 0 */
@@ -1076,7 +1059,6 @@ void mktrap(int num, int mazeflag, struct mkroom *croom, coord *tm)
 		case 5: kind = SLP_GAS_TRAP; break;
 		case 6: kind = RUST_TRAP; break;
 	    }
-#endif
 	} else if (Inhell && !rn2(5)) {
 	    /* bias the frequency of fire traps in Gehennom */
 	    kind = FIRE_TRAP;

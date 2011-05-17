@@ -116,6 +116,7 @@ struct flag {
 	
 	/* birth option flags */
 	boolean  elbereth_enabled; /* should the E-word repel monsters? */
+	boolean  rogue_enabled;
 };
 
 

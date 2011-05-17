@@ -7,8 +7,6 @@
 
 #include "hack.h"
 
-#ifdef REINCARNATION
-
 struct rogueroom {
 	xchar rlx, rly;
 	xchar dx, dy;
@@ -326,6 +324,5 @@ void makerogueghost(void)
 		ghostobj->known = TRUE;
 	}
 }
-#endif /* REINCARNATION */
 
 /*extralev.c*/

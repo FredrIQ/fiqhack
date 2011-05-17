@@ -572,9 +572,7 @@ struct level_map {
 	{ "medusa",	&medusa_level },
 	{ "oracle",	&oracle_level },
 	{ "orcus",	&orcus_level },
-#ifdef REINCARNATION
 	{ "rogue",	&rogue_level },
-#endif
 	{ "sanctum",	&sanctum_level },
 	{ "valley",	&valley_level },
 	{ "water",	&water_level },
@@ -637,16 +635,14 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    panic("init_dungeons: too many dungeons");
 
 	for (i = 0; i < n_dgns; i++) {
-	    Fread(&pd.tmpdungeon[i],
-				    sizeof(struct tmpdungeon), 1, dgn_file);
+	    Fread(&pd.tmpdungeon[i], sizeof(struct tmpdungeon), 1, dgn_file);
 	    if(!wizard)
 	      if(pd.tmpdungeon[i].chance && (pd.tmpdungeon[i].chance <= rn2(100))) {
 		int j;
 
 		/* skip over any levels or branches */
 		for(j = 0; j < pd.tmpdungeon[i].levels; j++)
-		    Fread(&pd.tmplevel[cl], sizeof(struct tmplevel),
-							1, dgn_file);
+		    Fread(&pd.tmplevel[cl], sizeof(struct tmplevel), 1, dgn_file);
 
 		for(j = 0; j < pd.tmpdungeon[i].branches; j++)
 		    Fread(&pd.tmpbranch[cb],
@@ -744,15 +740,16 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    pd.n_levs += pd.tmpdungeon[i].levels;
 	    if (pd.n_levs > LEV_LIMIT)
 		panic("init_dungeon: too many special levels");
+	    
 	    /*
 	     * Read in the prototype special levels.  Don't add generated
 	     * special levels until they are all placed.
 	     */
 	    for(; cl < pd.n_levs; cl++) {
-		Fread(&pd.tmplevel[cl],
-					sizeof(struct tmplevel), 1, dgn_file);
+		Fread(&pd.tmplevel[cl], sizeof(struct tmplevel), 1, dgn_file);
 		init_level(i, cl, &pd);
 	    }
+	    
 	    /*
 	     * Recursively place the generated levels for this dungeon.  This
 	     * routine will attempt all possible combinations before giving
@@ -786,6 +783,14 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	 * locations quickly.
 	 */
 	for (lev_map = level_map; lev_map->lev_name[0]; lev_map++) {
+		/* 
+		 * suppress finding the rogue level if it is not enabled
+		 * this makes Is_rogue_level(x) fail
+		 */
+		if (!strncmp(lev_map->lev_name, "rogue", 6) &&
+		    !flags.rogue_enabled)
+		    continue;
+		
 		x = find_level(lev_map->lev_name);
 		if (x) {
 			assign_level(lev_map->lev_spec, &x->dlevel);
@@ -811,6 +816,28 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 			}
 		}
 	}
+	
+	if (!flags.rogue_enabled) {
+	    /* 
+	     * remove rogue level from the special level chain
+	     * This makes Is_special(x) return NULL, so the level will never be
+	     * instantiated
+	     */
+	    s_level *s_curr, *s_prev;
+	    s_prev = NULL;
+	    for (s_curr = sp_levchn; s_curr; s_curr = s_curr->next) {
+		if (!strncmp(s_curr->proto, "rogue", 6)) {
+		    if (s_prev)
+			s_prev->next = s_curr->next;
+		    else
+			sp_levchn = s_curr->next;
+		    
+		    break;
+		}
+		s_prev = s_curr;
+	    }
+	}
+
 /*
  *	I hate hardwiring these names. :-(
  */

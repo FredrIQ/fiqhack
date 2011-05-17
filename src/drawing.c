@@ -562,8 +562,6 @@ void switch_graphics(int gr_set_flag)
 }
 
 
-#ifdef REINCARNATION
-
 /*
  * saved display symbols for objects & features.
  */
@@ -725,6 +723,5 @@ void assign_rogue_graphics(boolean is_rlevel)
 		      save_monsyms, sizeof monsyms);
     }
 }
-#endif /* REINCARNATION */
 
 /*drawing.c*/

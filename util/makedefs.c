@@ -286,9 +286,6 @@ static void make_version(void)
 	 */
 	version.feature_set = (unsigned long)(0L
 		/* levels and/or topology (0..4) */
-#ifdef REINCARNATION
-			| (1L <<  1)
-#endif
 		/* monsters (5..9) */
 #ifdef KOPS
 			| (1L <<  6)
@@ -445,9 +442,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef NEWS
 		"news file",
-#endif
-#ifdef REINCARNATION
-		"rogue level",
 #endif
 #ifdef NO_TERMS
 # ifdef SCREEN_VGA
@@ -776,11 +770,7 @@ static	struct deflist {
 	const char	*defname;
 	boolean	true_or_false;
 } deflist[] = {
-#ifdef REINCARNATION
 	      {	"REINCARNATION", TRUE },
-#else
-	      {	"REINCARNATION", FALSE },
-#endif
 	      { 0, 0 } };
 
 static int check_control(char *s)
