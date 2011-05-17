@@ -423,14 +423,6 @@ void moveloop(void)
     initrack();
 
 
-    /* Note:  these initializers don't do anything except guarantee that
-	    we're linked properly.
-    */
-    decl_init();
-    monst_init();
-    monstr_init();	/* monster strengths */
-    objects_init();
-
     if (wizard) add_debug_extended_commands();
 
     encumber_msg(); /* in case they auto-picked up something */

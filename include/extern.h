@@ -154,10 +154,6 @@ extern void open_drawbridge(int,int);
 extern void close_drawbridge(int,int);
 extern void destroy_drawbridge(int,int);
 
-/* ### decl.c ### */
-
-extern void decl_init(void);
-
 /* ### detect.c ### */
 
 extern struct obj *o_in(struct obj*, char);
@@ -1011,14 +1007,6 @@ extern boolean accessible(int,int);
 extern void set_apparxy(struct monst *);
 extern boolean can_ooze(struct monst *);
 
-/* ### monst.c ### */
-
-extern void monst_init(void);
-
-/* ### monstr.c ### */
-
-extern void monstr_init(void);
-
 /* ### mplayer.c ### */
 
 extern struct monst *mk_mplayer(struct permonst *,xchar,
@@ -1090,10 +1078,6 @@ extern void restnames(int);
 extern void discover_object(int,boolean,boolean);
 extern void undiscover_object(int);
 extern int dodiscovered(void);
-
-/* ### objects.c ### */
-
-extern void objects_init(void);
 
 /* ### objnam.c ### */
 

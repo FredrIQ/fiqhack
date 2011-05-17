@@ -3336,10 +3336,4 @@ struct permonst mons[] = {
 	SIZ(0, 0, 0, 0, 0), 0, 0, 0L, 0L, 0, 0)
 };
 
-/* dummy routine used to force linkage */
-void monst_init(void)
-{
-    return;
-}
-
 /*monst.c*/

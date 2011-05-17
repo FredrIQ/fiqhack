@@ -66,7 +66,6 @@ void free_rooms(splev *);
 
 extern void monst_init(void);
 extern void objects_init(void);
-extern void decl_init(void);
 
 static boolean write_common_data(int,int,lev_init *,long);
 static boolean write_monsters(int,char *,monster ***);
@@ -183,13 +182,7 @@ int main(int argc, char **argv)
 	FILE *fin;
 	int i;
 	boolean errors_encountered = FALSE;
-	/* Note:  these initializers don't do anything except guarantee that
-		we're linked properly.
-	*/
-	monst_init();
-	objects_init();
-	decl_init();
-	/* this one does something... */
+
 	init_obj_classes();
 
 	init_yyout(stdout);

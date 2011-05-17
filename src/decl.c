@@ -239,10 +239,4 @@ boolean botl  = 0;	/* partially redo status line */
 boolean botlx = 0;	/* print an entirely new bottom line */
 
 
-/* dummy routine used to force linkage */
-void decl_init(void)
-{
-    return;
-}
-
 /*decl.c*/

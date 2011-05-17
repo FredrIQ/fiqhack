@@ -60,7 +60,6 @@ void do_questtxt(const char *,const char *);
 void do_rumors(const char *,const char *,const char *);
 void do_oracles(const char *,const char *);
 
-extern void monst_init(void);		/* monst.c */
 extern void objects_init(void);	/* objects.c */
 
 static void make_version(void);
@@ -125,12 +124,6 @@ int main(int argc, char	*argv[])
 {
 	if (argc < 3)
 	    usage(argv[0], 0, 0);
-
-	/* Note:  these initializers don't do anything except guarantee that
-		we're linked properly.
-	*/
-	monst_init();
-	objects_init();
 
 	/* construct the current version number */
 	make_version();
@@ -926,12 +919,6 @@ void do_monstr(const char *outfile)
     /* might want to insert a final 0 entry here instead of just newline */
     fprintf(ofp,"%s};\n", (j & 15) ? "\n" : "");
 
-    fprintf(ofp,"\nvoid monstr_init(void);\n");
-    fprintf(ofp,"\nvoid\n");
-    fprintf(ofp,"monstr_init()\n");
-    fprintf(ofp,"{\n");
-    fprintf(ofp,"    return;\n");
-    fprintf(ofp,"}\n");
     fprintf(ofp,"\n/*monstr.c*/\n");
 
     fclose(ofp);

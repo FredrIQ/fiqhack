@@ -959,14 +959,6 @@ OBJECT(OBJ("acid venom", "splash of venom"),
 #  define OBJECTS_PASS_2_
 #include "objects.c"
 
-void objects_init(void);
-
-/* dummy routine used to force linkage */
-void objects_init(void)
-{
-    return;
-}
-
 #endif	/* !OBJECTS_PASS_2_ */
 
 /*objects.c*/
