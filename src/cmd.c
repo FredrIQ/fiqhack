@@ -66,7 +66,6 @@ static void end_of_input(void);
 
 static const char* readchar_queue="";
 
-static char *parse(void);
 static boolean help_dir(char, const char *);
 
 
@@ -1400,10 +1399,12 @@ void rhack(char *cmd)
 		firsttime = (cmd == 0);
 
 	iflags.menu_requested = FALSE;
-	if (firsttime) {
-		flags.nopick = 0;
-		cmd = parse();
+	if (cmd == NULL) {
+	    /* shouldn't happen */
+	    impossible("cmd is NULL in rhack");
+	    return;
 	}
+	
 	if (*cmd == '\033') {
 		flags.move = FALSE;
 		return;
@@ -1849,7 +1850,7 @@ const char *click_to_cmd(int x, int y, int mod)
     return cmd;
 }
 
-static char *parse(void)
+char *parse(void)
 {
 	static char in_line[COLNO];
 	int foo;

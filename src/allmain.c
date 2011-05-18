@@ -538,6 +538,7 @@ static boolean pre_move_tasks(boolean didmove)
 void nh_do_move(void)
 {
     boolean didmove = FALSE;
+    char *cmd;
 
     if (multi > 0) {
 	if (flags.mv) {
@@ -549,7 +550,9 @@ void nh_do_move(void)
 	    rhack(save_cm);
 	}
     } else if (multi == 0) {
-	rhack(NULL);
+	flags.nopick = 0;
+	cmd = parse();
+	rhack(cmd);
     }
     if (u.utotype)		/* change dungeon level */
 	deferred_goto();	/* after rhack() */
