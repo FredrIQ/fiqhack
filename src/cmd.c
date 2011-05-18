@@ -1393,16 +1393,19 @@ static int wiz_migrate_mons(void)
 #define unmeta(c)	(0x7f & (c))
 
 
-void rhack(char *cmd)
+void rhack(char *cmd, boolean firsttime)
 {
-	boolean do_walk, do_rush, prefix_seen, bad_command,
-		firsttime = (cmd == 0);
+	boolean do_walk, do_rush, prefix_seen, bad_command;
 
 	iflags.menu_requested = FALSE;
 	if (cmd == NULL) {
 	    /* shouldn't happen */
 	    impossible("cmd is NULL in rhack");
 	    return;
+	}
+	
+	if (firsttime) {
+	    flags.nopick = 0;
 	}
 	
 	if (*cmd == '\033') {

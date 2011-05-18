@@ -547,12 +547,11 @@ void nh_do_move(void)
 	    domove();
 	} else {
 	    --multi;
-	    rhack(save_cm);
+	    rhack(save_cm, FALSE);
 	}
     } else if (multi == 0) {
-	flags.nopick = 0;
 	cmd = parse();
-	rhack(cmd);
+	rhack(cmd, TRUE);
     }
     if (u.utotype)		/* change dungeon level */
 	deferred_goto();	/* after rhack() */

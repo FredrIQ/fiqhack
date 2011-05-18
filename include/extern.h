@@ -125,7 +125,7 @@ extern const char *rank_of(int, short, boolean);
 extern void reset_occupations(void);
 extern void set_occupation(int (*)(void),const char *,int);
 extern void add_debug_extended_commands(void);
-extern void rhack(char *);
+extern void rhack(char *, boolean);
 extern int doextlist(void);
 extern void enlightenment(int);
 extern void show_conduct(int);
