@@ -539,8 +539,11 @@ void nh_do_move(void)
 {
     boolean didmove = FALSE;
     char *cmd;
-
-    if (multi > 0) {
+    
+    if (multi == 0) {
+	cmd = parse();
+	rhack(cmd, TRUE);
+    } else if (multi > 0) {
 	if (flags.mv) {
 	    if(multi < COLNO && !--multi)
 		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
@@ -549,10 +552,8 @@ void nh_do_move(void)
 	    --multi;
 	    rhack(save_cm, FALSE);
 	}
-    } else if (multi == 0) {
-	cmd = parse();
-	rhack(cmd, TRUE);
     }
+    
     if (u.utotype)		/* change dungeon level */
 	deferred_goto();	/* after rhack() */
     /* !flags.move here: multiple movement command stopped */
