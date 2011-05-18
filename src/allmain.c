@@ -18,6 +18,7 @@ static const char *copyright_banner[] =
 {COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C};
 
 static void wd_message(void);
+static boolean pre_move_tasks(boolean didmove);
 
 static void wd_message(void)
 {
@@ -120,6 +121,8 @@ static void post_init_tasks(void)
     u.uz0.dlevel = u.uz.dlevel;
     youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
     
+    /* prepare for the first move */
+    pre_move_tasks(FALSE);
 }
 
 
@@ -536,20 +539,6 @@ void nh_do_move(void)
 {
     boolean didmove = FALSE;
 
-    get_nh_event();
-
-    didmove = flags.move;
-    if(didmove) {
-	you_moved();
-    } /* actual time passed */
-
-    /****************************************/
-    /* once-per-player-input things go here */
-    /****************************************/
-
-    if (pre_move_tasks(didmove))
-	return;
-    
     if (multi > 0) {
 	if (flags.mv) {
 	    if(multi < COLNO && !--multi)
@@ -577,6 +566,21 @@ void nh_do_move(void)
 	    botl = 1;
 	display_nhwindow(NHW_MAP, FALSE);
     }
+    
+    get_nh_event();
+
+    didmove = flags.move;
+    if(didmove) {
+	you_moved();
+    } /* actual time passed */
+
+    /****************************************/
+    /* once-per-player-input things go here */
+    /****************************************/
+
+    /* prepare for the next move */
+    pre_move_tasks(didmove);
+    
 }
 
 
