@@ -499,6 +499,9 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 static void copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
 {
 	if (option->type == OPTTYPE_STRING) {
+	    if (option->value.s == value.s)
+		return; /* setting the option to it's current value; nothing to copy */
+	    
 	    if (option->value.s)
 		free(option->value.s);
 	    option->value.s = NULL;
