@@ -426,7 +426,7 @@ static void you_moved(void)
 }
 
 
-static void maybe_stop_occupation(void)
+static void handle_occupation(void)
 {
 #if defined(WIN32)
     char ch;
@@ -504,7 +504,7 @@ static boolean pre_move_tasks(boolean didmove)
     flags.move = 1;
 
     if (multi >= 0 && occupation) {
-	maybe_stop_occupation();
+	handle_occupation();
 	return TRUE;
     }
 
