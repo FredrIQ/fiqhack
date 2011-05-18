@@ -527,7 +527,7 @@ static boolean pre_move_tasks(boolean didmove)
 	    /* lookaround may clear multi */
 	    flags.move = 0;
 	    botl = 1;
-	    return TRUE;
+	    return FALSE;
 	}
     }
     
@@ -535,24 +535,28 @@ static boolean pre_move_tasks(boolean didmove)
 }
 
 
+static boolean allow_input = TRUE;
 void nh_do_move(void)
 {
     boolean didmove = FALSE;
     char *cmd;
     
-    if (multi == 0) {
-	cmd = parse();
-	rhack(cmd, TRUE);
-    } else if (multi > 0) {
-	if (flags.mv) {
-	    if(multi < COLNO && !--multi)
-		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-	    domove();
-	} else {
-	    --multi;
-	    rhack(save_cm, FALSE);
+    if (allow_input) {
+	if (multi == 0) {
+	    cmd = parse();
+	    rhack(cmd, TRUE);
+	} else if (multi > 0) {
+	    if (flags.mv) {
+		if(multi < COLNO && !--multi)
+		    flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
+		domove();
+	    } else {
+		--multi;
+		rhack(save_cm, FALSE);
+	    }
 	}
     }
+    allow_input = TRUE; /* allow input next time */
     
     if (u.utotype)		/* change dungeon level */
 	deferred_goto();	/* after rhack() */
@@ -582,8 +586,8 @@ void nh_do_move(void)
     /****************************************/
 
     /* prepare for the next move */
-    pre_move_tasks(didmove);
-    
+    if (pre_move_tasks(didmove))
+	allow_input = FALSE; /* your move was used up while performing some occupation */
 }
 
 

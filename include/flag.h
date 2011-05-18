@@ -36,7 +36,8 @@ struct flag {
 	boolean  lit_corridor;	/* show a dark corr as lit if it is in sight */
 	boolean  made_amulet;
 	boolean  mon_moving;	/* monsters' turn to move */
-	boolean  move;
+	boolean  move;		/* normally 1, unless an action during your turn
+				 * did NOT use up the move */
 	boolean  mv;
 	boolean  bypasses;	/* bypass flag is set on at least one fobj */
 	boolean  nap;		/* `timed_delay' option for display effects */
