@@ -18,7 +18,7 @@ static const char *copyright_banner[] =
 {COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C};
 
 static void wd_message(void);
-static boolean pre_move_tasks(boolean didmove);
+static void pre_move_tasks(boolean didmove);
 
 static void wd_message(void)
 {
@@ -492,7 +492,7 @@ static void special_vision_handling(void)
 }
 
 
-static boolean pre_move_tasks(boolean didmove)
+static void pre_move_tasks(boolean didmove)
 {
     find_ac();
     if (!flags.mv || Blind)
@@ -500,11 +500,6 @@ static boolean pre_move_tasks(boolean didmove)
     
     if (botl || botlx)
 	bot();
-
-    if (multi >= 0 && occupation) {
-	handle_occupation();
-	return TRUE;
-    }
 
     if ((u.uhave.amulet || Clairvoyant) &&
 	!In_endgame(&u.uz) && !BClairvoyant &&
@@ -525,36 +520,31 @@ static boolean pre_move_tasks(boolean didmove)
 	    /* lookaround may clear multi */
 	    flags.move = 0;
 	    botl = 1;
-	    return FALSE;
 	}
     }
-    
-    return FALSE;
 }
 
 
-static boolean allow_input = TRUE;
 void nh_do_move(void)
 {
     boolean didmove = FALSE;
     char *cmd;
     
-    if (allow_input) {
-	if (multi == 0) {
-	    cmd = parse();
-	    rhack(cmd, TRUE);
-	} else if (multi > 0) {
-	    if (flags.mv) {
-		if(multi < COLNO && !--multi)
-		    flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-		domove();
-	    } else {
-		--multi;
-		rhack(save_cm, FALSE);
-	    }
+    if (multi >= 0 && occupation)
+	handle_occupation();
+    else if (multi == 0) {
+	cmd = parse();
+	rhack(cmd, TRUE);
+    } else if (multi > 0) {
+	if (flags.mv) {
+	    if(multi < COLNO && !--multi)
+		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
+	    domove();
+	} else {
+	    --multi;
+	    rhack(save_cm, FALSE);
 	}
     }
-    allow_input = TRUE; /* allow input next time */
     
     if (u.utotype)		/* change dungeon level */
 	deferred_goto();	/* after rhack() */
@@ -585,8 +575,7 @@ void nh_do_move(void)
 
     /* prepare for the next move */
     flags.move = 1;
-    if (pre_move_tasks(didmove))
-	allow_input = FALSE; /* your move was used up while performing some occupation */
+    pre_move_tasks(didmove);
 }
 
 
