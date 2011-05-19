@@ -501,8 +501,6 @@ static boolean pre_move_tasks(boolean didmove)
     if (botl || botlx)
 	bot();
 
-    flags.move = 1;
-
     if (multi >= 0 && occupation) {
 	handle_occupation();
 	return TRUE;
@@ -586,6 +584,7 @@ void nh_do_move(void)
     /****************************************/
 
     /* prepare for the next move */
+    flags.move = 1;
     if (pre_move_tasks(didmove))
 	allow_input = FALSE; /* your move was used up while performing some occupation */
 }
