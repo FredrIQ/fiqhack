@@ -597,6 +597,7 @@ void stop_occupation(void)
 	    You("stop %s.", occtxt);
 	occupation = 0;
 	botl = 1; /* in case u.uhs changed */
+	nomul(0);
 	/* fainting stops your occupation, there's no reason to sync.
 	sync_hunger();
 	 */
