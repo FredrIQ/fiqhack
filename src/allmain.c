@@ -562,8 +562,6 @@ void nh_do_move(void)
 	display_nhwindow(NHW_MAP, FALSE);
     }
     
-    get_nh_event();
-
     didmove = flags.move;
     if(didmove) {
 	you_moved();

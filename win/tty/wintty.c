@@ -24,7 +24,6 @@ struct interface_flags ui_flags;
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
     tty_player_selection,
-    tty_get_nh_event,
     tty_exit_nhwindows,
     tty_create_game_windows,
     tty_destroy_game_windows,
@@ -552,11 +551,6 @@ void tty_askname(char *plname)
 
     /* move to next line to simulate echo of user's <return> */
     move_cursor(BASE_WINDOW, 1, wins[BASE_WINDOW]->cury + 1);
-}
-
-void tty_get_nh_event(void)
-{
-    return;
 }
 
 #if !defined(WIN32CON)

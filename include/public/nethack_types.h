@@ -248,7 +248,6 @@ struct nh_status_info {
 
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
-    void (*win_get_nh_event)(void);
     void (*win_exit_nhwindows)(const char *);
     void (*win_create_game_windows)(void);
     void (*win_destroy_game_windows)(void);
