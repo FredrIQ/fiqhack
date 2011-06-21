@@ -28,7 +28,7 @@ static struct obj *DROPPABLES(struct monst *mon)
 		item1 = item2 = TRUE;
 	if (!tunnels(mon->data) || !needspick(mon->data))
 		item1 = TRUE;
-	for(obj = mon->minvent; obj; obj = obj->nobj) {
+	for (obj = mon->minvent; obj; obj = obj->nobj) {
 		if (!item1 && is_pick(obj) && (obj->otyp != DWARVISH_MATTOCK
 						|| !which_armor(mon, W_ARMS))) {
 			item1 = TRUE;
@@ -53,7 +53,7 @@ static boolean cursed_object_at(int x, int y)
 {
 	struct obj *otmp;
 
-	for(otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
+	for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
 		if (otmp->cursed) return TRUE;
 	return FALSE;
 }
@@ -67,7 +67,7 @@ int dog_nutrition(struct monst *mtmp, struct obj *obj)
 	 * as a human, but gets more nutritional value.
 	 */
 	if (obj->oclass == FOOD_CLASS) {
-	    if(obj->otyp == CORPSE) {
+	    if (obj->otyp == CORPSE) {
 		mtmp->meating = 3 + (mons[obj->corpsenm].cwt >> 6);
 		nutrit = mons[obj->corpsenm].cnutrit;
 	    } else {
@@ -83,7 +83,7 @@ int dog_nutrition(struct monst *mtmp, struct obj *obj)
 		case MZ_HUGE: nutrit *= 3; break;
 		case MZ_GIGANTIC: nutrit *= 2; break;
 	    }
-	    if(obj->oeaten) {
+	    if (obj->oeaten) {
 		mtmp->meating = eaten_stat(mtmp->meating, obj);
 		nutrit = eaten_stat(nutrit, obj);
 	    }
@@ -111,7 +111,7 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 	boolean poly = FALSE, grow = FALSE, heal = FALSE;
 	int nutrit;
 
-	if(edog->hungrytime < monstermoves)
+	if (edog->hungrytime < monstermoves)
 	    edog->hungrytime = monstermoves;
 	nutrit = dog_nutrition(mtmp, obj);
 	poly = polyfodder(obj);
@@ -148,7 +148,7 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 			singular(obj, doname) : doname(obj));
 	/* It's a reward if it's DOGFOOD and the player dropped/threw it. */
 	/* We know the player had it if invlet is set -dlc */
-	if(dogfood(mtmp,obj) == DOGFOOD && obj->invlet)
+	if (dogfood(mtmp,obj) == DOGFOOD && obj->invlet)
 	    edog->apport += (int)(200L/
 		((long)edog->dropdist + monstermoves - edog->droptime));
 
@@ -240,19 +240,19 @@ static int dog_invent(struct monst *mtmp, struct edog *edog, int udist)
 	/* Note: if apport == 1 then our behaviour is independent of udist */
 	/* Use udist+1 so steed won't cause divide by zero */
 #ifndef GOLDOBJ
-	if(DROPPABLES(mtmp) || mtmp->mgold) {
+	if (DROPPABLES(mtmp) || mtmp->mgold) {
 #else
-	if(DROPPABLES(mtmp)) {
+	if (DROPPABLES(mtmp)) {
 #endif
 	    if (!rn2(udist+1) || !rn2(edog->apport))
-		if(rn2(10) < edog->apport){
+		if (rn2(10) < edog->apport){
 		    relobj(mtmp, (int)mtmp->minvis, TRUE);
-		    if(edog->apport > 1) edog->apport--;
+		    if (edog->apport > 1) edog->apport--;
 		    edog->dropdist = udist;		/* hpscdi!jon */
 		    edog->droptime = monstermoves;
 		}
 	} else {
-	    if((obj=level.objects[omx][omy]) && !index(nofetch,obj->oclass)){
+	    if ((obj=level.objects[omx][omy]) && !index(nofetch,obj->oclass)){
 		int edible = dogfood(mtmp, obj);
 
 		if ((edible <= CADAVER ||
@@ -261,9 +261,9 @@ static int dog_invent(struct monst *mtmp, struct edog *edog, int udist)
 		    could_reach_item(mtmp, obj->ox, obj->oy))
 		    return dog_eat(mtmp, obj, omx, omy, FALSE);
 
-		if(can_carry(mtmp, obj) && !obj->cursed &&
+		if (can_carry(mtmp, obj) && !obj->cursed &&
 			could_reach_item(mtmp, obj->ox, obj->oy)) {
-		    if(rn2(20) < edog->apport+3) {
+		    if (rn2(20) < edog->apport+3) {
 			if (rn2(udist) || !rn2(edog->apport)) {
 			    if (cansee(omx, omy) && flags.verbose)
 				pline("%s picks up %s.", Monnam(mtmp),
@@ -348,7 +348,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 			    gy = ny;
 			    gtyp = otyp;
 			}
-		    } else if(gtyp == UNDEF && in_masters_sight &&
+		    } else if (gtyp == UNDEF && in_masters_sight &&
 			      !dog_has_minvent &&
 			      (!levl[omx][omy].lit || levl[u.ux][u.uy].lit) &&
 			      (otyp == MANFOOD || m_cansee(mtmp, nx, ny)) &&
@@ -380,7 +380,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 		if (appr == 0) {
 			obj = invent;
 			while (obj) {
-				if(dogfood(mtmp, obj) == DOGFOOD) {
+				if (dogfood(mtmp, obj) == DOGFOOD) {
 					appr = 1;
 					break;
 				}
@@ -389,7 +389,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 		}
 	} else
 	    appr = 1;	/* gtyp != UNDEF */
-	if(mtmp->mconf)
+	if (mtmp->mconf)
 	    appr = 0;
 
 #define FARAWAY (COLNO + 2)		/* position outside screen */
@@ -400,10 +400,10 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 	    if (cp) {
 		gx = cp->x;
 		gy = cp->y;
-		if(edog) edog->ogoal.x = 0;
+		if (edog) edog->ogoal.x = 0;
 	    } else {
 		/* assume master hasn't moved far, and reuse previous goal */
-		if(edog && edog->ogoal.x &&
+		if (edog && edog->ogoal.x &&
 		   ((edog->ogoal.x != omx) || (edog->ogoal.y != omy))) {
 		    gx = edog->ogoal.x;
 		    gy = edog->ogoal.y;
@@ -418,13 +418,13 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 		    if (gx == FARAWAY || (gx == omx && gy == omy)) {
 			gx = u.ux;
 			gy = u.uy;
-		    } else if(edog) {
+		    } else if (edog) {
 			edog->ogoal.x = gx;
 			edog->ogoal.y = gy;
 		    }
 		}
 	    }
-	} else if(edog) {
+	} else if (edog) {
 	    edog->ogoal.x = 0;
 	}
 	return appr;
@@ -509,10 +509,10 @@ int dog_move(struct monst *mtmp,
 		}
 		mongone(mtmp);
 		i = rnd(4);
-		while(i--) {
+		while (i--) {
 		    mm.x = u.ux;
 		    mm.y = u.uy;
-		    if(enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL]))
+		    if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL]))
 			mk_roamer(&mons[PM_ANGEL], u.ualign.type,
 					 mm.x, mm.y, FALSE);
 		}
@@ -656,7 +656,7 @@ int dog_move(struct monst *mtmp,
 			nix = nx;
 			niy = ny;
 			nidist = ndist;
-			if(j < 0) chcnt = 0;
+			if (j < 0) chcnt = 0;
 			chi = i;
 		}
 	nxti:	;
@@ -770,8 +770,8 @@ static boolean can_reach_location(struct monst *mon,
     if (!isok(mx, my)) return FALSE; /* should not happen */
     
     dist = dist2(mx, my, fx, fy);
-    for(i=mx-1; i<=mx+1; i++) {
-	for(j=my-1; j<=my+1; j++) {
+    for (i=mx-1; i<=mx+1; i++) {
+	for (j=my-1; j<=my+1; j++) {
 	    if (!isok(i, j))
 		continue;
 	    if (dist2(i, j, fx, fy) >= dist)

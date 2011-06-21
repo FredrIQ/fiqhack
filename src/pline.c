@@ -195,7 +195,7 @@ void raw_printf (const char *line, ...)
 
 static void vraw_printf(const char *line, va_list the_args)
 {
-	if(!index(line, '%'))
+	if (!index(line, '%'))
 	    raw_print(line);
 	else {
 	    char pbuf[BUFSZ];

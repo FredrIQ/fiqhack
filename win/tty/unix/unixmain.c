@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 	nh_init(hackpid, &tty_procs, gamepaths);
 	free(gamepaths);
 
-	if(argc > 1) {
+	if (argc > 1) {
 	    /* Now we know the directory containing 'record' and
 	     * may do a prscore().
 	     */
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	while (!plname[0])
 	    tty_askname(plname);
 	
-	if(!nh_restore_save(plname, locknum, playmode)) {
+	if (!nh_restore_save(plname, locknum, playmode)) {
 	    query_birth_options();
 	    nh_start_game(plname, locknum, playmode);
 	}
@@ -182,7 +182,7 @@ static void process_options(int argc, char *argv[])
 	/*
 	 * Process options.
 	 */
-	while(argc > 1 && argv[1][0] == '-'){
+	while (argc > 1 && argv[1][0] == '-'){
 		argv++;
 		argc--;
 		switch(argv[0][1]){
@@ -199,9 +199,9 @@ static void process_options(int argc, char *argv[])
 			break;
 #endif
 		case 'u':
-			if(argv[0][2])
+			if (argv[0][2])
 			  strncpy(plname, argv[0]+2, sizeof(plname)-1);
-			else if(argc > 1) {
+			else if (argc > 1) {
 			  argc--;
 			  argv++;
 			  strncpy(plname, argv[0], sizeof(plname)-1);
@@ -252,10 +252,10 @@ static void process_options(int argc, char *argv[])
 		}
 	}
 
-	if(argc > 1)
+	if (argc > 1)
 		locknum = atoi(argv[1]);
 #ifdef MAX_NR_OF_PLAYERS
-	if(!locknum || locknum > MAX_NR_OF_PLAYERS)
+	if (!locknum || locknum > MAX_NR_OF_PLAYERS)
 		locknum = MAX_NR_OF_PLAYERS;
 #endif
 }
@@ -279,11 +279,11 @@ static void whoami(char *name)
 	if (*name)
 	    return;
 	
-	if(/* !*name && */ (s = getenv("USER")))
+	if (/* !*name && */ (s = getenv("USER")))
 		strncpy(name, s, PL_NSIZ);
-	if(!*name && (s = getenv("LOGNAME")))
+	if (!*name && (s = getenv("LOGNAME")))
 		strncpy(name, s, PL_NSIZ);
-	if(!*name && (s = getlogin()))
+	if (!*name && (s = getlogin()))
 		strncpy(name, s, PL_NSIZ);
 }
 

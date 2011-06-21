@@ -37,8 +37,8 @@ static void goodfruit(int id)
 {
 	struct fruit *f;
 
-	for(f=ffruit; f; f=f->nextf) {
-		if(f->fid == -id) {
+	for (f=ffruit; f; f=f->nextf) {
+		if (f->fid == -id) {
 			f->fid = id;
 			return;
 		}
@@ -66,7 +66,7 @@ static void resetobjs(struct obj *ochain, boolean restore)
 		if (!restore) {
 			/* do not zero out o_ids for ghost levels anymore */
 
-			if(objects[otmp->otyp].oc_uses_known) otmp->known = 0;
+			if (objects[otmp->otyp].oc_uses_known) otmp->known = 0;
 			otmp->dknown = otmp->bknown = 0;
 			otmp->rknown = 0;
 			otmp->invlet = 0;
@@ -119,9 +119,9 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 		if ((cont || artifact_light(otmp)) && obj_is_burning(otmp))
 		    end_burn(otmp, TRUE);	/* smother in statue */
 
-		if(otmp->otyp == SLIME_MOLD) goodfruit(otmp->spe);
+		if (otmp->otyp == SLIME_MOLD) goodfruit(otmp->spe);
 
-		if(rn2(5)) curse(otmp);
+		if (rn2(5)) curse(otmp);
 		if (mtmp)
 			add_to_minv(mtmp, otmp);
 		else if (cont)
@@ -130,7 +130,7 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 			place_object(otmp, u.ux, u.uy);
 	}
 #ifndef GOLDOBJ
-	if(u.ugold) {
+	if (u.ugold) {
 		long ugold = u.ugold;
 		if (mtmp) mtmp->mgold = ugold;
 		else if (cont) add_to_container(cont, mkgoldobj(ugold));
@@ -155,11 +155,11 @@ boolean can_make_bones(void)
 	}
 	if (!Is_branchlev(&u.uz)) {
 	    /* no bones on non-branches with portals */
-	    for(ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
+	    for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
 		if (ttmp->ttyp == MAGIC_PORTAL) return FALSE;
 	}
 
-	if(depth(&u.uz) <= 0 ||		/* bulletproofing for endgame */
+	if (depth(&u.uz) <= 0 ||		/* bulletproofing for endgame */
 	   (!rn2(1 + (depth(&u.uz)>>2))	/* fewer ghosts on low levels */
 		&& !wizard))
 		return FALSE;
@@ -213,7 +213,7 @@ void savebones(struct obj *corpse)
 	/* mark all fruits as nonexistent; when we come to them we'll mark
 	 * them as existing (using goodfruit())
 	 */
-	for(f=ffruit; f; f=f->nextf) f->fid = -f->fid;
+	for (f=ffruit; f; f=f->nextf) f->fid = -f->fid;
 
 	/* check iron balls separately--maybe they're not carrying it */
 	if (uball) uball->owornmask = uchain->owornmask = 0;
@@ -265,13 +265,13 @@ void savebones(struct obj *corpse)
 		mtmp->female = flags.female;
 		mtmp->msleeping = 1;
 	}
-	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
 		resetobjs(mtmp->minvent,FALSE);
 		/* do not zero out m_ids for bones levels any more */
 		mtmp->mlstmv = 0L;
-		if(mtmp->mtame) mtmp->mtame = mtmp->mpeaceful = 0;
+		if (mtmp->mtame) mtmp->mtame = mtmp->mpeaceful = 0;
 	}
-	for(ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
+	for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
 		ttmp->madeby_u = 0;
 		ttmp->tseen = (ttmp->ttyp == HOLE);
 	}
@@ -282,15 +282,15 @@ void savebones(struct obj *corpse)
 	u.ux = u.uy = 0;
 
 	/* Clear all memory from the level. */
-	for(x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++) {
+	for (x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++) {
 	    levl[x][y].seenv = 0;
 	    levl[x][y].waslit = 0;
 	    levl[x][y].glyph = cmap_to_glyph(S_stone);
 	}
 
 	fd = create_bonesfile(&u.uz, &bonesid, whynot);
-	if(fd < 0) {
-		if(wizard)
+	if (fd < 0) {
+		if (wizard)
 			pline("%s", whynot);
 
 		/* bones file creation problems are silent to the player.
@@ -317,14 +317,14 @@ int getbones(void)
 	int ok;
 	char c, *bonesid, oldbonesid[10];
 
-	if(discover)		/* save bones files for real games */
+	if (discover)		/* save bones files for real games */
 		return 0;
 
 	/* wizard check added by GAN 02/05/87 */
-	if(rn2(3)	/* only once in three times do we find bones */
+	if (rn2(3)	/* only once in three times do we find bones */
 		&& !wizard)
 		return 0;
-	if(no_bones_level(&u.uz)) return 0;
+	if (no_bones_level(&u.uz)) return 0;
 	fd = open_bonesfile(&u.uz, &bonesid);
 	if (fd < 0) return 0;
 
@@ -333,8 +333,8 @@ int getbones(void)
 		pline("Discarding unuseable bones; no need to panic...");
 	} else {
 
-		if(wizard)  {
-			if(yn("Get bones?") == 'n') {
+		if (wizard)  {
+			if (yn("Get bones?") == 'n') {
 				close(fd);
 				return 0;
 			}
@@ -366,7 +366,7 @@ int getbones(void)
 			 * subject to genocide, their mhpmax will be
 			 * set to the magic DEFUNCT_MONSTER cookie value.
 			 */
-			for(mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+			for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
 			    if (mtmp->mhpmax == DEFUNCT_MONSTER) {
 #if defined(DEBUG)
 				if (wizard)
@@ -384,8 +384,8 @@ int getbones(void)
 	}
 	close(fd);
 
-	if(wizard) {
-		if(yn("Unlink bones?") == 'n') {
+	if (wizard) {
+		if (yn("Unlink bones?") == 'n') {
 			return ok;
 		}
 	}

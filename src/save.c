@@ -32,16 +32,16 @@ static unsigned ustuck_id = 0, usteed_id = 0;
 int dosave(void)
 {
 	clear_nhwindow(NHW_MESSAGE);
-	if(yn("Really save?") == 'n') {
+	if (yn("Really save?") == 'n') {
 		clear_nhwindow(NHW_MESSAGE);
-		if(multi > 0) nomul(0);
+		if (multi > 0) nomul(0);
 	} else {
 		clear_nhwindow(NHW_MESSAGE);
 		pline("Saving...");
 #if defined(UNIX)
 		program_state.done_hup = 0;
 #endif
-		if(dosave0()) {
+		if (dosave0()) {
 			program_state.something_worth_saving = 0;
 			u.uhp = -1;		/* universal game's over indicator */
 			/* make sure they see the Saving message */
@@ -110,7 +110,7 @@ int dosave0(void)
 	HUP mark_synch();	/* flush any buffered screen output */
 
 	fd = create_savefile();
-	if(fd < 0) {
+	if (fd < 0) {
 		HUP pline("Cannot open save file.");
 		delete_savefile();	/* ab@unido */
 		return 0;
@@ -120,11 +120,11 @@ int dosave0(void)
 				   in the event of an impossible() call */
 	
 	/* undo date-dependent luck adjustments made at startup time */
-	if(flags.moonphase == FULL_MOON)	/* ut-sally!fletcher */
+	if (flags.moonphase == FULL_MOON)	/* ut-sally!fletcher */
 		change_luck(-1);		/* and unido!ab */
-	if(flags.friday13)
+	if (flags.friday13)
 		change_luck(1);
-	if(iflags2.window_inited)
+	if (iflags2.window_inited)
 	    HUP clear_nhwindow(NHW_MESSAGE);
 
 	store_version(fd);
@@ -149,7 +149,7 @@ int dosave0(void)
 	u.ustuck = NULL;
 	u.usteed = NULL;
 
-	for(ltmp = (xchar)1; ltmp <= maxledgerno(); ltmp++) {
+	for (ltmp = (xchar)1; ltmp <= maxledgerno(); ltmp++) {
 		if (ltmp == ledger_no(&uz_save)) continue;
 		if (!(level_info[ltmp].flags & LFILE_EXISTS)) continue;
 		ofd = open_levelfile(ltmp, whynot);
@@ -210,9 +210,9 @@ static void savegamestate(int fd, int mode)
 				sizeof(struct spell) * (MAXSPELL + 1));
 	save_artifacts(fd);
 	save_oracles(fd, mode);
-	if(ustuck_id)
+	if (ustuck_id)
 	    bwrite(fd, &ustuck_id, sizeof ustuck_id);
-	if(usteed_id)
+	if (usteed_id)
 	    bwrite(fd, &usteed_id, sizeof usteed_id);
 	bwrite(fd, pl_character, sizeof pl_character);
 	bwrite(fd, pl_fruit, sizeof pl_fruit);
@@ -309,7 +309,7 @@ void savelev(int fd, xchar lev, int mode)
 		dmonsfree();
 	}
 
-	if(fd < 0) panic("Save on bad file!");	/* impossible */
+	if (fd < 0) panic("Save on bad file!");	/* impossible */
 	if (lev >= 0 && lev <= maxledgerno())
 	    level_info[lev].flags |= VISITED;
 	bwrite(fd,&hackpid,sizeof(hackpid));
@@ -360,10 +360,10 @@ static boolean buffering = FALSE;
 void bufon(int fd)
 {
 #ifdef UNIX
-    if(bw_fd >= 0)
+    if (bw_fd >= 0)
 	panic("double buffering unexpected");
     bw_fd = fd;
-    if((bw_FILE = fdopen(fd, "w")) == 0)
+    if ((bw_FILE = fdopen(fd, "w")) == 0)
 	panic("buffering of file %d failed", fd);
 #endif
     buffering = TRUE;
@@ -379,8 +379,8 @@ void bufoff(int fd)
 void bflush(int fd)
 {
 #ifdef UNIX
-    if(fd == bw_fd) {
-	if(fflush(bw_FILE) == EOF)
+    if (fd == bw_fd) {
+	if (fflush(bw_FILE) == EOF)
 	    panic("flush of savefile failed!");
     }
 #endif
@@ -394,7 +394,7 @@ void bwrite(int fd, void *loc, unsigned num)
 
 #ifdef UNIX
 	if (buffering) {
-	    if(fd != bw_fd)
+	    if (fd != bw_fd)
 		panic("unbuffered write to fd %d (!= %d)", fd, bw_fd);
 
 	    failed = (fwrite(loc, (int)num, 1, bw_FILE) != 1);
@@ -479,7 +479,7 @@ static void saveobjchn(int fd, struct obj *otmp, int mode)
 	unsigned int xl;
 	int minusone = -1;
 
-	while(otmp) {
+	while (otmp) {
 	    otmp2 = otmp->nobj;
 	    if (perform_bwrite(mode)) {
 		xl = otmp->oxlth + otmp->onamelth;

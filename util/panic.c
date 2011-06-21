@@ -17,7 +17,7 @@ panic (char *str, ...)
 {
 	va_list the_args;
 	va_start(the_args, str);
-	if(panicking++)
+	if (panicking++)
 	    abort();    /* avoid loops - this should never happen*/
 
 	fputs(" ERROR:  ", stderr);

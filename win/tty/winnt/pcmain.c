@@ -116,7 +116,7 @@ void pcmain(int argc, char *argv[])
 	if (!hackdir[0])
 		strcpy(hackdir, orgdir);
 	
-	if(argc > 1) {
+	if (argc > 1) {
 	    if (!strncmp(argv[1], "-d", 2) && argv[1][2] != 'e') {
 		/* avoid matching "-dec" for DECgraphics; since the man page
 		 * says -d directory, hope nobody's using -desomething_else
@@ -124,13 +124,13 @@ void pcmain(int argc, char *argv[])
 		argc--;
 		argv++;
 		dir = argv[0]+2;
-		if(*dir == '=' || *dir == ':') dir++;
-		if(!*dir && argc > 1) {
+		if (*dir == '=' || *dir == ':') dir++;
+		if (!*dir && argc > 1) {
 			argc--;
 			argv++;
 			dir = argv[0];
 		}
-		if(!*dir)
+		if (!*dir)
 		    error("Flag -d must be followed by a directory name.");
 		strcpy(hackdir, dir);
 	    }
@@ -182,7 +182,7 @@ void pcmain(int argc, char *argv[])
 				/* again if suffix was whole name */
 				/* accepts any suffix */
 	if (wizard) {
-		if(!strcmp(plname, WIZARD))
+		if (!strcmp(plname, WIZARD))
 			strcpy(plname, "wizard");
 		else {
 			wizard = FALSE;
@@ -269,7 +269,7 @@ void pcmain(int argc, char *argv[])
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 #ifdef NEWS
-		if(iflags2.news){
+		if (iflags2.news){
 		    display_file(NEWS, FALSE);
 		    iflags2.news = FALSE;
 		}
@@ -277,15 +277,15 @@ void pcmain(int argc, char *argv[])
 		pline("Restoring save file...");
 		mark_synch();	/* flush output */
 
-		if(!dorecover(fd))
+		if (!dorecover(fd))
 			goto not_recovered;
-		if(!wizard && remember_wiz_mode) wizard = TRUE;
+		if (!wizard && remember_wiz_mode) wizard = TRUE;
 		check_special_room(FALSE);
 		if (discover)
 			You("are in non-scoring discovery mode.");
 
 		if (discover || wizard) {
-			if(yn("Do you want to keep the save file?") == 'n'){
+			if (yn("Do you want to keep the save file?") == 'n'){
 				delete_savefile();
 			}
 		}
@@ -317,7 +317,7 @@ static void process_options(int argc, char *argv[])
 	/*
 	 * Process options.
 	 */
-	while(argc > 1 && argv[1][0] == '-'){
+	while (argc > 1 && argv[1][0] == '-'){
 		argv++;
 		argc--;
 		switch(argv[0][1]){
@@ -349,9 +349,9 @@ static void process_options(int argc, char *argv[])
 			break;
 #endif
 		case 'u':
-			if(argv[0][2])
+			if (argv[0][2])
 			  strncpy(plname, argv[0]+2, sizeof(plname)-1);
-			else if(argc > 1) {
+			else if (argc > 1) {
 			  argc--;
 			  argv++;
 			  strncpy(plname, argv[0], sizeof(plname)-1);
@@ -453,7 +453,7 @@ static void  nhusage(void)
 void chdirx(char *dir, boolean wr)
 {
 	static char thisdir[] = ".";
-	if(dir && chdir(dir) < 0) {
+	if (dir && chdir(dir) < 0) {
 		error("Cannot chdir to %s.", dir);
 	}
 

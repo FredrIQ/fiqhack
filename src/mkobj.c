@@ -92,23 +92,23 @@ struct obj *mkobj(char oclass, boolean artif)
 {
 	int tprob, i, prob = rnd(1000);
 
-	if(oclass == RANDOM_CLASS) {
+	if (oclass == RANDOM_CLASS) {
 		const struct icp *iprobs =
 				    (Is_rogue_level(&u.uz)) ?
 				    (const struct icp *)rogueprobs :
 				    Inhell ? (const struct icp *)hellprobs :
 				    (const struct icp *)mkobjprobs;
 
-		for(tprob = rnd(100);
+		for (tprob = rnd(100);
 		    (tprob -= iprobs->iprob) > 0;
 		    iprobs++);
 		oclass = iprobs->iclass;
 	}
 
 	i = bases[(int)oclass];
-	while((prob -= objects[i].oc_prob) > 0) i++;
+	while ((prob -= objects[i].oc_prob) > 0) i++;
 
-	if(objects[i].oc_class != oclass || !OBJ_NAME(objects[i]))
+	if (objects[i].oc_class != oclass || !OBJ_NAME(objects[i]))
 		panic("probtype error, oclass=%d i=%d", (int) oclass, i);
 
 	return mksobj(i, TRUE, artif);
@@ -190,7 +190,7 @@ int rndmonnum(void)
 	do {
 	    i = rn1(SPECIAL_PM - LOW_PM, LOW_PM);
 	    ptr = &mons[i];
-	} while((ptr->geno & G_NOGEN) || (!Inhell && (ptr->geno & G_HELL)));
+	} while ((ptr->geno & G_NOGEN) || (!Inhell && (ptr->geno & G_HELL)));
 
 	return i;
 }
@@ -354,10 +354,10 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 	if (init) switch (let) {
 	case WEAPON_CLASS:
 		otmp->quan = is_multigen(otmp) ? (long) rn1(6,6) : 1L;
-		if(!rn2(11)) {
+		if (!rn2(11)) {
 			otmp->spe = rne(3);
 			otmp->blessed = rn2(2);
-		} else if(!rn2(10)) {
+		} else if (!rn2(10)) {
 			curse(otmp);
 			otmp->spe = -rne(3);
 		} else	blessorcurse(otmp, 10);
@@ -471,7 +471,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 		case FIGURINE:	{	int tryct2 = 0;
 					do
 					    otmp->corpsenm = rndmonnum();
-					while(is_human(&mons[otmp->corpsenm])
+					while (is_human(&mons[otmp->corpsenm])
 						&& tryct2++ < 30);
 					blessorcurse(otmp, 4);
 					break;
@@ -489,7 +489,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 	    break;
 	case AMULET_CLASS:
 		if (otmp->otyp == AMULET_OF_YENDOR) flags.made_amulet = TRUE;
-		if(rn2(10) && (otmp->otyp == AMULET_OF_STRANGULATION ||
+		if (rn2(10) && (otmp->otyp == AMULET_OF_STRANGULATION ||
 		   otmp->otyp == AMULET_OF_CHANGE ||
 		   otmp->otyp == AMULET_OF_RESTFUL_SLEEP)) {
 			curse(otmp);
@@ -509,37 +509,37 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 		blessorcurse(otmp, 17);
 		break;
 	case ARMOR_CLASS:
-		if(rn2(10) && (otmp->otyp == FUMBLE_BOOTS ||
+		if (rn2(10) && (otmp->otyp == FUMBLE_BOOTS ||
 		   otmp->otyp == LEVITATION_BOOTS ||
 		   otmp->otyp == HELM_OF_OPPOSITE_ALIGNMENT ||
 		   otmp->otyp == GAUNTLETS_OF_FUMBLING ||
 		   !rn2(11))) {
 			curse(otmp);
 			otmp->spe = -rne(3);
-		} else if(!rn2(10)) {
+		} else if (!rn2(10)) {
 			otmp->blessed = rn2(2);
 			otmp->spe = rne(3);
 		} else	blessorcurse(otmp, 10);
 		if (artif && !rn2(40))                
 		    otmp = mk_artifact(otmp, (aligntyp)A_NONE);
 		/* simulate lacquered armor for samurai */
-		if (Role_if(PM_SAMURAI) && otmp->otyp == SPLINT_MAIL &&
+		if (Role_if (PM_SAMURAI) && otmp->otyp == SPLINT_MAIL &&
 		    (moves <= 1 || In_quest(&u.uz))) {
 			otmp->oerodeproof = otmp->rknown = 1;
 		}
 		break;
 	case WAND_CLASS:
-		if(otmp->otyp == WAN_WISHING) otmp->spe = rnd(3); else
+		if (otmp->otyp == WAN_WISHING) otmp->spe = rnd(3); else
 		otmp->spe = rn1(5,
 			(objects[otmp->otyp].oc_dir == NODIR) ? 11 : 4);
 		blessorcurse(otmp, 17);
 		otmp->recharged = 0; /* used to control recharging */
 		break;
 	case RING_CLASS:
-		if(objects[otmp->otyp].oc_charged) {
+		if (objects[otmp->otyp].oc_charged) {
 		    blessorcurse(otmp, 3);
-		    if(rn2(10)) {
-			if(rn2(10) && bcsign(otmp))
+		    if (rn2(10)) {
+			if (rn2(10) && bcsign(otmp))
 			    otmp->spe = bcsign(otmp) * rne(3);
 			else otmp->spe = rn2(2) ? rne(3) : -rne(3);
 		    }
@@ -547,7 +547,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 		    if (otmp->spe == 0) otmp->spe = rn2(4) - rn2(3);
 		    /* negative rings are usually cursed */
 		    if (otmp->spe < 0 && rn2(5)) curse(otmp);
-		} else if(rn2(10) && (otmp->otyp == RIN_TELEPORTATION ||
+		} else if (rn2(10) && (otmp->otyp == RIN_TELEPORTATION ||
 			  otmp->otyp == RIN_POLYMORPH ||
 			  otmp->otyp == RIN_AGGRAVATE_MONSTER ||
 			  otmp->otyp == RIN_HUNGER || !rn2(9))) {
@@ -704,10 +704,10 @@ void uncurse(struct obj *otmp)
 
 void blessorcurse(struct obj *otmp, int chance)
 {
-	if(otmp->blessed || otmp->cursed) return;
+	if (otmp->blessed || otmp->cursed) return;
 
-	if(!rn2(chance)) {
-	    if(!rn2(2)) {
+	if (!rn2(chance)) {
+	    if (!rn2(2)) {
 		curse(otmp);
 	    } else {
 		bless(otmp);
@@ -745,7 +745,7 @@ int weight(struct obj *obj)
 		    wt = (int)obj->quan *
 			 ((int)mons[obj->corpsenm].cwt * 3 / 2);
 
-		for(contents=obj->cobj; contents; contents=contents->nobj)
+		for (contents=obj->cobj; contents; contents=contents->nobj)
 			cwt += weight(contents);
 		/*
 		 *  The weight of bags of holding is calculated as the weight

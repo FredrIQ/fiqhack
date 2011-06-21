@@ -552,9 +552,9 @@ void u_init(void)
 	 */
 	case PM_ARCHEOLOGIST:
 		ini_inv(Archeologist);
-		if(!rn2(10)) ini_inv(Tinopener);
-		else if(!rn2(4)) ini_inv(Lamp);
-		else if(!rn2(10)) ini_inv(Magicmarker);
+		if (!rn2(10)) ini_inv(Tinopener);
+		else if (!rn2(4)) ini_inv(Lamp);
+		else if (!rn2(10)) ini_inv(Magicmarker);
 		knows_object(SACK);
 		knows_object(TOUCHSTONE);
 		skill_init(Skill_A);
@@ -565,7 +565,7 @@ void u_init(void)
 		    Barbarian[B_MINOR].trotyp = SHORT_SWORD;
 		}
 		ini_inv(Barbarian);
-		if(!rn2(6)) ini_inv(Lamp);
+		if (!rn2(6)) ini_inv(Lamp);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_B);
@@ -582,7 +582,7 @@ void u_init(void)
 		u.umoney0 = rn1(1000, 1001);
 #endif
 		ini_inv(Healer);
-		if(!rn2(25)) ini_inv(Lamp);
+		if (!rn2(25)) ini_inv(Lamp);
 		knows_object(POT_FULL_HEALING);
 		skill_init(Skill_H);
 		break;
@@ -602,15 +602,15 @@ void u_init(void)
 		case 2: Monk[M_BOOK].trotyp = SPE_SLEEP; break;
 		}
 		ini_inv(Monk);
-		if(!rn2(5)) ini_inv(Magicmarker);
-		else if(!rn2(10)) ini_inv(Lamp);
+		if (!rn2(5)) ini_inv(Magicmarker);
+		else if (!rn2(10)) ini_inv(Lamp);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_Mon);
 		break;
 	case PM_PRIEST:
 		ini_inv(Priest);
-		if(!rn2(10)) ini_inv(Magicmarker);
-		else if(!rn2(10)) ini_inv(Lamp);
+		if (!rn2(10)) ini_inv(Magicmarker);
+		else if (!rn2(10)) ini_inv(Lamp);
 		knows_object(POT_WATER);
 		skill_init(Skill_P);
 		/* KMH, conduct --
@@ -635,14 +635,14 @@ void u_init(void)
 		u.umoney0 = 0;
 #endif
 		ini_inv(Rogue);
-		if(!rn2(5)) ini_inv(Blindfold);
+		if (!rn2(5)) ini_inv(Blindfold);
 		knows_object(SACK);
 		skill_init(Skill_R);
 		break;
 	case PM_SAMURAI:
 		Samurai[S_ARROWS].trquan = rn1(20, 26);
 		ini_inv(Samurai);
-		if(!rn2(5)) ini_inv(Blindfold);
+		if (!rn2(5)) ini_inv(Blindfold);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_S);
@@ -656,24 +656,24 @@ void u_init(void)
 		u.umoney0 = rnd(1000);
 #endif
 		ini_inv(Tourist);
-		if(!rn2(25)) ini_inv(Tinopener);
-		else if(!rn2(25)) ini_inv(Leash);
-		else if(!rn2(25)) ini_inv(Towel);
-		else if(!rn2(25)) ini_inv(Magicmarker);
+		if (!rn2(25)) ini_inv(Tinopener);
+		else if (!rn2(25)) ini_inv(Leash);
+		else if (!rn2(25)) ini_inv(Towel);
+		else if (!rn2(25)) ini_inv(Magicmarker);
 		skill_init(Skill_T);
 		break;
 #endif
 	case PM_VALKYRIE:
 		ini_inv(Valkyrie);
-		if(!rn2(6)) ini_inv(Lamp);
+		if (!rn2(6)) ini_inv(Lamp);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_V);
 		break;
 	case PM_WIZARD:
 		ini_inv(Wizard);
-		if(!rn2(5)) ini_inv(Magicmarker);
-		if(!rn2(5)) ini_inv(Blindfold);
+		if (!rn2(5)) ini_inv(Magicmarker);
+		if (!rn2(5)) ini_inv(Blindfold);
 		skill_init(Skill_W);
 		break;
 
@@ -694,7 +694,7 @@ void u_init(void)
 	     * Non-warriors get an instrument.  We use a kludge to
 	     * get only non-magic instruments.
 	     */
-	    if (Role_if(PM_PRIEST) || Role_if(PM_WIZARD)) {
+	    if (Role_if (PM_PRIEST) || Role_if(PM_WIZARD)) {
 		static int trotyp[] = {
 		    WOODEN_FLUTE, TOOLED_HORN, WOODEN_HARP,
 		    BELL, BUGLE, LEATHER_DRUM
@@ -733,7 +733,7 @@ void u_init(void)
 
 	case PM_ORC:
 	    /* compensate for generally inferior equipment */
-	    if (!Role_if(PM_WIZARD))
+	    if (!Role_if (PM_WIZARD))
 		ini_inv(Xtra_food);
 	    /* Orcs can recognize all orcish objects */
 	    knows_object(ORCISH_SHORT_SWORD);
@@ -769,8 +769,8 @@ void u_init(void)
 /*
  *	Do we really need this?
  */
-	for(i = 0; i < A_MAX; i++)
-	    if(!rn2(20)) {
+	for (i = 0; i < A_MAX; i++)
+	    if (!rn2(20)) {
 		int xd = rn2(7) - 2;	/* biased variation */
 		adjattrib(i, xd, TRUE);
 		if (ABASE(i) < AMAX(i)) AMAX(i) = ABASE(i);
@@ -872,10 +872,10 @@ static void ini_inv(struct trobj *trop)
 				|| otyp == WAN_NOTHING
 				/* Monks don't use weapons */
 				|| (otyp == SCR_ENCHANT_WEAPON &&
-				    Role_if(PM_MONK))
+				    Role_if (PM_MONK))
 				/* wizard patch -- they already have one */
 				|| (otyp == SPE_FORCE_BOLT &&
-				    Role_if(PM_WIZARD))
+				    Role_if (PM_WIZARD))
 				/* powerful spells are either useless to
 				   low level players or unbalancing; also
 				   spells in restricted skill categories */
@@ -951,7 +951,7 @@ static void ini_inv(struct trobj *trop)
 		if (otyp == OIL_LAMP)
 			discover_object(POT_OIL, TRUE, FALSE);
 
-		if(obj->oclass == ARMOR_CLASS){
+		if (obj->oclass == ARMOR_CLASS){
 			if (is_shield(obj) && !uarms) {
 				setworn(obj, W_ARMS);
 				if (uswapwep) setuswapwep(NULL);
@@ -982,7 +982,7 @@ static void ini_inv(struct trobj *trop)
 				obj->otyp != SPE_BLANK_PAPER)
 		    initialspell(obj);
 
-		if(--trop->trquan) continue;	/* make a similar object */
+		if (--trop->trquan) continue;	/* make a similar object */
 		trop++;
 	}
 }

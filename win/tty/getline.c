@@ -43,21 +43,21 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 	struct WinDesc *cw = wins[WIN_MESSAGE];
 	boolean doprev = 0;
 
-	if(ttyDisplay->toplin == 1 && !(cw->flags & WIN_STOP)) more();
+	if (ttyDisplay->toplin == 1 && !(cw->flags & WIN_STOP)) more();
 	cw->flags &= ~WIN_STOP;
 	ttyDisplay->toplin = 3; /* special prompt state */
 	ttyDisplay->inread++;
 	sprintf(qbuf, "%s ", query);
 	tty_putstr(WIN_MESSAGE, 0, qbuf);
 	*obufp = 0;
-	for(;;) {
+	for (;;) {
 		fflush(stdout);
 		sprintf(toplines, "%s ", query);
 		strcat(toplines, obufp);
-		if((c = base_nhgetch()) == EOF) {
+		if ((c = base_nhgetch()) == EOF) {
 			break;
 		}
-		if(c == '\033') {
+		if (c == '\033') {
 			*obufp = c;
 			obufp[1] = 0;
 			break;
@@ -66,7 +66,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 		    ttyDisplay->intr--;
 		    *bufp = 0;
 		}
-		if(c == '\020') { /* ctrl-P */
+		if (c == '\020') { /* ctrl-P */
 		    if (ui_flags.prevmsg_window != 's') {
 			int sav = ttyDisplay->inread;
 			ttyDisplay->inread = 0;
@@ -94,8 +94,8 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 		    *bufp = 0;
 		    addtopl(obufp);
 		}
-		if(c == erase_char || c == '\b') {
-			if(bufp != obufp) {
+		if (c == erase_char || c == '\b') {
+			if (bufp != obufp) {
 				char *i;
 
 				bufp--;
@@ -104,9 +104,9 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 				for (; i > bufp; --i) putsyms("\b");
 				*bufp = 0;
 			} else	tty_nhbell();
-		} else if(c == '\n') {
+		} else if (c == '\n') {
 			break;
-		} else if(' ' <= (unsigned char) c && c != '\177' &&
+		} else if (' ' <= (unsigned char) c && c != '\177' &&
 			    (bufp-obufp < BUFSZ-1 && bufp-obufp < COLNO)) {
 				/* avoid isprint() - some people don't have it
 				   ' ' is not always a printing char */
@@ -127,7 +127,7 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 			    for (; i > bufp; --i) putsyms(" ");
 			    for (; s > bufp; --s) putsyms("\b");
 			}
-		} else if(c == kill_char || c == '\177') { /* Robert Viduya */
+		} else if (c == kill_char || c == '\177') { /* Robert Viduya */
 				/* this test last - @ might be the kill_char */
 			for (; *bufp; ++bufp) putsyms(" ");
 			for (; bufp != obufp; --bufp) putsyms("\b \b");
@@ -148,8 +148,8 @@ void xwaitforspace(const char *s)
 
     morc = 0;
 
-    while((c = base_nhgetch()) != '\n') {
-	if(ui_flags.cbreak) {
+    while ((c = base_nhgetch()) != '\n') {
+	if (ui_flags.cbreak) {
 	    if ((s && index(s,c)) || c == x) {
 		morc = (char) c;
 		break;
@@ -186,7 +186,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 	    any.a_void = 0;
 	    /* populate choices */
 	    for (i = 0; i < listlen; i++) {
-// 	    for(efp = extcmdlist; efp->ef_txt; efp++) {
+// 	    for (efp = extcmdlist; efp->ef_txt; efp++) {
 		if (!matchlevel || !strncmp(namelist[i], cbuf, matchlevel)) {
 			choices[nchoices++] = i;
 			if (strlen(desclist[i]) > biggest) {
@@ -212,7 +212,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 	    tty_start_menu(win);
 	    prevaccelerator = 0;
 	    acount = 0;
-	    for(i = 0; i < listlen && choices[i] >= 0; ++i) {
+	    for (i = 0; i < listlen && choices[i] >= 0; ++i) {
 		accelerator = namelist[choices[i]][matchlevel];
 		if (accelerator != prevaccelerator || nchoices < (ROWNO - 3)) {
 		    if (acount) {

@@ -55,7 +55,7 @@ static void hack_artifacts(void)
 		art->alignment = alignmnt;
 
 	/* Excalibur can be used by any lawful character, not just knights */
-	if (!Role_if(PM_KNIGHT))
+	if (!Role_if (PM_KNIGHT))
 	    artilist[ART_EXCALIBUR].role = NON_PM;
 
 	/* Fix up the quest artifact */
@@ -123,7 +123,7 @@ struct obj *mk_artifact(
 		(!(a->spfx & SPFX_NOGEN) || unique) && !artiexist[m]) {
 		if (by_align && a->race != NON_PM && race_hostile(&mons[a->race]))
 		    continue;	/* skip enemies' equipment */
-		else if (by_align && Role_if(a->role))
+		else if (by_align && Role_if (a->role))
 		    goto make_artif;	/* 'a' points to the desired one */
 		else
 		    eligible[n++] = m;
@@ -157,12 +157,12 @@ const char *artifact_name(const char *name, short *otyp)
     const struct artifact *a;
     const char *aname;
 
-    if(!strncmpi(name, "the ", 4)) name += 4;
+    if (!strncmpi(name, "the ", 4)) name += 4;
 
     for (a = artilist+1; a->otyp; a++) {
 	aname = a->name;
-	if(!strncmpi(aname, "the ", 4)) aname += 4;
-	if(!strcmpi(name, aname)) {
+	if (!strncmpi(aname, "the ", 4)) aname += 4;
+	if (!strcmpi(name, aname)) {
 	    *otyp = a->otyp;
 	    return a->name;
 	}
@@ -193,7 +193,7 @@ void artifact_exists(struct obj *otmp, const char *name, boolean mod)
 		    int m = a - artilist;
 		    otmp->oartifact = (char)(mod ? m : 0);
 		    otmp->age = 0;
-		    if(otmp->otyp == RIN_INCREASE_DAMAGE)
+		    if (otmp->otyp == RIN_INCREASE_DAMAGE)
 			otmp->spe = 0;
 		    artiexist[m] = mod;
 		    break;
@@ -206,8 +206,8 @@ int nartifact_exist(void)
     int a = 0;
     int n = SIZE(artiexist);
 
-    while(n > 1)
-	if(artiexist[--n]) a++;
+    while (n > 1)
+	if (artiexist[--n]) a++;
 
     return a;
 }
@@ -330,10 +330,10 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 	    /* find out if some other artifact also confers this intrinsic */
 	    /* if so, leave the mask alone */
 	    struct obj* obj;
-	    for(obj = invent; obj; obj = obj->nobj)
-		if(obj != otmp && obj->oartifact) {
+	    for (obj = invent; obj; obj = obj->nobj)
+		if (obj != otmp && obj->oartifact) {
 		    const struct artifact *art = get_artifact(obj);
-		    if(art->cary.adtyp == dtyp) {
+		    if (art->cary.adtyp == dtyp) {
 			mask = NULL;
 			break;
 		    }
@@ -346,18 +346,18 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 
 	/* intrinsics from the spfx field; there could be more than one */
 	spfx = (wp_mask != W_ART) ? oart->spfx : oart->cspfx;
-	if(spfx && wp_mask == W_ART && !on) {
+	if (spfx && wp_mask == W_ART && !on) {
 	    /* don't change any spfx also conferred by other artifacts */
 	    struct obj* obj;
-	    for(obj = invent; obj; obj = obj->nobj)
-		if(obj != otmp && obj->oartifact) {
+	    for (obj = invent; obj; obj = obj->nobj)
+		if (obj != otmp && obj->oartifact) {
 		    const struct artifact *art = get_artifact(obj);
 		    spfx &= ~art->cspfx;
 		}
 	}
 
 	if (spfx & SPFX_SEARCH) {
-	    if(on) ESearching |= wp_mask;
+	    if (on) ESearching |= wp_mask;
 	    else ESearching &= ~wp_mask;
 	}
 	if (spfx & SPFX_HALRES) {
@@ -370,7 +370,7 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 	    make_hallucinated((long)!on, restoring ? FALSE : TRUE, wp_mask);
 	}
 	if (spfx & SPFX_ESP) {
-	    if(on) ETelepat |= wp_mask;
+	    if (on) ETelepat |= wp_mask;
 	    else ETelepat &= ~wp_mask;
 	    see_monsters();
 	}
@@ -424,7 +424,7 @@ void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 	    else EReflecting &= ~wp_mask;
 	}
 
-	if(wp_mask == W_ART && !on && oart->inv_prop) {
+	if (wp_mask == W_ART && !on && oart->inv_prop) {
 	    /* might have to turn off invoked power too */
 	    if (oart->inv_prop <= LAST_PROP &&
 		(u.uprops[oart->inv_prop].extrinsic & W_ARTI))
@@ -444,7 +444,7 @@ int touch_artifact(struct obj *obj, struct monst *mon)
     const struct artifact *oart = get_artifact(obj);
     boolean badclass, badalign, self_willed, yours;
 
-    if(!oart) return 1;
+    if (!oart) return 1;
 
     yours = (mon == &youmonst);
     /* all quest artifacts are self-willed; it this ever changes, `badclass'
@@ -452,8 +452,8 @@ int touch_artifact(struct obj *obj, struct monst *mon)
     self_willed = ((oart->spfx & SPFX_INTEL) != 0);
     if (yours) {
 	badclass = self_willed &&
-		   ((oart->role != NON_PM && !Role_if(oart->role)) ||
-		    (oart->race != NON_PM && !Race_if(oart->race)));
+		   ((oart->role != NON_PM && !Role_if (oart->role)) ||
+		    (oart->race != NON_PM && !Race_if (oart->race)));
 	badalign = (oart->spfx & SPFX_RESTR) && oart->alignment != A_NONE &&
 		   (oart->alignment != u.ualign.type || u.ualign.record < 0);
     } else if (!is_covetous(mon->data) && !is_mplayer(mon->data)) {
@@ -505,7 +505,7 @@ static int spec_applies(const struct artifact *weap, struct monst *mtmp)
 	struct permonst *ptr;
 	boolean yours;
 
-	if(!(weap->spfx & (SPFX_DBONUS | SPFX_ATTK)))
+	if (!(weap->spfx & (SPFX_DBONUS | SPFX_ATTK)))
 	    return weap->attk.adtyp == AD_PHYS;
 
 	yours = (mtmp == &youmonst);
@@ -957,7 +957,7 @@ boolean artifact_hit(
 		}
 		if (!youdefend) {
 			/* allow normal cutworm() call to add extra damage */
-			if(notonhead)
+			if (notonhead)
 			    return FALSE;
 
 			if (bigmonst(mdef->data)) {
@@ -1049,7 +1049,7 @@ boolean artifact_hit(
 	if (spec_ability(otmp, SPFX_DRLI)) {
 		if (!youdefend) {
 			if (vis) {
-			    if(otmp->oartifact == ART_STORMBRINGER)
+			    if (otmp->oartifact == ART_STORMBRINGER)
 				pline_The("%s blade draws the life from %s!",
 				      hcolor(NH_BLACK),
 				      mon_nam(mdef));
@@ -1111,17 +1111,17 @@ static int arti_invoke(struct obj *obj)
 {
     const struct artifact *oart = get_artifact(obj);
 
-    if(!oart || !oart->inv_prop) {
-	if(obj->otyp == CRYSTAL_BALL)
+    if (!oart || !oart->inv_prop) {
+	if (obj->otyp == CRYSTAL_BALL)
 	    use_crystal_ball(obj);
 	else
 	    pline(nothing_happens);
 	return 1;
     }
 
-    if(oart->inv_prop > LAST_PROP) {
+    if (oart->inv_prop > LAST_PROP) {
 	/* It's a special power, not "just" a property */
-	if(obj->age > monstermoves) {
+	if (obj->age > monstermoves) {
 	    /* the artifact is tired :-) */
 	    You_feel("that %s %s ignoring you.",
 		     the(xname(obj)), otense(obj, "are"));
@@ -1153,8 +1153,8 @@ static int arti_invoke(struct obj *obj)
 		if (Upolyd) u.mh += healamt;
 		else u.uhp += healamt;
 	    }
-	    if(Sick) make_sick(0L,NULL,FALSE,SICK_ALL);
-	    if(Slimed) Slimed = 0L;
+	    if (Sick) make_sick(0L,NULL,FALSE,SICK_ALL);
+	    if (Slimed) Slimed = 0L;
 	    if (Blinded > creamed) make_blinded(creamed, FALSE);
 	    botl = 1;
 	    break;
@@ -1163,7 +1163,7 @@ static int arti_invoke(struct obj *obj)
 	    int epboost = (u.uenmax + 1 - u.uen) / 2;
 	    if (epboost > 120) epboost = 120;		/* arbitrary */
 	    else if (epboost < 12) epboost = u.uenmax - u.uen;
-	    if(epboost) {
+	    if (epboost) {
 		You_feel("re-energized.");
 		u.uen += epboost;
 		botl = 1;
@@ -1172,7 +1172,7 @@ static int arti_invoke(struct obj *obj)
 	    break;
 	  }
 	case UNTRAP: {
-	    if(!untrap(TRUE)) {
+	    if (!untrap(TRUE)) {
 		obj->age = 0; /* don't charge for changing their mind */
 		return 0;
 	    }
@@ -1234,15 +1234,15 @@ static int arti_invoke(struct obj *obj)
 	     * The closest level is either the entry or dunlev_ureached.
 	     */
 	    newlev.dnum = i;
-	    if(dungeons[i].depth_start >= depth(&u.uz))
+	    if (dungeons[i].depth_start >= depth(&u.uz))
 		newlev.dlevel = dungeons[i].entry_lev;
 	    else
 		newlev.dlevel = dungeons[i].dunlev_ureached;
-	    if(u.uhave.amulet || In_endgame(&u.uz) || In_endgame(&newlev) ||
+	    if (u.uhave.amulet || In_endgame(&u.uz) || In_endgame(&newlev) ||
 	       newlev.dnum == u.uz.dnum) {
 		You_feel("very disoriented for a moment.");
 	    } else {
-		if(!Blind) You("are surrounded by a shimmering sphere!");
+		if (!Blind) You("are surrounded by a shimmering sphere!");
 		else You_feel("weightless for a moment.");
 		goto_level(&newlev, FALSE, FALSE, FALSE);
 	    }
@@ -1276,7 +1276,7 @@ static int arti_invoke(struct obj *obj)
 	     iprop = u.uprops[oart->inv_prop].intrinsic;
 	boolean on = (eprop & W_ARTI) != 0; /* true if invoked prop just set */
 
-	if(on && obj->age > monstermoves) {
+	if (on && obj->age > monstermoves) {
 	    /* the artifact is tired :-) */
 	    u.uprops[oart->inv_prop].extrinsic ^= W_ARTI;
 	    You_feel("that %s %s ignoring you.",
@@ -1284,7 +1284,7 @@ static int arti_invoke(struct obj *obj)
 	    /* can't just keep repeatedly trying */
 	    obj->age += (long) d(3,10);
 	    return 1;
-	} else if(!on) {
+	} else if (!on) {
 	    /* when turning off property, determine downtime */
 	    /* arbitrary for now until we can tune this -dlc */
 	    obj->age = monstermoves + rnz(100);
@@ -1299,11 +1299,11 @@ nothing_special:
 	}
 	switch(oart->inv_prop) {
 	case CONFLICT:
-	    if(on) You_feel("like a rabble-rouser.");
+	    if (on) You_feel("like a rabble-rouser.");
 	    else You_feel("the tension decrease around you.");
 	    break;
 	case LEVITATION:
-	    if(on) {
+	    if (on) {
 		float_up();
 		spoteffects(FALSE);
 	    } else float_down(I_SPECIAL|TIMEOUT, W_ARTI);

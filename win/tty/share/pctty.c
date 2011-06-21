@@ -25,7 +25,7 @@ void gettty(void)
 void settty(const char *s)
 {
 	end_screen();
-	if(s) raw_print(s);
+	if (s) raw_print(s);
 	enable_ctrlP();		/* turn on ^P processing */
 }
 

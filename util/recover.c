@@ -177,7 +177,7 @@ int restore_savefile(char *basename)
 	gfd = open_levelfile(0);
 	if (gfd < 0) {
 #if defined(WIN32)
- 	    if(errno == EACCES) {
+ 	    if (errno == EACCES) {
 	  	Fprintf(stderr,
 			"\nThere are files from a game in progress under your name.");
 		Fprintf(stderr,"\nThe files are locked or inaccessible.");

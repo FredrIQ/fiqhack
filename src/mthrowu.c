@@ -51,12 +51,12 @@ int thitu(int tlev, int dam, struct obj *obj,
 			    (obj && obj->quan > 1L) ? name : an(name);
 	is_acid = (obj && obj->otyp == ACID_VENOM);
 
-	if(u.uac + tlev <= rnd(20)) {
-		if(Blind || !flags.verbose) pline("It misses.");
+	if (u.uac + tlev <= rnd(20)) {
+		if (Blind || !flags.verbose) pline("It misses.");
 		else You("are almost hit by %s.", onm);
 		return 0;
 	} else {
-		if(Blind || !flags.verbose) You("are hit!");
+		if (Blind || !flags.verbose) You("are hit!");
 		else You("are hit by %s%s", onm, exclam(dam));
 
 		if (obj && objects[obj->otyp].oc_material == SILVER
@@ -262,8 +262,8 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	singleobj->owornmask = 0; /* threw one of multiple weapons in hand? */
 
 	if (singleobj->cursed && (dx || dy) && !rn2(7)) {
-	    if(canseemon(mon) && flags.verbose) {
-		if(is_ammo(singleobj))
+	    if (canseemon(mon) && flags.verbose) {
+		if (is_ammo(singleobj))
 		    pline("%s misfires!", Monnam(mon));
 		else
 		    pline("%s as %s throws it!",
@@ -296,7 +296,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	 * be careful not to use either one after it's been freed.
 	 */
 	if (sym) tmp_at(DISP_FLASH, obj_to_glyph(singleobj));
-	while(range-- > 0) { /* Actually the loop is always exited by break */
+	while (range-- > 0) { /* Actually the loop is always exited by break */
 		bhitpos.x += dx;
 		bhitpos.y += dy;
 		if ((mtmp = m_at(bhitpos.x, bhitpos.y)) != 0) {
@@ -352,7 +352,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 				if (MON_WEP(mon) &&
 				    MON_WEP(mon)->otyp == ELVEN_BOW)
 				    hitv++;
-				if(singleobj->otyp == ELVEN_ARROW) dam++;
+				if (singleobj->otyp == ELVEN_ARROW) dam++;
 			    }
 			    if (bigmonst(youmonst.data)) hitv++;
 			    hitv += 8 + singleobj->spe;
@@ -367,20 +367,20 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			strcpy(knmbuf, killer_xname(singleobj));
 			poisoned(onmbuf, A_STR, knmbuf, -10);
 		    }
-		    if(hitu &&
+		    if (hitu &&
 		       can_blnd(NULL, &youmonst,
 				(uchar)(singleobj->otyp == BLINDING_VENOM ?
 					AT_SPIT : AT_WEAP), singleobj)) {
 			blindinc = rnd(25);
-			if(singleobj->otyp == CREAM_PIE) {
-			    if(!Blind) pline("Yecch!  You've been creamed.");
+			if (singleobj->otyp == CREAM_PIE) {
+			    if (!Blind) pline("Yecch!  You've been creamed.");
 			    else pline("There's %s sticky all over your %s.",
 				       something,
 				       body_part(FACE));
-			} else if(singleobj->otyp == BLINDING_VENOM) {
+			} else if (singleobj->otyp == BLINDING_VENOM) {
 			    int num_eyes = eyecount(youmonst.data);
 			    /* venom in the eyes */
-			    if(!Blind) pline_The("venom blinds you.");
+			    if (!Blind) pline_The("venom blinds you.");
 			    else Your("%s sting%s.",
 				      (num_eyes == 1) ? body_part(EYE) :
 						makeplural(body_part(EYE)),
@@ -462,7 +462,7 @@ void thrwmu(struct monst *mtmp)
 	if (mtmp->weapon_check == NEED_WEAPON || !MON_WEP(mtmp)) {
 	    mtmp->weapon_check = NEED_RANGED_WEAPON;
 	    /* mon_wield_item resets weapon_check as appropriate */
-	    if(mon_wield_item(mtmp) != 0) return;
+	    if (mon_wield_item(mtmp) != 0) return;
 	}
 
 	/* Pick a weapon */
@@ -583,14 +583,14 @@ int spitmu(struct monst *mtmp, struct attack *mattk)
 {
 	struct obj *otmp;
 
-	if(mtmp->mcan) {
+	if (mtmp->mcan) {
 
-	    if(flags.soundok)
+	    if (flags.soundok)
 		pline("A dry rattle comes from %s throat.",
 		                      s_suffix(mon_nam(mtmp)));
 	    return 0;
 	}
-	if(lined_up(mtmp)) {
+	if (lined_up(mtmp)) {
 		switch (mattk->adtyp) {
 		    case AD_BLND:
 		    case AD_DRST:
@@ -603,7 +603,7 @@ int spitmu(struct monst *mtmp, struct attack *mattk)
 			otmp = mksobj(ACID_VENOM, TRUE, FALSE);
 			break;
 		}
-		if(!rn2(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {
+		if (!rn2(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {
 		    if (canseemon(mtmp))
 			pline("%s spits venom!", Monnam(mtmp));
 		    m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
@@ -621,22 +621,22 @@ int breamu(struct monst *mtmp, struct attack *mattk)
 	/* if new breath types are added, change AD_ACID to max type */
 	int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_ACID) : mattk->adtyp ;
 
-	if(lined_up(mtmp)) {
+	if (lined_up(mtmp)) {
 
-	    if(mtmp->mcan) {
-		if(flags.soundok) {
-		    if(canseemon(mtmp))
+	    if (mtmp->mcan) {
+		if (flags.soundok) {
+		    if (canseemon(mtmp))
 			pline("%s coughs.", Monnam(mtmp));
 		    else
 			You_hear("a cough.");
 		}
 		return 0;
 	    }
-	    if(!mtmp->mspec_used && rn2(3)) {
+	    if (!mtmp->mspec_used && rn2(3)) {
 
-		if((typ >= AD_MAGM) && (typ <= AD_ACID)) {
+		if ((typ >= AD_MAGM) && (typ <= AD_ACID)) {
 
-		    if(canseemon(mtmp))
+		    if (canseemon(mtmp))
 			pline("%s breathes %s!", Monnam(mtmp),
 			      breathwep[typ-1]);
 		    buzz((int) (-20 - (typ-1)), (int)mattk->damn,
@@ -645,9 +645,9 @@ int breamu(struct monst *mtmp, struct attack *mattk)
 		    /* breath runs out sometimes. Also, give monster some
 		     * cunning; don't breath if the player fell asleep.
 		     */
-		    if(!rn2(3))
+		    if (!rn2(3))
 			mtmp->mspec_used = 10+rn2(20);
-		    if(typ == AD_SLEE && !Sleep_resistance)
+		    if (typ == AD_SLEE && !Sleep_resistance)
 			mtmp->mspec_used += rnd(20);
 		} else impossible("Breath weapon %d used", typ-1);
 	    }
@@ -664,10 +664,10 @@ boolean linedup(xchar ax, xchar ay, xchar bx, xchar by)
 	   own location; prevent it from throwing and zapping in that case */
 	if (!tbx && !tby) return FALSE;
 
-	if((!tbx || !tby || abs(tbx) == abs(tby)) /* straight line or diagonal */
+	if ((!tbx || !tby || abs(tbx) == abs(tby)) /* straight line or diagonal */
 	   && distmin(tbx, tby, 0, 0) < BOLT_LIM) {
-	    if(ax == u.ux && ay == u.uy) return (boolean)(couldsee(bx,by));
-	    else if(clear_path(ax,ay,bx,by)) return TRUE;
+	    if (ax == u.ux && ay == u.uy) return (boolean)(couldsee(bx,by));
+	    else if (clear_path(ax,ay,bx,by)) return TRUE;
 	}
 	return FALSE;
 }
@@ -684,8 +684,8 @@ struct obj *m_carrying(struct monst *mtmp, int type)
 {
 	struct obj *otmp;
 
-	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-		if(otmp->otyp == type)
+	for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+		if (otmp->otyp == type)
 			return otmp;
 	return NULL;
 }

@@ -249,7 +249,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    do {
 		pick4u = tolower(tty_nhgetch());
 		if (index(quitchars, pick4u)) pick4u = 'y';
-	    } while(!index("ynq", pick4u));
+	    } while (!index("ynq", pick4u));
 	    if ((int)strlen(prompt) + 1 < CO) {
 		/* Echo choice and move back down line */
 		tty_putsym(BASE_WINDOW, (int)strlen(prompt)+1, echoline, pick4u);
@@ -511,15 +511,15 @@ void tty_askname(char *plname)
 	move_cursor(BASE_WINDOW, (int)(sizeof who_are_you),
 		 wins[BASE_WINDOW]->cury - 1);
 	ct = 0;
-	while((c = base_nhgetch()) != '\n') {
-		if(c == EOF) error("End of input\n");
+	while ((c = base_nhgetch()) != '\n') {
+		if (c == EOF) error("End of input\n");
 		if (c == '\033') { ct = 0; break; }  /* continue outer loop */
 #if defined(WIN32CON)
 		if (c == '\003') bail("^C abort.\n");
 #endif
 		/* some people get confused when their erase char is not ^H */
 		if (c == '\b' || c == '\177') {
-			if(ct) {
+			if (ct) {
 				ct--;
 #ifdef WIN32CON
 				ttyDisplay->curx--;
@@ -535,8 +535,8 @@ void tty_askname(char *plname)
 			continue;
 		}
 #if defined(UNIX)
-		if(c != '-' && c != '@')
-		if(c < 'A' || (c > 'Z' && c < 'a') || c > 'z') c = '_';
+		if (c != '-' && c != '@')
+		if (c < 'A' || (c > 'Z' && c < 'a') || c > 'z') c = '_';
 #endif
 		if (ct < (int)(sizeof plname) - 1) {
 			putchar(c);
@@ -557,12 +557,12 @@ void tty_askname(char *plname)
 static void getret(void)
 {
 	xputs("\n");
-	if(ui_flags.standout)
+	if (ui_flags.standout)
 		standoutbeg();
 	xputs("Hit ");
 	xputs(ui_flags.cbreak ? "space" : "return");
 	xputs(" to continue: ");
-	if(ui_flags.standout)
+	if (ui_flags.standout)
 		standoutend();
 	xwaitforspace(" ");
 }
@@ -582,7 +582,7 @@ void tty_exit_nhwindows(const char *str)
     /* Just forget any windows existed, since we're about to exit anyway.
      * Disable windows to avoid calls to window routines.
      */
-    for(i=0; i<MAXWIN; i++)
+    for (i=0; i<MAXWIN; i++)
 	if (wins[i] && (i != BASE_WINDOW)) {
 #ifdef FREE_ALL_MEMORY
 	    free_window_info(wins[i], TRUE);
@@ -620,7 +620,7 @@ winid tty_create_nhwindow(int type)
     int i;
     int newid;
 
-    if(maxwin == MAXWIN)
+    if (maxwin == MAXWIN)
 	return WIN_ERR;
 
     newwin = malloc(sizeof(struct WinDesc));
@@ -644,8 +644,8 @@ winid tty_create_nhwindow(int type)
 	/* message window, 1 line long, very wide, top of screen */
 	newwin->offx = newwin->offy = 0;
 	/* sanity check */
-	if(ui_flags.msg_history < 20) ui_flags.msg_history = 20;
-	else if(ui_flags.msg_history > 60) ui_flags.msg_history = 60;
+	if (ui_flags.msg_history < 20) ui_flags.msg_history = 20;
+	else if (ui_flags.msg_history > 60) ui_flags.msg_history = 60;
 	newwin->maxrow = newwin->rows = ui_flags.msg_history;
 	newwin->maxcol = newwin->cols = 0;
 	break;
@@ -678,22 +678,22 @@ winid tty_create_nhwindow(int type)
 	return WIN_ERR;
     }
 
-    for(newid = 0; newid<MAXWIN; newid++) {
-	if(wins[newid] == 0) {
+    for (newid = 0; newid<MAXWIN; newid++) {
+	if (wins[newid] == 0) {
 	    wins[newid] = newwin;
 	    break;
 	}
     }
-    if(newid == MAXWIN) {
+    if (newid == MAXWIN) {
 	return WIN_ERR;
     }
 
-    if(newwin->maxrow) {
+    if (newwin->maxrow) {
 	newwin->data =
 		malloc(sizeof(char *) * (unsigned)newwin->maxrow);
 	newwin->datlen =
 		malloc(sizeof(short) * (unsigned)newwin->maxrow);
-	if(newwin->maxcol) {
+	if (newwin->maxcol) {
 	    for (i = 0; i < newwin->maxrow; i++) {
 		newwin->data[i] = malloc((unsigned)newwin->maxcol);
 		newwin->datlen[i] = newwin->maxcol;
@@ -704,7 +704,7 @@ winid tty_create_nhwindow(int type)
 		newwin->datlen[i] = 0;
 	    }
 	}
-	if(newwin->type == NHW_MESSAGE)
+	if (newwin->type == NHW_MESSAGE)
 	    newwin->maxrow = 0;
     } else {
 	newwin->data = NULL;
@@ -716,8 +716,8 @@ winid tty_create_nhwindow(int type)
 
 static void erase_menu_or_text(winid window, struct WinDesc *cw, boolean clear)
 {
-    if(cw->offx == 0)
-	if(cw->offy) {
+    if (cw->offx == 0)
+	if (cw->offy) {
 	    move_cursor(window, 1, 0);
 	    cl_eos();
 	} else if (clear)
@@ -735,8 +735,8 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
     if (cw->data) {
 	if (cw == wins[WIN_MESSAGE] && cw->rows > cw->maxrow)
 	    cw->maxrow = cw->rows;		/* topl data */
-	for(i=0; i<cw->maxrow; i++)
-	    if(cw->data[i]) {
+	for (i=0; i<cw->maxrow; i++)
+	    if (cw->data[i]) {
 		free(cw->data[i]);
 		cw->data[i] = NULL;
 		if (cw->datlen) cw->datlen[i] = 0;
@@ -750,7 +750,7 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
 	}
     }
     cw->maxrow = cw->maxcol = 0;
-    if(cw->mlist) {
+    if (cw->mlist) {
 	tty_menu_item *temp;
 	while ((temp = cw->mlist) != 0) {
 	    cw->mlist = cw->mlist->next;
@@ -763,7 +763,7 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
 	cw->plist = 0;
     }
     cw->plist_size = cw->npages = cw->nitems = cw->how = 0;
-    if(cw->morestr) {
+    if (cw->morestr) {
 	free(cw->morestr);
 	cw->morestr = 0;
     }
@@ -784,7 +784,7 @@ void clear_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	winerror(window);
 	return;
     }
@@ -792,10 +792,10 @@ void clear_nhwindow(winid window)
 
     switch(cw->type) {
     case NHW_MESSAGE:
-	if(ttyDisplay->toplin) {
+	if (ttyDisplay->toplin) {
 	    home();
 	    cl_end();
-	    if(cw->cury)
+	    if (cw->cury)
 		docorner(1, cw->cury+1);
 	    ttyDisplay->toplin = 0;
 	}
@@ -816,7 +816,7 @@ void clear_nhwindow(winid window)
 	break;
     case NHW_MENU:
     case NHW_TEXT:
-	if(cw->active)
+	if (cw->active)
 	    erase_menu_or_text(window, cw, TRUE);
 	free_window_info(cw, FALSE);
 	break;
@@ -832,11 +832,11 @@ static void dmore(struct WinDesc *cw,
 
     move_cursor(BASE_WINDOW,
 	     (int)ttyDisplay->curx + offset, (int)ttyDisplay->cury);
-    if(ui_flags.standout)
+    if (ui_flags.standout)
 	standoutbeg();
     xputs(prompt);
     ttyDisplay->curx += strlen(prompt);
-    if(ui_flags.standout)
+    if (ui_flags.standout)
 	standoutend();
 
     xwaitforspace(s);
@@ -989,7 +989,7 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 
 	    /* clear screen */
 	    if (!cw->offx) {	/* if not corner, do clearscreen */
-		if(cw->offy) {
+		if (cw->offy) {
 		    move_cursor(window, 1, 0);
 		    cl_eos();
 		} else
@@ -1299,31 +1299,31 @@ void display_nhwindow(winid window,
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	winerror(window);
 	return;
     }
-    if(cw->flags & WIN_CANCELLED)
+    if (cw->flags & WIN_CANCELLED)
 	return;
     ttyDisplay->lastwin = window;
     ttyDisplay->rawprint = 0;
 
     switch(cw->type) {
     case NHW_MESSAGE:
-	if(ttyDisplay->toplin == 1) {
+	if (ttyDisplay->toplin == 1) {
 	    more();
 	    ttyDisplay->toplin = 1; /* more resets this */
 	    clear_nhwindow(window);
 	} else
 	    ttyDisplay->toplin = 0;
 	cw->curx = cw->cury = 0;
-	if(!cw->active)
+	if (!cw->active)
 	    iflags2.window_inited = TRUE;
 	break;
     case NHW_MAP:
 	end_glyphout();
-	if(blocking) {
-	    if(!ttyDisplay->toplin) ttyDisplay->toplin = 1;
+	if (blocking) {
+	    if (!ttyDisplay->toplin) ttyDisplay->toplin = 1;
 	    display_nhwindow(WIN_MESSAGE, TRUE);
 	    return;
 	}
@@ -1338,13 +1338,13 @@ void display_nhwindow(winid window,
 	/* avoid converting to uchar before calculations are finished */
 	cw->offx = (uchar) (int)
 	    max((int) 10, (int) (ttyDisplay->cols - cw->maxcol - 1));
-	if(cw->type == NHW_MENU)
+	if (cw->type == NHW_MENU)
 	    cw->offy = 0;
-	if(ttyDisplay->toplin == 1)
+	if (ttyDisplay->toplin == 1)
 	    display_nhwindow(WIN_MESSAGE, TRUE);
-	if(cw->offx == 10 || cw->maxrow >= (int) ttyDisplay->rows) {
+	if (cw->offx == 10 || cw->maxrow >= (int) ttyDisplay->rows) {
 	    cw->offx = 0;
-	    if(cw->offy) {
+	    if (cw->offy) {
 		move_cursor(window, 1, 0);
 		cl_eos();
 	    } else
@@ -1366,7 +1366,7 @@ void tty_dismiss_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	winerror(window);
 	return;
     }
@@ -1388,7 +1388,7 @@ void tty_dismiss_nhwindow(winid window)
 	break;
     case NHW_MENU:
     case NHW_TEXT:
-	if(cw->active) {
+	if (cw->active) {
 	    if (iflags2.window_inited) {
 		/* otherwise dismissing the text endwin after other windows
 		 * are dismissed tries to redraw the map and panics.  since
@@ -1409,16 +1409,16 @@ void tty_destroy_nhwindow(winid window)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	winerror(window);
 	return;
     }
 
-    if(cw->active)
+    if (cw->active)
 	tty_dismiss_nhwindow(window);
-    if(cw->type == NHW_MESSAGE)
+    if (cw->type == NHW_MESSAGE)
 	iflags2.window_inited = 0;
-    if(cw->type == NHW_MAP)
+    if (cw->type == NHW_MAP)
 	clear_screen();
 
     free_window_info(cw, TRUE);
@@ -1441,7 +1441,7 @@ void move_cursor(winid window,
     int cx = ttyDisplay->curx;
     int cy = ttyDisplay->cury;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	winerror(window);
 	return;
     }
@@ -1450,7 +1450,7 @@ void move_cursor(winid window,
     cw->curx = --x;	/* column 0 is never used */
     cw->cury = y;
 #ifdef DEBUG
-    if(x<0 || y<0 || y >= cw->rows || x > cw->cols) {
+    if (x<0 || y<0 || y >= cw->rows || x > cw->cols) {
 	const char *s = "[unknown type]";
 	switch(cw->type) {
 	case NHW_MESSAGE: s = "[topl window]"; break;
@@ -1470,19 +1470,19 @@ void move_cursor(winid window,
     if (y == cy && x == cx)
 	return;
 
-    if(cw->type == NHW_MAP)
+    if (cw->type == NHW_MAP)
 	end_glyphout();
 
 #ifndef NO_TERMS
-    if(!nh_ND && (cx != x || x <= 3)) { /* Extremely primitive */
+    if (!nh_ND && (cx != x || x <= 3)) { /* Extremely primitive */
 	cmov(x, y); /* bunker!wtm */
 	return;
     }
 #endif
 
-    if((cy -= y) < 0) cy = -cy;
-    if((cx -= x) < 0) cx = -cx;
-    if(cy <= 3 && cx <= 3) {
+    if ((cy -= y) < 0) cy = -cy;
+    if ((cx -= x) < 0) cx = -cx;
+    if (cy <= 3 && cx <= 3) {
 	nocmov(x, y);
 #ifndef NO_TERMS
     } else if ((x <= 3 && cy <= 3) || (!nh_CM && x < cx)) {
@@ -1503,7 +1503,7 @@ static void tty_putsym(winid window, int x, int y, char ch)
 {
     struct WinDesc *cw = 0;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	winerror(window);
 	return;
     }
@@ -1529,14 +1529,14 @@ static const char*compress_str(const char *str)
 {
 	static char cbuf[BUFSZ];
 	/* compress in case line too long */
-	if((int)strlen(str) >= CO) {
+	if ((int)strlen(str) >= CO) {
 		const char *bp0 = str;
 		char *bp1 = cbuf;
 
 		do {
-			if(*bp0 != ' ' || bp0[1] != ' ' || bp0[2] != ' ')
+			if (*bp0 != ' ' || bp0[1] != ' ' || bp0[2] != ' ')
 				*bp1++ = *bp0;
-		} while(*bp0++);
+		} while (*bp0++);
 	} else
 	    return str;
 	return cbuf;
@@ -1552,15 +1552,15 @@ void tty_putstr(winid window, int attr, const char *str)
     /* Assume there's a real problem if the window is missing --
      * probably a panic message
      */
-    if(window == WIN_ERR || (cw = wins[window]) == NULL) {
+    if (window == WIN_ERR || (cw = wins[window]) == NULL) {
 	tty_raw_print(str);
 	return;
     }
 
-    if(str == NULL ||
+    if (str == NULL ||
 	((cw->flags & WIN_CANCELLED) && (cw->type != NHW_MESSAGE)))
 	return;
-    if(cw->type != NHW_MESSAGE)
+    if (cw->type != NHW_MESSAGE)
 	str = compress_str(str);
 
     ttyDisplay->lastwin = window;
@@ -1574,23 +1574,23 @@ void tty_putstr(winid window, int attr, const char *str)
     case NHW_STATUS:
 	ob = &cw->data[cw->cury][j = cw->curx];
 	*ob = 0;
-	if(!cw->cury && strlen(str) >= CO) {
+	if (!cw->cury && strlen(str) >= CO) {
 	    /* the characters before "St:" are unnecessary */
 	    nb = index(str, ':');
-	    if(nb && nb > str+2)
+	    if (nb && nb > str+2)
 		str = nb - 2;
 	}
 	nb = str;
-	for(i = cw->curx+1, n0 = cw->cols; i < n0; i++, nb++) {
-	    if(!*nb) {
+	for (i = cw->curx+1, n0 = cw->cols; i < n0; i++, nb++) {
+	    if (!*nb) {
 		/* last char printed may be in middle of line */
 		move_cursor(WIN_STATUS, i, cw->cury);
 		cl_end();
 		break;
 	    }
-	    if(*ob != *nb)
+	    if (*ob != *nb)
 		tty_putsym(WIN_STATUS, i, cw->cury, *nb);
-	    if(*ob) ob++;
+	    if (*ob) ob++;
 	}
 
 	strncpy(&cw->data[cw->cury][j], str, cw->cols - j - 1);
@@ -1601,7 +1601,7 @@ void tty_putstr(winid window, int attr, const char *str)
     case NHW_MAP:
 	move_cursor(window, cw->curx+1, cw->cury);
 	term_start_attr(attr);
-	while(*str && (int) ttyDisplay->curx < (int) ttyDisplay->cols-1) {
+	while (*str && (int) ttyDisplay->curx < (int) ttyDisplay->cols-1) {
 	    putchar(*str);
 	    str++;
 	    ttyDisplay->curx++;
@@ -1629,48 +1629,48 @@ void tty_putstr(winid window, int attr, const char *str)
 	break;
     case NHW_MENU:
     case NHW_TEXT:
-	if(cw->type == NHW_TEXT && cw->cury == ttyDisplay->rows-1) {
+	if (cw->type == NHW_TEXT && cw->cury == ttyDisplay->rows-1) {
 	    /* not a menu, so save memory and output 1 page at a time */
 	    cw->maxcol = ttyDisplay->cols; /* force full-screen mode */
 	    display_nhwindow(window, TRUE);
-	    for(i=0; i<cw->maxrow; i++)
-		if(cw->data[i]){
+	    for (i=0; i<cw->maxrow; i++)
+		if (cw->data[i]){
 		    free(cw->data[i]);
 		    cw->data[i] = 0;
 		}
 	    cw->maxrow = cw->cury = 0;
 	}
 	/* always grows one at a time, but alloc 12 at a time */
-	if(cw->cury >= cw->rows) {
+	if (cw->cury >= cw->rows) {
 	    char **tmp;
 
 	    cw->rows += 12;
 	    tmp = malloc(sizeof(char *) * (unsigned)cw->rows);
-	    for(i=0; i<cw->maxrow; i++)
+	    for (i=0; i<cw->maxrow; i++)
 		tmp[i] = cw->data[i];
-	    if(cw->data)
+	    if (cw->data)
 		free(cw->data);
 	    cw->data = tmp;
 
-	    for(i=cw->maxrow; i<cw->rows; i++)
+	    for (i=cw->maxrow; i<cw->rows; i++)
 		cw->data[i] = 0;
 	}
-	if(cw->data[cw->cury])
+	if (cw->data[cw->cury])
 	    free(cw->data[cw->cury]);
 	n0 = strlen(str) + 1;
 	ob = cw->data[cw->cury] = malloc((unsigned)n0 + 1);
 	*ob++ = (char)(attr + 1);	/* avoid nuls, for convenience */
 	strcpy(ob, str);
 
-	if(n0 > cw->maxcol)
+	if (n0 > cw->maxcol)
 	    cw->maxcol = n0;
-	if(++cw->cury > cw->maxrow)
+	if (++cw->cury > cw->maxrow)
 	    cw->maxrow = cw->cury;
-	if(n0 > CO) {
+	if (n0 > CO) {
 	    /* attempt to break the line */
-	    for(i = CO-1; i && str[i] != ' ' && str[i] != '\n';)
+	    for (i = CO-1; i && str[i] != ' ' && str[i] != '\n';)
 		i--;
-	    if(i) {
+	    if (i) {
 		cw->data[cw->cury-1][++i] = '\0';
 		tty_putstr(window, attr, &str[i]);
 	    }
@@ -1711,14 +1711,14 @@ void tty_display_buffer(char *buf, boolean trymove)
 	winid datawin = tty_create_nhwindow(NHW_TEXT);
 	boolean empty = TRUE;
 
-	if(trymove
+	if (trymove
 #ifndef NO_TERMS
 	    && nh_CD
 #endif
 	) {
 	    /* attempt to scroll text below map window if there's room */
 	    wins[datawin]->offy = wins[WIN_STATUS]->offy+3;
-	    if((int) wins[datawin]->offy + 12 > (int) ttyDisplay->rows)
+	    if ((int) wins[datawin]->offy + 12 > (int) ttyDisplay->rows)
 		wins[datawin]->offy = 0;
 	}
 	
@@ -1730,7 +1730,7 @@ void tty_display_buffer(char *buf, boolean trymove)
 	    empty = FALSE;
 	    tty_putstr(datawin, 0, linebuf);
 	    
-	    if(wins[datawin]->flags & WIN_CANCELLED)
+	    if (wins[datawin]->flags & WIN_CANCELLED)
 		break;
 	    
 	    line = strtok(NULL, "\n");
@@ -1923,7 +1923,7 @@ int tty_select_menu(winid window, int how, menu_item **menu_list)
     menu_item *mi;
     int n, cancelled;
 
-    if(window == WIN_ERR || (cw = wins[window]) == NULL
+    if (window == WIN_ERR || (cw = wins[window]) == NULL
        || cw->type != NHW_MENU) {
 	winerror(window);
 	return -1;
@@ -2085,15 +2085,15 @@ void tty_mark_synch(void)
 void tty_wait_synch(void)
 {
     /* we just need to make sure all windows are synch'd */
-    if(!ttyDisplay || ttyDisplay->rawprint) {
+    if (!ttyDisplay || ttyDisplay->rawprint) {
 	getret();
-	if(ttyDisplay) ttyDisplay->rawprint = 0;
+	if (ttyDisplay) ttyDisplay->rawprint = 0;
     } else {
 	display_nhwindow(WIN_MAP, FALSE);
-	if(ttyDisplay->inmore) {
+	if (ttyDisplay->inmore) {
 	    addtopl("--More--");
 	    fflush(stdout);
-	} else if(ttyDisplay->inread) {
+	} else if (ttyDisplay->inread) {
 	    /* this can only happen if we were reading and got interrupted */
 	    ttyDisplay->toplin = 3;
 	    /* do this twice; 1st time gets the Quit? message again */
@@ -2137,7 +2137,7 @@ void end_glyphout(void)
 	graph_off();
     }
 #endif
-    if(ttyDisplay->color != NO_COLOR) {
+    if (ttyDisplay->color != NO_COLOR) {
 	term_end_color();
 	ttyDisplay->color = NO_COLOR;
     }
@@ -2209,10 +2209,10 @@ void tty_print_glyph(xchar x, xchar y, int glyph)
 #endif
 
     if (color != ttyDisplay->color) {
-	if(ttyDisplay->color != NO_COLOR)
+	if (ttyDisplay->color != NO_COLOR)
 	    term_end_color();
 	ttyDisplay->color = color;
-	if(color != NO_COLOR)
+	if (color != NO_COLOR)
 	    term_start_color(color);
     }
 
@@ -2228,7 +2228,7 @@ void tty_print_glyph(xchar x, xchar y, int glyph)
     if (reverse_on) {
     	term_end_attr(ATR_INVERSE);
 	/* turn off color as well, ATR_INVERSE may have done this already */
-	if(ttyDisplay->color != NO_COLOR) {
+	if (ttyDisplay->color != NO_COLOR) {
 	    term_end_color();
 	    ttyDisplay->color = NO_COLOR;
 	}
@@ -2240,7 +2240,7 @@ void tty_print_glyph(xchar x, xchar y, int glyph)
 
 void tty_raw_print(const char *str)
 {
-    if(ttyDisplay) ttyDisplay->rawprint++;
+    if (ttyDisplay) ttyDisplay->rawprint++;
 #if defined(WIN32CON)
     msmsg("%s\n", str);
 #else
@@ -2251,7 +2251,7 @@ void tty_raw_print(const char *str)
 
 void tty_raw_print_bold(const char *str)
 {
-    if(ttyDisplay)
+    if (ttyDisplay)
 	ttyDisplay->rawprint++;
     term_start_raw_bold();
 #if defined(WIN32CON)
@@ -2438,7 +2438,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 	    goto nxtc;
 	}
 
-	if(c == '?'){
+	if (c == '?'){
 	    getpos_help(force, goal);
 	} else {
 	    if (!index(quitchars, c)) {
@@ -2640,7 +2640,7 @@ static void center(char *line, char *text)
 	char *ip,*op;
 	ip = text;
 	op = &line[STONE_LINE_CENT - ((strlen(text)+1)>>1)];
-	while(*ip) *op++ = *ip++;
+	while (*ip) *op++ = *ip++;
 }
 
 
@@ -2684,10 +2684,10 @@ void tty_outrip(struct nh_menuitem *items,int icount, int how, char *plname, lon
 		char tmpchar;
 
 		if ( (i0=strlen(dpx)) > STONE_LINE_LEN) {
-				for(i = STONE_LINE_LEN;
+				for (i = STONE_LINE_LEN;
 				    ((i0 > STONE_LINE_LEN) && i); i--)
-					if(dpx[i] == ' ') i0 = i;
-				if(!i) i0 = STONE_LINE_LEN;
+					if (dpx[i] == ' ') i0 = i;
+				if (!i) i0 = STONE_LINE_LEN;
 		}
 		tmpchar = dpx[i0];
 		dpx[i0] = 0;
@@ -2703,7 +2703,7 @@ void tty_outrip(struct nh_menuitem *items,int icount, int how, char *plname, lon
 	center(rip[YEAR_LINE], buf);
 
 	tty_putstr(tmpwin, 0, "");
-	for(; *dp; dp++)
+	for (; *dp; dp++)
 		tty_putstr(tmpwin, 0, *dp);
 
 	tty_putstr(tmpwin, 0, "");
@@ -2746,7 +2746,7 @@ static void bot1(struct nh_player_info *pi)
 	int i,j;
 
 	strcpy(newbot1, pi->plname);
-	if('a' <= newbot1[0] && newbot1[0] <= 'z')
+	if ('a' <= newbot1[0] && newbot1[0] <= 'z')
 	    newbot1[0] += 'A'-'a';
 	newbot1[10] = '\0';
 	nb += strlen(newbot1);
@@ -2755,7 +2755,7 @@ static void bot1(struct nh_player_info *pi)
 	strncat(nb, "  ", MAXCO);
 	i = pi->max_rank_sz + 15;
 	j = strlen(newbot1);
-	if((i - j) > 0)
+	if ((i - j) > 0)
 		sprintf(nb += strlen(nb), "%*s", i-j, " ");	/* pad with spaces */
 	
 	if (pi->st == 18) {
@@ -2792,12 +2792,12 @@ static void bot2(struct nh_player_info *pi)
 
 	if (pi->monnum != pi->cur_monnum)
 		sprintf(nb += strlen(nb), " HD:%d", pi->level);
-	else if(ui_flags.showexp)
+	else if (ui_flags.showexp)
 		sprintf(nb += strlen(nb), " Xp:%u/%-1ld", pi->level, pi->xp);
 	else
 		sprintf(nb += strlen(nb), " Exp:%u", pi->level);
 
-	if(ui_flags.time)
+	if (ui_flags.time)
 	    sprintf(nb += strlen(nb), " T:%ld", pi->moves);
 	
 	for (i = 0; i < pi->nr_items; i++)

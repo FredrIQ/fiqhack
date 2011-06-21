@@ -289,7 +289,7 @@ boolean allow_all(struct obj *obj)
 
 boolean allow_category(struct obj *obj)
 {
-    if (Role_if(PM_PRIEST)) obj->bknown = TRUE;
+    if (Role_if (PM_PRIEST)) obj->bknown = TRUE;
     if (((index(valid_menu_classes,'u') != NULL) && obj->unpaid) ||
 	(index(valid_menu_classes, obj->oclass) != NULL))
 	return TRUE;
@@ -1347,7 +1347,7 @@ int encumber_msg(void)
     static int oldcap = UNENCUMBERED;
     int newcap = near_capacity();
 
-    if(oldcap < newcap) {
+    if (oldcap < newcap) {
 	switch(newcap) {
 	case 1: Your("movements are slowed slightly because of your load.");
 		break;
@@ -1361,7 +1361,7 @@ int encumber_msg(void)
 		break;
 	}
 	botl = 1;
-    } else if(oldcap > newcap) {
+    } else if (oldcap > newcap) {
 	switch(newcap) {
 	case 0: Your("movements are now unencumbered.");
 		break;
@@ -1386,9 +1386,9 @@ static int container_at(int x, int y, boolean countem)
 	struct obj *cobj, *nobj;
 	int container_count = 0;
 	
-	for(cobj = level.objects[x][y]; cobj; cobj = nobj) {
+	for (cobj = level.objects[x][y]; cobj; cobj = nobj) {
 		nobj = cobj->nexthere;
-		if(Is_container(cobj)) {
+		if (Is_container(cobj)) {
 			container_count++;
 			if (!countem) break;
 		}
@@ -1423,11 +1423,11 @@ static boolean able_to_loot(int x, int y)
 static boolean mon_beside(int x, int y)
 {
 	int i,j,nx,ny;
-	for(i = -1; i <= 1; i++)
-	    for(j = -1; j <= 1; j++) {
+	for (i = -1; i <= 1; i++)
+	    for (j = -1; j <= 1; j++) {
 	    	nx = x + i;
 	    	ny = y + j;
-		if(isok(nx, ny) && MON_AT(nx, ny))
+		if (isok(nx, ny) && MON_AT(nx, ny))
 			return TRUE;
 	    }
 	return FALSE;
@@ -1855,7 +1855,7 @@ static int out_container(struct obj *obj)
 		obj->owt = weight(obj);
 	}
 
-	if(obj->oartifact && !touch_artifact(obj,&youmonst)) return 0;
+	if (obj->oartifact && !touch_artifact(obj,&youmonst)) return 0;
 
 	if (obj->otyp == CORPSE) {
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
@@ -1891,7 +1891,7 @@ static int out_container(struct obj *obj)
 	}
 	/* simulated point of time */
 
-	if(!obj->unpaid && !carried(current_container) &&
+	if (!obj->unpaid && !carried(current_container) &&
 	     costly_spot(current_container->ox, current_container->oy)) {
 		obj->ox = current_container->ox;
 		obj->oy = current_container->oy;

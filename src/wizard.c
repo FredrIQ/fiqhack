@@ -54,8 +54,8 @@ void amulet(void)
 	if ((((amu = uamul) != 0 && amu->otyp == AMULET_OF_YENDOR) ||
 	     ((amu = uwep) != 0 && amu->otyp == AMULET_OF_YENDOR))
 	    && !rn2(15)) {
-	    for(ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
-		if(ttmp->ttyp == MAGIC_PORTAL) {
+	    for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
+		if (ttmp->ttyp == MAGIC_PORTAL) {
 		    int du = distu(ttmp->tx, ttmp->ty);
 		    if (du <= 9)
 			pline("%s hot!", Tobjnam(amu, "feel"));
@@ -72,7 +72,7 @@ void amulet(void)
 	if (!flags.no_of_wizards)
 		return;
 	/* find Wizard, and wake him if necessary */
-	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp) && mtmp->iswiz && mtmp->msleeping && !rn2(40)) {
 		mtmp->msleeping = 0;
 		if (distu(mtmp->mx,mtmp->my) > 2)
@@ -88,8 +88,8 @@ int mon_has_amulet(struct monst *mtmp)
 {
 	struct obj *otmp;
 
-	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-		if(otmp->otyp == AMULET_OF_YENDOR) return 1;
+	for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+		if (otmp->otyp == AMULET_OF_YENDOR) return 1;
 	return 0;
 }
 
@@ -97,8 +97,8 @@ int mon_has_special(struct monst *mtmp)
 {
 	struct obj *otmp;
 
-	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-		if(otmp->otyp == AMULET_OF_YENDOR ||
+	for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+		if (otmp->otyp == AMULET_OF_YENDOR ||
 			is_quest_artifact(otmp) ||
 			otmp->otyp == BELL_OF_OPENING ||
 			otmp->otyp == CANDELABRUM_OF_INVOCATION ||
@@ -138,12 +138,12 @@ static boolean mon_has_arti(struct monst *mtmp, short otyp)
 {
 	struct obj *otmp;
 
-	for(otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
-	    if(otyp) {
-		if(otmp->otyp == otyp)
+	for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+	    if (otyp) {
+		if (otmp->otyp == otyp)
 			return 1;
 	    }
-	     else if(is_quest_artifact(otmp)) return 1;
+	     else if (is_quest_artifact(otmp)) return 1;
 	}
 	return 0;
 
@@ -153,10 +153,10 @@ static struct monst *other_mon_has_arti(struct monst *mtmp, short otyp)
 {
 	struct monst *mtmp2;
 
-	for(mtmp2 = fmon; mtmp2; mtmp2 = mtmp2->nmon)
+	for (mtmp2 = fmon; mtmp2; mtmp2 = mtmp2->nmon)
 	    /* no need for !DEADMONSTER check here since they have no inventory */
-	    if(mtmp2 != mtmp)
-		if(mon_has_arti(mtmp2, otyp)) return mtmp2;
+	    if (mtmp2 != mtmp)
+		if (mon_has_arti(mtmp2, otyp)) return mtmp2;
 
 	return NULL;
 }
@@ -193,15 +193,15 @@ static long target_on(int mask, struct monst *mtmp)
 	struct obj *otmp;
 	struct monst *mtmp2;
 
-	if(!M_Wants(mask))	return STRAT_NONE;
+	if (!M_Wants(mask))	return STRAT_NONE;
 
 	otyp = which_arti(mask);
-	if(!mon_has_arti(mtmp, otyp)) {
-	    if(you_have(mask))
+	if (!mon_has_arti(mtmp, otyp)) {
+	    if (you_have(mask))
 		return STRAT(STRAT_PLAYER, u.ux, u.uy, mask);
-	    else if((otmp = on_ground(otyp)))
+	    else if ((otmp = on_ground(otyp)))
 		return STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
-	    else if((mtmp2 = other_mon_has_arti(mtmp, otyp)))
+	    else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
 		return STRAT(STRAT_MONSTR, mtmp2->mx, mtmp2->my, mask);
 	}
 	return STRAT_NONE;
@@ -225,7 +225,7 @@ static long strategy(struct monst *mtmp)
 			return STRAT_HEAL;
 
 	    case 1:	/* the wiz is less cautious */
-			if(mtmp->data != &mons[PM_WIZARD_OF_YENDOR])
+			if (mtmp->data != &mons[PM_WIZARD_OF_YENDOR])
 			    return STRAT_HEAL;
 			/* else fall through */
 
@@ -236,29 +236,29 @@ static long strategy(struct monst *mtmp)
 			break;
 	}
 
-	if(flags.made_amulet)
-	    if((strat = target_on(M3_WANTSAMUL, mtmp)) != STRAT_NONE)
+	if (flags.made_amulet)
+	    if ((strat = target_on(M3_WANTSAMUL, mtmp)) != STRAT_NONE)
 		return strat;
 
-	if(u.uevent.invoked) {		/* priorities change once gate opened */
+	if (u.uevent.invoked) {		/* priorities change once gate opened */
 
-	    if((strat = target_on(M3_WANTSARTI, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSARTI, mtmp)) != STRAT_NONE)
 		return strat;
-	    if((strat = target_on(M3_WANTSBOOK, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSBOOK, mtmp)) != STRAT_NONE)
 		return strat;
-	    if((strat = target_on(M3_WANTSBELL, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSBELL, mtmp)) != STRAT_NONE)
 		return strat;
-	    if((strat = target_on(M3_WANTSCAND, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSCAND, mtmp)) != STRAT_NONE)
 		return strat;
 	} else {
 
-	    if((strat = target_on(M3_WANTSBOOK, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSBOOK, mtmp)) != STRAT_NONE)
 		return strat;
-	    if((strat = target_on(M3_WANTSBELL, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSBELL, mtmp)) != STRAT_NONE)
 		return strat;
-	    if((strat = target_on(M3_WANTSCAND, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSCAND, mtmp)) != STRAT_NONE)
 		return strat;
-	    if((strat = target_on(M3_WANTSARTI, mtmp)) != STRAT_NONE)
+	    if ((strat = target_on(M3_WANTSARTI, mtmp)) != STRAT_NONE)
 		return strat;
 	}
 	return dstrat;
@@ -284,7 +284,7 @@ int tactics(struct monst *mtmp)
 		}
 		/* if you're not around, cast healing spells */
 		if (distu(mtmp->mx,mtmp->my) > (BOLT_LIM * BOLT_LIM))
-		    if(mtmp->mhp <= mtmp->mhpmax - 8) {
+		    if (mtmp->mhp <= mtmp->mhpmax - 8) {
 			mtmp->mhp += rnd(8);
 			return 1;
 		    }
@@ -302,16 +302,16 @@ int tactics(struct monst *mtmp)
 		int   targ = strat & STRAT_GOAL;
 		struct obj *otmp;
 
-		if(!targ) { /* simply wants you to close */
+		if (!targ) { /* simply wants you to close */
 		    return 0;
 		}
-		if((u.ux == tx && u.uy == ty) || where == STRAT_PLAYER) {
+		if ((u.ux == tx && u.uy == ty) || where == STRAT_PLAYER) {
 		    /* player is standing on it (or has it) */
 		    mnexto(mtmp);
 		    return 0;
 		}
-		if(where == STRAT_GROUND) {
-		    if(!MON_AT(tx, ty) || (mtmp->mx == tx && mtmp->my == ty)) {
+		if (where == STRAT_GROUND) {
+		    if (!MON_AT(tx, ty) || (mtmp->mx == tx && mtmp->my == ty)) {
 			/* teleport to it and pick it up */
 			rloc_to(mtmp, tx, ty);	/* clean old pos */
 
@@ -344,10 +344,10 @@ void aggravate(void)
 {
 	struct monst *mtmp;
 
-	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp)) {
 		mtmp->msleeping = 0;
-		if(!mtmp->mcanmove && !rn2(5)) {
+		if (!mtmp->mcanmove && !rn2(5)) {
 			mtmp->mfrozen = 0;
 			mtmp->mcanmove = 1;
 		}
@@ -389,7 +389,7 @@ int nasty(struct monst *mcast)
     coord bypos;
     int count=0;
 
-    if(!rn2(10) && Inhell) {
+    if (!rn2(10) && Inhell) {
 	msummon(NULL);	/* summons like WoY */
 	count++;
     } else {
@@ -397,8 +397,8 @@ int nasty(struct monst *mcast)
 	/* if we don't have a casting monster, the nasties appear around you */
 	bypos.x = u.ux;
 	bypos.y = u.uy;
-	for(i = rnd(tmp); i > 0; --i)
-	    for(j=0; j<20; j++) {
+	for (i = rnd(tmp); i > 0; --i)
+	    for (j=0; j<20; j++) {
 		int makeindex;
 
 		/* Don't create more spellcasters of the monsters' level or
@@ -406,7 +406,7 @@ int nasty(struct monst *mcast)
 		 */
 		do {
 		    makeindex = pick_nasty();
-		} while(mcast && attacktype(&mons[makeindex], AT_MAGC) &&
+		} while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
 			monstr[makeindex] >= monstr[mcast->mnum]);
 		/* do this after picking the monster to place */
 		if (mcast &&
@@ -419,7 +419,7 @@ int nasty(struct monst *mcast)
 		} else /* GENOD? */
 		    mtmp = makemon(NULL,
 					bypos.x, bypos.y, NO_MM_FLAGS);
-		if(mtmp && (mtmp->data->maligntyp == 0 ||
+		if (mtmp && (mtmp->data->maligntyp == 0 ||
 		            sgn(mtmp->data->maligntyp) == sgn(castalign)) ) {
 		    count++;
 		    break;
@@ -578,7 +578,7 @@ void cuss(struct monst *mtmp)
 		    verbalize("%s %s!",
 			  random_malediction[rn2(SIZE(random_malediction))],
 			  random_insult[rn2(SIZE(random_insult))]);
-	} else if(is_lminion(mtmp)) {
+	} else if (is_lminion(mtmp)) {
 		com_pager(rn2(QTN_ANGELIC - 1 + (Hallucination ? 1 : 0)) +
 			      QT_ANGELIC);
 	} else {

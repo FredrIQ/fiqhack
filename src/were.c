@@ -51,12 +51,12 @@ void new_were(struct monst *mon)
 	int pm;
 
 	pm = counter_were(monsndx(mon->data));
-	if(!pm) {
+	if (!pm) {
 	    impossible("unknown lycanthrope %s.", mon->data->mname);
 	    return;
 	}
 
-	if(canseemon(mon) && !Hallucination)
+	if (canseemon(mon) && !Hallucination)
 	    pline("%s changes into a %s.", Monnam(mon),
 			is_human(&mons[pm]) ? "human" :
 			mons[pm].mname+4);
@@ -85,9 +85,9 @@ int were_summon(struct permonst *ptr, boolean yours,
 	int total = 0;
 
 	*visible = 0;
-	if(Protection_from_shape_changers && !yours)
+	if (Protection_from_shape_changers && !yours)
 		return 0;
-	for(i = rnd(5); i > 0; i--) {
+	for (i = rnd(5); i > 0; i--) {
 	   switch(pm) {
 
 		case PM_WERERAT:
@@ -128,7 +128,7 @@ void you_were(void)
 	    /* `+4' => skip "were" prefix to get name of beast */
 	    sprintf(qbuf, "Do you want to change into %s? ",
 		    an(mons[u.ulycn].mname+4));
-	    if(yn(qbuf) == 'n') return;
+	    if (yn(qbuf) == 'n') return;
 	}
 	polymon(u.ulycn);
 }

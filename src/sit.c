@@ -45,7 +45,7 @@ int dosit(void)
 	    return 0;
 	}
 
-	if(!can_reach_floor())	{
+	if (!can_reach_floor())	{
 	    if (Levitation)
 		You("tumble in place.");
 	    else
@@ -55,7 +55,7 @@ int dosit(void)
 	    goto in_water;
 	}
 
-	if(OBJ_AT(u.ux, u.uy)) {
+	if (OBJ_AT(u.ux, u.uy)) {
 	    struct obj *obj;
 
 	    obj = level.objects[u.ux][u.uy];
@@ -68,26 +68,26 @@ int dosit(void)
 
 	    if (u.utrap) {
 		exercise(A_WIS, FALSE);	/* you're getting stuck longer */
-		if(u.utraptype == TT_BEARTRAP) {
+		if (u.utraptype == TT_BEARTRAP) {
 		    You_cant("sit down with your %s in the bear trap.", body_part(FOOT));
 		    u.utrap++;
-	        } else if(u.utraptype == TT_PIT) {
-		    if(trap->ttyp == SPIKED_PIT) {
+	        } else if (u.utraptype == TT_PIT) {
+		    if (trap->ttyp == SPIKED_PIT) {
 			You("sit down on a spike.  Ouch!");
 			losehp(1, "sitting on an iron spike", KILLED_BY);
 			exercise(A_STR, FALSE);
 		    } else
 			You("sit down in the pit.");
 		    u.utrap += rn2(5);
-		} else if(u.utraptype == TT_WEB) {
+		} else if (u.utraptype == TT_WEB) {
 		    You("sit in the spider web and get entangled further!");
 		    u.utrap += rn1(10, 5);
-		} else if(u.utraptype == TT_LAVA) {
+		} else if (u.utraptype == TT_LAVA) {
 		    /* Must have fire resistance or they'd be dead already */
 		    You("sit in the lava!");
 		    u.utrap += rnd(4);
 		    losehp(d(2,10), "sitting in lava", KILLED_BY);
-		} else if(u.utraptype == TT_INFLOOR) {
+		} else if (u.utraptype == TT_INFLOOR) {
 		    You_cant("maneuver to sit!");
 		    u.utrap++;
 		}
@@ -95,36 +95,36 @@ int dosit(void)
 	        You("sit down.");
 		dotrap(trap, 0);
 	    }
-	} else if(Underwater || Is_waterlevel(&u.uz)) {
+	} else if (Underwater || Is_waterlevel(&u.uz)) {
 	    if (Is_waterlevel(&u.uz))
 		There("are no cushions floating nearby.");
 	    else
 		You("sit down on the muddy bottom.");
-	} else if(is_pool(u.ux, u.uy)) {
+	} else if (is_pool(u.ux, u.uy)) {
  in_water:
 	    You("sit in the water.");
 	    if (!rn2(10) && uarm)
 		rust_dmg(uarm, "armor", 1, TRUE, &youmonst);
 	    if (!rn2(10) && uarmf && uarmf->otyp != WATER_WALKING_BOOTS)
 		rust_dmg(uarm, "armor", 1, TRUE, &youmonst);
-	} else if(IS_SINK(typ)) {
+	} else if (IS_SINK(typ)) {
 
 	    You(sit_message, defsyms[S_sink].explanation);
 	    Your("%s gets wet.", humanoid(youmonst.data) ? "rump" : "underside");
-	} else if(IS_ALTAR(typ)) {
+	} else if (IS_ALTAR(typ)) {
 
 	    You(sit_message, defsyms[S_altar].explanation);
 	    altar_wrath(u.ux, u.uy);
 
-	} else if(IS_GRAVE(typ)) {
+	} else if (IS_GRAVE(typ)) {
 
 	    You(sit_message, defsyms[S_grave].explanation);
 
-	} else if(typ == STAIRS) {
+	} else if (typ == STAIRS) {
 
 	    You(sit_message, "stairs");
 
-	} else if(typ == LADDER) {
+	} else if (typ == LADDER) {
 
 	    You(sit_message, "ladder");
 
@@ -150,7 +150,7 @@ int dosit(void)
 
 	    You(sit_message, "drawbridge");
 
-	} else if(IS_THRONE(typ)) {
+	} else if (IS_THRONE(typ)) {
 
 	    You(sit_message, defsyms[S_throne].explanation);
 	    if (rnd(6) > 4)  {
@@ -175,7 +175,7 @@ int dosit(void)
 			    if (u.mh >= (u.mhmax - 5))  u.mhmax += 4;
 			    u.mh = u.mhmax;
 			}
-			if(u.uhp >= (u.uhpmax - 5))  u.uhpmax += 4;
+			if (u.uhp >= (u.uhpmax - 5))  u.uhpmax += 4;
 			u.uhp = u.uhpmax;
 			make_blinded(0L,TRUE);
 			make_sick(0L, NULL, FALSE, SICK_ALL);
@@ -186,7 +186,7 @@ int dosit(void)
 			take_gold();
 			break;
 		    case 6:
-			if(u.uluck + rn2(5) < 0) {
+			if (u.uluck + rn2(5) < 0) {
 			    You_feel("your luck is changing.");
 			    change_luck(1);
 			} else	    makewish();
@@ -198,7 +198,7 @@ int dosit(void)
 			pline("A voice echoes:");
 			verbalize("Thy audience hath been summoned, %s!",
 				  flags.female ? "Dame" : "Sire");
-			while(cnt--)
+			while (cnt--)
 			    makemon(courtmon(), u.ux, u.uy, NO_MM_FLAGS);
 			break;
 			}
@@ -314,7 +314,7 @@ void rndcurse(void)
 	    return;
 	}
 
-	if(Antimagic) {
+	if (Antimagic) {
 	    shieldeff(u.ux, u.uy);
 	    You(mal_aura, "you");
 	}
@@ -341,13 +341,13 @@ void rndcurse(void)
 		   cursed item happens--avoid "resists" message in that case */
 		if (!otmp || otmp->cursed) continue;	/* next target */
 
-		if(otmp->oartifact && spec_ability(otmp, SPFX_INTEL) &&
+		if (otmp->oartifact && spec_ability(otmp, SPFX_INTEL) &&
 		   rn2(10) < 8) {
 		    pline("%s!", Tobjnam(otmp, "resist"));
 		    continue;
 		}
 
-		if(otmp->blessed)
+		if (otmp->blessed)
 			unbless(otmp);
 		else
 			curse(otmp);

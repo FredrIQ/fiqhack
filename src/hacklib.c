@@ -161,9 +161,9 @@ char *s_suffix(const char *s) /* return a name converted to possessive */
     static char buf[BUFSZ];
 
     strcpy(buf, s);
-    if(!strcmpi(buf, "it"))
+    if (!strcmpi(buf, "it"))
 	strcat(buf, "s");
-    else if(*(eos(buf)-1) == 's')
+    else if (*(eos(buf)-1) == 's')
 	strcat(buf, "'");
     else
 	strcat(buf, "'s");

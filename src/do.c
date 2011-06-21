@@ -225,7 +225,7 @@ void doaltarobj(struct obj *obj)  /* obj is an object dropped on an altar */
 
 static void trycall(struct obj *obj)
 {
-	if(!objects[obj->otyp].oc_name_known &&
+	if (!objects[obj->otyp].oc_name_known &&
 	   !objects[obj->otyp].oc_uname)
 	   docall(obj);
 }
@@ -285,7 +285,7 @@ giveback:
 		break;
 	    case RIN_HUNGER:
 		ideed = FALSE;
-		for(otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp2) {
+		for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp2) {
 		    otmp2 = otmp->nexthere;
 		    if (otmp != uball && otmp != uchain &&
 			    !obj_resists(otmp, 1, 99)) {
@@ -306,7 +306,7 @@ giveback:
 		ideed = FALSE;
 		break;
 	}
-	if(!Blind && !ideed && obj->otyp != RIN_HUNGER) {
+	if (!Blind && !ideed && obj->otyp != RIN_HUNGER) {
 	    ideed = TRUE;
 	    switch(obj->otyp) {		/* effects that need eyes */
 		case RIN_ADORNMENT:
@@ -357,7 +357,7 @@ giveback:
 		    break;
 	    }
 	}
-	if(ideed)
+	if (ideed)
 	    trycall(obj);
 	else
 	    You_hear("the ring bouncing down the drainpipe.");
@@ -373,7 +373,7 @@ giveback:
 /* some common tests when trying to drop or throw items */
 boolean canletgo(struct obj *obj, const char *word)
 {
-	if(obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)){
+	if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)){
 		if (*word)
 			Norep("You cannot %s %s you are wearing.",word,
 				something);
@@ -412,17 +412,17 @@ boolean canletgo(struct obj *obj, const char *word)
 
 static int drop(struct obj *obj)
 {
-	if(!obj) return 0;
-	if(!canletgo(obj,"drop"))
+	if (!obj) return 0;
+	if (!canletgo(obj,"drop"))
 		return 0;
-	if(obj == uwep) {
-		if(welded(uwep)) {
+	if (obj == uwep) {
+		if (welded(uwep)) {
 			weldmsg(obj);
 			return 0;
 		}
 		setuwep(NULL);
 	}
-	if(obj == uquiver) {
+	if (obj == uquiver) {
 		setuqwep(NULL);
 	}
 	if (obj == uswapwep) {
@@ -431,7 +431,7 @@ static int drop(struct obj *obj)
 
 	if (u.uswallow) {
 		/* barrier between you and the floor */
-		if(flags.verbose)
+		if (flags.verbose)
 		{
 			char buf[BUFSZ];
 
@@ -441,13 +441,13 @@ static int drop(struct obj *obj)
 				mbodypart(u.ustuck, STOMACH));
 		}
 	} else {
-	    if((obj->oclass == RING_CLASS || obj->otyp == MEAT_RING) &&
+	    if ((obj->oclass == RING_CLASS || obj->otyp == MEAT_RING) &&
 			IS_SINK(levl[u.ux][u.uy].typ)) {
 		dosinkring(obj);
 		return 1;
 	    }
 	    if (!can_reach_floor()) {
-		if(flags.verbose) You("drop %s.", doname(obj));
+		if (flags.verbose) You("drop %s.", doname(obj));
 #ifndef GOLDOBJ
 		if (obj->oclass != COIN_CLASS || obj == invent) freeinv(obj);
 #else
@@ -492,7 +492,7 @@ void dropy(struct obj *obj)
 
 	if (!u.uswallow && flooreffects(obj,u.ux,u.uy,"drop")) return;
 	/* uswallow check done by GAN 01/29/87 */
-	if(u.uswallow) {
+	if (u.uswallow) {
 	    boolean could_petrify = FALSE;
 	    boolean could_poly = FALSE;
 	    boolean could_slime = FALSE;
@@ -535,7 +535,7 @@ void dropy(struct obj *obj)
 	    else
 		sellobj(obj, u.ux, u.uy);
 	    stackobj(obj);
-	    if(Blind && Levitation)
+	    if (Blind && Levitation)
 		map_object(obj, 0);
 	    newsym(u.ux,u.uy);	/* remap location under self */
 	}
@@ -549,7 +549,7 @@ void obj_no_longer_held(struct obj *obj)
 	    return;
 	} else if ((Is_container(obj) || obj->otyp == STATUE) && obj->cobj) {
 	    struct obj *contents;
-	    for(contents=obj->cobj; contents; contents=contents->nobj)
+	    for (contents=obj->cobj; contents; contents=contents->nobj)
 		obj_no_longer_held(contents);
 	}
 	switch(obj->otyp) {
@@ -637,7 +637,7 @@ static int menu_drop(int retry)
     }
 
     if (drop_everything) {
-	for(otmp = invent; otmp; otmp = otmp2) {
+	for (otmp = invent; otmp; otmp = otmp2) {
 	    otmp2 = otmp->nobj;
 	    n_dropped += drop(otmp);
 	}
@@ -708,7 +708,7 @@ int dodown(void)
 		if (ELevitation & W_ARTI) {
 		    struct obj *obj;
 
-		    for(obj = invent; obj; obj = obj->nobj) {
+		    for (obj = invent; obj; obj = obj->nobj) {
 			if (obj->oartifact &&
 					artifact_has_invprop(obj,LEVITATION)) {
 			    if (obj->age < monstermoves)
@@ -739,7 +739,7 @@ int dodown(void)
 			}
 		}
 	}
-	if(u.ustuck) {
+	if (u.ustuck) {
 		You("are %s, and cannot go down.",
 			!u.uswallow ? "being held" : is_animal(u.ustuck->data) ?
 			"swallowed" : "engulfed");
@@ -754,7 +754,7 @@ int dodown(void)
 		u.uevent.gehennom_entered = 1;	/* don't ask again */
 	}
 
-	if(!next_to_u()) {
+	if (!next_to_u()) {
 		You("are held back by your pet!");
 		return 0;
 	}
@@ -775,7 +775,7 @@ int dodown(void)
 
 int doup(void)
 {
-	if( (u.ux != xupstair || u.uy != yupstair)
+	if ( (u.ux != xupstair || u.uy != yupstair)
 	     && (!xupladder || u.ux != xupladder || u.uy != yupladder)
 	     && (!sstairs.sx || u.ux != sstairs.sx || u.uy != sstairs.sy
 			|| !sstairs.up)
@@ -789,23 +789,23 @@ int doup(void)
 	} else if (u.usteed && u.usteed->meating) {
 		pline("%s is still eating.", Monnam(u.usteed));
 		return 0;
-	} else if(u.ustuck) {
+	} else if (u.ustuck) {
 		You("are %s, and cannot go up.",
 			!u.uswallow ? "being held" : is_animal(u.ustuck->data) ?
 			"swallowed" : "engulfed");
 		return 1;
 	}
-	if(near_capacity() > SLT_ENCUMBER) {
+	if (near_capacity() > SLT_ENCUMBER) {
 		/* No levitation check; inv_weight() already allows for it */
 		Your("load is too heavy to climb the %s.",
 			levl[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
 		return 1;
 	}
-	if(ledger_no(&u.uz) == 1) {
+	if (ledger_no(&u.uz) == 1) {
 		if (yn("Beware, there will be no return! Still climb?") != 'y')
 			return 0;
 	}
-	if(!next_to_u()) {
+	if (!next_to_u()) {
 		You("are held back by your pet!");
 		return 0;
 	}
@@ -851,7 +851,7 @@ void save_currentstate(void)
 	if (flags.ins_chkpt) {
 		/* write out just-attained level, with pets and everything */
 		fd = currentlevel_rewrite();
-		if(fd < 0) return;
+		if (fd < 0) return;
 		bufon(fd);
 		savelev(fd,ledger_no(&u.uz), WRITE_SAVE);
 		bclose(fd);
@@ -1046,7 +1046,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			    do {
 				x = (COLNO - 2 - rnd(5));
 				y = rn1(ROWNO - 4, 3);
-			    } while(occupied(x, y) ||
+			    } while (occupied(x, y) ||
 				    IS_WALL(levl[x][y].typ));
 			    u_on_newpos(x, y);
 			} else u_on_sstairs();
@@ -1225,7 +1225,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		!(u.uevent.qexpelled || u.uevent.qcompleted || quest_status.leader_is_dead)) {
 
 		if (u.uevent.qcalled) {
-			com_pager(Role_if(PM_ROGUE) ? 4 : 3);
+			com_pager(Role_if (PM_ROGUE) ? 4 : 3);
 		} else {
 			com_pager(2);
 			u.uevent.qcalled = TRUE;
@@ -1236,7 +1236,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	if (Is_knox(&u.uz) && (new || !mvitals[PM_CROESUS].died)) {
 		You("penetrated a high security area!");
 		pline("An alarm sounds!");
-		for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 		    if (!DEADMONSTER(mtmp) && mtmp->msleeping) mtmp->msleeping = 0;
 	}
 
@@ -1479,7 +1479,7 @@ int donull(void)
 
 static int wipeoff(void)
 {
-	if(u.ucreamed < 4)	u.ucreamed = 0;
+	if (u.ucreamed < 4)	u.ucreamed = 0;
 	else			u.ucreamed -= 4;
 	if (Blinded < 4)	Blinded = 0;
 	else			Blinded -= 4;
@@ -1498,7 +1498,7 @@ static int wipeoff(void)
 
 int dowipe(void)
 {
-	if(u.ucreamed)  {
+	if (u.ucreamed)  {
 		static char buf[39];
 
 		sprintf(buf, "wiping off your %s", body_part(FACE));
@@ -1520,12 +1520,12 @@ void set_wounded_legs(long side, int timex)
 	 * Caller is also responsible for adjusting messages.
 	 */
 
-	if(!Wounded_legs) {
+	if (!Wounded_legs) {
 		ATEMP(A_DEX)--;
 		botl = 1;
 	}
 
-	if(!Wounded_legs || (HWounded_legs & TIMEOUT))
+	if (!Wounded_legs || (HWounded_legs & TIMEOUT))
 		HWounded_legs = timex;
 	EWounded_legs = side;
 	encumber_msg();
@@ -1533,7 +1533,7 @@ void set_wounded_legs(long side, int timex)
 
 void heal_legs(void)
 {
-	if(Wounded_legs) {
+	if (Wounded_legs) {
 		if (ATEMP(A_DEX) < 0) {
 			ATEMP(A_DEX)++;
 			botl = 1;
@@ -1542,7 +1542,7 @@ void heal_legs(void)
 		if (!u.usteed)
 		{
 			/* KMH, intrinsics patch */
-			if((EWounded_legs & BOTH_SIDES) == BOTH_SIDES) {
+			if ((EWounded_legs & BOTH_SIDES) == BOTH_SIDES) {
 			Your("%s feel somewhat better.",
 				makeplural(body_part(LEG)));
 		} else {

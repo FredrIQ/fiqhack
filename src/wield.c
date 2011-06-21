@@ -571,7 +571,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 	if (target->greased) {
 	    grease_protect(target,NULL,victim);
 	} else if (target->oclass == SCROLL_CLASS) {
-	    if(fade_scrolls && target->otyp != SCR_BLANK_PAPER)
+	    if (fade_scrolls && target->otyp != SCR_BLANK_PAPER)
 	    {
 		if (!Blind) {
 		    if (victim == &youmonst)
@@ -639,7 +639,7 @@ int chwepon(struct obj *otmp, int amount)
 	const char *xtime;
 	int otyp = STRANGE_OBJECT;
 
-	if(!uwep || (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep))) {
+	if (!uwep || (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep))) {
 		char buf[BUFSZ];
 
 		sprintf(buf, "Your %s %s.", makeplural(body_part(HAND)),
@@ -651,7 +651,7 @@ int chwepon(struct obj *otmp, int amount)
 
 	if (otmp && otmp->oclass == SCROLL_CLASS) otyp = otmp->otyp;
 
-	if(uwep->otyp == WORM_TOOTH && amount >= 0) {
+	if (uwep->otyp == WORM_TOOTH && amount >= 0) {
 		uwep->otyp = CRYSKNIFE;
 		uwep->oerodeproof = 0;
 		Your("weapon seems sharper now.");
@@ -660,7 +660,7 @@ int chwepon(struct obj *otmp, int amount)
 		return 1;
 	}
 
-	if(uwep->otyp == CRYSKNIFE && amount < 0) {
+	if (uwep->otyp == CRYSKNIFE && amount < 0) {
 		uwep->otyp = WORM_TOOTH;
 		uwep->oerodeproof = 0;
 		Your("weapon seems duller now.");
@@ -674,7 +674,7 @@ int chwepon(struct obj *otmp, int amount)
 	    return 1;
 	}
 	/* there is a (soft) upper and lower limit to uwep->spe */
-	if(((uwep->spe > 5 && amount >= 0) || (uwep->spe < -5 && amount < 0))
+	if (((uwep->spe > 5 && amount >= 0) || (uwep->spe < -5 && amount < 0))
 								&& rn2(3)) {
 	    if (!Blind)
 	    Your("%s %s for a while and then %s.",
@@ -696,7 +696,7 @@ int chwepon(struct obj *otmp, int amount)
 		makeknown(otyp);
 	}
 	uwep->spe += amount;
-	if(amount > 0) uwep->cursed = 0;
+	if (amount > 0) uwep->cursed = 0;
 
 	/*
 	 * Enchantment, which normally improves a weapon, has an

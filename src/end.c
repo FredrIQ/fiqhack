@@ -81,14 +81,14 @@ void done1(int sig_unused) /* called as signal() handler, so sent at least one a
 #ifndef NO_SIGNAL
 	signal(SIGINT,SIG_IGN);
 #endif
-	if(flags.ignintr) {
+	if (flags.ignintr) {
 #ifndef NO_SIGNAL
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 		clear_nhwindow(NHW_MESSAGE);
 		curs_on_u();
 		wait_synch();
-		if(multi > 0) nomul(0);
+		if (multi > 0) nomul(0);
 	} else {
 		done2();
 	}
@@ -98,22 +98,22 @@ void done1(int sig_unused) /* called as signal() handler, so sent at least one a
 /* "#quit" command or keyboard interrupt */
 int done2(void)
 {
-	if(yn("Really quit?") == 'n') {
+	if (yn("Really quit?") == 'n') {
 #ifndef NO_SIGNAL
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 		clear_nhwindow(NHW_MESSAGE);
 		curs_on_u();
 		wait_synch();
-		if(multi > 0) nomul(0);
-		if(multi == 0) {
+		if (multi > 0) nomul(0);
+		if (multi == 0) {
 		    u.uinvulnerable = FALSE;	/* avoid ctrl-C bug -dlc */
 		    u.usleep = 0;
 		}
 		return 0;
 	}
 #if defined(UNIX)
-	if(wizard) {
+	if (wizard) {
 	    int c;
 	    const char *tmp = "Dump core?";
 	    if ((c = ynq(tmp)) == 'y') {
@@ -176,10 +176,10 @@ void done_in_by(struct monst *mtmp)
 	if (distorted)
 		strcat(buf, "hallucinogen-distorted ");
 
-	if(mtmp->data == &mons[PM_GHOST]) {
+	if (mtmp->data == &mons[PM_GHOST]) {
 		strcat(buf, "ghost");
 		if (mtmp->mnamelth) sprintf(eos(buf), " of %s", NAME(mtmp));
-	} else if(mtmp->isshk) {
+	} else if (mtmp->isshk) {
 		sprintf(eos(buf), "%s %s, the shopkeeper",
 			(mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
 		killer_format = KILLED_BY;
@@ -200,7 +200,7 @@ void done_in_by(struct monst *mtmp)
 		u.ugrave_arise = PM_WRAITH;
 	else if (mtmp->data->mlet == S_MUMMY && urace.mummynum != NON_PM)
 		u.ugrave_arise = urace.mummynum;
-	else if (mtmp->data->mlet == S_VAMPIRE && Race_if(PM_HUMAN))
+	else if (mtmp->data->mlet == S_VAMPIRE && Race_if (PM_HUMAN))
 		u.ugrave_arise = PM_VAMPIRE;
 	else if (mtmp->data == &mons[PM_GHOUL])
 		u.ugrave_arise = PM_GHOUL;
@@ -314,7 +314,7 @@ static void disclose(int how, boolean taken)
 	boolean ask;
 
 	if (invent) {
-	    if(taken)
+	    if (taken)
 		sprintf(qbuf,"Do you want to see what you had when you %s?",
 			(how == QUIT) ? "quit" : "died");
 	    else
@@ -381,8 +381,8 @@ static void savelife(int how)
 	if (how == CHOKING) init_uhunger();
 	nomovemsg = "You survived that attempt on your life.";
 	flags.move = 0;
-	if(multi > 0) multi = 0; else multi = -1;
-	if(u.utrap && u.utraptype == TT_LAVA) u.utrap = 0;
+	if (multi > 0) multi = 0; else multi = -1;
+	if (u.utrap && u.utraptype == TT_LAVA) u.utrap = 0;
 	botl = 1;
 	u.ugrave_arise = NON_PM;
 	HUnchanging = 0L;
@@ -528,7 +528,7 @@ void done(int how)
 		if (uamul) useup(uamul);
 
 		adjattrib(A_CON, -1, TRUE);
-		if(u.uhpmax <= 0) u.uhpmax = 10;	/* arbitrary */
+		if (u.uhpmax <= 0) u.uhpmax = 10;	/* arbitrary */
 		savelife(how);
 		if (how == GENOCIDED)
 			pline("Unfortunately you are still genocided...");
@@ -539,10 +539,10 @@ void done(int how)
 		}
 	}
 	if ((wizard || discover) && (how <= GENOCIDED)) {
-		if(yn("Die?") == 'y') goto die;
+		if (yn("Die?") == 'y') goto die;
 		pline("OK, so you don't %s.",
 			(how == CHOKING) ? "choke" : "die");
-		if(u.uhpmax <= 0) u.uhpmax = u.ulevel * 8;	/* arbitrary */
+		if (u.uhpmax <= 0) u.uhpmax = u.ulevel * 8;	/* arbitrary */
 		savelife(how);
 		killer = 0;
 		killer_format = 0;
@@ -689,7 +689,7 @@ die:
 	    display_nhwindow(NHW_MESSAGE, TRUE);
 	    destroy_game_windows();
 
-	    if(!done_stopprint || flags.tombstone)
+	    if (!done_stopprint || flags.tombstone)
 		show_endwin = TRUE;
 
 	    if (how < GENOCIDED && flags.tombstone && show_endwin) {
@@ -867,7 +867,7 @@ die:
 	    topten(how);
 	}
 
-	if(done_stopprint) { raw_print(""); raw_print(""); }
+	if (done_stopprint) { raw_print(""); raw_print(""); }
 	terminate(EXIT_SUCCESS);
 }
 

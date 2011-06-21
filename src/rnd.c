@@ -77,7 +77,7 @@ int d(int n, int x)
 		return 1;
 	}
 #endif
-	while(n--) tmp += RND(x);
+	while (n--) tmp += RND(x);
 	return tmp; /* Alea iacta est. -- J.C. */
 }
 

@@ -105,7 +105,7 @@ static void readentry(FILE *rfile, struct toptenentry *tt)
 	final_fpos = tt->fpos = ftell(rfile);
 #endif
 #define TTFIELDS 13
-	if(fscanf(rfile, fmt,
+	if (fscanf(rfile, fmt,
 			&tt->ver_major, &tt->ver_minor, &tt->patchlevel,
 			&tt->points, &tt->deathdnum, &tt->deathlev,
 			&tt->maxlvl, &tt->hp, &tt->maxhp, &tt->deaths,
@@ -258,7 +258,7 @@ void topten(int how)
 
 #ifdef LOGFILE		/* used for debugging (who dies of what, where) */
 	if (lock_file(LOGFILE, SCOREPREFIX, 10)) {
-	    if(!(lfile = fopen_datafile(LOGFILE, "a", SCOREPREFIX))) {
+	    if (!(lfile = fopen_datafile(LOGFILE, "a", SCOREPREFIX))) {
 		HUP raw_print("Cannot open log file!");
 	    } else {
 		writeentry(lfile, t0);
@@ -298,17 +298,17 @@ void topten(int how)
 	HUP topten_print("");
 
 	/* assure minimum number of points */
-	if(t0->points < POINTSMIN) t0->points = 0;
+	if (t0->points < POINTSMIN) t0->points = 0;
 
 	t1 = tt_head = newttentry();
 	tprev = 0;
 	/* rank0: -1 undefined, 0 not_on_list, n n_th on list */
-	for(rank = 1; ; ) {
+	for (rank = 1; ; ) {
 	    readentry(rfile, t1);
 	    if (t1->points < POINTSMIN) t1->points = 0;
-	    if(rank0 < 0 && t1->points < t0->points) {
+	    if (rank0 < 0 && t1->points < t0->points) {
 		rank0 = rank++;
-		if(tprev == 0)
+		if (tprev == 0)
 			tt_head = t0;
 		else
 			tprev->tt_next = t0;
@@ -321,8 +321,8 @@ void topten(int how)
 		flg++;		/* ask for a rewrite */
 	    } else tprev = t1;
 
-	    if(t1->points == 0) break;
-	    if(
+	    if (t1->points == 0) break;
+	    if (
 #ifdef PERS_IS_UID
 		t1->uid == t0->uid &&
 #else
@@ -330,7 +330,7 @@ void topten(int how)
 #endif
 		!strncmp(t1->plrole, t0->plrole, ROLESZ) &&
 		--occ_cnt <= 0) {
-		    if(rank0 < 0) {
+		    if (rank0 < 0) {
 			rank0 = 0;
 			rank1 = rank;
 			HUP {
@@ -342,36 +342,36 @@ void topten(int how)
 			    topten_print("");
 			}
 		    }
-		    if(occ_cnt < 0) {
+		    if (occ_cnt < 0) {
 			flg++;
 			continue;
 		    }
 		}
-	    if(rank <= ENTRYMAX) {
+	    if (rank <= ENTRYMAX) {
 		t1->tt_next = newttentry();
 		t1 = t1->tt_next;
 		rank++;
 	    }
-	    if(rank > ENTRYMAX) {
+	    if (rank > ENTRYMAX) {
 		t1->points = 0;
 		break;
 	    }
 	}
-	if(flg) {	/* rewrite record file */
+	if (flg) {	/* rewrite record file */
 #ifdef UPDATE_RECORD_IN_PLACE
 		fseek(rfile, (t0->fpos >= 0 ?
 				     t0->fpos : final_fpos), SEEK_SET);
 #else
 		fclose(rfile);
-		if(!(rfile = fopen_datafile(RECORD, "w", SCOREPREFIX))){
+		if (!(rfile = fopen_datafile(RECORD, "w", SCOREPREFIX))){
 			HUP raw_print("Cannot write record file");
 			unlock_file(RECORD);
 			free_ttlist(tt_head);
 			goto destroywin;
 		}
 #endif	/* UPDATE_RECORD_IN_PLACE */
-		if(!done_stopprint) if(rank0 > 0){
-		    if(rank0 <= 10)
+		if (!done_stopprint) if(rank0 > 0){
+		    if (rank0 <= 10)
 			topten_print("You made the top ten list!");
 		    else {
 			char pbuf[BUFSZ];
@@ -383,12 +383,12 @@ void topten(int how)
 		    topten_print("");
 		}
 	}
-	if(rank0 == 0) rank0 = rank1;
-	if(rank0 <= 0) rank0 = rank;
-	if(!done_stopprint) outheader();
+	if (rank0 == 0) rank0 = rank1;
+	if (rank0 <= 0) rank0 = rank;
+	if (!done_stopprint) outheader();
 	t1 = tt_head;
-	for(rank = 1; t1->points != 0; rank++, t1 = t1->tt_next) {
-	    if(flg
+	for (rank = 1; t1->points != 0; rank++, t1 = t1->tt_next) {
+	    if (flg
 #ifdef UPDATE_RECORD_IN_PLACE
 		    && rank >= rank0
 #endif
@@ -408,16 +408,16 @@ void topten(int how)
 		    rank0 > flags.end_top + flags.end_around + 1 &&
 		    !flags.end_own)
 		topten_print("");
-	    if(rank != rank0)
+	    if (rank != rank0)
 		outentry(rank, t1, FALSE);
-	    else if(!rank1)
+	    else if (!rank1)
 		outentry(rank, t1, TRUE);
 	    else {
 		outentry(rank, t1, TRUE);
 		outentry(0, t0, TRUE);
 	    }
 	}
-	if(rank0 >= rank) if(!done_stopprint)
+	if (rank0 >= rank) if(!done_stopprint)
 		outentry(0, t0, TRUE);
 #ifdef UPDATE_RECORD_IN_PLACE
 	if (flg) {
@@ -463,7 +463,7 @@ static void outheader(void)
 
 	strcpy(linebuf, " No  Points     Name");
 	bp = eos(linebuf);
-	while(bp < linebuf + COLNO - 9) *bp++ = ' ';
+	while (bp < linebuf + COLNO - 9) *bp++ = ' ';
 	strcpy(bp, "Hp [max]");
 	topten_print(linebuf);
 }
@@ -567,7 +567,7 @@ static void outentry(int rank, struct toptenentry *t1, boolean so)
 	/* beginning of hp column after padding (not actually padded yet) */
 	hppos = COLNO - (sizeof("  Hp [max]")-1); /* sizeof(str) includes \0 */
 	while (lngr >= hppos) {
-	    for(bp = eos(linebuf);
+	    for (bp = eos(linebuf);
 		    !(*bp == ' ' && (bp-linebuf < hppos));
 		    bp--)
 		;
@@ -810,13 +810,13 @@ struct obj *tt_oname(struct obj *otmp)
 	tt = &tt_buf;
 	rank = rnd(10);
 pickentry:
-	for(i = rank; i; i--) {
+	for (i = rank; i; i--) {
 	    readentry(rfile, tt);
-	    if(tt->points == 0) break;
+	    if (tt->points == 0) break;
 	}
 
-	if(tt->points == 0) {
-		if(rank > 1) {
+	if (tt->points == 0) {
+		if (rank > 1) {
 			rank = 1;
 			rewind(rfile);
 			goto pickentry;

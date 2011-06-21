@@ -99,7 +99,7 @@ int use_saddle(struct obj *otmp)
 	chance = ACURR(A_DEX) + ACURR(A_CHA)/2 + 2*mtmp->mtame;
 	chance += u.ulevel * (mtmp->mtame ? 20 : 5);
 	if (!mtmp->mtame) chance -= 10*mtmp->m_lev;
-	if (Role_if(PM_KNIGHT))
+	if (Role_if (PM_KNIGHT))
 	    chance += 20;
 	switch (P_SKILL(P_RIDING)) {
 	case P_ISRESTRICTED:
@@ -215,7 +215,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	    You("won't fit on a saddle.");
 	    return FALSE;
 	}
-	if(!force && (near_capacity() > SLT_ENCUMBER)) {
+	if (!force && (near_capacity() > SLT_ENCUMBER)) {
 	    You_cant("do that while carrying so much stuff.");
 	    return FALSE;
 	}
@@ -264,7 +264,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	    return FALSE;
 	}
 
-	if (!force && !Role_if(PM_KNIGHT) && !(--mtmp->mtame)) {
+	if (!force && !Role_if (PM_KNIGHT) && !(--mtmp->mtame)) {
 	    /* no longer tame */
 	    newsym(mtmp->mx, mtmp->my);
 	    pline("%s resists%s!", Monnam(mtmp),

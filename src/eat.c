@@ -51,7 +51,7 @@ char msgbuf[BUFSZ];
 #define STARVED		6
 
 /* also used to see if you're allowed to eat cats and dogs */
-#define CANNIBAL_ALLOWED() (Role_if(PM_CAVEMAN) || Race_if(PM_ORC))
+#define CANNIBAL_ALLOWED() (Role_if (PM_CAVEMAN) || Race_if(PM_ORC))
 
 static const char comestibles[] = { FOOD_CLASS, 0 };
 
@@ -197,7 +197,7 @@ static void choke(struct obj *food) /* To a full belly all food is bad. (It.) */
 	if (u.uhs != SATIATED) {
 		if (!food || food->otyp != AMULET_OF_STRANGULATION)
 			return;
-	} else if (Role_if(PM_KNIGHT) && u.ualign.type == A_LAWFUL) {
+	} else if (Role_if (PM_KNIGHT) && u.ualign.type == A_LAWFUL) {
 			adjalign(-1);		/* gluttony is unchivalrous */
 			You_feel("like a glutton!");
 	}
@@ -220,7 +220,7 @@ static void choke(struct obj *food) /* To a full belly all food is bad. (It.) */
 		 * Note all "killer"s below read "Choked on %s" on the
 		 * high score list & tombstone.  So plan accordingly.
 		 */
-		if(food) {
+		if (food) {
 			You("choke over your %s.", foodword(food));
 			if (food->oclass == COIN_CLASS) {
 				killer = "a very rich meal";
@@ -263,7 +263,7 @@ void reset_eat(void)	/* called when eating interrupted by an event */
     /* we only set a flag here - the actual reset process is done after
      * the round is spent eating.
      */
-	if(victual.eating && !victual.doreset) {
+	if (victual.eating && !victual.doreset) {
 #ifdef DEBUG
 	    debugpline("reset_eat...");
 #endif
@@ -275,7 +275,7 @@ void reset_eat(void)	/* called when eating interrupted by an event */
 static struct obj *touchfood(struct obj *otmp)
 {
 	if (otmp->quan > 1L) {
-	    if(!carried(otmp))
+	    if (!carried(otmp))
 		splitobj(otmp, otmp->quan - 1L);
 	    else
 		otmp = splitobj(otmp, 1L);
@@ -285,7 +285,7 @@ static struct obj *touchfood(struct obj *otmp)
 	}
 
 	if (!otmp->oeaten) {
-	    if(((!carried(otmp) && costly_spot(otmp->ox, otmp->oy) &&
+	    if (((!carried(otmp) && costly_spot(otmp->ox, otmp->oy) &&
 		 !otmp->no_charge)
 		 || otmp->unpaid)) {
 		/* create a dummy duplicate to put on bill */
@@ -353,16 +353,16 @@ static void do_reset_eat(void)
 
 static int eatfood(void)	/* called each move during eating process */
 {
-	if(!victual.piece ||
+	if (!victual.piece ||
 	 (!carried(victual.piece) && !obj_here(victual.piece, u.ux, u.uy))) {
 		/* maybe it was stolen? */
 		do_reset_eat();
 		return 0;
 	}
-	if(!victual.eating) return 0;
+	if (!victual.eating) return 0;
 
-	if(++victual.usedtime <= victual.reqtime) {
-	    if(bite()) return 0;
+	if (++victual.usedtime <= victual.reqtime) {
+	    if (bite()) return 0;
 	    return 1;	/* still busy */
 	} else {	/* done */
 	    done_eating(TRUE);
@@ -381,7 +381,7 @@ static void done_eating(boolean message)
 	} else if (message)
 		You("finish eating %s.", food_xname(victual.piece, TRUE));
 
-	if(victual.piece->otyp == CORPSE)
+	if (victual.piece->otyp == CORPSE)
 		cpostfx(victual.piece->corpsenm);
 	else
 		fpostfx(victual.piece);
@@ -623,7 +623,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give fire resistance");
 #endif
-		if(!(HFire_resistance & FROMOUTSIDE)) {
+		if (!(HFire_resistance & FROMOUTSIDE)) {
 			You(Hallucination ? "be chillin'." :
 			    "feel a momentary chill.");
 			HFire_resistance |= FROMOUTSIDE;
@@ -633,7 +633,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give sleep resistance");
 #endif
-		if(!(HSleep_resistance & FROMOUTSIDE)) {
+		if (!(HSleep_resistance & FROMOUTSIDE)) {
 			You_feel("wide awake.");
 			HSleep_resistance |= FROMOUTSIDE;
 		}
@@ -642,7 +642,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give cold resistance");
 #endif
-		if(!(HCold_resistance & FROMOUTSIDE)) {
+		if (!(HCold_resistance & FROMOUTSIDE)) {
 			You_feel("full of hot air.");
 			HCold_resistance |= FROMOUTSIDE;
 		}
@@ -651,7 +651,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give disintegration resistance");
 #endif
-		if(!(HDisint_resistance & FROMOUTSIDE)) {
+		if (!(HDisint_resistance & FROMOUTSIDE)) {
 			You_feel(Hallucination ?
 			    "totally together, man." :
 			    "very firm.");
@@ -662,7 +662,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give shock resistance");
 #endif
-		if(!(HShock_resistance & FROMOUTSIDE)) {
+		if (!(HShock_resistance & FROMOUTSIDE)) {
 			if (Hallucination)
 				You_feel("grounded in reality.");
 			else
@@ -674,7 +674,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give poison resistance");
 #endif
-		if(!(HPoison_resistance & FROMOUTSIDE)) {
+		if (!(HPoison_resistance & FROMOUTSIDE)) {
 			You_feel(Poison_resistance ?
 				 "especially healthy." : "healthy.");
 			HPoison_resistance |= FROMOUTSIDE;
@@ -684,7 +684,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give teleport");
 #endif
-		if(!(HTeleportation & FROMOUTSIDE)) {
+		if (!(HTeleportation & FROMOUTSIDE)) {
 			You_feel(Hallucination ? "diffuse." :
 			    "very jumpy.");
 			HTeleportation |= FROMOUTSIDE;
@@ -694,7 +694,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give teleport control");
 #endif
-		if(!(HTeleport_control & FROMOUTSIDE)) {
+		if (!(HTeleport_control & FROMOUTSIDE)) {
 			You_feel(Hallucination ?
 			    "centered in your personal space." :
 			    "in control of yourself.");
@@ -705,7 +705,7 @@ static void givit(int type, struct permonst *ptr)
 #ifdef DEBUG
 		debugpline("Trying to give telepathy");
 #endif
-		if(!(HTelepat & FROMOUTSIDE)) {
+		if (!(HTelepat & FROMOUTSIDE)) {
 			You_feel(Hallucination ?
 			    "in touch with the cosmos." :
 			    "a strange mental acuity.");
@@ -768,7 +768,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 		botl = 1;
 		break;
 	    case PM_STALKER:
-		if(!Invis) {
+		if (!Invis) {
 			set_itimeout(&HInvis, (long)rn1(100, 50));
 			if (!Blind && !BInvis) self_invis_message();
 		} else {
@@ -861,7 +861,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 			pline ("Oh wow!  Great stuff!");
 			make_hallucinated(HHallucination + 200,FALSE,0L);
 		}
-		if(is_giant(ptr)) gainstr(NULL, 0);
+		if (is_giant(ptr)) gainstr(NULL, 0);
 
 		/* Check the monster for all of the intrinsics.  If this
 		 * monster can give more than one, pick one to try to give
@@ -924,7 +924,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 void violated_vegetarian(void)
 {
     u.uconduct.unvegetarian++;
-    if (Role_if(PM_MONK)) {
+    if (Role_if (PM_MONK)) {
 	You_feel("guilty.");
 	adjalign(-1);
     }
@@ -936,12 +936,12 @@ void violated_vegetarian(void)
 static void costly_tin(
     const char *verb /* if 0, the verb is "open" */)
 {
-	if(((!carried(tin.tin) &&
+	if (((!carried(tin.tin) &&
 	     costly_spot(tin.tin->ox, tin.tin->oy) &&
 	     !tin.tin->no_charge)
 	    || tin.tin->unpaid)) {
 	    verbalize("You %s it, you bought it!", verb ? verb : "open");
-	    if(tin.tin->quan > 1L) tin.tin = splitobj(tin.tin, 1L);
+	    if (tin.tin->quan > 1L) tin.tin = splitobj(tin.tin, 1L);
 	    bill_dummy_object(tin.tin);
 	}
 }
@@ -952,23 +952,23 @@ static int opentin(void) /* called during each move whilst opening a tin */
 	const char *what;
 	int which;
 
-	if(!carried(tin.tin) && !obj_here(tin.tin, u.ux, u.uy))
+	if (!carried(tin.tin) && !obj_here(tin.tin, u.ux, u.uy))
 					/* perhaps it was stolen? */
 		return 0;		/* %% probably we should use tinoid */
-	if(tin.usedtime++ >= 50) {
+	if (tin.usedtime++ >= 50) {
 		You("give up your attempt to open the tin.");
 		return 0;
 	}
-	if(tin.usedtime < tin.reqtime)
+	if (tin.usedtime < tin.reqtime)
 		return 1;		/* still busy */
-	if(tin.tin->otrapped ||
+	if (tin.tin->otrapped ||
 	   (tin.tin->cursed && tin.tin->spe != -1 && !rn2(8))) {
 		b_trapped("tin", 0);
 		costly_tin("destroyed");
 		goto use_me;
 	}
 	You("succeed in opening the tin.");
-	if(tin.tin->spe != 1) {
+	if (tin.tin->spe != 1) {
 	    if (tin.tin->corpsenm == NON_PM) {
 		pline("It turns out to be empty.");
 		tin.tin->dknown = tin.tin->known = TRUE;
@@ -1020,10 +1020,10 @@ static int opentin(void) /* called during each move whilst opening a tin */
 	    costly_tin(NULL);
 
 	    /* check for vomiting added by GAN 01/16/87 */
-	    if(tintxts[r].nut < 0) make_vomiting((long)rn1(15,10), FALSE);
+	    if (tintxts[r].nut < 0) make_vomiting((long)rn1(15,10), FALSE);
 	    else lesshungry(tintxts[r].nut);
 
-	    if(r == 0 || r == FRENCH_FRIED_TIN) {
+	    if (r == 0 || r == FRENCH_FRIED_TIN) {
 	        /* Assume !Glib, because you can't open tins when Glib. */
 		incr_itimeout(&Glib, rnd(15));
 		pline("Eating deep fried food made your %s very slippery.",
@@ -1075,7 +1075,7 @@ static void start_tin(struct obj *otmp) /* called when starting to open a tin */
 	} else if (otmp->blessed) {
 		pline_The("tin opens like magic!");
 		tmp = 1;
-	} else if(uwep) {
+	} else if (uwep) {
 		switch(uwep->otyp) {
 		case TIN_OPENER:
 			tmp = 1;
@@ -1100,10 +1100,10 @@ static void start_tin(struct obj *otmp) /* called when starting to open a tin */
 	} else {
 no_opener:
 		pline("It is not so easy to open this tin.");
-		if(Glib) {
+		if (Glib) {
 			pline_The("tin slips from your %s.",
 			      makeplural(body_part(FINGER)));
-			if(otmp->quan > 1L) {
+			if (otmp->quan > 1L) {
 			    otmp = splitobj(otmp, 1L);
 			}
 			if (carried(otmp)) dropx(otmp);
@@ -1129,15 +1129,15 @@ int Hear_again()		/* called when waking up after fainting */
 static int rottenfood(struct obj *obj)
 {
 	pline("Blecch!  Rotten %s!", foodword(obj));
-	if(!rn2(4)) {
+	if (!rn2(4)) {
 		if (Hallucination) You_feel("rather trippy.");
 		else You_feel("rather %s.", body_part(LIGHT_HEADED));
 		make_confused(HConfusion + d(2,4),FALSE);
-	} else if(!rn2(4) && !Blind) {
+	} else if (!rn2(4) && !Blind) {
 		pline("Everything suddenly goes dark.");
 		make_blinded((long)d(2,10),FALSE);
 		if (!Blind) Your(vision_clears);
-	} else if(!rn2(3)) {
+	} else if (!rn2(3)) {
 		const char *what, *where;
 		if (!Blind)
 		    what = "goes",  where = "dark";
@@ -1214,7 +1214,7 @@ static int eatcorpse(struct obj *otmp)
 	} else if (poisonous(&mons[mnum]) && rn2(5)) {
 		tp++;
 		pline("Ecch - that must have been poisonous!");
-		if(!Poison_resistance) {
+		if (!Poison_resistance) {
 			losestr(rnd(4));
 			losehp(rnd(15), "poisonous corpse", KILLED_BY_AN);
 		} else	You("seem unaffected by the poison.");
@@ -1300,16 +1300,16 @@ static void fprefx(struct obj *otmp)
 {
 	switch(otmp->otyp) {
 	    case FOOD_RATION:
-		if(u.uhunger <= 200)
+		if (u.uhunger <= 200)
 		    pline(Hallucination ? "Oh wow, like, superior, man!" :
 			  "That food really hit the spot!");
-		else if(u.uhunger <= 700) pline("That satiated your %s!",
+		else if (u.uhunger <= 700) pline("That satiated your %s!",
 						body_part(STOMACH));
 		break;
 	    case TRIPE_RATION:
 		if (carnivorous(youmonst.data) && !humanoid(youmonst.data))
 		    pline("That tripe ration was surprisingly good!");
-		else if (maybe_polyd(is_orc(youmonst.data), Race_if(PM_ORC)))
+		else if (maybe_polyd(is_orc(youmonst.data), Race_if (PM_ORC)))
 		    pline(Hallucination ? "Tastes great! Less filling!" :
 			  "Mmm, tripe... not bad!");
 		else {
@@ -1609,7 +1609,7 @@ static void fpostfx(struct obj *otmp)
 		} else {
 		    u.uhp += otmp->cursed ? -rnd(20) : rnd(20);
 		    if (u.uhp > u.uhpmax) {
-			if(!rn2(17)) u.uhpmax++;
+			if (!rn2(17)) u.uhpmax++;
 			u.uhp = u.uhpmax;
 		    } else if (u.uhp <= 0) {
 			killer_format = KILLED_BY_AN;
@@ -1617,7 +1617,7 @@ static void fpostfx(struct obj *otmp)
 			done(POISONING);
 		    }
 		}
-		if(!otmp->cursed) heal_legs();
+		if (!otmp->cursed) heal_legs();
 		break;
 	    case EGG:
 		if (touch_petrifies(&mons[otmp->corpsenm])) {
@@ -1717,7 +1717,7 @@ static int edibility_prompts(struct obj *otmp)
 		else return 2;
 	}
 	if (cadaver && !vegetarian(&mons[mnum]) &&
-	    !u.uconduct.unvegetarian && Role_if(PM_MONK)) {
+	    !u.uconduct.unvegetarian && Role_if (PM_MONK)) {
 		sprintf(buf, "%s unhealthy. %s",
 			foodsmell, eat_it_anyway);
 		if (yn_function(buf,ynchars,'n')=='n') return 1;
@@ -1810,7 +1810,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    u.umonnum == PM_RUST_MONSTER && otmp->oerodeproof) {
 	    	otmp->rknown = TRUE;
 		if (otmp->quan > 1L) {
-		    if(!carried(otmp))
+		    if (!carried(otmp))
 			splitobj(otmp, otmp->quan - 1L);
 		    else
 			otmp = splitobj(otmp, 1L);
@@ -1849,7 +1849,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    if (otmp->oclass == COIN_CLASS)
 		basenutrit = ((otmp->quan > 200000L) ? 2000
 			: (int)(otmp->quan/100L));
-	    else if(otmp->oclass == BALL_CLASS || otmp->oclass == CHAIN_CLASS)
+	    else if (otmp->oclass == BALL_CLASS || otmp->oclass == CHAIN_CLASS)
 		basenutrit = weight(otmp);
 	    /* oc_nutrition is usually weight anyway */
 	    else basenutrit = objects[otmp->otyp].oc_nutrition;
@@ -1870,7 +1870,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 
 	    if (otmp->oclass == WEAPON_CLASS && otmp->opoisoned) {
 		pline("Ecch - that must have been poisonous!");
-		if(!Poison_resistance) {
+		if (!Poison_resistance) {
 		    losestr(rnd(4));
 		    losehp(rnd(15), xname(otmp), KILLED_BY_AN);
 		} else
@@ -1884,7 +1884,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    return 1;
 	}
 
-	if(otmp == victual.piece) {
+	if (otmp == victual.piece) {
 	/* If they weren't able to choke, they don't suddenly become able to
 	 * choke just because they were interrupted.  On the other hand, if
 	 * they were able to choke before, if they lost food it's possible
@@ -1900,7 +1900,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	/* nothing in progress - so try to find something. */
 	/* tins are a special case */
 	/* tins must also check conduct separately in case they're discarded */
-	if(otmp->otyp == TIN) {
+	if (otmp->otyp == TIN) {
 	    start_tin(otmp);
 	    return 1;
 	}
@@ -1916,7 +1916,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	 * for normal vs. rotten food.  The reqtime and nutrit values are
 	 * then adjusted in accordance with the amount of food left.
 	 */
-	if(otmp->otyp == CORPSE) {
+	if (otmp->otyp == CORPSE) {
 	    int tmp = eatcorpse(otmp);
 	    if (tmp == 2) {
 		/* used up */
@@ -1998,7 +1998,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
  */
 static int bite(void)
 {
-	if(victual.canchoke && u.uhunger >= 2000) {
+	if (victual.canchoke && u.uhunger >= 2000) {
 		choke(victual.piece);
 		return 1;
 	}
@@ -2007,10 +2007,10 @@ static int bite(void)
 		return 0;
 	}
 	force_save_hs = TRUE;
-	if(victual.nmod < 0) {
+	if (victual.nmod < 0) {
 		lesshungry(-victual.nmod);
 		consume_oeaten(victual.piece, victual.nmod); /* -= -nmod */
-	} else if(victual.nmod > 0 && (victual.usedtime % victual.nmod)) {
+	} else if (victual.nmod > 0 && (victual.usedtime % victual.nmod)) {
 		lesshungry(1);
 		consume_oeaten(victual.piece, -1);		  /* -= 1 */
 	}
@@ -2077,7 +2077,7 @@ void lesshungry(int num)
 	debugpline("lesshungry(%d)", num);
 #endif
 	u.uhunger += num;
-	if(u.uhunger >= 2000) {
+	if (u.uhunger >= 2000) {
 	    if (!iseating || victual.canchoke) {
 		if (iseating) {
 		    choke(victual.piece);
@@ -2115,7 +2115,7 @@ void lesshungry(int num)
 static int unfaint(void)
 {
 	Hear_again();
-	if(u.uhs > FAINTING)
+	if (u.uhs > FAINTING)
 		u.uhs = FAINTING;
 	stop_occupation();
 	botl = 1;
@@ -2131,7 +2131,7 @@ boolean is_fainted(void)
 /* call when a faint must be prematurely terminated */
 void reset_faint(void)
 {
-	if(is_fainted()) nomul(0);
+	if (is_fainted()) nomul(0);
 }
 
 
@@ -2184,10 +2184,10 @@ void newuhs(boolean incr)
 		}
 	}
 
-	if(newhs == FAINTING) {
-		if(is_fainted()) newhs = FAINTED;
-		if(u.uhs <= WEAK || rn2(20-u.uhunger/10) >= 19) {
-			if(!is_fainted() && multi >= 0 /* %% */) {
+	if (newhs == FAINTING) {
+		if (is_fainted()) newhs = FAINTED;
+		if (u.uhs <= WEAK || rn2(20-u.uhunger/10) >= 19) {
+			if (!is_fainted() && multi >= 0 /* %% */) {
 				/* stop what you're doing, then faint */
 				stop_occupation();
 				You("faint from lack of food.");
@@ -2198,7 +2198,7 @@ void newuhs(boolean incr)
 				newhs = FAINTED;
 			}
 		} else
-		if(u.uhunger < -(int)(200 + 20*ACURR(A_CON))) {
+		if (u.uhunger < -(int)(200 + 20*ACURR(A_CON))) {
 			u.uhs = STARVED;
 			botl = 1;
 			bot();
@@ -2211,10 +2211,10 @@ void newuhs(boolean incr)
 		}
 	}
 
-	if(newhs != u.uhs) {
-		if(newhs >= WEAK && u.uhs < WEAK)
+	if (newhs != u.uhs) {
+		if (newhs >= WEAK && u.uhs < WEAK)
 			losestr(1);	/* this may kill you -- see below */
-		else if(newhs < WEAK && u.uhs >= WEAK)
+		else if (newhs < WEAK && u.uhs >= WEAK)
 			losestr(-1);
 		switch(newhs){
 		case HUNGRY:
@@ -2236,10 +2236,10 @@ void newuhs(boolean incr)
 				  "You still have the munchies." :
       "The munchies are interfering with your motor capabilities.");
 			else if (incr &&
-				(Role_if(PM_WIZARD) || Race_if(PM_ELF) ||
-				 Role_if(PM_VALKYRIE)))
+				(Role_if (PM_WIZARD) || Race_if(PM_ELF) ||
+				 Role_if (PM_VALKYRIE)))
 			    pline("%s needs food, badly!",
-				  (Role_if(PM_WIZARD) || Role_if(PM_VALKYRIE)) ?
+				  (Role_if (PM_WIZARD) || Role_if(PM_VALKYRIE)) ?
 				  urole.name.m : "Elf");
 			else
 			    You((!incr) ? "feel weak now." :
@@ -2321,7 +2321,7 @@ struct obj *floorfood(/* get food from floor or pack */
 
 	/* Is there some food (probably a heavy corpse) here on the ground? */
 	for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
-		if(corpsecheck ?
+		if (corpsecheck ?
 		(otmp->otyp==CORPSE && (corpsecheck == 1 || tinnable(otmp))) :
 		    feeding ? (otmp->oclass != COIN_CLASS && is_edible(otmp)) :
 						otmp->oclass==FOOD_CLASS) {
@@ -2329,9 +2329,9 @@ struct obj *floorfood(/* get food from floor or pack */
 				otense(otmp, "are"),
 				doname(otmp), verb,
 				(otmp->quan == 1L) ? "it" : "one");
-			if((c = yn_function(qbuf,ynqchars,'n')) == 'y')
+			if ((c = yn_function(qbuf,ynqchars,'n')) == 'y')
 				return otmp;
-			else if(c == 'q')
+			else if (c == 'q')
 				return NULL;
 		}
 	}

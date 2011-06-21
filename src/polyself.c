@@ -84,7 +84,7 @@ static void polyman(const char *fmt, const char *arg)
 	    make_blinded(0L, TRUE);	/* remove blindness */
 	}
 
-	if(!Levitation && !u.ustuck &&
+	if (!Levitation && !u.ustuck &&
 	   (is_pool(u.ux,u.uy) || is_lava(u.ux,u.uy)))
 		spoteffects(TRUE);
 
@@ -215,7 +215,7 @@ void polyself(boolean forcecontrol)
 	boolean isvamp = (youmonst.data->mlet == S_VAMPIRE || u.umonnum == PM_VAMPIRE_BAT);
 	boolean was_floating = (Levitation || Flying);
 
-        if(!Polymorph_control && !forcecontrol && !draconian && !iswere && !isvamp) {
+        if (!Polymorph_control && !forcecontrol && !draconian && !iswere && !isvamp) {
 	    if (rn2(20) > ACURR(A_CON)) {
 		You(shudder_for_moment);
 		losehp(rnd(30), "system shock", KILLED_BY_AN);
@@ -238,7 +238,7 @@ void polyself(boolean forcecontrol)
 			else if (!polyok(&mons[mntmp]) && !your_race(&mons[mntmp]))
 				You("cannot polymorph into that.");
 			else break;
-		} while(++tries < 5);
+		} while (++tries < 5);
 		if (tries==5) pline(thats_enough_tries);
 		/* allow skin merging, even when polymorph is controlled */
 		if (draconian &&
@@ -280,7 +280,7 @@ void polyself(boolean forcecontrol)
 		do {
 			/* randomly pick an "ordinary" monster */
 			mntmp = rn1(SPECIAL_PM - LOW_PM, LOW_PM);
-		} while((!polyok(&mons[mntmp]) || is_placeholder(&mons[mntmp]))
+		} while ((!polyok(&mons[mntmp]) || is_placeholder(&mons[mntmp]))
 				&& tries++ < 200);
 	}
 
@@ -289,7 +289,7 @@ void polyself(boolean forcecontrol)
 	 */
 	if (!polyok(&mons[mntmp]) || !rn2(5) || your_race(&mons[mntmp]))
 		newman();
-	else if(!polymon(mntmp)) return;
+	else if (!polymon(mntmp)) return;
 
 	if (!uarmg) selftouch("No longer petrify-resistant, you");
 
@@ -348,11 +348,11 @@ int polymon(int mntmp)
 	    youmonst.m_ap_type = M_AP_NOTHING;
 	}
 	if (is_male(&mons[mntmp])) {
-		if(flags.female) dochange = TRUE;
+		if (flags.female) dochange = TRUE;
 	} else if (is_female(&mons[mntmp])) {
-		if(!flags.female) dochange = TRUE;
+		if (!flags.female) dochange = TRUE;
 	} else if (!is_neuter(&mons[mntmp]) && mntmp != u.ulycn) {
-		if(!rn2(10)) dochange = TRUE;
+		if (!rn2(10)) dochange = TRUE;
 	}
 	if (dochange) {
 		flags.female = !flags.female;
@@ -382,7 +382,7 @@ int polymon(int mntmp)
 	/* New stats for monster, to last only as long as polymorphed.
 	 * Currently only strength gets changed.
 	 */
-	if(strongmonst(&mons[mntmp])) ABASE(A_STR) = AMAX(A_STR) = STR18(100);
+	if (strongmonst(&mons[mntmp])) ABASE(A_STR) = AMAX(A_STR) = STR18(100);
 
 	if (Stone_resistance && Stoned) { /* parnes@eniac.seas.upenn.edu */
 		Stoned = 0;
@@ -502,7 +502,7 @@ int polymon(int mntmp)
 	    learn_egg_type(egg_type_from_parent(u.umonnum, TRUE));
 	}
 	find_ac();
-	if((!Levitation && !u.ustuck && !Flying &&
+	if ((!Levitation && !u.ustuck && !Flying &&
 	    (is_pool(u.ux,u.uy) || is_lava(u.ux,u.uy))) ||
 	   (Underwater && !Swimming))
 	    spoteffects(TRUE);
@@ -553,7 +553,7 @@ static void break_armor(void)
 		useup(otmp);
 	}
 	if ((otmp = uarmc) != 0) {
-	    if(otmp->oartifact) {
+	    if (otmp->oartifact) {
 		Your("%s falls off!", cloak_simple_name(otmp));
 		Cloak_off();
 		dropx(otmp);
@@ -894,7 +894,7 @@ int dogaze(void)
 	uchar adtyp = 0;
 
 	for (i = 0; i < NATTK; i++) {
-	    if(youmonst.data->mattk[i].aatyp == AT_GAZE) {
+	    if (youmonst.data->mattk[i].aatyp == AT_GAZE) {
 		adtyp = youmonst.data->mattk[i].adtyp;
 		break;
 	    }
@@ -962,11 +962,11 @@ int dogaze(void)
 			    pline_The("fire doesn't burn %s!", mon_nam(mtmp));
 			    dmg = 0;
 			}
-			if((int) u.ulevel > rn2(20))
+			if ((int) u.ulevel > rn2(20))
 			    destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
-			if((int) u.ulevel > rn2(20))
+			if ((int) u.ulevel > rn2(20))
 			    destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
-			if((int) u.ulevel > rn2(25))
+			if ((int) u.ulevel > rn2(25))
 			    destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
 			if (dmg && !DEADMONSTER(mtmp)) mtmp->mhp -= dmg;
 			if (mtmp->mhp <= 0) killed(mtmp);
@@ -1042,7 +1042,7 @@ int domindblast(void)
 
 	You("concentrate.");
 	pline("A wave of psychic energy pours out.");
-	for(mtmp=fmon; mtmp; mtmp = nmon) {
+	for (mtmp=fmon; mtmp; mtmp = nmon) {
 		int u_sen;
 
 		nmon = mtmp->nmon;
@@ -1050,7 +1050,7 @@ int domindblast(void)
 			continue;
 		if (distu(mtmp->mx, mtmp->my) > BOLT_LIM * BOLT_LIM)
 			continue;
-		if(mtmp->mpeaceful)
+		if (mtmp->mpeaceful)
 			continue;
 		u_sen = telepathic(mtmp->data) && !mtmp->mcansee;
 		if (u_sen || (telepathic(mtmp->data) && rn2(2)) || !rn2(10)) {

@@ -56,7 +56,7 @@ static void find_lev_obj(void)
 	struct obj *otmp;
 	int x,y;
 
-	for(x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++)
+	for (x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++)
 		level.objects[x][y] = NULL;
 
 	/*
@@ -113,14 +113,14 @@ static void restlevchn(int fd)
 
 	sp_levchn = NULL;
 	mread(fd, &cnt, sizeof(int));
-	for(; cnt > 0; cnt--) {
+	for (; cnt > 0; cnt--) {
 
 	    tmplev = malloc(sizeof(s_level));
 	    mread(fd, tmplev, sizeof(s_level));
-	    if(!sp_levchn) sp_levchn = tmplev;
+	    if (!sp_levchn) sp_levchn = tmplev;
 	    else {
 
-		for(x = sp_levchn; x->next; x = x->next);
+		for (x = sp_levchn; x->next; x = x->next);
 		x->next = tmplev;
 	    }
 	    tmplev->next = NULL;
@@ -175,11 +175,11 @@ static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 	struct obj *first = NULL;
 	int xl;
 
-	while(1) {
+	while (1) {
 		mread(fd, &xl, sizeof(xl));
-		if(xl == -1) break;
+		if (xl == -1) break;
 		otmp = newobj(xl);
-		if(!first) first = otmp;
+		if (!first) first = otmp;
 		else otmp2->nobj = otmp;
 		mread(fd, otmp,
 					(unsigned) xl + sizeof(struct obj));
@@ -208,7 +208,7 @@ static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 
 		otmp2 = otmp;
 	}
-	if(first && otmp2->nobj){
+	if (first && otmp2->nobj){
 		impossible("Restobjchn: error reading objchn.");
 		otmp2->nobj = 0;
 	}
@@ -229,11 +229,11 @@ static struct monst *restmonchn(int fd, boolean ghostly)
 	mread(fd, &monbegin, sizeof(monbegin));
 	moved = (monbegin != mons);
 
-	while(1) {
+	while (1) {
 		mread(fd, &xl, sizeof(xl));
-		if(xl == -1) break;
+		if (xl == -1) break;
 		mtmp = newmonst(xl);
-		if(!first) first = mtmp;
+		if (!first) first = mtmp;
 		else mtmp2->nmon = mtmp;
 		mread(fd, mtmp, (unsigned) xl + sizeof(struct monst));
 		if (ghostly) {
@@ -252,7 +252,7 @@ static struct monst *restmonchn(int fd, boolean ghostly)
 				mtmp->mhpmax = DEFUNCT_MONSTER;	
 			}
 		}
-		if(mtmp->minvent) {
+		if (mtmp->minvent) {
 			struct obj *obj;
 			mtmp->minvent = restobjchn(fd, ghostly, FALSE);
 			/* restore monster back pointer */
@@ -262,7 +262,7 @@ static struct monst *restmonchn(int fd, boolean ghostly)
 		if (mtmp->mw) {
 			struct obj *obj;
 
-			for(obj = mtmp->minvent; obj; obj = obj->nobj)
+			for (obj = mtmp->minvent; obj; obj = obj->nobj)
 				if (obj->owornmask & W_WEP) break;
 			if (obj) mtmp->mw = obj;
 			else {
@@ -276,7 +276,7 @@ static struct monst *restmonchn(int fd, boolean ghostly)
 
 		mtmp2 = mtmp;
 	}
-	if(first && mtmp2->nmon){
+	if (first && mtmp2->nmon){
 		impossible("Restmonchn: error reading monchn.");
 		mtmp2->nmon = 0;
 	}
@@ -347,7 +347,7 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 	role_init();	/* Reset the initial role, race, gender, and alignment */
 	mread(fd, &u, sizeof(struct you));
 	set_uasmon();
-	if(u.uhp <= 0 && (!Upolyd || u.mh <= 0)) {
+	if (u.uhp <= 0 && (!Upolyd || u.mh <= 0)) {
 	    u.ux = u.uy = 0;	/* affects pline() [hence You()] */
 	    You("were not healthy enough to survive restoration.");
 	    /* wiz1_level.dlevel is used by mklev.c to see if lots of stuff is
@@ -368,8 +368,8 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 	mread(fd, mvitals, sizeof(mvitals));
 
 	/* this comes after inventory has been loaded */
-	for(otmp = invent; otmp; otmp = otmp->nobj)
-		if(otmp->owornmask)
+	for (otmp = invent; otmp; otmp = otmp->nobj)
+		if (otmp->owornmask)
 			setworn(otmp, otmp->owornmask);
 	/* reset weapon so that player will get a reminder about "bashing"
 	   during next fight when bare-handed or wielding an unconventional
@@ -485,8 +485,8 @@ int dorecover(int fd)
 	u.ustuck = NULL;
 	u.usteed = NULL;
 
-	while(1) {
-		if(read(fd, &ltmp, sizeof ltmp) != sizeof ltmp)
+	while (1) {
+		if (read(fd, &ltmp, sizeof ltmp) != sizeof ltmp)
 			break;
 		getlev(fd, 0, ltmp, FALSE);
 		rtmp = restlevelfile(ltmp);
@@ -511,8 +511,8 @@ int dorecover(int fd)
 	restlevelstate(stuckid, steedid);
 	max_rank_sz(); /* to recompute mrank_sz (botl.c) */
 	/* take care of iron ball & chain */
-	for(otmp = fobj; otmp; otmp = otmp->nobj)
-		if(otmp->owornmask)
+	for (otmp = fobj; otmp; otmp = otmp->nobj)
+		if (otmp->owornmask)
 			setworn(otmp, otmp->owornmask);
 
 	/* in_use processing must be after:
@@ -612,7 +612,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 		mtmp2 = mtmp->nmon;
 		if (ghostly) {
 			/* reset peaceful/malign relative to new character */
-			if(!mtmp->isshk)
+			if (!mtmp->isshk)
 				/* shopkeepers will reset based on name */
 				mtmp->mpeaceful = peace_minded(mtmp->data);
 			set_malign(mtmp);
@@ -687,7 +687,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 		case BR_PORTAL: /* max of 1 portal per level */
 		    {
 			struct trap *ttmp;
-			for(ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
+			for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
 			    if (ttmp->ttyp == MAGIC_PORTAL)
 				break;
 			if (!ttmp) panic("getlev: need portal but none found");
@@ -804,9 +804,9 @@ void mread(int fd, void * buf, unsigned int len)
 	int rlen;
 
 	rlen = read(fd, buf, (unsigned) len);
-	if((unsigned)rlen != len){
+	if ((unsigned)rlen != len){
 		pline("Read %d instead of %u bytes.", rlen, len);
-		if(restoring) {
+		if (restoring) {
 			close(fd);
 			delete_savefile();
 			raw_print("Error restoring old game.");

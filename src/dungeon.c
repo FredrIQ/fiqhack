@@ -64,7 +64,7 @@ static void dumpit(void)
 	s_level	*x;
 	branch *br;
 
-	for(i = 0; i < n_dgns; i++)  {
+	for (i = 0; i < n_dgns; i++)  {
 	    fprintf(stderr, "\n#%d \"%s\" (%s):\n", i,
 				DD.dname, DD.proto);
 	    fprintf(stderr, "    num_dunlevs %d, dunlev_ureached %d\n",
@@ -78,7 +78,7 @@ static void dumpit(void)
 	    getchar();
 	}
 	fprintf(stderr,"\nSpecial levels:\n");
-	for(x = sp_levchn; x; x = x->next) {
+	for (x = sp_levchn; x; x = x->next) {
 	    fprintf(stderr, "%s (%d): ", x->proto, x->rndlevs);
 	    fprintf(stderr, "on %d, %d; ", x->dlevel.dnum, x->dlevel.dlevel);
 	    fprintf(stderr, "flags:%s%s%s%s\n",
@@ -178,7 +178,7 @@ static void Fread(void *ptr, int size, int nitems, dlb *stream)
 {
 	int cnt;
 
-	if((cnt = dlb_fread(ptr, size, nitems, stream)) != nitems) {
+	if ((cnt = dlb_fread(ptr, size, nitems, stream)) != nitems) {
 	    panic(
  "Premature EOF on dungeon description file!\r\nExpected %d bytes - got %d.",
 		  (size * nitems), (size * cnt));
@@ -201,7 +201,7 @@ static xchar dname_to_dnum(const char *s)
 s_level *find_level(const char *s)
 {
 	s_level *curr;
-	for(curr = sp_levchn; curr; curr = curr->next)
+	for (curr = sp_levchn; curr; curr = curr->next)
 	    if (!strcmpi(s, curr->proto)) break;
 	return curr;
 }
@@ -636,15 +636,15 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 
 	for (i = 0; i < n_dgns; i++) {
 	    Fread(&pd.tmpdungeon[i], sizeof(struct tmpdungeon), 1, dgn_file);
-	    if(!wizard)
-	      if(pd.tmpdungeon[i].chance && (pd.tmpdungeon[i].chance <= rn2(100))) {
+	    if (!wizard)
+	      if (pd.tmpdungeon[i].chance && (pd.tmpdungeon[i].chance <= rn2(100))) {
 		int j;
 
 		/* skip over any levels or branches */
-		for(j = 0; j < pd.tmpdungeon[i].levels; j++)
+		for (j = 0; j < pd.tmpdungeon[i].levels; j++)
 		    Fread(&pd.tmplevel[cl], sizeof(struct tmplevel), 1, dgn_file);
 
-		for(j = 0; j < pd.tmpdungeon[i].branches; j++)
+		for (j = 0; j < pd.tmpdungeon[i].branches; j++)
 		    Fread(&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 		n_dgns--; i--;
@@ -655,12 +655,12 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    strcpy(dungeons[i].proto, pd.tmpdungeon[i].protoname);
 	    dungeons[i].boneid = pd.tmpdungeon[i].boneschar;
 
-	    if(pd.tmpdungeon[i].lev.rand)
+	    if (pd.tmpdungeon[i].lev.rand)
 		dungeons[i].num_dunlevs = (xchar)rn1(pd.tmpdungeon[i].lev.rand,
 						     pd.tmpdungeon[i].lev.base);
 	    else dungeons[i].num_dunlevs = (xchar)pd.tmpdungeon[i].lev.base;
 
-	    if(!i) {
+	    if (!i) {
 		dungeons[i].ledger_start = 0;
 		dungeons[i].depth_start = 1;
 		dungeons[i].dunlev_ureached = 1;
@@ -733,7 +733,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    }
 
 	    /* this is redundant - it should have been flagged by dgn_comp */
-	    if(dungeons[i].num_dunlevs > MAXLEVEL)
+	    if (dungeons[i].num_dunlevs > MAXLEVEL)
 		dungeons[i].num_dunlevs = MAXLEVEL;
 
 	    pd.start = pd.n_levs;	/* save starting point */
@@ -745,7 +745,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	     * Read in the prototype special levels.  Don't add generated
 	     * special levels until they are all placed.
 	     */
-	    for(; cl < pd.n_levs; cl++) {
+	    for (; cl < pd.n_levs; cl++) {
 		Fread(&pd.tmplevel[cl], sizeof(struct tmplevel), 1, dgn_file);
 		init_level(i, cl, &pd);
 	    }
@@ -769,7 +769,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    pd.n_brs += pd.tmpdungeon[i].branches;
 	    if (pd.n_brs > BRANCH_LIMIT)
 		panic("init_dungeon: too many branches");
-	    for(; cb < pd.n_brs; cb++)
+	    for (; cb < pd.n_brs; cb++)
 		Fread(&pd.tmpbranch[cb],
 					sizeof(struct tmpbranch), 1, dgn_file);
 	}
@@ -897,12 +897,12 @@ xchar deepest_lev_reached(boolean noquest)
 	d_level tmp;
 	schar ret = 0;
 
-	for(i = 0; i < n_dgns; i++) {
-	    if((tmp.dlevel = dungeons[i].dunlev_ureached) == 0) continue;
-	    if(!strcmp(dungeons[i].dname, "The Quest") && noquest) continue;
+	for (i = 0; i < n_dgns; i++) {
+	    if ((tmp.dlevel = dungeons[i].dunlev_ureached) == 0) continue;
+	    if (!strcmp(dungeons[i].dname, "The Quest") && noquest) continue;
 
 	    tmp.dnum = i;
-	    if(depth(&tmp) > ret) ret = depth(&tmp);
+	    if (depth(&tmp) > ret) ret = depth(&tmp);
 	}
 	return (xchar) ret;
 }
@@ -1016,7 +1016,7 @@ void prev_level(boolean at_stairs)
 		/* Taking an up dungeon branch. */
 		/* KMH -- Upwards branches are okay if not level 1 */
 		/* (Just make sure it doesn't go above depth 1) */
-		if(!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet) done(ESCAPED);
+		if (!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet) done(ESCAPED);
 		else goto_level(&sstairs.tolev, at_stairs, FALSE, FALSE);
 	} else {
 		/* Going up a stairs or rising through the ceiling. */
@@ -1299,9 +1299,9 @@ void assign_rnd_level(d_level *dest, d_level *src, int range)
 	dest->dnum = src->dnum;
 	dest->dlevel = src->dlevel + ((range > 0) ? rnd(range) : -rnd(-range)) ;
 
-	if(dest->dlevel > dunlevs_in_dungeon(dest))
+	if (dest->dlevel > dunlevs_in_dungeon(dest))
 		dest->dlevel = dunlevs_in_dungeon(dest);
-	else if(dest->dlevel < 1)
+	else if (dest->dlevel < 1)
 		dest->dlevel = 1;
 }
 
@@ -1312,10 +1312,10 @@ int induced_align(int pct)
 	aligntyp al;
 
 	if (lev && lev->flags.align)
-		if(rn2(100) < pct) return lev->flags.align;
+		if (rn2(100) < pct) return lev->flags.align;
 
-	if(dungeons[u.uz.dnum].flags.align)
-		if(rn2(100) < pct) return dungeons[u.uz.dnum].flags.align;
+	if (dungeons[u.uz.dnum].flags.align)
+		if (rn2(100) < pct) return dungeons[u.uz.dnum].flags.align;
 
 	al = rn2(3) - 1;
 	return Align2amask(al);

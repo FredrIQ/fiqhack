@@ -103,7 +103,7 @@ void tty_startup(int *wid, int *hgt)
 	tptr = (char *) malloc(1024);
 
 	tbufptr = tbuf;
-	if(tgetent(tptr, term) < 1) {
+	if (tgetent(tptr, term) < 1) {
 		char buf[BUFSZ];
 		strncpy(buf, term,
 				(BUFSZ - 1) - (sizeof("Unknown terminal type: .  ")));
@@ -113,10 +113,10 @@ void tty_startup(int *wid, int *hgt)
 	if ((pc = Tgetstr("pc")) != 0)
 		PC = *pc;
 
-	if(!(BC = Tgetstr("le")))	/* both termcap and terminfo use le */
+	if (!(BC = Tgetstr("le")))	/* both termcap and terminfo use le */
 	    error("Terminal must backspace.");
-	    if(!(BC = Tgetstr("bc"))) {	/* termcap also uses bc/bs */
-		if(!tgetflag("bs"))
+	    if (!(BC = Tgetstr("bc"))) {	/* termcap also uses bc/bs */
+		if (!tgetflag("bs"))
 			error("Terminal must backspace.");
 		BC = tbufptr;
 		tbufptr += 2;
@@ -132,9 +132,9 @@ void tty_startup(int *wid, int *hgt)
 	if (!CO) CO = tgetnum("co");
 	if (!LI) LI = tgetnum("li");
 	nh_ND = Tgetstr("nd");
-	if(tgetflag("os"))
+	if (tgetflag("os"))
 		error("NetHack can't have OS.");
-	if(tgetflag("ul"))
+	if (tgetflag("ul"))
 		ul_hack = TRUE;
 	CE = Tgetstr("ce");
 	UP = Tgetstr("up");
@@ -144,8 +144,8 @@ void tty_startup(int *wid, int *hgt)
 	   slightly. Let's leave that till the next release. */
 	XD = Tgetstr("xd");
 /* not:		XD = Tgetstr("do"); */
-	if(!(nh_CM = Tgetstr("cm"))) {
-	    if(!UP && !HO)
+	if (!(nh_CM = Tgetstr("cm"))) {
+	    if (!UP && !HO)
 		error("NetHack needs CM or UP or HO.");
 	    tty_raw_print("Playing NetHack on terminals without CM is suspect.");
 	    tty_wait_synch();
@@ -155,7 +155,7 @@ void tty_startup(int *wid, int *hgt)
 	nh_US = Tgetstr("us");
 	nh_UE = Tgetstr("ue");
 	SG = tgetnum("sg");	/* -1: not fnd; else # of spaces left by so */
-	if(!SO || !SE || (SG > 0)) SO = SE = nh_US = nh_UE = nullstr;
+	if (!SO || !SE || (SG > 0)) SO = SE = nh_US = nh_UE = nullstr;
 	TI = Tgetstr("ti");
 	TE = Tgetstr("te");
 	VS = VE = nullstr;
@@ -295,27 +295,27 @@ void tty_end_screen(void)
 void nocmov(int x, int y)
 {
 	if ((int) ttyDisplay->cury > y) {
-		if(UP) {
+		if (UP) {
 			while ((int) ttyDisplay->cury > y) {	/* Go up. */
 				xputs(UP);
 				ttyDisplay->cury--;
 			}
-		} else if(nh_CM) {
+		} else if (nh_CM) {
 			cmov(x, y);
-		} else if(HO) {
+		} else if (HO) {
 			home();
 			move_cursor(BASE_WINDOW, x+1, y);
 		} /* else impossible("..."); */
 	} else if ((int) ttyDisplay->cury < y) {
-		if(XD) {
-			while((int) ttyDisplay->cury < y) {
+		if (XD) {
+			while ((int) ttyDisplay->cury < y) {
 				xputs(XD);
 				ttyDisplay->cury++;
 			}
-		} else if(nh_CM) {
+		} else if (nh_CM) {
 			cmov(x, y);
 		} else {
-			while((int) ttyDisplay->cury < y) {
+			while ((int) ttyDisplay->cury < y) {
 				xputc('\n');
 				ttyDisplay->curx = 0;
 				ttyDisplay->cury++;
@@ -323,7 +323,7 @@ void nocmov(int x, int y)
 		}
 	}
 	if ((int) ttyDisplay->curx < x) {		/* Go to the right. */
-		if(!nh_ND) cmov(x, y); else	/* bah */
+		if (!nh_ND) cmov(x, y); else	/* bah */
 			/* should instead print what is there already */
 		while ((int) ttyDisplay->curx < x) {
 			xputs(nh_ND);
@@ -356,14 +356,14 @@ void xputs(const char *s)
 
 void cl_end(void)
 {
-	if(CE)
+	if (CE)
 		xputs(CE);
 	else {	/* no-CE fix - free after Harold Rynes */
 		/* this looks terrible, especially on a slow terminal
 		   but is better than nothing */
 		int cx = ttyDisplay->curx+1;
 
-		while(cx < CO) {
+		while (cx < CO) {
 			xputc(' ');
 			cx++;
 		}
@@ -387,9 +387,9 @@ void clear_screen(void)
 
 void home(void)
 {
-	if(HO)
+	if (HO)
 		xputs(HO);
-	else if(nh_CM)
+	else if (nh_CM)
 		xputs(tgoto(nh_CM, 0, 0));
 	else
 		move_cursor(BASE_WINDOW, 1, 0);	/* using UP ... */
@@ -398,12 +398,12 @@ void home(void)
 
 void standoutbeg(void)
 {
-	if(SO) xputs(SO);
+	if (SO) xputs(SO);
 }
 
 void standoutend(void)
 {
-	if(SE) xputs(SE);
+	if (SE) xputs(SE);
 }
 
 void backsp(void)
@@ -443,11 +443,11 @@ void tty_delay_output(void)
 void cl_eos(void)
 {			/* must only be called with curx = 1 */
 
-	if(nh_CD)
+	if (nh_CD)
 		xputs(nh_CD);
 	else {
 		int cy = ttyDisplay->cury+1;
-		while(cy <= LI-2) {
+		while (cy <= LI-2) {
 			cl_end();
 			xputc('\n');
 			cy++;
@@ -633,7 +633,7 @@ static char *s_atr2str(int n)
 {
     switch (n) {
 	    case ATR_ULINE:
-		    if(nh_US) return nh_US;
+		    if (nh_US) return nh_US;
 	    case ATR_BOLD:
 	    case ATR_BLINK:
 		    if (MD)
@@ -649,7 +649,7 @@ static char *e_atr2str(int n)
 {
     switch (n) {
 	    case ATR_ULINE:
-		    if(nh_UE) return nh_UE;
+		    if (nh_UE) return nh_UE;
 	    case ATR_BOLD:
 	    case ATR_BLINK:
 		    return nh_HE;
@@ -670,7 +670,7 @@ void term_start_attr(int attr)
 
 void term_end_attr(int attr)
 {
-	if(attr) {
+	if (attr) {
 		xputs(e_atr2str(attr));
 	}
 }

@@ -50,7 +50,7 @@ static void setgemprobs(d_level *dlev)
 	    lev = 0;
 	first = bases[GEM_CLASS];
 
-	for(j = 0; j < 9-lev/3; j++)
+	for (j = 0; j < 9-lev/3; j++)
 		objects[first+j].oc_prob = 0;
 	first += j;
 	if (first > LAST_GEM || objects[first].oc_class != GEM_CLASS ||
@@ -119,7 +119,7 @@ void init_objects(void)
 	/* init base; if probs given check that they add up to 1000,
 	   otherwise compute probs */
 	first = 0;
-	while( first < NUM_OBJECTS ) {
+	while ( first < NUM_OBJECTS ) {
 		oclass = objects[first].oc_class;
 		last = first+1;
 		while (last < NUM_OBJECTS && objects[last].oc_class == oclass) last++;
@@ -149,13 +149,13 @@ void init_objects(void)
 		}
 	check:
 		sum = 0;
-		for(i = first; i < last; i++) sum += objects[i].oc_prob;
-		if(sum == 0) {
-			for(i = first; i < last; i++)
+		for (i = first; i < last; i++) sum += objects[i].oc_prob;
+		if (sum == 0) {
+			for (i = first; i < last; i++)
 			    objects[i].oc_prob = (1000+i-first)/(last-first);
 			goto check;
 		}
-		if(sum != 1000) {
+		if (sum != 1000) {
 			char buf[BUFSZ];
 			sprintf(buf, "init-prob error for class %d (%d%%)", oclass, sum);
 			raw_print(buf);

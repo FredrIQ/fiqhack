@@ -205,17 +205,17 @@ void srandom(unsigned x)
 {
     	 int		i;
 
-	if(  rand_type  ==  TYPE_0  )  {
+	if (  rand_type  ==  TYPE_0  )  {
 	    state[ 0 ] = x;
 	}
 	else  {
 	    state[ 0 ] = x;
-	    for( i = 1; i < rand_deg; i++ )  {
+	    for ( i = 1; i < rand_deg; i++ )  {
 		state[i] = 1103515245*state[i - 1] + 12345;
 	    }
 	    fptr = &state[ rand_sep ];
 	    rptr = &state[ 0 ];
-	    for( i = 0; i < 10*rand_deg; i++ )  random();
+	    for ( i = 0; i < 10*rand_deg; i++ )  random();
 	}
 }
 
@@ -244,10 +244,10 @@ char  *initstate(
 {
 	 char		*ostate		= (char *)( &state[ -1 ] );
 
-	if(  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
+	if (  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
 	else  state[ -1 ] = MAX_TYPES*(rptr - state) + rand_type;
-	if(  n  <  BREAK_1  )  {
-	    if(  n  <  BREAK_0  )  {
+	if (  n  <  BREAK_1  )  {
+	    if (  n  <  BREAK_0  )  {
 		impossible(
  "initstate: not enough state (%d bytes) with which to do jack; ignored.", n);
 		return NULL;
@@ -257,19 +257,19 @@ char  *initstate(
 	    rand_sep = SEP_0;
 	}
 	else  {
-	    if(  n  <  BREAK_2  )  {
+	    if (  n  <  BREAK_2  )  {
 		rand_type = TYPE_1;
 		rand_deg = DEG_1;
 		rand_sep = SEP_1;
 	    }
 	    else  {
-		if(  n  <  BREAK_3  )  {
+		if (  n  <  BREAK_3  )  {
 		    rand_type = TYPE_2;
 		    rand_deg = DEG_2;
 		    rand_sep = SEP_2;
 		}
 		else  {
-		    if(  n  <  BREAK_4  )  {
+		    if (  n  <  BREAK_4  )  {
 			rand_type = TYPE_3;
 			rand_deg = DEG_3;
 			rand_sep = SEP_3;
@@ -285,7 +285,7 @@ char  *initstate(
 	state = &(  ( (long *)arg_state )[1]  );	/* first location */
 	end_ptr = &state[ rand_deg ];	/* must set end_ptr before srandom */
 	srandom( seed );
-	if(  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
+	if (  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
 	else  state[ -1 ] = MAX_TYPES*(rptr - state) + rand_type;
 	return  ostate ;
 }
@@ -311,7 +311,7 @@ char  *setstate(char *arg_state)
 	 int		rear		= new_state[0]/MAX_TYPES;
 	char			*ostate		= (char *)( &state[ -1 ] );
 
-	if(  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
+	if (  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
 	else  state[ -1 ] = MAX_TYPES*(rptr - state) + rand_type;
 	switch(  type  )  {
 	    case  TYPE_0:
@@ -329,7 +329,7 @@ char  *setstate(char *arg_state)
 		break;
 	}
 	state = &new_state[ 1 ];
-	if(  rand_type  !=  TYPE_0  )  {
+	if (  rand_type  !=  TYPE_0  )  {
 	    rptr = &state[ rear ];
 	    fptr = &state[ (rear + rand_sep)%rand_deg ];
 	}
@@ -358,18 +358,18 @@ long random(void)
 {
 	long		i;
 	
-	if(  rand_type  ==  TYPE_0  )  {
+	if (  rand_type  ==  TYPE_0  )  {
 	    i = state[0] = ( state[0]*1103515245 + 12345 )&0x7fffffff;
 	}
 	else  {
 	    *fptr += *rptr;
 	    i = (*fptr >> 1)&0x7fffffff;	/* chucking least random bit */
-	    if(  ++fptr  >=  end_ptr  )  {
+	    if (  ++fptr  >=  end_ptr  )  {
 		fptr = state;
 		++rptr;
 	    }
 	    else  {
-		if(  ++rptr  >=  end_ptr  )  rptr = state;
+		if (  ++rptr  >=  end_ptr  )  rptr = state;
 	    }
 	}
 	return  i ;

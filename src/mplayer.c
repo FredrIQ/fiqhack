@@ -47,8 +47,8 @@ static const char *dev_name(void)
 	    match = FALSE;
 	    i = rn2(n);
 	    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
-		if(!is_mplayer(mtmp->data)) continue;
-		if(!strncmp(developers[i], NAME(mtmp),
+		if (!is_mplayer(mtmp->data)) continue;
+		if (!strncmp(developers[i], NAME(mtmp),
 			               strlen(developers[i]))) {
 		    match = TRUE;
 		    break;
@@ -105,13 +105,13 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 	struct monst *mtmp;
 	char nam[PL_NSIZ];
 
-	if(!is_mplayer(ptr))
+	if (!is_mplayer(ptr))
 		return NULL;
 
-	if(MON_AT(x, y))
+	if (MON_AT(x, y))
 		rloc(m_at(x, y), FALSE); /* insurance */
 
-	if(!In_endgame(&u.uz)) special = FALSE;
+	if (!In_endgame(&u.uz)) special = FALSE;
 
 	if ((mtmp = makemon(ptr, x, y, NO_MM_FLAGS)) != 0) {
 	    short weapon = rn2(2) ? LONG_SWORD : rnd_class(SPEAR, BULLWHIP);
@@ -128,7 +128,7 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 	    mtmp->m_lev = (special ? rn1(16,15) : rnd(16));
 	    mtmp->mhp = mtmp->mhpmax = d((int)mtmp->m_lev,10) +
 					(special ? (30 + rnd(30)) : 30);
-	    if(special) {
+	    if (special) {
 	        get_mplname(mtmp, nam);
 	        mtmp = christen_monst(mtmp, nam);
 		/* that's why they are "stuck" in the endgame :-) */
@@ -225,7 +225,7 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 		mpickobj(mtmp, otmp);
 	    }
 
-	    if(special) {
+	    if (special) {
 		if (!rn2(10))
 		    mongets(mtmp, rn2(3) ? LUCKSTONE : LOADSTONE);
 		mk_mplayer_armor(mtmp, armor);
@@ -240,7 +240,7 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 		m_dowear(mtmp, TRUE);
 
 		quan = rn2(3) ? rn2(3) : rn2(16);
-		while(quan--)
+		while (quan--)
 		    mongets(mtmp, rnd_class(DILITHIUM_CRYSTAL, JADE));
 		/* To get the gold "right" would mean a player can double his */
 		/* gold supply by killing one mplayer.  Not good. */
@@ -250,17 +250,17 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 		mkmonmoney(mtmp, rn2(1000));
 #endif
 		quan = rn2(10);
-		while(quan--)
+		while (quan--)
 		    mpickobj(mtmp, mkobj(RANDOM_CLASS, FALSE));
 	    }
 	    quan = rnd(3);
-	    while(quan--)
+	    while (quan--)
 		mongets(mtmp, rnd_offensive_item(mtmp));
 	    quan = rnd(3);
-	    while(quan--)
+	    while (quan--)
 		mongets(mtmp, rnd_defensive_item(mtmp));
 	    quan = rnd(3);
-	    while(quan--)
+	    while (quan--)
 		mongets(mtmp, rnd_misc_item(mtmp));
 	}
 
@@ -279,7 +279,7 @@ void create_mplayers(int num, boolean special)
 	int pm, x, y;
 	struct monst fakemon;
 
-	while(num) {
+	while (num) {
 		int tryct = 0;
 
 		/* roll for character class */
@@ -290,10 +290,10 @@ void create_mplayers(int num, boolean special)
 		do {
 		    x = rn1(COLNO-4, 2);
 		    y = rnd(ROWNO-2);
-		} while(!goodpos(x, y, &fakemon, 0) && tryct++ <= 50);
+		} while (!goodpos(x, y, &fakemon, 0) && tryct++ <= 50);
 
 		/* if pos not found in 50 tries, don't bother to continue */
-		if(tryct > 50) return;
+		if (tryct > 50) return;
 
 		mk_mplayer(&mons[pm], (xchar)x, (xchar)y, special);
 		num--;
@@ -312,7 +312,7 @@ void mplayer_talk(struct monst *mtmp)
 		"Here is what I have to say!",
 	};
 
-	if(mtmp->mpeaceful) return; /* will drop to humanoid talk */
+	if (mtmp->mpeaceful) return; /* will drop to humanoid talk */
 
 	pline("Talk? -- %s",
 		(mtmp->data == &mons[urole.malenum] ||

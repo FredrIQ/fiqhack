@@ -186,13 +186,13 @@ int castmu(struct monst *mtmp,
 		    }
 		    break;
 		}
-	    } while(--cnt > 0 &&
+	    } while (--cnt > 0 &&
 		    spell_would_be_useless(mtmp, mattk->adtyp, spellnum));
 	    if (cnt == 0) return 0;
 	}
 
 	/* monster unable to cast spells? */
-	if(mtmp->mcan || mtmp->mspec_used || !ml) {
+	if (mtmp->mcan || mtmp->mspec_used || !ml) {
 	    cursetxt(mtmp, is_undirected_spell(mattk->adtyp, spellnum));
 	    return 0;
 	}
@@ -215,7 +215,7 @@ int castmu(struct monst *mtmp,
 	}
 
 	nomul(0);
-	if(rn2(ml*10) < (mtmp->mconf ? 100 : 20)) {	/* fumbled attack */
+	if (rn2(ml*10) < (mtmp->mconf ? 100 : 20)) {	/* fumbled attack */
 	    if (canseemon(mtmp) && flags.soundok)
 		pline_The("air crackles around %s.", mon_nam(mtmp));
 	    return 0;
@@ -255,7 +255,7 @@ int castmu(struct monst *mtmp,
 
 	    case AD_FIRE:
 		pline("You're enveloped in flames.");
-		if(Fire_resistance) {
+		if (Fire_resistance) {
 			shieldeff(u.ux, u.uy);
 			pline("But you resist the effects.");
 			dmg = 0;
@@ -264,7 +264,7 @@ int castmu(struct monst *mtmp,
 		break;
 	    case AD_COLD:
 		pline("You're covered in frost.");
-		if(Cold_resistance) {
+		if (Cold_resistance) {
 			shieldeff(u.ux, u.uy);
 			pline("But you resist the effects.");
 			dmg = 0;
@@ -272,7 +272,7 @@ int castmu(struct monst *mtmp,
 		break;
 	    case AD_MAGM:
 		You("are hit by a shower of missiles!");
-		if(Antimagic) {
+		if (Antimagic) {
 			shieldeff(u.ux, u.uy);
 			pline_The("missiles bounce off!");
 			dmg = 0;
@@ -289,7 +289,7 @@ int castmu(struct monst *mtmp,
 		break;
 	    }
 	}
-	if(dmg) mdamageu(mtmp, dmg);
+	if (dmg) mdamageu(mtmp, dmg);
 	return ret;
 }
 
@@ -734,10 +734,10 @@ int buzzmu(struct monst *mtmp, struct attack  *mattk)
 	    cursetxt(mtmp, FALSE);
 	    return 0;
 	}
-	if(lined_up(mtmp) && rn2(3)) {
+	if (lined_up(mtmp) && rn2(3)) {
 	    nomul(0);
-	    if(mattk->adtyp && (mattk->adtyp < 11)) { /* no cf unsigned >0 */
-		if(canseemon(mtmp))
+	    if (mattk->adtyp && (mattk->adtyp < 11)) { /* no cf unsigned >0 */
+		if (canseemon(mtmp))
 		    pline("%s zaps you with a %s!", Monnam(mtmp),
 			  flash_types[ad_to_typ(mattk->adtyp)]);
 		buzz(-ad_to_typ(mattk->adtyp), (int)mattk->damn,

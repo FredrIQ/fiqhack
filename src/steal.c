@@ -41,12 +41,12 @@ void stealgold(struct monst *mtmp)
 	    newsym(u.ux, u.uy);
 	    pline("%s quickly snatches some gold from between your %s!",
 		    Monnam(mtmp), makeplural(body_part(FOOT)));
-	    if(!u.ugold || !rn2(5)) {
+	    if (!u.ugold || !rn2(5)) {
 		if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 		/* do not set mtmp->mavenge here; gold on the floor is fair game */
 		monflee(mtmp, 0, FALSE, FALSE);
 	    }
-	} else if(u.ugold) {
+	} else if (u.ugold) {
 	    u.ugold -= (tmp = somegold());
 	    Your("purse feels lighter.");
 	    mtmp->mgold += tmp;
@@ -101,11 +101,11 @@ void stealgold(struct monst *mtmp)
 	    newsym(u.ux, u.uy);
 	    pline("%s quickly snatches some gold from between your %s!",
 		    Monnam(mtmp), makeplural(body_part(FOOT)));
-	    if(!ygold || !rn2(5)) {
+	    if (!ygold || !rn2(5)) {
 		if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 		monflee(mtmp, 0, FALSE, FALSE);
 	    }
-	} else if(ygold) {
+	} else if (ygold) {
             const int gold_price = objects[GOLD_PIECE].oc_cost;
 	    tmp = (somegold(money_cnt(invent)) + gold_price - 1) / gold_price;
 	    tmp = min(tmp, ygold->quan);
@@ -129,14 +129,14 @@ static int stealarm(void)
 	struct monst *mtmp;
 	struct obj *otmp;
 
-	for(otmp = invent; otmp; otmp = otmp->nobj) {
-	    if(otmp->o_id == stealoid) {
-		for(mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
-		    if(mtmp->m_id == stealmid) {
-			if(DEADMONSTER(mtmp)) impossible("stealarm(): dead monster stealing"); 
-			if(!dmgtype(mtmp->data, AD_SITM)) /* polymorphed */
+	for (otmp = invent; otmp; otmp = otmp->nobj) {
+	    if (otmp->o_id == stealoid) {
+		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		    if (mtmp->m_id == stealmid) {
+			if (DEADMONSTER(mtmp)) impossible("stealarm(): dead monster stealing"); 
+			if (!dmgtype(mtmp->data, AD_SITM)) /* polymorphed */
 			    goto botm;
-			if(otmp->unpaid)
+			if (otmp->unpaid)
 			    subfrombill(otmp, shop_keeper(*u.ushops));
 			freeinv(otmp);
 			pline("%s steals %s!", Monnam(mtmp), doname(otmp));
@@ -216,7 +216,7 @@ int steal(struct monst *mtmp, char *objnambuf)
 
 	if (objnambuf) *objnambuf = '\0';
 	/* the following is true if successful on first of two attacks. */
-	if(!monnear(mtmp, u.ux, u.uy)) return 0;
+	if (!monnear(mtmp, u.ux, u.uy)) return 0;
 
 	/* food being eaten might already be used up but will not have
 	   been removed from inventory yet; we don't want to steal that,
@@ -226,7 +226,7 @@ int steal(struct monst *mtmp, char *objnambuf)
 	if (!invent || (inv_cnt() == 1 && uskin)) {
 nothing_to_steal:
 	    /* Not even a thousand men in armor can strip a naked man. */
-	    if(Blind)
+	    if (Blind)
 	      pline("Somebody tries to rob you, but finds nothing to steal.");
 	    else
 	      pline("%s tries to rob you, but there is nothing to steal!",
@@ -246,7 +246,7 @@ nothing_to_steal:
 	}
 
 	tmp = 0;
-	for(otmp = invent; otmp; otmp = otmp->nobj)
+	for (otmp = invent; otmp; otmp = otmp->nobj)
 	    if ((!uarm || otmp != uarmc) && otmp != uskin
 #ifdef INVISIBLE_OBJECTS
 				&& (!otmp->oinvis || perceives(mtmp->data))
@@ -256,16 +256,16 @@ nothing_to_steal:
 			(W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 : 1);
 	if (!tmp) goto nothing_to_steal;
 	tmp = rn2(tmp);
-	for(otmp = invent; otmp; otmp = otmp->nobj)
+	for (otmp = invent; otmp; otmp = otmp->nobj)
 	    if ((!uarm || otmp != uarmc) && otmp != uskin
 #ifdef INVISIBLE_OBJECTS
 				&& (!otmp->oinvis || perceives(mtmp->data))
 #endif
 			)
-		if((tmp -= ((otmp->owornmask &
+		if ((tmp -= ((otmp->owornmask &
 			(W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 : 1)) < 0)
 			break;
-	if(!otmp) {
+	if (!otmp) {
 		impossible("Steal fails!");
 		return 0;
 	}
@@ -273,13 +273,13 @@ nothing_to_steal:
 	if (otmp == uarmg && uwep)
 	    otmp = uwep;
 	/* can't steal armor while wearing cloak - so steal the cloak. */
-	else if(otmp == uarm && uarmc) otmp = uarmc;
+	else if (otmp == uarm && uarmc) otmp = uarmc;
 #ifdef TOURIST
-	else if(otmp == uarmu && uarmc) otmp = uarmc;
-	else if(otmp == uarmu && uarm) otmp = uarm;
+	else if (otmp == uarmu && uarmc) otmp = uarmc;
+	else if (otmp == uarmu && uarm) otmp = uarm;
 #endif
 gotobj:
-	if(otmp->o_id == stealoid) return 0;
+	if (otmp->o_id == stealoid) return 0;
 
 	/* animals can't overcome curse stickiness nor unlock chains */
 	if (monkey_business) {
@@ -315,7 +315,7 @@ gotobj:
 	/* you're going to notice the theft... */
 	stop_occupation();
 
-	if((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))){
+	if ((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))){
 		switch(otmp->oclass) {
 		case TOOL_CLASS:
 		case AMULET_CLASS:
@@ -344,7 +344,7 @@ gotobj:
 			/* can't charm you without first waking you */
 			if (multi < 0 && is_fainted()) unmul(NULL);
 			slowly = (armordelay >= 1 || multi < 0);
-			if(flags.female)
+			if (flags.female)
 			    pline("%s charms you.  You gladly %s your %s.",
 				  !seen ? "She" : Monnam(mtmp),
 				  curssv ? "let her take" :
@@ -361,7 +361,7 @@ gotobj:
 			nomul(-armordelay);
 			remove_worn_item(otmp, TRUE);
 			otmp->cursed = curssv;
-			if(multi < 0){
+			if (multi < 0){
 				/*
 				multi = 0;
 				nomovemsg = 0;
@@ -446,26 +446,26 @@ void stealamulet(struct monst *mtmp)
     int real=0, fake=0;
 
     /* select the artifact to steal */
-    if(u.uhave.amulet) {
+    if (u.uhave.amulet) {
 	real = AMULET_OF_YENDOR;
 	fake = FAKE_AMULET_OF_YENDOR;
-    } else if(u.uhave.questart) {
-	for(otmp = invent; otmp; otmp = otmp->nobj)
-	    if(is_quest_artifact(otmp)) break;
+    } else if (u.uhave.questart) {
+	for (otmp = invent; otmp; otmp = otmp->nobj)
+	    if (is_quest_artifact(otmp)) break;
 	if (!otmp) return;	/* should we panic instead? */
-    } else if(u.uhave.bell) {
+    } else if (u.uhave.bell) {
 	real = BELL_OF_OPENING;
 	fake = BELL;
-    } else if(u.uhave.book) {
+    } else if (u.uhave.book) {
 	real = SPE_BOOK_OF_THE_DEAD;
-    } else if(u.uhave.menorah) {
+    } else if (u.uhave.menorah) {
 	real = CANDELABRUM_OF_INVOCATION;
     } else return;	/* you have nothing of special interest */
 
     if (!otmp) {
 	/* If we get here, real and fake have been set up. */
-	for(otmp = invent; otmp; otmp = otmp->nobj)
-	    if(otmp->otyp == real || (otmp->otyp == fake && !mtmp->iswiz))
+	for (otmp = invent; otmp; otmp = otmp->nobj)
+	    if (otmp->otyp == real || (otmp->otyp == fake && !mtmp->iswiz))
 		break;
     }
 

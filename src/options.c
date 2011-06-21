@@ -553,10 +553,10 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 		*bvar = option->value.b;
 		return TRUE;
 	}
-	else if(is_ui)
+	else if (is_ui)
 	    return ui_option_callback(option);
 	/* regular non-boolean options */
-	else if(!strcmp("boulder", option->name)) {
+	else if (!strcmp("boulder", option->name)) {
 	    int clash = 0;
 	    if (def_char_to_monclass(option->value.s[0]) != MAXMCLASSES)
 		clash = 1;
@@ -577,36 +577,36 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	    if (program_state.game_started)
 		doredraw();
 	}
-	else if(!strcmp("disclose_inventory", option->name)) {
+	else if (!strcmp("disclose_inventory", option->name)) {
 		flags.end_disclose[0] = option->value.e;
 	}
-	else if(!strcmp("disclose_attribs", option->name)) {
+	else if (!strcmp("disclose_attribs", option->name)) {
 		flags.end_disclose[1] = option->value.e;
 	}
-	else if(!strcmp("disclose_genocided", option->name)) {
+	else if (!strcmp("disclose_genocided", option->name)) {
 		flags.end_disclose[2] = option->value.e;
 	}
-	else if(!strcmp("disclose_vanquished", option->name)) {
+	else if (!strcmp("disclose_vanquished", option->name)) {
 		flags.end_disclose[3] = option->value.e;
 	}
-	else if(!strcmp("disclose_conduct", option->name)) {
+	else if (!strcmp("disclose_conduct", option->name)) {
 		flags.end_disclose[4] = option->value.e;
 	}
-	else if(!strcmp("fruit", option->name)) {
+	else if (!strcmp("fruit", option->name)) {
 		strncpy(pl_fruit, option->value.s, PL_FSIZ);
 		fruitadd(pl_fruit);
 	}
-	else if(!strcmp("menustyle", option->name)) {
+	else if (!strcmp("menustyle", option->name)) {
 		flags.menu_style = option->value.e;
 	}
-	else if(!strcmp("packorder", option->name)) {
+	else if (!strcmp("packorder", option->name)) {
 		if (!change_inv_order(option->value.s))
 			return FALSE;
 	}
-	else if(!strcmp("pickup_burden", option->name)) {
+	else if (!strcmp("pickup_burden", option->name)) {
 		flags.pickup_burden = option->value.e;
 	}
-	else if(!strcmp("pickup_types", option->name)) {
+	else if (!strcmp("pickup_types", option->name)) {
 		int num = 0;
 		const char *op = option->value.s;
 		while (*op) {
@@ -621,10 +621,10 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 		    op++;
 		}
 	}
-	else if(!strcmp("runmode", option->name)) {
+	else if (!strcmp("runmode", option->name)) {
 		iflags.runmode = option->value.e;
 	}
-	else if(!strcmp("graphics", option->name)) {
+	else if (!strcmp("graphics", option->name)) {
 		iflags2.DECgraphics = FALSE;
 		iflags2.IBMgraphics = FALSE;
 		if (option->value.e == GRAPHICS_DEC) {
@@ -640,57 +640,57 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	}
 	
 	/* birth options */
-	else if(!strcmp("align", option->name)) {
+	else if (!strcmp("align", option->name)) {
 		flags.initalign = option->value.e;
 	}
-	else if(!strcmp("gender", option->name)) {
+	else if (!strcmp("gender", option->name)) {
 		flags.initgend = option->value.e;
 	}
-	else if(!strcmp("race", option->name)) {
+	else if (!strcmp("race", option->name)) {
 		flags.initrace = option->value.e;
 	}
-	else if(!strcmp("role", option->name)) {
+	else if (!strcmp("role", option->name)) {
 		flags.initrole = option->value.e;
 	}
 	
-	else if(!strcmp("catname", option->name)) {
+	else if (!strcmp("catname", option->name)) {
 		strncpy(catname, option->value.s, PL_PSIZ);
 	}
-	else if(!strcmp("dogname", option->name)) {
+	else if (!strcmp("dogname", option->name)) {
 		strncpy(dogname, option->value.s, PL_PSIZ);
 	}
-	else if(!strcmp("horsename", option->name)) {
+	else if (!strcmp("horsename", option->name)) {
 		strncpy(horsename, option->value.s, PL_PSIZ);
 	}
 	
-	else if(!strcmp("dungeon", option->name)) {
+	else if (!strcmp("dungeon", option->name)) {
 		assign_graphics((uchar *)option->value.s, strlen(option->value.s),
 				MAXDCHARS, 0);
 	}
-	else if(!strcmp("traps", option->name)) {
+	else if (!strcmp("traps", option->name)) {
 		assign_graphics((uchar *)option->value.s, strlen(option->value.s),
 				MAXTCHARS, MAXDCHARS);
 	}
-	else if(!strcmp("effects", option->name)) {
+	else if (!strcmp("effects", option->name)) {
 		assign_graphics((uchar *)option->value.s, strlen(option->value.s),
 				MAXECHARS, MAXDCHARS+MAXTCHARS);
 	}
-	else if(!strcmp("monsters", option->name)) {
+	else if (!strcmp("monsters", option->name)) {
 		for (i = 0; i < strlen(option->value.s); i++)
 			monsyms[i+1] = (uchar)option->value.s[i];
 	}
-	else if(!strcmp("warnings", option->name)) {
+	else if (!strcmp("warnings", option->name)) {
 		for (i = 0; i < WARNCOUNT; i++)
 			warnsyms[i] = (i < strlen(option->value.s)) ?
 			    option->value.s[i] : def_warnsyms[i].sym;
 	}
-	else if(!strcmp("pettype", option->name)) {
+	else if (!strcmp("pettype", option->name)) {
 		preferred_pet = (char)option->value.e;
 	}
-	else if(!strcmp("scores_top", option->name)) {
+	else if (!strcmp("scores_top", option->name)) {
 		flags.end_top = option->value.i;
 	}
-	else if(!strcmp("scores_around", option->name)) {
+	else if (!strcmp("scores_around", option->name)) {
 		flags.end_around = option->value.i;
 	}
 	
@@ -749,7 +749,7 @@ int fruitadd(char *str)
 
 		    c = pl_fruit;
 
-		    for(c = pl_fruit; *c >= '0' && *c <= '9'; c++)
+		    for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
 			;
 		    if (isspace(*c) || *c == 0) numeric = TRUE;
 		}
@@ -771,10 +771,10 @@ int fruitadd(char *str)
 			    strncat(pl_fruit+8, buf, PL_FSIZ-8);
 			}
 	}
-	for(f=ffruit; f; f = f->nextf) {
+	for (f=ffruit; f; f = f->nextf) {
 		lastf = f;
-		if(f->fid > highest_fruit_id) highest_fruit_id = f->fid;
-		if(!strncmp(str, f->fname, PL_FSIZ))
+		if (f->fid > highest_fruit_id) highest_fruit_id = f->fid;
+		if (!strncmp(str, f->fname, PL_FSIZ))
 			goto nonew;
 	}
 	/* if adding another fruit would overflow spe, use a random

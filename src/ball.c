@@ -25,12 +25,12 @@ void ballfall(void)
 		if (uwep != uball)
 			freeinv(uball);
 	}
-	if(gets_hit){
+	if (gets_hit){
 		int dmg = rn1(7,25);
 		pline_The("iron ball falls on your %s.",
 			body_part(HEAD));
 		if (uarmh) {
-		    if(is_metallic(uarmh)) {
+		    if (is_metallic(uarmh)) {
 			pline("Fortunately, you are wearing a hard helmet.");
 			dmg = 3;
 		    } else if (flags.verbose)
@@ -743,20 +743,20 @@ void drag_down(void)
 		You("lose your grip on the iron ball.");
 
 	if (forward) {
-		if(rn2(6)) {
+		if (rn2(6)) {
 			pline_The("iron ball drags you downstairs!");
 			losehp(rnd(6), "dragged downstairs by an iron ball",
 				NO_KILLER_PREFIX);
 			litter();
 		}
 	} else {
-		if(rn2(2)) {
+		if (rn2(2)) {
 			pline_The("iron ball smacks into you!");
 			losehp(rnd(20), "iron ball collision", KILLED_BY_AN);
 			exercise(A_STR, FALSE);
 			dragchance -= 2;
 		}
-		if( (int) dragchance >= rnd(6)) {
+		if ( (int) dragchance >= rnd(6)) {
 			pline_The("iron ball drags you downstairs!");
 			losehp(rnd(3), "dragged downstairs by an iron ball",
 				NO_KILLER_PREFIX);

@@ -59,7 +59,7 @@ static void do_dknown_of(struct obj *obj)
 
     obj->dknown = 1;
     if (Has_contents(obj)) {
-	for(otmp = obj->cobj; otmp; otmp = otmp->nobj)
+	for (otmp = obj->cobj; otmp; otmp = otmp->nobj)
 	    do_dknown_of(otmp);
     }
 }
@@ -412,7 +412,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     	strcpy(stuff, class ? oclass_names[class] : "objects");
     if (boulder && class != ROCK_CLASS) strcat(stuff, " and/or large stones");
 
-    if (do_dknown) for(obj = invent; obj; obj = obj->nobj) do_dknown_of(obj);
+    if (do_dknown) for (obj = invent; obj; obj = obj->nobj) do_dknown_of(obj);
 
     for (obj = fobj; obj; obj = obj->nobj) {
 	if ((!class && !boulder) || o_in(obj, class) || o_in(obj, boulder)) {
@@ -964,25 +964,25 @@ static void findone(int zx, int zy, void *num)
 	struct trap *ttmp;
 	struct monst *mtmp;
 
-	if(levl[zx][zy].typ == SDOOR) {
+	if (levl[zx][zy].typ == SDOOR) {
 		cvt_sdoor_to_door(&levl[zx][zy]);	/* .typ = DOOR */
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if(levl[zx][zy].typ == SCORR) {
+	} else if (levl[zx][zy].typ == SCORR) {
 		levl[zx][zy].typ = CORR;
 		unblock_point(zx,zy);
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
 		(*(int*)num)++;
 	} else if ((ttmp = t_at(zx, zy)) != 0) {
-		if(!ttmp->tseen && ttmp->ttyp != STATUE_TRAP) {
+		if (!ttmp->tseen && ttmp->ttyp != STATUE_TRAP) {
 			ttmp->tseen = 1;
 			newsym(zx,zy);
 			(*(int*)num)++;
 		}
 	} else if ((mtmp = m_at(zx, zy)) != 0) {
-		if(mtmp->m_ap_type) {
+		if (mtmp->m_ap_type) {
 			seemimic(mtmp);
 			(*(int*)num)++;
 		}
@@ -1008,22 +1008,22 @@ static void openone(int zx, int zy, void *num)
 	struct trap *ttmp;
 	struct obj *otmp;
 
-	if(OBJ_AT(zx, zy)) {
-		for(otmp = level.objects[zx][zy];
+	if (OBJ_AT(zx, zy)) {
+		for (otmp = level.objects[zx][zy];
 				otmp; otmp = otmp->nexthere) {
-		    if(Is_box(otmp) && otmp->olocked) {
+		    if (Is_box(otmp) && otmp->olocked) {
 			otmp->olocked = 0;
 			(*(int*)num)++;
 		    }
 		}
 		/* let it fall to the next cases. could be on trap. */
 	}
-	if(levl[zx][zy].typ == SDOOR || (levl[zx][zy].typ == DOOR &&
+	if (levl[zx][zy].typ == SDOOR || (levl[zx][zy].typ == DOOR &&
 		      (levl[zx][zy].doormask & (D_CLOSED|D_LOCKED)))) {
-		if(levl[zx][zy].typ == SDOOR)
+		if (levl[zx][zy].typ == SDOOR)
 		    cvt_sdoor_to_door(&levl[zx][zy]);	/* .typ = DOOR */
-		if(levl[zx][zy].doormask & D_TRAPPED) {
-		    if(distu(zx, zy) < 3) b_trapped("door", 0);
+		if (levl[zx][zy].doormask & D_TRAPPED) {
+		    if (distu(zx, zy) < 3) b_trapped("door", 0);
 		    else Norep("You %s an explosion!",
 				cansee(zx, zy) ? "see" :
 				   (flags.soundok ? "hear" :
@@ -1035,7 +1035,7 @@ static void openone(int zx, int zy, void *num)
 		unblock_point(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if(levl[zx][zy].typ == SCORR) {
+	} else if (levl[zx][zy].typ == SCORR) {
 		levl[zx][zy].typ = CORR;
 		unblock_point(zx, zy);
 		newsym(zx, zy);
@@ -1057,7 +1057,7 @@ int findit(void)	/* returns number of things found */
 {
 	int num = 0;
 
-	if(u.uswallow) return 0;
+	if (u.uswallow) return 0;
 	do_clear_area(u.ux, u.uy, BOLT_LIM, findone, &num);
 	return num;
 }
@@ -1066,7 +1066,7 @@ int openit(void)	/* returns number of things found and opened */
 {
 	int num = 0;
 
-	if(u.uswallow) {
+	if (u.uswallow) {
 		if (is_animal(u.ustuck->data)) {
 			if (Blind) pline("Its mouth opens!");
 			else pline("%s opens its mouth!", Monnam(u.ustuck));
@@ -1115,7 +1115,7 @@ int dosearch0(int aflag)
 	struct trap *trap;
 	struct monst *mtmp;
 
-	if(u.uswallow) {
+	if (u.uswallow) {
 		if (!aflag)
 			pline("What are you looking for?  The exit?");
 	} else {
@@ -1125,13 +1125,13 @@ int dosearch0(int aflag)
 	    if (ublindf && ublindf->otyp == LENSES && !Blind)
 		    fund += 2; /* JDS: lenses help searching */
 	    if (fund > 5) fund = 5;
-	    for(x = u.ux-1; x < u.ux+2; x++)
-	      for(y = u.uy-1; y < u.uy+2; y++) {
-		if(!isok(x,y)) continue;
-		if(x != u.ux || y != u.uy) {
+	    for (x = u.ux-1; x < u.ux+2; x++)
+	      for (y = u.uy-1; y < u.uy+2; y++) {
+		if (!isok(x,y)) continue;
+		if (x != u.ux || y != u.uy) {
 		    if (Blind && !aflag) feel_location(x,y);
-		    if(levl[x][y].typ == SDOOR) {
-			if(rnl(7-fund)) continue;
+		    if (levl[x][y].typ == SDOOR) {
+			if (rnl(7-fund)) continue;
 			cvt_sdoor_to_door(&levl[x][y]);	/* .typ = DOOR */
 			exercise(A_WIS, TRUE);
 			nomul(0);
@@ -1139,8 +1139,8 @@ int dosearch0(int aflag)
 			    feel_location(x,y);	/* make sure it shows up */
 			else
 			    newsym(x,y);
-		    } else if(levl[x][y].typ == SCORR) {
-			if(rnl(7-fund)) continue;
+		    } else if (levl[x][y].typ == SCORR) {
+			if (rnl(7-fund)) continue;
 			levl[x][y].typ = CORR;
 			unblock_point(x,y);	/* vision */
 			exercise(A_WIS, TRUE);
@@ -1148,8 +1148,8 @@ int dosearch0(int aflag)
 			newsym(x,y);
 		    } else {
 		/* Be careful not to find anything in an SCORR or SDOOR */
-			if((mtmp = m_at(x, y)) && !aflag) {
-			    if(mtmp->m_ap_type) {
+			if ((mtmp = m_at(x, y)) && !aflag) {
+			    if (mtmp->m_ap_type) {
 				seemimic(mtmp);
 		find:		exercise(A_WIS, TRUE);
 				if (!canspotmon(mtmp)) {
@@ -1170,7 +1170,7 @@ int dosearch0(int aflag)
 				    You("find %s.", a_monnam(mtmp));
 				return 1;
 			    }
-			    if(!canspotmon(mtmp)) {
+			    if (!canspotmon(mtmp)) {
 				if (mtmp->mundetected &&
 				   (is_hider(mtmp->data) || mtmp->data->mlet == S_EEL))
 					mtmp->mundetected = 0;

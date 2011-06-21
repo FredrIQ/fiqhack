@@ -54,11 +54,11 @@ static boolean create_subroom(struct mkroom *, xchar, xchar,
 #define XLIM	4
 #define YLIM	3
 
-#define Fread(ptr, size, count, stream)  if(dlb_fread(ptr,size,count,stream) != count) goto err_out;
+#define Fread(ptr, size, count, stream)  if (dlb_fread(ptr,size,count,stream) != count) goto err_out;
 #define Fgetc	(schar)dlb_fgetc
 #define New(type)		malloc(sizeof(type))
 #define NewTab(type, size)	malloc(sizeof(type *) * (unsigned)size)
-#define Free(ptr)		if(ptr) free((ptr))
+#define Free(ptr)		if (ptr) free((ptr))
 
 static walk walklist[50];
 extern int min_rx, max_rx, min_ry, max_ry; /* from mkmap.c */
@@ -99,9 +99,9 @@ static void set_wall_property(xchar x1, xchar y1, xchar x2, xchar y2, int prop)
 {
 	xchar x, y;
 
-	for(y = y1; y <= y2; y++)
-	    for(x = x1; x <= x2; x++)
-		if(IS_STWALL(levl[x][y].typ))
+	for (y = y1; y <= y2; y++)
+	    for (x = x1; x <= x2; x++)
+		if (IS_STWALL(levl[x][y].typ))
 		    levl[x][y].wall_info |= prop;
 }
 
@@ -295,15 +295,15 @@ chk:
 
 	/* check area around room (and make room smaller if necessary) */
 	for (x = *lowx - xlim; x<= hix + xlim; x++) {
-		if(x <= 0 || x >= COLNO) continue;
+		if (x <= 0 || x >= COLNO) continue;
 		y = *lowy - ylim;	ymax = hiy + ylim;
-		if(y < 0) y = 0;
-		if(ymax >= ROWNO) ymax = (ROWNO-1);
+		if (y < 0) y = 0;
+		if (ymax >= ROWNO) ymax = (ROWNO-1);
 		lev = &levl[x][y];
 		for (; y <= ymax; y++) {
 			if (lev++->typ) {
 #ifdef DEBUG
-				if(!vault)
+				if (!vault)
 				    debugpline("strange area [%d,%d] in check_room.",x,y);
 #endif
 				if (!rn2(3))	return FALSE;
@@ -367,7 +367,7 @@ boolean create_room(xchar x, xchar y, xchar w, xchar h,
 
 		/* First case : a totaly random room */
 
-		if((xtmp < 0 && ytmp <0 && wtmp < 0 && xaltmp < 0 &&
+		if ((xtmp < 0 && ytmp <0 && wtmp < 0 && xaltmp < 0 &&
 		   yaltmp < 0) || vault) {
 			xchar hx, hy, lx, ly, dx, dy;
 			r1 = rnd_rect(); /* Get a random rectangle */
@@ -387,12 +387,12 @@ boolean create_room(xchar x, xchar y, xchar w, xchar h,
 			else {
 				dx = 2 + rn2((hx-lx > 28) ? 12 : 8);
 				dy = 2 + rn2(4);
-				if(dx*dy > 50)
+				if (dx*dy > 50)
 				    dy = 50/dx;
 			}
 			xborder = (lx > 0 && hx < COLNO -1) ? 2*xlim : xlim+1;
 			yborder = (ly > 0 && hy < ROWNO -1) ? 2*ylim : ylim+1;
-			if(hx-lx < dx + 3 + xborder ||
+			if (hx-lx < dx + 3 + xborder ||
 			   hy-ly < dy + 3 + yborder) {
 				r1 = 0;
 				continue;
@@ -404,7 +404,7 @@ boolean create_room(xchar x, xchar y, xchar w, xchar h,
 			if (ly == 0 && hy >= (ROWNO-1) &&
 			    (!nroom || !rn2(nroom)) && (yabs+dy > ROWNO/2)) {
 			    yabs = rn1(3, 2);
-			    if(nroom < 4 && dy>1) dy--;
+			    if (nroom < 4 && dy>1) dy--;
 		        }
 			if (!check_room(&xabs, &dx, &yabs, &dy, vault)) {
 				r1 = 0;
@@ -549,10 +549,10 @@ static void create_door(room_door *dd, struct mkroom *broom)
 	if (dd->mask == -1) {
 		/* is it a locked door, closed, or a doorway? */
 		if (!dd->secret) {
-			if(!rn2(3)) {
-				if(!rn2(5))
+			if (!rn2(3)) {
+				if (!rn2(5))
 				    dd->mask = D_ISOPEN;
-				else if(!rn2(6))
+				else if (!rn2(6))
 				    dd->mask = D_LOCKED;
 				else
 				    dd->mask = D_CLOSED;
@@ -561,10 +561,10 @@ static void create_door(room_door *dd, struct mkroom *broom)
 			} else
 			    dd->mask = D_NODOOR;
 		} else {
-			if(!rn2(5))	dd->mask = D_LOCKED;
+			if (!rn2(5))	dd->mask = D_LOCKED;
 			else		dd->mask = D_CLOSED;
 
-			if(!rn2(20)) dd->mask |= D_TRAPPED;
+			if (!rn2(20)) dd->mask |= D_TRAPPED;
 		}
 	}
 
@@ -625,26 +625,26 @@ void create_secret_door(struct mkroom *croom,
     xchar sx, sy; /* location of the secret door */
     int count;
 
-    for(count = 0; count < 100; count++) {
+    for (count = 0; count < 100; count++) {
 	sx = rn1(croom->hx - croom->lx + 1, croom->lx);
 	sy = rn1(croom->hy - croom->ly + 1, croom->ly);
 
 	switch(rn2(4)) {
 	case 0:  /* top */
-	    if(!(walls & W_NORTH)) continue;
+	    if (!(walls & W_NORTH)) continue;
 	    sy = croom->ly-1; break;
 	case 1: /* bottom */
-	    if(!(walls & W_SOUTH)) continue;
+	    if (!(walls & W_SOUTH)) continue;
 	    sy = croom->hy+1; break;
 	case 2: /* left */
-	    if(!(walls & W_EAST)) continue;
+	    if (!(walls & W_EAST)) continue;
 	    sx = croom->lx-1; break;
 	case 3: /* right */
-	    if(!(walls & W_WEST)) continue;
+	    if (!(walls & W_WEST)) continue;
 	    sx = croom->hx+1; break;
 	}
 
-	if(okdoor(sx,sy)) {
+	if (okdoor(sx,sy)) {
 	    levl[sx][sy].typ = SDOOR;
 	    levl[sx][sy].doormask = D_CLOSED;
 	    add_door(sx,sy,croom);
@@ -735,7 +735,7 @@ static void create_monster(monster *m, struct mkroom *croom)
 	       class has been genocided, so settle for a random monster */
 	}
 	if (In_mines(&u.uz) && pm && your_race(pm) &&
-			(Race_if(PM_DWARF) || Race_if(PM_GNOME)) && rn2(3))
+			(Race_if (PM_DWARF) || Race_if(PM_GNOME)) && rn2(3))
 	    pm = NULL;
 
 	x = m->x;
@@ -754,9 +754,9 @@ static void create_monster(monster *m, struct mkroom *croom)
 	if (MON_AT(x,y) && enexto(&cc, x, y, pm))
 	    x = cc.x,  y = cc.y;
 
-	if(m->align != -12)
+	if (m->align != -12)
 	    mtmp = mk_roamer(pm, Amask2align(amask), x, y, m->peaceful);
-	else if(PM_ARCHEOLOGIST <= m->id && m->id <= PM_WIZARD)
+	else if (PM_ARCHEOLOGIST <= m->id && m->id <= PM_WIZARD)
 	         mtmp = mk_mplayer(pm, x, y, FALSE);
 	else mtmp = makemon(pm, x, y, NO_MM_FLAGS);
 
@@ -955,7 +955,7 @@ static void create_object(object *o, struct mkroom *croom)
 		mongone(was);
 	    }
 	    otmp->corpsenm = wastyp;
-	    while(was->minvent) {
+	    while (was->minvent) {
 		obj = was->minvent;
 		obj->owornmask = 0;
 		obj_extract_self(obj);
@@ -1102,7 +1102,7 @@ static void create_feature(int fx, int fy, struct mkroom *croom, int typ)
 		} while (++trycnt <= 200 && occupied(x,y));
 	    else
 		get_room_loc(&x, &y, croom);
-	    if(trycnt > 200)
+	    if (trycnt > 200)
 		return;
 	} else {
 	    get_location(&x, &y, DRY);
@@ -1197,28 +1197,28 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 	xx -= dx;
 	yy -= dy;
 	cct = 0;
-	while(xx != tx || yy != ty) {
+	while (xx != tx || yy != ty) {
 	    /* loop: dig corridor at [xx,yy] and find new [xx,yy] */
-	    if(cct++ > 500 || (nxcor && !rn2(35)))
+	    if (cct++ > 500 || (nxcor && !rn2(35)))
 		return FALSE;
 
 	    xx += dx;
 	    yy += dy;
 
-	    if(xx >= COLNO-1 || xx <= 0 || yy <= 0 || yy >= ROWNO-1)
+	    if (xx >= COLNO-1 || xx <= 0 || yy <= 0 || yy >= ROWNO-1)
 		return FALSE;		/* impossible */
 
 	    crm = &levl[xx][yy];
-	    if(crm->typ == btyp) {
-		if(ftyp != CORR || rn2(100)) {
+	    if (crm->typ == btyp) {
+		if (ftyp != CORR || rn2(100)) {
 			crm->typ = ftyp;
-			if(nxcor && !rn2(50))
+			if (nxcor && !rn2(50))
 				mksobj_at(BOULDER, xx, yy, TRUE, FALSE);
 		} else {
 			crm->typ = SCORR;
 		}
 	    } else
-	    if(crm->typ != ftyp && crm->typ != SCORR) {
+	    if (crm->typ != ftyp && crm->typ != SCORR) {
 		/* strange ... */
 		return FALSE;
 	    }
@@ -1228,20 +1228,20 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 	    diy = abs(yy-ty);
 
 	    /* do we have to change direction ? */
-	    if(dy && dix > diy) {
+	    if (dy && dix > diy) {
 		int ddx = (xx > tx) ? -1 : 1;
 
 		crm = &levl[xx+ddx][yy];
-		if(crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR) {
+		if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR) {
 		    dx = ddx;
 		    dy = 0;
 		    continue;
 		}
-	    } else if(dx && diy > dix) {
+	    } else if (dx && diy > dix) {
 		int ddy = (yy > ty) ? -1 : 1;
 
 		crm = &levl[xx][yy+ddy];
-		if(crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR) {
+		if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR) {
 		    dy = ddy;
 		    dx = 0;
 		    continue;
@@ -1250,11 +1250,11 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 
 	    /* continue straight on? */
 	    crm = &levl[xx+dx][yy+dy];
-	    if(crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR)
+	    if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR)
 		continue;
 
 	    /* no, what must we do now?? */
-	    if(dx) {
+	    if (dx) {
 		dx = 0;
 		dy = (ty < yy) ? -1 : 1;
 	    } else {
@@ -1262,7 +1262,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 		dx = (tx < xx) ? -1 : 1;
 	    }
 	    crm = &levl[xx+dx][yy+dy];
-	    if(crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR)
+	    if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR)
 		continue;
 	    dy = -dy;
 	    dx = -dx;
@@ -1281,32 +1281,32 @@ static void fix_stair_rooms(void)
     int i;
     struct mkroom *croom;
 
-    if(xdnstair &&
+    if (xdnstair &&
        !((dnstairs_room->lx <= xdnstair && xdnstair <= dnstairs_room->hx) &&
 	 (dnstairs_room->ly <= ydnstair && ydnstair <= dnstairs_room->hy))) {
-	for(i=0; i < nroom; i++) {
+	for (i=0; i < nroom; i++) {
 	    croom = &rooms[i];
-	    if((croom->lx <= xdnstair && xdnstair <= croom->hx) &&
+	    if ((croom->lx <= xdnstair && xdnstair <= croom->hx) &&
 	       (croom->ly <= ydnstair && ydnstair <= croom->hy)) {
 		dnstairs_room = croom;
 		break;
 	    }
 	}
-	if(i == nroom)
+	if (i == nroom)
 	    panic("Couldn't find dnstair room in fix_stair_rooms!");
     }
-    if(xupstair &&
+    if (xupstair &&
        !((upstairs_room->lx <= xupstair && xupstair <= upstairs_room->hx) &&
 	 (upstairs_room->ly <= yupstair && yupstair <= upstairs_room->hy))) {
-	for(i=0; i < nroom; i++) {
+	for (i=0; i < nroom; i++) {
 	    croom = &rooms[i];
-	    if((croom->lx <= xupstair && xupstair <= croom->hx) &&
+	    if ((croom->lx <= xupstair && xupstair <= croom->hx) &&
 	       (croom->ly <= yupstair && yupstair <= croom->hy)) {
 		upstairs_room = croom;
 		break;
 	    }
 	}
-	if(i == nroom)
+	if (i == nroom)
 	    panic("Couldn't find upstair room in fix_stair_rooms!");
     }
 }
@@ -1327,12 +1327,12 @@ static void create_corridor(corridor *c)
 		return;
 	}
 
-	if( !search_door(&rooms[c->src.room], &org.x, &org.y, c->src.wall,
+	if ( !search_door(&rooms[c->src.room], &org.x, &org.y, c->src.wall,
 			 c->src.door))
 	    return;
 
 	if (c->dest.room != -1) {
-		if(!search_door(&rooms[c->dest.room], &dest.x, &dest.y,
+		if (!search_door(&rooms[c->dest.room], &dest.x, &dest.y,
 				c->dest.wall, c->dest.door))
 		    return;
 		switch(c->src.wall) {
@@ -1418,17 +1418,17 @@ static void free_rooms(room **ro, int n)
 	short j;
 	room *r;
 
-	while(n--) {
+	while (n--) {
 		r = ro[n];
 		Free(r->name);
 		Free(r->parent);
 		if ((j = r->ndoor) != 0) {
-			while(j--)
+			while (j--)
 			    Free(r->doors[j]);
 			Free(r->doors);
 		}
 		if ((j = r->nstair) != 0) {
-			while(j--)
+			while (j--)
 			    Free(r->stairs[j]);
 			Free(r->stairs);
 		}
@@ -1438,17 +1438,17 @@ static void free_rooms(room **ro, int n)
 			Free(r->altars);
 		}
 		if ((j = r->nfountain) != 0) {
-			while(j--)
+			while (j--)
 			    Free(r->fountains[j]);
 			Free(r->fountains);
 		}
 		if ((j = r->nsink) != 0) {
-			while(j--)
+			while (j--)
 			    Free(r->sinks[j]);
 			Free(r->sinks);
 		}
 		if ((j = r->npool) != 0) {
-			while(j--)
+			while (j--)
 			    Free(r->pools[j]);
 			Free(r->pools);
 		}
@@ -1468,7 +1468,7 @@ static void free_rooms(room **ro, int n)
 			Free(r->objects);
 		}
 		if ((j = r->ngold) != 0) {
-			while(j--)
+			while (j--)
 			    Free(r->golds[j]);
 			Free(r->golds);
 		}
@@ -1489,7 +1489,7 @@ static void build_room(room *r, room *pr)
 	short i;
 	xchar rtype = (!r->chance || rn2(100) < r->chance) ? r->rtype : OROOM;
 
-	if(pr) {
+	if (pr) {
 		aroom = &subrooms[nsubroom];
 		okroom = create_subroom(pr->mkr, r->x, r->y, r->w, r->h,
 					rtype, r->rlit);
@@ -1502,42 +1502,42 @@ static void build_room(room *r, room *pr)
 
 	if (okroom) {
 		/* Create subrooms if necessary... */
-		for(i=0; i < r->nsubroom; i++)
+		for (i=0; i < r->nsubroom; i++)
 		    build_room(r->subrooms[i], r);
 		/* And now we can fill the room! */
 
 		/* Priority to the stairs */
 
-		for(i=0; i <r->nstair; i++)
+		for (i=0; i <r->nstair; i++)
 		    create_stairs(r->stairs[i], aroom);
 
 		/* Then to the various elements (sinks, etc..) */
-		for(i = 0; i<r->nsink; i++)
+		for (i = 0; i<r->nsink; i++)
 		    create_feature(r->sinks[i]->x, r->sinks[i]->y, aroom, SINK);
-		for(i = 0; i<r->npool; i++)
+		for (i = 0; i<r->npool; i++)
 		    create_feature(r->pools[i]->x, r->pools[i]->y, aroom, POOL);
-		for(i = 0; i<r->nfountain; i++)
+		for (i = 0; i<r->nfountain; i++)
 		    create_feature(r->fountains[i]->x, r->fountains[i]->y,
 				   aroom, FOUNTAIN);
-		for(i = 0; i<r->naltar; i++)
+		for (i = 0; i<r->naltar; i++)
 		    create_altar(r->altars[i], aroom);
-		for(i = 0; i<r->ndoor; i++)
+		for (i = 0; i<r->ndoor; i++)
 		    create_door(r->doors[i], aroom);
 
 		/* The traps */
-		for(i = 0; i<r->ntrap; i++)
+		for (i = 0; i<r->ntrap; i++)
 		    create_trap(r->traps[i], aroom);
 
 		/* The monsters */
-		for(i = 0; i<r->nmonster; i++)
+		for (i = 0; i<r->nmonster; i++)
 		    create_monster(r->monsters[i], aroom);
 
 		/* The objects */
-		for(i = 0; i<r->nobject; i++)
+		for (i = 0; i<r->nobject; i++)
 		    create_object(r->objects[i], aroom);
 
 		/* The gold piles */
-		for(i = 0; i<r->ngold; i++)
+		for (i = 0; i<r->ngold; i++)
 		    create_gold(r->golds[i], aroom);
 
 		/* The engravings */
@@ -1550,7 +1550,7 @@ static void build_room(room *r, room *pr)
 		 * DLC - this can fail if corridors are added to this room
 		 * at a later point.  Currently no good way to fix this.
 		 */
-		if(aroom->rtype != OROOM && r->filled) fill_room(aroom, FALSE);
+		if (aroom->rtype != OROOM && r->filled) fill_room(aroom, FALSE);
 	}
 }
 
@@ -1566,16 +1566,16 @@ static void light_region(region *tmpregion)
     int lowy = tmpregion->y1;
     int lowx = tmpregion->x1, hix = tmpregion->x2;
 
-    if(litstate) {
+    if (litstate) {
 	/* adjust region size for walls, but only if lighted */
 	lowx = max(lowx-1,1);
 	hix = min(hix+1,COLNO-1);
 	lowy = max(lowy-1,0);
 	hiy = min(hiy+1, ROWNO-1);
     }
-    for(x = lowx; x <= hix; x++) {
+    for (x = lowx; x <= hix; x++) {
 	lev = &levl[x][lowy];
-	for(y = lowy; y <= hiy; y++) {
+	for (y = lowy; y <= hiy; y++) {
 	    if (lev->typ != LAVAPOOL) /* this overrides normal lighting */
 		lev->lit = litstate;
 	    lev++;
@@ -1601,8 +1601,8 @@ static void load_common_data(dlb *fd, int typ)
 
 	/* Read the level initialization data */
 	Fread(&init_lev, 1, sizeof(lev_init), fd);
-	if(init_lev.init_present) {
-	    if(init_lev.lit < 0)
+	if (init_lev.init_present) {
+	    if (init_lev.lit < 0)
 		init_lev.lit = rn2(2);
 	    mkmap(&init_lev);
 	}
@@ -1759,7 +1759,7 @@ static boolean load_rooms(dlb *fd)
 		Fread(&r->ndoor, 1, sizeof(r->ndoor), fd);
 		if ((n = r->ndoor) != 0)
 		    r->doors = NewTab(room_door, n);
-		while(n--) {
+		while (n--) {
 			r->doors[(int)n] = New(room_door);
 			Fread(r->doors[(int)n], 1,
 				sizeof(room_door), fd);
@@ -1818,7 +1818,7 @@ static boolean load_rooms(dlb *fd)
 		Fread(&r->ntrap, 1, sizeof(r->ntrap), fd);
 		if ((n = r->ntrap) != 0)
 		    r->traps = NewTab(trap, n);
-		while(n--) {
+		while (n--) {
 			r->traps[(int)n] = New(trap);
 			Fread(r->traps[(int)n], 1, sizeof(trap), fd);
 		}
@@ -1827,7 +1827,7 @@ static boolean load_rooms(dlb *fd)
 		Fread(&r->nmonster, 1, sizeof(r->nmonster), fd);
 		if ((n = r->nmonster) != 0) {
 		    r->monsters = NewTab(monster, n);
-		    while(n--) {
+		    while (n--) {
 			r->monsters[(int)n] = New(monster);
 			load_one_monster(fd, r->monsters[(int)n]);
 		    }
@@ -1875,7 +1875,7 @@ static boolean load_rooms(dlb *fd)
 	for (i = 0; i<nrooms; i++)
 	    if (tmproom[i]->parent) {
 		    /* Search the parent room */
-		    for(j=0; j<nrooms; j++)
+		    for (j=0; j<nrooms; j++)
 			if (tmproom[j]->name && !strcmp(tmproom[j]->name,
 						       tmproom[i]->parent)) {
 				n = tmproom[j]->nsubroom++;
@@ -1889,7 +1889,7 @@ static boolean load_rooms(dlb *fd)
 	 */
 
 	for (i=0; i < nrooms; i++)
-	    if(!tmproom[i]->parent)
+	    if (!tmproom[i]->parent)
 		build_room(tmproom[i], NULL);
 
 	free_rooms(tmproom, nrooms);
@@ -1976,8 +1976,8 @@ static boolean load_maze(dlb *fd)
     /* Initialize map */
     Fread(&filling, 1, sizeof(filling), fd);
     if (!init_lev.init_present) { /* don't init if mkmap() has been called */
-      for(x = 2; x <= x_maze_max; x++)
-	for(y = 0; y <= y_maze_max; y++)
+      for (x = 2; x <= x_maze_max; x++)
+	for (y = 0; y <= y_maze_max; y++)
 	    if (filling == -1) {
 #ifndef WALLIFIED_MAZE
 		    levl[x][y].typ = STONE;
@@ -2022,8 +2022,8 @@ static boolean load_maze(dlb *fd)
 	if ((ystart < 0) || (ystart + ysize > ROWNO)) {
 	    /* try to move the start a bit */
 	    ystart += (ystart > 0) ? -2 : 2;
-	    if(ysize == ROWNO) ystart = 0;
-	    if(ystart < 0 || ystart + ysize > ROWNO)
+	    if (ysize == ROWNO) ystart = 0;
+	    if (ystart < 0 || ystart + ysize > ROWNO)
 		panic("reading special level with ysize too large");
 	}
 
@@ -2034,15 +2034,15 @@ static boolean load_maze(dlb *fd)
 	 */
 	has_bounds = FALSE;
 
-	if(init_lev.init_present && xsize <= 1 && ysize <= 1) {
+	if (init_lev.init_present && xsize <= 1 && ysize <= 1) {
 	    xstart = 1;
 	    ystart = 0;
 	    xsize = COLNO-1;
 	    ysize = ROWNO;
 	} else {
 	    /* Load the map */
-	    for(y = ystart; y < ystart+ysize; y++)
-		for(x = xstart; x < xstart+xsize; x++) {
+	    for (y = ystart; y < ystart+ysize; y++)
+		for (x = xstart; x < xstart+xsize; x++) {
 		    levl[x][y].typ = Fgetc(fd);
 		    levl[x][y].lit = FALSE;
 		    /* clear out levl: load_common_data may set them */
@@ -2062,7 +2062,7 @@ static boolean load_maze(dlb *fd)
 		     *  the horizontal bit.
 		     */
 		    if (levl[x][y].typ == SDOOR || IS_DOOR(levl[x][y].typ)) {
-			if(levl[x][y].typ == SDOOR)
+			if (levl[x][y].typ == SDOOR)
 			    levl[x][y].doormask = D_CLOSED;
 			/*
 			 *  If there is a wall to the left that connects to a
@@ -2072,12 +2072,12 @@ static boolean load_maze(dlb *fd)
 			if (x != xstart && (IS_WALL(levl[x-1][y].typ) ||
 					    levl[x-1][y].horizontal))
 			    levl[x][y].horizontal = 1;
-		    } else if(levl[x][y].typ == HWALL ||
+		    } else if (levl[x][y].typ == HWALL ||
 				levl[x][y].typ == IRONBARS)
 			levl[x][y].horizontal = 1;
-		    else if(levl[x][y].typ == LAVAPOOL)
+		    else if (levl[x][y].typ == LAVAPOOL)
 			levl[x][y].lit = 1;
-		    else if(levl[x][y].typ == CROSSWALL)
+		    else if (levl[x][y].typ == CROSSWALL)
 			has_bounds = TRUE;
 		    Map[x][y] = 1;
 		}
@@ -2087,8 +2087,8 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of level regions */
-	if(n) {
-	    if(num_lregions) {
+	if (n) {
+	    if (num_lregions) {
 		/* realloc the lregion space to add the new ones */
 		/* don't really free it up until the whole level is done */
 		lev_region *newl = malloc(sizeof(lev_region) *
@@ -2104,7 +2104,7 @@ static boolean load_maze(dlb *fd)
 	    }
 	}
 
-	while(n--) {
+	while (n--) {
 	    Fread(&tmplregion, sizeof(tmplregion), 1, fd);
 	    if ((size = tmplregion.rname.len) != 0) {
 		tmplregion.rname.str = malloc((unsigned)size + 1);
@@ -2112,13 +2112,13 @@ static boolean load_maze(dlb *fd)
 		tmplregion.rname.str[size] = '\0';
 	    } else
 		tmplregion.rname.str = NULL;
-	    if(!tmplregion.in_islev) {
+	    if (!tmplregion.in_islev) {
 		get_location(&tmplregion.inarea.x1, &tmplregion.inarea.y1,
 								DRY|WET);
 		get_location(&tmplregion.inarea.x2, &tmplregion.inarea.y2,
 								DRY|WET);
 	    }
-	    if(!tmplregion.del_islev) {
+	    if (!tmplregion.del_islev) {
 		get_location(&tmplregion.delarea.x1, &tmplregion.delarea.y1,
 								DRY|WET);
 		get_location(&tmplregion.delarea.x2, &tmplregion.delarea.y2,
@@ -2129,14 +2129,14 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Random objects */
-	if(n) {
+	if (n) {
 		Fread(robjects, sizeof(*robjects), (int) n, fd);
 		sp_lev_shuffle(robjects, NULL, (int)n);
 	}
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Random locations */
-	if(n) {
+	if (n) {
 		Fread(rloc_x, sizeof(*rloc_x), (int) n, fd);
 		Fread(rloc_y, sizeof(*rloc_y), (int) n, fd);
 		sp_lev_shuffle(rloc_x, rloc_y, (int)n);
@@ -2144,7 +2144,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Random monsters */
-	if(n) {
+	if (n) {
 		Fread(rmonst, sizeof(*rmonst), (int) n, fd);
 		sp_lev_shuffle(rmonst, NULL, (int)n);
 	}
@@ -2152,18 +2152,18 @@ static boolean load_maze(dlb *fd)
 	memset(mustfill, 0, sizeof(mustfill));
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of subrooms */
-	while(n--) {
+	while (n--) {
 		struct mkroom *troom;
 
 		Fread(&tmpregion, 1, sizeof(tmpregion), fd);
 
-		if(tmpregion.rtype > MAXRTYPE) {
+		if (tmpregion.rtype > MAXRTYPE) {
 		    tmpregion.rtype -= MAXRTYPE+1;
 		    prefilled = TRUE;
 		} else
 		    prefilled = FALSE;
 
-		if(tmpregion.rlit < 0)
+		if (tmpregion.rlit < 0)
 		    tmpregion.rlit = (rnd(1+abs(depth(&u.uz))) < 11 && rn2(77))
 			? TRUE : FALSE;
 
@@ -2188,7 +2188,7 @@ static boolean load_maze(dlb *fd)
 		if (tmpregion.rtype != OROOM)
 		    mustfill[nroom] = (prefilled ? 2 : 1);
 
-		if(tmpregion.rirreg) {
+		if (tmpregion.rirreg) {
 		    min_rx = max_rx = tmpregion.x1;
 		    min_ry = max_ry = tmpregion.y1;
 		    flood_fill_rm(tmpregion.x1, tmpregion.y1,
@@ -2207,7 +2207,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of doors */
-	while(n--) {
+	while (n--) {
 		struct mkroom *croom = &rooms[0];
 
 		Fread(&tmpdoor, 1, sizeof(tmpdoor), fd);
@@ -2216,18 +2216,18 @@ static boolean load_maze(dlb *fd)
 		typ = tmpdoor.mask == -1 ? rnddoor() : tmpdoor.mask;
 
 		get_location(&x, &y, DRY);
-		if(levl[x][y].typ != SDOOR)
+		if (levl[x][y].typ != SDOOR)
 			levl[x][y].typ = DOOR;
 		else {
-			if(typ < D_CLOSED)
+			if (typ < D_CLOSED)
 			    typ = D_CLOSED; /* force it to be closed */
 		}
 		levl[x][y].doormask = typ;
 
 		/* Now the complicated part, list it with each subroom */
 		/* The dog move and mail daemon routines use this */
-		while(croom->hx >= 0 && doorindex < DOORMAX) {
-		    if(croom->hx >= x-1 && croom->lx <= x+1 &&
+		while (croom->hx >= 0 && doorindex < DOORMAX) {
+		    if (croom->hx >= x-1 && croom->lx <= x+1 &&
 		       croom->hy >= y-1 && croom->ly <= y+1) {
 			/* Found it */
 			add_door(x, y, croom);
@@ -2237,21 +2237,21 @@ static boolean load_maze(dlb *fd)
 	}
 
 	/* now that we have rooms _and_ associated doors, fill the rooms */
-	for(n = 0; n < SIZE(mustfill); n++)
-	    if(mustfill[(int)n])
+	for (n = 0; n < SIZE(mustfill); n++)
+	    if (mustfill[(int)n])
 		fill_room(&rooms[(int)n], (mustfill[(int)n] == 2));
 
 	/* if special boundary syms (CROSSWALL) in map, remove them now */
-	if(has_bounds) {
-	    for(x = xstart; x < xstart+xsize; x++)
-		for(y = ystart; y < ystart+ysize; y++)
-		    if(levl[x][y].typ == CROSSWALL)
+	if (has_bounds) {
+	    for (x = xstart; x < xstart+xsize; x++)
+		for (y = ystart; y < ystart+ysize; y++)
+		    if (levl[x][y].typ == CROSSWALL)
 			levl[x][y].typ = ROOM;
 	}
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of drawbridges */
-	while(n--) {
+	while (n--) {
 		Fread(&tmpdb, 1, sizeof(tmpdb), fd);
 
 		x = tmpdb.x;  y = tmpdb.y;
@@ -2263,7 +2263,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of mazewalks */
-	while(n--) {
+	while (n--) {
 		Fread(&tmpwalk, 1, sizeof(tmpwalk), fd);
 
 		get_location(&tmpwalk.x, &tmpwalk.y, DRY|WET);
@@ -2273,7 +2273,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of non_diggables */
-	while(n--) {
+	while (n--) {
 		Fread(&tmpdig, 1, sizeof(tmpdig), fd);
 
 		get_location(&tmpdig.x1, &tmpdig.y1, DRY|WET);
@@ -2285,7 +2285,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of non_passables */
-	while(n--) {
+	while (n--) {
 		Fread(&tmpdig, 1, sizeof(tmpdig), fd);
 
 		get_location(&tmpdig.x1, &tmpdig.y1, DRY|WET);
@@ -2297,7 +2297,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of ladders */
-	while(n--) {
+	while (n--) {
 		Fread(&tmplad, 1, sizeof(tmplad), fd);
 
 		x = tmplad.x;  y = tmplad.y;
@@ -2316,14 +2316,14 @@ static boolean load_maze(dlb *fd)
 	prevstair.x = prevstair.y = 0;
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of stairs */
-	while(n--) {
+	while (n--) {
 		Fread(&tmpstair, 1, sizeof(tmpstair), fd);
 
 		xi = 0;
 		do {
 		    x = tmpstair.x;  y = tmpstair.y;
 		    get_location(&x, &y, DRY);
-		} while(prevstair.x && xi++ < 100 &&
+		} while (prevstair.x && xi++ < 100 &&
 			distmin(x,y,prevstair.x,prevstair.y) <= 8);
 		if ((badtrap = t_at(x,y)) != 0) deltrap(badtrap);
 		mkstairs(x, y, (char)tmpstair.up, NULL);
@@ -2333,7 +2333,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of altars */
-	while(n--) {
+	while (n--) {
 		Fread(&tmpaltar, 1, sizeof(tmpaltar), fd);
 
 		create_altar(&tmpaltar, NULL);
@@ -2350,7 +2350,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of traps */
-	while(n--) {
+	while (n--) {
 		Fread(&tmptrap, 1, sizeof(tmptrap), fd);
 
 		create_trap(&tmptrap, NULL);
@@ -2358,7 +2358,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of monsters */
-	while(n--) {
+	while (n--) {
 		load_one_monster(fd, &tmpmons);
 
 		create_monster(&tmpmons, NULL);
@@ -2366,7 +2366,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of objects */
-	while(n--) {
+	while (n--) {
 		load_one_object(fd, &tmpobj);
 
 		create_object(&tmpobj, NULL);
@@ -2382,7 +2382,7 @@ static boolean load_maze(dlb *fd)
 
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of engravings */
-	while(n--) {
+	while (n--) {
 		load_one_engraving(fd, &tmpengraving);
 
 		create_engraving(&tmpengraving, NULL);
@@ -2391,7 +2391,7 @@ static boolean load_maze(dlb *fd)
     }		/* numpart loop */
 
     nwalk_sav = nwalk;
-    while(nwalk--) {
+    while (nwalk--) {
 	    x = (xchar) walklist[nwalk].x;
 	    y = (xchar) walklist[nwalk].y;
 	    dir = walklist[nwalk].dir;
@@ -2405,7 +2405,7 @@ static boolean load_maze(dlb *fd)
 		default: panic("load_maze: bad MAZEWALK direction");
 	    }
 
-	    if(!IS_DOOR(levl[x][y].typ)) {
+	    if (!IS_DOOR(levl[x][y].typ)) {
 #ifndef WALLIFIED_MAZE
 		levl[x][y].typ = CORR;
 #else
@@ -2419,7 +2419,7 @@ static boolean load_maze(dlb *fd)
 	     * walkfrom() is odd.  But we must also take into account
 	     * what direction was chosen.
 	     */
-	    if(!(x % 2)) {
+	    if (!(x % 2)) {
 		if (dir == W_EAST)
 		    x++;
 		else
@@ -2454,18 +2454,18 @@ static boolean load_maze(dlb *fd)
      */
     mapcountmax = mapcount = (x_maze_max - 2) * (y_maze_max - 2);
 
-    for(x = 2; x < x_maze_max; x++)
-	for(y = 0; y < y_maze_max; y++)
-	    if(Map[x][y]) mapcount--;
+    for (x = 2; x < x_maze_max; x++)
+	for (y = 0; y < y_maze_max; y++)
+	    if (Map[x][y]) mapcount--;
 
     if (nwalk_sav && (mapcount > (int) (mapcountmax / 10))) {
 	    mapfact = (int) ((mapcount * 100L) / mapcountmax);
-	    for(x = rnd((int) (20 * mapfact) / 100); x; x--) {
+	    for (x = rnd((int) (20 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, DRY);
 		    mkobj_at(rn2(2) ? GEM_CLASS : RANDOM_CLASS,
 							mm.x, mm.y, TRUE);
 	    }
-	    for(x = rnd((int) (12 * mapfact) / 100); x; x--) {
+	    for (x = rnd((int) (12 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, DRY);
 		    mksobj_at(BOULDER, mm.x, mm.y, TRUE, FALSE);
 	    }
@@ -2473,15 +2473,15 @@ static boolean load_maze(dlb *fd)
 		maze1xy(&mm, DRY);
 		makemon(&mons[PM_MINOTAUR], mm.x, mm.y, NO_MM_FLAGS);
 	    }
-	    for(x = rnd((int) (12 * mapfact) / 100); x; x--) {
+	    for (x = rnd((int) (12 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, WET|DRY);
 		    makemon(NULL, mm.x, mm.y, NO_MM_FLAGS);
 	    }
-	    for(x = rn2((int) (15 * mapfact) / 100); x; x--) {
+	    for (x = rn2((int) (15 * mapfact) / 100); x; x--) {
 		    maze1xy(&mm, DRY);
 		    mkgold(0L,mm.x,mm.y);
 	    }
-	    for(x = rn2((int) (15 * mapfact) / 100); x; x--) {
+	    for (x = rn2((int) (15 * mapfact) / 100); x; x--) {
 		    int trytrap;
 
 		    maze1xy(&mm, DRY);

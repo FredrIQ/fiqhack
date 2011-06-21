@@ -27,8 +27,8 @@ static void dowatersnakes(void) /* Fountain of snakes! */
 		  Hallucination ? makeplural(rndmonnam()) : "snakes");
 	else
 	    You_hear("%s hissing!", something);
-	while(num-- > 0)
-	    if((mtmp = makemon(&mons[PM_WATER_MOCCASIN],
+	while (num-- > 0)
+	    if ((mtmp = makemon(&mons[PM_WATER_MOCCASIN],
 			u.ux, u.uy, NO_MM_FLAGS)) && t_at(mtmp->mx, mtmp->my))
 		mintrap(mtmp);
     } else
@@ -39,8 +39,8 @@ static void dowaterdemon(void) /* Water demon */
 {
     struct monst *mtmp;
 
-    if(!(mvitals[PM_WATER_DEMON].mvflags & G_GONE)) {
-	if((mtmp = makemon(&mons[PM_WATER_DEMON],u.ux,u.uy, NO_MM_FLAGS))) {
+    if (!(mvitals[PM_WATER_DEMON].mvflags & G_GONE)) {
+	if ((mtmp = makemon(&mons[PM_WATER_DEMON],u.ux,u.uy, NO_MM_FLAGS))) {
 	    if (!Blind)
 		You("unleash %s!", a_monnam(mtmp));
 	    else
@@ -63,7 +63,7 @@ static void dowaternymph(void) /* Water Nymph */
 {
 	struct monst *mtmp;
 
-	if(!(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
+	if (!(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
 	   (mtmp = makemon(&mons[PM_WATER_NYMPH],u.ux,u.uy, NO_MM_FLAGS))) {
 		if (!Blind)
 		   You("attract %s!", a_monnam(mtmp));
@@ -136,11 +136,11 @@ void dryup(xchar x, xchar y, boolean isyou)
 {
 	if (IS_FOUNTAIN(levl[x][y].typ) &&
 	    (!rn2(3) || FOUNTAIN_IS_WARNED(x,y))) {
-		if(isyou && in_town(x, y) && !FOUNTAIN_IS_WARNED(x,y)) {
+		if (isyou && in_town(x, y) && !FOUNTAIN_IS_WARNED(x,y)) {
 			struct monst *mtmp;
 			SET_FOUNTAIN_WARNED(x,y);
 			/* Warn about future fountain use. */
-			for(mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+			for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
 			    if (DEADMONSTER(mtmp)) continue;
 			    if ((mtmp->data == &mons[PM_WATCHMAN] ||
 				mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&
@@ -152,7 +152,7 @@ void dryup(xchar x, xchar y, boolean isyou)
 			    }
 			}
 			/* You can see or hear this effect */
-			if(!mtmp) pline_The("flow reduces to a trickle.");
+			if (!mtmp) pline_The("flow reduces to a trickle.");
 			return;
 		}
 		
@@ -170,7 +170,7 @@ void dryup(xchar x, xchar y, boolean isyou)
 		/* or felt if the hero is blind.			 */
 		newsym(x, y);
 		level.flags.nfountains--;
-		if(isyou && in_town(x, y))
+		if (isyou && in_town(x, y))
 		    angry_guards(FALSE);
 	}
 }
@@ -214,7 +214,7 @@ void drinkfountain(void)
 		pline_The("cool draught refreshes you.");
 		u.uhunger += rnd(10); /* don't choke on water */
 		newuhs(FALSE);
-		if(mgkftn) return;
+		if (mgkftn) return;
 	} else {
 	    switch (fate) {
 
@@ -265,7 +265,7 @@ void drinkfountain(void)
 			pline("This water's no good!");
 			morehungry(rn1(20, 11));
 			exercise(A_CON, FALSE);
-			for(obj = invent; obj ; obj = obj->nobj)
+			for (obj = invent; obj ; obj = obj->nobj)
 				if (!rn2(5))	curse(obj);
 			break;
 			}
@@ -310,8 +310,8 @@ void drinkfountain(void)
 			struct monst *mtmp;
 
 			pline("This water gives you bad breath!");
-			for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
-			    if(!DEADMONSTER(mtmp))
+			for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+			    if (!DEADMONSTER(mtmp))
 				monflee(mtmp, 0, FALSE, FALSE);
 			}
 			break;
@@ -369,7 +369,7 @@ void dipfountain(struct obj *obj)
 		levl[u.ux][u.uy].looted = 0;
 		newsym(u.ux, u.uy);
 		level.flags.nfountains--;
-		if(in_town(u.ux, u.uy))
+		if (in_town(u.ux, u.uy))
 		    angry_guards(FALSE);
 		return;
 	} else if (get_wet(obj) && !rn2(2))
@@ -389,7 +389,7 @@ void dipfountain(struct obj *obj)
 		case 18:
 		case 19:
 		case 20: /* Uncurse the item */
-			if(obj->cursed) {
+			if (obj->cursed) {
 			    if (!Blind)
 				pline_The("water glows for a moment.");
 			    uncurse(obj);
@@ -475,7 +475,7 @@ void dipfountain(struct obj *obj)
 
 void breaksink(int x, int y)
 {
-    if(cansee(x,y) || (x == u.ux && y == u.uy))
+    if (cansee(x,y) || (x == u.ux && y == u.uy))
 	pline_The("pipes break!  Water spurts out!");
     level.flags.nsinks--;
     levl[x][y].doormask = 0;
@@ -520,7 +520,7 @@ void drinksink(void)
 					obfree(otmp, NULL);
 					otmp = NULL;
 				}
-			} while(!otmp);
+			} while (!otmp);
 			otmp->cursed = otmp->blessed = 0;
 			pline("Some %s liquid flows from the faucet.",
 			      Blind ? "odd" :

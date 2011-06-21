@@ -570,7 +570,7 @@ void place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
     new_tail->wx = x;
     new_tail->wy = y;
 
-    while(curr)  {
+    while (curr)  {
 	xchar nx, ny;
 	char tryct = 0;
 
@@ -689,7 +689,7 @@ boolean worm_known(struct monst *worm)
     struct wseg *curr = wtails[worm->wormno];
 
     while (curr) {
-	if(cansee(curr->wx,curr->wy)) return TRUE;
+	if (cansee(curr->wx,curr->wy)) return TRUE;
 	curr = curr->nseg;
     }
     return FALSE;

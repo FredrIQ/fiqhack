@@ -46,26 +46,26 @@ int experience(struct monst *mtmp, int nk)
 	    tmp += (ptr->mmove > (3*NORMAL_SPEED/2)) ? 5 : 3;
 
 /*	For each "special" attack type give extra experience */
-	for(i = 0; i < NATTK; i++) {
+	for (i = 0; i < NATTK; i++) {
 
 	    tmp2 = ptr->mattk[i].aatyp;
-	    if(tmp2 > AT_BUTT) {
+	    if (tmp2 > AT_BUTT) {
 
-		if(tmp2 == AT_WEAP) tmp += 5;
-		else if(tmp2 == AT_MAGC) tmp += 10;
+		if (tmp2 == AT_WEAP) tmp += 5;
+		else if (tmp2 == AT_MAGC) tmp += 10;
 		else tmp += 3;
 	    }
 	}
 
 /*	For each "special" damage type give extra experience */
-	for(i = 0; i < NATTK; i++) {
+	for (i = 0; i < NATTK; i++) {
 	    tmp2 = ptr->mattk[i].adtyp;
-	    if(tmp2 > AD_PHYS && tmp2 < AD_BLND) tmp += 2*mtmp->m_lev;
-	    else if((tmp2 == AD_DRLI) || (tmp2 == AD_STON) ||
+	    if (tmp2 > AD_PHYS && tmp2 < AD_BLND) tmp += 2*mtmp->m_lev;
+	    else if ((tmp2 == AD_DRLI) || (tmp2 == AD_STON) ||
 	    		(tmp2 == AD_SLIM)) tmp += 50;
-	    else if(tmp != AD_PHYS) tmp += mtmp->m_lev;
+	    else if (tmp != AD_PHYS) tmp += mtmp->m_lev;
 		/* extra heavy damage bonus */
-	    if((int)(ptr->mattk[i].damd * ptr->mattk[i].damn) > 23)
+	    if ((int)(ptr->mattk[i].damd * ptr->mattk[i].damn) > 23)
 		tmp += mtmp->m_lev;
 	    if (tmp2 == AD_WRAP && ptr->mlet == S_EEL && !Amphibious)
 		tmp += 1000;
@@ -75,7 +75,7 @@ int experience(struct monst *mtmp, int nk)
 	if (extra_nasty(ptr)) tmp += (7 * mtmp->m_lev);
 
 /*	For higher level monsters, an additional bonus is given */
-	if(mtmp->m_lev > 8) tmp += 50;
+	if (mtmp->m_lev > 8) tmp += 50;
 
 	return tmp;
 }
@@ -85,7 +85,7 @@ void more_experienced(int exp, int rexp)
 	u.uexp += exp;
 	u.urexp += 4*exp + rexp;
 	botl = 1;
-	if (u.urexp >= (Role_if(PM_WIZARD) ? 1000 : 2000))
+	if (u.urexp >= (Role_if (PM_WIZARD) ? 1000 : 2000))
 		flags.beginner = 0;
 }
 

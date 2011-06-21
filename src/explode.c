@@ -256,7 +256,7 @@ void explode(int x, int y,
 				      (adtyp == AD_ACID) ? "burned" :
 				       "fried");
 		} else if (cansee(i+x-1, j+y-1)) {
-		    if(mtmp->m_ap_type) seemimic(mtmp);
+		    if (mtmp->m_ap_type) seemimic(mtmp);
 		    pline("%s is caught in the %s!", Monnam(mtmp), str);
 		}
 
@@ -479,11 +479,11 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 			bhitpos.x = stmp->ox + stmp->dx;
 			bhitpos.y = stmp->oy + stmp->dy;
 			typ = levl[bhitpos.x][bhitpos.y].typ;
-			if(!isok(bhitpos.x, bhitpos.y)) {
+			if (!isok(bhitpos.x, bhitpos.y)) {
 				bhitpos.x -= stmp->dx;
 				bhitpos.y -= stmp->dy;
 				stmp->stopped = TRUE;
-			} else if(!ZAP_POS(typ) ||
+			} else if (!ZAP_POS(typ) ||
 					closed_door(bhitpos.x, bhitpos.y)) {
 				bhitpos.x -= stmp->dx;
 				bhitpos.y -= stmp->dy;

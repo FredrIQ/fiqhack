@@ -301,8 +301,8 @@ int max_passive_dmg(struct monst *mdef, struct monst *magr)
     int	i, dmg = 0;
     uchar adtyp;
 
-    for(i = 0; i < NATTK; i++)
-	if(mdef->data->mattk[i].aatyp == AT_NONE ||
+    for (i = 0; i < NATTK; i++)
+	if (mdef->data->mattk[i].aatyp == AT_NONE ||
 		mdef->data->mattk[i].aatyp == AT_BOOM) {
 	    adtyp = mdef->data->mattk[i].adtyp;
 	    if ((adtyp == AD_ACID && !resists_acid(magr)) ||
@@ -311,7 +311,7 @@ int max_passive_dmg(struct monst *mdef, struct monst *magr)
 		    (adtyp == AD_ELEC && !resists_elec(magr)) ||
 		    adtyp == AD_PHYS) {
 		dmg = mdef->data->mattk[i].damn;
-		if(!dmg) dmg = mdef->data->mlevel+1;
+		if (!dmg) dmg = mdef->data->mlevel+1;
 		dmg *= mdef->data->mattk[i].damd;
 	    } else dmg = 0;
 
@@ -542,7 +542,7 @@ int little_to_big(int montype)
 	int i;
 
 	for (i = 0; grownups[i][0] >= LOW_PM; i++)
-		if(montype == grownups[i][0]) return grownups[i][1];
+		if (montype == grownups[i][0]) return grownups[i][1];
 	return montype;
 }
 
@@ -551,7 +551,7 @@ int big_to_little(int montype)
 	int i;
 
 	for (i = 0; grownups[i][0] >= LOW_PM; i++)
-		if(montype == grownups[i][1]) return grownups[i][0];
+		if (montype == grownups[i][1]) return grownups[i][0];
 	return montype;
 }
 

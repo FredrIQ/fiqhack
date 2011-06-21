@@ -36,7 +36,7 @@ const struct worn {
 #define w_blocks(o,m) \
 		((o->otyp == MUMMY_WRAPPING && ((m) & W_ARMC)) ? INVIS : \
 		 (o->otyp == CORNUTHAUM && ((m) & W_ARMH) && \
-			!Role_if(PM_WIZARD)) ? CLAIRVOYANT : 0)
+			!Role_if (PM_WIZARD)) ? CLAIRVOYANT : 0)
 		/* note: monsters don't have clairvoyance, so your role
 		   has no significant effect on their use of w_blocks() */
 
@@ -53,11 +53,11 @@ void setworn(struct obj *obj, long mask)
 	    uskin = obj;
 	 /* assert( !uarm ); */
 	} else {
-	    for(wp = worn; wp->w_mask; wp++) if(wp->w_mask & mask) {
+	    for (wp = worn; wp->w_mask; wp++) if (wp->w_mask & mask) {
 		oobj = *(wp->w_obj);
-		if(oobj && !(oobj->owornmask & wp->w_mask))
+		if (oobj && !(oobj->owornmask & wp->w_mask))
 			impossible("Setworn: mask = %ld.", wp->w_mask);
-		if(oobj) {
+		if (oobj) {
 		    if (u.twoweap && (oobj->owornmask & (W_WEP|W_SWAPWEP)))
 			u.twoweap = 0;
 		    oobj->owornmask &= ~wp->w_mask;
@@ -74,7 +74,7 @@ void setworn(struct obj *obj, long mask)
 		    }
 		}
 		*(wp->w_obj) = obj;
-		if(obj) {
+		if (obj) {
 		    obj->owornmask |= wp->w_mask;
 		    /* Prevent getting/blocking intrinsics from wielding
 		     * potions, through the quiver, etc.
@@ -108,8 +108,8 @@ void setnotworn(struct obj *obj)
 
 	if (!obj) return;
 	if (obj == uwep || obj == uswapwep) u.twoweap = 0;
-	for(wp = worn; wp->w_mask; wp++)
-	    if(obj == *(wp->w_obj)) {
+	for (wp = worn; wp->w_mask; wp++)
+	    if (obj == *(wp->w_obj)) {
 		*(wp->w_obj) = 0;
 		p = objects[obj->otyp].oc_oprop;
 		u.uprops[p].extrinsic = u.uprops[p].extrinsic & ~wp->w_mask;
@@ -393,7 +393,7 @@ static void m_dowear_type(struct monst *mon, long flag, boolean creation,
 	if (old && flag == W_AMUL) return; /* no such thing as better amulets */
 	best = old;
 
-	for(obj = mon->minvent; obj; obj = obj->nobj) {
+	for (obj = mon->minvent; obj; obj = obj->nobj) {
 	    switch(flag) {
 		case W_AMUL:
 		    if (obj->oclass != AMULET_CLASS ||
@@ -492,7 +492,7 @@ struct obj *which_armor(struct monst *mon, long flag)
 {
 	struct obj *obj;
 
-	for(obj = mon->minvent; obj; obj = obj->nobj)
+	for (obj = mon->minvent; obj; obj = obj->nobj)
 		if (obj->owornmask & flag) return obj;
 	return NULL;
 }

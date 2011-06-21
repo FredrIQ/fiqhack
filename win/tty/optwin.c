@@ -81,10 +81,10 @@ boolean option_change_callback(struct nh_option_desc *option)
 	    var_playground = option->value.s;
 	    tty_print_message("This option will take effect when the game is restarted");
 	}
-	else if(!strcmp(option->name, "msghistory")) {
+	else if (!strcmp(option->name, "msghistory")) {
 	    ui_flags.msg_history = option->value.i;
 	}
-	else if(!strcmp(option->name, "msg_window")) {
+	else if (!strcmp(option->name, "msg_window")) {
 	    ui_flags.prevmsg_window = (char)option->value.e;
 	}
 	else if (!strcmp(option->name, "menu_headings")) {

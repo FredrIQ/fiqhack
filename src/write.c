@@ -82,15 +82,15 @@ int dowrite(struct obj *pen)
 
 	/* get paper to write on */
 	paper = getobj(write_on,"write on");
-	if(!paper)
+	if (!paper)
 		return 0;
 	typeword = (paper->oclass == SPBOOK_CLASS) ? "spellbook" : "scroll";
-	if(Blind && !paper->dknown) {
+	if (Blind && !paper->dknown) {
 		You("don't know if that %s is blank or not!", typeword);
 		return 1;
 	}
 	paper->dknown = 1;
-	if(paper->otyp != SCR_BLANK_PAPER && paper->otyp != SPE_BLANK_PAPER) {
+	if (paper->otyp != SCR_BLANK_PAPER && paper->otyp != SPE_BLANK_PAPER) {
 		pline("That %s is not blank!", typeword);
 		exercise(A_WIS, FALSE);
 		return 1;
@@ -100,7 +100,7 @@ int dowrite(struct obj *pen)
 	sprintf(qbuf, "What type of %s do you want to write?", typeword);
 	getlin(qbuf, namebuf);
 	mungspaces(namebuf);	/* remove any excess whitespace */
-	if(namebuf[0] == '\033' || !namebuf[0])
+	if (namebuf[0] == '\033' || !namebuf[0])
 		return 1;
 	nm = namebuf;
 	if (!strncmpi(nm, "scroll ", 7)) nm += 7;
@@ -156,7 +156,7 @@ found:
 
 	/* see if there's enough ink */
 	basecost = cost(new_obj);
-	if(pen->spe < basecost/2)  {
+	if (pen->spe < basecost/2)  {
 		Your("marker is too dry to write that!");
 		obfree(new_obj, NULL);
 		return 1;
@@ -186,9 +186,9 @@ found:
 	pen->spe -= actualcost;
 
 	/* can't write if we don't know it - unless we're lucky */
-	if(!(objects[new_obj->otyp].oc_name_known) &&
+	if (!(objects[new_obj->otyp].oc_name_known) &&
 	   !(objects[new_obj->otyp].oc_uname) &&
-	   (rnl(Role_if(PM_WIZARD) ? 3 : 15))) {
+	   (rnl(Role_if (PM_WIZARD) ? 3 : 15))) {
 		You("%s to write that!", by_descr ? "fail" : "don't know how");
 		/* scrolls disappear, spellbooks don't */
 		if (paper->oclass == SPBOOK_CLASS) {

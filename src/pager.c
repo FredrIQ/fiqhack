@@ -69,7 +69,7 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 	/* file lookup can't distinguish between "gnomish wizard" monster
 	   and correspondingly named player character, always picking the
 	   former; force it to find the general "wizard" entry instead */
-	if (Role_if(PM_WIZARD) && Race_if(PM_GNOME) && !Upolyd)
+	if (Role_if (PM_WIZARD) && Race_if(PM_GNOME) && !Upolyd)
 	    pm = &mons[PM_WIZARD];
 
 	if (u.usteed) {
@@ -245,11 +245,11 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
     } else if (glyph_is_trap(glyph)) {
 	int tnum = what_trap(glyph_to_trap(glyph));
 	strcpy(buf, defsyms[trap_to_defsym(tnum)].explanation);
-    } else if(!glyph_is_cmap(glyph)) {
+    } else if (!glyph_is_cmap(glyph)) {
 	strcpy(buf,"dark part of a room");
     } else switch(glyph_to_cmap(glyph)) {
     case S_altar:
-	if(!In_endgame(&u.uz))
+	if (!In_endgame(&u.uz))
 	    sprintf(buf, "%s altar",
 		align_str(Amask2align(levl[x][y].altarmask & ~AM_SHRINE)));
 	else sprintf(buf, "aligned altar");
@@ -388,7 +388,7 @@ static void checkfile(char *inp, struct permonst *pm, boolean user_typed_name,
 	}
     }
 
-    if(found_in_file) {
+    if (found_in_file) {
 	long entry_offset;
 	int  entry_count;
 	int  i;
@@ -566,7 +566,7 @@ static int do_look(boolean quick)
 	if ((from_screen ?
 		(sym == monsyms[S_HUMAN] && cc.x == u.ux && cc.y == u.uy) :
 		(sym == def_monsyms[S_HUMAN] && !iflags.showrace)) &&
-	    !(Race_if(PM_HUMAN) || Race_if(PM_ELF)) && !Upolyd)
+	    !(Race_if (PM_HUMAN) || Race_if(PM_ELF)) && !Upolyd)
 	    found += append_str(out_str, "you");	/* tack on "or you" */
 
 	/*
@@ -792,12 +792,12 @@ char *dowhatdoes_core(char q, char *cbuf)
 
   	ctrl = ((q <= '\033') ? (q - 1 + 'A') : 0);
 	meta = ((0x80 & q) ? (0x7f & q) : 0);
-	while(dlb_fgets(buf,BUFSZ-6,fp)) {
+	while (dlb_fgets(buf,BUFSZ-6,fp)) {
 	    if ((ctrl && *buf=='^' && *(buf+1)==ctrl) ||
 		(meta && *buf=='M' && *(buf+1)=='-' && *(buf+2)==meta) ||
 		*buf==q) {
 		ep = index(buf, '\n');
-		if(ep) *ep = 0;
+		if (ep) *ep = 0;
 		if (ctrl && buf[2] == '\t'){
 			buf = bufr + 1;
 			strncpy(buf, "^?      ", 8);
@@ -806,7 +806,7 @@ char *dowhatdoes_core(char q, char *cbuf)
 			buf = bufr + 2;
 			strncpy(buf, "M-?     ", 8);
 			buf[2] = meta;
-		} else if(buf[1] == '\t'){
+		} else if (buf[1] == '\t'){
 			buf = bufr;
 			buf[0] = q;
 			strncpy(buf+1, "       ", 7);

@@ -33,7 +33,7 @@ struct monst *christen_monst(struct monst *mtmp, const char *name)
 
 	/* dogname & catname are PL_PSIZ arrays; object names have same limit */
 	lth = *name ? (int)(strlen(name) + 1) : 0;
-	if(lth > PL_PSIZ){
+	if (lth > PL_PSIZ){
 		lth = PL_PSIZ;
 		name = strncpy(buf, name, PL_PSIZ - 1);
 		buf[PL_PSIZ - 1] = '\0';
@@ -99,7 +99,7 @@ int do_mname(void)
 	distant_monnam(mtmp, ARTICLE_THE, buf);
 	sprintf(qbuf, "What do you want to call %s?", buf);
 	getlin(qbuf,buf);
-	if(!*buf || *buf == '\033') return 0;
+	if (!*buf || *buf == '\033') return 0;
 	/* strip leading and trailing spaces; unnames monster if all spaces */
 	mungspaces(buf);
 
@@ -124,7 +124,7 @@ static void do_oname(struct obj *obj)
 	sprintf(qbuf, "What do you want to name %s %s?",
 		is_plural(obj) ? "these" : "this", xname(obj));
 	getlin(qbuf, buf);
-	if(!*buf || *buf == '\033')	return;
+	if (!*buf || *buf == '\033')	return;
 	/* strip leading and trailing spaces; unnames item if all spaces */
 	mungspaces(buf);
 
@@ -197,7 +197,7 @@ struct obj *realloc_obj(struct obj *obj, int oextra_size, void *oextra_src,
 	if (Has_contents(obj)) {
 		struct obj *inside;
 
-		for(inside = obj->cobj; inside; inside = inside->nobj)
+		for (inside = obj->cobj; inside; inside = inside->nobj)
 			inside->ocontainer = otmp;
 	}
 
@@ -269,7 +269,7 @@ int ddocall(void)
 	case 'y':
 		allowall[0] = ALL_CLASSES; allowall[1] = '\0';
 		obj = getobj(allowall, "name");
-		if(obj) do_oname(obj);
+		if (obj) do_oname(obj);
 		break;
 	default :
 		obj = getobj(callable, "call");
@@ -309,12 +309,12 @@ void docall(struct obj *obj)
 	else
 	    sprintf(qbuf, "Call %s:", an(xname(&otemp)));
 	getlin(qbuf, buf);
-	if(!*buf || *buf == '\033')
+	if (!*buf || *buf == '\033')
 		return;
 
 	/* clear old name */
 	str1 = &(objects[obj->otyp].oc_uname);
-	if(*str1) free(*str1);
+	if (*str1) free(*str1);
 
 	/* strip leading and trailing spaces; uncalls item if all spaces */
 	mungspaces(buf);

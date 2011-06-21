@@ -35,19 +35,19 @@ static void roguejoin(int x1, int y1, int x2, int y2, int horiz)
 #endif
 	if (horiz) {
 		middle = x1 + rn2(x2-x1+1);
-		for(x=MIN(x1,middle); x<=MAX(x1,middle); x++)
+		for (x=MIN(x1,middle); x<=MAX(x1,middle); x++)
 			corr(x, y1);
-		for(y=MIN(y1,y2); y<=MAX(y1,y2); y++)
+		for (y=MIN(y1,y2); y<=MAX(y1,y2); y++)
 			corr(middle,y);
-		for(x=MIN(middle,x2); x<=MAX(middle,x2); x++)
+		for (x=MIN(middle,x2); x<=MAX(middle,x2); x++)
 			corr(x, y2);
 	} else {
 		middle = y1 + rn2(y2-y1+1);
-		for(y=MIN(y1,middle); y<=MAX(y1,middle); y++)
+		for (y=MIN(y1,middle); y<=MAX(y1,middle); y++)
 			corr(x1, y);
-		for(x=MIN(x1,x2); x<=MAX(x1,x2); x++)
+		for (x=MIN(x1,x2); x<=MAX(x1,x2); x++)
 			corr(x, middle);
-		for(y=MIN(middle,y2); y<=MAX(middle,y2); y++)
+		for (y=MIN(middle,y2); y<=MAX(middle,y2); y++)
 			corr(x2,y);
 	}
 }
@@ -72,7 +72,7 @@ static void roguecorr(int x, int y, int dir)
 			levl[fromx][fromy].doormask = D_NODOOR;
 			fromy++;
 		}
-		if(y >= 2) {
+		if (y >= 2) {
 			impossible("down door from %d,%d going nowhere?",x,y);
 			return;
 		}
@@ -109,7 +109,7 @@ static void roguecorr(int x, int y, int dir)
 			levl[fromx][fromy].doormask = D_NODOOR;
 			fromx++;
 		}
-		if(x >= 2) {
+		if (x >= 2) {
 			impossible("right door from %d,%d going nowhere?",x,y);
 			return;
 		}
@@ -139,7 +139,7 @@ static void miniwalk(int x, int y)
 	int q, dir;
 	int dirs[4];
 
-	while(1) {
+	while (1) {
 		q = 0;
 #define doorhere (r[x][y].doortable)
 		if (x>0 && (!(doorhere & LEFT)) &&
@@ -202,7 +202,7 @@ void makeroguerooms(void) {
 #define here r[x][y]
 
 	nroom = 0;
-	for(y=0; y<3; y++) for(x=0; x<3; x++) {
+	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		/* Note: we want to insure at least 1 room.  So, if the
 		 * first 8 are all dummies, force the last to be a room.
 		 */
@@ -227,7 +227,7 @@ void makeroguerooms(void) {
 	}
 	miniwalk(rn2(3), rn2(3));
 	nroom = 0;
-	for(y=0; y<3; y++) for(x=0; x<3; x++) {
+	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		if (here.real) { /* Make a room */
 			int lowx, lowy, hix, hiy;
 
@@ -248,7 +248,7 @@ void makeroguerooms(void) {
 	}
 
 	/* Now, add connecting corridors. */
-	for(y=0; y<3; y++) for(x=0; x<3; x++) {
+	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		if (here.doortable & DOWN)
 			roguecorr(x, y, DOWN);
 		if (here.doortable & RIGHT)

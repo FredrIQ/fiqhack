@@ -190,7 +190,7 @@ boolean create_drawbridge(int x, int y, int dir, boolean flag)
 	levl[x][y].horizontal = !horiz;
 	levl[x2][y2].horizontal = horiz;
 	levl[x][y].drawbridgemask = dir;
-	if(lava) levl[x][y].drawbridgemask |= DB_LAVA;
+	if (lava) levl[x][y].drawbridgemask |= DB_LAVA;
 	return TRUE;
 }
 
@@ -624,7 +624,7 @@ void close_drawbridge(int x, int y)
 	do_entity(&(occupants[0]));		/* Do set_entity after first */
 	set_entity(x2, y2, &(occupants[1]));	/* do_entity for worm tail */
 	do_entity(&(occupants[1]));
-	if(OBJ_AT(x,y) && flags.soundok)
+	if (OBJ_AT(x,y) && flags.soundok)
 	    You_hear("smashing and crushing.");
 	revive_nasty(x,y,NULL);
 	revive_nasty(x2,y2,NULL);
@@ -762,7 +762,7 @@ void destroy_drawbridge(int x, int y)
 			killer_format = KILLED_BY_AN;
 			killer = "collapsing drawbridge";
 			e_died(etmp1, e_inview? 3 : 2, CRUSHING); /*no corpse*/
-			if(lev1->typ == MOAT) do_entity(etmp1);
+			if (lev1->typ == MOAT) do_entity(etmp1);
 		}
 	}
 }

@@ -132,19 +132,19 @@ static int in_trouble(void)
 	/*
 	 * major troubles
 	 */
-	if(Stoned) return TROUBLE_STONED;
-	if(Slimed) return TROUBLE_SLIMED;
-	if(Strangled) return TROUBLE_STRANGLED;
-	if(u.utrap && u.utraptype == TT_LAVA) return TROUBLE_LAVA;
-	if(Sick) return TROUBLE_SICK;
-	if(u.uhs >= WEAK) return TROUBLE_STARVING;
+	if (Stoned) return TROUBLE_STONED;
+	if (Slimed) return TROUBLE_SLIMED;
+	if (Strangled) return TROUBLE_STRANGLED;
+	if (u.utrap && u.utraptype == TT_LAVA) return TROUBLE_LAVA;
+	if (Sick) return TROUBLE_SICK;
+	if (u.uhs >= WEAK) return TROUBLE_STARVING;
 	if (Upolyd ? (u.mh <= 5 || u.mh*7 <= u.mhmax) :
 		(u.uhp <= 5 || u.uhp*7 <= u.uhpmax)) return TROUBLE_HIT;
-	if(u.ulycn >= LOW_PM) return TROUBLE_LYCANTHROPE;
-	if(near_capacity() >= EXT_ENCUMBER && AMAX(A_STR)-ABASE(A_STR) > 3)
+	if (u.ulycn >= LOW_PM) return TROUBLE_LYCANTHROPE;
+	if (near_capacity() >= EXT_ENCUMBER && AMAX(A_STR)-ABASE(A_STR) > 3)
 		return TROUBLE_COLLAPSING;
 
-	for (i= -1; i<=1; i++) for(j= -1; j<=1; j++) {
+	for (i= -1; i<=1; i++) for (j= -1; j<=1; j++) {
 		if (!i && !j) continue;
 		if (!isok(u.ux+i, u.uy+j) || IS_ROCK(levl[u.ux+i][u.uy+j].typ)
 		    || (blocked_boulder(i,j) && !throws_rocks(youmonst.data)))
@@ -166,12 +166,12 @@ static int in_trouble(void)
 		    ((otmp = unchanger()) != 0 && otmp->cursed)))
 		return TROUBLE_UNUSEABLE_HANDS;
 	}
-	if(Blindfolded && ublindf->cursed) return TROUBLE_CURSED_BLINDFOLD;
+	if (Blindfolded && ublindf->cursed) return TROUBLE_CURSED_BLINDFOLD;
 
 	/*
 	 * minor troubles
 	 */
-	if(Punished) return TROUBLE_PUNISHED;
+	if (Punished) return TROUBLE_PUNISHED;
 	if (Cursed_obj(uarmg, GAUNTLETS_OF_FUMBLING) ||
 		Cursed_obj(uarmf, FUMBLE_BOOTS))
 	    return TROUBLE_FUMBLING;
@@ -182,14 +182,14 @@ static int in_trouble(void)
 	}
 
 	if (Blinded > 1 && haseyes(youmonst.data)) return TROUBLE_BLIND;
-	for(i=0; i<A_MAX; i++)
-	    if(ABASE(i) < AMAX(i)) return TROUBLE_POISONED;
-	if(Wounded_legs && !u.usteed)
+	for (i=0; i<A_MAX; i++)
+	    if (ABASE(i) < AMAX(i)) return TROUBLE_POISONED;
+	if (Wounded_legs && !u.usteed)
 		return TROUBLE_WOUNDED_LEGS;
-	if(u.uhs >= HUNGRY) return TROUBLE_HUNGRY;
-	if(HStun) return TROUBLE_STUNNED;
-	if(HConfusion) return TROUBLE_CONFUSED;
-	if(Hallucination) return TROUBLE_HALLUCINATION;
+	if (u.uhs >= HUNGRY) return TROUBLE_HUNGRY;
+	if (HStun) return TROUBLE_STUNNED;
+	if (HConfusion) return TROUBLE_CONFUSED;
+	if (Hallucination) return TROUBLE_HALLUCINATION;
 	return 0;
 }
 
@@ -286,7 +286,7 @@ static void fix_worst_trouble(int trouble)
 		    /* teleport should always succeed, but if not,
 		     * just untrap them.
 		     */
-		    if(!safe_teleds(FALSE))
+		    if (!safe_teleds(FALSE))
 			u.utrap = 0;
 		    break;
 	    case TROUBLE_STARVING:
@@ -394,8 +394,8 @@ decurse:
 			pline("There's a tiger in your tank.");
 		    else
 			You_feel("in good health again.");
-		    for(i=0; i<A_MAX; i++) {
-			if(ABASE(i) < AMAX(i)) {
+		    for (i=0; i<A_MAX; i++) {
+			if (ABASE(i) < AMAX(i)) {
 				ABASE(i) = AMAX(i);
 				botl = 1;
 			}
@@ -535,12 +535,12 @@ static void angrygods(aligntyp resp_god)
 {
 	int	maxanger;
 
-	if(Inhell) resp_god = A_NONE;
+	if (Inhell) resp_god = A_NONE;
 	u.ublessed = 0;
 
 	/* changed from tmp = u.ugangr + abs (u.uluck) -- rph */
 	/* added test for alignment diff -dlc */
-	if(resp_god != u.ualign.type)
+	if (resp_god != u.ualign.type)
 	    maxanger =  u.ualign.record/2 + (Luck > 0 ? -Luck/3 : -Luck);
 	else
 	    maxanger =  3*u.ugangr +
@@ -653,7 +653,7 @@ static void gcrownu(void)
     class_gift = STRANGE_OBJECT;
     /* 3.3.[01] had this in the A_NEUTRAL case below,
        preventing chaotic wizards from receiving a spellbook */
-    if (Role_if(PM_WIZARD) &&
+    if (Role_if (PM_WIZARD) &&
 	    (!uwep || (uwep->oartifact != ART_VORPAL_BLADE &&
 		       uwep->oartifact != ART_STORMBRINGER)) &&
 	    !carrying(SPE_FINGER_OF_DEATH)) {
@@ -672,7 +672,7 @@ static void gcrownu(void)
 		if (ok_wep(uwep)) obj = uwep;	/* to be blessed,&c */
 		break;
 	    }
-    } else if (Role_if(PM_MONK) &&
+    } else if (Role_if (PM_MONK) &&
 	    (!uwep || !uwep->oartifact) &&
 	    !carrying(SPE_RESTORE_ABILITY)) {
 	/* monks rarely wield a weapon */
@@ -821,7 +821,7 @@ static void pleased(aligntyp g_align)
     /* note: can't get pat_on_head unless all troubles have just been
        fixed or there were no troubles to begin with; hallucination
        won't be in effect so special handling for it is superfluous */
-    if(pat_on_head)
+    if (pat_on_head)
 	switch(rn2((Luck + 6)>>1)) {
 	case 0:	break;
 	case 1:
@@ -915,7 +915,7 @@ static void pleased(aligntyp g_align)
 		You_feel("the power of %s.", u_gname());
 	    else You("are surrounded by %s aura.",
 		     an(hcolor(NH_LIGHT_BLUE)));
-	    for(otmp=invent; otmp; otmp=otmp->nobj) {
+	    for (otmp=invent; otmp; otmp=otmp->nobj) {
 		if (otmp->cursed) {
 		    uncurse(otmp);
 		    if (!Blind) {
@@ -1010,7 +1010,7 @@ static boolean water_prayer(boolean bless_water)
     long changed = 0;
     boolean other = FALSE, bc_known = !(Blind || Hallucination);
 
-    for(otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+    for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
 	/* turn water into (un)holy water */
 	if (otmp->otyp == POT_WATER &&
 		(bless_water ? !otmp->blessed : !otmp->cursed)) {
@@ -1018,10 +1018,10 @@ static boolean water_prayer(boolean bless_water)
 	    otmp->cursed = !bless_water;
 	    otmp->bknown = bc_known;
 	    changed += otmp->quan;
-	} else if(otmp->oclass == POTION_CLASS)
+	} else if (otmp->oclass == POTION_CLASS)
 	    other = TRUE;
     }
-    if(!Blind && changed) {
+    if (!Blind && changed) {
 	pline("%s potion%s on the altar glow%s %s for a moment.",
 	      ((other && changed > 1L) ? "Some of the" :
 					(other ? "One of the" : "The")),
@@ -1034,7 +1034,7 @@ static boolean water_prayer(boolean bless_water)
 static void godvoice(aligntyp g_align, const char *words)
 {
     const char *quot = "";
-    if(words)
+    if (words)
 	quot = "\"";
     else
 	words = "";
@@ -1051,8 +1051,8 @@ static void gods_angry(aligntyp g_align)
 /* The g_align god is upset with you. */
 static void gods_upset(aligntyp g_align)
 {
-	if(g_align == u.ualign.type) u.ugangr++;
-	else if(u.ugangr) u.ugangr--;
+	if (g_align == u.ualign.type) u.ugangr++;
+	else if (u.ugangr) u.ugangr--;
 	angrygods(g_align);
 }
 
@@ -1140,7 +1140,7 @@ int dosacrifice(void)
 	    if (altaralign != A_CHAOTIC && altaralign != A_NONE) {
 		/* curse the lawful/neutral altar */
 		pline_The("altar is stained with %s blood.", urace.adj);
-		if(!Is_astralevel(&u.uz))
+		if (!Is_astralevel(&u.uz))
 		    levl[u.ux][u.uy].altarmask = AM_CHAOTIC;
 		angry_priest();
 	    } else {
@@ -1233,9 +1233,9 @@ int dosacrifice(void)
 	    return 1;
 	} else {
 	    /* The final Test.	Did you win? */
-	    if(uamul == otmp) Amulet_off();
+	    if (uamul == otmp) Amulet_off();
 	    u.uevent.ascended = 1;
-	    if(carried(otmp)) useup(otmp); /* well, it's gone now */
+	    if (carried(otmp)) useup(otmp); /* well, it's gone now */
 	    else useupf(otmp, 1L);
 	    You("offer the Amulet of Yendor to %s...", a_gname());
 	    if (u.ualign.type != altaralign) {
@@ -1308,7 +1308,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 	    /* Is this a conversion ? */
 	    /* An unaligned altar in Gehennom will always elicit rejection. */
 	    if (ugod_is_angry() || (altaralign == A_NONE && Inhell)) {
-		if(u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL] &&
+		if (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL] &&
 		   altaralign != A_NONE) {
 		    You("have a strong feeling that %s is angry...", u_gname());
 		    consume_offering(otmp);
@@ -1361,7 +1361,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		       rnd(u.ualign.record) > (3*ALIGNLIM)/4)
 			summon_minion(altaralign, TRUE);
 		    /* anger priest; test handles bones files */
-		    if((pri = findpriest(temple_occupied(u.urooms))) &&
+		    if ((pri = findpriest(temple_occupied(u.urooms))) &&
 		       !p_coaligned(pri))
 			angry_priest();
 		} else {
@@ -1379,11 +1379,11 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 
 	consume_offering(otmp);
 	/* OK, you get brownie points. */
-	if(u.ugangr) {
+	if (u.ugangr) {
 	    u.ugangr -=
 		((value * (u.ualign.type == A_CHAOTIC ? 2 : 3)) / MAXVALUE);
-	    if(u.ugangr < 0) u.ugangr = 0;
-	    if(u.ugangr != saved_anger) {
+	    if (u.ugangr < 0) u.ugangr = 0;
+	    if (u.ugangr != saved_anger) {
 		if (u.ugangr) {
 		    pline("%s seems %s.", u_gname(),
 			  Hallucination ? "groovy" : "slightly mollified");
@@ -1400,16 +1400,16 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    pline_The("gods seem tall.");
 		else You("have a feeling of inadequacy.");
 	    }
-	} else if(ugod_is_angry()) {
-	    if(value > MAXVALUE) value = MAXVALUE;
-	    if(value > -u.ualign.record) value = -u.ualign.record;
+	} else if (ugod_is_angry()) {
+	    if (value > MAXVALUE) value = MAXVALUE;
+	    if (value > -u.ualign.record) value = -u.ualign.record;
 	    adjalign(value);
 	    You_feel("partially absolved.");
 	} else if (u.ublesscnt > 0) {
 	    u.ublesscnt -=
 		((value * (u.ualign.type == A_CHAOTIC ? 500 : 300)) / MAXVALUE);
-	    if(u.ublesscnt < 0) u.ublesscnt = 0;
-	    if(u.ublesscnt != saved_cnt) {
+	    if (u.ublesscnt < 0) u.ublesscnt = 0;
+	    if (u.ublesscnt != saved_cnt) {
 		if (u.ublesscnt) {
 		    if (Hallucination)
 			You("realize that the gods are not like you and I.");
@@ -1497,7 +1497,7 @@ boolean can_pray(boolean praying)
     else if ((int)Luck < 0 || u.ugangr || alignment < 0)
 	p_type = 1;		/* too naughty... */
     else /* alignment >= 0 */ {
-	if(on_altar() && u.ualign.type != p_aligntyp)
+	if (on_altar() && u.ualign.type != p_aligntyp)
 	    p_type = 2;
 	else
 	    p_type = 3;
@@ -1536,7 +1536,7 @@ int dopray(void)
 	    if (u.uluck < 0) u.uluck = 0;
 	    if (u.ualign.record <= 0) u.ualign.record = 1;
 	    u.ugangr = 0;
-	    if(p_type < 2) p_type = 3;
+	    if (p_type < 2) p_type = 3;
 	}
     }
 
@@ -1544,7 +1544,7 @@ int dopray(void)
     nomovemsg = "You finish your prayer.";
     afternmv = prayer_done;
 
-    if(p_type == 3 && !Inhell) {
+    if (p_type == 3 && !Inhell) {
 	/* if you've been true to your god you can't die while you pray */
 	if (!Blind)
 	    You("are surrounded by a shimmering light.");
@@ -1559,7 +1559,7 @@ static int prayer_done(void)
     aligntyp alignment = p_aligntyp;
 
     u.uinvulnerable = FALSE;
-    if(p_type == -1) {
+    if (p_type == -1) {
 	godvoice(alignment,
 		 alignment == A_LAWFUL ?
 		 "Vile creature, thou durst call upon me?" :
@@ -1581,17 +1581,17 @@ static int prayer_done(void)
     }
 
     if (p_type == 0) {
-	if(on_altar() && u.ualign.type != alignment)
+	if (on_altar() && u.ualign.type != alignment)
 	    water_prayer(FALSE);
 	u.ublesscnt += rnz(250);
 	change_luck(-3);
 	gods_upset(u.ualign.type);
-    } else if(p_type == 1) {
-	if(on_altar() && u.ualign.type != alignment)
+    } else if (p_type == 1) {
+	if (on_altar() && u.ualign.type != alignment)
 	    water_prayer(FALSE);
 	angrygods(u.ualign.type);	/* naughty */
-    } else if(p_type == 2) {
-	if(water_prayer(FALSE)) {
+    } else if (p_type == 2) {
+	if (water_prayer(FALSE)) {
 	    /* attempted water prayer on a non-coaligned altar */
 	    u.ublesscnt += rnz(250);
 	    change_luck(-3);
@@ -1599,7 +1599,7 @@ static int prayer_done(void)
 	} else pleased(alignment);
     } else {
 	/* coaligned */
-	if(on_altar())
+	if (on_altar())
 	    water_prayer(TRUE);
 	pleased(alignment); /* nice */
     }
@@ -1612,7 +1612,7 @@ int doturn(void)
 	struct monst *mtmp, *mtmp2;
 	int once, range, xlev;
 
-	if (!Role_if(PM_PRIEST) && !Role_if(PM_KNIGHT)) {
+	if (!Role_if (PM_PRIEST) && !Role_if(PM_KNIGHT)) {
 		/* Try to use turn undead spell. */
 		if (objects[SPE_TURN_UNDEAD].oc_name_known) {
 		    int sp_no;
@@ -1652,7 +1652,7 @@ int doturn(void)
 	range = BOLT_LIM + (u.ulevel / 5);	/* 5 to 11 */
 	range *= range;
 	once = 0;
-	for(mtmp = fmon; mtmp; mtmp = mtmp2) {
+	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 
 	    if (DEADMONSTER(mtmp)) continue;
@@ -1710,7 +1710,7 @@ const char *a_gname(void)
 /* returns the name of an altar's deity */
 const char *a_gname_at(xchar x, xchar y)
 {
-    if(!IS_ALTAR(levl[x][y].typ)) return NULL;
+    if (!IS_ALTAR(levl[x][y].typ)) return NULL;
 
     return align_gname(a_align(x,y));
 }
@@ -1777,7 +1777,7 @@ void altar_wrath(int x, int y)
 {
     aligntyp altaralign = a_align(x,y);
 
-    if(!strcmp(align_gname(altaralign), u_gname())) {
+    if (!strcmp(align_gname(altaralign), u_gname())) {
 	godvoice(altaralign, "How darest thou desecrate my altar!");
 	adjattrib(A_WIS, -1, FALSE);
     } else {
@@ -1794,8 +1794,8 @@ static boolean blocked_boulder(int dx, int dy)
     struct obj *otmp;
     long count = 0L;
 
-    for(otmp = level.objects[u.ux+dx][u.uy+dy]; otmp; otmp = otmp->nexthere) {
-	if(otmp->otyp == BOULDER)
+    for (otmp = level.objects[u.ux+dx][u.uy+dy]; otmp; otmp = otmp->nexthere) {
+	if (otmp->otyp == BOULDER)
 	    count += otmp->quan;
     }
 

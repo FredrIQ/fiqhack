@@ -161,7 +161,7 @@ void nh_get_player_info(struct nh_player_info *pi)
 		int k = 0;
 
 		strcpy(mbot, mons[u.umonnum].mname);
-		while(mbot[k] != 0) {
+		while (mbot[k] != 0) {
 		    if ((k == 0 || (k > 0 && mbot[k-1] == ' ')) &&
 					'a' <= mbot[k] && mbot[k] <= 'z')
 			mbot[k] += 'A' - 'a';
@@ -214,27 +214,27 @@ void nh_get_player_info(struct nh_player_info *pi)
 	pi->xp = u.uexp;
 
 	
-	if(strcmp(hu_stat[u.uhs], "        "))
+	if (strcmp(hu_stat[u.uhs], "        "))
 	    strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
 	
-	if(Confusion)
+	if (Confusion)
 	    strncpy(pi->statusitems[pi->nr_items++], "Conf", ITEMLEN);
 	
-	if(Sick) {
+	if (Sick) {
 	    if (u.usick_type & SICK_VOMITABLE)
 		strncpy(pi->statusitems[pi->nr_items++], "FoodPois", ITEMLEN);
 	    if (u.usick_type & SICK_NONVOMITABLE)
 		strncpy(pi->statusitems[pi->nr_items++], "Ill", ITEMLEN);
 	}
-	if(Blind)
+	if (Blind)
 	    strncpy(pi->statusitems[pi->nr_items++], "Blind", ITEMLEN);
-	if(Stunned)
+	if (Stunned)
 	    strncpy(pi->statusitems[pi->nr_items++], "Stun", ITEMLEN);
-	if(Hallucination)
+	if (Hallucination)
 	    strncpy(pi->statusitems[pi->nr_items++], "Hallu", ITEMLEN);
-	if(Slimed)
+	if (Slimed)
 	    strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
-	if(cap > UNENCUMBERED)
+	if (cap > UNENCUMBERED)
 	    strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
 }
 

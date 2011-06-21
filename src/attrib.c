@@ -124,10 +124,10 @@ boolean adjattrib(
 	    }
 
 	    ABASE(ndx) += incr;
-	    if(ABASE(ndx) > AMAX(ndx)) {
+	    if (ABASE(ndx) > AMAX(ndx)) {
 		incr = ABASE(ndx) - AMAX(ndx);
 		AMAX(ndx) += incr;
-		if(AMAX(ndx) > ATTRMAX(ndx))
+		if (AMAX(ndx) > ATTRMAX(ndx))
 		    AMAX(ndx) = ATTRMAX(ndx);
 		ABASE(ndx) = AMAX(ndx);
 	    }
@@ -141,11 +141,11 @@ boolean adjattrib(
 	    }
 
 	    ABASE(ndx) += incr;
-	    if(ABASE(ndx) < ATTRMIN(ndx)) {
+	    if (ABASE(ndx) < ATTRMIN(ndx)) {
 		incr = ABASE(ndx) - ATTRMIN(ndx);
 		ABASE(ndx) = ATTRMIN(ndx);
 		AMAX(ndx) += incr;
-		if(AMAX(ndx) < ATTRMIN(ndx))
+		if (AMAX(ndx) < ATTRMIN(ndx))
 		    AMAX(ndx) = ATTRMIN(ndx);
 	    }
 	}
@@ -163,9 +163,9 @@ void gainstr(struct obj *otmp, int incr)
 {
 	int num = 1;
 
-	if(incr) num = incr;
+	if (incr) num = incr;
 	else {
-	    if(ABASE(A_STR) < 18) num = (rn2(4) ? 1 : rnd(6) );
+	    if (ABASE(A_STR) < 18) num = (rn2(4) ? 1 : rnd(6) );
 	    else if (ABASE(A_STR) < STR18(85)) num = rnd(10);
 	}
 	adjattrib(A_STR, (otmp && otmp->cursed) ? -num : num, TRUE);
@@ -175,7 +175,7 @@ void losestr(int num)	/* may kill you; cause may be poison or monster like 'a' *
 {
 	int ustr = ABASE(A_STR) - num;
 
-	while(ustr < 3) {
+	while (ustr < 3) {
 	    ++ustr;
 	    --num;
 	    if (Upolyd) {
@@ -226,13 +226,13 @@ void restore_attrib(void)
 {
 	int	i;
 
-	for(i = 0; i < A_MAX; i++) {	/* all temporary losses/gains */
+	for (i = 0; i < A_MAX; i++) {	/* all temporary losses/gains */
 
-	   if(ATEMP(i) && ATIME(i)) {
-		if(!(--(ATIME(i)))) { /* countdown for change */
+	   if (ATEMP(i) && ATIME(i)) {
+		if (!(--(ATIME(i)))) { /* countdown for change */
 		    ATEMP(i) += ATEMP(i) > 0 ? -1 : 1;
 
-		    if(ATEMP(i)) /* reset timer */
+		    if (ATEMP(i)) /* reset timer */
 			ATIME(i) = 100 / ACURR(A_CON);
 		}
 	    }
@@ -254,7 +254,7 @@ exercise(int i, boolean inc_or_dec)
 	/* no physical exercise while polymorphed; the body's temporary */
 	if (Upolyd && i != A_WIS) return;
 
-	if(abs(AEXE(i)) < AVAL) {
+	if (abs(AEXE(i)) < AVAL) {
 		/*
 		 *	Law of diminishing returns (Part I):
 		 *
@@ -286,7 +286,7 @@ exercise(int i, boolean inc_or_dec)
 
 static void exerper(void)
 {
-	if(!(moves % 10)) {
+	if (!(moves % 10)) {
 		/* Hunger Checks */
 
 		int hs = (u.uhunger > 1000) ? SATIATED :
@@ -299,12 +299,12 @@ static void exerper(void)
 #endif
 		switch (hs) {
 		    case SATIATED:	exercise(A_DEX, FALSE);
-					if (Role_if(PM_MONK))
+					if (Role_if (PM_MONK))
 					    exercise(A_WIS, FALSE);
 					break;
 		    case NOT_HUNGRY:	exercise(A_CON, TRUE); break;
 		    case WEAK:		exercise(A_STR, FALSE);
-					if (Role_if(PM_MONK))	/* fasting */
+					if (Role_if (PM_MONK))	/* fasting */
 					    exercise(A_WIS, TRUE);
 					break;
 		    case FAINTING:
@@ -326,7 +326,7 @@ static void exerper(void)
 	}
 
 	/* status checks */
-	if(!(moves % 5)) {
+	if (!(moves % 5)) {
 #ifdef DEBUG
 		pline("exerper: Status checks");
 #endif
@@ -334,11 +334,11 @@ static void exerper(void)
 			exercise(A_WIS, TRUE);
 		if (HRegeneration)
 			exercise(A_STR, TRUE);
-		if(Sick || Vomiting)
+		if (Sick || Vomiting)
 			exercise(A_CON, FALSE);
-		if(Confusion || Hallucination)
+		if (Confusion || Hallucination)
 			exercise(A_WIS, FALSE);
-		if((Wounded_legs && !u.usteed) || Fumbling || HStun)
+		if ((Wounded_legs && !u.usteed) || Fumbling || HStun)
 			exercise(A_DEX, FALSE);
 	}
 }
@@ -351,11 +351,11 @@ void exerchk(void)
 	exerper();
 
 #ifdef DEBUG
-	if(moves >= next_check)
+	if (moves >= next_check)
 		pline("exerchk: ready to test. multi = %d.", multi);
 #endif
 	/*	Are we ready for a test?	*/
-	if(moves >= next_check && !multi) {
+	if (moves >= next_check && !multi) {
 #ifdef DEBUG
 	    pline("exerchk: testing.");
 #endif
@@ -367,10 +367,10 @@ void exerchk(void)
 	     *	increase/decrease, you lose some of the
 	     *	accumulated effects.
 	     */
-	    for(i = 0; i < A_MAX; AEXE(i++) /= 2) {
+	    for (i = 0; i < A_MAX; AEXE(i++) /= 2) {
 
-		if(ABASE(i) >= 18 || !AEXE(i)) continue;
-		if(i == A_INT || i == A_CHA) continue;/* can't exercise these */
+		if (ABASE(i) >= 18 || !AEXE(i)) continue;
+		if (i == A_INT || i == A_CHA) continue;/* can't exercise these */
 
 #ifdef DEBUG
 		pline("exerchk: testing %s (%d).",
@@ -383,14 +383,14 @@ void exerchk(void)
 		 *	You don't *always* gain by exercising.
 		 *	[MRS 92/10/28 - Treat Wisdom specially for balance.]
 		 */
-		if(rn2(AVAL) > ((i != A_WIS) ? abs(AEXE(i)*2/3) : abs(AEXE(i))))
+		if (rn2(AVAL) > ((i != A_WIS) ? abs(AEXE(i)*2/3) : abs(AEXE(i))))
 		    continue;
 		mod_val = sgn(AEXE(i));
 
 #ifdef DEBUG
 		pline("exerchk: changing %d.", i);
 #endif
-		if(adjattrib(i, mod_val, -1)) {
+		if (adjattrib(i, mod_val, -1)) {
 #ifdef DEBUG
 		    pline("exerchk: changed %d.", i);
 #endif
@@ -436,20 +436,20 @@ void init_attr(int np)
 	int	i, x, tryct;
 
 
-	for(i = 0; i < A_MAX; i++) {
+	for (i = 0; i < A_MAX; i++) {
 	    ABASE(i) = AMAX(i) = urole.attrbase[i];
 	    ATEMP(i) = ATIME(i) = 0;
 	    np -= urole.attrbase[i];
 	}
 
 	tryct = 0;
-	while(np > 0 && tryct < 100) {
+	while (np > 0 && tryct < 100) {
 
 	    x = rn2(100);
 	    for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++) ;
-	    if(i >= A_MAX) continue; /* impossible */
+	    if (i >= A_MAX) continue; /* impossible */
 
-	    if(ABASE(i) >= ATTRMAX(i)) {
+	    if (ABASE(i) >= ATTRMAX(i)) {
 
 		tryct++;
 		continue;
@@ -461,13 +461,13 @@ void init_attr(int np)
 	}
 
 	tryct = 0;
-	while(np < 0 && tryct < 100) {		/* for redistribution */
+	while (np < 0 && tryct < 100) {		/* for redistribution */
 
 	    x = rn2(100);
 	    for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++) ;
-	    if(i >= A_MAX) continue; /* impossible */
+	    if (i >= A_MAX) continue; /* impossible */
 
-	    if(ABASE(i) <= ATTRMIN(i)) {
+	    if (ABASE(i) <= ATTRMIN(i)) {
 
 		tryct++;
 		continue;
@@ -483,7 +483,7 @@ void redist_attr(void)
 {
 	int i, tmp;
 
-	for(i = 0; i < A_MAX; i++) {
+	for (i = 0; i < A_MAX; i++) {
 	    if (i==A_INT || i==A_WIS) continue;
 		/* Polymorphing doesn't change your mind */
 	    tmp = AMAX(i);
@@ -549,7 +549,7 @@ void adjabil(int oldlevel, int newlevel)
 	    	mask = FROMRACE;
 	    }
 		prevabil = *(abil->ability);
-		if(oldlevel < abil->ulevel && newlevel >= abil->ulevel) {
+		if (oldlevel < abil->ulevel && newlevel >= abil->ulevel) {
 			/* Abilities gained at level 1 can never be lost
 			 * via level loss, only via means that remove _any_
 			 * sort of ability.  A "gain" of such an ability from
@@ -560,16 +560,16 @@ void adjabil(int oldlevel, int newlevel)
 				*(abil->ability) |= (mask|FROMOUTSIDE);
 			else
 				*(abil->ability) |= mask;
-			if(!(*(abil->ability) & INTRINSIC & ~mask)) {
-			    if(*(abil->gainstr))
+			if (!(*(abil->ability) & INTRINSIC & ~mask)) {
+			    if (*(abil->gainstr))
 				You_feel("%s!", abil->gainstr);
 			}
 		} else if (oldlevel >= abil->ulevel && newlevel < abil->ulevel) {
 			*(abil->ability) &= ~mask;
-			if(!(*(abil->ability) & INTRINSIC)) {
-			    if(*(abil->losestr))
+			if (!(*(abil->ability) & INTRINSIC)) {
+			    if (*(abil->losestr))
 				You_feel("%s!", abil->losestr);
-			    else if(*(abil->gainstr))
+			    else if (*(abil->gainstr))
 				You_feel("less %s!", abil->gainstr);
 			}
 		}
@@ -673,13 +673,13 @@ void adjalign(int n)
 {
 	int newalign = u.ualign.record + n;
 
-	if(n < 0) {
-		if(newalign < u.ualign.record)
+	if (n < 0) {
+		if (newalign < u.ualign.record)
 			u.ualign.record = newalign;
 	} else
-		if(newalign > u.ualign.record) {
+		if (newalign > u.ualign.record) {
 			u.ualign.record = newalign;
-			if(u.ualign.record > ALIGNLIM)
+			if (u.ualign.record > ALIGNLIM)
 				u.ualign.record = ALIGNLIM;
 		}
 }

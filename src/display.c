@@ -909,7 +909,7 @@ void swallowed(int first)
     /*
      *  Display the hero surrounded by the monster's stomach.
      */
-    if(isok(u.ux, u.uy-1)) {
+    if (isok(u.ux, u.uy-1)) {
 	if (left_ok)
 	show_glyph(u.ux-1, u.uy-1, swallow_to_glyph(swallower, S_sw_tl));
 	show_glyph(u.ux  , u.uy-1, swallow_to_glyph(swallower, S_sw_tc));
@@ -923,7 +923,7 @@ void swallowed(int first)
     if (rght_ok)
     show_glyph(u.ux+1, u.uy  , swallow_to_glyph(swallower, S_sw_mr));
 
-    if(isok(u.ux, u.uy+1)) {
+    if (isok(u.ux, u.uy+1)) {
 	if (left_ok)
 	show_glyph(u.ux-1, u.uy+1, swallow_to_glyph(swallower, S_sw_bl));
 	show_glyph(u.ux  , u.uy+1, swallow_to_glyph(swallower, S_sw_bc));
@@ -1053,7 +1053,7 @@ void set_mimic_blocking(void)
 	   ((mon->m_ap_type == M_AP_FURNITURE &&
 	     (mon->mappearance == S_vcdoor || mon->mappearance == S_hcdoor)) ||
 	    (mon->m_ap_type == M_AP_OBJECT && mon->mappearance == BOULDER))) {
-	    if(See_invisible)
+	    if (See_invisible)
 		block_point(mon->mx, mon->my);
 	    else
 		unblock_point(mon->mx, mon->my);
@@ -1068,7 +1068,7 @@ void set_mimic_blocking(void)
 void see_objects(void)
 {
     struct obj *obj;
-    for(obj = fobj; obj; obj = obj->nobj)
+    for (obj = fobj; obj; obj = obj->nobj)
 	if (vobj_at(obj->ox,obj->oy) == obj) newsym(obj->ox, obj->oy);
 }
 
@@ -1310,7 +1310,7 @@ void flush_screen(int cursor_on_u)
     display_nhwindow(NHW_MAP, FALSE);
     reset_glyph_bbox();
     flushing = 0;
-    if(botl || botlx) bot();
+    if (botl || botlx) bot();
 }
 
 /* ========================================================================= */
@@ -1467,7 +1467,7 @@ int zapdir_to_glyph(int dx, int dy, int beam_type)
  */
 int glyph_at(xchar x, xchar y)
 {
-    if(x < 0 || y < 0 || x >= COLNO || y >= ROWNO)
+    if (x < 0 || y < 0 || x >= COLNO || y >= ROWNO)
 	return cmap_to_glyph(S_room);			/* XXX */
     return gbuf[y][x].glyph;
 }

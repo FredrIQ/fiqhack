@@ -118,7 +118,7 @@ static int domonability(void)
 	else if (is_hider(youmonst.data)) return dohide();
 	else if (is_mind_flayer(youmonst.data)) return domindblast();
 	else if (u.umonnum == PM_GREMLIN) {
-	    if(IS_FOUNTAIN(levl[u.ux][u.uy].typ)) {
+	    if (IS_FOUNTAIN(levl[u.ux][u.uy].typ)) {
 		if (split_mon(&youmonst, NULL))
 		    dryup(u.ux, u.uy, TRUE);
 	    } else There("is no fountain here.");
@@ -127,7 +127,7 @@ static int domonability(void)
 	    return 1;
 	} else if (youmonst.data->msound == MS_SHRIEK) {
 	    You("shriek.");
-	    if(u.uburied)
+	    if (u.uburied)
 		pline("Unfortunately sound does not carry well through rock.");
 	    else aggravate();
 	} else if (Upolyd)
@@ -138,7 +138,7 @@ static int domonability(void)
 
 static int enter_explore_mode(void)
 {
-	if(!discover && !wizard) {
+	if (!discover && !wizard) {
 		pline("Beware!  From explore mode there will be no return to normal game.");
 		if (yn("Do you want to enter explore mode?") == 'y') {
 			clear_nhwindow(NHW_MESSAGE);
@@ -217,7 +217,7 @@ static int wiz_where(void)
 /* ^E command - detect unseen (secret doors, traps, hidden monsters) */
 static int wiz_detect(void)
 {
-	if(wizard)  findit();
+	if (wizard)  findit();
 	else	    pline("Unavailable command '^E'.");
 	return 0;
 }
@@ -571,8 +571,8 @@ void enlightenment(int final)
 	if (Adornment) {
 	    int adorn = 0;
 
-	    if(uleft && uleft->otyp == RIN_ADORNMENT) adorn += uleft->spe;
-	    if(uright && uright->otyp == RIN_ADORNMENT) adorn += uright->spe;
+	    if (uleft && uleft->otyp == RIN_ADORNMENT) adorn += uleft->spe;
+	    if (uright && uright->otyp == RIN_ADORNMENT) adorn += uright->spe;
 	    if (adorn < 0)
 		you_are(&menu, "poorly adorned");
 	    else
@@ -630,8 +630,8 @@ void enlightenment(int final)
 	if (u.uspellprot || Protection) {
 	    int prot = 0;
 
-	    if(uleft && uleft->otyp == RIN_PROTECTION) prot += uleft->spe;
-	    if(uright && uright->otyp == RIN_PROTECTION) prot += uright->spe;
+	    if (uleft && uleft->otyp == RIN_PROTECTION) prot += uleft->spe;
+	    if (uright && uright->otyp == RIN_PROTECTION) prot += uright->spe;
 	    if (HProtection & INTRINSIC) prot += u.ublessed;
 	    prot += u.uspellprot;
 
@@ -1388,8 +1388,8 @@ int xytod(schar x, schar y)	/* convert an x,y pair into a direction code */
 {
 	int dd;
 
-	for(dd = 0; dd < 8; dd++)
-	    if(x == xdir[dd] && y == ydir[dd]) return dd;
+	for (dd = 0; dd < 8; dd++)
+	    if (x == xdir[dd] && y == ydir[dd]) return dd;
 
 	return -1;
 }
@@ -1447,7 +1447,7 @@ int getdir(const char *s)
 		return 0;
 	}
 	
-	if(!u.dz && (Stunned || (Confusion && !rn2(5))))
+	if (!u.dz && (Stunned || (Confusion && !rn2(5))))
 	    confdir();
 	
 	return 1;

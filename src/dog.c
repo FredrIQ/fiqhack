@@ -135,15 +135,15 @@ struct monst *makedog(void)
 	/* default pet names */
 	if (!*petname && pettype == PM_LITTLE_DOG) {
 	    /* All of these names were for dogs. */
-	    if(Role_if(PM_CAVEMAN)) petname = "Slasher";   /* The Warrior */
-	    if(Role_if(PM_SAMURAI)) petname = "Hachi";     /* Shibuya Station */
-	    if(Role_if(PM_BARBARIAN)) petname = "Idefix";  /* Obelix */
-	    if(Role_if(PM_RANGER)) petname = "Sirius";     /* Orion's dog */
+	    if (Role_if(PM_CAVEMAN)) petname = "Slasher";   /* The Warrior */
+	    if (Role_if(PM_SAMURAI)) petname = "Hachi";     /* Shibuya Station */
+	    if (Role_if(PM_BARBARIAN)) petname = "Idefix";  /* Obelix */
+	    if (Role_if(PM_RANGER)) petname = "Sirius";     /* Orion's dog */
 	}
 
 	mtmp = makemon(&mons[pettype], u.ux, u.uy, MM_EDOG);
 
-	if(!mtmp) return NULL; /* pets were genocided */
+	if (!mtmp) return NULL; /* pets were genocided */
 
 	/* Horses already wear a saddle */
 	if (pettype == PM_PONY && !!(otmp = mksobj(SADDLE, TRUE, FALSE))) {
@@ -184,10 +184,10 @@ void losedogs(void)
 		mon_arrive(mtmp, TRUE);
 	}
 
-	for(mtmp = migrating_mons; mtmp; mtmp = mtmp2) {
+	for (mtmp = migrating_mons; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
 		if (mtmp->mux == u.uz.dnum && mtmp->muy == u.uz.dlevel) {
-		    if(mtmp == migrating_mons)
+		    if (mtmp == migrating_mons)
 			migrating_mons = mtmp->nmon;
 		    else
 			mtmp0->nmon = mtmp->nmon;
@@ -513,7 +513,7 @@ void keepdogs(boolean pets_only)
 		} else num_segs = 0;
 
 		/* set minvent's obj->no_charge to 0 */
-		for(obj = mtmp->minvent; obj; obj = obj->nobj) {
+		for (obj = mtmp->minvent; obj; obj = obj->nobj) {
 		    if (Has_contents(obj))
 			picked_container(obj);	/* does the right thing */
 		    obj->no_charge = 0;
@@ -565,7 +565,7 @@ void migrate_to_level(
 	}
 
 	/* set minvent's obj->no_charge to 0 */
-	for(obj = mtmp->minvent; obj; obj = obj->nobj) {
+	for (obj = mtmp->minvent; obj; obj = obj->nobj) {
 	    if (Has_contents(obj))
 		picked_container(obj);	/* does the right thing */
 	    obj->no_charge = 0;
@@ -683,7 +683,7 @@ int dogfood(struct monst *mon, struct obj *obj)
 		/* Non-rustproofed ferrous based metals are preferred. */
 		return (is_rustprone(obj) && !obj->oerodeproof) ? DOGFOOD : ACCFOOD;
 	    }
-	    if(!obj->cursed && obj->oclass != BALL_CLASS &&
+	    if (!obj->cursed && obj->oclass != BALL_CLASS &&
 						obj->oclass != CHAIN_CLASS)
 		return APPORT;
 	    /* fall into next case */
@@ -705,7 +705,7 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 	/* worst case, at least it'll be peaceful. */
 	mtmp->mpeaceful = 1;
 	set_malign(mtmp);
-	if(flags.moonphase == FULL_MOON && night() && rn2(6) && obj
+	if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj
 						&& mtmp->data->mlet == S_DOG)
 		return NULL;
 
@@ -812,7 +812,7 @@ void wary_dog(struct monst *mtmp, boolean was_dead)
 	mtmp->mpeaceful = mtmp->mtame = 0;
 	if (edog->abuse >= 0 && edog->abuse < 10)
 	    if (!rn2(edog->abuse + 1)) mtmp->mpeaceful = 1;
-	if(!quietly && cansee(mtmp->mx, mtmp->my)) {
+	if (!quietly && cansee(mtmp->mx, mtmp->my)) {
 	    if (haseyes(youmonst.data)) {
 		if (haseyes(mtmp->data))
 			pline("%s %s to look you in the %s.",

@@ -153,7 +153,7 @@ static boolean cursed_book(struct obj *bp)
 		bp->in_use = TRUE;
 		break;
 	case 6:
-		if(Antimagic) {
+		if (Antimagic) {
 		    shieldeff(u.ux, u.uy);
 		    pline_The("book %s, but you are unharmed!", explodes);
 		} else {
@@ -202,40 +202,40 @@ static void deadbook(struct obj *book2)
     makeknown(SPE_BOOK_OF_THE_DEAD);
     /* KMH -- Need ->known to avoid "_a_ Book of the Dead" */
     book2->known = 1;
-    if(invocation_pos(u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
+    if (invocation_pos(u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
 	struct obj *otmp;
 	boolean arti1_primed = FALSE, arti2_primed = FALSE,
 			 arti_cursed = FALSE;
 
-	if(book2->cursed) {
+	if (book2->cursed) {
 	    pline_The("runes appear scrambled.  You can't read them!");
 	    return;
 	}
 
-	if(!u.uhave.bell || !u.uhave.menorah) {
+	if (!u.uhave.bell || !u.uhave.menorah) {
 	    pline("A chill runs down your %s.", body_part(SPINE));
-	    if(!u.uhave.bell) You_hear("a faint chime...");
-	    if(!u.uhave.menorah) pline("Vlad's doppelganger is amused.");
+	    if (!u.uhave.bell) You_hear("a faint chime...");
+	    if (!u.uhave.menorah) pline("Vlad's doppelganger is amused.");
 	    return;
 	}
 
-	for(otmp = invent; otmp; otmp = otmp->nobj) {
-	    if(otmp->otyp == CANDELABRUM_OF_INVOCATION &&
+	for (otmp = invent; otmp; otmp = otmp->nobj) {
+	    if (otmp->otyp == CANDELABRUM_OF_INVOCATION &&
 	       otmp->spe == 7 && otmp->lamplit) {
-		if(!otmp->cursed) arti1_primed = TRUE;
+		if (!otmp->cursed) arti1_primed = TRUE;
 		else arti_cursed = TRUE;
 	    }
-	    if(otmp->otyp == BELL_OF_OPENING &&
+	    if (otmp->otyp == BELL_OF_OPENING &&
 	       (moves - otmp->age) < 5L) { /* you rang it recently */
-		if(!otmp->cursed) arti2_primed = TRUE;
+		if (!otmp->cursed) arti2_primed = TRUE;
 		else arti_cursed = TRUE;
 	    }
 	}
 
-	if(arti_cursed) {
+	if (arti_cursed) {
 	    pline_The("invocation fails!");
 	    pline("At least one of your artifacts is cursed...");
-	} else if(arti1_primed && arti2_primed) {
+	} else if (arti1_primed && arti2_primed) {
 	    unsigned soon = (unsigned) d(2,6);	/* time til next intervene() */
 
 	    /* successful invocation */
@@ -271,14 +271,14 @@ raise_dead:
 	mm.x = u.ux;
 	mm.y = u.uy;
 	mkundead(&mm, TRUE, NO_MINVENT);
-    } else if(book2->blessed) {
-	for(mtmp = fmon; mtmp; mtmp = mtmp2) {
+    } else if (book2->blessed) {
+	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;		/* tamedog() changes chain */
 	    if (DEADMONSTER(mtmp)) continue;
 
 	    if (is_undead(mtmp->data) && cansee(mtmp->mx, mtmp->my)) {
 		mtmp->mpeaceful = TRUE;
-		if(sgn(mtmp->data->maligntyp) == sgn(u.ualign.type)
+		if (sgn(mtmp->data->maligntyp) == sgn(u.ualign.type)
 		   && distu(mtmp->mx, mtmp->my) < 4)
 		    if (mtmp->mtame) {
 			if (mtmp->mtame < 20)
@@ -325,7 +325,7 @@ static int learn(void)
 	}
 	exercise(A_WIS, TRUE);		/* you're studying. */
 	booktype = book->otyp;
-	if(booktype == SPE_BOOK_OF_THE_DEAD) {
+	if (booktype == SPE_BOOK_OF_THE_DEAD) {
 	    deadbook(book);
 	    return 0;
 	}
@@ -430,7 +430,7 @@ int study_book(struct obj *spellbook)
 			    - 2*objects[booktype].oc_level
 			    + ((ublindf && ublindf->otyp == LENSES) ? 2 : 0);
 			/* only wizards know if a spell is too difficult */
-			if (Role_if(PM_WIZARD) && read_ability < 20 &&
+			if (Role_if (PM_WIZARD) && read_ability < 20 &&
 			    !confused) {
 			    char qbuf[QBUFSZ];
 			    sprintf(qbuf,
@@ -453,7 +453,7 @@ int study_book(struct obj *spellbook)
 
 		    nomul(delay);			/* study time */
 		    delay = 0;
-		    if(gone || !rn2(3)) {
+		    if (gone || !rn2(3)) {
 			if (!gone) pline_The("spellbook crumbles to dust!");
 			if (!objects[spellbook->otyp].oc_name_known &&
 				!objects[spellbook->otyp].oc_uname)
@@ -537,7 +537,7 @@ static boolean getspell(int *spell_no)
 	    else if (nspells == 27)  sprintf(lets, "a-zA");
 	    else sprintf(lets, "a-zA-%c", 'A' + nspells - 27);
 
-	    for(;;)  {
+	    for (;;)  {
 		sprintf(qbuf, "Cast which spell? [%s ?]", lets);
 		if ((ilet = yn_function(qbuf, NULL, '\0')) == '?')
 		    break;
@@ -712,7 +712,7 @@ int spelleffects(int spell, boolean atme)
 	} else if (ACURR(A_STR) < 4)  {
 		You("lack the strength to cast spells.");
 		return 0;
-	} else if(check_capacity(
+	} else if (check_capacity(
 		"Your concentration falters while carrying so much stuff.")) {
 	    return 1;
 	} else if (!freehand()) {
@@ -724,7 +724,7 @@ int spelleffects(int spell, boolean atme)
 		You_feel("the amulet draining your energy away.");
 		energy += rnd(2*energy);
 	}
-	if(energy > u.uen)  {
+	if (energy > u.uen)  {
 		You("don't have enough energy to cast that spell.");
 		return 0;
 	} else {
@@ -745,7 +745,7 @@ int spelleffects(int spell, boolean atme)
 			 * understand quite well how to cast spells.
 			 */
 			intell = acurr(A_INT);
-			if (!Role_if(PM_WIZARD)) intell = 10;
+			if (!Role_if (PM_WIZARD)) intell = 10;
 			switch (intell) {
 				case 25: case 24: case 23: case 22:
 				case 21: case 20: case 19: case 18:
@@ -800,8 +800,8 @@ int spelleffects(int spell, boolean atme)
 	        if (throwspell()) {
 		    cc.x=u.dx;cc.y=u.dy;
 		    n=rnd(8)+1;
-		    while(n--) {
-			if(!u.dx && !u.dy && !u.dz) {
+		    while (n--) {
+			if (!u.dx && !u.dy && !u.dz) {
 			    if ((damage = zapyourself(pseudo, TRUE)) != 0) {
 				char buf[BUFSZ];
 				sprintf(buf, "zapped %sself with a spell", uhim());
@@ -851,7 +851,7 @@ int spelleffects(int spell, boolean atme)
 			    /* getdir cancelled, re-use previous direction */
 			    pline_The("magical energy is released!");
 			}
-			if(!u.dx && !u.dy && !u.dz) {
+			if (!u.dx && !u.dy && !u.dz) {
 			    if ((damage = zapyourself(pseudo, TRUE)) != 0) {
 				char buf[BUFSZ];
 				sprintf(buf, "zapped %sself with a spell", uhim());
@@ -1075,7 +1075,7 @@ static int isqrt(int val)
 {
     int rt = 0;
     int odd = 1;
-    while(val >= odd) {
+    while (val >= odd) {
 	val = val-odd;
 	odd = odd+2;
 	rt = rt + 1;

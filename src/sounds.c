@@ -82,7 +82,7 @@ void dosounds(void)
 	    level.flags.has_vault = 0;
 	    return;
 	}
-	if(gd_sound())
+	if (gd_sound())
 	    switch (rn2(2)+hallu) {
 		case 1: {
 		    boolean gold_in_vault = FALSE;
@@ -288,7 +288,7 @@ void growl(struct monst *mtmp)
 	growl_verb = growl_sound(mtmp);
     if (growl_verb) {
 	pline("%s %s!", Monnam(mtmp), vtense(NULL, growl_verb));
-	if(flags.run) nomul(0);
+	if (flags.run) nomul(0);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 18);
     }
 }
@@ -327,7 +327,7 @@ void yelp(struct monst *mtmp)
     }
     if (yelp_verb) {
 	pline("%s %s!", Monnam(mtmp), vtense(NULL, yelp_verb));
-	if(flags.run) nomul(0);
+	if (flags.run) nomul(0);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 12);
     }
 }
@@ -357,7 +357,7 @@ void whimper(struct monst *mtmp)
     }
     if (whimper_verb) {
 	pline("%s %s.", Monnam(mtmp), vtense(NULL, whimper_verb));
-	if(flags.run) nomul(0);
+	if (flags.run) nomul(0);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 6);
     }
 }
@@ -729,7 +729,7 @@ static int domonnoise(struct monst *mtmp)
 	    if (uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep)))
 		verbl_msg = "Put that weapon away before you hurt someone!";
 	    else if (uarmc || uarm || uarmh || uarms || uarmg || uarmf)
-		verbl_msg = Role_if(PM_HEALER) ?
+		verbl_msg = Role_if (PM_HEALER) ?
 			  "Doc, I can't help you unless you cooperate." :
 			  "Please undress so I can examine you.";
 #ifdef TOURIST

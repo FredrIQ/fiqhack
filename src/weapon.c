@@ -337,10 +337,10 @@ struct obj *select_rwep(struct monst *mtmp)
 	propellor = &zeroobj;
 	Oselect(EGG); /* cockatrice egg */
 #ifdef KOPS
-	if(mlet == S_KOP)	/* pies are first choice for Kops */
+	if (mlet == S_KOP)	/* pies are first choice for Kops */
 	    Oselect(CREAM_PIE);
 #endif
-	if(throws_rocks(mtmp->data))	/* ...boulders for giants */
+	if (throws_rocks(mtmp->data))	/* ...boulders for giants */
 	    Oselect(BOULDER);
 
 	/* Select polearms first; they do more damage and aren't expendable */
@@ -422,7 +422,7 @@ struct obj *select_rwep(struct monst *mtmp)
 			if ((otmp = oselect(mtmp, rwep[i])) && !otmp->oartifact
 			    && (!otmp->cursed || otmp != MON_WEP(mtmp)))
 				return otmp;
-		} else for(otmp=mtmp->minvent; otmp; otmp=otmp->nobj) {
+		} else for (otmp=mtmp->minvent; otmp; otmp=otmp->nobj) {
 		    if (otmp->otyp == LOADSTONE && !otmp->cursed)
 			return otmp;
 		}
@@ -459,7 +459,7 @@ struct obj *select_hwep(struct monst *mtmp)
 	boolean wearing_shield = (mtmp->misc_worn_check & W_ARMS) != 0;
 
 	/* prefer artifacts to everything else */
-	for(otmp=mtmp->minvent; otmp; otmp = otmp->nobj) {
+	for (otmp=mtmp->minvent; otmp; otmp = otmp->nobj) {
 		if (otmp->oclass == WEAPON_CLASS
 			&& otmp->oartifact && touch_artifact(otmp,mtmp)
 			&& ((strong && !wearing_shield)
@@ -467,7 +467,7 @@ struct obj *select_hwep(struct monst *mtmp)
 		    return otmp;
 	}
 
-	if(is_giant(mtmp->data))	/* giants just love to use clubs */
+	if (is_giant(mtmp->data))	/* giants just love to use clubs */
 	    Oselect(CLUB);
 
 	/* only strong monsters can wield big (esp. long) weapons */
@@ -1161,11 +1161,11 @@ void skill_init(const struct def_skill *class_skill)
 	}
 
 	/* set skills for magic */
-	if (Role_if(PM_HEALER) || Role_if(PM_MONK)) {
+	if (Role_if (PM_HEALER) || Role_if(PM_MONK)) {
 		P_SKILL(P_HEALING_SPELL) = P_BASIC;
-	} else if (Role_if(PM_PRIEST)) {
+	} else if (Role_if (PM_PRIEST)) {
 		P_SKILL(P_CLERIC_SPELL) = P_BASIC;
-	} else if (Role_if(PM_WIZARD)) {
+	} else if (Role_if (PM_WIZARD)) {
 		P_SKILL(P_ATTACK_SPELL) = P_BASIC;
 		P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;
 	}

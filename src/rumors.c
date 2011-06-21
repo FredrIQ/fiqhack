@@ -117,7 +117,7 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 		}
 		if ((endp = index(line, '\n')) != 0) *endp = 0;
 		strcat(rumor_buf, xcrypt(line, xbuf));
-	    } while(count++ < 50 && exclude_cookie && (strstri(rumor_buf, "fortune") || strstri(rumor_buf, "pity")));
+	    } while (count++ < 50 && exclude_cookie && (strstri(rumor_buf, "fortune") || strstri(rumor_buf, "pity")));
 	    dlb_fclose(rumors);
 	    if (count >= 50)
 		impossible("Can't find non-cookie rumor?");
@@ -226,7 +226,7 @@ void outoracle(boolean special, boolean delphi)
 	int oracle_idx;
 	char xbuf[BUFSZ];
 
-	if(oracle_flg < 0 ||			/* couldn't open ORACLEFILE */
+	if (oracle_flg < 0 ||			/* couldn't open ORACLEFILE */
 	   (oracle_flg > 0 && oracle_cnt == 0))	/* oracles already exhausted */
 		return;
 
@@ -259,7 +259,7 @@ void outoracle(boolean special, boolean delphi)
 		    add_menutext(&menu, "The message reads:");
 		add_menutext(&menu, "");
 
-		while(dlb_fgets(line, COLNO, oracles) && strcmp(line,"---\n")) {
+		while (dlb_fgets(line, COLNO, oracles) && strcmp(line,"---\n")) {
 			if ((endp = index(line, '\n')) != 0) *endp = 0;
 			add_menutext(&menu, xcrypt(line, xbuf));
 		}

@@ -657,7 +657,7 @@ void assign_rogue_graphics(boolean is_rlevel)
 /*
  * Some day if these rogue showsyms get much more extensive than this,
  * we may want to create r_showsyms, and IBM_r_showsyms arrays to hold
- * all of this info and to simply initialize it via a for() loop like r_oc_syms.
+ * all of this info and to simply initialize it via a for () loop like r_oc_syms.
  */
 
 	if (!iflags2.IBMgraphics) {

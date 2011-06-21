@@ -143,7 +143,7 @@ void settty(const char *s)
 {
 	cmov(ttyDisplay->curx, ttyDisplay->cury);
 	end_screen();
-	if(s) raw_print(s);
+	if (s) raw_print(s);
 }
 
 /* called by init_nhwindows() and resume_nhwindows() */
@@ -652,7 +652,7 @@ void toggle_mouse_support(void)
 /* handle tty options updates here */
 void nttty_preference_update(const char *pref)
 {
-	if( stricmp( pref, "mouse_support")==0) {
+	if ( stricmp( pref, "mouse_support")==0) {
 #ifndef NO_MOUSE_ALLOWED
 		toggle_mouse_support();
 #endif

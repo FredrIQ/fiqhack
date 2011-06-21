@@ -85,7 +85,7 @@ static void startup_common(char *name, int locknum, int playmode)
     if (wizard)
 	    strcpy(plname, "wizard");
 
-    if(!wizard) {
+    if (!wizard) {
 	signal(SIGQUIT,SIG_IGN);
 	signal(SIGINT,SIG_IGN);
     }
@@ -101,10 +101,10 @@ static void startup_common(char *name, int locknum, int playmode)
 static void post_init_tasks(void)
 {
     flags.moonphase = phase_of_the_moon();
-    if(flags.moonphase == FULL_MOON) {
+    if (flags.moonphase == FULL_MOON) {
 	You("are lucky!  Full moon tonight.");
 	change_luck(1);
-    } else if(flags.moonphase == NEW_MOON) {
+    } else if (flags.moonphase == NEW_MOON) {
 	pline("Be careful!  New moon tonight.");
     }
     flags.friday13 = friday_13th();
@@ -142,21 +142,21 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
     chmod(fq_save,0);	/* disallow parallel restores */
     signal(SIGINT, (SIG_RET_TYPE) done1);
 #ifdef NEWS
-    if(iflags2.news) {
+    if (iflags2.news) {
 	display_file(NEWS, FALSE);
 	iflags2.news = FALSE; /* in case dorecover() fails */
     }
 #endif
     pline("Restoring save file...");
     mark_synch();	/* flush output */
-    if(!dorecover(fd))
+    if (!dorecover(fd))
 	    goto not_recovered;
-    if(!wizard && remember_wiz_mode) wizard = TRUE;
+    if (!wizard && remember_wiz_mode) wizard = TRUE;
     check_special_room(FALSE);
     wd_message();
 
     if (discover || wizard) {
-	    if(yn("Do you want to keep the save file?") == 'n')
+	    if (yn("Do you want to keep the save file?") == 'n')
 		delete_savefile();
 	    else {
 		chmod(fq_save,FCMASK); /* back to readable */
@@ -226,7 +226,7 @@ static void you_moved(void)
 	    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
 		mtmp->movement += mcalcmove(mtmp);
 
-	    if(!rn2(u.uevent.udemigod ? 25 :
+	    if (!rn2(u.uevent.udemigod ? 25 :
 		    (depth(&u.uz) > depth(&stronghold_level)) ? 50 : 70))
 		makemon(NULL, 0, 0, NO_MM_FLAGS);
 
@@ -268,7 +268,7 @@ static void you_moved(void)
 	    /********************************/
 
 	    if (flags.bypasses) clear_bypasses();
-	    if(Glib) glibr();
+	    if (Glib) glibr();
 	    nh_timeout();
 	    run_regions();
 
@@ -312,7 +312,7 @@ static void you_moved(void)
 		    }
 		    botl = 1;
 		    u.uhp += heal;
-		    if(u.uhp > u.uhpmax)
+		    if (u.uhp > u.uhpmax)
 			u.uhp = u.uhpmax;
 		} else if (Regeneration ||
 			(u.ulevel <= 9 &&
@@ -324,7 +324,7 @@ static void you_moved(void)
 
 	    /* moving around while encumbered is hard work */
 	    if (wtcap > MOD_ENCUMBER && u.umoved) {
-		if(!(wtcap < EXT_ENCUMBER ? moves%30 : moves%10)) {
+		if (!(wtcap < EXT_ENCUMBER ? moves%30 : moves%10)) {
 		    if (Upolyd && u.mh > 1) {
 			u.mh--;
 		    } else if (!Upolyd && u.uhp > 1) {
@@ -340,15 +340,15 @@ static void you_moved(void)
 	    if ((u.uen < u.uenmax) &&
 		((wtcap < MOD_ENCUMBER &&
 		    (!(moves%((MAXULEV + 8 - u.ulevel) *
-			    (Role_if(PM_WIZARD) ? 3 : 4) / 6))))
+			    (Role_if (PM_WIZARD) ? 3 : 4) / 6))))
 		    || Energy_regeneration)) {
 		u.uen += rn1((int)(ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1,1);
 		if (u.uen > u.uenmax)  u.uen = u.uenmax;
 		botl = 1;
 	    }
 
-	    if(!u.uinvulnerable) {
-		if(Teleportation && !rn2(85)) {
+	    if (!u.uinvulnerable) {
+		if (Teleportation && !rn2(85)) {
 		    xchar old_ux = u.ux, old_uy = u.uy;
 		    tele();
 		    if (u.ux != old_ux || u.uy != old_uy) {
@@ -361,7 +361,7 @@ static void you_moved(void)
 		if ((change == 1 && !Polymorph) ||
 		    (change == 2 && u.ulycn == NON_PM))
 		    change = 0;
-		if(Polymorph && !rn2(100))
+		if (Polymorph && !rn2(100))
 		    change = 1;
 		else if (u.ulycn >= LOW_PM && !Upolyd &&
 			    !rn2(80 - (20 * night())))
@@ -379,7 +379,7 @@ static void you_moved(void)
 		}
 	    }
 
-	    if(Searching && multi >= 0) dosearch0(1);
+	    if (Searching && multi >= 0) dosearch0(1);
 	    dosounds();
 	    do_storms();
 	    gethungry();
@@ -406,7 +406,7 @@ static void you_moved(void)
 	    else if (u.uburied) under_ground(0);
 
 	    /* when immobile, count is in turns */
-	    if(multi < 0) {
+	    if (multi < 0) {
 		if (++multi == 0) {	/* finished yet? */
 		    unmul(NULL);
 		    /* if unmul caused a level change, take it now */
@@ -437,7 +437,7 @@ static void handle_occupation(void)
     if ((*occupation)() == 0)
 #endif
 	occupation = 0;
-    if(
+    if (
 #if defined(WIN32)
 	    abort_lev ||
 #endif
@@ -454,16 +454,16 @@ static void handle_occupation(void)
 
 static void handle_lava_trap(boolean didmove)
 {
-    if(!is_lava(u.ux,u.uy))
+    if (!is_lava(u.ux,u.uy))
 	u.utrap = 0;
     else if (!u.uinvulnerable) {
 	u.utrap -= 1<<8;
-	if(u.utrap < 1<<8) {
+	if (u.utrap < 1<<8) {
 	    killer_format = KILLED_BY;
 	    killer = "molten lava";
 	    You("sink below the surface and die.");
 	    done(DISSOLVED);
-	} else if(didmove && !u.umoved) {
+	} else if (didmove && !u.umoved) {
 	    Norep("You sink deeper into the lava.");
 	    u.utrap += rnd(4);
 	}
@@ -538,7 +538,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	    return ERR_NO_INPUT_ALLOWED;
 	
 	if (flags.mv) {
-	    if(multi < COLNO && !--multi)
+	    if (multi < COLNO && !--multi)
 		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
 	    domove();
 	} else
@@ -562,7 +562,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     }
     
     didmove = flags.move;
-    if(didmove) {
+    if (didmove) {
 	you_moved();
     } /* actual time passed */
 
@@ -587,7 +587,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 
 void stop_occupation(void)
 {
-    if(occupation) {
+    if (occupation) {
 	if (!maybe_finished_meal(TRUE))
 	    You("stop %s.", occtxt);
 	occupation = 0;
@@ -639,7 +639,7 @@ void newgame(void)
 	signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 #ifdef NEWS
-	if(iflags2.news) display_file(NEWS, FALSE);
+	if (iflags2.news) display_file(NEWS, FALSE);
 #endif
 	load_qtlist();	/* load up the quest text info */
 /*	quest_init();*/	/* Now part of role_init() */
@@ -655,7 +655,7 @@ void newgame(void)
 	 * makedog() will fail when it calls makemon().
 	 *			- ucsfcgl!kneller
 	 */
-	if(MON_AT(u.ux, u.uy)) mnexto(m_at(u.ux, u.uy));
+	if (MON_AT(u.ux, u.uy)) mnexto(m_at(u.ux, u.uy));
 	makedog();
 	docrt();
 

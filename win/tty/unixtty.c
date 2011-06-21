@@ -76,7 +76,7 @@ static int speednum(speed_t speed)
 
 static void setctty(void)
 {
-	if(STTY(&curttyb) < 0 || STTY2(&curttyb2) < 0)
+	if (STTY(&curttyb) < 0 || STTY2(&curttyb2) < 0)
 		perror("NetHack (setctty)");
 }
 
@@ -87,7 +87,7 @@ static void setctty(void)
  */
 void gettty(void)
 {
-	if(GTTY(&inittyb) < 0 || GTTY2(&inittyb2) < 0)
+	if (GTTY(&inittyb) < 0 || GTTY2(&inittyb2) < 0)
 		perror("NetHack (gettty)");
 	curttyb = inittyb;
 	curttyb2 = inittyb2;
@@ -98,7 +98,7 @@ void gettty(void)
 	getioctls();
 
 	/* do not expand tabs - they might be needed inside a cm sequence */
-	if(curttyb.tabflgs & EXTABS) {
+	if (curttyb.tabflgs & EXTABS) {
 		curttyb.tabflgs &= ~EXTABS;
 		setctty();
 	}
@@ -109,8 +109,8 @@ void gettty(void)
 void settty(const char *s)
 {
 	tty_end_screen();
-	if(s) tty_raw_print(s);
-	if(STTY(&inittyb) < 0 || STTY2(&inittyb2) < 0)
+	if (s) tty_raw_print(s);
+	if (STTY(&inittyb) < 0 || STTY2(&inittyb2) < 0)
 		perror("NetHack (settty)");
 	ui_flags.cbreak = (CBRKON(inittyb.cbrkflgs & CBRKMASK)) ? ON : OFF;
 	curttyb.inputflags |= STRIPHI;
@@ -124,12 +124,12 @@ void setftty(void)
 	int change = 0;
 	ui_flags.cbreak = ON;
 	/* Should use (ECHO|CRMOD) here instead of ECHO */
-	if((curttyb.echoflgs & ECHO) != ef){
+	if ((curttyb.echoflgs & ECHO) != ef){
 		curttyb.echoflgs &= ~ECHO;
 /*		curttyb.echoflgs |= ef;					*/
 		change++;
 	}
-	if((curttyb.cbrkflgs & CBRKMASK) != cf){
+	if ((curttyb.cbrkflgs & CBRKMASK) != cf){
 		curttyb.cbrkflgs &= ~CBRKMASK;
 		curttyb.cbrkflgs |= cf;
 		/* be satisfied with one character; no timeout */
@@ -152,16 +152,16 @@ void setftty(void)
 #endif
 		change++;
 	}
-	if(!IS_7BIT(inittyb)) curttyb.inputflags &=~ STRIPHI;
+	if (!IS_7BIT(inittyb)) curttyb.inputflags &=~ STRIPHI;
 	/* If an interrupt character is used, it will be overriden and
 	 * set to ^C.
 	 */
-	if(intr_char != nonesuch && curttyb2.intr_sym != '\003') {
+	if (intr_char != nonesuch && curttyb2.intr_sym != '\003') {
 	    curttyb2.intr_sym = '\003';
 	    change++;
 	}
 
-	if(change) setctty();
+	if (change) setctty();
 	tty_start_screen();
 }
 
@@ -229,7 +229,7 @@ void error (const char *s, ...)
 {
 	va_list the_args;
 	va_start(the_args, s);
-	if(settty_needed)
+	if (settty_needed)
 		settty(NULL);
 	vprintf(s, the_args);
 	putchar('\n');

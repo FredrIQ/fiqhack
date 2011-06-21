@@ -93,9 +93,9 @@ void display_file(const char *fname, boolean complain)
 
 	fp = dlb_fopen(fname, "r");
 	if (!fp) {
-	    if(complain) {
+	    if (complain) {
 		pline("Cannot open \"%s\".", fname);
-	    } else if(program_state.something_worth_saving) docrt();
+	    } else if (program_state.something_worth_saving) docrt();
 	} else {
 	    dlb_fseek(fp, 0, SEEK_END);
 	    fsize = dlb_ftell(fp);
@@ -117,7 +117,7 @@ void regularize(char *s)
 {
 	char *lp;
 #ifdef UNIX
-	while((lp=index(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
+	while ((lp=index(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
 		*lp = '_';
 #else
 # ifdef WIN32

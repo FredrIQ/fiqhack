@@ -194,15 +194,15 @@ vision_reset()
 	lev = &levl[1][y];
 	for (x = 1; x < COLNO; x++, lev += ROWNO)
 	    if (block != (IS_ROCK(lev->typ) || does_block(x,y,lev))) {
-		if(block) {
-		    for(i=dig_left; i<x; i++) {
+		if (block) {
+		    for (i=dig_left; i<x; i++) {
 			left_ptrs [y][i] = dig_left;
 			right_ptrs[y][i] = x-1;
 		    }
 		} else {
 		    i = dig_left;
-		    if(dig_left) dig_left--; /* point at first blocked point */
-		    for(; i<x; i++) {
+		    if (dig_left) dig_left--; /* point at first blocked point */
+		    for (; i<x; i++) {
 			left_ptrs [y][i] = dig_left;
 			right_ptrs[y][i] = x;
 			viz_clear[y][i] = 1;
@@ -213,8 +213,8 @@ vision_reset()
 	    }
 	/* handle right boundary; almost identical for blocked/unblocked */
 	i = dig_left;
-	if(!block && dig_left) dig_left--; /* point at first blocked point */
-	for(; i<COLNO; i++) {
+	if (!block && dig_left) dig_left--; /* point at first blocked point */
+	for (; i<COLNO; i++) {
 	    left_ptrs [y][i] = dig_left;
 	    right_ptrs[y][i] = (COLNO-1);
 	    viz_clear[y][i] = !block;
@@ -573,7 +573,7 @@ vision_recalc(control)
 		next_rmax[row] = min(COLNO-1, u.ux + 1);
 		next_row = next_array[row];
 
-		for(col=next_rmin[row]; col <= next_rmax[row]; col++)
+		for (col=next_rmin[row]; col <= next_rmax[row]; col++)
 		    next_row[col] = IN_SIGHT | COULD_SEE;
 	    }
 	} else
@@ -1273,16 +1273,16 @@ boolean clear_path(int col1, int row1, int col2, int row2)
 {
     int result;
 
-    if(col1 < col2) {
-	if(row1 > row2) {
+    if (col1 < col2) {
+	if (row1 > row2) {
 	    result = q1_path(row1,col1,row2,col2);
 	} else {
 	    result = q4_path(row1,col1,row2,col2);
 	}
     } else {
-	if(row1 > row2) {
+	if (row1 > row2) {
 	    result = q2_path(row1,col1,row2,col2);
-	} else if(row1 == row2 && col1 == col2) {
+	} else if (row1 == row2 && col1 == col2) {
 	    result = 1;
 	} else {
 	    result = q3_path(row1,col1,row2,col2);
@@ -1333,22 +1333,22 @@ static void right_side(
      * on the structure of circle_data[]).
      */
     deeper  = good_row(nrow) && (!limits || (*limits >= *(limits+1)));
-    if(!vis_func) {
+    if (!vis_func) {
 	rowp    = cs_rows[row];	/* optimization */
 	row_min = &cs_left[row];
 	row_max = &cs_right[row];
     }
-    if(limits) {
+    if (limits) {
 	lim_max = start_col + *limits;
-	if(lim_max > COLNO-1) lim_max = COLNO-1;
-	if(right_mark > lim_max) right_mark = lim_max;
+	if (lim_max > COLNO-1) lim_max = COLNO-1;
+	if (right_mark > lim_max) right_mark = lim_max;
 	limits++; /* prepare for next row */
     } else
 	lim_max = COLNO-1;
 
     while (left <= right_mark) {
 	right_edge = right_ptrs[row][left];
-	if(right_edge > lim_max) right_edge = lim_max;
+	if (right_edge > lim_max) right_edge = lim_max;
 
 	if (!is_clear(row,left)) {
 	    /*
@@ -1369,7 +1369,7 @@ static void right_side(
 		right_edge = is_clear(row-step,right_mark) ?
 						    right_mark+1 : right_mark;
 	    }
-	    if(vis_func) {
+	    if (vis_func) {
 		for (i = left; i <= right_edge; i++) (*vis_func)(i, row, varg);
 	    } else {
 		for (i = left; i <= right_edge; i++) set_cs(rowp,i);
@@ -1403,7 +1403,7 @@ static void right_side(
 	     */
 	    if (left > lim_max) return;	/* check (1) */
 	    if (left == lim_max) {	/* check (2) */
-		if(vis_func) (*vis_func)(lim_max, row, varg);
+		if (vis_func) (*vis_func)(lim_max, row, varg);
 		else {
 		    set_cs(rowp,lim_max);
 		    set_max(lim_max);
@@ -1463,9 +1463,9 @@ static void right_side(
 			start_col < (COLNO-1) && !is_clear(row,start_col+1))
 		right = start_col+1;
 
-	    if(right > lim_max) right = lim_max;
+	    if (right > lim_max) right = lim_max;
 	    /* set the bits */
-	    if(vis_func)
+	    if (vis_func)
 		for (i = left; i <= right; i++) (*vis_func)(i, row, varg);
 	    else {
 		for (i = left; i <= right; i++) set_cs(rowp,i);
@@ -1495,22 +1495,22 @@ static void left_side(int row, int left_mark, int right, char *limits)
     rowp = row_min = row_max = 0;
     nrow    = row+step;
     deeper  = good_row(nrow) && (!limits || (*limits >= *(limits+1)));
-    if(!vis_func) {
+    if (!vis_func) {
 	rowp    = cs_rows[row];
 	row_min = &cs_left[row];
 	row_max = &cs_right[row];
     }
-    if(limits) {
+    if (limits) {
 	lim_min = start_col - *limits;
-	if(lim_min < 0) lim_min = 0;
-	if(left_mark < lim_min) left_mark = lim_min;
+	if (lim_min < 0) lim_min = 0;
+	if (left_mark < lim_min) left_mark = lim_min;
 	limits++; /* prepare for next row */
     } else
 	lim_min = 0;
 
     while (right >= left_mark) {
 	left_edge = left_ptrs[row][right];
-	if(left_edge < lim_min) left_edge = lim_min;
+	if (left_edge < lim_min) left_edge = lim_min;
 
 	if (!is_clear(row,right)) {
 	    /* Jump to the far side of a stone wall. */
@@ -1519,7 +1519,7 @@ static void left_side(int row, int left_mark, int right, char *limits)
 		left_edge = is_clear(row-step,left_mark) ?
 						    left_mark-1 : left_mark;
 	    }
-	    if(vis_func) {
+	    if (vis_func) {
 		for (i = left_edge; i <= right; i++) (*vis_func)(i, row, varg);
 	    } else {
 		for (i = left_edge; i <= right; i++) set_cs(rowp,i);
@@ -1543,7 +1543,7 @@ static void left_side(int row, int left_mark, int right, char *limits)
 	    /* Check for boundary conditions. */
 	    if (right < lim_min) return;
 	    if (right == lim_min) {
-		if(vis_func) (*vis_func)(lim_min, row, varg);
+		if (vis_func) (*vis_func)(lim_min, row, varg);
 		else {
 		    set_cs(rowp,lim_min);
 		    set_min(lim_min);
@@ -1578,8 +1578,8 @@ static void left_side(int row, int left_mark, int right, char *limits)
 			    start_col > 0 && !is_clear(row,start_col-1))
 		left = start_col-1;
 
-	    if(left < lim_min) left = lim_min;
-	    if(vis_func)
+	    if (left < lim_min) left = lim_min;
+	    if (vis_func)
 		for (i = left; i <= right; i++) (*vis_func)(i, row, varg);
 	    else {
 		for (i = left; i <= right; i++) set_cs(rowp,i);
@@ -1641,16 +1641,16 @@ static void view_from(
 		(is_clear(srow,scol+1) ? right_ptrs[srow][scol+1] : scol+1);
     }
 
-    if(range) {
-	if(range > MAX_RADIUS || range < 1)
+    if (range) {
+	if (range > MAX_RADIUS || range < 1)
 	    panic("view_from called with range %d", range);
 	limits = circle_ptr(range) + 1; /* start at next row */
-	if(left < scol - range) left = scol - range;
-	if(right > scol + range) right = scol + range;
+	if (left < scol - range) left = scol - range;
+	if (right > scol + range) right = scol + range;
     } else
 	limits = NULL;
 
-    if(func) {
+    if (func) {
 	for (i = left; i <= right; i++) (*func)(i, srow, arg);
     } else {
 	/* Row pointer optimization. */
@@ -1706,15 +1706,15 @@ void do_clear_area(int scol, int srow, int range,
 
 	    if (range > MAX_RADIUS || range < 1)
 		panic("do_clear_area:  illegal range %d", range);
-	    if(vision_full_recalc)
+	    if (vision_full_recalc)
 		vision_recalc(0);	/* recalc vision if dirty */
 	    limits = circle_ptr(range);
 	    if ((max_y = (srow + range)) >= ROWNO) max_y = ROWNO-1;
 	    if ((y = (srow - range)) < 0) y = 0;
 	    for (; y <= max_y; y++) {
 		offset = limits[v_abs(y-srow)];
-		if((min_x = (scol - offset)) < 0) min_x = 0;
-		if((max_x = (scol + offset)) >= COLNO) max_x = COLNO-1;
+		if ((min_x = (scol - offset)) < 0) min_x = 0;
+		if ((max_x = (scol + offset)) >= COLNO) max_x = COLNO-1;
 		for (x = min_x; x <= max_x; x++)
 		    if (couldsee(x, y))
 			(*func)(x, y, arg);

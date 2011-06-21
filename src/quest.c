@@ -25,21 +25,21 @@ static void prisoner_speaks(struct monst *);
 
 static void on_start(void)
 {
-  if(!Qstat(first_start)) {
+  if (!Qstat(first_start)) {
     qt_pager(QT_FIRSTTIME);
     Qstat(first_start) = TRUE;
-  } else if((u.uz0.dnum != u.uz.dnum) || (u.uz0.dlevel < u.uz.dlevel)) {
-    if(Qstat(not_ready) <= 2) qt_pager(QT_NEXTTIME);
+  } else if ((u.uz0.dnum != u.uz.dnum) || (u.uz0.dlevel < u.uz.dlevel)) {
+    if (Qstat(not_ready) <= 2) qt_pager(QT_NEXTTIME);
     else	qt_pager(QT_OTHERTIME);
   }
 }
 
 static void on_locate(void)
 {
-  if(!Qstat(first_locate)) {
+  if (!Qstat(first_locate)) {
     qt_pager(QT_FIRSTLOCATE);
     Qstat(first_locate) = TRUE;
-  } else if(u.uz0.dlevel < u.uz.dlevel && !Qstat(killed_nemesis))
+  } else if (u.uz0.dlevel < u.uz.dlevel && !Qstat(killed_nemesis))
 	qt_pager(QT_NEXTLOCATE);
 }
 
@@ -52,24 +52,24 @@ static void on_goal(void)
     Qstat(made_goal) = 1;
   } else {
     qt_pager(QT_NEXTGOAL);
-    if(Qstat(made_goal) < 7) Qstat(made_goal)++;
+    if (Qstat(made_goal) < 7) Qstat(made_goal)++;
   }
 }
 
 void onquest(void)
 {
-	if(u.uevent.qcompleted || Not_firsttime) return;
-	if(!Is_special(&u.uz)) return;
+	if (u.uevent.qcompleted || Not_firsttime) return;
+	if (!Is_special(&u.uz)) return;
 
-	if(Is_qstart(&u.uz)) on_start();
-	else if(Is_qlocate(&u.uz) && u.uz.dlevel > u.uz0.dlevel) on_locate();
-	else if(Is_nemesis(&u.uz)) on_goal();
+	if (Is_qstart(&u.uz)) on_start();
+	else if (Is_qlocate(&u.uz) && u.uz.dlevel > u.uz0.dlevel) on_locate();
+	else if (Is_nemesis(&u.uz)) on_goal();
 	return;
 }
 
 void nemdead(void)
 {
-	if(!Qstat(killed_nemesis)) {
+	if (!Qstat(killed_nemesis)) {
 	    Qstat(killed_nemesis) = TRUE;
 	    qt_pager(QT_KILLEDNEM);
 	}
@@ -77,7 +77,7 @@ void nemdead(void)
 
 void artitouch(void)
 {
-	if(!Qstat(touched_artifact)) {
+	if (!Qstat(touched_artifact)) {
 	    Qstat(touched_artifact) = TRUE;
 	    qt_pager(QT_GOTIT);
 	    exercise(A_WIS, TRUE);
@@ -190,22 +190,22 @@ void finish_quest(struct obj *obj)
 static void chat_with_leader(void)
 {
 /*	Rule 0:	Cheater checks.					*/
-	if(u.uhave.questart && !Qstat(met_nemesis))
+	if (u.uhave.questart && !Qstat(met_nemesis))
 	    Qstat(cheater) = TRUE;
 
 /*	It is possible for you to get the amulet without completing
  *	the quest.  If so, try to induce the player to quest.
  */
-	if(Qstat(got_thanks)) {
+	if (Qstat(got_thanks)) {
 /*	Rule 1:	You've gone back with/without the amulet.	*/
-	    if(u.uhave.amulet)	finish_quest(NULL);
+	    if (u.uhave.amulet)	finish_quest(NULL);
 
 /*	Rule 2:	You've gone back before going for the amulet.	*/
 	    else		qt_pager(QT_POSTHANKS);
 	}
 
 /*	Rule 3: You've got the artifact and are back to return it. */
-	  else if(u.uhave.questart) {
+	  else if (u.uhave.questart) {
 	    struct obj *otmp;
 
 	    for (otmp = invent; otmp; otmp = otmp->nobj)
@@ -214,12 +214,12 @@ static void chat_with_leader(void)
 	    finish_quest(otmp);
 
 /*	Rule 4: You haven't got the artifact yet.	*/
-	} else if(Qstat(got_quest)) {
+	} else if (Qstat(got_quest)) {
 	    qt_pager(rn1(10, QT_ENCOURAGE));
 
 /*	Rule 5: You aren't yet acceptable - or are you? */
 	} else {
-	  if(!Qstat(met_leader)) {
+	  if (!Qstat(met_leader)) {
 	    qt_pager(QT_FIRSTLEADER);
 	    Qstat(met_leader) = TRUE;
 	    Qstat(not_ready) = 0;
@@ -228,16 +228,16 @@ static void chat_with_leader(void)
 	     the regular dungeon; none of the remaining make sense there */
 	  if (!on_level(&u.uz, &qstart_level)) return;
 
-	  if(not_capable()) {
+	  if (not_capable()) {
 	    qt_pager(QT_BADLEVEL);
 	    exercise(A_WIS, TRUE);
 	    expulsion(FALSE);
-	  } else if(is_pure(TRUE) < 0) {
+	  } else if (is_pure(TRUE) < 0) {
 	    com_pager(QT_BANISHED);
 	    expulsion(TRUE);
-	  } else if(is_pure(TRUE) == 0) {
+	  } else if (is_pure(TRUE) == 0) {
 	    qt_pager(QT_BADALIGN);
-	    if(Qstat(not_ready) == MAX_QUEST_TRIES) {
+	    if (Qstat(not_ready) == MAX_QUEST_TRIES) {
 	      qt_pager(QT_LASTLEADER);
 	      expulsion(TRUE);
 	    } else {
@@ -256,7 +256,7 @@ static void chat_with_leader(void)
 void leader_speaks(struct monst *mtmp)
 {
 	/* maybe you attacked leader? */
-	if(!mtmp->mpeaceful) {
+	if (!mtmp->mpeaceful) {
 		Qstat(pissed_off) = TRUE;
 		mtmp->mstrategy &= ~STRAT_WAITMASK;	/* end the inaction */
 	}
@@ -264,7 +264,7 @@ void leader_speaks(struct monst *mtmp)
 	   regular dungeon; if so, mustn't perform "backwards expulsion" */
 	if (!on_level(&u.uz, &qstart_level)) return;
 
-	if(Qstat(pissed_off)) {
+	if (Qstat(pissed_off)) {
 	  qt_pager(QT_LASTLEADER);
 	  expulsion(TRUE);
 	} else chat_with_leader();
@@ -274,22 +274,22 @@ static void chat_with_nemesis(void)
 {
 /*	The nemesis will do most of the talking, but... */
 	qt_pager(rn1(10, QT_DISCOURAGE));
-	if(!Qstat(met_nemesis)) Qstat(met_nemesis++);
+	if (!Qstat(met_nemesis)) Qstat(met_nemesis++);
 }
 
 void nemesis_speaks(void)
 {
-	if(!Qstat(in_battle)) {
-	  if(u.uhave.questart) qt_pager(QT_NEMWANTSIT);
-	  else if(Qstat(made_goal) == 1 || !Qstat(met_nemesis))
+	if (!Qstat(in_battle)) {
+	  if (u.uhave.questart) qt_pager(QT_NEMWANTSIT);
+	  else if (Qstat(made_goal) == 1 || !Qstat(met_nemesis))
 	      qt_pager(QT_FIRSTNEMESIS);
-	  else if(Qstat(made_goal) < 4) qt_pager(QT_NEXTNEMESIS);
-	  else if(Qstat(made_goal) < 7) qt_pager(QT_OTHERNEMESIS);
-	  else if(!rn2(5))	qt_pager(rn1(10, QT_DISCOURAGE));
-	  if(Qstat(made_goal) < 7) Qstat(made_goal)++;
+	  else if (Qstat(made_goal) < 4) qt_pager(QT_NEXTNEMESIS);
+	  else if (Qstat(made_goal) < 7) qt_pager(QT_OTHERNEMESIS);
+	  else if (!rn2(5))	qt_pager(rn1(10, QT_DISCOURAGE));
+	  if (Qstat(made_goal) < 7) Qstat(made_goal)++;
 	  Qstat(met_nemesis) = TRUE;
 	} else /* he will spit out random maledictions */
-	  if(!rn2(5))	qt_pager(rn1(10, QT_DISCOURAGE));
+	  if (!rn2(5))	qt_pager(rn1(10, QT_DISCOURAGE));
 }
 
 static void chat_with_guardian(void)
@@ -350,7 +350,7 @@ void quest_talk(struct monst *mtmp)
 
 void quest_stat_check(struct monst *mtmp)
 {
-    if(mtmp->data->msound == MS_NEMESIS)
+    if (mtmp->data->msound == MS_NEMESIS)
 	Qstat(in_battle) = (mtmp->mcanmove && !mtmp->msleeping &&
 			    monnear(mtmp, u.ux, u.uy));
 }

@@ -18,15 +18,15 @@ static int veryold(int fd)
 {
 	time_t date;
 
-	if(fstat(fd, &buf)) return 0;			/* cannot get status */
+	if (fstat(fd, &buf)) return 0;			/* cannot get status */
 #ifndef INSURANCE
-	if(buf.st_size != sizeof(int)) return 0;	/* not an xlock file */
+	if (buf.st_size != sizeof(int)) return 0;	/* not an xlock file */
 #endif
 	time(&date);
-	if(date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
+	if (date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
 		int lockedpid;	/* should be the same size as hackpid */
 
-		if(read(fd, &lockedpid, sizeof(lockedpid)) !=
+		if (read(fd, &lockedpid, sizeof(lockedpid)) !=
 			sizeof(lockedpid))
 			/* strange ... */
 			return 0;
@@ -45,7 +45,7 @@ static int eraseoldlocks(void)
 	 * before starting everything (including the dungeon initialization
 	 * that sets astral_level, needed for maxledgerno()) up
 	 */
-	for(i = 1; i <= MAXLOCKNO; i++) {
+	for (i = 1; i <= MAXLOCKNO; i++) {
 		/* try to remove all */
 		set_levelfile_name(lock, i);
 		unlink(fqname(lock, LEVELPREFIX, 0));
@@ -70,42 +70,42 @@ void getlock(int locknum)
 	regularize(lock);
 	set_levelfile_name(lock, 0);
 
-	if(locknum) {
-		if(locknum > 25) locknum = 25;
+	if (locknum) {
+		if (locknum > 25) locknum = 25;
 
 		do {
 			lock[0] = 'a' + i++;
 			fq_lock = fqname(lock, LEVELPREFIX, 0);
 
-			if((fd = open(fq_lock, 0)) == -1) {
-			    if(errno == ENOENT) goto gotlock; /* no such file */
+			if ((fd = open(fq_lock, 0)) == -1) {
+			    if (errno == ENOENT) goto gotlock; /* no such file */
 			    perror(fq_lock);
 			    unlock_file(HLOCK);
 			    panic("Cannot open %s", fq_lock);
 			}
 
-			if(veryold(fd) /* closes fd if true */
+			if (veryold(fd) /* closes fd if true */
 					&& eraseoldlocks())
 				goto gotlock;
 			close(fd);
-		} while(i < locknum);
+		} while (i < locknum);
 
 		unlock_file(HLOCK);
 		panic("Too many hacks running now.");
 	} else {
 		fq_lock = fqname(lock, LEVELPREFIX, 0);
-		if((fd = open(fq_lock, 0)) == -1) {
-			if(errno == ENOENT) goto gotlock;    /* no such file */
+		if ((fd = open(fq_lock, 0)) == -1) {
+			if (errno == ENOENT) goto gotlock;    /* no such file */
 			perror(fq_lock);
 			unlock_file(HLOCK);
 			panic("Cannot open %s", fq_lock);
 		}
 
-		if(veryold(fd) /* closes fd if true */ && eraseoldlocks())
+		if (veryold(fd) /* closes fd if true */ && eraseoldlocks())
 			goto gotlock;
 		close(fd);
 
-		if(iflags2.window_inited) {
+		if (iflags2.window_inited) {
 		    c = yn_function("There is already a game in progress under your name.  Destroy old game?",ynchars, 'n');
 		} else {
 		    printf("\nThere is already a game in progress under your name.");
@@ -116,8 +116,8 @@ void getlock(int locknum)
 		    fflush(stdout);
 		    while (getchar() != '\n') ; /* eat rest of line and newline */
 		}
-		if(c == 'y' || c == 'Y')
-			if(eraseoldlocks())
+		if (c == 'y' || c == 'Y')
+			if (eraseoldlocks())
 				goto gotlock;
 			else {
 				unlock_file(HLOCK);
@@ -132,14 +132,14 @@ void getlock(int locknum)
 gotlock:
 	fd = creat(fq_lock, FCMASK);
 	unlock_file(HLOCK);
-	if(fd == -1) {
+	if (fd == -1) {
 		panic("cannot creat lock file (%s).", fq_lock);
 	} else {
-		if(write(fd, &hackpid, sizeof(hackpid))
+		if (write(fd, &hackpid, sizeof(hackpid))
 		    != sizeof(hackpid)){
 			panic("cannot write lock (%s)", fq_lock);
 		}
-		if(close(fd) == -1) {
+		if (close(fd) == -1) {
 			panic("cannot close lock (%s)", fq_lock);
 		}
 	}

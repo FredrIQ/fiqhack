@@ -148,11 +148,11 @@ const char *surface(int x, int y)
 	    return "lava";
 	else if (lev->typ == DRAWBRIDGE_DOWN)
 	    return "bridge";
-	else if(IS_ALTAR(levl[x][y].typ))
+	else if (IS_ALTAR(levl[x][y].typ))
 	    return "altar";
-	else if(IS_GRAVE(levl[x][y].typ))
+	else if (IS_GRAVE(levl[x][y].typ))
 	    return "headstone";
-	else if(IS_FOUNTAIN(levl[x][y].typ))
+	else if (IS_FOUNTAIN(levl[x][y].typ))
 	    return "fountain";
 	else if ((IS_ROOM(lev->typ) && !Is_earthlevel(&u.uz)) ||
 		 IS_WALL(lev->typ) || IS_DOOR(lev->typ) || lev->typ == SDOOR)
@@ -192,8 +192,8 @@ struct engr *engr_at(xchar x, xchar y)
 {
 	struct engr *ep = head_engr;
 
-	while(ep) {
-		if(x == ep->engr_x && y == ep->engr_y)
+	while (ep) {
+		if (x == ep->engr_x && y == ep->engr_y)
 			return ep;
 		ep = ep->nxt_engr;
 	}
@@ -225,15 +225,15 @@ void wipe_engr_at(xchar x, xchar y, xchar cnt)
 	struct engr *ep = engr_at(x,y);
 
 	/* Headstones are indelible */
-	if(ep && ep->engr_type != HEADSTONE){
-	    if(ep->engr_type != BURN || is_ice(x,y)) {
-		if(ep->engr_type != DUST && ep->engr_type != ENGR_BLOOD) {
+	if (ep && ep->engr_type != HEADSTONE){
+	    if (ep->engr_type != BURN || is_ice(x,y)) {
+		if (ep->engr_type != DUST && ep->engr_type != ENGR_BLOOD) {
 			cnt = rn2(1 + 50/(cnt+1)) ? 0 : 1;
 		}
 		wipeout_text(ep->engr_txt, (int)cnt, 0);
-		while(ep->engr_txt[0] == ' ')
+		while (ep->engr_txt[0] == ' ')
 			ep->engr_txt++;
-		if(!ep->engr_txt[0]) del_engr(ep);
+		if (!ep->engr_txt[0]) del_engr(ep);
 	    }
 	}
 }
@@ -248,10 +248,10 @@ void read_engr_at(int x, int y)
 	/* Sensing an engraving does not require sight,
 	 * nor does it necessarily imply comprehension (literacy).
 	 */
-	if(ep && ep->engr_txt[0]) {
+	if (ep && ep->engr_txt[0]) {
 	    switch(ep->engr_type) {
 	    case DUST:
-		if(!Blind) {
+		if (!Blind) {
 			sensed = 1;
 			pline("%s is written here in the %s.", Something,
 				is_ice(x,y) ? "frost" : "dust");
@@ -275,7 +275,7 @@ void read_engr_at(int x, int y)
 		}
 		break;
 	    case MARK:
-		if(!Blind) {
+		if (!Blind) {
 			sensed = 1;
 			pline("There's some graffiti on the %s here.",
 				surface(x,y));
@@ -286,7 +286,7 @@ void read_engr_at(int x, int y)
 		 * "What's it say?"
 		 * "It says... `See you next Wednesday.'" -- Thriller
 		 */
-		if(!Blind) {
+		if (!Blind) {
 			sensed = 1;
 			You("see a message scrawled in blood here.");
 		}
@@ -307,7 +307,7 @@ void read_engr_at(int x, int y)
 			et = ep->engr_txt;
 		You("%s: \"%s\".",
 		      (Blind) ? "feel the words" : "read",  et);
-		if(flags.run > 1) nomul(0);
+		if (flags.run > 1) nomul(0);
 	    }
 	}
 }
@@ -424,7 +424,7 @@ int doengrave(void)
 
 	/* Can the adventurer engrave at all? */
 
-	if(u.uswallow) {
+	if (u.uswallow) {
 		if (is_animal(u.ustuck->data)) {
 			pline("What would you write?  \"Jonah was here\"?");
 			return 0;
@@ -440,7 +440,7 @@ int doengrave(void)
 		You_cant("write on the water!");
 		return 0;
 	}
-	if(Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)/* in bubble */) {
+	if (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)/* in bubble */) {
 		You_cant("write in thin air!");
 		return 0;
 	}
@@ -455,7 +455,7 @@ int doengrave(void)
 	 */
 
 	otmp = getobj(styluses, "write with");
-	if(!otmp) return 0;		/* otmp == zeroobj if fingers */
+	if (!otmp) return 0;		/* otmp == zeroobj if fingers */
 
 	if (otmp == &zeroobj) writer = makeplural(body_part(FINGER));
 	else writer = xname(otmp);
@@ -592,7 +592,7 @@ int doengrave(void)
 			}
 			break;
 		    case WAN_POLYMORPH:
-			if(oep)  {
+			if (oep)  {
 			    if (!Blind) {
 				type = (xchar)0;	/* random */
 				random_engraving(buf);
@@ -631,7 +631,7 @@ int doengrave(void)
 			if (!Blind)
 			    strcpy(post_engr_text,
 				"A few ice cubes drop from the wand.");
-			if(!oep || (oep->engr_type != BURN))
+			if (!oep || (oep->engr_type != BURN))
 			    break;
 		    case WAN_CANCELLATION:
 		    case WAN_MAKE_INVISIBLE:
@@ -655,7 +655,7 @@ int doengrave(void)
 		    case WAN_DIGGING:
 			ptext = TRUE;
 			type  = ENGRAVE;
-			if(!objects[otmp->otyp].oc_name_known) {
+			if (!objects[otmp->otyp].oc_name_known) {
 			    if (flags.verbose)
 				pline("This %s is a wand of digging!",
 				xname(otmp));
@@ -676,7 +676,7 @@ int doengrave(void)
 		    case WAN_FIRE:
 			ptext = TRUE;
 			type  = BURN;
-			if(!objects[otmp->otyp].oc_name_known) {
+			if (!objects[otmp->otyp].oc_name_known) {
 			if (flags.verbose)
 			    pline("This %s is a wand of fire!", xname(otmp));
 			    doknown = TRUE;
@@ -688,7 +688,7 @@ int doengrave(void)
 		    case WAN_LIGHTNING:
 			ptext = TRUE;
 			type  = BURN;
-			if(!objects[otmp->otyp].oc_name_known) {
+			if (!objects[otmp->otyp].oc_name_known) {
 			    if (flags.verbose)
 				pline("This %s is a wand of lightning!",
 					xname(otmp));
@@ -722,7 +722,7 @@ int doengrave(void)
 		break;
 
 	    case TOOL_CLASS:
-		if(otmp == ublindf) {
+		if (otmp == ublindf) {
 		    pline(
 		"That is a bit difficult to engrave with, don't you think?");
 		    return 0;
@@ -848,7 +848,7 @@ int doengrave(void)
 
 	    if (c == 'n' || Blind) {
 
-		if( (oep->engr_type == DUST) || (oep->engr_type == ENGR_BLOOD) ||
+		if ( (oep->engr_type == DUST) || (oep->engr_type == ENGR_BLOOD) ||
 		    (oep->engr_type == MARK) ) {
 		    if (!Blind) {
 			You("wipe out the message that was %s here.",
@@ -1090,9 +1090,9 @@ void rest_engravings(int fd)
 	unsigned lth;
 
 	head_engr = 0;
-	while(1) {
+	while (1) {
 		mread(fd, &lth, sizeof(unsigned));
-		if(lth == 0) return;
+		if (lth == 0) return;
 		ep = newengr(lth);
 		mread(fd, ep, sizeof(struct engr) + lth);
 		ep->nxt_engr = head_engr;

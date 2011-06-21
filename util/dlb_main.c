@@ -153,7 +153,7 @@ main(argc, argv)
 	/* doesn't return */
     }
 
-    for(cp=0;argv[1][cp];cp++){
+    for (cp=0;argv[1][cp];cp++){
 	switch(argv[1][cp]){
 	    default:
 		usage();	/* doesn't return */
@@ -166,20 +166,20 @@ main(argc, argv)
 	    case 'I':
 		if (ap == argc) usage();
 		list_file=argv[ap++];
-		if(iseen)
+		if (iseen)
 		    printf("Warning: multiple I options.  Previous ignored.\n");
 		iseen=1;
 		break;
 	    case 'f':
 		if (ap == argc) usage();
 		library_file=argv[ap++];
-		if(fseen)
+		if (fseen)
 		    printf("Warning: multiple f options.  Previous ignored.\n");
 		fseen=1;
 		break;
 	    case 'C':
 		if (ap == argc) usage();
-		if(chdir(argv[ap++])){
+		if (chdir(argv[ap++])){
 		    printf("Can't chdir to %s\n",argv[--ap]);
 		    xexit(EXIT_FAILURE);
 		}
@@ -190,7 +190,7 @@ main(argc, argv)
 	    case 't':
 	    case 'c':
 	    case 'x':
-		if(action != ' '){
+		if (action != ' '){
 		    printf("Only one of t,x,c may be specified.\n");
 		    usage();
 		}
@@ -199,7 +199,7 @@ main(argc, argv)
 	}
     }
 
-    if(argv[ap] && iseen){
+    if (argv[ap] && iseen){
 	printf("Too many arguments.\n");
 	xexit(EXIT_FAILURE);
     }

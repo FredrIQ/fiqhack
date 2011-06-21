@@ -88,7 +88,7 @@ static void choke_dialogue(void)
 {
 	long i = (Strangled & TIMEOUT);
 
-	if(i > 0 && i <= SIZE(choke_texts)) {
+	if (i > 0 && i <= SIZE(choke_texts)) {
 	    if (Breathless || !rn2(50))
 		pline(choke_texts2[SIZE(choke_texts2) - i], body_part(NECK));
 	    else {
@@ -167,23 +167,23 @@ void nh_timeout(void)
 	    int time_luck = stone_luck(FALSE);
 	    boolean nostone = !carrying(LUCKSTONE) && !stone_luck(TRUE);
 
-	    if(u.uluck > baseluck && (nostone || time_luck < 0))
+	    if (u.uluck > baseluck && (nostone || time_luck < 0))
 		u.uluck--;
-	    else if(u.uluck < baseluck && (nostone || time_luck > 0))
+	    else if (u.uluck < baseluck && (nostone || time_luck > 0))
 		u.uluck++;
 	}
-	if(u.uinvulnerable) return; /* things past this point could kill you */
-	if(Stoned) stoned_dialogue();
-	if(Slimed) slime_dialogue();
-	if(Vomiting) vomiting_dialogue();
-	if(Strangled) choke_dialogue();
-	if(u.mtimedone && !--u.mtimedone) {
+	if (u.uinvulnerable) return; /* things past this point could kill you */
+	if (Stoned) stoned_dialogue();
+	if (Slimed) slime_dialogue();
+	if (Vomiting) vomiting_dialogue();
+	if (Strangled) choke_dialogue();
+	if (u.mtimedone && !--u.mtimedone) {
 		if (Unchanging)
 			u.mtimedone = rnd(100*youmonst.data->mlevel + 1);
 		else
 			rehumanize();
 	}
-	if(u.ucreamed) u.ucreamed--;
+	if (u.ucreamed) u.ucreamed--;
 
 	/* Dissipate spell-based protection. */
 	if (u.usptime) {
@@ -202,8 +202,8 @@ void nh_timeout(void)
 	    	pline("%s stops galloping.", Monnam(u.usteed));
 	}
 
-	for(upp = u.uprops; upp < u.uprops+SIZE(u.uprops); upp++)
-	    if((upp->intrinsic & TIMEOUT) && !(--upp->intrinsic & TIMEOUT)) {
+	for (upp = u.uprops; upp < u.uprops+SIZE(u.uprops); upp++)
+	    if ((upp->intrinsic & TIMEOUT) && !(--upp->intrinsic & TIMEOUT)) {
 		switch(upp - u.uprops){
 		case STONED:
 			if (delayed_killer && !killer) {
@@ -1108,30 +1108,30 @@ void do_storms(void)
     int count;
 
     /* no lightning if not the air level or too often, even then */
-    if(!Is_airlevel(&u.uz) || rn2(8))
+    if (!Is_airlevel(&u.uz) || rn2(8))
 	return;
 
     /* the number of strikes is 8-log2(nstrike) */
-    for(nstrike = rnd(64); nstrike <= 64; nstrike *= 2) {
+    for (nstrike = rnd(64); nstrike <= 64; nstrike *= 2) {
 	count = 0;
 	do {
 	    x = rnd(COLNO-1);
 	    y = rn2(ROWNO);
 	} while (++count < 100 && levl[x][y].typ != CLOUD);
 
-	if(count < 100) {
+	if (count < 100) {
 	    dirx = rn2(3) - 1;
 	    diry = rn2(3) - 1;
-	    if(dirx != 0 || diry != 0)
+	    if (dirx != 0 || diry != 0)
 		buzz(-15, /* "monster" LIGHTNING spell */
 		     8, x, y, dirx, diry);
 	}
     }
 
-    if(levl[u.ux][u.uy].typ == CLOUD) {
+    if (levl[u.ux][u.uy].typ == CLOUD) {
 	/* inside a cloud during a thunder storm is deafening */
 	pline("Kaboom!!!  Boom!!  Boom!!");
-	if(!u.uinvulnerable) {
+	if (!u.uinvulnerable) {
 	    stop_occupation();
 	    nomul(-3);
 	}

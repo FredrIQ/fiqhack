@@ -65,53 +65,53 @@ static void mkshop(void)
 	char *ep = NULL;	/* (init == lint suppression) */
 
 	/* first determine shoptype */
-	if(wizard){
+	if (wizard){
 		ep = nh_getenv("SHOPTYPE");
-		if(ep){
-			if(*ep == 'z' || *ep == 'Z'){
+		if (ep){
+			if (*ep == 'z' || *ep == 'Z'){
 				mkzoo(ZOO);
 				return;
 			}
-			if(*ep == 'm' || *ep == 'M'){
+			if (*ep == 'm' || *ep == 'M'){
 				mkzoo(MORGUE);
 				return;
 			}
-			if(*ep == 'b' || *ep == 'B'){
+			if (*ep == 'b' || *ep == 'B'){
 				mkzoo(BEEHIVE);
 				return;
 			}
-			if(*ep == 't' || *ep == 'T' || *ep == '\\'){
+			if (*ep == 't' || *ep == 'T' || *ep == '\\'){
 				mkzoo(COURT);
 				return;
 			}
-			if(*ep == 's' || *ep == 'S'){
+			if (*ep == 's' || *ep == 'S'){
 				mkzoo(BARRACKS);
 				return;
 			}
-			if(*ep == 'a' || *ep == 'A'){
+			if (*ep == 'a' || *ep == 'A'){
 				mkzoo(ANTHOLE);
 				return;
 			}
-			if(*ep == 'c' || *ep == 'C'){
+			if (*ep == 'c' || *ep == 'C'){
 				mkzoo(COCKNEST);
 				return;
 			}
-			if(*ep == 'l' || *ep == 'L'){
+			if (*ep == 'l' || *ep == 'L'){
 				mkzoo(LEPREHALL);
 				return;
 			}
-			if(*ep == '_'){
+			if (*ep == '_'){
 				mktemple();
 				return;
 			}
-			if(*ep == '}'){
+			if (*ep == '}'){
 				mkswamp();
 				return;
 			}
-			for(i=0; shtypes[i].name; i++)
-				if(*ep == def_oc_syms[(int)shtypes[i].symb])
+			for (i=0; shtypes[i].name; i++)
+				if (*ep == def_oc_syms[(int)shtypes[i].symb])
 				    goto gottype;
-			if(*ep == 'g' || *ep == 'G')
+			if (*ep == 'g' || *ep == 'G')
 				i = 0;
 			else
 				i = -1;
@@ -119,28 +119,28 @@ static void mkshop(void)
 	}
 gottype:
 
-	for(sroom = &rooms[0]; ; sroom++){
-		if(sroom->hx < 0) return;
-		if(sroom - rooms >= nroom) {
+	for (sroom = &rooms[0]; ; sroom++){
+		if (sroom->hx < 0) return;
+		if (sroom - rooms >= nroom) {
 			pline("rooms not closed by -1?");
 			return;
 		}
-		if(sroom->rtype != OROOM) continue;
-		if(has_dnstairs(sroom) || has_upstairs(sroom))
+		if (sroom->rtype != OROOM) continue;
+		if (has_dnstairs(sroom) || has_upstairs(sroom))
 			continue;
-		if((wizard && ep && sroom->doorct != 0) ||
+		if ((wizard && ep && sroom->doorct != 0) ||
 			sroom->doorct == 1) break;
 	}
 	if (!sroom->rlit) {
 		int x, y;
 
-		for(x = sroom->lx - 1; x <= sroom->hx + 1; x++)
-		for(y = sroom->ly - 1; y <= sroom->hy + 1; y++)
+		for (x = sroom->lx - 1; x <= sroom->hx + 1; x++)
+		for (y = sroom->ly - 1; y <= sroom->hy + 1; y++)
 			levl[x][y].lit = 1;
 		sroom->rlit = 1;
 	}
 
-	if(i < 0) {			/* shoptype not yet determined */
+	if (i < 0) {			/* shoptype not yet determined */
 	    int j;
 
 	    /* pick a shop type at random */
@@ -150,7 +150,7 @@ gottype:
 	    /* big rooms cannot be wand or book shops,
 	     * - so make them general stores
 	     */
-	    if(isbig(sroom) && (shtypes[i].symb == WAND_CLASS
+	    if (isbig(sroom) && (shtypes[i].symb == WAND_CLASS
 				|| shtypes[i].symb == SPBOOK_CLASS)) i = 0;
 	}
 	sroom->rtype = SHOPBASE + i;
@@ -168,18 +168,18 @@ static struct mkroom *pick_room(boolean strict)
 	struct mkroom *sroom;
 	int i = nroom;
 
-	for(sroom = &rooms[rn2(nroom)]; i--; sroom++) {
-		if(sroom == &rooms[nroom])
+	for (sroom = &rooms[rn2(nroom)]; i--; sroom++) {
+		if (sroom == &rooms[nroom])
 			sroom = &rooms[0];
-		if(sroom->hx < 0)
+		if (sroom->hx < 0)
 			return NULL;
-		if(sroom->rtype != OROOM)	continue;
-		if(!strict) {
-		    if(has_upstairs(sroom) || (has_dnstairs(sroom) && rn2(3)))
+		if (sroom->rtype != OROOM)	continue;
+		if (!strict) {
+		    if (has_upstairs(sroom) || (has_dnstairs(sroom) && rn2(3)))
 			continue;
-		} else if(has_upstairs(sroom) || has_dnstairs(sroom))
+		} else if (has_upstairs(sroom) || has_dnstairs(sroom))
 			continue;
-		if(sroom->doorct == 1 || !rn2(5) || wizard)
+		if (sroom->doorct == 1 || !rn2(5) || wizard)
 			return sroom;
 	}
 	return NULL;
@@ -208,10 +208,10 @@ void fill_zoo(struct mkroom *sroom)
 	sh = sroom->fdoor;
 	switch(type) {
 	    case COURT:
-		if(level.flags.is_maze_lev) {
-		    for(tx = sroom->lx; tx <= sroom->hx; tx++)
-			for(ty = sroom->ly; ty <= sroom->hy; ty++)
-			    if(IS_THRONE(levl[tx][ty].typ))
+		if (level.flags.is_maze_lev) {
+		    for (tx = sroom->lx; tx <= sroom->hx; tx++)
+			for (ty = sroom->ly; ty <= sroom->hy; ty++)
+			    if (IS_THRONE(levl[tx][ty].typ))
 				goto throne_placed;
 		}
 		i = 100;
@@ -225,7 +225,7 @@ void fill_zoo(struct mkroom *sroom)
 	    case BEEHIVE:
 		tx = sroom->lx + (sroom->hx - sroom->lx + 1)/2;
 		ty = sroom->ly + (sroom->hy - sroom->ly + 1)/2;
-		if(sroom->irregular) {
+		if (sroom->irregular) {
 		    /* center might not be valid, so put queen elsewhere */
 		    if ((int) levl[tx][ty].roomno != rmno ||
 			    levl[tx][ty].edge) {
@@ -239,15 +239,15 @@ void fill_zoo(struct mkroom *sroom)
 		goldlim = 500 * level_difficulty();
 		break;
 	}
-	for(sx = sroom->lx; sx <= sroom->hx; sx++)
-	    for(sy = sroom->ly; sy <= sroom->hy; sy++) {
-		if(sroom->irregular) {
+	for (sx = sroom->lx; sx <= sroom->hx; sx++)
+	    for (sy = sroom->ly; sy <= sroom->hy; sy++) {
+		if (sroom->irregular) {
 		    if ((int) levl[sx][sy].roomno != rmno ||
 			  levl[sx][sy].edge ||
 			  (sroom->doorct &&
 			   distmin(sx, sy, doors[sh].x, doors[sh].y) <= 1))
 			continue;
-		} else if(!SPACE_POS(levl[sx][sy].typ) ||
+		} else if (!SPACE_POS(levl[sx][sy].typ) ||
 			  (sroom->doorct &&
 			   ((sx == sroom->lx && doors[sh].x == sx-1) ||
 			    (sx == sroom->hx && doors[sh].x == sx+1) ||
@@ -255,7 +255,7 @@ void fill_zoo(struct mkroom *sroom)
 			    (sy == sroom->hy && doors[sh].y == sy+1))))
 		    continue;
 		/* don't place monster on explicitly placed throne */
-		if(type == COURT && IS_THRONE(levl[sx][sy].typ))
+		if (type == COURT && IS_THRONE(levl[sx][sy].typ))
 		    continue;
 		mon = makemon(
 		    (type == COURT) ? courtmon() :
@@ -269,7 +269,7 @@ void fill_zoo(struct mkroom *sroom)
 		    (type == ANTHOLE) ? antholemon() :
 		    NULL,
 		   sx, sy, NO_MM_FLAGS);
-		if(mon) {
+		if (mon) {
 			mon->msleeping = 1;
 			if (type==COURT && mon->mpeaceful) {
 				mon->mpeaceful = 0;
@@ -279,38 +279,38 @@ void fill_zoo(struct mkroom *sroom)
 		switch(type) {
 		    case ZOO:
 		    case LEPREHALL:
-			if(sroom->doorct)
+			if (sroom->doorct)
 			{
 			    int distval = dist2(sx,sy,doors[sh].x,doors[sh].y);
 			    i = sq(distval);
 			}
 			else
 			    i = goldlim;
-			if(i >= goldlim) i = 5*level_difficulty();
+			if (i >= goldlim) i = 5*level_difficulty();
 			goldlim -= i;
 			mkgold((long) rn1(i, 10), sx, sy);
 			break;
 		    case MORGUE:
-			if(!rn2(5))
+			if (!rn2(5))
 			    mk_tt_object(CORPSE, sx, sy);
-			if(!rn2(10))	/* lots of treasure buried with dead */
+			if (!rn2(10))	/* lots of treasure buried with dead */
 			    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 					     sx, sy, TRUE, FALSE);
 			if (!rn2(5))
 			    make_grave(sx, sy, NULL);
 			break;
 		    case BEEHIVE:
-			if(!rn2(3))
+			if (!rn2(3))
 			    mksobj_at(LUMP_OF_ROYAL_JELLY,
 					     sx, sy, TRUE, FALSE);
 			break;
 		    case BARRACKS:
-			if(!rn2(20))	/* the payroll and some loot */
+			if (!rn2(20))	/* the payroll and some loot */
 			    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 					     sx, sy, TRUE, FALSE);
 			break;
 		    case COCKNEST:
-			if(!rn2(3)) {
+			if (!rn2(3)) {
 			    struct obj *sobj = mk_tt_object(STATUE, sx, sy);
 
 			    if (sobj) {
@@ -322,7 +322,7 @@ void fill_zoo(struct mkroom *sroom)
 			}
 			break;
 		    case ANTHOLE:
-			if(!rn2(3))
+			if (!rn2(3))
 			    mkobj_at(FOOD_CLASS, sx, sy, FALSE);
 			break;
 		}
@@ -381,10 +381,10 @@ static struct permonst *morguemon(void)
 {
 	int i = rn2(100), hd = rn2(level_difficulty());
 
-	if(hd > 10 && i < 10)
+	if (hd > 10 && i < 10)
 		return (Inhell || In_endgame(&u.uz)) ? mkclass(S_DEMON,0) :
 						       &mons[ndemon(A_NONE)];
-	if(hd > 8 && i > 85)
+	if (hd > 8 && i > 85)
 		return mkclass(S_VAMPIRE,0);
 
 	return (i < 20) ? &mons[PM_GHOST]
@@ -409,21 +409,21 @@ static void mkswamp(void)
 	struct mkroom *sroom;
 	int sx,sy,i,eelct = 0;
 
-	for(i=0; i<5; i++) {		/* turn up to 5 rooms swampy */
+	for (i=0; i<5; i++) {		/* turn up to 5 rooms swampy */
 		sroom = &rooms[rn2(nroom)];
-		if(sroom->hx < 0 || sroom->rtype != OROOM ||
+		if (sroom->hx < 0 || sroom->rtype != OROOM ||
 		   has_upstairs(sroom) || has_dnstairs(sroom))
 			continue;
 
 		/* satisfied; make a swamp */
 		sroom->rtype = SWAMP;
-		for(sx = sroom->lx; sx <= sroom->hx; sx++)
-		for(sy = sroom->ly; sy <= sroom->hy; sy++)
-		if(!OBJ_AT(sx, sy) &&
+		for (sx = sroom->lx; sx <= sroom->hx; sx++)
+		for (sy = sroom->ly; sy <= sroom->hy; sy++)
+		if (!OBJ_AT(sx, sy) &&
 		   !MON_AT(sx, sy) && !t_at(sx,sy) && !nexttodoor(sx,sy)) {
-		    if((sx+sy)%2) {
+		    if ((sx+sy)%2) {
 			levl[sx][sy].typ = POOL;
-			if(!eelct || !rn2(4)) {
+			if (!eelct || !rn2(4)) {
 			    /* mkclass() won't do, as we might get kraken */
 			    makemon(rn2(5) ? &mons[PM_GIANT_EEL]
 						  : rn2(2) ? &mons[PM_PIRANHA]
@@ -432,7 +432,7 @@ static void mkswamp(void)
 			    eelct++;
 			}
 		    } else
-			if(!rn2(4))	/* swamps tend to be moldy */
+			if (!rn2(4))	/* swamps tend to be moldy */
 			    makemon(mkclass(S_FUNGUS,0),
 						sx, sy, NO_MM_FLAGS);
 		}
@@ -456,7 +456,7 @@ static void mktemple(void)
 	coord *shrine_spot;
 	struct rm *lev;
 
-	if(!(sroom = pick_room(TRUE))) return;
+	if (!(sroom = pick_room(TRUE))) return;
 
 	/* set up Priest and shrine */
 	sroom->rtype = TEMPLE;
@@ -477,9 +477,9 @@ boolean nexttodoor(int sx, int sy)
 {
 	int dx, dy;
 	struct rm *lev;
-	for(dx = -1; dx <= 1; dx++) for(dy = -1; dy <= 1; dy++) {
-		if(!isok(sx+dx, sy+dy)) continue;
-		if(IS_DOOR((lev = &levl[sx+dx][sy+dy])->typ) ||
+	for (dx = -1; dx <= 1; dx++) for(dy = -1; dy <= 1; dy++) {
+		if (!isok(sx+dx, sy+dy)) continue;
+		if (IS_DOOR((lev = &levl[sx+dx][sy+dy])->typ) ||
 		    lev->typ == SDOOR)
 			return TRUE;
 	}
@@ -529,7 +529,7 @@ boolean somexy(struct mkroom *croom, coord *c)
 	if (croom->irregular) {
 	    i = (croom - rooms) + ROOMOFFSET;
 
-	    while(try_cnt++ < 100) {
+	    while (try_cnt++ < 100) {
 		c->x = somex(croom);
 		c->y = somey(croom);
 		if (!levl[c->x][c->y].edge &&
@@ -537,8 +537,8 @@ boolean somexy(struct mkroom *croom, coord *c)
 		    return TRUE;
 	    }
 	    /* try harder; exhaustively search until one is found */
-	    for(c->x = croom->lx; c->x <= croom->hx; c->x++)
-		for(c->y = croom->ly; c->y <= croom->hy; c->y++)
+	    for (c->x = croom->lx; c->x <= croom->hx; c->x++)
+		for (c->y = croom->ly; c->y <= croom->hy; c->y++)
 		    if (!levl[c->x][c->y].edge &&
 			    (int) levl[c->x][c->y].roomno == i)
 			return TRUE;
@@ -553,13 +553,13 @@ boolean somexy(struct mkroom *croom, coord *c)
 
 	/* Check that coords doesn't fall into a subroom or into a wall */
 
-	while(try_cnt++ < 100) {
+	while (try_cnt++ < 100) {
 		c->x = somex(croom);
 		c->y = somey(croom);
 		if (IS_WALL(levl[c->x][c->y].typ))
 		    continue;
-		for(i=0 ; i<croom->nsubrooms;i++)
-		    if(inside_room(croom->sbrooms[i], c->x, c->y))
+		for (i=0 ; i<croom->nsubrooms;i++)
+		    if (inside_room(croom->sbrooms[i], c->x, c->y))
 			goto you_lose;
 		break;
 you_lose:	;
@@ -580,13 +580,13 @@ struct mkroom *search_special(schar type)
 {
 	struct mkroom *croom;
 
-	for(croom = &rooms[0]; croom->hx >= 0; croom++)
-	    if((type == ANY_TYPE && croom->rtype != OROOM) ||
+	for (croom = &rooms[0]; croom->hx >= 0; croom++)
+	    if ((type == ANY_TYPE && croom->rtype != OROOM) ||
 	       (type == ANY_SHOP && croom->rtype >= SHOPBASE) ||
 	       croom->rtype == type)
 		return croom;
-	for(croom = &subrooms[0]; croom->hx >= 0; croom++)
-	    if((type == ANY_TYPE && croom->rtype != OROOM) ||
+	for (croom = &subrooms[0]; croom->hx >= 0; croom++)
+	    if ((type == ANY_TYPE && croom->rtype != OROOM) ||
 	       (type == ANY_SHOP && croom->rtype >= SHOPBASE) ||
 	       croom->rtype == type)
 		return croom;
@@ -650,7 +650,7 @@ static void save_room(int fd, struct mkroom *r)
 	 * the subrooms pointers, but who cares ?
 	 */
 	bwrite(fd, r, sizeof(struct mkroom));
-	for(i=0; i<r->nsubrooms; i++)
+	for (i=0; i<r->nsubrooms; i++)
 	    save_room(fd, r->sbrooms[i]);
 }
 
@@ -663,7 +663,7 @@ void save_rooms(int fd)
 
 	/* First, write the number of rooms */
 	bwrite(fd, &nroom, sizeof(nroom));
-	for(i=0; i<nroom; i++)
+	for (i=0; i<nroom; i++)
 	    save_room(fd, &rooms[i]);
 }
 
@@ -672,7 +672,7 @@ static void rest_room(int fd, struct mkroom *r)
 	short i;
 
 	mread(fd, r, sizeof(struct mkroom));
-	for(i=0; i<r->nsubrooms; i++) {
+	for (i=0; i<r->nsubrooms; i++) {
 		r->sbrooms[i] = &subrooms[nsubroom];
 		rest_room(fd, &subrooms[nsubroom]);
 		subrooms[nsubroom++].resident = NULL;
@@ -689,7 +689,7 @@ void rest_rooms(int fd)
 
 	mread(fd, &nroom, sizeof(nroom));
 	nsubroom = 0;
-	for(i = 0; i<nroom; i++) {
+	for (i = 0; i<nroom; i++) {
 	    rest_room(fd, &rooms[i]);
 	    rooms[i].resident = NULL;
 	}

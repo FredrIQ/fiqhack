@@ -313,7 +313,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 	sy = doors[sh].y;
 
 	/* check that the shopkeeper placement is sane */
-	if(sroom->irregular) {
+	if (sroom->irregular) {
 	    int rmno = (sroom - rooms) + ROOMOFFSET;
 	    if (isok(sx-1,sy) && !levl[sx-1][sy].edge &&
 		(int) levl[sx-1][sy].roomno == rmno) sx--;
@@ -325,16 +325,16 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 		(int) levl[sx][sy+1].roomno == rmno) sx++;
 	    else goto shk_failed;
 	}
-	else if(sx == sroom->lx-1) sx++;
-	else if(sx == sroom->hx+1) sx--;
-	else if(sy == sroom->ly-1) sy++;
-	else if(sy == sroom->hy+1) sy--; else {
+	else if (sx == sroom->lx-1) sx++;
+	else if (sx == sroom->hx+1) sx--;
+	else if (sy == sroom->ly-1) sy++;
+	else if (sy == sroom->hy+1) sy--; else {
 	shk_failed:
 	
 #ifdef DEBUG
 	    /* Said to happen sometimes, but I have never seen it. */
 	    /* Supposedly fixed by fdoor change in mklev.c */
-	    if(wizard) {
+	    if (wizard) {
 		int j = sroom->doorct;
 
 		pline("Where is shopdoor?");
@@ -342,7 +342,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 		      sroom->lx, sroom->ly, sroom->hx, sroom->hy);
 		pline("doormax=%d doorct=%d fdoor=%d",
 		      doorindex, sroom->doorct, sh);
-		while(j--) {
+		while (j--) {
 		    pline("door [%d,%d]", doors[sh].x, doors[sh].y);
 		    sh++;
 		}
@@ -353,10 +353,10 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 	    return -1;
 	}
 
-	if(MON_AT(sx, sy)) rloc(m_at(sx, sy), FALSE); /* insurance */
+	if (MON_AT(sx, sy)) rloc(m_at(sx, sy), FALSE); /* insurance */
 
 	/* now initialize the shopkeeper monster structure */
-	if(!(shk = makemon(&mons[PM_SHOPKEEPER], sx, sy, NO_MM_FLAGS)))
+	if (!(shk = makemon(&mons[PM_SHOPKEEPER], sx, sy, NO_MM_FLAGS)))
 		return -1;
 	shk->isshk = shk->mpeaceful = 1;
 	set_malign(shk);
@@ -411,35 +411,35 @@ void stock_room(int shp_indx, struct mkroom *sroom)
     sx = doors[sroom->fdoor].x;
     sy = doors[sroom->fdoor].y;
 
-    if(levl[sx][sy].doormask == D_NODOOR) {
+    if (levl[sx][sy].doormask == D_NODOOR) {
 	    levl[sx][sy].doormask = D_ISOPEN;
 	    newsym(sx,sy);
     }
-    if(levl[sx][sy].typ == SDOOR) {
+    if (levl[sx][sy].typ == SDOOR) {
 	    cvt_sdoor_to_door(&levl[sx][sy]);	/* .typ = DOOR */
 	    newsym(sx,sy);
     }
-    if(levl[sx][sy].doormask & D_TRAPPED)
+    if (levl[sx][sy].doormask & D_TRAPPED)
 	    levl[sx][sy].doormask = D_LOCKED;
 
-    if(levl[sx][sy].doormask == D_LOCKED) {
+    if (levl[sx][sy].doormask == D_LOCKED) {
 	    int m = sx, n = sy;
 
-	    if(inside_shop(sx+1,sy)) m--;
-	    else if(inside_shop(sx-1,sy)) m++;
-	    if(inside_shop(sx,sy+1)) n--;
-	    else if(inside_shop(sx,sy-1)) n++;
+	    if (inside_shop(sx+1,sy)) m--;
+	    else if (inside_shop(sx-1,sy)) m++;
+	    if (inside_shop(sx,sy+1)) n--;
+	    else if (inside_shop(sx,sy-1)) n++;
 	    sprintf(buf, "Closed for inventory");
 	    make_engr_at(m, n, buf, 0L, DUST);
     }
 
-    for(sx = sroom->lx; sx <= sroom->hx; sx++)
-	for(sy = sroom->ly; sy <= sroom->hy; sy++) {
-	    if(sroom->irregular) {
+    for (sx = sroom->lx; sx <= sroom->hx; sx++)
+	for (sy = sroom->ly; sy <= sroom->hy; sy++) {
+	    if (sroom->irregular) {
 		if (levl[sx][sy].edge || (int) levl[sx][sy].roomno != rmno ||
 		   distmin(sx, sy, doors[sh].x, doors[sh].y) <= 1)
 		    continue;
-	    } else if((sx == sroom->lx && doors[sh].x == sx-1) ||
+	    } else if ((sx == sroom->lx && doors[sh].x == sx-1) ||
 		      (sx == sroom->hx && doors[sh].x == sx+1) ||
 		      (sy == sroom->ly && doors[sh].y == sy-1) ||
 		      (sy == sroom->hy && doors[sh].y == sy+1)) continue;
@@ -477,7 +477,7 @@ int get_shop_item(int type)
 	int i,j;
 
 	/* select an appropriate object type at random */
-	for(j = rnd(100), i = 0; (j -= shp->iprobs[i].iprob) > 0; i++)
+	for (j = rnd(100), i = 0; (j -= shp->iprobs[i].iprob) > 0; i++)
 		continue;
 
 	return shp->iprobs[i].itype;

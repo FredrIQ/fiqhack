@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 		i = 3;
 	    }
 	    /* Otherwise every argument is a filename */
-	    for(; i<argc; i++) {
+	    for (; i<argc; i++) {
 		fname = strcpy(infile, argv[i]);
 		/* the input file had better be a .pdf file */
 		len = strlen(fname) - 4;	/* length excluding suffix */

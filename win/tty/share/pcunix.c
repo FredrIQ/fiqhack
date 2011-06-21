@@ -37,7 +37,7 @@ static int eraseoldlocks(void)
 	 * before starting everything (including the dungeon initialization
 	 * that sets astral_level, needed for maxledgerno()) up
 	 */
-	for(i = 1; i <= MAXDUNGEON*MAXLEVEL + 1; i++) {
+	for (i = 1; i <= MAXDUNGEON*MAXLEVEL + 1; i++) {
 		/* try to remove all */
 		set_levelfile_name(lock, i);
 		unlink(fqname(lock, LEVELPREFIX, 0));
@@ -46,7 +46,7 @@ static int eraseoldlocks(void)
 #ifdef HOLD_LOCKFILE_OPEN
 	really_close();
 #endif
-	if(unlink(fqname(lock, LEVELPREFIX, 0)))
+	if (unlink(fqname(lock, LEVELPREFIX, 0)))
 		return 0;				/* cannot remove it */
 	return 1;					/* success! */
 }
@@ -69,14 +69,14 @@ void getlock(void)
 	sprintf(tbuf,"%s",fqname(lock, LEVELPREFIX, 0));
 	set_levelfile_name(lock, 0);
 	fq_lock = fqname(lock, LEVELPREFIX, 1);
-	if((fd = open(fq_lock,0)) == -1) {
-		if(errno == ENOENT) goto gotlock;    /* no such file */
+	if ((fd = open(fq_lock,0)) == -1) {
+		if (errno == ENOENT) goto gotlock;    /* no such file */
 # if defined(CHDIR) && !defined(NOCWD_ASSUMPTIONS)
 		chdirx(orgdir, 0);
 # endif
 # if defined(WIN32) || defined(HOLD_LOCKFILE_OPEN)
 #  if defined(HOLD_LOCKFILE_OPEN)
- 		if(errno == EACCES) {
+ 		if (errno == EACCES) {
 #define OOPS_BUFSZ 512
  		    char oops[OOPS_BUFSZ];
  		    strcpy(oops,
@@ -101,7 +101,7 @@ void getlock(void)
 
 	close(fd);
 
-	if(iflags2.window_inited) { 
+	if (iflags2.window_inited) { 
 # ifdef SELF_RECOVER
 	  c = yn("There are files from a game in progress under your name. Recover?");
 # else
@@ -134,9 +134,9 @@ void getlock(void)
 		    }
 		}
 	}
-	if(c == 'y' || c == 'Y')
+	if (c == 'y' || c == 'Y')
 # ifndef SELF_RECOVER
-		if(eraseoldlocks()) {
+		if (eraseoldlocks()) {
 #  if defined(WIN32CON)
 			clear_screen();		/* display gets fouled up otherwise */
 #  endif
@@ -149,7 +149,7 @@ void getlock(void)
 			error("Couldn't destroy old game.");
 		}
 # else /*SELF_RECOVER*/
-		if(recover_savefile()) {
+		if (recover_savefile()) {
 #  if defined(WIN32CON)
 			clear_screen();		/* display gets fouled up otherwise */
 #  endif
@@ -174,7 +174,7 @@ gotlock:
 	fd = creat(fq_lock, FCMASK);
 	if (fd == -1) ern = errno;
 	unlock_file(HLOCK);
-	if(fd == -1) {
+	if (fd == -1) {
 # if defined(CHDIR) && !defined(NOCWD_ASSUMPTIONS)
 		chdirx(orgdir, 0);
 # endif
@@ -186,14 +186,14 @@ gotlock:
 		error("cannot creat file (%s.)", fq_lock);
 # endif
 	} else {
-		if(write(fd, (char *) &hackpid, sizeof(hackpid))
+		if (write(fd, (char *) &hackpid, sizeof(hackpid))
 		    != sizeof(hackpid)){
 # if defined(CHDIR) && !defined(NOCWD_ASSUMPTIONS)
 			chdirx(orgdir, 0);
 # endif
 			error("cannot write lock (%s)", fq_lock);
 		}
-		if(close(fd) == -1) {
+		if (close(fd) == -1) {
 # if defined(CHDIR) && !defined(NOCWD_ASSUMPTIONS)
 			chdirx(orgdir, 0);
 # endif

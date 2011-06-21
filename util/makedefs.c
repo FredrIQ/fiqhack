@@ -770,10 +770,10 @@ static int check_control(char *s)
 {
 	int	i;
 
-	if(s[0] != '%') return -1;
+	if (s[0] != '%') return -1;
 
-	for(i = 0; deflist[i].defname; i++)
-	    if(!strncmp(deflist[i].defname, s+1, strlen(deflist[i].defname)))
+	for (i = 0; deflist[i].defname; i++)
+	    if (!strncmp(deflist[i].defname, s+1, strlen(deflist[i].defname)))
 		return i;
 
 	return -1;
@@ -801,14 +801,14 @@ void do_dungeon(const char *infile, const char *outfile)
 
 	while (fgets(in_line, sizeof in_line, ifp) != 0) {
 	    rcnt++;
-	    if(in_line[0] == '#') continue;	/* discard comments */
+	    if (in_line[0] == '#') continue;	/* discard comments */
 recheck:
-	    if(in_line[0] == '%') {
+	    if (in_line[0] == '%') {
 		int i = check_control(in_line);
-		if(i >= 0) {
-		    if(!deflist[i].true_or_false)  {
+		if (i >= 0) {
+		    if (!deflist[i].true_or_false)  {
 			while (fgets(in_line, sizeof in_line, ifp) != 0)
-			    if(check_control(in_line) != i) goto recheck;
+			    if (check_control(in_line) != i) goto recheck;
 		    } else
 			fputs(without_control(in_line),ofp);
 		} else {
@@ -831,8 +831,8 @@ static boolean ranged_attk(struct permonst *ptr)
 	int	i, j;
 	int atk_mask = (1<<AT_BREA) | (1<<AT_SPIT) | (1<<AT_GAZE);
 
-	for(i = 0; i < NATTK; i++) {
-	    if((j=ptr->mattk[i].aatyp) >= AT_WEAP || (atk_mask & (1<<j)))
+	for (i = 0; i < NATTK; i++) {
+	    if ((j=ptr->mattk[i].aatyp) >= AT_WEAP || (atk_mask & (1<<j)))
 		return TRUE;
 	}
 
@@ -847,7 +847,7 @@ static int mstrength(struct permonst *ptr)
 {
 	int	i, tmp2, n, tmp = ptr->mlevel;
 
-	if(tmp > 49)		/* special fixed hp monster */
+	if (tmp > 49)		/* special fixed hp monster */
 	    tmp = 2*(tmp - 6) / 4;
 
 /*	For creation in groups */
@@ -865,7 +865,7 @@ static int mstrength(struct permonst *ptr)
 	n += (ptr->mmove >= 18);
 
 /*	For each attack and "special" attack */
-	for(i = 0; i < NATTK; i++) {
+	for (i = 0; i < NATTK; i++) {
 
 	    tmp2 = ptr->mattk[i].aatyp;
 	    n += (tmp2 > 0);
@@ -874,7 +874,7 @@ static int mstrength(struct permonst *ptr)
 	}
 
 /*	For each "special" damage type */
-	for(i = 0; i < NATTK; i++) {
+	for (i = 0; i < NATTK; i++) {
 
 	    tmp2 = ptr->mattk[i].adtyp;
 	    if ((tmp2 == AD_DRLI) || (tmp2 == AD_STON) || (tmp2 == AD_DRST)
@@ -889,8 +889,8 @@ static int mstrength(struct permonst *ptr)
 	if (!strcmp(ptr->mname, "leprechaun")) n -= 2;
 
 /*	Finally, adjust the monster level  0 <= n <= 24 (approx.) */
-	if(n == 0) tmp--;
-	else if(n >= 6) tmp += ( n / 2 );
+	if (n == 0) tmp--;
+	else if (n >= 6) tmp += ( n / 2 );
 	else tmp += ( n / 3 + 1);
 
 	return (tmp >= 0) ? tmp : 0;
@@ -972,7 +972,7 @@ static boolean	in_msg;
 
 static boolean qt_comment(char *s)
 {
-	if(s[0] == '#') return TRUE;
+	if (s[0] == '#') return TRUE;
 	return (boolean)(!in_msg  && strlen(s) == NO_MSG);
 }
 
@@ -985,15 +985,15 @@ static int get_hdr (char *code)
 {
 	int	i;
 
-	for(i = 0; i < qt_hdr.n_hdr; i++)
-	    if(!strncmp(code, qt_hdr.id[i], LEN_HDR)) return ++i;
+	for (i = 0; i < qt_hdr.n_hdr; i++)
+	    if (!strncmp(code, qt_hdr.id[i], LEN_HDR)) return ++i;
 
 	return 0;
 }
 
 static boolean new_id (char *code)
 {
-	if(qt_hdr.n_hdr >= N_HDR) {
+	if (qt_hdr.n_hdr >= N_HDR) {
 	    fprintf(stderr, OUT_OF_HEADERS, qt_line);
 	    return FALSE;
 	}
@@ -1008,8 +1008,8 @@ static boolean known_msg(int num, int id)
 {
 	int i;
 
-	for(i = 0; i < msg_hdr[num].n_msg; i++)
-	    if(msg_hdr[num].qt_msg[i].msgnum == id) return TRUE;
+	for (i = 0; i < msg_hdr[num].n_msg; i++)
+	    if (msg_hdr[num].qt_msg[i].msgnum == id) return TRUE;
 
 	return FALSE;
 }
@@ -1019,7 +1019,7 @@ static void new_msg(char *s, int num, int id)
 {
 	struct	qtmsg	*qt_msg;
 
-	if(msg_hdr[num].n_msg >= N_MSG) {
+	if (msg_hdr[num].n_msg >= N_MSG) {
 		fprintf(stderr, OUT_OF_MESSAGES, qt_line);
 	} else {
 		qt_msg = &(msg_hdr[num].qt_msg[msg_hdr[num].n_msg++]);
@@ -1038,7 +1038,7 @@ static void do_qt_control(char *s)
 
 	switch(s[1]) {
 
-	    case 'C':	if(in_msg) {
+	    case 'C':	if (in_msg) {
 			    fprintf(stderr, CREC_IN_MSG, qt_line);
 			    break;
 			} else {
@@ -1051,13 +1051,13 @@ static void do_qt_control(char *s)
 			    if (!num && !new_id(code))
 			    	break;
 			    num = get_hdr(code)-1;
-			    if(known_msg(num, id))
+			    if (known_msg(num, id))
 			    	fprintf(stderr, DUP_MSG, qt_line);
 			    else new_msg(s, num, id);
 			}
 			break;
 
-	    case 'E':	if(!in_msg) {
+	    case 'E':	if (!in_msg) {
 			    fprintf(stderr, END_NOT_IN_MSG, qt_line);
 			    break;
 			} else in_msg = FALSE;
@@ -1083,13 +1083,13 @@ static void adjust_qt_hdrs(void)
 	long count = 0L, hdr_offset = sizeof(int) +
 			(sizeof(char)*LEN_HDR + sizeof(long)) * qt_hdr.n_hdr;
 
-	for(i = 0; i < qt_hdr.n_hdr; i++) {
+	for (i = 0; i < qt_hdr.n_hdr; i++) {
 	    qt_hdr.offset[i] = hdr_offset;
 	    hdr_offset += sizeof(int) + sizeof(struct qtmsg) * msg_hdr[i].n_msg;
 	}
 
-	for(i = 0; i < qt_hdr.n_hdr; i++)
-	    for(j = 0; j < msg_hdr[i].n_msg; j++) {
+	for (i = 0; i < qt_hdr.n_hdr; i++)
+	    for (j = 0; j < msg_hdr[i].n_msg; j++) {
 
 		msg_hdr[i].qt_msg[j].offset = hdr_offset + count;
 		count += msg_hdr[i].qt_msg[j].size;
@@ -1115,7 +1115,7 @@ static void put_qt_hdrs(void)
 							qt_hdr.n_hdr, ofp);
 	if (count != qt_hdr.n_hdr) goto err_out;
 #ifdef DEBUG
-	for(i = 0; i < qt_hdr.n_hdr; i++)
+	for (i = 0; i < qt_hdr.n_hdr; i++)
 		fprintf(stderr, "%c @ %ld, ", qt_hdr.id[i], qt_hdr.offset[i]);
 
 	fprintf(stderr, "\n");
@@ -1124,7 +1124,7 @@ static void put_qt_hdrs(void)
 	/*
 	 *	The individual class headers.
 	 */
-	for(i = 0; i < qt_hdr.n_hdr; i++) {
+	for (i = 0; i < qt_hdr.n_hdr; i++) {
 
 #ifdef DEBUG
 	    fprintf(stderr, "%ld: %c header info.\n", ftell(ofp),
@@ -1137,7 +1137,7 @@ static void put_qt_hdrs(void)
 	    if (count != msg_hdr[i].n_msg) goto err_out;
 #ifdef DEBUG
 	    { int j;
-	      for(j = 0; j < msg_hdr[i].n_msg; j++)
+	      for (j = 0; j < msg_hdr[i].n_msg; j++)
 		fprintf(stderr, "msg %d @ %ld (%ld)\n",
 			msg_hdr[i].qt_msg[j].msgnum,
 			msg_hdr[i].qt_msg[j].offset,
@@ -1154,12 +1154,12 @@ err_out:
 
 void do_questtxt(const char *infile, const char *outfile)
 {
-	if(!(ifp = fopen(infile, RDTMODE))) {
+	if (!(ifp = fopen(infile, RDTMODE))) {
 		perror(infile);
 		exit(EXIT_FAILURE);
 	}
 
-	if(!(ofp = fopen(outfile, WRBMODE))) {
+	if (!(ofp = fopen(outfile, WRBMODE))) {
 		perror(outfile);
 		fclose(ifp);
 		exit(EXIT_FAILURE);
@@ -1171,8 +1171,8 @@ void do_questtxt(const char *infile, const char *outfile)
 
 	while (fgets(in_line, 80, ifp) != 0) {
 	    qt_line++;
-	    if(qt_control(in_line)) do_qt_control(in_line);
-	    else if(qt_comment(in_line)) continue;
+	    if (qt_control(in_line)) do_qt_control(in_line);
+	    else if (qt_comment(in_line)) continue;
 	    else		    do_qt_text(in_line);
 	}
 
@@ -1182,10 +1182,10 @@ void do_questtxt(const char *infile, const char *outfile)
 	put_qt_hdrs();
 	while (fgets(in_line, 80, ifp) != 0) {
 
-		if(qt_control(in_line)) {
+		if (qt_control(in_line)) {
 		    in_msg = (in_line[1] == 'C');
 		    continue;
-		} else if(qt_comment(in_line)) continue;
+		} else if (qt_comment(in_line)) continue;
 #ifdef DEBUG
 		fprintf(stderr, "%ld: %s", ftell(stdout), in_line);
 #endif
@@ -1224,12 +1224,12 @@ void do_objs(const char *outfile)
 	fprintf(ofp,"%s",Dont_Edit_Code);
 	fprintf(ofp,"#ifndef ONAMES_H\n#define ONAMES_H\n\n");
 
-	for(i = 0; !i || objects[i].oc_class != ILLOBJ_CLASS; i++) {
+	for (i = 0; !i || objects[i].oc_class != ILLOBJ_CLASS; i++) {
 		objects[i].oc_name_idx = objects[i].oc_descr_idx = i;	/* init */
 		if (!(objnam = tmpdup(OBJ_NAME(objects[i])))) continue;
 
 		/* make sure probabilities add up to 1000 */
-		if(objects[i].oc_class != class) {
+		if (objects[i].oc_class != class) {
 			if (sum && sum != 1000) {
 			    fprintf(stderr, "prob error for class %d (%d%%)",
 				    class, sum);
@@ -1258,7 +1258,7 @@ void do_objs(const char *outfile)
 		    case AMULET_CLASS:
 			/* avoid trouble with stupid C preprocessors */
 			fprintf(ofp,"#define\t");
-			if(objects[i].oc_material == PLASTIC) {
+			if (objects[i].oc_material == PLASTIC) {
 			    fprintf(ofp,"FAKE_AMULET_OF_YENDOR\t%d\n", i);
 			    prefix = -1;
 			    break;
@@ -1266,7 +1266,7 @@ void do_objs(const char *outfile)
 			break;
 		    case GEM_CLASS:
 			/* avoid trouble with stupid C preprocessors */
-			if(objects[i].oc_material == GLASS) {
+			if (objects[i].oc_material == GLASS) {
 			    fprintf(ofp,"/* #define\t%s\t%d */\n",
 							objnam, i);
 			    prefix = -1;
