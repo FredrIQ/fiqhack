@@ -31,7 +31,6 @@ extern void nh_delay_output(void);
 #define nhgetch (*windowprocs.win_nhgetch)
 #define win_getpos (*windowprocs.win_getpos)
 #define nhbell (*windowprocs.win_nhbell)
-#define nh_doprev_message (*windowprocs.win_doprev_message)
 #define getlin (*windowprocs.win_getlin)
 #define delay_output nh_delay_output
 

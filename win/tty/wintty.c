@@ -45,7 +45,6 @@ struct window_procs tty_procs = {
     tty_getpos,
     tty_getdir,
     tty_nhbell,
-    tty_doprev_message,
     tty_yn_function,
     tty_getlin,
     tty_delay_output,

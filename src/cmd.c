@@ -24,7 +24,6 @@ extern int wiz_debug_cmd(void);
 
 static int (*timed_occ_fn)(void);
 
-static int doprev_message(void);
 static int timed_occupation(void);
 static int domonability(void);
 static int dotravel(void);
@@ -60,10 +59,6 @@ static boolean minimal_enlightenment(void);
 static void enlght_line(struct menulist *,const char *,const char *,const char *);
 static char *enlght_combatinc(const char *,int,int,char *);
 
-static int doprev_message(void)
-{
-    return nh_doprev_message();
-}
 
 /* Count down by decrementing multi */
 static int timed_occupation(void)
@@ -949,7 +944,6 @@ static const struct cmd_desc cmdlist[] = {
 	{"wiz create monster", "", C('g'), 0, TRUE, wiz_genesis, CMD_ARG_NONE | CMD_DEBUG},
 	{"wiz itentify", "", C('i'), 0, TRUE, wiz_identify, CMD_ARG_NONE | CMD_DEBUG},
 	{"wiz print dungeon", "", C('o'), 0, TRUE, wiz_where, CMD_ARG_NONE | CMD_DEBUG},
-	{"prevmsg", "", C('p'), 0, TRUE, doprev_message, CMD_ARG_NONE},
 	{"redraw", "", C('r'), C('l'), TRUE, doredraw, CMD_ARG_NONE},
 	{"teleport", "", C('t'), 0, TRUE, dotele, CMD_ARG_NONE},
 	{"wiz level teleport", "", C('v'), 0, TRUE, wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},

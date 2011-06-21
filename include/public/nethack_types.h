@@ -334,7 +334,6 @@ struct window_procs {
     int (*win_getpos)(int *, int *, boolean, const char*);
     enum nh_direction (*win_getdir)(const char *, boolean);
     void (*win_nhbell)(void);
-    int (*win_doprev_message)(void);
     char (*win_yn_function)(const char *, const char *, char, long*);
     void (*win_getlin)(const char *,char *);
     void (*win_delay_output)(void);

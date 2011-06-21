@@ -12,7 +12,8 @@ enum internal_commands {
     /* implicitly include enum nh_direction */
     TTYCMD_OPTIONS = DIR_SELF + 1,
     TTYCMD_EXTCMD,
-    TTYCMD_REDO
+    TTYCMD_REDO,
+    TTYCMD_PREVMSG
 };
 
 static const char TTY_BUILTIN_CMD[] = "TTY_BUILTIN_CMD";
@@ -24,6 +25,9 @@ static struct nh_cmd_desc *prev_cmd = NULL;
 static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE};
 static int prev_count = 0;
 
+#ifndef Ctrl
+#define Ctrl(c)		(0x1f & (c))
+#endif
 
 struct nh_cmd_desc builtin_commands[] = {
 	{TTY_BUILTIN_CMD, "", 'h', '4', DIR_W},
@@ -38,6 +42,7 @@ struct nh_cmd_desc builtin_commands[] = {
 	{TTY_BUILTIN_CMD, "", 'O', 0, TTYCMD_OPTIONS},
 	{TTY_BUILTIN_CMD, "", '#', 0, TTYCMD_EXTCMD},
 	{TTY_BUILTIN_CMD, "", '\001', 0, TTYCMD_REDO},
+	{TTY_BUILTIN_CMD, "", Ctrl('p'), 0, TTYCMD_PREVMSG},
 };
 
 
@@ -84,6 +89,11 @@ static void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg
 		*cmd = prev_cmd;
 		*arg = prev_arg;
 		*count = prev_count;
+		break;
+		
+	    case TTYCMD_PREVMSG:
+		tty_doprev_message();
+		*cmd = NULL;
 		break;
 	}
 }
