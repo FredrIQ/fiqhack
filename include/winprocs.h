@@ -14,7 +14,6 @@ extern void nh_delay_output(void);
 #define destroy_game_windows (*windowprocs.win_destroy_game_windows)
 #define clear_nhwindow (*windowprocs.win_clear_nhwindow)
 #define display_nhwindow (*windowprocs.win_display_nhwindow)
-#define curs (*windowprocs.win_curs)
 #define display_buffer (*windowprocs.win_display_buffer)
 #define update_status (*windowprocs.win_update_status)
 #define print_message (*windowprocs.win_print_message)

@@ -151,7 +151,7 @@ extern struct DisplayDesc *ttyDisplay;	/* the tty display descriptor */
 extern char morc;		/* last character typed to xwaitforspace */
 extern char defmorestr[];	/* default --more-- prompt */
 
-extern struct nh_status_info cached_status;
+extern struct nh_player_info player;
 
 /* port specific external function references */
 
@@ -226,7 +226,7 @@ extern void tty_destroy_nhwindow(winid);
 extern void tty_curs(int,int);
 extern void tty_putstr(winid, int, const char *);
 extern void tty_display_buffer(char *,boolean);
-extern void tty_update_status(struct nh_status_info *status);
+extern void tty_update_status(void);
 extern void tty_print_message(const char *);
 extern void tty_start_menu(winid);
 extern void tty_add_menu(winid,int,const anything *,

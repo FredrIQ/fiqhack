@@ -278,17 +278,19 @@ struct nh_objresult {
 };
 
 #define ITEMLEN 12
-struct nh_status_info {
+struct nh_player_info {
     char plname[PL_NSIZ];
+    int x, y, z;
     char rank[PL_NSIZ];
     char level_desc[COLNO];
-    char items[12][ITEMLEN];
+    char statusitems[12][ITEMLEN];
     long score, xp, gold, moves;
-    int mrank_sz, st, st_extra, dx, co, in, wi, ch, align, nr_items;
+    int max_rank_sz;
+    int st, st_extra, dx, co, in, wi, ch;
+    int align, nr_items;
     int hp, hpmax, en, enmax, ac, level;
     char coinsym;
-    boolean polyd;
-
+    int monnum, cur_monnum;
 };
 
 
@@ -314,9 +316,8 @@ struct window_procs {
     void (*win_destroy_game_windows)(void);
     void (*win_clear_nhwindow)(int);
     void (*win_display_nhwindow)(int, boolean);
-    void (*win_curs)(int,int);
     void (*win_display_buffer)(char *,boolean);
-    void (*win_update_status)(struct nh_status_info *);
+    void (*win_update_status)(void);
     void (*win_print_message)(const char *);
     
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);

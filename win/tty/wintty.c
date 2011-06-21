@@ -29,7 +29,6 @@ struct window_procs tty_procs = {
     tty_destroy_game_windows,
     tty_clear_nhwindow,
     tty_display_nhwindow,
-    tty_curs,
     tty_display_buffer,
     tty_update_status,
     tty_print_message,
@@ -79,7 +78,7 @@ const char quitchars[] = " \r\n\033";
 const char ynchars[] = "yn";
 // char plname[PL_NSIZ];
 
-struct nh_status_info cached_status;
+struct nh_player_info player;
 
 #if !defined(NO_TERMS)
 boolean GFlag = FALSE;
@@ -811,7 +810,7 @@ void clear_nhwindow(winid window)
     case NHW_MAP:
 	/* cheap -- clear the whole thing and tell nethack to redraw botl */
 	clear_screen();
-	tty_update_status(&cached_status);
+	tty_update_status();
 	break;
     case NHW_BASE:
 	clear_screen();
@@ -2127,7 +2126,7 @@ void docorner(int xmin, int ymax)
     end_glyphout();
     if (ymax >= (int) wins[WIN_STATUS]->offy) {
 					/* we have wrecked the bottom line */
-	tty_update_status(&cached_status);
+	tty_update_status();
     }
 }
 
@@ -2741,80 +2740,80 @@ void tty_outrip(struct nh_menuitem *items,int icount, int how, char *plname, lon
 #define MAXCO (COLNO+20)
 #endif
 
-static void bot1(struct nh_status_info *s)
+static void bot1(struct nh_player_info *pi)
 {
 	char newbot1[MAXCO];
 	char *nb = newbot1;
 	int i,j;
 
-	strcpy(newbot1, s->plname);
+	strcpy(newbot1, pi->plname);
 	if('a' <= newbot1[0] && newbot1[0] <= 'z')
 	    newbot1[0] += 'A'-'a';
 	newbot1[10] = '\0';
 	nb += strlen(newbot1);
-	sprintf(nb, " the %s", s->rank);
+	sprintf(nb, " the %s", pi->rank);
 
 	strncat(nb, "  ", MAXCO);
-	i = s->mrank_sz + 15;
+	i = pi->max_rank_sz + 15;
 	j = strlen(newbot1);
 	if((i - j) > 0)
 		sprintf(nb += strlen(nb), "%*s", i-j, " ");	/* pad with spaces */
 	
-	if (s->st == 18) {
-		if (s->st_extra < 100)
-		    sprintf(nb += strlen(nb), "St:18/%02d ", s->st_extra);
+	if (pi->st == 18) {
+		if (pi->st_extra < 100)
+		    sprintf(nb += strlen(nb), "St:18/%02d ", pi->st_extra);
 		else
 		    sprintf(nb += strlen(nb),"St:18/** ");
 	} else
-		sprintf(nb += strlen(nb), "St:%-1d ", s->st);
+		sprintf(nb += strlen(nb), "St:%-1d ", pi->st);
 	
 	sprintf(nb += strlen(nb), "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
-		s->dx, s->co, s->in, s->wi, s->ch);
-	sprintf(nb += strlen(nb), (s->align == A_CHAOTIC) ? "  Chaotic" :
-			(s->align == A_NEUTRAL) ? "  Neutral" : "  Lawful");
+		pi->dx, pi->co, pi->in, pi->wi, pi->ch);
+	sprintf(nb += strlen(nb), (pi->align == A_CHAOTIC) ? "  Chaotic" :
+			(pi->align == A_NEUTRAL) ? "  Neutral" : "  Lawful");
 	
 	if (ui_flags.showscore)
-	    sprintf(nb += strlen(nb), " S:%ld", s->score);
+	    sprintf(nb += strlen(nb), " S:%ld", pi->score);
 	
 	move_cursor(WIN_STATUS, 1, 0);
 	tty_putstr(WIN_STATUS, 0, newbot1);
 }
 
-static void bot2(struct nh_status_info *s)
+
+static void bot2(struct nh_player_info *pi)
 {
 	char newbot2[MAXCO];
 	char *nb = newbot2;
 	int i;
 
-	strncpy(newbot2, s->level_desc, MAXCO);
+	strncpy(newbot2, pi->level_desc, MAXCO);
 	sprintf(nb += strlen(newbot2),
-		"%c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", s->coinsym,
-		s->gold, s->hp, s->hpmax, s->en, s->enmax, s->ac);
+		"%c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", pi->coinsym,
+		pi->gold, pi->hp, pi->hpmax, pi->en, pi->enmax, pi->ac);
 
-	if (s->polyd)
-		sprintf(nb += strlen(nb), " HD:%d", s->level);
+	if (pi->monnum != pi->cur_monnum)
+		sprintf(nb += strlen(nb), " HD:%d", pi->level);
 	else if(ui_flags.showexp)
-		sprintf(nb += strlen(nb), " Xp:%u/%-1ld", s->level, s->xp);
+		sprintf(nb += strlen(nb), " Xp:%u/%-1ld", pi->level, pi->xp);
 	else
-		sprintf(nb += strlen(nb), " Exp:%u", s->level);
+		sprintf(nb += strlen(nb), " Exp:%u", pi->level);
 
 	if(ui_flags.time)
-	    sprintf(nb += strlen(nb), " T:%ld", s->moves);
+	    sprintf(nb += strlen(nb), " T:%ld", pi->moves);
 	
-	for (i = 0; i < s->nr_items; i++)
-	    sprintf(nb += strlen(nb), " %s", s->items[i]);
+	for (i = 0; i < pi->nr_items; i++)
+	    sprintf(nb += strlen(nb), " %s", pi->statusitems[i]);
 	
 	move_cursor(WIN_STATUS, 1, 1);
 	tty_putstr(WIN_STATUS, 0, newbot2);
 }
 
-void tty_update_status(struct nh_status_info *status)
+void tty_update_status(void)
 {
-    if (status != &cached_status)
-	memcpy(&cached_status, status, sizeof(*status));
+    nh_get_player_info(&player);
     
-    bot1(status);
-    bot2(status);
+    bot1(&player);
+    bot2(&player);
 }
 
 

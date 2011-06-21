@@ -138,13 +138,23 @@ int describe_level(char *buf)
 
 void bot(void)
 {
-	struct nh_status_info status;
+	update_status();
+	botl = botlx = 0;
+}
+
+
+void nh_get_player_info(struct nh_player_info *pi)
+{
 	int cap = near_capacity();
 
-	memset(&status, 0, sizeof(status));
+	memset(pi, 0, sizeof(*pi));
 	
-	status.moves = moves;
-	strncpy(status.plname, plname, sizeof(status.plname));
+	pi->moves = moves;
+	strncpy(pi->plname, plname, sizeof(pi->plname));
+	
+	pi->x = u.ux;
+	pi->y = u.uy;
+	pi->z = u.uz.dlevel;
 	
 	if (Upolyd) {
 		char mbot[BUFSZ];
@@ -157,77 +167,75 @@ void bot(void)
 			mbot[k] += 'A' - 'a';
 		    k++;
 		}
-		strncpy(status.rank, mbot, sizeof(status.rank));
+		strncpy(pi->rank, mbot, sizeof(pi->rank));
 	} else
-		strncpy(status.rank, rank(), sizeof(status.rank));
+		strncpy(pi->rank, rank(), sizeof(pi->rank));
 	
-	status.mrank_sz = mrank_sz;
+	pi->max_rank_sz = mrank_sz;
 	
-	status.st = ACURR(A_STR);
-	status.st_extra = 0;
+	pi->st = ACURR(A_STR);
+	pi->st_extra = 0;
 	if (ACURR(A_STR) > 18) {
-		status.st = ACURR(A_STR) - 100;
-		status.st_extra = ACURR(A_STR) - 18;
+		pi->st = ACURR(A_STR) - 100;
+		pi->st_extra = ACURR(A_STR) - 18;
 	}
 	
-	status.dx = ACURR(A_DEX);
-	status.co = ACURR(A_CON);
-	status.in = ACURR(A_INT);
-	status.wi = ACURR(A_WIS);
-	status.ch = ACURR(A_CHA);
+	pi->dx = ACURR(A_DEX);
+	pi->co = ACURR(A_CON);
+	pi->in = ACURR(A_INT);
+	pi->wi = ACURR(A_WIS);
+	pi->ch = ACURR(A_CHA);
 	
-	status.score = botl_score();
+	pi->score = botl_score();
 	
-	status.hp = Upolyd ? u.mh : u.uhp;
-	status.hpmax = Upolyd ? u.mhmax : u.uhpmax;
-	if (status.hp < 0)
-	    status.hp = 0;
+	pi->hp = Upolyd ? u.mh : u.uhp;
+	pi->hpmax = Upolyd ? u.mhmax : u.uhpmax;
+	if (pi->hp < 0)
+	    pi->hp = 0;
 	
-	status.en = u.uen;
-	status.enmax = u.uenmax;
-	status.ac = u.uac;
+	pi->en = u.uen;
+	pi->enmax = u.uenmax;
+	pi->ac = u.uac;
 	
 #ifndef GOLDOBJ
-	status.gold = u.ugold;
+	pi->gold = u.ugold;
 #else
-	status.gold = money_cnt(invent);
+	pi->gold = money_cnt(invent);
 #endif
-	status.coinsym = oc_syms[COIN_CLASS];
-	describe_level(status.level_desc);
+	pi->coinsym = oc_syms[COIN_CLASS];
+	describe_level(pi->level_desc);
 	
-	status.polyd = Upolyd;
+	pi->monnum = u.umonster;
+	pi->cur_monnum = u.umonnum;
 	if (Upolyd)
-	    status.level = mons[u.umonnum].mlevel;
+	    pi->level = mons[u.umonnum].mlevel;
 	else
-	    status.level = u.ulevel;
-	status.xp = u.uexp;
+	    pi->level = u.ulevel;
+	pi->xp = u.uexp;
 
 	
 	if(strcmp(hu_stat[u.uhs], "        "))
-	    strncpy(status.items[status.nr_items++], hu_stat[u.uhs], ITEMLEN);
+	    strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
 	
 	if(Confusion)
-	    strncpy(status.items[status.nr_items++], "Conf", ITEMLEN);
+	    strncpy(pi->statusitems[pi->nr_items++], "Conf", ITEMLEN);
 	
 	if(Sick) {
 	    if (u.usick_type & SICK_VOMITABLE)
-		strncpy(status.items[status.nr_items++], "FoodPois", ITEMLEN);
+		strncpy(pi->statusitems[pi->nr_items++], "FoodPois", ITEMLEN);
 	    if (u.usick_type & SICK_NONVOMITABLE)
-		strncpy(status.items[status.nr_items++], "Ill", ITEMLEN);
+		strncpy(pi->statusitems[pi->nr_items++], "Ill", ITEMLEN);
 	}
 	if(Blind)
-	    strncpy(status.items[status.nr_items++], "Blind", ITEMLEN);
+	    strncpy(pi->statusitems[pi->nr_items++], "Blind", ITEMLEN);
 	if(Stunned)
-	    strncpy(status.items[status.nr_items++], "Stun", ITEMLEN);
+	    strncpy(pi->statusitems[pi->nr_items++], "Stun", ITEMLEN);
 	if(Hallucination)
-	    strncpy(status.items[status.nr_items++], "Hallu", ITEMLEN);
+	    strncpy(pi->statusitems[pi->nr_items++], "Hallu", ITEMLEN);
 	if(Slimed)
-	    strncpy(status.items[status.nr_items++], "Slime", ITEMLEN);
+	    strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
 	if(cap > UNENCUMBERED)
-	    strncpy(status.items[status.nr_items++], enc_stat[cap], ITEMLEN);
-	
-	update_status(&status);
-	botl = botlx = 0;
+	    strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
 }
 
 /*botl.c*/

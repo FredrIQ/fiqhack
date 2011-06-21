@@ -34,6 +34,8 @@ extern EXPORT void nh_start_game(char*, int, int);
 extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char **nh_get_copyright_banner(void);
 
+extern EXPORT void nh_get_player_info(struct nh_player_info *pi);
+
 /* cmd.c */
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
 

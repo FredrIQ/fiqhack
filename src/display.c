@@ -1307,8 +1307,6 @@ void flush_screen(int cursor_on_u)
 	    }
     }
 
-    if (cursor_on_u)
-	curs(u.ux,u.uy); /* move cursor to the hero */
     display_nhwindow(NHW_MAP, FALSE);
     reset_glyph_bbox();
     flushing = 0;

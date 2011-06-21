@@ -107,6 +107,8 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	    arg->argtype = CMD_ARG_NONE;
 	    bad_command = FALSE;
 	    
+	    tty_curs(player.x, player.y);
+	    
 	    if (!ui_flags.num_pad || (key = tty_nhgetch()) == 'n')
 		for (;;) {
 		    key = tty_nhgetch();
@@ -158,6 +160,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	} while (!cmd);
 	
 	tty_clear_nhwindow(NHW_MESSAGE);
+	tty_curs(player.x, player.y);
 	
 	prev_cmd = cmd;
 	prev_arg = *arg;
