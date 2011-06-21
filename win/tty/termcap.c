@@ -280,7 +280,6 @@ void tty_start_screen(void)
 	if (iflags2.DECgraphics) tty_decgraphics_termcap_fixup();
 	/* set up callback in case option is not set yet but toggled later */
 	decgraphics_mode_callback = tty_decgraphics_termcap_fixup;
-	if (iflags2.num_pad) tty_number_pad(1);	/* make keypad send digits */
 }
 
 void tty_end_screen(void)

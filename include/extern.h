@@ -124,14 +124,11 @@ extern const char *rank_of(int, short, boolean);
 
 extern void reset_occupations(void);
 extern void set_occupation(int (*)(void),const char *,int);
-extern void add_debug_extended_commands(void);
-extern void rhack(char *, boolean);
-extern int doextlist(void);
+extern int do_command(const char *, int, boolean, struct nh_cmd_arg*);
 extern void enlightenment(int);
 extern void show_conduct(int);
 extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);
-extern char readchar(void);
 extern int movecmd(char);
 extern int getdir(const char *);
 extern void confdir(void);
@@ -586,6 +583,13 @@ extern int inv_cnt(void);
 #ifdef GOLDOBJ
 extern long money_cnt(struct obj *);
 #endif
+extern int domovecmd(int,int,int);
+extern int domovecmd_nopickup(int,int,int);
+extern int dorun(int,int,int);
+extern int dorun_nopickup(int,int,int);
+extern int dogo(int,int,int);
+extern int dogo2(int,int,int);
+extern int dofight(int,int,int);
 
 /* ### hacklib.c ### */
 
@@ -1801,6 +1805,11 @@ extern int racial_exception(struct monst *, struct obj *);
 /* ### write.c ### */
 
 extern int dowrite(struct obj *);
+
+/* ### xmalloc.c ### */
+
+extern void *xmalloc(int size);
+extern void xmalloc_cleanup(void);
 
 /* ### zap.c ### */
 

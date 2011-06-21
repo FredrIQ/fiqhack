@@ -750,7 +750,9 @@ int doidtrap(void)
 	struct trap *trap;
 	int x, y, tt;
 
-	if (!getdir("^")) return 0;
+	if (!getdir(NULL))
+	    return 0;
+	
 	x = u.ux + u.dx;
 	y = u.uy + u.dy;
 	for (trap = ftrap; trap; trap = trap->ntrap)
@@ -841,9 +843,8 @@ static const char *help_menu_items[] = {
 /* 3*/	"Info on a character in the game display.",
 /* 4*/	"Info on what a given key does.",
 /* 5*/	"Longer explanation of game options.",
-/* 6*/	"List of extended commands.",
-/* 7*/	"The NetHack license.",
-#define WIZHLP_SLOT 8
+/* 6*/	"The NetHack license.",
+#define WIZHLP_SLOT 7
 	"List of wizard-mode commands.",
 	"",
 	NULL
@@ -882,9 +883,8 @@ int dohelp(void)
 			case  3:  dowhatis();  break;
 			case  4:  dowhatdoes();  break;
 			case  5:  display_file(OPTIONFILE, TRUE);  break;
-			case  6:  doextlist();  break;
-			case  7:  display_file(LICENSE, TRUE);  break;
-			/* handle slot 9 or 10 */
+			case  6:  display_file(LICENSE, TRUE);  break;
+			/* handle WIZHLP_SLOT */
 			default: display_file(DEBUGHELP, TRUE);  break;
 		}
 	}

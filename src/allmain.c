@@ -113,9 +113,6 @@ static void post_init_tasks(void)
 	change_luck(-1);
     }
 
-    if (wizard)
-	add_debug_extended_commands();
-
     encumber_msg(); /* in case they auto-picked up something */
 
     u.uz0.dlevel = u.uz.dlevel;
@@ -525,25 +522,27 @@ static void pre_move_tasks(boolean didmove)
 }
 
 
-void nh_do_move(void)
+int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
-    char *cmd;
+    
+    if (!program_state.game_started)
+	return ERR_GAME_NOT_RUNNING;
     
     if (multi >= 0 && occupation)
 	handle_occupation();
     else if (multi == 0) {
-	cmd = parse();
-	rhack(cmd, TRUE);
+	do_command(cmd, rep, TRUE, arg);
     } else if (multi > 0) {
+	if (cmd)
+	    return ERR_NO_INPUT_ALLOWED;
+	
 	if (flags.mv) {
 	    if(multi < COLNO && !--multi)
 		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
 	    domove();
-	} else {
-	    --multi;
-	    rhack(save_cm, FALSE);
-	}
+	} else
+	    do_command(saved_cmd, multi, FALSE, arg);
     }
     
     if (u.utotype)		/* change dungeon level */
@@ -570,10 +569,19 @@ void nh_do_move(void)
     /****************************************/
     /* once-per-player-input things go here */
     /****************************************/
-
+    xmalloc_cleanup();
+    
     /* prepare for the next move */
     flags.move = 1;
     pre_move_tasks(didmove);
+    flush_screen(1); /* Flush screen buffer. Put the cursor on the hero. */
+    
+    if (multi > 0 && occupation)
+	return OCCUPATION_IN_PROGRESS;
+    else if (multi > 0)
+	return MULTI_IN_PROGRESS;
+    
+    return READY_FOR_INPUT;
 }
 
 

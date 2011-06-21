@@ -31,7 +31,7 @@ struct q_score	quest_status = DUMMY;
 int smeq[MAXNROFROOMS+1] = DUMMY;
 int doorindex = 0;
 
-char *save_cm = 0;
+char *saved_cmd = NULL;
 int killer_format = 0;
 const char *killer = 0;
 const char *delayed_killer = 0;
@@ -71,12 +71,9 @@ struct linfo level_info[MAXLINFO];
 
 struct sinfo program_state;
 
-/* 'rogue'-like direction commands (cmd.c) */
-const char sdir[] = "hykulnjb><";
-const char ndir[] = "47896321><";	/* number pad mode */
-const schar xdir[10] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0 };
-const schar ydir[10] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
-const schar zdir[10] = {  0, 0, 0, 0, 0, 0, 0, 0, 1,-1 };
+const schar xdir[11] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0, 0 };
+const schar ydir[11] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0, 0 };
+const schar zdir[11] = {  0, 0, 0, 0, 0, 0, 0, 0, 1,-1, 0 };
 
 schar tbx = 0, tby = 0;	/* mthrowu: target */
 

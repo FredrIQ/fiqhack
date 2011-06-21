@@ -149,7 +149,7 @@ extern const char disclosure_options[];
 
 extern int smeq[];
 extern int doorindex;
-extern char *save_cm;
+extern char *saved_cmd;
 #define KILLED_BY_AN	 0
 #define KILLED_BY	 1
 #define NO_KILLER_PREFIX 2
@@ -170,7 +170,6 @@ extern const char *occtxt;			/* defined when occupation != NULL */
 extern const char *nomovemsg;
 extern const char nul[];
 
-extern const char sdir[], ndir[];
 extern const schar xdir[], ydir[], zdir[];
 
 extern schar tbx, tby;		/* set in mthrowu.c */

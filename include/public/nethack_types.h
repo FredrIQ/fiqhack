@@ -71,6 +71,37 @@
 #define CLR_WHITE		15
 #define CLR_MAX			16
 
+
+/* command param type specification */
+#define CMD_ARG_NONE (1 << 1)  /* param can be empty */
+#define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
+
+/* command usage hints */
+#define CMD_EXT        (1 << 10) /* an 'extended' command */
+#define CMD_MOVE       (1 << 11) /* this is a move command */
+#define CMD_OBJ        (1 << 12) /* command manipulates items */
+#define CMD_NOTIME     (1 << 13) /* command will not use up any game time */
+#define CMD_DEBUG      (1 << 14) /* a wizmode command */
+
+
+#define NH_ARG_NONE	(1<<0)
+#define NH_ARG_DIR	(1<<1)
+
+enum nh_direction {
+    DIR_NONE = -1,
+    DIR_W = 0,
+    DIR_NW,
+    DIR_N,
+    DIR_NE,
+    DIR_E,
+    DIR_SE,
+    DIR_S,
+    DIR_SW,
+    DIR_UP,
+    DIR_DOWN,
+    DIR_SELF
+};
+
 /* select_menu() "how" argument types */
 enum nh_pick_type {
     PICK_NONE,	/* user picks nothing (display only) */
@@ -141,9 +172,24 @@ enum nh_bucstatus {
 };
 
 enum nh_menuitem_role {
-	MI_TEXT = 0,
-	MI_NORMAL,
-	MI_HEADING
+    MI_TEXT = 0,
+    MI_NORMAL,
+    MI_HEADING
+};
+
+enum nh_command_status {
+    COMMAND_NOT_GIVEN,
+    COMMAND_UNKNOWN,
+    COMMAND_BAD_ARG,
+    COMMAND_OK
+};
+
+enum nh_input_status {
+    READY_FOR_INPUT,
+    MULTI_IN_PROGRESS,
+    OCCUPATION_IN_PROGRESS,
+    ERR_GAME_NOT_RUNNING,
+    ERR_NO_INPUT_ALLOWED
 };
 
 
@@ -246,6 +292,21 @@ struct nh_status_info {
 };
 
 
+struct nh_cmd_desc {
+	const char *name;
+	const char *desc;
+	char defkey, altkey;
+	unsigned flags;
+};
+
+struct nh_cmd_arg {
+	unsigned argtype;
+	union {
+	    enum nh_direction d;
+	};
+};
+
+
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
     void (*win_exit_nhwindows)(const char *);
@@ -269,13 +330,12 @@ struct window_procs {
     void (*win_raw_print)(const char *);
     void (*win_raw_print_bold)(const char *);
     int (*win_nhgetch)(void);
-    int (*win_nh_poskey)(int *, int *, int *);
+    int (*win_getpos)(int *, int *, boolean, const char*);
+    enum nh_direction (*win_getdir)(const char *, boolean);
     void (*win_nhbell)(void);
     int (*win_doprev_message)(void);
     char (*win_yn_function)(const char *, const char *, char, long*);
     void (*win_getlin)(const char *,char *);
-    int (*win_get_ext_cmd)(const char**, const char**, int);
-    void (*win_number_pad)(int);
     void (*win_delay_output)(void);
 
     void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
@@ -284,7 +344,6 @@ struct window_procs {
 struct instance_flags2 {
     boolean  DECgraphics;	/* use DEC VT-xxx extended character set */
     boolean  IBMgraphics;	/* use IBM extended character set */
-    boolean  num_pad;	/* use numbers for movement commands */
     boolean  news;		/* print news */
     boolean  window_inited; /* true if init_nhwindows() completed */
 };

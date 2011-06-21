@@ -129,8 +129,6 @@ struct flag {
 struct instance_flags {
 	boolean  vision_inited; /* true if vision is ready */
 	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
-	boolean  menu_requested; /* Flag for overloaded use of 'm' prefix
-				  * on some non-move commands */
 	int      purge_monsters;	/* # of dead monsters still on fmon list */
 	uchar	bouldersym;	/* symbol for boulder display */
 	boolean travel1;	/* first travel step */
@@ -138,7 +136,6 @@ struct instance_flags {
 	boolean  sanity_check;	/* run sanity checks */
 	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
 
-	boolean  cmdassist;	/* provide detailed assistance for some commands */
 	/* Items which belong in flags, but are here to allow save compatibility */
 	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
 	boolean  showrace;	/* show hero glyph by race rather than by role */

@@ -47,6 +47,7 @@ struct nh_option_desc tty_options[] = {
     {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
     {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
     {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
+    {"num_pad", "use the number pad keys", OPTTYPE_BOOL, { VTRUE }},
     
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)ATR_INVERSE}},
     {"msg_window", "the type of message window required", OPTTYPE_ENUM, {(void*)'s'}},
@@ -59,12 +60,13 @@ struct nh_option_desc tty_options[] = {
 struct nh_boolopt_map boolopt_map[] = {
     {"eight_bit_tty", &ui_flags.eight_bit_input},	/*WC*/
     {"extmenu", &ui_flags.extmenu},
-    {"hilite_pet",    &ui_flags.hilite_pet},	/*WC*/
+    {"hilite_pet", &ui_flags.hilite_pet},	/*WC*/
     {"showexp", &ui_flags.showexp},
     {"showscore", &ui_flags.showscore},
     {"standout", &ui_flags.standout},
     {"time", &ui_flags.time},
     {"use_inverse", &ui_flags.use_inverse},
+    {"num_pad", &ui_flags.num_pad},
     {NULL, NULL}
 };
 

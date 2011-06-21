@@ -847,19 +847,21 @@ struct obj *getobj(const char *let, const char *word)
 	}
 	for(;;) {
 		cnt = 0;
-		if (allowcnt == 2) allowcnt = 1;  /* abort previous count */
+		if (allowcnt == 2)
+		    allowcnt = 1;  /* abort previous count */
 		if(!buf[0]) {
 			sprintf(qbuf, "What do you want to %s? [*]", word);
 		} else {
 			sprintf(qbuf, "What do you want to %s? [%s or ?*]",
 				word, buf);
 		}
-		    ilet = yn_function(qbuf, NULL, '\0');
-		if(ilet == '0') prezero = TRUE;
+		ilet = yn_function(qbuf, NULL, '\0');
+		if(ilet == '0')
+		    prezero = TRUE;
 		while(digit(ilet) && allowcnt) {
 			cnt = 10*cnt + (ilet - '0');
 			allowcnt = 2;	/* signal presence of cnt */
-			ilet = readchar();
+			ilet = nhgetch();
 		}
 		if(digit(ilet)) {
 			pline("No count allowed with this command.");

@@ -98,7 +98,6 @@ struct nh_option_desc options[] = {
     {"autopickup",	"automatically pick up objects you move over",	OPTTYPE_BOOL, { VTRUE }},
     {"autoquiver",	"when firing with an empty quiver, select some suitable inventory weapon to fill the quiver",	OPTTYPE_BOOL, { VFALSE }},
     {"checkpoint",	"",	OPTTYPE_BOOL, { VTRUE }},
-    {"cmdassist",	"give help for errors on direction & other commands",	OPTTYPE_BOOL, { VTRUE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
     {"help",		"print all available info when using the / command",	OPTTYPE_BOOL, { VTRUE }},
@@ -108,7 +107,6 @@ struct nh_option_desc options[] = {
     {"lootabc",		"use a/b/c rather than o/i/b when looting",	OPTTYPE_BOOL, { VFALSE }},
     {"menu_tab_sep",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"news",		"",	OPTTYPE_BOOL, { VTRUE }},
-    {"number_pad",	"use the number keys to move instead of yuhjklbn",	OPTTYPE_BOOL, { VFALSE }},
     {"perm_invent",	"keep inventory in a permanent window",	OPTTYPE_BOOL, { VFALSE }},
     {"prayconfirm",	"use confirmation prompt when #pray command issued",	OPTTYPE_BOOL, { VTRUE }},
     {"pushweapon",	"when wielding a new weapon, put your previously wielded weapon into the secondary weapon slot",	OPTTYPE_BOOL, { VFALSE }},
@@ -178,7 +176,6 @@ static struct nh_boolopt_map boolopt_map[] = {
 #ifdef INSURANCE
 	{"checkpoint", &flags.ins_chkpt},
 #endif
-	{"cmdassist", &iflags.cmdassist},
 	{"confirm",&flags.confirm},
 	{"female", &flags.female},
 	{"fixinv", &flags.invlet_constant},
@@ -192,7 +189,6 @@ static struct nh_boolopt_map boolopt_map[] = {
 #ifdef NEWS
 	{"news", &iflags2.news},
 #endif
-	{"number_pad", &iflags2.num_pad},
 	{"perm_invent", &flags.perm_invent},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},

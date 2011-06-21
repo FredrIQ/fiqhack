@@ -409,7 +409,7 @@ int pickup(int what)		/* should be a long */
 	    goto menu_pickup;
 	}
 
-	if (flags.menu_style != MENU_TRADITIONAL || iflags.menu_requested) {
+	if (flags.menu_style != MENU_TRADITIONAL) {
 
 	    /* use menus exclusively */
 	    if (count) {	/* looking for N of something */

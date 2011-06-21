@@ -1715,7 +1715,7 @@ int dopickup(void)
 	int count;
 	struct trap *traphere = t_at(u.ux, u.uy);
  	/* awful kludge to work around parse()'s pre-decrement */
-	count = (multi || (save_cm && *save_cm == ',')) ? multi + 1 : 0;
+	count = multi;
 	multi = 0;	/* always reset */
 	/* uswallow case added by GAN 01/29/87 */
 	if(u.uswallow) {
@@ -2147,5 +2147,95 @@ long money_cnt(struct obj *otmp)
 	return 0;
 }
 #endif
+
+
+static void prepare_move(int dx, int dy, int dz)
+{
+	flags.travel = iflags.travel1 = 0;
+	u.dx = dx;
+	u.dy = dy;
+	u.dz = dz;
+}
+
+
+int dofight(int dx, int dy, int dz)
+{
+	prepare_move(dx, dy, dz);
+	flags.run = 0;
+	flags.forcefight = 1;
+	
+	if (multi)
+	    flags.mv = TRUE;
+	
+	domove();
+	flags.forcefight = 0;
+	
+	return 1;
+}
+
+
+int domovecmd(int dx, int dy, int dz)
+{
+	prepare_move(dx, dy, dz);
+	flags.run = 0;	/* only matters here if it was 8 */
+	
+	if (multi)
+	    flags.mv = TRUE;
+	
+	domove();
+	return 1;
+}
+
+
+int domovecmd_nopickup(int dx, int dy, int dz)
+{
+	flags.nopick = 1;
+	domovecmd(dx, dy, dz);
+	flags.nopick = 0;
+	
+	return 1;
+}
+
+
+static int do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
+{
+	prepare_move(dx, dy, dz);
+	flags.run = runmode;
+	
+	flags.nopick = move_only;
+	
+	// originally: if (firsttime)
+	if (!multi)
+	    multi = max(COLNO,ROWNO);
+	
+	domove();
+	
+	flags.nopick = 0;
+	return 1;
+}
+
+
+int dorun(int dx, int dy, int dz)
+{
+	return do_rush(dx, dy, dz, 1, FALSE);
+}
+
+
+int dorun_nopickup(int dx, int dy, int dz)
+{
+	return do_rush(dx, dy, dz, 1, TRUE);
+}
+
+
+int dogo(int dx, int dy, int dz)
+{
+	return do_rush(dx, dy, dz, 2, FALSE);
+}
+
+
+int dogo2(int dx, int dy, int dz)
+{
+	return do_rush(dx, dy, dz, 3, FALSE);
+}
 
 /*hack.c*/

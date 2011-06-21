@@ -6,11 +6,6 @@
 
 extern struct window_procs windowprocs;
 
-/*
- * If you wish to only support one window system and not use procedure
- * pointers, add the appropriate #ifdef below.
- */
-
 extern void nh_delay_output(void);
 
 #define player_selection (*windowprocs.win_player_selection)
@@ -35,12 +30,10 @@ extern void nh_delay_output(void);
 #define raw_print (*windowprocs.win_raw_print)
 #define raw_print_bold (*windowprocs.win_raw_print_bold)
 #define nhgetch (*windowprocs.win_nhgetch)
-#define nh_poskey (*windowprocs.win_nh_poskey)
+#define win_getpos (*windowprocs.win_getpos)
 #define nhbell (*windowprocs.win_nhbell)
 #define nh_doprev_message (*windowprocs.win_doprev_message)
 #define getlin (*windowprocs.win_getlin)
-#define get_ext_cmd (*windowprocs.win_get_ext_cmd)
-#define number_pad (*windowprocs.win_number_pad)
 #define delay_output nh_delay_output
 
 #define outrip (*windowprocs.win_outrip)
@@ -54,11 +47,5 @@ extern void nh_delay_output(void);
 /* player_selection */
 #define VIA_DIALOG	0
 #define VIA_PROMPTS	1
-
-
-struct wc_Opt {
-	const char *wc_name;
-	unsigned long wc_bit;
-};
 
 #endif /* WINPROCS_H */

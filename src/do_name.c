@@ -4,167 +4,24 @@
 #include "hack.h"
 
 static void do_oname(struct obj *);
-static void getpos_help(boolean,const char *);
-
-extern const char what_is_an_unknown_object[];		/* from pager.c */
-
-/* the response for '?' help request in getpos() */
-static void getpos_help(boolean force, const char *goal)
-{
-    boolean doing_what_is;
-    struct nh_menuitem items[6], *it = items;
-    memset(items, 0, sizeof(items));
-
-    sprintf((it++)->caption, "Use [%s] to move the cursor to %s.",
-	    iflags2.num_pad ? "2468" : "hjkl", goal);
-    strcpy((it++)->caption, "Use [HJKL] to move the cursor 8 units at a time.");
-    strcpy((it++)->caption, "Or enter a background symbol (ex. <).");
-
-    /* disgusting hack; the alternate selection characters work for any
-       getpos call, but they only matter for dowhatis (and doquickwhatis) */
-    doing_what_is = (goal == what_is_an_unknown_object);
-    sprintf((it++)->caption, "Type a .%s when you are at the right place.",
-            doing_what_is ? " or , or ; or :" : "");
-    if (!force)
-	strcpy((it++)->caption, "Type Space or Escape when you're done.");
-    strcpy((it++)->caption, "");
-
-    display_menu(items, !force ? 6 : 5, NULL, PICK_NONE, NULL);
-}
 
 int getpos(coord *cc, boolean force, const char *goal)
 {
-    int result = 0;
-    int cx, cy, i, c;
-    int sidx, tx, ty;
-    boolean msg_given = TRUE;	/* clear message window by default */
-    static const char pick_chars[] = ".,;:";
-    const char *cp;
-    const char *sdp;
-    if(iflags2.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
-
-    if (flags.verbose) {
-	pline("(For instructions type a ?)");
-	msg_given = TRUE;
-    }
-    cx = cc->x;
-    cy = cc->y;
-    curs(cx,cy);
-    flush_screen(0);
-    for (;;) {
-	c = nh_poskey(&tx, &ty, &sidx);
-	if (c == '\033') {
-	    cx = cy = -10;
-	    msg_given = TRUE;	/* force clear */
-	    result = -1;
-	    break;
-	}
-	if(c == 0) {
-	    if (!isok(tx, ty)) continue;
-	    /* a mouse click event, just assign and return */
-	    cx = tx;
-	    cy = ty;
-	    break;
-	}
-	if ((cp = index(pick_chars, c)) != 0) {
-	    /* '.' => 0, ',' => 1, ';' => 2, ':' => 3 */
-	    result = cp - pick_chars;
-	    break;
-	}
-	for (i = 0; i < 8; i++) {
-	    int dx, dy;
-
-	    if (sdp[i] == c) {
-		/* a normal movement letter or digit */
-		dx = xdir[i];
-		dy = ydir[i];
-	    } else if (sdir[i] == lowc((char)c)) {
-		/* a shifted movement letter */
-		dx = 8 * xdir[i];
-		dy = 8 * ydir[i];
-	    } else
-		continue;
-
-	    /* truncate at map edge; diagonal moves complicate this... */
-	    if (cx + dx < 1) {
-		dy -= sgn(dy) * (1 - (cx + dx));
-		dx = 1 - cx;		/* so that (cx+dx == 1) */
-	    } else if (cx + dx > COLNO-1) {
-		dy += sgn(dy) * ((COLNO-1) - (cx + dx));
-		dx = (COLNO-1) - cx;
-	    }
-	    if (cy + dy < 0) {
-		dx -= sgn(dx) * (0 - (cy + dy));
-		dy = 0 - cy;		/* so that (cy+dy == 0) */
-	    } else if (cy + dy > ROWNO-1) {
-		dx += sgn(dx) * ((ROWNO-1) - (cy + dy));
-		dy = (ROWNO-1) - cy;
-	    }
-	    cx += dx;
-	    cy += dy;
-	    goto nxtc;
-	}
-
-	if(c == '?'){
-	    getpos_help(force, goal);
-	} else {
-	    if (!index(quitchars, c)) {
-		char matching[MAXPCHARS];
-		int pass, lo_x, lo_y, hi_x, hi_y, k = 0;
-		memset(matching, 0, sizeof matching);
-		for (sidx = 1; sidx < MAXPCHARS; sidx++)
-		    if (c == defsyms[sidx].sym || c == (int)showsyms[sidx])
-			matching[sidx] = (char) ++k;
-		if (k) {
-		    for (pass = 0; pass <= 1; pass++) {
-			/* pass 0: just past current pos to lower right;
-			   pass 1: upper left corner to current pos */
-			lo_y = (pass == 0) ? cy : 0;
-			hi_y = (pass == 0) ? ROWNO - 1 : cy;
-			for (ty = lo_y; ty <= hi_y; ty++) {
-			    lo_x = (pass == 0 && ty == lo_y) ? cx + 1 : 1;
-			    hi_x = (pass == 1 && ty == hi_y) ? cx : COLNO - 1;
-			    for (tx = lo_x; tx <= hi_x; tx++) {
-				k = levl[tx][ty].glyph;
-				if (glyph_is_cmap(k) &&
-					matching[glyph_to_cmap(k)]) {
-				    cx = tx,  cy = ty;
-				    if (msg_given) {
-					clear_nhwindow(NHW_MESSAGE);
-					msg_given = FALSE;
-				    }
-				    goto nxtc;
-				}
-			    }	/* column */
-			}	/* row */
-		    }		/* pass */
-		    pline("Can't find dungeon feature '%c'.", c);
-		    msg_given = TRUE;
-		    goto nxtc;
-		} else {
-		    pline("Unknown direction: '%s' (%s).",
-			  visctrl((char)c),
-			  !force ? "aborted" :
-			  iflags2.num_pad ? "use 2468 or ." : "use hjkl or .");
-		    msg_given = TRUE;
-		} /* k => matching */
-	    } /* !quitchars */
-	    if (force) goto nxtc;
-	    pline("Done.");
-	    msg_given = FALSE;	/* suppress clear */
-	    cx = -1;
-	    cy = 0;
-	    result = 0;	/* not -1 */
-	    break;
-	}
-    nxtc:	;
-	curs(cx,cy);
+	int rv = -1, x, y;
+	
+	x = cc->x;
+	y = cc->y;
+	
 	flush_screen(0);
-    }
-    if (msg_given) clear_nhwindow(NHW_MESSAGE);
-    cc->x = cx;
-    cc->y = cy;
-    return result;
+	
+	while (rv == -1 || x < 1 || y < 1 || x > COLNO || y > ROWNO) {
+	    rv = win_getpos(&x, &y, force, goal);
+	}
+	
+	cc->x = x;
+	cc->y = y;
+	
+	return rv;
 }
 
 

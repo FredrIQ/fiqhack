@@ -7,7 +7,8 @@ set (NH_TTY_SRC
     wintty.c
     ioctl.c
     unixtty.c
-    optwin.c)
+    optwin.c
+    keymap.c)
 
 if (WIN32)
     # untested and probably incomplete

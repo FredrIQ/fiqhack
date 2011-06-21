@@ -120,6 +120,8 @@ struct interface_flags {
 	boolean  time;		/* display elapsed 'time' */
 	boolean  use_inverse;	/* use inverse video for some things   */
 	int menu_headings;	/* ATR for menu headings */
+	boolean  num_pad;	/* use numbers for movement commands */
+	boolean  cmdassist;	/* provide some extra help messages */
 };
 
 extern struct interface_flags ui_flags;
@@ -136,6 +138,8 @@ extern char *hackdir;
 extern char *var_playground;
 extern struct window_procs tty_procs;
 extern int hackpid;
+extern const char sdir[];
+extern const char ndir[];
 
 /* port specific variable declarations */
 extern winid BASE_WINDOW;
@@ -239,13 +243,13 @@ extern void tty_print_glyph(xchar,xchar,int);
 extern void tty_raw_print(const char *);
 extern void tty_raw_print_bold(const char *);
 extern int tty_nhgetch(void);
-extern int tty_nh_poskey(int *, int *, int *);
+extern int tty_getpos(int *, int *, boolean, const char*);
+enum nh_direction tty_getdir(const char *, boolean);
 extern void tty_nhbell(void);
 extern int tty_doprev_message(void);
 extern char tty_yn_function(const char *, const char *, char, long*);
 extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen);
-extern void tty_number_pad(int);
 extern void tty_delay_output(void);
 extern void tty_outrip(struct nh_menuitem *items,int icount, int how,
 		       char *plname, long gold, char *killbuf, int year);
@@ -265,6 +269,10 @@ extern int base_nhgetch(void);
 
 extern void tty_start_screen(void);
 extern void tty_end_screen(void);
+
+/* keymap.c */
+extern const char *get_command(int *count, struct nh_cmd_arg *arg);
+extern void load_keymap(boolean want_wizard);
 
 /* optwin.c */
 extern void tty_init_options(void);

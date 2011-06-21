@@ -4,19 +4,15 @@
 #ifndef FUNC_TAB_H
 #define FUNC_TAB_H
 
-struct func_tab {
-	char f_char;
-	boolean can_if_buried;
-	int (*f_funct)(void);
-	const char *f_text;
-};
 
-struct ext_func_tab {
-	const char *ef_txt, *ef_desc;
-	int (*ef_funct)(void);
+struct cmd_desc {
+	const char *name;
+	const char *desc;
+	char defkey, altkey;
 	boolean can_if_buried;
+	const void *func;
+	unsigned int flags;
+	const char *text;
 };
-
-extern struct ext_func_tab extcmdlist[];
 
 #endif /* FUNC_TAB_H */

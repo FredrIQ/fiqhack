@@ -194,8 +194,7 @@ int dothrow(void)
 	 * Prior to 3.3.0, command ``3t'' meant ``t(shoot) t(shoot) t(shoot)''
 	 * and took 3 turns.  Now it means ``t(shoot at most 3 missiles)''.
 	 */
-	/* kludge to work around parse()'s pre-decrement of `multi' */
-	shotlimit = (multi || save_cm) ? multi + 1 : 0;
+	shotlimit = multi;
 	multi = 0;		/* reset; it's been used up */
 
 	if (notake(youmonst.data)) {
@@ -315,8 +314,7 @@ int dofire(void)
 	 * Using ``5f'' when the shooting skill (plus RNG) dictates launch
 	 * of 3 projectiles will result in 3 being shot, not 5.
 	 */
-	/* kludge to work around parse()'s pre-decrement of `multi' */
-	shotlimit = (multi || save_cm) ? multi + 1 : 0;
+	shotlimit = multi;
 	multi = 0;		/* reset; it's been used up */
 
 	return throw_obj(uquiver, shotlimit);

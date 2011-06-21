@@ -15,7 +15,7 @@ set (LIBNETHACK_SRC
     save.c     shk.c      shknam.c   sit.c      sounds.c  spell.c    sp_lev.c
     steal.c    steed.c    teleport.c timeout.c  topten.c  track.c    trap.c
     uhitm.c    u_init.c   vault.c    version.c  vision.c  weapon.c   were.c
-    wield.c    windows.c  wizard.c   worm.c     worn.c    write.c    zap.c
+    wield.c    windows.c  wizard.c   worm.c     worn.c    write.c    xmalloc.c zap.c
     )
 set (LIBNETHACK_GENERATED_SRC
     ${NetHack_BINARY_DIR}/src/monstr.c

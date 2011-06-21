@@ -683,7 +683,7 @@ boolean dighole(boolean pit_only)
 			return FALSE;
 		}
 
-		lev->drawbridgemask &= ~DB_UNDER;
+		lev->drawbridgemask = (lev->drawbridgemask & ~DB_UNDER);
 		lev->drawbridgemask |= (typ == LAVAPOOL) ? DB_LAVA : DB_MOAT;
 
  liquid_flow:
@@ -776,14 +776,9 @@ static void dig_up_grave(void)
 int use_pick_axe(struct obj *obj)
 {
 	boolean ispick;
-	char dirsyms[12];
 	char qbuf[QBUFSZ];
-	char *dsp = dirsyms;
-	int rx, ry;
 	int res = 0;
-	const char *sdp, *verb;
-
-	if(iflags2.num_pad) sdp = ndir; else sdp = sdir;	/* DICE workaround */
+	const char *verb;
 
 	/* Check tool */
 	if (obj != uwep) {
@@ -801,19 +796,7 @@ int use_pick_axe(struct obj *obj)
 	    return res;
 	}
 
-	while(*sdp) {
-		movecmd(*sdp);	/* sets u.dx and u.dy and u.dz */
-		rx = u.ux + u.dx;
-		ry = u.uy + u.dy;
-		/* Include down even with axe, so we have at least one direction */
-		if (u.dz > 0 ||
-		    (u.dz == 0 && isok(rx, ry) &&
-		     dig_typ(obj, rx, ry) != DIGTYP_UNDIGGABLE))
-			*dsp++ = *sdp;
-		sdp++;
-	}
-	*dsp = 0;
-	sprintf(qbuf, "In what direction do you want to %s? [%s]", verb, dirsyms);
+	sprintf(qbuf, "In what direction do you want to %s?", verb);
 	if(!getdir(qbuf))
 		return res;
 

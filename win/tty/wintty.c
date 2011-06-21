@@ -43,13 +43,12 @@ struct window_procs tty_procs = {
     tty_raw_print,
     tty_raw_print_bold,
     tty_nhgetch,
-    tty_nh_poskey,
+    tty_getpos,
+    tty_getdir,
     tty_nhbell,
     tty_doprev_message,
     tty_yn_function,
     tty_getlin,
-    tty_get_ext_cmd,
-    tty_number_pad,
     tty_delay_output,
     tty_outrip,
 };
@@ -60,6 +59,9 @@ winid WIN_MESSAGE = WIN_ERR;
 winid WIN_STATUS = WIN_ERR;
 winid WIN_MAP = WIN_ERR;
 char toplines[TBUFSZ];
+
+const char sdir[] = "hykulnjb><";	/* 'rogue'-like direction commands */
+const char ndir[] = "47896321><";	/* number pad mode */
 
 static int maxwin = 0;			/* number of windows in use */
 winid BASE_WINDOW;
@@ -2320,34 +2322,270 @@ int tty_nhgetch(void)
     return i;
 }
 
-/*
- * return a key, or 0, in which case a mouse button was pressed
- * mouse events should be returned as character postitions in the map window.
- * Since normal tty's don't have mice, just return a key.
- */
-/*ARGSUSED*/
-int tty_nh_poskey(int *x, int *y, int *mod)
+/* the response for '?' help request in getpos() */
+static void getpos_help(boolean force, const char *goal)
 {
-# if defined(WIN32CON)
-    int i;
-    fflush(stdout);
-    /* Note: if raw_print() and wait_synch() get called to report terminal
-     * initialization problems, then wins[] and ttyDisplay might not be
-     * available yet.  Such problems will probably be fatal before we get
-     * here, but validate those pointers just in case...
-     */
-    if (WIN_MESSAGE != WIN_ERR && wins[WIN_MESSAGE])
-	    wins[WIN_MESSAGE]->flags &= ~WIN_STOP;
-    i = ntposkey(x, y, mod);
-    if (!i && mod && *mod == 0)
-    	i = '\033'; /* map NUL to ESC since nethack doesn't expect NUL */
-    if (ttyDisplay && ttyDisplay->toplin == 1)
-		ttyDisplay->toplin = 2;
-    return i;
-# else
-    return base_nhgetch();
-# endif
+    boolean doing_what_is;
+    struct nh_menuitem items[6], *it = items;
+    memset(items, 0, sizeof(items));
+
+    sprintf((it++)->caption, "Use the direction keys to move the cursor to %s.",
+	    goal);
+    strcpy((it++)->caption, "Use [HJKL] to move the cursor 8 units at a time.");
+    strcpy((it++)->caption, "Or enter a background symbol (ex. <).");
+
+    /* disgusting hack; the alternate selection characters work for any
+       getpos call, but they only matter for dowhatis (and doquickwhatis) */
+    doing_what_is = !strcmp(goal, "an unknown object");
+    sprintf((it++)->caption, "Type a .%s when you are at the right place.",
+            doing_what_is ? " or , or ; or :" : "");
+    
+    if (!force)
+	strcpy((it++)->caption, "Type Space or Escape when you're done.");
+    strcpy((it++)->caption, "");
+
+    tty_display_menu(items, !force ? 6 : 5, NULL, PICK_NONE, NULL);
 }
+
+char *visctrl(char c)	/* make a displayable string from a character */
+{
+    static char ccc[3];
+
+    c &= 0177;
+
+    ccc[2] = '\0';
+    if (c < 040) {
+	ccc[0] = '^';
+	ccc[1] = c | 0100;	/* letter */
+    } else if (c == 0177) {
+	ccc[0] = '^';
+	ccc[1] = c & ~0100;	/* '?' */
+    } else {
+	ccc[0] = c;		/* printable character */
+	ccc[1] = '\0';
+    }
+    return ccc;
+}
+
+const schar xdir[8] = { -1,-1, 0, 1, 1, 1, 0,-1 };
+const schar ydir[8] = {  0,-1,-1,-1, 0, 1, 1, 1 };
+
+#define sgn(x) ((x) >= 0 ? 1 : -1)
+
+int tty_getpos(int *x, int *y, boolean force, const char *goal)
+{
+    int result = 0;
+    int cx, cy, i, c;
+//     int sidx;
+    boolean msg_given = TRUE;	/* clear message window by default */
+    static const char pick_chars[] = ".,;:";
+    const char *cp;
+    const char *sdp = (ui_flags.num_pad) ? ndir : sdir;
+    char printbuf[BUFSZ];
+
+    if (ui_flags.cmdassist) {
+	tty_print_message("(For instructions type a ?)");
+	msg_given = TRUE;
+    }
+    cx = *x;
+    cy = *y;
+    tty_curs(cx,cy);
+    tty_display_nhwindow(WIN_MAP, FALSE);
+    
+    for (;;) {
+	c = base_nhgetch();
+	if (c == '\033') {
+	    cx = cy = -10;
+	    msg_given = TRUE;	/* force clear */
+	    result = -1;
+	    break;
+	}
+	
+	if ((cp = index(pick_chars, c)) != 0) {
+	    /* '.' => 0, ',' => 1, ';' => 2, ':' => 3 */
+	    result = cp - pick_chars;
+	    break;
+	}
+	for (i = 0; i < 8; i++) {
+	    int dx, dy;
+
+	    if (sdp[i] == c) {
+		/* a normal movement letter or digit */
+		dx = xdir[i];
+		dy = ydir[i];
+	    } else if (sdir[i] == tolower((char)c)) {
+		/* a shifted movement letter */
+		dx = 8 * xdir[i];
+		dy = 8 * ydir[i];
+	    } else
+		continue;
+
+	    /* truncate at map edge; diagonal moves complicate this... */
+	    if (cx + dx < 1) {
+		dy -= sgn(dy) * (1 - (cx + dx));
+		dx = 1 - cx;		/* so that (cx+dx == 1) */
+	    } else if (cx + dx > COLNO-1) {
+		dy += sgn(dy) * ((COLNO-1) - (cx + dx));
+		dx = (COLNO-1) - cx;
+	    }
+	    if (cy + dy < 0) {
+		dx -= sgn(dx) * (0 - (cy + dy));
+		dy = 0 - cy;		/* so that (cy+dy == 0) */
+	    } else if (cy + dy > ROWNO-1) {
+		dx += sgn(dx) * ((ROWNO-1) - (cy + dy));
+		dy = (ROWNO-1) - cy;
+	    }
+	    cx += dx;
+	    cy += dy;
+	    goto nxtc;
+	}
+
+	if(c == '?'){
+	    getpos_help(force, goal);
+	} else {
+	    if (!index(quitchars, c)) {
+		int k = 0;
+// 		char matching[MAXPCHARS];
+// 		int pass, lo_x, lo_y, hi_x, hi_y;
+// 		memset(matching, 0, sizeof matching);
+// 		for (sidx = 1; sidx < MAXPCHARS; sidx++)
+// 		    if (c == defsyms[sidx].sym || c == (int)showsyms[sidx])
+// 			matching[sidx] = (char) ++k;
+		if (k) {
+#if 0 && THIS_FEATURE_IS_BROKEN
+		    for (pass = 0; pass <= 1; pass++) {
+			/* pass 0: just past current pos to lower right;
+			   pass 1: upper left corner to current pos */
+			lo_y = (pass == 0) ? cy : 0;
+			hi_y = (pass == 0) ? ROWNO - 1 : cy;
+			for (ty = lo_y; ty <= hi_y; ty++) {
+			    lo_x = (pass == 0 && ty == lo_y) ? cx + 1 : 1;
+			    hi_x = (pass == 1 && ty == hi_y) ? cx : COLNO - 1;
+			    for (tx = lo_x; tx <= hi_x; tx++) {
+				k = levl[tx][ty].glyph;
+				if (glyph_is_cmap(k) &&
+					matching[glyph_to_cmap(k)]) {
+				    cx = tx,  cy = ty;
+				    if (msg_given) {
+					clear_nhwindow(NHW_MESSAGE);
+					msg_given = FALSE;
+				    }
+				    goto nxtc;
+				}
+			    }	/* column */
+			}	/* row */
+		    }		/* pass */
+#endif
+		    sprintf(printbuf, "Can't find dungeon feature '%c'.", (char)c);
+		    tty_print_message(printbuf);
+		    msg_given = TRUE;
+		    goto nxtc;
+		} else {
+		    sprintf(printbuf, "Unknown direction: '%s' (%s).",
+			  visctrl((char)c),
+			  !force ? "aborted" :
+			  ui_flags.num_pad ? "use 2468 or ." : "use hjkl or .");
+		    tty_print_message(printbuf);
+		    msg_given = TRUE;
+		} /* k => matching */
+	    } /* !quitchars */
+	    if (force) goto nxtc;
+	    tty_print_message("Done.");
+	    msg_given = FALSE;	/* suppress clear */
+	    cx = -1;
+	    cy = 0;
+	    result = 0;	/* not -1 */
+	    break;
+	}
+    nxtc:	;
+	tty_curs(cx,cy);
+	tty_display_nhwindow(WIN_MAP, FALSE);
+    }
+    if (msg_given)
+	tty_clear_nhwindow(NHW_MESSAGE);
+    
+    *x = cx;
+    *y = cy;
+    return result;
+}
+
+
+static void help_dir(const char *msg, boolean restricted)
+{
+	winid win;
+	char buf[BUFSZ];
+
+	win = tty_create_nhwindow(NHW_TEXT);
+
+	if (msg) {
+		sprintf(buf, "cmdassist: %s", msg);
+		tty_putstr(win, 0, buf);
+		tty_putstr(win, 0, "");
+	}
+
+	if (ui_flags.num_pad && restricted) {
+	    tty_putstr(win, 0, "Valid direction keys in your current form (with number_pad on) are:");
+	    tty_putstr(win, 0, "             8   ");
+	    tty_putstr(win, 0, "             |   ");
+	    tty_putstr(win, 0, "          4- . -6");
+	    tty_putstr(win, 0, "             |   ");
+	    tty_putstr(win, 0, "             2   ");
+	} else if (restricted) {
+	    tty_putstr(win, 0, "Valid direction keys in your current form are:");
+	    tty_putstr(win, 0, "             k   ");
+	    tty_putstr(win, 0, "             |   ");
+	    tty_putstr(win, 0, "          h- . -l");
+	    tty_putstr(win, 0, "             |   ");
+	    tty_putstr(win, 0, "             j   ");
+	} else if (ui_flags.num_pad) {
+	    tty_putstr(win, 0, "Valid direction keys (with number_pad on) are:");
+	    tty_putstr(win, 0, "          7  8  9");
+	    tty_putstr(win, 0, "           \\ | / ");
+	    tty_putstr(win, 0, "          4- . -6");
+	    tty_putstr(win, 0, "           / | \\ ");
+	    tty_putstr(win, 0, "          1  2  3");
+	} else {
+	    tty_putstr(win, 0, "Valid direction keys are:");
+	    tty_putstr(win, 0, "          y  k  u");
+	    tty_putstr(win, 0, "           \\ | / ");
+	    tty_putstr(win, 0, "          h- . -l");
+	    tty_putstr(win, 0, "           / | \\ ");
+	    tty_putstr(win, 0, "          b  j  n");
+	};
+	tty_putstr(win, 0, "");
+	tty_putstr(win, 0, "          <  up");
+	tty_putstr(win, 0, "          >  down");
+	tty_putstr(win, 0, "          .  direct at yourself");
+	tty_putstr(win, 0, "");
+	tty_putstr(win, 0, "(Suppress this message with !cmdassist in config file.)");
+	tty_display_nhwindow(win, FALSE);
+	tty_destroy_nhwindow(win);
+
+}
+
+
+enum nh_direction tty_getdir(const char *query, boolean restricted)
+{
+	char dirsym, *dp;
+	const char *dirs = ui_flags.num_pad ? ndir : sdir;
+
+	dirsym = tty_yn_function (query, NULL, '\0', NULL);
+	if (dirsym == '.' || dirsym == 's')
+		return DIR_SELF;
+	
+	dp = index(dirs, dirsym);
+	if (!dp) {
+	    if (!index(quitchars, dirsym)) {
+		if (ui_flags.cmdassist)
+		    help_dir("Invalid direction key!", restricted);
+		else
+		    tty_print_message("What a strange direction!");
+	    }
+	    return DIR_NONE;
+	}
+	return (enum nh_direction)(dp-dirs);
+}
+
 
 void win_tty_init(void)
 {

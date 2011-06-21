@@ -96,7 +96,26 @@ static void query_birth_options(void)
 }
 
 
-EXPORT int main(int argc, char *argv[])
+static void commandloop(void)
+{
+	const char *cmd;
+	int gamestate, count;
+	struct nh_cmd_arg cmdarg;
+	
+	gamestate = READY_FOR_INPUT;
+	
+	for (;;) {
+	    if (gamestate == READY_FOR_INPUT)
+		cmd = get_command(&count, &cmdarg);
+	    else
+		cmd = NULL;
+	    
+	    gamestate = nh_do_move(cmd, count, &cmdarg);
+	}
+}
+
+
+int main(int argc, char *argv[])
 {
 	char **gamepaths;
 
@@ -139,6 +158,7 @@ EXPORT int main(int argc, char *argv[])
 	read_config();
 
 	process_options(argc, argv);	/* command line options */
+	load_keymap(playmode == MODE_WIZARD);
 	
 	while (!plname[0])
 	    tty_askname(plname);
@@ -148,9 +168,7 @@ EXPORT int main(int argc, char *argv[])
 	    nh_start_game(plname, locknum, playmode);
 	}
 
-	for (;;) {
-	    nh_do_move();
-	}
+	commandloop();
 	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/

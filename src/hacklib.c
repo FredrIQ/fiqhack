@@ -214,26 +214,6 @@ char *tabexpand(char *sbuf)	/* expand tabs into proper number of spaces */
     return strcpy(sbuf, buf);
 }
 
-char *visctrl(char c)	/* make a displayable string from a character */
-{
-    static char ccc[3];
-
-    c &= 0177;
-
-    ccc[2] = '\0';
-    if (c < 040) {
-	ccc[0] = '^';
-	ccc[1] = c | 0100;	/* letter */
-    } else if (c == 0177) {
-	ccc[0] = '^';
-	ccc[1] = c & ~0100;	/* '?' */
-    } else {
-	ccc[0] = c;		/* printable character */
-	ccc[1] = '\0';
-    }
-    return ccc;
-}
-
 
 const char *ordin(int n)	/* return the ordinal suffix of a number */
 /* note: n should be non-negative */
