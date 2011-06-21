@@ -576,7 +576,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     pre_move_tasks(didmove);
     flush_screen(1); /* Flush screen buffer. Put the cursor on the hero. */
     
-    if (multi > 0 && occupation)
+    if (multi >= 0 && occupation)
 	return OCCUPATION_IN_PROGRESS;
     else if (multi > 0)
 	return MULTI_IN_PROGRESS;

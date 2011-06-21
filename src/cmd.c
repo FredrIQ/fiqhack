@@ -1342,7 +1342,7 @@ int do_command(const char *command, int repcount, boolean firsttime, struct nh_c
 	    if (!strcmp(command, cmdlist[i].name))
 		idx = i;
 	
-	argtype = (arg->argtype & cmdlist[i].flags);
+	argtype = (arg->argtype & cmdlist[idx].flags);
 	if (!argtype)
 	    return COMMAND_BAD_ARG;
 	
@@ -1359,8 +1359,8 @@ int do_command(const char *command, int repcount, boolean firsttime, struct nh_c
 	    switch (argtype) {
 		case CMD_ARG_NONE:
 		    func = cmdlist[idx].func;
-		    if (cmdlist[idx].text && !occupation && multi)
-			set_occupation(func, cmdlist[idx].text, multi);
+		    if (cmdlist[idx].text && !occupation && multi > 1)
+			set_occupation(func, cmdlist[idx].text, multi - 1);
 		    res = (*func)();		/* perform the command */
 		    break;
 		
