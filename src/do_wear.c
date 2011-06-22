@@ -1900,9 +1900,7 @@ int doddoremarm(void)
     }
 
     add_valid_menu_class(0); /* reset */
-    if (flags.menu_style != MENU_TRADITIONAL ||
-	    (result = ggetobj("take off", select_off, 0, FALSE, NULL)) < -1)
-	result = menu_remarm(result);
+    result = menu_remarm(result);
 
     if (takeoff_mask) {
 	/* default activity for armor and/or accessories,

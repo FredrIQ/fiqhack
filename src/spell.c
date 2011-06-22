@@ -19,7 +19,6 @@ static struct obj *book;	/* last/current book being xscribed */
 #define spellet(spell)	\
 	((char)((spell < 26) ? ('a' + spell) : ('A' + spell - 26)))
 
-static int spell_let_to_idx(char);
 static boolean cursed_book(struct obj *bp);
 static boolean confused_book(struct obj *);
 static void deadbook(struct obj *);
@@ -88,18 +87,6 @@ static int isqrt(int);
 
 /* since the spellbook itself doesn't blow up, don't say just "explodes" */
 static const char explodes[] = "radiates explosive energy";
-
-/* convert a letter into a number in the range 0..51, or -1 if not a letter */
-static int spell_let_to_idx(char ilet)
-{
-    int indx;
-
-    indx = ilet - 'a';
-    if (indx >= 0 && indx < 26) return indx;
-    indx = ilet - 'A';
-    if (indx >= 0 && indx < 26) return indx + 26;
-    return -1;
-}
 
 /* TRUE: book should be destroyed by caller */
 static boolean cursed_book(struct obj *bp)
@@ -519,40 +506,11 @@ void age_spells(void)
  */
 static boolean getspell(int *spell_no)
 {
-	int nspells, idx;
-	char ilet, lets[BUFSZ], qbuf[QBUFSZ];
-
 	if (spellid(0) == NO_SPELL)  {
 	    You("don't know any spells right now.");
 	    return FALSE;
 	}
-	if (flags.menu_style == MENU_TRADITIONAL) {
-	    /* we know there is at least 1 known spell */
-	    for (nspells = 1; nspells < MAXSPELL
-			    && spellid(nspells) != NO_SPELL; nspells++)
-		continue;
 
-	    if (nspells == 1)  strcpy(lets, "a");
-	    else if (nspells < 27)  sprintf(lets, "a-%c", 'a' + nspells - 1);
-	    else if (nspells == 27)  sprintf(lets, "a-zA");
-	    else sprintf(lets, "a-zA-%c", 'A' + nspells - 27);
-
-	    for (;;)  {
-		sprintf(qbuf, "Cast which spell? [%s ?]", lets);
-		if ((ilet = yn_function(qbuf, NULL, '\0')) == '?')
-		    break;
-
-		if (index(quitchars, ilet))
-		    return FALSE;
-
-		idx = spell_let_to_idx(ilet);
-		if (idx >= 0 && idx < nspells) {
-		    *spell_no = idx;
-		    return TRUE;
-		} else
-		    You("don't know that spell.");
-	    }
-	}
 	return dospellmenu("Choose which spell to cast",
 			   SPELLMENU_CAST, spell_no);
 }

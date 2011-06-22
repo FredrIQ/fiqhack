@@ -1205,7 +1205,7 @@ int ggetobj(const char *word, int (*fn)(struct obj*), int mx,
 
 	if (m_seen)
 	    return (allflag || (!oletct && ckfn != ckunpaid)) ? -2 : -3;
-	else if (flags.menu_style != MENU_TRADITIONAL && combo && !allflag)
+	else if (combo && !allflag)
 	    return 0;
 #ifndef GOLDOBJ
 	else if (allowgold == 2 && !oletct)
@@ -1407,11 +1407,6 @@ void identify_pack(int id_limit)
     } else {
 	/* identify up to `id_limit' items */
 	n = 0;
-	if (flags.menu_style == MENU_TRADITIONAL)
-	    do {
-		n = ggetobj("identify", identify, id_limit, FALSE, NULL);
-		if (n < 0) break; /* quit or no eligible items */
-	    } while ((id_limit -= n) > 0);
 	if (n == 0 || n < -1)
 	    menu_identify(id_limit);
     }
@@ -1800,7 +1795,6 @@ int dotypeinv(void)
 	int class_count, oclass, unpaid_count, itemcount;
 	boolean billx = *u.ushops && doinvbill(0);
 	int pick_list[30];
-	boolean traditional = TRUE;
 	const char *prompt = "What type of object do you want an inventory of?";
 
 #ifndef GOLDOBJ
@@ -1812,19 +1806,15 @@ int dotypeinv(void)
 	    return 0;
 	}
 	unpaid_count = count_unpaid(invent);
-	if (flags.menu_style != MENU_TRADITIONAL) {
-	    if (flags.menu_style == MENU_FULL ||
-				flags.menu_style == MENU_PARTIAL) {
-		traditional = FALSE;
-		i = UNPAID_TYPES;
-		if (billx) i |= BILLED_TYPES;
-		n = query_category(prompt, invent, i, pick_list, PICK_ONE);
-		if (!n)
-		    return 0;
-		this_type = c = pick_list[0];
-	    }
-	}
-	if (traditional) {
+	if (flags.menu_style != MENU_COMBINATION) {
+	    i = UNPAID_TYPES;
+	    if (billx)
+		i |= BILLED_TYPES;
+	    n = query_category(prompt, invent, i, pick_list, PICK_ONE);
+	    if (!n)
+		return 0;
+	    this_type = c = pick_list[0];
+	} else {
 	    /* collect a list of classes of objects carried, for use as a prompt */
 	    types[0] = 0;
 	    class_count = collect_obj_classes(types, invent,
@@ -1885,7 +1875,8 @@ int dotypeinv(void)
 		You("are not carrying any unpaid objects.");
 	    return 0;
 	}
-	if (traditional) {
+	
+	if (flags.menu_style == MENU_COMBINATION) {
 	    oclass = def_char_to_objclass(c); /* change to object class */
 	    if (oclass == COIN_CLASS) {
 		return doprgold();

@@ -570,11 +570,11 @@ int doddrop(void)
 	int result = 0;
 
 	add_valid_menu_class(0); /* clear any classes already there */
-	if (*u.ushops) sellobj_state(SELL_DELIBERATE);
-	if (flags.menu_style != MENU_TRADITIONAL ||
-		(result = ggetobj("drop", drop, 0, FALSE, NULL)) < -1)
-	    result = menu_drop(result);
-	if (*u.ushops) sellobj_state(SELL_NORMAL);
+	if (*u.ushops)
+	    sellobj_state(SELL_DELIBERATE);
+	result = menu_drop(result);
+	if (*u.ushops)
+	    sellobj_state(SELL_NORMAL);
 	reset_occupations();
 
 	return result;
