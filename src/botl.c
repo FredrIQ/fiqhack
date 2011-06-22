@@ -145,12 +145,19 @@ void bot(void)
 
 void nh_get_player_info(struct nh_player_info *pi)
 {
-	int cap = near_capacity();
-
-	memset(pi, 0, sizeof(*pi));
+	int cap;
+	
+	memset(pi, 0, sizeof(struct nh_player_info));
 	
 	pi->moves = moves;
 	strncpy(pi->plname, plname, sizeof(pi->plname));
+	
+	/* This function could be called before the game is fully inited.
+	 * Test youmonst.data as it is required for near_capacity().
+	 * program_state.game_started is no good, as we need this data before 
+	 * game_started is set */
+	if (!youmonst.data)
+	    return;
 	
 	pi->x = u.ux;
 	pi->y = u.uy;
@@ -213,6 +220,7 @@ void nh_get_player_info(struct nh_player_info *pi)
 	    pi->level = u.ulevel;
 	pi->xp = u.uexp;
 
+	cap = near_capacity();
 	
 	if (strcmp(hu_stat[u.uhs], "        "))
 	    strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
