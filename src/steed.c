@@ -37,7 +37,7 @@ int use_saddle(struct obj *otmp)
 	struct permonst *ptr;
 	int chance;
 	const char *s;
-
+	schar dx, dy, dz;
 
 	/* Can you use it? */
 	if (nohands(youmonst.data)) {
@@ -49,16 +49,16 @@ int use_saddle(struct obj *otmp)
 	}
 
 	/* Select an animal */
-	if (u.uswallow || Underwater || !getdir(NULL)) {
+	if (u.uswallow || Underwater || !getdir(NULL, &dx, &dy, &dz)) {
 	    pline(Never_mind);
 	    return 0;
 	}
-	if (!u.dx && !u.dy) {
+	if (!dx && !dy) {
 	    pline("Saddle yourself?  Very funny...");
 	    return 0;
 	}
-	if (!isok(u.ux+u.dx, u.uy+u.dy) ||
-			!(mtmp = m_at(u.ux+u.dx, u.uy+u.dy)) ||
+	if (!isok(u.ux+dx, u.uy+dy) ||
+			!(mtmp = m_at(u.ux+dx, u.uy+dy)) ||
 			!canspotmon(mtmp)) {
 	    pline("I see nobody there.");
 	    return 1;
@@ -160,13 +160,15 @@ boolean can_ride(struct monst *mtmp)
 int doride(void)
 {
 	boolean forcemount = FALSE;
+	schar dx, dy, dz;
 
 	if (u.usteed)
 	    dismount_steed(DISMOUNT_BYCHOICE);
-	else if (getdir(NULL) && isok(u.ux+u.dx, u.uy+u.dy)) {
+	else if (getdir(NULL, &dx, &dy, &dz) &&
+	         isok(u.ux+dx, u.uy+dy)) {
 	    if (wizard && yn("Force the mount to succeed?") == 'y')
 		forcemount = TRUE;
-	    return mount_steed(m_at(u.ux+u.dx, u.uy+u.dy), forcemount);
+	    return mount_steed(m_at(u.ux+dx, u.uy+dy), forcemount);
 	} else
 	    return 0;
 	return 1;
@@ -229,7 +231,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	    return FALSE;
 	}
 	if (u.uswallow || u.ustuck || u.utrap || Punished ||
-	    !test_move(u.ux, u.uy, mtmp->mx-u.ux, mtmp->my-u.uy, TEST_MOVE)) {
+	    !test_move(u.ux, u.uy, mtmp->mx-u.ux, mtmp->my-u.uy, 0, TEST_MOVE)) {
 	    if (Punished || !(u.uswallow || u.ustuck || u.utrap))
 		You("are unable to swing your %s over.", body_part(LEG)); 
 	    else

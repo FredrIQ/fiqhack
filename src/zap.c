@@ -21,7 +21,7 @@ extern boolean m_using;
 static void costly_cancel(struct obj *);
 static void polyuse(struct obj*, int, int);
 static void create_polymon(struct obj *, int);
-static boolean zap_updown(struct obj *);
+static boolean zap_updown(struct obj *, schar);
 static int zhitm(struct monst *,int,int,struct obj **);
 static void zhitu(int,int,const char *,xchar,xchar);
 static void revive_egg(struct obj *);
@@ -1729,6 +1729,7 @@ int dozap(void)
 {
 	struct obj *obj;
 	int	damage;
+	schar dx, dy, dz;
 
 	if (check_capacity(NULL)) return 0;
 	obj = getobj(zap_syms, "zap");
@@ -1742,11 +1743,12 @@ int dozap(void)
 		backfire(obj);	/* the wand blows up in your face! */
 		exercise(A_STR, FALSE);
 		return 1;
-	} else if (!(objects[obj->otyp].oc_dir == NODIR) && !getdir(NULL)) {
+	} else if (!(objects[obj->otyp].oc_dir == NODIR) &&
+	           !getdir(NULL, &dx, &dy, &dz)) {
 		if (!Blind)
 		    pline("%s glows and fades.", The(xname(obj)));
 		/* make him pay for knowing !NODIR */
-	} else if (!u.dx && !u.dy && !u.dz && !(objects[obj->otyp].oc_dir == NODIR)) {
+	} else if (!dx && !dy && !dz && !(objects[obj->otyp].oc_dir == NODIR)) {
 	    if ((damage = zapyourself(obj, TRUE)) != 0) {
 		char buf[BUFSZ];
 		sprintf(buf, "zapped %sself with a wand", uhim());
@@ -1761,7 +1763,7 @@ int dozap(void)
 		 * useup -> obfree -> dealloc_obj -> free(obj)
 		 */
 		current_wand = obj;
-		weffects(obj);
+		weffects(obj, dx, dy, dz);
 		obj = current_wand;
 		current_wand = 0;
 	}
@@ -2174,7 +2176,7 @@ boolean cancel_monst(struct monst *mdef, struct obj *obj, boolean youattack,
 
 /* you've zapped an immediate type wand up or down */
 /* obj: wand or spell */
-static boolean zap_updown(struct obj *obj)
+static boolean zap_updown(struct obj *obj, schar dz)
 {
 	boolean striking = FALSE, disclose = FALSE;
 	int x, y, xx, yy, ptmp;
@@ -2192,7 +2194,7 @@ static boolean zap_updown(struct obj *obj)
 	switch (obj->otyp) {
 	case WAN_PROBING:
 	    ptmp = 0;
-	    if (u.dz < 0) {
+	    if (dz < 0) {
 		You("probe towards the %s.", ceiling(x,y));
 	    } else {
 		ptmp += bhitpile(obj, bhito, x, y);
@@ -2207,7 +2209,7 @@ static boolean zap_updown(struct obj *obj)
 	    if (is_db_wall(x,y) && find_drawbridge(&xx, &yy)) {
 		open_drawbridge(xx, yy);
 		disclose = TRUE;
-	    } else if (u.dz > 0 && (x == xdnstair && y == ydnstair) &&
+	    } else if (dz > 0 && (x == xdnstair && y == ydnstair) &&
 			/* can't use the stairs down to quest level 2 until
 			   leader "unlocks" them; give feedback if you try */
 			on_level(&u.uz, &qstart_level) && !ok_to_quest()) {
@@ -2222,7 +2224,7 @@ static boolean zap_updown(struct obj *obj)
 	case WAN_LOCKING:
 	case SPE_WIZARD_LOCK:
 	    /* down at open bridge or up or down at open portcullis */
-	    if ((levl[x][y].typ == DRAWBRIDGE_DOWN) ? (u.dz > 0) :
+	    if ((levl[x][y].typ == DRAWBRIDGE_DOWN) ? (dz > 0) :
 			(is_drawbridge_wall(x,y) && !is_db_wall(x,y)) &&
 		    find_drawbridge(&xx, &yy)) {
 		if (!striking)
@@ -2230,7 +2232,7 @@ static boolean zap_updown(struct obj *obj)
 		else
 		    destroy_drawbridge(xx, yy);
 		disclose = TRUE;
-	    } else if (striking && u.dz < 0 && rn2(3) &&
+	    } else if (striking && dz < 0 && rn2(3) &&
 			!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) &&
 			!Underwater && !Is_qstart(&u.uz)) {
 		/* similar to zap_dig() */
@@ -2243,7 +2245,7 @@ static boolean zap_updown(struct obj *obj)
 		    stackobj(otmp);
 		}
 		newsym(x, y);
-	    } else if (!striking && ttmp && ttmp->ttyp == TRAPDOOR && u.dz > 0) {
+	    } else if (!striking && ttmp && ttmp->ttyp == TRAPDOOR && dz > 0) {
 		if (!Blind) {
 			if (ttmp->tseen) {
 				pline("A trap door beneath you closes up then vanishes.");
@@ -2262,11 +2264,11 @@ static boolean zap_updown(struct obj *obj)
 	    break;
 	case SPE_STONE_TO_FLESH:
 	    if (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
-		     Underwater || (Is_qstart(&u.uz) && u.dz < 0)) {
+		     Underwater || (Is_qstart(&u.uz) && dz < 0)) {
 		pline(nothing_happens);
-	    } else if (u.dz < 0) {	/* we should do more... */
+	    } else if (dz < 0) {	/* we should do more... */
 		pline("Blood drips on your %s.", body_part(FACE));
-	    } else if (u.dz > 0 && !OBJ_AT(u.ux, u.uy)) {
+	    } else if (dz > 0 && !OBJ_AT(u.ux, u.uy)) {
 		/*
 		Print this message only if there wasn't an engraving
 		affected here.  If water or ice, act like waterlevel case.
@@ -2287,7 +2289,7 @@ static boolean zap_updown(struct obj *obj)
 	    break;
 	}
 
-	if (u.dz > 0) {
+	if (dz > 0) {
 	    /* zapping downward */
 	    bhitpile(obj, bhito, x, y);
 
@@ -2332,14 +2334,14 @@ static boolean zap_updown(struct obj *obj)
 
 
 /* called for various wand and spell effects - M. Stephenson */
-void weffects(struct obj *obj)
+void weffects(struct obj *obj, schar dx, schar dy, schar dz)
 {
 	int otyp = obj->otyp;
 	boolean disclose = FALSE, was_unkn = !objects[otyp].oc_name_known;
 
 	exercise(A_WIS, TRUE);
 	if (u.usteed && (objects[otyp].oc_dir != NODIR) &&
-	    !u.dx && !u.dy && (u.dz > 0) && zap_steed(obj)) {
+	    !dx && !dy && (dz > 0) && zap_steed(obj)) {
 		disclose = TRUE;
 	} else if (objects[otyp].oc_dir == IMMEDIATE) {
 	    obj_zapped = FALSE;
@@ -2347,10 +2349,10 @@ void weffects(struct obj *obj)
 	    if (u.uswallow) {
 		bhitm(u.ustuck, obj);
 		/* [how about `bhitpile(u.ustuck->minvent)' effect?] */
-	    } else if (u.dz) {
-		disclose = zap_updown(obj);
+	    } else if (dz) {
+		disclose = zap_updown(obj, dz);
 	    } else {
-		bhit(u.dx,u.dy, rn1(8,6),ZAPPED_WAND, bhitm,bhito, obj);
+		bhit(dx, dy, rn1(8,6), ZAPPED_WAND, bhitm, bhito, obj);
 	    }
 	    /* give a clue if obj_zapped */
 	    if (obj_zapped)
@@ -2363,15 +2365,15 @@ void weffects(struct obj *obj)
 	    /* neither immediate nor directionless */
 
 	    if (otyp == WAN_DIGGING || otyp == SPE_DIG)
-		zap_dig();
+		zap_dig(dx, dy, dz);
 	    else if (otyp >= SPE_MAGIC_MISSILE && otyp <= SPE_FINGER_OF_DEATH)
 		buzz(otyp - SPE_MAGIC_MISSILE + 10,
 		     u.ulevel / 2 + 1,
-		     u.ux, u.uy, u.dx, u.dy);
+		     u.ux, u.uy, dx, dy);
 	    else if (otyp >= WAN_MAGIC_MISSILE && otyp <= WAN_LIGHTNING)
 		buzz(otyp - WAN_MAGIC_MISSILE,
 		     (otyp == WAN_MAGIC_MISSILE) ? 2 : 6,
-		     u.ux, u.uy, u.dx, u.dy);
+		     u.ux, u.uy, dx, dy);
 	    else
 		impossible("weffects: unexpected spell or wand");
 	    disclose = TRUE;
@@ -2676,7 +2678,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 			      The(distant_name(obj, xname)), an(xname(bobj)));
 		    range = 0;
 		} else if (obj == uball) {
-		    if (!test_move(x - ddx, y - ddy, ddx, ddy, TEST_MOVE)) {
+		    if (!test_move(x - ddx, y - ddy, ddx, ddy, 0, TEST_MOVE)) {
 			/* nb: it didn't hit anything directly */
 			if (cansee(x,y))
 			    pline("%s jerks to an abrupt halt.",

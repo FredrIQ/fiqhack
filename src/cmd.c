@@ -1412,52 +1412,56 @@ void dtoxy(coord *cc, int dd)	/* convert a direction code into an x,y pair */
  *
  * Returns non-zero if coordinates in cc are valid.
  */
-int get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y, coord *cc)
+int get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
+		     coord *cc, schar *dz)
 {
 	xchar new_x, new_y;
-	if (!getdir(prompt)) {
+	schar dx, dy;
+	
+	if (!getdir(prompt, &dx, &dy, dz)) {
 		pline(Never_mind);
 		return 0;
 	}
-	new_x = x + u.dx;
-	new_y = y + u.dy;
-	if (cc && isok(new_x,new_y)) {
+	new_x = x + dx;
+	new_y = y + dy;
+	if (cc && isok(new_x, new_y)) {
 		cc->x = new_x;
 		cc->y = new_y;
 	} else {
-		if (emsg) pline(emsg);
+		if (emsg)
+		    pline(emsg);
 		return 0;
 	}
 	return 1;
 }
 
 
-int getdir(const char *s)
+int getdir(const char *s, schar *dx, schar *dy, schar *dz)
 {
 	const char *query = s ? s : "In what direction?";
 	boolean restricted = u.umonnum == PM_GRID_BUG;
 	enum nh_direction dir = (*windowprocs.win_getdir)(query, restricted);
 	
-	u.dz = 0;
-	if (!dir_to_delta(dir, &u.dx, &u.dy, &u.dz))
-	    return 0;
+	*dz = 0;
+	if (!dir_to_delta(dir, dx, dy, dz))
+		return 0;
 	
-	if (u.dx && u.dy && u.umonnum == PM_GRID_BUG) {
-		u.dx = u.dy = 0;
+	if (*dx && *dy && u.umonnum == PM_GRID_BUG) {
+		*dx = *dy = 0;
 		return 0;
 	}
 	
-	if (!u.dz && (Stunned || (Confusion && !rn2(5))))
-	    confdir();
+	if (!*dz && (Stunned || (Confusion && !rn2(5))))
+		confdir(dx, dy);
 	
 	return 1;
 }
 
-void confdir(void)
+void confdir(schar *dx, schar *dy)
 {
 	int x = (u.umonnum == PM_GRID_BUG) ? 2*rn2(4) : rn2(8);
-	u.dx = xdir[x];
-	u.dy = ydir[x];
+	*dx = xdir[x];
+	*dy = ydir[x];
 	return;
 }
 
@@ -1501,7 +1505,7 @@ static int dotravel(void)
 	u.last_str_turn = 0;
 	flags.mv = TRUE;
 	
-	domove();
+	domove(0, 0, 0);
 	
 	return 1;
 }

@@ -623,7 +623,7 @@ drag:
  *
  *  Should not be called while swallowed.
  */
-void drop_ball(xchar x, xchar y)
+void drop_ball(xchar x, xchar y, schar dx, schar dy)
 {
     if (Blind) {
 	u.bc_order = bc_order();			/* get the order */
@@ -678,8 +678,8 @@ void drop_ball(xchar x, xchar y)
 	    u.ux = x;
 	    u.uy = y;
 	} else {
-	    u.ux = x - u.dx;
-	    u.uy = y - u.dy;
+	    u.ux = x - dx;
+	    u.uy = y - dy;
 	}
 	vision_full_recalc = 1;	/* hero has moved, recalculate vision later */
 
@@ -695,7 +695,7 @@ void drop_ball(xchar x, xchar y)
 	if (Blind) {
 	    u.bc_order = bc_order();
 	}
-	newsym(u.ux0,u.uy0);		/* clean up old position */
+	newsym(u.ux0, u.uy0);		/* clean up old position */
 	if (u.ux0 != u.ux || u.uy0 != u.uy) {
 	    spoteffects(TRUE);
 	    if (In_sokoban(&u.uz))

@@ -531,13 +531,13 @@ void dropy(struct obj *obj)
 	} else  {
 	    place_object(obj, u.ux, u.uy);
 	    if (obj == uball)
-		drop_ball(u.ux,u.uy);
+		drop_ball(u.ux, u.uy, 0, 0);
 	    else
 		sellobj(obj, u.ux, u.uy);
 	    stackobj(obj);
 	    if (Blind && Levitation)
 		map_object(obj, 0);
-	    newsym(u.ux,u.uy);	/* remap location under self */
+	    newsym(u.ux, u.uy);	/* remap location under self */
 	}
 }
 
@@ -732,7 +732,7 @@ int dodown(void)
 
 			if (flags.autodig && !flags.nopick &&
 				uwep && is_pick(uwep)) {
-				return use_pick_axe2(uwep);
+				return use_pick_axe2(uwep, 0, 0, 1);
 			} else {
 				You_cant("go down here.");
 				return 0;
@@ -1065,10 +1065,10 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		    if (newdungeon) u_on_sstairs();
 		    else u_on_upstairs();
 		}
-		if (u.dz && Flying)
+		if (at_stairs && Flying)
 		    You("fly down along the %s.",
 			at_ladder ? "ladder" : "stairs");
-		else if (u.dz &&
+		else if (at_stairs &&
 		    (near_capacity() > UNENCUMBERED || Punished || Fumbling)) {
 		    You("fall down the %s.", at_ladder ? "ladder" : "stairs");
 		    if (Punished) {
@@ -1089,7 +1089,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		    else
 			losehp(rnd(3), "falling downstairs", KILLED_BY);
 		    selftouch("Falling, you");
-		} else if (u.dz && at_ladder)
+		} else if (at_ladder)
 		    You("climb down the ladder.");
 	    }
 	} else {	/* trap door or level_tele or In_endgame */

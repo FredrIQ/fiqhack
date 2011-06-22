@@ -1562,15 +1562,17 @@ gotit:
      * 3.3.1 introduced directional looting for some things.
      */
     if (c != 'y' && mon_beside(u.ux, u.uy)) {
+	schar dz;
 	if (!get_adjacent_loc("Loot in what direction?", "Invalid loot location",
-			u.ux, u.uy, &cc)) return 0;
+			u.ux, u.uy, &cc, &dz))
+	    return 0;
 	if (cc.x == u.ux && cc.y == u.uy) {
 	    underfoot = TRUE;
 	    if (container_at(cc.x, cc.y, FALSE))
 		goto lootcont;
 	} else
 	    underfoot = FALSE;
-	if (u.dz < 0) {
+	if (dz < 0) {
 	    You("%s to loot on the %s.", dont_find_anything,
 		ceiling(cc.x, cc.y));
 	    timepassed = 1;

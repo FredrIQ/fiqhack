@@ -101,7 +101,7 @@ extern void set_bc(int);
 extern void move_bc(int,int,xchar,xchar,xchar,xchar);
 extern boolean drag_ball(xchar,xchar,
 		int *,xchar *,xchar *,xchar *,xchar *, boolean *,boolean);
-extern void drop_ball(xchar,xchar);
+extern void drop_ball(xchar,xchar,schar,schar);
 extern void drag_down(void);
 
 /* ### bones.c ### */
@@ -130,10 +130,10 @@ extern void show_conduct(int);
 extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);
 extern int movecmd(char);
-extern int getdir(const char *);
-extern void confdir(void);
+extern int getdir(const char *, schar *dx, schar *dy, schar *dz);
+extern void confdir(schar *dx, schar *dy);
 extern int isok(int,int);
-extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *);
+extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *, schar *);
 extern const char *click_to_cmd(int,int,int);
 extern void sanity_check(void);
 extern char yn_function(const char *,const char *, char);
@@ -181,10 +181,10 @@ extern boolean dig_check(struct monst *, boolean, int, int);
 extern void digactualhole(int,int,struct monst *,int);
 extern boolean dighole(boolean);
 extern int use_pick_axe(struct obj *);
-extern int use_pick_axe2(struct obj *);
+extern int use_pick_axe2(struct obj *, schar, schar, schar);
 extern boolean mdig_tunnel(struct monst *);
 extern void watch_dig(struct monst *,xchar,xchar,boolean);
-extern void zap_dig(void);
+extern void zap_dig(schar, schar, schar);
 extern struct obj *bury_an_obj(struct obj *);
 extern void bury_objs(int,int);
 extern void unearth_objs(int,int);
@@ -358,7 +358,7 @@ extern int dofire(void);
 extern void hitfloor(struct obj *);
 extern void hurtle(int,int,int,boolean);
 extern void mhurtle(struct monst *,int,int,int);
-extern void throwit(struct obj *,long,boolean);
+extern void throwit(struct obj *,long,boolean,schar,schar,schar);
 extern int omon_adj(struct monst *,struct obj *,boolean);
 extern int thitmonst(struct monst *,struct obj *);
 extern int hero_breaks(struct obj *,xchar,xchar,boolean);
@@ -560,15 +560,15 @@ extern boolean may_dig(xchar,xchar);
 extern boolean may_passwall(xchar,xchar);
 extern boolean bad_rock(struct permonst *,xchar,xchar);
 extern boolean invocation_pos(xchar,xchar);
-extern boolean test_move(int, int, int, int, int);
-extern void domove(void);
+extern boolean test_move(int, int, int, int, int, int);
+extern void domove(schar dx, schar dy, schar dz);
 extern void invocation_message(void);
 extern void spoteffects(boolean);
 extern char *in_rooms(xchar,xchar,int);
 extern boolean in_town(int,int);
 extern void check_special_room(boolean);
 extern int dopickup(void);
-extern void lookaround(void);
+extern void lookaround(schar, schar);
 extern int monster_nearby(void);
 extern void nomul(int);
 extern void unmul(const char *);
@@ -843,7 +843,7 @@ extern void place_lregion(xchar,xchar,xchar,xchar,
 			     xchar,xchar,xchar,xchar,
 			     xchar,d_level *);
 extern void movebubbles(void);
-extern void water_friction(void);
+extern void water_friction(schar *, schar *);
 extern void save_waterlevel(int,int);
 extern void restore_waterlevel(int);
 extern const char *waterbody_name(xchar,xchar);
@@ -1658,16 +1658,16 @@ extern void u_init(void);
 /* ### uhitm.c ### */
 
 extern void hurtmarmor(struct monst *,int);
-extern boolean attack_checks(struct monst *,struct obj *);
+extern boolean attack_checks(struct monst *, struct obj *, schar, schar);
 extern void check_caitiff(struct monst *);
 extern schar find_roll_to_hit(struct monst *);
-extern boolean attack(struct monst *);
+extern boolean attack(struct monst *, schar, schar);
 extern boolean hmon(struct monst *,struct obj *,int);
 extern int damageum(struct monst *,struct attack *);
 extern void missum(struct monst *,struct attack *);
 extern int passive(struct monst *,boolean,int,uchar);
 extern void passive_obj(struct monst *,struct obj *,struct attack *);
-extern void stumble_onto_mimic(struct monst *);
+extern void stumble_onto_mimic(struct monst *, schar, schar);
 extern int flash_hits_mon(struct monst *,struct obj *);
 
 /* ### vault.c ### */
@@ -1835,7 +1835,7 @@ extern int dozap(void);
 extern int zapyourself(struct obj *,boolean);
 extern boolean cancel_monst(struct monst *,struct obj *,
 			       boolean,boolean,boolean);
-extern void weffects(struct obj *);
+extern void weffects(struct obj *, schar, schar, schar);
 extern int spell_damage_bonus(void);
 extern const char *exclam(int force);
 extern void hit(const char *,struct monst *,const char *);

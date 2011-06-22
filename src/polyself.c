@@ -708,6 +708,7 @@ void rehumanize(void)
 int dobreathe(void)
 {
 	struct attack *mattk;
+	schar dx, dy, dz;
 
 	if (Strangled) {
 	    You_cant("breathe.  Sorry.");
@@ -720,26 +721,29 @@ int dobreathe(void)
 	u.uen -= 15;
 	botl = 1;
 
-	if (!getdir(NULL)) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
 
 	mattk = attacktype_fordmg(youmonst.data, AT_BREA, AD_ANY);
 	if (!mattk)
 	    impossible("bad breath attack?");	/* mouthwash needed... */
 	else
 	    buzz((int) (20 + mattk->adtyp-1), (int)mattk->damn,
-		u.ux, u.uy, u.dx, u.dy);
+		u.ux, u.uy, dx, dy);
 	return 1;
 }
 
 int dospit(void)
 {
 	struct obj *otmp;
+	schar dx, dy, dz;
 
-	if (!getdir(NULL)) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
 	otmp = mksobj(u.umonnum==PM_COBRA ? BLINDING_VENOM : ACID_VENOM,
 			TRUE, FALSE);
 	otmp->spe = 1; /* to indicate it's yours */
-	throwit(otmp, 0L, FALSE);
+	throwit(otmp, 0L, FALSE, dx, dy, dz);
 	return 1;
 }
 

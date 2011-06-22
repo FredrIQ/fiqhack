@@ -791,6 +791,7 @@ static int dochat(void)
     struct monst *mtmp;
     int tx,ty;
     struct obj *otmp;
+    schar dx, dy, dz;
 
     if (is_silent(youmonst.data)) {
 	pline("As %s, you cannot speak.", an(youmonst.data->mname));
@@ -821,19 +822,19 @@ static int dochat(void)
 	return 1;
     }
 
-    if (!getdir("Talk to whom? (in what direction)")) {
+    if (!getdir("Talk to whom? (in what direction)", &dx, &dy, &dz)) {
 	/* decided not to chat */
 	return 0;
     }
 
-    if (u.usteed && u.dz > 0)
+    if (u.usteed && dz > 0)
 	return domonnoise(u.usteed);
-    if (u.dz) {
-	pline("They won't hear you %s there.", u.dz < 0 ? "up" : "down");
+    if (dz) {
+	pline("They won't hear you %s there.", dz < 0 ? "up" : "down");
 	return 0;
     }
 
-    if (u.dx == 0 && u.dy == 0) {
+    if (dx == 0 && dy == 0) {
 /*
  * Let's not include this.  It raises all sorts of questions: can you wear
  * 2 helmets, 2 amulets, 3 pairs of gloves or 6 rings as a marilith,
@@ -847,7 +848,8 @@ static int dochat(void)
 	return 0;
     }
 
-    tx = u.ux+u.dx; ty = u.uy+u.dy;
+    tx = u.ux + dx;
+    ty = u.uy + dy;
     mtmp = m_at(tx, ty);
 
     if (!mtmp || mtmp->mundetected ||

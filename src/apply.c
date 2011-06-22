@@ -44,12 +44,14 @@ static const char no_elbow_room[] = "don't have enough elbow-room to maneuver.";
 static int use_camera(struct obj *obj)
 {
 	struct monst *mtmp;
+	schar dx, dy, dz;
 
 	if (Underwater) {
 		pline("Using your camera underwater would void the warranty.");
 		return 0;
 	}
-	if (!getdir(NULL)) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
 
 	if (obj->spe <= 0) {
 		pline(nothing_happens);
@@ -62,15 +64,13 @@ static int use_camera(struct obj *obj)
 	} else if (u.uswallow) {
 		You("take a picture of %s %s.", s_suffix(mon_nam(u.ustuck)),
 		    mbodypart(u.ustuck, STOMACH));
-	} else if (u.dz) {
+	} else if (dz) {
 		You("take a picture of the %s.",
-			(u.dz > 0) ? surface(u.ux,u.uy) : ceiling(u.ux,u.uy));
-	} else if (!u.dx && !u.dy) {
+			(dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
+	} else if (!dx && !dy) {
 		zapyourself(obj, TRUE);
-	} else if ((mtmp = bhit(u.dx, u.dy, COLNO, FLASHED_LIGHT,
-				(int (*)(struct monst*,struct obj*))0,
-				(int (*)(struct obj*,struct obj*))0,
-				obj)) != 0) {
+	} else if ((mtmp = bhit(dx, dy, COLNO, FLASHED_LIGHT,
+				NULL, NULL, obj)) != 0) {
 		obj->ox = u.ux,  obj->oy = u.uy;
 		flash_hits_mon(mtmp, obj);
 	}
@@ -193,6 +193,7 @@ static int use_stethoscope(struct obj *obj)
 	struct monst *mtmp;
 	struct rm *lev;
 	int rx, ry, res;
+	schar dx, dy, dz;
 	boolean interference = (u.uswallow && is_whirly(u.ustuck->data) &&
 				!rn2(Role_if (PM_HEALER) ? 10 : 3));
 
@@ -203,62 +204,66 @@ static int use_stethoscope(struct obj *obj)
 		You("have no free %s.", body_part(HAND));
 		return 0;
 	}
-	if (!getdir(NULL)) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
 
 	res = (moves == last_used_move) &&
 	      (youmonst.movement == last_used_movement);
 	last_used_move = moves;
 	last_used_movement = youmonst.movement;
 
-	if (u.usteed && u.dz > 0) {
+	if (u.usteed && dz > 0) {
 		if (interference) {
 			pline("%s interferes.", Monnam(u.ustuck));
 			mstatusline(u.ustuck);
 		} else
 			mstatusline(u.usteed);
 		return res;
-	} else if (u.uswallow && (u.dx || u.dy || u.dz)) {
+	} else if (u.uswallow && (dx || dy || dz)) {
 		mstatusline(u.ustuck);
 		return res;
 	} else if (u.uswallow && interference) {
 		pline("%s interferes.", Monnam(u.ustuck));
 		mstatusline(u.ustuck);
 		return res;
-	} else if (u.dz) {
+	} else if (dz) {
 		if (Underwater)
 		    You_hear("faint splashing.");
-		else if (u.dz < 0 || !can_reach_floor())
+		else if (dz < 0 || !can_reach_floor())
 		    You_cant("reach the %s.",
-			(u.dz > 0) ? surface(u.ux,u.uy) : ceiling(u.ux,u.uy));
+			(dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
 		else if (its_dead(u.ux, u.uy, &res))
 		    ;	/* message already given */
 		else if (Is_stronghold(&u.uz))
 		    You_hear("the crackling of hellfire.");
 		else
-		    pline_The("%s seems healthy enough.", surface(u.ux,u.uy));
+		    pline_The("%s seems healthy enough.", surface(u.ux, u.uy));
 		return res;
 	} else if (obj->cursed && !rn2(2)) {
 		You_hear("your heart beat.");
 		return res;
 	}
-	if (Stunned || (Confusion && !rn2(5))) confdir();
-	if (!u.dx && !u.dy) {
+	if (Stunned || (Confusion && !rn2(5)))
+	    confdir(&dx, &dy);
+	if (!dx && !dy) {
 		ustatusline();
 		return res;
 	}
-	rx = u.ux + u.dx; ry = u.uy + u.dy;
-	if (!isok(rx,ry)) {
+	
+	rx = u.ux + dx;
+	ry = u.uy + dy;
+	if (!isok(rx, ry)) {
 		You_hear("a faint typing noise.");
 		return 0;
 	}
-	if ((mtmp = m_at(rx,ry)) != 0) {
+	if ((mtmp = m_at(rx, ry)) != 0) {
 		mstatusline(mtmp);
 		if (mtmp->mundetected) {
 			mtmp->mundetected = 0;
-			if (cansee(rx,ry)) newsym(mtmp->mx,mtmp->my);
+			if (cansee(rx, ry)) newsym(mtmp->mx, mtmp->my);
 		}
 		if (!canspotmon(mtmp))
-			map_invisible(rx,ry);
+			map_invisible(rx, ry);
 		return res;
 	}
 	if (glyph_is_invisible(levl[rx][ry].glyph)) {
@@ -385,16 +390,17 @@ static void use_leash(struct obj *obj)
 	coord cc;
 	struct monst *mtmp;
 	int spotmon;
+	schar dz;
 
 	if (!obj->leashmon && number_leashed() >= MAXLEASHED) {
 		You("cannot leash any more pets.");
 		return;
 	}
 
-	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc)) return;
+	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz)) return;
 
 	if ((cc.x == u.ux) && (cc.y == u.uy)) {
-		if (u.usteed && u.dz > 0) {
+		if (u.usteed && dz > 0) {
 		    mtmp = u.usteed;
 		    spotmon = 1;
 		    goto got_target;
@@ -558,14 +564,17 @@ static int use_mirror(struct obj *obj)
 	struct monst *mtmp;
 	char mlet;
 	boolean vis;
+	schar dx, dy, dz;
 
-	if (!getdir(NULL)) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
+	
 	if (obj->cursed && !rn2(2)) {
 		if (!Blind)
 			pline_The("mirror fogs up and doesn't reflect!");
 		return 1;
 	}
-	if (!u.dx && !u.dy && !u.dz) {
+	if (!dx && !dy && !dz) {
 		if (!Blind && !Invisible) {
 		    if (u.umonnum == PM_FLOATING_EYE) {
 			if (!Free_action) {
@@ -609,13 +618,13 @@ static int use_mirror(struct obj *obj)
 		    "reflect the murky water.");
 		return 1;
 	}
-	if (u.dz) {
+	if (dz) {
 		if (!Blind)
 		    You("reflect the %s.",
-			(u.dz > 0) ? surface(u.ux,u.uy) : ceiling(u.ux,u.uy));
+			(dz > 0) ? surface(u.ux,u.uy) : ceiling(u.ux,u.uy));
 		return 1;
 	}
-	mtmp = bhit(u.dx, u.dy, COLNO, INVIS_BEAM,
+	mtmp = bhit(dx, dy, COLNO, INVIS_BEAM,
 		    (int (*)(struct monst*,struct obj*))0,
 		    (int (*)(struct obj*,struct obj*))0,
 		    obj);
@@ -1615,26 +1624,32 @@ static void use_figurine(struct obj **optr)
 	struct obj *obj = *optr;
 	xchar x, y;
 	coord cc;
+	schar dx, dy, dz;
 
 	if (u.uswallow) {
 		/* can't activate a figurine while swallowed */
 		if (!figurine_location_checks(obj, NULL, FALSE))
 			return;
 	}
-	if (!getdir(NULL)) {
+	if (!getdir(NULL, &dx, &dy, &dz)) {
 		flags.move = multi = 0;
 		return;
 	}
-	x = u.ux + u.dx; y = u.uy + u.dy;
-	cc.x = x; cc.y = y;
+	
+	x = u.ux + dx;
+	y = u.uy + dy;
+	cc.x = x;
+	cc.y = y;
+	
 	/* Passing FALSE arg here will result in messages displayed */
-	if (!figurine_location_checks(obj, &cc, FALSE)) return;
+	if (!figurine_location_checks(obj, &cc, FALSE))
+	    return;
 	You("%s and it transforms.",
-	    (u.dx||u.dy) ? "set the figurine beside you" :
+	    (dx || dy) ? "set the figurine beside you" :
 	    (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
 	     is_pool(cc.x, cc.y)) ?
 		"release the figurine" :
-	    (u.dz < 0 ?
+	    (dz < 0 ?
 		"toss the figurine into the air" :
 		"set the figurine on the ground"));
 	make_familiar(obj, cc.x, cc.y, FALSE);
@@ -2000,16 +2015,20 @@ static int use_whip(struct obj *obj)
     int rx, ry, proficient, res = 0;
     const char *msg_slipsfree = "The bullwhip slips free.";
     const char *msg_snap = "Snap!";
+    schar dx, dy, dz;
 
     if (obj != uwep) {
 	if (!wield_tool(obj, "lash")) return 0;
 	else res = 1;
     }
-    if (!getdir(NULL)) return res;
+    
+    if (!getdir(NULL, &dx, &dy, &dz))
+	return res;
 
-    if (Stunned || (Confusion && !rn2(5))) confdir();
-    rx = u.ux + u.dx;
-    ry = u.uy + u.dy;
+    if (Stunned || (Confusion && !rn2(5)))
+	confdir(&dx, &dy);
+    rx = u.ux + dx;
+    ry = u.uy + dy;
     mtmp = m_at(rx, ry);
 
     /* fake some proficiency checks */
@@ -2021,16 +2040,16 @@ static int use_whip(struct obj *obj)
     if (proficient > 3) proficient = 3;
     if (proficient < 0) proficient = 0;
 
-    if (u.uswallow && attack(u.ustuck)) {
+    if (u.uswallow && attack(u.ustuck, dx, dy)) {
 	There("is not enough room to flick your bullwhip.");
 
     } else if (Underwater) {
 	There("is too much resistance to flick your bullwhip.");
 
-    } else if (u.dz < 0) {
+    } else if (dz < 0) {
 	You("flick a bug off of the %s.",ceiling(u.ux,u.uy));
 
-    } else if ((!u.dx && !u.dy) || (u.dz > 0)) {
+    } else if ((!dx && !dy) || (dz > 0)) {
 	int dam;
 
 	/* Sometimes you hit your steed by mistake */
@@ -2056,7 +2075,8 @@ static int use_whip(struct obj *obj)
 	    }
 	}
 	dam = rnd(2) + dbon() + obj->spe;
-	if (dam <= 0) dam = 1;
+	if (dam <= 0)
+	    dam = 1;
 	You("hit your %s with your bullwhip.", body_part(FOOT));
 	sprintf(buf, "killed %sself with %s bullwhip", uhim(), uhis());
 	losehp(dam, buf, NO_KILLER_PREFIX);
@@ -2091,7 +2111,7 @@ static int use_whip(struct obj *obj)
 	    if (bigmonst(mtmp->data)) {
 		wrapped_what = strcpy(buf, mon_nam(mtmp));
 	    } else if (proficient) {
-		if (attack(mtmp)) return 1;
+		if (attack(mtmp, dx, dy)) return 1;
 		else pline(msg_snap);
 	    }
 	}
@@ -2196,11 +2216,13 @@ static int use_whip(struct obj *obj)
 	} else {
 	    if (mtmp->m_ap_type &&
 		!Protection_from_shape_changers && !sensemon(mtmp))
-		stumble_onto_mimic(mtmp);
+		stumble_onto_mimic(mtmp, dx, dy);
 	    else You("flick your bullwhip towards %s.", mon_nam(mtmp));
 	    if (proficient) {
-		if (attack(mtmp)) return 1;
-		else pline(msg_snap);
+		if (attack(mtmp, dx, dy))
+		    return 1;
+		else
+		    pline(msg_snap);
 	    }
 	}
 

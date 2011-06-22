@@ -749,18 +749,19 @@ int doidtrap(void)
 {
 	struct trap *trap;
 	int x, y, tt;
+	schar dx, dy, dz;
 
-	if (!getdir(NULL))
+	if (!getdir(NULL, &dx, &dy, &dz))
 	    return 0;
 	
-	x = u.ux + u.dx;
-	y = u.uy + u.dy;
+	x = u.ux + dx;
+	y = u.uy + dy;
 	for (trap = ftrap; trap; trap = trap->ntrap)
 	    if (trap->tx == x && trap->ty == y) {
 		if (!trap->tseen) break;
 		tt = trap->ttyp;
-		if (u.dz) {
-		    if (u.dz < 0 ? (tt == TRAPDOOR || tt == HOLE) :
+		if (dz) {
+		    if (dz < 0 ? (tt == TRAPDOOR || tt == HOLE) :
 			    tt == ROCKTRAP) break;
 		}
 		tt = what_trap(tt);

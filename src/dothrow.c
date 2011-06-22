@@ -10,13 +10,13 @@ static int throw_obj(struct obj *,int);
 static void autoquiver(void);
 static int gem_accept(struct monst *, struct obj *);
 static void tmiss(struct obj *, struct monst *);
-static int throw_gold(struct obj *);
+static int throw_gold(struct obj *, schar, schar, schar);
 static void check_shop_obj(struct obj *,xchar,xchar,boolean);
 static void breakobj(struct obj *,xchar,xchar,boolean,boolean);
 static void breakmsg(struct obj *,boolean);
 static boolean toss_up(struct obj *, boolean);
 static boolean throwing_weapon(struct obj *);
-static void sho_obj_return_to_u(struct obj *obj);
+static void sho_obj_return_to_u(struct obj *obj, schar, schar);
 static boolean mhurtle_step(void *,int,int);
 
 
@@ -39,10 +39,11 @@ static int throw_obj(struct obj *obj, int shotlimit)
 	schar skill;
 	long wep_mask;
 	boolean twoweap;
+	schar dx, dy, dz;
 
 	/* ask "in what direction?" */
 #ifndef GOLDOBJ
-	if (!getdir(NULL)) {
+	if (!getdir(NULL, &dx, &dy, &dz)) {
 		if (obj->oclass == COIN_CLASS) {
 		    u.ugold += obj->quan;
 		    botl = 1;
@@ -51,9 +52,10 @@ static int throw_obj(struct obj *obj, int shotlimit)
 		return 0;
 	}
 
-	if (obj->oclass == COIN_CLASS) return throw_gold(obj);
+	if (obj->oclass == COIN_CLASS)
+	    return throw_gold(obj, dx, dy, dz);
 #else
-	if (!getdir(NULL)) {
+	if (!getdir(NULL, &dx, &dy, &dz)) {
 	    /* obj might need to be merged back into the singular gold object */
 	    freeinv(obj);
 	    addinv(obj);
@@ -68,7 +70,8 @@ static int throw_obj(struct obj *obj, int shotlimit)
           If the money is in quiver, throw one coin at a time,
           possibly using a sling.
         */
-	if (obj->oclass == COIN_CLASS && obj != uquiver) return throw_gold(obj);
+	if (obj->oclass == COIN_CLASS && obj != uquiver)
+	    return throw_gold(obj, dx, dy, dz);
 #endif
 
 	if (!canletgo(obj,"throw"))
@@ -83,7 +86,7 @@ static int throw_obj(struct obj *obj, int shotlimit)
 		pline("It's too heavy.");
 		return 1;
 	}
-	if (!u.dx && !u.dy && !u.dz) {
+	if (!dx && !dy && !dz) {
 		You("cannot throw an object at yourself.");
 		return 0;
 	}
@@ -170,7 +173,7 @@ static int throw_obj(struct obj *obj, int shotlimit)
 		    remove_worn_item(otmp, FALSE);
 	    }
 	    freeinv(otmp);
-	    throwit(otmp, wep_mask, twoweap);
+	    throwit(otmp, wep_mask, twoweap, dx, dy, dz);
 	}
 	m_shot.n = m_shot.i = 0;
 	m_shot.o = STRANGE_OBJECT;
@@ -802,17 +805,18 @@ static boolean throwing_weapon(struct obj *obj)
 }
 
 /* the currently thrown object is returning to you (not for boomerangs) */
-static void sho_obj_return_to_u(struct obj *obj)
+static void sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
 {
     /* might already be our location (bounced off a wall) */
     if (bhitpos.x != u.ux || bhitpos.y != u.uy) {
-	int x = bhitpos.x - u.dx, y = bhitpos.y - u.dy;
+	int x = bhitpos.x - dx;
+	int y = bhitpos.y - dy;
 
 	tmp_at(DISP_FLASH, obj_to_glyph(obj));
 	while (x != u.ux || y != u.uy) {
 	    tmp_at(x, y);
 	    delay_output();
-	    x -= u.dx; y -= u.dy;
+	    x -= dx; y -= dy;
 	}
 	tmp_at(DISP_END, 0);
     }
@@ -820,14 +824,15 @@ static void sho_obj_return_to_u(struct obj *obj)
 
 void throwit(struct obj *obj,
 	     long wep_mask,  /* used to re-equip returning boomerang */
-	     boolean twoweap)/* used to restore twoweapon mode if wielded weapon returns */
+	     boolean twoweap, /* used to restore twoweapon mode if wielded weapon returns */
+	     schar dx, schar dy, schar dz)
 {
 	struct monst *mon;
 	int range, urange;
 	boolean impaired = (Confusion || Stunned || Blind ||
 			   Hallucination || Fumbling);
 
-	if ((obj->cursed || obj->greased) && (u.dx || u.dy) && !rn2(7)) {
+	if ((obj->cursed || obj->greased) && (dx || dy) && !rn2(7)) {
 	    boolean slipok = TRUE;
 	    if (ammo_and_launcher(obj, uwep))
 		pline("%s!", Tobjnam(obj, "misfire"));
@@ -840,14 +845,15 @@ void throwit(struct obj *obj,
 		else slipok = FALSE;
 	    }
 	    if (slipok) {
-		u.dx = rn2(3)-1;
-		u.dy = rn2(3)-1;
-		if (!u.dx && !u.dy) u.dz = 1;
+		dx = rn2(3)-1;
+		dy = rn2(3)-1;
+		if (!dx && !dy)
+		    dz = 1;
 		impaired = TRUE;
 	    }
 	}
 
-	if ((u.dx || u.dy || (u.dz < 1)) &&
+	if ((dx || dy || (dz < 1)) &&
 	    calc_capacity((int)obj->owt) > SLT_ENCUMBER &&
 	    (Upolyd ? (u.mh < 5 && u.mh != u.mhmax)
 	     : (u.uhp < 10 && u.uhp != u.uhpmax)) &&
@@ -856,8 +862,8 @@ void throwit(struct obj *obj,
 	    You("have so little stamina, %s drops from your grasp.",
 		the(xname(obj)));
 	    exercise(A_CON, FALSE);
-	    u.dx = u.dy = 0;
-	    u.dz = 1;
+	    dx = dy = 0;
+	    dz = 1;
 	}
 
 	thrownobj = obj;
@@ -866,8 +872,8 @@ void throwit(struct obj *obj,
 		mon = u.ustuck;
 		bhitpos.x = mon->mx;
 		bhitpos.y = mon->my;
-	} else if (u.dz) {
-	    if (u.dz < 0 && Role_if (PM_VALKYRIE) &&
+	} else if (dz) {
+	    if (dz < 0 && Role_if (PM_VALKYRIE) &&
 		    obj->oartifact == ART_MJOLLNIR && !impaired) {
 		pline("%s the %s and returns to your hand!",
 		      Tobjnam(obj, "hit"), ceiling(u.ux,u.uy));
@@ -875,7 +881,7 @@ void throwit(struct obj *obj,
 		encumber_msg();
 		setuwep(obj);
 		u.twoweap = twoweap;
-	    } else if (u.dz < 0 && !Is_airlevel(&u.uz) &&
+	    } else if (dz < 0 && !Is_airlevel(&u.uz) &&
 		    !Underwater && !Is_waterlevel(&u.uz)) {
 		toss_up(obj, rn2(5));
 	    } else {
@@ -886,8 +892,8 @@ void throwit(struct obj *obj,
 
 	} else if (obj->otyp == BOOMERANG && !Underwater) {
 		if (Is_airlevel(&u.uz) || Levitation)
-		    hurtle(-u.dx, -u.dy, 1, TRUE);
-		mon = boomhit(u.dx, u.dy);
+		    hurtle(-dx, -dy, 1, TRUE);
+		mon = boomhit(dx, dy);
 		if (mon == &youmonst) {		/* the thing was caught */
 			exercise(A_DEX, TRUE);
 			obj = addinv(obj);
@@ -940,14 +946,11 @@ void throwit(struct obj *obj,
 
 		if (Underwater) range = 1;
 
-		mon = bhit(u.dx, u.dy, range, THROWN_WEAPON,
-			   (int (*)(struct monst*,struct obj*))0,
-			   (int (*)(struct obj*,struct obj*))0,
-			   obj);
+		mon = bhit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
 
 		/* have to do this after bhit() so u.ux & u.uy are correct */
 		if (Is_airlevel(&u.uz) || Levitation)
-		    hurtle(-u.dx, -u.dy, urange, TRUE);
+		    hurtle(-dx, -dy, urange, TRUE);
 	}
 
 	if (mon) {
@@ -981,7 +984,7 @@ void throwit(struct obj *obj,
 		if (obj->oartifact == ART_MJOLLNIR &&
 			Role_if (PM_VALKYRIE) && rn2(100)) {
 		    /* we must be wearing Gauntlets of Power to get here */
-		    sho_obj_return_to_u(obj);	    /* display its flight */
+		    sho_obj_return_to_u(obj, dx, dy);	    /* display its flight */
 
 		    if (!impaired && rn2(100)) {
 			pline("%s to your hand!", Tobjnam(obj, "return"));
@@ -1054,7 +1057,7 @@ void throwit(struct obj *obj,
 
 		stackobj(obj);
 		if (obj == uball)
-		    drop_ball(bhitpos.x, bhitpos.y);
+		    drop_ball(bhitpos.x, bhitpos.y, dx, dy);
 		if (cansee(bhitpos.x, bhitpos.y))
 		    newsym(bhitpos.x,bhitpos.y);
 		if (obj_sheds_light(obj))
@@ -1211,7 +1214,11 @@ int thitmonst(struct monst *mon, struct obj *obj)
 		    finish_quest(obj);	/* acknowledge quest completion */
 		    pline("%s %s %s back to you.", Monnam(mon),
 			  (next2u ? "hands" : "tosses"), the(xname(obj)));
-		    if (!next2u) sho_obj_return_to_u(obj);
+		    if (!next2u) {
+			schar dx = sgn(mon->mx - u.ux);
+			schar dy = sgn(mon->my - u.uy);
+			sho_obj_return_to_u(obj, dx, dy);
+		    }
 		    obj = addinv(obj);	/* back into your inventory */
 		    encumber_msg();
 		} else {
@@ -1624,7 +1631,7 @@ static void breakmsg(struct obj *obj, boolean in_view)
 	}
 }
 
-static int throw_gold(struct obj *obj)
+static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 {
 	int range, odx, ody;
 #ifndef GOLDOBJ
@@ -1632,7 +1639,7 @@ static int throw_gold(struct obj *obj)
 #endif
 	struct monst *mon;
 
-	if (!u.dx && !u.dy && !u.dz) {
+	if (!dx && !dy && !dz) {
 #ifndef GOLDOBJ
 		u.ugold += obj->quan;
 		botl = 1;
@@ -1658,11 +1665,11 @@ static int throw_gold(struct obj *obj)
 		return 1;
 	}
 
-	if (u.dz) {
-		if (u.dz < 0 && !Is_airlevel(&u.uz) &&
+	if (dz) {
+		if (dz < 0 && !Is_airlevel(&u.uz) &&
 					!Underwater && !Is_waterlevel(&u.uz)) {
 	pline_The("gold hits the %s, then falls back on top of your %s.",
-		    ceiling(u.ux,u.uy), body_part(HEAD));
+		    ceiling(u.ux, u.uy), body_part(HEAD));
 		    /* some self damage? */
 		    if (uarmh) pline("Fortunately, you are wearing a helmet!");
 		}
@@ -1673,16 +1680,13 @@ static int throw_gold(struct obj *obj)
 		range = (int)((ACURRSTR)/2 - obj->owt/40);
 
 		/* see if the gold has a place to move into */
-		odx = u.ux + u.dx;
-		ody = u.uy + u.dy;
+		odx = u.ux + dx;
+		ody = u.uy + dy;
 		if (!ZAP_POS(levl[odx][ody].typ) || closed_door(odx, ody)) {
 			bhitpos.x = u.ux;
 			bhitpos.y = u.uy;
 		} else {
-			mon = bhit(u.dx, u.dy, range, THROWN_WEAPON,
-				   (int (*)(struct monst*,struct obj*))0,
-				   (int (*)(struct obj*,struct obj*))0,
-				   obj);
+			mon = bhit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
 			if (mon) {
 			    if (ghitm(mon, obj))	/* was it caught? */
 				return 1;
@@ -1693,11 +1697,13 @@ static int throw_gold(struct obj *obj)
 		}
 	}
 
-	if (flooreffects(obj,bhitpos.x,bhitpos.y,"fall")) return 1;
-	if (u.dz > 0)
+	if (flooreffects(obj,bhitpos.x,bhitpos.y,"fall"))
+	    return 1;
+	if (dz > 0)
 		pline_The("gold hits the %s.", surface(bhitpos.x,bhitpos.y));
 	place_object(obj,bhitpos.x,bhitpos.y);
-	if (*u.ushops) sellobj(obj, bhitpos.x, bhitpos.y);
+	if (*u.ushops)
+	    sellobj(obj, bhitpos.x, bhitpos.y);
 	stackobj(obj);
 	newsym(bhitpos.x,bhitpos.y);
 	return 1;

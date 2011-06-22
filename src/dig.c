@@ -686,8 +686,9 @@ boolean dighole(boolean pit_only)
 		lev->drawbridgemask = (lev->drawbridgemask & ~DB_UNDER);
 		lev->drawbridgemask |= (typ == LAVAPOOL) ? DB_LAVA : DB_MOAT;
 
- liquid_flow:
-		if (ttmp) delfloortrap(ttmp);
+liquid_flow:
+		if (ttmp)
+		    delfloortrap(ttmp);
 		/* if any objects were frozen here, they're released now */
 		unearth_objs(u.ux, u.uy);
 
@@ -779,6 +780,7 @@ int use_pick_axe(struct obj *obj)
 	char qbuf[QBUFSZ];
 	int res = 0;
 	const char *verb;
+	schar dx, dy, dz;
 
 	/* Check tool */
 	if (obj != uwep) {
@@ -797,17 +799,15 @@ int use_pick_axe(struct obj *obj)
 	}
 
 	sprintf(qbuf, "In what direction do you want to %s?", verb);
-	if (!getdir(qbuf))
+	if (!getdir(qbuf, &dx, &dy, &dz))
 		return res;
 
-	return use_pick_axe2(obj);
+	return use_pick_axe2(obj, dx, dy, dz);
 }
 
 /* MRKR: use_pick_axe() is split in two to allow autodig to bypass */
 /*       the "In what direction do you want to dig?" query.        */
-/*       use_pick_axe2() uses the existing u.dx, u.dy and u.dz    */
-
-int use_pick_axe2(struct obj *obj)
+int use_pick_axe2(struct obj *obj, schar dx, schar dy, schar dz)
 {
 	int rx, ry;
 	struct rm *lev;
@@ -815,37 +815,39 @@ int use_pick_axe2(struct obj *obj)
 	boolean ispick = is_pick(obj);
 	const char *verbing = ispick ? "digging" : "chopping";
 
-	if (u.uswallow && attack(u.ustuck)) {
+	if (u.uswallow && attack(u.ustuck, dx, dy)) {
 		;  /* return 1 */
 	} else if (Underwater) {
 		pline("Turbulence torpedoes your %s attempts.", verbing);
-	} else if (u.dz < 0) {
+	} else if (dz < 0) {
 		if (Levitation)
 			You("don't have enough leverage.");
 		else
 			You_cant("reach the %s.",ceiling(u.ux,u.uy));
-	} else if (!u.dx && !u.dy && !u.dz) {
+	} else if (!dx && !dy && !dz) {
 		char buf[BUFSZ];
 		int dam;
 
 		dam = rnd(2) + dbon() + obj->spe;
-		if (dam <= 0) dam = 1;
+		if (dam <= 0)
+		    dam = 1;
 		You("hit yourself with %s.", yname(uwep));
 		sprintf(buf, "%s own %s", uhis(),
 				OBJ_NAME(objects[obj->otyp]));
 		losehp(dam, buf, KILLED_BY);
 		botl=1;
 		return 1;
-	} else if (u.dz == 0) {
-		if (Stunned || (Confusion && !rn2(5))) confdir();
-		rx = u.ux + u.dx;
-		ry = u.uy + u.dy;
+	} else if (dz == 0) {
+		if (Stunned || (Confusion && !rn2(5)))
+		    confdir(&dx, &dy);
+		rx = u.ux + dx;
+		ry = u.uy + dy;
 		if (!isok(rx, ry)) {
 			pline("Clash!");
 			return 1;
 		}
 		lev = &levl[rx][ry];
-		if (MON_AT(rx, ry) && attack(m_at(rx, ry)))
+		if (MON_AT(rx, ry) && attack(m_at(rx, ry), dx, dy))
 			return 1;
 		dig_target = dig_typ(obj, rx, ry);
 		if (dig_target == DIGTYP_UNDIGGABLE) {
@@ -1073,22 +1075,17 @@ boolean mdig_tunnel(struct monst *mtmp)
 }
 
 
-/* digging via wand zap or spell cast */
-void zap_dig(void)
+/* zap_dig: digging via wand zap or spell cast
+ * 
+ * dig for digdepth positions; also down on request of Lennart Augustsson.
+ */
+void zap_dig(schar dx, schar dy, schar dz)
 {
 	struct rm *room;
 	struct monst *mtmp;
 	struct obj *otmp;
 	int zx, zy, digdepth;
 	boolean shopdoor, shopwall, maze_dig;
-	/*
-	 * Original effect (approximately):
-	 * from CORR: dig until we pierce a wall
-	 * from ROOM: pierce wall and dig until we reach
-	 * an ACCESSIBLE place.
-	 * Currently: dig for digdepth positions;
-	 * also down on request of Lennart Augustsson.
-	 */
 
 	if (u.uswallow) {
 	    mtmp = u.ustuck;
@@ -1103,9 +1100,9 @@ void zap_dig(void)
 	    return;
 	} /* swallowed */
 
-	if (u.dz) {
+	if (dz) {
 	    if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !Underwater) {
-		if (u.dz < 0 || On_stairs(u.ux, u.uy)) {
+		if (dz < 0 || On_stairs(u.ux, u.uy)) {
 		    if (On_stairs(u.ux, u.uy))
 			pline_The("beam bounces off the %s and hits the %s.",
 			      (u.ux == xdnladder || u.ux == xupladder) ?
@@ -1131,8 +1128,8 @@ void zap_dig(void)
 	/* normal case: digging across the level */
 	shopdoor = shopwall = FALSE;
 	maze_dig = level.flags.is_maze_lev && !Is_earthlevel(&u.uz);
-	zx = u.ux + u.dx;
-	zy = u.uy + u.dy;
+	zx = u.ux + dx;
+	zy = u.uy + dy;
 	digdepth = rn1(18, 8);
 	tmp_at(DISP_BEAM, cmap_to_glyph(S_digbeam));
 	while (--digdepth >= 0) {
@@ -1205,10 +1202,11 @@ void zap_dig(void)
 		}
 		unblock_point(zx,zy); /* vision */
 	    }
-	    zx += u.dx;
-	    zy += u.dy;
+	    zx += dx;
+	    zy += dy;
 	} /* while */
-	tmp_at(DISP_END,0);	/* closing call */
+	
+	tmp_at(DISP_END, 0);	/* closing call */
 	if (shopdoor || shopwall)
 	    pay_for_damage(shopdoor ? "destroy" : "dig into", FALSE);
 	return;

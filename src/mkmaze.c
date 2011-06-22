@@ -951,7 +951,7 @@ void movebubbles(void)
 }
 
 /* when moving in water, possibly (1 in 3) alter the intended destination */
-void water_friction(void)
+void water_friction(schar *udx, schar *udy)
 {
 	int x, y, dx, dy;
 	boolean eff = FALSE;
@@ -959,25 +959,25 @@ void water_friction(void)
 	if (Swimming && rn2(4))
 		return;		/* natural swimmers have advantage */
 
-	if (u.dx && !rn2(!u.dy ? 3 : 6)) {	/* 1/3 chance or half that */
+	if (*udx && !rn2(!*udy ? 3 : 6)) {	/* 1/3 chance or half that */
 		/* cancel delta x and choose an arbitrary delta y value */
 		x = u.ux;
 		do {
 		    dy = rn2(3) - 1;		/* -1, 0, 1 */
 		    y = u.uy + dy;
 		} while (dy && (!isok(x,y) || !is_pool(x,y)));
-		u.dx = 0;
-		u.dy = dy;
+		*udx = 0;
+		*udy = dy;
 		eff = TRUE;
-	} else if (u.dy && !rn2(!u.dx ? 3 : 5)) {	/* 1/3 or 1/5*(5/6) */
+	} else if (*udy && !rn2(!*udx ? 3 : 5)) {	/* 1/3 or 1/5*(5/6) */
 		/* cancel delta y and choose an arbitrary delta x value */
 		y = u.uy;
 		do {
 		    dx = rn2(3) - 1;		/* -1 .. 1 */
 		    x = u.ux + dx;
 		} while (dx && (!isok(x,y) || !is_pool(x,y)));
-		u.dy = 0;
-		u.dx = dx;
+		*udy = 0;
+		*udx = dx;
 		eff = TRUE;
 	}
 	if (eff) pline("Water turbulence affects your movements.");

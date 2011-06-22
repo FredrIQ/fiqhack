@@ -1016,7 +1016,8 @@ void prev_level(boolean at_stairs)
 		/* Taking an up dungeon branch. */
 		/* KMH -- Upwards branches are okay if not level 1 */
 		/* (Just make sure it doesn't go above depth 1) */
-		if (!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet) done(ESCAPED);
+		if (!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet)
+		    done(ESCAPED);
 		else goto_level(&sstairs.tolev, at_stairs, FALSE, FALSE);
 	} else {
 		/* Going up a stairs or rising through the ceiling. */

@@ -61,7 +61,6 @@ struct u_conduct {		/* number of times... */
 /*** Information about the player ***/
 struct you {
 	xchar ux, uy;
-	schar dx, dy, dz;	/* direction of move (or zap or ... ) */
 	schar di;		/* direction of FF */
 	xchar tx, ty;		/* destination of travel */
 	xchar ux0, uy0;		/* initial position FF */

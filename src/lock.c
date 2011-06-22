@@ -3,7 +3,7 @@
 
 #include "hack.h"
 
-static int picklock(void);
+static int picklock();
 static int forcelock(void);
 
 /* at most one of `door' and `box' should be non-null at any given time */
@@ -13,6 +13,7 @@ static struct xlock_s {
 	int picktyp, chance, usedtime;
 } xlock;
 
+static schar picklock_dx, picklock_dy;
 
 static const char *lock_action(void);
 static boolean obstructed(int,int);
@@ -21,8 +22,8 @@ static void chest_shatter_msg(struct obj *);
 boolean picking_lock(int *x, int *y)
 {
 	if (occupation == picklock) {
-	    *x = u.ux + u.dx;
-	    *y = u.uy + u.dy;
+	    *x = u.ux + picklock_dx;
+	    *y = u.uy + picklock_dy;
 	    return TRUE;
 	} else {
 	    *x = *y = 0;
@@ -32,7 +33,7 @@ boolean picking_lock(int *x, int *y)
 
 boolean picking_at(int x, int y)
 {
-	return (boolean)(occupation == picklock && xlock.door == &levl[x][y]);
+	return (occupation == picklock && xlock.door == &levl[x][y]);
 }
 
 /* produce an occupation string appropriate for the current activity */
@@ -67,13 +68,12 @@ static const char *lock_action(void)
 /* try to open/close a lock */
 static int picklock(void)
 {
-
 	if (xlock.box) {
 	    if ((xlock.box->ox != u.ux) || (xlock.box->oy != u.uy)) {
 		return (xlock.usedtime = 0);		/* you or it moved */
 	    }
 	} else {		/* door */
-	    if (xlock.door != &(levl[u.ux+u.dx][u.uy+u.dy])) {
+	    if (xlock.door != &(levl[u.ux+picklock_dx][u.uy+picklock_dy])) {
 		return (xlock.usedtime = 0);		/* you moved */
 	    }
 	    switch (xlock.door->doormask) {
@@ -102,10 +102,10 @@ static int picklock(void)
 	    if (xlock.door->doormask & D_TRAPPED) {
 		    b_trapped("door", FINGER);
 		    xlock.door->doormask = D_NODOOR;
-		    unblock_point(u.ux+u.dx, u.uy+u.dy);
-		    if (*in_rooms(u.ux+u.dx, u.uy+u.dy, SHOPBASE))
-			add_damage(u.ux+u.dx, u.uy+u.dy, 0L);
-		    newsym(u.ux+u.dx, u.uy+u.dy);
+		    unblock_point(u.ux+picklock_dx, u.uy+picklock_dy);
+		    if (*in_rooms(u.ux+picklock_dx, u.uy+picklock_dy, SHOPBASE))
+			add_damage(u.ux+picklock_dx, u.uy+picklock_dy, 0L);
+		    newsym(u.ux+picklock_dx, u.uy+picklock_dy);
 	    } else if (xlock.door->doormask & D_LOCKED)
 		xlock.door->doormask = D_CLOSED;
 	    else xlock.door->doormask = D_LOCKED;
@@ -215,6 +215,7 @@ int pick_lock(struct obj *pick)
 	struct rm	*door;
 	struct obj	*otmp;
 	char qbuf[QBUFSZ];
+	schar dx, dy, dz;
 
 	picktyp = pick->otyp;
 
@@ -257,13 +258,18 @@ int pick_lock(struct obj *pick)
 	}
 	ch = 0;		/* lint suppression */
 
-	if (!get_adjacent_loc(NULL, "Invalid location!", u.ux, u.uy, &cc)) return 0;
+	if (!get_adjacent_loc(NULL, "Invalid location!", u.ux, u.uy, &cc, &dz))
+	    return 0;
+	
+	dx = cc.x - u.ux;
+	dy = cc.y - u.uy;
+	
 	if (cc.x == u.ux && cc.y == u.uy) {	/* pick lock on a container */
 	    const char *verb;
 	    boolean it;
 	    int count;
 
-	    if (u.dz < 0) {
+	    if (dz < 0) {
 		There("isn't any sort of lock up %s.",
 		      Levitation ? "here" : "there");
 		return 0;
@@ -413,6 +419,8 @@ int pick_lock(struct obj *pick)
 	xlock.chance = ch;
 	xlock.picktyp = picktyp;
 	xlock.usedtime = 0;
+	picklock_dx = dx;
+	picklock_dy = dy;
 	set_occupation(picklock, lock_action(), 0);
 	return 1;
 }
@@ -486,6 +494,7 @@ int doopen(void)
 	coord cc;
 	struct rm *door;
 	struct monst *mtmp;
+	schar dz;
 
 	if (nohands(youmonst.data)) {
 	    You_cant("open anything -- you have no hands!");
@@ -497,9 +506,11 @@ int doopen(void)
 	    return 0;
 	}
 
-	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc)) return 0;
+	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz))
+	    return 0;
 
-	if ((cc.x == u.ux) && (cc.y == u.uy)) return 0;
+	if ((cc.x == u.ux) && (cc.y == u.uy))
+	    return 0;
 
 	if ((mtmp = m_at(cc.x,cc.y))			&&
 		mtmp->m_ap_type == M_AP_FURNITURE	&&
@@ -507,7 +518,7 @@ int doopen(void)
 			mtmp->mappearance == S_vcdoor)	&&
 		!Protection_from_shape_changers)	 {
 
-	    stumble_onto_mimic(mtmp);
+	    stumble_onto_mimic(mtmp, cc.x-u.ux, cc.y-u.uy);
 	    return 1;
 	}
 
@@ -589,6 +600,7 @@ int doclose(void)
 	int x, y;
 	struct rm *door;
 	struct monst *mtmp;
+	schar dx, dy, dz;
 
 	if (nohands(youmonst.data)) {
 	    You_cant("close anything -- you have no hands!");
@@ -600,10 +612,11 @@ int doclose(void)
 	    return 0;
 	}
 
-	if (!getdir(NULL)) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
 
-	x = u.ux + u.dx;
-	y = u.uy + u.dy;
+	x = u.ux + dx;
+	y = u.uy + dy;
 	if ((x == u.ux) && (y == u.uy)) {
 		You("are in the way!");
 		return 1;
@@ -615,7 +628,7 @@ int doclose(void)
 			mtmp->mappearance == S_vcdoor)	&&
 		!Protection_from_shape_changers)	 {
 
-	    stumble_onto_mimic(mtmp);
+	    stumble_onto_mimic(mtmp, dx, dy);
 	    return 1;
 	}
 

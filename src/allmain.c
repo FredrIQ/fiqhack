@@ -512,7 +512,7 @@ static void pre_move_tasks(boolean didmove)
     u.umoved = FALSE;
 
     if (multi > 0) {
-	lookaround();
+	lookaround(0, 0);
 	if (!multi) {
 	    /* lookaround may clear multi */
 	    flags.move = 0;
@@ -540,7 +540,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	if (flags.mv) {
 	    if (multi < COLNO && !--multi)
 		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-	    domove();
+	    domove(0, 0, 0);
 	} else
 	    do_command(saved_cmd, multi, FALSE, arg);
     }

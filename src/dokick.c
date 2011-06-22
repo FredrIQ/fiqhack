@@ -13,9 +13,9 @@ static const char *gate_str;
 
 extern boolean notonhead;	/* for long worms */
 
-static void kickdmg(struct monst *, boolean);
-static void kick_monster(xchar, xchar);
-static int kick_object(xchar, xchar);
+static void kickdmg(struct monst *, boolean, schar, schar);
+static void kick_monster(xchar, xchar, schar, schar);
+static int kick_object(xchar, xchar, schar, schar);
 static char *kickstr(char *);
 static void otransit_msg(struct obj *, boolean, long);
 static void drop_to(coord *,schar);
@@ -24,7 +24,7 @@ static struct obj *kickobj;
 
 static const char kick_passes_thru[] = "kick passes harmlessly through";
 
-static void kickdmg(struct monst *mon, boolean clumsy)
+static void kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
 {
 	int mdx, mdy;
 	int dmg = ( ACURRSTR + ACURR(A_DEX) + ACURR(A_CON) )/ 15;
@@ -87,8 +87,8 @@ static void kickdmg(struct monst *mon, boolean clumsy)
 	if (mon->mhp > 0 && martial() && !bigmonst(mon->data) && !rn2(3) &&
 	    mon->mcanmove && mon != u.ustuck && !mon->mtrapped) {
 		/* see if the monster has a place to move into */
-		mdx = mon->mx + u.dx;
-		mdy = mon->my + u.dy;
+		mdx = mon->mx + dx;
+		mdy = mon->my + dy;
 		if (goodpos(mdx, mdy, mon, 0)) {
 			pline("%s reels from the blow.", Monnam(mon));
 			if (m_in_out_region(mon, mdx, mdy)) {
@@ -110,7 +110,7 @@ static void kickdmg(struct monst *mon, boolean clumsy)
 	    use_skill(kick_skill, 1);
 }
 
-static void kick_monster(xchar x, xchar y)
+static void kick_monster(xchar x, xchar y, schar dx, schar dy)
 {
 	boolean clumsy = FALSE;
 	struct monst *mon = m_at(x, y);
@@ -118,7 +118,8 @@ static void kick_monster(xchar x, xchar y)
 
 	bhitpos.x = x;
 	bhitpos.y = y;
-	if (attack_checks(mon, NULL)) return;
+	if (attack_checks(mon, NULL, dx, dy))
+	    return;
 	setmangry(mon);
 
 	/* Kick attacks by kicking monsters are normal attacks, not special.
@@ -219,7 +220,7 @@ doit:
 		    }
 		}
 	}
-	kickdmg(mon, clumsy);
+	kickdmg(mon, clumsy, dx, dy);
 }
 
 /*
@@ -385,7 +386,7 @@ void container_impact_dmg(struct obj *obj)
 	}
 }
 
-static int kick_object(xchar x, xchar y)
+static int kick_object(xchar x, xchar y, schar dx, schar dy)
 {
 	int range;
 	struct monst *mon, *shkp;
@@ -452,7 +453,7 @@ static int kick_object(xchar x, xchar y)
 	if (kickobj->oartifact == ART_MJOLLNIR) range = 1;
 
 	/* see if the object has a place to move into */
-	if (!ZAP_POS(levl[x+u.dx][y+u.dy].typ) || closed_door(x+u.dx, y+u.dy))
+	if (!ZAP_POS(levl[x+dx][y+dy].typ) || closed_door(x+dx, y+dy))
 		range = 1;
 
 	costly = ((shkp = shop_keeper(*in_rooms(x, y, SHOPBASE))) &&
@@ -537,10 +538,7 @@ static int kick_object(xchar x, xchar y)
 	obj_extract_self(kickobj);
 	snuff_candle(kickobj);
 	newsym(x, y);
-	mon = bhit(u.dx, u.dy, range, KICKED_WEAPON,
-		   (int (*)(struct monst*,struct obj*))0,
-		   (int (*)(struct obj*,struct obj*))0,
-		   kickobj);
+	mon = bhit(dx, dy, range, KICKED_WEAPON, NULL, NULL, kickobj);
 
 	if (mon) {
 	    if (mon->isshk &&
@@ -608,6 +606,7 @@ int dokick(void)
 	struct monst *mtmp;
 	boolean no_kick = FALSE;
 	char buf[BUFSZ];
+	schar dx, dy, dz;
 
 	if (nolimbs(youmonst.data) || slithy(youmonst.data)) {
 		You("have no legs to kick with.");
@@ -664,11 +663,13 @@ int dokick(void)
 		return 0;
 	}
 
-	if (!getdir(NULL)) return 0;
-	if (!u.dx && !u.dy) return 0;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
+	if (!dx && !dy)
+	    return 0;
 
-	x = u.ux + u.dx;
-	y = u.uy + u.dy;
+	x = u.ux + dx;
+	y = u.uy + dy;
 
 	/* KMH -- Kicking boots always succeed */
 	if (uarmf && uarmf->otyp == KICKING_BOOTS)
@@ -691,8 +692,8 @@ int dokick(void)
 	if (Levitation) {
 		int xx, yy;
 
-		xx = u.ux - u.dx;
-		yy = u.uy - u.dy;
+		xx = u.ux - dx;
+		yy = u.uy - dy;
 		/* doors can be opened while levitating, so they must be
 		 * reachable for bracing purposes
 		 * Possible extension: allow bracing against stuff on the side?
@@ -721,7 +722,7 @@ int dokick(void)
 		mdat = mtmp->data;
 		if (!mtmp->mpeaceful || !canspotmon(mtmp))
 		    flags.forcefight = TRUE; /* attack even if invisible */
-		kick_monster(x, y);
+		kick_monster(x, y, dx, dy);
 		flags.forcefight = FALSE;
 		/* see comment in attack_checks() */
 		if (!DEADMONSTER(mtmp) &&
@@ -736,11 +737,13 @@ int dokick(void)
 		    int range;
 
 		    range = ((int)youmonst.data->cwt + (weight_cap() + inv_weight()));
-		    if (range < 1) range = 1; /* divide by zero avoidance */
+		    if (range < 1)
+			range = 1; /* divide by zero avoidance */
 		    range = (3*(int)mdat->cwt) / range;
 
-		    if (range < 1) range = 1;
-		    hurtle(-u.dx, -u.dy, range, TRUE);
+		    if (range < 1)
+			range = 1;
+		    hurtle(-dx, -dy, range, TRUE);
 		}
 		return 1;
 	}
@@ -758,9 +761,9 @@ int dokick(void)
 	if (OBJ_AT(x, y) &&
 	    (!Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
 	     || sobj_at(BOULDER,x,y))) {
-		if (kick_object(x, y)) {
+		if (kick_object(x, y, dx, dy)) {
 		    if (Is_airlevel(&u.uz))
-			hurtle(-u.dx, -u.dy, 1, TRUE); /* assume it's light */
+			hurtle(-dx, -dy, 1, TRUE); /* assume it's light */
 		    return 1;
 		}
 		goto ouch;
@@ -991,7 +994,7 @@ ouch:
 		    losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), kickstr(buf),
 			KILLED_BY);
 		    if (Is_airlevel(&u.uz) || Levitation)
-			hurtle(-u.dx, -u.dy, rn1(2,4), TRUE); /* assume it's heavy */
+			hurtle(-dx, -dy, rn1(2,4), TRUE); /* assume it's heavy */
 		    return 1;
 		}
 		goto dumb;
@@ -1011,7 +1014,7 @@ dumb:
 			set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
 		}
 		if ((Is_airlevel(&u.uz) || Levitation) && rn2(2)) {
-		    hurtle(-u.dx, -u.dy, 1, TRUE);
+		    hurtle(-dx, -dy, 1, TRUE);
 		    return 1;		/* you moved, so use up a turn */
 		}
 		return 0;

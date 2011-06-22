@@ -27,7 +27,7 @@ static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *,int,int *);
 static int percent_success(int);
-static int throwspell(void);
+static int throwspell(schar *dx, schar *dy);
 static void cast_protection(void);
 static void spell_backfire(int);
 static const char *spelltypemnemonic(int);
@@ -689,6 +689,7 @@ int spelleffects(int spell, boolean atme)
 	boolean confused = (Confusion != 0);
 	struct obj *pseudo;
 	coord cc;
+	schar dx, dy, dz;
 
 	/*
 	 * Spell casting no longer affects knowledge of the spell. A
@@ -797,29 +798,32 @@ int spelleffects(int spell, boolean atme)
 	case SPE_CONE_OF_COLD:
 	case SPE_FIREBALL:
 	    if (role_skill >= P_SKILLED) {
-	        if (throwspell()) {
-		    cc.x=u.dx;cc.y=u.dy;
-		    n=rnd(8)+1;
+	        if (throwspell(&dx, &dy)) {
+		    dz = 0;
+		    cc.x = dx;
+		    cc.y = dy;
+		    n = rnd(8)+1;
 		    while (n--) {
-			if (!u.dx && !u.dy && !u.dz) {
+			if (!dx && !dy && !dz) {
 			    if ((damage = zapyourself(pseudo, TRUE)) != 0) {
 				char buf[BUFSZ];
 				sprintf(buf, "zapped %sself with a spell", uhim());
 				losehp(damage, buf, NO_KILLER_PREFIX);
 			    }
 			} else {
-			    explode(u.dx, u.dy,
+			    explode(dx, dy,
 				    pseudo->otyp - SPE_MAGIC_MISSILE + 10,
 				    u.ulevel/2 + 1 + spell_damage_bonus(), 0,
 					(pseudo->otyp == SPE_CONE_OF_COLD) ?
 						EXPL_FROSTY : EXPL_FIERY);
 			}
-			u.dx = cc.x+rnd(3)-2; u.dy = cc.y+rnd(3)-2;
-			if (!isok(u.dx,u.dy) || !cansee(u.dx,u.dy) ||
-			    IS_STWALL(levl[u.dx][u.dy].typ) || u.uswallow) {
+			dx = cc.x+rnd(3)-2;
+			dy = cc.y+rnd(3)-2;
+			if (!isok(dx, dy) || !cansee(dx, dy) ||
+			    IS_STWALL(levl[dx][dy].typ) || u.uswallow) {
 			    /* Spell is reflected back to center */
-			    u.dx = cc.x;
-			    u.dy = cc.y;
+			    dx = cc.x;
+			    dy = cc.y;
 		        }
 		    }
 		}
@@ -846,19 +850,22 @@ int spelleffects(int spell, boolean atme)
 	case SPE_DRAIN_LIFE:
 	case SPE_STONE_TO_FLESH:
 		if (!(objects[pseudo->otyp].oc_dir == NODIR)) {
-			if (atme) u.dx = u.dy = u.dz = 0;
-			else if (!getdir(NULL)) {
-			    /* getdir cancelled, re-use previous direction */
+			if (atme)
+			    dx = dy = dz = 0;
+			else if (!getdir(NULL, &dx, &dy, &dz)) {
+			    /* getdir cancelled, generate a random direction */
+			    dz = 0;
+			    confdir(&dx, &dy);
 			    pline_The("magical energy is released!");
 			}
-			if (!u.dx && !u.dy && !u.dz) {
+			if (!dx && !dy && !dz) {
 			    if ((damage = zapyourself(pseudo, TRUE)) != 0) {
 				char buf[BUFSZ];
 				sprintf(buf, "zapped %sself with a spell", uhim());
 				losehp(damage, buf, NO_KILLER_PREFIX);
 			    }
-			} else weffects(pseudo);
-		} else weffects(pseudo);
+			} else weffects(pseudo, dx, dy, dz);
+		} else weffects(pseudo, dx, dy, dz);
 		update_inventory();	/* spell may modify inventory */
 		break;
 
@@ -934,14 +941,16 @@ int spelleffects(int spell, boolean atme)
 }
 
 /* Choose location where spell takes effect. */
-static int throwspell(void)
+static int throwspell(schar *dx, schar *dy)
 {
 	coord cc;
 
 	if (u.uinwater) {
-	    pline("You're joking! In this weather?"); return 0;
+	    pline("You're joking! In this weather?");
+	    return 0;
 	} else if (Is_waterlevel(&u.uz)) {
-	    You("had better wait for the sun to come out."); return 0;
+	    You("had better wait for the sun to come out.");
+	    return 0;
 	}
 
 	pline("Where do you want to cast the spell?");
@@ -956,15 +965,15 @@ static int throwspell(void)
 	} else if (u.uswallow) {
 	    pline_The("spell is cut short!");
 	    exercise(A_WIS, FALSE); /* What were you THINKING! */
-	    u.dx = 0;
-	    u.dy = 0;
+	    *dx = 0;
+	    *dy = 0;
 	    return 1;
 	} else if (!cansee(cc.x, cc.y) || IS_STWALL(levl[cc.x][cc.y].typ)) {
 	    Your("mind fails to lock onto that location!");
 	    return 0;
 	} else {
-	    u.dx=cc.x;
-	    u.dy=cc.y;
+	    *dx = cc.x;
+	    *dy = cc.y;
 	    return 1;
 	}
 }

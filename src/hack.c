@@ -4,10 +4,10 @@
 #include "hack.h"
 
 static void maybe_wail(void);
-static int moverock(void);
+static int moverock(schar dx, schar dy);
 static int still_chewing(xchar,xchar);
 static void dosinkfall(void);
-static boolean findtravelpath(boolean);
+static boolean findtravelpath(boolean, schar *, schar *);
 static boolean monstinroom(struct permonst *,int);
 
 static void move_update(boolean);
@@ -48,20 +48,21 @@ boolean revive_nasty(int x, int y, const char *msg)
     return revived;
 }
 
-static int moverock(void)
+static int moverock(schar dx, schar dy)
 {
     xchar rx, ry, sx, sy;
     struct obj *otmp;
     struct trap *ttmp;
     struct monst *mtmp;
 
-    sx = u.ux + u.dx,  sy = u.uy + u.dy;	/* boulder starting position */
+    sx = u.ux + dx;
+    sy = u.uy + dy;	/* boulder starting position */
     while ((otmp = sobj_at(BOULDER, sx, sy)) != 0) {
 	/* make sure that this boulder is visible as the top object */
 	if (otmp != level.objects[sx][sy]) movobj(otmp, sx, sy);
 
-	rx = u.ux + 2 * u.dx;	/* boulder destination position */
-	ry = u.uy + 2 * u.dy;
+	rx = u.ux + 2 * dx;	/* boulder destination position */
+	ry = u.uy + 2 * dy;
 	nomul(0);
 	if (Levitation || Is_airlevel(&u.uz)) {
 	    if (Blind) feel_location(sx, sy);
@@ -76,7 +77,7 @@ static int moverock(void)
 	}
 	if (isok(rx,ry) && !IS_ROCK(levl[rx][ry].typ) &&
 	    levl[rx][ry].typ != IRONBARS &&
-	    (!IS_DOOR(levl[rx][ry].typ) || !(u.dx && u.dy) || (
+	    (!IS_DOOR(levl[rx][ry].typ) || !(dx && dy) || (
 		!Is_rogue_level(&u.uz) &&
 		(levl[rx][ry].doormask & ~D_BROKEN) == D_NODOOR)) &&
 	    !sobj_at(BOULDER, rx, ry)) {
@@ -84,7 +85,7 @@ static int moverock(void)
 	    mtmp = m_at(rx, ry);
 
 		/* KMH -- Sokoban doesn't let you push boulders diagonally */
-	    if (In_sokoban(&u.uz) && u.dx && u.dy) {
+	    if (In_sokoban(&u.uz) && dx && dy) {
 	    	if (Blind) feel_location(sx,sy);
 	    	pline("%s won't roll diagonally on this %s.",
 	        		The(xname(otmp)), surface(sx, sy));
@@ -251,7 +252,7 @@ nopushmsg:
 	    }
 
 	    if (!u.usteed && (((!invent || inv_weight() <= -850) &&
-		 (!u.dx || !u.dy || (IS_ROCK(levl[u.ux][sy].typ)
+		 (!dx || !dy || (IS_ROCK(levl[u.ux][sy].typ)
 				     && IS_ROCK(levl[sx][u.uy].typ))))
 		|| verysmall(youmonst.data))) {
 		pline("However, you can squeeze yourself into a small opening.");
@@ -482,7 +483,7 @@ boolean invocation_pos(xchar x, xchar y)
 /* return TRUE if (dx,dy) is an OK place to move
  * mode is one of DO_MOVE, TEST_MOVE or TEST_TRAV
  */
-boolean test_move(int ux, int uy, int dx, int dy, int mode)
+boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 {
     int x = ux+dx;
     int y = uy+dy;
@@ -504,9 +505,9 @@ boolean test_move(int ux, int uy, int dx, int dy, int mode)
 	    if (mode == DO_MOVE && still_chewing(x,y)) return FALSE;
 	} else if (flags.autodig && !flags.run && !flags.nopick &&
 		   uwep && is_pick(uwep)) {
-	/* MRKR: Automatic digging when wielding the appropriate tool */
+	    /* MRKR: Automatic digging when wielding the appropriate tool */
 	    if (mode == DO_MOVE)
-		use_pick_axe2(uwep);
+		use_pick_axe2(uwep, dx, dy, dz);
 	    return FALSE;
 	} else {
 	    if (mode == DO_MOVE) {
@@ -611,7 +612,7 @@ boolean test_move(int ux, int uy, int dx, int dy, int mode)
 		!In_sokoban(&u.uz)) {
 		if (still_chewing(x,y)) return FALSE;
 	    } else
-		if (moverock() < 0) return FALSE;
+		if (moverock(dx, dy) < 0) return FALSE;
 	} else if (mode == TEST_TRAV) {
 	    struct obj* obj;
 
@@ -638,14 +639,14 @@ boolean test_move(int ux, int uy, int dx, int dy, int mode)
  * inaccessible locations as valid intermediate path points.
  * Returns TRUE if a path was found.
  */
-static boolean findtravelpath(boolean guess)
+static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 {
     /* if travel to adjacent, reachable location, use normal movement rules */
     if (!guess && iflags.travel1 && distmin(u.ux, u.uy, u.tx, u.ty) == 1) {
 	flags.run = 0;
-	if (test_move(u.ux, u.uy, u.tx-u.ux, u.ty-u.uy, TEST_MOVE)) {
-	    u.dx = u.tx-u.ux;
-	    u.dy = u.ty-u.uy;
+	if (test_move(u.ux, u.uy, u.tx-u.ux, u.ty-u.uy, 0, TEST_MOVE)) {
+	    *dx = u.tx-u.ux;
+	    *dy = u.ty-u.uy;
 	    nomul(0);
 	    iflags.travelcc.x = iflags.travelcc.y = -1;
 	    return TRUE;
@@ -705,12 +706,12 @@ static boolean findtravelpath(boolean guess)
 			    continue;
 			}
 		    }
-		    if (test_move(x, y, nx-x, ny-y, TEST_TRAV) &&
+		    if (test_move(x, y, nx-x, ny-y, 0, TEST_TRAV) &&
 			(levl[nx][ny].seenv || (!Blind && couldsee(nx, ny)))) {
 			if (nx == ux && ny == uy) {
 			    if (!guess) {
-				u.dx = x-ux;
-				u.dy = y-uy;
+				*dx = x-ux;
+				*dy = y-uy;
 				if (x == u.tx && y == u.ty) {
 				    nomul(0);
 				    /* reset run so domove run checks work */
@@ -761,9 +762,9 @@ static boolean findtravelpath(boolean guess)
 
 	    if (px == u.ux && py == u.uy) {
 		/* no guesses, just go in the general direction */
-		u.dx = sgn(u.tx - u.ux);
-		u.dy = sgn(u.ty - u.uy);
-		if (test_move(u.ux, u.uy, u.dx, u.dy, TEST_MOVE))
+		*dx = sgn(u.tx - u.ux);
+		*dy = sgn(u.ty - u.uy);
+		if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE))
 		    return TRUE;
 		goto found;
 	    }
@@ -780,13 +781,13 @@ static boolean findtravelpath(boolean guess)
     }
 
 found:
-    u.dx = 0;
-    u.dy = 0;
+    *dx = 0;
+    *dy = 0;
     nomul(0);
     return FALSE;
 }
 
-void domove(void)
+void domove(schar dx, schar dy, schar dz)
 {
 	struct monst *mtmp;
 	struct rm *tmpr;
@@ -802,8 +803,8 @@ void domove(void)
 	u_wipe_engr(rnd(5));
 
 	if (flags.travel) {
-	    if (!findtravelpath(FALSE))
-		findtravelpath(TRUE);
+	    if (!findtravelpath(FALSE, &dx, &dy))
+		findtravelpath(TRUE, &dx, &dy);
 	    iflags.travel1 = 0;
 	}
 
@@ -821,7 +822,7 @@ void domove(void)
 	    return;
 	}
 	if (u.uswallow) {
-		u.dx = u.dy = 0;
+		dx = dy = 0;
 		u.ux = x = u.ustuck->mx;
 		u.uy = y = u.ustuck->my;
 		mtmp = u.ustuck;
@@ -862,8 +863,8 @@ void domove(void)
 		if (!on_ice && (HFumbling & FROMOUTSIDE))
 		    HFumbling &= ~FROMOUTSIDE;
 
-		x = u.ux + u.dx;
-		y = u.uy + u.dy;
+		x = u.ux + dx;
+		y = u.uy + dy;
 		if (Stunned || (Confusion && !rn2(5))) {
 			int tries = 0;
 
@@ -872,20 +873,20 @@ void domove(void)
 					nomul(0);
 					return;
 				}
-				confdir();
-				x = u.ux + u.dx;
-				y = u.uy + u.dy;
+				confdir(&dx, &dy);
+				x = u.ux + dx;
+				y = u.uy + dy;
 			} while (!isok(x, y) || bad_rock(youmonst.data, x, y));
 		}
 		/* turbulence might alter your actual destination */
 		if (u.uinwater) {
-			water_friction();
-			if (!u.dx && !u.dy) {
+			water_friction(&dx, &dy);
+			if (!dx && !dy) {
 				nomul(0);
 				return;
 			}
-			x = u.ux + u.dx;
-			y = u.uy + u.dy;
+			x = u.ux + dx;
+			y = u.uy + dy;
 		}
 		if (!isok(x, y)) {
 			nomul(0);
@@ -991,7 +992,7 @@ void domove(void)
 		  (canspotmon(mtmp) || glyph_is_invisible(levl[x][y].glyph))){
 		if (mtmp->m_ap_type && !Protection_from_shape_changers
 						    && !sensemon(mtmp))
-		    stumble_onto_mimic(mtmp);
+		    stumble_onto_mimic(mtmp, dx, dy);
 		else if (mtmp->mpeaceful && !Hallucination)
 		    pline("Pardon me, %s.", m_monnam(mtmp));
 		else
@@ -1017,7 +1018,7 @@ void domove(void)
 
 		/* try to attack; note that it might evade */
 		/* also, we don't attack tame when _safepet_ */
-		if (attack(mtmp)) return;
+		if (attack(mtmp, dx, dy)) return;
 	    }
 	}
 
@@ -1046,7 +1047,7 @@ void domove(void)
 	    newsym(x, y);
 	}
 	/* not attacking an animal, so we try to move */
-	if (u.usteed && !u.usteed->mcanmove && (u.dx || u.dy)) {
+	if (u.usteed && !u.usteed->mcanmove && (dx || dy)) {
 		pline("%s won't move!", upstart(y_monnam(u.usteed)));
 		nomul(0);
 		return;
@@ -1151,12 +1152,12 @@ void domove(void)
 			else
 				Norep("You are %s.", predicament);
 		    }
-		    if ((u.dx && u.dy) || !rn2(5)) u.utrap--;
+		    if ((dx && dy) || !rn2(5)) u.utrap--;
 		}
 		return;
 	}
 
-	if (!test_move(u.ux, u.uy, x-u.ux, y-u.uy, DO_MOVE)) {
+	if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE)) {
 	    flags.move = 0;
 	    nomul(0);
 	    return;
@@ -1174,8 +1175,8 @@ void domove(void)
 
  	/* now move the hero */
 	mtmp = m_at(x, y);
-	u.ux += u.dx;
-	u.uy += u.dy;
+	u.ux += dx;
+	u.uy += dy;
 	/* Move your steed, too */
 	if (u.usteed) {
 		u.usteed->mx = u.ux;
@@ -1279,7 +1280,7 @@ void domove(void)
 	    u.uundetected = OBJ_AT(u.ux, u.uy);
 	else if (youmonst.data->mlet == S_EEL)
 	    u.uundetected = is_pool(u.ux, u.uy) && !Is_waterlevel(&u.uz);
-	else if (u.dx || u.dy)
+	else if (dx || dy)
 	    u.uundetected = 0;
 
 	/*
@@ -1287,7 +1288,7 @@ void domove(void)
 	 * imitating something that doesn't move.  We could extend this
 	 * to non-moving monsters...
 	 */
-	if ((u.dx || u.dy) && (youmonst.m_ap_type == M_AP_OBJECT
+	if ((dx || dy) && (youmonst.m_ap_type == M_AP_OBJECT
 				|| youmonst.m_ap_type == M_AP_FURNITURE))
 	    youmonst.m_ap_type = M_AP_NOTHING;
 
@@ -1386,7 +1387,8 @@ void spoteffects(boolean pick)
 			vision_full_recalc = 1;
 		}
 	}
-stillinwater:;
+	
+stillinwater:
 	if (!Levitation && !u.ustuck && !Flying) {
 	    /* limit recursive calls through teleds() */
 	    if (is_pool(u.ux, u.uy) || is_lava(u.ux, u.uy)) {
@@ -1786,7 +1788,7 @@ int dopickup(void)
 /* stop running if we see something interesting */
 /* turn around a corner if that is the only way we can proceed */
 /* do not turn left or right twice */
-void lookaround(void)
+void lookaround(schar dx, schar dy)
 {
     int x, y, i, x0 = 0, y0 = 0, m0 = 1, i0 = 9;
     int corrct = 0, noturn = 0;
@@ -1795,7 +1797,7 @@ void lookaround(void)
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe */
     /* they polymorphed while in the middle of a long move. */
-    if (u.umonnum == PM_GRID_BUG && u.dx && u.dy) {
+    if (u.umonnum == PM_GRID_BUG && dx && dy) {
 	nomul(0);
 	return;
     }
@@ -1813,12 +1815,12 @@ void lookaround(void)
 		    mtmp->m_ap_type != M_AP_OBJECT &&
 		    (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
 	    if ((flags.run != 1 && !mtmp->mtame)
-					|| (x == u.ux+u.dx && y == u.uy+u.dy))
+					|| (x == u.ux+dx && y == u.uy+dy))
 		goto stop;
 	}
 
 	if (levl[x][y].typ == STONE) continue;
-	if (x == u.ux-u.dx && y == u.uy-u.dy) continue;
+	if (x == u.ux-dx && y == u.uy-dy) continue;
 
 	if (IS_ROCK(levl[x][y].typ) || (levl[x][y].typ == ROOM) ||
 	    IS_AIR(levl[x][y].typ))
@@ -1834,9 +1836,9 @@ void lookaround(void)
 bcorr:
 	    if (levl[u.ux][u.uy].typ != ROOM) {
 		if (flags.run == 1 || flags.run == 3 || flags.run == 8) {
-		    i = dist2(x,y,u.ux+u.dx,u.uy+u.dy);
+		    i = dist2(x, y, u.ux+dx, u.uy+dy);
 		    if (i > 2) continue;
-		    if (corrct == 1 && dist2(x,y,x0,y0) != 1)
+		    if (corrct == 1 && dist2(x, y, x0, y0) != 1)
 			noturn = 1;
 		    if (i < i0) {
 			i0 = i;
@@ -1850,14 +1852,14 @@ bcorr:
 	    continue;
 	} else if ((trap = t_at(x,y)) && trap->tseen) {
 	    if (flags.run == 1) goto bcorr;	/* if you must */
-	    if (x == u.ux+u.dx && y == u.uy+u.dy) goto stop;
+	    if (x == u.ux+dx && y == u.uy+dy) goto stop;
 	    continue;
 	} else if (is_pool(x,y) || is_lava(x,y)) {
 	    /* water and lava only stop you if directly in front, and stop
 	     * you even if you are running
 	     */
 	    if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-				x == u.ux+u.dx && y == u.uy+u.dy)
+				x == u.ux+dx && y == u.uy+dy)
 			/* No Wwalking check; otherwise they'd be able
 			 * to test boots by trying to SHIFT-direction
 			 * into a pool and seeing if the game allowed it
@@ -1868,8 +1870,8 @@ bcorr:
 	    if (flags.run == 1) goto bcorr;
 	    if (flags.run == 8) continue;
 	    if (mtmp) continue;		/* d */
-	    if (((x == u.ux - u.dx) && (y != u.uy + u.dy)) ||
-	       ((y == u.uy - u.dy) && (x != u.ux + u.dx)))
+	    if (((x == u.ux - dx) && (y != u.uy + dy)) ||
+	       ((y == u.uy - dy) && (x != u.ux + dx)))
 	       continue;
 	}
 stop:
@@ -1883,17 +1885,17 @@ stop:
     {
 	/* make sure that we do not turn too far */
 	if (i0 == 2) {
-	    if (u.dx == y0-u.uy && u.dy == u.ux-x0)
+	    if (dx == y0-u.uy && dy == u.ux-x0)
 		i = 2;		/* straight turn right */
 	    else
 		i = -2;		/* straight turn left */
-	} else if (u.dx && u.dy) {
-	    if ((u.dx == u.dy && y0 == u.uy) || (u.dx != u.dy && y0 != u.uy))
+	} else if (dx && dy) {
+	    if ((dx == dy && y0 == u.uy) || (dx != dy && y0 != u.uy))
 		i = -1;		/* half turn left */
 	    else
 		i = 1;		/* half turn right */
 	} else {
-	    if ((x0-u.ux == y0-u.uy && !u.dy) || (x0-u.ux != y0-u.uy && u.dy))
+	    if ((x0-u.ux == y0-u.uy && !dy) || (x0-u.ux != y0-u.uy && dy))
 		i = 1;		/* half turn right */
 	    else
 		i = -1;		/* half turn left */
@@ -1902,8 +1904,8 @@ stop:
 	i += u.last_str_turn;
 	if (i <= 2 && i >= -2) {
 	    u.last_str_turn = i;
-	    u.dx = x0-u.ux;
-	    u.dy = y0-u.uy;
+	    dx = x0-u.ux;
+	    dy = y0-u.uy;
 	}
     }
 }
@@ -2149,25 +2151,16 @@ long money_cnt(struct obj *otmp)
 #endif
 
 
-static void prepare_move(int dx, int dy, int dz)
-{
-	flags.travel = iflags.travel1 = 0;
-	u.dx = dx;
-	u.dy = dy;
-	u.dz = dz;
-}
-
-
 int dofight(int dx, int dy, int dz)
 {
-	prepare_move(dx, dy, dz);
+	flags.travel = iflags.travel1 = 0;
 	flags.run = 0;
 	flags.forcefight = 1;
 	
 	if (multi)
 	    flags.mv = TRUE;
 	
-	domove();
+	domove(dx, dy, dz);
 	flags.forcefight = 0;
 	
 	return 1;
@@ -2176,13 +2169,13 @@ int dofight(int dx, int dy, int dz)
 
 int domovecmd(int dx, int dy, int dz)
 {
-	prepare_move(dx, dy, dz);
+	flags.travel = iflags.travel1 = 0;
 	flags.run = 0;	/* only matters here if it was 8 */
 	
 	if (multi)
 	    flags.mv = TRUE;
 	
-	domove();
+	domove(dx, dy, dz);
 	return 1;
 }
 
@@ -2199,7 +2192,7 @@ int domovecmd_nopickup(int dx, int dy, int dz)
 
 static int do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 {
-	prepare_move(dx, dy, dz);
+	flags.travel = iflags.travel1 = 0;
 	flags.run = runmode;
 	
 	flags.nopick = move_only;
@@ -2208,7 +2201,7 @@ static int do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 	if (!multi)
 	    multi = max(COLNO,ROWNO);
 	
-	domove();
+	domove(dx, dy, dz);
 	
 	flags.nopick = 0;
 	return 1;

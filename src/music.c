@@ -343,12 +343,13 @@ static int do_improvisation(struct obj *instr)
 	case FROST_HORN:		/* Idem wand of cold */
 	case FIRE_HORN:			/* Idem wand of fire */
 	    if (do_spec && instr->spe > 0) {
+		schar dx, dy, dz;
 		consume_obj_charge(instr, TRUE);
-
-		if (!getdir(NULL)) {
+		
+		if (!getdir(NULL, &dx, &dy, &dz)) {
 		    pline("%s.", Tobjnam(instr, "vibrate"));
 		    break;
-		} else if (!u.dx && !u.dy && !u.dz) {
+		} else if (!dx && !dy && !dz) {
 		    if ((damage = zapyourself(instr, TRUE)) != 0) {
 			char buf[BUFSZ];
 			sprintf(buf, "using a magical horn on %sself", uhim());
@@ -356,7 +357,7 @@ static int do_improvisation(struct obj *instr)
 		    }
 		} else {
 		    buzz((instr->otyp == FROST_HORN) ? AD_COLD-1 : AD_FIRE-1,
-			 rn1(6,6), u.ux, u.uy, u.dx, u.dy);
+			 rn1(6,6), u.ux, u.uy, dx, dy);
 		}
 		makeknown(instr->otyp);
 		break;

@@ -3,9 +3,9 @@
 
 #include "hack.h"
 
-static boolean known_hitum(struct monst *,int *,struct attack *);
+static boolean known_hitum(struct monst *,int *,struct attack *, schar, schar);
 static void steal_it(struct monst *, struct attack *);
-static boolean hitum(struct monst *,int,struct attack *);
+static boolean hitum(struct monst *,int,struct attack *, schar, schar);
 static boolean hmon_hitmon(struct monst *,struct obj *,int);
 static int joust(struct monst *,struct obj *);
 static void demonpet(void);
@@ -14,7 +14,7 @@ static int explum(struct monst *,struct attack *);
 static void start_engulf(struct monst *);
 static void end_engulf(void);
 static int gulpum(struct monst *,struct attack *);
-static boolean hmonas(struct monst *,int);
+static boolean hmonas(struct monst *, int, schar, schar);
 static void nohandglow(struct monst *);
 static boolean shade_aware(struct obj *);
 
@@ -88,7 +88,8 @@ void hurtmarmor(struct monst *mdef, int attk)
 
 /* FALSE means it's OK to attack */
 boolean attack_checks(struct monst *mtmp,
-		      struct obj *wep)	/* uwep for attack(), null for kick_monster() */
+		      struct obj *wep,/* uwep for attack(), null for kick_monster() */
+		      schar dx, schar dy)	
 {
 	char qbuf[QBUFSZ];
 
@@ -121,12 +122,12 @@ boolean attack_checks(struct monst *mtmp,
 	 * the screen, so you know something is there.
 	 */
 	if (!canspotmon(mtmp) &&
-		    !glyph_is_warning(glyph_at(u.ux+u.dx,u.uy+u.dy)) &&
-		    !glyph_is_invisible(levl[u.ux+u.dx][u.uy+u.dy].glyph) &&
+		    !glyph_is_warning(glyph_at(u.ux+dx, u.uy+dy)) &&
+		    !glyph_is_invisible(levl[u.ux+dx][u.uy+dy].glyph) &&
 		    !(!Blind && mtmp->mundetected && hides_under(mtmp->data))) {
 		pline("Wait!  There's %s there you can't see!",
 			something);
-		map_invisible(u.ux+u.dx, u.uy+u.dy);
+		map_invisible(u.ux+dx, u.uy+dy);
 		/* if it was an invisible mimic, treat it as if we stumbled
 		 * onto a visible mimic
 		 */
@@ -140,7 +141,7 @@ boolean attack_checks(struct monst *mtmp,
 
 	if (mtmp->m_ap_type && !Protection_from_shape_changers &&
 	   !sensemon(mtmp) &&
-	   !glyph_is_warning(glyph_at(u.ux+u.dx,u.uy+u.dy))) {
+	   !glyph_is_warning(glyph_at(u.ux+dx,u.uy+dy))) {
 		/* If a hidden mimic was in a square where a player remembers
 		 * some (probably different) unseen monster, the player is in
 		 * luck--he attacks it even though it's hidden.
@@ -149,12 +150,12 @@ boolean attack_checks(struct monst *mtmp,
 		    seemimic(mtmp);
 		    return FALSE;
 		}
-		stumble_onto_mimic(mtmp);
+		stumble_onto_mimic(mtmp, dx, dy);
 		return TRUE;
 	}
 
 	if (mtmp->mundetected && !canseemon(mtmp) &&
-		!glyph_is_warning(glyph_at(u.ux+u.dx,u.uy+u.dy)) &&
+		!glyph_is_warning(glyph_at(u.ux+dx, u.uy+dy)) &&
 		(hides_under(mtmp->data) || mtmp->data->mlet == S_EEL)) {
 	    mtmp->mundetected = mtmp->msleeping = 0;
 	    newsym(mtmp->mx, mtmp->my);
@@ -276,8 +277,7 @@ schar find_roll_to_hit(struct monst *mtmp)
 }
 
 /* try to attack; return FALSE if monster evaded */
-/* u.dx and u.dy must be set */
-boolean attack(struct monst *mtmp)
+boolean attack(struct monst *mtmp, schar dx, schar dy)
 {
 	schar tmp;
 	struct permonst *mdat = mtmp->data;
@@ -332,7 +332,8 @@ boolean attack(struct monst *mtmp)
 	/* possibly set in attack_checks;
 	   examined in known_hitum, called via hitum or hmonas below */
 	override_confirmation = FALSE;
-	if (attack_checks(mtmp, uwep)) return TRUE;
+	if (attack_checks(mtmp, uwep, dx, dy))
+	    return TRUE;
 
 	if (Upolyd) {
 		/* certain "pacifist" monsters don't attack */
@@ -370,14 +371,14 @@ boolean attack(struct monst *mtmp)
 	if (mdat->mlet == S_LEPRECHAUN && !mtmp->mfrozen && !mtmp->msleeping &&
 	   !mtmp->mconf && mtmp->mcansee && !rn2(7) &&
 	   (m_move(mtmp, 0) == 2 ||			    /* it died */
-	   mtmp->mx != u.ux+u.dx || mtmp->my != u.uy+u.dy)) /* it moved */
+	   mtmp->mx != u.ux + dx || mtmp->my != u.uy + dy)) /* it moved */
 		return FALSE;
 
 	tmp = find_roll_to_hit(mtmp);
 	if (Upolyd)
-		hmonas(mtmp, tmp);
+		hmonas(mtmp, tmp, dx, dy);
 	else
-		hitum(mtmp, tmp, youmonst.data->mattk);
+		hitum(mtmp, tmp, youmonst.data->mattk, dx, dy);
 	mtmp->mstrategy &= ~STRAT_WAITMASK;
 
 atk_done:
@@ -387,15 +388,16 @@ atk_done:
 	 * evade.
 	 */
 	if (flags.forcefight && mtmp->mhp > 0 && !canspotmon(mtmp) &&
-	    !glyph_is_invisible(levl[u.ux+u.dx][u.uy+u.dy].glyph) &&
+	    !glyph_is_invisible(levl[u.ux+dx][u.uy+dy].glyph) &&
 	    !(u.uswallow && mtmp == u.ustuck))
-		map_invisible(u.ux+u.dx, u.uy+u.dy);
+		map_invisible(u.ux+dx, u.uy+dy);
 
 	return TRUE;
 }
 
 /* returns TRUE if monster still lives */
-static boolean known_hitum(struct monst *mon, int *mhit, struct attack *uattk)
+static boolean known_hitum(struct monst *mon, int *mhit, struct attack *uattk,
+			   schar dx, schar dy)
 {
 	boolean malive = TRUE;
 
@@ -408,8 +410,9 @@ static boolean known_hitum(struct monst *mon, int *mhit, struct attack *uattk)
 	if (!*mhit) {
 	    missum(mon, uattk);
 	} else {
-	    int oldhp = mon->mhp,
-		x = u.ux + u.dx, y = u.uy + u.dy;
+	    int oldhp = mon->mhp;
+	    int x = u.ux + dx;
+	    int y = u.uy + dy;
 
 	    /* KMH, conduct */
 	    if (uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep)))
@@ -452,13 +455,14 @@ static boolean known_hitum(struct monst *mon, int *mhit, struct attack *uattk)
 }
 
 /* returns TRUE if monster still lives */
-static boolean hitum(struct monst *mon, int tmp, struct attack *uattk)
+static boolean hitum(struct monst *mon, int tmp, struct attack *uattk, schar dx, schar dy)
 {
 	boolean malive;
 	int mhit = (tmp > (dieroll = rnd(20)) || u.uswallow);
 
-	if (tmp > dieroll) exercise(A_DEX, TRUE);
-	malive = known_hitum(mon, &mhit, uattk);
+	if (tmp > dieroll)
+	    exercise(A_DEX, TRUE);
+	malive = known_hitum(mon, &mhit, uattk, dx, dy);
 	passive(mon, mhit, malive, AT_WEAP);
 	return malive;
 }
@@ -474,8 +478,10 @@ boolean hmon(struct monst *mon, struct obj *obj, int thrown)
 			     mon->data == &mons[PM_WATCHMAN] ||
 			     mon->data == &mons[PM_WATCH_CAPTAIN]));
 	result = hmon_hitmon(mon, obj, thrown);
-	if (mon->ispriest && !rn2(2)) ghod_hitsu(mon);
-	if (anger_guards) angry_guards(!flags.soundok);
+	if (mon->ispriest && !rn2(2))
+	    ghod_hitsu(mon);
+	if (anger_guards)
+	    angry_guards(!flags.soundok);
 	return result;
 }
 
@@ -922,9 +928,10 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 	    }
 	    /* avoid migrating a dead monster */
 	    if (mon->mhp > tmp) {
-		mhurtle(mon, u.dx, u.dy, 1);
+		mhurtle(mon, mon->mx-u.ux, mon->my-u.uy, 1);
 		mdat = mon->data; /* in case of a polymorph trap */
-		if (DEADMONSTER(mon)) already_killed = TRUE;
+		if (DEADMONSTER(mon))
+		    already_killed = TRUE;
 	    }
 	    hittxt = TRUE;
 	} else
@@ -938,9 +945,10 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			  makeplural(stagger(mon->data, "stagger")));
 		/* avoid migrating a dead monster */
 		if (mon->mhp > tmp) {
-		    mhurtle(mon, u.dx, u.dy, 1);
+		    mhurtle(mon, mon->mx-u.ux, mon->my-u.uy, 1);
 		    mdat = mon->data; /* in case of a polymorph trap */
-		    if (DEADMONSTER(mon)) already_killed = TRUE;
+		    if (DEADMONSTER(mon))
+			already_killed = TRUE;
 		}
 		hittxt = TRUE;
 	    }
@@ -1860,7 +1868,7 @@ void missum(struct monst *mdef, struct attack *mattk)
 }
 
 /* attack monster as a monster. */
-static boolean hmonas(struct monst *mon, int tmp)
+static boolean hmonas(struct monst *mon, int tmp, schar dx, schar dy)
 {
 	struct attack *mattk, alt_attk;
 	int	i, sum[NATTK], hittmp = 0;
@@ -1892,18 +1900,19 @@ use_weapon:
 			/* KMH -- Don't accumulate to-hit bonuses */
 			if (uwep) tmp -= hittmp;
 			/* Enemy dead, before any special abilities used */
-			if (!known_hitum(mon,&dhit,mattk)) {
+			if (!known_hitum(mon, &dhit, mattk, dx, dy)) {
 			    sum[i] = 2;
 			    break;
 			} else sum[i] = dhit;
 			/* might be a worm that gets cut in half */
-			if (m_at(u.ux+u.dx, u.uy+u.dy) != mon) return (boolean)(nsum != 0);
+			if (m_at(u.ux+dx, u.uy+dy) != mon)
+			    return (boolean)(nsum != 0);
 			/* Do not print "You hit" message, since known_hitum
 			 * already did it.
 			 */
 			if (dhit && mattk->adtyp != AD_SPEL
 				&& mattk->adtyp != AD_PHYS)
-				sum[i] = damageum(mon,mattk);
+				sum[i] = damageum(mon, mattk);
 			break;
 		case AT_CLAW:
 			if (i==0 && uwep && !cantwield(youmonst.data)) goto use_weapon;
@@ -2319,7 +2328,7 @@ void passive_obj(struct monst *mon,
 }
 
 /* Note: caller must ascertain mtmp is mimicking... */
-void stumble_onto_mimic(struct monst *mtmp)
+void stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
 {
 	const char *fmt = "Wait!  That's %s!",
 		   *generic = "a monster",
@@ -2334,7 +2343,7 @@ void stumble_onto_mimic(struct monst *mtmp)
 	    else if (mtmp->m_ap_type == M_AP_MONSTER)
 		what = a_monnam(mtmp);	/* differs from what was sensed */
 	} else {
-	    int glyph = levl[u.ux+u.dx][u.uy+u.dy].glyph;
+	    int glyph = levl[u.ux+dx][u.uy+dy].glyph;
 
 	    if (glyph_is_cmap(glyph) &&
 		    (glyph_to_cmap(glyph) == S_hcdoor ||

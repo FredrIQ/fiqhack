@@ -11,12 +11,12 @@ static boolean emergency_disrobe(boolean *);
 static int untrap_prob(struct trap *ttmp);
 static void cnv_trap_obj(int, int, struct trap *);
 static void move_into_trap(struct trap *);
-static int try_disarm(struct trap *,boolean);
+static int try_disarm(struct trap *, boolean, schar, schar);
 static void reward_untrap(struct trap *, struct monst *);
-static int disarm_holdingtrap(struct trap *);
-static int disarm_landmine(struct trap *);
-static int disarm_squeaky_board(struct trap *);
-static int disarm_shooting_trap(struct trap *, int);
+static int disarm_holdingtrap(struct trap *, schar, schar);
+static int disarm_landmine(struct trap *, schar, schar);
+static int disarm_squeaky_board(struct trap *, schar, schar);
+static int disarm_shooting_trap(struct trap *, int, schar, schar);
 static int try_lift(struct monst *, struct trap *, int, boolean);
 static int help_monster_out(struct monst *, struct trap *);
 static boolean thitm(int,struct monst *,struct obj *,int,boolean);
@@ -2679,7 +2679,7 @@ boolean drown(void)
 	int i, x, y;
 
 	/* happily wading in the same contiguous pool */
-	if (u.uinwater && is_pool(u.ux-u.dx,u.uy-u.dy) &&
+	if (u.uinwater && is_pool(u.ux0, u.uy0) &&
 	    (Swimming || Amphibious)) {
 		/* water effects on objects every now and then */
 		if (!rn2(5)) inpool_ok = TRUE;
@@ -2910,11 +2910,11 @@ static void move_into_trap(struct trap *ttmp)
  * 1: tries and fails
  * 2: succeeds
  */
-static int try_disarm(struct trap *ttmp, boolean force_failure)
+static int try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar dy)
 {
 	struct monst *mtmp = m_at(ttmp->tx,ttmp->ty);
 	int ttype = ttmp->ttyp;
-	boolean under_u = (!u.dx && !u.dy);
+	boolean under_u = (!dx && !dy);
 	boolean holdingtrap = (ttype == BEAR_TRAP || ttype == WEB);
 	
 	/* Test for monster first, monsters are displayed instead of trap. */
@@ -2929,7 +2929,7 @@ static int try_disarm(struct trap *ttmp, boolean force_failure)
 		return 0;
 	}
 	/* duplicate tight-space checks from test_move */
-	if (u.dx && u.dy &&
+	if (dx && dy &&
 	    bad_rock(youmonst.data,u.ux,ttmp->ty) &&
 	    bad_rock(youmonst.data,ttmp->tx,u.uy)) {
 	    if ((invent && (inv_weight() + weight_cap() > 600)) ||
@@ -3009,10 +3009,10 @@ static void reward_untrap(struct trap *ttmp, struct monst *mtmp)
 	}
 }
 
-static int disarm_holdingtrap(struct trap *ttmp)
+static int disarm_holdingtrap(struct trap *ttmp, schar dx, schar dy)
 {
 	struct monst *mtmp;
-	int fails = try_disarm(ttmp, FALSE);
+	int fails = try_disarm(ttmp, FALSE, dx, dy);
 
 	if (fails < 2) return fails;
 
@@ -3035,13 +3035,13 @@ static int disarm_holdingtrap(struct trap *ttmp)
 			deltrap(ttmp);
 		}
 	}
-	newsym(u.ux + u.dx, u.uy + u.dy);
+	newsym(u.ux + dx, u.uy + dy);
 	return 1;
 }
 
-static int disarm_landmine(struct trap *ttmp)
+static int disarm_landmine(struct trap *ttmp, schar dx, schar dy)
 {
-	int fails = try_disarm(ttmp, FALSE);
+	int fails = try_disarm(ttmp, FALSE, dx, dy);
 
 	if (fails < 2) return fails;
 	You("disarm %s land mine.", the_your[ttmp->madeby_u]);
@@ -3053,7 +3053,7 @@ static int disarm_landmine(struct trap *ttmp)
 static const char oil[] = { ALL_CLASSES, TOOL_CLASS, POTION_CLASS, 0 };
 
 /* it may not make much sense to use grease on floor boards, but so what? */
-static int disarm_squeaky_board(struct trap *ttmp)
+static int disarm_squeaky_board(struct trap *ttmp, schar dx, schar dy)
 {
 	struct obj *obj;
 	boolean bad_tool;
@@ -3066,7 +3066,7 @@ static int disarm_squeaky_board(struct trap *ttmp)
 			((obj->otyp != POT_OIL || obj->lamplit) &&
 			 (obj->otyp != CAN_OF_GREASE || !obj->spe)));
 
-	fails = try_disarm(ttmp, bad_tool);
+	fails = try_disarm(ttmp, bad_tool, dx, dy);
 	if (fails < 2) return fails;
 
 	/* successfully used oil or grease to fix squeaky board */
@@ -3078,18 +3078,19 @@ static int disarm_squeaky_board(struct trap *ttmp)
 	}
 	You("repair the squeaky board.");	/* no madeby_u */
 	deltrap(ttmp);
-	newsym(u.ux + u.dx, u.uy + u.dy);
+	newsym(u.ux + dx, u.uy + dy);
 	more_experienced(1, 5);
 	newexplevel();
 	return 1;
 }
 
 /* removes traps that shoot arrows, darts, etc. */
-static int disarm_shooting_trap(struct trap *ttmp, int otyp)
+static int disarm_shooting_trap(struct trap *ttmp, int otyp, schar dx, schar dy)
 {
-	int fails = try_disarm(ttmp, FALSE);
+	int fails = try_disarm(ttmp, FALSE, dx, dy);
 
-	if (fails < 2) return fails;
+	if (fails < 2)
+	    return fails;
 	You("disarm %s trap.", the_your[ttmp->madeby_u]);
 	cnv_trap_obj(otyp, 50-rnl(50), ttmp);
 	return 1;
@@ -3217,13 +3218,15 @@ int untrap(boolean force)
 	boolean deal_with_floor_trap = FALSE;
 	char the_trap[BUFSZ], qbuf[QBUFSZ];
 	int containercnt = 0;
+	schar dx, dy, dz;
 
-	if (!getdir(NULL)) return 0;
-	x = u.ux + u.dx;
-	y = u.uy + u.dy;
+	if (!getdir(NULL, &dx, &dy, &dz))
+	    return 0;
+	x = u.ux + dx;
+	y = u.uy + dy;
 
 	for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere) {
-		if (Is_box(otmp) && !u.dx && !u.dy) {
+		if (Is_box(otmp) && !dx && !dy) {
 			box_here = TRUE;
 			containercnt++;
 			if (containercnt > 1) break;
@@ -3263,18 +3266,18 @@ int untrap(boolean force)
 		    switch(ttmp->ttyp) {
 			case BEAR_TRAP:
 			case WEB:
-				return disarm_holdingtrap(ttmp);
+				return disarm_holdingtrap(ttmp, dx, dy);
 			case LANDMINE:
-				return disarm_landmine(ttmp);
+				return disarm_landmine(ttmp, dx, dy);
 			case SQKY_BOARD:
-				return disarm_squeaky_board(ttmp);
+				return disarm_squeaky_board(ttmp, dx, dy);
 			case DART_TRAP:
-				return disarm_shooting_trap(ttmp, DART);
+				return disarm_shooting_trap(ttmp, DART, dx, dy);
 			case ARROW_TRAP:
-				return disarm_shooting_trap(ttmp, ARROW);
+				return disarm_shooting_trap(ttmp, ARROW, dx, dy);
 			case PIT:
 			case SPIKED_PIT:
-				if (!u.dx && !u.dy) {
+				if (!dx && !dy) {
 				    You("are already on the edge of the pit.");
 				    return 0;
 				}
@@ -3284,13 +3287,13 @@ int untrap(boolean force)
 				}
 				return help_monster_out(mtmp, ttmp);
 			default:
-				You("cannot disable %s trap.", (u.dx || u.dy) ? "that" : "this");
+				You("cannot disable %s trap.", (dx || dy) ? "that" : "this");
 				return 0;
 		    }
 		}
 	} /* end if */
 
-	if (!u.dx && !u.dy) {
+	if (!dx && !dy) {
 	    for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
 		if (Is_box(otmp)) {
 		    sprintf(qbuf, "There is %s here. Check it for traps?",
@@ -3346,7 +3349,7 @@ int untrap(boolean force)
 			mtmp->mappearance == S_vcdoor)	&&
 		!Protection_from_shape_changers)	 {
 
-	    stumble_onto_mimic(mtmp);
+	    stumble_onto_mimic(mtmp, dx, dy);
 	    return 1;
 	}
 
