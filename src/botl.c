@@ -145,7 +145,7 @@ void bot(void)
 
 void nh_get_player_info(struct nh_player_info *pi)
 {
-	int cap;
+	int cap, advskills, i;
 	
 	memset(pi, 0, sizeof(struct nh_player_info));
 	
@@ -180,6 +180,7 @@ void nh_get_player_info(struct nh_player_info *pi)
 	
 	pi->max_rank_sz = mrank_sz;
 	
+	/* abilities */
 	pi->st = ACURR(A_STR);
 	pi->st_extra = 0;
 	if (ACURR(A_STR) > 18) {
@@ -195,6 +196,7 @@ void nh_get_player_info(struct nh_player_info *pi)
 	
 	pi->score = botl_score();
 	
+	/* hp and energy */
 	pi->hp = Upolyd ? u.mh : u.uhp;
 	pi->hpmax = Upolyd ? u.mhmax : u.uhpmax;
 	if (pi->hp < 0)
@@ -214,6 +216,8 @@ void nh_get_player_info(struct nh_player_info *pi)
 	
 	pi->monnum = u.umonster;
 	pi->cur_monnum = u.umonnum;
+	
+	/* level and exp points */
 	if (Upolyd)
 	    pi->level = mons[u.umonnum].mlevel;
 	else
@@ -222,6 +226,17 @@ void nh_get_player_info(struct nh_player_info *pi)
 
 	cap = near_capacity();
 	
+	/* check if any skills could be anhanced */
+	advskills = 0;
+	for (i = 0; i < P_NUM_SKILLS; i++) {
+	    if (P_RESTRICTED(i))
+		continue;
+	    if (can_advance(i, FALSE))
+		advskills++;
+	}
+	pi->enhance_possible = advskills > 0;
+	
+	/* add status items for various problems */
 	if (strcmp(hu_stat[u.uhs], "        "))
 	    strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
 	

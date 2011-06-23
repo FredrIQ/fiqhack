@@ -291,6 +291,7 @@ struct nh_player_info {
     int hp, hpmax, en, enmax, ac, level;
     char coinsym;
     int monnum, cur_monnum;
+    boolean enhance_possible;
 };
 
 

@@ -81,7 +81,6 @@ static void give_may_advance_msg(int skill)
 }
 
 
-static boolean can_advance(int, boolean);
 static boolean could_advance(int);
 static boolean peaked_skill(int);
 static int slots_required(int);
@@ -733,8 +732,7 @@ static int slots_required(int skill)
 }
 
 /* return true if this skill can be advanced */
-/*ARGSUSED*/
-static boolean can_advance(int skill, boolean speedy)
+boolean can_advance(int skill, boolean speedy)
 {
     return !P_RESTRICTED(skill)
 	    && P_SKILL(skill) < P_MAX_SKILL(skill) && (
