@@ -292,9 +292,7 @@ extern int Gloves_off(void);
 extern int Boots_off(void);
 extern int Cloak_off(void);
 extern int Shield_off(void);
-#ifdef TOURIST
 extern int Shirt_off(void);
-#endif
 extern void Amulet_off(void);
 extern void Ring_on(struct obj *);
 extern void Ring_off(struct obj *);

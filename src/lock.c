@@ -55,10 +55,8 @@ static const char *lock_action(void)
 	/* otherwise we're trying to unlock it */
 	else if (xlock.picktyp == LOCK_PICK)
 		return actions[3];	/* "picking the lock" */
-#ifdef TOURIST
 	else if (xlock.picktyp == CREDIT_CARD)
 		return actions[3];	/* same as lock_pick */
-#endif
 	else if (xlock.door)
 		return actions[0];	/* "unlocking the door" */
 	else
@@ -225,9 +223,7 @@ int pick_lock(struct obj *pick)
 
 	    if (nohands(youmonst.data)) {
 		const char *what = (picktyp == LOCK_PICK) ? "pick" : "key";
-#ifdef TOURIST
 		if (picktyp == CREDIT_CARD) what = "card";
-#endif
 		pline(no_longer, "hold the", what);
 		reset_pick();
 		return 0;
@@ -249,9 +245,7 @@ int pick_lock(struct obj *pick)
 	}
 
 	if ((picktyp != LOCK_PICK &&
-#ifdef TOURIST
 	    picktyp != CREDIT_CARD &&
-#endif
 	    picktyp != SKELETON_KEY)) {
 		impossible("picking lock with object %d?", picktyp);
 		return 0;
@@ -309,19 +303,15 @@ int pick_lock(struct obj *pick)
 			You_cant("fix its broken lock with %s.", doname(pick));
 			return 0;
 		    }
-#ifdef TOURIST
 		    else if (picktyp == CREDIT_CARD && !otmp->olocked) {
 			/* credit cards are only good for unlocking */
 			You_cant("do that with %s.", doname(pick));
 			return 0;
 		    }
-#endif
 		    switch(picktyp) {
-#ifdef TOURIST
 			case CREDIT_CARD:
 			    ch = ACURR(A_DEX) + 20*Role_if (PM_ROGUE);
 			    break;
-#endif
 			case LOCK_PICK:
 			    ch = 4*ACURR(A_DEX) + 25*Role_if (PM_ROGUE);
 			    break;
@@ -354,12 +344,10 @@ int pick_lock(struct obj *pick)
 	    if ((mtmp = m_at(cc.x, cc.y)) && canseemon(mtmp)
 			&& mtmp->m_ap_type != M_AP_FURNITURE
 			&& mtmp->m_ap_type != M_AP_OBJECT) {
-#ifdef TOURIST
 		if (picktyp == CREDIT_CARD &&
 		    (mtmp->isshk || mtmp->data == &mons[PM_ORACLE]))
 		    verbalize("No checks, no credit, no problem.");
 		else
-#endif
 		    pline("I don't think %s would appreciate that.", mon_nam(mtmp));
 		return 0;
 	    }
@@ -383,13 +371,11 @@ int pick_lock(struct obj *pick)
 		    pline("This door is broken.");
 		    return 0;
 		default:
-#ifdef TOURIST
 		    /* credit cards are only good for unlocking */
 		    if (picktyp == CREDIT_CARD && !(door->doormask & D_LOCKED)) {
 			You_cant("lock a door with a credit card.");
 			return 0;
 		    }
-#endif
 
 		    sprintf(qbuf,"%sock it?",
 			(door->doormask & D_LOCKED) ? "Unl" : "L" );
@@ -398,11 +384,9 @@ int pick_lock(struct obj *pick)
 		    if (c == 'n') return 0;
 
 		    switch(picktyp) {
-#ifdef TOURIST
 			case CREDIT_CARD:
 			    ch = 2*ACURR(A_DEX) + 20*Role_if (PM_ROGUE);
 			    break;
-#endif
 			case LOCK_PICK:
 			    ch = 3*ACURR(A_DEX) + 30*Role_if (PM_ROGUE);
 			    break;

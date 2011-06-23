@@ -64,7 +64,6 @@
 /* monsters & objects */
 #define KOPS		/* Keystone Kops by Scott R. Turner */
 #define SEDUCE		/* Succubi/incubi seduction, by KAA, suggested by IM */
-#define TOURIST		/* Tourist players with cameras and Hawaiian shirts */
 
 /*
  * Section 5:  EXPERIMENTAL STUFF

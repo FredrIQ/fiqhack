@@ -60,10 +60,8 @@ void hurtmarmor(struct monst *mdef, int attk)
 		}
 		if ((target = which_armor(mdef, W_ARM)) != NULL) {
 		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
-#ifdef TOURIST
 		} else if ((target = which_armor(mdef, W_ARMU)) != NULL) {
 		    rust_dmg(target, xname(target), hurt, TRUE, mdef);
-#endif
 		}
 		break;
 	    case 2:
@@ -682,7 +680,6 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			}
 			tmp = 1;
 			break;
-#ifdef TOURIST
 		    case EXPENSIVE_CAMERA:
 			You("succeed in destroying %s camera.  Congratulations!",
 			        shk_your(yourbuf, obj));
@@ -690,7 +687,6 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			return TRUE;
 			/*NOTREACHED*/
 			break;
-#endif
 		    case CORPSE:		/* fixed by polder@cs.vu.nl */
 			if (touch_petrifies(&mons[obj->corpsenm])) {
 			    static const char withwhat[] = "corpse";
@@ -1065,9 +1061,7 @@ static boolean m_slips_free(struct monst *mdef, struct attack *mattk)
 	    /* grabbing attacks the body */
 	    obj = which_armor(mdef, W_ARMC);		/* cloak */
 	    if (!obj) obj = which_armor(mdef, W_ARM);	/* suit */
-#ifdef TOURIST
 	    if (!obj) obj = which_armor(mdef, W_ARMU);	/* shirt */
-#endif
 	}
 
 	/* if your cloak/armor is greased, monster slips off; this

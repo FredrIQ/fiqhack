@@ -698,10 +698,8 @@ static void hurtarmor(int attk)
 		 */
 		if (uarm)
 		    rust_dmg(uarm, xname(uarm), hurt, TRUE, &youmonst);
-#ifdef TOURIST
 		else if (uarmu)
 		    rust_dmg(uarmu, xname(uarmu), hurt, TRUE, &youmonst);
-#endif
 		break;
 	    case 2:
 		if (!uarms || !rust_dmg(uarms, xname(uarms), hurt, FALSE, &youmonst))
@@ -739,9 +737,7 @@ static boolean u_slip_free(struct monst *mtmp, struct attack *mattk)
 {
 	struct obj *obj = (uarmc ? uarmc : uarm);
 
-#ifdef TOURIST
 	if (!obj) obj = uarmu;
-#endif
 	if (mattk->adtyp == AD_DRIN) obj = uarmh;
 
 	/* if your cloak/armor is greased, monster slips off; this
@@ -786,11 +782,9 @@ int magic_negation(struct monst *mon)
 
 	/* armor types for shirt, gloves, shoes, and shield don't currently
 	   provide any magic cancellation but we might as well be complete */
-#ifdef TOURIST
 	armor = (mon == &youmonst) ? uarmu : which_armor(mon, W_ARMU);
 	if (armor && armpro < objects[armor->otyp].a_can)
 	    armpro = objects[armor->otyp].a_can;
-#endif
 	armor = (mon == &youmonst) ? uarmg : which_armor(mon, W_ARMG);
 	if (armor && armpro < objects[armor->otyp].a_can)
 	    armpro = objects[armor->otyp].a_can;
@@ -1321,11 +1315,8 @@ dopois:
 		    hitmsg(mtmp, mattk);
 		    break;
 		}
-		if (!uwep
-#ifdef TOURIST
-		   && !uarmu
-#endif
-		   && !uarm && !uarmh && !uarms && !uarmg && !uarmc && !uarmf) {
+		if (!uwep && !uarmu && !uarm && !uarmh &&
+		    !uarms && !uarmg && !uarmc && !uarmf) {
 		    boolean goaway = FALSE;
 		    pline("%s hits!  (I hope you don't mind.)", Monnam(mtmp));
 		    if (Upolyd) {
@@ -2162,11 +2153,7 @@ int doseduce(struct monst *mon)
 	    }
 	}
 
-	if (!uarmc && !uarmf && !uarmg && !uarms && !uarmh
-#ifdef TOURIST
-								&& !uarmu
-#endif
-									)
+	if (!uarmc && !uarmf && !uarmg && !uarms && !uarmh && !uarmu)
 		pline("%s murmurs sweet nothings into your ear.",
 			Blind ? (fem ? "She" : "He") : Monnam(mon));
 	else
@@ -2180,10 +2167,8 @@ int doseduce(struct monst *mon)
 		mayberem(uarmg, "gloves");
 	mayberem(uarms, "shield");
 	mayberem(uarmh, "helmet");
-#ifdef TOURIST
 	if (!uarmc && !uarm)
 		mayberem(uarmu, "shirt");
-#endif
 
 	if (uarm || uarmc) {
 		verbalize("You're such a %s; I wish...",
@@ -2345,9 +2330,7 @@ static void mayberem(struct obj *obj, const char *str)
 			(obj == uarmc || obj == uarms) ? "it's in the way" :
 			(obj == uarmf) ? "let me rub your feet" :
 			(obj == uarmg) ? "they're too clumsy" :
-#ifdef TOURIST
 			(obj == uarmu) ? "let me massage you" :
-#endif
 			/* obj == uarmh */
 			hairbuf);
 	}

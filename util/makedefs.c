@@ -284,9 +284,6 @@ static void make_version(void)
 			| (1L <<  6)
 #endif
 		/* objects (10..14) */
-#ifdef TOURIST
-			| (1L << 10)
-#endif
 #ifdef GOLDOBJ
 			| (1L << 12)
 #endif
@@ -446,9 +443,6 @@ static const char *build_opts[] = {
 #endif
 #ifdef SEDUCE
 		"seduction",
-#endif
-#ifdef TOURIST
-		"tourists",
 #endif
 #ifdef WALLIFIED_MAZE
 		"walled mazes",
@@ -1302,11 +1296,9 @@ void do_objs(const char *outfile)
 
 		if (!strncmp(objnam, "THE_", 4))
 			objnam += 4;
-#ifdef TOURIST
 		/* fudge _platinum_ YENDORIAN EXPRESS CARD */
 		if (!strncmp(objnam, "PLATINUM_", 9))
 			objnam += 9;
-#endif
 		fprintf(ofp,"#define\tART_%s\t%d\n", limit(objnam, 1), i);
 	}
 

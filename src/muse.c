@@ -950,10 +950,7 @@ boolean find_offensive(struct monst *mtmp)
 		return FALSE;
 	if (u.uswallow) return FALSE;
 	if (in_your_sanctuary(mtmp, 0, 0)) return FALSE;
-	if (dmgtype(mtmp->data, AD_HEAL) && !uwep
-#ifdef TOURIST
-	    && !uarmu
-#endif
+	if (dmgtype(mtmp->data, AD_HEAL) && !uwep && !uarmu
 	    && !uarm && !uarmh && !uarms && !uarmg && !uarmc && !uarmf)
 		return FALSE;
 

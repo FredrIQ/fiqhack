@@ -453,9 +453,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 		case OILSKIN_SACK:
 		case BAG_OF_HOLDING:	mkbox_cnts(otmp);
 					break;
-#ifdef TOURIST
 		case EXPENSIVE_CAMERA:
-#endif
 		case TINNING_KIT:
 		case MAGIC_MARKER:	otmp->spe = rn1(70,30);
 					break;

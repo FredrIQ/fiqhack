@@ -740,11 +740,7 @@ struct obj *getobj(const char *let, const char *word)
 		/* ugly check: remove inappropriate things */
 		if ((taking_off(word) &&
 		    (!(otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))
-		     || (otmp==uarm && uarmc)
-#ifdef TOURIST
-		     || (otmp==uarmu && (uarm || uarmc))
-#endif
-		    ))
+		     || (otmp==uarm && uarmc) || (otmp==uarmu && (uarm || uarmc)) ))
 		|| (putting_on(word) &&
 		     (otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)))
 							/* already worn */
@@ -819,11 +815,7 @@ struct obj *getobj(const char *let, const char *word)
 
 		/* "ugly check" for reading fortune cookies, part 2 */
 		if ((!strcmp(word, "read") &&
-		    (otmp->otyp == FORTUNE_COOKIE
-#ifdef TOURIST
-			|| otmp->otyp == T_SHIRT
-#endif
-		    )))
+		    (otmp->otyp == FORTUNE_COOKIE || otmp->otyp == T_SHIRT)))
 			allowall = TRUE;
 	    }
 
@@ -1027,11 +1019,7 @@ static int ckunpaid(struct obj *otmp)
 
 boolean wearing_armor()
 {
-	return((boolean)(uarm || uarmc || uarmf || uarmg || uarmh || uarms
-#ifdef TOURIST
-		|| uarmu
-#endif
-		));
+	return((boolean)(uarm || uarmc || uarmf || uarmg || uarmh || uarms || uarmu));
 }
 
 boolean is_worn(struct obj *otmp)
@@ -2230,16 +2218,10 @@ int doprarm(void)
 	if (!wearing_armor())
 		You("are not wearing any armor.");
 	else {
-#ifdef TOURIST
 		char lets[8];
-#else
-		char lets[7];
-#endif
 		int ct = 0;
 
-#ifdef TOURIST
 		if (uarmu) lets[ct++] = obj_to_let(uarmu);
-#endif
 		if (uarm) lets[ct++] = obj_to_let(uarm);
 		if (uarmc) lets[ct++] = obj_to_let(uarmc);
 		if (uarmh) lets[ct++] = obj_to_let(uarmh);

@@ -120,9 +120,7 @@ struct obj *invent = NULL,
 	*uwep = NULL, *uarm = NULL,
 	*uswapwep = NULL,
 	*uquiver = NULL, /* quiver */
-#ifdef TOURIST
 	*uarmu = NULL, /* under-wear, so to speak */
-#endif
 	*uskin = NULL, /* dragon armor, if a dragon */
 	*uarmc = NULL, *uarmh = NULL,
 	*uarms = NULL, *uarmg = NULL,

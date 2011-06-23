@@ -12,9 +12,7 @@ static void mdrop_obj(struct monst *,struct obj *,boolean);
 static const char *equipname(struct obj *otmp)
 {
 	return (
-#ifdef TOURIST
 		(otmp == uarmu) ? "shirt" :
-#endif
 		(otmp == uarmf) ? "boots" :
 		(otmp == uarms) ? "shield" :
 		(otmp == uarmg) ? "gloves" :
@@ -176,9 +174,7 @@ void remove_worn_item(struct obj *obj,
 	    else if (obj == uarmg) Gloves_off();
 	    else if (obj == uarmh) Helmet_off();
 	    else if (obj == uarms) Shield_off();
-#ifdef TOURIST
 	    else if (obj == uarmu) Shirt_off();
-#endif
 	    /* catchall -- should never happen */
 	    else setworn(NULL, obj->owornmask & W_ARMOR);
 	} else if (obj->owornmask & W_AMUL) {
@@ -274,10 +270,8 @@ nothing_to_steal:
 	    otmp = uwep;
 	/* can't steal armor while wearing cloak - so steal the cloak. */
 	else if (otmp == uarm && uarmc) otmp = uarmc;
-#ifdef TOURIST
 	else if (otmp == uarmu && uarmc) otmp = uarmc;
 	else if (otmp == uarmu && uarm) otmp = uarm;
-#endif
 gotobj:
 	if (otmp->o_id == stealoid) return 0;
 

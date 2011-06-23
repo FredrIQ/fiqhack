@@ -718,9 +718,7 @@ boolean hits_bars(struct obj **obj_p,	/* *obj_p will be set to NULL if object br
 	case TOOL_CLASS:
 		hits = (obj_type != SKELETON_KEY &&
 			obj_type != LOCK_PICK &&
-#ifdef TOURIST
 			obj_type != CREDIT_CARD &&
-#endif
 			obj_type != TALLOW_CANDLE &&
 			obj_type != WAX_CANDLE &&
 			obj_type != LENSES &&

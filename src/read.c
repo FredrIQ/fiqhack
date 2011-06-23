@@ -50,7 +50,6 @@ int doread(void)
 	    if (!Blind) u.uconduct.literate++;
 	    useup(scroll);
 	    return 1;
-#ifdef TOURIST
 	} else if (scroll->otyp == T_SHIRT) {
 	    static const char *shirt_msgs[] = { /* Scott Bigham */
     "I explored the Dungeons of Doom and all I got was this lousy T-shirt!",
@@ -88,7 +87,6 @@ int doread(void)
 			     scroll->o_id ^ (unsigned)u.ubirthday);
 	    pline("\"%s\"", buf);
 	    return 1;
-#endif	/* TOURIST */
 	} else if (scroll->oclass != SCROLL_CLASS
 		&& scroll->oclass != SPBOOK_CLASS) {
 	    pline(silly_thing_to, "read");
@@ -292,9 +290,7 @@ void recharge(struct obj *obj, int curse_bless)
 		break;
 	    case MAGIC_MARKER:
 	    case TINNING_KIT:
-#ifdef TOURIST
 	    case EXPENSIVE_CAMERA:
-#endif
 		if (is_cursed) stripspe(obj);
 		else if (rechrg && obj->otyp == MAGIC_MARKER) {	/* previously recharged */
 		    obj->recharged = 1;	/* override increment done above */

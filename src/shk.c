@@ -1756,13 +1756,10 @@ static long get_cost(struct obj *obj,
 		} else if (!(obj->o_id % 4)) /* arbitrarily impose surcharge */
 		    tmp += tmp / 3L;
 	}
-#ifdef TOURIST
 	if ((Role_if (PM_TOURIST) && u.ulevel < (MAXULEV/2))
 	    || (uarmu && !uarm && !uarmc))	/* touristy shirt visible */
 		tmp += tmp / 3L;
-	else
-#endif
-	if (uarmh && uarmh->otyp == DUNCE_CAP)
+	else if (uarmh && uarmh->otyp == DUNCE_CAP)
 		tmp += tmp / 3L;
 
 	if (ACURR(A_CHA) > 18)		tmp /= 2L;
@@ -1864,13 +1861,10 @@ static long set_cost(struct obj *obj, struct monst *shkp)
 {
 	long tmp = getprice(obj, TRUE) * obj->quan;
 
-#ifdef TOURIST
 	if ((Role_if (PM_TOURIST) && u.ulevel < (MAXULEV/2))
 	    || (uarmu && !uarm && !uarmc))	/* touristy shirt visible */
 		tmp /= 3L;
-	else
-#endif
-	if (uarmh && uarmh->otyp == DUNCE_CAP)
+	else if (uarmh && uarmh->otyp == DUNCE_CAP)
 		tmp /= 3L;
 	else
 		tmp /= 2L;
@@ -3575,11 +3569,8 @@ static long cost_per_charge(struct monst *shkp, struct obj *otmp,
 	} else if (otmp->oclass == SPBOOK_CLASS) {
 		tmp -= tmp / 5L;
 	} else if (otmp->otyp == CAN_OF_GREASE ||
-		   otmp->otyp == TINNING_KIT
-#ifdef TOURIST
-		   || otmp->otyp == EXPENSIVE_CAMERA
-#endif
-		   ) {
+		   otmp->otyp == TINNING_KIT ||
+		   otmp->otyp == EXPENSIVE_CAMERA) {
 		tmp /= 10L;
 	} else if (otmp->otyp == POT_OIL) {
 		tmp /= 5L;
