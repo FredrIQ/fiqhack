@@ -789,9 +789,7 @@ extern int magic_negation(struct monst *);
 extern int gazemu(struct monst *,struct attack *);
 extern void mdamageu(struct monst *,int);
 extern int could_seduce(struct monst *,struct monst *,struct attack *);
-#ifdef SEDUCE
 extern int doseduce(struct monst *);
-#endif
 
 /* ### minion.c ### */
 

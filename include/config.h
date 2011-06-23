@@ -43,8 +43,6 @@
 
 /*
  * Section 3:	Definitions that may vary with system type.
- *		For example, both schar and uchar should be short ints on
- *		the AT&T 3B2/3B5/etc. family.
  */
 
 #include <stdarg.h>
@@ -63,7 +61,6 @@
 #define WALLIFIED_MAZE	/* Fancy mazes - Jean-Christophe Collet */
 /* monsters & objects */
 #define KOPS		/* Keystone Kops by Scott R. Turner */
-#define SEDUCE		/* Succubi/incubi seduction, by KAA, suggested by IM */
 
 /*
  * Section 5:  EXPERIMENTAL STUFF

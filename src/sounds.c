@@ -673,16 +673,13 @@ static int domonnoise(struct monst *mtmp)
 	    }
 	    break;
 	case MS_SEDUCE:
-#ifdef SEDUCE
-	    if (ptr->mlet != S_NYMPH &&
+	    if (ptr->mlet != S_NYMPH && flags.seduce_enabled &&
 		could_seduce(mtmp, &youmonst, NULL) == 1) {
 			doseduce(mtmp);
 			break;
 	    }
+	    
 	    switch ((poly_gender() != (int) mtmp->female) ? rn2(3) : 0)
-#else
-	    switch ((poly_gender() == 0) ? rn2(3) : 0)
-#endif
 	    {
 		case 2:
 			verbl_msg = "Hello, sailor.";

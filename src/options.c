@@ -146,6 +146,7 @@ struct nh_option_desc options[] = {
 struct nh_option_desc birth_options[] = {
     { "elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL, { VTRUE }},
     { "reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, { VTRUE }},
+    { "seduction", "certain monsters may seduce you", OPTTYPE_BOOL, { VTRUE }},
     { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
@@ -208,6 +209,7 @@ static struct nh_boolopt_map boolopt_map[] = {
 	{"scores_own", &flags.end_own},
 	{"elbereth", &flags.elbereth_enabled},
 	{"reincarnation", &flags.rogue_enabled},
+	{"seduction", &flags.seduce_enabled},
 	{NULL, NULL}
 };
 

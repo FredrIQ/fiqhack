@@ -1339,9 +1339,8 @@ int damageum(struct monst *mdef, struct attack *mattk)
 		    minstapetrify(mdef, TRUE);
 		tmp = 0;
 		break;
-#ifdef SEDUCE
+		
 	    case AD_SSEX:
-#endif
 	    case AD_SEDU:
 	    case AD_SITM:
 		steal_it(mdef, mattk);
@@ -1910,13 +1909,11 @@ use_weapon:
 			break;
 		case AT_CLAW:
 			if (i==0 && uwep && !cantwield(youmonst.data)) goto use_weapon;
-#ifdef SEDUCE
 			/* succubi/incubi are humanoid, but their _second_
 			 * attack is AT_CLAW, not their first...
 			 */
 			if (i==1 && uwep && (u.umonnum == PM_SUCCUBUS ||
 				u.umonnum == PM_INCUBUS)) goto use_weapon;
-#endif
 		case AT_KICK:
 		case AT_BITE:
 		case AT_STNG:

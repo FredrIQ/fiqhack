@@ -441,9 +441,6 @@ static const char *build_opts[] = {
 		"screen control via WIN32 console I/O",
 #  endif
 #endif
-#ifdef SEDUCE
-		"seduction",
-#endif
 #ifdef WALLIFIED_MAZE
 		"walled mazes",
 #endif
