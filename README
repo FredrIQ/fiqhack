@@ -16,7 +16,10 @@ Changes so far:
     - introduced "birth options" that may be set before the game starts. They
 	replace all options that could previously only be changed by editing the
 	config file.
-    - converted ELBERETH and REINCARNATION compile options to birth options.
+    - converted the ELBERETH, REINCARNATION and SEDUCE compile options to birth options.
+    - command input has been changed completely: instead of a moveloop in libnethack,
+	looping is now done in the windowing code, which calls nh_do_move
+	to perform user commands.
 
 Plans:
     - improve library API
@@ -24,9 +27,6 @@ Plans:
 	and should be part of the tty port (IBMgraphics, DECgraphics)
     - rename exported functions to nh_<foo> so that library calls become obvious
 	functions that have not been renamed need review (remove? replace?)
-    - break up moveloop() and externalize looping into the window port; move to
-	"push input" rather than "pull input" model by supplying next command as
-	an arg to each inner moveloop invocation
     - create a qt4-based tile port
 
 
