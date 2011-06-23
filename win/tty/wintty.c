@@ -2758,7 +2758,7 @@ static void bot1(struct nh_player_info *pi)
 	if ((i - j) > 0)
 		sprintf(nb += strlen(nb), "%*s", i-j, " ");	/* pad with spaces */
 	
-	if (pi->st == 18) {
+	if (pi->st == 18 && pi->st_extra) {
 		if (pi->st_extra < 100)
 		    sprintf(nb += strlen(nb), "St:18/%02d ", pi->st_extra);
 		else

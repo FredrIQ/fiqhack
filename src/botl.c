@@ -183,9 +183,12 @@ void nh_get_player_info(struct nh_player_info *pi)
 	/* abilities */
 	pi->st = ACURR(A_STR);
 	pi->st_extra = 0;
-	if (ACURR(A_STR) > 18) {
-		pi->st = ACURR(A_STR) - 100;
-		pi->st_extra = ACURR(A_STR) - 18;
+	if (pi->st > 118) {
+		pi->st = pi->st - 100;
+		pi->st_extra = 0;
+	} else if (pi->st > 18) {
+		pi->st_extra = pi->st - 18;
+		pi->st = 18;
 	}
 	
 	pi->dx = ACURR(A_DEX);
