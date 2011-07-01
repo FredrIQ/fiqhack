@@ -1319,7 +1319,7 @@ void domove(schar dx, schar dy, schar dz)
 	    /* display every step or every 7th step depending upon mode */
 	    if (iflags.runmode != RUN_LEAP || !(moves % 7L)) {
 		botl = 1;
-		curs_on_u();
+		flush_screen(1);
 		delay_output();
 		if (iflags.runmode == RUN_CRAWL) {
 		    delay_output();

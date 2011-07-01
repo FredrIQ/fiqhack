@@ -1087,14 +1087,6 @@ void see_traps(void)
     }
 }
 
-/*
- * Put the cursor on the hero.  Flush all accumulated glyphs before doing it.
- */
-void curs_on_u(void)
-{
-    flush_screen(1);	/* Flush waiting glyphs & put cursor on hero */
-}
-
 int doredraw(void)
 {
     docrt();

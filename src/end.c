@@ -86,7 +86,7 @@ void done1(int sig_unused) /* called as signal() handler, so sent at least one a
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 		clear_nhwindow(NHW_MESSAGE);
-		curs_on_u();
+		flush_screen(1);
 		wait_synch();
 		if (multi > 0) nomul(0);
 	} else {
@@ -103,7 +103,7 @@ int done2(void)
 		signal(SIGINT, (SIG_RET_TYPE) done1);
 #endif
 		clear_nhwindow(NHW_MESSAGE);
-		curs_on_u();
+		flush_screen(1);
 		wait_synch();
 		if (multi > 0) nomul(0);
 		if (multi == 0) {
@@ -386,7 +386,7 @@ static void savelife(int how)
 	botl = 1;
 	u.ugrave_arise = NON_PM;
 	HUnchanging = 0L;
-	curs_on_u();
+	flush_screen(1);
 }
 
 /*

@@ -1286,7 +1286,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 			/* fall through */
 	    default:
 			if (!delaycnt) delaycnt = 1;
-			if (!cansee(bhitpos.x,bhitpos.y)) curs_on_u();
+			if (!cansee(bhitpos.x,bhitpos.y)) flush_screen(1);
 			tmp_at(DISP_FLASH, obj_to_glyph(singleobj));
 			tmp_at(bhitpos.x, bhitpos.y);
 	}
