@@ -544,6 +544,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	} else
 	    do_command(saved_cmd, multi, FALSE, arg);
     }
+    /* no need to do anything here for multi < 0 */
     
     if (u.utotype)		/* change dungeon level */
 	deferred_goto();	/* after rhack() */
@@ -574,12 +575,27 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     /* prepare for the next move */
     flags.move = 1;
     pre_move_tasks(didmove);
-    flush_screen(1); /* Flush screen buffer. Put the cursor on the hero. */
+    flush_screen(1); /* Flush screen buffer */
     
+    /*
+     * performing a command can put the game into several different states:
+     *  - the command completes immediately: a simple move or an attack etc
+     *    multi == 0, occupation == NULL
+     *  - if a count is given, the command will (usually) take count turns
+     *    multi == count (> 0), occupation == NULL
+     *  - the command may cause a delay: for ex. putting on or removing armor
+     *    multi == -delay (< 0), occupation == NULL
+     *    multi is incremented in you_moved
+     *  - the command may take multiple moves, and require a callback to be
+     *    run for each move. example: forcing a lock
+     *    multi >= 0, occupation == callback
+     */
     if (multi >= 0 && occupation)
 	return OCCUPATION_IN_PROGRESS;
     else if (multi > 0)
 	return MULTI_IN_PROGRESS;
+    else if (multi < 0)
+	return POST_ACTION_DELAY;
     
     return READY_FOR_INPUT;
 }
