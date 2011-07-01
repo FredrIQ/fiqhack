@@ -46,7 +46,7 @@ static void speaker(struct obj *,char *);
 
 static void awaken_monsters(int distance)
 {
-	struct monst *mtmp = fmon;
+	struct monst *mtmp = level.monlist;
 	int distm;
 
 	while (mtmp) {
@@ -72,7 +72,7 @@ static void awaken_monsters(int distance)
 
 static void put_monsters_to_sleep(int distance)
 {
-	struct monst *mtmp = fmon;
+	struct monst *mtmp = level.monlist;
 
 	while (mtmp) {
 		if (!DEADMONSTER(mtmp) && distu(mtmp->mx, mtmp->my) < distance &&
@@ -89,7 +89,7 @@ static void put_monsters_to_sleep(int distance)
  */
 static void charm_snakes(int distance)
 {
-	struct monst *mtmp = fmon;
+	struct monst *mtmp = level.monlist;
 	int could_see_mon, was_peaceful;
 
 	while (mtmp) {
@@ -120,7 +120,7 @@ static void charm_snakes(int distance)
  */
 static void calm_nymphs(int distance)
 {
-	struct monst *mtmp = fmon;
+	struct monst *mtmp = level.monlist;
 
 	while (mtmp) {
 	    if (!DEADMONSTER(mtmp) && mtmp->data->mlet == S_NYMPH && mtmp->mcanmove &&
@@ -140,7 +140,7 @@ static void calm_nymphs(int distance)
 /* Awake only soldiers of the level. */
 void awaken_soldiers(void)
 {
-	struct monst *mtmp = fmon;
+	struct monst *mtmp = level.monlist;
 
 	while (mtmp) {
 	    if (!DEADMONSTER(mtmp) &&
@@ -167,7 +167,7 @@ static void charm_monsters(int distance)
 	    if (!resist(u.ustuck, TOOL_CLASS, 0, NOTELL))
 		tamedog(u.ustuck, NULL);
 	} else {
-	    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
 		if (DEADMONSTER(mtmp)) continue;
 

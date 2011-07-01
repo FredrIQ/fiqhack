@@ -1436,7 +1436,7 @@ void obj_sanity_check(void)
     }
 
     mesg = "minvent sanity";
-    for (mon = fmon; mon; mon = mon->nmon)
+    for (mon = level.monlist; mon; mon = mon->nmon)
 	for (obj = mon->minvent; obj; obj = obj->nobj) {
 	    if (obj->where != OBJ_MINVENT) {
 		pline("%s obj %p %s: %s\n", mesg,

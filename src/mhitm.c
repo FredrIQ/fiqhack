@@ -106,7 +106,7 @@ int fightm(struct monst *mtmp)		/* have monsters fight each other */
 	}
 	has_u_swallowed = (u.uswallow && (mtmp == u.ustuck));
 
-	for (mon = fmon; mon; mon = nmon) {
+	for (mon = level.monlist; mon; mon = nmon) {
 	    nmon = mon->nmon;
 	    if (nmon == mtmp) nmon = mtmp->nmon;
 	    /* Be careful to ignore monsters that are already dead, since we

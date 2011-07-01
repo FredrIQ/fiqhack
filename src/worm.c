@@ -526,7 +526,7 @@ void place_wsegs(struct monst *worm)
  *  This function is equivalent to the remove_monster #define in
  *  rm.h, only it will take the worm *and* tail out of the levels array.
  *  It does not get rid of (dealloc) the worm tail structures, and it does
- *  not remove the mon from the fmon chain.
+ *  not remove the mon from the level.monlist chain.
  */
 void remove_worm(struct monst *worm)
 {

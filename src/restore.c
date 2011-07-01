@@ -417,13 +417,13 @@ static void restlevelstate(unsigned int stuckid, unsigned int steedid)
 	struct monst *mtmp;
 
 	if (stuckid) {
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 			if (mtmp->m_id == stuckid) break;
 		if (!mtmp) panic("Cannot find the monster ustuck.");
 		u.ustuck = mtmp;
 	}
 	if (steedid) {
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 			if (mtmp->m_id == steedid) break;
 		if (!mtmp) panic("Cannot find the monster usteed.");
 		u.usteed = mtmp;
@@ -602,13 +602,13 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 
 	restore_timers(fd, RANGE_LEVEL, ghostly, monstermoves - omoves);
 	restore_light_sources(fd);
-	fmon = restmonchn(fd, ghostly);
+	level.monlist = restmonchn(fd, ghostly);
 
 	/* regenerate animals while on another level */
 	if (u.uz.dlevel) {
 	    struct monst *mtmp2;
 
-	    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
 		if (ghostly) {
 			/* reset peaceful/malign relative to new character */

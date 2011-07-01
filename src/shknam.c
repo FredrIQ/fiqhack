@@ -289,7 +289,7 @@ static void nameshk(struct monst *shk, const char * const *nlp)
 		}
 
 		/* is name already in use on this level? */
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp) || (mtmp == shk) || !mtmp->isshk) continue;
 		    if (strcmp(ESHK(mtmp)->shknam, shname)) continue;
 		    break;

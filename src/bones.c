@@ -199,7 +199,7 @@ void savebones(struct obj *corpse)
  make_bones:
 	unleash_all();
 	/* in case these characters are not in their home bases */
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    mptr = mtmp->data;
 	    if (mtmp->iswiz || mptr == &mons[PM_MEDUSA] ||
@@ -265,7 +265,7 @@ void savebones(struct obj *corpse)
 		mtmp->female = flags.female;
 		mtmp->msleeping = 1;
 	}
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		resetobjs(mtmp->minvent,FALSE);
 		/* do not zero out m_ids for bones levels any more */
 		mtmp->mlstmv = 0L;
@@ -366,7 +366,7 @@ int getbones(void)
 			 * subject to genocide, their mhpmax will be
 			 * set to the magic DEFUNCT_MONSTER cookie value.
 			 */
-			for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+			for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 			    if (mtmp->mhpmax == DEFUNCT_MONSTER) {
 #if defined(DEBUG)
 				if (wizard)

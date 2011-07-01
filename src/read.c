@@ -791,7 +791,7 @@ int seffects(struct obj *sobj)
 	    {	int ct = 0;
 		struct monst *mtmp;
 
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp)) continue;
 		    if (cansee(mtmp->mx,mtmp->my)) {
 			if (confused || sobj->cursed) {
@@ -1404,7 +1404,7 @@ static void do_class_genocide(void)
 			    struct monst *mtmp, *mtmp2;
 
 			    gonecnt = 0;
-			    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+			    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 				mtmp2 = mtmp->nmon;
 			    	if (DEADMONSTER(mtmp)) continue;
 				mongone(mtmp);

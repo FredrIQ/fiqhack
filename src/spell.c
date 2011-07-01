@@ -259,7 +259,7 @@ raise_dead:
 	mm.y = u.uy;
 	mkundead(&mm, TRUE, NO_MINVENT);
     } else if (book2->blessed) {
-	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;		/* tamedog() changes chain */
 	    if (DEADMONSTER(mtmp)) continue;
 

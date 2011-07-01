@@ -520,7 +520,7 @@ void clear_bypasses(void)
 	/* invent and mydogs chains shouldn't matter here */
 	for (otmp = migrating_objs; otmp; otmp = otmp->nobj)
 	    otmp->bypass = 0;
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 		otmp->bypass = 0;

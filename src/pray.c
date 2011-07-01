@@ -1648,7 +1648,7 @@ int doturn(void)
 	range = BOLT_LIM + (u.ulevel / 5);	/* 5 to 11 */
 	range *= range;
 	once = 0;
-	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 
 	    if (DEADMONSTER(mtmp)) continue;

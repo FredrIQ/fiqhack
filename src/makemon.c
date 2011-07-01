@@ -632,8 +632,8 @@ struct monst *clone_mon(struct monst *mon,
 	}
 	m2 = newmonst(0);
 	*m2 = *mon;			/* copy condition of old monster */
-	m2->nmon = fmon;
-	fmon = m2;
+	m2->nmon = level.monlist;
+	level.monlist = m2;
 	m2->m_id = flags.ident++;
 	if (!m2->m_id) m2->m_id = flags.ident++;	/* ident overflowed */
 	m2->mx = mm.x;
@@ -832,8 +832,8 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	mtmp = newmonst(xlth);
 	*mtmp = zeromonst;		/* clear all entries in structure */
 	memset(mtmp->mextra, 0, xlth);
-	mtmp->nmon = fmon;
-	fmon = mtmp;
+	mtmp->nmon = level.monlist;
+	level.monlist = mtmp;
 	mtmp->m_id = flags.ident++;
 	if (!mtmp->m_id) mtmp->m_id = flags.ident++;	/* ident overflowed */
 	set_mon_data(mtmp, ptr, 0);

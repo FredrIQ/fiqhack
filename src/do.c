@@ -1236,7 +1236,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	if (Is_knox(&u.uz) && (new || !mvitals[PM_CROESUS].died)) {
 		You("penetrated a high security area!");
 		pline("An alarm sounds!");
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		    if (!DEADMONSTER(mtmp) && mtmp->msleeping) mtmp->msleeping = 0;
 	}
 
@@ -1263,7 +1263,7 @@ static void final_level(void)
 	int i;
 
 	/* reset monster hostility relative to player */
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp)) reset_hostility(mtmp);
 
 	/* create some player-monsters */

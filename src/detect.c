@@ -155,7 +155,7 @@ int gold_detect(struct obj *sobj)
 				(unsigned)(sobj->blessed ? GOLD : 0));
 
     /* look for gold carried by monsters (might be in a container) */
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably not needed in this case but... */
 #ifndef GOLDOBJ
 	if (mtmp->mgold || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
@@ -232,7 +232,7 @@ outgoldmap:
 	    map_object(temp,1);
 	}
     }
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably overkill here */
 #ifndef GOLDOBJ
 	if (mtmp->mgold || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
@@ -289,7 +289,7 @@ int food_detect(struct obj *sobj)
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
 	}
-    for (mtmp = fmon; mtmp && !ct; mtmp = mtmp->nmon) {
+    for (mtmp = level.monlist; mtmp && !ct; mtmp = mtmp->nmon) {
 	/* no DEADMONSTER(mtmp) check needed since dmons never have inventory */
 	for (obj = mtmp->minvent; obj; obj = obj->nobj)
 	    if (o_in(obj, oclass)) {
@@ -341,7 +341,7 @@ int food_detect(struct obj *sobj)
 		}
 		map_object(temp,1);
 	    }
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 	    /* no DEADMONSTER(mtmp) check needed since dmons never have inventory */
 	    for (obj = mtmp->minvent; obj; obj = obj->nobj)
 		if ((temp = o_in(obj, oclass)) != 0) {
@@ -430,7 +430,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 	if (do_dknown) do_dknown_of(obj);
     }
 
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 	for (obj = mtmp->minvent; obj; obj = obj->nobj) {
 	    if ((!class && !boulder) || o_in(obj, class) || o_in(obj, boulder)) ct++;
@@ -501,7 +501,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 		}
 
     /* Objects in the monster's inventory override floor objects. */
-    for (mtmp = fmon ; mtmp ; mtmp = mtmp->nmon) {
+    for (mtmp = level.monlist ; mtmp ; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 	for (obj = mtmp->minvent; obj; obj = obj->nobj)
 	    if ((!class && !boulder) ||
@@ -564,12 +564,12 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
     int mcnt = 0;
 
 
-    /* Note: This used to just check fmon for a non-zero value
-     * but in versions since 3.3.0 fmon can test TRUE due to the
+    /* Note: This used to just check level.monlist for a non-zero value
+     * but in versions since 3.3.0 level.monlist can test TRUE due to the
      * presence of dmons, so we have to find at least one
      * with positive hit-points to know for sure.
      */
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
     	if (!DEADMONSTER(mtmp)) {
 		mcnt++;
 		break;
@@ -585,7 +585,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	boolean woken = FALSE;
 
 	cls();
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (!mclass || mtmp->data->mlet == mclass ||
 		(mtmp->data == &mons[PM_LONG_WORM] && mclass == S_WORM_TAIL))

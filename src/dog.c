@@ -171,7 +171,7 @@ void update_mlstmv(void)
 
 	/* monst->mlstmv used to be updated every time `monst' actually moved,
 	   but that is no longer the case so we just do a blanket assignment */
-	for (mon = fmon; mon; mon = mon->nmon)
+	for (mon = level.monlist; mon; mon = mon->nmon)
 	    if (!DEADMONSTER(mon)) mon->mlstmv = monstermoves;
 }
 
@@ -204,8 +204,8 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 	xchar xlocale, ylocale, xyloc, xyflags, wander;
 	int num_segs;
 
-	mtmp->nmon = fmon;
-	fmon = mtmp;
+	mtmp->nmon = level.monlist;
+	level.monlist = mtmp;
 	if (mtmp->isshk)
 	    set_residency(mtmp, FALSE);
 
@@ -457,7 +457,7 @@ void keepdogs(boolean pets_only)
 	int num_segs;
 	boolean stay_behind;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (pets_only && !mtmp->mtame) continue;

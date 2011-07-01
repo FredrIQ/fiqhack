@@ -476,7 +476,6 @@ extern dlevel_t level;	/* structure describing the current level */
  * Macros for compatibility with old code. Someday these will go away.
  */
 #define fobj		level.objlist
-#define fmon		level.monlist
 
 /*
  * Covert a trap number into the defsym graphics array.

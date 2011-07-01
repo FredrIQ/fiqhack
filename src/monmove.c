@@ -369,7 +369,7 @@ int dochug(struct monst *mtmp)
 				losehp(dmg, "psychic blast", KILLED_BY_AN);
 			}
 		}
-		for (m2=fmon; m2; m2 = nmon) {
+		for (m2=level.monlist; m2; m2 = nmon) {
 			nmon = m2->nmon;
 			if (DEADMONSTER(m2)) continue;
 			if (m2->mpeaceful == mtmp->mpeaceful) continue;

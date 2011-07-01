@@ -46,7 +46,7 @@ static const char *dev_name(void)
 	do {
 	    match = FALSE;
 	    i = rn2(n);
-	    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (!is_mplayer(mtmp->data)) continue;
 		if (!strncmp(developers[i], NAME(mtmp),
 			               strlen(developers[i]))) {

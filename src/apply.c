@@ -307,7 +307,7 @@ static void use_magic_whistle(struct obj *obj)
 	} else {
 		int pet_cnt = 0;
 		You(whistle_str, Hallucination ? "normal" : "strange");
-		for (mtmp = fmon; mtmp; mtmp = nextmon) {
+		for (mtmp = level.monlist; mtmp; mtmp = nextmon) {
 		    nextmon = mtmp->nmon; /* trap might kill mon */
 		    if (DEADMONSTER(mtmp)) continue;
 		    if (mtmp->mtame) {
@@ -344,7 +344,7 @@ void o_unleash(struct obj *otmp)	/* otmp is about to be destroyed or stolen */
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		if (mtmp->m_id == (unsigned)otmp->leashmon)
 			mtmp->mleashed = 0;
 	otmp->leashmon = 0;
@@ -374,7 +374,7 @@ void unleash_all(void)		/* player is about to die (for bones) */
 
 	for (otmp = invent; otmp; otmp = otmp->nobj)
 		if (otmp->otyp == LEASH) otmp->leashmon = 0;
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		mtmp->mleashed = 0;
 }
 
@@ -470,7 +470,7 @@ boolean next_to_u(void)
 	struct monst *mtmp;
 	struct obj *otmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		if (mtmp->mleashed) {
 			if (distu(mtmp->mx,mtmp->my) > 2) mnexto(mtmp);
@@ -501,7 +501,7 @@ void check_leash(xchar x, xchar y)
 
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    if (otmp->otyp != LEASH || otmp->leashmon == 0) continue;
-	    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		if ((int)mtmp->m_id == otmp->leashmon) break; 
 	    }

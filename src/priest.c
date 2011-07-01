@@ -279,7 +279,7 @@ struct monst *findpriest(char roomno)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (mtmp->ispriest && (EPRI(mtmp)->shroom == roomno) &&
 	       histemple_at(mtmp,mtmp->mx,mtmp->my))
@@ -650,7 +650,7 @@ void clearpriests(void)
 {
     struct monst *mtmp, *mtmp2;
 
-    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	mtmp2 = mtmp->nmon;
 	if (!DEADMONSTER(mtmp) && mtmp->ispriest && !on_level(&(EPRI(mtmp)->shrlevel), &u.uz))
 	    mongone(mtmp);

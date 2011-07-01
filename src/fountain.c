@@ -140,7 +140,7 @@ void dryup(xchar x, xchar y, boolean isyou)
 			struct monst *mtmp;
 			SET_FOUNTAIN_WARNED(x,y);
 			/* Warn about future fountain use. */
-			for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+			for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 			    if (DEADMONSTER(mtmp)) continue;
 			    if ((mtmp->data == &mons[PM_WATCHMAN] ||
 				mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&
@@ -310,7 +310,7 @@ void drinkfountain(void)
 			struct monst *mtmp;
 
 			pline("This water gives you bad breath!");
-			for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+			for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 			    if (!DEADMONSTER(mtmp))
 				monflee(mtmp, 0, FALSE, FALSE);
 			}

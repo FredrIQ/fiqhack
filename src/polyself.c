@@ -916,7 +916,7 @@ int dogaze(void)
 	u.uen -= 15;
 	botl = 1;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
 		looked++;
@@ -1042,7 +1042,7 @@ int domindblast(void)
 
 	You("concentrate.");
 	pline("A wave of psychic energy pours out.");
-	for (mtmp=fmon; mtmp; mtmp = nmon) {
+	for (mtmp=level.monlist; mtmp; mtmp = nmon) {
 		int u_sen;
 
 		nmon = mtmp->nmon;

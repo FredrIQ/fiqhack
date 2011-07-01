@@ -130,7 +130,7 @@ struct flag {
 struct instance_flags {
 	boolean  vision_inited; /* true if vision is ready */
 	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
-	int      purge_monsters;	/* # of dead monsters still on fmon list */
+	int      purge_monsters;	/* # of dead monsters still on level.monlist list */
 	uchar	bouldersym;	/* symbol for boulder display */
 	boolean travel1;	/* first travel step */
 	coord	travelcc;	/* coordinates for travel_cache */

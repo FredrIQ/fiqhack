@@ -968,7 +968,7 @@ void watch_dig(struct monst *mtmp, xchar x, xchar y, boolean zap)
 	    (closed_door(x, y) || lev->typ == SDOOR ||
 	     IS_WALL(lev->typ) || IS_FOUNTAIN(lev->typ) || IS_TREE(lev->typ))) {
 	    if (!mtmp) {
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp)) continue;
 		    if ((mtmp->data == &mons[PM_WATCHMAN] ||
 			 mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&

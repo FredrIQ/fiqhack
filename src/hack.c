@@ -1463,7 +1463,7 @@ static boolean monstinroom(struct permonst *mdat, int roomno)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		if (!DEADMONSTER(mtmp) && mtmp->data == mdat &&
 		   index(in_rooms(mtmp->mx, mtmp->my, 0), roomno + ROOMOFFSET))
 			return TRUE;
@@ -1703,7 +1703,7 @@ void check_special_room(boolean newlev)
 			}
 		}
 		if (rt == COURT || rt == SWAMP || rt == MORGUE || rt == ZOO)
-		    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+		    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 			if (!DEADMONSTER(mtmp) && !Stealth && !rn2(3)) mtmp->msleeping = 0;
 	    }
 	}

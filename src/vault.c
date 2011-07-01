@@ -92,7 +92,7 @@ static struct monst *findgd(void)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 	    if (mtmp->isgd && !DEADMONSTER(mtmp) && on_level(&(EGD(mtmp)->gdlevel), &u.uz))
 		return mtmp;
 	return NULL;

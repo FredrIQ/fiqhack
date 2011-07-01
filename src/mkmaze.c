@@ -442,7 +442,7 @@ static void fixup_special(void)
 	   struct monst *mtmp, *mtmp2;
 
 	   /* it's a ghost town, get rid of shopkeepers */
-	    for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 		    mtmp2 = mtmp->nmon;
 		    if (mtmp->isshk) mongone(mtmp);
 	    }

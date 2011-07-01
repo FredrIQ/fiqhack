@@ -333,14 +333,14 @@ void savelev(int fd, xchar lev, int mode)
 	save_timers(fd, mode, RANGE_LEVEL);
 	save_light_sources(fd, mode, RANGE_LEVEL);
 
-	savemonchn(fd, fmon, mode);
+	savemonchn(fd, level.monlist, mode);
 	save_worm(fd, mode);	/* save worm information */
 	savetrapchn(fd, ftrap, mode);
 	saveobjchn(fd, fobj, mode);
 	saveobjchn(fd, level.buriedobjlist, mode);
 	saveobjchn(fd, billobjs, mode);
 	if (release_data(mode)) {
-	    fmon = 0;
+	    level.monlist = 0;
 	    ftrap = 0;
 	    fobj = 0;
 	    level.buriedobjlist = 0;
@@ -606,7 +606,7 @@ void freedynamicdata(void)
 	/* level-specific data */
 	free_timers(RANGE_LEVEL);
 	free_light_sources(RANGE_LEVEL);
-	freemonchn(fmon);
+	freemonchn(level.monlist);
 	free_worm();		/* release worm segment information */
 	freetrapchn(ftrap);
 	freeobjchn(fobj);

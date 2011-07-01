@@ -1052,7 +1052,7 @@ dumb:
 		    pay_for_damage("break", FALSE);
 		}
 		if (in_town(x, y))
-		  for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		  for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp)) continue;
 		    if ((mtmp->data == &mons[PM_WATCHMAN] ||
 			mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&
@@ -1072,7 +1072,7 @@ dumb:
 	    exercise(A_STR, TRUE);
 	    pline("WHAMMM!!!");
 	    if (in_town(x, y))
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp)) continue;
 		    if ((mtmp->data == &mons[PM_WATCHMAN] ||
 				mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&

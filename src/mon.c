@@ -411,7 +411,7 @@ void mcalcdistress(void)
 {
     struct monst *mtmp;
 
-    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 
 	/* must check non-moving monsters once/turn in case
@@ -465,7 +465,7 @@ int movemon(void)
     teleport another, this scheme would have problems.
     */
 
-    for (mtmp = fmon; mtmp; mtmp = nmtmp) {
+    for (mtmp = level.monlist; mtmp; mtmp = nmtmp) {
 	nmtmp = mtmp->nmon;
 
 	/* Find a monster that we have not treated yet.	 */
@@ -1091,7 +1091,7 @@ void dmonsfree(void)
     struct monst **mtmp;
     int count = 0;
 
-    for (mtmp = &fmon; *mtmp;) {
+    for (mtmp = &level.monlist; *mtmp;) {
 	if ((*mtmp)->mhp <= 0) {
 	    struct monst *freetmp = *mtmp;
 	    *mtmp = (*mtmp)->nmon;
@@ -1123,7 +1123,7 @@ void replmon(struct monst *mtmp, struct monst *mtmp2)
     }
     mtmp->minvent = 0;
 
-    /* remove the old monster from the map and from `fmon' list */
+    /* remove the old monster from the map and from `level.monlist' list */
     relmon(mtmp);
 
     /* finish adding its replacement */
@@ -1139,8 +1139,8 @@ void replmon(struct monst *mtmp, struct monst *mtmp2)
 	/* here we rely on the fact that `mtmp' hasn't actually been deleted */
 	del_light_source(LS_MONSTER, mtmp);
     }
-    mtmp2->nmon = fmon;
-    fmon = mtmp2;
+    mtmp2->nmon = level.monlist;
+    level.monlist = mtmp2;
     if (u.ustuck == mtmp) u.ustuck = mtmp2;
     if (u.usteed == mtmp) u.usteed = mtmp2;
     if (mtmp2->isshk) replshk(mtmp,mtmp2);
@@ -1154,13 +1154,13 @@ void relmon(struct monst *mon)
 {
 	struct monst *mtmp;
 
-	if (fmon == NULL)  panic ("relmon: no fmon available.");
+	if (level.monlist == NULL)  panic ("relmon: no level.monlist available.");
 
 	remove_monster(mon->mx, mon->my);
 
-	if (mon == fmon) fmon = fmon->nmon;
+	if (mon == level.monlist) level.monlist = level.monlist->nmon;
 	else {
-		for (mtmp = fmon; mtmp && mtmp->nmon != mon; mtmp = mtmp->nmon) ;
+		for (mtmp = level.monlist; mtmp && mtmp->nmon != mon; mtmp = mtmp->nmon) ;
 		if (mtmp)    mtmp->nmon = mon->nmon;
 		else	    panic("relmon: mon not in list.");
 	}
@@ -1896,7 +1896,7 @@ void setmangry(struct monst *mtmp)
 	    int got_mad = 0;
 
 	    /* guardians will sense this attack even if they can't see it */
-	    for (mon = fmon; mon; mon = mon->nmon)
+	    for (mon = level.monlist; mon; mon = mon->nmon)
 		if (!DEADMONSTER(mon) && mon->data == q_guardian && mon->mpeaceful) {
 		    mon->mpeaceful = 0;
 		    if (canseemon(mon)) ++got_mad;
@@ -1927,7 +1927,7 @@ void wake_nearby(void)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (!DEADMONSTER(mtmp) && distu(mtmp->mx,mtmp->my) < u.ulevel*20) {
 		mtmp->msleeping = 0;
 		if (mtmp->mtame && !mtmp->isminion)
@@ -1941,7 +1941,7 @@ void wake_nearto(int x, int y, int distance)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (!DEADMONSTER(mtmp) && mtmp->msleeping && (distance == 0 ||
 				 dist2(mtmp->mx, mtmp->my, x, y) < distance))
 		mtmp->msleeping = 0;
@@ -1975,7 +1975,7 @@ void rescham(void)
 	struct monst *mtmp;
 	int mcham;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		mcham = (int) mtmp->cham;
 		if (mcham) {
@@ -1999,7 +1999,7 @@ void restartcham(void)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		mtmp->cham = pm_to_cham(monsndx(mtmp->data));
 		if (mtmp->data->mlet == S_MIMIC && mtmp->msleeping &&
@@ -2408,7 +2408,7 @@ void kill_genocided_monsters(void)
 	 *	2) otherwise, force every chameleon which is imitating
 	 *	   any genocided species to take on a new form.
 	 */
-	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 	    if (DEADMONSTER(mtmp)) continue;
 	    mndx = monsndx(mtmp->data);
@@ -2459,7 +2459,7 @@ boolean angry_guards(boolean silent)
 	struct monst *mtmp;
 	int ct = 0, nct = 0, sct = 0, slct = 0;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		if ((mtmp->data == &mons[PM_WATCHMAN] ||
 			       mtmp->data == &mons[PM_WATCH_CAPTAIN])
@@ -2498,7 +2498,7 @@ void pacify_guards(void)
 {
 	struct monst *mtmp;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (mtmp->data == &mons[PM_WATCHMAN] ||
 		mtmp->data == &mons[PM_WATCH_CAPTAIN])

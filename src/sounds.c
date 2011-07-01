@@ -52,7 +52,7 @@ void dosounds(void)
 		"Someone shouts \"Off with %s head!\"",
 		"Queen Beruthiel's cats!",
 	};
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if ((mtmp->msleeping ||
 			is_lord(mtmp->data) || is_prince(mtmp->data)) &&
@@ -113,7 +113,7 @@ void dosounds(void)
 	return;
     }
     if (level.flags.has_beehive && !rn2(200)) {
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if ((mtmp->data->mlet == S_ANT && is_flyer(mtmp->data)) &&
 		mon_in_room(mtmp, BEEHIVE)) {
@@ -134,7 +134,7 @@ void dosounds(void)
 	}
     }
     if (level.flags.has_morgue && !rn2(200)) {
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (is_undead(mtmp->data) &&
 		mon_in_room(mtmp, MORGUE)) {
@@ -164,7 +164,7 @@ void dosounds(void)
 	};
 	int count = 0;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (is_mercenary(mtmp->data) &&
 		mon_in_room(mtmp, BARRACKS) &&
@@ -181,7 +181,7 @@ void dosounds(void)
 		"a sound reminiscent of a seal barking.",
 		"Doctor Doolittle!",
 	};
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if ((mtmp->msleeping || is_animal(mtmp->data)) &&
 		    mon_in_room(mtmp, ZOO)) {
@@ -209,7 +209,7 @@ void dosounds(void)
     }
     if (Is_oracle_level(&u.uz) && !rn2(400)) {
 	/* make sure the Oracle is still here */
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp) && mtmp->data == &mons[PM_ORACLE])
 		break;
 	/* and don't produce silly effects when she's clearly visible */

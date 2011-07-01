@@ -1162,7 +1162,7 @@ static void contained(struct menulist *menu, const char *src, long *total_count,
 	count_obj(level.buriedobjlist, &count, &size, FALSE, TRUE);
 	count_obj(migrating_objs, &count, &size, FALSE, TRUE);
 	/* DEADMONSTER check not required in this loop since they have no inventory */
-	for (mon = fmon; mon; mon = mon->nmon)
+	for (mon = level.monlist; mon; mon = mon->nmon)
 	    count_obj(mon->minvent, &count, &size, FALSE, TRUE);
 	for (mon = migrating_mons; mon; mon = mon->nmon)
 	    count_obj(mon->minvent, &count, &size, FALSE, TRUE);
@@ -1214,7 +1214,7 @@ static int wiz_show_stats(void)
 				&total_obj_count, &total_obj_size);
 	obj_chain(&menu, "migrating obj", migrating_objs,
 				&total_obj_count, &total_obj_size);
-	mon_invent_chain(&menu, "minvent", fmon,
+	mon_invent_chain(&menu, "minvent", level.monlist,
 				&total_obj_count,&total_obj_size);
 	mon_invent_chain(&menu, "migrating minvent", migrating_mons,
 				&total_obj_count, &total_obj_size);
@@ -1232,7 +1232,7 @@ static int wiz_show_stats(void)
 	add_menutext(&menu, buf);
 	add_menutext(&menu, "");
 
-	mon_chain(&menu, "fmon", fmon,
+	mon_chain(&menu, "level.monlist", level.monlist,
 				&total_mon_count, &total_mon_size);
 	mon_chain(&menu, "migrating", migrating_mons,
 				&total_mon_count, &total_mon_size);

@@ -252,7 +252,7 @@ static void setpaid(struct monst *shkp)
 	clear_unpaid(fobj);
 	clear_unpaid(level.buriedobjlist);
 	if (thrownobj) thrownobj->unpaid = 0;
-	for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		clear_unpaid(mtmp->minvent);
 	for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)
 		clear_unpaid(mtmp->minvent);
@@ -572,14 +572,14 @@ boolean same_price(struct obj *obj1, struct obj *obj2)
 	boolean are_mergable = FALSE;
 
 	/* look up the first object by finding shk whose bill it's on */
-	for (shkp1 = next_shkp(fmon, TRUE); shkp1;
+	for (shkp1 = next_shkp(level.monlist, TRUE); shkp1;
 		shkp1 = next_shkp(shkp1->nmon, TRUE))
 	    if ((bp1 = onbill(obj1, shkp1, TRUE)) != 0) break;
 	/* second object is probably owned by same shk; if not, look harder */
 	if (shkp1 && (bp2 = onbill(obj2, shkp1, TRUE)) != 0) {
 	    shkp2 = shkp1;
 	} else {
-	    for (shkp2 = next_shkp(fmon, TRUE); shkp2;
+	    for (shkp2 = next_shkp(level.monlist, TRUE); shkp2;
 		    shkp2 = next_shkp(shkp2->nmon, TRUE))
 		if ((bp2 = onbill(obj2, shkp2, TRUE)) != 0) break;
 	}
@@ -623,7 +623,7 @@ void shopper_financial_report(void)
 	/* pass 0: report for the shop we're currently in, if any;
 	   pass 1: report for all other shops on this level. */
 	for (pass = this_shkp ? 0 : 1; pass <= 1; pass++)
-	    for (shkp = next_shkp(fmon, FALSE);
+	    for (shkp = next_shkp(level.monlist, FALSE);
 		    shkp; shkp = next_shkp(shkp->nmon, FALSE)) {
 		if ((shkp != this_shkp) ^ pass) continue;
 		eshkp = ESHK(shkp);
@@ -716,7 +716,7 @@ void obfree(struct obj *obj, struct obj *merge)
 	shkp = 0;
 	if (obj->unpaid) {
 	    /* look for a shopkeeper who owns this object */
-	    for (shkp = next_shkp(fmon, TRUE); shkp;
+	    for (shkp = next_shkp(level.monlist, TRUE); shkp;
 		    shkp = next_shkp(shkp->nmon, TRUE))
 		if (onbill(obj, shkp, TRUE)) break;
 	}
@@ -813,7 +813,7 @@ static boolean angry_shk_exists(void)
 {
 	struct monst *shkp;
 
-	for (shkp = next_shkp(fmon, FALSE);
+	for (shkp = next_shkp(level.monlist, FALSE);
 		shkp; shkp = next_shkp(shkp->nmon, FALSE))
 	    if (ANGRY(shkp)) return TRUE;
 	return FALSE;
@@ -988,7 +988,7 @@ int dopay(void)
 	/* find how many shk's there are, how many are in */
 	/* sight, and are you in a shop room with one.    */
 	nxtm = resident = 0;
-	for (shkp = next_shkp(fmon, FALSE);
+	for (shkp = next_shkp(level.monlist, FALSE);
 		shkp; shkp = next_shkp(shkp->nmon, FALSE)) {
 	    sk++;
 	    if (ANGRY(shkp) && distu(shkp->mx, shkp->my) <= 2) nxtm = shkp;
@@ -1020,7 +1020,7 @@ int dopay(void)
 	}
 
 	if (seensk == 1) {
-		for (shkp = next_shkp(fmon, FALSE);
+		for (shkp = next_shkp(level.monlist, FALSE);
 			shkp; shkp = next_shkp(shkp->nmon, FALSE))
 		    if (canspotmon(shkp)) break;
 		if (shkp != resident && distu(shkp->mx, shkp->my) > 2) {
@@ -1490,7 +1490,7 @@ boolean paybill(int croaked)
 	    resident = mtmp;
 	    taken = inherits(resident, numsk, croaked);
 	}
-	for (mtmp = next_shkp(fmon, FALSE);
+	for (mtmp = next_shkp(level.monlist, FALSE);
 		mtmp; mtmp = next_shkp(mtmp2, FALSE)) {
 	    mtmp2 = mtmp->nmon;
 	    if (mtmp != resident) {
@@ -1689,7 +1689,7 @@ struct obj *find_oid(unsigned id)
 	if ((obj = o_on(id, migrating_objs)) != 0) return obj;
 
 	/* not found yet; check inventory for members of various monst lists */
-	mmtmp[0] = fmon;
+	mmtmp[0] = level.monlist;
 	mmtmp[1] = migrating_mons;
 	mmtmp[2] = mydogs;		/* for use during level changes */
 	for (i = 0; i < 3; i++)
@@ -1893,7 +1893,7 @@ long unpaid_cost(struct obj *unp_obj )
 	struct bill_x *bp = NULL;
 	struct monst *shkp;
 
-	for (shkp = next_shkp(fmon, TRUE); shkp;
+	for (shkp = next_shkp(level.monlist, TRUE); shkp;
 					shkp = next_shkp(shkp->nmon, TRUE))
 	    if ((bp = onbill(unp_obj, shkp, TRUE)) != 0) break;
 
@@ -3517,7 +3517,7 @@ static void kops_gone(boolean silent)
 	int cnt = 0;
 	struct monst *mtmp, *mtmp2;
 
-	for (mtmp = fmon; mtmp; mtmp = mtmp2) {
+	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 	    if (mtmp->data->mlet == S_KOP) {
 		if (canspotmon(mtmp)) cnt++;

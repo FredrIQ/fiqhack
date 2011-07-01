@@ -129,7 +129,7 @@ static int stealarm(void)
 
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    if (otmp->o_id == stealoid) {
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (mtmp->m_id == stealmid) {
 			if (DEADMONSTER(mtmp)) impossible("stealarm(): dead monster stealing"); 
 			if (!dmgtype(mtmp->data, AD_SITM)) /* polymorphed */

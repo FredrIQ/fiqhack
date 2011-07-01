@@ -200,7 +200,7 @@ struct monst *find_mid(unsigned nid, unsigned fmflags)
 	if (!nid)
 	    return &youmonst;
 	if (fmflags & FM_FMON)
-		for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		    if (!DEADMONSTER(mtmp) && mtmp->m_id == nid) return mtmp;
 	if (fmflags & FM_MIGRATE)
 		for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)

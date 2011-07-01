@@ -1028,7 +1028,7 @@ void see_monsters(void)
 {
     struct monst *mon;
 
-    for (mon = fmon; mon; mon = mon->nmon) {
+    for (mon = level.monlist; mon; mon = mon->nmon) {
 	if (DEADMONSTER(mon)) continue;
 	newsym(mon->mx,mon->my);
 	if (mon->wormno) see_wsegs(mon);
@@ -1047,7 +1047,7 @@ void set_mimic_blocking(void)
 {
     struct monst *mon;
 
-    for (mon = fmon; mon; mon = mon->nmon) {
+    for (mon = level.monlist; mon; mon = mon->nmon) {
 	if (DEADMONSTER(mon)) continue;
 	if (mon->minvis &&
 	   ((mon->m_ap_type == M_AP_FURNITURE &&

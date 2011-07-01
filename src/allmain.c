@@ -223,7 +223,7 @@ static void you_moved(void)
 	    mcalcdistress();	/* adjust monsters' trap, blind, etc */
 
 	    /* reallocate movement rations to monsters */
-	    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+	    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		mtmp->movement += mcalcmove(mtmp);
 
 	    if (!rn2(u.uevent.udemigod ? 25 :
