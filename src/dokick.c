@@ -225,7 +225,7 @@ doit:
 
 /*
  *  Return TRUE if caught (the gold taken care of), FALSE otherwise.
- *  The gold object is *not* attached to the fobj chain!
+ *  The gold object is *not* attached to the level.objlist chain!
  */
 boolean ghitm(struct monst *mtmp, struct obj *gold)
 {
@@ -1240,7 +1240,7 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 
 }
 
-/* NOTE: ship_object assumes otmp was FREED from fobj or invent.
+/* NOTE: ship_object assumes otmp was FREED from level.objlist or invent.
  * <x,y> is the point of drop.  otmp is _not_ an <x,y> resident:
  * otmp is either a kicked, dropped, or thrown object.
  */

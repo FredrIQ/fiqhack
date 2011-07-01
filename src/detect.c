@@ -175,7 +175,7 @@ int gold_detect(struct obj *sobj)
     }
     
     /* look for gold objects */
-    for (obj = fobj; obj; obj = obj->nobj) {
+    for (obj = level.objlist; obj; obj = obj->nobj) {
 	if (sobj->blessed && o_material(obj, GOLD)) {
 	    known = TRUE;
 	    if (obj->ox != u.ux || obj->oy != u.uy) goto outgoldmap;
@@ -217,7 +217,7 @@ outgoldmap:
 
     u.uinwater = 0;
     /* Discover gold locations. */
-    for (obj = fobj; obj; obj = obj->nobj) {
+    for (obj = level.objlist; obj; obj = obj->nobj) {
     	if (sobj->blessed && (temp = o_material(obj, GOLD))) {
 	    if (temp != obj) {
 		temp->ox = obj->ox;
@@ -284,7 +284,7 @@ int food_detect(struct obj *sobj)
 
     stale = clear_stale_map(oclass, 0);
 
-    for (obj = fobj; obj; obj = obj->nobj)
+    for (obj = level.objlist; obj; obj = obj->nobj)
 	if (o_in(obj, oclass)) {
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
@@ -333,7 +333,7 @@ int food_detect(struct obj *sobj)
 	known = TRUE;
 	cls();
 	u.uinwater = 0;
-	for (obj = fobj; obj; obj = obj->nobj)
+	for (obj = level.objlist; obj; obj = obj->nobj)
 	    if ((temp = o_in(obj, oclass)) != 0) {
 		if (temp != obj) {
 		    temp->ox = obj->ox;
@@ -414,7 +414,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 
     if (do_dknown) for (obj = invent; obj; obj = obj->nobj) do_dknown_of(obj);
 
-    for (obj = fobj; obj; obj = obj->nobj) {
+    for (obj = level.objlist; obj; obj = obj->nobj) {
 	if ((!class && !boulder) || o_in(obj, class) || o_in(obj, boulder)) {
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
@@ -663,7 +663,7 @@ int trap_detect(struct obj *sobj)
 	    goto outtrapmap;
 	else found = TRUE;
     }
-    for (obj = fobj; obj; obj = obj->nobj) {
+    for (obj = level.objlist; obj; obj = obj->nobj) {
 	if ((obj->otyp==LARGE_BOX || obj->otyp==CHEST) && obj->otrapped) {
 	    if (obj->ox != u.ux || obj->oy != u.uy)
 		goto outtrapmap;
@@ -694,7 +694,7 @@ outtrapmap:
     for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
 	sense_trap(ttmp, 0, 0, sobj && sobj->cursed);
 
-    for (obj = fobj; obj; obj = obj->nobj)
+    for (obj = level.objlist; obj; obj = obj->nobj)
 	if ((obj->otyp==LARGE_BOX || obj->otyp==CHEST) && obj->otrapped)
 	sense_trap(NULL, obj->ox, obj->oy, sobj && sobj->cursed);
 

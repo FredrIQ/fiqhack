@@ -336,13 +336,13 @@ void savelev(int fd, xchar lev, int mode)
 	savemonchn(fd, level.monlist, mode);
 	save_worm(fd, mode);	/* save worm information */
 	savetrapchn(fd, ftrap, mode);
-	saveobjchn(fd, fobj, mode);
+	saveobjchn(fd, level.objlist, mode);
 	saveobjchn(fd, level.buriedobjlist, mode);
 	saveobjchn(fd, billobjs, mode);
 	if (release_data(mode)) {
 	    level.monlist = 0;
 	    ftrap = 0;
-	    fobj = 0;
+	    level.objlist = 0;
 	    level.buriedobjlist = 0;
 	    billobjs = 0;
 	}
@@ -609,7 +609,7 @@ void freedynamicdata(void)
 	freemonchn(level.monlist);
 	free_worm();		/* release worm segment information */
 	freetrapchn(ftrap);
-	freeobjchn(fobj);
+	freeobjchn(level.objlist);
 	freeobjchn(level.buriedobjlist);
 	freeobjchn(billobjs);
 	free_engravings();

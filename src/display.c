@@ -1068,7 +1068,7 @@ void set_mimic_blocking(void)
 void see_objects(void)
 {
     struct obj *obj;
-    for (obj = fobj; obj; obj = obj->nobj)
+    for (obj = level.objlist; obj; obj = obj->nobj)
 	if (vobj_at(obj->ox,obj->oy) == obj) newsym(obj->ox, obj->oy);
 }
 

@@ -326,7 +326,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 	    if ((max_y = omy + SQSRCHRADIUS) >= ROWNO) max_y = ROWNO - 1;
 
 	    /* nearby food is the first choice, then other objects */
-	    for (obj = fobj; obj; obj = obj->nobj) {
+	    for (obj = level.objlist; obj; obj = obj->nobj) {
 		nx = obj->ox;
 		ny = obj->oy;
 		if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y) {

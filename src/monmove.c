@@ -726,7 +726,7 @@ not_special:
 	    oomy = min(ROWNO-1, omy+minr);
 	    lmx = max(1, omx-minr);
 	    lmy = max(0, omy-minr);
-	    for (otmp = fobj; otmp; otmp = otmp->nobj) {
+	    for (otmp = level.objlist; otmp; otmp = otmp->nobj) {
 		/* monsters may pick rocks up, but won't go out of their way
 		   to grab them; this might hamper sling wielders, but it cuts
 		   down on move overhead by filtering out most common item */

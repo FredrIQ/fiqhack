@@ -473,11 +473,6 @@ dlevel_t;
 extern dlevel_t level;	/* structure describing the current level */
 
 /*
- * Macros for compatibility with old code. Someday these will go away.
- */
-#define fobj		level.objlist
-
-/*
  * Covert a trap number into the defsym graphics array.
  * Convert a defsym number into a trap number.
  * Assumes that arrow trap will always be the first trap.

@@ -501,7 +501,7 @@ void delallobj(int x, int y)
 }
 
 
-/* destroy object in fobj chain (if unpaid, it remains on the bill) */
+/* destroy object in level.objlist chain (if unpaid, it remains on the bill) */
 void delobj(struct obj *obj)
 {
 	boolean update_map;

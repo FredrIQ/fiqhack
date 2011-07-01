@@ -1272,7 +1272,7 @@ lootcont:
 		int pass;
 		/* find the original coffers chest, or any chest */
 		for (pass = 2; pass > -1; pass -= 2)
-		    for (coffers = fobj; coffers; coffers = coffers->nobj)
+		    for (coffers = level.objlist; coffers; coffers = coffers->nobj)
 			if (coffers->otyp == CHEST && coffers->spe == pass)
 			    goto gotit;	/* two level break */
 gotit:

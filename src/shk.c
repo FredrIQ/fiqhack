@@ -249,7 +249,7 @@ static void setpaid(struct monst *shkp)
 	   items which are on this particular shk's bill */
 
 	clear_unpaid(invent);
-	clear_unpaid(fobj);
+	clear_unpaid(level.objlist);
 	clear_unpaid(level.buriedobjlist);
 	if (thrownobj) thrownobj->unpaid = 0;
 	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
@@ -1684,7 +1684,7 @@ struct obj *find_oid(unsigned id)
 
 	/* first check various obj lists directly */
 	if ((obj = o_on(id, invent)) != 0) return obj;
-	if ((obj = o_on(id, fobj)) != 0) return obj;
+	if ((obj = o_on(id, level.objlist)) != 0) return obj;
 	if ((obj = o_on(id, level.buriedobjlist)) != 0) return obj;
 	if ((obj = o_on(id, migrating_objs)) != 0) return obj;
 

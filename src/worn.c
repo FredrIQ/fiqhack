@@ -507,7 +507,7 @@ void clear_bypasses(void)
 	struct obj *otmp, *nobj;
 	struct monst *mtmp;
 
-	for (otmp = fobj; otmp; otmp = nobj) {
+	for (otmp = level.objlist; otmp; otmp = nobj) {
 	    nobj = otmp->nobj;
 	    if (otmp->bypass) {
 		otmp->bypass = 0;

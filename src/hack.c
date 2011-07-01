@@ -192,10 +192,10 @@ static int moverock(schar dx, schar dy)
 	    if (boulder_hits_pool(otmp, rx, ry, TRUE))
 		continue;
 	    /*
-	     * Re-link at top of fobj chain so that pile order is preserved
+	     * Re-link at top of level.objlist chain so that pile order is preserved
 	     * when level is restored.
 	     */
-	    if (otmp != fobj) {
+	    if (otmp != level.objlist) {
 		remove_object(otmp);
 		place_object(otmp, otmp->ox, otmp->oy);
 	    }
@@ -393,7 +393,7 @@ static int still_chewing(xchar x, xchar y)
 
 void movobj(struct obj *obj, xchar ox, xchar oy)
 {
-	/* optimize by leaving on the fobj chain? */
+	/* optimize by leaving on the level.objlist chain? */
 	remove_object(obj);
 	newsym(obj->ox, obj->oy);
 	place_object(obj, ox, oy);

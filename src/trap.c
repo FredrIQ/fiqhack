@@ -1072,7 +1072,7 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 		}
 		blow_up_landmine(trap);
 		if (steed_mid && saddle && !u.usteed)
-			keep_saddle_with_steedcorpse(steed_mid, fobj, saddle);
+			keep_saddle_with_steedcorpse(steed_mid, level.objlist, saddle);
 		newsym(u.ux,u.uy);		/* update trap symbol */
 		losehp(rnd(16), "land mine", KILLED_BY_AN);
 		/* fall recursively into the pit... */

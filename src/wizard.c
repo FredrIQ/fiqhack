@@ -165,7 +165,7 @@ static struct obj *on_ground(short otyp)
 {
 	struct obj *otmp;
 
-	for (otmp = fobj; otmp; otmp = otmp->nobj)
+	for (otmp = level.objlist; otmp; otmp = otmp->nobj)
 	    if (otyp) {
 		if (otmp->otyp == otyp)
 		    return otmp;

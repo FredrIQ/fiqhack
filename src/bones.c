@@ -275,7 +275,7 @@ void savebones(struct obj *corpse)
 		ttmp->madeby_u = 0;
 		ttmp->tseen = (ttmp->ttyp == HOLE);
 	}
-	resetobjs(fobj,FALSE);
+	resetobjs(level.objlist,FALSE);
 	resetobjs(level.buriedobjlist, FALSE);
 
 	/* Hero is no longer on the map. */
@@ -378,7 +378,7 @@ int getbones(void)
 				/* to correctly reset named artifacts on the level */
 				resetobjs(mtmp->minvent,TRUE);
 			}
-			resetobjs(fobj,TRUE);
+			resetobjs(level.objlist,TRUE);
 			resetobjs(level.buriedobjlist,TRUE);
 		}
 	}

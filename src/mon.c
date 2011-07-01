@@ -2422,7 +2422,7 @@ void kill_genocided_monsters(void)
 	}
 
 	kill_eggs(invent);
-	kill_eggs(fobj);
+	kill_eggs(level.objlist);
 	kill_eggs(level.buriedobjlist);
 }
 

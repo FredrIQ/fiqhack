@@ -1212,7 +1212,7 @@ void zap_dig(schar dx, schar dy, schar dz)
 	return;
 }
 
-/* move objects from fobj/nexthere lists to buriedobjlist, keeping position */
+/* move objects from level.objlist/nexthere lists to buriedobjlist, keeping position */
 /* information */
 struct obj *bury_an_obj(struct obj *otmp)
 {
@@ -1282,7 +1282,7 @@ void bury_objs(int x, int y)
 	newsym(x, y);
 }
 
-/* move objects from buriedobjlist to fobj/nexthere lists */
+/* move objects from buriedobjlist to level.objlist/nexthere lists */
 void unearth_objs(int x, int y)
 {
 	struct obj *otmp, *otmp2;

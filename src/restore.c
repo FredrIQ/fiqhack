@@ -60,17 +60,17 @@ static void find_lev_obj(void)
 		level.objects[x][y] = NULL;
 
 	/*
-	 * Reverse the entire fobj chain, which is necessary so that we can
+	 * Reverse the entire level.objlist chain, which is necessary so that we can
 	 * place the objects in the proper order.  Make all obj in chain
 	 * OBJ_FREE so place_object will work correctly.
 	 */
-	while ((otmp = fobj) != 0) {
-		fobj = otmp->nobj;
+	while ((otmp = level.objlist) != 0) {
+		level.objlist = otmp->nobj;
 		otmp->nobj = fobjtmp;
 		otmp->where = OBJ_FREE;
 		fobjtmp = otmp;
 	}
-	/* fobj should now be empty */
+	/* level.objlist should now be empty */
 
 	/* Set level.objects (as well as reversing the chain back again) */
 	while ((otmp = fobjtmp) != 0) {
@@ -511,7 +511,7 @@ int dorecover(int fd)
 	restlevelstate(stuckid, steedid);
 	max_rank_sz(); /* to recompute mrank_sz (botl.c) */
 	/* take care of iron ball & chain */
-	for (otmp = fobj; otmp; otmp = otmp->nobj)
+	for (otmp = level.objlist; otmp; otmp = otmp->nobj)
 		if (otmp->owornmask)
 			setworn(otmp, otmp->owornmask);
 
@@ -634,7 +634,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 		ftrap = trap;
 	}
 	dealloc_trap(trap);
-	fobj = restobjchn(fd, ghostly, FALSE);
+	level.objlist = restobjchn(fd, ghostly, FALSE);
 	find_lev_obj();
 	/* restobjchn()'s `frozen' argument probably ought to be a callback
 	   routine so that we can check for objects being buried under ice */
@@ -780,7 +780,7 @@ static void reset_oattached_mids(boolean ghostly)
 {
     struct obj *otmp;
     unsigned oldid, nid;
-    for (otmp = fobj; otmp; otmp = otmp->nobj) {
+    for (otmp = level.objlist; otmp; otmp = otmp->nobj) {
 	if (ghostly && otmp->oattached == OATTACHED_MONST && otmp->oxlth) {
 	    struct monst *mtmp = (struct monst *)otmp->oextra;
 

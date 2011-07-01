@@ -274,7 +274,7 @@ void replace_object(struct obj *obj, struct obj *otmp)
 	otmp->oy = obj->oy;
 	obj->nobj = otmp;
 	obj->nexthere = otmp;
-	extract_nobj(obj, &fobj);
+	extract_nobj(obj, &level.objlist);
 	extract_nexthere(obj, &level.objects[obj->ox][obj->oy]);
 	break;
     default:
@@ -1021,8 +1021,8 @@ void place_object(struct obj *otmp, int x, int y)
     otmp->where = OBJ_FLOOR;
 
     /* add to floor chain */
-    otmp->nobj = fobj;
-    fobj = otmp;
+    otmp->nobj = level.objlist;
+    level.objlist = otmp;
     if (otmp->timed) obj_timer_checks(otmp, x, y, 0);
 }
 
@@ -1148,7 +1148,7 @@ void remove_object(struct obj *otmp)
 	panic("remove_object: obj not on floor");
     if (otmp->otyp == BOULDER) unblock_point(x,y); /* vision */
     extract_nexthere(otmp, &level.objects[x][y]);
-    extract_nobj(otmp, &fobj);
+    extract_nobj(otmp, &level.objlist);
     if (otmp->timed) obj_timer_checks(otmp,x,y,0);
 }
 
@@ -1171,7 +1171,7 @@ void discard_minvent(struct monst *mtmp)
  *
  * Object positions:
  *	OBJ_FREE	not on any list
- *	OBJ_FLOOR	fobj, level.locations[][] chains (use remove_object)
+ *	OBJ_FLOOR	level.objlist, level.locations[][] chains (use remove_object)
  *	OBJ_CONTAINED	cobj chain of container object
  *	OBJ_INVENT	hero's invent chain (use freeinv)
  *	OBJ_MINVENT	monster's invent chain
@@ -1375,8 +1375,8 @@ void obj_sanity_check(void)
     struct monst *mon;
     const char *mesg;
 
-    mesg = "fobj sanity";
-    for (obj = fobj; obj; obj = obj->nobj) {
+    mesg = "level.objlist sanity";
+    for (obj = level.objlist; obj; obj = obj->nobj) {
 	if (obj->where != OBJ_FLOOR) {
 	    pline("%s obj %p %s@(%d,%d): %s\n", mesg,
 		obj, where_name(obj->where),
