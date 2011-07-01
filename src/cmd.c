@@ -118,7 +118,7 @@ static int domonability(void)
 	else if (is_hider(youmonst.data)) return dohide();
 	else if (is_mind_flayer(youmonst.data)) return domindblast();
 	else if (u.umonnum == PM_GREMLIN) {
-	    if (IS_FOUNTAIN(levl[u.ux][u.uy].typ)) {
+	    if (IS_FOUNTAIN(level.locations[u.ux][u.uy].typ)) {
 		if (split_mon(&youmonst, NULL))
 		    dryup(u.ux, u.uy, TRUE);
 	    } else There("is no fountain here.");
@@ -315,7 +315,7 @@ static int wiz_show_seenv(void)
 		if (x == u.ux && y == u.uy) {
 		    row[curx] = row[curx+1] = '@';
 		} else {
-		    v = levl[x][y].seenv & 0xff;
+		    v = level.locations[x][y].seenv & 0xff;
 		    if (v == 0)
 			row[curx] = row[curx+1] = ' ';
 		    else
@@ -381,7 +381,7 @@ static int wiz_show_wmodes(void)
 	init_menulist(&menu);
 	for (y = 0; y < ROWNO; y++) {
 	    for (x = 0; x < COLNO; x++) {
-		lev = &levl[x][y];
+		lev = &level.locations[x][y];
 		if (x == u.ux && y == u.uy)
 		    row[x] = '@';
 		else if (IS_WALL(lev->typ) || lev->typ == SDOOR)

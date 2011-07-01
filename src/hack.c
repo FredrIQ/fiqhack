@@ -75,11 +75,11 @@ static int moverock(schar dx, schar dy)
 	    pline("You're too small to push that %s.", xname(otmp));
 	    goto cannot_push;
 	}
-	if (isok(rx,ry) && !IS_ROCK(levl[rx][ry].typ) &&
-	    levl[rx][ry].typ != IRONBARS &&
-	    (!IS_DOOR(levl[rx][ry].typ) || !(dx && dy) || (
+	if (isok(rx,ry) && !IS_ROCK(level.locations[rx][ry].typ) &&
+	    level.locations[rx][ry].typ != IRONBARS &&
+	    (!IS_DOOR(level.locations[rx][ry].typ) || !(dx && dy) || (
 		!Is_rogue_level(&u.uz) &&
-		(levl[rx][ry].doormask & ~D_BROKEN) == D_NODOOR)) &&
+		(level.locations[rx][ry].doormask & ~D_BROKEN) == D_NODOOR)) &&
 	    !sobj_at(BOULDER, rx, ry)) {
 	    ttmp = t_at(rx, ry);
 	    mtmp = m_at(rx, ry);
@@ -216,7 +216,7 @@ static int moverock(schar dx, schar dy)
 	    }
 
 	    /* Move the boulder *after* the message. */
-	    if (glyph_is_invisible(levl[rx][ry].glyph))
+	    if (glyph_is_invisible(level.locations[rx][ry].glyph))
 		unmap_object(rx, ry);
 	    movobj(otmp, rx, ry);	/* does newsym(rx,ry) */
 	    if (Blind) {
@@ -252,8 +252,8 @@ nopushmsg:
 	    }
 
 	    if (!u.usteed && (((!invent || inv_weight() <= -850) &&
-		 (!dx || !dy || (IS_ROCK(levl[u.ux][sy].typ)
-				     && IS_ROCK(levl[sx][u.uy].typ))))
+		 (!dx || !dy || (IS_ROCK(level.locations[u.ux][sy].typ)
+				     && IS_ROCK(level.locations[sx][u.uy].typ))))
 		|| verysmall(youmonst.data))) {
 		pline("However, you can squeeze yourself into a small opening.");
 		if (In_sokoban(&u.uz))
@@ -274,7 +274,7 @@ nopushmsg:
  */
 static int still_chewing(xchar x, xchar y)
 {
-    struct rm *lev = &levl[x][y];
+    struct rm *lev = &level.locations[x][y];
     struct obj *boulder = sobj_at(BOULDER,x,y);
     const char *digtxt = NULL, *dmgtxt = NULL;
 
@@ -455,21 +455,21 @@ static void dosinkfall(void)
 boolean may_dig(xchar x, xchar y)
 /* intended to be called only on ROCKs */
 {
-    return (boolean)(!(IS_STWALL(levl[x][y].typ) &&
-			(levl[x][y].wall_info & W_NONDIGGABLE)));
+    return (boolean)(!(IS_STWALL(level.locations[x][y].typ) &&
+			(level.locations[x][y].wall_info & W_NONDIGGABLE)));
 }
 
 boolean may_passwall(xchar x, xchar y)
 {
-   return (boolean)(!(IS_STWALL(levl[x][y].typ) &&
-			(levl[x][y].wall_info & W_NONPASSWALL)));
+   return (boolean)(!(IS_STWALL(level.locations[x][y].typ) &&
+			(level.locations[x][y].wall_info & W_NONPASSWALL)));
 }
 
 
 boolean bad_rock(struct permonst *mdat, xchar x, xchar y)
 {
 	return (boolean) ((In_sokoban(&u.uz) && sobj_at(BOULDER,x,y)) ||
-	       (IS_ROCK(levl[x][y].typ)
+	       (IS_ROCK(level.locations[x][y].typ)
 		    && (!tunnels(mdat) || needspick(mdat) || !may_dig(x,y))
 		    && !(passes_walls(mdat) && may_passwall(x,y))));
 }
@@ -487,7 +487,7 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 {
     int x = ux+dx;
     int y = uy+dy;
-    struct rm *tmpr = &levl[x][y];
+    struct rm *tmpr = &level.locations[x][y];
     struct rm *ust;
 
     /*
@@ -587,11 +587,11 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 	if ((t && t->tseen) ||
 	    (!Levitation && !Flying &&
 	     !is_clinger(youmonst.data) &&
-	     (is_pool(x, y) || is_lava(x, y)) && levl[x][y].seenv))
+	     (is_pool(x, y) || is_lava(x, y)) && level.locations[x][y].seenv))
 	    return FALSE;
     }
 
-    ust = &levl[ux][uy];
+    ust = &level.locations[ux][uy];
 
     /* Now see if other things block our way . . */
     if (dx && dy && !Passes_walls
@@ -707,7 +707,7 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 			}
 		    }
 		    if (test_move(x, y, nx-x, ny-y, 0, TEST_TRAV) &&
-			(levl[nx][ny].seenv || (!Blind && couldsee(nx, ny)))) {
+			(level.locations[nx][ny].seenv || (!Blind && couldsee(nx, ny)))) {
 			if (nx == ux && ny == uy) {
 			    if (!guess) {
 				*dx = x-ux;
@@ -895,7 +895,7 @@ void domove(schar dx, schar dy, schar dz)
 		if (((trap = t_at(x, y)) && trap->tseen) ||
 		    (Blind && !Levitation && !Flying &&
 		     !is_clinger(youmonst.data) &&
-		     (is_pool(x, y) || is_lava(x, y)) && levl[x][y].seenv)) {
+		     (is_pool(x, y) || is_lava(x, y)) && level.locations[x][y].seenv)) {
 			if (flags.run >= 2) {
 				nomul(0);
 				flags.move = 0;
@@ -969,7 +969,7 @@ void domove(schar dx, schar dy, schar dz)
 	u.uy0 = u.uy;
 	bhitpos.x = x;
 	bhitpos.y = y;
-	tmpr = &levl[x][y];
+	tmpr = &level.locations[x][y];
 
 	/* attack monster */
 	if (mtmp) {
@@ -989,7 +989,7 @@ void domove(schar dx, schar dy, schar dz)
 	     * attack_check(), which still wastes a turn, but prints a
 	     * different message and makes the player remember the monster.		     */
 	    if (flags.nopick &&
-		  (canspotmon(mtmp) || glyph_is_invisible(levl[x][y].glyph))){
+		  (canspotmon(mtmp) || glyph_is_invisible(level.locations[x][y].glyph))){
 		if (mtmp->m_ap_type && !Protection_from_shape_changers
 						    && !sensemon(mtmp))
 		    stumble_onto_mimic(mtmp, dx, dy);
@@ -1025,7 +1025,7 @@ void domove(schar dx, schar dy, schar dz)
 	/* specifying 'F' with no monster wastes a turn */
 	if (flags.forcefight ||
 	    /* remembered an 'I' && didn't use a move command */
-	    (glyph_is_invisible(levl[x][y].glyph) && !flags.nopick)) {
+	    (glyph_is_invisible(level.locations[x][y].glyph) && !flags.nopick)) {
 		boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
 	    	char buf[BUFSZ];
 		sprintf(buf,"a vacant spot on the %s", surface(x,y));
@@ -1042,7 +1042,7 @@ void domove(schar dx, schar dy, schar dz)
 		}
 		return;
 	}
-	if (glyph_is_invisible(levl[x][y].glyph)) {
+	if (glyph_is_invisible(level.locations[x][y].glyph)) {
 	    unmap_object(x, y);
 	    newsym(x, y);
 	}
@@ -1407,7 +1407,7 @@ stillinwater:
 	    }
 	}
 	check_special_room(FALSE);
-	if (IS_SINK(levl[u.ux][u.uy].typ) && Levitation)
+	if (IS_SINK(level.locations[u.ux][u.uy].typ) && Levitation)
 		dosinkfall();
 	if (!in_steed_dismounting) { /* if dismounting, we'll check again later */
 		struct trap *trap = t_at(u.ux, u.uy);
@@ -1481,7 +1481,7 @@ char * in_rooms(xchar x, xchar y, int typewanted)
 	     ((typefound = rooms[rno - ROOMOFFSET].rtype) == typewanted) || \
 	     ((typewanted == SHOPBASE) && (typefound > SHOPBASE))) \
 
-	switch (rno = levl[x][y].roomno) {
+	switch (rno = level.locations[x][y].roomno) {
 		case NO_ROOM:
 			return ptr;
 		case SHARED:
@@ -1514,7 +1514,7 @@ char * in_rooms(xchar x, xchar y, int typewanted)
 		max_y_offset -= step;
 
 	for (x = min_x; x <= max_x; x += step) {
-		lev = &levl[x][min_y];
+		lev = &level.locations[x][min_y];
 		y = 0;
 		if (((rno = lev[y].roomno) >= ROOMOFFSET) &&
 		    !index(ptr, rno) && goodtype(rno))
@@ -1819,11 +1819,11 @@ void lookaround(schar dx, schar dy)
 		goto stop;
 	}
 
-	if (levl[x][y].typ == STONE) continue;
+	if (level.locations[x][y].typ == STONE) continue;
 	if (x == u.ux-dx && y == u.uy-dy) continue;
 
-	if (IS_ROCK(levl[x][y].typ) || (levl[x][y].typ == ROOM) ||
-	    IS_AIR(levl[x][y].typ))
+	if (IS_ROCK(level.locations[x][y].typ) || (level.locations[x][y].typ == ROOM) ||
+	    IS_AIR(level.locations[x][y].typ))
 	    continue;
 	else if (closed_door(x,y) ||
 		 (mtmp && mtmp->m_ap_type == M_AP_FURNITURE &&
@@ -1832,9 +1832,9 @@ void lookaround(schar dx, schar dy)
 	    if (x != u.ux && y != u.uy) continue;
 	    if (flags.run != 1) goto stop;
 	    goto bcorr;
-	} else if (levl[x][y].typ == CORR) {
+	} else if (level.locations[x][y].typ == CORR) {
 bcorr:
-	    if (levl[u.ux][u.uy].typ != ROOM) {
+	    if (level.locations[u.ux][u.uy].typ != ROOM) {
 		if (flags.run == 1 || flags.run == 3 || flags.run == 8) {
 		    i = dist2(x, y, u.ux+dx, u.uy+dy);
 		    if (i > 2) continue;

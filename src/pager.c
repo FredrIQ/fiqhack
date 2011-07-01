@@ -232,9 +232,9 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 	} else
 	    strcpy(buf, distant_name(otmp, xname));
 
-	if (levl[x][y].typ == STONE || levl[x][y].typ == SCORR)
+	if (level.locations[x][y].typ == STONE || level.locations[x][y].typ == SCORR)
 	    strcat(buf, " embedded in stone");
-	else if (IS_WALL(levl[x][y].typ) || levl[x][y].typ == SDOOR)
+	else if (IS_WALL(level.locations[x][y].typ) || level.locations[x][y].typ == SDOOR)
 	    strcat(buf, " embedded in a wall");
 	else if (closed_door(x,y))
 	    strcat(buf, " embedded in a door");
@@ -251,13 +251,13 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
     case S_altar:
 	if (!In_endgame(&u.uz))
 	    sprintf(buf, "%s altar",
-		align_str(Amask2align(levl[x][y].altarmask & ~AM_SHRINE)));
+		align_str(Amask2align(level.locations[x][y].altarmask & ~AM_SHRINE)));
 	else sprintf(buf, "aligned altar");
 	break;
     case S_ndoor:
 	if (is_drawbridge_wall(x, y) >= 0)
 	    strcpy(buf,"open drawbridge portcullis");
-	else if ((levl[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
+	else if ((level.locations[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
 	    strcpy(buf,"broken door");
 	else
 	    strcpy(buf,"doorway");

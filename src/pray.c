@@ -109,9 +109,9 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()	IS_ALTAR(levl[u.ux][u.uy].typ)
-#define on_shrine()	((levl[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
-#define a_align(x,y)	((aligntyp)Amask2align(levl[x][y].altarmask & AM_MASK))
+#define on_altar()	IS_ALTAR(level.locations[u.ux][u.uy].typ)
+#define on_shrine()	((level.locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
+#define a_align(x,y)	((aligntyp)Amask2align(level.locations[x][y].altarmask & AM_MASK))
 
 /* Borrowed from eat.c */
 
@@ -146,7 +146,7 @@ static int in_trouble(void)
 
 	for (i= -1; i<=1; i++) for (j= -1; j<=1; j++) {
 		if (!i && !j) continue;
-		if (!isok(u.ux+i, u.uy+j) || IS_ROCK(levl[u.ux+i][u.uy+j].typ)
+		if (!isok(u.ux+i, u.uy+j) || IS_ROCK(level.locations[u.ux+i][u.uy+j].typ)
 		    || (blocked_boulder(i,j) && !throws_rocks(youmonst.data)))
 			count++;
 	}
@@ -1137,7 +1137,7 @@ int dosacrifice(void)
 		/* curse the lawful/neutral altar */
 		pline_The("altar is stained with %s blood.", urace.adj);
 		if (!Is_astralevel(&u.uz))
-		    levl[u.ux][u.uy].altarmask = AM_CHAOTIC;
+		    level.locations[u.ux][u.uy].altarmask = AM_CHAOTIC;
 		angry_priest();
 	    } else {
 		struct monst *dmon;
@@ -1149,8 +1149,8 @@ int dosacrifice(void)
 		    pline(
 		     "The blood floods the altar, which vanishes in %s cloud!",
 			  an(hcolor(NH_BLACK)));
-		    levl[u.ux][u.uy].typ = ROOM;
-		    levl[u.ux][u.uy].altarmask = 0;
+		    level.locations[u.ux][u.uy].typ = ROOM;
+		    level.locations[u.ux][u.uy].altarmask = 0;
 		    newsym(u.ux, u.uy);
 		    angry_priest();
 		    demonless_msg = "cloud dissipates";
@@ -1343,10 +1343,10 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    exercise(A_WIS, TRUE);
 		    change_luck(1);
 		    /* Yes, this is supposed to be &=, not |= */
-		    levl[u.ux][u.uy].altarmask &= AM_SHRINE;
+		    level.locations[u.ux][u.uy].altarmask &= AM_SHRINE;
 		    /* the following accommodates stupid compilers */
-		    levl[u.ux][u.uy].altarmask =
-			levl[u.ux][u.uy].altarmask | (Align2amask(u.ualign.type));
+		    level.locations[u.ux][u.uy].altarmask =
+			level.locations[u.ux][u.uy].altarmask | (Align2amask(u.ualign.type));
 		    if (!Blind)
 			pline_The("altar glows %s.",
 			      hcolor(
@@ -1706,7 +1706,7 @@ const char *a_gname(void)
 /* returns the name of an altar's deity */
 const char *a_gname_at(xchar x, xchar y)
 {
-    if (!IS_ALTAR(levl[x][y].typ)) return NULL;
+    if (!IS_ALTAR(level.locations[x][y].typ)) return NULL;
 
     return align_gname(a_align(x,y));
 }
@@ -1804,7 +1804,7 @@ static boolean blocked_boulder(int dx, int dy)
 
     if (!isok(u.ux+2*dx, u.uy+2*dy))
 	return TRUE;
-    if (IS_ROCK(levl[u.ux+2*dx][u.uy+2*dy].typ))
+    if (IS_ROCK(level.locations[u.ux+2*dx][u.uy+2*dy].typ))
 	return TRUE;
     if (sobj_at(BOULDER, u.ux+2*dx, u.uy+2*dy))
 	return TRUE;

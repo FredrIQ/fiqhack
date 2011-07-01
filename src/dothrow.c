@@ -329,11 +329,11 @@ int dofire(void)
  */
 void hitfloor(struct obj *obj)
 {
-	if (IS_SOFT(levl[u.ux][u.uy].typ) || u.uinwater) {
+	if (IS_SOFT(level.locations[u.ux][u.uy].typ) || u.uinwater) {
 		dropy(obj);
 		return;
 	}
-	if (IS_ALTAR(levl[u.ux][u.uy].typ))
+	if (IS_ALTAR(level.locations[u.ux][u.uy].typ))
 		doaltarobj(obj);
 	else
 		pline("%s hit%s the %s.", Doname2(obj),
@@ -449,20 +449,20 @@ boolean hurtle_step(void *arg, int x, int y)
     }
 
     if (!Passes_walls || !(may_pass = may_passwall(x, y))) {
-	if (IS_ROCK(levl[x][y].typ) || closed_door(x,y)) {
+	if (IS_ROCK(level.locations[x][y].typ) || closed_door(x,y)) {
 	    const char *s;
 
 	    pline("Ouch!");
-	    if (IS_TREE(levl[x][y].typ))
+	    if (IS_TREE(level.locations[x][y].typ))
 		s = "bumping into a tree";
-	    else if (IS_ROCK(levl[x][y].typ))
+	    else if (IS_ROCK(level.locations[x][y].typ))
 		s = "bumping into a wall";
 	    else
 		s = "bumping into a door";
 	    losehp(rnd(2+*range), s, KILLED_BY);
 	    return FALSE;
 	}
-	if (levl[x][y].typ == IRONBARS) {
+	if (level.locations[x][y].typ == IRONBARS) {
 	    You("crash into some iron bars.  Ouch!");
 	    losehp(rnd(2+*range), "crashing into iron bars", KILLED_BY);
 	    return FALSE;
@@ -1023,7 +1023,7 @@ void throwit(struct obj *obj,
 		    return;
 		}
 
-		if (!IS_SOFT(levl[bhitpos.x][bhitpos.y].typ) &&
+		if (!IS_SOFT(level.locations[bhitpos.x][bhitpos.y].typ) &&
 			breaktest(obj)) {
 		    tmp_at(DISP_FLASH, obj_to_glyph(obj));
 		    tmp_at(bhitpos.x, bhitpos.y);
@@ -1062,7 +1062,7 @@ void throwit(struct obj *obj,
 		    newsym(bhitpos.x,bhitpos.y);
 		if (obj_sheds_light(obj))
 		    vision_full_recalc = 1;
-		if (!IS_SOFT(levl[bhitpos.x][bhitpos.y].typ))
+		if (!IS_SOFT(level.locations[bhitpos.x][bhitpos.y].typ))
 		    container_impact_dmg(obj);
 	}
 }
@@ -1678,7 +1678,7 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 		/* see if the gold has a place to move into */
 		odx = u.ux + dx;
 		ody = u.uy + dy;
-		if (!ZAP_POS(levl[odx][ody].typ) || closed_door(odx, ody)) {
+		if (!ZAP_POS(level.locations[odx][ody].typ) || closed_door(odx, ody)) {
 			bhitpos.x = u.ux;
 			bhitpos.y = u.uy;
 		} else {

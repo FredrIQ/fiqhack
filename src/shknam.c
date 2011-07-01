@@ -315,14 +315,14 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 	/* check that the shopkeeper placement is sane */
 	if (sroom->irregular) {
 	    int rmno = (sroom - rooms) + ROOMOFFSET;
-	    if (isok(sx-1,sy) && !levl[sx-1][sy].edge &&
-		(int) levl[sx-1][sy].roomno == rmno) sx--;
-	    else if (isok(sx+1,sy) && !levl[sx+1][sy].edge &&
-		(int) levl[sx+1][sy].roomno == rmno) sx++;
-	    else if (isok(sx,sy-1) && !levl[sx][sy-1].edge &&
-		(int) levl[sx][sy-1].roomno == rmno) sy--;
-	    else if (isok(sx,sy+1) && !levl[sx][sy+1].edge &&
-		(int) levl[sx][sy+1].roomno == rmno) sx++;
+	    if (isok(sx-1,sy) && !level.locations[sx-1][sy].edge &&
+		(int) level.locations[sx-1][sy].roomno == rmno) sx--;
+	    else if (isok(sx+1,sy) && !level.locations[sx+1][sy].edge &&
+		(int) level.locations[sx+1][sy].roomno == rmno) sx++;
+	    else if (isok(sx,sy-1) && !level.locations[sx][sy-1].edge &&
+		(int) level.locations[sx][sy-1].roomno == rmno) sy--;
+	    else if (isok(sx,sy+1) && !level.locations[sx][sy+1].edge &&
+		(int) level.locations[sx][sy+1].roomno == rmno) sx++;
 	    else goto shk_failed;
 	}
 	else if (sx == sroom->lx-1) sx++;
@@ -411,18 +411,18 @@ void stock_room(int shp_indx, struct mkroom *sroom)
     sx = doors[sroom->fdoor].x;
     sy = doors[sroom->fdoor].y;
 
-    if (levl[sx][sy].doormask == D_NODOOR) {
-	    levl[sx][sy].doormask = D_ISOPEN;
+    if (level.locations[sx][sy].doormask == D_NODOOR) {
+	    level.locations[sx][sy].doormask = D_ISOPEN;
 	    newsym(sx,sy);
     }
-    if (levl[sx][sy].typ == SDOOR) {
-	    cvt_sdoor_to_door(&levl[sx][sy]);	/* .typ = DOOR */
+    if (level.locations[sx][sy].typ == SDOOR) {
+	    cvt_sdoor_to_door(&level.locations[sx][sy]);	/* .typ = DOOR */
 	    newsym(sx,sy);
     }
-    if (levl[sx][sy].doormask & D_TRAPPED)
-	    levl[sx][sy].doormask = D_LOCKED;
+    if (level.locations[sx][sy].doormask & D_TRAPPED)
+	    level.locations[sx][sy].doormask = D_LOCKED;
 
-    if (levl[sx][sy].doormask == D_LOCKED) {
+    if (level.locations[sx][sy].doormask == D_LOCKED) {
 	    int m = sx, n = sy;
 
 	    if (inside_shop(sx+1,sy)) m--;
@@ -436,7 +436,7 @@ void stock_room(int shp_indx, struct mkroom *sroom)
     for (sx = sroom->lx; sx <= sroom->hx; sx++)
 	for (sy = sroom->ly; sy <= sroom->hy; sy++) {
 	    if (sroom->irregular) {
-		if (levl[sx][sy].edge || (int) levl[sx][sy].roomno != rmno ||
+		if (level.locations[sx][sy].edge || (int) level.locations[sx][sy].roomno != rmno ||
 		   distmin(sx, sy, doors[sh].x, doors[sh].y) <= 1)
 		    continue;
 	    } else if ((sx == sroom->lx && doors[sh].x == sx-1) ||

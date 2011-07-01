@@ -2182,30 +2182,30 @@ srch:
 		/* or some other dungeon features -dlc */
 		p = eos(bp);
 		if (!BSTRCMP(bp, p-8, "fountain")) {
-			levl[u.ux][u.uy].typ = FOUNTAIN;
+			level.locations[u.ux][u.uy].typ = FOUNTAIN;
 			level.flags.nfountains++;
 			if (!strncmpi(bp, "magic ", 6))
-				levl[u.ux][u.uy].blessedftn = 1;
+				level.locations[u.ux][u.uy].blessedftn = 1;
 			pline("A %sfountain.",
-			      levl[u.ux][u.uy].blessedftn ? "magic " : "");
+			      level.locations[u.ux][u.uy].blessedftn ? "magic " : "");
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-6, "throne")) {
-			levl[u.ux][u.uy].typ = THRONE;
+			level.locations[u.ux][u.uy].typ = THRONE;
 			pline("A throne.");
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-4, "sink")) {
-			levl[u.ux][u.uy].typ = SINK;
+			level.locations[u.ux][u.uy].typ = SINK;
 			level.flags.nsinks++;
 			pline("A sink.");
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-4, "pool")) {
-			levl[u.ux][u.uy].typ = POOL;
+			level.locations[u.ux][u.uy].typ = POOL;
 			del_engr_at(u.ux, u.uy);
 			pline("A pool.");
 			/* Must manually make kelp! */
@@ -2214,7 +2214,7 @@ srch:
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-4, "lava")) {  /* also matches "molten lava" */
-			levl[u.ux][u.uy].typ = LAVAPOOL;
+			level.locations[u.ux][u.uy].typ = LAVAPOOL;
 			del_engr_at(u.ux, u.uy);
 			pline("A pool of molten lava.");
 			if (!(Levitation || Flying)) lava_effects();
@@ -2225,7 +2225,7 @@ srch:
 		if (!BSTRCMP(bp, p-5, "altar")) {
 		    aligntyp al;
 
-		    levl[u.ux][u.uy].typ = ALTAR;
+		    level.locations[u.ux][u.uy].typ = ALTAR;
 		    if (!strncmpi(bp, "chaotic ", 8))
 			al = A_CHAOTIC;
 		    else if (!strncmpi(bp, "neutral ", 8))
@@ -2236,7 +2236,7 @@ srch:
 			al = A_NONE;
 		    else /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
 			al = (!rn2(6)) ? A_NONE : rn2((int)A_LAWFUL+2) - 1;
-		    levl[u.ux][u.uy].altarmask = Align2amask( al );
+		    level.locations[u.ux][u.uy].altarmask = Align2amask( al );
 		    pline("%s altar.", An(align_str(al)));
 		    newsym(u.ux, u.uy);
 		    return &zeroobj;
@@ -2250,7 +2250,7 @@ srch:
 		}
 
 		if (!BSTRCMP(bp, p-4, "tree")) {
-		    levl[u.ux][u.uy].typ = TREE;
+		    level.locations[u.ux][u.uy].typ = TREE;
 		    pline("A tree.");
 		    newsym(u.ux, u.uy);
 		    block_point(u.ux, u.uy);
@@ -2258,7 +2258,7 @@ srch:
 		}
 
 		if (!BSTRCMP(bp, p-4, "bars")) {
-		    levl[u.ux][u.uy].typ = IRONBARS;
+		    level.locations[u.ux][u.uy].typ = IRONBARS;
 		    pline("Iron bars.");
 		    newsym(u.ux, u.uy);
 		    return &zeroobj;

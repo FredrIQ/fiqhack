@@ -33,7 +33,7 @@ boolean picking_lock(int *x, int *y)
 
 boolean picking_at(int x, int y)
 {
-	return (occupation == picklock && xlock.door == &levl[x][y]);
+	return (occupation == picklock && xlock.door == &level.locations[x][y]);
 }
 
 /* produce an occupation string appropriate for the current activity */
@@ -71,7 +71,7 @@ static int picklock(void)
 		return (xlock.usedtime = 0);		/* you or it moved */
 	    }
 	} else {		/* door */
-	    if (xlock.door != &(levl[u.ux+picklock_dx][u.uy+picklock_dy])) {
+	    if (xlock.door != &(level.locations[u.ux+picklock_dx][u.uy+picklock_dy])) {
 		return (xlock.usedtime = 0);		/* you moved */
 	    }
 	    switch (xlock.door->doormask) {
@@ -340,7 +340,7 @@ int pick_lock(struct obj *pick)
 		return 0;
 	    }
 
-	    door = &levl[cc.x][cc.y];
+	    door = &level.locations[cc.x][cc.y];
 	    if ((mtmp = m_at(cc.x, cc.y)) && canseemon(mtmp)
 			&& mtmp->m_ap_type != M_AP_FURNITURE
 			&& mtmp->m_ap_type != M_AP_OBJECT) {
@@ -506,7 +506,7 @@ int doopen(void)
 	    return 1;
 	}
 
-	door = &levl[cc.x][cc.y];
+	door = &level.locations[cc.x][cc.y];
 
 	if (!IS_DOOR(door->typ)) {
 		if (is_db_wall(cc.x,cc.y)) {
@@ -616,7 +616,7 @@ int doclose(void)
 	    return 1;
 	}
 
-	door = &levl[x][y];
+	door = &level.locations[x][y];
 
 	if (!IS_DOOR(door->typ)) {
 		if (door->typ == DRAWBRIDGE_DOWN)
@@ -708,7 +708,7 @@ boolean boxlock(struct obj *obj, struct obj *otmp)
 /* returns true if something happened */
 boolean doorlock(struct obj *otmp, int x, int y)
 {
-	struct rm *door = &levl[x][y];
+	struct rm *door = &level.locations[x][y];
 	boolean res = TRUE;
 	int loudness = 0;
 	const char *msg = NULL;

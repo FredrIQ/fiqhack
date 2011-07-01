@@ -101,8 +101,8 @@ static void set_wall_property(xchar x1, xchar y1, xchar x2, xchar y2, int prop)
 
 	for (y = y1; y <= y2; y++)
 	    for (x = x1; x <= x2; x++)
-		if (IS_STWALL(levl[x][y].typ))
-		    levl[x][y].wall_info |= prop;
+		if (IS_STWALL(level.locations[x][y].typ))
+		    level.locations[x][y].wall_info |= prop;
 }
 
 /*
@@ -200,7 +200,7 @@ static boolean is_ok_location(schar x, schar y, int humidity)
 	if (Is_waterlevel(&u.uz)) return TRUE;	/* accept any spot */
 
 	if (humidity & DRY) {
-	    typ = levl[x][y].typ;
+	    typ = level.locations[x][y].typ;
 	    if (typ == ROOM || typ == AIR ||
 		    typ == CLOUD || typ == ICE || typ == CORR)
 		return TRUE;
@@ -270,7 +270,7 @@ static void get_free_room_loc(schar *x, schar *y, struct mkroom *croom)
 	do {
 	    try_x = *x,  try_y = *y;
 	    get_room_loc(&try_x, &try_y, croom);
-	} while (levl[try_x][try_y].typ != ROOM && ++trycnt <= 100);
+	} while (level.locations[try_x][try_y].typ != ROOM && ++trycnt <= 100);
 
 	if (trycnt > 100)
 	    panic("get_free_room_loc:  can't find a place!");
@@ -299,7 +299,7 @@ chk:
 		y = *lowy - ylim;	ymax = hiy + ylim;
 		if (y < 0) y = 0;
 		if (ymax >= ROWNO) ymax = (ROWNO-1);
-		lev = &levl[x][y];
+		lev = &level.locations[x][y];
 		for (; y <= ymax; y++) {
 			if (lev++->typ) {
 #ifdef DEBUG
@@ -612,8 +612,8 @@ static void create_door(room_door *dd, struct mkroom *broom)
 		return;
 	}
 	add_door(x,y,broom);
-	levl[x][y].typ = (dd->secret ? SDOOR : DOOR);
-	levl[x][y].doormask = dd->mask;
+	level.locations[x][y].typ = (dd->secret ? SDOOR : DOOR);
+	level.locations[x][y].doormask = dd->mask;
 }
 
 /*
@@ -645,8 +645,8 @@ void create_secret_door(struct mkroom *croom,
 	}
 
 	if (okdoor(sx,sy)) {
-	    levl[sx][sy].typ = SDOOR;
-	    levl[sx][sy].doormask = D_CLOSED;
+	    level.locations[sx][sy].typ = SDOOR;
+	    level.locations[sx][sy].doormask = D_CLOSED;
 	    add_door(sx,sy,croom);
 	    return;
 	}
@@ -817,7 +817,7 @@ static void create_monster(monster *m, struct mkroom *croom)
 				m->appear, m->appear_as.str);
 			break;
 		}
-		if (does_block(x, y, &levl[x][y]))
+		if (does_block(x, y, &level.locations[x][y]))
 		    block_point(x, y);
 	    }
 
@@ -1026,7 +1026,7 @@ static void create_altar(altar *a, struct mkroom *croom)
 	}
 
 	/* check for existing features */
-	oldtyp = levl[x][y].typ;
+	oldtyp = level.locations[x][y].typ;
 	if (oldtyp == STAIRS || oldtyp == LADDER)
 	    return;
 
@@ -1048,8 +1048,8 @@ static void create_altar(altar *a, struct mkroom *croom)
 		(a->align == -11) ? induced_align(80) :
 		(a->align < 0 ? ralign[-a->align-1] : a->align);
 
-	levl[x][y].typ = ALTAR;
-	levl[x][y].altarmask = amask;
+	level.locations[x][y].typ = ALTAR;
+	level.locations[x][y].altarmask = amask;
 
 	if (a->shrine < 0) a->shrine = rn2(2);	/* handle random case */
 
@@ -1062,7 +1062,7 @@ static void create_altar(altar *a, struct mkroom *croom)
 
 	if (a->shrine) {	/* Is it a shrine  or sanctum? */
 	    priestini(&u.uz, croom, x, y, (a->shrine > 1));
-	    levl[x][y].altarmask |= AM_SHRINE;
+	    level.locations[x][y].altarmask |= AM_SHRINE;
 	    level.flags.has_temple = TRUE;
 	}
 }
@@ -1111,10 +1111,10 @@ static void create_feature(int fx, int fy, struct mkroom *croom, int typ)
 	   placed stairs).  However, if the _same_ feature is already
 	   here, it came from the map drawing and we still need to
 	   update the special counters. */
-	if (IS_FURNITURE(levl[x][y].typ) && levl[x][y].typ != typ)
+	if (IS_FURNITURE(level.locations[x][y].typ) && level.locations[x][y].typ != typ)
 	    return;
 
-	levl[x][y].typ = typ;
+	level.locations[x][y].typ = typ;
 	if (typ == FOUNTAIN)
 	    level.flags.nfountains++;
 	else if (typ == SINK)
@@ -1157,7 +1157,7 @@ static boolean search_door(struct mkroom *croom, xchar *x, xchar *y,
 		break;
 	}
 	while (xx <= croom->hx+1 && yy <= croom->hy+1) {
-		if (IS_DOOR(levl[xx][yy].typ) || levl[xx][yy].typ == SDOOR) {
+		if (IS_DOOR(level.locations[xx][yy].typ) || level.locations[xx][yy].typ == SDOOR) {
 			*x = xx;
 			*y = yy;
 			if (cnt-- <= 0)
@@ -1208,7 +1208,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 	    if (xx >= COLNO-1 || xx <= 0 || yy <= 0 || yy >= ROWNO-1)
 		return FALSE;		/* impossible */
 
-	    crm = &levl[xx][yy];
+	    crm = &level.locations[xx][yy];
 	    if (crm->typ == btyp) {
 		if (ftyp != CORR || rn2(100)) {
 			crm->typ = ftyp;
@@ -1231,7 +1231,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 	    if (dy && dix > diy) {
 		int ddx = (xx > tx) ? -1 : 1;
 
-		crm = &levl[xx+ddx][yy];
+		crm = &level.locations[xx+ddx][yy];
 		if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR) {
 		    dx = ddx;
 		    dy = 0;
@@ -1240,7 +1240,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 	    } else if (dx && diy > dix) {
 		int ddy = (yy > ty) ? -1 : 1;
 
-		crm = &levl[xx][yy+ddy];
+		crm = &level.locations[xx][yy+ddy];
 		if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR) {
 		    dy = ddy;
 		    dx = 0;
@@ -1249,7 +1249,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 	    }
 
 	    /* continue straight on? */
-	    crm = &levl[xx+dx][yy+dy];
+	    crm = &level.locations[xx+dx][yy+dy];
 	    if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR)
 		continue;
 
@@ -1261,7 +1261,7 @@ boolean dig_corridor(coord *org, coord *dest, boolean nxcor, schar ftyp, schar b
 		dy = 0;
 		dx = (tx < xx) ? -1 : 1;
 	    }
-	    crm = &levl[xx+dx][yy+dy];
+	    crm = &level.locations[xx+dx][yy+dy];
 	    if (crm->typ == btyp || crm->typ == ftyp || crm->typ == SCORR)
 		continue;
 	    dy = -dy;
@@ -1574,7 +1574,7 @@ static void light_region(region *tmpregion)
 	hiy = min(hiy+1, ROWNO-1);
     }
     for (x = lowx; x <= hix; x++) {
-	lev = &levl[x][lowy];
+	lev = &level.locations[x][lowy];
 	for (y = lowy; y <= hiy; y++) {
 	    if (lev->typ != LAVAPOOL) /* this overrides normal lighting */
 		lev->lit = litstate;
@@ -1980,13 +1980,13 @@ static boolean load_maze(dlb *fd)
 	for (y = 0; y <= y_maze_max; y++)
 	    if (filling == -1) {
 #ifndef WALLIFIED_MAZE
-		    levl[x][y].typ = STONE;
+		    level.locations[x][y].typ = STONE;
 #else
-		    levl[x][y].typ =
+		    level.locations[x][y].typ =
 			(y < 2 || ((x % 2) && (y % 2))) ? STONE : HWALL;
 #endif
 	    } else {
-		    levl[x][y].typ = filling;
+		    level.locations[x][y].typ = filling;
 	    }
     }
 
@@ -2043,15 +2043,15 @@ static boolean load_maze(dlb *fd)
 	    /* Load the map */
 	    for (y = ystart; y < ystart+ysize; y++)
 		for (x = xstart; x < xstart+xsize; x++) {
-		    levl[x][y].typ = Fgetc(fd);
-		    levl[x][y].lit = FALSE;
-		    /* clear out levl: load_common_data may set them */
-		    levl[x][y].flags = 0;
-		    levl[x][y].horizontal = 0;
-		    levl[x][y].roomno = 0;
-		    levl[x][y].edge = 0;
+		    level.locations[x][y].typ = Fgetc(fd);
+		    level.locations[x][y].lit = FALSE;
+		    /* clear out level.locations: load_common_data may set them */
+		    level.locations[x][y].flags = 0;
+		    level.locations[x][y].horizontal = 0;
+		    level.locations[x][y].roomno = 0;
+		    level.locations[x][y].edge = 0;
 		    /*
-		     * Note: Even though levl[x][y].typ is type schar,
+		     * Note: Even though level.locations[x][y].typ is type schar,
 		     *	 lev_comp.y saves it as type char. Since schar != char
 		     *	 all the time we must make this exception or hack
 		     *	 through lev_comp.y to fix.
@@ -2061,23 +2061,23 @@ static boolean load_maze(dlb *fd)
 		     *  Set secret doors to closed (why not trapped too?).  Set
 		     *  the horizontal bit.
 		     */
-		    if (levl[x][y].typ == SDOOR || IS_DOOR(levl[x][y].typ)) {
-			if (levl[x][y].typ == SDOOR)
-			    levl[x][y].doormask = D_CLOSED;
+		    if (level.locations[x][y].typ == SDOOR || IS_DOOR(level.locations[x][y].typ)) {
+			if (level.locations[x][y].typ == SDOOR)
+			    level.locations[x][y].doormask = D_CLOSED;
 			/*
 			 *  If there is a wall to the left that connects to a
 			 *  (secret) door, then it is horizontal.  This does
 			 *  not allow (secret) doors to be corners of rooms.
 			 */
-			if (x != xstart && (IS_WALL(levl[x-1][y].typ) ||
-					    levl[x-1][y].horizontal))
-			    levl[x][y].horizontal = 1;
-		    } else if (levl[x][y].typ == HWALL ||
-				levl[x][y].typ == IRONBARS)
-			levl[x][y].horizontal = 1;
-		    else if (levl[x][y].typ == LAVAPOOL)
-			levl[x][y].lit = 1;
-		    else if (levl[x][y].typ == CROSSWALL)
+			if (x != xstart && (IS_WALL(level.locations[x-1][y].typ) ||
+					    level.locations[x-1][y].horizontal))
+			    level.locations[x][y].horizontal = 1;
+		    } else if (level.locations[x][y].typ == HWALL ||
+				level.locations[x][y].typ == IRONBARS)
+			level.locations[x][y].horizontal = 1;
+		    else if (level.locations[x][y].typ == LAVAPOOL)
+			level.locations[x][y].lit = 1;
+		    else if (level.locations[x][y].typ == CROSSWALL)
 			has_bounds = TRUE;
 		    Map[x][y] = 1;
 		}
@@ -2216,13 +2216,13 @@ static boolean load_maze(dlb *fd)
 		typ = tmpdoor.mask == -1 ? rnddoor() : tmpdoor.mask;
 
 		get_location(&x, &y, DRY);
-		if (levl[x][y].typ != SDOOR)
-			levl[x][y].typ = DOOR;
+		if (level.locations[x][y].typ != SDOOR)
+			level.locations[x][y].typ = DOOR;
 		else {
 			if (typ < D_CLOSED)
 			    typ = D_CLOSED; /* force it to be closed */
 		}
-		levl[x][y].doormask = typ;
+		level.locations[x][y].doormask = typ;
 
 		/* Now the complicated part, list it with each subroom */
 		/* The dog move and mail daemon routines use this */
@@ -2245,8 +2245,8 @@ static boolean load_maze(dlb *fd)
 	if (has_bounds) {
 	    for (x = xstart; x < xstart+xsize; x++)
 		for (y = ystart; y < ystart+ysize; y++)
-		    if (levl[x][y].typ == CROSSWALL)
-			levl[x][y].typ = ROOM;
+		    if (level.locations[x][y].typ == CROSSWALL)
+			level.locations[x][y].typ = ROOM;
 	}
 
 	Fread(&n, 1, sizeof(n), fd);
@@ -2303,13 +2303,13 @@ static boolean load_maze(dlb *fd)
 		x = tmplad.x;  y = tmplad.y;
 		get_location(&x, &y, DRY);
 
-		levl[x][y].typ = LADDER;
+		level.locations[x][y].typ = LADDER;
 		if (tmplad.up == 1) {
 			xupladder = x;	yupladder = y;
-			levl[x][y].ladder = LA_UP;
+			level.locations[x][y].ladder = LA_UP;
 		} else {
 			xdnladder = x;	ydnladder = y;
-			levl[x][y].ladder = LA_DOWN;
+			level.locations[x][y].ladder = LA_DOWN;
 		}
 	}
 
@@ -2405,13 +2405,13 @@ static boolean load_maze(dlb *fd)
 		default: panic("load_maze: bad MAZEWALK direction");
 	    }
 
-	    if (!IS_DOOR(levl[x][y].typ)) {
+	    if (!IS_DOOR(level.locations[x][y].typ)) {
 #ifndef WALLIFIED_MAZE
-		levl[x][y].typ = CORR;
+		level.locations[x][y].typ = CORR;
 #else
-		levl[x][y].typ = ROOM;
+		level.locations[x][y].typ = ROOM;
 #endif
-		levl[x][y].flags = 0;
+		level.locations[x][y].flags = 0;
 	    }
 
 	    /*
@@ -2427,11 +2427,11 @@ static boolean load_maze(dlb *fd)
 
 		/* no need for IS_DOOR check; out of map bounds */
 #ifndef WALLIFIED_MAZE
-		levl[x][y].typ = CORR;
+		level.locations[x][y].typ = CORR;
 #else
-		levl[x][y].typ = ROOM;
+		level.locations[x][y].typ = ROOM;
 #endif
-		levl[x][y].flags = 0;
+		level.locations[x][y].flags = 0;
 	    }
 
 	    if (!(y % 2)) {

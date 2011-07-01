@@ -1267,7 +1267,7 @@ lootcont:
 		goldob = splitobj(goldob, contribution);
 	    freeinv(goldob);
 #endif
-	    if (IS_THRONE(levl[u.ux][u.uy].typ)){
+	    if (IS_THRONE(level.locations[u.ux][u.uy].typ)){
 		struct obj *coffers;
 		int pass;
 		/* find the original coffers chest, or any chest */
@@ -1307,7 +1307,7 @@ gotit:
 		pline("Ok, now there is loot here.");
 	    }
 	}
-    } else if (IS_GRAVE(levl[cc.x][cc.y].typ)) {
+    } else if (IS_GRAVE(level.locations[cc.x][cc.y].typ)) {
 	You("need to dig up the grave to effectively loot it...");
     }
     /*

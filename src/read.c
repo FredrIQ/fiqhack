@@ -471,9 +471,9 @@ void forget_map(int howmuch)
 	for (zx = 0; zx < COLNO; zx++) for(zy = 0; zy < ROWNO; zy++)
 	    if (howmuch & ALL_MAP || rn2(7)) {
 		/* Zonk all memory of this location. */
-		levl[zx][zy].seenv = 0;
-		levl[zx][zy].waslit = 0;
-		levl[zx][zy].glyph = cmap_to_glyph(S_stone);
+		level.locations[zx][zy].seenv = 0;
+		level.locations[zx][zy].waslit = 0;
+		level.locations[zx][zy].glyph = cmap_to_glyph(S_stone);
 	    }
 }
 
@@ -1016,8 +1016,8 @@ int seffects(struct obj *sobj)
 
 		    for (x = 1; x < COLNO; x++)
 		    	for (y = 0; y < ROWNO; y++)
-		    	    if (levl[x][y].typ == SDOOR)
-		    	    	cvt_sdoor_to_door(&levl[x][y]);
+		    	    if (level.locations[x][y].typ == SDOOR)
+		    	    	cvt_sdoor_to_door(&level.locations[x][y]);
 		    /* do_mapping() already reveals secret passages */
 		}
 		known = TRUE;
@@ -1103,8 +1103,8 @@ int seffects(struct obj *sobj)
 
 	    	    	/* Is this a suitable spot? */
 	    	    	if (isok(x, y) && !closed_door(x, y) &&
-	    	    			!IS_ROCK(levl[x][y].typ) &&
-	    	    			!IS_AIR(levl[x][y].typ) &&
+	    	    			!IS_ROCK(level.locations[x][y].typ) &&
+	    	    			!IS_AIR(level.locations[x][y].typ) &&
 					(x != u.ux || y != u.uy)) {
 			    struct obj *otmp2;
 			    struct monst *mtmp;
@@ -1247,9 +1247,9 @@ static void wand_explode(struct obj *obj)
 static void set_lit(int x, int y, void *val)
 {
 	if (val)
-	    levl[x][y].lit = 1;
+	    level.locations[x][y].lit = 1;
 	else {
-	    levl[x][y].lit = 0;
+	    level.locations[x][y].lit = 0;
 	    snuff_light_source(x, y);
 	}
 }
@@ -1312,7 +1312,7 @@ do_it:
 	if (Is_rogue_level(&u.uz)) {
 	    /* Can't use do_clear_area because MAX_RADIUS is too small */
 	    /* rogue lighting must light the entire room */
-	    int rnum = levl[u.ux][u.uy].roomno - ROOMOFFSET;
+	    int rnum = level.locations[u.ux][u.uy].roomno - ROOMOFFSET;
 	    int rx, ry;
 	    if (rnum >= 0) {
 		for (rx = rooms[rnum].lx-1; rx <= rooms[rnum].hx+1; rx++)

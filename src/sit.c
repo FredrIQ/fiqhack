@@ -37,7 +37,7 @@ int dosit(void)
 {
 	static const char sit_message[] = "sit on the %s.";
 	struct trap *trap;
-	int typ = levl[u.ux][u.uy].typ;
+	int typ = level.locations[u.ux][u.uy].typ;
 
 
 	if (u.usteed) {
@@ -263,9 +263,9 @@ int dosit(void)
 		    You_feel("somehow out of place...");
 	    }
 
-	    if (!rn2(3) && IS_THRONE(levl[u.ux][u.uy].typ)) {
+	    if (!rn2(3) && IS_THRONE(level.locations[u.ux][u.uy].typ)) {
 		/* may have teleported */
-		levl[u.ux][u.uy].typ = ROOM;
+		level.locations[u.ux][u.uy].typ = ROOM;
 		pline_The("throne vanishes in a puff of logic.");
 		newsym(u.ux,u.uy);
 	    }

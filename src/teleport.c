@@ -66,7 +66,7 @@ boolean goodpos(int x, int y, struct monst *mtmp, unsigned gpflags)
 	    }
 	    if (passes_walls(mdat) && may_passwall(x,y)) return TRUE;
 	}
-	if (!ACCESSIBLE(levl[x][y].typ)) {
+	if (!ACCESSIBLE(level.locations[x][y].typ)) {
 		if (!(is_pool(x,y) && ignorewater)) return FALSE;
 	}
 

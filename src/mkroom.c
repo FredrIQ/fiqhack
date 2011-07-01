@@ -136,7 +136,7 @@ gottype:
 
 		for (x = sroom->lx - 1; x <= sroom->hx + 1; x++)
 		for (y = sroom->ly - 1; y <= sroom->hy + 1; y++)
-			levl[x][y].lit = 1;
+			level.locations[x][y].lit = 1;
 		sroom->rlit = 1;
 	}
 
@@ -211,7 +211,7 @@ void fill_zoo(struct mkroom *sroom)
 		if (level.flags.is_maze_lev) {
 		    for (tx = sroom->lx; tx <= sroom->hx; tx++)
 			for (ty = sroom->ly; ty <= sroom->hy; ty++)
-			    if (IS_THRONE(levl[tx][ty].typ))
+			    if (IS_THRONE(level.locations[tx][ty].typ))
 				goto throne_placed;
 		}
 		i = 100;
@@ -227,8 +227,8 @@ void fill_zoo(struct mkroom *sroom)
 		ty = sroom->ly + (sroom->hy - sroom->ly + 1)/2;
 		if (sroom->irregular) {
 		    /* center might not be valid, so put queen elsewhere */
-		    if ((int) levl[tx][ty].roomno != rmno ||
-			    levl[tx][ty].edge) {
+		    if ((int) level.locations[tx][ty].roomno != rmno ||
+			    level.locations[tx][ty].edge) {
 			somexy(sroom, &mm);
 			tx = mm.x; ty = mm.y;
 		    }
@@ -242,12 +242,12 @@ void fill_zoo(struct mkroom *sroom)
 	for (sx = sroom->lx; sx <= sroom->hx; sx++)
 	    for (sy = sroom->ly; sy <= sroom->hy; sy++) {
 		if (sroom->irregular) {
-		    if ((int) levl[sx][sy].roomno != rmno ||
-			  levl[sx][sy].edge ||
+		    if ((int) level.locations[sx][sy].roomno != rmno ||
+			  level.locations[sx][sy].edge ||
 			  (sroom->doorct &&
 			   distmin(sx, sy, doors[sh].x, doors[sh].y) <= 1))
 			continue;
-		} else if (!SPACE_POS(levl[sx][sy].typ) ||
+		} else if (!SPACE_POS(level.locations[sx][sy].typ) ||
 			  (sroom->doorct &&
 			   ((sx == sroom->lx && doors[sh].x == sx-1) ||
 			    (sx == sroom->hx && doors[sh].x == sx+1) ||
@@ -255,7 +255,7 @@ void fill_zoo(struct mkroom *sroom)
 			    (sy == sroom->hy && doors[sh].y == sy+1))))
 		    continue;
 		/* don't place monster on explicitly placed throne */
-		if (type == COURT && IS_THRONE(levl[sx][sy].typ))
+		if (type == COURT && IS_THRONE(level.locations[sx][sy].typ))
 		    continue;
 		mon = makemon(
 		    (type == COURT) ? courtmon() :
@@ -331,7 +331,7 @@ void fill_zoo(struct mkroom *sroom)
 	      case COURT:
 		{
 		  struct obj *chest;
-		  levl[tx][ty].typ = THRONE;
+		  level.locations[tx][ty].typ = THRONE;
 		  somexy(sroom, &mm);
 		  mkgold((long) rn1(50 * level_difficulty(),10), mm.x, mm.y);
 		  /* the royal coffers */
@@ -422,7 +422,7 @@ static void mkswamp(void)
 		if (!OBJ_AT(sx, sy) &&
 		   !MON_AT(sx, sy) && !t_at(sx,sy) && !nexttodoor(sx,sy)) {
 		    if ((sx+sy)%2) {
-			levl[sx][sy].typ = POOL;
+			level.locations[sx][sy].typ = POOL;
 			if (!eelct || !rn2(4)) {
 			    /* mkclass() won't do, as we might get kraken */
 			    makemon(rn2(5) ? &mons[PM_GIANT_EEL]
@@ -465,7 +465,7 @@ static void mktemple(void)
 	 * located in the center of the room
 	 */
 	shrine_spot = shrine_pos((sroom - rooms) + ROOMOFFSET);
-	lev = &levl[shrine_spot->x][shrine_spot->y];
+	lev = &level.locations[shrine_spot->x][shrine_spot->y];
 	lev->typ = ALTAR;
 	lev->altarmask = induced_align(80);
 	priestini(&u.uz, sroom, shrine_spot->x, shrine_spot->y, FALSE);
@@ -479,7 +479,7 @@ boolean nexttodoor(int sx, int sy)
 	struct rm *lev;
 	for (dx = -1; dx <= 1; dx++) for(dy = -1; dy <= 1; dy++) {
 		if (!isok(sx+dx, sy+dy)) continue;
-		if (IS_DOOR((lev = &levl[sx+dx][sy+dy])->typ) ||
+		if (IS_DOOR((lev = &level.locations[sx+dx][sy+dy])->typ) ||
 		    lev->typ == SDOOR)
 			return TRUE;
 	}
@@ -532,15 +532,15 @@ boolean somexy(struct mkroom *croom, coord *c)
 	    while (try_cnt++ < 100) {
 		c->x = somex(croom);
 		c->y = somey(croom);
-		if (!levl[c->x][c->y].edge &&
-			(int) levl[c->x][c->y].roomno == i)
+		if (!level.locations[c->x][c->y].edge &&
+			(int) level.locations[c->x][c->y].roomno == i)
 		    return TRUE;
 	    }
 	    /* try harder; exhaustively search until one is found */
 	    for (c->x = croom->lx; c->x <= croom->hx; c->x++)
 		for (c->y = croom->ly; c->y <= croom->hy; c->y++)
-		    if (!levl[c->x][c->y].edge &&
-			    (int) levl[c->x][c->y].roomno == i)
+		    if (!level.locations[c->x][c->y].edge &&
+			    (int) level.locations[c->x][c->y].roomno == i)
 			return TRUE;
 	    return FALSE;
 	}
@@ -556,7 +556,7 @@ boolean somexy(struct mkroom *croom, coord *c)
 	while (try_cnt++ < 100) {
 		c->x = somex(croom);
 		c->y = somey(croom);
-		if (IS_WALL(levl[c->x][c->y].typ))
+		if (IS_WALL(level.locations[c->x][c->y].typ))
 		    continue;
 		for (i=0 ; i<croom->nsubrooms;i++)
 		    if (inside_room(croom->sbrooms[i], c->x, c->y))

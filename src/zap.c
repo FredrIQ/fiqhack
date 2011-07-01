@@ -2220,7 +2220,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	case WAN_LOCKING:
 	case SPE_WIZARD_LOCK:
 	    /* down at open bridge or up or down at open portcullis */
-	    if ((levl[x][y].typ == DRAWBRIDGE_DOWN) ? (dz > 0) :
+	    if ((level.locations[x][y].typ == DRAWBRIDGE_DOWN) ? (dz > 0) :
 			(is_drawbridge_wall(x,y) && !is_db_wall(x,y)) &&
 		    find_drawbridge(&xx, &yy)) {
 		if (!striking)
@@ -2526,7 +2526,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 		return mtmp;
 	    }
 
-	    typ = levl[bhitpos.x][bhitpos.y].typ;
+	    typ = level.locations[bhitpos.x][bhitpos.y].typ;
 
 	    /* iron bars will block anything big enough */
 	    if ((weapon == THROWN_WEAPON || weapon == KICKED_WEAPON) &&
@@ -2552,7 +2552,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 		    case WAN_LOCKING:
 		    case SPE_WIZARD_LOCK:
 			if ((cansee(x,y) || cansee(bhitpos.x, bhitpos.y))
-			    && levl[x][y].typ == DRAWBRIDGE_DOWN)
+			    && level.locations[x][y].typ == DRAWBRIDGE_DOWN)
 			    makeknown(obj->otyp);
 			close_drawbridge(x,y);
 			break;
@@ -2601,7 +2601,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 		}
 	    } else {
 		if (weapon == ZAPPED_WAND && obj->otyp == WAN_PROBING &&
-		   glyph_is_invisible(levl[bhitpos.x][bhitpos.y].glyph)) {
+		   glyph_is_invisible(level.locations[bhitpos.x][bhitpos.y].glyph)) {
 		    unmap_object(bhitpos.x, bhitpos.y);
 		    newsym(x, y);
 		}
@@ -2631,7 +2631,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 			if (cansee(bhitpos.x, bhitpos.y) ||
 			    (obj->otyp == WAN_STRIKING))
 			    makeknown(obj->otyp);
-			if (levl[bhitpos.x][bhitpos.y].doormask == D_BROKEN
+			if (level.locations[bhitpos.x][bhitpos.y].doormask == D_BROKEN
 			    && *in_rooms(bhitpos.x, bhitpos.y, SHOPBASE)) {
 			    shopdoor = TRUE;
 			    add_damage(bhitpos.x, bhitpos.y, 400L);
@@ -2648,7 +2648,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 	    if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM) {
 		/* 'I' present but no monster: erase */
 		/* do this before the tmp_at() */
-		if (glyph_is_invisible(levl[bhitpos.x][bhitpos.y].glyph)
+		if (glyph_is_invisible(level.locations[bhitpos.x][bhitpos.y].glyph)
 			&& cansee(x, y)) {
 		    unmap_object(bhitpos.x, bhitpos.y);
 		    newsym(x, y);
@@ -2726,7 +2726,7 @@ struct monst *boomhit(int dx, int dy)
 			tmp_at(DISP_END, 0);
 			return mtmp;
 		}
-		if (!ZAP_POS(levl[bhitpos.x][bhitpos.y].typ) ||
+		if (!ZAP_POS(level.locations[bhitpos.x][bhitpos.y].typ) ||
 		   closed_door(bhitpos.x, bhitpos.y)) {
 			bhitpos.x -= dx;
 			bhitpos.y -= dy;
@@ -2747,7 +2747,7 @@ struct monst *boomhit(int dx, int dy)
 		tmp_at(bhitpos.x, bhitpos.y);
 		delay_output();
 		if (ct % 5 != 0) i++;
-		if (IS_SINK(levl[bhitpos.x][bhitpos.y].typ))
+		if (IS_SINK(level.locations[bhitpos.x][bhitpos.y].typ))
 			break;	/* boomerang falls on sink */
 	}
 	tmp_at(DISP_END, 0);	/* do not leave last symbol */
@@ -3153,13 +3153,13 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
     while (range-- > 0) {
 	lsx = sx; sx += dx;
 	lsy = sy; sy += dy;
-	if (isok(sx,sy) && (lev = &levl[sx][sy])->typ) {
+	if (isok(sx,sy) && (lev = &level.locations[sx][sy])->typ) {
 	    mon = m_at(sx, sy);
 	    if (cansee(sx,sy)) {
 		/* reveal/unreveal invisible monsters before tmp_at() */
 		if (mon && !canspotmon(mon))
 		    map_invisible(sx, sy);
-		else if (!mon && glyph_is_invisible(levl[sx][sy].glyph)) {
+		else if (!mon && glyph_is_invisible(level.locations[sx][sy].glyph)) {
 		    unmap_object(sx, sy);
 		    newsym(sx, sy);
 		}
@@ -3322,15 +3322,15 @@ buzzmonst:
 		dx = -dx;
 		dy = -dy;
 	    } else {
-		if (isok(sx,lsy) && ZAP_POS(rmn = levl[sx][lsy].typ) &&
+		if (isok(sx,lsy) && ZAP_POS(rmn = level.locations[sx][lsy].typ) &&
 		   !closed_door(sx,lsy) &&
 		   (IS_ROOM(rmn) || (isok(sx+dx,lsy) &&
-				     ZAP_POS(levl[sx+dx][lsy].typ))))
+				     ZAP_POS(level.locations[sx+dx][lsy].typ))))
 		    bounce = 1;
-		if (isok(lsx,sy) && ZAP_POS(rmn = levl[lsx][sy].typ) &&
+		if (isok(lsx,sy) && ZAP_POS(rmn = level.locations[lsx][sy].typ) &&
 		   !closed_door(lsx,sy) &&
 		   (IS_ROOM(rmn) || (isok(lsx,sy+dy) &&
-				     ZAP_POS(levl[lsx][sy+dy].typ))))
+				     ZAP_POS(level.locations[lsx][sy+dy].typ))))
 		    if (!bounce || rn2(2))
 			bounce = 2;
 
@@ -3356,7 +3356,7 @@ buzzmonst:
 
 void melt_ice(xchar x, xchar y)
 {
-	struct rm *lev = &levl[x][y];
+	struct rm *lev = &level.locations[x][y];
 	struct obj *otmp;
 
 	if (lev->typ == DRAWBRIDGE_UP)
@@ -3393,7 +3393,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 {
 	struct monst *mon;
 	int abstype = abs(type) % 10;
-	struct rm *lev = &levl[x][y];
+	struct rm *lev = &level.locations[x][y];
 	int rangemod = 0;
 
 	if (abstype == ZT_FIRE) {
@@ -3597,7 +3597,7 @@ void fracture_rock(struct obj *obj)
 	if (obj->where == OBJ_FLOOR) {
 		obj_extract_self(obj);		/* move rocks back on top */
 		place_object(obj, obj->ox, obj->oy);
-		if (!does_block(obj->ox,obj->oy,&levl[obj->ox][obj->oy]))
+		if (!does_block(obj->ox,obj->oy,&level.locations[obj->ox][obj->oy]))
 	    		unblock_point(obj->ox,obj->oy);
 		if (cansee(obj->ox,obj->oy))
 		    newsym(obj->ox,obj->oy);
@@ -3930,8 +3930,8 @@ retry:
 				       "Oops!  %s out of your reach!" :
 				       (Is_airlevel(&u.uz) ||
 					Is_waterlevel(&u.uz) ||
-					levl[u.ux][u.uy].typ < IRONBARS ||
-					levl[u.ux][u.uy].typ >= ICE) ?
+					level.locations[u.ux][u.uy].typ < IRONBARS ||
+					level.locations[u.ux][u.uy].typ >= ICE) ?
 				       "Oops!  %s away from you!" :
 				       "Oops!  %s to the floor!",
 				       The(aobjnam(otmp,

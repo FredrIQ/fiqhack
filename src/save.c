@@ -314,7 +314,7 @@ void savelev(int fd, xchar lev, int mode)
 	    level_info[lev].flags |= VISITED;
 	bwrite(fd,&hackpid,sizeof(hackpid));
 	bwrite(fd,&lev,sizeof(lev));
-	bwrite(fd,levl,sizeof(levl));
+	bwrite(fd,level.locations,sizeof(level.locations));
 	bwrite(fd,&monstermoves,sizeof(monstermoves));
 	bwrite(fd,&upstair,sizeof(stairway));
 	bwrite(fd,&dnstair,sizeof(stairway));

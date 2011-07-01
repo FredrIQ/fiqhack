@@ -156,7 +156,7 @@ static void wildmiss(struct monst *mtmp, struct attack *mattk)
 		case 1: pline("%s attacks a spot beside you.", Monnam(mtmp));
 		    break;
 		case 2: pline("%s strikes at %s!", Monnam(mtmp),
-				levl[mtmp->mux][mtmp->muy].typ == WATER
+				level.locations[mtmp->mux][mtmp->muy].typ == WATER
 				    ? "empty water" : "thin air");
 		    break;
 		default:pline("%s %s wildly!", Monnam(mtmp), swings);
@@ -1173,8 +1173,8 @@ dopois:
 			if (is_pool(mtmp->mx,mtmp->my) && !Swimming
 			    && !Amphibious) {
 			    boolean moat =
-				(levl[mtmp->mx][mtmp->my].typ != POOL) &&
-				(levl[mtmp->mx][mtmp->my].typ != WATER) &&
+				(level.locations[mtmp->mx][mtmp->my].typ != POOL) &&
+				(level.locations[mtmp->mx][mtmp->my].typ != WATER) &&
 				!Is_medusa_level(&u.uz) &&
 				!Is_waterlevel(&u.uz);
 
@@ -1748,7 +1748,7 @@ static int explmu(struct monst *mtmp, struct attack  *mattk, boolean ufound)
     if (!ufound)
 	pline("%s explodes at a spot in %s!",
 	    canseemon(mtmp) ? Monnam(mtmp) : "It",
-	    levl[mtmp->mux][mtmp->muy].typ == WATER
+	    level.locations[mtmp->mux][mtmp->muy].typ == WATER
 		? "empty water" : "thin air");
     else {
 	int tmp = d((int)mattk->damn, (int)mattk->damd);

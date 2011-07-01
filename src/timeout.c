@@ -1117,7 +1117,7 @@ void do_storms(void)
 	do {
 	    x = rnd(COLNO-1);
 	    y = rn2(ROWNO);
-	} while (++count < 100 && levl[x][y].typ != CLOUD);
+	} while (++count < 100 && level.locations[x][y].typ != CLOUD);
 
 	if (count < 100) {
 	    dirx = rn2(3) - 1;
@@ -1128,7 +1128,7 @@ void do_storms(void)
 	}
     }
 
-    if (levl[u.ux][u.uy].typ == CLOUD) {
+    if (level.locations[u.ux][u.uy].typ == CLOUD) {
 	/* inside a cloud during a thunder storm is deafening */
 	pline("Kaboom!!!  Boom!!  Boom!!");
 	if (!u.uinvulnerable) {

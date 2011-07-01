@@ -215,7 +215,7 @@ static void do_earthquake(int force)
 		    newsym(x,y);
 		}
 	    }
-	    if (!rn2(14 - force)) switch (levl[x][y].typ) {
+	    if (!rn2(14 - force)) switch (level.locations[x][y].typ) {
 		  case FOUNTAIN : /* Make the fountain disappear */
 			if (cansee(x,y))
 				pline_The("fountain falls into a chasm.");
@@ -244,7 +244,7 @@ do_pit:		    chasm = maketrap(x,y,PIT);
 		    if (!chasm) break;	/* no pit if portal at that location */
 		    chasm->tseen = 1;
 
-		    levl[x][y].doormask = 0;
+		    level.locations[x][y].doormask = 0;
 
 		    mtmp = m_at(x,y);
 
@@ -299,12 +299,12 @@ do_pit:		    chasm = maketrap(x,y,PIT);
 		    } else newsym(x,y);
 		    break;
 		  case DOOR : /* Make the door collapse */
-		    if (levl[x][y].doormask == D_NODOOR) goto do_pit;
+		    if (level.locations[x][y].doormask == D_NODOOR) goto do_pit;
 		    if (cansee(x,y))
 			pline_The("door collapses.");
 		    if (*in_rooms(x, y, SHOPBASE))
 			add_damage(x, y, 0L);
-		    levl[x][y].doormask = D_NODOOR;
+		    level.locations[x][y].doormask = D_NODOOR;
 		    unblock_point(x,y);
 		    newsym(x,y);
 		    break;
@@ -455,7 +455,7 @@ int do_play_instrument(struct obj *instr)
 			if (isok(x,y))
 			if (find_drawbridge(&x,&y)) {
 			    u.uevent.uheard_tune = 2; /* tune now fully known */
-			    if (levl[x][y].typ == DRAWBRIDGE_DOWN)
+			    if (level.locations[x][y].typ == DRAWBRIDGE_DOWN)
 				close_drawbridge(x,y);
 			    else
 				open_drawbridge(x,y);
@@ -470,7 +470,7 @@ int do_play_instrument(struct obj *instr)
 		for (y = u.uy-1; y <= u.uy+1 && !ok; y++)
 		    for (x = u.ux-1; x <= u.ux+1 && !ok; x++)
 			if (isok(x,y))
-			if (IS_DRAWBRIDGE(levl[x][y].typ) ||
+			if (IS_DRAWBRIDGE(level.locations[x][y].typ) ||
 			   is_drawbridge_wall(x,y) >= 0)
 				ok = TRUE;
 		if (ok) { /* There is a drawbridge near */

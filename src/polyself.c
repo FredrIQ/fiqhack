@@ -855,7 +855,7 @@ int dospinweb(void)
 	else if (On_stairs(u.ux, u.uy)) {
 	    /* cop out: don't let them hide the stairs */
 	    Your("web fails to impede access to the %s.",
-		 (levl[u.ux][u.uy].typ == STAIRS) ? "stairs" : "ladder");
+		 (level.locations[u.ux][u.uy].typ == STAIRS) ? "stairs" : "ladder");
 	    return 1;
 		 
 	}

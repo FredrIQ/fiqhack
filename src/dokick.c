@@ -203,7 +203,7 @@ doit:
 		} else {
 		    mnexto(mon);
 		    if (mon->mx != x || mon->my != y) {
-			if (glyph_is_invisible(levl[x][y].glyph)) {
+			if (glyph_is_invisible(level.locations[x][y].glyph)) {
 			    unmap_object(x, y);
 			    newsym(x, y);
 			}
@@ -453,16 +453,16 @@ static int kick_object(xchar x, xchar y, schar dx, schar dy)
 	if (kickobj->oartifact == ART_MJOLLNIR) range = 1;
 
 	/* see if the object has a place to move into */
-	if (!ZAP_POS(levl[x+dx][y+dy].typ) || closed_door(x+dx, y+dy))
+	if (!ZAP_POS(level.locations[x+dx][y+dy].typ) || closed_door(x+dx, y+dy))
 		range = 1;
 
 	costly = ((shkp = shop_keeper(*in_rooms(x, y, SHOPBASE))) &&
 				    costly_spot(x, y));
 	isgold = (kickobj->oclass == COIN_CLASS);
 
-	if (IS_ROCK(levl[x][y].typ) || closed_door(x, y)) {
+	if (IS_ROCK(level.locations[x][y].typ) || closed_door(x, y)) {
 	    if ((!martial() && rn2(20) > ACURR(A_DEX)) ||
-		    IS_ROCK(levl[u.ux][u.uy].typ) || closed_door(u.ux, u.uy)) {
+		    IS_ROCK(level.locations[u.ux][u.uy].typ) || closed_door(u.ux, u.uy)) {
 		if (Blind)
 		    pline("It doesn't come loose.");
 		else
@@ -698,8 +698,8 @@ int dokick(void)
 		 * reachable for bracing purposes
 		 * Possible extension: allow bracing against stuff on the side?
 		 */
-		if (isok(xx,yy) && !IS_ROCK(levl[xx][yy].typ) &&
-			!IS_DOOR(levl[xx][yy].typ) &&
+		if (isok(xx,yy) && !IS_ROCK(level.locations[xx][yy].typ) &&
+			!IS_DOOR(level.locations[xx][yy].typ) &&
 			(!Is_airlevel(&u.uz) || !OBJ_AT(xx,yy))) {
 		    You("have nothing to brace yourself against.");
 		    return 0;
@@ -709,7 +709,7 @@ int dokick(void)
 	wake_nearby();
 	u_wipe_engr(2);
 
-	maploc = &levl[x][y];
+	maploc = &level.locations[x][y];
 
 	/* The next five tests should stay in    */
 	/* their present order: monsters, pools, */
@@ -730,7 +730,7 @@ int dokick(void)
 		    /* check x and y; a monster that evades your kick by
 		       jumping to an unseen square doesn't leave an I behind */
 		    mtmp->mx == x && mtmp->my == y &&
-		    !glyph_is_invisible(levl[x][y].glyph) &&
+		    !glyph_is_invisible(level.locations[x][y].glyph) &&
 		    !(u.uswallow && mtmp == u.ustuck))
 			map_invisible(x, y);
 		if ((Is_airlevel(&u.uz) || Levitation) && flags.move) {
@@ -747,7 +747,7 @@ int dokick(void)
 		}
 		return 1;
 	}
-	if (glyph_is_invisible(levl[x][y].glyph)) {
+	if (glyph_is_invisible(level.locations[x][y].glyph)) {
 		unmap_object(x, y);
 		newsym(x, y);
 	}
@@ -988,7 +988,7 @@ ouch:
 			pline_The("drawbridge is unaffected.");
 			/* update maploc to refer to the drawbridge */
 			find_drawbridge(&x,&y);
-			maploc = &levl[x][y];
+			maploc = &level.locations[x][y];
 		    }
 		    if (!rn2(3)) set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
 		    losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), kickstr(buf),
@@ -1081,12 +1081,12 @@ dumb:
 			    pline("%s yells:", Amonnam(mtmp));
 			else
 			    You_hear("someone yell:");
-			if (levl[x][y].looted & D_WARNED) {
+			if (level.locations[x][y].looted & D_WARNED) {
 			    verbalize("Halt, vandal!  You're under arrest!");
 			    angry_guards(FALSE);
 			} else {
 			    verbalize("Hey, stop damaging that door!");
-			    levl[x][y].looted |= D_WARNED;
+			    level.locations[x][y].looted |= D_WARNED;
 			}
 			break;
 		    }

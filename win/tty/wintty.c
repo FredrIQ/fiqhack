@@ -2460,7 +2460,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 			    lo_x = (pass == 0 && ty == lo_y) ? cx + 1 : 1;
 			    hi_x = (pass == 1 && ty == hi_y) ? cx : COLNO - 1;
 			    for (tx = lo_x; tx <= hi_x; tx++) {
-				k = levl[tx][ty].glyph;
+				k = level.locations[tx][ty].glyph;
 				if (glyph_is_cmap(k) &&
 					matching[glyph_to_cmap(k)]) {
 				    cx = tx,  cy = ty;

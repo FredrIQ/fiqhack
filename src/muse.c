@@ -332,14 +332,14 @@ boolean find_defensive(struct monst *mtmp)
 	    return FALSE;
 	}
 
-	if (levl[x][y].typ == STAIRS && !stuck && !immobile) {
+	if (level.locations[x][y].typ == STAIRS && !stuck && !immobile) {
 		if (x == xdnstair && y == ydnstair && !is_floater(mtmp->data))
 			m.has_defense = MUSE_DOWNSTAIRS;
 		if (x == xupstair && y == yupstair && ledger_no(&u.uz) != 1)
 	/* Unfair to let the monsters leave the dungeon with the Amulet */
 	/* (or go to the endlevel since you also need it, to get there) */
 			m.has_defense = MUSE_UPSTAIRS;
-	} else if (levl[x][y].typ == LADDER && !stuck && !immobile) {
+	} else if (level.locations[x][y].typ == LADDER && !stuck && !immobile) {
 		if (x == xupladder && y == yupladder)
 			m.has_defense = MUSE_UP_LADDER;
 		if (x == xdnladder && y == ydnladder && !is_floater(mtmp->data))
@@ -420,7 +420,7 @@ boolean find_defensive(struct monst *mtmp)
 		    /* monsters digging in Sokoban can ruin things */
 		    && !In_sokoban(&u.uz)
 		    /* digging wouldn't be effective; assume they know that */
-		    && !(levl[x][y].wall_info & W_NONDIGGABLE)
+		    && !(level.locations[x][y].wall_info & W_NONDIGGABLE)
 		    && !(Is_botlevel(&u.uz) || In_endgame(&u.uz))
 		    && !(is_ice(x,y) || is_pool(x,y) || is_lava(x,y))
 		    && !(mtmp->data == &mons[PM_VLAD_THE_IMPALER]
@@ -625,8 +625,8 @@ mon_tele:
 		mzapmsg(mtmp, otmp, FALSE);
 		otmp->spe--;
 		if (oseen) makeknown(WAN_DIGGING);
-		if (IS_FURNITURE(levl[mtmp->mx][mtmp->my].typ) ||
-		    IS_DRAWBRIDGE(levl[mtmp->mx][mtmp->my].typ) ||
+		if (IS_FURNITURE(level.locations[mtmp->mx][mtmp->my].typ) ||
+		    IS_DRAWBRIDGE(level.locations[mtmp->mx][mtmp->my].typ) ||
 		    (is_drawbridge_wall(mtmp->mx, mtmp->my) >= 0) ||
 		    (sstairs.sx && sstairs.sx == mtmp->mx &&
 				   sstairs.sy == mtmp->my)) {
@@ -716,8 +716,8 @@ mon_tele:
 			pline("%s %s into a %s!", Monnam(mtmp),
 			makeplural(locomotion(mtmp->data, "jump")),
 			t->ttyp == TRAPDOOR ? "trap door" : "hole");
-			if (levl[trapx][trapy].typ == SCORR) {
-			    levl[trapx][trapy].typ = CORR;
+			if (level.locations[trapx][trapy].typ == SCORR) {
+			    level.locations[trapx][trapy].typ = CORR;
 			    unblock_point(trapx, trapy);
 			}
 			seetrap(t_at(trapx,trapy));
@@ -806,8 +806,8 @@ mon_tele:
 		if (vis) {
 			pline("%s %s onto a teleport trap!", Monnam(mtmp),
 				makeplural(locomotion(mtmp->data, "jump")));
-			if (levl[trapx][trapy].typ == SCORR) {
-			    levl[trapx][trapy].typ = CORR;
+			if (level.locations[trapx][trapy].typ == SCORR) {
+			    level.locations[trapx][trapy].typ = CORR;
 			    unblock_point(trapx, trapy);
 			}
 			seetrap(t_at(trapx,trapy));
@@ -1182,7 +1182,7 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 		    }
 		    if (hitanything)	range--;
 		}
-		typ = levl[bhitpos.x][bhitpos.y].typ;
+		typ = level.locations[bhitpos.x][bhitpos.y].typ;
 		if (IS_DOOR(typ) || typ == SDOOR) {
 		    switch (obj->otyp) {
 			/* note: monsters don't use opening or locking magic
@@ -1194,7 +1194,7 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 				makeknown(obj->otyp);
 				/* if a shop door gets broken, add it to
 				   the shk's fix list (no cost to player) */
-				if (levl[bhitpos.x][bhitpos.y].doormask ==
+				if (level.locations[bhitpos.x][bhitpos.y].doormask ==
 					D_BROKEN &&
 				    *in_rooms(bhitpos.x, bhitpos.y, SHOPBASE))
 				    add_damage(bhitpos.x, bhitpos.y, 0L);
@@ -1203,7 +1203,7 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 		    }
 		}
 		if (!ZAP_POS(typ) || (IS_DOOR(typ) &&
-		   (levl[bhitpos.x][bhitpos.y].doormask & (D_LOCKED | D_CLOSED)))
+		   (level.locations[bhitpos.x][bhitpos.y].doormask & (D_LOCKED | D_CLOSED)))
 		  ) {
 			bhitpos.x -= ddx;
 			bhitpos.y -= ddy;
@@ -1294,8 +1294,8 @@ int use_offensive(struct monst *mtmp)
 	    	    for (y = mmy-1; y <= mmy+1; y++) {
 	    	    	/* Is this a suitable spot? */
 	    	    	if (isok(x, y) && !closed_door(x, y) &&
-	    	    			!IS_ROCK(levl[x][y].typ) &&
-	    	    			!IS_AIR(levl[x][y].typ) &&
+	    	    			!IS_ROCK(level.locations[x][y].typ) &&
+	    	    			!IS_AIR(level.locations[x][y].typ) &&
 	    	    			(((x == mmx) && (y == mmy)) ?
 	    	    			    !otmp->blessed : !otmp->cursed) &&
 					(x != u.ux || y != u.uy)) {

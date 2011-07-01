@@ -283,9 +283,9 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	   the random chance for small objects hitting bars is
 	   skipped when reaching them at point blank range */
 	if (!isok(bhitpos.x+dx,bhitpos.y+dy)
-	    || IS_ROCK(levl[bhitpos.x+dx][bhitpos.y+dy].typ)
+	    || IS_ROCK(level.locations[bhitpos.x+dx][bhitpos.y+dy].typ)
 	    || closed_door(bhitpos.x+dx, bhitpos.y+dy)
-	    || (levl[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS &&
+	    || (level.locations[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS &&
 		hits_bars(&singleobj, bhitpos.x, bhitpos.y, 0, 0))) {
 	    drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 	    return;
@@ -404,14 +404,14 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			/* missile hits edge of screen */
 			|| !isok(bhitpos.x+dx,bhitpos.y+dy)
 			/* missile hits the wall */
-			|| IS_ROCK(levl[bhitpos.x+dx][bhitpos.y+dy].typ)
+			|| IS_ROCK(level.locations[bhitpos.x+dx][bhitpos.y+dy].typ)
 			/* missile hit closed door */
 			|| closed_door(bhitpos.x+dx, bhitpos.y+dy)
 			/* missile might hit iron bars */
-			|| (levl[bhitpos.x+dx][bhitpos.y+dy].typ == IRONBARS &&
+			|| (level.locations[bhitpos.x+dx][bhitpos.y+dy].typ == IRONBARS &&
 			hits_bars(&singleobj, bhitpos.x, bhitpos.y, !rn2(5), 0))
 			/* Thrown objects "sink" */
-			|| IS_SINK(levl[bhitpos.x][bhitpos.y].typ)) {
+			|| IS_SINK(level.locations[bhitpos.x][bhitpos.y].typ)) {
 		    if (singleobj) /* hits_bars might have destroyed it */
 			drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 		    break;

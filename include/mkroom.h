@@ -84,7 +84,7 @@ extern coord doors[DOORMAX];
 				 * square searching required */
 
 #define ROOMOFFSET	3	/*
-				 * (levl[x][y].roomno - ROOMOFFSET) gives
+				 * (level.locations[x][y].roomno - ROOMOFFSET) gives
 				 * rooms[] index, for inside-squares and
 				 * non-shared boundaries.
 				 */

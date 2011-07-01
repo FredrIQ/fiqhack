@@ -61,9 +61,9 @@ pick_move:
 	for (i=0; i<cnt; i++) {
 		nx = poss[i].x;
 		ny = poss[i].y;
-		if (levl[nx][ny].typ == ROOM ||
+		if (level.locations[nx][ny].typ == ROOM ||
 			(mtmp->ispriest &&
-			    levl[nx][ny].typ == ALTAR) ||
+			    level.locations[nx][ny].typ == ALTAR) ||
 			(mtmp->isshk &&
 			    (!in_his_shop || ESHK(mtmp)->following))) {
 		    if (avoid && (info[i] & NOTONL))
@@ -177,7 +177,7 @@ void priestini(d_level *lvl, struct mkroom *sroom, int sx, int sy,
 			 sx + 1, sy, NO_MM_FLAGS);
 	if (priest) {
 		EPRI(priest)->shroom = (sroom - rooms) + ROOMOFFSET;
-		EPRI(priest)->shralign = Amask2align(levl[sx][sy].altarmask);
+		EPRI(priest)->shralign = Amask2align(level.locations[sx][sy].altarmask);
 		EPRI(priest)->shrpos.x = sx;
 		EPRI(priest)->shrpos.y = sy;
 		assign_level(&(EPRI(priest)->shrlevel), lvl);
@@ -269,7 +269,7 @@ static boolean has_shrine(struct monst *pri)
 
 	if (!pri)
 		return FALSE;
-	lev = &levl[EPRI(pri)->shrpos.x][EPRI(pri)->shrpos.y];
+	lev = &level.locations[EPRI(pri)->shrpos.x][EPRI(pri)->shrpos.y];
 	if (!IS_ALTAR(lev->typ) || !(lev->altarmask & AM_SHRINE))
 		return FALSE;
 	return (boolean)(EPRI(pri)->shralign == Amask2align(lev->altarmask & ~AM_SHRINE));
@@ -571,7 +571,7 @@ void ghod_hitsu(struct monst *priest)
 	troom = &rooms[roomno - ROOMOFFSET];
 
 	if ((u.ux == x && u.uy == y) || !linedup(u.ux, u.uy, x, y)) {
-	    if (IS_DOOR(levl[u.ux][u.uy].typ)) {
+	    if (IS_DOOR(level.locations[u.ux][u.uy].typ)) {
 
 		if (u.ux == troom->lx - 1) {
 		    x = troom->hx;
@@ -630,7 +630,7 @@ void angry_priest(void)
 	     *	a fresh corpse nearby, the priest ought to have an
 	     *	opportunity to try converting it back; maybe someday...)
 	     */
-	    lev = &levl[EPRI(priest)->shrpos.x][EPRI(priest)->shrpos.y];
+	    lev = &level.locations[EPRI(priest)->shrpos.x][EPRI(priest)->shrpos.y];
 	    if (!IS_ALTAR(lev->typ) ||
 		((aligntyp)Amask2align(lev->altarmask & AM_MASK) !=
 			EPRI(priest)->shralign)) {

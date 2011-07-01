@@ -133,7 +133,7 @@ boolean can_reach_floor(void)
 
 const char *surface(int x, int y)
 {
-	struct rm *lev = &levl[x][y];
+	struct rm *lev = &level.locations[x][y];
 
 	if ((x == u.ux) && (y == u.uy) && u.uswallow &&
 		is_animal(u.ustuck->data))
@@ -148,11 +148,11 @@ const char *surface(int x, int y)
 	    return "lava";
 	else if (lev->typ == DRAWBRIDGE_DOWN)
 	    return "bridge";
-	else if (IS_ALTAR(levl[x][y].typ))
+	else if (IS_ALTAR(level.locations[x][y].typ))
 	    return "altar";
-	else if (IS_GRAVE(levl[x][y].typ))
+	else if (IS_GRAVE(level.locations[x][y].typ))
 	    return "headstone";
-	else if (IS_FOUNTAIN(levl[x][y].typ))
+	else if (IS_FOUNTAIN(level.locations[x][y].typ))
 	    return "fountain";
 	else if ((IS_ROOM(lev->typ) && !Is_earthlevel(&u.uz)) ||
 		 IS_WALL(lev->typ) || IS_DOOR(lev->typ) || lev->typ == SDOOR)
@@ -163,7 +163,7 @@ const char *surface(int x, int y)
 
 const char *ceiling(int x, int y)
 {
-	struct rm *lev = &levl[x][y];
+	struct rm *lev = &level.locations[x][y];
 	const char *what;
 
 	/* other room types will no longer exist when we're interested --
@@ -436,7 +436,7 @@ int doengrave(void)
 	} else if (is_lava(u.ux, u.uy)) {
 		You_cant("write on the lava!");
 		return 0;
-	} else if (is_pool(u.ux,u.uy) || IS_FOUNTAIN(levl[u.ux][u.uy].typ)) {
+	} else if (is_pool(u.ux,u.uy) || IS_FOUNTAIN(level.locations[u.ux][u.uy].typ)) {
 		You_cant("write on the water!");
 		return 0;
 	}
@@ -477,19 +477,19 @@ int doengrave(void)
 		You_cant("reach the %s!", surface(u.ux,u.uy));
 		return 0;
 	}
-	if (IS_ALTAR(levl[u.ux][u.uy].typ)) {
+	if (IS_ALTAR(level.locations[u.ux][u.uy].typ)) {
 		You("make a motion towards the altar with your %s.", writer);
 		altar_wrath(u.ux, u.uy);
 		return 0;
 	}
-	if (IS_GRAVE(levl[u.ux][u.uy].typ)) {
+	if (IS_GRAVE(level.locations[u.ux][u.uy].typ)) {
 	    if (otmp == &zeroobj) { /* using only finger */
 		You("would only make a small smudge on the %s.",
 			surface(u.ux, u.uy));
 		return 0;
-	    } else if (!levl[u.ux][u.uy].disturbed) {
+	    } else if (!level.locations[u.ux][u.uy].disturbed) {
 		You("disturb the undead!");
-		levl[u.ux][u.uy].disturbed = 1;
+		level.locations[u.ux][u.uy].disturbed = 1;
 		makemon(&mons[PM_GHOUL], u.ux, u.uy, NO_MM_FLAGS);
 		exercise(A_WIS, FALSE);
 		return 1;
@@ -663,7 +663,7 @@ int doengrave(void)
 			}
 			if (!Blind)
 			    strcpy(post_engr_text,
-				IS_GRAVE(levl[u.ux][u.uy].typ) ?
+				IS_GRAVE(level.locations[u.ux][u.uy].typ) ?
 				"Chips fly out from the headstone." :
 				is_ice(u.ux,u.uy) ?
 				"Ice chips fly up from the ice surface!" :
@@ -771,7 +771,7 @@ int doengrave(void)
 		break;
 	}
 
-	if (IS_GRAVE(levl[u.ux][u.uy].typ)) {
+	if (IS_GRAVE(level.locations[u.ux][u.uy].typ)) {
 	    if (type == ENGRAVE || type == 0)
 		type = HEADSTONE;
 	    else {
@@ -811,7 +811,7 @@ int doengrave(void)
 	if (zapwand && (otmp->spe < 0)) {
 	    pline("%s %sturns to dust.",
 		  The(xname(otmp)), Blind ? "" : "glows violently, then ");
-	    if (!IS_GRAVE(levl[u.ux][u.uy].typ))
+	    if (!IS_GRAVE(level.locations[u.ux][u.uy].typ))
 		You("are not going to get anywhere trying to write in the %s with your dust.",
 		    is_ice(u.ux,u.uy) ? "frost" : "dust");
 	    useup(otmp);
@@ -1181,10 +1181,10 @@ static const char *epitaphs[] = {
 void make_grave(int x, int y, const char *str)
 {
 	/* Can we put a grave here? */
-	if ((levl[x][y].typ != ROOM && levl[x][y].typ != GRAVE) || t_at(x,y)) return;
+	if ((level.locations[x][y].typ != ROOM && level.locations[x][y].typ != GRAVE) || t_at(x,y)) return;
 
 	/* Make the grave */
-	levl[x][y].typ = GRAVE;
+	level.locations[x][y].typ = GRAVE;
 
 	/* Engrave the headstone */
 	if (!str) str = epitaphs[rn2(SIZE(epitaphs))];

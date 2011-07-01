@@ -1886,7 +1886,7 @@ int dotypeinv(void)
    is one worth mentioning at that location; otherwise null */
 const char *dfeature_at(int x, int y, char *buf)
 {
-	struct rm *lev = &levl[x][y];
+	struct rm *lev = &level.locations[x][y];
 	int ltyp = lev->typ, cmap = -1;
 	const char *dfeature = 0;
 	static char altbuf[BUFSZ];

@@ -412,7 +412,7 @@ static boolean landing_spot(coord *spot, /* landing position (we fill it in) */
 	    for (y = u.uy-1; y <= u.uy+1; y++) {
 		if (!isok(x, y) || (x == u.ux && y == u.uy)) continue;
 
-		if (ACCESSIBLE(levl[x][y].typ) &&
+		if (ACCESSIBLE(level.locations[x][y].typ) &&
 			    !MON_AT(x,y) && !closed_door(x,y)) {
 		    distance = distu(x,y);
 		    if (min_distance < 0 || distance < min_distance ||

@@ -65,11 +65,11 @@ static void roguecorr(int x, int y, int dir)
 			fromx = r[x][y].rlx + rn2(r[x][y].dx);
 			fromy = r[x][y].rly + r[x][y].dy;
 			fromx += 1 + 26*x; fromy += 7*y;
-			if (!IS_WALL(levl[fromx][fromy].typ))
+			if (!IS_WALL(level.locations[fromx][fromy].typ))
 				impossible("down: no wall at %d,%d?",fromx,
 									fromy);
 			dodoor(fromx, fromy, &rooms[r[x][y].nroom]);
-			levl[fromx][fromy].doormask = D_NODOOR;
+			level.locations[fromx][fromy].doormask = D_NODOOR;
 			fromy++;
 		}
 		if (y >= 2) {
@@ -85,10 +85,10 @@ static void roguecorr(int x, int y, int dir)
 			tox = r[x][y].rlx + rn2(r[x][y].dx);
 			toy = r[x][y].rly - 1;
 			tox += 1 + 26*x; toy += 7*y;
-			if (!IS_WALL(levl[tox][toy].typ))
+			if (!IS_WALL(level.locations[tox][toy].typ))
 				impossible("up: no wall at %d,%d?",tox,toy);
 			dodoor(tox, toy, &rooms[r[x][y].nroom]);
-			levl[tox][toy].doormask = D_NODOOR;
+			level.locations[tox][toy].doormask = D_NODOOR;
 			toy--;
 		}
 		roguejoin(fromx, fromy, tox, toy, FALSE);
@@ -102,11 +102,11 @@ static void roguecorr(int x, int y, int dir)
 			fromx = r[x][y].rlx + r[x][y].dx;
 			fromy = r[x][y].rly + rn2(r[x][y].dy);
 			fromx += 1 + 26*x; fromy += 7*y;
-			if (!IS_WALL(levl[fromx][fromy].typ))
+			if (!IS_WALL(level.locations[fromx][fromy].typ))
 				impossible("down: no wall at %d,%d?",fromx,
 									fromy);
 			dodoor(fromx, fromy, &rooms[r[x][y].nroom]);
-			levl[fromx][fromy].doormask = D_NODOOR;
+			level.locations[fromx][fromy].doormask = D_NODOOR;
 			fromx++;
 		}
 		if (x >= 2) {
@@ -122,10 +122,10 @@ static void roguecorr(int x, int y, int dir)
 			tox = r[x][y].rlx - 1;
 			toy = r[x][y].rly + rn2(r[x][y].dy);
 			tox += 1 + 26*x; toy += 7*y;
-			if (!IS_WALL(levl[tox][toy].typ))
+			if (!IS_WALL(level.locations[tox][toy].typ))
 				impossible("left: no wall at %d,%d?",tox,toy);
 			dodoor(tox, toy, &rooms[r[x][y].nroom]);
-			levl[tox][toy].doormask = D_NODOOR;
+			level.locations[tox][toy].doormask = D_NODOOR;
 			tox--;
 		}
 		roguejoin(fromx, fromy, tox, toy, TRUE);
@@ -263,9 +263,9 @@ void makeroguerooms(void) {
 void corr(int x, int y)
 {
 	if (rn2(50)) {
-		levl[x][y].typ = CORR;
+		level.locations[x][y].typ = CORR;
 	} else {
-		levl[x][y].typ = SCORR;
+		level.locations[x][y].typ = SCORR;
 	}
 }
 

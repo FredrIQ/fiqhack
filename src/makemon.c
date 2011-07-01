@@ -1544,9 +1544,9 @@ void set_mimic_sym(struct monst *mtmp)
 
 	if (!mtmp) return;
 	mx = mtmp->mx; my = mtmp->my;
-	typ = levl[mx][my].typ;
+	typ = level.locations[mx][my].typ;
 					/* only valid for INSIDE of room */
-	roomno = levl[mx][my].roomno - ROOMOFFSET;
+	roomno = level.locations[mx][my].roomno - ROOMOFFSET;
 	if (roomno >= 0)
 		rt = rooms[roomno].rtype;
 	else	rt = 0;	/* roomno < 0 case */
@@ -1563,13 +1563,13 @@ void set_mimic_sym(struct monst *mtmp)
 		 *  This does not allow doors to be in corners of rooms.
 		 */
 		if (mx != 0 &&
-			(levl[mx-1][my].typ == HWALL    ||
-			 levl[mx-1][my].typ == TLCORNER ||
-			 levl[mx-1][my].typ == TRWALL   ||
-			 levl[mx-1][my].typ == BLCORNER ||
-			 levl[mx-1][my].typ == TDWALL   ||
-			 levl[mx-1][my].typ == CROSSWALL||
-			 levl[mx-1][my].typ == TUWALL    ))
+			(level.locations[mx-1][my].typ == HWALL    ||
+			 level.locations[mx-1][my].typ == TLCORNER ||
+			 level.locations[mx-1][my].typ == TRWALL   ||
+			 level.locations[mx-1][my].typ == BLCORNER ||
+			 level.locations[mx-1][my].typ == TDWALL   ||
+			 level.locations[mx-1][my].typ == CROSSWALL||
+			 level.locations[mx-1][my].typ == TUWALL    ))
 		    appear = S_hcdoor;
 		else
 		    appear = S_vcdoor;

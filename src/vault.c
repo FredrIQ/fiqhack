@@ -42,14 +42,14 @@ static boolean clear_fcorr(struct monst *grd, boolean forceshow)
 			    rloc(mtmp, FALSE);
 			}
 		}
-		levl[fcx][fcy].typ = EGD(grd)->fakecorr[fcbeg].ftyp;
+		level.locations[fcx][fcy].typ = EGD(grd)->fakecorr[fcbeg].ftyp;
 		map_location(fcx, fcy, 1);	/* bypass vision */
-		if (!ACCESSIBLE(levl[fcx][fcy].typ)) block_point(fcx,fcy);
+		if (!ACCESSIBLE(level.locations[fcx][fcy].typ)) block_point(fcx,fcy);
 		EGD(grd)->fcbeg++;
 	}
 	if (grd->mhp <= 0) {
 	    pline_The("corridor disappears.");
-	    if (IS_ROCK(levl[u.ux][u.uy].typ)) You("are encased in rock.");
+	    if (IS_ROCK(level.locations[u.ux][u.uy].typ)) You("are encased in rock.");
 	}
 	return TRUE;
 }
@@ -137,14 +137,14 @@ void invault(void)
 	      if (y != u.uy-dd && y != u.uy+dd && x != u.ux-dd)
 		x = u.ux+dd;
 	      if (x < 1 || x > COLNO-1) continue;
-	      if (levl[x][y].typ == CORR) {
+	      if (level.locations[x][y].typ == CORR) {
 		  if (x < u.ux) lx = x + 1;
 		  else if (x > u.ux) lx = x - 1;
 		  else lx = x;
 		  if (y < u.uy) ly = y + 1;
 		  else if (y > u.uy) ly = y - 1;
 		  else ly = y;
-		  if (levl[lx][ly].typ != STONE && levl[lx][ly].typ != CORR)
+		  if (level.locations[lx][ly].typ != STONE && level.locations[lx][ly].typ != CORR)
 		      goto incr_radius;
 		  goto fnd;
 	      }
@@ -160,26 +160,26 @@ fnd:
 
 	/* next find a good place for a door in the wall */
 	x = u.ux; y = u.uy;
-	if (levl[x][y].typ != ROOM) {  /* player dug a door and is in it */
-		if (levl[x+1][y].typ == ROOM)  x = x + 1;
-		else if (levl[x][y+1].typ == ROOM) y = y + 1;
-		else if (levl[x-1][y].typ == ROOM) x = x - 1;
-		else if (levl[x][y-1].typ == ROOM) y = y - 1;
-		else if (levl[x+1][y+1].typ == ROOM) {
+	if (level.locations[x][y].typ != ROOM) {  /* player dug a door and is in it */
+		if (level.locations[x+1][y].typ == ROOM)  x = x + 1;
+		else if (level.locations[x][y+1].typ == ROOM) y = y + 1;
+		else if (level.locations[x-1][y].typ == ROOM) x = x - 1;
+		else if (level.locations[x][y-1].typ == ROOM) y = y - 1;
+		else if (level.locations[x+1][y+1].typ == ROOM) {
 			x = x + 1;
 			y = y + 1;
-		} else if (levl[x-1][y-1].typ == ROOM) {
+		} else if (level.locations[x-1][y-1].typ == ROOM) {
 			x = x - 1;
 			y = y - 1;
-		} else if (levl[x+1][y-1].typ == ROOM) {
+		} else if (level.locations[x+1][y-1].typ == ROOM) {
 			x = x + 1;
 			y = y - 1;
-		} else if (levl[x-1][y+1].typ == ROOM) {
+		} else if (level.locations[x-1][y+1].typ == ROOM) {
 			x = x - 1;
 			y = y + 1;
 		}
 	}
-	while (levl[x][y].typ == ROOM) {
+	while (level.locations[x][y].typ == ROOM) {
 		int dx,dy;
 
 		dx = (gx > x) ? 1 : (gx < x) ? -1 : 0;
@@ -190,13 +190,13 @@ fnd:
 			y += dy;
 	}
 	if (x == u.ux && y == u.uy) {
-		if (levl[x+1][y].typ == HWALL || levl[x+1][y].typ == DOOR)
+		if (level.locations[x+1][y].typ == HWALL || level.locations[x+1][y].typ == DOOR)
 			x = x + 1;
-		else if (levl[x-1][y].typ == HWALL || levl[x-1][y].typ == DOOR)
+		else if (level.locations[x-1][y].typ == HWALL || level.locations[x-1][y].typ == DOOR)
 			x = x - 1;
-		else if (levl[x][y+1].typ == VWALL || levl[x][y+1].typ == DOOR)
+		else if (level.locations[x][y+1].typ == VWALL || level.locations[x][y+1].typ == DOOR)
 			y = y + 1;
-		else if (levl[x][y-1].typ == VWALL || levl[x][y-1].typ == DOOR)
+		else if (level.locations[x][y-1].typ == VWALL || level.locations[x][y-1].typ == DOOR)
 			y = y - 1;
 		else return;
 	}
@@ -295,8 +295,8 @@ fnd:
 	EGD(guard)->fcbeg = 0;
 	EGD(guard)->fakecorr[0].fx = x;
 	EGD(guard)->fakecorr[0].fy = y;
-	if (IS_WALL(levl[x][y].typ))
-	    EGD(guard)->fakecorr[0].ftyp = levl[x][y].typ;
+	if (IS_WALL(level.locations[x][y].typ))
+	    EGD(guard)->fakecorr[0].ftyp = level.locations[x][y].typ;
 	else { /* the initial guard location is a dug door */
 	    int vlt = EGD(guard)->vroom;
 	    xchar lowx = rooms[vlt].lx, hix = rooms[vlt].hx;
@@ -315,8 +315,8 @@ fnd:
 	    else if (x == lowx-1 || x == hix+1)
 		EGD(guard)->fakecorr[0].ftyp = VWALL;
 	}
-	levl[x][y].typ = DOOR;
-	levl[x][y].doormask = D_NODOOR;
+	level.locations[x][y].typ = DOOR;
+	level.locations[x][y].doormask = D_NODOOR;
 	unblock_point(x, y);		/* doesn't block light */
 	EGD(guard)->fcend = 1;
 	EGD(guard)->warncnt = 1;
@@ -355,7 +355,7 @@ static void wallify_vault(struct monst *grd)
 		/* if not on the room boundary, skip ahead */
 		if (x != lox && x != hix && y != loy && y != hiy) continue;
 
-		if (!IS_WALL(levl[x][y].typ) && !in_fcorridor(grd, x, y)) {
+		if (!IS_WALL(level.locations[x][y].typ) && !in_fcorridor(grd, x, y)) {
 		    if ((mon = m_at(x, y)) != 0 && mon != grd) {
 			if (mon->mtame) yelp(mon);
 			rloc(mon, FALSE);
@@ -374,8 +374,8 @@ static void wallify_vault(struct monst *grd)
 			      (y == hiy) ? BRCORNER : VWALL;
 		    else  /* not left or right side, must be top or bottom */
 			typ = HWALL;
-		    levl[x][y].typ = typ;
-		    levl[x][y].doormask = 0;
+		    level.locations[x][y].typ = typ;
+		    level.locations[x][y].doormask = 0;
 		    /*
 		     * hack: player knows walls are restored because of the
 		     * message, below, so show this on the screen.
@@ -469,7 +469,7 @@ int gd_move(struct monst *grd)
 			n = grd->my;
 			verbalize("You've been warned, knave!");
 			mnexto(grd);
-			levl[m][n].typ = egrd->fakecorr[0].ftyp;
+			level.locations[m][n].typ = egrd->fakecorr[0].ftyp;
 			newsym(m,n);
 			grd->mpeaceful = 0;
 			return -1;
@@ -484,7 +484,7 @@ int gd_move(struct monst *grd)
 		    m = grd->mx;
 		    n = grd->my;
 		    rloc(grd, FALSE);
-		    levl[m][n].typ = egrd->fakecorr[0].ftyp;
+		    level.locations[m][n].typ = egrd->fakecorr[0].ftyp;
 		    newsym(m,n);
 		    grd->mpeaceful = 0;
 letknow:
@@ -508,7 +508,7 @@ letknow:
 	if (egrd->fcend > 1) {
 	    if (egrd->fcend > 2 && in_fcorridor(grd, grd->mx, grd->my) &&
 		  !egrd->gddone && !in_fcorridor(grd, u.ux, u.uy) &&
-		  levl[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ
+		  level.locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ
 				 == egrd->fakecorr[0].ftyp) {
 		pline_The("%s, confused, disappears.", g_monnam(grd));
 		disappear_msg_seen = TRUE;
@@ -595,7 +595,7 @@ letknow:
 	for (nx = x-1; nx <= x+1; nx++) for(ny = y-1; ny <= y+1; ny++) {
 	  if ((nx == x || ny == y) && (nx != x || ny != y) && isok(nx, ny)) {
 
-	    typ = (crm = &levl[nx][ny])->typ;
+	    typ = (crm = &level.locations[nx][ny])->typ;
 	    if (!IS_STWALL(typ) && !IS_POOL(typ)) {
 
 		if (in_fcorridor(grd, nx, ny))
@@ -625,11 +625,11 @@ nextpos:
 	dy = (gy > y) ? 1 : (gy < y) ? -1 : 0;
 	if (abs(gx-x) >= abs(gy-y)) nx += dx; else ny += dy;
 
-	while ((typ = (crm = &levl[nx][ny])->typ) != 0) {
+	while ((typ = (crm = &level.locations[nx][ny])->typ) != 0) {
 	/* in view of the above we must have IS_WALL(typ) or typ == POOL */
 	/* must be a wall here */
 		if (isok(nx+nx-x,ny+ny-y) && !IS_POOL(typ) &&
-		    IS_ROOM(levl[nx+nx-x][ny+ny-y].typ)){
+		    IS_ROOM(level.locations[nx+nx-x][ny+ny-y].typ)){
 			crm->typ = DOOR;
 			crm->doormask = D_NODOOR;
 			goto proceed;

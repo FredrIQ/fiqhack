@@ -305,14 +305,14 @@ int dodrink(void)
 		return 0;
 	}
 	/* Is there a fountain to drink from here? */
-	if (IS_FOUNTAIN(levl[u.ux][u.uy].typ) && !Levitation) {
+	if (IS_FOUNTAIN(level.locations[u.ux][u.uy].typ) && !Levitation) {
 		if (yn("Drink from the fountain?") == 'y') {
 			drinkfountain();
 			return 1;
 		}
 	}
 	/* Or a kitchen sink? */
-	if (IS_SINK(levl[u.ux][u.uy].typ)) {
+	if (IS_SINK(level.locations[u.ux][u.uy].typ)) {
 		if (yn("Drink from the sink?") == 'y') {
 			drinksink();
 			return 1;
@@ -597,7 +597,7 @@ int peffects(struct obj *otmp)
 		    incr_itimeout(&HDetect_monsters, i);
 		    for (x = 1; x < COLNO; x++) {
 			for (y = 0; y < ROWNO; y++) {
-			    if (levl[x][y].glyph == GLYPH_INVISIBLE) {
+			    if (level.locations[x][y].glyph == GLYPH_INVISIBLE) {
 				unmap_object(x, y);
 				newsym(x,y);
 			    }
@@ -1476,7 +1476,7 @@ int dodip(void)
 	if (!(obj = getobj(allowall, "dip")))
 		return 0;
 
-	here = levl[u.ux][u.uy].typ;
+	here = level.locations[u.ux][u.uy].typ;
 	/* Is there a fountain to dip into here? */
 	if (IS_FOUNTAIN(here)) {
 		if (yn("Dip it into the fountain?") == 'y') {

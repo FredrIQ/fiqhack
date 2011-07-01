@@ -45,18 +45,18 @@ static void watch_on_duty(struct monst *mtmp)
 	if (mtmp->mpeaceful && in_town(u.ux, u.uy) &&
 	   mtmp->mcansee && m_canseeu(mtmp) && !rn2(3)) {
 
-	    if (picking_lock(&x, &y) && IS_DOOR(levl[x][y].typ) &&
-	       (levl[x][y].doormask & D_LOCKED)) {
+	    if (picking_lock(&x, &y) && IS_DOOR(level.locations[x][y].typ) &&
+	       (level.locations[x][y].doormask & D_LOCKED)) {
 
 		if (couldsee(mtmp->mx, mtmp->my)) {
 
 		  pline("%s yells:", Amonnam(mtmp));
-		  if (levl[x][y].looted & D_WARNED) {
+		  if (level.locations[x][y].looted & D_WARNED) {
 			verbalize("Halt, thief!  You're under arrest!");
 			angry_guards(!(flags.soundok));
 		  } else {
 			verbalize("Hey, stop picking that lock!");
-			levl[x][y].looted |=  D_WARNED;
+			level.locations[x][y].looted |=  D_WARNED;
 		  }
 		  stop_occupation();
 		}
@@ -105,7 +105,7 @@ boolean onscary(int x, int y, struct monst *mtmp)
 	return (boolean)(sobj_at(SCR_SCARE_MONSTER, x, y)
 			 || (sengr_at("Elbereth", x, y) && flags.elbereth_enabled)
 			 || (mtmp->data->mlet == S_VAMPIRE
-			     && IS_ALTAR(levl[x][y].typ)));
+			     && IS_ALTAR(level.locations[x][y].typ)));
 }
 
 
@@ -646,8 +646,8 @@ not_special:
 		struct obj *lepgold, *ygold;
 #endif
 		boolean should_see = (couldsee(omx, omy) &&
-				      (levl[gx][gy].lit ||
-				       !levl[omx][omy].lit) &&
+				      (level.locations[gx][gy].lit ||
+				       !level.locations[omx][omy].lit) &&
 				      (dist2(omx, omy, gx, gy) <= 36));
 
 		if (!mtmp->mcansee ||
@@ -877,14 +877,14 @@ not_special:
 	    if (mmoved==1 && (u.ux != nix || u.uy != niy) && itsstuck(mtmp))
 		return 3;
 
-	    if (((IS_ROCK(levl[nix][niy].typ) && may_dig(nix,niy)) ||
+	    if (((IS_ROCK(level.locations[nix][niy].typ) && may_dig(nix,niy)) ||
 		 closed_door(nix, niy)) &&
 		mmoved==1 && can_tunnel && needspick(ptr)) {
 		if (closed_door(nix, niy)) {
 		    if (!(mw_tmp = MON_WEP(mtmp)) ||
 			!is_pick(mw_tmp) || !is_axe(mw_tmp))
 			mtmp->weapon_check = NEED_PICK_OR_AXE;
-		} else if (IS_TREE(levl[nix][niy].typ)) {
+		} else if (IS_TREE(level.locations[nix][niy].typ)) {
 		    if (!(mw_tmp = MON_WEP(mtmp)) || !is_axe(mw_tmp))
 			mtmp->weapon_check = NEED_AXE;
 		} else if (!(mw_tmp = MON_WEP(mtmp)) || !is_pick(mw_tmp)) {
@@ -974,11 +974,11 @@ postmov:
 		ptr = mtmp->data;
 
 		/* open a door, or crash through it, if you can */
-		if (IS_DOOR(levl[mtmp->mx][mtmp->my].typ)
+		if (IS_DOOR(level.locations[mtmp->mx][mtmp->my].typ)
 			&& !passes_walls(ptr) /* doesn't need to open doors */
 			&& !can_tunnel /* taken care of below */
 		      ) {
-		    struct rm *here = &levl[mtmp->mx][mtmp->my];
+		    struct rm *here = &level.locations[mtmp->mx][mtmp->my];
 		    boolean btrapped = (here->doormask & D_TRAPPED);
 
 		    if (here->doormask & (D_LOCKED|D_CLOSED) && amorphous(ptr)) {
@@ -1045,7 +1045,7 @@ postmov:
 			if (*in_rooms(mtmp->mx, mtmp->my, SHOPBASE))
 			    add_damage(mtmp->mx, mtmp->my, 0L);
 		    }
-		} else if (levl[mtmp->mx][mtmp->my].typ == IRONBARS) {
+		} else if (level.locations[mtmp->mx][mtmp->my].typ == IRONBARS) {
 			if (flags.verbose && canseemon(mtmp))
 			    Norep("%s %s %s the iron bars.", Monnam(mtmp),
 				  /* pluralization fakes verb conjugation */
@@ -1138,13 +1138,13 @@ postmov:
 
 boolean closed_door(int x, int y)
 {
-	return (boolean)(IS_DOOR(levl[x][y].typ) &&
-			(levl[x][y].doormask & (D_LOCKED | D_CLOSED)));
+	return (boolean)(IS_DOOR(level.locations[x][y].typ) &&
+			(level.locations[x][y].doormask & (D_LOCKED | D_CLOSED)));
 }
 
 boolean accessible(int x, int y)
 {
-	return (boolean)(ACCESSIBLE(levl[x][y].typ) && !closed_door(x, y));
+	return (boolean)(ACCESSIBLE(level.locations[x][y].typ) && !closed_door(x, y));
 }
 
 
@@ -1201,7 +1201,7 @@ void set_apparxy(struct monst *mtmp)
 		  || (disp != 2 && mx == mtmp->mx && my == mtmp->my)
 		  || ((mx != u.ux || my != u.uy) &&
 		      !passes_walls(mtmp->data) &&
-		      (!ACCESSIBLE(levl[mx][my].typ) ||
+		      (!ACCESSIBLE(level.locations[mx][my].typ) ||
 		       (closed_door(mx, my) && !can_ooze(mtmp))))
 		  || !couldsee(mx, my));
 	} else {

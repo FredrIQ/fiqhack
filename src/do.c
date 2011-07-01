@@ -48,7 +48,7 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 	else if (!Is_waterlevel(&u.uz) && (is_pool(rx,ry) || is_lava(rx,ry))) {
 	    boolean lava = is_lava(rx,ry), fills_up;
 	    const char *what = waterbody_name(rx,ry);
-	    schar ltyp = levl[rx][ry].typ;
+	    schar ltyp = level.locations[rx][ry].typ;
 	    int chance = rn2(10);		/* water: 90%; lava: 10% */
 	    fills_up = lava ? chance == 0 : chance != 0;
 
@@ -56,10 +56,10 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 		struct trap *ttmp = t_at(rx, ry);
 
 		if (ltyp == DRAWBRIDGE_UP) {
-		    levl[rx][ry].drawbridgemask &= ~DB_UNDER; /* clear lava */
-		    levl[rx][ry].drawbridgemask |= DB_FLOOR;
+		    level.locations[rx][ry].drawbridgemask &= ~DB_UNDER; /* clear lava */
+		    level.locations[rx][ry].drawbridgemask |= DB_FLOOR;
 		} else
-		    levl[rx][ry].typ = ROOM;
+		    level.locations[rx][ry].typ = ROOM;
 
 		if (ttmp) delfloortrap(ttmp);
 		bury_objs(rx, ry);
@@ -442,7 +442,7 @@ static int drop(struct obj *obj)
 		}
 	} else {
 	    if ((obj->oclass == RING_CLASS || obj->otyp == MEAT_RING) &&
-			IS_SINK(levl[u.ux][u.uy].typ)) {
+			IS_SINK(level.locations[u.ux][u.uy].typ)) {
 		dosinkring(obj);
 		return 1;
 	    }
@@ -458,7 +458,7 @@ static int drop(struct obj *obj)
 		hitfloor(obj);
 		return 1;
 	    }
-	    if (!IS_ALTAR(levl[u.ux][u.uy].typ) && flags.verbose)
+	    if (!IS_ALTAR(level.locations[u.ux][u.uy].typ) && flags.verbose)
 		You("drop %s.", doname(obj));
 	}
 	dropx(obj);
@@ -478,7 +478,7 @@ void dropx(struct obj *obj)
 #endif
 	if (!u.uswallow) {
 	    if (ship_object(obj, u.ux, u.uy, FALSE)) return;
-	    if (IS_ALTAR(levl[u.ux][u.uy].typ))
+	    if (IS_ALTAR(level.locations[u.ux][u.uy].typ))
 		doaltarobj(obj); /* set bknown */
 	}
 	dropy(obj);
@@ -766,7 +766,7 @@ int dodown(void)
 	if (trap && Is_stronghold(&u.uz)) {
 		goto_hell(FALSE, TRUE);
 	} else {
-		at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
+		at_ladder = (boolean) (level.locations[u.ux][u.uy].typ == LADDER);
 		next_level(!trap);
 		at_ladder = FALSE;
 	}
@@ -798,7 +798,7 @@ int doup(void)
 	if (near_capacity() > SLT_ENCUMBER) {
 		/* No levitation check; inv_weight() already allows for it */
 		Your("load is too heavy to climb the %s.",
-			levl[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
+			level.locations[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
 		return 1;
 	}
 	if (ledger_no(&u.uz) == 1) {
@@ -809,7 +809,7 @@ int doup(void)
 		You("are held back by your pet!");
 		return 0;
 	}
-	at_ladder = (boolean) (levl[u.ux][u.uy].typ == LADDER);
+	at_ladder = (boolean) (level.locations[u.ux][u.uy].typ == LADDER);
 	prev_level(TRUE);
 	at_ladder = FALSE;
 	return 1;
@@ -1047,7 +1047,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 				x = (COLNO - 2 - rnd(5));
 				y = rn1(ROWNO - 4, 3);
 			    } while (occupied(x, y) ||
-				    IS_WALL(levl[x][y].typ));
+				    IS_WALL(level.locations[x][y].typ));
 			    u_on_newpos(x, y);
 			} else u_on_sstairs();
 		    } else u_on_dnstairs();

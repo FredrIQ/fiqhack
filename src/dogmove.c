@@ -350,7 +350,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 			}
 		    } else if (gtyp == UNDEF && in_masters_sight &&
 			      !dog_has_minvent &&
-			      (!levl[omx][omy].lit || levl[u.ux][u.uy].lit) &&
+			      (!level.locations[omx][omy].lit || level.locations[u.ux][u.uy].lit) &&
 			      (otyp == MANFOOD || m_cansee(mtmp, nx, ny)) &&
 			      edog->apport > rn2(8) &&
 			      can_carry(mtmp,obj)) {
@@ -371,7 +371,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 			return -2;
 		appr = (udist >= 9) ? 1 : (mtmp->mflee) ? -1 : 0;
 		if (udist > 1) {
-			if (!IS_ROOM(levl[u.ux][u.uy].typ) || !rn2(4) ||
+			if (!IS_ROOM(level.locations[u.ux][u.uy].typ) || !rn2(4) ||
 			   whappr ||
 			   (dog_has_minvent && rn2(edog->apport)))
 				appr = 1;
@@ -676,7 +676,7 @@ newdogpos:
 		}
 		if (!m_in_out_region(mtmp, nix, niy))
 		    return 1;
-		if (((IS_ROCK(levl[nix][niy].typ) && may_dig(nix,niy)) ||
+		if (((IS_ROCK(level.locations[nix][niy].typ) && may_dig(nix,niy)) ||
 		     closed_door(nix, niy)) &&
 		    mtmp->weapon_check != NO_WEAPON_WANTED &&
 		    tunnels(mtmp->data) && needspick(mtmp->data)) {
@@ -684,7 +684,7 @@ newdogpos:
 			if (!(mw_tmp = MON_WEP(mtmp)) ||
 			    !is_pick(mw_tmp) || !is_axe(mw_tmp))
 			    mtmp->weapon_check = NEED_PICK_OR_AXE;
-		    } else if (IS_TREE(levl[nix][niy].typ)) {
+		    } else if (IS_TREE(level.locations[nix][niy].typ)) {
 			if (!(mw_tmp = MON_WEP(mtmp)) || !is_axe(mw_tmp))
 			    mtmp->weapon_check = NEED_AXE;
 		    } else if (!(mw_tmp = MON_WEP(mtmp)) || !is_pick(mw_tmp)) {
@@ -776,11 +776,11 @@ static boolean can_reach_location(struct monst *mon,
 		continue;
 	    if (dist2(i, j, fx, fy) >= dist)
 		continue;
-	    if (IS_ROCK(levl[i][j].typ) && !passes_walls(mon->data) &&
+	    if (IS_ROCK(level.locations[i][j].typ) && !passes_walls(mon->data) &&
 				    (!may_dig(i,j) || !tunnels(mon->data)))
 		continue;
-	    if (IS_DOOR(levl[i][j].typ) &&
-				(levl[i][j].doormask & (D_CLOSED | D_LOCKED)))
+	    if (IS_DOOR(level.locations[i][j].typ) &&
+				(level.locations[i][j].doormask & (D_CLOSED | D_LOCKED)))
 		continue;
 	    if (!could_reach_item(mon, i, j))
 		continue;

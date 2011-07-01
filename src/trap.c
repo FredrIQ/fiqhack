@@ -252,7 +252,7 @@ struct trap *maketrap(int x, int y, int typ)
 	    case PIT:
 	    case SPIKED_PIT:
 	    case TRAPDOOR:
-		lev = &levl[x][y];
+		lev = &level.locations[x][y];
 		if (*in_rooms(x, y, SHOPBASE) &&
 			((typ == HOLE || typ == TRAPDOOR) ||
 			 IS_DOOR(lev->typ) || IS_WALL(lev->typ)))
@@ -1201,8 +1201,8 @@ void blow_up_landmine(struct trap *trap)
 		NULL);
 	del_engr_at(trap->tx, trap->ty);
 	wake_nearto(trap->tx, trap->ty, 400);
-	if (IS_DOOR(levl[trap->tx][trap->ty].typ))
-	    levl[trap->tx][trap->ty].doormask = D_BROKEN;
+	if (IS_DOOR(level.locations[trap->tx][trap->ty].typ))
+	    level.locations[trap->tx][trap->ty].doormask = D_BROKEN;
 	/* TODO: destroy drawbridge if present */
 	/* caller may subsequently fill pit, e.g. with a boulder */
 	trap->ttyp = PIT;		/* explosion creates a pit */
@@ -1404,7 +1404,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 				     " as one boulder sets another in motion";
 
 			if (!isok(bhitpos.x + dx, bhitpos.y + dy) || !dist ||
-			    IS_ROCK(levl[bhitpos.x + dx][bhitpos.y + dy].typ))
+			    IS_ROCK(level.locations[bhitpos.x + dx][bhitpos.y + dy].typ))
 			    bmsg = " as one boulder hits another";
 
 			You_hear("a loud crash%s!",
@@ -1422,13 +1422,13 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 		if (otyp == BOULDER && closed_door(bhitpos.x,bhitpos.y)) {
 			if (cansee(bhitpos.x, bhitpos.y))
 				pline_The("boulder crashes through a door.");
-			levl[bhitpos.x][bhitpos.y].doormask = D_BROKEN;
+			level.locations[bhitpos.x][bhitpos.y].doormask = D_BROKEN;
 			if (dist) unblock_point(bhitpos.x, bhitpos.y);
 		}
 
 		/* if about to hit iron bars, do so now */
 		if (dist > 0 && isok(bhitpos.x + dx,bhitpos.y + dy) &&
-			levl[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS) {
+			level.locations[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS) {
 		    x2 = bhitpos.x,  y2 = bhitpos.y;	/* object stops here */
 		    if (hits_bars(&singleobj, x2, y2, !rn2(20), 0)) {
 			if (!singleobj) used_up = TRUE;
@@ -1524,7 +1524,7 @@ static boolean isclearpath(coord *cc, int distance, schar dx, schar dy)
 	while (distance-- > 0) {
 		x += dx;
 		y += dy;
-		typ = levl[x][y].typ;
+		typ = level.locations[x][y].typ;
 		if (!isok(x,y) || !ZAP_POS(typ) || closed_door(x,y))
 			return FALSE;
 	}
@@ -2785,7 +2785,7 @@ boolean drown(void)
 	u.uinwater = 1;
 	You("drown.");
 	killer_format = KILLED_BY_AN;
-	killer = (levl[u.ux][u.uy].typ == POOL || Is_medusa_level(&u.uz)) ?
+	killer = (level.locations[u.ux][u.uy].typ == POOL || Is_medusa_level(&u.uz)) ?
 	    "pool of water" : "moat";
 	done(DROWNING);
 	/* oops, we're still alive.  better get out of the water. */
@@ -3344,7 +3344,7 @@ int untrap(boolean force)
 	    return 1;
 	}
 
-	if (!IS_DOOR(levl[x][y].typ)) {
+	if (!IS_DOOR(level.locations[x][y].typ)) {
 	    if ((ttmp = t_at(x,y)) && ttmp->tseen)
 		You("cannot disable that trap.");
 	    else
@@ -3352,7 +3352,7 @@ int untrap(boolean force)
 	    return 0;
 	}
 
-	switch (levl[x][y].doormask) {
+	switch (level.locations[x][y].doormask) {
 	    case D_NODOOR:
 		You("%s no door there.", Blind ? "feel" : "see");
 		return 0;
@@ -3364,28 +3364,28 @@ int untrap(boolean force)
 		return 0;
 	}
 
-	if ((levl[x][y].doormask & D_TRAPPED
+	if ((level.locations[x][y].doormask & D_TRAPPED
 	     && (force ||
 		 (!confused && rn2(MAXULEV - u.ulevel + 11) < 10)))
 	    || (!force && confused && !rn2(3))) {
 		You("find a trap on the door!");
 		exercise(A_WIS, TRUE);
 		if (ynq("Disarm it?") != 'y') return 1;
-		if (levl[x][y].doormask & D_TRAPPED) {
+		if (level.locations[x][y].doormask & D_TRAPPED) {
 		    ch = 15 + (Role_if (PM_ROGUE) ? u.ulevel*3 : u.ulevel);
 		    exercise(A_DEX, TRUE);
 		    if (!force && (confused || Fumbling ||
 				     rnd(75+level_difficulty()/2) > ch)) {
 			You("set it off!");
 			b_trapped("door", FINGER);
-			levl[x][y].doormask = D_NODOOR;
+			level.locations[x][y].doormask = D_NODOOR;
 			unblock_point(x, y);
 			newsym(x, y);
 			/* (probably ought to charge for this damage...) */
 			if (*in_rooms(x, y, SHOPBASE)) add_damage(x, y, 0L);
 		    } else {
 			You("disarm it!");
-			levl[x][y].doormask &= ~D_TRAPPED;
+			level.locations[x][y].doormask &= ~D_TRAPPED;
 		    }
 		} else pline("This door was not trapped.");
 		return 1;

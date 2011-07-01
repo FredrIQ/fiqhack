@@ -524,7 +524,7 @@ int dorecover(int fd)
 
 	load_qtlist();	/* re-load the quest text info */
 	reset_attribute_clock();
-	/* Set up the vision internals, after levl[] data is loaded */
+	/* Set up the vision internals, after level.locations[] data is loaded */
 	/* but before docrt().					    */
 	vision_reset();
 	vision_full_recalc = 1;	/* recompute vision (not saved) */
@@ -583,7 +583,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	    trickery(trickbuf);
 	}
 
-	mread(fd, levl, sizeof(levl));
+	mread(fd, level.locations, sizeof(level.locations));
 	mread(fd, &omoves, sizeof(omoves));
 	mread(fd, &upstair, sizeof(stairway));
 	mread(fd, &dnstair, sizeof(stairway));
@@ -666,7 +666,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 		mazexy(&cc);
 		xdnstair = cc.x;
 		ydnstair = cc.y;
-		levl[cc.x][cc.y].typ = STAIRS;
+		level.locations[cc.x][cc.y].typ = STAIRS;
 	    }
 
 	    br = Is_branchlev(&u.uz);

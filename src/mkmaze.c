@@ -29,7 +29,7 @@ static boolean iswall(int x, int y)
     int type;
 
     if (!isok(x,y)) return FALSE;
-    type = levl[x][y].typ;
+    type = level.locations[x][y].typ;
     return (IS_WALL(type) || IS_DOOR(type) ||
 	    type == SDOOR || type == IRONBARS);
 }
@@ -41,7 +41,7 @@ static boolean iswall_or_stone(int x, int y)
     /* out of bounds = stone */
     if (!isok(x,y)) return TRUE;
 
-    type = levl[x][y].typ;
+    type = level.locations[x][y].typ;
     return (type == STONE || IS_WALL(type) || IS_DOOR(type) ||
 	    type == SDOOR || type == IRONBARS);
 }
@@ -49,7 +49,7 @@ static boolean iswall_or_stone(int x, int y)
 /* return TRUE if out of bounds, wall or rock */
 static boolean is_solid(int x, int y)
 {
-    return !isok(x,y) || IS_STWALL(levl[x][y].typ);
+    return !isok(x,y) || IS_STWALL(level.locations[x][y].typ);
 }
 
 
@@ -133,7 +133,7 @@ void wallification(int x1, int y1, int x2, int y2)
 	/* Step 1: change walls surrounded by rock to rock. */
 	for (x = x1; x <= x2; x++)
 	    for (y = y1; y <= y2; y++) {
-		lev = &levl[x][y];
+		lev = &level.locations[x][y];
 		type = lev->typ;
 		if (IS_WALL(type) && type != DBWALL) {
 		    if (is_solid(x-1,y-1) &&
@@ -155,7 +155,7 @@ void wallification(int x1, int y1, int x2, int y2)
 	 */
 	for (x = x1; x <= x2; x++)
 	    for (y = y1; y <= y2; y++) {
-		lev = &levl[x][y];
+		lev = &level.locations[x][y];
 		type = lev->typ;
 		if ( !(IS_WALL(type) && type != DBWALL)) continue;
 
@@ -186,7 +186,7 @@ static boolean okay(int x, int y, int dir)
 {
 	move(&x,&y,dir);
 	move(&x,&y,dir);
-	if (x<3 || y<3 || x>x_maze_max || y>y_maze_max || levl[x][y].typ != 0)
+	if (x<3 || y<3 || x>x_maze_max || y>y_maze_max || level.locations[x][y].typ != 0)
 		return FALSE;
 	return TRUE;
 }
@@ -209,8 +209,8 @@ boolean bad_location(xchar x, xchar y, xchar lx, xchar ly, xchar hx, xchar hy)
 {
     return((boolean)(occupied(x, y) ||
 	   within_bounded_area(x,y, lx,ly, hx,hy) ||
-	   !((levl[x][y].typ == CORR && level.flags.is_maze_lev) ||
-	       levl[x][y].typ == ROOM || levl[x][y].typ == AIR)));
+	   !((level.locations[x][y].typ == CORR && level.flags.is_maze_lev) ||
+	       level.locations[x][y].typ == ROOM || level.locations[x][y].typ == AIR)));
 }
 
 /* pick a location in area (lx, ly, hx, hy) but not in (nlx, nly, nhx, nhy) */
@@ -530,11 +530,11 @@ void makemaz(const char *s)
 #ifndef WALLIFIED_MAZE
 	for (x = 2; x < x_maze_max; x++)
 		for (y = 2; y < y_maze_max; y++)
-			levl[x][y].typ = STONE;
+			level.locations[x][y].typ = STONE;
 #else
 	for (x = 2; x <= x_maze_max; x++)
 		for (y = 2; y <= y_maze_max; y++)
-			levl[x][y].typ = ((x % 2) && (y % 2)) ? STONE : HWALL;
+			level.locations[x][y].typ = ((x % 2) && (y % 2)) ? STONE : HWALL;
 #endif
 
 	maze0xy(&mm);
@@ -584,7 +584,7 @@ void makemaz(const char *s)
 	    } while (x == xupstair || y == yupstair ||	/*(direct line)*/
 		     abs(x - xupstair) == abs(y - yupstair) ||
 		     distmin(x, y, xupstair, yupstair) <= INVPOS_DISTANCE ||
-		     !SPACE_POS(levl[x][y].typ) || occupied(x, y));
+		     !SPACE_POS(level.locations[x][y].typ) || occupied(x, y));
 	    inv_pos.x = x;
 	    inv_pos.y = y;
 #undef INVPOS_X_MARGIN
@@ -626,14 +626,14 @@ void walkfrom(int x, int y)
 	int q,a,dir;
 	int dirs[4];
 
-	if (!IS_DOOR(levl[x][y].typ)) {
+	if (!IS_DOOR(level.locations[x][y].typ)) {
 	    /* might still be on edge of MAP, so don't overwrite */
 #ifndef WALLIFIED_MAZE
-	    levl[x][y].typ = CORR;
+	    level.locations[x][y].typ = CORR;
 #else
-	    levl[x][y].typ = ROOM;
+	    level.locations[x][y].typ = ROOM;
 #endif
-	    levl[x][y].flags = 0;
+	    level.locations[x][y].flags = 0;
 	}
 
 	while (1) {
@@ -644,9 +644,9 @@ void walkfrom(int x, int y)
 		dir = dirs[rn2(q)];
 		move(&x,&y,dir);
 #ifndef WALLIFIED_MAZE
-		levl[x][y].typ = CORR;
+		level.locations[x][y].typ = CORR;
 #else
-		levl[x][y].typ = ROOM;
+		level.locations[x][y].typ = ROOM;
 #endif
 		move(&x,&y,dir);
 		walkfrom(x,y);
@@ -675,7 +675,7 @@ void mazexy(coord *cc)
 	    cc->x = 3 + 2*rn2((x_maze_max>>1) - 1);
 	    cc->y = 3 + 2*rn2((y_maze_max>>1) - 1);
 	    cpt++;
-	} while (cpt < 100 && levl[cc->x][cc->y].typ !=
+	} while (cpt < 100 && level.locations[cc->x][cc->y].typ !=
 #ifdef WALLIFIED_MAZE
 		 ROOM
 #else
@@ -689,7 +689,7 @@ void mazexy(coord *cc)
 		    for (y = 0; y < (y_maze_max>>1) - 1; y++) {
 			cc->x = 3 + 2 * x;
 			cc->y = 3 + 2 * y;
-			if (levl[cc->x][cc->y].typ ==
+			if (level.locations[cc->x][cc->y].typ ==
 #ifdef WALLIFIED_MAZE
 			    ROOM
 #else
@@ -724,7 +724,7 @@ void bound_digging(void)
 
 	found = nonwall = FALSE;
 	for (xmin=0; !found; xmin++) {
-		lev = &levl[xmin][0];
+		lev = &level.locations[xmin][0];
 		for (y=0; y<=ROWNO-1; y++, lev++) {
 			typ = lev->typ;
 			if (typ != STONE) {
@@ -738,7 +738,7 @@ void bound_digging(void)
 
 	found = nonwall = FALSE;
 	for (xmax=COLNO-1; !found; xmax--) {
-		lev = &levl[xmax][0];
+		lev = &level.locations[xmax][0];
 		for (y=0; y<=ROWNO-1; y++, lev++) {
 			typ = lev->typ;
 			if (typ != STONE) {
@@ -752,7 +752,7 @@ void bound_digging(void)
 
 	found = nonwall = FALSE;
 	for (ymin=0; !found; ymin++) {
-		lev = &levl[xmin][ymin];
+		lev = &level.locations[xmin][ymin];
 		for (x=xmin; x<=xmax; x++, lev += ROWNO) {
 			typ = lev->typ;
 			if (typ != STONE) {
@@ -765,7 +765,7 @@ void bound_digging(void)
 
 	found = nonwall = FALSE;
 	for (ymax=ROWNO-1; !found; ymax--) {
-		lev = &levl[xmin][ymax];
+		lev = &level.locations[xmin][ymax];
 		for (x=xmin; x<=xmax; x++, lev += ROWNO) {
 			typ = lev->typ;
 			if (typ != STONE) {
@@ -779,7 +779,7 @@ void bound_digging(void)
 	for (x = 0; x < COLNO; x++)
 	  for (y = 0; y < ROWNO; y++)
 	    if (y <= ymin || y >= ymax || x <= xmin || x >= xmax) {
-		levl[x][y].wall_info |= W_NONDIGGABLE;
+		level.locations[x][y].wall_info |= W_NONDIGGABLE;
 	    }
 }
 
@@ -925,7 +925,7 @@ void movebubbles(void)
 			    b->cons = cons;
 			}
 
-			levl[x][y] = water_pos;
+			level.locations[x][y] = water_pos;
 			block_point(x,y);
 		    }
 	}
@@ -1043,18 +1043,18 @@ const char *waterbody_name(xchar x, xchar y)
 
 	if (!isok(x,y))
 		return "drink";		/* should never happen */
-	lev = &levl[x][y];
+	lev = &level.locations[x][y];
 	ltyp = lev->typ;
 
 	if (is_lava(x,y))
 		return "lava";
 	else if (ltyp == ICE ||
 		 (ltyp == DRAWBRIDGE_UP &&
-		  (levl[x][y].drawbridgemask & DB_UNDER) == DB_ICE))
+		  (level.locations[x][y].drawbridgemask & DB_UNDER) == DB_ICE))
 		return "ice";
 	else if (((ltyp != POOL) && (ltyp != WATER) &&
 	  !Is_medusa_level(&u.uz) && !Is_waterlevel(&u.uz) && !Is_juiblex_level(&u.uz)) ||
-	   (ltyp == DRAWBRIDGE_UP && (levl[x][y].drawbridgemask & DB_UNDER) == DB_MOAT))
+	   (ltyp == DRAWBRIDGE_UP && (level.locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT))
 		return "moat";
 	else if ((ltyp != POOL) && (ltyp != WATER) && Is_juiblex_level(&u.uz))
 		return "swamp";
@@ -1088,7 +1088,7 @@ static void setup_waterlevel(void)
 
 	for (x = xmin; x <= xmax; x++)
 		for (y = ymin; y <= ymax; y++)
-			levl[x][y].glyph = water_glyph;
+			level.locations[x][y].glyph = water_glyph;
 
 	/* make bubbles */
 
@@ -1221,8 +1221,8 @@ static void mv_bubble(struct bubble *b, int dx, int dy, boolean ini)
 	for (i = 0, x = b->x; i < (int) b->bm[0]; i++, x++)
 	    for (j = 0, y = b->y; j < (int) b->bm[1]; j++, y++)
 		if (b->bm[j + 2] & (1 << i)) {
-		    levl[x][y].typ = AIR;
-		    levl[x][y].lit = 1;
+		    level.locations[x][y].typ = AIR;
+		    level.locations[x][y].lit = 1;
 		    unblock_point(x,y);
 		}
 

@@ -1050,7 +1050,7 @@ void u_on_sstairs(void)
 #ifdef DEBUG
 	    pline("u_on_sstairs: picking random spot");
 #endif
-#define badspot(x,y) ((levl[x][y].typ != ROOM && levl[x][y].typ != CORR) || MON_AT(x, y))
+#define badspot(x,y) ((level.locations[x][y].typ != ROOM && level.locations[x][y].typ != CORR) || MON_AT(x, y))
 	    do {
 		x = rnd(COLNO-1);
 		y = rn2(ROWNO);

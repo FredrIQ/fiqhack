@@ -262,12 +262,12 @@ static int use_stethoscope(struct obj *obj)
 			map_invisible(rx, ry);
 		return res;
 	}
-	if (glyph_is_invisible(levl[rx][ry].glyph)) {
+	if (glyph_is_invisible(level.locations[rx][ry].glyph)) {
 		unmap_object(rx, ry);
 		newsym(rx, ry);
 		pline_The("invisible monster must have moved.");
 	}
-	lev = &levl[rx][ry];
+	lev = &level.locations[rx][ry];
 	switch(lev->typ) {
 	case SDOOR:
 		You_hear(hollow_str, "door");
@@ -1598,11 +1598,11 @@ static boolean figurine_location_checks(struct obj *obj, coord *cc, boolean quie
 			You("cannot put the figurine there.");
 		return FALSE;
 	}
-	if (IS_ROCK(levl[x][y].typ) &&
+	if (IS_ROCK(level.locations[x][y].typ) &&
 	    !(passes_walls(&mons[obj->corpsenm]) && may_passwall(x,y))) {
 		if (!quietly)
 		    You("cannot place a figurine in %s!",
-			IS_TREE(levl[x][y].typ) ? "a tree" : "solid rock");
+			IS_TREE(level.locations[x][y].typ) ? "a tree" : "solid rock");
 		return FALSE;
 	}
 	if (sobj_at(BOULDER,x,y) && !passes_walls(&mons[obj->corpsenm])
@@ -1894,8 +1894,8 @@ static void use_trap(struct obj *otmp)
 	else if (On_stairs(u.ux, u.uy))
 	    what = (u.ux == xdnladder || u.ux == xupladder) ?
 			"on the ladder" : "on the stairs";
-	else if (IS_FURNITURE(levl[u.ux][u.uy].typ) ||
-		IS_ROCK(levl[u.ux][u.uy].typ) ||
+	else if (IS_FURNITURE(level.locations[u.ux][u.uy].typ) ||
+		IS_ROCK(level.locations[u.ux][u.uy].typ) ||
 		closed_door(u.ux, u.uy) || t_at(u.ux, u.uy))
 	    what = "here";
 	if (what) {
@@ -2110,7 +2110,7 @@ static int use_whip(struct obj *obj)
 	    }
 	}
 	if (!wrapped_what) {
-	    if (IS_FURNITURE(levl[rx][ry].typ))
+	    if (IS_FURNITURE(level.locations[rx][ry].typ))
 		wrapped_what = something;
 	    else if (sobj_at(BOULDER, rx, ry))
 		wrapped_what = "a boulder";
@@ -2135,7 +2135,7 @@ static int use_whip(struct obj *obj)
 
     } else if (mtmp) {
 	if (!canspotmon(mtmp) &&
-		!glyph_is_invisible(levl[rx][ry].glyph)) {
+		!glyph_is_invisible(level.locations[rx][ry].glyph)) {
 	   pline("A monster is there that you couldn't see.");
 	   map_invisible(rx, ry);
 	}
@@ -2432,7 +2432,7 @@ static int use_grapple (struct obj *obj)
 	    }
 	    /* FALL THROUGH */
 	case 3:	/* Surface */
-	    if (IS_AIR(levl[cc.x][cc.y].typ) || is_pool(cc.x, cc.y))
+	    if (IS_AIR(level.locations[cc.x][cc.y].typ) || is_pool(cc.x, cc.y))
 		pline_The("hook slices through the %s.", surface(cc.x, cc.y));
 	    else {
 		You("are yanked toward the %s!", surface(cc.x, cc.y));
@@ -2554,7 +2554,8 @@ static int do_break_wand(struct obj *obj)
 
 	if (obj->otyp == WAN_DIGGING) {
 	    if (dig_check(BY_OBJECT, FALSE, x, y)) {
-		if (IS_WALL(levl[x][y].typ) || IS_DOOR(levl[x][y].typ)) {
+		if (IS_WALL(level.locations[x][y].typ) ||
+		    IS_DOOR(level.locations[x][y].typ)) {
 		    /* normally, pits and holes don't anger guards, but they
 		     * do if it's a wall or door that's being dug */
 		    watch_dig(NULL, x, y, TRUE);
@@ -2828,8 +2829,8 @@ int doapply(void)
 				       "Oops!  %s out of your reach!" :
 					(Is_airlevel(&u.uz) ||
 					 Is_waterlevel(&u.uz) ||
-					 levl[u.ux][u.uy].typ < IRONBARS ||
-					 levl[u.ux][u.uy].typ >= ICE) ?
+					 level.locations[u.ux][u.uy].typ < IRONBARS ||
+					 level.locations[u.ux][u.uy].typ >= ICE) ?
 					       "Oops!  %s away from you!" :
 					       "Oops!  %s to the floor!",
 					       The(aobjnam(otmp, "slip")),

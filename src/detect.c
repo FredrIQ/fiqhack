@@ -672,7 +672,7 @@ int trap_detect(struct obj *sobj)
     }
     for (door = 0; door < doorindex; door++) {
 	cc = doors[door];
-	if (levl[cc.x][cc.y].doormask & D_TRAPPED) {
+	if (level.locations[cc.x][cc.y].doormask & D_TRAPPED) {
 	    if (cc.x != u.ux || cc.y != u.uy)
 		goto outtrapmap;
 	    else found = TRUE;
@@ -700,7 +700,7 @@ outtrapmap:
 
     for (door = 0; door < doorindex; door++) {
 	cc = doors[door];
-	if (levl[cc.x][cc.y].doormask & D_TRAPPED)
+	if (level.locations[cc.x][cc.y].doormask & D_TRAPPED)
 	sense_trap(NULL, cc.x, cc.y, sobj && sobj->cursed);
     }
 
@@ -879,7 +879,7 @@ static void show_map_spot(int x, int y)
     struct rm *lev;
 
     if (Confusion && rn2(7)) return;
-    lev = &levl[x][y];
+    lev = &level.locations[x][y];
 
     lev->seenv = SVALL;
 
@@ -964,13 +964,13 @@ static void findone(int zx, int zy, void *num)
 	struct trap *ttmp;
 	struct monst *mtmp;
 
-	if (levl[zx][zy].typ == SDOOR) {
-		cvt_sdoor_to_door(&levl[zx][zy]);	/* .typ = DOOR */
+	if (level.locations[zx][zy].typ == SDOOR) {
+		cvt_sdoor_to_door(&level.locations[zx][zy]);	/* .typ = DOOR */
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if (levl[zx][zy].typ == SCORR) {
-		levl[zx][zy].typ = CORR;
+	} else if (level.locations[zx][zy].typ == SCORR) {
+		level.locations[zx][zy].typ = CORR;
 		unblock_point(zx,zy);
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
@@ -993,9 +993,9 @@ static void findone(int zx, int zy, void *num)
 			(*(int*)num)++;
 		}
 		if (!canspotmon(mtmp) &&
-				    !glyph_is_invisible(levl[zx][zy].glyph))
+				    !glyph_is_invisible(level.locations[zx][zy].glyph))
 			map_invisible(zx, zy);
-	} else if (glyph_is_invisible(levl[zx][zy].glyph)) {
+	} else if (glyph_is_invisible(level.locations[zx][zy].glyph)) {
 		unmap_object(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
@@ -1018,25 +1018,25 @@ static void openone(int zx, int zy, void *num)
 		}
 		/* let it fall to the next cases. could be on trap. */
 	}
-	if (levl[zx][zy].typ == SDOOR || (levl[zx][zy].typ == DOOR &&
-		      (levl[zx][zy].doormask & (D_CLOSED|D_LOCKED)))) {
-		if (levl[zx][zy].typ == SDOOR)
-		    cvt_sdoor_to_door(&levl[zx][zy]);	/* .typ = DOOR */
-		if (levl[zx][zy].doormask & D_TRAPPED) {
+	if (level.locations[zx][zy].typ == SDOOR || (level.locations[zx][zy].typ == DOOR &&
+		      (level.locations[zx][zy].doormask & (D_CLOSED|D_LOCKED)))) {
+		if (level.locations[zx][zy].typ == SDOOR)
+		    cvt_sdoor_to_door(&level.locations[zx][zy]);	/* .typ = DOOR */
+		if (level.locations[zx][zy].doormask & D_TRAPPED) {
 		    if (distu(zx, zy) < 3) b_trapped("door", 0);
 		    else Norep("You %s an explosion!",
 				cansee(zx, zy) ? "see" :
 				   (flags.soundok ? "hear" :
 						"feel the shock of"));
 		    wake_nearto(zx, zy, 11*11);
-		    levl[zx][zy].doormask = D_NODOOR;
+		    level.locations[zx][zy].doormask = D_NODOOR;
 		} else
-		    levl[zx][zy].doormask = D_ISOPEN;
+		    level.locations[zx][zy].doormask = D_ISOPEN;
 		unblock_point(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if (levl[zx][zy].typ == SCORR) {
-		levl[zx][zy].typ = CORR;
+	} else if (level.locations[zx][zy].typ == SCORR) {
+		level.locations[zx][zy].typ = CORR;
 		unblock_point(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
@@ -1092,7 +1092,7 @@ void find_trap(struct trap *trap)
     else
 	newsym(trap->tx, trap->ty);
 
-    if (levl[trap->tx][trap->ty].glyph != trap_to_glyph(trap)) {
+    if (level.locations[trap->tx][trap->ty].glyph != trap_to_glyph(trap)) {
     	/* There's too much clutter to see your find otherwise */
 	cls();
 	map_trap(trap, 1);
@@ -1130,18 +1130,18 @@ int dosearch0(int aflag)
 		if (!isok(x,y)) continue;
 		if (x != u.ux || y != u.uy) {
 		    if (Blind && !aflag) feel_location(x,y);
-		    if (levl[x][y].typ == SDOOR) {
+		    if (level.locations[x][y].typ == SDOOR) {
 			if (rnl(7-fund)) continue;
-			cvt_sdoor_to_door(&levl[x][y]);	/* .typ = DOOR */
+			cvt_sdoor_to_door(&level.locations[x][y]);	/* .typ = DOOR */
 			exercise(A_WIS, TRUE);
 			nomul(0);
 			if (Blind && !aflag)
 			    feel_location(x,y);	/* make sure it shows up */
 			else
 			    newsym(x,y);
-		    } else if (levl[x][y].typ == SCORR) {
+		    } else if (level.locations[x][y].typ == SCORR) {
 			if (rnl(7-fund)) continue;
-			levl[x][y].typ = CORR;
+			level.locations[x][y].typ = CORR;
 			unblock_point(x,y);	/* vision */
 			exercise(A_WIS, TRUE);
 			nomul(0);
@@ -1153,7 +1153,7 @@ int dosearch0(int aflag)
 				seemimic(mtmp);
 		find:		exercise(A_WIS, TRUE);
 				if (!canspotmon(mtmp)) {
-				    if (glyph_is_invisible(levl[x][y].glyph)) {
+				    if (glyph_is_invisible(level.locations[x][y].glyph)) {
 					/* found invisible monster in a square
 					 * which already has an 'I' in it.
 					 * Logically, this should still take
@@ -1183,7 +1183,7 @@ int dosearch0(int aflag)
 			 * feel_location() already did it
 			 */
 			if (!aflag && !mtmp && !Blind &&
-				    glyph_is_invisible(levl[x][y].glyph)) {
+				    glyph_is_invisible(level.locations[x][y].glyph)) {
 			    unmap_object(x,y);
 			    newsym(x,y);
 			}
@@ -1222,8 +1222,8 @@ void sokoban_detect(void)
 	/* Map the background and boulders */
 	for (x = 1; x < COLNO; x++)
 	    for (y = 0; y < ROWNO; y++) {
-	    	levl[x][y].seenv = SVALL;
-	    	levl[x][y].waslit = TRUE;
+	    	level.locations[x][y].seenv = SVALL;
+	    	level.locations[x][y].waslit = TRUE;
 	    	map_background(x, y, 1);
 	    	for (obj = level.objects[x][y]; obj; obj = obj->nexthere)
 	    	    if (obj->otyp == BOULDER)

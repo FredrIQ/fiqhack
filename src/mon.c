@@ -285,7 +285,7 @@ int minliquid(struct monst *mtmp)
 	     !is_flyer(mtmp->data) && !is_floater(mtmp->data);
     inlava = is_lava(mtmp->mx,mtmp->my) &&
 	     !is_flyer(mtmp->data) && !is_floater(mtmp->data);
-    infountain = IS_FOUNTAIN(levl[mtmp->mx][mtmp->my].typ);
+    infountain = IS_FOUNTAIN(level.locations[mtmp->mx][mtmp->my].typ);
 
 	/* Flying and levitation keeps our steed out of the liquid */
 	/* (but not water-walking or swimming) */
@@ -871,7 +871,7 @@ int mfndpos(struct monst *mon,
 
 	x = mon->mx;
 	y = mon->my;
-	nowtyp = levl[x][y].typ;
+	nowtyp = level.locations[x][y].typ;
 
 	nodiag = (mdat == &mons[PM_GRID_BUG]);
 	wantpool = mdat->mlet == S_EEL;
@@ -913,20 +913,20 @@ nexttry:	/* eels prefer the water, but if there is no water nearby,
 	for (nx = max(1,x-1); nx <= maxx; nx++)
 	  for (ny = max(0,y-1); ny <= maxy; ny++) {
 	    if (nx == x && ny == y) continue;
-	    if (IS_ROCK(ntyp = levl[nx][ny].typ) &&
+	    if (IS_ROCK(ntyp = level.locations[nx][ny].typ) &&
 	       !((flag & ALLOW_WALL) && may_passwall(nx,ny)) &&
 	       !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(nx,ny))) continue;
 	    /* KMH -- Added iron bars */
 	    if (ntyp == IRONBARS && !(flag & ALLOW_BARS)) continue;
 	    if (IS_DOOR(ntyp) && !amorphous(mdat) &&
-	       ((levl[nx][ny].doormask & D_CLOSED && !(flag & OPENDOOR)) ||
-		(levl[nx][ny].doormask & D_LOCKED && !(flag & UNLOCKDOOR))) &&
+	       ((level.locations[nx][ny].doormask & D_CLOSED && !(flag & OPENDOOR)) ||
+		(level.locations[nx][ny].doormask & D_LOCKED && !(flag & UNLOCKDOOR))) &&
 	       !thrudoor) continue;
 	    if (nx != x && ny != y && (nodiag ||
 	       ((IS_DOOR(nowtyp) &&
-		 ((levl[x][y].doormask & ~D_BROKEN) || Is_rogue_level(&u.uz))) ||
+		 ((level.locations[x][y].doormask & ~D_BROKEN) || Is_rogue_level(&u.uz))) ||
 		(IS_DOOR(ntyp) &&
-		 ((levl[nx][ny].doormask & ~D_BROKEN) || Is_rogue_level(&u.uz))))
+		 ((level.locations[nx][ny].doormask & ~D_BROKEN) || Is_rogue_level(&u.uz))))
 	       ))
 		continue;
 	    if ((is_pool(nx,ny) == wantpool || poolok) &&
@@ -1302,7 +1302,7 @@ void mondead(struct monst *mtmp)
 #endif
 	if (mtmp->iswiz) wizdead();
 	if (mtmp->data->msound == MS_NEMESIS) nemdead();
-	if (glyph_is_invisible(levl[mtmp->mx][mtmp->my].glyph))
+	if (glyph_is_invisible(level.locations[mtmp->mx][mtmp->my].glyph))
 	    unmap_object(mtmp->mx, mtmp->my);
 	m_detach(mtmp, mptr);
 }
@@ -1473,7 +1473,7 @@ void monstone(struct monst *mdef)
 
 	stackobj(otmp);
 	/* mondead() already does this, but we must do it before the newsym */
-	if (glyph_is_invisible(levl[x][y].glyph))
+	if (glyph_is_invisible(level.locations[x][y].glyph))
 	    unmap_object(x, y);
 	if (cansee(x, y)) newsym(x,y);
 	/* We don't currently trap the hero in the statue in this case but we could */
@@ -1963,7 +1963,7 @@ void seemimic(struct monst *mtmp)
 	if (((old_ap_type == M_AP_FURNITURE &&
 	      (old_app == S_hcdoor || old_app == S_vcdoor)) ||
 	     (old_ap_type == M_AP_OBJECT && old_app == BOULDER)) &&
-	    !does_block(mtmp->mx, mtmp->my, &levl[mtmp->mx][mtmp->my]))
+	    !does_block(mtmp->mx, mtmp->my, &level.locations[mtmp->mx][mtmp->my]))
 	    unblock_point(mtmp->mx, mtmp->my);
 
 	newsym(mtmp->mx,mtmp->my);
@@ -2042,7 +2042,7 @@ static boolean restrap(struct monst *mtmp)
 		set_mimic_sym(mtmp);
 		return TRUE;
 	} else
-	    if (levl[mtmp->mx][mtmp->my].typ == ROOM)  {
+	    if (level.locations[mtmp->mx][mtmp->my].typ == ROOM)  {
 		mtmp->mundetected = 1;
 		return TRUE;
 	    }

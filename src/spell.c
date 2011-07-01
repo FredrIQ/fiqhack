@@ -778,7 +778,7 @@ int spelleffects(int spell, boolean atme)
 			dx = cc.x+rnd(3)-2;
 			dy = cc.y+rnd(3)-2;
 			if (!isok(dx, dy) || !cansee(dx, dy) ||
-			    IS_STWALL(levl[dx][dy].typ) || u.uswallow) {
+			    IS_STWALL(level.locations[dx][dy].typ) || u.uswallow) {
 			    /* Spell is reflected back to center */
 			    dx = cc.x;
 			    dy = cc.y;
@@ -926,7 +926,7 @@ static int throwspell(schar *dx, schar *dy)
 	    *dx = 0;
 	    *dy = 0;
 	    return 1;
-	} else if (!cansee(cc.x, cc.y) || IS_STWALL(levl[cc.x][cc.y].typ)) {
+	} else if (!cansee(cc.x, cc.y) || IS_STWALL(level.locations[cc.x][cc.y].typ)) {
 	    Your("mind fails to lock onto that location!");
 	    return 0;
 	} else {
