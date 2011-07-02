@@ -216,7 +216,7 @@ static int moverock(schar dx, schar dy)
 	    }
 
 	    /* Move the boulder *after* the message. */
-	    if (glyph_is_invisible(level.locations[rx][ry].glyph))
+	    if (level.locations[rx][ry].mem_invis)
 		unmap_object(rx, ry);
 	    movobj(otmp, rx, ry);	/* does newsym(rx,ry) */
 	    if (Blind) {
@@ -989,7 +989,7 @@ void domove(schar dx, schar dy, schar dz)
 	     * attack_check(), which still wastes a turn, but prints a
 	     * different message and makes the player remember the monster.		     */
 	    if (flags.nopick &&
-		  (canspotmon(mtmp) || glyph_is_invisible(level.locations[x][y].glyph))){
+		  (canspotmon(mtmp) || level.locations[x][y].mem_invis)){
 		if (mtmp->m_ap_type && !Protection_from_shape_changers
 						    && !sensemon(mtmp))
 		    stumble_onto_mimic(mtmp, dx, dy);
@@ -1025,7 +1025,7 @@ void domove(schar dx, schar dy, schar dz)
 	/* specifying 'F' with no monster wastes a turn */
 	if (flags.forcefight ||
 	    /* remembered an 'I' && didn't use a move command */
-	    (glyph_is_invisible(level.locations[x][y].glyph) && !flags.nopick)) {
+	    (level.locations[x][y].mem_invis && !flags.nopick)) {
 		boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
 	    	char buf[BUFSZ];
 		sprintf(buf,"a vacant spot on the %s", surface(x,y));
@@ -1042,7 +1042,7 @@ void domove(schar dx, schar dy, schar dz)
 		}
 		return;
 	}
-	if (glyph_is_invisible(level.locations[x][y].glyph)) {
+	if (level.locations[x][y].mem_invis) {
 	    unmap_object(x, y);
 	    newsym(x, y);
 	}

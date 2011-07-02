@@ -321,7 +321,12 @@ extern const struct symdef def_warnsyms[WARNCOUNT];
  * the size of temporary files and save files.
  */
 struct rm {
-	int glyph;		/* what the hero thinks is there */
+	unsigned mem_bg:6;	/* remembered background */
+	unsigned mem_trap:5;	/* remembered trap */
+	unsigned mem_obj:10;	/* remembered object */
+	unsigned mem_obj_mn:9;	/* monnum of remembered corpses, statues, figurines */
+	unsigned mem_invis:1;	/* remembered invisible monster encounter */
+	
 	schar typ;		/* what is really there */
 	uchar seenv;		/* seen vector */
 	unsigned flags:5;	/* extra information for typ */

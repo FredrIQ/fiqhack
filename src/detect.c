@@ -890,10 +890,7 @@ static void show_map_spot(int x, int y)
     }
 
     /* if we don't remember an object or trap there, map it */
-    if (lev->typ == ROOM ?
-	    (glyph_is_cmap(lev->glyph) && !glyph_is_trap(lev->glyph) &&
-		glyph_to_cmap(lev->glyph) != ROOM) :
-	    (!glyph_is_object(lev->glyph) && !glyph_is_trap(lev->glyph))) {
+    if (!lev->mem_obj && !lev->mem_trap) {
 	if (level.flags.hero_memory) {
 	    magic_map_background(x,y,0);
 	    newsym(x,y);			/* show it, if not blocked */
@@ -992,10 +989,9 @@ static void findone(int zx, int zy, void *num)
 			newsym(zx, zy);
 			(*(int*)num)++;
 		}
-		if (!canspotmon(mtmp) &&
-				    !glyph_is_invisible(level.locations[zx][zy].glyph))
+		if (!canspotmon(mtmp) && !level.locations[zx][zy].mem_invis)
 			map_invisible(zx, zy);
-	} else if (glyph_is_invisible(level.locations[zx][zy].glyph)) {
+	} else if (level.locations[zx][zy].mem_invis) {
 		unmap_object(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
@@ -1092,7 +1088,8 @@ void find_trap(struct trap *trap)
     else
 	newsym(trap->tx, trap->ty);
 
-    if (level.locations[trap->tx][trap->ty].glyph != trap_to_glyph(trap)) {
+    if (level.locations[trap->tx][trap->ty].mem_obj ||
+	level.locations[trap->tx][trap->ty].mem_invis) {
     	/* There's too much clutter to see your find otherwise */
 	cls();
 	map_trap(trap, 1);
@@ -1153,7 +1150,7 @@ int dosearch0(int aflag)
 				seemimic(mtmp);
 		find:		exercise(A_WIS, TRUE);
 				if (!canspotmon(mtmp)) {
-				    if (glyph_is_invisible(level.locations[x][y].glyph)) {
+				    if (level.locations[x][y].mem_invis) {
 					/* found invisible monster in a square
 					 * which already has an 'I' in it.
 					 * Logically, this should still take
@@ -1183,7 +1180,7 @@ int dosearch0(int aflag)
 			 * feel_location() already did it
 			 */
 			if (!aflag && !mtmp && !Blind &&
-				    glyph_is_invisible(level.locations[x][y].glyph)) {
+				    level.locations[x][y].mem_invis) {
 			    unmap_object(x,y);
 			    newsym(x,y);
 			}

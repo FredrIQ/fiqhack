@@ -262,7 +262,7 @@ static int use_stethoscope(struct obj *obj)
 			map_invisible(rx, ry);
 		return res;
 	}
-	if (glyph_is_invisible(level.locations[rx][ry].glyph)) {
+	if (level.locations[rx][ry].mem_invis) {
 		unmap_object(rx, ry);
 		newsym(rx, ry);
 		pline_The("invisible monster must have moved.");
@@ -2135,7 +2135,7 @@ static int use_whip(struct obj *obj)
 
     } else if (mtmp) {
 	if (!canspotmon(mtmp) &&
-		!glyph_is_invisible(level.locations[rx][ry].glyph)) {
+		!level.locations[rx][ry].mem_invis) {
 	   pline("A monster is there that you couldn't see.");
 	   map_invisible(rx, ry);
 	}

@@ -2601,7 +2601,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 		}
 	    } else {
 		if (weapon == ZAPPED_WAND && obj->otyp == WAN_PROBING &&
-		   glyph_is_invisible(level.locations[bhitpos.x][bhitpos.y].glyph)) {
+		    level.locations[bhitpos.x][bhitpos.y].mem_invis) {
 		    unmap_object(bhitpos.x, bhitpos.y);
 		    newsym(x, y);
 		}
@@ -2648,7 +2648,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 	    if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM) {
 		/* 'I' present but no monster: erase */
 		/* do this before the tmp_at() */
-		if (glyph_is_invisible(level.locations[bhitpos.x][bhitpos.y].glyph)
+		if (level.locations[bhitpos.x][bhitpos.y].mem_invis
 			&& cansee(x, y)) {
 		    unmap_object(bhitpos.x, bhitpos.y);
 		    newsym(x, y);
@@ -3159,7 +3159,7 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 		/* reveal/unreveal invisible monsters before tmp_at() */
 		if (mon && !canspotmon(mon))
 		    map_invisible(sx, sy);
-		else if (!mon && glyph_is_invisible(level.locations[sx][sy].glyph)) {
+		else if (!mon && level.locations[sx][sy].mem_invis) {
 		    unmap_object(sx, sy);
 		    newsym(sx, sy);
 		}

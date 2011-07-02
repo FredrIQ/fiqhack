@@ -1302,7 +1302,7 @@ void mondead(struct monst *mtmp)
 #endif
 	if (mtmp->iswiz) wizdead();
 	if (mtmp->data->msound == MS_NEMESIS) nemdead();
-	if (glyph_is_invisible(level.locations[mtmp->mx][mtmp->my].glyph))
+	if (level.locations[mtmp->mx][mtmp->my].mem_invis)
 	    unmap_object(mtmp->mx, mtmp->my);
 	m_detach(mtmp, mptr);
 }
@@ -1473,9 +1473,10 @@ void monstone(struct monst *mdef)
 
 	stackobj(otmp);
 	/* mondead() already does this, but we must do it before the newsym */
-	if (glyph_is_invisible(level.locations[x][y].glyph))
+	if (level.locations[x][y].mem_invis)
 	    unmap_object(x, y);
-	if (cansee(x, y)) newsym(x,y);
+	if (cansee(x, y))
+	    newsym(x,y);
 	/* We don't currently trap the hero in the statue in this case but we could */
 	if (u.uswallow && u.ustuck == mdef) wasinside = TRUE;
 	mondead(mdef);

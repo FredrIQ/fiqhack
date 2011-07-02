@@ -196,6 +196,8 @@ extern void rot_corpse(void *, long);
 #ifdef INVISIBLE_OBJECTS
 extern struct obj * vobj_at(xchar,xchar);
 #endif /* INVISIBLE_OBJECTS */
+extern int memory_glyph(int x, int y);
+extern void clear_memory_glyph(schar x, schar y, int to);
 extern void magic_map_background(xchar,xchar,int);
 extern void map_background(xchar,xchar,int);
 extern void map_trap(struct trap *,int);
@@ -218,7 +220,7 @@ extern void show_glyph(int,int,int);
 extern void clear_glyph_buffer(void);
 extern void cls(void);
 extern void flush_screen(int);
-extern int back_to_glyph(xchar,xchar);
+extern int back_to_cmap(xchar,xchar);
 extern int zapdir_to_glyph(int,int,int);
 extern int glyph_at(xchar,xchar);
 extern void set_wall_state(void);

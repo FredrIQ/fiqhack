@@ -105,7 +105,7 @@ boolean attack_checks(struct monst *mtmp,
 		 * not stay there, so the player will have suddenly forgotten
 		 * the square's contents for no apparent reason.
 		if (!canspotmon(mtmp) &&
-		    !glyph_is_invisible(level.locations[u.ux+u.dx][u.uy+u.dy].glyph))
+		    !level.locations[u.ux+u.dx][u.uy+u.dy].mem_invis)
 			map_invisible(u.ux+u.dx, u.uy+u.dy);
 		 */
 		return FALSE;
@@ -121,7 +121,7 @@ boolean attack_checks(struct monst *mtmp,
 	 */
 	if (!canspotmon(mtmp) &&
 		    !glyph_is_warning(glyph_at(u.ux+dx, u.uy+dy)) &&
-		    !glyph_is_invisible(level.locations[u.ux+dx][u.uy+dy].glyph) &&
+		    !level.locations[u.ux+dx][u.uy+dy].mem_invis &&
 		    !(!Blind && mtmp->mundetected && hides_under(mtmp->data))) {
 		pline("Wait!  There's %s there you can't see!",
 			something);
@@ -144,7 +144,7 @@ boolean attack_checks(struct monst *mtmp,
 		 * some (probably different) unseen monster, the player is in
 		 * luck--he attacks it even though it's hidden.
 		 */
-		if (glyph_is_invisible(level.locations[mtmp->mx][mtmp->my].glyph)) {
+		if (level.locations[mtmp->mx][mtmp->my].mem_invis) {
 		    seemimic(mtmp);
 		    return FALSE;
 		}
@@ -157,7 +157,7 @@ boolean attack_checks(struct monst *mtmp,
 		(hides_under(mtmp->data) || mtmp->data->mlet == S_EEL)) {
 	    mtmp->mundetected = mtmp->msleeping = 0;
 	    newsym(mtmp->mx, mtmp->my);
-	    if (glyph_is_invisible(level.locations[mtmp->mx][mtmp->my].glyph)) {
+	    if (level.locations[mtmp->mx][mtmp->my].mem_invis) {
 		seemimic(mtmp);
 		return FALSE;
 	    }
@@ -386,7 +386,7 @@ atk_done:
 	 * evade.
 	 */
 	if (flags.forcefight && mtmp->mhp > 0 && !canspotmon(mtmp) &&
-	    !glyph_is_invisible(level.locations[u.ux+dx][u.uy+dy].glyph) &&
+	    !level.locations[u.ux+dx][u.uy+dy].mem_invis &&
 	    !(u.uswallow && mtmp == u.ustuck))
 		map_invisible(u.ux+dx, u.uy+dy);
 
@@ -2334,14 +2334,10 @@ void stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
 	    else if (mtmp->m_ap_type == M_AP_MONSTER)
 		what = a_monnam(mtmp);	/* differs from what was sensed */
 	} else {
-	    int glyph = level.locations[u.ux+dx][u.uy+dy].glyph;
-
-	    if (glyph_is_cmap(glyph) &&
-		    (glyph_to_cmap(glyph) == S_hcdoor ||
-		     glyph_to_cmap(glyph) == S_vcdoor))
+	    if (level.locations[u.ux+dx][u.uy+dy].mem_bg == S_hcdoor ||
+		level.locations[u.ux+dx][u.uy+dy].mem_bg == S_vcdoor)
 		fmt = "The door actually was %s!";
-	    else if (glyph_is_object(glyph) &&
-		    glyph_to_obj(glyph) == GOLD_PIECE)
+	    else if (level.locations[u.ux+dx][u.uy+dy].mem_obj - 1 == GOLD_PIECE)
 		fmt = "That gold was %s!";
 
 	    /* cloned Wiz starts out mimicking some other monster and

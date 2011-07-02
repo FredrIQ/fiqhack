@@ -597,7 +597,7 @@ int peffects(struct obj *otmp)
 		    incr_itimeout(&HDetect_monsters, i);
 		    for (x = 1; x < COLNO; x++) {
 			for (y = 0; y < ROWNO; y++) {
-			    if (level.locations[x][y].glyph == GLYPH_INVISIBLE) {
+			    if (level.locations[x][y].mem_invis) {
 				unmap_object(x, y);
 				newsym(x,y);
 			    }

@@ -834,8 +834,8 @@ void movebubbles(void)
 	struct bubble *b;
 	int x, y, i, j;
 	struct trap *btrap;
-	static const struct rm water_pos =
-		{ cmap_to_glyph(S_water), WATER, 0, 0, 0, 0, 0, 0, 0 };
+	static const struct rm water_pos = { S_water, 0, 0, 0, 0, WATER /* typ */,
+	    0, 0, 0, 0, 0, 0, 0 };
 
 	/* set up the portal the first time bubbles are moved */
 	if (!wportal) set_wportal();
@@ -1075,7 +1075,6 @@ static void setup_waterlevel(void)
 {
 	int x, y;
 	int xskip, yskip;
-	int water_glyph = cmap_to_glyph(S_water);
 
 	/* ouch, hardcoded... */
 
@@ -1088,7 +1087,7 @@ static void setup_waterlevel(void)
 
 	for (x = xmin; x <= xmax; x++)
 		for (y = ymin; y <= ymax; y++)
-			level.locations[x][y].glyph = water_glyph;
+			level.locations[x][y].mem_bg = S_water;
 
 	/* make bubbles */
 

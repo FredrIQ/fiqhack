@@ -163,7 +163,8 @@ struct obj *vobj_at(xchar x, xchar y)
  */
 void magic_map_background(xchar x, xchar y, int show)
 {
-    int glyph = back_to_glyph(x,y);	/* assumes hero can see x,y */
+    int cmap = back_to_cmap(x,y);	/* assumes hero can see x,y */
+    int glyph = cmap_to_glyph(cmap);	/* assumes hero can see x,y */
     struct rm *lev = &level.locations[x][y];
 
     /*
@@ -178,7 +179,7 @@ void magic_map_background(xchar x, xchar y, int show)
 	    glyph = cmap_to_glyph(S_corr);
     }
     if (level.flags.hero_memory)
-	lev->glyph = glyph;
+	lev->mem_bg = cmap;
     if (show) show_glyph(x,y, glyph);
 }
 
@@ -205,11 +206,11 @@ void magic_map_background(xchar x, xchar y, int show)
  */
 void map_background(xchar x, xchar y, int show)
 {
-    int glyph = back_to_glyph(x,y);
+    int cmap = back_to_cmap(x,y);
 
     if (level.flags.hero_memory)
-	level.locations[x][y].glyph = glyph;
-    if (show) show_glyph(x,y, glyph);
+	level.locations[x][y].mem_bg = cmap;
+    if (show) show_glyph(x, y, cmap_to_glyph(cmap));
 }
 
 /*
@@ -221,11 +222,11 @@ void map_background(xchar x, xchar y, int show)
 void map_trap(struct trap *trap, int show)
 {
     int x = trap->tx, y = trap->ty;
-    int glyph = trap_to_glyph(trap);
+    int cmap = trap_to_defsym(what_trap((trap)->ttyp));
 
     if (level.flags.hero_memory)
-	level.locations[x][y].glyph = glyph;
-    if (show) show_glyph(x, y, glyph);
+	level.locations[x][y].mem_trap = 1 + cmap - MAXDCHARS;
+    if (show) show_glyph(x, y, cmap_to_glyph(cmap));
 }
 
 /*
@@ -238,9 +239,20 @@ void map_object(struct obj *obj, int show)
 {
     int x = obj->ox, y = obj->oy;
     int glyph = obj_to_glyph(obj);
-
-    if (level.flags.hero_memory)
-	level.locations[x][y].glyph = glyph;
+    int objtyp = glyph_to_obj(glyph);
+    int monnum = 0;
+    
+    if (level.flags.hero_memory) {
+	if (objtyp == CORPSE || objtyp == STATUE || objtyp == FIGURINE) {
+	    if (Hallucination)
+		monnum = random_monster();
+	    else
+		monnum = obj->corpsenm;
+	}
+	
+	level.locations[x][y].mem_obj = objtyp + 1;
+	level.locations[x][y].mem_obj_mn = monnum + 1;
+    }
     if (show) show_glyph(x, y, glyph);
 }
 
@@ -257,7 +269,7 @@ void map_invisible(xchar x, xchar y)
 {
     if (x != u.ux || y != u.uy) { /* don't display I at hero's location */
 	if (level.flags.hero_memory)
-	    level.locations[x][y].glyph = GLYPH_INVISIBLE;
+	    level.locations[x][y].mem_invis = 1;
 	show_glyph(x, y, GLYPH_INVISIBLE);
     }
 }
@@ -273,23 +285,11 @@ void map_invisible(xchar x, xchar y)
  */
 void unmap_object(int x, int y)
 {
-    struct trap *trap;
-
     if (!level.flags.hero_memory) return;
 
-    if ((trap = t_at(x,y)) != 0 && trap->tseen && !covers_traps(x,y))
-	map_trap(trap, 0);
-    else if (level.locations[x][y].seenv) {
-	struct rm *lev = &level.locations[x][y];
-
-	map_background(x, y, 0);
-
-	/* turn remembered dark room squares dark */
-	if (!lev->waslit && lev->glyph == cmap_to_glyph(S_room) &&
-							    lev->typ == ROOM)
-	    lev->glyph = cmap_to_glyph(S_stone);
-    } else
-	level.locations[x][y].glyph = cmap_to_glyph(S_stone);	/* default val */
+    level.locations[x][y].mem_invis = 0;
+    level.locations[x][y].mem_obj = 0;
+    level.locations[x][y].mem_obj_mn = 0;
 }
 
 
@@ -298,26 +298,56 @@ void unmap_object(int x, int y)
  *
  * Make whatever at this location show up.  This is only for non-living
  * things.  This will not handle feeling invisible objects correctly.
- *
- * Internal to display.c, this is a #define for speed.
  */
-#define _map_location(x,y,show)						\
-{									\
-    struct obj   *obj;						\
-    struct trap  *trap;					\
-									\
-    if ((obj = vobj_at(x,y)) && !covers_objects(x,y))			\
-	map_object(obj,show);						\
-    else if ((trap = t_at(x,y)) && trap->tseen && !covers_traps(x,y))	\
-	map_trap(trap,show);						\
-    else								\
-	map_background(x,y,show);					\
-}
-
 void map_location(int x, int y, int show)
 {
-    _map_location(x,y,show);
+    register struct obj   *obj;
+    register struct trap  *trap;
+
+    if (level.flags.hero_memory) {
+	if ((obj = vobj_at(x, y)) && !covers_objects(x, y))
+	    map_object(obj, FALSE);
+	else
+	    level.locations[x][y].mem_obj_mn = level.locations[x][y].mem_obj = 0;
+	if ((trap = t_at(x, y)) && trap->tseen && !covers_traps(x, y))
+	    map_trap(trap, FALSE);
+	else
+	    level.locations[x][y].mem_trap = 0;
+	map_background(x, y, FALSE);
+	if (show) show_glyph(x, y, memory_glyph(x, y));
+    } else if ((obj = vobj_at(x,y)) && !covers_objects(x,y))
+	map_object(obj,show);
+    else if ((trap = t_at(x,y)) && trap->tseen && !covers_traps(x,y))
+	map_trap(trap,show);
+    else
+	map_background(x,y,show);
 }
+
+
+int memory_glyph(int x, int y)
+{
+    if (level.locations[x][y].mem_invis)
+	return GLYPH_INVISIBLE;
+    else if (level.locations[x][y].mem_obj)
+	if (level.locations[x][y].mem_obj - 1 == CORPSE)
+	    return body_to_glyph(level.locations[x][y].mem_obj_mn - 1);
+	else
+	    return objnum_to_glyph(level.locations[x][y].mem_obj - 1);
+    else if (level.locations[x][y].mem_trap)
+	return cmap_to_glyph(level.locations[x][y].mem_trap - 1 + MAXDCHARS);
+    else
+	return cmap_to_glyph(level.locations[x][y].mem_bg);
+}
+
+void clear_memory_glyph(schar x, schar y, int to)
+{
+    level.locations[x][y].mem_bg = to;
+    level.locations[x][y].mem_trap = 0;
+    level.locations[x][y].mem_obj = 0;
+    level.locations[x][y].mem_obj_mn = 0;
+    level.locations[x][y].mem_invis = 0;
+}
+
 
 #define DETECTED 	2
 #define PHYSICALLY_SEEN 1
@@ -372,7 +402,7 @@ static void display_monster(
 		 * makemon.c.
 		 */
 		int glyph = cmap_to_glyph(mon->mappearance);
-		level.locations[x][y].glyph = glyph;
+		level.locations[x][y].mem_bg = mon->mappearance;
 		if (!sensed) show_glyph(x,y, glyph);
 		break;
 	    }
@@ -473,7 +503,7 @@ void feel_location(xchar x, xchar y)
      * We must return (so we don't erase the monster).  (We must also, in the
      * search function, be sure to skip over previously detected 'I's.)
      */
-    if (glyph_is_invisible(level.locations[x][y].glyph) && m_at(x,y)) return;
+    if (level.locations[x][y].mem_invis && m_at(x,y)) return;
 
     /* The hero can't feel non pool locations while under water. */
     if (Underwater && !Is_waterlevel(&u.uz) && ! is_pool(x,y))
@@ -531,32 +561,28 @@ void feel_location(xchar x, xchar y)
 	     * We could also just display what is currently on the top of the
 	     * object stack (if anything).
 	     */
-	    if (lev->glyph == objnum_to_glyph(BOULDER)) {
+	    if (lev->mem_obj - 1 == BOULDER) {
 		if (lev->typ != ROOM && lev->seenv) {
 		    map_background(x, y, 1);
 		} else {
-		    lev->glyph = lev->waslit ? cmap_to_glyph(S_room) :
-					       cmap_to_glyph(S_stone);
-		    show_glyph(x,y,lev->glyph);
+		    lev->mem_bg = lev->waslit ? S_room : S_stone;
+		    show_glyph(x, y, memory_glyph(x, y));
 		}
-	    } else if ((lev->glyph >= cmap_to_glyph(S_stone) &&
-			lev->glyph < cmap_to_glyph(S_room)) ||
-		       glyph_is_invisible(level.locations[x][y].glyph)) {
-		lev->glyph = lev->waslit ? cmap_to_glyph(S_room) :
-					   cmap_to_glyph(S_stone);
-		show_glyph(x,y,lev->glyph);
+	    } else if ((lev->mem_bg >= S_stone && lev->mem_bg < S_room) ||
+		       level.locations[x][y].mem_invis) {
+		lev->mem_bg = lev->waslit ? S_room : S_stone;
+		show_glyph(x, y, memory_glyph(x, y));
 	    }
 	} else {
 	    /* We feel it (I think hallways are the only things left). */
 	    map_background(x, y, 1);
 	    /* Corridors are never felt as lit (unless remembered that way) */
 	    /* (lit_corridor only).					    */
-	    if (lev->typ == CORR &&
-		    lev->glyph == cmap_to_glyph(S_litcorr) && !lev->waslit)
-		show_glyph(x, y, lev->glyph = cmap_to_glyph(S_corr));
+	    if (lev->typ == CORR && lev->mem_bg == S_litcorr && !lev->waslit)
+		show_glyph(x, y, cmap_to_glyph(lev->mem_bg = S_corr));
 	}
     } else {
-	_map_location(x, y, 1);
+	map_location(x, y, 1);
 
 	if (Punished) {
 	    /*
@@ -581,12 +607,14 @@ void feel_location(xchar x, xchar y)
 	}
 
 	/* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-	if (lev->typ == ROOM &&
-		    lev->glyph == cmap_to_glyph(S_room) && !lev->waslit)
-	    show_glyph(x,y, lev->glyph = cmap_to_glyph(S_stone));
-	else if (lev->typ == CORR &&
-		    lev->glyph == cmap_to_glyph(S_litcorr) && !lev->waslit)
-	    show_glyph(x,y, lev->glyph = cmap_to_glyph(S_corr));
+	if (lev->typ == ROOM && lev->mem_bg == S_room && !lev->waslit) {
+	    lev->mem_bg = S_stone;
+	    show_glyph(x,y, memory_glyph(x, y));
+	} else if (lev->typ == CORR &&
+		    lev->mem_bg == S_litcorr && !lev->waslit) {
+	    lev->mem_bg = S_corr;
+	    show_glyph(x,y, memory_glyph(x, y));
+	}
     }
     /* draw monster on top if we can sense it */
     if ((x != u.ux || y != u.uy) && (mon = m_at(x,y)) && sensemon(mon))
@@ -646,11 +674,11 @@ void newsym(int x, int y)
 	}
 	if (x == u.ux && y == u.uy) {
 	    if (senseself()) {
-		_map_location(x,y,0);	/* map *under* self */
+		map_location(x,y,0);	/* map *under* self */
 		display_self();
 	    } else
 		/* we can see what is there */
-		_map_location(x,y,1);
+		map_location(x,y,1);
 	}
 	else {
 	    mon = m_at(x,y);
@@ -669,16 +697,16 @@ void newsym(int x, int y)
 			trap->tseen = TRUE;
 		    }
 		}
-		_map_location(x,y,0);	/* map under the monster */
+		map_location(x,y,0);	/* map under the monster */
 		/* also gets rid of any invisibility glyph */
 		display_monster(x, y, mon, see_it ? PHYSICALLY_SEEN : DETECTED, worm_tail);
 	    }
 	    else if (mon && mon_warning(mon) && !is_worm_tail(mon))
 	        display_warning(mon);
-	    else if (glyph_is_invisible(level.locations[x][y].glyph))
+	    else if (level.locations[x][y].mem_invis)
 		map_invisible(x, y);
 	    else
-		_map_location(x,y,1);	/* map the location */
+		map_location(x,y,1);	/* map the location */
 	}
     }
 
@@ -726,15 +754,18 @@ void newsym(int x, int y)
 	 * They are dependent on the position being out of sight.
 	 */
 	else if (!lev->waslit) {
-	    if (lev->glyph == cmap_to_glyph(S_litcorr) && lev->typ == CORR)
-		show_glyph(x, y, lev->glyph = cmap_to_glyph(S_corr));
-	    else if (lev->glyph == cmap_to_glyph(S_room) && lev->typ == ROOM)
-		show_glyph(x, y, lev->glyph = cmap_to_glyph(S_stone));
+	    if (lev->mem_bg == S_litcorr && lev->typ == CORR) {
+		lev->mem_bg = S_corr;
+		show_glyph(x, y, memory_glyph(x, y));
+	    } else if (lev->mem_bg == S_room && lev->typ == ROOM) {
+		lev->mem_bg = S_stone;
+		show_glyph(x, y, memory_glyph(x, y));
+	    }
 	    else
 		goto show_mem;
 	} else {
 show_mem:
-	    show_glyph(x, y, lev->glyph);
+	    show_glyph(x, y, memory_glyph(x, y));
 	}
     }
 }
@@ -1096,7 +1127,6 @@ int doredraw(void)
 void docrt(void)
 {
     int x,y;
-    struct rm *lev;
 
     if (!u.ux) return; /* display isn't ready yet */
 
@@ -1125,10 +1155,8 @@ void docrt(void)
 
     /* display memory */
     for (x = 1; x < COLNO; x++) {
-	lev = &level.locations[x][0];
-	for (y = 0; y < ROWNO; y++, lev++)
-	    if (lev->glyph != cmap_to_glyph(S_stone))
-		show_glyph(x,y,lev->glyph);
+	for (y = 0; y < ROWNO; y++)
+	    show_glyph(x, y, memory_glyph(x, y));
     }
 
     /* see what is to be seen */
@@ -1308,7 +1336,7 @@ void flush_screen(int cursor_on_u)
 /* ========================================================================= */
 
 /*
- * back_to_glyph()
+ * back_to_cmap()
  *
  * Use the information in the rm structure at the given position to create
  * a glyph of a background.
@@ -1322,7 +1350,7 @@ void flush_screen(int cursor_on_u)
  * were up or down.  I didn't want to check t he upstairs and dnstairs
  * variables.
  */
-int back_to_glyph(xchar x, xchar y)
+int back_to_cmap(xchar x, xchar y)
 {
     int idx;
     struct rm *ptr = &(level.locations[x][y]);
@@ -1401,12 +1429,12 @@ int back_to_glyph(xchar x, xchar y)
 	    idx = (ptr->horizontal) ? S_hodbridge : S_vodbridge;
 	    break;
 	default:
-	    impossible("back_to_glyph:  unknown level type [ = %d ]",ptr->typ);
+	    impossible("back_to_cmap:  unknown level type [ = %d ]",ptr->typ);
 	    idx = S_room;
 	    break;
     }
 
-    return cmap_to_glyph(idx);
+    return idx;
 }
 
 

@@ -301,6 +301,7 @@
 #define detected_monnum_to_glyph(mnum)	((int) (mnum) + GLYPH_DETECT_OFF)
 #define ridden_monnum_to_glyph(mnum)	((int) (mnum) + GLYPH_RIDDEN_OFF)
 #define petnum_to_glyph(mnum)	((int) (mnum) + GLYPH_PET_OFF)
+#define body_to_glyph(mnum)	((int) (mnum) + GLYPH_BODY_OFF)
 
 /* The hero's glyph when seen as a monster.
  */

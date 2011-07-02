@@ -162,7 +162,7 @@ void explode(int x, int y,
 		}
 		if (mtmp && cansee(i+x-1,j+y-1) && !canspotmon(mtmp))
 		    map_invisible(i+x-1, j+y-1);
-		else if (!mtmp && glyph_is_invisible(level.locations[i+x-1][j+y-1].glyph)) {
+		else if (!mtmp && level.locations[i+x-1][j+y-1].mem_invis) {
 		    unmap_object(i+x-1, j+y-1);
 		    newsym(i+x-1, j+y-1);
 		}

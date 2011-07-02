@@ -203,7 +203,7 @@ doit:
 		} else {
 		    mnexto(mon);
 		    if (mon->mx != x || mon->my != y) {
-			if (glyph_is_invisible(level.locations[x][y].glyph)) {
+			if (level.locations[x][y].mem_invis) {
 			    unmap_object(x, y);
 			    newsym(x, y);
 			}
@@ -730,7 +730,7 @@ int dokick(void)
 		    /* check x and y; a monster that evades your kick by
 		       jumping to an unseen square doesn't leave an I behind */
 		    mtmp->mx == x && mtmp->my == y &&
-		    !glyph_is_invisible(level.locations[x][y].glyph) &&
+		    !level.locations[x][y].mem_invis &&
 		    !(u.uswallow && mtmp == u.ustuck))
 			map_invisible(x, y);
 		if ((Is_airlevel(&u.uz) || Levitation) && flags.move) {
@@ -747,7 +747,7 @@ int dokick(void)
 		}
 		return 1;
 	}
-	if (glyph_is_invisible(level.locations[x][y].glyph)) {
+	if (level.locations[x][y].mem_invis) {
 		unmap_object(x, y);
 		newsym(x, y);
 	}

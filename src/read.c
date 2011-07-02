@@ -473,7 +473,11 @@ void forget_map(int howmuch)
 		/* Zonk all memory of this location. */
 		level.locations[zx][zy].seenv = 0;
 		level.locations[zx][zy].waslit = 0;
-		level.locations[zx][zy].glyph = cmap_to_glyph(S_stone);
+		level.locations[zx][zy].mem_bg = S_stone;
+		level.locations[zx][zy].mem_trap = 0;
+		level.locations[zx][zy].mem_obj = 0;
+		level.locations[zx][zy].mem_obj_mn = 0;
+		level.locations[zx][zy].mem_invis = 0;
 	    }
 }
 
