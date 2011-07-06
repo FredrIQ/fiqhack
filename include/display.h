@@ -17,6 +17,10 @@
 #define vobj_at(x,y) (level.objects[x][y])
 #endif
 
+
+#define dbuf_monid(mon) ((int) what_mon(mon->mnum) + 1)
+
+
 /*
  * sensemon()
  *
@@ -184,26 +188,6 @@
 /* Total number of cmap indices in the sheild_static[] array. */
 #define SHIELD_COUNT 21
 
-
-/*
- * display_self()
- *
- * Display the hero.  It is assumed that all checks necessary to determine
- * _if_ the hero can be seen have already been done.
- */
-#define maybe_display_usteed	(u.usteed && mon_visible(u.usteed)) ? \
-					ridden_mon_to_glyph(u.usteed) :
-
-#define display_self()							\
-    show_glyph(u.ux, u.uy,						\
-	maybe_display_usteed			/* else */		\
-	youmonst.m_ap_type == M_AP_NOTHING ?				\
-				hero_glyph :				\
-	youmonst.m_ap_type == M_AP_FURNITURE ?				\
-				cmap_to_glyph(youmonst.mappearance) :	\
-	youmonst.m_ap_type == M_AP_OBJECT ?				\
-				objnum_to_glyph(youmonst.mappearance) : \
-	/* else M_AP_MONSTER */ monnum_to_glyph(youmonst.mappearance))
 
 /*
  * A glyph is an abstraction that represents a _unique_ monster, object,

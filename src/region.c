@@ -5,9 +5,9 @@
 #include "lev.h"
 
 /*
- * This should really go into the level structure, but
- * I'll start here for ease. It *WILL* move into the level
- * structure eventually.
+ * Regions are currently used for only one purpose: stinking gas clouds
+ * This is reflected in the display code: visible regions are displayed in the
+ * effect layer
  */
 
 static NhRegion **regions;
@@ -70,6 +70,8 @@ NhRegion *create_region(NhRect *rects, int nrect)
     NhRegion *reg;
 
     reg = malloc(sizeof (NhRegion));
+    memset(reg, 0, sizeof (NhRegion));
+    
     /* Determines bounding box */
     if (nrect > 0) {
 	reg->bounding_box = rects[0];
@@ -93,11 +95,6 @@ NhRegion *create_region(NhRect *rects, int nrect)
 	reg->rects[i] = rects[i];
     }
     reg->ttl = -1;		/* Defaults */
-    reg->attach_2_u = FALSE;
-    reg->attach_2_m = 0;
-    /* reg->attach_2_o = NULL; */
-    reg->enter_msg = NULL;
-    reg->leave_msg = NULL;
     reg->expire_f = NO_CALLBACK;
     reg->enter_f = NO_CALLBACK;
     reg->can_enter_f = NO_CALLBACK;
@@ -106,10 +103,7 @@ NhRegion *create_region(NhRect *rects, int nrect)
     reg->inside_f = NO_CALLBACK;
     clear_hero_inside(reg);
     clear_heros_fault(reg);
-    reg->n_monst = 0;
-    reg->max_monst = 0;
-    reg->monsters = NULL;
-    reg->arg = NULL;
+    
     return reg;
 }
 
@@ -478,7 +472,7 @@ NhRegion *visible_region_at(xchar x, xchar y)
 
 void show_region(NhRegion *reg, xchar x, xchar y)
 {
-    show_glyph(x, y, reg->glyph);
+    
 }
 
 /**
@@ -522,7 +516,7 @@ void save_regions(int fd, int mode)
 	    bwrite(fd, &regions[i]->monsters[j],
 	     sizeof (unsigned));
 	bwrite(fd, &regions[i]->visible, sizeof (boolean));
-	bwrite(fd, &regions[i]->glyph, sizeof (int));
+	bwrite(fd, &regions[i]->effect_id, sizeof (int));
 	bwrite(fd, &regions[i]->arg, sizeof (void *));
     }
 
@@ -604,7 +598,7 @@ void rest_regions(int fd,
 	    mread(fd, &regions[i]->monsters[j],
 		  sizeof (unsigned));
 	mread(fd, &regions[i]->visible, sizeof (boolean));
-	mread(fd, &regions[i]->glyph, sizeof (int));
+	mread(fd, &regions[i]->effect_id, sizeof (int));
 	mread(fd, &regions[i]->arg, sizeof (void *));
     }
     /* remove expired regions, do not trigger the expire_f callback (yet!);
@@ -740,7 +734,7 @@ NhRegion *create_gas_cloud(xchar x, xchar y, int radius, long damage)
     cloud->expire_f = EXPIRE_GAS_CLOUD;
     cloud->arg = (void *)damage;
     cloud->visible = TRUE;
-    cloud->glyph = cmap_to_glyph(S_cloud);
+    cloud->effect_id = cmap_to_glyph(S_cloud);
     add_region(cloud);
     return cloud;
 }

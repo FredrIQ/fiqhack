@@ -71,6 +71,12 @@
 #define CLR_WHITE		15
 #define CLR_MAX			16
 
+/* flags for displayed monsters */
+#define MON_NORMAL   0
+#define MON_TAME     (1 << 0)
+#define MON_RIDDEN   (1 << 1)
+#define MON_DETECTED (1 << 2)
+#define MON_WARNING  (1 << 3) /* this "monster" is actually a warning */
 
 /* command param type specification */
 #define CMD_ARG_NONE (1 << 1)  /* param can be empty */

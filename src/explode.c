@@ -190,7 +190,7 @@ void explode(int x, int y,
 				 * directly to the buffered screen.  tmp_at()
 				 * will clean up the location for us later.
 				 */
-				show_glyph(i+x-1, j+y-1,
+				dbuf_set_effect(i+x-1, j+y-1,
 					cmap_to_glyph(shield_static[k]));
 			}
 			flush_screen(1);	/* will flush screen and output */
@@ -200,7 +200,7 @@ void explode(int x, int y,
 		    /* Cover last shield glyph with blast symbol. */
 		    for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 1)
-			    show_glyph(i+x-1,j+y-1,
+			    dbuf_set_effect(i+x-1,j+y-1,
 					explosion_to_glyph(expltype, expl[i][j]));
 		    }
 

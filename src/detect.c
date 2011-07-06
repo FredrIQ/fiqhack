@@ -590,13 +590,11 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	    if (!mclass || mtmp->data->mlet == mclass ||
 		(mtmp->data == &mons[PM_LONG_WORM] && mclass == S_WORM_TAIL))
 		    if (mtmp->mx > 0) {
-		    	if (mclass && def_monsyms[mclass] == ' ')
-				show_glyph(mtmp->mx,mtmp->my,
-					detected_mon_to_glyph(mtmp));
-			else
-				show_glyph(mtmp->mx,mtmp->my,mon_to_glyph(mtmp));
+		    	dbuf_set(mtmp->mx,mtmp->my, S_stone, 0, 0, 0, 0,
+				 dbuf_monid(mtmp), 0, 0);
 			/* don't be stingy - display entire worm */
-			if (mtmp->data == &mons[PM_LONG_WORM]) detect_wsegs(mtmp,0);
+			if (mtmp->data == &mons[PM_LONG_WORM])
+			    detect_wsegs(mtmp,0);
 		    }
 	    if (otmp && otmp->cursed &&
 		(mtmp->msleeping || !mtmp->mcanmove)) {
@@ -639,7 +637,7 @@ static void sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
 	temp_trap.tx = x;
 	temp_trap.ty = y;
 	temp_trap.ttyp = BEAR_TRAP;	/* some kind of trap */
-	map_trap(&temp_trap,1);
+	map_trap(&temp_trap, 1);
     }
 
 }

@@ -444,6 +444,7 @@ bad_data_file:	impossible("'data' file in wrong format");
 const char what_is_an_unknown_object[] = "an unknown object";
 
 /* quick: use cursor && don't search for "more info" */
+#warning do_look needs to be rewritten
 static int do_look(boolean quick)
 {
     char    out_str[BUFSZ], look_buf[BUFSZ];

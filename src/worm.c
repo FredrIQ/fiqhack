@@ -412,16 +412,15 @@ void see_wsegs(struct monst *worm)
  */
 void detect_wsegs(struct monst *worm, boolean use_detection_glyph)
 {
-    int num;
+    int dflag;
     struct wseg *curr = wtails[worm->wormno];
 
 /*  if (!mtmp->wormno) return;  bullet proofing */
 
     while (curr != wheads[worm->wormno]) {
-	num = use_detection_glyph ?
-		detected_monnum_to_glyph(what_mon(PM_LONG_WORM_TAIL)) :
-		monnum_to_glyph(what_mon(PM_LONG_WORM_TAIL));
-	show_glyph(curr->wx,curr->wy,num);
+	dflag = use_detection_glyph ? MON_DETECTED : 0;
+	dbuf_set(curr->wx, curr->wy, S_stone, 0, 0, 0, 0,
+		    PM_LONG_WORM_TAIL + 1, dflag, 0);
 	curr = curr->nseg;
     }
 }

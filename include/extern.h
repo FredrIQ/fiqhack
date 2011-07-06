@@ -215,8 +215,12 @@ extern void see_monsters(void);
 extern void set_mimic_blocking(void);
 extern void see_objects(void);
 extern void see_traps(void);
+extern void display_self(void);
 extern int doredraw(void);
-extern void show_glyph(int,int,int);
+extern void dbuf_set_loc(int x, int y);
+extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
+		   boolean invis, int mon, int monflags, int effect);
+extern void dbuf_set_effect(int x, int y, int eglyph);
 extern void clear_glyph_buffer(void);
 extern void cls(void);
 extern void flush_screen(int);

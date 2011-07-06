@@ -13,12 +13,6 @@ typedef boolean (*callback_proc)(void *, void *);
  * a way as to retain compatibility with 3.4.0 save and bones files;
  * this relies on the fact that nethack's `boolean' is really stored
  * in a `char' (or bigger type) rather than in a single bit.
- *
- * 3.4.1 save and bones files will be correct.
- * 3.4.0 save files restored under 3.4.1 will be correct.
- * 3.4.0 bones files used with 3.4.1 will continue to have the minor
- *	 3.4.0 bug of falsely claiming that the current game's hero is
- *	 responsible for the dead former hero's stinking clouds.
  */
 #define REG_HERO_INSIDE	1
 #define REG_NOT_HEROS	2
@@ -58,7 +52,7 @@ typedef struct {
   /* Should probably do the same thing about objects */
 
   boolean visible;		/* Is the region visible ? */
-  int glyph;			/* Which glyph to use if visible */
+  int effect_id;		/* How to display if visible */
   void * arg;		/* Optional user argument (Ex: strength of
 				   force field, damage of a fire zone, ...*/
 } NhRegion;
