@@ -50,6 +50,7 @@ extern winid WIN_MAP;
 #define ON		1
 #define OFF		0
 
+#define NO_GLYPH (-1)
 
 /* menu structure */
 typedef struct tty_mi {
@@ -239,7 +240,8 @@ extern char tty_message_menu(char,int,const char *);
 extern void tty_update_inventory(void);
 extern void tty_mark_synch(void);
 extern void tty_wait_synch(void);
-extern void tty_print_glyph(xchar,xchar,int);
+extern void tty_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
+extern void tty_print_glyph(xchar,xchar,struct nh_dbuf_entry *dbe);
 extern void tty_raw_print(const char *);
 extern void tty_raw_print_bold(const char *);
 extern int tty_nhgetch(void);

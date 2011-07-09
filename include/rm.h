@@ -176,10 +176,11 @@
 #define S_hbeam		64	/* To change order or add, see function     */
 #define S_lslant	65	/* zapdir_to_glyph() in display.c.	    */
 #define S_rslant	66
+
 #define S_digbeam	67	/* dig beam symbol */
 #define S_flashbeam	68	/* camera flash symbol */
 #define S_boomleft	69	/* thrown boomerang, open left, e.g ')'    */
-#define S_boomright	70	/* thrown boomerand, open right, e.g. '('  */
+#define S_boomright	70	/* thrown boomerang, open right, e.g. '('  */
 #define S_ss1		71	/* 4 magic shield glyphs */
 #define S_ss2		72
 #define S_ss3		73

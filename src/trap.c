@@ -1222,7 +1222,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 {
 	struct monst *mtmp;
 	struct obj *otmp, *otmp2;
-	int dx,dy;
+	int dx, dy;
 	struct obj *singleobj;
 	boolean used_up = FALSE;
 	boolean otherside = FALSE;
@@ -1285,9 +1285,12 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 			delaycnt = 2;
 			/* fall through */
 	    default:
-			if (!delaycnt) delaycnt = 1;
-			if (!cansee(bhitpos.x,bhitpos.y)) flush_screen(1);
-			tmp_at(DISP_FLASH, obj_to_glyph(singleobj));
+			if (!delaycnt)
+			    delaycnt = 1;
+			if (!cansee(bhitpos.x,bhitpos.y))
+			    flush_screen(1);
+			
+			tmp_at(DISP_OBJECT, dbuf_objid(singleobj));
 			tmp_at(bhitpos.x, bhitpos.y);
 	}
 

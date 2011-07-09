@@ -12,7 +12,7 @@ static void demonpet(void);
 static boolean m_slips_free(struct monst *mtmp,struct attack *mattk);
 static int explum(struct monst *,struct attack *);
 static void start_engulf(struct monst *);
-static void end_engulf(void);
+static void end_engulf(struct monst *);
 static int gulpum(struct monst *,struct attack *);
 static boolean hmonas(struct monst *, int, schar, schar);
 static void nohandglow(struct monst *);
@@ -120,7 +120,7 @@ boolean attack_checks(struct monst *mtmp,
 	 * the screen, so you know something is there.
 	 */
 	if (!canspotmon(mtmp) &&
-		    !glyph_is_warning(glyph_at(u.ux+dx, u.uy+dy)) &&
+		    !warning_at(u.ux+dx, u.uy+dy) &&
 		    !level.locations[u.ux+dx][u.uy+dy].mem_invis &&
 		    !(!Blind && mtmp->mundetected && hides_under(mtmp->data))) {
 		pline("Wait!  There's %s there you can't see!",
@@ -139,7 +139,7 @@ boolean attack_checks(struct monst *mtmp,
 
 	if (mtmp->m_ap_type && !Protection_from_shape_changers &&
 	   !sensemon(mtmp) &&
-	   !glyph_is_warning(glyph_at(u.ux+dx,u.uy+dy))) {
+	   !warning_at(u.ux+dx, u.uy+dy)) {
 		/* If a hidden mimic was in a square where a player remembers
 		 * some (probably different) unseen monster, the player is in
 		 * luck--he attacks it even though it's hidden.
@@ -153,7 +153,7 @@ boolean attack_checks(struct monst *mtmp,
 	}
 
 	if (mtmp->mundetected && !canseemon(mtmp) &&
-		!glyph_is_warning(glyph_at(u.ux+dx, u.uy+dy)) &&
+		!warning_at(u.ux+dx, u.uy+dy) &&
 		(hides_under(mtmp->data) || mtmp->data->mlet == S_EEL)) {
 	    mtmp->mundetected = mtmp->msleeping = 0;
 	    newsym(mtmp->mx, mtmp->my);
@@ -1656,20 +1656,27 @@ common:
 
 static void start_engulf(struct monst *mdef)
 {
+	int x, y;
 	if (!Invisible) {
+		x = mdef->mx;
+		y = mdef->my;
 		map_location(u.ux, u.uy, TRUE);
-		tmp_at(DISP_ALWAYS, mon_to_glyph(&youmonst));
-		tmp_at(mdef->mx, mdef->my);
+		
+		dbuf_set(x, y, level.locations[x][y].mem_bg, 
+		         level.locations[x][y].mem_trap,
+		         level.locations[x][y].mem_obj,
+		         level.locations[x][y].mem_obj_mn,
+		         0, dbuf_monid((&youmonst)), 0, 0);
 	}
 	You("engulf %s!", mon_nam(mdef));
 	delay_output();
 	delay_output();
 }
 
-static void end_engulf(void)
+static void end_engulf(struct monst *mdef)
 {
 	if (!Invisible) {
-		tmp_at(DISP_END, 0);
+		newsym(mdef->mx, mdef->my);
 		newsym(u.ux, u.uy);
 	}
 }
@@ -1701,7 +1708,7 @@ static int gulpum(struct monst *mdef, struct attack *mattk)
 			/* eating a Rider or its corpse is fatal */
 			if (is_rider(mdef->data)) {
 			 pline("Unfortunately, digesting any of it is fatal.");
-			    end_engulf();
+			    end_engulf(mdef);
 			    sprintf(msgbuf, "unwisely tried to eat %s",
 				    mdef->data->mname);
 			    killer = msgbuf;
@@ -1761,7 +1768,7 @@ static int gulpum(struct monst *mdef, struct attack *mattk)
 			    } else
 			    exercise(A_CON, TRUE);
 			}
-			end_engulf();
+			end_engulf(mdef);
 			return 2;
 		    case AD_PHYS:
 			if (youmonst.data == &mons[PM_FOG_CLOUD]) {
@@ -1825,7 +1832,7 @@ static int gulpum(struct monst *mdef, struct attack *mattk)
 			} else dam = 0;
 			break;
 		}
-		end_engulf();
+		end_engulf(mdef);
 		if ((mdef->mhp -= dam) <= 0) {
 		    killed(mdef);
 		    if (mdef->mhp <= 0)	/* not lifesaved */

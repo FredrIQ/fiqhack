@@ -295,7 +295,9 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	 * early to avoid the dagger bug, anyone who modifies this code should
 	 * be careful not to use either one after it's been freed.
 	 */
-	if (sym) tmp_at(DISP_FLASH, obj_to_glyph(singleobj));
+	if (sym)
+	    tmp_at(DISP_OBJECT, dbuf_objid(singleobj));
+	
 	while (range-- > 0) { /* Actually the loop is always exited by break */
 		bhitpos.x += dx;
 		bhitpos.y += dy;

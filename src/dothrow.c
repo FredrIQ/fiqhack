@@ -811,8 +811,8 @@ static void sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
     if (bhitpos.x != u.ux || bhitpos.y != u.uy) {
 	int x = bhitpos.x - dx;
 	int y = bhitpos.y - dy;
-
-	tmp_at(DISP_FLASH, obj_to_glyph(obj));
+	
+	tmp_at(DISP_OBJECT, dbuf_objid(obj));
 	while (x != u.ux || y != u.uy) {
 	    tmp_at(x, y);
 	    delay_output();
@@ -1025,7 +1025,7 @@ void throwit(struct obj *obj,
 
 		if (!IS_SOFT(level.locations[bhitpos.x][bhitpos.y].typ) &&
 			breaktest(obj)) {
-		    tmp_at(DISP_FLASH, obj_to_glyph(obj));
+		    tmp_at(DISP_OBJECT, dbuf_objid(obj));
 		    tmp_at(bhitpos.x, bhitpos.y);
 		    delay_output();
 		    tmp_at(DISP_END, 0);

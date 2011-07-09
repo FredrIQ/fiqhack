@@ -734,7 +734,7 @@ NhRegion *create_gas_cloud(xchar x, xchar y, int radius, long damage)
     cloud->expire_f = EXPIRE_GAS_CLOUD;
     cloud->arg = (void *)damage;
     cloud->visible = TRUE;
-    cloud->effect_id = cmap_to_glyph(S_cloud);
+    cloud->effect_id = dbuf_effect(E_MISC, S_cloud);
     add_region(cloud);
     return cloud;
 }

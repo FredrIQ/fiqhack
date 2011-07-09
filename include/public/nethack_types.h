@@ -30,16 +30,6 @@
 #define HLOCK		"perm"	/* an empty file used for locking purposes */
 #define msleep(k) usleep((k)*1000)
 
-/* default glyph value for all menus that don't need glyphs */
-#define NO_GLYPH	(-1)
-
-/* Special returns from mapglyph() */
-#define MG_CORPSE	0x01
-#define MG_INVIS	0x02
-#define MG_DETECT	0x04
-#define MG_PET		0x08
-#define MG_RIDDEN	0x10
-
 #define ROLE_NONE	(-1)
 #define ROLE_RANDOM	(-2)
 
@@ -199,6 +189,13 @@ enum nh_input_status {
     ERR_NO_INPUT_ALLOWED
 };
 
+enum nh_effect_types {
+    E_EXPLOSION,
+    E_SWALLOW,
+    E_ZAP,
+    E_MISC
+};
+
 
 typedef signed char	schar;
 typedef unsigned char	uchar;
@@ -270,7 +267,6 @@ struct nh_objitem {
     char caption[COLNO];
     int id;
     int count;
-    int glyph;
     char accel;
     char group_accel;
     int otype;
@@ -317,6 +313,19 @@ struct nh_cmd_arg {
 };
 
 
+struct nh_dbuf_entry {
+    xchar new;
+    int bg;
+    int trap;
+    int obj;
+    int obj_mn;
+    boolean invis;
+    int mon;
+    int monflags;
+    int effect;
+};
+
+
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
     void (*win_exit_nhwindows)(const char *);
@@ -335,7 +344,7 @@ struct window_procs {
     void (*win_update_inventory)(void);
     void (*win_mark_synch)(void);
     void (*win_wait_synch)(void);
-    void (*win_print_glyph)(xchar,xchar,int);
+    void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
     void (*win_raw_print)(const char *);
     void (*win_raw_print_bold)(const char *);
     int (*win_nhgetch)(void);

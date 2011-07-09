@@ -38,7 +38,7 @@ struct window_procs tty_procs = {
     tty_update_inventory,
     tty_mark_synch,
     tty_wait_synch,
-    tty_print_glyph,
+    tty_update_screen,
     tty_raw_print,
     tty_raw_print_bold,
     tty_nhgetch,
@@ -78,6 +78,7 @@ const char ynchars[] = "yn";
 // char plname[PL_NSIZ];
 
 struct nh_player_info player;
+static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
 
 #if !defined(NO_TERMS)
 boolean GFlag = FALSE;
@@ -2025,7 +2026,7 @@ int tty_display_objects(struct nh_objitem *items, int icount, const char *title,
 	    tty_add_menu(win, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
 			    items[i].caption, MENU_UNSELECTED);
 	else
-	    tty_add_menu(win, items[i].glyph, &any, items[i].accel,
+	    tty_add_menu(win, NO_GLYPH, &any, items[i].accel,
 			items[i].group_accel, ATR_NONE, items[i].caption,
 			MENU_UNSELECTED);
     }
@@ -2105,6 +2106,17 @@ void tty_wait_synch(void)
     }
 }
 
+void row_refresh(int start, int stop, int y)
+{
+    int x;
+    
+    if (!display_buffer)
+	return;
+
+    for (x = start; x <= stop; x++)
+	tty_print_glyph(x, y, &display_buffer[y][x]);
+}
+
 void docorner(int xmin, int ymax)
 {
     int y;
@@ -2175,26 +2187,30 @@ void g_putch(int in_ch)
 }
 #endif /* !WIN32 */
 
+void tty_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
+{
+    int x, y;
+    display_buffer = dbuf;
+    
+    for (y = 1; y < ROWNO; y++)
+	for (x = 1; x < COLNO; x++)
+	    tty_print_glyph(x, y, &dbuf[y][x]);
+}
 
 /*
  *  tty_print_glyph
  *
- *  Print the glyph to the output device.  Don't flush the output device.
- *
- *  Since this is only called from show_glyph(), it is assumed that the
- *  position and glyph are always correct (checked there)!
+ *  Print the glyph to the output device.  Don't flush the output device. (why not?)
  */
-
-void tty_print_glyph(xchar x, xchar y, int glyph)
+void tty_print_glyph(xchar x, xchar y, struct nh_dbuf_entry *dbe)
 {
     int ch;
     boolean reverse_on = FALSE;
     int	    color;
-    unsigned special;
     winid window = WIN_MAP;
     
     /* map glyph to character and color */
-    mapglyph(glyph, &ch, &color, &special, x, y);
+    mapglyph(dbe, &ch, &color, x, y);
     if (!has_color(color))
 	color = NO_COLOR;
 
@@ -2217,13 +2233,14 @@ void tty_print_glyph(xchar x, xchar y, int glyph)
     }
 
     /* must be after color check; term_end_color may turn off inverse too */
-    if (((special & MG_PET) && ui_flags.hilite_pet) ||
-	((special & MG_DETECT) && ui_flags.use_inverse)) {
+    if (((dbe->monflags & MON_TAME) && ui_flags.hilite_pet) ||
+	((dbe->monflags & MON_DETECTED) && ui_flags.use_inverse)) {
 	term_start_attr(ATR_INVERSE);
 	reverse_on = TRUE;
     }
-
-	g_putch(ch);		/* print the character */
+    if (!ch)
+	ch = ' ';
+    g_putch(ch);		/* print the character */
 
     if (reverse_on) {
     	term_end_attr(ATR_INVERSE);

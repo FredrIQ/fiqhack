@@ -40,7 +40,6 @@ extern EXPORT void nh_get_player_info(struct nh_player_info *pi);
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
 
 /* display.c */
-extern EXPORT void row_refresh(int,int,int);
 extern EXPORT void swallowed(int);
 extern EXPORT void docrt(void);
 extern EXPORT void switch_graphics(int);
@@ -52,7 +51,8 @@ extern EXPORT void clearlocks(void);
 extern EXPORT boolean check_swallowed(void);
 
 /* mapglyph.c */
-extern EXPORT void mapglyph(int, int *, int *, unsigned *, int, int);
+extern EXPORT void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
+	      int x, int y);
 
 /* options.c */
 extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);

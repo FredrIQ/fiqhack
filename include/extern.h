@@ -196,7 +196,6 @@ extern void rot_corpse(void *, long);
 #ifdef INVISIBLE_OBJECTS
 extern struct obj * vobj_at(xchar,xchar);
 #endif /* INVISIBLE_OBJECTS */
-extern int memory_glyph(int x, int y);
 extern void clear_memory_glyph(schar x, schar y, int to);
 extern void magic_map_background(xchar,xchar,int);
 extern void map_background(xchar,xchar,int);
@@ -221,12 +220,12 @@ extern void dbuf_set_loc(int x, int y);
 extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 		   boolean invis, int mon, int monflags, int effect);
 extern void dbuf_set_effect(int x, int y, int eglyph);
-extern void clear_glyph_buffer(void);
+extern boolean warning_at(int x, int y);
+extern void clear_display_buffer(void);
 extern void cls(void);
 extern void flush_screen(int);
 extern int back_to_cmap(xchar,xchar);
-extern int zapdir_to_glyph(int,int,int);
-extern int glyph_at(xchar,xchar);
+extern int zapdir_to_effect(int,int,int);
 extern void set_wall_state(void);
 
 /* ### do.c ### */

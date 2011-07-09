@@ -3,7 +3,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *			THE NEW DISPLAY CODE
+ *			THE DISPLAY CODE
  *
  * The old display code has been broken up into three parts: vision, display,
  * and drawing.  Vision decides what locations can and cannot be physically
@@ -17,29 +17,17 @@
  * are part of the window port.  See doc/window.doc for the drawing
  * interface.
  *
- * The display system deals with an abstraction called a glyph.  Anything
- * that could possibly be displayed has a unique glyph identifier.
- *
  * What is seen on the screen is a combination of what the hero remembers
  * and what the hero currently sees.  Objects and dungeon features (walls
  * doors, etc) are remembered when out of sight.  Monsters and temporary
- * effects are not remembered.  Each location on the level has an
- * associated glyph.  This is the hero's _memory_ of what he or she has
- * seen there before.
+ * effects are not remembered.
+ * Specifically, the hero memory for each location has a mem_<foo>
+ * entry for background, traps, objects and invisible moster markers
  *
- * Display rules:
- *
- *	If the location is in sight, display in order:
- *		visible (or sensed) monsters
- *		visible objects
- *		known traps
- *		background
- *
- *	If the location is out of sight, display in order:
- *		sensed monsters (telepathy)
- *		memory
- *
- *
+ * In most circumstances the entire hero memory is copied into the display
+ * buffer (dbuf) together with monsters and effects and passed to the window
+ * port for display. Exceptions are: {object,monster} detection, underwater
+ * and swallowed display.
  *
  * Here is a list of the major routines in this file to be used externally:
  *
@@ -69,7 +57,8 @@
  * clear a remembered object when/if detection reveals it isn't there.
  *
  *
- * show_glyph
+ * dbuf_set
+ * dbuf_set_<foo>
  *
  * This is direct (no processing in between) buffered access to the screen.
  * Temporary screen effects are run through this and its companion,
@@ -96,9 +85,8 @@
  *
  * Parts of the rm structure that are used:
  *
- *	typ	- What is really there.
- *	glyph	- What the hero remembers.  This will never be a monster.
- *		  Monsters "float" above this.
+ *	typ	- What (dungeon feature) is really there.
+ *	mem_*	- What the hero remembers.
  *	lit	- True if the position is lit.  An optimization for
  *		  lit/unlit rooms.
  *	waslit	- True if the position was *remembered* as lit.
@@ -118,7 +106,7 @@
 #include "region.h"
 
 static void display_monster(xchar,xchar,struct monst *,int,xchar);
-static int swallow_to_glyph(int, int);
+static int swallow_to_effect(int, int);
 static void display_warning(struct monst *);
 
 static int check_pos(int, int, int);
@@ -132,7 +120,7 @@ static int set_crosswall(int, int);
 static void set_seenv(struct rm *, int, int, int, int);
 static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
-
+static void dbuf_set_object(int x, int y, int oid);
 
 #ifdef INVISIBLE_OBJECTS
 /*
@@ -216,7 +204,7 @@ void map_trap(struct trap *trap, int show)
     int cmap = trap_to_defsym(what_trap((trap)->ttyp));
 
     if (level.flags.hero_memory)
-	level.locations[x][y].mem_trap = 1 + cmap - MAXDCHARS;
+	level.locations[x][y].mem_trap = cmap - S_arrow_trap + 1;
     if (show)
 	dbuf_set(x, y, level.locations[x][y].mem_bg,
 		 level.locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0);
@@ -231,8 +219,7 @@ void map_trap(struct trap *trap, int show)
 void map_object(struct obj *obj, int show)
 {
     int x = obj->ox, y = obj->oy;
-    int glyph = obj_to_glyph(obj);
-    int objtyp = glyph_to_obj(glyph);
+    int objtyp = Hallucination ? random_object() : obj->otyp;
     int monnum = 0;
     
     if (level.flags.hero_memory) {
@@ -323,21 +310,6 @@ void map_location(int x, int y, int show)
 	map_background(x,y,show);
 }
 
-
-int memory_glyph(int x, int y)
-{
-    if (level.locations[x][y].mem_invis)
-	return GLYPH_INVISIBLE;
-    else if (level.locations[x][y].mem_obj)
-	if (level.locations[x][y].mem_obj - 1 == CORPSE)
-	    return body_to_glyph(level.locations[x][y].mem_obj_mn - 1);
-	else
-	    return objnum_to_glyph(level.locations[x][y].mem_obj - 1);
-    else if (level.locations[x][y].mem_trap)
-	return cmap_to_glyph(level.locations[x][y].mem_trap - 1 + MAXDCHARS);
-    else
-	return cmap_to_glyph(level.locations[x][y].mem_bg);
-}
 
 void clear_memory_glyph(schar x, schar y, int to)
 {
@@ -790,11 +762,12 @@ void shieldeff(xchar x, xchar y)
     
     if (cansee(x,y)) {	/* Don't see anything if can't see the location */
 	for (i = 0; i < SHIELD_COUNT; i++) {
-	    dbuf_set_effect(x, y, cmap_to_glyph(shield_static[i]));
-	    flush_screen(1);	/* make sure the glyph shows up */
+	    dbuf_set_effect(x, y, dbuf_effect(E_MISC, shield_static[i]));
+	    flush_screen(1);	/* make sure the effect shows up */
 	    delay_output();
 	}
-	newsym(x,y);		/* restore the old information */
+	
+	dbuf_set_effect(x, y, 0);
     }
 }
 
@@ -807,57 +780,62 @@ void shieldeff(xchar x, xchar y)
  * but explode() wants to delay].
  *
  * Call:
- *	(DISP_BEAM,   glyph)	open, initialize glyph
- *	(DISP_FLASH,  glyph)	open, initialize glyph
- *	(DISP_ALWAYS, glyph)	open, initialize glyph
- *	(DISP_CHANGE, glyph)	change glyph
+ *	(DISP_BEAM,   sym)	open, initialize sym
+ *	(DISP_FLASH,  sym)	open, initialize sym
+ *	(DISP_ALWAYS, sym)	open, initialize sym
+ *	(DISP_OBJECT, sym)	open, initialize sym
+ *	(DISP_CHANGE, sym)	change sym
  *	(DISP_END,    0)	close & clean up (second argument doesn't
  *				matter)
  *	(DISP_FREEMEM, 0)	only used to prevent memory leak during
  *				exit)
- *	(x, y)			display the glyph at the location
+ *	(x, y)			display the sym at the location
  *
- * DISP_BEAM  - Display the given glyph at each location, but do not erase
+ * DISP_BEAM  - Display the given sym at each location, but do not erase
  *		any until the close call.
- * DISP_FLASH - Display the given glyph at each location, but erase the
- *		previous location's glyph.
+ * DISP_FLASH - Display the given sym at each location, but erase the
+ *		previous location's sym.
  * DISP_ALWAYS- Like DISP_FLASH, but vision is not taken into account.
+ * DISP_OBJECT- Like flash, but shows an object instead of an effect symbol
  */
 
-static struct tmp_glyph {
+static struct tmp_sym {
     coord saved[COLNO];	/* previously updated positions */
     int sidx;		/* index of next unused slot in saved[] */
-    int style;		/* either DISP_BEAM or DISP_FLASH or DISP_ALWAYS */
-    int glyph;		/* glyph to use when printing */
-    struct tmp_glyph *prev;
-} tgfirst;
+    int style;		/* DISP_BEAM, DISP_FLASH, DISP_ALWAYS or DISP_OBJECT */
+    int sym;		/* symbol to use when printing */
+    struct tmp_sym *prev;
+} tsfirst;
 
 void tmp_at(int x, int y)
 {
-    static struct tmp_glyph *tglyph = NULL;
-    struct tmp_glyph *tmp;
+    static struct tmp_sym *tsym = NULL;
+    struct tmp_sym *tmp;
 
     switch (x) {
 	case DISP_BEAM:
 	case DISP_FLASH:
 	case DISP_ALWAYS:
-	    if (!tglyph)
-		tmp = &tgfirst;
+	case DISP_OBJECT:
+	    if (!tsym)
+		tmp = &tsfirst;
 	    else	/* nested effect; we need dynamic memory */
-		tmp = malloc(sizeof (struct tmp_glyph));
-	    tmp->prev = tglyph;
-	    tglyph = tmp;
-	    tglyph->sidx = 0;
-	    tglyph->style = x;
-	    tglyph->glyph = y;
+		tmp = malloc(sizeof (struct tmp_sym));
+	    
+	    tmp->prev = tsym;
+	    tsym = tmp;
+	    tsym->sidx = 0;
+	    tsym->style = x;
+	    tsym->sym = y;
 	    flush_screen(0);	/* flush buffered glyphs */
 	    return;
 
 	case DISP_FREEMEM:  /* in case game ends with tmp_at() in progress */
-	    while (tglyph) {
-		tmp = tglyph->prev;
-		if (tglyph != &tgfirst) free(tglyph);
-		tglyph = tmp;
+	    while (tsym) {
+		tmp = tsym->prev;
+		if (tsym != &tsfirst)
+		    free(tsym);
+		tsym = tmp;
 	    }
 	    return;
 
@@ -865,49 +843,54 @@ void tmp_at(int x, int y)
 	    break;
     }
 
-    if (!tglyph) panic("tmp_at: tglyph not initialized");
+    if (!tsym) panic("tmp_at: tsym not initialized");
 
     switch (x) {
 	case DISP_CHANGE:
-	    tglyph->glyph = y;
+	    tsym->sym = y;
 	    break;
 
 	case DISP_END:
-	    if (tglyph->style == DISP_BEAM) {
+	    if (tsym->style == DISP_BEAM) {
 		int i;
 
 		/* Erase (reset) from source to end */
-		for (i = 0; i < tglyph->sidx; i++)
-		    newsym(tglyph->saved[i].x, tglyph->saved[i].y);
+		for (i = 0; i < tsym->sidx; i++)
+		    newsym(tsym->saved[i].x, tsym->saved[i].y);
 	    } else {		/* DISP_FLASH or DISP_ALWAYS */
-		if (tglyph->sidx)	/* been called at least once */
-		    newsym(tglyph->saved[0].x, tglyph->saved[0].y);
+		if (tsym->sidx)	/* been called at least once */
+		    newsym(tsym->saved[0].x, tsym->saved[0].y);
 	    }
-	 /* tglyph->sidx = 0; -- about to be freed, so not necessary */
-	    tmp = tglyph->prev;
-	    if (tglyph != &tgfirst) free(tglyph);
-	    tglyph = tmp;
+	 /* tsym->sidx = 0; -- about to be freed, so not necessary */
+	    tmp = tsym->prev;
+	    if (tsym != &tsfirst)
+		free(tsym);
+	    tsym = tmp;
 	    break;
 
 	default:	/* do it */
-	    if (tglyph->style == DISP_BEAM) {
-		if (!cansee(x,y)) break;
+	    if (tsym->style == DISP_BEAM) {
+		if (!cansee(x,y))
+		    break;
 		/* save pos for later erasing */
-		tglyph->saved[tglyph->sidx].x = x;
-		tglyph->saved[tglyph->sidx].y = y;
-		tglyph->sidx += 1;
+		tsym->saved[tsym->sidx].x = x;
+		tsym->saved[tsym->sidx].y = y;
+		tsym->sidx += 1;
 	    } else {	/* DISP_FLASH/ALWAYS */
-		if (tglyph->sidx) { /* not first call, so reset previous pos */
-		    newsym(tglyph->saved[0].x, tglyph->saved[0].y);
-		    tglyph->sidx = 0;	/* display is presently up to date */
+		if (tsym->sidx) { /* not first call, so reset previous pos */
+		    newsym(tsym->saved[0].x, tsym->saved[0].y);
+		    tsym->sidx = 0;	/* display is presently up to date */
 		}
-		if (!cansee(x,y) && tglyph->style != DISP_ALWAYS) break;
-		tglyph->saved[0].x = x;
-		tglyph->saved[0].y = y;
-		tglyph->sidx = 1;
+		if (!cansee(x,y) && tsym->style != DISP_ALWAYS) break;
+		tsym->saved[0].x = x;
+		tsym->saved[0].y = y;
+		tsym->sidx = 1;
 	    }
-
-	    dbuf_set_effect(x, y, tglyph->glyph);	/* show it */
+	    
+	    if (tsym->style == DISP_OBJECT)
+		dbuf_set_object(x, y, tsym->sym);
+	    else
+		dbuf_set_effect(x, y, tsym->sym);	/* show it */
 	    flush_screen(0);			/* make sure it shows up */
 	    break;
     } /* end case */
@@ -947,24 +930,24 @@ void swallowed(int first)
      */
     if (isok(u.ux, u.uy-1)) {
 	if (left_ok)
-	    dbuf_set_effect(u.ux-1, u.uy-1, swallow_to_glyph(swallower, S_sw_tl));
-	dbuf_set_effect(u.ux, u.uy-1, swallow_to_glyph(swallower, S_sw_tc));
+	    dbuf_set_effect(u.ux-1, u.uy-1, swallow_to_effect(swallower, S_sw_tl));
+	dbuf_set_effect(u.ux, u.uy-1, swallow_to_effect(swallower, S_sw_tc));
 	if (rght_ok)
-	    dbuf_set_effect(u.ux+1, u.uy-1, swallow_to_glyph(swallower, S_sw_tr));
+	    dbuf_set_effect(u.ux+1, u.uy-1, swallow_to_effect(swallower, S_sw_tr));
     }
 
     if (left_ok)
-	dbuf_set_effect(u.ux-1, u.uy  , swallow_to_glyph(swallower, S_sw_ml));
+	dbuf_set_effect(u.ux-1, u.uy  , swallow_to_effect(swallower, S_sw_ml));
     display_self();
     if (rght_ok)
-	dbuf_set_effect(u.ux+1, u.uy  , swallow_to_glyph(swallower, S_sw_mr));
+	dbuf_set_effect(u.ux+1, u.uy  , swallow_to_effect(swallower, S_sw_mr));
 
     if (isok(u.ux, u.uy+1)) {
 	if (left_ok)
-	    dbuf_set_effect(u.ux-1, u.uy+1, swallow_to_glyph(swallower, S_sw_bl));
-	dbuf_set_effect(u.ux, u.uy+1, swallow_to_glyph(swallower, S_sw_bc));
+	    dbuf_set_effect(u.ux-1, u.uy+1, swallow_to_effect(swallower, S_sw_bl));
+	dbuf_set_effect(u.ux, u.uy+1, swallow_to_effect(swallower, S_sw_bc));
 	if (rght_ok)
-	    dbuf_set_effect(u.ux+1, u.uy+1, swallow_to_glyph(swallower, S_sw_br));
+	    dbuf_set_effect(u.ux+1, u.uy+1, swallow_to_effect(swallower, S_sw_br));
     }
 
     /* Update the swallowed position. */
@@ -1115,13 +1098,10 @@ void see_objects(void)
 void see_traps(void)
 {
     struct trap *trap;
-    int glyph;
 
-    for (trap = ftrap; trap; trap = trap->ntrap) {
-	glyph = glyph_at(trap->tx, trap->ty);
-	if (glyph_is_trap(glyph))
+    for (trap = ftrap; trap; trap = trap->ntrap)
+	if (level.locations[trap->tx][trap->ty].mem_trap)
 	    newsym(trap->tx, trap->ty);
-    }
 }
 
 /*
@@ -1217,23 +1197,7 @@ void docrt(void)
 
 /* ========================================================================= */
 /* Display Buffering (3rd screen) ========================================== */
-
-typedef struct {
-    xchar new;
-    int bg;
-    int trap;
-    int obj;
-    int obj_mn;
-    boolean invis;
-    int mon;
-    int monflags;
-    int effect;
-} dbuf_entry;
-
-static dbuf_entry dbuf[ROWNO][COLNO];
-static char dbuf_start[ROWNO];
-static char dbuf_stop[ROWNO];
-
+static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
 
 void dbuf_set_effect(int x, int y, int eglyph)
 {
@@ -1244,6 +1208,18 @@ void dbuf_set_effect(int x, int y, int eglyph)
     dbuf[y][x].new = 1;
 }
 
+static void dbuf_set_object(int x, int y, int oid)
+{
+    if (!isok(x, y))
+	return;
+    
+    dbuf[y][x].obj = oid;
+    dbuf[y][x].new = 1;
+}
+
+/*
+ * copy player memory for a location into the display buffer
+ */
 void dbuf_set_loc(int x, int y)
 {
     dbuf_set(x, y,
@@ -1257,7 +1233,7 @@ void dbuf_set_loc(int x, int y)
 
 
 /*
- * Store the glyph in the 3rd screen for later flushing.
+ * Store display information for later flushing.
  */
 void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 		   boolean invis, int mon, int monflags, int effect)
@@ -1269,11 +1245,6 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 	dbuf[y][x].obj != obj || dbuf[y][x].obj_mn != obj_mn ||
 	dbuf[y][x].invis != invis || dbuf[y][x].mon != mon ||
 	dbuf[y][x].monflags != monflags || dbuf[y][x].effect != effect) {
-	
-	if (dbuf_start[y] > x)
-	    dbuf_start[y] = x;
-	if (dbuf_stop[y]  < x)
-	    dbuf_stop[y]  = x;
 	
 	dbuf[y][x].new = 1;
 	dbuf[y][x].bg = bg;
@@ -1288,87 +1259,21 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 }
 
 
-/* needs to go away again ... */
-static int dbuf_glyph(int x, int y)
+/* warning_at: return TRUE if there is a warning symbol at the given position
+ *
+ * attack_checks() needs to know and there is no other way to get this info
+ */
+boolean warning_at(int x, int y)
 {
-    if (dbuf[y][x].effect)
-	return dbuf[y][x].effect; /* effects are still stored as glyphs */
-    
-    if (dbuf[y][x].mon) {
-	if (dbuf[y][x].monflags & MON_WARNING)
-	    return warning_to_glyph(dbuf[y][x].mon - NUMMONS - 1);
-	
-	if (dbuf[y][x].monflags & MON_DETECTED)
-	    return dbuf[y][x].mon + GLYPH_DETECT_OFF - 1;
-	
-	if (dbuf[y][x].monflags & MON_TAME)
-	    return dbuf[y][x].mon + GLYPH_PET_OFF - 1;
-	
-	if (dbuf[y][x].monflags & MON_RIDDEN)
-	    return dbuf[y][x].mon + GLYPH_RIDDEN_OFF - 1;
-	
-	return dbuf[y][x].mon + GLYPH_MON_OFF - 1;
-    }
-    
-    if (dbuf[y][x].invis)
-	return GLYPH_INVISIBLE;
-    
-    if (dbuf[y][x].obj - 1 == CORPSE)
-	return dbuf[y][x].obj + GLYPH_BODY_OFF - 1;
-    if (dbuf[y][x].obj)
-	return dbuf[y][x].obj + GLYPH_OBJ_OFF - 1;
-    
-    if (dbuf[y][x].trap)
-	return cmap_to_glyph(dbuf[y][x].trap - 1 + MAXDCHARS);
-    
-    /* only cmaps / bg left */
-    return dbuf[y][x].bg + GLYPH_CMAP_OFF;
+    return (dbuf[y][x].mon > NUMMONS) && (dbuf[y][x].monflags & MON_WARNING);
 }
 
 
-/*
- * Reset the changed glyph borders so that none of the 3rd screen has
- * changed.
- */
-#define reset_glyph_bbox()			\
-    {						\
-	int i;					\
-						\
-	for (i = 0; i < ROWNO; i++) {		\
-	    dbuf_start[i] = COLNO-1;		\
-	    dbuf_stop[i]  = 0;			\
-	}					\
-    }
-
-
-static dbuf_entry nul_dbuf = { 0, S_stone, 0, 0, 0, 0, 0, 0, 0 };
-/*
- * Turn the 3rd screen into stone.
- */
-void clear_glyph_buffer(void)
+void clear_display_buffer(void)
 {
-    int x, y;
-    dbuf_entry *gptr;
-
-    for (y = 0; y < ROWNO; y++) {
-	gptr = &dbuf[y][0];
-	for (x = COLNO; x; x--) {
-	    *gptr++ = nul_dbuf;
-	}
-    }
-    reset_glyph_bbox();
+    memset(dbuf, 0, sizeof(struct nh_dbuf_entry) * ROWNO * COLNO);
 }
 
-/*
- * Assumes that the indicated positions are filled with S_stone glyphs.
- */
-void row_refresh(int start, int stop, int y)
-{
-    int x;
-
-    for (x = start; x <= stop; x++)
-	print_glyph(x,y,dbuf_glyph(x,y));
-}
 
 void cls(void)
 {
@@ -1376,37 +1281,22 @@ void cls(void)
     botlx = 1;			/* force update of botl window */
     clear_nhwindow(NHW_MAP);	/* clear physical screen */
 
-    clear_glyph_buffer();	/* this is sort of an extra effort, but OK */
+    clear_display_buffer();	/* this is sort of an extra effort, but OK */
 }
 
 /*
- * Synch the third screen with the display.
+ * Send the display buffer to the window port.
  */
 void flush_screen(int cursor_on_u)
 {
-    /* Prevent infinite loops on errors:
-     *	    flush_screen->print_glyph->impossible->pline->flush_screen
-     */
-    static   boolean flushing = 0;
     static   boolean delay_flushing = 0;
-    int x,y;
 
     if (cursor_on_u == -1) delay_flushing = !delay_flushing;
     if (delay_flushing) return;
-    if (flushing) return;	/* if already flushing then return */
-    flushing = 1;
 
-    for (y = 0; y < ROWNO; y++) {
-	for (x = dbuf_start[y]; x <= dbuf_stop[y]; x++)
-	    if (dbuf[y][x].new) {
-		print_glyph(x,y,dbuf_glyph(x, y));
-		dbuf[y][x].new = 0;
-	    }
-    }
+    update_screen(dbuf);
 
     display_nhwindow(NHW_MAP, FALSE);
-    reset_glyph_bbox();
-    flushing = 0;
     if (botl || botlx) bot();
 }
 
@@ -1516,25 +1406,25 @@ int back_to_cmap(xchar x, xchar y)
 
 
 /*
- * swallow_to_glyph()
+ * swallow_to_effect()
  *
  * Convert a monster number and a swallow location into the correct glyph.
  * If you don't want a patchwork monster while hallucinating, decide on
  * a random monster in swallowed() and don't use what_mon() here.
  */
-static int swallow_to_glyph(int mnum, int loc)
+static int swallow_to_effect(int mnum, int loc)
 {
     if (loc < S_sw_tl || S_sw_br < loc) {
-	impossible("swallow_to_glyph: bad swallow location");
+	impossible("swallow_to_effect: bad swallow location");
 	loc = S_sw_br;
     }
-    return ((int) (what_mon(mnum)<<3) | (loc - S_sw_tl)) + GLYPH_SWALLOW_OFF;
+    return (((E_SWALLOW << 16) |  what_mon(mnum)<<3) | (loc - S_sw_tl)) + 1;
 }
 
 
 
 /*
- * zapdir_to_glyph()
+ * zapdir_to_effect()
  *
  * Change the given zap direction and beam type into a glyph.  Each beam
  * type has four glyphs, one for each of the symbols below.  The order of
@@ -1545,28 +1435,15 @@ static int swallow_to_glyph(int mnum, int loc)
  *	\  S_lslant	( 1, 1) or (-1,-1)
  *	/  S_rslant	(-1, 1) or ( 1,-1)
  */
-int zapdir_to_glyph(int dx, int dy, int beam_type)
+int zapdir_to_effect(int dx, int dy, int beam_type)
 {
     if (beam_type >= NUM_ZAP) {
-	impossible("zapdir_to_glyph:  illegal beam type");
+	impossible("zapdir_to_effect:  illegal beam type");
 	beam_type = 0;
     }
     dx = (dx == dy) ? 2 : (dx && dy) ? 3 : dx ? 1 : 0;
 
-    return ((int) ((beam_type << 2) | dx)) + GLYPH_ZAP_OFF;
-}
-
-
-/*
- * Utility routine for dowhatis() used to find out the glyph displayed at
- * the location.  This isn't necessarily the same as the glyph in the level.locations
- * structure, so we must check the display buffer.
- */
-int glyph_at(xchar x, xchar y)
-{
-    if (x < 0 || y < 0 || x >= COLNO || y >= ROWNO)
-	return cmap_to_glyph(S_room);			/* XXX */
-    return dbuf_glyph(x, y);
+    return (((E_ZAP << 16) | (beam_type << 2) | dx)) + 1;
 }
 
 

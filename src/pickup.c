@@ -377,7 +377,6 @@ void add_objitem(struct nh_objitem **items, int *nr_items, int idx, int id,
 	
 	if (obj) {
 	    it->count = obj->quan;
-	    it->glyph = obj_to_glyph(obj);
 	    it->accel = use_invlet ? obj->invlet : 0;
 	    it->group_accel = def_oc_syms[(int)objects[obj->otyp].oc_class];
 	    it->otype = obj->otyp;
@@ -393,7 +392,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, int idx, int id,
 		it->buc = BUC_UNCURSED;
 	} else {
 	    it->accel = it->group_accel = 0;
-	    it->otype = it->oclass = it->glyph = -1;
+	    it->otype = it->oclass = -1;
 	}
 }
 

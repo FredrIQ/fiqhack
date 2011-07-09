@@ -626,7 +626,7 @@ void display_gamewindows(void)
      */
     display_nhwindow(NHW_STATUS, FALSE);
     display_nhwindow(NHW_MESSAGE, FALSE);
-    clear_glyph_buffer();
+    clear_display_buffer();
     display_nhwindow(NHW_MAP, FALSE);
 }
 

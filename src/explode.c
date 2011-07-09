@@ -175,7 +175,7 @@ void explode(int x, int y,
 		for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 2) continue;
 			tmp_at(starting ? DISP_BEAM : DISP_CHANGE,
-				explosion_to_glyph(expltype,expl[i][j]));
+				dbuf_effect(E_EXPLOSION, expl[i][j]));
 			tmp_at(i+x-1, j+y-1);
 			starting = 0;
 		}
@@ -191,7 +191,7 @@ void explode(int x, int y,
 				 * will clean up the location for us later.
 				 */
 				dbuf_set_effect(i+x-1, j+y-1,
-					cmap_to_glyph(shield_static[k]));
+					dbuf_effect(E_MISC, shield_static[k]));
 			}
 			flush_screen(1);	/* will flush screen and output */
 			delay_output();
@@ -201,7 +201,7 @@ void explode(int x, int y,
 		    for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 1)
 			    dbuf_set_effect(i+x-1,j+y-1,
-					explosion_to_glyph(expltype, expl[i][j]));
+					    dbuf_effect(E_EXPLOSION, expl[i][j]));
 		    }
 
 		} else {		/* delay a little bit. */

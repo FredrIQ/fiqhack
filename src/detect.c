@@ -67,12 +67,12 @@ static void do_dknown_of(struct obj *obj)
 /* Check whether the location has an outdated object displayed on it. */
 static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 {
-	int glyph;
+	int memobj;
 	struct obj *otmp;
 	struct monst *mtmp;
 
-	glyph = glyph_at(x,y);
-	if (glyph_is_object(glyph)) {
+	memobj = level.locations[x][y].mem_obj;
+	if (memobj) {
 	    /* there's some object shown here */
 	    if (oclass == ALL_CLASSES) {
 		return((boolean)( !(level.objects[x][y] ||     /* stale if nothing here */
@@ -83,7 +83,7 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 #endif
 						 mtmp->minvent)))));
 	    } else {
-		if (material && objects[glyph_to_obj(glyph)].oc_material == material) {
+		if (material && objects[memobj - 1].oc_material == material) {
 			/* the object shown here is of interest because material matches */
 			for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
 				if (o_material(otmp, GOLD)) return FALSE;
@@ -95,7 +95,7 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 			/* detection indicates removal of this object from the map */
 			return TRUE;
 		}
-	        if (oclass && objects[glyph_to_obj(glyph)].oc_class == oclass) {
+	        if (oclass && objects[memobj - 1].oc_class == oclass) {
 			/* the object shown here is of interest because its class matches */
 			for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
 				if (o_in(otmp, oclass)) return FALSE;

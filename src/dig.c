@@ -1131,7 +1131,7 @@ void zap_dig(schar dx, schar dy, schar dz)
 	zx = u.ux + dx;
 	zy = u.uy + dy;
 	digdepth = rn1(18, 8);
-	tmp_at(DISP_BEAM, cmap_to_glyph(S_digbeam));
+	tmp_at(DISP_BEAM, dbuf_effect(E_MISC, S_digbeam));
 	while (--digdepth >= 0) {
 	    if (!isok(zx,zy)) break;
 	    room = &level.locations[zx][zy];

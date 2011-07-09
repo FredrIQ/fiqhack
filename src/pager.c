@@ -46,6 +46,9 @@ static int append_str(char *buf, const char *new_str)
  */
 static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
 {
+#warning lookat needs fixing
+    return NULL;
+#if 0
     struct monst *mtmp = NULL;
     struct permonst *pm = NULL;
     int glyph;
@@ -271,6 +274,7 @@ static struct permonst *lookat(int x, int y, char *buf, char *monbuf)
     }
 
     return (pm && !Hallucination) ? pm : NULL;
+#endif
 }
 
 /*
@@ -444,9 +448,10 @@ bad_data_file:	impossible("'data' file in wrong format");
 const char what_is_an_unknown_object[] = "an unknown object";
 
 /* quick: use cursor && don't search for "more info" */
-#warning do_look needs to be rewritten
 static int do_look(boolean quick)
 {
+#warning do_look needs to be rewritten
+#if 0
     char    out_str[BUFSZ], look_buf[BUFSZ];
     const char *x_str, *firstmatch = 0;
     struct permonst *pm = 0;
@@ -732,6 +737,7 @@ static int do_look(boolean quick)
     } while (from_screen && !quick && ans != LOOK_ONCE);
 
     flags.verbose = save_verbose;
+#endif
     return 0;
 }
 

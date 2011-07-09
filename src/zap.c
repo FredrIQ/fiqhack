@@ -2503,9 +2503,9 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 	}
 
 	if (weapon == FLASHED_LIGHT) {
-	    tmp_at(DISP_BEAM, cmap_to_glyph(S_flashbeam));
+	    tmp_at(DISP_BEAM, dbuf_effect(E_MISC, S_flashbeam));
 	} else if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM)
-	    tmp_at(DISP_FLASH, obj_to_glyph(obj));
+	    tmp_at(DISP_OBJECT, dbuf_objid(obj));
 
 	while (range-- > 0) {
 	    int x,y;
@@ -2711,11 +2711,11 @@ struct monst *boomhit(int dx, int dy)
 	bhitpos.y = u.uy;
 
 	for (i = 0; i < 8; i++) if (xdir[i] == dx && ydir[i] == dy) break;
-	tmp_at(DISP_FLASH, cmap_to_glyph(boom));
+	tmp_at(DISP_FLASH, dbuf_effect(E_MISC, boom));
 	for (ct = 0; ct < 10; ct++) {
 		if (i == 8) i = 0;
 		boom = (boom == S_boomleft) ? S_boomright : S_boomleft;
-		tmp_at(DISP_CHANGE, cmap_to_glyph(boom));/* change glyph */
+		tmp_at(DISP_CHANGE, dbuf_effect(E_MISC, boom));/* change glyph */
 		dx = xdir[i];
 		dy = ydir[i];
 		bhitpos.x += dx;
@@ -3149,7 +3149,7 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
     if (dx == 0 && dy == 0) range = 1;
     save_bhitpos = bhitpos;
 
-    tmp_at(DISP_BEAM, zapdir_to_glyph(dx, dy, abstype));
+    tmp_at(DISP_BEAM, zapdir_to_effect(dx, dy, abstype));
     while (range-- > 0) {
 	lsx = sx; sx += dx;
 	lsy = sy; sy += dy;
@@ -3339,7 +3339,7 @@ buzzmonst:
 		case 1: dy = -dy; break;
 		case 2: dx = -dx; break;
 		}
-		tmp_at(DISP_CHANGE, zapdir_to_glyph(dx,dy,abstype));
+		tmp_at(DISP_CHANGE, zapdir_to_effect(dx,dy,abstype));
 	    }
 	}
     }
