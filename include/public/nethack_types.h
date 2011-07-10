@@ -68,6 +68,20 @@
 #define MON_DETECTED (1 << 2)
 #define MON_WARNING  (1 << 3) /* this "monster" is actually a warning */
 
+/* 
+ * level display modes
+ * These defines are used by notify_levelchange() to inform the window port 
+ * about some characteristic of the new level that might be worth displaying
+ * in some nonstandard way (eg the rogue level in tty nethack, or alternate
+ * tiles for mines/hell in tiles versions)
+ */
+#define LDM_DEFAULT	0
+#define LDM_HELL	1
+#define LDM_QUEST	2
+#define LDM_MINES	3
+#define LDM_SOKOBAN	4
+#define LDM_ROGUE	5
+
 /* command param type specification */
 #define CMD_ARG_NONE (1 << 1)  /* param can be empty */
 #define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
@@ -354,7 +368,7 @@ struct window_procs {
     char (*win_yn_function)(const char *, const char *, char, long*);
     void (*win_getlin)(const char *,char *);
     void (*win_delay_output)(void);
-
+    void (*win_level_changed)(int displaymode);
     void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
 };
 

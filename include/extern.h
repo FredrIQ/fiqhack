@@ -244,6 +244,7 @@ extern int doup(void);
 #ifdef INSURANCE
 extern void save_currentstate(void);
 #endif
+extern void notify_levelchange(void);
 extern void goto_level(d_level *,boolean,boolean,boolean);
 extern void schedule_goto(d_level *,boolean,boolean,int,
 			     const char *,const char *);

@@ -674,6 +674,9 @@ void newgame(void)
 	if (MON_AT(u.ux, u.uy)) mnexto(m_at(u.ux, u.uy));
 	makedog();
 	docrt();
+	
+	/* help the window port get it's display charset/tiles sorted out */
+	notify_levelchange();
 
 	if (flags.legacy) {
 		flush_screen(1);

@@ -529,6 +529,9 @@ int dorecover(int fd)
 	vision_reset();
 	vision_full_recalc = 1;	/* recompute vision (not saved) */
 
+	/* help the window port get it's display charset/tiles sorted out */
+	notify_levelchange();
+
 	run_timers();	/* expire all timers that have gone off while away */
 	docrt();
 	restoring = FALSE;

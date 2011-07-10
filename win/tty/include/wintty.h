@@ -255,6 +255,7 @@ extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int lis
 extern void tty_delay_output(void);
 extern void tty_outrip(struct nh_menuitem *items,int icount, int how,
 		       char *plname, long gold, char *killbuf, int year);
+extern void tty_notify_level_changed(int dmode);
 
 extern void move_cursor(winid,int,int);
 

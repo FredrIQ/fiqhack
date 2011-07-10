@@ -48,6 +48,7 @@ struct window_procs tty_procs = {
     tty_yn_function,
     tty_getlin,
     tty_delay_output,
+    tty_notify_level_changed,
     tty_outrip,
 };
 
@@ -2836,6 +2837,11 @@ void tty_update_status(void)
 void tty_print_message(const char *msg)
 {
     tty_putstr(WIN_MESSAGE, 0, msg);
+}
+
+
+void tty_notify_level_changed(int dmode)
+{
 }
 
 /*wintty.c*/

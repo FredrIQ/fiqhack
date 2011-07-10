@@ -32,5 +32,6 @@ extern void nh_delay_output(void);
 #define getlin (*windowprocs.win_getlin)
 #define delay_output nh_delay_output
 #define outrip (*windowprocs.win_outrip)
+#define level_changed (*windowprocs.win_level_changed)
 
 #endif /* WINPROCS_H */

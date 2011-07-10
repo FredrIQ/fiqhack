@@ -862,6 +862,27 @@ void save_currentstate(void)
 }
 #endif
 
+
+void notify_levelchange(void)
+{
+	int mode;
+	
+	if (In_hell(&u.uz))
+	    mode = LDM_HELL;
+	else if (In_quest(&u.uz))
+	    mode = LDM_QUEST;
+	else if (In_mines(&u.uz))
+	    mode = LDM_MINES;
+	else if (In_sokoban(&u.uz))
+	    mode = LDM_SOKOBAN;
+	else if (Is_rogue_level(&u.uz))
+	    mode = LDM_ROGUE;
+	else
+	    mode = LDM_DEFAULT;
+	
+	level_changed(mode);
+}
+
 void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean portal)
 {
 	int fd, l_idx;
@@ -1162,6 +1183,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	    familiar = TRUE;
 	    level_info[new_ledger].flags &= ~FORGOTTEN;
 	}
+	
+	notify_levelchange(); /* inform the window code about the level change */
 
 	/* Reset the screen. */
 	vision_reset();		/* reset the blockages */
