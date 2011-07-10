@@ -9,7 +9,7 @@ int (*occupation)(void);
 /* from xxxmain.c */
 int hackpid = 0;		/* current process id */
 
-int bases[MAXOCLASSES] = DUMMY;
+int bases[MAXOCLASSES];
 
 int multi = 0;
 int nroom = 0;
@@ -23,12 +23,12 @@ int otg_temp;			/* used by object_to_glyph() [otg] */
  *	The following structure will be initialized at startup time with
  *	the level numbers of some "important" things in the game.
  */
-struct dgn_topology dungeon_topology = {DUMMY};
+struct dgn_topology dungeon_topology;
 
 #include "quest.h"
-struct q_score	quest_status = DUMMY;
+struct q_score	quest_status;
 
-int smeq[MAXNROFROOMS+1] = DUMMY;
+int smeq[MAXNROFROOMS+1];
 int doorindex = 0;
 
 char *saved_cmd = NULL;
@@ -38,20 +38,20 @@ const char *delayed_killer = 0;
 #ifdef GOLDOBJ
 long done_money = 0;
 #endif
-char killer_buf[BUFSZ] = DUMMY;
+char killer_buf[BUFSZ];
 const char *nomovemsg = 0;
-const char nul[40] = DUMMY;			/* contains zeros */
-char plname[PL_NSIZ] = DUMMY;		/* player name */
-char pl_character[PL_CSIZ] = DUMMY;
+const char nul[40];			/* contains zeros */
+char plname[PL_NSIZ];			/* player name */
+char pl_character[PL_CSIZ];
 char pl_race = '\0';
 
-char pl_fruit[PL_FSIZ] = DUMMY;
+char pl_fruit[PL_FSIZ];
 int current_fruit = 0;
 struct fruit *ffruit = NULL;
 
-char tune[6] = DUMMY;
+char tune[6];
 
-const char *occtxt = DUMMY;
+const char *occtxt;
 const char quitchars[] = " \r\n\033";
 const char vowels[] = "aeiouAEIOU";
 const char ynchars[] = "yn";
@@ -101,20 +101,20 @@ struct obj *current_wand = 0;	/* wand currently zapped/applied */
 
 boolean in_steed_dismounting = FALSE;
 
-coord bhitpos = DUMMY;
-coord doors[DOORMAX] = {DUMMY};
+coord bhitpos;
+coord doors[DOORMAX];
 
-struct mkroom rooms[(MAXNROFROOMS+1)*2] = {DUMMY};
+struct mkroom rooms[(MAXNROFROOMS+1)*2];
 struct mkroom* subrooms = &rooms[MAXNROFROOMS+1];
 struct mkroom *upstairs_room, *dnstairs_room, *sstairs_room;
 
 dlevel_t level;		/* level map */
 struct trap *ftrap = NULL;
-struct monst youmonst = DUMMY;
-struct flag flags = DUMMY;
-struct instance_flags iflags = DUMMY;
+struct monst youmonst;
+struct flag flags;
+struct instance_flags iflags;
 struct instance_flags2 iflags2;
-struct you u = DUMMY;
+struct you u;
 
 struct obj *invent = NULL,
 	*uwep = NULL, *uarm = NULL,
@@ -151,7 +151,7 @@ const int shield_static[SHIELD_COUNT] = {
     S_ss1, S_ss2, S_ss3, S_ss2, S_ss1, S_ss2, S_ss4,
 };
 
-struct spell spl_book[MAXSPELL + 1] = {DUMMY};
+struct spell spl_book[MAXSPELL + 1];
 
 long moves = 1L, monstermoves = 1L;
 	 /* These diverge when player is Fast */
@@ -163,12 +163,12 @@ struct obj *migrating_objs = NULL;
 struct obj *billobjs = NULL;
 
 /* used to zero all elements of a struct obj */
-struct obj zeroobj = DUMMY;
+struct obj zeroobj;
 
 /* originally from dog.c */
-char dogname[PL_PSIZ] = DUMMY;
-char catname[PL_PSIZ] = DUMMY;
-char horsename[PL_PSIZ] = DUMMY;
+char dogname[PL_PSIZ];
+char catname[PL_PSIZ];
+char horsename[PL_PSIZ];
 char preferred_pet;	/* '\0', 'c', 'd', 'n' (none) */
 /* monsters that went down/up together with @ */
 struct monst *mydogs = NULL;

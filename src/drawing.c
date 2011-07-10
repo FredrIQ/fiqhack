@@ -13,10 +13,10 @@
 
 #define g_FILLER(symbol) 0
 
-uchar oc_syms[MAXOCLASSES] = DUMMY; /* the current object  display symbols */
-uchar showsyms[MAXPCHARS]  = DUMMY; /* the current feature display symbols */
-uchar monsyms[MAXMCLASSES] = DUMMY; /* the current monster display symbols */
-uchar warnsyms[WARNCOUNT]  = DUMMY;  /* the current warning display symbols */
+uchar oc_syms[MAXOCLASSES]; /* the current object  display symbols */
+uchar showsyms[MAXPCHARS];  /* the current feature display symbols */
+uchar monsyms[MAXMCLASSES]; /* the current monster display symbols */
+uchar warnsyms[WARNCOUNT];  /* the current warning display symbols */
 
 /* Default object class symbols.  See objclass.h. */
 const char def_oc_syms[MAXOCLASSES] = {
@@ -565,9 +565,9 @@ void switch_graphics(int gr_set_flag)
 /*
  * saved display symbols for objects & features.
  */
-static uchar save_oc_syms[MAXOCLASSES] = DUMMY;
-static uchar save_showsyms[MAXPCHARS]  = DUMMY;
-static uchar save_monsyms[MAXPCHARS]   = DUMMY;
+static uchar save_oc_syms[MAXOCLASSES];
+static uchar save_showsyms[MAXPCHARS];
+static uchar save_monsyms[MAXPCHARS];
 
 static const uchar r_oc_syms[MAXOCLASSES] = {
 /* 0*/	'\0',

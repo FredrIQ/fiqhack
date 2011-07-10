@@ -18,7 +18,6 @@
 #define NOTELL		0
 #define BOLT_LIM	8 /* from this distance ranged attacks will be made */
 #define MAX_CARR_CAP	1000	/* so that boulders can be heavier */
-#define DUMMY { 0 }
 
 /* symbolic names for capacity levels */
 #define UNENCUMBERED	0

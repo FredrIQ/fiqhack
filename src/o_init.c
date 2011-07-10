@@ -10,7 +10,7 @@ static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
 
-static short disco[NUM_OBJECTS] = DUMMY;
+static short disco[NUM_OBJECTS];
 
 #ifdef USE_TILES
 static void shuffle_tiles(void);
