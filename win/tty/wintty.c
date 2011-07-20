@@ -58,6 +58,7 @@ winid WIN_MESSAGE = WIN_ERR;
 winid WIN_STATUS = WIN_ERR;
 winid WIN_MAP = WIN_ERR;
 char toplines[TBUFSZ];
+int levelmode;
 
 const char sdir[] = "hykulnjb><";	/* 'rogue'-like direction commands */
 const char ndir[] = "47896321><";	/* number pad mode */
@@ -725,7 +726,7 @@ static void erase_menu_or_text(winid window, struct WinDesc *cw, boolean clear)
 	} else if (clear)
 	    clear_screen();
 	else
-	    docrt();
+	    redraw_screen();
     else
 	docorner((int)cw->offx, cw->maxrow+1);
 }
@@ -2162,7 +2163,7 @@ void g_putch(int in_ch)
     char ch = (char)in_ch;
 
 # if !defined(NO_TERMS)
-    if (iflags2.IBMgraphics || ui_flags.eight_bit_input) {
+    if (ui_flags.graphics == IBM_GRAPHICS || ui_flags.eight_bit_input) {
 	/* IBM-compatible displays don't need other stuff */
 	putchar(ch);
     } else if (ch & 0x80) {
@@ -2191,6 +2192,7 @@ void g_putch(int in_ch)
 void tty_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
 {
     int x, y;
+       
     display_buffer = dbuf;
     
     for (y = 1; y < ROWNO; y++)
@@ -2842,6 +2844,16 @@ void tty_print_message(const char *msg)
 
 void tty_notify_level_changed(int dmode)
 {
+    levelmode = dmode;
+    set_rogue_level(dmode == LDM_ROGUE);
+}
+
+
+void redraw_screen(void)
+{
+    clear_nhwindow(WIN_MAP);
+    if (display_buffer)
+	tty_update_screen(display_buffer);
 }
 
 /*wintty.c*/

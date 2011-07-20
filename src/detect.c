@@ -22,7 +22,7 @@ static void openone(int,int,void *);
 /* Recursively search obj for an object in class oclass and return 1st found */
 struct obj *o_in(struct obj *obj, char oclass)
 {
-    struct obj* otmp;
+    struct obj *otmp;
     struct obj *temp;
 
     if (obj->oclass == oclass) return obj;
@@ -389,33 +389,21 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     struct obj *obj, *otmp = NULL;
     struct monst *mtmp;
     int uw = u.uinwater;
-    int sym, boulder = 0;
 
     if (class < 0 || class >= MAXOCLASSES) {
 	impossible("object_detect:  illegal class %d", class);
 	class = 0;
     }
 
-    /* Special boulder symbol check - does the class symbol happen
-     * to match iflags.bouldersym which is a user-defined?
-     * If so, that means we aren't sure what they really wanted to
-     * detect. Rather than trump anything, show both possibilities.
-     * We can exclude checking the buried obj chain for boulders below.
-     */
-    sym = class ? def_oc_syms[class] : 0;
-    if (sym && iflags.bouldersym && sym == iflags.bouldersym)
-    	boulder = ROCK_CLASS;
-
     if (Hallucination || (Confusion && class == SCROLL_CLASS))
 	strcpy(stuff, something);
     else
     	strcpy(stuff, class ? oclass_names[class] : "objects");
-    if (boulder && class != ROCK_CLASS) strcat(stuff, " and/or large stones");
 
     if (do_dknown) for (obj = invent; obj; obj = obj->nobj) do_dknown_of(obj);
 
     for (obj = level.objlist; obj; obj = obj->nobj) {
-	if ((!class && !boulder) || o_in(obj, class) || o_in(obj, boulder)) {
+	if (!class || o_in(obj, class)) {
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
 	}
@@ -433,7 +421,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 	for (obj = mtmp->minvent; obj; obj = obj->nobj) {
-	    if ((!class && !boulder) || o_in(obj, class) || o_in(obj, boulder)) ct++;
+	    if (!class || o_in(obj, class)) ct++;
 	    if (do_dknown) do_dknown_of(obj);
 	}
 	if ((is_cursed && mtmp->m_ap_type == M_AP_OBJECT &&
@@ -487,9 +475,8 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     for (x = 1; x < COLNO; x++)
 	for (y = 0; y < ROWNO; y++)
 	    for (obj = level.objects[x][y]; obj; obj = obj->nexthere)
-		if ((!class && !boulder) ||
-		    (otmp = o_in(obj, class)) || (otmp = o_in(obj, boulder))) {
-		    if (class || boulder) {
+		if (!class || (otmp = o_in(obj, class))) {
+		    if (class) {
 			if (otmp != obj) {
 			    otmp->ox = obj->ox;
 			    otmp->oy = obj->oy;
@@ -504,9 +491,9 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     for (mtmp = level.monlist ; mtmp ; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 	for (obj = mtmp->minvent; obj; obj = obj->nobj)
-	    if ((!class && !boulder) ||
-		 (otmp = o_in(obj, class)) || (otmp = o_in(obj, boulder))) {
-		if (!class && !boulder) otmp = obj;
+	    if (!class || (otmp = o_in(obj, class))) {
+		if (!class)
+		    otmp = obj;
 		otmp->ox = mtmp->mx;		/* at monster location */
 		otmp->oy = mtmp->my;
 		map_object(otmp, 1);
@@ -846,8 +833,6 @@ void use_crystal_ball(struct obj *obj)
 		ret = object_detect(NULL, class);
 	else if ((class = def_char_to_monclass(ch)) != MAXMCLASSES)
 		ret = monster_detect(NULL, class);
-	else if (iflags.bouldersym && (ch == iflags.bouldersym))
-		ret = object_detect(NULL, ROCK_CLASS);
 	else switch(ch) {
 		case '^':
 		    ret = trap_detect(NULL);
@@ -1095,7 +1080,7 @@ void find_trap(struct trap *trap)
 	cleared = TRUE;
     }
 
-    You("find %s.", an(defsyms[trap_to_defsym(tt)].explanation));
+    You("find %s.", an(trapexplain[tt-1]));
 
     if (cleared) {
 	display_nhwindow(NHW_MAP, TRUE);	/* wait */

@@ -35,6 +35,14 @@ static struct nh_listitem msg_window_list[] = {
 };
 static struct nh_enum_option msg_window_spec = {msg_window_list, listlen(msg_window_list)};
 
+static struct nh_listitem graphics_list[] = {
+	{ASCII_GRAPHICS, "plain"},
+	{DEC_GRAPHICS, "DEC graphics"},
+	{IBM_GRAPHICS, "IBM graphics"}
+};
+static struct nh_enum_option graphics_spec = {graphics_list, listlen(graphics_list)};
+
+
 
 #define VTRUE (void*)TRUE
 
@@ -54,6 +62,8 @@ struct nh_option_desc tty_options[] = {
     {"msghistory", "number of top line messages to save", OPTTYPE_INT, {(void*)20}},
     {"hackdir", "game data directory", OPTTYPE_STRING, {NULL}},
     {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
+    
+    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
@@ -90,6 +100,10 @@ boolean option_change_callback(struct nh_option_desc *option)
 	else if (!strcmp(option->name, "menu_headings")) {
 	    ui_flags.menu_headings = option->value.e;
 	}
+	else if (!strcmp(option->name, "graphics")) {
+	    ui_flags.graphics = option->value.e;
+	    switch_graphics(option->value.e);
+	}
 	else
 	    return FALSE;
 	
@@ -113,6 +127,7 @@ void tty_init_options(void)
 	find_option("menu_headings")->e = menu_headings_spec;
 	find_option("msg_window")->e = msg_window_spec;
 	find_option("msghistory")->i.max = 1000; /* arbitrary value */
+	find_option("graphics")->e = graphics_spec;
 	
 	nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
 	read_ui_config();

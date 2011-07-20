@@ -19,7 +19,7 @@ set ( DGN_COMP_SRC
 set ( LEV_COMP_SRC
     lev_main.c
     panic.c
-    ${NetHack_SOURCE_DIR}/src/drawing.c
+    ${NetHack_SOURCE_DIR}/src/symclass.c
     ${NetHack_SOURCE_DIR}/src/decl.c
     ${NetHack_SOURCE_DIR}/src/monst.c
     ${NetHack_SOURCE_DIR}/src/objects.c

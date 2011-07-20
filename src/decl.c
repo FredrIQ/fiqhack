@@ -131,24 +131,10 @@ struct obj *invent = NULL,
 	*uchain = NULL,
 	*uball = NULL;
 
-/*
- *  This must be the same order as used for buzz() in zap.c.
- */
-const int zapcolors[NUM_ZAP] = {
-    HI_ZAP,		/* 0 - missile */
-    CLR_ORANGE,		/* 1 - fire */
-    CLR_WHITE,		/* 2 - frost */
-    HI_ZAP,		/* 3 - sleep */
-    CLR_BLACK,		/* 4 - death */
-    CLR_WHITE,		/* 5 - lightning */
-    CLR_YELLOW,		/* 6 - poison gas */
-    CLR_GREEN,		/* 7 - acid */
-};
-
 const int shield_static[SHIELD_COUNT] = {
-    S_ss1, S_ss2, S_ss3, S_ss2, S_ss1, S_ss2, S_ss4,	/* 7 per row */
-    S_ss1, S_ss2, S_ss3, S_ss2, S_ss1, S_ss2, S_ss4,
-    S_ss1, S_ss2, S_ss3, S_ss2, S_ss1, S_ss2, S_ss4,
+    E_ss1, E_ss2, E_ss3, E_ss2, E_ss1, E_ss2, E_ss4,	/* 7 per row */
+    E_ss1, E_ss2, E_ss3, E_ss2, E_ss1, E_ss2, E_ss4,
+    E_ss1, E_ss2, E_ss3, E_ss2, E_ss1, E_ss2, E_ss4,
 };
 
 struct spell spl_book[MAXSPELL + 1];

@@ -1000,8 +1000,6 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		delete_levelfile(l_idx);
 	}
 
-	if (Is_rogue_level(newlevel) || Is_rogue_level(&u.uz))
-		assign_rogue_graphics(Is_rogue_level(newlevel));
 #ifdef USE_TILES
 	substitute_tiles(newlevel);
 #endif

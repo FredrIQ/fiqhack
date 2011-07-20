@@ -2503,7 +2503,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 	}
 
 	if (weapon == FLASHED_LIGHT) {
-	    tmp_at(DISP_BEAM, dbuf_effect(E_MISC, S_flashbeam));
+	    tmp_at(DISP_BEAM, dbuf_effect(E_MISC, E_flashbeam));
 	} else if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM)
 	    tmp_at(DISP_OBJECT, dbuf_objid(obj));
 
@@ -2704,7 +2704,7 @@ struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
 struct monst *boomhit(int dx, int dy)
 {
 	int i, ct;
-	int boom = S_boomleft;	/* showsym[] index  */
+	int boom = E_boomleft;	/* showsym[] index  */
 	struct monst *mtmp;
 
 	bhitpos.x = u.ux;
@@ -2714,7 +2714,7 @@ struct monst *boomhit(int dx, int dy)
 	tmp_at(DISP_FLASH, dbuf_effect(E_MISC, boom));
 	for (ct = 0; ct < 10; ct++) {
 		if (i == 8) i = 0;
-		boom = (boom == S_boomleft) ? S_boomright : S_boomleft;
+		boom = (boom == E_boomleft) ? E_boomright : E_boomleft;
 		tmp_at(DISP_CHANGE, dbuf_effect(E_MISC, boom));/* change glyph */
 		dx = xdir[i];
 		dy = ydir[i];

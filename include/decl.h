@@ -18,7 +18,6 @@ extern int nsubroom;
 extern int occtime;
 
 #define WARNCOUNT 6			/* number of different warning levels */
-extern uchar warnsyms[WARNCOUNT];
 
 extern int x_maze_max, y_maze_max;
 extern int otg_temp;
@@ -201,12 +200,9 @@ extern const int shield_static[];
 extern struct spell spl_book[];	/* sized in decl.c */
 
 #include "color.h"
-extern const int zapcolors[];
 
 extern const char def_oc_syms[MAXOCLASSES];	/* default class symbols */
-extern uchar oc_syms[MAXOCLASSES];		/* current class symbols */
 extern const char def_monsyms[MAXMCLASSES];	/* default class symbols */
-extern uchar monsyms[MAXMCLASSES];		/* current class symbols */
 
 #include "obj.h"
 extern struct obj *invent,
@@ -299,7 +295,7 @@ extern boolean vision_full_recalc;	/* TRUE if need vision recalc */
 extern char **viz_array;		/* could see/in sight row pointers */
 
 /* xxxexplain[] is in drawing.c */
-extern const char * const monexplain[], invisexplain[], * const objexplain[], * const oclass_names[];
+extern const char * const monexplain[], * const oclass_names[];
 
 /* used in files.c; xxconf.h can override if needed */
 # ifndef FQN_MAX_FILENAME

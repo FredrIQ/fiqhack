@@ -8,7 +8,8 @@ set (NH_TTY_SRC
     ioctl.c
     unixtty.c
     optwin.c
-    keymap.c)
+    keymap.c
+    mapglyph.c)
 
 if (WIN32)
     # untested and probably incomplete

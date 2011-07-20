@@ -2169,7 +2169,7 @@ srch:
 		for (trap = NO_TRAP+1; trap < TRAPNUM; trap++) {
 			const char *tname;
 
-			tname = defsyms[trap_to_defsym(trap)].explanation;
+			tname = trapexplain[trap-1];
 			if (!strncmpi(tname, bp, strlen(tname))) {
 				/* avoid stupid mistakes */
 				if ((trap == TRAPDOOR || trap == HOLE)

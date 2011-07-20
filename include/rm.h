@@ -145,75 +145,43 @@
 #define S_cloud		39
 #define S_water		40
 
-/* end dungeon characters, begin traps */
+#define MAXPCHARS	41	/* maximum number of mapped characters */
 
-#define S_arrow_trap		41
-#define S_dart_trap		42
-#define S_falling_rock_trap	43
-#define S_squeaky_board		44
-#define S_bear_trap		45
-#define S_land_mine		46
-#define S_rolling_boulder_trap	47
-#define S_sleeping_gas_trap	48
-#define S_rust_trap		49
-#define S_fire_trap		50
-#define S_pit			51
-#define S_spiked_pit		52
-#define S_hole			53
-#define S_trap_door		54
-#define S_teleportation_trap	55
-#define S_level_teleporter	56
-#define S_magic_portal		57
-#define S_web			58
-#define S_statue_trap		59
-#define S_magic_trap		60
-#define S_anti_magic_trap	61
-#define S_polymorph_trap	62
+/* end dungeon characters, begin special effects */
 
-/* end traps, begin special effects */
-
-#define S_vbeam		63	/* The 4 zap beam symbols.  Do NOT separate. */
-#define S_hbeam		64	/* To change order or add, see function     */
-#define S_lslant	65	/* zapdir_to_glyph() in display.c.	    */
-#define S_rslant	66
-
-#define S_digbeam	67	/* dig beam symbol */
-#define S_flashbeam	68	/* camera flash symbol */
-#define S_boomleft	69	/* thrown boomerang, open left, e.g ')'    */
-#define S_boomright	70	/* thrown boomerang, open right, e.g. '('  */
-#define S_ss1		71	/* 4 magic shield glyphs */
-#define S_ss2		72
-#define S_ss3		73
-#define S_ss4		74
+#define E_digbeam	0	/* dig beam symbol */
+#define E_flashbeam	1	/* camera flash symbol */
+#define E_boomleft	2	/* thrown boomerang, open left, e.g ')'    */
+#define E_boomright	3	/* thrown boomerang, open right, e.g. '('  */
+#define E_ss1		4	/* 4 magic shield glyphs */
+#define E_ss2		5
+#define E_ss3		6
+#define E_ss4		7
+#define E_gascloud	8
 
 /* The 8 swallow symbols.  Do NOT separate.  To change order or add, see */
-/* the function swallow_to_glyph() in display.c.			 */
-#define S_sw_tl		75	/* swallow top left [1]			*/
-#define S_sw_tc		76	/* swallow top center [2]	Order:	*/
-#define S_sw_tr		77	/* swallow top right [3]		*/
-#define S_sw_ml		78	/* swallow middle left [4]	1 2 3	*/
-#define S_sw_mr		79	/* swallow middle right [6]	4 5 6	*/
-#define S_sw_bl		80	/* swallow bottom left [7]	7 8 9	*/
-#define S_sw_bc		81	/* swallow bottom center [8]		*/
-#define S_sw_br		82	/* swallow bottom right [9]		*/
+/* the function swallow_to_effect() in display.c.			 */
+#define S_sw_tl		0	/* swallow top left [1]			*/
+#define S_sw_tc		1	/* swallow top center [2]	Order:	*/
+#define S_sw_tr		2	/* swallow top right [3]		*/
+#define S_sw_ml		3	/* swallow middle left [4]	1 2 3	*/
+#define S_sw_mr		4	/* swallow middle right [6]	4 5 6	*/
+#define S_sw_bl		5	/* swallow bottom left [7]	7 8 9	*/
+#define S_sw_bc		6	/* swallow bottom center [8]		*/
+#define S_sw_br		7	/* swallow bottom right [9]		*/
 
-#define S_explode1	83	/* explosion top left			*/
-#define S_explode2	84	/* explosion top center			*/
-#define S_explode3	85	/* explosion top right		 Ex.	*/
-#define S_explode4	86	/* explosion middle left		*/
-#define S_explode5	87	/* explosion middle center	 /-\	*/
-#define S_explode6	88	/* explosion middle right	 |@|	*/
-#define S_explode7	89	/* explosion bottom left	 \-/	*/
-#define S_explode8	90	/* explosion bottom center		*/
-#define S_explode9	91	/* explosion bottom right		*/
+#define E_explode1	0	/* explosion top left			*/
+#define E_explode2	1	/* explosion top center			*/
+#define E_explode3	2	/* explosion top right		 Ex.	*/
+#define E_explode4	3	/* explosion middle left		*/
+#define E_explode5	4	/* explosion middle center	 /-\	*/
+#define E_explode6	5	/* explosion middle right	 |@|	*/
+#define E_explode7	6	/* explosion bottom left	 \-/	*/
+#define E_explode8	7	/* explosion bottom center		*/
+#define E_explode9	8	/* explosion bottom right		*/
 
 /* end effects */
 
-#define MAXPCHARS	92	/* maximum number of mapped characters */
-#define MAXDCHARS	41	/* maximum of mapped dungeon characters */
-#define MAXTCHARS	22	/* maximum of mapped trap characters */
-#define MAXECHARS	29	/* maximum of mapped effects characters */
-#define MAXEXPCHARS	9	/* number of explosion characters */
 
 struct symdef {
     uchar sym;
@@ -221,10 +189,11 @@ struct symdef {
     uchar color;
 };
 
-extern const struct symdef defsyms[MAXPCHARS];	/* defaults */
-extern uchar showsyms[MAXPCHARS];
-extern const struct symdef def_warnsyms[WARNCOUNT];
+extern const struct nh_symdef defsyms[];	/* defaults */
 
+extern const char *trapexplain[];
+extern const char *defexplain[];
+extern const char *warnexplain[];
 
 /*
  * The 5 possible states of doors

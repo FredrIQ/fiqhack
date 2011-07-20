@@ -129,21 +129,6 @@ enum nh_window_type {
     NHW_TEXT
 };
 
-/* nh_poskey() modifier types */
-enum nh_click_type {
-    CLICK_1,
-    CLICK_2
-};
-
-/*
- * Graphics sets for display symbols
- */
-enum nh_text_mode {
-    ASCII_GRAPHICS,	/* regular characters: '-', '+', &c */
-    IBM_GRAPHICS,	/* PC graphic characters */
-    DEC_GRAPHICS	/* VT100 line drawing characters */
-};
-
 /* Always use full pathnames for file names,
  * rather than assuming that they're all in the current directory.  This
  * provides all the subclasses that seem reasonable.
@@ -327,8 +312,9 @@ struct nh_cmd_arg {
 };
 
 
+/* a single position in the display buffer passed by win_update_screen */
 struct nh_dbuf_entry {
-    xchar new;
+    xchar isnew; /* will be set to 1 whenever other entries change */
     int bg;
     int trap;
     int obj;
@@ -336,8 +322,55 @@ struct nh_dbuf_entry {
     boolean invis;
     int mon;
     int monflags;
-    int effect;
+    int effect; /* to decode type and id see macros below */
 };
+
+#define NH_EFFECT_TYPE(e) ((enum nh_effect_types)((e) >> 16))
+#define NH_EFFECT_ID(e) (((e) - 1) & 0xffff)
+
+
+struct nh_symdef {
+    char ch;
+    const char *symname;
+    int color;
+};
+
+/* all information necessary to interpret and display the values supplied
+ * in an nh_dbuf_entry */
+struct nh_drawing_info {
+    /* background layer symbols: nh_dbuf_entry.bg */
+    struct nh_symdef *bgelements;
+    /* background layer symbols: nh_dbuf_entry.bg */
+    struct nh_symdef *traps;
+    /* object layer symbols: nh_dbuf_entry.obj */
+    struct nh_symdef *objects;
+    /* invisible monster symbol: show this if nh_dbuf_entry.invis is true */
+    struct nh_symdef *invis;
+    /* monster layer symbols: nh_dbuf_entry.mon
+     * symbols with id <= num_monsters are actual monsters, followed by warnings */
+    struct nh_symdef *monsters;
+    struct nh_symdef *warnings;
+    /* effect layer symbols: nh_dbuf_entry.effect
+     * NH_EFFECT_TYPE */
+    struct nh_symdef *explsyms;
+    struct nh_symdef *expltypes;
+    struct nh_symdef *zapsyms; /* default zap symbols; no color info */
+    struct nh_symdef *zaptypes; /* zap beam types + colors. no symbols */
+    struct nh_symdef *effects; /* shield, boomerang, digbeam, flashbeam, gascloud */
+    struct nh_symdef *swallowsyms; /* no color info: use the color of the swallower */
+    int num_bgelements;
+    int num_traps;
+    int num_objects;
+    int num_monsters;
+    int num_warnings;
+    int num_expltypes;
+    int num_zaptypes;
+    int num_effects;
+};
+
+#define NUMEXPCHARS 9 /* explosions fill a 3x3 grid */
+#define NUMZAPCHARS 4 /* beam directions: vert., horiz., left diag., right diag */
+#define NUMSWALLOWCHARS 8 /* like explosions, but without the center */
 
 
 struct window_procs {
@@ -373,8 +406,6 @@ struct window_procs {
 };
 
 struct instance_flags2 {
-    boolean  DECgraphics;	/* use DEC VT-xxx extended character set */
-    boolean  IBMgraphics;	/* use IBM extended character set */
     boolean  news;		/* print news */
     boolean  window_inited; /* true if init_nhwindows() completed */
 };

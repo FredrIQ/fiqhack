@@ -109,16 +109,16 @@ int dosit(void)
 		rust_dmg(uarm, "armor", 1, TRUE, &youmonst);
 	} else if (IS_SINK(typ)) {
 
-	    You(sit_message, defsyms[S_sink].explanation);
+	    You(sit_message, defexplain[S_sink]);
 	    Your("%s gets wet.", humanoid(youmonst.data) ? "rump" : "underside");
 	} else if (IS_ALTAR(typ)) {
 
-	    You(sit_message, defsyms[S_altar].explanation);
+	    You(sit_message, defexplain[S_altar]);
 	    altar_wrath(u.ux, u.uy);
 
 	} else if (IS_GRAVE(typ)) {
 
-	    You(sit_message, defsyms[S_grave].explanation);
+	    You(sit_message, defexplain[S_grave]);
 
 	} else if (typ == STAIRS) {
 
@@ -143,7 +143,7 @@ int dosit(void)
 
 	} else if (is_ice(u.ux, u.uy)) {
 
-	    You(sit_message, defsyms[S_ice].explanation);
+	    You(sit_message, defexplain[S_ice]);
 	    if (!Cold_resistance) pline_The("ice feels cold.");
 
 	} else if (typ == DRAWBRIDGE_DOWN) {
@@ -152,7 +152,7 @@ int dosit(void)
 
 	} else if (IS_THRONE(typ)) {
 
-	    You(sit_message, defsyms[S_throne].explanation);
+	    You(sit_message, defexplain[S_throne]);
 	    if (rnd(6) > 4)  {
 		switch (rnd(13))  {
 		    case 1:

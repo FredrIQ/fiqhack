@@ -780,8 +780,7 @@ static void create_monster(monster *m, struct mkroom *croom)
 
 		    case M_AP_FURNITURE:
 			for (i = 0; i < MAXPCHARS; i++)
-			    if (!strcmp(defsyms[i].explanation,
-					m->appear_as.str))
+			    if (!strcmp(defexplain[i], m->appear_as.str))
 				break;
 			if (i == MAXPCHARS) {
 			    impossible(

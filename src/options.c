@@ -8,12 +8,6 @@
 
 static int change_inv_order(char *op);
 
-enum graphics_enum {
-    GRAPHICS_PLAIN,
-    GRAPHICS_DEC,
-    GRAPHICS_IBM
-};
-
 /* -------------------------------------------------------------------------- */
 
 #define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
@@ -51,13 +45,6 @@ static struct nh_listitem runmode_list[] = {
 	{RUN_TPORT, "teleport"}
 };
 static struct nh_enum_option runmode_spec = {runmode_list, listlen(runmode_list)};
-
-static struct nh_listitem graphics_list[] = {
-	{GRAPHICS_PLAIN, "plain"},
-	{GRAPHICS_DEC, "DEC graphics"},
-	{GRAPHICS_IBM, "IBM graphics"}
-};
-static struct nh_enum_option graphics_spec = {graphics_list, listlen(graphics_list)};
 
 static struct nh_listitem align_list[] = {
 	{ROLE_LAWFUL, "lawful"},
@@ -123,7 +110,6 @@ struct nh_option_desc options[] = {
     {"verbose",		"print more commentary during the game",	OPTTYPE_BOOL, { VTRUE }},
     
     /* complicated options */
-    {"boulder", "the symbol to use for displaying boulders", OPTTYPE_STRING, {"`"}},
     {"disclose_inventory", "the kinds of information to disclose at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"disclose_attribs", "disclose your attributes at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"disclose_vanquished", "disclose the list of vanquished enemies at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
@@ -135,9 +121,6 @@ struct nh_option_desc options[] = {
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
     {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
     {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
-    
-    /* TODO: following items really should be ui options */
-    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)GRAPHICS_PLAIN}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -154,11 +137,6 @@ struct nh_option_desc birth_options[] = {
     { "catname",  "the name of your (first) cat", OPTTYPE_STRING, {NULL}},
     { "dogname",  "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
     { "horsename", "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
-    { "dungeon",  "the symbols to use in drawing the dungeon map", OPTTYPE_STRING, {NULL}},
-    { "traps",    "the symbols to use in drawing traps", OPTTYPE_STRING, {NULL}},
-    { "effects",  "the symbols to use in drawing special effects", OPTTYPE_STRING, {NULL}},
-    { "monsters", "the symbols to use for monsters", OPTTYPE_STRING, {NULL}},
-    { "warnings", "the symbols to use for warnings", OPTTYPE_STRING, {NULL}},
     { "pettype",  "your preferred initial pet type", OPTTYPE_ENUM, {0}},
     { "scores_own", "show only your own scores in the list", OPTTYPE_BOOL, { VFALSE }},
     { "scores_top", "how many top scores to show", OPTTYPE_INT, {(void*)3}},
@@ -319,8 +297,6 @@ void initoptions(void)
 	find_option(options, "pickup_types")->s.maxlen = MAXOCLASSES;
 	find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
 	find_option(options, "runmode")->e = runmode_spec;
-	find_option(options, "boulder")->s.maxlen = 1;
-	find_option(options, "graphics")->e = graphics_spec;
 	
 	find_option(birth_options, "align")->e = align_spec;
 	find_option(birth_options, "gender")->e = gender_spec;
@@ -330,21 +306,9 @@ void initoptions(void)
 	find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
-	find_option(birth_options, "dungeon")->s.maxlen = MAXDCHARS;
-	find_option(birth_options, "traps")->s.maxlen = MAXTCHARS;
-	find_option(birth_options, "effects")->s.maxlen = MAXECHARS;
-	find_option(birth_options, "monsters")->s.maxlen = MAXMCLASSES-1;
-	find_option(birth_options, "warnings")->s.maxlen = WARNCOUNT;
 	find_option(birth_options, "scores_top")->i.max = 100;
 	find_option(birth_options, "scores_around")->i.max = 100;
 
-	/* Set the default monster and object class symbols. */
-	for (i = 0; i < MAXOCLASSES; i++)
-		oc_syms[i] = (uchar) def_oc_syms[i];
-	for (i = 0; i < MAXMCLASSES; i++)
-		monsyms[i] = (uchar) def_monsyms[i];
-	for (i = 0; i < WARNCOUNT; i++)
-		warnsyms[i] = def_warnsyms[i].sym;
 	iflags.travelcc.x = iflags.travelcc.y = -1;
 	flags.warnlevel = 1;
 	flags.warntype = 0L;
@@ -353,8 +317,6 @@ void initoptions(void)
 	/* init flags.inv_order this way, as setting it via the option
 	 * requires a preexisting order */
 	memcpy(flags.inv_order, def_inv_order, sizeof flags.inv_order);
-
-	switch_graphics(ASCII_GRAPHICS);	/* set default characters */
 
 	/* since this is done before init_objects(), do partial init here */
 	objects[SLIME_MOLD].oc_name_idx = SLIME_MOLD;
@@ -503,7 +465,7 @@ static void copy_option_value(struct nh_option_desc *option, union nh_optvalue v
 		free(option->value.s);
 	    option->value.s = NULL;
 	    if (value.s) {
-		option->value.s = malloc(strlen(value.s));
+		option->value.s = malloc(strlen(value.s) + 1);
 		strcpy(option->value.s, value.s);
 	    }
 	} else
@@ -513,7 +475,6 @@ static void copy_option_value(struct nh_option_desc *option, union nh_optvalue v
 
 boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
 {
-	int i;
 	boolean is_ui = FALSE;
 	struct nh_option_desc *option = find_option(options, name);
 	
@@ -557,27 +518,6 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	else if (is_ui)
 	    return ui_option_callback(option);
 	/* regular non-boolean options */
-	else if (!strcmp("boulder", option->name)) {
-	    int clash = 0;
-	    if (def_char_to_monclass(option->value.s[0]) != MAXMCLASSES)
-		clash = 1;
-	    else if (option->value.s[0] >= '1' && option->value.s[0] <= '5')
-		clash = 2;
-	    if (clash) {
-		/* symbol chosen matches a used monster or warning
-		    symbol which is not good - reject it*/
-		pline("Bad option - boulder symbol '%c' conflicts with a %s symbol.",
-		      option->value.s[0], (clash == 1) ? "monster" : "warning");
-		return FALSE;
-	    } else {
-		/*
-		 * Override the default boulder symbol.
-		 */
-		iflags.bouldersym = (uchar) option->value.s[0];
-	    }
-	    if (program_state.game_started)
-		doredraw();
-	}
 	else if (!strcmp("disclose_inventory", option->name)) {
 		flags.end_disclose[0] = option->value.e;
 	}
@@ -625,20 +565,6 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	else if (!strcmp("runmode", option->name)) {
 		iflags.runmode = option->value.e;
 	}
-	else if (!strcmp("graphics", option->name)) {
-		iflags2.DECgraphics = FALSE;
-		iflags2.IBMgraphics = FALSE;
-		if (option->value.e == GRAPHICS_DEC) {
-		    iflags2.DECgraphics = TRUE;
-		    switch_graphics(DEC_GRAPHICS);
-		}
-		else if (option->value.e == GRAPHICS_IBM) {
-		    iflags2.IBMgraphics = TRUE;
-		    switch_graphics(IBM_GRAPHICS);
-		}
-		else
-		    switch_graphics(ASCII_GRAPHICS);
-	}
 	
 	/* birth options */
 	else if (!strcmp("align", option->name)) {
@@ -662,28 +588,6 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	}
 	else if (!strcmp("horsename", option->name)) {
 		strncpy(horsename, option->value.s, PL_PSIZ);
-	}
-	
-	else if (!strcmp("dungeon", option->name)) {
-		assign_graphics((uchar *)option->value.s, strlen(option->value.s),
-				MAXDCHARS, 0);
-	}
-	else if (!strcmp("traps", option->name)) {
-		assign_graphics((uchar *)option->value.s, strlen(option->value.s),
-				MAXTCHARS, MAXDCHARS);
-	}
-	else if (!strcmp("effects", option->name)) {
-		assign_graphics((uchar *)option->value.s, strlen(option->value.s),
-				MAXECHARS, MAXDCHARS+MAXTCHARS);
-	}
-	else if (!strcmp("monsters", option->name)) {
-		for (i = 0; i < strlen(option->value.s); i++)
-			monsyms[i+1] = (uchar)option->value.s[i];
-	}
-	else if (!strcmp("warnings", option->name)) {
-		for (i = 0; i < WARNCOUNT; i++)
-			warnsyms[i] = (i < strlen(option->value.s)) ?
-			    option->value.s[i] : def_warnsyms[i].sym;
 	}
 	else if (!strcmp("pettype", option->name)) {
 		preferred_pet = (char)option->value.e;

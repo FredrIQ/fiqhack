@@ -20,13 +20,16 @@ Changes so far:
     - command input has been changed completely: instead of a moveloop in libnethack,
 	looping is now done in the windowing code, which calls nh_do_move
 	to perform user commands.
+    - drawing (selection of appropriate output char / tile) has been completely
+        separated from libnethack and is handled entirely in the window port.
+        libnethack uses symbol ids to tell the window port what to display.
 
 Plans:
     - improve library API
-	certain parts of the display & drawing code are actually tty-specific
-	and should be part of the tty port (IBMgraphics, DECgraphics)
+        outrip / topten display are just fugly and need to be rewritten
     - rename exported functions to nh_<foo> so that library calls become obvious
-	functions that have not been renamed need review (remove? replace?)
+        functions that have not been renamed need review (remove? replace?)
+    - create an ncurses based window port for tty and delete the current tty code
     - create a qt4-based tile port
 
 

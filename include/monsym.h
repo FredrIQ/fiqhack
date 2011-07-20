@@ -43,6 +43,7 @@
 #define S_FUNGUS	32
 #define S_GNOME		33
 #define S_GIANT		34
+
 #define S_JABBERWOCK	36
 #define S_KOP		37
 #define S_LICH		38

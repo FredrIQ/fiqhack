@@ -245,7 +245,7 @@ static void tty_decgraphics_termcap_fixup(void)
 	 * Do not select NA ASCII as the primary font since people may
 	 * reasonably be using the UK character set.
 	 */
-	if (iflags2.DECgraphics) xputs("\033)0");
+	if (ui_flags.graphics == DEC_GRAPHICS) xputs("\033)0");
 
 #if !defined(NO_TERMS)
 	/* some termcaps suffer from the bizarre notion that resetting
@@ -277,7 +277,7 @@ void tty_start_screen(void)
 {
 	xputs(TI);
 	xputs(VS);
-	if (iflags2.DECgraphics) tty_decgraphics_termcap_fixup();
+	if (ui_flags.graphics == DEC_GRAPHICS) tty_decgraphics_termcap_fixup();
 	/* set up callback in case option is not set yet but toggled later */
 	decgraphics_mode_callback = tty_decgraphics_termcap_fixup;
 }

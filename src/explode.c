@@ -5,9 +5,9 @@
 
 /* Note: Arrays are column first, while the screen is row first */
 static int expl[3][3] = {
-	{ S_explode1, S_explode4, S_explode7 },
-	{ S_explode2, S_explode5, S_explode8 },
-	{ S_explode3, S_explode6, S_explode9 }
+	{ E_explode1, E_explode4, E_explode7 },
+	{ E_explode2, E_explode5, E_explode8 },
+	{ E_explode3, E_explode6, E_explode9 }
 };
 
 /* Note: I had to choose one of three possible kinds of "type" when writing

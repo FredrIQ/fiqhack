@@ -561,7 +561,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 	     */
 	    pline("Air currents pull you down into %s %s!",
 	    	a_your[trap->madeby_u],
-	    	defsyms[trap_to_defsym(ttype)].explanation);
+	    	trapexplain[ttype-1]);
 	    /* then proceed to normal trap effect */
 	} else if (already_seen) {
 	    if ((Levitation || Flying) &&
@@ -570,7 +570,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 		You("%s over %s %s.",
 		    Levitation ? "float" : "fly",
 		    a_your[trap->madeby_u],
-		    defsyms[trap_to_defsym(ttype)].explanation);
+		    trapexplain[ttype-1]);
 		return;
 	    }
 	    if (!Fumbling && ttype != MAGIC_PORTAL &&
@@ -580,7 +580,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 		You("escape %s %s.",
 		    (ttype == ARROW_TRAP && !trap->madeby_u) ? "an" :
 			a_your[trap->madeby_u],
-		    defsyms[trap_to_defsym(ttype)].explanation);
+		    trapexplain[ttype-1]);
 		return;
 	    }
 	}
@@ -879,7 +879,7 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 		if (!Can_fall_thru(&u.uz)) {
 		    seetrap(trap);	/* normally done in fall_through */
 		    impossible("dotrap: %ss cannot exist on this level.",
-			       defsyms[trap_to_defsym(ttype)].explanation);
+			       trapexplain[ttype-1]);
 		    break;		/* don't activate it after all */
 		}
 		fall_through(TRUE);
@@ -1855,7 +1855,7 @@ mfiretrap:
 		case TRAPDOOR:
 			if (!Can_fall_thru(&u.uz)) {
 			 impossible("mintrap: %ss cannot exist on this level.",
-				    defsyms[trap_to_defsym(tt)].explanation);
+				    trapexplain[tt-1]);
 			    break;	/* don't activate it after all */
 			}
 			if (is_flyer(mptr) || is_floater(mptr) ||
@@ -2930,7 +2930,7 @@ static int try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar 
 		bigmonst(youmonst.data)) {
 		/* don't allow untrap if they can't get thru to it */
 		You("are unable to reach the %s!",
-		    defsyms[trap_to_defsym(ttype)].explanation);
+		    trapexplain[ttype-1]);
 		return 0;
 	    }
 	}
@@ -2941,7 +2941,7 @@ static int try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar 
 				mon_nam(u.usteed));
 		else
 			You("are unable to reach the %s!",
-			defsyms[trap_to_defsym(ttype)].explanation);
+			trapexplain[ttype-1]);
 		return 0;
 	}
 
@@ -2975,7 +2975,7 @@ static int try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar 
 		} else {
 		    pline("%s %s is difficult to %s.",
 			  ttmp->madeby_u ? "Your" : under_u ? "This" : "That",
-			  defsyms[trap_to_defsym(ttype)].explanation,
+			  trapexplain[ttype-1],
 			  (ttype == WEB) ? "remove" : "disarm");
 		}
 		return 1;
@@ -3229,7 +3229,7 @@ int untrap(boolean force)
 
 	if ((ttmp = t_at(x,y)) && ttmp->tseen) {
 		deal_with_floor_trap = TRUE;
-		strcpy(the_trap, the(defsyms[trap_to_defsym(ttmp->ttyp)].explanation));
+		strcpy(the_trap, the(trapexplain[ttmp->ttyp-1]));
 		if (box_here) {
 			if (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT) {
 			    You_cant("do much about %s%s.",
@@ -3241,7 +3241,7 @@ int untrap(boolean force)
 			} else {
 			    sprintf(qbuf, "There %s and %s here. %s %s?",
 				(containercnt == 1) ? "is a container" : "are containers",
-				an(defsyms[trap_to_defsym(ttmp->ttyp)].explanation),
+				an(trapexplain[ttmp->ttyp-1]),
 				ttmp->ttyp == WEB ? "Remove" : "Disarm", the_trap);
 			    switch (ynq(qbuf)) {
 				case 'q': return 0;

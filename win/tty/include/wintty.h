@@ -29,6 +29,7 @@ typedef struct mi {
 extern winid WIN_MESSAGE;
 extern winid WIN_STATUS;
 extern winid WIN_MAP;
+extern int levelmode;
 
 /* attribute types for putstr; the same as the ANSI value, for convenience */
 #define ATR_NONE    0
@@ -51,6 +52,15 @@ extern winid WIN_MAP;
 #define OFF		0
 
 #define NO_GLYPH (-1)
+
+/*
+ * Graphics sets for display symbols
+ */
+enum nh_text_mode {
+    ASCII_GRAPHICS,	/* regular characters: '-', '+', &c */
+    IBM_GRAPHICS,	/* PC graphic characters */
+    DEC_GRAPHICS	/* VT100 line drawing characters */
+};
 
 /* menu structure */
 typedef struct tty_mi {
@@ -109,6 +119,7 @@ struct DisplayDesc {
 #endif /* WINDOW_STRUCTS */
 
 struct interface_flags {
+	enum nh_text_mode graphics; /* display charset */
 	boolean  cbreak;	/* in cbreak mode, rogue format */    
 	boolean  eight_bit_input;/* allow eight bit input               */
 	boolean  extmenu;	/* extended commands use menu interface */
@@ -258,6 +269,7 @@ extern void tty_outrip(struct nh_menuitem *items,int icount, int how,
 extern void tty_notify_level_changed(int dmode);
 
 extern void move_cursor(winid,int,int);
+extern void redraw_screen(void);
 
 extern void gettty(void);
 extern void settty(const char *);
@@ -276,6 +288,13 @@ extern void tty_end_screen(void);
 /* keymap.c */
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);
 extern void load_keymap(boolean want_wizard);
+
+/* mapglyph.c */
+extern void init_displaychars(void);
+extern void set_rogue_level(boolean enable);
+extern void switch_graphics(enum nh_text_mode mode);
+extern void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
+	      int x, int y);
 
 /* optwin.c */
 extern void tty_init_options(void);
@@ -327,6 +346,9 @@ extern void setioctls(void);
 /* The "half-way" point for tty based color systems.  This is used in */
 /* the tty color setup code. */
 #define BRIGHT		8
+
+
+extern void (*decgraphics_mode_callback)(void);
 
 
 /* system terminal functions */

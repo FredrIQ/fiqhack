@@ -486,7 +486,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 
 	if (ttyp != PIT && !Can_dig_down(&u.uz)) {
 	    impossible("digactualhole: can't dig %s on this level.",
-		       defsyms[trap_to_defsym(ttyp)].explanation);
+		       trapexplain[ttyp-1]);
 	    ttyp = PIT;
 	}
 
@@ -1131,7 +1131,7 @@ void zap_dig(schar dx, schar dy, schar dz)
 	zx = u.ux + dx;
 	zy = u.uy + dy;
 	digdepth = rn1(18, 8);
-	tmp_at(DISP_BEAM, dbuf_effect(E_MISC, S_digbeam));
+	tmp_at(DISP_BEAM, dbuf_effect(E_MISC, E_digbeam));
 	while (--digdepth >= 0) {
 	    if (!isok(zx,zy)) break;
 	    room = &level.locations[zx][zy];

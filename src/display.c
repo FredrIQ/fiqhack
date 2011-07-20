@@ -201,10 +201,10 @@ void map_background(xchar x, xchar y, int show)
 void map_trap(struct trap *trap, int show)
 {
     int x = trap->tx, y = trap->ty;
-    int cmap = trap_to_defsym(what_trap((trap)->ttyp));
+    int trapid = what_trap((trap)->ttyp);
 
     if (level.flags.hero_memory)
-	level.locations[x][y].mem_trap = cmap - S_arrow_trap + 1;
+	level.locations[x][y].mem_trap = trapid;
     if (show)
 	dbuf_set(x, y, level.locations[x][y].mem_bg,
 		 level.locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0);
@@ -1205,7 +1205,7 @@ void dbuf_set_effect(int x, int y, int eglyph)
 	return;
     
     dbuf[y][x].effect = eglyph;
-    dbuf[y][x].new = 1;
+    dbuf[y][x].isnew = 1;
 }
 
 static void dbuf_set_object(int x, int y, int oid)
@@ -1214,7 +1214,7 @@ static void dbuf_set_object(int x, int y, int oid)
 	return;
     
     dbuf[y][x].obj = oid;
-    dbuf[y][x].new = 1;
+    dbuf[y][x].isnew = 1;
 }
 
 /*
@@ -1246,7 +1246,7 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 	dbuf[y][x].invis != invis || dbuf[y][x].mon != mon ||
 	dbuf[y][x].monflags != monflags || dbuf[y][x].effect != effect) {
 	
-	dbuf[y][x].new = 1;
+	dbuf[y][x].isnew = 1;
 	dbuf[y][x].bg = bg;
 	dbuf[y][x].trap = trap;
 	dbuf[y][x].obj = obj;
@@ -1418,7 +1418,7 @@ static int swallow_to_effect(int mnum, int loc)
 	impossible("swallow_to_effect: bad swallow location");
 	loc = S_sw_br;
     }
-    return (((E_SWALLOW << 16) |  what_mon(mnum)<<3) | (loc - S_sw_tl)) + 1;
+    return ((E_SWALLOW << 16) |  (what_mon(mnum)<<3) | loc) + 1;
 }
 
 
@@ -1430,10 +1430,10 @@ static int swallow_to_effect(int mnum, int loc)
  * type has four glyphs, one for each of the symbols below.  The order of
  * the zap symbols [0-3] as defined in rm.h are:
  *
- *	|  S_vbeam	( 0, 1) or ( 0,-1)
- *	-  S_hbeam	( 1, 0) or (-1,	0)
- *	\  S_lslant	( 1, 1) or (-1,-1)
- *	/  S_rslant	(-1, 1) or ( 1,-1)
+ *	|  S_vbeam	( 0, 1) or ( 0,-1) -> dx = 0
+ *	-  S_hbeam	( 1, 0) or (-1,	0) -> dx = 1
+ *	\  S_lslant	( 1, 1) or (-1,-1) -> dx = 2
+ *	/  S_rslant	(-1, 1) or ( 1,-1) -> dx = 3
  */
 int zapdir_to_effect(int dx, int dy, int beam_type)
 {

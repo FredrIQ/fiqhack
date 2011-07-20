@@ -262,7 +262,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 
 	    You_cant("mount %s while %s's trapped in %s.",
 		     mon_nam(mtmp), mhe(mtmp),
-		     an(defsyms[trap_to_defsym(t->ttyp)].explanation));
+		     an(trapexplain[t->ttyp-1]));
 	    return FALSE;
 	}
 

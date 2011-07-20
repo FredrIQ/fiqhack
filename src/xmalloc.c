@@ -2,6 +2,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 /* malloc wrapper functions for "external" memory allocations
  * 
@@ -35,7 +36,7 @@ void *xmalloc(int size)
 	free(mem);
 	return NULL;
     }
-    
+       
     b->mem = mem;
     b->next = xm_blocklist;
     xm_blocklist = b;

@@ -214,7 +214,7 @@ void nh_get_player_info(struct nh_player_info *pi)
 #else
 	pi->gold = money_cnt(invent);
 #endif
-	pi->coinsym = oc_syms[COIN_CLASS];
+	pi->coinsym = def_oc_syms[COIN_CLASS];
 	describe_level(pi->level_desc);
 	
 	pi->monnum = u.umonster;

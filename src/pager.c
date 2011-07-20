@@ -7,21 +7,66 @@
 #include "hack.h"
 #include "dlb.h"
 
-static boolean is_swallow_sym(int);
 static int append_str(char *, const char *);
 static struct permonst * lookat(int, int, char *, char *);
 static void checkfile(char *,struct permonst *,boolean,boolean);
 static int do_look(boolean);
 static boolean help_menu(int *);
 
-/* Returns "true" for characters that could represent a monster's stomach. */
-static boolean is_swallow_sym(int c)
-{
-    int i;
-    for (i = S_sw_tl; i <= S_sw_br; i++)
-	if ((int)showsyms[i] == c) return TRUE;
-    return FALSE;
-}
+/* The explanations below are also used when the user gives a string
+ * for blessed genocide, so no text should wholly contain any later
+ * text.  They should also always contain obvious names (eg. cat/feline).
+ */
+const char * const monexplain[MAXMCLASSES] = {
+    0,
+    "ant or other insect",	"blob",			"cockatrice",
+    "dog or other canine",	"eye or sphere",	"cat or other feline",
+    "gremlin",			"humanoid",		"imp or minor demon",
+    "jelly",			"kobold",		"leprechaun",
+    "mimic",			"nymph",		"orc",
+    "piercer",			"quadruped",		"rodent",
+    "arachnid or centipede",	"trapper or lurker above", "unicorn or horse",
+    "vortex",		"worm", "xan or other mythical/fantastic insect",
+    "light",			"zruty",
+
+    "angelic being",		"bat or bird",		"centaur",
+    "dragon",			"elemental",		"fungus or mold",
+    "gnome",			"giant humanoid",	0,
+    "jabberwock",		"Keystone Kop",		"lich",
+    "mummy",			"naga",			"ogre",
+    "pudding or ooze",		"quantum mechanic",	"rust monster or disenchanter",
+    "snake",			"troll",		"umber hulk",
+    "vampire",			"wraith",		"xorn",
+    "apelike creature",		"zombie",
+
+    "human or elf",		"ghost",		"golem",
+    "major demon",		"sea monster",		"lizard",
+    "long worm tail",		"mimic"
+};
+
+const char invisexplain[] = "remembered, unseen, creature";
+
+/* Object descriptions.  Used in do_look(). */
+const char * const objexplain[] = {	/* these match def_oc_syms */
+/* 0*/	0,
+	"strange object",
+	"weapon",
+	"suit or piece of armor",
+	"ring",
+/* 5*/	"amulet",
+	"useful item (pick-axe, key, lamp...)",
+	"piece of food",
+	"potion",
+	"scroll",
+/*10*/	"spellbook",
+	"wand",
+	"pile of coins",
+	"gem or rock",
+	"boulder or statue",
+/*15*/	"iron ball",
+	"iron chain",
+	"splash of venom"
+};
 
 /*
  * Append new_str to the end of buf if new_str doesn't already exist as
@@ -773,7 +818,7 @@ int doidtrap(void)
 		}
 		tt = what_trap(tt);
 		pline("That is %s%s%s.",
-		      an(defsyms[trap_to_defsym(tt)].explanation),
+		      an(trapexplain[tt - 1]),
 		      !trap->madeby_u ? "" : (tt == WEB) ? " woven" :
 			  /* trap doors & spiked pits can't be made by
 			     player, and should be considered at least

@@ -65,7 +65,7 @@ static char** init_game_paths(void)
 	/* alloc memory for the paths and append slashes as required */
 	for (i = 0; i < PREFIX_COUNT; i++) {
 	    char *tmp = pathlist[i];
-	    pathlist[i] = malloc(strlen(tmp) + 1);
+	    pathlist[i] = malloc(strlen(tmp) + 2);
 	    strcpy(pathlist[i], tmp);
 	    append_slash(pathlist[i]);
 	}
@@ -159,6 +159,7 @@ int main(int argc, char *argv[])
 
 	process_options(argc, argv);	/* command line options */
 	load_keymap(playmode == MODE_WIZARD);
+	init_displaychars();
 	
 	while (!plname[0])
 	    tty_askname(plname);

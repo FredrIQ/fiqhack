@@ -25,7 +25,6 @@
 #endif
 
 extern EXPORT struct instance_flags2 iflags2;
-extern EXPORT void (*decgraphics_mode_callback)(void);    /* defined in drawing.c */
 
 /* allmain.c */
 extern EXPORT void nh_init(int, struct window_procs *, char **);
@@ -41,18 +40,15 @@ extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
 
 /* display.c */
 extern EXPORT void swallowed(int);
-extern EXPORT void docrt(void);
-extern EXPORT void switch_graphics(int);
+
+/* drawing.c */
+extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);
 
 /* files.c */
 extern EXPORT void clearlocks(void);
 
 /* hack.c */
 extern EXPORT boolean check_swallowed(void);
-
-/* mapglyph.c */
-extern EXPORT void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
-	      int x, int y);
 
 /* options.c */
 extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);
