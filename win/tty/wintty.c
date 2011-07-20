@@ -2394,12 +2394,13 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 {
     int result = 0;
     int cx, cy, i, c;
-//     int sidx;
+    int sidx;
     boolean msg_given = TRUE;	/* clear message window by default */
     static const char pick_chars[] = ".,;:";
     const char *cp;
     const char *sdp = (ui_flags.num_pad) ? ndir : sdir;
     char printbuf[BUFSZ];
+    char *matching = NULL;
 
     if (ui_flags.cmdassist) {
 	tty_print_message("(For instructions type a ?)");
@@ -2462,15 +2463,14 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 	    getpos_help(force, goal);
 	} else {
 	    if (!index(quitchars, c)) {
-		int k = 0;
-// 		char matching[MAXPCHARS];
-// 		int pass, lo_x, lo_y, hi_x, hi_y;
-// 		memset(matching, 0, sizeof matching);
-// 		for (sidx = 1; sidx < MAXPCHARS; sidx++)
-// 		    if (c == defsyms[sidx].sym || c == (int)showsyms[sidx])
-// 			matching[sidx] = (char) ++k;
+		matching = malloc(default_drawing->num_bgelements);
+		int k = 0, tx, ty;
+		int pass, lo_x, lo_y, hi_x, hi_y;
+		memset(matching, 0, default_drawing->num_bgelements);
+		for (sidx = 1; sidx < default_drawing->num_bgelements; sidx++)
+		    if (c == default_drawing->bgelements[sidx].ch)
+			matching[sidx] = (char) ++k;
 		if (k) {
-#if 0 && THIS_FEATURE_IS_BROKEN
 		    for (pass = 0; pass <= 1; pass++) {
 			/* pass 0: just past current pos to lower right;
 			   pass 1: upper left corner to current pos */
@@ -2480,20 +2480,15 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 			    lo_x = (pass == 0 && ty == lo_y) ? cx + 1 : 1;
 			    hi_x = (pass == 1 && ty == hi_y) ? cx : COLNO - 1;
 			    for (tx = lo_x; tx <= hi_x; tx++) {
-				k = level.locations[tx][ty].glyph;
-				if (glyph_is_cmap(k) &&
-					matching[glyph_to_cmap(k)]) {
-				    cx = tx,  cy = ty;
-				    if (msg_given) {
-					clear_nhwindow(NHW_MESSAGE);
-					msg_given = FALSE;
-				    }
+				k = display_buffer[ty][tx].bg;
+				if (k && matching[k]) {
+				    cx = tx;
+				    cy = ty;
 				    goto nxtc;
 				}
 			    }	/* column */
 			}	/* row */
 		    }		/* pass */
-#endif
 		    sprintf(printbuf, "Can't find dungeon feature '%c'.", (char)c);
 		    tty_print_message(printbuf);
 		    msg_given = TRUE;
@@ -2505,7 +2500,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 			  ui_flags.num_pad ? "use 2468 or ." : "use hjkl or .");
 		    tty_print_message(printbuf);
 		    msg_given = TRUE;
-		} /* k => matching */
+		}
 	    } /* !quitchars */
 	    if (force) goto nxtc;
 	    tty_print_message("Done.");
@@ -2524,6 +2519,8 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
     
     *x = cx;
     *y = cy;
+    if (matching)
+	free(matching);
     return result;
 }
 

@@ -11,7 +11,8 @@
 
 void (*decgraphics_mode_callback)(void);
 static int corpse_id;
-static struct nh_drawing_info *d, *default_drawing, *ibm_drawing,
+struct nh_drawing_info *default_drawing;
+static struct nh_drawing_info *d, *ibm_drawing,
                               *dec_drawing, *rogue_drawing;
 
 

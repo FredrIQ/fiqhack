@@ -31,6 +31,8 @@ extern winid WIN_STATUS;
 extern winid WIN_MAP;
 extern int levelmode;
 
+extern struct nh_drawing_info *default_drawing;
+
 /* attribute types for putstr; the same as the ANSI value, for convenience */
 #define ATR_NONE    0
 #define ATR_BOLD    1
