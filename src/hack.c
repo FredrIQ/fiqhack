@@ -2129,11 +2129,6 @@ int inv_cnt(void)
 	return ct;
 }
 
-boolean check_swallowed(void)
-{
-	return u.uswallow;
-}
-
 #ifdef GOLDOBJ
 /* Counts the money in an object chain. */
 /* Intended use is for your or some monsters inventory, */

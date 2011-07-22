@@ -38,17 +38,11 @@ extern EXPORT void nh_get_player_info(struct nh_player_info *pi);
 /* cmd.c */
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
 
-/* display.c */
-extern EXPORT void swallowed(int);
-
 /* drawing.c */
 extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);
 
 /* files.c */
 extern EXPORT void clearlocks(void);
-
-/* hack.c */
-extern EXPORT boolean check_swallowed(void);
 
 /* options.c */
 extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);

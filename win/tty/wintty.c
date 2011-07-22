@@ -2124,11 +2124,6 @@ void docorner(int xmin, int ymax)
     int y;
     struct WinDesc *cw = wins[WIN_MAP];
 
-    if (check_swallowed()) {	/* Can be done more efficiently */
-	swallowed(1);
-	return;
-    }
-
     for (y = 0; y < ymax; y++) {
 	move_cursor(BASE_WINDOW, xmin,y);	/* move cursor */
 	cl_end();			/* clear to end of line */

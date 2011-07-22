@@ -206,6 +206,7 @@ extern void shieldeff(xchar,xchar);
 extern void tmp_at(int,int);
 extern void under_ground(int);
 extern void under_water(int);
+extern void swallowed(int);
 extern void see_monsters(void);
 extern void set_mimic_blocking(void);
 extern void see_objects(void);

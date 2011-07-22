@@ -914,11 +914,11 @@ void swallowed(int first)
 	cls();
     else {
 	int x, y;
-
 	/* Clear old location */
 	for (y = lasty-1; y <= lasty+1; y++)
 	    for (x = lastx-1; x <= lastx+1; x++)
 		dbuf_set_effect(x,y,0);
+	dbuf_set(lastx, lasty, 0,0,0,0,0,0,0,0); /* remove hero symbol */
     }
 
     swallower = monsndx(u.ustuck->data);
@@ -1281,7 +1281,7 @@ void cls(void)
     botlx = 1;			/* force update of botl window */
     clear_nhwindow(NHW_MAP);	/* clear physical screen */
 
-    clear_display_buffer();	/* this is sort of an extra effort, but OK */
+    clear_display_buffer();
 }
 
 /*
