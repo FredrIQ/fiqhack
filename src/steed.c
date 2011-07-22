@@ -11,8 +11,7 @@ static const char steeds[] = {
 static boolean landing_spot(coord *, int, int);
 
 /* caller has decided that hero can't reach something while mounted */
-void
-rider_cant_reach()
+void rider_cant_reach(void)
 {
      You("aren't skilled enough to reach from %s.", y_monnam(u.usteed));
 }

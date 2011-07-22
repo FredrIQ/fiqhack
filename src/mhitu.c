@@ -1821,10 +1821,8 @@ common:
     return 2;	/* it dies */
 }
 
-int
-gazemu(mtmp, mattk)	/* monster gazes at you */
-	struct monst *mtmp;
-	struct attack  *mattk;
+
+int gazemu(struct monst *mtmp, struct attack  *mattk)	/* monster gazes at you */
 {
 	switch(mattk->adtyp) {
 	    case AD_STON:

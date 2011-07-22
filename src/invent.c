@@ -1017,7 +1017,7 @@ static int ckunpaid(struct obj *otmp)
 	return (int)(otmp->unpaid);
 }
 
-boolean wearing_armor()
+boolean wearing_armor(void)
 {
 	return((boolean)(uarm || uarmc || uarmf || uarmg || uarmh || uarms || uarmu));
 }

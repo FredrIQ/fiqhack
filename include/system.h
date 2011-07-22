@@ -19,7 +19,7 @@
 #endif
 
 #ifndef SIG_RET_TYPE
-# define SIG_RET_TYPE void (*)()
+# define SIG_RET_TYPE void (*)(int)
 #endif
 
 #if !defined(__cplusplus)

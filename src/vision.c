@@ -106,8 +106,7 @@ static void rogue_vision(char **,char *,char *);
  * This must be called before mklev() is called in newgame() [allmain.c],
  * or before a game restore.   Else we die a horrible death.
  */
-void
-vision_init()
+void vision_init(void)
 {
     int i;
 
@@ -133,10 +132,7 @@ vision_init()
  * Returns true if the level feature, object, or monster at (x,y) blocks
  * sight.
  */
-int
-does_block(x,y,lev)
-    int x, y;
-    struct rm    *lev;
+int does_block(int x, int y, struct rm *lev)
 {
     struct obj   *obj;
     struct monst *mon;
@@ -170,8 +166,7 @@ does_block(x,y,lev)
  * This must be called *after* the level.locations[][] structure is set with the new
  * level and the level monsters and objects are in place.
  */
-void
-vision_reset()
+void vision_reset(void)
 {
     int y;
     int x, i, dig_left, block;
@@ -232,10 +227,7 @@ vision_reset()
  * Called from vision_recalc() and at least one light routine.  Get pointers
  * to the unused vision work area.
  */
-static void
-get_unused_cs(rows, rmin, rmax)
-    char ***rows;
-    char **rmin, **rmax;
+static void get_unused_cs(char ***rows, char **rmin, char **rmax)
 {
     int  row;
     char *nrmin, *nrmax;
@@ -274,10 +266,8 @@ get_unused_cs(rows, rmin, rmax)
  * We set the in_sight bit here as well to escape a bug that shows up
  * due to the one-sided lit wall hack.
  */
-static void
-rogue_vision(next, rmin, rmax)
-    char **next;	/* could_see array pointers */
-    char *rmin, *rmax;
+static void rogue_vision(char **next, /* could_see array pointers */
+			 char *rmin, char *rmax)
 {
     int rnum = level.locations[u.ux][u.uy].roomno - ROOMOFFSET; /* no SHARED... */
     int start, stop, in_door, xhi, xlo, yhi, ylo;
@@ -373,11 +363,7 @@ static int new_angle(struct rm *, unsigned char *, int, int);
  *	  many exceptions.  I may have to bite the bullet and do more
  *	  checks.	- Dean 2/11/93
  */
-static int
-new_angle(lev, sv, row, col)
-    struct rm *lev;
-    unsigned char *sv;
-    int row, col;
+static int new_angle(struct rm *lev, unsigned char *sv, int row, int col)
 {
     int res = *sv;
 
@@ -465,9 +451,7 @@ new_angle(lev, sv, row, col)
  *	+ Right after the hero is swallowed. [gulpmu()]
  *	+ Just before bubbles are moved. [movebubbles()]
  */
-void
-vision_recalc(control)
-    int control;
+void vision_recalc(int control)
 {
     char **temp_array;	/* points to the old vision array */
     char **next_array;	/* points to the new vision array */
@@ -787,9 +771,7 @@ skip:
  *
  * Make the location opaque to light.
  */
-void
-block_point(x,y)
-    int x, y;
+void block_point(int x, int y)
 {
     fill_point(y,x);
 
@@ -810,9 +792,7 @@ block_point(x,y)
  *
  * Make the location transparent to light.
  */
-void
-unblock_point(x,y)
-    int x, y;
+void unblock_point(int x, int y)
 {
     dig_point(y,x);
 
@@ -870,9 +850,7 @@ unblock_point(x,y)
  *   This means that a right-edge (a blocked spot that has an open
  *    spot on its right) will point to itself.
  */
-static void
-dig_point(row,col)
-    int row,col;
+static void dig_point(int row, int col)
 {
     int i;
 
@@ -951,9 +929,7 @@ dig_point(row,col)
     }
 }
 
-static void
-fill_point(row,col)
-    int row, col;
+static void fill_point(int row, int col)
 {
     int i;
 

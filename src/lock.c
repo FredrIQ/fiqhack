@@ -3,7 +3,7 @@
 
 #include "hack.h"
 
-static int picklock();
+static int picklock(void);
 static int forcelock(void);
 
 /* at most one of `door' and `box' should be non-null at any given time */

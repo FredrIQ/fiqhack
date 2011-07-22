@@ -1119,7 +1119,7 @@ no_opener:
 	return;
 }
 
-int Hear_again()		/* called when waking up after fainting */
+int Hear_again(void)		/* called when waking up after fainting */
 {
 	flags.soundok = 1;
 	return 0;

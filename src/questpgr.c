@@ -186,7 +186,7 @@ static const char *guardname(void)
 }
 
 /* return your role leader's location */
-static const char *homebase()
+static const char *homebase(void)
 {
 	return urole.homebase;
 }
