@@ -900,7 +900,7 @@ static struct obj *save_mtraits(struct obj *obj, struct monst *mtmp)
 	otmp = realloc_obj(obj, lth, mtmp, namelth, ONAME(obj));
 	if (otmp && otmp->oxlth) {
 		struct monst *mtmp2 = (struct monst *)otmp->oextra;
-		if (mtmp->data) mtmp2->mnum = monsndx(mtmp->data);
+		if (mtmp->data) mtmp2->mnum = mtmp->mnum;
 		/* invalidate pointers */
 		/* m_id is needed to know if this is a revived quest leader */
 		/* but m_id must be cleared when loading bones */

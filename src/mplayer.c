@@ -79,7 +79,7 @@ static void get_mplname(struct monst *mtmp, char *nam)
 	    mtmp->female = 0;
 	strcat(nam, " the ");
 	strcat(nam, rank_of((int)mtmp->m_lev,
-			    monsndx(mtmp->data),
+			    mtmp->mnum,
 			    (boolean)mtmp->female));
 }
 

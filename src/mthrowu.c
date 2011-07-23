@@ -519,7 +519,7 @@ void thrwmu(struct monst *mtmp)
 	    if (is_prince(mtmp->data)) multishot += 2;
 	    else if (is_lord(mtmp->data)) multishot++;
 
-	    switch (monsndx(mtmp->data)) {
+	    switch (mtmp->mnum) {
 	    case PM_RANGER:
 		    multishot++;
 		    break;

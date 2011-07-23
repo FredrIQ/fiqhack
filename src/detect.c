@@ -158,9 +158,9 @@ int gold_detect(struct obj *sobj)
     for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably not needed in this case but... */
 #ifndef GOLDOBJ
-	if (mtmp->mgold || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
+	if (mtmp->mgold || mtmp->mnum == PM_GOLD_GOLEM) {
 #else
-	if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
+	if (findgold(mtmp->minvent) || mtmp->mnum == PM_GOLD_GOLEM) {
 #endif
 	    known = TRUE;
 	    goto outgoldmap;	/* skip further searching */
@@ -235,9 +235,9 @@ outgoldmap:
     for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably overkill here */
 #ifndef GOLDOBJ
-	if (mtmp->mgold || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
+	if (mtmp->mgold || mtmp->mnum == PM_GOLD_GOLEM) {
 #else
-	if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
+	if (findgold(mtmp->minvent) || mtmp->mnum == PM_GOLD_GOLEM) {
 #endif
 	    struct obj gold;
 

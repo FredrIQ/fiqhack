@@ -921,7 +921,7 @@ void swallowed(int first)
 	dbuf_set(lastx, lasty, 0,0,0,0,0,0,0,0); /* remove hero symbol */
     }
 
-    swallower = monsndx(u.ustuck->data);
+    swallower = u.ustuck->mnum;
     /* assume isok(u.ux,u.uy) */
     left_ok = isok(u.ux-1,u.uy);
     rght_ok = isok(u.ux+1,u.uy);

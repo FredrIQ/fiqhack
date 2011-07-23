@@ -655,11 +655,11 @@ not_special:
 		    (youmonst.m_ap_type == M_AP_OBJECT && youmonst.mappearance == STRANGE_OBJECT) || u.uundetected ||
 		    (youmonst.m_ap_type == M_AP_OBJECT && youmonst.mappearance == GOLD_PIECE && !likes_gold(ptr)) ||
 		    (mtmp->mpeaceful && !mtmp->isshk) ||  /* allow shks to follow */
-		    ((monsndx(ptr) == PM_STALKER || ptr->mlet == S_BAT ||
+		    ((mtmp->mnum == PM_STALKER || ptr->mlet == S_BAT ||
 		      ptr->mlet == S_LIGHT) && !rn2(3)))
 			appr = 0;
 
-		if (monsndx(ptr) == PM_LEPRECHAUN && (appr == 1) &&
+		if (mtmp->mnum == PM_LEPRECHAUN && (appr == 1) &&
 #ifndef GOLDOBJ
 		   (mtmp->mgold > u.ugold))
 #else

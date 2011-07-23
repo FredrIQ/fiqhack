@@ -129,7 +129,7 @@ static struct obj *make_corpse(struct monst *mtmp)
 	int num;
 	struct obj *obj = NULL;
 	int x = mtmp->mx, y = mtmp->my;
-	int mndx = monsndx(mdat);
+	int mndx = mtmp->mnum;
 
 	switch(mndx) {
 	    case PM_GRAY_DRAGON:
@@ -144,7 +144,7 @@ static struct obj *make_corpse(struct monst *mtmp)
 		/* Make dragon scales.  This assumes that the order of the */
 		/* dragons is the same as the order of the scales.	   */
 		if (!rn2(mtmp->mrevived ? 20 : 3)) {
-		    num = GRAY_DRAGON_SCALES + monsndx(mdat) - PM_GRAY_DRAGON;
+		    num = GRAY_DRAGON_SCALES + mndx - PM_GRAY_DRAGON;
 		    obj = mksobj_at(num, x, y, FALSE, FALSE);
 		    obj->spe = 0;
 		    obj->cursed = obj->blessed = FALSE;
@@ -1228,7 +1228,7 @@ static void lifesaved_monster(struct monst *mtmp)
 		}
 		if (mtmp->mhpmax <= 0) mtmp->mhpmax = 10;
 		mtmp->mhp = mtmp->mhpmax;
-		if (mvitals[monsndx(mtmp->data)].mvflags & G_GENOD) {
+		if (mvitals[mtmp->mnum].mvflags & G_GENOD) {
 			if (cansee(mtmp->mx, mtmp->my))
 			    pline("Unfortunately %s is still genocided...",
 				mon_nam(mtmp));
@@ -1278,7 +1278,7 @@ void mondead(struct monst *mtmp)
 	 * based on only player kills probably opens more avenues of abuse
 	 * for rings of conflict and such.
 	 */
-	tmp = monsndx(mtmp->data);
+	tmp = mtmp->mnum;
 	if (mvitals[tmp].died < 255) mvitals[tmp].died++;
 
 	/* if it's a (possibly polymorphed) quest leader, mark him as dead */
@@ -1598,7 +1598,7 @@ void xkilled(struct monst *mtmp, int dest)
 	}
 
 	mdat = mtmp->data; /* note: mondead can change mtmp->data */
-	mndx = monsndx(mdat);
+	mndx = mtmp->mnum;
 
 	if (stoned) {
 		stoned = FALSE;
@@ -2002,7 +2002,7 @@ void restartcham(void)
 
 	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
-		mtmp->cham = pm_to_cham(monsndx(mtmp->data));
+		mtmp->cham = pm_to_cham(mtmp->mnum);
 		if (mtmp->data->mlet == S_MIMIC && mtmp->msleeping &&
 				cansee(mtmp->mx, mtmp->my)) {
 			set_mimic_sym(mtmp);
@@ -2027,7 +2027,7 @@ void restore_cham(struct monst *mon)
 		new_were(mon);
 	    }
 	} else if (mon->cham == CHAM_ORDINARY) {
-	    mon->cham = pm_to_cham(monsndx(mon->data));
+	    mon->cham = pm_to_cham(mon->mnum);
 	}
 }
 
@@ -2412,7 +2412,7 @@ void kill_genocided_monsters(void)
 	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 	    if (DEADMONSTER(mtmp)) continue;
-	    mndx = monsndx(mtmp->data);
+	    mndx = mtmp->mnum;
 	    if ((mvitals[mndx].mvflags & G_GENOD) || kill_cham[mtmp->cham]) {
 		if (mtmp->cham && !kill_cham[mtmp->cham])
 		    newcham(mtmp, NULL, FALSE, FALSE);

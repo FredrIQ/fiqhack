@@ -284,7 +284,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 		if (!Blind) makeknown(WAN_SLEEP);
 		break;
 	case SPE_STONE_TO_FLESH:
-		if (monsndx(mtmp->data) == PM_STONE_GOLEM) {
+		if (mtmp->mnum == PM_STONE_GOLEM) {
 		    char *name = Monnam(mtmp);
 		    /* turn into flesh golem */
 		    if (newcham(mtmp, &mons[PM_FLESH_GOLEM], FALSE, FALSE)) {

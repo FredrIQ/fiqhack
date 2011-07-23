@@ -392,7 +392,7 @@ static int domonnoise(struct monst *mtmp)
 
     /* Make sure its your role's quest quardian; adjust if not */
     if (ptr->msound == MS_GUARDIAN && ptr != &mons[urole.guardnum]) {
-    	int mndx = monsndx(ptr);
+    	int mndx = mtmp->mnum;
     	ptr = &mons[genus(mndx,1)];
     }
 

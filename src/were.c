@@ -16,7 +16,7 @@ void were_change(struct monst *mon)
 		if (flags.soundok && !canseemon(mon)) {
 		    const char *howler;
 
-		    switch (monsndx(mon->data)) {
+		    switch (mon->mnum) {
 		    case PM_WEREWOLF:	howler = "wolf";    break;
 		    case PM_WEREJACKAL: howler = "jackal";  break;
 		    default:		howler = NULL; break;
@@ -50,7 +50,7 @@ void new_were(struct monst *mon)
 {
 	int pm;
 
-	pm = counter_were(monsndx(mon->data));
+	pm = counter_were(mon->mnum);
 	if (!pm) {
 	    impossible("unknown lycanthrope %s.", mon->data->mname);
 	    return;

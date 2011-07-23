@@ -1761,7 +1761,7 @@ glovecheck:		    target = which_armor(mtmp, W_ARMG);
 				}
 			    }
 			}
-			if (mptr == &mons[PM_IRON_GOLEM]) {
+			if (mtmp->mnum == PM_IRON_GOLEM) {
 				if (in_sight)
 				    pline("%s falls to pieces!", Monnam(mtmp));
 				else if (mtmp->mtame)
@@ -1770,7 +1770,7 @@ glovecheck:		    target = which_armor(mtmp, W_ARMG);
 				mondied(mtmp);
 				if (mtmp->mhp <= 0)
 					trapkilled = TRUE;
-			} else if (mptr == &mons[PM_GREMLIN] && rn2(3)) {
+			} else if (mtmp->mnum == PM_GREMLIN && rn2(3)) {
 				split_mon(mtmp, NULL);
 			}
 			break;
@@ -1796,7 +1796,7 @@ mfiretrap:
 
 			    /* paper burns very fast, assume straw is tightly
 			     * packed and burns a bit slower */
-			    switch (monsndx(mtmp->data)) {
+			    switch (mtmp->mnum) {
 			    case PM_PAPER_GOLEM:   immolate = TRUE;
 						   alt = mtmp->mhpmax; break;
 			    case PM_STRAW_GOLEM:   alt = mtmp->mhpmax / 2; break;
@@ -1859,7 +1859,7 @@ mfiretrap:
 			    break;	/* don't activate it after all */
 			}
 			if (is_flyer(mptr) || is_floater(mptr) ||
-				mptr == &mons[PM_WUMPUS] ||
+				mtmp->mnum == PM_WUMPUS ||
 				(mtmp->wormno && count_wsegs(mtmp) > 5) ||
 				mptr->msize >= MZ_HUGE) {
 			    if (inescapable) {	/* sokoban hole */
@@ -1893,12 +1893,12 @@ mfiretrap:
 			if (webmaker(mptr)) break;
 			if (amorphous(mptr) || is_whirly(mptr) || unsolid(mptr)){
 			    if (acidic(mptr) ||
-			       mptr == &mons[PM_GELATINOUS_CUBE] ||
-			       mptr == &mons[PM_FIRE_ELEMENTAL]) {
+			       mtmp->mnum == PM_GELATINOUS_CUBE ||
+			       mtmp->mnum == PM_FIRE_ELEMENTAL) {
 				if (in_sight)
 				    pline("%s %s %s spider web!",
 					  Monnam(mtmp),
-					  (mptr == &mons[PM_FIRE_ELEMENTAL]) ?
+					  (mtmp->mnum == PM_FIRE_ELEMENTAL) ?
 					    "burns" : "dissolves",
 					  a_your[trap->madeby_u]);
 				deltrap(trap);
@@ -1914,7 +1914,7 @@ mfiretrap:
 			    break;
 			}
 			tear_web = FALSE;
-			switch (monsndx(mptr)) {
+			switch (mtmp->mnum) {
 			    case PM_OWLBEAR: /* Eric Backus */
 			    case PM_BUGBEAR:
 				if (!in_sight) {

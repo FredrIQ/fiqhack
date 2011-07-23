@@ -10,21 +10,24 @@ void msummon(struct monst *mon)
 {
 	const struct permonst *ptr;
 	int dtype = NON_PM, cnt = 0;
+	int mndx;
 	aligntyp atyp;
 	struct monst *mtmp;
 
 	if (mon) {
 	    ptr = mon->data;
+	    mndx = mon->mnum;
 	    atyp = (ptr->maligntyp==A_NONE) ? A_NONE : sgn(ptr->maligntyp);
 	    if (mon->ispriest || mon->data == &mons[PM_ALIGNED_PRIEST]
 		|| mon->data == &mons[PM_ANGEL])
 		atyp = EPRI(mon)->shralign;
 	} else {
 	    ptr = &mons[PM_WIZARD_OF_YENDOR];
+	    mndx = PM_WIZARD_OF_YENDOR;
 	    atyp = (ptr->maligntyp==A_NONE) ? A_NONE : sgn(ptr->maligntyp);
 	}
 	    
-	if (is_dprince(ptr) || (ptr == &mons[PM_WIZARD_OF_YENDOR])) {
+	if (is_dprince(ptr) || (mndx == PM_WIZARD_OF_YENDOR)) {
 	    dtype = (!rn2(20)) ? dprince(atyp) :
 				 (!rn2(4)) ? dlord(atyp) : ndemon(atyp);
 	    cnt = (!rn2(4) && is_ndemon(&mons[dtype])) ? 2 : 1;
@@ -34,13 +37,13 @@ void msummon(struct monst *mon)
 	    cnt = (!rn2(4) && is_ndemon(&mons[dtype])) ? 2 : 1;
 	} else if (is_ndemon(ptr)) {
 	    dtype = (!rn2(20)) ? dlord(atyp) :
-				 (!rn2(6)) ? ndemon(atyp) : monsndx(ptr);
+				 (!rn2(6)) ? ndemon(atyp) : mndx;
 	    cnt = 1;
 	} else if (is_lminion(mon)) {
 	    dtype = (is_lord(ptr) && !rn2(20)) ? llord() :
-		     (is_lord(ptr) || !rn2(6)) ? lminion() : monsndx(ptr);
+		     (is_lord(ptr) || !rn2(6)) ? lminion() : mndx;
 	    cnt = (!rn2(4) && !is_lord(&mons[dtype])) ? 2 : 1;
-	} else if (ptr == &mons[PM_ANGEL]) {
+	} else if (mndx == PM_ANGEL) {
 	    /* non-lawful angels can also summon */
 	    if (!rn2(6)) {
 		switch (atyp) { /* see summon_minion */
