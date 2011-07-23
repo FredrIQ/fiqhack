@@ -120,7 +120,7 @@ static int precheck(struct monst *mon, struct obj *obj)
 	    }
 	}
 	if (obj->oclass == WAND_CLASS && obj->cursed && !rn2(100)) {
-	    int dam = d(obj->spe+2, 6);
+	    int dam = dice(obj->spe+2, 6);
 
 	    if (flags.soundok) {
 		if (vis) pline("%s zaps %s, which suddenly explodes!",
@@ -822,7 +822,7 @@ mon_tele:
 		goto mon_tele;
 	case MUSE_POT_HEALING:
 		mquaffmsg(mtmp, otmp);
-		i = d(6 + 2 * bcsign(otmp), 4);
+		i = dice(6 + 2 * bcsign(otmp), 4);
 		mtmp->mhp += i;
 		if (mtmp->mhp > mtmp->mhpmax) mtmp->mhp = ++mtmp->mhpmax;
 		if (!otmp->cursed && !mtmp->mcansee) {
@@ -836,7 +836,7 @@ mon_tele:
 		return 2;
 	case MUSE_POT_EXTRA_HEALING:
 		mquaffmsg(mtmp, otmp);
-		i = d(6 + 2 * bcsign(otmp), 8);
+		i = dice(6 + 2 * bcsign(otmp), 8);
 		mtmp->mhp += i;
 		if (mtmp->mhp > mtmp->mhpmax)
 			mtmp->mhp = (mtmp->mhpmax += (otmp->blessed ? 5 : 2));
@@ -1071,7 +1071,7 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 			    pline("Boing!");
 			} else if (rnd(20) < 10 + u.uac) {
 			    pline_The("wand hits you!");
-			    tmp = d(2,12);
+			    tmp = dice(2,12);
 			    if (Half_spell_damage) tmp = (tmp+1) / 2;
 			    losehp(tmp, "wand", KILLED_BY_AN);
 			} else pline_The("wand misses you.");
@@ -1081,7 +1081,7 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 			shieldeff(mtmp->mx, mtmp->my);
 			pline("Boing!");
 		} else if (rnd(20) < 10+find_mac(mtmp)) {
-			tmp = d(2,12);
+			tmp = dice(2,12);
 			hit("wand", mtmp, exclam(tmp));
 			resist(mtmp, otmp->oclass, tmp, TELL);
 			if (cansee(mtmp->mx, mtmp->my) && zap_oseen)

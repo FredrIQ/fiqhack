@@ -126,7 +126,7 @@ struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special
 	    struct obj *otmp;
 
 	    mtmp->m_lev = (special ? rn1(16,15) : rnd(16));
-	    mtmp->mhp = mtmp->mhpmax = d((int)mtmp->m_lev,10) +
+	    mtmp->mhp = mtmp->mhpmax = dice((int)mtmp->m_lev,10) +
 					(special ? (30 + rnd(30)) : 30);
 	    if (special) {
 	        get_mplname(mtmp, nam);

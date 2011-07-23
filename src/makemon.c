@@ -568,9 +568,9 @@ static void m_initinv(struct monst *mtmp)
 		break;
 	    case S_LEPRECHAUN:
 #ifndef GOLDOBJ
-		mtmp->mgold = (long) d(level_difficulty(), 30);
+		mtmp->mgold = (long) dice(level_difficulty(), 30);
 #else
-		mkmonmoney(mtmp, (long) d(level_difficulty(), 30));
+		mkmonmoney(mtmp, (long) dice(level_difficulty(), 30));
 #endif
 		break;
 	    case S_DEMON:
@@ -597,10 +597,10 @@ static void m_initinv(struct monst *mtmp)
 #ifndef GOLDOBJ
 	if (likes_gold(ptr) && !mtmp->mgold && !rn2(5))
 		mtmp->mgold =
-		      (long) d(level_difficulty(), mtmp->minvent ? 5 : 10);
+		      (long) dice(level_difficulty(), mtmp->minvent ? 5 : 10);
 #else
 	if (likes_gold(ptr) && !findgold(mtmp->minvent) && !rn2(5))
-		mkmonmoney(mtmp, (long) d(level_difficulty(), mtmp->minvent ? 5 : 10));
+		mkmonmoney(mtmp, (long) dice(level_difficulty(), mtmp->minvent ? 5 : 10));
 #endif
 }
 
@@ -847,7 +847,7 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	    mtmp->mhpmax = mtmp->mhp = golemhp(mndx);
 	} else if (is_rider(ptr)) {
 	    /* We want low HP, but a high mlevel so they can attack well */
-	    mtmp->mhpmax = mtmp->mhp = d(10,8);
+	    mtmp->mhpmax = mtmp->mhp = dice(10,8);
 	} else if (ptr->mlevel > 49) {
 	    /* "special" fixed hp monster
 	     * the hit points are encoded in the mlevel in a somewhat strange
@@ -858,11 +858,11 @@ struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
 	} else if (ptr->mlet == S_DRAGON && mndx >= PM_GRAY_DRAGON) {
 	    /* adult dragons */
 	    mtmp->mhpmax = mtmp->mhp = (int) (In_endgame(&u.uz) ?
-		(8 * mtmp->m_lev) : (4 * mtmp->m_lev + d((int)mtmp->m_lev, 4)));
+		(8 * mtmp->m_lev) : (4 * mtmp->m_lev + dice((int)mtmp->m_lev, 4)));
 	} else if (!mtmp->m_lev) {
 	    mtmp->mhpmax = mtmp->mhp = rnd(4);
 	} else {
-	    mtmp->mhpmax = mtmp->mhp = d((int)mtmp->m_lev, 8);
+	    mtmp->mhpmax = mtmp->mhp = dice((int)mtmp->m_lev, 8);
 	    if (is_home_elemental(ptr))
 		mtmp->mhpmax = (mtmp->mhp *= 3);
 	}

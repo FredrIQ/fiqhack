@@ -212,7 +212,7 @@ char	 **viz_array = 0;/* used in cansee() and couldsee() macros */
 char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,
 				NULL, NULL, NULL, NULL };
 
-char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
+const char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
 					"bonesdir", "datadir", "scoredir",
 					"lockdir", "troubledir" };
 

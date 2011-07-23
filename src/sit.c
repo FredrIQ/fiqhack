@@ -86,7 +86,7 @@ int dosit(void)
 		    /* Must have fire resistance or they'd be dead already */
 		    You("sit in the lava!");
 		    u.utrap += rnd(4);
-		    losehp(d(2,10), "sitting in lava", KILLED_BY);
+		    losehp(dice(2,10), "sitting in lava", KILLED_BY);
 		} else if (u.utraptype == TT_INFLOOR) {
 		    You_cant("maneuver to sit!");
 		    u.utrap++;
@@ -138,7 +138,7 @@ int dosit(void)
 		return 1;
 	    }
 	    pline_The("lava burns you!");
-	    losehp(d((Fire_resistance ? 2 : 10), 10),
+	    losehp(dice((Fire_resistance ? 2 : 10), 10),
 		   "sitting on lava", KILLED_BY);
 
 	} else if (is_ice(u.ux, u.uy)) {

@@ -702,7 +702,7 @@ nonew:
  * Convert the given string of object classes to a string of default object
  * symbols.
  */
-void oc_to_str(char *src, char *dest)
+static void oc_to_str(char *src, char *dest)
 {
     int i;
 
@@ -777,11 +777,11 @@ static int change_inv_order(char *op)
 
 
 /* convenience function: allows the ui to share option handling code */
-void nh_setup_ui_options(struct nh_option_desc *options,
+void nh_setup_ui_options(struct nh_option_desc *uioptions,
 			 struct nh_boolopt_map *boolmap,
 			 boolean(*callback)(struct nh_option_desc *))
 {
-    ui_options = options;
+    ui_options = uioptions;
     ui_boolopt_map = boolmap;
     ui_option_callback = callback;
 }

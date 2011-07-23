@@ -434,10 +434,10 @@ int peffects(struct obj *otmp)
 				you_unwere(FALSE);
 			    u.ulycn = NON_PM;	/* cure lycanthropy */
 			}
-			losehp(d(2,6), "potion of holy water", KILLED_BY_AN);
+			losehp(dice(2,6), "potion of holy water", KILLED_BY_AN);
 		    } else if (otmp->cursed) {
 			You_feel("quite proud of yourself.");
-			healup(d(2,6),0,0,0);
+			healup(dice(2,6),0,0,0);
 			if (u.ulycn >= LOW_PM && !Upolyd) you_were();
 			exercise(A_CON, TRUE);
 		    }
@@ -453,7 +453,7 @@ int peffects(struct obj *otmp)
 		    } else {
 			if (u.ualign.type == A_LAWFUL) {
 			    pline("This burns like acid!");
-			    losehp(d(2,6), "potion of unholy water",
+			    losehp(dice(2,6), "potion of unholy water",
 				KILLED_BY_AN);
 			} else
 			    You_feel("full of dread.");
@@ -468,7 +468,7 @@ int peffects(struct obj *otmp)
 		      otmp->odiluted ? "watered down " : "",
 		      Hallucination ? "dandelion wine" : "liquid fire");
 		if (!otmp->blessed)
-		    make_confused(itimeout_incr(HConfusion, d(3,8)), FALSE);
+		    make_confused(itimeout_incr(HConfusion, dice(3,8)), FALSE);
 		/* the whiskey makes us feel better */
 		if (!otmp->odiluted) healup(1, 0, FALSE, FALSE);
 		u.uhunger += 10 * (2 + bcsign(otmp));
@@ -749,13 +749,13 @@ int peffects(struct obj *otmp)
 		break;
 	case POT_HEALING:
 		You_feel("better.");
-		healup(d(6 + 2 * bcsign(otmp), 4),
+		healup(dice(6 + 2 * bcsign(otmp), 4),
 		       !otmp->cursed ? 1 : 0, !!otmp->blessed, !otmp->cursed);
 		exercise(A_CON, TRUE);
 		break;
 	case POT_EXTRA_HEALING:
 		You_feel("much better.");
-		healup(d(6 + 2 * bcsign(otmp), 8),
+		healup(dice(6 + 2 * bcsign(otmp), 8),
 		       otmp->blessed ? 5 : !otmp->cursed ? 2 : 0,
 		       !otmp->cursed, TRUE);
 		make_hallucinated(0L,TRUE,0L);
@@ -831,7 +831,7 @@ int peffects(struct obj *otmp)
 				good_for_you = TRUE;
 			    } else {
 				You("burn your %s.", body_part(FACE));
-				losehp(d(Fire_resistance ? 1 : 3, 4),
+				losehp(dice(Fire_resistance ? 1 : 3, 4),
 				       "burning potion of oil", KILLED_BY_AN);
 			    }
 			} else if (otmp->cursed)
@@ -848,7 +848,7 @@ int peffects(struct obj *otmp)
 		else {
 			pline("This burns%s!", otmp->blessed ? " a little" :
 					otmp->cursed ? " a lot" : " like acid");
-			losehp(d(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8),
+			losehp(dice(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8),
 					"potion of acid", KILLED_BY_AN);
 			exercise(A_CON, FALSE);
 		}
@@ -961,7 +961,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		if (!Acid_resistance) {
 		    pline("This burns%s!", obj->blessed ? " a little" :
 				    obj->cursed ? " a lot" : "");
-		    losehp(d(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8),
+		    losehp(dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8),
 				    "potion of acid", KILLED_BY_AN);
 		}
 		break;
@@ -1047,7 +1047,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		    if (obj->blessed) {
 			pline("%s %s in pain!", Monnam(mon),
 			      is_silent(mon->data) ? "writhes" : "shrieks");
-			mon->mhp -= d(2,6);
+			mon->mhp -= dice(2,6);
 			/* should only be by you */
 			if (mon->mhp < 1) killed(mon);
 			else if (is_were(mon->data) && !is_human(mon->data))
@@ -1056,7 +1056,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 			angermon = FALSE;
 			if (canseemon(mon))
 			    pline("%s looks healthier.", Monnam(mon));
-			mon->mhp += d(2,6);
+			mon->mhp += dice(2,6);
 			if (mon->mhp > mon->mhpmax) mon->mhp = mon->mhpmax;
 			if (is_were(mon->data) && is_human(mon->data) &&
 				!Protection_from_shape_changers)
@@ -1068,7 +1068,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		} else if (mon->data == &mons[PM_IRON_GOLEM]) {
 		    if (canseemon(mon))
 			pline("%s rusts.", Monnam(mon));
-		    mon->mhp -= d(1,6);
+		    mon->mhp -= dice(1,6);
 		    /* should only be by you */
 		    if (mon->mhp < 1) killed(mon);
 		}
@@ -1081,7 +1081,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		if (!resists_acid(mon) && !resist(mon, POTION_CLASS, 0, NOTELL)) {
 		    pline("%s %s in pain!", Monnam(mon),
 			  is_silent(mon->data) ? "writhes" : "shrieks");
-		    mon->mhp -= d(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8);
+		    mon->mhp -= dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8);
 		    if (mon->mhp < 1) {
 			if (your_fault)
 			    killed(mon);
@@ -1737,7 +1737,7 @@ int dodip(void)
 	    } else if (potion->cursed) {
 		pline_The("potion spills and covers your %s with oil.",
 			  makeplural(body_part(FINGER)));
-		incr_itimeout(&Glib, d(2,10));
+		incr_itimeout(&Glib, dice(2,10));
 	    } else if (obj->oclass != WEAPON_CLASS && !is_weptool(obj)) {
 		/* the following cases apply only to weapons */
 		goto more_dips;
@@ -1772,7 +1772,7 @@ int dodip(void)
 	    /* Turn off engine before fueling, turn off fuel too :-)  */
 	    if (obj->lamplit || potion->lamplit) {
 		useup(potion);
-		explode(u.ux, u.uy, 11, d(6,6), 0, EXPL_FIERY);
+		explode(u.ux, u.uy, 11, dice(6,6), 0, EXPL_FIERY);
 		exercise(A_WIS, FALSE);
 		return 1;
 	    }

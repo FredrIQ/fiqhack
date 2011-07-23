@@ -192,13 +192,13 @@ static struct obj *make_corpse(struct monst *mtmp)
 		obj->age -= 100;		/* this is an *OLD* corpse */
 		break;
 	    case PM_IRON_GOLEM:
-		num = d(2,6);
+		num = dice(2,6);
 		while (num--)
 			obj = mksobj_at(IRON_CHAIN, x, y, TRUE, FALSE);
 		mtmp->mnamelth = 0;
 		break;
 	    case PM_GLASS_GOLEM:
-		num = d(2,4);   /* very low chance of creating all glass gems */
+		num = dice(2,4);   /* very low chance of creating all glass gems */
 		while (num--)
 			obj = mksobj_at((LAST_GEM + rnd(9)), x, y, TRUE, FALSE);
 		mtmp->mnamelth = 0;
@@ -214,14 +214,14 @@ static struct obj *make_corpse(struct monst *mtmp)
 			mdat, x, y, FALSE);
 		break;
 	    case PM_WOOD_GOLEM:
-		num = d(2,4);
+		num = dice(2,4);
 		while (num--) {
 			obj = mksobj_at(QUARTERSTAFF, x, y, TRUE, FALSE);
 		}
 		mtmp->mnamelth = 0;
 		break;
 	    case PM_LEATHER_GOLEM:
-		num = d(2,4);
+		num = dice(2,4);
 		while (num--)
 			obj = mksobj_at(LEATHER_ARMOR, x, y, TRUE, FALSE);
 		mtmp->mnamelth = 0;
@@ -302,7 +302,7 @@ int minliquid(struct monst *mtmp)
 	if (inpool) water_damage(mtmp->minvent, FALSE, FALSE);
 	return 0;
     } else if (mtmp->data == &mons[PM_IRON_GOLEM] && inpool && !rn2(5)) {
-	int dam = d(2,6);
+	int dam = dice(2,6);
 	if (cansee(mtmp->mx,mtmp->my))
 	    pline("%s rusts.", Monnam(mtmp));
 	mtmp->mhp -= dam;
@@ -1325,10 +1325,10 @@ boolean corpse_chance(struct monst *mon,
 	for (i = 0; i < NATTK; i++) {
 	    if (mdat->mattk[i].aatyp == AT_BOOM) {
 	    	if (mdat->mattk[i].damn)
-	    	    tmp = d((int)mdat->mattk[i].damn,
+	    	    tmp = dice((int)mdat->mattk[i].damn,
 	    	    		(int)mdat->mattk[i].damd);
 	    	else if (mdat->mattk[i].damd)
-	    	    tmp = d((int)mdat->mlevel+1, (int)mdat->mattk[i].damd);
+	    	    tmp = dice((int)mdat->mlevel+1, (int)mdat->mattk[i].damd);
 	    	else tmp = 0;
 		if (was_swallowed && magr) {
 		    if (magr == &youmonst) {

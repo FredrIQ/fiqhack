@@ -364,11 +364,11 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
     new_worm->m_lev = worm->m_lev;
 
     /* Calculate the mhp on the new_worm for the (lower) monster level. */
-    new_worm->mhpmax = new_worm->mhp = d((int)new_worm->m_lev, 8);
+    new_worm->mhpmax = new_worm->mhp = dice((int)new_worm->m_lev, 8);
 
     /* Calculate the mhp on the old worm for the (lower) monster level. */
     if (worm->m_lev > 3) {
-	worm->mhpmax = d((int)worm->m_lev, 8);
+	worm->mhpmax = dice((int)worm->m_lev, 8);
 	if (worm->mhpmax < worm->mhp) worm->mhp = worm->mhpmax;
     }
 

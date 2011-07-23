@@ -4,7 +4,7 @@
 #include "hack.h"
 
 /* Note: Arrays are column first, while the screen is row first */
-static int expl[3][3] = {
+static const int explosion[3][3] = {
 	{ E_explode1, E_explode4, E_explode7 },
 	{ E_explode2, E_explode5, E_explode8 },
 	{ E_explode3, E_explode6, E_explode9 }
@@ -175,7 +175,7 @@ void explode(int x, int y,
 		for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 2) continue;
 			tmp_at(starting ? DISP_BEAM : DISP_CHANGE,
-				dbuf_effect(E_EXPLOSION, expl[i][j]));
+				dbuf_effect(E_EXPLOSION, explosion[i][j]));
 			tmp_at(i+x-1, j+y-1);
 			starting = 0;
 		}
@@ -201,7 +201,7 @@ void explode(int x, int y,
 		    for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 1)
 			    dbuf_set_effect(i+x-1,j+y-1,
-					    dbuf_effect(E_EXPLOSION, expl[i][j]));
+					    dbuf_effect(E_EXPLOSION, explosion[i][j]));
 		    }
 
 		} else {		/* delay a little bit. */
@@ -557,7 +557,7 @@ void splatter_burning_oil(int x, int y)
 {
 /* ZT_SPELL(ZT_FIRE) = ZT_SPELL(AD_FIRE-1) = 10+(2-1) = 11 */
 #define ZT_SPELL_O_FIRE 11 /* value kludge, see zap.c */
-    explode(x, y, ZT_SPELL_O_FIRE, d(4,4), BURNING_OIL, EXPL_FIERY);
+    explode(x, y, ZT_SPELL_O_FIRE, dice(4,4), BURNING_OIL, EXPL_FIERY);
 }
 
 /*explode.c*/

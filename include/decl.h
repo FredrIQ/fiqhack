@@ -306,7 +306,7 @@ extern boolean botl;
 extern boolean botlx;
 
 extern char *fqn_prefix[PREFIX_COUNT];
-extern char *fqn_prefix_names[PREFIX_COUNT];
+extern const char *fqn_prefix_names[PREFIX_COUNT];
 
 extern char lock[];
 

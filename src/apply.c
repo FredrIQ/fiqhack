@@ -583,7 +583,7 @@ static int use_mirror(struct obj *obj)
 			You("don't have a reflection.");
 		    else if (u.umonnum == PM_UMBER_HULK) {
 			pline("Huh?  That doesn't look like you!");
-			make_confused(HConfusion + d(3,4),FALSE);
+			make_confused(HConfusion + dice(3,4), FALSE);
 		    } else if (Hallucination)
 			You(look_str, hcolor(NULL));
 		    else if (Sick)
@@ -650,7 +650,7 @@ static int use_mirror(struct obj *obj)
 		killed(mtmp);
 	} else if (!mtmp->mcan && !mtmp->minvis &&
 					mtmp->data == &mons[PM_FLOATING_EYE]) {
-		int tmp = d((int)mtmp->m_lev, (int)mtmp->data->mattk[0].damd);
+		int tmp = dice((int)mtmp->m_lev, (int)mtmp->data->mattk[0].damd);
 		if (!rn2(4)) tmp = 120;
 		if (vis)
 			pline("%s is frozen by its reflection.", Monnam(mtmp));
@@ -678,7 +678,7 @@ static int use_mirror(struct obj *obj)
 			(!mtmp->minvis || perceives(mtmp->data)) && rn2(5)) {
 		if (vis)
 		    pline("%s is frightened by its reflection.", Monnam(mtmp));
-		monflee(mtmp, d(2,4), FALSE, FALSE);
+		monflee(mtmp, dice(2,4), FALSE, FALSE);
 	} else if (!Blind) {
 		if (mtmp->minvis && !See_invisible)
 		    ;
@@ -1439,7 +1439,7 @@ void use_unicorn_horn(struct obj *obj)
 	 *   blessed:  22.7%  22.7%  19.5%  15.4%  10.7%   5.7%   2.6%	 0.8%
 	 *  uncursed:  35.4%  35.4%  22.9%   6.3%    0	    0	   0	  0
 	 */
-	val_limit = rn2( d(2, (obj && obj->blessed) ? 4 : 2) );
+	val_limit = rn2( dice(2, (obj && obj->blessed) ? 4 : 2) );
 	if (val_limit > trouble_count) val_limit = trouble_count;
 
 	/* fix [some of] the troubles */
@@ -2532,7 +2532,7 @@ static int do_break_wand(struct obj *obj)
     case WAN_STRIKING:
 	/* we want this before the explosion instead of at the very end */
 	pline("A wall of force smashes down around you!");
-	dmg = d(1 + obj->spe,6);	/* normally 2d12 */
+	dmg = dice(1 + obj->spe,6);	/* normally 2d12 */
     case WAN_CANCELLATION:
     case WAN_POLYMORPH:
     case WAN_TELEPORTATION:

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "hack.h"
+
 /* malloc wrapper functions for "external" memory allocations
  * 
  * The idea is to avoid a transfer of responsibility for freeing memory to to

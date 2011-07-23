@@ -92,7 +92,7 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 		    You("are hit by molten lava%c",
 			Fire_resistance ? '.' : '!');
 			burn_away_slime();
-		    losehp(d((Fire_resistance ? 1 : 3), 6),
+		    losehp(dice((Fire_resistance ? 1 : 3), 6),
 			   "molten lava", KILLED_BY);
 		} else if (!fills_up && flags.verbose &&
 			   (pushing ? !Blind : cansee(rx,ry)))
@@ -1321,7 +1321,7 @@ static void final_level(void)
 		    /* make him strong enough vs. endgame foes */
 		    mtmp->m_lev = rn1(8,15);
 		    mtmp->mhp = mtmp->mhpmax =
-					d((int)mtmp->m_lev,10) + 30 + rnd(30);
+					dice((int)mtmp->m_lev,10) + 30 + rnd(30);
 		    if ((otmp = select_hwep(mtmp)) == 0) {
 			otmp = mksobj(SILVER_SABER, FALSE, FALSE);
 			if (mpickobj(mtmp, otmp))

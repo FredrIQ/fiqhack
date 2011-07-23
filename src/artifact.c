@@ -483,7 +483,7 @@ int touch_artifact(struct obj *obj, struct monst *mon)
 
 	if (!yours) return 0;
 	You("are blasted by %s power!", s_suffix(the(xname(obj))));
-	dmg = d((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
+	dmg = dice((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
 	sprintf(buf, "touching %s", oart->name);
 	losehp(dmg, buf, KILLED_BY);
 	exercise(A_WIS, FALSE);
@@ -1126,7 +1126,7 @@ static int arti_invoke(struct obj *obj)
 	    You_feel("that %s %s ignoring you.",
 		     the(xname(obj)), otense(obj, "are"));
 	    /* and just got more so; patience is essential... */
-	    obj->age += (long) d(3,10);
+	    obj->age += (long) dice(3,10);
 	    return 1;
 	}
 	obj->age = monstermoves + rnz(100);
@@ -1282,7 +1282,7 @@ static int arti_invoke(struct obj *obj)
 	    You_feel("that %s %s ignoring you.",
 		     the(xname(obj)), otense(obj, "are"));
 	    /* can't just keep repeatedly trying */
-	    obj->age += (long) d(3,10);
+	    obj->age += (long) dice(3,10);
 	    return 1;
 	} else if (!on) {
 	    /* when turning off property, determine downtime */

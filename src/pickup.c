@@ -1565,7 +1565,7 @@ static int in_container(struct obj *obj)
 		else
 			panic("in_container:  bag not found.");
 
-		losehp(d(6,6),"magical explosion", KILLED_BY_AN);
+		losehp(dice(6,6),"magical explosion", KILLED_BY_AN);
 		current_container = 0;	/* baggone = TRUE; */
 	}
 

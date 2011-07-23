@@ -59,10 +59,10 @@ static void vomiting_dialogue(void)
 		morehungry(20);
 		break;
 	case 2:
-		make_stunned(HStun + d(2,4), FALSE);
+		make_stunned(HStun + dice(2,4), FALSE);
 		/* fall through */
 	case 3:
-		make_confused(HConfusion + d(2,4), FALSE);
+		make_confused(HConfusion + dice(2,4), FALSE);
 		break;
 	}
 	exercise(A_CON, FALSE);

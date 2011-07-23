@@ -223,7 +223,7 @@ static void deadbook(struct obj *book2)
 	    pline_The("invocation fails!");
 	    pline("At least one of your artifacts is cursed...");
 	} else if (arti1_primed && arti2_primed) {
-	    unsigned soon = (unsigned) d(2,6);	/* time til next intervene() */
+	    unsigned soon = (unsigned) dice(2,6);	/* time til next intervene() */
 
 	    /* successful invocation */
 	    mkinvokearea();

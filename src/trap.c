@@ -646,7 +646,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 		    deltrap(trap);
 		    newsym(u.ux,u.uy);
 		} else {
-		    int dmg = d(2,6); /* should be std ROCK dmg? */
+		    int dmg = dice(2,6); /* should be std ROCK dmg? */
 
 		    trap->once = 1;
 		    seetrap(trap);
@@ -1661,7 +1661,7 @@ int mintrap(struct monst *mtmp)
 			otmp->quan = 1L;
 			otmp->owt = weight(otmp);
 			if (in_sight) seetrap(trap);
-			if (thitm(0, mtmp, otmp, d(2, 6), FALSE))
+			if (thitm(0, mtmp, otmp, dice(2, 6), FALSE))
 			    trapkilled = TRUE;
 			break;
 
@@ -1791,7 +1791,7 @@ mfiretrap:
 				pline("%s is uninjured.", Monnam(mtmp));
 			    }
 			} else {
-			    int num = d(2,4), alt;
+			    int num = dice(2,4), alt;
 			    boolean immolate = FALSE;
 
 			    /* paper burns very fast, assume straw is tightly
@@ -2316,7 +2316,7 @@ static void dofiretrap(struct obj *box)
 	    shieldeff(u.ux, u.uy);
 	    num = rn2(2);
 	} else if (Upolyd) {
-	    num = d(2,4);
+	    num = dice(2,4);
 	    switch (u.umonnum) {
 	    case PM_PAPER_GOLEM:   alt = u.mhmax; break;
 	    case PM_STRAW_GOLEM:   alt = u.mhmax / 2; break;
@@ -2328,7 +2328,7 @@ static void dofiretrap(struct obj *box)
 	    if (u.mhmax > mons[u.umonnum].mlevel)
 		u.mhmax -= rn2(min(u.mhmax,num + 1)), botl = 1;
 	} else {
-	    num = d(2,4);
+	    num = dice(2,4);
 	    if (u.uhpmax > u.ulevel)
 		u.uhpmax -= rn2(min(u.uhpmax,num + 1)), botl = 1;
 	}
@@ -2695,7 +2695,7 @@ boolean drown(void)
 	    split_mon(&youmonst, NULL);
 	else if (u.umonnum == PM_IRON_GOLEM) {
 	    You("rust!");
-	    i = d(2,6);
+	    i = dice(2,6);
 	    if (u.mhmax > i) u.mhmax -= i;
 	    losehp(i, "rusting away", KILLED_BY);
 	}
@@ -3482,7 +3482,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 			      delobj(otmp);
 			  }
 			  wake_nearby();
-			  losehp(d(6,6), buf, KILLED_BY_AN);
+			  losehp(dice(6,6), buf, KILLED_BY_AN);
 			  exercise(A_STR, FALSE);
 			  if (costly && loss) {
 			      if (insider)
@@ -3530,7 +3530,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 			    You("don't seem to be affected.");
 			    dmg = 0;
 			} else
-			    dmg = d(4, 4);
+			    dmg = dice(4, 4);
 			destroy_item(RING_CLASS, AD_ELEC);
 			destroy_item(WAND_CLASS, AD_ELEC);
 			if (dmg) losehp(dmg, "electric shock", KILLED_BY_AN);
@@ -3541,7 +3541,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 		case 3:
 			if (!Free_action) {                        
 			pline("Suddenly you are frozen in place!");
-			nomul(-d(5, 6));
+			nomul(-dice(5, 6));
 			exercise(A_DEX, FALSE);
 			nomovemsg = You_can_move_again;
 			} else You("momentarily stiffen.");
@@ -3712,7 +3712,7 @@ boolean lava_effects(void)
 
     if (!Fire_resistance) {
 	if (Wwalking) {
-	    dmg = d(6,6);
+	    dmg = dice(6,6);
 	    pline_The("lava here burns you!");
 	    if (dmg < u.uhp) {
 		losehp(dmg, lava_killer, KILLED_BY);

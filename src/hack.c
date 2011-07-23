@@ -1436,7 +1436,7 @@ stillinwater:
 			    int dmg;
 			    You("are hit by %s!",
 				x_monnam(mtmp, ARTICLE_A, "falling", 0, TRUE));
-			    dmg = d(4,6);
+			    dmg = dice(4,6);
 			    if (Half_physical_damage) dmg = (dmg+1) / 2;
 			    mdamageu(mtmp, dmg);
 			}

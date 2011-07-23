@@ -557,7 +557,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 	struct obj *obj;
 	char buf[BUFSZ];
 	struct permonst *pa = magr->data, *pd = mdef->data;
-	int armpro, num, tmp = d((int)mattk->damn, (int)mattk->damd);
+	int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
 	boolean cancelled;
 
 	if (touch_petrifies(pd) && !resists_ston(magr)) {
@@ -875,7 +875,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 
 		    if (vis && mdef->mcansee)
 			pline("%s is blinded.", Monnam(mdef));
-		    rnd_tmp = d((int)mattk->damn, (int)mattk->damd);
+		    rnd_tmp = dice((int)mattk->damn, (int)mattk->damd);
 		    if ((rnd_tmp += mdef->mblinded) > 127) rnd_tmp = 127;
 		    mdef->mblinded = rnd_tmp;
 		    mdef->mcansee = 0;
@@ -952,7 +952,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 		break;
 	    case AD_DRLI:
 		if (!cancelled && !rn2(3) && !resists_drli(mdef)) {
-			tmp = d(2,6);
+			tmp = dice(2,6);
 			if (vis)
 			    pline("%s suddenly seems weaker!", Monnam(mdef));
 			mdef->mhpmax -= tmp;
@@ -1222,10 +1222,10 @@ static int passivemm(struct monst *magr, struct monst *mdef,
 	    if (mddat->mattk[i].aatyp == AT_NONE) break;
 	}
 	if (mddat->mattk[i].damn)
-	    tmp = d((int)mddat->mattk[i].damn,
+	    tmp = dice((int)mddat->mattk[i].damn,
 				    (int)mddat->mattk[i].damd);
 	else if (mddat->mattk[i].damd)
-	    tmp = d((int)mddat->mlevel+1, (int)mddat->mattk[i].damd);
+	    tmp = dice((int)mddat->mlevel+1, (int)mddat->mattk[i].damd);
 	else
 	    tmp = 0;
 

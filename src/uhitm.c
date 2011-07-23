@@ -605,7 +605,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			m_useup(mon, monwep);
 			/* If someone just shattered MY weapon, I'd flee! */
 			if (rn2(4)) {
-			    monflee(mon, d(2,3), TRUE, TRUE);
+			    monflee(mon, dice(2,3), TRUE, TRUE);
 			}
 			hittxt = TRUE;
 		    }
@@ -768,7 +768,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 		      }
 		    case CLOVE_OF_GARLIC:	/* no effect against demons */
 			if (is_undead(mdat)) {
-			    monflee(mon, d(2, 4), FALSE, TRUE);
+			    monflee(mon, dice(2, 4), FALSE, TRUE);
 			}
 			tmp = 1;
 			break;
@@ -910,7 +910,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 	}
 
 	if (jousting) {
-	    tmp += d(2, (obj == uwep) ? 10 : 2);	/* [was in dmgval()] */
+	    tmp += dice(2, (obj == uwep) ? 10 : 2);	/* [was in dmgval()] */
 	    You("joust %s%s",
 			 mon_nam(mon), canseemon(mon) ? exclam(tmp) : ".");
 	    if (jousting < 0) {
@@ -1226,7 +1226,7 @@ static void steal_it(struct monst *mdef, struct attack *mattk)
 int damageum(struct monst *mdef, struct attack *mattk)
 {
 	struct permonst *pd = mdef->data;
-	int	tmp = d((int)mattk->damn, (int)mattk->damd);
+	int	tmp = dice((int)mattk->damn, (int)mattk->damd);
 	int armpro;
 	boolean negated;
 
@@ -1414,7 +1414,7 @@ int damageum(struct monst *mdef, struct attack *mattk)
 		break;
 	    case AD_DRLI:
 		if (!negated && !rn2(3) && !resists_drli(mdef)) {
-			int xtmp = d(2,6);
+			int xtmp = dice(2,6);
 			pline("%s suddenly seems weaker!", Monnam(mdef));
 			mdef->mhpmax -= xtmp;
 			if ((mdef->mhp -= xtmp) <= 0 || !mdef->m_lev) {
@@ -1603,7 +1603,7 @@ int damageum(struct monst *mdef, struct attack *mattk)
 
 static int explum(struct monst *mdef, struct attack *mattk)
 {
-	int tmp = d((int)mattk->damn, (int)mattk->damd);
+	int tmp = dice((int)mattk->damn, (int)mattk->damd);
 
 	You("explode!");
 	switch(mattk->adtyp) {
@@ -1684,7 +1684,7 @@ static void end_engulf(struct monst *mdef)
 static int gulpum(struct monst *mdef, struct attack *mattk)
 {
 	int tmp;
-	int dam = d((int)mattk->damn, (int)mattk->damd);
+	int dam = dice((int)mattk->damn, (int)mattk->damd);
 	struct obj *otmp;
 	/* Not totally the same as for real monsters.  Specifically, these
 	 * don't take multiple moves.  (It's just too hard, for too little
@@ -2076,9 +2076,9 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 	}
 	/* Note: tmp not always used */
 	if (ptr->mattk[i].damn)
-	    tmp = d((int)ptr->mattk[i].damn, (int)ptr->mattk[i].damd);
+	    tmp = dice((int)ptr->mattk[i].damn, (int)ptr->mattk[i].damd);
 	else if (ptr->mattk[i].damd)
-	    tmp = d((int)mon->m_lev+1, (int)ptr->mattk[i].damd);
+	    tmp = dice((int)mon->m_lev+1, (int)ptr->mattk[i].damd);
 	else
 	    tmp = 0;
 
@@ -2399,7 +2399,7 @@ int flash_hits_mon(struct monst *mtmp,
 		}
 		if (mtmp->data == &mons[PM_GREMLIN]) {
 		    /* Rule #1: Keep them out of the light. */
-		    amt = otmp->otyp == WAN_LIGHT ? d(1 + otmp->spe, 4) :
+		    amt = otmp->otyp == WAN_LIGHT ? dice(1 + otmp->spe, 4) :
 		          rn2(min(mtmp->mhp,4));
 		    pline("%s %s!", Monnam(mtmp), amt > mtmp->mhp / 2 ?
 			  "wails in agony" : "cries out in pain");

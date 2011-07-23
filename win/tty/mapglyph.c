@@ -12,7 +12,7 @@
 void (*decgraphics_mode_callback)(void);
 static int corpse_id;
 struct nh_drawing_info *default_drawing;
-static struct nh_drawing_info *d, *ibm_drawing,
+static struct nh_drawing_info *cur_drawing, *ibm_drawing,
                               *dec_drawing, *rogue_drawing;
 
 
@@ -205,11 +205,11 @@ void init_displaychars(void)
     apply_override(dec_drawing, dec_graphics_ovr, array_size(dec_graphics_ovr));
     apply_override(rogue_drawing, rogue_graphics_ovr, array_size(rogue_graphics_ovr));
     
-    d = default_drawing;
+    cur_drawing = default_drawing;
     
     /* find objects that need special treatment */
-    for (i = 0; i < d->num_objects; i++) {
-	if (!strcmp("corpse", d->objects[i].symname))
+    for (i = 0; i < cur_drawing->num_objects; i++) {
+	if (!strcmp("corpse", cur_drawing->objects[i].symname))
 	    corpse_id = i;
     }
     
@@ -230,60 +230,60 @@ void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
 	
 	switch (NH_EFFECT_TYPE(dbe->effect)) {
 	    case E_EXPLOSION:
-		ch = d->explsyms[id % NUMEXPCHARS].ch;
-		color = d->expltypes[id / NUMEXPCHARS].color;
+		ch = cur_drawing->explsyms[id % NUMEXPCHARS].ch;
+		color = cur_drawing->expltypes[id / NUMEXPCHARS].color;
 		break;
 		
 	    case E_SWALLOW:
-		ch = d->swallowsyms[id & 0x7].ch;
-		color = d->monsters[id >> 3].color;
+		ch = cur_drawing->swallowsyms[id & 0x7].ch;
+		color = cur_drawing->monsters[id >> 3].color;
 		break;
 		
 	    case E_ZAP:
-		ch = d->zapsyms[id & 0x3].ch;
-		color = d->zaptypes[id >> 2].color;
+		ch = cur_drawing->zapsyms[id & 0x3].ch;
+		color = cur_drawing->zaptypes[id >> 2].color;
 		break;
 		
 	    case E_MISC:
-		ch = d->effects[id].ch;
-		color = d->effects[id].color;
+		ch = cur_drawing->effects[id].ch;
+		color = cur_drawing->effects[id].color;
 		break;
 	}
 	
     } else if (dbe->invis) {
-	ch = d->invis->ch;
-	color = d->invis->color;
+	ch = cur_drawing->invis->ch;
+	color = cur_drawing->invis->color;
 	
     } else if (dbe->mon) {
-	if (dbe->mon > d->num_monsters && (dbe->monflags & MON_WARNING)) {
-	    id = dbe->mon - 1 - d->num_monsters;
-	    ch = d->warnings[id].ch;
-	    color = d->warnings[id].color;
+	if (dbe->mon > cur_drawing->num_monsters && (dbe->monflags & MON_WARNING)) {
+	    id = dbe->mon - 1 - cur_drawing->num_monsters;
+	    ch = cur_drawing->warnings[id].ch;
+	    color = cur_drawing->warnings[id].color;
 	} else {
 	    id = dbe->mon - 1;
-	    ch = d->monsters[id].ch;
-	    color = d->monsters[id].color;
+	    ch = cur_drawing->monsters[id].ch;
+	    color = cur_drawing->monsters[id].color;
 	}
 	
     } else if (dbe->obj) {
 	id = dbe->obj - 1;
 	if (id == corpse_id) {
-	    ch = d->objects[id].ch;
-	    color = d->monsters[dbe->obj_mn - 1].color;
+	    ch = cur_drawing->objects[id].ch;
+	    color = cur_drawing->monsters[dbe->obj_mn - 1].color;
 	} else {
-	    ch = d->objects[id].ch;
-	    color = d->objects[id].color;
+	    ch = cur_drawing->objects[id].ch;
+	    color = cur_drawing->objects[id].color;
 	}
 	
     } else if (dbe->trap) {
 	id = dbe->trap - 1;
-	ch = d->traps[id].ch;
-	color = d->traps[id].color;
+	ch = cur_drawing->traps[id].ch;
+	color = cur_drawing->traps[id].color;
 	
     } else if (dbe->bg) {
 	id = dbe->bg;
-	ch = d->bgelements[id].ch;
-	color = d->bgelements[id].color;
+	ch = cur_drawing->bgelements[id].ch;
+	color = cur_drawing->bgelements[id].color;
     } else
 	ch = 0;
 
@@ -300,7 +300,7 @@ void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
 void set_rogue_level(boolean enable)
 {
     if (enable)
-	d = rogue_drawing;
+	cur_drawing = rogue_drawing;
     else
 	switch_graphics(ui_flags.graphics);
 }
@@ -311,7 +311,7 @@ void switch_graphics(enum nh_text_mode mode)
     switch (mode) {
 	default:
 	case ASCII_GRAPHICS:
-	    d = default_drawing;
+	    cur_drawing = default_drawing;
 	    break;
 	    
 	case IBM_GRAPHICS:
@@ -319,7 +319,7 @@ void switch_graphics(enum nh_text_mode mode)
  * Use the nice IBM Extended ASCII line-drawing characters (codepage 437).
  * This fails on UTF-8 terminals and on terminals that use other codepages.
  */
-	    d = ibm_drawing;
+	    cur_drawing = ibm_drawing;
 	    break;
 	    
 	case DEC_GRAPHICS:
@@ -327,7 +327,7 @@ void switch_graphics(enum nh_text_mode mode)
  * Use the VT100 line drawing character set.
  * VT100 emulation is very common on Unix, so this should generally work.
  */
-	    d = dec_drawing;
+	    cur_drawing = dec_drawing;
 	    if (decgraphics_mode_callback)
 		(*decgraphics_mode_callback)();
 	    

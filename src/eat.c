@@ -1132,10 +1132,10 @@ static int rottenfood(struct obj *obj)
 	if (!rn2(4)) {
 		if (Hallucination) You_feel("rather trippy.");
 		else You_feel("rather %s.", body_part(LIGHT_HEADED));
-		make_confused(HConfusion + d(2,4),FALSE);
+		make_confused(HConfusion + dice(2,4), FALSE);
 	} else if (!rn2(4) && !Blind) {
 		pline("Everything suddenly goes dark.");
-		make_blinded((long)d(2,10),FALSE);
+		make_blinded((long)dice(2,10), FALSE);
 		if (!Blind) Your(vision_clears);
 	} else if (!rn2(3)) {
 		const char *what, *where;
@@ -1357,7 +1357,7 @@ static void fprefx(struct obj *otmp)
 #endif
 		if (otmp->otyp == EGG && stale_egg(otmp)) {
 		    pline("Ugh.  Rotten egg.");	/* perhaps others like it */
-		    make_vomiting(Vomiting+d(10,4), TRUE);
+		    make_vomiting(Vomiting+dice(10,4), TRUE);
 		} else
  give_feedback:
 		    pline("This %s is %s", singular(otmp, xname),
@@ -1428,7 +1428,7 @@ static void eataccessory(struct obj *otmp)
 		    u.uprops[LEVITATION].intrinsic = oldprop;
 		    if (!Levitation) {
 			float_up();
-			incr_itimeout(&HLevitation, d(10,20));
+			incr_itimeout(&HLevitation, dice(10,20));
 			makeknown(typ);
 		    }
 		    break;

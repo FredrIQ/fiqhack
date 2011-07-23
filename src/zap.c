@@ -110,7 +110,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 			shieldeff(mtmp->mx, mtmp->my);
 			break;	/* skip makeknown */
 		} else if (u.uswallow || rnd(20) < 10 + find_mac(mtmp)) {
-			dmg = d(2,12);
+			dmg = dice(2,12);
 			if (dbldam) dmg *= 2;
 			if (otyp == SPE_FORCE_BOLT)
 			    dmg += spell_damage_bonus();
@@ -241,7 +241,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 		reveal_invis = TRUE;
 	    if (mtmp->data != &mons[PM_PESTILENCE]) {
 		wake = FALSE;		/* wakeup() makes the target angry */
-		mtmp->mhp += d(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
+		mtmp->mhp += dice(6, otyp == SPE_EXTRA_HEALING ? 8 : 4);
 		if (mtmp->mhp > mtmp->mhpmax)
 		    mtmp->mhp = mtmp->mhpmax;
 		if (mtmp->mblinded) {
@@ -266,7 +266,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 	    } else {	/* Pestilence */
 		/* Pestilence will always resist; damage is half of 3d{4,8} */
 		resist(mtmp, otmp->oclass,
-			      d(3, otyp == SPE_EXTRA_HEALING ? 8 : 4), TELL);
+			      dice(3, otyp == SPE_EXTRA_HEALING ? 8 : 4), TELL);
 	    }
 		break;
 	case WAN_LIGHT:	/* (broken wand) */
@@ -279,7 +279,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 		/* [wakeup() doesn't rouse victims of temporary sleep,
 		    so it's okay to leave `wake' set to TRUE here] */
 		reveal_invis = TRUE;
-		if (sleep_monst(mtmp, d(1 + otmp->spe, 12), WAND_CLASS))
+		if (sleep_monst(mtmp, dice(1 + otmp->spe, 12), WAND_CLASS))
 		    slept_monst(mtmp);
 		if (!Blind) makeknown(WAN_SLEEP);
 		break;
@@ -1717,7 +1717,7 @@ static void backfire(struct obj *otmp)
 {
 	otmp->in_use = TRUE;	/* in case losehp() is fatal */
 	pline("%s suddenly explodes!", The(xname(otmp)));
-	losehp(d(otmp->spe+2,6), "exploding wand", KILLED_BY_AN);
+	losehp(dice(otmp->spe+2,6), "exploding wand", KILLED_BY_AN);
 	useup(otmp);
 }
 
@@ -1788,9 +1788,9 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    } else {
 			if (ordinary) {
 			    You("bash yourself!");
-			    damage = d(2,12);
+			    damage = dice(2,12);
 			} else
-			    damage = d(1 + obj->spe,6);
+			    damage = dice(1 + obj->spe,6);
 			exercise(A_STR, FALSE);
 		    }
 		    break;
@@ -1799,12 +1799,12 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    makeknown(WAN_LIGHTNING);
 		    if (!Shock_resistance) {
 			You("shock yourself!");
-			damage = d(12,6);
+			damage = dice(12,6);
 			exercise(A_CON, FALSE);
 		    } else {
 			shieldeff(u.ux, u.uy);
 			You("zap yourself, but seem unharmed.");
-			ugolemeffects(AD_ELEC, d(12,6));
+			ugolemeffects(AD_ELEC, dice(12,6));
 		    }
 		    destroy_item(WAND_CLASS, AD_ELEC);
 		    destroy_item(RING_CLASS, AD_ELEC);
@@ -1817,7 +1817,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 
 		case SPE_FIREBALL:
 		    You("explode a fireball on top of yourself!");
-		    explode(u.ux, u.uy, 11, d(6,6), WAND_CLASS, EXPL_FIERY);
+		    explode(u.ux, u.uy, 11, dice(6,6), WAND_CLASS, EXPL_FIERY);
 		    break;
 		case WAN_FIRE:
 		    makeknown(WAN_FIRE);
@@ -1825,10 +1825,10 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    if (Fire_resistance) {
 			shieldeff(u.ux, u.uy);
 			You_feel("rather warm.");
-			ugolemeffects(AD_FIRE, d(12,6));
+			ugolemeffects(AD_FIRE, dice(12,6));
 		    } else {
 			pline("You've set yourself afire!");
-			damage = d(12,6);
+			damage = dice(12,6);
 		    }
 		    burn_away_slime();
 		    burnarmor(&youmonst);
@@ -1844,10 +1844,10 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    if (Cold_resistance) {
 			shieldeff(u.ux, u.uy);
 			You_feel("a little chill.");
-			ugolemeffects(AD_COLD, d(12,6));
+			ugolemeffects(AD_COLD, dice(12,6));
 		    } else {
 			You("imitate a popsicle!");
-			damage = d(12,6);
+			damage = dice(12,6);
 		    }
 		    destroy_item(POTION_CLASS, AD_COLD);
 		    break;
@@ -1859,7 +1859,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 			shieldeff(u.ux, u.uy);
 			pline_The("missiles bounce!");
 		    } else {
-			damage = d(4,6);
+			damage = dice(4,6);
 			pline("Idiot!  You've shot yourself!");
 		    }
 		    break;
@@ -1899,7 +1899,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    if (ordinary || !rn2(10)) {	/* permanent */
 			HInvis |= FROMOUTSIDE;
 		    } else {			/* temporary */
-		    	incr_itimeout(&HInvis, d(obj->spe, 250));
+		    	incr_itimeout(&HInvis, dice(obj->spe, 250));
 		    }
 		    if (msg) {
 			makeknown(WAN_MAKE_INVISIBLE);
@@ -1976,14 +1976,14 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    break;
 		case SPE_HEALING:
 		case SPE_EXTRA_HEALING:
-		    healup(d(6, obj->otyp == SPE_EXTRA_HEALING ? 8 : 4),
+		    healup(dice(6, obj->otyp == SPE_EXTRA_HEALING ? 8 : 4),
 			   0, FALSE, (obj->otyp == SPE_EXTRA_HEALING));
 		    You_feel("%sbetter.",
 			obj->otyp == SPE_EXTRA_HEALING ? "much " : "");
 		    break;
 		case WAN_LIGHT:	/* (broken wand) */
 		 /* assert( !ordinary ); */
-		    damage = d(obj->spe, 25);
+		    damage = dice(obj->spe, 25);
 		case EXPENSIVE_CAMERA:
 		    damage += rnd(25);
 		    if (!resists_blnd(&youmonst)) {
@@ -2312,12 +2312,12 @@ static boolean zap_updown(struct obj *obj, schar dz)
 			pline_The(Hallucination ?
 			    "floor runs like butter!" :
 			    "edges on the floor get smoother.");
-			wipe_engr_at(x, y, d(2,4));
+			wipe_engr_at(x, y, dice(2,4));
 			}
 		    break;
 		case WAN_STRIKING:
 		case SPE_FORCE_BOLT:
-		    wipe_engr_at(x, y, d(2,4));
+		    wipe_engr_at(x, y, dice(2,4));
 		    break;
 		default:
 		    break;
@@ -2770,7 +2770,7 @@ static int zhitm(struct monst *mon, int type, int nd,
 		    sho_shieldeff = TRUE;
 		    break;
 		}
-		tmp = d(nd,6);
+		tmp = dice(nd,6);
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
 #ifdef WIZ_PATCH_DEBUG
@@ -2784,7 +2784,7 @@ static int zhitm(struct monst *mon, int type, int nd,
 		    sho_shieldeff = TRUE;
 		    break;
 		}
-		tmp = d(nd,6);
+		tmp = dice(nd,6);
 		if (resists_cold(mon)) tmp += 7;
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
@@ -2804,8 +2804,8 @@ static int zhitm(struct monst *mon, int type, int nd,
 		    sho_shieldeff = TRUE;
 		    break;
 		}
-		tmp = d(nd,6);
-		if (resists_fire(mon)) tmp += d(nd, 3);
+		tmp = dice(nd,6);
+		if (resists_fire(mon)) tmp += dice(nd, 3);
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
 #ifdef WIZ_PATCH_DEBUG
@@ -2817,7 +2817,7 @@ static int zhitm(struct monst *mon, int type, int nd,
 		break;
 	case ZT_SLEEP:
 		tmp = 0;
-		sleep_monst(mon, d(nd, 25),
+		sleep_monst(mon, dice(nd, 25),
 				type == ZT_WAND(ZT_SLEEP) ? WAND_CLASS : '\0');
 		break;
 	case ZT_DEATH:		/* death/disintegration */
@@ -2869,7 +2869,7 @@ static int zhitm(struct monst *mon, int type, int nd,
 		    tmp = 0;
 		    /* can still blind the monster */
 		} else
-		    tmp = d(nd,6);
+		    tmp = dice(nd,6);
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
 #ifdef WIZ_PATCH_DEBUG
@@ -2894,14 +2894,14 @@ static int zhitm(struct monst *mon, int type, int nd,
 		    sho_shieldeff = TRUE;
 		    break;
 		}
-		tmp = d(nd,6);
+		tmp = dice(nd,6);
 		break;
 	case ZT_ACID:
 		if (resists_acid(mon)) {
 		    sho_shieldeff = TRUE;
 		    break;
 		}
-		tmp = d(nd,6);
+		tmp = dice(nd,6);
 		if (!rn2(6)) erode_obj(MON_WEP(mon), TRUE, TRUE);
 		if (!rn2(6)) erode_armor(mon, TRUE);
 		break;
@@ -2930,7 +2930,7 @@ static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 		shieldeff(sx, sy);
 		pline_The("missiles bounce off!");
 	    } else {
-		dam = d(nd,6);
+		dam = dice(nd,6);
 		exercise(A_STR, FALSE);
 	    }
 	    break;
@@ -2938,9 +2938,9 @@ static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	    if (Fire_resistance) {
 		shieldeff(sx, sy);
 		You("don't feel hot!");
-		ugolemeffects(AD_FIRE, d(nd, 6));
+		ugolemeffects(AD_FIRE, dice(nd, 6));
 	    } else {
-		dam = d(nd, 6);
+		dam = dice(nd, 6);
 	    }
 	    burn_away_slime();
 	    if (burnarmor(&youmonst)) {	/* "body hit" */
@@ -2953,9 +2953,9 @@ static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	    if (Cold_resistance) {
 		shieldeff(sx, sy);
 		You("don't feel cold.");
-		ugolemeffects(AD_COLD, d(nd, 6));
+		ugolemeffects(AD_COLD, dice(nd, 6));
 	    } else {
-		dam = d(nd, 6);
+		dam = dice(nd, 6);
 	    }
 	    if (!rn2(3)) destroy_item(POTION_CLASS, AD_COLD);
 	    break;
@@ -2964,7 +2964,7 @@ static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 		shieldeff(u.ux, u.uy);
 		You("don't feel sleepy.");
 	    } else {
-		fall_asleep(-d(nd,25), TRUE); /* sleep ray */
+		fall_asleep(-dice(nd,25), TRUE); /* sleep ray */
 	    }
 	    break;
 	case ZT_DEATH:
@@ -3005,9 +3005,9 @@ static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	    if (Shock_resistance) {
 		shieldeff(sx, sy);
 		You("aren't affected.");
-		ugolemeffects(AD_ELEC, d(nd, 6));
+		ugolemeffects(AD_ELEC, dice(nd, 6));
 	    } else {
-		dam = d(nd, 6);
+		dam = dice(nd, 6);
 		exercise(A_CON, FALSE);
 	    }
 	    if (!rn2(3)) destroy_item(WAND_CLASS, AD_ELEC);
@@ -3021,7 +3021,7 @@ static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 		dam = 0;
 	    } else {
 		pline_The("acid burns!");
-		dam = d(nd,6);
+		dam = dice(nd,6);
 		exercise(A_STR, FALSE);
 	    }
 	    /* using two weapons at once makes both of them more vulnerable */
@@ -3297,7 +3297,7 @@ buzzmonst:
 	    }
 	    if (abstype == ZT_LIGHTNING && !resists_blnd(&youmonst)) {
 		You(are_blinded_by_the_flash);
-		make_blinded((long)d(nd,50),FALSE);
+		make_blinded((long)dice(nd,50),FALSE);
 		if (!Blind) Your(vision_clears);
 	    }
 	    stop_occupation();
@@ -3345,7 +3345,7 @@ buzzmonst:
     }
     tmp_at(DISP_END,0);
     if (type == ZT_SPELL(ZT_FIRE))
-	explode(sx, sy, type, d(12,6), 0, EXPL_FIERY);
+	explode(sx, sy, type, dice(12,6), 0, EXPL_FIERY);
     if (shopdamage)
 	pay_for_damage(abstype == ZT_FIRE ?  "burn away" :
 		       abstype == ZT_COLD ?  "shatter" :

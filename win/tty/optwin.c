@@ -134,9 +134,9 @@ void tty_init_options(void)
 }
 
 
-static char* get_option_string(struct nh_option_desc *option, char *valbuf)
+static const char* get_option_string(struct nh_option_desc *option, char *valbuf)
 {
-	char *valstr;
+	const char *valstr;
 	int i;
 	
 	switch (option->type) {
@@ -148,7 +148,7 @@ static char* get_option_string(struct nh_option_desc *option, char *valbuf)
 		valstr = "(invalid)";
 		for (i = 0; i < option->e.numchoices; i++)
 		    if (option->value.e == option->e.choices[i].id)
-			valstr =  option->e.choices[i].caption;
+			valstr = option->e.choices[i].caption;
 		break;
 		
 	    case OPTTYPE_INT:
@@ -172,7 +172,8 @@ static int menu_add_options(winid window, int firstid,
 			    struct nh_option_desc *options, boolean read_only)
 {
 	int i;
-	char *valstr = NULL, valbuf[8], optbuf[128];
+	const char *valstr = NULL;
+	char valbuf[8], optbuf[128];
 	const char *opttxt;
 	anything any;
 	
@@ -525,7 +526,7 @@ static void write_config_options(FILE *fp, struct nh_option_desc *options)
 {
 	int i;
 	char workbuf[8];
-	char *optval;
+	const char *optval;
 	
 	for (i = 0; options[i].name; i++) {
 	    optval = get_option_string(&options[i], workbuf);

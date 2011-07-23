@@ -267,7 +267,7 @@ static xchar parent_dnum(const char *s, /* dungeon name */
  *	 a negative random component means from the (adjusted) base to the
  *	 end of the dungeon.
  */
-static int level_range(xchar dgn, int base, int rand, int chain,
+static int level_range(xchar dgn, int base, int rrand, int chain,
 		       struct proto_dungeon *pd, int *adjusted_base)
 {
 	int lmax = dungeons[dgn].num_dunlevs;
@@ -287,11 +287,11 @@ static int level_range(xchar dgn, int base, int rand, int chain,
 
 	*adjusted_base = base;
 
-	if (rand == -1) {	/* from base to end of dungeon */
+	if (rrand == -1) {	/* from base to end of dungeon */
 	    return lmax - base + 1;
-	} else if (rand) {
+	} else if (rrand) {
 	    /* make sure we don't run off the end of the dungeon */
-	    return ((base + rand - 1) > lmax) ? lmax-base+1 : rand;
+	    return ((base + rrand - 1) > lmax) ? lmax-base+1 : rrand;
 	} /* else only one choice */
 	return 1;
 }

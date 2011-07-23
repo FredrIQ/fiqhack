@@ -413,12 +413,12 @@ int polymon(int mntmp)
 	 */
 	mlvl = (int)mons[mntmp].mlevel;
 	if (youmonst.data->mlet == S_DRAGON && mntmp >= PM_GRAY_DRAGON) {
-		u.mhmax = In_endgame(&u.uz) ? (8*mlvl) : (4*mlvl + d(mlvl,4));
+		u.mhmax = In_endgame(&u.uz) ? (8*mlvl) : (4*mlvl + dice(mlvl,4));
 	} else if (is_golem(youmonst.data)) {
 		u.mhmax = golemhp(mntmp);
 	} else {
 		if (!mlvl) u.mhmax = rnd(4);
-		else u.mhmax = d(mlvl, 8);
+		else u.mhmax = dice(mlvl, 8);
 		if (is_home_elemental(&mons[mntmp])) u.mhmax *= 3;
 	}
 	u.mh = u.mhmax;
@@ -956,7 +956,7 @@ int dogaze(void)
 							Monnam(mtmp));
 			mtmp->mconf = 1;
 		    } else if (adtyp == AD_FIRE) {
-			int dmg = d(2,6);
+			int dmg = dice(2,6);
 			You("attack %s with a fiery gaze!", mon_nam(mtmp));
 			if (resists_fire(mtmp)) {
 			    pline_The("fire doesn't burn %s!", mon_nam(mtmp));
@@ -980,7 +980,7 @@ int dogaze(void)
 			    You("are frozen by %s gaze!",
 					     s_suffix(mon_nam(mtmp)));
 			    nomul((u.ulevel > 6 || rn2(4)) ?
-				    -d((int)mtmp->m_lev+1,
+				    -dice((int)mtmp->m_lev+1,
 					    (int)mtmp->data->mattk[0].damd)
 				    : -200);
 			    return 1;

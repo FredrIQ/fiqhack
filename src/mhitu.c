@@ -350,7 +350,7 @@ int mattacku(struct monst *mtmp)
 			if (3 + find_mac(mtmp) <= rnd(20)) {
 			    pline("%s is hit by a falling piercer (you)!",
 								Monnam(mtmp));
-			    if ((mtmp->mhp -= d(3,6)) < 1)
+			    if ((mtmp->mhp -= dice(3,6)) < 1)
 				killed(mtmp);
 			} else
 			  pline("%s is almost hit by a falling piercer (you)!",
@@ -849,9 +849,9 @@ static int hitmu(struct monst *mtmp, struct attack  *mattk)
 	}
 
 /*	First determine the base damage done */
-	dmg = d((int)mattk->damn, (int)mattk->damd);
+	dmg = dice((int)mattk->damn, (int)mattk->damd);
 	if (is_undead(mdat) && midnight())
-		dmg += d((int)mattk->damn, (int)mattk->damd); /* extra damage */
+		dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
 
 /*	Next a cancellation factor	*/
 /*	Use uncancelled when the cancellation factor takes into account certain
@@ -1333,7 +1333,7 @@ dopois:
 			u.uhp += rnd(7);
 			if (!rn2(7)) {
 			    /* hard upper limit via nurse care: 25 * ulevel */
-			    if (u.uhpmax < 5 * u.ulevel + d(2 * u.ulevel, 10))
+			    if (u.uhpmax < 5 * u.ulevel + dice(2 * u.ulevel, 10))
 				u.uhpmax++;
 			    if (!rn2(13)) goaway = TRUE;
 			}
@@ -1348,7 +1348,7 @@ dopois:
 			return 2;
 		    } else if (!rn2(33)) {
 			if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
-			monflee(mtmp, d(3, 6), TRUE, FALSE);
+			monflee(mtmp, dice(3, 6), TRUE, FALSE);
 			return 3;
 		    }
 		    dmg = 0;
@@ -1558,7 +1558,7 @@ dopois:
 static int gulpmu(struct monst *mtmp, struct attack  *mattk)
 {
 	struct trap *t = t_at(u.ux, u.uy);
-	int	tmp = d((int)mattk->damn, (int)mattk->damd);
+	int	tmp = dice((int)mattk->damn, (int)mattk->damd);
 	int	tim_tmp;
 	struct obj *otmp2;
 	int	i;
@@ -1751,7 +1751,7 @@ static int explmu(struct monst *mtmp, struct attack  *mattk, boolean ufound)
 	    level.locations[mtmp->mux][mtmp->muy].typ == WATER
 		? "empty water" : "thin air");
     else {
-	int tmp = d((int)mattk->damn, (int)mattk->damd);
+	int tmp = dice((int)mattk->damn, (int)mattk->damd);
 	boolean not_affected = defends((int)mattk->adtyp, uwep);
 
 	hitmsg(mtmp, mattk);
@@ -1876,7 +1876,7 @@ int gazemu(struct monst *mtmp, struct attack  *mattk)	/* monster gazes at you */
 		if (!mtmp->mcan && canseemon(mtmp) &&
 		   couldsee(mtmp->mx, mtmp->my) &&
 		   mtmp->mcansee && !mtmp->mspec_used && rn2(5)) {
-		    int conf = d(3,4);
+		    int conf = dice(3,4);
 
 		    mtmp->mspec_used = mtmp->mspec_used + (conf + rn2(6));
 		    if (!Confusion)
@@ -1892,7 +1892,7 @@ int gazemu(struct monst *mtmp, struct attack  *mattk)	/* monster gazes at you */
 		if (!mtmp->mcan && canseemon(mtmp) &&
 		   couldsee(mtmp->mx, mtmp->my) &&
 		   mtmp->mcansee && !mtmp->mspec_used && rn2(5)) {
-		    int stun = d(2,6);
+		    int stun = dice(2,6);
 
 		    mtmp->mspec_used = mtmp->mspec_used + (stun + rn2(6));
 		    pline("%s stares piercingly at you!", Monnam(mtmp));
@@ -1903,7 +1903,7 @@ int gazemu(struct monst *mtmp, struct attack  *mattk)	/* monster gazes at you */
 	    case AD_BLND:
 		if (!mtmp->mcan && canseemon(mtmp) && !resists_blnd(&youmonst)
 			&& distu(mtmp->mx,mtmp->my) <= BOLT_LIM*BOLT_LIM) {
-		    int blnd = d((int)mattk->damn, (int)mattk->damd);
+		    int blnd = dice((int)mattk->damn, (int)mattk->damd);
 
 		    You("are blinded by %s radiance!",
 			              s_suffix(mon_nam(mtmp)));
@@ -1913,14 +1913,14 @@ int gazemu(struct monst *mtmp, struct attack  *mattk)	/* monster gazes at you */
 		       the Eyes of the Overworld; make them block this
 		       particular stun attack too */
 		    if (!Blind) Your(vision_clears);
-		    else make_stunned((long)d(1,3),TRUE);
+		    else make_stunned((long)dice(1,3),TRUE);
 		}
 		break;
 	    case AD_FIRE:
 		if (!mtmp->mcan && canseemon(mtmp) &&
 			couldsee(mtmp->mx, mtmp->my) &&
 			mtmp->mcansee && !mtmp->mspec_used && rn2(5)) {
-		    int dmg = d(2,6);
+		    int dmg = dice(2,6);
 
 		    pline("%s attacks you with a fiery gaze!", Monnam(mtmp));
 		    stop_occupation();
@@ -2341,10 +2341,10 @@ static int passiveum(struct permonst *olduasmon, struct monst *mtmp,
 	    		olduasmon->mattk[i].aatyp == AT_BOOM) break;
 	}
 	if (olduasmon->mattk[i].damn)
-	    tmp = d((int)olduasmon->mattk[i].damn,
+	    tmp = dice((int)olduasmon->mattk[i].damn,
 				    (int)olduasmon->mattk[i].damd);
 	else if (olduasmon->mattk[i].damd)
-	    tmp = d((int)olduasmon->mlevel+1, (int)olduasmon->mattk[i].damd);
+	    tmp = dice((int)olduasmon->mlevel+1, (int)olduasmon->mattk[i].damd);
 	else
 	    tmp = 0;
 

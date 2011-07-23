@@ -199,11 +199,11 @@ int dmgval(struct obj *otmp, struct monst *mon)
 
 		case BATTLE_AXE:
 		case BARDICHE:
-		case TRIDENT:		tmp += d(2,4); break;
+		case TRIDENT:		tmp += dice(2,4); break;
 
 		case TSURUGI:
 		case DWARVISH_MATTOCK:
-		case TWO_HANDED_SWORD:	tmp += d(2,6); break;
+		case TWO_HANDED_SWORD:	tmp += dice(2,6); break;
 	    }
 	} else {
 	    if (objects[otyp].oc_wsdam)
@@ -773,7 +773,7 @@ static void skill_advance(int skill)
 	P_NAME(skill));
 }
 
-const static struct skill_range {
+static const struct skill_range {
 	short first, last;
 	const char *name;
 } skill_ranges[] = {

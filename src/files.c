@@ -228,25 +228,25 @@ char *fname_decode(char quotechar, char *s, char *callerbuf, int bufsz)
 	return callerbuf;
 }
 
-const char *fqname(const char *basename, int whichprefix, int buffnum)
+const char *fqname(const char *filename, int whichprefix, int buffnum)
 {
-	if (!basename || whichprefix < 0 || whichprefix >= PREFIX_COUNT)
-		return basename;
+	if (!filename || whichprefix < 0 || whichprefix >= PREFIX_COUNT)
+		return filename;
 	if (!fqn_prefix[whichprefix])
-		return basename;
+		return filename;
 	if (buffnum < 0 || buffnum >= FQN_NUMBUF) {
 		impossible("Invalid fqn_filename_buffer specified: %d",
 								buffnum);
 		buffnum = 0;
 	}
-	if (strlen(fqn_prefix[whichprefix]) + strlen(basename) >=
+	if (strlen(fqn_prefix[whichprefix]) + strlen(filename) >=
 						    FQN_MAX_FILENAME) {
 		impossible("fqname too long: %s + %s", fqn_prefix[whichprefix],
-						basename);
-		return basename;	/* XXX */
+						filename);
+		return filename;	/* XXX */
 	}
 	strcpy(fqn_filename_buffer[buffnum], fqn_prefix[whichprefix]);
-	return strcat(fqn_filename_buffer[buffnum], basename);
+	return strcat(fqn_filename_buffer[buffnum], filename);
 }
 
 /* reasonbuf must be at least BUFSZ, supplied by caller */
@@ -256,7 +256,8 @@ int validate_prefix_locations(char *reasonbuf)
 	FILE *fp;
 	const char *filename;
 	int prefcnt, failcount = 0;
-	char panicbuf1[BUFSZ], panicbuf2[BUFSZ], *details;
+	char panicbuf1[BUFSZ], panicbuf2[BUFSZ];
+	const char *details;
 
 	if (reasonbuf) reasonbuf[0] = '\0';
 	for (prefcnt = 1; prefcnt < PREFIX_COUNT; prefcnt++) {

@@ -245,8 +245,8 @@ int castmu(struct monst *mtmp,
 		return 0;
 	    }
 	} else if (mattk->damd)
-	    dmg = d((int)((ml/2) + mattk->damn), (int)mattk->damd);
-	else dmg = d((int)((ml/2) + 1), 6);
+	    dmg = dice((int)((ml/2) + mattk->damn), (int)mattk->damd);
+	else dmg = dice((int)((ml/2) + 1), 6);
 	if (Half_spell_damage) dmg = (dmg+1) / 2;
 
 	ret = 1;
@@ -276,7 +276,7 @@ int castmu(struct monst *mtmp,
 			shieldeff(u.ux, u.uy);
 			pline_The("missiles bounce off!");
 			dmg = 0;
-		} else dmg = d((int)mtmp->m_lev/2 + 1,6);
+		} else dmg = dice((int)mtmp->m_lev/2 + 1,6);
 		break;
 	    case AD_SPEL:	/* wizard spell */
 	    case AD_CLRC:       /* clerical spell */
@@ -411,7 +411,7 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	    make_stunned(1L, FALSE);
 	} else {
 	    You(Stunned ? "struggle to keep your balance." : "reel...");
-	    dmg = d(ACURR(A_DEX) < 12 ? 6 : 4, 4);
+	    dmg = dice(ACURR(A_DEX) < 12 ? 6 : 4, 4);
 	    if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	    make_stunned(HStun + dmg, FALSE);
 	}
@@ -426,7 +426,7 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	    if (canseemon(mtmp))
 		pline("%s looks better.", Monnam(mtmp));
 	    /* note: player healing does 6d4; this used to do 1d8 */
-	    if ((mtmp->mhp += d(3,6)) > mtmp->mhpmax)
+	    if ((mtmp->mhp += dice(3,6)) > mtmp->mhpmax)
 		mtmp->mhp = mtmp->mhpmax;
 	    dmg = 0;
 	}
@@ -467,7 +467,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
     case CLC_GEYSER:
 	/* this is physical damage, not magical damage */
 	pline("A sudden geyser slams into you from nowhere!");
-	dmg = d(8, 6);
+	dmg = dice(8, 6);
 	if (Half_physical_damage) dmg = (dmg + 1) / 2;
 	break;
     case CLC_FIRE_PILLAR:
@@ -476,7 +476,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	    shieldeff(u.ux, u.uy);
 	    dmg = 0;
 	} else
-	    dmg = d(8, 6);
+	    dmg = dice(8, 6);
 	if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	burn_away_slime();
 	burnarmor(&youmonst);
@@ -497,7 +497,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	    if (reflects)
 		break;
 	} else
-	    dmg = d(8, 6);
+	    dmg = dice(8, 6);
 	if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	destroy_item(WAND_CLASS, AD_ELEC);
 	destroy_item(RING_CLASS, AD_ELEC);
@@ -608,7 +608,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	    if (canseemon(mtmp))
 		pline("%s looks better.", Monnam(mtmp));
 	    /* note: player healing does 6d4; this used to do 1d8 */
-	    if ((mtmp->mhp += d(3,6)) > mtmp->mhpmax)
+	    if ((mtmp->mhp += dice(3,6)) > mtmp->mhpmax)
 		mtmp->mhp = mtmp->mhpmax;
 	    dmg = 0;
 	}

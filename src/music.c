@@ -76,7 +76,7 @@ static void put_monsters_to_sleep(int distance)
 
 	while (mtmp) {
 		if (!DEADMONSTER(mtmp) && distu(mtmp->mx, mtmp->my) < distance &&
-			sleep_monst(mtmp, d(10,10), TOOL_CLASS)) {
+			sleep_monst(mtmp, dice(10,10), TOOL_CLASS)) {
 		    mtmp->msleeping = 1; /* 10d10 turns + wake_nearby to rouse */
 		    slept_monst(mtmp);
 		}

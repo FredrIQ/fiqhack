@@ -1349,7 +1349,7 @@ extern void mread(int,void *,unsigned int);
 extern int rn2(int);
 extern int rnl(int);
 extern int rnd(int);
-extern int d(int,int);
+extern int dice(int,int);
 extern int rne(int);
 extern int rnz(int);
 

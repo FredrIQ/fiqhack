@@ -234,8 +234,8 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	char listbuffers[LISTSZ][256];
 	
 	for (i = 0; i < LISTSZ; i++) {
+	    listbuffers[i][0] = '\0';
 	    list[i].caption = listbuffers[i];
-	    list[i].caption[0] = '\0';
 	}
 
 	/* Should we randomly pick for the player? */

@@ -67,7 +67,7 @@ int rnd(int x)
 
 
 /* n <= d(n,x) <= (n*x) */
-int d(int n, int x)
+int dice(int n, int x)
 {
 	int tmp = n;
 

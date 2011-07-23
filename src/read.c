@@ -382,7 +382,7 @@ void recharge(struct obj *obj, int curse_bless)
 		if (is_cursed) {
 		    stripspe(obj);
 		} else if (is_blessed) {
-		    obj->spe += d(2,4);
+		    obj->spe += dice(2,4);
 		    if (obj->spe > 20) obj->spe = 20;
 		    p_glow2(obj, NH_BLUE);
 		} else {
@@ -995,7 +995,7 @@ int seffects(struct obj *sobj)
 		    if (u.uen < u.uenmax)
 			u.uen = u.uenmax;
 		    else
-			u.uen = (u.uenmax += d(5,4));
+			u.uen = (u.uenmax += dice(5,4));
 		    botl = 1;
 		    break;
 		}

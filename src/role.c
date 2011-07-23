@@ -1003,9 +1003,9 @@ void nh_set_gend(int gend)
 	flags.initgend  = gend;
 }
 
-void nh_set_align(int align)
+void nh_set_align(int algn)
 {
-	flags.initalign = align;
+	flags.initalign = algn;
 }
 
 void nh_set_random_player(void)
