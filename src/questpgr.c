@@ -392,7 +392,7 @@ void qt_pager(int msgnum)
 	return;
 }
 
-struct permonst *qt_montype(void)
+const struct permonst *qt_montype(void)
 {
 	int qpm;
 

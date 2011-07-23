@@ -8,7 +8,7 @@ static int moverock(schar dx, schar dy);
 static int still_chewing(xchar,xchar);
 static void dosinkfall(void);
 static boolean findtravelpath(boolean, schar *, schar *);
-static boolean monstinroom(struct permonst *,int);
+static boolean monstinroom(const struct permonst *,int);
 
 static void move_update(boolean);
 
@@ -466,7 +466,7 @@ boolean may_passwall(xchar x, xchar y)
 }
 
 
-boolean bad_rock(struct permonst *mdat, xchar x, xchar y)
+boolean bad_rock(const struct permonst *mdat, xchar x, xchar y)
 {
 	return (boolean) ((In_sokoban(&u.uz) && sobj_at(BOULDER,x,y)) ||
 	       (IS_ROCK(level.locations[x][y].typ)
@@ -1459,7 +1459,7 @@ stillinwater:
 	}
 }
 
-static boolean monstinroom(struct permonst *mdat, int roomno)
+static boolean monstinroom(const struct permonst *mdat, int roomno)
 {
 	struct monst *mtmp;
 

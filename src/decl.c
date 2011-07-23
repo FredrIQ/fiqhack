@@ -7,14 +7,14 @@ int (*afternmv)(void);
 int (*occupation)(void);
 
 /* from xxxmain.c */
-int hackpid = 0;		/* current process id */
+int hackpid;		/* current process id */
 
 int bases[MAXOCLASSES];
 
-int multi = 0;
-int nroom = 0;
-int nsubroom = 0;
-int occtime = 0;
+int multi;
+int nroom;
+int nsubroom;
+int occtime;
 
 int x_maze_max, y_maze_max;	/* initialized in main, used in mkmaze.c */
 int otg_temp;			/* used by object_to_glyph() [otg] */
@@ -29,24 +29,24 @@ struct dgn_topology dungeon_topology;
 struct q_score	quest_status;
 
 int smeq[MAXNROFROOMS+1];
-int doorindex = 0;
+int doorindex;
 
 char *saved_cmd = NULL;
-int killer_format = 0;
-const char *killer = 0;
-const char *delayed_killer = 0;
+int killer_format;
+const char *killer;
+const char *delayed_killer;
 #ifdef GOLDOBJ
-long done_money = 0;
+long done_money;
 #endif
 char killer_buf[BUFSZ];
-const char *nomovemsg = 0;
+const char *nomovemsg;
 const char nul[40];			/* contains zeros */
 char plname[PL_NSIZ];			/* player name */
 char pl_character[PL_CSIZ];
-char pl_race = '\0';
+char pl_race;
 
 char pl_fruit[PL_FSIZ];
-int current_fruit = 0;
+int current_fruit;
 struct fruit *ffruit = NULL;
 
 char tune[6];
@@ -58,7 +58,7 @@ const char ynchars[] = "yn";
 const char ynqchars[] = "ynq";
 const char ynaqchars[] = "ynaq";
 const char ynNaqchars[] = "yn#aq";
-long yn_number = 0L;
+long yn_number;
 
 const char disclosure_options[] = "iavgc";
 
@@ -75,7 +75,7 @@ const schar xdir[11] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0, 0 };
 const schar ydir[11] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0, 0 };
 const schar zdir[11] = {  0, 0, 0, 0, 0, 0, 0, 0, 1,-1, 0 };
 
-schar tbx = 0, tby = 0;	/* mthrowu: target */
+schar tbx, tby;	/* mthrowu: target */
 
 /* for xname handling of multiple shot missile volleys:
    number of shots, index of current one, validity check, shoot vs throw */
@@ -92,12 +92,12 @@ dest_area updest = { 0, 0, 0, 0, 0, 0, 0, 0 };
 dest_area dndest = { 0, 0, 0, 0, 0, 0, 0, 0 };
 coord inv_pos = { 0, 0 };
 
-boolean in_mklev = FALSE;
-boolean stoned = FALSE;	/* done to monsters hit by 'c' */
-boolean unweapon = FALSE;
-boolean mrg_to_wielded = FALSE;
+boolean in_mklev;
+boolean stoned;	/* done to monsters hit by 'c' */
+boolean unweapon;
+boolean mrg_to_wielded;
 			 /* weapon picked is merged with wielded one */
-struct obj *current_wand = 0;	/* wand currently zapped/applied */
+struct obj *current_wand;	/* wand currently zapped/applied */
 
 boolean in_steed_dismounting = FALSE;
 
@@ -109,27 +109,27 @@ struct mkroom* subrooms = &rooms[MAXNROFROOMS+1];
 struct mkroom *upstairs_room, *dnstairs_room, *sstairs_room;
 
 dlevel_t level;		/* level map */
-struct trap *ftrap = NULL;
+struct trap *ftrap;
 struct monst youmonst;
 struct flag flags;
 struct instance_flags iflags;
 struct instance_flags2 iflags2;
 struct you u;
 
-struct obj *invent = NULL,
-	*uwep = NULL, *uarm = NULL,
-	*uswapwep = NULL,
-	*uquiver = NULL, /* quiver */
-	*uarmu = NULL, /* under-wear, so to speak */
-	*uskin = NULL, /* dragon armor, if a dragon */
-	*uarmc = NULL, *uarmh = NULL,
-	*uarms = NULL, *uarmg = NULL,
-	*uarmf = NULL, *uamul = NULL,
-	*uright = NULL,
-	*uleft = NULL,
-	*ublindf = NULL,
-	*uchain = NULL,
-	*uball = NULL;
+struct obj *invent,
+	*uwep, *uarm,
+	*uswapwep,
+	*uquiver, /* quiver */
+	*uarmu, /* under-wear, so to speak */
+	*uskin, /* dragon armor, if a dragon */
+	*uarmc, *uarmh,
+	*uarms, *uarmg,
+	*uarmf, *uamul,
+	*uright,
+	*uleft,
+	*ublindf,
+	*uchain,
+	*uball;
 
 const int shield_static[SHIELD_COUNT] = {
     E_ss1, E_ss2, E_ss3, E_ss2, E_ss1, E_ss2, E_ss4,	/* 7 per row */
@@ -141,12 +141,12 @@ struct spell spl_book[MAXSPELL + 1];
 
 long moves = 1L, monstermoves = 1L;
 	 /* These diverge when player is Fast */
-long wailmsg = 0L;
+long wailmsg;
 
 /* objects that are moving to another dungeon level */
-struct obj *migrating_objs = NULL;
+struct obj *migrating_objs;
 /* objects not yet paid for */
-struct obj *billobjs = NULL;
+struct obj *billobjs;
 
 /* used to zero all elements of a struct obj */
 struct obj zeroobj;
@@ -189,7 +189,7 @@ const char *c_obj_colors[] = {
 	"white",		/* CLR_WHITE */
 };
 
-struct c_common_strings c_common_strings = {
+const struct c_common_strings c_common_strings = {
 	"Nothing happens.",		"That's enough tries!",
 	"That is a silly thing to %s.",	"shudder for a moment.",
 	"something", "Something", "You can move again.", "Never mind.",
@@ -206,8 +206,8 @@ const char *materialnm[] = {
 };
 
 /* Vision */
-boolean vision_full_recalc = 0;
-char	 **viz_array = 0;/* used in cansee() and couldsee() macros */
+boolean vision_full_recalc;
+char **viz_array;/* used in cansee() and couldsee() macros */
 
 char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,
 				NULL, NULL, NULL, NULL };
@@ -216,8 +216,8 @@ const char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
 					"bonesdir", "datadir", "scoredir",
 					"lockdir", "troubledir" };
 
-boolean botl  = 0;	/* partially redo status line */
-boolean botlx = 0;	/* print an entirely new bottom line */
+boolean botl;	/* partially redo status line */
+boolean botlx;	/* print an entirely new bottom line */
 
 
 /*decl.c*/

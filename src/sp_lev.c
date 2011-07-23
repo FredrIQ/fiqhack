@@ -698,7 +698,7 @@ static void create_monster(monster *m, struct mkroom *croom)
     char class;
     aligntyp amask;
     coord cc;
-    struct permonst *pm;
+    const struct permonst *pm;
     unsigned g_mvflags;
 
     if (rn2(100) < m->chance) {
@@ -724,7 +724,7 @@ static void create_monster(monster *m, struct mkroom *croom)
 	    pm = NULL;
 	else if (m->id != NON_PM) {
 	    pm = &mons[m->id];
-	    g_mvflags = (unsigned) mvitals[monsndx(pm)].mvflags;
+	    g_mvflags = (unsigned) mvitals[m->id].mvflags;
 	    if ((pm->geno & G_UNIQ) && (g_mvflags & G_EXTINCT))
 		goto m_done;
 	    else if (g_mvflags & G_GONE)	/* genocided or extinct */

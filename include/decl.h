@@ -255,7 +255,7 @@ extern struct c_color_names {
 /* The names of the colors used for gems, etc. */
 extern const char *c_obj_colors[];
 
-extern struct c_common_strings {
+extern const struct c_common_strings {
     const char	*const c_nothing_happens, *const c_thats_enough_tries,
 		*const c_silly_thing_to, *const c_shudder_for_moment,
 		*const c_something, *const c_Something,

@@ -70,8 +70,8 @@ static int check_control(char *);
 static char *without_control(char *);
 static boolean d_filter(char *);
 static boolean h_filter(char *);
-static boolean ranged_attk(struct permonst*);
-static int mstrength(struct permonst *);
+static boolean ranged_attk(const struct permonst*);
+static int mstrength(const struct permonst *);
 static void build_savebones_compat_string(void);
 
 static boolean qt_comment(char *);
@@ -817,7 +817,7 @@ recheck:
 }
 
 /* returns TRUE if monster can attack at range */
-static boolean ranged_attk(struct permonst *ptr)
+static boolean ranged_attk(const struct permonst *ptr)
 {
 	int	i, j;
 	int atk_mask = (1<<AT_BREA) | (1<<AT_SPIT) | (1<<AT_GAZE);
@@ -834,7 +834,7 @@ static boolean ranged_attk(struct permonst *ptr)
  * an approximation of monster strength.  It uses a similar method of
  * determination as "experience()" to arrive at the strength.
  */
-static int mstrength(struct permonst *ptr)
+static int mstrength(const struct permonst *ptr)
 {
 	int	i, tmp2, n, tmp = ptr->mlevel;
 
@@ -889,7 +889,7 @@ static int mstrength(struct permonst *ptr)
 
 void do_monstr(const char *outfile)
 {
-    struct permonst *ptr;
+    const struct permonst *ptr;
     int i, j;
 
     /*

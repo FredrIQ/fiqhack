@@ -33,7 +33,7 @@ static int enermod(int en)
 /* return # of exp points for mtmp after nk killed */
 int experience(struct monst *mtmp, int nk)
 {
-	struct permonst *ptr = mtmp->data;
+	const struct permonst *ptr = mtmp->data;
 	int	i, tmp, tmp2;
 
 	tmp = 1 + mtmp->m_lev * mtmp->m_lev;

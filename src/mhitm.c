@@ -17,14 +17,14 @@ static const char brief_feeling[] =
 
 static char *mon_nam_too(char *,struct monst *,struct monst *);
 static void mrustm(struct monst *, struct monst *, struct obj *);
-static int hitmm(struct monst *,struct monst *,struct attack *);
-static int gazemm(struct monst *,struct monst *,struct attack *);
-static int gulpmm(struct monst *,struct monst *,struct attack *);
-static int explmm(struct monst *,struct monst *,struct attack *);
-static int mdamagem(struct monst *,struct monst *,struct attack *);
+static int hitmm(struct monst *,struct monst *, const struct attack *);
+static int gazemm(struct monst *,struct monst *, const struct attack *);
+static int gulpmm(struct monst *,struct monst *, const struct attack *);
+static int explmm(struct monst *,struct monst *, const struct attack *);
+static int mdamagem(struct monst *,struct monst *, const struct attack *);
 static void mswingsm(struct monst *, struct monst *, struct obj *);
-static void noises(struct monst *,struct attack *);
-static void missmm(struct monst *,struct monst *,struct attack *);
+static void noises(struct monst *, const struct attack *);
+static void missmm(struct monst *,struct monst *, const struct attack *);
 static int passivemm(struct monst *, struct monst *, boolean, int);
 
 /* Needed for the special case of monsters wielding vorpal blades (rare).
@@ -47,7 +47,7 @@ static char *mon_nam_too(char *outbuf, struct monst *mon, struct monst *other_mo
 	return outbuf;
 }
 
-static void noises(struct monst *magr, struct attack *mattk)
+static void noises(struct monst *magr, const struct attack *mattk)
 {
 	boolean farq = (distu(magr->mx, magr->my) > 15);
 
@@ -60,7 +60,7 @@ static void noises(struct monst *magr, struct attack *mattk)
 	}
 }
 
-static void missmm(struct monst *magr, struct monst *mdef, struct attack *mattk)
+static void missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
 	const char *fmt;
 	char buf[BUFSZ], mdef_name[BUFSZ];
@@ -183,12 +183,14 @@ int mattackm(struct monst *magr, struct monst *mdef)
 		    attk,	/* attack attempted this time */
 		    struck = 0,	/* hit at least once */
 		    res[NATTK];	/* results of all attacks */
-    struct attack   *mattk, alt_attk;
-    struct permonst *pa, *pd;
+    const struct attack *mattk;
+    struct attack alt_attk;
+    const struct permonst *pa, *pd;
 
     if (!magr || !mdef) return MM_MISS;		/* mike@genat */
     if (!magr->mcanmove || magr->msleeping) return MM_MISS;
-    pa = magr->data;  pd = mdef->data;
+    pa = magr->data;
+    pd = mdef->data;
 
     /* Grid bugs cannot attack at an angle. */
     if (pa == &mons[PM_GRID_BUG] && magr->mx != mdef->mx
@@ -358,7 +360,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
 }
 
 /* Returns the result of mdamagem(). */
-static int hitmm(struct monst *magr, struct monst *mdef, struct attack *mattk)
+static int hitmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
 	if (vis){
 		int compat;
@@ -413,7 +415,7 @@ static int hitmm(struct monst *magr, struct monst *mdef, struct attack *mattk)
 
 
 /* Returns the same values as mdamagem(). */
-static int gazemm(struct monst *magr, struct monst *mdef, struct attack *mattk)
+static int gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
 	char buf[BUFSZ];
 
@@ -459,7 +461,7 @@ static int gazemm(struct monst *magr, struct monst *mdef, struct attack *mattk)
 }
 
 /* Returns the same values as mattackm(). */
-static int gulpmm(struct monst *magr, struct monst *mdef, struct attack *mattk)
+static int gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
 	xchar	ax, ay, dx, dy;
 	int	status;
@@ -524,7 +526,7 @@ static int gulpmm(struct monst *magr, struct monst *mdef, struct attack *mattk)
 	return status;
 }
 
-static int explmm(struct monst *magr, struct monst *mdef,struct attack *mattk)
+static int explmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
 	int result;
 
@@ -552,11 +554,12 @@ static int explmm(struct monst *magr, struct monst *mdef,struct attack *mattk)
 /*
  *  See comment at top of mattackm(), for return values.
  */
-static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
+static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
 	struct obj *obj;
 	char buf[BUFSZ];
-	struct permonst *pa = magr->data, *pd = mdef->data;
+	const struct permonst *pa = magr->data;
+	const struct permonst *pd = mdef->data;
 	int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
 	boolean cancelled;
 
@@ -1121,7 +1124,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef,struct attack *mattk)
 }
 
 
-int noattacks(struct permonst *ptr) /* returns 1 if monster doesn't attack */
+int noattacks(const struct permonst *ptr) /* returns 1 if monster doesn't attack */
 {
 	int i;
 
@@ -1212,8 +1215,8 @@ static void mswingsm(struct monst *magr, struct monst *mdef, struct obj *otemp)
 static int passivemm(struct monst *magr, struct monst *mdef,
 		     boolean mhit, int mdead)
 {
-	struct permonst *mddat = mdef->data;
-	struct permonst *madat = magr->data;
+	const struct permonst *mddat = mdef->data;
+	const struct permonst *madat = magr->data;
 	char buf[BUFSZ];
 	int i, tmp;
 

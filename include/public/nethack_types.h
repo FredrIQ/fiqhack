@@ -224,7 +224,7 @@ struct nh_int_option {
 };
 
 struct nh_enum_option {
-    struct nh_listitem *choices;
+    const struct nh_listitem *choices;
     int numchoices;
 };
 

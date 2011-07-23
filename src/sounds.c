@@ -383,7 +383,7 @@ static int domonnoise(struct monst *mtmp)
 {
     const char *pline_msg = 0,	/* Monnam(mtmp) will be prepended */
 			*verbl_msg = 0;	/* verbalize() */
-    struct permonst *ptr = mtmp->data;
+    const struct permonst *ptr = mtmp->data;
     char verbuf[BUFSZ];
 
     /* presumably nearness and sleep checks have already been made */

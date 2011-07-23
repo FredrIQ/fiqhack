@@ -20,9 +20,9 @@ static struct mkroom * pick_room(boolean);
 static void mkshop(void), mkzoo(int), mkswamp(void);
 static void mktemple(void);
 static coord * shrine_pos(int);
-static struct permonst * morguemon(void);
-static struct permonst * antholemon(void);
-static struct permonst * squadmon(void);
+static const struct permonst * morguemon(void);
+static const struct permonst * antholemon(void);
+static const struct permonst * squadmon(void);
 static void save_room(int,struct mkroom *);
 static void rest_room(int,struct mkroom *);
 
@@ -362,7 +362,7 @@ void fill_zoo(struct mkroom *sroom)
 void mkundead(coord *mm, boolean revive_corpses, int mm_flags)
 {
 	int cnt = (level_difficulty() + 1)/10 + rnd(5);
-	struct permonst *mdat;
+	const struct permonst *mdat;
 	struct obj *otmp;
 	coord cc;
 
@@ -377,7 +377,7 @@ void mkundead(coord *mm, boolean revive_corpses, int mm_flags)
 	level.flags.graveyard = TRUE;	/* reduced chance for undead corpse */
 }
 
-static struct permonst *morguemon(void)
+static const struct permonst *morguemon(void)
 {
 	int i = rn2(100), hd = rn2(level_difficulty());
 
@@ -391,7 +391,7 @@ static struct permonst *morguemon(void)
 			: (i < 40) ? &mons[PM_WRAITH] : mkclass(S_ZOMBIE,0);
 }
 
-static struct permonst *antholemon(void)
+static const struct permonst *antholemon(void)
 {
 	int mtyp;
 
@@ -594,7 +594,7 @@ struct mkroom *search_special(schar type)
 }
 
 
-struct permonst *courtmon(void)
+const struct permonst *courtmon(void)
 {
 	int     i = rn2(60) + rn2(3*level_difficulty());
 	if (i > 100)		return mkclass(S_DRAGON,0);
@@ -617,7 +617,7 @@ static struct {
     {PM_SOLDIER, 80}, {PM_SERGEANT, 15}, {PM_LIEUTENANT, 4}, {PM_CAPTAIN, 1}
 };
 
-static struct permonst *squadmon(void)	/* return soldier types. */
+static const struct permonst *squadmon(void)	/* return soldier types. */
 {
 	int sel_prob, i, cpro, mndx;
 

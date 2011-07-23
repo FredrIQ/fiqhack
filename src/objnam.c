@@ -1908,7 +1908,6 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 	}
 
 	/* Alternate spellings (pick-ax, silver sabre, &c) */
-    {
 	struct alt_spellings *as = spellings;
 
 	while (as->sp) {
@@ -1921,7 +1920,6 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 	/* can't use spellings list for this one due to shuffling */
 	if (!strncmpi(bp, "grey spell", 10))
 		*(bp + 2) = 'a';
-    }
 
 	/* dragon scales - assumes order of dragons */
 	if (!strcmpi(bp, "scales") &&
@@ -2145,6 +2143,12 @@ srch:
 			ftype = f->fid;
 			goto typfnd;
 		}
+	    }
+	    
+	    /* make it possible to wish for "fruit" */
+	    if (!strcmpi(bp, "fruit")) {
+		    typ = SLIME_MOLD;
+		    goto typfnd;
 	    }
 	}
 

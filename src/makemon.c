@@ -17,8 +17,8 @@ static struct monst zeromonst;
 		  (mptr->msound == MS_LEADER || mptr->msound == MS_NEMESIS))
 
 static boolean uncommon(int);
-static int align_shift(struct permonst *);
-static boolean wrong_elem_type(struct permonst *);
+static int align_shift(const struct permonst *);
+static boolean wrong_elem_type(const struct permonst *);
 static void m_initgrp(struct monst *,int,int,int);
 static void m_initthrow(struct monst *,int,int);
 static void m_initweap(struct monst *);
@@ -31,7 +31,7 @@ extern const int monstr[];
 #define toostrong(monindx, lev) (monstr[monindx] > lev)
 #define tooweak(monindx, lev)	(monstr[monindx] < lev)
 
-boolean is_home_elemental(struct permonst *ptr)
+boolean is_home_elemental(const struct permonst *ptr)
 {
 	if (ptr->mlet == S_ELEMENTAL)
 	    switch (monsndx(ptr)) {
@@ -46,7 +46,7 @@ boolean is_home_elemental(struct permonst *ptr)
 /*
  * Return true if the given monster cannot exist on this elemental level.
  */
-static boolean wrong_elem_type(struct permonst *ptr)
+static boolean wrong_elem_type(const struct permonst *ptr)
 {
     if (ptr->mlet == S_ELEMENTAL) {
 	return (boolean)(!is_home_elemental(ptr));
@@ -112,7 +112,7 @@ static void m_initthrow(struct monst *mtmp, int otyp, int oquan)
 
 static void m_initweap(struct monst *mtmp)
 {
-	struct permonst *ptr = mtmp->data;
+	const struct permonst *ptr = mtmp->data;
 	int mm = monsndx(ptr);
 	struct obj *otmp;
 
@@ -430,7 +430,7 @@ static void m_initinv(struct monst *mtmp)
 {
 	int cnt;
 	struct obj *otmp;
-	struct permonst *ptr = mtmp->data;
+	const struct permonst *ptr = mtmp->data;
 	if (Is_rogue_level(&u.uz)) return;
 /*
  *	Soldiers get armour & rations - armour approximates their ac.
@@ -752,7 +752,7 @@ boolean propagate(int mndx, boolean tally, boolean ghostly)
  *
  *	In case we make a monster group, only return the one at [x,y].
  */
-struct monst *makemon(struct permonst *ptr, int x, int y, int mmflags)
+struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 {
 	struct monst *mtmp;
 	int mndx, mcham, ct, mitem, xlth;
@@ -1026,7 +1026,7 @@ int mbirth_limit(int mndx)
 /* used for wand/scroll/spell of create monster */
 /* returns TRUE iff you know monsters have been created */
 boolean create_critters(int cnt,
-			struct permonst *mptr) /* usually null; used for confused reading */
+			const struct permonst *mptr) /* usually null; used for confused reading */
 {
 	coord c;
 	int x, y;
@@ -1070,7 +1070,7 @@ static boolean uncommon(int mndx)
  *	comparing the dungeon alignment and monster alignment.
  *	return an integer in the range of 0-5.
  */
-static int align_shift(struct permonst *ptr)
+static int align_shift(const struct permonst *ptr)
 {
     static long oldmoves = 0L;	/* != 1, starting value of moves */
     static s_level *lev;
@@ -1100,9 +1100,9 @@ static struct {
 } rndmonst_state = { -1, {0} };
 
 /* select a random monster type */
-struct permonst *rndmonst(void)
+const struct permonst *rndmonst(void)
 {
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	int mndx, ct;
 
 	if (u.uz.dnum == quest_dnum && rn2(7) && (ptr = qt_montype()) != 0)
@@ -1203,7 +1203,7 @@ void reset_rndmonst(int mndx)
  *	in that class can be made.
  */
 
-struct permonst *mkclass(char class, int spc)
+const struct permonst *mkclass(char class, int spc)
 {
 	int	first, last, num = 0;
 	int maxmlev, mask = (G_NOGEN | G_UNIQ) & ~spc;
@@ -1252,7 +1252,7 @@ struct permonst *mkclass(char class, int spc)
 }
 
 /* adjust strength of monsters based on u.uz and u.ulevel */
-int adj_lev(struct permonst *ptr)
+int adj_lev(const struct permonst *ptr)
 {
 	int	tmp, tmp2;
 
@@ -1279,12 +1279,12 @@ int adj_lev(struct permonst *ptr)
 }
 
 
-struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" into a bigger version */
+const struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" into a bigger version */
 			 struct monst *victim)
 {
 	int oldtype, newtype, max_increase, cur_increase,
 	    lev_limit, hp_threshold;
-	struct permonst *ptr = mtmp->data;
+	const struct permonst *ptr = mtmp->data;
 
 	/* monster died after killing enemy but before calling this function */
 	/* currently possible if killing a gas spore */
@@ -1438,7 +1438,7 @@ int golemhp(int type)
  *	Alignment vs. yours determines monster's attitude to you.
  *	( some "animal" types are co-aligned, but also hungry )
  */
-boolean peace_minded(struct permonst *ptr)
+boolean peace_minded(const struct permonst *ptr)
 {
 	aligntyp mal = ptr->maligntyp, ual = u.ualign.type;
 

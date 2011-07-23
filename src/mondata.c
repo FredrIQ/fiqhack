@@ -7,7 +7,7 @@
 
 /*	These routines provide basic data for any type of monster. */
 
-void set_mon_data(struct monst *mon, struct permonst *ptr, int flag)
+void set_mon_data(struct monst *mon, const struct permonst *ptr, int flag)
 {
     mon->data = ptr;
     if (flag == -1) return;		/* "don't care" */
@@ -20,9 +20,9 @@ void set_mon_data(struct monst *mon, struct permonst *ptr, int flag)
 }
 
 
-struct attack *attacktype_fordmg(struct permonst *ptr, int atyp, int dtyp)
+const struct attack *attacktype_fordmg(const struct permonst *ptr, int atyp, int dtyp)
 {
-    struct attack *a;
+    const struct attack *a;
 
     for (a = &ptr->mattk[0]; a < &ptr->mattk[NATTK]; a++)
 	if (a->aatyp == atyp && (dtyp == AD_ANY || a->adtyp == dtyp))
@@ -31,13 +31,13 @@ struct attack *attacktype_fordmg(struct permonst *ptr, int atyp, int dtyp)
     return NULL;
 }
 
-boolean attacktype(struct permonst *ptr, int atyp)
+boolean attacktype(const struct permonst *ptr, int atyp)
 {
     return attacktype_fordmg(ptr, atyp, AD_ANY) ? TRUE : FALSE;
 }
 
 
-boolean poly_when_stoned(struct permonst *ptr)
+boolean poly_when_stoned(const struct permonst *ptr)
 {
     return((boolean)(is_golem(ptr) && ptr != &mons[PM_STONE_GOLEM] &&
 	    !(mvitals[PM_STONE_GOLEM].mvflags & G_GENOD)));
@@ -47,7 +47,7 @@ boolean poly_when_stoned(struct permonst *ptr)
 /* returns TRUE if monster is drain-life resistant */
 boolean resists_drli(struct monst *mon)
 {
-	struct permonst *ptr = mon->data;
+	const struct permonst *ptr = mon->data;
 	struct obj *wep = ((mon == &youmonst) ? uwep : MON_WEP(mon));
 
 	return (boolean)(is_undead(ptr) || is_demon(ptr) || is_were(ptr) ||
@@ -58,7 +58,7 @@ boolean resists_drli(struct monst *mon)
 /* TRUE if monster is magic-missile resistant */
 boolean resists_magm(struct monst *mon)
 {
-	struct permonst *ptr = mon->data;
+	const struct permonst *ptr = mon->data;
 	struct obj *o;
 
 	/* as of 3.2.0:  gray dragons, Angels, Oracle, Yeenoghu */
@@ -81,7 +81,7 @@ boolean resists_magm(struct monst *mon)
 /* TRUE iff monster is resistant to light-induced blindness */
 boolean resists_blnd(struct monst *mon)
 {
-	struct permonst *ptr = mon->data;
+	const struct permonst *ptr = mon->data;
 	boolean is_you = (mon == &youmonst);
 	struct obj *o;
 
@@ -189,7 +189,7 @@ boolean can_blnd(struct monst *magr,	/* NULL == no specific aggressor */
 
 
 /* returns TRUE if monster can attack at range */
-boolean ranged_attk(struct permonst *ptr)
+boolean ranged_attk(const struct permonst *ptr)
 {
 	int i, atyp;
 	long atk_mask = (1L << AT_BREA) | (1L << AT_SPIT) | (1L << AT_GAZE);
@@ -210,7 +210,7 @@ boolean ranged_attk(struct permonst *ptr)
 }
 
 /* returns TRUE if monster is especially affected by silver weapons */
-boolean hates_silver(struct permonst *ptr)
+boolean hates_silver(const struct permonst *ptr)
 {
 	return((boolean)(is_were(ptr) || ptr->mlet==S_VAMPIRE || is_demon(ptr) ||
 		ptr == &mons[PM_SHADE] ||
@@ -218,7 +218,7 @@ boolean hates_silver(struct permonst *ptr)
 }
 
 /* true iff the type of monster pass through iron bars */
-boolean passes_bars(struct permonst *mptr)
+boolean passes_bars(const struct permonst *mptr)
 {
     return (boolean) (passes_walls(mptr) || amorphous(mptr) ||
 		      is_whirly(mptr) || verysmall(mptr) ||
@@ -227,7 +227,7 @@ boolean passes_bars(struct permonst *mptr)
 
 
 /* returns TRUE if monster can track well */
-boolean can_track(struct permonst *ptr)
+boolean can_track(const struct permonst *ptr)
 {
 	if (uwep && uwep->oartifact == ART_EXCALIBUR)
 		return TRUE;
@@ -236,14 +236,14 @@ boolean can_track(struct permonst *ptr)
 }
 
 /* creature will slide out of armor */
-boolean sliparm(struct permonst *ptr)
+boolean sliparm(const struct permonst *ptr)
 {
 	return((boolean)(is_whirly(ptr) || ptr->msize <= MZ_SMALL ||
 			 noncorporeal(ptr)));
 }
 
 /* creature will break out of armor */
-boolean breakarm(struct permonst *ptr)
+boolean breakarm(const struct permonst *ptr)
 {
 	return ((bigmonst(ptr) || (ptr->msize > MZ_SMALL && !humanoid(ptr)) ||
 		/* special cases of humanoids that cannot wear body armor */
@@ -252,14 +252,14 @@ boolean breakarm(struct permonst *ptr)
 }
 
 /* creature sticks other creatures it hits */
-boolean sticks(struct permonst *ptr)
+boolean sticks(const struct permonst *ptr)
 {
 	return((boolean)(dmgtype(ptr,AD_STCK) || dmgtype(ptr,AD_WRAP) ||
 		attacktype(ptr,AT_HUGS)));
 }
 
 /* number of horns this type of monster has on its head */
-int num_horns(struct permonst *ptr)
+int num_horns(const struct permonst *ptr)
 {
     switch (monsndx(ptr)) {
     case PM_HORNED_DEVIL:	/* ? "more than one" */
@@ -278,9 +278,9 @@ int num_horns(struct permonst *ptr)
     return 0;
 }
 
-struct attack *dmgtype_fromattack(struct permonst *ptr, int dtyp, int atyp)
+const struct attack *dmgtype_fromattack(const struct permonst *ptr, int dtyp, int atyp)
 {
-    struct attack *a;
+    const struct attack *a;
 
     for (a = &ptr->mattk[0]; a < &ptr->mattk[NATTK]; a++)
 	if (a->adtyp == dtyp && (atyp == AT_ANY || a->aatyp == atyp))
@@ -289,7 +289,7 @@ struct attack *dmgtype_fromattack(struct permonst *ptr, int dtyp, int atyp)
     return NULL;
 }
 
-boolean dmgtype(struct permonst *ptr, int dtyp)
+boolean dmgtype(const struct permonst *ptr, int dtyp)
 {
     return dmgtype_fromattack(ptr, dtyp, AT_ANY) ? TRUE : FALSE;
 }
@@ -322,7 +322,7 @@ int max_passive_dmg(struct monst *mdef, struct monst *magr)
 
 
 /* return an index into the mons array */
-int monsndx(struct permonst *ptr)
+int monsndx(const struct permonst *ptr)
 {
 	int i;
 
@@ -609,7 +609,7 @@ const char *stagger(const struct permonst *ptr, const char *def)
 }
 
 /* return a phrase describing the effect of fire attack on a type of monster */
-const char *on_fire(struct permonst *mptr, struct attack *mattk)
+const char *on_fire(const struct permonst *mptr, const struct attack *mattk)
 {
     const char *what;
 

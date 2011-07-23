@@ -549,7 +549,7 @@ extern boolean revive_nasty(int,int,const char*);
 extern void movobj(struct obj *,xchar,xchar);
 extern boolean may_dig(xchar,xchar);
 extern boolean may_passwall(xchar,xchar);
-extern boolean bad_rock(struct permonst *,xchar,xchar);
+extern boolean bad_rock(const struct permonst *,xchar,xchar);
 extern boolean invocation_pos(xchar,xchar);
 extern boolean test_move(int, int, int, int, int, int);
 extern void domove(schar dx, schar dy, schar dz);
@@ -734,18 +734,18 @@ extern void getlock(int locknum);
 
 /* ### makemon.c ### */
 
-extern boolean is_home_elemental(struct permonst *);
+extern boolean is_home_elemental(const struct permonst *);
 extern struct monst *clone_mon(struct monst *,xchar,xchar);
-extern struct monst *makemon(struct permonst *,int,int,int);
-extern boolean create_critters(int,struct permonst *);
-extern struct permonst *rndmonst(void);
+extern struct monst *makemon(const struct permonst *,int,int,int);
+extern boolean create_critters(int, const struct permonst *);
+extern const struct permonst *rndmonst(void);
 extern void reset_rndmonst(int);
-extern struct permonst *mkclass(char,int);
-extern int adj_lev(struct permonst *);
-extern struct permonst *grow_up(struct monst *,struct monst *);
+extern const struct permonst *mkclass(char,int);
+extern int adj_lev(const struct permonst *);
+extern const struct permonst *grow_up(struct monst *,struct monst *);
 extern int mongets(struct monst *,int);
 extern int golemhp(int);
-extern boolean peace_minded(struct permonst *);
+extern boolean peace_minded(const struct permonst *);
 extern void set_malign(struct monst *);
 extern void set_mimic_sym(struct monst *);
 extern int mbirth_limit(int);
@@ -758,30 +758,30 @@ extern boolean propagate(int,boolean,boolean);
 
 /* ### mcastu.c ### */
 
-extern int castmu(struct monst *,struct attack *,boolean,boolean);
-extern int buzzmu(struct monst *,struct attack *);
+extern int castmu(struct monst *, const struct attack *, boolean, boolean);
+extern int buzzmu(struct monst *, const struct attack *);
 
 /* ### mhitm.c ### */
 
 extern int fightm(struct monst *);
 extern int mattackm(struct monst *,struct monst *);
-extern int noattacks(struct permonst *);
+extern int noattacks(const struct permonst *);
 extern int sleep_monst(struct monst *,int,int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
 
 /* ### mhitu.c ### */
 
-extern const char *mpoisons_subj(struct monst *,struct attack *);
+extern const char *mpoisons_subj(struct monst *, const struct attack *);
 extern void u_slow_down(void);
 extern struct monst *cloneu(void);
-extern void expels(struct monst *,struct permonst *,boolean);
-extern struct attack *getmattk(struct permonst *,int,int *,struct attack *);
+extern void expels(struct monst *,const struct permonst *,boolean);
+extern const struct attack *getmattk(const struct permonst *,int,int *, struct attack *);
 extern int mattacku(struct monst *);
 extern int magic_negation(struct monst *);
-extern int gazemu(struct monst *,struct attack *);
+extern int gazemu(struct monst *, const struct attack *);
 extern void mdamageu(struct monst *,int);
-extern int could_seduce(struct monst *,struct monst *,struct attack *);
+extern int could_seduce(struct monst *,struct monst *, const struct attack *);
 extern int doseduce(struct monst *);
 
 /* ### minion.c ### */
@@ -851,12 +851,12 @@ extern int bcsign(struct obj *);
 extern int weight(struct obj *);
 extern struct obj *mkgold(long,int,int);
 extern struct obj *mkcorpstat
-	(int,struct monst *,struct permonst *,int,int,boolean);
+	(int,struct monst *,const struct permonst *,int,int,boolean);
 extern struct obj *obj_attach_mid(struct obj *, unsigned);
 extern struct monst *get_mtraits(struct obj *, boolean);
 extern struct obj *mk_tt_object(int,int,int);
 extern struct obj *mk_named_object
-	(int,struct permonst *,int,int,const char *);
+	(int, const struct permonst *, int, int, const char *);
 extern struct obj *rnd_treefruit_at(int, int);
 extern void start_corpse_timeout(struct obj *);
 extern void bless(struct obj *);
@@ -893,7 +893,7 @@ extern int somey(struct mkroom *);
 extern boolean inside_room(struct mkroom *,xchar,xchar);
 extern boolean somexy(struct mkroom *,coord *);
 extern void mkundead(coord *,boolean,int);
-extern struct permonst *courtmon(void);
+extern const struct permonst *courtmon(void);
 extern void save_rooms(int);
 extern void rest_rooms(int);
 extern struct mkroom *search_special(schar);
@@ -944,7 +944,7 @@ extern void rescham(void);
 extern void restartcham(void);
 extern void restore_cham(struct monst *);
 extern void mon_animal_list(boolean);
-extern int newcham(struct monst *,struct permonst *,boolean,boolean);
+extern int newcham(struct monst *,const struct permonst *,boolean,boolean);
 extern int can_be_hatched(int);
 extern int egg_type_from_parent(int,boolean);
 extern boolean dead_species(int,boolean);
@@ -955,26 +955,26 @@ extern void pacify_guards(void);
 
 /* ### mondata.c ### */
 
-extern void set_mon_data(struct monst *,struct permonst *,int);
-extern struct attack *attacktype_fordmg(struct permonst *,int,int);
-extern boolean attacktype(struct permonst *,int);
-extern boolean poly_when_stoned(struct permonst *);
+extern void set_mon_data(struct monst *,const struct permonst *,int);
+extern const struct attack *attacktype_fordmg(const struct permonst *,int,int);
+extern boolean attacktype(const struct permonst *,int);
+extern boolean poly_when_stoned(const struct permonst *);
 extern boolean resists_drli(struct monst *);
 extern boolean resists_magm(struct monst *);
 extern boolean resists_blnd(struct monst *);
 extern boolean can_blnd(struct monst *,struct monst *,uchar,struct obj *);
-extern boolean ranged_attk(struct permonst *);
-extern boolean hates_silver(struct permonst *);
-extern boolean passes_bars(struct permonst *);
-extern boolean can_track(struct permonst *);
-extern boolean breakarm(struct permonst *);
-extern boolean sliparm(struct permonst *);
-extern boolean sticks(struct permonst *);
-extern int num_horns(struct permonst *);
-extern struct attack *dmgtype_fromattack(struct permonst *,int,int);
-extern boolean dmgtype(struct permonst *,int);
+extern boolean ranged_attk(const struct permonst *);
+extern boolean hates_silver(const struct permonst *);
+extern boolean passes_bars(const struct permonst *);
+extern boolean can_track(const struct permonst *);
+extern boolean breakarm(const struct permonst *);
+extern boolean sliparm(const struct permonst *);
+extern boolean sticks(const struct permonst *);
+extern int num_horns(const struct permonst *);
+extern const struct attack *dmgtype_fromattack(const struct permonst *,int,int);
+extern boolean dmgtype(const struct permonst *,int);
 extern int max_passive_dmg(struct monst *,struct monst *);
-extern int monsndx(struct permonst *);
+extern int monsndx(const struct permonst *);
 extern int name_to_mon(const char *);
 extern int gender(struct monst *);
 extern int pronoun_gender(struct monst *);
@@ -983,7 +983,7 @@ extern int little_to_big(int);
 extern int big_to_little(int);
 extern const char *locomotion(const struct permonst *,const char *);
 extern const char *stagger(const struct permonst *,const char *);
-extern const char *on_fire(struct permonst *,struct attack *);
+extern const char *on_fire(const struct permonst *, const struct attack *);
 extern const struct permonst *raceptr(struct monst *);
 
 /* ### monmove.c ### */
@@ -1003,7 +1003,7 @@ extern boolean can_ooze(struct monst *);
 
 /* ### mplayer.c ### */
 
-extern struct monst *mk_mplayer(struct permonst *,xchar,
+extern struct monst *mk_mplayer(const struct permonst *,xchar,
 				   xchar,boolean);
 extern void create_mplayers(int,boolean);
 extern void mplayer_talk(struct monst *);
@@ -1032,8 +1032,8 @@ extern void Delay(int);
 extern int thitu(int,int,struct obj *,const char *);
 extern int ohitmon(struct monst *,struct obj *,int,boolean);
 extern void thrwmu(struct monst *);
-extern int spitmu(struct monst *,struct attack *);
-extern int breamu(struct monst *,struct attack *);
+extern int spitmu(struct monst *, const struct attack *);
+extern int breamu(struct monst *, const struct attack *);
 extern boolean linedup(xchar,xchar,xchar,xchar);
 extern boolean lined_up(struct monst *);
 extern struct obj *m_carrying(struct monst *,int);
@@ -1254,7 +1254,7 @@ extern boolean p_coaligned(struct monst *);
 extern struct monst *findpriest(char);
 extern void intemple(int);
 extern void priest_talk(struct monst *);
-extern struct monst *mk_roamer(struct permonst *,aligntyp,
+extern struct monst *mk_roamer(const struct permonst *,aligntyp,
 				  xchar,xchar,boolean);
 extern void reset_hostility(struct monst *);
 extern boolean in_your_sanctuary(struct monst *,xchar,xchar);
@@ -1285,7 +1285,7 @@ extern const char *ldrname(void);
 extern boolean is_quest_artifact(struct obj*);
 extern void com_pager(int);
 extern void qt_pager(int);
-extern struct permonst *qt_montype(void);
+extern const struct permonst *qt_montype(void);
 
 /* ### random.c ### */
 
@@ -1547,8 +1547,8 @@ extern int def_char_to_monclass(char);
 /* ### teleport.c ### */
 
 extern boolean goodpos(int,int,struct monst *,unsigned);
-extern boolean enexto(coord *,xchar,xchar,struct permonst *);
-extern boolean enexto_core(coord *,xchar,xchar,struct permonst *,unsigned);
+extern boolean enexto(coord *,xchar,xchar,const struct permonst *);
+extern boolean enexto_core(coord *,xchar,xchar,const struct permonst *,unsigned);
 extern void teleds(int,int,boolean);
 extern boolean safe_teleds(boolean);
 extern boolean teleport_pet(struct monst *,boolean);
@@ -1657,10 +1657,10 @@ extern void check_caitiff(struct monst *);
 extern schar find_roll_to_hit(struct monst *);
 extern boolean attack(struct monst *, schar, schar);
 extern boolean hmon(struct monst *,struct obj *,int);
-extern int damageum(struct monst *,struct attack *);
-extern void missum(struct monst *,struct attack *);
+extern int damageum(struct monst *, const struct attack *);
+extern void missum(struct monst *, const struct attack *);
 extern int passive(struct monst *,boolean,int,uchar);
-extern void passive_obj(struct monst *,struct obj *,struct attack *);
+extern void passive_obj(struct monst *,struct obj *, const struct attack *);
 extern void stumble_onto_mimic(struct monst *, schar, schar);
 extern int flash_hits_mon(struct monst *,struct obj *);
 
@@ -1722,7 +1722,7 @@ extern void skill_init(const struct def_skill *);
 
 extern void were_change(struct monst *);
 extern void new_were(struct monst *);
-extern int were_summon(struct permonst *,boolean,int *,char *);
+extern int were_summon(const struct permonst *,boolean,int *,char *);
 extern void you_were(void);
 extern void you_unwere(boolean);
 

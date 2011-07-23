@@ -18,7 +18,7 @@ boolean m_using = FALSE;
  * don't know not to read scrolls, etc....
  */
 
-static struct permonst *muse_newcham_mon(struct monst *);
+static const struct permonst *muse_newcham_mon(struct monst *);
 static int precheck(struct monst *,struct obj *);
 static void mzapmsg(struct monst *,struct obj *,boolean);
 static void mreadmsg(struct monst *,struct obj *);
@@ -658,7 +658,7 @@ mon_tele:
 	case MUSE_WAN_CREATE_MONSTER:
 	    {	coord cc;
 		    /* pm: 0 => random, eel => aquatic, croc => amphibious */
-		struct permonst *pm = !is_pool(mtmp->mx, mtmp->my) ? 0 :
+		const struct permonst *pm = !is_pool(mtmp->mx, mtmp->my) ? 0 :
 			     &mons[u.uinwater ? PM_GIANT_EEL : PM_CROCODILE];
 		struct monst *mon;
 
@@ -672,7 +672,7 @@ mon_tele:
 	    }
 	case MUSE_SCR_CREATE_MONSTER:
 	    {	coord cc;
-		struct permonst *pm = 0, *fish = 0;
+		const struct permonst *pm = 0, *fish = 0;
 		int cnt = 1;
 		struct monst *mon;
 		boolean known = FALSE;
@@ -877,7 +877,7 @@ mon_tele:
 
 int rnd_defensive_item(struct monst *mtmp)
 {
-	struct permonst *pm = mtmp->data;
+	const struct permonst *pm = mtmp->data;
 	int difficulty = monstr[(monsndx(pm))];
 	int trycnt = 0;
 
@@ -1423,7 +1423,7 @@ int use_offensive(struct monst *mtmp)
 
 int rnd_offensive_item(struct monst *mtmp)
 {
-	struct permonst *pm = mtmp->data;
+	const struct permonst *pm = mtmp->data;
 	int difficulty = monstr[(monsndx(pm))];
 
 	if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
@@ -1470,7 +1470,7 @@ int rnd_offensive_item(struct monst *mtmp)
 boolean find_misc(struct monst *mtmp)
 {
 	struct obj *obj;
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 	int x = mtmp->mx, y = mtmp->my;
 	struct trap *t;
 	int xx, yy;
@@ -1578,7 +1578,7 @@ boolean find_misc(struct monst *mtmp)
 
 /* type of monster to polymorph into; defaults to one suitable for the
    current level rather than the totally arbitrary choice of newcham() */
-static struct permonst *muse_newcham_mon(struct monst *mon)
+static const struct permonst *muse_newcham_mon(struct monst *mon)
 {
 	struct obj *m_armr;
 
@@ -1801,7 +1801,7 @@ static void you_aggravate(struct monst *mtmp)
 
 int rnd_misc_item(struct monst *mtmp)
 {
-	struct permonst *pm = mtmp->data;
+	const struct permonst *pm = mtmp->data;
 	int difficulty = monstr[(monsndx(pm))];
 
 	if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)

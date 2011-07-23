@@ -502,7 +502,7 @@ int touch_artifact(struct obj *obj, struct monst *mon)
 /* decide whether an artifact's special attacks apply against mtmp */
 static int spec_applies(const struct artifact *weap, struct monst *mtmp)
 {
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	boolean yours;
 
 	if (!(weap->spfx & (SPFX_DBONUS | SPFX_ATTK)))
@@ -688,7 +688,7 @@ static boolean Mb_hit(
     char *hittee		/* target's name: "you" or mon_nam(mdef) */
     )
 {
-    struct permonst *old_uasmon;
+    const struct permonst *old_uasmon;
     const char *verb;
     boolean youattack = (magr == &youmonst),
 	    youdefend = (mdef == &youmonst),

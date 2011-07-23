@@ -18,7 +18,7 @@ static void kill_eggs(struct obj *);
 
 
 static struct obj *make_corpse(struct monst *);
-static void m_detach(struct monst *, struct permonst *);
+static void m_detach(struct monst *, const struct permonst *);
 static void lifesaved_monster(struct monst *);
 
 /* convert the monster index of an undead to its living counterpart */
@@ -73,7 +73,7 @@ int genus(int mndx, int mode)
 	case PM_WARRIOR:     mndx = mode ? PM_VALKYRIE  : PM_HUMAN; break;
 	default:
 		if (mndx >= LOW_PM && mndx < NUMMONS) {
-			struct permonst *ptr = &mons[mndx];
+			const struct permonst *ptr = &mons[mndx];
 			if (is_human(ptr))      mndx = PM_HUMAN;
 			else if (is_elf(ptr))   mndx = PM_ELF;
 			else if (is_dwarf(ptr)) mndx = PM_DWARF;
@@ -125,7 +125,7 @@ static short cham_to_pm[] = {
  */
 static struct obj *make_corpse(struct monst *mtmp)
 {
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 	int num;
 	struct obj *obj = NULL;
 	int x = mtmp->mx, y = mtmp->my;
@@ -539,7 +539,7 @@ int movemon(void)
 int meatmetal(struct monst *mtmp)
 {
 	struct obj *otmp;
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	int poly, grow, heal, mstone;
 
 	/* If a pet, eating is handled separately, in dog.c */
@@ -627,7 +627,7 @@ int meatmetal(struct monst *mtmp)
 int meatobj(struct monst *mtmp)
 {
 	struct obj *otmp, *otmp2;
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	int poly, grow, heal, count = 0, ecount = 0;
 	char buf[BUFSZ];
 
@@ -820,7 +820,7 @@ int max_mon_load(struct monst *mtmp)
 boolean can_carry(struct monst *mtmp, struct obj *otmp)
 {
 	int otyp = otmp->otyp, newload = otmp->owt;
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 
 	if (notake(mdat)) return FALSE;		/* can't carry anything */
 
@@ -860,7 +860,7 @@ int mfndpos(struct monst *mon,
 	    long *info,		/* long info[9] */
 	    long flag)
 {
-	struct permonst *mdat = mon->data;
+	const struct permonst *mdat = mon->data;
 	xchar x,y,nx,ny;
 	int cnt = 0;
 	uchar ntyp;
@@ -1168,7 +1168,7 @@ void relmon(struct monst *mon)
 
 /* remove effects of mtmp from other data structures */
 static void m_detach(struct monst *mtmp, 
-		     struct permonst *mptr) /* reflects mtmp->data _prior_ to mtmp's death */
+		     const struct permonst *mptr) /* reflects mtmp->data _prior_ to mtmp's death */
 {
 	if (mtmp->mleashed) m_unleash(mtmp, FALSE);
 	    /* to prevent an infinite relobj-flooreffects-hmon-killed loop */
@@ -1240,7 +1240,7 @@ static void lifesaved_monster(struct monst *mtmp)
 
 void mondead(struct monst *mtmp)
 {
-	struct permonst *mptr;
+	const struct permonst *mptr;
 	int tmp;
 
 	if (mtmp->isgd) {
@@ -1312,7 +1312,7 @@ boolean corpse_chance(struct monst *mon,
 		      struct monst *magr,	/* killer, if swallowed */
 		      boolean was_swallowed)	/* digestion */
 {
-	struct permonst *mdat = mon->data;
+	const struct permonst *mdat = mon->data;
 	int i, tmp;
 
 	if (mdat == &mons[PM_VLAD_THE_IMPALER] || mdat->mlet == S_LICH) {
@@ -1542,7 +1542,7 @@ void xkilled(struct monst *mtmp, int dest)
  */
 {
 	int tmp, x = mtmp->mx, y = mtmp->my;
-	struct permonst *mdat;
+	const struct permonst *mdat;
 	int mndx;
 	struct obj *otmp;
 	struct trap *t;
@@ -1891,9 +1891,9 @@ void setmangry(struct monst *mtmp)
 
 	/* attacking your own quest leader will anger his or her guardians */
 	if (!flags.mon_moving &&	/* should always be the case here */
-		mtmp->data == &mons[quest_info(MS_LEADER)]) {
+		mtmp->mnum == quest_info(MS_LEADER)) {
 	    struct monst *mon;
-	    struct permonst *q_guardian = &mons[quest_info(MS_GUARDIAN)];
+	    const struct permonst *q_guardian = &mons[quest_info(MS_GUARDIAN)];
 	    int got_mad = 0;
 
 	    /* guardians will sense this attack even if they can't see it */
@@ -2135,13 +2135,13 @@ static int select_newcham_form(struct monst *mon)
 
 /* make a chameleon look like a new monster; returns 1 if it actually changed */
 int newcham(struct monst *mtmp,
-	    struct permonst *mdat,
+	    const struct permonst *mdat,
 	    boolean polyspot,	/* change is the result of wand or spell of polymorph */
 	    boolean msg)	/* "The oldmon turns into a newmon!" */
 {
 	int mhp, hpn, hpd;
 	int mndx, tryct;
-	struct permonst *olddata = mtmp->data;
+	const struct permonst *olddata = mtmp->data;
 	char oldname[BUFSZ];
 
 	if (msg) {

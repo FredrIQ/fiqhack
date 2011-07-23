@@ -12,7 +12,7 @@ static int change_inv_order(char *op);
 
 #define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
 
-static struct nh_listitem disclose_list[] = {
+static const struct nh_listitem disclose_list[] = {
 	{DISCLOSE_NO_WITHOUT_PROMPT, "no"},
 	{DISCLOSE_PROMPT_DEFAULT_NO, "ask, default no"},
 	{DISCLOSE_PROMPT_DEFAULT_YES, "ask, default yes"},
@@ -20,14 +20,14 @@ static struct nh_listitem disclose_list[] = {
 };
 static struct nh_enum_option disclose_spec = {disclose_list, listlen(disclose_list)};
 
-static struct nh_listitem menustyle_list[] = {
+static const struct nh_listitem menustyle_list[] = {
 	{MENU_COMBINATION, "combination"},
 	{MENU_PARTIAL, "partial"},
 	{MENU_FULL, "full"}
 };
 static struct nh_enum_option menustyle_spec = {menustyle_list, listlen(menustyle_list)};
 
-static struct nh_listitem pickup_burden_list[] = {
+static const struct nh_listitem pickup_burden_list[] = {
 	{UNENCUMBERED, "unencumbered"},
 	{SLT_ENCUMBER, "burdened"},
 	{MOD_ENCUMBER, "stressed"},
@@ -38,7 +38,7 @@ static struct nh_listitem pickup_burden_list[] = {
 static struct nh_enum_option pickup_burden_spec =
 			{pickup_burden_list, listlen(pickup_burden_list)};
 
-static struct nh_listitem runmode_list[] = {
+static const struct nh_listitem runmode_list[] = {
 	{RUN_CRAWL, "crawl"},
 	{RUN_STEP, "step"},
 	{RUN_LEAP, "leap"},
@@ -46,7 +46,7 @@ static struct nh_listitem runmode_list[] = {
 };
 static struct nh_enum_option runmode_spec = {runmode_list, listlen(runmode_list)};
 
-static struct nh_listitem align_list[] = {
+static const struct nh_listitem align_list[] = {
 	{ROLE_LAWFUL, "lawful"},
 	{ROLE_NEUTRAL, "neutral"},
 	{ROLE_CHAOTIC, "chaotic"},
@@ -55,7 +55,7 @@ static struct nh_listitem align_list[] = {
 };
 static struct nh_enum_option align_spec = {align_list, listlen(align_list)};
 
-static struct nh_listitem gender_list[] = {
+static const struct nh_listitem gender_list[] = {
 	{ROLE_FEMALE, "female"},
 	{ROLE_MALE, "male"},
 	{ROLE_NONE, "ask"},
@@ -147,7 +147,7 @@ struct nh_option_desc birth_options[] = {
 
 
 /* associate boolean options with variables directly */
-static struct nh_boolopt_map boolopt_map[] = {
+static const struct nh_boolopt_map boolopt_map[] = {
 	{"autodig", &flags.autodig},
 	{"autopickup", &flags.pickup},
 	{"autoquiver", &flags.autoquiver},
@@ -235,42 +235,48 @@ static struct nh_option_desc *find_option(struct nh_option_desc *optlist, const 
 static void build_role_spec(void)
 {
 	int i;
+	struct nh_listitem *choices;
 	
 	/* build list of roles */
 	for (i = 0; roles[i].name.m || roles[i].name.f; i++)
 	    ; /* just count em */
 	role_spec.numchoices = i + 2;
-	role_spec.choices = malloc((i+2) * sizeof(struct nh_listitem));
+	choices = malloc((i+2) * sizeof(struct nh_listitem));
 	for (i = 0; roles[i].name.m || roles[i].name.f; i++) {
-	    role_spec.choices[i].id = i;
+	    choices[i].id = i;
 	    if (roles[i].name.m)
-		role_spec.choices[i].caption = (char*)roles[i].name.m;
+		choices[i].caption = (char*)roles[i].name.m;
 	    else
-		role_spec.choices[i].caption = (char*)roles[i].name.f;
+		choices[i].caption = (char*)roles[i].name.f;
 	}
-	role_spec.choices[i].id = ROLE_NONE;
-	role_spec.choices[i].caption = "ask";
-	role_spec.choices[i+1].id = ROLE_RANDOM;
-	role_spec.choices[i+1].caption = "random";
+	choices[i].id = ROLE_NONE;
+	choices[i].caption = "ask";
+	choices[i+1].id = ROLE_RANDOM;
+	choices[i+1].caption = "random";
+	
+	role_spec.choices = choices;
 }
 
 static void build_race_spec(void)
 {
 	int i;
+	struct nh_listitem *choices;
 	
 	/* build list of races */
 	for (i = 0; races[i].noun; i++)
 	    ; /* just count em */
 	race_spec.numchoices = i+2;
-	race_spec.choices = malloc((i+2) * sizeof(struct nh_listitem));
+	choices = malloc((i+2) * sizeof(struct nh_listitem));
 	for (i = 0; races[i].noun; i++) {
-	    race_spec.choices[i].id = i;
-	    race_spec.choices[i].caption = (char*)races[i].noun;
+	    choices[i].id = i;
+	    choices[i].caption = (char*)races[i].noun;
 	}
-	race_spec.choices[i].id = ROLE_NONE;
-	race_spec.choices[i].caption = "ask";
-	race_spec.choices[i+1].id = ROLE_RANDOM;
-	race_spec.choices[i+1].caption = "random";
+	choices[i].id = ROLE_NONE;
+	choices[i].caption = "ask";
+	choices[i+1].id = ROLE_RANDOM;
+	choices[i+1].caption = "random";
+	
+	race_spec.choices = choices;
 }
 
 void initoptions(void)
@@ -321,13 +327,7 @@ void initoptions(void)
 	/* since this is done before init_objects(), do partial init here */
 	objects[SLIME_MOLD].oc_name_idx = SLIME_MOLD;
 	strncpy(pl_fruit, OBJ_NAME(objects[SLIME_MOLD]), PL_FSIZ);
-
 	fruitadd(pl_fruit);
-	/* Remove "slime mold" from list of object names; this will	*/
-	/* prevent it from being wished unless it's actually present	*/
-	/* as a named (or default) fruit.  Wishing for "fruit" will	*/
-	/* result in the player's preferred fruit [better than "\033"].	*/
-	obj_descr[SLIME_MOLD].oc_name = "fruit";
 	
 	/* init from option definitions */
 	for (i = 0; birth_options[i].name; i++) {
@@ -500,7 +500,7 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	if (option->type == OPTTYPE_BOOL) {
 		int i;
 		boolean *bvar = NULL;
-		struct nh_boolopt_map *boolmap = boolopt_map;
+		const struct nh_boolopt_map *boolmap = boolopt_map;
 		if (is_ui)
 		    boolmap = ui_boolopt_map;
 		

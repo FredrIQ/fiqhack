@@ -235,7 +235,7 @@ static int m_arrival(struct monst *mon)
  */
 int dochug(struct monst *mtmp)
 {
-	struct permonst *mdat;
+	const struct permonst *mdat;
 	int tmp=0;
 	int inrange, nearby, scared;
 #ifdef GOLDOBJ
@@ -438,7 +438,7 @@ toofar:
 		   from you from having cast dozens of sticks-to-snakes
 		   or similar spells by the time you reach it */
 		if (dist2(mtmp->mx, mtmp->my, u.ux, u.uy) <= 49 && !mtmp->mspec_used) {
-		    struct attack *a;
+		    const struct attack *a;
 
 		    for (a = &mdat->mattk[0]; a < &mdat->mattk[NATTK]; a++) {
 			if (a->aatyp == AT_MAGC && (a->adtyp == AD_SPEL || a->adtyp == AD_CLRC)) {
@@ -539,7 +539,7 @@ int m_move(struct monst *mtmp, int after)
 	boolean can_open=0, can_unlock=0, doorbuster=0;
 	boolean uses_items=0, setlikes=0;
 	boolean avoid=FALSE;
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	struct monst *mtoo;
 	schar mmoved = 0;	/* not strictly nec.: chi >= 0 will do */
 	long info[9];

@@ -41,7 +41,7 @@ static int pet_type(void)
 
 struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 {
-	struct permonst *pm;
+	const struct permonst *pm;
 	struct monst *mtmp = 0;
 	int chance, trycnt = 100;
 
@@ -604,7 +604,7 @@ int dogfood(struct monst *mon, struct obj *obj)
 {
 	boolean carni = carnivorous(mon->data);
 	boolean herbi = herbivorous(mon->data);
-	struct permonst *fptr = &mons[obj->corpsenm];
+	const struct permonst *fptr = &mons[obj->corpsenm];
 	boolean starving;
 
 	if (is_quest_artifact(obj) || obj_resists(obj, 0, 95))

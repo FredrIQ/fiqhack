@@ -179,7 +179,7 @@ static void mkbox_cnts(struct obj *box)
 /* select a random, common monster type */
 int rndmonnum(void)
 {
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	int i;
 
 	/* Plan A: get a level-appropriate common monster */
@@ -826,7 +826,7 @@ struct obj *mkgold(long amount, int x, int y)
  */
 struct obj *mkcorpstat(int objtype,	/* CORPSE or STATUE */
 		       struct monst *mtmp,
-		       struct permonst *ptr,
+		       const struct permonst *ptr,
 		       int x, int y,
 		       boolean init)
 {
@@ -956,7 +956,7 @@ struct obj *mk_tt_object(int objtype, /* CORPSE or STATUE */
 
 /* make a new corpse or statue, uninitialized if a statue (i.e. no books) */
 struct obj *mk_named_object(int objtype,	/* CORPSE or STATUE */
-			    struct permonst *ptr,
+			    const struct permonst *ptr,
 			    int x, int y,
 			    const char *nm)
 {

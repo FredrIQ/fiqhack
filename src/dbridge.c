@@ -196,7 +196,7 @@ boolean create_drawbridge(int x, int y, int dir, boolean flag)
 
 struct entity {
 	struct monst *emon;	  /* youmonst for the player */
-	struct permonst *edata;   /* must be non-zero for record to be valid */
+	const struct permonst *edata;   /* must be non-zero for record to be valid */
 	int ex, ey;
 };
 

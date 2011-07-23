@@ -223,7 +223,7 @@ static void mkshobj_at(const struct shclass *shp, int sx, int sy)
 {
 	struct monst *mtmp;
 	int atype;
-	struct permonst *ptr;
+	const struct permonst *ptr;
 
 	if (rn2(100) < depth(&u.uz) &&
 		!MON_AT(sx, sy) && (ptr = mkclass(S_MIMIC,0)) &&

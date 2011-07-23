@@ -100,7 +100,7 @@ static void mk_mplayer_armor(struct monst *mon, short typ)
 	mpickobj(mon, obj);
 }
 
-struct monst *mk_mplayer(struct permonst *ptr, xchar x, xchar y, boolean special)
+struct monst *mk_mplayer(const struct permonst *ptr, xchar x, xchar y, boolean special)
 {
 	struct monst *mtmp;
 	char nam[PL_NSIZ];

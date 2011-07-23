@@ -382,7 +382,7 @@ char *x_monnam(struct monst *mtmp,
 {
 	static char buf[BUFSZ];
 
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 	boolean do_hallu, do_invis, do_it, do_saddle;
 	boolean name_at_start, has_adjectives;
 	char *bp;

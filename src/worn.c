@@ -541,7 +541,7 @@ void bypass_obj(struct obj *obj)
 void mon_break_armor(struct monst *mon, boolean polyspot)
 {
 	struct obj *otmp;
-	struct permonst *mdat = mon->data;
+	const struct permonst *mdat = mon->data;
 	boolean vis = cansee(mon->mx, mon->my);
 	boolean handless_or_tiny = (nohands(mdat) || verysmall(mdat));
 	const char *pronoun = mhim(mon),

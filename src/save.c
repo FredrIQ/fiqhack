@@ -507,7 +507,7 @@ static void savemonchn(int fd, struct monst *mtmp, int mode)
 	struct monst *mtmp2;
 	unsigned int xl;
 	int minusone = -1;
-	struct permonst *monbegin = &mons[0];
+	const struct permonst *monbegin = &mons[0];
 
 	if (perform_bwrite(mode))
 	    bwrite(fd, &monbegin, sizeof(monbegin));

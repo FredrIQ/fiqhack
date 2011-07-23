@@ -1107,7 +1107,7 @@ int dosacrifice(void)
 #define MAXVALUE 24 /* Highest corpse value (besides Wiz) */
 
     if (otmp->otyp == CORPSE) {
-	struct permonst *ptr = &mons[otmp->corpsenm];
+	const struct permonst *ptr = &mons[otmp->corpsenm];
 	struct monst *mtmp;
 	extern const int monstr[];
 

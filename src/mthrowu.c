@@ -581,7 +581,7 @@ void thrwmu(struct monst *mtmp)
 }
 
 /* monster spits substance at you */
-int spitmu(struct monst *mtmp, struct attack *mattk)
+int spitmu(struct monst *mtmp, const struct attack *mattk)
 {
 	struct obj *otmp;
 
@@ -618,7 +618,7 @@ int spitmu(struct monst *mtmp, struct attack *mattk)
 }
 
 /* monster breathes at you (ranged) */
-int breamu(struct monst *mtmp, struct attack *mattk)
+int breamu(struct monst *mtmp, const struct attack *mattk)
 {
 	/* if new breath types are added, change AD_ACID to max type */
 	int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_ACID) : mattk->adtyp ;

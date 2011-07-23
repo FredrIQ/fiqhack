@@ -21,8 +21,8 @@ static struct obj *touchfood(struct obj *);
 static void do_reset_eat(void);
 static void done_eating(boolean);
 static void cprefx(int);
-static int intrinsic_possible(int,struct permonst *);
-static void givit(int,struct permonst *);
+static int intrinsic_possible(int, const struct permonst *);
+static void givit(int, const struct permonst *ptr);
 static void cpostfx(int);
 static void start_tin(struct obj *);
 static int eatcorpse(struct obj *);
@@ -492,7 +492,7 @@ void fix_petrification(void)
  */
 
 /* intrinsic_possible() returns TRUE iff a monster can give an intrinsic. */
-static int intrinsic_possible(int type, struct permonst *ptr)
+static int intrinsic_possible(int type, const struct permonst *ptr)
 {
 	switch (type) {
 	    case FIRE_RES:
@@ -585,7 +585,7 @@ static int intrinsic_possible(int type, struct permonst *ptr)
 /* givit() tries to give you an intrinsic based on the monster's level
  * and what type of intrinsic it is trying to give you.
  */
-static void givit(int type, struct permonst *ptr)
+static void givit(int type, const struct permonst *ptr)
 {
 	int chance;
 
@@ -853,7 +853,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 		}
 		/* fall through to default case */
 	    default: {
-		struct permonst *ptr = &mons[pm];
+		const struct permonst *ptr = &mons[pm];
 		int i, count;
 
 		if (dmgtype(ptr, AD_STUN) || dmgtype(ptr, AD_HALU) ||

@@ -1512,7 +1512,7 @@ void do_genocide(int how)
 	char buf[BUFSZ];
 	int	i, killplayer = 0;
 	int mndx;
-	struct permonst *ptr;
+	const struct permonst *ptr;
 	const char *which;
 
 	if (how & PLAYER) {
@@ -1722,7 +1722,7 @@ boolean create_particular(void)
 {
 	char buf[BUFSZ], *bufp, monclass = MAXMCLASSES;
 	int which, tries, i;
-	struct permonst *whichpm;
+	const struct permonst *whichpm;
 	struct monst *mtmp;
 	boolean madeany = FALSE;
 	boolean maketame, makepeaceful, makehostile;

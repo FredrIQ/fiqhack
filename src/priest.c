@@ -494,7 +494,7 @@ void priest_talk(struct monst *priest)
 	}
 }
 
-struct monst *mk_roamer(struct permonst *ptr, aligntyp alignment,
+struct monst *mk_roamer(const struct permonst *ptr, aligntyp alignment,
 			xchar x, xchar y, boolean peaceful)
 {
 	struct monst *roamer;

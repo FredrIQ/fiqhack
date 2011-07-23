@@ -1001,7 +1001,7 @@ static void polyuse(struct obj *objhdr, int mat, int minwt)
  */
 static void create_polymon(struct obj *obj, int okind)
 {
-	struct permonst *mdat = NULL;
+	const struct permonst *mdat = NULL;
 	struct monst *mtmp;
 	const char *material;
 	int pm_index;

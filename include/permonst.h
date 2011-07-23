@@ -46,7 +46,7 @@ struct permonst {
 			mr;			/* (base) magic resistance */
 	aligntyp	maligntyp;		/* basic monster alignment */
 	unsigned short	geno;			/* creation/geno mask value */
-	struct	attack	mattk[NATTK];		/* attacks matrix */
+	struct attack 	mattk[NATTK];		/* attacks matrix */
 	unsigned short	cwt,			/* weight of corpse */
 			cnutrit;		/* its nutritional value */
 	short		pxlth;			/* length of extension */
@@ -60,8 +60,7 @@ struct permonst {
 	uchar		mcolor;			/* color to use */
 };
 
-extern struct permonst
-		mons[];		/* the master list of monster types */
+extern struct permonst mons[];		/* the master list of monster types */
 
 #define VERY_SLOW 3
 #define SLOW_SPEED 9

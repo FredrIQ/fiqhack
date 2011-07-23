@@ -3,17 +3,17 @@
 
 #include "hack.h"
 
-static boolean known_hitum(struct monst *,int *,struct attack *, schar, schar);
-static void steal_it(struct monst *, struct attack *);
-static boolean hitum(struct monst *,int,struct attack *, schar, schar);
+static boolean known_hitum(struct monst *,int *, const struct attack *, schar, schar);
+static void steal_it(struct monst *, const struct attack *);
+static boolean hitum(struct monst *, int, const struct attack *, schar, schar);
 static boolean hmon_hitmon(struct monst *,struct obj *,int);
 static int joust(struct monst *,struct obj *);
 static void demonpet(void);
-static boolean m_slips_free(struct monst *mtmp,struct attack *mattk);
-static int explum(struct monst *,struct attack *);
+static boolean m_slips_free(struct monst *mtmp, const struct attack *mattk);
+static int explum(struct monst *, const struct attack *);
 static void start_engulf(struct monst *);
 static void end_engulf(struct monst *);
-static int gulpum(struct monst *,struct attack *);
+static int gulpum(struct monst *, const struct attack *);
 static boolean hmonas(struct monst *, int, schar, schar);
 static void nohandglow(struct monst *);
 static boolean shade_aware(struct obj *);
@@ -278,7 +278,7 @@ schar find_roll_to_hit(struct monst *mtmp)
 boolean attack(struct monst *mtmp, schar dx, schar dy)
 {
 	schar tmp;
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 
 	/* This section of code provides protection against accidentally
 	 * hitting peaceful (like '@') and tame (like 'd') monsters.
@@ -394,7 +394,7 @@ atk_done:
 }
 
 /* returns TRUE if monster still lives */
-static boolean known_hitum(struct monst *mon, int *mhit, struct attack *uattk,
+static boolean known_hitum(struct monst *mon, int *mhit, const struct attack *uattk,
 			   schar dx, schar dy)
 {
 	boolean malive = TRUE;
@@ -453,7 +453,8 @@ static boolean known_hitum(struct monst *mon, int *mhit, struct attack *uattk,
 }
 
 /* returns TRUE if monster still lives */
-static boolean hitum(struct monst *mon, int tmp, struct attack *uattk, schar dx, schar dy)
+static boolean hitum(struct monst *mon, int tmp, const struct attack *uattk,
+		     schar dx, schar dy)
 {
 	boolean malive;
 	int mhit = (tmp > (dieroll = rnd(20)) || u.uswallow);
@@ -487,7 +488,7 @@ boolean hmon(struct monst *mon, struct obj *obj, int thrown)
 static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 {
 	int tmp;
-	struct permonst *mdat = mon->data;
+	const struct permonst *mdat = mon->data;
 	int barehand_silver_rings = 0;
 	/* The basic reason we need all these booleans is that we don't want
 	 * a "hit" message when a monster dies, so we have to know how much
@@ -1050,7 +1051,7 @@ static boolean shade_aware(struct obj *obj)
 
 /* check whether slippery clothing protects from hug or wrap attack */
 /* [currently assumes that you are the attacker] */
-static boolean m_slips_free(struct monst *mdef, struct attack *mattk)
+static boolean m_slips_free(struct monst *mdef, const struct attack *mattk)
 {
 	struct obj *obj;
 
@@ -1124,7 +1125,7 @@ static int joust(struct monst *mon,	/* target */
 static void demonpet(void)
 {
 	int i;
-	struct permonst *pm;
+	const struct permonst *pm;
 	struct monst *dtmp;
 
 	pline("Some hell-p has arrived!");
@@ -1147,7 +1148,7 @@ static void demonpet(void)
  * If that ever changes, the check for touching a cockatrice corpse
  * will need to be smarter about whether to break out of the theft loop.
  */
-static void steal_it(struct monst *mdef, struct attack *mattk)
+static void steal_it(struct monst *mdef, const struct attack *mattk)
 {
 	struct obj *otmp, *stealoid, **minvent_ptr;
 	long unwornmask;
@@ -1223,9 +1224,9 @@ static void steal_it(struct monst *mdef, struct attack *mattk)
 	}
 }
 
-int damageum(struct monst *mdef, struct attack *mattk)
+int damageum(struct monst *mdef, const struct attack *mattk)
 {
-	struct permonst *pd = mdef->data;
+	const struct permonst *pd = mdef->data;
 	int	tmp = dice((int)mattk->damn, (int)mattk->damd);
 	int armpro;
 	boolean negated;
@@ -1601,7 +1602,7 @@ int damageum(struct monst *mdef, struct attack *mattk)
 	return 1;
 }
 
-static int explum(struct monst *mdef, struct attack *mattk)
+static int explum(struct monst *mdef, const struct attack *mattk)
 {
 	int tmp = dice((int)mattk->damn, (int)mattk->damd);
 
@@ -1681,7 +1682,7 @@ static void end_engulf(struct monst *mdef)
 	}
 }
 
-static int gulpum(struct monst *mdef, struct attack *mattk)
+static int gulpum(struct monst *mdef, const struct attack *mattk)
 {
 	int tmp;
 	int dam = dice((int)mattk->damn, (int)mattk->damd);
@@ -1855,7 +1856,7 @@ static int gulpum(struct monst *mdef, struct attack *mattk)
 	return 0;
 }
 
-void missum(struct monst *mdef, struct attack *mattk)
+void missum(struct monst *mdef, const struct attack *mattk)
 {
 	if (could_seduce(&youmonst, mdef, mattk))
 		You("pretend to be friendly to %s.", mon_nam(mdef));
@@ -1870,7 +1871,8 @@ void missum(struct monst *mdef, struct attack *mattk)
 /* attack monster as a monster. */
 static boolean hmonas(struct monst *mon, int tmp, schar dx, schar dy)
 {
-	struct attack *mattk, alt_attk;
+	const struct attack *mattk;
+	struct attack alt_attk;
 	int	i, sum[NATTK], hittmp = 0;
 	int	nsum = 0;
 	int	dhit = 0;
@@ -2067,7 +2069,7 @@ use_weapon:
 /*	Special (passive) attacks on you by monsters done here.		*/
 int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 {
-	struct permonst *ptr = mon->data;
+	const struct permonst *ptr = mon->data;
 	int i, tmp;
 
 	for (i = 0; ; i++) {
@@ -2271,9 +2273,9 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
  */
 void passive_obj(struct monst *mon,
 		 struct obj *obj, /* null means pick uwep, uswapwep or uarmg */
-		 struct attack *mattk) /* null means we find one internally */
+		 const struct attack *mattk) /* null means we find one internally */
 {
-	struct permonst *ptr = mon->data;
+	const struct permonst *ptr = mon->data;
 	int i;
 
 	/* if caller hasn't specified an object, use uwep, uswapwep or uarmg */

@@ -147,7 +147,7 @@ static int choose_clerical_spell(int spellnum)
  * 0: unsuccessful spell
  */
 int castmu(struct monst *mtmp,
-	   struct attack *mattk,
+	   const struct attack *mattk,
 	   boolean thinks_it_foundyou,
 	   boolean foundyou)
 {
@@ -512,7 +512,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
       {
 	/* Try for insects, and if there are none
 	   left, go for (sticks to) snakes.  -3. */
-	struct permonst *pm = mkclass(S_ANT,0);
+	const struct permonst *pm = mkclass(S_ANT,0);
 	struct monst *mtmp2 = NULL;
 	char let = (pm ? S_ANT : S_SNAKE);
 	boolean success;
@@ -723,7 +723,7 @@ static boolean spell_would_be_useless(struct monst *mtmp, unsigned int adtyp,
 #define ad_to_typ(k) (10 + (int)k - 1)
 
 /* monster uses spell (ranged) */
-int buzzmu(struct monst *mtmp, struct attack  *mattk)
+int buzzmu(struct monst *mtmp, const struct attack  *mattk)
 {
 	/* don't print constant stream of curse messages for 'normal'
 	   spellcasting monsters at range */

@@ -370,7 +370,7 @@ void fall_through(boolean td)	/* td == TRUE : trap door or hole */
 struct monst *animate_statue(struct obj *statue, xchar x, xchar y, int cause,
 			     int *fail_reason)
 {
-	struct permonst *mptr;
+	const struct permonst *mptr;
 	struct monst *mon = 0;
 	struct obj *item;
 	coord cc;
@@ -1108,7 +1108,7 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 static int steedintrap(struct trap *trap, struct obj *otmp)
 {
 	struct monst *mtmp = u.usteed;
-	struct permonst *mptr;
+	const struct permonst *mptr;
 	int tt;
 	boolean in_sight;
 	boolean trapkilled = FALSE;
@@ -1541,7 +1541,7 @@ int mintrap(struct monst *mtmp)
 {
 	struct trap *trap = t_at(mtmp->mx, mtmp->my);
 	boolean trapkilled = FALSE;
-	struct permonst *mptr = mtmp->data;
+	const struct permonst *mptr = mtmp->data;
 	struct obj *otmp;
 
 	if (!trap) {

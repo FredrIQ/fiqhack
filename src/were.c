@@ -76,7 +76,7 @@ void new_were(struct monst *mon)
 }
 
 /* were-creature (even you) summons a horde */
-int were_summon(struct permonst *ptr, boolean yours,
+int were_summon(const struct permonst *ptr, boolean yours,
 		int *visible,	/* number of visible helpers created */
 		char *genbuf)
 {

@@ -703,7 +703,7 @@ void rehumanize(void)
 
 int dobreathe(void)
 {
-	struct attack *mattk;
+	const struct attack *mattk;
 	schar dx, dy, dz;
 
 	if (Strangled) {
@@ -1139,7 +1139,7 @@ const char *mbodypart(struct monst *mon, int part)
 		S_ORC, S_GIANT,		/* quest nemeses */
 		'\0'		/* string terminator; assert( S_xxx != 0 ); */
 	};
-	struct permonst *mptr = mon->data;
+	const struct permonst *mptr = mon->data;
 
 	if (part == HAND || part == HANDED) {	/* some special cases */
 	    if (mptr->mlet == S_DOG || mptr->mlet == S_FELINE ||

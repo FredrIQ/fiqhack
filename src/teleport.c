@@ -18,7 +18,7 @@ static void mvault_tele(struct monst *);
  */
 boolean goodpos(int x, int y, struct monst *mtmp, unsigned gpflags)
 {
-	struct permonst *mdat = NULL;
+	const struct permonst *mdat = NULL;
 	boolean ignorewater = ((gpflags & MM_IGNOREWATER) != 0);
 
 	if (!isok(x, y)) return FALSE;
@@ -85,13 +85,13 @@ boolean goodpos(int x, int y, struct monst *mtmp, unsigned gpflags)
  * If there is more than one valid positon in the ring, choose one randomly.
  * Return TRUE and the position chosen when successful, FALSE otherwise.
  */
-boolean enexto(coord *cc, xchar xx, xchar yy, struct permonst *mdat)
+boolean enexto(coord *cc, xchar xx, xchar yy, const struct permonst *mdat)
 {
 	return enexto_core(cc, xx, yy, mdat, 0);
 }
 
 boolean enexto_core(coord *cc, xchar xx, xchar yy,
-		    struct permonst *mdat, unsigned entflags)
+		    const struct permonst *mdat, unsigned entflags)
 {
 #define MAX_GOOD 15
     coord good[MAX_GOOD], *good_ptr;
@@ -995,7 +995,7 @@ int mlevel_tele_trap(struct monst *mtmp, struct trap *trap,
 		     boolean force_it, int in_sight)
 {
 	int tt = trap->ttyp;
-	struct permonst *mptr = mtmp->data;
+	const struct permonst *mptr = mtmp->data;
 
 	if (mtmp == u.ustuck)	/* probably a vortex */
 	    return 0;		/* temporary? kludge */

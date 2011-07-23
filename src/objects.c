@@ -33,7 +33,7 @@ struct monst { struct monst *dummy; };	/* lint: struct obj's union */
 # define OBJECT(obj,bits,prp,sym,prob,dly,wt,cost,sdam,ldam,oc1,oc2,nut,color) \
 	{obj}
 
-struct objdescr obj_descr[] = {
+const struct objdescr obj_descr[] = {
 #else
 /* second pass -- object definitions */
 

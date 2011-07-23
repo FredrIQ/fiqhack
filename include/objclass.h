@@ -112,7 +112,7 @@ struct objdescr {
 };
 
 extern struct objclass objects[];
-extern struct objdescr obj_descr[];
+extern const struct objdescr obj_descr[];
 
 /*
  * All objects have a class. Make sure that all classes have a corresponding
