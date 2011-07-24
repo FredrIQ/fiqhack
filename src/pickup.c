@@ -379,7 +379,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, int idx, int id,
 	    it->count = obj->quan;
 	    it->accel = use_invlet ? obj->invlet : 0;
 	    it->group_accel = def_oc_syms[(int)objects[obj->otyp].oc_class];
-	    it->otype = obj->otyp;
+	    it->otype = obfuscate_object(obj->otyp + 1);
 	    it->oclass = obj->oclass;
 	
 	    if (!obj->bknown)

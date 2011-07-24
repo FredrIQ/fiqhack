@@ -1199,6 +1199,66 @@ void docrt(void)
 /* Display Buffering (3rd screen) ========================================== */
 static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
 
+
+/* 
+ * object ids need to be obfuscated for non-identified types to prevent
+ * visual identification in tile ports:
+ * if a worthless piece of red glass and a ruby have different tile images
+ * even when the glass rock is unidentified, describing both as "red gem" is
+ * useless.
+ * Additionally, it is better if descriptions match up with tiles for potions etc.
+ * so that a potion described as "milky" will actually be ablt to look milky.
+ * 
+ * also used in pickup.c and invent.c
+ */
+int obfuscate_object(int otyp)
+{
+    if (!otyp)
+	return 0;
+    
+    /* object ids are shifted by 1 for display, so that 0 can mean "no object" */
+    otyp -= 1;
+    
+    if (!objects[otyp].oc_name_known) {
+	switch (otyp) {
+	    case SACK: case OILSKIN_SACK: case BAG_OF_TRICKS: case BAG_OF_HOLDING:
+		otyp = SACK;
+
+	    case LOADSTONE: case LUCKSTONE: case FLINT: case TOUCHSTONE: 
+		otyp = FLINT;
+
+	    case OIL_LAMP: case MAGIC_LAMP:
+		otyp = OIL_LAMP;
+
+	    case TIN_WHISTLE: case MAGIC_WHISTLE:
+		otyp = TIN_WHISTLE;
+
+	    /* all gems initially look like pieces of glass */
+	    case DILITHIUM_CRYSTAL: case DIAMOND: case RUBY: case JACINTH:
+	    case SAPPHIRE: case BLACK_OPAL: case EMERALD: case TURQUOISE:
+	    case CITRINE: case AQUAMARINE: case AMBER: case TOPAZ: case JET:
+	    case OPAL: case CHRYSOBERYL: case GARNET: case AMETHYST: case JASPER:
+	    case FLUORITE: case OBSIDIAN: case AGATE: case JADE:
+		switch (objects[otyp].oc_color) {
+		    case CLR_WHITE: otyp = WORTHLESS_PIECE_OF_WHITE_GLASS; break;
+		    case CLR_BLUE: otyp = WORTHLESS_PIECE_OF_BLUE_GLASS; break;
+		    case CLR_RED: otyp = WORTHLESS_PIECE_OF_RED_GLASS; break;
+		    case CLR_BROWN: otyp = WORTHLESS_PIECE_OF_YELLOWISH_BROWN_GLASS; break;
+		    case CLR_ORANGE: otyp = WORTHLESS_PIECE_OF_ORANGE_GLASS; break;
+		    case CLR_YELLOW: otyp = WORTHLESS_PIECE_OF_YELLOW_GLASS; break;
+		    case CLR_BLACK: otyp = WORTHLESS_PIECE_OF_YELLOW_GLASS; break;
+		    case CLR_GREEN: otyp = WORTHLESS_PIECE_OF_GREEN_GLASS; break;
+		    case CLR_MAGENTA: otyp = WORTHLESS_PIECE_OF_VIOLET_GLASS; break;
+		}
+		break;
+	}
+    }
+
+    /* finally, account for shuffled descriptions */
+    return objects[otyp].oc_descr_idx + 1;
+}
+
+
 void dbuf_set_effect(int x, int y, int eglyph)
 {
     if (!isok(x, y))
@@ -1213,7 +1273,7 @@ static void dbuf_set_object(int x, int y, int oid)
     if (!isok(x, y))
 	return;
     
-    dbuf[y][x].obj = oid;
+    dbuf[y][x].obj = obfuscate_object(oid);
     dbuf[y][x].isnew = 1;
 }
 
@@ -1249,7 +1309,7 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 	dbuf[y][x].isnew = 1;
 	dbuf[y][x].bg = bg;
 	dbuf[y][x].trap = trap;
-	dbuf[y][x].obj = obj;
+	dbuf[y][x].obj = obfuscate_object(obj);
 	dbuf[y][x].obj_mn = obj_mn;
 	dbuf[y][x].invis = invis;
 	dbuf[y][x].mon = mon;
