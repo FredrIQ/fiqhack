@@ -437,8 +437,11 @@ static void checkfile(const char *inp, struct permonst *pm, boolean user_typed_n
 
     /* Make sure the name is non-empty. */
     if (*dbase_str) {
-	/* adjust the input to remove "named " and convert to lower case */
+	/* adjust the input to remove " [seen" and "named " and convert to lower case */
 	char *alt = 0;	/* alternate description */
+
+	if ((ep = strstri(dbase_str, " [seen")) != 0)
+	    *ep = '\0';
 
 	if ((ep = strstri(dbase_str, " named ")) != 0)
 	    alt = ep + 7;
@@ -604,6 +607,7 @@ static int do_look(boolean quick)
 	skipped_venom = 0;
 	found = 0;
 	out_str[0] = '\0';
+	objplur = 0;
 
 	if (flags.verbose)
 	    pline("Please move the cursor to %s.",
