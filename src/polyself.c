@@ -21,7 +21,10 @@ static void newman(void);
 /* update the youmonst.data structure pointer */
 void set_uasmon(void)
 {
-	set_mon_data(&youmonst, &mons[u.umonnum], 0);
+	const struct permonst *pm = &mons[u.umonnum];
+	if (!Upolyd)
+	    pm = flags.female ? &pm_you_female : &pm_you_male;
+	set_mon_data(&youmonst, pm, 0);
 }
 
 /* make a (new) human out of the player */

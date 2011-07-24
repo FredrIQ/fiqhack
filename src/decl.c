@@ -221,8 +221,7 @@ boolean botlx;	/* print an entirely new bottom line */
 
 /* quest monsters need some fixups depending on your race and role, but
  * mons is const. We'll use these copies instead. */
-struct permonst pm_leader;
-struct permonst pm_guardian;
-struct permonst pm_nemesis;
+struct permonst pm_leader, pm_guardian, pm_nemesis;
+struct permonst pm_you_male, pm_you_female;
 
 /*decl.c*/

@@ -1442,6 +1442,9 @@ void role_init(void)
 	}
 
 	/* Fix up infravision */
+	pm_you_male = pm_you_female = mons[urole.malenum];
+	if (urole.femalenum != NON_PM)
+	    pm_you_female = mons[urole.femalenum];
 	if (mons[urace.malenum].mflags3 & M3_INFRAVISION) {
 	    /* although an infravision intrinsic is possible, infravision
 	     * is purely a property of the physical race.  This means that we
@@ -1452,9 +1455,8 @@ void role_init(void)
 	     * but since infravision has no effect for NPCs anyway we can
 	     * ignore this.
 	     */
-	    mons[urole.malenum].mflags3 |= M3_INFRAVISION;
-	    if (urole.femalenum != NON_PM)
-	    	mons[urole.femalenum].mflags3 |= M3_INFRAVISION;
+	    pm_you_male.mflags3 |= M3_INFRAVISION;
+	    pm_you_female.mflags3 |= M3_INFRAVISION;
 	}
 
 	/* Artifacts are fixed in hack_artifacts() */
