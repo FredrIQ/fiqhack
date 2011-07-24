@@ -825,18 +825,32 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 		} while (!goodpos(x, y, &fakemon, gpflags) && tryct++ < 50);
 		mndx = monsndx(ptr);
 	}
+	
+	if (mndx == quest_info(MS_LEADER))
+	    ptr = &pm_leader;
+	else if (mndx == quest_info(MS_GUARDIAN))
+	    ptr = &pm_guardian;
+	else if (mndx == quest_info(MS_NEMESIS))
+	    ptr = &pm_nemesis;
+	
 	propagate(mndx, countbirth, FALSE);
+
 	xlth = ptr->pxlth;
-	if (mmflags & MM_EDOG) xlth += sizeof(struct edog);
-	else if (mmflags & MM_EMIN) xlth += sizeof(struct emin);
+	if (mmflags & MM_EDOG)
+	    xlth += sizeof(struct edog);
+	else if (mmflags & MM_EMIN)
+	    xlth += sizeof(struct emin);
+	
 	mtmp = newmonst(xlth);
 	*mtmp = zeromonst;		/* clear all entries in structure */
 	memset(mtmp->mextra, 0, xlth);
 	mtmp->nmon = level.monlist;
 	level.monlist = mtmp;
 	mtmp->m_id = flags.ident++;
-	if (!mtmp->m_id) mtmp->m_id = flags.ident++;	/* ident overflowed */
+	if (!mtmp->m_id)
+	    mtmp->m_id = flags.ident++;	/* ident overflowed */
 	set_mon_data(mtmp, ptr, 0);
+	
 	if (mtmp->data->msound == MS_LEADER)
 	    quest_status.leader_m_id = mtmp->m_id;
 	mtmp->mxlth = xlth;

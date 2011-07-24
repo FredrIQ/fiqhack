@@ -329,6 +329,10 @@ struct menulist {
     int icount;
 };
 
+extern struct permonst pm_leader;
+extern struct permonst pm_guardian;
+extern struct permonst pm_nemesis;
+
 #define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
 #define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)
 

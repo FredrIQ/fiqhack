@@ -1893,19 +1893,18 @@ void setmangry(struct monst *mtmp)
 	if (!flags.mon_moving &&	/* should always be the case here */
 		mtmp->mnum == quest_info(MS_LEADER)) {
 	    struct monst *mon;
-	    const struct permonst *q_guardian = &mons[quest_info(MS_GUARDIAN)];
 	    int got_mad = 0;
 
 	    /* guardians will sense this attack even if they can't see it */
 	    for (mon = level.monlist; mon; mon = mon->nmon)
-		if (!DEADMONSTER(mon) && mon->data == q_guardian && mon->mpeaceful) {
+		if (!DEADMONSTER(mon) && mon->data == &pm_guardian && mon->mpeaceful) {
 		    mon->mpeaceful = 0;
 		    if (canseemon(mon)) ++got_mad;
 		}
 	    if (got_mad && !Hallucination)
 		pline_The("%s appear%s to be angry too...",
-		      got_mad == 1 ? q_guardian->mname :
-				    makeplural(q_guardian->mname),
+		      got_mad == 1 ? pm_guardian.mname :
+				    makeplural(pm_guardian.mname),
 		      got_mad == 1 ? "s" : "");
 	}
 }

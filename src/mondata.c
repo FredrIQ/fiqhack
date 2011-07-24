@@ -328,9 +328,14 @@ int monsndx(const struct permonst *ptr)
 
 	i = (int)(ptr - &mons[0]);
 	if (i < LOW_PM || i >= NUMMONS) {
-		/* ought to switch this to use `fmt_ptr' */
-	    panic("monsndx - could not index monster (%lx)",
-		  (unsigned long)ptr);
+	    if (ptr == &pm_leader)
+		return urole.ldrnum;
+	    else if (ptr == &pm_guardian)
+		return urole.guardnum;
+	    else if (ptr == &pm_nemesis)
+		return urole.neminum;
+	    
+	    panic("monsndx - could not index monster (%p)", ptr);
 	    return NON_PM;		/* will not get here */
 	}
 

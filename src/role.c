@@ -1405,25 +1405,28 @@ void role_init(void)
 	urace = races[flags.initrace];
 
 	/* Fix up the quest leader */
+	pm_leader = mons[urole.ldrnum];
 	if (urole.ldrnum != NON_PM) {
-	    mons[urole.ldrnum].msound = MS_LEADER;
-	    mons[urole.ldrnum].mflags2 |= (M2_PEACEFUL);
-	    mons[urole.ldrnum].mflags3 |= M3_CLOSE;
-	    mons[urole.ldrnum].maligntyp = alignmnt * 3;
+	    pm_leader.msound = MS_LEADER;
+	    pm_leader.mflags2 |= (M2_PEACEFUL);
+	    pm_leader.mflags3 |= M3_CLOSE;
+	    pm_leader.maligntyp = alignmnt * 3;
 	}
 
 	/* Fix up the quest guardians */
+	pm_guardian = mons[urole.guardnum];
 	if (urole.guardnum != NON_PM) {
-	    mons[urole.guardnum].mflags2 |= (M2_PEACEFUL);
-	    mons[urole.guardnum].maligntyp = alignmnt * 3;
+	    pm_guardian.mflags2 |= (M2_PEACEFUL);
+	    pm_guardian.maligntyp = alignmnt * 3;
 	}
 
 	/* Fix up the quest nemesis */
+	pm_nemesis = mons[urole.neminum];
 	if (urole.neminum != NON_PM) {
-	    mons[urole.neminum].msound = MS_NEMESIS;
-	    mons[urole.neminum].mflags2 &= ~(M2_PEACEFUL);
-	    mons[urole.neminum].mflags2 |= (M2_NASTY|M2_STALK|M2_HOSTILE);
-	    mons[urole.neminum].mflags3 |= M3_WANTSARTI | M3_WAITFORU;
+	    pm_nemesis.msound = MS_NEMESIS;
+	    pm_nemesis.mflags2 &= ~(M2_PEACEFUL);
+	    pm_nemesis.mflags2 |= (M2_NASTY|M2_STALK|M2_HOSTILE);
+	    pm_nemesis.mflags3 |= M3_WANTSARTI | M3_WAITFORU;
 	}
 
 	/* Fix up the god names */
