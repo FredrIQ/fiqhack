@@ -357,7 +357,7 @@ static void describe_mon(int x, int y, int monnum, char *buf)
 
 void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
 {
-    const struct nh_dbuf_entry *loc = dbuf_get(x, y);
+    int monid = dbuf_get_mon(x, y);
     
     bufs->bgdesc[0] = '\0';
     bufs->trapdesc[0] = '\0';
@@ -367,23 +367,20 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
     bufs->effectdesc[0] = '\0';
     bufs->objcount = -1;
     
-    if (!loc)
-	return;
+    describe_bg(x, y, level.locations[x][y].mem_bg, bufs->bgdesc);
     
-    describe_bg(x, y, loc->bg, bufs->bgdesc);
+    if (level.locations[x][y].mem_trap)
+	strcpy(bufs->trapdesc, trapexplain[level.locations[x][y].mem_trap]);
     
-    if (loc->trap)
-	strcpy(bufs->trapdesc, trapexplain[loc->trap]);
+    bufs->objcount = describe_object(x, y, level.locations[x][y].mem_obj - 1,
+				     bufs->objdesc);
     
-    bufs->objcount = describe_object(x, y, loc->obj - 1, bufs->objdesc);
+    describe_mon(x, y, monid - 1, bufs->mondesc);
     
-    describe_mon(x, y, loc->mon - 1, bufs->mondesc);
-    
-    if (loc->invis)
+    if (level.locations[x][y].mem_invis)
 	strcpy(bufs->invisdesc, invisexplain);
     
-    if ((u.uswallow && (x != u.ux || y != u.uy)) ||
-	(loc->effect && NH_EFFECT_TYPE(loc->effect) == E_SWALLOW)) {
+    if (u.uswallow && (x != u.ux || y != u.uy)) {
 	/* all locations when swallowed other than the hero are the monster */
 	sprintf(bufs->effectdesc, "interior of %s", Blind ? "a monster" : a_monnam(u.ustuck));
     }

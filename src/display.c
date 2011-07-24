@@ -1259,12 +1259,12 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 }
 
 
-const struct nh_dbuf_entry *dbuf_get(int x, int y)
+int dbuf_get_mon(int x, int y)
 {
     if (!isok(x, y))
-	return NULL;
+	return 0;
     
-    return &dbuf[y][x];
+    return dbuf[y][x].mon;
 }
 
 
