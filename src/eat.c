@@ -1420,7 +1420,7 @@ static void eataccessory(struct obj *otmp)
 			makeknown(typ);
 		    }
 		    break;
-		  case RIN_PROTECTION_FROM_SHAPE_CHAN:
+		  case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
 		    rescham();
 		    break;
 		  case RIN_LEVITATION:

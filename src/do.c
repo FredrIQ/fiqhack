@@ -333,7 +333,7 @@ giveback:
 		case RIN_COLD_RESISTANCE:
 		pline_The("cold water faucet flashes brightly for a moment.");
 		    break;
-		case RIN_PROTECTION_FROM_SHAPE_CHAN:
+		case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
 		    pline_The("sink looks nothing like a fountain.");
 		    break;
 		case RIN_PROTECTION:

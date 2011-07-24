@@ -1188,13 +1188,13 @@ void do_questtxt(const char *infile, const char *outfile)
 }
 
 
-static	char	temp[32];
+static	char	temp[42];
 
-/* limit a name to 30 characters length */
+/* limit a name to 40 characters length */
 static char *limit(char *name, int pref)
 {
-	strncpy(temp, name, pref ? 26 : 30);
-	temp[pref ? 26 : 30] = 0;
+	strncpy(temp, name, pref ? 36 : 40);
+	temp[pref ? 36 : 40] = 0;
 	return temp;
 }
 
@@ -1255,14 +1255,6 @@ void do_objs(const char *outfile)
 			    break;
 			}
 			break;
-		    case GEM_CLASS:
-			/* avoid trouble with stupid C preprocessors */
-			if (objects[i].oc_material == GLASS) {
-			    fprintf(ofp,"/* #define\t%s\t%d */\n",
-							objnam, i);
-			    prefix = -1;
-			    break;
-			}
 		    default:
 			fprintf(ofp,"#define\t");
 		}
