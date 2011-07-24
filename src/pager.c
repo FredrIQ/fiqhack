@@ -308,6 +308,11 @@ static void describe_mon(int x, int y, int monnum, char *buf)
 			(how & 4) ? "monster detection" : "");
 	}
 	
+    } else if (monnum >= NUMMONS) {
+	monnum -= NUMMONS;
+	if (monnum < WARNCOUNT)
+	    strcat(buf, warnexplain[monnum]);
+	
     } else if ( (mtmp = m_at(x,y)) ) {
 	bhitpos.x = x;
 	bhitpos.y = y;
