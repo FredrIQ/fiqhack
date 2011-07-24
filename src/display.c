@@ -1259,6 +1259,15 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 }
 
 
+const struct nh_dbuf_entry *dbuf_get(int x, int y)
+{
+    if (!isok(x, y))
+	return NULL;
+    
+    return &dbuf[y][x];
+}
+
+
 /* warning_at: return TRUE if there is a warning symbol at the given position
  *
  * attack_checks() needs to know and there is no other way to get this info

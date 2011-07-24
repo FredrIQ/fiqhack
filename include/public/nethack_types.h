@@ -335,7 +335,8 @@ struct nh_symdef {
     int color;
 };
 
-/* all information necessary to interpret and display the values supplied
+/* 
+ * all information necessary to interpret and display the values supplied
  * in an nh_dbuf_entry */
 struct nh_drawing_info {
     /* background layer symbols: nh_dbuf_entry.bg */
@@ -372,6 +373,20 @@ struct nh_drawing_info {
 #define NUMZAPCHARS 4 /* beam directions: vert., horiz., left diag., right diag */
 #define NUMSWALLOWCHARS 8 /* like explosions, but without the center */
 
+
+/* 
+ * output buffers for nh_describe_pos
+ * there is one buffer per display layer (see nh_dbuf_entry)
+ */
+struct nh_desc_buf {
+    char bgdesc[BUFSZ];
+    char trapdesc[BUFSZ];
+    char objdesc[BUFSZ];
+    char mondesc[BUFSZ];
+    char invisdesc[BUFSZ];
+    char effectdesc[BUFSZ]; /* can only describe the swallow effect */
+    int objcount; /* number of (visible) objects or -1 if the location is not visible */
+};
 
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);

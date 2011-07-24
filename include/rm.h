@@ -447,14 +447,6 @@ dlevel_t;
 
 extern dlevel_t level;	/* structure describing the current level */
 
-/*
- * Covert a trap number into the defsym graphics array.
- * Convert a defsym number into a trap number.
- * Assumes that arrow trap will always be the first trap.
- */
-#define trap_to_defsym(t) (S_arrow_trap+(t)-1)
-#define defsym_to_trap(d) ((d)-S_arrow_trap+1)
-
 #define OBJ_AT(x,y)	(level.objects[x][y] != NULL)
 /*
  * Macros for encapsulation of level.monsters references.

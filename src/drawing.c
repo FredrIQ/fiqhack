@@ -67,7 +67,7 @@ const char *defexplain[] = {
 	"closed door",		/* hcdoor */
 	"iron bars",		/* bars */
 	"tree",			/* tree */
-	"floor of a room",	/* room */
+	"the floor of a room",	/* room */
 /*20*/	"corridor",		/* dark corr */
 	"lit corridor",		/* lit corr */
 	"staircase up",		/* upstair */

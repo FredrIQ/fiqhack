@@ -218,6 +218,7 @@ extern void dbuf_set_loc(int x, int y);
 extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 		   boolean invis, int mon, int monflags, int effect);
 extern void dbuf_set_effect(int x, int y, int eglyph);
+extern const struct nh_dbuf_entry *dbuf_get(int x, int y);
 extern boolean warning_at(int x, int y);
 extern void clear_display_buffer(void);
 extern void cls(void);
@@ -1780,7 +1781,7 @@ extern void place_wsegs(struct monst *);
 extern void remove_worm(struct monst *);
 extern void place_worm_tail_randomly(struct monst *,xchar,xchar);
 extern int count_wsegs(struct monst *);
-extern boolean worm_known(struct monst *);
+extern boolean worm_known(const struct monst *);
 
 /* ### worn.c ### */
 

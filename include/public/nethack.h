@@ -51,6 +51,9 @@ extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 			 struct nh_boolopt_map *boolmap,
 			 boolean(*callback)(struct nh_option_desc *));
 
+/* pager.c */
+extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs);
+
 /* role.c */
 extern EXPORT int nh_get_valid_roles(int, int, int, struct nh_listitem*, int);
 extern EXPORT int nh_get_valid_races(int, int, int, struct nh_listitem*, int);
