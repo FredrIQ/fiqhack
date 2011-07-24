@@ -478,7 +478,7 @@ static void makevtele(void)
  */
 static void clear_level_structures(void)
 {
-	static struct rm zerorm = { S_stone, 0, 0, 0, 0, 0 /* typ */,
+	static struct rm zerorm = { S_unexplored, 0, 0, 0, 0, 0 /* typ */,
 	    0, 0, 0, 0, 0, 0, 0 };
 	int x,y;
 	struct rm *lev;

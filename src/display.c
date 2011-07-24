@@ -162,7 +162,7 @@ void magic_map_background(xchar x, xchar y, int show)
     if (!cansee(x,y) && !lev->waslit) {
 	/* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
 	if (lev->typ == ROOM && cmap == S_room)
-	    cmap = S_stone;
+	    cmap = S_darkroom;
 	else if (lev->typ == CORR && cmap == S_litcorr)
 	    cmap = S_corr;
     }
@@ -538,12 +538,12 @@ void feel_location(xchar x, xchar y)
 		if (lev->typ != ROOM && lev->seenv) {
 		    map_background(x, y, 1);
 		} else {
-		    lev->mem_bg = lev->waslit ? S_room : S_stone;
+		    lev->mem_bg = lev->waslit ? S_room : S_darkroom;
 		    dbuf_set_loc(x, y);
 		}
-	    } else if ((lev->mem_bg >= S_stone && lev->mem_bg < S_room) ||
+	    } else if ((lev->mem_bg >= S_unexplored && lev->mem_bg < S_room) ||
 		       level.locations[x][y].mem_invis) {
-		lev->mem_bg = lev->waslit ? S_room : S_stone;
+		lev->mem_bg = lev->waslit ? S_room : S_darkroom;
 		dbuf_set_loc(x, y);
 	    }
 	} else {
@@ -583,7 +583,7 @@ void feel_location(xchar x, xchar y)
 
 	/* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
 	if (lev->typ == ROOM && lev->mem_bg == S_room && !lev->waslit) {
-	    lev->mem_bg = S_stone;
+	    lev->mem_bg = S_darkroom;
 	    dbuf_set_loc(x, y);
 	} else if (lev->typ == CORR &&
 		    lev->mem_bg == S_litcorr && !lev->waslit) {
@@ -733,7 +733,7 @@ void newsym(int x, int y)
 		lev->mem_bg = S_corr;
 		dbuf_set_loc(x, y);
 	    } else if (lev->mem_bg == S_room && lev->typ == ROOM) {
-		lev->mem_bg = S_stone;
+		lev->mem_bg = S_darkroom;
 		dbuf_set_loc(x, y);
 	    }
 	    else
@@ -986,13 +986,13 @@ void under_water(int mode)
 	for (y = lasty-1; y <= lasty+1; y++)
 	    for (x = lastx-1; x <= lastx+1; x++)
 		if (isok(x,y))
-		    dbuf_set(x, y, S_stone, 0, 0, 0, 0, 0, 0, 0);
+		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0);
     }
     for (x = u.ux-1; x <= u.ux+1; x++)
 	for (y = u.uy-1; y <= u.uy+1; y++)
 	    if (isok(x,y) && is_pool(x,y)) {
 		if (Blind && !(x == u.ux && y == u.uy))
-		    dbuf_set(x, y, S_stone, 0, 0, 0, 0, 0, 0, 0);
+		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0);
 		else	
 		    newsym(x,y);
 	    }
@@ -1396,7 +1396,9 @@ int back_to_cmap(xchar x, xchar y)
 	case STONE:
 	    idx = level.flags.arboreal ? S_tree : S_stone;
 	    break;
-	case ROOM:		idx = S_room;	  break;
+	case ROOM:
+	    idx = (!cansee(x,y) && !ptr->waslit) ? S_darkroom : S_room;
+	    break;
 	case CORR:
 	    idx = (ptr->waslit || flags.lit_corridor) ? S_litcorr : S_corr;
 	    break;
@@ -1453,7 +1455,7 @@ int back_to_cmap(xchar x, xchar y)
 	    case DB_MOAT:  idx = S_pool; break;
 	    case DB_LAVA:  idx = S_lava; break;
 	    case DB_ICE:   idx = S_ice;  break;
-	    case DB_FLOOR: idx = S_room; break;
+	    case DB_FLOOR: idx = (!cansee(x,y) && !ptr->waslit) ? S_darkroom : S_room; break;
 	    default:
 		impossible("Strange db-under: %d",
 			   ptr->drawbridgemask & DB_UNDER);
@@ -1793,10 +1795,10 @@ static void set_seenv(struct rm *lev, int x0, int y0, int x, int y)
 #define T_tdwall 4
 
 static const int wall_matrix[4][5] = {
-    { S_stone, S_tlcorn, S_trcorn, S_hwall, S_tdwall },	/* tdwall */
-    { S_stone, S_trcorn, S_brcorn, S_vwall, S_tlwall },	/* tlwall */
-    { S_stone, S_brcorn, S_blcorn, S_hwall, S_tuwall },	/* tuwall */
-    { S_stone, S_blcorn, S_tlcorn, S_vwall, S_trwall },	/* trwall */
+    { S_unexplored, S_tlcorn, S_trcorn, S_hwall, S_tdwall },	/* tdwall */
+    { S_unexplored, S_trcorn, S_brcorn, S_vwall, S_tlwall },	/* tlwall */
+    { S_unexplored, S_brcorn, S_blcorn, S_hwall, S_tuwall },	/* tuwall */
+    { S_unexplored, S_blcorn, S_tlcorn, S_vwall, S_trwall },	/* trwall */
 };
 
 

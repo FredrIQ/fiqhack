@@ -48,7 +48,8 @@ struct nh_symdef warnsyms[WARNCOUNT] = {
 };
 
 const char *defexplain[] = {
-/* 0*/	"dark part of a room",	/* stone */
+/* 0*/	"unexplored area",	/* unexplored */
+	"solid rock",		/* stone */
 	"wall",			/* vwall */
 	"wall",			/* hwall */
 	"wall",			/* tlcorn */
@@ -57,8 +58,8 @@ const char *defexplain[] = {
 	"wall",			/* brcorn */
 	"wall",			/* crwall */
 	"wall",			/* tuwall */
-	"wall",			/* tdwall */
-/*10*/	"wall",			/* tlwall */
+/*10*/	"wall",			/* tdwall */
+	"wall",			/* tlwall */
 	"wall",			/* trwall */
 	"doorway",		/* ndoor */
 	"open door",		/* vodoor */
@@ -67,8 +68,9 @@ const char *defexplain[] = {
 	"closed door",		/* hcdoor */
 	"iron bars",		/* bars */
 	"tree",			/* tree */
-	"the floor of a room",	/* room */
-/*20*/	"corridor",		/* dark corr */
+/*20*/	"the floor of a room",	/* room */
+	"dark part of a room",	/* darkroom */
+	"corridor",		/* dark corr */
 	"lit corridor",		/* lit corr */
 	"staircase up",		/* upstair */
 	"staircase down",	/* dnstair */
@@ -76,9 +78,9 @@ const char *defexplain[] = {
 	"ladder down",		/* dnladder */
 	"altar",		/* altar */
 	"grave",		/* grave */
-	"opulent throne",	/* throne */
+/*30*/	"opulent throne",	/* throne */
 	"sink",			/* sink */
-/*30*/	"fountain",		/* fountain */
+	"fountain",		/* fountain */
 	"water",		/* pool */
 	"ice",			/* ice */
 	"molten lava",		/* lava */
@@ -86,9 +88,9 @@ const char *defexplain[] = {
 	"lowered drawbridge",	/* hodbridge */
 	"raised drawbridge",	/* vcdbridge */
 	"raised drawbridge",	/* hcdbridge */
-	"air",			/* open air */
+/*40*/	"air",			/* open air */
 	"cloud",		/* [part of] a cloud */
-/*40*/	"water"			/* under water */
+	"water"			/* under water */
 };
 
 
@@ -121,7 +123,8 @@ const char *trapexplain[] = {
  *  Default screen symbols with explanations and colors.
  */
 const struct nh_symdef defsyms[] = {
-/* 0*/	{' ', "stone",		NO_COLOR},	
+/* 0*/	{' ', "unexplored",	NO_COLOR},	
+	{' ', "stone",		NO_COLOR},	
 	{'|', "vwall",		CLR_GRAY},
 	{'-', "hwall",		CLR_GRAY},
 	{'-', "tlcorn",		CLR_GRAY},
@@ -130,8 +133,8 @@ const struct nh_symdef defsyms[] = {
 	{'-', "brcorn",		CLR_GRAY},
 	{'-', "crwall",		CLR_GRAY},
 	{'-', "tuwall",		CLR_GRAY},
-	{'-', "tdwall",		CLR_GRAY},
-/*10*/	{'|', "tlwall",		CLR_GRAY},
+/*10*/	{'-', "tdwall",		CLR_GRAY},
+	{'|', "tlwall",		CLR_GRAY},
 	{'|', "trwall",		CLR_GRAY},
 	{'.', "ndoor",		CLR_GRAY},
 	{'-', "vodoor",		CLR_BROWN},
@@ -140,8 +143,9 @@ const struct nh_symdef defsyms[] = {
 	{'+', "hcdoor",		CLR_BROWN},
 	{'#', "bars",		HI_METAL},
 	{'#', "tree",		CLR_GREEN},
-	{'.', "room",		CLR_GRAY},
-/*20*/	{'#', "corr",		CLR_GRAY},
+/*20*/	{'.', "room",		CLR_GRAY},
+	{' ', "darkroom",	CLR_GRAY},
+	{'#', "corr",		CLR_GRAY},
 	{'#', "litcorr",	CLR_WHITE},
 	{'<', "upstair",	CLR_GRAY},
 	{'>', "dnstair",	CLR_GRAY},
@@ -149,9 +153,9 @@ const struct nh_symdef defsyms[] = {
 	{'>', "dnladder",	CLR_BROWN},
 	{'_', "altar",		CLR_GRAY},
 	{'|', "grave",		CLR_GRAY},
-	{'\\',"throne",		HI_GOLD},
+/*30*/	{'\\',"throne",		HI_GOLD},
 	{'#', "sink",		CLR_GRAY},
-/*30*/	{'{', "fountain",	CLR_BLUE},
+	{'{', "fountain",	CLR_BLUE},
 	{'}', "pool",		CLR_BLUE},
 	{'.', "ice",		CLR_CYAN},
 	{'}', "lava",		CLR_RED},
@@ -159,9 +163,9 @@ const struct nh_symdef defsyms[] = {
 	{'.', "hodbridge",	CLR_BROWN},
 	{'#', "vcdbridge",	CLR_BROWN},
 	{'#', "hcdbridge",	CLR_BROWN},
-	{' ', "air",		CLR_CYAN},
+/*40*/	{' ', "air",		CLR_CYAN},
 	{'#', "cloud",		CLR_GRAY},
-/*40*/	{'}', "water",		CLR_BLUE}
+	{'}', "water",		CLR_BLUE}
 };
 
 static const struct nh_symdef trapsyms[] = {

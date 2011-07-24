@@ -473,7 +473,7 @@ void forget_map(int howmuch)
 		/* Zonk all memory of this location. */
 		level.locations[zx][zy].seenv = 0;
 		level.locations[zx][zy].waslit = 0;
-		level.locations[zx][zy].mem_bg = S_stone;
+		level.locations[zx][zy].mem_bg = S_unexplored;
 		level.locations[zx][zy].mem_trap = 0;
 		level.locations[zx][zy].mem_obj = 0;
 		level.locations[zx][zy].mem_obj_mn = 0;

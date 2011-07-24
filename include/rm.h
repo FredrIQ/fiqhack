@@ -103,49 +103,51 @@
 
 /* begin dungeon characters */
 
-#define S_stone		0
-#define S_vwall		1
-#define S_hwall		2
-#define S_tlcorn	3
-#define S_trcorn	4
-#define S_blcorn	5
-#define S_brcorn	6
-#define S_crwall	7
-#define S_tuwall	8
-#define S_tdwall	9
-#define S_tlwall	10
-#define S_trwall	11
-#define S_ndoor		12
-#define S_vodoor	13
-#define S_hodoor	14
-#define S_vcdoor	15	/* closed door, vertical wall */
-#define S_hcdoor	16	/* closed door, horizontal wall */
-#define S_bars		17	/* KMH -- iron bars */
-#define S_tree		18	/* KMH */
-#define S_room		19
-#define S_corr		20
-#define S_litcorr	21
-#define S_upstair	22
-#define S_dnstair	23
-#define S_upladder	24
-#define S_dnladder	25
-#define S_altar		26
-#define S_grave		27
-#define S_throne	28
-#define S_sink		29
-#define S_fountain	30
-#define S_pool		31
-#define S_ice		32
-#define S_lava		33
-#define S_vodbridge	34
-#define S_hodbridge	35
-#define S_vcdbridge	36	/* closed drawbridge, vertical wall */
-#define S_hcdbridge	37	/* closed drawbridge, horizontal wall */
-#define S_air		38
-#define S_cloud		39
-#define S_water		40
+#define S_unexplored	0
+#define S_stone		1
+#define S_vwall		2
+#define S_hwall		3
+#define S_tlcorn	4
+#define S_trcorn	5
+#define S_blcorn	6
+#define S_brcorn	7
+#define S_crwall	8
+#define S_tuwall	9
+#define S_tdwall	10
+#define S_tlwall	11
+#define S_trwall	12
+#define S_ndoor		13
+#define S_vodoor	14
+#define S_hodoor	15
+#define S_vcdoor	16	/* closed door, vertical wall */
+#define S_hcdoor	17	/* closed door, horizontal wall */
+#define S_bars		18	/* KMH -- iron bars */
+#define S_tree		19	/* KMH */
+#define S_room		20
+#define S_darkroom	21
+#define S_corr		22
+#define S_litcorr	23
+#define S_upstair	24
+#define S_dnstair	25
+#define S_upladder	26
+#define S_dnladder	27
+#define S_altar		28
+#define S_grave		29
+#define S_throne	30
+#define S_sink		31
+#define S_fountain	32
+#define S_pool		33
+#define S_ice		34
+#define S_lava		35
+#define S_vodbridge	36
+#define S_hodbridge	37
+#define S_vcdbridge	38	/* closed drawbridge, vertical wall */
+#define S_hcdbridge	39	/* closed drawbridge, horizontal wall */
+#define S_air		40
+#define S_cloud		41
+#define S_water		42
 
-#define MAXPCHARS	41	/* maximum number of mapped characters */
+#define MAXPCHARS	43	/* maximum number of mapped characters */
 
 /* end dungeon characters, begin special effects */
 

@@ -280,12 +280,12 @@ void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
 	ch = cur_drawing->traps[id].ch;
 	color = cur_drawing->traps[id].color;
 	
-    } else if (dbe->bg) {
+    } else { /* dbe->bg */
 	id = dbe->bg;
 	ch = cur_drawing->bgelements[id].ch;
 	color = cur_drawing->bgelements[id].color;
-    } else
-	ch = 0;
+    }
+
 
     /* Turn off color if rogue level w/o PC graphics. */
     if (levelmode == LDM_ROGUE && ui_flags.graphics != IBM_GRAPHICS)
