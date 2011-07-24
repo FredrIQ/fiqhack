@@ -14,9 +14,9 @@ int getpos(coord *cc, boolean force, const char *goal)
 	
 	flush_screen(0);
 	
-	while (rv == -1 || x < 1 || y < 1 || x > COLNO || y > ROWNO) {
+	do {
 	    rv = win_getpos(&x, &y, force, goal);
-	}
+	} while (force && (rv == -1 || x < 1 || y < 1 || x > COLNO || y > ROWNO));
 	
 	cc->x = x;
 	cc->y = y;

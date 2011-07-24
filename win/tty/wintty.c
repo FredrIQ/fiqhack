@@ -2401,8 +2401,8 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 	tty_print_message("(For instructions type a ?)");
 	msg_given = TRUE;
     }
-    cx = *x;
-    cy = *y;
+    cx = *x >= 1 ? *x : 1;
+    cy = *y >= 0 ? *y : 0;
     tty_curs(cx,cy);
     tty_display_nhwindow(WIN_MAP, FALSE);
     
