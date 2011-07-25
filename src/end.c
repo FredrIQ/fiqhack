@@ -36,6 +36,9 @@ static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *,int);
 static void artifact_score(struct obj *,boolean,struct menulist *);
 static void savelife(int);
+static boolean check_survival(int how, char *kilbuf);
+static long calc_score(int how);
+static void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
 static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
 static boolean should_query_disclose_option(int,char *);
@@ -474,18 +477,9 @@ static void artifact_score(struct obj *list,
     }
 }
 
-/* Be careful not to call panic from here! */
-void done(int how)
-{
-	boolean taken;
-	char kilbuf[BUFSZ], pbuf[BUFSZ];
-	char outrip_buf[BUFSZ];
-	struct menulist menu;
-	boolean show_endwin = FALSE;
-	boolean bones_ok, have_windows = iflags2.window_inited;
-	struct obj *corpse = NULL;
-	long umoney;
 
+static boolean check_survival(int how, char *kilbuf)
+{
 	if (how == TRICKED) {
 	    if (killer) {
 		paniclog("trickery", killer);
@@ -493,7 +487,7 @@ void done(int how)
 	    }
 	    if (wizard) {
 		You("are a very tricky wizard, it seems.");
-		return;
+		return TRUE;
 	    }
 	}
 
@@ -529,156 +523,65 @@ void done(int how)
 		else {
 			killer = 0;
 			killer_format = 0;
-			return;
+			return TRUE;
 		}
 	}
 	if ((wizard || discover) && (how <= GENOCIDED)) {
-		if (yn("Die?") == 'y') goto die;
+		if (yn("Die?") == 'y')
+		    return FALSE;
 		pline("OK, so you don't %s.",
 			(how == CHOKING) ? "choke" : "die");
-		if (u.uhpmax <= 0) u.uhpmax = u.ulevel * 8;	/* arbitrary */
+		if (u.uhpmax <= 0)
+		    u.uhpmax = u.ulevel * 8;	/* arbitrary */
 		savelife(how);
 		killer = 0;
 		killer_format = 0;
-		return;
+		return TRUE;
 	}
+	
+	return FALSE;
+}
 
-    /*
-     *	The game is now over...
-     */
 
-die:
-	program_state.gameover = 1;
-	/* in case of a subsequent panic(), there's no point trying to save */
-	program_state.something_worth_saving = 0;
-	/* render vision subsystem inoperative */
-	iflags.vision_inited = 0;
-	/* might have been killed while using a disposable item, so make sure
-	   it's gone prior to inventory disclosure and creation of bones data */
-	inven_inuse(TRUE);
-
-	/* Sometimes you die on the first move.  Life's not fair.
-	 * On those rare occasions you get hosed immediately, go out
-	 * smiling... :-)  -3.
-	 */
-	if (moves <= 1 && how < PANICKED)	/* You die... --More-- */
-	    pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
-
-	if (have_windows) wait_synch();	/* flush screen output */
-#ifndef NO_SIGNAL
-	signal(SIGINT, (SIG_RET_TYPE) done_intr);
-# if defined(UNIX)
-	signal(SIGQUIT, (SIG_RET_TYPE) done_intr);
-	signal(SIGHUP, (SIG_RET_TYPE) done_hangup);
-# endif
-#endif /* NO_SIGNAL */
-
-	bones_ok = (how < GENOCIDED) && can_make_bones();
-
-	if (how == TURNED_SLIME)
-	    u.ugrave_arise = PM_GREEN_SLIME;
-
-	if (bones_ok && u.ugrave_arise < LOW_PM) {
-	    /* corpse gets burnt up too */
-	    if (how == BURNING)
-		u.ugrave_arise = (NON_PM - 2);	/* leave no corpse */
-	    else if (how == STONING)
-		u.ugrave_arise = (NON_PM - 1);	/* statue instead of corpse */
-	    else if (u.ugrave_arise == NON_PM &&
-		     !(mvitals[u.umonnum].mvflags & G_NOCORPSE)) {
-		int mnum = u.umonnum;
-
-		if (!Upolyd) {
-		    /* Base corpse on race when not poly'd since original
-		     * u.umonnum is based on role, and all role monsters
-		     * are human.
-		     */
-		    mnum = (flags.female && urace.femalenum != NON_PM) ?
-			urace.femalenum : urace.malenum;
-		}
-		corpse = mk_named_object(CORPSE, &mons[mnum],
-				       u.ux, u.uy, plname);
-		sprintf(pbuf, "%s, %s%s", plname,
-			killer_format == NO_KILLER_PREFIX ? "" :
-			killed_by_prefix[how],
-			killer_format == KILLED_BY_AN ? an(killer) : killer);
-		make_grave(u.ux, u.uy, pbuf);
-	    }
-	}
-
-	if (how == QUIT) {
-		killer_format = NO_KILLER_PREFIX;
-		if (u.uhp < 1) {
-			how = DIED;
-			u.umortality++;	/* skipped above when how==QUIT */
-			/* note that killer is pointing at kilbuf */
-			strcpy(kilbuf, "quit while already on Charon's boat");
-		}
-	}
-	if (how == ESCAPED || how == PANICKED)
-		killer_format = NO_KILLER_PREFIX;
-
-	if (how != PANICKED) {
-	    /* these affect score and/or bones, but avoid them during panic */
-	    taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
-	    paygd();
-	    clearpriests();
-	} else	taken = FALSE;	/* lint; assert( !bones_ok ); */
-
-	clearlocks();
-
-	if (have_windows) display_nhwindow(NHW_MESSAGE, FALSE);
-
-	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
-		disclose(how, taken);
-	/* finish_paybill should be called after disclosure but before bones */
-	if (bones_ok && taken) finish_paybill();
-
-	/* calculate score, before creating bones [container gold] */
-	{
-	    long tmp;
-	    int deepest = deepest_lev_reached(FALSE);
+static long calc_score(int how)
+{
+	long umoney;
+	long tmp;
+	int deepest = deepest_lev_reached(FALSE);
 
 #ifndef GOLDOBJ
-	    umoney = u.ugold;
-	    tmp = u.ugold0;
+	umoney = u.ugold;
+	tmp = u.ugold0;
 #else
-	    umoney = money_cnt(invent);
-	    tmp = u.umoney0;
+	umoney = money_cnt(invent);
+	tmp = u.umoney0;
 #endif
-	    umoney += hidden_gold();	/* accumulate gold from containers */
-	    tmp = umoney - tmp;		/* net gain */
+	umoney += hidden_gold();	/* accumulate gold from containers */
+	tmp = umoney - tmp;		/* net gain */
 
-	    if (tmp < 0L)
-		tmp = 0L;
-	    if (how < PANICKED)
-		tmp -= tmp / 10L;
-	    u.urexp += tmp;
-	    u.urexp += 50L * (long)(deepest - 1);
-	    if (deepest > 20)
-		u.urexp += 1000L * (long)((deepest > 30) ? 10 : deepest - 20);
-	    if (how == ASCENDED) u.urexp *= 2L;
-	}
+	if (tmp < 0L)
+	    tmp = 0L;
+	if (how < PANICKED)
+	    tmp -= tmp / 10L;
+	u.urexp += tmp;
+	u.urexp += 50L * (long)(deepest - 1);
+	if (deepest > 20)
+	    u.urexp += 1000L * (long)((deepest > 30) ? 10 : deepest - 20);
+	if (how == ASCENDED) u.urexp *= 2L; 
+	
+	return umoney;
+}
 
-	if (bones_ok) {
-	    if (!wizard || yn("Save bones?") == 'y')
-		savebones(corpse);
-	    /* corpse may be invalid pointer now so
-		ensure that it isn't used again */
-	    corpse = NULL;
-	}
 
-	/* update gold for the rip output, which can't use hidden_gold()
-	   (containers will be gone by then if bones just got saved...) */
-#ifndef GOLDOBJ
-	u.ugold = umoney;
-#else
-	done_money = umoney;
-#endif
-
+static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
+{
+	char outrip_buf[BUFSZ];
+	boolean show_endwin = FALSE;
+	struct menulist menu;
+	
 	init_menulist(&menu);
 	/* clean up unneeded windows */
-	if (have_windows) {
+	if (iflags2.window_inited) {
 	    wait_synch();
 	    display_nhwindow(NHW_MESSAGE, TRUE);
 	    destroy_game_windows();
@@ -848,15 +751,139 @@ die:
 		   getyear());
 	
 	free(menu.items);
+}
+
+
+/* Be careful not to call panic from here! */
+void done(int how)
+{
+	boolean taken;
+	char kilbuf[BUFSZ], pbuf[BUFSZ];
+	boolean bones_ok;
+	struct obj *corpse = NULL;
+	long umoney;
+
+	if (check_survival(how, kilbuf))
+	    return;
+	
+	/*
+	 *	The game is now over...
+	 */
+	program_state.gameover = 1;
+	/* in case of a subsequent panic(), there's no point trying to save */
+	program_state.something_worth_saving = 0;
+	/* render vision subsystem inoperative */
+	iflags.vision_inited = 0;
+	/* might have been killed while using a disposable item, so make sure
+	   it's gone prior to inventory disclosure and creation of bones data */
+	inven_inuse(TRUE);
+
+	/* Sometimes you die on the first move.  Life's not fair.
+	 * On those rare occasions you get hosed immediately, go out
+	 * smiling... :-)  -3.
+	 */
+	if (moves <= 1 && how < PANICKED)	/* You die... --More-- */
+	    pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
+
+	if (iflags2.window_inited) wait_synch();	/* flush screen output */
+#ifndef NO_SIGNAL
+	signal(SIGINT, (SIG_RET_TYPE) done_intr);
+# if defined(UNIX)
+	signal(SIGQUIT, (SIG_RET_TYPE) done_intr);
+	signal(SIGHUP, (SIG_RET_TYPE) done_hangup);
+# endif
+#endif /* NO_SIGNAL */
+
+	bones_ok = (how < GENOCIDED) && can_make_bones();
+
+	if (how == TURNED_SLIME)
+	    u.ugrave_arise = PM_GREEN_SLIME;
+
+	if (bones_ok && u.ugrave_arise < LOW_PM) {
+	    /* corpse gets burnt up too */
+	    if (how == BURNING)
+		u.ugrave_arise = (NON_PM - 2);	/* leave no corpse */
+	    else if (how == STONING)
+		u.ugrave_arise = (NON_PM - 1);	/* statue instead of corpse */
+	    else if (u.ugrave_arise == NON_PM &&
+		     !(mvitals[u.umonnum].mvflags & G_NOCORPSE)) {
+		int mnum = u.umonnum;
+
+		if (!Upolyd) {
+		    /* Base corpse on race when not poly'd since original
+		     * u.umonnum is based on role, and all role monsters
+		     * are human.
+		     */
+		    mnum = (flags.female && urace.femalenum != NON_PM) ?
+			urace.femalenum : urace.malenum;
+		}
+		corpse = mk_named_object(CORPSE, &mons[mnum],
+				       u.ux, u.uy, plname);
+		sprintf(pbuf, "%s, %s%s", plname,
+			killer_format == NO_KILLER_PREFIX ? "" :
+			killed_by_prefix[how],
+			killer_format == KILLED_BY_AN ? an(killer) : killer);
+		make_grave(u.ux, u.uy, pbuf);
+	    }
+	}
+
+	if (how == QUIT) {
+		killer_format = NO_KILLER_PREFIX;
+		if (u.uhp < 1) {
+			how = DIED;
+			u.umortality++;	/* skipped above when how==QUIT */
+			/* note that killer is pointing at kilbuf */
+			strcpy(kilbuf, "quit while already on Charon's boat");
+		}
+	}
+	if (how == ESCAPED || how == PANICKED)
+		killer_format = NO_KILLER_PREFIX;
+
+	if (how != PANICKED) {
+	    /* these affect score and/or bones, but avoid them during panic */
+	    taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
+	    paygd();
+	    clearpriests();
+	} else	taken = FALSE;	/* lint; assert( !bones_ok ); */
+
+	clearlocks();
+
+	if (iflags2.window_inited) display_nhwindow(NHW_MESSAGE, FALSE);
+
+	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
+		disclose(how, taken);
+	/* finish_paybill should be called after disclosure but before bones */
+	if (bones_ok && taken) finish_paybill();
+
+	/* calculate score, before creating bones [container gold] */
+	umoney = calc_score(how);
+
+	if (bones_ok) {
+	    if (!wizard || yn("Save bones?") == 'y')
+		savebones(corpse);
+	    /* corpse may be invalid pointer now so
+		ensure that it isn't used again */
+	    corpse = NULL;
+	}
+
+	/* update gold for the rip output, which can't use hidden_gold()
+	   (containers will be gone by then if bones just got saved...) */
+#ifndef GOLDOBJ
+	u.ugold = umoney;
+#else
+	done_money = umoney;
+#endif
+
+	display_rip(how, kilbuf, pbuf, umoney);
 
 	/* "So when I die, the first thing I will see in Heaven is a
 	 * score list?" */
 	if (flags.toptenwin) {
 	    topten(how);
-	    if (have_windows)
+	    if (iflags2.window_inited)
 		exit_nhwindows(NULL);
 	} else {
-	    if (have_windows)
+	    if (iflags2.window_inited)
 		exit_nhwindows(NULL);
 	    topten(how);
 	}
