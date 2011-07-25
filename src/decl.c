@@ -224,7 +224,7 @@ boolean botlx;	/* print an entirely new bottom line */
 struct permonst pm_leader, pm_guardian, pm_nemesis;
 struct permonst pm_you_male, pm_you_female;
 
-boolean exit_jmp_buf_valid;
+int exit_jmp_buf_valid;
 jmp_buf exit_jmp_buf;
 
 /*decl.c*/

@@ -246,8 +246,8 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
  * this MUST be a macro: stack values get clobbered; this includes the return address
  */
 #define api_entry_checkpoint() \
-    (exit_jmp_buf_valid ? 1 : (exit_jmp_buf_valid = 1, setjmp(exit_jmp_buf) ? 0 : 1))
+    (exit_jmp_buf_valid++ ? 1 : setjmp(exit_jmp_buf) ? 0 : 1)
     
-#define api_exit() do {exit_jmp_buf_valid = FALSE; } while(0)
+#define api_exit() do {--exit_jmp_buf_valid; } while(0)
 
 #endif /* HACK_H */

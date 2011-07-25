@@ -96,7 +96,7 @@ static void query_birth_options(void)
 }
 
 
-static void commandloop(void)
+static int commandloop(void)
 {
 	const char *cmd;
 	int gamestate, count;
@@ -104,7 +104,7 @@ static void commandloop(void)
 	
 	gamestate = READY_FOR_INPUT;
 	
-	while (gamestate != GAME_OVER) {
+	while (gamestate < GAME_OVER) {
 	    if (gamestate == READY_FOR_INPUT)
 		cmd = get_command(&count, &cmdarg);
 	    else
@@ -112,6 +112,8 @@ static void commandloop(void)
 	    
 	    gamestate = nh_do_move(cmd, count, &cmdarg);
 	}
+	
+	return gamestate;
 }
 
 

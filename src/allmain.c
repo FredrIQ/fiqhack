@@ -544,8 +544,14 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     if (!program_state.game_running)
 	return ERR_GAME_NOT_RUNNING;
     
-    if (!api_entry_checkpoint())
-	return GAME_OVER; /* terminate() in end.c will arrive here */
+    if (!api_entry_checkpoint()) {
+	/* terminate() in end.c will arrive here */
+	if (program_state.panicking)
+	    return GAME_PANICKED;
+	if (!program_state.gameover)
+	    return GAME_SAVED;
+	return GAME_OVER;
+    }
     
     
     if (multi >= 0 && occupation)

@@ -184,9 +184,12 @@ enum nh_input_status {
     MULTI_IN_PROGRESS,
     OCCUPATION_IN_PROGRESS,
     POST_ACTION_DELAY,
-    ERR_GAME_NOT_RUNNING,
     ERR_NO_INPUT_ALLOWED,
-    GAME_OVER
+    
+    GAME_OVER, /* >= GAME_OVER: exit command loop */
+    GAME_SAVED,
+    GAME_PANICKED,
+    ERR_GAME_NOT_RUNNING
 };
 
 enum nh_effect_types {

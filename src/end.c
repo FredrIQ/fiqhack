@@ -946,7 +946,7 @@ void terminate(int status)
 	
 	/* try to leave gracefully - this should return control to the ui code */
 	if (exit_jmp_buf_valid) {
-	    exit_jmp_buf_valid = FALSE;
+	    exit_jmp_buf_valid = 0;
 	    longjmp(exit_jmp_buf, 1);
 	}
 
