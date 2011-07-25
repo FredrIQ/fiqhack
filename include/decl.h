@@ -111,7 +111,7 @@ extern int current_fruit;
 extern struct fruit *ffruit;
 
 extern struct sinfo {
-	int game_started;
+	int game_running;
 	int gameover;		/* self explanatory? */
 	int stopprint;		/* inhibit further end of game disclosure */
 #if defined(UNIX) || defined(WIN32)
@@ -331,6 +331,9 @@ struct menulist {
 
 extern struct permonst pm_leader, pm_guardian, pm_nemesis;
 extern struct permonst pm_you_male, pm_you_female;
+
+extern boolean exit_jmp_buf_valid;
+extern jmp_buf exit_jmp_buf;
 
 #define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
 #define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)

@@ -185,7 +185,8 @@ enum nh_input_status {
     OCCUPATION_IN_PROGRESS,
     POST_ACTION_DELAY,
     ERR_GAME_NOT_RUNNING,
-    ERR_NO_INPUT_ALLOWED
+    ERR_NO_INPUT_ALLOWED,
+    GAME_OVER
 };
 
 enum nh_effect_types {

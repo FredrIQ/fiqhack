@@ -473,13 +473,13 @@ static void copy_option_value(struct nh_option_desc *option, union nh_optvalue v
 }
 
 
-boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
+static boolean set_option(const char *name, union nh_optvalue value, boolean isstring)
 {
 	boolean is_ui = FALSE;
 	struct nh_option_desc *option = find_option(options, name);
 	
-	if (!option && !program_state.game_started)
-		option = find_option(birth_options, name);
+	if (!option && !program_state.game_running)
+	    option = find_option(birth_options, name);
 	
 	if (!option && ui_options) {
 	    option = find_option(ui_options, name);
@@ -487,7 +487,7 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	}
 	    
 	if (!option)
-		return FALSE;
+	    return FALSE;
 	
 	if (isstring)
 	    value = string_to_optvalue(option, value.s);
@@ -605,6 +605,20 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 	
 	/* assume that any recognized option has been handled. */
 	return TRUE;
+}
+
+
+boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
+{
+	boolean rv;
+	
+	if (!api_entry_checkpoint())
+	    return FALSE;
+	
+	rv = set_option(name, value, isstring);
+	
+	api_exit();
+	return rv;
 }
 
 

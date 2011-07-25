@@ -104,7 +104,7 @@ static void commandloop(void)
 	
 	gamestate = READY_FOR_INPUT;
 	
-	for (;;) {
+	while (gamestate != GAME_OVER) {
 	    if (gamestate == READY_FOR_INPUT)
 		cmd = get_command(&count, &cmdarg);
 	    else

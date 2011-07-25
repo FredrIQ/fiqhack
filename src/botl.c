@@ -154,9 +154,9 @@ void nh_get_player_info(struct nh_player_info *pi)
 	
 	/* This function could be called before the game is fully inited.
 	 * Test youmonst.data as it is required for near_capacity().
-	 * program_state.game_started is no good, as we need this data before 
+	 * program_state.game_running is no good, as we need this data before 
 	 * game_started is set */
-	if (!youmonst.data)
+	if (!youmonst.data || !api_entry_checkpoint())
 	    return;
 	
 	pi->x = u.ux;
@@ -262,6 +262,8 @@ void nh_get_player_info(struct nh_player_info *pi)
 	    strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
 	if (cap > UNENCUMBERED)
 	    strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
+	
+	api_exit();
 }
 
 /*botl.c*/

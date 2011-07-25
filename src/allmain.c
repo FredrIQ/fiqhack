@@ -35,6 +35,9 @@ const char **nh_get_copyright_banner(void)
 void nh_init(int pid, struct window_procs *procs, char **paths)
 {
     int i;
+            
+    if (!api_entry_checkpoint()) /* not sure anything in here can actually call panic */
+	return;
     
     hackpid = pid;
     windowprocs = *procs;
@@ -42,7 +45,7 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
     for (i = 0; i < PREFIX_COUNT; i++)
 	fqn_prefix[i] = paths[i];
     
-    program_state.game_started = 0;
+    program_state.game_running = 0;
     initoptions();
 
     dlb_init();	/* must be before newgame() */
@@ -69,6 +72,8 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 #ifdef SIGXCPU
     signal(SIGXCPU, (SIG_RET_TYPE) hangup);
 #endif
+    
+    api_exit();
 }
 
 
@@ -127,7 +132,10 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
 {
     int fd;
     
-    startup_common(name, locknum, playmode);
+    if (!api_entry_checkpoint())
+	return FALSE;
+    
+     startup_common(name, locknum, playmode);
     
     fd = restore_saved_game();
     if (fd < 0)
@@ -166,19 +174,24 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
     
     sync_options();
     
-    program_state.game_started = 1;
+    program_state.game_running = 1;
     post_init_tasks();
+    api_exit();
     return TRUE;
 not_recovered:
     
     clearlocks();
-    program_state.game_started = 0;
+    program_state.game_running = 0;
+    api_exit();
     return FALSE;
 }
 
 
 void nh_start_game(char *name, int locknum, int playmode)
 {
+    if (!api_entry_checkpoint())
+	return;
+    
     startup_common(name, locknum, playmode);
     
     /* prevent an unnecessary prompt in player selection */
@@ -192,8 +205,10 @@ void nh_start_game(char *name, int locknum, int playmode)
     set_wear();
     pickup(1);
     
-    program_state.game_started = 1;
+    program_state.game_running = 1;
     post_init_tasks();
+    
+    api_exit();
 }
 
 
@@ -526,8 +541,12 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
     
-    if (!program_state.game_started)
+    if (!program_state.game_running)
 	return ERR_GAME_NOT_RUNNING;
+    
+    if (!api_entry_checkpoint())
+	return GAME_OVER; /* terminate() in end.c will arrive here */
+    
     
     if (multi >= 0 && occupation)
 	handle_occupation();
@@ -577,6 +596,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     pre_move_tasks(didmove);
     flush_screen(1); /* Flush screen buffer */
     
+    api_exit();
     /*
      * performing a command can put the game into several different states:
      *  - the command completes immediately: a simple move or an attack etc

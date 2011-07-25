@@ -367,6 +367,9 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
     bufs->effectdesc[0] = '\0';
     bufs->objcount = -1;
     
+    if (!program_state.game_running || !api_entry_checkpoint())
+	return;
+    
     describe_bg(x, y, level.locations[x][y].mem_bg, bufs->bgdesc);
     
     if (level.locations[x][y].mem_trap)
@@ -384,6 +387,8 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
 	/* all locations when swallowed other than the hero are the monster */
 	sprintf(bufs->effectdesc, "interior of %s", Blind ? "a monster" : a_monnam(u.ustuck));
     }
+    
+    api_exit();
 }
 
 /*

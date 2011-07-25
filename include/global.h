@@ -5,6 +5,7 @@
 #define GLOBAL_H
 
 #include <stdio.h>
+#include <setjmp.h>
 
 #include "nethack_types.h"
 

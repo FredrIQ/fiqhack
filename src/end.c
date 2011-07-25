@@ -40,12 +40,6 @@ static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
 static boolean should_query_disclose_option(int,char *);
 
-#if defined(WIN32)
-extern void nethack_exit(int);
-#else
-#define nethack_exit exit
-#endif
-
 #define done_stopprint program_state.stopprint
 
 #ifdef WIN32
@@ -219,7 +213,7 @@ void done_in_by(struct monst *mtmp)
 #endif
 
 /*VARARGS1*/
-void panic (const char *str, ...)
+void panic(const char *str, ...)
 {
 	va_list the_args;
 	va_start(the_args, str);
@@ -920,8 +914,19 @@ void terminate(int status)
 	    freedynamicdata();
 	    dlb_cleanup();
 	}
+	
+	program_state.game_running = 0;
+	
+	/* try to leave gracefully - this should return control to the ui code */
+	if (exit_jmp_buf_valid) {
+	    exit_jmp_buf_valid = FALSE;
+	    longjmp(exit_jmp_buf, 1);
+	}
 
-	nethack_exit(status);
+	/* no jmp_buf.
+	 * This can only happen when an unguarded api function calls panic()
+	 * This should not happen. */
+	exit(status);
 }
 
 static void list_vanquished(char defquery, boolean ask)
