@@ -32,6 +32,16 @@
 /* Assorted definitions that may depend on selections in config.h. */
 
 
+typedef signed char	schar;
+typedef unsigned char	uchar;
+
+/*
+ * type xchar: small integers in the range 0 - 127, usually coordinates
+ * although they are nonnegative they must not be declared unsigned
+ * since otherwise comparisons with signed quantities are done incorrectly
+ */
+typedef schar	xchar;
+
 #ifndef STRNCMPI
 #  define strcmpi(a,b) strncmpi((a),(b),-1)
 #endif

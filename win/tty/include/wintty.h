@@ -9,6 +9,9 @@
 #endif
 
 typedef int winid;		/* a window identifier */
+typedef signed char	schar;
+typedef unsigned char	uchar;
+typedef schar	xchar;
 
 /* generic parameter - must not be any larger than a pointer */
 typedef union any {

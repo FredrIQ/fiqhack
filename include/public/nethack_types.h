@@ -197,16 +197,7 @@ enum nh_effect_types {
 };
 
 
-typedef signed char	schar;
-typedef unsigned char	uchar;
-
-/*
- * type xchar: small integers in the range 0 - 127, usually coordinates
- * although they are nonnegative they must not be declared unsigned
- * since otherwise comparisons with signed quantities are done incorrectly
- */
-typedef schar	xchar;
-typedef xchar	boolean;		/* 0 or 1 */
+typedef signed char	boolean;		/* 0 or 1 */
 
 
 struct nh_listitem {
