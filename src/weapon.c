@@ -774,12 +774,12 @@ static void skill_advance(int skill)
 }
 
 static const struct skill_range {
-	short first, last;
 	const char *name;
+	short first, last;
 } skill_ranges[] = {
-    { P_FIRST_H_TO_H, P_LAST_H_TO_H, "Fighting Skills" },
-    { P_FIRST_WEAPON, P_LAST_WEAPON, "Weapon Skills" },
-    { P_FIRST_SPELL,  P_LAST_SPELL,  "Spellcasting Skills" },
+    { "Fighting Skills", P_FIRST_H_TO_H, P_LAST_H_TO_H },
+    { "Weapon Skills", P_FIRST_WEAPON, P_LAST_WEAPON },
+    { "Spellcasting Skills", P_FIRST_SPELL,  P_LAST_SPELL },
 };
 
 /*

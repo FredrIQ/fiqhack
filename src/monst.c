@@ -14,11 +14,8 @@
 #define WT_ELF	   800
 #define WT_DRAGON 4500
 
-#ifdef C
-#undef C
-#endif
 #include "color.h"
-#define C(color)	color
+
 #define HI_DOMESTIC	CLR_WHITE	/* use for player + friendlies */
 #define HI_LORD		CLR_MAGENTA
 
@@ -32,12 +29,12 @@ void monst_init(void);
  *	6 * attack structs ( type , damage-type, # dice, # sides ),
  *	weight (WT_* defines), nutritional value, extension length,
  *	sounds made (MS_* defines), physical size (MZ_* defines),
- *	resistances, resistances conferred (both MR_* defines),
  *	3 * flag bitmaps (M1_*, M2_*, and M3_* defines respectively)
- *	symbol color (C(x) macro)
+ *	resistances, resistances conferred (both MR_* defines),
+ *	symbol color
  */
 #define MON(nam,sym,lvl,gen,atk,siz,mr1,mr2,flg1,flg2,flg3,col) \
-	   {nam,sym,lvl,gen,atk,siz,mr1,mr2,flg1,flg2,flg3,C(col)}
+	   {nam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mr1,mr2,col}
 /* LVL() and SIZ() collect several fields to cut down on # of args for MON() */
 #define LVL(lvl,mov,ac,mr,aln) lvl,mov,ac,mr,aln
 #define SIZ(wt,nut,pxl,snd,siz) wt,nut,pxl,snd,siz

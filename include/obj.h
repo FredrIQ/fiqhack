@@ -97,10 +97,10 @@ struct obj {
 #define spestudied corpsenm	/* # of times a spellbook has been studied */
 #define fromsink  corpsenm	/* a potion from a sink */
 	unsigned oeaten;	/* nutrition left in food, if partly eaten */
-	long age;		/* creation date */
 
 	uchar onamelth;		/* length of name (following oxlth) */
 	short oxlth;		/* length of following data */
+	long age;		/* creation date */
 	/* in order to prevent alignment problems oextra should
 	   be (or follow) a long int */
 	long owornmask;

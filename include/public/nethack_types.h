@@ -266,11 +266,11 @@ struct nh_objitem {
     char caption[COLNO];
     int id;
     int count;
-    char accel;
-    char group_accel;
     int otype;
     int oclass;
     enum nh_bucstatus buc;
+    char accel;
+    char group_accel;
     boolean worn;
 };
 
@@ -314,15 +314,14 @@ struct nh_cmd_arg {
 
 /* a single position in the display buffer passed by win_update_screen */
 struct nh_dbuf_entry {
-    xchar isnew; /* will be set to 1 whenever other entries change */
-    int bg;
-    int trap;
-    int obj;
-    int obj_mn;
-    boolean invis;
-    int mon;
-    int monflags;
     int effect; /* to decode type and id see macros below */
+    short bg;
+    short trap;
+    short obj;
+    short obj_mn;
+    short mon;
+    short monflags;
+    boolean invis;
 };
 
 #define NH_EFFECT_TYPE(e) ((enum nh_effect_types)((e) >> 16))

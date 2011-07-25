@@ -1265,7 +1265,6 @@ void dbuf_set_effect(int x, int y, int eglyph)
 	return;
     
     dbuf[y][x].effect = eglyph;
-    dbuf[y][x].isnew = 1;
 }
 
 static void dbuf_set_object(int x, int y, int oid)
@@ -1274,7 +1273,6 @@ static void dbuf_set_object(int x, int y, int oid)
 	return;
     
     dbuf[y][x].obj = obfuscate_object(oid);
-    dbuf[y][x].isnew = 1;
 }
 
 /*
@@ -1301,21 +1299,14 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
     if (!isok(x, y))
 	return;
     
-    if (dbuf[y][x].bg != bg || dbuf[y][x].trap != trap ||
-	dbuf[y][x].obj != obj || dbuf[y][x].obj_mn != obj_mn ||
-	dbuf[y][x].invis != invis || dbuf[y][x].mon != mon ||
-	dbuf[y][x].monflags != monflags || dbuf[y][x].effect != effect) {
-	
-	dbuf[y][x].isnew = 1;
-	dbuf[y][x].bg = bg;
-	dbuf[y][x].trap = trap;
-	dbuf[y][x].obj = obfuscate_object(obj);
-	dbuf[y][x].obj_mn = obj_mn;
-	dbuf[y][x].invis = invis;
-	dbuf[y][x].mon = mon;
-	dbuf[y][x].monflags = monflags;
-	dbuf[y][x].effect = effect;
-    }
+    dbuf[y][x].bg = bg;
+    dbuf[y][x].trap = trap;
+    dbuf[y][x].obj = obfuscate_object(obj);
+    dbuf[y][x].obj_mn = obj_mn;
+    dbuf[y][x].invis = invis;
+    dbuf[y][x].mon = mon;
+    dbuf[y][x].monflags = monflags;
+    dbuf[y][x].effect = effect;
 }
 
 
