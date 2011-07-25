@@ -179,6 +179,7 @@ enum nh_command_status {
     COMMAND_OK
 };
 
+/* return values for nh_do_move */
 enum nh_input_status {
     READY_FOR_INPUT,
     MULTI_IN_PROGRESS,
@@ -186,10 +187,18 @@ enum nh_input_status {
     POST_ACTION_DELAY,
     ERR_NO_INPUT_ALLOWED,
     
-    GAME_OVER, /* >= GAME_OVER: exit command loop */
+    /* for a status >= GAME_OVER exit the command loop */
+    GAME_OVER, /* i.e. player died */
     GAME_SAVED,
-    GAME_PANICKED,
-    ERR_GAME_NOT_RUNNING
+    GAME_PANICKED, /* something went wrong in libnethack and panic() was called */
+    ERR_GAME_NOT_RUNNING /* possibilities: the init sequence was incorrect and
+                                           the game is not running YET
+                                        or some api call other than nh_do_move    
+                                           caused a panic, which killed the game
+                                        or an attempt was made to call nh_do_move
+                                           after some other final status (>= GAME_OVER)
+                                           was returned
+                          */
 };
 
 enum nh_effect_types {
