@@ -646,8 +646,6 @@ void stop_occupation(void)
 
 void display_gamewindows(void)
 {
-    create_game_windows();
-
     /*
      * The mac port is not DEPENDENT on the order of these
      * displays, but it looks a lot better this way...

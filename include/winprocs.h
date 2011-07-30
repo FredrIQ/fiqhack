@@ -10,8 +10,6 @@ extern void nh_delay_output(void);
 
 #define player_selection (*windowprocs.win_player_selection)
 #define exit_nhwindows (*windowprocs.win_exit_nhwindows)
-#define create_game_windows (*windowprocs.win_create_game_windows)
-#define destroy_game_windows (*windowprocs.win_destroy_game_windows)
 #define clear_nhwindow (*windowprocs.win_clear_nhwindow)
 #define display_nhwindow (*windowprocs.win_display_nhwindow)
 #define display_buffer (*windowprocs.win_display_buffer)

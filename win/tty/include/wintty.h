@@ -141,6 +141,7 @@ struct interface_flags {
 	boolean  cmdassist;	/* provide some extra help messages */
 	boolean  end_own;	/* list all own scores */
 	int	 end_top, end_around;	/* describe desired score list */
+	boolean  window_inited;
 };
 
 extern struct interface_flags ui_flags;

@@ -274,12 +274,17 @@ int main(int argc, char *argv[])
 	while (!plname[0])
 	    tty_askname(plname);
 	
+	tty_create_game_windows();
+	
 	if (!nh_restore_save(plname, locknum, playmode)) {
 	    query_birth_options();
 	    nh_start_game(plname, locknum, playmode);
 	}
-
+	
 	ret = commandloop();
+	
+	tty_destroy_game_windows();
+	
 	if (ret == GAME_OVER)
 	    show_topten(plname, ui_flags.end_top, ui_flags.end_around, ui_flags.end_own);
 	

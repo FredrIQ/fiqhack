@@ -617,11 +617,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 
 	/* validate the data's version against the program's version */
 	Fread(&vers_info, sizeof vers_info, 1, dgn_file);
-	/* we'd better clear the screen now, since when error messages come from
-	 * check_version() they will be printed using pline(), which doesn't
-	 * mix with the raw messages that might be already on the screen
-	 */
-	if (iflags2.window_inited) clear_nhwindow(NHW_MAP);
+	
 	if (!check_version(&vers_info, DUNGEON_FILE, TRUE))
 	    panic("Dungeon description not valid.");
 

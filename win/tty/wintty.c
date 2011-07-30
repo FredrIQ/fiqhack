@@ -25,8 +25,6 @@ struct interface_flags ui_flags;
 struct window_procs tty_procs = {
     tty_player_selection,
     tty_exit_nhwindows,
-    tty_create_game_windows,
-    tty_destroy_game_windows,
     tty_clear_nhwindow,
     tty_display_nhwindow,
     tty_display_buffer,
@@ -595,7 +593,7 @@ void tty_exit_nhwindows(const char *str)
 #ifndef NO_TERMS		/*(until this gets added to the window interface)*/
     tty_shutdown();		/* cleanup termcap/terminfo/whatever */
 #endif
-    iflags2.window_inited = 0;
+    ui_flags.window_inited = 0;
 }
 
 
@@ -1320,7 +1318,7 @@ void display_nhwindow(winid window,
 	    ttyDisplay->toplin = 0;
 	cw->curx = cw->cury = 0;
 	if (!cw->active)
-	    iflags2.window_inited = TRUE;
+	    ui_flags.window_inited = TRUE;
 	break;
     case NHW_MAP:
 	end_glyphout();
@@ -1391,7 +1389,7 @@ void tty_dismiss_nhwindow(winid window)
     case NHW_MENU:
     case NHW_TEXT:
 	if (cw->active) {
-	    if (iflags2.window_inited) {
+	    if (ui_flags.window_inited) {
 		/* otherwise dismissing the text endwin after other windows
 		 * are dismissed tries to redraw the map and panics.  since
 		 * the whole reason for dismissing the other windows was to
@@ -1419,7 +1417,7 @@ void tty_destroy_nhwindow(winid window)
     if (cw->active)
 	tty_dismiss_nhwindow(window);
     if (cw->type == NHW_MESSAGE)
-	iflags2.window_inited = 0;
+	ui_flags.window_inited = 0;
     if (cw->type == NHW_MAP)
 	clear_screen();
 

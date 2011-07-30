@@ -416,8 +416,6 @@ struct nh_topten_entry {
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
     void (*win_exit_nhwindows)(const char *);
-    void (*win_create_game_windows)(void);
-    void (*win_destroy_game_windows)(void);
     void (*win_clear_nhwindow)(int);
     void (*win_display_nhwindow)(int, boolean);
     void (*win_display_buffer)(char *,boolean);
@@ -446,7 +444,6 @@ struct window_procs {
 
 struct instance_flags2 {
     boolean  news;		/* print news */
-    boolean  window_inited; /* true if init_nhwindows() completed */
 };
 
 #endif

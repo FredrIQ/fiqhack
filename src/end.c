@@ -226,13 +226,6 @@ void panic(const char *str, ...)
 	if (program_state.panicking++)
 	    NH_abort();	/* avoid loops - this should never happen*/
 
-	if (iflags2.window_inited) {
-	    raw_print("\r\nOops...");
-	    wait_synch();	/* make sure all pending output gets flushed */
-	    exit_nhwindows(NULL);
-	    iflags2.window_inited = 0; /* they're gone; force raw_print()ing */
-	}
-
 	raw_print(program_state.gameover ?
 		  "Postgame wrapup disrupted." :
 		  !program_state.something_worth_saving ?
@@ -253,7 +246,7 @@ void panic(const char *str, ...)
 # endif
 	if (program_state.something_worth_saving) {
 	    set_error_savefile();
-	    dosave0();
+	    dosave0(TRUE);
 	}
 	
 	char buf[BUFSZ];
@@ -582,36 +575,33 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	struct menulist menu;
 	
 	init_menulist(&menu);
+	
 	/* clean up unneeded windows */
-	if (iflags2.window_inited) {
-	    wait_synch();
-	    display_nhwindow(NHW_MESSAGE, TRUE);
-	    destroy_game_windows();
+	wait_synch();
+	display_nhwindow(NHW_MESSAGE, TRUE);
 
-	    if (!done_stopprint || flags.tombstone)
-		show_endwin = TRUE;
+	if (!done_stopprint || flags.tombstone)
+	    show_endwin = TRUE;
 
-	    if (how < GENOCIDED && flags.tombstone && show_endwin) {
-		/* Put together death description */
-		switch (killer_format) {
-			default: impossible("bad killer format?");
-			case KILLED_BY_AN:
-				strcpy(outrip_buf, killed_by_prefix[how]);
-				strcat(outrip_buf, an(killer));
-				break;
-			case KILLED_BY:
-				strcpy(outrip_buf, killed_by_prefix[how]);
-				strcat(outrip_buf, killer);
-				break;
-			case NO_KILLER_PREFIX:
-				strcpy(outrip_buf, killer);
-				break;
-		}
-
-		
+	if (how < GENOCIDED && flags.tombstone && show_endwin) {
+	    /* Put together death description */
+	    switch (killer_format) {
+		    default: impossible("bad killer format?");
+		    case KILLED_BY_AN:
+			    strcpy(outrip_buf, killed_by_prefix[how]);
+			    strcat(outrip_buf, an(killer));
+			    break;
+		    case KILLED_BY:
+			    strcpy(outrip_buf, killed_by_prefix[how]);
+			    strcat(outrip_buf, killer);
+			    break;
+		    case NO_KILLER_PREFIX:
+			    strcpy(outrip_buf, killer);
+			    break;
 	    }
-	} else
-	    done_stopprint = 1; /* just avoid any more output */
+
+	    
+	}
 
 /* changing kilbuf really changes killer. we do it this way because
    killer is declared a (const char *)
@@ -787,7 +777,7 @@ void done(int how)
 	if (moves <= 1 && how < PANICKED)	/* You die... --More-- */
 	    pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
 
-	if (iflags2.window_inited) wait_synch();	/* flush screen output */
+	wait_synch();	/* flush screen output */
 #ifndef NO_SIGNAL
 	signal(SIGINT, (SIG_RET_TYPE) done_intr);
 # if defined(UNIX)
@@ -850,7 +840,7 @@ void done(int how)
 
 	clearlocks();
 
-	if (iflags2.window_inited) display_nhwindow(NHW_MESSAGE, FALSE);
+	display_nhwindow(NHW_MESSAGE, FALSE);
 
 	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
 		disclose(how, taken);

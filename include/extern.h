@@ -1389,7 +1389,7 @@ extern int dosave(void);
 #if defined(UNIX) || defined(WIN32)
 extern void hangup(int);
 #endif
-extern int dosave0(void);
+extern int dosave0(boolean emergency);
 #ifdef INSURANCE
 extern void savestateinlock(void);
 #endif

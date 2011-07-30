@@ -41,7 +41,7 @@ int dosave(void)
 #if defined(UNIX)
 		program_state.done_hup = 0;
 #endif
-		if (dosave0()) {
+		if (dosave0(FALSE)) {
 			program_state.something_worth_saving = 0;
 			u.uhp = -1;		/* universal game's over indicator */
 			/* make sure they see the Saving message */
@@ -66,7 +66,7 @@ void hangup(int sig_unused)
 # else	/* SAVEONHANGUP */
 	if (!program_state.done_hup++) {
 	    if (program_state.something_worth_saving)
-		dosave0();
+		dosave0(TRUE);
 	    clearlocks();
 	    terminate(EXIT_FAILURE);
 	}
@@ -76,7 +76,7 @@ void hangup(int sig_unused)
 #endif
 
 /* returns 1 if save successful */
-int dosave0(void)
+int dosave0(boolean emergency)
 {
 	const char *fq_save;
 	int fd, ofd;
@@ -95,7 +95,7 @@ int dosave0(void)
 	signal(SIGINT, SIG_IGN);
 #endif
 
-	HUP if (iflags2.window_inited) {
+	HUP if (!emergency) {
 	    fd = open_savefile();
 	    if (fd > 0) {
 		close(fd);
@@ -124,7 +124,7 @@ int dosave0(void)
 		change_luck(-1);		/* and unido!ab */
 	if (flags.friday13)
 		change_luck(1);
-	if (iflags2.window_inited)
+	if (!emergency)
 	    HUP clear_nhwindow(NHW_MESSAGE);
 
 	store_version(fd);
