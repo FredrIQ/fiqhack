@@ -76,6 +76,7 @@ extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int)
 extern EXPORT char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 
 /* topten.c */
-extern EXPORT void prscore(char*,int,char**);
+extern EXPORT struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
+				      char *player, int top, int around, boolean own);
 
 #endif

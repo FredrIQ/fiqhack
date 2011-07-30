@@ -1603,7 +1603,7 @@ extern void timer_sanity_check(void);
 
 /* ### topten.c ### */
 
-extern void topten(int);
+extern void update_topten(int how);
 extern struct obj *tt_oname(struct obj *);
 
 /* ### track.c ### */

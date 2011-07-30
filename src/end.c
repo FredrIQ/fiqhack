@@ -70,6 +70,8 @@ static const char *ends[] = {		/* "when you..." */
 	"quit", "escaped", "ascended"
 };
 
+static char killbuf[BUFSZ];
+
 extern const char * const killed_by_prefix[];	/* from topten.c */
 
 /*ARGSUSED*/
@@ -758,12 +760,12 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 void done(int how)
 {
 	boolean taken;
-	char kilbuf[BUFSZ], pbuf[BUFSZ];
+	char pbuf[BUFSZ];
 	boolean bones_ok;
 	struct obj *corpse = NULL;
 	long umoney;
 
-	if (check_survival(how, kilbuf))
+	if (check_survival(how, killbuf))
 	    return;
 	
 	/*
@@ -832,8 +834,8 @@ void done(int how)
 		if (u.uhp < 1) {
 			how = DIED;
 			u.umortality++;	/* skipped above when how==QUIT */
-			/* note that killer is pointing at kilbuf */
-			strcpy(kilbuf, "quit while already on Charon's boat");
+			/* note that killer is pointing at killbuf */
+			strcpy(killbuf, "quit while already on Charon's boat");
 		}
 	}
 	if (how == ESCAPED || how == PANICKED)
@@ -874,21 +876,12 @@ void done(int how)
 	done_money = umoney;
 #endif
 
-	display_rip(how, kilbuf, pbuf, umoney);
+	display_rip(how, killbuf, pbuf, umoney);
 
-	/* "So when I die, the first thing I will see in Heaven is a
-	 * score list?" */
-	if (flags.toptenwin) {
-	    topten(how);
-	    if (iflags2.window_inited)
-		exit_nhwindows(NULL);
-	} else {
-	    if (iflags2.window_inited)
-		exit_nhwindows(NULL);
-	    topten(how);
-	}
-
-	if (done_stopprint) { raw_print(""); raw_print(""); }
+	/* generate a topten entry for this game.
+	   update_topten does not display anything. */
+	update_topten(how);
+	
 	terminate(EXIT_SUCCESS);
 }
 

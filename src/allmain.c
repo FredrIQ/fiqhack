@@ -192,6 +192,8 @@ void nh_start_game(char *name, int locknum, int playmode)
     if (!api_entry_checkpoint())
 	return;
     
+    moves = monstermoves = 1;
+    
     startup_common(name, locknum, playmode);
     
     /* prevent an unnecessary prompt in player selection */

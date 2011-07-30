@@ -40,7 +40,6 @@ struct window_procs tty_procs = {
     tty_wait_synch,
     tty_update_screen,
     tty_raw_print,
-    tty_raw_print_bold,
     tty_nhgetch,
     tty_getpos,
     tty_getdir,

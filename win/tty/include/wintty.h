@@ -139,6 +139,8 @@ struct interface_flags {
 	int menu_headings;	/* ATR for menu headings */
 	boolean  num_pad;	/* use numbers for movement commands */
 	boolean  cmdassist;	/* provide some extra help messages */
+	boolean  end_own;	/* list all own scores */
+	int	 end_top, end_around;	/* describe desired score list */
 };
 
 extern struct interface_flags ui_flags;

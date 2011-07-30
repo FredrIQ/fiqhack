@@ -138,9 +138,6 @@ struct nh_option_desc birth_options[] = {
     { "dogname",  "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
     { "horsename", "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
     { "pettype",  "your preferred initial pet type", OPTTYPE_ENUM, {0}},
-    { "scores_own", "show only your own scores in the list", OPTTYPE_BOOL, { VFALSE }},
-    { "scores_top", "how many top scores to show", OPTTYPE_INT, {(void*)3}},
-    { "scores_around", "the number of scores around the top scores", OPTTYPE_INT, {(void*)2}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -184,7 +181,6 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"verbose", &flags.verbose},
 
 	/* birth options */
-	{"scores_own", &flags.end_own},
 	{"elbereth", &flags.elbereth_enabled},
 	{"reincarnation", &flags.rogue_enabled},
 	{"seduction", &flags.seduce_enabled},
@@ -312,8 +308,6 @@ void initoptions(void)
 	find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
-	find_option(birth_options, "scores_top")->i.max = 100;
-	find_option(birth_options, "scores_around")->i.max = 100;
 
 	iflags.travelcc.x = iflags.travelcc.y = -1;
 	flags.warnlevel = 1;
@@ -591,12 +585,6 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	}
 	else if (!strcmp("pettype", option->name)) {
 		preferred_pet = (char)option->value.e;
-	}
-	else if (!strcmp("scores_top", option->name)) {
-		flags.end_top = option->value.i;
-	}
-	else if (!strcmp("scores_around", option->name)) {
-		flags.end_around = option->value.i;
 	}
 	
 	else

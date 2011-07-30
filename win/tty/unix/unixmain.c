@@ -74,6 +74,113 @@ static char** init_game_paths(void)
 }
 
 
+static void topten_print(struct nh_topten_entry *entry)
+{
+	char linebuf[BUFSZ];
+	char *bp, hpbuf[24], linebuf3[BUFSZ];
+	int hppos, lngr;
+	
+	sprintf(linebuf, "%4d %10d  %s", entry->rank, entry->points, entry->entrytxt);
+
+	lngr = (int)strlen(linebuf);
+	if (entry->hp <= 0) hpbuf[0] = '-', hpbuf[1] = '\0';
+	else sprintf(hpbuf, "%d", entry->hp);
+	/* beginning of hp column after padding (not actually padded yet) */
+	hppos = COLNO - (sizeof("  Hp [max]")-1); /* sizeof(str) includes \0 */
+	while (lngr >= hppos) {
+	    bp = linebuf + strlen(linebuf);
+	    while (!(*bp == ' ' && (bp-linebuf < hppos)))
+		bp--;
+	    /* special case: if about to wrap in the middle of maximum
+		dungeon depth reached, wrap in front of it instead */
+	    if (bp > linebuf + 5 && !strncmp(bp - 5, " [max", 5)) bp -= 5;
+	    strcpy(linebuf3, bp+1);
+	    *bp = 0;
+	    
+	    if (entry->highlight) {
+		while (bp < linebuf + (COLNO-1)) *bp++ = ' ';
+		*bp = 0;
+		tty_raw_print_bold(linebuf);
+	    } else
+		tty_raw_print(linebuf);
+	    sprintf(linebuf, "%16s %s", "", linebuf3);
+	    lngr = strlen(linebuf);
+	}
+	/* beginning of hp column not including padding */
+	hppos = COLNO - 7 - (int)strlen(hpbuf);
+	bp = linebuf + strlen(linebuf);
+
+	if (bp <= linebuf + hppos) {
+	    /* pad any necessary blanks to the hit point entry */
+	    while (bp < linebuf + hppos) *bp++ = ' ';
+	    strcpy(bp, hpbuf);
+	    sprintf(bp + strlen(bp), " %s[%d]",
+		    (entry->maxhp < 10) ? "  " : (entry->maxhp < 100) ? " " : "",
+		    entry->maxhp);
+	}
+
+	if (entry->highlight) {
+	    bp = linebuf + strlen(linebuf);
+	    while (bp < linebuf + (COLNO-1)) *bp++ = ' ';
+	    *bp = 0;
+	    tty_raw_print_bold(linebuf);
+	} else
+	    tty_raw_print(linebuf);
+}
+
+
+static void outheader(void)
+{
+	char linebuf[BUFSZ];
+	char *bp;
+
+	strcpy(linebuf, " No   Points     Name");
+	bp = linebuf + strlen(linebuf);
+	while (bp < linebuf + COLNO - 9) *bp++ = ' ';
+	strcpy(bp, "Hp [max]");
+	tty_raw_print(linebuf);
+}
+
+
+static void show_topten(char *player, int top, int around, boolean own)
+{
+	struct nh_topten_entry *scores;
+	char status[BUFSZ];
+	int i, listlen = 0;
+	
+	scores = nh_get_topten(&listlen, status, player, top, around, own);
+	
+	if (listlen == 0) {
+	    return;
+	}
+	
+	if (status[0])
+	    tty_raw_print(status);
+	
+	tty_raw_print("");
+	outheader();
+	
+	for (i = 0; i < listlen; i++)
+	    topten_print(&scores[i]);
+}
+
+
+static void prscore(int argc, char **argv)
+{
+	char *plname = NULL;
+
+	if (argc < 2 || strncmp(argv[1], "-s", 2)) {
+		printf("prscore: bad arguments (%d)", argc);
+		return;
+	}
+	
+	if (argc >= 3)
+	    plname = argv[2];
+	
+	show_topten(plname, 10, 0, plname != 0);
+}
+
+
 static void query_birth_options(void)
 {
 	char *prompt, resp = 0;
@@ -120,6 +227,7 @@ static int commandloop(void)
 int main(int argc, char *argv[])
 {
 	char **gamepaths;
+	int ret;
 
 	/* idea from rpick%ucqais@uccba.uc.edu
 	 * prevent automated rerolling of characters
@@ -145,7 +253,7 @@ int main(int argc, char *argv[])
 	     * may do a prscore().
 	     */
 	    if (!strncmp(argv[1], "-s", 2)) {
-		prscore(argv[0], argc, argv);
+		prscore(argc, argv);
 		exit(EXIT_SUCCESS);
 	    }
 	}
@@ -171,7 +279,9 @@ int main(int argc, char *argv[])
 	    nh_start_game(plname, locknum, playmode);
 	}
 
-	commandloop();
+	ret = commandloop();
+	if (ret == GAME_OVER)
+	    show_topten(plname, ui_flags.end_top, ui_flags.end_around, ui_flags.end_own);
 	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/

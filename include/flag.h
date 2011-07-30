@@ -20,7 +20,6 @@ struct flag {
 	boolean  confirm;	/* confirm before hitting tame monsters */
 	boolean  debug;		/* in debugging mode */
 #define wizard	 flags.debug
-	boolean  end_own;	/* list all own scores */
 	boolean  explore;	/* in exploration mode */
 #define discover flags.explore
 	boolean  female;
@@ -57,7 +56,6 @@ struct flag {
 	boolean  toptenwin;	/* ending list in window instead of stdout */
 	boolean  verbose;	/* max battle info */
 	boolean  prayconfirm;	/* confirm before praying */
-	int	 end_top, end_around;	/* describe desired score list */
 	unsigned ident;		/* social security number for each monster */
 	unsigned moonphase;
 #define NEW_MOON	0

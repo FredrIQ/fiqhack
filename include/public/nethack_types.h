@@ -378,7 +378,7 @@ struct nh_drawing_info {
 
 
 /* 
- * output buffers for nh_describe_pos
+ * output buffers for nh_describe_pos()
  * there is one buffer per display layer (see nh_dbuf_entry)
  */
 struct nh_desc_buf {
@@ -389,6 +389,28 @@ struct nh_desc_buf {
     char invisdesc[BUFSZ];
     char effectdesc[BUFSZ]; /* can only describe the swallow effect */
     int objcount; /* number of (visible) objects or -1 if the location is not visible */
+};
+
+#define TTPLBUFSZ 16
+/* 
+ * return type for nh_get_topten()
+ */
+struct nh_topten_entry {
+    int rank;
+    int points;
+    int maxlvl; /* maximum depth level reached */
+    int hp, maxhp;
+    int deaths;
+    int ver_major, ver_minor, patchlevel;
+    int deathdate, birthdate; /* decimal representation, ex: 20101231 for 31 Dec 2010 */
+    char plrole[TTPLBUFSZ];
+    char plrace[TTPLBUFSZ];
+    char plgend[TTPLBUFSZ];
+    char plalign[TTPLBUFSZ];
+    char name[TTPLBUFSZ];
+    char death[BUFSZ];
+    char entrytxt[BUFSZ];
+    boolean highlight;
 };
 
 struct window_procs {
@@ -411,7 +433,6 @@ struct window_procs {
     void (*win_wait_synch)(void);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
     void (*win_raw_print)(const char *);
-    void (*win_raw_print_bold)(const char *);
     int (*win_nhgetch)(void);
     int (*win_getpos)(int *, int *, boolean, const char*);
     enum nh_direction (*win_getdir)(const char *, boolean);

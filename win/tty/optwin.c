@@ -64,13 +64,17 @@ struct nh_option_desc tty_options[] = {
     {"playground", "directory for lockfiles, savegames, etc.", OPTTYPE_STRING, {NULL}},
     
     {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
+    {"scores_own", "show all your own scores in the list", OPTTYPE_BOOL, { FALSE }},
+    {"scores_top", "how many top scores to show", OPTTYPE_INT, {(void*)3}},
+    {"scores_around", "the number of scores shown around your score", OPTTYPE_INT, {(void*)2}},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
 struct nh_boolopt_map boolopt_map[] = {
-    {"eight_bit_tty", &ui_flags.eight_bit_input},	/*WC*/
+    {"eight_bit_tty", &ui_flags.eight_bit_input},
     {"extmenu", &ui_flags.extmenu},
-    {"hilite_pet", &ui_flags.hilite_pet},	/*WC*/
+    {"hilite_pet", &ui_flags.hilite_pet},
+    {"scores_own", &ui_flags.end_own},
     {"showexp", &ui_flags.showexp},
     {"showscore", &ui_flags.showscore},
     {"standout", &ui_flags.standout},
@@ -104,6 +108,12 @@ boolean option_change_callback(struct nh_option_desc *option)
 	    ui_flags.graphics = option->value.e;
 	    switch_graphics(option->value.e);
 	}
+	else if (!strcmp(option->name, "scores_top")) {
+	    ui_flags.end_top = option->value.i;
+	}
+	else if (!strcmp(option->name, "scores_around")) {
+	    ui_flags.end_around = option->value.i;
+	}
 	else
 	    return FALSE;
 	
@@ -128,6 +138,8 @@ void tty_init_options(void)
 	find_option("msg_window")->e = msg_window_spec;
 	find_option("msghistory")->i.max = 1000; /* arbitrary value */
 	find_option("graphics")->e = graphics_spec;
+	find_option("scores_top")->i.max = 10000;
+	find_option("scores_around")->i.max = 100;
 	
 	nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
 	read_ui_config();

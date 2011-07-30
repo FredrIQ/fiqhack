@@ -139,7 +139,8 @@ const int shield_static[SHIELD_COUNT] = {
 
 struct spell spl_book[MAXSPELL + 1];
 
-long moves = 1L, monstermoves = 1L;
+long moves;
+long monstermoves;
 	 /* These diverge when player is Fast */
 long wailmsg;
 
