@@ -1239,7 +1239,6 @@ static void wand_explode(struct obj *obj)
 {
     obj->in_use = TRUE;	/* in case losehp() is fatal */
     Your("%s vibrates violently, and explodes!",xname(obj));
-    nhbell();
     losehp(rnd(2*(u.uhpmax+1)/3), "exploding wand", KILLED_BY_AN);
     useup(obj);
     exercise(A_STR, FALSE);
