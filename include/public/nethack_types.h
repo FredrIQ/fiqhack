@@ -415,7 +415,6 @@ struct nh_topten_entry {
 
 struct window_procs {
     void (*win_player_selection)(int,int,int,int,int);
-    void (*win_exit_nhwindows)(const char *);
     void (*win_clear_nhwindow)(int);
     void (*win_display_nhwindow)(int, boolean);
     void (*win_display_buffer)(char *,boolean);

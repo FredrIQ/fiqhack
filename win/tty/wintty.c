@@ -24,7 +24,6 @@ struct interface_flags ui_flags;
 /* Interface definition, for windows.c */
 struct window_procs tty_procs = {
     tty_player_selection,
-    tty_exit_nhwindows,
     tty_clear_nhwindow,
     tty_display_nhwindow,
     tty_display_buffer,

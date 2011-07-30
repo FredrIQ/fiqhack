@@ -46,7 +46,6 @@ int dosave(void)
 			u.uhp = -1;		/* universal game's over indicator */
 			/* make sure they see the Saving message */
 			display_nhwindow(NHW_MESSAGE, TRUE);
-			exit_nhwindows("Be seeing you...");
 			terminate(EXIT_SUCCESS);
 		} else doredraw();
 	}

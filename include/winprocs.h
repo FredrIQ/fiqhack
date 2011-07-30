@@ -9,7 +9,6 @@ extern struct window_procs windowprocs;
 extern void nh_delay_output(void);
 
 #define player_selection (*windowprocs.win_player_selection)
-#define exit_nhwindows (*windowprocs.win_exit_nhwindows)
 #define clear_nhwindow (*windowprocs.win_clear_nhwindow)
 #define display_nhwindow (*windowprocs.win_display_nhwindow)
 #define display_buffer (*windowprocs.win_display_buffer)

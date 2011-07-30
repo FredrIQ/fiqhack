@@ -117,7 +117,6 @@ int done2(void)
 	    const char *tmp = "Dump core?";
 	    if ((c = ynq(tmp)) == 'y') {
 		signal(SIGINT, (SIG_RET_TYPE) done1);
-		exit_nhwindows(NULL);
 		NH_abort();
 	    } else if (c == 'q') done_stopprint++;
 	}

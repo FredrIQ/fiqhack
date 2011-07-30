@@ -284,9 +284,12 @@ int main(int argc, char *argv[])
 	ret = commandloop();
 	
 	tty_destroy_game_windows();
+	tty_exit_nhwindows(NULL);
 	
 	if (ret == GAME_OVER)
 	    show_topten(plname, ui_flags.end_top, ui_flags.end_around, ui_flags.end_own);
+	else if (ret == GAME_SAVED)
+	    tty_raw_print("Be seeing you...");
 	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/
