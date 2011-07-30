@@ -112,7 +112,12 @@ struct DisplayDesc {
     uchar curx, cury;		/* current cursor position on the screen */
     int color;			/* current color */
     int attrs;			/* attributes in effect */
-    int toplin;			/* flag for topl stuff */
+    int toplin;			/* flag for topl stuff 
+                                 * toplin = 0: empty
+                                 * toplin = 1: nonempty, --More-- required
+                                 * toplin = 2: nonempty, no --More-- required
+                                 * toplin = 3: special prompt state
+                                 */
     int rawprint;		/* number of raw_printed lines since synch */
     int inmore;			/* non-zero if more() is active */
     int inread;			/* non-zero if reading a character */

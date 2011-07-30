@@ -87,14 +87,12 @@ boolean uptodate(int fd, const char *name)
     if (rlen == 0) {
 	if (verbose) {
 	    pline("File \"%s\" is empty?", name);
-	    wait_synch();
 	}
 	return FALSE;
     }
-    if (!check_version(&vers_info, name, verbose)) {
-	if (verbose) wait_synch();
+    if (!check_version(&vers_info, name, verbose))
 	return FALSE;
-    }
+    
     return TRUE;
 }
 

@@ -86,7 +86,6 @@ void done1(int sig_unused) /* called as signal() handler, so sent at least one a
 #endif
 		clear_nhwindow(NHW_MESSAGE);
 		flush_screen(1);
-		wait_synch();
 		if (multi > 0) nomul(0);
 	} else {
 		done2();
@@ -103,7 +102,6 @@ int done2(void)
 #endif
 		clear_nhwindow(NHW_MESSAGE);
 		flush_screen(1);
-		wait_synch();
 		if (multi > 0) nomul(0);
 		if (multi == 0) {
 		    u.uinvulnerable = FALSE;	/* avoid ctrl-C bug -dlc */
@@ -576,7 +574,6 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	init_menulist(&menu);
 	
 	/* clean up unneeded windows */
-	wait_synch();
 	display_nhwindow(NHW_MESSAGE, TRUE);
 
 	if (!done_stopprint || flags.tombstone)
@@ -776,7 +773,6 @@ void done(int how)
 	if (moves <= 1 && how < PANICKED)	/* You die... --More-- */
 	    pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
 
-	wait_synch();	/* flush screen output */
 #ifndef NO_SIGNAL
 	signal(SIGINT, (SIG_RET_TYPE) done_intr);
 # if defined(UNIX)

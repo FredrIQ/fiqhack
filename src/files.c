@@ -655,7 +655,8 @@ int restore_saved_game(void)
 	if ((fd = open_savefile()) < 0) return fd;
 
 	if (!uptodate(fd, fq_save)) {
-	    close(fd),  fd = -1;
+	    close(fd);
+	    fd = -1;
 	    delete_savefile();
 	}
 	return fd;
@@ -814,7 +815,6 @@ void check_recordfile(const char *dir)
 	    close(fd);	/* RECORD newly created */
 	} else {
 	    raw_printf("Warning: cannot write scoreboard file %s", fq_record);
-	    wait_synch();
 	}
 #endif  /* UNIX */
 #if defined(WIN32)
@@ -826,7 +826,6 @@ void check_recordfile(const char *dir)
 	    /* try to create empty record */
 	    if ((fd = open(fq_record, O_CREAT|O_RDWR, S_IREAD|S_IWRITE)) < 0) {
 	raw_printf("Warning: cannot write record %s", tmp);
-		wait_synch();
 	    } else
 		close(fd);
 	} else		/* open succeeded */

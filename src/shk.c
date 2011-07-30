@@ -3273,10 +3273,6 @@ void pay_for_damage(const char *dmgstr, boolean cant_mollify)
 		if (flags.soundok) {
 		    You_hear("an angry voice:");
 		    verbalize("Out of my way, scum!");
-		    wait_synch();
-#if defined(UNIX)
-			sleep(1);
-#endif
 		}
 	    }
 	    mnearto(shkp, x, y, TRUE);

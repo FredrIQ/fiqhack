@@ -63,7 +63,6 @@ void getlock(int locknum)
 
 	/* we ignore QUIT and INT at this point */
 	if (!lock_file(HLOCK, LOCKPREFIX, 10)) {
-		wait_synch();
 		panic("%s", "");
 	}
 

@@ -34,7 +34,6 @@ struct window_procs tty_procs = {
     tty_message_menu,
     tty_update_inventory,
     tty_mark_synch,
-    tty_wait_synch,
     tty_update_screen,
     tty_raw_print,
     tty_nhgetch,
