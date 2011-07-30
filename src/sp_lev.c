@@ -1627,6 +1627,7 @@ static void load_common_data(dlb *fd, int typ)
 	    lev_message[n] = 0;
 	}
 	
+	return;
 err_out:
 	fprintf(stderr, "read error in load_common_data\n");
 }
@@ -1649,6 +1650,7 @@ static void load_one_monster(dlb *fd, monster *m)
 	} else
 	    m->appear_as.str = NULL;
 	
+	return;
 err_out:
 	fprintf(stderr, "read error in load_one_monster\n");
 }
@@ -1665,6 +1667,7 @@ static void load_one_object(dlb *fd, object *o)
 	} else
 	    o->name.str = NULL;
 
+	return;
 err_out:
 	fprintf(stderr, "read error in load_one_object\n");
 }
@@ -1679,6 +1682,7 @@ static void load_one_engraving(dlb *fd, engraving *e)
 	Fread(e->engr.str, 1, size, fd);
 	e->engr.str[size] = '\0';
 	
+	return;
 err_out:
 	fprintf(stderr, "read error in load_one_engraving\n");
 }
