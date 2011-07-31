@@ -218,6 +218,46 @@ void init_displaychars(void)
 }
 
 
+static void free_symarray(struct nh_symdef *array, int len)
+{
+    int i;
+    for (i = 0; i < len; i++)
+	free((char*)array[i].symname);
+    
+    free(array);
+}
+
+
+static void free_drawing_info(struct nh_drawing_info *di)
+{
+    free_symarray(di->bgelements, di->num_bgelements);
+    free_symarray(di->traps, di->num_traps);
+    free_symarray(di->objects, di->num_objects);
+    free_symarray(di->monsters, di->num_monsters);
+    free_symarray(di->warnings, di->num_warnings);
+    free_symarray(di->invis, 1);
+    free_symarray(di->effects, di->num_effects);
+    free_symarray(di->expltypes, di->num_expltypes);
+    free_symarray(di->explsyms, NUMEXPCHARS);
+    free_symarray(di->zaptypes, di->num_zaptypes);
+    free_symarray(di->zapsyms, NUMZAPCHARS);
+    free_symarray(di->swallowsyms, NUMSWALLOWCHARS);
+    
+    free(di);
+}
+
+
+void free_displaychars(void)
+{
+    free_drawing_info(default_drawing);
+    free_drawing_info(ibm_drawing);
+    free_drawing_info(dec_drawing);
+    free_drawing_info(rogue_drawing);
+    
+    default_drawing = ibm_drawing = dec_drawing = rogue_drawing = NULL;
+}
+
+
 void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,
 	      int x, int y)
 {

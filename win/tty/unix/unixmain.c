@@ -292,6 +292,7 @@ int main(int argc, char *argv[])
 	    tty_raw_print("Be seeing you...");
 	
 	nh_exit(0);
+	free_displaychars();
 	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/

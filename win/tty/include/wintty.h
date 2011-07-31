@@ -304,6 +304,7 @@ extern void load_keymap(boolean want_wizard);
 
 /* mapglyph.c */
 extern void init_displaychars(void);
+extern void free_displaychars(void);
 extern void set_rogue_level(boolean enable);
 extern void switch_graphics(enum nh_text_mode mode);
 extern void mapglyph(struct nh_dbuf_entry *dbe, int *ochar, int *ocolor,

@@ -278,7 +278,7 @@ static struct nh_cmd_desc *doextcmd(void)
     do {
 	idx = tty_get_ext_cmd(namelist, desclist, size);
 	if (idx < 0)
-	    return NULL;      /* quit */
+	    goto freemem;
 	
 	i = idxmap[idx];
 	
@@ -288,6 +288,7 @@ static struct nh_cmd_desc *doextcmd(void)
 	    retval = &commandlist[i];
     } while (!retval);
 
+freemem:
     free(namelist);
     free(desclist);
     free(idxmap);
