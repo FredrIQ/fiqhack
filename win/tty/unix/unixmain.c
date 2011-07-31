@@ -32,6 +32,7 @@ int locknum = 0;		/* max num of simultaneous users */
 static char plname[PL_NSIZ] = "\0";
 char *hackdir, *var_playground;
 int hackpid;
+static boolean interrupt_multi = FALSE;
 
 
 static char** init_game_paths(void)
@@ -212,11 +213,15 @@ static int commandloop(void)
 	gamestate = READY_FOR_INPUT;
 	
 	while (gamestate < GAME_OVER) {
+	    count = 0;
 	    if (gamestate == READY_FOR_INPUT)
 		cmd = get_command(&count, &cmdarg);
+	    else if (gamestate == MULTI_IN_PROGRESS && interrupt_multi)
+		count = -1;
 	    else
 		cmd = NULL;
 	    
+	    interrupt_multi = FALSE; /* could have been set while no multi was in progress */
 	    gamestate = nh_do_move(cmd, count, &cmdarg);
 	}
 	
