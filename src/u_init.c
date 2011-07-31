@@ -472,7 +472,7 @@ static struct trobj *copy_trobj_list(const struct trobj *list)
 	struct trobj *copy;
 	int len = 0;
 	
-	while (list[len].trotyp)
+	while (list[len].trotyp || list[len].trclass)
 	    len++;
 	len++; /* list is terminated by an entry of zeros */
 	copy = malloc(len * sizeof(struct trobj));
