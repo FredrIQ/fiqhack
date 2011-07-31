@@ -425,7 +425,7 @@ extern boolean maybe_finished_meal(boolean);
 
 /* ### end.c ### */
 
-extern void terminate(int);
+extern void terminate(void);
 extern void panic(const char *,...);
 extern int done2(void);
 extern void done_in_by(struct monst *);

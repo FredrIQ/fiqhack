@@ -65,9 +65,11 @@ extern time_t time(time_t *);
 
 #ifdef UNIX
 # define nh_jmp_buf sigjmp_buf
+# define nh_longjmp(buf, val) siglongjmp(buf, val)
 # define nh_setjmp(buf) sigsetjmp(buf, 1)
 #else
 # define nh_jmp_buf jmp_buf
+# define nh_longjmp(buf, val) longjmp(buf, val)
 # define nh_setjmp(buf) setjmp(buf)
 #endif
 

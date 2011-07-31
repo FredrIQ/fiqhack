@@ -115,7 +115,7 @@ boolean nh_exit(int exit_type)
     /* calling terminate() will get us out of nested contexts safely, eg:
      * UI_cmdloop -> nh_do_move -> UI_update_screen (problem happens here) -> nh_exit
      * will jump all the way back to UI_cmdloop */
-    terminate(EXIT_FAILURE);
+    terminate();
     
     api_exit(); /* not reached */
     return TRUE;

@@ -182,7 +182,7 @@ static void Fread(void *ptr, int size, int nitems, dlb *stream)
 	    panic(
  "Premature EOF on dungeon description file!\r\nExpected %d bytes - got %d.",
 		  (size * nitems), (size * cnt));
-	    terminate(EXIT_FAILURE);
+	    terminate();
 	}
 }
 

@@ -806,7 +806,7 @@ void done(int how)
 	   update_topten does not display anything. */
 	update_topten(how);
 	
-	terminate(EXIT_SUCCESS);
+	terminate();
 }
 
 
@@ -849,8 +849,7 @@ static void container_contents(struct obj *list,
 }
 
 
-/* should be called with either EXIT_SUCCESS or EXIT_FAILURE */
-void terminate(int status)
+void terminate(void)
 {
 	/* don't bother to try to release memory if we're in panic mode, to
 	   avoid trouble in case that happens to be due to memory problems */
@@ -864,13 +863,13 @@ void terminate(int status)
 	/* try to leave gracefully - this should return control to the ui code */
 	if (exit_jmp_buf_valid) {
 	    exit_jmp_buf_valid = 0;
-	    longjmp(exit_jmp_buf, 1);
+	    nh_longjmp(exit_jmp_buf, 1);
 	}
 
 	/* no jmp_buf.
 	 * This can only happen when an unguarded api function calls panic()
 	 * This should not happen. */
-	exit(status);
+	exit(1);
 }
 
 static void list_vanquished(char defquery, boolean ask)

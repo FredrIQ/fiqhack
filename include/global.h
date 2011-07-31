@@ -85,14 +85,6 @@ typedef schar	xchar;
 # endif
 #endif
 
-#ifndef EXIT_SUCCESS
-# define EXIT_SUCCESS 0
-#endif
-#ifndef EXIT_FAILURE
-# define EXIT_FAILURE 1
-#endif
-
-
 /* Used for consistency checks of various data files; declare it here so
    that utility programs which include config.h but not hack.h can see it. */
 struct version_info {
