@@ -5,12 +5,6 @@
 #include "patchlevel.h"
 #include "dlb.h"
 
-#if defined(UNIX)
-#define HUP	if (!program_state.done_hup)
-#else
-#define HUP
-#endif
-
 /* 10000 highscore entries should be enough for _anybody_
  * <500 bytes per entry * 10000 ~= 5MB max file size. Seems reasonable. */
 #define TTLISTLEN 10000
@@ -98,7 +92,7 @@ static void update_log(const struct toptenentry *newtt)
     if (lock_file(LOGFILE, SCOREPREFIX, 10)) {
 	file = fopen_datafile(LOGFILE, "a", SCOREPREFIX);
 	if (!file) {
-	    HUP raw_print("Cannot open log file!");
+	    raw_print("Cannot open log file!");
 	} else {
 	    writeentry(file, newtt);
 	    fclose(file);

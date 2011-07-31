@@ -2242,6 +2242,9 @@ void tty_print_glyph(xchar x, xchar y, struct nh_dbuf_entry *dbe)
 
 void tty_raw_print(const char *str)
 {
+    if (ui_flags.done_hup)
+	return; /* there is no place to print to */
+    
     if (ttyDisplay) ttyDisplay->rawprint++;
 #if defined(WIN32CON)
     msmsg("%s\n", str);

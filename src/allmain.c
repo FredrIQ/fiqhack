@@ -5,9 +5,6 @@
 
 #include "hack.h"
 
-#ifndef NO_SIGNAL
-#include <signal.h>
-#endif
 #include <sys/stat.h>
 
 #include "dlb.h"
@@ -68,10 +65,6 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
     vision_init();
     
     u.uhp = 1;	/* prevent RIP on early quits */
-    signal(SIGHUP, (SIG_RET_TYPE) hangup);
-#ifdef SIGXCPU
-    signal(SIGXCPU, (SIG_RET_TYPE) hangup);
-#endif
     
     api_exit();
 }
@@ -88,27 +81,30 @@ boolean nh_exit(int exit_type)
 	switch (exit_type) {
 	    case EXIT_REQUEST_SAVE:
 		dosave(); /* will ask "really save?" and, if 'y', eventually call terminate. */
-		return FALSE;
+		break;
 		
 	    case EXIT_FORCE_SAVE:
 		dosave0(TRUE);
-		return FALSE; /* only reached if saving fails */
+		break; /* only reached if saving fails */
 		
 	    case EXIT_REQUEST_QUIT:
 		done2();
-		return FALSE;
+		break;
 		    
 	    case EXIT_FORCE_QUIT:
 		done(QUIT);
-		return FALSE; /* not reached */
+		break; /* not reached */
 		
 	    case EXIT_PANIC:
 		/* freeing things should be safe */
 		freedynamicdata();
 		dlb_cleanup();
 		panic("UI problem.");
-		return FALSE;
+		break;
 	}
+	
+	api_exit();
+	return FALSE;
     }
     
     clearlocks();
@@ -135,10 +131,6 @@ static void startup_common(char *name, int locknum, int playmode)
     if (wizard)
 	    strcpy(plname, "wizard");
 
-    if (!wizard) {
-	signal(SIGQUIT,SIG_IGN);
-	signal(SIGINT,SIG_IGN);
-    }
     sprintf(lock, "%d%s", (int)getuid(), plname);
     getlock(locknum);
 
@@ -193,7 +185,6 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
     const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
 
     chmod(fq_save,0);	/* disallow parallel restores */
-    signal(SIGINT, (SIG_RET_TYPE) done1);
 
     pline("Restoring save file...");
     if (!dorecover(fd))
@@ -722,9 +713,6 @@ void newgame(void)
 	init_artifacts();
 	u_init();
 
-#ifndef NO_SIGNAL
-	signal(SIGINT, (SIG_RET_TYPE) done1);
-#endif
 	load_qtlist();	/* load up the quest text info */
 /*	quest_init();*/	/* Now part of role_init() */
 

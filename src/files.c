@@ -19,10 +19,6 @@
 extern int errno;
 #endif
 
-#if defined(UNIX)
-#include <signal.h>
-#endif
-
 #if defined(WIN32)
 #include <sys/stat.h>
 #endif
@@ -402,9 +398,6 @@ void clearlocks(void)
 {
 	int x;
 
-#if defined(UNIX)
-	signal(SIGHUP, SIG_IGN);
-#endif
 	/* can't access maxledgerno() before dungeons are created -dlc */
 	for (x = (n_dgns ? maxledgerno() : 0); x >= 0; x--)
 		delete_levelfile(x);	/* not all levels need be present */
@@ -680,8 +673,6 @@ void free_saved_games(char **saved)
 
 static int nesting = 0;
 
-#define HUP	if (!program_state.done_hup)
-
 static char *make_lockname(const char *filename, char *lockname)
 {
 #if defined(UNIX) || defined(WIN32)
@@ -718,13 +709,13 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 	    switch (errnosv) {	/* George Barbanis */
 	    case EEXIST:
 		if (retryct--) {
-		    HUP raw_printf(
+		    raw_printf(
 			    "Waiting for access to %s.  (%d retries left).",
 			    filename, retryct);
 			sleep(1);
 		} else {
-		    HUP raw_print("I give up.  Sorry.");
-		    HUP raw_printf("Perhaps there is an old %s around?",
+		    raw_print("I give up.  Sorry.");
+		    raw_printf("Perhaps there is an old %s around?",
 					lockname);
 		    nesting--;
 		    return FALSE;
@@ -732,17 +723,16 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 
 		break;
 	    case ENOENT:
-		HUP raw_printf("Can't find file %s to lock!", filename);
+		raw_printf("Can't find file %s to lock!", filename);
 		nesting--;
 		return FALSE;
 	    case EACCES:
-		HUP raw_printf("No write permission to lock %s!", filename);
+		raw_printf("No write permission to lock %s!", filename);
 		nesting--;
 		return FALSE;
 	    default:
-		HUP perror(lockname);
-		HUP raw_printf(
-			     "Cannot lock %s for unknown reason (%d).",
+		perror(lockname);
+		raw_printf("Cannot lock %s for unknown reason (%d).",
 			       filename, errnosv);
 		nesting--;
 		return FALSE;
@@ -783,7 +773,7 @@ void unlock_file(const char *filename)
 
 #if defined(UNIX)
 		if (unlink(lockname) < 0)
-			HUP raw_printf("Can't unlink %s.", lockname);
+			raw_printf("Can't unlink %s.", lockname);
 #endif  /* UNIX */
 
 #if defined(WIN32)

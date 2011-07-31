@@ -147,6 +147,8 @@ struct interface_flags {
 	boolean  end_own;	/* list all own scores */
 	int	 end_top, end_around;	/* describe desired score list */
 	boolean  window_inited;
+	boolean  ignintr;	/* ignore interrupts */
+	int	 done_hup;	/* hangup signal received; our terminal is gone */
 };
 
 extern struct interface_flags ui_flags;

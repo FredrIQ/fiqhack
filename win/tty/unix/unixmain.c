@@ -12,6 +12,7 @@
 #endif
 #include <unistd.h>
 #include <ctype.h>
+#include <signal.h>
 
 #include "nethack.h"
 #include "wintty.h"
@@ -33,7 +34,46 @@ static char plname[PL_NSIZ] = "\0";
 char *hackdir, *var_playground;
 int hackpid;
 static boolean interrupt_multi = FALSE;
+static boolean game_is_running = FALSE;
 
+#ifdef UNIX
+
+static void sighup_handler(int signum)
+{
+	if (!ui_flags.done_hup++)
+	    nh_exit(EXIT_FORCE_SAVE);
+}
+
+static void sigint_handler(int signum)
+{
+	if (!game_is_running)
+	    return;
+	
+	if (ui_flags.ignintr)
+	    interrupt_multi = TRUE;
+	else
+	    nh_exit(EXIT_REQUEST_QUIT);
+	
+	/* the question "Really quit?" moves the cursor off the player*/
+	tty_curs(player.x, player.y);
+}
+
+static void setup_signals(void)
+{
+	signal(SIGHUP, sighup_handler);
+# ifdef SIGXCPU
+	signal(SIGXCPU, sighup_handler);
+# endif
+	signal(SIGQUIT,SIG_IGN);
+	
+	
+	signal(SIGINT, sigint_handler);
+
+}
+
+#else
+static void setup_signals(void) {}
+#endif
 
 static char** init_game_paths(void)
 {
@@ -211,6 +251,7 @@ static int commandloop(void)
 	struct nh_cmd_arg cmdarg;
 	
 	gamestate = READY_FOR_INPUT;
+	game_is_running = TRUE;
 	
 	while (gamestate < GAME_OVER) {
 	    count = 0;
@@ -220,12 +261,12 @@ static int commandloop(void)
 		cmd = get_command(&count, &cmdarg);
 	    else if (gamestate == MULTI_IN_PROGRESS && interrupt_multi)
 		count = -1;
-
 	    
 	    interrupt_multi = FALSE; /* could have been set while no multi was in progress */
 	    gamestate = nh_do_move(cmd, count, &cmdarg);
 	}
 	
+	game_is_running = FALSE;
 	return gamestate;
 }
 
@@ -253,6 +294,8 @@ int main(int argc, char *argv[])
 	gamepaths = init_game_paths();
 	nh_init(hackpid, &tty_procs, gamepaths);
 	free(gamepaths);
+	
+	setup_signals();
 
 	if (argc > 1) {
 	    /* Now we know the directory containing 'record' and

@@ -50,6 +50,7 @@ struct nh_option_desc tty_options[] = {
     {"eight_bit_tty", "send 8-bit characters straight to terminal", OPTTYPE_BOOL, { FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { FALSE }},
+    {"ignintr", "ignore interrupt signal, including breaks", OPTTYPE_BOOL, { FALSE }},
     {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
     {"showscore", "show your score in the status line", OPTTYPE_BOOL, {FALSE}},
     {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
@@ -80,6 +81,7 @@ struct nh_boolopt_map boolopt_map[] = {
     {"standout", &ui_flags.standout},
     {"time", &ui_flags.time},
     {"use_inverse", &ui_flags.use_inverse},
+    {"ignintr", &ui_flags.ignintr},
     {"num_pad", &ui_flags.num_pad},
     {NULL, NULL}
 };

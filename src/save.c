@@ -5,9 +5,6 @@
 #include "lev.h"
 #include "quest.h"
 
-#ifndef NO_SIGNAL
-#include <signal.h>
-#endif
 #if !defined(LSC) && !defined(O_WRONLY)
 #include <fcntl.h>
 #endif
@@ -19,12 +16,6 @@ static void savemonchn(int,struct monst *,int);
 static void savetrapchn(int,struct trap *,int);
 static void savegamestate(int,int);
 
-
-#if defined(UNIX) || defined(WIN32)
-#define HUP	if (!program_state.done_hup)
-#else
-#define HUP
-#endif
 
 /* need to preserve these during save to avoid accessing freed memory */
 static unsigned ustuck_id = 0, usteed_id = 0;
@@ -38,9 +29,6 @@ int dosave(void)
 	} else {
 		clear_nhwindow(NHW_MESSAGE);
 		pline("Saving...");
-#if defined(UNIX)
-		program_state.done_hup = 0;
-#endif
 		if (dosave0(FALSE)) {
 			program_state.something_worth_saving = 0;
 			u.uhp = -1;		/* universal game's over indicator */
@@ -52,27 +40,6 @@ int dosave(void)
 	return 0;
 }
 
-
-#if defined(UNIX) || defined(WIN32)
-/*ARGSUSED*/
-/* called as signal() handler, so sent at least one arg */
-void hangup(int sig_unused)
-{
-# ifdef NOSAVEONHANGUP
-	signal(SIGINT, SIG_IGN);
-	clearlocks();
-	terminate(EXIT_FAILURE);
-# else	/* SAVEONHANGUP */
-	if (!program_state.done_hup++) {
-	    if (program_state.something_worth_saving)
-		dosave0(TRUE);
-	    clearlocks();
-	    terminate(EXIT_FAILURE);
-	}
-# endif
-	return;
-}
-#endif
 
 /* returns 1 if save successful */
 int dosave0(boolean emergency)
@@ -87,14 +54,7 @@ int dosave0(boolean emergency)
 		return 0;
 	fq_save = fqname(SAVEF, SAVEPREFIX, 1);	/* level files take 0 */
 
-#if defined(UNIX)
-	signal(SIGHUP, SIG_IGN);
-#endif
-#ifndef NO_SIGNAL
-	signal(SIGINT, SIG_IGN);
-#endif
-
-	HUP if (!emergency) {
+	if (!emergency) {
 	    fd = open_savefile();
 	    if (fd > 0) {
 		close(fd);
@@ -108,7 +68,7 @@ int dosave0(boolean emergency)
 
 	fd = create_savefile();
 	if (fd < 0) {
-		HUP pline("Cannot open save file.");
+		pline("Cannot open save file.");
 		delete_savefile();	/* ab@unido */
 		return 0;
 	}
@@ -122,7 +82,7 @@ int dosave0(boolean emergency)
 	if (flags.friday13)
 		change_luck(1);
 	if (!emergency)
-	    HUP clear_nhwindow(NHW_MESSAGE);
+	    clear_nhwindow(NHW_MESSAGE);
 
 	store_version(fd);
 #ifdef STORE_PLNAME_IN_FILE
@@ -151,11 +111,11 @@ int dosave0(boolean emergency)
 		if (!(level_info[ltmp].flags & LFILE_EXISTS)) continue;
 		ofd = open_levelfile(ltmp, whynot);
 		if (ofd < 0) {
-		    HUP pline("%s", whynot);
+		    pline("%s", whynot);
 		    close(fd);
 		    delete_savefile();
-		    HUP killer = whynot;
-		    HUP done(TRICKED);
+		    killer = whynot;
+		    done(TRICKED);
 		    return 0;
 		}
 		getlev(ofd, hackpid, ltmp, FALSE);
@@ -402,14 +362,8 @@ void bwrite(int fd, void *loc, unsigned num)
 	    failed = (write(fd, loc, num) != num);
 	}
 
-	if (failed) {
-#if defined(UNIX)
-	    if (program_state.done_hup)
-		terminate(EXIT_FAILURE);
-	    else
-#endif
-		panic("cannot write %u bytes to file #%d", num, fd);
-	}
+	if (failed)
+	    panic("cannot write %u bytes to file #%d", num, fd);
 }
 
 

@@ -445,7 +445,6 @@ extern boolean maybe_finished_meal(boolean);
 
 extern void terminate(int);
 extern void panic(const char *,...);
-extern void done1(int);
 extern int done2(void);
 extern void done_in_by(struct monst *);
 extern void done(int);
@@ -1387,9 +1386,6 @@ extern int doconsult(struct monst *);
 /* ### save.c ### */
 
 extern int dosave(void);
-#if defined(UNIX) || defined(WIN32)
-extern void hangup(int);
-#endif
 extern int dosave0(boolean emergency);
 #ifdef INSURANCE
 extern void savestateinlock(void);
