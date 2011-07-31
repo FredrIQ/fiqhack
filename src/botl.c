@@ -17,11 +17,15 @@ const char * const enc_stat[] = {
 
 
 static int mrank_sz = 0; /* loaded by max_rank_sz (from u_init) */
+
 static const char *rank(void);
+static int xlev_to_rank(int);
+static long botl_score(void);
+static int describe_level(char *);
 
 
 /* convert experience level (1..30) to rank index (0..8) */
-int xlev_to_rank(int xlev)
+static int xlev_to_rank(int xlev)
 {
 	return (xlev <= 2) ? 0 : (xlev <= 30) ? ((xlev + 2) / 4) : 8;
 }
@@ -95,7 +99,7 @@ void max_rank_sz(void)
 }
 
 
-long botl_score(void)
+static long botl_score(void)
 {
     int deepest = deepest_lev_reached(FALSE);
 #ifndef GOLDOBJ
@@ -115,7 +119,7 @@ long botl_score(void)
 
 
 /* provide the name of the current level for display by various ports */
-int describe_level(char *buf)
+static int describe_level(char *buf)
 {
 	int ret = 1;
 

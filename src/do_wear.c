@@ -45,6 +45,7 @@ static int take_off(void);
 static int menu_remarm(int);
 static void already_wearing(const char*);
 static void already_wearing2(const char*, const char*);
+static int armoroff(struct obj *);
 
 void off_msg(struct obj *otmp)
 {

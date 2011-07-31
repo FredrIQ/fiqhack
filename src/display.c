@@ -121,6 +121,8 @@ static void set_seenv(struct rm *, int, int, int, int);
 static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
 static void dbuf_set_object(int x, int y, int oid);
+static void dbuf_set_loc(int x, int y);
+static int back_to_cmap(xchar,xchar);
 
 #ifdef INVISIBLE_OBJECTS
 /*
@@ -1278,7 +1280,7 @@ static void dbuf_set_object(int x, int y, int oid)
 /*
  * copy player memory for a location into the display buffer
  */
-void dbuf_set_loc(int x, int y)
+static void dbuf_set_loc(int x, int y)
 {
     dbuf_set(x, y,
 	     level.locations[x][y].mem_bg,
@@ -1378,7 +1380,7 @@ void flush_screen(int cursor_on_u)
  * were up or down.  I didn't want to check t he upstairs and dnstairs
  * variables.
  */
-int back_to_cmap(xchar x, xchar y)
+static int back_to_cmap(xchar x, xchar y)
 {
     int idx;
     struct rm *ptr = &(level.locations[x][y]);

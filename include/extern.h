@@ -9,8 +9,6 @@
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
-extern void display_gamewindows(void);
-extern void newgame(void);
 extern void welcome(boolean);
 
 /* ### apply.c ### */
@@ -64,7 +62,6 @@ extern boolean artifact_hit(struct monst *,struct monst *,struct obj *,int *,int
 extern int doinvoke(void);
 extern void arti_speak(struct obj *);
 extern boolean artifact_light(struct obj *);
-extern long spec_m2(struct obj *);
 extern boolean artifact_has_invprop(struct obj *, uchar);
 extern long arti_cost(struct obj *);
 
@@ -109,11 +106,8 @@ extern int getbones(void);
 /* ### botl.c ### */
 
 extern void bot(void);
-extern int xlev_to_rank(int);
 extern int title_to_mon(const char *,int *,int *);
 extern void max_rank_sz(void);
-extern long botl_score(void);
-extern int describe_level(char *);
 extern const char *rank_of(int, short, boolean);
 
 /* ### cmd.c ### */
@@ -125,15 +119,12 @@ extern void enlightenment(int);
 extern void show_conduct(int);
 extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);
-extern int movecmd(char);
 extern int getdir(const char *, schar *dx, schar *dy, schar *dz);
 extern void confdir(schar *dx, schar *dy);
 extern int isok(int,int);
 extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *, schar *);
-extern const char *click_to_cmd(int,int,int);
 extern void sanity_check(void);
 extern char yn_function(const char *,const char *, char);
-extern char *parse(void);
 
 /* ### dbridge.c ### */
 
@@ -150,14 +141,11 @@ extern void destroy_drawbridge(int,int);
 
 /* ### detect.c ### */
 
-extern struct obj *o_in(struct obj*, char);
-extern struct obj *o_material(struct obj*,unsigned);
 extern int gold_detect(struct obj *);
 extern int food_detect(struct obj *);
 extern int object_detect(struct obj *,int);
 extern int monster_detect(struct obj *,int);
 extern int trap_detect(struct obj *);
-extern const char *level_distance(d_level *);
 extern void use_crystal_ball(struct obj *);
 extern void do_mapping(void);
 extern void do_vicinity_map(void);
@@ -175,13 +163,11 @@ extern boolean is_digging(void);
 extern int holetime(void);
 extern boolean dig_check(struct monst *, boolean, int, int);
 extern void digactualhole(int,int,struct monst *,int);
-extern boolean dighole(boolean);
 extern int use_pick_axe(struct obj *);
 extern int use_pick_axe2(struct obj *, schar, schar, schar);
 extern boolean mdig_tunnel(struct monst *);
 extern void watch_dig(struct monst *,xchar,xchar,boolean);
 extern void zap_dig(schar, schar, schar);
-extern struct obj *bury_an_obj(struct obj *);
 extern void bury_objs(int,int);
 extern void unearth_objs(int,int);
 extern void rot_organic(void *, long);
@@ -215,7 +201,6 @@ extern void display_self(void);
 extern int doredraw(void);
 extern void docrt(void);
 extern int obfuscate_object(int otyp);
-extern void dbuf_set_loc(int x, int y);
 extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 		   boolean invis, int mon, int monflags, int effect);
 extern void dbuf_set_effect(int x, int y, int eglyph);
@@ -224,7 +209,6 @@ extern boolean warning_at(int x, int y);
 extern void clear_display_buffer(void);
 extern void cls(void);
 extern void flush_screen(int);
-extern int back_to_cmap(xchar,xchar);
 extern int zapdir_to_effect(int,int,int);
 extern void set_wall_state(void);
 
@@ -307,7 +291,6 @@ extern void Blindf_off(struct obj *);
 extern int dotakeoff(void);
 extern int doremring(void);
 extern int cursed(struct obj *);
-extern int armoroff(struct obj *);
 extern int canwearobj(struct obj *, long *, boolean);
 extern int dowear(void);
 extern int doputon(void);
@@ -427,7 +410,6 @@ extern void reset_eat(void);
 extern int doeat(void);
 extern void gethungry(void);
 extern void morehungry(int);
-extern void lesshungry(int);
 extern boolean is_fainted(void);
 extern void reset_faint(void);
 extern void violated_vegetarian(void);
@@ -448,7 +430,6 @@ extern void panic(const char *,...);
 extern int done2(void);
 extern void done_in_by(struct monst *);
 extern void done(int);
-extern void container_contents(struct obj *,boolean,boolean);
 extern int num_genocides(void);
 
 /* ### engrave.c ### */

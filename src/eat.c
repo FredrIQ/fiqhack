@@ -37,6 +37,7 @@ static void eatspecial(void);
 static void eataccessory(struct obj *);
 static const char *foodword(struct obj *);
 static boolean maybe_cannibal(int,boolean);
+static void lesshungry(int);
 
 char msgbuf[BUFSZ];
 
@@ -2069,7 +2070,7 @@ void morehungry(int num)
 
 
 /* called after eating (and after drinking fruit juice) */
-void lesshungry(int num)
+static void lesshungry(int num)
 {
 	/* See comments in newuhs() for discussion on force_save_hs */
 	boolean iseating = (occupation == eatfood) || force_save_hs;

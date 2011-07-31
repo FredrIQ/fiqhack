@@ -17,6 +17,10 @@ static const char *copyright_banner[] =
 static void wd_message(void);
 static void pre_move_tasks(boolean didmove);
 
+static void display_gamewindows(void);
+static void newgame(void);
+
+
 static void wd_message(void)
 {
     if (discover)
@@ -680,7 +684,7 @@ void stop_occupation(void)
 }
 
 
-void display_gamewindows(void)
+static void display_gamewindows(void)
 {
     /*
      * The mac port is not DEPENDENT on the order of these
@@ -692,7 +696,7 @@ void display_gamewindows(void)
     display_nhwindow(NHW_MAP, FALSE);
 }
 
-void newgame(void)
+static void newgame(void)
 {
 	int i;
 

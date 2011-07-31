@@ -33,6 +33,7 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
 static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
 static boolean should_query_disclose_option(int,char *);
+static void container_contents(struct obj *,boolean,boolean);
 
 #define done_stopprint program_state.stopprint
 
@@ -809,7 +810,7 @@ void done(int how)
 }
 
 
-void container_contents(struct obj *list,
+static void container_contents(struct obj *list,
 			boolean identified, boolean all_containers)
 {
 	struct obj *box, *obj;

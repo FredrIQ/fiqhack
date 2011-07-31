@@ -11,6 +11,8 @@
 
 extern boolean known;	/* from read.c */
 
+static struct obj *o_in(struct obj*, char);
+static struct obj *o_material(struct obj*,unsigned);
 static void do_dknown_of(struct obj *);
 static boolean check_map_spot(int,int,char,unsigned);
 static boolean clear_stale_map(char,unsigned);
@@ -18,9 +20,10 @@ static void sense_trap(struct trap *,xchar,xchar,int);
 static void show_map_spot(int,int);
 static void findone(int,int,void *);
 static void openone(int,int,void *);
+static const char *level_distance(d_level *);
 
 /* Recursively search obj for an object in class oclass and return 1st found */
-struct obj *o_in(struct obj *obj, char oclass)
+static struct obj *o_in(struct obj *obj, char oclass)
 {
     struct obj *otmp;
     struct obj *temp;
@@ -37,7 +40,7 @@ struct obj *o_in(struct obj *obj, char oclass)
 }
 
 /* Recursively search obj for an object made of specified material and return 1st found */
-struct obj *o_material(struct obj *obj, unsigned material)
+static struct obj *o_material(struct obj *obj, unsigned material)
 {
     struct obj* otmp;
     struct obj *temp;
@@ -700,7 +703,7 @@ outtrapmap:
 }
 
 
-const char *level_distance(d_level *where)
+static const char *level_distance(d_level *where)
 {
     schar ll = depth(&u.uz) - depth(where);
     boolean indun = (u.uz.dnum == where->dnum);

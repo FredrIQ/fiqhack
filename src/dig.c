@@ -14,6 +14,8 @@ static int dig_typ(struct obj *,xchar,xchar);
 static int dig(void);
 static schar fillholetyp(int, int);
 static void dig_up_grave(void);
+static boolean dighole(boolean);
+static struct obj *bury_an_obj(struct obj *);
 
 /* Indices returned by dig_typ() */
 #define DIGTYP_UNDIGGABLE 0
@@ -614,7 +616,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 }
 
 /* return TRUE if digging succeeded, FALSE otherwise */
-boolean dighole(boolean pit_only)
+static boolean dighole(boolean pit_only)
 {
 	struct trap *ttmp = t_at(u.ux, u.uy);
 	struct rm *lev = &level.locations[u.ux][u.uy];
@@ -1214,7 +1216,7 @@ void zap_dig(schar dx, schar dy, schar dz)
 
 /* move objects from level.objlist/nexthere lists to buriedobjlist, keeping position */
 /* information */
-struct obj *bury_an_obj(struct obj *otmp)
+static struct obj *bury_an_obj(struct obj *otmp)
 {
 	struct obj *otmp2;
 	boolean under_ice;

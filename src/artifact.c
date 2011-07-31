@@ -20,6 +20,7 @@ static int spec_applies(const struct artifact *,struct monst *);
 static int arti_invoke(struct obj*);
 static boolean Mb_hit(struct monst *magr,struct monst *mdef,
 				  struct obj *,int *,int,boolean,char *);
+static long spec_m2(struct obj *);
 
 /* The amount added to the victim's total hit points to insure that the
    victim will be killed even after damage bonus/penalty adjustments.
@@ -554,7 +555,7 @@ static int spec_applies(const struct artifact *weap, struct monst *mtmp)
 }
 
 /* return the M2 flags of monster that an artifact's special attacks apply against */
-long spec_m2(struct obj *otmp)
+static long spec_m2(struct obj *otmp)
 {
 	const struct artifact *artifact = get_artifact(otmp);
 	if (artifact)
