@@ -214,12 +214,13 @@ static int commandloop(void)
 	
 	while (gamestate < GAME_OVER) {
 	    count = 0;
+	    cmd = NULL;
+	    
 	    if (gamestate == READY_FOR_INPUT)
 		cmd = get_command(&count, &cmdarg);
 	    else if (gamestate == MULTI_IN_PROGRESS && interrupt_multi)
 		count = -1;
-	    else
-		cmd = NULL;
+
 	    
 	    interrupt_multi = FALSE; /* could have been set while no multi was in progress */
 	    gamestate = nh_do_move(cmd, count, &cmdarg);
