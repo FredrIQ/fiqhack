@@ -37,12 +37,6 @@ static void container_contents(struct obj *,boolean,boolean);
 
 #define done_stopprint program_state.stopprint
 
-#ifdef WIN32
-#define NH_abort()	win32_abort()
-#else
-#define NH_abort()	abort()
-#endif
-
 /*
  * The order of these needs to match the macros in hack.h.
  */
@@ -80,15 +74,7 @@ int done2(void)
 		}
 		return 0;
 	}
-#if defined(UNIX)
-	if (wizard) {
-	    int c;
-	    const char *tmp = "Dump core?";
-	    if ((c = ynq(tmp)) == 'y') {
-		NH_abort();
-	    } else if (c == 'q') done_stopprint++;
-	}
-#endif
+
 	done(QUIT);
 	return 0;
 }
@@ -168,7 +154,7 @@ void panic(const char *str, ...)
 	va_start(the_args, str);
 
 	if (program_state.panicking++)
-	    NH_abort();	/* avoid loops - this should never happen*/
+	    terminate(); /* avoid loops - this should never happen*/
 
 	raw_print(program_state.gameover ?
 		  "Postgame wrapup disrupted." :
@@ -200,10 +186,7 @@ void panic(const char *str, ...)
 #ifdef WIN32
 	interject(INTERJECT_PANIC);
 #endif
-#if defined(UNIX) || defined(WIN32)
-	if (wizard)
-	    NH_abort();	/* generate core dump */
-#endif
+
 	va_end(the_args);
 	done(PANICKED);
 }
