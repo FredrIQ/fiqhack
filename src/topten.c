@@ -39,6 +39,19 @@ struct toptenentry {
 
 #define validentry(x) ((x).points > 0 || (x).deathlev)
 
+static void writeentry(FILE *rfile, const struct toptenentry *tt);
+static void write_topten(const struct toptenentry *ttlist);
+static void update_log(const struct toptenentry *newtt);
+static boolean readentry(FILE *rfile, struct toptenentry *tt);
+static struct toptenentry *read_topten(int limit);
+static void fill_topten_entry(struct toptenentry *newtt, int how);
+static boolean toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt);
+static int classmon(char *plch, boolean fem);
+static void topten_death_description(struct toptenentry *in, char *outbuf);
+static void fill_nh_score_entry(struct toptenentry *in, struct nh_topten_entry *out,
+				int rank, boolean highlight);
+
+
 /* must fit with end.c; used in rip.c */
 const char * const killed_by_prefix[] = {
     "killed by ", "choked on ", "poisoned by ", "died of ", "drowned in ",
