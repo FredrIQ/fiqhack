@@ -226,6 +226,6 @@ struct permonst pm_leader, pm_guardian, pm_nemesis;
 struct permonst pm_you_male, pm_you_female;
 
 int exit_jmp_buf_valid;
-jmp_buf exit_jmp_buf;
+nh_jmp_buf exit_jmp_buf;
 
 /*decl.c*/

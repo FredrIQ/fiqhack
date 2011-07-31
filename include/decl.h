@@ -333,7 +333,7 @@ extern struct permonst pm_leader, pm_guardian, pm_nemesis;
 extern struct permonst pm_you_male, pm_you_female;
 
 extern int exit_jmp_buf_valid;
-extern jmp_buf exit_jmp_buf;
+extern nh_jmp_buf exit_jmp_buf;
 
 #define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
 #define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)
