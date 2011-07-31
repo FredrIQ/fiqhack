@@ -136,14 +136,7 @@ int describe_level(char *buf)
 }
 
 
-void bot(void)
-{
-	update_status();
-	botl = botlx = 0;
-}
-
-
-void nh_get_player_info(struct nh_player_info *pi)
+static void make_player_info(struct nh_player_info *pi)
 {
 	int cap, advskills, i;
 	
@@ -264,6 +257,16 @@ void nh_get_player_info(struct nh_player_info *pi)
 	    strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
 	
 	api_exit();
+}
+
+
+void bot(void)
+{
+	struct nh_player_info pi;
+	
+	make_player_info(&pi);
+	update_status(&pi);
+	botl = botlx = 0;
 }
 
 /*botl.c*/

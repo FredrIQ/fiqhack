@@ -426,7 +426,7 @@ struct window_procs {
     void (*win_clear_nhwindow)(int);
     void (*win_display_nhwindow)(int, boolean);
     void (*win_display_buffer)(char *,boolean);
-    void (*win_update_status)(void);
+    void (*win_update_status)(struct nh_player_info *pi);
     void (*win_print_message)(const char *);
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);

@@ -253,7 +253,7 @@ extern void tty_destroy_nhwindow(winid);
 extern void tty_curs(int,int);
 extern void tty_putstr(winid, int, const char *);
 extern void tty_display_buffer(char *,boolean);
-extern void tty_update_status(void);
+extern void tty_update_status(struct nh_player_info *pi);
 extern void tty_print_message(const char *);
 extern void tty_start_menu(winid);
 extern void tty_add_menu(winid,int,const anything *,

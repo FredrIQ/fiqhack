@@ -803,7 +803,7 @@ void clear_nhwindow(winid window)
     case NHW_MAP:
 	/* cheap -- clear the whole thing and tell nethack to redraw botl */
 	clear_screen();
-	tty_update_status();
+	tty_update_status(NULL);
 	break;
     case NHW_BASE:
 	clear_screen();
@@ -2121,7 +2121,7 @@ void docorner(int xmin, int ymax)
     end_glyphout();
     if (ymax >= (int) wins[WIN_STATUS]->offy) {
 					/* we have wrecked the bottom line */
-	tty_update_status();
+	tty_update_status(NULL);
     }
 }
 
@@ -2809,9 +2809,10 @@ static void bot2(struct nh_player_info *pi)
 	tty_putstr(WIN_STATUS, 0, newbot2);
 }
 
-void tty_update_status(void)
+void tty_update_status(struct nh_player_info *pi)
 {
-    nh_get_player_info(&player);
+    if (pi)
+	player = *pi;
     
     bot1(&player);
     bot2(&player);
