@@ -271,10 +271,34 @@ static int commandloop(void)
 }
 
 
+static void rungame(void)
+{
+	int ret;
+    
+	while (!plname[0])
+	    tty_askname(plname);
+	
+	tty_create_game_windows();
+	
+	if (!nh_restore_save(plname, locknum, playmode)) {
+	    query_birth_options();
+	    nh_start_game(plname, locknum, playmode);
+	}
+	
+	ret = commandloop();
+	
+	tty_destroy_game_windows();
+	
+	if (ret == GAME_OVER)
+	    show_topten(plname, ui_flags.end_top, ui_flags.end_around, ui_flags.end_own);
+	else if (ret == GAME_SAVED)
+	    tty_raw_print("Be seeing you...");
+}
+
+
 int main(int argc, char *argv[])
 {
 	char **gamepaths;
-	int ret;
 
 	/* idea from rpick%ucqais@uccba.uc.edu
 	 * prevent automated rerolling of characters
@@ -311,8 +335,8 @@ int main(int argc, char *argv[])
 	check_linux_console();
 	init_linux_cons();
 #endif
-	
 	tty_init_nhwindows();
+	
 	whoami(plname);
 	read_config();
 
@@ -320,26 +344,9 @@ int main(int argc, char *argv[])
 	load_keymap(playmode == MODE_WIZARD);
 	init_displaychars();
 	
-	while (!plname[0])
-	    tty_askname(plname);
+	rungame();
 	
-	tty_create_game_windows();
-	
-	if (!nh_restore_save(plname, locknum, playmode)) {
-	    query_birth_options();
-	    nh_start_game(plname, locknum, playmode);
-	}
-	
-	ret = commandloop();
-	
-	tty_destroy_game_windows();
 	tty_exit_nhwindows(NULL);
-	
-	if (ret == GAME_OVER)
-	    show_topten(plname, ui_flags.end_top, ui_flags.end_around, ui_flags.end_own);
-	else if (ret == GAME_SAVED)
-	    tty_raw_print("Be seeing you...");
-	
 	nh_exit(0);
 	free_displaychars();
 	
