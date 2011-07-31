@@ -444,8 +444,4 @@ struct window_procs {
     void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
 };
 
-struct instance_flags2 {
-    boolean  news;		/* print news */
-};
-
 #endif

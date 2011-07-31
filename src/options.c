@@ -92,7 +92,6 @@ struct nh_option_desc options[] = {
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
     {"lootabc",		"use a/b/c rather than o/i/b when looting",	OPTTYPE_BOOL, { VFALSE }},
     {"menu_tab_sep",	"",	OPTTYPE_BOOL, { VFALSE }},
-    {"news",		"",	OPTTYPE_BOOL, { VTRUE }},
     {"perm_invent",	"keep inventory in a permanent window",	OPTTYPE_BOOL, { VFALSE }},
     {"prayconfirm",	"use confirmation prompt when #pray command issued",	OPTTYPE_BOOL, { VTRUE }},
     {"pushweapon",	"when wielding a new weapon, put your previously wielded weapon into the secondary weapon slot",	OPTTYPE_BOOL, { VFALSE }},
@@ -161,9 +160,6 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"lootabc", &iflags.lootabc},
 	/* for menu debugging only*/
 	{"menu_tab_sep", &iflags.menu_tab_sep},
-#ifdef NEWS
-	{"news", &iflags2.news},
-#endif
 	{"perm_invent", &flags.perm_invent},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},

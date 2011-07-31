@@ -113,7 +113,6 @@ struct trap *ftrap;
 struct monst youmonst;
 struct flag flags;
 struct instance_flags iflags;
-struct instance_flags2 iflags2;
 struct you u;
 
 struct obj *invent,

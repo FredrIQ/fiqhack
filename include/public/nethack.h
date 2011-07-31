@@ -24,8 +24,6 @@
 # endif
 #endif
 
-extern EXPORT struct instance_flags2 iflags2;
-
 /* allmain.c */
 extern EXPORT void nh_init(int, struct window_procs *, char **);
 extern EXPORT boolean nh_exit(int exit_type);
