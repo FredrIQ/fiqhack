@@ -534,6 +534,7 @@ extern void check_recordfile(const char *);
 extern void set_levelfile_name(char *,int);
 extern boolean lock_file(const char *,int,int);
 extern void unlock_file(const char *);
+extern void clearlocks(void);
 
 /* ### fountain.c ### */
 

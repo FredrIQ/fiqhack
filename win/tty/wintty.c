@@ -133,7 +133,7 @@ static void winerror(int win)
 /* clean up and quit */
 static void bail(const char *mesg)
 {
-    clearlocks();
+    nh_exit(EXIT_FORCE_SAVE);
     tty_exit_nhwindows(mesg);
     exit(EXIT_SUCCESS);
     /*NOTREACHED*/

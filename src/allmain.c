@@ -77,6 +77,51 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 }
 
 
+boolean nh_exit(int exit_type)
+{
+    if (!api_entry_checkpoint()) /* not sure anything in here can actually call panic */
+	return TRUE; /* terminate was called, so exit is successful */
+	
+    xmalloc_cleanup();
+    
+    if (program_state.game_running) {
+	switch (exit_type) {
+	    case EXIT_REQUEST_SAVE:
+		dosave(); /* will ask "really save?" and, if 'y', eventually call terminate. */
+		return FALSE;
+		
+	    case EXIT_FORCE_SAVE:
+		dosave0(TRUE);
+		return FALSE; /* only reached if saving fails */
+		
+	    case EXIT_REQUEST_QUIT:
+		done2();
+		return FALSE;
+		    
+	    case EXIT_FORCE_QUIT:
+		done(QUIT);
+		return FALSE; /* not reached */
+		
+	    case EXIT_PANIC:
+		/* freeing things should be safe */
+		freedynamicdata();
+		dlb_cleanup();
+		panic("UI problem.");
+		return FALSE;
+	}
+    }
+    
+    clearlocks();
+    /* calling terminate() will get us out of nested contexts safely, eg:
+     * UI_cmdloop -> nh_do_move -> UI_update_screen (problem happens here) -> nh_exit
+     * will jump all the way back to UI_cmdloop */
+    terminate(EXIT_FAILURE);
+    
+    api_exit(); /* not reached */
+    return TRUE;
+}
+
+
 static void startup_common(char *name, int locknum, int playmode)
 {
     if (playmode == MODE_EXPLORE)

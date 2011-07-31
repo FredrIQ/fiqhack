@@ -208,6 +208,14 @@ enum nh_effect_types {
     E_MISC
 };
 
+enum exit_types {
+    EXIT_REQUEST_SAVE,
+    EXIT_FORCE_SAVE,
+    EXIT_REQUEST_QUIT,
+    EXIT_FORCE_QUIT,
+    EXIT_PANIC
+};
+
 
 typedef signed char	boolean;		/* 0 or 1 */
 

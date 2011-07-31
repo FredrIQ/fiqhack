@@ -291,6 +291,8 @@ int main(int argc, char *argv[])
 	else if (ret == GAME_SAVED)
 	    tty_raw_print("Be seeing you...");
 	
+	nh_exit(0);
+	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/
 	return 0;
