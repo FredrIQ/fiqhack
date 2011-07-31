@@ -542,7 +542,7 @@ static void pre_move_tasks(boolean didmove)
     if (!flags.mv || Blind)
 	special_vision_handling();
     
-    if (botl || botlx)
+    if (botl)
 	bot();
 
     if ((u.uhave.amulet || Clairvoyant) &&
@@ -721,7 +721,7 @@ void newgame(void)
 	vision_reset();		/* set up internals for level (after mklev) */
 	check_special_room(FALSE);
 
-	botlx = 1;
+	botl = 1;
 
 	/* Move the monster from under you or else
 	 * makedog() will fail when it calls makemon().

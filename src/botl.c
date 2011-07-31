@@ -266,7 +266,7 @@ void bot(void)
 	
 	make_player_info(&pi);
 	update_status(&pi);
-	botl = botlx = 0;
+	botl = 0;
 }
 
 /*botl.c*/

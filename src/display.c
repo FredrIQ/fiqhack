@@ -1191,7 +1191,7 @@ void docrt(void)
     /* overlay with monsters */
     see_monsters();
 
-    botlx = 1;	/* force a redraw of the bottom line */
+    botl = 1;	/* force a redraw of the bottom line */
 }
 
 
@@ -1338,7 +1338,7 @@ void clear_display_buffer(void)
 void cls(void)
 {
     display_nhwindow(NHW_MESSAGE, FALSE); /* flush messages */
-    botlx = 1;			/* force update of botl window */
+    botl = 1;			/* force update of botl window */
     clear_nhwindow(NHW_MAP);	/* clear physical screen */
 
     clear_display_buffer();
@@ -1357,7 +1357,8 @@ void flush_screen(int cursor_on_u)
     update_screen(dbuf);
 
     display_nhwindow(NHW_MAP, FALSE);
-    if (botl || botlx) bot();
+    if (botl)
+	bot();
 }
 
 /* ========================================================================= */

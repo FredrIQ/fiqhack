@@ -216,8 +216,7 @@ const char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
 					"bonesdir", "datadir", "scoredir",
 					"lockdir", "troubledir" };
 
-boolean botl;	/* partially redo status line */
-boolean botlx;	/* print an entirely new bottom line */
+boolean botl;	/* redo status line */
 
 /* quest monsters need some fixups depending on your race and role, but
  * mons is const. We'll use these copies instead. */
