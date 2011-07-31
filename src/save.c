@@ -571,10 +571,8 @@ void savefruitchn(int fd, int mode)
 /* also called by prscore(); this probably belongs in dungeon.c... */
 void free_dungeons(void)
 {
-#ifdef FREE_ALL_MEMORY
 	savelevchn(0, FREE_SAVE);
 	save_dungeon(0, FALSE, TRUE);
-#endif
 	return;
 }
 
@@ -584,7 +582,6 @@ void freedynamicdata(void)
 	free_invbuf();	/* let_to_name (invent.c) */
 	free_youbuf();	/* You_buf,&c (pline.c) */
 	tmp_at(DISP_FREEMEM, 0);	/* temporary display effects */
-#ifdef FREE_ALL_MEMORY
 # define freeobjchn(X)	(saveobjchn(0, X, FREE_SAVE),  X = 0)
 # define freemonchn(X)	(savemonchn(0, X, FREE_SAVE),  X = 0)
 # define freetrapchn(X)	(savetrapchn(0, X, FREE_SAVE), X = 0)
@@ -633,7 +630,6 @@ void freedynamicdata(void)
 	free_autopickup_exceptions();
 #endif
 
-#endif	/* FREE_ALL_MEMORY */
 	return;
 }
 
