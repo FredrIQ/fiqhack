@@ -473,6 +473,9 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     statusbuf[0] = '\0';
     *out_len = 0;
     
+    if (!api_entry_checkpoint())
+	return NULL;
+    
     if (!game_inited) {
 	/* If nh_get_topten() isn't called after a game, we never went through
 	 * initialization. */
@@ -490,6 +493,7 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     ttlist = read_topten(TTLISTLEN);
     if (!ttlist) {
 	strcpy(statusbuf, "Cannot open record file!");
+	api_exit();
 	return NULL;
     }
     
@@ -547,6 +551,7 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     
     free(selected);
     free(ttlist);
-	
+    
+    api_exit();
     return score_list;
 }
