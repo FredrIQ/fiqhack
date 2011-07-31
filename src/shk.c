@@ -2679,7 +2679,6 @@ struct monst *shkcatch(struct obj *obj, xchar x, xchar y)
 		    if (!canspotmon(shkp))
 			map_invisible(x, y);
 		    delay_output();
-		    mark_synch();
 		}
 		subfrombill(obj, shkp);
 		mpickobj(shkp, obj);

@@ -152,7 +152,6 @@ void done_in_by(struct monst *mtmp)
 	boolean distorted = (boolean)(Hallucination && canspotmon(mtmp));
 
 	You("die...");
-	mark_synch();	/* flush buffered screen output */
 	buf[0] = '\0';
 	killer_format = KILLED_BY_AN;
 	/* "killed by the high priest of Crom" is okay, "killed by the high

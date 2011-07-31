@@ -33,7 +33,6 @@ struct window_procs tty_procs = {
     tty_display_objects,
     tty_message_menu,
     tty_update_inventory,
-    tty_mark_synch,
     tty_update_screen,
     tty_raw_print,
     tty_nhgetch,
@@ -2072,10 +2071,6 @@ void tty_update_inventory(void)
     return;
 }
 
-void tty_mark_synch(void)
-{
-    fflush(stdout);
-}
 
 void tty_wait_synch(void)
 {

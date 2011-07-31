@@ -262,7 +262,6 @@ extern int tty_display_menu(struct nh_menuitem*, int, const char*, int, int*);
 extern int tty_display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
 extern char tty_message_menu(char,int,const char *);
 extern void tty_update_inventory(void);
-extern void tty_mark_synch(void);
 extern void tty_wait_synch(void);
 extern void tty_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
 extern void tty_print_glyph(xchar,xchar,struct nh_dbuf_entry *dbe);

@@ -106,8 +106,6 @@ int dosave0(boolean emergency)
 	    }
 	}
 
-	HUP mark_synch();	/* flush any buffered screen output */
-
 	fd = create_savefile();
 	if (fd < 0) {
 		HUP pline("Cannot open save file.");

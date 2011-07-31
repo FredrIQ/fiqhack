@@ -18,7 +18,6 @@ extern void nh_delay_output(void);
 #define display_objects (*windowprocs.win_display_objects)
 #define message_menu (*windowprocs.win_message_menu)
 #define update_inventory (*windowprocs.win_update_inventory)
-#define mark_synch (*windowprocs.win_mark_synch)
 #define update_screen (*windowprocs.win_update_screen)
 #define raw_print (*windowprocs.win_raw_print)
 #define nhgetch (*windowprocs.win_nhgetch)

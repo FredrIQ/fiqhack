@@ -201,7 +201,6 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
     }
 #endif
     pline("Restoring save file...");
-    mark_synch();	/* flush output */
     if (!dorecover(fd))
 	    goto not_recovered;
     if (!wizard && remember_wiz_mode) wizard = TRUE;

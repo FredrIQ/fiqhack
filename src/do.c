@@ -823,10 +823,6 @@ static int currentlevel_rewrite(void)
 	int fd;
 	char whynot[BUFSZ];
 
-	/* since level change might be a bit slow, flush any buffered screen
-	 *  output (like "you fall through a trap door") */
-	mark_synch();
-
 	fd = create_levelfile(ledger_no(&u.uz), whynot);
 	if (fd < 0) {
 		/*

@@ -428,13 +428,10 @@ struct window_procs {
     void (*win_display_buffer)(char *,boolean);
     void (*win_update_status)(void);
     void (*win_print_message)(const char *);
-    
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
-    
     char (*win_message_menu)(char,int,const char *);
     void (*win_update_inventory)(void);
-    void (*win_mark_synch)(void);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
     void (*win_raw_print)(const char *);
     int (*win_nhgetch)(void);
