@@ -608,6 +608,12 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	if (cmd)
 	    return ERR_NO_INPUT_ALLOWED;
 	
+	/* allow interruption of multi-turn commands */
+	if (rep == -1) {
+	    nomul(0);
+	    return READY_FOR_INPUT;
+	}
+	
 	if (flags.mv) {
 	    if (multi < COLNO && !--multi)
 		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
