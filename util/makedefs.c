@@ -125,6 +125,8 @@ int main(int argc, char	*argv[])
 	if (argc < 3)
 	    usage(argv[0], 0, 0);
 
+	init_objlist();
+	
 	/* construct the current version number */
 	make_version();
 	
@@ -190,6 +192,7 @@ int main(int argc, char	*argv[])
 		return 1;
 	}
 	
+	free(objects);
 	return 0;
 }
 

@@ -530,6 +530,9 @@ void free_dungeons(void)
 
 void freedynamicdata(void)
 {
+	if (!objects)
+	    return; /* no cleanup necessary */
+	
 	unload_qtlist();
 	free_invbuf();	/* let_to_name (invent.c) */
 	free_youbuf();	/* You_buf,&c (pline.c) */
@@ -581,7 +584,11 @@ void freedynamicdata(void)
 #ifdef AUTOPICKUP_EXCEPTIONS
 	free_autopickup_exceptions();
 #endif
-
+	free(artilist);
+	free(objects);
+	objects = NULL;
+	artilist = NULL;
+	
 	return;
 }
 

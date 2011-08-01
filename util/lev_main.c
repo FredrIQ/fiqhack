@@ -64,9 +64,6 @@ void store_room(void);
 boolean write_level_file(char *,splev *,specialmaze *);
 void free_rooms(splev *);
 
-extern void monst_init(void);
-extern void objects_init(void);
-
 static boolean write_common_data(int,int,lev_init *,long);
 static boolean write_monsters(int,char *,monster ***);
 static boolean write_objects(int,char *,object ***);
@@ -183,6 +180,7 @@ int main(int argc, char **argv)
 	int i;
 	boolean errors_encountered = FALSE;
 
+	init_objlist();
 	init_obj_classes();
 
 	init_yyout(stdout);
@@ -224,6 +222,8 @@ int main(int argc, char **argv)
 		    }
 	    }
 	}
+	
+	free(objects);
 	exit(errors_encountered ? EXIT_FAILURE : EXIT_SUCCESS);
 	/*NOTREACHED*/
 	return 0;

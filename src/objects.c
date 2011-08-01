@@ -48,7 +48,8 @@ const struct objdescr obj_descr[] = {
 #  define HARDGEM(n) (0)
 # endif
 
-struct objclass objects[] = {
+struct objclass *objects;
+const struct objclass const_objects[] = {
 #endif
 /* dummy object[0] -- description [2nd arg] *must* be NULL */
 	OBJECT(OBJ("strange object",NULL), BITS(1,0,0,0,0,0,0,0,0,0,0,P_NONE,0),
@@ -943,6 +944,14 @@ OBJECT(OBJ("acid venom", "splash of venom"),
 #  undef OBJECT
 #  define OBJECTS_PASS_2_
 #include "objects.c"
+
+#else
+
+void init_objlist(void)
+{
+    objects = malloc(sizeof(const_objects));
+    memcpy(objects, const_objects, sizeof(const_objects));
+}
 
 #endif	/* !OBJECTS_PASS_2_ */
 

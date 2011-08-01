@@ -36,6 +36,7 @@ extern int unfixable_trouble_count(boolean);
 
 /* ### artifact.c ### */
 
+extern void init_artilist(void);
 extern void init_artifacts(void);
 extern void save_artifacts(int);
 extern void restore_artifacts(int);
@@ -138,6 +139,10 @@ extern boolean create_drawbridge(int,int,int,boolean);
 extern void open_drawbridge(int,int);
 extern void close_drawbridge(int,int);
 extern void destroy_drawbridge(int,int);
+
+/* ### decl.c ### */
+
+void init_data(void);
 
 /* ### detect.c ### */
 

@@ -269,7 +269,7 @@ static char *make_object_name(int otyp)
     char buffer[41], buf2[41];
     const char *nameptr, *classname;
     char *ret;
-    int class = (int)objects[otyp].oc_class;
+    int class = (int)const_objects[otyp].oc_class;
     
     
     buffer[0] = buf2[0] = '\0';
@@ -280,15 +280,15 @@ static char *make_object_name(int otyp)
    
     /* catch dummy objects (scrolls, wands, ...) without names */
     if (!nameptr) {
-	unnamed_cnt[(int)objects[otyp].oc_class]++;
+	unnamed_cnt[(int)const_objects[otyp].oc_class]++;
 	snprintf(buf2, 40, "unnamed %d", unnamed_cnt[class]);
     }
     
     if (class == AMULET_CLASS &&
-	objects[otyp].oc_material == PLASTIC) {
+	const_objects[otyp].oc_material == PLASTIC) {
 	snprintf(buf2, 40, "fake amulet of yendor");
     } else if (class == GEM_CLASS &&
-	objects[otyp].oc_material == GLASS) {
+	const_objects[otyp].oc_material == GLASS) {
 	snprintf(buf2, 40, "%s glass gem", obj_descr[otyp].oc_descr);
     }
 
@@ -328,9 +328,9 @@ struct nh_drawing_info *nh_get_drawing_info(void)
     di->num_objects = NUM_OBJECTS;
     tmp = xmalloc(sizeof(struct nh_symdef) * di->num_objects);
     for (i = 0; i < di->num_objects; i++) {
-	tmp[i].ch = def_oc_syms[(int)objects[i].oc_class];
+	tmp[i].ch = def_oc_syms[(int)const_objects[i].oc_class];
 	tmp[i].symname = make_object_name(i);
-	tmp[i].color = objects[i].oc_color;
+	tmp[i].color = const_objects[i].oc_color;
     }
     di->objects = tmp;
     

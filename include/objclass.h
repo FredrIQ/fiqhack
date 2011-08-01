@@ -111,8 +111,12 @@ struct objdescr {
 	const char *oc_descr;		/* description when name unknown */
 };
 
-extern struct objclass objects[];
+extern struct objclass *objects;
+extern const struct objclass const_objects[];
 extern const struct objdescr obj_descr[];
+
+/* copy object list into objects */
+extern void init_objlist(void);
 
 /*
  * All objects have a class. Make sure that all classes have a corresponding

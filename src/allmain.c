@@ -46,28 +46,6 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
     for (i = 0; i < PREFIX_COUNT; i++)
 	fqn_prefix[i] = paths[i];
     
-    program_state.game_running = 0;
-    initoptions();
-
-    dlb_init();	/* must be before newgame() */
-
-    /*
-	* Initialization of the boundaries of the mazes
-	* Both boundaries have to be even.
-	*/
-    x_maze_max = COLNO-1;
-    if (x_maze_max % 2)
-	    x_maze_max--;
-    y_maze_max = ROWNO-1;
-    if (y_maze_max % 2)
-	    y_maze_max--;
-
-    /*
-	*  Initialize the vision system.  This must be before mklev() on a
-	*  new game or before a level restore on a saved game.
-	*/
-    vision_init();
-    
     u.uhp = 1;	/* prevent RIP on early quits */
     
     api_exit();
@@ -124,6 +102,34 @@ boolean nh_exit(int exit_type)
 
 static void startup_common(char *name, int locknum, int playmode)
 {
+    /* (re)init all global data */
+    init_data();
+    /* create mutable copies of object and artifact liss */
+    init_objlist();
+    init_artilist();
+    
+    program_state.game_running = 0;
+    initoptions();
+
+    dlb_init();	/* must be before newgame() */
+
+    /*
+	* Initialization of the boundaries of the mazes
+	* Both boundaries have to be even.
+	*/
+    x_maze_max = COLNO-1;
+    if (x_maze_max % 2)
+	    x_maze_max--;
+    y_maze_max = ROWNO-1;
+    if (y_maze_max % 2)
+	    y_maze_max--;
+
+    /*
+	*  Initialize the vision system.  This must be before mklev() on a
+	*  new game or before a level restore on a saved game.
+	*/
+    vision_init();
+    
     if (playmode == MODE_EXPLORE)
 	discover = TRUE;
     else if (playmode == MODE_WIZARD)
@@ -176,7 +182,7 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
     if (!api_entry_checkpoint())
 	return FALSE;
     
-     startup_common(name, locknum, playmode);
+    startup_common(name, locknum, playmode);
     
     fd = restore_saved_game();
     if (fd < 0)

@@ -44,6 +44,12 @@ static void hack_artifacts(void);
 static boolean attacks(int,struct obj *);
 
 
+void init_artilist(void)
+{
+    artilist = malloc(sizeof(const_artilist));
+    memcpy(artilist, const_artilist, sizeof(const_artilist));
+}
+
 /* handle some special cases; must be called after u_init() */
 static void hack_artifacts(void)
 {

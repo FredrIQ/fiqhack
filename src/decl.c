@@ -99,7 +99,7 @@ boolean mrg_to_wielded;
 			 /* weapon picked is merged with wielded one */
 struct obj *current_wand;	/* wand currently zapped/applied */
 
-boolean in_steed_dismounting = FALSE;
+boolean in_steed_dismounting;
 
 coord bhitpos;
 coord doors[DOORMAX];
@@ -157,9 +157,9 @@ char catname[PL_PSIZ];
 char horsename[PL_PSIZ];
 char preferred_pet;	/* '\0', 'c', 'd', 'n' (none) */
 /* monsters that went down/up together with @ */
-struct monst *mydogs = NULL;
+struct monst *mydogs;
 /* monsters that are moving to another dungeon level */
-struct monst *migrating_mons = NULL;
+struct monst *migrating_mons;
 
 struct mvitals mvitals[NUMMONS];
 
@@ -225,5 +225,51 @@ struct permonst pm_you_male, pm_you_female;
 
 int exit_jmp_buf_valid;
 nh_jmp_buf exit_jmp_buf;
+
+struct artifact *artilist;
+
+void init_data(void)
+{
+    memset(&program_state, 0, sizeof(program_state));
+    
+    botl = in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
+    current_wand = invent = uwep = uarm = uswapwep = uquiver = uarmu = uskin =
+	uarmc = uarmh = uarms = uarmg = uarmf = uamul = uright = uleft =
+	ublindf = uchain = uball = NULL;
+
+    in_steed_dismounting = FALSE;
+    
+    wailmsg = moves = monstermoves = 0;
+
+    bhitpos.x = bhitpos.y = 0;
+    memset(doors, 0, sizeof(doors));
+    memset(rooms, 0, sizeof(rooms));
+    memset(subrooms, 0, sizeof(subrooms));
+    memset(spl_book, 0, sizeof(spl_book));
+    
+    upstairs_room = dnstairs_room = sstairs_room = NULL;
+
+    memset(&level, 0, sizeof(level));
+    
+    ftrap = NULL;
+    memset(&youmonst, 0, sizeof(youmonst));
+    memset(&flags, 0, sizeof(flags));
+    memset(&iflags, 0, sizeof(iflags));
+    memset(&u, 0, sizeof(u));
+    memset(&zeroobj, 0, sizeof(zeroobj));
+    
+    preferred_pet = 0;
+    memset(dogname, 0, sizeof(dogname));
+    memset(catname, 0, sizeof(catname));
+    memset(horsename, 0, sizeof(horsename));
+    
+    migrating_mons = mydogs = NULL;
+    memset(mvitals, 0, sizeof(mvitals));
+    
+    vision_full_recalc = FALSE;
+    viz_array = NULL;
+    
+    artilist = NULL;
+}
 
 /*decl.c*/
