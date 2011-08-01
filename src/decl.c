@@ -47,7 +47,7 @@ char pl_race;
 
 char pl_fruit[PL_FSIZ];
 int current_fruit;
-struct fruit *ffruit = NULL;
+struct fruit *ffruit;
 
 char tune[6];
 
@@ -233,46 +233,47 @@ short disco[NUM_OBJECTS]; /* discovered objects */
 void init_data(void)
 {
     memset(&program_state, 0, sizeof(program_state));
+    memset(&flags, 0, sizeof(flags));
+    memset(&iflags, 0, sizeof(iflags));
+    memset(&quest_status, 0, sizeof(quest_status));
+    memset(&level_info, 0, sizeof(level_info));
+    memset(&level, 0, sizeof(level));
+    memset(doors, 0, sizeof(doors));
+    memset(rooms, 0, sizeof(rooms));
+    memset(bases, 0, sizeof(bases));
+    memset(&u, 0, sizeof(u));
+    memset(dogname, 0, sizeof(dogname));
+    memset(catname, 0, sizeof(catname));
+    memset(horsename, 0, sizeof(horsename));
+    memset(&youmonst, 0, sizeof(youmonst));
+    memset(&zeroobj, 0, sizeof(zeroobj));
+    memset(mvitals, 0, sizeof(mvitals));
+    memset(spl_book, 0, sizeof(spl_book));
+    memset(disco, 0, sizeof(disco));
+    memset(&digging, 0, sizeof(digging));
     
+    multi = nroom = nsubroom = occtime = killer_format = 0;
+    afternmv = NULL;
+    occupation = NULL;
+    killer = NULL;
+    ffruit = NULL;
+    current_fruit = 0;
+    sp_levchn = NULL;
     botl = in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
     current_wand = invent = uwep = uarm = uswapwep = uquiver = uarmu = uskin =
 	uarmc = uarmh = uarms = uarmg = uarmf = uamul = uright = uleft =
 	ublindf = uchain = uball = NULL;
-
+    migrating_objs = billobjs = NULL;
     in_steed_dismounting = FALSE;
-    
     wailmsg = moves = monstermoves = 0;
-
     bhitpos.x = bhitpos.y = 0;
-    memset(doors, 0, sizeof(doors));
-    memset(rooms, 0, sizeof(rooms));
-    memset(subrooms, 0, sizeof(subrooms));
-    memset(spl_book, 0, sizeof(spl_book));
-    
     upstairs_room = dnstairs_room = sstairs_room = NULL;
-
-    memset(&level, 0, sizeof(level));
-    
     ftrap = NULL;
-    memset(&youmonst, 0, sizeof(youmonst));
-    memset(&flags, 0, sizeof(flags));
-    memset(&iflags, 0, sizeof(iflags));
-    memset(&u, 0, sizeof(u));
-    memset(&zeroobj, 0, sizeof(zeroobj));
-    
     preferred_pet = 0;
-    memset(dogname, 0, sizeof(dogname));
-    memset(catname, 0, sizeof(catname));
-    memset(horsename, 0, sizeof(horsename));
-    
     migrating_mons = mydogs = NULL;
-    memset(mvitals, 0, sizeof(mvitals));
-    
     vision_full_recalc = FALSE;
     viz_array = NULL;
-    
     artilist = NULL;
-    memset(disco, 0, sizeof(disco));
 }
 
 /*decl.c*/
