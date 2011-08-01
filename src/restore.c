@@ -4,10 +4,6 @@
 #include "hack.h"
 #include "lev.h"
 
-#ifdef USE_TILES
-extern void substitute_tiles(d_level *);       /* from tile.c */
-#endif
-
 static void find_lev_obj(void);
 static void restlevchn(int);
 static void restdamage(int,boolean);
@@ -504,9 +500,6 @@ int dorecover(int fd)
 	if (!wizard && !discover)
 		delete_savefile();
 
-#ifdef USE_TILES
-	substitute_tiles(&u.uz);
-#endif
 	restlevelstate(stuckid, steedid);
 	max_rank_sz(); /* to recompute mrank_sz (botl.c) */
 	/* take care of iron ball & chain */

@@ -996,9 +996,6 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		delete_levelfile(l_idx);
 	}
 
-#ifdef USE_TILES
-	substitute_tiles(newlevel);
-#endif
 	assign_level(&u.uz0, &u.uz);
 	assign_level(&u.uz, newlevel);
 	assign_level(&u.utolev, newlevel);
