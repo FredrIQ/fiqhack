@@ -504,30 +504,31 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	init_menulist(&menu);
 	
 	/* clean up unneeded windows */
-	display_nhwindow(NHW_MESSAGE, TRUE);
+	if (program_state.game_running) {
+	    display_nhwindow(NHW_MESSAGE, TRUE);
 
-	if (!done_stopprint || flags.tombstone)
-	    show_endwin = TRUE;
+	    if (!done_stopprint || flags.tombstone)
+		show_endwin = TRUE;
 
-	if (how < GENOCIDED && flags.tombstone && show_endwin) {
-	    /* Put together death description */
-	    switch (killer_format) {
-		    default: impossible("bad killer format?");
-		    case KILLED_BY_AN:
-			    strcpy(outrip_buf, killed_by_prefix[how]);
-			    strcat(outrip_buf, an(killer));
-			    break;
-		    case KILLED_BY:
-			    strcpy(outrip_buf, killed_by_prefix[how]);
-			    strcat(outrip_buf, killer);
-			    break;
-		    case NO_KILLER_PREFIX:
-			    strcpy(outrip_buf, killer);
-			    break;
+	    if (how < GENOCIDED && flags.tombstone && show_endwin) {
+		/* Put together death description */
+		switch (killer_format) {
+			default: impossible("bad killer format?");
+			case KILLED_BY_AN:
+				strcpy(outrip_buf, killed_by_prefix[how]);
+				strcat(outrip_buf, an(killer));
+				break;
+			case KILLED_BY:
+				strcpy(outrip_buf, killed_by_prefix[how]);
+				strcat(outrip_buf, killer);
+				break;
+			case NO_KILLER_PREFIX:
+				strcpy(outrip_buf, killer);
+				break;
+		}
 	    }
-
-	    
-	}
+	} else
+	    done_stopprint = 1;
 
 /* changing kilbuf really changes killer. we do it this way because
    killer is declared a (const char *)
