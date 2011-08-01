@@ -226,21 +226,23 @@ static void query_birth_options(void)
 {
 	char *prompt, resp = 0;
 	
-	move_cursor(BASE_WINDOW, 1, 5);
 	prompt = "Do you want to modify your birth options? [yn] ";
-	tty_putstr(BASE_WINDOW, 0, prompt);
-	
-	while (resp != 'y' && resp != 'n')
-	    resp = tolower(tty_nhgetch());
+	tty_raw_print("\n"); /* leave a free line under the copyright message */
+	tty_raw_print(prompt);
+	resp = tolower(tty_nhgetch());
 	
 	if (resp == 'y') {
 	    display_options(TRUE);
 	    clear_screen();
 	    
+	    /* redraw */
 	    move_cursor(BASE_WINDOW, 1, 0);
 	    tty_putstr(BASE_WINDOW, 0, prompt);
-	}
+	} else /* treat and display all other chars as 'n' */
+	    resp = 'n';
+	
 	putchar(resp);
+	tty_raw_print("\n");
 }
 
 

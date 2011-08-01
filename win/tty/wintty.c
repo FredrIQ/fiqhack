@@ -235,21 +235,17 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	if (!randomall &&
 	    (initrole == ROLE_NONE || initrace == ROLE_NONE ||
 	     initgend == ROLE_NONE || initalign == ROLE_NONE)) {
-	    int echoline;
 	    char *prompt = nh_build_plselection_prompt(pbuf, QBUFSZ, initrole,
 				initrace, initgend, initalign);
 
-	    tty_putstr(BASE_WINDOW, 0, "");
-	    echoline = wins[BASE_WINDOW]->cury;
-	    tty_putstr(BASE_WINDOW, 0, prompt);
+	    tty_raw_print(prompt);
 	    do {
 		pick4u = tolower(tty_nhgetch());
 		if (index(quitchars, pick4u)) pick4u = 'y';
 	    } while (!index("ynq", pick4u));
 	    if ((int)strlen(prompt) + 1 < CO) {
 		/* Echo choice and move back down line */
-		tty_putsym(BASE_WINDOW, (int)strlen(prompt)+1, echoline, pick4u);
-		tty_putstr(BASE_WINDOW, 0, "");
+		putchar(pick4u);
 	    } else
 		/* Otherwise it's hard to tell where to echo, and things are
 		 * wrapping a bit messily anyway, so (try to) make sure the next
