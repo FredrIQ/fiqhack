@@ -227,10 +227,10 @@ not_recovered:
 }
 
 
-void nh_start_game(char *name, int locknum, int playmode)
+boolean nh_start_game(char *name, int locknum, int playmode)
 {
     if (!api_entry_checkpoint())
-	return;
+	return FALSE; /* quit from player selection or init failed */
     
     moves = monstermoves = 1;
     
@@ -251,6 +251,7 @@ void nh_start_game(char *name, int locknum, int playmode)
     post_init_tasks();
     
     api_exit();
+    return TRUE;
 }
 
 

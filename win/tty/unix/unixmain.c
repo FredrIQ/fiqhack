@@ -282,7 +282,8 @@ static void rungame(void)
 	
 	if (!nh_restore_save(plname, locknum, playmode)) {
 	    query_birth_options();
-	    nh_start_game(plname, locknum, playmode);
+	    if (!nh_start_game(plname, locknum, playmode))
+		return;
 	}
 	
 	ret = commandloop();
