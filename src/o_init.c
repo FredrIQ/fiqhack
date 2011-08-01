@@ -10,9 +10,6 @@ static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
 
-static short disco[NUM_OBJECTS];
-
-
 static void setgemprobs(d_level *dlev)
 {
 	int j, first, lev;

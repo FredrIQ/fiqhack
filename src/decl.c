@@ -227,6 +227,8 @@ int exit_jmp_buf_valid;
 nh_jmp_buf exit_jmp_buf;
 
 struct artifact *artilist;
+short disco[NUM_OBJECTS]; /* discovered objects */
+
 
 void init_data(void)
 {
@@ -270,6 +272,7 @@ void init_data(void)
     viz_array = NULL;
     
     artilist = NULL;
+    memset(disco, 0, sizeof(disco));
 }
 
 /*decl.c*/
