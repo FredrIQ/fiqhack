@@ -216,6 +216,12 @@ enum exit_types {
     EXIT_PANIC
 };
 
+enum nh_restore_status {
+    RESTORED,
+    NOT_RESTORED,
+    RESTORE_ABORTED
+};
+
 
 typedef signed char	boolean;		/* 0 or 1 */
 

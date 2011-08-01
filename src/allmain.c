@@ -175,12 +175,12 @@ static void post_init_tasks(void)
 }
 
 
-boolean nh_restore_save(char *name, int locknum, int playmode)
+enum nh_restore_status nh_restore_save(char *name, int locknum, int playmode)
 {
     int fd;
     
     if (!api_entry_checkpoint())
-	return FALSE;
+	return RESTORE_ABORTED;
     
     startup_common(name, locknum, playmode);
     
@@ -217,13 +217,13 @@ boolean nh_restore_save(char *name, int locknum, int playmode)
     program_state.game_running = 1;
     post_init_tasks();
     api_exit();
-    return TRUE;
+    return RESTORED;
 not_recovered:
     
     clearlocks();
     program_state.game_running = 0;
     api_exit();
-    return FALSE;
+    return NOT_RESTORED;
 }
 
 

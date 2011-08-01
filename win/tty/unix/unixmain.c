@@ -274,13 +274,17 @@ static int commandloop(void)
 static void rungame(void)
 {
 	int ret;
-    
+	
 	while (!plname[0])
 	    tty_askname(plname);
 	
 	tty_create_game_windows();
 	
-	if (!nh_restore_save(plname, locknum, playmode)) {
+	ret = nh_restore_save(plname, locknum, playmode);
+	if (ret == RESTORE_ABORTED)
+	    return;
+	
+	else if (ret == NOT_RESTORED) {
 	    query_birth_options();
 	    if (!nh_start_game(plname, locknum, playmode))
 		return;

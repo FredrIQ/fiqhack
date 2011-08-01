@@ -27,7 +27,7 @@
 /* allmain.c */
 extern EXPORT void nh_init(int, struct window_procs *, char **);
 extern EXPORT boolean nh_exit(int exit_type);
-extern EXPORT boolean nh_restore_save(char *, int, int);
+extern EXPORT enum nh_restore_status nh_restore_save(char *, int, int);
 extern EXPORT boolean nh_start_game(char*, int, int);
 extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char **nh_get_copyright_banner(void);
