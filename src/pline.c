@@ -36,10 +36,6 @@ static void vpline(const char *line, va_list the_args)
 	    vsprintf(pbuf,line,the_args);
 	    line = pbuf;
 	}
-/*	if (!program_state.game_running) {
-	    raw_print(line);
-	    return;
-	}*/
 	if (no_repeat && !strcmp(line, toplines))
 	    return;
 	if (vision_full_recalc)

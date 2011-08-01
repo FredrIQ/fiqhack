@@ -55,7 +55,7 @@ static void setgemprobs(d_level *dlev)
 	first += j;
 	if (first > LAST_GEM || objects[first].oc_class != GEM_CLASS ||
 	    OBJ_NAME(objects[first]) == NULL) {
-		raw_printf("Not enough gems? - first=%d j=%d LAST_GEM=%d",
+		raw_printf("Not enough gems? - first=%d j=%d LAST_GEM=%d\n",
 			first, j, LAST_GEM);
 	    }
 	for (j = first; j <= LAST_GEM; j++)
@@ -154,11 +154,9 @@ void init_objects(void)
 			    objects[i].oc_prob = (1000+i-first)/(last-first);
 			goto check;
 		}
-		if (sum != 1000) {
-			char buf[BUFSZ];
-			sprintf(buf, "init-prob error for class %d (%d%%)", oclass, sum);
-			raw_print(buf);
-		}
+		if (sum != 1000)
+			raw_printf("init-prob error for class %d (%d%%)\n", oclass, sum);
+		
 		first = last;
 	}
 	/* shuffle descriptions */

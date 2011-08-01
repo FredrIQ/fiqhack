@@ -157,19 +157,19 @@ void panic(const char *str, ...)
 	    terminate(); /* avoid loops - this should never happen*/
 
 	raw_print(program_state.gameover ?
-		  "Postgame wrapup disrupted." :
+		  "Postgame wrapup disrupted.\n" :
 		  !program_state.something_worth_saving ?
-		  "Program initialization has failed." :
-		  "Suddenly, the dungeon collapses.");
+		  "Program initialization has failed.\n" :
+		  "Suddenly, the dungeon collapses.\n");
 # if defined(NOTIFY_NETHACK_BUGS)
 	if (!wizard)
-	    raw_printf("Report the following error to \"%s\".",
-			"nethack-bugs@nethack.org");
+	    raw_printf("Report the following error to \"%s\".\n",
+			"nethack-bugs@nethack.org\n");
 	else if (program_state.something_worth_saving)
 	    raw_print("\nError save file being written.\n");
 # else
 	if (!wizard)
-	    raw_printf("Report error to \"%s\"%s.",
+	    raw_printf("Report error to \"%s\"%s.\n",
 			WIZARD,
 			!program_state.something_worth_saving ? "" :
 			" and it may be possible to rebuild.");
@@ -182,6 +182,7 @@ void panic(const char *str, ...)
 	char buf[BUFSZ];
 	vsprintf(buf,str,the_args);
 	raw_print(buf);
+	raw_print("\n");
 	paniclog("panic", buf);
 #ifdef WIN32
 	interject(INTERJECT_PANIC);

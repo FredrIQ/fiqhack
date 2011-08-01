@@ -92,7 +92,7 @@ static void update_log(const struct toptenentry *newtt)
     if (lock_file(LOGFILE, SCOREPREFIX, 10)) {
 	file = fopen_datafile(LOGFILE, "a", SCOREPREFIX);
 	if (!file) {
-	    raw_print("Cannot open log file!");
+	    raw_print("Cannot open log file!\n");
 	} else {
 	    writeentry(file, newtt);
 	    fclose(file);
@@ -261,7 +261,7 @@ void update_topten(int how)
     
     toptenlist = read_topten(TTLISTLEN);
     if (!toptenlist) {
-	raw_print("Cannot open record file!");
+	raw_print("Cannot open record file!\n");
 	unlock_file(RECORD);
 	return;
     }

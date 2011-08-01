@@ -2247,9 +2247,9 @@ void tty_raw_print(const char *str)
     
     if (ttyDisplay) ttyDisplay->rawprint++;
 #if defined(WIN32CON)
-    msmsg("%s\n", str);
+    msmsg("%s", str);
 #else
-    puts(str);
+    fputs(str, stdout);
     fflush(stdout);
 #endif
 }

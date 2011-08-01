@@ -709,13 +709,12 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 	    switch (errnosv) {	/* George Barbanis */
 	    case EEXIST:
 		if (retryct--) {
-		    raw_printf(
-			    "Waiting for access to %s.  (%d retries left).",
+		    raw_printf("Waiting for access to %s.  (%d retries left).\n",
 			    filename, retryct);
 			sleep(1);
 		} else {
-		    raw_print("I give up.  Sorry.");
-		    raw_printf("Perhaps there is an old %s around?",
+		    raw_print("I give up.  Sorry.\n");
+		    raw_printf("Perhaps there is an old %s around?\n",
 					lockname);
 		    nesting--;
 		    return FALSE;
@@ -723,16 +722,16 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 
 		break;
 	    case ENOENT:
-		raw_printf("Can't find file %s to lock!", filename);
+		raw_printf("Can't find file %s to lock!\n", filename);
 		nesting--;
 		return FALSE;
 	    case EACCES:
-		raw_printf("No write permission to lock %s!", filename);
+		raw_printf("No write permission to lock %s!\n", filename);
 		nesting--;
 		return FALSE;
 	    default:
 		perror(lockname);
-		raw_printf("Cannot lock %s for unknown reason (%d).",
+		raw_printf("Cannot lock %s for unknown reason (%d).\n",
 			       filename, errnosv);
 		nesting--;
 		return FALSE;
@@ -747,13 +746,13 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
     while (--retryct && OPENFAILURE(lockptr)) {
 	lockptr = sopen(lockname, O_RDWR|O_CREAT, SH_DENYRW, S_IWRITE);
 	if (OPENFAILURE(lockptr)) {
-	    raw_printf("Waiting for access to %s.  (%d retries left).",
+	    raw_printf("Waiting for access to %s.  (%d retries left).\n",
 			filename, retryct);
 	    Delay(50);
 	}
     }
     if (!retryct) {
-	raw_printf("I give up.  Sorry.");
+	raw_printf("I give up.  Sorry.\n");
 	nesting--;
 	return FALSE;
     }
@@ -773,7 +772,7 @@ void unlock_file(const char *filename)
 
 #if defined(UNIX)
 		if (unlink(lockname) < 0)
-			raw_printf("Can't unlink %s.", lockname);
+			raw_printf("Can't unlink %s.\n", lockname);
 #endif  /* UNIX */
 
 #if defined(WIN32)
@@ -804,7 +803,7 @@ void check_recordfile(const char *dir)
 	} else if ((fd = open(fq_record, O_CREAT|O_RDWR, FCMASK)) >= 0) {
 	    close(fd);	/* RECORD newly created */
 	} else {
-	    raw_printf("Warning: cannot write scoreboard file %s", fq_record);
+	    raw_printf("Warning: cannot write scoreboard file %s\n", fq_record);
 	}
 #endif  /* UNIX */
 #if defined(WIN32)
@@ -815,7 +814,7 @@ void check_recordfile(const char *dir)
 	if ((fd = open(fq_record, O_RDWR)) < 0) {
 	    /* try to create empty record */
 	    if ((fd = open(fq_record, O_CREAT|O_RDWR, S_IREAD|S_IWRITE)) < 0) {
-	raw_printf("Warning: cannot write record %s", tmp);
+	raw_printf("Warning: cannot write record %s\n", tmp);
 	    } else
 		close(fd);
 	} else		/* open succeeded */
@@ -879,8 +878,8 @@ boolean recover_savefile(void)
 	    return FALSE;
 	}
 	if (read(gfd, &hpid, sizeof hpid) != sizeof hpid) {
-	    raw_printf(
-"\nCheckpoint data incompletely written or subsequently clobbered. Recovery impossible.");
+	    raw_printf("\nCheckpoint data incompletely written or subsequently "
+	               "clobbered. Recovery impossible.\n");
 	    close(gfd);
 	    return FALSE;
 	}
@@ -925,7 +924,7 @@ boolean recover_savefile(void)
 
 	if (write(sfd, &version_data, sizeof version_data)
 		!= sizeof version_data) {
-	    raw_printf("\nError writing %s; recovery failed.", SAVEF);
+	    raw_printf("\nError writing %s; recovery failed.\n", SAVEF);
 	    close(gfd);
 	    close(sfd);
 	    delete_savefile();

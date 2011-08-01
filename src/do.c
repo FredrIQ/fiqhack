@@ -1029,7 +1029,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			killer = whynot;
 			done(TRICKED);
 			/* we'll reach here if running in wizard mode */
-			raw_print("Cannot continue this game.");
+			raw_print("Cannot continue this game.\n");
 		}
 		getlev(fd, hackpid, new_ledger, FALSE);
 		close(fd);
