@@ -685,7 +685,7 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 		int dir;
 		int x = travelstepx[set][i];
 		int y = travelstepy[set][i];
-		static int ordered[] = { 0, 2, 4, 6, 1, 3, 5, 7 };
+		static const int ordered[] = { 0, 2, 4, 6, 1, 3, 5, 7 };
 		/* no diagonal movement for grid bugs */
 		int dirmax = u.umonnum == PM_GRID_BUG ? 4 : 8;
 
@@ -1960,7 +1960,7 @@ void unmul(const char *msg_override)
 
 static void maybe_wail(void)
 {
-    static short powers[] = { TELEPORT, SEE_INVIS, POISON_RES, COLD_RES,
+    static const short powers[] = { TELEPORT, SEE_INVIS, POISON_RES, COLD_RES,
 			      SHOCK_RES, FIRE_RES, SLEEP_RES, DISINT_RES,
 			      TELEPORT_CONTROL, STEALTH, FAST, INVIS };
 

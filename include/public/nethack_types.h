@@ -233,7 +233,7 @@ struct nh_listitem {
 
 struct nh_boolopt_map {
     const char *optname;
-    boolean	*addr;
+    boolean *addr;
 };
 
 struct nh_int_option {

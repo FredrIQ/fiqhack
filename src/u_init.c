@@ -551,6 +551,7 @@ void u_init(void)
 	 */
 	u.nv_range   =  1;
 	u.xray_range = -1;
+	u.next_attr_check = 600; /* arbitrary initial setting */
 
 
 	/*** Role-specific initializations ***/
@@ -713,7 +714,7 @@ void u_init(void)
 	     */
 	    if (Role_if (PM_PRIEST) || Role_if(PM_WIZARD)) {
 		trobj_list = copy_trobj_list(Instrument);
-		static int trotyp[] = {
+		static const int trotyp[] = {
 		    WOODEN_FLUTE, TOOLED_HORN, WOODEN_HARP,
 		    BELL, BUGLE, LEATHER_DRUM
 		};

@@ -40,7 +40,7 @@ boolean picking_at(int x, int y)
 static const char *lock_action(void)
 {
 	/* "unlocking"+2 == "locking" */
-	static const char *actions[] = {
+	static const char *const actions[] = {
 		/* [0] */	"unlocking the door",
 		/* [1] */	"unlocking the chest",
 		/* [2] */	"unlocking the box",
@@ -219,7 +219,7 @@ int pick_lock(struct obj *pick)
 
 	/* check whether we're resuming an interrupted previous attempt */
 	if (xlock.usedtime && picktyp == xlock.picktyp) {
-	    static char no_longer[] = "Unfortunately, you can no longer %s %s.";
+	    static const char no_longer[] = "Unfortunately, you can no longer %s %s.";
 
 	    if (nohands(youmonst.data)) {
 		const char *what = (picktyp == LOCK_PICK) ? "pick" : "key";

@@ -65,7 +65,8 @@ extern int min_rx, max_rx, min_ry, max_ry; /* from mkmap.c */
 
 static char Map[COLNO][ROWNO];
 static char robjects[10], rloc_x[10], rloc_y[10], rmonst[10];
-static aligntyp	ralign[3] = { AM_CHAOTIC, AM_NEUTRAL, AM_LAWFUL };
+static const aligntyp init_ralign[3] = { AM_CHAOTIC, AM_NEUTRAL, AM_LAWFUL };
+static aligntyp ralign[3];
 static xchar xstart, ystart;
 static char xsize, ysize;
 
@@ -1592,6 +1593,7 @@ static void load_common_data(dlb *fd, int typ)
       {
 	aligntyp atmp;
 	/* shuffle 3 alignments; can't use sp_lev_shuffle() on aligntyp's */
+	ralign[0] = init_ralign[0]; ralign[1] = init_ralign[1]; ralign[2] = init_ralign[2]; 
 	i = rn2(3);   atmp=ralign[2]; ralign[2]=ralign[i]; ralign[i]=atmp;
 	if (rn2(2)) { atmp=ralign[1]; ralign[1]=ralign[0]; ralign[0]=atmp; }
       }

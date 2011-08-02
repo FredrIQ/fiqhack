@@ -77,7 +77,6 @@ extern void losestr(int);
 extern void restore_attrib(void);
 extern void exercise(int,boolean);
 extern void exerchk(void);
-extern void reset_attribute_clock(void);
 extern void init_attr(int);
 extern void redist_attr(void);
 extern void adjabil(int,int);

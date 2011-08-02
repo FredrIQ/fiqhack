@@ -61,7 +61,7 @@ static int precheck(struct monst *mon, struct obj *obj)
 
 	if (obj->oclass == POTION_CLASS) {
 	    coord cc;
-	    static const char *empty = "The potion turns out to be empty.";
+	    static const char *const empty = "The potion turns out to be empty.";
 	    const char *potion_descr;
 	    struct monst *mtmp;
 #define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))	/* also in potion.c */

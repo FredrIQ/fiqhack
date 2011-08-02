@@ -34,7 +34,7 @@ static int lastinvnr = 51;	/* 0 ... 51 (never saved&restored) */
  * is not wizard because the wizard can leave venom lying
  * around on a bones level for normal players to find.
  */
-static char venom_inv[] = { VENOM_CLASS, 0 };	/* (constant) */
+static const char venom_inv[] = { VENOM_CLASS, 0 };	/* (constant) */
 
 void assigninvlet(struct obj *otmp)
 {
@@ -1520,7 +1520,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 {
 	struct obj *otmp;
 	char ilet, ret;
-	char *invlet = flags.inv_order;
+	const char *invlet = flags.inv_order;
 	int n, classcount;
 	int nr_items = 0, cur_entry = 0;
 	struct nh_objitem *items = NULL;
@@ -2341,7 +2341,7 @@ static const char oth_symbols[] = {
 	'\0'
 };
 
-static const char *oth_names[] = {
+static const char *const oth_names[] = {
 	"Bagged/Boxed items"
 };
 

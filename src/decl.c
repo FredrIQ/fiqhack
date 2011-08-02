@@ -85,12 +85,12 @@ struct dig_info digging;
 
 dungeon dungeons[MAXDUNGEON];	/* ini'ed by init_dungeon() */
 s_level *sp_levchn;
-stairway upstair = { 0, 0 }, dnstair = { 0, 0 };
-stairway upladder = { 0, 0 }, dnladder = { 0, 0 };
-stairway sstairs = { 0, 0 };
-dest_area updest = { 0, 0, 0, 0, 0, 0, 0, 0 };
-dest_area dndest = { 0, 0, 0, 0, 0, 0, 0, 0 };
-coord inv_pos = { 0, 0 };
+stairway upstair, dnstair;
+stairway upladder, dnladder;
+stairway sstairs;
+dest_area updest;
+dest_area dndest;
+coord inv_pos;
 
 boolean in_mklev;
 boolean stoned;	/* done to monsters hit by 'c' */
@@ -105,7 +105,7 @@ coord bhitpos;
 coord doors[DOORMAX];
 
 struct mkroom rooms[(MAXNROFROOMS+1)*2];
-struct mkroom* subrooms = &rooms[MAXNROFROOMS+1];
+struct mkroom* subrooms;
 struct mkroom *upstairs_room, *dnstairs_room, *sstairs_room;
 
 dlevel_t level;		/* level map */
@@ -240,6 +240,14 @@ void init_data(void)
     memset(spl_book, 0, sizeof(spl_book));
     memset(disco, 0, sizeof(disco));
     memset(&digging, 0, sizeof(digging));
+    memset(&updest, 0, sizeof(updest));
+    memset(&dndest, 0, sizeof(dndest));
+    memset(&upstair, 0, sizeof(upstair));
+    memset(&dnstair, 0, sizeof(dnstair));
+    memset(&upladder, 0, sizeof(upladder));
+    memset(&dnladder, 0, sizeof(dnladder));
+    memset(&sstairs, 0, sizeof(sstairs));
+    memset(&inv_pos, 0, sizeof(inv_pos));
     
     multi = nroom = nsubroom = occtime = killer_format = 0;
     afternmv = NULL;
@@ -263,6 +271,8 @@ void init_data(void)
     vision_full_recalc = FALSE;
     viz_array = NULL;
     artilist = NULL;
+    
+    subrooms = &rooms[MAXNROFROOMS+1];
 }
 
 /*decl.c*/

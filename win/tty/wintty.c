@@ -143,7 +143,7 @@ void tty_init_nhwindows(void)
 {
     int wid, hgt;
     char *opts;
-    const char **banner;
+    const char *const *banner;
 
     /*
      *  Remember tty modes, to be restored on exit.

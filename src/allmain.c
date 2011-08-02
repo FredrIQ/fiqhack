@@ -11,7 +11,7 @@
 #include "hack.h"
 #include "patchlevel.h"
 
-static const char *copyright_banner[] =
+static const char *const copyright_banner[] =
 {COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C};
 
 static void wd_message(void);
@@ -28,7 +28,7 @@ static void wd_message(void)
 }
 
 
-const char **nh_get_copyright_banner(void)
+const char *const *nh_get_copyright_banner(void)
 {
     return copyright_banner;
 }

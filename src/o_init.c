@@ -297,7 +297,7 @@ static boolean interesting_to_discover(int i)
 }
 
 /* items that should stand out once they're known */
-static short uniq_objs[] = {
+static const short uniq_objs[] = {
 	AMULET_OF_YENDOR,
 	SPE_BOOK_OF_THE_DEAD,
 	CANDELABRUM_OF_INVOCATION,

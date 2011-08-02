@@ -31,7 +31,7 @@ static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
 
 #if !defined(WIN32)
 char bones[] = "bonesnn.xxx";
-char lock[PL_NSIZ+14] = "1lock"; /* long enough for uid+name+.99 */
+char lock[PL_NSIZ+14];		/* long enough for uid+name+.99 */
 #else
 # if defined(WIN32)
 char bones[] = "bonesnn.xxx";
@@ -152,7 +152,7 @@ char *fname_encode(const char *legal, char quotechar, char *s,
 {
 	char *sp, *op;
 	int cnt = 0;
-	static char hexdigits[] = "0123456789ABCDEF";
+	static const char hexdigits[] = "0123456789ABCDEF";
 
 	sp = s;
 	op = callerbuf;
@@ -193,7 +193,7 @@ char *fname_decode(char quotechar, char *s, char *callerbuf, int bufsz)
 {
 	char *sp, *op;
 	int k,calc,cnt = 0;
-	static char hexdigits[] = "0123456789ABCDEF";
+	static const char hexdigits[] = "0123456789ABCDEF";
 
 	sp = s;
 	op = callerbuf;

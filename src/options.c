@@ -18,14 +18,14 @@ static const struct nh_listitem disclose_list[] = {
 	{DISCLOSE_PROMPT_DEFAULT_YES, "ask, default yes"},
 	{DISCLOSE_YES_WITHOUT_PROMPT, "yes"}
 };
-static struct nh_enum_option disclose_spec = {disclose_list, listlen(disclose_list)};
+static const struct nh_enum_option disclose_spec = {disclose_list, listlen(disclose_list)};
 
 static const struct nh_listitem menustyle_list[] = {
 	{MENU_COMBINATION, "combination"},
 	{MENU_PARTIAL, "partial"},
 	{MENU_FULL, "full"}
 };
-static struct nh_enum_option menustyle_spec = {menustyle_list, listlen(menustyle_list)};
+static const struct nh_enum_option menustyle_spec = {menustyle_list, listlen(menustyle_list)};
 
 static const struct nh_listitem pickup_burden_list[] = {
 	{UNENCUMBERED, "unencumbered"},
@@ -35,7 +35,7 @@ static const struct nh_listitem pickup_burden_list[] = {
 	{EXT_ENCUMBER, "overtaxed"},
 	{OVERLOADED, "overloaded"}
 };
-static struct nh_enum_option pickup_burden_spec =
+static const struct nh_enum_option pickup_burden_spec =
 			{pickup_burden_list, listlen(pickup_burden_list)};
 
 static const struct nh_listitem runmode_list[] = {
@@ -44,7 +44,7 @@ static const struct nh_listitem runmode_list[] = {
 	{RUN_LEAP, "leap"},
 	{RUN_TPORT, "teleport"}
 };
-static struct nh_enum_option runmode_spec = {runmode_list, listlen(runmode_list)};
+static const struct nh_enum_option runmode_spec = {runmode_list, listlen(runmode_list)};
 
 static const struct nh_listitem align_list[] = {
 	{ROLE_LAWFUL, "lawful"},
@@ -53,7 +53,7 @@ static const struct nh_listitem align_list[] = {
 	{ROLE_NONE, "ask"},
 	{ROLE_RANDOM, "random"}
 };
-static struct nh_enum_option align_spec = {align_list, listlen(align_list)};
+static const struct nh_enum_option align_spec = {align_list, listlen(align_list)};
 
 static const struct nh_listitem gender_list[] = {
 	{ROLE_FEMALE, "female"},
@@ -61,19 +61,19 @@ static const struct nh_listitem gender_list[] = {
 	{ROLE_NONE, "ask"},
 	{ROLE_RANDOM, "random"}
 };
-static struct nh_enum_option gender_spec = {gender_list, listlen(gender_list)};
+static const struct nh_enum_option gender_spec = {gender_list, listlen(gender_list)};
 
 static struct nh_enum_option race_spec = {NULL, 0};
 static struct nh_enum_option role_spec = {NULL, 0};
 
-static struct nh_listitem pettype_list[] = {
+static const struct nh_listitem pettype_list[] = {
 	{'c', "cat"},
 	{'d', "dog"},
 	{'h', "horse"},
 	{'n', "no pet"},
 	{0, "random"}
 };
-static struct nh_enum_option pettype_spec = {pettype_list, listlen(pettype_list)};
+static const struct nh_enum_option pettype_spec = {pettype_list, listlen(pettype_list)};
 
 #define VTRUE (void*)TRUE
 #define VFALSE (void*)FALSE
@@ -182,7 +182,7 @@ static const struct nh_boolopt_map boolopt_map[] = {
 };
 
 
-static char def_inv_order[MAXOCLASSES] = {
+static const char def_inv_order[MAXOCLASSES] = {
 	COIN_CLASS, AMULET_CLASS, WEAPON_CLASS, ARMOR_CLASS, FOOD_CLASS,
 	SCROLL_CLASS, SPBOOK_CLASS, POTION_CLASS, RING_CLASS, WAND_CLASS,
 	TOOL_CLASS, GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, 0,
@@ -349,7 +349,7 @@ void sync_options(void)
 	for (i = 0; birth_options[i].name; i++) {
 	    /* doing this automatically is only possible for booleans */
 	    if (birth_options[i].type == OPTTYPE_BOOL) {
-		boolean *bvar = NULL;
+		const boolean *bvar = NULL;
 		
 		for (j = 0; boolopt_map[j].optname && !bvar; j++)
 			if (!strcmp(birth_options[i].name, boolopt_map[j].optname))

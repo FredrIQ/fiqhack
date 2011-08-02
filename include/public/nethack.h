@@ -30,7 +30,7 @@ extern EXPORT boolean nh_exit(int exit_type);
 extern EXPORT enum nh_restore_status nh_restore_save(char *, int, int);
 extern EXPORT boolean nh_start_game(char*, int, int);
 extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
-extern EXPORT const char **nh_get_copyright_banner(void);
+extern EXPORT const char *const *nh_get_copyright_banner(void);
 
 /* cmd.c */
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
@@ -67,7 +67,7 @@ extern EXPORT void nh_set_gend(int);
 extern EXPORT void nh_set_align(int);
 extern EXPORT void nh_set_random_player(void);
 extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int);
-extern EXPORT char *nh_root_plselection_prompt(char *, int, int, int, int, int);
+extern EXPORT const char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 
 /* topten.c */
 extern EXPORT struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,

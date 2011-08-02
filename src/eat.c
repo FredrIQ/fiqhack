@@ -64,7 +64,7 @@ static const char allobj[] = {
 
 static boolean force_save_hs = FALSE;
 
-const char *hu_stat[] = {
+const char *const hu_stat[] = {
 	"Satiated",
 	"        ",
 	"Hungry  ",

@@ -144,6 +144,7 @@ struct you {
 			amax,		/* your max attributes (eg. str) */
 			atemp,		/* used for temporary loss/gain */
 			atime;		/* used for loss/gain countdown */
+	int next_attr_check;		/* number of turns until exerchk can run again */
 	align	ualign;			/* character alignment */
 #define CONVERT		2
 #define A_ORIGINAL	1

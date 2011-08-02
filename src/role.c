@@ -366,22 +366,9 @@ const struct Role roles[] = {
 
 
 /* The player's role, created at runtime from initial
- * choices.  This may be munged in role_init().
+ * choices.  This will be munged in role_init().
  */
-struct Role urole =
-{	{"Undefined", 0}, { {0, 0}, {0, 0}, {0, 0},
-	{0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0} },
-	"L", "N", "C", "Xxx", "home", "locate",
-	NON_PM, NON_PM, NON_PM, NON_PM, NON_PM, NON_PM,
-	NON_PM, NON_PM, 0, 0, 0, 0,
-	/* Str Int Wis Dex Con Cha */
-	{   7,  7,  7,  7,  7,  7 },
-	{  20, 15, 15, 20, 20, 10 },
-	/* Init   Lower  Higher */
-	{ 10, 0,  0, 8,  1, 0 },	/* Hit points */
-	{  2, 0,  0, 2,  0, 3 },14,	/* Energy */
-	0, 10, 0, 0,  4, A_INT, 0, -3
-};
+struct Role urole;
 
 
 
@@ -453,20 +440,9 @@ const struct Race races[] = {
 
 
 /* The player's race, created at runtime from initial
- * choices.  This may be munged in role_init().
+ * choices.  This will be munged in role_init().
  */
-struct Race urace =
-{	"something", "undefined", "something", "Xxx",
-	{0, 0},
-	NON_PM, NON_PM, NON_PM, NON_PM,
-	0, 0, 0, 0,
-	/*    Str     Int Wis Dex Con Cha */
-	{      3,      3,  3,  3,  3,  3 },
-	{ STR18(100), 18, 18, 18, 18, 18 },
-	/* Init   Lower  Higher */
-	{  2, 0,  0, 2,  1, 0 },	/* Hit points */
-	{  1, 0,  2, 0,  2, 0 }		/* Energy */
-};
+struct Race urace;
 
 
 /* Table of all genders */
@@ -490,7 +466,7 @@ static int role_gendercount(int);
 static int race_alignmentcount(int);
 
 /* used by nh_str2XXX() */
-static char randomstr[] = "random";
+static const char randomstr[] = "random";
 
 
 boolean nh_validrole(int rolenum)
@@ -1155,12 +1131,12 @@ int nh_get_valid_aligns(int rolenum, int racenum, int gendnum,
 }
 
 
-char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
+const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
 			      int racenum, int gendnum, int alignnum)
 {
 	int k, gendercount = 0, aligncount = 0;
 	char buf[BUFSZ];
-	static char err_ret[] = " character's";
+	static const char err_ret[] = " character's";
 	boolean donefirst = FALSE;
 
 	if (!suppliedbuf || buflen < 1) return err_ret;

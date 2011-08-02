@@ -1750,7 +1750,7 @@ static struct obj *do_takeoff(void)
 	return otmp;
 }
 
-static const char *disrobing = "";
+static const char *disrobing;
 
 static int take_off(void)
 {
@@ -1837,7 +1837,7 @@ static int take_off(void)
 void reset_remarm(void)
 {
 	taking_off = takeoff_mask = 0L;
-	disrobing = nul;
+	disrobing = NULL;
 }
 
 /* the 'A' command -- remove multiple worn items */

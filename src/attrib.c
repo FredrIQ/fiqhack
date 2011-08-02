@@ -93,7 +93,6 @@ const struct innate {
 	orc_abil[] = { {	1, &(HPoison_resistance), "", "" },
 		     {	 0, 0, 0, 0 } };
 
-static long next_check = 600L;	/* arbitrary first setting */
 static void exerper(void);
 static void postadjabil(long *);
 
@@ -351,11 +350,11 @@ void exerchk(void)
 	exerper();
 
 #ifdef DEBUG
-	if (moves >= next_check)
+	if (moves >= u.next_attr_check)
 		pline("exerchk: ready to test. multi = %d.", multi);
 #endif
 	/*	Are we ready for a test?	*/
-	if (moves >= next_check && !multi) {
+	if (moves >= u.next_attr_check && !multi) {
 #ifdef DEBUG
 	    pline("exerchk: testing.");
 #endif
@@ -417,17 +416,11 @@ void exerchk(void)
 		    }
 		}
 	    }
-	    next_check += rn1(200,800);
+	    u.next_attr_check += rn1(200,800);
 #ifdef DEBUG
-	    pline("exerchk: next check at %ld.", next_check);
+	    pline("exerchk: next check at %ld.", u.next_attr_check);
 #endif
 	}
-}
-
-/* next_check will otherwise have its initial 600L after a game restore */
-void reset_attribute_clock(void)
-{
-	if (moves > 600L) next_check = moves + rn1(50,800);
 }
 
 

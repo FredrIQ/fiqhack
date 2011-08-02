@@ -12,7 +12,7 @@ static int drop_throw(struct obj *,boolean,int,int);
 /*
  * Keep consistent with breath weapons in zap.c, and AD_* in monattk.h.
  */
-static const char *breathwep[] = {
+static const char *const breathwep[] = {
 				"fragments",
 				"fire",
 				"frost",

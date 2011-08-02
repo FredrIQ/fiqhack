@@ -1754,7 +1754,7 @@ void set_wall_state(void)
 
 /* ------------------------------------------------------------------------- */
 /* This matrix is used here and in vision.c. */
-unsigned char seenv_matrix[3][3] = { {SV2,   SV1, SV0},
+unsigned const char seenv_matrix[3][3] = { {SV2,   SV1, SV0},
 				     {SV3, SVALL, SV7},
 				     {SV4,   SV5, SV6} };
 

@@ -16,7 +16,7 @@ static struct valuable_data
 	gems[LAST_GEM+1 - FIRST_GEM + 1], /* 1 extra for glass */
 	amulets[LAST_AMULET+1 - FIRST_AMULET];
 
-static struct val_list { struct valuable_data *list; int size; } valuables[] = {
+static const struct val_list { struct valuable_data *list; int size; } valuables[] = {
 	{ gems,    sizeof gems / sizeof *gems },
 	{ amulets, sizeof amulets / sizeof *amulets },
 	{ 0, 0 }
@@ -556,7 +556,7 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	if (how == ESCAPED || how == ASCENDED) {
 	    struct monst *mtmp;
 	    struct obj *otmp;
-	    struct val_list *val;
+	    const struct val_list *val;
 	    int i;
 
 	    for (val = valuables; val->list; val++)

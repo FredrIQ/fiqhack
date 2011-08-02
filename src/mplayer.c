@@ -300,11 +300,11 @@ void create_mplayers(int num, boolean special)
 
 void mplayer_talk(struct monst *mtmp)
 {
-	static const char *same_class_msg[3] = {
+	static const char *const same_class_msg[3] = {
 		"I can't win, and neither will you!",
 		"You don't deserve to win!",
 		"Mine should be the honor, not yours!",
-	},		  *other_class_msg[3] = {
+	},		  *const other_class_msg[3] = {
 		"The low-life wants to talk, eh?",
 		"Fight, scum!",
 		"Here is what I have to say!",

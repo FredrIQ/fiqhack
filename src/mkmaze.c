@@ -119,7 +119,7 @@ void wallification(int x1, int y1, int x2, int y2)
 	 * so even though this table says VWALL, we actually leave whatever
 	 * typ was there alone.
 	 */
-	static xchar spine_array[16] = {
+	static const xchar spine_array[16] = {
 	    VWALL,	HWALL,		HWALL,		HWALL,
 	    VWALL,	TRCORNER,	TLCORNER,	TDWALL,
 	    VWALL,	BRCORNER,	BLCORNER,	TUWALL,

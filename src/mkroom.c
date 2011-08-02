@@ -610,7 +610,7 @@ const struct permonst *courtmon(void)
 
 #define NSTYPES (PM_CAPTAIN - PM_SOLDIER + 1)
 
-static struct {
+static const struct {
     unsigned	pm;
     unsigned	prob;
 } squadprob[NSTYPES] = {

@@ -100,7 +100,7 @@ int pm_to_cham(int mndx)
 }
 
 /* convert chameleon index to monster index */
-static short cham_to_pm[] = {
+static const short cham_to_pm[] = {
 		NON_PM,		/* placeholder for CHAM_ORDINARY */
 		PM_CHAMELEON,
 		PM_DOPPELGANGER,
@@ -1779,8 +1779,7 @@ boolean mnearto(struct monst *mtmp,
 }
 
 
-static const char *poiseff[] = {
-
+static const char *const poiseff[] = {
 	" feel weaker", "r brain is on fire",
 	"r judgement is impaired", "r muscles won't obey you",
 	" feel very sick", " break out in hives"
