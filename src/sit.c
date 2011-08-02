@@ -367,7 +367,7 @@ void rndcurse(void)
 		pline("%s %s %s.",
 		      s_suffix(upstart(y_monnam(u.usteed))),
 		      aobjnam(otmp, "glow"),
-		      hcolor(otmp->cursed ? NH_BLACK : (const char *)"brown"));
+		      hcolor(otmp->cursed ? "black" : "brown"));
 		otmp->bknown = TRUE;
 	    }
 	}

@@ -1448,7 +1448,7 @@ stillinwater:
 			else if (mtmp->mpeaceful) {
 				You("surprise %s!",
 				    Blind && !sensemon(mtmp) ?
-				    something : a_monnam(mtmp));
+				    "something" : a_monnam(mtmp));
 				mtmp->mpeaceful = 0;
 			} else
 			    pline("%s attacks you by surprise!",
@@ -1740,8 +1740,7 @@ int dopickup(void)
 		You("cannot dive into the water to pick things up.");
 		return 0;
 	    } else if (!Underwater) {
-		You_cant("even see the bottom, let alone pick up %s.",
-				something);
+		You_cant("even see the bottom, let alone pick up something.");
 		return 0;
 	    }
 	}
@@ -1950,7 +1949,7 @@ void unmul(const char *msg_override)
 {
 	multi = 0;	/* caller will usually have done this already */
 	if (msg_override) nomovemsg = msg_override;
-	else if (!nomovemsg) nomovemsg = You_can_move_again;
+	else if (!nomovemsg) nomovemsg = "You can move again.";
 	if (*nomovemsg) pline(nomovemsg);
 	nomovemsg = 0;
 	u.usleep = 0;

@@ -213,7 +213,7 @@ void doaltarobj(struct obj *obj)  /* obj is an object dropped on an altar */
 
 	if ((obj->blessed || obj->cursed) && obj->oclass != COIN_CLASS) {
 		There("is %s flash as %s %s the altar.",
-			an(hcolor(obj->blessed ? NH_AMBER : NH_BLACK)),
+			an(hcolor(obj->blessed ? "amber" : "black")),
 			doname(obj), otense(obj, "hit"));
 		if (!Hallucination) obj->bknown = 1;
 	} else {
@@ -338,10 +338,10 @@ giveback:
 		    break;
 		case RIN_PROTECTION:
 		    pline_The("sink glows %s for a moment.",
-			    hcolor((obj->spe<0) ? NH_BLACK : NH_SILVER));
+			    hcolor((obj->spe<0) ? "black" : "silver"));
 		    break;
 		case RIN_WARNING:
-		    pline_The("sink glows %s for a moment.", hcolor(NH_WHITE));
+		    pline_The("sink glows %s for a moment.", hcolor("white"));
 		    break;
 		case RIN_TELEPORTATION:
 		    pline_The("sink momentarily vanishes.");
@@ -375,8 +375,7 @@ boolean canletgo(struct obj *obj, const char *word)
 {
 	if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)){
 		if (*word)
-			Norep("You cannot %s %s you are wearing.",word,
-				something);
+			Norep("You cannot %s something you are wearing.", word);
 		return FALSE;
 	}
 	if (obj->otyp == LOADSTONE && obj->cursed) {
@@ -403,8 +402,7 @@ boolean canletgo(struct obj *obj, const char *word)
 	}
 	if (obj->owornmask & W_SADDLE) {
 		if (*word)
-			You("cannot %s %s you are sitting on.", word,
-				something);
+			You("cannot %s something you are sitting on.", word);
 		return FALSE;
 	}
 	return TRUE;
@@ -1440,20 +1438,20 @@ boolean revive_corpse(struct obj *corpse)
 		}
 		break;
 	   case OBJ_CONTAINED:
-	   	if (container_where == OBJ_MINVENT && cansee(mtmp->mx, mtmp->my) &&
+		if (container_where == OBJ_MINVENT && cansee(mtmp->mx, mtmp->my) &&
 		    mcarry && canseemon(mcarry) && container) {
 		        char sackname[BUFSZ];
 		        sprintf(sackname, "%s %s", s_suffix(mon_nam(mcarry)),
 				xname(container)); 
-	   		pline("%s writhes out of %s!", Amonnam(mtmp), sackname);
-	   	} else if (container_where == OBJ_INVENT && container) {
+			pline("%s writhes out of %s!", Amonnam(mtmp), sackname);
+		} else if (container_where == OBJ_INVENT && container) {
 		        char sackname[BUFSZ];
 		        strcpy(sackname, an(xname(container)));
-	   		pline("%s %s out of %s in your pack!",
-	   			Blind ? Something : Amonnam(mtmp),
+			pline("%s %s out of %s in your pack!",
+				Blind ? "Something" : Amonnam(mtmp),
 				locomotion(mtmp->data,"writhes"),
-	   			sackname);
-	   	} else if (container_where == OBJ_FLOOR && container &&
+				sackname);
+		} else if (container_where == OBJ_FLOOR && container &&
 		            cansee(mtmp->mx, mtmp->my)) {
 		        char sackname[BUFSZ];
 		        strcpy(sackname, an(xname(container)));

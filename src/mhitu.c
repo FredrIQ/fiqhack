@@ -407,7 +407,7 @@ int mattacku(struct monst *mtmp)
 	/* player might be mimicking an object */
 	if (youmonst.m_ap_type == M_AP_OBJECT && !range2 && foundyou && !u.uswallow) {
 	    if (!youseeit)
-		 pline("%s %s!", Something,
+		 pline("Something %s!",
 			(likes_gold(mtmp->data) && youmonst.mappearance == GOLD_PIECE) ?
 			"tries to pick you up" : "disturbs you");
 	    else pline("Wait, %s!  That %s is really %s named %s!",
@@ -471,7 +471,7 @@ int mattacku(struct monst *mtmp)
 			const char *from_nowhere;
 
 			if (flags.soundok) {
-				pline("%s %s!", Something,
+				pline("Something %s!",
 					makeplural(growl_sound(mtmp)));
 				from_nowhere = "";
 			} else from_nowhere = " from nowhere";
@@ -500,7 +500,7 @@ int mattacku(struct monst *mtmp)
 		    pline("%s starts to attack you, but pulls back.",
 			  Monnam(mtmp));
 		else
-		    You_feel("%s move nearby.", something);
+		    You_feel("something move nearby.");
 	    }
 	    return 0;
 	}
@@ -838,7 +838,7 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 
 		if ((obj = level.objects[mtmp->mx][mtmp->my]) != 0) {
 		    if (Blind && !obj->dknown)
-			what = something;
+			what = "something";
 		    else if (is_pool(mtmp->mx, mtmp->my) && !Underwater)
 			what = "the water";
 		    else
@@ -984,7 +984,7 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 		if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
 		    if (!Blind) pline("%s blinds you!", Monnam(mtmp));
 		    make_blinded(Blinded+(long)dmg,FALSE);
-		    if (!Blind) Your(vision_clears);
+		    if (!Blind) Your("vision quickly clears.");
 		}
 		dmg = 0;
 		break;
@@ -1676,7 +1676,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 			if (!Blind) {
 			    You_cant("see in here!");
 			    make_blinded((long)tmp,FALSE);
-			    if (!Blind) Your(vision_clears);
+			    if (!Blind) Your("vision quickly clears.");
 			} else
 			    /* keep him blind until disgorged */
 			    make_blinded(Blinded+1,FALSE);
@@ -1789,7 +1789,7 @@ common:
 		    if (mon_visible(mtmp) || (rnd(tmp /= 2) > u.ulevel)) {
 			You("are blinded by a blast of light!");
 			make_blinded((long)tmp, FALSE);
-			if (!Blind) Your(vision_clears);
+			if (!Blind) Your("vision quickly clears.");
 		    } else if (flags.verbose)
 			You("get the impression it was not terribly bright.");
 		}
@@ -1915,7 +1915,7 @@ int gazemu(struct monst *mtmp, const struct attack *mattk)
 		    /* not blind at this point implies you're wearing
 		       the Eyes of the Overworld; make them block this
 		       particular stun attack too */
-		    if (!Blind) Your(vision_clears);
+		    if (!Blind) Your("vision quickly clears.");
 		    else make_stunned((long)dice(1,3),TRUE);
 		}
 		break;

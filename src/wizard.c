@@ -489,7 +489,7 @@ void intervene(void)
 			break;
 	    case 2:	if (!Blind)
 			    You("notice a %s glow surrounding you.",
-				  hcolor(NH_BLACK));
+				  hcolor("black"));
 			rndcurse();
 			break;
 	    case 3:	aggravate();

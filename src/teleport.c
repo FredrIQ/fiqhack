@@ -493,7 +493,7 @@ int dotele(void)
 		else tele();
 		next_to_u();
 	} else {
-		You(shudder_for_moment);
+		You("shudder for a moment.");
 		return 0;
 	}
 	if (!trap) morehungry(100);
@@ -596,7 +596,7 @@ void level_tele(void)
 	     * we let negative values requests fall into the "heaven" loop.
 	     */
 	    if (Is_knox(&u.uz) && newlev > 0) {
-		You(shudder_for_moment);
+		You("shudder for a moment.");
 		return;
 	    }
 	    /* if in Quest, the player sees "Home 1", etc., on the status
@@ -613,13 +613,13 @@ void level_tele(void)
  random_levtport:
 	    newlev = random_teleport_level();
 	    if (newlev == depth(&u.uz)) {
-		You(shudder_for_moment);
+		You("shudder for a moment.");
 		return;
 	    }
 	}
 
 	if (!next_to_u()) {
-		You(shudder_for_moment);
+		You("shudder for a moment.");
 		return;
 	}
 
@@ -736,7 +736,7 @@ void domagicportal(struct trap *ttmp)
 	struct d_level target_level;
 
 	if (!next_to_u()) {
-		You(shudder_for_moment);
+		You("shudder for a moment.");
 		return;
 	}
 
@@ -768,7 +768,7 @@ void tele_trap(struct trap *trap)
 			shieldeff(u.ux, u.uy);
 		You_feel("a wrenching sensation.");
 	} else if (!next_to_u()) {
-		You(shudder_for_moment);
+		You("shudder for a moment.");
 	} else if (trap->once) {
 		deltrap(trap);
 		newsym(u.ux,u.uy);	/* get rid of trap symbol */

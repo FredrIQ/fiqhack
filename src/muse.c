@@ -103,7 +103,7 @@ static int precheck(struct monst *mon, struct obj *obj)
 		    if (vis)
 			pline("In a cloud of smoke, %s emerges!",
 							a_monnam(mtmp));
-		    pline("%s speaks.", vis ? Monnam(mtmp) : Something);
+		    pline("%s speaks.", vis ? Monnam(mtmp) : "Something");
 		/* I suspect few players will be upset that monsters */
 		/* can't wish for wands of death here.... */
 		    if (rn2(2)) {
@@ -648,7 +648,7 @@ mon_tele:
 		    pline("%s %s through...", Monnam(mtmp),
 			  is_flyer(mtmp->data) ? "dives" : "falls");
 		} else if (flags.soundok)
-			You_hear("%s crash through the %s.", something,
+			You_hear("something crash through the %s.",
 				surface(mtmp->mx, mtmp->my));
 		/* we made sure that there is a level for mtmp to go to */
 		migrate_to_level(mtmp, ledger_no(&u.uz) + 1,

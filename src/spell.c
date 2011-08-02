@@ -233,7 +233,7 @@ static void deadbook(struct obj *book2)
 	    u.uevent.udemigod = 1;	/* wizdead() */
 	    if (!u.udg_cnt || u.udg_cnt > soon) u.udg_cnt = soon;
 	} else {	/* at least one artifact not prepared properly */
-	    You("have a feeling that %s is amiss...", something);
+	    You("have a feeling that something is amiss...");
 	    goto raise_dead;
 	}
 	return;
@@ -591,7 +591,7 @@ static void cast_protection(void)
 
 	if (gain > 0) {
 	    if (!Blind) {
-		const char *hgolden = hcolor(NH_GOLDEN);
+		const char *hgolden = hcolor("golden");
 
 		if (u.uspellprot)
 		    pline_The("%s haze around you becomes more dense.",
@@ -883,7 +883,7 @@ int spelleffects(int spell, boolean atme)
 		break;
 	case SPE_JUMPING:
 		if (!jump(max(role_skill,1)))
-			pline(nothing_happens);
+			pline("Nothing happens.");
 		break;
 	default:
 		impossible("Unknown spell %d attempted.", spell);

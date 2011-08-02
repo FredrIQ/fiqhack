@@ -95,7 +95,7 @@ static void choke_dialogue(void)
 		const char *str = choke_texts[SIZE(choke_texts)-i];
 
 		if (index(str, '%'))
-		    pline(str, hcolor(NH_BLUE));
+		    pline(str, hcolor("blue"));
 		else
 		    pline(str);
 	    }
@@ -122,7 +122,7 @@ static void slime_dialogue(void)
 	    if (index(str, '%')) {
 		if (i == 4L) {	/* "you are turning green" */
 		    if (!Blind)	/* [what if you're already green?] */
-			pline(str, hcolor(NH_GREEN));
+			pline(str, hcolor("green"));
 		} else
 		    pline(str, an(Hallucination ? rndmonnam() : "green slime"));
 	    } else
@@ -192,7 +192,7 @@ void nh_timeout(void)
 		u.uspellprot--;
 		find_ac();
 		if (!Blind)
-		    Norep("The %s haze around you %s.", hcolor(NH_GOLDEN),
+		    Norep("The %s haze around you %s.", hcolor("golden"),
 			  u.uspellprot ? "becomes less dense" : "disappears");
 	    }
 	}
@@ -355,7 +355,7 @@ void fall_asleep(int how_long, boolean wakeup_msg)
 	}
 	/* early wakeup from combat won't be possible until next monster turn */
 	u.usleep = monstermoves;
-	nomovemsg = wakeup_msg ? "You wake up." : You_can_move_again;
+	nomovemsg = wakeup_msg ? "You wake up." : "You can move again.";
 }
 
 /* Attach an egg hatch timeout to the given egg. */
@@ -460,7 +460,7 @@ void hatch_egg(void *arg, long timeout)
 		case OBJ_INVENT:
 		    knows_egg = TRUE; /* true even if you are blind */
 		    if (!cansee_hatchspot)
-			You_feel("%s %s from your pack!", something,
+			You_feel("something %s from your pack!",
 			    locomotion(mon->data, "drop"));
 		    else
 			You("see %s %s out of your pack!",
@@ -576,7 +576,7 @@ static void slip_or_trip(void)
 	    pronoun = otmp->quan == 1L ? "it" : Hallucination ? "they" : "them";
 	    what = !otmp->nexthere ? pronoun :
 		  (otmp->dknown || !Blind) ? doname(otmp) :
-		  ((otmp = sobj_at(ROCK, u.ux, u.uy)) == 0 ? something :
+		  ((otmp = sobj_at(ROCK, u.ux, u.uy)) == 0 ? "something" :
 		  (otmp->quan == 1L ? "a rock" : "some rocks"));
 	    if (Hallucination) {
 		what = strcpy(buf, what);

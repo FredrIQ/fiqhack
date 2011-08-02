@@ -51,7 +51,7 @@ static int use_camera(struct obj *obj)
 	    return 0;
 
 	if (obj->spe <= 0) {
-		pline(nothing_happens);
+		pline("Nothing happens.");
 		return 1;
 	}
 	consume_obj_charge(obj, TRUE);
@@ -654,7 +654,7 @@ static int use_mirror(struct obj *obj)
 		if (!rn2(4)) tmp = 120;
 		if (vis)
 			pline("%s is frozen by its reflection.", Monnam(mtmp));
-		else You_hear("%s stop moving.",something);
+		else You_hear("something stop moving.");
 		mtmp->mcanmove = 0;
 		if ( (int) mtmp->mfrozen + tmp > 127)
 			mtmp->mfrozen = 127;
@@ -747,7 +747,7 @@ static void use_bell(struct obj **optr)
 		if (!obj->cursed)
 		    openit();
 		else
-		    pline(nothing_happens);
+		    pline("Nothing happens.");
 
 	    } else if (obj->cursed) {
 		coord mm;
@@ -773,8 +773,8 @@ static void use_bell(struct obj **optr)
 		}
 		res += openit();
 		switch (res) {
-		  case 0:  pline(nothing_happens); break;
-		  case 1:  pline("%s opens...", Something);
+		  case 0:  pline("Nothing happens."); break;
+		  case 1:  pline("Something opens...");
 			   learno = TRUE; break;
 		  default: pline("Things open around you...");
 			   learno = TRUE; break;
@@ -782,7 +782,7 @@ static void use_bell(struct obj **optr)
 
 	    } else {  /* uncursed */
 		if (findit() != 0) learno = TRUE;
-		else pline(nothing_happens);
+		else pline("Nothing happens.");
 	    }
 
 	}	/* charged BofO */
@@ -1113,12 +1113,12 @@ int dorub(void)
 		update_inventory();
 	    } else if (rn2(2) && !Blind)
 		You("see a puff of smoke.");
-	    else pline(nothing_happens);
+	    else pline("Nothing happens.");
 	} else if (obj->otyp == BRASS_LANTERN) {
 	    /* message from Adventure */
 	    pline("Rubbing the electric lamp is not particularly rewarding.");
 	    pline("Anyway, nothing exciting happens.");
-	} else pline(nothing_happens);
+	} else pline("Nothing happens.");
 	return 1;
 }
 
@@ -1301,7 +1301,7 @@ static void use_tinning_kit(struct obj *obj)
 	}
 	if (!(corpse = floorfood("tin", 2))) return;
 	if (corpse->oeaten) {
-		You("cannot tin %s which is partly eaten.",something);
+		You("cannot tin something which is partly eaten.");
 		return;
 	}
 	if (touch_petrifies(&mons[corpse->corpsenm])
@@ -1420,7 +1420,7 @@ void use_unicorn_horn(struct obj *obj)
 	}
 
 	if (trouble_count == 0) {
-	    pline(nothing_happens);
+	    pline("Nothing happens.");
 	    return;
 	} else if (trouble_count > 1) {		/* shuffle */
 	    int i, j, k;
@@ -1536,7 +1536,7 @@ void fig_transform(void *arg, long timeout)
 	    switch (figurine->where) {
 		case OBJ_INVENT:
 		    if (Blind)
-			You_feel("%s %s from your pack!", something,
+			You_feel("something %s from your pack!",
 			    locomotion(mtmp->data,"drop"));
 		    else
 			You("see %s %s out of your pack!",
@@ -2111,7 +2111,7 @@ static int use_whip(struct obj *obj)
 	}
 	if (!wrapped_what) {
 	    if (IS_FURNITURE(level.locations[rx][ry].typ))
-		wrapped_what = something;
+		wrapped_what = "something";
 	    else if (sobj_at(BOULDER, rx, ry))
 		wrapped_what = "a boulder";
 	}
@@ -2300,7 +2300,7 @@ static int use_pole (struct obj *obj)
 		u.uconduct.weaphit++;
 	} else
 	    /* Now you know that nothing is there... */
-	    pline(nothing_happens);
+	    pline("Nothing happens.");
 	return 1;
 }
 
@@ -2448,7 +2448,7 @@ static int use_grapple (struct obj *obj)
 	    }
 	    break;
 	}
-	pline(nothing_happens);
+	pline("Nothing happens.");
 	return 1;
 }
 
@@ -2837,7 +2837,7 @@ int doapply(void)
 					       NULL);
 		    makeknown(HORN_OF_PLENTY);
 		} else
-		    pline(nothing_happens);
+		    pline("Nothing happens.");
 		break;
 	case LAND_MINE:
 	case BEARTRAP:

@@ -382,7 +382,7 @@ decurse:
 		    if (!Blind) {
 			Your("%s %s.", what ? what :
 				(const char *)aobjnam(otmp, "softly glow"),
-			     hcolor(NH_AMBER));
+			     hcolor("amber"));
 			otmp->bknown = TRUE;
 		    }
 		    update_inventory();
@@ -432,7 +432,7 @@ decurse:
 			pline("%s %s %s.",
 			      s_suffix(upstart(y_monnam(u.usteed))),
 			      aobjnam(otmp, "softly glow"),
-			      hcolor(NH_AMBER));
+			      hcolor("amber"));
 			otmp->bknown = TRUE;
 		    }
 		    break;
@@ -502,7 +502,7 @@ static void god_zaps_you(aligntyp resp_god)
 	    if (!Disint_resistance)
 		fry_by_god(resp_god);
 	    else {
-		You("bask in its %s glow for a minute...", NH_BLACK);
+		You("bask in its black glow for a minute...");
 		godvoice(resp_god, "I believe it not!");
 	    }
 	    if (Is_astralevel(&u.uz) || Is_sanctum(&u.uz)) {
@@ -570,7 +570,7 @@ static void angrygods(aligntyp resp_god)
 	    case 5:	gods_angry(resp_god);
 			if (!Blind && !Antimagic)
 			    pline("%s glow surrounds you.",
-				  An(hcolor(NH_BLACK)));
+				  An(hcolor("black")));
 			rndcurse();
 			break;
 	    case 7:
@@ -595,7 +595,7 @@ static void angrygods(aligntyp resp_god)
 /* helper to print "str appears at your feet", or appropriate */
 static void at_your_feet(const char *str)
 {
-	if (Blind) str = Something;
+	if (Blind) str = "Something";
 	if (u.uswallow) {
 	    /* barrier between you and the floor */
 	    pline("%s %s into %s %s.", str, vtense(str, "drop"),
@@ -713,7 +713,7 @@ static void gcrownu(void)
       {
 	char swordbuf[BUFSZ];
 
-	sprintf(swordbuf, "%s sword", hcolor(NH_BLACK));
+	sprintf(swordbuf, "%s sword", hcolor("black"));
 	if (class_gift != STRANGE_OBJECT) {
 	    ;		/* already got bonus above */
 	} else if (in_hand) {
@@ -835,7 +835,7 @@ static void pleased(aligntyp g_align)
 		    uwep->bknown = TRUE;
 		    if (!Blind)
 			Your("%s %s%s.", aobjnam(uwep, "softly glow"),
-			     hcolor(NH_AMBER), repair_buf);
+			     hcolor("amber"), repair_buf);
 		    else You_feel("the power of %s over your %s.",
 			u_gname(), xname(uwep));
 		    *repair_buf = '\0';
@@ -845,7 +845,7 @@ static void pleased(aligntyp g_align)
 		    if (!Blind)
 			Your("%s with %s aura%s.",
 			     aobjnam(uwep, "softly glow"),
-			     an(hcolor(NH_LIGHT_BLUE)), repair_buf);
+			     an(hcolor("light blue")), repair_buf);
 		    else You_feel("the blessing of %s over your %s.",
 			u_gname(), xname(uwep));
 		    *repair_buf = '\0';
@@ -885,7 +885,7 @@ static void pleased(aligntyp g_align)
 	    /* Otherwise, falls into next case */
 	case 2:
 	    if (!Blind)
-		You("are surrounded by %s glow.", an(hcolor(NH_GOLDEN)));
+		You("are surrounded by %s glow.", an(hcolor("golden")));
 	    /* if any levels have been lost (and not yet regained),
 	       treat this effect like blessed full healing */
 	    if (u.ulevel < u.ulevelmax) {
@@ -910,13 +910,13 @@ static void pleased(aligntyp g_align)
 	    if (Blind)
 		You_feel("the power of %s.", u_gname());
 	    else You("are surrounded by %s aura.",
-		     an(hcolor(NH_LIGHT_BLUE)));
+		     an(hcolor("light blue")));
 	    for (otmp=invent; otmp; otmp=otmp->nobj) {
 		if (otmp->cursed) {
 		    uncurse(otmp);
 		    if (!Blind) {
 			Your("%s %s.", aobjnam(otmp, "softly glow"),
-			     hcolor(NH_AMBER));
+			     hcolor("amber"));
 			otmp->bknown = TRUE;
 			++any;
 		    }
@@ -1022,7 +1022,7 @@ static boolean water_prayer(boolean bless_water)
 	      ((other && changed > 1L) ? "Some of the" :
 					(other ? "One of the" : "The")),
 	      ((other || changed > 1L) ? "s" : ""), (changed > 1L ? "" : "s"),
-	      (bless_water ? hcolor(NH_LIGHT_BLUE) : hcolor(NH_BLACK)));
+	      (bless_water ? hcolor("light blue") : hcolor("black")));
     }
     return (boolean)(changed > 0L);
 }
@@ -1148,7 +1148,7 @@ int dosacrifice(void)
 		if (altaralign == A_CHAOTIC && u.ualign.type != A_CHAOTIC) {
 		    pline(
 		     "The blood floods the altar, which vanishes in %s cloud!",
-			  an(hcolor(NH_BLACK)));
+			  an(hcolor("black")));
 		    level.locations[u.ux][u.uy].typ = ROOM;
 		    level.locations[u.ux][u.uy].altarmask = 0;
 		    newsym(u.ux, u.uy);
@@ -1277,7 +1277,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
     } /* fake Amulet */
 
     if (value == 0) {
-	pline(nothing_happens);
+	pline("Nothing happens.");
 	return 1;
     }
 
@@ -1350,8 +1350,8 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    if (!Blind)
 			pline_The("altar glows %s.",
 			      hcolor(
-			      u.ualign.type == A_LAWFUL ? NH_WHITE :
-			      u.ualign.type ? NH_BLACK : (const char *)"gray"));
+			      u.ualign.type == A_LAWFUL ? "white" :
+			      u.ualign.type ? "black" : "gray"));
 
 		    if (rnl(u.ulevel) > 6 && u.ualign.record > 0 &&
 		       rnd(u.ualign.record) > (3*ALIGNLIM)/4)
@@ -1449,7 +1449,7 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 	    if ((int)u.uluck < 0) u.uluck = 0;
 	    if (u.uluck != saved_luck) {
 		if (Blind)
-		    You("think %s brushed your %s.",something, body_part(FOOT));
+		    You("think something brushed your %s.", body_part(FOOT));
 		else You(Hallucination ?
 		    "see crabgrass at your %s.  A funny thing in a dungeon." :
 		    "glimpse a four-leaf clover at your %s.",

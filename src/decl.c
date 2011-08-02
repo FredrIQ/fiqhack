@@ -163,13 +163,6 @@ struct monst *migrating_mons;
 
 struct mvitals mvitals[NUMMONS];
 
-struct c_color_names c_color_names = {
-	"black", "amber", "golden",
-	"light blue", "red", "green",
-	"silver", "blue", "purple",
-	"white"
-};
-
 const char *c_obj_colors[] = {
 	"black",		/* CLR_BLACK */
 	"red",			/* CLR_RED */
@@ -189,12 +182,7 @@ const char *c_obj_colors[] = {
 	"white",		/* CLR_WHITE */
 };
 
-const struct c_common_strings c_common_strings = {
-	"Nothing happens.",		"That's enough tries!",
-	"That is a silly thing to %s.",	"shudder for a moment.",
-	"something", "Something", "You can move again.", "Never mind.",
-	"vision quickly clears.", {"the", "your"}
-};
+const char *the_your[] = {"the", "your"};
 
 /* NOTE: the order of these words exactly corresponds to the
    order of oc_material values #define'd in objclass.h. */

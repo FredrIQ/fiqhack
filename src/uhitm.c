@@ -123,8 +123,7 @@ boolean attack_checks(struct monst *mtmp,
 		    !warning_at(u.ux+dx, u.uy+dy) &&
 		    !level.locations[u.ux+dx][u.uy+dy].mem_invis &&
 		    !(!Blind && mtmp->mundetected && hides_under(mtmp->data))) {
-		pline("Wait!  There's %s there you can't see!",
-			something);
+		pline("Wait!  There's something there you can't see!");
 		map_invisible(u.ux+dx, u.uy+dy);
 		/* if it was an invisible mimic, treat it as if we stumbled
 		 * onto a visible mimic
@@ -2370,13 +2369,13 @@ static void nohandglow(struct monst *mon)
 		if (Blind)
 			Your("%s stop tingling.", hands);
 		else
-			Your("%s stop glowing %s.", hands, hcolor(NH_RED));
+			Your("%s stop glowing %s.", hands, hcolor("red"));
 	} else {
 		if (Blind)
 			pline_The("tingling in your %s lessens.", hands);
 		else
 			Your("%s no longer glow so brightly %s.", hands,
-				hcolor(NH_RED));
+				hcolor("red"));
 	}
 	u.umconf--;
 }

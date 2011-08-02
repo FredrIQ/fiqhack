@@ -89,7 +89,7 @@ int doread(void)
 	    return 1;
 	} else if (scroll->oclass != SCROLL_CLASS
 		&& scroll->oclass != SPBOOK_CLASS) {
-	    pline(silly_thing_to, "read");
+	    pline("That is a silly thing to read.");
 	    return 0;
 	} else if (Blind) {
 	    const char *what = 0;
@@ -145,14 +145,14 @@ int doread(void)
 
 static void stripspe(struct obj *obj)
 {
-	if (obj->blessed) pline(nothing_happens);
+	if (obj->blessed) pline("Nothing happens.");
 	else {
 		if (obj->spe > 0) {
 		    obj->spe = 0;
 		    if (obj->otyp == OIL_LAMP || obj->otyp == BRASS_LANTERN)
 			obj->age = 0;
 		    Your("%s %s briefly.",xname(obj), otense(obj, "vibrate"));
-		} else pline(nothing_happens);
+		} else pline("Nothing happens.");
 	}
 }
 
@@ -242,7 +242,7 @@ void recharge(struct obj *obj, int curse_bless)
 		    wand_explode(obj);
 		    return;
 		}
-		if (obj->spe >= lim) p_glow2(obj, NH_BLUE);
+		if (obj->spe >= lim) p_glow2(obj, "blue");
 		else p_glow1(obj);
 	    }
 
@@ -297,7 +297,7 @@ void recharge(struct obj *obj, int curse_bless)
 		    if (obj->spe < 3)
 			Your("marker seems permanently dried out.");
 		    else
-			pline(nothing_happens);
+			pline("Nothing happens.");
 		} else if (is_blessed) {
 		    n = rn1(16,15);		/* 15..30 */
 		    if (obj->spe + n <= 50)
@@ -311,7 +311,7 @@ void recharge(struct obj *obj, int curse_bless)
 			else
 				obj->spe += n;
 		    }
-		    p_glow2(obj, NH_BLUE);
+		    p_glow2(obj, "blue");
 		} else {
 		    n = rn1(11,10);		/* 10..20 */
 		    if (obj->spe + n <= 50)
@@ -323,7 +323,7 @@ void recharge(struct obj *obj, int curse_bless)
 			else
 				obj->spe += n;
 		    }
-		    p_glow2(obj, NH_WHITE);
+		    p_glow2(obj, "white");
 		}
 		break;
 	    case OIL_LAMP:
@@ -338,7 +338,7 @@ void recharge(struct obj *obj, int curse_bless)
 		} else if (is_blessed) {
 		    obj->spe = 1;
 		    obj->age = 1500;
-		    p_glow2(obj, NH_BLUE);
+		    p_glow2(obj, "blue");
 		} else {
 		    obj->spe = 1;
 		    obj->age += 750;
@@ -350,12 +350,12 @@ void recharge(struct obj *obj, int curse_bless)
 		if (is_cursed) stripspe(obj);
 		else if (is_blessed) {
 		    obj->spe = 6;
-		    p_glow2(obj, NH_BLUE);
+		    p_glow2(obj, "blue");
 		} else {
 		    if (obj->spe < 5) {
 			obj->spe++;
 			p_glow1(obj);
-		    } else pline(nothing_happens);
+		    } else pline("Nothing happens.");
 		}
 		break;
 	    case HORN_OF_PLENTY:
@@ -367,7 +367,7 @@ void recharge(struct obj *obj, int curse_bless)
 			obj->spe += rn1(10, 6);
 		    else obj->spe += rn1(5, 6);
 		    if (obj->spe > 50) obj->spe = 50;
-		    p_glow2(obj, NH_BLUE);
+		    p_glow2(obj, "blue");
 		} else {
 		    obj->spe += rnd(5);
 		    if (obj->spe > 50) obj->spe = 50;
@@ -384,7 +384,7 @@ void recharge(struct obj *obj, int curse_bless)
 		} else if (is_blessed) {
 		    obj->spe += dice(2,4);
 		    if (obj->spe > 20) obj->spe = 20;
-		    p_glow2(obj, NH_BLUE);
+		    p_glow2(obj, "blue");
 		} else {
 		    obj->spe += rnd(4);
 		    if (obj->spe > 20) obj->spe = 20;
@@ -627,7 +627,7 @@ int seffects(struct obj *sobj)
 			    Your("%s %s covered by a %s %s %s!",
 				xname(otmp), otense(otmp, "are"),
 				sobj->cursed ? "mottled" : "shimmering",
-				 hcolor(sobj->cursed ? NH_BLACK : NH_GOLDEN),
+				 hcolor(sobj->cursed ? "black" : "golden"),
 				sobj->cursed ? "glow" :
 				  (is_shield(otmp) ? "layer" : "shield"));
 			}
@@ -662,7 +662,7 @@ int seffects(struct obj *sobj)
 		     otense(otmp, Blind ? "vibrate" : "glow"),
 		     (!Blind && !same_color) ? " " : nul,
 		     (Blind || same_color) ? nul :
-			hcolor(sobj->cursed ? NH_BLACK : NH_SILVER),
+			hcolor(sobj->cursed ? "black" : "silver"),
 		     otense(otmp, "evaporate"));
 			if (is_cloak(otmp)) Cloak_off();
 			if (is_boots(otmp)) Boots_off();
@@ -698,7 +698,7 @@ int seffects(struct obj *sobj)
 		        s == 0 ? "violently " : nul,
 			otense(otmp, Blind ? "vibrate" : "glow"),
 			(!Blind && !same_color) ? " " : nul,
-			(Blind || same_color) ? nul : hcolor(sobj->cursed ? NH_BLACK : NH_SILVER),
+			(Blind || same_color) ? nul : hcolor(sobj->cursed ? "black" : "silver"),
 			  (s*s>1) ? "while" : "moment");
 		otmp->cursed = sobj->cursed;
 		if (!otmp->blessed || sobj->cursed)
@@ -727,7 +727,7 @@ int seffects(struct obj *sobj)
 				return 1;
 			}
 			otmp->oerodeproof = sobj->cursed;
-			p_glow2(otmp, NH_PURPLE);
+			p_glow2(otmp, "purple");
 			break;
 		}
 		if (!sobj->cursed || !otmp || !otmp->cursed) {
@@ -755,11 +755,11 @@ int seffects(struct obj *sobj)
 			Your("%s begin to %s%s.",
 			    makeplural(body_part(HAND)),
 			    Blind ? "tingle" : "glow ",
-			    Blind ? nul : hcolor(NH_PURPLE));
+			    Blind ? nul : hcolor("purple"));
 			make_confused(HConfusion + rnd(100),FALSE);
 		    } else {
 			pline("A %s%s surrounds your %s.",
-			    Blind ? nul : hcolor(NH_RED),
+			    Blind ? nul : hcolor("red"),
 			    Blind ? "faint buzz" : " glow",
 			    body_part(HEAD));
 			make_confused(0L,TRUE);
@@ -769,7 +769,7 @@ int seffects(struct obj *sobj)
 			Your("%s%s %s%s.",
 			makeplural(body_part(HAND)),
 			Blind ? "" : " begin to glow",
-			Blind ? (const char *)"tingle" : hcolor(NH_RED),
+			Blind ? (const char *)"tingle" : hcolor("red"),
 			u.umconf ? " even more" : "");
 			u.umconf++;
 		    } else {
@@ -781,7 +781,7 @@ int seffects(struct obj *sobj)
 			    Your("%s glow a%s brilliant %s.",
 				makeplural(body_part(HAND)),
 				u.umconf ? "n even more" : "",
-				hcolor(NH_RED));
+				hcolor("red"));
 			/* after a while, repeated uses become less effective */
 			if (u.umconf >= 40)
 			    u.umconf++;
@@ -906,7 +906,7 @@ int seffects(struct obj *sobj)
 			    Your("%s covered by a %s %s %s!",
 				aobjnam(uwep, "are"),
 				sobj->cursed ? "mottled" : "shimmering",
-				hcolor(sobj->cursed ? NH_PURPLE : NH_GOLDEN),
+				hcolor(sobj->cursed ? "purple" : "golden"),
 				sobj->cursed ? "glow" : "shield");
 			}
 			if (uwep->oerodeproof && (uwep->oeroded || uwep->oeroded2)) {
@@ -1027,7 +1027,7 @@ int seffects(struct obj *sobj)
 		known = TRUE;
 	case SPE_MAGIC_MAPPING:
 		if (level.flags.nommap) {
-		    Your("%s spins as %s blocks the spell!", body_part(HEAD), something);
+		    Your("%s spins as something blocks the spell!", body_part(HEAD));
 		    make_confused(HConfusion + rnd(30), FALSE);
 		    break;
 		}
@@ -1218,7 +1218,7 @@ int seffects(struct obj *sobj)
 		cc.x = u.ux;
 		cc.y = u.uy;
 		if (getpos(&cc, TRUE, "the desired position") < 0) {
-		    pline(Never_mind);
+		    pline("Never mind.");
 		    return 0;
 		}
 		if (!cansee(cc.x, cc.y) || distu(cc.x, cc.y) >= 32) {
@@ -1356,7 +1356,7 @@ static void do_class_genocide(void)
 
 	for (j=0; ; j++) {
 		if (j >= 5) {
-			pline(thats_enough_tries);
+			pline("That's enough tries!");
 			return;
 		}
 		do {
@@ -1522,7 +1522,7 @@ void do_genocide(int how)
 	} else {
 	    for (i = 0; ; i++) {
 		if (i >= 5) {
-		    pline(thats_enough_tries);
+		    pline("That's enough tries!");
 		    return;
 		}
 		getlin("What monster do you want to genocide? [type the name]",
@@ -1645,7 +1645,7 @@ void do_genocide(int how)
 	    if (cnt)
 		pline("Sent in some %s.", makeplural(buf));
 	    else
-		pline(nothing_happens);
+		pline("Nothing happens.");
 	}
 }
 
@@ -1758,7 +1758,7 @@ boolean create_particular(void)
 	} while (++tries < 5);
 
 	if (tries == 5) {
-	    pline(thats_enough_tries);
+	    pline("That's enough tries!");
 	} else {
 	    cant_create(&which, FALSE);
 	    whichpm = &mons[which];

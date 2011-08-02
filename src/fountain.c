@@ -26,7 +26,7 @@ static void dowatersnakes(void) /* Fountain of snakes! */
 	    pline("An endless stream of %s pours forth!",
 		  Hallucination ? makeplural(rndmonnam()) : "snakes");
 	else
-	    You_hear("%s hissing!", something);
+	    You_hear("something hissing!");
 	while (num-- > 0)
 	    if ((mtmp = makemon(&mons[PM_WATER_MOCCASIN],
 			u.ux, u.uy, NO_MM_FLAGS)) && t_at(mtmp->mx, mtmp->my))

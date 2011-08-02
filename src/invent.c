@@ -861,7 +861,7 @@ struct obj *getobj(const char *let, const char *word)
 		}
 		if (index(quitchars,ilet)) {
 		    if (flags.verbose)
-			pline(Never_mind);
+			pline("Never mind.");
 		    return NULL;
 		}
 		if (ilet == '-') {
@@ -916,7 +916,7 @@ struct obj *getobj(const char *let, const char *word)
 		    }
 		    if (ilet == '\033') {
 			if (flags.verbose)
-			    pline(Never_mind);
+			    pline("Never mind.");
 			return NULL;
 		    }
 		    /* they typed a letter (not a space) at the prompt */
@@ -1001,7 +1001,7 @@ void silly_thing(const char *word, struct obj *otmp)
 		what = "those";
 	    pline("Use the '%s' command to %s %s%s.", s1, s2, what, s3);
 	} else {
-	    pline(silly_thing_to, word);
+	    pline("That is a silly thing to %s.", word);
 	}
 }
 
@@ -2433,7 +2433,7 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 		sprintf(qbuf, "Adjust letter to what [%s]?",buf);
 		let = yn_function(qbuf, NULL, '\0');
 		if (index(quitchars,let)) {
-			pline(Never_mind);
+			pline("Never mind.");
 			return 0;
 		}
 		if (let == '@' || !letter(let))

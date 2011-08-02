@@ -635,7 +635,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 
 int chwepon(struct obj *otmp, int amount)
 {
-	const char *color = hcolor((amount < 0) ? NH_BLACK : NH_BLUE);
+	const char *color = hcolor((amount < 0) ? "black" : "blue");
 	const char *xtime;
 	int otyp = STRANGE_OBJECT;
 

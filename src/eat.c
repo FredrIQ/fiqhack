@@ -1033,7 +1033,7 @@ static int opentin(void) /* called during each move whilst opening a tin */
 	} else {
 	    if (tin.tin->cursed)
 		pline("It contains some decaying%s%s substance.",
-			Blind ? "" : " ", Blind ? "" : hcolor(NH_GREEN));
+			Blind ? "" : " ", Blind ? "" : hcolor("green"));
 	    else
 		pline("It contains spinach.");
 
@@ -1137,7 +1137,7 @@ static int rottenfood(struct obj *obj)
 	} else if (!rn2(4) && !Blind) {
 		pline("Everything suddenly goes dark.");
 		make_blinded((long)dice(2,10), FALSE);
-		if (!Blind) Your(vision_clears);
+		if (!Blind) Your("vision quickly clears.");
 	} else if (!rn2(3)) {
 		const char *what, *where;
 		if (!Blind)
@@ -1804,7 +1804,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    return 0;
 	} else if ((otmp->owornmask & (W_ARMOR | W_TOOL | W_AMUL | W_SADDLE)) != 0) {
 	    /* let them eat rings */
-	    You_cant("eat %s you're wearing.", something);
+	    You_cant("eat something you're wearing.");
 	    return 0;
 	}
 	if (is_metallic(otmp) &&

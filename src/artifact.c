@@ -1058,7 +1058,7 @@ boolean artifact_hit(
 			if (vis) {
 			    if (otmp->oartifact == ART_STORMBRINGER)
 				pline_The("%s blade draws the life from %s!",
-				      hcolor(NH_BLACK),
+				      hcolor("black"),
 				      mon_nam(mdef));
 			    else
 				pline("%s draws the life from %s!",
@@ -1085,7 +1085,7 @@ boolean artifact_hit(
 				    "unholy blade" : "object");
 			else if (otmp->oartifact == ART_STORMBRINGER)
 				pline_The("%s blade drains your life!",
-				      hcolor(NH_BLACK));
+				      hcolor("black"));
 			else
 				pline("%s drains your life!",
 				      The(distant_name(otmp, xname)));
@@ -1122,7 +1122,7 @@ static int arti_invoke(struct obj *obj)
 	if (obj->otyp == CRYSTAL_BALL)
 	    use_crystal_ball(obj);
 	else
-	    pline(nothing_happens);
+	    pline("Nothing happens.");
 	return 1;
     }
 

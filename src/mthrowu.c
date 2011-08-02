@@ -376,8 +376,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			blindinc = rnd(25);
 			if (singleobj->otyp == CREAM_PIE) {
 			    if (!Blind) pline("Yecch!  You've been creamed.");
-			    else pline("There's %s sticky all over your %s.",
-				       something,
+			    else pline("There's something sticky all over your %s.",
 				       body_part(FACE));
 			} else if (singleobj->otyp == BLINDING_VENOM) {
 			    int num_eyes = eyecount(youmonst.data);
@@ -428,7 +427,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	if (blindinc) {
 		u.ucreamed += blindinc;
 		make_blinded(Blinded + (long)blindinc, FALSE);
-		if (!Blind) Your(vision_clears);
+		if (!Blind) Your("vision quickly clears.");
 	}
 }
 

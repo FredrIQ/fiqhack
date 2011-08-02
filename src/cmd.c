@@ -252,7 +252,7 @@ static int wiz_level_change(void)
     else ret = sscanf(buf, "%d", &newlevel);
 
     if (ret != 1) {
-	pline(Never_mind);
+	pline("Never mind.");
 	return 0;
     }
     if (newlevel == u.ulevel) {
@@ -419,7 +419,7 @@ static const char
 #define you_can(menu,attr)	enl_msg(menu,You_,can,could,attr)
 #define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were,goodthing)
 #define you_have_never(menu,badthing) enl_msg(menu,You_,have_never,never,badthing)
-#define you_have_X(menu,something)	enl_msg(menu,You_,have,(const char *)"",something)
+#define you_have_X(menu,something)	enl_msg(menu,You_,have,(const char *)"","something")
 
 static void enlght_line(struct menulist *menu,
 			const char *start, const char *middle, const char *end)
@@ -557,7 +557,7 @@ void enlightenment(int final)
 		sprintf(buf, "aware of the presence of %s",
 			(flags.warntype & M2_ORC) ? "orcs" :
 			(flags.warntype & M2_DEMON) ? "demons" :
-			something); 
+			"something");
 		you_are(&menu, buf);
 	}
 	if (Undead_warning) you_are(&menu, "warned of undead");
@@ -1407,7 +1407,7 @@ void dtoxy(coord *cc, int dd)	/* convert a direction code into an x,y pair */
  * produces coordinates using the direction from getdir()
  * and verifies that those coordinates are ok.
  *
- * If the call to getdir() returns 0, Never_mind is displayed.
+ * If the call to getdir() returns 0, "Never mind." is displayed.
  * If the resulting coordinates are not okay, emsg is displayed.
  *
  * Returns non-zero if coordinates in cc are valid.
@@ -1419,7 +1419,7 @@ int get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
 	schar dx, dy;
 	
 	if (!getdir(prompt, &dx, &dy, dz)) {
-		pline(Never_mind);
+		pline("Never mind.");
 		return 0;
 	}
 	new_x = x + dx;

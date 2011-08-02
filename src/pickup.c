@@ -1456,8 +1456,8 @@ static int in_container(struct obj *obj)
 		pline("That would be an interesting topological exercise.");
 		return 0;
 	} else if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) {
-		Norep("You cannot %s %s you are wearing.",
-			Icebox ? "refrigerate" : "stash", something);
+		Norep("You cannot %s something you are wearing.",
+			Icebox ? "refrigerate" : "stash");
 		return 0;
 	} else if ((obj->otyp == LOADSTONE) && obj->cursed) {
 		obj->bknown = 1;
@@ -1707,7 +1707,7 @@ static void observe_quantum_cat(struct obj *box)
 	livecat->mpeaceful = 1;
 	set_malign(livecat);
 	if (!canspotmon(livecat))
-	    You("think %s brushed your %s.", something, body_part(FOOT));
+	    You("think something brushed your %s.", body_part(FOOT));
 	else
 	    pline("%s inside the box is still alive!", Monnam(livecat));
 	christen_monst(livecat, sc);
@@ -1839,7 +1839,7 @@ int use_container(struct obj *obj, int held)
 	    return used;
 	}
 	if (flags.menu_style != MENU_FULL) {
-	    sprintf(qbuf, "Do you wish to put %s in?", something);
+	    sprintf(qbuf, "Do you wish to put something in?");
 	    strcpy(pbuf, ynqchars);
 
 	    switch (yn_function(qbuf, pbuf, 'n')) {
@@ -1973,13 +1973,13 @@ static int in_or_out_menu(const char *prompt, struct obj *obj,
     const char *menuselector = iflags.lootabc ? "abc" : "oib";
 
     if (outokay) {
-	sprintf(buf,"Take %s out of %s", something, the(xname(obj)));
+	sprintf(buf,"Take something out of %s", the(xname(obj)));
 	set_menuitem(&items[nr], 1, MI_NORMAL, buf, menuselector[nr], FALSE);
 	nr++;
     }
     
     if (inokay) {
-	sprintf(buf,"Put %s into %s", something, the(xname(obj)));
+	sprintf(buf,"Put something into %s", the(xname(obj)));
 	set_menuitem(&items[nr], 2, MI_NORMAL, buf, menuselector[nr], FALSE);
 	nr++;
     }

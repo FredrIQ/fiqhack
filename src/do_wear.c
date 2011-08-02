@@ -302,7 +302,7 @@ static int Helmet_on(void)
 			pline("%s for a moment.", Tobjnam(uarmh, "vibrate"));
 		    else
 			pline("%s %s for a moment.",
-			      Tobjnam(uarmh, "glow"), hcolor(NH_BLACK));
+			      Tobjnam(uarmh, "glow"), hcolor("black"));
 		    curse(uarmh);
 		}
 		botl = 1;		/* reveal new alignment or INT & WIS */
@@ -1429,7 +1429,7 @@ int doputon(void)
 				else
 					already_wearing("some lenses");
 			} else
-				already_wearing(something); /* ??? */
+				already_wearing("something"); /* ??? */
 			return 0;
 		}
 		if (otmp->otyp != BLINDFOLD && otmp->otyp != TOWEL && otmp->otyp != LENSES) {

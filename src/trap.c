@@ -467,7 +467,7 @@ struct monst *animate_statue(struct obj *statue, xchar x, xchar y, int cause,
 		canspotmon(mon) ? "comes to life" : "disappears");
 	else { /* cause == ANIMATE_NORMAL */
 	    You("find %s posing as a statue.",
-		canspotmon(mon) ? a_monnam(mon) : something);
+		canspotmon(mon) ? a_monnam(mon) : "something");
 	    stop_occupation();
 	}
 	/* avoid hiding under nothing */
@@ -2025,8 +2025,7 @@ mfiretrap:
 			if (in_sight)
 			    pline("Click! %s triggers %s.", Monnam(mtmp),
 				  trap->tseen ?
-				  "a rolling boulder trap" :
-				  something);
+				  "a rolling boulder trap" : "something");
 			if (launch_obj(BOULDER, trap->launch.x, trap->launch.y,
 				trap->launch2.x, trap->launch2.y, style)) {
 			    if (in_sight) trap->tseen = TRUE;
@@ -2362,7 +2361,7 @@ static void domagictrap(void)
 	  if (!resists_blnd(&youmonst)) {
 		You("are momentarily blinded by a flash of light!");
 		make_blinded((long)rn1(5,10),FALSE);
-		if (!Blind) Your(vision_clears);
+		if (!Blind) Your("vision quickly clears.");
 	  } else if (!Blind) {
 		You("see a flash of light!");
 	  }  else
@@ -3543,7 +3542,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 			pline("Suddenly you are frozen in place!");
 			nomul(-dice(5, 6));
 			exercise(A_DEX, FALSE);
-			nomovemsg = You_can_move_again;
+			nomovemsg = "You can move again.";
 			} else You("momentarily stiffen.");
 			break;
 		case 2:

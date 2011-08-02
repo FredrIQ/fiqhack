@@ -1736,7 +1736,7 @@ int dozap(void)
 	check_unpaid(obj);
 
 	/* zappable addition done by GAN 11/03/86 */
-	if (!zappable(obj)) pline(nothing_happens);
+	if (!zappable(obj)) pline("Nothing happens.");
 	else if (obj->cursed && !rn2(100)) {
 		backfire(obj);	/* the wand blows up in your face! */
 		exercise(A_STR, FALSE);
@@ -1811,7 +1811,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    if (!resists_blnd(&youmonst)) {
 			    You(are_blinded_by_the_flash);
 			    make_blinded((long)rnd(100),FALSE);
-			    if (!Blind) Your(vision_clears);
+			    if (!Blind) Your("vision quickly clears.");
 		    }
 		    break;
 
@@ -1990,7 +1990,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 			You(are_blinded_by_the_flash);
 			make_blinded((long)damage, FALSE);
 			makeknown(obj->otyp);
-			if (!Blind) Your(vision_clears);
+			if (!Blind) Your("vision quickly clears.");
 		    }
 		    damage = 0;	/* reset */
 		    break;
@@ -2261,7 +2261,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	case SPE_STONE_TO_FLESH:
 	    if (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
 		     Underwater || (Is_qstart(&u.uz) && dz < 0)) {
-		pline(nothing_happens);
+		pline("Nothing happens.");
 	    } else if (dz < 0) {	/* we should do more... */
 		pline("Blood drips on your %s.", body_part(FACE));
 	    } else if (dz > 0 && !OBJ_AT(u.ux, u.uy)) {
@@ -2272,7 +2272,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 		e = engr_at(u.ux, u.uy);
 		if (!(e && e->engr_type == ENGRAVE)) {
 		    if (is_pool(u.ux, u.uy) || is_ice(u.ux, u.uy))
-			pline(nothing_happens);
+			pline("Nothing happens.");
 		    else
 			pline("Blood %ss %s your %s.",
 			      is_lava(u.ux, u.uy) ? "boil" : "pool",
@@ -3298,7 +3298,7 @@ buzzmonst:
 	    if (abstype == ZT_LIGHTNING && !resists_blnd(&youmonst)) {
 		You(are_blinded_by_the_flash);
 		make_blinded((long)dice(nd,50),FALSE);
-		if (!Blind) Your(vision_clears);
+		if (!Blind) Your("vision quickly clears.");
 	    }
 	    stop_occupation();
 	    nomul(0);
@@ -3912,7 +3912,7 @@ retry:
 	if (!otmp) {
 	    pline("Nothing fitting that description exists in the game.");
 	    if (++tries < 5) goto retry;
-	    pline(thats_enough_tries);
+	    pline("That's enough tries!");
 	    otmp = readobjnam(NULL, NULL, TRUE);
 	    if (!otmp) return;	/* for safety; should never happen */
 	} else if (otmp == &nothing) {

@@ -282,7 +282,7 @@ int food_detect(struct obj *sobj)
     int ct = 0, ctu = 0;
     boolean confused = (Confusion || (sobj && sobj->cursed)), stale;
     char oclass = confused ? POTION_CLASS : FOOD_CLASS;
-    const char *what = confused ? something : "food";
+    const char *what = confused ? "something" : "food";
     int uw = u.uinwater;
 
     stale = clear_stale_map(oclass, 0);
@@ -399,7 +399,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     }
 
     if (Hallucination || (Confusion && class == SCROLL_CLASS))
-	strcpy(stuff, something);
+	strcpy(stuff, "something");
     else
     	strcpy(stuff, class ? oclass_names[class] : "objects");
 
@@ -763,7 +763,7 @@ void use_crystal_ball(struct obj *obj)
 	case 3 : if (!resists_blnd(&youmonst)) {
 		pline("%s your vision!", Tobjnam(obj, "damage"));
 		make_blinded(Blinded + rnd(100),FALSE);
-		if (!Blind) Your(vision_clears);
+		if (!Blind) Your("vision quickly clears.");
 	    } else {
 		pline("%s your vision.", Tobjnam(obj, "assault"));
 		You("are unaffected!");
@@ -812,7 +812,7 @@ void use_crystal_ball(struct obj *obj)
     ch = yn_function("What do you look for?", NULL, '\0');
     /* Don't filter out ' ' here; it has a use */
     if ((ch != def_monsyms[S_GHOST]) && index(quitchars,ch)) { 
-	if (flags.verbose) pline(Never_mind);
+	if (flags.verbose) pline("Never mind.");
 	return;
     }
     You("peer into %s...", the(xname(obj)));

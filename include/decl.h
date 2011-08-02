@@ -231,44 +231,10 @@ extern struct mvitals {
 	uchar	mvflags;
 } mvitals[NUMMONS];
 
-extern struct c_color_names {
-    const char	*const c_black, *const c_amber, *const c_golden,
-		*const c_light_blue,*const c_red, *const c_green,
-		*const c_silver, *const c_blue, *const c_purple,
-		*const c_white;
-} c_color_names;
-#define NH_BLACK		c_color_names.c_black
-#define NH_AMBER		c_color_names.c_amber
-#define NH_GOLDEN		c_color_names.c_golden
-#define NH_LIGHT_BLUE		c_color_names.c_light_blue
-#define NH_RED			c_color_names.c_red
-#define NH_GREEN		c_color_names.c_green
-#define NH_SILVER		c_color_names.c_silver
-#define NH_BLUE			c_color_names.c_blue
-#define NH_PURPLE		c_color_names.c_purple
-#define NH_WHITE		c_color_names.c_white
-
 /* The names of the colors used for gems, etc. */
 extern const char *c_obj_colors[];
 
-extern const struct c_common_strings {
-    const char	*const c_nothing_happens, *const c_thats_enough_tries,
-		*const c_silly_thing_to, *const c_shudder_for_moment,
-		*const c_something, *const c_Something,
-		*const c_You_can_move_again,
-		*const c_Never_mind, *c_vision_clears,
-		*const c_the_your[2];
-} c_common_strings;
-#define nothing_happens    c_common_strings.c_nothing_happens
-#define thats_enough_tries c_common_strings.c_thats_enough_tries
-#define silly_thing_to	   c_common_strings.c_silly_thing_to
-#define shudder_for_moment c_common_strings.c_shudder_for_moment
-#define something	   c_common_strings.c_something
-#define Something	   c_common_strings.c_Something
-#define You_can_move_again c_common_strings.c_You_can_move_again
-#define Never_mind	   c_common_strings.c_Never_mind
-#define vision_clears	   c_common_strings.c_vision_clears
-#define the_your	   c_common_strings.c_the_your
+extern const char *the_your[];
 
 /* material strings */
 extern const char *materialnm[];

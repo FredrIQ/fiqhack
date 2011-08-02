@@ -1657,7 +1657,7 @@ void bagotricks(struct obj *bag)
     if (!bag || bag->otyp != BAG_OF_TRICKS) {
 	impossible("bad bag o' tricks");
     } else if (bag->spe < 1) {
-	pline(nothing_happens);
+	pline("Nothing happens.");
     } else {
 	boolean gotone = FALSE;
 	int cnt = 1;
