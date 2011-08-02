@@ -557,7 +557,7 @@ static boolean place_level(int proto_index, struct proto_dungeon *pd)
 struct level_map {
 	const char *lev_name;
 	d_level *lev_spec;
-} level_map[] = {
+} const level_map[] = {
 	{ "air",	&air_level },
 	{ "asmodeus",	&asmodeus_level },
 	{ "astral",	&astral_level },
@@ -591,7 +591,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	int i, cl = 0, cb = 0;
 	s_level *x;
 	struct proto_dungeon pd;
-	struct level_map *lev_map;
+	const struct level_map *lev_map;
 	struct version_info vers_info;
 
 	pd.n_levs = pd.n_brs = 0;

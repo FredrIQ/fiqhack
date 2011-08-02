@@ -21,7 +21,7 @@
  *				@...X   +4
  *
  */
-char circle_data[] = {
+const char circle_data[] = {
 /*  0*/	 1, 1,
 /*  2*/	 2, 2, 1,
 /*  5*/	 3, 3, 2, 1,
@@ -44,7 +44,7 @@ char circle_data[] = {
  * These are the starting indexes into the circle_data[] array for a
  * circle of a given radius.
  */
-char circle_start[] = {
+const char circle_start[] = {
 /*  */	  0,	/* circles of radius zero are not used */
 /* 1*/    0,
 /* 2*/	  2,
@@ -459,7 +459,7 @@ void vision_recalc(int control)
     char *old_row;	/* row pointer for the old array */
     char *next_rmin;	/* min pointer for the new array */
     char *next_rmax;	/* max pointer for the new array */
-    char *ranges;	/* circle ranges -- used for xray & night vision */
+    const char *ranges;	/* circle ranges -- used for xray & night vision */
     int row;		/* row counter (outer loop)  */
     int start, stop;	/* inner loop starting/stopping index */
     int dx, dy;		/* one step from a lit door or lit wall (see below) */
@@ -1276,8 +1276,8 @@ boolean clear_path(int col1, int row1, int col2, int row2)
 /*
  * Defines local to Algorithm C.
  */
-static void right_side(int,int,int,char*);
-static void left_side(int,int,int,char*);
+static void right_side(int,int,int,const char*);
+static void left_side(int,int,int,const char*);
 
 /*
  * Mark positions as visible on one quadrant of the right side.  The
@@ -1287,7 +1287,7 @@ static void right_side(
     int row,		/* current row */
     int left,		/* first (left side) visible spot on prev row */
     int right_mark,	/* last (right side) visible spot on prev row */
-    char *limits)	/* points at range limit for current row, or NULL */
+    const char *limits)	/* points at range limit for current row, or NULL */
 {
     int		  right;	/* right limit of "could see" */
     int		  right_edge;	/* right edge of an opening */
@@ -1460,7 +1460,7 @@ static void right_side(
  * This routine is the mirror image of right_side().  See right_side() for
  * extensive comments.
  */
-static void left_side(int row, int left_mark, int right, char *limits)
+static void left_side(int row, int left_mark, int right, const char *limits)
 {
     int		  left, left_edge, nrow, deeper, result;
     int  i;
@@ -1589,7 +1589,7 @@ static void view_from(
     int		 nrow;		/* the next row */
     int		 left;		/* the left-most visible column */
     int		 right;		/* the right-most visible column */
-    char	 *limits;	/* range limit for next row */
+    const char	 *limits;	/* range limit for next row */
 
     /* Set globals for q?_path(), left_side(), and right_side() to use. */
     start_col = scol;
@@ -1678,7 +1678,7 @@ void do_clear_area(int scol, int srow, int range,
 	else {
 	    int x;
 	    int y, min_x, max_x, max_y, offset;
-	    char *limits;
+	    const char *limits;
 
 	    if (range > MAX_RADIUS || range < 1)
 		panic("do_clear_area:  illegal range %d", range);

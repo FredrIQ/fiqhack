@@ -38,7 +38,7 @@ const char * const warnexplain[] = {
 };
 
 
-struct nh_symdef warnsyms[WARNCOUNT] = {
+const struct nh_symdef warnsyms[WARNCOUNT] = {
 	{'0', "warn1", CLR_WHITE},  	/* white warning  */
 	{'1', "warn2", CLR_RED},	/* pink warning   */
 	{'2', "warn3", CLR_RED},	/* red warning    */

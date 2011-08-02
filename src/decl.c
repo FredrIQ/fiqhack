@@ -163,7 +163,7 @@ struct monst *migrating_mons;
 
 struct mvitals mvitals[NUMMONS];
 
-const char *c_obj_colors[] = {
+const char *const c_obj_colors[] = {
 	"black",		/* CLR_BLACK */
 	"red",			/* CLR_RED */
 	"green",		/* CLR_GREEN */
@@ -182,11 +182,11 @@ const char *c_obj_colors[] = {
 	"white",		/* CLR_WHITE */
 };
 
-const char *the_your[] = {"the", "your"};
+const char * const the_your[] = {"the", "your"};
 
 /* NOTE: the order of these words exactly corresponds to the
    order of oc_material values #define'd in objclass.h. */
-const char *materialnm[] = {
+const char * const materialnm[] = {
 	"mysterious", "liquid", "wax", "organic", "flesh",
 	"paper", "cloth", "leather", "wooden", "bone", "dragonhide",
 	"iron", "metal", "copper", "silver", "gold", "platinum", "mithril",
@@ -200,9 +200,10 @@ char **viz_array;/* used in cansee() and couldsee() macros */
 char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,
 				NULL, NULL, NULL, NULL };
 
-const char *fqn_prefix_names[PREFIX_COUNT] = { "hackdir", "leveldir", "savedir",
-					"bonesdir", "datadir", "scoredir",
-					"lockdir", "troubledir" };
+const char *const fqn_prefix_names[PREFIX_COUNT] = {
+    "hackdir", "leveldir", "savedir", "bonesdir", "datadir", "scoredir",
+    "lockdir", "troubledir"
+};
 
 boolean botl;	/* redo status line */
 

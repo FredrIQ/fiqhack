@@ -27,7 +27,7 @@ struct Jitem {
 			   typ != EMERALD && typ != OPAL)))
 
 
-static struct Jitem Japanese_items[] = {
+static const struct Jitem Japanese_items[] = {
 	{ SHORT_SWORD, "wakizashi" },
 	{ BROADSWORD, "ninja-to" },
 	{ FLAIL, "nunchaku" },
@@ -1138,7 +1138,7 @@ char *Ysimple_name2(struct obj *obj)
 	return s;
 }
 
-static const char *wrp[] = {
+static const char *const wrp[] = {
 	"wand", "ring", "potion", "scroll", "gem", "amulet",
 	"spellbook", "spell book",
 	/* for non-specific wishes */
@@ -1581,7 +1581,7 @@ static boolean wishymatch(const char *u_str,	/* from user, so might be variant s
    absence of spaces and/or hyphens (such as "pickaxe" vs "pick axe"
    vs "pick-axe") then there is no need for inclusion in this list;
    likewise for ``"of" inversions'' ("boots of speed" vs "speed boots") */
-struct alt_spellings {
+static const struct alt_spellings {
 	const char *sp;
 	int ob;
 } spellings[] = {
@@ -1908,7 +1908,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 	}
 
 	/* Alternate spellings (pick-ax, silver sabre, &c) */
-	struct alt_spellings *as = spellings;
+	const struct alt_spellings *as = spellings;
 
 	while (as->sp) {
 		if (fuzzymatch(bp, as->sp, " -", TRUE)) {
@@ -2083,7 +2083,7 @@ srch:
 		i++;
 	}
 	if (actualn) {
-		struct Jitem *j = Japanese_items;
+		const struct Jitem *j = Japanese_items;
 		while (j->item) {
 			if (actualn && !strcmpi(actualn, j->name)) {
 				typ = j->item;
@@ -2544,7 +2544,7 @@ int rnd_class(int first, int last)
 
 static const char *Japanese_item_name(int i)
 {
-	struct Jitem *j = Japanese_items;
+	const struct Jitem *j = Japanese_items;
 
 	while (j->item) {
 		if (i == j->item)

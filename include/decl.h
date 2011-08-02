@@ -232,12 +232,12 @@ extern struct mvitals {
 } mvitals[NUMMONS];
 
 /* The names of the colors used for gems, etc. */
-extern const char *c_obj_colors[];
+extern const char *const c_obj_colors[];
 
-extern const char *the_your[];
+extern const char *const the_your[];
 
 /* material strings */
-extern const char *materialnm[];
+extern const char *const materialnm[];
 
 /* Monster name articles */
 #define ARTICLE_NONE	0
@@ -267,7 +267,7 @@ extern const char * const monexplain[], * const oclass_names[];
 extern boolean botl;
 
 extern char *fqn_prefix[PREFIX_COUNT];
-extern const char *fqn_prefix_names[PREFIX_COUNT];
+extern const char *const fqn_prefix_names[PREFIX_COUNT];
 
 extern char lock[];
 

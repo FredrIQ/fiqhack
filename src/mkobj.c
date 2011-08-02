@@ -1451,7 +1451,7 @@ void obj_sanity_check(void)
 }
 
 /* This must stay consistent with the defines in obj.h. */
-static const char *obj_state_names[NOBJ_STATES] = {
+static const char *const obj_state_names[NOBJ_STATES] = {
 	"free",		"floor",	"contained",	"invent",
 	"minvent",	"migrating",	"buried",	"onbill"
 };

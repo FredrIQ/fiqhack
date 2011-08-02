@@ -56,7 +56,7 @@ static schar get_map(int col, int row, schar bg_typ)
 	return level.locations[col][row].typ;
 }
 
-static int dirs[16] = {
+static const int dirs[16] = {
     -1, -1 /**/, -1, 0 /**/, -1, 1 /**/,
      0, -1 /**/,              0, 1 /**/,
      1, -1 /**/,  1, 0 /**/,  1, 1};

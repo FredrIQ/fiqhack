@@ -1120,7 +1120,7 @@ static void mk_bubble(int x, int y, int n)
 	 * in situ, either.  The first two elements tell the dimensions of
 	 * the bubble's bounding box.
 	 */
-	static uchar
+	static const uchar
 		bm2[] = {2,1,0x3},
 		bm3[] = {3,2,0x7,0x7},
 		bm4[] = {4,3,0x6,0xf,0x6},
@@ -1128,7 +1128,7 @@ static void mk_bubble(int x, int y, int n)
 		bm6[] = {6,4,0x1e,0x3f,0x3f,0x1e},
 		bm7[] = {7,4,0x3e,0x7f,0x7f,0x3e},
 		bm8[] = {8,4,0x7e,0xff,0xff,0x7e},
-		*bmask[] = {bm2,bm3,bm4,bm5,bm6,bm7,bm8};
+		*const bmask[] = {bm2,bm3,bm4,bm5,bm6,bm7,bm8};
 
 	struct bubble *b;
 

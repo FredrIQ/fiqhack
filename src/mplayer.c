@@ -13,7 +13,7 @@ static void mk_mplayer_armor(struct monst *, short);
  * Keep in alphabetical order within teams.
  * Same first name is entered once within each team.
  */
-static const char *developers[] = {
+static const char * const developers[] = {
 	/* devteam */
 	"Dave", "Dean", "Eric", "Izchak", "Janet", "Jessie",
 	"Ken", "Kevin", "Michael", "Mike", "Pat", "Paul", "Steve", "Timo",

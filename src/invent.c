@@ -2329,7 +2329,7 @@ void useupf(struct obj *obj, long numused)
  * Conversion from a class to a string for printing.
  * This must match the object class order.
  */
-static const char *names[] = { 0,
+static const char * const names[] = { 0,
 	"Illegal objects", "Weapons", "Armor", "Rings", "Amulets",
 	"Tools", "Comestibles", "Potions", "Scrolls", "Spellbooks",
 	"Wands", "Coins", "Gems", "Boulders/Statues", "Iron balls",

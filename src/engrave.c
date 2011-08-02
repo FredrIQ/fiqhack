@@ -8,7 +8,7 @@
 static struct engr *head_engr;
 
 /* random engravings */
-static const char *random_mesg[] = {
+static const char *const random_mesg[] = {
 	"Elbereth",
 	/* trap engravings */
 	"Vlad was here", "ad aerarium",
@@ -1141,7 +1141,7 @@ void rloc_engr(struct engr *ep)
 
 
 /* Epitaphs for random headstones */
-static const char *epitaphs[] = {
+static const char * const epitaphs[] = {
 	"Rest in peace",
 	"R.I.P.",
 	"Rest In Pieces",

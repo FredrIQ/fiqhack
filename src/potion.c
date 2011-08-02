@@ -900,7 +900,7 @@ void strange_feeling(struct obj *obj, const char *txt)
 	useup(obj);
 }
 
-const char *bottlenames[] = {
+const char *const bottlenames[] = {
 	"bottle", "phial", "flagon", "carafe", "flask", "jar", "vial"
 };
 

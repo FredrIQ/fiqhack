@@ -51,7 +51,7 @@ int doread(void)
 	    useup(scroll);
 	    return 1;
 	} else if (scroll->otyp == T_SHIRT) {
-	    static const char *shirt_msgs[] = { /* Scott Bigham */
+	    static const char *const shirt_msgs[] = { /* Scott Bigham */
     "I explored the Dungeons of Doom and all I got was this lousy T-shirt!",
     "Is that Mjollnir in your pocket or are you just happy to see me?",
     "It's not the size of your sword, it's how #enhance'd you are with it.",

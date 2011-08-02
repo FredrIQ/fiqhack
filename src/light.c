@@ -47,8 +47,8 @@ static void write_ls(int, light_source *);
 static int maybe_write_ls(int, int, boolean);
 
 /* imported from vision.c, for small circles */
-extern char circle_data[];
-extern char circle_start[];
+extern const char circle_data[];
+extern const char circle_start[];
 
 
 /* Create a new light source.  */
@@ -116,7 +116,7 @@ void del_light_source(int type, void *id)
 void do_light_sources(char **cs_rows)
 {
     int x, y, min_x, max_x, max_y, offset;
-    char *limits;
+    const char *limits;
     short at_hero_range = 0;
     light_source *ls;
     char *row;

@@ -30,7 +30,7 @@ struct container {
 struct bubble {
 	xchar x, y;	/* coordinates of the upper left corner */
 	schar dx, dy;	/* the general direction of the bubble's movement */
-	uchar *bm;	/* pointer to the bubble bit mask */
+	const uchar *bm;/* pointer to the bubble bit mask */
 	struct bubble *prev, *next; /* need to traverse the list up and down */
 	struct container *cons;
 };
