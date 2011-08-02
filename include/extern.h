@@ -1819,7 +1819,7 @@ extern int spell_damage_bonus(void);
 extern const char *exclam(int force);
 extern void hit(const char *,struct monst *,const char *);
 extern void miss(const char *,struct monst *);
-extern struct monst *bhit(int,int,int,int,int (*)(struct monst*,struct obj*),
+extern struct monst *beam_hit(int,int,int,int,int (*)(struct monst*,struct obj*),
 			     int (*)(struct obj*,struct obj*),struct obj *);
 extern struct monst *boomhit(int,int);
 extern int burn_floor_paper(int,int,boolean,boolean);

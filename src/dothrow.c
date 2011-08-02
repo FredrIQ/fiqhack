@@ -946,7 +946,7 @@ void throwit(struct obj *obj,
 
 		if (Underwater) range = 1;
 
-		mon = bhit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
+		mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
 
 		/* have to do this after bhit() so u.ux & u.uy are correct */
 		if (Is_airlevel(&u.uz) || Levitation)
@@ -1682,7 +1682,7 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 			bhitpos.x = u.ux;
 			bhitpos.y = u.uy;
 		} else {
-			mon = bhit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
+			mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
 			if (mon) {
 			    if (ghitm(mon, obj))	/* was it caught? */
 				return 1;

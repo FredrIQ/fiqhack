@@ -22,12 +22,12 @@ static void costly_cancel(struct obj *);
 static void polyuse(struct obj*, int, int);
 static void create_polymon(struct obj *, int);
 static boolean zap_updown(struct obj *, schar);
-static int zhitm(struct monst *,int,int,struct obj **);
-static void zhitu(int,int,const char *,xchar,xchar);
+static int zap_hit_mon(struct monst *,int,int,struct obj **);
+static void zap_hit_u(int,int,const char *,xchar,xchar);
 static void revive_egg(struct obj *);
 static boolean zap_steed(struct obj *);
 
-static int zap_hit(int,int);
+static int zap_hit_check(int,int);
 static void backfire(struct obj *);
 static int spell_hit_bonus(int);
 
@@ -2348,7 +2348,7 @@ void weffects(struct obj *obj, schar dx, schar dy, schar dz)
 	    } else if (dz) {
 		disclose = zap_updown(obj, dz);
 	    } else {
-		bhit(dx, dy, rn1(8,6), ZAPPED_WAND, bhitm, bhito, obj);
+		beam_hit(dx, dy, rn1(8,6), ZAPPED_WAND, bhitm, bhito, obj);
 	    }
 	    /* give a clue if obj_zapped */
 	    if (obj_zapped)
@@ -2477,12 +2477,12 @@ void miss(const char *str, struct monst *mtmp)
  *  function) several objects and monsters on its path.  The return value
  *  is the monster hit (weapon != ZAPPED_WAND), or a null monster pointer.
  *
- *  Check !u.uswallow before calling bhit().
+ *  Check !u.uswallow before calling beam_hit().
  *  This function reveals the absence of a remembered invisible monster in
  *  necessary cases (throwing or kicking weapons).  The presence of a real
  *  one is revealed for a weapon, but if not a weapon is left up to fhitm().
  */
-struct monst *bhit(int ddx, int ddy, int range,	/* direction and range */
+struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		   int weapon,			/* see values in hack.h */
 		   int (*fhitm)(struct monst*, struct obj*),/* fns called when mon/obj hit */
 		   int (*fhito)(struct obj*, struct obj*),
@@ -2755,7 +2755,7 @@ struct monst *boomhit(int dx, int dy)
 }
 
 /* returns damage to mon */
-static int zhitm(struct monst *mon, int type, int nd,
+static int zap_hit_mon(struct monst *mon, int type, int nd,
 		 struct obj **ootmp) /* to return worn armor for caller to disintegrate */
 {
 	int tmp = 0;
@@ -2920,7 +2920,7 @@ static int zhitm(struct monst *mon, int type, int nd,
 	return tmp;
 }
 
-static void zhitu(int type, int nd, const char *fltxt, xchar sx, xchar sy)
+static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 {
 	int dam = 0;
 
@@ -3091,7 +3091,7 @@ int burn_floor_paper(int x, int y,
 }
 
 /* will zap/spell/breath attack score a hit against armor class `ac'? */
-static int zap_hit(int ac, 
+static int zap_hit_check(int ac, 
 		   int type)	/* either hero cast spell type or 0 */
 {
     int chance = rn2(20);
@@ -3133,7 +3133,7 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 	int tmp;
 
 	if (type < 0) return;
-	tmp = zhitm(u.ustuck, type, nd, &otmp);
+	tmp = zap_hit_mon(u.ustuck, type, nd, &otmp);
 	if (!u.ustuck)	u.uswallow = 0;
 	else	pline("%s rips into %s%s",
 		      The(fltxt), mon_nam(u.ustuck), exclam(tmp));
@@ -3180,7 +3180,7 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 	    if (type == ZT_SPELL(ZT_FIRE)) break;
 	    if (type >= 0) mon->mstrategy &= ~STRAT_WAITMASK;
 buzzmonst:
-	    if (zap_hit(find_mac(mon), spell_type)) {
+	    if (zap_hit_check(find_mac(mon), spell_type)) {
 		if (mon_reflects(mon, NULL)) {
 		    if (cansee(mon->mx,mon->my)) {
 			hit(fltxt, mon, exclam(0));
@@ -3191,7 +3191,7 @@ buzzmonst:
 		    dy = -dy;
 		} else {
 		    boolean mon_could_move = mon->mcanmove;
-		    int tmp = zhitm(mon, type, nd, &otmp);
+		    int tmp = zap_hit_mon(mon, type, nd, &otmp);
 
 		    if (is_rider(mon->data) && abs(type) == ZT_BREATH(ZT_DEATH)) {
 			if (canseemon(mon)) {
@@ -3278,7 +3278,7 @@ buzzmonst:
 	    if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, NULL)) {
 		    mon = u.usteed;
 		    goto buzzmonst;
-	    } else if (zap_hit((int) u.uac, 0)) {
+	    } else if (zap_hit_check((int) u.uac, 0)) {
 		range -= 2;
 		pline("%s hits you!", The(fltxt));
 		if (Reflecting) {
@@ -3290,7 +3290,7 @@ buzzmonst:
 		    dy = -dy;
 		    shieldeff(sx, sy);
 		} else {
-		    zhitu(type, nd, fltxt, sx, sy);
+		    zap_hit_u(type, nd, fltxt, sx, sy);
 		}
 	    } else {
 		pline("%s whizzes by you!", The(fltxt));

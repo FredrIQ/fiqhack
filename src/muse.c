@@ -1121,8 +1121,8 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 	return 0;
 }
 
-/* A modified bhit() for monsters.  Based on bhit() in zap.c.  Unlike
- * buzz(), bhit() doesn't take into account the possibility of a monster
+/* A modified bhit() for monsters.  Based on beam_hit() in zap.c.  Unlike
+ * buzz(), beam_hit() doesn't take into account the possibility of a monster
  * zapping you, so we need a special function for it.  (Unless someone wants
  * to merge the two functions...)
  */

@@ -538,7 +538,7 @@ static int kick_object(xchar x, xchar y, schar dx, schar dy)
 	obj_extract_self(kickobj);
 	snuff_candle(kickobj);
 	newsym(x, y);
-	mon = bhit(dx, dy, range, KICKED_WEAPON, NULL, NULL, kickobj);
+	mon = beam_hit(dx, dy, range, KICKED_WEAPON, NULL, NULL, kickobj);
 
 	if (mon) {
 	    if (mon->isshk &&
