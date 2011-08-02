@@ -28,7 +28,7 @@ const char * const oclass_names[] = {
 };
 
 
-const char *warnexplain[] = {
+const char * const warnexplain[] = {
 	"unknown creature causing you worry",
 	"unknown creature causing you concern",
 	"unknown creature causing you anxiety",
@@ -47,7 +47,7 @@ struct nh_symdef warnsyms[WARNCOUNT] = {
 	{'5', "warn6", CLR_BRIGHT_MAGENTA}/* black warning  */
 };
 
-const char *defexplain[] = {
+const char * const defexplain[] = {
 /* 0*/	"unexplored area",	/* unexplored */
 	"solid rock",		/* stone */
 	"wall",			/* vwall */
@@ -94,7 +94,7 @@ const char *defexplain[] = {
 };
 
 
-const char *trapexplain[] = {
+const char * const trapexplain[] = {
 	"arrow trap",
 	"dart trap",
 	"falling rock trap",

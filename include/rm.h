@@ -193,9 +193,9 @@ struct symdef {
 
 extern const struct nh_symdef defsyms[];	/* defaults */
 
-extern const char *trapexplain[];
-extern const char *defexplain[];
-extern const char *warnexplain[];
+extern const char * const trapexplain[];
+extern const char * const defexplain[];
+extern const char * const warnexplain[];
 
 /*
  * The 5 possible states of doors
