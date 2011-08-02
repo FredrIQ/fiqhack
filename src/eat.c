@@ -2310,7 +2310,7 @@ struct obj *floorfood(/* get food from floor or pack */
 		if (gold->quan == 1L)
 		    sprintf(qbuf, "There is 1 gold piece here; eat it?");
 		else
-		    sprintf(qbuf, "There are %ld gold pieces here; eat them?",
+		    sprintf(qbuf, "There are %d gold pieces here; eat them?",
 			    gold->quan);
 		if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
 		    return gold;

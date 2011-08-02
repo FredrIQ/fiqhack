@@ -1457,7 +1457,7 @@ char *xprname(struct obj *obj,
 		(txt ? txt : doname(obj)), cost, currency(cost));
 #ifndef GOLDOBJ
     } else if (obj && obj->oclass == COIN_CLASS) {
-	sprintf(li, "%ld gold piece%s%s", obj->quan, plur(obj->quan),
+	sprintf(li, "%d gold piece%s%s", obj->quan, plur(obj->quan),
 		(dot ? "." : ""));
 #endif
     } else {

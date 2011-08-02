@@ -52,7 +52,7 @@ struct permonst {
 	short		pxlth;			/* length of extension */
 	uchar		msound;			/* noise it makes (6 bits) */
 	uchar		msize;			/* physical size (3 bits) */
-	unsigned long	mflags1,		/* boolean bitflags */
+	unsigned int	mflags1,		/* boolean bitflags */
 			mflags2;		/* more boolean bitflags */
 	unsigned short	mflags3;		/* yet more boolean bitflags */
 	uchar		mresists;		/* resistances */

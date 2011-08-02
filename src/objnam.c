@@ -535,7 +535,7 @@ char *doname(struct obj *obj)
 	}
 
 	if (obj->quan != 1L)
-		sprintf(prefix, "%ld ", obj->quan);
+		sprintf(prefix, "%d ", obj->quan);
 	else if (obj_is_pname(obj) || the_unique_obj(obj)) {
 		if (!strncmpi(bp, "the ", 4))
 		    bp += 4;
@@ -942,7 +942,7 @@ char *aobjnam(struct obj *otmp, const char *verb)
 	char prefix[PREFIX];
 
 	if (otmp->quan != 1L) {
-		sprintf(prefix, "%ld ", otmp->quan);
+		sprintf(prefix, "%d ", otmp->quan);
 		bp = strprepend(bp, prefix);
 	}
 

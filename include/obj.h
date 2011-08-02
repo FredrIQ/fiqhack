@@ -25,7 +25,7 @@ struct obj {
 	xchar ox,oy;
 	short otyp;		/* object class number */
 	unsigned owt;
-	long quan;		/* number of items */
+	int quan;		/* number of items */
 
 	schar spe;		/* quality of weapon, armor or ring (+ or -)
 				   number of charges for wand ( >= -1 )
@@ -100,11 +100,9 @@ struct obj {
 
 	uchar onamelth;		/* length of name (following oxlth) */
 	short oxlth;		/* length of following data */
-	long age;		/* creation date */
-	/* in order to prevent alignment problems oextra should
-	   be (or follow) a long int */
-	long owornmask;
-	long oextra[1];		/* used for name of ordinary objects - length
+	int age;		/* creation date */
+	int owornmask;
+	int oextra[1];		/* used for name of ordinary objects - length
 				   is flexible; amount for tmp gold objects */
 };
 
