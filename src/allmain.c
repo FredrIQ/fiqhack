@@ -107,6 +107,7 @@ static void startup_common(char *name, int locknum, int playmode)
     /* create mutable copies of object and artifact liss */
     init_objlist();
     init_artilist();
+    reset_rndmonst(NON_PM);
     
     program_state.game_running = 0;
     initoptions();

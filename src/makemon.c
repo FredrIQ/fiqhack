@@ -1111,7 +1111,7 @@ static int align_shift(const struct permonst *ptr)
 static struct {
 	int choice_count;
 	char mchoices[SPECIAL_PM];	/* value range is 0..127 */
-} rndmonst_state = { -1, {0} };
+} rndmonst_state;
 
 /* select a random monster type */
 const struct permonst *rndmonst(void)
