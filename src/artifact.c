@@ -18,7 +18,7 @@ extern boolean notonhead;	/* for long worms */
 
 static int spec_applies(const struct artifact *,struct monst *);
 static int arti_invoke(struct obj*);
-static boolean Mb_hit(struct monst *magr,struct monst *mdef,
+static boolean magicbane_hit(struct monst *magr,struct monst *mdef,
 				  struct obj *,int *,int,boolean,char *);
 static long spec_m2(struct obj *);
 
@@ -685,7 +685,7 @@ static const char * const mb_verb[2][4] = {
 #define MB_INDEX_CANCEL		3
 
 /* called when someone is being hit by Magicbane */
-static boolean Mb_hit(
+static boolean magicbane_hit(
     struct monst *magr,		/* attacker */
     struct monst *mdef,		/* defender */
     struct obj *mb,		/* Magicbane */
@@ -856,7 +856,180 @@ static boolean Mb_hit(
 
     return result;
 }
-  
+
+
+/* the tsurugi of muramasa or vorpal blade hit someone */
+static boolean artifact_hit_behead(struct monst *magr, struct monst *mdef,
+			           struct obj *otmp, int *dmgptr, int dieroll)
+{
+    boolean youattack = (magr == &youmonst);
+    boolean youdefend = (mdef == &youmonst);
+    boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
+	|| (!youdefend && cansee(mdef->mx, mdef->my))
+	|| (youattack && u.uswallow && mdef == u.ustuck && !Blind);
+    const char *wepdesc;
+    char hittee[BUFSZ];
+
+    strcpy(hittee, youdefend ? "you" : mon_nam(mdef));
+    
+    /* We really want "on a natural 20" but Nethack does it in reverse from AD&D. */
+    if (otmp->oartifact == ART_TSURUGI_OF_MURAMASA && dieroll == 1) {
+	wepdesc = "The razor-sharp blade";
+	/* not really beheading, but so close, why add another SPFX */
+	if (youattack && u.uswallow && mdef == u.ustuck) {
+	    You("slice %s wide open!", mon_nam(mdef));
+	    *dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
+	    return TRUE;
+	}
+	if (!youdefend) {
+		/* allow normal cutworm() call to add extra damage */
+		if (notonhead)
+		    return FALSE;
+
+		if (bigmonst(mdef->data)) {
+			if (youattack)
+				You("slice deeply into %s!",
+					mon_nam(mdef));
+			else if (vis)
+				pline("%s cuts deeply into %s!",
+					Monnam(magr), hittee);
+			*dmgptr *= 2;
+			return TRUE;
+		}
+		*dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
+		pline("%s cuts %s in half!", wepdesc, mon_nam(mdef));
+		otmp->dknown = TRUE;
+		return TRUE;
+	} else {
+		if (bigmonst(youmonst.data)) {
+			pline("%s cuts deeply into you!",
+				magr ? Monnam(magr) : wepdesc);
+			*dmgptr *= 2;
+			return TRUE;
+		}
+
+		/* Players with negative AC's take less damage instead
+		    * of just not getting hit.  We must add a large enough
+		    * value to the damage so that this reduction in
+		    * damage does not prevent death.
+		    */
+		*dmgptr = 2 * (Upolyd ? u.mh : u.uhp) + FATAL_DAMAGE_MODIFIER;
+		pline("%s cuts you in half!", wepdesc);
+		otmp->dknown = TRUE;
+		return TRUE;
+	}
+    } else if (otmp->oartifact == ART_VORPAL_BLADE &&
+		(dieroll == 1 || mdef->data == &mons[PM_JABBERWOCK])) {
+	static const char * const behead_msg[2] = {
+		"%s beheads %s!",
+		"%s decapitates %s!"
+	};
+
+	if (youattack && u.uswallow && mdef == u.ustuck)
+		return FALSE;
+	wepdesc = artilist[ART_VORPAL_BLADE].name;
+	if (!youdefend) {
+		if (!has_head(mdef->data) || notonhead || u.uswallow) {
+			if (youattack)
+				pline("Somehow, you miss %s wildly.",
+					mon_nam(mdef));
+			else if (vis)
+				pline("Somehow, %s misses wildly.",
+					mon_nam(magr));
+			*dmgptr = 0;
+			return (boolean)(youattack || vis);
+		}
+		if (noncorporeal(mdef->data) || amorphous(mdef->data)) {
+			pline("%s slices through %s %s.", wepdesc,
+				s_suffix(mon_nam(mdef)),
+				mbodypart(mdef,NECK));
+			return TRUE;
+		}
+		*dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
+		pline(behead_msg[rn2(SIZE(behead_msg))],
+			wepdesc, mon_nam(mdef));
+		otmp->dknown = TRUE;
+		return TRUE;
+	} else {
+		if (!has_head(youmonst.data)) {
+			pline("Somehow, %s misses you wildly.",
+				magr ? mon_nam(magr) : wepdesc);
+			*dmgptr = 0;
+			return TRUE;
+		}
+		if (noncorporeal(youmonst.data) || amorphous(youmonst.data)) {
+			pline("%s slices through your %s.",
+				wepdesc, body_part(NECK));
+			return TRUE;
+		}
+		*dmgptr = 2 * (Upolyd ? u.mh : u.uhp)
+			    + FATAL_DAMAGE_MODIFIER;
+		pline(behead_msg[rn2(SIZE(behead_msg))],
+			wepdesc, "you");
+		otmp->dknown = TRUE;
+		/* Should amulets fall off? */
+		return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+
+static boolean artifact_hit_drainlife(struct monst *magr, struct monst *mdef,
+				      struct obj *otmp, int *dmgptr)
+{
+    boolean youattack = (magr == &youmonst);
+    boolean youdefend = (mdef == &youmonst);
+    boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
+	|| (!youdefend && cansee(mdef->mx, mdef->my))
+	|| (youattack && u.uswallow && mdef == u.ustuck && !Blind);
+	
+    if (!youdefend) {
+	    if (vis) {
+		if (otmp->oartifact == ART_STORMBRINGER)
+		    pline_The("%s blade draws the life from %s!",
+			    hcolor("black"),
+			    mon_nam(mdef));
+		else
+		    pline("%s draws the life from %s!",
+			    The(distant_name(otmp, xname)),
+			    mon_nam(mdef));
+	    }
+	    if (mdef->m_lev == 0) {
+		*dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
+	    } else {
+		int drain = rnd(8);
+		*dmgptr += drain;
+		mdef->mhpmax -= drain;
+		mdef->m_lev--;
+		drain /= 2;
+		if (drain) healup(drain, 0, FALSE, FALSE);
+	    }
+	    return vis;
+    } else { /* youdefend */
+	    int oldhpmax = u.uhpmax;
+
+	    if (Blind)
+		    You_feel("an %s drain your life!",
+			otmp->oartifact == ART_STORMBRINGER ?
+			"unholy blade" : "object");
+	    else if (otmp->oartifact == ART_STORMBRINGER)
+		    pline_The("%s blade drains your life!",
+			    hcolor("black"));
+	    else
+		    pline("%s drains your life!",
+			    The(distant_name(otmp, xname)));
+	    losexp("life drainage");
+	    if (magr && magr->mhp < magr->mhpmax) {
+		magr->mhp += (oldhpmax - u.uhpmax)/2;
+		if (magr->mhp > magr->mhpmax) magr->mhp = magr->mhpmax;
+	    }
+	    return TRUE;
+    }
+    return FALSE;
+}
+
+
 /* Function used when someone attacks someone else with an artifact
  * weapon.  Only adds the special (artifact) damage, and returns a 1 if it
  * did something special (in which case the caller won't print the normal
@@ -879,11 +1052,9 @@ boolean artifact_hit(
 	    || (!youdefend && cansee(mdef->mx, mdef->my))
 	    || (youattack && u.uswallow && mdef == u.ustuck && !Blind);
 	boolean realizes_damage;
-	const char *wepdesc;
-	static const char you[] = "you";
 	char hittee[BUFSZ];
 
-	strcpy(hittee, youdefend ? you : mon_nam(mdef));
+	strcpy(hittee, youdefend ? "you" : mon_nam(mdef));
 
 	/* The following takes care of most of the damage, but not all--
 	 * the exception being for level draining, which is specially
@@ -939,164 +1110,26 @@ boolean artifact_hit(
 			  hittee, !spec_dbon_applies ? '.' : '!');
 	    return realizes_damage;
 	}
-
+	
 	if (attacks(AD_STUN, otmp) && dieroll <= MB_MAX_DIEROLL) {
 	    /* Magicbane's special attacks (possibly modifies hittee[]) */
-	    return Mb_hit(magr, mdef, otmp, dmgptr, dieroll, vis, hittee);
+	    return magicbane_hit(magr, mdef, otmp, dmgptr, dieroll, vis, hittee);
 	}
-
+	
 	if (!spec_dbon_applies) {
 	    /* since damage bonus didn't apply, nothing more to do;  
 	       no further attacks have side-effects on inventory */
 	    return FALSE;
 	}
-
-	/* We really want "on a natural 20" but Nethack does it in */
-	/* reverse from AD&D. */
-	if (spec_ability(otmp, SPFX_BEHEAD)) {
-	    if (otmp->oartifact == ART_TSURUGI_OF_MURAMASA && dieroll == 1) {
-		wepdesc = "The razor-sharp blade";
-		/* not really beheading, but so close, why add another SPFX */
-		if (youattack && u.uswallow && mdef == u.ustuck) {
-		    You("slice %s wide open!", mon_nam(mdef));
-		    *dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
-		    return TRUE;
-		}
-		if (!youdefend) {
-			/* allow normal cutworm() call to add extra damage */
-			if (notonhead)
-			    return FALSE;
-
-			if (bigmonst(mdef->data)) {
-				if (youattack)
-					You("slice deeply into %s!",
-						mon_nam(mdef));
-				else if (vis)
-					pline("%s cuts deeply into %s!",
-					      Monnam(magr), hittee);
-				*dmgptr *= 2;
-				return TRUE;
-			}
-			*dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
-			pline("%s cuts %s in half!", wepdesc, mon_nam(mdef));
-			otmp->dknown = TRUE;
-			return TRUE;
-		} else {
-			if (bigmonst(youmonst.data)) {
-				pline("%s cuts deeply into you!",
-				      magr ? Monnam(magr) : wepdesc);
-				*dmgptr *= 2;
-				return TRUE;
-			}
-
-			/* Players with negative AC's take less damage instead
-			 * of just not getting hit.  We must add a large enough
-			 * value to the damage so that this reduction in
-			 * damage does not prevent death.
-			 */
-			*dmgptr = 2 * (Upolyd ? u.mh : u.uhp) + FATAL_DAMAGE_MODIFIER;
-			pline("%s cuts you in half!", wepdesc);
-			otmp->dknown = TRUE;
-			return TRUE;
-		}
-	    } else if (otmp->oartifact == ART_VORPAL_BLADE &&
-			(dieroll == 1 || mdef->data == &mons[PM_JABBERWOCK])) {
-		static const char * const behead_msg[2] = {
-		     "%s beheads %s!",
-		     "%s decapitates %s!"
-		};
-
-		if (youattack && u.uswallow && mdef == u.ustuck)
-			return FALSE;
-		wepdesc = artilist[ART_VORPAL_BLADE].name;
-		if (!youdefend) {
-			if (!has_head(mdef->data) || notonhead || u.uswallow) {
-				if (youattack)
-					pline("Somehow, you miss %s wildly.",
-						mon_nam(mdef));
-				else if (vis)
-					pline("Somehow, %s misses wildly.",
-						mon_nam(magr));
-				*dmgptr = 0;
-				return (boolean)(youattack || vis);
-			}
-			if (noncorporeal(mdef->data) || amorphous(mdef->data)) {
-				pline("%s slices through %s %s.", wepdesc,
-				      s_suffix(mon_nam(mdef)),
-				      mbodypart(mdef,NECK));
-				return TRUE;
-			}
-			*dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
-			pline(behead_msg[rn2(SIZE(behead_msg))],
-			      wepdesc, mon_nam(mdef));
-			otmp->dknown = TRUE;
-			return TRUE;
-		} else {
-			if (!has_head(youmonst.data)) {
-				pline("Somehow, %s misses you wildly.",
-				      magr ? mon_nam(magr) : wepdesc);
-				*dmgptr = 0;
-				return TRUE;
-			}
-			if (noncorporeal(youmonst.data) || amorphous(youmonst.data)) {
-				pline("%s slices through your %s.",
-				      wepdesc, body_part(NECK));
-				return TRUE;
-			}
-			*dmgptr = 2 * (Upolyd ? u.mh : u.uhp)
-				  + FATAL_DAMAGE_MODIFIER;
-			pline(behead_msg[rn2(SIZE(behead_msg))],
-			      wepdesc, "you");
-			otmp->dknown = TRUE;
-			/* Should amulets fall off? */
-			return TRUE;
-		}
-	    }
-	}
-	if (spec_ability(otmp, SPFX_DRLI)) {
-		if (!youdefend) {
-			if (vis) {
-			    if (otmp->oartifact == ART_STORMBRINGER)
-				pline_The("%s blade draws the life from %s!",
-				      hcolor("black"),
-				      mon_nam(mdef));
-			    else
-				pline("%s draws the life from %s!",
-				      The(distant_name(otmp, xname)),
-				      mon_nam(mdef));
-			}
-			if (mdef->m_lev == 0) {
-			    *dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
-			} else {
-			    int drain = rnd(8);
-			    *dmgptr += drain;
-			    mdef->mhpmax -= drain;
-			    mdef->m_lev--;
-			    drain /= 2;
-			    if (drain) healup(drain, 0, FALSE, FALSE);
-			}
-			return vis;
-		} else { /* youdefend */
-			int oldhpmax = u.uhpmax;
-
-			if (Blind)
-				You_feel("an %s drain your life!",
-				    otmp->oartifact == ART_STORMBRINGER ?
-				    "unholy blade" : "object");
-			else if (otmp->oartifact == ART_STORMBRINGER)
-				pline_The("%s blade drains your life!",
-				      hcolor("black"));
-			else
-				pline("%s drains your life!",
-				      The(distant_name(otmp, xname)));
-			losexp("life drainage");
-			if (magr && magr->mhp < magr->mhpmax) {
-			    magr->mhp += (oldhpmax - u.uhpmax)/2;
-			    if (magr->mhp > magr->mhpmax) magr->mhp = magr->mhpmax;
-			}
-			return TRUE;
-		}
-	}
+	
+	/* Tsurugi of Muramasa, Vorpal Blade */
+	if (spec_ability(otmp, SPFX_BEHEAD))
+		return artifact_hit_behead(magr, mdef, otmp, dmgptr, dieroll);
+	
+	/* Stormbringer */
+	if (spec_ability(otmp, SPFX_DRLI))
+		return artifact_hit_drainlife(magr, mdef, otmp, dmgptr);
+	
 	return FALSE;
 }
 
