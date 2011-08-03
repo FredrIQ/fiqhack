@@ -418,7 +418,7 @@ int query_objlist(const char *qstr,	/* query string */
 		  int how,		/* type of query */
 		  boolean (*allow)(struct obj*)) /* allow function */
 {
-	int n;
+	int n = 0;
 	struct obj *curr, *last;
 	char *pack;
 	boolean printed_type_name;
@@ -492,8 +492,10 @@ int query_objlist(const char *qstr,	/* query string */
 	    pack++;
 	} while (qflags & INVORDER_SORT && *pack);
 
-	selection = malloc(cur_entry * sizeof(struct nh_objresult));
-	n = display_objects(items, cur_entry, qstr, how, selection);
+	if (cur_entry > 0) {
+	    selection = malloc(cur_entry * sizeof(struct nh_objresult));
+	    n = display_objects(items, cur_entry, qstr, how, selection);
+	}
 	
 	if (n > 0) {
 	    int i;
@@ -1394,7 +1396,7 @@ int loot_mon(struct monst *mtmp, int *passed_info, boolean *prev_loot)
 		    otmp->owornmask = 0L;
 		    update_mon_intrinsics(mtmp, otmp, FALSE, FALSE);
 		}
-		otmp = hold_another_object(otmp, "You drop %s!", doname(otmp),
+		hold_another_object(otmp, "You drop %s!", doname(otmp),
 					NULL);
 		timepassed = rnd(3);
 		if (prev_loot) *prev_loot = TRUE;

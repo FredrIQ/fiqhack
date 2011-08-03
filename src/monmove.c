@@ -443,7 +443,6 @@ toofar:
 		    for (a = &mdat->mattk[0]; a < &mdat->mattk[NATTK]; a++) {
 			if (a->aatyp == AT_MAGC && (a->adtyp == AD_SPEL || a->adtyp == AD_CLRC)) {
 			    if (castmu(mtmp, a, FALSE, FALSE)) {
-				tmp = 3;
 				break;
 			    }
 			}
@@ -1085,7 +1084,6 @@ postmov:
 		    likemagic = (likes_magic(ptr) && pctload < 85);
 		    likerock = (throws_rocks(ptr) && pctload < 50 &&
 				!In_sokoban(&u.uz));
-		    conceals = hides_under(ptr);
 		}
 
 		/* Maybe a rock mole just ate some metal object */

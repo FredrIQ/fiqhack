@@ -146,7 +146,7 @@ static void do_oname(struct obj *obj)
 		display_nhwindow(NHW_MESSAGE, FALSE);
 		You("engrave: \"%s\".",buf);
 	}
-	obj = oname(obj, buf);
+	oname(obj, buf);
 }
 
 /*

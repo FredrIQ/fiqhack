@@ -106,7 +106,6 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	const char *dirs, *dp;
 	struct nh_cmd_desc *cmd;
 	struct nh_cmd_desc **keymap;
-	boolean bad_command;
 	
 	do {
 	    /* the value of ui_flags.num_pad may change while the loop is running */
@@ -115,7 +114,6 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 
 	    cmd = NULL;
 	    arg->argtype = CMD_ARG_NONE;
-	    bad_command = FALSE;
 	    
 	    tty_curs(player.x, player.y);
 	    

@@ -198,7 +198,6 @@ char *fname_decode(char quotechar, char *s, char *callerbuf, int bufsz)
 	sp = s;
 	op = callerbuf;
 	*op = '\0';
-	calc = 0;
 
 	while (*sp) {
 		/* Do we have room for one more character? */

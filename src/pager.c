@@ -570,8 +570,6 @@ static int do_look(boolean quick)
     coord cc;		/* screen pos of unknown glyph */
     boolean save_verbose;	/* saved value of flags.verbose */
     boolean from_screen;	/* question from the screen */
-    boolean need_to_look;	/* need to get explan. from glyph */
-    int skipped_venom;		/* non-zero if we ignored "splash of venom" */
     struct nh_desc_buf descbuf;
     struct obj *otmp;
 
@@ -608,8 +606,6 @@ static int do_look(boolean quick)
      */
     do {
 	/* Reset some variables. */
-	need_to_look = FALSE;
-	skipped_venom = 0;
 	found = 0;
 	out_str[0] = '\0';
 	objplur = 0;

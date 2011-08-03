@@ -1852,9 +1852,8 @@ int dodip(void)
 		    }
 		}
 		obj_extract_self(singlepotion);
-		singlepotion = hold_another_object(singlepotion,
-					"You juggle and drop %s!",
-					doname(singlepotion), NULL);
+		hold_another_object(singlepotion, "You juggle and drop %s!",
+				    doname(singlepotion), NULL);
 		update_inventory();
 		return 1;
 	}

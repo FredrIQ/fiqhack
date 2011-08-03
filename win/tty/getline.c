@@ -182,11 +182,9 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
     biggest = 0;
     while (!ret) {
 	    nchoices = n = 0;
-	    accelerator = 0;
 	    any.a_void = 0;
 	    /* populate choices */
 	    for (i = 0; i < listlen; i++) {
-// 	    for (efp = extcmdlist; efp->ef_txt; efp++) {
 		if (!matchlevel || !strncmp(namelist[i], cbuf, matchlevel)) {
 			choices[nchoices++] = i;
 			if (strlen(desclist[i]) > biggest) {

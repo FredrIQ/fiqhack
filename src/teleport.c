@@ -556,7 +556,7 @@ void level_tele(void)
 					obj = mksobj(AMULET_OF_YENDOR,
 							TRUE, FALSE);
 					if (obj) {
-						obj = addinv(obj);
+						addinv(obj);
 						strcat(buf, " with the amulet");
 					}
 				}

@@ -1843,8 +1843,6 @@ void reset_remarm(void)
 /* the 'A' command -- remove multiple worn items */
 int doddoremarm(void)
 {
-    int result = 0;
-
     if (taking_off || takeoff_mask) {
 	You("continue %s.", disrobing);
 	set_occupation(take_off, disrobing, 0);
@@ -1856,7 +1854,7 @@ int doddoremarm(void)
     }
 
     add_valid_menu_class(0); /* reset */
-    result = menu_remarm(result);
+    menu_remarm(0);
 
     if (takeoff_mask) {
 	/* default activity for armor and/or accessories,

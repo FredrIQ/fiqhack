@@ -282,7 +282,7 @@ void makerogueghost(void)
 	if (!(ghost = makemon(&mons[PM_GHOST], x, y, NO_MM_FLAGS)))
 		return;
 	ghost->msleeping = 1;
-	ghost = christen_monst(ghost, roguename());
+	christen_monst(ghost, roguename());
 
 	if (rn2(4)) {
 		ghostobj = mksobj_at(FOOD_RATION, x, y, FALSE, FALSE);

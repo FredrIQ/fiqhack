@@ -1252,7 +1252,6 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 	if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) && !nh_validrole(rolenum)) {
 		if (donefirst) strcat(buf, " ");
 		strcat(buf, "character");
-		donefirst = TRUE;
 	}
 	/* <your lawful female gnomish cavewoman> || <your lawful female gnome>
 	 *    || <your lawful female character>

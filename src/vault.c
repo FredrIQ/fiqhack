@@ -131,19 +131,27 @@ void invault(void)
 #endif
 	/* first find the goal for the guard */
 	for (dd = 2; (dd < ROWNO || dd < COLNO); dd++) {
-	  for (y = u.uy-dd; y <= u.uy+dd; ly = y, y++) {
+	  for (y = u.uy-dd; y <= u.uy+dd; y++) {
 	    if (y < 0 || y > ROWNO-1) continue;
-	    for (x = u.ux-dd; x <= u.ux+dd; lx = x, x++) {
+	    for (x = u.ux-dd; x <= u.ux+dd; x++) {
 	      if (y != u.uy-dd && y != u.uy+dd && x != u.ux-dd)
 		x = u.ux+dd;
 	      if (x < 1 || x > COLNO-1) continue;
 	      if (level.locations[x][y].typ == CORR) {
-		  if (x < u.ux) lx = x + 1;
-		  else if (x > u.ux) lx = x - 1;
-		  else lx = x;
-		  if (y < u.uy) ly = y + 1;
-		  else if (y > u.uy) ly = y - 1;
-		  else ly = y;
+		  if (x < u.ux)
+		      lx = x + 1;
+		  else if (x > u.ux)
+		      lx = x - 1;
+		  else
+		      lx = x;
+		  
+		  if (y < u.uy)
+		      ly = y + 1;
+		  else if (y > u.uy)
+		      ly = y - 1;
+		  else
+		      ly = y;
+		  
 		  if (level.locations[lx][ly].typ != STONE && level.locations[lx][ly].typ != CORR)
 		      goto incr_radius;
 		  goto fnd;

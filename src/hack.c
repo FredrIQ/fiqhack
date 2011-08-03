@@ -1901,11 +1901,8 @@ stop:
 	}
 
 	i += u.last_str_turn;
-	if (i <= 2 && i >= -2) {
+	if (i <= 2 && i >= -2)
 	    u.last_str_turn = i;
-	    dx = x0-u.ux;
-	    dy = y0-u.uy;
-	}
     }
 }
 

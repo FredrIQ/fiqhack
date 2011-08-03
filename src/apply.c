@@ -1073,8 +1073,7 @@ static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
 	    obj_extract_self(obj);	/* free from inv */
 
 	    /* shouldn't merge */
-	    obj = hold_another_object(obj, "You drop %s!",
-				      doname(obj), NULL);
+	    hold_another_object(obj, "You drop %s!", doname(obj), NULL);
 	} else
 	    begin_burn(obj, FALSE);
 }
@@ -1345,8 +1344,8 @@ static void use_tinning_kit(struct obj *obj)
 		    verbalize(you_buy_it);
 		useupf(corpse, 1L);
 	    }
-	    can = hold_another_object(can, "You make, but cannot pick up, %s.",
-				      doname(can), NULL);
+	    hold_another_object(can, "You make, but cannot pick up, %s.",
+				doname(can), NULL);
 	} else impossible("Tinning failed.");
 }
 
@@ -2188,7 +2187,7 @@ static int use_whip(struct obj *obj)
 			pline("Snatching %s is a fatal mistake.", kbuf);
 			instapetrify(kbuf);
 		    }
-		    otmp = hold_another_object(otmp, "You drop %s!",
+		    hold_another_object(otmp, "You drop %s!",
 					       doname(otmp), NULL);
 		    break;
 		default:
@@ -2822,7 +2821,7 @@ int doapply(void)
 		    otmp->blessed = obj->blessed;
 		    otmp->cursed = obj->cursed;
 		    otmp->owt = weight(otmp);
-		    otmp = hold_another_object(otmp, u.uswallow ?
+		    hold_another_object(otmp, u.uswallow ?
 				       "Oops!  %s out of your reach!" :
 					(Is_airlevel(&u.uz) ||
 					 Is_waterlevel(&u.uz) ||

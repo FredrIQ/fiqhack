@@ -471,18 +471,21 @@ static void m_initinv(struct monst *mtmp)
 			mac += 1 + mongets(mtmp, HELMET);
 		    else if (mac < 10 && rn2(2))
 			mac += 1 + mongets(mtmp, DENTED_POT);
+		    
 		    if (mac < 10 && rn2(3))
 			mac += 1 + mongets(mtmp, SMALL_SHIELD);
 		    else if (mac < 10 && rn2(2))
 			mac += 2 + mongets(mtmp, LARGE_SHIELD);
+		    
 		    if (mac < 10 && rn2(3))
 			mac += 1 + mongets(mtmp, LOW_BOOTS);
 		    else if (mac < 10 && rn2(2))
 			mac += 2 + mongets(mtmp, HIGH_BOOTS);
+		    
 		    if (mac < 10 && rn2(3))
-			mac += 1 + mongets(mtmp, LEATHER_GLOVES);
+			mongets(mtmp, LEATHER_GLOVES);
 		    else if (mac < 10 && rn2(2))
-			mac += 1 + mongets(mtmp, LEATHER_CLOAK);
+			mongets(mtmp, LEATHER_CLOAK);
 
 		    if (ptr != &mons[PM_GUARD] &&
 			ptr != &mons[PM_WATCHMAN] &&

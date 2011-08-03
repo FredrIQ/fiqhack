@@ -474,8 +474,6 @@ void vision_recalc(int control)
     vision_full_recalc = 0;			/* reset flag */
     if (in_mklev || !iflags.vision_inited) return;
 
-    row = 0;
-
     /*
      * Either the light sources have been taken care of, or we must
      * recalculate them here.

@@ -1521,7 +1521,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	struct obj *otmp;
 	char ilet, ret;
 	const char *invlet = flags.inv_order;
-	int n, classcount;
+	int n = 0, classcount;
 	int nr_items = 0, cur_entry = 0;
 	struct nh_objitem *items = NULL;
 	struct nh_objresult *selected = NULL;
@@ -1594,9 +1594,11 @@ nextclass:
 		}
 	}
 
-	selected = malloc(cur_entry * sizeof(struct nh_objresult));
-	n = display_objects(items, cur_entry, NULL,
-			    want_reply ? PICK_ONE : PICK_NONE, selected);
+	if (cur_entry) {
+	    selected = malloc(cur_entry * sizeof(struct nh_objresult));
+	    n = display_objects(items, cur_entry, NULL,
+				want_reply ? PICK_ONE : PICK_NONE, selected);
+	}
 	if (n > 0) {
 	    ret = (char)selected[0].id;
 	    if (out_cnt)
@@ -1701,7 +1703,7 @@ static void dounpaid(void)
 	return;
     }
 
-    cost = totcost = 0;
+    totcost = 0;
     num_so_far = 0;	/* count of # printed so far */
     if (!flags.invlet_constant)
 	reassign();

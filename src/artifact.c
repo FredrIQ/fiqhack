@@ -1306,8 +1306,7 @@ static int arti_invoke(struct obj *obj)
 	    } else
 		otmp->quan += rnd(5);
 	    otmp->owt = weight(otmp);
-	    otmp = hold_another_object(otmp, "Suddenly %s out.",
-				       aobjnam(otmp, "fall"), NULL);
+	    hold_another_object(otmp, "Suddenly %s out.", aobjnam(otmp, "fall"), NULL);
 	    break;
 	  }
 	}

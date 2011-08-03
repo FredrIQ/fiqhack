@@ -1224,16 +1224,16 @@ int obfuscate_object(int otyp)
     if (!objects[otyp].oc_name_known) {
 	switch (otyp) {
 	    case SACK: case OILSKIN_SACK: case BAG_OF_TRICKS: case BAG_OF_HOLDING:
-		otyp = SACK;
+		otyp = SACK; break;
 
 	    case LOADSTONE: case LUCKSTONE: case FLINT: case TOUCHSTONE: 
-		otyp = FLINT;
+		otyp = FLINT; break;
 
 	    case OIL_LAMP: case MAGIC_LAMP:
-		otyp = OIL_LAMP;
+		otyp = OIL_LAMP; break;
 
 	    case TIN_WHISTLE: case MAGIC_WHISTLE:
-		otyp = TIN_WHISTLE;
+		otyp = TIN_WHISTLE; break;
 
 	    /* all gems initially look like pieces of glass */
 	    case DILITHIUM_CRYSTAL: case DIAMOND: case RUBY: case JACINTH:

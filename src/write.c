@@ -219,7 +219,7 @@ found:
 	}
 	new_obj->blessed = (curseval > 0);
 	new_obj->cursed = (curseval < 0);
-	new_obj = hold_another_object(new_obj, "Oops!  %s out of your grasp!",
+	hold_another_object(new_obj, "Oops!  %s out of your grasp!",
 					       The(aobjnam(new_obj, "slip")),
 					       NULL);
 	return 1;

@@ -648,8 +648,6 @@ int fruitadd(char *str)
 		{
 		    char *c;
 
-		    c = pl_fruit;
-
 		    for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
 			;
 		    if (isspace(*c) || *c == 0) numeric = TRUE;

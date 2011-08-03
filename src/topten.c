@@ -199,7 +199,6 @@ static void fill_topten_entry(struct toptenentry *newtt, int how)
 
 static boolean toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt)
 {
-    struct toptenentry *ttprev;
     int i, ins, del, occ_cnt;
     occ_cnt = 0;
     
@@ -207,10 +206,8 @@ static boolean toptenlist_insert(struct toptenentry *ttlist, struct toptenentry 
 	if (newtt->points > ttlist[ins].points)
 	    break;
 	
-	if (!strncmp(newtt->name, ttlist[ins].name, NAMSZ)) {
-	    ttprev = &ttlist[ins];
+	if (!strncmp(newtt->name, ttlist[ins].name, NAMSZ))
 	    occ_cnt++;
-	}
     }
     
     if (occ_cnt >= PLAYERMAX || ins == TTLISTLEN)
@@ -338,7 +335,7 @@ struct obj *tt_oname(struct obj *otmp)
 static void topten_death_description(struct toptenentry *in, char *outbuf)
 {
     char *bp;
-    boolean second_line;
+    boolean second_line = FALSE;
 
     outbuf[0] = '\0';
 

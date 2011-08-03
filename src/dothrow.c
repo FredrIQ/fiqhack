@@ -1219,7 +1219,7 @@ int thitmonst(struct monst *mon, struct obj *obj)
 			schar dy = sgn(mon->my - u.uy);
 			sho_obj_return_to_u(obj, dx, dy);
 		    }
-		    obj = addinv(obj);	/* back into your inventory */
+		    addinv(obj);	/* back into your inventory */
 		    encumber_msg();
 		} else {
 		    /* angry leader caught it and isn't returning it */
