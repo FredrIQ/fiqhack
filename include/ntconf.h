@@ -4,8 +4,6 @@
 #ifndef NTCONF_H
 #define NTCONF_H
 
-#define RANDOM		/* have Berkeley random(3) */
-
 #define EXEPATH			/* Allow .exe location to be used as HACKDIR */
 #define TRADITIONAL_GLYPHMAP	/* Store glyph mappings at level change time */
 #ifdef WIN32CON
@@ -75,13 +73,6 @@ extern void interject(int);
 #define index	strchr
 #define rindex	strrchr
 #include <time.h>
-
-#ifdef RANDOM
-/* Use the high quality random number routines. */
-#define Rand()	random()
-#else
-#define Rand()	rand()
-#endif
 
 #define regularize	nt_regularize
 

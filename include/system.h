@@ -24,13 +24,6 @@
 
 #if !defined(__cplusplus)
 
-#if defined(RANDOM)
-# ifdef random
-# undef random
-# endif
-extern void srandom(unsigned int);
-#endif /* RANDOM */
-
 extern void exit(int);
 extern void perror(const char *);
 extern void qsort(void *,size_t,size_t,int(*)(const void *,const void *));

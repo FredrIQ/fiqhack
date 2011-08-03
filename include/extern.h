@@ -605,7 +605,6 @@ extern boolean pmatch(const char *,const char *);
 extern char *strstri(const char *,const char *);
 #endif
 extern boolean fuzzymatch(const char *,const char *,const char *,boolean);
-extern void setrandom(void);
 extern int getyear(void);
 extern long yyyymmdd(time_t);
 extern int phase_of_the_moon(void);
@@ -1028,6 +1027,11 @@ extern void m_useup(struct monst *,struct obj *);
 extern void m_throw(struct monst *,int,int,int,int,int,struct obj *);
 extern boolean hits_bars(struct obj **,int,int,int,int);
 
+/* ### mtrand.c ### */
+
+extern void mt_srand(unsigned int seed);
+extern unsigned int mt_random(void);
+
 /* ### muse.c ### */
 
 extern boolean find_defensive(struct monst *);
@@ -1273,15 +1277,6 @@ extern boolean is_quest_artifact(struct obj*);
 extern void com_pager(int);
 extern void qt_pager(int);
 extern const struct permonst *qt_montype(void);
-
-/* ### random.c ### */
-
-#if defined(RANDOM)
-extern void srandom(unsigned);
-extern char *initstate(unsigned,char *,int);
-extern char *setstate(char *);
-extern long random(void);
-#endif /* RANDOM */
 
 /* ### read.c ### */
 

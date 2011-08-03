@@ -403,18 +403,6 @@ boolean fuzzymatch(const char *s1, const char *s2,
 
 static struct tm *getlt(void);
 
-void setrandom(void)
-{
-	/* the types are different enough here that sweeping the different
-	 * routine names into one via #defines is even more confusing
-	 */
-#ifdef RANDOM	/* srandom() from sys/share/random.c */
-	srandom((unsigned int) time(NULL));
-#else
-	srandom((int) time(NULL));
-#endif
-}
-
 static struct tm *getlt(void)
 {
 	time_t date;

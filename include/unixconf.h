@@ -5,10 +5,6 @@
 #ifndef UNIXCONF_H
 #define UNIXCONF_H
 
-/* define any of the following that are appropriate */
-/* #define RANDOM */		/* if neither random/srandom nor lrand48/srand48
-				   is available from your system */
-
 /*
  * The remainder of the file should not need to be changed.
  */
@@ -27,9 +23,6 @@
 #ifndef rindex
 #define rindex	strrchr
 #endif
-
-/* Use the high quality random number routines. */
-#define Rand()	random()
 
 #endif /* UNIXCONF_H */
 #endif /* UNIX */

@@ -276,7 +276,7 @@ void initoptions(void)
 	nullvalue.s = NULL;
 
 	/* initialize the random number generator */
-	setrandom();
+	mt_srand((int) time(NULL));
 	
 	build_role_spec();
 	build_race_spec();

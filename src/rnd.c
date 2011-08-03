@@ -2,14 +2,7 @@
 
 #include "hack.h"
 
-/* "Rand()"s definition is determined by [OS]conf.h */
-#if defined(UNIX) || defined(RANDOM)
-#define RND(x)	(int)(Rand() % (long)(x))
-#else
-/* Good luck: the bottom order bits are cyclic. */
-#define RND(x)	(int)((Rand()>>3) % (x))
-#endif
-
+#define RND(x)	(int)(mt_random() % (long)(x))
 
 /* 0 <= rn2(x) < x */
 int rn2(int x)

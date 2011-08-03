@@ -97,11 +97,11 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 		switch (adjtruth = truth + rn2(2)) {
 		  case  2:	/*(might let a bogus input arg sneak thru)*/
 		  case  1:  beginning = true_rumor_start;
-			    tidbit = Rand() % true_rumor_size;
+			    tidbit = mt_random() % true_rumor_size;
 			break;
 		  case  0:	/* once here, 0 => false rather than "either"*/
 		  case -1:  beginning = false_rumor_start;
-			    tidbit = Rand() % false_rumor_size;
+			    tidbit = mt_random() % false_rumor_size;
 			break;
 		  default:
 			    impossible("strange truth value for rumor");
