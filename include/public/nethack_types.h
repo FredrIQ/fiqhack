@@ -85,6 +85,8 @@
 /* command param type specification */
 #define CMD_ARG_NONE (1 << 1)  /* param can be empty */
 #define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
+#define CMD_ARG_POS  (1 << 3)  /* param can be a position */
+#define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS)
 
 /* command usage hints */
 #define CMD_EXT        (1 << 10) /* an 'extended' command */
@@ -322,10 +324,15 @@ struct nh_cmd_desc {
 	unsigned flags;
 };
 
+struct nh_cmdarg_pos {
+	short x, y;
+};
+
 struct nh_cmd_arg {
 	unsigned argtype;
 	union {
 	    enum nh_direction d;
+	    struct nh_cmdarg_pos pos;
 	};
 };
 

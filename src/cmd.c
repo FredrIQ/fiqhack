@@ -26,7 +26,7 @@ static int (*timed_occ_fn)(void);
 
 static int timed_occupation(void);
 static int domonability(void);
-static int dotravel(void);
+static int dotravel(int x,int y);
 static int wiz_wish(void);
 static int wiz_identify(void);
 static int wiz_map(void);
@@ -1028,7 +1028,7 @@ static const struct cmd_desc cmdlist[] = {
 	{"showworn", "", '*', 0, TRUE, doprinuse, CMD_ARG_NONE},
 	{"showgold", "", GOLD_SYM, 0, TRUE, doprgold, CMD_ARG_NONE},
 	{"showspells", "", SPBOOK_SYM, 0, TRUE, dovspell, CMD_ARG_NONE},
-	{"travel", "", '_', 0, TRUE, dotravel, CMD_ARG_NONE},
+	{"travel", "", '_', 0, TRUE, dotravel, CMD_ARG_NONE | CMD_ARG_POS},
 	
 	{"adjust", "adjust inventory letters", 0, 0, TRUE, doorganize, CMD_ARG_NONE | CMD_EXT},
 	{"chat", "talk to someone", 0, 0, TRUE, dotalk, CMD_ARG_NONE | CMD_EXT},	/* converse? */
@@ -1301,9 +1301,10 @@ int do_command(const char *command, int repcount, boolean firsttime, struct nh_c
 {
 	int i, idx = -1;
 	schar dx, dy, dz;
-	int res, (*func)(void), (*func_dir)(int, int, int);
+	int x, y;
+	int res, (*func)(void), (*func_dir)(int, int, int), (*func_pos)(int,int);
 	struct nh_cmd_arg noarg = {CMD_ARG_NONE};
-	int argtype;
+	int argtype, functype;
 	
 	/* for multi-turn movement, we use re-invocation of do_command rather
 	 * than set_occupation, so the relevant command must be saved and restored */
@@ -1336,12 +1337,18 @@ int do_command(const char *command, int repcount, boolean firsttime, struct nh_c
 	    if (!strcmp(command, cmdlist[i].name))
 		idx = i;
 	
+	if (idx == -1)
+	    return COMMAND_UNKNOWN;
+	
+	/* in some cases, a command function will accept either it's proper argument
+	 * type or no argument; we're looking for the possible type of the argument here */
+	functype = (cmdlist[idx].flags & CMD_ARG_FLAGS);
+	if (!functype)
+	    functype = CMD_ARG_NONE;
+	    
 	argtype = (arg->argtype & cmdlist[idx].flags);
 	if (!argtype)
 	    return COMMAND_BAD_ARG;
-	
-	if (idx == -1)
-	    return COMMAND_UNKNOWN;
 	
 	if (u.uburied && !cmdlist[idx].can_if_buried) {
 	    You_cant("do that while you are buried!");
@@ -1350,7 +1357,7 @@ int do_command(const char *command, int repcount, boolean firsttime, struct nh_c
 	    flags.move = TRUE;
 	    multi = repcount;
 	    
-	    switch (argtype) {
+	    switch (functype) {
 		case CMD_ARG_NONE:
 		    func = cmdlist[idx].func;
 		    if (cmdlist[idx].text && !occupation && multi > 1)
@@ -1360,9 +1367,26 @@ int do_command(const char *command, int repcount, boolean firsttime, struct nh_c
 		
 		case CMD_ARG_DIR:
 		    func_dir = cmdlist[idx].func;
-		    if (!dir_to_delta(arg->d, &dx, &dy, &dz))
-			return COMMAND_BAD_ARG;
+		    if (argtype == CMD_ARG_DIR) {
+			if (!dir_to_delta(arg->d, &dx, &dy, &dz))
+			    return COMMAND_BAD_ARG;
+		    } else {
+			 /* invalid direction deltas indicate that no arg was given */
+			dx = -2; dy = -2; dz = -2;
+		    }
 		    res = func_dir(dx, dy, dz);
+		    break;
+		
+		case CMD_ARG_POS:
+		    func_pos = cmdlist[idx].func;
+		    if (argtype == CMD_ARG_POS) {
+			x = arg->pos.x;
+			y = arg->pos.y;
+		    } else {
+			x = -1;
+			y = -1;
+		    }
+		    func_pos(x, y);
 		    break;
 		    
 		default:
@@ -1473,7 +1497,7 @@ int isok(int x, int y)
 }
 
 
-static int dotravel(void)
+static int dotravel(int x, int y)
 {
 	/* Keyboard travel command */
 	coord cc;
@@ -1481,17 +1505,22 @@ static int dotravel(void)
 	if (!iflags.travelcmd)
 	    return 0;
 	
-	cc.x = iflags.travelcc.x;
-	cc.y = iflags.travelcc.y;
-	if (cc.x == -1 && cc.y == -1) {
-	    /* No cached destination, start attempt from current position */
-	    cc.x = u.ux;
-	    cc.y = u.uy;
-	}
-	pline("Where do you want to travel to?");
-	if (getpos(&cc, TRUE, "the desired destination") < 0) {
-		/* user pressed ESC */
-		return 0;
+	if (x == -1 && y == -1) {
+	    cc.x = iflags.travelcc.x;
+	    cc.y = iflags.travelcc.y;
+	    if (cc.x == -1 && cc.y == -1) {
+		/* No cached destination, start attempt from current position */
+		cc.x = u.ux;
+		cc.y = u.uy;
+	    }
+	    pline("Where do you want to travel to?");
+	    if (getpos(&cc, TRUE, "the desired destination") < 0) {
+		    /* user pressed ESC */
+		    return 0;
+	    }
+	} else {
+	    cc.x = x;
+	    cc.y = y;
 	}
 	iflags.travelcc.x = u.tx = cc.x;
 	iflags.travelcc.y = u.ty = cc.y;
