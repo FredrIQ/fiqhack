@@ -7,6 +7,8 @@ Changes so far:
     - libification: NetHack is now a shared library (libnethack.so) that
 	is included by the tty window port binary.
 	Other window ports can each have their own binaries (eg. nethack_qt,...)
+	libnethack now has a sane, limited and reasonably consistent API. There
+	is no more shared global state
     - new option handling that allows for graceful handling of window port
 	options. Several options have been moved int the tty port code.
     - new option file locations & formats
@@ -25,10 +27,9 @@ Changes so far:
         libnethack uses symbol ids to tell the window port what to display.
 
 Plans:
-    - improve library API
-        outrip / topten display are just fugly and need to be rewritten
-    - rename exported functions to nh_<foo> so that library calls become obvious
-        functions that have not been renamed need review (remove? replace?)
+    - replay-based save/restore
+        the starting state and all moves should be logged during play and then replayed
+	sequentially in order to restore a game
     - create an ncurses based window port for tty and delete the current tty code
     - create a qt4-based tile port
 
