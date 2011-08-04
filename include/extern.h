@@ -1103,6 +1103,7 @@ extern const char *mimic_obj_name(struct monst *);
 /* ### options.c ### */
 
 extern char *nh_getenv(const char *);
+extern void init_opt_struct(void);
 extern void initoptions(void);
 extern void sync_options(void);
 extern int dotogglepickup(void);

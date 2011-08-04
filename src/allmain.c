@@ -47,6 +47,7 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 	fqn_prefix[i] = paths[i];
     
     u.uhp = 1;	/* prevent RIP on early quits */
+    init_opt_struct();
     
     api_exit();
 }

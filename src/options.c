@@ -47,17 +47,17 @@ static const struct nh_listitem runmode_list[] = {
 static const struct nh_enum_option runmode_spec = {runmode_list, listlen(runmode_list)};
 
 static const struct nh_listitem align_list[] = {
-	{ROLE_LAWFUL, "lawful"},
-	{ROLE_NEUTRAL, "neutral"},
-	{ROLE_CHAOTIC, "chaotic"},
+	{0, "lawful"},
+	{1, "neutral"},
+	{2, "chaotic"},
 	{ROLE_NONE, "ask"},
 	{ROLE_RANDOM, "random"}
 };
 static const struct nh_enum_option align_spec = {align_list, listlen(align_list)};
 
 static const struct nh_listitem gender_list[] = {
-	{ROLE_FEMALE, "female"},
-	{ROLE_MALE, "male"},
+	{0, "male"},
+	{1, "female"},
 	{ROLE_NONE, "ask"},
 	{ROLE_RANDOM, "random"}
 };
@@ -269,12 +269,11 @@ static void build_race_spec(void)
 	race_spec.choices = choices;
 }
 
-void initoptions(void)
+void init_opt_struct(void)
 {
 	int i;
-	union nh_optvalue value, nullvalue;
-	nullvalue.s = NULL;
-
+	char *s;
+    
 	/* initialize the random number generator */
 	mt_srand((int) time(NULL));
 	
@@ -302,7 +301,27 @@ void initoptions(void)
 	find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
+	
+	/* copy all strings onto the heap because nh_set_option frees  them if
+	 * a different value is set */
+	for (i = 0; birth_options[i].name; i++)
+	    if (birth_options[i].type == OPTTYPE_STRING && birth_options[i].value.s) {
+		s = strdup(birth_options[i].value.s);
+		birth_options[i].value.s = s;
+	    }
+	
+	for (i = 0; options[i].name; i++)
+	    if (options[i].type == OPTTYPE_STRING && options[i].value.s) {
+		s = strdup(options[i].value.s);
+		options[i].value.s = s;
+	    }
+	
+}
 
+void initoptions(void)
+{
+	int i;
+	
 	iflags.travelcc.x = iflags.travelcc.y = -1;
 	flags.warnlevel = 1;
 	flags.warntype = 0L;
@@ -318,22 +337,11 @@ void initoptions(void)
 	fruitadd(pl_fruit);
 	
 	/* init from option definitions */
-	for (i = 0; birth_options[i].name; i++) {
-		/* ensure that string pointers are initially NULL in nh_set_option
-		 * to prevent that code from trying to free() them */
-		value = birth_options[i].value;
-		birth_options[i].value = nullvalue;
-		nh_set_option(birth_options[i].name, value, FALSE);
-	}
+	for (i = 0; birth_options[i].name; i++)
+		nh_set_option(birth_options[i].name, birth_options[i].value, FALSE);
 	
-	for (i = 0; options[i].name; i++) {
-		/* same string pointer dance as above */
-		value = options[i].value;
-		options[i].value = nullvalue;
-		nh_set_option(options[i].name, value, FALSE);
-	}
-
-	return;
+	for (i = 0; options[i].name; i++)
+		nh_set_option(options[i].name, options[i].value, FALSE);
 }
 
 
@@ -523,7 +531,8 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	}
 	else if (!strcmp("fruit", option->name)) {
 		strncpy(pl_fruit, option->value.s, PL_FSIZ);
-		fruitadd(pl_fruit);
+		if (objects) /* don't do fruitadd before the game is running */
+		    fruitadd(pl_fruit);
 	}
 	else if (!strcmp("menustyle", option->name)) {
 		flags.menu_style = option->value.e;
