@@ -262,7 +262,6 @@ extern void tty_end_menu(winid, const char *);
 extern int tty_select_menu(winid, int, menu_item **);
 extern int tty_display_menu(struct nh_menuitem*, int, const char*, int, int*);
 extern int tty_display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
-extern char tty_message_menu(char,int,const char *);
 extern void tty_update_inventory(void);
 extern void tty_wait_synch(void);
 extern void tty_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);

@@ -31,7 +31,6 @@ struct window_procs tty_procs = {
     tty_print_message,
     tty_display_menu,
     tty_display_objects,
-    tty_message_menu,
     tty_update_inventory,
     tty_update_screen,
     tty_raw_print,
@@ -2032,35 +2031,6 @@ int tty_display_objects(struct nh_objitem *items, int icount, const char *title,
     return n;
 }
 
-
-/* special hack for treating top line --More-- as a one item menu */
-char tty_message_menu(char let, int how, const char *mesg)
-{
-    /* "menu" without selection; use ordinary pline, no more() */
-    if (how == PICK_NONE) {
-	tty_print_message(mesg);
-	return 0;
-    }
-
-    ttyDisplay->dismiss_more = let;
-    morc = 0;
-    /* barebones pline(); since we're only supposed to be called after
-       response to a prompt, we'll assume that the display is up to date */
-    tty_putstr(WIN_MESSAGE, 0, mesg);
-    /* if `mesg' didn't wrap (triggering --More--), force --More-- now */
-    if (ttyDisplay->toplin == 1) {
-	more();
-	ttyDisplay->toplin = 1; /* more resets this */
-	clear_nhwindow(WIN_MESSAGE);
-    }
-    /* normally <ESC> means skip further messages, but in this case
-       it means cancel the current prompt; any other messages should
-       continue to be output normally */
-    wins[WIN_MESSAGE]->flags &= ~WIN_CANCELLED;
-    ttyDisplay->dismiss_more = 0;
-
-    return ((how == PICK_ONE && morc == let) || morc == '\033') ? morc : '\0';
-}
 
 void tty_update_inventory(void)
 {

@@ -1253,9 +1253,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	    ret = '\0';
 	    for (otmp = invent; otmp; otmp = otmp->nobj) {
 		if (otmp->invlet == lets[0]) {
-		    ret = message_menu(lets[0],
-			  want_reply ? PICK_ONE : PICK_NONE,
-			  xprname(otmp, NULL, lets[0], TRUE, 0L, 0L));
+		    pline("%s", xprname(otmp, NULL, lets[0], TRUE, 0L, 0L));
 		    if (out_cnt) *out_cnt = -1L;	/* select all */
 		    break;
 		}
