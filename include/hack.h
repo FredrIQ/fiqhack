@@ -165,8 +165,6 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define ynq(query) yn_function(query,ynqchars, 'q')
 #define ynaq(query) yn_function(query,ynaqchars, 'y')
 #define nyaq(query) yn_function(query,ynaqchars, 'n')
-#define nyNaq(query) yn_function(query,ynNaqchars, 'n')
-#define ynNaq(query) yn_function(query,ynNaqchars, 'y')
 
 /* Macros for scatter */
 #define VIS_EFFECTS	0x01	/* display visual effects */
@@ -214,7 +212,6 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define STOMACH 18
 
 /* Flags to control menus */
-#define MENU_COMBINATION 1
 #define MENU_PARTIAL	 2
 #define MENU_FULL	 3
 

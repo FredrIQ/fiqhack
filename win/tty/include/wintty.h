@@ -274,7 +274,7 @@ extern int tty_getpos(int *, int *, boolean, const char*);
 enum nh_direction tty_getdir(const char *, boolean);
 extern void tty_nhbell(void);
 extern int tty_doprev_message(void);
-extern char tty_yn_function(const char *, const char *, char, long*);
+extern char tty_yn_function(const char *, const char *, char);
 extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen);
 extern void tty_delay_output(void);

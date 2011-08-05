@@ -45,35 +45,6 @@ static const char moderateloadmsg[] = "You have a little trouble lifting";
 static const char nearloadmsg[] = "You have much trouble lifting";
 static const char overloadmsg[] = "You have extreme difficulty lifting";
 
-#ifndef GOLDOBJ
-int collect_obj_classes(char ilets[], struct obj *otmp, boolean here,
-			boolean incl_gold, boolean (*filter)(struct obj*),
-			int *itemcount)
-#else
-int collect_obj_classes(char ilets[], struct obj *otmp, boolean here,
-			boolean (*filter)(struct obj*), int *itemcount)
-#endif
-{
-	int iletct = 0;
-	char c;
-
-	*itemcount = 0;
-#ifndef GOLDOBJ
-	if (incl_gold)
-	    ilets[iletct++] = def_oc_syms[COIN_CLASS];
-#endif
-	ilets[iletct] = '\0'; /* terminate ilets so that index() will work */
-	while (otmp) {
-	    c = def_oc_syms[(int)otmp->oclass];
-	    if (!index(ilets, c) && (!filter || (*filter)(otmp)))
-		ilets[iletct++] = c,  ilets[iletct] = '\0';
-	    *itemcount += 1;
-	    otmp = here ? otmp->nexthere : otmp->nobj;
-	}
-
-	return iletct;
-}
-
 
 /* look at the objects at our location, unless there are too many of them */
 static void check_here(boolean picked_some)
@@ -1818,7 +1789,7 @@ int use_container(struct obj *obj, int held)
 		if (t <= 0) return 0;
 		loot_out = (t & 0x01) != 0;
 		loot_in  = (t & 0x02) != 0;
-	    } else {	/* MENU_COMBINATION or MENU_PARTIAL */
+	    } else {	/* MENU_PARTIAL */
 		loot_out = (yn_function(qbuf, "ynq", 'n') == 'y');
 	    }
 	    

@@ -639,12 +639,9 @@ extern boolean is_worn(struct obj *);
 extern struct obj *g_at(int,int);
 extern struct obj *mkgoldobj(long);
 extern struct obj *getobj(const char *,const char *);
-extern int ggetobj(const char *,int (*)(struct obj*),int,boolean,unsigned *);
 extern void fully_identify_obj(struct obj *);
 extern int identify(struct obj *);
 extern void identify_pack(int);
-extern int askchain(struct obj **,const char *,int,int (*)(struct obj*),
-			int (*)(struct obj*),int,const char *);
 extern void prinv(const char *,struct obj *,long);
 extern char *xprname(struct obj *,const char *,char,boolean,long,long);
 extern int ddoinv(void);
@@ -1127,13 +1124,6 @@ extern int dohistory(void);
 
 /* ### pickup.c ### */
 
-#ifdef GOLDOBJ
-extern int collect_obj_classes
-	(char *,struct obj *,boolean,boolean (*)(struct obj*), int *);
-#else
-extern int collect_obj_classes
-	(char *,struct obj *,boolean,boolean,boolean (*)(struct obj*), int *);
-#endif
 extern void add_valid_menu_class(int);
 extern boolean allow_all(struct obj *);
 extern boolean allow_category(struct obj *);

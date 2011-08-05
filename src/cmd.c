@@ -1551,16 +1551,18 @@ char yn_function(const char *query,const char *resp, char def)
 	unsigned truncspot, reduction = sizeof(" [N]  ?") + 1;
 
 	if (resp)
-	    reduction += strlen(resp) + sizeof(" () ");
+		reduction += strlen(resp) + sizeof(" () ");
+	
 	if (strlen(query) < (QBUFSZ - reduction))
-		return (*windowprocs.win_yn_function)(query, resp, def, &yn_number);
+		return (*windowprocs.win_yn_function)(query, resp, def);
+	
 	paniclog("Query truncated: ", query);
 	reduction += sizeof("...");
 	truncspot = QBUFSZ - reduction;
 	strncpy(qbuf, query, (int)truncspot);
 	qbuf[truncspot] = '\0';
 	strcat(qbuf,"...");
-	return (*windowprocs.win_yn_function)(qbuf, resp, def, &yn_number);
+	return (*windowprocs.win_yn_function)(qbuf, resp, def);
 }
 
 /*cmd.c*/

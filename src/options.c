@@ -21,7 +21,6 @@ static const struct nh_listitem disclose_list[] = {
 static const struct nh_enum_option disclose_spec = {disclose_list, listlen(disclose_list)};
 
 static const struct nh_listitem menustyle_list[] = {
-	{MENU_COMBINATION, "combination"},
 	{MENU_PARTIAL, "partial"},
 	{MENU_FULL, "full"}
 };

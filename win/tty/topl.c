@@ -17,7 +17,6 @@
 static void redotoplin(const char*);
 static void topl_putsym(char);
 static void remember_topl(void);
-static void removetopl(int);
 
 
 int tty_doprev_message(void)
@@ -288,15 +287,9 @@ void putsyms(const char *str)
 	topl_putsym(*str++);
 }
 
-static void removetopl(int n)
-{
-    /* assume addtopl() has been done, so ttyDisplay->toplin is already set */
-    while (n-- > 0) putsyms("\b \b");
-}
-
 extern char erase_char;		/* from xxxtty.c; don't need kill_char */
 
-char tty_yn_function(const char *query, const char *resp, char def, long *yn_number)
+char tty_yn_function(const char *query, const char *resp, char def)
 /*
  *   Generic yes/no function. 'def' is the default (returned by space or
  *   return; 'esc' returns 'q', or 'n', or the default, depending on
@@ -304,14 +297,13 @@ char tty_yn_function(const char *query, const char *resp, char def, long *yn_num
  *   is asked about the string.
  *   If resp is NULL, any single character is accepted and returned.
  *   If not-NULL, only characters in it are allowed (exceptions:  the
- *   quitchars are always allowed, and if it contains '#' then digits
- *   are allowed); if it includes an <esc>, anything beyond that won't
- *   be shown in the prompt to the user but will be acceptable as input.
+ *   quitchars are always allowed); if it includes an <esc>, anything
+ *   beyond that won't be shown in the prompt to the user but will be
+ *   acceptable as input.
  */
 {
 	char q;
 	char rtmp[40];
-	boolean digit_ok, allow_num;
 	struct WinDesc *cw = wins[WIN_MESSAGE];
 	boolean doprev = 0;
 	char prompt[QBUFSZ];
@@ -323,7 +315,6 @@ char tty_yn_function(const char *query, const char *resp, char def, long *yn_num
 	if (resp) {
 	    char *rb, respbuf[QBUFSZ];
 
-	    allow_num = (index(resp, '#') != 0);
 	    strcpy(respbuf, resp);
 	    /* any acceptable responses that follow <esc> aren't displayed */
 	    if ((rb = index(respbuf, '\033')) != 0) *rb = '\0';
@@ -368,7 +359,6 @@ char tty_yn_function(const char *query, const char *resp, char def, long *yn_num
 		q = '\0';	/* force another loop iteration */
 		continue;
 	    }
-	    digit_ok = allow_num && isdigit(q);
 	    if (q == '\033') {
 		if (index(resp, 'q'))
 		    q = 'q';
@@ -381,47 +371,9 @@ char tty_yn_function(const char *query, const char *resp, char def, long *yn_num
 		q = def;
 		break;
 	    }
-	    if (!index(resp, q) && !digit_ok) {
+	    if (!index(resp, q)) {
 		tty_nhbell();
 		q = (char)0;
-	    } else if (q == '#' || digit_ok) {
-		char z, digit_string[2];
-		int n_len = 0;
-		long value = 0;
-		addtopl("#"),  n_len++;
-		digit_string[1] = '\0';
-		if (q != '#') {
-		    digit_string[0] = q;
-		    addtopl(digit_string),  n_len++;
-		    value = q - '0';
-		    q = '#';
-		}
-		do {	/* loop until we get a non-digit */
-		    z = tolower(tty_nhgetch());
-		    if (isdigit(z)) {
-			value = (10 * value) + (z - '0');
-			if (value < 0) break;	/* overflow: try again */
-			digit_string[0] = z;
-			addtopl(digit_string),  n_len++;
-		    } else if (z == 'y' || index(quitchars, z)) {
-			if (z == '\033')  value = -1;	/* abort */
-			z = '\n';	/* break */
-		    } else if (z == erase_char || z == '\b') {
-			if (n_len <= 1) { value = -1;  break; }
-			else { value /= 10;  removetopl(1),  n_len--; }
-		    } else {
-			value = -1;	/* abort */
-			tty_nhbell();
-			break;
-		    }
-		} while (z != '\n');
-		if (value > 0 && yn_number)
-		    *yn_number = value;
-		else if (value == 0) q = 'n';		/* 0 => "no" */
-		else {	/* remove number from top line, then try again */
-			removetopl(n_len),  n_len = 0;
-			q = '\0';
-		}
 	    }
 	} while (!q);
 

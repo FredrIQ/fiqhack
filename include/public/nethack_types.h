@@ -450,7 +450,7 @@ struct window_procs {
     int (*win_nhgetch)(void);
     int (*win_getpos)(int *, int *, boolean, const char*);
     enum nh_direction (*win_getdir)(const char *, boolean);
-    char (*win_yn_function)(const char *, const char *, char, long*);
+    char (*win_yn_function)(const char *, const char *, char);
     void (*win_getlin)(const char *,char *);
     void (*win_delay_output)(void);
     void (*win_level_changed)(int displaymode);

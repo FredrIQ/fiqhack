@@ -622,16 +622,6 @@ static int menu_drop(int retry)
 	    else
 		add_valid_menu_class(pick_list[i]);
 	}
-    } else if (flags.menu_style == MENU_COMBINATION) {
-	unsigned ggoresults = 0;
-	all_categories = FALSE;
-	/* Gather valid classes via traditional NetHack method */
-	i = ggetobj("drop", drop, 0, TRUE, &ggoresults);
-	if (i == -2) all_categories = TRUE;
-	if (ggoresults & ALL_FINISHED) {
-		n_dropped = i;
-		goto drop_done;
-	}
     }
 
     if (drop_everything) {

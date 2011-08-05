@@ -57,8 +57,6 @@ const char vowels[] = "aeiouAEIOU";
 const char ynchars[] = "yn";
 const char ynqchars[] = "ynq";
 const char ynaqchars[] = "ynaq";
-const char ynNaqchars[] = "yn#aq";
-long yn_number;
 
 const char disclosure_options[] = "iavgc";
 

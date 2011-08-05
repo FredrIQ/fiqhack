@@ -2565,7 +2565,7 @@ enum nh_direction tty_getdir(const char *query, boolean restricted)
 	char dirsym, *dp;
 	const char *dirs = ui_flags.num_pad ? ndir : sdir;
 
-	dirsym = tty_yn_function (query, NULL, '\0', NULL);
+	dirsym = tty_yn_function (query, NULL, '\0');
 	if (dirsym == '.' || dirsym == 's')
 		return DIR_SELF;
 	
