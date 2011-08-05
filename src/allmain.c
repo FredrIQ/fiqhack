@@ -485,30 +485,12 @@ static void you_moved(void)
 
 static void handle_occupation(void)
 {
-#if defined(WIN32)
-    char ch;
-    int abort_lev = 0;
-    if (kbhit()) {
-	if ((ch = nhgetch()) == ABORT)
-	    abort_lev++;
-    }
-    if (!abort_lev && (*occupation)() == 0)
-#else
     if ((*occupation)() == 0)
-#endif
-	occupation = 0;
-    if (
-#if defined(WIN32)
-	    abort_lev ||
-#endif
-	    monster_nearby()) {
+	occupation = NULL;
+    if (monster_nearby()) {
 	stop_occupation();
 	reset_eat();
     }
-#if defined(WIN32)
-    if (!(++occtime % 7))
-	display_nhwindow(NHW_MAP, FALSE);
-#endif    
 }
 
 

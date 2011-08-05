@@ -20,7 +20,7 @@ extern void nh_delay_output(void);
 #define update_inventory (*windowprocs.win_update_inventory)
 #define update_screen (*windowprocs.win_update_screen)
 #define raw_print (*windowprocs.win_raw_print)
-#define nhgetch (*windowprocs.win_nhgetch)
+#define query_key (*windowprocs.win_query_key)
 #define win_getpos (*windowprocs.win_getpos)
 #define getlin (*windowprocs.win_getlin)
 #define delay_output nh_delay_output

@@ -295,9 +295,8 @@ char tty_yn_function(const char *query, const char *resp, char def)
  *   return; 'esc' returns 'q', or 'n', or the default, depending on
  *   what's in the string. The 'query' string is printed before the user
  *   is asked about the string.
- *   If resp is NULL, any single character is accepted and returned.
- *   If not-NULL, only characters in it are allowed (exceptions:  the
- *   quitchars are always allowed); if it includes an <esc>, anything
+ *   Resp may not be NULL and only characters in it are allowed (exceptions: 
+ *   the quitchars are always allowed); if it includes an <esc>, anything
  *   beyond that won't be shown in the prompt to the user but will be
  *   acceptable as input.
  */
@@ -307,27 +306,26 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	struct WinDesc *cw = wins[WIN_MESSAGE];
 	boolean doprev = 0;
 	char prompt[QBUFSZ];
+	char *rb, respbuf[QBUFSZ];
+	
+	if (!resp) {
+	    tty_raw_print("invalid use of the tty_yn_function API.\n");
+	    return 0;
+	}
 
 	if (ttyDisplay->toplin == 1 && !(cw->flags & WIN_STOP)) more();
 	cw->flags &= ~WIN_STOP;
 	ttyDisplay->toplin = 3; /* special prompt state */
 	ttyDisplay->inread++;
-	if (resp) {
-	    char *rb, respbuf[QBUFSZ];
 
-	    strcpy(respbuf, resp);
-	    /* any acceptable responses that follow <esc> aren't displayed */
-	    if ((rb = index(respbuf, '\033')) != 0) *rb = '\0';
-	    sprintf(prompt, "%s [%s] ", query, respbuf);
-	    if (def) sprintf(prompt + strlen(prompt), "(%c) ", def);
-	    tty_print_message(prompt);
-	} else {
-	    char qbuf[BUFSZ];
-	    sprintf(qbuf, "%s ", query);
-	    tty_print_message(qbuf);
-	    q = tty_nhgetch();
-	    goto clean_up;
-	}
+	strcpy(respbuf, resp);
+	/* any acceptable responses that follow <esc> aren't displayed */
+	if ((rb = index(respbuf, '\033')) != 0)
+	    *rb = '\0';
+	sprintf(prompt, "%s [%s] ", query, respbuf);
+	if (def)
+	    sprintf(prompt + strlen(prompt), "(%c) ", def);
+	tty_print_message(prompt);
 
 	do {	/* loop until we get valid input */
 	    q = tolower(tty_nhgetch());
@@ -381,7 +379,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		sprintf(rtmp, "%c", q);
 		addtopl(rtmp);
 	}
-    clean_up:
+
 	ttyDisplay->inread--;
 	ttyDisplay->toplin = 2;
 	if (ttyDisplay->intr) ttyDisplay->intr--;
@@ -389,6 +387,41 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	    clear_nhwindow(WIN_MESSAGE);
 
 	return q;
+}
+
+char tty_query_key(const char *query, int *count)
+{
+	char key;
+	int cnt = 0;
+	boolean hascount = FALSE;
+	struct WinDesc *cw = wins[WIN_MESSAGE];
+	
+	if (ttyDisplay->toplin == 1 && !(cw->flags & WIN_STOP)) more();
+	cw->flags &= ~WIN_STOP;
+	ttyDisplay->toplin = 3; /* special prompt state */
+	ttyDisplay->inread++;
+	
+	tty_print_message(query);
+	key = tty_nhgetch();
+	while (isdigit(key) && count != NULL) {
+	    cnt = 10*cnt + (key - '0');
+	    key = tty_nhgetch();
+	    hascount = TRUE;
+	}
+	
+	if (count != NULL) {
+	    if (!hascount && !cnt)
+		cnt = -1; /* signal to caller that no count was given */
+	    *count = cnt;
+	}
+	
+	ttyDisplay->inread--;
+	ttyDisplay->toplin = 2;
+	if (ttyDisplay->intr) ttyDisplay->intr--;
+	if (wins[WIN_MESSAGE]->cury)
+	    clear_nhwindow(WIN_MESSAGE);
+	
+	return key;    
 }
 
 /*topl.c*/

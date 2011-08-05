@@ -35,7 +35,7 @@ struct window_procs tty_procs = {
     tty_update_inventory,
     tty_update_screen,
     tty_raw_print,
-    tty_nhgetch,
+    tty_query_key,
     tty_getpos,
     tty_getdir,
     tty_yn_function,
@@ -2565,7 +2565,7 @@ enum nh_direction tty_getdir(const char *query, boolean restricted)
 	char dirsym, *dp;
 	const char *dirs = ui_flags.num_pad ? ndir : sdir;
 
-	dirsym = tty_yn_function (query, NULL, '\0');
+	dirsym = tty_query_key(query, NULL);
 	if (dirsym == '.' || dirsym == 's')
 		return DIR_SELF;
 	

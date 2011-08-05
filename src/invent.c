@@ -675,7 +675,7 @@ struct obj *getobj(const char *let, const char *word)
 	boolean allownone = FALSE;
 	boolean useboulder = FALSE;
 	xchar foox = 0;
-	long cnt;
+	int cnt;
 	boolean prezero = FALSE;
 	long dummymask;
 
@@ -845,14 +845,13 @@ struct obj *getobj(const char *let, const char *word)
 			sprintf(qbuf, "What do you want to %s? [%s or ?*]",
 				word, buf);
 		}
-		ilet = yn_function(qbuf, NULL, '\0');
-		if (ilet == '0')
-		    prezero = TRUE;
-		while (digit(ilet) && allowcnt) {
-			cnt = 10*cnt + (ilet - '0');
-			allowcnt = 2;	/* signal presence of cnt */
-			ilet = nhgetch();
+		ilet = query_key(qbuf, allowcnt ? &cnt : NULL);
+		if (allowcnt == 1 && cnt != -1) {
+		    allowcnt = 2; /* signal presence of cnt */
+		    if (cnt == 0)
+			prezero = TRUE; /* cnt was explicitly set to 0 */
 		}
+		
 		if (digit(ilet)) {
 			pline("No count allowed with this command.");
 			continue;
@@ -2074,7 +2073,7 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	/* get new letter to use as inventory letter */
 	for (;;) {
 		sprintf(qbuf, "Adjust letter to what [%s]?",buf);
-		let = yn_function(qbuf, NULL, '\0');
+		let = query_key(qbuf, NULL);
 		if (index(quitchars,let)) {
 			pline("Never mind.");
 			return 0;

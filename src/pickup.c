@@ -1708,7 +1708,7 @@ int use_container(struct obj *obj, int held)
 #endif
 	boolean quantum_cat = FALSE,
 		loot_out = FALSE, loot_in = FALSE;
-	char qbuf[BUFSZ], emptymsg[BUFSZ], pbuf[QBUFSZ];
+	char qbuf[BUFSZ], emptymsg[BUFSZ];
 	long loss = 0L;
 	int cnt = 0, used = 0,
 	    menu_on_request;
@@ -1790,7 +1790,7 @@ int use_container(struct obj *obj, int held)
 		loot_out = (t & 0x01) != 0;
 		loot_in  = (t & 0x02) != 0;
 	    } else {	/* MENU_PARTIAL */
-		loot_out = (yn_function(qbuf, "ynq", 'n') == 'y');
+		loot_out = (yn_function(qbuf, ynqchars, 'n') == 'y');
 	    }
 	    
 	    if (loot_out) {
@@ -1813,9 +1813,8 @@ int use_container(struct obj *obj, int held)
 	}
 	if (flags.menu_style != MENU_FULL) {
 	    sprintf(qbuf, "Do you wish to put something in?");
-	    strcpy(pbuf, ynqchars);
 
-	    switch (yn_function(qbuf, pbuf, 'n')) {
+	    switch (yn_function(qbuf, ynqchars, 'n')) {
 		case 'y':
 		    loot_in = TRUE;
 		    break;

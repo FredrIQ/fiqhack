@@ -768,7 +768,7 @@ int dowhatdoes(void)
 	char bufr[BUFSZ];
 	char q, *reslt;
 
-	q = yn_function("What command?", NULL, '\0');
+	q = query_key("What command?", NULL);
 
 	reslt = dowhatdoes_core(q, bufr);
 	if (reslt)

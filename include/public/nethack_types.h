@@ -446,11 +446,11 @@ struct window_procs {
     char (*win_message_menu)(char,int,const char *);
     void (*win_update_inventory)(void);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
-    void (*win_raw_print)(const char *);
-    int (*win_nhgetch)(void);
+    void (*win_raw_print)(const char *str);
+    char (*win_query_key)(const char *query, int *count);
     int (*win_getpos)(int *, int *, boolean, const char*);
     enum nh_direction (*win_getdir)(const char *, boolean);
-    char (*win_yn_function)(const char *, const char *, char);
+    char (*win_yn_function)(const char *query, const char *rset, char defchoice);
     void (*win_getlin)(const char *,char *);
     void (*win_delay_output)(void);
     void (*win_level_changed)(int displaymode);

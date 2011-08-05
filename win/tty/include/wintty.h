@@ -270,6 +270,7 @@ extern void tty_print_glyph(xchar,xchar,struct nh_dbuf_entry *dbe);
 extern void tty_raw_print(const char *);
 extern void tty_raw_print_bold(const char *);
 extern int tty_nhgetch(void);
+extern char tty_query_key(const char *query, int *count);
 extern int tty_getpos(int *, int *, boolean, const char*);
 enum nh_direction tty_getdir(const char *, boolean);
 extern void tty_nhbell(void);
