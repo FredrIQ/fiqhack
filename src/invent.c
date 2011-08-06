@@ -851,6 +851,8 @@ struct obj *getobj(const char *let, const char *word)
 		    if (cnt == 0)
 			prezero = TRUE; /* cnt was explicitly set to 0 */
 		}
+		if (cnt == -1)
+		    cnt = 0;
 		
 		if (digit(ilet)) {
 			pline("No count allowed with this command.");
