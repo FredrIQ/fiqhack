@@ -108,19 +108,19 @@ boolean allow_all(struct obj *obj)
 boolean allow_category(struct obj *obj)
 {
     if (Role_if (PM_PRIEST)) obj->bknown = TRUE;
-    if (((index(valid_menu_classes,'u') != NULL) && obj->unpaid) ||
-	(index(valid_menu_classes, obj->oclass) != NULL))
+    if (((strchr(valid_menu_classes,'u') != NULL) && obj->unpaid) ||
+	(strchr(valid_menu_classes, obj->oclass) != NULL))
 	return TRUE;
-    else if (((index(valid_menu_classes,'U') != NULL) &&
+    else if (((strchr(valid_menu_classes,'U') != NULL) &&
 	(obj->oclass != COIN_CLASS && obj->bknown && !obj->blessed && !obj->cursed)))
 	return TRUE;
-    else if (((index(valid_menu_classes,'B') != NULL) &&
+    else if (((strchr(valid_menu_classes,'B') != NULL) &&
 	(obj->oclass != COIN_CLASS && obj->bknown && obj->blessed)))
 	return TRUE;
-    else if (((index(valid_menu_classes,'C') != NULL) &&
+    else if (((strchr(valid_menu_classes,'C') != NULL) &&
 	(obj->oclass != COIN_CLASS && obj->bknown && obj->cursed)))
 	return TRUE;
-    else if (((index(valid_menu_classes,'X') != NULL) &&
+    else if (((strchr(valid_menu_classes,'X') != NULL) &&
 	(obj->oclass != COIN_CLASS && !obj->bknown)))
 	return TRUE;
     else
@@ -133,7 +133,7 @@ boolean is_worn_by_type(struct obj *otmp)
 {
 	return((boolean)(!!(otmp->owornmask &
 			(W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP | W_QUIVER)))
-	        && (index(valid_menu_classes, otmp->oclass) != NULL));
+	        && (strchr(valid_menu_classes, otmp->oclass) != NULL));
 }
 
 /*
@@ -307,9 +307,9 @@ static int autopick(struct obj *olist,	/* the object list */
 
 
 #ifndef AUTOPICKUP_EXCEPTIONS
-	    if (!*otypes || index(otypes, curr->oclass))
+	    if (!*otypes || strchr(otypes, curr->oclass))
 #else
-	    if ((!*otypes || index(otypes, curr->oclass) ||
+	    if ((!*otypes || strchr(otypes, curr->oclass) ||
 		 is_autopickup_exception(curr, TRUE)) &&
 	    	 !is_autopickup_exception(curr, FALSE))
 #endif
@@ -319,9 +319,9 @@ static int autopick(struct obj *olist,	/* the object list */
 	    *pick_list = pi = malloc(sizeof(struct object_pick) * n);
 	    for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
 #ifndef AUTOPICKUP_EXCEPTIONS
-		if (!*otypes || index(otypes, curr->oclass)) {
+		if (!*otypes || strchr(otypes, curr->oclass)) {
 #else
-	    if ((!*otypes || index(otypes, curr->oclass) ||
+	    if ((!*otypes || strchr(otypes, curr->oclass) ||
 		 is_autopickup_exception(curr, TRUE)) &&
 	    	 !is_autopickup_exception(curr, FALSE)) {
 #endif
@@ -1053,7 +1053,7 @@ struct obj *pick_obj(struct obj *otmp)
 	    addtobill(otmp, TRUE, FALSE, FALSE);
 	    strcpy(u.ushops, saveushops);
 	    /* if you're outside the shop, make shk notice */
-	    if (!index(u.ushops, *fakeshop))
+	    if (!strchr(u.ushops, *fakeshop))
 		remote_burglary(otmp->ox, otmp->oy);
 	}
 	if (otmp->no_charge)	/* only applies to objects outside invent */

@@ -365,10 +365,10 @@ static void read_config_line(char* line)
 	char *comment, *delim, *name, *value;
 	union nh_optvalue optval;
 
-	comment = index(line, '#');
+	comment = strchr(line, '#');
 	if (comment)
 	    comment = '\0';
-	delim = index(line, '=');
+	delim = strchr(line, '=');
 	if (!delim)
 	    return; /* could whine about junk chars in the config, but why bother */
 	
@@ -610,7 +610,7 @@ void add_menu_cmd_alias(char from_ch, char to_ch)
  */
 char map_menu_cmd(char ch)
 {
-    char *found = index(mapped_menu_cmds, ch);
+    char *found = strchr(mapped_menu_cmds, ch);
     if (found) {
 	int idx = found - mapped_menu_cmds;
 	ch = mapped_menu_op[idx];

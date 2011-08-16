@@ -423,7 +423,7 @@ void scan_map(char *map)
 	/* Second, find the max width of the map */
 	s1 = map;
 	while (s1 && *s1) {
-		s2 = index(s1, '\n');
+		s2 = strchr(s1, '\n');
 		if (s2) {
 			len = (int) (s2 - s1);
 			s1 = s2 + 1;
@@ -437,7 +437,7 @@ void scan_map(char *map)
 	/* Then parse it now */
 	while (map && *map) {
 		tmpmap[max_hig] = malloc(max_len);
-		s1 = index(map, '\n');
+		s1 = strchr(map, '\n');
 		if (s1) {
 			len = (int) (s1 - map);
 			s1++;

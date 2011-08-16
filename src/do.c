@@ -1186,7 +1186,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		mesg = halu_fam_msgs[which];
 	    else
 		mesg = fam_msgs[which];
-	    if (mesg && index(mesg, '%')) {
+	    if (mesg && strchr(mesg, '%')) {
 		sprintf(buf, mesg, !Blind ? "looks" : "seems");
 		mesg = buf;
 	    }

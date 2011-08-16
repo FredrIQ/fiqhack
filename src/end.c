@@ -193,7 +193,7 @@ void panic(const char *str, ...)
 static boolean should_query_disclose_option(int category, char *defquery)
 {
     int idx;
-    char *dop = index(disclosure_options, category);
+    char *dop = strchr(disclosure_options, category);
 
     if (dop && defquery) {
 	idx = dop - disclosure_options;

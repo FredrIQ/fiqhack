@@ -115,7 +115,7 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 			dlb_fseek(rumors, beginning, SEEK_SET);
 			d = dlb_fgets(line, sizeof line, rumors);
 		}
-		if ((endp = index(line, '\n')) != 0) *endp = 0;
+		if ((endp = strchr(line, '\n')) != 0) *endp = 0;
 		strcat(rumor_buf, xcrypt(line, xbuf));
 	    } while (count++ < 50 && exclude_cookie && (strstri(rumor_buf, "fortune") || strstri(rumor_buf, "pity")));
 	    dlb_fclose(rumors);
@@ -260,7 +260,7 @@ void outoracle(boolean special, boolean delphi)
 		add_menutext(&menu, "");
 
 		while (dlb_fgets(line, COLNO, oracles) && strcmp(line,"---\n")) {
-			if ((endp = index(line, '\n')) != 0) *endp = 0;
+			if ((endp = strchr(line, '\n')) != 0) *endp = 0;
 			add_menutext(&menu, xcrypt(line, xbuf));
 		}
 		display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);

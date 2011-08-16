@@ -1465,7 +1465,7 @@ static boolean monstinroom(const struct permonst *mdat, int roomno)
 
 	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
 		if (!DEADMONSTER(mtmp) && mtmp->data == mdat &&
-		   index(in_rooms(mtmp->mx, mtmp->my, 0), roomno + ROOMOFFSET))
+		   strchr(in_rooms(mtmp->mx, mtmp->my, 0), roomno + ROOMOFFSET))
 			return TRUE;
 	return FALSE;
 }
@@ -1517,19 +1517,19 @@ char * in_rooms(xchar x, xchar y, int typewanted)
 		lev = &level.locations[x][min_y];
 		y = 0;
 		if (((rno = lev[y].roomno) >= ROOMOFFSET) &&
-		    !index(ptr, rno) && goodtype(rno))
+		    !strchr(ptr, rno) && goodtype(rno))
 			*(--ptr) = rno;
 		y += step;
 		if (y > max_y_offset)
 			continue;
 		if (((rno = lev[y].roomno) >= ROOMOFFSET) &&
-		    !index(ptr, rno) && goodtype(rno))
+		    !strchr(ptr, rno) && goodtype(rno))
 			*(--ptr) = rno;
 		y += step;
 		if (y > max_y_offset)
 			continue;
 		if (((rno = lev[y].roomno) >= ROOMOFFSET) &&
-		    !index(ptr, rno) && goodtype(rno))
+		    !strchr(ptr, rno) && goodtype(rno))
 			*(--ptr) = rno;
 	}
 	return ptr;
@@ -1579,11 +1579,11 @@ static void move_update(boolean newlev)
 	     ptr3 = &u.ushops[0],
 	     ptr4 = &u.ushops_entered[0];
 	     *ptr1; ptr1++) {
-		if (!index(u.urooms0, *ptr1))
+		if (!strchr(u.urooms0, *ptr1))
 			*(ptr2++) = *ptr1;
 		if (IS_SHOP(*ptr1 - ROOMOFFSET)) {
 			*(ptr3++) = *ptr1;
-			if (!index(u.ushops0, *ptr1))
+			if (!strchr(u.ushops0, *ptr1))
 				*(ptr4++) = *ptr1;
 		}
 	}
@@ -1593,7 +1593,7 @@ static void move_update(boolean newlev)
 
 	/* filter u.ushops0 -> u.ushops_left */
 	for (ptr1 = &u.ushops0[0], ptr2 = &u.ushops_left[0]; *ptr1; ptr1++)
-		if (!index(u.ushops, *ptr1))
+		if (!strchr(u.ushops, *ptr1))
 			*(ptr2++) = *ptr1;
 	*ptr2 = '\0';
 }

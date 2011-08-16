@@ -703,7 +703,7 @@ const char *roguename(void) /* Name of a Rogue player */
 		for (i = opts; *i; i++)
 			if (!strncmp("name=",i,5)) {
 				char *j;
-				if ((j = index(i+5,',')) != 0)
+				if ((j = strchr(i+5,',')) != 0)
 					*j = (char)0;
 				return i+5;
 			}

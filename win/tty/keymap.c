@@ -154,7 +154,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 		    if (key2 == '\033') /* cancel silently */
 			continue;
 		    
-		    dp = index(dirs, key2);
+		    dp = strchr(dirs, key2);
 		    if (dp) {
 			arg->argtype = CMD_ARG_DIR;
 			arg->d = (enum nh_direction)(dp-dirs);

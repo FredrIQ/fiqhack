@@ -97,7 +97,7 @@ boolean is_edible(struct obj *obj)
 	    !Has_contents(obj))
 		return TRUE;
 
-     /* return (boolean)(!!index(comestibles, obj->oclass)); */
+     /* return (boolean)(!!strchr(comestibles, obj->oclass)); */
 	return (boolean)(obj->oclass == FOOD_CLASS);
 }
 

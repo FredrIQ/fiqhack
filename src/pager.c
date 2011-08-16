@@ -486,7 +486,7 @@ static void checkfile(const char *inp, struct permonst *pm, boolean user_typed_n
 		/* a number indicates the end of current entry */
 		skipping_entry = FALSE;
 	    } else if (!skipping_entry) {
-		if (!(ep = index(buf, '\n'))) goto bad_data_file;
+		if (!(ep = strchr(buf, '\n'))) goto bad_data_file;
 		*ep = 0;
 		/* if we match a key that begins with "~", skip this entry */
 		chk_skip = (*buf == '~') ? 1 : 0;
@@ -534,9 +534,9 @@ bad_data_file:	impossible("'data' file in wrong format");
 	    for (i = 0; i < entry_count; i++) {
 		if (!dlb_fgets(buf, BUFSZ, fp))
 		    goto bad_data_file;
-		if ((ep = index(buf, '\n')) != 0)
+		if ((ep = strchr(buf, '\n')) != 0)
 		    *ep = 0;
-		if (index(buf+1, '\t') != 0)
+		if (strchr(buf+1, '\t') != 0)
 		    tabexpand(buf+1);
 		add_menutext(&menu, buf+1);
 	    }
@@ -739,7 +739,7 @@ char *dowhatdoes_core(char q, char *cbuf)
 	    if ((ctrl && *buf=='^' && *(buf+1)==ctrl) ||
 		(meta && *buf=='M' && *(buf+1)=='-' && *(buf+2)==meta) ||
 		*buf==q) {
-		ep = index(buf, '\n');
+		ep = strchr(buf, '\n');
 		if (ep) *ep = 0;
 		if (ctrl && buf[2] == '\t'){
 			buf = bufr + 1;

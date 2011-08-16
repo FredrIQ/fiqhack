@@ -524,7 +524,7 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 		    int oc_sym = def_char_to_objclass(*op);
 		    /* make sure all are valid obj symbols occuring once */
 		    if (oc_sym != MAXOCLASSES &&
-			!index(flags.pickup_types, oc_sym)) {
+			!strchr(flags.pickup_types, oc_sym)) {
 			flags.pickup_types[num] = (char)oc_sym;
 			flags.pickup_types[++num] = '\0';
 		    } else
@@ -762,7 +762,7 @@ static int change_inv_order(char *op)
 
     num = 0;
 #ifndef GOLDOBJ
-    if (!index(op, GOLD_SYM))
+    if (!strchr(op, GOLD_SYM))
 	buf[num++] = COIN_CLASS;
 #else
     /*  !!!! probably unnecessary with gold as normal inventory */
@@ -773,7 +773,7 @@ static int change_inv_order(char *op)
 	/* reject bad or duplicate entries */
 	if (oc_sym == MAXOCLASSES ||
 		oc_sym == RANDOM_CLASS || oc_sym == ILLOBJ_CLASS ||
-		!index(flags.inv_order, oc_sym) || index(sp+1, *sp))
+		!strchr(flags.inv_order, oc_sym) || index(sp+1, *sp))
 	    return 0;
 	/* retain good ones */
 	buf[num++] = (char) oc_sym;
@@ -782,9 +782,9 @@ static int change_inv_order(char *op)
 
     /* fill in any omitted classes, using previous ordering */
     for (sp = flags.inv_order; *sp; sp++)
-	if (!index(buf, *sp)) {
+	if (!strchr(buf, *sp)) {
 	    buf[num++] = *sp;
-	    buf[num] = '\0';	/* explicitly terminate for next index() */
+	    buf[num] = '\0';	/* explicitly terminate for next strchr() */
 	}
 
     strcpy(flags.inv_order, buf);

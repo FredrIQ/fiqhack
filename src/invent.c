@@ -726,7 +726,7 @@ struct obj *getobj(const char *let, const char *word)
 		if (otmp->invlet != GOLD_SYM) /* don't reassign this */
 #endif
 		otmp->invlet = ilet;	/* reassign() */
-	    if (!*let || index(let, otmp->oclass)
+	    if (!*let || strchr(let, otmp->oclass)
 #ifdef GOLDOBJ
 		|| (usegold && otmp->invlet == GOLD_SYM)
 #endif
@@ -858,7 +858,7 @@ struct obj *getobj(const char *let, const char *word)
 			pline("No count allowed with this command.");
 			continue;
 		}
-		if (index(quitchars,ilet)) {
+		if (strchr(quitchars,ilet)) {
 		    if (flags.verbose)
 			pline("Never mind.");
 		    return NULL;
@@ -949,7 +949,7 @@ struct obj *getobj(const char *let, const char *word)
 		}
 		break;
 	}
-	if (!allowall && let && !index(let,otmp->oclass)
+	if (!allowall && let && !strchr(let,otmp->oclass)
 #ifdef GOLDOBJ
 	   && !(usegold && otmp->oclass == COIN_CLASS)
 #endif
@@ -1270,7 +1270,7 @@ nextclass:
 	classcount = 0;
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    ilet = otmp->invlet;
-	    if (!lets || !*lets || index(lets, ilet)) {
+	    if (!lets || !*lets || strchr(lets, ilet)) {
 		if (!flags.sortpack || otmp->oclass == *invlet) {
 		    if (flags.sortpack && !classcount) {
 			add_objitem(&items, &nr_items, cur_entry++, 0,
@@ -1956,7 +1956,7 @@ void useupf(struct obj *obj, long numused)
 	else
 		otmp = obj;
 	if (costly_spot(otmp->ox, otmp->oy)) {
-	    if (index(u.urooms, *in_rooms(otmp->ox, otmp->oy, 0)))
+	    if (strchr(u.urooms, *in_rooms(otmp->ox, otmp->oy, 0)))
 	        addtobill(otmp, FALSE, FALSE, FALSE);
 	    else stolen_value(otmp, otmp->ox, otmp->oy, FALSE, FALSE);
 	}
@@ -1999,7 +1999,7 @@ char *let_to_name(char let, boolean unpaid)
 
 	if (oclass)
 	    class_name = names[oclass];
-	else if ((pos = index(oth_symbols, let)) != 0)
+	else if ((pos = strchr(oth_symbols, let)) != 0)
 	    class_name = oth_names[pos - oth_symbols];
 	else
 	    class_name = names[0];
@@ -2074,7 +2074,7 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	for (;;) {
 		sprintf(qbuf, "Adjust letter to what [%s]?",buf);
 		let = query_key(qbuf, NULL);
-		if (index(quitchars,let)) {
+		if (strchr(quitchars,let)) {
 			pline("Never mind.");
 			return 0;
 		}

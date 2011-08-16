@@ -264,7 +264,7 @@ char *xname(struct obj *obj)
 		/* it whenever calling doname() or xname(). */
 		if (typ == FIGURINE)
 		    sprintf(eos(buf), " of a%s %s",
-			index(vowels,*(mons[obj->corpsenm].mname)) ? "n" : "",
+			strchr(vowels,*(mons[obj->corpsenm].mname)) ? "n" : "",
 			mons[obj->corpsenm].mname);
 		break;
 	    case ARMOR_CLASS:
@@ -340,7 +340,7 @@ char *xname(struct obj *obj)
 			actualn,
 			type_is_pname(&mons[obj->corpsenm]) ? "" :
 			  (mons[obj->corpsenm].geno & G_UNIQ) ? "the " :
-			    (index(vowels,*(mons[obj->corpsenm].mname)) ?
+			    (strchr(vowels,*(mons[obj->corpsenm].mname)) ?
 								"an " : "a "),
 			mons[obj->corpsenm].mname);
 		else strcpy(buf, actualn);
@@ -725,7 +725,7 @@ ring:
 			quotedprice, currency(quotedprice));
 	}
 	if (!strncmp(prefix, "a ", 2) &&
-			index(vowels, *(prefix+2) ? *(prefix+2) : *bp)
+			strchr(vowels, *(prefix+2) ? *(prefix+2) : *bp)
 			&& (*(prefix+2) || (strncmp(bp, "uranium", 7)
 				&& strncmp(bp, "unicorn", 7)
 				&& strncmp(bp, "eucalyptus", 10)))) {
@@ -857,7 +857,7 @@ char *an(const char *str)
 	    strcmp(str, "molten lava") &&
 	    strcmp(str, "iron bars") &&
 	    strcmp(str, "ice")) {
-		if (index(vowels, *str) &&
+		if (strchr(vowels, *str) &&
 		    strncmp(str, "one-", 4) &&
 		    strncmp(str, "useful", 6) &&
 		    strncmp(str, "unicorn", 7) &&
@@ -901,10 +901,10 @@ char *the(const char *str)
 	    int l;
 
 	    /* some objects have capitalized adjectives in their names */
-	    if (((tmp = rindex(str, ' ')) || (tmp = rindex(str, '-'))) &&
+	    if (((tmp = strrchr(str, ' ')) || (tmp = strrchr(str, '-'))) &&
 	       (tmp[1] < 'A' || tmp[1] > 'Z'))
 		insert_the = TRUE;
-	    else if (tmp && index(str, ' ') < tmp) {	/* has spaces */
+	    else if (tmp && strchr(str, ' ') < tmp) {	/* has spaces */
 		/* it needs an article if the name contains "of" */
 		tmp = strstri(str, " of ");
 		named = strstri(str, " named ");
@@ -1018,7 +1018,7 @@ char *vtense(const char *subj, const char *verb)
 	    if (!strncmpi(subj, "a ", 2) || !strncmpi(subj, "an ", 3))
 		goto sing;
 	    spot = NULL;
-	    for (sp = subj; (sp = index(sp, ' ')) != 0; ++sp) {
+	    for (sp = subj; (sp = strchr(sp, ' ')) != 0; ++sp) {
 		if (!strncmp(sp, " of ", 4) ||
 		    !strncmp(sp, " from ", 6) ||
 		    !strncmp(sp, " called ", 8) ||
@@ -1070,13 +1070,13 @@ char *vtense(const char *subj, const char *verb)
 	    strcpy(buf, "is");
 	else if (!strcmp(verb, "have"))
 	    strcpy(buf, "has");
-	else if (index("zxs", *spot) ||
-		 (len >= 2 && *spot=='h' && index("cs", *(spot-1))) ||
+	else if (strchr("zxs", *spot) ||
+		 (len >= 2 && *spot=='h' && strchr("cs", *(spot-1))) ||
 		 (len == 2 && *spot == 'o')) {
 	    /* Ends in z, x, s, ch, sh; add an "es" */
 	    strcpy(buf, verb);
 	    strcat(buf, "es");
-	} else if (*spot == 'y' && (!index(vowels, *(spot-1)))) {
+	} else if (*spot == 'y' && (!strchr(vowels, *(spot-1)))) {
 	    /* like "y" case in makeplural */
 	    strcpy(buf, verb);
 	    strcpy(buf + len - 1, "ies");
@@ -1258,7 +1258,7 @@ char *makeplural(const char *oldstr)
 		strcpy(spot-1, "ves");
 		goto bottom;
 	} else if (*spot == 'f') {
-		if (index("lr", *(spot-1)) || index(vowels, *(spot-1))) {
+		if (strchr("lr", *(spot-1)) || index(vowels, *(spot-1))) {
 			strcpy(spot, "ves");
 			goto bottom;
 		} else if (len >= 5 && !strncmp(spot-4, "staf", 4)) {
@@ -1328,7 +1328,7 @@ char *makeplural(const char *oldstr)
 	}
 
 	/* mouse/mice,louse/lice (not a monster, but possible in food names) */
-	if (len >= 5 && !strcmp(spot-3, "ouse") && index("MmLl", *(spot-4))) {
+	if (len >= 5 && !strcmp(spot-3, "ouse") && strchr("MmLl", *(spot-4))) {
 		strcpy(spot-3, "ice");
 		goto bottom;
 	}
@@ -1355,8 +1355,8 @@ char *makeplural(const char *oldstr)
 	/* note: ox/oxen, VAX/VAXen, goose/geese */
 
 	/* Ends in z, x, s, ch, sh; add an "es" */
-	if (index("zxs", *spot)
-			|| (len >= 2 && *spot=='h' && index("cs", *(spot-1)))
+	if (strchr("zxs", *spot)
+			|| (len >= 2 && *spot=='h' && strchr("cs", *(spot-1)))
 	/* Kludge to get "tomatoes" and "potatoes" right */
 			|| (len >= 4 && !strcmp(spot-2, "ato"))) {
 		strcpy(spot+1, "es");
@@ -1365,7 +1365,7 @@ char *makeplural(const char *oldstr)
 
 	/* Ends in y preceded by consonant (note: also "qu") change to "ies" */
 	if (*spot == 'y' &&
-	    (!index(vowels, *(spot-1)))) {
+	    (!strchr(vowels, *(spot-1)))) {
 		strcpy(spot, "ies");
 		goto bottom;
 	}
@@ -1764,7 +1764,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 	}
 	if (!cnt) cnt = 1;		/* %% what with "gems" etc. ? */
 	if (strlen(bp) > 1) {
-	    if ((p = rindex(bp, '(')) != 0) {
+	    if ((p = strrchr(bp, '(')) != 0) {
 		if (p > bp && p[-1] == ' ') p[-1] = 0;
 		else *p = 0;
 		p++;

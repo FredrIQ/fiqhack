@@ -110,7 +110,7 @@ void regularize(char *s)
 {
 	char *lp;
 #ifdef UNIX
-	while ((lp=index(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
+	while ((lp=strchr(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
 		*lp = '_';
 #else
 # ifdef WIN32
@@ -163,7 +163,7 @@ char *fname_encode(const char *legal, char quotechar, char *s,
 			sprintf(op, "%c%02X", quotechar, *sp);
 			 op += 3;
 			 cnt += 3;
-		} else if ((index(legal, *sp) != 0) || (index(hexdigits, *sp) != 0)) {
+		} else if ((strchr(legal, *sp) != 0) || (index(hexdigits, *sp) != 0)) {
 			*op++ = *sp;
 			*op = '\0';
 			cnt++;
@@ -305,7 +305,7 @@ void set_levelfile_name(char *file, int lev)
 {
 	char *tf;
 
-	tf = rindex(file, '.');
+	tf = strrchr(file, '.');
 	if (!tf) tf = eos(file);
 	sprintf(tf, ".%d", lev);
 	return;
@@ -488,7 +488,7 @@ static char *set_bonestemp_name(void)
 {
 	char *tf;
 
-	tf = rindex(lock, '.');
+	tf = strrchr(lock, '.');
 	if (!tf) tf = eos(lock);
 	sprintf(tf, ".bn");
 	return lock;

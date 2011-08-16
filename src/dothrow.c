@@ -970,7 +970,7 @@ void throwit(struct obj *obj,
 		/* [perhaps this should be moved into thitmonst or hmon] */
 		if (mon && mon->isshk &&
 			(!inside_shop(u.ux, u.uy) ||
-			 !index(in_rooms(mon->mx, mon->my, SHOPBASE), *u.ushops)))
+			 !strchr(in_rooms(mon->mx, mon->my, SHOPBASE), *u.ushops)))
 		    hot_pursuit(mon);
 
 		if (obj_gone) return;

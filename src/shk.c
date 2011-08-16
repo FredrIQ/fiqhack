@@ -185,7 +185,7 @@ void shkgone(struct monst *mtmp)
 
 	    /* Make sure bill is set only when the
 	       dead shk is the resident shk. */
-	    if ((p = index(u.ushops, eshk->shoproom)) != 0) {
+	    if ((p = strchr(u.ushops, eshk->shoproom)) != 0) {
 		setpaid(mtmp);
 		eshk->bill_p = NULL;
 		/* remove eshk->shoproom from u.ushops */
@@ -459,7 +459,7 @@ void u_entered_shop(char *enterstring)
 		return;
 
 	if (!(shkp = shop_keeper(*enterstring))) {
-	    if (!index(empty_shops, *enterstring) &&
+	    if (!strchr(empty_shops, *enterstring) &&
 		in_rooms(u.ux, u.uy, SHOPBASE) !=
 				  in_rooms(u.ux0, u.uy0, SHOPBASE))
 		pline(no_shk);
@@ -473,7 +473,7 @@ void u_entered_shop(char *enterstring)
 	if (!inhishop(shkp)) {
 	    /* dump core when referenced */
 	    eshkp->bill_p = (struct bill_x *) -1000;
-	    if (!index(empty_shops, *enterstring))
+	    if (!strchr(empty_shops, *enterstring))
 		pline(no_shk);
 	    strcpy(empty_shops, u.ushops);
 	    u.ushops[0] = '\0';
@@ -644,7 +644,7 @@ void shopper_financial_report(void)
 
 int inhishop(struct monst *mtmp)
 {
-	return(index(in_rooms(mtmp->mx, mtmp->my, SHOPBASE),
+	return(strchr(in_rooms(mtmp->mx, mtmp->my, SHOPBASE),
 		     ESHK(mtmp)->shoproom) &&
 		on_level(&(ESHK(mtmp)->shoplevel), &u.uz));
 }
@@ -2746,7 +2746,7 @@ static void remove_damage(struct monst *shkp, boolean croaked)
 
 	    disposition = 0;
 	    strcpy(shops, in_rooms(x, y, SHOPBASE));
-	    if (index(shops, ESHK(shkp)->shoproom)) {
+	    if (strchr(shops, ESHK(shkp)->shoproom)) {
 		if (croaked)
 		    disposition = (shops[1])? 0 : 1;
 		else if (stop_picking)

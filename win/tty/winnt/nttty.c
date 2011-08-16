@@ -719,19 +719,19 @@ void map_subkeyvalue(char *op)
 
 	idx = -1;
 	val = -1;
-	kp = index(op, '/');
+	kp = strchr(op, '/');
 	if (kp) {
 		*kp = '\0';
 		kp++;
 		length = strlen(kp);
 		if (length < 1 || length > 3) return;
 		for (i = 0; i < length; i++)
-			if (!index(digits, kp[i])) return;
+			if (!strchr(digits, kp[i])) return;
 		val = atoi(kp);
 		length = strlen(op);
 		if (length < 1 || length > 3) return;
 		for (i = 0; i < length; i++)
-			if (!index(digits, op[i])) return;
+			if (!strchr(digits, op[i])) return;
 		idx = atoi(op);
 	}
 	if (idx >= MAX_OVERRIDES || idx < 0 || val >= MAX_OVERRIDES || val < 1)

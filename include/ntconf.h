@@ -66,10 +66,6 @@ extern void interject(int);
 # endif
 #endif
 
-
-#define NO_SIGNAL
-#define index	strchr
-#define rindex	strrchr
 #include <time.h>
 
 #define regularize	nt_regularize

@@ -120,7 +120,7 @@ int hitval(struct obj *otmp, struct monst *mon)
 	   (is_demon(ptr) || is_undead(ptr))) tmp += 2;
 
 	if (is_spear(otmp) &&
-	   index(kebabable, ptr->mlet)) tmp += 2;
+	   strchr(kebabable, ptr->mlet)) tmp += 2;
 
 	/* trident is highly effective against swimmers */
 	if (otmp->otyp == TRIDENT && is_swimmer(ptr)) {

@@ -1531,7 +1531,7 @@ int dodip(void)
 				    pline("%s %s with a%s %s aura.",
 					  Your_buf,
 					  aobjnam(obj, "softly glow"),
-					  index(vowels, *tmp) ? "n" : "", tmp);
+					  strchr(vowels, *tmp) ? "n" : "", tmp);
 				}
 				bless(obj);
 				obj->bknown=1;
@@ -1553,7 +1553,7 @@ int dodip(void)
 				    pline("%s %s with a%s %s aura.",
 					  Your_buf,
 					  aobjnam(obj, "glow"),
-					  index(vowels, *tmp) ? "n" : "", tmp);
+					  strchr(vowels, *tmp) ? "n" : "", tmp);
 				}
 				curse(obj);
 				obj->bknown=1;

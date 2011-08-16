@@ -375,8 +375,8 @@ boolean fuzzymatch(const char *s1, const char *s2,
     char c1, c2;
 
     do {
-	while ((c1 = *s1++) != '\0' && index(ignore_chars, c1) != 0) continue;
-	while ((c2 = *s2++) != '\0' && index(ignore_chars, c2) != 0) continue;
+	while ((c1 = *s1++) != '\0' && strchr(ignore_chars, c1) != 0) continue;
+	while ((c2 = *s2++) != '\0' && strchr(ignore_chars, c2) != 0) continue;
 	if (!c1 || !c2) break;	/* stop when end of either string is reached */
 
 	if (caseblind) {

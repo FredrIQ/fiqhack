@@ -234,7 +234,7 @@ void update_topl(const char *bp)
 	    for (tl+=CO-1; tl != otl && !isspace(*tl); --tl) ;
 	    if (tl == otl) {
 		/* Eek!  A huge token.  Try splitting after it. */
-		tl = index(otl, ' ');
+		tl = strchr(otl, ' ');
 		if (!tl) break;    /* No choice but to spit it out whole. */
 	    }
 	    *tl++ = '\n';
@@ -320,7 +320,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 
 	strcpy(respbuf, resp);
 	/* any acceptable responses that follow <esc> aren't displayed */
-	if ((rb = index(respbuf, '\033')) != 0)
+	if ((rb = strchr(respbuf, '\033')) != 0)
 	    *rb = '\0';
 	sprintf(prompt, "%s [%s] ", query, respbuf);
 	if (def)
@@ -358,18 +358,18 @@ char tty_yn_function(const char *query, const char *resp, char def)
 		continue;
 	    }
 	    if (q == '\033') {
-		if (index(resp, 'q'))
+		if (strchr(resp, 'q'))
 		    q = 'q';
-		else if (index(resp, 'n'))
+		else if (strchr(resp, 'n'))
 		    q = 'n';
 		else
 		    q = def;
 		break;
-	    } else if (index(quitchars, q)) {
+	    } else if (strchr(quitchars, q)) {
 		q = def;
 		break;
 	    }
-	    if (!index(resp, q)) {
+	    if (!strchr(resp, q)) {
 		tty_nhbell();
 		q = (char)0;
 	    }

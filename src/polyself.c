@@ -1149,7 +1149,7 @@ const char *mbodypart(struct monst *mon, int part)
 		    mptr->mlet == S_YETI)
 		return part == HAND ? "paw" : "pawed";
 	    if (humanoid(mptr) && attacktype(mptr, AT_CLAW) &&
-		    !index(not_claws, mptr->mlet) &&
+		    !strchr(not_claws, mptr->mlet) &&
 		    mptr != &mons[PM_STONE_GOLEM] &&
 		    mptr != &mons[PM_INCUBUS] && mptr != &mons[PM_SUCCUBUS])
 		return part == HAND ? "claw" : "clawed";

@@ -331,7 +331,7 @@ int dodiscovered(void)
 
     /* several classes are omitted from packorder; one is of interest here */
     strcpy(classes, flags.inv_order);
-    if (!index(classes, VENOM_CLASS)) {
+    if (!strchr(classes, VENOM_CLASS)) {
 	s = eos(classes);
 	*s++ = VENOM_CLASS;
 	*s = '\0';

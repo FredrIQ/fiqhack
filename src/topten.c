@@ -349,7 +349,7 @@ static void topten_death_description(struct toptenentry *in, char *outbuf)
 		!strncmp(" (", in->death + 7, 2) ? in->death + 7 + 2 : "",
 		in->maxlvl);
 	/* fixup for closing paren in "escaped... with...Amulet)[max..." */
-	if ((bp = index(outbuf, ')')) != 0)
+	if ((bp = strchr(outbuf, ')')) != 0)
 	    *bp = (in->deathdnum == astral_level.dnum) ? '\0' : ' ';
 	second_line = FALSE;
     } else if (!strncmp("ascended", in->death, 8)) {

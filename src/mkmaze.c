@@ -450,7 +450,7 @@ static void fixup_special(void)
 
     if (lev_message) {
 	char *str, *nl;
-	for (str = lev_message; (nl = index(str, '\n')) != 0; str = nl+1) {
+	for (str = lev_message; (nl = strchr(str, '\n')) != 0; str = nl+1) {
 	    *nl = '\0';
 	    pline("%s", str);
 	}
@@ -496,7 +496,7 @@ void makemaz(const char *s)
 	    char *ep = getenv("SPLEVTYPE");	/* not nh_getenv */
 	    if (ep) {
 		/* rindex always succeeds due to code in prior block */
-		int len = (rindex(protofile, '-') - protofile) + 1;
+		int len = (strrchr(protofile, '-') - protofile) + 1;
 
 		while (ep && *ep) {
 		    if (!strncmp(ep, protofile, len)) {
@@ -506,7 +506,7 @@ void makemaz(const char *s)
 			    sprintf(protofile + len, "%d", pick);
 			break;
 		    } else {
-			ep = index(ep, ',');
+			ep = strchr(ep, ',');
 			if (ep) ++ep;
 		    }
 		}

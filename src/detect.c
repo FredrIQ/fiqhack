@@ -811,7 +811,7 @@ void use_crystal_ball(struct obj *obj)
     if (flags.verbose) You("may look for an object or monster symbol.");
     ch = query_key("What do you look for?", NULL);
     /* Don't filter out ' ' here; it has a use */
-    if ((ch != def_monsyms[S_GHOST]) && index(quitchars,ch)) { 
+    if ((ch != def_monsyms[S_GHOST]) && strchr(quitchars,ch)) { 
 	if (flags.verbose) pline("Never mind.");
 	return;
     }

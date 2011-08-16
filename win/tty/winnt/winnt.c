@@ -110,7 +110,7 @@ void chdrive(char *str)
 {
 	char *ptr;
 	char drive;
-	if ((ptr = index(str, ':')) != NULL) 
+	if ((ptr = strchr(str, ':')) != NULL) 
 	{
 		drive = toupper(*(ptr - 1));
 		_chdrive((drive - 'A') + 1);

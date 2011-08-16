@@ -89,7 +89,7 @@ void wipeout_text(char *engr,
 		if (*s == ' ') continue;
 
 		/* rub out unreadable & small punctuation marks */
-		if (index("?.,'`-|_", *s)) {
+		if (strchr("?.,'`-|_", *s)) {
 		    *s = ' ';
 		    continue;
 		}
@@ -925,7 +925,7 @@ int doengrave(void)
 	len = strlen(ebuf);
 	for (sp = ebuf; *sp; sp++) if (isspace(*sp)) len -= 1;
 
-	if (len == 0 || index(ebuf, '\033')) {
+	if (len == 0 || strchr(ebuf, '\033')) {
 	    if (zapwand) {
 		if (!Blind)
 		    pline("%s, then %s.",
@@ -938,7 +938,7 @@ int doengrave(void)
 	}
 
 	/* A single `x' is the traditional signature of an illiterate person */
-	if (len != 1 || (!index(ebuf, 'x') && !index(ebuf, 'X')))
+	if (len != 1 || (!strchr(ebuf, 'x') && !index(ebuf, 'X')))
 	    u.uconduct.literate++;
 
 	/* Mix up engraving if surface or state of mind is unsound.

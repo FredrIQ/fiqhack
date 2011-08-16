@@ -206,7 +206,7 @@ void tty_init_nhwindows(void)
     /* detect whether a "vt" terminal can handle alternate charsets */
     if ((opts = getenv("TERM")) &&
 	!strncmp(opts, "vt", 2) && AS && AE &&
-	index(AS, '\016') && index(AE, '\017')) {
+	strchr(AS, '\016') && index(AE, '\017')) {
 	    switch_graphics(DEC_GRAPHICS);
     }
 }
@@ -240,8 +240,8 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    tty_raw_print(prompt);
 	    do {
 		pick4u = tolower(tty_nhgetch());
-		if (index(quitchars, pick4u)) pick4u = 'y';
-	    } while (!index("ynq", pick4u));
+		if (strchr(quitchars, pick4u)) pick4u = 'y';
+	    } while (!strchr("ynq", pick4u));
 	    if ((int)strlen(prompt) + 1 < CO) {
 		/* Echo choice and move back down line */
 		putchar(pick4u);
@@ -955,11 +955,11 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 
 	if (n > 0)	/* at least one group accelerator found */
 	    for (rp = gacc, curr = cw->mlist; curr; curr = curr->next)
-		if (curr->gselector && !index(gacc, curr->gselector) &&
+		if (curr->gselector && !strchr(gacc, curr->gselector) &&
 			(cw->how == PICK_ANY ||
 			    gcnt[GSELIDX(curr->gselector)] == 1)) {
 		    *rp++ = curr->gselector;
-		    *rp = '\0';	/* re-terminate for index() */
+		    *rp = '\0';	/* re-terminate for strchr() */
 		}
     }
 
@@ -1069,7 +1069,7 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 	switch (morc) {
 	    case '0':
 		/* special case: '0' is also the default ball class */
-		if (!counting && index(gacc, morc)) goto group_accel;
+		if (!counting && strchr(gacc, morc)) goto group_accel;
 		/* fall through to count the zero */
 	    case '1': case '2': case '3': case '4':
 	    case '5': case '6': case '7': case '8': case '9':
@@ -1170,11 +1170,11 @@ static void process_menu_window(winid window, struct WinDesc *cw)
 		    invert_all(window, page_start, page_end, 0);
 		break;
 	    default:
-		if (cw->how == PICK_NONE || !index(resp, morc)) {
+		if (cw->how == PICK_NONE || !strchr(resp, morc)) {
 		    /* unacceptable input received */
 		    tty_nhbell();
 		    break;
-		} else if (index(gacc, morc)) {
+		} else if (strchr(gacc, morc)) {
  group_accel:
 		    /* group accelerator; for the PICK_ONE case, we know that
 		       it matches exactly one item in order to be in gacc[] */
@@ -1565,7 +1565,7 @@ void tty_putstr(winid window, int attr, const char *str)
 	*ob = 0;
 	if (!cw->cury && strlen(str) >= CO) {
 	    /* the characters before "St:" are unnecessary */
-	    nb = index(str, ':');
+	    nb = strchr(str, ':');
 	    if (nb && nb > str+2)
 		str = nb - 2;
 	}
@@ -1714,7 +1714,7 @@ void tty_display_buffer(char *buf, boolean trymove)
 	line = strtok(buf, "\n");
 	do {
 	    strncpy(linebuf, line, BUFSZ);
-	    if (index(linebuf, '\t') != 0)
+	    if (strchr(linebuf, '\t') != 0)
 		tabexpand(linebuf);
 	    empty = FALSE;
 	    tty_putstr(datawin, 0, linebuf);
@@ -2366,7 +2366,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 	    break;
 	}
 	
-	if ((cp = index(pick_chars, c)) != 0) {
+	if ((cp = strchr(pick_chars, c)) != 0) {
 	    /* '.' => 0, ',' => 1, ';' => 2, ':' => 3 */
 	    result = cp - pick_chars;
 	    break;
@@ -2408,7 +2408,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 	if (c == '?'){
 	    getpos_help(force, goal);
 	} else {
-	    if (!index(quitchars, c)) {
+	    if (!strchr(quitchars, c)) {
 		matching = malloc(default_drawing->num_bgelements);
 		int k = 0, tx, ty;
 		int pass, lo_x, lo_y, hi_x, hi_y;
@@ -2534,9 +2534,9 @@ enum nh_direction tty_getdir(const char *query, boolean restricted)
 	if (dirsym == '.' || dirsym == 's')
 		return DIR_SELF;
 	
-	dp = index(dirs, dirsym);
+	dp = strchr(dirs, dirsym);
 	if (!dp) {
-	    if (!index(quitchars, dirsym)) {
+	    if (!strchr(quitchars, dirsym)) {
 		if (ui_flags.cmdassist)
 		    help_dir("Invalid direction key!", restricted);
 		else

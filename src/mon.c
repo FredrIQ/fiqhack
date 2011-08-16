@@ -747,7 +747,7 @@ boolean mpickstuff(struct monst *mtmp, const char *str)
 	    otmp2 = otmp->nexthere;
 /*	Nymphs take everything.  Most monsters don't pick up corpses. */
 	    if (!str ? searches_for_item(mtmp,otmp) :
-		  !!(index(str, otmp->oclass))) {
+		  !!(strchr(str, otmp->oclass))) {
 		if (otmp->otyp == CORPSE && mtmp->data->mlet != S_NYMPH &&
 			/* let a handful of corpse types thru to can_carry() */
 			!touch_petrifies(&mons[otmp->corpsenm]) &&
@@ -2183,7 +2183,7 @@ int newcham(struct monst *mtmp,
 		 * polymorphed, so dropping the rank for mplayers seems
 		 * reasonable.
 		 */
-		char *p = index(NAME(mtmp), ' ');
+		char *p = strchr(NAME(mtmp), ' ');
 		if (p) {
 			*p = '\0';
 			mtmp->mnamelth = p - NAME(mtmp) + 1;

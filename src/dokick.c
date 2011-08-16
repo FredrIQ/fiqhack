@@ -480,7 +480,7 @@ static int kick_object(xchar x, xchar y, schar dx, schar dy)
 	    obj_extract_self(kickobj);
 	    newsym(x, y);
 	    if (costly && (!costly_spot(u.ux, u.uy) ||
-		    !index(u.urooms, *in_rooms(x, y, SHOPBASE))))
+		    !strchr(u.urooms, *in_rooms(x, y, SHOPBASE))))
 		addtobill(kickobj, FALSE, FALSE, FALSE);
 	    if (!flooreffects(kickobj, u.ux, u.uy, "fall")) {
 		place_object(kickobj, u.ux, u.uy);
@@ -1182,7 +1182,7 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 		if (costly) {
 		    price += stolen_value(obj, x, y,
 				(costly_spot(u.ux, u.uy) &&
-				 index(u.urooms, *in_rooms(x, y, SHOPBASE))),
+				 strchr(u.urooms, *in_rooms(x, y, SHOPBASE))),
 				TRUE);
 		    /* set obj->no_charge to 0 */
 		    if (Has_contents(obj))
@@ -1298,7 +1298,7 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 		oy = otmp->oy;
 		stolen_value(otmp, ox, oy,
 			  (costly_spot(u.ux, u.uy) &&
-			      index(u.urooms, *in_rooms(ox, oy, SHOPBASE))),
+			      strchr(u.urooms, *in_rooms(ox, oy, SHOPBASE))),
 			  FALSE);
 	    }
 	    /* set otmp->no_charge to 0 */
