@@ -773,7 +773,7 @@ static int change_inv_order(char *op)
 	/* reject bad or duplicate entries */
 	if (oc_sym == MAXOCLASSES ||
 		oc_sym == RANDOM_CLASS || oc_sym == ILLOBJ_CLASS ||
-		!strchr(flags.inv_order, oc_sym) || index(sp+1, *sp))
+		!strchr(flags.inv_order, oc_sym) || strchr(sp+1, *sp))
 	    return 0;
 	/* retain good ones */
 	buf[num++] = (char) oc_sym;

@@ -1258,7 +1258,7 @@ char *makeplural(const char *oldstr)
 		strcpy(spot-1, "ves");
 		goto bottom;
 	} else if (*spot == 'f') {
-		if (strchr("lr", *(spot-1)) || index(vowels, *(spot-1))) {
+		if (strchr("lr", *(spot-1)) || strchr(vowels, *(spot-1))) {
 			strcpy(spot, "ves");
 			goto bottom;
 		} else if (len >= 5 && !strncmp(spot-4, "staf", 4)) {

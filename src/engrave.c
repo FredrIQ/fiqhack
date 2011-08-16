@@ -938,7 +938,7 @@ int doengrave(void)
 	}
 
 	/* A single `x' is the traditional signature of an illiterate person */
-	if (len != 1 || (!strchr(ebuf, 'x') && !index(ebuf, 'X')))
+	if (len != 1 || (!strchr(ebuf, 'x') && !strchr(ebuf, 'X')))
 	    u.uconduct.literate++;
 
 	/* Mix up engraving if surface or state of mind is unsound.

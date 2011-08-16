@@ -206,7 +206,7 @@ void tty_init_nhwindows(void)
     /* detect whether a "vt" terminal can handle alternate charsets */
     if ((opts = getenv("TERM")) &&
 	!strncmp(opts, "vt", 2) && AS && AE &&
-	strchr(AS, '\016') && index(AE, '\017')) {
+	strchr(AS, '\016') && strchr(AE, '\017')) {
 	    switch_graphics(DEC_GRAPHICS);
     }
 }

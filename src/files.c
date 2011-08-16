@@ -100,7 +100,7 @@ void regularize(char *s)
 {
 	char *lp;
 #ifdef UNIX
-	while ((lp=strchr(s, '.')) || (lp=index(s, '/')) || (lp=index(s,' ')))
+	while ((lp=strchr(s, '.')) || (lp=strchr(s, '/')) || (lp=strchr(s,' ')))
 		*lp = '_';
 #else
 # ifdef WIN32
@@ -153,7 +153,7 @@ char *fname_encode(const char *legal, char quotechar, char *s,
 			sprintf(op, "%c%02X", quotechar, *sp);
 			 op += 3;
 			 cnt += 3;
-		} else if ((strchr(legal, *sp) != 0) || (index(hexdigits, *sp) != 0)) {
+		} else if ((strchr(legal, *sp) != 0) || (strchr(hexdigits, *sp) != 0)) {
 			*op++ = *sp;
 			*op = '\0';
 			cnt++;
