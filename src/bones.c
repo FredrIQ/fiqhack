@@ -307,7 +307,7 @@ void savebones(struct obj *corpse)
 	savefruitchn(fd, WRITE_SAVE | FREE_SAVE);
 	update_mlstmv();	/* update monsters for eventual restoration */
 	savelev(fd, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
-	bclose(fd);
+	close(fd);
 	commit_bonesfile(&u.uz);
 }
 

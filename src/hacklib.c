@@ -405,10 +405,7 @@ static struct tm *getlt(void);
 
 static struct tm *getlt(void)
 {
-	time_t date;
-
-	time(&date);
-	return localtime(&date);
+	return localtime(&turntime);
 }
 
 int getyear(void)

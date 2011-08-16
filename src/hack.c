@@ -2188,7 +2188,6 @@ static int do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 	
 	flags.nopick = move_only;
 	
-	// originally: if (firsttime)
 	if (!multi)
 	    multi = max(COLNO,ROWNO);
 	

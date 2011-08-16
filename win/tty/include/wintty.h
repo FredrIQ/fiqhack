@@ -8,6 +8,9 @@
 #define NETHACKDIR "/usr/share/NetHack/"
 #endif
 
+#include <stdio.h>
+
+
 typedef int winid;		/* a window identifier */
 typedef signed char	schar;
 typedef unsigned char	uchar;
@@ -163,7 +166,7 @@ extern struct interface_flags ui_flags;
 
 extern char *hackdir;
 extern char *var_playground;
-extern struct window_procs tty_procs;
+extern struct nh_window_procs tty_procs;
 extern int hackpid;
 extern const char sdir[];
 extern const char ndir[];

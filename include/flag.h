@@ -26,9 +26,6 @@ struct flag {
 	boolean  forcefight;
 	boolean  friday13;	/* it's Friday the 13th */
 	boolean  help;		/* look in data file for info about stuff */
-#ifdef INSURANCE
-	boolean  ins_chkpt;	/* checkpoint as appropriate */
-#endif
 	boolean  invlet_constant; /* let objects keep their inventory symbol */
 	boolean  legacy;	/* print game entry "story" */
 	boolean  lit_corridor;	/* show a dark corr as lit if it is in sight */
@@ -138,6 +135,7 @@ struct instance_flags {
 	boolean  showrace;	/* show hero glyph by race rather than by role */
 	boolean  travelcmd;	/* allow travel command */
 	int	 runmode;	/* update screen display during run moves */
+	boolean  disable_log;   /* don't append anything to the logfile */
 #ifdef AUTOPICKUP_EXCEPTIONS
 	struct autopickup_exception *autopickup_exceptions[2];
 #define AP_LEAVE 0

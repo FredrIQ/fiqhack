@@ -543,7 +543,7 @@ void u_init(void)
 			aligns[flags.initalign].value;
 	u.ulycn = NON_PM;
 
-	time(&u.ubirthday);
+	u.ubirthday = turntime;
 
 	/*
 	 *  For now, everyone starts out with a night vision range of 1 and

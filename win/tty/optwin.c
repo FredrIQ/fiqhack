@@ -281,8 +281,8 @@ void display_options(boolean change_birth_opt)
 	int gidx_end, bidx_end;
 	int pick_cnt, i;
 	menu_item *pick_list;
-	struct nh_option_desc *nhoptions = nh_get_options(FALSE);
-	struct nh_option_desc *birthoptions = nh_get_options(TRUE);
+	struct nh_option_desc *nhoptions = nh_get_options(GAME_OPTIONS);
+	struct nh_option_desc *birthoptions = NULL;
 	struct nh_option_desc *option = NULL;
 	union nh_optvalue value;
 	char strbuf[BUFSZ];
@@ -292,6 +292,7 @@ void display_options(boolean change_birth_opt)
 	
 	any.a_void = NULL;
 	if (!change_birth_opt) {
+	    birthoptions = nh_get_options(ACTIVE_BIRTH_OPTIONS);
 	    /* add general game options */
 	    gidx_start = 1;
 	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
@@ -301,12 +302,13 @@ void display_options(boolean change_birth_opt)
 	    /* add or display birth options */
 	    bidx_start = gidx_end;
 	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
-		    "Birth options:", MENU_UNSELECTED);
+		    "Birth options for this game:", MENU_UNSELECTED);
 	    bidx_end = menu_add_options(tmpwin, bidx_start, birthoptions, TRUE);
 	    
 	    tidx_start = bidx_end;
 	
 	} else {
+	    birthoptions = nh_get_options(CURRENT_BIRTH_OPTIONS);
 	    /* add or display birth options */
 	    bidx_start = 1;
 	    tty_add_menu(tmpwin, NO_GLYPH, &any, 0, 0, ui_flags.menu_headings,
@@ -564,8 +566,8 @@ void write_config(void)
 	
 	fp = open_config_file(filename);
 	if (fp) {
-	    write_config_options(fp, nh_get_options(FALSE));
-	    write_config_options(fp, nh_get_options(TRUE));
+	    write_config_options(fp, nh_get_options(GAME_OPTIONS));
+	    write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
 	    fclose(fp);
 	}
 	

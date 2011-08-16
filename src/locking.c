@@ -19,9 +19,6 @@ static int veryold(int fd)
 	time_t date;
 
 	if (fstat(fd, &buf)) return 0;			/* cannot get status */
-#ifndef INSURANCE
-	if (buf.st_size != sizeof(int)) return 0;	/* not an xlock file */
-#endif
 	time(&date);
 	if (date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
 		int lockedpid;	/* should be the same size as hackpid */

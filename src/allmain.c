@@ -33,7 +33,7 @@ const char *const *nh_get_copyright_banner(void)
     return copyright_banner;
 }
 
-void nh_init(int pid, struct window_procs *procs, char **paths)
+void nh_init(int pid, struct nh_window_procs *procs, char **paths)
 {
     int i;
             
@@ -44,10 +44,11 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
     windowprocs = *procs;
     
     for (i = 0; i < PREFIX_COUNT; i++)
-	fqn_prefix[i] = paths[i];
+	fqn_prefix[i] = strdup(paths[i]);
     
     u.uhp = 1;	/* prevent RIP on early quits */
     init_opt_struct();
+    turntime = 0;
     
     api_exit();
 }
@@ -55,11 +56,16 @@ void nh_init(int pid, struct window_procs *procs, char **paths)
 
 boolean nh_exit(int exit_type)
 {
-    if (!api_entry_checkpoint()) /* not sure anything in here can actually call panic */
+    int i;
+    boolean log_disabled = iflags.disable_log;
+    
+    if (!api_entry_checkpoint()) { /* not sure anything in here can actually call panic */
+	iflags.disable_log = log_disabled;
 	return TRUE; /* terminate was called, so exit is successful */
+    }
 	
     xmalloc_cleanup();
-    
+    iflags.disable_log = TRUE;
     if (program_state.game_running) {
 	switch (exit_type) {
 	    case EXIT_REQUEST_SAVE:
@@ -86,11 +92,19 @@ boolean nh_exit(int exit_type)
 		break;
 	}
 	
+	iflags.disable_log = log_disabled;
 	api_exit();
 	return FALSE;
     }
     
+    cleanup_opt_struct();
+    
     clearlocks();
+    for (i = 0; i < PREFIX_COUNT; i++) {
+	free(fqn_prefix[i]);
+	fqn_prefix[i] = NULL;
+    }
+    iflags.disable_log = log_disabled;
     /* calling terminate() will get us out of nested contexts safely, eg:
      * UI_cmdloop -> nh_do_move -> UI_update_screen (problem happens here) -> nh_exit
      * will jump all the way back to UI_cmdloop */
@@ -116,9 +130,9 @@ static void startup_common(char *name, int locknum, int playmode)
     dlb_init();	/* must be before newgame() */
 
     /*
-	* Initialization of the boundaries of the mazes
-	* Both boundaries have to be even.
-	*/
+     * Initialization of the boundaries of the mazes
+     * Both boundaries have to be even.
+     */
     x_maze_max = COLNO-1;
     if (x_maze_max % 2)
 	    x_maze_max--;
@@ -152,21 +166,34 @@ static void startup_common(char *name, int locknum, int playmode)
 }
 
 
-static void post_init_tasks(void)
+static void realtime_tasks(void)
 {
+    int prev_moonphase = flags.moonphase;
+    int prev_friday13 = flags.friday13;
+    
     flags.moonphase = phase_of_the_moon();
-    if (flags.moonphase == FULL_MOON) {
+    if (flags.moonphase == FULL_MOON && prev_moonphase != FULL_MOON) {
 	You("are lucky!  Full moon tonight.");
 	change_luck(1);
-    } else if (flags.moonphase == NEW_MOON) {
+    } else if (flags.moonphase != FULL_MOON && prev_moonphase == FULL_MOON) {
+	change_luck(-1);
+    } else if (flags.moonphase == NEW_MOON && prev_moonphase != FULL_MOON) {
 	pline("Be careful!  New moon tonight.");
     }
+    
     flags.friday13 = friday_13th();
-    if (flags.friday13) {
+    if (flags.friday13 && !prev_friday13) {
 	pline("Watch out!  Bad things can happen on Friday the 13th.");
 	change_luck(-1);
+    } else if (!flags.friday13 && prev_friday13) {
+	change_luck(1);
     }
+}
 
+
+static void post_init_tasks(void)
+{
+    realtime_tasks();
     encumber_msg(); /* in case they auto-picked up something */
 
     u.uz0.dlevel = u.uz.dlevel;
@@ -177,64 +204,20 @@ static void post_init_tasks(void)
 }
 
 
-enum nh_restore_status nh_restore_save(char *name, int locknum, int playmode)
-{
-    int fd;
-    
-    if (!api_entry_checkpoint())
-	return RESTORE_ABORTED;
-    
-    startup_common(name, locknum, playmode);
-    
-    fd = restore_saved_game();
-    if (fd < 0)
-	goto not_recovered;
-	
-    /* Since wizard is actually flags.debug, restoring might
-	* overwrite it.
-	*/
-    boolean remember_wiz_mode = wizard;
-    const char *fq_save = fqname(SAVEF, SAVEPREFIX, 1);
-
-    chmod(fq_save,0);	/* disallow parallel restores */
-
-    pline("Restoring save file...");
-    if (!dorecover(fd))
-	    goto not_recovered;
-    if (!wizard && remember_wiz_mode) wizard = TRUE;
-    check_special_room(FALSE);
-    wd_message();
-
-    if (discover || wizard) {
-	    if (yn("Do you want to keep the save file?") == 'n')
-		delete_savefile();
-	    else {
-		chmod(fq_save,FCMASK); /* back to readable */
-	    }
-    }
-    flags.move = 0;
-    
-    sync_options();
-    
-    program_state.game_running = 1;
-    post_init_tasks();
-    api_exit();
-    return RESTORED;
-not_recovered:
-    
-    clearlocks();
-    program_state.game_running = 0;
-    api_exit();
-    return NOT_RESTORED;
-}
-
-
-boolean nh_start_game(char *name, int locknum, int playmode)
+boolean nh_start_game(int fd, char *name, int locknum, int playmode)
 {
     if (!api_entry_checkpoint())
 	return FALSE; /* quit from player selection or init failed */
+
+    if (fd == -1)
+	return FALSE;
     
     moves = monstermoves = 1;
+
+    if (!program_state.restoring)
+	turntime = time(NULL);
+    /* initialize the random number generator */
+    mt_srand(turntime);
     
     startup_common(name, locknum, playmode);
     
@@ -242,6 +225,9 @@ boolean nh_start_game(char *name, int locknum, int playmode)
     rigid_role_checks();
     player_selection(flags.initrole, flags.initrace, flags.initgend,
 	flags.initalign, flags.randomall);
+    
+    log_newgame(fd, turntime, playmode);
+    
     newgame();
     wd_message();
 
@@ -254,6 +240,92 @@ boolean nh_start_game(char *name, int locknum, int playmode)
     
     api_exit();
     return TRUE;
+}
+
+
+enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
+			   char *name, int locknum, boolean force_replay)
+{
+    struct nh_window_procs def_windowprocs = windowprocs;
+    int playmode;
+    char namebuf[PL_NSIZ];
+    enum nh_restore_status error = GAME_RESTORED;
+    
+    if (fd == -1 || !name)
+	return ERR_BAD_ARGS;
+    
+    if (!api_entry_checkpoint())
+	goto error_out;
+    
+    switch (nh_get_savegame_status(fd)) {
+	case LS_INVALID:	return ERR_BAD_FILE;
+	case LS_DONE:		return ERR_GAME_OVER;
+	case LS_IN_PROGRESS:	force_replay = TRUE; break;
+	case LS_SAVED:		break; /* default, everything is A-OK */
+    }
+    
+    error = ERR_BAD_FILE;
+    replay_set_logfile(fd);
+    replay_begin();
+    
+    program_state.restoring = TRUE;
+    iflags.disable_log = TRUE;
+    
+    replay_read_newgame(&turntime, &playmode, namebuf);
+       
+    /* set special windowprocs which will autofill requests for user input
+     * with data from the log file */
+    replay_setup_windowprocs(rwinprocs);
+    
+    if (!force_replay) {
+	startup_common(name, locknum, playmode);
+	error = ERR_RESTORE_FAILED;
+	replay_run_cmdloop(TRUE);
+	if (!dorecover(fd))
+	    goto error_out2;
+	wd_message();
+	program_state.game_running = 1;
+	post_init_tasks();
+    } else {
+	nh_start_game(fd, namebuf, locknum, playmode);
+	/* try replaying instead */
+	error = ERR_REPLAY_FAILED;
+	replay_run_cmdloop(FALSE);
+    }
+    
+    /* restore standard window procs */
+    windowprocs = def_windowprocs;
+    program_state.restoring = FALSE;
+    iflags.disable_log = FALSE;
+
+    /* clean up data used for replay */
+    replay_end();
+    
+    /* info might not have reached the ui while alternate window procs were set */
+    docrt();
+    bot();
+    flush_screen(0);
+    
+    welcome(FALSE);
+    
+    api_exit();
+    return GAME_RESTORED;
+
+error_out2:
+    api_exit();
+    
+error_out:
+    windowprocs = def_windowprocs;
+    program_state.restoring = FALSE;
+    iflags.disable_log = FALSE;
+    replay_end();
+    
+    if (error == ERR_RESTORE_FAILED) {
+	raw_printf("Restore failed. Attempting to replay instead.\n");
+	error = nh_restore_game(fd, rwinprocs, name, locknum, TRUE);
+    }
+    
+    return error;
 }
 
 
@@ -561,12 +633,16 @@ static void pre_move_tasks(boolean didmove)
 	    botl = 1;
 	}
     }
+    
+    if (moves % 100 == 0)
+	realtime_tasks();
 }
 
 
 int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
+    int cmdidx;
     
     if (!program_state.game_running)
 	return ERR_GAME_NOT_RUNNING;
@@ -580,11 +656,18 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	return GAME_OVER;
     }
     
+    if (!program_state.restoring)
+	/* if the game is being restored, turntime is set in restore_read_command */
+	turntime = time(NULL);
+    
+    cmdidx = get_command_idx(cmd);
+    log_command(cmdidx, rep, arg);
+    
     
     if (multi >= 0 && occupation)
 	handle_occupation();
     else if (multi == 0) {
-	do_command(cmd, rep, TRUE, arg);
+	do_command(cmdidx, rep, TRUE, arg);
     } else if (multi > 0) {
 	if (cmd)
 	    return ERR_NO_INPUT_ALLOWED;
@@ -634,6 +717,8 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     flags.move = 1;
     pre_move_tasks(didmove);
     flush_screen(1); /* Flush screen buffer */
+    
+    log_command_result();
     
     api_exit();
     /*
@@ -734,9 +819,6 @@ static void newgame(void)
 		com_pager(1);
 	}
 
-#ifdef INSURANCE
-	save_currentstate();
-#endif
 	program_state.something_worth_saving++;	/* useful data now exists */
 
 	/* Success! */

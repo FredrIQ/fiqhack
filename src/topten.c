@@ -244,6 +244,9 @@ void update_topten(int how)
     struct toptenentry *toptenlist, newtt;
     boolean need_rewrite;
     
+    if (program_state.panicking)
+	return;
+    
     end_how = how; /* save how for nh_get_topten */
     
     fill_topten_entry(&newtt, how);
@@ -308,7 +311,7 @@ struct obj *tt_oname(struct obj *otmp)
     toptenlist = read_topten(100); /* load the top 100 scores */
     
     /* try to find a valid entry, reducing the value range for rank each time */
-    rank = rn2(TTLISTLEN);
+    rank = rn2(100);
     while (!validentry(toptenlist[rank]) && rank)
 	rank = rn2(rank);
     

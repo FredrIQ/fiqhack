@@ -15,8 +15,6 @@
 
 #define HOLD_LOCKFILE_OPEN	/* Keep an exclusive lock on the .0 file */
 
-#define SELF_RECOVER		/* Allow the game itself to recover from an aborted game */
-
 /*
  * -----------------------------------------------------------------
  *  The remaining code shouldn't need modification.

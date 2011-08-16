@@ -35,13 +35,6 @@
 /* #define DLB */	/* not supported on all platforms */
 
 /*
- *	Defining INSURANCE slows down level changes, but allows games that
- *	died due to program or system crashes to be resumed from the point
- *	of the last level change, after running a utility program.
- */
-#define INSURANCE	/* allow crashed game recovery */
-
-/*
  * Section 3:	Definitions that may vary with system type.
  */
 

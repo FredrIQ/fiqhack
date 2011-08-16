@@ -827,26 +827,6 @@ static int currentlevel_rewrite(void)
 	return fd;
 }
 
-#ifdef INSURANCE
-void save_currentstate(void)
-{
-	int fd;
-
-	if (flags.ins_chkpt) {
-		/* write out just-attained level, with pets and everything */
-		fd = currentlevel_rewrite();
-		if (fd < 0) return;
-		bufon(fd);
-		savelev(fd,ledger_no(&u.uz), WRITE_SAVE);
-		bclose(fd);
-	}
-
-	/* write out non-level state */
-	savestateinlock();
-}
-#endif
-
-
 void notify_levelchange(void)
 {
 	int mode;
@@ -973,11 +953,10 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	cant_go_back = (newdungeon && In_endgame(newlevel));
 	if (!cant_go_back) {
 	    update_mlstmv();	/* current monsters are becoming inactive */
-	    bufon(fd);		/* use buffered output */
 	}
 	savelev(fd, ledger_no(&u.uz),
 		cant_go_back ? FREE_SAVE : (WRITE_SAVE | FREE_SAVE));
-	bclose(fd);
+	close(fd);
 	if (cant_go_back) {
 	    /* discard unreachable levels; keep #0 */
 	    for (l_idx = maxledgerno(); l_idx > 0; --l_idx)
@@ -1247,10 +1226,6 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	else
 	    onquest();
 	assign_level(&u.uz0, &u.uz); /* reset u.uz0 */
-
-#ifdef INSURANCE
-	save_currentstate();
-#endif
 
 	/* assume this will always return TRUE when changing level */
 	in_out_region(u.ux, u.uy);

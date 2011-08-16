@@ -111,7 +111,8 @@ extern int current_fruit;
 extern struct fruit *ffruit;
 
 extern struct sinfo {
-	int game_running;
+	int game_running;	/* ok to call nh_do_move */
+	int restoring;		/* game is currently non-interactive (user input via log restore) */
 	int gameover;		/* self explanatory? */
 	int stopprint;		/* inhibit further end of game disclosure */
 	int something_worth_saving;	/* in case of panic */
@@ -142,7 +143,7 @@ extern const char disclosure_options[];
 
 extern int smeq[];
 extern int doorindex;
-extern char *saved_cmd;
+extern int saved_cmd;
 #define KILLED_BY_AN	 0
 #define KILLED_BY	 1
 #define NO_KILLER_PREFIX 2
@@ -296,6 +297,23 @@ extern nh_jmp_buf exit_jmp_buf;
 
 extern struct artifact *artilist;
 extern short disco[NUM_OBJECTS];
+
+struct cmd_desc {
+	const char *name;
+	const char *desc;
+	char defkey, altkey;
+	boolean can_if_buried;
+	const void *func;
+	unsigned int flags;
+	const char *text;
+};
+
+extern time_t turntime;
+
+extern struct nh_option_desc *active_birth_options;
+extern struct nh_option_desc *birth_options;
+extern struct nh_option_desc *options;
+
 
 #define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
 #define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)

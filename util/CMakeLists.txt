@@ -26,7 +26,6 @@ set ( LEV_COMP_SRC
     ${NetHack_BINARY_DIR}/util/lev_parser.c
     ${NetHack_BINARY_DIR}/util/lev_scanner.c    
     )
-set ( RECOVER_SRC recover.c )
 set (MAKEDEFS_HEADERS
     ${NetHack_BINARY_DIR}/include/date.h
     ${NetHack_BINARY_DIR}/include/onames.h
@@ -95,7 +94,6 @@ add_definitions( -Wall )
 add_executable (makedefs ${MAKEDEFS_SRC})
 add_executable (dgn_comp ${DGN_COMP_SRC})
 add_executable (lev_comp ${LEV_COMP_SRC})
-add_executable (recover  ${RECOVER_SRC})
 
 add_custom_target (makedefs_headers DEPENDS ${MAKEDEFS_HEADERS})
 add_dependencies (dgn_comp makedefs_headers)

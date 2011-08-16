@@ -115,7 +115,8 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	    cmd = NULL;
 	    arg->argtype = CMD_ARG_NONE;
 	    
-	    tty_curs(player.x, player.y);
+	    if (player.x && player.y)
+		tty_curs(player.x, player.y);
 	    
 	    if (!ui_flags.num_pad || (key = tty_nhgetch()) == 'n')
 		for (;;) {

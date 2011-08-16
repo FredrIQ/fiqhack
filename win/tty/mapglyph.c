@@ -1,11 +1,11 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include "nethack.h"
-#include "wintty.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "nethack.h"
+#include "wintty.h"
 
 #define array_size(x) (sizeof(x)/sizeof(x[0]))
 

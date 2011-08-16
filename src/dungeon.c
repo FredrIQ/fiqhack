@@ -854,7 +854,7 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    /* TO DO: strip "dummy" out all the way here,
 	       so that it's hidden from <ctrl/O> feedback. */
 	}
-
+	
 #ifdef DEBUG
 	dumpit();
 #endif

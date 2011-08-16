@@ -215,6 +215,9 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define MENU_PARTIAL	 2
 #define MENU_FULL	 3
 
+/* sizes for base64 string buffers */
+#define ENCBUFSZ 344 /* ceil(BUFSZ/3)*4 */
+#define EQBUFSZ 172 /* ceil(QBUFSZ/3)*4 */
 
 #ifndef max
 #define max(a,b) ((a) > (b) ? (a) : (b))

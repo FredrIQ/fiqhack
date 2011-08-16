@@ -5,26 +5,6 @@
 
 static void do_oname(struct obj *);
 
-int getpos(coord *cc, boolean force, const char *goal)
-{
-	int rv = -1, x, y;
-	
-	x = cc->x;
-	y = cc->y;
-	
-	flush_screen(0);
-	
-	do {
-	    rv = win_getpos(&x, &y, force, goal);
-	} while (force && (rv == -1 || x < 1 || y < 1 || x > COLNO || y > ROWNO));
-	
-	cc->x = x;
-	cc->y = y;
-	
-	return rv;
-}
-
-
 struct monst *christen_monst(struct monst *mtmp, const char *name)
 {
 	int lth;

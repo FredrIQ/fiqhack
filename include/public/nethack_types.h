@@ -161,6 +161,12 @@ enum nh_opttype {
     OPTTYPE_STRING
 };
 
+enum nh_option_list {
+    CURRENT_BIRTH_OPTIONS,
+    ACTIVE_BIRTH_OPTIONS,
+    GAME_OPTIONS
+};
+
 enum nh_bucstatus {
     BUC_UNKNOWN,
     BUC_BLESSED,
@@ -210,7 +216,7 @@ enum nh_effect_types {
     E_MISC
 };
 
-enum exit_types {
+enum nh_exit_types {
     EXIT_REQUEST_SAVE,
     EXIT_FORCE_SAVE,
     EXIT_REQUEST_QUIT,
@@ -219,10 +225,22 @@ enum exit_types {
 };
 
 enum nh_restore_status {
-    RESTORED,
-    NOT_RESTORED,
-    RESTORE_ABORTED
+    GAME_RESTORED,
+    ERR_BAD_ARGS,
+    ERR_BAD_FILE, /* file isn't a saved game */
+    ERR_GAME_OVER, /* this is the log of a completed game, play cannot be resumed */
+    ERR_RESTORE_FAILED, /* restoring the saved game state did not succeed (try replaying the log instead) */
+    ERR_REPLAY_FAILED /* replaying the action log did not succeed */
 };
+
+
+enum nh_log_status {
+    LS_INVALID = -1,
+    LS_SAVED,
+    LS_DONE, /* quit, died, ascended, etc */
+    LS_IN_PROGRESS
+};
+
 
 
 typedef signed char	boolean;		/* 0 or 1 */
@@ -434,8 +452,9 @@ struct nh_topten_entry {
     boolean highlight;
 };
 
-struct window_procs {
-    void (*win_player_selection)(int,int,int,int,int);
+struct nh_window_procs {
+    void (*win_player_selection)(int initrole, int initrace, int initgend,
+			         int initalign, int randomall);
     void (*win_clear_nhwindow)(int);
     void (*win_display_nhwindow)(int, boolean);
     void (*win_display_buffer)(char *,boolean);

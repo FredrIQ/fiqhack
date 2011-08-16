@@ -322,23 +322,10 @@ static void ghostfruit(struct obj *otmp)
 
 static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedid)
 {
-	/* discover is actually flags.explore */
-	boolean remember_discover = discover;
 	struct obj *otmp;
-	int uid;
-
-	mread(fd, &uid, sizeof uid);
-	if (uid != getuid()) {		/* strange ... */
-	    /* for wizard mode, issue a reminder; for others, treat it
-	       as an attempt to cheat and refuse to restore this file */
-	    pline("Saved game was not yours.");
-	    if (!wizard)
-		return FALSE;
-	}
 
 	mread(fd, &flags, sizeof(struct flag));
 	flags.bypasses = 0;	/* never use the saved value of bypasses */
-	if (remember_discover) discover = remember_discover;
 
 	role_init();	/* Reset the initial role, race, gender, and alignment */
 	mread(fd, &u, sizeof(struct you));
@@ -439,9 +426,8 @@ static int restlevelfile(xchar ltmp)
 		panic("restlevelfile: %s", whynot);
 	}
 
-	bufon(nfd);
 	savelev(nfd, ltmp, WRITE_SAVE | FREE_SAVE);
-	bclose(nfd);
+	close(nfd);
 	return 2;
 }
 
@@ -451,27 +437,24 @@ int dorecover(int fd)
 	xchar ltmp;
 	int rtmp;
 	struct obj *otmp;
-
-#ifdef STORE_PLNAME_IN_FILE
-	mread(fd, plname, PL_NSIZ);
-#endif
+	long initial_pos;
 
 	restoring = TRUE;
+	initial_pos = lseek(fd, 0, SEEK_CUR);
+	if (!uptodate(fd, NULL))
+	    return 0;
+	
 	getlev(fd, 0, (xchar)0, FALSE);
 	if (!restgamestate(fd, &stuckid, &steedid)) {
 		display_nhwindow(NHW_MESSAGE, TRUE);
 		savelev(-1, 0, FREE_SAVE);	/* discard current level */
-		close(fd);
-		delete_savefile();
 		restoring = FALSE;
 		return 0;
 	}
 	restlevelstate(stuckid, steedid);
-#ifdef INSURANCE
-	savestateinlock();
-#endif
 	rtmp = restlevelfile(ledger_no(&u.uz));
 	if (rtmp < 2) return rtmp;  /* dorecover called recursively */
+	restore_mt_state(fd);
 
 	/* these pointers won't be valid while we're processing the
 	 * other levels, but they'll be reset again by restlevelstate()
@@ -489,16 +472,11 @@ int dorecover(int fd)
 		if (rtmp < 2) return rtmp;  /* dorecover called recursively */
 	}
 
-	lseek(fd, (off_t)0, 0);
+	lseek(fd, initial_pos, SEEK_SET);
 	uptodate(fd, NULL);		/* skip version info */
-#ifdef STORE_PLNAME_IN_FILE
-	mread(fd, plname, PL_NSIZ);
-#endif
 	getlev(fd, 0, (xchar)0, FALSE);
-	close(fd);
-
-	if (!wizard && !discover)
-		delete_savefile();
+	lseek(fd, initial_pos, SEEK_SET);
+	ftruncate(fd, initial_pos);
 
 	restlevelstate(stuckid, steedid);
 	max_rank_sz(); /* to recompute mrank_sz (botl.c) */
@@ -528,6 +506,9 @@ int dorecover(int fd)
 	restoring = FALSE;
 	clear_nhwindow(NHW_MESSAGE);
 	program_state.something_worth_saving++;	/* useful data now exists */
+	
+	check_special_room(FALSE);
+	flags.move = 0;
 
 	/* Success! */
 	welcome(FALSE);
@@ -800,11 +781,9 @@ void mread(int fd, void * buf, unsigned int len)
 	rlen = read(fd, buf, (unsigned) len);
 	if ((unsigned)rlen != len){
 		pline("Read %d instead of %u bytes.", rlen, len);
-		if (restoring) {
-			close(fd);
-			delete_savefile();
+		if (restoring)
 			raw_print("Error restoring old game.\n");
-		}
+		
 		panic("Error reading level file.");
 	}
 }

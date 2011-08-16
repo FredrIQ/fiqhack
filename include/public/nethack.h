@@ -25,12 +25,16 @@
 #endif
 
 /* allmain.c */
-extern EXPORT void nh_init(int, struct window_procs *, char **);
+extern EXPORT void nh_init(int, struct nh_window_procs *, char **);
 extern EXPORT boolean nh_exit(int exit_type);
-extern EXPORT enum nh_restore_status nh_restore_save(char *, int, int);
-extern EXPORT boolean nh_start_game(char*, int, int);
+extern EXPORT enum nh_restore_status nh_restore_game(int fd,
+	struct nh_window_procs *rwinprocs, char *name, int locknum, boolean force_replay);
+
+extern EXPORT boolean nh_start_game(int fd, char*, int, int);
 extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char *const *nh_get_copyright_banner(void);
+
+extern EXPORT enum nh_log_status nh_get_savegame_status(int fd);
 
 /* cmd.c */
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
@@ -40,7 +44,7 @@ extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);
 
 /* options.c */
 extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);
-extern EXPORT struct nh_option_desc *nh_get_options(boolean birth);
+extern EXPORT struct nh_option_desc *nh_get_options(enum nh_option_list list);
 extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 			 struct nh_boolopt_map *boolmap,
 			 boolean(*callback)(struct nh_option_desc *));

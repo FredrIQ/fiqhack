@@ -4,6 +4,7 @@
 /* tty.c - (Unix) version */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "nethack.h"
 #include "wintty.h"

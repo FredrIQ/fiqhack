@@ -91,3 +91,28 @@ unsigned int mt_random(void)
 }
 
 
+unsigned int mt_nextstate(void)
+{
+    if (!left)
+	return 0;
+    return *next;
+}
+
+
+void save_mt_state(int fd)
+{
+    unsigned int pos = next - state;
+    bwrite(fd, state, sizeof(state));
+    bwrite(fd, &pos, sizeof(pos));
+    bwrite(fd, &left, sizeof(left));
+}
+
+
+void restore_mt_state(int fd)
+{
+    unsigned int pos;
+    read(fd, state, sizeof(state));
+    read(fd, &pos, sizeof(pos));
+    read(fd, &left, sizeof(left));
+    next = &state[pos];
+}

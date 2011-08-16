@@ -31,7 +31,7 @@ struct q_score	quest_status;
 int smeq[MAXNROFROOMS+1];
 int doorindex;
 
-char *saved_cmd = NULL;
+int saved_cmd;
 int killer_format;
 const char *killer;
 const char *delayed_killer;
@@ -216,9 +216,22 @@ nh_jmp_buf exit_jmp_buf;
 struct artifact *artilist;
 short disco[NUM_OBJECTS]; /* discovered objects */
 
+time_t turntime;
+
+/* If one game (A) is started and then saved, followed by game B with different
+ * birth_options, after which game A is restored, then A must run with it's
+ * original birth_options, rather than the most recent birth_options which were
+ * set for game B. */
+struct nh_option_desc *active_birth_options;
+struct nh_option_desc *birth_options;
+struct nh_option_desc *options;
+
 
 void init_data(void)
 {
+    boolean in_restore = program_state.restoring;
+    boolean nolog = iflags.disable_log;
+    
     memset(&program_state, 0, sizeof(program_state));
     memset(&flags, 0, sizeof(flags));
     memset(&iflags, 0, sizeof(iflags));
@@ -271,6 +284,10 @@ void init_data(void)
     artilist = NULL;
     
     subrooms = &rooms[MAXNROFROOMS+1];
+    
+    program_state.restoring = in_restore;
+    iflags.disable_log = nolog;
+    flags.moonphase = 10; /* invalid value, so that the first call to realtime_tasks will dtrt */
 }
 
 /*decl.c*/

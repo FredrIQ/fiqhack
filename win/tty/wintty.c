@@ -22,7 +22,7 @@
 struct interface_flags ui_flags;
 
 /* Interface definition, for windows.c */
-struct window_procs tty_procs = {
+struct nh_window_procs tty_procs = {
     tty_player_selection,
     tty_clear_nhwindow,
     tty_display_nhwindow,
@@ -2280,11 +2280,6 @@ int tty_nhgetch(void)
 
     i = base_nhgetch();
 
-    if (i == 'O') {
-	display_options(FALSE);
-	i = '\033'; /* NetHack doesn't know 'O' */
-    }
-    
     if (!i) i = '\033'; /* map NUL to ESC since nethack doesn't expect NUL */
     if (ttyDisplay && ttyDisplay->toplin == 1)
 	ttyDisplay->toplin = 2;

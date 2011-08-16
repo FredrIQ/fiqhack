@@ -273,22 +273,26 @@ static int commandloop(void)
 }
 
 
-static void rungame(void)
+static void rungame(char *saveprefix)
 {
 	int ret;
+	int fd = -1;
+	char filename[1024];	
 	
 	while (!plname[0])
 	    tty_askname(plname);
 	
 	tty_create_game_windows();
 	
-	ret = nh_restore_save(plname, locknum, playmode);
-	if (ret == RESTORE_ABORTED)
-	    return;
+	snprintf(filename, sizeof(filename), "%ssave/%d%s.nhgame", saveprefix, getuid(), plname);
+	fd = open(filename, O_RDWR, 0660);
 	
-	else if (ret == NOT_RESTORED) {
+	if (nh_restore_game(fd, NULL, plname, locknum, FALSE) != GAME_RESTORED) {
+	    if (fd != -1)
+		close(fd);
 	    query_birth_options();
-	    if (!nh_start_game(plname, locknum, playmode))
+	    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+	    if (!nh_start_game(fd, plname, locknum, playmode))
 		return;
 	}
 	
@@ -306,15 +310,7 @@ static void rungame(void)
 int main(int argc, char *argv[])
 {
 	char **gamepaths;
-
-	/* idea from rpick%ucqais@uccba.uc.edu
-	 * prevent automated rerolling of characters
-	 * test input (fd0) so that tee'ing output to get a screen dump still
-	 * works
-	 * also incidentally prevents development of any hack-o-matic programs
-	 */
-	if (!isatty(0))
-	    error("You must play from a terminal.");
+	int i;
 
 	hackpid = getpid();
 	umask(0777 & ~FCMASK);
@@ -324,7 +320,6 @@ int main(int argc, char *argv[])
 	
 	gamepaths = init_game_paths();
 	nh_init(hackpid, &tty_procs, gamepaths);
-	free(gamepaths);
 	
 	setup_signals();
 
@@ -351,11 +346,15 @@ int main(int argc, char *argv[])
 	load_keymap(playmode == MODE_WIZARD);
 	init_displaychars();
 	
-	rungame();
+	rungame(gamepaths[SAVEPREFIX]);
 	
 	tty_exit_nhwindows(NULL);
 	nh_exit(0);
 	free_displaychars();
+	
+	for (i = 0; i < PREFIX_COUNT; i++)
+	    free(gamepaths[i]);
+	free(gamepaths);
 	
 	exit(EXIT_SUCCESS);
 	/*NOTREACHED*/

@@ -54,10 +54,9 @@ install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
         DESTINATION ${LIBDIR})
 install(PROGRAMS ${NetHack_BINARY_DIR}/win/tty/nethack
         DESTINATION ${BINDIR})
-install(PROGRAMS ${NetHack_BINARY_DIR}/util/recover
-        DESTINATION ${BINDIR})
         
 if (UNIX)
     install(PROGRAMS ${NetHack_BINARY_DIR}/win/tty/nethack.sh
             DESTINATION ${SHELLDIR} RENAME nethack)
 endif()
+

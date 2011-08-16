@@ -77,28 +77,24 @@ static const struct nh_enum_option pettype_spec = {pettype_list, listlen(pettype
 #define VTRUE (void*)TRUE
 #define VFALSE (void*)FALSE
 
-struct nh_option_desc options[] = {
+static const struct nh_option_desc const_options[] = {
     /* boolean options */
     {"autodig",		"dig if moving and wielding digging tool",	OPTTYPE_BOOL, { VFALSE }},
     {"autopickup",	"automatically pick up objects you move over",	OPTTYPE_BOOL, { VTRUE }},
     {"autoquiver",	"when firing with an empty quiver, select some suitable inventory weapon to fill the quiver",	OPTTYPE_BOOL, { VFALSE }},
-    {"checkpoint",	"",	OPTTYPE_BOOL, { VTRUE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
     {"help",		"print all available info when using the / command",	OPTTYPE_BOOL, { VTRUE }},
-    {"legacy",		"print introductory message",	OPTTYPE_BOOL, { VTRUE }},
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
     {"lootabc",		"use a/b/c rather than o/i/b when looting",	OPTTYPE_BOOL, { VFALSE }},
     {"menu_tab_sep",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"perm_invent",	"keep inventory in a permanent window",	OPTTYPE_BOOL, { VFALSE }},
     {"prayconfirm",	"use confirmation prompt when #pray command issued",	OPTTYPE_BOOL, { VTRUE }},
     {"pushweapon",	"when wielding a new weapon, put your previously wielded weapon into the secondary weapon slot",	OPTTYPE_BOOL, { VFALSE }},
-    {"rest_on_space",	"count the space bar as a rest character",	OPTTYPE_BOOL, { VFALSE }},
     {"safe_pet",	"prevent you from (knowingly) attacking your pet(s)",	OPTTYPE_BOOL, { VTRUE }},
     {"sanity_check",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"showrace",	"show yourself by your race rather than by role",	OPTTYPE_BOOL, { VFALSE }},
     {"sortpack",	"group similar kinds of objects in inventory",	OPTTYPE_BOOL, { VTRUE }},
-    {"sound",		"enable messages about what your character hears",	OPTTYPE_BOOL, { VTRUE }},
     {"sparkle",		"display sparkly effect for resisted magical attacks",	OPTTYPE_BOOL, { VTRUE }},
     {"timed_delay",	"",	OPTTYPE_BOOL, { VTRUE }},
     {"tombstone",	"print tombstone when you die",	OPTTYPE_BOOL, { VTRUE }},
@@ -123,10 +119,11 @@ struct nh_option_desc options[] = {
 };
 
 
-struct nh_option_desc birth_options[] = {
+static const struct nh_option_desc const_birth_options[] = {
     { "elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL, { VTRUE }},
     { "reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, { VTRUE }},
     { "seduction", "certain monsters may seduce you", OPTTYPE_BOOL, { VTRUE }},
+    { "legacy",   "print introductory message", OPTTYPE_BOOL, { VTRUE }},
     { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
@@ -145,9 +142,6 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"autodig", &flags.autodig},
 	{"autopickup", &flags.pickup},
 	{"autoquiver", &flags.autoquiver},
-#ifdef INSURANCE
-	{"checkpoint", &flags.ins_chkpt},
-#endif
 	{"confirm",&flags.confirm},
 	{"female", &flags.female},
 	{"fixinv", &flags.invlet_constant},
@@ -160,12 +154,10 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"perm_invent", &flags.perm_invent},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},
-	{"rest_on_space", &flags.rest_on_space},
 	{"safe_pet", &flags.safe_dog},
 	{"sanity_check", &iflags.sanity_check},
 	{"showrace", &iflags.showrace},
 	{"sortpack", &flags.sortpack},
-	{"sound", &flags.soundok},
 	{"sparkle", &flags.sparkle},
 	{"timed_delay", &flags.nap},
 	{"tombstone",&flags.tombstone},
@@ -270,11 +262,8 @@ static void build_race_spec(void)
 
 void init_opt_struct(void)
 {
-	int i;
-	char *s;
-    
-	/* initialize the random number generator */
-	mt_srand((int) time(NULL));
+	options = clone_optlist(const_options);
+	birth_options = clone_optlist(const_birth_options);
 	
 	build_role_spec();
 	build_race_spec();
@@ -300,22 +289,21 @@ void init_opt_struct(void)
 	find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
-	
-	/* copy all strings onto the heap because nh_set_option frees  them if
-	 * a different value is set */
-	for (i = 0; birth_options[i].name; i++)
-	    if (birth_options[i].type == OPTTYPE_STRING && birth_options[i].value.s) {
-		s = strdup(birth_options[i].value.s);
-		birth_options[i].value.s = s;
-	    }
-	
-	for (i = 0; options[i].name; i++)
-	    if (options[i].type == OPTTYPE_STRING && options[i].value.s) {
-		s = strdup(options[i].value.s);
-		options[i].value.s = s;
-	    }
-	
 }
+
+
+void cleanup_opt_struct(void)
+{
+	free((void*)role_spec.choices);
+	role_spec.choices = NULL;
+	free((void*)race_spec.choices);
+	race_spec.choices = NULL;
+	free_optlist(options);
+	options = NULL;
+	free_optlist(birth_options);
+	birth_options = NULL;
+}
+
 
 void initoptions(void)
 {
@@ -341,34 +329,8 @@ void initoptions(void)
 	
 	for (i = 0; options[i].name; i++)
 		nh_set_option(options[i].name, options[i].value, FALSE);
-}
-
-
-/* sync_options: fix up option values after dorecover()
- * after a save is restored, the stored option values might not reflect the
- * actual values in the associated data structures.
- */
-void sync_options(void)
-{
-	int i, j;
 	
-	/* step 1: update birth option fields to match the loaded values */
-	for (i = 0; birth_options[i].name; i++) {
-	    /* doing this automatically is only possible for booleans */
-	    if (birth_options[i].type == OPTTYPE_BOOL) {
-		const boolean *bvar = NULL;
-		
-		for (j = 0; boolopt_map[j].optname && !bvar; j++)
-			if (!strcmp(birth_options[i].name, boolopt_map[j].optname))
-				bvar = boolopt_map[j].addr;
-			
-		birth_options[i].value.b = *bvar;
-	    }
-	}
-	
-	/* step 2: re-apply all game options */
-	for (i = 0; options[i].name; i++)
-	    nh_set_option(options[i].name, options[i].value, FALSE);
+	active_birth_options = clone_optlist(birth_options);
 }
 
 
@@ -450,11 +412,12 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 
 
 /* copy values carefully: copying pointers to strings on the stack is not good */
-static void copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
+static boolean copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
 {
 	if (option->type == OPTTYPE_STRING) {
-	    if (option->value.s == value.s)
-		return; /* setting the option to it's current value; nothing to copy */
+	    if (option->value.s == value.s ||
+		(option->value.s && value.s && !strcmp(option->value.s, value.s)))
+		return FALSE; /* setting the option to it's current value; nothing to copy */
 	    
 	    if (option->value.s)
 		free(option->value.s);
@@ -463,17 +426,27 @@ static void copy_option_value(struct nh_option_desc *option, union nh_optvalue v
 		option->value.s = malloc(strlen(value.s) + 1);
 		strcpy(option->value.s, value.s);
 	    }
-	} else
+	} else if ((option->type == OPTTYPE_ENUM && option->value.e == value.e) ||
+	    (option->type == OPTTYPE_INT && option->value.i == value.i) ||
+	    (option->type == OPTTYPE_BOOL && option->value.b == value.b))
+	    return FALSE;
+	else
 	    option->value = value;
+	
+	return TRUE;
+	
 }
 
 
 static boolean set_option(const char *name, union nh_optvalue value, boolean isstring)
 {
 	boolean is_ui = FALSE;
-	struct nh_option_desc *option = find_option(options, name);
+	struct nh_option_desc *option = NULL;
 	
-	if (!option && !program_state.game_running)
+	if (options)
+	    option = find_option(options, name);
+	
+	if (!option && !program_state.game_running && birth_options)
 	    option = find_option(birth_options, name);
 	
 	if (!option && ui_options) {
@@ -490,7 +463,8 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	if (!option_value_ok(option, value))
 		return FALSE;
 	
-	copy_option_value(option, value);
+	if (copy_option_value(option, value))
+	    log_option(option); /* prev value != new value */
 	
 	if (option->type == OPTTYPE_BOOL) {
 		int i;
@@ -612,11 +586,51 @@ boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstrin
 }
 
 
-struct nh_option_desc *nh_get_options(boolean birth)
+struct nh_option_desc *nh_get_options(enum nh_option_list list)
 {
-	if (birth)
+	switch (list) {
+	    case CURRENT_BIRTH_OPTIONS:
 		return birth_options;
-	return options;
+	    case ACTIVE_BIRTH_OPTIONS:
+		return active_birth_options;
+	    case GAME_OPTIONS:
+		return options;
+	}
+	return NULL;
+}
+
+
+struct nh_option_desc *clone_optlist(const struct nh_option_desc *in)
+{
+	int i;
+	struct nh_option_desc *out;
+	
+	for (i = 0; in[i].name; i++)
+	    ;
+	i++;
+	out = malloc(sizeof(struct nh_option_desc) * i);
+	memcpy(out, in, sizeof(struct nh_option_desc) * i);
+	
+	for (i = 0; in[i].name; i++)
+	    if (in[i].type == OPTTYPE_STRING && in[i].value.s)
+		out[i].value.s = strdup(in[i].value.s);
+	
+	return out;
+}
+
+
+void free_optlist(struct nh_option_desc *opt)
+{
+	int i;
+	
+	if (!opt)
+	    return;
+	
+	for (i = 0; opt[i].name; i++)
+	    if (opt[i].type == OPTTYPE_STRING && opt[i].value.s)
+		free(opt[i].value.s);
+	
+	free(opt);
 }
 
 

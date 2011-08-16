@@ -174,10 +174,8 @@ void panic(const char *str, ...)
 			!program_state.something_worth_saving ? "" :
 			" and it may be possible to rebuild.");
 # endif
-	if (program_state.something_worth_saving) {
-	    set_error_savefile();
+	if (program_state.something_worth_saving)
 	    dosave0(TRUE);
-	}
 	
 	char buf[BUFSZ];
 	vsprintf(buf,str,the_args);
@@ -785,6 +783,8 @@ void done(int how)
 	done_money = umoney;
 #endif
 
+	log_command_result();
+	log_finish(LS_DONE);
 	display_rip(how, killbuf, pbuf, umoney);
 
 	/* generate a topten entry for this game.
@@ -844,6 +844,7 @@ void terminate(void)
 	}
 	
 	program_state.game_running = 0;
+	log_finish(LS_IN_PROGRESS); /* didn't necessarily get here via done() */
 	
 	/* try to leave gracefully - this should return control to the ui code */
 	if (exit_jmp_buf_valid) {

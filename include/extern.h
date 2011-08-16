@@ -114,17 +114,17 @@ extern const char *rank_of(int, short, boolean);
 
 extern void reset_occupations(void);
 extern void set_occupation(int (*)(void),const char *,int);
-extern int do_command(const char *, int, boolean, struct nh_cmd_arg*);
+extern int get_command_idx(const char *cmd);
+extern int do_command(int cmd, int, boolean, struct nh_cmd_arg*);
 extern void enlightenment(int);
 extern void show_conduct(int);
+extern boolean dir_to_delta(enum nh_direction dir, schar *dx, schar *dy, schar *dz);
 extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);
-extern int getdir(const char *, schar *dx, schar *dy, schar *dz);
 extern void confdir(schar *dx, schar *dy);
 extern int isok(int,int);
 extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *, schar *);
 extern void sanity_check(void);
-extern char yn_function(const char *,const char *, char);
 
 /* ### dbridge.c ### */
 
@@ -229,9 +229,6 @@ extern void obj_no_longer_held(struct obj *);
 extern int doddrop(void);
 extern int dodown(void);
 extern int doup(void);
-#ifdef INSURANCE
-extern void save_currentstate(void);
-#endif
 extern void notify_levelchange(void);
 extern void goto_level(d_level *,boolean,boolean,boolean);
 extern void schedule_goto(d_level *,boolean,boolean,int,
@@ -246,7 +243,6 @@ extern void heal_legs(void);
 
 /* ### do_name.c ### */
 
-extern int getpos(coord *,boolean,const char *);
 extern struct monst *christen_monst(struct monst *,const char *);
 extern int do_mname(void);
 extern struct obj *oname(struct obj *,const char *);
@@ -494,21 +490,8 @@ extern int create_bonesfile(d_level*,char **, char *);
 extern void commit_bonesfile(d_level *);
 extern int open_bonesfile(d_level*,char **);
 extern int delete_bonesfile(d_level*);
-extern void set_savefile_name(void);
-#ifdef INSURANCE
-extern void save_savefile_name(int);
-#endif
-extern void set_error_savefile(void);
-extern int create_savefile(void);
-extern int open_savefile(void);
-extern int delete_savefile(void);
-extern int restore_saved_game(void);
 extern void paniclog(const char *, const char *);
 extern int validate_prefix_locations(char *);
-extern void free_saved_games(char**);
-#ifdef SELF_RECOVER
-extern boolean recover_savefile(void);
-#endif
 #ifdef HOLD_LOCKFILE_OPEN
 extern void really_close(void);
 #endif
@@ -714,6 +697,31 @@ extern int doclose(void);
 /* ### locking.c ### */
 
 extern void getlock(int locknum);
+
+/* ### log.c ### */
+
+extern void log_newgame(int logfd, unsigned int rnd_seed, int playmode);
+extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
+extern void log_command_result(void);
+extern void log_option(struct nh_option_desc *opt);
+extern void log_getpos(int ret, int x, int y);
+extern void log_getdir(enum nh_direction dir);
+extern void log_query_key(char key, int *count);
+extern void log_getlin(char *buf);
+extern void log_yn_function(char key);
+extern void log_menu(int n, int *results);
+extern void log_objmenu(int n, struct nh_objresult *pick_list);
+extern void log_finish(enum nh_log_status status);
+
+/* ### logreplay.c ### */
+
+extern void replay_set_logfile(int logfd);
+extern void replay_begin(void);
+extern void replay_end(void);
+extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
+extern void replay_read_newgame(time_t *seed, int *playmode, char *name);
+extern void replay_run_cmdloop(boolean optonly);
+
 
 /* ### makemon.c ### */
 
@@ -1028,6 +1036,9 @@ extern boolean hits_bars(struct obj **,int,int,int,int);
 
 extern void mt_srand(unsigned int seed);
 extern unsigned int mt_random(void);
+extern unsigned int mt_nextstate(void);
+extern void save_mt_state(int fd);
+extern void restore_mt_state(int fd);
 
 /* ### muse.c ### */
 
@@ -1101,8 +1112,10 @@ extern const char *mimic_obj_name(struct monst *);
 
 extern char *nh_getenv(const char *);
 extern void init_opt_struct(void);
+extern void cleanup_opt_struct(void);
 extern void initoptions(void);
-extern void sync_options(void);
+extern struct nh_option_desc *clone_optlist(const struct nh_option_desc *in);
+extern void free_optlist(struct nh_option_desc *opt);
 extern int dotogglepickup(void);
 extern int fruitadd(char *);
 // extern void option_help(void);
@@ -1358,15 +1371,8 @@ extern int doconsult(struct monst *);
 
 extern int dosave(void);
 extern int dosave0(boolean emergency);
-#ifdef INSURANCE
-extern void savestateinlock(void);
-#endif
 extern void savelev(int,xchar,int);
-extern void bufon(int);
-extern void bufoff(int);
-extern void bflush(int);
 extern void bwrite(int,void *,unsigned int);
-extern void bclose(int);
 extern void savefruitchn(int,int);
 extern void free_dungeons(void);
 extern void freedynamicdata(void);
@@ -1717,6 +1723,16 @@ extern int chwepon(struct obj *,int);
 extern int welded(struct obj *);
 extern void weldmsg(struct obj *);
 extern void setmnotwielded(struct monst *,struct obj *);
+
+/* ### windows.c ### */
+
+extern int getpos(coord *cc, boolean, const char *);
+extern char yn_function(const char *query, const char *resp, char def);
+extern int getdir(const char *, schar *dx, schar *dy, schar *dz);
+extern char query_key(const char *query, int *count);
+extern void getlin(const char *query, char *bufp);
+extern int display_menu(struct nh_menuitem*, int, const char*, int, int*);
+extern int display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
 
 /* ### wizard.c ### */
 

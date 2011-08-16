@@ -103,10 +103,8 @@ void store_version(int fd)
 			VERSION_SANITY1, VERSION_SANITY2
 	};
 
-	bufoff(fd);
 	/* bwrite() before bufon() uses plain write() */
 	bwrite(fd,(void *)&version_data, sizeof version_data);
-	bufon(fd);
 	return;
 }
 

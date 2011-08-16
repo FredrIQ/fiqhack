@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #endif
 
+extern int logfile;
+
 static void savelevchn(int,int);
 static void savedamage(int,int);
 static void saveobjchn(int,struct obj *,int);
@@ -44,54 +46,22 @@ int dosave(void)
 /* returns 1 if save successful */
 int dosave0(boolean emergency)
 {
-	const char *fq_save;
 	int fd, ofd;
 	xchar ltmp;
 	d_level uz_save;
 	char whynot[BUFSZ];
 
-	if (!SAVEF[0])
-		return 0;
-	fq_save = fqname(SAVEF, SAVEPREFIX, 1);	/* level files take 0 */
-
-	if (!emergency) {
-	    fd = open_savefile();
-	    if (fd > 0) {
-		close(fd);
-		clear_nhwindow(NHW_MESSAGE);
-		There("seems to be an old save file.");
-		if (yn("Overwrite the old file?") == 'n') {
-		    return 0;
-		}
-	    }
-	}
-
-	fd = create_savefile();
-	if (fd < 0) {
-		pline("Cannot open save file.");
-		delete_savefile();	/* ab@unido */
-		return 0;
-	}
-
+	fd = logfile;
+	
+	log_finish(LS_SAVED);
 	vision_recalc(2);	/* shut down vision to prevent problems
 				   in the event of an impossible() call */
-	
-	/* undo date-dependent luck adjustments made at startup time */
-	if (flags.moonphase == FULL_MOON)	/* ut-sally!fletcher */
-		change_luck(-1);		/* and unido!ab */
-	if (flags.friday13)
-		change_luck(1);
-	if (!emergency)
-	    clear_nhwindow(NHW_MESSAGE);
-
 	store_version(fd);
-#ifdef STORE_PLNAME_IN_FILE
-	bwrite(fd, plname, PL_NSIZ);
-#endif
 	ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
 	usteed_id = (u.usteed ? u.usteed->m_id : 0);
 	savelev(fd, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
 	savegamestate(fd, WRITE_SAVE | FREE_SAVE);
+	save_mt_state(fd);
 
 	/* While copying level files around, zero out u.uz to keep
 	 * parts of the restore code from completely initializing all
@@ -112,8 +82,6 @@ int dosave0(boolean emergency)
 		ofd = open_levelfile(ltmp, whynot);
 		if (ofd < 0) {
 		    pline("%s", whynot);
-		    close(fd);
-		    delete_savefile();
 		    killer = whynot;
 		    done(TRICKED);
 		    return 0;
@@ -124,22 +92,18 @@ int dosave0(boolean emergency)
 		savelev(fd, ltmp, WRITE_SAVE | FREE_SAVE);     /* actual level*/
 		delete_levelfile(ltmp);
 	}
-	bclose(fd);
+	close(fd);
 
 	u.uz = uz_save;
 
 	/* get rid of current level --jgm */
 	delete_levelfile(ledger_no(&u.uz));
 	delete_levelfile(0);
-	return 1;
+	return TRUE;
 }
 
 static void savegamestate(int fd, int mode)
 {
-	int uid;
-
-	uid = getuid();
-	bwrite(fd, &uid, sizeof uid);
 	bwrite(fd, &flags, sizeof(struct flag));
 	bwrite(fd, &u, sizeof(struct you));
 
@@ -177,80 +141,8 @@ static void savegamestate(int fd, int mode)
 	savefruitchn(fd, mode);
 	savenames(fd, mode);
 	save_waterlevel(fd, mode);
-	bflush(fd);
 }
 
-#ifdef INSURANCE
-void savestateinlock(void)
-{
-	int fd, hpid, count;
-	static boolean havestate = TRUE;
-	char whynot[BUFSZ];
-
-	/* When checkpointing is on, the full state needs to be written
-	 * on each checkpoint.  When checkpointing is off, only the pid
-	 * needs to be in the level.0 file, so it does not need to be
-	 * constantly rewritten.  When checkpointing is turned off during
-	 * a game, however, the file has to be rewritten once to truncate
-	 * it and avoid restoring from outdated information.
-	 *
-	 * Restricting havestate to this routine means that an additional
-	 * noop pid rewriting will take place on the first "checkpoint" after
-	 * the game is started or restored, if checkpointing is off.
-	 */
-	if (flags.ins_chkpt || havestate) {
-		/* save the rest of the current game state in the lock file,
-		 * following the original int pid, the current level number,
-		 * and the current savefile name, which should not be subject
-		 * to any internal compression schemes since they must be
-		 * readable by an external utility
-		 */
-		fd = open_levelfile(0, whynot);
-		if (fd < 0) {
-		    pline("%s", whynot);
-		    pline("Probably someone removed it.");
-		    killer = whynot;
-		    done(TRICKED);
-		    return;
-		}
-
-		count = read(fd, &hpid, sizeof(hpid));
-		if (hackpid != hpid) {
-		    sprintf(whynot,
-			    "Level #0 pid (%d) doesn't match ours (%d)!",
-			    hpid, hackpid);
-		    pline("%s", whynot);
-		    killer = whynot;
-		    done(TRICKED);
-		}
-		close(fd);
-
-		fd = create_levelfile(0, whynot);
-		if (fd < 0) {
-		    pline("%s", whynot);
-		    killer = whynot;
-		    done(TRICKED);
-		    return;
-		}
-		count = write(fd, &hackpid, sizeof(hackpid));
-		if (flags.ins_chkpt) {
-		    int currlev = ledger_no(&u.uz);
-
-		    count = write(fd, &currlev, sizeof(currlev));
-		    save_savefile_name(fd);
-		    store_version(fd);
-#ifdef STORE_PLNAME_IN_FILE
-		    bwrite(fd, plname, PL_NSIZ);
-#endif
-		    ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
-		    usteed_id = (u.usteed ? u.usteed->m_id : 0);
-		    savegamestate(fd, WRITE_SAVE);
-		}
-		bclose(fd);
-	}
-	havestate = flags.ins_chkpt;
-}
-#endif
 
 void savelev(int fd, xchar lev, int mode)
 {
@@ -306,80 +198,18 @@ void savelev(int fd, xchar lev, int mode)
 	save_engravings(fd, mode);
 	savedamage(fd, mode);
 	save_regions(fd, mode);
-	if (mode != FREE_SAVE) bflush(fd);
-}
-
-
-static int bw_fd = -1;
-static FILE *bw_FILE = 0;
-static boolean buffering = FALSE;
-
-void bufon(int fd)
-{
-#ifdef UNIX
-    if (bw_fd >= 0)
-	panic("double buffering unexpected");
-    bw_fd = fd;
-    if ((bw_FILE = fdopen(fd, "w")) == 0)
-	panic("buffering of file %d failed", fd);
-#endif
-    buffering = TRUE;
-}
-
-void bufoff(int fd)
-{
-    bflush(fd);
-    buffering = FALSE;
-}
-
-
-void bflush(int fd)
-{
-#ifdef UNIX
-    if (fd == bw_fd) {
-	if (fflush(bw_FILE) == EOF)
-	    panic("flush of savefile failed!");
-    }
-#endif
-    return;
 }
 
 
 void bwrite(int fd, void *loc, unsigned num)
 {
-	boolean failed;
+    boolean failed;
 
-#ifdef UNIX
-	if (buffering) {
-	    if (fd != bw_fd)
-		panic("unbuffered write to fd %d (!= %d)", fd, bw_fd);
-
-	    failed = (fwrite(loc, (int)num, 1, bw_FILE) != 1);
-	} else
-#endif /* UNIX */
-	{
-/* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
-	    failed = (write(fd, loc, num) != num);
-	}
-
-	if (failed)
-	    panic("cannot write %u bytes to file #%d", num, fd);
+    failed = (write(fd, loc, num) != num);
+    if (failed)
+	panic("cannot write %u bytes to file #%d", num, fd);
 }
 
-
-void bclose(int fd)
-{
-    bufoff(fd);
-#ifdef UNIX
-    if (fd == bw_fd) {
-	fclose(bw_FILE);
-	bw_fd = -1;
-	bw_FILE = 0;
-    } else
-#endif
-	close(fd);
-    return;
-}
 
 static void savelevchn(int fd, int mode)
 {
@@ -588,6 +418,10 @@ void freedynamicdata(void)
 	free(objects);
 	objects = NULL;
 	artilist = NULL;
+	
+	if (active_birth_options)
+	    free_optlist(active_birth_options);
+	active_birth_options = NULL;
 	
 	return;
 }
