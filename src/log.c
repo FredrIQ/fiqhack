@@ -6,7 +6,7 @@
 
 extern const struct cmd_desc cmdlist[];
 
-int logfile;
+int logfile = -1;
 unsigned int last_cmd_pos;
 static const char *const statuscodes[] = {"save", "done", "inpr"};
 
@@ -60,7 +60,7 @@ void log_option(struct nh_option_desc *opt)
     char encbuf[ENCBUFSZ];
     char *str;
     
-    if (iflags.disable_log || !logfile)
+    if (iflags.disable_log || logfile == -1)
 	return;
     
     base64_encode(opt->name, encbuf);
@@ -147,7 +147,7 @@ void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
 
 void log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 {
-    if (iflags.disable_log)
+    if (iflags.disable_log || logfile == -1)
 	return;
     
     /* command numbers are shifted by 1, so that they can be array indices during replay */
@@ -168,7 +168,7 @@ void log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 
 void log_command_result(void)
 {
-    if (iflags.disable_log || !program_state.something_worth_saving || !logfile)
+    if (iflags.disable_log || !program_state.something_worth_saving || logfile == -1)
 	return;
     
     lprintf("\n<%x", mt_nextstate() & 0xffff);
@@ -269,12 +269,12 @@ void log_objmenu(int n, struct nh_objresult *pick_list)
 
 void log_finish(enum nh_log_status status)
 {
-    if (!program_state.something_worth_saving || !logfile)
+    if (!program_state.something_worth_saving || logfile == -1)
 	return;
     
     lseek(logfile, 0, SEEK_SET);
     lprintf("NHGAME %4s %08x", statuscodes[status], last_cmd_pos);
     lseek(logfile, last_cmd_pos, SEEK_SET);
     
-    logfile = 0;
+    logfile = -1;
 }

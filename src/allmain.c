@@ -254,15 +254,15 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     if (fd == -1 || !name)
 	return ERR_BAD_ARGS;
     
-    if (!api_entry_checkpoint())
-	goto error_out;
-    
     switch (nh_get_savegame_status(fd)) {
 	case LS_INVALID:	return ERR_BAD_FILE;
 	case LS_DONE:		return ERR_GAME_OVER;
 	case LS_IN_PROGRESS:	force_replay = TRUE; break;
 	case LS_SAVED:		break; /* default, everything is A-OK */
     }
+    
+    if (!api_entry_checkpoint())
+	goto error_out;
     
     error = ERR_BAD_FILE;
     replay_set_logfile(fd);

@@ -688,6 +688,8 @@ void done(int how)
 	 *	The game is now over...
 	 */
 	program_state.gameover = 1;
+	log_command_result();
+	log_finish(LS_DONE);
 	/* in case of a subsequent panic(), there's no point trying to save */
 	program_state.something_worth_saving = 0;
 	/* render vision subsystem inoperative */
@@ -783,8 +785,6 @@ void done(int how)
 	done_money = umoney;
 #endif
 
-	log_command_result();
-	log_finish(LS_DONE);
 	display_rip(how, killbuf, pbuf, umoney);
 
 	/* generate a topten entry for this game.
