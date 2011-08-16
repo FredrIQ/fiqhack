@@ -25,11 +25,13 @@ Changes so far:
     - drawing (selection of appropriate output char / tile) has been completely
         separated from libnethack and is handled entirely in the window port.
         libnethack uses symbol ids to tell the window port what to display.
+    - replay-based save/restore
+        the starting state and all moves are now logged during play and can be replayed
+	in order to restore a game
 
 Plans:
-    - replay-based save/restore
-        the starting state and all moves should be logged during play and then replayed
-	sequentially in order to restore a game
+    - change level handling
+        there is no good reason to write levels to disk any more
     - create an ncurses based window port for tty and delete the current tty code
     - create a qt4-based tile port
 
