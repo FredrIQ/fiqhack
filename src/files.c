@@ -39,16 +39,6 @@ char lock[PL_NSIZ+25];		/* long enough for username+-+name+.99 */
 # endif
 #endif
 
-#if defined(UNIX)
-#define SAVESIZE	(PL_NSIZ + 13)	/* save/99999player.e */
-#else
-#  if defined(WIN32)
-#define SAVESIZE	(PL_NSIZ + 40)	/* username-player.NetHack-saved-game */
-#  endif
-#endif
-
-char SAVEF[SAVESIZE];	/* holds relative path of save file from playground */
-
 #ifdef HOLD_LOCKFILE_OPEN
 struct level_ftrack {
 int init;
