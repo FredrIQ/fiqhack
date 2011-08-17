@@ -50,7 +50,9 @@ static int lprintf(const char *fmt, ...)
     size = vsnprintf(outbuf, sizeof(outbuf), fmt, vargs);
     va_end(vargs);
     
-    write(logfile, outbuf, size);
+    if (write(logfile, outbuf, size) != size)
+	panic("writing %d bytes to the log failed.");
+	
     return size;
 }
 
