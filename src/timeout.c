@@ -1237,7 +1237,6 @@ static const char *kind_name(short kind)
 	case TIMER_LEVEL: return "level";
 	case TIMER_GLOBAL: return "global";
 	case TIMER_OBJECT: return "object";
-	case TIMER_MONSTER: return "monster";
     }
     return "unknown";
 }
@@ -1503,20 +1502,6 @@ static void write_timer(int fd, timer_element *timer)
 	    }
 	    break;
 
-	case TIMER_MONSTER:
-	    if (timer->needs_fixup)
-		bwrite(fd, timer, sizeof(timer_element));
-	    else {
-		/* replace monster pointer with id */
-		arg_save = timer->arg;
-		timer->arg = (void *)((struct monst *)timer->arg)->m_id;
-		timer->needs_fixup = 1;
-		bwrite(fd, timer, sizeof(timer_element));
-		timer->arg = arg_save;
-		timer->needs_fixup = 0;
-	    }
-	    break;
-
 	default:
 	    panic("write_timer");
 	    break;
@@ -1570,7 +1555,6 @@ static boolean timer_is_local(timer_element *timer)
 	case TIMER_LEVEL:	return TRUE;
 	case TIMER_GLOBAL:	return FALSE;
 	case TIMER_OBJECT:	return obj_is_local((struct obj *)timer->arg);
-	case TIMER_MONSTER:	return mon_is_local((struct monst *)timer->arg);
     }
     panic("timer_is_local");
     return FALSE;
@@ -1699,8 +1683,6 @@ void relink_timers(boolean ghostly)
 		curr->arg = find_oid(nid);
 		if (!curr->arg) panic("cant find o_id %d", nid);
 		curr->needs_fixup = 0;
-	    } else if (curr->kind == TIMER_MONSTER) {
-		panic("relink_timers: no monster timer implemented");
 	    } else
 		panic("relink_timers 2");
 	}

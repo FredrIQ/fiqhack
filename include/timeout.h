@@ -11,7 +11,6 @@ typedef void (*timeout_proc)(void *, long);
 #define TIMER_LEVEL	0	/* event specific to level */
 #define TIMER_GLOBAL	1	/* event follows current play */
 #define TIMER_OBJECT	2	/* event follows a object */
-#define TIMER_MONSTER	3	/* event follows a monster */
 
 /* save/restore timer ranges */
 #define RANGE_LEVEL  0		/* save/restore timers staying on level */
