@@ -455,6 +455,7 @@ int dorecover(int fd)
 	rtmp = restlevelfile(ledger_no(&u.uz));
 	if (rtmp < 2) return rtmp;  /* dorecover called recursively */
 	restore_mt_state(fd);
+	restore_track(fd);
 
 	/* these pointers won't be valid while we're processing the
 	 * other levels, but they'll be reset again by restlevelstate()

@@ -53,4 +53,20 @@ coord *gettrack(int x, int y)
     return NULL;
 }
 
+
+void save_track(int fd)
+{
+    bwrite(fd, utrack, sizeof(utrack));
+    bwrite(fd, &utcnt, sizeof(utcnt));
+    bwrite(fd, &utpnt, sizeof(utpnt));    
+}
+
+
+void restore_track(int fd)
+{
+    read(fd, utrack, sizeof(utrack));
+    read(fd, &utcnt, sizeof(utcnt));
+    read(fd, &utpnt, sizeof(utpnt));    
+}
+
 /*track.c*/

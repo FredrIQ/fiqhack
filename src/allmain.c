@@ -305,7 +305,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     docrt();
     bot();
     flush_screen(0);
-    
+    pline("Recovered via %s.", force_replay ? "replay" : "restore");
     welcome(FALSE);
     
     api_exit();

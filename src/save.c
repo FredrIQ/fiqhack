@@ -62,6 +62,7 @@ int dosave0(boolean emergency)
 	savelev(fd, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
 	savegamestate(fd, WRITE_SAVE | FREE_SAVE);
 	save_mt_state(fd);
+	save_track(fd);
 
 	/* While copying level files around, zero out u.uz to keep
 	 * parts of the restore code from completely initializing all

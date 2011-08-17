@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <signal.h>
+#include <time.h>
 
 #include "nethack.h"
 #include "wintty.h"
@@ -283,11 +284,12 @@ static void rungame(char *saveprefix)
 	    tty_askname(plname);
 	
 	tty_create_game_windows();
+	srandom(time(NULL));
 	
 	snprintf(filename, sizeof(filename), "%ssave/%d%s.nhgame", saveprefix, getuid(), plname);
 	fd = open(filename, O_RDWR, 0660);
 	
-	if (nh_restore_game(fd, NULL, plname, locknum, FALSE) != GAME_RESTORED) {
+	if (nh_restore_game(fd, NULL, plname, locknum, random() % 2) != GAME_RESTORED) {
 	    if (fd != -1)
 		close(fd);
 	    query_birth_options();

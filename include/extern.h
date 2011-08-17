@@ -1585,6 +1585,8 @@ extern struct obj *tt_oname(struct obj *);
 extern void initrack(void);
 extern void settrack(void);
 extern coord *gettrack(int,int);
+extern void save_track(int fd);
+extern void restore_track(int fd);
 
 /* ### trap.c ### */
 
