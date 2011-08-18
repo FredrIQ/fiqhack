@@ -165,6 +165,50 @@ static void parse_command_list(char **tokens, long *tnum, long tcount)
 }
 
 
+static void parse_key(char *token)
+{
+    char key, keystr[16];
+    int cnt = 0;
+    sscanf(token, "k:%hhx:%x", &key, &cnt);
+    if (key == '\033')
+	sprintf(keystr, "<ESC>");
+    else if (key == '\n')
+	sprintf(keystr, "<RETURN>");
+    else
+	sprintf(keystr, "%c", key);
+    
+    if (cnt > 1)
+	printf("key:%d%s ", cnt, keystr);
+    else
+	printf("key:%s ", keystr);
+}
+
+
+static void parse_yesno(char *token)
+{
+    char key;
+    sscanf(token, "y:%hhx", &key);
+    printf("yes/no:'%c' ", key);
+}
+
+
+static void parse_line(char *token)
+{
+    char outbuf[1024];
+    char *encdata = strchr(token, ':');
+    base64_decode(encdata+1, outbuf);
+    printf("line:\"%s\" ", outbuf);
+}
+
+
+static void parse_dir(char *token)
+{
+    int dir;
+    sscanf(token, "d:%d", &dir);
+    printf("dir:%s ", directions[dir+1]);
+}
+
+
 int main(int argc, char *argv[])
 {
     FILE *fp;
@@ -243,10 +287,10 @@ int main(int argc, char *argv[])
 	    case '!': parse_option_token(tokens[tnum], tnum); break;
 	    case '>': parse_command_token(tokens, &tnum, tcount); break;
 	    case 'p': printf("pos "); break;
-	    case 'k': printf("key "); break;
-	    case 'd': printf("dir "); break;
-	    case 'l': printf("line "); break;
-	    case 'y': printf("yes/no "); break;
+	    case 'k': parse_key(tokens[tnum]); break;
+	    case 'd': parse_dir(tokens[tnum]); break;
+	    case 'l': parse_line(tokens[tnum]); break;
+	    case 'y': parse_yesno(tokens[tnum]); break;
 	    case 'm': printf("menu "); break;
 	    case 'o': printf("objects "); break;
 	    case '<': printf("\n"); break;
