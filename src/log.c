@@ -280,3 +280,8 @@ void log_finish(enum nh_log_status status)
     
     logfile = -1;
 }
+
+void log_truncate(void)
+{
+    ftruncate(logfile, last_cmd_pos);
+}

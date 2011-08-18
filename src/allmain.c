@@ -300,6 +300,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 
     /* clean up data used for replay */
     replay_end();
+    log_truncate();
     
     /* info might not have reached the ui while alternate window procs were set */
     docrt();
