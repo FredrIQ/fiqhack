@@ -323,6 +323,8 @@ void make_engr_at(int x, int y, const char *s, long e_time, xchar e_type)
 	ep->engr_x = x;
 	ep->engr_y = y;
 	ep->engr_txt = (char *)(ep + 1);
+	while (ep->engr_txt[0] == ' ')
+	    ep->engr_txt++;
 	strcpy(ep->engr_txt, s);
 	/* engraving Elbereth shows wisdom */
 	if (!in_mklev && !strcmp(s, "Elbereth")) exercise(A_WIS, TRUE);
@@ -1096,6 +1098,8 @@ void rest_engravings(int fd)
 		ep->nxt_engr = head_engr;
 		head_engr = ep;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
+		while (ep->engr_txt[0] == ' ')
+		    ep->engr_txt++;
 		/* mark as finished for bones levels -- no problem for
 		 * normal levels as the player must have finished engraving
 		 * to be able to move again */
