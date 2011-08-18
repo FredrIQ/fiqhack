@@ -142,6 +142,7 @@ static void savegamestate(int fd, int mode)
 	savefruitchn(fd, mode);
 	savenames(fd, mode);
 	save_waterlevel(fd, mode);
+	bwrite(fd, &lastinvnr, sizeof(lastinvnr));
 }
 
 

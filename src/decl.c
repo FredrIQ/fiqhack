@@ -127,6 +127,7 @@ struct obj *invent,
 	*ublindf,
 	*uchain,
 	*uball;
+int lastinvnr;	/* 0 ... 51 */
 
 const int shield_static[SHIELD_COUNT] = {
     E_ss1, E_ss2, E_ss3, E_ss2, E_ss1, E_ss2, E_ss4,	/* 7 per row */
@@ -288,6 +289,7 @@ void init_data(void)
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;
     flags.moonphase = 10; /* invalid value, so that the first call to realtime_tasks will dtrt */
+    lastinvnr = 51;
 }
 
 /*decl.c*/

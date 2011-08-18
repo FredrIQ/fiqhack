@@ -205,6 +205,7 @@ extern struct obj *invent,
 	*uarmu, /* under-wear, so to speak */
 	*uskin, *uamul, *uleft, *uright, *ublindf,
 	*uwep, *uswapwep, *uquiver;
+extern int lastinvnr;
 
 extern struct obj *uchain;		/* defined only when punished */
 extern struct obj *uball;

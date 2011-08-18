@@ -23,8 +23,6 @@ static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
 
 
-static int lastinvnr = 51;	/* 0 ... 51 (never saved&restored) */
-
 /* wizards can wish for venom, which will become an invisible inventory
  * item without this.  putting it in inv_order would mean venom would
  * suddenly become a choice for all the inventory-class commands, which

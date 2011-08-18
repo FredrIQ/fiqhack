@@ -386,6 +386,7 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 
 	restnames(fd);
 	restore_waterlevel(fd);
+	read(fd, &lastinvnr, sizeof(lastinvnr));
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE);
 	relink_light_sources(FALSE);
