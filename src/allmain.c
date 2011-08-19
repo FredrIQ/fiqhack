@@ -74,7 +74,8 @@ boolean nh_exit(int exit_type)
 		
 	    case EXIT_FORCE_SAVE:
 		dosave0(TRUE);
-		break; /* only reached if saving fails */
+		terminate();
+		break;
 		
 	    case EXIT_REQUEST_QUIT:
 		done2();
@@ -197,7 +198,6 @@ static void post_init_tasks(void)
     encumber_msg(); /* in case they auto-picked up something */
 
     u.uz0.dlevel = u.uz.dlevel;
-    youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
     
     /* prepare for the first move */
     pre_move_tasks(FALSE);
@@ -236,6 +236,7 @@ boolean nh_start_game(int fd, char *name, int locknum, int playmode)
     pickup(1);
     
     program_state.game_running = 1;
+    youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
     post_init_tasks();
     
     api_exit();

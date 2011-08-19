@@ -329,7 +329,8 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 
 	role_init();	/* Reset the initial role, race, gender, and alignment */
 	mread(fd, &u, sizeof(struct you));
-	set_uasmon();
+	mread(fd, &youmonst, sizeof(youmonst));
+	set_uasmon(); /* fix up youmonst.data */
 	if (u.uhp <= 0 && (!Upolyd || u.mh <= 0)) {
 	    u.ux = u.uy = 0;	/* affects pline() [hence You()] */
 	    You("were not healthy enough to survive restoration.");

@@ -93,7 +93,6 @@ int dosave0(boolean emergency)
 		savelev(fd, ltmp, WRITE_SAVE | FREE_SAVE);     /* actual level*/
 		delete_levelfile(ltmp);
 	}
-	close(fd);
 
 	u.uz = uz_save;
 
@@ -107,6 +106,7 @@ static void savegamestate(int fd, int mode)
 {
 	bwrite(fd, &flags, sizeof(struct flag));
 	bwrite(fd, &u, sizeof(struct you));
+	bwrite(fd, &youmonst, sizeof(youmonst));
 
 	/* must come before migrating_objs and migrating_mons are freed */
 	save_timers(fd, mode, RANGE_GLOBAL);
