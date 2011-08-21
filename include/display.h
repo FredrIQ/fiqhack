@@ -141,9 +141,9 @@
  *
  * Respectively return a random monster, object, or trap number.
  */
-#define random_monster() rn2(NUMMONS)
-#define random_object()  rn1(NUM_OBJECTS-1,1)
-#define random_trap()	 rn1(TRAPNUM-1,1)
+#define random_monster() (display_rng(NUMMONS))
+#define random_object()  (display_rng(NUM_OBJECTS-1) + 1)
+#define random_trap()	 (display_rng(TRAPNUM-1) + 1)
 
 /*
  * what_obj()

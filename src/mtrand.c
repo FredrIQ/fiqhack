@@ -23,6 +23,7 @@
 static unsigned int state[N+1];     /* state vector + 1 extra to not violate ANSI C */
 static unsigned int *next;          /* next random value is computed from here */
 static int          left = -1;      /* can *next++ this many times before reloading */
+static int dpos;
 
 
 void mt_srand(unsigned int seed)
@@ -51,6 +52,7 @@ static unsigned int mt_reload(void)
 
     left = N-1;
     next = state+1;
+    dpos = 0;
     
     s0 = state[0];
     s1 = state[1];
@@ -116,3 +118,17 @@ void restore_mt_state(int fd)
     read(fd, &left, sizeof(left));
     next = &state[pos];
 }
+
+
+/* A special-purpose rng for random_monster(), random_object(), random_trap()
+ * These functions are used for displaying hallucinated things.
+ * Re-using "used up" random values is not a problem for that and is preferable
+ * to messing with the system rng, while running a second mt with it's own state
+ * seems like overkill. */
+int display_rng(int x)
+{
+    unsigned int num = state[dpos];
+    dpos = (dpos + 1) % N;
+    return num % x;
+}
+

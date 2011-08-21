@@ -1040,6 +1040,8 @@ extern unsigned int mt_random(void);
 extern unsigned int mt_nextstate(void);
 extern void save_mt_state(int fd);
 extern void restore_mt_state(int fd);
+extern int display_rng(int);
+
 
 /* ### muse.c ### */
 

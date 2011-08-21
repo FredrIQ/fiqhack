@@ -1179,7 +1179,7 @@ struct obj *poly_obj(struct obj *obj, int id)
 
 		/* now change it into something layed by the hero */
 		while (tryct--) {
-		    mnum = can_be_hatched(random_monster());
+		    mnum = can_be_hatched(rn2(NUMMONS));
 		    if (mnum != NON_PM && !dead_species(mnum, TRUE)) {
 			otmp->spe = 1;	/* layed by hero */
 			otmp->corpsenm = mnum;
