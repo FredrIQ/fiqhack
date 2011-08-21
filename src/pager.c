@@ -698,7 +698,7 @@ int doidtrap(void)
 	
 	x = u.ux + dx;
 	y = u.uy + dy;
-	for (trap = ftrap; trap; trap = trap->ntrap)
+	for (trap = level.lev_traps; trap; trap = trap->ntrap)
 	    if (trap->tx == x && trap->ty == y) {
 		if (!trap->tseen) break;
 		tt = trap->ttyp;

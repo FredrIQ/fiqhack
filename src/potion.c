@@ -786,9 +786,9 @@ int peffects(struct obj *otmp)
 			/* reverse kludge */
 			HLevitation = 0;
 			if (otmp->cursed && !Is_waterlevel(&u.uz)) {
-	if ((u.ux != xupstair || u.uy != yupstair)
-	   && (u.ux != sstairs.sx || u.uy != sstairs.sy || !sstairs.up)
-	   && (!xupladder || u.ux != xupladder || u.uy != yupladder)
+	if ((u.ux != level.upstair.sx || u.uy != level.upstair.sy)
+	   && (u.ux != level.sstairs.sx || u.uy != level.sstairs.sy || !level.sstairs.up)
+	   && (!level.upladder.sx || u.ux != level.upladder.sx || u.uy != level.upladder.sy)
 	) {
 					You("hit your %s on the %s.",
 						body_part(HEAD),

@@ -228,7 +228,7 @@ void place_lregion(xchar lx, xchar ly, xchar hx, xchar hy,
 	 * if there are rooms and this a branch, let place_branch choose
 	 * the branch location (to avoid putting branches in corridors).
 	 */
-	if (rtype == LR_BRANCH && nroom) {
+	if (rtype == LR_BRANCH && level.nroom) {
 	    place_branch(Is_branchlev(&u.uz), 0, 0);
 	    return;
 	}
@@ -355,16 +355,16 @@ static void fixup_special(void)
 	case LR_DOWNTELE:
 	    /* save the region outlines for goto_level() */
 	    if (r->rtype == LR_TELE || r->rtype == LR_UPTELE) {
-		    updest.lx = r->inarea.x1; updest.ly = r->inarea.y1;
-		    updest.hx = r->inarea.x2; updest.hy = r->inarea.y2;
-		    updest.nlx = r->delarea.x1; updest.nly = r->delarea.y1;
-		    updest.nhx = r->delarea.x2; updest.nhy = r->delarea.y2;
+		    level.updest.lx = r->inarea.x1; level.updest.ly = r->inarea.y1;
+		    level.updest.hx = r->inarea.x2; level.updest.hy = r->inarea.y2;
+		    level.updest.nlx = r->delarea.x1; level.updest.nly = r->delarea.y1;
+		    level.updest.nhx = r->delarea.x2; level.updest.nhy = r->delarea.y2;
 	    }
 	    if (r->rtype == LR_TELE || r->rtype == LR_DOWNTELE) {
-		    dndest.lx = r->inarea.x1; dndest.ly = r->inarea.y1;
-		    dndest.hx = r->inarea.x2; dndest.hy = r->inarea.y2;
-		    dndest.nlx = r->delarea.x1; dndest.nly = r->delarea.y1;
-		    dndest.nhx = r->delarea.x2; dndest.nhy = r->delarea.y2;
+		    level.dndest.lx = r->inarea.x1; level.dndest.ly = r->inarea.y1;
+		    level.dndest.hx = r->inarea.x2; level.dndest.hy = r->inarea.y2;
+		    level.dndest.nlx = r->delarea.x1; level.dndest.nly = r->delarea.y1;
+		    level.dndest.nhx = r->delarea.x2; level.dndest.nhy = r->delarea.y2;
 	    }
 	    /* place_lregion gets called from goto_level() */
 	    break;
@@ -387,7 +387,7 @@ static void fixup_special(void)
 	struct obj *otmp;
 	int tryct;
 
-	croom = &rooms[0]; /* only one room on the medusa level */
+	croom = &level.rooms[0]; /* only one room on the medusa level */
 	for (tryct = rnd(4); tryct; tryct--) {
 	    x = somex(croom); y = somey(croom);
 	    if (goodpos(x, y, NULL, 0)) {
@@ -581,9 +581,9 @@ void makemaz(const char *s)
 		y = rn1(y_range, y_maze_min + INVPOS_Y_MARGIN + 1);
 		/* we don't want it to be too near the stairs, nor
 		   to be on a spot that's already in use (wall|trap) */
-	    } while (x == xupstair || y == yupstair ||	/*(direct line)*/
-		     abs(x - xupstair) == abs(y - yupstair) ||
-		     distmin(x, y, xupstair, yupstair) <= INVPOS_DISTANCE ||
+	    } while (x == level.upstair.sx || y == level.upstair.sy ||	/*(direct line)*/
+		     abs(x - level.upstair.sx) == abs(y - level.upstair.sy) ||
+		     distmin(x, y, level.upstair.sx, level.upstair.sy) <= INVPOS_DISTANCE ||
 		     !SPACE_POS(level.locations[x][y].typ) || occupied(x, y));
 	    inv_pos.x = x;
 	    inv_pos.y = y;
@@ -1066,7 +1066,7 @@ const char *waterbody_name(xchar x, xchar y)
 static void set_wportal(void)
 {
 	/* there better be only one magic portal on water level... */
-	for (wportal = ftrap; wportal; wportal = wportal->ntrap)
+	for (wportal = level.lev_traps; wportal; wportal = wportal->ntrap)
 		if (wportal->ttyp == MAGIC_PORTAL) return;
 	impossible("set_wportal(): no portal!");
 }

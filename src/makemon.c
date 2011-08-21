@@ -1565,7 +1565,7 @@ void set_mimic_sym(struct monst *mtmp)
 					/* only valid for INSIDE of room */
 	roomno = level.locations[mx][my].roomno - ROOMOFFSET;
 	if (roomno >= 0)
-		rt = rooms[roomno].rtype;
+		rt = level.rooms[roomno].rtype;
 	else	rt = 0;	/* roomno < 0 case */
 
 	if (OBJ_AT(mx, my)) {

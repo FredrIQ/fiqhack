@@ -303,7 +303,7 @@ boolean attack(struct monst *mtmp, schar dx, schar dy)
 		char *p;
 
 		for (p = in_rooms(mtmp->mx, mtmp->my, SHOPBASE); *p; p++)
-		    if (tended_shop(&rooms[*p - ROOMOFFSET])) {
+		    if (tended_shop(&level.rooms[*p - ROOMOFFSET])) {
 			inshop = TRUE;
 			break;
 		    }

@@ -31,7 +31,6 @@ struct trap {
 #define launch2		vl.v_launch2
 };
 
-extern struct trap *ftrap;
 #define newtrap()	malloc(sizeof(struct trap))
 #define dealloc_trap(trap) free(trap)
 

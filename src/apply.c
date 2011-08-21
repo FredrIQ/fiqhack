@@ -1888,7 +1888,7 @@ static void use_trap(struct obj *otmp)
 	else if (is_lava(u.ux, u.uy))
 	    what = "in lava";
 	else if (On_stairs(u.ux, u.uy))
-	    what = (u.ux == xdnladder || u.ux == xupladder) ?
+	    what = (u.ux == level.dnladder.sx || u.ux == level.upladder.sx) ?
 			"on the ladder" : "on the stairs";
 	else if (IS_FURNITURE(level.locations[u.ux][u.uy].typ) ||
 		IS_ROCK(level.locations[u.ux][u.uy].typ) ||

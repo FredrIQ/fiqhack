@@ -12,8 +12,6 @@ int hackpid;		/* current process id */
 int bases[MAXOCLASSES];
 
 int multi;
-int nroom;
-int nsubroom;
 int occtime;
 
 int x_maze_max, y_maze_max;	/* initialized in main, used in mkmaze.c */
@@ -29,7 +27,6 @@ struct dgn_topology dungeon_topology;
 struct q_score	quest_status;
 
 int smeq[MAXNROFROOMS+1];
-int doorindex;
 
 int saved_cmd;
 int killer_format;
@@ -83,11 +80,6 @@ struct dig_info digging;
 
 dungeon dungeons[MAXDUNGEON];	/* ini'ed by init_dungeon() */
 s_level *sp_levchn;
-stairway upstair, dnstair;
-stairway upladder, dnladder;
-stairway sstairs;
-dest_area updest;
-dest_area dndest;
 coord inv_pos;
 
 boolean in_mklev;
@@ -100,14 +92,8 @@ struct obj *current_wand;	/* wand currently zapped/applied */
 boolean in_steed_dismounting;
 
 coord bhitpos;
-coord doors[DOORMAX];
 
-struct mkroom rooms[(MAXNROFROOMS+1)*2];
-struct mkroom* subrooms;
-struct mkroom *upstairs_room, *dnstairs_room, *sstairs_room;
-
-dlevel_t level;		/* level map */
-struct trap *ftrap;
+struct dlevel level;		/* level map */
 struct monst youmonst;
 struct flag flags;
 struct instance_flags iflags;
@@ -239,8 +225,6 @@ void init_data(void)
     memset(&quest_status, 0, sizeof(quest_status));
     memset(&level_info, 0, sizeof(level_info));
     memset(&level, 0, sizeof(level));
-    memset(doors, 0, sizeof(doors));
-    memset(rooms, 0, sizeof(rooms));
     memset(bases, 0, sizeof(bases));
     memset(&u, 0, sizeof(u));
     memset(dogname, 0, sizeof(dogname));
@@ -252,16 +236,9 @@ void init_data(void)
     memset(spl_book, 0, sizeof(spl_book));
     memset(disco, 0, sizeof(disco));
     memset(&digging, 0, sizeof(digging));
-    memset(&updest, 0, sizeof(updest));
-    memset(&dndest, 0, sizeof(dndest));
-    memset(&upstair, 0, sizeof(upstair));
-    memset(&dnstair, 0, sizeof(dnstair));
-    memset(&upladder, 0, sizeof(upladder));
-    memset(&dnladder, 0, sizeof(dnladder));
-    memset(&sstairs, 0, sizeof(sstairs));
     memset(&inv_pos, 0, sizeof(inv_pos));
     
-    multi = nroom = nsubroom = occtime = killer_format = 0;
+    multi = occtime = killer_format = 0;
     afternmv = NULL;
     occupation = NULL;
     killer = NULL;
@@ -276,15 +253,13 @@ void init_data(void)
     in_steed_dismounting = FALSE;
     wailmsg = moves = monstermoves = 0;
     bhitpos.x = bhitpos.y = 0;
-    upstairs_room = dnstairs_room = sstairs_room = NULL;
-    ftrap = NULL;
     preferred_pet = 0;
     migrating_mons = mydogs = NULL;
     vision_full_recalc = FALSE;
     viz_array = NULL;
     artilist = NULL;
     
-    subrooms = &rooms[MAXNROFROOMS+1];
+    level.subrooms = &level.rooms[MAXNROFROOMS+1];
     
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;

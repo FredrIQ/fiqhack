@@ -283,8 +283,8 @@ struct trap *maketrap(int x, int y, int typ)
 	ttmp->dst.dnum = -1;
 	ttmp->dst.dlevel = -1;
 	if (!oldplace) {
-	    ttmp->ntrap = ftrap;
-	    ftrap = ttmp;
+	    ttmp->ntrap = level.lev_traps;
+	    level.lev_traps = ttmp;
 	}
 	return ttmp;
 }
@@ -3576,7 +3576,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 
 struct trap *t_at(int x, int y)
 {
-	struct trap *trap = ftrap;
+	struct trap *trap = level.lev_traps;
 	while (trap) {
 		if (trap->tx == x && trap->ty == y) return trap;
 		trap = trap->ntrap;
@@ -3589,10 +3589,10 @@ void deltrap(struct trap *trap)
 {
 	struct trap *ttmp;
 
-	if (trap == ftrap)
-		ftrap = ftrap->ntrap;
+	if (trap == level.lev_traps)
+		level.lev_traps = level.lev_traps->ntrap;
 	else {
-		for (ttmp = ftrap; ttmp->ntrap != trap; ttmp = ttmp->ntrap) ;
+		for (ttmp = level.lev_traps; ttmp->ntrap != trap; ttmp = ttmp->ntrap) ;
 		ttmp->ntrap = trap->ntrap;
 	}
 	dealloc_trap(trap);

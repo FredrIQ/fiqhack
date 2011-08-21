@@ -68,7 +68,7 @@ static void roguecorr(int x, int y, int dir)
 			if (!IS_WALL(level.locations[fromx][fromy].typ))
 				impossible("down: no wall at %d,%d?",fromx,
 									fromy);
-			dodoor(fromx, fromy, &rooms[r[x][y].nroom]);
+			dodoor(fromx, fromy, &level.rooms[r[x][y].nroom]);
 			level.locations[fromx][fromy].doormask = D_NODOOR;
 			fromy++;
 		}
@@ -87,7 +87,7 @@ static void roguecorr(int x, int y, int dir)
 			tox += 1 + 26*x; toy += 7*y;
 			if (!IS_WALL(level.locations[tox][toy].typ))
 				impossible("up: no wall at %d,%d?",tox,toy);
-			dodoor(tox, toy, &rooms[r[x][y].nroom]);
+			dodoor(tox, toy, &level.rooms[r[x][y].nroom]);
 			level.locations[tox][toy].doormask = D_NODOOR;
 			toy--;
 		}
@@ -105,7 +105,7 @@ static void roguecorr(int x, int y, int dir)
 			if (!IS_WALL(level.locations[fromx][fromy].typ))
 				impossible("down: no wall at %d,%d?",fromx,
 									fromy);
-			dodoor(fromx, fromy, &rooms[r[x][y].nroom]);
+			dodoor(fromx, fromy, &level.rooms[r[x][y].nroom]);
 			level.locations[fromx][fromy].doormask = D_NODOOR;
 			fromx++;
 		}
@@ -124,7 +124,7 @@ static void roguecorr(int x, int y, int dir)
 			tox += 1 + 26*x; toy += 7*y;
 			if (!IS_WALL(level.locations[tox][toy].typ))
 				impossible("left: no wall at %d,%d?",tox,toy);
-			dodoor(tox, toy, &rooms[r[x][y].nroom]);
+			dodoor(tox, toy, &level.rooms[r[x][y].nroom]);
 			level.locations[tox][toy].doormask = D_NODOOR;
 			tox--;
 		}
@@ -201,12 +201,12 @@ void makeroguerooms(void) {
 	 */
 #define here r[x][y]
 
-	nroom = 0;
+	level.nroom = 0;
 	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		/* Note: we want to insure at least 1 room.  So, if the
 		 * first 8 are all dummies, force the last to be a room.
 		 */
-		if (!rn2(5) && (nroom || (x<2 && y<2))) {
+		if (!rn2(5) && (level.nroom || (x<2 && y<2))) {
 			/* Arbitrary: dummy rooms may only go where real
 			 * ones do.
 			 */
@@ -221,18 +221,18 @@ void makeroguerooms(void) {
 			/* boundaries of room floor */
 			here.rlx = rnd(23 - here.dx + 1);
 			here.rly = rnd(((y==2) ? 5 : 4)- here.dy + 1);
-			nroom++;
+			level.nroom++;
 		}
 		here.doortable = 0;
 	}
 	miniwalk(rn2(3), rn2(3));
-	nroom = 0;
+	level.nroom = 0;
 	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		if (here.real) { /* Make a room */
 			int lowx, lowy, hix, hiy;
 
-			r[x][y].nroom = nroom;
-			smeq[nroom] = nroom;
+			r[x][y].nroom = level.nroom;
+			smeq[level.nroom] = level.nroom;
 
 			lowx = 1 + 26*x + here.rlx;
 			lowy = 7*y + here.rly;
@@ -276,9 +276,12 @@ void makerogueghost(void)
 	struct mkroom *croom;
 	int x,y;
 
-	if (!nroom) return; /* Should never happen */
-	croom = &rooms[rn2(nroom)];
-	x = somex(croom); y = somey(croom);
+	if (!level.nroom)
+	    return; /* Should never happen */
+	croom = &level.rooms[rn2(level.nroom)];
+	x = somex(croom);
+	y = somey(croom);
+	
 	if (!(ghost = makemon(&mons[PM_GHOST], x, y, NO_MM_FLAGS)))
 		return;
 	ghost->msleeping = 1;

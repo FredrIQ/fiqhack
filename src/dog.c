@@ -271,15 +271,15 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 		break;
 	 case MIGR_NEAR_PLAYER:	xlocale = u.ux,  ylocale = u.uy;
 		break;
-	 case MIGR_STAIRS_UP:	xlocale = xupstair,  ylocale = yupstair;
+	 case MIGR_STAIRS_UP:	xlocale = level.upstair.sx,  ylocale = level.upstair.sy;
 		break;
-	 case MIGR_STAIRS_DOWN:	xlocale = xdnstair,  ylocale = ydnstair;
+	 case MIGR_STAIRS_DOWN:	xlocale = level.dnstair.sx,  ylocale = level.dnstair.sy;
 		break;
-	 case MIGR_LADDER_UP:	xlocale = xupladder,  ylocale = yupladder;
+	 case MIGR_LADDER_UP:	xlocale = level.upladder.sx,  ylocale = level.upladder.sy;
 		break;
-	 case MIGR_LADDER_DOWN:	xlocale = xdnladder,  ylocale = ydnladder;
+	 case MIGR_LADDER_DOWN:	xlocale = level.dnladder.sx,  ylocale = level.dnladder.sy;
 		break;
-	 case MIGR_SSTAIRS:	xlocale = sstairs.sx,  ylocale = sstairs.sy;
+	 case MIGR_SSTAIRS:	xlocale = level.sstairs.sx,  ylocale = level.sstairs.sy;
 		break;
 	 case MIGR_PORTAL:
 		if (In_endgame(&u.uz)) {
@@ -288,12 +288,12 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 		       that we know that the current endgame levels always
 		       build upwards and never have any exclusion subregion
 		       inside their TELEPORT_REGION settings. */
-		    xlocale = rn1(updest.hx - updest.lx + 1, updest.lx);
-		    ylocale = rn1(updest.hy - updest.ly + 1, updest.ly);
+		    xlocale = rn1(level.updest.hx - level.updest.lx + 1, level.updest.lx);
+		    ylocale = rn1(level.updest.hy - level.updest.ly + 1, level.updest.ly);
 		    break;
 		}
 		/* find the arrival portal */
-		for (t = ftrap; t; t = t->ntrap)
+		for (t = level.lev_traps; t; t = t->ntrap)
 		    if (t->ttyp == MAGIC_PORTAL) break;
 		if (t) {
 		    xlocale = t->tx,  ylocale = t->ty;
@@ -312,8 +312,8 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 	    char *r = in_rooms(xlocale, ylocale, 0);
 	    if (r && *r) {
 		coord c;
-		/* somexy() handles irregular rooms */
-		if (somexy(&rooms[*r - ROOMOFFSET], &c))
+		/* somexy() handles irregular level.rooms */
+		if (somexy(&level.rooms[*r - ROOMOFFSET], &c))
 		    xlocale = c.x,  ylocale = c.y;
 		else
 		    xlocale = ylocale = 0;

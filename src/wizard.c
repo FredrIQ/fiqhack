@@ -54,7 +54,7 @@ void amulet(void)
 	if ((((amu = uamul) != 0 && amu->otyp == AMULET_OF_YENDOR) ||
 	     ((amu = uwep) != 0 && amu->otyp == AMULET_OF_YENDOR))
 	    && !rn2(15)) {
-	    for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
+	    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
 		if (ttmp->ttyp == MAGIC_PORTAL) {
 		    int du = distu(ttmp->tx, ttmp->ty);
 		    if (du <= 9)
@@ -276,11 +276,11 @@ int tactics(struct monst *mtmp)
 		/* unless, of course, there are no stairs (e.g. endlevel) */
 		mtmp->mavenge = 1; /* covetous monsters attack while fleeing */
 		if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
-			(mtmp->iswiz && !xupstair && !mon_has_amulet(mtmp))) {
+			(mtmp->iswiz && !level.upstair.sx && !mon_has_amulet(mtmp))) {
 		    if (!rn2(3 + mtmp->mhp/10)) rloc(mtmp, FALSE);
-		} else if (xupstair &&
-			 (mtmp->mx != xupstair || mtmp->my != yupstair)) {
-		    mnearto(mtmp, xupstair, yupstair, TRUE);
+		} else if (level.upstair.sx &&
+			 (mtmp->mx != level.upstair.sx || mtmp->my != level.upstair.sy)) {
+		    mnearto(mtmp, level.upstair.sx, level.upstair.sy, TRUE);
 		}
 		/* if you're not around, cast healing spells */
 		if (distu(mtmp->mx,mtmp->my) > (BOLT_LIM * BOLT_LIM))

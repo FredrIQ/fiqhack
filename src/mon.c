@@ -1290,7 +1290,7 @@ void mondead(struct monst *mtmp)
 	    /* Dead Kops may come back. */
 	    switch(rnd(5)) {
 		case 1:	     /* returns near the stairs */
-			makemon(mtmp->data,xdnstair,ydnstair,NO_MM_FLAGS);
+			makemon(mtmp->data,level.dnstair.sx,level.dnstair.sy,NO_MM_FLAGS);
 			break;
 		case 2:	     /* randomly */
 			makemon(mtmp->data,0,0,NO_MM_FLAGS);

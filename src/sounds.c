@@ -13,7 +13,7 @@ static int mon_in_room(struct monst *mon, int rmtyp)
 {
     int rno = level.locations[mon->mx][mon->my].roomno;
 
-    return rooms[rno - ROOMOFFSET].rtype == rmtyp;
+    return level.rooms[rno - ROOMOFFSET].rtype == rmtyp;
 }
 
 void dosounds(void)

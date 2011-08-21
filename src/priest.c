@@ -107,7 +107,7 @@ char temple_occupied(char *array)
 	char *ptr;
 
 	for (ptr = array; *ptr; ptr++)
-		if (rooms[*ptr - ROOMOFFSET].rtype == TEMPLE)
+		if (level.rooms[*ptr - ROOMOFFSET].rtype == TEMPLE)
 			return *ptr;
 	return '\0';
 }
@@ -176,7 +176,7 @@ void priestini(d_level *lvl, struct mkroom *sroom, int sx, int sy,
 	priest = makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST],
 			 sx + 1, sy, NO_MM_FLAGS);
 	if (priest) {
-		EPRI(priest)->shroom = (sroom - rooms) + ROOMOFFSET;
+		EPRI(priest)->shroom = (sroom - level.rooms) + ROOMOFFSET;
 		EPRI(priest)->shralign = Amask2align(level.locations[sx][sy].altarmask);
 		EPRI(priest)->shrpos.x = sx;
 		EPRI(priest)->shrpos.y = sy;
@@ -568,7 +568,7 @@ void ghod_hitsu(struct monst *priest)
 
 	ax = x = EPRI(priest)->shrpos.x;
 	ay = y = EPRI(priest)->shrpos.y;
-	troom = &rooms[roomno - ROOMOFFSET];
+	troom = &level.rooms[roomno - ROOMOFFSET];
 
 	if ((u.ux == x && u.uy == y) || !linedup(u.ux, u.uy, x, y)) {
 	    if (IS_DOOR(level.locations[u.ux][u.uy].typ)) {

@@ -18,7 +18,7 @@ static void call_kops(struct monst *,boolean);
 static void kops_gone(boolean);
 #endif /* KOPS */
 
-#define IS_SHOP(x)	(rooms[x].rtype >= SHOPBASE)
+#define IS_SHOP(x)	(level.rooms[x].rtype >= SHOPBASE)
 
 extern const struct shclass shtypes[];	/* defined in shknam.c */
 extern struct obj *thrownobj;		/* defined in dothrow.c */
@@ -164,7 +164,7 @@ char *shkname(struct monst *mtmp)
 void shkgone(struct monst *mtmp)
 {
 	struct eshk *eshk = ESHK(mtmp);
-	struct mkroom *sroom = &rooms[eshk->shoproom - ROOMOFFSET];
+	struct mkroom *sroom = &level.rooms[eshk->shoproom - ROOMOFFSET];
 	struct obj *otmp;
 	char *p;
 	int sx, sy;
@@ -197,13 +197,13 @@ void shkgone(struct monst *mtmp)
 void set_residency(struct monst *shkp, boolean zero_out)
 {
 	if (on_level(&(ESHK(shkp)->shoplevel), &u.uz))
-	    rooms[ESHK(shkp)->shoproom - ROOMOFFSET].resident =
+	    level.rooms[ESHK(shkp)->shoproom - ROOMOFFSET].resident =
 		(zero_out)? NULL : shkp;
 }
 
 void replshk(struct monst *mtmp, struct monst *mtmp2)
 {
-	rooms[ESHK(mtmp2)->shoproom - ROOMOFFSET].resident = mtmp2;
+	level.rooms[ESHK(mtmp2)->shoproom - ROOMOFFSET].resident = mtmp2;
 	if (inhishop(mtmp) && *u.ushops == ESHK(mtmp)->shoproom) {
 		ESHK(mtmp2)->bill_p = &(ESHK(mtmp2)->bill[0]);
 	}
@@ -322,8 +322,8 @@ static void call_kops(struct monst *shkp, boolean nearshop)
 	    if (flags.verbose)
 		 pline_The("Keystone Kops are after you!");
 	    /* Create swarm near down staircase (hinders return to level) */
-	    mm.x = xdnstair;
-	    mm.y = ydnstair;
+	    mm.x = level.dnstair.sx;
+	    mm.y = level.dnstair.sy;
 	    makekops(&mm);
 	    /* Create swarm near shopkeeper (hinders return to shop) */
 	    mm.x = shkp->mx;
@@ -500,7 +500,7 @@ void u_entered_shop(char *enterstring)
 	    return;
 	}
 
-	rt = rooms[*enterstring - ROOMOFFSET].rtype;
+	rt = level.rooms[*enterstring - ROOMOFFSET].rtype;
 
 	if (ANGRY(shkp)) {
 	    verbalize("So, %s, you dare return to %s %s?!",
@@ -652,7 +652,7 @@ int inhishop(struct monst *mtmp)
 struct monst *shop_keeper(char rmno)
 {
 	struct monst *shkp = rmno >= ROOMOFFSET ?
-				rooms[rmno - ROOMOFFSET].resident : 0;
+				level.rooms[rmno - ROOMOFFSET].resident : 0;
 
 	if (shkp) {
 	    if (NOTANGRY(shkp)) {

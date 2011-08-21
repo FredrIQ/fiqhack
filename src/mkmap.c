@@ -258,12 +258,12 @@ static void join_map(schar bg_typ, schar fg_typ)
 		min_rx = max_rx = i;
 		min_ry = max_ry = j;
 		n_loc_filled = 0;
-		flood_fill_rm(i,j,nroom+ROOMOFFSET,FALSE,FALSE);
+		flood_fill_rm(i, j, level.nroom+ROOMOFFSET, FALSE, FALSE);
 		if (n_loc_filled > 3) {
 		    add_room(min_rx, min_ry, max_rx, max_ry,
 			     FALSE, OROOM, TRUE);
-		    rooms[nroom-1].irregular = TRUE;
-		    if (nroom >= (MAXNROFROOMS*2))
+		    level.rooms[level.nroom-1].irregular = TRUE;
+		    if (level.nroom >= (MAXNROFROOMS*2))
 			goto joinm;
 		} else {
 		    /*
@@ -273,7 +273,7 @@ static void join_map(schar bg_typ, schar fg_typ)
 		    for (sx = min_rx; sx<=max_rx; sx++)
 			for (sy = min_ry; sy<=max_ry; sy++)
 			    if ((int) level.locations[sx][sy].roomno ==
-				    nroom + ROOMOFFSET) {
+				    level.nroom + ROOMOFFSET) {
 				level.locations[sx][sy].typ = bg_typ;
 				level.locations[sx][sy].roomno = NO_ROOM;
 			    }
@@ -288,7 +288,7 @@ joinm:
      * so don't call sort_rooms(), which can screw up the roomno's
      * validity in the level.locations structure.
      */
-    for (croom = &rooms[0], croom2 = croom + 1; croom2 < &rooms[nroom]; ) {
+    for (croom = &level.rooms[0], croom2 = croom + 1; croom2 < &level.rooms[level.nroom]; ) {
 	/* pick random starting and end locations for "corridor" */
 	if (!somexy(croom, &sm) || !somexy(croom2, &em)) {
 	    /* ack! -- the level is going to be busted */
@@ -326,8 +326,8 @@ static void finish_map(schar fg_typ, schar bg_typ, boolean lit, boolean walled)
 		       (bg_typ == TREE && level.locations[i][j].typ == bg_typ) ||
 			(walled && IS_WALL(level.locations[i][j].typ)))
 			level.locations[i][j].lit = TRUE;
-	    for (i = 0; i < nroom; i++)
-		rooms[i].rlit = 1;
+	    for (i = 0; i < level.nroom; i++)
+		level.rooms[i].rlit = 1;
 	}
 	/* light lava even if everything's otherwise unlit */
 	for (i=1; i<COLNO; i++)
@@ -350,8 +350,8 @@ void remove_rooms(int lx, int ly, int hx, int hy)
     int i;
     struct mkroom *croom;
 
-    for (i = nroom - 1; i >= 0; --i) {
-	croom = &rooms[i];
+    for (i = level.nroom - 1; i >= 0; --i) {
+	croom = &level.rooms[i];
 	if (croom->hx < lx || croom->lx >= hx ||
 	    croom->hy < ly || croom->ly >= hy) continue; /* no overlap */
 
@@ -368,15 +368,15 @@ void remove_rooms(int lx, int ly, int hx, int hy)
 }
 
 /*
- * Remove roomno from the rooms array, decrementing nroom.  Also updates
+ * Remove roomno from the level.rooms array, decrementing level.nroom.  Also updates
  * all level roomno values of affected higher numbered rooms.  Assumes
  * level structure contents corresponding to roomno have already been reset.
  * Currently handles only the removal of rooms that have no subrooms.
  */
 static void remove_room(unsigned roomno)
 {
-    struct mkroom *croom = &rooms[roomno];
-    struct mkroom *maxroom = &rooms[--nroom];
+    struct mkroom *croom = &level.rooms[roomno];
+    struct mkroom *maxroom = &level.rooms[--level.nroom];
     int i, j;
     unsigned oroomno;
 
@@ -388,7 +388,7 @@ static void remove_room(unsigned roomno)
 		      sizeof(struct mkroom));
 
 	/* since maxroom moved, update affected level roomno values */
-	oroomno = nroom + ROOMOFFSET;
+	oroomno = level.nroom + ROOMOFFSET;
 	roomno += ROOMOFFSET;
 	for (i = croom->lx; i <= croom->hx; ++i)
 	    for (j = croom->ly; j <= croom->hy; ++j) {

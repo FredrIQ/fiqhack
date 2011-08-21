@@ -403,9 +403,9 @@ boolean create_room(xchar x, xchar y, xchar w, xchar h,
 			yabs = ly + (ly > 0 ? ylim : 2)
 			    + rn2(hy - (ly>0?ly : 2) - dy - yborder + 1);
 			if (ly == 0 && hy >= (ROWNO-1) &&
-			    (!nroom || !rn2(nroom)) && (yabs+dy > ROWNO/2)) {
+			    (!level.nroom || !rn2(level.nroom)) && (yabs+dy > ROWNO/2)) {
 			    yabs = rn1(3, 2);
-			    if (nroom < 4 && dy>1) dy--;
+			    if (level.nroom < 4 && dy>1) dy--;
 		        }
 			if (!check_room(&xabs, &dx, &yabs, &dy, vault)) {
 				r1 = 0;
@@ -480,12 +480,12 @@ boolean create_room(xchar x, xchar y, xchar w, xchar h,
 	split_rects(r1, &r2);
 
 	if (!vault) {
-		smeq[nroom] = nroom;
+		smeq[level.nroom] = level.nroom;
 		add_room(xabs, yabs, xabs+wtmp-1, yabs+htmp-1,
 			 rlit, rtype, FALSE);
 	} else {
-		rooms[nroom].lx = xabs;
-		rooms[nroom].ly = yabs;
+		level.rooms[level.nroom].lx = xabs;
+		level.rooms[level.nroom].ly = yabs;
 	}
 	return TRUE;
 }
@@ -1020,7 +1020,7 @@ static void create_altar(altar *a, struct mkroom *croom)
 	} else {
 	    get_location(&x, &y, DRY);
 	    if ((sproom = (schar) *in_rooms(x, y, TEMPLE)) != 0)
-		croom = &rooms[sproom - ROOMOFFSET];
+		croom = &level.rooms[sproom - ROOMOFFSET];
 	    else
 		croom_is_temple = FALSE;
 	}
@@ -1281,32 +1281,32 @@ static void fix_stair_rooms(void)
     int i;
     struct mkroom *croom;
 
-    if (xdnstair &&
-       !((dnstairs_room->lx <= xdnstair && xdnstair <= dnstairs_room->hx) &&
-	 (dnstairs_room->ly <= ydnstair && ydnstair <= dnstairs_room->hy))) {
-	for (i=0; i < nroom; i++) {
-	    croom = &rooms[i];
-	    if ((croom->lx <= xdnstair && xdnstair <= croom->hx) &&
-	       (croom->ly <= ydnstair && ydnstair <= croom->hy)) {
-		dnstairs_room = croom;
+    if (level.dnstair.sx &&
+       !((level.dnstairs_room->lx <= level.dnstair.sx && level.dnstair.sx <= level.dnstairs_room->hx) &&
+	 (level.dnstairs_room->ly <= level.dnstair.sy && level.dnstair.sy <= level.dnstairs_room->hy))) {
+	for (i=0; i < level.nroom; i++) {
+	    croom = &level.rooms[i];
+	    if ((croom->lx <= level.dnstair.sx && level.dnstair.sx <= croom->hx) &&
+	       (croom->ly <= level.dnstair.sy && level.dnstair.sy <= croom->hy)) {
+		level.dnstairs_room = croom;
 		break;
 	    }
 	}
-	if (i == nroom)
+	if (i == level.nroom)
 	    panic("Couldn't find dnstair room in fix_stair_rooms!");
     }
-    if (xupstair &&
-       !((upstairs_room->lx <= xupstair && xupstair <= upstairs_room->hx) &&
-	 (upstairs_room->ly <= yupstair && yupstair <= upstairs_room->hy))) {
-	for (i=0; i < nroom; i++) {
-	    croom = &rooms[i];
-	    if ((croom->lx <= xupstair && xupstair <= croom->hx) &&
-	       (croom->ly <= yupstair && yupstair <= croom->hy)) {
-		upstairs_room = croom;
+    if (level.upstair.sx &&
+       !((level.upstairs_room->lx <= level.upstair.sx && level.upstair.sx <= level.upstairs_room->hx) &&
+	 (level.upstairs_room->ly <= level.upstair.sy && level.upstair.sy <= level.upstairs_room->hy))) {
+	for (i=0; i < level.nroom; i++) {
+	    croom = &level.rooms[i];
+	    if ((croom->lx <= level.upstair.sx && level.upstair.sx <= croom->hx) &&
+	       (croom->ly <= level.upstair.sy && level.upstair.sy <= croom->hy)) {
+		level.upstairs_room = croom;
 		break;
 	    }
 	}
-	if (i == nroom)
+	if (i == level.nroom)
 	    panic("Couldn't find upstair room in fix_stair_rooms!");
     }
 }
@@ -1327,12 +1327,12 @@ static void create_corridor(corridor *c)
 		return;
 	}
 
-	if ( !search_door(&rooms[c->src.room], &org.x, &org.y, c->src.wall,
+	if ( !search_door(&level.rooms[c->src.room], &org.x, &org.y, c->src.wall,
 			 c->src.door))
 	    return;
 
 	if (c->dest.room != -1) {
-		if (!search_door(&rooms[c->dest.room], &dest.x, &dest.y,
+		if (!search_door(&level.rooms[c->dest.room], &dest.x, &dest.y,
 				c->dest.wall, c->dest.door))
 		    return;
 		switch(c->src.wall) {
@@ -1490,11 +1490,11 @@ static void build_room(room *r, room *pr)
 	xchar rtype = (!r->chance || rn2(100) < r->chance) ? r->rtype : OROOM;
 
 	if (pr) {
-		aroom = &subrooms[nsubroom];
+		aroom = &level.subrooms[level.nsubroom];
 		okroom = create_subroom(pr->mkr, r->x, r->y, r->w, r->h,
 					rtype, r->rlit);
 	} else {
-		aroom = &rooms[nroom];
+		aroom = &level.rooms[level.nroom];
 		okroom = create_room(r->x, r->y, r->w, r->h, r->xalign,
 				     r->yalign, rtype, r->rlit);
 		r->mkr = aroom;
@@ -2180,24 +2180,24 @@ static boolean load_maze(dlb *fd)
 		   control placement of migrating monster arrivals) */
 		room_not_needed = (tmpregion.rtype == OROOM &&
 				   !tmpregion.rirreg && !prefilled);
-		if (room_not_needed || nroom >= MAXNROFROOMS) {
+		if (room_not_needed || level.nroom >= MAXNROFROOMS) {
 		    if (!room_not_needed)
 			impossible("Too many rooms on new level!");
 		    light_region(&tmpregion);
 		    continue;
 		}
 
-		troom = &rooms[nroom];
+		troom = &level.rooms[level.nroom];
 
 		/* mark rooms that must be filled, but do it later */
 		if (tmpregion.rtype != OROOM)
-		    mustfill[nroom] = (prefilled ? 2 : 1);
+		    mustfill[level.nroom] = (prefilled ? 2 : 1);
 
 		if (tmpregion.rirreg) {
 		    min_rx = max_rx = tmpregion.x1;
 		    min_ry = max_ry = tmpregion.y1;
 		    flood_fill_rm(tmpregion.x1, tmpregion.y1,
-				  nroom+ROOMOFFSET, tmpregion.rlit, TRUE);
+				  level.nroom+ROOMOFFSET, tmpregion.rlit, TRUE);
 		    add_room(min_rx, min_ry, max_rx, max_ry,
 			     FALSE, tmpregion.rtype, TRUE);
 		    troom->rlit = tmpregion.rlit;
@@ -2213,7 +2213,7 @@ static boolean load_maze(dlb *fd)
 	Fread(&n, 1, sizeof(n), fd);
 						/* Number of doors */
 	while (n--) {
-		struct mkroom *croom = &rooms[0];
+		struct mkroom *croom = &level.rooms[0];
 
 		Fread(&tmpdoor, 1, sizeof(tmpdoor), fd);
 
@@ -2231,7 +2231,7 @@ static boolean load_maze(dlb *fd)
 
 		/* Now the complicated part, list it with each subroom */
 		/* The dog move and mail daemon routines use this */
-		while (croom->hx >= 0 && doorindex < DOORMAX) {
+		while (croom->hx >= 0 && level.doorindex < DOORMAX) {
 		    if (croom->hx >= x-1 && croom->lx <= x+1 &&
 		       croom->hy >= y-1 && croom->ly <= y+1) {
 			/* Found it */
@@ -2244,7 +2244,7 @@ static boolean load_maze(dlb *fd)
 	/* now that we have rooms _and_ associated doors, fill the rooms */
 	for (n = 0; n < SIZE(mustfill); n++)
 	    if (mustfill[(int)n])
-		fill_room(&rooms[(int)n], (mustfill[(int)n] == 2));
+		fill_room(&level.rooms[(int)n], (mustfill[(int)n] == 2));
 
 	/* if special boundary syms (CROSSWALL) in map, remove them now */
 	if (has_bounds) {
@@ -2310,10 +2310,10 @@ static boolean load_maze(dlb *fd)
 
 		level.locations[x][y].typ = LADDER;
 		if (tmplad.up == 1) {
-			xupladder = x;	yupladder = y;
+			level.upladder.sx = x;	level.upladder.sy = y;
 			level.locations[x][y].ladder = LA_UP;
 		} else {
-			xdnladder = x;	ydnladder = y;
+			level.dnladder.sx = x;	level.dnladder.sy = y;
 			level.locations[x][y].ladder = LA_DOWN;
 		}
 	}

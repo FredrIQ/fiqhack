@@ -1556,15 +1556,15 @@ const char *dfeature_at(int x, int y, char *buf)
 	    sprintf(altbuf, "altar to %s (%s)", a_gname(),
 		    align_str(Amask2align(lev->altarmask & ~AM_SHRINE)));
 	    dfeature = altbuf;
-	} else if ((x == xupstair && y == yupstair) ||
-		 (x == sstairs.sx && y == sstairs.sy && sstairs.up))
+	} else if ((x == level.upstair.sx && y == level.upstair.sy) ||
+		 (x == level.sstairs.sx && y == level.sstairs.sy && level.sstairs.up))
 	    cmap = S_upstair;				/* "staircase up" */
-	else if ((x == xdnstair && y == ydnstair) ||
-		 (x == sstairs.sx && y == sstairs.sy && !sstairs.up))
+	else if ((x == level.dnstair.sx && y == level.dnstair.sy) ||
+		 (x == level.sstairs.sx && y == level.sstairs.sy && !level.sstairs.up))
 	    cmap = S_dnstair;				/* "staircase down" */
-	else if (x == xupladder && y == yupladder)
+	else if (x == level.upladder.sx && y == level.upladder.sy)
 	    cmap = S_upladder;				/* "ladder up" */
-	else if (x == xdnladder && y == ydnladder)
+	else if (x == level.dnladder.sx && y == level.dnladder.sy)
 	    cmap = S_dnladder;				/* "ladder down" */
 	else if (ltyp == DRAWBRIDGE_DOWN)
 	    cmap = S_vodbridge;			/* "lowered drawbridge" */

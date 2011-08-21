@@ -434,8 +434,9 @@ struct levelflags {
 	unsigned arboreal:1;		/* Trees replace rock */
 };
 
-typedef struct
-{
+
+struct ls_t;
+struct dlevel {
     struct rm		locations[COLNO][ROWNO];
     struct obj		*objects[COLNO][ROWNO];
     struct monst	*monsters[COLNO][ROWNO];
@@ -444,10 +445,28 @@ typedef struct
     struct monst	*monlist;
     struct damage	*damagelist;
     struct levelflags	flags;
-}
-dlevel_t;
+    
+    timer_element	*lev_timers;
+    struct ls_t		*lev_lights;
+    struct damage	*lev_damage;
+    struct trap 	*lev_traps;
+    coord 		doors[DOORMAX];
+    struct mkroom	rooms[(MAXNROFROOMS+1)*2];
+    struct mkroom	*subrooms;
+    struct mkroom	*upstairs_room, *dnstairs_room, *sstairs_room;
+    stairway		upstair, dnstair;
+    stairway		upladder, dnladder;
+    stairway		sstairs;
+    dest_area		updest;
+    dest_area		dndest;
+int nroom;
+int nsubroom;
+    int			doorindex;
+    int			monmoves; /* monstermoves when the level was last visited */
+};
 
-extern dlevel_t level;	/* structure describing the current level */
+extern struct dlevel level;	/* structure describing the current level */
+
 
 #define OBJ_AT(x,y)	(level.objects[x][y] != NULL)
 /*

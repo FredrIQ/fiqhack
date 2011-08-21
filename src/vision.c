@@ -276,12 +276,12 @@ static void rogue_vision(char **next, /* could_see array pointers */
     /* If in a lit room, we are able to see to its boundaries. */
     /* If dark, set COULD_SEE so various spells work -dlc */
     if (rnum >= 0) {
-	for (zy = rooms[rnum].ly-1; zy <= rooms[rnum].hy+1; zy++) {
-	    rmin[zy] = start = rooms[rnum].lx-1;
-	    rmax[zy] = stop  = rooms[rnum].hx+1;
+	for (zy = level.rooms[rnum].ly-1; zy <= level.rooms[rnum].hy+1; zy++) {
+	    rmin[zy] = start = level.rooms[rnum].lx-1;
+	    rmax[zy] = stop  = level.rooms[rnum].hx+1;
 
 	    for (zx = start; zx <= stop; zx++) {
-		if (rooms[rnum].rlit) {
+		if (level.rooms[rnum].rlit) {
 		    next[zy][zx] = COULD_SEE | IN_SIGHT;
 		    level.locations[zx][zy].seenv = SVALL;	/* see the walls */
 		} else

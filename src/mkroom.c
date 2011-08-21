@@ -8,8 +8,8 @@
  *	has_dnstairs() -- return TRUE if given room has a down staircase
  *	has_upstairs() -- return TRUE if given room has an up staircase
  *	courtmon() -- generate a court monster
- *	save_rooms() -- save rooms into file fd
- *	rest_rooms() -- restore rooms from file fd
+ *	save_rooms() -- save level.rooms into file fd
+ *	rest_rooms() -- restore level.rooms from file fd
  */
 
 #include "hack.h"
@@ -119,10 +119,10 @@ static void mkshop(void)
 	}
 gottype:
 
-	for (sroom = &rooms[0]; ; sroom++){
+	for (sroom = &level.rooms[0]; ; sroom++){
 		if (sroom->hx < 0) return;
-		if (sroom - rooms >= nroom) {
-			pline("rooms not closed by -1?");
+		if (sroom - level.rooms >= level.nroom) {
+			pline("level.rooms not closed by -1?");
 			return;
 		}
 		if (sroom->rtype != OROOM) continue;
@@ -166,11 +166,11 @@ gottype:
 static struct mkroom *pick_room(boolean strict)
 {
 	struct mkroom *sroom;
-	int i = nroom;
+	int i = level.nroom;
 
-	for (sroom = &rooms[rn2(nroom)]; i--; sroom++) {
-		if (sroom == &rooms[nroom])
-			sroom = &rooms[0];
+	for (sroom = &level.rooms[rn2(level.nroom)]; i--; sroom++) {
+		if (sroom == &level.rooms[level.nroom])
+			sroom = &level.rooms[0];
 		if (sroom->hx < 0)
 			return NULL;
 		if (sroom->rtype != OROOM)	continue;
@@ -200,7 +200,7 @@ void fill_zoo(struct mkroom *sroom)
 	struct monst *mon;
 	int sx,sy,i;
 	int sh, tx, ty, goldlim, type = sroom->rtype;
-	int rmno = (sroom - rooms) + ROOMOFFSET;
+	int rmno = (sroom - level.rooms) + ROOMOFFSET;
 	coord mm;
 
 	tx = ty = goldlim = 0;
@@ -245,14 +245,14 @@ void fill_zoo(struct mkroom *sroom)
 		    if ((int) level.locations[sx][sy].roomno != rmno ||
 			  level.locations[sx][sy].edge ||
 			  (sroom->doorct &&
-			   distmin(sx, sy, doors[sh].x, doors[sh].y) <= 1))
+			   distmin(sx, sy, level.doors[sh].x, level.doors[sh].y) <= 1))
 			continue;
 		} else if (!SPACE_POS(level.locations[sx][sy].typ) ||
 			  (sroom->doorct &&
-			   ((sx == sroom->lx && doors[sh].x == sx-1) ||
-			    (sx == sroom->hx && doors[sh].x == sx+1) ||
-			    (sy == sroom->ly && doors[sh].y == sy-1) ||
-			    (sy == sroom->hy && doors[sh].y == sy+1))))
+			   ((sx == sroom->lx && level.doors[sh].x == sx-1) ||
+			    (sx == sroom->hx && level.doors[sh].x == sx+1) ||
+			    (sy == sroom->ly && level.doors[sh].y == sy-1) ||
+			    (sy == sroom->hy && level.doors[sh].y == sy+1))))
 		    continue;
 		/* don't place monster on explicitly placed throne */
 		if (type == COURT && IS_THRONE(level.locations[sx][sy].typ))
@@ -281,7 +281,7 @@ void fill_zoo(struct mkroom *sroom)
 		    case LEPREHALL:
 			if (sroom->doorct)
 			{
-			    int distval = dist2(sx,sy,doors[sh].x,doors[sh].y);
+			    int distval = dist2(sx,sy,level.doors[sh].x,level.doors[sh].y);
 			    i = sq(distval);
 			}
 			else
@@ -410,7 +410,7 @@ static void mkswamp(void)
 	int sx,sy,i,eelct = 0;
 
 	for (i=0; i<5; i++) {		/* turn up to 5 rooms swampy */
-		sroom = &rooms[rn2(nroom)];
+		sroom = &level.rooms[rn2(level.nroom)];
 		if (sroom->hx < 0 || sroom->rtype != OROOM ||
 		   has_upstairs(sroom) || has_dnstairs(sroom))
 			continue;
@@ -443,7 +443,7 @@ static void mkswamp(void)
 static coord *shrine_pos(int roomno)
 {
 	static coord buf;
-	struct mkroom *troom = &rooms[roomno - ROOMOFFSET];
+	struct mkroom *troom = &level.rooms[roomno - ROOMOFFSET];
 
 	buf.x = troom->lx + ((troom->hx - troom->lx) / 2);
 	buf.y = troom->ly + ((troom->hy - troom->ly) / 2);
@@ -464,7 +464,7 @@ static void mktemple(void)
 	 * In temples, shrines are blessed altars
 	 * located in the center of the room
 	 */
-	shrine_spot = shrine_pos((sroom - rooms) + ROOMOFFSET);
+	shrine_spot = shrine_pos((sroom - level.rooms) + ROOMOFFSET);
 	lev = &level.locations[shrine_spot->x][shrine_spot->y];
 	lev->typ = ALTAR;
 	lev->altarmask = induced_align(80);
@@ -488,19 +488,19 @@ boolean nexttodoor(int sx, int sy)
 
 boolean has_dnstairs(struct mkroom *sroom)
 {
-	if (sroom == dnstairs_room)
+	if (sroom == level.dnstairs_room)
 		return TRUE;
-	if (sstairs.sx && !sstairs.up)
-		return (boolean)(sroom == sstairs_room);
+	if (level.sstairs.sx && !level.sstairs.up)
+		return (boolean)(sroom == level.sstairs_room);
 	return FALSE;
 }
 
 boolean has_upstairs(struct mkroom *sroom)
 {
-	if (sroom == upstairs_room)
+	if (sroom == level.upstairs_room)
 		return TRUE;
-	if (sstairs.sx && sstairs.up)
-		return (boolean)(sroom == sstairs_room);
+	if (level.sstairs.sx && level.sstairs.up)
+		return (boolean)(sroom == level.sstairs_room);
 	return FALSE;
 }
 
@@ -527,7 +527,7 @@ boolean somexy(struct mkroom *croom, coord *c)
 	int i;
 
 	if (croom->irregular) {
-	    i = (croom - rooms) + ROOMOFFSET;
+	    i = (croom - level.rooms) + ROOMOFFSET;
 
 	    while (try_cnt++ < 100) {
 		c->x = somex(croom);
@@ -558,7 +558,7 @@ boolean somexy(struct mkroom *croom, coord *c)
 		c->y = somey(croom);
 		if (IS_WALL(level.locations[c->x][c->y].typ))
 		    continue;
-		for (i=0 ; i<croom->nsubrooms;i++)
+		for (i=0; i < croom->nsubrooms; i++)
 		    if (inside_room(croom->sbrooms[i], c->x, c->y))
 			goto you_lose;
 		break;
@@ -580,12 +580,12 @@ struct mkroom *search_special(schar type)
 {
 	struct mkroom *croom;
 
-	for (croom = &rooms[0]; croom->hx >= 0; croom++)
+	for (croom = &level.rooms[0]; croom->hx >= 0; croom++)
 	    if ((type == ANY_TYPE && croom->rtype != OROOM) ||
 	       (type == ANY_SHOP && croom->rtype >= SHOPBASE) ||
 	       croom->rtype == type)
 		return croom;
-	for (croom = &subrooms[0]; croom->hx >= 0; croom++)
+	for (croom = &level.subrooms[0]; croom->hx >= 0; croom++)
 	    if ((type == ANY_TYPE && croom->rtype != OROOM) ||
 	       (type == ANY_SHOP && croom->rtype >= SHOPBASE) ||
 	       croom->rtype == type)
@@ -662,9 +662,9 @@ void save_rooms(int fd)
 	short i;
 
 	/* First, write the number of rooms */
-	bwrite(fd, &nroom, sizeof(nroom));
-	for (i=0; i<nroom; i++)
-	    save_room(fd, &rooms[i]);
+	bwrite(fd, &level.nroom, sizeof(level.nroom));
+	for (i=0; i<level.nroom; i++)
+	    save_room(fd, &level.rooms[i]);
 }
 
 static void rest_room(int fd, struct mkroom *r)
@@ -673,9 +673,9 @@ static void rest_room(int fd, struct mkroom *r)
 
 	mread(fd, r, sizeof(struct mkroom));
 	for (i=0; i<r->nsubrooms; i++) {
-		r->sbrooms[i] = &subrooms[nsubroom];
-		rest_room(fd, &subrooms[nsubroom]);
-		subrooms[nsubroom++].resident = NULL;
+		r->sbrooms[i] = &level.subrooms[level.nsubroom];
+		rest_room(fd, &level.subrooms[level.nsubroom]);
+		level.subrooms[level.nsubroom++].resident = NULL;
 	}
 }
 
@@ -687,14 +687,14 @@ void rest_rooms(int fd)
 {
 	short i;
 
-	mread(fd, &nroom, sizeof(nroom));
-	nsubroom = 0;
-	for (i = 0; i<nroom; i++) {
-	    rest_room(fd, &rooms[i]);
-	    rooms[i].resident = NULL;
+	mread(fd, &level.nroom, sizeof(level.nroom));
+	level.nsubroom = 0;
+	for (i = 0; i<level.nroom; i++) {
+	    rest_room(fd, &level.rooms[i]);
+	    level.rooms[i].resident = NULL;
 	}
-	rooms[nroom].hx = -1;		/* restore ending flags */
-	subrooms[nsubroom].hx = -1;
+	level.rooms[level.nroom].hx = -1;		/* restore ending flags */
+	level.subrooms[level.nsubroom].hx = -1;
 }
 
 /*mkroom.c*/

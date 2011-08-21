@@ -85,7 +85,7 @@ gotit:
 
 void sort_rooms(void)
 {
-	qsort(rooms, nroom, sizeof(struct mkroom), do_comp);
+	qsort(level.rooms, level.nroom, sizeof(struct mkroom), do_comp);
 }
 
 static void do_room_or_subroom(struct mkroom *croom,
@@ -122,11 +122,11 @@ static void do_room_or_subroom(struct mkroom *croom,
 	croom->hy = hiy;
 	croom->rtype = rtype;
 	croom->doorct = 0;
-	/* if we're not making a vault, doorindex will still be 0
+	/* if we're not making a vault, level.doorindex will still be 0
 	 * if we are, we'll have problems adding niches to the previous room
 	 * unless fdoor is at least doorindex
 	 */
-	croom->fdoor = doorindex;
+	croom->fdoor = level.doorindex;
 	croom->irregular = FALSE;
 
 	croom->nsubrooms = 0;
@@ -164,12 +164,12 @@ void add_room(int lowx, int lowy, int hix, int hiy, boolean lit,
 {
 	struct mkroom *croom;
 
-	croom = &rooms[nroom];
+	croom = &level.rooms[level.nroom];
 	do_room_or_subroom(croom, lowx, lowy, hix, hiy, lit,
 					    rtype, special, (boolean) TRUE);
 	croom++;
 	croom->hx = -1;
-	nroom++;
+	level.nroom++;
 }
 
 void add_subroom(struct mkroom *proom, int lowx, int lowy, int hix, int hiy,
@@ -177,13 +177,13 @@ void add_subroom(struct mkroom *proom, int lowx, int lowy, int hix, int hiy,
 {
 	struct mkroom *croom;
 
-	croom = &subrooms[nsubroom];
+	croom = &level.subrooms[level.nsubroom];
 	do_room_or_subroom(croom, lowx, lowy, hix, hiy, lit,
-					    rtype, special, (boolean) FALSE);
+					    rtype, special, FALSE);
 	proom->sbrooms[proom->nsubrooms++] = croom;
 	croom++;
 	croom->hx = -1;
-	nsubroom++;
+	level.nsubroom++;
 }
 
 static void makerooms(void)
@@ -192,13 +192,13 @@ static void makerooms(void)
 
 	/* make rooms until satisfied */
 	/* rnd_rect() will returns 0 if no more rects are available... */
-	while (nroom < MAXNROFROOMS && rnd_rect()) {
-		if (nroom >= (MAXNROFROOMS/6) && rn2(2) && !tried_vault) {
+	while (level.nroom < MAXNROFROOMS && rnd_rect()) {
+		if (level.nroom >= (MAXNROFROOMS/6) && rn2(2) && !tried_vault) {
 			tried_vault = TRUE;
 			if (create_vault()) {
-				vault_x = rooms[nroom].lx;
-				vault_y = rooms[nroom].ly;
-				rooms[nroom].hx = -1;
+				vault_x = level.rooms[level.nroom].lx;
+				vault_y = level.rooms[level.nroom].ly;
+				level.rooms[level.nroom].hx = -1;
 			}
 		} else
 		    if (!create_room(-1, -1, -1, -1, -1, -1, OROOM, -1))
@@ -214,13 +214,13 @@ static void join(int a, int b, boolean nxcor)
 	struct mkroom *croom, *troom;
 	int dx, dy;
 
-	croom = &rooms[a];
-	troom = &rooms[b];
+	croom = &level.rooms[a];
+	troom = &level.rooms[b];
 
 	/* find positions cc and tt for doors in croom and troom
 	   and direction for a corridor between them */
 
-	if (troom->hx < 0 || croom->hx < 0 || doorindex >= DOORMAX) return;
+	if (troom->hx < 0 || croom->hx < 0 || level.doorindex >= DOORMAX) return;
 	if (troom->lx > croom->hx) {
 		dx = 1;
 		dy = 0;
@@ -281,25 +281,25 @@ void makecorridors(void)
 	int a, b, i;
 	boolean any = TRUE;
 
-	for (a = 0; a < nroom-1; a++) {
+	for (a = 0; a < level.nroom-1; a++) {
 		join(a, a+1, FALSE);
 		if (!rn2(50)) break; /* allow some randomness */
 	}
-	for (a = 0; a < nroom-2; a++)
+	for (a = 0; a < level.nroom-2; a++)
 	    if (smeq[a] != smeq[a+2])
 		join(a, a+2, FALSE);
-	for (a = 0; any && a < nroom; a++) {
+	for (a = 0; any && a < level.nroom; a++) {
 	    any = FALSE;
-	    for (b = 0; b < nroom; b++)
+	    for (b = 0; b < level.nroom; b++)
 		if (smeq[a] != smeq[b]) {
 		    join(a, b, FALSE);
 		    any = TRUE;
 		}
 	}
-	if (nroom > 2)
-	    for (i = rn2(nroom) + 4; i; i--) {
-		a = rn2(nroom);
-		b = rn2(nroom-2);
+	if (level.nroom > 2)
+	    for (i = rn2(level.nroom) + 4; i; i--) {
+		a = rn2(level.nroom);
+		b = rn2(level.nroom-2);
 		if (b >= a) b += 2;
 		join(a, b, TRUE);
 	    }
@@ -313,13 +313,13 @@ void add_door(int x, int y, struct mkroom *aroom)
 	aroom->doorct++;
 	broom = aroom+1;
 	if (broom->hx < 0)
-		tmp = doorindex;
+		tmp = level.doorindex;
 	else
-		for (tmp = doorindex; tmp > broom->fdoor; tmp--)
-			doors[tmp] = doors[tmp-1];
-	doorindex++;
-	doors[tmp].x = x;
-	doors[tmp].y = y;
+		for (tmp = level.doorindex; tmp > broom->fdoor; tmp--)
+			level.doors[tmp] = level.doors[tmp-1];
+	level.doorindex++;
+	level.doors[tmp].x = x;
+	level.doors[tmp].y = y;
 	for ( ; broom->hx >= 0; broom++) broom->fdoor++;
 }
 
@@ -407,9 +407,9 @@ static void makeniche(int trap_type)
 	int dy, xx, yy;
 	struct trap *ttmp;
 
-	if (doorindex < DOORMAX)
+	if (level.doorindex < DOORMAX)
 	  while (vct--) {
-	    aroom = &rooms[rn2(nroom)];
+	    aroom = &level.rooms[rn2(level.nroom)];
 	    if (aroom->rtype != OROOM) continue;	/* not an ordinary room */
 	    if (aroom->doorct == 1 && rn2(5)) continue;
 	    if (!place_niche(aroom,&dy,&xx,&yy)) continue;
@@ -450,7 +450,7 @@ static void makeniche(int trap_type)
 
 static void make_niches(void)
 {
-	int ct = rnd((nroom>>1) + 1), dep = depth(&u.uz);
+	int ct = rnd((level.nroom>>1) + 1), dep = depth(&u.uz);
 
 	boolean	ltptr = (!level.flags.noteleport && dep > 15),
 		vamp = (dep > 5 && dep < 25);
@@ -516,16 +516,16 @@ static void clear_level_structures(void)
 	level.flags.is_maze_lev = 0;
 	level.flags.is_cavernous_lev = 0;
 
-	nroom = 0;
-	rooms[0].hx = -1;
-	nsubroom = 0;
-	subrooms[0].hx = -1;
-	doorindex = 0;
+	level.nroom = 0;
+	level.rooms[0].hx = -1;
+	level.nsubroom = 0;
+	level.subrooms[0].hx = -1;
+	level.doorindex = 0;
 	init_rect();
 	init_vault();
-	xdnstair = ydnstair = xupstair = yupstair = 0;
-	sstairs.sx = sstairs.sy = 0;
-	xdnladder = ydnladder = xupladder = yupladder = 0;
+	level.dnstair.sx = level.dnstair.sy = level.upstair.sx = level.upstair.sy = 0;
+	level.sstairs.sx = level.sstairs.sy = 0;
+	level.dnladder.sx = level.dnladder.sy = level.upladder.sx = level.upladder.sy = 0;
 	made_branch = FALSE;
 	clear_regions();
 }
@@ -586,12 +586,12 @@ static void makelevel(void)
 	sort_rooms();
 
 	/* construct stairs (up and down in different rooms if possible) */
-	croom = &rooms[rn2(nroom)];
+	croom = &level.rooms[rn2(level.nroom)];
 	if (!Is_botlevel(&u.uz))
 	     mkstairs(somex(croom), somey(croom), 0, croom);	/* down */
-	if (nroom > 1) {
+	if (level.nroom > 1) {
 	    troom = croom;
-	    croom = &rooms[rn2(nroom-1)];
+	    croom = &level.rooms[rn2(level.nroom-1)];
 	    if (croom == troom) croom++;
 	}
 
@@ -626,16 +626,16 @@ static void makelevel(void)
 				 vault_y+h, TRUE, VAULT, FALSE);
 			level.flags.has_vault = 1;
 			++room_threshold;
-			fill_room(&rooms[nroom - 1], FALSE);
+			fill_room(&level.rooms[level.nroom - 1], FALSE);
 			mk_knox_portal(vault_x+w, vault_y+h);
 			if (!level.flags.noteleport && !rn2(3)) makevtele();
 		} else if (rnd_rect() && create_vault()) {
-			vault_x = rooms[nroom].lx;
-			vault_y = rooms[nroom].ly;
+			vault_x = level.rooms[level.nroom].lx;
+			vault_y = level.rooms[level.nroom].ly;
 			if (check_room(&vault_x, &w, &vault_y, &h, TRUE))
 				goto fill_vault;
 			else
-				rooms[nroom].hx = -1;
+				level.rooms[level.nroom].hx = -1;
 		}
 	}
 
@@ -645,7 +645,7 @@ static void makelevel(void)
 	if (wizard && nh_getenv("SHOPTYPE")) mkroom(SHOPBASE); else
 	if (u_depth > 1 &&
 	    u_depth < depth(&medusa_level) &&
-	    nroom >= room_threshold &&
+	    level.nroom >= room_threshold &&
 	    rn2(u_depth) < 3) mkroom(SHOPBASE);
 	else if (u_depth > 4 && !rn2(6)) mkroom(COURT);
 	else if (u_depth > 5 && !rn2(8) &&
@@ -668,7 +668,7 @@ skip0:
 	place_branch(branchp, 0, 0);
 
 	/* for each room: put things inside */
-	for (croom = rooms; croom->hx > 0; croom++) {
+	for (croom = level.rooms; croom->hx > 0; croom++) {
 		if (croom->rtype != OROOM) continue;
 
 		/* put a sleeping monster inside */
@@ -710,7 +710,7 @@ skip0:
 		 *  of rooms; about 5 - 7.5% for 2 boxes, least likely
 		 *  when few rooms; chance for 3 or more is neglible.
 		 */
-		if (!rn2(nroom * 5 / 2))
+		if (!rn2(level.nroom * 5 / 2))
 		    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST,
 				     somex(croom), somey(croom), TRUE, FALSE);
 
@@ -841,7 +841,7 @@ void mklev(void)
 	if (level.flags.has_morgue)
 	    level.flags.graveyard = 1;
 	if (!level.flags.is_maze_lev) {
-	    for (croom = &rooms[0]; croom != &rooms[nroom]; croom++)
+	    for (croom = &level.rooms[0]; croom != &level.rooms[level.nroom]; croom++)
 		topologize(croom);
 	}
 	set_wall_state();
@@ -850,7 +850,7 @@ void mklev(void)
 
 void topologize(struct mkroom *croom)
 {
-	int x, y, roomno = (croom - rooms) + ROOMOFFSET;
+	int x, y, roomno = (croom - level.rooms) + ROOMOFFSET;
 	int lowx = croom->lx, lowy = croom->ly;
 	int hix = croom->hx, hiy = croom->hy;
 	int subindex, nsubrooms = croom->nsubrooms;
@@ -893,19 +893,19 @@ static struct mkroom *find_branch_room(coord *mp)
 {
     struct mkroom *croom = 0;
 
-    if (nroom == 0) {
+    if (level.nroom == 0) {
 	mazexy(mp);		/* already verifies location */
     } else {
 	/* not perfect - there may be only one stairway */
-	if (nroom > 2) {
+	if (level.nroom > 2) {
 	    int tryct = 0;
 
 	    do
-		croom = &rooms[rn2(nroom)];
-	    while ((croom == dnstairs_room || croom == upstairs_room ||
+		croom = &level.rooms[rn2(level.nroom)];
+	    while ((croom == level.dnstairs_room || croom == level.upstairs_room ||
 		  croom->rtype != OROOM) && (++tryct < 100));
 	} else
-	    croom = &rooms[rn2(nroom)];
+	    croom = &level.rooms[rn2(level.nroom)];
 
 	do {
 	    if (!somexy(croom, mp))
@@ -922,7 +922,7 @@ static struct mkroom *pos_to_room(xchar x, xchar y)
     int i;
     struct mkroom *curr;
 
-    for (curr = rooms, i = 0; i < nroom; curr++, i++)
+    for (curr = level.rooms, i = 0; i < level.nroom; curr++, i++)
 	if (inside_room(curr, x, y)) return curr;;
     return NULL;
 }
@@ -966,14 +966,14 @@ void place_branch(branch *br,		/* branch to place */
 	if (br->type == BR_PORTAL) {
 	    mkportal(x, y, dest->dnum, dest->dlevel);
 	} else if (make_stairs) {
-	    sstairs.sx = x;
-	    sstairs.sy = y;
-	    sstairs.up = (char) on_level(&br->end1, &u.uz) ?
+	    level.sstairs.sx = x;
+	    level.sstairs.sy = y;
+	    level.sstairs.up = (char) on_level(&br->end1, &u.uz) ?
 					    br->end1_up : !br->end1_up;
-	    assign_level(&sstairs.tolev, dest);
-	    sstairs_room = br_room;
+	    assign_level(&level.sstairs.tolev, dest);
+	    level.sstairs_room = br_room;
 
-	    level.locations[x][y].ladder = sstairs.up ? LA_UP : LA_DOWN;
+	    level.locations[x][y].ladder = level.sstairs.up ? LA_UP : LA_DOWN;
 	    level.locations[x][y].typ = STAIRS;
 	}
 	/*
@@ -1014,12 +1014,12 @@ int okdoor(xchar x, xchar y)
 	boolean near_door = bydoor(x, y);
 
 	return((level.locations[x][y].typ == HWALL || level.locations[x][y].typ == VWALL) &&
-			doorindex < DOORMAX && !near_door);
+			level.doorindex < DOORMAX && !near_door);
 }
 
 void dodoor(int x, int y, struct mkroom *aroom)
 {
-	if (doorindex >= DOORMAX) {
+	if (level.doorindex >= DOORMAX) {
 		impossible("DOORMAX exceeded?");
 		return;
 	}
@@ -1140,13 +1140,13 @@ void mkstairs(xchar x, xchar y, char up, struct mkroom *croom)
 	    return;
 
 	if (up) {
-		xupstair = x;
-		yupstair = y;
-		upstairs_room = croom;
+		level.upstair.sx = x;
+		level.upstair.sy = y;
+		level.upstairs_room = croom;
 	} else {
-		xdnstair = x;
-		ydnstair = y;
-		dnstairs_room = croom;
+		level.dnstair.sx = x;
+		level.dnstair.sy = y;
+		level.dnstairs_room = croom;
 	}
 
 	level.locations[x][y].typ = STAIRS;

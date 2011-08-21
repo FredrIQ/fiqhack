@@ -167,15 +167,15 @@ void savelev(int fd, xchar lev, int mode)
 	bwrite(fd,&lev,sizeof(lev));
 	bwrite(fd,level.locations,sizeof(level.locations));
 	bwrite(fd,&monstermoves,sizeof(monstermoves));
-	bwrite(fd,&upstair,sizeof(stairway));
-	bwrite(fd,&dnstair,sizeof(stairway));
-	bwrite(fd,&upladder,sizeof(stairway));
-	bwrite(fd,&dnladder,sizeof(stairway));
-	bwrite(fd,&sstairs,sizeof(stairway));
-	bwrite(fd,&updest,sizeof(dest_area));
-	bwrite(fd,&dndest,sizeof(dest_area));
+	bwrite(fd,&level.upstair,sizeof(stairway));
+	bwrite(fd,&level.dnstair,sizeof(stairway));
+	bwrite(fd,&level.upladder,sizeof(stairway));
+	bwrite(fd,&level.dnladder,sizeof(stairway));
+	bwrite(fd,&level.sstairs,sizeof(stairway));
+	bwrite(fd,&level.updest,sizeof(dest_area));
+	bwrite(fd,&level.dndest,sizeof(dest_area));
 	bwrite(fd,&level.flags,sizeof(level.flags));
-	bwrite(fd, doors, sizeof(doors));
+	bwrite(fd, level.doors, sizeof(level.doors));
 	save_rooms(fd);	/* no dynamic memory to reclaim */
 
 	/* from here on out, saving also involves allocated memory cleanup */
@@ -186,13 +186,13 @@ void savelev(int fd, xchar lev, int mode)
 
 	savemonchn(fd, level.monlist, mode);
 	save_worm(fd, mode);	/* save worm information */
-	savetrapchn(fd, ftrap, mode);
+	savetrapchn(fd, level.lev_traps, mode);
 	saveobjchn(fd, level.objlist, mode);
 	saveobjchn(fd, level.buriedobjlist, mode);
 	saveobjchn(fd, billobjs, mode);
 	if (release_data(mode)) {
 	    level.monlist = 0;
-	    ftrap = 0;
+	    level.lev_traps = 0;
 	    level.objlist = 0;
 	    level.buriedobjlist = 0;
 	    billobjs = 0;
@@ -391,7 +391,7 @@ void freedynamicdata(void)
 	free_light_sources(RANGE_LEVEL);
 	freemonchn(level.monlist);
 	free_worm();		/* release worm segment information */
-	freetrapchn(ftrap);
+	freetrapchn(level.lev_traps);
 	freeobjchn(level.objlist);
 	freeobjchn(level.buriedobjlist);
 	freeobjchn(billobjs);

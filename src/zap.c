@@ -2223,7 +2223,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	    if (is_db_wall(x,y) && find_drawbridge(&xx, &yy)) {
 		open_drawbridge(xx, yy);
 		disclose = TRUE;
-	    } else if (dz > 0 && (x == xdnstair && y == ydnstair) &&
+	    } else if (dz > 0 && (x == level.dnstair.sx && y == level.dnstair.sy) &&
 			/* can't use the stairs down to quest level 2 until
 			   leader "unlocks" them; give feedback if you try */
 			on_level(&u.uz, &qstart_level) && !ok_to_quest()) {

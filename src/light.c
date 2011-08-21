@@ -2,7 +2,7 @@
 /* NetHack may be freely redistributed.  See license for details.	*/
 
 #include "hack.h"
-#include "lev.h"	/* for checking save modes */
+#include "lev.h"
 
 /*
  * Mobile light sources.

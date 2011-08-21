@@ -328,7 +328,7 @@ static int wiz_map(void)
 		 save_Hhallu = HHallucination;
 
 	    HConfusion = HHallucination = 0L;
-	    for (t = ftrap; t != 0; t = t->ntrap) {
+	    for (t = level.lev_traps; t != 0; t = t->ntrap) {
 		t->tseen = 1;
 		map_trap(t, TRUE);
 	    }

@@ -309,12 +309,12 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 
 	/* place the shopkeeper in the given room */
 	sh = sroom->fdoor;
-	sx = doors[sh].x;
-	sy = doors[sh].y;
+	sx = level.doors[sh].x;
+	sy = level.doors[sh].y;
 
 	/* check that the shopkeeper placement is sane */
 	if (sroom->irregular) {
-	    int rmno = (sroom - rooms) + ROOMOFFSET;
+	    int rmno = (sroom - level.rooms) + ROOMOFFSET;
 	    if (isok(sx-1,sy) && !level.locations[sx-1][sy].edge &&
 		(int) level.locations[sx-1][sy].roomno == rmno) sx--;
 	    else if (isok(sx+1,sy) && !level.locations[sx+1][sy].edge &&
@@ -341,7 +341,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 		pline("Room at (%d,%d),(%d,%d).",
 		      sroom->lx, sroom->ly, sroom->hx, sroom->hy);
 		pline("doormax=%d doorct=%d fdoor=%d",
-		      doorindex, sroom->doorct, sh);
+		      level.doorindex, sroom->doorct, sh);
 		while (j--) {
 		    pline("door [%d,%d]", doors[sh].x, doors[sh].y);
 		    sh++;
@@ -362,11 +362,11 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 	set_malign(shk);
 	shk->msleeping = 0;
 	shk->mtrapseen = ~0;	/* we know all the traps already */
-	ESHK(shk)->shoproom = (sroom - rooms) + ROOMOFFSET;
+	ESHK(shk)->shoproom = (sroom - level.rooms) + ROOMOFFSET;
 	sroom->resident = shk;
 	ESHK(shk)->shoptype = sroom->rtype;
 	assign_level(&(ESHK(shk)->shoplevel), &u.uz);
-	ESHK(shk)->shd = doors[sh];
+	ESHK(shk)->shd = level.doors[sh];
 	ESHK(shk)->shk.x = sx;
 	ESHK(shk)->shk.y = sy;
 	ESHK(shk)->robbed = 0L;
@@ -399,7 +399,7 @@ void stock_room(int shp_indx, struct mkroom *sroom)
      */
     int sx, sy, sh;
     char buf[BUFSZ];
-    int rmno = (sroom - rooms) + ROOMOFFSET;
+    int rmno = (sroom - level.rooms) + ROOMOFFSET;
     const struct shclass *shp = &shtypes[shp_indx];
 
     /* first, try to place a shopkeeper in the room */
@@ -408,8 +408,8 @@ void stock_room(int shp_indx, struct mkroom *sroom)
 
     /* make sure no doorways without doors, and no */
     /* trapped doors, in shops.			   */
-    sx = doors[sroom->fdoor].x;
-    sy = doors[sroom->fdoor].y;
+    sx = level.doors[sroom->fdoor].x;
+    sy = level.doors[sroom->fdoor].y;
 
     if (level.locations[sx][sy].doormask == D_NODOOR) {
 	    level.locations[sx][sy].doormask = D_ISOPEN;
@@ -437,12 +437,12 @@ void stock_room(int shp_indx, struct mkroom *sroom)
 	for (sy = sroom->ly; sy <= sroom->hy; sy++) {
 	    if (sroom->irregular) {
 		if (level.locations[sx][sy].edge || (int) level.locations[sx][sy].roomno != rmno ||
-		   distmin(sx, sy, doors[sh].x, doors[sh].y) <= 1)
+		   distmin(sx, sy, level.doors[sh].x, level.doors[sh].y) <= 1)
 		    continue;
-	    } else if ((sx == sroom->lx && doors[sh].x == sx-1) ||
-		      (sx == sroom->hx && doors[sh].x == sx+1) ||
-		      (sy == sroom->ly && doors[sh].y == sy-1) ||
-		      (sy == sroom->hy && doors[sh].y == sy+1)) continue;
+	    } else if ((sx == sroom->lx && level.doors[sh].x == sx-1) ||
+		      (sx == sroom->hx && level.doors[sh].x == sx+1) ||
+		      (sy == sroom->ly && level.doors[sh].y == sy-1) ||
+		      (sy == sroom->hy && level.doors[sh].y == sy+1)) continue;
 	    mkshobj_at(shp, sx, sy);
 	}
 

@@ -487,7 +487,7 @@ void forget_traps(void)
 	struct trap *trap;
 
 	/* forget all traps (except the one the hero is in :-) */
-	for (trap = ftrap; trap; trap = trap->ntrap)
+	for (trap = level.lev_traps; trap; trap = trap->ntrap)
 	    if ((trap->tx != u.ux || trap->ty != u.uy) && (trap->ttyp != HOLE))
 		trap->tseen = 0;
 }
@@ -1318,11 +1318,11 @@ do_it:
 	    int rnum = level.locations[u.ux][u.uy].roomno - ROOMOFFSET;
 	    int rx, ry;
 	    if (rnum >= 0) {
-		for (rx = rooms[rnum].lx-1; rx <= rooms[rnum].hx+1; rx++)
-		    for (ry = rooms[rnum].ly-1; ry <= rooms[rnum].hy+1; ry++)
+		for (rx = level.rooms[rnum].lx-1; rx <= level.rooms[rnum].hx+1; rx++)
+		    for (ry = level.rooms[rnum].ly-1; ry <= level.rooms[rnum].hy+1; ry++)
 			set_lit(rx, ry,
 				(on ? &is_lit : NULL));
-		rooms[rnum].rlit = on;
+		level.rooms[rnum].rlit = on;
 	    }
 	    /* hallways remain dark on the rogue level */
 	} else

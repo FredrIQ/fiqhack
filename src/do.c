@@ -680,9 +680,9 @@ static boolean at_ladder = FALSE;
 int dodown(void)
 {
 	struct trap *trap = 0;
-	boolean stairs_down = ((u.ux == xdnstair && u.uy == ydnstair) ||
-		    (u.ux == sstairs.sx && u.uy == sstairs.sy && !sstairs.up)),
-		ladder_down = (u.ux == xdnladder && u.uy == ydnladder);
+	boolean stairs_down = ((u.ux == level.dnstair.sx && u.uy == level.dnstair.sy) ||
+		(u.ux == level.sstairs.sx && u.uy == level.sstairs.sy && !level.sstairs.up)),
+		ladder_down = (u.ux == level.dnladder.sx && u.uy == level.dnladder.sy);
 
 	if (u.usteed && !u.usteed->mcanmove) {
 		pline("%s won't move!", Monnam(u.usteed));
@@ -763,10 +763,10 @@ int dodown(void)
 
 int doup(void)
 {
-	if ( (u.ux != xupstair || u.uy != yupstair)
-	     && (!xupladder || u.ux != xupladder || u.uy != yupladder)
-	     && (!sstairs.sx || u.ux != sstairs.sx || u.uy != sstairs.sy
-			|| !sstairs.up)
+	if ( (u.ux != level.upstair.sx || u.uy != level.upstair.sy)
+	     && (!level.upladder.sx || u.ux != level.upladder.sx || u.uy != level.upladder.sy)
+	     && (!level.sstairs.sx || u.ux != level.sstairs.sx || u.uy != level.sstairs.sy
+			|| !level.sstairs.up)
 	  ) {
 		You_cant("go up here.");
 		return 0;
@@ -973,8 +973,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	/* set default level change destination areas */
 	/* the special level code may override these */
-	memset(&updest, 0, sizeof updest);
-	memset(&dndest, 0, sizeof dndest);
+	memset(&level.updest, 0, sizeof(level.updest));
+	memset(&level.dndest, 0, sizeof(level.dndest));
 
 	if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
 		/* entering this level for first time; make it now */
@@ -1007,7 +1007,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	    /* find the portal on the new level */
 	    struct trap *ttrap;
 
-	    for (ttrap = ftrap; ttrap; ttrap = ttrap->ntrap)
+	    for (ttrap = level.lev_traps; ttrap; ttrap = ttrap->ntrap)
 		if (ttrap->ttyp == MAGIC_PORTAL) break;
 
 	    if (!ttrap) panic("goto_level: no corresponding portal!");
@@ -1016,7 +1016,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	} else if (at_stairs && !In_endgame(&u.uz)) {
 	    if (up) {
 		if (at_ladder) {
-		    u_on_newpos(xdnladder, ydnladder);
+		    u_on_newpos(level.dnladder.sx, level.dnladder.sy);
 		} else {
 		    if (newdungeon) {
 			if (Is_stronghold(&u.uz)) {
@@ -1039,7 +1039,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		    You("climb up the ladder.");
 	    } else {	/* down */
 		if (at_ladder) {
-		    u_on_newpos(xupladder, yupladder);
+		    u_on_newpos(level.upladder.sx, level.upladder.sy);
 		} else {
 		    if (newdungeon) u_on_sstairs();
 		    else u_on_upstairs();
@@ -1075,20 +1075,20 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	    if (was_in_W_tower && On_W_tower_level(&u.uz))
 		/* Stay inside the Wizard's tower when feasible.	*/
 		/* Note: up vs down doesn't really matter in this case. */
-		place_lregion(dndest.nlx, dndest.nly,
-				dndest.nhx, dndest.nhy,
+		place_lregion(level.dndest.nlx, level.dndest.nly,
+				level.dndest.nhx, level.dndest.nhy,
 				0,0, 0,0, LR_DOWNTELE, NULL);
 	    else if (up)
-		place_lregion(updest.lx, updest.ly,
-				updest.hx, updest.hy,
-				updest.nlx, updest.nly,
-				updest.nhx, updest.nhy,
+		place_lregion(level.updest.lx, level.updest.ly,
+				level.updest.hx, level.updest.hy,
+				level.updest.nlx, level.updest.nly,
+				level.updest.nhx, level.updest.nhy,
 				LR_UPTELE, NULL);
 	    else
-		place_lregion(dndest.lx, dndest.ly,
-				dndest.hx, dndest.hy,
-				dndest.nlx, dndest.nly,
-				dndest.nhx, dndest.nhy,
+		place_lregion(level.dndest.lx, level.dndest.ly,
+				level.dndest.hx, level.dndest.hy,
+				level.dndest.nlx, level.dndest.nly,
+				level.dndest.nhx, level.dndest.nhy,
 				LR_DOWNTELE, NULL);
 	    if (falling) {
 		if (Punished) ballfall();

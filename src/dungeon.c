@@ -992,9 +992,9 @@ branch *Is_branchlev(d_level *lev)
 /* goto the next level (or appropriate dungeon) */
 void next_level(boolean at_stairs)
 {
-	if (at_stairs && u.ux == sstairs.sx && u.uy == sstairs.sy) {
+	if (at_stairs && u.ux == level.sstairs.sx && u.uy == level.sstairs.sy) {
 		/* Taking a down dungeon branch. */
-		goto_level(&sstairs.tolev, at_stairs, FALSE, FALSE);
+		goto_level(&level.sstairs.tolev, at_stairs, FALSE, FALSE);
 	} else {
 		/* Going down a stairs or jump in a trap door. */
 		d_level	newlevel;
@@ -1008,13 +1008,13 @@ void next_level(boolean at_stairs)
 /* goto the previous level (or appropriate dungeon) */
 void prev_level(boolean at_stairs)
 {
-	if (at_stairs && u.ux == sstairs.sx && u.uy == sstairs.sy) {
+	if (at_stairs && u.ux == level.sstairs.sx && u.uy == level.sstairs.sy) {
 		/* Taking an up dungeon branch. */
 		/* KMH -- Upwards branches are okay if not level 1 */
 		/* (Just make sure it doesn't go above depth 1) */
 		if (!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet)
 		    done(ESCAPED);
-		else goto_level(&sstairs.tolev, at_stairs, FALSE, FALSE);
+		else goto_level(&level.sstairs.tolev, at_stairs, FALSE, FALSE);
 	} else {
 		/* Going up a stairs or rising through the ceiling. */
 		d_level	newlevel;
@@ -1037,8 +1037,8 @@ void u_on_newpos(int x, int y)
 void u_on_sstairs(void)
 {
 
-	if (sstairs.sx) {
-	    u_on_newpos(sstairs.sx, sstairs.sy);
+	if (level.sstairs.sx) {
+	    u_on_newpos(level.sstairs.sx, level.sstairs.sy);
 	} else {
 	    /* code stolen from goto_level */
 	    int trycnt = 0;
@@ -1063,28 +1063,28 @@ void u_on_sstairs(void)
 /* place you on upstairs (or special equivalent) */
 void u_on_upstairs(void)
 {
-	if (xupstair) {
-		u_on_newpos(xupstair, yupstair);
+	if (level.upstair.sx) {
+		u_on_newpos(level.upstair.sx, level.upstair.sy);
 	} else
 		u_on_sstairs();
 }
 
-/* place you on dnstairs (or special equivalent) */
+/* place you on level.dnstairs (or special equivalent) */
 void u_on_dnstairs(void)
 {
-	if (xdnstair) {
-		u_on_newpos(xdnstair, ydnstair);
+	if (level.dnstair.sx) {
+		u_on_newpos(level.dnstair.sx, level.dnstair.sy);
 	} else
 		u_on_sstairs();
 }
 
 boolean On_stairs(xchar x, xchar y)
 {
-	return (boolean)((x == xupstair && y == yupstair) ||
-	       (x == xdnstair && y == ydnstair) ||
-	       (x == xdnladder && y == ydnladder) ||
-	       (x == xupladder && y == yupladder) ||
-	       (x == sstairs.sx && y == sstairs.sy));
+	return (boolean)((x == level.upstair.sx && y == level.upstair.sy) ||
+	       (x == level.dnstair.sx && y == level.dnstair.sy) ||
+	       (x == level.dnladder.sx && y == level.dnladder.sy) ||
+	       (x == level.upladder.sx && y == level.upladder.sy) ||
+	       (x == level.sstairs.sx && y == level.sstairs.sy));
 }
 
 boolean Is_botlevel(d_level *lev)
@@ -1123,7 +1123,7 @@ boolean Can_rise_up(int x, int y, d_level *lev)
 	return FALSE;
     return (boolean)(lev->dlevel > 1 ||
 		(dungeons[lev->dnum].entry_lev == 1 && ledger_no(lev) != 1 &&
-		 sstairs.sx && sstairs.up));
+		 level.sstairs.sx && level.sstairs.up));
 }
 
 /*
@@ -1255,9 +1255,9 @@ boolean In_W_tower(int x, int y, d_level *lev)
 	 * (from above or below) define the tower's boundary.
 	 *	assert( updest.nIJ == dndest.nIJ for I={l|h},J={x|y} );
 	 */
-	if (dndest.nlx > 0)
-	    return (boolean)within_bounded_area(x, y, dndest.nlx, dndest.nly,
-						dndest.nhx, dndest.nhy);
+	if (level.dndest.nlx > 0)
+	    return (boolean)within_bounded_area(x, y, level.dndest.nlx, level.dndest.nly,
+						level.dndest.nhx, level.dndest.nhy);
 	else
 	    impossible("No boundary for Wizard's Tower?");
 	return FALSE;
@@ -1577,7 +1577,7 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
     else if (Is_earthlevel(&u.uz) || Is_waterlevel(&u.uz)
 				|| Is_firelevel(&u.uz) || Is_airlevel(&u.uz)) {
 	struct trap *trap;
-	for (trap = ftrap; trap; trap = trap->ntrap)
+	for (trap = level.lev_traps; trap; trap = trap->ntrap)
 	    if (trap->ttyp == MAGIC_PORTAL)
 		break;
 

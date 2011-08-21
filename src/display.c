@@ -1101,7 +1101,7 @@ void see_traps(void)
 {
     struct trap *trap;
 
-    for (trap = ftrap; trap; trap = trap->ntrap)
+    for (trap = level.lev_traps; trap; trap = trap->ntrap)
 	if (level.locations[trap->tx][trap->ty].mem_trap)
 	    newsym(trap->tx, trap->ty);
 }
@@ -1377,7 +1377,7 @@ void flush_screen(int cursor_on_u)
  * level generation time.
  *
  * I used the 'ladder' field (really doormask) for deciding if stairwells
- * were up or down.  I didn't want to check t he upstairs and dnstairs
+ * were up or down.  I didn't want to check the upstairs and dnstairs
  * variables.
  */
 static int back_to_cmap(xchar x, xchar y)

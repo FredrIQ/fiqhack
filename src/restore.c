@@ -563,20 +563,21 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 
 	mread(fd, level.locations, sizeof(level.locations));
 	mread(fd, &omoves, sizeof(omoves));
-	mread(fd, &upstair, sizeof(stairway));
-	mread(fd, &dnstair, sizeof(stairway));
-	mread(fd, &upladder, sizeof(stairway));
-	mread(fd, &dnladder, sizeof(stairway));
-	mread(fd, &sstairs, sizeof(stairway));
-	mread(fd, &updest, sizeof(dest_area));
-	mread(fd, &dndest, sizeof(dest_area));
+	mread(fd, &level.upstair, sizeof(stairway));
+	mread(fd, &level.dnstair, sizeof(stairway));
+	mread(fd, &level.upladder, sizeof(stairway));
+	mread(fd, &level.dnladder, sizeof(stairway));
+	mread(fd, &level.sstairs, sizeof(stairway));
+	mread(fd, &level.updest, sizeof(dest_area));
+	mread(fd, &level.dndest, sizeof(dest_area));
 	mread(fd, &level.flags, sizeof(level.flags));
-	mread(fd, doors, sizeof(doors));
+	mread(fd, level.doors, sizeof(level.doors));
 	rest_rooms(fd);		/* No joke :-) */
-	if (nroom)
-	    doorindex = rooms[nroom - 1].fdoor + rooms[nroom - 1].doorct;
+	if (level.nroom)
+	    level.doorindex = level.rooms[level.nroom - 1].fdoor +
+	                level.rooms[level.nroom - 1].doorct;
 	else
-	    doorindex = 0;
+	    level.doorindex = 0;
 
 	restore_timers(fd, RANGE_LEVEL, ghostly, monstermoves - omoves);
 	restore_light_sources(fd);
@@ -604,12 +605,12 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	}
 
 	rest_worm(fd);	/* restore worm information */
-	ftrap = 0;
+	level.lev_traps = 0;
 	while (trap = newtrap(),
 	       mread(fd, trap, sizeof(struct trap)),
 	       trap->tx != 0) {	/* need "!= 0" to work around DICE 3.0 bug */
-		trap->ntrap = ftrap;
-		ftrap = trap;
+		trap->ntrap = level.lev_traps;
+		level.lev_traps = trap;
 	}
 	dealloc_trap(trap);
 	level.objlist = restobjchn(fd, ghostly, FALSE);
@@ -638,12 +639,12 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	    freefruitchn(oldfruit),  oldfruit = 0;
 
 	    if (lev > ledger_no(&medusa_level) &&
-			lev < ledger_no(&stronghold_level) && xdnstair == 0) {
+			lev < ledger_no(&stronghold_level) && level.dnstair.sx == 0) {
 		coord cc;
 
 		mazexy(&cc);
-		xdnstair = cc.x;
-		ydnstair = cc.y;
+		level.dnstair.sx = cc.x;
+		level.dnstair.sy = cc.y;
 		level.locations[cc.x][cc.y].typ = STAIRS;
 	    }
 
@@ -660,12 +661,12 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 		case BR_STAIR:
 		case BR_NO_END1:
 		case BR_NO_END2: /* OK to assign to sstairs if it's not used */
-		    assign_level(&sstairs.tolev, &ltmp);
+		    assign_level(&level.sstairs.tolev, &ltmp);
 		    break;		
 		case BR_PORTAL: /* max of 1 portal per level */
 		    {
 			struct trap *ttmp;
-			for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
+			for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
 			    if (ttmp->ttyp == MAGIC_PORTAL)
 				break;
 			if (!ttmp) panic("getlev: need portal but none found");
@@ -676,7 +677,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	    } else if (!br) {
 		/* Remove any dangling portals. */
 		struct trap *ttmp;
-		for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
+		for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
 		    if (ttmp->ttyp == MAGIC_PORTAL) {
 			deltrap(ttmp);
 			break; /* max of 1 portal/level */

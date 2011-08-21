@@ -167,30 +167,30 @@ full:
  */
 static boolean tele_jump_ok(int x1, int y1, int x2, int y2)
 {
-	if (dndest.nlx > 0) {
+	if (level.dndest.nlx > 0) {
 	    /* if inside a restricted region, can't teleport outside */
-	    if (within_bounded_area(x1, y1, dndest.nlx, dndest.nly,
-						dndest.nhx, dndest.nhy) &&
-		!within_bounded_area(x2, y2, dndest.nlx, dndest.nly,
-						dndest.nhx, dndest.nhy))
+	    if (within_bounded_area(x1, y1, level.dndest.nlx, level.dndest.nly,
+						level.dndest.nhx, level.dndest.nhy) &&
+		!within_bounded_area(x2, y2, level.dndest.nlx, level.dndest.nly,
+						level.dndest.nhx, level.dndest.nhy))
 		return FALSE;
 	    /* and if outside, can't teleport inside */
-	    if (!within_bounded_area(x1, y1, dndest.nlx, dndest.nly,
-						dndest.nhx, dndest.nhy) &&
-		within_bounded_area(x2, y2, dndest.nlx, dndest.nly,
-						dndest.nhx, dndest.nhy))
+	    if (!within_bounded_area(x1, y1, level.dndest.nlx, level.dndest.nly,
+						level.dndest.nhx, level.dndest.nhy) &&
+		within_bounded_area(x2, y2, level.dndest.nlx, level.dndest.nly,
+						level.dndest.nhx, level.dndest.nhy))
 		return FALSE;
 	}
-	if (updest.nlx > 0) {		/* ditto */
-	    if (within_bounded_area(x1, y1, updest.nlx, updest.nly,
-						updest.nhx, updest.nhy) &&
-		!within_bounded_area(x2, y2, updest.nlx, updest.nly,
-						updest.nhx, updest.nhy))
+	if (level.updest.nlx > 0) {		/* ditto */
+	    if (within_bounded_area(x1, y1, level.updest.nlx, level.updest.nly,
+						level.updest.nhx, level.updest.nhy) &&
+		!within_bounded_area(x2, y2, level.updest.nlx, level.updest.nly,
+						level.updest.nhx, level.updest.nhy))
 		return FALSE;
-	    if (!within_bounded_area(x1, y1, updest.nlx, updest.nly,
-						updest.nhx, updest.nhy) &&
-		within_bounded_area(x2, y2, updest.nlx, updest.nly,
-						updest.nhx, updest.nhy))
+	    if (!within_bounded_area(x1, y1, level.updest.nlx, level.updest.nly,
+						level.updest.nhx, level.updest.nhy) &&
+		within_bounded_area(x2, y2, level.updest.nlx, level.updest.nly,
+						level.updest.nhx, level.updest.nhy))
 		return FALSE;
 	}
 	return TRUE;
@@ -816,22 +816,22 @@ static boolean rloc_pos_ok(int x, int y, /* coordinates of candidate location */
 	yy = mtmp->my;
 	if (!xx) {
 	    /* no current location (migrating monster arrival) */
-	    if (dndest.nlx && On_W_tower_level(&u.uz))
+	    if (level.dndest.nlx && On_W_tower_level(&u.uz))
 		return ((yy & 2) != 0) ^	/* inside xor not within */
-		       !within_bounded_area(x, y, dndest.nlx, dndest.nly,
-						  dndest.nhx, dndest.nhy);
-	    if (updest.lx && (yy & 1) != 0)	/* moving up */
-		return (within_bounded_area(x, y, updest.lx, updest.ly,
-						  updest.hx, updest.hy) &&
-		       (!updest.nlx ||
-			!within_bounded_area(x, y, updest.nlx, updest.nly,
-						   updest.nhx, updest.nhy)));
-	    if (dndest.lx && (yy & 1) == 0)	/* moving down */
-		return (within_bounded_area(x, y, dndest.lx, dndest.ly,
-						  dndest.hx, dndest.hy) &&
-		       (!dndest.nlx ||
-			!within_bounded_area(x, y, dndest.nlx, dndest.nly,
-						   dndest.nhx, dndest.nhy)));
+		       !within_bounded_area(x, y, level.dndest.nlx, level.dndest.nly,
+						  level.dndest.nhx, level.dndest.nhy);
+	    if (level.updest.lx && (yy & 1) != 0)	/* moving up */
+		return (within_bounded_area(x, y, level.updest.lx, level.updest.ly,
+						  level.updest.hx, level.updest.hy) &&
+		       (!level.updest.nlx ||
+			!within_bounded_area(x, y, level.updest.nlx, level.updest.nly,
+						   level.updest.nhx, level.updest.nhy)));
+	    if (level.dndest.lx && (yy & 1) == 0)	/* moving down */
+		return (within_bounded_area(x, y, level.dndest.lx, level.dndest.ly,
+						  level.dndest.hx, level.dndest.hy) &&
+		       (!level.dndest.nlx ||
+			!within_bounded_area(x, y, level.dndest.nlx, level.dndest.nly,
+						   level.dndest.nhx, level.dndest.nhy)));
 	} else {
 	    /* current location is <xx,yy> */
 	    if (!tele_jump_ok(xx, yy, x, y)) return FALSE;
@@ -903,11 +903,11 @@ boolean rloc(struct monst *mtmp, /* mx==0 implies migrating monster arrival */
 
 	if (mtmp->iswiz && mtmp->mx) {	/* Wizard, not just arriving */
 	    if (!In_W_tower(u.ux, u.uy, &u.uz))
-		x = xupstair,  y = yupstair;
-	    else if (!xdnladder)	/* bottom level of tower */
-		x = xupladder,  y = yupladder;
+		x = level.upstair.sx,  y = level.upstair.sy;
+	    else if (!level.dnladder.sx)	/* bottom level of tower */
+		x = level.upladder.sx,  y = level.upladder.sy;
 	    else
-		x = xdnladder,  y = ydnladder;
+		x = level.dnladder.sx,  y = level.dnladder.sy;
 	    /* if the wiz teleports away to heal, try the up staircase,
 	       to block the player's escaping before he's healed
 	       (deliberately use `goodpos' rather than `rloc_pos_ok' here) */
@@ -1070,7 +1070,7 @@ void rloco(struct obj *obj)
 	obj_extract_self(obj);
 	otx = obj->ox;
 	oty = obj->oy;
-	restricted_fall = (otx == 0 && dndest.lx);
+	restricted_fall = (otx == 0 && level.dndest.lx);
 	do {
 	    tx = rn1(COLNO-3,2);
 	    ty = rn2(ROWNO);
@@ -1078,11 +1078,11 @@ void rloco(struct obj *obj)
 	} while (!goodpos(tx, ty, NULL, 0) ||
 		/* bug: this lacks provision for handling the Wizard's tower */
 		 (restricted_fall &&
-		  (!within_bounded_area(tx, ty, dndest.lx, dndest.ly,
-						dndest.hx, dndest.hy) ||
-		   (dndest.nlx &&
-		    within_bounded_area(tx, ty, dndest.nlx, dndest.nly,
-						dndest.nhx, dndest.nhy)))));
+		  (!within_bounded_area(tx, ty, level.dndest.lx, level.dndest.ly,
+						level.dndest.hx, level.dndest.hy) ||
+		   (level.dndest.nlx &&
+		    within_bounded_area(tx, ty, level.dndest.nlx, level.dndest.nly,
+						level.dndest.nhx, level.dndest.nhy)))));
 
 	if (flooreffects(obj, tx, ty, "fall")) {
 	    return;

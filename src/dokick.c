@@ -1114,8 +1114,8 @@ static void drop_to(coord *cc, schar loc)
 		    cc->y = u.uz.dlevel + 1;
 		    break;
 	 case MIGR_SSTAIRS:
-		    cc->x = sstairs.tolev.dnum;
-		    cc->y = sstairs.tolev.dlevel;
+		    cc->x = level.sstairs.tolev.dnum;
+		    cc->y = level.sstairs.tolev.dlevel;
 		    break;
 	 default:
 	 case MIGR_NOWHERE:
@@ -1371,11 +1371,11 @@ void obj_delivery(void)
 	    otmp->owornmask = 0L;
 
 	    switch ((int)where) {
-	     case MIGR_STAIRS_UP:   nx = xupstair,  ny = yupstair;
+	     case MIGR_STAIRS_UP:   nx = level.upstair.sx,  ny = level.upstair.sy;
 				break;
-	     case MIGR_LADDER_UP:   nx = xupladder,  ny = yupladder;
+	     case MIGR_LADDER_UP:   nx = level.upladder.sx,  ny = level.upladder.sy;
 				break;
-	     case MIGR_SSTAIRS:	    nx = sstairs.sx,  ny = sstairs.sy;
+	     case MIGR_SSTAIRS:	    nx = level.sstairs.sx,  ny = level.sstairs.sy;
 				break;
 	     case MIGR_NEAR_PLAYER: nx = u.ux,  ny = u.uy;
 				break;
@@ -1430,13 +1430,13 @@ schar down_gate(xchar x, xchar y)
 	if (on_level(&u.uz, &qstart_level) && !ok_to_quest())
 	    return MIGR_NOWHERE;
 
-	if ((xdnstair == x && ydnstair == y) ||
-		(sstairs.sx == x && sstairs.sy == y && !sstairs.up)) {
+	if ((level.dnstair.sx == x && level.dnstair.sy == y) ||
+	    (level.sstairs.sx == x && level.sstairs.sy == y && !level.sstairs.up)) {
 	    gate_str = "down the stairs";
-	    return (xdnstair == x && ydnstair == y) ?
+	    return (level.dnstair.sx == x && level.dnstair.sy == y) ?
 		    MIGR_STAIRS_UP : MIGR_SSTAIRS;
 	}
-	if (xdnladder == x && ydnladder == y) {
+	if (level.dnladder.sx == x && level.dnladder.sy == y) {
 	    gate_str = "down the ladder";
 	    return MIGR_LADDER_UP;
 	}

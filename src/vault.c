@@ -104,7 +104,7 @@ char vault_occupied(char *array)
 	char *ptr;
 
 	for (ptr = array; *ptr; ptr++)
-		if (rooms[*ptr - ROOMOFFSET].rtype == VAULT)
+		if (level.rooms[*ptr - ROOMOFFSET].rtype == VAULT)
 			return *ptr;
 	return '\0';
 }
@@ -307,8 +307,8 @@ fnd:
 	    EGD(guard)->fakecorr[0].ftyp = level.locations[x][y].typ;
 	else { /* the initial guard location is a dug door */
 	    int vlt = EGD(guard)->vroom;
-	    xchar lowx = rooms[vlt].lx, hix = rooms[vlt].hx;
-	    xchar lowy = rooms[vlt].ly, hiy = rooms[vlt].hy;
+	    xchar lowx = level.rooms[vlt].lx, hix = level.rooms[vlt].hx;
+	    xchar lowy = level.rooms[vlt].ly, hiy = level.rooms[vlt].hy;
 
 	    if (x == lowx-1 && y == lowy-1)
 		EGD(guard)->fakecorr[0].ftyp = TLCORNER;
@@ -338,8 +338,8 @@ static void move_gold(struct obj *gold, int vroom)
 
 	remove_object(gold);
 	newsym(gold->ox, gold->oy);
-	nx = rooms[vroom].lx + rn2(2);
-	ny = rooms[vroom].ly + rn2(2);
+	nx = level.rooms[vroom].lx + rn2(2);
+	ny = level.rooms[vroom].ly + rn2(2);
 	place_object(gold, nx, ny);
 	stackobj(gold);
 	newsym(nx,ny);
@@ -350,8 +350,8 @@ static void wallify_vault(struct monst *grd)
 	int x, y, typ;
 	int vlt = EGD(grd)->vroom;
 	char tmp_viz;
-	xchar lox = rooms[vlt].lx - 1, hix = rooms[vlt].hx + 1,
-	      loy = rooms[vlt].ly - 1, hiy = rooms[vlt].hy + 1;
+	xchar lox = level.rooms[vlt].lx - 1, hix = level.rooms[vlt].hx + 1,
+	      loy = level.rooms[vlt].ly - 1, hiy = level.rooms[vlt].hy + 1;
 	struct monst *mon;
 	struct obj *gold;
 	struct trap *trap;
@@ -745,8 +745,8 @@ void paygd(void)
 	    }
 	    mnexto(grd);
 	    pline("%s remits your gold to the vault.", Monnam(grd));
-	    gx = rooms[EGD(grd)->vroom].lx + rn2(2);
-	    gy = rooms[EGD(grd)->vroom].ly + rn2(2);
+	    gx = level.rooms[EGD(grd)->vroom].lx + rn2(2);
+	    gy = level.rooms[EGD(grd)->vroom].ly + rn2(2);
 	    sprintf(buf,
 		"To Croesus: here's the gold recovered from %s the %s.",
 		plname, mons[u.umonster].mname);

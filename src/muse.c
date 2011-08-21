@@ -333,18 +333,18 @@ boolean find_defensive(struct monst *mtmp)
 	}
 
 	if (level.locations[x][y].typ == STAIRS && !stuck && !immobile) {
-		if (x == xdnstair && y == ydnstair && !is_floater(mtmp->data))
+		if (x == level.dnstair.sx && y == level.dnstair.sy && !is_floater(mtmp->data))
 			m.has_defense = MUSE_DOWNSTAIRS;
-		if (x == xupstair && y == yupstair && ledger_no(&u.uz) != 1)
+		if (x == level.upstair.sx && y == level.upstair.sy && ledger_no(&u.uz) != 1)
 	/* Unfair to let the monsters leave the dungeon with the Amulet */
 	/* (or go to the endlevel since you also need it, to get there) */
 			m.has_defense = MUSE_UPSTAIRS;
 	} else if (level.locations[x][y].typ == LADDER && !stuck && !immobile) {
-		if (x == xupladder && y == yupladder)
+		if (x == level.upladder.sx && y == level.upladder.sy)
 			m.has_defense = MUSE_UP_LADDER;
-		if (x == xdnladder && y == ydnladder && !is_floater(mtmp->data))
+		if (x == level.dnladder.sx && y == level.dnladder.sy && !is_floater(mtmp->data))
 			m.has_defense = MUSE_DN_LADDER;
-	} else if (sstairs.sx && sstairs.sx == x && sstairs.sy == y) {
+	} else if (level.sstairs.sx && level.sstairs.sx == x && level.sstairs.sy == y) {
 		m.has_defense = MUSE_SSTAIRS;
 	} else if (!stuck && !immobile) {
 	/* Note: trap doors take precedence over teleport traps. */
@@ -628,8 +628,8 @@ mon_tele:
 		if (IS_FURNITURE(level.locations[mtmp->mx][mtmp->my].typ) ||
 		    IS_DRAWBRIDGE(level.locations[mtmp->mx][mtmp->my].typ) ||
 		    (is_drawbridge_wall(mtmp->mx, mtmp->my) >= 0) ||
-		    (sstairs.sx && sstairs.sx == mtmp->mx &&
-				   sstairs.sy == mtmp->my)) {
+		    (level.sstairs.sx && level.sstairs.sx == mtmp->mx &&
+				   level.sstairs.sy == mtmp->my)) {
 			pline_The("digging ray is ineffective.");
 			return 2;
 		}
@@ -788,17 +788,17 @@ mon_tele:
 		m_flee(mtmp);
 		/* the stairs leading up from the 1st level are */
 		/* regular stairs, not sstairs.			*/
-		if (sstairs.up) {
+		if (level.sstairs.up) {
 			if (vismon)
 			    pline("%s escapes upstairs!", Monnam(mtmp));
 			if (Inhell) {
-			    migrate_to_level(mtmp, ledger_no(&sstairs.tolev),
+			    migrate_to_level(mtmp, ledger_no(&level.sstairs.tolev),
 					     MIGR_RANDOM, NULL);
 			    return 2;
 			}
 		} else	if (vismon)
 		    pline("%s escapes downstairs!", Monnam(mtmp));
-		migrate_to_level(mtmp, ledger_no(&sstairs.tolev),
+		migrate_to_level(mtmp, ledger_no(&level.sstairs.tolev),
 				 MIGR_SSTAIRS, NULL);
 		return 2;
 	case MUSE_TELEPORT_TRAP:

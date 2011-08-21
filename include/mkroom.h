@@ -33,18 +33,12 @@ struct shclass {
 	const char * const *shknms;	/* list of shopkeeper names for this type */
 };
 
-extern struct mkroom rooms[(MAXNROFROOMS+1)*2];
-extern struct mkroom* subrooms;
 /* the normal rooms on the current level are described in rooms[0..n] for
  * some n<MAXNROFROOMS
  * the vault, if any, is described by rooms[n+1]
  * the next rooms entry has hx -1 as a flag
  * there is at most one non-vault special room on a level
  */
-
-extern struct mkroom *dnstairs_room, *upstairs_room, *sstairs_room;
-
-extern coord doors[DOORMAX];
 
 /* values for rtype in the room definition structure */
 #define OROOM		 0	/* ordinary room */
@@ -89,14 +83,14 @@ extern coord doors[DOORMAX];
 				 * non-shared boundaries.
 				 */
 
-#define IS_ROOM_PTR(x)		((x) >= rooms && (x) < rooms + MAXNROFROOMS)
+#define IS_ROOM_PTR(x)		((x) >= level.rooms && (x) < level.rooms + MAXNROFROOMS)
 #define IS_ROOM_INDEX(x)	((x) >= 0 && (x) < MAXNROFROOMS)
-#define IS_SUBROOM_PTR(x)	((x) >= subrooms && \
-				 (x) < subrooms + MAXNROFROOMS)
+#define IS_SUBROOM_PTR(x)	((x) >= level.subrooms && \
+				 (x) < level.subrooms + MAXNROFROOMS)
 #define IS_SUBROOM_INDEX(x)	((x) > MAXNROFROOMS && (x) < (MAXNROFROOMS*2))
-#define ROOM_INDEX(x)		((x) - rooms)
-#define SUBROOM_INDEX(x)	((x) - subrooms)
-#define IS_LAST_ROOM_PTR(x)	(ROOM_INDEX(x) == nroom)
-#define IS_LAST_SUBROOM_PTR(x)	(!nsubroom || SUBROOM_INDEX(x) == nsubroom)
+#define ROOM_INDEX(x)		((x) - level.rooms)
+#define SUBROOM_INDEX(x)	((x) - level.subrooms)
+#define IS_LAST_ROOM_PTR(x)	(ROOM_INDEX(x) == level.nroom)
+#define IS_LAST_SUBROOM_PTR(x)	(!level.nsubroom || SUBROOM_INDEX(x) == level.nsubroom)
 
 #endif /* MKROOM_H */

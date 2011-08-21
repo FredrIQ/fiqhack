@@ -155,7 +155,7 @@ boolean can_make_bones(void)
 	}
 	if (!Is_branchlev(&u.uz)) {
 	    /* no bones on non-branches with portals */
-	    for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
+	    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
 		if (ttmp->ttyp == MAGIC_PORTAL) return FALSE;
 	}
 
@@ -271,7 +271,7 @@ void savebones(struct obj *corpse)
 		mtmp->mlstmv = 0L;
 		if (mtmp->mtame) mtmp->mtame = mtmp->mpeaceful = 0;
 	}
-	for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
+	for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
 		ttmp->madeby_u = 0;
 		ttmp->tseen = (ttmp->ttyp == HOLE);
 	}

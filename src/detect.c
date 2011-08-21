@@ -646,7 +646,7 @@ int trap_detect(struct obj *sobj)
     boolean found = FALSE;
     coord cc;
 
-    for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
+    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
 	if (ttmp->tx != u.ux || ttmp->ty != u.uy)
 	    goto outtrapmap;
 	else found = TRUE;
@@ -658,8 +658,8 @@ int trap_detect(struct obj *sobj)
 	    else found = TRUE;
 	}
     }
-    for (door = 0; door < doorindex; door++) {
-	cc = doors[door];
+    for (door = 0; door < level.doorindex; door++) {
+	cc = level.doors[door];
 	if (level.locations[cc.x][cc.y].doormask & D_TRAPPED) {
 	    if (cc.x != u.ux || cc.y != u.uy)
 		goto outtrapmap;
@@ -679,15 +679,15 @@ outtrapmap:
     cls();
 
     u.uinwater = 0;
-    for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap)
+    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
 	sense_trap(ttmp, 0, 0, sobj && sobj->cursed);
 
     for (obj = level.objlist; obj; obj = obj->nobj)
 	if ((obj->otyp==LARGE_BOX || obj->otyp==CHEST) && obj->otrapped)
 	sense_trap(NULL, obj->ox, obj->oy, sobj && sobj->cursed);
 
-    for (door = 0; door < doorindex; door++) {
-	cc = doors[door];
+    for (door = 0; door < level.doorindex; door++) {
+	cc = level.doors[door];
 	if (level.locations[cc.x][cc.y].doormask & D_TRAPPED)
 	sense_trap(NULL, cc.x, cc.y, sobj && sobj->cursed);
     }
@@ -1214,7 +1214,7 @@ void sokoban_detect(void)
 	    }
 
 	/* Map the traps */
-	for (ttmp = ftrap; ttmp; ttmp = ttmp->ntrap) {
+	for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
 	    ttmp->tseen = 1;
 	    map_trap(ttmp, 1);
 	}

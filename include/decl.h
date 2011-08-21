@@ -13,8 +13,6 @@ extern int bases[MAXOCLASSES];
 
 extern int hackpid;
 extern int multi;
-extern int nroom;
-extern int nsubroom;
 extern int occtime;
 
 #define WARNCOUNT 6			/* number of different warning levels */
@@ -79,21 +77,10 @@ extern struct dgn_topology {		/* special dungeon levels for speed */
 #define nemesis_level		(dungeon_topology.d_nemesis_level)
 #define knox_level		(dungeon_topology.d_knox_level)
 
-extern stairway dnstair, upstair;		/* stairs up and down */
 #define xdnstair	(dnstair.sx)
 #define ydnstair	(dnstair.sy)
 #define xupstair	(upstair.sx)
 #define yupstair	(upstair.sy)
-
-extern stairway dnladder, upladder;		/* ladders up and down */
-#define xdnladder	(dnladder.sx)
-#define ydnladder	(dnladder.sy)
-#define xupladder	(upladder.sx)
-#define yupladder	(upladder.sy)
-
-extern stairway sstairs;
-
-extern dest_area updest, dndest;	/* level-change destination areas */
 
 extern coord inv_pos;
 extern dungeon dungeons[];
@@ -142,7 +129,6 @@ extern const char ynaqchars[];
 extern const char disclosure_options[];
 
 extern int smeq[];
-extern int doorindex;
 extern int saved_cmd;
 #define KILLED_BY_AN	 0
 #define KILLED_BY	 1

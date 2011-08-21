@@ -153,7 +153,7 @@ boolean dig_check(struct monst *madeby, boolean verbose, int x, int y)
 	const char *verb = (madeby == BY_YOU && uwep && is_axe(uwep)) ? "chop" : "dig in";
 
 	if (On_stairs(x, y)) {
-	    if (x == xdnladder || x == xupladder) {
+	    if (x == level.dnladder.sx || x == level.upladder.sx) {
 		if (verbose) pline_The("ladder resists your effort.");
 	    } else if (verbose) pline_The("stairs are too hard to %s.", verb);
 	    return FALSE;
@@ -578,7 +578,7 @@ void digactualhole(int x, int y, struct monst *madeby, int ttyp)
 		    newlevel.dnum = u.uz.dnum;
 		    newlevel.dlevel = u.uz.dlevel + 1;
 		    goto_level(&newlevel, FALSE, TRUE, FALSE);
-		    /* messages for arriving in special rooms */
+		    /* messages for arriving in special level.rooms */
 		    spoteffects(FALSE);
 		}
 	    } else {
@@ -1107,7 +1107,7 @@ void zap_dig(schar dx, schar dy, schar dz)
 		if (dz < 0 || On_stairs(u.ux, u.uy)) {
 		    if (On_stairs(u.ux, u.uy))
 			pline_The("beam bounces off the %s and hits the %s.",
-			      (u.ux == xdnladder || u.ux == xupladder) ?
+			      (u.ux == level.dnladder.sx || u.ux == level.upladder.sx) ?
 			      "ladder" : "stairs", ceiling(u.ux, u.uy));
 		    You("loosen a rock from the %s.", ceiling(u.ux, u.uy));
 		    pline("It falls on your %s!", body_part(HEAD));

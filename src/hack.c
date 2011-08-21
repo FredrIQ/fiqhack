@@ -12,7 +12,7 @@ static boolean monstinroom(const struct permonst *,int);
 
 static void move_update(boolean);
 
-#define IS_SHOP(x)	(rooms[x].rtype >= SHOPBASE)
+#define IS_SHOP(x)	(level.rooms[x].rtype >= SHOPBASE)
 
 
 boolean revive_nasty(int x, int y, const char *msg)
@@ -1478,7 +1478,7 @@ char * in_rooms(xchar x, xchar y, int typewanted)
 	struct rm *lev;
 
 #define goodtype(rno) (!typewanted || \
-	     ((typefound = rooms[rno - ROOMOFFSET].rtype) == typewanted) || \
+	     ((typefound = level.rooms[rno - ROOMOFFSET].rtype) == typewanted) || \
 	     ((typewanted == SHOPBASE) && (typefound > SHOPBASE))) \
 
 	switch (rno = level.locations[x][y].roomno) {
@@ -1548,7 +1548,7 @@ boolean in_town(int x, int y)
 	 * See if (x,y) is in a room with subrooms, if so, assume it's the
 	 * town.  If there are no subrooms, the whole level is in town.
 	 */
-	for (sroom = &rooms[0]; sroom->hx > 0; sroom++) {
+	for (sroom = &level.rooms[0]; sroom->hx > 0; sroom++) {
 	    if (sroom->nsubrooms > 0) {
 		has_subrooms = TRUE;
 		if (inside_room(sroom, x, y)) return TRUE;
@@ -1616,7 +1616,8 @@ void check_special_room(boolean newlev)
 	    u_entered_shop(u.ushops_entered);
 
 	for (ptr = &u.uentered[0]; *ptr; ptr++) {
-	    int roomno = *ptr - ROOMOFFSET, rt = rooms[roomno].rtype;
+	    int roomno = *ptr - ROOMOFFSET;
+	    int rt = level.rooms[roomno].rtype;
 
 	    /* Did we just enter some other special room? */
 	    /* vault.c insists that a vault remain a VAULT,
@@ -1675,7 +1676,7 @@ void check_special_room(boolean newlev)
 	    }
 
 	    if (rt != 0) {
-		rooms[roomno].rtype = OROOM;
+		level.rooms[roomno].rtype = OROOM;
 		if (!search_special(rt)) {
 			/* No more room of that type */
 			switch(rt) {
