@@ -1514,7 +1514,7 @@ static int in_container(struct obj *obj)
 	    }
 	}
 	if (Icebox && !age_is_relative(obj)) {
-		obj->age = monstermoves - obj->age; /* actual age */
+		obj->age = moves - obj->age; /* actual age */
 		/* stop any corpse timeouts when frozen */
 		if (obj->otyp == CORPSE && obj->timed) {
 			long rot_alarm = stop_timer(ROT_CORPSE, obj);
@@ -1607,7 +1607,7 @@ static int out_container(struct obj *obj)
 	current_container->owt = weight(current_container);
 
 	if (Icebox && !age_is_relative(obj)) {
-		obj->age = monstermoves - obj->age; /* actual age */
+		obj->age = moves - obj->age; /* actual age */
 		if (obj->otyp == CORPSE)
 			start_corpse_timeout(obj);
 	}

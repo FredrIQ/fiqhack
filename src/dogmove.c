@@ -111,8 +111,8 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 	boolean poly = FALSE, grow = FALSE, heal = FALSE;
 	int nutrit;
 
-	if (edog->hungrytime < monstermoves)
-	    edog->hungrytime = monstermoves;
+	if (edog->hungrytime < moves)
+	    edog->hungrytime = moves;
 	nutrit = dog_nutrition(mtmp, obj);
 	poly = polyfodder(obj);
 	grow = mlevelgain(obj);
@@ -150,7 +150,7 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 	/* We know the player had it if invlet is set -dlc */
 	if (dogfood(mtmp,obj) == DOGFOOD && obj->invlet)
 	    edog->apport += (int)(200L/
-		((long)edog->dropdist + monstermoves - edog->droptime));
+		((long)edog->dropdist + moves - edog->droptime));
 
 	if (mtmp->data == &mons[PM_RUST_MONSTER] && obj->oerodeproof) {
 	    /* The object's rustproofing is gone now */
@@ -187,9 +187,9 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 /* hunger effects -- returns TRUE on starvation */
 static boolean dog_hunger(struct monst *mtmp, struct edog *edog)
 {
-	if (monstermoves > edog->hungrytime + 500) {
+	if (moves > edog->hungrytime + 500) {
 	    if (!carnivorous(mtmp->data) && !herbivorous(mtmp->data)) {
-		edog->hungrytime = monstermoves + 500;
+		edog->hungrytime = moves + 500;
 		/* but not too high; it might polymorph */
 	    } else if (!edog->mhpmax_penalty) {
 		/* starving pets are limited in healing */
@@ -207,7 +207,7 @@ static boolean dog_hunger(struct monst *mtmp, struct edog *edog)
 		else
 		    You_feel("worried about %s.", y_monnam(mtmp));
 		stop_occupation();
-	    } else if (monstermoves > edog->hungrytime + 750 || mtmp->mhp < 1) {
+	    } else if (moves > edog->hungrytime + 750 || mtmp->mhp < 1) {
 dog_died:
 		if (mtmp->mleashed && mtmp != u.usteed)
 		    Your("leash goes slack.");
@@ -249,7 +249,7 @@ static int dog_invent(struct monst *mtmp, struct edog *edog, int udist)
 		    relobj(mtmp, (int)mtmp->minvis, TRUE);
 		    if (edog->apport > 1) edog->apport--;
 		    edog->dropdist = udist;		/* hpscdi!jon */
-		    edog->droptime = monstermoves;
+		    edog->droptime = moves;
 		}
 	} else {
 	    if ((obj=level.objects[omx][omy]) && !strchr(nofetch,obj->oclass)){
@@ -364,7 +364,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 
 	/* follow player if appropriate */
 	if (gtyp == UNDEF ||
-	    (gtyp != DOGFOOD && gtyp != APPORT && monstermoves < edog->hungrytime)) {
+	    (gtyp != DOGFOOD && gtyp != APPORT && moves < edog->hungrytime)) {
 		gx = u.ux;
 		gy = u.uy;
 		if (after && udist <= 4 && gx == u.ux && gy == u.uy)
@@ -484,7 +484,7 @@ int dog_move(struct monst *mtmp,
 	    if (j == 2) return 2;		/* died */
 	    else if (j == 1) goto newdogpos;	/* eating something */
 
-	    whappr = (monstermoves - edog->whistletime < 5);
+	    whappr = (moves - edog->whistletime < 5);
 	} else
 	    whappr = 0;
 
@@ -588,7 +588,7 @@ int dog_move(struct monst *mtmp,
 		    if (mstatus & MM_AGR_DIED) return 2;
 
 		    if ((mstatus & MM_HIT) && !(mstatus & MM_DEF_DIED) &&
-			    rn2(4) && mtmp2->mlstmv != monstermoves &&
+			    rn2(4) && mtmp2->mlstmv != moves &&
 			    !onscary(mtmp->mx, mtmp->my, mtmp2) &&
 			    /* monnear check needed: long worms hit on tail */
 			    monnear(mtmp2, mtmp->mx, mtmp->my)) {
@@ -625,7 +625,7 @@ int dog_move(struct monst *mtmp,
 		for (obj = level.objects[nx][ny]; obj; obj = obj->nexthere) {
 		    if (obj->cursed) cursemsg[i] = TRUE;
 		    else if ((otyp = dogfood(mtmp, obj)) < MANFOOD &&
-			     (otyp < ACCFOOD || edog->hungrytime <= monstermoves)) {
+			     (otyp < ACCFOOD || edog->hungrytime <= moves)) {
 			/* Note: our dog likes the food so much that he
 			 * might eat it even when it conceals a cursed object */
 			nix = nx;

@@ -645,7 +645,7 @@ int mattacku(struct monst *mtmp)
 	    if (botl) bot();
 	/* give player a chance of waking up before dying -kaa */
 	    if (sum[i] == 1) {	    /* successful attack */
-		if (u.usleep && u.usleep < monstermoves && !rn2(10)) {
+		if (u.usleep && u.usleep < moves && !rn2(10)) {
 		    multi = -1;
 		    nomovemsg = "The combat suddenly awakens you.";
 		}

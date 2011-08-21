@@ -164,7 +164,7 @@ extern struct dig_info {		/* apply.c, hack.c */
 	boolean down, chew, warned, quiet;
 } digging;
 
-extern long moves, monstermoves;
+extern long moves;
 extern long wailmsg;
 
 extern boolean in_mklev;

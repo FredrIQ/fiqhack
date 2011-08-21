@@ -1161,7 +1161,7 @@ static int arti_invoke(struct obj *obj)
 
     if (oart->inv_prop > LAST_PROP) {
 	/* It's a special power, not "just" a property */
-	if (obj->age > monstermoves) {
+	if (obj->age > moves) {
 	    /* the artifact is tired :-) */
 	    You_feel("that %s %s ignoring you.",
 		     the(xname(obj)), otense(obj, "are"));
@@ -1169,7 +1169,7 @@ static int arti_invoke(struct obj *obj)
 	    obj->age += (long) dice(3,10);
 	    return 1;
 	}
-	obj->age = monstermoves + rnz(100);
+	obj->age = moves + rnz(100);
 
 	switch(oart->inv_prop) {
 	case TAMING: {
@@ -1315,7 +1315,7 @@ static int arti_invoke(struct obj *obj)
 	     iprop = u.uprops[oart->inv_prop].intrinsic;
 	boolean on = (eprop & W_ARTI) != 0; /* true if invoked prop just set */
 
-	if (on && obj->age > monstermoves) {
+	if (on && obj->age > moves) {
 	    /* the artifact is tired :-) */
 	    u.uprops[oart->inv_prop].extrinsic ^= W_ARTI;
 	    You_feel("that %s %s ignoring you.",
@@ -1326,7 +1326,7 @@ static int arti_invoke(struct obj *obj)
 	} else if (!on) {
 	    /* when turning off property, determine downtime */
 	    /* arbitrary for now until we can tune this -dlc */
-	    obj->age = monstermoves + rnz(100);
+	    obj->age = moves + rnz(100);
 	}
 
 	if ((eprop & ~W_ARTI) || iprop) {

@@ -1176,7 +1176,7 @@ static int eatcorpse(struct obj *otmp)
 	if (mnum != PM_LIZARD && mnum != PM_LICHEN) {
 		long age = peek_at_iced_corpse_age(otmp);
 
-		rotted = (monstermoves - age)/(10L + rn2(20));
+		rotted = (moves - age)/(10L + rn2(20));
 		if (otmp->cursed) rotted += 2L;
 		else if (otmp->blessed) rotted -= 2L;
 	}
@@ -1679,7 +1679,7 @@ static int edibility_prompts(struct obj *otmp)
 			long age = peek_at_iced_corpse_age(otmp);
 			/* worst case rather than random
 			   in this calculation to force prompt */
-			rotted = (monstermoves - age)/(10L + 0 /* was rn2(20) */);
+			rotted = (moves - age)/(10L + 0 /* was rn2(20) */);
 			if (otmp->cursed) rotted += 2L;
 			else if (otmp->blessed) rotted -= 2L;
 		}
@@ -1951,7 +1951,7 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 	    victual.reqtime = objects[otmp->otyp].oc_delay;
 	    if (otmp->otyp != FORTUNE_COOKIE &&
 		(otmp->cursed ||
-		 (((monstermoves - otmp->age) > (int) otmp->blessed ? 50:30) &&
+		 (((moves - otmp->age) > (int) otmp->blessed ? 50:30) &&
 		(otmp->orotten || !rn2(7))))) {
 
 		if (rottenfood(otmp)) {

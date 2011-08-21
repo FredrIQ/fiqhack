@@ -180,7 +180,7 @@ static int forcelock(void)
 		    useup(otmp);
 		}
 		if (xlock.box->otyp == ICE_BOX && otmp->otyp == CORPSE) {
-		    otmp->age = monstermoves - otmp->age; /* actual age */
+		    otmp->age = moves - otmp->age; /* actual age */
 		    start_corpse_timeout(otmp);
 		}
 		place_object(otmp, u.ux, u.uy);

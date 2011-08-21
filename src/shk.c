@@ -2708,7 +2708,7 @@ void add_damage(xchar x, xchar y, long cost)
 		return;
 	    }
 	tmp_dam = malloc((unsigned)sizeof(struct damage));
-	tmp_dam->when = monstermoves;
+	tmp_dam->when = moves;
 	tmp_dam->place.x = x;
 	tmp_dam->place.y = y;
 	tmp_dam->cost = cost;
@@ -2830,7 +2830,7 @@ int repair_damage(struct monst *shkp, struct damage *tmp_dam,
 	struct obj *otmp;
 	struct trap *ttmp;
 
-	if ((monstermoves - tmp_dam->when) < REPAIR_DELAY)
+	if ((moves - tmp_dam->when) < REPAIR_DELAY)
 	    return 0;
 	if (shkp->msleeping || !shkp->mcanmove || ESHK(shkp)->following)
 	    return 0;
@@ -3190,7 +3190,7 @@ void pay_for_damage(const char *dmgstr, boolean cant_mollify)
 	int picks = 0;
 
 	for (tmp_dam = level.damagelist;
-	     (tmp_dam && (tmp_dam->when == monstermoves));
+	     (tmp_dam && (tmp_dam->when == moves));
 	     tmp_dam = tmp_dam->next) {
 	    char *shp;
 

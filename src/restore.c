@@ -41,7 +41,6 @@ static struct bucket *id_map = 0;
 
 boolean restoring = FALSE;
 static struct fruit *oldfruit;
-static long omoves;
 
 #define Is_IceBox(o) ((o)->otyp == ICE_BOX ? TRUE : FALSE)
 
@@ -138,7 +137,7 @@ static void restdamage(int fd, boolean ghostly)
 
 	    mread(fd, tmp_dam, sizeof(*tmp_dam));
 	    if (ghostly)
-		tmp_dam->when += (monstermoves - omoves);
+		tmp_dam->when += (moves - level.lastmoves);
 	    strcpy(damaged_shops,
 		   in_rooms(tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 	    if (u.uz.dlevel) {
@@ -190,7 +189,7 @@ static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 		 * immediately after old player died.
 		 */
 		if (ghostly && !frozen && !age_is_relative(otmp))
-		    otmp->age = monstermoves - omoves + otmp->age;
+		    otmp->age = moves - level.lastmoves + otmp->age;
 
 		/* get contents of a container or statue */
 		if (Has_contents(otmp)) {
@@ -367,8 +366,7 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 
 	restore_dungeon(fd);
 	restlevchn(fd);
-	mread(fd, &moves, sizeof moves);
-	mread(fd, &monstermoves, sizeof monstermoves);
+	mread(fd, &moves, sizeof(moves));
 	mread(fd, &quest_status, sizeof(struct q_score));
 	mread(fd, spl_book,
 				sizeof(struct spell) * (MAXSPELL + 1));
@@ -514,7 +512,6 @@ int dorecover(int fd)
 	flags.move = 0;
 
 	/* Success! */
-	welcome(FALSE);
 	return 1;
 }
 
@@ -562,7 +559,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	}
 
 	mread(fd, level.locations, sizeof(level.locations));
-	mread(fd, &omoves, sizeof(omoves));
+	mread(fd, &level.lastmoves, sizeof(level.lastmoves));
 	mread(fd, &level.upstair, sizeof(stairway));
 	mread(fd, &level.dnstair, sizeof(stairway));
 	mread(fd, &level.upladder, sizeof(stairway));
@@ -579,7 +576,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	else
 	    level.doorindex = 0;
 
-	restore_timers(fd, RANGE_LEVEL, ghostly, monstermoves - omoves);
+	restore_timers(fd, RANGE_LEVEL, ghostly, moves - level.lastmoves);
 	restore_light_sources(fd);
 	level.monlist = restmonchn(fd, ghostly);
 
@@ -595,8 +592,9 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 				/* shopkeepers will reset based on name */
 				mtmp->mpeaceful = peace_minded(mtmp->data);
 			set_malign(mtmp);
-		} else if (monstermoves > omoves)
-			mon_catchup_elapsed_time(mtmp, monstermoves - omoves);
+		} else if (!restoring && moves > level.lastmoves)
+			/* only do this when the player enters the level */
+			mon_catchup_elapsed_time(mtmp, moves - level.lastmoves);
 
 		/* update shape-changers in case protection against
 		   them is different now than when the level was saved */

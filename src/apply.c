@@ -1511,7 +1511,7 @@ void fig_transform(void *arg, long timeout)
 #endif
 	    return;
 	}
-	silent = (timeout != monstermoves); /* happened while away */
+	silent = (timeout != moves); /* happened while away */
 	okay_spot = get_obj_location(figurine, &cc.x, &cc.y, 0);
 	if (figurine->where == OBJ_INVENT ||
 	    figurine->where == OBJ_MINVENT)

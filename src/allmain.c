@@ -212,7 +212,7 @@ boolean nh_start_game(int fd, char *name, int locknum, int playmode)
     if (fd == -1)
 	return FALSE;
     
-    moves = monstermoves = 1;
+    moves = 1;
 
     if (!program_state.restoring)
 	turntime = time(NULL);
@@ -394,8 +394,8 @@ static void you_moved(void)
 	    if (youmonst.movement < 0) youmonst.movement = 0;
 	    settrack();
 
-	    monstermoves++;
 	    moves++;
+	    level.lastmoves = moves;
 
 	    /********************************/
 	    /* once-per-turn things go here */

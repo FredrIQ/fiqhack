@@ -665,7 +665,7 @@ int meatobj(struct monst *mtmp)
 		    while ((otmp3 = otmp->cobj) != 0) {
 			obj_extract_self(otmp3);
 			if (otmp->otyp == ICE_BOX && otmp3->otyp == CORPSE) {
-			    otmp3->age = monstermoves - otmp3->age;
+			    otmp3->age = moves - otmp3->age;
 			    start_corpse_timeout(otmp3);
 			}
 			mpickobj(mtmp, otmp3);

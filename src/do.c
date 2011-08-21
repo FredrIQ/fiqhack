@@ -699,8 +699,8 @@ int dodown(void)
 		    for (obj = invent; obj; obj = obj->nobj) {
 			if (obj->oartifact &&
 					artifact_has_invprop(obj,LEVITATION)) {
-			    if (obj->age < monstermoves)
-				obj->age = monstermoves + rnz(100);
+			    if (obj->age < moves)
+				obj->age = moves + rnz(100);
 			    else
 				obj->age += rnz(100);
 			}
@@ -1443,7 +1443,7 @@ void revive_mon(void *arg, long timeout)
     if (!revive_corpse(body)) {
 	if (is_rider(&mons[body->corpsenm]))
 	    You_feel("less hassled.");
-	start_timer(250L - (monstermoves-body->age),
+	start_timer(250L - (moves-body->age),
 					TIMER_OBJECT, ROT_CORPSE, arg);
     }
 }

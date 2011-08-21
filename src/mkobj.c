@@ -335,7 +335,7 @@ struct obj *mksobj(int otyp, boolean init, boolean artif)
 
 	otmp = newobj(0);
 	*otmp = zeroobj;
-	otmp->age = monstermoves;
+	otmp->age = moves;
 	otmp->o_id = flags.ident++;
 	if (!otmp->o_id) otmp->o_id = flags.ident++;	/* ident overflowed */
 	otmp->quan = 1L;
@@ -605,7 +605,7 @@ void start_corpse_timeout(struct obj *body)
 
 	action = ROT_CORPSE;		/* default action: rot away */
 	rot_adjust = in_mklev ? 25 : 10;	/* give some variation */
-	corpse_age = monstermoves - body->age;
+	corpse_age = moves - body->age;
 	if (corpse_age > ROT_AGE)
 		when = rot_adjust;
 	else
@@ -1061,13 +1061,13 @@ long peek_at_iced_corpse_age(struct obj *otmp)
     
     if (otmp->otyp == CORPSE && ON_ICE(otmp)) {
 	/* Adjust the age; must be same as obj_timer_checks() for off ice*/
-	age = monstermoves - otmp->age;
+	age = moves - otmp->age;
 	retval = otmp->age + (age / ROT_ICE_ADJUSTMENT);
 #ifdef DEBUG_EFFECTS
 	pline_The("%s age has ice modifications:otmp->age = %ld, returning %ld.",
 		s_suffix(doname(otmp)),otmp->age, retval);
 	pline("Effective age of corpse: %ld.",
-		monstermoves - retval);
+		moves - retval);
 #endif
     }
     return retval;
@@ -1092,7 +1092,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 	if (tleft != 0L) {
 	    long age;
 	    
-	    tleft = tleft - monstermoves;
+	    tleft = tleft - moves;
 	    /* mark the corpse as being on ice */
 	    ON_ICE(otmp) = 1;
 #ifdef DEBUG_EFFECTS
@@ -1102,8 +1102,8 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 	    tleft *= ROT_ICE_ADJUSTMENT;
 	    restart_timer = TRUE;
 	    /* Adjust the age; must be same as in obj_ice_age() */
-	    age = monstermoves - otmp->age;
-	    otmp->age = monstermoves - (age * ROT_ICE_ADJUSTMENT);
+	    age = moves - otmp->age;
+	    otmp->age = moves - (age * ROT_ICE_ADJUSTMENT);
 	}
     }
     /* Check for corpses coming off ice */
@@ -1118,7 +1118,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 	if (tleft != 0L) {
 		long age;
 
-		tleft = tleft - monstermoves;
+		tleft = tleft - moves;
 		ON_ICE(otmp) = 0;
 #ifdef DEBUG_EFFECTS
 	    	pline("%s is no longer on ice at %d,%d.", The(xname(otmp)),x,y);
@@ -1127,7 +1127,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 		tleft /= ROT_ICE_ADJUSTMENT;
 		restart_timer = TRUE;
 		/* Adjust the age */
-		age = monstermoves - otmp->age;
+		age = moves - otmp->age;
 		otmp->age = otmp->age + (age / ROT_ICE_ADJUSTMENT);
 	}
     }

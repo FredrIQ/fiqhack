@@ -126,7 +126,6 @@ static void savegamestate(int fd, int mode)
 			 (boolean)!!release_data(mode));
 	savelevchn(fd, mode);
 	bwrite(fd, &moves, sizeof moves);
-	bwrite(fd, &monstermoves, sizeof monstermoves);
 	bwrite(fd, &quest_status, sizeof(struct q_score));
 	bwrite(fd, spl_book,
 				sizeof(struct spell) * (MAXSPELL + 1));
@@ -166,7 +165,7 @@ void savelev(int fd, xchar lev, int mode)
 	bwrite(fd,&hackpid,sizeof(hackpid));
 	bwrite(fd,&lev,sizeof(lev));
 	bwrite(fd,level.locations,sizeof(level.locations));
-	bwrite(fd,&monstermoves,sizeof(monstermoves));
+	bwrite(fd,&level.lastmoves,sizeof(level.lastmoves));
 	bwrite(fd,&level.upstair,sizeof(stairway));
 	bwrite(fd,&level.dnstair,sizeof(stairway));
 	bwrite(fd,&level.upladder,sizeof(stairway));

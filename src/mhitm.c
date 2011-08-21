@@ -228,7 +228,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
      *	some cases, in which case this still counts as its move for the round
      *	and it shouldn't move again.
      */
-    magr->mlstmv = monstermoves;
+    magr->mlstmv = moves;
 
     /* Now perform all attacks for the monster. */
     for (i = 0; i < NATTK; i++) {

@@ -2049,11 +2049,11 @@ static void mon_consume_unstone(struct monst *mon, struct obj *obj,
     if (mon->mtame && !mon->isminion && nutrit > 0) {
 	struct edog *edog = EDOG(mon);
 
-	if (edog->hungrytime < monstermoves) edog->hungrytime = monstermoves;
+	if (edog->hungrytime < moves) edog->hungrytime = moves;
 	edog->hungrytime += nutrit;
 	mon->mconf = 0;
     }
-    mon->mlstmv = monstermoves; /* it takes a turn */
+    mon->mlstmv = moves; /* it takes a turn */
 }
 
 /*muse.c*/

@@ -1118,7 +1118,7 @@ int dosacrifice(void)
 	feel_cockatrice(otmp, TRUE);
 
 	if (otmp->corpsenm == PM_ACID_BLOB
-		|| (monstermoves <= peek_at_iced_corpse_age(otmp) + 50)) {
+		|| (moves <= peek_at_iced_corpse_age(otmp) + 50)) {
 	    value = monstr[otmp->corpsenm] + 1;
 	    if (otmp->oeaten)
 		value = eaten_stat(value, otmp);

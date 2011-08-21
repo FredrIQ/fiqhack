@@ -354,7 +354,7 @@ void fall_asleep(int how_long, boolean wakeup_msg)
 	    afternmv = Hear_again;	/* this won't give any messages */
 	}
 	/* early wakeup from combat won't be possible until next monster turn */
-	u.usleep = monstermoves;
+	u.usleep = moves;
 	nomovemsg = wakeup_msg ? "You wake up." : "You can move again.";
 }
 
@@ -407,7 +407,7 @@ void hatch_egg(void *arg, long timeout)
 	mnum = big_to_little(egg->corpsenm);
 	/* The identity of one's father is learned, not innate */
 	yours = (egg->spe || (!flags.female && carried(egg) && !rn2(2)));
-	silent = (timeout != monstermoves);	/* hatched while away */
+	silent = (timeout != moves);	/* hatched while away */
 
 	/* only can hatch when in INVENT, FLOOR, MINVENT */
 	if (get_obj_location(egg, &x, &y, 0)) {
@@ -681,8 +681,8 @@ void burn_object(void *arg, long timeout)
 	many = menorah ? obj->spe > 1 : obj->quan > 1L;
 
 	/* timeout while away */
-	if (timeout != monstermoves) {
-	    long how_long = monstermoves - timeout;
+	if (timeout != moves) {
+	    long how_long = moves - timeout;
 
 	    if (how_long >= obj->age) {
 		obj->age = 0;
@@ -1091,7 +1091,7 @@ static void cleanup_burn(void *arg, long expire_time)
     del_light_source(LS_OBJECT, arg);
 
     /* restore unused time */
-    obj->age += expire_time - monstermoves;
+    obj->age += expire_time - moves;
 
     obj->lamplit = 0;
 
@@ -1150,7 +1150,7 @@ void do_storms(void)
  *	boolean start_timer(long timeout,short kind,short func_index,
  *							void * arg)
  *		Start a timer of kind 'kind' that will expire at time
- *		monstermoves+'timeout'.  Call the function at 'func_index'
+ *		moves+'timeout'.  Call the function at 'func_index'
  *		in the timeout table using argument 'arg'.  Return TRUE if
  *		a timer was started.  This places the timer on a list ordered
  *		"sooner" to "later".  If an object, increment the object's
@@ -1273,7 +1273,7 @@ int wiz_timeout_queue(void)
 
     init_menulist(&menu);
 
-    sprintf(buf, "Current time = %ld.", monstermoves);
+    sprintf(buf, "Current time = %ld.", moves);
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
     add_menutext(&menu, "Active timeout queue:");
@@ -1315,7 +1315,7 @@ void run_timers(void)
      * any time.  The list is ordered, we are done when the first element
      * is in the future.
      */
-    while (timer_base && timer_base->timeout <= monstermoves) {
+    while (timer_base && timer_base->timeout <= moves) {
 	curr = timer_base;
 	timer_base = curr->next;
 
@@ -1339,7 +1339,7 @@ boolean start_timer(long when, short kind, short func_index,void *arg)
     gnu = malloc(sizeof(timer_element));
     gnu->next = 0;
     gnu->tid = timer_id++;
-    gnu->timeout = monstermoves + when;
+    gnu->timeout = moves + when;
     gnu->kind = kind;
     gnu->needs_fixup = 0;
     gnu->func_index = func_index;
@@ -1408,7 +1408,7 @@ void obj_split_timers(struct obj *src, struct obj *dest)
     for (curr = timer_base; curr; curr = next_timer) {
 	next_timer = curr->next;	/* things may be inserted */
 	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
-	    start_timer(curr->timeout-monstermoves, TIMER_OBJECT,
+	    start_timer(curr->timeout-moves, TIMER_OBJECT,
 					curr->func_index, dest);
 	}
     }

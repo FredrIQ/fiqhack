@@ -459,10 +459,10 @@ struct dlevel {
     stairway		sstairs;
     dest_area		updest;
     dest_area		dndest;
-int nroom;
-int nsubroom;
+    int 		nroom;
+    int			nsubroom;
     int			doorindex;
-    int			monmoves; /* monstermoves when the level was last visited */
+    long		lastmoves; /* when the level was last visited */
 };
 
 extern struct dlevel level;	/* structure describing the current level */

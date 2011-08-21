@@ -124,7 +124,7 @@ const int shield_static[SHIELD_COUNT] = {
 struct spell spl_book[MAXSPELL + 1];
 
 long moves;
-long monstermoves;
+long moves;
 	 /* These diverge when player is Fast */
 long wailmsg;
 
@@ -251,7 +251,7 @@ void init_data(void)
 	ublindf = uchain = uball = NULL;
     migrating_objs = billobjs = NULL;
     in_steed_dismounting = FALSE;
-    wailmsg = moves = monstermoves = 0;
+    wailmsg = moves = 0;
     bhitpos.x = bhitpos.y = 0;
     preferred_pet = 0;
     migrating_mons = mydogs = NULL;
