@@ -1203,7 +1203,6 @@ static boolean timer_is_local(timer_element *);
 static int maybe_write_timer(int, int, boolean);
 
 /* ordered timer list */
-static timer_element *timer_base;		/* "active" */
 static unsigned long timer_id = 1;
 
 /* If defined, then include names when printing out the timer queue */
@@ -1278,7 +1277,7 @@ int wiz_timeout_queue(void)
     add_menutext(&menu, "");
     add_menutext(&menu, "Active timeout queue:");
     add_menutext(&menu, "");
-    print_queue(&menu, timer_base);
+    print_queue(&menu, level.lev_timers);
 
     display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
     free(menu.items);
@@ -1291,7 +1290,7 @@ void timer_sanity_check(void)
     timer_element *curr;
 
     /* this should be much more complete */
-    for (curr = timer_base; curr; curr = curr->next)
+    for (curr = level.lev_timers; curr; curr = curr->next)
 	if (curr->kind == TIMER_OBJECT) {
 	    struct obj *obj = (struct obj *) curr->arg;
 	    if (obj->timed == 0) {
@@ -1315,9 +1314,9 @@ void run_timers(void)
      * any time.  The list is ordered, we are done when the first element
      * is in the future.
      */
-    while (timer_base && timer_base->timeout <= moves) {
-	curr = timer_base;
-	timer_base = curr->next;
+    while (level.lev_timers && level.lev_timers->timeout <= moves) {
+	curr = level.lev_timers;
+	level.lev_timers = curr->next;
 
 	if (curr->kind == TIMER_OBJECT) ((struct obj *)(curr->arg))->timed--;
 	(*timeout_funcs[curr->func_index].f)(curr->arg, curr->timeout);
@@ -1363,7 +1362,7 @@ long stop_timer(short func_index, void *arg)
     timer_element *doomed;
     long timeout;
 
-    doomed = remove_timer(&timer_base, func_index, arg);
+    doomed = remove_timer(&level.lev_timers, func_index, arg);
 
     if (doomed) {
 	timeout = doomed->timeout;
@@ -1386,7 +1385,7 @@ void obj_move_timers(struct obj *src, struct obj *dest)
     int count;
     timer_element *curr;
 
-    for (count = 0, curr = timer_base; curr; curr = curr->next)
+    for (count = 0, curr = level.lev_timers; curr; curr = curr->next)
 	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
 	    curr->arg = dest;
 	    dest->timed++;
@@ -1405,7 +1404,7 @@ void obj_split_timers(struct obj *src, struct obj *dest)
 {
     timer_element *curr, *next_timer=0;
 
-    for (curr = timer_base; curr; curr = next_timer) {
+    for (curr = level.lev_timers; curr; curr = next_timer) {
 	next_timer = curr->next;	/* things may be inserted */
 	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
 	    start_timer(curr->timeout-moves, TIMER_OBJECT,
@@ -1423,13 +1422,13 @@ void obj_stop_timers(struct obj *obj)
 {
     timer_element *curr, *prev, *next_timer=0;
 
-    for (prev = 0, curr = timer_base; curr; curr = next_timer) {
+    for (prev = 0, curr = level.lev_timers; curr; curr = next_timer) {
 	next_timer = curr->next;
 	if (curr->kind == TIMER_OBJECT && curr->arg == obj) {
 	    if (prev)
 		prev->next = curr->next;
 	    else
-		timer_base = curr->next;
+		level.lev_timers = curr->next;
 	    if (timeout_funcs[curr->func_index].cleanup)
 		(*timeout_funcs[curr->func_index].cleanup)(curr->arg,
 			curr->timeout);
@@ -1447,14 +1446,14 @@ static void insert_timer(timer_element *gnu)
 {
     timer_element *curr, *prev;
 
-    for (prev = 0, curr = timer_base; curr; prev = curr, curr = curr->next)
+    for (prev = 0, curr = level.lev_timers; curr; prev = curr, curr = curr->next)
 	if (curr->timeout >= gnu->timeout) break;
 
     gnu->next = curr;
     if (prev)
 	prev->next = gnu;
     else
-	timer_base = gnu;
+	level.lev_timers = gnu;
 }
 
 
@@ -1570,7 +1569,7 @@ static int maybe_write_timer(int fd, int range, boolean write_it)
     int count = 0;
     timer_element *curr;
 
-    for (curr = timer_base; curr; curr = curr->next) {
+    for (curr = level.lev_timers; curr; curr = curr->next) {
 	if (range == RANGE_GLOBAL) {
 	    /* global timers */
 
@@ -1622,14 +1621,14 @@ void save_timers(int fd, int mode, int range)
     }
 
     if (release_data(mode)) {
-	for (prev = 0, curr = timer_base; curr; curr = next_timer) {
+	for (prev = 0, curr = level.lev_timers; curr; curr = next_timer) {
 	    next_timer = curr->next;	/* in case curr is removed */
 
 	    if ( !(!!(range == RANGE_LEVEL) ^ !!timer_is_local(curr)) ) {
 		if (prev)
 		    prev->next = curr->next;
 		else
-		    timer_base = curr->next;
+		    level.lev_timers = curr->next;
 		free(curr);
 		/* prev stays the same */
 	    } else {
@@ -1672,7 +1671,7 @@ void relink_timers(boolean ghostly)
     timer_element *curr;
     unsigned nid;
 
-    for (curr = timer_base; curr; curr = curr->next) {
+    for (curr = level.lev_timers; curr; curr = curr->next) {
 	if (curr->needs_fixup) {
 	    if (curr->kind == TIMER_OBJECT) {
 		if (ghostly) {

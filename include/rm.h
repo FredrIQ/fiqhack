@@ -448,7 +448,6 @@ struct dlevel {
     
     timer_element	*lev_timers;
     struct ls_t		*lev_lights;
-    struct damage	*lev_damage;
     struct trap 	*lev_traps;
     coord 		doors[DOORMAX];
     struct mkroom	rooms[(MAXNROFROOMS+1)*2];

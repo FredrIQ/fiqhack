@@ -41,8 +41,6 @@
 #define LSF_SHOW	0x1		/* display the light source */
 #define LSF_NEEDS_FIXUP	0x2		/* need oid fixup */
 
-static light_source *light_base = 0;
-
 static void write_ls(int, light_source *);
 static int maybe_write_ls(int, int, boolean);
 
@@ -63,14 +61,14 @@ void new_light_source(xchar x, xchar y, int range, int type, void *id)
 
     ls = malloc(sizeof(light_source));
 
-    ls->next = light_base;
+    ls->next = level.lev_lights;
     ls->x = x;
     ls->y = y;
     ls->range = range;
     ls->type = type;
     ls->id = id;
     ls->flags = 0;
-    light_base = ls;
+    level.lev_lights = ls;
 
     vision_full_recalc = 1;	/* make the source show up */
 }
@@ -96,13 +94,13 @@ void del_light_source(int type, void *id)
 			break;
     }
 
-    for (prev = 0, curr = light_base; curr; prev = curr, curr = curr->next) {
+    for (prev = 0, curr = level.lev_lights; curr; prev = curr, curr = curr->next) {
 	if (curr->type != type) continue;
 	if (curr->id == ((curr->flags & LSF_NEEDS_FIXUP) ? tmp_id : id)) {
 	    if (prev)
 		prev->next = curr->next;
 	    else
-		light_base = curr->next;
+		level.lev_lights = curr->next;
 
 	    free(curr);
 	    vision_full_recalc = 1;
@@ -121,7 +119,7 @@ void do_light_sources(char **cs_rows)
     light_source *ls;
     char *row;
 
-    for (ls = light_base; ls; ls = ls->next) {
+    for (ls = level.lev_lights; ls; ls = ls->next) {
 	ls->flags &= ~LSF_SHOW;
 
 	/*
@@ -227,7 +225,7 @@ void save_light_sources(int fd, int mode, int range)
     }
 
     if (release_data(mode)) {
-	for (prev = &light_base; (curr = *prev) != 0; ) {
+	for (prev = &level.lev_lights; (curr = *prev) != 0; ) {
 	    if (!curr->id) {
 		impossible("save_light_sources: no id! [range=%d]", range);
 		is_global = 0;
@@ -271,8 +269,8 @@ void restore_light_sources(int fd)
     while (count-- > 0) {
 	ls = malloc(sizeof(light_source));
 	mread(fd, ls, sizeof(light_source));
-	ls->next = light_base;
-	light_base = ls;
+	ls->next = level.lev_lights;
+	level.lev_lights = ls;
     }
 }
 
@@ -283,7 +281,7 @@ void relink_light_sources(boolean ghostly)
     unsigned nid;
     light_source *ls;
 
-    for (ls = light_base; ls; ls = ls->next) {
+    for (ls = level.lev_lights; ls; ls = ls->next) {
 	if (ls->flags & LSF_NEEDS_FIXUP) {
 	    if (ls->type == LS_OBJECT || ls->type == LS_MONSTER) {
 		if (ghostly) {
@@ -319,7 +317,7 @@ static int maybe_write_ls(int fd, int range, boolean write_it)
     int count = 0, is_global;
     light_source *ls;
 
-    for (ls = light_base; ls; ls = ls->next) {
+    for (ls = level.lev_lights; ls; ls = ls->next) {
 	if (!ls->id) {
 	    impossible("maybe_write_ls: no id! [range=%d]", range);
 	    continue;
@@ -390,7 +388,7 @@ void obj_move_light_source(struct obj *src, struct obj *dest)
 {
     light_source *ls;
 
-    for (ls = light_base; ls; ls = ls->next)
+    for (ls = level.lev_lights; ls; ls = ls->next)
 	if (ls->type == LS_OBJECT && ls->id == src)
 	    ls->id = dest;
     src->lamplit = 0;
@@ -400,7 +398,7 @@ void obj_move_light_source(struct obj *src, struct obj *dest)
 /* return true if there exist any light sources */
 boolean any_light_source(void)
 {
-    return light_base != NULL;
+    return level.lev_lights != NULL;
 }
 
 /*
@@ -412,7 +410,7 @@ void snuff_light_source(int x, int y)
     light_source *ls;
     struct obj *obj;
 
-    for (ls = light_base; ls; ls = ls->next)
+    for (ls = level.lev_lights; ls; ls = ls->next)
 	/*
 	Is this position check valid??? Can I assume that the positions
 	will always be correct because the objects would have been
@@ -457,7 +455,7 @@ void obj_split_light_source(struct obj *src, struct obj *dest)
 {
     light_source *ls, *new_ls;
 
-    for (ls = light_base; ls; ls = ls->next)
+    for (ls = level.lev_lights; ls; ls = ls->next)
 	if (ls->type == LS_OBJECT && ls->id == src) {
 	    /*
 	     * Insert the new source at beginning of list.  This will
@@ -473,8 +471,8 @@ void obj_split_light_source(struct obj *src, struct obj *dest)
 		vision_full_recalc = 1;	/* in case range changed */
 	    }
 	    new_ls->id = dest;
-	    new_ls->next = light_base;
-	    light_base = new_ls;
+	    new_ls->next = level.lev_lights;
+	    level.lev_lights = new_ls;
 	    dest->lamplit = 1;		/* now an active light source */
 	}
 }
@@ -488,7 +486,7 @@ void obj_merge_light_sources(struct obj *src, struct obj *dest)
     /* src == dest implies adding to candelabrum */
     if (src != dest) end_burn(src, TRUE);		/* extinguish candles */
 
-    for (ls = light_base; ls; ls = ls->next)
+    for (ls = level.lev_lights; ls; ls = ls->next)
 	if (ls->type == LS_OBJECT && ls->id == dest) {
 	    ls->range = candle_light_range(dest);
 	    vision_full_recalc = 1;	/* in case range changed */
@@ -548,10 +546,10 @@ int wiz_light_sources(void)
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 
-    if (light_base) {
+    if (level.lev_lights) {
 	add_menutext(&menu, "location range flags  type    id");
 	add_menutext(&menu, "-------- ----- ------ ----  -------");
-	for (ls = light_base; ls; ls = ls->next) {
+	for (ls = level.lev_lights; ls; ls = ls->next) {
 	    sprintf(buf, "  %2d,%2d   %2d   0x%04x  %s  %p",
 		ls->x, ls->y, ls->range, ls->flags,
 		(ls->type == LS_OBJECT ? "obj" :
