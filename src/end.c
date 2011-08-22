@@ -665,7 +665,7 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	    add_menutext(&menu, "");
 	}
 	if (!done_stopprint)
-	    outrip(menu.items, menu.icount, how, plname, umoney, outrip_buf,
+	    outrip(menu.items, menu.icount, how <= GENOCIDED, plname, umoney, outrip_buf,
 		   getyear());
 	
 	free(menu.items);

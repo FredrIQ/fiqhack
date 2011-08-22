@@ -2607,7 +2607,7 @@ static void center(char *line, char *text)
 }
 
 
-void tty_outrip(struct nh_menuitem *items,int icount, int how, char *plname, long gold,
+void tty_outrip(struct nh_menuitem *items, int icount, boolean tombstone, char *plname, long gold,
 		char *killbuf, int year)
 {
 	char **dp, **rip;
@@ -2617,66 +2617,62 @@ void tty_outrip(struct nh_menuitem *items,int icount, int how, char *plname, lon
 	int line;
 	winid tmpwin = tty_create_nhwindow(NHW_TEXT);
 	
+	if (tombstone) {
+	    rip = dp = malloc(sizeof(rip_txt));
+	    for (x = 0; rip_txt[x]; x++) {
+		    dp[x] = malloc((unsigned int)(strlen(rip_txt[x]) + 1));
+		    strcpy(dp[x], rip_txt[x]);
+	    }
+	    dp[x] = NULL;
 
-	rip = dp = malloc(sizeof(rip_txt));
-	for (x = 0; rip_txt[x]; x++) {
-		dp[x] = malloc((unsigned int)(strlen(rip_txt[x]) + 1));
-		strcpy(dp[x], rip_txt[x]);
+	    /* Put name on stone */
+	    sprintf(buf, "%s", plname);
+	    buf[STONE_LINE_LEN] = 0;
+	    center(rip[NAME_LINE], buf);
+
+	    /* Put $ on stone */
+	    sprintf(buf, "%ld Au", gold);
+	    buf[STONE_LINE_LEN] = 0; /* It could be a *lot* of gold :-) */
+	    center(rip[GOLD_LINE], buf);
+
+	    strcpy(buf, killbuf);
+	    /* Put death type on stone */
+	    for (line=DEATH_LINE, dpx = buf; line<YEAR_LINE; line++) {
+		    int i,i0;
+		    char tmpchar;
+
+		    if ( (i0=strlen(dpx)) > STONE_LINE_LEN) {
+				    for (i = STONE_LINE_LEN;
+					((i0 > STONE_LINE_LEN) && i); i--)
+					    if (dpx[i] == ' ') i0 = i;
+				    if (!i) i0 = STONE_LINE_LEN;
+		    }
+		    tmpchar = dpx[i0];
+		    dpx[i0] = 0;
+		    center(rip[line], dpx);
+		    if (tmpchar != ' ') {
+			    dpx[i0] = tmpchar;
+			    dpx= &dpx[i0];
+		    } else  dpx= &dpx[i0+1];
+	    }
+
+	    /* Put year on stone */
+	    sprintf(buf, "%4d", year);
+	    center(rip[YEAR_LINE], buf);
+
+	    tty_putstr(tmpwin, 0, "");
+	    for (; *dp; dp++)
+		    tty_putstr(tmpwin, 0, *dp);
+
+	    tty_putstr(tmpwin, 0, "");
+	    tty_putstr(tmpwin, 0, "");
+
+	    for (x = 0; rip_txt[x]; x++) {
+		    free(rip[x]);
+	    }
+	    free(rip);
+	    rip = NULL;
 	}
-	dp[x] = NULL;
-
-	/* Put name on stone */
-	sprintf(buf, "%s", plname);
-	buf[STONE_LINE_LEN] = 0;
-	center(rip[NAME_LINE], buf);
-
-	/* Put $ on stone */
-	sprintf(buf, "%ld Au", gold);
-// #ifndef GOLDOBJ
-// 	sprintf(buf, "%ld Au", u.ugold);
-// #else
-// 	sprintf(buf, "%ld Au", done_money);
-// #endif
-	buf[STONE_LINE_LEN] = 0; /* It could be a *lot* of gold :-) */
-	center(rip[GOLD_LINE], buf);
-
-	strcpy(buf, killbuf);
-	/* Put death type on stone */
-	for (line=DEATH_LINE, dpx = buf; line<YEAR_LINE; line++) {
-		int i,i0;
-		char tmpchar;
-
-		if ( (i0=strlen(dpx)) > STONE_LINE_LEN) {
-				for (i = STONE_LINE_LEN;
-				    ((i0 > STONE_LINE_LEN) && i); i--)
-					if (dpx[i] == ' ') i0 = i;
-				if (!i) i0 = STONE_LINE_LEN;
-		}
-		tmpchar = dpx[i0];
-		dpx[i0] = 0;
-		center(rip[line], dpx);
-		if (tmpchar != ' ') {
-			dpx[i0] = tmpchar;
-			dpx= &dpx[i0];
-		} else  dpx= &dpx[i0+1];
-	}
-
-	/* Put year on stone */
-	sprintf(buf, "%4d", year);
-	center(rip[YEAR_LINE], buf);
-
-	tty_putstr(tmpwin, 0, "");
-	for (; *dp; dp++)
-		tty_putstr(tmpwin, 0, *dp);
-
-	tty_putstr(tmpwin, 0, "");
-	tty_putstr(tmpwin, 0, "");
-
-	for (x = 0; rip_txt[x]; x++) {
-		free(rip[x]);
-	}
-	free(rip);
-	rip = NULL;
 	
 	for (i = 0; i < icount; i++)
 	    tty_putstr(tmpwin, 0, items[i].caption);

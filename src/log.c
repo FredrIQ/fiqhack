@@ -128,6 +128,7 @@ void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
     if (program_state.restoring)
 	return;
     
+    iflags.disable_log = FALSE;
     logfile = logfd;
     /* FIXME: needs file locking */
     
@@ -279,6 +280,7 @@ void log_finish(enum nh_log_status status)
     lseek(logfile, last_cmd_pos, SEEK_SET);
     
     logfile = -1;
+    iflags.disable_log = TRUE;
 }
 
 void log_truncate(void)

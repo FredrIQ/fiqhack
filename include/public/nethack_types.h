@@ -472,7 +472,7 @@ struct nh_window_procs {
     void (*win_getlin)(const char *,char *);
     void (*win_delay_output)(void);
     void (*win_level_changed)(int displaymode);
-    void (*win_outrip)(struct nh_menuitem*,int, int, char *, long, char *, int);
+    void (*win_outrip)(struct nh_menuitem*,int, boolean, char *, long, char *, int);
 };
 
 #endif

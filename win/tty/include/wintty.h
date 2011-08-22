@@ -281,7 +281,7 @@ extern char tty_yn_function(const char *, const char *, char);
 extern void tty_getlin(const char *,char *);
 extern int tty_get_ext_cmd(const char **namelist, const char **desclist, int listlen);
 extern void tty_delay_output(void);
-extern void tty_outrip(struct nh_menuitem *items,int icount, int how,
+extern void tty_outrip(struct nh_menuitem *items,int icount, boolean tombstone,
 		       char *plname, long gold, char *killbuf, int year);
 extern void tty_notify_level_changed(int dmode);
 
