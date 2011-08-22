@@ -434,6 +434,12 @@ struct levelflags {
 	unsigned arboreal:1;		/* Trees replace rock */
 };
 
+/* worm segment structure */
+struct wseg {
+    struct wseg *nseg;
+    xchar  wx, wy;	/* the segment's position */
+};
+
 
 struct ls_t;
 struct dlevel {
@@ -458,10 +464,13 @@ struct dlevel {
     stairway		sstairs;
     dest_area		updest;
     dest_area		dndest;
+
+    struct wseg 	*wheads[MAX_NUM_WORMS], *wtails[MAX_NUM_WORMS];
+    long		wgrowtime[MAX_NUM_WORMS];
+    long		lastmoves; /* when the level was last visited */
     int 		nroom;
     int			nsubroom;
     int			doorindex;
-    long		lastmoves; /* when the level was last visited */
 };
 
 extern struct dlevel level;	/* structure describing the current level */
