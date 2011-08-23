@@ -5,8 +5,6 @@
 #include "lev.h"
 #include <ctype.h>
 
-static struct engr *head_engr;
-
 /* random engravings */
 static const char *const random_mesg[] = {
 	"Elbereth",
@@ -190,7 +188,7 @@ const char *ceiling(int x, int y)
 
 struct engr *engr_at(xchar x, xchar y)
 {
-	struct engr *ep = head_engr;
+	struct engr *ep = level.lev_engr;
 
 	while (ep) {
 		if (x == ep->engr_x && y == ep->engr_y)
@@ -318,8 +316,8 @@ void make_engr_at(int x, int y, const char *s, long e_time, xchar e_type)
 	if ((ep = engr_at(x,y)) != 0)
 	    del_engr(ep);
 	ep = newengr(strlen(s) + 1);
-	ep->nxt_engr = head_engr;
-	head_engr = ep;
+	ep->nxt_engr = level.lev_engr;
+	level.lev_engr = ep;
 	ep->engr_x = x;
 	ep->engr_y = y;
 	ep->engr_txt = (char *)(ep + 1);
@@ -1064,7 +1062,7 @@ int doengrave(void)
 
 void save_engravings(int fd, int mode)
 {
-	struct engr *ep = head_engr;
+	struct engr *ep = level.lev_engr;
 	struct engr *ep2;
 	unsigned no_more_engr = 0;
 
@@ -1081,7 +1079,7 @@ void save_engravings(int fd, int mode)
 	if (perform_bwrite(mode))
 	    bwrite(fd, &no_more_engr, sizeof no_more_engr);
 	if (release_data(mode))
-	    head_engr = 0;
+	    level.lev_engr = NULL;
 }
 
 void rest_engravings(int fd)
@@ -1089,14 +1087,14 @@ void rest_engravings(int fd)
 	struct engr *ep;
 	unsigned lth;
 
-	head_engr = 0;
+	level.lev_engr = NULL;
 	while (1) {
 		mread(fd, &lth, sizeof(unsigned));
 		if (lth == 0) return;
 		ep = newengr(lth);
 		mread(fd, ep, sizeof(struct engr) + lth);
-		ep->nxt_engr = head_engr;
-		head_engr = ep;
+		ep->nxt_engr = level.lev_engr;
+		level.lev_engr = ep;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
 		while (ep->engr_txt[0] == ' ')
 		    ep->engr_txt++;
@@ -1109,12 +1107,12 @@ void rest_engravings(int fd)
 
 void del_engr(struct engr *ep)
 {
-	if (ep == head_engr) {
-		head_engr = ep->nxt_engr;
+	if (ep == level.lev_engr) {
+		level.lev_engr = ep->nxt_engr;
 	} else {
 		struct engr *ept;
 
-		for (ept = head_engr; ept; ept = ept->nxt_engr)
+		for (ept = level.lev_engr; ept; ept = ept->nxt_engr)
 		    if (ept->nxt_engr == ep) {
 			ept->nxt_engr = ep->nxt_engr;
 			break;
