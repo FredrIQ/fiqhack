@@ -39,6 +39,7 @@
 struct monst {
 	struct monst *nmon;
 	const struct permonst *data;
+	struct level *dlevel;	/* pointer to the level this monster is on */
 	long m_id;
 	short mnum;		/* permanent monster index number */
 	short movement;		/* movement points (derived from permonst definition and added effects */

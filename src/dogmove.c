@@ -53,7 +53,7 @@ static boolean cursed_object_at(int x, int y)
 {
 	struct obj *otmp;
 
-	for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
+	for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
 		if (otmp->cursed) return TRUE;
 	return FALSE;
 }
@@ -134,7 +134,7 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 	    newsym(x, y);
 	    newsym(mtmp->mx, mtmp->my);
 	}
-	if (is_pool(x, y) && !Underwater) {
+	if (is_pool(level, x, y) && !Underwater) {
 	    /* Don't print obj */
 	    /* TODO: Reveal presence of sea monster (especially sharks) */
 	} else
@@ -252,7 +252,7 @@ static int dog_invent(struct monst *mtmp, struct edog *edog, int udist)
 		    edog->droptime = moves;
 		}
 	} else {
-	    if ((obj=level.objects[omx][omy]) && !strchr(nofetch,obj->oclass)){
+	    if ((obj=level->objects[omx][omy]) && !strchr(nofetch,obj->oclass)){
 		int edible = dogfood(mtmp, obj);
 
 		if ((edible <= CADAVER ||
@@ -326,7 +326,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 	    if ((max_y = omy + SQSRCHRADIUS) >= ROWNO) max_y = ROWNO - 1;
 
 	    /* nearby food is the first choice, then other objects */
-	    for (obj = level.objlist; obj; obj = obj->nobj) {
+	    for (obj = level->objlist; obj; obj = obj->nobj) {
 		nx = obj->ox;
 		ny = obj->oy;
 		if (nx >= min_x && nx <= max_x && ny >= min_y && ny <= max_y) {
@@ -350,7 +350,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 			}
 		    } else if (gtyp == UNDEF && in_masters_sight &&
 			      !dog_has_minvent &&
-			      (!level.locations[omx][omy].lit || level.locations[u.ux][u.uy].lit) &&
+			      (!level->locations[omx][omy].lit || level->locations[u.ux][u.uy].lit) &&
 			      (otyp == MANFOOD || m_cansee(mtmp, nx, ny)) &&
 			      edog->apport > rn2(8) &&
 			      can_carry(mtmp,obj)) {
@@ -371,7 +371,7 @@ static int dog_goal(struct monst *mtmp, struct edog *edog,
 			return -2;
 		appr = (udist >= 9) ? 1 : (mtmp->mflee) ? -1 : 0;
 		if (udist > 1) {
-			if (!IS_ROOM(level.locations[u.ux][u.uy].typ) || !rn2(4) ||
+			if (!IS_ROOM(level->locations[u.ux][u.uy].typ) || !rn2(4) ||
 			   whappr ||
 			   (dog_has_minvent && rn2(edog->apport)))
 				appr = 1;
@@ -512,9 +512,9 @@ int dog_move(struct monst *mtmp,
 		while (i--) {
 		    mm.x = u.ux;
 		    mm.y = u.uy;
-		    if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL]))
+		    if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
 			mk_roamer(&mons[PM_ANGEL], u.ualign.type,
-					 mm.x, mm.y, FALSE);
+					 level, mm.x, mm.y, FALSE);
 		}
 		return 2;
 
@@ -540,7 +540,7 @@ int dog_move(struct monst *mtmp,
 	uncursedcnt = 0;
 	for (i = 0; i < cnt; i++) {
 		nx = poss[i].x; ny = poss[i].y;
-		if (MON_AT(nx,ny) && !(info[i] & ALLOW_M)) continue;
+		if (MON_AT(level, nx,ny) && !(info[i] & ALLOW_M)) continue;
 		if (cursed_object_at(nx, ny)) continue;
 		uncursedcnt++;
 	}
@@ -561,9 +561,9 @@ int dog_move(struct monst *mtmp,
 		if (!has_edog &&
 		    (j = distu(nx, ny)) > 16 && j >= udist) continue;
 
-		if ((info[i] & ALLOW_M) && MON_AT(nx, ny)) {
+		if ((info[i] & ALLOW_M) && MON_AT(level, nx, ny)) {
 		    int mstatus;
-		    struct monst *mtmp2 = m_at(nx,ny);
+		    struct monst *mtmp2 = m_at(level, nx,ny);
 
 		    if ((int)mtmp2->m_lev >= (int)mtmp->m_lev+2 ||
 			(mtmp2->data == &mons[PM_FLOATING_EYE] && rn2(10) &&
@@ -608,7 +608,7 @@ int dog_move(struct monst *mtmp,
 		     */
 		    struct trap *trap;
 
-		    if ((info[i] & ALLOW_TRAPS) && (trap = t_at(nx,ny))) {
+		    if ((info[i] & ALLOW_TRAPS) && (trap = t_at(level, nx, ny))) {
 			if (mtmp->mleashed) {
 			    if (flags.soundok) whimper(mtmp);
 			} else
@@ -622,7 +622,7 @@ int dog_move(struct monst *mtmp,
 		/* dog eschews cursed objects, but likes dog food */
 		/* (minion isn't interested; `cursemsg' stays FALSE) */
 		if (has_edog)
-		for (obj = level.objects[nx][ny]; obj; obj = obj->nexthere) {
+		for (obj = level->objects[nx][ny]; obj; obj = obj->nexthere) {
 		    if (obj->cursed) cursemsg[i] = TRUE;
 		    else if ((otyp = dogfood(mtmp, obj)) < MANFOOD &&
 			     (otyp < ACCFOOD || edog->hungrytime <= moves)) {
@@ -676,15 +676,15 @@ newdogpos:
 		}
 		if (!m_in_out_region(mtmp, nix, niy))
 		    return 1;
-		if (((IS_ROCK(level.locations[nix][niy].typ) && may_dig(nix,niy)) ||
-		     closed_door(nix, niy)) &&
+		if (((IS_ROCK(level->locations[nix][niy].typ) && may_dig(level, nix,niy)) ||
+		     closed_door(level, nix, niy)) &&
 		    mtmp->weapon_check != NO_WEAPON_WANTED &&
 		    tunnels(mtmp->data) && needspick(mtmp->data)) {
-		    if (closed_door(nix, niy)) {
+		    if (closed_door(level, nix, niy)) {
 			if (!(mw_tmp = MON_WEP(mtmp)) ||
 			    !is_pick(mw_tmp) || !is_axe(mw_tmp))
 			    mtmp->weapon_check = NEED_PICK_OR_AXE;
-		    } else if (IS_TREE(level.locations[nix][niy].typ)) {
+		    } else if (IS_TREE(level->locations[nix][niy].typ)) {
 			if (!(mw_tmp = MON_WEP(mtmp)) || !is_axe(mw_tmp))
 			    mtmp->weapon_check = NEED_AXE;
 		    } else if (!(mw_tmp = MON_WEP(mtmp)) || !is_pick(mw_tmp)) {
@@ -719,16 +719,16 @@ newdogpos:
 		ny = sgn(omy - u.uy);
 		cc.x = u.ux + nx;
 		cc.y = u.uy + ny;
-		if (goodpos(cc.x, cc.y, mtmp, 0)) goto dognext;
+		if (goodpos(level, cc.x, cc.y, mtmp, 0)) goto dognext;
 
 		i  = xytod(nx, ny);
 		for (j = (i + 7)%8; j < (i + 1)%8; j++) {
 			dtoxy(&cc, j);
-			if (goodpos(cc.x, cc.y, mtmp, 0)) goto dognext;
+			if (goodpos(level, cc.x, cc.y, mtmp, 0)) goto dognext;
 		}
 		for (j = (i + 6)%8; j < (i + 2)%8; j++) {
 			dtoxy(&cc, j);
-			if (goodpos(cc.x, cc.y, mtmp, 0)) goto dognext;
+			if (goodpos(level, cc.x, cc.y, mtmp, 0)) goto dognext;
 		}
 		cc.x = mtmp->mx;
 		cc.y = mtmp->my;
@@ -746,9 +746,9 @@ dognext:
 /* check if a monster could pick up objects from a location */
 static boolean could_reach_item(struct monst *mon, xchar nx, xchar ny)
 {
-    if ((!is_pool(nx,ny) || is_swimmer(mon->data)) &&
-	(!is_lava(nx,ny) || likes_lava(mon->data)) &&
-	(!sobj_at(BOULDER,nx,ny) || throws_rocks(mon->data)))
+    if ((!is_pool(level, nx,ny) || is_swimmer(mon->data)) &&
+	(!is_lava(level, nx,ny) || likes_lava(mon->data)) &&
+	(!sobj_at(BOULDER, level, nx,ny) || throws_rocks(mon->data)))
     	return TRUE;
     return FALSE;
 }
@@ -776,11 +776,11 @@ static boolean can_reach_location(struct monst *mon,
 		continue;
 	    if (dist2(i, j, fx, fy) >= dist)
 		continue;
-	    if (IS_ROCK(level.locations[i][j].typ) && !passes_walls(mon->data) &&
-				    (!may_dig(i,j) || !tunnels(mon->data)))
+	    if (IS_ROCK(level->locations[i][j].typ) && !passes_walls(mon->data) &&
+				    (!may_dig(level, i,j) || !tunnels(mon->data)))
 		continue;
-	    if (IS_DOOR(level.locations[i][j].typ) &&
-				(level.locations[i][j].doormask & (D_CLOSED | D_LOCKED)))
+	    if (IS_DOOR(level->locations[i][j].typ) &&
+				(level->locations[i][j].doormask & (D_CLOSED | D_LOCKED)))
 		continue;
 	    if (!could_reach_item(mon, i, j))
 		continue;

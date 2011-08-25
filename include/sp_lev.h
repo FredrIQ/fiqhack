@@ -242,4 +242,8 @@ typedef struct {
 	corridor **corrs;
 } splev;
 
+/* mkmap.c */
+void mkmap(struct level *lev, lev_init *init_lev);
+
+
 #endif /* SP_LEV_H */

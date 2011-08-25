@@ -231,7 +231,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 			update_mon_intrinsics(mtmp, obj, FALSE, FALSE);
 			obj->owornmask = 0L;
 			obj_extract_self(obj);
-			place_object(obj, mtmp->mx, mtmp->my);
+			place_object(obj, level, mtmp->mx, mtmp->my);
 			/* call stackobj() if we ever drop anything that can merge */
 			newsym(mtmp->mx, mtmp->my);
 		}
@@ -253,7 +253,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 			if (mtmp->m_ap_type == M_AP_OBJECT &&
 			    mtmp->mappearance == STRANGE_OBJECT) {
 			    /* it can do better now */
-			    set_mimic_sym(mtmp);
+			    set_mimic_sym(mtmp, level);
 			    newsym(mtmp->mx, mtmp->my);
 			} else
 			    mimic_hit_msg(mtmp, otyp);
@@ -438,7 +438,7 @@ struct monst *montraits(struct obj *obj, coord *cc)
 		mtmp2->data = &mons[mtmp2->mnum];
 		if (mtmp2->mhpmax <= 0 && !is_rider(mtmp2->data))
 			return NULL;
-		mtmp = makemon(mtmp2->data,
+		mtmp = makemon(mtmp2->data, level,
 				cc->x, cc->y, NO_MINVENT|MM_NOWAIT|MM_NOCOUNTBIRTH);
 		if (!mtmp) return mtmp;
 
@@ -571,23 +571,23 @@ struct monst *revive(struct obj *obj)
 			   - the container cannot be heavily nested (>2 is arbitrary)
 			   - the container cannot be a statue or bag of holding
 			     (except in very rare cases for the latter)
-			*/
+			 */
 			if (!x || !y || container->olocked || container_nesting > 2 ||
 			    container->otyp == STATUE ||
 			    (container->otyp == BAG_OF_HOLDING && rn2(40)))
 				return NULL;
 		}
 
-		if (MON_AT(x,y)) {
+		if (MON_AT(level, x,y)) {
 		    coord new_xy;
 
-		    if (enexto(&new_xy, x, y, &mons[montype]))
+		    if (enexto(&new_xy, level, x, y, &mons[montype]))
 			x = new_xy.x,  y = new_xy.y;
 		}
 
 		if (cant_create(&montype, TRUE)) {
 			/* make a zombie or worm instead */
-			mtmp = makemon(&mons[montype], x, y,
+			mtmp = makemon(&mons[montype], level, x, y,
 				       NO_MINVENT|MM_NOWAIT);
 			if (mtmp) {
 				mtmp->mhp = mtmp->mhpmax = 100;
@@ -597,12 +597,12 @@ struct monst *revive(struct obj *obj)
 		    if (obj->oxlth && (obj->oattached == OATTACHED_MONST)) {
 			    coord xy;
 			    xy.x = x; xy.y = y;
-		    	    mtmp = montraits(obj, &xy);
-		    	    if (mtmp && mtmp->mtame && !mtmp->isminion)
+			    mtmp = montraits(obj, &xy);
+			    if (mtmp && mtmp->mtame && !mtmp->isminion)
 				wary_dog(mtmp, TRUE);
 		    } else
- 		            mtmp = makemon(&mons[montype], x, y,
-				       NO_MINVENT|MM_NOWAIT|MM_NOCOUNTBIRTH);
+			    mtmp = makemon(&mons[montype], level, x, y,
+				    NO_MINVENT|MM_NOWAIT|MM_NOCOUNTBIRTH);
 		    if (mtmp) {
 			if (obj->oxlth && (obj->oattached == OATTACHED_M_ID)) {
 			    unsigned m_id;
@@ -610,13 +610,13 @@ struct monst *revive(struct obj *obj)
 			    memcpy(&m_id,
 				    obj->oextra, sizeof(m_id));
 			    ghost = find_mid(m_id, FM_FMON);
-		    	    if (ghost && ghost->data == &mons[PM_GHOST]) {
-		    		    int x2, y2;
-		    		    x2 = ghost->mx; y2 = ghost->my;
-		    		    if (ghost->mtame)
-		    		    	savetame = ghost->mtame;
-		    		    if (canseemon(ghost))
-		    		  	pline("%s is suddenly drawn into its former body!",
+			    if (ghost && ghost->data == &mons[PM_GHOST]) {
+				    int x2, y2;
+				    x2 = ghost->mx; y2 = ghost->my;
+				    if (ghost->mtame)
+					savetame = ghost->mtame;
+				    if (canseemon(ghost))
+					pline("%s is suddenly drawn into its former body!",
 						Monnam(ghost));
 				    mondead(ghost);
 				    recorporealization = TRUE;
@@ -746,7 +746,7 @@ static void costly_cancel(struct obj *obj)
 		}
 		break;
 	case OBJ_FLOOR:
-		objroom = *in_rooms(obj->ox, obj->oy, SHOPBASE);
+		objroom = *in_rooms(level, obj->ox, obj->oy, SHOPBASE);
 		shkp = shop_keeper(objroom);
 		if (!shkp || !inhishop(shkp)) return;
 		if (costly_spot(u.ux, u.uy) && objroom == *u.ushops) {
@@ -1069,7 +1069,7 @@ static void create_polymon(struct obj *obj, int okind)
 	if (!(mvitals[pm_index].mvflags & G_GENOD))
 		mdat = &mons[pm_index];
 
-	mtmp = makemon(mdat, obj->ox, obj->oy, NO_MM_FLAGS);
+	mtmp = makemon(mdat, level, obj->ox, obj->oy, NO_MM_FLAGS);
 	polyuse(obj, okind, (int)mons[pm_index].cwt);
 
 	if (mtmp && cansee(mtmp->mx, mtmp->my)) {
@@ -1142,12 +1142,12 @@ struct obj *poly_obj(struct obj *obj, int id)
 	    otmp = NULL;
 	    do {
 		if (otmp) delobj(otmp);
-		otmp = mkobj(obj->oclass, FALSE);
+		otmp = mkobj(level, obj->oclass, FALSE);
 	    } while (--try_limit > 0 &&
 		  objects[obj->otyp].oc_magic != objects[otmp->otyp].oc_magic);
 	} else {
 	    /* literally replace obj with this new thing */
-	    otmp = mksobj(id, FALSE, FALSE);
+	    otmp = mksobj(level, id, FALSE, FALSE);
 	/* Actually more things use corpsenm but they polymorph differently */
 #define USES_CORPSENM(typ) ((typ)==CORPSE || (typ)==STATUE || (typ)==FIGURINE)
 	    if (USES_CORPSENM(obj->otyp) && USES_CORPSENM(id))
@@ -1331,15 +1331,15 @@ no_unwear:
 		get_obj_location(otmp, &ox, &oy, BURIED_TOO|CONTAINED_TOO) &&
 		costly_spot(ox, oy)) {
 	    struct monst *shkp =
-		shop_keeper(*in_rooms(ox, oy, SHOPBASE));
+		shop_keeper(*in_rooms(level, ox, oy, SHOPBASE));
 
 	    if ((!obj->no_charge ||
 		 (Has_contents(obj) &&
 		    (contained_cost(obj, shkp, 0L, FALSE, FALSE) != 0L)))
 	       && inhishop(shkp)) {
 		if (shkp->mpeaceful) {
-		    if (*u.ushops && *in_rooms(u.ux, u.uy, 0) ==
-			    *in_rooms(shkp->mx, shkp->my, 0) &&
+		    if (*u.ushops && *in_rooms(level, u.ux, u.uy, 0) ==
+			    *in_rooms(level, shkp->mx, shkp->my, 0) &&
 			    !costly_spot(u.ux, u.uy))
 			make_angry_shk(shkp, ox, oy);
 		    else {
@@ -1397,7 +1397,7 @@ makecorpse:			if (mons[obj->corpsenm].geno &
 			    */
 			while ((item = obj->cobj) != 0) {
 			    obj_extract_self(item);
-			    place_object(item, oox, ooy);
+			    place_object(item, level, oox, ooy);
 			}
 			poly_obj(obj, CORPSE);
 			break;
@@ -1424,7 +1424,7 @@ makecorpse:			if (mons[obj->corpsenm].geno &
 		}
 		get_obj_location(obj, &oox, &ooy, 0);
 		refresh_x = oox; refresh_y = ooy;
-		mon = makemon(&mons[obj->corpsenm],
+		mon = makemon(&mons[obj->corpsenm], level,
 				oox, ooy, NO_MM_FLAGS);
 		if (mon) {
 		    delobj(obj);
@@ -1644,7 +1644,7 @@ int bhitpile(struct obj *obj, int (*fhito)(struct obj*,struct obj*),
     struct obj *otmp, *next_obj;
 
     if (obj->otyp == SPE_FORCE_BOLT || obj->otyp == WAN_STRIKING) {
-	struct trap *t = t_at(tx, ty);
+	struct trap *t = t_at(level, tx, ty);
 
 	/* We can't settle for the default calling sequence of
 	   bhito(otmp) -> break_statue(otmp) -> activate_statue_trap(ox,oy)
@@ -1657,13 +1657,13 @@ int bhitpile(struct obj *obj, int (*fhito)(struct obj*,struct obj*),
     }
 
     poly_zapped = -1;
-    for (otmp = level.objects[tx][ty]; otmp; otmp = next_obj) {
+    for (otmp = level->objects[tx][ty]; otmp; otmp = next_obj) {
 	/* Fix for polymorph bug, Tim Wright */
 	next_obj = otmp->nexthere;
 	hitanything += (*fhito)(otmp, obj);
     }
     if (poly_zapped >= 0)
-	create_polymon(level.objects[tx][ty], poly_zapped);
+	create_polymon(level->objects[tx][ty], poly_zapped);
 
     return hitanything;
 }
@@ -2203,7 +2203,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	/* drawbridge might change <u.ux,u.uy> */
 	x = xx = u.ux;	/* <x,y> is zap location */
 	y = yy = u.uy;	/* <xx,yy> is drawbridge (portcullis) position */
-	ttmp = t_at(x, y); /* trap if there is one */
+	ttmp = t_at(level, x, y); /* trap if there is one */
 
 	switch (obj->otyp) {
 	case WAN_PROBING:
@@ -2223,7 +2223,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	    if (is_db_wall(x,y) && find_drawbridge(&xx, &yy)) {
 		open_drawbridge(xx, yy);
 		disclose = TRUE;
-	    } else if (dz > 0 && (x == level.dnstair.sx && y == level.dnstair.sy) &&
+	    } else if (dz > 0 && (x == level->dnstair.sx && y == level->dnstair.sy) &&
 			/* can't use the stairs down to quest level 2 until
 			   leader "unlocks" them; give feedback if you try */
 			on_level(&u.uz, &qstart_level) && !ok_to_quest()) {
@@ -2238,7 +2238,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	case WAN_LOCKING:
 	case SPE_WIZARD_LOCK:
 	    /* down at open bridge or up or down at open portcullis */
-	    if ((level.locations[x][y].typ == DRAWBRIDGE_DOWN) ? (dz > 0) :
+	    if ((level->locations[x][y].typ == DRAWBRIDGE_DOWN) ? (dz > 0) :
 			(is_drawbridge_wall(x,y) && !is_db_wall(x,y)) &&
 		    find_drawbridge(&xx, &yy)) {
 		if (!striking)
@@ -2254,7 +2254,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 		      ceiling(x, y), body_part(HEAD));
 		losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
 		       "falling rock", KILLED_BY_AN);
-		if ((otmp = mksobj_at(ROCK, x, y, FALSE, FALSE)) != 0) {
+		if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE)) != 0) {
 		    xname(otmp);	/* set dknown, maybe bknown */
 		    stackobj(otmp);
 		}
@@ -2266,7 +2266,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 				disclose = TRUE;
 			} else {
 				You("see a swirl of %s beneath you.",
-					is_ice(x,y) ? "frost" : "dust");
+					is_ice(level, x, y) ? "frost" : "dust");
 			}
 		} else {
 			You_hear("a twang followed by a thud.");
@@ -2287,13 +2287,13 @@ static boolean zap_updown(struct obj *obj, schar dz)
 		Print this message only if there wasn't an engraving
 		affected here.  If water or ice, act like waterlevel case.
 		*/
-		e = engr_at(u.ux, u.uy);
+		e = engr_at(level, u.ux, u.uy);
 		if (!(e && e->engr_type == ENGRAVE)) {
-		    if (is_pool(u.ux, u.uy) || is_ice(u.ux, u.uy))
+		    if (is_pool(level, u.ux, u.uy) || is_ice(level, u.ux, u.uy))
 			pline("Nothing happens.");
 		    else
 			pline("Blood %ss %s your %s.",
-			      is_lava(u.ux, u.uy) ? "boil" : "pool",
+			      is_lava(level, u.ux, u.uy) ? "boil" : "pool",
 			      Levitation ? "beneath" : "at",
 			      makeplural(body_part(FOOT)));
 		}
@@ -2308,12 +2308,12 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	    bhitpile(obj, bhito, x, y);
 
 	    /* subset of engraving effects; none sets `disclose' */
-	    if ((e = engr_at(x, y)) != 0 && e->engr_type != HEADSTONE) {
+	    if ((e = engr_at(level, x, y)) != 0 && e->engr_type != HEADSTONE) {
 		switch (obj->otyp) {
 		case WAN_POLYMORPH:
 		case SPE_POLYMORPH:
 		    del_engr(e);
-		    make_engr_at(x, y, random_engraving(buf), moves, (xchar)0);
+		    make_engr_at(level, x, y, random_engraving(buf), moves, (xchar)0);
 		    break;
 		case WAN_CANCELLATION:
 		case SPE_CANCELLATION:
@@ -2330,12 +2330,12 @@ static boolean zap_updown(struct obj *obj, schar dz)
 			pline_The(Hallucination ?
 			    "floor runs like butter!" :
 			    "edges on the floor get smoother.");
-			wipe_engr_at(x, y, dice(2,4));
+			wipe_engr_at(level, x, y, dice(2,4));
 			}
 		    break;
 		case WAN_STRIKING:
 		case SPE_FORCE_BOLT:
-		    wipe_engr_at(x, y, dice(2,4));
+		    wipe_engr_at(level, x, y, dice(2,4));
 		    break;
 		default:
 		    break;
@@ -2538,13 +2538,13 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		break;
 	    }
 
-	    if (is_pick(obj) && inside_shop(x, y) &&
+	    if (is_pick(obj) && inside_shop(level, x, y) &&
 					   (mtmp = shkcatch(obj, x, y))) {
 		tmp_at(DISP_END, 0);
 		return mtmp;
 	    }
 
-	    typ = level.locations[bhitpos.x][bhitpos.y].typ;
+	    typ = level->locations[bhitpos.x][bhitpos.y].typ;
 
 	    /* iron bars will block anything big enough */
 	    if ((weapon == THROWN_WEAPON || weapon == KICKED_WEAPON) &&
@@ -2570,7 +2570,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		    case WAN_LOCKING:
 		    case SPE_WIZARD_LOCK:
 			if ((cansee(x,y) || cansee(bhitpos.x, bhitpos.y))
-			    && level.locations[x][y].typ == DRAWBRIDGE_DOWN)
+			    && level->locations[x][y].typ == DRAWBRIDGE_DOWN)
 			    makeknown(obj->otyp);
 			close_drawbridge(x,y);
 			break;
@@ -2582,7 +2582,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 			break;
 		}
 
-	    if ((mtmp = m_at(bhitpos.x, bhitpos.y)) != 0) {
+	    if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
 		notonhead = (bhitpos.x != mtmp->mx ||
 			     bhitpos.y != mtmp->my);
 		if (weapon != FLASHED_LIGHT) {
@@ -2619,7 +2619,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		}
 	    } else {
 		if (weapon == ZAPPED_WAND && obj->otyp == WAN_PROBING &&
-		    level.locations[bhitpos.x][bhitpos.y].mem_invis) {
+		    level->locations[bhitpos.x][bhitpos.y].mem_invis) {
 		    unmap_object(bhitpos.x, bhitpos.y);
 		    newsym(x, y);
 		}
@@ -2649,8 +2649,8 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 			if (cansee(bhitpos.x, bhitpos.y) ||
 			    (obj->otyp == WAN_STRIKING))
 			    makeknown(obj->otyp);
-			if (level.locations[bhitpos.x][bhitpos.y].doormask == D_BROKEN
-			    && *in_rooms(bhitpos.x, bhitpos.y, SHOPBASE)) {
+			if (level->locations[bhitpos.x][bhitpos.y].doormask == D_BROKEN
+			    && *in_rooms(level, bhitpos.x, bhitpos.y, SHOPBASE)) {
 			    shopdoor = TRUE;
 			    add_damage(bhitpos.x, bhitpos.y, 400L);
 			}
@@ -2658,7 +2658,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		    break;
 		}
 	    }
-	    if (!ZAP_POS(typ) || closed_door(bhitpos.x, bhitpos.y)) {
+	    if (!ZAP_POS(typ) || closed_door(level, bhitpos.x, bhitpos.y)) {
 		bhitpos.x -= ddx;
 		bhitpos.y -= ddy;
 		break;
@@ -2666,7 +2666,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 	    if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM) {
 		/* 'I' present but no monster: erase */
 		/* do this before the tmp_at() */
-		if (level.locations[bhitpos.x][bhitpos.y].mem_invis
+		if (level->locations[bhitpos.x][bhitpos.y].mem_invis
 			&& cansee(x, y)) {
 		    unmap_object(bhitpos.x, bhitpos.y);
 		    newsym(x, y);
@@ -2675,8 +2675,8 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		delay_output();
 		/* kicked objects fall in pools */
 		if ((weapon == KICKED_WEAPON) &&
-		   (is_pool(bhitpos.x, bhitpos.y) ||
-		   is_lava(bhitpos.x, bhitpos.y)))
+		   (is_pool(level, bhitpos.x, bhitpos.y) ||
+		   is_lava(level, bhitpos.x, bhitpos.y)))
 		    break;
 		if (IS_SINK(typ) && weapon != FLASHED_LIGHT)
 		    break;	/* physical objects fall onto sink */
@@ -2686,7 +2686,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		obj->otyp == HEAVY_IRON_BALL) {
 		struct obj *bobj;
 		struct trap *t;
-		if ((bobj = sobj_at(BOULDER, x, y)) != 0) {
+		if ((bobj = sobj_at(BOULDER, level, x, y)) != 0) {
 		    if (cansee(x,y))
 			pline("%s hits %s.",
 			      The(distant_name(obj, xname)), an(xname(bobj)));
@@ -2698,7 +2698,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 			    pline("%s jerks to an abrupt halt.",
 				  The(distant_name(obj, xname))); /* lame */
 			range = 0;
-		    } else if (In_sokoban(&u.uz) && (t = t_at(x, y)) != 0 &&
+		    } else if (In_sokoban(&u.uz) && (t = t_at(level, x, y)) != 0 &&
 			       (t->ttyp == PIT || t->ttyp == SPIKED_PIT ||
 				t->ttyp == HOLE || t->ttyp == TRAPDOOR)) {
 			/* hero falls into the trap, so ball stops */
@@ -2738,14 +2738,14 @@ struct monst *boomhit(int dx, int dy)
 		dy = ydir[i];
 		bhitpos.x += dx;
 		bhitpos.y += dy;
-		if (MON_AT(bhitpos.x, bhitpos.y)) {
-			mtmp = m_at(bhitpos.x,bhitpos.y);
+		if (MON_AT(level, bhitpos.x, bhitpos.y)) {
+			mtmp = m_at(level, bhitpos.x,bhitpos.y);
 			m_respond(mtmp);
 			tmp_at(DISP_END, 0);
 			return mtmp;
 		}
-		if (!ZAP_POS(level.locations[bhitpos.x][bhitpos.y].typ) ||
-		   closed_door(bhitpos.x, bhitpos.y)) {
+		if (!ZAP_POS(level->locations[bhitpos.x][bhitpos.y].typ) ||
+		   closed_door(level, bhitpos.x, bhitpos.y)) {
 			bhitpos.x -= dx;
 			bhitpos.y -= dy;
 			break;
@@ -2765,7 +2765,7 @@ struct monst *boomhit(int dx, int dy)
 		tmp_at(bhitpos.x, bhitpos.y);
 		delay_output();
 		if (ct % 5 != 0) i++;
-		if (IS_SINK(level.locations[bhitpos.x][bhitpos.y].typ))
+		if (IS_SINK(level->locations[bhitpos.x][bhitpos.y].typ))
 			break;	/* boomerang falls on sink */
 	}
 	tmp_at(DISP_END, 0);	/* do not leave last symbol */
@@ -3070,7 +3070,7 @@ int burn_floor_paper(int x, int y,
 	char buf1[BUFSZ], buf2[BUFSZ];
 	int cnt = 0;
 
-	for (obj = level.objects[x][y]; obj; obj = obj2) {
+	for (obj = level->objects[x][y]; obj; obj = obj2) {
 	    obj2 = obj->nexthere;
 	    if (obj->oclass == SCROLL_CLASS || obj->oclass == SPBOOK_CLASS) {
 		if (obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL ||
@@ -3134,7 +3134,7 @@ static int zap_hit_check(int ac,
 void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 {
     int range, abstype = abs(type) % 10;
-    struct rm *lev;
+    struct rm *loc;
     xchar lsx, lsy;
     struct monst *mon;
     coord save_bhitpos;
@@ -3171,17 +3171,17 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
     while (range-- > 0) {
 	lsx = sx; sx += dx;
 	lsy = sy; sy += dy;
-	if (isok(sx,sy) && (lev = &level.locations[sx][sy])->typ) {
-	    mon = m_at(sx, sy);
+	if (isok(sx,sy) && (loc = &level->locations[sx][sy])->typ) {
+	    mon = m_at(level, sx, sy);
 	    if (cansee(sx,sy)) {
 		/* reveal/unreveal invisible monsters before tmp_at() */
 		if (mon && !canspotmon(mon))
 		    map_invisible(sx, sy);
-		else if (!mon && level.locations[sx][sy].mem_invis) {
+		else if (!mon && level->locations[sx][sy].mem_invis) {
 		    unmap_object(sx, sy);
 		    newsym(sx, sy);
 		}
-		if (ZAP_POS(lev->typ) || cansee(lsx,lsy))
+		if (ZAP_POS(loc->typ) || cansee(lsx,lsy))
 		    tmp_at(sx,sy);
 		delay_output(); /* wait a little */
 	    }
@@ -3322,7 +3322,7 @@ buzzmonst:
 	    nomul(0);
 	}
 
-	if (!ZAP_POS(lev->typ) || (closed_door(sx, sy) && (range >= 0))) {
+	if (!ZAP_POS(loc->typ) || (closed_door(level, sx, sy) && (range >= 0))) {
 	    int bounce;
 	    uchar rmn;
 
@@ -3340,15 +3340,15 @@ buzzmonst:
 		dx = -dx;
 		dy = -dy;
 	    } else {
-		if (isok(sx,lsy) && ZAP_POS(rmn = level.locations[sx][lsy].typ) &&
-		   !closed_door(sx,lsy) &&
+		if (isok(sx,lsy) && ZAP_POS(rmn = level->locations[sx][lsy].typ) &&
+		   !closed_door(level, sx,lsy) &&
 		   (IS_ROOM(rmn) || (isok(sx+dx,lsy) &&
-				     ZAP_POS(level.locations[sx+dx][lsy].typ))))
+				     ZAP_POS(level->locations[sx+dx][lsy].typ))))
 		    bounce = 1;
-		if (isok(lsx,sy) && ZAP_POS(rmn = level.locations[lsx][sy].typ) &&
-		   !closed_door(lsx,sy) &&
+		if (isok(lsx,sy) && ZAP_POS(rmn = level->locations[lsx][sy].typ) &&
+		   !closed_door(level, lsx,sy) &&
 		   (IS_ROOM(rmn) || (isok(lsx,sy+dy) &&
-				     ZAP_POS(level.locations[lsx][sy+dy].typ))))
+				     ZAP_POS(level->locations[lsx][sy+dy].typ))))
 		    if (!bounce || rn2(2))
 			bounce = 2;
 
@@ -3374,28 +3374,28 @@ buzzmonst:
 
 void melt_ice(xchar x, xchar y)
 {
-	struct rm *lev = &level.locations[x][y];
+	struct rm *loc = &level->locations[x][y];
 	struct obj *otmp;
 
-	if (lev->typ == DRAWBRIDGE_UP)
-	    lev->drawbridgemask &= ~DB_ICE;	/* revert to DB_MOAT */
-	else {	/* lev->typ == ICE */
-	    lev->typ = (lev->icedpool == ICED_POOL ? POOL : MOAT);
-	    lev->icedpool = 0;
+	if (loc->typ == DRAWBRIDGE_UP)
+	    loc->drawbridgemask &= ~DB_ICE;	/* revert to DB_MOAT */
+	else {	/* loc->typ == ICE */
+	    loc->typ = (loc->icedpool == ICED_POOL ? POOL : MOAT);
+	    loc->icedpool = 0;
 	}
 	obj_ice_effects(x, y, FALSE);
-	unearth_objs(x, y);
+	unearth_objs(level, x, y);
 	if (Underwater) vision_recalc(1);
 	newsym(x,y);
 	if (cansee(x,y)) Norep("The ice crackles and melts.");
-	if ((otmp = sobj_at(BOULDER, x, y)) != 0) {
+	if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
 	    if (cansee(x,y)) pline("%s settles...", An(xname(otmp)));
 	    do {
 		obj_extract_self(otmp);	/* boulder isn't being pushed */
 		if (!boulder_hits_pool(otmp, x, y, FALSE))
 		    impossible("melt_ice: no pool?");
 		/* try again if there's another boulder and pool didn't fill */
-	    } while (is_pool(x,y) && (otmp = sobj_at(BOULDER, x, y)) != 0);
+	    } while (is_pool(level, x,y) && (otmp = sobj_at(BOULDER, level, x, y)) != 0);
 	    newsym(x,y);
 	}
 	if (x == u.ux && y == u.uy)
@@ -3411,11 +3411,11 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 {
 	struct monst *mon;
 	int abstype = abs(type) % 10;
-	struct rm *lev = &level.locations[x][y];
+	struct rm *loc = &level->locations[x][y];
 	int rangemod = 0;
 
 	if (abstype == ZT_FIRE) {
-	    struct trap *t = t_at(x, y);
+	    struct trap *t = t_at(level, x, y);
 
 	    if (t && t->ttyp == WEB) {
 		/* a burning web is too flimsy to notice if you can't see it */
@@ -3423,38 +3423,38 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		delfloortrap(t);
 		if (cansee(x,y)) newsym(x,y);
 	    }
-	    if (is_ice(x, y)) {
+	    if (is_ice(level, x, y)) {
 		melt_ice(x, y);
-	    } else if (is_pool(x,y)) {
+	    } else if (is_pool(level, x,y)) {
 		const char *msgtxt = "You hear hissing gas.";
-		if (lev->typ != POOL) {	/* MOAT or DRAWBRIDGE_UP */
+		if (loc->typ != POOL) {	/* MOAT or DRAWBRIDGE_UP */
 		    if (cansee(x,y)) msgtxt = "Some water evaporates.";
 		} else {
 		    struct trap *ttmp;
 
 		    rangemod -= 3;
-		    lev->typ = ROOM;
-		    ttmp = maketrap(x, y, PIT);
+		    loc->typ = ROOM;
+		    ttmp = maketrap(level, x, y, PIT);
 		    if (ttmp) ttmp->tseen = 1;
 		    if (cansee(x,y)) msgtxt = "The water evaporates.";
 		}
 		Norep(msgtxt);
-		if (lev->typ == ROOM) newsym(x,y);
-	    } else if (IS_FOUNTAIN(lev->typ)) {
+		if (loc->typ == ROOM) newsym(x,y);
+	    } else if (IS_FOUNTAIN(loc->typ)) {
 		    if (cansee(x,y))
 			pline("Steam billows from the fountain.");
 		    rangemod -= 1;
 		    dryup(x, y, type > 0);
 	    }
 	}
-	else if (abstype == ZT_COLD && (is_pool(x,y) || is_lava(x,y))) {
-		boolean lava = is_lava(x,y);
-		boolean moat = (!lava && (lev->typ != POOL) &&
-				(lev->typ != WATER) &&
+	else if (abstype == ZT_COLD && (is_pool(level, x,y) || is_lava(level, x,y))) {
+		boolean lava = is_lava(level, x,y);
+		boolean moat = (!lava && (loc->typ != POOL) &&
+				(loc->typ != WATER) &&
 				!Is_medusa_level(&u.uz) &&
 				!Is_waterlevel(&u.uz));
 
-		if (lev->typ == WATER) {
+		if (loc->typ == WATER) {
 		    /* For now, don't let WATER freeze. */
 		    if (cansee(x,y))
 			pline_The("water freezes for a moment.");
@@ -3463,14 +3463,14 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		    rangemod -= 1000;	/* stop */
 		} else {
 		    rangemod -= 3;
-		    if (lev->typ == DRAWBRIDGE_UP) {
-			lev->drawbridgemask &= ~DB_UNDER;  /* clear lava */
-			lev->drawbridgemask |= (lava ? DB_FLOOR : DB_ICE);
+		    if (loc->typ == DRAWBRIDGE_UP) {
+			loc->drawbridgemask &= ~DB_UNDER;  /* clear lava */
+			loc->drawbridgemask |= (lava ? DB_FLOOR : DB_ICE);
 		    } else {
 			if (!lava)
-			    lev->icedpool =
-				    (lev->typ == POOL ? ICED_POOL : ICED_MOAT);
-			lev->typ = (lava ? ROOM : ICE);
+			    loc->icedpool =
+				    (loc->typ == POOL ? ICED_POOL : ICED_MOAT);
+			loc->typ = (lava ? ROOM : ICE);
 		    }
 		    bury_objs(x,y);
 		    if (cansee(x,y)) {
@@ -3500,7 +3500,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 				You("are firmly stuck in the cooling rock.");
 			    }
 			}
-		    } else if ((mon = m_at(x,y)) != 0) {
+		    } else if ((mon = m_at(level, x,y)) != 0) {
 			/* probably ought to do some hefty damage to any
 			   non-ice creature caught in freezing water;
 			   at a minimum, eels are forced out of hiding */
@@ -3512,7 +3512,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		}
 		obj_ice_effects(x,y,TRUE);
 	}
-	if (closed_door(x, y)) {
+	if (closed_door(level, x, y)) {
 		int new_doormask = -1;
 		const char *see_txt = 0, *sense_txt = 0, *hear_txt = 0;
 		rangemod = -1000;
@@ -3552,14 +3552,14 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		    break;
 		}
 		if (new_doormask >= 0) {	/* door gets broken */
-		    if (*in_rooms(x, y, SHOPBASE)) {
+		    if (*in_rooms(level, x, y, SHOPBASE)) {
 			if (type >= 0) {
 			    add_damage(x, y, 400L);
 			    *shopdamage = TRUE;
 			} else	/* caused by monster */
 			    add_damage(x, y, 0L);
 		    }
-		    lev->doormask = new_doormask;
+		    loc->doormask = new_doormask;
 		    unblock_point(x, y);	/* vision */
 		    if (cansee(x, y)) {
 			pline(see_txt);
@@ -3582,13 +3582,13 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		    You("%s of smoke.",
 			!Blind ? "see a puff" : "smell a whiff");
 		}
-	if ((mon = m_at(x,y)) != 0) {
+	if ((mon = m_at(level, x,y)) != 0) {
 		/* Cannot use wakeup() which also angers the monster */
 		mon->msleeping = 0;
 		if (mon->m_ap_type) seemimic(mon);
 		if (type >= 0) {
 		    setmangry(mon);
-		    if (mon->ispriest && *in_rooms(mon->mx, mon->my, TEMPLE))
+		    if (mon->ispriest && *in_rooms(level, mon->mx, mon->my, TEMPLE))
 			ghod_hitsu(mon);
 		    if (mon->isshk && !*u.ushops)
 			hot_pursuit(mon);
@@ -3614,8 +3614,8 @@ void fracture_rock(struct obj *obj)
 	obj->oattached = OATTACHED_NOTHING;
 	if (obj->where == OBJ_FLOOR) {
 		obj_extract_self(obj);		/* move rocks back on top */
-		place_object(obj, obj->ox, obj->oy);
-		if (!does_block(obj->ox,obj->oy,&level.locations[obj->ox][obj->oy]))
+		place_object(obj, level, obj->ox, obj->oy);
+		if (!does_block(obj->olev, obj->ox,obj->oy))
 	    		unblock_point(obj->ox,obj->oy);
 		if (cansee(obj->ox,obj->oy))
 		    newsym(obj->ox,obj->oy);
@@ -3626,7 +3626,7 @@ void fracture_rock(struct obj *obj)
 boolean break_statue(struct obj *obj)
 {
 	/* [obj is assumed to be on floor, so no get_obj_location() needed] */
-	struct trap *trap = t_at(obj->ox, obj->oy);
+	struct trap *trap = t_at(level, obj->ox, obj->oy);
 	struct obj *item;
 
 	if (trap && trap->ttyp == STATUE_TRAP &&
@@ -3635,7 +3635,7 @@ boolean break_statue(struct obj *obj)
 	/* drop any objects contained inside the statue */
 	while ((item = obj->cobj) != 0) {
 	    obj_extract_self(item);
-	    place_object(item, obj->ox, obj->oy);
+	    place_object(item, level, obj->ox, obj->oy);
 	}
 	if (Role_if (PM_ARCHEOLOGIST) && !flags.mon_moving && (obj->spe & STATUE_HISTORIC)) {
 	    You_feel("guilty about damaging such a historic statue.");
@@ -3948,8 +3948,8 @@ retry:
 				       "Oops!  %s out of your reach!" :
 				       (Is_airlevel(&u.uz) ||
 					Is_waterlevel(&u.uz) ||
-					level.locations[u.ux][u.uy].typ < IRONBARS ||
-					level.locations[u.ux][u.uy].typ >= ICE) ?
+					level->locations[u.ux][u.uy].typ < IRONBARS ||
+					level->locations[u.ux][u.uy].typ >= ICE) ?
 				       "Oops!  %s away from you!" :
 				       "Oops!  %s to the floor!",
 				       The(aobjnam(otmp,

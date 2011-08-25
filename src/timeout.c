@@ -364,7 +364,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 	int i;
 
 	/* stop previous timer, if any */
-	stop_timer(HATCH_EGG, egg);
+	stop_timer(egg->olev, HATCH_EGG, egg);
 
 	/*
 	 * Decide if and when to hatch the egg.  The old hatch_it() code tried
@@ -375,7 +375,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 	for (i = (MAX_EGG_HATCH_TIME-50)+1; i <= MAX_EGG_HATCH_TIME; i++)
 	    if (rnd(i) > 150) {
 		/* egg will hatch */
-		start_timer((long)i, TIMER_OBJECT,
+		start_timer(egg->olev, (long)i, TIMER_OBJECT,
 						HATCH_EGG, egg);
 		break;
 	    }
@@ -385,7 +385,7 @@ void attach_egg_hatch_timeout(struct obj *egg)
 void kill_egg(struct obj *egg)
 {
 	/* stop previous timer, if any */
-	stop_timer(HATCH_EGG, egg);
+	stop_timer(egg->olev, HATCH_EGG, egg);
 }
 
 /* timer callback routine: hatch the given egg */
@@ -416,8 +416,8 @@ void hatch_egg(void *arg, long timeout)
 	    if (!(mons[mnum].geno & G_UNIQ) &&
 		   !(mvitals[mnum].mvflags & (G_GENOD | G_EXTINCT))) {
 		for (i = hatchcount; i > 0; i--) {
-		    if (!enexto(&cc, x, y, &mons[mnum]) ||
-			 !(mon = makemon(&mons[mnum], cc.x, cc.y, NO_MINVENT)))
+		    if (!enexto(&cc, level, x, y, &mons[mnum]) ||
+			 !(mon = makemon(&mons[mnum], level, cc.x, cc.y, NO_MINVENT)))
 			break;
 		    /* tame if your own egg hatches while you're on the
 		       same dungeon level, or any dragon egg which hatches
@@ -491,7 +491,7 @@ void hatch_egg(void *arg, long timeout)
 				     s_suffix(a_monnam(egg->ocarry)));
 			    knows_egg = TRUE;
 			}
-			else if (is_pool(mon->mx, mon->my))
+			else if (is_pool(level, mon->mx, mon->my))
 			    strcpy(carriedby, "empty water");
 			else
 			    strcpy(carriedby, "thin air");
@@ -512,8 +512,8 @@ void hatch_egg(void *arg, long timeout)
 		attach_egg_hatch_timeout(egg);
 		if (egg->timed) {
 		    /* replace ordinary egg timeout with a short one */
-		    stop_timer(HATCH_EGG, egg);
-		    start_timer((long)rnd(12), TIMER_OBJECT,
+		    stop_timer(egg->olev, HATCH_EGG, egg);
+		    start_timer(egg->olev, (long)rnd(12), TIMER_OBJECT,
 					HATCH_EGG, egg);
 		}
 	    } else if (carried(egg)) {
@@ -543,14 +543,14 @@ void attach_fig_transform_timeout(struct obj *figurine)
 	int i;
 
 	/* stop previous timer, if any */
-	stop_timer(FIG_TRANSFORM, figurine);
+	stop_timer(figurine->olev, FIG_TRANSFORM, figurine);
 
 	/*
 	 * Decide when to transform the figurine.
 	 */
 	i = rnd(9000) + 200;
 	/* figurine will transform */
-	start_timer((long)i, TIMER_OBJECT,
+	start_timer(figurine->olev, (long)i, TIMER_OBJECT,
 				FIG_TRANSFORM, figurine);
 }
 
@@ -563,7 +563,7 @@ static void slip_or_trip(void)
 	boolean on_foot = TRUE;
 	if (u.usteed) on_foot = FALSE;
 
-	if (otmp && on_foot && !u.uinwater && is_pool(u.ux, u.uy)) otmp = 0;
+	if (otmp && on_foot && !u.uinwater && is_pool(level, u.ux, u.uy)) otmp = 0;
 
 	if (otmp && on_foot) {		/* trip over something in particular */
 	    /*
@@ -576,7 +576,7 @@ static void slip_or_trip(void)
 	    pronoun = otmp->quan == 1L ? "it" : Hallucination ? "they" : "them";
 	    what = !otmp->nexthere ? pronoun :
 		  (otmp->dknown || !Blind) ? doname(otmp) :
-		  ((otmp = sobj_at(ROCK, u.ux, u.uy)) == 0 ? "something" :
+		  ((otmp = sobj_at(ROCK, level, u.ux, u.uy)) == 0 ? "something" :
 		  (otmp->quan == 1L ? "a rock" : "some rocks"));
 	    if (Hallucination) {
 		what = strcpy(buf, what);
@@ -587,7 +587,7 @@ static void slip_or_trip(void)
 	    } else {
 		You("trip over %s.", what);
 	    }
-	} else if (rn2(3) && is_ice(u.ux, u.uy)) {
+	} else if (rn2(3) && is_ice(level, u.ux, u.uy)) {
 	    pline("%s %s%s on the ice.",
 		u.usteed ? upstart(x_monnam(u.usteed,
 				u.usteed->mnamelth ? ARTICLE_NONE : ARTICLE_THE,
@@ -1028,7 +1028,7 @@ void begin_burn(struct obj *obj, boolean already_lit)
 	}
 
 	if (do_timer) {
-	    if (start_timer(turns, TIMER_OBJECT,
+	    if (start_timer(obj->olev, turns, TIMER_OBJECT,
 					BURN_OBJECT, obj)) {
 		obj->lamplit = 1;
 		obj->age -= turns;
@@ -1046,7 +1046,7 @@ void begin_burn(struct obj *obj, boolean already_lit)
 	    xchar x, y;
 
 	    if (get_obj_location(obj, &x, &y, CONTAINED_TOO|BURIED_TOO))
-		new_light_source(x, y, radius, LS_OBJECT, obj);
+		new_light_source(level, x, y, radius, LS_OBJECT, obj);
 	    else
 		impossible("begin_burn: can't get obj position");
 	}
@@ -1068,11 +1068,11 @@ void end_burn(struct obj *obj, boolean timer_attached)
 
 	if (!timer_attached) {
 	    /* [DS] Cleanup explicitly, since timer cleanup won't happen */
-	    del_light_source(LS_OBJECT, obj);
+	    del_light_source(obj->olev, LS_OBJECT, obj);
 	    obj->lamplit = 0;
 	    if (obj->where == OBJ_INVENT)
 		update_inventory();
-	} else if (!stop_timer(BURN_OBJECT, obj))
+	} else if (!stop_timer(obj->olev, BURN_OBJECT, obj))
 	    impossible("end_burn: obj %s not timed!", xname(obj));
 }
 
@@ -1088,7 +1088,7 @@ static void cleanup_burn(void *arg, long expire_time)
 	return;
     }
 
-    del_light_source(LS_OBJECT, arg);
+    del_light_source(obj->olev, LS_OBJECT, arg);
 
     /* restore unused time */
     obj->age += expire_time - moves;
@@ -1117,7 +1117,7 @@ void do_storms(void)
 	do {
 	    x = rnd(COLNO-1);
 	    y = rn2(ROWNO);
-	} while (++count < 100 && level.locations[x][y].typ != CLOUD);
+	} while (++count < 100 && level->locations[x][y].typ != CLOUD);
 
 	if (count < 100) {
 	    dirx = rn2(3) - 1;
@@ -1128,7 +1128,7 @@ void do_storms(void)
 	}
     }
 
-    if (level.locations[u.ux][u.uy].typ == CLOUD) {
+    if (level->locations[u.ux][u.uy].typ == CLOUD) {
 	/* inside a cloud during a thunder storm is deafening */
 	pline("Kaboom!!!  Boom!!  Boom!!");
 	if (!u.uinvulnerable) {
@@ -1147,8 +1147,8 @@ void do_storms(void)
  * Interface:
  *
  * General:
- *	boolean start_timer(long timeout,short kind,short func_index,
- *							void * arg)
+ *	boolean start_timer(struct level *lev, long timeout, short kind,
+ *                          short func_index, void * arg)
  *		Start a timer of kind 'kind' that will expire at time
  *		moves+'timeout'.  Call the function at 'func_index'
  *		in the timeout table using argument 'arg'.  Return TRUE if
@@ -1156,7 +1156,7 @@ void do_storms(void)
  *		"sooner" to "later".  If an object, increment the object's
  *		timer count.
  *
- *	long stop_timer(short func_index, void * arg)
+ *	long stop_timer(struct level *lev, short func_index, void * arg)
  *		Stop a timer specified by the (func_index, arg) pair.  This
  *		assumes that such a pair is unique.  Return the time the
  *		timer would have gone off.  If no timer is found, return 0.
@@ -1195,7 +1195,7 @@ void do_storms(void)
 
 static const char *kind_name(short);
 static void print_queue(struct menulist *menu, timer_element *);
-static void insert_timer(timer_element *);
+static void insert_timer(struct level *lev, timer_element *gnu);
 static timer_element *remove_timer(timer_element **, short,void *);
 static void write_timer(int, timer_element *);
 static boolean mon_is_local(struct monst *);
@@ -1277,7 +1277,7 @@ int wiz_timeout_queue(void)
     add_menutext(&menu, "");
     add_menutext(&menu, "Active timeout queue:");
     add_menutext(&menu, "");
-    print_queue(&menu, level.lev_timers);
+    print_queue(&menu, level->lev_timers);
 
     display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
     free(menu.items);
@@ -1290,7 +1290,7 @@ void timer_sanity_check(void)
     timer_element *curr;
 
     /* this should be much more complete */
-    for (curr = level.lev_timers; curr; curr = curr->next)
+    for (curr = level->lev_timers; curr; curr = curr->next)
 	if (curr->kind == TIMER_OBJECT) {
 	    struct obj *obj = (struct obj *) curr->arg;
 	    if (obj->timed == 0) {
@@ -1314,9 +1314,9 @@ void run_timers(void)
      * any time.  The list is ordered, we are done when the first element
      * is in the future.
      */
-    while (level.lev_timers && level.lev_timers->timeout <= moves) {
-	curr = level.lev_timers;
-	level.lev_timers = curr->next;
+    while (level->lev_timers && level->lev_timers->timeout <= moves) {
+	curr = level->lev_timers;
+	level->lev_timers = curr->next;
 
 	if (curr->kind == TIMER_OBJECT) ((struct obj *)(curr->arg))->timed--;
 	(*timeout_funcs[curr->func_index].f)(curr->arg, curr->timeout);
@@ -1328,7 +1328,7 @@ void run_timers(void)
 /*
  * Start a timer.  Return TRUE if successful.
  */
-boolean start_timer(long when, short kind, short func_index,void *arg)
+boolean start_timer(struct level *lev, long when, short kind, short func_index,void *arg)
 {
     timer_element *gnu;
 
@@ -1343,7 +1343,7 @@ boolean start_timer(long when, short kind, short func_index,void *arg)
     gnu->needs_fixup = 0;
     gnu->func_index = func_index;
     gnu->arg = arg;
-    insert_timer(gnu);
+    insert_timer(lev, gnu);
 
     if (kind == TIMER_OBJECT)	/* increment object's timed count */
 	((struct obj *)arg)->timed++;
@@ -1357,12 +1357,12 @@ boolean start_timer(long when, short kind, short func_index,void *arg)
  * Remove the timer from the current list and free it up.  Return the time
  * it would have gone off, 0 if not found.
  */
-long stop_timer(short func_index, void *arg)
+long stop_timer(struct level *lev, short func_index, void *arg)
 {
     timer_element *doomed;
     long timeout;
 
-    doomed = remove_timer(&level.lev_timers, func_index, arg);
+    doomed = remove_timer(&lev->lev_timers, func_index, arg);
 
     if (doomed) {
 	timeout = doomed->timeout;
@@ -1385,7 +1385,7 @@ void obj_move_timers(struct obj *src, struct obj *dest)
     int count;
     timer_element *curr;
 
-    for (count = 0, curr = level.lev_timers; curr; curr = curr->next)
+    for (count = 0, curr = src->olev->lev_timers; curr; curr = curr->next)
 	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
 	    curr->arg = dest;
 	    dest->timed++;
@@ -1404,10 +1404,10 @@ void obj_split_timers(struct obj *src, struct obj *dest)
 {
     timer_element *curr, *next_timer=0;
 
-    for (curr = level.lev_timers; curr; curr = next_timer) {
+    for (curr = src->olev->lev_timers; curr; curr = next_timer) {
 	next_timer = curr->next;	/* things may be inserted */
 	if (curr->kind == TIMER_OBJECT && curr->arg == src) {
-	    start_timer(curr->timeout-moves, TIMER_OBJECT,
+	    start_timer(dest->olev, curr->timeout-moves, TIMER_OBJECT,
 					curr->func_index, dest);
 	}
     }
@@ -1422,13 +1422,13 @@ void obj_stop_timers(struct obj *obj)
 {
     timer_element *curr, *prev, *next_timer=0;
 
-    for (prev = 0, curr = level.lev_timers; curr; curr = next_timer) {
+    for (prev = 0, curr = obj->olev->lev_timers; curr; curr = next_timer) {
 	next_timer = curr->next;
 	if (curr->kind == TIMER_OBJECT && curr->arg == obj) {
 	    if (prev)
 		prev->next = curr->next;
 	    else
-		level.lev_timers = curr->next;
+		obj->olev->lev_timers = curr->next;
 	    if (timeout_funcs[curr->func_index].cleanup)
 		(*timeout_funcs[curr->func_index].cleanup)(curr->arg,
 			curr->timeout);
@@ -1442,18 +1442,18 @@ void obj_stop_timers(struct obj *obj)
 
 
 /* Insert timer into the global queue */
-static void insert_timer(timer_element *gnu)
+static void insert_timer(struct level *lev, timer_element *gnu)
 {
     timer_element *curr, *prev;
 
-    for (prev = 0, curr = level.lev_timers; curr; prev = curr, curr = curr->next)
+    for (prev = 0, curr = lev->lev_timers; curr; prev = curr, curr = curr->next)
 	if (curr->timeout >= gnu->timeout) break;
 
     gnu->next = curr;
     if (prev)
 	prev->next = gnu;
     else
-	level.lev_timers = gnu;
+	lev->lev_timers = gnu;
 }
 
 
@@ -1569,7 +1569,7 @@ static int maybe_write_timer(int fd, int range, boolean write_it)
     int count = 0;
     timer_element *curr;
 
-    for (curr = level.lev_timers; curr; curr = curr->next) {
+    for (curr = level->lev_timers; curr; curr = curr->next) {
 	if (range == RANGE_GLOBAL) {
 	    /* global timers */
 
@@ -1593,6 +1593,29 @@ static int maybe_write_timer(int fd, int range, boolean write_it)
 }
 
 
+void transfer_timers(struct level *oldlev, struct level *newlev)
+{
+    timer_element *curr, *prev = NULL, *next_timer = NULL;
+    
+    for (curr = oldlev->lev_timers; curr; curr = next_timer) {
+	next_timer = curr->next;	/* in case curr is removed */
+
+	if ( !timer_is_local(curr) ) {
+	    if (prev)
+		prev->next = curr->next;
+	    else
+		oldlev->lev_timers = curr->next;
+	    
+	    curr->next = newlev->lev_timers;
+	    newlev->lev_timers = curr;
+	    /* prev stays the same */
+	} else {
+	    prev = curr;
+	}
+    }
+}
+
+
 /*
  * Save part of the timer list.  The parameter 'range' specifies either
  * global or level timers to save.  The timer ID is saved with the global
@@ -1606,7 +1629,7 @@ static int maybe_write_timer(int fd, int range, boolean write_it)
  *		+ timeouts that are level specific (e.g. storms)
  *		+ timeouts that stay with the level (obj & monst)
  */
-void save_timers(int fd, int mode, int range)
+void save_timers(int fd, struct level *lev, int mode, int range)
 {
     timer_element *curr, *prev, *next_timer=0;
     int count;
@@ -1621,14 +1644,14 @@ void save_timers(int fd, int mode, int range)
     }
 
     if (release_data(mode)) {
-	for (prev = 0, curr = level.lev_timers; curr; curr = next_timer) {
+	for (prev = 0, curr = lev->lev_timers; curr; curr = next_timer) {
 	    next_timer = curr->next;	/* in case curr is removed */
 
 	    if ( !(!!(range == RANGE_LEVEL) ^ !!timer_is_local(curr)) ) {
 		if (prev)
 		    prev->next = curr->next;
 		else
-		    level.lev_timers = curr->next;
+		    lev->lev_timers = curr->next;
 		free(curr);
 		/* prev stays the same */
 	    } else {
@@ -1643,7 +1666,7 @@ void save_timers(int fd, int mode, int range)
  * Pull in the structures from disk, but don't recalculate the object and
  * monster pointers.
  */
-void restore_timers(int fd, int range,
+void restore_timers(int fd, struct level *lev, int range,
 		    boolean ghostly,	/* restoring from a ghost level */
 		    long adjust)	/* how much to adjust timeout */
 {
@@ -1660,7 +1683,7 @@ void restore_timers(int fd, int range,
 	mread(fd, curr, sizeof(timer_element));
 	if (ghostly)
 	    curr->timeout += adjust;
-	insert_timer(curr);
+	insert_timer(lev, curr);
     }
 }
 
@@ -1671,7 +1694,7 @@ void relink_timers(boolean ghostly)
     timer_element *curr;
     unsigned nid;
 
-    for (curr = level.lev_timers; curr; curr = curr->next) {
+    for (curr = level->lev_timers; curr; curr = curr->next) {
 	if (curr->needs_fixup) {
 	    if (curr->kind == TIMER_OBJECT) {
 		if (ghostly) {

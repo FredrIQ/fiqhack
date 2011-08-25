@@ -132,26 +132,27 @@ void vision_init(void)
  * Returns true if the level feature, object, or monster at (x,y) blocks
  * sight.
  */
-int does_block(int x, int y, struct rm *lev)
+int does_block(struct level *lev, int x, int y)
 {
     struct obj   *obj;
     struct monst *mon;
+    struct rm *loc = &lev->locations[x][y];
 
     /* Features that block . . */
-    if (IS_ROCK(lev->typ) || lev->typ == TREE || (IS_DOOR(lev->typ) &&
-			    (lev->doormask & (D_CLOSED|D_LOCKED|D_TRAPPED) )))
+    if (IS_ROCK(loc->typ) || loc->typ == TREE || (IS_DOOR(loc->typ) &&
+			    (loc->doormask & (D_CLOSED|D_LOCKED|D_TRAPPED) )))
 	return 1;
 
-    if (lev->typ == CLOUD || lev->typ == WATER ||
-			(lev->typ == MOAT && Underwater))
+    if (loc->typ == CLOUD || loc->typ == WATER ||
+			(loc->typ == MOAT && Underwater))
 	return 1;
 
     /* Boulders block light. */
-    for (obj = level.objects[x][y]; obj; obj = obj->nexthere)
+    for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
 	if (obj->otyp == BOULDER) return 1;
 
     /* Mimics mimicing a door or boulder block light. */
-    if ((mon = m_at(x,y)) && (!mon->minvis || See_invisible) &&
+    if ((mon = m_at(lev, x,y)) && (!mon->minvis || See_invisible) &&
 	  ((mon->m_ap_type == M_AP_FURNITURE &&
 	  (mon->mappearance == S_hcdoor || mon->mappearance == S_vcdoor)) ||
 	  (mon->m_ap_type == M_AP_OBJECT && mon->mappearance == BOULDER)))
@@ -163,14 +164,14 @@ int does_block(int x, int y, struct rm *lev)
 /*
  * vision_reset()
  *
- * This must be called *after* the level.locations[][] structure is set with the new
+ * This must be called *after* the level->locations[][] structure is set with the new
  * level and the level monsters and objects are in place.
  */
 void vision_reset(void)
 {
     int y;
     int x, i, dig_left, block;
-    struct rm    *lev;
+    struct rm *loc;
 
     /* Start out with cs0 as our current array */
     viz_array = cs_rows0;
@@ -186,9 +187,9 @@ void vision_reset(void)
     for (y = 0; y < ROWNO; y++) {
 	dig_left = 0;
 	block = TRUE;	/* location (0,y) is always stone; it's !isok() */
-	lev = &level.locations[1][y];
-	for (x = 1; x < COLNO; x++, lev += ROWNO)
-	    if (block != (IS_ROCK(lev->typ) || does_block(x,y,lev))) {
+	loc = &level->locations[1][y];
+	for (x = 1; x < COLNO; x++, loc += ROWNO)
+	    if (block != (IS_ROCK(loc->typ) || does_block(level, x, y))) {
 		if (block) {
 		    for (i=dig_left; i<x; i++) {
 			left_ptrs [y][i] = dig_left;
@@ -269,28 +270,28 @@ static void get_unused_cs(char ***rows, char **rmin, char **rmax)
 static void rogue_vision(char **next, /* could_see array pointers */
 			 char *rmin, char *rmax)
 {
-    int rnum = level.locations[u.ux][u.uy].roomno - ROOMOFFSET; /* no SHARED... */
+    int rnum = level->locations[u.ux][u.uy].roomno - ROOMOFFSET; /* no SHARED... */
     int start, stop, in_door, xhi, xlo, yhi, ylo;
     int zx, zy;
 
     /* If in a lit room, we are able to see to its boundaries. */
     /* If dark, set COULD_SEE so various spells work -dlc */
     if (rnum >= 0) {
-	for (zy = level.rooms[rnum].ly-1; zy <= level.rooms[rnum].hy+1; zy++) {
-	    rmin[zy] = start = level.rooms[rnum].lx-1;
-	    rmax[zy] = stop  = level.rooms[rnum].hx+1;
+	for (zy = level->rooms[rnum].ly-1; zy <= level->rooms[rnum].hy+1; zy++) {
+	    rmin[zy] = start = level->rooms[rnum].lx-1;
+	    rmax[zy] = stop  = level->rooms[rnum].hx+1;
 
 	    for (zx = start; zx <= stop; zx++) {
-		if (level.rooms[rnum].rlit) {
+		if (level->rooms[rnum].rlit) {
 		    next[zy][zx] = COULD_SEE | IN_SIGHT;
-		    level.locations[zx][zy].seenv = SVALL;	/* see the walls */
+		    level->locations[zx][zy].seenv = SVALL;	/* see the walls */
 		} else
 		    next[zy][zx] = COULD_SEE;
 	    }
 	}
     }
 
-    in_door = level.locations[u.ux][u.uy].typ == DOOR;
+    in_door = level->locations[u.ux][u.uy].typ == DOOR;
 
     /* Can always see adjacent. */
     ylo = max(u.uy - 1, 0);
@@ -363,7 +364,7 @@ static int new_angle(struct rm *, unsigned char *, int, int);
  *	  many exceptions.  I may have to bite the bullet and do more
  *	  checks.	- Dean 2/11/93
  */
-static int new_angle(struct rm *lev, unsigned char *sv, int row, int col)
+static int new_angle(struct rm *loc, unsigned char *sv, int row, int col)
 {
     int res = *sv;
 
@@ -464,7 +465,7 @@ void vision_recalc(int control)
     int start, stop;	/* inner loop starting/stopping index */
     int dx, dy;		/* one step from a lit door or lit wall (see below) */
     int col;	/* inner loop counter */
-    struct rm *lev;	/* pointer to current pos */
+    struct rm *loc;	/* pointer to current pos */
     struct rm *flev;	/* pointer to position in "front" of current pos */
     extern unsigned char seenv_matrix[3][3];	/* from display.c */
     static unsigned char colbump[COLNO+1];	/* cols to bump sv */
@@ -538,7 +539,7 @@ void vision_recalc(int control)
 
 	    for (row = u.uy-1; row <= u.uy+1; row++)
 		for (col = u.ux-1; col <= u.ux+1; col++) {
-		    if (!isok(col,row) || !is_pool(col,row)) continue;
+		    if (!isok(col,row) || !is_pool(level, col,row)) continue;
 
 		    next_rmin[row] = min(next_rmin[row], col);
 		    next_rmax[row] = max(next_rmax[row], col);
@@ -579,8 +580,8 @@ void vision_recalc(int control)
 		    for (col = start; col <= stop; col++) {
 			char old_row_val = next_row[col];
 			next_row[col] |= IN_SIGHT;
-			oldseenv = level.locations[col][row].seenv;
-			level.locations[col][row].seenv = SVALL;	/* see all! */
+			oldseenv = level->locations[col][row].seenv;
+			level->locations[col][row].seenv = SVALL;	/* see all! */
 			/* Update if previously not in sight or new angle. */
 			if (!(old_row_val & IN_SIGHT) || oldseenv != SVALL)
 			    newsym(col,row);
@@ -592,7 +593,7 @@ void vision_recalc(int control)
 
 	    } else {	/* range is 0 */
 		next_array[u.uy][u.ux] |= IN_SIGHT;
-		level.locations[u.ux][u.uy].seenv = SVALL;
+		level->locations[u.ux][u.uy].seenv = SVALL;
 		next_rmin[u.uy] = min(u.ux, next_rmin[u.uy]);
 		next_rmax[u.uy] = max(u.ux, next_rmax[u.uy]);
 	    }
@@ -601,7 +602,7 @@ void vision_recalc(int control)
 	if (has_night_vision && u.xray_range < u.nv_range) {
 	    if (!u.nv_range) {	/* range is 0 */
 		next_array[u.uy][u.ux] |= IN_SIGHT;
-		level.locations[u.ux][u.uy].seenv = SVALL;
+		level->locations[u.ux][u.uy].seenv = SVALL;
 		next_rmin[u.uy] = min(u.ux, next_rmin[u.uy]);
 		next_rmax[u.uy] = max(u.ux, next_rmax[u.uy]);
 	    } else if (u.nv_range > 0) {
@@ -658,31 +659,31 @@ void vision_recalc(int control)
 	/* Find the min and max positions on the row. */
 	start = min(viz_rmin[row], next_rmin[row]);
 	stop  = max(viz_rmax[row], next_rmax[row]);
-	lev = &level.locations[start][row];
+	loc = &level->locations[start][row];
 
 	sv = &seenv_matrix[dy+1][start < u.ux ? 0 : (start > u.ux ? 2:1)];
 
 	for (col = start; col <= stop;
-				lev += ROWNO, sv += (int) colbump[++col]) {
+				loc += ROWNO, sv += (int) colbump[++col]) {
 	    if (next_row[col] & IN_SIGHT) {
 		/*
 		 * We see this position because of night- or xray-vision.
 		 */
-		oldseenv = lev->seenv;
-		lev->seenv |= new_angle(lev,sv,row,col); /* update seen angle */
+		oldseenv = loc->seenv;
+		loc->seenv |= new_angle(loc,sv,row,col); /* update seen angle */
 
 		/* Update pos if previously not in sight or new angle. */
-		if ( !(old_row[col] & IN_SIGHT) || oldseenv != lev->seenv)
+		if ( !(old_row[col] & IN_SIGHT) || oldseenv != loc->seenv)
 		    newsym(col,row);
 	    }
 
 	    else if ((next_row[col] & COULD_SEE)
-				&& (lev->lit || (next_row[col] & TEMP_LIT))) {
+				&& (loc->lit || (next_row[col] & TEMP_LIT))) {
 		/*
 		 * We see this position because it is lit.
 		 */
-		if ((IS_DOOR(lev->typ) || lev->typ == SDOOR ||
-		     IS_WALL(lev->typ)) && !viz_clear[row][col]) {
+		if ((IS_DOOR(loc->typ) || loc->typ == SDOOR ||
+		     IS_WALL(loc->typ)) && !viz_clear[row][col]) {
 		    /*
 		     * Make sure doors, walls, boulders or mimics don't show up
 		     * at the end of dark hallways.  We do this by checking
@@ -690,15 +691,15 @@ void vision_recalc(int control)
 		     * the door or wall, otherwise we can't.
 		     */
 		    dx = u.ux - col;	dx = sign(dx);
-		    flev = &(level.locations[col+dx][row+dy]);
+		    flev = &(level->locations[col+dx][row+dy]);
 		    if (flev->lit || next_array[row+dy][col+dx] & TEMP_LIT) {
 			next_row[col] |= IN_SIGHT;	/* we see it */
 
-			oldseenv = lev->seenv;
-			lev->seenv |= new_angle(lev,sv,row,col);
+			oldseenv = loc->seenv;
+			loc->seenv |= new_angle(loc,sv,row,col);
 
 			/* Update pos if previously not in sight or new angle.*/
-			if (!(old_row[col] & IN_SIGHT) || oldseenv!=lev->seenv)
+			if (!(old_row[col] & IN_SIGHT) || oldseenv!=loc->seenv)
 			    newsym(col,row);
 		    } else
 			goto not_in_sight;	/* we don't see it */
@@ -706,14 +707,14 @@ void vision_recalc(int control)
 		} else {
 		    next_row[col] |= IN_SIGHT;	/* we see it */
 
-		    oldseenv = lev->seenv;
-		    lev->seenv |= new_angle(lev,sv,row,col);
+		    oldseenv = loc->seenv;
+		    loc->seenv |= new_angle(loc,sv,row,col);
 
 		    /* Update pos if previously not in sight or new angle. */
-		    if ( !(old_row[col] & IN_SIGHT) || oldseenv != lev->seenv)
+		    if ( !(old_row[col] & IN_SIGHT) || oldseenv != loc->seenv)
 			newsym(col,row);
 		}
-	    } else if ((next_row[col] & COULD_SEE) && lev->waslit) {
+	    } else if ((next_row[col] & COULD_SEE) && loc->waslit) {
 		/*
 		 * If we make it here, the hero _could see_ the location,
 		 * but doesn't see it (location is not lit).
@@ -721,7 +722,7 @@ void vision_recalc(int control)
 		 * The hero can now see that it is not lit, so change waslit
 		 * and update the location.
 		 */
-		lev->waslit = 0; /* remember lit condition */
+		loc->waslit = 0; /* remember lit condition */
 		newsym(col,row);
 	    }
 	    /*

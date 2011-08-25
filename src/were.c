@@ -108,7 +108,7 @@ int were_summon(const struct permonst *ptr, boolean yours,
 		default:
 			continue;
 	    }
-	    mtmp = makemon(&mons[typ], u.ux, u.uy, NO_MM_FLAGS);
+	    mtmp = makemon(&mons[typ], level, u.ux, u.uy, NO_MM_FLAGS);
 	    if (mtmp) {
 		total++;
 		if (canseemon(mtmp)) *visible += 1;

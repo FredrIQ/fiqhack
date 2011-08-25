@@ -260,7 +260,7 @@ static int domonability(void)
 	else if (is_hider(youmonst.data)) return dohide();
 	else if (is_mind_flayer(youmonst.data)) return domindblast();
 	else if (u.umonnum == PM_GREMLIN) {
-	    if (IS_FOUNTAIN(level.locations[u.ux][u.uy].typ)) {
+	    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
 		if (split_mon(&youmonst, NULL))
 		    dryup(u.ux, u.uy, TRUE);
 	    } else There("is no fountain here.");
@@ -328,7 +328,7 @@ static int wiz_map(void)
 		 save_Hhallu = HHallucination;
 
 	    HConfusion = HHallucination = 0L;
-	    for (t = level.lev_traps; t != 0; t = t->ntrap) {
+	    for (t = level->lev_traps; t != 0; t = t->ntrap) {
 		t->tseen = 1;
 		map_trap(t, TRUE);
 	    }
@@ -457,7 +457,7 @@ static int wiz_show_seenv(void)
 		if (x == u.ux && y == u.uy) {
 		    row[curx] = row[curx+1] = '@';
 		} else {
-		    v = level.locations[x][y].seenv & 0xff;
+		    v = level->locations[x][y].seenv & 0xff;
 		    if (v == 0)
 			row[curx] = row[curx+1] = ' ';
 		    else
@@ -518,19 +518,19 @@ static int wiz_show_wmodes(void)
 	struct menulist menu;
 	int x,y;
 	char row[COLNO+1];
-	struct rm *lev;
+	struct rm *loc;
 
 	init_menulist(&menu);
 	for (y = 0; y < ROWNO; y++) {
 	    for (x = 0; x < COLNO; x++) {
-		lev = &level.locations[x][y];
+		loc = &level->locations[x][y];
 		if (x == u.ux && y == u.uy)
 		    row[x] = '@';
-		else if (IS_WALL(lev->typ) || lev->typ == SDOOR)
-		    row[x] = '0' + (lev->wall_info & WM_MASK);
-		else if (lev->typ == CORR)
+		else if (IS_WALL(loc->typ) || loc->typ == SDOOR)
+		    row[x] = '0' + (loc->wall_info & WM_MASK);
+		else if (loc->typ == CORR)
 		    row[x] = '#';
-		else if (IS_ROOM(lev->typ) || IS_DOOR(lev->typ))
+		else if (IS_ROOM(loc->typ) || IS_DOOR(loc->typ))
 		    row[x] = '.';
 		else
 		    row[x] = 'x';
@@ -1157,11 +1157,11 @@ static void contained(struct menulist *menu, const char *src, long *total_count,
 	struct monst *mon;
 
 	count_obj(invent, &count, &size, FALSE, TRUE);
-	count_obj(level.objlist, &count, &size, FALSE, TRUE);
-	count_obj(level.buriedobjlist, &count, &size, FALSE, TRUE);
+	count_obj(level->objlist, &count, &size, FALSE, TRUE);
+	count_obj(level->buriedobjlist, &count, &size, FALSE, TRUE);
 	count_obj(migrating_objs, &count, &size, FALSE, TRUE);
 	/* DEADMONSTER check not required in this loop since they have no inventory */
-	for (mon = level.monlist; mon; mon = mon->nmon)
+	for (mon = level->monlist; mon; mon = mon->nmon)
 	    count_obj(mon->minvent, &count, &size, FALSE, TRUE);
 	for (mon = migrating_mons; mon; mon = mon->nmon)
 	    count_obj(mon->minvent, &count, &size, FALSE, TRUE);
@@ -1208,12 +1208,12 @@ static int wiz_show_stats(void)
 	add_menutext(&menu, count_str);
 
 	obj_chain(&menu, "invent", invent, &total_obj_count, &total_obj_size);
-	obj_chain(&menu, "level.objlist", level.objlist, &total_obj_count, &total_obj_size);
-	obj_chain(&menu, "buried", level.buriedobjlist,
+	obj_chain(&menu, "level->objlist", level->objlist, &total_obj_count, &total_obj_size);
+	obj_chain(&menu, "buried", level->buriedobjlist,
 				&total_obj_count, &total_obj_size);
 	obj_chain(&menu, "migrating obj", migrating_objs,
 				&total_obj_count, &total_obj_size);
-	mon_invent_chain(&menu, "minvent", level.monlist,
+	mon_invent_chain(&menu, "minvent", level->monlist,
 				&total_obj_count,&total_obj_size);
 	mon_invent_chain(&menu, "migrating minvent", migrating_mons,
 				&total_obj_count, &total_obj_size);
@@ -1231,7 +1231,7 @@ static int wiz_show_stats(void)
 	add_menutext(&menu, buf);
 	add_menutext(&menu, "");
 
-	mon_chain(&menu, "level.monlist", level.monlist,
+	mon_chain(&menu, "level->monlist", level->monlist,
 				&total_mon_count, &total_mon_size);
 	mon_chain(&menu, "migrating", migrating_mons,
 				&total_mon_count, &total_mon_size);
@@ -1472,13 +1472,6 @@ void confdir(schar *dx, schar *dy)
 	*dx = xdir[x];
 	*dy = ydir[x];
 	return;
-}
-
-
-int isok(int x, int y)
-{
-	/* x corresponds to curx, so x==1 is the first column. Ach. %% */
-	return x >= 1 && x <= COLNO-1 && y >= 0 && y <= ROWNO-1;
 }
 
 

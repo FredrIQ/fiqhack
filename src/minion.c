@@ -75,7 +75,7 @@ void msummon(struct monst *mon)
 	}
 
 	while (cnt > 0) {
-	    mtmp = makemon(&mons[dtype], u.ux, u.uy, NO_MM_FLAGS);
+	    mtmp = makemon(&mons[dtype], level, u.ux, u.uy, NO_MM_FLAGS);
 	    if (mtmp && (dtype == PM_ANGEL)) {
 		/* alignment should match the summoner */
 		EPRI(mtmp)->shralign = atyp;
@@ -109,19 +109,19 @@ void summon_minion(aligntyp alignment, boolean talk)
 	mon = 0;
     } else if (mons[mnum].pxlth == 0) {
 	const struct permonst *pm = &mons[mnum];
-	mon = makemon(pm, u.ux, u.uy, MM_EMIN);
+	mon = makemon(pm, level, u.ux, u.uy, MM_EMIN);
 	if (mon) {
 	    mon->isminion = TRUE;
 	    EMIN(mon)->min_align = alignment;
 	}
     } else if (mnum == PM_ANGEL) {
-	mon = makemon(&mons[mnum], u.ux, u.uy, NO_MM_FLAGS);
+	mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
 	if (mon) {
 	    mon->isminion = TRUE;
 	    EPRI(mon)->shralign = alignment;	/* always A_LAWFUL here */
 	}
     } else
-	mon = makemon(&mons[mnum], u.ux, u.uy, NO_MM_FLAGS);
+	mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
     if (mon) {
 	if (talk) {
 	    pline_The("voice of %s booms:", align_gname(alignment));

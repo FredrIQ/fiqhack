@@ -127,14 +127,14 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 		else if (cont)
 			add_to_container(cont, otmp);
 		else
-			place_object(otmp, u.ux, u.uy);
+			place_object(otmp, level, u.ux, u.uy);
 	}
 #ifndef GOLDOBJ
 	if (u.ugold) {
 		long ugold = u.ugold;
 		if (mtmp) mtmp->mgold = ugold;
 		else if (cont) add_to_container(cont, mkgoldobj(ugold));
-		else mkgold(ugold, u.ux, u.uy);
+		else mkgold(ugold, level, u.ux, u.uy);
 		u.ugold = ugold;	/* undo mkgoldobj()'s removal */
 	}
 #endif
@@ -142,25 +142,25 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 }
 
 /* check whether bones are feasible */
-boolean can_make_bones(void)
+boolean can_make_bones(d_level *lev)
 {
 	struct trap *ttmp;
 
-	if (ledger_no(&u.uz) <= 0 || ledger_no(&u.uz) > maxledgerno())
+	if (ledger_no(lev) <= 0 || ledger_no(lev) > maxledgerno())
 	    return FALSE;
-	if (no_bones_level(&u.uz))
+	if (no_bones_level(lev))
 	    return FALSE;		/* no bones for specific levels */
 	if (u.uswallow) {
 	    return FALSE;		/* no bones when swallowed */
 	}
-	if (!Is_branchlev(&u.uz)) {
+	if (!Is_branchlev(lev)) {
 	    /* no bones on non-branches with portals */
-	    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
+	    for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap)
 		if (ttmp->ttyp == MAGIC_PORTAL) return FALSE;
 	}
 
-	if (depth(&u.uz) <= 0 ||		/* bulletproofing for endgame */
-	   (!rn2(1 + (depth(&u.uz)>>2))	/* fewer ghosts on low levels */
+	if (depth(lev) <= 0 ||		/* bulletproofing for endgame */
+	   (!rn2(1 + (depth(lev)>>2))	/* fewer ghosts on low levels */
 		&& !wizard))
 		return FALSE;
 	/* don't let multiple restarts generate multiple copies of objects
@@ -199,7 +199,7 @@ void savebones(struct obj *corpse)
  make_bones:
 	unleash_all();
 	/* in case these characters are not in their home bases */
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    mptr = mtmp->data;
 	    if (mtmp->iswiz || mptr == &mons[PM_MEDUSA] ||
@@ -208,7 +208,7 @@ void savebones(struct obj *corpse)
 		mongone(mtmp);
 	}
 	if (u.usteed) dismount_steed(DISMOUNT_BONES);
-		dmonsfree();	/* discard dead or gone monsters */
+		dmonsfree(level);	/* discard dead or gone monsters */
 
 	/* mark all fruits as nonexistent; when we come to them we'll mark
 	 * them as existing (using goodfruit())
@@ -236,7 +236,7 @@ void savebones(struct obj *corpse)
 		 * on your location
 		 */
 		in_mklev = TRUE;
-		mtmp = makemon(&mons[PM_GHOST], u.ux, u.uy, MM_NONAME);
+		mtmp = makemon(&mons[PM_GHOST], level, u.ux, u.uy, MM_NONAME);
 		in_mklev = FALSE;
 		if (!mtmp) return;
 		mtmp = christen_monst(mtmp, plname);
@@ -245,7 +245,7 @@ void savebones(struct obj *corpse)
 	} else {
 		/* give your possessions to the monster you become */
 		in_mklev = TRUE;
-		mtmp = makemon(&mons[u.ugrave_arise], u.ux, u.uy, NO_MM_FLAGS);
+		mtmp = makemon(&mons[u.ugrave_arise], level, u.ux, u.uy, NO_MM_FLAGS);
 		in_mklev = FALSE;
 		if (!mtmp) {
 			drop_upon_death(NULL, NULL);
@@ -265,26 +265,26 @@ void savebones(struct obj *corpse)
 		mtmp->female = flags.female;
 		mtmp->msleeping = 1;
 	}
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 		resetobjs(mtmp->minvent,FALSE);
 		/* do not zero out m_ids for bones levels any more */
 		mtmp->mlstmv = 0L;
 		if (mtmp->mtame) mtmp->mtame = mtmp->mpeaceful = 0;
 	}
-	for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
+	for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap) {
 		ttmp->madeby_u = 0;
 		ttmp->tseen = (ttmp->ttyp == HOLE);
 	}
-	resetobjs(level.objlist,FALSE);
-	resetobjs(level.buriedobjlist, FALSE);
+	resetobjs(level->objlist,FALSE);
+	resetobjs(level->buriedobjlist, FALSE);
 
 	/* Hero is no longer on the map. */
 	u.ux = u.uy = 0;
 
 	/* Clear all memory from the level. */
 	for (x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++) {
-	    level.locations[x][y].seenv = 0;
-	    level.locations[x][y].waslit = 0;
+	    level->locations[x][y].seenv = 0;
+	    level->locations[x][y].waslit = 0;
 	    clear_memory_glyph(x, y, S_unexplored);
 	}
 
@@ -311,7 +311,7 @@ void savebones(struct obj *corpse)
 	commit_bonesfile(&u.uz);
 }
 
-int getbones(void)
+int getbones(struct level *lev)
 {
 	int fd;
 	int ok;
@@ -324,8 +324,8 @@ int getbones(void)
 	if (rn2(3)	/* only once in three times do we find bones */
 		&& !wizard)
 		return 0;
-	if (no_bones_level(&u.uz)) return 0;
-	fd = open_bonesfile(&u.uz, &bonesid);
+	if (no_bones_level(&lev->z)) return 0;
+	fd = open_bonesfile(&lev->z, &bonesid);
 	if (fd < 0) return 0;
 
 	if ((ok = uptodate(fd, bones)) == 0) {
@@ -366,7 +366,7 @@ int getbones(void)
 			 * subject to genocide, their mhpmax will be
 			 * set to the magic DEFUNCT_MONSTER cookie value.
 			 */
-			for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+			for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 			    if (mtmp->mhpmax == DEFUNCT_MONSTER) {
 #if defined(DEBUG)
 				if (wizard)
@@ -378,8 +378,8 @@ int getbones(void)
 				/* to correctly reset named artifacts on the level */
 				resetobjs(mtmp->minvent,TRUE);
 			}
-			resetobjs(level.objlist,TRUE);
-			resetobjs(level.buriedobjlist,TRUE);
+			resetobjs(level->objlist,TRUE);
+			resetobjs(level->buriedobjlist,TRUE);
 		}
 	}
 	close(fd);
@@ -389,7 +389,7 @@ int getbones(void)
 			return ok;
 		}
 	}
-	if (!delete_bonesfile(&u.uz)) {
+	if (!delete_bonesfile(&lev->z)) {
 		/* When N games try to simultaneously restore the same
 		 * bones file, N-1 of them will fail to delete it
 		 * (the first N-1 under AmigaDOS, the last N-1 under UNIX).

@@ -23,9 +23,10 @@ typedef boolean (*callback_proc)(void *, void *);
 #define set_heros_fault(r)	((r)->player_flags &= ~REG_NOT_HEROS)
 #define clear_heros_fault(r)	((r)->player_flags |= REG_NOT_HEROS)
 
-typedef struct {
-  NhRect bounding_box;		/* Bounding box of the region */
-  NhRect *rects;		/* Rectangles composing the region */
+struct region {
+  struct level *lev;		/* the level this region is on */
+  struct nhrect *rects;		/* Rectangles composing the region */
+  struct nhrect bounding_box;	/* Bounding box of the region */
   short  nrects;		/* Number of rectangles  */
   boolean attach_2_u;		/* Region attached to player ? */
   unsigned int attach_2_m;	/* Region attached to monster ? */
@@ -55,6 +56,6 @@ typedef struct {
   int effect_id;		/* How to display if visible */
   void * arg;		/* Optional user argument (Ex: strength of
 				   force field, damage of a fire zone, ...*/
-} NhRegion;
+};
 
 #endif /* REGION_H */

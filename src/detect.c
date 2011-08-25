@@ -74,12 +74,12 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 	struct obj *otmp;
 	struct monst *mtmp;
 
-	memobj = level.locations[x][y].mem_obj;
+	memobj = level->locations[x][y].mem_obj;
 	if (memobj) {
 	    /* there's some object shown here */
 	    if (oclass == ALL_CLASSES) {
-		return((boolean)( !(level.objects[x][y] ||     /* stale if nothing here */
-			    ((mtmp = m_at(x,y)) != 0 &&
+		return((boolean)( !(level->objects[x][y] ||     /* stale if nothing here */
+			    ((mtmp = m_at(level, x,y)) != 0 &&
 				(
 #ifndef GOLDOBJ
 				 mtmp->mgold ||
@@ -88,10 +88,10 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 	    } else {
 		if (material && objects[memobj - 1].oc_material == material) {
 			/* the object shown here is of interest because material matches */
-			for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
+			for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
 				if (o_material(otmp, GOLD)) return FALSE;
 			/* didn't find it; perhaps a monster is carrying it */
-			if ((mtmp = m_at(x,y)) != 0) {
+			if ((mtmp = m_at(level, x,y)) != 0) {
 				for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 					if (o_material(otmp, GOLD)) return FALSE;
 		        }
@@ -100,18 +100,18 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 		}
 	        if (oclass && objects[memobj - 1].oc_class == oclass) {
 			/* the object shown here is of interest because its class matches */
-			for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
+			for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
 				if (o_in(otmp, oclass)) return FALSE;
 			/* didn't find it; perhaps a monster is carrying it */
 #ifndef GOLDOBJ
-			if ((mtmp = m_at(x,y)) != 0) {
+			if ((mtmp = m_at(level, x,y)) != 0) {
 				if (oclass == COIN_CLASS && mtmp->mgold)
 					return FALSE;
 				else for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 					if (o_in(otmp, oclass)) return FALSE;
 		        }
 #else
-			if ((mtmp = m_at(x,y)) != 0) {
+			if ((mtmp = m_at(level, x,y)) != 0) {
 				for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 					if (o_in(otmp, oclass)) return FALSE;
 		        }
@@ -158,7 +158,7 @@ int gold_detect(struct obj *sobj)
 				(unsigned)(sobj->blessed ? GOLD : 0));
 
     /* look for gold carried by monsters (might be in a container) */
-    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably not needed in this case but... */
 #ifndef GOLDOBJ
 	if (mtmp->mgold || mtmp->mnum == PM_GOLD_GOLEM) {
@@ -178,7 +178,7 @@ int gold_detect(struct obj *sobj)
     }
     
     /* look for gold objects */
-    for (obj = level.objlist; obj; obj = obj->nobj) {
+    for (obj = level->objlist; obj; obj = obj->nobj) {
 	if (sobj->blessed && o_material(obj, GOLD)) {
 	    known = TRUE;
 	    if (obj->ox != u.ux || obj->oy != u.uy) goto outgoldmap;
@@ -220,7 +220,7 @@ outgoldmap:
 
     u.uinwater = 0;
     /* Discover gold locations. */
-    for (obj = level.objlist; obj; obj = obj->nobj) {
+    for (obj = level->objlist; obj; obj = obj->nobj) {
     	if (sobj->blessed && (temp = o_material(obj, GOLD))) {
 	    if (temp != obj) {
 		temp->ox = obj->ox;
@@ -235,7 +235,7 @@ outgoldmap:
 	    map_object(temp,1);
 	}
     }
-    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably overkill here */
 #ifndef GOLDOBJ
 	if (mtmp->mgold || mtmp->mnum == PM_GOLD_GOLEM) {
@@ -287,12 +287,12 @@ int food_detect(struct obj *sobj)
 
     stale = clear_stale_map(oclass, 0);
 
-    for (obj = level.objlist; obj; obj = obj->nobj)
+    for (obj = level->objlist; obj; obj = obj->nobj)
 	if (o_in(obj, oclass)) {
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
 	}
-    for (mtmp = level.monlist; mtmp && !ct; mtmp = mtmp->nmon) {
+    for (mtmp = level->monlist; mtmp && !ct; mtmp = mtmp->nmon) {
 	/* no DEADMONSTER(mtmp) check needed since dmons never have inventory */
 	for (obj = mtmp->minvent; obj; obj = obj->nobj)
 	    if (o_in(obj, oclass)) {
@@ -336,7 +336,7 @@ int food_detect(struct obj *sobj)
 	known = TRUE;
 	cls();
 	u.uinwater = 0;
-	for (obj = level.objlist; obj; obj = obj->nobj)
+	for (obj = level->objlist; obj; obj = obj->nobj)
 	    if ((temp = o_in(obj, oclass)) != 0) {
 		if (temp != obj) {
 		    temp->ox = obj->ox;
@@ -344,7 +344,7 @@ int food_detect(struct obj *sobj)
 		}
 		map_object(temp,1);
 	    }
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 	    /* no DEADMONSTER(mtmp) check needed since dmons never have inventory */
 	    for (obj = mtmp->minvent; obj; obj = obj->nobj)
 		if ((temp = o_in(obj, oclass)) != 0) {
@@ -405,7 +405,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 
     if (do_dknown) for (obj = invent; obj; obj = obj->nobj) do_dknown_of(obj);
 
-    for (obj = level.objlist; obj; obj = obj->nobj) {
+    for (obj = level->objlist; obj; obj = obj->nobj) {
 	if (!class || o_in(obj, class)) {
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
@@ -413,7 +413,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 	if (do_dknown) do_dknown_of(obj);
     }
 
-    for (obj = level.buriedobjlist; obj; obj = obj->nobj) {
+    for (obj = level->buriedobjlist; obj; obj = obj->nobj) {
 	if (!class || o_in(obj, class)) {
 	    if (obj->ox == u.ux && obj->oy == u.uy) ctu++;
 	    else ct++;
@@ -421,7 +421,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 	if (do_dknown) do_dknown_of(obj);
     }
 
-    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 	for (obj = mtmp->minvent; obj; obj = obj->nobj) {
 	    if (!class || o_in(obj, class)) ct++;
@@ -456,7 +456,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 /*
  *	Map all buried objects first.
  */
-    for (obj = level.buriedobjlist; obj; obj = obj->nobj)
+    for (obj = level->buriedobjlist; obj; obj = obj->nobj)
 	if (!class || (otmp = o_in(obj, class))) {
 	    if (class) {
 		if (otmp != obj) {
@@ -477,7 +477,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
      */
     for (x = 1; x < COLNO; x++)
 	for (y = 0; y < ROWNO; y++)
-	    for (obj = level.objects[x][y]; obj; obj = obj->nexthere)
+	    for (obj = level->objects[x][y]; obj; obj = obj->nexthere)
 		if (!class || (otmp = o_in(obj, class))) {
 		    if (class) {
 			if (otmp != obj) {
@@ -491,7 +491,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 		}
 
     /* Objects in the monster's inventory override floor objects. */
-    for (mtmp = level.monlist ; mtmp ; mtmp = mtmp->nmon) {
+    for (mtmp = level->monlist ; mtmp ; mtmp = mtmp->nmon) {
 	if (DEADMONSTER(mtmp)) continue;
 	for (obj = mtmp->minvent; obj; obj = obj->nobj)
 	    if (!class || (otmp = o_in(obj, class))) {
@@ -554,12 +554,12 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
     int mcnt = 0;
 
 
-    /* Note: This used to just check level.monlist for a non-zero value
-     * but in versions since 3.3.0 level.monlist can test TRUE due to the
+    /* Note: This used to just check level->monlist for a non-zero value
+     * but in versions since 3.3.0 level->monlist can test TRUE due to the
      * presence of dmons, so we have to find at least one
      * with positive hit-points to know for sure.
      */
-    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
     	if (!DEADMONSTER(mtmp)) {
 		mcnt++;
 		break;
@@ -575,7 +575,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	boolean woken = FALSE;
 
 	cls();
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (!mclass || mtmp->data->mlet == mclass ||
 		(mtmp->data == &mons[PM_LONG_WORM] && mclass == S_WORM_TAIL))
@@ -646,21 +646,21 @@ int trap_detect(struct obj *sobj)
     boolean found = FALSE;
     coord cc;
 
-    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
+    for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap) {
 	if (ttmp->tx != u.ux || ttmp->ty != u.uy)
 	    goto outtrapmap;
 	else found = TRUE;
     }
-    for (obj = level.objlist; obj; obj = obj->nobj) {
+    for (obj = level->objlist; obj; obj = obj->nobj) {
 	if ((obj->otyp==LARGE_BOX || obj->otyp==CHEST) && obj->otrapped) {
 	    if (obj->ox != u.ux || obj->oy != u.uy)
 		goto outtrapmap;
 	    else found = TRUE;
 	}
     }
-    for (door = 0; door < level.doorindex; door++) {
-	cc = level.doors[door];
-	if (level.locations[cc.x][cc.y].doormask & D_TRAPPED) {
+    for (door = 0; door < level->doorindex; door++) {
+	cc = level->doors[door];
+	if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
 	    if (cc.x != u.ux || cc.y != u.uy)
 		goto outtrapmap;
 	    else found = TRUE;
@@ -679,16 +679,16 @@ outtrapmap:
     cls();
 
     u.uinwater = 0;
-    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
+    for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap)
 	sense_trap(ttmp, 0, 0, sobj && sobj->cursed);
 
-    for (obj = level.objlist; obj; obj = obj->nobj)
+    for (obj = level->objlist; obj; obj = obj->nobj)
 	if ((obj->otyp==LARGE_BOX || obj->otyp==CHEST) && obj->otrapped)
 	sense_trap(NULL, obj->ox, obj->oy, sobj && sobj->cursed);
 
-    for (door = 0; door < level.doorindex; door++) {
-	cc = level.doors[door];
-	if (level.locations[cc.x][cc.y].doormask & D_TRAPPED)
+    for (door = 0; door < level->doorindex; door++) {
+	cc = level->doors[door];
+	if (level->locations[cc.x][cc.y].doormask & D_TRAPPED)
 	sense_trap(NULL, cc.x, cc.y, sobj && sobj->cursed);
     }
 
@@ -862,22 +862,22 @@ void use_crystal_ball(struct obj *obj)
 
 static void show_map_spot(int x, int y)
 {
-    struct rm *lev;
+    struct rm *loc;
 
     if (Confusion && rn2(7)) return;
-    lev = &level.locations[x][y];
+    loc = &level->locations[x][y];
 
-    lev->seenv = SVALL;
+    loc->seenv = SVALL;
 
     /* Secret corridors are found, but not secret doors. */
-    if (lev->typ == SCORR) {
-	lev->typ = CORR;
+    if (loc->typ == SCORR) {
+	loc->typ = CORR;
 	unblock_point(x,y);
     }
 
     /* if we don't remember an object or trap there, map it */
-    if (!lev->mem_obj && !lev->mem_trap) {
-	if (level.flags.hero_memory) {
+    if (!loc->mem_obj && !loc->mem_trap) {
+	if (level->flags.hero_memory) {
 	    magic_map_background(x,y,0);
 	    newsym(x,y);			/* show it, if not blocked */
 	} else {
@@ -898,7 +898,7 @@ void do_mapping(void)
 	    show_map_spot(zx, zy);
     exercise(A_WIS, TRUE);
     u.uinwater = uw;
-    if (!level.flags.hero_memory || Underwater) {
+    if (!level->flags.hero_memory || Underwater) {
 	flush_screen(1);			/* flush temp screen */
 	display_nhwindow(NHW_MAP, TRUE);	/* wait */
 	docrt();
@@ -918,7 +918,7 @@ void do_vicinity_map(void)
 	for (zy = lo_y; zy < hi_y; zy++)
 	    show_map_spot(zx, zy);
 
-    if (!level.flags.hero_memory || Underwater) {
+    if (!level->flags.hero_memory || Underwater) {
 	flush_screen(1);			/* flush temp screen */
 	display_nhwindow(NHW_MAP, TRUE);	/* wait */
 	docrt();
@@ -926,9 +926,9 @@ void do_vicinity_map(void)
 }
 
 /* convert a secret door into a normal door */
-void cvt_sdoor_to_door(struct rm *lev)
+void cvt_sdoor_to_door(struct rm *loc)
 {
-	int newmask = lev->doormask & ~WM_MASK;
+	int newmask = loc->doormask & ~WM_MASK;
 
 	if (Is_rogue_level(&u.uz))
 	    /* rogue didn't have doors, only doorways */
@@ -937,8 +937,8 @@ void cvt_sdoor_to_door(struct rm *lev)
 	    /* newly exposed door is closed */
 	    if (!(newmask & D_LOCKED)) newmask |= D_CLOSED;
 
-	lev->typ = DOOR;
-	lev->doormask = newmask;
+	loc->typ = DOOR;
+	loc->doormask = newmask;
 }
 
 
@@ -947,24 +947,24 @@ static void findone(int zx, int zy, void *num)
 	struct trap *ttmp;
 	struct monst *mtmp;
 
-	if (level.locations[zx][zy].typ == SDOOR) {
-		cvt_sdoor_to_door(&level.locations[zx][zy]);	/* .typ = DOOR */
+	if (level->locations[zx][zy].typ == SDOOR) {
+		cvt_sdoor_to_door(&level->locations[zx][zy]);	/* .typ = DOOR */
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if (level.locations[zx][zy].typ == SCORR) {
-		level.locations[zx][zy].typ = CORR;
+	} else if (level->locations[zx][zy].typ == SCORR) {
+		level->locations[zx][zy].typ = CORR;
 		unblock_point(zx,zy);
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if ((ttmp = t_at(zx, zy)) != 0) {
+	} else if ((ttmp = t_at(level, zx, zy)) != 0) {
 		if (!ttmp->tseen && ttmp->ttyp != STATUE_TRAP) {
 			ttmp->tseen = 1;
 			newsym(zx,zy);
 			(*(int*)num)++;
 		}
-	} else if ((mtmp = m_at(zx, zy)) != 0) {
+	} else if ((mtmp = m_at(level, zx, zy)) != 0) {
 		if (mtmp->m_ap_type) {
 			seemimic(mtmp);
 			(*(int*)num)++;
@@ -975,9 +975,9 @@ static void findone(int zx, int zy, void *num)
 			newsym(zx, zy);
 			(*(int*)num)++;
 		}
-		if (!canspotmon(mtmp) && !level.locations[zx][zy].mem_invis)
+		if (!canspotmon(mtmp) && !level->locations[zx][zy].mem_invis)
 			map_invisible(zx, zy);
-	} else if (level.locations[zx][zy].mem_invis) {
+	} else if (level->locations[zx][zy].mem_invis) {
 		unmap_object(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
@@ -991,7 +991,7 @@ static void openone(int zx, int zy, void *num)
 	struct obj *otmp;
 
 	if (OBJ_AT(zx, zy)) {
-		for (otmp = level.objects[zx][zy];
+		for (otmp = level->objects[zx][zy];
 				otmp; otmp = otmp->nexthere) {
 		    if (Is_box(otmp) && otmp->olocked) {
 			otmp->olocked = 0;
@@ -1000,29 +1000,29 @@ static void openone(int zx, int zy, void *num)
 		}
 		/* let it fall to the next cases. could be on trap. */
 	}
-	if (level.locations[zx][zy].typ == SDOOR || (level.locations[zx][zy].typ == DOOR &&
-		      (level.locations[zx][zy].doormask & (D_CLOSED|D_LOCKED)))) {
-		if (level.locations[zx][zy].typ == SDOOR)
-		    cvt_sdoor_to_door(&level.locations[zx][zy]);	/* .typ = DOOR */
-		if (level.locations[zx][zy].doormask & D_TRAPPED) {
+	if (level->locations[zx][zy].typ == SDOOR || (level->locations[zx][zy].typ == DOOR &&
+		      (level->locations[zx][zy].doormask & (D_CLOSED|D_LOCKED)))) {
+		if (level->locations[zx][zy].typ == SDOOR)
+		    cvt_sdoor_to_door(&level->locations[zx][zy]);	/* .typ = DOOR */
+		if (level->locations[zx][zy].doormask & D_TRAPPED) {
 		    if (distu(zx, zy) < 3) b_trapped("door", 0);
 		    else Norep("You %s an explosion!",
 				cansee(zx, zy) ? "see" :
 				   (flags.soundok ? "hear" :
 						"feel the shock of"));
 		    wake_nearto(zx, zy, 11*11);
-		    level.locations[zx][zy].doormask = D_NODOOR;
+		    level->locations[zx][zy].doormask = D_NODOOR;
 		} else
-		    level.locations[zx][zy].doormask = D_ISOPEN;
+		    level->locations[zx][zy].doormask = D_ISOPEN;
 		unblock_point(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if (level.locations[zx][zy].typ == SCORR) {
-		level.locations[zx][zy].typ = CORR;
+	} else if (level->locations[zx][zy].typ == SCORR) {
+		level->locations[zx][zy].typ = CORR;
 		unblock_point(zx, zy);
 		newsym(zx, zy);
 		(*(int*)num)++;
-	} else if ((ttmp = t_at(zx, zy)) != 0) {
+	} else if ((ttmp = t_at(level, zx, zy)) != 0) {
 		if (!ttmp->tseen && ttmp->ttyp != STATUE_TRAP) {
 		    ttmp->tseen = 1;
 		    newsym(zx,zy);
@@ -1074,8 +1074,8 @@ void find_trap(struct trap *trap)
     else
 	newsym(trap->tx, trap->ty);
 
-    if (level.locations[trap->tx][trap->ty].mem_obj ||
-	level.locations[trap->tx][trap->ty].mem_invis) {
+    if (level->locations[trap->tx][trap->ty].mem_obj ||
+	level->locations[trap->tx][trap->ty].mem_invis) {
     	/* There's too much clutter to see your find otherwise */
 	cls();
 	map_trap(trap, 1);
@@ -1113,30 +1113,30 @@ int dosearch0(int aflag)
 		if (!isok(x,y)) continue;
 		if (x != u.ux || y != u.uy) {
 		    if (Blind && !aflag) feel_location(x,y);
-		    if (level.locations[x][y].typ == SDOOR) {
+		    if (level->locations[x][y].typ == SDOOR) {
 			if (rnl(7-fund)) continue;
-			cvt_sdoor_to_door(&level.locations[x][y]);	/* .typ = DOOR */
+			cvt_sdoor_to_door(&level->locations[x][y]);	/* .typ = DOOR */
 			exercise(A_WIS, TRUE);
 			nomul(0);
 			if (Blind && !aflag)
 			    feel_location(x,y);	/* make sure it shows up */
 			else
 			    newsym(x,y);
-		    } else if (level.locations[x][y].typ == SCORR) {
+		    } else if (level->locations[x][y].typ == SCORR) {
 			if (rnl(7-fund)) continue;
-			level.locations[x][y].typ = CORR;
+			level->locations[x][y].typ = CORR;
 			unblock_point(x,y);	/* vision */
 			exercise(A_WIS, TRUE);
 			nomul(0);
 			newsym(x,y);
 		    } else {
 		/* Be careful not to find anything in an SCORR or SDOOR */
-			if ((mtmp = m_at(x, y)) && !aflag) {
+			if ((mtmp = m_at(level, x, y)) && !aflag) {
 			    if (mtmp->m_ap_type) {
 				seemimic(mtmp);
 		find:		exercise(A_WIS, TRUE);
 				if (!canspotmon(mtmp)) {
-				    if (level.locations[x][y].mem_invis) {
+				    if (level->locations[x][y].mem_invis) {
 					/* found invisible monster in a square
 					 * which already has an 'I' in it.
 					 * Logically, this should still take
@@ -1166,12 +1166,12 @@ int dosearch0(int aflag)
 			 * feel_location() already did it
 			 */
 			if (!aflag && !mtmp && !Blind &&
-				    level.locations[x][y].mem_invis) {
+				    level->locations[x][y].mem_invis) {
 			    unmap_object(x,y);
 			    newsym(x,y);
 			}
 
-			if ((trap = t_at(x,y)) && !trap->tseen && !rnl(8)) {
+			if ((trap = t_at(level, x,y)) && !trap->tseen && !rnl(8)) {
 			    nomul(0);
 
 			    if (trap->ttyp == STATUE_TRAP) {
@@ -1195,8 +1195,10 @@ int dosearch(void)
 	return dosearch0(0);
 }
 
-/* Pre-map the sokoban levels */
-void sokoban_detect(void)
+/* Pre-map the sokoban levels (called during level creation)
+ * Don't use map_<foo>: Those functions are meant to be used when the player
+ * is on the level, which is not the case here. */
+void sokoban_detect(struct level *lev)
 {
 	int x, y;
 	struct trap *ttmp;
@@ -1205,18 +1207,18 @@ void sokoban_detect(void)
 	/* Map the background and boulders */
 	for (x = 1; x < COLNO; x++)
 	    for (y = 0; y < ROWNO; y++) {
-	    	level.locations[x][y].seenv = SVALL;
-	    	level.locations[x][y].waslit = TRUE;
-	    	map_background(x, y, 1);
-	    	for (obj = level.objects[x][y]; obj; obj = obj->nexthere)
-	    	    if (obj->otyp == BOULDER)
-	    	    	map_object(obj, 1);
+		lev->locations[x][y].seenv = SVALL;
+		lev->locations[x][y].waslit = TRUE;
+		lev->locations[x][y].mem_bg = back_to_cmap(lev, x, y);
+		for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
+		    if (obj->otyp == BOULDER)
+			lev->locations[x][y].mem_obj = what_obj(BOULDER) + 1;
 	    }
 
 	/* Map the traps */
-	for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
+	for (ttmp = lev->lev_traps; ttmp; ttmp = ttmp->ntrap) {
 	    ttmp->tseen = 1;
-	    map_trap(ttmp, 1);
+	    lev->locations[ttmp->tx][ttmp->ty].mem_trap = what_trap(ttmp->ttyp);
 	}
 }
 

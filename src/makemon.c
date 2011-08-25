@@ -19,15 +19,15 @@ static struct monst zeromonst;
 static boolean uncommon(int);
 static int align_shift(const struct permonst *);
 static boolean wrong_elem_type(const struct permonst *);
-static void m_initgrp(struct monst *,int,int,int);
+static void m_initgrp(struct monst *, struct level *lev, int,int,int);
 static void m_initthrow(struct monst *,int,int);
 static void m_initweap(struct monst *);
 static void m_initinv(struct monst *);
 
 extern const int monstr[];
 
-#define m_initsgrp(mtmp, x, y)	m_initgrp(mtmp, x, y, 3)
-#define m_initlgrp(mtmp, x, y)	m_initgrp(mtmp, x, y, 10)
+#define m_initsgrp(mtmp, lev, x, y)	m_initgrp(mtmp, lev, x, y, 3)
+#define m_initlgrp(mtmp, lev, x, y)	m_initgrp(mtmp, lev, x, y, 10)
 #define toostrong(monindx, lev) (monstr[monindx] > lev)
 #define tooweak(monindx, lev)	(monstr[monindx] < lev)
 
@@ -44,7 +44,7 @@ boolean is_home_elemental(const struct permonst *ptr)
 }
 
 /*
- * Return true if the given monster cannot exist on this elemental level.
+ * Return true if the given monster cannot exist on this elemental level->
  */
 static boolean wrong_elem_type(const struct permonst *ptr)
 {
@@ -66,7 +66,7 @@ static boolean wrong_elem_type(const struct permonst *ptr)
 }
 
 /* make a group just like mtmp */
-static void m_initgrp(struct monst *mtmp, int x, int y, int n)
+static void m_initgrp(struct monst *mtmp, struct level *lev, int x, int y, int n)
 {
 	coord mm;
 	int cnt = rnd(n);
@@ -85,8 +85,8 @@ static void m_initgrp(struct monst *mtmp, int x, int y, int n)
 		 * are peaceful and some are not, the result will just be a
 		 * smaller group.
 		 */
-		if (enexto(&mm, mm.x, mm.y, mtmp->data)) {
-		    mon = makemon(mtmp->data, mm.x, mm.y, NO_MM_FLAGS);
+		if (enexto(&mm, lev, mm.x, mm.y, mtmp->data)) {
+		    mon = makemon(mtmp->data, lev, mm.x, mm.y, NO_MM_FLAGS);
 		    mon->mpeaceful = FALSE;
 		    mon->mavenge = 0;
 		    set_malign(mon);
@@ -102,7 +102,7 @@ static void m_initthrow(struct monst *mtmp, int otyp, int oquan)
 {
 	struct obj *otmp;
 
-	otmp = mksobj(otyp, TRUE, FALSE);
+	otmp = mksobj(level, otyp, TRUE, FALSE);
 	otmp->quan = (long) rn1(oquan, 3);
 	otmp->owt = weight(otmp);
 	if (otyp == ORCISH_ARROW) otmp->opoisoned = TRUE;
@@ -195,7 +195,7 @@ static void m_initweap(struct monst *mtmp)
 		    }
 		} else if (ptr->msound == MS_PRIEST ||
 			quest_mon_represents_role(ptr,PM_PRIEST)) {
-		    otmp = mksobj(MACE, FALSE, FALSE);
+		    otmp = mksobj(level, MACE, FALSE, FALSE);
 		    if (otmp) {
 			otmp->spe = rnd(3);
 			if (!rn2(2)) curse(otmp);
@@ -209,7 +209,7 @@ static void m_initweap(struct monst *mtmp)
 		    int spe2;
 
 		    /* create minion stuff; can't use mongets */
-		    otmp = mksobj(LONG_SWORD, FALSE, FALSE);
+		    otmp = mksobj(level, LONG_SWORD, FALSE, FALSE);
 
 		    /* maybe make it special */
 		    if (!rn2(20) || is_lord(ptr))
@@ -221,7 +221,7 @@ static void m_initweap(struct monst *mtmp)
 		    otmp->spe = max(otmp->spe, spe2);
 		    mpickobj(mtmp, otmp);
 
-		    otmp = mksobj(!rn2(4) || is_lord(ptr) ?
+		    otmp = mksobj(level, !rn2(4) || is_lord(ptr) ?
 				  SHIELD_OF_REFLECTION : LARGE_SHIELD,
 				  FALSE, FALSE);
 		    otmp->cursed = FALSE;
@@ -420,7 +420,7 @@ static void m_initweap(struct monst *mtmp)
  */
 void mkmonmoney(struct monst *mtmp, long amount)
 {
-    struct obj *gold = mksobj(GOLD_PIECE, FALSE, FALSE);
+    struct obj *gold = mksobj(level, GOLD_PIECE, FALSE, FALSE);
     gold->quan = amount;
     add_to_minv(mtmp, gold);
 }
@@ -532,7 +532,7 @@ static void m_initinv(struct monst *mtmp)
 			mongets(mtmp, WAN_DIGGING);
 		} else if (is_giant(ptr)) {
 		    for (cnt = rn2((int)(mtmp->m_lev / 2)); cnt; cnt--) {
-			otmp = mksobj(rnd_class(DILITHIUM_CRYSTAL,LUCKSTONE-1),
+			otmp = mksobj(level, rnd_class(DILITHIUM_CRYSTAL,LUCKSTONE-1),
 				      FALSE, FALSE);
 			otmp->quan = (long) rn1(2, 3);
 			otmp->owt = weight(otmp);
@@ -542,7 +542,7 @@ static void m_initinv(struct monst *mtmp)
 		break;
 	    case S_WRAITH:
 		if (ptr == &mons[PM_NAZGUL]) {
-			otmp = mksobj(RIN_INVISIBILITY, FALSE, FALSE);
+			otmp = mksobj(level, RIN_INVISIBILITY, FALSE, FALSE);
 			curse(otmp);
 			mpickobj(mtmp, otmp);
 		}
@@ -551,7 +551,7 @@ static void m_initinv(struct monst *mtmp)
 		if (ptr == &mons[PM_MASTER_LICH] && !rn2(13))
 			mongets(mtmp, (rn2(7) ? ATHAME : WAN_NOTHING));
 		else if (ptr == &mons[PM_ARCH_LICH] && !rn2(3)) {
-			otmp = mksobj(rn2(3) ? ATHAME : QUARTERSTAFF,
+			otmp = mksobj(level, rn2(3) ? ATHAME : QUARTERSTAFF,
 				      TRUE, rn2(13) ? FALSE : TRUE);
 			if (otmp->spe < 2) otmp->spe = rnd(3);
 			if (!rn2(4)) otmp->oerodeproof = 1;
@@ -563,7 +563,7 @@ static void m_initinv(struct monst *mtmp)
 		break;
 	    case S_QUANTMECH:
 		if (!rn2(20)) {
-			otmp = mksobj(LARGE_BOX, FALSE, FALSE);
+			otmp = mksobj(level, LARGE_BOX, FALSE, FALSE);
 			otmp->spe = 1; /* flag for special box */
 			otmp->owt = weight(otmp);
 			mpickobj(mtmp, otmp);
@@ -621,22 +621,22 @@ struct monst *clone_mon(struct monst *mon,
 	if (x == 0) {
 	    mm.x = mon->mx;
 	    mm.y = mon->my;
-	    if (!enexto(&mm, mm.x, mm.y, mon->data) || MON_AT(mm.x, mm.y))
+	    if (!enexto(&mm, level, mm.x, mm.y, mon->data) || MON_AT(level, mm.x, mm.y))
 		return NULL;
 	} else if (!isok(x, y)) {
 	    return NULL;	/* paranoia */
 	} else {
 	    mm.x = x;
 	    mm.y = y;
-	    if (MON_AT(mm.x, mm.y)) {
-		if (!enexto(&mm, mm.x, mm.y, mon->data) || MON_AT(mm.x, mm.y))
+	    if (MON_AT(level, mm.x, mm.y)) {
+		if (!enexto(&mm, level, mm.x, mm.y, mon->data) || MON_AT(level, mm.x, mm.y))
 		    return NULL;
 	    }
 	}
 	m2 = newmonst(0);
 	*m2 = *mon;			/* copy condition of old monster */
-	m2->nmon = level.monlist;
-	level.monlist = m2;
+	m2->nmon = level->monlist;
+	level->monlist = m2;
 	m2->m_id = flags.ident++;
 	if (!m2->m_id) m2->m_id = flags.ident++;	/* ident overflowed */
 	m2->mx = mm.x;
@@ -666,7 +666,7 @@ struct monst *clone_mon(struct monst *mon,
 	m2->mxlth = 0;
 	place_monster(m2, m2->mx, m2->my);
 	if (emits_light(m2->data))
-	    new_light_source(m2->mx, m2->my, emits_light(m2->data),
+	    new_light_source(m2->dlevel, m2->mx, m2->my, emits_light(m2->data),
 			     LS_MONSTER, m2);
 	if (m2->mnamelth) {
 	    m2->mnamelth = 0; /* or it won't get allocated */
@@ -755,7 +755,8 @@ boolean propagate(int mndx, boolean tally, boolean ghostly)
  *
  *	In case we make a monster group, only return the one at [x,y].
  */
-struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
+struct monst *makemon(const struct permonst *ptr,
+		      struct level *lev, int x, int y, int mmflags)
 {
 	struct monst *mtmp;
 	int mndx, mcham, ct, mitem, xlth;
@@ -774,12 +775,12 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 		do {
 			x = rn1(COLNO-3,2);
 			y = rn2(ROWNO);
-		} while (!goodpos(x, y, ptr ? &fakemon : NULL, gpflags) ||
+		} while (!goodpos(lev, x, y, ptr ? &fakemon : NULL, gpflags) ||
 			(!in_mklev && tryct++ < 50 && cansee(x, y)));
 	} else if (byyou && !in_mklev) {
 		coord bypos;
 
-		if (enexto_core(&bypos, u.ux, u.uy, ptr, gpflags)) {
+		if (enexto_core(&bypos, lev, u.ux, u.uy, ptr, gpflags)) {
 			x = bypos.x;
 			y = bypos.y;
 		} else
@@ -787,10 +788,10 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 	}
 
 	/* Does monster already exist at the position? */
-	if (MON_AT(x, y)) {
+	if (MON_AT(lev, x, y)) {
 		if ((mmflags & MM_ADJACENTOK) != 0) {
 			coord bypos;
-			if (enexto_core(&bypos, x, y, ptr, gpflags)) {
+			if (enexto_core(&bypos, lev, x, y, ptr, gpflags)) {
 				x = bypos.x;
 				y = bypos.y;
 			} else
@@ -825,7 +826,7 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 			    return NULL;	/* no more monsters! */
 			}
 			fakemon.data = ptr;	/* set up for goodpos */
-		} while (!goodpos(x, y, &fakemon, gpflags) && tryct++ < 50);
+		} while (!goodpos(lev, x, y, &fakemon, gpflags) && tryct++ < 50);
 		mndx = monsndx(ptr);
 	}
 	
@@ -847,8 +848,8 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 	mtmp = newmonst(xlth);
 	*mtmp = zeromonst;		/* clear all entries in structure */
 	memset(mtmp->mextra, 0, xlth);
-	mtmp->nmon = level.monlist;
-	level.monlist = mtmp;
+	mtmp->nmon = lev->monlist;
+	lev->monlist = mtmp;
 	mtmp->m_id = flags.ident++;
 	if (!mtmp->m_id)
 	    mtmp->m_id = flags.ident++;	/* ident overflowed */
@@ -893,20 +894,21 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 	if (ptr->msound == MS_LEADER)		/* leader knows about portal */
 	    mtmp->mtrapseen |= (1L << (MAGIC_PORTAL-1));
 
+	mtmp->dlevel = lev;
 	place_monster(mtmp, x, y);
 	mtmp->mcansee = mtmp->mcanmove = TRUE;
 	mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
 
 	switch(ptr->mlet) {
 		case S_MIMIC:
-			set_mimic_sym(mtmp);
+			set_mimic_sym(mtmp, lev);
 			break;
 		case S_SPIDER:
 		case S_SNAKE:
 			if (in_mklev)
 			    if (x && y)
-				mkobj_at(0, x, y, TRUE);
-			if (hides_under(ptr) && OBJ_AT(x, y))
+				mkobj_at(0, lev, x, y, TRUE);
+			if (hides_under(ptr) && OBJ_AT_LEV(lev, x, y))
 			    mtmp->mundetected = TRUE;
 			break;
 		case S_LIGHT:
@@ -917,7 +919,7 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 			}
 			break;
 		case S_EEL:
-			if (is_pool(x, y))
+			if (is_pool(lev, x, y))
 			    mtmp->mundetected = TRUE;
 			break;
 		case S_LEPRECHAUN:
@@ -941,7 +943,7 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 			break;
 	}
 	if ((ct = emits_light(mtmp->data)) > 0)
-		new_light_source(mtmp->mx, mtmp->my, ct,
+		new_light_source(lev, mtmp->mx, mtmp->my, ct,
 				 LS_MONSTER, mtmp);
 	mitem = 0;	/* extra inventory item for this monster */
 
@@ -995,7 +997,7 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 	    if (uwep && uwep->oartifact == ART_EXCALIBUR)
 		mtmp->mpeaceful = mtmp->mtame = FALSE;
 	}
-	if (mndx == PM_LONG_WORM && (mtmp->wormno = get_wormno()) != 0)
+	if (mndx == PM_LONG_WORM && (mtmp->wormno = get_wormno(lev)) != 0)
 	{
 	    /* we can now create worms with tails - 11/91 */
 	    initworm(mtmp, rn2(5));
@@ -1004,10 +1006,10 @@ struct monst *makemon(const struct permonst *ptr, int x, int y, int mmflags)
 	set_malign(mtmp);		/* having finished peaceful changes */
 	if (anymon) {
 	    if ((ptr->geno & G_SGROUP) && rn2(2)) {
-		m_initsgrp(mtmp, mtmp->mx, mtmp->my);
+		m_initsgrp(mtmp, lev, mtmp->mx, mtmp->my);
 	    } else if (ptr->geno & G_LGROUP) {
-		if (rn2(3))  m_initlgrp(mtmp, mtmp->mx, mtmp->my);
-		else	    m_initsgrp(mtmp, mtmp->mx, mtmp->my);
+		if (rn2(3))  m_initlgrp(mtmp, lev, mtmp->mx, mtmp->my);
+		else	    m_initsgrp(mtmp, lev, mtmp->mx, mtmp->my);
 	    }
 	}
 
@@ -1062,10 +1064,10 @@ boolean create_critters(int cnt,
 	    x = u.ux,  y = u.uy;
 	    /* if in water, try to encourage an aquatic monster
 	       by finding and then specifying another wet location */
-	    if (!mptr && u.uinwater && enexto(&c, x, y, &mons[PM_GIANT_EEL]))
+	    if (!mptr && u.uinwater && enexto(&c, level, x, y, &mons[PM_GIANT_EEL]))
 		x = c.x,  y = c.y;
 
-	    mon = makemon(mptr, x, y, NO_MM_FLAGS);
+	    mon = makemon(mptr, level, x, y, NO_MM_FLAGS);
 	    if (mon && canspotmon(mon)) known = TRUE;
 	}
 	return known;
@@ -1391,7 +1393,7 @@ int mongets(struct monst *mtmp, int otyp)
 	int spe;
 
 	if (!otyp) return 0;
-	otmp = mksobj(otyp, TRUE, FALSE);
+	otmp = mksobj(level, otyp, TRUE, FALSE);
 	if (otmp) {
 	    if (mtmp->data->mlet == S_DEMON) {
 		/* demons never get blessed objects */
@@ -1551,7 +1553,7 @@ static const char syms[] = {
 	S_MIMIC_DEF, S_MIMIC_DEF, S_MIMIC_DEF,
 };
 
-void set_mimic_sym(struct monst *mtmp)
+void set_mimic_sym(struct monst *mtmp, struct level *lev)
 {
 	int typ, roomno, rt;
 	unsigned appear, ap_type;
@@ -1561,16 +1563,16 @@ void set_mimic_sym(struct monst *mtmp)
 
 	if (!mtmp) return;
 	mx = mtmp->mx; my = mtmp->my;
-	typ = level.locations[mx][my].typ;
+	typ = lev->locations[mx][my].typ;
 					/* only valid for INSIDE of room */
-	roomno = level.locations[mx][my].roomno - ROOMOFFSET;
+	roomno = lev->locations[mx][my].roomno - ROOMOFFSET;
 	if (roomno >= 0)
-		rt = level.rooms[roomno].rtype;
+		rt = lev->rooms[roomno].rtype;
 	else	rt = 0;	/* roomno < 0 case */
 
-	if (OBJ_AT(mx, my)) {
+	if (OBJ_AT_LEV(lev, mx, my)) {
 		ap_type = M_AP_OBJECT;
-		appear = level.objects[mx][my]->otyp;
+		appear = lev->objects[mx][my]->otyp;
 	} else if (IS_DOOR(typ) || IS_WALL(typ) ||
 		   typ == SDOOR || typ == SCORR) {
 		ap_type = M_AP_FURNITURE;
@@ -1580,20 +1582,20 @@ void set_mimic_sym(struct monst *mtmp)
 		 *  This does not allow doors to be in corners of rooms.
 		 */
 		if (mx != 0 &&
-			(level.locations[mx-1][my].typ == HWALL    ||
-			 level.locations[mx-1][my].typ == TLCORNER ||
-			 level.locations[mx-1][my].typ == TRWALL   ||
-			 level.locations[mx-1][my].typ == BLCORNER ||
-			 level.locations[mx-1][my].typ == TDWALL   ||
-			 level.locations[mx-1][my].typ == CROSSWALL||
-			 level.locations[mx-1][my].typ == TUWALL    ))
+			(lev->locations[mx-1][my].typ == HWALL    ||
+			 lev->locations[mx-1][my].typ == TLCORNER ||
+			 lev->locations[mx-1][my].typ == TRWALL   ||
+			 lev->locations[mx-1][my].typ == BLCORNER ||
+			 lev->locations[mx-1][my].typ == TDWALL   ||
+			 lev->locations[mx-1][my].typ == CROSSWALL||
+			 lev->locations[mx-1][my].typ == TUWALL    ))
 		    appear = S_hcdoor;
 		else
 		    appear = S_vcdoor;
 
 		if (!mtmp->minvis || See_invisible)
 		    block_point(mx,my);	/* vision */
-	} else if (level.flags.is_maze_lev && rn2(2)) {
+	} else if (lev->flags.is_maze_lev && rn2(2)) {
 		ap_type = M_AP_OBJECT;
 		appear = STATUE;
 	} else if (roomno < 0) {
@@ -1643,7 +1645,7 @@ assign_sym:
 			if (s_sym == S_MIMIC_DEF) {
 				appear = STRANGE_OBJECT;
 			} else {
-				otmp = mkobj( (char) s_sym, FALSE );
+				otmp = mkobj(level,  (char) s_sym, FALSE );
 				appear = otmp->otyp;
 				/* make sure container contents are free'ed */
 				obfree(otmp, NULL);
@@ -1669,7 +1671,7 @@ void bagotricks(struct obj *bag)
 
 	if (!rn2(23)) cnt += rn1(7, 1);
 	while (cnt-- > 0) {
-	    if (makemon(NULL, u.ux, u.uy, NO_MM_FLAGS))
+	    if (makemon(NULL, level, u.ux, u.uy, NO_MM_FLAGS))
 		gotone = TRUE;
 	}
 	if (gotone) makeknown(BAG_OF_TRICKS);

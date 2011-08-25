@@ -106,7 +106,7 @@ int fightm(struct monst *mtmp)		/* have monsters fight each other */
 	}
 	has_u_swallowed = (u.uswallow && (mtmp == u.ustuck));
 
-	for (mon = level.monlist; mon; mon = nmon) {
+	for (mon = level->monlist; mon; mon = nmon) {
 	    nmon = mon->nmon;
 	    if (nmon == mtmp) nmon = mtmp->nmon;
 	    /* Be careful to ignore monsters that are already dead, since we
@@ -503,7 +503,7 @@ static int gulpmm(struct monst *magr, struct monst *mdef, const struct attack *m
 	else if (status & MM_DEF_DIED) {	/* defender died */
 	    /*
 	     *  Note:  remove_monster() was called in relmon(), wiping out
-	     *  magr from level.monsters[mdef->mx][mdef->my].  We need to
+	     *  magr from level->monsters[mdef->mx][mdef->my].  We need to
 	     *  put it back and display it.	-kd
 	     */
 	    place_monster(magr, dx, dy);
@@ -622,7 +622,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		num = mdef->mnum;
 		if (magr->mtame && !magr->isminion &&
 		    !(mvitals[num].mvflags & G_NOCORPSE)) {
-		    struct obj *virtualcorpse = mksobj(CORPSE, FALSE, FALSE);
+		    struct obj *virtualcorpse = mksobj(level, CORPSE, FALSE, FALSE);
 		    int nutrit;
 
 		    virtualcorpse->corpsenm = num;
@@ -1093,7 +1093,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 	if (!tmp) return MM_MISS;
 
 	if ((mdef->mhp -= tmp) < 1) {
-	    if (m_at(mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
+	    if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
 		remove_monster(mdef->mx, mdef->my);
 		mdef->mhp = 1;	/* otherwise place_monster will complain */
 		place_monster(mdef, mdef->mx, mdef->my);

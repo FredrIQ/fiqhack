@@ -148,7 +148,7 @@ found:
 	/* KMH, conduct */
 	u.uconduct.literate++;
 
-	new_obj = mksobj(i, FALSE, FALSE);
+	new_obj = mksobj(level, i, FALSE, FALSE);
 	new_obj->bknown = (paper->bknown && pen->bknown);
 
 	/* shk imposes a flat rate per use, not based on actual charges used */

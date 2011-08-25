@@ -511,7 +511,7 @@ static void indent(int d)
 
 /*
  * Place a level.  First, find the possible places on a dungeon map
- * template.  Next pick one.  Then try to place the next level.  If
+ * template.  Next pick one.  Then try to place the next level->  If
  * sucessful, we're done.  Otherwise, try another (and another) until
  * all possible places have been tried.  If all possible places have
  * been exausted, return false.
@@ -992,9 +992,9 @@ branch *Is_branchlev(d_level *lev)
 /* goto the next level (or appropriate dungeon) */
 void next_level(boolean at_stairs)
 {
-	if (at_stairs && u.ux == level.sstairs.sx && u.uy == level.sstairs.sy) {
+	if (at_stairs && u.ux == level->sstairs.sx && u.uy == level->sstairs.sy) {
 		/* Taking a down dungeon branch. */
-		goto_level(&level.sstairs.tolev, at_stairs, FALSE, FALSE);
+		goto_level(&level->sstairs.tolev, at_stairs, FALSE, FALSE);
 	} else {
 		/* Going down a stairs or jump in a trap door. */
 		d_level	newlevel;
@@ -1008,13 +1008,13 @@ void next_level(boolean at_stairs)
 /* goto the previous level (or appropriate dungeon) */
 void prev_level(boolean at_stairs)
 {
-	if (at_stairs && u.ux == level.sstairs.sx && u.uy == level.sstairs.sy) {
+	if (at_stairs && u.ux == level->sstairs.sx && u.uy == level->sstairs.sy) {
 		/* Taking an up dungeon branch. */
 		/* KMH -- Upwards branches are okay if not level 1 */
 		/* (Just make sure it doesn't go above depth 1) */
 		if (!u.uz.dnum && u.uz.dlevel == 1 && !u.uhave.amulet)
 		    done(ESCAPED);
-		else goto_level(&level.sstairs.tolev, at_stairs, FALSE, FALSE);
+		else goto_level(&level->sstairs.tolev, at_stairs, FALSE, FALSE);
 	} else {
 		/* Going up a stairs or rising through the ceiling. */
 		d_level	newlevel;
@@ -1037,8 +1037,8 @@ void u_on_newpos(int x, int y)
 void u_on_sstairs(void)
 {
 
-	if (level.sstairs.sx) {
-	    u_on_newpos(level.sstairs.sx, level.sstairs.sy);
+	if (level->sstairs.sx) {
+	    u_on_newpos(level->sstairs.sx, level->sstairs.sy);
 	} else {
 	    /* code stolen from goto_level */
 	    int trycnt = 0;
@@ -1046,7 +1046,7 @@ void u_on_sstairs(void)
 #ifdef DEBUG
 	    pline("u_on_sstairs: picking random spot");
 #endif
-#define badspot(x,y) ((level.locations[x][y].typ != ROOM && level.locations[x][y].typ != CORR) || MON_AT(x, y))
+#define badspot(x,y) ((level->locations[x][y].typ != ROOM && level->locations[x][y].typ != CORR) || MON_AT(level, x, y))
 	    do {
 		x = rnd(COLNO-1);
 		y = rn2(ROWNO);
@@ -1063,49 +1063,49 @@ void u_on_sstairs(void)
 /* place you on upstairs (or special equivalent) */
 void u_on_upstairs(void)
 {
-	if (level.upstair.sx) {
-		u_on_newpos(level.upstair.sx, level.upstair.sy);
+	if (level->upstair.sx) {
+		u_on_newpos(level->upstair.sx, level->upstair.sy);
 	} else
 		u_on_sstairs();
 }
 
-/* place you on level.dnstairs (or special equivalent) */
+/* place you on level->dnstairs (or special equivalent) */
 void u_on_dnstairs(void)
 {
-	if (level.dnstair.sx) {
-		u_on_newpos(level.dnstair.sx, level.dnstair.sy);
+	if (level->dnstair.sx) {
+		u_on_newpos(level->dnstair.sx, level->dnstair.sy);
 	} else
 		u_on_sstairs();
 }
 
 boolean On_stairs(xchar x, xchar y)
 {
-	return (boolean)((x == level.upstair.sx && y == level.upstair.sy) ||
-	       (x == level.dnstair.sx && y == level.dnstair.sy) ||
-	       (x == level.dnladder.sx && y == level.dnladder.sy) ||
-	       (x == level.upladder.sx && y == level.upladder.sy) ||
-	       (x == level.sstairs.sx && y == level.sstairs.sy));
+	return (boolean)((x == level->upstair.sx && y == level->upstair.sy) ||
+	       (x == level->dnstair.sx && y == level->dnstair.sy) ||
+	       (x == level->dnladder.sx && y == level->dnladder.sy) ||
+	       (x == level->upladder.sx && y == level->upladder.sy) ||
+	       (x == level->sstairs.sx && y == level->sstairs.sy));
 }
 
 boolean Is_botlevel(d_level *lev)
 {
-	return (boolean)(lev->dlevel == dungeons[lev->dnum].num_dunlevs);
+	return (lev->dlevel == dungeons[lev->dnum].num_dunlevs);
 }
 
-boolean Can_dig_down(d_level *lev)
+boolean can_dig_down(struct level *lev)
 {
-	return (boolean)(!level.flags.hardfloor
-	    && !Is_botlevel(lev) && !Invocation_lev(lev));
+	return (!lev->flags.hardfloor && !Is_botlevel(&lev->z) &&
+	        !Invocation_lev(&lev->z));
 }
 
 /*
  * Like Can_dig_down (above), but also allows falling through on the
- * stronghold level.  Normally, the bottom level of a dungeon resists
+ * stronghold level->  Normally, the bottom level of a dungeon resists
  * both digging and falling.
  */
-boolean Can_fall_thru(d_level *lev)
+boolean can_fall_thru(struct level *lev)
 {
-	return (boolean)(Can_dig_down(lev) || Is_stronghold(lev));
+	return (can_dig_down(lev) || Is_stronghold(&lev->z));
 }
 
 /*
@@ -1123,7 +1123,7 @@ boolean Can_rise_up(int x, int y, d_level *lev)
 	return FALSE;
     return (boolean)(lev->dlevel > 1 ||
 		(dungeons[lev->dnum].entry_lev == 1 && ledger_no(lev) != 1 &&
-		 level.sstairs.sx && level.sstairs.up));
+		 level->sstairs.sx && level->sstairs.up));
 }
 
 /*
@@ -1255,9 +1255,9 @@ boolean In_W_tower(int x, int y, d_level *lev)
 	 * (from above or below) define the tower's boundary.
 	 *	assert( updest.nIJ == dndest.nIJ for I={l|h},J={x|y} );
 	 */
-	if (level.dndest.nlx > 0)
-	    return (boolean)within_bounded_area(x, y, level.dndest.nlx, level.dndest.nly,
-						level.dndest.nhx, level.dndest.nhy);
+	if (level->dndest.nlx > 0)
+	    return (boolean)within_bounded_area(x, y, level->dndest.nlx, level->dndest.nly,
+						level->dndest.nhx, level->dndest.nhy);
 	else
 	    impossible("No boundary for Wizard's Tower?");
 	return FALSE;
@@ -1577,7 +1577,7 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
     else if (Is_earthlevel(&u.uz) || Is_waterlevel(&u.uz)
 				|| Is_firelevel(&u.uz) || Is_airlevel(&u.uz)) {
 	struct trap *trap;
-	for (trap = level.lev_traps; trap; trap = trap->ntrap)
+	for (trap = level->lev_traps; trap; trap = trap->ntrap)
 	    if (trap->ttyp == MAGIC_PORTAL)
 		break;
 

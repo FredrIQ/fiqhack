@@ -30,7 +30,7 @@ long somegold(void)
 
 void stealgold(struct monst *mtmp)
 {
-	struct obj *gold = g_at(u.ux, u.uy);
+	struct obj *gold = gold_at(level, u.ux, u.uy);
 	long tmp;
 
 	if (gold && ( !u.ugold || gold->quan > u.ugold || !rn2(5))) {
@@ -129,7 +129,7 @@ static int stealarm(void)
 
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    if (otmp->o_id == stealoid) {
-		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (mtmp->m_id == stealmid) {
 			if (DEADMONSTER(mtmp)) impossible("stealarm(): dead monster stealing"); 
 			if (!dmgtype(mtmp->data, AD_SITM)) /* polymorphed */
@@ -499,7 +499,7 @@ static void mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
     if (verbosely && cansee(omx, omy))
 	pline("%s drops %s.", Monnam(mon), distant_name(obj, doname));
     if (!flooreffects(obj, omx, omy, "fall")) {
-	place_object(obj, omx, omy);
+	place_object(obj, level, omx, omy);
 	stackobj(obj);
     }
 }
@@ -566,7 +566,7 @@ void relobj(struct monst *mtmp, int show,
 #ifndef GOLDOBJ
 	if (mtmp->mgold) {
 		long g = mtmp->mgold;
-		mkgold(g, omx, omy);
+		mkgold(g, level, omx, omy);
 		if (is_pet && cansee(omx, omy) && flags.verbose)
 			pline("%s drops %ld gold piece%s.", Monnam(mtmp),
 				g, plur(g));

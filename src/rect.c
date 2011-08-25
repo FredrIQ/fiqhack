@@ -3,9 +3,9 @@
 
 #include "hack.h"
 
-int get_rect_ind(NhRect *);
+int get_rect_ind(struct nhrect *);
 
-static boolean intersect(NhRect *,NhRect *,NhRect *);
+static boolean intersect(struct nhrect *,struct nhrect *,struct nhrect *);
 
     /*
      * In this file, we will handle the various rectangle functions we
@@ -16,7 +16,7 @@ static boolean intersect(NhRect *,NhRect *,NhRect *);
 #define XLIM	4
 #define YLIM	3
 
-static NhRect rect[MAXRECT+1];
+static struct nhrect rect[MAXRECT+1];
 static int rect_cnt;
 
 /*
@@ -33,11 +33,11 @@ void init_rect(void)
 }
 
 /*
- * Search Index of one precise NhRect.
+ * Search Index of one precise struct nhrect.
  */
-int get_rect_ind(NhRect *r)
+int get_rect_ind(struct nhrect *r)
 {
-	NhRect *rectp;
+	struct nhrect *rectp;
 	int lx, ly, hx, hy;
 	int i;
 
@@ -53,9 +53,9 @@ int get_rect_ind(NhRect *r)
 /*
  * Search a free rectangle that include the one given in arg
  */
-NhRect *get_rect(NhRect *r)
+struct nhrect *get_rect(struct nhrect *r)
 {
-	NhRect *rectp;
+	struct nhrect *rectp;
 	int lx, ly, hx, hy;
 	int i;
 
@@ -69,10 +69,10 @@ NhRect *get_rect(NhRect *r)
 }
 
 /*
- * Get some random NhRect from the list.
+ * Get some random struct nhrect from the list.
  */
 
-NhRect *rnd_rect(void)
+struct nhrect *rnd_rect(void)
 {
 	    return rect_cnt > 0 ? &rect[rn2(rect_cnt)] : 0;
 }
@@ -83,7 +83,7 @@ NhRect *rnd_rect(void)
  * otherwise returns FALSE
  */
 
-static boolean intersect(NhRect *r1, NhRect *r2, NhRect *r3)
+static boolean intersect(struct nhrect *r1, struct nhrect *r2, struct nhrect *r3)
 {
 	if (r2->lx > r1->hx || r2->ly > r1->hy ||
 	    r2->hx < r1->lx || r2->hy < r1->ly)
@@ -100,10 +100,10 @@ static boolean intersect(NhRect *r1, NhRect *r2, NhRect *r3)
 }
 
 /*
- * Remove a rectangle from the list of free NhRect.
+ * Remove a rectangle from the list of free struct nhrect.
  */
 
-void remove_rect(NhRect *r)
+void remove_rect(struct nhrect *r)
 {
 	int ind;
 
@@ -113,16 +113,16 @@ void remove_rect(NhRect *r)
 }
 
 /*
- * Add a NhRect to the list.
+ * Add a struct nhrect to the list.
  */
 
-void add_rect(NhRect *r)
+void add_rect(struct nhrect *r)
 {
 	if (rect_cnt >= MAXRECT) {
 		if (wizard) pline("MAXRECT may be too small.");
 		return;
 	}
-	/* Check that this NhRect is not included in another one */
+	/* Check that this struct nhrect is not included in another one */
 	if (get_rect(r))
 	    return;
 	rect[rect_cnt] = *r;
@@ -136,9 +136,9 @@ void add_rect(NhRect *r)
  * then remove it.
  */
 
-void split_rects(NhRect *r1, NhRect *r2)
+void split_rects(struct nhrect *r1, struct nhrect *r2)
 {
-	NhRect r, old_r;
+	struct nhrect r, old_r;
 	int i;
 
 	old_r = *r1;

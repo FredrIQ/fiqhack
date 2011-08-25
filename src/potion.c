@@ -274,7 +274,7 @@ boolean make_hallucinated(long xtime, /* nonzero if this is an attempt to turn o
 
 static void ghost_from_bottle(void)
 {
-	struct monst *mtmp = makemon(&mons[PM_GHOST], u.ux, u.uy, NO_MM_FLAGS);
+	struct monst *mtmp = makemon(&mons[PM_GHOST], level, u.ux, u.uy, NO_MM_FLAGS);
 
 	if (!mtmp) {
 		pline("This bottle turns out to be empty.");
@@ -305,14 +305,14 @@ int dodrink(void)
 		return 0;
 	}
 	/* Is there a fountain to drink from here? */
-	if (IS_FOUNTAIN(level.locations[u.ux][u.uy].typ) && !Levitation) {
+	if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !Levitation) {
 		if (yn("Drink from the fountain?") == 'y') {
 			drinkfountain();
 			return 1;
 		}
 	}
 	/* Or a kitchen sink? */
-	if (IS_SINK(level.locations[u.ux][u.uy].typ)) {
+	if (IS_SINK(level->locations[u.ux][u.uy].typ)) {
 		if (yn("Drink from the sink?") == 'y') {
 			drinksink();
 			return 1;
@@ -597,11 +597,11 @@ int peffects(struct obj *otmp)
 		    incr_itimeout(&HDetect_monsters, i);
 		    for (x = 1; x < COLNO; x++) {
 			for (y = 0; y < ROWNO; y++) {
-			    if (level.locations[x][y].mem_invis) {
+			    if (level->locations[x][y].mem_invis) {
 				unmap_object(x, y);
 				newsym(x,y);
 			    }
-			    if (MON_AT(x,y)) unkn = 0;
+			    if (MON_AT(level, x,y)) unkn = 0;
 			}
 		    }
 		    see_monsters();
@@ -786,9 +786,9 @@ int peffects(struct obj *otmp)
 			/* reverse kludge */
 			HLevitation = 0;
 			if (otmp->cursed && !Is_waterlevel(&u.uz)) {
-	if ((u.ux != level.upstair.sx || u.uy != level.upstair.sy)
-	   && (u.ux != level.sstairs.sx || u.uy != level.sstairs.sy || !level.sstairs.up)
-	   && (!level.upladder.sx || u.ux != level.upladder.sx || u.uy != level.upladder.sy)
+	if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
+	   && (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy || !level->sstairs.up)
+	   && (!level->upladder.sx || u.ux != level->upladder.sx || u.uy != level->upladder.sy)
 	) {
 					You("hit your %s on the %s.",
 						body_part(HEAD),
@@ -1117,7 +1117,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		docall(obj);
 	if (*u.ushops && obj->unpaid) {
 	        struct monst *shkp =
-			shop_keeper(*in_rooms(u.ux, u.uy, SHOPBASE));
+			shop_keeper(*in_rooms(level, u.ux, u.uy, SHOPBASE));
 
 		if (!shkp)
 		    obj->unpaid = 0;
@@ -1476,14 +1476,14 @@ int dodip(void)
 	if (!(obj = getobj(allowall, "dip")))
 		return 0;
 
-	here = level.locations[u.ux][u.uy].typ;
+	here = level->locations[u.ux][u.uy].typ;
 	/* Is there a fountain to dip into here? */
 	if (IS_FOUNTAIN(here)) {
 		if (yn("Dip it into the fountain?") == 'y') {
 			dipfountain(obj);
 			return 1;
 		}
-	} else if (is_pool(u.ux,u.uy)) {
+	} else if (is_pool(level, u.ux,u.uy)) {
 		tmp = waterbody_name(u.ux,u.uy);
 		sprintf(qbuf, "Dip it into the %s?", tmp);
 		if (yn(qbuf) == 'y') {
@@ -1632,7 +1632,7 @@ int dodip(void)
 			case 4:
 				{
 				  struct obj *otmp;
-				  otmp = mkobj(POTION_CLASS,FALSE);
+				  otmp = mkobj(level, POTION_CLASS,FALSE);
 				  obj->otyp = otmp->otyp;
 				  obfree(otmp, NULL);
 				}
@@ -1868,7 +1868,7 @@ void djinni_from_bottle(struct obj *obj)
 	struct monst *mtmp;
 	int chance;
 
-	if (!(mtmp = makemon(&mons[PM_DJINNI], u.ux, u.uy, NO_MM_FLAGS))){
+	if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))){
 		pline("It turns out to be empty.");
 		return;
 	}

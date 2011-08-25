@@ -471,13 +471,13 @@ void forget_map(int howmuch)
 	for (zx = 0; zx < COLNO; zx++) for(zy = 0; zy < ROWNO; zy++)
 	    if (howmuch & ALL_MAP || rn2(7)) {
 		/* Zonk all memory of this location. */
-		level.locations[zx][zy].seenv = 0;
-		level.locations[zx][zy].waslit = 0;
-		level.locations[zx][zy].mem_bg = S_unexplored;
-		level.locations[zx][zy].mem_trap = 0;
-		level.locations[zx][zy].mem_obj = 0;
-		level.locations[zx][zy].mem_obj_mn = 0;
-		level.locations[zx][zy].mem_invis = 0;
+		level->locations[zx][zy].seenv = 0;
+		level->locations[zx][zy].waslit = 0;
+		level->locations[zx][zy].mem_bg = S_unexplored;
+		level->locations[zx][zy].mem_trap = 0;
+		level->locations[zx][zy].mem_obj = 0;
+		level->locations[zx][zy].mem_obj_mn = 0;
+		level->locations[zx][zy].mem_invis = 0;
 	    }
 }
 
@@ -487,7 +487,7 @@ void forget_traps(void)
 	struct trap *trap;
 
 	/* forget all traps (except the one the hero is in :-) */
-	for (trap = level.lev_traps; trap; trap = trap->ntrap)
+	for (trap = level->lev_traps; trap; trap = trap->ntrap)
 	    if ((trap->tx != u.ux || trap->ty != u.uy) && (trap->ttyp != HOLE))
 		trap->tseen = 0;
 }
@@ -795,7 +795,7 @@ int seffects(struct obj *sobj)
 	    {	int ct = 0;
 		struct monst *mtmp;
 
-		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp)) continue;
 		    if (cansee(mtmp->mx,mtmp->my)) {
 			if (confused || sobj->cursed) {
@@ -930,7 +930,7 @@ int seffects(struct obj *sobj)
 
 		    for (i = -bd; i <= bd; i++) for (j = -bd; j <= bd; j++) {
 			if (!isok(u.ux + i, u.uy + j)) continue;
-			if ((mtmp = m_at(u.ux + i, u.uy + j)) != 0)
+			if ((mtmp = m_at(level, u.ux + i, u.uy + j)) != 0)
 			    maybe_tame(mtmp, sobj);
 		    }
 		}
@@ -1006,7 +1006,7 @@ int seffects(struct obj *sobj)
 		recharge(otmp, sobj->cursed ? -1 : (sobj->blessed ? 1 : 0));
 		break;
 	case SCR_MAGIC_MAPPING:
-		if (level.flags.nommap) {
+		if (level->flags.nommap) {
 		    Your("mind is filled with crazy lines!");
 		    if (Hallucination)
 			pline("Wow!  Modern art.");
@@ -1019,14 +1019,14 @@ int seffects(struct obj *sobj)
 		    int x, y;
 
 		    for (x = 1; x < COLNO; x++)
-		    	for (y = 0; y < ROWNO; y++)
-		    	    if (level.locations[x][y].typ == SDOOR)
-		    	    	cvt_sdoor_to_door(&level.locations[x][y]);
+			for (y = 0; y < ROWNO; y++)
+			    if (level->locations[x][y].typ == SDOOR)
+				cvt_sdoor_to_door(&level->locations[x][y]);
 		    /* do_mapping() already reveals secret passages */
 		}
 		known = TRUE;
 	case SPE_MAGIC_MAPPING:
-		if (level.flags.nommap) {
+		if (level->flags.nommap) {
 		    Your("%s spins as something blocks the spell!", body_part(HEAD));
 		    make_confused(HConfusion + rnd(30), FALSE);
 		    break;
@@ -1094,48 +1094,48 @@ int seffects(struct obj *sobj)
 	    	 (!In_endgame(&u.uz) || Is_earthlevel(&u.uz))) {
 	    	int x, y;
 
-	    	/* Identify the scroll */
-	    	pline_The("%s rumbles %s you!", ceiling(u.ux,u.uy),
-	    			sobj->blessed ? "around" : "above");
-	    	known = 1;
-	    	if (In_sokoban(&u.uz))
-	    	    change_luck(-1);	/* Sokoban guilt */
+		/* Identify the scroll */
+		pline_The("%s rumbles %s you!", ceiling(u.ux,u.uy),
+				sobj->blessed ? "around" : "above");
+		known = 1;
+		if (In_sokoban(&u.uz))
+		    change_luck(-1);	/* Sokoban guilt */
 
-	    	/* Loop through the surrounding squares */
-	    	if (!sobj->cursed) for (x = u.ux-1; x <= u.ux+1; x++) {
-	    	    for (y = u.uy-1; y <= u.uy+1; y++) {
+		/* Loop through the surrounding squares */
+		if (!sobj->cursed) for (x = u.ux-1; x <= u.ux+1; x++) {
+		    for (y = u.uy-1; y <= u.uy+1; y++) {
 
-	    	    	/* Is this a suitable spot? */
-	    	    	if (isok(x, y) && !closed_door(x, y) &&
-	    	    			!IS_ROCK(level.locations[x][y].typ) &&
-	    	    			!IS_AIR(level.locations[x][y].typ) &&
+			/* Is this a suitable spot? */
+			if (isok(x, y) && !closed_door(level, x, y) &&
+					!IS_ROCK(level->locations[x][y].typ) &&
+					!IS_AIR(level->locations[x][y].typ) &&
 					(x != u.ux || y != u.uy)) {
 			    struct obj *otmp2;
 			    struct monst *mtmp;
 
-	    	    	    /* Make the object(s) */
-	    	    	    otmp2 = mksobj(confused ? ROCK : BOULDER,
-	    	    	    		FALSE, FALSE);
-	    	    	    if (!otmp2) continue;  /* Shouldn't happen */
-	    	    	    otmp2->quan = confused ? rn1(5,2) : 1;
-	    	    	    otmp2->owt = weight(otmp2);
+			    /* Make the object(s) */
+			    otmp2 = mksobj(level, confused ? ROCK : BOULDER,
+					FALSE, FALSE);
+			    if (!otmp2) continue;  /* Shouldn't happen */
+			    otmp2->quan = confused ? rn1(5,2) : 1;
+			    otmp2->owt = weight(otmp2);
 
-	    	    	    /* Find the monster here (won't be player) */
-	    	    	    mtmp = m_at(x, y);
-	    	    	    if (mtmp && !amorphous(mtmp->data) &&
-	    	    	    		!passes_walls(mtmp->data) &&
-	    	    	    		!noncorporeal(mtmp->data) &&
-	    	    	    		!unsolid(mtmp->data)) {
+			    /* Find the monster here (won't be player) */
+			    mtmp = m_at(level, x, y);
+			    if (mtmp && !amorphous(mtmp->data) &&
+					!passes_walls(mtmp->data) &&
+					!noncorporeal(mtmp->data) &&
+					!unsolid(mtmp->data)) {
 				struct obj *helmet = which_armor(mtmp, W_ARMH);
 				int mdmg;
 
 				if (cansee(mtmp->mx, mtmp->my)) {
 				    pline("%s is hit by %s!", Monnam(mtmp),
-	    	    	    			doname(otmp2));
+						doname(otmp2));
 				    if (mtmp->minvis && !canspotmon(mtmp))
 					map_invisible(mtmp->mx, mtmp->my);
 				}
-	    	    	    	mdmg = dmgval(otmp2, mtmp) * otmp2->quan;
+				mdmg = dmgval(otmp2, mtmp) * otmp2->quan;
 				if (helmet) {
 				    if (is_metallic(helmet)) {
 					if (canspotmon(mtmp))
@@ -1150,17 +1150,17 @@ int seffects(struct obj *sobj)
 						mhim(mtmp));
 				    }
 				}
-	    	    	    	mtmp->mhp -= mdmg;
-	    	    	    	if (mtmp->mhp <= 0)
-	    	    	    	    xkilled(mtmp, 1);
-	    	    	    }
-	    	    	    /* Drop the rock/boulder to the floor */
-	    	    	    if (!flooreffects(otmp2, x, y, "fall")) {
-	    	    	    	place_object(otmp2, x, y);
-	    	    	    	stackobj(otmp2);
-	    	    	    	newsym(x, y);  /* map the rock */
-	    	    	    }
-	    	    	}
+				mtmp->mhp -= mdmg;
+				if (mtmp->mhp <= 0)
+				    xkilled(mtmp, 1);
+			    }
+			    /* Drop the rock/boulder to the floor */
+			    if (!flooreffects(otmp2, x, y, "fall")) {
+				place_object(otmp2, level, x, y);
+				stackobj(otmp2);
+				newsym(x, y);  /* map the rock */
+			    }
+			}
 		    }
 		}
 		/* Attack the player */
@@ -1169,7 +1169,7 @@ int seffects(struct obj *sobj)
 		    struct obj *otmp2;
 
 		    /* Okay, _you_ write this without repeating the code */
-		    otmp2 = mksobj(confused ? ROCK : BOULDER,
+		    otmp2 = mksobj(level, confused ? ROCK : BOULDER,
 				FALSE, FALSE);
 		    if (!otmp2) break;
 		    otmp2->quan = confused ? rn1(5,2) : 1;
@@ -1193,7 +1193,7 @@ int seffects(struct obj *sobj)
 			dmg = 0;
 		    /* Must be before the losehp(), for bones files */
 		    if (!flooreffects(otmp2, u.ux, u.uy, "fall")) {
-			place_object(otmp2, u.ux, u.uy);
+			place_object(otmp2, level, u.ux, u.uy);
 			stackobj(otmp2);
 			newsym(u.ux, u.uy);
 		    }
@@ -1225,7 +1225,7 @@ int seffects(struct obj *sobj)
 		    You("smell rotten eggs.");
 		    return 0;
 		}
-		create_gas_cloud(cc.x, cc.y, 3+bcsign(sobj),
+		create_gas_cloud(level, cc.x, cc.y, 3+bcsign(sobj),
 						8+4*bcsign(sobj));
 		break;
 	}
@@ -1250,9 +1250,9 @@ static void wand_explode(struct obj *obj)
 static void set_lit(int x, int y, void *val)
 {
 	if (val)
-	    level.locations[x][y].lit = 1;
+	    level->locations[x][y].lit = 1;
 	else {
-	    level.locations[x][y].lit = 0;
+	    level->locations[x][y].lit = 0;
 	    snuff_light_source(x, y);
 	}
 }
@@ -1315,14 +1315,14 @@ do_it:
 	if (Is_rogue_level(&u.uz)) {
 	    /* Can't use do_clear_area because MAX_RADIUS is too small */
 	    /* rogue lighting must light the entire room */
-	    int rnum = level.locations[u.ux][u.uy].roomno - ROOMOFFSET;
+	    int rnum = level->locations[u.ux][u.uy].roomno - ROOMOFFSET;
 	    int rx, ry;
 	    if (rnum >= 0) {
-		for (rx = level.rooms[rnum].lx-1; rx <= level.rooms[rnum].hx+1; rx++)
-		    for (ry = level.rooms[rnum].ly-1; ry <= level.rooms[rnum].hy+1; ry++)
+		for (rx = level->rooms[rnum].lx-1; rx <= level->rooms[rnum].hx+1; rx++)
+		    for (ry = level->rooms[rnum].ly-1; ry <= level->rooms[rnum].hy+1; ry++)
 			set_lit(rx, ry,
 				(on ? &is_lit : NULL));
-		level.rooms[rnum].rlit = on;
+		level->rooms[rnum].rlit = on;
 	    }
 	    /* hallways remain dark on the rogue level */
 	} else
@@ -1407,7 +1407,7 @@ static void do_class_genocide(void)
 			    struct monst *mtmp, *mtmp2;
 
 			    gonecnt = 0;
-			    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+			    for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 				mtmp2 = mtmp->nmon;
 			    	if (DEADMONSTER(mtmp)) continue;
 				mongone(mtmp);
@@ -1636,7 +1636,7 @@ void do_genocide(int how)
 	    if (!(mons[mndx].geno & G_UNIQ) &&
 		    !(mvitals[mndx].mvflags & (G_GENOD | G_EXTINCT)))
 		for (i = rn1(3, 4); i > 0; i--) {
-		    if (!makemon(ptr, u.ux, u.uy, NO_MINVENT))
+		    if (!makemon(ptr, level, u.ux, u.uy, NO_MINVENT))
 			break;	/* couldn't make one */
 		    ++cnt;
 		    if (mvitals[mndx].mvflags & G_EXTINCT)
@@ -1660,11 +1660,11 @@ void punish(struct obj *sobj)
 	}
 	if (amorphous(youmonst.data) || is_whirly(youmonst.data) || unsolid(youmonst.data)) {
 		pline("A ball and chain appears, then falls away.");
-		dropy(mkobj(BALL_CLASS, TRUE));
+		dropy(mkobj(level, BALL_CLASS, TRUE));
 		return;
 	}
-	setworn(mkobj(CHAIN_CLASS, TRUE), W_CHAIN);
-	setworn(mkobj(BALL_CLASS, TRUE), W_BALL);
+	setworn(mkobj(level, CHAIN_CLASS, TRUE), W_CHAIN);
+	setworn(mkobj(level, BALL_CLASS, TRUE), W_BALL);
 	uball->spe = 1;		/* special ball (see save) */
 
 	/*
@@ -1766,13 +1766,13 @@ boolean create_particular(void)
 		if (monclass != MAXMCLASSES)
 		    whichpm = mkclass(monclass, 0);
 		if (maketame) {
-		    mtmp = makemon(whichpm, u.ux, u.uy, MM_EDOG);
+		    mtmp = makemon(whichpm, level, u.ux, u.uy, MM_EDOG);
 		    if (mtmp) {
 			initedog(mtmp);
 			set_malign(mtmp);
 		    }
 		} else {
-		    mtmp = makemon(whichpm, u.ux, u.uy, NO_MM_FLAGS);
+		    mtmp = makemon(whichpm, level, u.ux, u.uy, NO_MM_FLAGS);
 		    if ((makepeaceful || makehostile) && mtmp) {
 			mtmp->mtame = 0;	/* sanity precaution */
 			mtmp->mpeaceful = makepeaceful ? 1 : 0;

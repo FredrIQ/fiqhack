@@ -105,7 +105,7 @@ boolean attack_checks(struct monst *mtmp,
 		 * not stay there, so the player will have suddenly forgotten
 		 * the square's contents for no apparent reason.
 		if (!canspotmon(mtmp) &&
-		    !level.locations[u.ux+u.dx][u.uy+u.dy].mem_invis)
+		    !level->locations[u.ux+u.dx][u.uy+u.dy].mem_invis)
 			map_invisible(u.ux+u.dx, u.uy+u.dy);
 		 */
 		return FALSE;
@@ -121,7 +121,7 @@ boolean attack_checks(struct monst *mtmp,
 	 */
 	if (!canspotmon(mtmp) &&
 		    !warning_at(u.ux+dx, u.uy+dy) &&
-		    !level.locations[u.ux+dx][u.uy+dy].mem_invis &&
+		    !level->locations[u.ux+dx][u.uy+dy].mem_invis &&
 		    !(!Blind && mtmp->mundetected && hides_under(mtmp->data))) {
 		pline("Wait!  There's something there you can't see!");
 		map_invisible(u.ux+dx, u.uy+dy);
@@ -143,7 +143,7 @@ boolean attack_checks(struct monst *mtmp,
 		 * some (probably different) unseen monster, the player is in
 		 * luck--he attacks it even though it's hidden.
 		 */
-		if (level.locations[mtmp->mx][mtmp->my].mem_invis) {
+		if (level->locations[mtmp->mx][mtmp->my].mem_invis) {
 		    seemimic(mtmp);
 		    return FALSE;
 		}
@@ -156,16 +156,16 @@ boolean attack_checks(struct monst *mtmp,
 		(hides_under(mtmp->data) || mtmp->data->mlet == S_EEL)) {
 	    mtmp->mundetected = mtmp->msleeping = 0;
 	    newsym(mtmp->mx, mtmp->my);
-	    if (level.locations[mtmp->mx][mtmp->my].mem_invis) {
+	    if (level->locations[mtmp->mx][mtmp->my].mem_invis) {
 		seemimic(mtmp);
 		return FALSE;
 	    }
 	    if (!(Blind ? Blind_telepat : Unblind_telepat)) {
 		struct obj *obj;
 
-		if (Blind || (is_pool(mtmp->mx,mtmp->my) && !Underwater))
+		if (Blind || (is_pool(level, mtmp->mx,mtmp->my) && !Underwater))
 		    pline("Wait!  There's a hidden monster there!");
-		else if ((obj = level.objects[mtmp->mx][mtmp->my]) != 0)
+		else if ((obj = level->objects[mtmp->mx][mtmp->my]) != 0)
 		    pline("Wait!  There's %s hiding under %s!",
 			  an(l_monnam(mtmp)), doname(obj));
 		return TRUE;
@@ -302,14 +302,14 @@ boolean attack(struct monst *mtmp, schar dx, schar dy)
 			inshop = FALSE;
 		char *p;
 
-		for (p = in_rooms(mtmp->mx, mtmp->my, SHOPBASE); *p; p++)
-		    if (tended_shop(&level.rooms[*p - ROOMOFFSET])) {
+		for (p = in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE); *p; p++)
+		    if (tended_shop(&level->rooms[*p - ROOMOFFSET])) {
 			inshop = TRUE;
 			break;
 		    }
 
 		if (inshop || foo ||
-			(IS_ROCK(level.locations[u.ux][u.uy].typ) &&
+			(IS_ROCK(level->locations[u.ux][u.uy].typ) &&
 					!passes_walls(mtmp->data))) {
 		    char buf[BUFSZ];
 
@@ -385,7 +385,7 @@ atk_done:
 	 * evade.
 	 */
 	if (flags.forcefight && mtmp->mhp > 0 && !canspotmon(mtmp) &&
-	    !level.locations[u.ux+dx][u.uy+dy].mem_invis &&
+	    !level->locations[u.ux+dx][u.uy+dy].mem_invis &&
 	    !(u.uswallow && mtmp == u.ustuck))
 		map_invisible(u.ux+dx, u.uy+dy);
 
@@ -421,7 +421,7 @@ static boolean known_hitum(struct monst *mon, int *mhit, const struct attack *ua
 	    malive = hmon(mon, uwep, 0);
 	    /* this assumes that Stormbringer was uwep not uswapwep */ 
 	    if (malive && u.twoweap && !override_confirmation &&
-		    m_at(x, y) == mon)
+		    m_at(level, x, y) == mon)
 		malive = hmon(mon, uswapwep, 0);
 	    if (malive) {
 		/* monster still alive */
@@ -756,7 +756,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 				obj->spe = 0;
 				obj->known = obj->dknown = obj->bknown = 0;
 				obj->owt = weight(obj);
-				if (thrown) place_object(obj, mon->mx, mon->my);
+				if (thrown) place_object(obj, level, mon->mx, mon->my);
 			    } else {
 				pline("Splat!");
 				useup_eggs(obj);
@@ -1130,7 +1130,7 @@ static void demonpet(void)
 	pline("Some hell-p has arrived!");
 	i = !rn2(6) ? ndemon(u.ualign.type) : NON_PM;
 	pm = i != NON_PM ? &mons[i] : youmonst.data;
-	if ((dtmp = makemon(pm, u.ux, u.uy, NO_MM_FLAGS)) != 0)
+	if ((dtmp = makemon(pm, level, u.ux, u.uy, NO_MM_FLAGS)) != 0)
 	    tamedog(dtmp, NULL);
 	exercise(A_WIS, TRUE);
 }
@@ -1523,7 +1523,7 @@ int damageum(struct monst *mdef, const struct attack *mattk)
 			}
 		    } else if (u.ustuck == mdef) {
 			/* Monsters don't wear amulets of magical breathing */
-			if (is_pool(u.ux,u.uy) && !is_swimmer(mdef->data) &&
+			if (is_pool(level, u.ux,u.uy) && !is_swimmer(mdef->data) &&
 			    !amphibious(mdef->data)) {
 			    You("drown %s...", mon_nam(mdef));
 			    tmp = mdef->mhp;
@@ -1662,10 +1662,10 @@ static void start_engulf(struct monst *mdef)
 		y = mdef->my;
 		map_location(u.ux, u.uy, TRUE);
 		
-		dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		         level.locations[x][y].mem_trap,
-		         level.locations[x][y].mem_obj,
-		         level.locations[x][y].mem_obj_mn,
+		dbuf_set(x, y, level->locations[x][y].mem_bg, 
+		         level->locations[x][y].mem_trap,
+		         level->locations[x][y].mem_obj,
+		         level->locations[x][y].mem_obj_mn,
 		         0, dbuf_monid((&youmonst)), 0, 0);
 	}
 	You("engulf %s!", mon_nam(mdef));
@@ -1906,7 +1906,7 @@ use_weapon:
 			    break;
 			} else sum[i] = dhit;
 			/* might be a worm that gets cut in half */
-			if (m_at(u.ux+dx, u.uy+dy) != mon)
+			if (m_at(level, u.ux+dx, u.uy+dy) != mon)
 			    return (boolean)(nsum != 0);
 			/* Do not print "You hit" message, since known_hitum
 			 * already did it.
@@ -2342,10 +2342,10 @@ void stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
 	    else if (mtmp->m_ap_type == M_AP_MONSTER)
 		what = a_monnam(mtmp);	/* differs from what was sensed */
 	} else {
-	    if (level.locations[u.ux+dx][u.uy+dy].mem_bg == S_hcdoor ||
-		level.locations[u.ux+dx][u.uy+dy].mem_bg == S_vcdoor)
+	    if (level->locations[u.ux+dx][u.uy+dy].mem_bg == S_hcdoor ||
+		level->locations[u.ux+dx][u.uy+dy].mem_bg == S_vcdoor)
 		fmt = "The door actually was %s!";
-	    else if (level.locations[u.ux+dx][u.uy+dy].mem_obj - 1 == GOLD_PIECE)
+	    else if (level->locations[u.ux+dx][u.uy+dy].mem_obj - 1 == GOLD_PIECE)
 		fmt = "That gold was %s!";
 
 	    /* cloned Wiz starts out mimicking some other monster and

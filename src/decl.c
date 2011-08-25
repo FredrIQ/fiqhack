@@ -93,7 +93,9 @@ boolean in_steed_dismounting;
 
 coord bhitpos;
 
-struct dlevel level;		/* level map */
+struct level *levels[MAXLINFO];
+struct level *level;		/* level map */
+
 struct monst youmonst;
 struct flag flags;
 struct instance_flags iflags;
@@ -224,7 +226,7 @@ void init_data(void)
     memset(&iflags, 0, sizeof(iflags));
     memset(&quest_status, 0, sizeof(quest_status));
     memset(&level_info, 0, sizeof(level_info));
-    memset(&level, 0, sizeof(level));
+    memset(&levels, 0, sizeof(levels));
     memset(bases, 0, sizeof(bases));
     memset(&u, 0, sizeof(u));
     memset(dogname, 0, sizeof(dogname));
@@ -238,6 +240,7 @@ void init_data(void)
     memset(&digging, 0, sizeof(digging));
     memset(&inv_pos, 0, sizeof(inv_pos));
     
+    level = NULL;
     multi = occtime = killer_format = 0;
     afternmv = NULL;
     occupation = NULL;
@@ -258,8 +261,6 @@ void init_data(void)
     vision_full_recalc = FALSE;
     viz_array = NULL;
     artilist = NULL;
-    
-    level.subrooms = &level.rooms[MAXNROFROOMS+1];
     
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;

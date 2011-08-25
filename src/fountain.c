@@ -28,19 +28,20 @@ static void dowatersnakes(void) /* Fountain of snakes! */
 	else
 	    You_hear("something hissing!");
 	while (num-- > 0)
-	    if ((mtmp = makemon(&mons[PM_WATER_MOCCASIN],
-			u.ux, u.uy, NO_MM_FLAGS)) && t_at(mtmp->mx, mtmp->my))
+	    if ((mtmp = makemon(&mons[PM_WATER_MOCCASIN], level,
+			u.ux, u.uy, NO_MM_FLAGS)) && t_at(level, mtmp->mx, mtmp->my))
 		mintrap(mtmp);
     } else
 	pline_The("fountain bubbles furiously for a moment, then calms.");
 }
+
 
 static void dowaterdemon(void) /* Water demon */
 {
     struct monst *mtmp;
 
     if (!(mvitals[PM_WATER_DEMON].mvflags & G_GONE)) {
-	if ((mtmp = makemon(&mons[PM_WATER_DEMON],u.ux,u.uy, NO_MM_FLAGS))) {
+	if ((mtmp = makemon(&mons[PM_WATER_DEMON], level, u.ux, u.uy, NO_MM_FLAGS))) {
 	    if (!Blind)
 		You("unleash %s!", a_monnam(mtmp));
 	    else
@@ -52,25 +53,26 @@ static void dowaterdemon(void) /* Water demon */
 		      mhis(mtmp), mhe(mtmp));
 		makewish();
 		mongone(mtmp);
-	    } else if (t_at(mtmp->mx, mtmp->my))
+	    } else if (t_at(level, mtmp->mx, mtmp->my))
 		mintrap(mtmp);
 	}
     } else
 	pline_The("fountain bubbles furiously for a moment, then calms.");
 }
 
+
 static void dowaternymph(void) /* Water Nymph */
 {
 	struct monst *mtmp;
 
 	if (!(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
-	   (mtmp = makemon(&mons[PM_WATER_NYMPH],u.ux,u.uy, NO_MM_FLAGS))) {
+	   (mtmp = makemon(&mons[PM_WATER_NYMPH], level, u.ux, u.uy, NO_MM_FLAGS))) {
 		if (!Blind)
 		   You("attract %s!", a_monnam(mtmp));
 		else
 		   You_hear("a seductive voice.");
 		mtmp->msleeping = 0;
-		if (t_at(mtmp->mx, mtmp->my))
+		if (t_at(level, mtmp->mx, mtmp->my))
 		    mintrap(mtmp);
 	} else
 		if (!Blind)
@@ -99,23 +101,23 @@ static void gush(int x, int y, void *poolcnt)
 
 	if (((x+y)%2) || (x == u.ux && y == u.uy) ||
 	    (rn2(1 + distmin(u.ux, u.uy, x, y)))  ||
-	    (level.locations[x][y].typ != ROOM) ||
-	    (sobj_at(BOULDER, x, y)) || nexttodoor(x, y))
+	    (level->locations[x][y].typ != ROOM) ||
+	    (sobj_at(BOULDER, level, x, y)) || nexttodoor(level, x, y))
 		return;
 
-	if ((ttmp = t_at(x, y)) != 0 && !delfloortrap(ttmp))
+	if ((ttmp = t_at(level, x, y)) != 0 && !delfloortrap(ttmp))
 		return;
 
 	if (!((*(int *)poolcnt)++))
 	    pline("Water gushes forth from the overflowing fountain!");
 
 	/* Put a pool at x, y */
-	level.locations[x][y].typ = POOL;
+	level->locations[x][y].typ = POOL;
 	/* No kelp! */
-	del_engr_at(x, y);
-	water_damage(level.objects[x][y], FALSE, TRUE);
+	del_engr_at(level, x, y);
+	water_damage(level->objects[x][y], FALSE, TRUE);
 
-	if ((mtmp = m_at(x, y)) != 0)
+	if ((mtmp = m_at(level, x, y)) != 0)
 		minliquid(mtmp);
 	else
 		newsym(x,y);
@@ -125,7 +127,7 @@ static void dofindgem(void) /* Find a gem in the sparkling waters. */
 {
 	if (!Blind) You("spot a gem in the sparkling waters!");
 	else You_feel("a gem here!");
-	mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE-1),
+	mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE-1), level,
 			 u.ux, u.uy, FALSE, FALSE);
 	SET_FOUNTAIN_LOOTED(u.ux,u.uy);
 	newsym(u.ux, u.uy);
@@ -134,13 +136,13 @@ static void dofindgem(void) /* Find a gem in the sparkling waters. */
 
 void dryup(xchar x, xchar y, boolean isyou)
 {
-	if (IS_FOUNTAIN(level.locations[x][y].typ) &&
+	if (IS_FOUNTAIN(level->locations[x][y].typ) &&
 	    (!rn2(3) || FOUNTAIN_IS_WARNED(x,y))) {
 		if (isyou && in_town(x, y) && !FOUNTAIN_IS_WARNED(x,y)) {
 			struct monst *mtmp;
 			SET_FOUNTAIN_WARNED(x,y);
 			/* Warn about future fountain use. */
-			for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+			for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 			    if (DEADMONSTER(mtmp)) continue;
 			    if ((mtmp->data == &mons[PM_WATCHMAN] ||
 				mtmp->data == &mons[PM_WATCH_CAPTAIN]) &&
@@ -162,14 +164,14 @@ void dryup(xchar x, xchar y, boolean isyou)
 		}
 		
 		/* replace the fountain with ordinary floor */
-		level.locations[x][y].typ = ROOM;
-		level.locations[x][y].looted = 0;
-		level.locations[x][y].blessedftn = 0;
+		level->locations[x][y].typ = ROOM;
+		level->locations[x][y].looted = 0;
+		level->locations[x][y].blessedftn = 0;
 		if (cansee(x,y)) pline_The("fountain dries up!");
 		/* The location is seen if the hero/monster is invisible */
 		/* or felt if the hero is blind.			 */
 		newsym(x, y);
-		level.flags.nfountains--;
+		level->flags.nfountains--;
 		if (isyou && in_town(x, y))
 		    angry_guards(FALSE);
 	}
@@ -178,7 +180,7 @@ void dryup(xchar x, xchar y, boolean isyou)
 void drinkfountain(void)
 {
 	/* What happens when you drink from a fountain? */
-	boolean mgkftn = (level.locations[u.ux][u.uy].blessedftn == 1);
+	boolean mgkftn = (level->locations[u.ux][u.uy].blessedftn == 1);
 	int fate = rnd(30);
 
 	if (Levitation) {
@@ -206,7 +208,7 @@ void drinkfountain(void)
 		display_nhwindow(NHW_MESSAGE, FALSE);
 		pline("A wisp of vapor escapes the fountain...");
 		exercise(A_WIS, TRUE);
-		level.locations[u.ux][u.uy].blessedftn = 0;
+		level->locations[u.ux][u.uy].blessedftn = 0;
 		return;
 	}
 
@@ -310,7 +312,7 @@ void drinkfountain(void)
 			struct monst *mtmp;
 
 			pline("This water gives you bad breath!");
-			for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+			for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 			    if (!DEADMONSTER(mtmp))
 				monflee(mtmp, 0, FALSE, FALSE);
 			}
@@ -365,10 +367,10 @@ void dipfountain(struct obj *obj)
 			exercise(A_WIS, TRUE);
 		}
 		update_inventory();
-		level.locations[u.ux][u.uy].typ = ROOM;
-		level.locations[u.ux][u.uy].looted = 0;
+		level->locations[u.ux][u.uy].typ = ROOM;
+		level->locations[u.ux][u.uy].looted = 0;
 		newsym(u.ux, u.uy);
-		level.flags.nfountains--;
+		level->flags.nfountains--;
 		if (in_town(u.ux, u.uy))
 		    angry_guards(FALSE);
 		return;
@@ -462,7 +464,7 @@ void dipfountain(struct obj *obj)
 		    SET_FOUNTAIN_LOOTED(u.ux,u.uy);
 		    mkgold((long)
 			(rnd((dunlevs_in_dungeon(&u.uz)-dunlev(&u.uz)+1)*2)+5),
-			u.ux, u.uy);
+			level, u.ux, u.uy);
 		    if (!Blind)
 		pline("Far below you, you see coins glistening in the water.");
 		    exercise(A_WIS, TRUE);
@@ -477,10 +479,10 @@ void breaksink(int x, int y)
 {
     if (cansee(x,y) || (x == u.ux && y == u.uy))
 	pline_The("pipes break!  Water spurts out!");
-    level.flags.nsinks--;
-    level.locations[x][y].doormask = 0;
-    level.locations[x][y].typ = FOUNTAIN;
-    level.flags.nfountains++;
+    level->flags.nsinks--;
+    level->locations[x][y].doormask = 0;
+    level->locations[x][y].typ = FOUNTAIN;
+    level->flags.nfountains++;
     newsym(x,y);
 }
 
@@ -506,7 +508,7 @@ void drinksink(void)
 		case 3: if (mvitals[PM_SEWER_RAT].mvflags & G_GONE)
 				pline_The("sink seems quite dirty.");
 			else {
-				mtmp = makemon(&mons[PM_SEWER_RAT],
+				mtmp = makemon(&mons[PM_SEWER_RAT], level,
 						u.ux, u.uy, NO_MM_FLAGS);
 				if (mtmp) pline("Eek!  There's %s in the sink!",
 					(Blind || !canspotmon(mtmp)) ?
@@ -515,7 +517,7 @@ void drinksink(void)
 			}
 			break;
 		case 4: do {
-				otmp = mkobj(POTION_CLASS,FALSE);
+				otmp = mkobj(level, POTION_CLASS,FALSE);
 				if (otmp->otyp == POT_WATER) {
 					obfree(otmp, NULL);
 					otmp = NULL;
@@ -531,10 +533,10 @@ void drinksink(void)
 			dopotion(otmp);
 			obfree(otmp, NULL);
 			break;
-		case 5: if (!(level.locations[u.ux][u.uy].looted & S_LRING)) {
+		case 5: if (!(level->locations[u.ux][u.uy].looted & S_LRING)) {
 			    You("find a ring in the sink!");
-			    mkobj_at(RING_CLASS, u.ux, u.uy, TRUE);
-			    level.locations[u.ux][u.uy].looted |= S_LRING;
+			    mkobj_at(RING_CLASS, level, u.ux, u.uy, TRUE);
+			    level->locations[u.ux][u.uy].looted |= S_LRING;
 			    exercise(A_WIS, TRUE);
 			    newsym(u.ux,u.uy);
 			} else pline("Some dirty water backs up in the drain.");
@@ -543,7 +545,7 @@ void drinksink(void)
 			break;
 		case 7: pline_The("water moves as though of its own will!");
 			if ((mvitals[PM_WATER_ELEMENTAL].mvflags & G_GONE)
-			    || !makemon(&mons[PM_WATER_ELEMENTAL],
+			    || !makemon(&mons[PM_WATER_ELEMENTAL], level,
 					u.ux, u.uy, NO_MM_FLAGS))
 				pline("But it quiets down.");
 			break;

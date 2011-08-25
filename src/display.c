@@ -109,20 +109,19 @@ static void display_monster(xchar,xchar,struct monst *,int,xchar);
 static int swallow_to_effect(int, int);
 static void display_warning(struct monst *);
 
-static int check_pos(int, int, int);
+static int check_pos(struct level *lev, int, int, int);
 #ifdef WA_VERBOSE
 static boolean more_than_one(int, int, int, int, int);
 #endif
-static int set_twall(int,int, int,int, int,int, int,int);
-static int set_wall(int, int, int);
-static int set_corn(int,int, int,int, int,int, int,int);
-static int set_crosswall(int, int);
+static int set_twall(struct level *lev, int,int, int,int, int,int, int,int);
+static int set_wall(struct level *lev, int, int, int);
+static int set_corn(struct level *lev, int,int, int,int, int,int, int,int);
+static int set_crosswall(struct level *lev, int, int);
 static void set_seenv(struct rm *, int, int, int, int);
 static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
 static void dbuf_set_object(int x, int y, int oid);
 static void dbuf_set_loc(int x, int y);
-static int back_to_cmap(xchar,xchar);
 
 #ifdef INVISIBLE_OBJECTS
 /*
@@ -136,7 +135,7 @@ static int back_to_cmap(xchar,xchar);
  */
 struct obj *vobj_at(xchar x, xchar y)
 {
-    struct obj *obj = level.objects[x][y];
+    struct obj *obj = level->objects[x][y];
 
     while (obj) {
 	if (!obj->oinvis || See_invisible) return obj;
@@ -154,22 +153,22 @@ struct obj *vobj_at(xchar x, xchar y)
  */
 void magic_map_background(xchar x, xchar y, int show)
 {
-    int cmap = back_to_cmap(x,y);	/* assumes hero can see x,y */
-    struct rm *lev = &level.locations[x][y];
+    int cmap = back_to_cmap(level, x, y);	/* assumes hero can see x,y */
+    struct rm *loc = &level->locations[x][y];
 
     /*
      * Correct for out of sight lit corridors and rooms that the hero
      * doesn't remember as lit.
      */
-    if (!cansee(x,y) && !lev->waslit) {
+    if (!cansee(x,y) && !loc->waslit) {
 	/* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-	if (lev->typ == ROOM && cmap == S_room)
+	if (loc->typ == ROOM && cmap == S_room)
 	    cmap = S_darkroom;
-	else if (lev->typ == CORR && cmap == S_litcorr)
+	else if (loc->typ == CORR && cmap == S_litcorr)
 	    cmap = S_corr;
     }
-    if (level.flags.hero_memory)
-	lev->mem_bg = cmap;
+    if (level->flags.hero_memory)
+	loc->mem_bg = cmap;
     if (show)
 	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -186,10 +185,10 @@ void magic_map_background(xchar x, xchar y, int show)
  */
 void map_background(xchar x, xchar y, int show)
 {
-    int cmap = back_to_cmap(x,y);
+    int cmap = back_to_cmap(level, x, y);
 
-    if (level.flags.hero_memory)
-	level.locations[x][y].mem_bg = cmap;
+    if (level->flags.hero_memory)
+	level->locations[x][y].mem_bg = cmap;
     if (show)
 	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -203,13 +202,13 @@ void map_background(xchar x, xchar y, int show)
 void map_trap(struct trap *trap, int show)
 {
     int x = trap->tx, y = trap->ty;
-    int trapid = what_trap((trap)->ttyp);
+    int trapid = what_trap(trap->ttyp);
 
-    if (level.flags.hero_memory)
-	level.locations[x][y].mem_trap = trapid;
+    if (level->flags.hero_memory)
+	level->locations[x][y].mem_trap = trapid;
     if (show)
-	dbuf_set(x, y, level.locations[x][y].mem_bg,
-		 level.locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0);
+	dbuf_set(x, y, level->locations[x][y].mem_bg,
+		 level->locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0);
 }
 
 /*
@@ -221,10 +220,10 @@ void map_trap(struct trap *trap, int show)
 void map_object(struct obj *obj, int show)
 {
     int x = obj->ox, y = obj->oy;
-    int objtyp = Hallucination ? random_object() : obj->otyp;
+    int objtyp = what_obj(obj->otyp);
     int monnum = 0;
     
-    if (level.flags.hero_memory) {
+    if (level->flags.hero_memory) {
 	if (objtyp == CORPSE || objtyp == STATUE || objtyp == FIGURINE) {
 	    if (Hallucination)
 		monnum = random_monster();
@@ -232,13 +231,13 @@ void map_object(struct obj *obj, int show)
 		monnum = obj->corpsenm;
 	}
 	
-	level.locations[x][y].mem_obj = objtyp + 1;
-	level.locations[x][y].mem_obj_mn = monnum + 1;
+	level->locations[x][y].mem_obj = objtyp + 1;
+	level->locations[x][y].mem_obj_mn = monnum + 1;
     }
     if (show)
-	dbuf_set(x, y, level.locations[x][y].mem_bg,
-		 level.locations[x][y].mem_trap, level.locations[x][y].mem_obj,
-		 level.locations[x][y].mem_obj_mn, 0, 0, 0, 0);
+	dbuf_set(x, y, level->locations[x][y].mem_bg,
+		 level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
+		 level->locations[x][y].mem_obj_mn, 0, 0, 0, 0);
 }
 
 /*
@@ -253,11 +252,11 @@ void map_object(struct obj *obj, int show)
 void map_invisible(xchar x, xchar y)
 {
     if (x != u.ux || y != u.uy) { /* don't display I at hero's location */
-	if (level.flags.hero_memory)
-	    level.locations[x][y].mem_invis = 1;
-	dbuf_set(x, y, level.locations[x][y].mem_bg,
-		 level.locations[x][y].mem_trap, level.locations[x][y].mem_obj,
-		 level.locations[x][y].mem_obj_mn, 1, 0, 0, 0);
+	if (level->flags.hero_memory)
+	    level->locations[x][y].mem_invis = 1;
+	dbuf_set(x, y, level->locations[x][y].mem_bg,
+		 level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
+		 level->locations[x][y].mem_obj_mn, 1, 0, 0, 0);
     }
 }
 
@@ -272,11 +271,11 @@ void map_invisible(xchar x, xchar y)
  */
 void unmap_object(int x, int y)
 {
-    if (!level.flags.hero_memory) return;
+    if (!level->flags.hero_memory) return;
 
-    level.locations[x][y].mem_invis = 0;
-    level.locations[x][y].mem_obj = 0;
-    level.locations[x][y].mem_obj_mn = 0;
+    level->locations[x][y].mem_invis = 0;
+    level->locations[x][y].mem_obj = 0;
+    level->locations[x][y].mem_obj_mn = 0;
 }
 
 
@@ -292,21 +291,21 @@ void map_location(int x, int y, int show)
     register struct obj   *obj;
     register struct trap  *trap;
 
-    if (level.flags.hero_memory) {
-	if ((obj = vobj_at(x, y)) && !covers_objects(x, y))
+    if (level->flags.hero_memory) {
+	if ((obj = vobj_at(x, y)) && !covers_objects(level, x, y))
 	    map_object(obj, FALSE);
 	else
-	    level.locations[x][y].mem_obj_mn = level.locations[x][y].mem_obj = 0;
-	if ((trap = t_at(x, y)) && trap->tseen && !covers_traps(x, y))
+	    level->locations[x][y].mem_obj_mn = level->locations[x][y].mem_obj = 0;
+	if ((trap = t_at(level, x, y)) && trap->tseen && !covers_traps(level, x, y))
 	    map_trap(trap, FALSE);
 	else
-	    level.locations[x][y].mem_trap = 0;
+	    level->locations[x][y].mem_trap = 0;
 	map_background(x, y, FALSE);
 	if (show)
 	    dbuf_set_loc(x, y);
-    } else if ((obj = vobj_at(x,y)) && !covers_objects(x,y))
+    } else if ((obj = vobj_at(x,y)) && !covers_objects(level, x,y))
 	map_object(obj,show);
-    else if ((trap = t_at(x,y)) && trap->tseen && !covers_traps(x,y))
+    else if ((trap = t_at(level, x, y)) && trap->tseen && !covers_traps(level, x, y))
 	map_trap(trap,show);
     else
 	map_background(x,y,show);
@@ -315,11 +314,11 @@ void map_location(int x, int y, int show)
 
 void clear_memory_glyph(schar x, schar y, int to)
 {
-    level.locations[x][y].mem_bg = to;
-    level.locations[x][y].mem_trap = 0;
-    level.locations[x][y].mem_obj = 0;
-    level.locations[x][y].mem_obj_mn = 0;
-    level.locations[x][y].mem_invis = 0;
+    level->locations[x][y].mem_bg = to;
+    level->locations[x][y].mem_trap = 0;
+    level->locations[x][y].mem_obj = 0;
+    level->locations[x][y].mem_obj_mn = 0;
+    level->locations[x][y].mem_invis = 0;
 }
 
 
@@ -367,7 +366,7 @@ static void display_monster(
 		 * mappearance is currently set to an S_ index value in
 		 * makemon.c.
 		 */
-		level.locations[x][y].mem_bg = mon->mappearance;
+		level->locations[x][y].mem_bg = mon->mappearance;
 		if (!sensed)
 		    dbuf_set_loc(x, y);
 		break;
@@ -385,10 +384,10 @@ static void display_monster(
 	    }
 
 	    case M_AP_MONSTER:
-		dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		         level.locations[x][y].mem_trap,
-		         level.locations[x][y].mem_obj,
-		         level.locations[x][y].mem_obj_mn,
+		dbuf_set(x, y, level->locations[x][y].mem_bg,
+		         level->locations[x][y].mem_trap,
+		         level->locations[x][y].mem_obj,
+		         level->locations[x][y].mem_obj_mn,
 		         0, what_mon((int)mon->mappearance) + 1, mon->mtame ? MON_TAME : 0, 0);
 		break;
 	}
@@ -411,10 +410,10 @@ static void display_monster(
 	if (mon->mtame && !Hallucination)
 	    mflag |= MON_TAME;
 
-	dbuf_set(x, y, level.locations[x][y].mem_bg, 
-	         level.locations[x][y].mem_trap,
-	         level.locations[x][y].mem_obj,
-	         level.locations[x][y].mem_obj_mn,
+	dbuf_set(x, y, level->locations[x][y].mem_bg,
+	         level->locations[x][y].mem_trap,
+	         level->locations[x][y].mem_obj,
+	         level->locations[x][y].mem_obj_mn,
 	         0, what_mon(monnum) + 1, mflag, 0);
     }
 }
@@ -450,10 +449,10 @@ static void display_warning(struct monst *mon)
         return;
     }
     
-    dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		level.locations[x][y].mem_trap,
-		level.locations[x][y].mem_obj,
-		level.locations[x][y].mem_obj_mn,
+    dbuf_set(x, y, level->locations[x][y].mem_bg,
+		level->locations[x][y].mem_trap,
+		level->locations[x][y].mem_obj,
+		level->locations[x][y].mem_obj_mn,
 		0, monnum, mflag, 0);
 }
 
@@ -469,7 +468,7 @@ static void display_warning(struct monst *mon)
  */
 void feel_location(xchar x, xchar y)
 {
-    struct rm *lev = &(level.locations[x][y]);
+    struct rm *loc = &(level->locations[x][y]);
     struct obj *boulder;
     struct monst *mon;
 
@@ -478,15 +477,15 @@ void feel_location(xchar x, xchar y)
      * We must return (so we don't erase the monster).  (We must also, in the
      * search function, be sure to skip over previously detected 'I's.)
      */
-    if (level.locations[x][y].mem_invis && m_at(x,y)) return;
+    if (level->locations[x][y].mem_invis && m_at(level, x,y)) return;
 
     /* The hero can't feel non pool locations while under water. */
-    if (Underwater && !Is_waterlevel(&u.uz) && ! is_pool(x,y))
+    if (Underwater && !Is_waterlevel(&u.uz) && ! is_pool(level, x,y))
 	return;
 
     /* Set the seen vector as if the hero had seen it.  It doesn't matter */
     /* if the hero is levitating or not.				  */
-    set_seenv(lev, u.ux, u.uy, x, y);
+    set_seenv(loc, u.ux, u.uy, x, y);
 
     if (Levitation && !Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz)) {
 	/*
@@ -504,14 +503,14 @@ void feel_location(xchar x, xchar y)
 	 *	+ Room/water positions
 	 *	+ Everything else (hallways!)
 	 */
-	if (IS_ROCK(lev->typ) || (IS_DOOR(lev->typ) &&
-				(lev->doormask & (D_LOCKED | D_CLOSED)))) {
+	if (IS_ROCK(loc->typ) || (IS_DOOR(loc->typ) &&
+				(loc->doormask & (D_LOCKED | D_CLOSED)))) {
 	    map_background(x, y, 1);
-	} else if ((boulder = sobj_at(BOULDER,x,y)) != 0) {
+	} else if ((boulder = sobj_at(BOULDER, level, x,y)) != 0) {
 	    map_object(boulder, 1);
-	} else if (IS_DOOR(lev->typ)) {
+	} else if (IS_DOOR(loc->typ)) {
 	    map_background(x, y, 1);
-	} else if (IS_ROOM(lev->typ) || IS_POOL(lev->typ)) {
+	} else if (IS_ROOM(loc->typ) || IS_POOL(loc->typ)) {
 	    /*
 	     * An open room or water location.  Normally we wouldn't touch
 	     * this, but we have to get rid of remembered boulder symbols.
@@ -536,16 +535,16 @@ void feel_location(xchar x, xchar y)
 	     * We could also just display what is currently on the top of the
 	     * object stack (if anything).
 	     */
-	    if (lev->mem_obj - 1 == BOULDER) {
-		if (lev->typ != ROOM && lev->seenv) {
+	    if (loc->mem_obj - 1 == BOULDER) {
+		if (loc->typ != ROOM && loc->seenv) {
 		    map_background(x, y, 1);
 		} else {
-		    lev->mem_bg = lev->waslit ? S_room : S_darkroom;
+		    loc->mem_bg = loc->waslit ? S_room : S_darkroom;
 		    dbuf_set_loc(x, y);
 		}
-	    } else if ((lev->mem_bg >= S_unexplored && lev->mem_bg < S_room) ||
-		       level.locations[x][y].mem_invis) {
-		lev->mem_bg = lev->waslit ? S_room : S_darkroom;
+	    } else if ((loc->mem_bg >= S_unexplored && loc->mem_bg < S_room) ||
+		       level->locations[x][y].mem_invis) {
+		loc->mem_bg = loc->waslit ? S_room : S_darkroom;
 		dbuf_set_loc(x, y);
 	    }
 	} else {
@@ -553,8 +552,8 @@ void feel_location(xchar x, xchar y)
 	    map_background(x, y, 1);
 	    /* Corridors are never felt as lit (unless remembered that way) */
 	    /* (lit_corridor only).					    */
-	    if (lev->typ == CORR && lev->mem_bg == S_litcorr && !lev->waslit) {
-		lev->mem_bg = S_corr;
+	    if (loc->typ == CORR && loc->mem_bg == S_litcorr && !loc->waslit) {
+		loc->mem_bg = S_corr;
 		dbuf_set_loc(x, y);
 	    }
 	}
@@ -570,13 +569,13 @@ void feel_location(xchar x, xchar y)
 	     * the wrong glyph.
 	     */
 	    if (uchain->ox == x && uchain->oy == y) {
-		if (level.objects[x][y] == uchain)
+		if (level->objects[x][y] == uchain)
 		    u.bc_felt |= BC_CHAIN;
 		else
 		    u.bc_felt &= ~BC_CHAIN;	/* do not feel the chain */
 	    }
 	    if (!carried(uball) && uball->ox == x && uball->oy == y) {
-		if (level.objects[x][y] == uball)
+		if (level->objects[x][y] == uball)
 		    u.bc_felt |= BC_BALL;
 		else
 		    u.bc_felt &= ~BC_BALL;	/* do not feel the ball */
@@ -584,17 +583,17 @@ void feel_location(xchar x, xchar y)
 	}
 
 	/* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-	if (lev->typ == ROOM && lev->mem_bg == S_room && !lev->waslit) {
-	    lev->mem_bg = S_darkroom;
+	if (loc->typ == ROOM && loc->mem_bg == S_room && !loc->waslit) {
+	    loc->mem_bg = S_darkroom;
 	    dbuf_set_loc(x, y);
-	} else if (lev->typ == CORR &&
-		    lev->mem_bg == S_litcorr && !lev->waslit) {
-	    lev->mem_bg = S_corr;
+	} else if (loc->typ == CORR &&
+		    loc->mem_bg == S_litcorr && !loc->waslit) {
+	    loc->mem_bg = S_corr;
 	    dbuf_set_loc(x, y);
 	}
     }
     /* draw monster on top if we can sense it */
-    if ((x != u.ux || y != u.uy) && (mon = m_at(x,y)) && sensemon(mon))
+    if ((x != u.ux || y != u.uy) && (mon = m_at(level, x,y)) && sensemon(mon))
 	display_monster(x, y, mon,
 		(tp_sensemon(mon) || MATCH_WARN_OF_MON(mon)) ? PHYSICALLY_SEEN : DETECTED,
 		is_worm_tail(mon));
@@ -608,7 +607,7 @@ void feel_location(xchar x, xchar y)
 void newsym(int x, int y)
 {
     struct monst *mon;
-    struct rm *lev = &(level.locations[x][y]);
+    struct rm *loc = &(level->locations[x][y]);
     int see_it;
     xchar worm_tail;
 
@@ -622,7 +621,7 @@ void newsym(int x, int y)
     if (Underwater && !Is_waterlevel(&u.uz)) {
 	/* don't do anything unless (x,y) is an adjacent underwater position */
 	int dx, dy;
-	if (!is_pool(x,y)) return;
+	if (!is_pool(level, x,y)) return;
 	dx = x - u.ux;	if (dx < 0) dx = -dx;
 	dy = y - u.uy;	if (dy < 0) dy = -dy;
 	if (dx > 1 || dy > 1) return;
@@ -630,11 +629,11 @@ void newsym(int x, int y)
 
     /* Can physically see the location. */
     if (cansee(x,y)) {
-        NhRegion* reg = visible_region_at(x,y);
+        struct region* reg = visible_region_at(level, x, y);
 	/*
 	 * Don't use templit here:  E.g.
 	 *
-	 *	lev->waslit = !!(lev->lit || templit(x,y));
+	 *	loc->waslit = !!(loc->lit || templit(x,y));
 	 *
 	 * Otherwise we have the "light pool" problem, where non-permanently
 	 * lit areas just out of sight stay remembered as lit.  They should
@@ -643,7 +642,7 @@ void newsym(int x, int y)
 	 * Perhaps ALL areas should revert to their "unlit" look when
 	 * out of sight.
 	 */
-	lev->waslit = (lev->lit!=0);	/* remember lit condition */
+	loc->waslit = (loc->lit!=0);	/* remember lit condition */
 
 	if (x == u.ux && y == u.uy) {
 	    if (senseself()) {
@@ -654,14 +653,14 @@ void newsym(int x, int y)
 		map_location(x,y,1);
 	}
 	else {
-	    mon = m_at(x,y);
+	    mon = m_at(level, x,y);
 	    worm_tail = is_worm_tail(mon);
 	    see_it = mon && (worm_tail
 		? (!mon->minvis || See_invisible)
 		: (mon_visible(mon)) || tp_sensemon(mon) || MATCH_WARN_OF_MON(mon));
 	    if (mon && (see_it || (!worm_tail && Detect_monsters))) {
 		if (mon->mtrapped) {
-		    struct trap *trap = t_at(x, y);
+		    struct trap *trap = t_at(level, x, y);
 		    int tt = trap ? trap->ttyp : NO_TRAP;
 
 		    /* if monster is in a physical trap, you see the trap too */
@@ -676,13 +675,13 @@ void newsym(int x, int y)
 	    }
 	    else if (mon && mon_warning(mon) && !is_worm_tail(mon))
 	        display_warning(mon);
-	    else if (level.locations[x][y].mem_invis)
+	    else if (level->locations[x][y].mem_invis)
 		map_invisible(x, y);
 	    else
 		map_location(x,y,1);	/* map the location */
 	}
 	
-	if (reg != NULL && ACCESSIBLE(lev->typ))
+	if (reg != NULL && ACCESSIBLE(loc->typ))
 	    dbuf_set_effect(x, y, reg->effect_id);
     }
 
@@ -694,7 +693,7 @@ void newsym(int x, int y)
 	    if (senseself())
 		display_self();
 	}
-	else if ((mon = m_at(x,y))
+	else if ((mon = m_at(level, x,y))
 		&& ((see_it = (tp_sensemon(mon) || MATCH_WARN_OF_MON(mon)
 		    		|| (see_with_infrared(mon) && mon_visible(mon))))
 		    || Detect_monsters)
@@ -703,7 +702,7 @@ void newsym(int x, int y)
 	    /* This also gets rid of any invisibility glyph */
 	    display_monster(x, y, mon, see_it ? 0 : DETECTED, 0);
 	}
-	else if ((mon = m_at(x,y)) && mon_warning(mon) &&
+	else if ((mon = m_at(level, x,y)) && mon_warning(mon) &&
 		 !is_worm_tail(mon)) {
 	        display_warning(mon);
 	}		
@@ -730,12 +729,12 @@ void newsym(int x, int y)
 	 * These checks and changes must be here and not in back_to_glyph().
 	 * They are dependent on the position being out of sight.
 	 */
-	else if (!lev->waslit) {
-	    if (lev->mem_bg == S_litcorr && lev->typ == CORR) {
-		lev->mem_bg = S_corr;
+	else if (!loc->waslit) {
+	    if (loc->mem_bg == S_litcorr && loc->typ == CORR) {
+		loc->mem_bg = S_corr;
 		dbuf_set_loc(x, y);
-	    } else if (lev->mem_bg == S_room && lev->typ == ROOM) {
-		lev->mem_bg = S_darkroom;
+	    } else if (loc->mem_bg == S_room && loc->typ == ROOM) {
+		loc->mem_bg = S_darkroom;
 		dbuf_set_loc(x, y);
 	    }
 	    else
@@ -992,7 +991,7 @@ void under_water(int mode)
     }
     for (x = u.ux-1; x <= u.ux+1; x++)
 	for (y = u.uy-1; y <= u.uy+1; y++)
-	    if (isok(x,y) && is_pool(x,y)) {
+	    if (isok(x,y) && is_pool(level, x,y)) {
 		if (Blind && !(x == u.ux && y == u.uy))
 		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0);
 		else	
@@ -1050,7 +1049,7 @@ void see_monsters(void)
 {
     struct monst *mon;
 
-    for (mon = level.monlist; mon; mon = mon->nmon) {
+    for (mon = level->monlist; mon; mon = mon->nmon) {
 	if (DEADMONSTER(mon)) continue;
 	newsym(mon->mx,mon->my);
 	if (mon->wormno) see_wsegs(mon);
@@ -1069,7 +1068,7 @@ void set_mimic_blocking(void)
 {
     struct monst *mon;
 
-    for (mon = level.monlist; mon; mon = mon->nmon) {
+    for (mon = level->monlist; mon; mon = mon->nmon) {
 	if (DEADMONSTER(mon)) continue;
 	if (mon->minvis &&
 	   ((mon->m_ap_type == M_AP_FURNITURE &&
@@ -1090,7 +1089,7 @@ void set_mimic_blocking(void)
 void see_objects(void)
 {
     struct obj *obj;
-    for (obj = level.objlist; obj; obj = obj->nobj)
+    for (obj = level->objlist; obj; obj = obj->nobj)
 	if (vobj_at(obj->ox,obj->oy) == obj) newsym(obj->ox, obj->oy);
 }
 
@@ -1101,8 +1100,8 @@ void see_traps(void)
 {
     struct trap *trap;
 
-    for (trap = level.lev_traps; trap; trap = trap->ntrap)
-	if (level.locations[trap->tx][trap->ty].mem_trap)
+    for (trap = level->lev_traps; trap; trap = trap->ntrap)
+	if (level->locations[trap->tx][trap->ty].mem_trap)
 	    newsym(trap->tx, trap->ty);
 }
 
@@ -1117,32 +1116,32 @@ void display_self(void)
     int x = u.ux, y = u.uy;
     
     if (u.usteed && mon_visible(u.usteed)) {
-	dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		         level.locations[x][y].mem_trap,
-		         level.locations[x][y].mem_obj,
-		         level.locations[x][y].mem_obj_mn,
+	dbuf_set(x, y, level->locations[x][y].mem_bg, 
+		         level->locations[x][y].mem_trap,
+		         level->locations[x][y].mem_obj,
+		         level->locations[x][y].mem_obj_mn,
 		         0, what_mon(u.usteed->mnum) + 1, MON_RIDDEN, 0);
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
 	int monnum = (Upolyd || !iflags.showrace) ? u.umonnum :
 	              (flags.female && urace.femalenum != NON_PM) ? urace.femalenum :
 	               urace.malenum;
-	dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		         level.locations[x][y].mem_trap,
-		         level.locations[x][y].mem_obj,
-		         level.locations[x][y].mem_obj_mn,
+	dbuf_set(x, y, level->locations[x][y].mem_bg, 
+		         level->locations[x][y].mem_trap,
+		         level->locations[x][y].mem_obj,
+		         level->locations[x][y].mem_obj_mn,
 		         0, monnum + 1, 0, 0);
     } else if (youmonst.m_ap_type == M_AP_FURNITURE) {
 	dbuf_set(x, y, youmonst.mappearance, 0, 0, 0, 0, 0, 0, 0);
     } else if (youmonst.m_ap_type == M_AP_OBJECT) {
-	dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		         level.locations[x][y].mem_trap,
+	dbuf_set(x, y, level->locations[x][y].mem_bg, 
+		         level->locations[x][y].mem_trap,
 		         youmonst.mappearance + 1,
 		         0, 0, 0, 0, 0);
     } else /* M_AP_MONSTER */
-	dbuf_set(x, y, level.locations[x][y].mem_bg, 
-		         level.locations[x][y].mem_trap,
-		         level.locations[x][y].mem_obj,
-		         level.locations[x][y].mem_obj_mn,
+	dbuf_set(x, y, level->locations[x][y].mem_bg, 
+		         level->locations[x][y].mem_trap,
+		         level->locations[x][y].mem_obj,
+		         level->locations[x][y].mem_obj_mn,
 		         0, youmonst.mappearance + 1, 0, 0);
 }
 
@@ -1283,11 +1282,11 @@ static void dbuf_set_object(int x, int y, int oid)
 static void dbuf_set_loc(int x, int y)
 {
     dbuf_set(x, y,
-	     level.locations[x][y].mem_bg,
-	     level.locations[x][y].mem_trap,
-	     level.locations[x][y].mem_obj,
-	     level.locations[x][y].mem_obj_mn,
-	     level.locations[x][y].mem_invis,
+	     level->locations[x][y].mem_bg,
+	     level->locations[x][y].mem_trap,
+	     level->locations[x][y].mem_obj,
+	     level->locations[x][y].mem_obj_mn,
+	     level->locations[x][y].mem_invis,
 	     0, 0, 0);
 }
 
@@ -1380,15 +1379,15 @@ void flush_screen(int cursor_on_u)
  * were up or down.  I didn't want to check the upstairs and dnstairs
  * variables.
  */
-static int back_to_cmap(xchar x, xchar y)
+int back_to_cmap(struct level *lev, xchar x, xchar y)
 {
     int idx;
-    struct rm *ptr = &(level.locations[x][y]);
+    struct rm *ptr = &(lev->locations[x][y]);
 
     switch (ptr->typ) {
 	case SCORR:
 	case STONE:
-	    idx = level.flags.arboreal ? S_tree : S_stone;
+	    idx = lev->flags.arboreal ? S_tree : S_stone;
 	    break;
 	case ROOM:
 	    idx = (!cansee(x,y) && !ptr->waslit) ? S_darkroom : S_room;
@@ -1461,7 +1460,7 @@ static int back_to_cmap(xchar x, xchar y)
 	    idx = (ptr->horizontal) ? S_hodbridge : S_vodbridge;
 	    break;
 	default:
-	    impossible("back_to_cmap:  unknown level type [ = %d ]",ptr->typ);
+	    impossible("back_to_cmap:  unknown location type [ = %d ]", ptr->typ);
 	    idx = S_room;
 	    break;
     }
@@ -1544,9 +1543,9 @@ static const char *type_to_name(int type)
 static void error4(int x, int y, int a, int b, int c, int dd)
 {
     pline("set_wall_state: %s @ (%d,%d) %s%s%s%s",
-	type_to_name(level.locations[x][y].typ), x, y,
+	type_to_name(level->locations[x][y].typ), x, y,
 	a ? "1":"", b ? "2":"", c ? "3":"", dd ? "4":"");
-    bad_count[level.locations[x][y].typ]++;
+    bad_count[level->locations[x][y].typ]++;
 }
 #endif /* WA_VERBOSE */
 
@@ -1556,11 +1555,11 @@ static void error4(int x, int y, int a, int b, int c, int dd)
  *
  * Things that are ambigious: lava
  */
-static int check_pos(int x, int y, int which)
+static int check_pos(struct level *lev, int x, int y, int which)
 {
     int type;
     if (!isok(x,y)) return which;
-    type = level.locations[x][y].typ;
+    type = lev->locations[x][y].typ;
     if (IS_ROCK(type) || type == CORR || type == SCORR) return which;
     return 0;
 }
@@ -1581,13 +1580,14 @@ static boolean more_than_one(int x, int y, int a, int b, int c)
 #endif
 
 /* Return the wall mode for a T wall. */
-static int set_twall(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3)
+static int set_twall(struct level *lev, int x0, int y0, int x1, int y1,
+		     int x2, int y2, int x3, int y3)
 {
     int wmode, is_1, is_2, is_3;
 
-    is_1 = check_pos(x1, y1, WM_T_LONG);
-    is_2 = check_pos(x2, y2, WM_T_BL);
-    is_3 = check_pos(x3, y3, WM_T_BR);
+    is_1 = check_pos(lev, x1, y1, WM_T_LONG);
+    is_2 = check_pos(lev, x2, y2, WM_T_BL);
+    is_3 = check_pos(lev, x3, y3, WM_T_BR);
     if (more_than_one(x0, y0, is_1, is_2, is_3)) {
 	wmode = 0;
     } else {
@@ -1597,16 +1597,16 @@ static int set_twall(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int
 }
 
 /* Return wall mode for a horizontal or vertical wall. */
-static int set_wall(int x, int y, int horiz)
+static int set_wall(struct level *lev, int x, int y, int horiz)
 {
     int wmode, is_1, is_2;
 
     if (horiz) {
-	is_1 = check_pos(x,y-1, WM_W_TOP);
-	is_2 = check_pos(x,y+1, WM_W_BOTTOM);
+	is_1 = check_pos(lev, x,y-1, WM_W_TOP);
+	is_2 = check_pos(lev, x,y+1, WM_W_BOTTOM);
     } else {
-	is_1 = check_pos(x-1,y, WM_W_LEFT);
-	is_2 = check_pos(x+1,y, WM_W_RIGHT);
+	is_1 = check_pos(lev, x-1,y, WM_W_LEFT);
+	is_2 = check_pos(lev, x+1,y, WM_W_RIGHT);
     }
     if (more_than_one(x, y, is_1, is_2, 0)) {
 	wmode = 0;
@@ -1618,15 +1618,15 @@ static int set_wall(int x, int y, int horiz)
 
 
 /* Return a wall mode for a corner wall. (x4,y4) is the "inner" position. */
-static int set_corn(int x1, int y1, int x2, int y2,
+static int set_corn(struct level *lev, int x1, int y1, int x2, int y2,
 		    int x3, int y3, int x4, int y4)
 {
     int wmode, is_1, is_2, is_3, is_4;
 
-    is_1 = check_pos(x1, y1, 1);
-    is_2 = check_pos(x2, y2, 1);
-    is_3 = check_pos(x3, y3, 1);
-    is_4 = check_pos(x4, y4, 1);	/* inner location */
+    is_1 = check_pos(lev, x1, y1, 1);
+    is_2 = check_pos(lev, x2, y2, 1);
+    is_3 = check_pos(lev, x3, y3, 1);
+    is_4 = check_pos(lev, x4, y4, 1);	/* inner location */
 
     /*
      * All 4 should not be true.  So if the inner location is rock,
@@ -1646,14 +1646,14 @@ static int set_corn(int x1, int y1, int x2, int y2,
 }
 
 /* Return mode for a crosswall. */
-static int set_crosswall(int x, int y)
+static int set_crosswall(struct level *lev, int x, int y)
 {
     int wmode, is_1, is_2, is_3, is_4;
 
-    is_1 = check_pos(x-1, y-1, 1);
-    is_2 = check_pos(x+1, y-1, 1);
-    is_3 = check_pos(x+1, y+1, 1);
-    is_4 = check_pos(x-1, y+1, 1);
+    is_1 = check_pos(lev, x-1, y-1, 1);
+    is_2 = check_pos(lev, x+1, y-1, 1);
+    is_3 = check_pos(lev, x+1, y+1, 1);
+    is_4 = check_pos(lev, x-1, y+1, 1);
 
     wmode = is_1+is_2+is_3+is_4;
     if (wmode > 1) {
@@ -1680,54 +1680,54 @@ static int set_crosswall(int x, int y)
 }
 
 /* Called from mklev.  Scan the level and set the wall modes. */
-void set_wall_state(void)
+void set_wall_state(struct level *lev)
 {
     int x, y;
     int wmode;
-    struct rm *lev;
+    struct rm *loc;
 
 #ifdef WA_VERBOSE
     for (x = 0; x < MAX_TYPE; x++) bad_count[x] = 0;
 #endif
 
     for (x = 0; x < COLNO; x++)
-	for (lev = &level.locations[x][0], y = 0; y < ROWNO; y++, lev++) {
-	    switch (lev->typ) {
+	for (loc = &lev->locations[x][0], y = 0; y < ROWNO; y++, loc++) {
+	    switch (loc->typ) {
 		case SDOOR:
-		    wmode = set_wall(x, y, (int) lev->horizontal);
+		    wmode = set_wall(lev, x, y, (int) loc->horizontal);
 		    break;
 		case VWALL:
-		    wmode = set_wall(x, y, 0);
+		    wmode = set_wall(lev, x, y, 0);
 		    break;
 		case HWALL:
-		    wmode = set_wall(x, y, 1);
+		    wmode = set_wall(lev, x, y, 1);
 		    break;
 		case TDWALL:
-		    wmode = set_twall(x,y, x,y-1, x-1,y+1, x+1,y+1);
+		    wmode = set_twall(lev, x,y, x,y-1, x-1,y+1, x+1,y+1);
 		    break;
 		case TUWALL:
-		    wmode = set_twall(x,y, x,y+1, x+1,y-1, x-1,y-1);
+		    wmode = set_twall(lev, x,y, x,y+1, x+1,y-1, x-1,y-1);
 		    break;
 		case TLWALL:
-		    wmode = set_twall(x,y, x+1,y, x-1,y-1, x-1,y+1);
+		    wmode = set_twall(lev, x,y, x+1,y, x-1,y-1, x-1,y+1);
 		    break;
 		case TRWALL:
-		    wmode = set_twall(x,y, x-1,y, x+1,y+1, x+1,y-1);
+		    wmode = set_twall(lev, x,y, x-1,y, x+1,y+1, x+1,y-1);
 		    break;
 		case TLCORNER:
-		    wmode = set_corn(x-1,y-1, x,y-1, x-1,y, x+1,y+1);
+		    wmode = set_corn(lev, x-1,y-1, x,y-1, x-1,y, x+1,y+1);
 		    break;
 		case TRCORNER:
-		    wmode = set_corn(x,y-1, x+1,y-1, x+1,y, x-1,y+1);
+		    wmode = set_corn(lev, x,y-1, x+1,y-1, x+1,y, x-1,y+1);
 		    break;
 		case BLCORNER:
-		    wmode = set_corn(x,y+1, x-1,y+1, x-1,y, x+1,y-1);
+		    wmode = set_corn(lev, x,y+1, x-1,y+1, x-1,y, x+1,y-1);
 		    break;
 		case BRCORNER:
-		    wmode = set_corn(x+1,y, x+1,y+1, x,y+1, x-1,y-1);
+		    wmode = set_corn(lev, x+1,y, x+1,y+1, x,y+1, x-1,y-1);
 		    break;
 		case CROSSWALL:
-		    wmode = set_crosswall(x, y);
+		    wmode = set_crosswall(lev, x, y);
 		    break;
 
 		default:
@@ -1736,7 +1736,7 @@ void set_wall_state(void)
 	    }
 
 	if (wmode >= 0)
-	    lev->wall_info = (lev->wall_info & ~WM_MASK) | wmode;
+	    loc->wall_info = (loc->wall_info & ~WM_MASK) | wmode;
 	}
 
 #ifdef WA_VERBOSE
@@ -1761,10 +1761,10 @@ unsigned const char seenv_matrix[3][3] = { {SV2,   SV1, SV0},
 #define sign(z) ((z) < 0 ? -1 : ((z) > 0 ? 1 : 0))
 
 /* Set the seen vector of lev as if seen from (x0,y0) to (x,y). */
-static void set_seenv(struct rm *lev, int x0, int y0, int x, int y)
+static void set_seenv(struct rm *loc, int x0, int y0, int x, int y)
 {
     int dx = x-x0, dy = y0-y;
-    lev->seenv |= seenv_matrix[sign(dy)+1][sign(dx)+1];
+    loc->seenv |= seenv_matrix[sign(dy)+1][sign(dx)+1];
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1825,18 +1825,18 @@ static const int cross_matrix[4][6] = {
 
 
 /* Print out a T wall warning and all interesting info. */
-static void t_warn(struct rm *lev)
+static void t_warn(struct rm *loc)
 {
     static const char warn_str[] = "wall_angle: %s: case %d: seenv = 0x%x";
     const char *wname;
 
-    if (lev->typ == TUWALL) wname = "tuwall";
-    else if (lev->typ == TLWALL) wname = "tlwall";
-    else if (lev->typ == TRWALL) wname = "trwall";
-    else if (lev->typ == TDWALL) wname = "tdwall";
+    if (loc->typ == TUWALL) wname = "tuwall";
+    else if (loc->typ == TLWALL) wname = "tlwall";
+    else if (loc->typ == TRWALL) wname = "trwall";
+    else if (loc->typ == TDWALL) wname = "tdwall";
     else wname = "unknown";
-    impossible(warn_str, wname, lev->wall_info & WM_MASK,
-	(unsigned int) lev->seenv);
+    impossible(warn_str, wname, loc->wall_info & WM_MASK,
+	(unsigned int) loc->seenv);
 }
 
 
@@ -1852,14 +1852,14 @@ static void t_warn(struct rm *lev)
  * draw diagrams.  See rm.h for more details on the wall modes and
  * seen vector (SV).
  */
-static int wall_angle(struct rm *lev)
+static int wall_angle(struct rm *loc)
 {
-    unsigned int seenv = lev->seenv & 0xff;
+    unsigned int seenv = loc->seenv & 0xff;
     const int *row;
     int col, idx;
 
 #define only(sv, bits)	(((sv) & (bits)) && ! ((sv) & ~(bits)))
-    switch (lev->typ) {
+    switch (loc->typ) {
 	case TUWALL:
 		row = wall_matrix[T_u];
 		seenv = (seenv >> 4 | seenv << 4) & 0xff;/* rotate to tdwall */
@@ -1875,7 +1875,7 @@ static int wall_angle(struct rm *lev)
 	case TDWALL:
 		row = wall_matrix[T_d];
 do_twall:
-		switch (lev->wall_info & WM_MASK) {
+		switch (loc->wall_info & WM_MASK) {
 		    case 0:
 			if (seenv == SV4) {
 			    col = T_tlcorn;
@@ -1887,7 +1887,7 @@ do_twall:
 			} else if (seenv & (SV0|SV1|SV2)) {
 			    col = (seenv & (SV4|SV6) ? T_tdwall : T_hwall);
 			} else {
-			    t_warn(lev);
+			    t_warn(loc);
 			    col = T_stone;
 			}
 			break;
@@ -1902,7 +1902,7 @@ do_twall:
 			} else {
 			    /* only SV0|SV1|SV2 */
 			    if (! only(seenv, SV0|SV1|SV2) )
-				t_warn(lev);
+				t_warn(loc);
 			    col = T_stone;
 			}
 			break;
@@ -1931,7 +1931,7 @@ do_twall:
 			break;
 		    default:
 			impossible("wall_angle: unknown T wall mode %d",
-				lev->wall_info & WM_MASK);
+				loc->wall_info & WM_MASK);
 			col = T_stone;
 			break;
 		}
@@ -1939,10 +1939,10 @@ do_twall:
 		break;
 
 	case SDOOR:
-		if (lev->horizontal) goto horiz;
+		if (loc->horizontal) goto horiz;
 		/* fall through */
 	case VWALL:
-		switch (lev->wall_info & WM_MASK) {
+		switch (loc->wall_info & WM_MASK) {
 		    case 0: idx = seenv ? S_vwall : S_stone; break;
 		    case 1: idx = seenv & (SV1|SV2|SV3|SV4|SV5) ? S_vwall :
 								  S_stone;
@@ -1952,7 +1952,7 @@ do_twall:
 			    break;
 		    default:
 			impossible("wall_angle: unknown vwall mode %d",
-				lev->wall_info & WM_MASK);
+				loc->wall_info & WM_MASK);
 			idx = S_stone;
 			break;
 		}
@@ -1960,7 +1960,7 @@ do_twall:
 
 	case HWALL:
 horiz:
-		switch (lev->wall_info & WM_MASK) {
+		switch (loc->wall_info & WM_MASK) {
 		    case 0: idx = seenv ? S_hwall : S_stone; break;
 		    case 1: idx = seenv & (SV3|SV4|SV5|SV6|SV7) ? S_hwall :
 								  S_stone;
@@ -1970,40 +1970,40 @@ horiz:
 			    break;
 		    default:
 			impossible("wall_angle: unknown hwall mode %d",
-				lev->wall_info & WM_MASK);
+				loc->wall_info & WM_MASK);
 			idx = S_stone;
 			break;
 		}
 		break;
 
-#define set_corner(idx, lev, which, outer, inner, name)	\
-    switch ((lev)->wall_info & WM_MASK) {				    \
+#define set_corner(idx, loc, which, outer, inner, name)	\
+    switch ((loc)->wall_info & WM_MASK) {				    \
 	case 0:		 idx = which; break;				    \
 	case WM_C_OUTER: idx = seenv &  (outer) ? which : S_stone; break;   \
 	case WM_C_INNER: idx = seenv & ~(inner) ? which : S_stone; break;   \
 	default:							    \
 	    impossible("wall_angle: unknown %s mode %d", name,		    \
-		(lev)->wall_info & WM_MASK);				    \
+		(loc)->wall_info & WM_MASK);				    \
 	    idx = S_stone;						    \
 	    break;							    \
     }
 
 	case TLCORNER:
-	    set_corner(idx, lev, S_tlcorn, (SV3|SV4|SV5), SV4, "tlcorn");
+	    set_corner(idx, loc, S_tlcorn, (SV3|SV4|SV5), SV4, "tlcorn");
 	    break;
 	case TRCORNER:
-	    set_corner(idx, lev, S_trcorn, (SV5|SV6|SV7), SV6, "trcorn");
+	    set_corner(idx, loc, S_trcorn, (SV5|SV6|SV7), SV6, "trcorn");
 	    break;
 	case BLCORNER:
-	    set_corner(idx, lev, S_blcorn, (SV1|SV2|SV3), SV2, "blcorn");
+	    set_corner(idx, loc, S_blcorn, (SV1|SV2|SV3), SV2, "blcorn");
 	    break;
 	case BRCORNER:
-	    set_corner(idx, lev, S_brcorn, (SV7|SV0|SV1), SV0, "brcorn");
+	    set_corner(idx, loc, S_brcorn, (SV7|SV0|SV1), SV0, "brcorn");
 	    break;
 
 
 	case CROSSWALL:
-		switch (lev->wall_info & WM_MASK) {
+		switch (loc->wall_info & WM_MASK) {
 		    case 0:
 			if (seenv == SV0)
 			    idx = S_brcorn;
@@ -2108,7 +2108,7 @@ do_crwall:
 		break;
 
 	default:
-	    impossible("wall_angle: unexpected wall type %d", lev->typ);
+	    impossible("wall_angle: unexpected wall type %d", loc->typ);
 	    idx = S_stone;
     }
     return idx;

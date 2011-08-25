@@ -156,7 +156,7 @@ static void wildmiss(struct monst *mtmp, const struct attack *mattk)
 		case 1: pline("%s attacks a spot beside you.", Monnam(mtmp));
 		    break;
 		case 2: pline("%s strikes at %s!", Monnam(mtmp),
-				level.locations[mtmp->mux][mtmp->muy].typ == WATER
+				level->locations[mtmp->mux][mtmp->muy].typ == WATER
 				    ? "empty water" : "thin air");
 		    break;
 		default:pline("%s %s wildly!", Monnam(mtmp), swings);
@@ -325,7 +325,7 @@ int mattacku(struct monst *mtmp)
 		    struct obj *obj;
 
 		    You("fall from the %s!", ceiling(u.ux,u.uy));
-		    if (enexto(&cc, u.ux, u.uy, youmonst.data)) {
+		    if (enexto(&cc, level, u.ux, u.uy, youmonst.data)) {
 			remove_monster(mtmp->mx, mtmp->my);
 			newsym(mtmp->mx,mtmp->my);
 			place_monster(mtmp, u.ux, u.uy);
@@ -368,10 +368,10 @@ int mattacku(struct monst *mtmp)
 			 * parallelism to work, we can't rephrase it, so we
 			 * zap the "laid by you" momentarily instead.
 			 */
-			struct obj *obj = level.objects[u.ux][u.uy];
+			struct obj *obj = level->objects[u.ux][u.uy];
 
 			if (obj ||
-			      (youmonst.data->mlet == S_EEL && is_pool(u.ux, u.uy))) {
+			      (youmonst.data->mlet == S_EEL && is_pool(level, u.ux, u.uy))) {
 			    int save_spe = 0; /* suppress warning */
 			    if (obj) {
 				save_spe = obj->spe;
@@ -383,7 +383,7 @@ int mattacku(struct monst *mtmp)
 			    else
 	     pline("Wait, %s!  There's a %s named %s hiding under %s!",
 				m_monnam(mtmp), youmonst.data->mname, plname,
-				doname(level.objects[u.ux][u.uy]));
+				doname(level->objects[u.ux][u.uy]));
 			    if (obj) obj->spe = save_spe;
 			} else
 			    impossible("hiding under nothing?");
@@ -836,10 +836,10 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 		struct obj *obj;
 		const char *what;
 
-		if ((obj = level.objects[mtmp->mx][mtmp->my]) != 0) {
+		if ((obj = level->objects[mtmp->mx][mtmp->my]) != 0) {
 		    if (Blind && !obj->dknown)
 			what = "something";
-		    else if (is_pool(mtmp->mx, mtmp->my) && !Underwater)
+		    else if (is_pool(level, mtmp->mx, mtmp->my) && !Underwater)
 			what = "the water";
 		    else
 			what = doname(obj);
@@ -1172,11 +1172,11 @@ dopois:
 			    u.ustuck = mtmp;
 			}
 		    } else if (u.ustuck == mtmp) {
-			if (is_pool(mtmp->mx,mtmp->my) && !Swimming
+			if (is_pool(level, mtmp->mx,mtmp->my) && !Swimming
 			    && !Amphibious) {
 			    boolean moat =
-				(level.locations[mtmp->mx][mtmp->my].typ != POOL) &&
-				(level.locations[mtmp->mx][mtmp->my].typ != WATER) &&
+				(level->locations[mtmp->mx][mtmp->my].typ != POOL) &&
+				(level->locations[mtmp->mx][mtmp->my].typ != WATER) &&
 				!Is_medusa_level(&u.uz) &&
 				!Is_waterlevel(&u.uz);
 
@@ -1520,7 +1520,7 @@ dopois:
 		 *	hpmax > 10*lvl	50..100%
 		 *	hpmax >  5*lvl	25..75%
 		 *	otherwise	 0..50%
-		 * Never reduces hpmax below 1 hit point per level.
+		 * Never reduces hpmax below 1 hit point per level->
 		 */
 		permdmg = rn2(dmg / 2 + 1);
 		if (Upolyd || u.uhpmax > 25 * u.ulevel) permdmg = dmg;
@@ -1559,7 +1559,7 @@ dopois:
 /* monster swallows you, or damage if u.uswallow */
 static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 {
-	struct trap *t = t_at(u.ux, u.uy);
+	struct trap *t = t_at(level, u.ux, u.uy);
 	int	tmp = dice((int)mattk->damn, (int)mattk->damd);
 	int	tim_tmp;
 	struct obj *otmp2;
@@ -1568,7 +1568,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 	if (!u.uswallow) {	/* swallows you */
 		if (youmonst.data->msize >= MZ_HUGE) return 0;
 		if ((t && ((t->ttyp == PIT) || (t->ttyp == SPIKED_PIT))) &&
-		    sobj_at(BOULDER, u.ux, u.uy))
+		    sobj_at(BOULDER, level, u.ux, u.uy))
 			return 0;
 
 		if (Punished) unplacebc();	/* ball&chain go away */
@@ -1750,7 +1750,7 @@ static int explmu(struct monst *mtmp, const struct attack *mattk, boolean ufound
     if (!ufound)
 	pline("%s explodes at a spot in %s!",
 	    canseemon(mtmp) ? Monnam(mtmp) : "It",
-	    level.locations[mtmp->mux][mtmp->muy].typ == WATER
+	    level->locations[mtmp->mux][mtmp->muy].typ == WATER
 		? "empty water" : "thin air");
     else {
 	int tmp = dice((int)mattk->damn, (int)mattk->damd);
@@ -2503,7 +2503,7 @@ struct monst *cloneu(void)
 	if (mvitals[mndx].mvflags & G_EXTINCT)
 	    return NULL;
 	
-	mon = makemon(youmonst.data, u.ux, u.uy, NO_MINVENT|MM_EDOG);
+	mon = makemon(youmonst.data, level, u.ux, u.uy, NO_MINVENT|MM_EDOG);
 	mon = christen_monst(mon, plname);
 	initedog(mon);
 	mon->m_lev = youmonst.data->mlevel;

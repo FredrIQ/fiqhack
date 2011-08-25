@@ -131,29 +131,29 @@ boolean can_reach_floor(void)
 
 const char *surface(int x, int y)
 {
-	struct rm *lev = &level.locations[x][y];
+	struct rm *loc = &level->locations[x][y];
 
 	if ((x == u.ux) && (y == u.uy) && u.uswallow &&
 		is_animal(u.ustuck->data))
 	    return "maw";
-	else if (IS_AIR(lev->typ) && Is_airlevel(&u.uz))
+	else if (IS_AIR(loc->typ) && Is_airlevel(&u.uz))
 	    return "air";
-	else if (is_pool(x,y))
+	else if (is_pool(level, x, y))
 	    return (Underwater && !Is_waterlevel(&u.uz)) ? "bottom" : "water";
-	else if (is_ice(x,y))
+	else if (is_ice(level, x, y))
 	    return "ice";
-	else if (is_lava(x,y))
+	else if (is_lava(level, x, y))
 	    return "lava";
-	else if (lev->typ == DRAWBRIDGE_DOWN)
+	else if (loc->typ == DRAWBRIDGE_DOWN)
 	    return "bridge";
-	else if (IS_ALTAR(level.locations[x][y].typ))
+	else if (IS_ALTAR(level->locations[x][y].typ))
 	    return "altar";
-	else if (IS_GRAVE(level.locations[x][y].typ))
+	else if (IS_GRAVE(level->locations[x][y].typ))
 	    return "headstone";
-	else if (IS_FOUNTAIN(level.locations[x][y].typ))
+	else if (IS_FOUNTAIN(level->locations[x][y].typ))
 	    return "fountain";
-	else if ((IS_ROOM(lev->typ) && !Is_earthlevel(&u.uz)) ||
-		 IS_WALL(lev->typ) || IS_DOOR(lev->typ) || lev->typ == SDOOR)
+	else if ((IS_ROOM(loc->typ) && !Is_earthlevel(&u.uz)) ||
+		 IS_WALL(loc->typ) || IS_DOOR(loc->typ) || loc->typ == SDOOR)
 	    return "floor";
 	else
 	    return "ground";
@@ -161,24 +161,24 @@ const char *surface(int x, int y)
 
 const char *ceiling(int x, int y)
 {
-	struct rm *lev = &level.locations[x][y];
+	struct rm *loc = &level->locations[x][y];
 	const char *what;
 
 	/* other room types will no longer exist when we're interested --
 	 * see check_special_room()
 	 */
-	if (*in_rooms(x,y,VAULT))
+	if (*in_rooms(level, x, y, VAULT))
 	    what = "vault's ceiling";
-	else if (*in_rooms(x,y,TEMPLE))
+	else if (*in_rooms(level, x, y, TEMPLE))
 	    what = "temple's ceiling";
-	else if (*in_rooms(x,y,SHOPBASE))
+	else if (*in_rooms(level, x, y, SHOPBASE))
 	    what = "shop's ceiling";
-	else if (IS_AIR(lev->typ))
+	else if (IS_AIR(loc->typ))
 	    what = "sky";
 	else if (Underwater)
 	    what = "water's surface";
-	else if ((IS_ROOM(lev->typ) && !Is_earthlevel(&u.uz)) ||
-		 IS_WALL(lev->typ) || IS_DOOR(lev->typ) || lev->typ == SDOOR)
+	else if ((IS_ROOM(loc->typ) && !Is_earthlevel(&u.uz)) ||
+		 IS_WALL(loc->typ) || IS_DOOR(loc->typ) || loc->typ == SDOOR)
 	    what = "ceiling";
 	else
 	    what = "rock above";
@@ -186,9 +186,9 @@ const char *ceiling(int x, int y)
 	return what;
 }
 
-struct engr *engr_at(xchar x, xchar y)
+struct engr *engr_at(struct level *lev, xchar x, xchar y)
 {
-	struct engr *ep = level.lev_engr;
+	struct engr *ep = lev->lev_engr;
 
 	while (ep) {
 		if (x == ep->engr_x && y == ep->engr_y)
@@ -204,7 +204,7 @@ struct engr *engr_at(xchar x, xchar y)
  */
 int sengr_at(const char *s, xchar x, xchar y)
 {
-	struct engr *ep = engr_at(x,y);
+	struct engr *ep = engr_at(level, x,y);
 
 	return (ep && ep->engr_type != HEADSTONE &&
 		ep->engr_time <= moves && strstri(ep->engr_txt, s) != 0);
@@ -214,17 +214,17 @@ int sengr_at(const char *s, xchar x, xchar y)
 void u_wipe_engr(int cnt)
 {
 	if (can_reach_floor())
-		wipe_engr_at(u.ux, u.uy, cnt);
+		wipe_engr_at(level, u.ux, u.uy, cnt);
 }
 
 
-void wipe_engr_at(xchar x, xchar y, xchar cnt)
+void wipe_engr_at(struct level *lev, xchar x, xchar y, xchar cnt)
 {
-	struct engr *ep = engr_at(x,y);
+	struct engr *ep = engr_at(lev, x,y);
 
 	/* Headstones are indelible */
 	if (ep && ep->engr_type != HEADSTONE){
-	    if (ep->engr_type != BURN || is_ice(x,y)) {
+	    if (ep->engr_type != BURN || is_ice(lev, x, y)) {
 		if (ep->engr_type != DUST && ep->engr_type != ENGR_BLOOD) {
 			cnt = rn2(1 + 50/(cnt+1)) ? 0 : 1;
 		}
@@ -239,7 +239,7 @@ void wipe_engr_at(xchar x, xchar y, xchar cnt)
 
 void read_engr_at(int x, int y)
 {
-	struct engr *ep = engr_at(x,y);
+	struct engr *ep = engr_at(level, x,y);
 	int	sensed = 0;
 	char buf[BUFSZ];
 	
@@ -252,7 +252,7 @@ void read_engr_at(int x, int y)
 		if (!Blind) {
 			sensed = 1;
 			pline("Something is written here in the %s.",
-				is_ice(x,y) ? "frost" : "dust");
+				is_ice(level, x, y) ? "frost" : "dust");
 		}
 		break;
 	    case ENGRAVE:
@@ -267,8 +267,8 @@ void read_engr_at(int x, int y)
 		if (!Blind || can_reach_floor()) {
 			sensed = 1;
 			pline("Some text has been %s into the %s here.",
-				is_ice(x,y) ? "melted" : "burned",
-				surface(x,y));
+				is_ice(level, x, y) ? "melted" : "burned",
+				surface(x, y));
 		}
 		break;
 	    case MARK:
@@ -309,21 +309,22 @@ void read_engr_at(int x, int y)
 }
 
 
-void make_engr_at(int x, int y, const char *s, long e_time, xchar e_type)
+void make_engr_at(struct level *lev, int x, int y,
+		  const char *s, long e_time, xchar e_type)
 {
 	struct engr *ep;
 
-	if ((ep = engr_at(x,y)) != 0)
+	if ((ep = engr_at(lev, x,y)) != 0)
 	    del_engr(ep);
 	ep = newengr(strlen(s) + 1);
-	ep->nxt_engr = level.lev_engr;
-	level.lev_engr = ep;
+	ep->nxt_engr = lev->lev_engr;
+	lev->lev_engr = ep;
 	ep->engr_x = x;
 	ep->engr_y = y;
 	ep->engr_txt = (char *)(ep + 1);
+	strcpy(ep->engr_txt, s);
 	while (ep->engr_txt[0] == ' ')
 	    ep->engr_txt++;
-	strcpy(ep->engr_txt, s);
 	/* engraving Elbereth shows wisdom */
 	if (!in_mklev && !strcmp(s, "Elbereth")) exercise(A_WIS, TRUE);
 	ep->engr_time = e_time;
@@ -332,9 +333,9 @@ void make_engr_at(int x, int y, const char *s, long e_time, xchar e_type)
 }
 
 /* delete any engraving at location <x,y> */
-void del_engr_at(int x, int y)
+void del_engr_at(struct level *lev, int x, int y)
 {
-	struct engr *ep = engr_at(x, y);
+	struct engr *ep = engr_at(lev, x, y);
 
 	if (ep) del_engr(ep);
 }
@@ -405,7 +406,7 @@ int doengrave(void)
 	char *sp;		/* Place holder for space count of engr text */
 	int len;		/* # of nonspace chars of new engraving text */
 	int maxelen;		/* Max allowable length of engraving text */
-	struct engr *oep = engr_at(u.ux,u.uy);
+	struct engr *oep = engr_at(level, u.ux,u.uy);
 				/* The current engraving */
 	struct obj *otmp;	/* Object selected with which to engrave */
 	char *writer;
@@ -431,10 +432,10 @@ int doengrave(void)
 			return 0;
 		} else
 			jello = TRUE;
-	} else if (is_lava(u.ux, u.uy)) {
+	} else if (is_lava(level, u.ux, u.uy)) {
 		You_cant("write on the lava!");
 		return 0;
-	} else if (is_pool(u.ux,u.uy) || IS_FOUNTAIN(level.locations[u.ux][u.uy].typ)) {
+	} else if (is_pool(level, u.ux,u.uy) || IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
 		You_cant("write on the water!");
 		return 0;
 	}
@@ -475,20 +476,20 @@ int doengrave(void)
 		You_cant("reach the %s!", surface(u.ux,u.uy));
 		return 0;
 	}
-	if (IS_ALTAR(level.locations[u.ux][u.uy].typ)) {
+	if (IS_ALTAR(level->locations[u.ux][u.uy].typ)) {
 		You("make a motion towards the altar with your %s.", writer);
 		altar_wrath(u.ux, u.uy);
 		return 0;
 	}
-	if (IS_GRAVE(level.locations[u.ux][u.uy].typ)) {
+	if (IS_GRAVE(level->locations[u.ux][u.uy].typ)) {
 	    if (otmp == &zeroobj) { /* using only finger */
 		You("would only make a small smudge on the %s.",
 			surface(u.ux, u.uy));
 		return 0;
-	    } else if (!level.locations[u.ux][u.uy].disturbed) {
+	    } else if (!level->locations[u.ux][u.uy].disturbed) {
 		You("disturb the undead!");
-		level.locations[u.ux][u.uy].disturbed = 1;
-		makemon(&mons[PM_GHOUL], u.ux, u.uy, NO_MM_FLAGS);
+		level->locations[u.ux][u.uy].disturbed = 1;
+		makemon(&mons[PM_GHOUL], level, u.ux, u.uy, NO_MM_FLAGS);
 		exercise(A_WIS, FALSE);
 		return 1;
 	    }
@@ -532,7 +533,7 @@ int doengrave(void)
 	    case SCROLL_CLASS:
 	    case SPBOOK_CLASS:
 		Your("%s would get %s.", xname(otmp),
-			is_ice(u.ux,u.uy) ? "all frosty" : "too dirty");
+			is_ice(level, u.ux, u.uy) ? "all frosty" : "too dirty");
 		ptext = FALSE;
 		break;
 
@@ -661,9 +662,9 @@ int doengrave(void)
 			}
 			if (!Blind)
 			    strcpy(post_engr_text,
-				IS_GRAVE(level.locations[u.ux][u.uy].typ) ?
+				IS_GRAVE(level->locations[u.ux][u.uy].typ) ?
 				"Chips fly out from the headstone." :
-				is_ice(u.ux,u.uy) ?
+				is_ice(level, u.ux, u.uy) ?
 				"Ice chips fly up from the ice surface!" :
 				"Gravel flies up from the floor.");
 			else
@@ -744,7 +745,7 @@ int doengrave(void)
 				else
 				    Your("%s %s %s.", xname(otmp),
 					 otense(otmp, "get"),
-					 is_ice(u.ux,u.uy) ?
+					 is_ice(level, u.ux, u.uy) ?
 					 "frosty" : "dusty");
 				dengr = TRUE;
 			    } else
@@ -752,7 +753,7 @@ int doengrave(void)
 				     xname(otmp));
 			else
 			    Your("%s %s %s.", xname(otmp), otense(otmp, "get"),
-				  is_ice(u.ux,u.uy) ? "frosty" : "dusty");
+				  is_ice(level, u.ux, u.uy) ? "frosty" : "dusty");
 			break;
 		    default:
 			break;
@@ -769,7 +770,7 @@ int doengrave(void)
 		break;
 	}
 
-	if (IS_GRAVE(level.locations[u.ux][u.uy].typ)) {
+	if (IS_GRAVE(level->locations[u.ux][u.uy].typ)) {
 	    if (type == ENGRAVE || type == 0)
 		type = HEADSTONE;
 	    else {
@@ -801,7 +802,7 @@ int doengrave(void)
 
 	/* Something has changed the engraving here */
 	if (*buf) {
-	    make_engr_at(u.ux, u.uy, buf, moves, type);
+	    make_engr_at(level, u.ux, u.uy, buf, moves, type);
 	    pline_The("engraving now reads: \"%s\".", buf);
 	    ptext = FALSE;
 	}
@@ -809,9 +810,9 @@ int doengrave(void)
 	if (zapwand && (otmp->spe < 0)) {
 	    pline("%s %sturns to dust.",
 		  The(xname(otmp)), Blind ? "" : "glows violently, then ");
-	    if (!IS_GRAVE(level.locations[u.ux][u.uy].typ))
+	    if (!IS_GRAVE(level->locations[u.ux][u.uy].typ))
 		You("are not going to get anywhere trying to write in the %s with your dust.",
-		    is_ice(u.ux,u.uy) ? "frost" : "dust");
+		    is_ice(level, u.ux, u.uy) ? "frost" : "dust");
 	    useup(otmp);
 	    ptext = FALSE;
 	}
@@ -863,7 +864,7 @@ int doengrave(void)
 			You(
 			 "cannot wipe out the message that is %s the %s here.",
 			 oep->engr_type == BURN ?
-			   (is_ice(u.ux,u.uy) ? "melted into" : "burned into") :
+			   (is_ice(level, u.ux, u.uy) ? "melted into" : "burned into") :
 			   "engraved in", surface(u.ux,u.uy));
 			return 1;
 		    } else
@@ -884,7 +885,7 @@ int doengrave(void)
 	    case DUST:
 		everb = (oep && !eow ? "add to the writing in" :
 				       "write in");
-		eloc = is_ice(u.ux,u.uy) ? "frost" : "dust";
+		eloc = is_ice(level, u.ux, u.uy) ? "frost" : "dust";
 		break;
 	    case HEADSTONE:
 		everb = (oep && !eow ? "add to the epitaph on" :
@@ -896,9 +897,9 @@ int doengrave(void)
 		break;
 	    case BURN:
 		everb = (oep && !eow ?
-			( is_ice(u.ux,u.uy) ? "add to the text melted into" :
+			( is_ice(level, u.ux,u.uy) ? "add to the text melted into" :
 					      "add to the text burned into") :
-			( is_ice(u.ux,u.uy) ? "melt into" : "burn into"));
+			( is_ice(level, u.ux,u.uy) ? "melt into" : "burn into"));
 		break;
 	    case MARK:
 		everb = (oep && !eow ? "add to the graffiti on" :
@@ -1006,7 +1007,7 @@ int doengrave(void)
 	    case BURN:
 		multi = -(len/10);
 		if (multi)
-		    nomovemsg = is_ice(u.ux,u.uy) ?
+		    nomovemsg = is_ice(level, u.ux,u.uy) ?
 			"You finish melting your message into the ice.":
 			"You finish burning your message into the floor.";
 		break;
@@ -1047,7 +1048,7 @@ int doengrave(void)
 
 	strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
 
-	make_engr_at(u.ux, u.uy, buf, (moves - multi), type);
+	make_engr_at(level, u.ux, u.uy, buf, (moves - multi), type);
 
 	if (post_engr_text[0]) pline(post_engr_text);
 
@@ -1062,7 +1063,7 @@ int doengrave(void)
 
 void save_engravings(int fd, int mode)
 {
-	struct engr *ep = level.lev_engr;
+	struct engr *ep = level->lev_engr;
 	struct engr *ep2;
 	unsigned no_more_engr = 0;
 
@@ -1079,7 +1080,7 @@ void save_engravings(int fd, int mode)
 	if (perform_bwrite(mode))
 	    bwrite(fd, &no_more_engr, sizeof no_more_engr);
 	if (release_data(mode))
-	    level.lev_engr = NULL;
+	    level->lev_engr = NULL;
 }
 
 void rest_engravings(int fd)
@@ -1087,14 +1088,14 @@ void rest_engravings(int fd)
 	struct engr *ep;
 	unsigned lth;
 
-	level.lev_engr = NULL;
+	level->lev_engr = NULL;
 	while (1) {
 		mread(fd, &lth, sizeof(unsigned));
 		if (lth == 0) return;
 		ep = newengr(lth);
 		mread(fd, ep, sizeof(struct engr) + lth);
-		ep->nxt_engr = level.lev_engr;
-		level.lev_engr = ep;
+		ep->nxt_engr = level->lev_engr;
+		level->lev_engr = ep;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
 		while (ep->engr_txt[0] == ' ')
 		    ep->engr_txt++;
@@ -1107,12 +1108,12 @@ void rest_engravings(int fd)
 
 void del_engr(struct engr *ep)
 {
-	if (ep == level.lev_engr) {
-		level.lev_engr = ep->nxt_engr;
+	if (ep == level->lev_engr) {
+		level->lev_engr = ep->nxt_engr;
 	} else {
 		struct engr *ept;
 
-		for (ept = level.lev_engr; ept; ept = ept->nxt_engr)
+		for (ept = level->lev_engr; ept; ept = ept->nxt_engr)
 		    if (ept->nxt_engr == ep) {
 			ept->nxt_engr = ep->nxt_engr;
 			break;
@@ -1134,8 +1135,8 @@ void rloc_engr(struct engr *ep)
 	    if (--tryct < 0) return;
 	    tx = rn1(COLNO-3,2);
 	    ty = rn2(ROWNO);
-	} while (engr_at(tx, ty) ||
-		!goodpos(tx, ty, NULL, 0));
+	} while (engr_at(level, tx, ty) ||
+		!goodpos(level, tx, ty, NULL, 0));
 
 	ep->engr_x = tx;
 	ep->engr_y = ty;
@@ -1178,18 +1179,18 @@ static const char * const epitaphs[] = {
 /* Create a headstone at the given location.
  * The caller is responsible for newsym(x, y).
  */
-void make_grave(int x, int y, const char *str)
+void make_grave(struct level *lev, int x, int y, const char *str)
 {
 	/* Can we put a grave here? */
-	if ((level.locations[x][y].typ != ROOM && level.locations[x][y].typ != GRAVE) || t_at(x,y)) return;
+	if ((lev->locations[x][y].typ != ROOM && lev->locations[x][y].typ != GRAVE) || t_at(lev, x, y)) return;
 
 	/* Make the grave */
-	level.locations[x][y].typ = GRAVE;
+	lev->locations[x][y].typ = GRAVE;
 
 	/* Engrave the headstone */
 	if (!str) str = epitaphs[rn2(SIZE(epitaphs))];
-	del_engr_at(x, y);
-	make_engr_at(x, y, str, 0L, HEADSTONE);
+	del_engr_at(lev, x, y);
+	make_engr_at(lev, x, y, str, 0L, HEADSTONE);
 	return;
 }
 

@@ -124,7 +124,7 @@ int hitval(struct obj *otmp, struct monst *mon)
 
 	/* trident is highly effective against swimmers */
 	if (otmp->otyp == TRIDENT && is_swimmer(ptr)) {
-	   if (is_pool(mon->mx, mon->my)) tmp += 4;
+	   if (is_pool(level, mon->mx, mon->my)) tmp += 4;
 	   else if (ptr->mlet == S_EEL || ptr->mlet == S_SNAKE) tmp += 2;
 	}
 
@@ -515,7 +515,7 @@ void possibly_unwield(struct monst *mon, boolean polyspot)
 		/* might be dropping object into water or lava */
 		if (!flooreffects(obj, mon->mx, mon->my, "drop")) {
 		    if (polyspot) bypass_obj(obj);
-		    place_object(obj, mon->mx, mon->my);
+		    place_object(obj, level, mon->mx, mon->my);
 		    stackobj(obj);
 		}
 		return;

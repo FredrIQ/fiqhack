@@ -54,7 +54,7 @@ void amulet(void)
 	if ((((amu = uamul) != 0 && amu->otyp == AMULET_OF_YENDOR) ||
 	     ((amu = uwep) != 0 && amu->otyp == AMULET_OF_YENDOR))
 	    && !rn2(15)) {
-	    for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap) {
+	    for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap) {
 		if (ttmp->ttyp == MAGIC_PORTAL) {
 		    int du = distu(ttmp->tx, ttmp->ty);
 		    if (du <= 9)
@@ -72,7 +72,7 @@ void amulet(void)
 	if (!flags.no_of_wizards)
 		return;
 	/* find Wizard, and wake him if necessary */
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp) && mtmp->iswiz && mtmp->msleeping && !rn2(40)) {
 		mtmp->msleeping = 0;
 		if (distu(mtmp->mx,mtmp->my) > 2)
@@ -153,7 +153,7 @@ static struct monst *other_mon_has_arti(struct monst *mtmp, short otyp)
 {
 	struct monst *mtmp2;
 
-	for (mtmp2 = level.monlist; mtmp2; mtmp2 = mtmp2->nmon)
+	for (mtmp2 = level->monlist; mtmp2; mtmp2 = mtmp2->nmon)
 	    /* no need for !DEADMONSTER check here since they have no inventory */
 	    if (mtmp2 != mtmp)
 		if (mon_has_arti(mtmp2, otyp)) return mtmp2;
@@ -165,7 +165,7 @@ static struct obj *on_ground(short otyp)
 {
 	struct obj *otmp;
 
-	for (otmp = level.objlist; otmp; otmp = otmp->nobj)
+	for (otmp = level->objlist; otmp; otmp = otmp->nobj)
 	    if (otyp) {
 		if (otmp->otyp == otyp)
 		    return otmp;
@@ -276,11 +276,11 @@ int tactics(struct monst *mtmp)
 		/* unless, of course, there are no stairs (e.g. endlevel) */
 		mtmp->mavenge = 1; /* covetous monsters attack while fleeing */
 		if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
-			(mtmp->iswiz && !level.upstair.sx && !mon_has_amulet(mtmp))) {
+			(mtmp->iswiz && !level->upstair.sx && !mon_has_amulet(mtmp))) {
 		    if (!rn2(3 + mtmp->mhp/10)) rloc(mtmp, FALSE);
-		} else if (level.upstair.sx &&
-			 (mtmp->mx != level.upstair.sx || mtmp->my != level.upstair.sy)) {
-		    mnearto(mtmp, level.upstair.sx, level.upstair.sy, TRUE);
+		} else if (level->upstair.sx &&
+			 (mtmp->mx != level->upstair.sx || mtmp->my != level->upstair.sy)) {
+		    mnearto(mtmp, level->upstair.sx, level->upstair.sy, TRUE);
 		}
 		/* if you're not around, cast healing spells */
 		if (distu(mtmp->mx,mtmp->my) > (BOLT_LIM * BOLT_LIM))
@@ -311,7 +311,7 @@ int tactics(struct monst *mtmp)
 		    return 0;
 		}
 		if (where == STRAT_GROUND) {
-		    if (!MON_AT(tx, ty) || (mtmp->mx == tx && mtmp->my == ty)) {
+		    if (!MON_AT(level, tx, ty) || (mtmp->mx == tx && mtmp->my == ty)) {
 			/* teleport to it and pick it up */
 			rloc_to(mtmp, tx, ty);	/* clean old pos */
 
@@ -344,7 +344,7 @@ void aggravate(void)
 {
 	struct monst *mtmp;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp)) {
 		mtmp->msleeping = 0;
 		if (!mtmp->mcanmove && !rn2(5)) {
@@ -358,11 +358,11 @@ void clonewiz(void)
 {
 	struct monst *mtmp2;
 
-	if ((mtmp2 = makemon(&mons[PM_WIZARD_OF_YENDOR],
+	if ((mtmp2 = makemon(&mons[PM_WIZARD_OF_YENDOR], level,
 				u.ux, u.uy, NO_MM_FLAGS)) != 0) {
 	    mtmp2->msleeping = mtmp2->mtame = mtmp2->mpeaceful = 0;
 	    if (!u.uhave.amulet && rn2(2)) {  /* give clone a fake */
-		add_to_minv(mtmp2, mksobj(FAKE_AMULET_OF_YENDOR,
+		add_to_minv(mtmp2, mksobj(level, FAKE_AMULET_OF_YENDOR,
 					TRUE, FALSE));
 	    }
 	    mtmp2->m_ap_type = M_AP_MONSTER;
@@ -410,14 +410,14 @@ int nasty(struct monst *mcast)
 			monstr[makeindex] >= monstr[mcast->mnum]);
 		/* do this after picking the monster to place */
 		if (mcast &&
-		    !enexto(&bypos, mcast->mux, mcast->muy, &mons[makeindex]))
+		    !enexto(&bypos, level, mcast->mux, mcast->muy, &mons[makeindex]))
 		    continue;
-		if ((mtmp = makemon(&mons[makeindex],
+		if ((mtmp = makemon(&mons[makeindex], level,
 				    bypos.x, bypos.y, NO_MM_FLAGS)) != 0) {
 		    mtmp->msleeping = mtmp->mpeaceful = mtmp->mtame = 0;
 		    set_malign(mtmp);
 		} else /* GENOD? */
-		    mtmp = makemon(NULL,
+		    mtmp = makemon(NULL, level,
 					bypos.x, bypos.y, NO_MM_FLAGS);
 		if (mtmp && (mtmp->data->maligntyp == 0 ||
 		            sgn(mtmp->data->maligntyp) == sgn(castalign)) ) {
@@ -439,7 +439,7 @@ void resurrect(void)
 	if (!flags.no_of_wizards) {
 	    /* make a new Wizard */
 	    verb = "kill";
-	    mtmp = makemon(&mons[PM_WIZARD_OF_YENDOR], u.ux, u.uy, MM_NOWAIT);
+	    mtmp = makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy, MM_NOWAIT);
 	} else {
 	    /* look for a migrating Wizard */
 	    verb = "elude";

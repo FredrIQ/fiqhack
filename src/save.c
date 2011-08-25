@@ -109,7 +109,7 @@ static void savegamestate(int fd, int mode)
 	bwrite(fd, &youmonst, sizeof(youmonst));
 
 	/* must come before migrating_objs and migrating_mons are freed */
-	save_timers(fd, mode, RANGE_GLOBAL);
+	save_timers(fd, level, mode, RANGE_GLOBAL);
 	save_light_sources(fd, mode, RANGE_GLOBAL);
 
 	saveobjchn(fd, invent, mode);
@@ -156,7 +156,7 @@ void savelev(int fd, xchar lev, int mode)
 		 * a panic save rather than a normal one, or sometimes
 		 * when changing levels without taking time -- e.g.
 		 * create statue trap then immediately level teleport) */
-		dmonsfree();
+		dmonsfree(level);
 	}
 
 	if (fd < 0) panic("Save on bad file!");	/* impossible */
@@ -164,41 +164,41 @@ void savelev(int fd, xchar lev, int mode)
 	    level_info[lev].flags |= VISITED;
 	bwrite(fd,&hackpid,sizeof(hackpid));
 	bwrite(fd,&lev,sizeof(lev));
-	bwrite(fd,level.locations,sizeof(level.locations));
-	bwrite(fd,&level.lastmoves,sizeof(level.lastmoves));
-	bwrite(fd,&level.upstair,sizeof(stairway));
-	bwrite(fd,&level.dnstair,sizeof(stairway));
-	bwrite(fd,&level.upladder,sizeof(stairway));
-	bwrite(fd,&level.dnladder,sizeof(stairway));
-	bwrite(fd,&level.sstairs,sizeof(stairway));
-	bwrite(fd,&level.updest,sizeof(dest_area));
-	bwrite(fd,&level.dndest,sizeof(dest_area));
-	bwrite(fd,&level.flags,sizeof(level.flags));
-	bwrite(fd, level.doors, sizeof(level.doors));
+	bwrite(fd,level->locations,sizeof(level->locations));
+	bwrite(fd,&level->lastmoves,sizeof(level->lastmoves));
+	bwrite(fd,&level->upstair,sizeof(stairway));
+	bwrite(fd,&level->dnstair,sizeof(stairway));
+	bwrite(fd,&level->upladder,sizeof(stairway));
+	bwrite(fd,&level->dnladder,sizeof(stairway));
+	bwrite(fd,&level->sstairs,sizeof(stairway));
+	bwrite(fd,&level->updest,sizeof(dest_area));
+	bwrite(fd,&level->dndest,sizeof(dest_area));
+	bwrite(fd,&level->flags,sizeof(level->flags));
+	bwrite(fd, level->doors, sizeof(level->doors));
 	save_rooms(fd);	/* no dynamic memory to reclaim */
 
 	/* from here on out, saving also involves allocated memory cleanup */
  skip_lots:
 	/* must be saved before mons, objs, and buried objs */
-	save_timers(fd, mode, RANGE_LEVEL);
+	save_timers(fd, level, mode, RANGE_LEVEL);
 	save_light_sources(fd, mode, RANGE_LEVEL);
 
-	savemonchn(fd, level.monlist, mode);
+	savemonchn(fd, level->monlist, mode);
 	save_worm(fd, mode);	/* save worm information */
-	savetrapchn(fd, level.lev_traps, mode);
-	saveobjchn(fd, level.objlist, mode);
-	saveobjchn(fd, level.buriedobjlist, mode);
+	savetrapchn(fd, level->lev_traps, mode);
+	saveobjchn(fd, level->objlist, mode);
+	saveobjchn(fd, level->buriedobjlist, mode);
 	saveobjchn(fd, billobjs, mode);
 	if (release_data(mode)) {
-	    level.monlist = 0;
-	    level.lev_traps = 0;
-	    level.objlist = 0;
-	    level.buriedobjlist = 0;
+	    level->monlist = 0;
+	    level->lev_traps = 0;
+	    level->objlist = 0;
+	    level->buriedobjlist = 0;
 	    billobjs = 0;
 	}
 	save_engravings(fd, mode);
 	savedamage(fd, mode);
-	save_regions(fd, mode);
+	save_regions(fd, level, mode);
 }
 
 
@@ -237,7 +237,7 @@ static void savedamage(int fd, int mode)
 	struct damage *damageptr, *tmp_dam;
 	unsigned int xl = 0;
 
-	damageptr = level.damagelist;
+	damageptr = level->damagelist;
 	for (tmp_dam = damageptr; tmp_dam; tmp_dam = tmp_dam->next)
 	    xl++;
 	if (perform_bwrite(mode))
@@ -252,7 +252,7 @@ static void savedamage(int fd, int mode)
 		free(tmp_dam);
 	}
 	if (release_data(mode))
-	    level.damagelist = 0;
+	    level->damagelist = 0;
 }
 
 static void saveobjchn(int fd, struct obj *otmp, int mode)
@@ -376,23 +376,23 @@ void freedynamicdata(void)
 # define free_oracles()	save_oracles(0, FREE_SAVE)
 # define free_waterlevel() save_waterlevel(0, FREE_SAVE)
 # define free_worm()	 save_worm(0, FREE_SAVE)
-# define free_timers(R)	 save_timers(0, FREE_SAVE, R)
+# define free_timers(R)	 save_timers(0, level, FREE_SAVE, R)
 # define free_light_sources(R) save_light_sources(0, FREE_SAVE, R);
 # define free_engravings() save_engravings(0, FREE_SAVE)
 # define freedamage()	 savedamage(0, FREE_SAVE)
 # define free_animals()	 mon_animal_list(FALSE)
 
 	/* move-specific data */
-	dmonsfree();		/* release dead monsters */
+	dmonsfree(level);		/* release dead monsters */
 
 	/* level-specific data */
 	free_timers(RANGE_LEVEL);
 	free_light_sources(RANGE_LEVEL);
-	freemonchn(level.monlist);
+	freemonchn(level->monlist);
 	free_worm();		/* release worm segment information */
-	freetrapchn(level.lev_traps);
-	freeobjchn(level.objlist);
-	freeobjchn(level.buriedobjlist);
+	freetrapchn(level->lev_traps);
+	freeobjchn(level->objlist);
+	freeobjchn(level->buriedobjlist);
 	freeobjchn(billobjs);
 	free_engravings();
 	freedamage();

@@ -145,7 +145,7 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define ALL_TYPES_SELECTED -2
 
 /* Flags to control find_mid() */
-#define FM_FMON	       0x01	/* search the level.monlist chain */
+#define FM_FMON	       0x01	/* search the level->monlist chain */
 #define FM_MIGRATE     0x02	/* search the migrating monster chain */
 #define FM_MYDOGS      0x04	/* search mydogs */
 #define FM_EVERYWHERE  (FM_FMON | FM_MIGRATE | FM_MYDOGS)

@@ -128,6 +128,8 @@ typedef struct branch {
 #define within_bounded_area(X,Y,LX,LY,HX,HY) \
 		((X) >= (LX) && (X) <= (HX) && (Y) >= (LY) && (Y) <= (HY))
 
+#define isok(x, y) ((x) >= 1 && (x) <= COLNO-1 && (y) >= 0 && (y) <= ROWNO-1)
+
 /* monster and object migration codes */
 
 #define MIGR_NOWHERE	      (-1)	/* failure flag for down_gate() */

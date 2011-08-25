@@ -12,7 +12,6 @@ static int drop(struct obj *);
 static int wipeoff(void);
 
 static int menu_drop(int);
-static int currentlevel_rewrite(void);
 static void final_level(void);
 /* static boolean badspot(XCHAR_P,XCHAR_P); */
 
@@ -45,21 +44,21 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 {
 	if (!otmp || otmp->otyp != BOULDER)
 	    impossible("Not a boulder?");
-	else if (!Is_waterlevel(&u.uz) && (is_pool(rx,ry) || is_lava(rx,ry))) {
-	    boolean lava = is_lava(rx,ry), fills_up;
+	else if (!Is_waterlevel(&u.uz) && (is_pool(level, rx,ry) || is_lava(level, rx,ry))) {
+	    boolean lava = is_lava(level, rx,ry), fills_up;
 	    const char *what = waterbody_name(rx,ry);
-	    schar ltyp = level.locations[rx][ry].typ;
+	    schar ltyp = level->locations[rx][ry].typ;
 	    int chance = rn2(10);		/* water: 90%; lava: 10% */
 	    fills_up = lava ? chance == 0 : chance != 0;
 
 	    if (fills_up) {
-		struct trap *ttmp = t_at(rx, ry);
+		struct trap *ttmp = t_at(level, rx, ry);
 
 		if (ltyp == DRAWBRIDGE_UP) {
-		    level.locations[rx][ry].drawbridgemask &= ~DB_UNDER; /* clear lava */
-		    level.locations[rx][ry].drawbridgemask |= DB_FLOOR;
+		    level->locations[rx][ry].drawbridgemask &= ~DB_UNDER; /* clear lava */
+		    level->locations[rx][ry].drawbridgemask |= DB_FLOOR;
 		} else
-		    level.locations[rx][ry].typ = ROOM;
+		    level->locations[rx][ry].typ = ROOM;
 
 		if (ttmp) delfloortrap(ttmp);
 		bury_objs(rx, ry);
@@ -124,10 +123,10 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 
 	if (obj->otyp == BOULDER && boulder_hits_pool(obj, x, y, FALSE))
 		return TRUE;
-	else if (obj->otyp == BOULDER && (t = t_at(x,y)) != 0 &&
+	else if (obj->otyp == BOULDER && (t = t_at(level, x,y)) != 0 &&
 		 (t->ttyp==PIT || t->ttyp==SPIKED_PIT
 			|| t->ttyp==TRAPDOOR || t->ttyp==HOLE)) {
-		if (((mtmp = m_at(x, y)) && mtmp->mtrapped) ||
+		if (((mtmp = m_at(level, x, y)) && mtmp->mtrapped) ||
 			(u.utrap && u.ux == x && u.uy == y)) {
 		    if (*verb)
 			pline_The("boulder %s into the pit%s.",
@@ -167,9 +166,9 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 		bury_objs(x, y);
 		newsym(x,y);
 		return TRUE;
-	} else if (is_lava(x, y)) {
+	} else if (is_lava(level, x, y)) {
 		return fire_damage(obj, FALSE, FALSE, x, y);
-	} else if (is_pool(x, y)) {
+	} else if (is_pool(level, x, y)) {
 		/* Reasonably bulky objects (arbitrary) splash when dropped.
 		 * If you're floating above the water even small things make noise.
 		 * Stuff dropped near fountains always misses */
@@ -188,7 +187,7 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 		water_damage(obj, FALSE, FALSE);
 	} else if (u.ux == x && u.uy == y &&
 		(!u.utrap || u.utraptype != TT_PIT) &&
-		(t = t_at(x,y)) != 0 && t->tseen &&
+		(t = t_at(level, x,y)) != 0 && t->tseen &&
 			(t->ttyp==PIT || t->ttyp==SPIKED_PIT)) {
 		/* you escaped a pit and are standing on the precipice */
 		if (Blind && flags.soundok)
@@ -285,7 +284,7 @@ giveback:
 		break;
 	    case RIN_HUNGER:
 		ideed = FALSE;
-		for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp2) {
+		for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp2) {
 		    otmp2 = otmp->nexthere;
 		    if (otmp != uball && otmp != uchain &&
 			    !obj_resists(otmp, 1, 99)) {
@@ -440,7 +439,7 @@ static int drop(struct obj *obj)
 		}
 	} else {
 	    if ((obj->oclass == RING_CLASS || obj->otyp == MEAT_RING) &&
-			IS_SINK(level.locations[u.ux][u.uy].typ)) {
+			IS_SINK(level->locations[u.ux][u.uy].typ)) {
 		dosinkring(obj);
 		return 1;
 	    }
@@ -456,7 +455,7 @@ static int drop(struct obj *obj)
 		hitfloor(obj);
 		return 1;
 	    }
-	    if (!IS_ALTAR(level.locations[u.ux][u.uy].typ) && flags.verbose)
+	    if (!IS_ALTAR(level->locations[u.ux][u.uy].typ) && flags.verbose)
 		You("drop %s.", doname(obj));
 	}
 	dropx(obj);
@@ -476,7 +475,7 @@ void dropx(struct obj *obj)
 #endif
 	if (!u.uswallow) {
 	    if (ship_object(obj, u.ux, u.uy, FALSE)) return;
-	    if (IS_ALTAR(level.locations[u.ux][u.uy].typ))
+	    if (IS_ALTAR(level->locations[u.ux][u.uy].typ))
 		doaltarobj(obj); /* set bknown */
 	}
 	dropy(obj);
@@ -527,7 +526,7 @@ void dropy(struct obj *obj)
 		}
 	    }
 	} else  {
-	    place_object(obj, u.ux, u.uy);
+	    place_object(obj, level, u.ux, u.uy);
 	    if (obj == uball)
 		drop_ball(u.ux, u.uy, 0, 0);
 	    else
@@ -680,9 +679,9 @@ static boolean at_ladder = FALSE;
 int dodown(void)
 {
 	struct trap *trap = 0;
-	boolean stairs_down = ((u.ux == level.dnstair.sx && u.uy == level.dnstair.sy) ||
-		(u.ux == level.sstairs.sx && u.uy == level.sstairs.sy && !level.sstairs.up)),
-		ladder_down = (u.ux == level.dnladder.sx && u.uy == level.dnladder.sy);
+	boolean stairs_down = ((u.ux == level->dnstair.sx && u.uy == level->dnstair.sy) ||
+		(u.ux == level->sstairs.sx && u.uy == level->sstairs.sy && !level->sstairs.up)),
+		ladder_down = (u.ux == level->dnladder.sx && u.uy == level->dnladder.sy);
 
 	if (u.usteed && !u.usteed->mcanmove) {
 		pline("%s won't move!", Monnam(u.usteed));
@@ -714,9 +713,9 @@ int dodown(void)
 	    return 0;   /* didn't move */
 	}
 	if (!stairs_down && !ladder_down) {
-		if (!(trap = t_at(u.ux,u.uy)) ||
+		if (!(trap = t_at(level, u.ux,u.uy)) ||
 			(trap->ttyp != TRAPDOOR && trap->ttyp != HOLE)
-			|| !Can_fall_thru(&u.uz) || !trap->tseen) {
+			|| !can_fall_thru(level) || !trap->tseen) {
 
 			if (flags.autodig && !flags.nopick &&
 				uwep && is_pick(uwep)) {
@@ -754,7 +753,7 @@ int dodown(void)
 	if (trap && Is_stronghold(&u.uz)) {
 		goto_hell(FALSE, TRUE);
 	} else {
-		at_ladder = (boolean) (level.locations[u.ux][u.uy].typ == LADDER);
+		at_ladder = (boolean) (level->locations[u.ux][u.uy].typ == LADDER);
 		next_level(!trap);
 		at_ladder = FALSE;
 	}
@@ -763,10 +762,10 @@ int dodown(void)
 
 int doup(void)
 {
-	if ( (u.ux != level.upstair.sx || u.uy != level.upstair.sy)
-	     && (!level.upladder.sx || u.ux != level.upladder.sx || u.uy != level.upladder.sy)
-	     && (!level.sstairs.sx || u.ux != level.sstairs.sx || u.uy != level.sstairs.sy
-			|| !level.sstairs.up)
+	if ( (u.ux != level->upstair.sx || u.uy != level->upstair.sy)
+	     && (!level->upladder.sx || u.ux != level->upladder.sx || u.uy != level->upladder.sy)
+	     && (!level->sstairs.sx || u.ux != level->sstairs.sx || u.uy != level->sstairs.sy
+			|| !level->sstairs.up)
 	  ) {
 		You_cant("go up here.");
 		return 0;
@@ -786,7 +785,7 @@ int doup(void)
 	if (near_capacity() > SLT_ENCUMBER) {
 		/* No levitation check; inv_weight() already allows for it */
 		Your("load is too heavy to climb the %s.",
-			level.locations[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
+			level->locations[u.ux][u.uy].typ == STAIRS ? "stairs" : "ladder");
 		return 1;
 	}
 	if (ledger_no(&u.uz) == 1) {
@@ -797,7 +796,7 @@ int doup(void)
 		You("are held back by your pet!");
 		return 0;
 	}
-	at_ladder = (boolean) (level.locations[u.ux][u.uy].typ == LADDER);
+	at_ladder = (boolean) (level->locations[u.ux][u.uy].typ == LADDER);
 	prev_level(TRUE);
 	at_ladder = FALSE;
 	return 1;
@@ -805,27 +804,6 @@ int doup(void)
 
 d_level save_dlevel = {0, 0};
 
-/* check that we can write out the current level */
-static int currentlevel_rewrite(void)
-{
-	int fd;
-	char whynot[BUFSZ];
-
-	fd = create_levelfile(ledger_no(&u.uz), whynot);
-	if (fd < 0) {
-		/*
-		 * This is not quite impossible: e.g., we may have
-		 * exceeded our quota. If that is the case then we
-		 * cannot leave this level, and cannot save either.
-		 * Another possibility is that the directory was not
-		 * writable.
-		 */
-		pline("%s", whynot);
-		return -1;
-	}
-
-	return fd;
-}
 
 void notify_levelchange(void)
 {
@@ -847,18 +825,18 @@ void notify_levelchange(void)
 	level_changed(mode);
 }
 
+
 void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean portal)
 {
-	int fd, l_idx;
 	xchar new_ledger;
-	boolean cant_go_back,
-		up = (depth(newlevel) < depth(&u.uz)),
+	boolean up = (depth(newlevel) < depth(&u.uz)),
 		newdungeon = (u.uz.dnum != newlevel->dnum),
 		was_in_W_tower = In_W_tower(u.ux, u.uy, &u.uz),
 		familiar = FALSE;
 	boolean new = FALSE;	/* made a new level? */
 	struct monst *mtmp;
-	char whynot[BUFSZ];
+	struct obj *otmp;
+	struct level *origlev;
 
 	if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
 		newlevel->dlevel = dunlevs_in_dungeon(newlevel);
@@ -920,16 +898,13 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	if (on_level(newlevel, &u.uz)) return;		/* this can happen */
 
-	fd = currentlevel_rewrite();
-	if (fd < 0) return;
-
 	if (falling) /* assuming this is only trap door or hole */
 	    impact_drop(NULL, u.ux, u.uy, newlevel->dlevel);
 
 	check_special_room(TRUE);		/* probably was a trap door */
 	if (Punished) unplacebc();
 	u.utrap = 0;				/* needed in level_tele */
-	fill_pit(u.ux, u.uy);
+	fill_pit(level, u.ux, u.uy);
 	u.ustuck = 0;				/* idem */
 	u.uinwater = 0;
 	u.uundetected = 0;	/* not hidden, even if means are available */
@@ -937,31 +912,17 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	if (u.uswallow)				/* idem */
 		u.uswldtim = u.uswallow = 0;
 	/*
-	 *  We no longer see anything on the level.  Make sure that this
+	 *  We no longer see anything on the level->  Make sure that this
 	 *  follows u.uswallow set to null since uswallow overrides all
 	 *  normal vision.
 	 */
 	vision_recalc(2);
 
-	/*
-	 * Save the level we're leaving.  If we're entering the endgame,
-	 * we can get rid of all existing levels because they cannot be
-	 * reached any more.  We still need to use savelev()'s cleanup
-	 * for the level being left, to recover dynamic memory in use and
-	 * to avoid dangling timers and light sources.
-	 */
-	cant_go_back = (newdungeon && In_endgame(newlevel));
-	if (!cant_go_back) {
-	    update_mlstmv();	/* current monsters are becoming inactive */
+	if (iflags.purge_monsters) {
+		/* purge any dead monsters */
+		dmonsfree(level);
 	}
-	savelev(fd, ledger_no(&u.uz),
-		cant_go_back ? FREE_SAVE : (WRITE_SAVE | FREE_SAVE));
-	close(fd);
-	if (cant_go_back) {
-	    /* discard unreachable levels; keep #0 */
-	    for (l_idx = maxledgerno(); l_idx > 0; --l_idx)
-		delete_levelfile(l_idx);
-	}
+	update_mlstmv();	/* current monsters are becoming inactive */
 
 	assign_level(&u.uz0, &u.uz);
 	assign_level(&u.uz, newlevel);
@@ -971,33 +932,23 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		dunlev_reached(&u.uz) = dunlev(&u.uz);
 	reset_rndmonst(NON_PM);   /* u.uz change affects monster generation */
 
-	/* set default level change destination areas */
-	/* the special level code may override these */
-	memset(&level.updest, 0, sizeof(level.updest));
-	memset(&level.dndest, 0, sizeof(level.dndest));
-
+	origlev = level;
+	level = NULL;
+	
 	if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
 		/* entering this level for first time; make it now */
-		if (level_info[new_ledger].flags & (FORGOTTEN|VISITED)) {
-		    impossible("goto_level: returning to discarded level?");
-		    level_info[new_ledger].flags &= ~(FORGOTTEN|VISITED);
-		}
-		mklev();
+		level = mklev(&u.uz);
 		new = TRUE;	/* made the level */
 	} else {
-		/* returning to previously visited level; reload it */
-		fd = open_levelfile(new_ledger, whynot);
-		if (fd < 0) {
-			pline("%s", whynot);
-			pline("Probably someone removed it.");
-			killer = whynot;
-			done(TRICKED);
-			/* we'll reach here if running in wizard mode */
-			raw_print("Cannot continue this game.\n");
-		}
-		getlev(fd, hackpid, new_ledger, FALSE);
-		close(fd);
+		/* returning to previously visited level */
+		level = levels[new_ledger];
 	}
+	
+	/* some timers and lights might need to be transferred to the new level
+	 * if they are attached to objects the hero is carrying */
+	transfer_timers(origlev, level);
+	transfer_lights(origlev, level);
+	
 	/* do this prior to level-change pline messages */
 	vision_reset();		/* clear old level's line-of-sight */
 	vision_full_recalc = 0;	/* don't let that reenable vision yet */
@@ -1007,7 +958,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	    /* find the portal on the new level */
 	    struct trap *ttrap;
 
-	    for (ttrap = level.lev_traps; ttrap; ttrap = ttrap->ntrap)
+	    for (ttrap = level->lev_traps; ttrap; ttrap = ttrap->ntrap)
 		if (ttrap->ttyp == MAGIC_PORTAL) break;
 
 	    if (!ttrap) panic("goto_level: no corresponding portal!");
@@ -1016,7 +967,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	} else if (at_stairs && !In_endgame(&u.uz)) {
 	    if (up) {
 		if (at_ladder) {
-		    u_on_newpos(level.dnladder.sx, level.dnladder.sy);
+		    u_on_newpos(level->dnladder.sx, level->dnladder.sy);
 		} else {
 		    if (newdungeon) {
 			if (Is_stronghold(&u.uz)) {
@@ -1025,8 +976,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			    do {
 				x = (COLNO - 2 - rnd(5));
 				y = rn1(ROWNO - 4, 3);
-			    } while (occupied(x, y) ||
-				    IS_WALL(level.locations[x][y].typ));
+			    } while (occupied(level, x, y) ||
+				    IS_WALL(level->locations[x][y].typ));
 			    u_on_newpos(x, y);
 			} else u_on_sstairs();
 		    } else u_on_dnstairs();
@@ -1039,7 +990,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		    You("climb up the ladder.");
 	    } else {	/* down */
 		if (at_ladder) {
-		    u_on_newpos(level.upladder.sx, level.upladder.sy);
+		    u_on_newpos(level->upladder.sx, level->upladder.sy);
 		} else {
 		    if (newdungeon) u_on_sstairs();
 		    else u_on_upstairs();
@@ -1075,20 +1026,20 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	    if (was_in_W_tower && On_W_tower_level(&u.uz))
 		/* Stay inside the Wizard's tower when feasible.	*/
 		/* Note: up vs down doesn't really matter in this case. */
-		place_lregion(level.dndest.nlx, level.dndest.nly,
-				level.dndest.nhx, level.dndest.nhy,
+		place_lregion(level, level->dndest.nlx, level->dndest.nly,
+				level->dndest.nhx, level->dndest.nhy,
 				0,0, 0,0, LR_DOWNTELE, NULL);
 	    else if (up)
-		place_lregion(level.updest.lx, level.updest.ly,
-				level.updest.hx, level.updest.hy,
-				level.updest.nlx, level.updest.nly,
-				level.updest.nhx, level.updest.nhy,
+		place_lregion(level, level->updest.lx, level->updest.ly,
+				level->updest.hx, level->updest.hy,
+				level->updest.nlx, level->updest.nly,
+				level->updest.nhx, level->updest.nhy,
 				LR_UPTELE, NULL);
 	    else
-		place_lregion(level.dndest.lx, level.dndest.ly,
-				level.dndest.hx, level.dndest.hy,
-				level.dndest.nlx, level.dndest.nly,
-				level.dndest.nhx, level.dndest.nhy,
+		place_lregion(level, level->dndest.lx, level->dndest.ly,
+				level->dndest.hx, level->dndest.hy,
+				level->dndest.nlx, level->dndest.nly,
+				level->dndest.nhx, level->dndest.nhy,
 				LR_DOWNTELE, NULL);
 	    if (falling) {
 		if (Punished) ballfall();
@@ -1098,6 +1049,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	if (Punished) placebc();
 	obj_delivery();		/* before killing geno'd monsters' eggs */
+	for (otmp = invent; otmp; otmp = otmp->nobj)
+	    set_obj_level(level, otmp);
 	losedogs();
 	kill_genocided_monsters();  /* for those wiped out while in limbo */
 	/*
@@ -1109,7 +1062,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	initrack();
 
-	if ((mtmp = m_at(u.ux, u.uy)) != 0
+	if ((mtmp = m_at(level, u.ux, u.uy)) != 0
 		&& mtmp != u.usteed) {
 	    /* There's a monster at your target destination; it might be one
 	       which accompanied you--see mon_arrive(dogmove.c)--or perhaps
@@ -1119,13 +1072,13 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	    coord cc;
 
 	    if (!rn2(2) &&
-		    enexto(&cc, u.ux, u.uy, youmonst.data) &&
+		    enexto(&cc, level, u.ux, u.uy, youmonst.data) &&
 		    distu(cc.x, cc.y) <= 2)
 		u_on_newpos(cc.x, cc.y);	/*[maybe give message here?]*/
 	    else
 		mnexto(mtmp);
 
-	    if ((mtmp = m_at(u.ux, u.uy)) != 0) {
+	    if ((mtmp = m_at(level, u.ux, u.uy)) != 0) {
 		impossible("mnexto failed (do.c)?");
 		rloc(mtmp, FALSE);
 	    }
@@ -1217,7 +1170,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	if (Is_knox(&u.uz) && (new || !mvitals[PM_CROESUS].died)) {
 		You("penetrated a high security area!");
 		pline("An alarm sounds!");
-		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 		    if (!DEADMONSTER(mtmp) && mtmp->msleeping) mtmp->msleeping = 0;
 	}
 
@@ -1228,9 +1181,10 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	assign_level(&u.uz0, &u.uz); /* reset u.uz0 */
 
 	/* assume this will always return TRUE when changing level */
-	in_out_region(u.ux, u.uy);
+	in_out_region(level, u.ux, u.uy);
 	pickup(1);
 }
+
 
 static void final_level(void)
 {
@@ -1240,7 +1194,7 @@ static void final_level(void)
 	int i;
 
 	/* reset monster hostility relative to player */
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp)) reset_hostility(mtmp);
 
 	/* create some player-monsters */
@@ -1253,18 +1207,18 @@ static void final_level(void)
 	    for (i = rnd(4); i > 0; --i) {
 		mm.x = u.ux;
 		mm.y = u.uy;
-		if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL]))
+		if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
 		    mk_roamer(&mons[PM_ANGEL], u.ualign.type,
-				     mm.x, mm.y, FALSE);
+				     level, mm.x, mm.y, FALSE);
 	    }
 
 	} else if (u.ualign.record > 8) {	/* fervent */
 	    pline("A voice whispers: \"Thou hast been worthy of me!\"");
 	    mm.x = u.ux;
 	    mm.y = u.uy;
-	    if (enexto(&mm, mm.x, mm.y, &mons[PM_ANGEL])) {
+	    if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL])) {
 		if ((mtmp = mk_roamer(&mons[PM_ANGEL], u.ualign.type,
-				      mm.x, mm.y, TRUE)) != 0) {
+				      level, mm.x, mm.y, TRUE)) != 0) {
 		    if (!Blind)
 			pline("An angel appears near you.");
 		    else
@@ -1279,7 +1233,7 @@ static void final_level(void)
 		    mtmp->mhp = mtmp->mhpmax =
 					dice((int)mtmp->m_lev,10) + 30 + rnd(30);
 		    if ((otmp = select_hwep(mtmp)) == 0) {
-			otmp = mksobj(SILVER_SABER, FALSE, FALSE);
+			otmp = mksobj(level, SILVER_SABER, FALSE, FALSE);
 			if (mpickobj(mtmp, otmp))
 			    panic("merged weapon?");
 		    }
@@ -1330,7 +1284,7 @@ void deferred_goto(void)
 	    if (dfr_pre_msg) pline(dfr_pre_msg);
 	    goto_level(&dest, !!(typmask&1), !!(typmask&2), !!(typmask&4));
 	    if (typmask & 0200) {	/* remove portal */
-		struct trap *t = t_at(u.ux, u.uy);
+		struct trap *t = t_at(level, u.ux, u.uy);
 
 		if (t) {
 		    deltrap(t);
@@ -1443,7 +1397,7 @@ void revive_mon(void *arg, long timeout)
     if (!revive_corpse(body)) {
 	if (is_rider(&mons[body->corpsenm]))
 	    You_feel("less hassled.");
-	start_timer(250L - (moves-body->age),
+	start_timer(body->olev, 250L - (moves-body->age),
 					TIMER_OBJECT, ROT_CORPSE, arg);
     }
 }

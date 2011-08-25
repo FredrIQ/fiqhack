@@ -2280,14 +2280,14 @@ struct obj *floorfood(/* get food from floor or pack */
 	/* if we can't touch floor objects then use invent food only */
 	if (!can_reach_floor() ||
 		(feeding && u.usteed) || /* can't eat off floor while riding */
-		((is_pool(u.ux, u.uy) || is_lava(u.ux, u.uy)) &&
+		((is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) &&
 		    (Wwalking || is_clinger(youmonst.data) ||
 			(Flying && !Breathless))))
 	    goto skipfloor;
 
 	if (feeding && metallivorous(youmonst.data)) {
 	    struct obj *gold;
-	    struct trap *ttmp = t_at(u.ux, u.uy);
+	    struct trap *ttmp = t_at(level, u.ux, u.uy);
 
 	    if (ttmp && ttmp->tseen && ttmp->ttyp == BEAR_TRAP) {
 		/* If not already stuck in the trap, perhaps there should
@@ -2299,14 +2299,14 @@ struct obj *floorfood(/* get food from floor or pack */
 		if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
 		    u.utrap = u.utraptype = 0;
 		    deltrap(ttmp);
-		    return mksobj(BEARTRAP, TRUE, FALSE);
+		    return mksobj(level, BEARTRAP, TRUE, FALSE);
 		} else if (c == 'q') {
 		    return NULL;
 		}
 	    }
 
 	    if (youmonst.data != &mons[PM_RUST_MONSTER] &&
-		(gold = g_at(u.ux, u.uy)) != 0) {
+		(gold = gold_at(level, u.ux, u.uy)) != 0) {
 		if (gold->quan == 1L)
 		    sprintf(qbuf, "There is 1 gold piece here; eat it?");
 		else
@@ -2321,7 +2321,7 @@ struct obj *floorfood(/* get food from floor or pack */
 	}
 
 	/* Is there some food (probably a heavy corpse) here on the ground? */
-	for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+	for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
 		if (corpsecheck ?
 		(otmp->otyp==CORPSE && (corpsecheck == 1 || tinnable(otmp))) :
 		    feeding ? (otmp->oclass != COIN_CLASS && is_edible(otmp)) :

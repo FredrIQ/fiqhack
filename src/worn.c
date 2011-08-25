@@ -496,7 +496,7 @@ static void m_lose_armor(struct monst *mon, struct obj *obj)
 	obj->owornmask = 0L;
 
 	obj_extract_self(obj);
-	place_object(obj, mon->mx, mon->my);
+	place_object(obj, level, mon->mx, mon->my);
 	/* call stackobj() if we ever drop anything that can merge */
 	newsym(mon->mx, mon->my);
 }
@@ -507,7 +507,7 @@ void clear_bypasses(void)
 	struct obj *otmp, *nobj;
 	struct monst *mtmp;
 
-	for (otmp = level.objlist; otmp; otmp = nobj) {
+	for (otmp = level->objlist; otmp; otmp = nobj) {
 	    nobj = otmp->nobj;
 	    if (otmp->bypass) {
 		otmp->bypass = 0;
@@ -520,7 +520,7 @@ void clear_bypasses(void)
 	/* invent and mydogs chains shouldn't matter here */
 	for (otmp = migrating_objs; otmp; otmp = otmp->nobj)
 	    otmp->bypass = 0;
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 		otmp->bypass = 0;

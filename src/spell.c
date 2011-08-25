@@ -245,9 +245,9 @@ raise_dead:
 
 	You("raised the dead!");
 	/* first maybe place a dangerous adversary */
-	if (!rn2(3) && ((mtmp = makemon(&mons[PM_MASTER_LICH],
+	if (!rn2(3) && ((mtmp = makemon(&mons[PM_MASTER_LICH], level,
 					u.ux, u.uy, NO_MINVENT)) != 0 ||
-			(mtmp = makemon(&mons[PM_NALFESHNEE],
+			(mtmp = makemon(&mons[PM_NALFESHNEE], level,
 					u.ux, u.uy, NO_MINVENT)) != 0)) {
 	    mtmp->mpeaceful = 0;
 	    set_malign(mtmp);
@@ -259,7 +259,7 @@ raise_dead:
 	mm.y = u.uy;
 	mkundead(&mm, TRUE, NO_MINVENT);
     } else if (book2->blessed) {
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;		/* tamedog() changes chain */
 	    if (DEADMONSTER(mtmp)) continue;
 
@@ -736,7 +736,7 @@ int spelleffects(int spell, boolean atme)
 	botl = 1;
 	exercise(A_WIS, TRUE);
 	/* pseudo is a temporary "false" object containing the spell stats */
-	pseudo = mksobj(spellid(spell), FALSE, FALSE);
+	pseudo = mksobj(level, spellid(spell), FALSE, FALSE);
 	pseudo->blessed = pseudo->cursed = 0;
 	pseudo->quan = 20L;			/* do not let useup get it */
 	/*
@@ -778,7 +778,7 @@ int spelleffects(int spell, boolean atme)
 			dx = cc.x+rnd(3)-2;
 			dy = cc.y+rnd(3)-2;
 			if (!isok(dx, dy) || !cansee(dx, dy) ||
-			    IS_STWALL(level.locations[dx][dy].typ) || u.uswallow) {
+			    IS_STWALL(level->locations[dx][dy].typ) || u.uswallow) {
 			    /* Spell is reflected back to center */
 			    dx = cc.x;
 			    dy = cc.y;
@@ -926,7 +926,7 @@ static int throwspell(schar *dx, schar *dy)
 	    *dx = 0;
 	    *dy = 0;
 	    return 1;
-	} else if (!cansee(cc.x, cc.y) || IS_STWALL(level.locations[cc.x][cc.y].typ)) {
+	} else if (!cansee(cc.x, cc.y) || IS_STWALL(level->locations[cc.x][cc.y].typ)) {
 	    Your("mind fails to lock onto that location!");
 	    return 0;
 	} else {

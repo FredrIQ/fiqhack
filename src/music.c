@@ -35,18 +35,13 @@ static void charm_monsters(int);
 static void do_earthquake(int);
 static int do_improvisation(struct obj *);
 
-#ifdef UNIX386MUSIC
-static int atconsole(void);
-static void speaker(struct obj *,char *);
-#endif
-
 /*
  * Wake every monster in range...
  */
 
 static void awaken_monsters(int distance)
 {
-	struct monst *mtmp = level.monlist;
+	struct monst *mtmp = level->monlist;
 	int distm;
 
 	while (mtmp) {
@@ -72,7 +67,7 @@ static void awaken_monsters(int distance)
 
 static void put_monsters_to_sleep(int distance)
 {
-	struct monst *mtmp = level.monlist;
+	struct monst *mtmp = level->monlist;
 
 	while (mtmp) {
 		if (!DEADMONSTER(mtmp) && distu(mtmp->mx, mtmp->my) < distance &&
@@ -89,7 +84,7 @@ static void put_monsters_to_sleep(int distance)
  */
 static void charm_snakes(int distance)
 {
-	struct monst *mtmp = level.monlist;
+	struct monst *mtmp = level->monlist;
 	int could_see_mon, was_peaceful;
 
 	while (mtmp) {
@@ -120,7 +115,7 @@ static void charm_snakes(int distance)
  */
 static void calm_nymphs(int distance)
 {
-	struct monst *mtmp = level.monlist;
+	struct monst *mtmp = level->monlist;
 
 	while (mtmp) {
 	    if (!DEADMONSTER(mtmp) && mtmp->data->mlet == S_NYMPH && mtmp->mcanmove &&
@@ -140,7 +135,7 @@ static void calm_nymphs(int distance)
 /* Awake only soldiers of the level. */
 void awaken_soldiers(void)
 {
-	struct monst *mtmp = level.monlist;
+	struct monst *mtmp = level->monlist;
 
 	while (mtmp) {
 	    if (!DEADMONSTER(mtmp) &&
@@ -167,7 +162,7 @@ static void charm_monsters(int distance)
 	    if (!resist(u.ustuck, TOOL_CLASS, 0, NOTELL))
 		tamedog(u.ustuck, NULL);
 	} else {
-	    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+	    for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
 		if (DEADMONSTER(mtmp)) continue;
 
@@ -200,7 +195,7 @@ static void do_earthquake(int force)
 	if (end_x >= COLNO) end_x = COLNO - 1;
 	if (end_y >= ROWNO) end_y = ROWNO - 1;
 	for (x=start_x; x<=end_x; x++) for (y=start_y; y<=end_y; y++) {
-	    if ((mtmp = m_at(x,y)) != 0) {
+	    if ((mtmp = m_at(level, x,y)) != 0) {
 		wakeup(mtmp);	/* peaceful monster will become hostile */
 		if (mtmp->mundetected && is_hider(mtmp->data)) {
 		    mtmp->mundetected = 0;
@@ -215,7 +210,7 @@ static void do_earthquake(int force)
 		    newsym(x,y);
 		}
 	    }
-	    if (!rn2(14 - force)) switch (level.locations[x][y].typ) {
+	    if (!rn2(14 - force)) switch (level->locations[x][y].typ) {
 		  case FOUNTAIN : /* Make the fountain disappear */
 			if (cansee(x,y))
 				pline_The("fountain falls into a chasm.");
@@ -240,15 +235,15 @@ static void do_earthquake(int force)
 			/* Falls into next case */
 		  case ROOM :
 		  case CORR : /* Try to make a pit */
-do_pit:		    chasm = maketrap(x,y,PIT);
+do_pit:		    chasm = maketrap(level, x,y,PIT);
 		    if (!chasm) break;	/* no pit if portal at that location */
 		    chasm->tseen = 1;
 
-		    level.locations[x][y].doormask = 0;
+		    level->locations[x][y].doormask = 0;
 
-		    mtmp = m_at(x,y);
+		    mtmp = m_at(level, x,y);
 
-		    if ((otmp = sobj_at(BOULDER, x, y)) != 0) {
+		    if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
 			if (cansee(x, y))
 			   pline("KADOOM! The boulder falls into a chasm%s!",
 			      ((x == u.ux) && (y == u.uy)) ? " below you" : "");
@@ -299,12 +294,12 @@ do_pit:		    chasm = maketrap(x,y,PIT);
 		    } else newsym(x,y);
 		    break;
 		  case DOOR : /* Make the door collapse */
-		    if (level.locations[x][y].doormask == D_NODOOR) goto do_pit;
+		    if (level->locations[x][y].doormask == D_NODOOR) goto do_pit;
 		    if (cansee(x,y))
 			pline_The("door collapses.");
-		    if (*in_rooms(x, y, SHOPBASE))
+		    if (*in_rooms(level, x, y, SHOPBASE))
 			add_damage(x, y, 0L);
-		    level.locations[x][y].doormask = D_NODOOR;
+		    level->locations[x][y].doormask = D_NODOOR;
 		    unblock_point(x,y);
 		    newsym(x,y);
 		    break;
@@ -455,7 +450,7 @@ int do_play_instrument(struct obj *instr)
 			if (isok(x,y))
 			if (find_drawbridge(&x,&y)) {
 			    u.uevent.uheard_tune = 2; /* tune now fully known */
-			    if (level.locations[x][y].typ == DRAWBRIDGE_DOWN)
+			    if (level->locations[x][y].typ == DRAWBRIDGE_DOWN)
 				close_drawbridge(x,y);
 			    else
 				open_drawbridge(x,y);
@@ -470,7 +465,7 @@ int do_play_instrument(struct obj *instr)
 		for (y = u.uy-1; y <= u.uy+1 && !ok; y++)
 		    for (x = u.ux-1; x <= u.ux+1 && !ok; x++)
 			if (isok(x,y))
-			if (IS_DRAWBRIDGE(level.locations[x][y].typ) ||
+			if (IS_DRAWBRIDGE(level->locations[x][y].typ) ||
 			   is_drawbridge_wall(x,y) >= 0)
 				ok = TRUE;
 		if (ok) { /* There is a drawbridge near */

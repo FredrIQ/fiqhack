@@ -11,9 +11,9 @@ static int mon_in_room(struct monst *,int);
 /* this easily could be a macro, but it might overtax dumb compilers */
 static int mon_in_room(struct monst *mon, int rmtyp)
 {
-    int rno = level.locations[mon->mx][mon->my].roomno;
+    int rno = level->locations[mon->mx][mon->my].roomno;
 
-    return level.rooms[rno - ROOMOFFSET].rtype == rmtyp;
+    return level->rooms[rno - ROOMOFFSET].rtype == rmtyp;
 }
 
 void dosounds(void)
@@ -26,7 +26,7 @@ void dosounds(void)
 
     hallu = Hallucination ? 1 : 0;
 
-    if (level.flags.nfountains && !rn2(400)) {
+    if (level->flags.nfountains && !rn2(400)) {
 	static const char * const fountain_msg[4] = {
 		"bubbling water.",
 		"water falling on coins.",
@@ -36,7 +36,7 @@ void dosounds(void)
 	You_hear(fountain_msg[rn2(3)+hallu]);
     }
 
-    if (level.flags.nsinks && !rn2(300)) {
+    if (level->flags.nsinks && !rn2(300)) {
 	static const char * const sink_msg[3] = {
 		"a slow drip.",
 		"a gurgling noise.",
@@ -45,14 +45,14 @@ void dosounds(void)
 	You_hear(sink_msg[rn2(2)+hallu]);
     }
 
-    if (level.flags.has_court && !rn2(200)) {
+    if (level->flags.has_court && !rn2(200)) {
 	static const char * const throne_msg[4] = {
 		"the tones of courtly conversation.",
 		"a sceptre pounded in judgment.",
 		"Someone shouts \"Off with %s head!\"",
 		"Queen Beruthiel's cats!",
 	};
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if ((mtmp->msleeping ||
 			is_lord(mtmp->data) || is_prince(mtmp->data)) &&
@@ -67,7 +67,7 @@ void dosounds(void)
 	    }
 	}
     }
-    if (level.flags.has_swamp && !rn2(200)) {
+    if (level->flags.has_swamp && !rn2(200)) {
 	static const char * const swamp_msg[3] = {
 		"hear mosquitoes!",
 		"smell marsh gas!",	/* so it's a smell...*/
@@ -76,10 +76,10 @@ void dosounds(void)
 	You(swamp_msg[rn2(2)+hallu]);
 	return;
     }
-    if (level.flags.has_vault && !rn2(200)) {
-	if (!(sroom = search_special(VAULT))) {
+    if (level->flags.has_vault && !rn2(200)) {
+	if (!(sroom = search_special(level, VAULT))) {
 	    /* strange ... */
-	    level.flags.has_vault = 0;
+	    level->flags.has_vault = 0;
 	    return;
 	}
 	if (gd_sound())
@@ -89,7 +89,7 @@ void dosounds(void)
 
 		    for (vx = sroom->lx;vx <= sroom->hx; vx++)
 			for (vy = sroom->ly; vy <= sroom->hy; vy++)
-			    if (g_at(vx, vy))
+			    if (gold_at(level, vx, vy))
 				gold_in_vault = TRUE;
 		    if (vault_occupied(u.urooms) !=
 			 (ROOM_INDEX(sroom) + ROOMOFFSET))
@@ -112,8 +112,8 @@ void dosounds(void)
 	    }
 	return;
     }
-    if (level.flags.has_beehive && !rn2(200)) {
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+    if (level->flags.has_beehive && !rn2(200)) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if ((mtmp->data->mlet == S_ANT && is_flyer(mtmp->data)) &&
 		mon_in_room(mtmp, BEEHIVE)) {
@@ -133,8 +133,8 @@ void dosounds(void)
 	    }
 	}
     }
-    if (level.flags.has_morgue && !rn2(200)) {
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+    if (level->flags.has_morgue && !rn2(200)) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (is_undead(mtmp->data) &&
 		mon_in_room(mtmp, MORGUE)) {
@@ -155,7 +155,7 @@ void dosounds(void)
 	    }
 	}
     }
-    if (level.flags.has_barracks && !rn2(200)) {
+    if (level->flags.has_barracks && !rn2(200)) {
 	static const char * const barracks_msg[4] = {
 		"blades being honed.",
 		"loud snoring.",
@@ -164,7 +164,7 @@ void dosounds(void)
 	};
 	int count = 0;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (is_mercenary(mtmp->data) &&
 		mon_in_room(mtmp, BARRACKS) &&
@@ -175,13 +175,13 @@ void dosounds(void)
 	    }
 	}
     }
-    if (level.flags.has_zoo && !rn2(200)) {
+    if (level->flags.has_zoo && !rn2(200)) {
 	static const char * const zoo_msg[3] = {
 		"a sound reminiscent of an elephant stepping on a peanut.",
 		"a sound reminiscent of a seal barking.",
 		"Doctor Doolittle!",
 	};
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if ((mtmp->msleeping || is_animal(mtmp->data)) &&
 		    mon_in_room(mtmp, ZOO)) {
@@ -190,10 +190,10 @@ void dosounds(void)
 	    }
 	}
     }
-    if (level.flags.has_shop && !rn2(200)) {
-	if (!(sroom = search_special(ANY_SHOP))) {
+    if (level->flags.has_shop && !rn2(200)) {
+	if (!(sroom = search_special(level, ANY_SHOP))) {
 	    /* strange... */
-	    level.flags.has_shop = 0;
+	    level->flags.has_shop = 0;
 	    return;
 	}
 	if (tended_shop(sroom) &&
@@ -209,7 +209,7 @@ void dosounds(void)
     }
     if (Is_oracle_level(&u.uz) && !rn2(400)) {
 	/* make sure the Oracle is still here */
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 	    if (!DEADMONSTER(mtmp) && mtmp->data == &mons[PM_ORACLE])
 		break;
 	/* and don't produce silly effects when she's clearly visible */
@@ -637,7 +637,7 @@ static int domonnoise(struct monst *mtmp)
 	    else if (!mtmp->mcansee)
 		verbl_msg = "I can't see!";
 	    else if (mtmp->mtrapped) {
-		struct trap *t = t_at(mtmp->mx, mtmp->my);
+		struct trap *t = t_at(level, mtmp->mx, mtmp->my);
 
 		if (t) t->tseen = 1;
 		verbl_msg = "I'm trapped!";
@@ -844,7 +844,7 @@ static int dochat(void)
 
     tx = u.ux + dx;
     ty = u.uy + dy;
-    mtmp = m_at(tx, ty);
+    mtmp = m_at(level, tx, ty);
 
     if (!mtmp || mtmp->mundetected ||
 		mtmp->m_ap_type == M_AP_FURNITURE ||

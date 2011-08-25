@@ -329,11 +329,11 @@ int dofire(void)
  */
 void hitfloor(struct obj *obj)
 {
-	if (IS_SOFT(level.locations[u.ux][u.uy].typ) || u.uinwater) {
+	if (IS_SOFT(level->locations[u.ux][u.uy].typ) || u.uinwater) {
 		dropy(obj);
 		return;
 	}
-	if (IS_ALTAR(level.locations[u.ux][u.uy].typ))
+	if (IS_ALTAR(level->locations[u.ux][u.uy].typ))
 		doaltarobj(obj);
 	else
 		pline("%s hit%s the %s.", Doname2(obj),
@@ -442,32 +442,32 @@ boolean hurtle_step(void *arg, int x, int y)
     if (!isok(x,y)) {
 	You_feel("the spirits holding you back.");
 	return FALSE;
-    } else if (!in_out_region(x, y)) {
+    } else if (!in_out_region(level, x, y)) {
 	return FALSE;
     } else if (*range == 0) {
 	return FALSE;			/* previous step wants to stop now */
     }
 
-    if (!Passes_walls || !(may_pass = may_passwall(x, y))) {
-	if (IS_ROCK(level.locations[x][y].typ) || closed_door(x,y)) {
+    if (!Passes_walls || !(may_pass = may_passwall(level, x, y))) {
+	if (IS_ROCK(level->locations[x][y].typ) || closed_door(level, x,y)) {
 	    const char *s;
 
 	    pline("Ouch!");
-	    if (IS_TREE(level.locations[x][y].typ))
+	    if (IS_TREE(level->locations[x][y].typ))
 		s = "bumping into a tree";
-	    else if (IS_ROCK(level.locations[x][y].typ))
+	    else if (IS_ROCK(level->locations[x][y].typ))
 		s = "bumping into a wall";
 	    else
 		s = "bumping into a door";
 	    losehp(rnd(2+*range), s, KILLED_BY);
 	    return FALSE;
 	}
-	if (level.locations[x][y].typ == IRONBARS) {
+	if (level->locations[x][y].typ == IRONBARS) {
 	    You("crash into some iron bars.  Ouch!");
 	    losehp(rnd(2+*range), "crashing into iron bars", KILLED_BY);
 	    return FALSE;
 	}
-	if ((obj = sobj_at(BOULDER,x,y)) != 0) {
+	if ((obj = sobj_at(BOULDER, level, x,y)) != 0) {
 	    You("bump into a %s.  Ouch!", xname(obj));
 	    losehp(rnd(2+*range), "bumping into a boulder", KILLED_BY);
 	    return FALSE;
@@ -491,7 +491,7 @@ boolean hurtle_step(void *arg, int x, int y)
 	}
     }
 
-    if ((mon = m_at(x, y)) != 0) {
+    if ((mon = m_at(level, x, y)) != 0) {
 	You("bump into %s.", a_monnam(mon));
 	wakeup(mon);
 	return FALSE;
@@ -520,7 +520,7 @@ boolean hurtle_step(void *arg, int x, int y)
      * we have tested, and offer a message for the
      * ones that we have not yet tested.
      */
-    if ((ttmp = t_at(x, y)) != 0) {
+    if ((ttmp = t_at(level, x, y)) != 0) {
     	if (ttmp->ttyp == MAGIC_PORTAL) {
     		dotrap(ttmp,0);
     		return FALSE;
@@ -554,7 +554,7 @@ static boolean mhurtle_step(void *arg, int x, int y)
 	/* TODO: Treat walls, doors, iron bars, pools, lava, etc. specially
 	 * rather than just stopping before.
 	 */
-	if (goodpos(x, y, mon, 0) && m_in_out_region(mon, x, y)) {
+	if (goodpos(level, x, y, mon, 0) && m_in_out_region(mon, x, y)) {
 	    remove_monster(mon->mx, mon->my);
 	    newsym(mon->mx, mon->my);
 	    place_monster(mon, x, y);
@@ -669,7 +669,7 @@ static void check_shop_obj(struct obj *obj, xchar x, xchar y, boolean broken)
 		return;
 	}
 
-	if (!costly_spot(x, y) || *in_rooms(x, y, SHOPBASE) != *u.ushops) {
+	if (!costly_spot(x, y) || *in_rooms(level, x, y, SHOPBASE) != *u.ushops) {
 		/* thrown out of a shop or into a different shop */
 		if (obj->unpaid) {
 		    stolen_value(obj, u.ux, u.uy,
@@ -965,12 +965,12 @@ void throwit(struct obj *obj,
 		notonhead = (bhitpos.x != mon->mx || bhitpos.y != mon->my);
 		obj_gone = thitmonst(mon, obj);
 		/* Monster may have been tamed; this frees old mon */
-		mon = m_at(bhitpos.x, bhitpos.y);
+		mon = m_at(level, bhitpos.x, bhitpos.y);
 
 		/* [perhaps this should be moved into thitmonst or hmon] */
 		if (mon && mon->isshk &&
-			(!inside_shop(u.ux, u.uy) ||
-			 !strchr(in_rooms(mon->mx, mon->my, SHOPBASE), *u.ushops)))
+			(!inside_shop(level, u.ux, u.uy) ||
+			 !strchr(in_rooms(level, mon->mx, mon->my, SHOPBASE), *u.ushops)))
 		    hot_pursuit(mon);
 
 		if (obj_gone) return;
@@ -1023,7 +1023,7 @@ void throwit(struct obj *obj,
 		    return;
 		}
 
-		if (!IS_SOFT(level.locations[bhitpos.x][bhitpos.y].typ) &&
+		if (!IS_SOFT(level->locations[bhitpos.x][bhitpos.y].typ) &&
 			breaktest(obj)) {
 		    tmp_at(DISP_OBJECT, dbuf_objid(obj));
 		    tmp_at(bhitpos.x, bhitpos.y);
@@ -1051,7 +1051,7 @@ void throwit(struct obj *obj,
 		    return;
 		}
 		thrownobj = NULL;
-		place_object(obj, bhitpos.x, bhitpos.y);
+		place_object(obj, level, bhitpos.x, bhitpos.y);
 		if (*u.ushops && obj != uball)
 		    check_shop_obj(obj, bhitpos.x, bhitpos.y, FALSE);
 
@@ -1062,7 +1062,7 @@ void throwit(struct obj *obj,
 		    newsym(bhitpos.x,bhitpos.y);
 		if (obj_sheds_light(obj))
 		    vision_full_recalc = 1;
-		if (!IS_SOFT(level.locations[bhitpos.x][bhitpos.y].typ))
+		if (!IS_SOFT(level->locations[bhitpos.x][bhitpos.y].typ))
 		    container_impact_dmg(obj);
 	}
 }
@@ -1544,7 +1544,7 @@ static void breakobj(struct obj *obj,
 			check_shop_obj(obj, x, y, TRUE);
 	    } else if (!obj->no_charge && costly_spot(x, y)) {
 		/* it is assumed that the obj is a floor-object */
-		char *o_shop = in_rooms(x, y, SHOPBASE);
+		char *o_shop = in_rooms(level, x, y, SHOPBASE);
 		struct monst *shkp = shop_keeper(*o_shop);
 
 		if (shkp) {		/* (implies *o_shop != '\0') */
@@ -1557,7 +1557,7 @@ static void breakobj(struct obj *obj,
 		    if (moves != lastmovetime)
 			peaceful_shk = shkp->mpeaceful;
 		    if (stolen_value(obj, x, y, peaceful_shk, FALSE) > 0L &&
-			(*o_shop != u.ushops[0] || !inside_shop(u.ux, u.uy)) &&
+			(*o_shop != u.ushops[0] || !inside_shop(level, u.ux, u.uy)) &&
 			moves != lastmovetime) make_angry_shk(shkp, x, y);
 		    lastmovetime = moves;
 		}
@@ -1678,7 +1678,7 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 		/* see if the gold has a place to move into */
 		odx = u.ux + dx;
 		ody = u.uy + dy;
-		if (!ZAP_POS(level.locations[odx][ody].typ) || closed_door(odx, ody)) {
+		if (!ZAP_POS(level->locations[odx][ody].typ) || closed_door(level, odx, ody)) {
 			bhitpos.x = u.ux;
 			bhitpos.y = u.uy;
 		} else {
@@ -1697,7 +1697,7 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 	    return 1;
 	if (dz > 0)
 		pline_The("gold hits the %s.", surface(bhitpos.x,bhitpos.y));
-	place_object(obj,bhitpos.x,bhitpos.y);
+	place_object(obj, level, bhitpos.x,bhitpos.y);
 	if (*u.ushops)
 	    sellobj(obj, bhitpos.x, bhitpos.y);
 	stackobj(obj);

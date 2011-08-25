@@ -79,7 +79,7 @@
 #define IS_ROCK(typ)	((typ) < POOL)		/* absolutely nonaccessible */
 #define IS_DOOR(typ)	((typ) == DOOR)
 #define IS_TREE(typ)	((typ) == TREE || \
-			(level.flags.arboreal && (typ) == STONE))
+			(level->flags.arboreal && (typ) == STONE))
 #define ACCESSIBLE(typ) ((typ) >= DOOR)		/* good position */
 #define IS_ROOM(typ)	((typ) >= ROOM)		/* ROOM, STAIRS, furniture.. */
 #define ZAP_POS(typ)	((typ) >= POOL)
@@ -229,12 +229,12 @@ extern const char * const warnexplain[];
  */
 #define F_LOOTED	1
 #define F_WARNED	2
-#define FOUNTAIN_IS_WARNED(x,y)		(level.locations[x][y].looted & F_WARNED)
-#define FOUNTAIN_IS_LOOTED(x,y)		(level.locations[x][y].looted & F_LOOTED)
-#define SET_FOUNTAIN_WARNED(x,y)	level.locations[x][y].looted |= F_WARNED;
-#define SET_FOUNTAIN_LOOTED(x,y)	level.locations[x][y].looted |= F_LOOTED;
-#define CLEAR_FOUNTAIN_WARNED(x,y)	level.locations[x][y].looted &= ~F_WARNED;
-#define CLEAR_FOUNTAIN_LOOTED(x,y)	level.locations[x][y].looted &= ~F_LOOTED;
+#define FOUNTAIN_IS_WARNED(x,y)		(level->locations[x][y].looted & F_WARNED)
+#define FOUNTAIN_IS_LOOTED(x,y)		(level->locations[x][y].looted & F_LOOTED)
+#define SET_FOUNTAIN_WARNED(x,y)	level->locations[x][y].looted |= F_WARNED;
+#define SET_FOUNTAIN_LOOTED(x,y)	level->locations[x][y].looted |= F_LOOTED;
+#define CLEAR_FOUNTAIN_WARNED(x,y)	level->locations[x][y].looted &= ~F_WARNED;
+#define CLEAR_FOUNTAIN_LOOTED(x,y)	level->locations[x][y].looted &= ~F_LOOTED;
 
 /*
  * Doors are even worse :-) The special warning has a side effect
@@ -442,7 +442,7 @@ struct wseg {
 
 
 struct ls_t;
-struct dlevel {
+struct level {
     struct rm		locations[COLNO][ROWNO];
     struct obj		*objects[COLNO][ROWNO];
     struct monst	*monsters[COLNO][ROWNO];
@@ -456,6 +456,7 @@ struct dlevel {
     struct ls_t		*lev_lights;
     struct trap 	*lev_traps;
     struct engr		*lev_engr;
+    struct region 	**regions;
 
     coord 		doors[DOORMAX];
     struct mkroom	rooms[(MAXNROFROOMS+1)*2];
@@ -473,24 +474,31 @@ struct dlevel {
     int 		nroom;
     int			nsubroom;
     int			doorindex;
+    int			n_regions;
+    int			max_regions;
+
+    d_level		z;
 };
 
-extern struct dlevel level;	/* structure describing the current level */
+extern struct level *levels[MAXLINFO]; /* structure describing all levels */
+extern struct level *level;		/* pointer to an entry in levels */
 
 
-#define OBJ_AT(x,y)	(level.objects[x][y] != NULL)
+#define OBJ_AT(x,y)	(level->objects[x][y] != NULL)
+#define OBJ_AT_LEV(lev, x,y)	((lev)->objects[x][y] != NULL)
+
 /*
- * Macros for encapsulation of level.monsters references.
+ * Macros for encapsulation of level->monsters references.
  */
-#define MON_AT(x,y)	(level.monsters[x][y] != NULL && \
-			 !(level.monsters[x][y])->mburied)
-#define MON_BURIED_AT(x,y)	(level.monsters[x][y] != NULL && \
-				(level.monsters[x][y])->mburied)
-#define place_worm_seg(m,x,y)	level.monsters[x][y] = m
-#define remove_monster(x,y)	level.monsters[x][y] = NULL
-#define m_at(x,y)		(MON_AT(x,y) ? level.monsters[x][y] : \
+#define MON_AT(lev,x,y)	((lev)->monsters[x][y] != NULL && \
+			 !(lev)->monsters[x][y]->mburied)
+#define MON_BURIED_AT(x,y)	(level->monsters[x][y] != NULL && \
+				level->monsters[x][y]->mburied)
+#define place_worm_seg(m,x,y)	(m)->dlevel->monsters[x][y] = m
+#define remove_monster(x,y)	level->monsters[x][y] = NULL
+#define m_at(lev,x,y)		(MON_AT(lev,x,y) ? (lev)->monsters[x][y] : \
 						NULL)
-#define m_buried_at(x,y)	(MON_BURIED_AT(x,y) ? level.monsters[x][y] : \
+#define m_buried_at(x,y)	(MON_BURIED_AT(x,y) ? level->monsters[x][y] : \
 						       NULL)
 
 #endif /* RM_H */

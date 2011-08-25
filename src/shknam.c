@@ -6,9 +6,10 @@
 #include "hack.h"
 #include "eshk.h"
 
-static void mkshobj_at(const struct shclass *,int,int);
-static void nameshk(struct monst *,const char * const *);
-static int  shkinit(const struct shclass *,struct mkroom *);
+static void mkshobj_at(const struct shclass *shp, struct level *lev, int sx, int sy);
+static void nameshk(struct monst *shk, const char * const *nlp, struct level *lev);
+static int  shkinit(const struct shclass *shp, struct level *lev,
+		    struct mkroom *sroom);
 
 static const char * const shkliquors[] = {
     /* Ukraine */
@@ -219,15 +220,15 @@ void init_shop_selection(void)
 #endif /* DEBUG */
 
 /* make an object of the appropriate type for a shop square */
-static void mkshobj_at(const struct shclass *shp, int sx, int sy)
+static void mkshobj_at(const struct shclass *shp, struct level *lev, int sx, int sy)
 {
 	struct monst *mtmp;
 	int atype;
 	const struct permonst *ptr;
 
 	if (rn2(100) < depth(&u.uz) &&
-		!MON_AT(sx, sy) && (ptr = mkclass(S_MIMIC,0)) &&
-		(mtmp = makemon(ptr,sx,sy,NO_MM_FLAGS)) != 0) {
+		!MON_AT(lev, sx, sy) && (ptr = mkclass(S_MIMIC,0)) &&
+		(mtmp = makemon(ptr,lev,sx,sy,NO_MM_FLAGS)) != 0) {
 	    /* note: makemon will set the mimic symbol to a shop item */
 	    if (rn2(10) >= depth(&u.uz)) {
 		mtmp->m_ap_type = M_AP_OBJECT;
@@ -236,14 +237,14 @@ static void mkshobj_at(const struct shclass *shp, int sx, int sy)
 	} else {
 	    atype = get_shop_item(shp - shtypes);
 	    if (atype < 0)
-		mksobj_at(-atype, sx, sy, TRUE, TRUE);
+		mksobj_at(-atype, lev, sx, sy, TRUE, TRUE);
 	    else
-		mkobj_at(atype, sx, sy, TRUE);
+		mkobj_at(atype, lev, sx, sy, TRUE);
 	}
 }
 
 /* extract a shopkeeper name for the given shop type */
-static void nameshk(struct monst *shk, const char * const *nlp)
+static void nameshk(struct monst *shk, const char * const *nlp, struct level *lev)
 {
 	int i, trycnt, names_avail;
 	const char *shname = 0;
@@ -289,7 +290,7 @@ static void nameshk(struct monst *shk, const char * const *nlp)
 		}
 
 		/* is name already in use on this level? */
-		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+		for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
 		    if (DEADMONSTER(mtmp) || (mtmp == shk) || !mtmp->isshk) continue;
 		    if (strcmp(ESHK(mtmp)->shknam, shname)) continue;
 		    break;
@@ -302,27 +303,27 @@ static void nameshk(struct monst *shk, const char * const *nlp)
 }
 
 /* create a new shopkeeper in the given room */
-static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
+static int shkinit(const struct shclass	*shp, struct level *lev, struct mkroom *sroom)
 {
 	int sh, sx, sy;
 	struct monst *shk;
 
 	/* place the shopkeeper in the given room */
 	sh = sroom->fdoor;
-	sx = level.doors[sh].x;
-	sy = level.doors[sh].y;
+	sx = lev->doors[sh].x;
+	sy = lev->doors[sh].y;
 
 	/* check that the shopkeeper placement is sane */
 	if (sroom->irregular) {
-	    int rmno = (sroom - level.rooms) + ROOMOFFSET;
-	    if (isok(sx-1,sy) && !level.locations[sx-1][sy].edge &&
-		(int) level.locations[sx-1][sy].roomno == rmno) sx--;
-	    else if (isok(sx+1,sy) && !level.locations[sx+1][sy].edge &&
-		(int) level.locations[sx+1][sy].roomno == rmno) sx++;
-	    else if (isok(sx,sy-1) && !level.locations[sx][sy-1].edge &&
-		(int) level.locations[sx][sy-1].roomno == rmno) sy--;
-	    else if (isok(sx,sy+1) && !level.locations[sx][sy+1].edge &&
-		(int) level.locations[sx][sy+1].roomno == rmno) sx++;
+	    int rmno = (sroom - lev->rooms) + ROOMOFFSET;
+	    if (isok(sx-1,sy) && !lev->locations[sx-1][sy].edge &&
+		(int) lev->locations[sx-1][sy].roomno == rmno) sx--;
+	    else if (isok(sx+1,sy) && !lev->locations[sx+1][sy].edge &&
+		(int) lev->locations[sx+1][sy].roomno == rmno) sx++;
+	    else if (isok(sx,sy-1) && !lev->locations[sx][sy-1].edge &&
+		(int) lev->locations[sx][sy-1].roomno == rmno) sy--;
+	    else if (isok(sx,sy+1) && !lev->locations[sx][sy+1].edge &&
+		(int) lev->locations[sx][sy+1].roomno == rmno) sx++;
 	    else goto shk_failed;
 	}
 	else if (sx == sroom->lx-1) sx++;
@@ -341,7 +342,7 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 		pline("Room at (%d,%d),(%d,%d).",
 		      sroom->lx, sroom->ly, sroom->hx, sroom->hy);
 		pline("doormax=%d doorct=%d fdoor=%d",
-		      level.doorindex, sroom->doorct, sh);
+		      lev->doorindex, sroom->doorct, sh);
 		while (j--) {
 		    pline("door [%d,%d]", doors[sh].x, doors[sh].y);
 		    sh++;
@@ -353,20 +354,20 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 	    return -1;
 	}
 
-	if (MON_AT(sx, sy)) rloc(m_at(sx, sy), FALSE); /* insurance */
+	if (MON_AT(lev, sx, sy)) rloc(m_at(lev, sx, sy), FALSE); /* insurance */
 
 	/* now initialize the shopkeeper monster structure */
-	if (!(shk = makemon(&mons[PM_SHOPKEEPER], sx, sy, NO_MM_FLAGS)))
+	if (!(shk = makemon(&mons[PM_SHOPKEEPER], lev, sx, sy, NO_MM_FLAGS)))
 		return -1;
 	shk->isshk = shk->mpeaceful = 1;
 	set_malign(shk);
 	shk->msleeping = 0;
 	shk->mtrapseen = ~0;	/* we know all the traps already */
-	ESHK(shk)->shoproom = (sroom - level.rooms) + ROOMOFFSET;
+	ESHK(shk)->shoproom = (sroom - lev->rooms) + ROOMOFFSET;
 	sroom->resident = shk;
 	ESHK(shk)->shoptype = sroom->rtype;
 	assign_level(&(ESHK(shk)->shoplevel), &u.uz);
-	ESHK(shk)->shd = level.doors[sh];
+	ESHK(shk)->shd = lev->doors[sh];
 	ESHK(shk)->shk.x = sx;
 	ESHK(shk)->shk.y = sy;
 	ESHK(shk)->robbed = 0L;
@@ -383,13 +384,13 @@ static int shkinit(const struct shclass	*shp, struct mkroom *sroom)
 #endif
 	if (shp->shknms == shkrings)
 	    mongets(shk, TOUCHSTONE);
-	nameshk(shk, shp->shknms);
+	nameshk(shk, shp->shknms, lev);
 
 	return sh;
 }
 
 /* stock a newly-created room with objects */
-void stock_room(int shp_indx, struct mkroom *sroom)
+void stock_room(int shp_indx, struct level *lev, struct mkroom *sroom)
 {
     /*
      * Someday soon we'll dispatch on the shdist field of shclass to do
@@ -399,51 +400,51 @@ void stock_room(int shp_indx, struct mkroom *sroom)
      */
     int sx, sy, sh;
     char buf[BUFSZ];
-    int rmno = (sroom - level.rooms) + ROOMOFFSET;
+    int rmno = (sroom - lev->rooms) + ROOMOFFSET;
     const struct shclass *shp = &shtypes[shp_indx];
 
     /* first, try to place a shopkeeper in the room */
-    if ((sh = shkinit(shp, sroom)) < 0)
+    if ((sh = shkinit(shp, lev, sroom)) < 0)
 	return;
 
     /* make sure no doorways without doors, and no */
     /* trapped doors, in shops.			   */
-    sx = level.doors[sroom->fdoor].x;
-    sy = level.doors[sroom->fdoor].y;
+    sx = lev->doors[sroom->fdoor].x;
+    sy = lev->doors[sroom->fdoor].y;
 
-    if (level.locations[sx][sy].doormask == D_NODOOR) {
-	    level.locations[sx][sy].doormask = D_ISOPEN;
+    if (lev->locations[sx][sy].doormask == D_NODOOR) {
+	    lev->locations[sx][sy].doormask = D_ISOPEN;
 	    newsym(sx,sy);
     }
-    if (level.locations[sx][sy].typ == SDOOR) {
-	    cvt_sdoor_to_door(&level.locations[sx][sy]);	/* .typ = DOOR */
+    if (lev->locations[sx][sy].typ == SDOOR) {
+	    cvt_sdoor_to_door(&lev->locations[sx][sy]);	/* .typ = DOOR */
 	    newsym(sx,sy);
     }
-    if (level.locations[sx][sy].doormask & D_TRAPPED)
-	    level.locations[sx][sy].doormask = D_LOCKED;
+    if (lev->locations[sx][sy].doormask & D_TRAPPED)
+	    lev->locations[sx][sy].doormask = D_LOCKED;
 
-    if (level.locations[sx][sy].doormask == D_LOCKED) {
+    if (lev->locations[sx][sy].doormask == D_LOCKED) {
 	    int m = sx, n = sy;
 
-	    if (inside_shop(sx+1,sy)) m--;
-	    else if (inside_shop(sx-1,sy)) m++;
-	    if (inside_shop(sx,sy+1)) n--;
-	    else if (inside_shop(sx,sy-1)) n++;
+	    if (inside_shop(lev, sx+1, sy)) m--;
+	    else if (inside_shop(lev, sx-1, sy)) m++;
+	    if (inside_shop(lev, sx, sy+1)) n--;
+	    else if (inside_shop(lev, sx, sy-1)) n++;
 	    sprintf(buf, "Closed for inventory");
-	    make_engr_at(m, n, buf, 0L, DUST);
+	    make_engr_at(lev, m, n, buf, 0L, DUST);
     }
 
     for (sx = sroom->lx; sx <= sroom->hx; sx++)
 	for (sy = sroom->ly; sy <= sroom->hy; sy++) {
 	    if (sroom->irregular) {
-		if (level.locations[sx][sy].edge || (int) level.locations[sx][sy].roomno != rmno ||
-		   distmin(sx, sy, level.doors[sh].x, level.doors[sh].y) <= 1)
+		if (lev->locations[sx][sy].edge || (int) lev->locations[sx][sy].roomno != rmno ||
+		   distmin(sx, sy, lev->doors[sh].x, lev->doors[sh].y) <= 1)
 		    continue;
-	    } else if ((sx == sroom->lx && level.doors[sh].x == sx-1) ||
-		      (sx == sroom->hx && level.doors[sh].x == sx+1) ||
-		      (sy == sroom->ly && level.doors[sh].y == sy-1) ||
-		      (sy == sroom->hy && level.doors[sh].y == sy+1)) continue;
-	    mkshobj_at(shp, sx, sy);
+	    } else if ((sx == sroom->lx && lev->doors[sh].x == sx-1) ||
+		      (sx == sroom->hx && lev->doors[sh].x == sx+1) ||
+		      (sy == sroom->ly && lev->doors[sh].y == sy-1) ||
+		      (sy == sroom->hy && lev->doors[sh].y == sy+1)) continue;
+	    mkshobj_at(shp, lev, sx, sy);
 	}
 
     /*
@@ -451,7 +452,7 @@ void stock_room(int shp_indx, struct mkroom *sroom)
      * monsters will sit on top of objects and not the other way around.
      */
 
-    level.flags.has_shop = TRUE;
+    lev->flags.has_shop = TRUE;
 }
 
 

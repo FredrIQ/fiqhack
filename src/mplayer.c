@@ -46,7 +46,7 @@ static const char *dev_name(void)
 	do {
 	    match = FALSE;
 	    i = rn2(n);
-	    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 		if (!is_mplayer(mtmp->data)) continue;
 		if (!strncmp(developers[i], NAME(mtmp),
 			               strlen(developers[i]))) {
@@ -88,7 +88,7 @@ static void mk_mplayer_armor(struct monst *mon, short typ)
 	struct obj *obj;
 
 	if (typ == STRANGE_OBJECT) return;
-	obj = mksobj(typ, FALSE, FALSE);
+	obj = mksobj(level, typ, FALSE, FALSE);
 	if (!rn2(3)) obj->oerodeproof = 1;
 	if (!rn2(3)) curse(obj);
 	if (!rn2(3)) bless(obj);
@@ -100,7 +100,8 @@ static void mk_mplayer_armor(struct monst *mon, short typ)
 	mpickobj(mon, obj);
 }
 
-struct monst *mk_mplayer(const struct permonst *ptr, xchar x, xchar y, boolean special)
+struct monst *mk_mplayer(const struct permonst *ptr,
+			 struct level *lev, xchar x, xchar y, boolean special)
 {
 	struct monst *mtmp;
 	char nam[PL_NSIZ];
@@ -108,12 +109,12 @@ struct monst *mk_mplayer(const struct permonst *ptr, xchar x, xchar y, boolean s
 	if (!is_mplayer(ptr))
 		return NULL;
 
-	if (MON_AT(x, y))
-		rloc(m_at(x, y), FALSE); /* insurance */
+	if (MON_AT(lev, x, y))
+		rloc(m_at(lev, x, y), FALSE); /* insurance */
 
 	if (!In_endgame(&u.uz)) special = FALSE;
 
-	if ((mtmp = makemon(ptr, x, y, NO_MM_FLAGS)) != 0) {
+	if ((mtmp = makemon(ptr, lev, x, y, NO_MM_FLAGS)) != 0) {
 	    short weapon = rn2(2) ? LONG_SWORD : rnd_class(SPEAR, BULLWHIP);
 	    short armor = rnd_class(GRAY_DRAGON_SCALE_MAIL, YELLOW_DRAGON_SCALE_MAIL);
 	    short cloak = !rn2(8) ? STRANGE_OBJECT :
@@ -211,7 +212,7 @@ struct monst *mk_mplayer(const struct permonst *ptr, xchar x, xchar y, boolean s
 	    }
 
 	    if (weapon != STRANGE_OBJECT) {
-		otmp = mksobj(weapon, TRUE, FALSE);
+		otmp = mksobj(level, weapon, TRUE, FALSE);
 		otmp->spe = (special ? rn1(5,4) : rn2(4));
 		if (!rn2(3)) otmp->oerodeproof = 1;
 		else if (!rn2(2)) otmp->greased = 1;
@@ -249,7 +250,7 @@ struct monst *mk_mplayer(const struct permonst *ptr, xchar x, xchar y, boolean s
 #endif
 		quan = rn2(10);
 		while (quan--)
-		    mpickobj(mtmp, mkobj(RANDOM_CLASS, FALSE));
+		    mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE));
 	    }
 	    quan = rnd(3);
 	    while (quan--)
@@ -288,12 +289,12 @@ void create_mplayers(int num, boolean special)
 		do {
 		    x = rn1(COLNO-4, 2);
 		    y = rnd(ROWNO-2);
-		} while (!goodpos(x, y, &fakemon, 0) && tryct++ <= 50);
+		} while (!goodpos(level, x, y, &fakemon, 0) && tryct++ <= 50);
 
 		/* if pos not found in 50 tries, don't bother to continue */
 		if (tryct > 50) return;
 
-		mk_mplayer(&mons[pm], (xchar)x, (xchar)y, special);
+		mk_mplayer(&mons[pm], level, (xchar)x, (xchar)y, special);
 		num--;
 	}
 }

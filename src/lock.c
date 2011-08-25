@@ -33,7 +33,7 @@ boolean picking_lock(int *x, int *y)
 
 boolean picking_at(int x, int y)
 {
-	return (occupation == picklock && xlock.door == &level.locations[x][y]);
+	return (occupation == picklock && xlock.door == &level->locations[x][y]);
 }
 
 /* produce an occupation string appropriate for the current activity */
@@ -71,7 +71,7 @@ static int picklock(void)
 		return (xlock.usedtime = 0);		/* you or it moved */
 	    }
 	} else {		/* door */
-	    if (xlock.door != &(level.locations[u.ux+picklock_dx][u.uy+picklock_dy])) {
+	    if (xlock.door != &(level->locations[u.ux+picklock_dx][u.uy+picklock_dy])) {
 		return (xlock.usedtime = 0);		/* you moved */
 	    }
 	    switch (xlock.door->doormask) {
@@ -101,7 +101,7 @@ static int picklock(void)
 		    b_trapped("door", FINGER);
 		    xlock.door->doormask = D_NODOOR;
 		    unblock_point(u.ux+picklock_dx, u.uy+picklock_dy);
-		    if (*in_rooms(u.ux+picklock_dx, u.uy+picklock_dy, SHOPBASE))
+		    if (*in_rooms(level, u.ux+picklock_dx, u.uy+picklock_dy, SHOPBASE))
 			add_damage(u.ux+picklock_dx, u.uy+picklock_dy, 0L);
 		    newsym(u.ux+picklock_dx, u.uy+picklock_dy);
 	    } else if (xlock.door->doormask & D_LOCKED)
@@ -183,7 +183,7 @@ static int forcelock(void)
 		    otmp->age = moves - otmp->age; /* actual age */
 		    start_corpse_timeout(otmp);
 		}
-		place_object(otmp, u.ux, u.uy);
+		place_object(otmp, level, u.ux, u.uy);
 		stackobj(otmp);
 	    }
 
@@ -267,18 +267,18 @@ int pick_lock(struct obj *pick)
 		There("isn't any sort of lock up %s.",
 		      Levitation ? "here" : "there");
 		return 0;
-	    } else if (is_lava(u.ux, u.uy)) {
+	    } else if (is_lava(level, u.ux, u.uy)) {
 		pline("Doing that would probably melt your %s.",
 		      xname(pick));
 		return 0;
-	    } else if (is_pool(u.ux, u.uy) && !Underwater) {
+	    } else if (is_pool(level, u.ux, u.uy) && !Underwater) {
 		pline_The("water has no lock.");
 		return 0;
 	    }
 
 	    count = 0;
 	    c = 'n';			/* in case there are no boxes here */
-	    for (otmp = level.objects[cc.x][cc.y]; otmp; otmp = otmp->nexthere)
+	    for (otmp = level->objects[cc.x][cc.y]; otmp; otmp = otmp->nexthere)
 		if (Is_box(otmp)) {
 		    ++count;
 		    if (!can_reach_floor()) {
@@ -340,8 +340,8 @@ int pick_lock(struct obj *pick)
 		return 0;
 	    }
 
-	    door = &level.locations[cc.x][cc.y];
-	    if ((mtmp = m_at(cc.x, cc.y)) && canseemon(mtmp)
+	    door = &level->locations[cc.x][cc.y];
+	    if ((mtmp = m_at(level, cc.x, cc.y)) && canseemon(mtmp)
 			&& mtmp->m_ap_type != M_AP_FURNITURE
 			&& mtmp->m_ap_type != M_AP_OBJECT) {
 		if (picktyp == CREDIT_CARD &&
@@ -440,7 +440,7 @@ int doforce(void)
 
 	/* A lock is made only for the honest man, the thief will break it. */
 	xlock.box = NULL;
-	for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere)
+	for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere)
 	    if (Is_box(otmp)) {
 		if (otmp->obroken || !otmp->olocked) {
 		    There("is %s here, but its lock is already %s.",
@@ -496,7 +496,7 @@ int doopen(void)
 	if ((cc.x == u.ux) && (cc.y == u.uy))
 	    return 0;
 
-	if ((mtmp = m_at(cc.x,cc.y))			&&
+	if ((mtmp = m_at(level, cc.x,cc.y))		&&
 		mtmp->m_ap_type == M_AP_FURNITURE	&&
 		(mtmp->mappearance == S_hcdoor ||
 			mtmp->mappearance == S_vcdoor)	&&
@@ -506,7 +506,7 @@ int doopen(void)
 	    return 1;
 	}
 
-	door = &level.locations[cc.x][cc.y];
+	door = &level->locations[cc.x][cc.y];
 
 	if (!IS_DOOR(door->typ)) {
 		if (is_db_wall(cc.x,cc.y)) {
@@ -543,7 +543,7 @@ int doopen(void)
 	    if (door->doormask & D_TRAPPED) {
 		b_trapped("door", FINGER);
 		door->doormask = D_NODOOR;
-		if (*in_rooms(cc.x, cc.y, SHOPBASE)) add_damage(cc.x, cc.y, 0L);
+		if (*in_rooms(level, cc.x, cc.y, SHOPBASE)) add_damage(cc.x, cc.y, 0L);
 	    } else
 		door->doormask = D_ISOPEN;
 	    if (Blind)
@@ -561,7 +561,7 @@ int doopen(void)
 
 static boolean obstructed(int x, int y)
 {
-	struct monst *mtmp = m_at(x, y);
+	struct monst *mtmp = m_at(level, x, y);
 
 	if (mtmp && mtmp->m_ap_type != M_AP_FURNITURE) {
 		if (mtmp->m_ap_type == M_AP_OBJECT) goto objhere;
@@ -606,7 +606,7 @@ int doclose(void)
 		return 1;
 	}
 
-	if ((mtmp = m_at(x,y))				&&
+	if ((mtmp = m_at(level, x,y))				&&
 		mtmp->m_ap_type == M_AP_FURNITURE	&&
 		(mtmp->mappearance == S_hcdoor ||
 			mtmp->mappearance == S_vcdoor)	&&
@@ -616,7 +616,7 @@ int doclose(void)
 	    return 1;
 	}
 
-	door = &level.locations[x][y];
+	door = &level->locations[x][y];
 
 	if (!IS_DOOR(door->typ)) {
 		if (door->typ == DRAWBRIDGE_DOWN)
@@ -708,7 +708,7 @@ boolean boxlock(struct obj *obj, struct obj *otmp)
 /* returns true if something happened */
 boolean doorlock(struct obj *otmp, int x, int y)
 {
-	struct rm *door = &level.locations[x][y];
+	struct rm *door = &level->locations[x][y];
 	boolean res = TRUE;
 	int loudness = 0;
 	const char *msg = NULL;
@@ -758,11 +758,10 @@ boolean doorlock(struct obj *otmp, int x, int y)
 	    if (obstructed(x,y)) return FALSE;
 	    /* Don't allow doors to close over traps.  This is for pits */
 	    /* & trap doors, but is it ever OK for anything else? */
-	    if (t_at(x,y)) {
+	    if (t_at(level, x, y)) {
 		/* maketrap() clears doormask, so it should be NODOOR */
-		pline(
-		"%s springs up in the doorway, but %s.",
-		dustcloud, quickly_dissipates);
+		pline("%s springs up in the doorway, but %s.",
+		      dustcloud, quickly_dissipates);
 		return FALSE;
 	    }
 
@@ -799,8 +798,8 @@ boolean doorlock(struct obj *otmp, int x, int y)
 	case SPE_FORCE_BOLT:
 	    if (door->doormask & (D_LOCKED | D_CLOSED)) {
 		if (door->doormask & D_TRAPPED) {
-		    if (MON_AT(x, y))
-			mb_trapped(m_at(x,y));
+		    if (MON_AT(level, x, y))
+			mb_trapped(m_at(level, x,y));
 		    else if (flags.verbose) {
 			if (cansee(x,y))
 			    pline("KABOOM!!  You see a door explode.");
@@ -834,7 +833,7 @@ boolean doorlock(struct obj *otmp, int x, int y)
 	if (loudness > 0) {
 	    /* door was destroyed */
 	    wake_nearto(x, y, loudness);
-	    if (*in_rooms(x, y, SHOPBASE)) add_damage(x, y, 0L);
+	    if (*in_rooms(level, x, y, SHOPBASE)) add_damage(x, y, 0L);
 	}
 
 	if (res && picking_at(x, y)) {

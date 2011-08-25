@@ -61,9 +61,9 @@ pick_move:
 	for (i=0; i<cnt; i++) {
 		nx = poss[i].x;
 		ny = poss[i].y;
-		if (level.locations[nx][ny].typ == ROOM ||
+		if (level->locations[nx][ny].typ == ROOM ||
 			(mtmp->ispriest &&
-			    level.locations[nx][ny].typ == ALTAR) ||
+			    level->locations[nx][ny].typ == ALTAR) ||
 			(mtmp->isshk &&
 			    (!in_his_shop || ESHK(mtmp)->following))) {
 		    if (avoid && (info[i] & NOTONL))
@@ -107,7 +107,7 @@ char temple_occupied(char *array)
 	char *ptr;
 
 	for (ptr = array; *ptr; ptr++)
-		if (level.rooms[*ptr - ROOMOFFSET].rtype == TEMPLE)
+		if (level->rooms[*ptr - ROOMOFFSET].rtype == TEMPLE)
 			return *ptr;
 	return '\0';
 }
@@ -115,7 +115,7 @@ char temple_occupied(char *array)
 
 static boolean histemple_at(struct monst *priest, xchar x, xchar y)
 {
-	return((boolean)((EPRI(priest)->shroom == *in_rooms(x, y, TEMPLE)) &&
+	return((boolean)((EPRI(priest)->shroom == *in_rooms(level, x, y, TEMPLE)) &&
 	       on_level(&(EPRI(priest)->shrlevel), &u.uz)));
 }
 
@@ -163,24 +163,24 @@ int pri_move(struct monst *priest)
 }
 
 /* exclusively for mktemple() */
-void priestini(d_level *lvl, struct mkroom *sroom, int sx, int sy,
+void priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
 	       boolean sanctum)   /* is it the seat of the high priest? */
 {
 	struct monst *priest;
 	struct obj *otmp;
 	int cnt;
 
-	if (MON_AT(sx+1, sy))
-		rloc(m_at(sx+1, sy), FALSE); /* insurance */
+	if (MON_AT(lev, sx+1, sy))
+		rloc(m_at(lev, sx+1, sy), FALSE); /* insurance */
 
 	priest = makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST],
-			 sx + 1, sy, NO_MM_FLAGS);
+			 lev, sx + 1, sy, NO_MM_FLAGS);
 	if (priest) {
-		EPRI(priest)->shroom = (sroom - level.rooms) + ROOMOFFSET;
-		EPRI(priest)->shralign = Amask2align(level.locations[sx][sy].altarmask);
+		EPRI(priest)->shroom = (sroom - lev->rooms) + ROOMOFFSET;
+		EPRI(priest)->shralign = Amask2align(lev->locations[sx][sy].altarmask);
 		EPRI(priest)->shrpos.x = sx;
 		EPRI(priest)->shrpos.y = sy;
-		assign_level(&(EPRI(priest)->shrlevel), lvl);
+		assign_level(&(EPRI(priest)->shrlevel), &lev->z);
 		priest->mtrapseen = ~0;	/* traps are known */
 		priest->mpeaceful = 1;
 		priest->ispriest = 1;
@@ -194,7 +194,7 @@ void priestini(d_level *lvl, struct mkroom *sroom, int sx, int sy,
 		}
 		/* 2 to 4 spellbooks */
 		for (cnt = rn1(3,2); cnt > 0; --cnt) {
-		    mpickobj(priest, mkobj(SPBOOK_CLASS, FALSE));
+		    mpickobj(priest, mkobj(level, SPBOOK_CLASS, FALSE));
 		}
 		/* robe [via makemon()] */
 		if (rn2(2) && (otmp = which_armor(priest, W_ARMC)) != 0) {
@@ -265,21 +265,21 @@ boolean p_coaligned(struct monst *priest)
 
 static boolean has_shrine(struct monst *pri)
 {
-	struct rm *lev;
+	struct rm *loc;
 
 	if (!pri)
 		return FALSE;
-	lev = &level.locations[EPRI(pri)->shrpos.x][EPRI(pri)->shrpos.y];
-	if (!IS_ALTAR(lev->typ) || !(lev->altarmask & AM_SHRINE))
+	loc = &level->locations[EPRI(pri)->shrpos.x][EPRI(pri)->shrpos.y];
+	if (!IS_ALTAR(loc->typ) || !(loc->altarmask & AM_SHRINE))
 		return FALSE;
-	return (boolean)(EPRI(pri)->shralign == Amask2align(lev->altarmask & ~AM_SHRINE));
+	return (boolean)(EPRI(pri)->shralign == Amask2align(loc->altarmask & ~AM_SHRINE));
 }
 
 struct monst *findpriest(char roomno)
 {
 	struct monst *mtmp;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (mtmp->ispriest && (EPRI(mtmp)->shroom == roomno) &&
 	       histemple_at(mtmp,mtmp->mx,mtmp->my))
@@ -350,7 +350,8 @@ void intemple(int roomno)
 		if (!rn2(5)) {
 		    struct monst *mtmp;
 
-		    if (!(mtmp = makemon(&mons[PM_GHOST],u.ux,u.uy,NO_MM_FLAGS)))
+		    if (!(mtmp = makemon(&mons[PM_GHOST], level, u.ux, u.uy, 
+			                 NO_MM_FLAGS)))
 			return;
 		    if (!Blind || sensemon(mtmp))
 			pline("An enormous ghost appears next to you!");
@@ -402,7 +403,7 @@ void priest_talk(struct monst *priest)
 	}
 
 	/* you desecrated the temple and now you want to chat? */
-	if (priest->mpeaceful && *in_rooms(priest->mx, priest->my, TEMPLE) &&
+	if (priest->mpeaceful && *in_rooms(level, priest->mx, priest->my, TEMPLE) &&
 		  !has_shrine(priest)) {
 	    verbalize("Begone!  Thou desecratest this holy place with thy presence.");
 	    priest->mpeaceful = 0;
@@ -495,7 +496,7 @@ void priest_talk(struct monst *priest)
 }
 
 struct monst *mk_roamer(const struct permonst *ptr, aligntyp alignment,
-			xchar x, xchar y, boolean peaceful)
+			struct level *lev, xchar x, xchar y, boolean peaceful)
 {
 	struct monst *roamer;
 	boolean coaligned = (u.ualign.type == alignment);
@@ -503,9 +504,9 @@ struct monst *mk_roamer(const struct permonst *ptr, aligntyp alignment,
 	if (ptr != &mons[PM_ALIGNED_PRIEST] && ptr != &mons[PM_ANGEL])
 		return NULL;
 	
-	if (MON_AT(x, y)) rloc(m_at(x, y), FALSE);	/* insurance */
+	if (MON_AT(lev, x, y)) rloc(m_at(lev, x, y), FALSE);	/* insurance */
 
-	if (!(roamer = makemon(ptr, x, y, NO_MM_FLAGS)))
+	if (!(roamer = makemon(ptr, lev, x, y, NO_MM_FLAGS)))
 		return NULL;
 
 	EPRI(roamer)->shralign = alignment;
@@ -548,7 +549,7 @@ boolean in_your_sanctuary(struct monst *mon, /* if non-null, <mx,my> overrides <
 	if (u.ualign.record <= ALGN_SINNED)	/* sinned or worse */
 	    return FALSE;
 	if ((roomno = temple_occupied(u.urooms)) == 0 ||
-		roomno != *in_rooms(x, y, TEMPLE))
+		roomno != *in_rooms(level, x, y, TEMPLE))
 	    return FALSE;
 	if ((priest = findpriest(roomno)) == 0)
 	    return FALSE;
@@ -568,10 +569,10 @@ void ghod_hitsu(struct monst *priest)
 
 	ax = x = EPRI(priest)->shrpos.x;
 	ay = y = EPRI(priest)->shrpos.y;
-	troom = &level.rooms[roomno - ROOMOFFSET];
+	troom = &level->rooms[roomno - ROOMOFFSET];
 
 	if ((u.ux == x && u.uy == y) || !linedup(u.ux, u.uy, x, y)) {
-	    if (IS_DOOR(level.locations[u.ux][u.uy].typ)) {
+	    if (IS_DOOR(level->locations[u.ux][u.uy].typ)) {
 
 		if (u.ux == troom->lx - 1) {
 		    x = troom->hx;
@@ -619,7 +620,7 @@ void ghod_hitsu(struct monst *priest)
 void angry_priest(void)
 {
 	struct monst *priest;
-	struct rm *lev;
+	struct rm *loc;
 
 	if ((priest = findpriest(temple_occupied(u.urooms))) != 0) {
 	    wakeup(priest);
@@ -630,9 +631,9 @@ void angry_priest(void)
 	     *	a fresh corpse nearby, the priest ought to have an
 	     *	opportunity to try converting it back; maybe someday...)
 	     */
-	    lev = &level.locations[EPRI(priest)->shrpos.x][EPRI(priest)->shrpos.y];
-	    if (!IS_ALTAR(lev->typ) ||
-		((aligntyp)Amask2align(lev->altarmask & AM_MASK) !=
+	    loc = &level->locations[EPRI(priest)->shrpos.x][EPRI(priest)->shrpos.y];
+	    if (!IS_ALTAR(loc->typ) ||
+		((aligntyp)Amask2align(loc->altarmask & AM_MASK) !=
 			EPRI(priest)->shralign)) {
 		priest->ispriest = 0;		/* now a roamer */
 		priest->isminion = 1;		/* but still aligned */
@@ -650,7 +651,7 @@ void clearpriests(void)
 {
     struct monst *mtmp, *mtmp2;
 
-    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 	mtmp2 = mtmp->nmon;
 	if (!DEADMONSTER(mtmp) && mtmp->ispriest && !on_level(&(EPRI(mtmp)->shrlevel), &u.uz))
 	    mongone(mtmp);

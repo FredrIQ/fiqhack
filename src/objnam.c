@@ -719,7 +719,7 @@ ring:
 		if (Has_contents(obj) &&
 		    get_obj_location(obj, &ox, &oy, BURIED_TOO|CONTAINED_TOO) &&
 		    costly_spot(ox, oy) &&
-		    (shkp = shop_keeper(*in_rooms(ox, oy, SHOPBASE))))
+		    (shkp = shop_keeper(*in_rooms(level, ox, oy, SHOPBASE))))
 			quotedprice += contained_cost(obj, shkp, 0L, FALSE, TRUE);
 		sprintf(eos(bp), " (unpaid, %ld %s)",
 			quotedprice, currency(quotedprice));
@@ -1963,7 +1963,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 		botl=1;
 		return &zeroobj;
 #else
-                otmp = mksobj(GOLD_PIECE, FALSE, FALSE);
+                otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE);
 		otmp->quan = cnt;
                 otmp->owt = weight(otmp);
 		botl=1;
@@ -2177,8 +2177,8 @@ srch:
 			if (!strncmpi(tname, bp, strlen(tname))) {
 				/* avoid stupid mistakes */
 				if ((trap == TRAPDOOR || trap == HOLE)
-				      && !Can_fall_thru(&u.uz)) trap = ROCKTRAP;
-				maketrap(u.ux, u.uy, trap);
+				      && !can_fall_thru(level)) trap = ROCKTRAP;
+				maketrap(level, u.ux, u.uy, trap);
 				pline("%s.", An(tname));
 				return &zeroobj;
 			}
@@ -2186,40 +2186,40 @@ srch:
 		/* or some other dungeon features -dlc */
 		p = eos(bp);
 		if (!BSTRCMP(bp, p-8, "fountain")) {
-			level.locations[u.ux][u.uy].typ = FOUNTAIN;
-			level.flags.nfountains++;
+			level->locations[u.ux][u.uy].typ = FOUNTAIN;
+			level->flags.nfountains++;
 			if (!strncmpi(bp, "magic ", 6))
-				level.locations[u.ux][u.uy].blessedftn = 1;
+				level->locations[u.ux][u.uy].blessedftn = 1;
 			pline("A %sfountain.",
-			      level.locations[u.ux][u.uy].blessedftn ? "magic " : "");
+			      level->locations[u.ux][u.uy].blessedftn ? "magic " : "");
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-6, "throne")) {
-			level.locations[u.ux][u.uy].typ = THRONE;
+			level->locations[u.ux][u.uy].typ = THRONE;
 			pline("A throne.");
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-4, "sink")) {
-			level.locations[u.ux][u.uy].typ = SINK;
-			level.flags.nsinks++;
+			level->locations[u.ux][u.uy].typ = SINK;
+			level->flags.nsinks++;
 			pline("A sink.");
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-4, "pool")) {
-			level.locations[u.ux][u.uy].typ = POOL;
-			del_engr_at(u.ux, u.uy);
+			level->locations[u.ux][u.uy].typ = POOL;
+			del_engr_at(level, u.ux, u.uy);
 			pline("A pool.");
 			/* Must manually make kelp! */
-			water_damage(level.objects[u.ux][u.uy], FALSE, TRUE);
+			water_damage(level->objects[u.ux][u.uy], FALSE, TRUE);
 			newsym(u.ux, u.uy);
 			return &zeroobj;
 		}
 		if (!BSTRCMP(bp, p-4, "lava")) {  /* also matches "molten lava" */
-			level.locations[u.ux][u.uy].typ = LAVAPOOL;
-			del_engr_at(u.ux, u.uy);
+			level->locations[u.ux][u.uy].typ = LAVAPOOL;
+			del_engr_at(level, u.ux, u.uy);
 			pline("A pool of molten lava.");
 			if (!(Levitation || Flying)) lava_effects();
 			newsym(u.ux, u.uy);
@@ -2229,7 +2229,7 @@ srch:
 		if (!BSTRCMP(bp, p-5, "altar")) {
 		    aligntyp al;
 
-		    level.locations[u.ux][u.uy].typ = ALTAR;
+		    level->locations[u.ux][u.uy].typ = ALTAR;
 		    if (!strncmpi(bp, "chaotic ", 8))
 			al = A_CHAOTIC;
 		    else if (!strncmpi(bp, "neutral ", 8))
@@ -2240,21 +2240,21 @@ srch:
 			al = A_NONE;
 		    else /* -1 - A_CHAOTIC, 0 - A_NEUTRAL, 1 - A_LAWFUL */
 			al = (!rn2(6)) ? A_NONE : rn2((int)A_LAWFUL+2) - 1;
-		    level.locations[u.ux][u.uy].altarmask = Align2amask( al );
+		    level->locations[u.ux][u.uy].altarmask = Align2amask( al );
 		    pline("%s altar.", An(align_str(al)));
 		    newsym(u.ux, u.uy);
 		    return &zeroobj;
 		}
 
 		if (!BSTRCMP(bp, p-5, "grave") || !BSTRCMP(bp, p-9, "headstone")) {
-		    make_grave(u.ux, u.uy, NULL);
+		    make_grave(level, u.ux, u.uy, NULL);
 		    pline("A grave.");
 		    newsym(u.ux, u.uy);
 		    return &zeroobj;
 		}
 
 		if (!BSTRCMP(bp, p-4, "tree")) {
-		    level.locations[u.ux][u.uy].typ = TREE;
+		    level->locations[u.ux][u.uy].typ = TREE;
 		    pline("A tree.");
 		    newsym(u.ux, u.uy);
 		    block_point(u.ux, u.uy);
@@ -2262,7 +2262,7 @@ srch:
 		}
 
 		if (!BSTRCMP(bp, p-4, "bars")) {
-		    level.locations[u.ux][u.uy].typ = IRONBARS;
+		    level->locations[u.ux][u.uy].typ = IRONBARS;
 		    pline("Iron bars.");
 		    newsym(u.ux, u.uy);
 		    return &zeroobj;
@@ -2304,16 +2304,16 @@ typfnd:
 	    typ = OIL_LAMP;
 
 	if (typ) {
-		otmp = mksobj(typ, TRUE, FALSE);
+		otmp = mksobj(level, typ, TRUE, FALSE);
 	} else {
-		otmp = mkobj(oclass, FALSE);
+		otmp = mkobj(level, oclass, FALSE);
 		if (otmp) typ = otmp->otyp;
 	}
 
 	if (islit &&
 		(typ == OIL_LAMP || typ == MAGIC_LAMP || typ == BRASS_LANTERN ||
 		 Is_candle(otmp) || typ == POT_OIL)) {
-	    place_object(otmp, u.ux, u.uy);  /* make it viable light source */
+	    place_object(otmp, level, u.ux, u.uy);  /* make it viable light source */
 	    begin_burn(otmp, FALSE);
 	    obj_extract_self(otmp);	 /* now release it for caller's use */
 	}
@@ -2360,7 +2360,7 @@ typfnd:
 			/* Fall through */
 		case SKELETON_KEY: case CHEST: case LARGE_BOX:
 		case HEAVY_IRON_BALL: case IRON_CHAIN: case STATUE:
-			/* otmp->cobj already done in mksobj() */
+			/* otmp->cobj already done in mksobj(level, ) */
 				break;
 		case WAN_WISHING:
 			if (!wizard) {

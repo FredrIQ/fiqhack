@@ -183,7 +183,7 @@ static void describe_bg(int x, int y, int bg, char *buf)
 	case S_altar:
 	    if (!In_endgame(&u.uz))
 		sprintf(buf, "%s altar",
-		    align_str(Amask2align(level.locations[x][y].altarmask & ~AM_SHRINE)));
+		    align_str(Amask2align(level->locations[x][y].altarmask & ~AM_SHRINE)));
 	    else
 		sprintf(buf, "aligned altar");
 	    break;
@@ -191,7 +191,7 @@ static void describe_bg(int x, int y, int bg, char *buf)
 	case S_ndoor:
 	    if (is_drawbridge_wall(x, y) >= 0)
 		strcpy(buf,"open drawbridge portcullis");
-	    else if ((level.locations[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
+	    else if ((level->locations[x][y].doormask & ~D_TRAPPED) == D_BROKEN)
 		strcpy(buf,"broken door");
 	    else
 		strcpy(buf,"doorway");
@@ -218,7 +218,7 @@ static int describe_object(int x, int y, int votyp, char *buf)
     
     if (!otmp || otmp->otyp != votyp) {
 	if (votyp != STRANGE_OBJECT) {
-	    otmp = mksobj(votyp, FALSE, FALSE);
+	    otmp = mksobj(level, votyp, FALSE, FALSE);
 	    if (otmp->oclass == COIN_CLASS)
 		otmp->quan = 1L; /* to force pluralization off */
 	    else if (otmp->otyp == SLIME_MOLD)
@@ -229,15 +229,15 @@ static int describe_object(int x, int y, int votyp, char *buf)
     } else
 	strcpy(buf, distant_name(otmp, xname));
     
-    if (level.locations[x][y].typ == STONE || level.locations[x][y].typ == SCORR)
+    if (level->locations[x][y].typ == STONE || level->locations[x][y].typ == SCORR)
 	strcat(buf, " embedded in stone");
-    else if (IS_WALL(level.locations[x][y].typ) || level.locations[x][y].typ == SDOOR)
+    else if (IS_WALL(level->locations[x][y].typ) || level->locations[x][y].typ == SDOOR)
 	strcat(buf, " embedded in a wall");
-    else if (closed_door(x,y))
+    else if (closed_door(level, x,y))
 	strcat(buf, " embedded in a door");
-    else if (is_pool(x,y))
+    else if (is_pool(level, x,y))
 	strcat(buf, " in water");
-    else if (is_lava(x,y))
+    else if (is_lava(level, x,y))
 	strcat(buf, " in molten lava");	/* [can this ever happen?] */
     
     if (!cansee(x, y))
@@ -313,7 +313,7 @@ static void describe_mon(int x, int y, int monnum, char *buf)
 	if (monnum < WARNCOUNT)
 	    strcat(buf, warnexplain[monnum]);
 	
-    } else if ( (mtmp = m_at(x,y)) ) {
+    } else if ( (mtmp = m_at(level, x,y)) ) {
 	bhitpos.x = x;
 	bhitpos.y = y;
 
@@ -336,7 +336,7 @@ static void describe_mon(int x, int y, int monnum, char *buf)
 	    strcat(buf, ", leashed to you");
 
 	if (mtmp->mtrapped && cansee(mtmp->mx, mtmp->my)) {
-	    struct trap *t = t_at(mtmp->mx, mtmp->my);
+	    struct trap *t = t_at(level, mtmp->mx, mtmp->my);
 	    int tt = t ? t->ttyp : NO_TRAP;
 
 	    /* newsym lets you know of the trap, so mention it here */
@@ -370,17 +370,17 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
     if (!program_state.game_running || !api_entry_checkpoint())
 	return;
     
-    describe_bg(x, y, level.locations[x][y].mem_bg, bufs->bgdesc);
+    describe_bg(x, y, level->locations[x][y].mem_bg, bufs->bgdesc);
     
-    if (level.locations[x][y].mem_trap)
-	strcpy(bufs->trapdesc, trapexplain[level.locations[x][y].mem_trap]);
+    if (level->locations[x][y].mem_trap)
+	strcpy(bufs->trapdesc, trapexplain[level->locations[x][y].mem_trap]);
     
-    bufs->objcount = describe_object(x, y, level.locations[x][y].mem_obj - 1,
+    bufs->objcount = describe_object(x, y, level->locations[x][y].mem_obj - 1,
 				     bufs->objdesc);
     
     describe_mon(x, y, monid - 1, bufs->mondesc);
     
-    if (level.locations[x][y].mem_invis)
+    if (level->locations[x][y].mem_invis)
 	strcpy(bufs->invisdesc, invisexplain);
     
     if (u.uswallow && (x != u.ux || y != u.uy)) {
@@ -698,7 +698,7 @@ int doidtrap(void)
 	
 	x = u.ux + dx;
 	y = u.uy + dy;
-	for (trap = level.lev_traps; trap; trap = trap->ntrap)
+	for (trap = level->lev_traps; trap; trap = trap->ntrap)
 	    if (trap->tx == x && trap->ty == y) {
 		if (!trap->tseen) break;
 		tt = trap->ttyp;

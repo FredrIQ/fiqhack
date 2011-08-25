@@ -88,7 +88,7 @@ static void polyman(const char *fmt, const char *arg)
 	}
 
 	if (!Levitation && !u.ustuck &&
-	   (is_pool(u.ux,u.uy) || is_lava(u.ux,u.uy)))
+	   (is_pool(level, u.ux,u.uy) || is_lava(level, u.ux,u.uy)))
 		spoteffects(TRUE);
 
 	see_monsters();
@@ -300,13 +300,13 @@ void polyself(boolean forcecontrol)
 	new_light = Upolyd ? emits_light(youmonst.data) : 0;
 	if (old_light != new_light) {
 	    if (old_light)
-		del_light_source(LS_MONSTER, &youmonst);
+		del_light_source(level, LS_MONSTER, &youmonst);
 	    if (new_light == 1) ++new_light;  /* otherwise it's undetectable */
 	    if (new_light)
-		new_light_source(u.ux, u.uy, new_light,
+		new_light_source(level, u.ux, u.uy, new_light,
 				 LS_MONSTER, &youmonst);
 	}
-	if (is_pool(u.ux,u.uy) && was_floating && !(Levitation || Flying) &&
+	if (is_pool(level, u.ux,u.uy) && was_floating && !(Levitation || Flying) &&
 		!breathless(youmonst.data) && !amphibious(youmonst.data) &&
 		!Swimming) drown();
 }
@@ -438,7 +438,7 @@ int polymon(int mntmp)
 	if (hides_under(youmonst.data))
 		u.uundetected = OBJ_AT(u.ux, u.uy);
 	else if (youmonst.data->mlet == S_EEL)
-		u.uundetected = is_pool(u.ux, u.uy);
+		u.uundetected = is_pool(level, u.ux, u.uy);
 	else
 		u.uundetected = 0;
 
@@ -506,7 +506,7 @@ int polymon(int mntmp)
 	}
 	find_ac();
 	if ((!Levitation && !u.ustuck && !Flying &&
-	    (is_pool(u.ux,u.uy) || is_lava(u.ux,u.uy))) ||
+	    (is_pool(level, u.ux,u.uy) || is_lava(level, u.ux,u.uy))) ||
 	   (Underwater && !Swimming))
 	    spoteffects(TRUE);
 	if (Passes_walls && u.utrap && u.utraptype == TT_INFLOOR) {
@@ -685,7 +685,7 @@ void rehumanize(void)
 	}
 
 	if (emits_light(youmonst.data))
-	    del_light_source(LS_MONSTER, &youmonst);
+	    del_light_source(level, LS_MONSTER, &youmonst);
 	polyman("return to %s form!", urace.adj);
 
 	if (u.uhp < 1) {
@@ -739,7 +739,7 @@ int dospit(void)
 
 	if (!getdir(NULL, &dx, &dy, &dz))
 	    return 0;
-	otmp = mksobj(u.umonnum==PM_COBRA ? BLINDING_VENOM : ACID_VENOM,
+	otmp = mksobj(level, u.umonnum==PM_COBRA ? BLINDING_VENOM : ACID_VENOM,
 			TRUE, FALSE);
 	otmp->spe = 1; /* to indicate it's yours */
 	throwit(otmp, 0L, FALSE, dx, dy, dz);
@@ -758,7 +758,7 @@ int doremove(void)
 
 int dospinweb(void)
 {
-	struct trap *ttmp = t_at(u.ux,u.uy);
+	struct trap *ttmp = t_at(level, u.ux, u.uy);
 
 	if (Levitation || Is_airlevel(&u.uz)
 	    || Underwater || Is_waterlevel(&u.uz)) {
@@ -858,11 +858,11 @@ int dospinweb(void)
 	else if (On_stairs(u.ux, u.uy)) {
 	    /* cop out: don't let them hide the stairs */
 	    Your("web fails to impede access to the %s.",
-		 (level.locations[u.ux][u.uy].typ == STAIRS) ? "stairs" : "ladder");
+		 (level->locations[u.ux][u.uy].typ == STAIRS) ? "stairs" : "ladder");
 	    return 1;
 		 
 	}
-	ttmp = maketrap(u.ux, u.uy, WEB);
+	ttmp = maketrap(level, u.ux, u.uy, WEB);
 	if (ttmp) {
 		ttmp->tseen = 1;
 		ttmp->madeby_u = 1;
@@ -919,7 +919,7 @@ int dogaze(void)
 	u.uen -= 15;
 	botl = 1;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
 		looked++;
@@ -1045,7 +1045,7 @@ int domindblast(void)
 
 	You("concentrate.");
 	pline("A wave of psychic energy pours out.");
-	for (mtmp=level.monlist; mtmp; mtmp = nmon) {
+	for (mtmp=level->monlist; mtmp; mtmp = nmon) {
 		int u_sen;
 
 		nmon = mtmp->nmon;

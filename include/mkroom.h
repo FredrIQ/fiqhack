@@ -78,19 +78,19 @@ struct shclass {
 				 * square searching required */
 
 #define ROOMOFFSET	3	/*
-				 * (level.locations[x][y].roomno - ROOMOFFSET) gives
+				 * (level->locations[x][y].roomno - ROOMOFFSET) gives
 				 * rooms[] index, for inside-squares and
 				 * non-shared boundaries.
 				 */
 
-#define IS_ROOM_PTR(x)		((x) >= level.rooms && (x) < level.rooms + MAXNROFROOMS)
+#define IS_ROOM_PTR(x)		((x) >= level->rooms && (x) < level->rooms + MAXNROFROOMS)
 #define IS_ROOM_INDEX(x)	((x) >= 0 && (x) < MAXNROFROOMS)
-#define IS_SUBROOM_PTR(x)	((x) >= level.subrooms && \
-				 (x) < level.subrooms + MAXNROFROOMS)
+#define IS_SUBROOM_PTR(x)	((x) >= level->subrooms && \
+				 (x) < level->subrooms + MAXNROFROOMS)
 #define IS_SUBROOM_INDEX(x)	((x) > MAXNROFROOMS && (x) < (MAXNROFROOMS*2))
-#define ROOM_INDEX(x)		((x) - level.rooms)
-#define SUBROOM_INDEX(x)	((x) - level.subrooms)
-#define IS_LAST_ROOM_PTR(x)	(ROOM_INDEX(x) == level.nroom)
-#define IS_LAST_SUBROOM_PTR(x)	(!level.nsubroom || SUBROOM_INDEX(x) == level.nsubroom)
+#define ROOM_INDEX(x)		((x) - level->rooms)
+#define SUBROOM_INDEX(x)	((x) - level->subrooms)
+#define IS_LAST_ROOM_PTR(x)	(ROOM_INDEX(x) == level->nroom)
+#define IS_LAST_SUBROOM_PTR(x)	(!level->nsubroom || SUBROOM_INDEX(x) == level->nsubroom)
 
 #endif /* MKROOM_H */

@@ -109,9 +109,9 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()	IS_ALTAR(level.locations[u.ux][u.uy].typ)
-#define on_shrine()	((level.locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
-#define a_align(x,y)	((aligntyp)Amask2align(level.locations[x][y].altarmask & AM_MASK))
+#define on_altar()	IS_ALTAR(level->locations[u.ux][u.uy].typ)
+#define on_shrine()	((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
+#define a_align(x,y)	((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
 
 /* Borrowed from eat.c */
 
@@ -146,7 +146,7 @@ static int in_trouble(void)
 
 	for (i= -1; i<=1; i++) for (j= -1; j<=1; j++) {
 		if (!i && !j) continue;
-		if (!isok(u.ux+i, u.uy+j) || IS_ROCK(level.locations[u.ux+i][u.uy+j].typ)
+		if (!isok(u.ux+i, u.uy+j) || IS_ROCK(level->locations[u.ux+i][u.uy+j].typ)
 		    || (blocked_boulder(i,j) && !throws_rocks(youmonst.data)))
 			count++;
 	}
@@ -655,7 +655,7 @@ static void gcrownu(void)
 	    !carrying(SPE_FINGER_OF_DEATH)) {
 	class_gift = SPE_FINGER_OF_DEATH;
  make_splbk:
-	obj = mksobj(class_gift, TRUE, FALSE);
+	obj = mksobj(level, class_gift, TRUE, FALSE);
 	bless(obj);
 	obj->bknown = TRUE;
 	at_your_feet("A spellbook");
@@ -697,7 +697,7 @@ static void gcrownu(void)
 	    Your("%s goes snicker-snack!", xname(obj));
 	    obj->dknown = TRUE;
 	} else if (!already_exists) {
-	    obj = mksobj(LONG_SWORD, FALSE, FALSE);
+	    obj = mksobj(level, LONG_SWORD, FALSE, FALSE);
 	    obj = oname(obj, artiname(ART_VORPAL_BLADE));
 	    obj->spe = 1;
 	    at_your_feet("A sword");
@@ -720,7 +720,7 @@ static void gcrownu(void)
 	    Your("%s hums ominously!", swordbuf);
 	    obj->dknown = TRUE;
 	} else if (!already_exists) {
-	    obj = mksobj(RUNESWORD, FALSE, FALSE);
+	    obj = mksobj(level, RUNESWORD, FALSE, FALSE);
 	    obj = oname(obj, artiname(ART_STORMBRINGER));
 	    at_your_feet(An(swordbuf));
 	    obj->spe = 1;
@@ -963,7 +963,7 @@ static void pleased(aligntyp g_align)
 	    at_your_feet("An object");
 	    /* not yet known spells given preference over already known ones */
 	    /* Also, try to grant a spell for which there is a skill slot */
-	    otmp = mkobj(SPBOOK_CLASS, TRUE);
+	    otmp = mkobj(level, SPBOOK_CLASS, TRUE);
 	    while (--trycnt > 0) {
 		if (otmp->otyp != SPE_BLANK_PAPER) {
 		    for (sp_no = 0; sp_no < MAXSPELL; sp_no++)
@@ -978,7 +978,7 @@ static void pleased(aligntyp g_align)
 		otmp->otyp = rnd_class(bases[SPBOOK_CLASS], SPE_BLANK_PAPER);
 	    }
 	    bless(otmp);
-	    place_object(otmp, u.ux, u.uy);
+	    place_object(otmp, level, u.ux, u.uy);
 	    break;
 	}
 	default:	impossible("Confused deity!");
@@ -1006,7 +1006,7 @@ static boolean water_prayer(boolean bless_water)
     long changed = 0;
     boolean other = FALSE, bc_known = !(Blind || Hallucination);
 
-    for (otmp = level.objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+    for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
 	/* turn water into (un)holy water */
 	if (otmp->otyp == POT_WATER &&
 		(bless_water ? !otmp->blessed : !otmp->cursed)) {
@@ -1137,7 +1137,7 @@ int dosacrifice(void)
 		/* curse the lawful/neutral altar */
 		pline_The("altar is stained with %s blood.", urace.adj);
 		if (!Is_astralevel(&u.uz))
-		    level.locations[u.ux][u.uy].altarmask = AM_CHAOTIC;
+		    level->locations[u.ux][u.uy].altarmask = AM_CHAOTIC;
 		angry_priest();
 	    } else {
 		struct monst *dmon;
@@ -1149,8 +1149,8 @@ int dosacrifice(void)
 		    pline(
 		     "The blood floods the altar, which vanishes in %s cloud!",
 			  an(hcolor("black")));
-		    level.locations[u.ux][u.uy].typ = ROOM;
-		    level.locations[u.ux][u.uy].altarmask = 0;
+		    level->locations[u.ux][u.uy].typ = ROOM;
+		    level->locations[u.ux][u.uy].altarmask = 0;
 		    newsym(u.ux, u.uy);
 		    angry_priest();
 		    demonless_msg = "cloud dissipates";
@@ -1161,7 +1161,7 @@ int dosacrifice(void)
 		    demonless_msg = "blood coagulates";
 		}
 		if ((pm = dlord(altaralign)) != NON_PM &&
-		    (dmon = makemon(&mons[pm], u.ux, u.uy, NO_MM_FLAGS))) {
+		    (dmon = makemon(&mons[pm], level, u.ux, u.uy, NO_MM_FLAGS))) {
 		    You("have summoned %s!", a_monnam(dmon));
 		    if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
 			dmon->mpeaceful = TRUE;
@@ -1343,10 +1343,10 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    exercise(A_WIS, TRUE);
 		    change_luck(1);
 		    /* Yes, this is supposed to be &=, not |= */
-		    level.locations[u.ux][u.uy].altarmask &= AM_SHRINE;
+		    level->locations[u.ux][u.uy].altarmask &= AM_SHRINE;
 		    /* the following accommodates stupid compilers */
-		    level.locations[u.ux][u.uy].altarmask =
-			level.locations[u.ux][u.uy].altarmask | (Align2amask(u.ualign.type));
+		    level->locations[u.ux][u.uy].altarmask =
+			level->locations[u.ux][u.uy].altarmask | (Align2amask(u.ualign.type));
 		    if (!Blind)
 			pline_The("altar glows %s.",
 			      hcolor(
@@ -1648,7 +1648,7 @@ int doturn(void)
 	range = BOLT_LIM + (u.ulevel / 5);	/* 5 to 11 */
 	range *= range;
 	once = 0;
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 
 	    if (DEADMONSTER(mtmp)) continue;
@@ -1706,7 +1706,7 @@ const char *a_gname(void)
 /* returns the name of an altar's deity */
 const char *a_gname_at(xchar x, xchar y)
 {
-    if (!IS_ALTAR(level.locations[x][y].typ)) return NULL;
+    if (!IS_ALTAR(level->locations[x][y].typ)) return NULL;
 
     return align_gname(a_align(x,y));
 }
@@ -1790,7 +1790,7 @@ static boolean blocked_boulder(int dx, int dy)
     struct obj *otmp;
     long count = 0L;
 
-    for (otmp = level.objects[u.ux+dx][u.uy+dy]; otmp; otmp = otmp->nexthere) {
+    for (otmp = level->objects[u.ux+dx][u.uy+dy]; otmp; otmp = otmp->nexthere) {
 	if (otmp->otyp == BOULDER)
 	    count += otmp->quan;
     }
@@ -1804,9 +1804,9 @@ static boolean blocked_boulder(int dx, int dy)
 
     if (!isok(u.ux+2*dx, u.uy+2*dy))
 	return TRUE;
-    if (IS_ROCK(level.locations[u.ux+2*dx][u.uy+2*dy].typ))
+    if (IS_ROCK(level->locations[u.ux+2*dx][u.uy+2*dy].typ))
 	return TRUE;
-    if (sobj_at(BOULDER, u.ux+2*dx, u.uy+2*dy))
+    if (sobj_at(BOULDER, level, u.ux+2*dx, u.uy+2*dy))
 	return TRUE;
 
     return FALSE;

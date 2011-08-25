@@ -57,7 +57,7 @@ int use_saddle(struct obj *otmp)
 	    return 0;
 	}
 	if (!isok(u.ux+dx, u.uy+dy) ||
-			!(mtmp = m_at(u.ux+dx, u.uy+dy)) ||
+			!(mtmp = m_at(level, u.ux+dx, u.uy+dy)) ||
 			!canspotmon(mtmp)) {
 	    pline("I see nobody there.");
 	    return 1;
@@ -167,7 +167,7 @@ int doride(void)
 	         isok(u.ux+dx, u.uy+dy)) {
 	    if (wizard && yn("Force the mount to succeed?") == 'y')
 		forcemount = TRUE;
-	    return mount_steed(m_at(u.ux+dx, u.uy+dy), forcemount);
+	    return mount_steed(m_at(level, u.ux+dx, u.uy+dy), forcemount);
 	} else
 	    return 0;
 	return 1;
@@ -257,7 +257,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	    return FALSE;
 	}
 	if (mtmp->mtrapped) {
-	    struct trap *t = t_at(mtmp->mx, mtmp->my);
+	    struct trap *t = t_at(level, mtmp->mx, mtmp->my);
 
 	    You_cant("mount %s while %s's trapped in %s.",
 		     mon_nam(mtmp), mhe(mtmp),
@@ -411,13 +411,13 @@ static boolean landing_spot(coord *spot, /* landing position (we fill it in) */
 	    for (y = u.uy-1; y <= u.uy+1; y++) {
 		if (!isok(x, y) || (x == u.ux && y == u.uy)) continue;
 
-		if (ACCESSIBLE(level.locations[x][y].typ) &&
-			    !MON_AT(x,y) && !closed_door(x,y)) {
+		if (ACCESSIBLE(level->locations[x][y].typ) &&
+			    !MON_AT(level, x,y) && !closed_door(level, x,y)) {
 		    distance = distu(x,y);
 		    if (min_distance < 0 || distance < min_distance ||
 			    (distance == min_distance && rn2(2))) {
-			if (i > 0 || (((t = t_at(x, y)) == 0 || !t->tseen) &&
-				      (!sobj_at(BOULDER, x, y) ||
+			if (i > 0 || (((t = t_at(level, x, y)) == 0 || !t->tseen) &&
+				      (!sobj_at(BOULDER, level, x, y) ||
 				       throws_rocks(youmonst.data)))) {
 			    spot->x = x;
 			    spot->y = y;
@@ -431,7 +431,7 @@ static boolean landing_spot(coord *spot, /* landing position (we fill it in) */
 
     /* If we didn't find a good spot and forceit is on, try enexto(). */
     if (forceit && min_distance < 0 &&
-		!enexto(spot, u.ux, u.uy, youmonst.data))
+		!enexto(spot, level, u.ux, u.uy, youmonst.data))
 	return FALSE;
 
     return found;
@@ -512,7 +512,7 @@ void dismount_steed(int reason)
 	   unless we're in the midst of creating a bones file. */
 	if (reason == DISMOUNT_BONES) {
 	    /* move the steed to an adjacent square */
-	    if (enexto(&cc, u.ux, u.uy, mtmp->data))
+	    if (enexto(&cc, level, u.ux, u.uy, mtmp->data))
 		rloc_to(mtmp, cc.x, cc.y);
 	    else	/* evidently no room nearby; move steed elsewhere */
 		rloc(mtmp, FALSE);
@@ -525,7 +525,7 @@ void dismount_steed(int reason)
 
 		/* The steed may drop into water/lava */
 		if (!is_flyer(mdat) && !is_floater(mdat) && !is_clinger(mdat)) {
-		    if (is_pool(u.ux, u.uy)) {
+		    if (is_pool(level, u.ux, u.uy)) {
 			if (!Underwater)
 			    pline("%s falls into the %s!", Monnam(mtmp),
 							surface(u.ux, u.uy));
@@ -533,7 +533,7 @@ void dismount_steed(int reason)
 			    killed(mtmp);
 			    adjalign(-1);
 			}
-		    } else if (is_lava(u.ux, u.uy)) {
+		    } else if (is_lava(level, u.ux, u.uy)) {
 			pline("%s is pulled into the lava!", Monnam(mtmp));
 			if (!likes_lava(mdat)) {
 			    killed(mtmp);
@@ -572,7 +572,7 @@ void dismount_steed(int reason)
 			mintrap(mtmp);
 		}
 	    /* Couldn't... try placing the steed */
-	    } else if (enexto(&cc, u.ux, u.uy, mtmp->data)) {
+	    } else if (enexto(&cc, level, u.ux, u.uy, mtmp->data)) {
 		/* Keep player here, move the steed to cc */
 		rloc_to(mtmp, cc.x, cc.y);
 		/* Player stays put */
@@ -608,7 +608,7 @@ void place_monster(struct monst *mon, int x, int y)
 	return;
     }
     mon->mx = x, mon->my = y;
-    level.monsters[x][y] = mon;
+    mon->dlevel->monsters[x][y] = mon;
 }
 
 /*steed.c*/

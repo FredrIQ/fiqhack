@@ -857,7 +857,7 @@ static void ini_inv(const struct trobj *trop)
 				    break;
 				}
 			}
-			obj = mksobj(otyp, TRUE, FALSE);
+			obj = mksobj(level, otyp, TRUE, FALSE);
 		} else {	/* UNDEF_TYP */
 			static short nocreate = STRANGE_OBJECT;
 			static short nocreate2 = STRANGE_OBJECT;
@@ -873,7 +873,7 @@ static void ini_inv(const struct trobj *trop)
 		 * one will immediately read it and use the iron ball as a
 		 * weapon.)
 		 */
-			obj = mkobj(trop->trclass, FALSE);
+			obj = mkobj(level, trop->trclass, FALSE);
 			otyp = obj->otyp;
 			while (otyp == WAN_WISHING
 				|| otyp == nocreate
@@ -905,7 +905,7 @@ static void ini_inv(const struct trobj *trop)
 				    restricted_spell_discipline(otyp)))
 							) {
 				dealloc_obj(obj);
-				obj = mkobj(trop->trclass, FALSE);
+				obj = mkobj(level, trop->trclass, FALSE);
 				otyp = obj->otyp;
 			}
 

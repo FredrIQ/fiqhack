@@ -357,12 +357,12 @@ static void you_moved(void)
 	    mcalcdistress();	/* adjust monsters' trap, blind, etc */
 
 	    /* reallocate movement rations to monsters */
-	    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 		mtmp->movement += mcalcmove(mtmp);
 
 	    if (!rn2(u.uevent.udemigod ? 25 :
 		    (depth(&u.uz) > depth(&stronghold_level)) ? 50 : 70))
-		makemon(NULL, 0, 0, NO_MM_FLAGS);
+		makemon(NULL, level, 0, 0, NO_MM_FLAGS);
 
 	    /* calculate how much time passed. */
 	    if (u.usteed && u.umoved) {
@@ -395,7 +395,7 @@ static void you_moved(void)
 	    settrack();
 
 	    moves++;
-	    level.lastmoves = moves;
+	    level->lastmoves = moves;
 
 	    /********************************/
 	    /* once-per-turn things go here */
@@ -404,7 +404,7 @@ static void you_moved(void)
 	    if (flags.bypasses) clear_bypasses();
 	    if (Glib) glibr();
 	    nh_timeout();
-	    run_regions();
+	    run_regions(level);
 
 	    if (u.ublesscnt)  u.ublesscnt--;
 	    botl = 1;
@@ -419,7 +419,7 @@ static void you_moved(void)
 	    if (u.uinvulnerable) {
 		/* for the moment at least, you're in tiptop shape */
 		wtcap = UNENCUMBERED;
-	    } else if (Upolyd && youmonst.data->mlet == S_EEL && !is_pool(u.ux,u.uy) && !Is_waterlevel(&u.uz)) {
+	    } else if (Upolyd && youmonst.data->mlet == S_EEL && !is_pool(level, u.ux,u.uy) && !Is_waterlevel(&u.uz)) {
 		if (u.mh > 1) {
 		    u.mh--;
 		    botl = 1;
@@ -570,7 +570,7 @@ static void handle_occupation(void)
 
 static void handle_lava_trap(boolean didmove)
 {
-    if (!is_lava(u.ux,u.uy))
+    if (!is_lava(level, u.ux,u.uy))
 	u.utrap = 0;
     else if (!u.uinvulnerable) {
 	u.utrap -= 1<<8;
@@ -798,7 +798,7 @@ static void newgame(void)
 	load_qtlist();	/* load up the quest text info */
 /*	quest_init();*/	/* Now part of role_init() */
 
-	mklev();
+	level = mklev(&u.uz);
 	u_on_upstairs();
 	vision_reset();		/* set up internals for level (after mklev) */
 	check_special_room(FALSE);
@@ -809,7 +809,7 @@ static void newgame(void)
 	 * makedog() will fail when it calls makemon().
 	 *			- ucsfcgl!kneller
 	 */
-	if (MON_AT(u.ux, u.uy)) mnexto(m_at(u.ux, u.uy));
+	if (MON_AT(level, u.ux, u.uy)) mnexto(m_at(level, u.ux, u.uy));
 	makedog();
 	docrt();
 	

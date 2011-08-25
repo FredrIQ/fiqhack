@@ -53,7 +53,7 @@ static void check_here(boolean picked_some)
 	int ct = 0;
 
 	/* count the objects here */
-	for (obj = level.objects[u.ux][u.uy]; obj; obj = obj->nexthere) {
+	for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere) {
 	    if (obj != uchain)
 		ct++;
 	}
@@ -148,7 +148,7 @@ boolean is_worn_by_type(struct obj *otmp)
  * Returns 1 if tried to pick something up, whether
  * or not it succeeded.
  */
-int pickup(int what)		/* should be a long */
+int pickup(int what)
 {
 	int i, n, res, count, n_tried = 0, n_picked = 0;
 	struct object_pick *pick_list = NULL;
@@ -162,10 +162,10 @@ int pickup(int what)		/* should be a long */
 	    count = 0;
 
 	if (!u.uswallow) {
-		struct trap *ttmp = t_at(u.ux, u.uy);
+		struct trap *ttmp = t_at(level, u.ux, u.uy);
 		/* no auto-pick if no-pick move, nothing there, or in a pool */
 		if (autopickup && (flags.nopick || !OBJ_AT(u.ux, u.uy) ||
-			(is_pool(u.ux, u.uy) && !Underwater) || is_lava(u.ux, u.uy))) {
+			(is_pool(level, u.ux, u.uy) && !Underwater) || is_lava(level, u.ux, u.uy))) {
 			read_engr_at(u.ux, u.uy);
 			return 0;
 		}
@@ -205,12 +205,12 @@ int pickup(int what)		/* should be a long */
 		}
 
 		/* if there's anything here, stop running */
-		if (OBJ_AT(u.ux,u.uy) && flags.run && flags.run != 8 && !flags.nopick) nomul(0);
+		if (OBJ_AT(u.ux, u.uy) && flags.run && flags.run != 8 && !flags.nopick) nomul(0);
 	}
 
 	add_valid_menu_class(0);	/* reset */
 	if (!u.uswallow) {
-		objchain = level.objects[u.ux][u.uy];
+		objchain = level->objects[u.ux][u.uy];
 		traverse_how = BY_NEXTHERE;
 	} else {
 		objchain = u.ustuck->minvent;
@@ -256,7 +256,7 @@ menu_pickup:
 
 
 	if (!u.uswallow) {
-		if (!OBJ_AT(u.ux,u.uy)) u.uundetected = 0;
+		if (!OBJ_AT(u.ux, u.uy)) u.uundetected = 0;
 
 		/* position may need updating (invisible hero) */
 		if (n_picked) newsym(u.ux,u.uy);
@@ -1046,7 +1046,7 @@ struct obj *pick_obj(struct obj *otmp)
 	       usually they'll be the same, but not when using telekinesis
 	       (if ever implemented) or a grappling hook */
 	    strcpy(saveushops, u.ushops);
-	    fakeshop[0] = *in_rooms(otmp->ox, otmp->oy, SHOPBASE);
+	    fakeshop[0] = *in_rooms(level, otmp->ox, otmp->oy, SHOPBASE);
 	    fakeshop[1] = '\0';
 	    strcpy(u.ushops, fakeshop);
 	    /* sets obj->unpaid if necessary */
@@ -1110,7 +1110,7 @@ static int container_at(int x, int y, boolean countem)
 	struct obj *cobj, *nobj;
 	int container_count = 0;
 	
-	for (cobj = level.objects[x][y]; cobj; cobj = nobj) {
+	for (cobj = level->objects[x][y]; cobj; cobj = nobj) {
 		nobj = cobj->nexthere;
 		if (Is_container(cobj)) {
 			container_count++;
@@ -1128,10 +1128,10 @@ static boolean able_to_loot(int x, int y)
 		else
 			You("cannot reach the %s.", surface(x, y));
 		return FALSE;
-	} else if (is_pool(x, y) || is_lava(x, y)) {
+	} else if (is_pool(level, x, y) || is_lava(level, x, y)) {
 		/* at present, can't loot in water even when Underwater */
 		You("cannot loot things that are deep in the %s.",
-		    is_lava(x, y) ? "lava" : "water");
+		    is_lava(level, x, y) ? "lava" : "water");
 		return FALSE;
 	} else if (nolimbs(youmonst.data)) {
 		pline("Without limbs, you cannot loot anything.");
@@ -1151,7 +1151,7 @@ static boolean mon_beside(int x, int y)
 	    for (j = -1; j <= 1; j++) {
 	    	nx = x + i;
 	    	ny = y + j;
-		if (isok(nx, ny) && MON_AT(nx, ny))
+		if (isok(nx, ny) && MON_AT(level, nx, ny))
 			return TRUE;
 	    }
 	return FALSE;
@@ -1187,7 +1187,7 @@ lootcont:
 	boolean any = FALSE;
 
 	if (!able_to_loot(cc.x, cc.y)) return 0;
-	for (cobj = level.objects[cc.x][cc.y]; cobj; cobj = nobj) {
+	for (cobj = level->objects[cc.x][cc.y]; cobj; cobj = nobj) {
 	    nobj = cobj->nexthere;
 
 	    if (Is_container(cobj)) {
@@ -1239,12 +1239,12 @@ lootcont:
 		goldob = splitobj(goldob, contribution);
 	    freeinv(goldob);
 #endif
-	    if (IS_THRONE(level.locations[u.ux][u.uy].typ)){
+	    if (IS_THRONE(level->locations[u.ux][u.uy].typ)){
 		struct obj *coffers;
 		int pass;
 		/* find the original coffers chest, or any chest */
 		for (pass = 2; pass > -1; pass -= 2)
-		    for (coffers = level.objlist; coffers; coffers = coffers->nobj)
+		    for (coffers = level->objlist; coffers; coffers = coffers->nobj)
 			if (coffers->otyp == CHEST && coffers->spe == pass)
 			    goto gotit;	/* two level break */
 gotit:
@@ -1253,7 +1253,7 @@ gotit:
 		    add_to_container(coffers, goldob);
 		    coffers->owt = weight(coffers);
 		} else {
-		    struct monst *mon = makemon(courtmon(),
+		    struct monst *mon = makemon(courtmon(), level,
 					    u.ux, u.uy, NO_MM_FLAGS);
 		    if (mon) {
 #ifndef GOLDOBJ
@@ -1279,7 +1279,7 @@ gotit:
 		pline("Ok, now there is loot here.");
 	    }
 	}
-    } else if (IS_GRAVE(level.locations[cc.x][cc.y].typ)) {
+    } else if (IS_GRAVE(level->locations[cc.x][cc.y].typ)) {
 	You("need to dig up the grave to effectively loot it...");
     }
     /*
@@ -1302,7 +1302,7 @@ gotit:
 	    timepassed = 1;
 	    return timepassed;
 	}
-	mtmp = m_at(cc.x, cc.y);
+	mtmp = m_at(level, cc.x, cc.y);
 	if (mtmp) timepassed = loot_mon(mtmp, &prev_inquiry, &prev_loot);
 
 	/* Preserve pre-3.3.1 behaviour for containers.
@@ -1517,8 +1517,8 @@ static int in_container(struct obj *obj)
 		obj->age = moves - obj->age; /* actual age */
 		/* stop any corpse timeouts when frozen */
 		if (obj->otyp == CORPSE && obj->timed) {
-			long rot_alarm = stop_timer(ROT_CORPSE, obj);
-			stop_timer(REVIVE_MON, obj);
+			long rot_alarm = stop_timer(obj->olev, ROT_CORPSE, obj);
+			stop_timer(obj->olev, REVIVE_MON, obj);
 			/* mark a non-reviving corpse as such */
 			if (rot_alarm) obj->norevive = 1;
 		}
@@ -1674,7 +1674,7 @@ static void observe_quantum_cat(struct obj *box)
        (telepathic or monster/object/food detection) ought to
        force the determination of alive vs dead state; but basing
        it just on opening the box is much simpler to cope with */
-    livecat = rn2(2) ? makemon(&mons[PM_HOUSECAT],
+    livecat = rn2(2) ? makemon(&mons[PM_HOUSECAT], level,
 			       box->ox, box->oy, NO_MINVENT) : 0;
     if (livecat) {
 	livecat->mpeaceful = 1;

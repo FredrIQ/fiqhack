@@ -71,7 +71,7 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 		}
 	    }
 
-	    mtmp = makemon(pm, x, y, MM_EDOG|MM_IGNOREWATER);
+	    mtmp = makemon(pm, level, x, y, MM_EDOG|MM_IGNOREWATER);
 	    if (otmp && !mtmp) { /* monster was genocided or square occupied */
 	 	if (!quietly)
 		   pline_The("figurine writhes and then shatters into pieces!");
@@ -81,7 +81,7 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 
 	if (!mtmp) return NULL;
 
-	if (is_pool(mtmp->mx, mtmp->my) && minliquid(mtmp))
+	if (is_pool(level, mtmp->mx, mtmp->my) && minliquid(mtmp))
 		return NULL;
 
 	initedog(mtmp);
@@ -141,12 +141,12 @@ struct monst *makedog(void)
 	    if (Role_if(PM_RANGER)) petname = "Sirius";     /* Orion's dog */
 	}
 
-	mtmp = makemon(&mons[pettype], u.ux, u.uy, MM_EDOG);
+	mtmp = makemon(&mons[pettype], level, u.ux, u.uy, MM_EDOG);
 
 	if (!mtmp) return NULL; /* pets were genocided */
 
 	/* Horses already wear a saddle */
-	if (pettype == PM_PONY && !!(otmp = mksobj(SADDLE, TRUE, FALSE))) {
+	if (pettype == PM_PONY && !!(otmp = mksobj(level, SADDLE, TRUE, FALSE))) {
 	    if (mpickobj(mtmp, otmp))
 		panic("merged saddle?");
 	    mtmp->misc_worn_check |= W_SADDLE;
@@ -171,7 +171,7 @@ void update_mlstmv(void)
 
 	/* monst->mlstmv used to be updated every time `monst' actually moved,
 	   but that is no longer the case so we just do a blanket assignment */
-	for (mon = level.monlist; mon; mon = mon->nmon)
+	for (mon = level->monlist; mon; mon = mon->nmon)
 	    if (!DEADMONSTER(mon)) mon->mlstmv = moves;
 }
 
@@ -201,19 +201,20 @@ void losedogs(void)
 void mon_arrive(struct monst *mtmp, boolean with_you)
 {
 	struct trap *t;
+	struct obj *otmp;
 	xchar xlocale, ylocale, xyloc, xyflags, wander;
 	int num_segs;
 
-	mtmp->nmon = level.monlist;
-	level.monlist = mtmp;
+	mtmp->dlevel = level;
+	mtmp->nmon = level->monlist;
+	level->monlist = mtmp;
 	if (mtmp->isshk)
 	    set_residency(mtmp, FALSE);
 
 	num_segs = mtmp->wormno;
 	/* baby long worms have no tail so don't use is_longworm() */
 	if ((mtmp->data == &mons[PM_LONG_WORM]) &&
-	    (mtmp->wormno = get_wormno()) != 0)
-	{
+	    (mtmp->wormno = get_wormno(mtmp->dlevel)) != 0) {
 	    initworm(mtmp, num_segs);
 	    /* tail segs are not yet initialized or displayed */
 	} else mtmp->wormno = 0;
@@ -230,6 +231,9 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 	ylocale = mtmp->mtrack[1].y;
 	mtmp->mtrack[0].x = mtmp->mtrack[0].y = 0;
 	mtmp->mtrack[1].x = mtmp->mtrack[1].y = 0;
+	
+	for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+	    set_obj_level(mtmp->dlevel, otmp);
 
 	if (mtmp == u.usteed)
 	    return;	/* don't place steed on the map */
@@ -239,7 +243,7 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 	       that spot.  This code doesn't control the final outcome;
 	       goto_level(do.c) decides who ends up at your target spot
 	       when there is a monster there too. */
-	    if (!MON_AT(u.ux, u.uy) &&
+	    if (!MON_AT(level, u.ux, u.uy) &&
 		    !rn2(mtmp->mtame ? 10 : mtmp->mpeaceful ? 5 : 2))
 		rloc_to(mtmp, u.ux, u.uy);
 	    else
@@ -271,15 +275,15 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 		break;
 	 case MIGR_NEAR_PLAYER:	xlocale = u.ux,  ylocale = u.uy;
 		break;
-	 case MIGR_STAIRS_UP:	xlocale = level.upstair.sx,  ylocale = level.upstair.sy;
+	 case MIGR_STAIRS_UP:	xlocale = level->upstair.sx,  ylocale = level->upstair.sy;
 		break;
-	 case MIGR_STAIRS_DOWN:	xlocale = level.dnstair.sx,  ylocale = level.dnstair.sy;
+	 case MIGR_STAIRS_DOWN:	xlocale = level->dnstair.sx,  ylocale = level->dnstair.sy;
 		break;
-	 case MIGR_LADDER_UP:	xlocale = level.upladder.sx,  ylocale = level.upladder.sy;
+	 case MIGR_LADDER_UP:	xlocale = level->upladder.sx,  ylocale = level->upladder.sy;
 		break;
-	 case MIGR_LADDER_DOWN:	xlocale = level.dnladder.sx,  ylocale = level.dnladder.sy;
+	 case MIGR_LADDER_DOWN:	xlocale = level->dnladder.sx,  ylocale = level->dnladder.sy;
 		break;
-	 case MIGR_SSTAIRS:	xlocale = level.sstairs.sx,  ylocale = level.sstairs.sy;
+	 case MIGR_SSTAIRS:	xlocale = level->sstairs.sx,  ylocale = level->sstairs.sy;
 		break;
 	 case MIGR_PORTAL:
 		if (In_endgame(&u.uz)) {
@@ -288,12 +292,12 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 		       that we know that the current endgame levels always
 		       build upwards and never have any exclusion subregion
 		       inside their TELEPORT_REGION settings. */
-		    xlocale = rn1(level.updest.hx - level.updest.lx + 1, level.updest.lx);
-		    ylocale = rn1(level.updest.hy - level.updest.ly + 1, level.updest.ly);
+		    xlocale = rn1(level->updest.hx - level->updest.lx + 1, level->updest.lx);
+		    ylocale = rn1(level->updest.hy - level->updest.ly + 1, level->updest.ly);
 		    break;
 		}
 		/* find the arrival portal */
-		for (t = level.lev_traps; t; t = t->ntrap)
+		for (t = level->lev_traps; t; t = t->ntrap)
 		    if (t->ttyp == MAGIC_PORTAL) break;
 		if (t) {
 		    xlocale = t->tx,  ylocale = t->ty;
@@ -309,11 +313,11 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 	if (xlocale && wander) {
 	    /* monster moved a bit; pick a nearby location */
 	    /* mnearto() deals w/stone, et al */
-	    char *r = in_rooms(xlocale, ylocale, 0);
+	    char *r = in_rooms(level, xlocale, ylocale, 0);
 	    if (r && *r) {
 		coord c;
-		/* somexy() handles irregular level.rooms */
-		if (somexy(&level.rooms[*r - ROOMOFFSET], &c))
+		/* somexy() handles irregular level->rooms */
+		if (somexy(level, &level->rooms[*r - ROOMOFFSET], &c))
 		    xlocale = c.x,  ylocale = c.y;
 		else
 		    xlocale = ylocale = 0;
@@ -347,19 +351,19 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 			setmnotwielded(mtmp,obj);
 		    obj->owornmask = 0L;
 		    if (xlocale && ylocale)
-			    place_object(obj, xlocale, ylocale);
+			    place_object(obj, level, xlocale, ylocale);
 		    else {
 		    	rloco(obj);
 			get_obj_location(obj, &xlocale, &ylocale, 0);
 		    }
 		}
 		corpse = mkcorpstat(CORPSE, NULL, mtmp->data,
-				xlocale, ylocale, FALSE);
+				level, xlocale, ylocale, FALSE);
 #ifndef GOLDOBJ
 		if (mtmp->mgold) {
 		    if (xlocale == 0 && ylocale == 0 && corpse) {
 			get_obj_location(corpse, &xlocale, &ylocale, 0);
-			mkgold(mtmp->mgold, xlocale, ylocale);
+			mkgold(mtmp->mgold, level, xlocale, ylocale);
 		    }
 		    mtmp->mgold = 0L;
 		}
@@ -457,7 +461,7 @@ void keepdogs(boolean pets_only)
 	int num_segs;
 	boolean stay_behind;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;
 	    if (DEADMONSTER(mtmp)) continue;
 	    if (pets_only && !mtmp->mtame) continue;
@@ -739,7 +743,7 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 		} else if (cansee(mtmp->mx,mtmp->my))
 		    pline("%s.", Tobjnam(obj, "stop"));
 		/* dog_eat expects a floor object */
-		place_object(obj, mtmp->mx, mtmp->my);
+		place_object(obj, level, mtmp->mx, mtmp->my);
 		dog_eat(mtmp, obj, mtmp->mx, mtmp->my, FALSE);
 		/* eating might have killed it, but that doesn't matter here;
 		   a non-null result suppresses "miss" message for thrown
@@ -770,7 +774,7 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 
 	if (obj) {		/* thrown food */
 	    /* defer eating until the edog extension has been set up */
-	    place_object(obj, mtmp2->mx, mtmp2->my);	/* put on floor */
+	    place_object(obj, level, mtmp2->mx, mtmp2->my);	/* put on floor */
 	    /* devour the food (might grow into larger, genocided monster) */
 	    if (dog_eat(mtmp2, obj, mtmp2->mx, mtmp2->my, TRUE) == 2)
 		return mtmp2;		/* oops, it died... */

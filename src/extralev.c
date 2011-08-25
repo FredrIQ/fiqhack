@@ -20,11 +20,12 @@ struct rogueroom {
 #define RIGHT 8
 
 static struct rogueroom r[3][3];
-static void roguejoin(int,int,int,int,int);
-static void roguecorr(int,int,int);
+static void roguejoin(struct level *lev, int,int,int,int,int);
+static void roguecorr(struct level *lev, int,int,int);
 static void miniwalk(int,int);
 
-static void roguejoin(int x1, int y1, int x2, int y2, int horiz)
+
+static void roguejoin(struct level *lev, int x1, int y1, int x2, int y2, int horiz)
 {
 	int x,y,middle;
 #ifndef MAX
@@ -36,23 +37,24 @@ static void roguejoin(int x1, int y1, int x2, int y2, int horiz)
 	if (horiz) {
 		middle = x1 + rn2(x2-x1+1);
 		for (x=MIN(x1,middle); x<=MAX(x1,middle); x++)
-			corr(x, y1);
+			corr(lev, x, y1);
 		for (y=MIN(y1,y2); y<=MAX(y1,y2); y++)
-			corr(middle,y);
+			corr(lev, middle,y);
 		for (x=MIN(middle,x2); x<=MAX(middle,x2); x++)
-			corr(x, y2);
+			corr(lev, x, y2);
 	} else {
 		middle = y1 + rn2(y2-y1+1);
 		for (y=MIN(y1,middle); y<=MAX(y1,middle); y++)
-			corr(x1, y);
+			corr(lev, x1, y);
 		for (x=MIN(x1,x2); x<=MAX(x1,x2); x++)
-			corr(x, middle);
+			corr(lev, x, middle);
 		for (y=MIN(middle,y2); y<=MAX(middle,y2); y++)
-			corr(x2,y);
+			corr(lev, x2,y);
 	}
 }
 
-static void roguecorr(int x, int y, int dir)
+
+static void roguecorr(struct level *lev, int x, int y, int dir)
 {
 	int fromx, fromy, tox, toy;
 
@@ -65,11 +67,11 @@ static void roguecorr(int x, int y, int dir)
 			fromx = r[x][y].rlx + rn2(r[x][y].dx);
 			fromy = r[x][y].rly + r[x][y].dy;
 			fromx += 1 + 26*x; fromy += 7*y;
-			if (!IS_WALL(level.locations[fromx][fromy].typ))
+			if (!IS_WALL(lev->locations[fromx][fromy].typ))
 				impossible("down: no wall at %d,%d?",fromx,
 									fromy);
-			dodoor(fromx, fromy, &level.rooms[r[x][y].nroom]);
-			level.locations[fromx][fromy].doormask = D_NODOOR;
+			dodoor(lev, fromx, fromy, &lev->rooms[r[x][y].nroom]);
+			lev->locations[fromx][fromy].doormask = D_NODOOR;
 			fromy++;
 		}
 		if (y >= 2) {
@@ -85,13 +87,13 @@ static void roguecorr(int x, int y, int dir)
 			tox = r[x][y].rlx + rn2(r[x][y].dx);
 			toy = r[x][y].rly - 1;
 			tox += 1 + 26*x; toy += 7*y;
-			if (!IS_WALL(level.locations[tox][toy].typ))
+			if (!IS_WALL(lev->locations[tox][toy].typ))
 				impossible("up: no wall at %d,%d?",tox,toy);
-			dodoor(tox, toy, &level.rooms[r[x][y].nroom]);
-			level.locations[tox][toy].doormask = D_NODOOR;
+			dodoor(lev, tox, toy, &lev->rooms[r[x][y].nroom]);
+			lev->locations[tox][toy].doormask = D_NODOOR;
 			toy--;
 		}
-		roguejoin(fromx, fromy, tox, toy, FALSE);
+		roguejoin(lev, fromx, fromy, tox, toy, FALSE);
 		return;
 	} else if (dir == RIGHT) {
 		r[x][y].doortable &= ~RIGHT;
@@ -102,11 +104,11 @@ static void roguecorr(int x, int y, int dir)
 			fromx = r[x][y].rlx + r[x][y].dx;
 			fromy = r[x][y].rly + rn2(r[x][y].dy);
 			fromx += 1 + 26*x; fromy += 7*y;
-			if (!IS_WALL(level.locations[fromx][fromy].typ))
+			if (!IS_WALL(lev->locations[fromx][fromy].typ))
 				impossible("down: no wall at %d,%d?",fromx,
 									fromy);
-			dodoor(fromx, fromy, &level.rooms[r[x][y].nroom]);
-			level.locations[fromx][fromy].doormask = D_NODOOR;
+			dodoor(lev, fromx, fromy, &lev->rooms[r[x][y].nroom]);
+			lev->locations[fromx][fromy].doormask = D_NODOOR;
 			fromx++;
 		}
 		if (x >= 2) {
@@ -122,16 +124,17 @@ static void roguecorr(int x, int y, int dir)
 			tox = r[x][y].rlx - 1;
 			toy = r[x][y].rly + rn2(r[x][y].dy);
 			tox += 1 + 26*x; toy += 7*y;
-			if (!IS_WALL(level.locations[tox][toy].typ))
+			if (!IS_WALL(lev->locations[tox][toy].typ))
 				impossible("left: no wall at %d,%d?",tox,toy);
-			dodoor(tox, toy, &level.rooms[r[x][y].nroom]);
-			level.locations[tox][toy].doormask = D_NODOOR;
+			dodoor(lev, tox, toy, &lev->rooms[r[x][y].nroom]);
+			lev->locations[tox][toy].doormask = D_NODOOR;
 			tox--;
 		}
-		roguejoin(fromx, fromy, tox, toy, TRUE);
+		roguejoin(lev, fromx, fromy, tox, toy, TRUE);
 		return;
 	} else impossible("corridor in direction %d?",dir);
 }
+
 
 /* Modified walkfrom() from mkmaze.c */
 static void miniwalk(int x, int y)
@@ -181,7 +184,8 @@ static void miniwalk(int x, int y)
 	}
 }
 
-void makeroguerooms(void) {
+
+void makeroguerooms(struct level *lev) {
 	int x,y;
 	/* Rogue levels are structured 3 by 3, with each section containing
 	 * a room or an intersection.  The minimum width is 2 each way.
@@ -201,12 +205,12 @@ void makeroguerooms(void) {
 	 */
 #define here r[x][y]
 
-	level.nroom = 0;
+	lev->nroom = 0;
 	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		/* Note: we want to insure at least 1 room.  So, if the
 		 * first 8 are all dummies, force the last to be a room.
 		 */
-		if (!rn2(5) && (level.nroom || (x<2 && y<2))) {
+		if (!rn2(5) && (lev->nroom || (x<2 && y<2))) {
 			/* Arbitrary: dummy rooms may only go where real
 			 * ones do.
 			 */
@@ -221,18 +225,18 @@ void makeroguerooms(void) {
 			/* boundaries of room floor */
 			here.rlx = rnd(23 - here.dx + 1);
 			here.rly = rnd(((y==2) ? 5 : 4)- here.dy + 1);
-			level.nroom++;
+			lev->nroom++;
 		}
 		here.doortable = 0;
 	}
 	miniwalk(rn2(3), rn2(3));
-	level.nroom = 0;
+	lev->nroom = 0;
 	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		if (here.real) { /* Make a room */
 			int lowx, lowy, hix, hiy;
 
-			r[x][y].nroom = level.nroom;
-			smeq[level.nroom] = level.nroom;
+			r[x][y].nroom = lev->nroom;
+			smeq[lev->nroom] = lev->nroom;
 
 			lowx = 1 + 26*x + here.rlx;
 			lowy = 7*y + here.rly;
@@ -242,7 +246,7 @@ void makeroguerooms(void) {
 			 * level 10, but since Rogue rooms are only
 			 * encountered below level 10, use !rn2(7).
 			 */
-			add_room(lowx, lowy, hix, hiy,
+			add_room(lev, lowx, lowy, hix, hiy,
 				 (boolean) !rn2(7), OROOM, FALSE);
 		}
 	}
@@ -250,9 +254,9 @@ void makeroguerooms(void) {
 	/* Now, add connecting corridors. */
 	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		if (here.doortable & DOWN)
-			roguecorr(x, y, DOWN);
+			roguecorr(lev, x, y, DOWN);
 		if (here.doortable & RIGHT)
-			roguecorr(x, y, RIGHT);
+			roguecorr(lev, x, y, RIGHT);
 		if (here.doortable & LEFT)
 			impossible ("left end of %d, %d never connected?",x,y);
 		if (here.doortable & UP)
@@ -260,70 +264,72 @@ void makeroguerooms(void) {
 	}
 }
 
-void corr(int x, int y)
+
+void corr(struct level *lev, int x, int y)
 {
 	if (rn2(50)) {
-		level.locations[x][y].typ = CORR;
+		lev->locations[x][y].typ = CORR;
 	} else {
-		level.locations[x][y].typ = SCORR;
+		lev->locations[x][y].typ = SCORR;
 	}
 }
 
-void makerogueghost(void)
+
+void makerogueghost(struct level *lev)
 {
 	struct monst *ghost;
 	struct obj *ghostobj;
 	struct mkroom *croom;
 	int x,y;
 
-	if (!level.nroom)
+	if (!lev->nroom)
 	    return; /* Should never happen */
-	croom = &level.rooms[rn2(level.nroom)];
+	croom = &lev->rooms[rn2(lev->nroom)];
 	x = somex(croom);
 	y = somey(croom);
 	
-	if (!(ghost = makemon(&mons[PM_GHOST], x, y, NO_MM_FLAGS)))
+	if (!(ghost = makemon(&mons[PM_GHOST], lev, x, y, NO_MM_FLAGS)))
 		return;
 	ghost->msleeping = 1;
 	christen_monst(ghost, roguename());
 
 	if (rn2(4)) {
-		ghostobj = mksobj_at(FOOD_RATION, x, y, FALSE, FALSE);
+		ghostobj = mksobj_at(FOOD_RATION, lev, x, y, FALSE, FALSE);
 		ghostobj->quan = (long) rnd(7);
 		ghostobj->owt = weight(ghostobj);
 	}
 	if (rn2(2)) {
-		ghostobj = mksobj_at(MACE, x, y, FALSE, FALSE);
+		ghostobj = mksobj_at(MACE, lev, x, y, FALSE, FALSE);
 		ghostobj->spe = rnd(3);
 		if (rn2(4)) curse(ghostobj);
 	} else {
-		ghostobj = mksobj_at(TWO_HANDED_SWORD, x, y, FALSE, FALSE);
+		ghostobj = mksobj_at(TWO_HANDED_SWORD, lev, x, y, FALSE, FALSE);
 		ghostobj->spe = rnd(5) - 2;
 		if (rn2(4)) curse(ghostobj);
 	}
-	ghostobj = mksobj_at(BOW, x, y, FALSE, FALSE);
+	ghostobj = mksobj_at(BOW, lev, x, y, FALSE, FALSE);
 	ghostobj->spe = 1;
 	if (rn2(4)) curse(ghostobj);
 
-	ghostobj = mksobj_at(ARROW, x, y, FALSE, FALSE);
+	ghostobj = mksobj_at(ARROW, lev, x, y, FALSE, FALSE);
 	ghostobj->spe = 0;
 	ghostobj->quan = (long) rn1(10,25);
 	ghostobj->owt = weight(ghostobj);
 	if (rn2(4)) curse(ghostobj);
 
 	if (rn2(2)) {
-		ghostobj = mksobj_at(RING_MAIL, x, y, FALSE, FALSE);
+		ghostobj = mksobj_at(RING_MAIL, lev, x, y, FALSE, FALSE);
 		ghostobj->spe = rn2(3);
 		if (!rn2(3)) ghostobj->oerodeproof = TRUE;
 		if (rn2(4)) curse(ghostobj);
 	} else {
-		ghostobj = mksobj_at(PLATE_MAIL, x, y, FALSE, FALSE);
+		ghostobj = mksobj_at(PLATE_MAIL, lev, x, y, FALSE, FALSE);
 		ghostobj->spe = rnd(5) - 2;
 		if (!rn2(3)) ghostobj->oerodeproof = TRUE;
 		if (rn2(4)) curse(ghostobj);
 	}
 	if (rn2(2)) {
-		ghostobj = mksobj_at(FAKE_AMULET_OF_YENDOR, x, y, TRUE, FALSE);
+		ghostobj = mksobj_at(FAKE_AMULET_OF_YENDOR, lev, x, y, TRUE, FALSE);
 		ghostobj->known = TRUE;
 	}
 }

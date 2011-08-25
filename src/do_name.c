@@ -65,7 +65,7 @@ int do_mname(void)
 		return 0;
 	    }
 	} else
-	    mtmp = m_at(cx, cy);
+	    mtmp = m_at(level, cx, cy);
 
 	if (!mtmp || (!sensemon(mtmp) &&
 			(!(cansee(cx,cy) || see_with_infrared(mtmp)) || mtmp->mundetected

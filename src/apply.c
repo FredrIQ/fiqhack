@@ -150,14 +150,14 @@ static boolean its_dead(int rx, int ry, int *resp)
 	if (!can_reach_floor()) return FALSE;
 
 	/* additional stethoscope messages from jyoung@apanix.apana.org.au */
-	if (Hallucination && sobj_at(CORPSE, rx, ry)) {
+	if (Hallucination && sobj_at(CORPSE, level, rx, ry)) {
 	    /* (a corpse doesn't retain the monster's sex,
 	       so we're forced to use generic pronoun here) */
 	    You_hear("a voice say, \"It's dead, Jim.\"");
 	    *resp = 1;
 	    return TRUE;
-	} else if (Role_if (PM_HEALER) && ((otmp = sobj_at(CORPSE, rx, ry)) != 0 ||
-				    (otmp = sobj_at(STATUE, rx, ry)) != 0)) {
+	} else if (Role_if (PM_HEALER) && ((otmp = sobj_at(CORPSE, level, rx, ry)) != 0 ||
+				    (otmp = sobj_at(STATUE, level, rx, ry)) != 0)) {
 	    /* possibly should check uppermost {corpse,statue} in the pile
 	       if both types are present, but it's not worth the effort */
 	    if (vobj_at(rx, ry)->otyp == STATUE) otmp = vobj_at(rx, ry);
@@ -165,7 +165,7 @@ static boolean its_dead(int rx, int ry, int *resp)
 		You("determine that %s unfortunate being is dead.",
 		    (rx == u.ux && ry == u.uy) ? "this" : "that");
 	    } else {
-		ttmp = t_at(rx, ry);
+		ttmp = t_at(level, rx, ry);
 		pline("%s appears to be in %s health for a statue.",
 		      The(mons[otmp->corpsenm].mname),
 		      (ttmp && ttmp->ttyp == STATUE_TRAP) ?
@@ -187,7 +187,7 @@ static int use_stethoscope(struct obj *obj)
 	static long last_used_move = -1;
 	static short last_used_movement = 0;
 	struct monst *mtmp;
-	struct rm *lev;
+	struct rm *loc;
 	int rx, ry, res;
 	schar dx, dy, dz;
 	boolean interference = (u.uswallow && is_whirly(u.ustuck->data) &&
@@ -252,7 +252,7 @@ static int use_stethoscope(struct obj *obj)
 		You_hear("a faint typing noise.");
 		return 0;
 	}
-	if ((mtmp = m_at(rx, ry)) != 0) {
+	if ((mtmp = m_at(level, rx, ry)) != 0) {
 		mstatusline(mtmp);
 		if (mtmp->mundetected) {
 			mtmp->mundetected = 0;
@@ -262,22 +262,22 @@ static int use_stethoscope(struct obj *obj)
 			map_invisible(rx, ry);
 		return res;
 	}
-	if (level.locations[rx][ry].mem_invis) {
+	if (level->locations[rx][ry].mem_invis) {
 		unmap_object(rx, ry);
 		newsym(rx, ry);
 		pline_The("invisible monster must have moved.");
 	}
-	lev = &level.locations[rx][ry];
-	switch(lev->typ) {
+	loc = &level->locations[rx][ry];
+	switch(loc->typ) {
 	case SDOOR:
 		You_hear(hollow_str, "door");
-		cvt_sdoor_to_door(lev);		/* ->typ = DOOR */
+		cvt_sdoor_to_door(loc);		/* ->typ = DOOR */
 		if (Blind) feel_location(rx,ry);
 		else newsym(rx,ry);
 		return res;
 	case SCORR:
 		You_hear(hollow_str, "passage");
-		lev->typ = CORR;
+		loc->typ = CORR;
 		unblock_point(rx,ry);
 		if (Blind) feel_location(rx,ry);
 		else newsym(rx,ry);
@@ -307,14 +307,14 @@ static void use_magic_whistle(struct obj *obj)
 	} else {
 		int pet_cnt = 0;
 		You(whistle_str, Hallucination ? "normal" : "strange");
-		for (mtmp = level.monlist; mtmp; mtmp = nextmon) {
+		for (mtmp = level->monlist; mtmp; mtmp = nextmon) {
 		    nextmon = mtmp->nmon; /* trap might kill mon */
 		    if (DEADMONSTER(mtmp)) continue;
 		    if (mtmp->mtame) {
 			if (mtmp->mtrapped) {
 			    /* no longer in previous trap (affects mintrap) */
 			    mtmp->mtrapped = 0;
-			    fill_pit(mtmp->mx, mtmp->my);
+			    fill_pit(level, mtmp->mx, mtmp->my);
 			}
 			mnexto(mtmp);
 			if (canspotmon(mtmp)) ++pet_cnt;
@@ -344,7 +344,7 @@ void o_unleash(struct obj *otmp)	/* otmp is about to be destroyed or stolen */
 {
 	struct monst *mtmp;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 		if (mtmp->m_id == (unsigned)otmp->leashmon)
 			mtmp->mleashed = 0;
 	otmp->leashmon = 0;
@@ -374,7 +374,7 @@ void unleash_all(void)		/* player is about to die (for bones) */
 
 	for (otmp = invent; otmp; otmp = otmp->nobj)
 		if (otmp->otyp == LEASH) otmp->leashmon = 0;
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 		mtmp->mleashed = 0;
 }
 
@@ -405,7 +405,7 @@ static void use_leash(struct obj *obj)
 		return;
 	}
 
-	if (!(mtmp = m_at(cc.x, cc.y))) {
+	if (!(mtmp = m_at(level, cc.x, cc.y))) {
 		There("is no creature there.");
 		return;
 	}
@@ -470,7 +470,7 @@ boolean next_to_u(void)
 	struct monst *mtmp;
 	struct obj *otmp;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		if (mtmp->mleashed) {
 			if (distu(mtmp->mx,mtmp->my) > 2) mnexto(mtmp);
@@ -501,7 +501,7 @@ void check_leash(xchar x, xchar y)
 
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    if (otmp->otyp != LEASH || otmp->leashmon == 0) continue;
-	    for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+	    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 		if (DEADMONSTER(mtmp)) continue;
 		if ((int)mtmp->m_id == otmp->leashmon) break; 
 	    }
@@ -715,7 +715,7 @@ static void use_bell(struct obj **optr)
 		    !(mvitals[PM_WOOD_NYMPH].mvflags & G_GONE) &&
 		    !(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
 		    !(mvitals[PM_MOUNTAIN_NYMPH].mvflags & G_GONE) &&
-		    (mtmp = makemon(mkclass(S_NYMPH, 0),
+		    (mtmp = makemon(mkclass(S_NYMPH, 0), level,
 					u.ux, u.uy, NO_MINVENT)) != 0) {
 		You("summon %s!", a_monnam(mtmp));
 		if (!obj_resists(obj, 93, 100)) {
@@ -1235,7 +1235,7 @@ int jump(
 		    break;
 		case TT_WEB:
 		    You("tear the web apart as you pull yourself free!");
-		    deltrap(t_at(u.ux,u.uy));
+		    deltrap(t_at(level, u.ux,u.uy));
 		    break;
 		case TT_LAVA:
 		    You("pull yourself above the lava!");
@@ -1326,7 +1326,7 @@ static void use_tinning_kit(struct obj *obj)
 	}
 	consume_obj_charge(obj, TRUE);
 
-	if ((can = mksobj(TIN, FALSE, FALSE)) != 0) {
+	if ((can = mksobj(level, TIN, FALSE, FALSE)) != 0) {
 	    static const char you_buy_it[] = "You tin it, you bought it!";
 
 	    can->corpsenm = corpse->corpsenm;
@@ -1515,12 +1515,12 @@ void fig_transform(void *arg, long timeout)
 	okay_spot = get_obj_location(figurine, &cc.x, &cc.y, 0);
 	if (figurine->where == OBJ_INVENT ||
 	    figurine->where == OBJ_MINVENT)
-		okay_spot = enexto(&cc, cc.x, cc.y,
+		okay_spot = enexto(&cc, level, cc.x, cc.y,
 				   &mons[figurine->corpsenm]);
 	if (!okay_spot ||
 	    !figurine_location_checks(figurine,&cc, TRUE)) {
 		/* reset the timer to try again later */
-		start_timer((long)rnd(5000), TIMER_OBJECT,
+		start_timer(figurine->olev, (long)rnd(5000), TIMER_OBJECT,
 				FIG_TRANSFORM, figurine);
 		return;
 	}
@@ -1557,7 +1557,7 @@ void fig_transform(void *arg, long timeout)
 			    sprintf(carriedby, "%s pack",
 				     s_suffix(a_monnam(mon)));
 			}
-			else if (is_pool(mon->mx, mon->my))
+			else if (is_pool(level, mon->mx, mon->my))
 			    strcpy(carriedby, "empty water");
 			else
 			    strcpy(carriedby, "thin air");
@@ -1594,14 +1594,14 @@ static boolean figurine_location_checks(struct obj *obj, coord *cc, boolean quie
 			You("cannot put the figurine there.");
 		return FALSE;
 	}
-	if (IS_ROCK(level.locations[x][y].typ) &&
-	    !(passes_walls(&mons[obj->corpsenm]) && may_passwall(x,y))) {
+	if (IS_ROCK(level->locations[x][y].typ) &&
+	    !(passes_walls(&mons[obj->corpsenm]) && may_passwall(level, x,y))) {
 		if (!quietly)
 		    You("cannot place a figurine in %s!",
-			IS_TREE(level.locations[x][y].typ) ? "a tree" : "solid rock");
+			IS_TREE(level->locations[x][y].typ) ? "a tree" : "solid rock");
 		return FALSE;
 	}
-	if (sobj_at(BOULDER,x,y) && !passes_walls(&mons[obj->corpsenm])
+	if (sobj_at(BOULDER, level, x,y) && !passes_walls(&mons[obj->corpsenm])
 			&& !throws_rocks(&mons[obj->corpsenm])) {
 		if (!quietly)
 			You("cannot fit the figurine on the boulder.");
@@ -1639,13 +1639,13 @@ static void use_figurine(struct obj **optr)
 	You("%s and it transforms.",
 	    (dx || dy) ? "set the figurine beside you" :
 	    (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
-	     is_pool(cc.x, cc.y)) ?
+	     is_pool(level, cc.x, cc.y)) ?
 		"release the figurine" :
 	    (dz < 0 ?
 		"toss the figurine into the air" :
 		"set the figurine on the ground"));
 	make_familiar(obj, cc.x, cc.y, FALSE);
-	stop_timer(FIG_TRANSFORM, obj);
+	stop_timer(obj->olev, FIG_TRANSFORM, obj);
 	useup(obj);
 	*optr = 0;
 }
@@ -1883,16 +1883,16 @@ static void use_trap(struct obj *otmp)
 	    what = "underwater";
 	else if (Levitation)
 	    what = "while levitating";
-	else if (is_pool(u.ux, u.uy))
+	else if (is_pool(level, u.ux, u.uy))
 	    what = "in water";
-	else if (is_lava(u.ux, u.uy))
+	else if (is_lava(level, u.ux, u.uy))
 	    what = "in lava";
 	else if (On_stairs(u.ux, u.uy))
-	    what = (u.ux == level.dnladder.sx || u.ux == level.upladder.sx) ?
+	    what = (u.ux == level->dnladder.sx || u.ux == level->upladder.sx) ?
 			"on the ladder" : "on the stairs";
-	else if (IS_FURNITURE(level.locations[u.ux][u.uy].typ) ||
-		IS_ROCK(level.locations[u.ux][u.uy].typ) ||
-		closed_door(u.ux, u.uy) || t_at(u.ux, u.uy))
+	else if (IS_FURNITURE(level->locations[u.ux][u.uy].typ) ||
+		IS_ROCK(level->locations[u.ux][u.uy].typ) ||
+		closed_door(level, u.ux, u.uy) || t_at(level, u.ux, u.uy))
 	    what = "here";
 	if (what) {
 	    You_cant("set a trap %s!",what);
@@ -1973,12 +1973,12 @@ static int set_trap(void)
 	if (--trapinfo.time_needed > 0) return 1;	/* still busy */
 
 	ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
-	ttmp = maketrap(u.ux, u.uy, ttyp);
+	ttmp = maketrap(level, u.ux, u.uy, ttyp);
 	if (ttmp) {
 	    ttmp->tseen = 1;
 	    ttmp->madeby_u = 1;
 	    newsym(u.ux, u.uy); /* if our hero happens to be invisible */
-	    if (*in_rooms(u.ux,u.uy,SHOPBASE)) {
+	    if (*in_rooms(level, u.ux, u.uy, SHOPBASE)) {
 		add_damage(u.ux, u.uy, 0L);		/* schedule removal */
 	    }
 	    if (!trapinfo.force_bungle)
@@ -2019,7 +2019,7 @@ static int use_whip(struct obj *obj)
 	confdir(&dx, &dy);
     rx = u.ux + dx;
     ry = u.uy + dy;
-    mtmp = m_at(rx, ry);
+    mtmp = m_at(level, rx, ry);
 
     /* fake some proficiency checks */
     proficient = 0;
@@ -2051,7 +2051,7 @@ static int use_whip(struct obj *obj)
 
 	if (Levitation || u.usteed) {
 	    /* Have a shot at snaring something on the floor */
-	    otmp = level.objects[u.ux][u.uy];
+	    otmp = level->objects[u.ux][u.uy];
 	    if (otmp && otmp->otyp == CORPSE && otmp->corpsenm == PM_HORSE) {
 		pline("Why beat a dead horse?");
 		return 1;
@@ -2106,9 +2106,9 @@ static int use_whip(struct obj *obj)
 	    }
 	}
 	if (!wrapped_what) {
-	    if (IS_FURNITURE(level.locations[rx][ry].typ))
+	    if (IS_FURNITURE(level->locations[rx][ry].typ))
 		wrapped_what = "something";
-	    else if (sobj_at(BOULDER, rx, ry))
+	    else if (sobj_at(BOULDER, level, rx, ry))
 		wrapped_what = "a boulder";
 	}
 	if (wrapped_what) {
@@ -2117,7 +2117,7 @@ static int use_whip(struct obj *obj)
 	    cc.x = rx; cc.y = ry;
 	    You("wrap your bullwhip around %s.", wrapped_what);
 	    if (proficient && rn2(proficient + 2)) {
-		if (!mtmp || enexto(&cc, rx, ry, youmonst.data)) {
+		if (!mtmp || enexto(&cc, level, rx, ry, youmonst.data)) {
 		    You("yank yourself out of the pit!");
 		    teleds(cc.x, cc.y, TRUE);
 		    u.utrap = 0;
@@ -2131,7 +2131,7 @@ static int use_whip(struct obj *obj)
 
     } else if (mtmp) {
 	if (!canspotmon(mtmp) &&
-		!level.locations[rx][ry].mem_invis) {
+		!level->locations[rx][ry].mem_invis) {
 	   pline("A monster is there that you couldn't see.");
 	   map_invisible(rx, ry);
 	}
@@ -2168,7 +2168,7 @@ static int use_whip(struct obj *obj)
 		    /* to floor near you */
 		    You("yank %s %s to the %s!", s_suffix(mon_nam(mtmp)),
 			onambuf, surface(u.ux, u.uy));
-		    place_object(otmp, u.ux, u.uy);
+		    place_object(otmp, level, u.ux, u.uy);
 		    stackobj(otmp);
 		    break;
 		case 3:
@@ -2195,7 +2195,7 @@ static int use_whip(struct obj *obj)
 		    You("yank %s from %s %s!", the(onambuf),
 			s_suffix(mon_nam(mtmp)), mon_hand);
 		    obj_no_longer_held(otmp);
-		    place_object(otmp, mtmp->mx, mtmp->my);
+		    place_object(otmp, level, mtmp->mx, mtmp->my);
 		    stackobj(otmp);
 		    break;
 		}
@@ -2272,7 +2272,7 @@ static int use_pole (struct obj *obj)
 	    pline("Too close!");
 	    return res;
 	} else if (!cansee(cc.x, cc.y) &&
-		   ((mtmp = m_at(cc.x, cc.y)) == NULL ||
+		   ((mtmp = m_at(level, cc.x, cc.y)) == NULL ||
 		    !canseemon(mtmp))) {
 	    You(cant_see_spot);
 	    return res;
@@ -2282,7 +2282,7 @@ static int use_pole (struct obj *obj)
 	}
 
 	/* Attack the monster there */
-	if ((mtmp = m_at(cc.x, cc.y)) != NULL) {
+	if ((mtmp = m_at(level, cc.x, cc.y)) != NULL) {
 	    int oldhp = mtmp->mhp;
 
 	    bhitpos = cc;
@@ -2405,7 +2405,7 @@ static int use_grapple (struct obj *obj)
 	    /* FIXME -- untrap needs to deal with non-adjacent traps */
 	    break;
 	case 1:	/* Object */
-	    if ((otmp = level.objects[cc.x][cc.y]) != 0) {
+	    if ((otmp = level->objects[cc.x][cc.y]) != 0) {
 		You("snag an object from the %s!", surface(cc.x, cc.y));
 		pickup_object(otmp, 1L, FALSE);
 		/* If pickup fails, leave it alone */
@@ -2414,9 +2414,9 @@ static int use_grapple (struct obj *obj)
 	    }
 	    break;
 	case 2:	/* Monster */
-	    if ((mtmp = m_at(cc.x, cc.y)) == NULL) break;
+	    if ((mtmp = m_at(level, cc.x, cc.y)) == NULL) break;
 	    if (verysmall(mtmp->data) && !rn2(4) &&
-			enexto(&cc, u.ux, u.uy, NULL)) {
+			enexto(&cc, level, u.ux, u.uy, NULL)) {
 		You("pull in %s!", mon_nam(mtmp));
 		mtmp->mundetected = 0;
 		rloc_to(mtmp, cc.x, cc.y);
@@ -2428,7 +2428,7 @@ static int use_grapple (struct obj *obj)
 	    }
 	    /* FALL THROUGH */
 	case 3:	/* Surface */
-	    if (IS_AIR(level.locations[cc.x][cc.y].typ) || is_pool(cc.x, cc.y))
+	    if (IS_AIR(level->locations[cc.x][cc.y].typ) || is_pool(level, cc.x, cc.y))
 		pline_The("hook slices through the %s.", surface(cc.x, cc.y));
 	    else {
 		You("are yanked toward the %s!", surface(cc.x, cc.y));
@@ -2550,21 +2550,21 @@ static int do_break_wand(struct obj *obj)
 
 	if (obj->otyp == WAN_DIGGING) {
 	    if (dig_check(BY_OBJECT, FALSE, x, y)) {
-		if (IS_WALL(level.locations[x][y].typ) ||
-		    IS_DOOR(level.locations[x][y].typ)) {
+		if (IS_WALL(level->locations[x][y].typ) ||
+		    IS_DOOR(level->locations[x][y].typ)) {
 		    /* normally, pits and holes don't anger guards, but they
 		     * do if it's a wall or door that's being dug */
 		    watch_dig(NULL, x, y, TRUE);
-		    if (*in_rooms(x,y,SHOPBASE)) shop_damage = TRUE;
+		    if (*in_rooms(level, x, y, SHOPBASE)) shop_damage = TRUE;
 		}		    
 		digactualhole(x, y, BY_OBJECT,
-			      (rn2(obj->spe) < 3 || !Can_dig_down(&u.uz)) ?
+			      (rn2(obj->spe) < 3 || !can_dig_down(level)) ?
 			       PIT : HOLE);
 	    }
 	    continue;
 	} else if (obj->otyp == WAN_CREATE_MONSTER) {
 	    /* u.ux,u.uy creates it near you--x,y might create it in rock */
-	    makemon(NULL, u.ux, u.uy, NO_MM_FLAGS);
+	    makemon(NULL, level, u.ux, u.uy, NO_MM_FLAGS);
 	    continue;
 	} else {
 	    if (x == u.ux && y == u.uy) {
@@ -2572,7 +2572,7 @@ static int do_break_wand(struct obj *obj)
 		   autopickup.  Other wand/object effects handled after
 		   possible wand damage is assessed */
 		if (obj->otyp == WAN_TELEPORTATION &&
-		    affects_objects && level.objects[x][y]) {
+		    affects_objects && level->objects[x][y]) {
 		    bhitpile(obj, bhito, x, y);
 		    if (botl) bot();		/* potion effects */
 		}
@@ -2582,11 +2582,11 @@ static int do_break_wand(struct obj *obj)
 		    losehp(damage, buf, NO_KILLER_PREFIX);
 		}
 		if (botl) bot();		/* blindness */
-	    } else if ((mon = m_at(x, y)) != 0) {
+	    } else if ((mon = m_at(level, x, y)) != 0) {
 		bhitm(mon, obj);
 	     /* if (botl) bot(); */
 	    }
-	    if (affects_objects && level.objects[x][y]) {
+	    if (affects_objects && level->objects[x][y]) {
 		bhitpile(obj, bhito, x, y);
 		if (botl) bot();		/* potion effects */
 	    }
@@ -2806,13 +2806,13 @@ int doapply(void)
 
 		    consume_obj_charge(obj, TRUE);
 		    if (!rn2(13)) {
-			otmp = mkobj(POTION_CLASS, FALSE);
+			otmp = mkobj(level, POTION_CLASS, FALSE);
 			if (objects[otmp->otyp].oc_magic) do {
 			    otmp->otyp = rnd_class(POT_BOOZE, POT_WATER);
 			} while (otmp->otyp == POT_SICKNESS);
 			what = "A potion";
 		    } else {
-			otmp = mkobj(FOOD_CLASS, FALSE);
+			otmp = mkobj(level, FOOD_CLASS, FALSE);
 			if (otmp->otyp == FOOD_RATION && !rn2(7))
 			    otmp->otyp = LUMP_OF_ROYAL_JELLY;
 			what = "Some food";
@@ -2825,8 +2825,8 @@ int doapply(void)
 				       "Oops!  %s out of your reach!" :
 					(Is_airlevel(&u.uz) ||
 					 Is_waterlevel(&u.uz) ||
-					 level.locations[u.ux][u.uy].typ < IRONBARS ||
-					 level.locations[u.ux][u.uy].typ >= ICE) ?
+					 level->locations[u.ux][u.uy].typ < IRONBARS ||
+					 level->locations[u.ux][u.uy].typ >= ICE) ?
 					       "Oops!  %s away from you!" :
 					       "Oops!  %s to the floor!",
 					       The(aobjnam(otmp, "slip")),

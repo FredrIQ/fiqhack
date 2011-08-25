@@ -115,7 +115,7 @@ struct obj *merge_choice(struct obj *objlist, struct obj *obj)
 	   that from eliciting an incorrect result from mergable() */
 	save_nocharge = obj->no_charge;
 	if (objlist == invent && obj->where == OBJ_FLOOR &&
-		(shkp = shop_keeper(inside_shop(obj->ox, obj->oy))) != 0) {
+		(shkp = shop_keeper(inside_shop(obj->olev, obj->ox, obj->oy))) != 0) {
 	    if (obj->no_charge) obj->no_charge = 0;
 	    /* A billable object won't have its `unpaid' bit set, so would
 	       erroneously seem to be a candidate to merge with a similar
@@ -341,7 +341,7 @@ struct obj *hold_another_object(struct obj *obj, const char *drop_fmt,
 	    boolean wasUpolyd = Upolyd;
 
 	    /* in case touching this object turns out to be fatal */
-	    place_object(obj, u.ux, u.uy);
+	    place_object(obj, level, u.ux, u.uy);
 
 	    if (!touch_artifact(obj, &youmonst)) {
 		obj_extract_self(obj);	/* remove it from the floor */
@@ -469,7 +469,7 @@ void freeinv_core(struct obj *obj)
 		set_moreluck();
 		botl = 1;
 	} else if (obj->otyp == FIGURINE && obj->timed) {
-		stop_timer(FIG_TRANSFORM, obj);
+		stop_timer(obj->olev, FIG_TRANSFORM, obj);
 	}
 }
 
@@ -485,7 +485,7 @@ void delallobj(int x, int y)
 {
 	struct obj *otmp, *otmp2;
 
-	for (otmp = level.objects[x][y]; otmp; otmp = otmp2) {
+	for (otmp = level->objects[x][y]; otmp; otmp = otmp2) {
 		if (otmp == uball)
 			unpunish();
 		/* after unpunish(), or might get deallocated chain */
@@ -497,7 +497,7 @@ void delallobj(int x, int y)
 }
 
 
-/* destroy object in level.objlist chain (if unpaid, it remains on the bill) */
+/* destroy object in level->objlist chain (if unpaid, it remains on the bill) */
 void delobj(struct obj *obj)
 {
 	boolean update_map;
@@ -520,12 +520,12 @@ void delobj(struct obj *obj)
 }
 
 
-struct obj *sobj_at(int n, int x, int y)
+struct obj *sobj_at(int otyp, struct level *lev, int x, int y)
 {
 	struct obj *otmp;
 
-	for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
-		if (otmp->otyp == n)
+	for (otmp = lev->objects[x][y]; otmp; otmp = otmp->nexthere)
+		if (otmp->otyp == otyp)
 		    return otmp;
 	return NULL;
 }
@@ -574,15 +574,15 @@ boolean obj_here(struct obj *obj, int x, int y)
 {
 	struct obj *otmp;
 
-	for (otmp = level.objects[x][y]; otmp; otmp = otmp->nexthere)
+	for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
 		if (obj == otmp) return TRUE;
 	return FALSE;
 }
 
 
-struct obj *g_at(int x, int y)
+struct obj *gold_at(struct level *lev, int x, int y)
 {
-	struct obj *obj = level.objects[x][y];
+	struct obj *obj = lev->objects[x][y];
 	while (obj) {
 	    if (obj->oclass == COIN_CLASS) return obj;
 	    obj = obj->nexthere;
@@ -597,7 +597,7 @@ struct obj *mkgoldobj(long q)
 {
 	struct obj *otmp;
 
-	otmp = mksobj(GOLD_PIECE, FALSE, FALSE);
+	otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE);
 	u.ugold -= q;
 	otmp->quan = q;
 	otmp->owt = weight(otmp);
@@ -1525,13 +1525,13 @@ int dotypeinv(void)
    is one worth mentioning at that location; otherwise null */
 const char *dfeature_at(int x, int y, char *buf)
 {
-	struct rm *lev = &level.locations[x][y];
-	int ltyp = lev->typ, cmap = -1;
+	struct rm *loc = &level->locations[x][y];
+	int ltyp = loc->typ, cmap = -1;
 	const char *dfeature = 0;
 	static char altbuf[BUFSZ];
 
 	if (IS_DOOR(ltyp)) {
-	    switch (lev->doormask) {
+	    switch (loc->doormask) {
 	    case D_NODOOR:	cmap = S_ndoor; break;	/* "doorway" */
 	    case D_ISOPEN:	cmap = S_vodoor; break;	/* "open door" */
 	    case D_BROKEN:	dfeature = "broken door"; break;
@@ -1544,27 +1544,27 @@ const char *dfeature_at(int x, int y, char *buf)
 	    cmap = S_fountain;				/* "fountain" */
 	else if (IS_THRONE(ltyp))
 	    cmap = S_throne;				/* "opulent throne" */
-	else if (is_lava(x,y))
+	else if (is_lava(level, x,y))
 	    cmap = S_lava;				/* "molten lava" */
-	else if (is_ice(x,y))
+	else if (is_ice(level, x, y))
 	    cmap = S_ice;				/* "ice" */
-	else if (is_pool(x,y))
+	else if (is_pool(level, x,y))
 	    dfeature = "pool of water";
 	else if (IS_SINK(ltyp))
 	    cmap = S_sink;				/* "sink" */
 	else if (IS_ALTAR(ltyp)) {
 	    sprintf(altbuf, "altar to %s (%s)", a_gname(),
-		    align_str(Amask2align(lev->altarmask & ~AM_SHRINE)));
+		    align_str(Amask2align(loc->altarmask & ~AM_SHRINE)));
 	    dfeature = altbuf;
-	} else if ((x == level.upstair.sx && y == level.upstair.sy) ||
-		 (x == level.sstairs.sx && y == level.sstairs.sy && level.sstairs.up))
+	} else if ((x == level->upstair.sx && y == level->upstair.sy) ||
+		 (x == level->sstairs.sx && y == level->sstairs.sy && level->sstairs.up))
 	    cmap = S_upstair;				/* "staircase up" */
-	else if ((x == level.dnstair.sx && y == level.dnstair.sy) ||
-		 (x == level.sstairs.sx && y == level.sstairs.sy && !level.sstairs.up))
+	else if ((x == level->dnstair.sx && y == level->dnstair.sy) ||
+		 (x == level->sstairs.sx && y == level->sstairs.sy && !level->sstairs.up))
 	    cmap = S_dnstair;				/* "staircase down" */
-	else if (x == level.upladder.sx && y == level.upladder.sy)
+	else if (x == level->upladder.sx && y == level->upladder.sy)
 	    cmap = S_upladder;				/* "ladder up" */
-	else if (x == level.dnladder.sx && y == level.dnladder.sy)
+	else if (x == level->dnladder.sx && y == level->dnladder.sy)
 	    cmap = S_dnladder;				/* "ladder down" */
 	else if (ltyp == DRAWBRIDGE_DOWN)
 	    cmap = S_vodbridge;			/* "lowered drawbridge" */
@@ -1616,11 +1616,11 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	    }
 	    return !!Blind;
 	}
-	if (!skip_objects && (trap = t_at(u.ux,u.uy)) && trap->tseen)
+	if (!skip_objects && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
 		There("is %s here.",
 			an(trapexplain[trap->ttyp - 1]));
 
-	otmp = level.objects[u.ux][u.uy];
+	otmp = level->objects[u.ux][u.uy];
 	dfeature = dfeature_at(u.ux, u.uy, fbuf2);
 	if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
 		dfeature = NULL;
@@ -1646,7 +1646,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	if (dfeature)
 		sprintf(fbuf, "There is %s here.", an(dfeature));
 
-	if (!otmp || is_lava(u.ux,u.uy) || (is_pool(u.ux,u.uy) && !Underwater)) {
+	if (!otmp || is_lava(level, u.ux,u.uy) || (is_pool(level, u.ux,u.uy) && !Underwater)) {
 		if (dfeature) pline(fbuf);
 		read_engr_at(u.ux, u.uy); /* Eric Backus */
 		if (!skip_objects && (Blind || !dfeature))
@@ -1738,7 +1738,7 @@ void stackobj(struct obj *obj)
 {
 	struct obj *otmp;
 
-	for (otmp = level.objects[obj->ox][obj->oy]; otmp; otmp = otmp->nexthere)
+	for (otmp = obj->olev->objects[obj->ox][obj->oy]; otmp; otmp = otmp->nexthere)
 		if (otmp != obj && merged(&obj,&otmp))
 			break;
 	return;
@@ -1954,7 +1954,7 @@ void useupf(struct obj *obj, long numused)
 	else
 		otmp = obj;
 	if (costly_spot(otmp->ox, otmp->oy)) {
-	    if (strchr(u.urooms, *in_rooms(otmp->ox, otmp->oy, 0)))
+	    if (strchr(u.urooms, *in_rooms(level, otmp->ox, otmp->oy, 0)))
 	        addtobill(otmp, FALSE, FALSE, FALSE);
 	    else stolen_value(otmp, otmp->ox, otmp->oy, FALSE, FALSE);
 	}
@@ -2281,7 +2281,7 @@ int display_binventory(int x, int y, boolean as_if_seen)
 	int n;
 
 	/* count # of objects here */
-	for (n = 0, obj = level.buriedobjlist; obj; obj = obj->nobj)
+	for (n = 0, obj = level->buriedobjlist; obj; obj = obj->nobj)
 	    if (obj->ox == x && obj->oy == y) {
 		if (as_if_seen) obj->dknown = 1;
 		n++;
@@ -2291,7 +2291,7 @@ int display_binventory(int x, int y, boolean as_if_seen)
 	    only.x = x;
 	    only.y = y;
 	    if (query_objlist("Things that are buried here:",
-			      level.buriedobjlist, INVORDER_SORT,
+			      level->buriedobjlist, INVORDER_SORT,
 			      &selected, PICK_NONE, only_here) > 0)
 		free(selected);
 	    only.x = only.y = 0;

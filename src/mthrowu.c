@@ -95,8 +95,8 @@ static int drop_throw(struct obj *obj, boolean ohit, int x, int y)
 		create = !rn2(3);
 	else create = 1;
 
-	if (create && !((mtmp = m_at(x, y)) && (mtmp->mtrapped) &&
-			(t = t_at(x, y)) && ((t->ttyp == PIT) ||
+	if (create && !((mtmp = m_at(level, x, y)) && (mtmp->mtrapped) &&
+			(t = t_at(level, x, y)) && ((t->ttyp == PIT) ||
 			(t->ttyp == SPIKED_PIT)))) {
 		int objgone = 0;
 
@@ -104,7 +104,7 @@ static int drop_throw(struct obj *obj, boolean ohit, int x, int y)
 			objgone = ship_object(obj, x, y, FALSE);
 		if (!objgone) {
 			if (!flooreffects(obj,x,y,"fall")) { /* don't double-dip on damage */
-			    place_object(obj, x, y);
+			    place_object(obj, level, x, y);
 			    if (!mtmp && x == u.ux && y == u.uy)
 				mtmp = &youmonst;
 			    if (mtmp && ohit)
@@ -283,9 +283,9 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	   the random chance for small objects hitting bars is
 	   skipped when reaching them at point blank range */
 	if (!isok(bhitpos.x+dx,bhitpos.y+dy)
-	    || IS_ROCK(level.locations[bhitpos.x+dx][bhitpos.y+dy].typ)
-	    || closed_door(bhitpos.x+dx, bhitpos.y+dy)
-	    || (level.locations[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS &&
+	    || IS_ROCK(level->locations[bhitpos.x+dx][bhitpos.y+dy].typ)
+	    || closed_door(level, bhitpos.x+dx, bhitpos.y+dy)
+	    || (level->locations[bhitpos.x + dx][bhitpos.y + dy].typ == IRONBARS &&
 		hits_bars(&singleobj, bhitpos.x, bhitpos.y, 0, 0))) {
 	    drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 	    return;
@@ -301,7 +301,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	while (range-- > 0) { /* Actually the loop is always exited by break */
 		bhitpos.x += dx;
 		bhitpos.y += dy;
-		if ((mtmp = m_at(bhitpos.x, bhitpos.y)) != 0) {
+		if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
 		    if (ohitmon(mtmp, singleobj, range, TRUE))
 			break;
 		} else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
@@ -405,14 +405,14 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			/* missile hits edge of screen */
 			|| !isok(bhitpos.x+dx,bhitpos.y+dy)
 			/* missile hits the wall */
-			|| IS_ROCK(level.locations[bhitpos.x+dx][bhitpos.y+dy].typ)
+			|| IS_ROCK(level->locations[bhitpos.x+dx][bhitpos.y+dy].typ)
 			/* missile hit closed door */
-			|| closed_door(bhitpos.x+dx, bhitpos.y+dy)
+			|| closed_door(level, bhitpos.x+dx, bhitpos.y+dy)
 			/* missile might hit iron bars */
-			|| (level.locations[bhitpos.x+dx][bhitpos.y+dy].typ == IRONBARS &&
+			|| (level->locations[bhitpos.x+dx][bhitpos.y+dy].typ == IRONBARS &&
 			hits_bars(&singleobj, bhitpos.x, bhitpos.y, !rn2(5), 0))
 			/* Thrown objects "sink" */
-			|| IS_SINK(level.locations[bhitpos.x][bhitpos.y].typ)) {
+			|| IS_SINK(level->locations[bhitpos.x][bhitpos.y].typ)) {
 		    if (singleobj) /* hits_bars might have destroyed it */
 			drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
 		    break;
@@ -595,13 +595,13 @@ int spitmu(struct monst *mtmp, const struct attack *mattk)
 		switch (mattk->adtyp) {
 		    case AD_BLND:
 		    case AD_DRST:
-			otmp = mksobj(BLINDING_VENOM, TRUE, FALSE);
+			otmp = mksobj(level, BLINDING_VENOM, TRUE, FALSE);
 			break;
 		    default:
 			impossible("bad attack type in spitmu");
 				/* fall through */
 		    case AD_ACID:
-			otmp = mksobj(ACID_VENOM, TRUE, FALSE);
+			otmp = mksobj(level, ACID_VENOM, TRUE, FALSE);
 			break;
 		}
 		if (!rn2(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {

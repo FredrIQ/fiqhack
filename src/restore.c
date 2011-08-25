@@ -44,7 +44,7 @@ static struct fruit *oldfruit;
 
 #define Is_IceBox(o) ((o)->otyp == ICE_BOX ? TRUE : FALSE)
 
-/* Recalculate level.objects[x][y], since this info was not saved. */
+/* Recalculate level->objects[x][y], since this info was not saved. */
 static void find_lev_obj(void)
 {
 	struct obj *fobjtmp = NULL;
@@ -52,25 +52,25 @@ static void find_lev_obj(void)
 	int x,y;
 
 	for (x=0; x<COLNO; x++) for(y=0; y<ROWNO; y++)
-		level.objects[x][y] = NULL;
+		level->objects[x][y] = NULL;
 
 	/*
-	 * Reverse the entire level.objlist chain, which is necessary so that we can
+	 * Reverse the entire level->objlist chain, which is necessary so that we can
 	 * place the objects in the proper order.  Make all obj in chain
 	 * OBJ_FREE so place_object will work correctly.
 	 */
-	while ((otmp = level.objlist) != 0) {
-		level.objlist = otmp->nobj;
+	while ((otmp = level->objlist) != 0) {
+		level->objlist = otmp->nobj;
 		otmp->nobj = fobjtmp;
 		otmp->where = OBJ_FREE;
 		fobjtmp = otmp;
 	}
-	/* level.objlist should now be empty */
+	/* level->objlist should now be empty */
 
-	/* Set level.objects (as well as reversing the chain back again) */
+	/* Set level->objects (as well as reversing the chain back again) */
 	while ((otmp = fobjtmp) != 0) {
 		fobjtmp = otmp->nobj;
-		place_object(otmp, otmp->ox, otmp->oy);
+		place_object(otmp, level, otmp->ox, otmp->oy);
 	}
 }
 
@@ -137,9 +137,9 @@ static void restdamage(int fd, boolean ghostly)
 
 	    mread(fd, tmp_dam, sizeof(*tmp_dam));
 	    if (ghostly)
-		tmp_dam->when += (moves - level.lastmoves);
+		tmp_dam->when += (moves - level->lastmoves);
 	    strcpy(damaged_shops,
-		   in_rooms(tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
+		   in_rooms(level, tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 	    if (u.uz.dlevel) {
 		/* when restoring, there are two passes over the current
 		 * level.  the first time, u.uz isn't set, so neither is
@@ -155,8 +155,8 @@ static void restdamage(int fd, boolean ghostly)
 		}
 	    }
 	    if (!shp || !*shp) {
-		tmp_dam->next = level.damagelist;
-		level.damagelist = tmp_dam;
+		tmp_dam->next = level->damagelist;
+		level->damagelist = tmp_dam;
 		tmp_dam = malloc(sizeof(*tmp_dam));
 	    }
 	}
@@ -176,8 +176,7 @@ static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 		otmp = newobj(xl);
 		if (!first) first = otmp;
 		else otmp2->nobj = otmp;
-		mread(fd, otmp,
-					(unsigned) xl + sizeof(struct obj));
+		mread(fd, otmp, (unsigned) xl + sizeof(struct obj));
 		if (ghostly) {
 		    unsigned nid = flags.ident++;
 		    add_id_mapping(otmp->o_id, nid);
@@ -189,7 +188,7 @@ static struct obj *restobjchn(int fd, boolean ghostly, boolean frozen)
 		 * immediately after old player died.
 		 */
 		if (ghostly && !frozen && !age_is_relative(otmp))
-		    otmp->age = moves - level.lastmoves + otmp->age;
+		    otmp->age = moves - level->lastmoves + otmp->age;
 
 		/* get contents of a container or statue */
 		if (Has_contents(otmp)) {
@@ -343,7 +342,7 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 	}
 
 	/* this stuff comes after potential aborted restore attempts */
-	restore_timers(fd, RANGE_GLOBAL, FALSE, 0L);
+	restore_timers(fd, level, RANGE_GLOBAL, FALSE, 0L);
 	restore_light_sources(fd);
 	invent = restobjchn(fd, FALSE, FALSE);
 	migrating_objs = restobjchn(fd, FALSE, FALSE);
@@ -389,6 +388,7 @@ static boolean restgamestate(int fd, unsigned int *stuckid, unsigned int *steedi
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE);
 	relink_light_sources(FALSE);
+	
 	return TRUE;
 }
 
@@ -400,13 +400,13 @@ static void restlevelstate(unsigned int stuckid, unsigned int steedid)
 	struct monst *mtmp;
 
 	if (stuckid) {
-		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 			if (mtmp->m_id == stuckid) break;
 		if (!mtmp) panic("Cannot find the monster ustuck.");
 		u.ustuck = mtmp;
 	}
 	if (steedid) {
-		for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 			if (mtmp->m_id == steedid) break;
 		if (!mtmp) panic("Cannot find the monster usteed.");
 		u.usteed = mtmp;
@@ -482,7 +482,7 @@ int dorecover(int fd)
 	restlevelstate(stuckid, steedid);
 	max_rank_sz(); /* to recompute mrank_sz (botl.c) */
 	/* take care of iron ball & chain */
-	for (otmp = level.objlist; otmp; otmp = otmp->nobj)
+	for (otmp = level->objlist; otmp; otmp = otmp->nobj)
 		if (otmp->owornmask)
 			setworn(otmp, otmp->owornmask);
 
@@ -494,7 +494,7 @@ int dorecover(int fd)
 	inven_inuse(FALSE);
 
 	load_qtlist();	/* re-load the quest text info */
-	/* Set up the vision internals, after level.locations[] data is loaded */
+	/* Set up the vision internals, after level->locations[] data is loaded */
 	/* but before docrt().					    */
 	vision_reset();
 	vision_full_recalc = 1;	/* recompute vision (not saved) */
@@ -558,33 +558,33 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	    trickery(trickbuf);
 	}
 
-	mread(fd, level.locations, sizeof(level.locations));
-	mread(fd, &level.lastmoves, sizeof(level.lastmoves));
-	mread(fd, &level.upstair, sizeof(stairway));
-	mread(fd, &level.dnstair, sizeof(stairway));
-	mread(fd, &level.upladder, sizeof(stairway));
-	mread(fd, &level.dnladder, sizeof(stairway));
-	mread(fd, &level.sstairs, sizeof(stairway));
-	mread(fd, &level.updest, sizeof(dest_area));
-	mread(fd, &level.dndest, sizeof(dest_area));
-	mread(fd, &level.flags, sizeof(level.flags));
-	mread(fd, level.doors, sizeof(level.doors));
+	mread(fd, level->locations, sizeof(level->locations));
+	mread(fd, &level->lastmoves, sizeof(level->lastmoves));
+	mread(fd, &level->upstair, sizeof(stairway));
+	mread(fd, &level->dnstair, sizeof(stairway));
+	mread(fd, &level->upladder, sizeof(stairway));
+	mread(fd, &level->dnladder, sizeof(stairway));
+	mread(fd, &level->sstairs, sizeof(stairway));
+	mread(fd, &level->updest, sizeof(dest_area));
+	mread(fd, &level->dndest, sizeof(dest_area));
+	mread(fd, &level->flags, sizeof(level->flags));
+	mread(fd, level->doors, sizeof(level->doors));
 	rest_rooms(fd);		/* No joke :-) */
-	if (level.nroom)
-	    level.doorindex = level.rooms[level.nroom - 1].fdoor +
-	                level.rooms[level.nroom - 1].doorct;
+	if (level->nroom)
+	    level->doorindex = level->rooms[level->nroom - 1].fdoor +
+	                level->rooms[level->nroom - 1].doorct;
 	else
-	    level.doorindex = 0;
+	    level->doorindex = 0;
 
-	restore_timers(fd, RANGE_LEVEL, ghostly, moves - level.lastmoves);
+	restore_timers(fd, level, RANGE_LEVEL, ghostly, moves - level->lastmoves);
 	restore_light_sources(fd);
-	level.monlist = restmonchn(fd, ghostly);
+	level->monlist = restmonchn(fd, ghostly);
 
 	/* regenerate animals while on another level */
 	if (u.uz.dlevel) {
 	    struct monst *mtmp2;
 
-	    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+	    for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 		mtmp2 = mtmp->nmon;
 		if (ghostly) {
 			/* reset peaceful/malign relative to new character */
@@ -592,9 +592,9 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 				/* shopkeepers will reset based on name */
 				mtmp->mpeaceful = peace_minded(mtmp->data);
 			set_malign(mtmp);
-		} else if (!restoring && moves > level.lastmoves)
+		} else if (!restoring && moves > level->lastmoves)
 			/* only do this when the player enters the level */
-			mon_catchup_elapsed_time(mtmp, moves - level.lastmoves);
+			mon_catchup_elapsed_time(mtmp, moves - level->lastmoves);
 
 		/* update shape-changers in case protection against
 		   them is different now than when the level was saved */
@@ -603,27 +603,27 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	}
 
 	rest_worm(fd);	/* restore worm information */
-	level.lev_traps = 0;
+	level->lev_traps = 0;
 	while (trap = newtrap(),
 	       mread(fd, trap, sizeof(struct trap)),
-	       trap->tx != 0) {	/* need "!= 0" to work around DICE 3.0 bug */
-		trap->ntrap = level.lev_traps;
-		level.lev_traps = trap;
+	       trap->tx != 0) {
+		trap->ntrap = level->lev_traps;
+		level->lev_traps = trap;
 	}
 	dealloc_trap(trap);
-	level.objlist = restobjchn(fd, ghostly, FALSE);
+	level->objlist = restobjchn(fd, ghostly, FALSE);
 	find_lev_obj();
 	/* restobjchn()'s `frozen' argument probably ought to be a callback
 	   routine so that we can check for objects being buried under ice */
-	level.buriedobjlist = restobjchn(fd, ghostly, FALSE);
+	level->buriedobjlist = restobjchn(fd, ghostly, FALSE);
 	billobjs = restobjchn(fd, ghostly, FALSE);
 	rest_engravings(fd);
 
-	/* reset level.monsters for new level */
+	/* reset level->monsters for new level */
 	for (x = 0; x < COLNO; x++)
 	    for (y = 0; y < ROWNO; y++)
-		level.monsters[x][y] = NULL;
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon) {
+		level->monsters[x][y] = NULL;
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (mtmp->isshk)
 		set_residency(mtmp, FALSE);
 	    place_monster(mtmp, mtmp->mx, mtmp->my);
@@ -631,19 +631,19 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	}
 	restdamage(fd, ghostly);
 
-	rest_regions(fd, ghostly);
+	rest_regions(fd, level, ghostly);
 	if (ghostly) {
 	    /* Now get rid of all the temp fruits... */
 	    freefruitchn(oldfruit),  oldfruit = 0;
 
 	    if (lev > ledger_no(&medusa_level) &&
-			lev < ledger_no(&stronghold_level) && level.dnstair.sx == 0) {
+			lev < ledger_no(&stronghold_level) && level->dnstair.sx == 0) {
 		coord cc;
 
-		mazexy(&cc);
-		level.dnstair.sx = cc.x;
-		level.dnstair.sy = cc.y;
-		level.locations[cc.x][cc.y].typ = STAIRS;
+		mazexy(level, &cc);
+		level->dnstair.sx = cc.x;
+		level->dnstair.sy = cc.y;
+		level->locations[cc.x][cc.y].typ = STAIRS;
 	    }
 
 	    br = Is_branchlev(&u.uz);
@@ -659,12 +659,12 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 		case BR_STAIR:
 		case BR_NO_END1:
 		case BR_NO_END2: /* OK to assign to sstairs if it's not used */
-		    assign_level(&level.sstairs.tolev, &ltmp);
+		    assign_level(&level->sstairs.tolev, &ltmp);
 		    break;		
 		case BR_PORTAL: /* max of 1 portal per level */
 		    {
 			struct trap *ttmp;
-			for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
+			for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap)
 			    if (ttmp->ttyp == MAGIC_PORTAL)
 				break;
 			if (!ttmp) panic("getlev: need portal but none found");
@@ -675,7 +675,7 @@ void getlev(int fd, int pid, xchar lev, boolean ghostly)
 	    } else if (!br) {
 		/* Remove any dangling portals. */
 		struct trap *ttmp;
-		for (ttmp = level.lev_traps; ttmp; ttmp = ttmp->ntrap)
+		for (ttmp = level->lev_traps; ttmp; ttmp = ttmp->ntrap)
 		    if (ttmp->ttyp == MAGIC_PORTAL) {
 			deltrap(ttmp);
 			break; /* max of 1 portal/level */
@@ -757,7 +757,7 @@ static void reset_oattached_mids(boolean ghostly)
 {
     struct obj *otmp;
     unsigned oldid, nid;
-    for (otmp = level.objlist; otmp; otmp = otmp->nobj) {
+    for (otmp = level->objlist; otmp; otmp = otmp->nobj) {
 	if (ghostly && otmp->oattached == OATTACHED_MONST && otmp->oxlth) {
 	    struct monst *mtmp = (struct monst *)otmp->oextra;
 

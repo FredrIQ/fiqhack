@@ -124,7 +124,7 @@ struct flag {
 struct instance_flags {
 	boolean  vision_inited; /* true if vision is ready */
 	boolean  menu_tab_sep;	/* Use tabs to separate option menu fields */
-	int      purge_monsters;	/* # of dead monsters still on level.monlist list */
+	int      purge_monsters;	/* # of dead monsters still on level->monlist list */
 	boolean  travel1;	/* first travel step */
 	coord    travelcc;	/* coordinates for travel_cache */
 	boolean  sanity_check;	/* run sanity checks */

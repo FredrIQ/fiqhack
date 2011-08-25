@@ -9,7 +9,7 @@
 #include "mondata.h"	/* for mindless() */
 
 #ifndef INVISIBLE_OBJECTS
-#define vobj_at(x,y) (level.objects[x][y])
+#define vobj_at(x,y) (level->objects[x][y])
 #endif
 
 
@@ -164,10 +164,10 @@
  * These routines are true if what is really at the given location will
  * "cover" any objects or traps that might be there.
  */
-#define covers_objects(xx,yy)						      \
-    ((is_pool(xx,yy) && !Underwater) || (level.locations[xx][yy].typ == LAVAPOOL))
+#define covers_objects(lev,xx,yy)						      \
+    ((is_pool(lev,xx,yy) && !Underwater) || (lev->locations[xx][yy].typ == LAVAPOOL))
 
-#define covers_traps(xx,yy)	covers_objects(xx,yy)
+#define covers_traps(lev,xx,yy)	covers_objects(lev,xx,yy)
 
 
 /*

@@ -7,32 +7,31 @@
 #define HEIGHT	(ROWNO - 1)
 #define WIDTH	(COLNO - 2)
 
-static void init_map(schar);
-static void init_fill(schar,schar);
-static schar get_map(int,int,schar);
-static void pass_one(schar,schar);
-static void pass_two(schar,schar);
-static void pass_three(schar,schar);
-static void wallify_map(void);
-static void join_map(schar,schar);
-static void finish_map(schar,schar,xchar,xchar);
-static void remove_room(unsigned);
-void mkmap(lev_init *);
+static void init_map(struct level *lev, schar bg_typ);
+static void init_fill(struct level *lev, schar bg_typ, schar fg_typ);
+static schar get_map(struct level *lev, int col, int row, schar bg_typ);
+static void pass_one(struct level *lev, schar,schar);
+static void pass_two(struct level *lev, schar,schar);
+static void pass_three(struct level *lev, schar,schar);
+static void wallify_map(struct level *lev);
+static void join_map(struct level *lev, schar,schar);
+static void finish_map(struct level *lev, schar,schar,xchar,xchar);
+static void remove_room(struct level *lev, unsigned roomno);
 
 char *new_locations;
 int min_rx, max_rx, min_ry, max_ry; /* rectangle bounds for regions */
 static int n_loc_filled;
 
-static void init_map(schar bg_typ)
+static void init_map(struct level *lev, schar bg_typ)
 {
 	int i,j;
 
 	for (i=1; i<COLNO; i++)
 	    for (j=0; j<ROWNO; j++)
-		level.locations[i][j].typ = bg_typ;
+		lev->locations[i][j].typ = bg_typ;
 }
 
-static void init_fill(schar bg_typ, schar fg_typ)
+static void init_fill(struct level *lev, schar bg_typ, schar fg_typ)
 {
 	int i,j;
 	long limit, count;
@@ -42,18 +41,18 @@ static void init_fill(schar bg_typ, schar fg_typ)
 	while (count < limit) {
 	    i = rn1(WIDTH-1, 2);
 	    j = rnd(HEIGHT-1);
-	    if (level.locations[i][j].typ == bg_typ) {
-		level.locations[i][j].typ = fg_typ;
+	    if (lev->locations[i][j].typ == bg_typ) {
+		lev->locations[i][j].typ = fg_typ;
 		count++;
 	    }
 	}
 }
 
-static schar get_map(int col, int row, schar bg_typ)
+static schar get_map(struct level *lev, int col, int row, schar bg_typ)
 {
 	if (col <= 0 || row < 0 || col > WIDTH || row >= HEIGHT)
 		return bg_typ;
-	return level.locations[col][row].typ;
+	return lev->locations[col][row].typ;
 }
 
 static const int dirs[16] = {
@@ -61,7 +60,7 @@ static const int dirs[16] = {
      0, -1 /**/,              0, 1 /**/,
      1, -1 /**/,  1, 0 /**/,  1, 1};
 
-static void pass_one(schar bg_typ, schar fg_typ)
+static void pass_one(struct level *lev, schar bg_typ, schar fg_typ)
 {
 	int i,j;
 	short count, dr;
@@ -69,7 +68,7 @@ static void pass_one(schar bg_typ, schar fg_typ)
 	for (i=2; i<=WIDTH; i++)
 	    for (j=1; j<HEIGHT; j++) {
 		for (count=0, dr=0; dr < 8; dr++)
-		    if (get_map(i+dirs[dr*2], j+dirs[(dr*2)+1], bg_typ)
+		    if (get_map(lev, i+dirs[dr*2], j+dirs[(dr*2)+1], bg_typ)
 								== fg_typ)
 			count++;
 
@@ -77,13 +76,13 @@ static void pass_one(schar bg_typ, schar fg_typ)
 		  case 0 : /* death */
 		  case 1 :
 		  case 2:
-			  level.locations[i][j].typ = bg_typ;
+			  lev->locations[i][j].typ = bg_typ;
 			  break;
 		  case 5:
 		  case 6:
 		  case 7:
 		  case 8:
-			  level.locations[i][j].typ = fg_typ;
+			  lev->locations[i][j].typ = fg_typ;
 			  break;
 		  default:
 			  break;
@@ -93,7 +92,7 @@ static void pass_one(schar bg_typ, schar fg_typ)
 
 #define new_loc(i,j)	*(new_locations+ ((j)*(WIDTH+1)) + (i))
 
-static void pass_two(schar bg_typ, schar fg_typ)
+static void pass_two(struct level *lev, schar bg_typ, schar fg_typ)
 {
 	int i,j;
 	short count, dr;
@@ -101,21 +100,21 @@ static void pass_two(schar bg_typ, schar fg_typ)
 	for (i=2; i<=WIDTH; i++)
 	    for (j=1; j<HEIGHT; j++) {
 		for (count=0, dr=0; dr < 8; dr++)
-		    if (get_map(i+dirs[dr*2], j+dirs[(dr*2)+1], bg_typ)
+		    if (get_map(lev, i+dirs[dr*2], j+dirs[(dr*2)+1], bg_typ)
 								== fg_typ)
 			count++;
 		    if (count == 5)
 			new_loc(i,j) = bg_typ;
 		    else
-			new_loc(i,j) = get_map(i,j, bg_typ);
+			new_loc(i,j) = get_map(lev, i,j, bg_typ);
 	    }
 
 	for (i=2; i<=WIDTH; i++)
 	    for (j=1; j<HEIGHT; j++)
-		level.locations[i][j].typ = new_loc(i,j);
+		lev->locations[i][j].typ = new_loc(i,j);
 }
 
-static void pass_three(schar bg_typ, schar fg_typ)
+static void pass_three(struct level *lev, schar bg_typ, schar fg_typ)
 {
 	int i,j;
 	short count, dr;
@@ -123,36 +122,36 @@ static void pass_three(schar bg_typ, schar fg_typ)
 	for (i=2; i<=WIDTH; i++)
 	    for (j=1; j<HEIGHT; j++) {
 		for (count=0, dr=0; dr < 8; dr++)
-		    if (get_map(i+dirs[dr*2], j+dirs[(dr*2)+1], bg_typ)
+		    if (get_map(lev, i+dirs[dr*2], j+dirs[(dr*2)+1], bg_typ)
 								== fg_typ)
 			count++;
 		if (count < 3)
 		    new_loc(i,j) = bg_typ;
 		else
-		    new_loc(i,j) = get_map(i,j, bg_typ);
+		    new_loc(i,j) = get_map(lev, i,j, bg_typ);
 	    }
 
 	for (i=2; i<=WIDTH; i++)
 	    for (j=1; j<HEIGHT; j++)
-		level.locations[i][j].typ = new_loc(i,j);
+		lev->locations[i][j].typ = new_loc(i,j);
 }
 
 /*
  * use a flooding algorithm to find all locations that should
  * have the same rm number as the current location.
  * if anyroom is TRUE, use IS_ROOM to check room membership instead of
- * exactly matching level.locations[sx][sy].typ and walls are included as well.
+ * exactly matching level->locations[sx][sy].typ and walls are included as well.
  */
-void flood_fill_rm(int sx, int sy, int rmno, boolean lit, boolean anyroom)
+void flood_fill_rm(struct level *lev, int sx, int sy, int rmno, boolean lit, boolean anyroom)
 {
     int i;
     int nx;
-    schar fg_typ = level.locations[sx][sy].typ;
+    schar fg_typ = lev->locations[sx][sy].typ;
 
     /* back up to find leftmost uninitialized location */
     while (sx > 0 &&
-	  (anyroom ? IS_ROOM(level.locations[sx][sy].typ) : level.locations[sx][sy].typ == fg_typ) &&
-	  (int) level.locations[sx][sy].roomno != rmno)
+	  (anyroom ? IS_ROOM(lev->locations[sx][sy].typ) : lev->locations[sx][sy].typ == fg_typ) &&
+	  (int) lev->locations[sx][sy].roomno != rmno)
 	sx--;
     sx++; /* compensate for extra decrement */
 
@@ -160,21 +159,21 @@ void flood_fill_rm(int sx, int sy, int rmno, boolean lit, boolean anyroom)
     if (sx < min_rx) min_rx = sx;
     if (sy < min_ry) min_ry = sy;
 
-    for (i=sx; i<=WIDTH && level.locations[i][sy].typ == fg_typ; i++) {
-	level.locations[i][sy].roomno = rmno;
-	level.locations[i][sy].lit = lit;
+    for (i=sx; i<=WIDTH && lev->locations[i][sy].typ == fg_typ; i++) {
+	lev->locations[i][sy].roomno = rmno;
+	lev->locations[i][sy].lit = lit;
 	if (anyroom) {
 	    /* add walls to room as well */
 	    int ii,jj;
 	    for (ii= (i == sx ? i-1 : i); ii <= i+1; ii++)
 		for (jj = sy-1; jj <= sy+1; jj++)
 		    if (isok(ii,jj) &&
-		       (IS_WALL(level.locations[ii][jj].typ) ||
-			IS_DOOR(level.locations[ii][jj].typ))) {
-			level.locations[ii][jj].edge = 1;
-			if (lit) level.locations[ii][jj].lit = lit;
-			if ((int) level.locations[ii][jj].roomno != rmno)
-			    level.locations[ii][jj].roomno = SHARED;
+		       (IS_WALL(lev->locations[ii][jj].typ) ||
+			IS_DOOR(lev->locations[ii][jj].typ))) {
+			lev->locations[ii][jj].edge = 1;
+			if (lit) lev->locations[ii][jj].lit = lit;
+			if ((int) lev->locations[ii][jj].roomno != rmno)
+			    lev->locations[ii][jj].roomno = SHARED;
 		    }
 	}
 	n_loc_filled++;
@@ -183,37 +182,37 @@ void flood_fill_rm(int sx, int sy, int rmno, boolean lit, boolean anyroom)
 
     if (isok(sx,sy-1)) {
 	for (i=sx; i<nx; i++)
-	    if (level.locations[i][sy-1].typ == fg_typ) {
-		if ((int) level.locations[i][sy-1].roomno != rmno)
-		    flood_fill_rm(i,sy-1,rmno,lit,anyroom);
+	    if (lev->locations[i][sy-1].typ == fg_typ) {
+		if ((int) lev->locations[i][sy-1].roomno != rmno)
+		    flood_fill_rm(lev, i,sy-1,rmno,lit,anyroom);
 	    } else {
 		if ((i>sx || isok(i-1,sy-1)) &&
-		      level.locations[i-1][sy-1].typ == fg_typ) {
-		    if ((int) level.locations[i-1][sy-1].roomno != rmno)
-			flood_fill_rm(i-1,sy-1,rmno,lit,anyroom);
+		      lev->locations[i-1][sy-1].typ == fg_typ) {
+		    if ((int) lev->locations[i-1][sy-1].roomno != rmno)
+			flood_fill_rm(lev, i-1,sy-1,rmno,lit,anyroom);
 		}
 		if ((i<nx-1 || isok(i+1,sy-1)) &&
-		      level.locations[i+1][sy-1].typ == fg_typ) {
-		    if ((int) level.locations[i+1][sy-1].roomno != rmno)
-			flood_fill_rm(i+1,sy-1,rmno,lit,anyroom);
+		      lev->locations[i+1][sy-1].typ == fg_typ) {
+		    if ((int) lev->locations[i+1][sy-1].roomno != rmno)
+			flood_fill_rm(lev, i+1,sy-1,rmno,lit,anyroom);
 		}
 	    }
     }
     if (isok(sx,sy+1)) {
 	for (i=sx; i<nx; i++)
-	    if (level.locations[i][sy+1].typ == fg_typ) {
-		if ((int) level.locations[i][sy+1].roomno != rmno)
-		    flood_fill_rm(i,sy+1,rmno,lit,anyroom);
+	    if (lev->locations[i][sy+1].typ == fg_typ) {
+		if ((int) lev->locations[i][sy+1].roomno != rmno)
+		    flood_fill_rm(lev, i,sy+1,rmno,lit,anyroom);
 	    } else {
 		if ((i>sx || isok(i-1,sy+1)) &&
-		      level.locations[i-1][sy+1].typ == fg_typ) {
-		    if ((int) level.locations[i-1][sy+1].roomno != rmno)
-			flood_fill_rm(i-1,sy+1,rmno,lit,anyroom);
+		      lev->locations[i-1][sy+1].typ == fg_typ) {
+		    if ((int) lev->locations[i-1][sy+1].roomno != rmno)
+			flood_fill_rm(lev, i-1,sy+1,rmno,lit,anyroom);
 		}
 		if ((i<nx-1 || isok(i+1,sy+1)) &&
-		      level.locations[i+1][sy+1].typ == fg_typ) {
-		    if ((int) level.locations[i+1][sy+1].roomno != rmno)
-			flood_fill_rm(i+1,sy+1,rmno,lit,anyroom);
+		      lev->locations[i+1][sy+1].typ == fg_typ) {
+		    if ((int) lev->locations[i+1][sy+1].roomno != rmno)
+			flood_fill_rm(lev, i+1,sy+1,rmno,lit,anyroom);
 		}
 	    }
     }
@@ -226,24 +225,24 @@ void flood_fill_rm(int sx, int sy, int rmno, boolean lit, boolean anyroom)
  *	If we have drawn a map without walls, this allows us to
  *	auto-magically wallify it.  Taken from lev_main.c.
  */
-static void wallify_map(void)
+static void wallify_map(struct level *lev)
 {
 
     int x, y, xx, yy;
 
     for (x = 1; x < COLNO; x++)
 	for (y = 0; y < ROWNO; y++)
-	    if (level.locations[x][y].typ == STONE) {
+	    if (lev->locations[x][y].typ == STONE) {
 		for (yy = y - 1; yy <= y+1; yy++)
 		    for (xx = x - 1; xx <= x+1; xx++)
-			if (isok(xx,yy) && level.locations[xx][yy].typ == ROOM) {
-			    if (yy != y)	level.locations[x][y].typ = HWALL;
-			    else	level.locations[x][y].typ = VWALL;
+			if (isok(xx,yy) && lev->locations[xx][yy].typ == ROOM) {
+			    if (yy != y)	lev->locations[x][y].typ = HWALL;
+			    else	lev->locations[x][y].typ = VWALL;
 			}
 	    }
 }
 
-static void join_map(schar bg_typ, schar fg_typ)
+static void join_map(struct level *lev, schar bg_typ, schar fg_typ)
 {
     struct mkroom *croom, *croom2;
 
@@ -254,16 +253,16 @@ static void join_map(schar bg_typ, schar fg_typ)
     /* first, use flood filling to find all of the regions that need joining */
     for (i=2; i<=WIDTH; i++)
 	for (j=1; j<HEIGHT; j++) {
-	    if (level.locations[i][j].typ == fg_typ && level.locations[i][j].roomno == NO_ROOM) {
+	    if (lev->locations[i][j].typ == fg_typ && lev->locations[i][j].roomno == NO_ROOM) {
 		min_rx = max_rx = i;
 		min_ry = max_ry = j;
 		n_loc_filled = 0;
-		flood_fill_rm(i, j, level.nroom+ROOMOFFSET, FALSE, FALSE);
+		flood_fill_rm(lev, i, j, lev->nroom+ROOMOFFSET, FALSE, FALSE);
 		if (n_loc_filled > 3) {
-		    add_room(min_rx, min_ry, max_rx, max_ry,
+		    add_room(lev, min_rx, min_ry, max_rx, max_ry,
 			     FALSE, OROOM, TRUE);
-		    level.rooms[level.nroom-1].irregular = TRUE;
-		    if (level.nroom >= (MAXNROFROOMS*2))
+		    lev->rooms[lev->nroom-1].irregular = TRUE;
+		    if (lev->nroom >= (MAXNROFROOMS*2))
 			goto joinm;
 		} else {
 		    /*
@@ -272,10 +271,10 @@ static void join_map(schar bg_typ, schar fg_typ)
 		     */
 		    for (sx = min_rx; sx<=max_rx; sx++)
 			for (sy = min_ry; sy<=max_ry; sy++)
-			    if ((int) level.locations[sx][sy].roomno ==
-				    level.nroom + ROOMOFFSET) {
-				level.locations[sx][sy].typ = bg_typ;
-				level.locations[sx][sy].roomno = NO_ROOM;
+			    if ((int) lev->locations[sx][sy].roomno ==
+				    lev->nroom + ROOMOFFSET) {
+				lev->locations[sx][sy].typ = bg_typ;
+				lev->locations[sx][sy].roomno = NO_ROOM;
 			    }
 		}
 	    }
@@ -286,11 +285,11 @@ joinm:
      * Ok, now we can actually join the regions with fg_typ's.
      * The rooms are already sorted due to the previous loop,
      * so don't call sort_rooms(), which can screw up the roomno's
-     * validity in the level.locations structure.
+     * validity in the level->locations structure.
      */
-    for (croom = &level.rooms[0], croom2 = croom + 1; croom2 < &level.rooms[level.nroom]; ) {
+    for (croom = &lev->rooms[0], croom2 = croom + 1; croom2 < &lev->rooms[lev->nroom]; ) {
 	/* pick random starting and end locations for "corridor" */
-	if (!somexy(croom, &sm) || !somexy(croom2, &em)) {
+	if (!somexy(lev, croom, &sm) || !somexy(lev, croom2, &em)) {
 	    /* ack! -- the level is going to be busted */
 	    /* arbitrarily pick centers of both rooms and hope for the best */
 	    impossible("No start/end room loc in join_map.");
@@ -300,7 +299,7 @@ joinm:
 	    em.y = croom2->ly + ((croom2->hy - croom2->ly) / 2);
 	}
 
-	dig_corridor(&sm, &em, FALSE, fg_typ, bg_typ);
+	dig_corridor(lev, &sm, &em, FALSE, fg_typ, bg_typ);
 
 	/* choose next region to join */
 	/* only increment croom if croom and croom2 are non-overlapping */
@@ -312,28 +311,28 @@ joinm:
     }
 }
 
-static void finish_map(schar fg_typ, schar bg_typ, boolean lit, boolean walled)
+static void finish_map(struct level *lev, schar fg_typ, schar bg_typ, boolean lit, boolean walled)
 {
 	int	i, j;
 
-	if (walled) wallify_map();
+	if (walled) wallify_map(lev);
 
 	if (lit) {
 	    for (i=1; i<COLNO; i++)
 		for (j=0; j<ROWNO; j++)
-		    if ((!IS_ROCK(fg_typ) && level.locations[i][j].typ == fg_typ) ||
-		       (!IS_ROCK(bg_typ) && level.locations[i][j].typ == bg_typ) ||
-		       (bg_typ == TREE && level.locations[i][j].typ == bg_typ) ||
-			(walled && IS_WALL(level.locations[i][j].typ)))
-			level.locations[i][j].lit = TRUE;
-	    for (i = 0; i < level.nroom; i++)
-		level.rooms[i].rlit = 1;
+		    if ((!IS_ROCK(fg_typ) && lev->locations[i][j].typ == fg_typ) ||
+		       (!IS_ROCK(bg_typ) && lev->locations[i][j].typ == bg_typ) ||
+		       (bg_typ == TREE && lev->locations[i][j].typ == bg_typ) ||
+			(walled && IS_WALL(lev->locations[i][j].typ)))
+			lev->locations[i][j].lit = TRUE;
+	    for (i = 0; i < lev->nroom; i++)
+		lev->rooms[i].rlit = 1;
 	}
 	/* light lava even if everything's otherwise unlit */
 	for (i=1; i<COLNO; i++)
 	    for (j=0; j<ROWNO; j++)
-		if (level.locations[i][j].typ == LAVAPOOL)
-		    level.locations[i][j].lit = TRUE;
+		if (lev->locations[i][j].typ == LAVAPOOL)
+		    lev->locations[i][j].lit = TRUE;
 }
 
 /*
@@ -345,13 +344,13 @@ static void finish_map(schar fg_typ, schar bg_typ, boolean lit, boolean walled)
  * region are already cleared, and roomno and irregular fields outside the
  * region are all set.
  */
-void remove_rooms(int lx, int ly, int hx, int hy)
+void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy)
 {
     int i;
     struct mkroom *croom;
 
-    for (i = level.nroom - 1; i >= 0; --i) {
-	croom = &level.rooms[i];
+    for (i = lev->nroom - 1; i >= 0; --i) {
+	croom = &lev->rooms[i];
 	if (croom->hx < lx || croom->lx >= hx ||
 	    croom->hy < ly || croom->ly >= hy) continue; /* no overlap */
 
@@ -362,21 +361,21 @@ void remove_rooms(int lx, int ly, int hx, int hy)
 	    if (!croom->irregular) impossible("regular room in joined map");
 	} else {
 	    /* total overlap, remove the room */
-	    remove_room((unsigned)i);
+	    remove_room(lev, (unsigned)i);
 	}
     }
 }
 
 /*
- * Remove roomno from the level.rooms array, decrementing level.nroom.  Also updates
+ * Remove roomno from the level->rooms array, decrementing level->nroom.  Also updates
  * all level roomno values of affected higher numbered rooms.  Assumes
  * level structure contents corresponding to roomno have already been reset.
  * Currently handles only the removal of rooms that have no subrooms.
  */
-static void remove_room(unsigned roomno)
+static void remove_room(struct level *lev, unsigned roomno)
 {
-    struct mkroom *croom = &level.rooms[roomno];
-    struct mkroom *maxroom = &level.rooms[--level.nroom];
+    struct mkroom *croom = &lev->rooms[roomno];
+    struct mkroom *maxroom = &lev->rooms[--lev->nroom];
     int i, j;
     unsigned oroomno;
 
@@ -388,12 +387,12 @@ static void remove_room(unsigned roomno)
 		      sizeof(struct mkroom));
 
 	/* since maxroom moved, update affected level roomno values */
-	oroomno = level.nroom + ROOMOFFSET;
+	oroomno = lev->nroom + ROOMOFFSET;
 	roomno += ROOMOFFSET;
 	for (i = croom->lx; i <= croom->hx; ++i)
 	    for (j = croom->ly; j <= croom->hy; ++j) {
-		if (level.locations[i][j].roomno == oroomno)
-		    level.locations[i][j].roomno = roomno;
+		if (lev->locations[i][j].roomno == oroomno)
+		    lev->locations[i][j].roomno = roomno;
 	    }
     }
 
@@ -404,7 +403,7 @@ static void remove_room(unsigned roomno)
 #define N_P2_ITER	1	/* tune map generation via this value */
 #define N_P3_ITER	2	/* tune map smoothing via this value */
 
-void mkmap(lev_init *init_lev)
+void mkmap(struct level *lev, lev_init *init_lev)
 {
 	schar	bg_typ = init_lev->bg,
 		fg_typ = init_lev->fg;
@@ -419,27 +418,27 @@ void mkmap(lev_init *init_lev)
 
 	new_locations = malloc((WIDTH+1) * HEIGHT);
 
-	init_map(bg_typ);
-	init_fill(bg_typ, fg_typ);
+	init_map(lev, bg_typ);
+	init_fill(lev, bg_typ, fg_typ);
 
 	for (i = 0; i < N_P1_ITER; i++)
-	    pass_one(bg_typ, fg_typ);
+	    pass_one(lev, bg_typ, fg_typ);
 
 	for (i = 0; i < N_P2_ITER; i++)
-	pass_two(bg_typ, fg_typ);
+	    pass_two(lev, bg_typ, fg_typ);
 
 	if (smooth)
 	    for (i = 0; i < N_P3_ITER; i++)
-		pass_three(bg_typ, fg_typ);
+		pass_three(lev, bg_typ, fg_typ);
 
 	if (join)
-	    join_map(bg_typ, fg_typ);
+	    join_map(lev, bg_typ, fg_typ);
 
-	finish_map(fg_typ, bg_typ, (boolean)lit, (boolean)walled);
+	finish_map(lev, fg_typ, bg_typ, (boolean)lit, (boolean)walled);
 	/* a walled, joined level is cavernous, not mazelike -dlc */
 	if (walled && join) {
-	    level.flags.is_maze_lev = FALSE;
-	    level.flags.is_cavernous_lev = TRUE;
+	    lev->flags.is_maze_lev = FALSE;
+	    lev->flags.is_cavernous_lev = TRUE;
 	}
 	free(new_locations);
 }

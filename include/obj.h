@@ -4,9 +4,6 @@
 #ifndef OBJ_H
 #define OBJ_H
 
-/* #define obj obj_nh */ /* uncomment for SCO UNIX, which has a conflicting
-			  * typedef for "obj" in <sys/types.h> */
-
 union vptrs {
 	    struct obj *v_nexthere;	/* floor location lists */
 	    struct obj *v_ocontainer;	/* point back to container */
@@ -22,6 +19,7 @@ struct obj {
 
 	struct obj *cobj;	/* contents list for containers */
 	long o_id;
+	struct level *olev;	/* the level it is on */
 	xchar ox,oy;
 	short otyp;		/* object class number */
 	unsigned owt;

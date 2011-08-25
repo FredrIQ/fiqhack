@@ -209,7 +209,7 @@ int castmu(struct monst *mtmp,
 		!is_undirected_spell(mattk->adtyp, spellnum)) {
 	    pline("%s casts a spell at %s!",
 		canseemon(mtmp) ? Monnam(mtmp) : "Something",
-		level.locations[mtmp->mux][mtmp->muy].typ == WATER
+		level->locations[mtmp->mux][mtmp->muy].typ == WATER
 		    ? "empty water" : "thin air");
 	    return 0;
 	}
@@ -524,10 +524,10 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	if (quan < 3) quan = 3;
 	success = pm ? TRUE : FALSE;
 	for (i = 0; i <= quan; i++) {
-	    if (!enexto(&bypos, mtmp->mux, mtmp->muy, mtmp->data))
+	    if (!enexto(&bypos, level, mtmp->mux, mtmp->muy, mtmp->data))
 		break;
 	    if ((pm = mkclass(let,0)) != 0 &&
-		    (mtmp2 = makemon(pm, bypos.x, bypos.y, NO_MM_FLAGS)) != 0) {
+		    (mtmp2 = makemon(pm, level, bypos.x, bypos.y, NO_MM_FLAGS)) != 0) {
 		success = TRUE;
 		mtmp2->msleeping = mtmp2->mpeaceful = mtmp2->mtame = 0;
 		set_malign(mtmp2);

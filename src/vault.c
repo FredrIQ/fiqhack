@@ -35,21 +35,21 @@ static boolean clear_fcorr(struct monst *grd, boolean forceshow)
 				&& uball->ox == fcx && uball->oy == fcy))
 			return FALSE;
 
-		if ((mtmp = m_at(fcx,fcy)) != 0) {
+		if ((mtmp = m_at(level, fcx,fcy)) != 0) {
 			if (mtmp->isgd) return FALSE;
 			else if (!in_fcorridor(grd, u.ux, u.uy)) {
 			    if (mtmp->mtame) yelp(mtmp);
 			    rloc(mtmp, FALSE);
 			}
 		}
-		level.locations[fcx][fcy].typ = EGD(grd)->fakecorr[fcbeg].ftyp;
+		level->locations[fcx][fcy].typ = EGD(grd)->fakecorr[fcbeg].ftyp;
 		map_location(fcx, fcy, 1);	/* bypass vision */
-		if (!ACCESSIBLE(level.locations[fcx][fcy].typ)) block_point(fcx,fcy);
+		if (!ACCESSIBLE(level->locations[fcx][fcy].typ)) block_point(fcx,fcy);
 		EGD(grd)->fcbeg++;
 	}
 	if (grd->mhp <= 0) {
 	    pline_The("corridor disappears.");
-	    if (IS_ROCK(level.locations[u.ux][u.uy].typ)) You("are encased in rock.");
+	    if (IS_ROCK(level->locations[u.ux][u.uy].typ)) You("are encased in rock.");
 	}
 	return TRUE;
 }
@@ -92,7 +92,7 @@ static struct monst *findgd(void)
 {
 	struct monst *mtmp;
 
-	for (mtmp = level.monlist; mtmp; mtmp = mtmp->nmon)
+	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 	    if (mtmp->isgd && !DEADMONSTER(mtmp) && on_level(&(EGD(mtmp)->gdlevel), &u.uz))
 		return mtmp;
 	return NULL;
@@ -104,7 +104,7 @@ char vault_occupied(char *array)
 	char *ptr;
 
 	for (ptr = array; *ptr; ptr++)
-		if (level.rooms[*ptr - ROOMOFFSET].rtype == VAULT)
+		if (level->rooms[*ptr - ROOMOFFSET].rtype == VAULT)
 			return *ptr;
 	return '\0';
 }
@@ -137,7 +137,7 @@ void invault(void)
 	      if (y != u.uy-dd && y != u.uy+dd && x != u.ux-dd)
 		x = u.ux+dd;
 	      if (x < 1 || x > COLNO-1) continue;
-	      if (level.locations[x][y].typ == CORR) {
+	      if (level->locations[x][y].typ == CORR) {
 		  if (x < u.ux)
 		      lx = x + 1;
 		  else if (x > u.ux)
@@ -152,7 +152,7 @@ void invault(void)
 		  else
 		      ly = y;
 		  
-		  if (level.locations[lx][ly].typ != STONE && level.locations[lx][ly].typ != CORR)
+		  if (level->locations[lx][ly].typ != STONE && level->locations[lx][ly].typ != CORR)
 		      goto incr_radius;
 		  goto fnd;
 	      }
@@ -168,26 +168,26 @@ fnd:
 
 	/* next find a good place for a door in the wall */
 	x = u.ux; y = u.uy;
-	if (level.locations[x][y].typ != ROOM) {  /* player dug a door and is in it */
-		if (level.locations[x+1][y].typ == ROOM)  x = x + 1;
-		else if (level.locations[x][y+1].typ == ROOM) y = y + 1;
-		else if (level.locations[x-1][y].typ == ROOM) x = x - 1;
-		else if (level.locations[x][y-1].typ == ROOM) y = y - 1;
-		else if (level.locations[x+1][y+1].typ == ROOM) {
+	if (level->locations[x][y].typ != ROOM) {  /* player dug a door and is in it */
+		if (level->locations[x+1][y].typ == ROOM)  x = x + 1;
+		else if (level->locations[x][y+1].typ == ROOM) y = y + 1;
+		else if (level->locations[x-1][y].typ == ROOM) x = x - 1;
+		else if (level->locations[x][y-1].typ == ROOM) y = y - 1;
+		else if (level->locations[x+1][y+1].typ == ROOM) {
 			x = x + 1;
 			y = y + 1;
-		} else if (level.locations[x-1][y-1].typ == ROOM) {
+		} else if (level->locations[x-1][y-1].typ == ROOM) {
 			x = x - 1;
 			y = y - 1;
-		} else if (level.locations[x+1][y-1].typ == ROOM) {
+		} else if (level->locations[x+1][y-1].typ == ROOM) {
 			x = x + 1;
 			y = y - 1;
-		} else if (level.locations[x-1][y+1].typ == ROOM) {
+		} else if (level->locations[x-1][y+1].typ == ROOM) {
 			x = x - 1;
 			y = y + 1;
 		}
 	}
-	while (level.locations[x][y].typ == ROOM) {
+	while (level->locations[x][y].typ == ROOM) {
 		int dx,dy;
 
 		dx = (gx > x) ? 1 : (gx < x) ? -1 : 0;
@@ -198,19 +198,19 @@ fnd:
 			y += dy;
 	}
 	if (x == u.ux && y == u.uy) {
-		if (level.locations[x+1][y].typ == HWALL || level.locations[x+1][y].typ == DOOR)
+		if (level->locations[x+1][y].typ == HWALL || level->locations[x+1][y].typ == DOOR)
 			x = x + 1;
-		else if (level.locations[x-1][y].typ == HWALL || level.locations[x-1][y].typ == DOOR)
+		else if (level->locations[x-1][y].typ == HWALL || level->locations[x-1][y].typ == DOOR)
 			x = x - 1;
-		else if (level.locations[x][y+1].typ == VWALL || level.locations[x][y+1].typ == DOOR)
+		else if (level->locations[x][y+1].typ == VWALL || level->locations[x][y+1].typ == DOOR)
 			y = y + 1;
-		else if (level.locations[x][y-1].typ == VWALL || level.locations[x][y-1].typ == DOOR)
+		else if (level->locations[x][y-1].typ == VWALL || level->locations[x][y-1].typ == DOOR)
 			y = y - 1;
 		else return;
 	}
 
 	/* make something interesting happen */
-	if (!(guard = makemon(&mons[PM_GUARD], x, y, NO_MM_FLAGS))) return;
+	if (!(guard = makemon(&mons[PM_GUARD], level, x, y, NO_MM_FLAGS))) return;
 	guard->isgd = 1;
 	guard->mpeaceful = 1;
 	set_malign(guard);
@@ -303,12 +303,12 @@ fnd:
 	EGD(guard)->fcbeg = 0;
 	EGD(guard)->fakecorr[0].fx = x;
 	EGD(guard)->fakecorr[0].fy = y;
-	if (IS_WALL(level.locations[x][y].typ))
-	    EGD(guard)->fakecorr[0].ftyp = level.locations[x][y].typ;
+	if (IS_WALL(level->locations[x][y].typ))
+	    EGD(guard)->fakecorr[0].ftyp = level->locations[x][y].typ;
 	else { /* the initial guard location is a dug door */
 	    int vlt = EGD(guard)->vroom;
-	    xchar lowx = level.rooms[vlt].lx, hix = level.rooms[vlt].hx;
-	    xchar lowy = level.rooms[vlt].ly, hiy = level.rooms[vlt].hy;
+	    xchar lowx = level->rooms[vlt].lx, hix = level->rooms[vlt].hx;
+	    xchar lowy = level->rooms[vlt].ly, hiy = level->rooms[vlt].hy;
 
 	    if (x == lowx-1 && y == lowy-1)
 		EGD(guard)->fakecorr[0].ftyp = TLCORNER;
@@ -323,8 +323,8 @@ fnd:
 	    else if (x == lowx-1 || x == hix+1)
 		EGD(guard)->fakecorr[0].ftyp = VWALL;
 	}
-	level.locations[x][y].typ = DOOR;
-	level.locations[x][y].doormask = D_NODOOR;
+	level->locations[x][y].typ = DOOR;
+	level->locations[x][y].doormask = D_NODOOR;
 	unblock_point(x, y);		/* doesn't block light */
 	EGD(guard)->fcend = 1;
 	EGD(guard)->warncnt = 1;
@@ -338,9 +338,9 @@ static void move_gold(struct obj *gold, int vroom)
 
 	remove_object(gold);
 	newsym(gold->ox, gold->oy);
-	nx = level.rooms[vroom].lx + rn2(2);
-	ny = level.rooms[vroom].ly + rn2(2);
-	place_object(gold, nx, ny);
+	nx = level->rooms[vroom].lx + rn2(2);
+	ny = level->rooms[vroom].ly + rn2(2);
+	place_object(gold, level, nx, ny);
 	stackobj(gold);
 	newsym(nx,ny);
 }
@@ -350,8 +350,8 @@ static void wallify_vault(struct monst *grd)
 	int x, y, typ;
 	int vlt = EGD(grd)->vroom;
 	char tmp_viz;
-	xchar lox = level.rooms[vlt].lx - 1, hix = level.rooms[vlt].hx + 1,
-	      loy = level.rooms[vlt].ly - 1, hiy = level.rooms[vlt].hy + 1;
+	xchar lox = level->rooms[vlt].lx - 1, hix = level->rooms[vlt].hx + 1,
+	      loy = level->rooms[vlt].ly - 1, hiy = level->rooms[vlt].hy + 1;
 	struct monst *mon;
 	struct obj *gold;
 	struct trap *trap;
@@ -363,16 +363,16 @@ static void wallify_vault(struct monst *grd)
 		/* if not on the room boundary, skip ahead */
 		if (x != lox && x != hix && y != loy && y != hiy) continue;
 
-		if (!IS_WALL(level.locations[x][y].typ) && !in_fcorridor(grd, x, y)) {
-		    if ((mon = m_at(x, y)) != 0 && mon != grd) {
+		if (!IS_WALL(level->locations[x][y].typ) && !in_fcorridor(grd, x, y)) {
+		    if ((mon = m_at(level, x, y)) != 0 && mon != grd) {
 			if (mon->mtame) yelp(mon);
 			rloc(mon, FALSE);
 		    }
-		    if ((gold = g_at(x, y)) != 0) {
+		    if ((gold = gold_at(level, x, y)) != 0) {
 			move_gold(gold, EGD(grd)->vroom);
 			movedgold = TRUE;
 		    }
-		    if ((trap = t_at(x, y)) != 0)
+		    if ((trap = t_at(level, x, y)) != 0)
 			deltrap(trap);
 		    if (x == lox)
 			typ = (y == loy) ? TLCORNER :
@@ -382,8 +382,8 @@ static void wallify_vault(struct monst *grd)
 			      (y == hiy) ? BRCORNER : VWALL;
 		    else  /* not left or right side, must be top or bottom */
 			typ = HWALL;
-		    level.locations[x][y].typ = typ;
-		    level.locations[x][y].doormask = 0;
+		    level->locations[x][y].typ = typ;
+		    level->locations[x][y].doormask = 0;
 		    /*
 		     * hack: player knows walls are restored because of the
 		     * message, below, so show this on the screen.
@@ -421,7 +421,7 @@ int gd_move(struct monst *grd)
 	struct rm *crm;
 	boolean goldincorridor = FALSE,
 			 u_in_vault = vault_occupied(u.urooms)? TRUE : FALSE,
-			 grd_in_vault = *in_rooms(grd->mx, grd->my, VAULT)?
+			 grd_in_vault = *in_rooms(level, grd->mx, grd->my, VAULT)?
 					TRUE : FALSE;
 	boolean disappear_msg_seen = FALSE, semi_dead = (grd->mhp <= 0);
 #ifndef GOLDOBJ
@@ -477,7 +477,7 @@ int gd_move(struct monst *grd)
 			n = grd->my;
 			verbalize("You've been warned, knave!");
 			mnexto(grd);
-			level.locations[m][n].typ = egrd->fakecorr[0].ftyp;
+			level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
 			newsym(m,n);
 			grd->mpeaceful = 0;
 			return -1;
@@ -492,7 +492,7 @@ int gd_move(struct monst *grd)
 		    m = grd->mx;
 		    n = grd->my;
 		    rloc(grd, FALSE);
-		    level.locations[m][n].typ = egrd->fakecorr[0].ftyp;
+		    level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
 		    newsym(m,n);
 		    grd->mpeaceful = 0;
 letknow:
@@ -516,7 +516,7 @@ letknow:
 	if (egrd->fcend > 1) {
 	    if (egrd->fcend > 2 && in_fcorridor(grd, grd->mx, grd->my) &&
 		  !egrd->gddone && !in_fcorridor(grd, u.ux, u.uy) &&
-		  level.locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ
+		  level->locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ
 				 == egrd->fakecorr[0].ftyp) {
 		pline_The("%s, confused, disappears.", g_monnam(grd));
 		disappear_msg_seen = TRUE;
@@ -542,7 +542,7 @@ letknow:
 	    }
 	}
 	for (fci = egrd->fcbeg; fci < egrd->fcend; fci++)
-	    if (g_at(egrd->fakecorr[fci].fx, egrd->fakecorr[fci].fy)){
+	    if (gold_at(level, egrd->fakecorr[fci].fx, egrd->fakecorr[fci].fy)){
 		m = egrd->fakecorr[fci].fx;
 		n = egrd->fakecorr[fci].fy;
 		goldincorridor = TRUE;
@@ -551,7 +551,7 @@ letknow:
 		x = grd->mx;
 		y = grd->my;
 		if (m == u.ux && n == u.uy) {
-		    struct obj *gold = g_at(m,n);
+		    struct obj *gold = gold_at(level, m, n);
 		    /* Grab the gold from between the hero's feet.  */
 #ifndef GOLDOBJ
 		    grd->mgold += gold->quan;
@@ -565,9 +565,9 @@ letknow:
 		    mpickgold(grd);	/* does a newsym */
 		} else {
 		    /* just for insurance... */
-		    if (MON_AT(m, n) && m != grd->mx && n != grd->my) {
+		    if (MON_AT(level, m, n) && m != grd->mx && n != grd->my) {
 			verbalize("Out of my way, scum!");
-			rloc(m_at(m, n), FALSE);
+			rloc(m_at(level, m, n), FALSE);
 		    }
 		    remove_monster(grd->mx, grd->my);
 		    newsym(grd->mx, grd->my);
@@ -603,13 +603,13 @@ letknow:
 	for (nx = x-1; nx <= x+1; nx++) for(ny = y-1; ny <= y+1; ny++) {
 	  if ((nx == x || ny == y) && (nx != x || ny != y) && isok(nx, ny)) {
 
-	    typ = (crm = &level.locations[nx][ny])->typ;
+	    typ = (crm = &level->locations[nx][ny])->typ;
 	    if (!IS_STWALL(typ) && !IS_POOL(typ)) {
 
 		if (in_fcorridor(grd, nx, ny))
 			goto nextnxy;
 
-		if (*in_rooms(nx,ny,VAULT))
+		if (*in_rooms(level, nx, ny, VAULT))
 			continue;
 
 		/* seems we found a good place to leave him alone */
@@ -633,11 +633,11 @@ nextpos:
 	dy = (gy > y) ? 1 : (gy < y) ? -1 : 0;
 	if (abs(gx-x) >= abs(gy-y)) nx += dx; else ny += dy;
 
-	while ((typ = (crm = &level.locations[nx][ny])->typ) != 0) {
+	while ((typ = (crm = &level->locations[nx][ny])->typ) != 0) {
 	/* in view of the above we must have IS_WALL(typ) or typ == POOL */
 	/* must be a wall here */
 		if (isok(nx+nx-x,ny+ny-y) && !IS_POOL(typ) &&
-		    IS_ROOM(level.locations[nx+nx-x][ny+ny-y].typ)){
+		    IS_ROOM(level->locations[nx+nx-x][ny+ny-y].typ)){
 			crm->typ = DOOR;
 			crm->doormask = D_NODOOR;
 			goto proceed;
@@ -745,22 +745,22 @@ void paygd(void)
 	    }
 	    mnexto(grd);
 	    pline("%s remits your gold to the vault.", Monnam(grd));
-	    gx = level.rooms[EGD(grd)->vroom].lx + rn2(2);
-	    gy = level.rooms[EGD(grd)->vroom].ly + rn2(2);
+	    gx = level->rooms[EGD(grd)->vroom].lx + rn2(2);
+	    gy = level->rooms[EGD(grd)->vroom].ly + rn2(2);
 	    sprintf(buf,
 		"To Croesus: here's the gold recovered from %s the %s.",
 		plname, mons[u.umonster].mname);
-	    make_grave(gx, gy, buf);
+	    make_grave(level, gx, gy, buf);
 	}
 #ifndef GOLDOBJ
-	place_object(gold = mkgoldobj(u.ugold), gx, gy);
+	place_object(gold = mkgoldobj(u.ugold), level, gx, gy);
 	stackobj(gold);
 #else
         for (coins = invent; coins; coins = nextcoins) {
             nextcoins = coins->nobj;
 	    if (objects[coins->otyp].oc_class == COIN_CLASS) {
 	        freeinv(coins);
-                place_object(coins, gx, gy);
+                place_object(coins, level, gx, gy);
 		stackobj(coins);
 	    }
         }

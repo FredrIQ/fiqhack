@@ -10,46 +10,46 @@ extern char *lev_message;
 extern lev_region *lregions;
 extern int num_lregions;
 
-static boolean iswall(int,int);
-static boolean iswall_or_stone(int,int);
-static boolean is_solid(int,int);
+static boolean iswall(struct level *lev, int x, int y);
+static boolean iswall_or_stone(struct level *lev, int x, int y);
+static boolean is_solid(struct level *lev, int x, int y);
 static int extend_spine(int [3][3], int, int, int);
-static boolean okay(int,int,int);
+static boolean okay(struct level *lev, int x, int y, int dir);
 static void maze0xy(coord *);
-static boolean put_lregion_here(xchar,xchar,xchar,
+static boolean put_lregion_here(struct level *lev,xchar,xchar,xchar,
 	xchar,xchar,xchar,xchar,boolean,d_level *);
-static void fixup_special(void);
+static void fixup_special(struct level *lev);
 static void move(int *,int *,int);
-static void setup_waterlevel(void);
+static void setup_waterlevel(struct level *lev);
 static void unsetup_waterlevel(void);
 
 
-static boolean iswall(int x, int y)
+static boolean iswall(struct level *lev, int x, int y)
 {
     int type;
 
     if (!isok(x,y)) return FALSE;
-    type = level.locations[x][y].typ;
+    type = lev->locations[x][y].typ;
     return (IS_WALL(type) || IS_DOOR(type) ||
 	    type == SDOOR || type == IRONBARS);
 }
 
-static boolean iswall_or_stone(int x, int y)
+static boolean iswall_or_stone(struct level *lev, int x, int y)
 {
     int type;
-
+    
     /* out of bounds = stone */
     if (!isok(x,y)) return TRUE;
 
-    type = level.locations[x][y].typ;
+    type = lev->locations[x][y].typ;
     return (type == STONE || IS_WALL(type) || IS_DOOR(type) ||
 	    type == SDOOR || type == IRONBARS);
 }
 
 /* return TRUE if out of bounds, wall or rock */
-static boolean is_solid(int x, int y)
+static boolean is_solid(struct level *lev, int x, int y)
 {
-    return !isok(x,y) || IS_STWALL(level.locations[x][y].typ);
+    return !isok(x,y) || IS_STWALL(lev->locations[x][y].typ);
 }
 
 
@@ -107,11 +107,11 @@ static int extend_spine(int locale[3][3], int wall_there, int dx, int dy)
  * are totally surrounded by stone - they are redundant.  (2) correct
  * the types so that they extend and connect to each other.
  */
-void wallification(int x1, int y1, int x2, int y2)
+void wallification(struct level *lev, int x1, int y1, int x2, int y2)
 {
 	uchar type;
 	int x,y;
-	struct rm *lev;
+	struct rm *loc;
 	int bits;
 	int locale[3][3];	/* rock or wall status surrounding positions */
 	/*
@@ -133,18 +133,18 @@ void wallification(int x1, int y1, int x2, int y2)
 	/* Step 1: change walls surrounded by rock to rock. */
 	for (x = x1; x <= x2; x++)
 	    for (y = y1; y <= y2; y++) {
-		lev = &level.locations[x][y];
-		type = lev->typ;
+		loc = &lev->locations[x][y];
+		type = loc->typ;
 		if (IS_WALL(type) && type != DBWALL) {
-		    if (is_solid(x-1,y-1) &&
-			is_solid(x-1,y  ) &&
-			is_solid(x-1,y+1) &&
-			is_solid(x,  y-1) &&
-			is_solid(x,  y+1) &&
-			is_solid(x+1,y-1) &&
-			is_solid(x+1,y  ) &&
-			is_solid(x+1,y+1))
-		    lev->typ = STONE;
+		    if (is_solid(lev, x-1, y-1) &&
+			is_solid(lev, x-1, y  ) &&
+			is_solid(lev, x-1, y+1) &&
+			is_solid(lev, x,   y-1) &&
+			is_solid(lev, x,   y+1) &&
+			is_solid(lev, x+1, y-1) &&
+			is_solid(lev, x+1, y  ) &&
+			is_solid(lev, x+1, y+1))
+		    loc->typ = STONE;
 		}
 	    }
 
@@ -155,38 +155,38 @@ void wallification(int x1, int y1, int x2, int y2)
 	 */
 	for (x = x1; x <= x2; x++)
 	    for (y = y1; y <= y2; y++) {
-		lev = &level.locations[x][y];
-		type = lev->typ;
+		loc = &lev->locations[x][y];
+		type = loc->typ;
 		if ( !(IS_WALL(type) && type != DBWALL)) continue;
 
 		/* set the locations TRUE if rock or wall or out of bounds */
-		locale[0][0] = iswall_or_stone(x-1,y-1);
-		locale[1][0] = iswall_or_stone(  x,y-1);
-		locale[2][0] = iswall_or_stone(x+1,y-1);
+		locale[0][0] = iswall_or_stone(lev, x-1, y-1);
+		locale[1][0] = iswall_or_stone(lev,   x, y-1);
+		locale[2][0] = iswall_or_stone(lev, x+1, y-1);
 
-		locale[0][1] = iswall_or_stone(x-1,  y);
-		locale[2][1] = iswall_or_stone(x+1,  y);
+		locale[0][1] = iswall_or_stone(lev, x-1,   y);
+		locale[2][1] = iswall_or_stone(lev, x+1,   y);
 
-		locale[0][2] = iswall_or_stone(x-1,y+1);
-		locale[1][2] = iswall_or_stone(  x,y+1);
-		locale[2][2] = iswall_or_stone(x+1,y+1);
+		locale[0][2] = iswall_or_stone(lev, x-1, y+1);
+		locale[1][2] = iswall_or_stone(lev,   x, y+1);
+		locale[2][2] = iswall_or_stone(lev, x+1, y+1);
 
 		/* determine if wall should extend to each direction NSEW */
-		bits =    (extend_spine(locale, iswall(x,y-1),  0, -1) << 3)
-			| (extend_spine(locale, iswall(x,y+1),  0,  1) << 2)
-			| (extend_spine(locale, iswall(x+1,y),  1,  0) << 1)
-			|  extend_spine(locale, iswall(x-1,y), -1,  0);
+		bits =    (extend_spine(locale, iswall(lev, x,y-1),  0, -1) << 3)
+			| (extend_spine(locale, iswall(lev, x,y+1),  0,  1) << 2)
+			| (extend_spine(locale, iswall(lev, x+1,y),  1,  0) << 1)
+			|  extend_spine(locale, iswall(lev, x-1,y), -1,  0);
 
 		/* don't change typ if wall is free-standing */
-		if (bits) lev->typ = spine_array[bits];
+		if (bits) loc->typ = spine_array[bits];
 	    }
 }
 
-static boolean okay(int x, int y, int dir)
+static boolean okay(struct level *lev, int x, int y, int dir)
 {
 	move(&x,&y,dir);
 	move(&x,&y,dir);
-	if (x<3 || y<3 || x>x_maze_max || y>y_maze_max || level.locations[x][y].typ != 0)
+	if (x<3 || y<3 || x>x_maze_max || y>y_maze_max || lev->locations[x][y].typ != 0)
 		return FALSE;
 	return TRUE;
 }
@@ -205,19 +205,20 @@ static void maze0xy(coord *cc)
  *	pos is inside restricted region (lx,ly,hx,hy) OR
  *	NOT (pos is corridor and a maze level OR pos is a room OR pos is air)
  */
-boolean bad_location(xchar x, xchar y, xchar lx, xchar ly, xchar hx, xchar hy)
+boolean bad_location(struct level *lev, xchar x, xchar y,
+		     xchar lx, xchar ly, xchar hx, xchar hy)
 {
-    return((boolean)(occupied(x, y) ||
+    return((boolean)(occupied(lev, x, y) ||
 	   within_bounded_area(x,y, lx,ly, hx,hy) ||
-	   !((level.locations[x][y].typ == CORR && level.flags.is_maze_lev) ||
-	       level.locations[x][y].typ == ROOM || level.locations[x][y].typ == AIR)));
+	   !((lev->locations[x][y].typ == CORR && lev->flags.is_maze_lev) ||
+	       lev->locations[x][y].typ == ROOM || lev->locations[x][y].typ == AIR)));
 }
 
 /* pick a location in area (lx, ly, hx, hy) but not in (nlx, nly, nhx, nhy) */
 /* and place something (based on rtype) in that region */
-void place_lregion(xchar lx, xchar ly, xchar hx, xchar hy,
+void place_lregion(struct level *lev, xchar lx, xchar ly, xchar hx, xchar hy,
 		   xchar nlx, xchar nly, xchar nhx, xchar nhy,
-		   xchar rtype, d_level *lev)
+		   xchar rtype, d_level *dest_lvl)
 {
     int trycnt;
     boolean oneshot;
@@ -228,8 +229,8 @@ void place_lregion(xchar lx, xchar ly, xchar hx, xchar hy,
 	 * if there are rooms and this a branch, let place_branch choose
 	 * the branch location (to avoid putting branches in corridors).
 	 */
-	if (rtype == LR_BRANCH && level.nroom) {
-	    place_branch(Is_branchlev(&u.uz), 0, 0);
+	if (rtype == LR_BRANCH && lev->nroom) {
+	    place_branch(lev, Is_branchlev(&u.uz), 0, 0);
 	    return;
 	}
 
@@ -238,41 +239,40 @@ void place_lregion(xchar lx, xchar ly, xchar hx, xchar hy,
     }
 
     /* first a probabilistic approach */
-
     oneshot = (lx == hx && ly == hy);
     for (trycnt = 0; trycnt < 200; trycnt++) {
 	x = rn1((hx - lx) + 1, lx);
 	y = rn1((hy - ly) + 1, ly);
-	if (put_lregion_here(x,y,nlx,nly,nhx,nhy,rtype,oneshot,lev))
+	if (put_lregion_here(lev, x,y,nlx,nly,nhx,nhy,rtype,oneshot,dest_lvl))
 	    return;
     }
 
     /* then a deterministic one */
-
     oneshot = TRUE;
     for (x = lx; x <= hx; x++)
 	for (y = ly; y <= hy; y++)
-	    if (put_lregion_here(x,y,nlx,nly,nhx,nhy,rtype,oneshot,lev))
+	    if (put_lregion_here(lev, x,y,nlx,nly,nhx,nhy,rtype,oneshot,dest_lvl))
 		return;
 
     impossible("Couldn't place lregion type %d!", rtype);
 }
 
-static boolean put_lregion_here(xchar x, xchar y, xchar nlx, xchar nly,
+static boolean put_lregion_here(struct level *lev,
+				xchar x, xchar y, xchar nlx, xchar nly,
 				xchar nhx, xchar nhy, xchar rtype,
-				boolean oneshot, d_level *lev)
+				boolean oneshot, d_level *dest_lvl)
 {
-    if (bad_location(x, y, nlx, nly, nhx, nhy)) {
+    if (bad_location(lev, x, y, nlx, nly, nhx, nhy)) {
 	if (!oneshot) {
 	    return FALSE;		/* caller should try again */
 	} else {
 	    /* Must make do with the only location possible;
 	       avoid failure due to a misplaced trap.
 	       It might still fail if there's a dungeon feature here. */
-	    struct trap *t = t_at(x,y);
+	    struct trap *t = t_at(lev, x, y);
 
 	    if (t && t->ttyp != MAGIC_PORTAL) deltrap(t);
-	    if (bad_location(x, y, nlx, nly, nhx, nhy)) return FALSE;
+	    if (bad_location(lev, x, y, nlx, nly, nhx, nhy)) return FALSE;
 	}
     }
     switch (rtype) {
@@ -280,22 +280,22 @@ static boolean put_lregion_here(xchar x, xchar y, xchar nlx, xchar nly,
     case LR_UPTELE:
     case LR_DOWNTELE:
 	/* "something" means the player in this case */
-	if (MON_AT(x, y)) {
+	if (MON_AT(lev, x, y)) {
 	    /* move the monster if no choice, or just try again */
-	    if (oneshot) rloc(m_at(x,y), FALSE);
+	    if (oneshot) rloc(m_at(lev, x,y), FALSE);
 	    else return FALSE;
 	}
 	u_on_newpos(x, y);
 	break;
     case LR_PORTAL:
-	mkportal(x, y, lev->dnum, lev->dlevel);
+	mkportal(lev, x, y, dest_lvl->dnum, dest_lvl->dlevel);
 	break;
     case LR_DOWNSTAIR:
     case LR_UPSTAIR:
-	mkstairs(x, y, (char)rtype, NULL);
+	mkstairs(lev, x, y, (char)rtype, NULL);
 	break;
     case LR_BRANCH:
-	place_branch(Is_branchlev(&u.uz), x, y);
+	place_branch(lev, Is_branchlev(&u.uz), x, y);
 	break;
     }
     return TRUE;
@@ -304,10 +304,10 @@ static boolean put_lregion_here(xchar x, xchar y, xchar nlx, xchar nly,
 static boolean was_waterlevel; /* ugh... this shouldn't be needed */
 
 /* this is special stuff that the level compiler cannot (yet) handle */
-static void fixup_special(void)
+static void fixup_special(struct level *lev)
 {
     lev_region *r = lregions;
-    struct d_level lev;
+    struct d_level lvl;
     int x, y;
     struct mkroom *croom;
     boolean added_branch = FALSE;
@@ -317,11 +317,11 @@ static void fixup_special(void)
 	u.uinwater = 0;
 	unsetup_waterlevel();
     } else if (Is_waterlevel(&u.uz)) {
-	level.flags.hero_memory = 0;
+	lev->flags.hero_memory = 0;
 	was_waterlevel = TRUE;
 	/* water level is an odd beast - it has to be set up
 	   before calling place_lregions etc. */
-	setup_waterlevel();
+	setup_waterlevel(lev);
     }
     for (x = 0; x < num_lregions; x++, r++) {
 	switch(r->rtype) {
@@ -332,22 +332,22 @@ static void fixup_special(void)
 	case LR_PORTAL:
 	    if (*r->rname.str >= '0' && *r->rname.str <= '9') {
 		/* "chutes and ladders" */
-		lev = u.uz;
-		lev.dlevel = atoi(r->rname.str);
+		lvl = u.uz;
+		lvl.dlevel = atoi(r->rname.str);
 	    } else {
 		s_level *sp = find_level(r->rname.str);
-		lev = sp->dlevel;
+		lvl = sp->dlevel;
 	    }
 	    /* fall into... */
 
 	case LR_UPSTAIR:
 	case LR_DOWNSTAIR:
 	place_it:
-	    place_lregion(r->inarea.x1, r->inarea.y1,
+	    place_lregion(lev, r->inarea.x1, r->inarea.y1,
 			  r->inarea.x2, r->inarea.y2,
 			  r->delarea.x1, r->delarea.y1,
 			  r->delarea.x2, r->delarea.y2,
-			  r->rtype, &lev);
+			  r->rtype, &lvl);
 	    break;
 
 	case LR_TELE:
@@ -355,16 +355,16 @@ static void fixup_special(void)
 	case LR_DOWNTELE:
 	    /* save the region outlines for goto_level() */
 	    if (r->rtype == LR_TELE || r->rtype == LR_UPTELE) {
-		    level.updest.lx = r->inarea.x1; level.updest.ly = r->inarea.y1;
-		    level.updest.hx = r->inarea.x2; level.updest.hy = r->inarea.y2;
-		    level.updest.nlx = r->delarea.x1; level.updest.nly = r->delarea.y1;
-		    level.updest.nhx = r->delarea.x2; level.updest.nhy = r->delarea.y2;
+		    lev->updest.lx = r->inarea.x1; lev->updest.ly = r->inarea.y1;
+		    lev->updest.hx = r->inarea.x2; lev->updest.hy = r->inarea.y2;
+		    lev->updest.nlx = r->delarea.x1; lev->updest.nly = r->delarea.y1;
+		    lev->updest.nhx = r->delarea.x2; lev->updest.nhy = r->delarea.y2;
 	    }
 	    if (r->rtype == LR_TELE || r->rtype == LR_DOWNTELE) {
-		    level.dndest.lx = r->inarea.x1; level.dndest.ly = r->inarea.y1;
-		    level.dndest.hx = r->inarea.x2; level.dndest.hy = r->inarea.y2;
-		    level.dndest.nlx = r->delarea.x1; level.dndest.nly = r->delarea.y1;
-		    level.dndest.nhx = r->delarea.x2; level.dndest.nhy = r->delarea.y2;
+		    lev->dndest.lx = r->inarea.x1; lev->dndest.ly = r->inarea.y1;
+		    lev->dndest.hx = r->inarea.x2; lev->dndest.hy = r->inarea.y2;
+		    lev->dndest.nlx = r->delarea.x1; lev->dndest.nly = r->delarea.y1;
+		    lev->dndest.nhx = r->delarea.x2; lev->dndest.nhy = r->delarea.y2;
 	    }
 	    /* place_lregion gets called from goto_level() */
 	    break;
@@ -375,23 +375,23 @@ static void fixup_special(void)
 
     /* place dungeon branch if not placed above */
     if (!added_branch && Is_branchlev(&u.uz)) {
-	place_lregion(0,0,0,0,0,0,0,0,LR_BRANCH,NULL);
+	place_lregion(lev, 0,0,0,0,0,0,0,0,LR_BRANCH,NULL);
     }
 
 	/* KMH -- Sokoban levels */
-	if (In_sokoban(&u.uz))
-		sokoban_detect();
+	if (In_sokoban(&lev->z))
+		sokoban_detect(lev);
 
     /* Still need to add some stuff to level file */
     if (Is_medusa_level(&u.uz)) {
 	struct obj *otmp;
 	int tryct;
 
-	croom = &level.rooms[0]; /* only one room on the medusa level */
+	croom = &lev->rooms[0]; /* only one room on the medusa level */
 	for (tryct = rnd(4); tryct; tryct--) {
 	    x = somex(croom); y = somey(croom);
-	    if (goodpos(x, y, NULL, 0)) {
-		otmp = mk_tt_object(STATUE, x, y);
+	    if (goodpos(lev, x, y, NULL, 0)) {
+		otmp = mk_tt_object(lev, STATUE, x, y);
 		while (otmp && (poly_when_stoned(&mons[otmp->corpsenm]) ||
 				pm_resistance(&mons[otmp->corpsenm],MR_STONE))) {
 		    otmp->corpsenm = rndmonnum();
@@ -401,10 +401,10 @@ static void fixup_special(void)
 	}
 
 	if (rn2(2))
-	    otmp = mk_tt_object(STATUE, somex(croom), somey(croom));
+	    otmp = mk_tt_object(lev, STATUE, somex(croom), somey(croom));
 	else /* Medusa statues don't contain books */
 	    otmp = mkcorpstat(STATUE, NULL, NULL,
-			      somex(croom), somey(croom), FALSE);
+			      lev, somex(croom), somey(croom), FALSE);
 	if (otmp) {
 	    while (pm_resistance(&mons[otmp->corpsenm],MR_STONE)
 		   || poly_when_stoned(&mons[otmp->corpsenm])) {
@@ -413,36 +413,36 @@ static void fixup_special(void)
 	    }
 	}
     } else if (Is_wiz1_level(&u.uz)) {
-	croom = search_special(MORGUE);
+	croom = search_special(lev, MORGUE);
 
-	create_secret_door(croom, W_SOUTH|W_EAST|W_WEST);
+	create_secret_door(lev, croom, W_SOUTH|W_EAST|W_WEST);
     } else if (Is_knox(&u.uz)) {
 	/* using an unfilled morgue for rm id */
-	croom = search_special(MORGUE);
+	croom = search_special(lev, MORGUE);
 	/* avoid inappropriate morgue-related messages */
-	level.flags.graveyard = level.flags.has_morgue = 0;
+	lev->flags.graveyard = lev->flags.has_morgue = 0;
 	croom->rtype = OROOM;	/* perhaps it should be set to VAULT? */
 	/* stock the main vault */
 	for (x = croom->lx; x <= croom->hx; x++)
 	    for (y = croom->ly; y <= croom->hy; y++) {
-		mkgold((long) rn1(300, 600), x, y);
-		if (!rn2(3) && !is_pool(x,y))
-		    maketrap(x, y, rn2(3) ? LANDMINE : SPIKED_PIT);
+		mkgold((long) rn1(300, 600), lev, x, y);
+		if (!rn2(3) && !is_pool(lev, x,y))
+		    maketrap(lev, x, y, rn2(3) ? LANDMINE : SPIKED_PIT);
 	    }
     } else if (Role_if (PM_PRIEST) && In_quest(&u.uz)) {
 	/* less chance for undead corpses (lured from lower morgues) */
-	level.flags.graveyard = 1;
+	lev->flags.graveyard = 1;
     } else if (Is_stronghold(&u.uz)) {
-	level.flags.graveyard = 1;
+	lev->flags.graveyard = 1;
     } else if (Is_sanctum(&u.uz)) {
-	croom = search_special(TEMPLE);
+	croom = search_special(lev, TEMPLE);
 
-	create_secret_door(croom, W_ANY);
+	create_secret_door(lev, croom, W_ANY);
     } else if (on_level(&u.uz, &orcus_level)) {
 	   struct monst *mtmp, *mtmp2;
 
 	   /* it's a ghost town, get rid of shopkeepers */
-	    for (mtmp = level.monlist; mtmp; mtmp = mtmp2) {
+	    for (mtmp = lev->monlist; mtmp; mtmp = mtmp2) {
 		    mtmp2 = mtmp->nmon;
 		    if (mtmp->isshk) mongone(mtmp);
 	    }
@@ -465,7 +465,7 @@ static void fixup_special(void)
     num_lregions = 0;
 }
 
-void makemaz(const char *s)
+void makemaz(struct level *lev, const char *s)
 {
 	int x,y;
 	char protofile[20];
@@ -515,41 +515,41 @@ void makemaz(const char *s)
 
 	if (*protofile) {
 	    strcat(protofile, LEV_EXT);
-	    if (load_special(protofile)) {
-		fixup_special();
+	    if (load_special(lev, protofile)) {
+		fixup_special(lev);
 		/* some levels can end up with monsters
 		   on dead mon list, including light source monsters */
-		dmonsfree();
+		dmonsfree(lev);
 		return;	/* no mazification right now */
 	    }
 	    impossible("Couldn't load \"%s\" - making a maze.", protofile);
 	}
 
-	level.flags.is_maze_lev = TRUE;
+	lev->flags.is_maze_lev = TRUE;
 
 #ifndef WALLIFIED_MAZE
 	for (x = 2; x < x_maze_max; x++)
 		for (y = 2; y < y_maze_max; y++)
-			level.locations[x][y].typ = STONE;
+			lev->locations[x][y].typ = STONE;
 #else
 	for (x = 2; x <= x_maze_max; x++)
 		for (y = 2; y <= y_maze_max; y++)
-			level.locations[x][y].typ = ((x % 2) && (y % 2)) ? STONE : HWALL;
+			lev->locations[x][y].typ = ((x % 2) && (y % 2)) ? STONE : HWALL;
 #endif
 
 	maze0xy(&mm);
-	walkfrom((int) mm.x, (int) mm.y);
+	walkfrom(lev, mm.x, mm.y);
 	/* put a boulder at the maze center */
-	mksobj_at(BOULDER, (int) mm.x, (int) mm.y, TRUE, FALSE);
+	mksobj_at(BOULDER, lev, (int) mm.x, (int) mm.y, TRUE, FALSE);
 
 #ifdef WALLIFIED_MAZE
-	wallification(2, 2, x_maze_max, y_maze_max);
+	wallification(lev, 2, 2, x_maze_max, y_maze_max);
 #endif
-	mazexy(&mm);
-	mkstairs(mm.x, mm.y, 1, NULL);		/* up */
+	mazexy(lev, &mm);
+	mkstairs(lev, mm.x, mm.y, 1, NULL);		/* up */
 	if (!Invocation_lev(&u.uz)) {
-	    mazexy(&mm);
-	    mkstairs(mm.x, mm.y, 0, NULL);	/* down */
+	    mazexy(lev, &mm);
+	    mkstairs(lev, mm.x, mm.y, 0, NULL);	/* down */
 	} else {	/* choose "vibrating square" location */
 #define x_maze_min 2
 #define y_maze_min 2
@@ -581,10 +581,10 @@ void makemaz(const char *s)
 		y = rn1(y_range, y_maze_min + INVPOS_Y_MARGIN + 1);
 		/* we don't want it to be too near the stairs, nor
 		   to be on a spot that's already in use (wall|trap) */
-	    } while (x == level.upstair.sx || y == level.upstair.sy ||	/*(direct line)*/
-		     abs(x - level.upstair.sx) == abs(y - level.upstair.sy) ||
-		     distmin(x, y, level.upstair.sx, level.upstair.sy) <= INVPOS_DISTANCE ||
-		     !SPACE_POS(level.locations[x][y].typ) || occupied(x, y));
+	    } while (x == lev->upstair.sx || y == lev->upstair.sy ||	/*(direct line)*/
+		     abs(x - lev->upstair.sx) == abs(y - lev->upstair.sy) ||
+		     distmin(x, y, lev->upstair.sx, lev->upstair.sy) <= INVPOS_DISTANCE ||
+		     !SPACE_POS(lev->locations[x][y].typ) || occupied(lev, x, y));
 	    inv_pos.x = x;
 	    inv_pos.y = y;
 #undef INVPOS_X_MARGIN
@@ -595,63 +595,65 @@ void makemaz(const char *s)
 	}
 
 	/* place branch stair or portal */
-	place_branch(Is_branchlev(&u.uz), 0, 0);
+	place_branch(lev, Is_branchlev(&u.uz), 0, 0);
 
 	for (x = rn1(8,11); x; x--) {
-		mazexy(&mm);
-		mkobj_at(rn2(2) ? GEM_CLASS : 0, mm.x, mm.y, TRUE);
+		mazexy(lev, &mm);
+		mkobj_at(rn2(2) ? GEM_CLASS : 0, lev, mm.x, mm.y, TRUE);
 	}
 	for (x = rn1(10,2); x; x--) {
-		mazexy(&mm);
-		mksobj_at(BOULDER, mm.x, mm.y, TRUE, FALSE);
+		mazexy(lev, &mm);
+		mksobj_at(BOULDER, lev, mm.x, mm.y, TRUE, FALSE);
 	}
 	for (x = rn2(3); x; x--) {
-		mazexy(&mm);
-		makemon(&mons[PM_MINOTAUR], mm.x, mm.y, NO_MM_FLAGS);
+		mazexy(lev, &mm);
+		makemon(&mons[PM_MINOTAUR], lev, mm.x, mm.y, NO_MM_FLAGS);
 	}
 	for (x = rn1(5,7); x; x--) {
-		mazexy(&mm);
-		makemon(NULL, mm.x, mm.y, NO_MM_FLAGS);
+		mazexy(lev, &mm);
+		makemon(NULL, lev, mm.x, mm.y, NO_MM_FLAGS);
 	}
 	for (x = rn1(6,7); x; x--) {
-		mazexy(&mm);
-		mkgold(0L,mm.x,mm.y);
+		mazexy(lev, &mm);
+		mkgold(0L, lev, mm.x, mm.y);
 	}
 	for (x = rn1(6,7); x; x--)
-		mktrap(0,1,NULL, NULL);
+		mktrap(lev, 0, 1, NULL, NULL);
 }
 
-void walkfrom(int x, int y)
+
+void walkfrom(struct level *lev, int x, int y)
 {
 	int q,a,dir;
 	int dirs[4];
 
-	if (!IS_DOOR(level.locations[x][y].typ)) {
+	if (!IS_DOOR(lev->locations[x][y].typ)) {
 	    /* might still be on edge of MAP, so don't overwrite */
 #ifndef WALLIFIED_MAZE
-	    level.locations[x][y].typ = CORR;
+	    lev->locations[x][y].typ = CORR;
 #else
-	    level.locations[x][y].typ = ROOM;
+	    lev->locations[x][y].typ = ROOM;
 #endif
-	    level.locations[x][y].flags = 0;
+	    lev->locations[x][y].flags = 0;
 	}
 
 	while (1) {
 		q = 0;
 		for (a = 0; a < 4; a++)
-			if (okay(x,y,a)) dirs[q++]= a;
+			if (okay(lev, x, y, a)) dirs[q++]= a;
 		if (!q) return;
 		dir = dirs[rn2(q)];
 		move(&x,&y,dir);
 #ifndef WALLIFIED_MAZE
-		level.locations[x][y].typ = CORR;
+		lev->locations[x][y].typ = CORR;
 #else
-		level.locations[x][y].typ = ROOM;
+		lev->locations[x][y].typ = ROOM;
 #endif
 		move(&x,&y,dir);
-		walkfrom(x,y);
+		walkfrom(lev, x,y);
 	}
 }
+
 
 static void move(int *x, int *y, int dir)
 {
@@ -667,7 +669,7 @@ static void move(int *x, int *y, int dir)
 
 /* find random point in generated corridors,
  * so we don't create items in moats, bunkers, or walls */
-void mazexy(coord *cc)
+void mazexy(struct level *lev, coord *cc)
 {
 	int cpt=0;
 
@@ -675,7 +677,7 @@ void mazexy(coord *cc)
 	    cc->x = 3 + 2*rn2((x_maze_max>>1) - 1);
 	    cc->y = 3 + 2*rn2((y_maze_max>>1) - 1);
 	    cpt++;
-	} while (cpt < 100 && level.locations[cc->x][cc->y].typ !=
+	} while (cpt < 100 && lev->locations[cc->x][cc->y].typ !=
 #ifdef WALLIFIED_MAZE
 		 ROOM
 #else
@@ -689,7 +691,7 @@ void mazexy(coord *cc)
 		    for (y = 0; y < (y_maze_max>>1) - 1; y++) {
 			cc->x = 3 + 2 * x;
 			cc->y = 3 + 2 * y;
-			if (level.locations[cc->x][cc->y].typ ==
+			if (lev->locations[cc->x][cc->y].typ ==
 #ifdef WALLIFIED_MAZE
 			    ROOM
 #else
@@ -712,82 +714,82 @@ void mazexy(coord *cc)
  * we can't bound unconditionally on one beyond the last line, because
  * that provides a window of abuse for WALLIFIED_MAZE special levels
  */
-void bound_digging(void)
+void bound_digging(struct level *lev)
 {
 	int x,y;
 	unsigned typ;
-	struct rm *lev;
+	struct rm *loc;
 	boolean found, nonwall;
 	int xmin,xmax,ymin,ymax;
 
-	if (Is_earthlevel(&u.uz)) return; /* everything diggable here */
+	if (Is_earthlevel(&lev->z)) return; /* everything diggable here */
 
 	found = nonwall = FALSE;
 	for (xmin=0; !found; xmin++) {
-		lev = &level.locations[xmin][0];
-		for (y=0; y<=ROWNO-1; y++, lev++) {
-			typ = lev->typ;
+		loc = &lev->locations[xmin][0];
+		for (y=0; y<=ROWNO-1; y++, loc++) {
+			typ = loc->typ;
 			if (typ != STONE) {
 				found = TRUE;
 				if (!IS_WALL(typ)) nonwall = TRUE;
 			}
 		}
 	}
-	xmin -= (nonwall || !level.flags.is_maze_lev) ? 2 : 1;
+	xmin -= (nonwall || !lev->flags.is_maze_lev) ? 2 : 1;
 	if (xmin < 0) xmin = 0;
 
 	found = nonwall = FALSE;
 	for (xmax=COLNO-1; !found; xmax--) {
-		lev = &level.locations[xmax][0];
-		for (y=0; y<=ROWNO-1; y++, lev++) {
-			typ = lev->typ;
+		loc = &lev->locations[xmax][0];
+		for (y=0; y<=ROWNO-1; y++, loc++) {
+			typ = loc->typ;
 			if (typ != STONE) {
 				found = TRUE;
 				if (!IS_WALL(typ)) nonwall = TRUE;
 			}
 		}
 	}
-	xmax += (nonwall || !level.flags.is_maze_lev) ? 2 : 1;
+	xmax += (nonwall || !lev->flags.is_maze_lev) ? 2 : 1;
 	if (xmax >= COLNO) xmax = COLNO-1;
 
 	found = nonwall = FALSE;
 	for (ymin=0; !found; ymin++) {
-		lev = &level.locations[xmin][ymin];
-		for (x=xmin; x<=xmax; x++, lev += ROWNO) {
-			typ = lev->typ;
+		loc = &lev->locations[xmin][ymin];
+		for (x=xmin; x<=xmax; x++, loc += ROWNO) {
+			typ = loc->typ;
 			if (typ != STONE) {
 				found = TRUE;
 				if (!IS_WALL(typ)) nonwall = TRUE;
 			}
 		}
 	}
-	ymin -= (nonwall || !level.flags.is_maze_lev) ? 2 : 1;
+	ymin -= (nonwall || !lev->flags.is_maze_lev) ? 2 : 1;
 
 	found = nonwall = FALSE;
 	for (ymax=ROWNO-1; !found; ymax--) {
-		lev = &level.locations[xmin][ymax];
-		for (x=xmin; x<=xmax; x++, lev += ROWNO) {
-			typ = lev->typ;
+		loc = &lev->locations[xmin][ymax];
+		for (x=xmin; x<=xmax; x++, loc += ROWNO) {
+			typ = loc->typ;
 			if (typ != STONE) {
 				found = TRUE;
 				if (!IS_WALL(typ)) nonwall = TRUE;
 			}
 		}
 	}
-	ymax += (nonwall || !level.flags.is_maze_lev) ? 2 : 1;
+	ymax += (nonwall || !lev->flags.is_maze_lev) ? 2 : 1;
 
 	for (x = 0; x < COLNO; x++)
 	  for (y = 0; y < ROWNO; y++)
 	    if (y <= ymin || y >= ymax || x <= xmin || x >= xmax) {
-		level.locations[x][y].wall_info |= W_NONDIGGABLE;
+		lev->locations[x][y].wall_info |= W_NONDIGGABLE;
 	    }
 }
 
-void mkportal(xchar x, xchar y, xchar todnum, xchar todlevel)
+void mkportal(struct level *lev, xchar x, xchar y, xchar todnum, xchar todlevel)
 {
 	/* a portal "trap" must be matched by a */
 	/* portal in the destination dungeon/dlevel */
-	struct trap *ttmp = maketrap(x, y, MAGIC_PORTAL);
+	struct trap *ttmp = maketrap(lev, x, y, MAGIC_PORTAL);
 
 	if (!ttmp) {
 		impossible("portal on top of portal??");
@@ -825,8 +827,8 @@ static int xmin, ymin, xmax, ymax;	/* level boundaries */
 #define bymax (ymax - 1)
 
 static void set_wportal(void);
-static void mk_bubble(int,int,int);
-static void mv_bubble(struct bubble *,int,int,boolean);
+static void mk_bubble(struct level *lev, int x, int y, int n);
+static void mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini);
 
 void movebubbles(void)
 {
@@ -860,12 +862,12 @@ void movebubbles(void)
 			}
 
 			/* pick up objects, monsters, hero, and traps */
-			if (OBJ_AT(x,y)) {
+			if (OBJ_AT(x, y)) {
 			    struct obj *olist = NULL, *otmp;
 			    struct container *cons =
 				malloc(sizeof(struct container));
 
-			    while ((otmp = level.objects[x][y]) != 0) {
+			    while ((otmp = level->objects[x][y]) != 0) {
 				remove_object(otmp);
 				otmp->ox = otmp->oy = 0;
 				otmp->nexthere = olist;
@@ -879,8 +881,8 @@ void movebubbles(void)
 			    cons->next = b->cons;
 			    b->cons = cons;
 			}
-			if (MON_AT(x,y)) {
-			    struct monst *mon = m_at(x,y);
+			if (MON_AT(level, x,y)) {
+			    struct monst *mon = m_at(level, x,y);
 			    struct container *cons =
 				malloc(sizeof(struct container));
 
@@ -912,7 +914,7 @@ void movebubbles(void)
 			    cons->next = b->cons;
 			    b->cons = cons;
 			}
-			if ((btrap = t_at(x,y)) != 0) {
+			if ((btrap = t_at(level, x, y)) != 0) {
 			    struct container *cons =
 				malloc(sizeof(struct container));
 
@@ -925,7 +927,7 @@ void movebubbles(void)
 			    b->cons = cons;
 			}
 
-			level.locations[x][y] = water_pos;
+			level->locations[x][y] = water_pos;
 			block_point(x,y);
 		    }
 	}
@@ -940,7 +942,7 @@ void movebubbles(void)
 	for (b = up ? bbubbles : ebubbles; b; b = up ? b->next : b->prev) {
 		int rx = rn2(3), ry = rn2(3);
 
-		mv_bubble(b,b->dx + 1 - (!b->dx ? rx : (rx ? 1 : 0)),
+		mv_bubble(level, b, b->dx + 1 - (!b->dx ? rx : (rx ? 1 : 0)),
 			    b->dy + 1 - (!b->dy ? ry : (ry ? 1 : 0)),
 			    FALSE);
 	}
@@ -965,7 +967,7 @@ void water_friction(schar *udx, schar *udy)
 		do {
 		    dy = rn2(3) - 1;		/* -1, 0, 1 */
 		    y = u.uy + dy;
-		} while (dy && (!isok(x,y) || !is_pool(x,y)));
+		} while (dy && (!isok(x,y) || !is_pool(level, x,y)));
 		*udx = 0;
 		*udy = dy;
 		eff = TRUE;
@@ -975,7 +977,7 @@ void water_friction(schar *udx, schar *udy)
 		do {
 		    dx = rn2(3) - 1;		/* -1 .. 1 */
 		    x = u.ux + dx;
-		} while (dx && (!isok(x,y) || !is_pool(x,y)));
+		} while (dx && (!isok(x,y) || !is_pool(level, x,y)));
 		*udy = 0;
 		*udx = dx;
 		eff = TRUE;
@@ -1029,7 +1031,7 @@ void restore_waterlevel(int fd)
 			bbubbles = b;
 			b->prev = NULL;
 		}
-		mv_bubble(b,0,0,TRUE);
+		mv_bubble(level, b, 0, 0, TRUE);
 	}
 	ebubbles = b;
 	b->next = NULL;
@@ -1038,23 +1040,23 @@ void restore_waterlevel(int fd)
 
 const char *waterbody_name(xchar x, xchar y)
 {
-	struct rm *lev;
+	struct rm *loc;
 	schar ltyp;
 
 	if (!isok(x,y))
 		return "drink";		/* should never happen */
-	lev = &level.locations[x][y];
-	ltyp = lev->typ;
+	loc = &level->locations[x][y];
+	ltyp = loc->typ;
 
-	if (is_lava(x,y))
+	if (is_lava(level, x,y))
 		return "lava";
 	else if (ltyp == ICE ||
 		 (ltyp == DRAWBRIDGE_UP &&
-		  (level.locations[x][y].drawbridgemask & DB_UNDER) == DB_ICE))
+		  (level->locations[x][y].drawbridgemask & DB_UNDER) == DB_ICE))
 		return "ice";
 	else if (((ltyp != POOL) && (ltyp != WATER) &&
 	  !Is_medusa_level(&u.uz) && !Is_waterlevel(&u.uz) && !Is_juiblex_level(&u.uz)) ||
-	   (ltyp == DRAWBRIDGE_UP && (level.locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT))
+	   (ltyp == DRAWBRIDGE_UP && (level->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT))
 		return "moat";
 	else if ((ltyp != POOL) && (ltyp != WATER) && Is_juiblex_level(&u.uz))
 		return "swamp";
@@ -1066,12 +1068,12 @@ const char *waterbody_name(xchar x, xchar y)
 static void set_wportal(void)
 {
 	/* there better be only one magic portal on water level... */
-	for (wportal = level.lev_traps; wportal; wportal = wportal->ntrap)
+	for (wportal = level->lev_traps; wportal; wportal = wportal->ntrap)
 		if (wportal->ttyp == MAGIC_PORTAL) return;
 	impossible("set_wportal(): no portal!");
 }
 
-static void setup_waterlevel(void)
+static void setup_waterlevel(struct level *lev)
 {
 	int x, y;
 	int xskip, yskip;
@@ -1087,7 +1089,7 @@ static void setup_waterlevel(void)
 
 	for (x = xmin; x <= xmax; x++)
 		for (y = ymin; y <= ymax; y++)
-			level.locations[x][y].mem_bg = S_water;
+			lev->locations[x][y].mem_bg = S_water;
 
 	/* make bubbles */
 
@@ -1095,7 +1097,7 @@ static void setup_waterlevel(void)
 	yskip = 4 + rn2(4);
 	for (x = bxmin; x <= bxmax; x += xskip)
 		for (y = bymin; y <= bymax; y += yskip)
-			mk_bubble(x,y,rn2(7));
+			mk_bubble(lev, x, y, rn2(7));
 }
 
 static void unsetup_waterlevel(void)
@@ -1111,7 +1113,7 @@ static void unsetup_waterlevel(void)
 	bbubbles = ebubbles = NULL;
 }
 
-static void mk_bubble(int x, int y, int n)
+static void mk_bubble(struct level *lev, int x, int y, int n)
 {
 	/*
 	 * These bit masks make visually pleasing bubbles on a normal aspect
@@ -1155,7 +1157,7 @@ static void mk_bubble(int x, int y, int n)
 		b->prev = NULL;
 	b->next =  NULL;
 	ebubbles = b;
-	mv_bubble(b,0,0,TRUE);
+	mv_bubble(lev, b,0,0,TRUE);
 }
 
 /*
@@ -1166,7 +1168,7 @@ static void mk_bubble(int x, int y, int n)
  * in the immediate neighborhood of one, he/she may get sucked inside.
  * This property also makes leaving a bubble slightly difficult.
  */
-static void mv_bubble(struct bubble *b, int dx, int dy, boolean ini)
+static void mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini)
 {
 	int x, y, i, j, colli = 0;
 	struct container *cons, *ctemp;
@@ -1220,8 +1222,8 @@ static void mv_bubble(struct bubble *b, int dx, int dy, boolean ini)
 	for (i = 0, x = b->x; i < (int) b->bm[0]; i++, x++)
 	    for (j = 0, y = b->y; j < (int) b->bm[1]; j++, y++)
 		if (b->bm[j + 2] & (1 << i)) {
-		    level.locations[x][y].typ = AIR;
-		    level.locations[x][y].lit = 1;
+		    lev->locations[x][y].typ = AIR;
+		    lev->locations[x][y].lit = 1;
 		    unblock_point(x,y);
 		}
 
@@ -1237,7 +1239,7 @@ static void mv_bubble(struct bubble *b, int dx, int dy, boolean ini)
 
 		    for (olist=(struct obj *)cons->list; olist; olist=otmp) {
 			otmp = olist->nexthere;
-			place_object(olist, cons->x, cons->y);
+			place_object(olist, lev, cons->x, cons->y);
 		    }
 		    break;
 		}
@@ -1256,8 +1258,8 @@ static void mv_bubble(struct bubble *b, int dx, int dy, boolean ini)
 		    u.uy = cons->y;
 		    newsym(ux0, uy0);	/* clean up old position */
 
-		    if (MON_AT(cons->x, cons->y)) {
-				mnexto(m_at(cons->x,cons->y));
+		    if (MON_AT(lev, cons->x, cons->y)) {
+				mnexto(m_at(lev, cons->x,cons->y));
 			}
 		    break;
 		}

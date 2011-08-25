@@ -37,7 +37,7 @@ int dosit(void)
 {
 	static const char sit_message[] = "sit on the %s.";
 	struct trap *trap;
-	int typ = level.locations[u.ux][u.uy].typ;
+	int typ = level->locations[u.ux][u.uy].typ;
 
 
 	if (u.usteed) {
@@ -51,19 +51,19 @@ int dosit(void)
 	    else
 		You("are sitting on air.");
 	    return 0;
-	} else if (is_pool(u.ux, u.uy) && !Underwater) {  /* water walking */
+	} else if (is_pool(level, u.ux, u.uy) && !Underwater) {  /* water walking */
 	    goto in_water;
 	}
 
 	if (OBJ_AT(u.ux, u.uy)) {
 	    struct obj *obj;
 
-	    obj = level.objects[u.ux][u.uy];
+	    obj = level->objects[u.ux][u.uy];
 	    You("sit on %s.", the(xname(obj)));
 	    if (!(Is_box(obj) || objects[obj->otyp].oc_material == CLOTH))
 		pline("It's not very comfortable...");
 
-	} else if ((trap = t_at(u.ux, u.uy)) != 0 ||
+	} else if ((trap = t_at(level, u.ux, u.uy)) != 0 ||
 		   (u.utrap && (u.utraptype >= TT_LAVA))) {
 
 	    if (u.utrap) {
@@ -100,7 +100,7 @@ int dosit(void)
 		There("are no cushions floating nearby.");
 	    else
 		You("sit down on the muddy bottom.");
-	} else if (is_pool(u.ux, u.uy)) {
+	} else if (is_pool(level, u.ux, u.uy)) {
  in_water:
 	    You("sit in the water.");
 	    if (!rn2(10) && uarm)
@@ -128,7 +128,7 @@ int dosit(void)
 
 	    You(sit_message, "ladder");
 
-	} else if (is_lava(u.ux, u.uy)) {
+	} else if (is_lava(level, u.ux, u.uy)) {
 
 	    /* must be WWalking */
 	    You(sit_message, "lava");
@@ -141,7 +141,7 @@ int dosit(void)
 	    losehp(dice((Fire_resistance ? 2 : 10), 10),
 		   "sitting on lava", KILLED_BY);
 
-	} else if (is_ice(u.ux, u.uy)) {
+	} else if (is_ice(level, u.ux, u.uy)) {
 
 	    You(sit_message, defexplain[S_ice]);
 	    if (!Cold_resistance) pline_The("ice feels cold.");
@@ -199,7 +199,7 @@ int dosit(void)
 			verbalize("Thy audience hath been summoned, %s!",
 				  flags.female ? "Dame" : "Sire");
 			while (cnt--)
-			    makemon(courtmon(), u.ux, u.uy, NO_MM_FLAGS);
+			    makemon(courtmon(), level, u.ux, u.uy, NO_MM_FLAGS);
 			break;
 			}
 		    case 8:
@@ -217,7 +217,7 @@ int dosit(void)
 			break;
 		    case 10:
 			if (Luck < 0 || (HSee_invisible & INTRINSIC))  {
-				if (level.flags.nommap) {
+				if (level->flags.nommap) {
 					pline(
 					"A terrible drone fills your head!");
 					make_confused(HConfusion + rnd(30),
@@ -263,9 +263,9 @@ int dosit(void)
 		    You_feel("somehow out of place...");
 	    }
 
-	    if (!rn2(3) && IS_THRONE(level.locations[u.ux][u.uy].typ)) {
+	    if (!rn2(3) && IS_THRONE(level->locations[u.ux][u.uy].typ)) {
 		/* may have teleported */
-		level.locations[u.ux][u.uy].typ = ROOM;
+		level->locations[u.ux][u.uy].typ = ROOM;
 		pline_The("throne vanishes in a puff of logic.");
 		newsym(u.ux,u.uy);
 	    }
@@ -283,7 +283,7 @@ int dosit(void)
 			return 0;
 		}
 
-		uegg = mksobj(EGG, FALSE, FALSE);
+		uegg = mksobj(level, EGG, FALSE, FALSE);
 		uegg->spe = 1;
 		uegg->quan = 1;
 		uegg->owt = weight(uegg);

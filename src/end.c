@@ -610,7 +610,7 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 
 		    if (count == 0L) continue;
 		    if (objects[typ].oc_class != GEM_CLASS || typ <= LAST_GEM) {
-			otmp = mksobj(typ, FALSE, FALSE);
+			otmp = mksobj(level, typ, FALSE, FALSE);
 			makeknown(otmp->otyp);
 			otmp->known = 1;	/* for fake amulets */
 			otmp->dknown = 1;	/* seen it (blindness fix) */
@@ -705,7 +705,7 @@ void done(int how)
 	if (moves <= 1 && how < PANICKED)	/* You die... --More-- */
 	    pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
 
-	bones_ok = (how < GENOCIDED) && can_make_bones();
+	bones_ok = (how < GENOCIDED) && can_make_bones(&u.uz);
 
 	if (how == TURNED_SLIME)
 	    u.ugrave_arise = PM_GREEN_SLIME;
@@ -734,7 +734,7 @@ void done(int how)
 			killer_format == NO_KILLER_PREFIX ? "" :
 			killed_by_prefix[how],
 			killer_format == KILLED_BY_AN ? an(killer) : killer);
-		make_grave(u.ux, u.uy, pbuf);
+		make_grave(level, u.ux, u.uy, pbuf);
 	    }
 	}
 
