@@ -148,6 +148,7 @@ static void make_player_info(struct nh_player_info *pi)
 	
 	pi->moves = moves;
 	strncpy(pi->plname, plname, sizeof(pi->plname));
+	pi->align = u.ualign.type;
 	
 	/* This function could be called before the game is fully inited.
 	 * Test youmonst.data as it is required for near_capacity().
