@@ -178,7 +178,7 @@ static void realtime_tasks(void)
 	change_luck(1);
     } else if (flags.moonphase != FULL_MOON && prev_moonphase == FULL_MOON) {
 	change_luck(-1);
-    } else if (flags.moonphase == NEW_MOON && prev_moonphase != FULL_MOON) {
+    } else if (flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) {
 	pline("Be careful!  New moon tonight.");
     }
     
