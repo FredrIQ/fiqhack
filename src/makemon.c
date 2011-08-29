@@ -7,8 +7,6 @@
 #include "edog.h"
 #include <ctype.h>
 
-static struct monst zeromonst;
-
 /* this assumes that a human quest leader or nemesis is an archetype
    of the corresponding role; that isn't so for some roles (tourist
    for instance) but is for the priests and monks we use it for... */
@@ -846,8 +844,7 @@ struct monst *makemon(const struct permonst *ptr,
 	    xlth += sizeof(struct emin);
 	
 	mtmp = newmonst(xlth);
-	*mtmp = zeromonst;		/* clear all entries in structure */
-	memset(mtmp->mextra, 0, xlth);
+	memset(mtmp, 0, sizeof(struct monst) + xlth);
 	mtmp->nmon = lev->monlist;
 	lev->monlist = mtmp;
 	mtmp->m_id = flags.ident++;

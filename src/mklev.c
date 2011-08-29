@@ -18,7 +18,6 @@ static void mksink(struct level *lev, struct mkroom *);
 static void mkaltar(struct level *lev, struct mkroom *);
 static void mkgrave(struct level *lev, struct mkroom *);
 static void makevtele(struct level *lev);
-static struct level *alloc_level(d_level *levnum);
 static void makelevel(struct level *lev);
 static void mineralize(struct level *lev);
 static boolean bydoor(struct level *lev, xchar,xchar);
@@ -478,12 +477,13 @@ static void makevtele(struct level *lev)
  * special) but it's easier to put it all in one place than make sure
  * each type initializes what it needs to separately.
  */
-static struct level *alloc_level(d_level *levnum)
+struct level *alloc_level(d_level *levnum)
 {
 	struct level *lev = malloc(sizeof(struct level));
 	
 	memset(lev, 0, sizeof(struct level));
-	lev->z = *levnum;
+	if (levnum)
+	    lev->z = *levnum;
 	lev->subrooms = &lev->rooms[MAXNROFROOMS+1]; /* compat */
 	lev->rooms[0].hx = -1;
 	lev->subrooms[0].hx = -1;
@@ -799,11 +799,11 @@ struct level *mklev(d_level *levnum)
 	if (levels[ln])
 	    return levels[ln];
 	
+	if (getbones(levnum))
+	    return levels[ln]; /* initialized in getbones->getlev */
+	
 	lev = levels[ln] = alloc_level(levnum);
 
-	if (getbones(lev))
-	    return lev;
-	
 	in_mklev = TRUE;
 	makelevel(lev);
 	bound_digging(lev);

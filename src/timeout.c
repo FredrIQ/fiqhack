@@ -1200,7 +1200,7 @@ static timer_element *remove_timer(timer_element **, short,void *);
 static void write_timer(int, timer_element *);
 static boolean mon_is_local(struct monst *);
 static boolean timer_is_local(timer_element *);
-static int maybe_write_timer(int, int, boolean);
+static int maybe_write_timer(int fd, struct level *lev, int range, boolean write_it);
 
 /* ordered timer list */
 static unsigned long timer_id = 1;
@@ -1564,12 +1564,12 @@ static boolean timer_is_local(timer_element *timer)
  * Part of the save routine.  Count up the number of timers that would
  * be written.  If write_it is true, actually write the timer.
  */
-static int maybe_write_timer(int fd, int range, boolean write_it)
+static int maybe_write_timer(int fd, struct level *lev, int range, boolean write_it)
 {
     int count = 0;
     timer_element *curr;
 
-    for (curr = level->lev_timers; curr; curr = curr->next) {
+    for (curr = lev->lev_timers; curr; curr = curr->next) {
 	if (range == RANGE_GLOBAL) {
 	    /* global timers */
 
@@ -1638,9 +1638,9 @@ void save_timers(int fd, struct level *lev, int mode, int range)
 	if (range == RANGE_GLOBAL)
 	    bwrite(fd, &timer_id, sizeof(timer_id));
 
-	count = maybe_write_timer(fd, range, FALSE);
+	count = maybe_write_timer(fd, lev, range, FALSE);
 	bwrite(fd, &count, sizeof count);
-	maybe_write_timer(fd, range, TRUE);
+	maybe_write_timer(fd, lev, range, TRUE);
     }
 
     if (release_data(mode)) {
@@ -1689,12 +1689,12 @@ void restore_timers(int fd, struct level *lev, int range,
 
 
 /* reset all timers that are marked for reseting */
-void relink_timers(boolean ghostly)
+void relink_timers(boolean ghostly, struct level *lev)
 {
     timer_element *curr;
     unsigned nid;
 
-    for (curr = level->lev_timers; curr; curr = curr->next) {
+    for (curr = lev->lev_timers; curr; curr = curr->next) {
 	if (curr->needs_fixup) {
 	    if (curr->kind == TIMER_OBJECT) {
 		if (ghostly) {

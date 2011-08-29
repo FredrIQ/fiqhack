@@ -1209,7 +1209,7 @@ void obj_extract_self(struct obj *obj)
 	    extract_nobj(obj, &obj->olev->buriedobjlist);
 	    break;
 	case OBJ_ONBILL:
-	    extract_nobj(obj, &billobjs);
+	    extract_nobj(obj, &obj->olev->billobjs);
 	    break;
 	default:
 	    panic("obj_extract_self");
@@ -1434,7 +1434,7 @@ void obj_sanity_check(void)
     }
 
     mesg = "bill sanity";
-    for (obj = billobjs; obj; obj = obj->nobj) {
+    for (obj = level->billobjs; obj; obj = obj->nobj) {
 	if (obj->where != OBJ_ONBILL) {
 	    pline("%s obj %p %s: %s\n", mesg,
 		obj, where_name(obj->where), doname(obj));

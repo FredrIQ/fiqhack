@@ -60,6 +60,7 @@ static void dropped_container(struct obj *, struct monst *,boolean);
 static void add_to_billobjs(struct obj *);
 static void bill_box_content(struct obj *, boolean, boolean,struct monst *);
 static boolean rob_shop(struct monst *);
+static struct obj *find_oid_lev(struct level *lev, unsigned id);
 /*
 	invariants: obj->unpaid iff onbill(obj) [unless bp->useup]
 		obj->quan <= bp->bquan
@@ -256,7 +257,7 @@ static void setpaid(struct monst *shkp)
 	for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)
 		clear_unpaid(mtmp->minvent);
 
-	while ((obj = billobjs) != 0) {
+	while ((obj = level->billobjs) != 0) {
 		obj_extract_self(obj);
 		dealloc_obj(obj);
 	}
@@ -1664,37 +1665,54 @@ static struct obj *bp_to_obj(struct bill_x *bp)
 	unsigned int id = bp->bo_id;
 
 	if (bp->useup)
-		obj = o_on(id, billobjs);
+		obj = o_on(id, level->billobjs);
 	else
 		obj = find_oid(id);
 	return obj;
 }
 
+
+static struct obj *find_oid_lev(struct level *lev, unsigned id)
+{
+	struct obj *obj;
+	struct monst *mon;
+	if ((obj = o_on(id, lev->objlist)) != 0) return obj;
+	if ((obj = o_on(id, lev->buriedobjlist)) != 0) return obj;
+	
+	for (mon = lev->monlist; mon; mon = mon->nmon)
+	    if ((obj = o_on(id, mon->minvent)) != 0) return obj;
+
+	return NULL;
+}
+
 /*
  * Look for o_id on all lists but billobj.  Return obj or NULL if not found.
- * Its OK for restore_timers() to call this function, there should not
+ * It's OK for restore_timers() to call this function, there should not
  * be any timeouts on the billobjs chain.
  */
 struct obj *find_oid(unsigned id)
 {
 	struct obj *obj;
-	struct monst *mon, *mmtmp[3];
+	struct monst *mon;
 	int i;
+	
+	/* try searching the current level, if any */
+	if (level && (obj = find_oid_lev(level, id))) return obj;
 
 	/* first check various obj lists directly */
-	if ((obj = o_on(id, invent)) != 0) return obj;
-	if ((obj = o_on(id, level->objlist)) != 0) return obj;
-	if ((obj = o_on(id, level->buriedobjlist)) != 0) return obj;
-	if ((obj = o_on(id, migrating_objs)) != 0) return obj;
+	if ((obj = o_on(id, invent))) return obj;
+	if ((obj = o_on(id, migrating_objs))) return obj;
 
 	/* not found yet; check inventory for members of various monst lists */
-	mmtmp[0] = level->monlist;
-	mmtmp[1] = migrating_mons;
-	mmtmp[2] = mydogs;		/* for use during level changes */
-	for (i = 0; i < 3; i++)
-	    for (mon = mmtmp[i]; mon; mon = mon->nmon)
-		if ((obj = o_on(id, mon->minvent)) != 0) return obj;
+	for (mon = migrating_mons; mon; mon = mon->nmon)
+	    if ((obj = o_on(id, mon->minvent))) return obj;
+	for (mon = mydogs; mon; mon = mon->nmon)
+	    if ((obj = o_on(id, mon->minvent))) return obj;
 
+	/* search all levels */
+	for (i = 0; i < maxledgerno(); i++)
+	    if (levels[i] && (obj = find_oid_lev(levels[i], id))) return obj;
+	    
 	/* not found at all */
 	return NULL;
 }
@@ -1949,8 +1967,8 @@ static void add_to_billobjs(struct obj *obj)
     if (obj->timed)
 	obj_stop_timers(obj);
 
-    obj->nobj = billobjs;
-    billobjs = obj;
+    obj->nobj = obj->olev->billobjs;
+    obj->olev->billobjs = obj;
     obj->where = OBJ_ONBILL;
 }
 

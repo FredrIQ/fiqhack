@@ -448,6 +448,7 @@ struct level {
     struct monst	*monsters[COLNO][ROWNO];
     struct obj		*objlist;
     struct obj		*buriedobjlist;
+    struct obj		*billobjs; /* objects not yet paid for */
     struct monst	*monlist;
     struct damage	*damagelist;
     struct levelflags	flags;

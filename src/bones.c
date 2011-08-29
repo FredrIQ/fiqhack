@@ -13,10 +13,7 @@ static void drop_upon_death(struct monst *, struct obj *);
 
 static boolean no_bones_level(d_level *lev)
 {
-	extern d_level save_dlevel;		/* in do.c */
 	s_level *sptr;
-
-	if (ledger_no(&save_dlevel)) assign_level(lev, &save_dlevel);
 
 	return (boolean)(((sptr = Is_special(lev)) != 0 && !sptr->boneid)
 		|| !dungeons[lev->dnum].boneid
@@ -306,12 +303,13 @@ void savebones(struct obj *corpse)
 	bwrite(fd, bonesid, (unsigned) c);	/* DD.nnn */
 	savefruitchn(fd, WRITE_SAVE | FREE_SAVE);
 	update_mlstmv();	/* update monsters for eventual restoration */
-	savelev(fd, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
+	savelev(fd, level, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
 	close(fd);
 	commit_bonesfile(&u.uz);
 }
 
-int getbones(struct level *lev)
+
+int getbones(d_level *levnum)
 {
 	int fd;
 	int ok;
@@ -324,8 +322,8 @@ int getbones(struct level *lev)
 	if (rn2(3)	/* only once in three times do we find bones */
 		&& !wizard)
 		return 0;
-	if (no_bones_level(&lev->z)) return 0;
-	fd = open_bonesfile(&lev->z, &bonesid);
+	if (no_bones_level(levnum)) return 0;
+	fd = open_bonesfile(levnum, &bonesid);
 	if (fd < 0) return 0;
 
 	if ((ok = uptodate(fd, bones)) == 0) {
@@ -357,7 +355,7 @@ int getbones(struct level *lev)
 		} else {
 			struct monst *mtmp;
 
-			getlev(fd, 0, 0, TRUE);
+			getlev(fd, 0, TRUE);
 
 			/* Note that getlev() now keeps tabs on unique
 			 * monsters such as demon lords, and tracks the
@@ -389,7 +387,7 @@ int getbones(struct level *lev)
 			return ok;
 		}
 	}
-	if (!delete_bonesfile(&lev->z)) {
+	if (!delete_bonesfile(levnum)) {
 		/* When N games try to simultaneously restore the same
 		 * bones file, N-1 of them will fail to delete it
 		 * (the first N-1 under AmigaDOS, the last N-1 under UNIX).

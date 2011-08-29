@@ -132,8 +132,9 @@ long wailmsg;
 
 /* objects that are moving to another dungeon level */
 struct obj *migrating_objs;
-/* objects not yet paid for */
-struct obj *billobjs;
+
+/* last/current book being read */
+struct obj *book;
 
 /* used to zero all elements of a struct obj */
 struct obj zeroobj;
@@ -252,7 +253,7 @@ void init_data(void)
     current_wand = invent = uwep = uarm = uswapwep = uquiver = uarmu = uskin =
 	uarmc = uarmh = uarms = uarmg = uarmf = uamul = uright = uleft =
 	ublindf = uchain = uball = NULL;
-    migrating_objs = billobjs = NULL;
+    migrating_objs = book = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = moves = 0;
     bhitpos.x = bhitpos.y = 0;

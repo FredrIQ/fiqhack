@@ -101,7 +101,7 @@ extern void drag_down(void);
 
 extern boolean can_make_bones(d_level *lev);
 extern void savebones(struct obj *);
-extern int getbones(struct level *lev);
+extern int getbones(d_level *levnum);
 
 /* ### botl.c ### */
 
@@ -422,6 +422,8 @@ extern void food_substitution(struct obj *,struct obj *);
 extern void fix_petrification(void);
 extern void consume_oeaten(struct obj *,int);
 extern boolean maybe_finished_meal(boolean);
+extern void save_food(int fd);
+extern void restore_food(int fd);
 
 /* ### end.c ### */
 
@@ -448,8 +450,8 @@ extern void make_engr_at(struct level *lev, int,int,const char *,long,xchar);
 extern void del_engr_at(struct level *lev, int,int);
 extern int freehand(void);
 extern int doengrave(void);
-extern void save_engravings(int,int);
-extern void rest_engravings(int);
+extern void save_engravings(int fd, struct level *lev, int mode);
+extern void rest_engravings(int fd, struct level *lev);
 extern void del_engr(struct engr *);
 extern void rloc_engr(struct engr *);
 extern void make_grave(struct level *lev, int x, int y, const char *str);
@@ -669,11 +671,11 @@ extern void new_light_source(struct level *lev, xchar x, xchar y,
 			     int range, int type, void *id);
 extern void del_light_source(struct level *lev, int type, void *id);
 extern void do_light_sources(char **);
-extern struct monst *find_mid(unsigned, unsigned);
+extern struct monst *find_mid(struct level *lev, unsigned nid, unsigned fmflags);
 extern void transfer_lights(struct level *oldlev, struct level *newlev);
-extern void save_light_sources(int, int, int);
-extern void restore_light_sources(int);
-extern void relink_light_sources(boolean);
+extern void save_light_sources(int fd, struct level *lev, int mode, int range);
+extern void restore_light_sources(int fd, struct level *lev);
+extern void relink_light_sources(boolean ghostly, struct level *lev);
 extern void obj_move_light_source(struct obj *, struct obj *);
 extern boolean any_light_source(void);
 extern void snuff_light_source(int, int);
@@ -792,6 +794,7 @@ extern int lminion(void);
 
 /* ### mklev.c ### */
 
+extern struct level *alloc_level(d_level *levnum);
 extern void sort_rooms(struct level *lev);
 extern void add_room(struct level *lev,int,int,int,int,boolean,schar,boolean);
 extern void add_subroom(struct level *lev,struct mkroom *,int,int,int,int,
@@ -892,8 +895,8 @@ extern boolean inside_room(struct mkroom *,xchar,xchar);
 extern boolean somexy(struct level *lev, struct mkroom *,coord *);
 extern void mkundead(coord *,boolean,int);
 extern const struct permonst *courtmon(void);
-extern void save_rooms(int);
-extern void rest_rooms(int);
+extern void save_rooms(int fd, struct level *lev);
+extern void rest_rooms(int fd, struct level *lev);
 extern struct mkroom *search_special(struct level *lev, schar type);
 
 /* ### mon.c ### */
@@ -1334,7 +1337,7 @@ extern struct region* create_gas_cloud(struct level *lev, xchar, xchar, int, lon
 extern void inven_inuse(boolean);
 extern int dorecover(int);
 extern void trickery(char *);
-extern void getlev(int fd, int pid, xchar levnum, boolean ghostly);
+extern struct level *getlev(int fd, xchar levnum, boolean ghostly);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
 extern void mread(int,void *,unsigned int);
 
@@ -1379,7 +1382,7 @@ extern int doconsult(struct monst *);
 
 extern int dosave(void);
 extern int dosave0(boolean emergency);
-extern void savelev(int,xchar,int);
+extern void savelev(int fd, struct level *lev, xchar levnum, int mode);
 extern void bwrite(int,void *,unsigned int);
 extern void savefruitchn(int,int);
 extern void free_dungeons(void);
@@ -1414,7 +1417,7 @@ extern void make_angry_shk(struct monst *,xchar,xchar);
 extern int dopay(void);
 extern boolean paybill(int);
 extern void finish_paybill(void);
-extern struct obj *find_oid(unsigned);
+extern struct obj *find_oid(unsigned id);
 extern long contained_cost(struct obj *,struct monst *,long,boolean, boolean);
 extern long contained_gold(struct obj *);
 extern void picked_container(struct obj *);
@@ -1584,7 +1587,7 @@ extern void transfer_timers(struct level *oldlev, struct level *newlev);
 extern void save_timers(int fd, struct level *lev, int mode, int range);
 extern void restore_timers(int fd, struct level *lev, int range,
 		           boolean ghostly, long adjust);
-extern void relink_timers(boolean);
+extern void relink_timers(boolean ghostly, struct level *lev);
 extern int wiz_timeout_queue(void);
 extern void timer_sanity_check(void);
 
@@ -1775,8 +1778,8 @@ extern void wormhitu(struct monst *);
 extern void cutworm(struct monst *,xchar,xchar,struct obj *);
 extern void see_wsegs(struct monst *);
 extern void detect_wsegs(struct monst *,boolean);
-extern void save_worm(int,int);
-extern void rest_worm(int);
+extern void save_worm(int fd, struct level *lev, int mode);
+extern void rest_worm(int fd, struct level *lev);
 extern void place_wsegs(struct monst *);
 extern void remove_worm(struct monst *);
 extern void place_worm_tail_randomly(struct monst *,xchar,xchar);

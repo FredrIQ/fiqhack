@@ -607,9 +607,8 @@ struct monst *revive(struct obj *obj)
 			if (obj->oxlth && (obj->oattached == OATTACHED_M_ID)) {
 			    unsigned m_id;
 			    struct monst *ghost;
-			    memcpy(&m_id,
-				    obj->oextra, sizeof(m_id));
-			    ghost = find_mid(m_id, FM_FMON);
+			    memcpy(&m_id, obj->oextra, sizeof(m_id));
+			    ghost = find_mid(level, m_id, FM_FMON);
 			    if (ghost && ghost->data == &mons[PM_GHOST]) {
 				    int x2, y2;
 				    x2 = ghost->mx; y2 = ghost->my;

@@ -317,6 +317,7 @@ void make_engr_at(struct level *lev, int x, int y,
 	if ((ep = engr_at(lev, x,y)) != 0)
 	    del_engr(ep);
 	ep = newengr(strlen(s) + 1);
+	memset(ep, 0, sizeof(struct engr) + strlen(s) + 1);
 	ep->nxt_engr = lev->lev_engr;
 	lev->lev_engr = ep;
 	ep->engr_x = x;
@@ -1061,9 +1062,9 @@ int doengrave(void)
 	return 1;
 }
 
-void save_engravings(int fd, int mode)
+void save_engravings(int fd, struct level *lev, int mode)
 {
-	struct engr *ep = level->lev_engr;
+	struct engr *ep = lev->lev_engr;
 	struct engr *ep2;
 	unsigned no_more_engr = 0;
 
@@ -1080,22 +1081,22 @@ void save_engravings(int fd, int mode)
 	if (perform_bwrite(mode))
 	    bwrite(fd, &no_more_engr, sizeof no_more_engr);
 	if (release_data(mode))
-	    level->lev_engr = NULL;
+	    lev->lev_engr = NULL;
 }
 
-void rest_engravings(int fd)
+void rest_engravings(int fd, struct level *lev)
 {
 	struct engr *ep;
 	unsigned lth;
 
-	level->lev_engr = NULL;
+	lev->lev_engr = NULL;
 	while (1) {
 		mread(fd, &lth, sizeof(unsigned));
 		if (lth == 0) return;
 		ep = newengr(lth);
 		mread(fd, ep, sizeof(struct engr) + lth);
-		ep->nxt_engr = level->lev_engr;
-		level->lev_engr = ep;
+		ep->nxt_engr = lev->lev_engr;
+		lev->lev_engr = ep;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
 		while (ep->engr_txt[0] == ' ')
 		    ep->engr_txt++;

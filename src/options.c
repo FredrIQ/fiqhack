@@ -703,6 +703,7 @@ int fruitadd(char *str)
 	if (highest_fruit_id >= 127) return rnd(127);
 	highest_fruit_id++;
 	f = newfruit();
+	memset(f, 0, sizeof(struct fruit));
 	if (ffruit) lastf->nextf = f;
 	else ffruit = f;
 	strcpy(f->fname, str);

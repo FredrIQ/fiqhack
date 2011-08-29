@@ -802,8 +802,6 @@ int doup(void)
 	return 1;
 }
 
-d_level save_dlevel = {0, 0};
-
 
 void notify_levelchange(void)
 {
@@ -834,7 +832,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		was_in_W_tower = In_W_tower(u.ux, u.uy, &u.uz),
 		familiar = FALSE;
 	boolean new = FALSE;	/* made a new level? */
-	struct monst *mtmp;
+	struct monst *mtmp, *mtmp2;
 	struct obj *otmp;
 	struct level *origlev;
 
@@ -942,6 +940,17 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	} else {
 		/* returning to previously visited level */
 		level = levels[new_ledger];
+
+		/* regenerate animals while on another level */
+		for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
+			mtmp2 = mtmp->nmon;
+			if (moves > level->lastmoves)
+				mon_catchup_elapsed_time(mtmp, moves - level->lastmoves);
+
+			/* update shape-changers in case protection against
+			   them is different now */
+			restore_cham(mtmp);
+		}
 	}
 	
 	/* some timers and lights might need to be transferred to the new level

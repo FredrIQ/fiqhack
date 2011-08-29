@@ -220,6 +220,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 	} else {
 	    oldplace = FALSE;
 	    ttmp = newtrap();
+	    memset(ttmp, 0, sizeof(struct trap));
 	    ttmp->tx = x;
 	    ttmp->ty = y;
 	    ttmp->launch.x = -1;	/* force error if used before set */

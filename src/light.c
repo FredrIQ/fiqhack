@@ -42,7 +42,7 @@
 #define LSF_NEEDS_FIXUP	0x2		/* need oid fixup */
 
 static void write_ls(int, light_source *);
-static int maybe_write_ls(int, int, boolean);
+static int maybe_write_ls(int fd, struct level *lev, int range, boolean write_it);
 
 /* imported from vision.c, for small circles */
 extern const char circle_data[];
@@ -191,14 +191,14 @@ void do_light_sources(char **cs_rows)
 /* (mon->mx == 0) implies migrating */
 #define mon_is_local(mon)	((mon)->mx > 0)
 
-struct monst *find_mid(unsigned nid, unsigned fmflags)
+struct monst *find_mid(struct level *lev, unsigned nid, unsigned fmflags)
 {
 	struct monst *mtmp;
 
 	if (!nid)
 	    return &youmonst;
 	if (fmflags & FM_FMON)
-		for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
+		for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
 		    if (!DEADMONSTER(mtmp) && mtmp->m_id == nid) return mtmp;
 	if (fmflags & FM_MIGRATE)
 		for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)
@@ -225,7 +225,6 @@ void transfer_lights(struct level *oldlev, struct level *newlev)
 		break;
 	    default:
 		is_global = FALSE;
-		impossible("save_light_sources: bad type (%d)", curr->type);
 		break;
 	}
 	/* associate all global light sources with the new level */
@@ -241,22 +240,22 @@ void transfer_lights(struct level *oldlev, struct level *newlev)
 
 
 /* Save all light sources of the given range. */
-void save_light_sources(int fd, int mode, int range)
+void save_light_sources(int fd, struct level *lev, int mode, int range)
 {
     int count, actual, is_global;
     light_source **prev, *curr;
 
     if (perform_bwrite(mode)) {
-	count = maybe_write_ls(fd, range, FALSE);
+	count = maybe_write_ls(fd, lev, range, FALSE);
 	bwrite(fd, &count, sizeof count);
-	actual = maybe_write_ls(fd, range, TRUE);
+	actual = maybe_write_ls(fd, lev, range, TRUE);
 	if (actual != count)
 	    panic("counted %d light sources, wrote %d! [range=%d]",
 		  count, actual, range);
     }
 
     if (release_data(mode)) {
-	for (prev = &level->lev_lights; (curr = *prev) != 0; ) {
+	for (prev = &lev->lev_lights; (curr = *prev) != 0; ) {
 	    if (!curr->id) {
 		impossible("save_light_sources: no id! [range=%d]", range);
 		is_global = 0;
@@ -289,7 +288,7 @@ void save_light_sources(int fd, int mode, int range)
  * Pull in the structures from disk, but don't recalculate the object
  * pointers.
  */
-void restore_light_sources(int fd)
+void restore_light_sources(int fd, struct level *lev)
 {
     int count;
     light_source *ls;
@@ -300,19 +299,19 @@ void restore_light_sources(int fd)
     while (count-- > 0) {
 	ls = malloc(sizeof(light_source));
 	mread(fd, ls, sizeof(light_source));
-	ls->next = level->lev_lights;
-	level->lev_lights = ls;
+	ls->next = lev->lev_lights;
+	lev->lev_lights = ls;
     }
 }
 
 /* Relink all lights that are so marked. */
-void relink_light_sources(boolean ghostly)
+void relink_light_sources(boolean ghostly, struct level *lev)
 {
     char which;
     unsigned nid;
     light_source *ls;
 
-    for (ls = level->lev_lights; ls; ls = ls->next) {
+    for (ls = lev->lev_lights; ls; ls = ls->next) {
 	if (ls->flags & LSF_NEEDS_FIXUP) {
 	    if (ls->type == LS_OBJECT || ls->type == LS_MONSTER) {
 		if (ghostly) {
@@ -325,7 +324,7 @@ void relink_light_sources(boolean ghostly)
 		    ls->id = find_oid(nid);
 		} else {
 		    which = 'm';
-		    ls->id = find_mid(nid, FM_EVERYWHERE);
+		    ls->id = find_mid(lev, nid, FM_EVERYWHERE);
 		}
 		if (!ls->id)
 		    impossible("relink_light_sources: cant find %c_id %d",
@@ -343,12 +342,12 @@ void relink_light_sources(boolean ghostly)
  * sources that would be written.  If write_it is true, actually write
  * the light source out.
  */
-static int maybe_write_ls(int fd, int range, boolean write_it)
+static int maybe_write_ls(int fd, struct level *lev, int range, boolean write_it)
 {
     int count = 0, is_global;
     light_source *ls;
 
-    for (ls = level->lev_lights; ls; ls = ls->next) {
+    for (ls = lev->lev_lights; ls; ls = ls->next) {
 	if (!ls->id) {
 	    impossible("maybe_write_ls: no id! [range=%d]", range);
 	    continue;
@@ -419,7 +418,7 @@ void obj_move_light_source(struct obj *src, struct obj *dest)
 {
     light_source *ls;
 
-    for (ls = level->lev_lights; ls; ls = ls->next)
+    for (ls = src->olev->lev_lights; ls; ls = ls->next)
 	if (ls->type == LS_OBJECT && ls->id == src)
 	    ls->id = dest;
     src->lamplit = 0;

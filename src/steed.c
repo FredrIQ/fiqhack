@@ -598,6 +598,7 @@ void dismount_steed(int reason)
 	return;
 }
 
+
 void place_monster(struct monst *mon, int x, int y)
 {
     if (mon == u.usteed ||
@@ -607,7 +608,8 @@ void place_monster(struct monst *mon, int x, int y)
 		   (mon == u.usteed) ? "steed" : "defunct monster");
 	return;
     }
-    mon->mx = x, mon->my = y;
+    mon->mx = x;
+    mon->my = y;
     mon->dlevel->monsters[x][y] = mon;
 }
 

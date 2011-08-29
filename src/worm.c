@@ -423,7 +423,7 @@ void detect_wsegs(struct monst *worm, boolean use_detection_glyph)
  *  Save the worm information for later use.  The count is the number
  *  of segments, including the dummy.  Called from save.c.
  */
-void save_worm(int fd, int mode)
+void save_worm(int fd, struct level *lev, int mode)
 {
     int i;
     int count;
@@ -431,32 +431,32 @@ void save_worm(int fd, int mode)
 
     if (perform_bwrite(mode)) {
 	for (i = 1; i < MAX_NUM_WORMS; i++) {
-	    for (count = 0, curr = level->wtails[i]; curr; curr = curr->nseg) count++;
+	    for (count = 0, curr = lev->wtails[i]; curr; curr = curr->nseg) count++;
 	    /* Save number of segments */
 	    bwrite(fd, &count, sizeof(int));
 	    /* Save segment locations of the monster. */
 	    if (count) {
-		for (curr = level->wtails[i]; curr; curr = curr->nseg) {
+		for (curr = lev->wtails[i]; curr; curr = curr->nseg) {
 		    bwrite(fd, &(curr->wx), sizeof(xchar));
 		    bwrite(fd, &(curr->wy), sizeof(xchar));
 		}
 	    }
 	}
-	bwrite(fd, level->wgrowtime, sizeof(level->wgrowtime));
+	bwrite(fd, lev->wgrowtime, sizeof(lev->wgrowtime));
     }
 
     if (release_data(mode)) {
 	/* Free the segments only.  savemonchn() will take care of the
 	 * monsters. */
 	for (i = 1; i < MAX_NUM_WORMS; i++) {
-	    if (!(curr = level->wtails[i])) continue;
+	    if (!(curr = lev->wtails[i])) continue;
 
 	    while (curr) {
 		temp = curr->nseg;
 		free(curr);		/* free the segment */
 		curr = temp;
 	    }
-	    level->wheads[i] = level->wtails[i] = NULL;
+	    lev->wheads[i] = lev->wtails[i] = NULL;
 	}
     }
 
@@ -467,7 +467,7 @@ void save_worm(int fd, int mode)
  *
  *  Restore the worm information from the save file.  Called from restore.c
  */
-void rest_worm(int fd)
+void rest_worm(int fd, struct level *lev)
 {
     int i, j, count;
     struct wseg *curr, *temp;
@@ -485,12 +485,12 @@ void rest_worm(int fd)
 	    if (curr)
 		curr->nseg = temp;
 	    else
-		level->wtails[i] = temp;
+		lev->wtails[i] = temp;
 	    curr = temp;
 	}
-	level->wheads[i] = curr;
+	lev->wheads[i] = curr;
     }
-    mread(fd, level->wgrowtime, sizeof(level->wgrowtime));
+    mread(fd, lev->wgrowtime, sizeof(lev->wgrowtime));
 }
 
 /*
@@ -500,12 +500,12 @@ void rest_worm(int fd)
  */
 void place_wsegs(struct monst *worm)
 {
-    struct wseg *curr = level->wtails[worm->wormno];
+    struct wseg *curr = worm->dlevel->wtails[worm->wormno];
 
 /*  if (!mtmp->wormno) return;  bullet proofing */
 
-    while (curr != level->wheads[worm->wormno]) {
-	place_worm_seg(worm,curr->wx,curr->wy);
+    while (curr != worm->dlevel->wheads[worm->wormno]) {
+	place_worm_seg(worm, curr->wx, curr->wy);
 	curr = curr->nseg;
     }
 }

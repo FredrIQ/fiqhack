@@ -391,6 +391,7 @@ static branch *add_branch(int dgn, int child_entry_level, struct proto_dungeon *
 
     branch_num = find_branch(dungeons[dgn].dname,pd);
     new_branch = malloc(sizeof(branch));
+    memset(new_branch, 0, sizeof(branch));
     new_branch->next = NULL;
     new_branch->id = branch_id++;
     new_branch->type = correct_branch_type(&pd->tmpbranch[branch_num]);
@@ -439,8 +440,9 @@ static void init_level(int dgn, int proto_index, struct proto_dungeon *pd)
 	if (!wizard)
 	    if (tlevel->chance <= rn2(100)) return;
 
-	pd->final_lev[proto_index] = new_level =
-					malloc(sizeof(s_level));
+	pd->final_lev[proto_index] = new_level = malloc(sizeof(s_level));
+	memset(pd->final_lev[proto_index], 0, sizeof(s_level));
+	
 	/* load new level with data */
 	strcpy(new_level->proto, tlevel->name);
 	new_level->boneid = tlevel->boneschar;

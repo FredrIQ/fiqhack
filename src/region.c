@@ -311,7 +311,7 @@ void run_regions(struct level *lev)
 	/* Check if any monster is inside region */
 	if (f_indx != NO_CALLBACK) {
 	    for (j = 0; j < lev->regions[i]->n_monst; j++) {
-		struct monst *mtmp = find_mid(lev->regions[i]->monsters[j], FM_FMON);
+		struct monst *mtmp = find_mid(lev, lev->regions[i]->monsters[j], FM_FMON);
 
 		if (!mtmp || mtmp->mhp <= 0 ||
 				(*callbacks[f_indx])(lev->regions[i], mtmp)) {

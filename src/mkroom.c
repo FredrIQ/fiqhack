@@ -26,7 +26,7 @@ static const struct permonst * morguemon(void);
 static const struct permonst * antholemon(void);
 static const struct permonst * squadmon(void);
 static void save_room(int,struct mkroom *);
-static void rest_room(int,struct mkroom *);
+static void rest_room(int fd, struct level *lev, struct mkroom *r);
 
 #define sq(x) ((x)*(x))
 
@@ -604,25 +604,25 @@ static void save_room(int fd, struct mkroom *r)
 /*
  * save_rooms : Save all the rooms on disk!
  */
-void save_rooms(int fd)
+void save_rooms(int fd, struct level *lev)
 {
 	short i;
 
 	/* First, write the number of rooms */
-	bwrite(fd, &level->nroom, sizeof(level->nroom));
-	for (i=0; i<level->nroom; i++)
-	    save_room(fd, &level->rooms[i]);
+	bwrite(fd, &lev->nroom, sizeof(lev->nroom));
+	for (i=0; i<lev->nroom; i++)
+	    save_room(fd, &lev->rooms[i]);
 }
 
-static void rest_room(int fd, struct mkroom *r)
+static void rest_room(int fd, struct level *lev, struct mkroom *r)
 {
 	short i;
 
 	mread(fd, r, sizeof(struct mkroom));
 	for (i=0; i<r->nsubrooms; i++) {
-		r->sbrooms[i] = &level->subrooms[level->nsubroom];
-		rest_room(fd, &level->subrooms[level->nsubroom]);
-		level->subrooms[level->nsubroom++].resident = NULL;
+		r->sbrooms[i] = &lev->subrooms[lev->nsubroom];
+		rest_room(fd, lev, &lev->subrooms[lev->nsubroom]);
+		lev->subrooms[lev->nsubroom++].resident = NULL;
 	}
 }
 
@@ -630,18 +630,18 @@ static void rest_room(int fd, struct mkroom *r)
  * rest_rooms : That's for restoring rooms. Read the rooms structure from
  * the disk.
  */
-void rest_rooms(int fd)
+void rest_rooms(int fd, struct level *lev)
 {
 	short i;
 
-	mread(fd, &level->nroom, sizeof(level->nroom));
-	level->nsubroom = 0;
-	for (i = 0; i<level->nroom; i++) {
-	    rest_room(fd, &level->rooms[i]);
-	    level->rooms[i].resident = NULL;
+	mread(fd, &lev->nroom, sizeof(lev->nroom));
+	lev->nsubroom = 0;
+	for (i = 0; i<lev->nroom; i++) {
+	    rest_room(fd, lev, &lev->rooms[i]);
+	    lev->rooms[i].resident = NULL;
 	}
-	level->rooms[level->nroom].hx = -1;		/* restore ending flags */
-	level->subrooms[level->nsubroom].hx = -1;
+	lev->rooms[lev->nroom].hx = -1;		/* restore ending flags */
+	lev->subrooms[lev->nsubroom].hx = -1;
 }
 
 /*mkroom.c*/
