@@ -70,10 +70,8 @@ int dosave0(boolean emergency)
 	}
 	
 	savegamestate(fd, WRITE_SAVE | FREE_SAVE);
-
 	freedynamicdata();
 
-	delete_levelfile(0);
 	return TRUE;
 }
 

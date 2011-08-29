@@ -100,7 +100,6 @@ boolean nh_exit(int exit_type)
     
     cleanup_opt_struct();
     
-    clearlocks();
     for (i = 0; i < PREFIX_COUNT; i++) {
 	free(fqn_prefix[i]);
 	fqn_prefix[i] = NULL;
@@ -159,7 +158,6 @@ static void startup_common(char *name, int locknum, int playmode)
 	    strcpy(plname, "wizard");
 
     sprintf(lock, "%d%s", (int)getuid(), plname);
-    getlock(locknum);
 
     display_gamewindows();
 

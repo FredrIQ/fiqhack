@@ -757,8 +757,6 @@ void done(int how)
 	    clearpriests();
 	} else	taken = FALSE;	/* lint; assert( !bones_ok ); */
 
-	clearlocks();
-
 	display_nhwindow(NHW_MESSAGE, FALSE);
 
 	if (strcmp(flags.end_disclose, "none") && how != PANICKED)

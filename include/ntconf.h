@@ -13,8 +13,6 @@
 #define PC_LOCKING		/* Prevent overwrites of aborted or in-progress games */
 				/* without first receiving confirmation. */
 
-#define HOLD_LOCKFILE_OPEN	/* Keep an exclusive lock on the .0 file */
-
 /*
  * -----------------------------------------------------------------
  *  The remaining code shouldn't need modification.

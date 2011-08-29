@@ -27,7 +27,6 @@
 #define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
 
 #define FCMASK		0660	/* file creation mask */
-#define HLOCK		"perm"	/* an empty file used for locking purposes */
 #define msleep(k) usleep((k)*1000)
 
 #define ROLE_NONE	(-1)

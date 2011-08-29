@@ -485,25 +485,18 @@ extern char *fname_decode(char, char *, char *, int);
 extern FILE *fopen_datafile(const char *,const char *,int);
 extern boolean uptodate(int,const char *);
 extern void store_version(int);
-extern int create_levelfile(int,char *);
-extern int open_levelfile(int,char *);
-extern void delete_levelfile(int);
 extern int create_bonesfile(d_level*,char **, char *);
 extern void commit_bonesfile(d_level *);
 extern int open_bonesfile(d_level*,char **);
 extern int delete_bonesfile(d_level*);
 extern void paniclog(const char *, const char *);
 extern int validate_prefix_locations(char *);
-#ifdef HOLD_LOCKFILE_OPEN
-extern void really_close(void);
-#endif
 extern void regularize(char *);
 extern const char *fqname(const char *, int, int);
 extern void check_recordfile(const char *);
 extern void set_levelfile_name(char *,int);
 extern boolean lock_file(const char *,int,int);
 extern void unlock_file(const char *);
-extern void clearlocks(void);
 
 /* ### fountain.c ### */
 

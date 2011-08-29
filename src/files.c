@@ -39,18 +39,6 @@ char lock[PL_NSIZ+25];		/* long enough for username+-+name+.99 */
 # endif
 #endif
 
-#ifdef HOLD_LOCKFILE_OPEN
-struct level_ftrack {
-int init;
-int fd;					/* file descriptor for level file     */
-int oflag;				/* open flags                         */
-boolean nethack_thinks_it_is_open;	/* Does NetHack think it's open?       */
-} lftrack;
-# if defined(WIN32)
-#include <share.h>
-# endif
-#endif /*HOLD_LOCKFILE_OPEN*/
-
 #if defined(WIN32)
 static int lockptr;
 #define Close close
@@ -62,10 +50,6 @@ extern int n_dgns;		/* from dungeon.c */
 static char *set_bonesfile_name(char *,d_level*);
 static char *set_bonestemp_name(void);
 static char *make_lockname(const char *,char *);
-#ifdef HOLD_LOCKFILE_OPEN
-static int open_levelfile_exclusively(const char *, int, int);
-#endif
-
 
 
 void display_file(const char *fname, boolean complain)
@@ -282,169 +266,6 @@ FILE *fopen_datafile(const char *filename, const char *mode, int prefix)
 	fp = fopen(filename, mode);
 	return fp;
 }
-
-/* ----------  BEGIN LEVEL FILE HANDLING ----------- */
-
-/* Construct a file name for a level-type file, which is of the form
- * something.level (with any old level stripped off).
- * This assumes there is space on the end of 'file' to append
- * a two digit number.  This is true for 'level'
- * but be careful if you use it for other things -dgk
- */
-void set_levelfile_name(char *file, int lev)
-{
-	char *tf;
-
-	tf = strrchr(file, '.');
-	if (!tf) tf = eos(file);
-	sprintf(tf, ".%d", lev);
-	return;
-}
-
-int create_levelfile(int lev, char errbuf[])
-{
-	int fd;
-	const char *fq_lock;
-
-	if (errbuf) *errbuf = '\0';
-	set_levelfile_name(lock, lev);
-	fq_lock = fqname(lock, LEVELPREFIX, 0);
-
-#if defined(WIN32)
-	/* Use O_TRUNC to force the file to be shortened if it already
-	 * exists and is currently longer.
-	 */
-# ifdef HOLD_LOCKFILE_OPEN
-	if (lev == 0)
-		fd = open_levelfile_exclusively(fq_lock, lev,
-				O_WRONLY |O_CREAT | O_TRUNC | O_BINARY);
-	else
-# endif
-	fd = open(fq_lock, O_WRONLY |O_CREAT | O_TRUNC | O_BINARY, FCMASK);
-#else
-	fd = creat(fq_lock, FCMASK);
-#endif /* WIN32 */
-
-	if (fd >= 0)
-	    level_info[lev].flags |= LFILE_EXISTS;
-	else if (errbuf)	/* failure explanation */
-	    sprintf(errbuf,
-		    "Cannot create file \"%s\" for level %d (errno %d).",
-		    lock, lev, errno);
-
-	return fd;
-}
-
-
-int open_levelfile(int lev, char errbuf[])
-{
-	int fd;
-	const char *fq_lock;
-
-	if (errbuf) *errbuf = '\0';
-	set_levelfile_name(lock, lev);
-	fq_lock = fqname(lock, LEVELPREFIX, 0);
-# ifdef HOLD_LOCKFILE_OPEN
-	if (lev == 0)
-		fd = open_levelfile_exclusively(fq_lock, lev, O_RDONLY | O_BINARY );
-	else
-# endif
-	fd = open(fq_lock, O_RDONLY | O_BINARY, 0);
-
-	/* for failure, return an explanation that our caller can use;
-	   settle for `lock' instead of `fq_lock' because the latter
-	   might end up being too big for nethack's BUFSZ */
-	if (fd < 0 && errbuf)
-	    sprintf(errbuf,
-		    "Cannot open file \"%s\" for level %d (errno %d).",
-		    lock, lev, errno);
-
-	return fd;
-}
-
-
-void delete_levelfile(int lev)
-{
-	/*
-	 * Level 0 might be created by port specific code that doesn't
-	 * call create_levfile(), so always assume that it exists.
-	 */
-	if (lev == 0 || (level_info[lev].flags & LFILE_EXISTS)) {
-		set_levelfile_name(lock, lev);
-#ifdef HOLD_LOCKFILE_OPEN
-		if (lev == 0) really_close();
-#endif
-		unlink(fqname(lock, LEVELPREFIX, 0));
-		level_info[lev].flags &= ~LFILE_EXISTS;
-	}
-}
-
-
-void clearlocks(void)
-{
-	int x;
-
-	/* can't access maxledgerno() before dungeons are created -dlc */
-	for (x = (n_dgns ? maxledgerno() : 0); x >= 0; x--)
-		delete_levelfile(x);	/* not all levels need be present */
-}
-
-#ifdef HOLD_LOCKFILE_OPEN
-static int open_levelfile_exclusively(const char *name, int lev, int oflag)
-{
-	int reslt, fd;
-	if (!lftrack.init) {
-		lftrack.init = 1;
-		lftrack.fd = -1;
-	}
-	if (lftrack.fd >= 0) {
-		/* check for compatible access */
-		if (lftrack.oflag == oflag) {
-			fd = lftrack.fd;
-			reslt = lseek(fd, 0L, SEEK_SET);
-			if (reslt == -1L)
-			    panic("open_levelfile_exclusively: lseek failed %d", errno);
-			lftrack.nethack_thinks_it_is_open = TRUE;
-		} else {
-			really_close();
-			fd = sopen(name, oflag,SH_DENYRW, FCMASK);
-			lftrack.fd = fd;
-			lftrack.oflag = oflag;
-			lftrack.nethack_thinks_it_is_open = TRUE;
-		}
-	} else {
-			fd = sopen(name, oflag,SH_DENYRW, FCMASK);
-			lftrack.fd = fd;
-			lftrack.oflag = oflag;
-			if (fd >= 0)
-			    lftrack.nethack_thinks_it_is_open = TRUE;
-	}
-	return fd;
-}
-
-void really_close(void)
-{
-	int fd = lftrack.fd;
-	lftrack.nethack_thinks_it_is_open = FALSE;
-	lftrack.fd = -1;
-	lftrack.oflag = 0;
-	_close(fd);
-	return;
-}
-
-int close(int fd)
-{
- 	if (lftrack.fd == fd) {
-		really_close();	/* close it, but reopen it to hold it */
-		fd = open_levelfile(0, NULL);
-		lftrack.nethack_thinks_it_is_open = FALSE;
-		return 0;
-	}
-	return _close(fd);
-}
-#endif
-	
-/* ----------  END LEVEL FILE HANDLING ----------- */
 
 
 /* ----------  BEGIN BONES FILE HANDLING ----------- */

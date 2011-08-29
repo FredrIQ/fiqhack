@@ -41,9 +41,8 @@ install(DIRECTORY ${NetHack_BINARY_DIR}/dat/
         PATTERN "CMakeFiles" EXCLUDE)
 install(FILES ${NetHack_BINARY_DIR}/dat/dungeon ${NetHack_BINARY_DIR}/dat/options
               ${NetHack_BINARY_DIR}/dat/quest.dat ${NetHack_BINARY_DIR}/dat/rumors
-              ${NetHack_BINARY_DIR}/dat/data ${NetHack_BINARY_DIR}/dat/perm
-              ${NetHack_BINARY_DIR}/dat/record ${NetHack_BINARY_DIR}/dat/logfile
-               ${NetHack_BINARY_DIR}/dat/oracles
+              ${NetHack_BINARY_DIR}/dat/data ${NetHack_BINARY_DIR}/dat/record
+              ${NetHack_BINARY_DIR}/dat/logfile ${NetHack_BINARY_DIR}/dat/oracles
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
               ${NetHack_SOURCE_DIR}/dat/hh ${NetHack_SOURCE_DIR}/dat/cmdhelp

@@ -63,5 +63,5 @@ add_custom_command (OUTPUT dungeon
 add_custom_target (nethack_data_files ALL
                    COMMAND lev_comp ${LEVEL_DESCRIPTIONS}
                    COMMAND mkdir -p save
-                   COMMAND touch perm record logfile
+                   COMMAND touch record logfile
                    DEPENDS lev_comp data dungeon quest.dat rumors oracles)
