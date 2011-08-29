@@ -691,10 +691,6 @@ extern boolean doorlock(struct obj *,int,int);
 extern int doopen(void);
 extern int doclose(void);
 
-/* ### locking.c ### */
-
-extern void getlock(int locknum);
-
 /* ### log.c ### */
 
 extern void log_newgame(int logfd, unsigned int rnd_seed, int playmode);
