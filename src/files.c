@@ -28,16 +28,7 @@ extern int errno;
 
 #define FQN_NUMBUF 4
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
-
-#if !defined(WIN32)
 char bones[] = "bonesnn.xxx";
-char lock[PL_NSIZ+14];		/* long enough for uid+name+.99 */
-#else
-# if defined(WIN32)
-char bones[] = "bonesnn.xxx";
-char lock[PL_NSIZ+25];		/* long enough for username+-+name+.99 */
-# endif
-#endif
 
 #if defined(WIN32)
 static int lockptr;
@@ -45,10 +36,7 @@ static int lockptr;
 #define DeleteFile unlink
 #endif
 
-extern int n_dgns;		/* from dungeon.c */
-
 static char *set_bonesfile_name(char *,d_level*);
-static char *set_bonestemp_name(void);
 static char *make_lockname(const char *,char *);
 static const char *fqname(const char *, int, int);
 
@@ -136,31 +124,17 @@ static char *set_bonesfile_name(char *file, d_level *lev)
 	return dptr-2;
 }
 
-/* set up temporary file name for writing bones, to avoid another game's
- * trying to read from an uncompleted bones file.  we want an uncontentious
- * name, so use one in the namespace reserved for this game's level files.
- * (we are not reading or writing level files while writing bones files, so
- * the same array may be used instead of copying.)
- */
-static char *set_bonestemp_name(void)
-{
-	char *tf;
-
-	tf = strrchr(lock, '.');
-	if (!tf) tf = eos(lock);
-	sprintf(tf, ".bn");
-	return lock;
-}
 
 int create_bonesfile(d_level *lev, char **bonesid, char errbuf[])
 {
 	const char *file;
+	char tempname[PL_NSIZ+32];
 	int fd;
 
 	if (errbuf) *errbuf = '\0';
 	*bonesid = set_bonesfile_name(bones, lev);
-	file = set_bonestemp_name();
-	file = fqname(file, BONESPREFIX, 0);
+	sprintf(tempname, "%d%s.bn", (int)getuid(), plname);
+	file = fqname(tempname, BONESPREFIX, 0);
 
 #if defined(WIN32)
 	/* Use O_TRUNC to force the file to be shortened if it already
@@ -171,9 +145,8 @@ int create_bonesfile(d_level *lev, char **bonesid, char errbuf[])
 	fd = creat(file, FCMASK);
 #endif
 	if (fd < 0 && errbuf) /* failure explanation */
-	    sprintf(errbuf,
-		    "Cannot create bones \"%s\", id %s (errno %d).",
-		    lock, *bonesid, errno);
+	    sprintf(errbuf, "Cannot create bones id %s (errno %d).",
+		    *bonesid, errno);
 
 	return fd;
 }
@@ -183,12 +156,13 @@ int create_bonesfile(d_level *lev, char **bonesid, char errbuf[])
 void commit_bonesfile(d_level *lev)
 {
 	const char *fq_bones, *tempname;
+	char tempbuf[PL_NSIZ+32];
 	int ret;
 
 	set_bonesfile_name(bones, lev);
 	fq_bones = fqname(bones, BONESPREFIX, 0);
-	tempname = set_bonestemp_name();
-	tempname = fqname(tempname, BONESPREFIX, 1);
+	sprintf(tempbuf, "%d%s.bn", (int)getuid(), plname);
+	tempname = fqname(tempbuf, BONESPREFIX, 1);
 
 	ret = rename(tempname, fq_bones);
 	if (wizard && ret != 0)

@@ -158,8 +158,6 @@ static void startup_common(char *name, int locknum, int playmode)
     if (wizard)
 	    strcpy(plname, "wizard");
 
-    sprintf(lock, "%d%s", (int)getuid(), plname);
-
     display_gamewindows();
 
     initrack();
