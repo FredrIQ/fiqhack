@@ -6,9 +6,6 @@
 int (*afternmv)(void);
 int (*occupation)(void);
 
-/* from xxxmain.c */
-int hackpid;		/* current process id */
-
 int bases[MAXOCLASSES];
 
 int multi;

@@ -11,7 +11,6 @@ extern char SAVEF[];
 
 extern int bases[MAXOCLASSES];
 
-extern int hackpid;
 extern int multi;
 extern int occtime;
 

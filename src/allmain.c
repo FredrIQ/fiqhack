@@ -34,14 +34,13 @@ const char *const *nh_get_copyright_banner(void)
     return copyright_banner;
 }
 
-void nh_init(int pid, struct nh_window_procs *procs, char **paths)
+void nh_init(struct nh_window_procs *procs, char **paths)
 {
     int i;
             
     if (!api_entry_checkpoint()) /* not sure anything in here can actually call panic */
 	return;
     
-    hackpid = pid;
     windowprocs = *procs;
     
     for (i = 0; i < PREFIX_COUNT; i++)

@@ -33,7 +33,6 @@ extern void init_linux_cons(void);
 int locknum = 0;		/* max num of simultaneous users */
 static char plname[PL_NSIZ] = "\0";
 char *hackdir, *var_playground;
-int hackpid;
 static boolean interrupt_multi = FALSE;
 static boolean game_is_running = FALSE;
 
@@ -314,14 +313,13 @@ int main(int argc, char *argv[])
 	char **gamepaths;
 	int i;
 
-	hackpid = getpid();
 	umask(0777 & ~FCMASK);
 	
 	tty_init_options();
 	win_tty_init();
 	
 	gamepaths = init_game_paths();
-	nh_init(hackpid, &tty_procs, gamepaths);
+	nh_init(&tty_procs, gamepaths);
 	
 	setup_signals();
 
