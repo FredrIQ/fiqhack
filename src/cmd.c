@@ -561,7 +561,7 @@ static const char
 #define you_can(menu,attr)	enl_msg(menu,You_,can,could,attr)
 #define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were,goodthing)
 #define you_have_never(menu,badthing) enl_msg(menu,You_,have_never,never,badthing)
-#define you_have_X(menu,something)	enl_msg(menu,You_,have,(const char *)"","something")
+#define you_have_X(menu,something)	enl_msg(menu,You_,have,(const char *)"", something)
 
 static void enlght_line(struct menulist *menu,
 			const char *start, const char *middle, const char *end)
