@@ -10,6 +10,7 @@ static void container_weight(struct obj *);
 static struct obj *save_mtraits(struct obj *, struct monst *);
 static const char *where_name(int);
 static void check_contained(struct obj *,const char *);
+static void extract_nexthere(struct obj *, struct obj **);
 
 extern struct obj *thrownobj;		/* defined in dothrow.c */
 

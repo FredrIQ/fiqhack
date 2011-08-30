@@ -3,6 +3,17 @@
 
 #include "hack.h"
 
+static boolean ok_role(int, int, int, int);
+static boolean ok_race(int, int, int, int);
+static boolean ok_gend(int, int, int, int);
+static boolean ok_align(int, int, int, int);
+static int pick_role(int, int, int, int);
+static int pick_race(int, int, int, int);
+static int pick_gend(int, int, int, int);
+static int pick_align(int, int, int, int);
+static int randrace(int);
+static int randalign(int, int);
+
 
 /*** Table of all roles ***/
 /* According to AD&D, HD for some classes (ex. Wizard) should be smaller
@@ -577,30 +588,6 @@ boolean nh_validgend(int rolenum, int racenum, int gendnum)
 	return (gendnum >= 0 && gendnum < ROLE_GENDERS &&
 		(roles[rolenum].allow & races[racenum].allow &
 		 genders[gendnum].allow & ROLE_GENDMASK));
-}
-
-
-int randgend(int rolenum, int racenum)
-{
-	int i, n = 0;
-
-	/* Count the number of valid genders */
-	for (i = 0; i < ROLE_GENDERS; i++)
-	    if (roles[rolenum].allow & races[racenum].allow &
-	    		genders[i].allow & ROLE_GENDMASK)
-	    	n++;
-
-	/* Pick a random gender */
-	if (n) n = rn2(n);
-	for (i = 0; i < ROLE_GENDERS; i++)
-	    if (roles[rolenum].allow & races[racenum].allow &
-	    		genders[i].allow & ROLE_GENDMASK) {
-	    	if (n) n--;
-	    	else return i;
-	    }
-
-	/* This role/race has no permitted genders? */
-	return rn2(ROLE_GENDERS);
 }
 
 

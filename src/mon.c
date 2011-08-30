@@ -1972,7 +1972,7 @@ void seemimic(struct monst *mtmp)
 }
 
 /* force all chameleons to become normal */
-void rescham(void)
+void resistcham(void)
 {
 	struct monst *mtmp;
 	int mcham;

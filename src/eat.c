@@ -1422,7 +1422,7 @@ static void eataccessory(struct obj *otmp)
 		    }
 		    break;
 		  case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-		    rescham();
+		    resistcham();
 		    break;
 		  case RIN_LEVITATION:
 		    /* undo the `.intrinsic |= FROMOUTSIDE' done above */

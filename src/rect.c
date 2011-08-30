@@ -5,6 +5,8 @@
 
 int get_rect_ind(struct nhrect *);
 
+static void remove_rect(struct nhrect *);
+static void add_rect(struct nhrect *);
 static boolean intersect(struct nhrect *,struct nhrect *,struct nhrect *);
 
     /*

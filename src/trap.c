@@ -25,6 +25,7 @@ static boolean isclearpath(struct level *lev, coord *, int, schar, schar);
 static int steedintrap(struct trap *, struct obj *);
 static boolean keep_saddle_with_steedcorpse
 			(unsigned, struct obj *, struct obj *);
+static int launch_obj(short,int,int,int,int,int);
 
 
 static const char * const a_your[2] = { "a", "your" };

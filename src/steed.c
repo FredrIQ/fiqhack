@@ -8,7 +8,9 @@ static const char steeds[] = {
 	S_QUADRUPED, S_UNICORN, S_ANGEL, S_CENTAUR, S_DRAGON, S_JABBERWOCK, '\0'
 };
 
+static boolean mount_steed(struct monst *, boolean);
 static boolean landing_spot(coord *, int, int);
+
 
 /* caller has decided that hero can't reach something while mounted */
 void rider_cant_reach(void)

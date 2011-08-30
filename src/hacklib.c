@@ -44,6 +44,7 @@ NetHack, except that rounddiv may call panic().
 	int		midnight	(void)
 =*/
 
+
 void set_menuitem(struct nh_menuitem *item, int id, enum nh_menuitem_role role,
 		  const char *caption, char accel, boolean selected)
 {
@@ -143,16 +144,6 @@ char *mungspaces(char *bp)
 char *eos(char *s)	/* return the end of a string (pointing at '\0') */
 {
     while (*s) s++;	/* s += strlen(s); */
-    return s;
-}
-
-/* strcat(s, {c,'\0'}); */
-char *strkitten(char *s, char c) /* append a character to a string (in place) */
-{
-    char *p = eos(s);
-
-    *p++ = c;
-    *p = '\0';
     return s;
 }
 

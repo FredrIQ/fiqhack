@@ -27,6 +27,8 @@ static const struct permonst * antholemon(void);
 static const struct permonst * squadmon(void);
 static void save_room(int,struct mkroom *);
 static void rest_room(int fd, struct level *lev, struct mkroom *r);
+static boolean has_dnstairs(struct level *lev, struct mkroom *);
+static boolean has_upstairs(struct level *lev, struct mkroom *);
 
 #define sq(x) ((x)*(x))
 

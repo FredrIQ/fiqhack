@@ -468,11 +468,6 @@ struct region *visible_region_at(struct level *lev, xchar x, xchar y)
     return NULL;
 }
 
-void show_region(struct region *reg, xchar x, xchar y)
-{
-    
-}
-
 /**
  * save_regions :
  */

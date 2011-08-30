@@ -26,6 +26,9 @@ static int zap_hit_mon(struct monst *,int,int,struct obj **);
 static void zap_hit_u(int,int,const char *,xchar,xchar);
 static void revive_egg(struct obj *);
 static boolean zap_steed(struct obj *);
+static void cancel_item(struct obj *);
+static boolean obj_shudders(struct obj *);
+static void do_osshock(struct obj *);
 
 static int zap_hit_check(int,int);
 static void backfire(struct obj *);

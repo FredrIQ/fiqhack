@@ -15,6 +15,7 @@ static void describe_mon(int x, int y, int monnum, char *buf);
 static void checkfile(const char *inp, struct permonst *, boolean, boolean);
 static int do_look(boolean);
 static boolean help_menu(int *);
+static char *dowhatdoes_core(char, char *);
 
 /* The explanations below are also used when the user gives a string
  * for blessed genocide, so no text should wholly contain any later

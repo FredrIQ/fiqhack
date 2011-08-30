@@ -22,6 +22,8 @@ static void fixup_special(struct level *lev);
 static void move(int *,int *,int);
 static void setup_waterlevel(struct level *lev);
 static void unsetup_waterlevel(void);
+static boolean bad_location(struct level *lev, xchar x, xchar y,
+		     xchar lx, xchar ly, xchar hx, xchar hy);
 
 
 static boolean iswall(struct level *lev, int x, int y)

@@ -19,6 +19,7 @@ static void pre_move_tasks(boolean didmove);
 
 static void display_gamewindows(void);
 static void newgame(void);
+static void welcome(boolean);
 
 
 static void wd_message(void)
@@ -827,9 +828,8 @@ static void newgame(void)
 }
 
 /* show "welcome [back] to nethack" message at program startup */
-void welcome(
-    boolean new_game	/* false => restoring an old game */
-    )
+static void welcome(
+    boolean new_game)	/* false => restoring an old game */
 {
     char buf[BUFSZ];
     boolean currentgend = Upolyd ? u.mfemale : flags.female;

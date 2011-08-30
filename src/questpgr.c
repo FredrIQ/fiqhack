@@ -23,6 +23,7 @@ static void convert_arg(char);
 static void convert_line(void);
 static void deliver_by_pline(struct qtmsg *);
 static void deliver_by_window(struct qtmsg *,int);
+static const char *ldrname(void);
 
 static char	in_line[80], cvt_buf[64], out_line[128];
 static struct	qtlists	qt_list;

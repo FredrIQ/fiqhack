@@ -12,6 +12,8 @@ static void slip_or_trip(void);
 static void see_lamp_flicker(struct obj *, const char *);
 static void lantern_message(struct obj *);
 static void cleanup_burn(void *,long);
+static void hatch_egg(void *, long);
+static void burn_object(void *, long);
 
 
 /* He is being petrified - dialogue by inmet!tower */

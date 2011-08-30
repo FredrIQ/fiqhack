@@ -689,7 +689,7 @@ void Ring_on(struct obj *obj)
 		u.udaminc += obj->spe;
 		break;
 	case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-		rescham();
+		resistcham();
 		break;
 	case RIN_PROTECTION:
 		if (obj->spe || objects[RIN_PROTECTION].oc_name_known) {

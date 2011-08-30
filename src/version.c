@@ -11,6 +11,9 @@
 
 /* #define BETA_INFO "" */	/* "[ beta n]" */
 
+static char *getversionstring(char *);
+
+
 /* fill buffer with short version (so caller can avoid including date.h) */
 char *version_string(char *buf)
 {
@@ -23,9 +26,6 @@ char *getversionstring(char *buf)
 	strcpy(buf, VERSION_ID);
 #if defined(BETA) && defined(BETA_INFO)
 	sprintf(eos(buf), " %s", BETA_INFO);
-#endif
-#if defined(RUNTIME_PORT_ID)
-	append_port_id(buf);
 #endif
 	return buf;
 }

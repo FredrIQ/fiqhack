@@ -50,6 +50,7 @@ extern int n_dgns;		/* from dungeon.c */
 static char *set_bonesfile_name(char *,d_level*);
 static char *set_bonestemp_name(void);
 static char *make_lockname(const char *,char *);
+static const char *fqname(const char *, int, int);
 
 
 void display_file(const char *fname, boolean complain)
@@ -80,120 +81,6 @@ void display_file(const char *fname, boolean complain)
 }
 
 
-void regularize(char *s)
-{
-	char *lp;
-#ifdef UNIX
-	while ((lp=strchr(s, '.')) || (lp=strchr(s, '/')) || (lp=strchr(s,' ')))
-		*lp = '_';
-#else
-# ifdef WIN32
-	for (lp = s; *lp; lp++)
-	    if ( *lp == '?' || *lp == '"' || *lp == '\\' ||
-		 *lp == '/' || *lp == '>' || *lp == '<'  ||
-		 *lp == '*' || *lp == '|' || *lp == ':'  || (*lp > 127))
-			*lp = '_';
-# endif
-#endif
-}
-
-/*
- * fname_encode()
- *
- *   Args:
- *	legal		zero-terminated list of acceptable file name characters
- *	quotechar	lead-in character used to quote illegal characters as hex digits
- *	s		string to encode
- *	callerbuf	buffer to house result
- *	bufsz		size of callerbuf
- *
- *   Notes:
- *	The hex digits 0-9 and A-F are always part of the legal set due to
- *	their use in the encoding scheme, even if not explicitly included in 'legal'.
- *
- *   Sample:
- *	The following call:
- *	    fname_encode("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
- *				'%', "This is a % test!", buf, 512);
- *	results in this encoding:
- *	    "This%20is%20a%20%25%20test%21"
- */
-char *fname_encode(const char *legal, char quotechar, char *s,
-		   char *callerbuf, int bufsz)
-{
-	char *sp, *op;
-	int cnt = 0;
-	static const char hexdigits[] = "0123456789ABCDEF";
-
-	sp = s;
-	op = callerbuf;
-	*op = '\0';
-	
-	while (*sp) {
-		/* Do we have room for one more character or encoding? */
-		if ((bufsz - cnt) <= 4) return callerbuf;
-
-		if (*sp == quotechar) {
-			sprintf(op, "%c%02X", quotechar, *sp);
-			 op += 3;
-			 cnt += 3;
-		} else if ((strchr(legal, *sp) != 0) || (strchr(hexdigits, *sp) != 0)) {
-			*op++ = *sp;
-			*op = '\0';
-			cnt++;
-		} else {
-			sprintf(op,"%c%02X", quotechar, *sp);
-			op += 3;
-			cnt += 3;
-		}
-		sp++;
-	}
-	return callerbuf;
-}
-
-/*
- * fname_decode()
- *
- *   Args:
- *	quotechar	lead-in character used to quote illegal characters as hex digits
- *	s		string to decode
- *	callerbuf	buffer to house result
- *	bufsz		size of callerbuf
- */
-char *fname_decode(char quotechar, char *s, char *callerbuf, int bufsz)
-{
-	char *sp, *op;
-	int k,calc,cnt = 0;
-	static const char hexdigits[] = "0123456789ABCDEF";
-
-	sp = s;
-	op = callerbuf;
-	*op = '\0';
-
-	while (*sp) {
-		/* Do we have room for one more character? */
-		if ((bufsz - cnt) <= 2) return callerbuf;
-		if (*sp == quotechar) {
-			sp++;
-			for (k=0; k < 16; ++k) if (*sp == hexdigits[k]) break;
-			if (k >= 16) return callerbuf;	/* impossible, so bail */
-			calc = k << 4; 
-			sp++;
-			for (k=0; k < 16; ++k) if (*sp == hexdigits[k]) break;
-			if (k >= 16) return callerbuf;	/* impossible, so bail */
-			calc += k; 
-			sp++;
-			*op++ = calc;
-			*op = '\0';
-		} else {
-			*op++ = *sp++;
-			*op = '\0';
-		}
-		cnt++;
-	}
-	return callerbuf;
-}
-
 const char *fqname(const char *filename, int whichprefix, int buffnum)
 {
 	if (!filename || whichprefix < 0 || whichprefix >= PREFIX_COUNT)
@@ -215,46 +102,6 @@ const char *fqname(const char *filename, int whichprefix, int buffnum)
 	return strcat(fqn_filename_buffer[buffnum], filename);
 }
 
-/* reasonbuf must be at least BUFSZ, supplied by caller */
-/*ARGSUSED*/
-int validate_prefix_locations(char *reasonbuf)
-{
-	FILE *fp;
-	const char *filename;
-	int prefcnt, failcount = 0;
-	char panicbuf1[BUFSZ], panicbuf2[BUFSZ];
-	const char *details;
-
-	if (reasonbuf) reasonbuf[0] = '\0';
-	for (prefcnt = 1; prefcnt < PREFIX_COUNT; prefcnt++) {
-		/* don't test writing to configdir or datadir; they're readonly */
-		if (prefcnt == DATAPREFIX)
-		    continue;
-		filename = fqname("validate", prefcnt, 3);
-		if ((fp = fopen(filename, "w"))) {
-			fclose(fp);
-			unlink(filename);
-		} else {
-			if (reasonbuf) {
-				if (failcount) strcat(reasonbuf,", ");
-				strcat(reasonbuf, fqn_prefix_names[prefcnt]);
-			}
-			/* the paniclog entry gets the value of errno as well */
-			sprintf(panicbuf1,"Invalid %s", fqn_prefix_names[prefcnt]);
-			
-			if (!(details = strerror(errno)))
-				details = "";
-			sprintf(panicbuf2,"\"%s\", (%d) %s",
-				fqn_prefix[prefcnt], errno, details);
-			paniclog(panicbuf1, panicbuf2);
-			failcount++;
-		}	
-	}
-	if (failcount)
-		return 0;
-	
-	return 1;
-}
 
 /* fopen a file, with OS-dependent bells and whistles */
 /* NOTE: a simpler version of this routine also exists in util/dlb_main.c */
@@ -487,43 +334,6 @@ void unlock_file(const char *filename)
 }
 
 /* ----------  END FILE LOCKING HANDLING ----------- */
-
-/* ----------  BEGIN SCOREBOARD CREATION ----------- */
-
-/* verify that we can write to the scoreboard file; if not, try to create one */
-void check_recordfile(const char *dir)
-{
-	const char *fq_record;
-	int fd;
-
-#if defined(UNIX)
-	fq_record = fqname(RECORD, SCOREPREFIX, 0);
-	fd = open(fq_record, O_RDWR, 0);
-	if (fd >= 0) {
-	    close(fd);	/* RECORD is accessible */
-	} else if ((fd = open(fq_record, O_CREAT|O_RDWR, FCMASK)) >= 0) {
-	    close(fd);	/* RECORD newly created */
-	} else {
-	    raw_printf("Warning: cannot write scoreboard file %s\n", fq_record);
-	}
-#endif  /* UNIX */
-#if defined(WIN32)
-	char tmp[PATHLEN];
-	strcpy(tmp, RECORD);
-	fq_record = fqname(RECORD, SCOREPREFIX, 0);
-
-	if ((fd = open(fq_record, O_RDWR)) < 0) {
-	    /* try to create empty record */
-	    if ((fd = open(fq_record, O_CREAT|O_RDWR, S_IREAD|S_IWRITE)) < 0) {
-	raw_printf("Warning: cannot write record %s\n", tmp);
-	    } else
-		close(fd);
-	} else		/* open succeeded */
-	    close(fd);
-#endif /* WIN32*/
-}
-
-/* ----------  END SCOREBOARD CREATION ----------- */
 
 /* ----------  BEGIN PANIC/IMPOSSIBLE LOG ----------- */
 

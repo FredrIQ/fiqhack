@@ -21,6 +21,8 @@ static void chat_with_leader(void);
 static void chat_with_nemesis(void);
 static void chat_with_guardian(void);
 static void prisoner_speaks(struct monst *);
+static void leader_speaks(struct monst *);
+static void nemesis_speaks(void);
 
 
 static void on_start(void)

@@ -21,6 +21,9 @@ static struct obj *find_unpaid(struct obj *,struct obj **);
 static void menu_identify(int);
 static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
+static int identify(struct obj *);
+static const char *dfeature_at(int,int,char *);
+static void reassign(void);
 
 
 /* wizards can wish for venom, which will become an invisible inventory

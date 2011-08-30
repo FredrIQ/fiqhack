@@ -1129,15 +1129,6 @@ char *ysimple_name(struct obj *obj)
 	return strncat(strcat(s, " "), simple_typename(obj->otyp), space_left);
 }
 
-/* capitalized variant of ysimple_name() */
-char *Ysimple_name2(struct obj *obj)
-{
-	char *s = ysimple_name(obj);
-
-	*s = highc(*s);
-	return s;
-}
-
 static const char *const wrp[] = {
 	"wand", "ring", "potion", "scroll", "gem", "amulet",
 	"spellbook", "spell book",

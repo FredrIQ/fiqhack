@@ -23,6 +23,7 @@ static struct rogueroom r[3][3];
 static void roguejoin(struct level *lev, int,int,int,int,int);
 static void roguecorr(struct level *lev, int,int,int);
 static void miniwalk(int,int);
+static void corr(struct level *lev, int,int);
 
 
 static void roguejoin(struct level *lev, int x1, int y1, int x2, int y2, int horiz)
@@ -265,7 +266,7 @@ void makeroguerooms(struct level *lev) {
 }
 
 
-void corr(struct level *lev, int x, int y)
+static void corr(struct level *lev, int x, int y)
 {
 	if (rn2(50)) {
 		lev->locations[x][y].typ = CORR;
