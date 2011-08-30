@@ -12,7 +12,7 @@ static struct monst *restmonchn(int fd, struct level *lev, boolean ghostly);
 static struct fruit *loadfruitchn(int);
 static void freefruitchn(struct fruit *);
 static void ghostfruit(struct obj *);
-static boolean restgamestate(int fd);
+static void restgamestate(int fd);
 static void reset_oattached_mids(boolean ghostly, struct level *lev);
 
 /*
@@ -30,6 +30,7 @@ struct bucket {
 
 static void clear_id_mapping(void);
 static void add_id_mapping(unsigned, unsigned);
+static long filepos(int fd);
 
 static int n_ids_mapped = 0;
 static struct bucket *id_map = 0;
@@ -313,7 +314,7 @@ static void ghostfruit(struct obj *otmp)
 }
 
 
-static boolean restgamestate(int fd)
+static void restgamestate(int fd)
 {
 	struct obj *otmp;
 	unsigned int stuckid = 0, steedid = 0;
@@ -393,8 +394,6 @@ static boolean restgamestate(int fd)
 		u.usteed = mtmp;
 		remove_monster(mtmp->mx, mtmp->my);
 	}
-	
-	return TRUE;
 }
 
 
@@ -407,7 +406,7 @@ int dorecover(int fd)
 
 	level = NULL; /* level restore must not use this pointer */
 	restoring = TRUE;
-	initial_pos = lseek(fd, 0, SEEK_CUR);
+	initial_pos = filepos(fd);
 	if (!uptodate(fd, NULL))
 	    return 0;
 	
@@ -418,17 +417,11 @@ int dorecover(int fd)
 	/* restore levels */
 	mread(fd, &count, sizeof(count));
 	for ( ; count; count--) {
-	    if (read(fd, &ltmp, sizeof ltmp) != sizeof ltmp)
-		return 0;
+	    mread(fd, &ltmp, sizeof ltmp);
 	    getlev(fd, ltmp, FALSE);
 	}
 	
-	if (!restgamestate(fd)) {
-		display_nhwindow(NHW_MESSAGE, TRUE);
-		freedynamicdata();
-		restoring = FALSE;
-		return 0;
-	}
+	restgamestate(fd);
 
 	/* erase the binary portion of the logfile */
 	lseek(fd, initial_pos, SEEK_SET);
@@ -728,7 +721,7 @@ static void reset_oattached_mids(boolean ghostly, struct level *lev)
     }
 }
 
-void mread(int fd, void * buf, unsigned int len)
+void mread(int fd, void *buf, unsigned int len)
 {
 	int rlen;
 
@@ -740,6 +733,12 @@ void mread(int fd, void * buf, unsigned int len)
 		
 		panic("Error reading level file.");
 	}
+}
+
+
+static long filepos(int fd)
+{
+    return lseek(fd, 0, SEEK_CUR);
 }
 
 /*restore.c*/
