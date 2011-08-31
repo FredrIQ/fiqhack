@@ -28,10 +28,12 @@ Changes so far:
     - replay-based save/restore
         the starting state and all moves are now logged during play and can be replayed
 	in order to restore a game
+    - change level handling
+        inactive levels are now kept in memory rather than being written to disk.
+	This makes a bunch of locking unnecessary since there is no longer any chance
+	of different games trampling each other.
 
 Plans:
-    - change level handling
-        there is no good reason to write levels to disk any more
     - create an ncurses based window port for tty and delete the current tty code
     - create a qt4-based tile port
 
