@@ -304,7 +304,7 @@ void bill_dummy_object(struct obj *otmp)
 	struct obj *dummy;
 
 	if (otmp->unpaid)
-	    subfrombill(otmp, shop_keeper(*u.ushops));
+	    subfrombill(otmp, shop_keeper(level, *u.ushops));
 	dummy = newobj(otmp->oxlth + otmp->onamelth);
 	*dummy = *otmp;
 	dummy->where = OBJ_FREE;

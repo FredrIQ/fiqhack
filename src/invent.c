@@ -118,7 +118,7 @@ struct obj *merge_choice(struct obj *objlist, struct obj *obj)
 	   that from eliciting an incorrect result from mergable() */
 	save_nocharge = obj->no_charge;
 	if (objlist == invent && obj->where == OBJ_FLOOR &&
-		(shkp = shop_keeper(inside_shop(obj->olev, obj->ox, obj->oy))) != 0) {
+		(shkp = shop_keeper(level, inside_shop(obj->olev, obj->ox, obj->oy))) != 0) {
 	    if (obj->no_charge) obj->no_charge = 0;
 	    /* A billable object won't have its `unpaid' bit set, so would
 	       erroneously seem to be a candidate to merge with a similar

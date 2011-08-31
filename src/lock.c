@@ -160,7 +160,7 @@ static int forcelock(void)
 	    long loss = 0L;
 
 	    costly = (*u.ushops && costly_spot(u.ux, u.uy));
-	    shkp = costly ? shop_keeper(*u.ushops) : 0;
+	    shkp = costly ? shop_keeper(level, *u.ushops) : 0;
 
 	    pline("In fact, you've totally destroyed %s.",
 		  the(xname(xlock.box)));

@@ -341,7 +341,7 @@ void container_impact_dmg(struct obj *obj)
 	/* only consider normal containers */
 	if (!Is_container(obj) || Is_mbag(obj)) return;
 
-	costly = ((shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE))) &&
+	costly = ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) &&
 		  costly_spot(x, y));
 	insider = (*u.ushops && inside_shop(level, u.ux, u.uy) &&
 		   *in_rooms(level, x, y, SHOPBASE) == *u.ushops);
@@ -456,7 +456,7 @@ static int kick_object(xchar x, xchar y, schar dx, schar dy)
 	if (!ZAP_POS(level->locations[x+dx][y+dy].typ) || closed_door(level, x+dx, y+dy))
 		range = 1;
 
-	costly = ((shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE))) &&
+	costly = ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) &&
 				    costly_spot(x, y));
 	isgold = (kickobj->oclass == COIN_CLASS);
 
@@ -1159,7 +1159,7 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 	 * unsavory pline repetitions.
 	 */
 	if (costly) {
-	    if ((shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE))) != 0) {
+	    if ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) != 0) {
 		debit	= ESHK(shkp)->debit;
 		robbed	= ESHK(shkp)->robbed;
 		angry	= !shkp->mpeaceful;
@@ -1291,7 +1291,7 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 
 	if (unpaid || shop_floor_obj) {
 	    if (unpaid) {
-		subfrombill(otmp, shop_keeper(*u.ushops));
+		subfrombill(otmp, shop_keeper(level, *u.ushops));
 		stolen_value(otmp, u.ux, u.uy, TRUE, FALSE);
 	    } else {
 		ox = otmp->ox;

@@ -741,7 +741,7 @@ static void costly_cancel(struct obj *obj)
 	switch (obj->where) {
 	case OBJ_INVENT:
 		if (obj->unpaid) {
-		    shkp = shop_keeper(*u.ushops);
+		    shkp = shop_keeper(level, *u.ushops);
 		    if (!shkp) return;
 		    Norep("You cancel an unpaid object, you pay for it!");
 		    bill_dummy_object(obj);
@@ -749,7 +749,7 @@ static void costly_cancel(struct obj *obj)
 		break;
 	case OBJ_FLOOR:
 		objroom = *in_rooms(level, obj->ox, obj->oy, SHOPBASE);
-		shkp = shop_keeper(objroom);
+		shkp = shop_keeper(level, objroom);
 		if (!shkp || !inhishop(shkp)) return;
 		if (costly_spot(u.ux, u.uy) && objroom == *u.ushops) {
 		    Norep("You cancel it, you pay for it!");
@@ -1333,7 +1333,7 @@ no_unwear:
 		get_obj_location(otmp, &ox, &oy, BURIED_TOO|CONTAINED_TOO) &&
 		costly_spot(ox, oy)) {
 	    struct monst *shkp =
-		shop_keeper(*in_rooms(level, ox, oy, SHOPBASE));
+		shop_keeper(level, *in_rooms(level, ox, oy, SHOPBASE));
 
 	    if ((!obj->no_charge ||
 		 (Has_contents(obj) &&

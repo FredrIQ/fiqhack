@@ -987,7 +987,7 @@ int doengrave(void)
 			 */
 		    Your("%s dull.", aobjnam(otmp, "get"));
 		    if (otmp->unpaid) {
-			struct monst *shkp = shop_keeper(*u.ushops);
+			struct monst *shkp = shop_keeper(level, *u.ushops);
 			if (shkp) {
 			    You("damage it, you pay for it!");
 			    bill_dummy_object(otmp);

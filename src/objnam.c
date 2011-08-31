@@ -719,7 +719,7 @@ ring:
 		if (Has_contents(obj) &&
 		    get_obj_location(obj, &ox, &oy, BURIED_TOO|CONTAINED_TOO) &&
 		    costly_spot(ox, oy) &&
-		    (shkp = shop_keeper(*in_rooms(level, ox, oy, SHOPBASE))))
+		    (shkp = shop_keeper(level, *in_rooms(level, ox, oy, SHOPBASE))))
 			quotedprice += contained_cost(obj, shkp, 0L, FALSE, TRUE);
 		sprintf(eos(bp), " (unpaid, %ld %s)",
 			quotedprice, currency(quotedprice));

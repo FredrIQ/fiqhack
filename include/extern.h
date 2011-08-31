@@ -1329,7 +1329,7 @@ extern void u_entered_shop(char *);
 extern boolean same_price(struct obj *,struct obj *);
 extern void shopper_financial_report(void);
 extern int inhishop(struct monst *);
-extern struct monst *shop_keeper(char);
+extern struct monst *shop_keeper(struct level *lev, char rmno);
 extern boolean tended_shop(struct mkroom *);
 extern void delete_contents(struct obj *);
 extern void obfree(struct obj *,struct obj *);

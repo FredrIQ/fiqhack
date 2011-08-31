@@ -655,7 +655,7 @@ void mhurtle(struct monst *mon, int dx, int dy, int range)
 
 static void check_shop_obj(struct obj *obj, xchar x, xchar y, boolean broken)
 {
-	struct monst *shkp = shop_keeper(*u.ushops);
+	struct monst *shkp = shop_keeper(level, *u.ushops);
 
 	if (!shkp) return;
 
@@ -1545,7 +1545,7 @@ static void breakobj(struct obj *obj,
 	    } else if (!obj->no_charge && costly_spot(x, y)) {
 		/* it is assumed that the obj is a floor-object */
 		char *o_shop = in_rooms(level, x, y, SHOPBASE);
-		struct monst *shkp = shop_keeper(*o_shop);
+		struct monst *shkp = shop_keeper(level, *o_shop);
 
 		if (shkp) {		/* (implies *o_shop != '\0') */
 		    static long lastmovetime = 0L;

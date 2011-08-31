@@ -1117,7 +1117,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		docall(obj);
 	if (*u.ushops && obj->unpaid) {
 	        struct monst *shkp =
-			shop_keeper(*in_rooms(level, u.ux, u.uy, SHOPBASE));
+			shop_keeper(level, *in_rooms(level, u.ux, u.uy, SHOPBASE));
 
 		if (!shkp)
 		    obj->unpaid = 0;

@@ -174,7 +174,7 @@ static int ready_weapon(struct obj *wep)
 	    if (wep->unpaid) {
 		struct monst *this_shkp;
 
-		if ((this_shkp = shop_keeper(inside_shop(level, u.ux, u.uy))) !=
+		if ((this_shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy))) !=
 		    NULL) {
 		    pline("%s says \"You be careful with my %s!\"",
 			  shkname(this_shkp),

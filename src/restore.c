@@ -142,7 +142,7 @@ static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 		   in_rooms(lev, tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 	    
 	    for (shp = damaged_shops; *shp; shp++) {
-		struct monst *shkp = shop_keeper(*shp);
+		struct monst *shkp = shop_keeper(lev, *shp);
 
 		if (shkp && inhishop(shkp) &&
 			repair_damage(shkp, tmp_dam, TRUE))

@@ -1619,7 +1619,7 @@ static int out_container(struct obj *obj)
 		obj->oy = current_container->oy;
 		addtobill(obj, FALSE, FALSE, FALSE);
 	}
-	if (is_pick(obj) && !obj->unpaid && *u.ushops && shop_keeper(*u.ushops))
+	if (is_pick(obj) && !obj->unpaid && *u.ushops && shop_keeper(level, *u.ushops))
 		verbalize("You sneaky cad! Get out of here with that pick!");
 
 	otmp = addinv(obj);
@@ -1650,7 +1650,7 @@ static long mbag_item_gone(int held, struct obj *item)
     else
 	You("%s %s disappear!", Blind ? "notice" : "see", doname(item));
 
-    if (*u.ushops && (shkp = shop_keeper(*u.ushops)) != 0) {
+    if (*u.ushops && (shkp = shop_keeper(level, *u.ushops)) != 0) {
 	if (held ? (boolean) item->unpaid : costly_spot(u.ux, u.uy))
 	    loss = stolen_value(item, u.ux, u.uy,
 				(boolean)shkp->mpeaceful, TRUE);

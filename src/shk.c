@@ -182,7 +182,7 @@ void shkgone(struct monst *mtmp)
 	    for (otmp = shoplev->objects[sx][sy]; otmp; otmp = otmp->nexthere)
 		otmp->no_charge = 0;
 
-	if (on_level(&eshk->shoplevel, &u.uz)) {
+	if (on_level(&eshk->shoplevel, &mtmp->dlevel->z)) {
 	    /* Make sure bill is set only when the
 	       dead shk is the resident shk. */
 	    if ((p = strchr(u.ushops, eshk->shoproom)) != 0) {
@@ -196,8 +196,8 @@ void shkgone(struct monst *mtmp)
 
 void set_residency(struct monst *shkp, boolean zero_out)
 {
-	if (on_level(&(ESHK(shkp)->shoplevel), &u.uz))
-	    level->rooms[ESHK(shkp)->shoproom - ROOMOFFSET].resident =
+	if (on_level(&(ESHK(shkp)->shoplevel), &shkp->dlevel->z))
+	    shkp->dlevel->rooms[ESHK(shkp)->shoproom - ROOMOFFSET].resident =
 		(zero_out)? NULL : shkp;
 }
 
@@ -212,18 +212,16 @@ void replshk(struct monst *mtmp, struct monst *mtmp2)
 /* do shopkeeper specific structure munging -dlc */
 void restshk(struct monst *shkp, boolean ghostly)
 {
-    if (u.uz.dlevel) {
-	struct eshk *eshkp = ESHK(shkp);
+    struct eshk *eshkp = ESHK(shkp);
 
-	if (eshkp->bill_p != (struct bill_x *) -1000)
-	    eshkp->bill_p = &eshkp->bill[0];
-	/* shoplevel can change as dungeons move around */
-	/* savebones guarantees that non-homed shk's will be gone */
-	if (ghostly) {
-	    assign_level(&eshkp->shoplevel, &u.uz);
-	    if (ANGRY(shkp) && strncmpi(eshkp->customer, plname, PL_NSIZ))
-		pacify_shk(shkp);
-	}
+    if (eshkp->bill_p != (struct bill_x *) -1000)
+	eshkp->bill_p = &eshkp->bill[0];
+    /* shoplevel can change as dungeons move around */
+    /* savebones guarantees that non-homed shk's will be gone */
+    if (ghostly) {
+	assign_level(&eshkp->shoplevel, &u.uz);
+	if (ANGRY(shkp) && strncmpi(eshkp->customer, plname, PL_NSIZ))
+	    pacify_shk(shkp);
     }
 }
 
@@ -361,7 +359,7 @@ void u_left_shop(char *leavestring, boolean newlev)
 	   (!level->locations[u.ux][u.uy].edge || level->locations[u.ux0][u.uy0].edge))
 	    return;
 
-	shkp = shop_keeper(*u.ushops0);
+	shkp = shop_keeper(level, *u.ushops0);
 	if (!shkp || !inhishop(shkp))
 	    return;	/* shk died, teleported, changed levels... */
 
@@ -396,7 +394,7 @@ void remote_burglary(xchar x, xchar y)
 	struct monst *shkp;
 	struct eshk *eshkp;
 
-	shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE));
+	shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE));
 	if (!shkp || !inhishop(shkp))
 	    return;	/* shk died, teleported, changed levels... */
 
@@ -458,7 +456,7 @@ void u_entered_shop(char *enterstring)
 	if (!*enterstring)
 		return;
 
-	if (!(shkp = shop_keeper(*enterstring))) {
+	if (!(shkp = shop_keeper(level, *enterstring))) {
 	    if (!strchr(empty_shops, *enterstring) &&
 		in_rooms(level, u.ux, u.uy, SHOPBASE) !=
 				  in_rooms(level, u.ux0, u.uy0, SHOPBASE))
@@ -609,7 +607,7 @@ static long shop_debt(struct eshk *eshkp)
 /* called in response to the `$' command */
 void shopper_financial_report(void)
 {
-	struct monst *shkp, *this_shkp = shop_keeper(inside_shop(level, u.ux, u.uy));
+	struct monst *shkp, *this_shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy));
 	struct eshk *eshkp;
 	long amt;
 	int pass;
@@ -644,15 +642,15 @@ void shopper_financial_report(void)
 
 int inhishop(struct monst *mtmp)
 {
-	return(strchr(in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE),
+	return(strchr(in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE),
 		     ESHK(mtmp)->shoproom) &&
-		on_level(&(ESHK(mtmp)->shoplevel), &u.uz));
+		on_level(&(ESHK(mtmp)->shoplevel), &mtmp->dlevel->z));
 }
 
-struct monst *shop_keeper(char rmno)
+struct monst *shop_keeper(struct level *lev, char rmno)
 {
 	struct monst *shkp = rmno >= ROOMOFFSET ?
-				level->rooms[rmno - ROOMOFFSET].resident : 0;
+				lev->rooms[rmno - ROOMOFFSET].resident : 0;
 
 	if (shkp) {
 	    if (NOTANGRY(shkp)) {
@@ -721,9 +719,9 @@ void obfree(struct obj *obj, struct obj *merge)
 		if (onbill(obj, shkp, TRUE)) break;
 	}
 	/* sanity check, more or less */
-	if (!shkp) shkp = shop_keeper(*u.ushops);
+	if (!shkp) shkp = shop_keeper(level, *u.ushops);
 		/*
-		 * Note:  `shkp = shop_keeper(*u.ushops)' used to be
+		 * Note:  `shkp = shop_keeper(level, *u.ushops)' used to be
 		 *	  unconditional.  But obfree() is used all over
 		 *	  the place, so making its behavior be dependent
 		 *	  upon player location doesn't make much sense.
@@ -882,7 +880,7 @@ void make_happy_shk(struct monst *shkp, boolean silentkops)
 		boolean vanished = canseemon(shkp);
 
 		strcpy(shk_nam, mon_nam(shkp));
-		if (on_level(&eshkp->shoplevel, &u.uz)) {
+		if (on_level(&eshkp->shoplevel, &shkp->dlevel->z)) {
 			home_shk(shkp, FALSE);
 			/* didn't disappear if shk can still be seen */
 			if (canseemon(shkp)) vanished = FALSE;
@@ -1485,7 +1483,7 @@ boolean paybill(int croaked)
 	repo_location.x = repo_location.y = 0;
 
 	/* give shopkeeper first crack */
-	if ((mtmp = shop_keeper(*u.ushops)) && inhishop(mtmp)) {
+	if ((mtmp = shop_keeper(level, *u.ushops)) && inhishop(mtmp)) {
 	    numsk++;
 	    resident = mtmp;
 	    taken = inherits(resident, numsk, croaked);
@@ -1495,7 +1493,7 @@ boolean paybill(int croaked)
 	    mtmp2 = mtmp->nmon;
 	    if (mtmp != resident) {
 		/* for bones: we don't want a shopless shk around */
-		if (!on_level(&(ESHK(mtmp)->shoplevel), &u.uz))
+		if (!on_level(&(ESHK(mtmp)->shoplevel), &mtmp->dlevel->z))
 			mongone(mtmp);
 		else {
 		    numsk++;
@@ -1928,7 +1926,7 @@ static void add_one_tobill(struct obj *obj, boolean dummy)
 	char roomno = *u.ushops;
 
 	if (!roomno) return;
-	if (!(shkp = shop_keeper(roomno))) return;
+	if (!(shkp = shop_keeper(level, roomno))) return;
 	if (!inhishop(shkp)) return;
 
 	if (onbill(obj, shkp, FALSE) || /* perhaps thrown away earlier */
@@ -2032,7 +2030,7 @@ void addtobill(struct obj *obj, boolean ininv, boolean dummy, boolean silent)
 
 	if (!*u.ushops) return;
 
-	if (!(shkp = shop_keeper(roomno))) return;
+	if (!(shkp = shop_keeper(level, roomno))) return;
 
 	if (!inhishop(shkp)) return;
 
@@ -2133,7 +2131,7 @@ void splitbill(struct obj *obj, struct obj *otmp)
 	/* otmp has been split off from obj */
 	struct bill_x *bp;
 	long tmp;
-	struct monst *shkp = shop_keeper(*u.ushops);
+	struct monst *shkp = shop_keeper(level, *u.ushops);
 
 	if (!shkp || !inhishop(shkp)) {
 		impossible("splitbill: no resident shopkeeper??");
@@ -2256,7 +2254,7 @@ long stolen_value(struct obj *obj, xchar x, xchar y, boolean peaceful,
 		  boolean silent)
 {
 	long value = 0L, gvalue = 0L;
-	struct monst *shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE));
+	struct monst *shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE));
 
 	if (!shkp || !inhishop(shkp))
 	    return 0L;
@@ -2353,7 +2351,7 @@ void sellobj(struct obj *obj, xchar x, xchar y)
 	boolean isgold = (obj->oclass == COIN_CLASS);
 	boolean only_partially_your_contents = FALSE;
 
-	if (!(shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE))) ||
+	if (!(shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) ||
 	   !inhishop(shkp)) return;
 	if (!costly_spot(x, y))	return;
 	if (!*u.ushops) return;
@@ -2570,7 +2568,7 @@ int doinvbill(int mode)
 	char *buf_p;
 	struct menulist menu;
 
-	shkp = shop_keeper(*u.ushops);
+	shkp = shop_keeper(level, *u.ushops);
 	if (!shkp || !inhishop(shkp)) {
 	    if (mode != 0) impossible("doinvbill: no shopkeeper?");
 	    return 0;
@@ -2678,7 +2676,7 @@ struct monst *shkcatch(struct obj *obj, xchar x, xchar y)
 {
 	struct monst *shkp;
 
-	if (!(shkp = shop_keeper(inside_shop(level, x, y))) ||
+	if (!(shkp = shop_keeper(level, inside_shop(level, x, y))) ||
 	    !inhishop(shkp)) return 0;
 
 	if (shkp->mcanmove && !shkp->msleeping &&
@@ -2714,7 +2712,7 @@ void add_damage(xchar x, xchar y, long cost)
 
 	    /* Don't schedule for repair unless it's a real shop entrance */
 	    for (shops = in_rooms(level, x, y, SHOPBASE); *shops; shops++)
-		if ((mtmp = shop_keeper(*shops)) != 0 &&
+		if ((mtmp = shop_keeper(level, *shops)) != 0 &&
 			x == ESHK(mtmp)->shd.x && y == ESHK(mtmp)->shd.y)
 		    break;
 	    if (!*shops) return;
@@ -3093,7 +3091,7 @@ boolean is_fshk(struct monst *mtmp)
 /* You are digging in the shop. */
 void shopdig(int fall)
 {
-    struct monst *shkp = shop_keeper(*u.ushops);
+    struct monst *shkp = shop_keeper(level, *u.ushops);
     int lang;
     const char *grabs = "grabs";
 
@@ -3221,7 +3219,7 @@ void pay_for_damage(const char *dmgstr, boolean cant_mollify)
 		struct monst *tmp_shk;
 		unsigned int shk_distance;
 
-		if (!(tmp_shk = shop_keeper(*shp)))
+		if (!(tmp_shk = shop_keeper(level, *shp)))
 		    continue;
 		if (tmp_shk == shkp) {
 		    unsigned int damage_distance =
@@ -3345,7 +3343,7 @@ boolean costly_spot(xchar x, xchar y)
 	struct monst *shkp;
 
 	if (!level->flags.has_shop) return FALSE;
-	shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE));
+	shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE));
 	if (!shkp || !inhishop(shkp)) return FALSE;
 
 	return((boolean)(inside_shop(level, x, y) &&
@@ -3361,7 +3359,7 @@ struct obj *shop_object(xchar x, xchar y)
     struct obj *otmp;
     struct monst *shkp;
 
-    if (!(shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE))) || !inhishop(shkp))
+    if (!(shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) || !inhishop(shkp))
 	return NULL;
 
     for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
@@ -3381,7 +3379,7 @@ void price_quote(struct obj *first_obj)
     long cost;
     int cnt = 0;
     struct menulist menu;
-    struct monst *shkp = shop_keeper(inside_shop(level, u.ux, u.uy));
+    struct monst *shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy));
 
     init_menulist(&menu);
     add_menutext(&menu, "Fine goods for sale:");
@@ -3606,7 +3604,7 @@ void check_unpaid_usage(struct obj *otmp, boolean altusage)
 	if (!otmp->unpaid || !*u.ushops ||
 		(otmp->spe <= 0 && objects[otmp->otyp].oc_charged))
 	    return;
-	if (!(shkp = shop_keeper(*u.ushops)) || !inhishop(shkp))
+	if (!(shkp = shop_keeper(level, *u.ushops)) || !inhishop(shkp))
 	    return;
 	if ((tmp = cost_per_charge(shkp, otmp, altusage)) == 0L)
 	    return;
@@ -3644,7 +3642,7 @@ void costly_gold(xchar x, xchar y, long amount)
 
 	if (!costly_spot(x, y)) return;
 	/* shkp now guaranteed to exist by costly_spot() */
-	shkp = shop_keeper(*in_rooms(level, x, y, SHOPBASE));
+	shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE));
 
 	eshkp = ESHK(shkp);
 	if (eshkp->credit >= amount) {
@@ -3679,7 +3677,7 @@ boolean block_door(xchar x, xchar y)
 	if (!IS_DOOR(level->locations[x][y].typ)) return FALSE;
 	if (roomno != *u.ushops) return FALSE;
 
-	if (!(shkp = shop_keeper((char)roomno)) || !inhishop(shkp))
+	if (!(shkp = shop_keeper(level, (char)roomno)) || !inhishop(shkp))
 		return FALSE;
 
 	if (shkp->mx == ESHK(shkp)->shk.x && shkp->my == ESHK(shkp)->shk.y
@@ -3711,7 +3709,7 @@ boolean block_entry(xchar x, xchar y)
 
 	roomno = *in_rooms(level, x, y, SHOPBASE);
 	if (roomno < 0 || !IS_SHOP(level, roomno)) return FALSE;
-	if (!(shkp = shop_keeper((char)roomno)) || !inhishop(shkp))
+	if (!(shkp = shop_keeper(level, (char)roomno)) || !inhishop(shkp))
 		return FALSE;
 
 	if (ESHK(shkp)->shd.x != u.ux || ESHK(shkp)->shd.y != u.uy)
@@ -3754,7 +3752,7 @@ static char *shk_owns(char *buf, struct obj *obj)
 	if (get_obj_location(obj, &x, &y, 0) &&
 	    (obj->unpaid ||
 	     (obj->where==OBJ_FLOOR && !obj->no_charge && costly_spot(x,y)))) {
-	    shkp = shop_keeper(inside_shop(level, x, y));
+	    shkp = shop_keeper(level, inside_shop(level, x, y));
 	    return strcpy(buf, shkp ? s_suffix(shkname(shkp)) : "the");
 	}
 	return NULL;

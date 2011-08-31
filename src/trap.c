@@ -3450,7 +3450,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 
 			  /* the obj location need not be that of player */
 			  costly = (costly_spot(ox, oy) &&
-				   (shkp = shop_keeper(*in_rooms(level, ox, oy,
+				   (shkp = shop_keeper(level, *in_rooms(level, ox, oy,
 				    SHOPBASE))) != NULL);
 			  insider = (*u.ushops && inside_shop(level, u.ux, u.uy) &&
 				    *in_rooms(level, ox, oy, SHOPBASE) == *u.ushops);

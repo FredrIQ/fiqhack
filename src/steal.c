@@ -135,7 +135,7 @@ static int stealarm(void)
 			if (!dmgtype(mtmp->data, AD_SITM)) /* polymorphed */
 			    goto botm;
 			if (otmp->unpaid)
-			    subfrombill(otmp, shop_keeper(*u.ushops));
+			    subfrombill(otmp, shop_keeper(level, *u.ushops));
 			freeinv(otmp);
 			pline("%s steals %s!", Monnam(mtmp), doname(otmp));
 			mpickobj(mtmp,otmp);	/* may free otmp */
