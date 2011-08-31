@@ -5,14 +5,15 @@
 #include "lev.h"
 
 static void find_lev_obj(struct level *lev);
-static void restlevchn(int);
-static void restdamage(int,boolean);
-static struct obj *restobjchn(int fd, struct level *lev, boolean ghostly, boolean frozen);
-static struct monst *restmonchn(int fd, struct level *lev, boolean ghostly);
-static struct fruit *loadfruitchn(int);
+static void restlevchn(struct memfile *mf);
+static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
+static struct obj *restobjchn(struct memfile *mf, struct level *lev,
+			      boolean ghostly, boolean frozen);
+static struct monst *restmonchn(struct memfile *mf, struct level *lev, boolean ghostly);
+static struct fruit *loadfruitchn(struct memfile *mf);
 static void freefruitchn(struct fruit *);
 static void ghostfruit(struct obj *);
-static void restgamestate(int fd);
+static void restgamestate(struct memfile *mf);
 static void reset_oattached_mids(boolean ghostly, struct level *lev);
 
 /*
@@ -100,17 +101,17 @@ void inven_inuse(boolean quietly)
 	}
 }
 
-static void restlevchn(int fd)
+static void restlevchn(struct memfile *mf)
 {
 	int cnt;
 	s_level	*tmplev, *x;
 
 	sp_levchn = NULL;
-	mread(fd, &cnt, sizeof(int));
+	mread(mf, &cnt, sizeof(int));
 	for (; cnt > 0; cnt--) {
 
 	    tmplev = malloc(sizeof(s_level));
-	    mread(fd, tmplev, sizeof(s_level));
+	    mread(mf, tmplev, sizeof(s_level));
 	    if (!sp_levchn) sp_levchn = tmplev;
 	    else {
 
@@ -122,23 +123,23 @@ static void restlevchn(int fd)
 }
 
 
-static void restdamage(int fd, boolean ghostly)
+static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 {
 	int counter;
 	struct damage *tmp_dam;
 
-	mread(fd, &counter, sizeof(counter));
+	mread(mf, &counter, sizeof(counter));
 	if (!counter)
 	    return;
 	tmp_dam = malloc(sizeof(struct damage));
 	while (--counter >= 0) {
 	    char damaged_shops[5], *shp = NULL;
 
-	    mread(fd, tmp_dam, sizeof(*tmp_dam));
+	    mread(mf, tmp_dam, sizeof(*tmp_dam));
 	    if (ghostly)
-		tmp_dam->when += (moves - level->lastmoves);
+		tmp_dam->when += (moves - lev->lastmoves);
 	    strcpy(damaged_shops,
-		   in_rooms(level, tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
+		   in_rooms(lev, tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 	    
 	    for (shp = damaged_shops; *shp; shp++) {
 		struct monst *shkp = shop_keeper(*shp);
@@ -149,8 +150,8 @@ static void restdamage(int fd, boolean ghostly)
 	    }
 	    
 	    if (!shp || !*shp) {
-		tmp_dam->next = level->damagelist;
-		level->damagelist = tmp_dam;
+		tmp_dam->next = lev->damagelist;
+		lev->damagelist = tmp_dam;
 		tmp_dam = malloc(sizeof(*tmp_dam));
 	    }
 	}
@@ -158,19 +159,20 @@ static void restdamage(int fd, boolean ghostly)
 }
 
 
-static struct obj *restobjchn(int fd, struct level *lev, boolean ghostly, boolean frozen)
+static struct obj *restobjchn(struct memfile *mf, struct level *lev,
+			      boolean ghostly, boolean frozen)
 {
 	struct obj *otmp, *otmp2 = 0;
 	struct obj *first = NULL;
 	int xl;
 
 	while (1) {
-		mread(fd, &xl, sizeof(xl));
+		mread(mf, &xl, sizeof(xl));
 		if (xl == -1) break;
 		otmp = newobj(xl);
 		if (!first) first = otmp;
 		else otmp2->nobj = otmp;
-		mread(fd, otmp, (unsigned) xl + sizeof(struct obj));
+		mread(mf, otmp, (unsigned) xl + sizeof(struct obj));
 		otmp->olev = lev;
 		if (ghostly) {
 		    unsigned nid = flags.ident++;
@@ -183,12 +185,12 @@ static struct obj *restobjchn(int fd, struct level *lev, boolean ghostly, boolea
 		 * immediately after old player died.
 		 */
 		if (ghostly && !frozen && !age_is_relative(otmp))
-		    otmp->age = moves - level->lastmoves + otmp->age;
+		    otmp->age = moves - lev->lastmoves + otmp->age;
 
 		/* get contents of a container or statue */
 		if (Has_contents(otmp)) {
 		    struct obj *otmp3;
-		    otmp->cobj = restobjchn(fd, lev, ghostly, Is_IceBox(otmp));
+		    otmp->cobj = restobjchn(mf, lev, ghostly, Is_IceBox(otmp));
 		    /* restore container back pointers */
 		    for (otmp3 = otmp->cobj; otmp3; otmp3 = otmp3->nobj)
 			otmp3->ocontainer = otmp;
@@ -206,7 +208,7 @@ static struct obj *restobjchn(int fd, struct level *lev, boolean ghostly, boolea
 }
 
 
-static struct monst *restmonchn(int fd, struct level *lev, boolean ghostly)
+static struct monst *restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 {
 	struct monst *mtmp, *mtmp2 = 0;
 	struct monst *first = NULL;
@@ -215,16 +217,16 @@ static struct monst *restmonchn(int fd, struct level *lev, boolean ghostly)
 	boolean moved;
 
 	/* get the original base address */
-	mread(fd, &monbegin, sizeof(monbegin));
+	mread(mf, &monbegin, sizeof(monbegin));
 	moved = (monbegin != mons);
 
 	while (1) {
-		mread(fd, &xl, sizeof(xl));
+		mread(mf, &xl, sizeof(xl));
 		if (xl == -1) break;
 		mtmp = newmonst(xl);
 		if (!first) first = mtmp;
 		else mtmp2->nmon = mtmp;
-		mread(fd, mtmp, (unsigned) xl + sizeof(struct monst));
+		mread(mf, mtmp, (unsigned) xl + sizeof(struct monst));
 		mtmp->dlevel = lev;
 		if (ghostly) {
 			unsigned nid = flags.ident++;
@@ -244,7 +246,7 @@ static struct monst *restmonchn(int fd, struct level *lev, boolean ghostly)
 		}
 		if (mtmp->minvent) {
 			struct obj *obj;
-			mtmp->minvent = restobjchn(fd, lev, ghostly, FALSE);
+			mtmp->minvent = restobjchn(mf, lev, ghostly, FALSE);
 			/* restore monster back pointer */
 			for (obj = mtmp->minvent; obj; obj = obj->nobj)
 				obj->ocarry = mtmp;
@@ -274,13 +276,13 @@ static struct monst *restmonchn(int fd, struct level *lev, boolean ghostly)
 }
 
 
-static struct fruit *loadfruitchn(int fd)
+static struct fruit *loadfruitchn(struct memfile *mf)
 {
 	struct fruit *flist, *fnext;
 
 	flist = 0;
 	while (fnext = newfruit(),
-	       mread(fd, fnext, sizeof *fnext),
+	       mread(mf, fnext, sizeof *fnext),
 	       fnext->fid != 0) {
 		fnext->nextf = flist;
 		flist = fnext;
@@ -314,30 +316,30 @@ static void ghostfruit(struct obj *otmp)
 }
 
 
-static void restgamestate(int fd)
+static void restgamestate(struct memfile *mf)
 {
 	struct obj *otmp;
 	unsigned int stuckid = 0, steedid = 0;
 	struct monst *mtmp;
 	struct level *lev;
 
-	mread(fd, &flags, sizeof(struct flag));
+	mread(mf, &flags, sizeof(struct flag));
 	flags.bypasses = 0;	/* never use the saved value of bypasses */
 
 	role_init();	/* Reset the initial role, race, gender, and alignment */
-	mread(fd, &u, sizeof(struct you));
-	mread(fd, &youmonst, sizeof(youmonst));
+	mread(mf, &u, sizeof(struct you));
+	mread(mf, &youmonst, sizeof(youmonst));
 	set_uasmon(); /* fix up youmonst.data */
 	
 	lev = levels[ledger_no(&u.uz)];
 
 	/* this stuff comes after potential aborted restore attempts */
-	restore_timers(fd, lev, RANGE_GLOBAL, FALSE, 0L);
-	restore_light_sources(fd, lev);
-	invent = restobjchn(fd, lev, FALSE, FALSE);
-	migrating_objs = restobjchn(fd, lev, FALSE, FALSE);
-	migrating_mons = restmonchn(fd, lev, FALSE);
-	mread(fd, mvitals, sizeof(mvitals));
+	restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
+	restore_light_sources(mf, lev);
+	invent = restobjchn(mf, lev, FALSE, FALSE);
+	migrating_objs = restobjchn(mf, lev, FALSE, FALSE);
+	migrating_mons = restmonchn(mf, lev, FALSE);
+	mread(mf, mvitals, sizeof(mvitals));
 
 	/* this comes after inventory has been loaded */
 	for (otmp = invent; otmp; otmp = otmp->nobj)
@@ -353,29 +355,28 @@ static void restgamestate(int fd)
 	if (!uwep || uwep->otyp == PICK_AXE || uwep->otyp == GRAPPLING_HOOK)
 	    unweapon = TRUE;
 
-	mread(fd, &moves, sizeof(moves));
-	mread(fd, &quest_status, sizeof(struct q_score));
-	mread(fd, spl_book,
-				sizeof(struct spell) * (MAXSPELL + 1));
-	restore_artifacts(fd);
-	restore_oracles(fd);
+	mread(mf, &moves, sizeof(moves));
+	mread(mf, &quest_status, sizeof(struct q_score));
+	mread(mf, spl_book, sizeof(struct spell) * (MAXSPELL + 1));
+	restore_artifacts(mf);
+	restore_oracles(mf);
 	if (u.ustuck)
-		mread(fd, &stuckid, sizeof (stuckid));
+		mread(mf, &stuckid, sizeof (stuckid));
 	if (u.usteed)
-		mread(fd, &steedid, sizeof (steedid));
-	mread(fd, pl_character, sizeof pl_character);
+		mread(mf, &steedid, sizeof (steedid));
+	mread(mf, pl_character, sizeof pl_character);
 
-	mread(fd, pl_fruit, sizeof pl_fruit);
-	mread(fd, &current_fruit, sizeof current_fruit);
+	mread(mf, pl_fruit, sizeof pl_fruit);
+	mread(mf, &current_fruit, sizeof current_fruit);
 	freefruitchn(ffruit);	/* clean up fruit(s) made by initoptions() */
-	ffruit = loadfruitchn(fd);
+	ffruit = loadfruitchn(mf);
 
-	restnames(fd);
-	restore_waterlevel(fd);
-	read(fd, &lastinvnr, sizeof(lastinvnr));
-	restore_mt_state(fd);
-	restore_track(fd);
-	restore_food(fd);
+	restnames(mf);
+	restore_waterlevel(mf);
+	mread(mf, &lastinvnr, sizeof(lastinvnr));
+	restore_mt_state(mf);
+	restore_track(mf);
+	restore_food(mf);
 	
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE, lev);
@@ -397,36 +398,45 @@ static void restgamestate(int fd)
 }
 
 
-int dorecover(int fd)
+int dorecover(int infd)
 {
 	int count;
 	xchar ltmp;
 	struct obj *otmp;
-	long initial_pos;
+	long initial_pos, endpos;
+	struct memfile mf = {NULL, 0, 0};
 
 	level = NULL; /* level restore must not use this pointer */
 	restoring = TRUE;
-	initial_pos = filepos(fd);
-	if (!uptodate(fd, NULL))
+
+	initial_pos = filepos(infd);
+	endpos = lseek(infd, 0, SEEK_END);
+	lseek(infd, initial_pos, SEEK_SET);
+	mf.len = endpos - initial_pos;
+	mf.pos = 0;
+	mf.buf = malloc(mf.len);
+	if (!read(infd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
+	    free(mf.buf);
 	    return 0;
-	
-	/* restore dungeon */
-	restore_dungeon(fd);
-	restlevchn(fd);
-	
-	/* restore levels */
-	mread(fd, &count, sizeof(count));
-	for ( ; count; count--) {
-	    mread(fd, &ltmp, sizeof ltmp);
-	    getlev(fd, ltmp, FALSE);
 	}
 	
-	restgamestate(fd);
+	/* restore dungeon */
+	restore_dungeon(&mf);
+	restlevchn(&mf);
+	
+	/* restore levels */
+	mread(&mf, &count, sizeof(count));
+	for ( ; count; count--) {
+	    mread(&mf, &ltmp, sizeof ltmp);
+	    getlev(&mf, ltmp, FALSE);
+	}
+	
+	restgamestate(&mf);
 
 	/* erase the binary portion of the logfile */
-	lseek(fd, initial_pos, SEEK_SET);
-	ftruncate(fd, initial_pos);
-	
+	lseek(infd, initial_pos, SEEK_SET);
+	ftruncate(infd, initial_pos);
+
 	/* all data has been read, prepare for player */
 	level = levels[ledger_no(&u.uz)];
 
@@ -474,7 +484,7 @@ void trickery(char *reason)
 	done(TRICKED);
 }
 
-struct level *getlev(int fd, xchar levnum, boolean ghostly)
+struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 {
 	struct trap *trap;
 	struct monst *mtmp;
@@ -489,10 +499,10 @@ struct level *getlev(int fd, xchar levnum, boolean ghostly)
 	/* Load the old fruit info.  We have to do it first, so the
 	 * information is available when restoring the objects.
 	 */
-	if (ghostly) oldfruit = loadfruitchn(fd);
+	if (ghostly) oldfruit = loadfruitchn(mf);
 
 	/* CHECK:  This may prevent restoration */
-	mread(fd, &dlvl, sizeof(dlvl));
+	mread(mf, &dlvl, sizeof(dlvl));
 	if (levnum && dlvl != levnum) {
 	    char trickbuf[BUFSZ];
 	    sprintf(trickbuf, "This is level %d, not %d!", dlvl, levnum);
@@ -505,28 +515,28 @@ struct level *getlev(int fd, xchar levnum, boolean ghostly)
 	    panic("Unsupported: trying to restore level %d which already exists.\n", dlvl);
 	lev = levels[dlvl] = alloc_level(NULL);
 
-	mread(fd, &lev->z,sizeof(lev->z));
-	mread(fd, lev->locations, sizeof(lev->locations));
-	mread(fd, &lev->lastmoves, sizeof(lev->lastmoves));
-	mread(fd, &lev->upstair, sizeof(stairway));
-	mread(fd, &lev->dnstair, sizeof(stairway));
-	mread(fd, &lev->upladder, sizeof(stairway));
-	mread(fd, &lev->dnladder, sizeof(stairway));
-	mread(fd, &lev->sstairs, sizeof(stairway));
-	mread(fd, &lev->updest, sizeof(dest_area));
-	mread(fd, &lev->dndest, sizeof(dest_area));
-	mread(fd, &lev->flags, sizeof(lev->flags));
-	mread(fd, lev->doors, sizeof(lev->doors));
-	rest_rooms(fd, lev);	/* No joke :-) */
+	mread(mf, &lev->z,sizeof(lev->z));
+	mread(mf, lev->locations, sizeof(lev->locations));
+	mread(mf, &lev->lastmoves, sizeof(lev->lastmoves));
+	mread(mf, &lev->upstair, sizeof(stairway));
+	mread(mf, &lev->dnstair, sizeof(stairway));
+	mread(mf, &lev->upladder, sizeof(stairway));
+	mread(mf, &lev->dnladder, sizeof(stairway));
+	mread(mf, &lev->sstairs, sizeof(stairway));
+	mread(mf, &lev->updest, sizeof(dest_area));
+	mread(mf, &lev->dndest, sizeof(dest_area));
+	mread(mf, &lev->flags, sizeof(lev->flags));
+	mread(mf, lev->doors, sizeof(lev->doors));
+	rest_rooms(mf, lev);	/* No joke :-) */
 	if (lev->nroom)
 	    lev->doorindex = lev->rooms[lev->nroom - 1].fdoor +
 	                lev->rooms[lev->nroom - 1].doorct;
 	else
 	    lev->doorindex = 0;
 
-	restore_timers(fd, lev, RANGE_LEVEL, ghostly, moves - lev->lastmoves);
-	restore_light_sources(fd, lev);
-	lev->monlist = restmonchn(fd, lev, ghostly);
+	restore_timers(mf, lev, RANGE_LEVEL, ghostly, moves - lev->lastmoves);
+	restore_light_sources(mf, lev);
+	lev->monlist = restmonchn(mf, lev, ghostly);
 
 	if (ghostly) {
 	    struct monst *mtmp2;
@@ -545,22 +555,22 @@ struct level *getlev(int fd, xchar levnum, boolean ghostly)
 	    }
 	}
 
-	rest_worm(fd, lev);	/* restore worm information */
+	rest_worm(mf, lev);	/* restore worm information */
 	lev->lev_traps = 0;
 	while (trap = newtrap(),
-	       mread(fd, trap, sizeof(struct trap)),
+	       mread(mf, trap, sizeof(struct trap)),
 	       trap->tx != 0) {
 		trap->ntrap = lev->lev_traps;
 		lev->lev_traps = trap;
 	}
 	dealloc_trap(trap);
-	lev->objlist = restobjchn(fd, lev, ghostly, FALSE);
+	lev->objlist = restobjchn(mf, lev, ghostly, FALSE);
 	find_lev_obj(lev);
 	/* restobjchn()'s `frozen' argument probably ought to be a callback
 	   routine so that we can check for objects being buried under ice */
-	lev->buriedobjlist = restobjchn(fd, lev, ghostly, FALSE);
-	lev->billobjs = restobjchn(fd, lev, ghostly, FALSE);
-	rest_engravings(fd, lev);
+	lev->buriedobjlist = restobjchn(mf, lev, ghostly, FALSE);
+	lev->billobjs = restobjchn(mf, lev, ghostly, FALSE);
+	rest_engravings(mf, lev);
 
 	/* reset level->monsters for new level */
 	for (x = 0; x < COLNO; x++)
@@ -572,9 +582,9 @@ struct level *getlev(int fd, xchar levnum, boolean ghostly)
 	    place_monster(mtmp, mtmp->mx, mtmp->my);
 	    if (mtmp->wormno) place_wsegs(mtmp);
 	}
-	restdamage(fd, ghostly);
+	restdamage(mf, lev, ghostly);
 
-	rest_regions(fd, lev, ghostly);
+	rest_regions(mf, lev, ghostly);
 	if (ghostly) {
 	    /* assert(lev->z == u.uz); */
 	    
@@ -721,11 +731,12 @@ static void reset_oattached_mids(boolean ghostly, struct level *lev)
     }
 }
 
-void mread(int fd, void *buf, unsigned int len)
+void mread(struct memfile *mf, void *buf, unsigned int len)
 {
-	int rlen;
+	int rlen = min(len, mf->len - mf->pos);
 
-	rlen = read(fd, buf, (unsigned) len);
+	memcpy(buf, &mf->buf[mf->pos], rlen);
+	mf->pos += rlen;
 	if ((unsigned)rlen != len){
 		pline("Read %d instead of %u bytes.", rlen, len);
 		if (restoring)

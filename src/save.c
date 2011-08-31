@@ -66,7 +66,7 @@ int dosave0(boolean emergency)
 		if (!levels[ltmp])
 		    continue;
 		bwrite(fd, &ltmp, sizeof ltmp); /* level number*/
-		savelev(fd, levels[ltmp], ltmp, WRITE_SAVE); /* actual level*/
+		savelev(fd, ltmp, WRITE_SAVE); /* actual level*/
 	}
 	
 	savegamestate(fd, WRITE_SAVE | FREE_SAVE);
@@ -121,8 +121,10 @@ static void savegamestate(int fd, int mode)
 }
 
 
-void savelev(int fd, struct level *lev, xchar levnum, int mode)
+void savelev(int fd, xchar levnum, int mode)
 {
+	struct level *lev = levels[levnum];
+	
 	/* if we're tearing down the current level without saving anything
 	   (which happens upon entrance to the endgame or after an aborted
 	   restore attempt) then we don't want to do any actual I/O */

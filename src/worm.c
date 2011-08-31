@@ -467,21 +467,21 @@ void save_worm(int fd, struct level *lev, int mode)
  *
  *  Restore the worm information from the save file.  Called from restore.c
  */
-void rest_worm(int fd, struct level *lev)
+void rest_worm(struct memfile *mf, struct level *lev)
 {
     int i, j, count;
     struct wseg *curr, *temp;
 
     for (i = 1; i < MAX_NUM_WORMS; i++) {
-	mread(fd, &count, sizeof(int));
+	mread(mf, &count, sizeof(int));
 	if (!count) continue;	/* none */
 
 	/* Get the segments. */
 	for (curr = NULL, j = 0; j < count; j++) {
 	    temp = malloc(sizeof(struct wseg));
 	    temp->nseg = NULL;
-	    mread(fd, &(temp->wx), sizeof(xchar));
-	    mread(fd, &(temp->wy), sizeof(xchar));
+	    mread(mf, &(temp->wx), sizeof(xchar));
+	    mread(mf, &(temp->wy), sizeof(xchar));
 	    if (curr)
 		curr->nseg = temp;
 	    else
@@ -490,7 +490,7 @@ void rest_worm(int fd, struct level *lev)
 	}
 	lev->wheads[i] = curr;
     }
-    mread(fd, lev->wgrowtime, sizeof(lev->wgrowtime));
+    mread(mf, lev->wgrowtime, sizeof(lev->wgrowtime));
 }
 
 /*

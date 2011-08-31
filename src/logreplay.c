@@ -362,6 +362,27 @@ static void replay_getlin(const char *query, char *buf)
 }
 
 
+char *replay_bones(int *buflen)
+{
+    char *b64data, *token = next_log_token();
+    char *buf = NULL;
+    
+    if (strncmp(token, "b:", 2) != 0) {
+	loginfo.next--; /* no bones to load */
+	return NULL;
+    }
+    
+    b64data = token+2;
+    *buflen = strlen(b64data);
+    buf = malloc(*buflen);
+    memset(buf, 0, *buflen);
+    
+    base64_decode(b64data, buf);
+    
+    return buf;
+}
+
+
 void replay_setup_windowprocs(const struct nh_window_procs *procs)
 {
     void (*win_raw_print)(const char *str);

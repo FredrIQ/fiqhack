@@ -518,7 +518,7 @@ skip_lots:
 	clear_regions(lev);
 }
 
-void rest_regions(int fd, struct level *lev,
+void rest_regions(struct memfile *mf, struct level *lev,
 		  boolean ghostly) /* If a bones file restore */
 {
     int i, j;
@@ -527,60 +527,60 @@ void rest_regions(int fd, struct level *lev,
     char *msg_buf;
 
     clear_regions(lev);		/* Just for security */
-    mread(fd, &tmstamp, sizeof (tmstamp));
+    mread(mf, &tmstamp, sizeof (tmstamp));
     if (ghostly) tmstamp = 0;
     else tmstamp = (moves - tmstamp);
-    mread(fd, &lev->n_regions, sizeof (lev->n_regions));
+    mread(mf, &lev->n_regions, sizeof (lev->n_regions));
     lev->max_regions = lev->n_regions;
     if (lev->n_regions > 0)
 	lev->regions = malloc(sizeof (struct region *) * lev->n_regions);
     for (i = 0; i < lev->n_regions; i++) {
 	lev->regions[i] = malloc(sizeof (struct region));
-	mread(fd, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
-	mread(fd, &lev->regions[i]->nrects, sizeof (short));
+	mread(mf, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
+	mread(mf, &lev->regions[i]->nrects, sizeof (short));
 
 	if (lev->regions[i]->nrects > 0)
 	    lev->regions[i]->rects = malloc(sizeof (struct nhrect) * lev->regions[i]->nrects);
 	for (j = 0; j < lev->regions[i]->nrects; j++)
-	    mread(fd, &lev->regions[i]->rects[j], sizeof (struct nhrect));
-	mread(fd, &lev->regions[i]->attach_2_u, sizeof (boolean));
-	mread(fd, &lev->regions[i]->attach_2_m, sizeof (unsigned));
+	    mread(mf, &lev->regions[i]->rects[j], sizeof (struct nhrect));
+	mread(mf, &lev->regions[i]->attach_2_u, sizeof (boolean));
+	mread(mf, &lev->regions[i]->attach_2_m, sizeof (unsigned));
 
-	mread(fd, &n, sizeof n);
+	mread(mf, &n, sizeof n);
 	if (n > 0) {
 	    msg_buf = malloc(n + 1);
-	    mread(fd, msg_buf, n);
+	    mread(mf, msg_buf, n);
 	    msg_buf[n] = '\0';
 	    lev->regions[i]->enter_msg = (const char *) msg_buf;
 	} else
 	    lev->regions[i]->enter_msg = NULL;
 
-	mread(fd, &n, sizeof n);
+	mread(mf, &n, sizeof n);
 	if (n > 0) {
 	    msg_buf = malloc(n + 1);
-	    mread(fd, msg_buf, n);
+	    mread(mf, msg_buf, n);
 	    msg_buf[n] = '\0';
 	    lev->regions[i]->leave_msg = (const char *) msg_buf;
 	} else
 	    lev->regions[i]->leave_msg = NULL;
 
-	mread(fd, &lev->regions[i]->ttl, sizeof (short));
+	mread(mf, &lev->regions[i]->ttl, sizeof (short));
 	/* check for expired region */
 	if (lev->regions[i]->ttl >= 0)
 	    lev->regions[i]->ttl =
 		(lev->regions[i]->ttl > tmstamp) ? lev->regions[i]->ttl - tmstamp : 0;
-	mread(fd, &lev->regions[i]->expire_f, sizeof (short));
-	mread(fd, &lev->regions[i]->can_enter_f, sizeof (short));
-	mread(fd, &lev->regions[i]->enter_f, sizeof (short));
-	mread(fd, &lev->regions[i]->can_leave_f, sizeof (short));
-	mread(fd, &lev->regions[i]->leave_f, sizeof (short));
-	mread(fd, &lev->regions[i]->inside_f, sizeof (short));
-	mread(fd, &lev->regions[i]->player_flags, sizeof (boolean));
+	mread(mf, &lev->regions[i]->expire_f, sizeof (short));
+	mread(mf, &lev->regions[i]->can_enter_f, sizeof (short));
+	mread(mf, &lev->regions[i]->enter_f, sizeof (short));
+	mread(mf, &lev->regions[i]->can_leave_f, sizeof (short));
+	mread(mf, &lev->regions[i]->leave_f, sizeof (short));
+	mread(mf, &lev->regions[i]->inside_f, sizeof (short));
+	mread(mf, &lev->regions[i]->player_flags, sizeof (boolean));
 	if (ghostly) {	/* settings pertained to old player */
 	    clear_hero_inside(lev->regions[i]);
 	    clear_heros_fault(lev->regions[i]);
 	}
-	mread(fd, &lev->regions[i]->n_monst, sizeof (short));
+	mread(mf, &lev->regions[i]->n_monst, sizeof (short));
 	if (lev->regions[i]->n_monst > 0)
 	    lev->regions[i]->monsters =
 		malloc(sizeof (unsigned) * lev->regions[i]->n_monst);
@@ -588,11 +588,11 @@ void rest_regions(int fd, struct level *lev,
 	    lev->regions[i]->monsters = NULL;
 	lev->regions[i]->max_monst = lev->regions[i]->n_monst;
 	for (j = 0; j < lev->regions[i]->n_monst; j++)
-	    mread(fd, &lev->regions[i]->monsters[j],
+	    mread(mf, &lev->regions[i]->monsters[j],
 		  sizeof (unsigned));
-	mread(fd, &lev->regions[i]->visible, sizeof (boolean));
-	mread(fd, &lev->regions[i]->effect_id, sizeof (int));
-	mread(fd, &lev->regions[i]->arg, sizeof (void *));
+	mread(mf, &lev->regions[i]->visible, sizeof (boolean));
+	mread(mf, &lev->regions[i]->effect_id, sizeof (int));
+	mread(mf, &lev->regions[i]->arg, sizeof (void *));
     }
     /* remove expired lev->regions, do not trigger the expire_f callback (yet!);
        also update monster lists if this data is coming from a bones file */

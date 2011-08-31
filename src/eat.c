@@ -2452,15 +2452,15 @@ void save_food(int fd)
 }
 
 
-void restore_food(int fd)
+void restore_food(struct memfile *mf)
 {
     int oid;
-    read(fd, &victual, sizeof(victual));
-    read(fd, &oid, sizeof(oid));
+    mread(mf, &victual, sizeof(victual));
+    mread(mf, &oid, sizeof(oid));
     victual.piece = oid ? find_oid(oid) : NULL;
     
-    read(fd, &tin, sizeof(tin));
-    read(fd, &oid, sizeof(oid));
+    mread(mf, &tin, sizeof(tin));
+    mread(mf, &oid, sizeof(oid));
     tin.tin = oid ? find_oid(oid) : NULL;
 }
 

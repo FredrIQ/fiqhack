@@ -77,19 +77,12 @@ boolean check_version(struct version_info *version_data, const char *filename,
 
 /* this used to be based on file date and somewhat OS-dependant,
    but now examines the initial part of the file's contents */
-boolean uptodate(int fd, const char *name)
+boolean uptodate(struct memfile *mf, const char *name)
 {
-    int rlen;
     struct version_info vers_info;
     boolean verbose = name ? TRUE : FALSE;
 
-    rlen = read(fd, &vers_info, sizeof vers_info);
-    if (rlen == 0) {
-	if (verbose) {
-	    pline("File \"%s\" is empty?", name);
-	}
-	return FALSE;
-    }
+    mread(mf, &vers_info, sizeof(vers_info));
     if (!check_version(&vers_info, name, verbose))
 	return FALSE;
     

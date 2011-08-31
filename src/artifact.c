@@ -87,10 +87,10 @@ void save_artifacts(int fd)
 	bwrite(fd, artidisco, sizeof artidisco);
 }
 
-void restore_artifacts(int fd)
+void restore_artifacts(struct memfile *mf)
 {
-	mread(fd, artiexist, sizeof artiexist);
-	mread(fd, artidisco, sizeof artidisco);
+	mread(mf, artiexist, sizeof artiexist);
+	mread(mf, artidisco, sizeof artidisco);
 	hack_artifacts();	/* redo non-saved special cases */
 }
 

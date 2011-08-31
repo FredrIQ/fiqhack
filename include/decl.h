@@ -7,8 +7,6 @@
 extern int (*occupation)(void);
 extern int (*afternmv)(void);
 
-extern char SAVEF[];
-
 extern int bases[MAXOCLASSES];
 
 extern int multi;
@@ -301,5 +299,11 @@ extern struct nh_option_desc *options;
 
 #define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
 #define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)
+
+struct memfile {
+    char *buf;
+    int len;
+    int pos;
+};
 
 #endif /* DECL_H */

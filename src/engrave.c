@@ -1084,17 +1084,17 @@ void save_engravings(int fd, struct level *lev, int mode)
 	    lev->lev_engr = NULL;
 }
 
-void rest_engravings(int fd, struct level *lev)
+void rest_engravings(struct memfile *mf, struct level *lev)
 {
 	struct engr *ep;
 	unsigned lth;
 
 	lev->lev_engr = NULL;
 	while (1) {
-		mread(fd, &lth, sizeof(unsigned));
+		mread(mf, &lth, sizeof(unsigned));
 		if (lth == 0) return;
 		ep = newengr(lth);
-		mread(fd, ep, sizeof(struct engr) + lth);
+		mread(mf, ep, sizeof(struct engr) + lth);
 		ep->nxt_engr = lev->lev_engr;
 		lev->lev_engr = ep;
 		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */

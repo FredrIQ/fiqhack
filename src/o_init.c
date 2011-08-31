@@ -229,19 +229,19 @@ void savenames(int fd, int mode)
 	    }
 }
 
-void restnames(int fd)
+void restnames(struct memfile *mf)
 {
 	int i;
 	unsigned int len;
 
-	mread(fd, bases, sizeof bases);
-	mread(fd, disco, sizeof disco);
-	mread(fd, objects, sizeof(struct objclass) * NUM_OBJECTS);
+	mread(mf, bases, sizeof bases);
+	mread(mf, disco, sizeof disco);
+	mread(mf, objects, sizeof(struct objclass) * NUM_OBJECTS);
 	for (i = 0; i < NUM_OBJECTS; i++)
 	    if (objects[i].oc_uname) {
-		mread(fd, &len, sizeof len);
+		mread(mf, &len, sizeof len);
 		objects[i].oc_uname = malloc(len);
-		mread(fd, objects[i].oc_uname, len);
+		mread(mf, objects[i].oc_uname, len);
 	    }
 }
 

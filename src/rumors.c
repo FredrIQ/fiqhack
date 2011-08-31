@@ -209,12 +209,12 @@ void save_oracles(int fd, int mode)
 	}
 }
 
-void restore_oracles(int fd)
+void restore_oracles(struct memfile *mf)
 {
-	mread(fd, &oracle_cnt, sizeof oracle_cnt);
+	mread(mf, &oracle_cnt, sizeof oracle_cnt);
 	if (oracle_cnt) {
 	    oracle_loc = malloc(oracle_cnt * sizeof (long));
-	    mread(fd, oracle_loc, oracle_cnt * sizeof (long));
+	    mread(mf, oracle_loc, oracle_cnt * sizeof (long));
 	    oracle_flg = 1;	/* no need to call init_oracles() */
 	}
 }

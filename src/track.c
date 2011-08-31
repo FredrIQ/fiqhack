@@ -62,11 +62,11 @@ void save_track(int fd)
 }
 
 
-void restore_track(int fd)
+void restore_track(struct memfile *mf)
 {
-    read(fd, utrack, sizeof(utrack));
-    read(fd, &utcnt, sizeof(utcnt));
-    read(fd, &utpnt, sizeof(utpnt));    
+    mread(mf, utrack, sizeof(utrack));
+    mread(mf, &utcnt, sizeof(utcnt));
+    mread(mf, &utpnt, sizeof(utpnt));    
 }
 
 /*track.c*/

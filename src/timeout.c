@@ -1668,7 +1668,7 @@ void save_timers(int fd, struct level *lev, int mode, int range)
  * Pull in the structures from disk, but don't recalculate the object and
  * monster pointers.
  */
-void restore_timers(int fd, struct level *lev, int range,
+void restore_timers(struct memfile *mf, struct level *lev, int range,
 		    boolean ghostly,	/* restoring from a ghost level */
 		    long adjust)	/* how much to adjust timeout */
 {
@@ -1676,13 +1676,13 @@ void restore_timers(int fd, struct level *lev, int range,
     timer_element *curr;
 
     if (range == RANGE_GLOBAL)
-	mread(fd, &timer_id, sizeof timer_id);
+	mread(mf, &timer_id, sizeof timer_id);
 
     /* restore elements */
-    mread(fd, &count, sizeof count);
+    mread(mf, &count, sizeof count);
     while (count-- > 0) {
 	curr = malloc(sizeof(timer_element));
-	mread(fd, curr, sizeof(timer_element));
+	mread(mf, curr, sizeof(timer_element));
 	if (ghostly)
 	    curr->timeout += adjust;
 	insert_timer(lev, curr);

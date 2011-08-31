@@ -10,14 +10,13 @@ int logfile = -1;
 unsigned int last_cmd_pos;
 static const char *const statuscodes[] = {"save", "done", "inpr"};
 
-static const char b64e[64] =
+static const unsigned char b64e[64] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 
-static void base64_encode(const char* in, char *out)
+static void base64_encode_binary(const unsigned char* in, char *out, int len)
 {
     int i, pos = 0, rem;
-    int len = strlen(in);
     
     for (i = 0; i < (len / 3) * 3; i += 3) {
 	out[pos  ] = b64e[ in[i  ]         >> 2];
@@ -37,6 +36,12 @@ static void base64_encode(const char* in, char *out)
     }
     
     out[pos] = '\0';
+}
+
+
+static void base64_encode(const char* in, char *out)
+{
+    base64_encode_binary((const unsigned char*)in, out, strlen(in));
 }
 
 
@@ -267,6 +272,20 @@ void log_objmenu(int n, struct nh_objresult *pick_list)
     }
     
     lprintf("]");
+}
+
+
+/* bones files must also be logged, since they are an input into the game state */
+void log_bones(const char *bonesbuf, int buflen)
+{
+    char *b64buf = malloc(buflen / 3 * 4 + 5);
+    base64_encode_binary((const unsigned char*)bonesbuf, b64buf, buflen);
+    
+    /* don't use lprintf, b64buf might be too big for the buffer used by lprintf */
+    write(logfile, " b:", 3);
+    write(logfile, b64buf, strlen(b64buf));
+    
+    free(b64buf);
 }
 
 

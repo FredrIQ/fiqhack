@@ -1008,7 +1008,7 @@ void save_waterlevel(int fd, int mode)
 	    unsetup_waterlevel();
 }
 
-void restore_waterlevel(int fd)
+void restore_waterlevel(struct memfile *mf)
 {
 	struct bubble *b = NULL, *btmp;
 	int i;
@@ -1017,15 +1017,15 @@ void restore_waterlevel(int fd)
 	if (!Is_waterlevel(&u.uz)) return;
 
 	set_wportal();
-	mread(fd,&n,sizeof(int));
-	mread(fd,&xmin,sizeof(int));
-	mread(fd,&ymin,sizeof(int));
-	mread(fd,&xmax,sizeof(int));
-	mread(fd,&ymax,sizeof(int));
+	mread(mf,&n,sizeof(int));
+	mread(mf,&xmin,sizeof(int));
+	mread(mf,&ymin,sizeof(int));
+	mread(mf,&xmax,sizeof(int));
+	mread(mf,&ymax,sizeof(int));
 	for (i = 0; i < n; i++) {
 		btmp = b;
 		b = malloc(sizeof(struct bubble));
-		mread(fd,b,sizeof(struct bubble));
+		mread(mf,b,sizeof(struct bubble));
 		if (bbubbles) {
 			btmp->next = b;
 			b->prev = btmp;

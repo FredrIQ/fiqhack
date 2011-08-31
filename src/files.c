@@ -36,7 +36,6 @@ static int lockptr;
 #define DeleteFile unlink
 #endif
 
-static char *set_bonesfile_name(char *,d_level*);
 static char *make_lockname(const char *,char *);
 static const char *fqname(const char *, int, int);
 
@@ -105,34 +104,14 @@ FILE *fopen_datafile(const char *filename, const char *mode, int prefix)
 
 /* ----------  BEGIN BONES FILE HANDLING ----------- */
 
-/* set up "file" to be file name for retrieving bones, and return a
- * bonesid to be read/written in the bones file.
- */
-static char *set_bonesfile_name(char *file, d_level *lev)
-{
-	s_level *sptr;
-	char *dptr;
-
-	sprintf(file, "bon%c%s", dungeons[lev->dnum].boneid,
-			In_quest(lev) ? urole.filecode : "0");
-	dptr = eos(file);
-	if ((sptr = Is_special(lev)) != 0)
-	    sprintf(dptr, ".%c", sptr->boneid);
-	else
-	    sprintf(dptr, ".%d", lev->dlevel);
-	
-	return dptr-2;
-}
-
-
-int create_bonesfile(d_level *lev, char **bonesid, char errbuf[])
+int create_bonesfile(char *bonesid, char errbuf[])
 {
 	const char *file;
 	char tempname[PL_NSIZ+32];
 	int fd;
 
 	if (errbuf) *errbuf = '\0';
-	*bonesid = set_bonesfile_name(bones, lev);
+	sprintf(bones, "bon%s", bonesid);
 	sprintf(tempname, "%d%s.bn", (int)getuid(), plname);
 	file = fqname(tempname, BONESPREFIX, 0);
 
@@ -146,20 +125,20 @@ int create_bonesfile(d_level *lev, char **bonesid, char errbuf[])
 #endif
 	if (fd < 0 && errbuf) /* failure explanation */
 	    sprintf(errbuf, "Cannot create bones id %s (errno %d).",
-		    *bonesid, errno);
+		    bonesid, errno);
 
 	return fd;
 }
 
 
 /* move completed bones file to proper name */
-void commit_bonesfile(d_level *lev)
+void commit_bonesfile(char *bonesid)
 {
 	const char *fq_bones, *tempname;
 	char tempbuf[PL_NSIZ+32];
 	int ret;
 
-	set_bonesfile_name(bones, lev);
+	sprintf(bones, "bon%s", bonesid);
 	fq_bones = fqname(bones, BONESPREFIX, 0);
 	sprintf(tempbuf, "%d%s.bn", (int)getuid(), plname);
 	tempname = fqname(tempbuf, BONESPREFIX, 1);
@@ -170,21 +149,21 @@ void commit_bonesfile(d_level *lev)
 }
 
 
-int open_bonesfile(d_level *lev, char **bonesid)
+int open_bonesfile(char *bonesid)
 {
 	const char *fq_bones;
 	int fd;
 
-	*bonesid = set_bonesfile_name(bones, lev);
+	sprintf(bones, "bon%s", bonesid);
 	fq_bones = fqname(bones, BONESPREFIX, 0);
 	fd = open(fq_bones, O_RDONLY | O_BINARY, 0);
 	return fd;
 }
 
 
-int delete_bonesfile(d_level *lev)
+int delete_bonesfile(char *bonesid)
 {
-	set_bonesfile_name(bones, lev);
+	sprintf(bones, "bon%s", bonesid);
 	return !(unlink(fqname(bones, BONESPREFIX, 0)) < 0);
 }
 

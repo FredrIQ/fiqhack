@@ -143,22 +143,22 @@ void save_dungeon(int fd, boolean perform_write, boolean free_data)
 }
 
 /* Restore the dungeon structures. */
-void restore_dungeon(int fd)
+void restore_dungeon(struct memfile *mf)
 {
     branch *curr, *last;
     int    count, i;
 
-    mread(fd, &n_dgns, sizeof(n_dgns));
-    mread(fd, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
-    mread(fd, &dungeon_topology, sizeof dungeon_topology);
-    mread(fd, tune, sizeof tune);
+    mread(mf, &n_dgns, sizeof(n_dgns));
+    mread(mf, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+    mread(mf, &dungeon_topology, sizeof dungeon_topology);
+    mread(mf, tune, sizeof tune);
 
     last = branches = NULL;
 
-    mread(fd, &count, sizeof(count));
+    mread(mf, &count, sizeof(count));
     for (i = 0; i < count; i++) {
 	curr = malloc(sizeof(branch));
-	mread(fd, curr, sizeof(branch));
+	mread(mf, curr, sizeof(branch));
 	curr->next = NULL;
 	if (last)
 	    last->next = curr;
@@ -167,11 +167,11 @@ void restore_dungeon(int fd)
 	last = curr;
     }
 
-    mread(fd, &count, sizeof(count));
+    mread(mf, &count, sizeof(count));
     if (count >= MAXLINFO)
 	panic("level information count larger (%d) than allocated size", count);
-    mread(fd, level_info, (unsigned)count*sizeof(struct linfo));
-    mread(fd, &inv_pos, sizeof inv_pos);
+    mread(mf, level_info, (unsigned)count*sizeof(struct linfo));
+    mread(mf, &inv_pos, sizeof inv_pos);
 }
 
 static void Fread(void *ptr, int size, int nitems, dlb *stream)

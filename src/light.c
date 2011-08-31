@@ -288,17 +288,17 @@ void save_light_sources(int fd, struct level *lev, int mode, int range)
  * Pull in the structures from disk, but don't recalculate the object
  * pointers.
  */
-void restore_light_sources(int fd, struct level *lev)
+void restore_light_sources(struct memfile *mf, struct level *lev)
 {
     int count;
     light_source *ls;
 
     /* restore elements */
-    mread(fd, &count, sizeof count);
+    mread(mf, &count, sizeof count);
 
     while (count-- > 0) {
 	ls = malloc(sizeof(light_source));
-	mread(fd, ls, sizeof(light_source));
+	mread(mf, ls, sizeof(light_source));
 	ls->next = lev->lev_lights;
 	lev->lev_lights = ls;
     }

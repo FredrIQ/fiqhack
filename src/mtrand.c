@@ -110,12 +110,12 @@ void save_mt_state(int fd)
 }
 
 
-void restore_mt_state(int fd)
+void restore_mt_state(struct memfile *mf)
 {
     unsigned int pos;
-    read(fd, state, sizeof(state));
-    read(fd, &pos, sizeof(pos));
-    read(fd, &left, sizeof(left));
+    mread(mf, state, sizeof(state));
+    mread(mf, &pos, sizeof(pos));
+    mread(mf, &left, sizeof(left));
     next = &state[pos];
 }
 

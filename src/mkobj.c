@@ -1280,7 +1280,6 @@ int add_to_minv(struct monst *mon, struct obj *obj)
 	if (merged(&otmp, &obj))
 	    return 1;	/* obj merged and then free'd */
     /* else insert; don't bother forcing it to end of chain */
-    obj->olev = NULL;
     obj->where = OBJ_MINVENT;
     obj->ocarry = mon;
     obj->nobj = mon->minvent;
@@ -1306,7 +1305,6 @@ struct obj *add_to_container(struct obj *container, struct obj *obj)
     for (otmp = container->cobj; otmp; otmp = otmp->nobj)
 	if (merged(&otmp, &obj)) return otmp;
 
-    obj->olev = NULL;
     obj->where = OBJ_CONTAINED;
     obj->ocontainer = container;
     obj->nobj = container->cobj;

@@ -25,8 +25,8 @@ static coord * shrine_pos(struct level *lev, int roomno);
 static const struct permonst * morguemon(void);
 static const struct permonst * antholemon(void);
 static const struct permonst * squadmon(void);
-static void save_room(int,struct mkroom *);
-static void rest_room(int fd, struct level *lev, struct mkroom *r);
+static void save_room(int fd, struct mkroom *);
+static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r);
 static boolean has_dnstairs(struct level *lev, struct mkroom *);
 static boolean has_upstairs(struct level *lev, struct mkroom *);
 
@@ -616,14 +616,14 @@ void save_rooms(int fd, struct level *lev)
 	    save_room(fd, &lev->rooms[i]);
 }
 
-static void rest_room(int fd, struct level *lev, struct mkroom *r)
+static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r)
 {
 	short i;
 
-	mread(fd, r, sizeof(struct mkroom));
+	mread(mf, r, sizeof(struct mkroom));
 	for (i=0; i<r->nsubrooms; i++) {
 		r->sbrooms[i] = &lev->subrooms[lev->nsubroom];
-		rest_room(fd, lev, &lev->subrooms[lev->nsubroom]);
+		rest_room(mf, lev, &lev->subrooms[lev->nsubroom]);
 		lev->subrooms[lev->nsubroom++].resident = NULL;
 	}
 }
@@ -632,14 +632,14 @@ static void rest_room(int fd, struct level *lev, struct mkroom *r)
  * rest_rooms : That's for restoring rooms. Read the rooms structure from
  * the disk.
  */
-void rest_rooms(int fd, struct level *lev)
+void rest_rooms(struct memfile *mf, struct level *lev)
 {
 	short i;
 
-	mread(fd, &lev->nroom, sizeof(lev->nroom));
+	mread(mf, &lev->nroom, sizeof(lev->nroom));
 	lev->nsubroom = 0;
 	for (i = 0; i<lev->nroom; i++) {
-	    rest_room(fd, lev, &lev->rooms[i]);
+	    rest_room(mf, lev, &lev->rooms[i]);
 	    lev->rooms[i].resident = NULL;
 	}
 	lev->rooms[lev->nroom].hx = -1;		/* restore ending flags */
