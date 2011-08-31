@@ -123,6 +123,7 @@ static const struct nh_option_desc const_birth_options[] = {
     { "elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL, { VTRUE }},
     { "reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, { VTRUE }},
     { "seduction", "certain monsters may seduce you", OPTTYPE_BOOL, { VTRUE }},
+    { "bones", "allow bones levels", OPTTYPE_BOOL, { VTRUE }},
     { "legacy",   "print introductory message", OPTTYPE_BOOL, { VTRUE }},
     { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
     { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
@@ -169,6 +170,7 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"elbereth", &flags.elbereth_enabled},
 	{"reincarnation", &flags.rogue_enabled},
 	{"seduction", &flags.seduce_enabled},
+	{"bones", &flags.bones_enabled},
 	{NULL, NULL}
 };
 

@@ -111,8 +111,9 @@ struct flag {
 	
 	/* birth option flags */
 	boolean  elbereth_enabled; /* should the E-word repel monsters? */
-	boolean  rogue_enabled;  /* create a rogue level */ 
-	boolean  seduce_enabled; /* succubus sduction */
+	boolean  rogue_enabled;    /* create a rogue level */
+	boolean  seduce_enabled;   /* succubus sduction */
+	boolean  bones_enabled;    /* allow loading bones levels */
 };
 
 

@@ -332,7 +332,7 @@ int getbones(d_level *levnum)
 	char c, bonesid[10], oldbonesid[10];
 	struct memfile mf = {NULL, 0, 0};
 
-	if (discover)		/* save bones files for real games */
+	if (discover || !flags.bones_enabled) /* save bones files for real games */
 		return 0;
 
 	/* wizard check added by GAN 02/05/87 */
