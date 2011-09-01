@@ -1991,12 +1991,8 @@ static boolean load_maze(struct level *lev, dlb *fd)
       for (x = 2; x <= x_maze_max; x++)
 	for (y = 0; y <= y_maze_max; y++)
 	    if (filling == -1) {
-#ifndef WALLIFIED_MAZE
-		    lev->locations[x][y].typ = STONE;
-#else
 		    lev->locations[x][y].typ =
 			(y < 2 || ((x % 2) && (y % 2))) ? STONE : HWALL;
-#endif
 	    } else {
 		    lev->locations[x][y].typ = filling;
 	    }
@@ -2418,11 +2414,7 @@ static boolean load_maze(struct level *lev, dlb *fd)
 	    }
 
 	    if (!IS_DOOR(lev->locations[x][y].typ)) {
-#ifndef WALLIFIED_MAZE
-		lev->locations[x][y].typ = CORR;
-#else
 		lev->locations[x][y].typ = ROOM;
-#endif
 		lev->locations[x][y].flags = 0;
 	    }
 
@@ -2438,11 +2430,7 @@ static boolean load_maze(struct level *lev, dlb *fd)
 		    x--;
 
 		/* no need for IS_DOOR check; out of map bounds */
-#ifndef WALLIFIED_MAZE
-		lev->locations[x][y].typ = CORR;
-#else
 		lev->locations[x][y].typ = ROOM;
-#endif
 		lev->locations[x][y].flags = 0;
 	    }
 

@@ -529,24 +529,16 @@ void makemaz(struct level *lev, const char *s)
 
 	lev->flags.is_maze_lev = TRUE;
 
-#ifndef WALLIFIED_MAZE
-	for (x = 2; x < x_maze_max; x++)
-		for (y = 2; y < y_maze_max; y++)
-			lev->locations[x][y].typ = STONE;
-#else
 	for (x = 2; x <= x_maze_max; x++)
 		for (y = 2; y <= y_maze_max; y++)
 			lev->locations[x][y].typ = ((x % 2) && (y % 2)) ? STONE : HWALL;
-#endif
 
 	maze0xy(&mm);
 	walkfrom(lev, mm.x, mm.y);
 	/* put a boulder at the maze center */
 	mksobj_at(BOULDER, lev, (int) mm.x, (int) mm.y, TRUE, FALSE);
 
-#ifdef WALLIFIED_MAZE
 	wallification(lev, 2, 2, x_maze_max, y_maze_max);
-#endif
 	mazexy(lev, &mm);
 	mkstairs(lev, mm.x, mm.y, 1, NULL);		/* up */
 	if (!Invocation_lev(&u.uz)) {
@@ -631,11 +623,7 @@ void walkfrom(struct level *lev, int x, int y)
 
 	if (!IS_DOOR(lev->locations[x][y].typ)) {
 	    /* might still be on edge of MAP, so don't overwrite */
-#ifndef WALLIFIED_MAZE
-	    lev->locations[x][y].typ = CORR;
-#else
 	    lev->locations[x][y].typ = ROOM;
-#endif
 	    lev->locations[x][y].flags = 0;
 	}
 
@@ -646,11 +634,7 @@ void walkfrom(struct level *lev, int x, int y)
 		if (!q) return;
 		dir = dirs[rn2(q)];
 		move(&x,&y,dir);
-#ifndef WALLIFIED_MAZE
-		lev->locations[x][y].typ = CORR;
-#else
 		lev->locations[x][y].typ = ROOM;
-#endif
 		move(&x,&y,dir);
 		walkfrom(lev, x,y);
 	}
@@ -679,13 +663,7 @@ void mazexy(struct level *lev, coord *cc)
 	    cc->x = 3 + 2*rn2((x_maze_max>>1) - 1);
 	    cc->y = 3 + 2*rn2((y_maze_max>>1) - 1);
 	    cpt++;
-	} while (cpt < 100 && lev->locations[cc->x][cc->y].typ !=
-#ifdef WALLIFIED_MAZE
-		 ROOM
-#else
-		 CORR
-#endif
-		);
+	} while (cpt < 100 && lev->locations[cc->x][cc->y].typ != ROOM);
 	if (cpt >= 100) {
 		int x, y;
 		/* last try */
@@ -693,13 +671,8 @@ void mazexy(struct level *lev, coord *cc)
 		    for (y = 0; y < (y_maze_max>>1) - 1; y++) {
 			cc->x = 3 + 2 * x;
 			cc->y = 3 + 2 * y;
-			if (lev->locations[cc->x][cc->y].typ ==
-#ifdef WALLIFIED_MAZE
-			    ROOM
-#else
-			    CORR
-#endif
-			   ) return;
+			if (lev->locations[cc->x][cc->y].typ == ROOM)
+			    return;
 		    }
 		panic("mazexy: can't find a place!");
 	}

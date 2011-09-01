@@ -50,8 +50,6 @@
  * complexity of the game but also to the size of the load module.
  */
 
-/* dungeon levels */
-#define WALLIFIED_MAZE	/* Fancy mazes - Jean-Christophe Collet */
 /* monsters & objects */
 #define KOPS		/* Keystone Kops by Scott R. Turner */
 
