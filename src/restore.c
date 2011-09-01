@@ -319,7 +319,7 @@ static void ghostfruit(struct obj *otmp)
 static void restgamestate(struct memfile *mf)
 {
 	struct obj *otmp;
-	unsigned int stuckid = 0, steedid = 0;
+	unsigned int stuckid = 0, steedid = 0, bookid = 0;
 	struct monst *mtmp;
 	struct level *lev;
 
@@ -377,6 +377,9 @@ static void restgamestate(struct memfile *mf)
 	restore_mt_state(mf);
 	restore_track(mf);
 	restore_food(mf);
+	mread(mf, &bookid, sizeof(bookid));
+	if (bookid)
+	    book = find_oid(bookid);
 	
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE, lev);

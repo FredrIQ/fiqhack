@@ -77,6 +77,7 @@ static void savegamestate(int fd, int mode)
 {
 	unsigned ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
 	unsigned usteed_id = (u.usteed ? u.usteed->m_id : 0);
+	unsigned book_id;
 
 	bwrite(fd, &flags, sizeof(struct flag));
 	bwrite(fd, &u, sizeof(struct you));
@@ -115,6 +116,8 @@ static void savegamestate(int fd, int mode)
 	save_mt_state(fd);
 	save_track(fd);
 	save_food(fd);
+	book_id = book ? book->o_id : 0;
+	bwrite(fd, &book_id, sizeof(book_id));
 }
 
 
