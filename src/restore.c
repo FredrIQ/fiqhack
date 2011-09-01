@@ -238,7 +238,7 @@ static struct monst *restmonchn(struct memfile *mf, struct level *lev, boolean g
 			mtmp->data = mons + offset;  /* new permonst location */
 		}
 		if (ghostly) {
-			int mndx = mtmp->mnum;
+			int mndx = monsndx(mtmp->data);
 			if (propagate(mndx, TRUE, ghostly) == 0) {
 				/* cookie to trigger purge in getbones() */
 				mtmp->mhpmax = DEFUNCT_MONSTER;	

@@ -78,9 +78,7 @@ static void get_mplname(struct monst *mtmp, char *nam)
 	else
 	    mtmp->female = 0;
 	strcat(nam, " the ");
-	strcat(nam, rank_of((int)mtmp->m_lev,
-			    mtmp->mnum,
-			    (boolean)mtmp->female));
+	strcat(nam, rank_of((int)mtmp->m_lev, monsndx(mtmp->data), mtmp->female));
 }
 
 static void mk_mplayer_armor(struct monst *mon, short typ)

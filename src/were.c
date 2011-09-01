@@ -50,7 +50,7 @@ void new_were(struct monst *mon)
 {
 	int pm;
 
-	pm = counter_were(mon->mnum);
+	pm = counter_were(monsndx(mon->data));
 	if (!pm) {
 	    impossible("unknown lycanthrope %s.", mon->data->mname);
 	    return;

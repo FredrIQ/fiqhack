@@ -619,7 +619,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		 * No nutrition from G_NOCORPSE monster, eg, undead.
 		 * DGST monsters don't die from undead corpses
 		 */
-		num = mdef->mnum;
+		num = monsndx(mdef->data);
 		if (magr->mtame && !magr->isminion &&
 		    !(mvitals[num].mvflags & G_NOCORPSE)) {
 		    struct obj *virtualcorpse = mksobj(level, CORPSE, FALSE, FALSE);

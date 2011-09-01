@@ -402,7 +402,7 @@ static void display_monster(
 	if (worm_tail)
 	    monnum = PM_LONG_WORM_TAIL;
 	else
-	    monnum = mon->mnum;
+	    monnum = monsndx(mon->data);
 	
 	if (sightflags == DETECTED)
 	    mflag |= MON_DETECTED;
@@ -922,7 +922,7 @@ void swallowed(int first)
 	dbuf_set(lastx, lasty, 0,0,0,0,0,0,0,0); /* remove hero symbol */
     }
 
-    swallower = u.ustuck->mnum;
+    swallower = monsndx(u.ustuck->data);
     /* assume isok(u.ux,u.uy) */
     left_ok = isok(u.ux-1,u.uy);
     rght_ok = isok(u.ux+1,u.uy);

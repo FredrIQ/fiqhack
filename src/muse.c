@@ -878,7 +878,7 @@ mon_tele:
 int rnd_defensive_item(struct monst *mtmp)
 {
 	const struct permonst *pm = mtmp->data;
-	int difficulty = monstr[mtmp->mnum];
+	int difficulty = monstr[monsndx(pm)];
 	int trycnt = 0;
 
 	if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
@@ -1424,7 +1424,7 @@ int use_offensive(struct monst *mtmp)
 int rnd_offensive_item(struct monst *mtmp)
 {
 	const struct permonst *pm = mtmp->data;
-	int difficulty = monstr[mtmp->mnum];
+	int difficulty = monstr[monsndx(pm)];
 
 	if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
 			|| pm->mlet == S_GHOST
@@ -1490,7 +1490,7 @@ boolean find_misc(struct monst *mtmp)
 	if (dist2(x, y, mtmp->mux, mtmp->muy) > 36)
 		return FALSE;
 
-	if (!stuck && !immobile && !mtmp->cham && monstr[mtmp->mnum] < 6) {
+	if (!stuck && !immobile && !mtmp->cham && monstr[monsndx(mdat)] < 6) {
 	  boolean ignore_boulders = (verysmall(mdat) ||
 				     throws_rocks(mdat) ||
 				     passes_walls(mdat));
@@ -1561,13 +1561,13 @@ boolean find_misc(struct monst *mtmp)
 		}
 		nomore(MUSE_WAN_POLYMORPH);
 		if (obj->otyp == WAN_POLYMORPH && obj->spe > 0 && !mtmp->cham
-				&& monstr[mtmp->mnum] < 6) {
+				&& monstr[monsndx(mdat)] < 6) {
 			m.misc = obj;
 			m.has_misc = MUSE_WAN_POLYMORPH;
 		}
 		nomore(MUSE_POT_POLYMORPH);
 		if (obj->otyp == POT_POLYMORPH && !mtmp->cham
-				&& monstr[mtmp->mnum] < 6) {
+				&& monstr[monsndx(mdat)] < 6) {
 			m.misc = obj;
 			m.has_misc = MUSE_POT_POLYMORPH;
 		}
@@ -1802,7 +1802,7 @@ static void you_aggravate(struct monst *mtmp)
 int rnd_misc_item(struct monst *mtmp)
 {
 	const struct permonst *pm = mtmp->data;
-	int difficulty = monstr[mtmp->mnum];
+	int difficulty = monstr[monsndx(pm)];
 
 	if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
 			|| pm->mlet == S_GHOST
@@ -1854,7 +1854,7 @@ boolean searches_for_item(struct monst *mon, struct obj *obj)
 	    if (typ == WAN_DIGGING)
 		return (boolean)(!is_floater(mon->data));
 	    if (typ == WAN_POLYMORPH)
-		return (boolean)(monstr[mon->mnum] < 6);
+		return (boolean)(monstr[monsndx(mon->data)] < 6);
 	    if (objects[typ].oc_dir == RAY ||
 		    typ == WAN_STRIKING ||
 		    typ == WAN_TELEPORTATION ||

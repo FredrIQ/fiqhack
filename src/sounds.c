@@ -392,8 +392,8 @@ static int domonnoise(struct monst *mtmp)
 
     /* Make sure its your role's quest quardian; adjust if not */
     if (ptr->msound == MS_GUARDIAN && ptr != &pm_guardian) {
-    	int mndx = mtmp->mnum;
-    	ptr = &mons[genus(mndx,1)];
+	int mndx = monsndx(ptr);
+	ptr = &mons[genus(mndx,1)];
     }
 
     /* be sure to do this before talking; the monster might teleport away, in

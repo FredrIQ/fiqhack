@@ -129,7 +129,7 @@ static struct obj *make_corpse(struct monst *mtmp)
 	int num;
 	struct obj *obj = NULL;
 	int x = mtmp->mx, y = mtmp->my;
-	int mndx = mtmp->mnum;
+	int mndx = monsndx(mdat);
 
 	switch(mndx) {
 	    case PM_GRAY_DRAGON:
@@ -1231,7 +1231,7 @@ static void lifesaved_monster(struct monst *mtmp)
 		}
 		if (mtmp->mhpmax <= 0) mtmp->mhpmax = 10;
 		mtmp->mhp = mtmp->mhpmax;
-		if (mvitals[mtmp->mnum].mvflags & G_GENOD) {
+		if (mvitals[monsndx(mtmp->data)].mvflags & G_GENOD) {
 			if (cansee(mtmp->mx, mtmp->my))
 			    pline("Unfortunately %s is still genocided...",
 				mon_nam(mtmp));
@@ -1281,7 +1281,7 @@ void mondead(struct monst *mtmp)
 	 * based on only player kills probably opens more avenues of abuse
 	 * for rings of conflict and such.
 	 */
-	tmp = mtmp->mnum;
+	tmp = monsndx(mtmp->data);
 	if (mvitals[tmp].died < 255) mvitals[tmp].died++;
 
 	/* if it's a (possibly polymorphed) quest leader, mark him as dead */
@@ -1601,7 +1601,7 @@ void xkilled(struct monst *mtmp, int dest)
 	}
 
 	mdat = mtmp->data; /* note: mondead can change mtmp->data */
-	mndx = mtmp->mnum;
+	mndx = monsndx(mdat);
 
 	if (stoned) {
 		stoned = FALSE;

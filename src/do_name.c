@@ -480,7 +480,7 @@ char *x_monnam(struct monst *mtmp,
 	} else if (is_mplayer(mdat) && !In_endgame(&u.uz)) {
 	    char pbuf[BUFSZ];
 	    strcpy(pbuf, rank_of((int)mtmp->m_lev,
-				 mtmp->mnum, (boolean)mtmp->female));
+				 monsndx(mdat), (boolean)mtmp->female));
 	    strcat(buf, lcase(pbuf));
 	    name_at_start = FALSE;
 	} else {

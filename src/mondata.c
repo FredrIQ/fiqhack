@@ -323,7 +323,9 @@ int max_passive_dmg(struct monst *mdef, struct monst *magr)
 }
 
 
-/* return an index into the mons array */
+/* return an index into the mons array
+ * note: monsndx(mtmp->data) != mtmp->mnum for shape changers
+ */
 int monsndx(const struct permonst *ptr)
 {
 	int i;

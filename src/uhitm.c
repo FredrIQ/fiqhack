@@ -1740,7 +1740,7 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 			} else {
 			    tmp = 1 + (mdef->data->cwt >> 8);
 			    if (corpse_chance(mdef, &youmonst, TRUE) &&
-				!(mvitals[mdef->mnum].mvflags &
+				!(mvitals[monsndx(mdef->data)].mvflags &
 				  G_NOCORPSE)) {
 				/* nutrition only if there can be a corpse */
 				u.uhunger += (mdef->data->cnutrit+1) / 2;

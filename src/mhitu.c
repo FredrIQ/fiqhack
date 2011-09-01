@@ -877,7 +877,7 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 		    } else if (u.ustuck == mtmp) {
 			exercise(A_STR, FALSE);
 			You("are being %s.",
-			      (mtmp->mnum == PM_ROPE_GOLEM)
+			      (mtmp->data == &mons[PM_ROPE_GOLEM])
 			      ? "choked" : "crushed");
 		    }
 		} else {			  /* hand to hand weapon */
@@ -1204,7 +1204,7 @@ dopois:
 			!defends(AD_WERE,uwep)) {
 		    You_feel("feverish.");
 		    exercise(A_CON, FALSE);
-		    u.ulycn = mtmp->mnum;
+		    u.ulycn = monsndx(mdat);
 		}
 		break;
 	    case AD_SGLD:
@@ -2496,7 +2496,7 @@ static int passiveum(const struct permonst *olduasmon, struct monst *mtmp,
 struct monst *cloneu(void)
 {
 	struct monst *mon;
-	int mndx = youmonst.mnum;
+	int mndx = monsndx(youmonst.data);
 
 	if (u.mh <= 1)
 	    return NULL;

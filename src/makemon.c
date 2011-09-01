@@ -111,7 +111,7 @@ static void m_initthrow(struct monst *mtmp, int otyp, int oquan)
 static void m_initweap(struct monst *mtmp)
 {
 	const struct permonst *ptr = mtmp->data;
-	int mm = mtmp->mnum;
+	int mm = monsndx(ptr);
 	struct obj *otmp;
 
 	if (Is_rogue_level(&u.uz))
@@ -440,7 +440,7 @@ static void m_initinv(struct monst *mtmp)
 		if (is_mercenary(ptr)) {
 		    int mac;
 
-		    switch(mtmp->mnum) {
+		    switch(monsndx(ptr)) {
 			case PM_GUARD: mac = -1; break;
 			case PM_SOLDIER: mac = 3; break;
 			case PM_SERGEANT: mac = 0; break;
@@ -448,7 +448,7 @@ static void m_initinv(struct monst *mtmp)
 			case PM_CAPTAIN: mac = -3; break;
 			case PM_WATCHMAN: mac = 3; break;
 			case PM_WATCH_CAPTAIN: mac = -2; break;
-			default: impossible("odd mercenary %d?", mtmp->mnum);
+			default: impossible("odd mercenary %d?", monsndx(ptr));
 				mac = 0;
 				break;
 		    }
@@ -613,7 +613,7 @@ struct monst *clone_mon(struct monst *mon,
 	struct monst *m2;
 
 	/* may be too weak or have been extinguished for population control */
-	if (mon->mhp <= 1 || (mvitals[mon->mnum].mvflags & G_EXTINCT))
+	if (mon->mhp <= 1 || (mvitals[monsndx(mon->data)].mvflags & G_EXTINCT))
 	    return NULL;
 
 	if (x == 0) {
@@ -1309,7 +1309,7 @@ const struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" int
 
 	/* note:  none of the monsters with special hit point calculations
 	   have both little and big forms */
-	oldtype = mtmp->mnum;
+	oldtype = monsndx(ptr);
 	newtype = little_to_big(oldtype);
 	if (newtype == PM_PRIEST && mtmp->female) newtype = PM_PRIESTESS;
 
