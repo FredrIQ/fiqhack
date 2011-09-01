@@ -945,24 +945,12 @@ static const char accessories[] = {RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CL
 int dotakeoff(void)
 {
 	struct obj *otmp = NULL;
-	int armorpieces = 0;
+	boolean have_armor = FALSE;
 
-#define MOREARM(x) if (x) { armorpieces++; otmp = x; }
-	MOREARM(uarmh);
-	MOREARM(uarms);
-	MOREARM(uarmg);
-	MOREARM(uarmf);
-	if (uarmc) {
-		armorpieces++;
-		otmp = uarmc;
-	} else if (uarm) {
-		armorpieces++;
-		otmp = uarm;
-	} else if (uarmu) {
-		armorpieces++;
-		otmp = uarmu;
-	}
-	if (!armorpieces) {
+	if (uarmh || uarms || uarmg || uarmf || uarmc || uarm || uarmu)
+	    have_armor = TRUE;
+
+	if (!have_armor) {
 	     /* assert( GRAY_DRAGON_SCALES > YELLOW_DRAGON_SCALE_MAIL ); */
 		if (uskin)
 		    pline_The("%s merged with your skin!",
@@ -972,15 +960,15 @@ int dotakeoff(void)
 		    pline("Not wearing any armor.");
 		return 0;
 	}
-	if (armorpieces > 1)
-		otmp = getobj(clothes, "take off");
+
+	otmp = getobj(clothes, "take off");
 	if (otmp == 0) return 0;
 	if (!(otmp->owornmask & W_ARMOR)) {
 		You("are not wearing that.");
 		return 0;
 	}
 	/* note: the `uskin' case shouldn't be able to happen here; dragons
-	   can't wear any armor so will end up with `armorpieces == 0' above */
+	   can't wear any armor so will end up with `!have_armor' above */
 	if (otmp == uskin || ((otmp == uarm) && uarmc)
 			  || ((otmp == uarmu) && (uarmc || uarm))) {
 	    You_cant("take that off.");
@@ -1000,19 +988,17 @@ int dotakeoff(void)
 int doremring(void)
 {
 	struct obj *otmp = 0;
-	int Accessories = 0;
+	boolean have_accessories = FALSE;
 
-#define MOREACC(x) if (x) { Accessories++; otmp = x; }
-	MOREACC(uleft);
-	MOREACC(uright);
-	MOREACC(uamul);
-	MOREACC(ublindf);
+	if (uleft || uright || uamul || ublindf)
+	    have_accessories = TRUE;
 
-	if (!Accessories) {
+	if (!have_accessories) {
 		pline("Not wearing any accessories.");
 		return 0;
 	}
-	if (Accessories != 1) otmp = getobj(accessories, "remove");
+
+	otmp = getobj(accessories, "remove");
 	if (!otmp) return 0;
 	if (!(otmp->owornmask & (W_RING | W_AMUL | W_TOOL))) {
 		You("are not wearing that.");
