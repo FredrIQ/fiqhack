@@ -263,18 +263,18 @@ static int domonability(void)
 	    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
 		if (split_mon(&youmonst, NULL))
 		    dryup(u.ux, u.uy, TRUE);
-	    } else There("is no fountain here.");
+	    } else pline("There is no fountain here.");
 	} else if (is_unicorn(youmonst.data)) {
 	    use_unicorn_horn(NULL);
 	    return 1;
 	} else if (youmonst.data->msound == MS_SHRIEK) {
-	    You("shriek.");
+	    pline("You shriek.");
 	    if (u.uburied)
 		pline("Unfortunately sound does not carry well through rock.");
 	    else aggravate();
 	} else if (Upolyd)
 		pline("Any special ability you may have is purely reflexive.");
-	else You("don't have a special ability in your normal form!");
+	else pline("You don't have a special ability in your normal form!");
 	return 0;
 }
 
@@ -283,7 +283,7 @@ static int enter_explore_mode(void)
 	if (!discover && !wizard) {
 		pline("Beware!  From explore mode there will be no return to normal game.");
 		if (yn("Do you want to enter explore mode?") == 'y') {
-			You("are now in non-scoring explore mode.");
+			pline("You are now in non-scoring explore mode.");
 			discover = TRUE;
 		}
 		else {
@@ -396,10 +396,10 @@ static int wiz_level_change(void)
 	return 0;
     }
     if (newlevel == u.ulevel) {
-	You("are already that experienced.");
+	pline("You are already that experienced.");
     } else if (newlevel < u.ulevel) {
 	if (u.ulevel == 1) {
-	    You("are already as inexperienced as you can get.");
+	    pline("You are already as inexperienced as you can get.");
 	    return 0;
 	}
 	if (newlevel < 1) newlevel = 1;
@@ -407,7 +407,7 @@ static int wiz_level_change(void)
 	    losexp("#levelchange");
     } else {
 	if (u.ulevel >= MAXULEV) {
-	    You("are already as experienced as you can get.");
+	    pline("You are already as experienced as you can get.");
 	    return 0;
 	}
 	if (newlevel > MAXULEV) newlevel = MAXULEV;
@@ -1355,7 +1355,7 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 	    return COMMAND_BAD_ARG;
 	
 	if (u.uburied && !cmdlist[command].can_if_buried) {
-	    You_cant("do that while you are buried!");
+	    pline("You can't do that while you are buried!");
 	    res = 0;
 	} else {
 	    flags.move = TRUE;

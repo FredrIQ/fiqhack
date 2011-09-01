@@ -53,16 +53,16 @@ int thitu(int tlev, int dam, struct obj *obj,
 
 	if (u.uac + tlev <= rnd(20)) {
 		if (Blind || !flags.verbose) pline("It misses.");
-		else You("are almost hit by %s.", onm);
+		else pline("You are almost hit by %s.", onm);
 		return 0;
 	} else {
-		if (Blind || !flags.verbose) You("are hit!");
-		else You("are hit by %s%s", onm, exclam(dam));
+		if (Blind || !flags.verbose) pline("You are hit!");
+		else pline("You are hit by %s%s", onm, exclam(dam));
 
 		if (obj && objects[obj->otyp].oc_material == SILVER
 				&& hates_silver(youmonst.data)) {
 			dam += rnd(20);
-			pline_The("silver sears your flesh!");
+			pline("The silver sears your flesh!");
 			exercise(A_CON, FALSE);
 		}
 		if (is_acid && Acid_resistance)
@@ -161,20 +161,20 @@ int ohitmon(struct monst *mtmp,	/* accidental target */
 
 	    if (otmp->opoisoned && is_poisonable(otmp)) {
 		if (resists_poison(mtmp)) {
-		    if (vis) pline_The("poison doesn't seem to affect %s.",
+		    if (vis) pline("The poison doesn't seem to affect %s.",
 				   mon_nam(mtmp));
 		} else {
 		    if (rn2(30)) {
 			damage += rnd(6);
 		    } else {
-			if (vis) pline_The("poison was deadly...");
+			if (vis) pline("The poison was deadly...");
 			damage = mtmp->mhp;
 		    }
 		}
 	    }
 	    if (objects[otmp->otyp].oc_material == SILVER &&
 		    hates_silver(mtmp->data)) {
-		if (vis) pline_The("silver sears %s flesh!",
+		if (vis) pline("The silver sears %s flesh!",
 				s_suffix(mon_nam(mtmp)));
 		else if (verbose) pline("Its flesh is seared!");
 	    }
@@ -184,7 +184,7 @@ int ohitmon(struct monst *mtmp,	/* accidental target */
 			pline("%s is unaffected.", Monnam(mtmp));
 		    damage = 0;
 		} else {
-		    if (vis) pline_The("acid burns %s!", mon_nam(mtmp));
+		    if (vis) pline("The acid burns %s!", mon_nam(mtmp));
 		    else if (verbose) pline("It is burned!");
 		}
 	    }
@@ -311,13 +311,13 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			    singleobj->otyp <= LAST_GEM+9 /* 9 glass colors */
 			    && is_unicorn(youmonst.data)) {
 			if (singleobj->otyp > LAST_GEM) {
-			    You("catch the %s.", xname(singleobj));
-			    You("are not interested in %s junk.",
+			    pline("You catch the %s.", xname(singleobj));
+			    pline("You are not interested in %s junk.",
 				s_suffix(mon_nam(mon)));
 			    makeknown(singleobj->otyp);
 			    dropy(singleobj);
 			} else {
-			    You("accept %s gift in the spirit in which it was intended.",
+			    pline("You accept %s gift in the spirit in which it was intended.",
 				s_suffix(mon_nam(mon)));
 			    hold_another_object(singleobj,
 				"You catch, but drop, %s.", xname(singleobj),
@@ -381,8 +381,8 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 			} else if (singleobj->otyp == BLINDING_VENOM) {
 			    int num_eyes = eyecount(youmonst.data);
 			    /* venom in the eyes */
-			    if (!Blind) pline_The("venom blinds you.");
-			    else Your("%s sting%s.",
+			    if (!Blind) pline("The venom blinds you.");
+			    else pline("Your %s sting%s.",
 				      (num_eyes == 1) ? body_part(EYE) :
 						makeplural(body_part(EYE)),
 				      (num_eyes == 1) ? "s" : "");
@@ -427,7 +427,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	if (blindinc) {
 		u.ucreamed += blindinc;
 		make_blinded(Blinded + (long)blindinc, FALSE);
-		if (!Blind) Your("vision quickly clears.");
+		if (!Blind) pline("Your vision quickly clears.");
 	}
 }
 

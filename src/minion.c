@@ -121,7 +121,7 @@ void summon_minion(aligntyp alignment, boolean talk)
 	mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
     if (mon) {
 	if (talk) {
-	    pline_The("voice of %s booms:", align_gname(alignment));
+	    pline("The voice of %s booms:", align_gname(alignment));
 	    verbalize("Thou shalt pay for thy indiscretion!");
 	    if (!Blind)
 		pline("%s appears before you.", Amonnam(mon));
@@ -211,27 +211,27 @@ long bribe(struct monst *mtmp)
 	/*Michael Paddon -- fix for negative offer to monster*/
 	/*JAR880815 - */
 	if (offer < 0L) {
-		You("try to shortchange %s, but fumble.",
+		pline("You try to shortchange %s, but fumble.",
 			mon_nam(mtmp));
 		return 0L;
 	} else if (offer == 0L) {
-		You("refuse.");
+		pline("You refuse.");
 		return 0L;
 #ifndef GOLDOBJ
 	} else if (offer >= u.ugold) {
-		You("give %s all your gold.", mon_nam(mtmp));
+		pline("You give %s all your gold.", mon_nam(mtmp));
 		offer = u.ugold;
 	} else {
-		You("give %s %ld %s.", mon_nam(mtmp), offer, currency(offer));
+		pline("You give %s %ld %s.", mon_nam(mtmp), offer, currency(offer));
 	}
 	u.ugold -= offer;
 	mtmp->mgold += offer;
 #else
 	} else if (offer >= umoney) {
-		You("give %s all your gold.", mon_nam(mtmp));
+		pline("You give %s all your gold.", mon_nam(mtmp));
 		offer = umoney;
 	} else {
-		You("give %s %ld %s.", mon_nam(mtmp), offer, currency(offer));
+		pline("You give %s %ld %s.", mon_nam(mtmp), offer, currency(offer));
 	}
 	money2mon(mtmp, offer);
 #endif

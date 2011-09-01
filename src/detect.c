@@ -212,7 +212,7 @@ int gold_detect(struct obj *sobj)
     }
     /* only under me - no separate display required */
     if (stale) docrt();
-    You("notice some gold between your %s.", makeplural(body_part(FOOT)));
+    pline("You notice some gold between your %s.", makeplural(body_part(FOOT)));
     return 0;
 
 outgoldmap:
@@ -263,7 +263,7 @@ outgoldmap:
     }
     
     newsym(u.ux,u.uy);
-    You_feel("very greedy, and sense gold!");
+    pline("You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
     win_pause(P_MAP);
     docrt();
@@ -305,9 +305,9 @@ int food_detect(struct obj *sobj)
 	known = stale && !confused;
 	if (stale) {
 	    docrt();
-	    You("sense a lack of %s nearby.", what);
+	    pline("You sense a lack of %s nearby.", what);
 	    if (sobj && sobj->blessed) {
-		if (!u.uedibility) Your("%s starts to tingle.", body_part(NOSE));
+		if (!u.uedibility) pline("Your %s starts to tingle.", body_part(NOSE));
 		u.uedibility = 1;
 	    }
 	} else if (sobj) {
@@ -326,7 +326,7 @@ int food_detect(struct obj *sobj)
 	return !stale;
     } else if (!ct) {
 	known = TRUE;
-	You("%s %s nearby.", sobj ? "smell" : "sense", what);
+	pline("You %s %s nearby.", sobj ? "smell" : "sense", what);
 	if (sobj && sobj->blessed) {
 		if (!u.uedibility) pline("Your %s starts to tingle.", body_part(NOSE));
 		u.uedibility = 1;
@@ -356,13 +356,13 @@ int food_detect(struct obj *sobj)
 	newsym(u.ux,u.uy);
 	if (sobj) {
 	    if (sobj->blessed) {
-	    	Your("%s %s to tingle and you smell %s.", body_part(NOSE),
+	    	pline("Your %s %s to tingle and you smell %s.", body_part(NOSE),
 	    		u.uedibility ? "continues" : "starts", what);
 		u.uedibility = 1;
 	    } else
-		Your("%s tingles and you smell %s.", body_part(NOSE), what);
+		pline("Your %s tingles and you smell %s.", body_part(NOSE), what);
 	}
-	else You("sense %s.", what);
+	else pline("You sense %s.", what);
 	win_pause(P_MAP);
 	exercise(A_WIS, TRUE);
 	docrt();
@@ -446,7 +446,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 	    return 1;
 	}
 
-	You("sense %s nearby.", stuff);
+	pline("You sense %s nearby.", stuff);
 	return 0;
     }
 
@@ -527,7 +527,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
     }
 
     newsym(u.ux,u.uy);
-    You("detect the %s of %s.", ct ? "presence" : "absence", stuff);
+    pline("You detect the %s of %s.", ct ? "presence" : "absence", stuff);
     win_pause(P_MAP);
     /*
      * What are we going to do when the hero does an object detect while blind
@@ -594,7 +594,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	    }
 	}
 	display_self();
-	You("sense the presence of monsters.");
+	pline("You sense the presence of monsters.");
 	if (woken)
 	    pline("Monsters sense the presence of you.");
 	win_pause(P_MAP);
@@ -673,7 +673,7 @@ int trap_detect(struct obj *sobj)
 	return 1;
     }
     /* traps exist, but only under me - no separate display required */
-    Your("%s itch.", makeplural(body_part(TOE)));
+    pline("Your %s itch.", makeplural(body_part(TOE)));
     return 0;
 outtrapmap:
     cls();
@@ -693,7 +693,7 @@ outtrapmap:
     }
 
     newsym(u.ux,u.uy);
-    You_feel("%s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
+    pline("You feel %s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
     win_pause(P_MAP);
     docrt();
     u.uinwater = uw;
@@ -763,10 +763,10 @@ void use_crystal_ball(struct obj *obj)
 	case 3 : if (!resists_blnd(&youmonst)) {
 		pline("%s your vision!", Tobjnam(obj, "damage"));
 		make_blinded(Blinded + rnd(100),FALSE);
-		if (!Blind) Your("vision quickly clears.");
+		if (!Blind) pline("Your vision quickly clears.");
 	    } else {
 		pline("%s your vision.", Tobjnam(obj, "assault"));
-		You("are unaffected!");
+		pline("You are unaffected!");
 	    }
 	    break;
 	case 4 : pline("%s your mind!", Tobjnam(obj, "zap"));
@@ -787,17 +787,17 @@ void use_crystal_ball(struct obj *obj)
 	    pline("All you see is funky %s haze.", hcolor(NULL));
 	} else {
 	    switch(rnd(6)) {
-	    case 1 : You("grok some groovy globs of incandescent lava.");
+	    case 1 : pline("You grok some groovy globs of incandescent lava.");
 		break;
 	    case 2 : pline("Whoa!  Psychedelic colors, %s!",
 			   poly_gender() == 1 ? "babe" : "dude");
 		break;
-	    case 3 : pline_The("crystal pulses with sinister %s light!",
+	    case 3 : pline("The crystal pulses with sinister %s light!",
 				hcolor(NULL));
 		break;
-	    case 4 : You("see goldfish swimming above fluorescent rocks.");
+	    case 4 : pline("You see goldfish swimming above fluorescent rocks.");
 		break;
-	    case 5 : You("see tiny snowflakes spinning around a miniature farmhouse.");
+	    case 5 : pline("You see tiny snowflakes spinning around a miniature farmhouse.");
 		break;
 	    default: pline("Oh wow... like a kaleidoscope!");
 		break;
@@ -808,18 +808,18 @@ void use_crystal_ball(struct obj *obj)
     }
 
     /* read a single character */
-    if (flags.verbose) You("may look for an object or monster symbol.");
+    if (flags.verbose) pline("You may look for an object or monster symbol.");
     ch = query_key("What do you look for?", NULL);
     /* Don't filter out ' ' here; it has a use */
     if ((ch != def_monsyms[S_GHOST]) && strchr(quitchars,ch)) { 
 	if (flags.verbose) pline("Never mind.");
 	return;
     }
-    You("peer into %s...", the(xname(obj)));
+    pline("You peer into %s...", the(xname(obj)));
     nomul(-rnd(10));
     nomovemsg = "";
     if (obj->spe <= 0)
-	pline_The("vision is unclear.");
+	pline("The vision is unclear.");
     else {
 	int class;
 	int ret = 0;
@@ -843,7 +843,7 @@ void use_crystal_ball(struct obj *obj)
 		default:
 		    {
 		    int i = rn2(SIZE(level_detects));
-		    You("see %s, %s.",
+		    pline("You see %s, %s.",
 			level_detects[i].what,
 			level_distance(level_detects[i].where));
 		    }
@@ -853,8 +853,8 @@ void use_crystal_ball(struct obj *obj)
 
 	if (ret) {
 	    if (!rn2(100))  /* make them nervous */
-		You("see the Wizard of Yendor gazing out at you.");
-	    else pline_The("vision is unclear.");
+		pline("You see the Wizard of Yendor gazing out at you.");
+	    else pline("The vision is unclear.");
 	}
     }
     return;
@@ -1083,7 +1083,7 @@ void find_trap(struct trap *trap)
 	cleared = TRUE;
     }
 
-    You("find %s.", an(trapexplain[tt-1]));
+    pline("You find %s.", an(trapexplain[tt-1]));
 
     if (cleared) {
 	win_pause(P_MAP);	/* wait */
@@ -1146,11 +1146,11 @@ int dosearch0(int aflag)
 					 */
 					continue;
 				    } else {
-					You_feel("an unseen monster!");
+					pline("You feel an unseen monster!");
 					map_invisible(x, y);
 				    }
 				} else if (!sensemon(mtmp))
-				    You("find %s.", a_monnam(mtmp));
+				    pline("You find %s.", a_monnam(mtmp));
 				return 1;
 			    }
 			    if (!canspotmon(mtmp)) {

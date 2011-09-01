@@ -355,7 +355,7 @@ int dodiscovered(void)
 	}
     }
     if (ct == 0) {
-	You("haven't discovered anything yet...");
+	pline("You haven't discovered anything yet...");
     } else
 	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
     free(menu.items);

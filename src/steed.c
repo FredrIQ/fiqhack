@@ -15,7 +15,7 @@ static boolean landing_spot(coord *, int, int);
 /* caller has decided that hero can't reach something while mounted */
 void rider_cant_reach(void)
 {
-     You("aren't skilled enough to reach from %s.", y_monnam(u.usteed));
+     pline("You aren't skilled enough to reach from %s.", y_monnam(u.usteed));
 }
 
 /*** Putting the saddle on ***/
@@ -42,10 +42,10 @@ int use_saddle(struct obj *otmp)
 
 	/* Can you use it? */
 	if (nohands(youmonst.data)) {
-		You("have no hands!");	/* not `body_part(HAND)' */
+		pline("You have no hands!");	/* not `body_part(HAND)' */
 		return 0;
 	} else if (!freehand()) {
-		You("have no free %s.", body_part(HAND));
+		pline("You have no free %s.", body_part(HAND));
 		return 0;
 	}
 
@@ -75,7 +75,7 @@ int use_saddle(struct obj *otmp)
 	if (touch_petrifies(ptr) && !uarmg && !Stone_resistance) {
 	    char kbuf[BUFSZ];
 
-	    You("touch %s.", mon_nam(mtmp));
+	    pline("You touch %s.", mon_nam(mtmp));
  	    if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
 		sprintf(kbuf, "attempting to saddle %s", an(mtmp->data->mname));
 		instapetrify(kbuf);
@@ -92,7 +92,7 @@ int use_saddle(struct obj *otmp)
 	    return 1;
 	}
 	if (!can_saddle(mtmp)) {
-		You_cant("saddle such a creature.");
+		pline("You can't saddle such a creature.");
 		return 1;
 	}
 
@@ -131,7 +131,7 @@ int use_saddle(struct obj *otmp)
 
 	/* Make the attempt */
 	if (rn2(100) < chance) {
-	    You("put the saddle on %s.", mon_nam(mtmp));
+	    pline("You put the saddle on %s.", mon_nam(mtmp));
 	    if (otmp->owornmask) remove_worn_item(otmp, FALSE);
 	    freeinv(otmp);
 	    /* mpickobj may free otmp it if merges, but we have already
@@ -186,7 +186,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 
 	/* Sanity checks */
 	if (u.usteed) {
-	    You("are already riding %s.", mon_nam(u.usteed));
+	    pline("You are already riding %s.", mon_nam(u.usteed));
 	    return FALSE;
 	}
 
@@ -206,7 +206,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	 * minimized, if not eliminated altogether.
 	 */
 	if (Wounded_legs) {
-	    Your("%s are in no shape for riding.", makeplural(body_part(LEG)));
+	    pline("Your %s are in no shape for riding.", makeplural(body_part(LEG)));
 	    if (force && wizard && yn("Heal your legs?") == 'y')
 		HWounded_legs = EWounded_legs = 0;
 	    else
@@ -215,11 +215,11 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 
 	if (Upolyd && (!humanoid(youmonst.data) || verysmall(youmonst.data) ||
 			bigmonst(youmonst.data) || slithy(youmonst.data))) {
-	    You("won't fit on a saddle.");
+	    pline("You won't fit on a saddle.");
 	    return FALSE;
 	}
 	if (!force && (near_capacity() > SLT_ENCUMBER)) {
-	    You_cant("do that while carrying so much stuff.");
+	    pline("You can't do that while carrying so much stuff.");
 	    return FALSE;
 	}
 
@@ -234,9 +234,9 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	if (u.uswallow || u.ustuck || u.utrap || Punished ||
 	    !test_move(u.ux, u.uy, mtmp->mx-u.ux, mtmp->my-u.uy, 0, TEST_MOVE)) {
 	    if (Punished || !(u.uswallow || u.ustuck || u.utrap))
-		You("are unable to swing your %s over.", body_part(LEG)); 
+		pline("You are unable to swing your %s over.", body_part(LEG)); 
 	    else
-		You("are stuck here for now.");
+		pline("You are stuck here for now.");
 	    return FALSE;
 	}
 
@@ -250,7 +250,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	if (touch_petrifies(ptr) && !Stone_resistance) {
 	    char kbuf[BUFSZ];
 
-	    You("touch %s.", mon_nam(mtmp));
+	    pline("You touch %s.", mon_nam(mtmp));
 	    sprintf(kbuf, "attempting to ride %s", an(mtmp->data->mname));
 	    instapetrify(kbuf);
 	}
@@ -261,7 +261,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	if (mtmp->mtrapped) {
 	    struct trap *t = t_at(level, mtmp->mx, mtmp->my);
 
-	    You_cant("mount %s while %s's trapped in %s.",
+	    pline("You can't mount %s while %s's trapped in %s.",
 		     mon_nam(mtmp), mhe(mtmp),
 		     an(trapexplain[t->ttyp-1]));
 	    return FALSE;
@@ -276,23 +276,23 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	    return FALSE;
 	}
 	if (!force && Underwater && !is_swimmer(ptr)) {
-	    You_cant("ride that creature while under water.");
+	    pline("You can't ride that creature while under water.");
 	    return FALSE;
 	}
 	if (!can_saddle(mtmp) || !can_ride(mtmp)) {
-	    You_cant("ride such a creature.");
+	    pline("You can't ride such a creature.");
 	    return 0;
 	}
 
 	/* Is the player impaired? */
 	if (!force && !is_floater(ptr) && !is_flyer(ptr) &&
 			Levitation && !Lev_at_will) {
-	    You("cannot reach %s.", mon_nam(mtmp));
+	    pline("You cannot reach %s.", mon_nam(mtmp));
 	    return FALSE;
 	}
 	if (!force && uarm && is_metallic(uarm) &&
 			greatest_erosion(uarm)) {
-	    Your("%s armor is too stiff to be able to mount %s.",
+	    pline("Your %s armor is too stiff to be able to mount %s.",
 			uarm->oeroded ? "rusty" : "corroded",
 			mon_nam(mtmp));
 	    return FALSE;
@@ -303,7 +303,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 		pline("%s slips away from you.", Monnam(mtmp));
 		return FALSE;
 	    }
-	    You("slip while trying to get on %s.", mon_nam(mtmp));
+	    pline("You slip while trying to get on %s.", mon_nam(mtmp));
 
 	    sprintf(buf, "slipped while mounting %s",
 		    /* "a saddled mumak" or "a saddled pony called Dobbin" */
@@ -319,7 +319,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	    if (Levitation && !is_floater(ptr) && !is_flyer(ptr))
 	    	/* Must have Lev_at_will at this point */
 	    	pline("%s magically floats up!", Monnam(mtmp));
-	    You("mount %s.", mon_nam(mtmp));
+	    pline("You mount %s.", mon_nam(mtmp));
 	}
 	/* setuwep handles polearms differently when you're mounted */
 	if (uwep && is_pole(uwep)) unweapon = FALSE;
@@ -461,14 +461,14 @@ void dismount_steed(int reason)
 	    case DISMOUNT_THROWN:
 		verb = "are thrown";
 	    case DISMOUNT_FELL:
-		You("%s off of %s!", verb, mon_nam(mtmp));
+		pline("You %s off of %s!", verb, mon_nam(mtmp));
 		if (!have_spot) have_spot = landing_spot(&cc,reason,1);
 		losehp(rn1(10,10), "riding accident", KILLED_BY_AN);
 		set_wounded_legs(BOTH_SIDES, (int)HWounded_legs + rn1(5,5));
 		repair_leg_damage = FALSE;
 		break;
 	    case DISMOUNT_POLY:
-		You("can no longer ride %s.", mon_nam(u.usteed));
+		pline("You can no longer ride %s.", mon_nam(u.usteed));
 		if (!have_spot) have_spot = landing_spot(&cc,reason,1);
 		break;
 	    case DISMOUNT_ENGULFED:
@@ -483,13 +483,13 @@ void dismount_steed(int reason)
 	    case DISMOUNT_BYCHOICE:
 	    default:
 		if (otmp && otmp->cursed) {
-		    You("can't.  The saddle %s cursed.",
+		    pline("You can't.  The saddle %s cursed.",
 			otmp->bknown ? "is" : "seems to be");
 		    otmp->bknown = TRUE;
 		    return;
 		}
 		if (!have_spot) {
-		    You("can't. There isn't anywhere for you to stand.");
+		    pline("You can't. There isn't anywhere for you to stand.");
 		    return;
 		}
 		if (!mtmp->mnamelth) {
@@ -498,7 +498,7 @@ void dismount_steed(int reason)
 			if (Hallucination)
 				pline("It felt good to get out of the rain.");
 		} else
-			You("dismount %s.", mon_nam(mtmp));
+			pline("You dismount %s.", mon_nam(mtmp));
 	}
 	/* While riding these refer to the steed's legs
 	 * so after dismounting they refer to the player's

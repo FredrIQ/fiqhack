@@ -13,7 +13,7 @@ static long noisetime;
 static struct obj *otmp;
 
 static const char brief_feeling[] =
-	"have a %s feeling for a moment, then it passes.";
+	"You have a %s feeling for a moment, then it passes.";
 
 static char *mon_nam_too(char *,struct monst *,struct monst *);
 static void mrustm(struct monst *, struct monst *, struct obj *);
@@ -209,7 +209,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
 	mdef->mundetected = 0;
 	newsym(mdef->mx, mdef->my);
 	if (canseemon(mdef) && !sensemon(mdef)) {
-	    if (u.usleep) You("dream of %s.",
+	    if (u.usleep) pline("You dream of %s.",
 				(mdef->data->geno & G_UNIQ) ?
 				a_monnam(mdef) : makeplural(m_monnam(mdef)));
 	    else pline("Suddenly, you notice %s.", a_monnam(mdef));
@@ -546,7 +546,7 @@ static int explmm(struct monst *magr, struct monst *mdef, const struct attack *m
 	    result |= MM_AGR_DIED;
 	}
 	if (magr->mtame)	/* give this one even if it was visible */
-	    You(brief_feeling, "melancholy");
+	    pline(brief_feeling, "melancholy");
 
 	return result;
 }
@@ -580,7 +580,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		monstone(magr);
 		if (magr->mhp > 0) return 0;
 		else if (magr->mtame && !vis)
-		    You(brief_feeling, "peculiarly sad");
+		    pline(brief_feeling, "peculiarly sad");
 		return MM_AGR_DIED;
 	    }
 	}
@@ -603,7 +603,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		    mondied(magr);
 		    if (magr->mhp > 0) return 0;	/* lifesaved */
 		    else if (magr->mtame && !vis)
-			You(brief_feeling, "queasy");
+			pline(brief_feeling, "queasy");
 		    return MM_AGR_DIED;
 		}
 		if (flags.verbose && flags.soundok) verbalize("Burrrrp!");
@@ -701,7 +701,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		tmp += destroy_mitem(mdef, SPBOOK_CLASS, AD_FIRE);
 		if (resists_fire(mdef)) {
 		    if (vis)
-			pline_The("fire doesn't seem to burn %s!",
+			pline("The fire doesn't seem to burn %s!",
 								mon_nam(mdef));
 		    shieldeff(mdef->mx, mdef->my);
 		    golemeffects(mdef, AD_FIRE, tmp);
@@ -718,7 +718,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		if (vis) pline("%s is covered in frost!", Monnam(mdef));
 		if (resists_cold(mdef)) {
 		    if (vis)
-			pline_The("frost doesn't seem to chill %s!",
+			pline("The frost doesn't seem to chill %s!",
 								mon_nam(mdef));
 		    shieldeff(mdef->mx, mdef->my);
 		    golemeffects(mdef, AD_COLD, tmp);
@@ -734,7 +734,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		if (vis) pline("%s gets zapped!", Monnam(mdef));
 		tmp += destroy_mitem(mdef, WAND_CLASS, AD_ELEC);
 		if (resists_elec(mdef)) {
-		    if (vis) pline_The("zap doesn't shock %s!", mon_nam(mdef));
+		    if (vis) pline("The zap doesn't shock %s!", mon_nam(mdef));
 		    shieldeff(mdef->mx, mdef->my);
 		    golemeffects(mdef, AD_ELEC, tmp);
 		    tmp = 0;
@@ -811,7 +811,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 			monstone(mdef);
  post_stone:		if (mdef->mhp > 0) return 0;
 			else if (mdef->mtame && !vis)
-			    You(brief_feeling, "peculiarly sad");
+			    pline(brief_feeling, "peculiarly sad");
 			return (MM_DEF_DIED | (grow_up(magr,mdef) ?
 							0 : MM_AGR_DIED));
 		}
@@ -911,7 +911,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 			    mondied(mdef);
 			    if (mdef->mhp > 0) return 0;
 			    else if (mdef->mtame && !vis)
-				You(brief_feeling, "strangely sad");
+				pline(brief_feeling, "strangely sad");
 			    return (MM_DEF_DIED | (grow_up(magr,mdef) ?
 							0 : MM_AGR_DIED));
 		    }
@@ -1027,12 +1027,12 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 			      mpoisons_subj(magr, mattk));
 		    if (resists_poison(mdef)) {
 			if (vis)
-			    pline_The("poison doesn't seem to affect %s.",
+			    pline("The poison doesn't seem to affect %s.",
 				mon_nam(mdef));
 		    } else {
 			if (rn2(10)) tmp += rn1(10,6);
 			else {
-			    if (vis) pline_The("poison was deadly...");
+			    if (vis) pline("The poison was deadly...");
 			    tmp = mdef->mhp;
 			}
 		    }

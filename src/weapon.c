@@ -70,7 +70,7 @@ static const char * const barehands_or_martial[] = {
 
 static void give_may_advance_msg(int skill)
 {
-	You_feel("more confident in your %sskills.",
+	pline("You feel more confident in your %sskills.",
 		skill == P_NONE ?
 			"" :
 		skill <= P_LAST_WEAPON ?
@@ -768,7 +768,7 @@ static void skill_advance(int skill)
     P_SKILL(skill)++;
     u.skill_record[u.skills_advanced++] = skill;
     /* subtly change the advance message to indicate no more advancement */
-    You("are now %s skilled in %s.",
+    pline("You are now %s skilled in %s.",
 	P_SKILL(skill) >= P_MAX_SKILL(skill) ? "most" : "more",
 	P_NAME(skill));
 }
@@ -906,7 +906,7 @@ int enhance_weapon_skill(void)
 	    /* check for more skills able to advance, if so then .. */
 	    for (n = i = 0; i < P_NUM_SKILLS; i++) {
 		if (can_advance(i, speedy)) {
-		    if (!speedy) You_feel("you could be more dangerous!");
+		    if (!speedy) pline("You feel you could be more dangerous!");
 		    n++;
 		    break;
 		}

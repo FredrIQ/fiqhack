@@ -665,11 +665,11 @@ boolean inside_gas_cloud(void * p1, void * p2)
 	    make_blinded(1L, FALSE);
 	if (!Poison_resistance) {
 	    pline("Something is burning your %s!", makeplural(body_part(LUNG)));
-	    You("cough and spit blood!");
+	    pline("You cough and spit blood!");
 	    losehp(rnd(dam) + 5, "gas cloud", KILLED_BY_AN);
 	    return FALSE;
 	} else {
-	    You("cough!");
+	    pline("You cough!");
 	    return FALSE;
 	}
     } else {			/* A monster is inside the cloud */

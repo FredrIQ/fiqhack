@@ -217,7 +217,7 @@ int castmu(struct monst *mtmp,
 	nomul(0);
 	if (rn2(ml*10) < (mtmp->mconf ? 100 : 20)) {	/* fumbled attack */
 	    if (canseemon(mtmp) && flags.soundok)
-		pline_The("air crackles around %s.", mon_nam(mtmp));
+		pline("The air crackles around %s.", mon_nam(mtmp));
 	    return 0;
 	}
 	if (canspotmon(mtmp) || !is_undirected_spell(mattk->adtyp, spellnum)) {
@@ -271,10 +271,10 @@ int castmu(struct monst *mtmp,
 		}
 		break;
 	    case AD_MAGM:
-		You("are hit by a shower of missiles!");
+		pline("You are hit by a shower of missiles!");
 		if (Antimagic) {
 			shieldeff(u.ux, u.uy);
-			pline_The("missiles bounce off!");
+			pline("The missiles bounce off!");
 			dmg = 0;
 		} else dmg = dice((int)mtmp->m_lev/2 + 1,6);
 		break;
@@ -313,10 +313,10 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
     case MGC_DEATH_TOUCH:
 	pline("Oh no, %s's using the touch of death!", mhe(mtmp));
 	if (nonliving(youmonst.data) || is_demon(youmonst.data)) {
-	    You("seem no deader than before.");
+	    pline("You seem no deader than before.");
 	} else if (!Antimagic && rn2(mtmp->m_lev) > 12) {
 	    if (Hallucination) {
-		You("have an out of body experience.");
+		pline("You have an out of body experience.");
 	    } else {
 		killer_format = KILLED_BY_AN;
 		killer = "touch of death";
@@ -361,12 +361,12 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	break;
     }
     case MGC_AGGRAVATION:
-	You_feel("that monsters are aware of your presence.");
+	pline("You feel that monsters are aware of your presence.");
 	aggravate();
 	dmg = 0;
 	break;
     case MGC_CURSE_ITEMS:
-	You_feel("as if you need some help.");
+	pline("You feel as if you need some help.");
 	rndcurse();
 	dmg = 0;
 	break;
@@ -375,16 +375,16 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	    shieldeff(u.ux, u.uy);
 	    pline("A field of force surrounds you!");
 	} else if (!destroy_arm(some_armor(&youmonst))) {
-	    Your("skin itches.");
+	    pline("Your skin itches.");
 	}
 	dmg = 0;
 	break;
     case MGC_WEAKEN_YOU:		/* drain strength */
 	if (Antimagic) {
 	    shieldeff(u.ux, u.uy);
-	    You_feel("momentarily weakened.");
+	    pline("You feel momentarily weakened.");
 	} else {
-	    You("suddenly feel weaker!");
+	    pline("You suddenly feel weaker!");
 	    dmg = mtmp->m_lev - 6;
 	    if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	    losestr(rnd(dmg));
@@ -407,10 +407,10 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	if (Antimagic || Free_action) {
 	    shieldeff(u.ux, u.uy);
 	    if (!Stunned)
-		You_feel("momentarily disoriented.");
+		pline("You feel momentarily disoriented.");
 	    make_stunned(1L, FALSE);
 	} else {
-	    You(Stunned ? "struggle to keep your balance." : "reel...");
+	    pline(Stunned ? "You struggle to keep your balance." : "You reel...");
 	    dmg = dice(ACURR(A_DEX) < 12 ? 6 : 4, 4);
 	    if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	    make_stunned(HStun + dmg, FALSE);
@@ -439,13 +439,13 @@ static void cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 	    dmg = (dmg + 1) / 2;
 	}
 	if (dmg <= 5)
-	    You("get a slight %sache.", body_part(HEAD));
+	    pline("You get a slight %sache.", body_part(HEAD));
 	else if (dmg <= 10)
-	    Your("brain is on fire!");
+	    pline("Your brain is on fire!");
 	else if (dmg <= 20)
-	    Your("%s suddenly aches painfully!", body_part(HEAD));
+	    pline("Your %s suddenly aches painfully!", body_part(HEAD));
 	else
-	    Your("%s suddenly aches very painfully!", body_part(HEAD));
+	    pline("Your %s suddenly aches very painfully!", body_part(HEAD));
 	break;
     default:
 	impossible("mcastu: invalid magic spell (%d)", spellnum);
@@ -504,7 +504,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	break;
     }
     case CLC_CURSE_ITEMS:
-	You_feel("as if you need some help.");
+	pline("You feel as if you need some help.");
 	rndcurse();
 	dmg = 0;
 	break;
@@ -566,7 +566,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 		  (num_eyes == 1) ?
 		  body_part(EYE) : makeplural(body_part(EYE)));
 	    make_blinded(Half_spell_damage ? 100L : 200L, FALSE);
-	    if (!Blind) Your("vision quickly clears.");
+	    if (!Blind) pline("Your vision quickly clears.");
 	    dmg = 0;
 	} else
 	    impossible("no reason for monster to cast blindness spell?");
@@ -575,11 +575,11 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	if (Antimagic || Free_action) {
 	    shieldeff(u.ux, u.uy);
 	    if (multi >= 0)
-		You("stiffen briefly.");
+		pline("You stiffen briefly.");
 	    nomul(-1);
 	} else {
 	    if (multi >= 0)
-		You("are frozen in place!");
+		pline("You are frozen in place!");
 	    dmg = 4 + (int)mtmp->m_lev;
 	    if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	    nomul(-dmg);
@@ -589,7 +589,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
     case CLC_CONFUSE_YOU:
 	if (Antimagic) {
 	    shieldeff(u.ux, u.uy);
-	    You_feel("momentarily dizzy.");
+	    pline("You feel momentarily dizzy.");
 	} else {
 	    boolean oldprop = !!Confusion;
 
@@ -597,9 +597,9 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	    if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	    make_confused(HConfusion + dmg, TRUE);
 	    if (Hallucination)
-		You_feel("%s!", oldprop ? "trippier" : "trippy");
+		pline("You feel %s!", oldprop ? "trippier" : "trippy");
 	    else
-		You_feel("%sconfused!", oldprop ? "more " : "");
+		pline("You feel %sconfused!", oldprop ? "more " : "");
 	}
 	dmg = 0;
 	break;
@@ -619,13 +619,13 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	    dmg = (dmg + 1) / 2;
 	}
 	if (dmg <= 5)
-	    Your("skin itches badly for a moment.");
+	    pline("Your skin itches badly for a moment.");
 	else if (dmg <= 10)
 	    pline("Wounds appear on your body!");
 	else if (dmg <= 20)
 	    pline("Severe wounds appear on your body!");
 	else
-	    Your("body is covered with painful wounds!");
+	    pline("Your body is covered with painful wounds!");
 	break;
     default:
 	impossible("mcastu: invalid clerical spell (%d)", spellnum);

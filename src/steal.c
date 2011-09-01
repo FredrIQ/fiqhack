@@ -46,7 +46,7 @@ void stealgold(struct monst *mtmp)
 	    }
 	} else if (u.ugold) {
 	    u.ugold -= (tmp = somegold());
-	    Your("purse feels lighter.");
+	    pline("Your purse feels lighter.");
 	    mtmp->mgold += tmp;
 	if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 	    mtmp->mavenge = 1;
@@ -110,7 +110,7 @@ void stealgold(struct monst *mtmp)
             if (tmp < ygold->quan) ygold = splitobj(ygold, tmp);
             freeinv(ygold);
             add_to_minv(mtmp, ygold);
-	    Your("purse feels lighter.");
+	    pline("Your purse feels lighter.");
 	    if (!tele_restrict(mtmp)) rloc(mtmp, FALSE);
 	    monflee(mtmp, 0, FALSE, FALSE);
 	    botl = 1;

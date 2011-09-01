@@ -117,9 +117,9 @@ void u_slow_down(void)
 {
 	HFast = 0L;
 	if (!Fast)
-	    You("slow down.");
+	    pline("You slow down.");
 	else	/* speed boots */
-	    Your("quickness feels less natural.");
+	    pline("Your quickness feels less natural.");
 	exercise(A_DEX, FALSE);
 }
 
@@ -197,7 +197,7 @@ void expels(struct monst *mtmp,
 {
 	if (message) {
 		if (is_animal(mdat))
-			You("get regurgitated!");
+			pline("You get regurgitated!");
 		else {
 			char blast[40];
 			int i;
@@ -222,7 +222,7 @@ void expels(struct monst *mtmp,
 					}
 				} else
 					strcpy(blast, " with a squelch");
-				You("get expelled from %s%s!",
+				pline("You get expelled from %s%s!",
 				    mon_nam(mtmp), blast);
 			}
 		}
@@ -324,7 +324,7 @@ int mattacku(struct monst *mtmp)
 		    coord cc; /* maybe we need a unexto() function? */
 		    struct obj *obj;
 
-		    You("fall from the %s!", ceiling(u.ux,u.uy));
+		    pline("You fall from the %s!", ceiling(u.ux,u.uy));
 		    if (enexto(&cc, level, u.ux, u.uy, youmonst.data)) {
 			remove_monster(mtmp->mx, mtmp->my);
 			newsym(mtmp->mx,mtmp->my);
@@ -346,7 +346,7 @@ int mattacku(struct monst *mtmp)
 
 		    obj = which_armor(mtmp, WORN_HELMET);
 		    if (obj && is_metallic(obj)) {
-			Your("blow glances off %s helmet.",
+			pline("Your blow glances off %s helmet.",
 			               s_suffix(mon_nam(mtmp)));
 		    } else {
 			if (3 + find_mac(mtmp) <= rnd(20)) {
@@ -465,7 +465,7 @@ int mattacku(struct monst *mtmp)
 			pline("%s summons help!", Monnam(mtmp));
 			if (numhelp > 0) {
 			    if (numseen == 0)
-				You_feel("hemmed in.");
+				pline("You feel hemmed in.");
 			} else pline("But none comes.");
 		} else {
 			const char *from_nowhere;
@@ -476,7 +476,7 @@ int mattacku(struct monst *mtmp)
 				from_nowhere = "";
 			} else from_nowhere = " from nowhere";
 			if (numhelp > 0) {
-			    if (numseen < 1) You_feel("hemmed in.");
+			    if (numseen < 1) pline("You feel hemmed in.");
 			    else {
 				if (numseen == 1)
 			    		sprintf(buf, "%s appears",
@@ -500,7 +500,7 @@ int mattacku(struct monst *mtmp)
 		    pline("%s starts to attack you, but pulls back.",
 			  Monnam(mtmp));
 		else
-		    You_feel("something move nearby.");
+		    pline("You feel something move nearby.");
 	    }
 	    return 0;
 	}
@@ -722,7 +722,7 @@ static void hurtarmor(int attk)
 static boolean diseasemu(const struct permonst *mdat)
 {
 	if (Sick_resistance) {
-		You_feel("a slight illness.");
+		pline("You feel a slight illness.");
 		return FALSE;
 	} else {
 		make_sick(Sick ? Sick/3L + 1L : (long)rn1(ACURR(A_CON), 20),
@@ -754,7 +754,7 @@ static boolean u_slip_free(struct monst *mtmp, const struct attack *mattk)
 			xname(obj) : cloak_simple_name(obj));
 
 	    if (obj->greased && !rn2(2)) {
-		pline_The("grease wears off.");
+		pline("The grease wears off.");
 		obj->greased = 0;
 		update_inventory();
 	    }
@@ -876,7 +876,7 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 			}
 		    } else if (u.ustuck == mtmp) {
 			exercise(A_STR, FALSE);
-			You("are being %s.",
+			pline("You are being %s.",
 			      (mtmp->data == &mons[PM_ROPE_GOLEM])
 			      ? "choked" : "crushed");
 		    }
@@ -910,7 +910,7 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 			    botl = 1;
 			    dmg = 0;
 			    if (cloneu())
-			    You("divide as %s hits you!",mon_nam(mtmp));
+			    pline("You divide as %s hits you!",mon_nam(mtmp));
 			}
 			urustm(mtmp, otmp);
 		    } else if (mattk->aatyp != AT_TUCH || dmg != 0 ||
@@ -928,12 +928,12 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 		    pline("You're %s!", on_fire(youmonst.data, mattk));
 		    if (youmonst.data == &mons[PM_STRAW_GOLEM] ||
 		        youmonst.data == &mons[PM_PAPER_GOLEM]) {
-			    You("roast!");
+			    pline("You roast!");
 			    /* KMH -- this is okay with unchanging */
 			    rehumanize();
 			    break;
 		    } else if (Fire_resistance) {
-			pline_The("fire doesn't feel hot!");
+			pline("The fire doesn't feel hot!");
 			dmg = 0;
 		    }
 		    if ((int) mtmp->m_lev > rn2(20))
@@ -950,7 +950,7 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 		if (uncancelled) {
 		    pline("You're covered in frost!");
 		    if (Cold_resistance) {
-			pline_The("frost doesn't seem cold!");
+			pline("The frost doesn't seem cold!");
 			dmg = 0;
 		    }
 		    if ((int) mtmp->m_lev > rn2(20))
@@ -960,9 +960,9 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 	    case AD_ELEC:
 		hitmsg(mtmp, mattk);
 		if (uncancelled) {
-		    You("get zapped!");
+		    pline("You get zapped!");
 		    if (Shock_resistance) {
-			pline_The("zap doesn't shock you!");
+			pline("The zap doesn't shock you!");
 			dmg = 0;
 		    }
 		    if ((int) mtmp->m_lev > rn2(20))
@@ -976,15 +976,15 @@ static int hitmu(struct monst *mtmp, const struct attack  *mattk)
 		if (uncancelled && multi >= 0 && !rn2(5)) {
 		    if (Sleep_resistance) break;
 		    fall_asleep(-rnd(10), TRUE);
-		    if (Blind) You("are put to sleep!");
-		    else You("are put to sleep by %s!", mon_nam(mtmp));
+		    if (Blind) pline("You are put to sleep!");
+		    else pline("You are put to sleep by %s!", mon_nam(mtmp));
 		}
 		break;
 	    case AD_BLND:
 		if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
 		    if (!Blind) pline("%s blinds you!", Monnam(mtmp));
 		    make_blinded(Blinded+(long)dmg,FALSE);
-		    if (!Blind) Your("vision quickly clears.");
+		    if (!Blind) pline("Your vision quickly clears.");
 		}
 		dmg = 0;
 		break;
@@ -1007,7 +1007,7 @@ dopois:
 	    case AD_DRIN:
 		hitmsg(mtmp, mattk);
 		if (defends(AD_DRIN, uwep) || !has_head(youmonst.data)) {
-		    You("don't seem harmed.");
+		    pline("You don't seem harmed.");
 		    /* Not clear what to do for green slimes */
 		    break;
 		}
@@ -1015,14 +1015,14 @@ dopois:
 
 		if (uarmh && rn2(8)) {
 		    /* not body_part(HEAD) */
-		    Your("helmet blocks the attack to your head.");
+		    pline("Your helmet blocks the attack to your head.");
 		    break;
 		}
 		if (Half_physical_damage) dmg = (dmg+1) / 2;
 		mdamageu(mtmp, dmg);
 
 		if (!uarmh || uarmh->otyp != DUNCE_CAP) {
-		    Your("brain is eaten!");
+		    pline("Your brain is eaten!");
 		    /* No such thing as mindless players... */
 		    if (ABASE(A_INT) <= ATTRMIN(A_INT)) {
 			int lifesaved = 0;
@@ -1039,7 +1039,7 @@ dopois:
 				    /* explicitly chose not to die;
 				       arbitrarily boost intelligence */
 				    ABASE(A_INT) = ATTRMIN(A_INT) + 2;
-				    You_feel("like a scarecrow.");
+				    pline("You feel like a scarecrow.");
 				    break;
 				}
 			    }
@@ -1047,7 +1047,7 @@ dopois:
 			    if (lifesaved)
 				pline("Unfortunately your brain is still gone.");
 			    else
-				Your("last thought fades away.");
+				pline("Your last thought fades away.");
 			    killer = "brainlessness";
 			    killer_format = KILLED_BY;
 			    done(DIED);
@@ -1065,10 +1065,10 @@ dopois:
 		hitmsg(mtmp, mattk);
 		if (uncancelled && multi >= 0 && !rn2(3)) {
 		    if (Free_action) {
-			You("momentarily stiffen.");            
+			pline("You momentarily stiffen.");            
 		    } else {
-			if (Blind) You("are frozen!");
-			else You("are frozen by %s!", mon_nam(mtmp));
+			if (Blind) pline("You are frozen!");
+			else pline("You are frozen by %s!", mon_nam(mtmp));
 			nomovemsg = 0;	/* default: "you can move again" */
 			nomul(-rnd(10));
 			exercise(A_DEX, FALSE);
@@ -1149,7 +1149,7 @@ dopois:
 				    killer_format = KILLED_BY;
 				} else killer_format = KILLED_BY_AN;
 				return 1;
-				/* You("turn to stone..."); */
+				/* pline("You turn to stone..."); */
 				/* done_in_by(mtmp); */
 			    }
 			}
@@ -1188,7 +1188,7 @@ dopois:
 			    killer = buf;
 			    done(DROWNING);
 			} else if (mattk->aatyp == AT_HUGS)
-			    You("are being crushed.");
+			    pline("You are being crushed.");
 		    } else {
 			dmg = 0;
 			if (flags.verbose)
@@ -1202,7 +1202,7 @@ dopois:
 		if (uncancelled && !rn2(4) && u.ulycn == NON_PM &&
 			!Protection_from_shape_changers &&
 			!defends(AD_WERE,uwep)) {
-		    You_feel("feverish.");
+		    pline("You feel feverish.");
 		    exercise(A_CON, FALSE);
 		    u.ulycn = monsndx(mdat);
 		}
@@ -1281,7 +1281,7 @@ dopois:
 		hitmsg(mtmp, mattk);
 		if (uncancelled) {
 		    if (flags.verbose)
-			Your("position suddenly seems very uncertain!");
+			pline("Your position suddenly seems very uncertain!");
 		    tele();
 		}
 		break;
@@ -1289,7 +1289,7 @@ dopois:
 		hitmsg(mtmp, mattk);
 		if (mtmp->mcan) break;
 		if (u.umonnum == PM_IRON_GOLEM) {
-			You("rust!");
+			pline("You rust!");
 			/* KMH -- this is okay with unchanging */
 			rehumanize();
 			break;
@@ -1306,7 +1306,7 @@ dopois:
 		if (mtmp->mcan) break;
 		if (u.umonnum == PM_WOOD_GOLEM ||
 		    u.umonnum == PM_LEATHER_GOLEM) {
-			You("rot!");
+			pline("You rot!");
 			/* KMH -- this is okay with unchanging */
 			rehumanize();
 			break;
@@ -1415,8 +1415,8 @@ dopois:
 		if (!mtmp->mcan && !rn2(4) && !mtmp->mspec_used) {
 		    mtmp->mspec_used = mtmp->mspec_used + (dmg + rn2(6));
 		    if (Confusion)
-			 You("are getting even more confused.");
-		    else You("are getting confused.");
+			 pline("You are getting even more confused.");
+		    else pline("You are getting confused.");
 		    make_confused(HConfusion + dmg, FALSE);
 		}
 		dmg = 0;
@@ -1438,7 +1438,7 @@ dopois:
 			break;
 		    } /* else FALLTHRU */
 		default: /* case 16: ... case 5: */
-		    You_feel("your life force draining away...");
+		    pline("You feel your life force draining away...");
 		    permdmg = 1;	/* actual damage done below */
 		    break;
 		case 4: case 3: case 2: case 1: case 0:
@@ -1464,14 +1464,14 @@ dopois:
 		hitmsg(mtmp, mattk);
 		if (!uncancelled) break;
 		if (flaming(youmonst.data)) {
-		    pline_The("slime burns away!");
+		    pline("The slime burns away!");
 		    dmg = 0;
 		} else if (Unchanging ||
 				youmonst.data == &mons[PM_GREEN_SLIME]) {
-		    You("are unaffected.");
+		    pline("You are unaffected.");
 		    dmg = 0;
 		} else if (!Slimed) {
-		    You("don't feel very well.");
+		    pline("You don't feel very well.");
 		    Slimed = 10L;
 		    botl = 1;
 		    killer_format = KILLED_BY_AN;
@@ -1487,7 +1487,7 @@ dopois:
 		    struct obj *obj = some_armor(&youmonst);
 
 		    if (drain_item(obj)) {
-			Your("%s less effective.", aobjnam(obj, "seem"));
+			pline("Your %s less effective.", aobjnam(obj, "seem"));
 		    }
 		}
 		break;
@@ -1594,7 +1594,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		reset_occupations();	/* behave as if you had moved */
 
 		if (u.utrap) {
-			You("are released from the %s!",
+			pline("You are released from the %s!",
 				u.utraptype==TT_WEB ? "web" : "trap");
 			u.utrap = 0;
 		}
@@ -1602,7 +1602,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		i = number_leashed();
 		if (i > 0) {
 		    const char *s = (i > 1) ? "leashes" : "leash";
-		    pline_The("%s %s loose.", s, vtense(s, "snap"));
+		    pline("The %s %s loose.", s, vtense(s, "snap"));
 		    unleash_all();
 		}
 
@@ -1649,7 +1649,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		    break;
 		case AD_PHYS:
 		    if (mtmp->data == &mons[PM_FOG_CLOUD]) {
-			You("are laden with moisture and %s",
+			pline("You are laden with moisture and %s",
 			    flaming(youmonst.data) ? "are smoldering out!" :
 			    Breathless ? "find it mildly uncomfortable." :
 			    amphibious(youmonst.data) ? "feel comforted." :
@@ -1657,26 +1657,26 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 			/* NB: Amphibious includes Breathless */
 			if (Amphibious && !flaming(youmonst.data)) tmp = 0;
 		    } else {
-			You("are pummeled with debris!");
+			pline("You are pummeled with debris!");
 			exercise(A_STR, FALSE);
 		    }
 		    break;
 		case AD_ACID:
 		    if (Acid_resistance) {
-			You("are covered with a seemingly harmless goo.");
+			pline("You are covered with a seemingly harmless goo.");
 			tmp = 0;
 		    } else {
 		      if (Hallucination) pline("Ouch!  You've been slimed!");
-		      else You("are covered in slime!  It burns!");
+		      else pline("You are covered in slime!  It burns!");
 		      exercise(A_STR, FALSE);
 		    }
 		    break;
 		case AD_BLND:
 		    if (can_blnd(mtmp, &youmonst, mattk->aatyp, NULL)) {
 			if (!Blind) {
-			    You_cant("see in here!");
+			    pline("You can't see in here!");
 			    make_blinded((long)tmp,FALSE);
-			    if (!Blind) Your("vision quickly clears.");
+			    if (!Blind) pline("Your vision quickly clears.");
 			} else
 			    /* keep him blind until disgorged */
 			    make_blinded(Blinded+1,FALSE);
@@ -1685,10 +1685,10 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		    break;
 		case AD_ELEC:
 		    if (!mtmp->mcan && rn2(2)) {
-			pline_The("air around you crackles with electricity.");
+			pline("The air around you crackles with electricity.");
 			if (Shock_resistance) {
 				shieldeff(u.ux, u.uy);
-				You("seem unhurt.");
+				pline("You seem unhurt.");
 				ugolemeffects(AD_ELEC,tmp);
 				tmp = 0;
 			}
@@ -1698,20 +1698,20 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		    if (!mtmp->mcan && rn2(2)) {
 			if (Cold_resistance) {
 				shieldeff(u.ux, u.uy);
-				You_feel("mildly chilly.");
+				pline("You feel mildly chilly.");
 				ugolemeffects(AD_COLD,tmp);
 				tmp = 0;
-			} else You("are freezing to death!");
+			} else pline("You are freezing to death!");
 		    } else tmp = 0;
 		    break;
 		case AD_FIRE:
 		    if (!mtmp->mcan && rn2(2)) {
 			if (Fire_resistance) {
 				shieldeff(u.ux, u.uy);
-				You_feel("mildly hot.");
+				pline("You feel mildly hot.");
 				ugolemeffects(AD_FIRE,tmp);
 				tmp = 0;
-			} else You("are burning to a crisp!");
+			} else pline("You are burning to a crisp!");
 			burn_away_slime();
 		    } else tmp = 0;
 		    break;
@@ -1733,7 +1733,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		  is_animal(mtmp->data)? "regurgitates" : "expels");
 	    expels(mtmp, mtmp->data, FALSE);
 	} else if (!u.uswldtim || youmonst.data->msize >= MZ_HUGE) {
-	    You("get %s!", is_animal(mtmp->data)? "regurgitated" : "expelled");
+	    pline("You get %s!", is_animal(mtmp->data)? "regurgitated" : "expelled");
 	    if (flags.verbose && (is_animal(mtmp->data) ||
 		    (dmgtype(mtmp->data, AD_DGST) && Slow_digestion)))
 		pline("Obviously %s doesn't like your taste.", mon_nam(mtmp));
@@ -1771,10 +1771,10 @@ common:
 
 		if (!not_affected) {
 		    if (ACURR(A_DEX) > rnd(20)) {
-			You("duck some of the blast.");
+			pline("You duck some of the blast.");
 			tmp = (tmp+1) / 2;
 		    } else {
-		        if (flags.verbose) You("get blasted!");
+		        if (flags.verbose) pline("You get blasted!");
 		    }
 		    if (mattk->adtyp == AD_FIRE) burn_away_slime();
 		    if (Half_physical_damage) tmp = (tmp+1) / 2;
@@ -1787,11 +1787,11 @@ common:
 		if (!not_affected) {
 		    /* sometimes you're affected even if it's invisible */
 		    if (mon_visible(mtmp) || (rnd(tmp /= 2) > u.ulevel)) {
-			You("are blinded by a blast of light!");
+			pline("You are blinded by a blast of light!");
 			make_blinded((long)tmp, FALSE);
-			if (!Blind) Your("vision quickly clears.");
+			if (!Blind) pline("Your vision quickly clears.");
 		    } else if (flags.verbose)
-			You("get the impression it was not terribly bright.");
+			pline("You get the impression it was not terribly bright.");
 		}
 		break;
 
@@ -1803,9 +1803,9 @@ common:
 		if (!not_affected) {
 		    boolean chg;
 		    if (!Hallucination)
-			You("are caught in a blast of kaleidoscopic light!");
+			pline("You are caught in a blast of kaleidoscopic light!");
 		    chg = make_hallucinated(HHallucination + (long)tmp,FALSE,0L);
-		    You("%s.", chg ? "are freaked out" : "seem unaffected");
+		    pline("You %s.", chg ? "are freaked out" : "seem unaffected");
 		}
 		break;
 
@@ -1813,7 +1813,7 @@ common:
 		break;
 	}
 	if (not_affected) {
-	    You("seem unaffected by it.");
+	    pline("You seem unaffected by it.");
 	    ugolemeffects((int)mattk->adtyp, tmp);
 	}
     }
@@ -1865,11 +1865,11 @@ int gazemu(struct monst *mtmp, const struct attack *mattk)
 		}
 		if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
 		    !Stone_resistance) {
-		    You("meet %s gaze.", s_suffix(mon_nam(mtmp)));
+		    pline("You meet %s gaze.", s_suffix(mon_nam(mtmp)));
 		    stop_occupation();
 		    if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
 			break;
-		    You("turn to stone...");
+		    pline("You turn to stone...");
 		    killer_format = KILLED_BY;
 		    killer = mtmp->data->mname;
 		    done(STONING);
@@ -1886,7 +1886,7 @@ int gazemu(struct monst *mtmp, const struct attack *mattk)
 			pline("%s gaze confuses you!",
 			                  s_suffix(Monnam(mtmp)));
 		    else
-			You("are getting more and more confused.");
+			pline("You are getting more and more confused.");
 		    make_confused(HConfusion + conf, FALSE);
 		    stop_occupation();
 		}
@@ -1908,14 +1908,14 @@ int gazemu(struct monst *mtmp, const struct attack *mattk)
 			&& distu(mtmp->mx,mtmp->my) <= BOLT_LIM*BOLT_LIM) {
 		    int blnd = dice((int)mattk->damn, (int)mattk->damd);
 
-		    You("are blinded by %s radiance!",
+		    pline("You are blinded by %s radiance!",
 			              s_suffix(mon_nam(mtmp)));
 		    make_blinded((long)blnd,FALSE);
 		    stop_occupation();
 		    /* not blind at this point implies you're wearing
 		       the Eyes of the Overworld; make them block this
 		       particular stun attack too */
-		    if (!Blind) Your("vision quickly clears.");
+		    if (!Blind) pline("Your vision quickly clears.");
 		    else make_stunned((long)dice(1,3),TRUE);
 		}
 		break;
@@ -1928,7 +1928,7 @@ int gazemu(struct monst *mtmp, const struct attack *mattk)
 		    pline("%s attacks you with a fiery gaze!", Monnam(mtmp));
 		    stop_occupation();
 		    if (Fire_resistance) {
-			pline_The("fire doesn't feel hot!");
+			pline("The fire doesn't feel hot!");
 			dmg = 0;
 		    }
 		    burn_away_slime();
@@ -2081,7 +2081,7 @@ int doseduce(struct monst *mon)
 	}
 
 	if (Blind) pline("It caresses you...");
-	else You_feel("very attracted to %s.", mon_nam(mon));
+	else pline("You feel very attracted to %s.", mon_nam(mon));
 
 	for (ring = invent; ring; ring = nring) {
 	    nring = ring->nobj;
@@ -2182,33 +2182,33 @@ int doseduce(struct monst *mon)
 		pline("%s seems to have enjoyed it more than you...",
 			noit_Monnam(mon));
 		switch (rn2(5)) {
-			case 0: You_feel("drained of energy.");
+			case 0: pline("You feel drained of energy.");
 				u.uen = 0;
 				u.uenmax -= rnd(Half_physical_damage ? 5 : 10);
 			        exercise(A_CON, FALSE);
 				if (u.uenmax < 0) u.uenmax = 0;
 				break;
-			case 1: You("are down in the dumps.");
+			case 1: pline("You are down in the dumps.");
 				adjattrib(A_CON, -1, TRUE);
 			        exercise(A_CON, FALSE);
 				botl = 1;
 				break;
-			case 2: Your("senses are dulled.");
+			case 2: pline("Your senses are dulled.");
 				adjattrib(A_WIS, -1, TRUE);
 			        exercise(A_WIS, FALSE);
 				botl = 1;
 				break;
 			case 3:
 				if (!resists_drli(&youmonst)) {
-				    You_feel("out of shape.");
+				    pline("You feel out of shape.");
 				    losexp("overexertion");
 				} else {
-				    You("have a curious feeling...");
+				    pline("You have a curious feeling...");
 				}
 				break;
 			case 4: {
 				int tmp;
-				You_feel("exhausted.");
+				pline("You feel exhausted.");
 			        exercise(A_STR, FALSE);
 				tmp = rn1(10, 6);
 				if (Half_physical_damage) tmp = (tmp+1) / 2;
@@ -2218,19 +2218,19 @@ int doseduce(struct monst *mon)
 		}
 	} else {
 		mon->mspec_used = rnd(100); /* monster is worn out */
-		You("seem to have enjoyed it more than %s...",
+		pline("You seem to have enjoyed it more than %s...",
 		    noit_mon_nam(mon));
 		switch (rn2(5)) {
-		case 0: You_feel("raised to your full potential.");
+		case 0: pline("You feel raised to your full potential.");
 			exercise(A_CON, TRUE);
 			u.uen = (u.uenmax += rnd(5));
 			break;
-		case 1: You_feel("good enough to do it again.");
+		case 1: pline("You feel good enough to do it again.");
 			adjattrib(A_CON, 1, TRUE);
 			exercise(A_CON, TRUE);
 			botl = 1;
 			break;
-		case 2: You("will always remember %s...", noit_mon_nam(mon));
+		case 2: pline("You will always remember %s...", noit_mon_nam(mon));
 			adjattrib(A_WIS, 1, TRUE);
 			exercise(A_WIS, TRUE);
 			botl = 1;
@@ -2239,7 +2239,7 @@ int doseduce(struct monst *mon)
 			pluslvl(FALSE);
 			exercise(A_WIS, TRUE);
 			break;
-		case 4: You_feel("restored to health!");
+		case 4: pline("You feel restored to health!");
 			u.uhp = u.uhpmax;
 			if (Upolyd) u.mh = u.mhmax;
 			exercise(A_STR, TRUE);
@@ -2402,7 +2402,7 @@ static int passiveum(const struct permonst *olduasmon, struct monst *mtmp,
 	if (rn2(3)) switch(youmonst.data->mattk[i].adtyp) {
 	    case AD_PHYS:
 	    	if (youmonst.data->mattk[i].aatyp == AT_BOOM) {
-	    	    You("explode!");
+	    	    pline("You explode!");
 	    	    /* KMH, balance patch -- this is okay with unchanging */
 	    	    rehumanize();
 	    	    goto assess_dmg;

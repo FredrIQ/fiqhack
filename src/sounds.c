@@ -69,11 +69,11 @@ void dosounds(void)
     }
     if (level->flags.has_swamp && !rn2(200)) {
 	static const char * const swamp_msg[3] = {
-		"hear mosquitoes!",
-		"smell marsh gas!",	/* so it's a smell...*/
-		"hear Donald Duck!",
+		"You hear mosquitoes!",
+		"You smell marsh gas!",	/* so it's a smell...*/
+		"You hear Donald Duck!",
 	};
-	You(swamp_msg[rn2(2)+hallu]);
+	pline(swamp_msg[rn2(2)+hallu]);
 	return;
     }
     if (level->flags.has_vault && !rn2(200)) {
@@ -140,14 +140,14 @@ void dosounds(void)
 		mon_in_room(mtmp, MORGUE)) {
 		switch (rn2(2)+hallu) {
 		    case 0:
-			You("suddenly realize it is unnaturally quiet.");
+			pline("You suddenly realize it is unnaturally quiet.");
 			break;
 		    case 1:
-			pline_The("%s on the back of your %s stands up.",
+			pline("The %s on the back of your %s stands up.",
 				body_part(HAIR), body_part(NECK));
 			break;
 		    case 2:
-			pline_The("%s on your %s seems to stand up.",
+			pline("The %s on your %s seems to stand up.",
 				body_part(HAIR), body_part(HEAD));
 			break;
 		}
@@ -581,7 +581,7 @@ static int domonnoise(struct monst *mtmp)
 	    break;
 	case MS_BONES:
 	    pline("%s rattles noisily.", Monnam(mtmp));
-	    You("freeze for a moment.");
+	    pline("You freeze for a moment.");
 	    nomul(-2);
 	    break;
 	case MS_LAUGH:
@@ -792,7 +792,7 @@ static int dochat(void)
 	return 0;
     }
     if (Strangled) {
-	You_cant("speak.  You're choking!");
+	pline("You can't speak.  You're choking!");
 	return 0;
     }
     if (u.uswallow) {
@@ -800,7 +800,7 @@ static int dochat(void)
 	return 0;
     }
     if (Underwater) {
-	Your("speech is unintelligible underwater.");
+	pline("Your speech is unintelligible underwater.");
 	return 0;
     }
 
@@ -834,7 +834,7 @@ static int dochat(void)
  * 2 helmets, 2 amulets, 3 pairs of gloves or 6 rings as a marilith,
  * etc...  --KAA
 	if (u.umonnum == PM_ETTIN) {
-	    You("discover that your other head makes boring conversation.");
+	    pline("You discover that your other head makes boring conversation.");
 	    return 1;
 	}
 */

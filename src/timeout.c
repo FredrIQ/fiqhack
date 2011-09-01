@@ -40,11 +40,11 @@ static void stoned_dialogue(void)
 
 /* He is getting sicker and sicker prior to vomiting */
 static const char * const vomiting_texts[] = {
-	"are feeling mildly nauseated.",	/* 14 */
-	"feel slightly confused.",		/* 11 */
-	"can't seem to think straight.",	/* 8 */
-	"feel incredibly sick.",		/* 5 */
-	"suddenly vomit!"			/* 2 */
+	"You are feeling mildly nauseated.",	/* 14 */
+	"You feel slightly confused.",		/* 11 */
+	"You can't seem to think straight.",	/* 8 */
+	"You feel incredibly sick.",		/* 5 */
+	"You suddenly vomit!"			/* 2 */
 };
 
 static void vomiting_dialogue(void)
@@ -53,7 +53,7 @@ static void vomiting_dialogue(void)
 
 	if ((((Vomiting & TIMEOUT) % 3L) == 2) && (i >= 0)
 	    && (i < SIZE(vomiting_texts)))
-		You(vomiting_texts[SIZE(vomiting_texts) - i - 1]);
+		pline(vomiting_texts[SIZE(vomiting_texts) - i - 1]);
 
 	switch ((int) i) {
 	case 0:
@@ -141,7 +141,7 @@ static void slime_dialogue(void)
 void burn_away_slime(void)
 {
 	if (Slimed) {
-	    pline_The("slime that covers you is burned away!");
+	    pline("The slime that covers you is burned away!");
 	    Slimed = 0L;
 	    botl = 1;
 	}
@@ -235,7 +235,7 @@ void nh_timeout(void)
 			make_vomiting(0L, TRUE);
 			break;
 		case SICK:
-			You("die from your illness.");
+			pline("You die from your illness.");
 			killer_format = KILLED_BY_AN;
 			killer = u.usick_cause;
 			if ((m_idx = name_to_mon(killer)) >= LOW_PM) {
@@ -252,7 +252,7 @@ void nh_timeout(void)
 			break;
 		case FAST:
 			if (!Very_fast)
-				You_feel("yourself slowing down%s.",
+				pline("You feel yourself slowing down%s.",
 							Fast ? " a bit" : "");
 			break;
 		case CONFUSION:
@@ -273,9 +273,9 @@ void nh_timeout(void)
 		case INVIS:
 			newsym(u.ux,u.uy);
 			if (!Invis && !BInvis && !Blind) {
-			    You(!See_invisible ?
-				    "are no longer invisible." :
-				    "can no longer see through yourself.");
+			    pline(!See_invisible ?
+				    "You are no longer invisible." :
+				    "You can no longer see through yourself.");
 			    stop_occupation();
 			}
 			break;
@@ -298,7 +298,7 @@ void nh_timeout(void)
 			if (unconscious() || Sleep_resistance)
 				HSleeping += rnd(100);
 			else if (Sleeping) {
-				You("fall asleep.");
+				pline("You fall asleep.");
 				sleeptime = rnd(20);
 				fall_asleep(-sleeptime, TRUE);
 				HSleeping += sleeptime + rnd(100);
@@ -324,7 +324,7 @@ void nh_timeout(void)
 			     * to this number must be thoroughly play tested.
 			     */
 			    if ((inv_weight() > -500)) {
-				You("make a lot of noise!");
+				pline("You make a lot of noise!");
 				wake_nearby();
 			    }
 			}
@@ -462,10 +462,10 @@ void hatch_egg(void *arg, long timeout)
 		case OBJ_INVENT:
 		    knows_egg = TRUE; /* true even if you are blind */
 		    if (!cansee_hatchspot)
-			You_feel("something %s from your pack!",
+			pline("You feel something %s from your pack!",
 			    locomotion(mon->data, "drop"));
 		    else
-			You("see %s %s out of your pack!",
+			pline("You see %s %s out of your pack!",
 			    monnambuf, locomotion(mon->data, "drop"));
 		    if (yours) {
 			pline("%s cries sound like \"%s%s\"",
@@ -480,7 +480,7 @@ void hatch_egg(void *arg, long timeout)
 		case OBJ_FLOOR:
 		    if (cansee_hatchspot) {
 			knows_egg = TRUE;
-			You("see %s hatch.", monnambuf);
+			pline("You see %s hatch.", monnambuf);
 			redraw = TRUE;	/* update egg's map location */
 		    }
 		    break;
@@ -497,7 +497,7 @@ void hatch_egg(void *arg, long timeout)
 			    strcpy(carriedby, "empty water");
 			else
 			    strcpy(carriedby, "thin air");
-			You("see %s %s out of %s!", monnambuf,
+			pline("You see %s %s out of %s!", monnambuf,
 			    locomotion(mon->data, "drop"), carriedby);
 		    }
 		    break;
@@ -587,7 +587,7 @@ static void slip_or_trip(void)
 			what, (!otmp || otmp->quan == 1L) ? "s" : "",
 			body_part(FOOT));
 	    } else {
-		You("trip over %s.", what);
+		pline("You trip over %s.", what);
 	    }
 	} else if (rn2(3) && is_ice(level, u.ux, u.uy)) {
 	    pline("%s %s%s on the ice.",
@@ -599,34 +599,34 @@ static void slip_or_trip(void)
 	    if (on_foot) {
 		switch (rn2(4)) {
 		  case 1:
-			You("trip over your own %s.", Hallucination ?
+			pline("You trip over your own %s.", Hallucination ?
 				"elbow" : makeplural(body_part(FOOT)));
 			break;
 		  case 2:
-			You("slip %s.", Hallucination ?
+			pline("You slip %s.", Hallucination ?
 				"on a banana peel" : "and nearly fall");
 			break;
 		  case 3:
-			You("flounder.");
+			pline("You flounder.");
 			break;
 		  default:
-			You("stumble.");
+			pline("You stumble.");
 			break;
 		}
 	    }
 	    else {
 		switch (rn2(4)) {
 		  case 1:
-			Your("%s slip out of the stirrups.", makeplural(body_part(FOOT)));
+			pline("Your %s slip out of the stirrups.", makeplural(body_part(FOOT)));
 			break;
 		  case 2:
-			You("let go of the reins.");
+			pline("You let go of the reins.");
 			break;
 		  case 3:
-			You("bang into the saddle-horn.");
+			pline("You bang into the saddle-horn.");
 			break;
 		  default:
-			You("slide to one side of the saddle.");
+			pline("You slide to one side of the saddle.");
 			break;
 		}
 		dismount_steed(DISMOUNT_FELL);
@@ -643,7 +643,7 @@ static void see_lamp_flicker(struct obj *obj, const char *tailer)
 		pline("%s flickers%s.", Yname2(obj), tailer);
 		break;
 	    case OBJ_FLOOR:
-		You("see %s flicker%s.", an(xname(obj)), tailer);
+		pline("You see %s flicker%s.", an(xname(obj)), tailer);
 		break;
 	}
 }
@@ -654,12 +654,12 @@ static void lantern_message(struct obj *obj)
 	/* from adventure */
 	switch (obj->where) {
 	    case OBJ_INVENT:
-		Your("lantern is getting dim.");
+		pline("Your lantern is getting dim.");
 		if (Hallucination)
 		    pline("Batteries have not been invented yet.");
 		break;
 	    case OBJ_FLOOR:
-		You("see a lantern getting dim.");
+		pline("You see a lantern getting dim.");
 		break;
 	    case OBJ_MINVENT:
 		pline("%s lantern is getting dim.",
@@ -728,7 +728,7 @@ void burn_object(void *arg, long timeout)
 				    whose);
 				break;
 			    case OBJ_FLOOR:
-				You("see a burning potion of oil go out.");
+				pline("You see a burning potion of oil go out.");
 				need_newsym = TRUE;
 				break;
 			}
@@ -766,7 +766,7 @@ void burn_object(void *arg, long timeout)
 					    whose, xname(obj));
 					break;
 				    case OBJ_FLOOR:
-					You("see %s about to go out.",
+					pline("You see %s about to go out.",
 					    an(xname(obj)));
 					break;
 				}
@@ -789,9 +789,9 @@ void burn_object(void *arg, long timeout)
 				    break;
 				case OBJ_FLOOR:
 				    if (obj->otyp == BRASS_LANTERN)
-					You("see a lantern run out of power.");
+					pline("You see a lantern run out of power.");
 				    else
-					You("see %s go out.",
+					pline("You see %s go out.",
 					    an(xname(obj)));
 				    break;
 			    }
@@ -828,7 +828,7 @@ void burn_object(void *arg, long timeout)
 					many ? "s are" : " is");
 				    break;
 				case OBJ_FLOOR:
-				    You("see %scandle%s getting short.",
+				    pline("You see %scandle%s getting short.",
 					    menorah ? "a candelabrum's " :
 						many ? "some " : "a ",
 					    many ? "s" : "");
@@ -850,7 +850,7 @@ void burn_object(void *arg, long timeout)
 					    many ? "" : "s");
 				    break;
 				case OBJ_FLOOR:
-				    You("see %scandle%s flame%s flicker low!",
+				    pline("You see %scandle%s flame%s flicker low!",
 					    menorah ? "a candelabrum's " :
 						many ? "some " : "a ",
 					    many ? "s'" : "'s",
@@ -871,7 +871,7 @@ void burn_object(void *arg, long timeout)
 					    many ? "s die" : " dies");
 					break;
 				    case OBJ_FLOOR:
-					You("see a candelabrum's flame%s die.",
+					pline("You see a candelabrum's flame%s die.",
 						many ? "s" : "");
 					break;
 				}
@@ -889,7 +889,7 @@ void burn_object(void *arg, long timeout)
 					You see some wax candles consumed!
 					You see a wax candle consumed!
 					*/
-					You("see %s%s consumed!",
+					pline("You see %s%s consumed!",
 					    many ? "some " : "",
 					    many ? xname(obj):an(xname(obj)));
 					need_newsym = TRUE;

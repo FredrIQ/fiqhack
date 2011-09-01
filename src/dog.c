@@ -66,7 +66,7 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 		pm = rndmonst();
 		if (!pm) {
 		  if (!quietly)
-		    There("seems to be nothing available for a familiar.");
+		    pline("There seems to be nothing available for a familiar.");
 		  break;
 		}
 	    }
@@ -74,7 +74,7 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 	    mtmp = makemon(pm, level, x, y, MM_EDOG|MM_IGNOREWATER);
 	    if (otmp && !mtmp) { /* monster was genocided or square occupied */
 	 	if (!quietly)
-		   pline_The("figurine writhes and then shatters into pieces!");
+		   pline("The figurine writhes and then shatters into pieces!");
 		break;
 	    }
 	} while (!mtmp && --trycnt > 0);
@@ -94,7 +94,7 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 		mtmp->mtame = 0;	/* not tame after all */
 		if (chance == 2) { /* hostile (cursed figurine) */
 		    if (!quietly)
-		       You("get a bad feeling about this.");
+		       pline("You get a bad feeling about this.");
 		    mtmp->mpeaceful = 0;
 		    set_malign(mtmp);
 		}

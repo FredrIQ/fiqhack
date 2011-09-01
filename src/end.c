@@ -84,7 +84,7 @@ void done_in_by(struct monst *mtmp)
 	char buf[BUFSZ];
 	boolean distorted = (boolean)(Hallucination && canspotmon(mtmp));
 
-	You("die...");
+	pline("You die...");
 	buf[0] = '\0';
 	killer_format = KILLED_BY_AN;
 	/* "killed by the high priest of Crom" is okay, "killed by the high
@@ -406,7 +406,7 @@ static boolean check_survival(int how, char *kilbuf)
 		killer = 0;
 	    }
 	    if (wizard) {
-		You("are a very tricky wizard, it seems.");
+		pline("You are a very tricky wizard, it seems.");
 		return TRUE;
 	    }
 	}
@@ -428,11 +428,11 @@ static boolean check_survival(int how, char *kilbuf)
 	if (Lifesaved && (how <= GENOCIDED)) {
 		pline("But wait...");
 		makeknown(AMULET_OF_LIFE_SAVING);
-		Your("medallion %s!",
+		pline("Your medallion %s!",
 		      !Blind ? "begins to glow" : "feels warm");
-		if (how == CHOKING) You("vomit ...");
-		You_feel("much better!");
-		pline_The("medallion crumbles to dust!");
+		if (how == CHOKING) pline("You vomit ...");
+		pline("You feel much better!");
+		pline("The medallion crumbles to dust!");
 		if (uamul) useup(uamul);
 
 		adjattrib(A_CON, -1, TRUE);

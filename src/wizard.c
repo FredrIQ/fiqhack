@@ -76,9 +76,8 @@ void amulet(void)
 	    if (!DEADMONSTER(mtmp) && mtmp->iswiz && mtmp->msleeping && !rn2(40)) {
 		mtmp->msleeping = 0;
 		if (distu(mtmp->mx,mtmp->my) > 2)
-		    You(
-    "get the creepy feeling that somebody noticed your taking the Amulet."
-		    );
+		    pline("get the creepy feeling that somebody noticed "
+		          "your taking the Amulet.");
 		return;
 	    }
 }
@@ -485,10 +484,10 @@ void intervene(void)
 	/* cases 0 and 5 don't apply on the Astral level */
 	switch (which) {
 	    case 0:
-	    case 1:	You_feel("vaguely nervous.");
+	    case 1:	pline("You feel vaguely nervous.");
 			break;
 	    case 2:	if (!Blind)
-			    You("notice a %s glow surrounding you.",
+			    pline("You notice a %s glow surrounding you.",
 				  hcolor("black"));
 			rndcurse();
 			break;

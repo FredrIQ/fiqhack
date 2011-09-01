@@ -114,22 +114,22 @@ static int ready_weapon(struct obj *wep)
 	if (!wep) {
 	    /* No weapon */
 	    if (uwep) {
-		You("are empty %s.", body_part(HANDED));
+		pline("You are empty %s.", body_part(HANDED));
 		setuwep(NULL);
 		res++;
 	    } else
-		You("are already empty %s.", body_part(HANDED));
+		pline("You are already empty %s.", body_part(HANDED));
 	} else if (!uarmg && !Stone_resistance && wep->otyp == CORPSE
 				&& touch_petrifies(&mons[wep->corpsenm])) {
 	    /* Prevent wielding cockatrice when not wearing gloves --KAA */
 	    char kbuf[BUFSZ];
 
-	    You("wield the %s corpse in your bare %s.",
+	    pline("You wield the %s corpse in your bare %s.",
 		mons[wep->corpsenm].mname, makeplural(body_part(HAND)));
 	    sprintf(kbuf, "%s corpse", an(mons[wep->corpsenm].mname));
 	    instapetrify(kbuf);
 	} else if (uarms && bimanual(wep))
-	    You("cannot wield a two-handed %s while wearing a shield.",
+	    pline("You cannot wield a two-handed %s while wearing a shield.",
 		is_sword(wep) ? "sword" :
 		    wep->otyp == BATTLE_AXE ? "axe" : "weapon");
 	else if (wep->oartifact && !touch_artifact(wep, &youmonst)) {
@@ -224,7 +224,7 @@ int dowield(void)
 		/* Cancelled */
 		return 0;
 	else if (wep == uwep) {
-	    You("are already wielding that!");
+	    pline("You are already wielding that!");
 	    if (is_weptool(wep)) unweapon = FALSE;	/* [see setuwep()] */
 		return 0;
 	} else if (welded(uwep)) {
@@ -243,7 +243,7 @@ int dowield(void)
 		setuqwep(NULL);
 	else if (wep->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL
 			| W_SADDLE)) {
-		You("cannot wield that!");
+		pline("You cannot wield that!");
 		return 0;
 	}
 
@@ -291,7 +291,7 @@ int doswapweapon(void)
 		if (uswapwep)
 			prinv(NULL, uswapwep, 0L);
 		else
-			You("have no secondary weapon readied.");
+			pline("You have no secondary weapon readied.");
 	}
 
 	if (u.twoweap && !can_twoweapon())
@@ -321,10 +321,10 @@ int dowieldquiver(void)
 	if (newquiver == &zeroobj) {
 		/* Explicitly nothing */
 		if (uquiver) {
-			You("now have no ammunition readied.");
+			pline("You now have no ammunition readied.");
 			setuqwep(newquiver = NULL);
 		} else {
-			You("already have no ammunition readied!");
+			pline("You already have no ammunition readied!");
 			return 0;
 		}
 	} else if (newquiver == uquiver) {
@@ -337,7 +337,7 @@ int dowieldquiver(void)
 		return 0;
 	} else if (newquiver->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL
 			| W_SADDLE)) {
-		You("cannot ready that!");
+		pline("You cannot ready that!");
 		return 0;
 	} else {
 		long dummy;
@@ -381,7 +381,7 @@ boolean wield_tool(struct obj *obj,
     if (obj->owornmask & (W_ARMOR|W_RING|W_AMUL|W_TOOL)) {
 	char yourbuf[BUFSZ];
 
-	You_cant("%s %s %s while wearing %s.",
+	pline("You can't %s %s %s while wearing %s.",
 		 verb, shk_your(yourbuf, obj), what,
 		 more_than_1 ? "them" : "it");
 	return FALSE;
@@ -396,17 +396,17 @@ boolean wield_tool(struct obj *obj,
 	     "Since your weapon is welded to your %s, you cannot %s %s %s.",
 		  hand, verb, more_than_1 ? "those" : "that", xname(obj));
 	} else {
-	    You_cant("do that.");
+	    pline("You can't do that.");
 	}
 	return FALSE;
     }
     if (cantwield(youmonst.data)) {
-	You_cant("hold %s strongly enough.", more_than_1 ? "them" : "it");
+	pline("You can't hold %s strongly enough.", more_than_1 ? "them" : "it");
 	return FALSE;
     }
     /* check shield */
     if (uarms && bimanual(obj)) {
-	You("cannot %s a two-handed %s while wearing a shield.",
+	pline("You cannot %s a two-handed %s while wearing a shield.",
 	    verb, (obj->oclass == WEAPON_CLASS) ? "weapon" : "tool");
 	return FALSE;
     }
@@ -416,7 +416,7 @@ boolean wield_tool(struct obj *obj,
 	/* doswapweapon might fail */
 	if (uswapwep == obj) return FALSE;
     } else {
-	You("now wield %s.", doname(obj));
+	pline("You now wield %s.", doname(obj));
 	setuwep(obj);
     }
     if (uwep != obj) return FALSE;	/* rewielded old object after dying */
@@ -435,13 +435,13 @@ int can_twoweapon(void)
 #define NOT_WEAPON(obj) (!is_weptool(obj) && obj->oclass != WEAPON_CLASS)
 	if (!could_twoweap(youmonst.data)) {
 		if (Upolyd)
-		    You_cant("use two weapons in your current form.");
+		    pline("You can't use two weapons in your current form.");
 		else
 		    pline("%s aren't able to use two weapons at once.",
 			  makeplural((flags.female && urole.name.f) ?
 				     urole.name.f : urole.name.m));
 	} else if (!uwep || !uswapwep)
-		Your("%s%s%s empty.", uwep ? "left " : uswapwep ? "right " : "",
+		pline("Your %s%s%s empty.", uwep ? "left " : uswapwep ? "right " : "",
 			body_part(HAND), (!uwep && !uswapwep) ? "s are" : " is");
 	else if (NOT_WEAPON(uwep) || NOT_WEAPON(uswapwep)) {
 		otmp = NOT_WEAPON(uwep) ? uwep : uswapwep;
@@ -451,7 +451,7 @@ int can_twoweapon(void)
 		otmp = bimanual(uwep) ? uwep : uswapwep;
 		pline("%s isn't one-handed.", Yname2(otmp));
 	} else if (uarms)
-		You_cant("use two weapons while wearing a shield.");
+		pline("You can't use two weapons while wearing a shield.");
 	else if (uswapwep->oartifact)
 		pline("%s %s being held second to another weapon!",
 			Yname2(uswapwep), otense(uswapwep, "resist"));
@@ -459,7 +459,7 @@ int can_twoweapon(void)
 		    touch_petrifies(&mons[uswapwep->corpsenm]))) {
 		char kbuf[BUFSZ];
 
-		You("wield the %s corpse with your bare %s.",
+		pline("You wield the %s corpse with your bare %s.",
 		    mons[uswapwep->corpsenm].mname, body_part(HAND));
 		sprintf(kbuf, "%s corpse", an(mons[uswapwep->corpsenm].mname));
 		instapetrify(kbuf);
@@ -479,7 +479,7 @@ void drop_uswapwep(void)
 
 	/* Avoid trashing makeplural's static buffer */
 	strcpy(str, makeplural(body_part(HAND)));
-	Your("%s from your %s!",  aobjnam(obj, "slip"), str);
+	pline("Your %s from your %s!",  aobjnam(obj, "slip"), str);
 	dropx(obj);
 }
 
@@ -487,7 +487,7 @@ int dotwoweapon(void)
 {
 	/* You can always toggle it off */
 	if (u.twoweap) {
-		You("switch to your primary weapon.");
+		pline("You switch to your primary weapon.");
 		u.twoweap = 0;
 		update_inventory();
 		return 0;
@@ -496,7 +496,7 @@ int dotwoweapon(void)
 	/* May we use two weapons? */
 	if (can_twoweapon()) {
 		/* Success! */
-		You("begin two-weapon combat.");
+		pline("You begin two-weapon combat.");
 		u.twoweap = 1;
 		update_inventory();
 		return rnd(20) > ACURR(A_DEX);
@@ -542,7 +542,7 @@ void uqwepgone(void)
 void untwoweapon(void)
 {
 	if (u.twoweap) {
-		You("can no longer use two weapons at once.");
+		pline("You can no longer use two weapons at once.");
 		u.twoweap = FALSE;
 		update_inventory();
 	}
@@ -575,12 +575,12 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 	    {
 		if (!Blind) {
 		    if (victim == &youmonst)
-			Your("%s.", aobjnam(target, "fade"));
+			pline("Your %s.", aobjnam(target, "fade"));
 		    else if (vismon)
 			pline("%s's %s.", Monnam(victim),
 			      aobjnam(target, "fade"));
 		    else if (visobj)
-			pline_The("%s.", aobjnam(target, "fade"));
+			pline("The %s.", aobjnam(target, "fade"));
 		}
 		target->otyp = SCR_BLANK_PAPER;
 		target->spe = 0;
@@ -589,7 +589,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 		(acid_dmg ? !is_corrodeable(target) : !is_rustprone(target))) {
 	    if (flags.verbose || !(target->oerodeproof && target->rknown)) {
 		if (victim == &youmonst)
-		    Your("%s not affected.", aobjnam(target, "are"));
+		    pline("Your %s not affected.", aobjnam(target, "are"));
 		else if (vismon)
 		    pline("%s's %s not affected.", Monnam(victim),
 			aobjnam(target, "are"));
@@ -598,7 +598,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 	    if (target->oerodeproof) target->rknown = TRUE;
 	} else if (erosion < MAX_ERODE) {
 	    if (victim == &youmonst)
-		Your("%s%s!", aobjnam(target, acid_dmg ? "corrode" : "rust"),
+		pline("Your %s%s!", aobjnam(target, acid_dmg ? "corrode" : "rust"),
 		    erosion+1 == MAX_ERODE ? " completely" :
 		    erosion ? " further" : "");
 	    else if (vismon)
@@ -607,7 +607,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 		    erosion+1 == MAX_ERODE ? " completely" :
 		    erosion ? " further" : "");
 	    else if (visobj)
-		pline_The("%s%s!",
+		pline("The %s%s!",
 		    aobjnam(target, acid_dmg ? "corrode" : "rust"),
 		    erosion+1 == MAX_ERODE ? " completely" :
 		    erosion ? " further" : "");
@@ -618,7 +618,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 	} else {
 	    if (flags.verbose) {
 		if (victim == &youmonst)
-		    Your("%s completely %s.",
+		    pline("Your %s completely %s.",
 			aobjnam(target, Blind ? "feel" : "look"),
 			acid_dmg ? "corroded" : "rusty");
 		else if (vismon)
@@ -626,7 +626,7 @@ void erode_obj(struct obj *target, /* object (e.g. weapon or armor) to erode */
 			aobjnam(target, "look"),
 			acid_dmg ? "corroded" : "rusty");
 		else if (visobj)
-		    pline_The("%s completely %s.",
+		    pline("The %s completely %s.",
 			aobjnam(target, "look"),
 			acid_dmg ? "corroded" : "rusty");
 	    }
@@ -654,7 +654,7 @@ int chwepon(struct obj *otmp, int amount)
 	if (uwep->otyp == WORM_TOOTH && amount >= 0) {
 		uwep->otyp = CRYSKNIFE;
 		uwep->oerodeproof = 0;
-		Your("weapon seems sharper now.");
+		pline("Your weapon seems sharper now.");
 		uwep->cursed = 0;
 		if (otyp != STRANGE_OBJECT) makeknown(otyp);
 		return 1;
@@ -663,32 +663,32 @@ int chwepon(struct obj *otmp, int amount)
 	if (uwep->otyp == CRYSKNIFE && amount < 0) {
 		uwep->otyp = WORM_TOOTH;
 		uwep->oerodeproof = 0;
-		Your("weapon seems duller now.");
+		pline("Your weapon seems duller now.");
 		if (otyp != STRANGE_OBJECT && otmp->bknown) makeknown(otyp);
 		return 1;
 	}
 
 	if (amount < 0 && uwep->oartifact && restrict_name(uwep, ONAME(uwep))) {
 	    if (!Blind)
-		Your("%s %s.", aobjnam(uwep, "faintly glow"), color);
+		pline("Your %s %s.", aobjnam(uwep, "faintly glow"), color);
 	    return 1;
 	}
 	/* there is a (soft) upper and lower limit to uwep->spe */
 	if (((uwep->spe > 5 && amount >= 0) || (uwep->spe < -5 && amount < 0))
 								&& rn2(3)) {
 	    if (!Blind)
-	    Your("%s %s for a while and then %s.",
+	    pline("Your %s %s for a while and then %s.",
 		 aobjnam(uwep, "violently glow"), color,
 		 otense(uwep, "evaporate"));
 	    else
-		Your("%s.", aobjnam(uwep, "evaporate"));
+		pline("Your %s.", aobjnam(uwep, "evaporate"));
 
 	    useupall(uwep);	/* let all of them disappear */
 	    return 1;
 	}
 	if (!Blind) {
 	    xtime = (amount*amount == 1) ? "moment" : "while";
-	    Your("%s %s for a %s.",
+	    pline("Your %s %s for a %s.",
 		 aobjnam(uwep, amount == 0 ? "violently glow" : "glow"),
 		 color, xtime);
 	    if (otyp != STRANGE_OBJECT && uwep->known &&
@@ -704,7 +704,7 @@ int chwepon(struct obj *otmp, int amount)
 	 * spe dependent.  Give an obscure clue here.
 	 */
 	if (uwep->oartifact == ART_MAGICBANE && uwep->spe >= 0) {
-		Your("right %s %sches!",
+		pline("Your right %s %sches!",
 			body_part(HAND),
 			(((amount > 1) && (uwep->spe > 1)) ? "flin" : "it"));
 	}
@@ -713,7 +713,7 @@ int chwepon(struct obj *otmp, int amount)
 	/* elven weapons vibrate warningly when enchanted beyond a limit */
 	if ((uwep->spe > 5)
 		&& (is_elven_weapon(uwep) || uwep->oartifact || !rn2(7)))
-	    Your("%s unexpectedly.",
+	    pline("Your %s unexpectedly.",
 		aobjnam(uwep, "suddenly vibrate"));
 
 	return 1;
@@ -733,7 +733,7 @@ void weldmsg(struct obj *obj)
 	long savewornmask;
 
 	savewornmask = obj->owornmask;
-	Your("%s %s welded to your %s!",
+	pline("Your %s %s welded to your %s!",
 		xname(obj), otense(obj, "are"),
 		bimanual(obj) ? (const char *)makeplural(body_part(HAND))
 				: body_part(HAND));

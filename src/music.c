@@ -98,7 +98,7 @@ static void charm_snakes(int distance)
 		newsym(mtmp->mx, mtmp->my);
 		if (canseemon(mtmp)) {
 		    if (!could_see_mon)
-			You("notice %s, swaying with the music.",
+			pline("You notice %s, swaying with the music.",
 			    a_monnam(mtmp));
 		    else
 			pline("%s freezes, then sways with the music%s.",
@@ -205,7 +205,7 @@ static void do_earthquake(int force)
 		    else
 			You_hear("a thumping sound.");
 		    if (x==u.ux && y==u.uy)
-			You("easily dodge the falling %s.",
+			pline("You easily dodge the falling %s.",
 							    mon_nam(mtmp));
 		    newsym(x,y);
 		}
@@ -213,25 +213,25 @@ static void do_earthquake(int force)
 	    if (!rn2(14 - force)) switch (level->locations[x][y].typ) {
 		  case FOUNTAIN : /* Make the fountain disappear */
 			if (cansee(x,y))
-				pline_The("fountain falls into a chasm.");
+				pline("The fountain falls into a chasm.");
 			goto do_pit;
 		  case SINK :
 			if (cansee(x,y))
-				pline_The("kitchen sink falls into a chasm.");
+				pline("The kitchen sink falls into a chasm.");
 			goto do_pit;
 		  case ALTAR :
 			if (Is_astralevel(&u.uz) || Is_sanctum(&u.uz)) break;
 
 			if (cansee(x,y))
-				pline_The("altar falls into a chasm.");
+				pline("The altar falls into a chasm.");
 			goto do_pit;
 		  case GRAVE :
 			if (cansee(x,y))
-				pline_The("headstone topples into a chasm.");
+				pline("The headstone topples into a chasm.");
 			goto do_pit;
 		  case THRONE :
 			if (cansee(x,y))
-				pline_The("throne falls into a chasm.");
+				pline("The throne falls into a chasm.");
 			/* Falls into next case */
 		  case ROOM :
 		  case CORR : /* Try to make a pit */
@@ -270,7 +270,7 @@ do_pit:		    chasm = maketrap(level, x,y,PIT);
 				    if (!cansee(x,y))
 					pline("It is destroyed!");
 				    else {
-					You("destroy %s!", mtmp->mtame ?
+					pline("You destroy %s!", mtmp->mtame ?
 					    x_monnam(mtmp, ARTICLE_THE, "poor",
 				mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE):
 					    mon_nam(mtmp));
@@ -282,9 +282,9 @@ do_pit:		    chasm = maketrap(level, x,y,PIT);
 			    if (Levitation || Flying ||
 						is_clinger(youmonst.data)) {
 				    pline("A chasm opens up under you!");
-				    You("don't fall in!");
+				    pline("You don't fall in!");
 			    } else {
-				    You("fall into a chasm!");
+				    pline("You fall into a chasm!");
 				    u.utrap = rn1(6,2);
 				    u.utraptype = TT_PIT;
 				    losehp(rnd(6),"fell into a chasm",
@@ -296,7 +296,7 @@ do_pit:		    chasm = maketrap(level, x,y,PIT);
 		  case DOOR : /* Make the door collapse */
 		    if (level->locations[x][y].doormask == D_NODOOR) goto do_pit;
 		    if (cansee(x,y))
-			pline_The("door collapses.");
+			pline("The door collapses.");
 		    if (*in_rooms(level, x, y, SHOPBASE))
 			add_damage(x, y, 0L);
 		    level->locations[x][y].doormask = D_NODOOR;
@@ -317,14 +317,14 @@ static int do_improvisation(struct obj *instr)
 	if (!do_spec)
 	    pline("What you produce is quite far from music...");
 	else
-	    You("start playing %s.", the(xname(instr)));
+	    pline("You start playing %s.", the(xname(instr)));
 
 	switch (instr->otyp) {
 	case MAGIC_FLUTE:		/* Make monster fall asleep */
 	    if (do_spec && instr->spe > 0) {
 		consume_obj_charge(instr, TRUE);
 
-		You("produce soft music.");
+		pline("You produce soft music.");
 		put_monsters_to_sleep(u.ulevel * 5);
 		exercise(A_DEX, TRUE);
 		break;
@@ -358,12 +358,12 @@ static int do_improvisation(struct obj *instr)
 		break;
 	    } /* else FALLTHRU */
 	case TOOLED_HORN:		/* Awaken or scare monsters */
-	    You("produce a frightful, grave sound.");
+	    pline("You produce a frightful, grave sound.");
 	    awaken_monsters(u.ulevel * 30);
 	    exercise(A_WIS, FALSE);
 	    break;
 	case BUGLE:			/* Awaken & attract soldiers */
-	    You("extract a loud noise from %s.", the(xname(instr)));
+	    pline("You extract a loud noise from %s.", the(xname(instr)));
 	    awaken_soldiers();
 	    exercise(A_WIS, FALSE);
 	    break;
@@ -387,8 +387,8 @@ static int do_improvisation(struct obj *instr)
 	    if (do_spec && instr->spe > 0) {
 		consume_obj_charge(instr, TRUE);
 
-		You("produce a heavy, thunderous rolling!");
-		pline_The("entire dungeon is shaking around you!");
+		pline("You produce a heavy, thunderous rolling!");
+		pline("The entire dungeon is shaking around you!");
 		do_earthquake((u.ulevel - 1) / 3 + 1);
 		/* shake up monsters in a much larger radius... */
 		awaken_monsters(ROWNO * COLNO);
@@ -396,7 +396,7 @@ static int do_improvisation(struct obj *instr)
 		break;
 	    } /* else FALLTHRU */
 	case LEATHER_DRUM:		/* Awaken monsters */
-	    You("beat a deafening row!");
+	    pline("You beat a deafening row!");
 	    awaken_monsters(u.ulevel * 40);
 	    exercise(A_WIS, FALSE);
 	    break;
@@ -418,7 +418,7 @@ int do_play_instrument(struct obj *instr)
     boolean ok;
 
     if (Underwater) {
-	You_cant("play music underwater!");
+	pline("You can't play music underwater!");
 	return 0;
     }
     if (instr->otyp != LEATHER_DRUM && instr->otyp != DRUM_OF_EARTHQUAKE) {
@@ -436,7 +436,7 @@ int do_play_instrument(struct obj *instr)
 		if (*s == 'H') *s = 'B';
 	    }
 	}
-	You("extract a strange sound from %s!", the(xname(instr)));
+	pline("You extract a strange sound from %s!", the(xname(instr)));
 	
 	/* Check if there was the Stronghold drawbridge near
 	 * and if the tune conforms to what we're waiting for.

@@ -159,7 +159,7 @@ void pluslvl(boolean incr)
 {
 	int num;
 
-	if (!incr) You_feel("more experienced.");
+	if (!incr) pline("You feel more experienced.");
 	num = newhp();
 	u.uhpmax += num;
 	u.uhp += num;

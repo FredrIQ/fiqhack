@@ -285,7 +285,7 @@ int doconsult(struct monst *oracl)
 	multi = 0;
 
 	if (!oracl) {
-		There("is no one here to consult.");
+		pline("There is no one here to consult.");
 		return 0;
 	} else if (!oracl->mpeaceful) {
 		pline("%s is in no mood for consultations.", Monnam(oracl));
@@ -295,7 +295,7 @@ int doconsult(struct monst *oracl)
 #else
 	} else if (!umoney) {
 #endif
-		You("have no money.");
+		pline("You have no money.");
 		return 0;
 	}
 
@@ -312,7 +312,7 @@ int doconsult(struct monst *oracl)
 #else
 		if (umoney < (long)minor_cost) {
 #endif
-		    You("don't even have enough money for that!");
+		    pline("You don't even have enough money for that!");
 		    return 0;
 		}
 		u_pay = minor_cost;

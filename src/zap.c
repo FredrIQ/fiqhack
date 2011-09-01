@@ -50,7 +50,7 @@ static int spell_hit_bonus(int);
 
 #define is_hero_spell(type)	((type) >= 10 && (type) < 20)
 
-static const char are_blinded_by_the_flash[] = "are blinded by the flash!";
+static const char blinded_by_the_flash[] = "You are blinded by the flash!";
 
 const char * const flash_types[] = {	/* also used in buzzmu(mcastu.c) */
 	"magic missile",	/* Wands must be 0-9 */
@@ -129,7 +129,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 			m_dowear(mtmp, FALSE); /* might want speed boots */
 			if (u.uswallow && (mtmp == u.ustuck) &&
 			    is_whirly(mtmp->data)) {
-				You("disrupt %s!", mon_nam(mtmp));
+				pline("You disrupt %s!", mon_nam(mtmp));
 				pline("A huge hole opens up...");
 				expels(mtmp, mtmp->data, TRUE);
 			}
@@ -225,7 +225,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 		wake = FALSE;	/* don't want immediate counterattack */
 		if (u.uswallow && mtmp == u.ustuck) {
 			if (is_animal(mtmp->data)) {
-				if (Blind) You_feel("a sudden rush of air!");
+				if (Blind) pline("You feel a sudden rush of air!");
 				else pline("%s opens its mouth!", Monnam(mtmp));
 			}
 			expels(mtmp, mtmp->data, TRUE);
@@ -1431,7 +1431,7 @@ makecorpse:			if (mons[obj->corpsenm].geno &
 		if (mon) {
 		    delobj(obj);
 		    if (cansee(mon->mx, mon->my))
-			pline_The("figurine animates!");
+			pline("The figurine animates!");
 		    break;
 		}
 		goto makecorpse;
@@ -1681,7 +1681,7 @@ int zappable(struct obj *wand)
 	if (wand->spe < 0 || (wand->spe == 0 && rn2(121)))
 		return 0;
 	if (wand->spe == 0)
-		You("wrest one last charge from the worn-out wand.");
+		pline("You wrest one last charge from the worn-out wand.");
 	wand->spe--;
 	return 1;
 }
@@ -1719,10 +1719,10 @@ void zapnodir(struct obj *obj)
 			break;
 		case WAN_ENLIGHTENMENT:
 			known = TRUE;
-			You_feel("self-knowledgeable...");
+			pline("You feel self-knowledgeable...");
 			win_pause(P_MESSAGE);
 			enlightenment(FALSE);
-			pline_The("feeling subsides.");
+			pline("The feeling subsides.");
 			exercise(A_WIS, TRUE);
 			break;
 	}
@@ -1807,7 +1807,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 			pline("Boing!");
 		    } else {
 			if (ordinary) {
-			    You("bash yourself!");
+			    pline("You bash yourself!");
 			    damage = dice(2,12);
 			} else
 			    damage = dice(1 + obj->spe,6);
@@ -1818,25 +1818,25 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case WAN_LIGHTNING:
 		    makeknown(WAN_LIGHTNING);
 		    if (!Shock_resistance) {
-			You("shock yourself!");
+			pline("You shock yourself!");
 			damage = dice(12,6);
 			exercise(A_CON, FALSE);
 		    } else {
 			shieldeff(u.ux, u.uy);
-			You("zap yourself, but seem unharmed.");
+			pline("You zap yourself, but seem unharmed.");
 			ugolemeffects(AD_ELEC, dice(12,6));
 		    }
 		    destroy_item(WAND_CLASS, AD_ELEC);
 		    destroy_item(RING_CLASS, AD_ELEC);
 		    if (!resists_blnd(&youmonst)) {
-			    You(are_blinded_by_the_flash);
+			    pline(blinded_by_the_flash);
 			    make_blinded((long)rnd(100),FALSE);
-			    if (!Blind) Your("vision quickly clears.");
+			    if (!Blind) pline("Your vision quickly clears.");
 		    }
 		    break;
 
 		case SPE_FIREBALL:
-		    You("explode a fireball on top of yourself!");
+		    pline("You explode a fireball on top of yourself!");
 		    explode(u.ux, u.uy, 11, dice(6,6), WAND_CLASS, EXPL_FIERY);
 		    break;
 		case WAN_FIRE:
@@ -1844,7 +1844,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case FIRE_HORN:
 		    if (Fire_resistance) {
 			shieldeff(u.ux, u.uy);
-			You_feel("rather warm.");
+			pline("You feel rather warm.");
 			ugolemeffects(AD_FIRE, dice(12,6));
 		    } else {
 			pline("You've set yourself afire!");
@@ -1863,10 +1863,10 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case FROST_HORN:
 		    if (Cold_resistance) {
 			shieldeff(u.ux, u.uy);
-			You_feel("a little chill.");
+			pline("You feel a little chill.");
 			ugolemeffects(AD_COLD, dice(12,6));
 		    } else {
-			You("imitate a popsicle!");
+			pline("You imitate a popsicle!");
 			damage = dice(12,6);
 		    }
 		    destroy_item(POTION_CLASS, AD_COLD);
@@ -1877,7 +1877,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case SPE_MAGIC_MISSILE:
 		    if (Antimagic) {
 			shieldeff(u.ux, u.uy);
-			pline_The("missiles bounce!");
+			pline("The missiles bounce!");
 		    } else {
 			damage = dice(4,6);
 			pline("Idiot!  You've shot yourself!");
@@ -1913,7 +1913,7 @@ int zapyourself(struct obj *obj, boolean ordinary)
 
 		    if (BInvis && uarmc->otyp == MUMMY_WRAPPING) {
 			/* A mummy wrapping absorbs it and protects you */
-		        You_feel("rather itchy under your %s.", xname(uarmc));
+		        pline("You feel rather itchy under your %s.", xname(uarmc));
 		        break;
 		    }
 		    if (ordinary || !rn2(10)) {	/* permanent */
@@ -1932,9 +1932,9 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case WAN_SPEED_MONSTER:
 		    if (!(HFast & INTRINSIC)) {
 			if (!Fast)
-			    You("speed up.");
+			    pline("You speed up.");
 			else
-			    Your("quickness feels more natural.");
+			    pline("Your quickness feels more natural.");
 			makeknown(WAN_SPEED_MONSTER);
 			exercise(A_DEX, TRUE);
 		    }
@@ -1946,9 +1946,9 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case SPE_SLEEP:
 		    if (Sleep_resistance) {
 			shieldeff(u.ux, u.uy);
-			You("don't feel sleepy!");
+			pline("You don't feel sleepy!");
 		    } else {
-			pline_The("sleep ray hits you!");
+			pline("The sleep ray hits you!");
 			fall_asleep(-rnd(50), TRUE);
 		    }
 		    break;
@@ -1977,8 +1977,8 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		    sprintf(buf, "shot %sself with a death ray", uhim());
 		    killer = buf;
 		    killer_format = NO_KILLER_PREFIX;
-		    You("irradiate yourself with pure energy!");
-		    You("die.");
+		    pline("You irradiate yourself with pure energy!");
+		    pline("You die.");
 		    makeknown(obj->otyp);
 			/* They might survive with an amulet of life saving */
 		    done(DIED);
@@ -1988,17 +1988,17 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case SPE_TURN_UNDEAD:
 		    unturn_dead(&youmonst);
 		    if (is_undead(youmonst.data)) {
-			You_feel("frightened and %sstunned.",
+			pline("You feel frightened and %sstunned.",
 			     Stunned ? "even more " : "");
 			make_stunned(HStun + rnd(30), FALSE);
 		    } else
-			You("shudder in dread.");
+			pline("You shudder in dread.");
 		    break;
 		case SPE_HEALING:
 		case SPE_EXTRA_HEALING:
 		    healup(dice(6, obj->otyp == SPE_EXTRA_HEALING ? 8 : 4),
 			   0, FALSE, (obj->otyp == SPE_EXTRA_HEALING));
-		    You_feel("%sbetter.",
+		    pline("You feel %sbetter.",
 			obj->otyp == SPE_EXTRA_HEALING ? "much " : "");
 		    break;
 		case WAN_LIGHT:	/* (broken wand) */
@@ -2007,17 +2007,17 @@ int zapyourself(struct obj *obj, boolean ordinary)
 		case EXPENSIVE_CAMERA:
 		    damage += rnd(25);
 		    if (!resists_blnd(&youmonst)) {
-			You(are_blinded_by_the_flash);
+			pline(blinded_by_the_flash);
 			make_blinded((long)damage, FALSE);
 			makeknown(obj->otyp);
-			if (!Blind) Your("vision quickly clears.");
+			if (!Blind) pline("Your vision quickly clears.");
 		    }
 		    damage = 0;	/* reset */
 		    break;
 		case WAN_OPENING:
 		    if (Punished) makeknown(WAN_OPENING);
 		case SPE_KNOCK:
-		    if (Punished) Your("chain quivers for a moment.");
+		    if (Punished) pline("Your chain quivers for a moment.");
 		    break;
 		case WAN_DIGGING:
 		case SPE_DIG:
@@ -2165,7 +2165,7 @@ boolean cancel_monst(struct monst *mdef, struct obj *obj, boolean youattack,
 		    pline(writing_vanishes, your);
 
 		if (Unchanging)
-		    Your("amulet grows hot for a moment, then cools.");
+		    pline("Your amulet grows hot for a moment, then cools.");
 		else
 		    rehumanize();
 	    }
@@ -2211,13 +2211,13 @@ static boolean zap_updown(struct obj *obj, schar dz)
 	case WAN_PROBING:
 	    ptmp = 0;
 	    if (dz < 0) {
-		You("probe towards the %s.", ceiling(x,y));
+		pline("You probe towards the %s.", ceiling(x,y));
 	    } else {
 		ptmp += bhitpile(obj, bhito, x, y);
-		You("probe beneath the %s.", surface(x,y));
+		pline("You probe beneath the %s.", surface(x,y));
 		ptmp += display_binventory(x, y, TRUE);
 	    }
-	    if (!ptmp) Your("probe reveals nothing.");
+	    if (!ptmp) pline("Your probe reveals nothing.");
 	    return TRUE;	/* we've done our own bhitpile */
 	case WAN_OPENING:
 	case SPE_KNOCK:
@@ -2229,7 +2229,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 			/* can't use the stairs down to quest level 2 until
 			   leader "unlocks" them; give feedback if you try */
 			on_level(&u.uz, &qstart_level) && !ok_to_quest()) {
-		pline_The("stairs seem to ripple momentarily.");
+		pline("The stairs seem to ripple momentarily.");
 		disclose = TRUE;
 	    }
 	    break;
@@ -2267,7 +2267,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 				pline("A trap door beneath you closes up then vanishes.");
 				disclose = TRUE;
 			} else {
-				You("see a swirl of %s beneath you.",
+				pline("You see a swirl of %s beneath you.",
 					is_ice(level, x, y) ? "frost" : "dust");
 			}
 		} else {
@@ -2329,9 +2329,9 @@ static boolean zap_updown(struct obj *obj, schar dz)
 		case SPE_STONE_TO_FLESH:
 		    if (e->engr_type == ENGRAVE) {
 			/* only affects things in stone */
-			pline_The(Hallucination ?
-			    "floor runs like butter!" :
-			    "edges on the floor get smoother.");
+			pline(Hallucination ?
+			    "The floor runs like butter!" :
+			    "The edges on the floor get smoother.");
 			wipe_engr_at(level, x, y, dice(2,4));
 			}
 		    break;
@@ -2372,7 +2372,7 @@ void weffects(struct obj *obj, schar dx, schar dy, schar dz)
 	    }
 	    /* give a clue if obj_zapped */
 	    if (obj_zapped)
-		You_feel("shuddering vibrations.");
+		pline("You feel shuddering vibrations.");
 
 	} else if (objects[otyp].oc_dir == NODIR) {
 	    zapnodir(obj);
@@ -2760,7 +2760,7 @@ struct monst *boomhit(int dx, int dy)
 				break;
 			} else {	/* we catch it */
 				tmp_at(DISP_END, 0);
-				You("skillfully catch the boomerang.");
+				pline("You skillfully catch the boomerang.");
 				return &youmonst;
 			}
 		}
@@ -2948,7 +2948,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	case ZT_MAGIC_MISSILE:
 	    if (Antimagic) {
 		shieldeff(sx, sy);
-		pline_The("missiles bounce off!");
+		pline("The missiles bounce off!");
 	    } else {
 		dam = dice(nd,6);
 		exercise(A_STR, FALSE);
@@ -2957,7 +2957,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	case ZT_FIRE:
 	    if (Fire_resistance) {
 		shieldeff(sx, sy);
-		You("don't feel hot!");
+		pline("You don't feel hot!");
 		ugolemeffects(AD_FIRE, dice(nd, 6));
 	    } else {
 		dam = dice(nd, 6);
@@ -2972,7 +2972,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	case ZT_COLD:
 	    if (Cold_resistance) {
 		shieldeff(sx, sy);
-		You("don't feel cold.");
+		pline("You don't feel cold.");
 		ugolemeffects(AD_COLD, dice(nd, 6));
 	    } else {
 		dam = dice(nd, 6);
@@ -2982,7 +2982,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	case ZT_SLEEP:
 	    if (Sleep_resistance) {
 		shieldeff(u.ux, u.uy);
-		You("don't feel sleepy.");
+		pline("You don't feel sleepy.");
 	    } else {
 		fall_asleep(-dice(nd,25), TRUE); /* sleep ray */
 	    }
@@ -2990,7 +2990,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	case ZT_DEATH:
 	    if (abs(type) == ZT_BREATH(ZT_DEATH)) {
 		if (Disint_resistance) {
-		    You("are not disintegrated.");
+		    pline("You are not disintegrated.");
 		    break;
 		} else if (uarms) {
 		    /* destroy shield; other possessions are safe */
@@ -3008,11 +3008,11 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 		if (uarmu) destroy_arm(uarmu);
 	    } else if (nonliving(youmonst.data) || is_demon(youmonst.data)) {
 		shieldeff(sx, sy);
-		You("seem unaffected.");
+		pline("You seem unaffected.");
 		break;
 	    } else if (Antimagic) {
 		shieldeff(sx, sy);
-		You("aren't affected.");
+		pline("You aren't affected.");
 		break;
 	    }
 	    killer_format = KILLED_BY_AN;
@@ -3024,7 +3024,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	case ZT_LIGHTNING:
 	    if (Shock_resistance) {
 		shieldeff(sx, sy);
-		You("aren't affected.");
+		pline("You aren't affected.");
 		ugolemeffects(AD_ELEC, dice(nd, 6));
 	    } else {
 		dam = dice(nd, 6);
@@ -3040,7 +3040,7 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
 	    if (Acid_resistance) {
 		dam = 0;
 	    } else {
-		pline_The("acid burns!");
+		pline("The acid burns!");
 		dam = dice(nd,6);
 		exercise(A_STR, FALSE);
 	    }
@@ -3316,9 +3316,9 @@ buzzmonst:
 		pline("%s whizzes by you!", The(fltxt));
 	    }
 	    if (abstype == ZT_LIGHTNING && !resists_blnd(&youmonst)) {
-		You(are_blinded_by_the_flash);
+		pline(blinded_by_the_flash);
 		make_blinded((long)dice(nd,50),FALSE);
-		if (!Blind) Your("vision quickly clears.");
+		if (!Blind) pline("Your vision quickly clears.");
 	    }
 	    stop_occupation();
 	    nomul(0);
@@ -3459,7 +3459,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		if (loc->typ == WATER) {
 		    /* For now, don't let WATER freeze. */
 		    if (cansee(x,y))
-			pline_The("water freezes for a moment.");
+			pline("The water freezes for a moment.");
 		    else
 			You_hear("a soft crackling.");
 		    rangemod -= 1000;	/* stop */
@@ -3495,11 +3495,11 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 			    vision_full_recalc = 1;
 			} else if (u.utrap && u.utraptype == TT_LAVA) {
 			    if (Passes_walls) {
-				You("pass through the now-solid rock.");
+				pline("You pass through the now-solid rock.");
 			    } else {
 				u.utrap = rn1(50,20);
 				u.utraptype = TT_INFLOOR;
-				You("are firmly stuck in the cooling rock.");
+				pline("You are firmly stuck in the cooling rock.");
 			    }
 			}
 		    } else if ((mon = m_at(level, x,y)) != 0) {
@@ -3516,18 +3516,18 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 	}
 	if (closed_door(level, x, y)) {
 		int new_doormask = -1;
-		const char *see_txt = 0, *sense_txt = 0, *hear_txt = 0;
+		const char *see_txt = NULL, *sense_txt = NULL, *hear_txt = NULL;
 		rangemod = -1000;
 		switch(abstype) {
 		case ZT_FIRE:
 		    new_doormask = D_NODOOR;
 		    see_txt = "The door is consumed in flames!";
-		    sense_txt = "smell smoke.";
+		    sense_txt = "You smell smoke.";
 		    break;
 		case ZT_COLD:
 		    new_doormask = D_NODOOR;
 		    see_txt = "The door freezes and shatters!";
-		    sense_txt = "feel cold.";
+		    sense_txt = "You feel cold.";
 		    break;
 		case ZT_DEATH:
 		    /* death spells/wands don't disintegrate */
@@ -3545,12 +3545,12 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		default:
 		def_case:
 		    if (cansee(x,y)) {
-			pline_The("door absorbs %s %s!",
+			pline("The door absorbs %s %s!",
 			      (type < 0) ? "the" : "your",
 			      abs(type) < ZT_SPELL(0) ? "bolt" :
 			      abs(type) < ZT_BREATH(0) ? "spell" :
 			      "blast");
-		    } else You_feel("vibrations.");
+		    } else pline("You feel vibrations.");
 		    break;
 		}
 		if (new_doormask >= 0) {	/* door gets broken */
@@ -3567,7 +3567,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 			pline(see_txt);
 			newsym(x, y);
 		    } else if (sense_txt) {
-			You(sense_txt);
+			pline(sense_txt);
 		    } else if (hear_txt) {
 			if (flags.soundok) You_hear(hear_txt);
 		    }
@@ -3581,7 +3581,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 	if (OBJ_AT(x, y) && abstype == ZT_FIRE)
 		if (burn_floor_paper(x, y, FALSE, type > 0) && couldsee(x, y)) {
 		    newsym(x,y);
-		    You("%s of smoke.",
+		    pline("You %s of smoke.",
 			!Blind ? "see a puff" : "smell a whiff");
 		}
 	if ((mon = m_at(level, x,y)) != 0) {
@@ -3640,7 +3640,7 @@ boolean break_statue(struct obj *obj)
 	    place_object(item, level, obj->ox, obj->oy);
 	}
 	if (Role_if (PM_ARCHEOLOGIST) && !flags.mon_moving && (obj->spe & STATUE_HISTORIC)) {
-	    You_feel("guilty about damaging such a historic statue.");
+	    pline("You feel guilty about damaging such a historic statue.");
 	    adjalign(-1);
 	}
 	obj->spe = 0;
@@ -3761,7 +3761,7 @@ void destroy_item(int osym, int dmgtyp)
 		for (i = 0; i < cnt; i++)
 		    useup(obj);
 		if (dmg) {
-		    if (xresist)	You("aren't hurt!");
+		    if (xresist)	pline("You aren't hurt!");
 		    else {
 			const char *how = destroy_strings[dindx * 3 + 2];
 			boolean one = (cnt == 1L);
@@ -3918,7 +3918,7 @@ void makewish(void)
 	int tries = 0;
 
 	nothing = zeroobj;  /* lint suppression; only its address matters */
-	if (flags.verbose) You("may wish for an object.");
+	if (flags.verbose) pline("You may wish for an object.");
 retry:
 	getlin("For what do you wish?", buf);
 	if (buf[0] == '\033') buf[0] = 0;

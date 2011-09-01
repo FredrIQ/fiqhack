@@ -71,7 +71,7 @@ int dowrite(struct obj *pen)
 	const char *typeword;
 
 	if (nohands(youmonst.data)) {
-	    You("need hands to be able to write!");
+	    pline("You need hands to be able to write!");
 	    return 0;
 	} else if (Glib) {
 	    pline("%s from your %s.",
@@ -86,7 +86,7 @@ int dowrite(struct obj *pen)
 		return 0;
 	typeword = (paper->oclass == SPBOOK_CLASS) ? "spellbook" : "scroll";
 	if (Blind && !paper->dknown) {
-		You("don't know if that %s is blank or not!", typeword);
+		pline("You don't know if that %s is blank or not!", typeword);
 		return 1;
 	}
 	paper->dknown = 1;
@@ -126,12 +126,12 @@ int dowrite(struct obj *pen)
 		}
 	}
 
-	There("is no such %s!", typeword);
+	pline("There is no such %s!", typeword);
 	return 1;
 found:
 
 	if (i == SCR_BLANK_PAPER || i == SPE_BLANK_PAPER) {
-		You_cant("write that!");
+		pline("You can't write that!");
 		pline("It's obscene!");
 		return 1;
 	} else if (i == SPE_BOOK_OF_THE_DEAD) {
@@ -157,7 +157,7 @@ found:
 	/* see if there's enough ink */
 	basecost = cost(new_obj);
 	if (pen->spe < basecost/2)  {
-		Your("marker is too dry to write that!");
+		pline("Your marker is too dry to write that!");
 		obfree(new_obj, NULL);
 		return 1;
 	}
@@ -170,14 +170,13 @@ found:
 	/* dry out marker */
 	if (pen->spe < actualcost) {
 		pen->spe = 0;
-		Your("marker dries out!");
+		pline("Your marker dries out!");
 		/* scrolls disappear, spellbooks don't */
 		if (paper->oclass == SPBOOK_CLASS) {
-			pline_The(
-		       "spellbook is left unfinished and your writing fades.");
+			pline("The spellbook is left unfinished and your writing fades.");
 			update_inventory();	/* pen charges */
 		} else {
-			pline_The("scroll is now useless and disappears!");
+			pline("The scroll is now useless and disappears!");
 			useup(paper);
 		}
 		obfree(new_obj, NULL);
@@ -189,11 +188,11 @@ found:
 	if (!(objects[new_obj->otyp].oc_name_known) &&
 	   !(objects[new_obj->otyp].oc_uname) &&
 	   (rnl(Role_if (PM_WIZARD) ? 3 : 15))) {
-		You("%s to write that!", by_descr ? "fail" : "don't know how");
+		pline("You %s to write that!", by_descr ? "fail" : "don't know how");
 		/* scrolls disappear, spellbooks don't */
 		if (paper->oclass == SPBOOK_CLASS) {
-			You(
-       "write in your best handwriting:  \"My Diary\", but it quickly fades.");
+			pline("You write in your best handwriting:  "
+			      "\"My Diary\", but it quickly fades.");
 			update_inventory();	/* pen charges */
 		} else {
 			if (by_descr) {
@@ -201,7 +200,7 @@ found:
 			    wipeout_text(namebuf, (6+MAXULEV - u.ulevel)/6, 0);
 			} else
 			    sprintf(namebuf, "%s was here!", plname);
-			You("write \"%s\" and the scroll disappears.", namebuf);
+			pline("You write \"%s\" and the scroll disappears.", namebuf);
 			useup(paper);
 		}
 		obfree(new_obj, NULL);
@@ -214,7 +213,7 @@ found:
 	/* success */
 	if (new_obj->oclass == SPBOOK_CLASS) {
 		/* acknowledge the change in the object's description... */
-		pline_The("spellbook warps strangely, then turns %s.",
+		pline("The spellbook warps strangely, then turns %s.",
 		      OBJ_DESCR(objects[new_obj->otyp]));
 	}
 	new_obj->blessed = (curseval > 0);

@@ -136,7 +136,7 @@ void you_were(void)
 void you_unwere(boolean purify)
 {
 	if (purify) {
-	    You_feel("purified.");
+	    pline("You feel purified.");
 	    u.ulycn = NON_PM;	/* cure lycanthropy */
 	}
 	if (!Unchanging && is_were(youmonst.data) &&

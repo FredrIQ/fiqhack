@@ -443,7 +443,7 @@ static void do_entity(struct entity *etmp)
 
 	if (automiss(etmp) && e_survives_at(etmp, oldx, oldy)) {
 		if (e_inview && (at_portcullis || IS_DRAWBRIDGE(crm->typ)))
-			pline_The("%s passes through %s!",
+			pline("The %s passes through %s!",
 			      at_portcullis ? "portcullis" : "drawbridge",
 			      e_nam(etmp));
 		if (is_u(etmp)) spoteffects(FALSE);
@@ -451,7 +451,7 @@ static void do_entity(struct entity *etmp)
 	}
 	if (e_missed(etmp, FALSE)) {
 		if (at_portcullis)
-			pline_The("portcullis misses %s!",
+			pline("The portcullis misses %s!",
 			      e_nam(etmp));
 		if (e_survives_at(etmp, oldx, oldy))
 			return;
@@ -538,11 +538,11 @@ static void do_entity(struct entity *etmp)
 	if (is_db_wall(etmp->ex, etmp->ey)) {
 		if (e_inview) {
 			if (is_u(etmp)) {
-				You("tumble towards the closed portcullis!");
+				pline("You tumble towards the closed portcullis!");
 				if (automiss(etmp))
-					You("pass through it!");
+					pline("You pass through it!");
 				else
-					pline_The("drawbridge closes in...");
+					pline("The drawbridge closes in...");
 			} else
 				pline("%s behind the drawbridge.",
 				      E_phrase(etmp, "disappear"));
@@ -602,7 +602,7 @@ void close_drawbridge(int x, int y)
 	x2 = x; y2 = y;
 	get_wall_for_db(&x2,&y2);
 	if (cansee(x,y) || cansee(x2,y2))
-		You("see a drawbridge %s up!",
+		pline("You see a drawbridge %s up!",
 		    (((u.ux == x || u.uy == y) && !Underwater) ||
 		     distu(x2,y2) < distu(x,y)) ? "coming" : "going");
 	loc1->typ = DRAWBRIDGE_UP;
@@ -651,7 +651,7 @@ void open_drawbridge(int x, int y)
 	x2 = x; y2 = y;
 	get_wall_for_db(&x2,&y2);
 	if (cansee(x,y) || cansee(x2,y2))
-		You("see a drawbridge %s down!",
+		pline("You see a drawbridge %s down!",
 		    (distu(x2,y2) < distu(x,y)) ? "going" : "coming");
 	loc1->typ = DRAWBRIDGE_DOWN;
 	loc2 = &level->locations[x2][y2];
@@ -695,13 +695,13 @@ void destroy_drawbridge(int x, int y)
 		boolean lava = (loc1->drawbridgemask & DB_UNDER) == DB_LAVA;
 		if (loc1->typ == DRAWBRIDGE_UP) {
 			if (cansee(x2,y2))
-			    pline_The("portcullis of the drawbridge falls into the %s!",
+			    pline("The portcullis of the drawbridge falls into the %s!",
 				  lava ? "lava" : "moat");
 			else if (flags.soundok)
 				You_hear("a loud *SPLASH*!");
 		} else {
 			if (cansee(x,y))
-			    pline_The("drawbridge collapses into the %s!",
+			    pline("The drawbridge collapses into the %s!",
 				  lava ? "lava" : "moat");
 			else if (flags.soundok)
 				You_hear("a loud *SPLASH*!");
@@ -714,7 +714,7 @@ void destroy_drawbridge(int x, int y)
 		}
 	} else {
 		if (cansee(x,y))
-			pline_The("drawbridge disintegrates!");
+			pline("The drawbridge disintegrates!");
 		else
 			You_hear("a loud *CRASH*!");
 		loc1->typ =

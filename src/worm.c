@@ -339,7 +339,7 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
 	if (flags.mon_moving)
 	    pline("Part of the tail of %s is cut off.", mon_nam(worm));
 	else
-	    You("cut part of the tail off of %s.", mon_nam(worm));
+	    pline("You cut part of the tail off of %s.", mon_nam(worm));
 	toss_wsegs(worm->dlevel, new_tail, TRUE);
 	if (worm->mhp > 1) worm->mhp /= 2;
 	return;
@@ -373,7 +373,7 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
     if (flags.mon_moving)
 	pline("%s is cut in half.", Monnam(worm));
     else
-	You("cut %s in half.", mon_nam(worm));
+	pline("You cut %s in half.", mon_nam(worm));
 }
 
 

@@ -105,12 +105,12 @@ static int is_pure(boolean talk)
 
     if (wizard && talk) {
 	if (u.ualign.type != original_alignment) {
-	    You("are currently %s instead of %s.",
+	    pline("You are currently %s instead of %s.",
 		align_str(u.ualign.type), align_str(original_alignment));
 	} else if (u.ualignbase[A_CURRENT] != original_alignment) {
-	    You("have converted.");
+	    pline("You have converted.");
 	} else if (u.ualign.record < MIN_QUEST_ALIGN) {
-	    You("are currently %d and require %d.",
+	    pline("You are currently %d and require %d.",
 		u.ualign.record, MIN_QUEST_ALIGN);
 	    if (yn_function("adjust?", ynchars, 'y') == 'y')
 		u.ualign.record = MIN_QUEST_ALIGN;

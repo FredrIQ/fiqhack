@@ -530,7 +530,7 @@ int use_defensive(struct monst *mtmp)
 		    if (otmp)
 			pline("%s uses a unicorn horn!", Monnam(mtmp));
 		    else
-			pline_The("tip of %s's horn glows!", mon_nam(mtmp));
+			pline("The tip of %s's horn glows!", mon_nam(mtmp));
 		}
 		if (!mtmp->mcansee) {
 		    mtmp->mcansee = 1;
@@ -630,12 +630,12 @@ mon_tele:
 		    (is_drawbridge_wall(mtmp->mx, mtmp->my) >= 0) ||
 		    (level->sstairs.sx && level->sstairs.sx == mtmp->mx &&
 				   level->sstairs.sy == mtmp->my)) {
-			pline_The("digging ray is ineffective.");
+			pline("The digging ray is ineffective.");
 			return 2;
 		}
 		if (!can_dig_down(level)) {
 		    if (canseemon(mtmp))
-			pline_The("%s here is too hard to dig in.",
+			pline("The %s here is too hard to dig in.",
 					surface(mtmp->mx, mtmp->my));
 		    return 2;
 		}
@@ -1070,11 +1070,11 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 			    shieldeff(u.ux, u.uy);
 			    pline("Boing!");
 			} else if (rnd(20) < 10 + u.uac) {
-			    pline_The("wand hits you!");
+			    pline("The wand hits you!");
 			    tmp = dice(2,12);
 			    if (Half_spell_damage) tmp = (tmp+1) / 2;
 			    losehp(tmp, "wand", KILLED_BY_AN);
-			} else pline_The("wand misses you.");
+			} else pline("The wand misses you.");
 			stop_occupation();
 			nomul(0);
 		} else if (resists_magm(mtmp)) {
@@ -1277,12 +1277,12 @@ int use_offensive(struct monst *mtmp)
 		mreadmsg(mtmp, otmp);
 	    	/* Identify the scroll */
 		if (canspotmon(mtmp)) {
-		    pline_The("%s rumbles %s %s!", ceiling(mtmp->mx, mtmp->my),
+		    pline("The %s rumbles %s %s!", ceiling(mtmp->mx, mtmp->my),
 	    			otmp->blessed ? "around" : "above",
 				mon_nam(mtmp));
 		    if (oseen) makeknown(otmp->otyp);
 		} else if (cansee(mtmp->mx, mtmp->my)) {
-		    pline_The("%s rumbles in the middle of nowhere!",
+		    pline("The %s rumbles in the middle of nowhere!",
 			ceiling(mtmp->mx, mtmp->my));
 		    if (mtmp->minvis)
 			map_invisible(mtmp->mx, mtmp->my);
@@ -1370,14 +1370,14 @@ int use_offensive(struct monst *mtmp)
 			    !Passes_walls &&
 			    !noncorporeal(youmonst.data) &&
 			    !unsolid(youmonst.data)) {
-			You("are hit by %s!", doname(otmp2));
+			pline("You are hit by %s!", doname(otmp2));
 			dmg = dmgval(otmp2, &youmonst) * otmp2->quan;
 			if (uarmh) {
 			    if (is_metallic(uarmh)) {
 				pline("Fortunately, you are wearing a hard helmet.");
 				if (dmg > 2) dmg = 2;
 			    } else if (flags.verbose) {
-				Your("%s does not protect you.",
+				pline("Your %s does not protect you.",
 						xname(uarmh));
 			    }
 			}
@@ -1741,7 +1741,7 @@ skipmsg:
 			where_to = 0;
 		    }
 		    if (!where_to) {
-			pline_The("whip slips free.");  /* not `The_whip' */
+			pline("The whip slips free.");  /* not `The_whip' */
 			return 1;
 		    } else if (where_to == 3 && hates_silver(mtmp->data) &&
 			    objects[obj->otyp].oc_material == SILVER) {
@@ -1786,7 +1786,7 @@ static void you_aggravate(struct monst *mtmp)
 	cls();
 	dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0, dbuf_monid(mtmp), 0, 0);
 	display_self();
-	You_feel("aggravated at %s.", noit_mon_nam(mtmp));
+	pline("You feel aggravated at %s.", noit_mon_nam(mtmp));
 	win_pause(P_MAP);
 	docrt();
 	if (unconscious()) {

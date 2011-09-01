@@ -205,16 +205,16 @@ static boolean dog_hunger(struct monst *mtmp, struct edog *edog)
 		else if (couldsee(mtmp->mx, mtmp->my))
 		    beg(mtmp);
 		else
-		    You_feel("worried about %s.", y_monnam(mtmp));
+		    pline("You feel worried about %s.", y_monnam(mtmp));
 		stop_occupation();
 	    } else if (moves > edog->hungrytime + 750 || mtmp->mhp < 1) {
 dog_died:
 		if (mtmp->mleashed && mtmp != u.usteed)
-		    Your("leash goes slack.");
+		    pline("Your leash goes slack.");
 		else if (cansee(mtmp->mx, mtmp->my))
 		    pline("%s starves.", Monnam(mtmp));
 		else
-		    You_feel("%s for a moment.",
+		    pline("You feel %s for a moment.",
 			Hallucination ? "bummed" : "sad");
 		mondied(mtmp);
 		return TRUE;
@@ -523,7 +523,7 @@ int dog_move(struct monst *mtmp,
 	if (!Conflict && !mtmp->mconf &&
 	    mtmp == u.ustuck && !sticks(youmonst.data)) {
 	    unstuck(mtmp);	/* swallowed case handled above */
-	    You("get released!");
+	    pline("You get released!");
 	}
 	if (!nohands(mtmp->data) && !verysmall(mtmp->data)) {
 		allowflags |= OPENDOOR;

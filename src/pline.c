@@ -88,67 +88,6 @@ void free_youbuf(void)
  strcat((YouPrefix(pointer, prefix, text), pointer), text)
 
 /*VARARGS1*/
-void You (const char * line, ...)
-{
-	va_list the_args;
-	char *tmp;
-	va_start(the_args, line);
-	vpline(YouMessage(tmp, "You ", line), the_args);
-	va_end(the_args);
-}
-
-/*VARARGS1*/
-void Your (const char *line, ...)
-{
-	va_list the_args;
-	char *tmp;
-	va_start(the_args, line);
-	vpline(YouMessage(tmp, "Your ", line), the_args);
-	va_end(the_args);
-}
-
-/*VARARGS1*/
-void You_feel (const char *line, ...)
-{
-	va_list the_args;
-	char *tmp;
-	va_start(the_args, line);
-	vpline(YouMessage(tmp, "You feel ", line), the_args);
-	va_end(the_args);
-}
-
-
-/*VARARGS1*/
-void You_cant (const char *line, ...)
-{
-	va_list the_args;
-	char *tmp;
-	va_start(the_args, line);
-	vpline(YouMessage(tmp, "You can't ", line), the_args);
-	va_end(the_args);
-}
-
-/*VARARGS1*/
-void pline_The (const char *line, ...)
-{
-	va_list the_args;
-	char *tmp;
-	va_start(the_args, line);
-	vpline(YouMessage(tmp, "The ", line), the_args);
-	va_end(the_args);
-}
-
-/*VARARGS1*/
-void There (const char *line, ...)
-{
-	va_list the_args;
-	char *tmp;
-	va_start(the_args, line);
-	vpline(YouMessage(tmp, "There ", line), the_args);
-	va_end(the_args);
-}
-
-/*VARARGS1*/
 void You_hear (const char *line, ...)
 {
 	va_list the_args;

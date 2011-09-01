@@ -832,7 +832,7 @@ struct obj *getobj(const char *let, const char *word)
 #else
 	if (!foo && !allowall && !allownone) {
 #endif
-		You("don't have anything %sto %s.",
+		pline("You don't have anything %sto %s.",
 			foox ? "else " : "", word);
 		return NULL;
 	}
@@ -871,14 +871,14 @@ struct obj *getobj(const char *let, const char *word)
 			if (!usegold) {
 			    if (!strncmp(word, "rub on ", 7)) {
 				/* the dangers of building sentences... */
-				You("cannot rub gold%s.", word + 3);
+				pline("You cannot rub gold%s.", word + 3);
 			    } else {
-				You("cannot %s gold.", word);
+				pline("You cannot %s gold.", word);
 			    }
 			    return NULL;
 #ifndef GOLDOBJ
 			} else if (!allowgold) {
-				You("are not carrying any gold.");
+				pline("You are not carrying any gold.");
 				return NULL;
 #endif
 			} 
@@ -890,7 +890,7 @@ struct obj *getobj(const char *let, const char *word)
 			 * from Larn.
 			 */
 			if (cnt < 0) {
-	pline_The("LRS would be very interested to know you have that much.");
+	pline("The LRS would be very interested to know you have that much.");
 				return NULL;
 			}
 
@@ -931,7 +931,7 @@ struct obj *getobj(const char *let, const char *word)
 			allowcnt = 1;
 		    if (cnt == 0 && prezero) return NULL;
 		    if (cnt > 1) {
-			You("can only throw one item at a time.");
+			pline("You can only throw one item at a time.");
 			continue;
 		    }
 		}
@@ -941,10 +941,10 @@ struct obj *getobj(const char *let, const char *word)
 		for (otmp = invent; otmp; otmp = otmp->nobj)
 			if (otmp->invlet == ilet) break;
 		if (!otmp) {
-			You("don't have that object.");
+			pline("You don't have that object.");
 			continue;
 		} else if (cnt < 0 || otmp->quan < cnt) {
-			You("don't have that many!  You have only %ld.",
+			pline("You don't have that many!  You have only %ld.",
 			    otmp->quan);
 			continue;
 		}
@@ -1079,7 +1079,7 @@ void identify_pack(int id_limit)
 	if (not_fully_identified(obj)) ++unid_cnt, the_obj = obj;
 
     if (!unid_cnt) {
-	You("have already identified all of your possessions.");
+	pline("You have already identified all of your possessions.");
     } else if (!id_limit) {
 	/* identify everything */
 	if (unid_cnt == 1) {
@@ -1488,7 +1488,7 @@ int dotypeinv(void)
 #else
 	if (!invent && !billx) {
 #endif
-	    You("aren't carrying anything.");
+	    pline("You aren't carrying anything.");
 	    return 0;
 	}
 	unpaid_count = count_unpaid(invent);
@@ -1512,7 +1512,7 @@ int dotypeinv(void)
 	    if (unpaid_count)
 		dounpaid();
 	    else
-		You("are not carrying any unpaid objects.");
+		pline("You are not carrying any unpaid objects.");
 	    return 0;
 	}
 	
@@ -1603,7 +1603,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	    sprintf(fbuf, "Contents of %s %s",
 		s_suffix(mon_nam(mtmp)), mbodypart(mtmp, STOMACH));
 	    /* Skip "Contents of " by using fbuf index 12 */
-	    You("%s to %s what is lying in %s.",
+	    pline("You %s to %s what is lying in %s.",
 		Blind ? "try" : "look around", verb, &fbuf[12]);
 	    otmp = mtmp->minvent;
 	    if (otmp) {
@@ -1615,12 +1615,12 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		strcat(fbuf,":");
 	    	display_minventory(mtmp, MINV_ALL, fbuf);
 	    } else {
-		You("%s no objects here.", verb);
+		pline("You %s no objects here.", verb);
 	    }
 	    return !!Blind;
 	}
 	if (!skip_objects && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
-		There("is %s here.",
+		pline("There is %s here.",
 			an(trapexplain[trap->ttyp - 1]));
 
 	otmp = level->objects[u.ux][u.uy];
@@ -1632,9 +1632,9 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		boolean drift = Is_airlevel(&u.uz) || Is_waterlevel(&u.uz);
 		if (dfeature && !strncmp(dfeature, "altar ", 6)) {
 		    /* don't say "altar" twice, dfeature has more info */
-		    You("try to feel what is here.");
+		    pline("You try to feel what is here.");
 		} else {
-		    You("try to feel what is %s%s.",
+		    pline("You try to feel what is %s%s.",
 			drift ? "floating here" : "lying here on the ",
 			drift ? ""		: surface(u.ux, u.uy));
 		}
@@ -1653,7 +1653,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		if (dfeature) pline(fbuf);
 		read_engr_at(u.ux, u.uy); /* Eric Backus */
 		if (!skip_objects && (Blind || !dfeature))
-		    You("%s no objects here.", verb);
+		    pline("You %s no objects here.", verb);
 		return !!Blind;
 	}
 	/* we know there is something here */
@@ -1661,7 +1661,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	if (skip_objects) {
 	    if (dfeature) pline(fbuf);
 	    read_engr_at(u.ux, u.uy); /* Eric Backus */
-	    There("are %s%s objects here.",
+	    pline("There are %s%s objects here.",
 		  (obj_cnt <= 10) ? "several" : "many",
 		  picked_some ? " more" : "");
 	} else if (!otmp->nexthere) {
@@ -1671,7 +1671,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 #ifdef INVISIBLE_OBJECTS
 	    if (otmp->oinvis && !See_invisible) verb = "feel";
 #endif
-	    You("%s here %s.", verb, doname(otmp));
+	    pline("You %s here %s.", verb, doname(otmp));
 	    if (otmp->otyp == CORPSE)
 		feel_cockatrice(otmp, FALSE);
 	} else {
@@ -1725,7 +1725,7 @@ void feel_cockatrice(struct obj *otmp, boolean force_touch)
 
 	if (will_feel_cockatrice(otmp, force_touch)) {
 	    if (poly_when_stoned(youmonst.data))
-			You("touched the %s corpse with your bare %s.",
+			pline("You touched the %s corpse with your bare %s.",
 				mons[otmp->corpsenm].mname, makeplural(body_part(HAND)));
 	    else
 			pline("Touching the %s corpse is a fatal mistake...",
@@ -1829,15 +1829,15 @@ int doprgold(void)
 	   take containers into account */
 #ifndef GOLDOBJ
 	if (!u.ugold)
-	    Your("wallet is empty.");
+	    pline("Your wallet is empty.");
 	else
-	    Your("wallet contains %ld gold piece%s.", u.ugold, plur(u.ugold));
+	    pline("Your wallet contains %ld gold piece%s.", u.ugold, plur(u.ugold));
 #else
         long umoney = money_cnt(invent);
 	if (!umoney)
-	    Your("wallet is empty.");
+	    pline("Your wallet is empty.");
 	else
-	    Your("wallet contains %ld %s.", umoney, currency(umoney));
+	    pline("Your wallet contains %ld %s.", umoney, currency(umoney));
 #endif
 	shopper_financial_report();
 	return 0;
@@ -1847,7 +1847,7 @@ int doprgold(void)
 int doprwep(void)
 {
     if (!uwep) {
-	You("are empty %s.", body_part(HANDED));
+	pline("You are empty %s.", body_part(HANDED));
     } else {
 	prinv(NULL, uwep, 0L);
 	if (u.twoweap) prinv(NULL, uswapwep, 0L);
@@ -1858,7 +1858,7 @@ int doprwep(void)
 int doprarm(void)
 {
 	if (!wearing_armor())
-		You("are not wearing any armor.");
+		pline("You are not wearing any armor.");
 	else {
 		char lets[8];
 		int ct = 0;
@@ -1879,7 +1879,7 @@ int doprarm(void)
 int doprring(void)
 {
 	if (!uleft && !uright)
-		You("are not wearing any rings.");
+		pline("You are not wearing any rings.");
 	else {
 		char lets[3];
 		int ct = 0;
@@ -1895,7 +1895,7 @@ int doprring(void)
 int dopramulet(void)
 {
 	if (!uamul)
-		You("are not wearing an amulet.");
+		pline("You are not wearing an amulet.");
 	else
 		prinv(NULL, uamul, 0L);
 	return 0;
@@ -1920,7 +1920,7 @@ int doprtool(void)
 	    if (tool_in_use(otmp))
 		lets[ct++] = obj_to_let(otmp);
 	lets[ct] = '\0';
-	if (!ct) You("are not using any tools.");
+	if (!ct) pline("You are not using any tools.");
 	else display_inventory(lets, FALSE);
 	return 0;
 }
@@ -1937,7 +1937,7 @@ int doprinuse(void)
 	    if (is_worn(otmp) || tool_in_use(otmp))
 		lets[ct++] = obj_to_let(otmp);
 	lets[ct] = '\0';
-	if (!ct) You("are not wearing or wielding anything.");
+	if (!ct) pline("You are not wearing or wielding anything.");
 	else display_inventory(lets, FALSE);
 	return 0;
 }

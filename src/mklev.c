@@ -1249,8 +1249,8 @@ void mkinvokearea(void)
     xchar ymin = inv_pos.y, ymax = inv_pos.y;
     xchar i;
 
-    pline_The("floor shakes violently under you!");
-    pline_The("walls around you begin to bend and crumble!");
+    pline("The floor shakes violently under you!");
+    pline("The walls around you begin to bend and crumble!");
     win_pause(P_MESSAGE);
 
     mkinvpos(xmin, ymin, 0);		/* middle, before placing stairs */
@@ -1277,7 +1277,7 @@ void mkinvokearea(void)
 	delay_output();
     }
 
-    You("are standing at the top of a stairwell leading down!");
+    pline("You are standing at the top of a stairwell leading down!");
     mkstairs(level, u.ux, u.uy, 0, NULL); /* down */
     newsym(u.ux, u.uy);
     vision_full_recalc = 1;	/* everything changed */
