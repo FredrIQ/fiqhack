@@ -264,6 +264,7 @@ void init_data(void)
     iflags.disable_log = nolog;
     flags.moonphase = 10; /* invalid value, so that the first call to realtime_tasks will dtrt */
     lastinvnr = 51;
+    flags.soundok = 1;
 }
 
 /*decl.c*/
