@@ -70,6 +70,15 @@ enum nh_text_mode {
     DEC_GRAPHICS	/* VT100 line drawing characters */
 };
 
+/* window types */
+enum nh_window_type {
+    NHW_MESSAGE,
+    NHW_STATUS,
+    NHW_MAP,
+    NHW_MENU,
+    NHW_TEXT
+};
+
 /* menu structure */
 typedef struct tty_mi {
     struct tty_mi *next;
@@ -246,8 +255,10 @@ extern void tty_exit_nhwindows(const char *);
 extern void tty_create_game_windows(void);
 extern void tty_destroy_game_windows(void);
 extern winid tty_create_nhwindow(int);
+extern void tty_clear_map(void);
 extern void tty_clear_nhwindow(int);
 extern void clear_nhwindow(winid);
+extern void tty_pause(enum nh_pause_reason reason);
 extern void tty_display_nhwindow(int, boolean);
 extern void display_nhwindow(winid, boolean);
 extern void tty_dismiss_nhwindow(winid);

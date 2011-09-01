@@ -120,16 +120,6 @@ enum nh_pick_type {
     PICK_ANY,	/* can pick any amount */
 };
 
-/* window types */
-enum nh_window_type {
-    NHW_MESSAGE,
-    NHW_STATUS,
-    NHW_MAP,
-    /* the following 2 only have meaning inside the tty port. remove when possible */
-    NHW_MENU,
-    NHW_TEXT
-};
-
 /* Always use full pathnames for file names,
  * rather than assuming that they're all in the current directory.  This
  * provides all the subclasses that seem reasonable.
@@ -151,6 +141,11 @@ enum nh_game_modes {
     MODE_NORMAL,
     MODE_EXPLORE,
     MODE_WIZARD
+};
+
+enum nh_pause_reason {
+    P_MESSAGE,
+    P_MAP
 };
 
 enum nh_opttype {
@@ -454,8 +449,8 @@ struct nh_topten_entry {
 struct nh_window_procs {
     void (*win_player_selection)(int initrole, int initrace, int initgend,
 			         int initalign, int randomall);
-    void (*win_clear_nhwindow)(int);
-    void (*win_display_nhwindow)(int, boolean);
+    void (*win_clear_map)(void);
+    void (*win_pause)(enum nh_pause_reason reason);
     void (*win_display_buffer)(char *,boolean);
     void (*win_update_status)(struct nh_player_info *pi);
     void (*win_print_message)(const char *);

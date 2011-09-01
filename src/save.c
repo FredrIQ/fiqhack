@@ -21,18 +21,15 @@ static void savegamestate(int,int);
 
 int dosave(void)
 {
-	clear_nhwindow(NHW_MESSAGE);
 	if (yn("Really save?") == 'n') {
-		clear_nhwindow(NHW_MESSAGE);
 		if (multi > 0) nomul(0);
 	} else {
-		clear_nhwindow(NHW_MESSAGE);
 		pline("Saving...");
 		if (dosave0(FALSE)) {
 			program_state.something_worth_saving = 0;
 			u.uhp = -1;		/* universal game's over indicator */
 			/* make sure they see the Saving message */
-			display_nhwindow(NHW_MESSAGE, TRUE);
+			win_pause(P_MESSAGE);
 			terminate();
 		} else doredraw();
 	}

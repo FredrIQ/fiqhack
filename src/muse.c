@@ -1787,7 +1787,7 @@ static void you_aggravate(struct monst *mtmp)
 	dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0, dbuf_monid(mtmp), 0, 0);
 	display_self();
 	You_feel("aggravated at %s.", noit_mon_nam(mtmp));
-	display_nhwindow(NHW_MAP, TRUE);
+	win_pause(P_MAP);
 	docrt();
 	if (unconscious()) {
 		multi = -1;

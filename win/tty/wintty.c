@@ -24,8 +24,8 @@ struct interface_flags ui_flags;
 /* Interface definition, for windows.c */
 struct nh_window_procs tty_procs = {
     tty_player_selection,
-    tty_clear_nhwindow,
-    tty_display_nhwindow,
+    tty_clear_map,
+    tty_pause,
     tty_display_buffer,
     tty_update_status,
     tty_print_message,
@@ -758,6 +758,13 @@ static void free_window_info(struct WinDesc *cw, boolean free_data)
     }
 }
 
+
+void tty_clear_map(void)
+{
+    clear_nhwindow(WIN_MAP);
+}
+
+
 void tty_clear_nhwindow(int type)
 {
     if (type == NHW_MESSAGE)
@@ -1269,6 +1276,15 @@ static void process_text_window(winid window, struct WinDesc *cw)
 	if (morc == '\033')
 	    cw->flags |= WIN_CANCELLED;
     }
+}
+
+
+void tty_pause(enum nh_pause_reason reason)
+{
+    if (reason == P_MESSAGE)
+	display_nhwindow(WIN_MESSAGE, FALSE);
+    else if (reason == P_MAP)
+	display_nhwindow(WIN_MAP, TRUE);
 }
 
 

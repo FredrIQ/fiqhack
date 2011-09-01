@@ -861,11 +861,10 @@ static int lift_object(struct obj *obj, struct obj *container,
 				doname(obj), an(simple_typename(obj->otyp)), "something"));
 		obj->quan = savequan;
 		switch (ynq(qbuf)) {
-		case 'q':  result = -1; break;
-		case 'n':  result =  0; break;
-		default:   break;	/* 'y' => result == 1 */
+		    case 'q':  result = -1; break;
+		    case 'n':  result =  0; break;
+		    default:   break;	/* 'y' => result == 1 */
 		}
-		clear_nhwindow(NHW_MESSAGE);
 	    }
 	}
     }
@@ -975,7 +974,7 @@ int pickup_object(struct obj *obj, long count,
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
 				&& !Stone_resistance && !telekinesis) {
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-		    display_nhwindow(NHW_MESSAGE, FALSE);
+		    win_pause(P_MESSAGE);
 		else {
 			char kbuf[BUFSZ];
 
@@ -1468,7 +1467,7 @@ static int in_container(struct obj *obj)
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
 		 && !Stone_resistance) {
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-		    display_nhwindow(NHW_MESSAGE, FALSE);
+		    win_pause(P_MESSAGE);
 		else {
 		    char kbuf[BUFSZ];
 
@@ -1583,7 +1582,7 @@ static int out_container(struct obj *obj)
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
 		 && !Stone_resistance) {
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-		    display_nhwindow(NHW_MESSAGE, FALSE);
+		    win_pause(P_MESSAGE);
 		else {
 		    char kbuf[BUFSZ];
 

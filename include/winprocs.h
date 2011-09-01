@@ -9,8 +9,8 @@ extern struct nh_window_procs windowprocs;
 extern void nh_delay_output(void);
 
 #define player_selection (*windowprocs.win_player_selection)
-#define clear_nhwindow (*windowprocs.win_clear_nhwindow)
-#define display_nhwindow (*windowprocs.win_display_nhwindow)
+#define win_clear_map (*windowprocs.win_clear_map)
+#define win_pause (*windowprocs.win_pause)
 #define display_buffer (*windowprocs.win_display_buffer)
 #define update_status (*windowprocs.win_update_status)
 #define print_message (*windowprocs.win_print_message)

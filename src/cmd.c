@@ -283,12 +283,10 @@ static int enter_explore_mode(void)
 	if (!discover && !wizard) {
 		pline("Beware!  From explore mode there will be no return to normal game.");
 		if (yn("Do you want to enter explore mode?") == 'y') {
-			clear_nhwindow(NHW_MESSAGE);
 			You("are now in non-scoring explore mode.");
 			discover = TRUE;
 		}
 		else {
-			clear_nhwindow(NHW_MESSAGE);
 			pline("Resuming normal game.");
 		}
 	}

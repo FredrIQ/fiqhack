@@ -383,8 +383,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	ttyDisplay->inread--;
 	ttyDisplay->toplin = 2;
 	if (ttyDisplay->intr) ttyDisplay->intr--;
-	if (wins[WIN_MESSAGE]->cury)
-	    clear_nhwindow(WIN_MESSAGE);
+	clear_nhwindow(WIN_MESSAGE);
 
 	return q;
 }

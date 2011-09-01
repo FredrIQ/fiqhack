@@ -1720,7 +1720,7 @@ void zapnodir(struct obj *obj)
 		case WAN_ENLIGHTENMENT:
 			known = TRUE;
 			You_feel("self-knowledgeable...");
-			display_nhwindow(NHW_MESSAGE, FALSE);
+			win_pause(P_MESSAGE);
 			enlightenment(FALSE);
 			pline_The("feeling subsides.");
 			exercise(A_WIS, TRUE);

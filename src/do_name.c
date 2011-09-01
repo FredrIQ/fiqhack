@@ -123,7 +123,7 @@ static void do_oname(struct obj *obj)
 		do c2 = 'a' + rn2('z'-'a'); while (c1 == c2);
 		buf[n] = (buf[n] == c1) ? c2 : highc(c2);  /* keep same case */
 		pline("While engraving your %s slips.", body_part(HAND));
-		display_nhwindow(NHW_MESSAGE, FALSE);
+		win_pause(P_MESSAGE);
 		You("engrave: \"%s\".",buf);
 	}
 	oname(obj, buf);

@@ -65,7 +65,6 @@ extern const char * const killed_by_prefix[];	/* from topten.c */
 int done2(void)
 {
 	if (yn("Really quit?") == 'n') {
-		clear_nhwindow(NHW_MESSAGE);
 		flush_screen(1);
 		if (multi > 0) nomul(0);
 		if (multi == 0) {
@@ -504,7 +503,7 @@ static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	
 	/* clean up unneeded windows */
 	if (program_state.game_running) {
-	    display_nhwindow(NHW_MESSAGE, TRUE);
+	    win_pause(P_MESSAGE);
 
 	    if (!done_stopprint || flags.tombstone)
 		show_endwin = TRUE;
@@ -757,7 +756,7 @@ void done(int how)
 	    clearpriests();
 	} else	taken = FALSE;	/* lint; assert( !bones_ok ); */
 
-	display_nhwindow(NHW_MESSAGE, FALSE);
+	win_pause(P_MESSAGE);
 
 	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
 		disclose(how, taken);
@@ -823,7 +822,7 @@ static void container_contents(struct obj *list,
 			container_contents(box->cobj, identified, TRUE);
 		} else {
 		    pline("%s empty.", Tobjnam(box, "are"));
-		    display_nhwindow(NHW_MESSAGE, FALSE);
+		    win_pause(P_MESSAGE);
 		}
 	    }
 	    if (!all_containers)

@@ -465,7 +465,6 @@ int dorecover(int infd)
 	run_timers();	/* expire all timers that have gone off while away */
 	docrt();
 	restoring = FALSE;
-	clear_nhwindow(NHW_MESSAGE);
 	program_state.something_worth_saving++;	/* useful data now exists */
 	
 	check_special_room(FALSE);

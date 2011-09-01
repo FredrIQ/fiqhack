@@ -1249,7 +1249,7 @@ int dosacrifice(void)
 		adjalign(10);
 pline("An invisible choir sings, and you are bathed in radiance...");
 		godvoice(altaralign, "Congratulations, mortal!");
-		display_nhwindow(NHW_MESSAGE, FALSE);
+		win_pause(P_MESSAGE);
 verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		You("ascend to the status of Demigod%s...",
 		    flags.female ? "dess" : "");

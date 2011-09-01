@@ -22,7 +22,7 @@ static struct qtmsg * msg_in(struct qtmsg *,int);
 static void convert_arg(char);
 static void convert_line(void);
 static void deliver_by_pline(struct qtmsg *);
-static void deliver_by_window(struct qtmsg *,int);
+static void deliver_by_window(struct qtmsg*);
 static const char *ldrname(void);
 
 static char	in_line[80], cvt_buf[64], out_line[128];
@@ -345,7 +345,7 @@ static void deliver_by_pline(struct qtmsg *qt_msg)
 
 }
 
-static void deliver_by_window(struct qtmsg *qt_msg, int how)
+static void deliver_by_window(struct qtmsg *qt_msg)
 {
 	long size;
 	char *d;
@@ -372,8 +372,7 @@ void com_pager(int msgnum)
 
 	dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
 	if (qt_msg->delivery == 'p') deliver_by_pline(qt_msg);
-	else if (msgnum == 1) deliver_by_window(qt_msg, NHW_MENU);
-	else		     deliver_by_window(qt_msg, NHW_TEXT);
+	else deliver_by_window(qt_msg);
 	return;
 }
 
@@ -389,7 +388,7 @@ void qt_pager(int msgnum)
 	dlb_fseek(msg_file, qt_msg->offset, SEEK_SET);
 	if (qt_msg->delivery == 'p')
 		deliver_by_pline(qt_msg);
-	else	deliver_by_window(qt_msg, NHW_TEXT);
+	else	deliver_by_window(qt_msg);
 	return;
 }
 

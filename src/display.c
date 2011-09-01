@@ -1338,9 +1338,9 @@ void clear_display_buffer(void)
 
 void cls(void)
 {
-    display_nhwindow(NHW_MESSAGE, FALSE); /* flush messages */
-    botl = 1;			/* force update of botl window */
-    clear_nhwindow(NHW_MAP);	/* clear physical screen */
+    win_pause(P_MESSAGE); /* required due to screwy tty display logic */
+    botl = 1;		/* force update of botl window */
+    win_clear_map();	/* clear physical screen */
 
     clear_display_buffer();
 }
@@ -1357,7 +1357,6 @@ void flush_screen(int cursor_on_u)
 
     update_screen(dbuf);
 
-    display_nhwindow(NHW_MAP, FALSE);
     if (botl)
 	bot();
 }

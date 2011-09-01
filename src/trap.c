@@ -334,7 +334,7 @@ void fall_through(boolean td)	/* td == TRUE : trap door or hole */
 	    /* hero didn't fall through, but any objects here might */
 	    impact_drop(NULL, u.ux, u.uy, 0);
 	    if (!td) {
-		display_nhwindow(NHW_MESSAGE, FALSE);
+		win_pause(P_MESSAGE);
 		pline_The("opening under you closes up.");
 	    }
 	    return;
@@ -3151,7 +3151,7 @@ static int help_monster_out(struct monst *mtmp, struct trap *ttmp)
 				mtmp->data->mname, makeplural(body_part(HAND)));
 
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-			display_nhwindow(NHW_MESSAGE, FALSE);
+			win_pause(P_MESSAGE);
 		else {
 			char kbuf[BUFSZ];
 
@@ -3415,7 +3415,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 	otmp->otrapped = 0;	/* trap is one-shot; clear flag first in case
 				   chest kills you and ends up in bones file */
 	You(disarm ? "set it off!" : "trigger a trap!");
-	display_nhwindow(NHW_MESSAGE, FALSE);
+	win_pause(P_MESSAGE);
 	if (Luck > -13 && rn2(13+Luck) > 7) {	/* saved by luck */
 	    /* trap went off, but good luck prevents damage */
 	    switch (rn2(13)) {

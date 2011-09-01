@@ -17,7 +17,6 @@ static const char *const copyright_banner[] =
 static void wd_message(void);
 static void pre_move_tasks(boolean didmove);
 
-static void display_gamewindows(void);
 static void newgame(void);
 static void welcome(boolean);
 
@@ -157,7 +156,7 @@ static void startup_common(char *name, int locknum, int playmode)
     if (wizard)
 	    strcpy(plname, "wizard");
 
-    display_gamewindows();
+    clear_display_buffer();
 
     initrack();
 }
@@ -698,7 +697,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	    (multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
 	if (flags.run)
 	    botl = 1;
-	display_nhwindow(NHW_MAP, FALSE);
+	flush_screen(0);
     }
     
     didmove = flags.move;
@@ -714,7 +713,8 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     /* prepare for the next move */
     flags.move = 1;
     pre_move_tasks(didmove);
-    flush_screen(1); /* Flush screen buffer */
+    if (multi == 0 && !occupation)
+	flush_screen(1); /* Flush screen buffer */
     
     log_command_result();
     
@@ -757,18 +757,6 @@ void stop_occupation(void)
     }
 }
 
-
-static void display_gamewindows(void)
-{
-    /*
-     * The mac port is not DEPENDENT on the order of these
-     * displays, but it looks a lot better this way...
-     */
-    display_nhwindow(NHW_STATUS, FALSE);
-    display_nhwindow(NHW_MESSAGE, FALSE);
-    clear_display_buffer();
-    display_nhwindow(NHW_MAP, FALSE);
-}
 
 static void newgame(void)
 {

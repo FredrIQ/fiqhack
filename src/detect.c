@@ -265,7 +265,7 @@ outgoldmap:
     newsym(u.ux,u.uy);
     You_feel("very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
-    display_nhwindow(NHW_MAP, TRUE);
+    win_pause(P_MAP);
     docrt();
     u.uinwater = uw;
     if (Underwater) under_water(2);
@@ -363,7 +363,7 @@ int food_detect(struct obj *sobj)
 		Your("%s tingles and you smell %s.", body_part(NOSE), what);
 	}
 	else You("sense %s.", what);
-	display_nhwindow(NHW_MAP, TRUE);
+	win_pause(P_MAP);
 	exercise(A_WIS, TRUE);
 	docrt();
 	u.uinwater = uw;
@@ -528,7 +528,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 
     newsym(u.ux,u.uy);
     You("detect the %s of %s.", ct ? "presence" : "absence", stuff);
-    display_nhwindow(NHW_MAP, TRUE);
+    win_pause(P_MAP);
     /*
      * What are we going to do when the hero does an object detect while blind
      * and the detected object covers a known pool?
@@ -597,7 +597,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	You("sense the presence of monsters.");
 	if (woken)
 	    pline("Monsters sense the presence of you.");
-	display_nhwindow(NHW_MAP, TRUE);
+	win_pause(P_MAP);
 	docrt();
 	if (Underwater) under_water(2);
 	if (u.uburied) under_ground(2);
@@ -694,7 +694,7 @@ outtrapmap:
 
     newsym(u.ux,u.uy);
     You_feel("%s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
-    display_nhwindow(NHW_MAP, TRUE);
+    win_pause(P_MAP);
     docrt();
     u.uinwater = uw;
     if (Underwater) under_water(2);
@@ -900,7 +900,7 @@ void do_mapping(void)
     u.uinwater = uw;
     if (!level->flags.hero_memory || Underwater) {
 	flush_screen(1);			/* flush temp screen */
-	display_nhwindow(NHW_MAP, TRUE);	/* wait */
+	win_pause(P_MAP);	/* wait */
 	docrt();
     }
 }
@@ -920,7 +920,7 @@ void do_vicinity_map(void)
 
     if (!level->flags.hero_memory || Underwater) {
 	flush_screen(1);			/* flush temp screen */
-	display_nhwindow(NHW_MAP, TRUE);	/* wait */
+	win_pause(P_MAP);	/* wait */
 	docrt();
     }
 }
@@ -1086,7 +1086,7 @@ void find_trap(struct trap *trap)
     You("find %s.", an(trapexplain[tt-1]));
 
     if (cleared) {
-	display_nhwindow(NHW_MAP, TRUE);	/* wait */
+	win_pause(P_MAP);	/* wait */
 	docrt();
     }
 }
