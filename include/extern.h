@@ -610,6 +610,7 @@ extern void prinv(const char *,struct obj *,long);
 extern char *xprname(struct obj *,const char *,char,boolean,long,long);
 extern int ddoinv(void);
 extern char display_inventory(const char *,boolean);
+extern void update_inventory(void);
 extern int display_binventory(int,int,boolean);
 extern struct obj *display_cinventory(struct obj *);
 extern struct obj *display_minventory(struct monst *,int,char *);

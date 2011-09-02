@@ -456,7 +456,7 @@ struct nh_window_procs {
     void (*win_print_message)(const char *);
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
-    void (*win_update_inventory)(void);
+    void (*win_update_inventory)(struct nh_objitem *items, int icount);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
     void (*win_raw_print)(const char *str);
     char (*win_query_key)(const char *query, int *count);

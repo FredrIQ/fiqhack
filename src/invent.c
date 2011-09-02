@@ -1211,6 +1211,45 @@ static struct obj *find_unpaid(struct obj *list, struct obj **last_found)
     return NULL;
 }
 
+
+static struct nh_objitem *make_invlist(const char *lets, int *icount)
+{
+	struct obj *otmp;
+	char ilet;
+	int nr_items = 10, cur_entry = 0, classcount;
+	const char *invlet = flags.inv_order;
+	struct nh_objitem *items = malloc(nr_items * sizeof(struct nh_objitem));
+
+nextclass:
+	classcount = 0;
+	for (otmp = invent; otmp; otmp = otmp->nobj) {
+	    ilet = otmp->invlet;
+	    if (!lets || !*lets || strchr(lets, ilet)) {
+		if (!flags.sortpack || otmp->oclass == *invlet) {
+		    if (flags.sortpack && !classcount) {
+			add_objitem(&items, &nr_items, cur_entry++, 0,
+				    let_to_name(*invlet, FALSE), NULL, FALSE);
+			classcount++;
+		    }
+		    add_objitem(&items, &nr_items, cur_entry++, ilet, doname(otmp),
+				otmp, TRUE);
+		}
+	    }
+	}
+	if (flags.sortpack) {
+		if (*++invlet)
+			goto nextclass;
+		if (--invlet != venom_inv) {
+			invlet = venom_inv;
+			goto nextclass;
+		}
+	}
+
+	*icount = cur_entry;
+	return items;
+}
+
+
 /*
  * Internal function used by display_inventory and getobj that can display
  * inventory and return a count as well as a letter. If out_cnt is not null,
@@ -1219,11 +1258,10 @@ static struct obj *find_unpaid(struct obj *list, struct obj **last_found)
 static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 {
 	struct obj *otmp;
-	char ilet, ret;
-	const char *invlet = flags.inv_order;
-	int n = 0, classcount;
-	int nr_items = 0, cur_entry = 0;
-	struct nh_objitem *items = NULL;
+	char ret;
+	int n = 0;
+	int icount = 0;
+	struct nh_objitem *items;
 	struct nh_objresult *selected = NULL;
 
 	/*
@@ -1250,9 +1288,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	if (!flags.invlet_constant) reassign();
 
 	if (lets && strlen(lets) == 1) {
-	    /* when only one item of interest, use pline instead of menus;
-	       we actually use a fake message-line menu in order to allow
-	       the user to perform selection at the --More-- prompt for tty */
+	    /* when only one item of interest, use pline instead of menus */
 	    ret = '\0';
 	    for (otmp = invent; otmp; otmp = otmp->nobj) {
 		if (otmp->invlet == lets[0]) {
@@ -1264,37 +1300,11 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	    return ret;
 	}
 
-	nr_items = 10;
-	items = malloc(nr_items * sizeof(struct nh_objitem));
-	
-nextclass:
-	classcount = 0;
-	for (otmp = invent; otmp; otmp = otmp->nobj) {
-	    ilet = otmp->invlet;
-	    if (!lets || !*lets || strchr(lets, ilet)) {
-		if (!flags.sortpack || otmp->oclass == *invlet) {
-		    if (flags.sortpack && !classcount) {
-			add_objitem(&items, &nr_items, cur_entry++, 0,
-				    let_to_name(*invlet, FALSE), NULL, FALSE);
-			classcount++;
-		    }
-		    add_objitem(&items, &nr_items, cur_entry++, ilet, doname(otmp),
-				otmp, TRUE);
-		}
-	    }
-	}
-	if (flags.sortpack) {
-		if (*++invlet)
-			goto nextclass;
-		if (--invlet != venom_inv) {
-			invlet = venom_inv;
-			goto nextclass;
-		}
-	}
+	items = make_invlist(lets, &icount);
 
-	if (cur_entry) {
-	    selected = malloc(cur_entry * sizeof(struct nh_objresult));
-	    n = display_objects(items, cur_entry, NULL,
+	if (icount) {
+	    selected = malloc(icount * sizeof(struct nh_objresult));
+	    n = display_objects(items, icount, NULL,
 				want_reply ? PICK_ONE : PICK_NONE, selected);
 	}
 	if (n > 0) {
@@ -1320,6 +1330,22 @@ char display_inventory(const char *lets, boolean want_reply)
 {
 	return display_pickinv(lets, want_reply, NULL);
 }
+
+
+void update_inventory(void)
+{
+	int icount = 0;
+	struct nh_objitem *items;
+
+	if (!windowprocs.win_update_inventory)
+	    return;
+
+	items = make_invlist(NULL, &icount);
+	(*windowprocs.win_update_inventory)(items, icount);
+
+	return;
+}
+
 
 /*
  * Returns the number of unpaid items within the given list.  This includes

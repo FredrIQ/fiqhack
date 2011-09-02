@@ -15,7 +15,6 @@ static void replay_pause(enum nh_pause_reason r) {}
 static void replay_display_buffer(char *buf, boolean trymove) {}
 static void replay_update_status(struct nh_player_info *pi) {}
 static void replay_print_message(const char *msg) {}
-static void replay_update_inventory(void) {}
 static void replay_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void replay_delay_output(void) {}
 static void replay_level_changed(int displaymode) {}
@@ -70,7 +69,7 @@ static const struct nh_window_procs replay_windowprocs = {
     replay_print_message,
     replay_display_menu,
     replay_display_objects,
-    replay_update_inventory,
+    NULL, /* no function required for update_inventory */
     replay_update_screen,
     NULL, /* always use a given raw_print */
     replay_query_key,

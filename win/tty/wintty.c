@@ -31,7 +31,7 @@ struct nh_window_procs tty_procs = {
     tty_print_message,
     tty_display_menu,
     tty_display_objects,
-    tty_update_inventory,
+    NULL, /* no function required for update inventory */
     tty_update_screen,
     tty_raw_print,
     tty_query_key,
