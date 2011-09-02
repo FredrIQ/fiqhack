@@ -566,7 +566,7 @@ int mattacku(struct monst *mtmp)
 				    /* Force swallowing monster to be
 				     * displayed even when player is
 				     * moving away */
-				    flush_screen(1);
+				    flush_screen();
 				    sum[i] = gulpmu(mtmp, mattk);
 				} else {
 				    missmu(mtmp, (tmp == j), mattk);

@@ -41,7 +41,7 @@ static void vpline(const char *line, va_list the_args)
 	if (vision_full_recalc)
 	    vision_recalc(0);
 	if (u.ux)
-	    flush_screen(1);
+	    flush_screen();
 	
 	strcpy(toplines, line);
 	print_message(line);

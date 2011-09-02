@@ -179,7 +179,7 @@ void explode(int x, int y,
 			tmp_at(i+x-1, j+y-1);
 			starting = 0;
 		}
-		flush_screen(1);	/* will flush screen and output */
+		flush_screen();	/* will flush screen and output */
 
 		if (any_shield && flags.sparkle) { /* simulate shield effect */
 		    for (k = 0; k < SHIELD_COUNT; k++) {
@@ -193,7 +193,7 @@ void explode(int x, int y,
 				dbuf_set_effect(i+x-1, j+y-1,
 					dbuf_effect(E_MISC, shield_static[k]));
 			}
-			flush_screen(1);	/* will flush screen and output */
+			flush_screen();	/* will flush screen and output */
 			delay_output();
 		    }
 

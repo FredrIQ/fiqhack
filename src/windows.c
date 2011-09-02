@@ -12,7 +12,7 @@ int getpos(coord *cc, boolean force, const char *goal)
 	x = cc->x;
 	y = cc->y;
 	
-	flush_screen(0);
+	flush_screen();
 	
 	do {
 	    rv = (*windowprocs.win_getpos)(&x, &y, force, goal);

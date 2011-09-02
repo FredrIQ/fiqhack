@@ -1273,7 +1273,7 @@ void mkinvokearea(void)
 	    mkinvpos(xmax, i, dist);
 	}
 
-	flush_screen(1);	/* make sure the new glyphs shows up */
+	flush_screen();	/* make sure the new glyphs shows up */
 	delay_output();
     }
 

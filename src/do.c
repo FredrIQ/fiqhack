@@ -961,7 +961,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	/* do this prior to level-change pline messages */
 	vision_reset();		/* clear old level's line-of-sight */
 	vision_full_recalc = 0;	/* don't let that reenable vision yet */
-	flush_screen(-1);	/* ensure all map flushes are postponed */
+	flush_screen_disable();	/* ensure all map flushes are postponed */
 
 	if (portal && !In_endgame(&u.uz)) {
 	    /* find the portal on the new level */
@@ -1109,7 +1109,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	/* Reset the screen. */
 	vision_reset();		/* reset the blockages */
 	doredraw();		/* does a full vision recalc */
-	flush_screen(-1);
+	flush_screen_enable();
+	flush_screen();
 
 	/*
 	 *  Move all plines beyond the screen reset.

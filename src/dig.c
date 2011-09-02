@@ -108,7 +108,7 @@ static void mkcavearea(boolean rockit)
 	    mkcavepos(xmax, i, dist, waslit, rockit);
 	}
 
-	flush_screen(1);	/* make sure the new glyphs shows up */
+	flush_screen();	/* make sure the new glyphs shows up */
 	delay_output();
     }
 

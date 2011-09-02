@@ -813,7 +813,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 		    youmonst.m_ap_type = M_AP_OBJECT;
 		    youmonst.mappearance = Hallucination ? ORANGE : GOLD_PIECE;
 		    newsym(u.ux,u.uy);
-		    flush_screen(1);
+		    flush_screen();
 		    /* make gold symbol show up now */
 		    win_pause(P_MAP);
 		}

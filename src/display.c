@@ -123,6 +123,8 @@ static int wall_angle(struct rm *);
 static void dbuf_set_object(int x, int y, int oid);
 static void dbuf_set_loc(int x, int y);
 
+static boolean delay_flushing;
+
 #ifdef INVISIBLE_OBJECTS
 /*
  * vobj_at()
@@ -764,7 +766,7 @@ void shieldeff(xchar x, xchar y)
     if (cansee(x,y)) {	/* Don't see anything if can't see the location */
 	for (i = 0; i < SHIELD_COUNT; i++) {
 	    dbuf_set_effect(x, y, dbuf_effect(E_MISC, shield_static[i]));
-	    flush_screen(1);	/* make sure the effect shows up */
+	    flush_screen();	/* make sure the effect shows up */
 	    delay_output();
 	}
 	
@@ -828,7 +830,7 @@ void tmp_at(int x, int y)
 	    tsym->sidx = 0;
 	    tsym->style = x;
 	    tsym->sym = y;
-	    flush_screen(0);	/* flush buffered glyphs */
+	    flush_screen();	/* flush buffered glyphs */
 	    return;
 
 	case DISP_FREEMEM:  /* in case game ends with tmp_at() in progress */
@@ -892,7 +894,7 @@ void tmp_at(int x, int y)
 		dbuf_set_object(x, y, tsym->sym);
 	    else
 		dbuf_set_effect(x, y, tsym->sym);	/* show it */
-	    flush_screen(0);			/* make sure it shows up */
+	    flush_screen();			/* make sure it shows up */
 	    break;
     } /* end case */
 }
@@ -1342,14 +1344,24 @@ void cls(void)
     clear_display_buffer();
 }
 
+
+void flush_screen_disable(void)
+{
+    delay_flushing = TRUE;
+}
+
+
+void flush_screen_enable(void)
+{
+    delay_flushing = FALSE;
+}
+
+
 /*
  * Send the display buffer to the window port.
  */
-void flush_screen(int cursor_on_u)
+void flush_screen(void)
 {
-    static   boolean delay_flushing = 0;
-
-    if (cursor_on_u == -1) delay_flushing = !delay_flushing;
     if (delay_flushing) return;
 
     update_screen(dbuf);

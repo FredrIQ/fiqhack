@@ -301,7 +301,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     /* info might not have reached the ui while alternate window procs were set */
     doredraw();
     bot();
-    flush_screen(0);
+    flush_screen();
     pline("Recovered via %s.", force_replay ? "replay" : "restore");
     welcome(FALSE);
     
@@ -697,7 +697,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	    (multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
 	if (flags.run)
 	    botl = 1;
-	flush_screen(0);
+	flush_screen();
     }
     
     didmove = flags.move;
@@ -714,7 +714,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     flags.move = 1;
     pre_move_tasks(didmove);
     if (multi == 0 && !occupation)
-	flush_screen(1); /* Flush screen buffer */
+	flush_screen(); /* Flush screen buffer */
     
     log_command_result();
     
@@ -801,7 +801,7 @@ static void newgame(void)
 	notify_levelchange();
 
 	if (flags.legacy) {
-		flush_screen(1);
+		flush_screen();
 		com_pager(1);
 	}
 

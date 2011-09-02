@@ -65,7 +65,7 @@ extern const char * const killed_by_prefix[];	/* from topten.c */
 int done2(void)
 {
 	if (yn("Really quit?") == 'n') {
-		flush_screen(1);
+		flush_screen();
 		if (multi > 0) nomul(0);
 		if (multi == 0) {
 		    u.uinvulnerable = FALSE;	/* avoid ctrl-C bug -dlc */
@@ -303,7 +303,7 @@ static void savelife(int how)
 	botl = 1;
 	u.ugrave_arise = NON_PM;
 	HUnchanging = 0L;
-	flush_screen(1);
+	flush_screen();
 }
 
 /*

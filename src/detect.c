@@ -899,7 +899,7 @@ void do_mapping(void)
     exercise(A_WIS, TRUE);
     u.uinwater = uw;
     if (!level->flags.hero_memory || Underwater) {
-	flush_screen(1);			/* flush temp screen */
+	flush_screen();			/* flush temp screen */
 	win_pause(P_MAP);	/* wait */
 	doredraw();
     }
@@ -919,7 +919,7 @@ void do_vicinity_map(void)
 	    show_map_spot(zx, zy);
 
     if (!level->flags.hero_memory || Underwater) {
-	flush_screen(1);			/* flush temp screen */
+	flush_screen();			/* flush temp screen */
 	win_pause(P_MAP);	/* wait */
 	doredraw();
     }

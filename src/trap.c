@@ -1290,7 +1290,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 			if (!delaycnt)
 			    delaycnt = 1;
 			if (!cansee(bhitpos.x,bhitpos.y))
-			    flush_screen(1);
+			    flush_screen();
 			
 			tmp_at(DISP_OBJECT, dbuf_objid(singleobj));
 			tmp_at(bhitpos.x, bhitpos.y);

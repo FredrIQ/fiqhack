@@ -511,7 +511,7 @@ boolean hurtle_step(void *arg, int x, int y)
     u.uy = y;
     newsym(ox, oy);		/* update old position */
     vision_recalc(1);		/* update for new position */
-    flush_screen(1);
+    flush_screen();
     /* FIXME:
      * Each trap should really trigger on the recoil if
      * it would trigger during normal movement. However,

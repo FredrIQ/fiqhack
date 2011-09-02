@@ -61,7 +61,7 @@ static void check_here(boolean picked_some)
 	/* If there are objects here, take a look. */
 	if (ct) {
 	    if (flags.run) nomul(0);
-	    flush_screen(1);
+	    flush_screen();
 	    look_here(ct, picked_some);
 	} else {
 	    read_engr_at(u.ux,u.uy);
