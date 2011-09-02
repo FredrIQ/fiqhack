@@ -1526,7 +1526,7 @@ void unstuck(struct monst *mtmp)
 			u.uswldtim = 0;
 			if (Punished) placebc();
 			vision_full_recalc = 1;
-			docrt();
+			doredraw();
 		}
 		u.ustuck = 0;
 	}

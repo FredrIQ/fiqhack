@@ -431,7 +431,7 @@ static int new_angle(struct rm *loc, unsigned char *sv, int row, int col)
  *	+ At end of moveloop. [moveloop() ??? not sure why this is here]
  *	+ Right before something is printed. [pline()]
  *	+ Right before we do a vision based operation. [do_clear_area()]
- *	+ screen redraw, so we can renew all positions in sight. [docrt()]
+ *	+ screen redraw, so we can renew all positions in sight. [doredraw()]
  *
  * Control flag = 1.  An adjacent vision recalculation.  The hero has moved
  * one square.  Knowing this, it might be possible to optimize the vision
@@ -445,7 +445,7 @@ static int new_angle(struct rm *loc, unsigned char *sv, int row, int col)
  * a newsym() run on all locations in sight, or on some locations but you
  * don't know which ones.
  *
- *	+ Before a screen redraw, so all positions are renewed. [docrt()]
+ *	+ Before a screen redraw, so all positions are renewed. [doredraw()]
  *	+ Right before the hero arrives on a new level. [goto_level()]
  *	+ Right after a scroll of light is read. [litroom()]
  *	+ After an option has changed that affects vision [parseoptions()]

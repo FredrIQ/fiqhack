@@ -299,7 +299,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     log_truncate();
     
     /* info might not have reached the ui while alternate window procs were set */
-    docrt();
+    doredraw();
     bot();
     flush_screen(0);
     pline("Recovered via %s.", force_replay ? "replay" : "restore");
@@ -795,7 +795,7 @@ static void newgame(void)
 	 */
 	if (MON_AT(level, u.ux, u.uy)) mnexto(m_at(level, u.ux, u.uy));
 	makedog();
-	docrt();
+	doredraw();
 	
 	/* help the window port get it's display charset/tiles sorted out */
 	notify_levelchange();

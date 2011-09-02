@@ -201,7 +201,6 @@ extern void see_objects(void);
 extern void see_traps(void);
 extern void display_self(void);
 extern int doredraw(void);
-extern void docrt(void);
 extern int obfuscate_object(int otyp);
 extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
 		   boolean invis, int mon, int monflags, int effect);

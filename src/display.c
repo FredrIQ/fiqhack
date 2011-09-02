@@ -1145,29 +1145,25 @@ void display_self(void)
 		         0, youmonst.mappearance + 1, 0, 0);
 }
 
-int doredraw(void)
-{
-    docrt();
-    return 0;
-}
 
-void docrt(void)
+int doredraw(void)
 {
     int x,y;
 
-    if (!u.ux) return; /* display isn't ready yet */
+    if (!u.ux)
+	return 0; /* display isn't ready yet */
 
     if (u.uswallow) {
 	swallowed(1);
-	return;
+	return 0;
     }
     if (Underwater && !Is_waterlevel(&u.uz)) {
 	under_water(1);
-	return;
+	return 0;
     }
     if (u.uburied) {
 	under_ground(1);
-	return;
+	return 0;
     }
 
     /* shut down vision */
@@ -1193,6 +1189,7 @@ void docrt(void)
     see_monsters();
 
     botl = 1;	/* force a redraw of the bottom line */
+    return 0;
 }
 
 

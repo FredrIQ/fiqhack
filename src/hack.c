@@ -1382,7 +1382,7 @@ void spoteffects(boolean pick)
 		was_underwater = Underwater && !Is_waterlevel(&u.uz);
 		u.uinwater = 0;		/* leave the water */
 		if (was_underwater) {	/* restore vision */
-			docrt();
+			doredraw();
 			vision_full_recalc = 1;
 		}
 	}

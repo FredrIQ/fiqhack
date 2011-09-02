@@ -576,7 +576,7 @@ static void forget(int howmuch)
 	 * thing to do is to run it through the vision system again, which
 	 * is always correct.
 	 */
-	docrt();		/* this correctly will reset vision */
+	doredraw();		/* this correctly will reset vision */
 }
 
 /* monster is hit by scroll of taming's effect */

@@ -84,7 +84,7 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 
 		if (fills_up && u.uinwater && distu(rx,ry) == 0) {
 		    u.uinwater = 0;
-		    docrt();
+		    doredraw();
 		    vision_full_recalc = 1;
 		    pline("You find yourself on dry land again!");
 		} else if (lava && distu(rx,ry) <= 2) {
@@ -1108,7 +1108,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 
 	/* Reset the screen. */
 	vision_reset();		/* reset the blockages */
-	docrt();		/* does a full vision recalc */
+	doredraw();		/* does a full vision recalc */
 	flush_screen(-1);
 
 	/*

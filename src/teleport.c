@@ -263,7 +263,7 @@ void teleds(int nux, int nuy, boolean allow_drag)
 		    ball_active = TRUE;
 		    allow_drag = FALSE;
 		}
-		docrt();
+		doredraw();
 	}
 	if (ball_active) {
 	    if (ball_still_in_range || allow_drag) {
@@ -877,7 +877,7 @@ void rloc_to(struct monst *mtmp, int x, int y)
 		if (u.uswallow) {
 			u.ux = x;
 			u.uy = y;
-			docrt();
+			doredraw();
 		} else	u.ustuck = 0;
 	}
 

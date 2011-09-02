@@ -211,7 +211,7 @@ int gold_detect(struct obj *sobj)
 	return 1;
     }
     /* only under me - no separate display required */
-    if (stale) docrt();
+    if (stale) doredraw();
     pline("You notice some gold between your %s.", makeplural(body_part(FOOT)));
     return 0;
 
@@ -266,7 +266,7 @@ outgoldmap:
     pline("You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
     win_pause(P_MAP);
-    docrt();
+    doredraw();
     u.uinwater = uw;
     if (Underwater) under_water(2);
     if (u.uburied) under_ground(2);
@@ -304,7 +304,7 @@ int food_detect(struct obj *sobj)
     if (!ct && !ctu) {
 	known = stale && !confused;
 	if (stale) {
-	    docrt();
+	    doredraw();
 	    pline("You sense a lack of %s nearby.", what);
 	    if (sobj && sobj->blessed) {
 		if (!u.uedibility) pline("Your %s starts to tingle.", body_part(NOSE));
@@ -365,7 +365,7 @@ int food_detect(struct obj *sobj)
 	else pline("You sense %s.", what);
 	win_pause(P_MAP);
 	exercise(A_WIS, TRUE);
-	docrt();
+	doredraw();
 	u.uinwater = uw;
 	if (Underwater) under_water(2);
 	if (u.uburied) under_ground(2);
@@ -533,7 +533,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
      * What are we going to do when the hero does an object detect while blind
      * and the detected object covers a known pool?
      */
-    docrt();	/* this will correctly reset vision */
+    doredraw();	/* this will correctly reset vision */
 
     u.uinwater = uw;
     if (Underwater) under_water(2);
@@ -598,7 +598,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	if (woken)
 	    pline("Monsters sense the presence of you.");
 	win_pause(P_MAP);
-	docrt();
+	doredraw();
 	if (Underwater) under_water(2);
 	if (u.uburied) under_ground(2);
     }
@@ -695,7 +695,7 @@ outtrapmap:
     newsym(u.ux,u.uy);
     pline("You feel %s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
     win_pause(P_MAP);
-    docrt();
+    doredraw();
     u.uinwater = uw;
     if (Underwater) under_water(2);
     if (u.uburied) under_ground(2);
@@ -901,7 +901,7 @@ void do_mapping(void)
     if (!level->flags.hero_memory || Underwater) {
 	flush_screen(1);			/* flush temp screen */
 	win_pause(P_MAP);	/* wait */
-	docrt();
+	doredraw();
     }
 }
 
@@ -921,7 +921,7 @@ void do_vicinity_map(void)
     if (!level->flags.hero_memory || Underwater) {
 	flush_screen(1);			/* flush temp screen */
 	win_pause(P_MAP);	/* wait */
-	docrt();
+	doredraw();
     }
 }
 
@@ -1087,7 +1087,7 @@ void find_trap(struct trap *trap)
 
     if (cleared) {
 	win_pause(P_MAP);	/* wait */
-	docrt();
+	doredraw();
     }
 }
 

@@ -50,7 +50,7 @@ void display_file(const char *fname, boolean complain)
 	if (!fp) {
 	    if (complain) {
 		pline("Cannot open \"%s\".", fname);
-	    } else if (program_state.something_worth_saving) docrt();
+	    } else if (program_state.something_worth_saving) doredraw();
 	} else {
 	    dlb_fseek(fp, 0, SEEK_END);
 	    fsize = dlb_ftell(fp);

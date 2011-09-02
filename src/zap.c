@@ -3491,7 +3491,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 			    /* leave the no longer existent water */
 			    u.uinwater = 0;
 			    u.uundetected = 0;
-			    docrt();
+			    doredraw();
 			    vision_full_recalc = 1;
 			} else if (u.utrap && u.utraptype == TT_LAVA) {
 			    if (Passes_walls) {

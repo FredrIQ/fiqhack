@@ -458,7 +458,7 @@ int dorecover(int infd)
 
 	load_qtlist();	/* re-load the quest text info */
 	/* Set up the vision internals, after level->locations[] data is loaded */
-	/* but before docrt().					    */
+	/* but before doredraw().					    */
 	vision_reset();
 	vision_full_recalc = 1;	/* recompute vision (not saved) */
 
@@ -466,7 +466,7 @@ int dorecover(int infd)
 	notify_levelchange();
 
 	run_timers();	/* expire all timers that have gone off while away */
-	docrt();
+	doredraw();
 	restoring = FALSE;
 	program_state.something_worth_saving++;	/* useful data now exists */
 	

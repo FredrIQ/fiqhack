@@ -1788,7 +1788,7 @@ static void you_aggravate(struct monst *mtmp)
 	display_self();
 	pline("You feel aggravated at %s.", noit_mon_nam(mtmp));
 	win_pause(P_MAP);
-	docrt();
+	doredraw();
 	if (unconscious()) {
 		multi = -1;
 		nomovemsg =
