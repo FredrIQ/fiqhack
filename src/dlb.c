@@ -1,10 +1,9 @@
 /* Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nethack_types.h"
 #include "config.h"
 #include "dlb.h"
-
-#define DATAPREFIX 4
 
 /* without extern.h via hack.h, these haven't been declared for us */
 extern FILE *fopen_datafile(const char *,const char *,int);

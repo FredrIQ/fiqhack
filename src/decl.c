@@ -182,12 +182,10 @@ const char * const materialnm[] = {
 boolean vision_full_recalc;
 char **viz_array;/* used in cansee() and couldsee() macros */
 
-char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL,
-				NULL, NULL, NULL, NULL };
+char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL, NULL };
 
 const char *const fqn_prefix_names[PREFIX_COUNT] = {
-    "hackdir", "leveldir", "savedir", "bonesdir", "datadir", "scoredir",
-    "lockdir", "troubledir"
+    "bonesdir", "datadir", "scoredir", "lockdir", "troubledir"
 };
 
 boolean botl;	/* redo status line */

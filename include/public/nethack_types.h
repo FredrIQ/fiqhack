@@ -126,10 +126,7 @@ enum nh_pick_type {
  * An array listing a path for each prefix must be passed to nh_init().
  */
 enum nh_path_prefix {
-    HACKPREFIX,
-    LEVELPREFIX,
-    SAVEPREFIX,
-    BONESPREFIX,
+    BONESPREFIX = 0,
     DATAPREFIX,
     SCOREPREFIX,
     LOCKPREFIX,

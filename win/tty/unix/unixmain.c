@@ -32,7 +32,7 @@ extern void init_linux_cons(void);
 
 int locknum = 0;		/* max num of simultaneous users */
 static char plname[PL_NSIZ] = "\0";
-char *hackdir, *var_playground;
+char *hackdir, *var_playground, *savedir;
 static boolean interrupt_multi = FALSE;
 static boolean game_is_running = FALSE;
 
@@ -96,8 +96,6 @@ static char** init_game_paths(void)
 	
 	if (var_playground) {
 	    pathlist[SCOREPREFIX] = var_playground;
-	    pathlist[LEVELPREFIX] = var_playground;
-	    pathlist[SAVEPREFIX] = var_playground;
 	    pathlist[BONESPREFIX] = var_playground;
 	    pathlist[LOCKPREFIX] = var_playground;
 	    pathlist[TROUBLEPREFIX] = var_playground;
@@ -110,6 +108,10 @@ static char** init_game_paths(void)
 	    strcpy(pathlist[i], tmp);
 	    append_slash(pathlist[i]);
 	}
+	
+	savedir = malloc(strlen(dir) + 2);
+	strcpy(savedir, dir);
+	append_slash(savedir);
 	
 	return pathlist;
 }
@@ -273,11 +275,11 @@ static int commandloop(void)
 }
 
 
-static void rungame(char *saveprefix)
+static void rungame(void)
 {
 	int ret;
 	int fd = -1;
-	char filename[1024];	
+	char filename[1024];
 	
 	while (!plname[0])
 	    tty_askname(plname);
@@ -285,7 +287,7 @@ static void rungame(char *saveprefix)
 	tty_create_game_windows();
 	srandom(time(NULL));
 	
-	snprintf(filename, sizeof(filename), "%ssave/%d%s.nhgame", saveprefix, getuid(), plname);
+	snprintf(filename, sizeof(filename), "%ssave/%d%s.nhgame", savedir, getuid(), plname);
 	fd = open(filename, O_RDWR, 0660);
 	
 	if (nh_restore_game(fd, NULL, plname, locknum, random() % 2) != GAME_RESTORED) {
@@ -346,7 +348,7 @@ int main(int argc, char *argv[])
 	load_keymap(playmode == MODE_WIZARD);
 	init_displaychars();
 	
-	rungame(gamepaths[SAVEPREFIX]);
+	rungame();
 	
 	tty_exit_nhwindows(NULL);
 	nh_exit(0);
