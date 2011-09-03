@@ -114,7 +114,7 @@ boolean nh_exit(int exit_type)
 }
 
 
-static void startup_common(char *name, int locknum, int playmode)
+static void startup_common(char *name, int playmode)
 {
     /* (re)init all global data */
     init_data();
@@ -199,7 +199,7 @@ static void post_init_tasks(void)
 }
 
 
-boolean nh_start_game(int fd, char *name, int locknum, int playmode)
+boolean nh_start_game(int fd, char *name, int playmode)
 {
     if (!api_entry_checkpoint())
 	return FALSE; /* quit from player selection or init failed */
@@ -214,7 +214,7 @@ boolean nh_start_game(int fd, char *name, int locknum, int playmode)
     /* initialize the random number generator */
     mt_srand(turntime);
     
-    startup_common(name, locknum, playmode);
+    startup_common(name, playmode);
     
     /* prevent an unnecessary prompt in player selection */
     rigid_role_checks();
@@ -240,7 +240,7 @@ boolean nh_start_game(int fd, char *name, int locknum, int playmode)
 
 
 enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
-			   char *name, int locknum, boolean force_replay)
+			   char *name, boolean force_replay)
 {
     struct nh_window_procs def_windowprocs = windowprocs;
     int playmode;
@@ -274,7 +274,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     replay_setup_windowprocs(rwinprocs);
     
     if (!force_replay) {
-	startup_common(name, locknum, playmode);
+	startup_common(name, playmode);
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE);
 	if (!dorecover(fd))
@@ -283,7 +283,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	program_state.game_running = 1;
 	post_init_tasks();
     } else {
-	nh_start_game(fd, namebuf, locknum, playmode);
+	nh_start_game(fd, namebuf, playmode);
 	/* try replaying instead */
 	error = ERR_REPLAY_FAILED;
 	replay_run_cmdloop(FALSE);
@@ -319,7 +319,7 @@ error_out:
     
     if (error == ERR_RESTORE_FAILED) {
 	raw_printf("Restore failed. Attempting to replay instead.\n");
-	error = nh_restore_game(fd, rwinprocs, name, locknum, TRUE);
+	error = nh_restore_game(fd, rwinprocs, name, TRUE);
     }
     
     return error;

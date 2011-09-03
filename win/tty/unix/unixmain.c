@@ -30,7 +30,6 @@ extern void check_linux_console(void);
 extern void init_linux_cons(void);
 #endif
 
-int locknum = 0;		/* max num of simultaneous users */
 static char plname[PL_NSIZ] = "\0";
 char *hackdir, *var_playground, *savedir;
 static boolean interrupt_multi = FALSE;
@@ -290,12 +289,12 @@ static void rungame(void)
 	snprintf(filename, sizeof(filename), "%ssave/%d%s.nhgame", savedir, getuid(), plname);
 	fd = open(filename, O_RDWR, 0660);
 	
-	if (nh_restore_game(fd, NULL, plname, locknum, random() % 2) != GAME_RESTORED) {
+	if (nh_restore_game(fd, NULL, plname, random() % 2) != GAME_RESTORED) {
 	    if (fd != -1)
 		close(fd);
 	    query_birth_options();
 	    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
-	    if (!nh_start_game(fd, plname, locknum, playmode))
+	    if (!nh_start_game(fd, plname, playmode))
 		return;
 	}
 	
@@ -439,13 +438,6 @@ static void process_options(int argc, char *argv[])
 			/* else raw_printf("Unknown option: %s", *argv); */
 		}
 	}
-
-	if (argc > 1)
-		locknum = atoi(argv[1]);
-#ifdef MAX_NR_OF_PLAYERS
-	if (!locknum || locknum > MAX_NR_OF_PLAYERS)
-		locknum = MAX_NR_OF_PLAYERS;
-#endif
 }
 
 
