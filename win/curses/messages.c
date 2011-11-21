@@ -104,17 +104,23 @@ void draw_msgwin(void)
 
 static void more(void)
 {
-    int key;
+    int key, attr = A_NORMAL;
+    if (settings.standout)
+	attr = A_STANDOUT;
     
     if (getmaxy(msgwin) == 1) {
 	wmove(msgwin, getmaxy(msgwin)-1, COLNO-8);
+	wattron(msgwin, attr);
 	waddstr(msgwin, "--More--");
+	wattroff(msgwin, attr);
 	wrefresh(msgwin);
     } else {
 	newline();
 	draw_msgwin();
 	wmove(msgwin, getmaxy(msgwin)-1, COLNO/2 - 4);
+	wattron(msgwin, attr);
 	waddstr(msgwin, "--More--");
+	wattroff(msgwin, attr);
 	wrefresh(msgwin);
     }
     
