@@ -119,7 +119,7 @@ static int get_cmdkey(void)
 	wtimeout(stdscr, 666); /* wait 2/3 of a second before switching */
     
     while (1) {
-	if (player.x && player.y) {
+	if (player.x) { /* x == 0 is not a valid coordinate */
 	    wmove(mapwin, player.y, player.x - 1);
 	    wrefresh(mapwin);
 	}
