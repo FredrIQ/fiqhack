@@ -289,7 +289,7 @@ static void rungame(void)
 	snprintf(filename, sizeof(filename), "%ssave/%d%s.nhgame", savedir, getuid(), plname);
 	fd = open(filename, O_RDWR, 0660);
 	
-	if (nh_restore_game(fd, NULL, plname, random() % 2) != GAME_RESTORED) {
+	if (nh_restore_game(fd, NULL, random() % 2) != GAME_RESTORED) {
 	    if (fd != -1)
 		close(fd);
 	    query_birth_options();

@@ -49,7 +49,7 @@ struct tc_gbl_data tc_gbl_data = { 0,0, 0,0 };	/* AS,AE, LI,CO */
 winid WIN_MESSAGE = WIN_ERR;
 winid WIN_STATUS = WIN_ERR;
 winid WIN_MAP = WIN_ERR;
-char toplines[TBUFSZ];
+char top_lines[TBUFSZ];
 int levelmode;
 
 const char sdir[] = "hykulnjb><";	/* 'rogue'-like direction commands */
@@ -213,7 +213,7 @@ void tty_init_nhwindows(void)
 
 
 #define LISTSZ 32
-void tty_player_selection(int initrole, int initrace, int initgend,
+boolean tty_player_selection(int initrole, int initrace, int initgend,
 			  int initalign, int randomall)
 {
 	int i, k, n, listlen;
@@ -256,9 +256,7 @@ void tty_player_selection(int initrole, int initrace, int initgend,
 	    if (pick4u != 'y' && pick4u != 'n') {
 give_up:	/* Quit */
 		if (selected) free(selected);
-		bail(NULL);
-		/*NOTREACHED*/
-		return;
+		return FALSE;
 	    }
 	}
 
@@ -476,6 +474,7 @@ give_up:	/* Quit */
 	
 	/* Success! */
 	display_nhwindow(BASE_WINDOW, FALSE);
+	return TRUE;
 }
 
 /*
@@ -2365,7 +2364,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
     char *matching = NULL;
 
     if (ui_flags.cmdassist) {
-	tty_print_message("(For instructions type a ?)");
+	tty_print_message(0, "(For instructions type a ?)");
 	msg_given = TRUE;
     }
     cx = *x >= 1 ? *x : 1;
@@ -2452,7 +2451,7 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 			}	/* row */
 		    }		/* pass */
 		    sprintf(printbuf, "Can't find dungeon feature '%c'.", (char)c);
-		    tty_print_message(printbuf);
+		    tty_print_message(0, printbuf);
 		    msg_given = TRUE;
 		    goto nxtc;
 		} else {
@@ -2460,12 +2459,12 @@ int tty_getpos(int *x, int *y, boolean force, const char *goal)
 			  visctrl((char)c),
 			  !force ? "aborted" :
 			  ui_flags.num_pad ? "use 2468 or ." : "use hjkl or .");
-		    tty_print_message(printbuf);
+		    tty_print_message(0, printbuf);
 		    msg_given = TRUE;
 		}
 	    } /* !quitchars */
 	    if (force) goto nxtc;
-	    tty_print_message("Done.");
+	    tty_print_message(0, "Done.");
 	    msg_given = FALSE;	/* suppress clear */
 	    cx = -1;
 	    cy = 0;
@@ -2556,7 +2555,7 @@ enum nh_direction tty_getdir(const char *query, boolean restricted)
 		if (ui_flags.cmdassist)
 		    help_dir("Invalid direction key!", restricted);
 		else
-		    tty_print_message("What a strange direction!");
+		    tty_print_message(0, "What a strange direction!");
 	    }
 	    return DIR_NONE;
 	}
@@ -2795,7 +2794,7 @@ void tty_update_status(struct nh_player_info *pi)
 }
 
 
-void tty_print_message(const char *msg)
+void tty_print_message(int turn, const char *msg)
 {
     tty_putstr(WIN_MESSAGE, 0, msg);
 }

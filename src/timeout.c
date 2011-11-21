@@ -1338,11 +1338,12 @@ boolean start_timer(struct level *lev, long when, short kind, short func_index,v
 	panic("start_timer");
 
     gnu = malloc(sizeof(timer_element));
-    gnu->next = 0;
+    memset(gnu, 0, sizeof(timer_element));
+    gnu->next = NULL;
     gnu->tid = timer_id++;
     gnu->timeout = moves + when;
     gnu->kind = kind;
-    gnu->needs_fixup = 0;
+    gnu->needs_fixup = FALSE;
     gnu->func_index = func_index;
     gnu->arg = arg;
     insert_timer(lev, gnu);

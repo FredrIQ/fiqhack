@@ -37,7 +37,7 @@ int tty_doprev_message(void)
                     tty_putstr(prevmsg_win, 0, cw->data[i]);
                 i = (i + 1) % cw->rows;
             } while (i != cw->maxcol);
-            tty_putstr(prevmsg_win, 0, toplines);
+            tty_putstr(prevmsg_win, 0, top_lines);
             display_nhwindow(prevmsg_win, TRUE);
             tty_destroy_nhwindow(prevmsg_win);
         } else if (ui_flags.prevmsg_window == 'c') {		/* combination */
@@ -45,7 +45,7 @@ int tty_doprev_message(void)
                 morc = 0;
                 if (cw->maxcol == cw->maxrow) {
                     ttyDisplay->dismiss_more = C('p');	/* <ctrl/P> allowed at --More-- */
-                    redotoplin(toplines);
+                    redotoplin(top_lines);
                     cw->maxcol--;
                     if (cw->maxcol < 0) cw->maxcol = cw->rows-1;
                     if (!cw->data[cw->maxcol])
@@ -68,7 +68,7 @@ int tty_doprev_message(void)
                             tty_putstr(prevmsg_win, 0, cw->data[i]);
                         i = (i + 1) % cw->rows;
                     } while (i != cw->maxcol);
-                    tty_putstr(prevmsg_win, 0, toplines);
+                    tty_putstr(prevmsg_win, 0, top_lines);
                     display_nhwindow(prevmsg_win, TRUE);
                     tty_destroy_nhwindow(prevmsg_win);
                 }
@@ -80,7 +80,7 @@ int tty_doprev_message(void)
             prevmsg_win = tty_create_nhwindow(NHW_MENU);
             tty_putstr(prevmsg_win, 0, "Message History");
             tty_putstr(prevmsg_win, 0, "");
-            tty_putstr(prevmsg_win, 0, toplines);
+            tty_putstr(prevmsg_win, 0, top_lines);
             cw->maxcol=cw->maxrow-1;
             if (cw->maxcol < 0) cw->maxcol = cw->rows-1;
             do {
@@ -101,7 +101,7 @@ int tty_doprev_message(void)
         do {
             morc = 0;
             if (cw->maxcol == cw->maxrow)
-                redotoplin(toplines);
+                redotoplin(top_lines);
             else if (cw->data[cw->maxcol])
                 redotoplin(cw->data[cw->maxcol]);
             cw->maxcol--;
@@ -137,7 +137,7 @@ static void remember_topl(void)
 {
     struct WinDesc *cw = wins[WIN_MESSAGE];
     int idx = cw->maxrow;
-    unsigned len = strlen(toplines) + 1;
+    unsigned len = strlen(top_lines) + 1;
 
     if (len > (unsigned)cw->datlen[idx]) {
 	if (cw->data[idx]) free(cw->data[idx]);
@@ -145,7 +145,7 @@ static void remember_topl(void)
 	cw->data[idx] = malloc(len);
 	cw->datlen[idx] = (short)len;
     }
-    strcpy(cw->data[idx], toplines);
+    strcpy(cw->data[idx], top_lines);
     cw->maxcol = cw->maxrow = (idx + 1) % cw->rows;
 }
 
@@ -210,10 +210,10 @@ void update_topl(const char *bp)
 	n0 = strlen(bp);
 	if ((ttyDisplay->toplin == 1 || (cw->flags & WIN_STOP)) &&
 	    cw->cury == 0 &&
-	    n0 + (int)strlen(toplines) + 3 < CO-8 &&  /* room for --More-- */
+	    n0 + (int)strlen(top_lines) + 3 < CO-8 &&  /* room for --More-- */
 	    (notdied = strncmp(bp, "You die", 7))) {
-		strcat(toplines, "  ");
-		strcat(toplines, bp);
+		strcat(top_lines, "  ");
+		strcat(top_lines, bp);
 		cw->curx += 2;
 		if (!(cw->flags & WIN_STOP))
 		    addtopl(bp);
@@ -226,10 +226,10 @@ void update_topl(const char *bp)
 	    }
 	}
 	remember_topl();
-	strncpy(toplines, bp, TBUFSZ);
-	toplines[TBUFSZ - 1] = 0;
+	strncpy(top_lines, bp, TBUFSZ);
+	top_lines[TBUFSZ - 1] = 0;
 
-	for (tl = toplines; n0 >= CO; ){
+	for (tl = top_lines; n0 >= CO; ){
 	    otl = tl;
 	    for (tl+=CO-1; tl != otl && !isspace(*tl); --tl) ;
 	    if (tl == otl) {
@@ -241,7 +241,7 @@ void update_topl(const char *bp)
 	    n0 = strlen(tl);
 	}
 	if (!notdied) cw->flags &= ~WIN_STOP;
-	if (!(cw->flags & WIN_STOP)) redotoplin(toplines);
+	if (!(cw->flags & WIN_STOP)) redotoplin(top_lines);
 }
 
 
@@ -325,7 +325,7 @@ char tty_yn_function(const char *query, const char *resp, char def)
 	sprintf(prompt, "%s [%s] ", query, respbuf);
 	if (def)
 	    sprintf(prompt + strlen(prompt), "(%c) ", def);
-	tty_print_message(prompt);
+	tty_print_message(0, prompt);
 
 	do {	/* loop until we get valid input */
 	    q = tolower(tty_nhgetch());
@@ -400,7 +400,7 @@ char tty_query_key(const char *query, int *count)
 	ttyDisplay->toplin = 3; /* special prompt state */
 	ttyDisplay->inread++;
 	
-	tty_print_message(query);
+	tty_print_message(0, query);
 	key = tty_nhgetch();
 	while (isdigit(key) && count != NULL) {
 	    cnt = 10*cnt + (key - '0');

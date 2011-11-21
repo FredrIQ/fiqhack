@@ -204,18 +204,21 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 	lockname = fqname(lockname, LOCKPREFIX, 2);
 
 #if defined(UNIX)
+	/* ensure the file exists before attempting to lock it */
+	close(open(filename, O_CREAT | O_RDWR, 0660));
+	
 	while (link(filename, lockname) == -1) {
 	    int errnosv = errno;
 
 	    switch (errnosv) {	/* George Barbanis */
 	    case EEXIST:
 		if (retryct--) {
-		    raw_printf("Waiting for access to %s.  (%d retries left).\n",
+		    raw_printf("Waiting for access to %s.  (%d retries left).",
 			    filename, retryct);
 			sleep(1);
 		} else {
-		    raw_print("I give up.  Sorry.\n");
-		    raw_printf("Perhaps there is an old %s around?\n",
+		    raw_print("I give up.  Sorry.");
+		    raw_printf("Perhaps there is an old %s around?",
 					lockname);
 		    nesting--;
 		    return FALSE;
@@ -223,16 +226,16 @@ boolean lock_file(const char *filename, int whichprefix, int retryct)
 
 		break;
 	    case ENOENT:
-		raw_printf("Can't find file %s to lock!\n", filename);
+		raw_printf("Can't find file %s to lock!", filename);
 		nesting--;
 		return FALSE;
 	    case EACCES:
-		raw_printf("No write permission to lock %s!\n", filename);
+		raw_printf("No write permission to lock %s!", filename);
 		nesting--;
 		return FALSE;
 	    default:
 		perror(lockname);
-		raw_printf("Cannot lock %s for unknown reason (%d).\n",
+		raw_printf("Cannot lock %s for unknown reason (%d).",
 			       filename, errnosv);
 		nesting--;
 		return FALSE;

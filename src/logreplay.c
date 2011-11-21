@@ -2,19 +2,20 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "dlb.h"
 #include "patchlevel.h"
 
 extern int logfile;
 extern unsigned int last_cmd_pos;
 
 
-static void replay_player_selection(int initrole, int initrace, int initgend,
-			             int initalign, int randomall);
+static boolean replay_player_selection(int initrole, int initrace, int initgend,
+			               int initalign, int randomall);
 static void replay_clear_map(void) {}
 static void replay_pause(enum nh_pause_reason r) {}
 static void replay_display_buffer(char *buf, boolean trymove) {}
 static void replay_update_status(struct nh_player_info *pi) {}
-static void replay_print_message(const char *msg) {}
+static void replay_print_message(int turn, const char *msg) {}
 static void replay_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void replay_delay_output(void) {}
 static void replay_level_changed(int displaymode) {}
@@ -69,7 +70,7 @@ static const struct nh_window_procs replay_windowprocs = {
     replay_print_message,
     replay_display_menu,
     replay_display_objects,
-    NULL, /* no function required for update_inventory */
+    NULL, /* no function required for list_items */
     replay_update_screen,
     NULL, /* always use a given raw_print */
     replay_query_key,
@@ -165,7 +166,6 @@ void replay_begin(void)
 	    endpos = (long)loginfo.tokens[loginfo.tokencount-1] - (long)loginfo.mem;
 	    loginfo.tokencount--;
 	}
-	
     }
     
     last_cmd_pos = endpos;
@@ -220,13 +220,14 @@ static char *next_log_token(void)
 }
 
 
-static void replay_player_selection(int initrole, int initrace, int initgend,
-			             int initalign, int randomall)
+static boolean replay_player_selection(int initrole, int initrace, int initgend,
+			               int initalign, int randomall)
 {
     nh_set_role(restore_irole);
     nh_set_race(restore_irace);
     nh_set_gend(restore_igend);
     nh_set_align(restore_ialign);
+    return TRUE;
 }
 
 
@@ -609,24 +610,86 @@ void replay_run_cmdloop(boolean optonly)
 }
 
 
-enum nh_log_status nh_get_savegame_status(int fd)
+enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
 {
-    char header[24], status[8];
-    int n;
+    char header[128], status[8], encplname[PL_NSIZ * 2];
+    char role[PLRBUFSZ], race[PLRBUFSZ], gend[PLRBUFSZ], algn[PLRBUFSZ];
+    int n, v1, v2, v3;
+    unsigned int savepos, endpos, seed, playmode;
+    struct memfile mf;
+    enum nh_log_status ret;
+    boolean game_inited = (wiz1_level.dlevel != 0);
+    struct you sg_you;
+    struct flag sg_flags;
+    struct permonst sg_youmonst;
+    long sg_moves;
     
     lseek(fd, 0, SEEK_SET);
-    read(fd, header, 23);
-    header[23] = '\0';
-    n = sscanf(header, "NHGAME %4s %*x", status);
-    if (n != 1)
-	return LS_INVALID;
+    read(fd, header, 127);
+    header[127] = '\0';
+    n = sscanf(header, "NHGAME %4s %x NetHack %d.%d.%d\n%x %x %s %s %s %s %s",
+	       status, &savepos, &v1, &v2, &v3, &seed, &playmode, encplname,
+	       role, race, gend, algn);
+    if (n != 12) return LS_INVALID;
     
     if (!strcmp(status, "save"))
-	return LS_SAVED;
+	ret = LS_SAVED;
     else if (!strcmp(status, "done"))
 	return LS_DONE;
     else if (!strcmp(status, "inpr"))
+	ret = LS_IN_PROGRESS;
+    else
+	return LS_INVALID;
+    
+    if (!si)
+	return ret;
+    
+    base64_decode(encplname, si->name);
+    role[0] = lowc(role[0]);
+    strcpy(si->plrole, role);
+    strcpy(si->plrace, race);
+    strcpy(si->plgend, gend);
+    strcpy(si->plalign, algn);
+    
+    if (ret == LS_IN_PROGRESS)
 	return LS_IN_PROGRESS;
     
-    return LS_INVALID;
+    endpos = lseek(fd, 0, SEEK_END);
+    lseek(fd, savepos, SEEK_SET);
+    mf.len = endpos - savepos;
+    mf.pos = 0;
+    mf.buf = malloc(mf.len);
+    if (!read(fd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
+	free(mf.buf);
+	return LS_IN_PROGRESS; /* probably still a valid game */
+    }
+    
+    mread(&mf, &sg_flags, sizeof(struct flag));
+    flags.bypasses = 0;	/* never use the saved value of bypasses */
+
+    role_init();	/* Reset the initial role, race, gender, and alignment */
+    mread(&mf, &sg_you, sizeof(struct you));
+    mread(&mf, &sg_youmonst, sizeof(youmonst));
+    set_uasmon(); /* fix up youmonst.data */
+    mread(&mf, &sg_moves, sizeof(moves));
+    free(mf.buf);
+    
+    /* make sure topten_level_name can work correctly */
+    if (!game_inited) {
+	dlb_init();
+	init_dungeons();
+    }
+    
+    si->depth = depth(&sg_you.uz);
+    si->moves = sg_moves;
+    si->level_desc[0] = '\0';
+    si->has_amulet = sg_you.uhave.amulet;
+    topten_level_name(sg_you.uz.dnum, sg_you.uz.dlevel, si->level_desc);
+    
+    if (!game_inited) {
+	    free_dungeons();
+	    dlb_cleanup();
+    }
+    
+    return LS_SAVED;
 }

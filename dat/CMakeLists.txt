@@ -62,6 +62,5 @@ add_custom_command (OUTPUT dungeon
 # pseudo-target: depend on all other generated data
 add_custom_target (nethack_data_files ALL
                    COMMAND lev_comp ${LEVEL_DESCRIPTIONS}
-                   COMMAND mkdir -p save
-                   COMMAND touch record logfile
+                   COMMAND touch logfile
                    DEPENDS lev_comp data dungeon quest.dat rumors oracles)

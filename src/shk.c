@@ -3397,7 +3397,8 @@ void price_quote(struct obj *first_obj)
 		    otmp->quan > 1L ? " each" : "");
 	}
 	sprintf(buf, "%s, %s", doname(otmp), price);
-	add_menutext(&menu, buf),  cnt++;
+	add_menutext(&menu, buf);
+	cnt++;
     }
     if (cnt > 1) {
 	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);

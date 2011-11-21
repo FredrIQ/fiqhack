@@ -335,10 +335,40 @@ struct obj *tt_oname(struct obj *otmp)
 }
 
 
+/* append the level name to outbuf */
+void topten_level_name(int dnum, int dlev, char *outbuf)
+{
+    if (dnum == astral_level.dnum) {
+	const char *arg, *fmt = "on the Plane of %s";
+
+	switch (dlev) {
+	case -5:
+		fmt = "on the %s Plane";
+		arg = "Astral";	break;
+	case -4:
+		arg = "Water";	break;
+	case -3:
+		arg = "Fire";	break;
+	case -2:
+		arg = "Air";	break;
+	case -1:
+		arg = "Earth";	break;
+	default:
+		arg = "Void";	break;
+	}
+	sprintf(eos(outbuf), fmt, arg);
+    } else {
+	sprintf(eos(outbuf), "in %s", dungeons[dnum].dname);
+	if (dnum != knox_level.dnum)
+	    sprintf(eos(outbuf), " on level %d", dlev);
+    }
+}
+
+
 static void topten_death_description(struct toptenentry *in, char *outbuf)
 {
     char *bp;
-    boolean second_line = FALSE;
+    boolean second_line = TRUE;
 
     outbuf[0] = '\0';
 
@@ -374,32 +404,10 @@ static void topten_death_description(struct toptenentry *in, char *outbuf)
 	    strcat(outbuf, "turned to stone");
 	} else strcat(outbuf, "died");
 
-	if (in->deathdnum == astral_level.dnum) {
-	    const char *arg, *fmt = " on the Plane of %s";
-
-	    switch (in->deathlev) {
-	    case -5:
-		    fmt = " on the %s Plane";
-		    arg = "Astral";	break;
-	    case -4:
-		    arg = "Water";	break;
-	    case -3:
-		    arg = "Fire";	break;
-	    case -2:
-		    arg = "Air";	break;
-	    case -1:
-		    arg = "Earth";	break;
-	    default:
-		    arg = "Void";	break;
-	    }
-	    sprintf(eos(outbuf), fmt, arg);
-	} else {
-	    sprintf(eos(outbuf), " in %s", dungeons[in->deathdnum].dname);
-	    if (in->deathdnum != knox_level.dnum)
-		sprintf(eos(outbuf), " on level %d", in->deathlev);
-	    if (in->deathlev != in->maxlvl)
-		sprintf(eos(outbuf), " [max %d]", in->maxlvl);
-	}
+	strcat(outbuf, " ");
+	topten_level_name(in->deathdnum, in->deathlev, outbuf);
+	if (in->deathlev != in->maxlvl)
+	    sprintf(eos(outbuf), " [max %d]", in->maxlvl);
 
 	/* kludge for "quit while already on Charon's boat" */
 	if (!strncmp(in->death, "quit ", 5))
@@ -441,13 +449,13 @@ static void fill_nh_score_entry(struct toptenentry *in, struct nh_topten_entry *
     strncpy(out->death, in->death, DTHSZ);
     
     if (gendnum == 1 && roles[rolenum].name.f)
-	strncpy(out->plrole, roles[rolenum].name.f, TTPLBUFSZ);
+	strncpy(out->plrole, roles[rolenum].name.f, PLRBUFSZ);
     else
-	strncpy(out->plrole, roles[rolenum].name.m, TTPLBUFSZ);
+	strncpy(out->plrole, roles[rolenum].name.m, PLRBUFSZ);
     
-    strncpy(out->plrace, races[racenum].noun, TTPLBUFSZ);
-    strncpy(out->plgend, genders[gendnum].adj, TTPLBUFSZ);
-    strncpy(out->plalign, aligns[alignnum].adj, TTPLBUFSZ);
+    strncpy(out->plrace, races[racenum].noun, PLRBUFSZ);
+    strncpy(out->plgend, genders[gendnum].adj, PLRBUFSZ);
+    strncpy(out->plalign, aligns[alignnum].adj, PLRBUFSZ);
     
     topten_death_description(in, out->entrytxt);
 }

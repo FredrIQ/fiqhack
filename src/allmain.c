@@ -12,7 +12,7 @@
 #include "patchlevel.h"
 
 static const char *const copyright_banner[] =
-{COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C};
+{COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL};
 
 static void wd_message(void);
 static void pre_move_tasks(boolean didmove);
@@ -134,10 +134,10 @@ static void startup_common(char *name, int playmode)
      */
     x_maze_max = COLNO-1;
     if (x_maze_max % 2)
-	    x_maze_max--;
+	x_maze_max--;
     y_maze_max = ROWNO-1;
     if (y_maze_max % 2)
-	    y_maze_max--;
+	y_maze_max--;
 
     /*
 	*  Initialize the vision system.  This must be before mklev() on a
@@ -154,7 +154,7 @@ static void startup_common(char *name, int playmode)
 	strcpy(plname, name);
 
     if (wizard)
-	    strcpy(plname, "wizard");
+	strcpy(plname, "wizard");
 
     clear_display_buffer();
 
@@ -201,11 +201,12 @@ static void post_init_tasks(void)
 
 boolean nh_start_game(int fd, char *name, int playmode)
 {
+    boolean ret;
     if (!api_entry_checkpoint())
 	return FALSE; /* quit from player selection or init failed */
 
     if (fd == -1)
-	return FALSE;
+	goto err_out;
     
     moves = 1;
 
@@ -218,8 +219,11 @@ boolean nh_start_game(int fd, char *name, int playmode)
     
     /* prevent an unnecessary prompt in player selection */
     rigid_role_checks();
-    player_selection(flags.initrole, flags.initrace, flags.initgend,
-	flags.initalign, flags.randomall);
+    ret = player_selection(flags.initrole, flags.initrace, flags.initgend,
+	                   flags.initalign, flags.randomall);
+    if (!ret || flags.initrole == -1 || flags.initrace == -1 ||
+	flags.initgend == -1 || flags.initalign == -1)
+	goto err_out;
     
     log_newgame(fd, turntime, playmode);
     
@@ -236,21 +240,25 @@ boolean nh_start_game(int fd, char *name, int playmode)
     
     api_exit();
     return TRUE;
+    
+err_out:
+    api_exit();
+    return FALSE;
 }
 
 
 enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
-			   char *name, boolean force_replay)
+				       boolean force_replay)
 {
     struct nh_window_procs def_windowprocs = windowprocs;
     int playmode;
     char namebuf[PL_NSIZ];
     enum nh_restore_status error = GAME_RESTORED;
     
-    if (fd == -1 || !name)
+    if (fd == -1)
 	return ERR_BAD_ARGS;
     
-    switch (nh_get_savegame_status(fd)) {
+    switch (nh_get_savegame_status(fd, NULL)) {
 	case LS_INVALID:	return ERR_BAD_FILE;
 	case LS_DONE:		return ERR_GAME_OVER;
 	case LS_IN_PROGRESS:	force_replay = TRUE; break;
@@ -274,7 +282,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     replay_setup_windowprocs(rwinprocs);
     
     if (!force_replay) {
-	startup_common(name, playmode);
+	startup_common(namebuf, playmode);
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE);
 	if (!dorecover(fd))
@@ -302,8 +310,9 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     doredraw();
     bot();
     flush_screen();
-    pline("Recovered via %s.", force_replay ? "replay" : "restore");
+    
     welcome(FALSE);
+    update_inventory();
     
     api_exit();
     return GAME_RESTORED;
@@ -319,7 +328,7 @@ error_out:
     
     if (error == ERR_RESTORE_FAILED) {
 	raw_printf("Restore failed. Attempting to replay instead.\n");
-	error = nh_restore_game(fd, rwinprocs, name, TRUE);
+	error = nh_restore_game(fd, rwinprocs, TRUE);
     }
     
     return error;
@@ -760,57 +769,57 @@ void stop_occupation(void)
 
 static void newgame(void)
 {
-	int i;
+    int i;
 
-	flags.ident = 1;
+    flags.ident = 1;
 
-	for (i = 0; i < NUMMONS; i++)
-		mvitals[i].mvflags = mons[i].geno & G_NOCORPSE;
+    for (i = 0; i < NUMMONS; i++)
+	    mvitals[i].mvflags = mons[i].geno & G_NOCORPSE;
 
-	init_objects();		/* must be before u_init() */
+    init_objects();	/* must be before u_init() */
 
-	flags.pantheon = -1;	/* role_init() will reset this */
-	role_init();		/* must be before init_dungeons(), u_init(),
-				 * and init_artifacts() */
+    flags.pantheon = -1;/* role_init() will reset this */
+    role_init();	/* must be before init_dungeons(), u_init(),
+			 * and init_artifacts() */
 
-	init_dungeons();	/* must be before u_init() to avoid rndmonst()
-				 * creating odd monsters for any tins and eggs
-				 * in hero's initial inventory */
-	init_artifacts();
-	u_init();
+    init_dungeons();	/* must be before u_init() to avoid rndmonst()
+			 * creating odd monsters for any tins and eggs
+			 * in hero's initial inventory */
+    init_artifacts();
+    u_init();
 
-	load_qtlist();	/* load up the quest text info */
-/*	quest_init();*/	/* Now part of role_init() */
+    load_qtlist();	/* load up the quest text info */
 
-	level = mklev(&u.uz);
-	u_on_upstairs();
-	vision_reset();		/* set up internals for level (after mklev) */
-	check_special_room(FALSE);
+    level = mklev(&u.uz);
+    u_on_upstairs();
+    vision_reset();	/* set up internals for level (after mklev) */
+    check_special_room(FALSE);
 
-	botl = 1;
+    botl = 1;
 
-	/* Move the monster from under you or else
-	 * makedog() will fail when it calls makemon().
-	 *			- ucsfcgl!kneller
-	 */
-	if (MON_AT(level, u.ux, u.uy)) mnexto(m_at(level, u.ux, u.uy));
-	makedog();
-	doredraw();
-	
-	/* help the window port get it's display charset/tiles sorted out */
-	notify_levelchange();
+    /* Move the monster from under you or else
+     * makedog() will fail when it calls makemon().
+     *			- ucsfcgl!kneller
+     */
+    if (MON_AT(level, u.ux, u.uy)) mnexto(m_at(level, u.ux, u.uy));
+    makedog();
+    doredraw();
+    
+    /* help the window port get it's display charset/tiles sorted out */
+    notify_levelchange();
 
-	if (flags.legacy) {
-		flush_screen();
-		com_pager(1);
-	}
+    if (flags.legacy) {
+	    flush_screen();
+	    com_pager(1);
+    }
 
-	program_state.something_worth_saving++;	/* useful data now exists */
+    program_state.something_worth_saving++;	/* useful data now exists */
 
-	/* Success! */
-	welcome(TRUE);
-	return;
+    /* Success! */
+    welcome(TRUE);
+    return;
 }
+
 
 /* show "welcome [back] to nethack" message at program startup */
 static void welcome(

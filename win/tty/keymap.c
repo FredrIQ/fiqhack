@@ -127,7 +127,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 			if (multi > 9) {
 			    tty_clear_nhwindow(NHW_MESSAGE);
 			    sprintf(line, "Count: %d", multi);
-			    tty_print_message(line);
+			    tty_print_message(0, line);
 			}
 		    } else
 			break;	/* not a digit */
@@ -164,7 +164,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	    }
 	    
 	    if (!cmd) {
-		tty_print_message("Bad command.");
+		tty_print_message(0, "Bad command.");
 	    }
 	} while (!cmd);
 	

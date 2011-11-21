@@ -841,7 +841,8 @@ void terminate(void)
 	}
 	
 	program_state.game_running = 0;
-	log_finish(LS_IN_PROGRESS); /* didn't necessarily get here via done() */
+	if (!program_state.panicking) /* logging could be in disorder, ex: RO logfile */
+	    log_finish(LS_IN_PROGRESS); /* didn't necessarily get here via done() */
 	
 	/* try to leave gracefully - this should return control to the ui code */
 	if (exit_jmp_buf_valid) {

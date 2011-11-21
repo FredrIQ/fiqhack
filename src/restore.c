@@ -323,14 +323,6 @@ static void restgamestate(struct memfile *mf)
 	struct monst *mtmp;
 	struct level *lev;
 
-	mread(mf, &flags, sizeof(struct flag));
-	flags.bypasses = 0;	/* never use the saved value of bypasses */
-
-	role_init();	/* Reset the initial role, race, gender, and alignment */
-	mread(mf, &u, sizeof(struct you));
-	mread(mf, &youmonst, sizeof(youmonst));
-	set_uasmon(); /* fix up youmonst.data */
-	
 	lev = levels[ledger_no(&u.uz)];
 
 	/* this stuff comes after potential aborted restore attempts */
@@ -355,7 +347,6 @@ static void restgamestate(struct memfile *mf)
 	if (!uwep || uwep->otyp == PICK_AXE || uwep->otyp == GRAPPLING_HOOK)
 	    unweapon = TRUE;
 
-	mread(mf, &moves, sizeof(moves));
 	mread(mf, &quest_status, sizeof(struct q_score));
 	mread(mf, spl_book, sizeof(struct spell) * (MAXSPELL + 1));
 	restore_artifacts(mf);
@@ -423,6 +414,15 @@ int dorecover(int infd)
 	    return 0;
 	}
 	
+	mread(&mf, &flags, sizeof(struct flag));
+	flags.bypasses = 0;	/* never use the saved value of bypasses */
+
+	role_init();	/* Reset the initial role, race, gender, and alignment */
+	mread(&mf, &u, sizeof(struct you));
+	mread(&mf, &youmonst, sizeof(youmonst));
+	set_uasmon(); /* fix up youmonst.data */
+	mread(&mf, &moves, sizeof(moves));
+	
 	/* restore dungeon */
 	restore_dungeon(&mf);
 	restlevchn(&mf);
@@ -435,6 +435,7 @@ int dorecover(int infd)
 	}
 	
 	restgamestate(&mf);
+	free(mf.buf);
 
 	/* erase the binary portion of the logfile */
 	lseek(infd, initial_pos, SEEK_SET);

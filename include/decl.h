@@ -296,9 +296,12 @@ extern struct nh_option_desc *active_birth_options;
 extern struct nh_option_desc *birth_options;
 extern struct nh_option_desc *options;
 
-
-#define add_menuheading(m, c) add_menu_simple(m, c, MI_HEADING)
-#define add_menutext(m, c) add_menu_simple(m, c, MI_TEXT)
+#define add_menuitem(m, i, cap, acc, sel)\
+    add_menu_item((m)->items, (m)->size, (m)->icount, i, cap, acc, sel)
+#define add_menuheading(m, c)\
+    add_menu_txt((m)->items, (m)->size, (m)->icount, c, MI_HEADING)
+#define add_menutext(m, c)\
+    add_menu_txt((m)->items, (m)->size, (m)->icount, c, MI_TEXT)
 
 struct memfile {
     char *buf;

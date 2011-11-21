@@ -52,8 +52,8 @@ static void hooked_tty_getlin(const char *query, char *bufp,
 	*obufp = 0;
 	for (;;) {
 		fflush(stdout);
-		sprintf(toplines, "%s ", query);
-		strcat(toplines, obufp);
+		sprintf(top_lines, "%s ", query);
+		strcat(top_lines, obufp);
 		if ((c = base_nhgetch()) == EOF) {
 			break;
 		}

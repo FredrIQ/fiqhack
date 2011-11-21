@@ -799,6 +799,15 @@ void domove(schar dx, schar dy, schar dz)
 	int bc_control;				/* control for ball&chain */
 	boolean cause_delay = FALSE;	/* dragging ball will skip a move */
 	const char *predicament;
+	
+	if (dz) {
+	    nomul(0);
+	    if (dz > 0)
+		doup();
+	    else
+		dodown();
+	    return;
+	}
 
 	u_wipe_engr(rnd(5));
 
@@ -1356,6 +1365,9 @@ void invocation_message(void)
 void spoteffects(boolean pick)
 {
 	struct monst *mtmp;
+	
+	/* clear items remebered by the ui at this location */
+	win_list_items(NULL, 0, FALSE);
 
 	if (u.uinwater) {
 		int was_underwater;

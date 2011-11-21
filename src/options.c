@@ -81,16 +81,15 @@ static const struct nh_option_desc const_options[] = {
     /* boolean options */
     {"autodig",		"dig if moving and wielding digging tool",	OPTTYPE_BOOL, { VFALSE }},
     {"autopickup",	"automatically pick up objects you move over",	OPTTYPE_BOOL, { VTRUE }},
-    {"autoquiver",	"when firing with an empty quiver, select some suitable inventory weapon to fill the quiver",	OPTTYPE_BOOL, { VFALSE }},
+    {"autoquiver",	"when firing with an empty quiver, select something suitable",	OPTTYPE_BOOL, { VFALSE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
     {"help",		"print all available info when using the / command",	OPTTYPE_BOOL, { VTRUE }},
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
     {"lootabc",		"use a/b/c rather than o/i/b when looting",	OPTTYPE_BOOL, { VFALSE }},
-    {"menu_tab_sep",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"perm_invent",	"keep inventory in a permanent window",	OPTTYPE_BOOL, { VFALSE }},
     {"prayconfirm",	"use confirmation prompt when #pray command issued",	OPTTYPE_BOOL, { VTRUE }},
-    {"pushweapon",	"when wielding a new weapon, put your previously wielded weapon into the secondary weapon slot",	OPTTYPE_BOOL, { VFALSE }},
+    {"pushweapon",	"when wielding a new weapon, put your previous weapon into the secondary weapon slot",	OPTTYPE_BOOL, { VFALSE }},
     {"safe_pet",	"prevent you from (knowingly) attacking your pet(s)",	OPTTYPE_BOOL, { VTRUE }},
     {"sanity_check",	"",	OPTTYPE_BOOL, { VFALSE }},
     {"showrace",	"show yourself by your race rather than by role",	OPTTYPE_BOOL, { VFALSE }},
@@ -151,7 +150,6 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"lit_corridor", &flags.lit_corridor},
 	{"lootabc", &iflags.lootabc},
 	/* for menu debugging only*/
-	{"menu_tab_sep", &iflags.menu_tab_sep},
 	{"perm_invent", &flags.perm_invent},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},
@@ -348,7 +346,7 @@ static boolean option_value_ok(struct nh_option_desc *option,
 		break;
 		
 	    case OPTTYPE_INT:
-		if (value.i >= option->i.min || value.i <= option->i.max)
+		if (value.i >= option->i.min && value.i <= option->i.max)
 		    return TRUE;
 		break;
 		
@@ -484,6 +482,9 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 			return FALSE;
 		
 		*bvar = option->value.b;
+		/* allow the ui to "see" changes to booleans, but the return
+		 * value doesn't mattter as the option was set here. */
+		ui_option_callback(option);
 		return TRUE;
 	}
 	else if (is_ui)

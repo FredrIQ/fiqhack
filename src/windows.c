@@ -124,4 +124,13 @@ void nh_delay_output(void)
 }
 
 
+boolean win_list_items(struct nh_objitem *items, int icount, boolean is_invent)
+{
+    if (!windowprocs.win_list_items)
+	return FALSE;
+    
+    return (*windowprocs.win_list_items)(items, icount, is_invent);
+}
+
+
 /*windows.c*/

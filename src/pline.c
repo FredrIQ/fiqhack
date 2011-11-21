@@ -44,7 +44,7 @@ static void vpline(const char *line, va_list the_args)
 	    flush_screen();
 	
 	strcpy(toplines, line);
-	print_message(line);
+	print_message(moves, line);
 }
 
 /*VARARGS1*/

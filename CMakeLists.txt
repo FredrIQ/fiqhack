@@ -31,17 +31,17 @@ message(${DATADIR})
 add_subdirectory (util)
 add_subdirectory (src)
 add_subdirectory (win/tty)
+add_subdirectory (win/curses)
 add_subdirectory (dat)
 
 
 install(DIRECTORY ${NetHack_BINARY_DIR}/dat/
         DESTINATION ${DATADIR}
         FILES_MATCHING PATTERN "*.lev"
-        PATTERN "save"
         PATTERN "CMakeFiles" EXCLUDE)
 install(FILES ${NetHack_BINARY_DIR}/dat/dungeon ${NetHack_BINARY_DIR}/dat/options
               ${NetHack_BINARY_DIR}/dat/quest.dat ${NetHack_BINARY_DIR}/dat/rumors
-              ${NetHack_BINARY_DIR}/dat/data ${NetHack_BINARY_DIR}/dat/record
+              ${NetHack_BINARY_DIR}/dat/data
               ${NetHack_BINARY_DIR}/dat/logfile ${NetHack_BINARY_DIR}/dat/oracles
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
@@ -52,6 +52,8 @@ install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
 install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
         DESTINATION ${LIBDIR})
 install(PROGRAMS ${NetHack_BINARY_DIR}/win/tty/nethack
+        DESTINATION ${BINDIR})
+install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack-curses
         DESTINATION ${BINDIR})
         
 if (UNIX)

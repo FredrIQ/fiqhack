@@ -249,7 +249,7 @@ extern void win_tty_init(void);
 
 /* external declarations */
 extern void tty_init_nhwindows(void);
-extern void tty_player_selection(int,int,int,int,int);
+extern boolean tty_player_selection(int,int,int,int,int);
 extern void tty_askname(char*);
 extern void tty_exit_nhwindows(const char *);
 extern void tty_create_game_windows(void);
@@ -267,7 +267,7 @@ extern void tty_curs(int,int);
 extern void tty_putstr(winid, int, const char *);
 extern void tty_display_buffer(char *,boolean);
 extern void tty_update_status(struct nh_player_info *pi);
-extern void tty_print_message(const char *);
+extern void tty_print_message(int, const char *);
 extern void tty_start_menu(winid);
 extern void tty_add_menu(winid,int,const anything *,
 		char,char,int,const char *, boolean);
@@ -336,7 +336,7 @@ extern char mapped_menu_cmds[];
 
 extern const char quitchars[];
 extern const char ynchars[];
-extern char toplines[];
+extern char top_lines[];
 extern void getlock(void);
 
 /* ioctl.c */

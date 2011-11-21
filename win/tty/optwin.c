@@ -91,11 +91,11 @@ boolean option_change_callback(struct nh_option_desc *option)
 {
 	if (!strcmp(option->name, "hackdir")) {
 	    hackdir = option->value.s;
-	    tty_print_message("This option will take effect when the game is restarted");
+	    tty_print_message(0, "This option will take effect when the game is restarted");
 	}
 	else if (!strcmp(option->name, "playground")) {
 	    var_playground = option->value.s;
-	    tty_print_message("This option will take effect when the game is restarted");
+	    tty_print_message(0, "This option will take effect when the game is restarted");
 	}
 	else if (!strcmp(option->name, "msghistory")) {
 	    ui_flags.msg_history = option->value.i;
@@ -350,7 +350,7 @@ void display_options(boolean change_birth_opt)
 	    get_option_value(&value, option);
 	    if (!nh_set_option(option->name, value, FALSE)) {
 		sprintf(strbuf, "new value for %s rejected", option->name);
-		tty_print_message(strbuf);
+		tty_print_message(0, strbuf);
 	    }
 	}
 	tty_destroy_nhwindow(tmpwin);
@@ -594,7 +594,7 @@ static short n_menu_mapped = 0;
 void add_menu_cmd_alias(char from_ch, char to_ch)
 {
     if (n_menu_mapped >= MAX_MENU_MAPPED_CMDS)
-	tty_print_message("out of menu map space.");
+	tty_print_message(0, "out of menu map space.");
     else {
 	mapped_menu_cmds[n_menu_mapped] = from_ch;
 	mapped_menu_op[n_menu_mapped] = to_ch;

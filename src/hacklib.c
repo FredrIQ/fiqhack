@@ -45,46 +45,11 @@ NetHack, except that rounddiv may call panic().
 =*/
 
 
-void set_menuitem(struct nh_menuitem *item, int id, enum nh_menuitem_role role,
-		  const char *caption, char accel, boolean selected)
-{
-	item->id = id;
-	item->role = role;
-	item->accel = accel;
-	item->group_accel = 0;
-	item->selected = selected;
-	strcpy(item->caption, caption);
-}
-
 void init_menulist(struct menulist *m)
 {
 	m->size = 10;
 	m->icount = 0;
 	m->items = malloc(m->size * sizeof(struct nh_menuitem));
-}
-
-void add_menuitem(struct menulist *m, int id, const char *caption,
-		  char accel, boolean selected)
-{
-	if (m->icount >= m->size) {
-	    m->size *= 2;
-	    m->items = realloc(m->items, m->size * sizeof(struct nh_menuitem));
-	}
-    
-	set_menuitem(&m->items[m->icount], id, MI_NORMAL, caption, accel, selected);
-	m->icount++;
-}
-
-void add_menu_simple(struct menulist *m, const char *caption,
-		     enum nh_menuitem_role role)
-{
-	if (m->icount >= m->size) {
-	    m->size *= 2;
-	    m->items = realloc(m->items, m->size * sizeof(struct nh_menuitem));
-	}
-    
-	set_menuitem(&m->items[m->icount], 0, role, caption, 0, FALSE);
-	m->icount++;
 }
 
 boolean digit(char c)	/* is 'c' a digit? */

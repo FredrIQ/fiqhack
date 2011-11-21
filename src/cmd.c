@@ -138,8 +138,6 @@ const struct cmd_desc cmdlist[] = {
 	{"explore mode", "", 'X', 0, TRUE, enter_explore_mode, CMD_ARG_NONE},
 	{"zap", "", 'z', 0, FALSE, dozap, CMD_ARG_NONE},
 	{"cast", "", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
-	{"go up", "", '<', 0, FALSE, doup, CMD_ARG_NONE},
-	{"go down", "", '>', 0, FALSE, dodown, CMD_ARG_NONE},
 	{"whatis", "", '/', 0, TRUE, dowhatis, CMD_ARG_NONE},
 	{"whatdoes", "", '&', 0, TRUE, dowhatdoes, CMD_ARG_NONE},
 	{"wait", "", '.', ' ', TRUE, donull, CMD_ARG_NONE, "waiting"},
@@ -881,17 +879,9 @@ static boolean minimal_enlightenment(void)
 {
 	int genidx, n, i = 0;
 	char buf[BUFSZ], buf2[BUFSZ];
-	static const char untabbed_fmtstr[] = "%-15s: %-12s";
-	static const char untabbed_deity_fmtstr[] = "%-17s%s";
-	static const char tabbed_fmtstr[] = "%s:\t%-12s";
-	static const char tabbed_deity_fmtstr[] = "%s\t%s";
-	static const char *fmtstr;
-	static const char *deity_fmtstr;
+	static const char fmtstr[] = "%s:\t%-12s";
+	static const char deity_fmtstr[] = "%s\t%s";
 	struct nh_menuitem items[18];
-
-	fmtstr = iflags.menu_tab_sep ? tabbed_fmtstr : untabbed_fmtstr;
-	deity_fmtstr = iflags.menu_tab_sep ?
-			tabbed_deity_fmtstr : untabbed_deity_fmtstr; 
 
 	buf[0] = buf2[0] = '\0';
 	set_menuitem(&items[i++], 0, MI_HEADING, "Starting", 0, FALSE);

@@ -334,8 +334,8 @@ static int autopick(struct obj *olist,	/* the object list */
 }
 
 
-void add_objitem(struct nh_objitem **items, int *nr_items, int idx, int id,
-		 char *caption, struct obj *obj, boolean use_invlet)
+void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role role,
+		 int idx, int id, char *caption, struct obj *obj, boolean use_invlet)
 {
 	if (idx >= *nr_items) {
 	    *nr_items = *nr_items * 2;
@@ -344,27 +344,36 @@ void add_objitem(struct nh_objitem **items, int *nr_items, int idx, int id,
 	
 	struct nh_objitem *it = &((*items)[idx]);
 	it->id = id;
+	it->weight = -1;
+	it->role = role;
 	strcpy(it->caption, caption);
 	
-	if (obj) {
+	if (role == MI_NORMAL && obj) {
 	    it->count = obj->quan;
 	    it->accel = use_invlet ? obj->invlet : 0;
 	    it->group_accel = def_oc_syms[(int)objects[obj->otyp].oc_class];
 	    it->otype = obfuscate_object(obj->otyp + 1);
 	    it->oclass = obj->oclass;
+	    it->worn = !!obj->owornmask;
+	    
+	    /* don't unconditionally reveal weight, otherwise lodestones on the
+	     * floor could be identified by their weight in the pickup dialog */
+	    if (obj->where == OBJ_INVENT || (obj->known && obj->invlet))
+		it->weight = obj->owt;
 	
 	    if (!obj->bknown)
-		it->buc = BUC_UNKNOWN;
+		it->buc = B_UNKNOWN;
 	    else if (obj->blessed)
-		it->buc = BUC_BLESSED;
+		it->buc = B_BLESSED;
 	    else if (obj->cursed)
-		it->buc = BUC_CURSED;
+		it->buc = B_CURSED;
 	    else
-		it->buc = BUC_UNCURSED;
+		it->buc = B_UNCURSED;
 	} else {
 	    it->accel = it->group_accel = 0;
 	    it->otype = it->oclass = -1;
 	}
+	    
 }
 
 /*
@@ -444,7 +453,7 @@ int query_objlist(const char *qstr,	/* query string */
 
 		    /* if sorting, print type name (once only) */
 		    if (qflags & INVORDER_SORT && !printed_type_name) {
-			add_objitem(&items, &nr_items, cur_entry, 0,
+			add_objitem(&items, &nr_items, MI_HEADING, cur_entry, 0,
 				    let_to_name(*pack, FALSE), NULL, FALSE);
 			id_to_obj = realloc(id_to_obj, 
 					    nr_items * sizeof(struct obj*));
@@ -453,7 +462,7 @@ int query_objlist(const char *qstr,	/* query string */
 			printed_type_name = TRUE;
 		    }
 		    
-		    add_objitem(&items, &nr_items, cur_entry, cur_entry+1,
+		    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry, cur_entry+1,
 				doname(curr), curr, (qflags & USE_INVLET) != 0);
 		    id_to_obj = realloc(id_to_obj, nr_items * sizeof(struct obj*));
 		    id_to_obj[cur_entry] = curr;

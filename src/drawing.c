@@ -123,8 +123,8 @@ const char * const trapexplain[] = {
  *  Default screen symbols with explanations and colors.
  */
 const struct nh_symdef defsyms[] = {
-/* 0*/	{' ', "unexplored",	NO_COLOR},	
-	{' ', "stone",		NO_COLOR},	
+/* 0*/	{' ', "unexplored",	CLR_GRAY},
+	{' ', "stone",		CLR_GRAY},
 	{'|', "vwall",		CLR_GRAY},
 	{'-', "hwall",		CLR_GRAY},
 	{'-', "tlcorn",		CLR_GRAY},

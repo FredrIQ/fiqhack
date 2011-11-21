@@ -1253,7 +1253,7 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 char *nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 			       int gendnum, int alignnum)
 {
-	const char *defprompt = "Shall I pick a character for you? [ynq] ";
+	const char *defprompt = "Shall I pick a character for you?";
 	int num_post_attribs = 0;
 	char tmpbuf[BUFSZ];
 	
@@ -1298,7 +1298,7 @@ char *nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenu
 			strcat(buf, "alignment");
 		}
 	}
-	strcat(buf, " for you? [ynq] ");
+	strcat(buf, " for you?");
 	return buf;
 }
 

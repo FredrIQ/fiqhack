@@ -28,8 +28,6 @@ int dosave(void)
 		if (dosave0(FALSE)) {
 			program_state.something_worth_saving = 0;
 			u.uhp = -1;		/* universal game's over indicator */
-			/* make sure they see the Saving message */
-			win_pause(P_MESSAGE);
 			terminate();
 		} else doredraw();
 	}
@@ -50,6 +48,14 @@ int dosave0(boolean emergency)
 				   in the event of an impossible() call */
 	store_version(fd);
 	
+	/* Place flags, player info & moves at the beginning of the save.
+	 * This makes it possible to read them in nh_get_savegame_status without
+	 * parsing all the dungeon and level data */
+	bwrite(fd, &flags, sizeof(struct flag));
+	bwrite(fd, &u, sizeof(struct you));
+	bwrite(fd, &youmonst, sizeof(youmonst));
+	bwrite(fd, &moves, sizeof moves);
+
 	/* store dungeon layout */
 	save_dungeon(fd, TRUE, FALSE);
 	savelevchn(fd, WRITE_SAVE);
@@ -79,10 +85,6 @@ static void savegamestate(int fd, int mode)
 	unsigned usteed_id = (u.usteed ? u.usteed->m_id : 0);
 	unsigned book_id;
 
-	bwrite(fd, &flags, sizeof(struct flag));
-	bwrite(fd, &u, sizeof(struct you));
-	bwrite(fd, &youmonst, sizeof(youmonst));
-
 	/* must come before migrating_objs and migrating_mons are freed */
 	save_timers(fd, level, mode, RANGE_GLOBAL);
 	save_light_sources(fd, level, mode, RANGE_GLOBAL);
@@ -97,7 +99,6 @@ static void savegamestate(int fd, int mode)
 	}
 	bwrite(fd, mvitals, sizeof(mvitals));
 
-	bwrite(fd, &moves, sizeof moves);
 	bwrite(fd, &quest_status, sizeof(struct q_score));
 	bwrite(fd, spl_book, sizeof(struct spell) * (MAXSPELL + 1));
 	save_artifacts(fd);

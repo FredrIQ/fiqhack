@@ -543,11 +543,7 @@ extern char *tabexpand(char *);
 #ifndef STRNCMPI
 extern int strncmpi(const char *,const char *,int);
 #endif
-extern void set_menuitem(struct nh_menuitem *, int, enum nh_menuitem_role,
-			 const char *, char, boolean);
-extern void init_menulist(struct menulist*);
-extern void add_menuitem(struct menulist*,int, const char*,char,boolean);
-extern void add_menu_simple(struct menulist*,const char*,enum nh_menuitem_role);
+extern void init_menulist(struct menulist *m);
 extern boolean letter(char);
 extern boolean digit(char);
 extern char *eos(char *);
@@ -1102,8 +1098,8 @@ extern int query_category(const char *, struct obj *, int,
 				int*, int);
 extern int query_objlist(const char *, struct obj *, int,
 				struct object_pick **, int, boolean (*)(struct obj*));
-extern void add_objitem(struct nh_objitem**, int*, int, int, char*,
-			struct obj*, boolean);
+extern void add_objitem(struct nh_objitem**, int*, enum nh_menuitem_role, int,
+			int, char*, struct obj*, boolean);
 extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(void);
 extern int doloot(void);
@@ -1506,6 +1502,7 @@ extern void timer_sanity_check(void);
 
 extern void update_topten(int how);
 extern struct obj *tt_oname(struct obj *);
+extern void topten_level_name(int dnum, int dlev, char *outbuf);
 
 /* ### track.c ### */
 
@@ -1659,6 +1656,7 @@ extern char query_key(const char *query, int *count);
 extern void getlin(const char *query, char *bufp);
 extern int display_menu(struct nh_menuitem*, int, const char*, int, int*);
 extern int display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
+extern boolean win_list_items(struct nh_objitem *items, int icount, boolean invent);
 
 /* ### wizard.c ### */
 

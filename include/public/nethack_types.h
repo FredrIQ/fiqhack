@@ -25,6 +25,7 @@
 #define TBUFSZ		300	/* toplines[] buffer max msg: 3 81char names */
 				/* plus longest prefix plus a few extra words */
 #define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
+#define PLRBUFSZ	16	/* player race/role names */
 
 #define FCMASK		0660	/* file creation mask */
 #define msleep(k) usleep((k)*1000)
@@ -94,6 +95,8 @@
 #define CMD_NOTIME     (1 << 13) /* command will not use up any game time */
 #define CMD_DEBUG      (1 << 14) /* a wizmode command */
 
+/* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
+#define CMD_UI         (1 << 31) 
 
 #define NH_ARG_NONE	(1<<0)
 #define NH_ARG_DIR	(1<<1)
@@ -159,10 +162,10 @@ enum nh_option_list {
 };
 
 enum nh_bucstatus {
-    BUC_UNKNOWN,
-    BUC_BLESSED,
-    BUC_UNCURSED,
-    BUC_CURSED
+    B_UNKNOWN,
+    B_BLESSED,
+    B_UNCURSED,
+    B_CURSED
 };
 
 enum nh_menuitem_role {
@@ -275,7 +278,7 @@ struct nh_option_desc {
     union nh_optvalue value;
     union {
 	/* only the first element of a union can be initialized at compile
-	    * time (without C99), so boolean args go first, there are more of those ...*/
+	 * time (without C99), so boolean args go first, there are more of those ...*/
 	struct nh_int_option i;
 	struct nh_enum_option e;
 	struct nh_string_option s;
@@ -285,18 +288,20 @@ struct nh_option_desc {
 struct nh_menuitem {
     int id;
     enum nh_menuitem_role role;
-    char caption[COLNO];
+    char caption[BUFSZ];
     char accel;
     char group_accel;
     boolean selected;
 };
 
 struct nh_objitem {
-    char caption[COLNO];
+    char caption[BUFSZ];
     int id;
+    enum nh_menuitem_role role;
     int count;
     int otype;
     int oclass;
+    int weight; /* w < 0  == weight unknown */
     enum nh_bucstatus buc;
     char accel;
     char group_accel;
@@ -326,23 +331,45 @@ struct nh_player_info {
 };
 
 
+/* info about saved games as provided by nh_get_savegame_status */
+struct nh_save_info {
+    char name[PL_NSIZ];
+    char plrole[PLRBUFSZ];
+    char plrace[PLRBUFSZ];
+    char plgend[PLRBUFSZ];
+    char plalign[PLRBUFSZ];
+    /* the following fields are only valid if the status is LS_SAVED
+     * retrieving the values for LS_IN_PROGRESS would require reconstructing
+     * the full game. You can force that by doing:
+     *   if (nh_restore_game(fd, NULL, TRUE) != GAME_RESTORED)
+     *       handle_error(...)
+     *   nh_exit(EXIT_FORCE_SAVE);
+     * Now a call to nh_get_savegame_status will return LS_SAVED.
+     */
+    char level_desc[COLNO];
+    int moves, depth;
+    boolean has_amulet;
+    /* most of nh_player_info is possible, but what makes sense? */
+};
+
+
 struct nh_cmd_desc {
-	const char *name;
-	const char *desc;
-	char defkey, altkey;
-	unsigned flags;
+    const char *name;
+    const char *desc;
+    unsigned char defkey, altkey;
+    unsigned flags;
 };
 
 struct nh_cmdarg_pos {
-	short x, y;
+    short x, y;
 };
 
 struct nh_cmd_arg {
-	unsigned argtype;
-	union {
-	    enum nh_direction d;
-	    struct nh_cmdarg_pos pos;
-	};
+    unsigned argtype;
+    union {
+	enum nh_direction d;
+	struct nh_cmdarg_pos pos;
+    };
 };
 
 
@@ -421,7 +448,7 @@ struct nh_desc_buf {
     int objcount; /* number of (visible) objects or -1 if the location is not visible */
 };
 
-#define TTPLBUFSZ 16
+
 /* 
  * return type for nh_get_topten()
  */
@@ -433,27 +460,27 @@ struct nh_topten_entry {
     int deaths;
     int ver_major, ver_minor, patchlevel;
     int deathdate, birthdate; /* decimal representation, ex: 20101231 for 31 Dec 2010 */
-    char plrole[TTPLBUFSZ];
-    char plrace[TTPLBUFSZ];
-    char plgend[TTPLBUFSZ];
-    char plalign[TTPLBUFSZ];
-    char name[TTPLBUFSZ];
+    char plrole[PLRBUFSZ];
+    char plrace[PLRBUFSZ];
+    char plgend[PLRBUFSZ];
+    char plalign[PLRBUFSZ];
+    char name[PL_NSIZ];
     char death[BUFSZ];
     char entrytxt[BUFSZ];
     boolean highlight;
 };
 
 struct nh_window_procs {
-    void (*win_player_selection)(int initrole, int initrace, int initgend,
-			         int initalign, int randomall);
+    boolean (*win_player_selection)(int initrole, int initrace, int initgend,
+			            int initalign, int randomall);
     void (*win_clear_map)(void);
     void (*win_pause)(enum nh_pause_reason reason);
     void (*win_display_buffer)(char *,boolean);
     void (*win_update_status)(struct nh_player_info *pi);
-    void (*win_print_message)(const char *);
+    void (*win_print_message)(int turn, const char *msg);
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
-    void (*win_update_inventory)(struct nh_objitem *items, int icount);
+    boolean (*win_list_items)(struct nh_objitem *items, int icount, boolean invent);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
     void (*win_raw_print)(const char *str);
     char (*win_query_key)(const char *query, int *count);

@@ -1227,12 +1227,12 @@ nextclass:
 	    if (!lets || !*lets || strchr(lets, ilet)) {
 		if (!flags.sortpack || otmp->oclass == *invlet) {
 		    if (flags.sortpack && !classcount) {
-			add_objitem(&items, &nr_items, cur_entry++, 0,
+			add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
 				    let_to_name(*invlet, FALSE), NULL, FALSE);
 			classcount++;
 		    }
-		    add_objitem(&items, &nr_items, cur_entry++, ilet, doname(otmp),
-				otmp, TRUE);
+		    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, ilet,
+				doname(otmp), otmp, TRUE);
 		}
 	    }
 	}
@@ -1337,12 +1337,13 @@ void update_inventory(void)
 	int icount = 0;
 	struct nh_objitem *items;
 
-	if (!windowprocs.win_update_inventory)
+	if (!windowprocs.win_list_items)
 	    return;
 
 	items = make_invlist(NULL, &icount);
-	(*windowprocs.win_update_inventory)(items, icount);
-
+	win_list_items(items, icount, TRUE);
+	free(items);
+	
 	return;
 }
 
@@ -1621,9 +1622,16 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	const char *verb = Blind ? "feel" : "see";
 	const char *dfeature = NULL;
 	char fbuf[BUFSZ], fbuf2[BUFSZ];
-	struct menulist menu;
 	boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
+	int icount = 0;
+	int size = 10;
+	struct nh_objitem *items = NULL;
+	const char *title = Blind ? "Things that you feel here:" :
+					"Things that are here:";
 
+	/* notify the ui that any previous item list is invalid */
+	win_list_items(NULL, 0, FALSE);
+	
 	if (u.uswallow && u.ustuck) {
 	    struct monst *mtmp = u.ustuck;
 	    sprintf(fbuf, "Contents of %s %s",
@@ -1677,52 +1685,68 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 
 	if (!otmp || is_lava(level, u.ux,u.uy) || (is_pool(level, u.ux,u.uy) && !Underwater)) {
 		if (dfeature) pline(fbuf);
-		read_engr_at(u.ux, u.uy); /* Eric Backus */
+		read_engr_at(u.ux, u.uy);
 		if (!skip_objects && (Blind || !dfeature))
 		    pline("You %s no objects here.", verb);
 		return !!Blind;
 	}
 	/* we know there is something here */
 
+	items = malloc(size * sizeof(struct nh_objitem));
+	if (dfeature) {
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, fbuf, NULL, FALSE);
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
+	}
+	
 	if (skip_objects) {
-	    if (dfeature) pline(fbuf);
-	    read_engr_at(u.ux, u.uy); /* Eric Backus */
-	    pline("There are %s%s objects here.",
-		  (obj_cnt <= 10) ? "several" : "many",
-		  picked_some ? " more" : "");
-	} else if (!otmp->nexthere) {
-	    /* only one object */
-	    if (dfeature) pline(fbuf);
-	    read_engr_at(u.ux, u.uy); /* Eric Backus */
+	    char buf[BUFSZ];
+	    add_objitem(&items, &size, MI_NORMAL, icount++, 0,
+			doname(otmp), otmp, FALSE);
+	    sprintf(buf, "There are %s other objects here.",
+		  (obj_cnt <= 10) ? "several" : "many");
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	    if (!win_list_items(items, icount, FALSE)) {
+		if (dfeature) pline(fbuf);
+		read_engr_at(u.ux, u.uy);
+		pline("There are %s%s objects here.",
+		    (obj_cnt <= 10) ? "several" : "many",
+		    picked_some ? " more" : "");
+	    }
+	    free(items);
+	} else if (!otmp->nexthere) { /* only one object */
+	    /* give the ui a nice list of items */
+	    add_objitem(&items, &size, MI_NORMAL, icount++, 0,
+			doname(otmp), otmp, FALSE);
+	    if (!win_list_items(items, icount, FALSE)) {
+		/* ui didn't want the item list so use pline instead */
+		if (dfeature) pline(fbuf);
+		read_engr_at(u.ux, u.uy);
 #ifdef INVISIBLE_OBJECTS
-	    if (otmp->oinvis && !See_invisible) verb = "feel";
+		if (otmp->oinvis && !See_invisible) verb = "feel";
 #endif
-	    pline("You %s here %s.", verb, doname(otmp));
+		pline("You %s here %s.", verb, doname(otmp));
+	    }
+	    free(items);
 	    if (otmp->otyp == CORPSE)
 		feel_cockatrice(otmp, FALSE);
+	    
 	} else {
-	    init_menulist(&menu);
-	    
-	    if (dfeature) {
-		add_menutext(&menu, fbuf);
-		add_menutext(&menu, "");
-	    }
-	    add_menutext(&menu, Blind ? "Things that you feel here:" :
-					"Things that are here:");
-	    
 	    for ( ; otmp; otmp = otmp->nexthere) {
 		if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, FALSE)) {
 			char buf[BUFSZ];
 			felt_cockatrice = TRUE;
 			strcpy(buf, doname(otmp));
 			strcat(buf, "...");
-			add_menutext(&menu, buf);
+			add_objitem(&items, &size, MI_NORMAL, icount++, 0,
+				    fbuf, otmp, FALSE);
 			break;
 		}
-		add_menutext(&menu, doname(otmp));
+		add_objitem(&items, &size, MI_NORMAL, icount++, 0,
+			    doname(otmp), otmp, FALSE);
 	    }
-	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
-	    free(menu.items);
+	    if (!win_list_items(items, icount, FALSE) || !obj_cnt)
+		display_objects(items, icount, title, PICK_NONE, NULL);
+	    free(items);
 	    
 	    if (felt_cockatrice)
 		feel_cockatrice(otmp, FALSE);

@@ -986,23 +986,10 @@ static boolean dospellmenu(const char *prompt,
 	struct nh_menuitem items[MAXSPELL+1];
 	int selected[MAXSPELL+1];
 
-	/*
-	 * The correct spacing of the columns depends on the
-	 * following that (1) the font is monospaced and (2)
-	 * that selection letters are pre-pended to the given
-	 * string and are of the form "a - ".
-	 *
-	 * To do it right would require that we implement columns
-	 * in the window-ports (say via a tab character).
-	 */
-	if (!iflags.menu_tab_sep)
-		sprintf(buf, "%-20s     Level  %-12s Fail", "    Name", "Category");
-	else
-		sprintf(buf, "Name\tLevel\tCategory\tFail");
+	sprintf(buf, "Name\tLevel\tCategory\tFail");
 	set_menuitem(&items[count++], 0, MI_HEADING, buf, 0, FALSE);
 	for (i = 0; i < MAXSPELL && spellid(i) != NO_SPELL; i++) {
-		sprintf(buf, iflags.menu_tab_sep ?
-			"%s\t%-d%s\t%s\t%-d%%" : "%-20s  %2d%s   %-12s %3d%%",
+		sprintf(buf, "%s\t%-d%s\t%s\t%-d%%",
 			spellname(i), spellev(i),
 			spellknow(i) ? " " : "*",
 			spelltypemnemonic(spell_skilltype(spellid(i))),
