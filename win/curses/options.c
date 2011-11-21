@@ -68,6 +68,7 @@ struct nh_option_desc tty_options[] = {
     {"blink", "show multiple symbols for each location by switching between them", OPTTYPE_BOOL, { VTRUE }},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, { VTRUE }},    
+    {"status3", "3 line status display", OPTTYPE_BOOL, { VTRUE }},
     {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { FALSE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
     {"ignintr", "ignore interrupt signal, including breaks", OPTTYPE_BOOL, { FALSE }},
@@ -97,6 +98,7 @@ struct nh_boolopt_map boolopt_map[] = {
     {"frame", &settings.frame},
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
+    {"status3", &settings.status3},
     {"scores_own", &settings.end_own},
     {"showexp", &settings.showexp},
     {"showscore", &settings.showscore},
@@ -113,6 +115,7 @@ struct nh_boolopt_map boolopt_map[] = {
 boolean option_change_callback(struct nh_option_desc *option)
 {
     if (!strcmp(option->name, "frame") ||
+	!strcmp(option->name, "status3") ||
 	!strcmp(option->name, "sidebar")) {
 	rebuild_ui();
 	return TRUE;

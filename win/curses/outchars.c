@@ -388,30 +388,38 @@ void switch_graphics(enum nh_text_mode mode)
 }
 
 
+int curses_color_attr(int nh_color)
+{
+    int color = nh_color + 1;
+    int cattr = A_NORMAL;
+    
+    if (COLORS < 16 && color > 8) {
+	color -= 8;
+	cattr = A_BOLD;
+    }
+    cattr |= COLOR_PAIR(color);
+    return cattr;
+}
+
+
 void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
 {
-    int attr, color;
+    int attr;
     cchar_t uni_out;
     
     /* nethack color index -> curses color */
     attr = A_NORMAL | extra_attrs;
-    color = sym->color + 1;
-    if (COLORS < 16 && color > 8) {
-	color -= 8;
-	attr = A_BOLD;
-    }
-    if (!ui_flags.color)
-	color = 0;
+    if (ui_flags.color)
+	attr |= curses_color_attr(sym->color);
     
     /* print it; preferably as unicode */
     if (sym->unichar[0] && ui_flags.unicode && settings.unicode) {
+	int color = PAIR_NUMBER(attr);
 	setcchar(&uni_out, sym->unichar, attr, color, NULL);
 	wadd_wch(win, &uni_out);
     } else {
 	wattron(win, attr);
-	wattron(win, COLOR_PAIR(color));
 	waddch(win, sym->ch);
-	wattroff(win, COLOR_PAIR(color));
 	wattroff(win, attr);
     }
 }

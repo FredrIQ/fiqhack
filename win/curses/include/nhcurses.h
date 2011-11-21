@@ -36,6 +36,7 @@ struct interface_flags {
     boolean ingame;
     boolean draw_frame;
     boolean draw_sidebar;
+    boolean status3; /* draw the 3 line status instead of the classic 2 lines */
     boolean color; /* the terminal has color capability */
     boolean unicode; /* ncurses detected a unicode locale */
     int levelmode;
@@ -68,6 +69,7 @@ struct settings {
     boolean  blink;	/* show multiple symbols for each location by blinking */
     boolean  sidebar;   /* draw the inventory sidebar */
     boolean  frame;     /* draw a frame around the window sections */
+    boolean  status3;	/* draw 3 line status */
 };
 
 
@@ -240,6 +242,7 @@ extern void free_displaychars(void);
 extern int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms);
 extern void set_rogue_level(boolean enable);
 extern void switch_graphics(enum nh_text_mode mode);
+extern int curses_color_attr(int nh_color);
 extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs);
 extern void curses_notify_level_changed(int dmode);
 

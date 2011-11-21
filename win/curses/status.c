@@ -3,93 +3,163 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "nhcurses.h"
 
 struct nh_player_info player;
 
-/* MAXCO must hold longest uncompressed status line, and must be larger
- * than COLNO
- *
+/*
  * longest practical second status line at the moment is
  *	Astral Plane $:12345 HP:700(700) Pw:111(111) AC:-127 Xp:30/123456789
  *	T:123456 Satiated Conf FoodPois Ill Blind Stun Hallu Overloaded
  * -- or somewhat over 130 characters
  */
-#if COLNO <= 140
-#define MAXCO 160
-#else
-#define MAXCO (COLNO+20)
-#endif
 
-
-static void bot1(struct nh_player_info *pi)
+static void classic_status(struct nh_player_info *pi)
 {
-	char newbot1[MAXCO];
-	char *nb = newbot1;
-	int i,j;
+    char buf[COLNO];
+    int i;
+    
+    /* line 1 */
+    sprintf(buf, "%.10s the %-*s  ", pi->plname,
+	    pi->max_rank_sz + 8 - (int)strlen(pi->plname), pi->rank);
+    buf[0] = toupper(buf[0]);
+    mvwaddstr(statuswin, 0, 0, buf);
+    
+    if (pi->st == 18 && pi->st_extra) {
+	if (pi->st_extra < 100)
+	    wprintw(statuswin, "St:18/%02d ", pi->st_extra);
+	else
+	    wprintw(statuswin,"St:18/** ");
+    } else
+	wprintw(statuswin, "St:%-1d ", pi->st);
+    
+    wprintw(statuswin, "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+	    pi->dx, pi->co, pi->in, pi->wi, pi->ch);
+    wprintw(statuswin, (pi->align == A_CHAOTIC) ? "  Chaotic" :
+		    (pi->align == A_NEUTRAL) ? "  Neutral" : "  Lawful");
+    
+    if (settings.showscore)
+	wprintw(statuswin, " S:%ld", pi->score);
+    
+    wclrtoeol(statuswin);
 
-	strcpy(newbot1, pi->plname);
-	if ('a' <= newbot1[0] && newbot1[0] <= 'z')
-	    newbot1[0] += 'A'-'a';
-	newbot1[10] = '\0';
-	nb += strlen(newbot1);
-	sprintf(nb, " the %s", pi->rank);
+    /* line 2 */
+    mvwaddstr(statuswin, 1, 0, pi->level_desc);
+    wprintw(statuswin, " %c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", pi->coinsym,
+	    pi->gold, pi->hp, pi->hpmax, pi->en, pi->enmax, pi->ac);
 
-	strncat(nb, "  ", MAXCO);
-	i = pi->max_rank_sz + 15;
-	j = strlen(newbot1);
-	if ((i - j) > 0)
-		sprintf(nb += strlen(nb), "%*s", i-j, " ");	/* pad with spaces */
-	
-	if (pi->st == 18 && pi->st_extra) {
-		if (pi->st_extra < 100)
-		    sprintf(nb += strlen(nb), "St:18/%02d ", pi->st_extra);
-		else
-		    sprintf(nb += strlen(nb),"St:18/** ");
-	} else
-		sprintf(nb += strlen(nb), "St:%-1d ", pi->st);
-	
-	sprintf(nb += strlen(nb), "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
-		pi->dx, pi->co, pi->in, pi->wi, pi->ch);
-	sprintf(nb += strlen(nb), (pi->align == A_CHAOTIC) ? "  Chaotic" :
-			(pi->align == A_NEUTRAL) ? "  Neutral" : "  Lawful");
-	
-	if (settings.showscore)
-	    sprintf(nb += strlen(nb), " S:%ld", pi->score);
-	
-	wmove(statuswin, 0, 0);
-	waddstr(statuswin, newbot1);
-	wclrtoeol(statuswin);
+    if (pi->monnum != pi->cur_monnum)
+	wprintw(statuswin, " HD:%d", pi->level);
+    else if (settings.showexp)
+	wprintw(statuswin, " Xp:%u/%-1ld", pi->level, pi->xp);
+    else
+	wprintw(statuswin, " Exp:%u", pi->level);
+
+    if (settings.time)
+	wprintw(statuswin, " T:%ld", pi->moves);
+    
+    for (i = 0; i < pi->nr_items; i++)
+	wprintw(statuswin, " %s", pi->statusitems[i]);
+    
+    wclrtoeol(statuswin);
 }
 
 
-static void bot2(struct nh_player_info *pi)
+static void draw_bar(int barlen, int val_cur, int val_max, const char *prefix)
 {
-	char newbot2[MAXCO];
-	char *nb = newbot2;
-	int i;
+    char str[COLNO], bar[COLNO];
+    int fill_len, bl, percent, colorattr, color;
+    
+    percent = 100 * val_cur / val_max;
+    if (percent < 25)
+	color = CLR_RED;
+    else if (percent < 50)
+	color = CLR_BROWN; /* inverted this looks orange */
+    else if (percent < 95)
+	color = CLR_GREEN;
+    else
+	color = CLR_GRAY; /* inverted this is white, with better text contrast */
+    colorattr = curses_color_attr(color);
+    
+    bl = barlen-2;
+    
+    fill_len = bl * val_cur / val_max;
+    sprintf(str, "%s%d(%d)", prefix, val_cur, val_max);
+    sprintf(bar, "%-*s", bl, str);
+    waddch(statuswin, '[');
+    wattron(statuswin, colorattr);
+    
+    wattron(statuswin, A_REVERSE);
+    wprintw(statuswin, "%.*s", fill_len, bar);
+    wattroff(statuswin, A_REVERSE);
+    wprintw(statuswin, "%s", &bar[fill_len]);
+    
+    wattroff(statuswin, colorattr);
+    waddch(statuswin, ']');
+}
 
-	strncpy(newbot2, pi->level_desc, MAXCO);
-	sprintf(nb += strlen(newbot2),
-		"%c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", pi->coinsym,
-		pi->gold, pi->hp, pi->hpmax, pi->en, pi->enmax, pi->ac);
 
-	if (pi->monnum != pi->cur_monnum)
-		sprintf(nb += strlen(nb), " HD:%d", pi->level);
-	else if (settings.showexp)
-		sprintf(nb += strlen(nb), " Xp:%u/%-1ld", pi->level, pi->xp);
+static void status3(struct nh_player_info *pi)
+{
+    char buf[COLNO];
+    int i;
+    
+    /* line 1 */
+    sprintf(buf, "%.10s the %-*s  ", pi->plname,
+	    pi->max_rank_sz + 8 - (int)strlen(pi->plname), pi->rank);
+    buf[0] = toupper(buf[0]);
+    mvwaddstr(statuswin, 0, 0, buf);
+    wprintw(statuswin, "Con:%-1d Str:", pi->co);
+    if (pi->st == 18 && pi->st_extra) {
+	if (pi->st_extra < 100)
+	    wprintw(statuswin, "18/%02d  ", pi->st_extra);
 	else
-		sprintf(nb += strlen(nb), " Exp:%u", pi->level);
+	    wprintw(statuswin,"18/**  ");
+    } else
+	wprintw(statuswin, "%-1d  ", pi->st);
 
-	if (settings.time)
-	    sprintf(nb += strlen(nb), " T:%ld", pi->moves);
-	
-	for (i = 0; i < pi->nr_items; i++)
-	    sprintf(nb += strlen(nb), " %s", pi->statusitems[i]);
-	
-	wmove(statuswin, 1, 0);
-	waddstr(statuswin, newbot2);
-	wclrtoeol(statuswin);
+    waddstr(statuswin, pi->level_desc);
+
+    if (settings.time)
+	wprintw(statuswin, "  T:%ld", pi->moves);
+    
+    wprintw(statuswin, (pi->align == A_CHAOTIC) ? "  Chaotic" :
+		    (pi->align == A_NEUTRAL) ? "  Neutral" : "  Lawful");
+    wclrtoeol(statuswin);
+    
+    
+    /* line 2 */
+    wmove(statuswin, 1, 0);
+    draw_bar(14 + pi->max_rank_sz, pi->hp, pi->hpmax, "HP:");
+    wprintw(statuswin, " Int:%-1d Wis:%-1d  %c:%-2ld  AC:%-2d  ", pi->in, pi->wi,
+	    pi->coinsym, pi->gold, pi->ac);
+    
+    if (pi->monnum != pi->cur_monnum)
+	wprintw(statuswin, "HD:%d", pi->level);
+    else if (settings.showexp) {
+	if (pi->xp < 1000000)
+	    wprintw(statuswin, "Xp:%u/%-1ld", pi->level, pi->xp);
+	else
+	    wprintw(statuswin, "Xp:%u/%-1ldk", pi->level, pi->xp / 1000);
+    }
+    else
+	wprintw(statuswin, "Exp:%u", pi->level);
+    
+    if (settings.showscore)
+	wprintw(statuswin, "  S:%ld", pi->score);
+    wclrtoeol(statuswin);
+
+    /* line 3 */
+    wmove(statuswin, 2, 0);
+    draw_bar(14 + pi->max_rank_sz, pi->en, pi->enmax, "Pw:");
+    wprintw(statuswin, " Dex:%-1d Cha:%-1d ", pi->dx, pi->ch);
+    
+    wattron(statuswin, curses_color_attr(CLR_YELLOW));
+    for (i = 0; i < pi->nr_items; i++)
+	wprintw(statuswin, " %s", pi->statusitems[i]);
+    wattroff(statuswin, curses_color_attr(CLR_YELLOW));
+    wclrtoeol(statuswin);
 }
 
 
@@ -101,8 +171,10 @@ void curses_update_status(struct nh_player_info *pi)
     if (player.x == 0)
 	return; /* called before the game is running */
     
-    bot1(&player);
-    bot2(&player);
+    if (ui_flags.status3)
+	status3(&player);
+    else
+	classic_status(&player);
     
     wrefresh(statuswin);
 }

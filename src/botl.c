@@ -125,15 +125,15 @@ static int describe_level(char *buf)
 
 	/* TODO:	Add in dungeon name */
 	if (Is_knox(&u.uz))
-		sprintf(buf, "%s ", dungeons[u.uz.dnum].dname);
+		sprintf(buf, "%s", dungeons[u.uz.dnum].dname);
 	else if (In_quest(&u.uz))
-		sprintf(buf, "Home %d ", dunlev(&u.uz));
+		sprintf(buf, "Home %d", dunlev(&u.uz));
 	else if (In_endgame(&u.uz))
 		sprintf(buf,
-			Is_astralevel(&u.uz) ? "Astral Plane " : "End Game ");
+			Is_astralevel(&u.uz) ? "Astral Plane" : "End Game");
 	else {
 		/* ports with more room may expand this one */
-		sprintf(buf, "Dlvl:%-2d ", depth(&u.uz));
+		sprintf(buf, "Dlvl:%-2d", depth(&u.uz));
 		ret = 0;
 	}
 	return ret;

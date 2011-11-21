@@ -81,8 +81,8 @@ void draw_frame(void)
 	return;
     
     /* vertical lines */
-    mvwvline(stdscr, 1, 0, ACS_VLINE, 4 + ui_flags.msgheight + ROWNO);
-    mvwvline(stdscr, 1, COLNO + 1, ACS_VLINE, 4 + ui_flags.msgheight + ROWNO);
+    mvwvline(stdscr, 1, 0, ACS_VLINE, ui_flags.viewheight);
+    mvwvline(stdscr, 1, COLNO + 1, ACS_VLINE, ui_flags.viewheight);
 
     /* horizontal top line above the message win */
     mvwaddch(stdscr, 0, 0, ACS_ULCORNER);
@@ -122,9 +122,17 @@ void draw_frame(void)
 void create_game_windows(void)
 {
     ui_flags.draw_frame = ui_flags.draw_sidebar = FALSE;
+    int statusheight = settings.status3 ? 3 : 2;
     
+    /* 3 variable elements contribute to height: 
+     *  - message area (most important)
+     *  - better status
+     *  - horizontal frame lines (least important)
+     */
+    
+    /* space for the frame? */
     if (settings.frame && COLS >= COLNO + 2 &&
-	LINES >= ROWNO + 4 /* horiz frame lines */ + 1 /* messages */ + 2 /* status */)
+	LINES >= ROWNO + 4 /* horiz lines */ + settings.msgheight + statusheight)
 	ui_flags.draw_frame = TRUE;
     
     if (settings.sidebar && COLS >= COLNO + 20)
@@ -132,13 +140,14 @@ void create_game_windows(void)
     
     /* create subwindows */
     if (ui_flags.draw_frame) {
-	int spare_lines = LINES - ROWNO - 4 - 2;
-	ui_flags.msgheight = min(settings.msgheight, spare_lines);
+	ui_flags.msgheight = settings.msgheight;
+	ui_flags.status3 = settings.status3;
 	
 	msgwin = derwin(stdscr, ui_flags.msgheight, COLNO, 1, 1);
 	mapwin = derwin(stdscr, ROWNO, COLNO, ui_flags.msgheight + 2, 1);
-	statuswin = derwin(stdscr, 2, COLNO, ui_flags.msgheight + ROWNO + 3, 1);
-	ui_flags.viewheight = ui_flags.msgheight + ROWNO + 2 + 2;
+	statuswin = derwin(stdscr, statusheight, COLNO,
+			   ui_flags.msgheight + ROWNO + 3, 1);
+	ui_flags.viewheight = ui_flags.msgheight + ROWNO + statusheight + 2;
 	
 	if (ui_flags.draw_sidebar)
 	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
@@ -147,11 +156,17 @@ void create_game_windows(void)
     } else {
 	int spare_lines = LINES - ROWNO - 2;
 	ui_flags.msgheight = min(settings.msgheight, spare_lines);
-	
+	if (ui_flags.msgheight < spare_lines)
+	    ui_flags.status3 = settings.status3;
+	else {
+	    ui_flags.status3 = FALSE;
+	    statusheight = 2;
+	}
+	    
 	msgwin = derwin(stdscr, ui_flags.msgheight, COLNO, 0, 0);
 	mapwin = derwin(stdscr, ROWNO, COLNO, ui_flags.msgheight, 0);
-	statuswin = derwin(stdscr, 2, COLNO, ui_flags.msgheight + ROWNO, 0);
-	ui_flags.viewheight = ui_flags.msgheight + ROWNO + 2;
+	statuswin = derwin(stdscr, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	ui_flags.viewheight = ui_flags.msgheight + ROWNO + statusheight;
 	
 	if (ui_flags.draw_sidebar)
 	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
