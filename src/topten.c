@@ -372,7 +372,7 @@ static void topten_death_description(struct toptenentry *in, char *outbuf)
 
     outbuf[0] = '\0';
 
-    sprintf(eos(outbuf), "%.10s-%s-%s-%s-%s ", in->name, in->plrole, in->plrace, in->plgend, in->plalign);
+    sprintf(eos(outbuf), "%.16s %s-%s-%s-%s ", in->name, in->plrole, in->plrace, in->plgend, in->plalign);
 
     if (!strncmp("escaped", in->death, 7)) {
 	sprintf(eos(outbuf), "escaped the dungeon %s[max level %d]",
