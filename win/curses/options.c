@@ -126,6 +126,10 @@ boolean option_change_callback(struct nh_option_desc *option)
     else if (!strcmp(option->name, "graphics")) {
 	settings.graphics = option->value.e;
 	switch_graphics(option->value.e);
+	if (ui_flags.ingame) {
+	    draw_map(0);
+	    redraw_game_windows();
+	}
     }
     else if (!strcmp(option->name, "scores_top")) {
 	settings.end_top = option->value.i;
