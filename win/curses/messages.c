@@ -167,7 +167,8 @@ void curses_print_message(int turn, const char *inmsg)
 	    strcat(msglines[curline], "  ");
 	strcat(msglines[curline], msg);
     } else {
-	more();
+	if (strlen(msglines[curline]) > 0)
+	    more();
 	if (!stopprint) /* may get set in more() */
 	    strcpy(msglines[curline], msg);
     }
