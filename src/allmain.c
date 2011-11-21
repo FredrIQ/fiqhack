@@ -208,8 +208,6 @@ boolean nh_start_game(int fd, char *name, int playmode)
     if (fd == -1)
 	goto err_out;
     
-    moves = 1;
-
     if (!program_state.restoring)
 	turntime = time(NULL);
     /* initialize the random number generator */

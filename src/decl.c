@@ -123,8 +123,6 @@ const int shield_static[SHIELD_COUNT] = {
 struct spell spl_book[MAXSPELL + 1];
 
 long moves;
-long moves;
-	 /* These diverge when player is Fast */
 long wailmsg;
 
 /* objects that are moving to another dungeon level */
@@ -216,6 +214,7 @@ void init_data(void)
 {
     boolean in_restore = program_state.restoring;
     boolean nolog = iflags.disable_log;
+    moves = 1;
     
     memset(&program_state, 0, sizeof(program_state));
     memset(&flags, 0, sizeof(flags));
@@ -250,7 +249,7 @@ void init_data(void)
 	ublindf = uchain = uball = NULL;
     migrating_objs = book = NULL;
     in_steed_dismounting = FALSE;
-    wailmsg = moves = 0;
+    wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;
     preferred_pet = 0;
     migrating_mons = mydogs = NULL;
