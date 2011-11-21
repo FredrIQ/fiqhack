@@ -37,8 +37,8 @@ struct nh_cmd_desc builtin_commands[] = {
     {"dir_south_east", "", 'n', 0, CMD_UI | DIRCMD | DIR_SE},
     {"dir_south",      "", 'j', 0, CMD_UI | DIRCMD | DIR_S},
     {"dir_south_west", "", 'b', 0, CMD_UI | DIRCMD | DIR_SW},
-    {"dir_up",         "", '>', 0, CMD_UI | DIRCMD | DIR_UP},
-    {"dir_down",       "", '<', 0, CMD_UI | DIRCMD | DIR_DOWN},
+    {"dir_up",         "", '<', 0, CMD_UI | DIRCMD | DIR_UP},
+    {"dir_down",       "", '>', 0, CMD_UI | DIRCMD | DIR_DOWN},
     
     {"options",	"", 'O', 0, CMD_UI | UICMD_OPTIONS},
     {"extcommand",	"", '#', 0, CMD_UI | UICMD_EXTCMD},
@@ -72,16 +72,10 @@ static void handle_internal_cmd(struct nh_cmd_desc **cmd,
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD);
     switch (id) {
-	case DIR_W:
-	case DIR_NW:
-	case DIR_N:
-	case DIR_NE:
-	case DIR_E:
-	case DIR_SE:
-	case DIR_S:
-	case DIR_SW:
-	case DIR_UP:
-	case DIR_DOWN:
+	case DIR_NW: case DIR_N: case DIR_NE:
+	case DIR_E:              case DIR_W:
+	case DIR_SW: case DIR_S: case DIR_SE:
+	case DIR_UP: case DIR_DOWN:
 	    arg->argtype = CMD_ARG_DIR;
 	    arg->d = id;
 	    *cmd = find_command("move");
