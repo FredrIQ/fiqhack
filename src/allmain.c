@@ -150,8 +150,10 @@ static void startup_common(char *name, int playmode)
     else if (playmode == MODE_WIZARD)
 	wizard = TRUE;
     
-    if (name && name[0])
-	strcpy(plname, name);
+    if (name && name[0]) {
+	strncpy(plname, name, PL_NSIZ);
+	plname[PL_NSIZ-1] = '\0';
+    }
 
     if (wizard)
 	strcpy(plname, "wizard");
@@ -205,7 +207,7 @@ boolean nh_start_game(int fd, char *name, int playmode)
     if (!api_entry_checkpoint())
 	return FALSE; /* quit from player selection or init failed */
 
-    if (fd == -1)
+    if (fd == -1 || !name)
 	goto err_out;
     
     if (!program_state.restoring)
