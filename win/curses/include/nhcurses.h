@@ -62,7 +62,6 @@ struct settings {
     boolean  standout;	/* use standout for --More-- */
     boolean  time;	/* display elapsed 'time' */
     boolean  use_inverse; /* use inverse video for some things   */
-    boolean  num_pad;	/* use numbers for movement commands */
     boolean  ignintr;	/* ignore interrupts */
     boolean  unicode;	/* try to display unicode chars */
     boolean  invweight;	/* show item weight in the inventory */
