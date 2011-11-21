@@ -333,6 +333,7 @@ struct nh_player_info {
 
 /* info about saved games as provided by nh_get_savegame_status */
 struct nh_save_info {
+    enum nh_game_modes playmode;
     char name[PL_NSIZ];
     char plrole[PLRBUFSZ];
     char plrace[PLRBUFSZ];

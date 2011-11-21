@@ -644,6 +644,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
     if (!si)
 	return ret;
     
+    si->playmode = playmode;
     base64_decode(encplname, si->name);
     role[0] = lowc(role[0]);
     strcpy(si->plrole, role);

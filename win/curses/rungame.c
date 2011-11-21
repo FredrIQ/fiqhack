@@ -184,13 +184,16 @@ void rungame(void)
 
 static void describe_save(char *buf, enum nh_log_status status, struct nh_save_info *si)
 {
+    const char *mode_desc[] = {"", "\t[explore]", "\t[wizard]"};
     if (status == LS_IN_PROGRESS)
-	snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s  (crashed?)",
-		 si->name, si->plrole, si->plrace, si->plgend, si->plalign);
-    else
-	snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s%s\tafter %d moves",
+	snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s  (crashed?)\t%s",
 		 si->name, si->plrole, si->plrace, si->plgend, si->plalign,
-		 si->level_desc, si->has_amulet ? " with the amulet" : "", si->moves);
+		 mode_desc[si->playmode]);
+    else
+	snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s%s\tafter %d moves%s",
+		 si->name, si->plrole, si->plrace, si->plgend, si->plalign,
+		 si->level_desc, si->has_amulet ? " with the amulet" : "",
+		 si->moves, mode_desc[si->playmode]);
 }
 
 

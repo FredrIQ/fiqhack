@@ -30,7 +30,7 @@ extern EXPORT boolean nh_exit(int exit_type);
 extern EXPORT enum nh_restore_status nh_restore_game(int fd,
 	struct nh_window_procs *rwinprocs, boolean force_replay);
 
-extern EXPORT boolean nh_start_game(int fd, char*, int);
+extern EXPORT boolean nh_start_game(int fd, char *name, enum nh_game_modes playmode);
 extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char *const *nh_get_copyright_banner(void);
 

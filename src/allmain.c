@@ -201,7 +201,7 @@ static void post_init_tasks(void)
 }
 
 
-boolean nh_start_game(int fd, char *name, int playmode)
+boolean nh_start_game(int fd, char *name, enum nh_game_modes playmode)
 {
     boolean ret;
     if (!api_entry_checkpoint())
