@@ -30,7 +30,6 @@ message(${DATADIR})
 
 add_subdirectory (util)
 add_subdirectory (src)
-add_subdirectory (win/tty)
 add_subdirectory (win/curses)
 add_subdirectory (dat)
 
@@ -51,13 +50,11 @@ install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
         DESTINATION ${LIBDIR})
-install(PROGRAMS ${NetHack_BINARY_DIR}/win/tty/nethack
-        DESTINATION ${BINDIR})
 install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack-curses
         DESTINATION ${BINDIR})
         
 if (UNIX)
-    install(PROGRAMS ${NetHack_BINARY_DIR}/win/tty/nethack.sh
-            DESTINATION ${SHELLDIR} RENAME nethack)
+    install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack-curses.sh
+            DESTINATION ${SHELLDIR} RENAME nethack-curses)
 endif()
 
