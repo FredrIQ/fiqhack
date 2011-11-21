@@ -287,12 +287,8 @@ void free_keymap(void)
 int doextlist(const char **namelist, const char **desclist, int listlen)
 {
     char buf[BUFSZ];
-    int i, icount = 0, size = 10;
+    int i, icount = 0, size = listlen;
     struct nh_menuitem *items = malloc(sizeof(struct nh_menuitem) * size);
-
-    add_menu_txt(items, size, icount, "", MI_TEXT);
-    add_menu_txt(items, size, icount, "    Press '#', then type:", MI_TEXT);
-    add_menu_txt(items, size, icount, "", MI_TEXT);
 
     for (i = 0; i < listlen; i++) {
 	    sprintf(buf, " %s\t- %s.", namelist[i], desclist[i]);
@@ -323,7 +319,7 @@ static struct nh_cmd_desc *doextcmd(void)
     
     /* add help */
     namelist[size] = exthelp;
-    namelist[size] = "get this list of extended commands";
+    desclist[size] = "get this list of extended commands";
     idxmap[size] = 0;
        
     idx = 0;
@@ -338,14 +334,14 @@ static struct nh_cmd_desc *doextcmd(void)
     
     /* keep repeating until we don't run help or quit */
     do {
-	idx = curses_get_ext_cmd(namelist, desclist, size);
+	idx = curses_get_ext_cmd(namelist, desclist, size+1);
 	if (idx < 0)
 	    goto freemem;
 	
 	i = idxmap[idx];
 	
-	if (i == 0 && namelist[i] == exthelp)
-	    doextlist(namelist, desclist, size);
+	if (idx == size && namelist[idx] == exthelp)
+	    doextlist(namelist, desclist, size+1);
 	else
 	    retval = &commandlist[i];
     } while (!retval);

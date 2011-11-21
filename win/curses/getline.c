@@ -237,31 +237,6 @@ char *mungspaces(char *bp)
 }
 
 
-/* 
- * display command and command description for each extended command
- * This is semi-redundant - extcmd_via_menu also lists the commands, but only
- * shows the description for some items, so you might need to know what you're
- * looking for.
- */
-static void extcmd_help(const char **namelist, const char **desclist, int listlen)
-{
-    struct nh_menuitem *items;
-    int icount, size, i;
-    char buf[BUFSZ];
-    
-    icount = 0;
-    size = 10;
-    items = malloc(sizeof(struct nh_menuitem) * size);
-    
-    for (i = 0; i < listlen; i++) {
-	sprintf(buf, "%s\t- %s", namelist[i], desclist[i]);
-	add_menu_txt(items, size, icount, buf, MI_TEXT);
-    }
-    curses_display_menu(items, icount, "Extended Commands List:", PICK_NONE, NULL);
-    free(items);
-}
-
-
 static int extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
 {
     struct nh_menuitem *items;
@@ -377,7 +352,6 @@ int curses_get_ext_cmd(const char **namelist, const char **desclist, int listlen
 	if (settings.extmenu)
 	    return extcmd_via_menu(namelist, desclist, listlen);
 
-redo:
 	/* maybe a runtime option? */
 	hooked_curses_getlin("extended command: (? for help)", buf,
 			     ext_cmd_getlin_hook, &hpa);
@@ -385,11 +359,6 @@ redo:
 	if (buf[0] == 0 || buf[0] == '\033')
 	    return -1;
 	
-	if (!strcmp(buf, "?")) {
-	    extcmd_help(namelist, desclist, listlen);
-	    goto redo;
-	}
-
 	for (i = 0; i < listlen; i++)
 	    if (!strcmp(buf, namelist[i])) break;
 
