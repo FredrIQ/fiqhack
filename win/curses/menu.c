@@ -455,13 +455,15 @@ static void layout_objmenu(struct gamewin *gw)
 void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 		  int *selected, int how)
 {
-    int i, maxitem, txtattr;
+    int i, maxitem, txtattr, width, pos;
     
+    width = getmaxx(win);
     werase(win);
     
     /* draw menu items */
     maxitem = min(getmaxy(win), icount);
     for (i = 0; i < maxitem; i++) {
+	pos = 4; /* assume that an accel will be added ("a - ") */
 	wmove(win, i, 0);
 	wattrset(win, 0);
 	txtattr = A_NORMAL;
@@ -483,10 +485,13 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 	    }
 	else if (items[i].accel)
 	    wprintw(win, "%c - ", items[i].accel);
+	else
+	    pos = 0; /* no accel after all */
 	
 	if (items[i].otype) {
 	    print_sym(win, &cur_drawing->objects[items[i].otype-1], A_NORMAL);
 	    waddch(win, ' ');
+	    pos += 2;
 	}
 	
 	if (items[i].worn) txtattr |= A_BOLD;
@@ -496,10 +501,11 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 	    default: break;
 	}
 	wattron(win, txtattr);
-	waddstr(win, items[i].caption);
+	wprintw(win, "%-.*s", width - pos, items[i].caption);
+	pos += min(strlen(items[i].caption), width - pos);
 	wattroff(win, txtattr);
 	
-	if (settings.invweight && items[i].weight != -1)
+	if (settings.invweight && items[i].weight != -1 && width > pos + 3)
 	    wprintw(win, " {%d}", items[i].weight);
     }
     wrefresh(win);
