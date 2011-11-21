@@ -121,6 +121,11 @@ boolean option_change_callback(struct nh_option_desc *option)
 	return TRUE;
     }
     
+    if (!strcmp(option->name, "showexp") ||
+	!strcmp(option->name, "showscore") ||
+	!strcmp(option->name, "time"))
+	curses_update_status(NULL);
+    
     if (!strcmp(option->name, "menu_headings")) {
 	settings.menu_headings = option->value.e;
     }
