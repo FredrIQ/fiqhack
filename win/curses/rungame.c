@@ -156,6 +156,8 @@ void rungame(void)
     query_birth_options();
     while (!settings.plname[0])
 	curses_getline("what is your name?", settings.plname);
+    if (settings.plname[0] == '\033') /* canceled */
+	return;
 
     t = (long)time(NULL);
     snprintf(filename, sizeof(filename), "%s%ld_%s.nhgame", savedir,
