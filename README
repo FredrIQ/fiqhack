@@ -2,7 +2,8 @@ NetHack, experimental dev version
 
 Changes so far:
     - removed support for obsolete systems, OSes, compilers
-    - removed all window ports beside tty, to make changing the core easier
+    - removed all old window ports.
+    - new ncurses based window port - with unicode, colors, etc.
     - new build system: cmake. yay!
     - libification: NetHack is now a shared library (libnethack.so) that
 	is included by the tty window port binary.
@@ -34,7 +35,6 @@ Changes so far:
 	of different games trampling each other.
 
 Plans:
-    - create an ncurses based window port for tty and delete the current tty code
     - create a qt4-based tile port
 
 
