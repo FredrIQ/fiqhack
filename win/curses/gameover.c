@@ -49,7 +49,7 @@ void curses_outrip(struct nh_menuitem *items, int icount, boolean tombstone,
     char *dpx;
     char buf[BUFSZ];
     int x, i;
-    int line;
+    int line, txtpos = 0;
     
     /* clear all game windows and print to the screen directly.
      * Those windows will be destroyed later. */
@@ -104,14 +104,13 @@ void curses_outrip(struct nh_menuitem *items, int icount, boolean tombstone,
 	}
 	free(rip);
 	rip = NULL;
+	txtpos = sizeof(rip_txt)/sizeof(rip_txt[0])+ 2;
     }
     
     for (i = 0; i < icount; i++)
-	mvaddstr(sizeof(rip_txt)/sizeof(rip_txt[0])+ 2 + i, 0, items[i].caption);
+	mvaddstr(txtpos + i, 0, items[i].caption);
     mvaddstr(LINES-1, 0, "--More--");
     
     refresh();
     getch();
-    clear();
-    refresh();
 }

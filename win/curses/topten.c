@@ -82,6 +82,10 @@ void show_topten(char *player, int top, int around, boolean own)
 	return;
     }
     
+    /* show the score list on a blank screen */
+    clear();
+    refresh();
+
     icount = 0;
     size = 4 + listlen * 2; /* maximum length, only required if every item wraps */
     items = malloc(size * sizeof(struct nh_menuitem));
