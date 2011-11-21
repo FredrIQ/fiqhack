@@ -187,13 +187,11 @@ int main(int argc, char *argv[])
     read_nh_config();
 
     process_args(argc, argv);	/* command line options */
-    load_keymap(ui_flags.playmode == MODE_WIZARD);
     init_displaychars();
     
     mainmenu();
     
     exit_curses_ui();
-    free_keymap();
     nh_exit(0);
     free_displaychars();
 

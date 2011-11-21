@@ -37,7 +37,7 @@ extern EXPORT const char *const *nh_get_copyright_banner(void);
 extern EXPORT enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si);
 
 /* cmd.c */
-extern EXPORT struct nh_cmd_desc *nh_get_commands(int*,boolean);
+extern EXPORT struct nh_cmd_desc *nh_get_commands(int *count);
 
 /* drawing.c */
 extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);

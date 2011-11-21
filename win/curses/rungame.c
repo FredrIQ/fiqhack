@@ -112,7 +112,7 @@ static void game_ended(int status, char *filename)
     } else if (status != GAME_OVER)
 	return;
     
-    show_topten(settings.plname, settings.end_top, settings.end_around,
+    show_topten(player.plname, settings.end_top, settings.end_around,
 		settings.end_own);
     
     /* 
@@ -170,7 +170,9 @@ void rungame(void)
     if (!nh_start_game(fd, settings.plname, ui_flags.playmode))
 	return;
     
+    load_keymap(); /* need to load the keymap after the game has been started */
     ret = commandloop();
+    free_keymap();
     
     destroy_game_windows();
     cleanup_messages();
@@ -254,9 +256,10 @@ boolean loadgame(void)
 	destroy_game_windows();
 	return FALSE;
     }
-    strncpy(settings.plname, player.plname, PL_NSIZ);
     
+    load_keymap(); /* need to load the keymap after the game has been started */
     ret = commandloop();
+    free_keymap();
     
     destroy_game_windows();
     cleanup_messages();

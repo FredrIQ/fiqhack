@@ -314,7 +314,7 @@ extern void tty_end_screen(void);
 
 /* keymap.c */
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);
-extern void load_keymap(boolean want_wizard);
+extern void load_keymap(void);
 
 /* mapglyph.c */
 extern void init_displaychars(void);

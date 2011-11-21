@@ -179,10 +179,10 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 }
 
 
-void load_keymap(boolean want_wizard)
+void load_keymap(void)
 {
 	int count, i;
-	struct nh_cmd_desc *cmdlist = nh_get_commands(&cmdcount, want_wizard);
+	struct nh_cmd_desc *cmdlist = nh_get_commands(&cmdcount);
 	
 	commandlist = malloc(cmdcount * sizeof(struct nh_cmd_desc));
 	memcpy(commandlist, cmdlist, cmdcount * sizeof(struct nh_cmd_desc));

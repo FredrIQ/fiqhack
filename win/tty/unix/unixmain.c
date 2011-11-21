@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
 	read_config();
 
 	process_options(argc, argv);	/* command line options */
-	load_keymap(playmode == MODE_WIZARD);
+	load_keymap();
 	init_displaychars();
 	
 	rungame();

@@ -99,7 +99,7 @@ void curses_update_status(struct nh_player_info *pi)
 	player = *pi;
     
     if (player.x == 0)
-	return; /* called from erase_menu_or_text, but the game isn't running */
+	return; /* called before the game is running */
     
     bot1(&player);
     bot2(&player);

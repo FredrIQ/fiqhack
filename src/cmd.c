@@ -1059,13 +1059,13 @@ void show_conduct(int final)
 }
 
 
-struct nh_cmd_desc *nh_get_commands(int *count, boolean include_debug)
+struct nh_cmd_desc *nh_get_commands(int *count)
 {
 	int i, j, cmdcount = 0;
 	struct nh_cmd_desc *ui_cmd;
 	
 	for (i = 0; cmdlist[i].name; i++)
-	    if (include_debug || !(cmdlist[i].flags & CMD_DEBUG))
+	    if (wizard || !(cmdlist[i].flags & CMD_DEBUG))
 		cmdcount++;
     
 	ui_cmd = xmalloc(sizeof(struct nh_cmd_desc) * cmdcount);
@@ -1074,7 +1074,7 @@ struct nh_cmd_desc *nh_get_commands(int *count, boolean include_debug)
 
 	j = 0;
 	for (i = 0; cmdlist[i].name; i++)
-	    if (include_debug || !(cmdlist[i].flags & CMD_DEBUG)) {
+	    if (wizard || !(cmdlist[i].flags & CMD_DEBUG)) {
 		ui_cmd[j].name = cmdlist[i].name;
 		ui_cmd[j].desc = cmdlist[i].desc;
 		ui_cmd[j].defkey = cmdlist[i].defkey;
@@ -1289,7 +1289,8 @@ int get_command_idx(const char *command)
 	    return -1;
 	
 	for (i = 0; cmdlist[i].name; i++)
-	    if (!strcmp(command, cmdlist[i].name))
+	    if (!strcmp(command, cmdlist[i].name) &&
+		(wizard || !(cmdlist[i].flags & CMD_DEBUG)))
 		return i;
 	
 	return -1;
