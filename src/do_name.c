@@ -83,9 +83,11 @@ int do_mname(void)
 	/* strip leading and trailing spaces; unnames monster if all spaces */
 	mungspaces(buf);
 
-	if (mtmp->data->geno & G_UNIQ)
-	    pline("%s doesn't like being called names!", Monnam(mtmp));
-	else
+	if (mtmp->data->geno & G_UNIQ) {
+	    distant_monnam(mtmp, ARTICLE_THE, buf);
+	    *buf = highc(*buf);
+	    pline("%s doesn't like being called names!", buf);
+	} else
 	    christen_monst(mtmp, buf);
 	return 0;
 }
