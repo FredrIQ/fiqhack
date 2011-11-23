@@ -19,6 +19,7 @@ static void pre_move_tasks(boolean didmove);
 
 static void newgame(void);
 static void welcome(boolean);
+static void handle_lava_trap(boolean didmove);
 
 
 static void wd_message(void)
@@ -560,7 +561,7 @@ static void you_moved(void)
     /******************************************/
 
     if (u.utrap && u.utraptype == TT_LAVA)
-	handle_lava_trap(didmove);
+	handle_lava_trap(TRUE);
 }
 
 
