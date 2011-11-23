@@ -746,12 +746,12 @@ int seffects(struct obj *sobj)
 			    ABON(A_INT)--;
 			    ABON(A_WIS)--;
 			    makeknown(otmp->otyp);
-			    flags.botl = 1;
+			    iflags.botl = 1;
 			}
 			if (otmp->otyp == GAUNTLETS_OF_DEXTERITY) {
 			    ABON(A_DEX)--;
 			    makeknown(otmp->otyp);
-			    flags.botl = 1;
+			    iflags.botl = 1;
 			}
 		    }
 		    make_stunned(HStun + rn1(10, 10), TRUE);
@@ -1009,7 +1009,7 @@ int seffects(struct obj *sobj)
 			u.uen = u.uenmax;
 		    else
 			u.uen = (u.uenmax += dice(5,4));
-		    botl = 1;
+		    iflags.botl = 1;
 		    break;
 		}
 		known = TRUE;

@@ -271,7 +271,7 @@ void bot(void)
 	
 	make_player_info(&pi);
 	update_status(&pi);
-	botl = 0;
+	iflags.botl = 0;
 }
 
 /*botl.c*/

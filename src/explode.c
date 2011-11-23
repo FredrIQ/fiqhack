@@ -322,7 +322,7 @@ void explode(int x, int y,
 		    	u.mh  -= damu;
 		    else
 			u.uhp -= damu;
-		    botl = 1;
+		    iflags.botl = 1;
 		}
 
 		if (u.uhp <= 0 || (Upolyd && u.mh <= 0)) {

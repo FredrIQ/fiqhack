@@ -12,7 +12,7 @@ void take_gold(void)
 	} else {
 		pline("You notice you have no gold!");
 		u.ugold = 0;
-		botl = 1;
+		iflags.botl = 1;
 	}
 #else
         struct obj *otmp, *nobj;
@@ -28,7 +28,7 @@ void take_gold(void)
 		pline("You feel a strange sensation.");
 	} else {
 		pline("You notice you have no money!");
-		botl = 1;
+		iflags.botl = 1;
 	}
 #endif
 }
@@ -180,7 +180,7 @@ int dosit(void)
 			make_blinded(0L,TRUE);
 			make_sick(0L, NULL, FALSE, SICK_ALL);
 			heal_legs();
-			botl = 1;
+			iflags.botl = 1;
 			break;
 		    case 5:
 			take_gold();

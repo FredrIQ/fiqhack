@@ -1503,7 +1503,7 @@ int damageum(struct monst *mdef, const struct attack *mattk)
 			ABASE(A_INT) += rnd(4);
 			if (ABASE(A_INT) > AMAX(A_INT))
 				ABASE(A_INT) = AMAX(A_INT);
-			botl = 1;
+			iflags.botl = 1;
 		}
 		exercise(A_WIS, TRUE);
 		break;
@@ -1763,7 +1763,7 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 					The(mdef->data->mname));
 				if (!Unchanging) {
 					Slimed = 5L;
-					botl = 1;
+					iflags.botl = 1;
 				}
 			    } else
 			    exercise(A_CON, TRUE);

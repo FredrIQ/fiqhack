@@ -247,7 +247,6 @@ extern const char * const monexplain[], * const oclass_names[];
 #define FQN_MAX_FILENAME 512
 # endif
 
-extern boolean botl;
 
 extern char *fqn_prefix[PREFIX_COUNT];
 extern const char *const fqn_prefix_names[PREFIX_COUNT];

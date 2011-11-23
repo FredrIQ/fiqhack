@@ -1484,7 +1484,7 @@ void use_unicorn_horn(struct obj *obj)
 	else if (!did_prop)
 	    pline("Nothing seems to happen.");
 
-	botl = (did_attr || did_prop);
+	iflags.botl = (did_attr || did_prop);
 #undef PROP_COUNT
 #undef ATTR_COUNT
 #undef prop2trbl
@@ -1752,7 +1752,7 @@ static void use_stone(struct obj *tstone)
 	return;
 #ifndef GOLDOBJ
     if (obj->oclass == COIN_CLASS) {
-	u.ugold += obj->quan;	/* keep botl up to date */
+	u.ugold += obj->quan;	/* keep iflags.botl up to date */
 	goldobj = *obj;
 	dealloc_obj(obj);
 	obj = &goldobj;
@@ -2070,7 +2070,7 @@ static int use_whip(struct obj *obj)
 	pline("You hit your %s with your bullwhip.", body_part(FOOT));
 	sprintf(buf, "killed %sself with %s bullwhip", uhim(), uhis());
 	losehp(dam, buf, NO_KILLER_PREFIX);
-	botl = 1;
+	iflags.botl = 1;
 	return 1;
 
     } else if ((Fumbling || Glib) && !rn2(5)) {
@@ -2574,21 +2574,21 @@ static int do_break_wand(struct obj *obj)
 		if (obj->otyp == WAN_TELEPORTATION &&
 		    affects_objects && level->objects[x][y]) {
 		    bhitpile(obj, bhito, x, y);
-		    if (botl) bot();		/* potion effects */
+		    if (iflags.botl) bot();		/* potion effects */
 		}
 		damage = zapyourself(obj, FALSE);
 		if (damage) {
 		    sprintf(buf, "killed %sself by breaking a wand", uhim());
 		    losehp(damage, buf, NO_KILLER_PREFIX);
 		}
-		if (botl) bot();		/* blindness */
+		if (iflags.botl) bot();		/* blindness */
 	    } else if ((mon = m_at(level, x, y)) != 0) {
 		bhitm(mon, obj);
-	     /* if (botl) bot(); */
+	     /* if (iflags.botl) bot(); */
 	    }
 	    if (affects_objects && level->objects[x][y]) {
 		bhitpile(obj, bhito, x, y);
-		if (botl) bot();		/* potion effects */
+		if (iflags.botl) bot();		/* potion effects */
 	    }
 	}
     }

@@ -449,7 +449,7 @@ static int drop(struct obj *obj)
 		if (obj->oclass != COIN_CLASS || obj == invent) freeinv(obj);
 #else
 		/* Ensure update when we drop gold objects */
-		if (obj->oclass == COIN_CLASS) botl = 1;
+		if (obj->oclass == COIN_CLASS) iflags.botl = 1;
 		freeinv(obj);
 #endif
 		hitfloor(obj);
@@ -470,7 +470,7 @@ void dropx(struct obj *obj)
 	if (obj->oclass != COIN_CLASS || obj == invent) freeinv(obj);
 #else
         /* Ensure update when we drop gold objects */
-        if (obj->oclass == COIN_CLASS) botl = 1;
+        if (obj->oclass == COIN_CLASS) iflags.botl = 1;
         freeinv(obj);
 #endif
 	if (!u.uswallow) {
@@ -1463,7 +1463,7 @@ void set_wounded_legs(long side, int timex)
 
 	if (!Wounded_legs) {
 		ATEMP(A_DEX)--;
-		botl = 1;
+		iflags.botl = 1;
 	}
 
 	if (!Wounded_legs || (HWounded_legs & TIMEOUT))
@@ -1477,7 +1477,7 @@ void heal_legs(void)
 	if (Wounded_legs) {
 		if (ATEMP(A_DEX) < 0) {
 			ATEMP(A_DEX)++;
-			botl = 1;
+			iflags.botl = 1;
 		}
 
 		if (!u.usteed)

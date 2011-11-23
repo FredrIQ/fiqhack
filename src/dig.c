@@ -837,7 +837,7 @@ int use_pick_axe2(struct obj *obj, schar dx, schar dy, schar dz)
 		sprintf(buf, "%s own %s", uhis(),
 				OBJ_NAME(objects[obj->otyp]));
 		losehp(dam, buf, KILLED_BY);
-		botl=1;
+		iflags.botl=1;
 		return 1;
 	} else if (dz == 0) {
 		if (Stunned || (Confusion && !rn2(5)))

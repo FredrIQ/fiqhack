@@ -2328,11 +2328,11 @@ static void dofiretrap(struct obj *box)
 	    }
 	    if (alt > num) num = alt;
 	    if (u.mhmax > mons[u.umonnum].mlevel)
-		u.mhmax -= rn2(min(u.mhmax,num + 1)), botl = 1;
+		u.mhmax -= rn2(min(u.mhmax,num + 1)), iflags.botl = 1;
 	} else {
 	    num = dice(2,4);
 	    if (u.uhpmax > u.ulevel)
-		u.uhpmax -= rn2(min(u.uhpmax,num + 1)), botl = 1;
+		u.uhpmax -= rn2(min(u.uhpmax,num + 1)), iflags.botl = 1;
 	}
 	if (!num)
 	    pline("You are uninjured.");
@@ -2816,7 +2816,7 @@ void drain_en(int n)
 		if (u.uenmax < 0) u.uenmax = 0;
 		u.uen = 0;
 	}
-	botl = 1;
+	iflags.botl = 1;
 }
 
 /* disarm a trap */

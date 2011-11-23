@@ -143,7 +143,7 @@ void burn_away_slime(void)
 	if (Slimed) {
 	    pline("The slime that covers you is burned away!");
 	    Slimed = 0L;
-	    botl = 1;
+	    iflags.botl = 1;
 	}
 	return;
 }

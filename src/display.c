@@ -1190,7 +1190,7 @@ int doredraw(void)
     /* overlay with monsters */
     see_monsters();
 
-    botl = 1;	/* force a redraw of the bottom line */
+    iflags.botl = 1;	/* force a redraw of the bottom line */
     return 0;
 }
 
@@ -1338,7 +1338,7 @@ void clear_display_buffer(void)
 void cls(void)
 {
     win_pause(P_MESSAGE); /* required due to screwy tty display logic */
-    botl = 1;		/* force update of botl window */
+    iflags.botl = 1;		/* force update of botl window */
     win_clear_map();	/* clear physical screen */
 
     clear_display_buffer();
@@ -1366,7 +1366,7 @@ void flush_screen(void)
 
     update_screen(dbuf);
 
-    if (botl)
+    if (iflags.botl)
 	bot();
 }
 

@@ -343,7 +343,7 @@ int doconsult(struct monst *oracl)
 #else
         money2mon(oracl, (long)u_pay);
 #endif
-	botl = 1;
+	iflags.botl = 1;
 	add_xpts = 0;	/* first oracle of each type gives experience points */
 	if (u_pay == minor_cost) {
 		outrumor(1, BY_ORACLE);

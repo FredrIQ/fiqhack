@@ -1326,7 +1326,7 @@ void domove(schar dx, schar dy, schar dz)
 	if (flags.run && iflags.runmode != RUN_TPORT) {
 	    /* display every step or every 7th step depending upon mode */
 	    if (iflags.runmode != RUN_LEAP || !(moves % 7L)) {
-		botl = 1;
+		iflags.botl = 1;
 		flush_screen();
 		delay_output();
 		if (iflags.runmode == RUN_CRAWL) {
@@ -2005,7 +2005,7 @@ void losehp(int n, const char *knam, boolean k_format)
 	if (Upolyd) {
 		u.mh -= n;
 		if (u.mhmax < u.mh) u.mhmax = u.mh;
-		botl = 1;
+		iflags.botl = 1;
 		if (u.mh < 1)
 		    rehumanize();
 		else if (n > 0 && u.mh*10 < u.mhmax && Unchanging)
@@ -2016,7 +2016,7 @@ void losehp(int n, const char *knam, boolean k_format)
 	u.uhp -= n;
 	if (u.uhp > u.uhpmax)
 		u.uhpmax = u.uhp;	/* perhaps n was negative */
-	botl = 1;
+	iflags.botl = 1;
 	if (u.uhp < 1) {
 		killer_format = k_format;
 		killer = knam;		/* the thing that killed you */

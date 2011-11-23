@@ -217,7 +217,7 @@ void addinv_core1(struct obj *obj)
 #ifndef GOLDOBJ
 		u.ugold += obj->quan;
 #else
-		botl = 1;
+		iflags.botl = 1;
 #endif
 	} else if (obj->otyp == AMULET_OF_YENDOR) {
 		if (u.uhave.amulet) impossible("already have amulet?");
@@ -443,7 +443,7 @@ void freeinv_core(struct obj *obj)
 		u.ugold -= obj->quan;
 		obj->in_use = FALSE;
 #endif
-		botl = 1;
+		iflags.botl = 1;
 		return;
 	} else if (obj->otyp == AMULET_OF_YENDOR) {
 		if (!u.uhave.amulet) impossible("don't have amulet?");
@@ -470,7 +470,7 @@ void freeinv_core(struct obj *obj)
 		curse(obj);
 	} else if (confers_luck(obj)) {
 		set_moreluck();
-		botl = 1;
+		iflags.botl = 1;
 	} else if (obj->otyp == FIGURINE && obj->timed) {
 		stop_timer(obj->olev, FIG_TRANSFORM, obj);
 	}
@@ -604,7 +604,7 @@ struct obj *mkgoldobj(long q)
 	u.ugold -= q;
 	otmp->quan = q;
 	otmp->owt = weight(otmp);
-	botl = 1;
+	iflags.botl = 1;
 	return otmp;
 }
 #endif
@@ -936,7 +936,7 @@ struct obj *getobj(const char *let, const char *word)
 		    }
 		}
 #ifdef GOLDOBJ
-		botl = 1; /* May have changed the amount of money */
+		iflags.botl = 1; /* May have changed the amount of money */
 #endif
 		for (otmp = invent; otmp; otmp = otmp->nobj)
 			if (otmp->invlet == ilet) break;

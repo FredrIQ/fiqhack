@@ -769,7 +769,7 @@ static boolean magicbane_hit(
 		    pline("You lose magical energy!");
 		    u.uenmax--;
 		    if (u.uen > 0) u.uen--;
-		    botl = 1;
+		    iflags.botl = 1;
 		}
 	    } else {
 		if (mdef->data == &mons[PM_CLAY_GOLEM])
@@ -778,7 +778,7 @@ static boolean magicbane_hit(
 		    pline("You absorb magical energy!");
 		    u.uenmax++;
 		    u.uen++;
-		    botl = 1;
+		    iflags.botl = 1;
 		}
 	    }
 	}
@@ -1196,7 +1196,7 @@ static int arti_invoke(struct obj *obj)
 	    if (Sick) make_sick(0L,NULL,FALSE,SICK_ALL);
 	    if (Slimed) Slimed = 0L;
 	    if (Blinded > creamed) make_blinded(creamed, FALSE);
-	    botl = 1;
+	    iflags.botl = 1;
 	    break;
 	  }
 	case ENERGY_BOOST: {
@@ -1206,7 +1206,7 @@ static int arti_invoke(struct obj *obj)
 	    if (epboost) {
 		pline("You feel re-energized.");
 		u.uen += epboost;
-		botl = 1;
+		iflags.botl = 1;
 	    } else
 		goto nothing_special;
 	    break;

@@ -1951,13 +1951,13 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 		if (from_user)
 		    pline("%d gold piece%s.", cnt, plur(cnt));
 		u.ugold += cnt;
-		botl=1;
+		iflags.botl=1;
 		return &zeroobj;
 #else
                 otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE);
 		otmp->quan = cnt;
                 otmp->owt = weight(otmp);
-		botl=1;
+		iflags.botl=1;
 		return otmp;
 #endif
 	}

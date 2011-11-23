@@ -46,7 +46,7 @@ static int throw_obj(struct obj *obj, int shotlimit)
 	if (!getdir(NULL, &dx, &dy, &dz)) {
 		if (obj->oclass == COIN_CLASS) {
 		    u.ugold += obj->quan;
-		    botl = 1;
+		    iflags.botl = 1;
 		    dealloc_obj(obj);
 		}
 		return 0;
@@ -1638,7 +1638,7 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 	if (!dx && !dy && !dz) {
 #ifndef GOLDOBJ
 		u.ugold += obj->quan;
-		botl = 1;
+		iflags.botl = 1;
 		dealloc_obj(obj);
 #endif
 		pline("You cannot throw gold at yourself.");

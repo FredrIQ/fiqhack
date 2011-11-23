@@ -485,7 +485,7 @@ int dotele(void)
 			return 0;
 	    } else {
 		u.uen -= energy;
-		botl = 1;
+		iflags.botl = 1;
 	    }
 	}
 

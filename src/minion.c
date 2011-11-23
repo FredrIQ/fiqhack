@@ -235,7 +235,7 @@ long bribe(struct monst *mtmp)
 	}
 	money2mon(mtmp, offer);
 #endif
-	botl = 1;
+	iflags.botl = 1;
 	return offer;
 }
 

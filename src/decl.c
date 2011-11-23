@@ -186,7 +186,6 @@ const char *const fqn_prefix_names[PREFIX_COUNT] = {
     "bonesdir", "datadir", "scoredir", "lockdir", "troubledir"
 };
 
-boolean botl;	/* redo status line */
 
 /* quest monsters need some fixups depending on your race and role, but
  * mons is const. We'll use these copies instead. */
@@ -243,7 +242,7 @@ void init_data(void)
     ffruit = NULL;
     current_fruit = 0;
     sp_levchn = NULL;
-    botl = in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
+    in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
     current_wand = invent = uwep = uarm = uswapwep = uquiver = uarmu = uskin =
 	uarmc = uarmh = uarms = uarmg = uarmf = uamul = uright = uleft =
 	ublindf = uchain = uball = NULL;

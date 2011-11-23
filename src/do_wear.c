@@ -286,7 +286,7 @@ static int Helmet_on(void)
 		 * and the actual enchantment of the hat is irrelevant.
 		 */
 		ABON(A_CHA) += (Role_if (PM_WIZARD) ? 1 : -1);
-		botl = 1;
+		iflags.botl = 1;
 		makeknown(uarmh->otyp);
 		break;
 	case HELM_OF_OPPOSITE_ALIGNMENT:
@@ -305,7 +305,7 @@ static int Helmet_on(void)
 			      Tobjnam(uarmh, "glow"), hcolor("black"));
 		    curse(uarmh);
 		}
-		botl = 1;		/* reveal new alignment or INT & WIS */
+		iflags.botl = 1;		/* reveal new alignment or INT & WIS */
 		if (Hallucination) {
 		    pline("My brain hurts!"); /* Monty Python's Flying Circus */
 		} else if (uarmh->otyp == DUNCE_CAP) {
@@ -335,12 +335,12 @@ int Helmet_off(void)
 	case ORCISH_HELM:
 	    break;
 	case DUNCE_CAP:
-	    botl = 1;
+	    iflags.botl = 1;
 	    break;
 	case CORNUTHAUM:
 	    if (!cancelled_don) {
 		ABON(A_CHA) += (Role_if (PM_WIZARD) ? -1 : 1);
-		botl = 1;
+		iflags.botl = 1;
 	    }
 	    break;
 	case HELM_OF_TELEPATHY:
@@ -354,7 +354,7 @@ int Helmet_off(void)
 	case HELM_OF_OPPOSITE_ALIGNMENT:
 	    u.ualign.type = u.ualignbase[A_CURRENT];
 	    u.ublessed = 0; /* lose the other god's protection */
-	    botl = 1;
+	    iflags.botl = 1;
 	    break;
 	default: impossible(unknown_type, c_helmet, uarmh->otyp);
     }
@@ -377,7 +377,7 @@ static int Gloves_on(void)
 		break;
 	case GAUNTLETS_OF_POWER:
 		makeknown(uarmg->otyp);
-		botl = 1; /* taken care of in attrib.c */
+		iflags.botl = 1; /* taken care of in attrib.c */
 		break;
 	case GAUNTLETS_OF_DEXTERITY:
 		adj_abon(uarmg, uarmg->spe);
@@ -403,7 +403,7 @@ int Gloves_off(void)
 	    break;
 	case GAUNTLETS_OF_POWER:
 	    makeknown(uarmg->otyp);
-	    botl = 1; /* taken care of in attrib.c */
+	    iflags.botl = 1; /* taken care of in attrib.c */
 	    break;
 	case GAUNTLETS_OF_DEXTERITY:
 	    if (!cancelled_don) adj_abon(uarmg, -uarmg->spe);
@@ -509,7 +509,7 @@ static void Amulet_on(void)
 	case AMULET_OF_UNCHANGING:
 		if (Slimed) {
 		    Slimed = 0;
-		    botl = 1;
+		    iflags.botl = 1;
 		}
 		break;
 	case AMULET_OF_CHANGE:
@@ -523,7 +523,7 @@ static void Amulet_on(void)
 		    makeknown(AMULET_OF_CHANGE);
 		    pline("You are suddenly very %s!", flags.female ? "feminine"
 			: "masculine");
-		    botl = 1;
+		    iflags.botl = 1;
 		} else
 		    /* already polymorphed into single-gender monster; only
 		       changed the character's base sex */
@@ -676,7 +676,7 @@ void Ring_on(struct obj *obj)
 		if (ACURR(which) != old_attrib ||
 			(objects[obj->otyp].oc_name_known &&
 			    old_attrib != 25 && old_attrib != 3)) {
-		    botl = 1;
+		    iflags.botl = 1;
 		    makeknown(obj->otyp);
 		    obj->known = 1;
 		    update_inventory();
@@ -693,7 +693,7 @@ void Ring_on(struct obj *obj)
 		break;
 	case RIN_PROTECTION:
 		if (obj->spe || objects[RIN_PROTECTION].oc_name_known) {
-		    botl = 1;
+		    iflags.botl = 1;
 		    makeknown(RIN_PROTECTION);
 		    obj->known = 1;
 		    update_inventory();
@@ -776,7 +776,7 @@ static void Ring_off_or_gone(struct obj *obj, boolean gone)
 		old_attrib = ACURR(which);
 		ABON(which) -= obj->spe;
 		if (ACURR(which) != old_attrib) {
-		    botl = 1;
+		    iflags.botl = 1;
 		    makeknown(obj->otyp);
 		    obj->known = 1;
 		    update_inventory();
@@ -791,7 +791,7 @@ static void Ring_off_or_gone(struct obj *obj, boolean gone)
 	case RIN_PROTECTION:
 		/* might have forgotten it due to amnesia */
 		if (obj->spe) {
-		    botl = 1;
+		    iflags.botl = 1;
 		    makeknown(RIN_PROTECTION);
 		    obj->known = 1;
 		    update_inventory();
@@ -842,7 +842,7 @@ void Blindf_on(struct obj *otmp)
 	    /* blindness has just been toggled */
 	    if (Blind_telepat || Infravision) see_monsters();
 	    vision_full_recalc = 1;	/* recalc vision limits */
-	    botl = 1;
+	    iflags.botl = 1;
 	}
 }
 
@@ -875,7 +875,7 @@ void Blindf_off(struct obj *otmp)
 	    /* blindness has just been toggled */
 	    if (Blind_telepat || Infravision) see_monsters();
 	    vision_full_recalc = 1;	/* recalc vision limits */
-	    botl = 1;
+	    iflags.botl = 1;
 	}
 }
 
@@ -1275,7 +1275,7 @@ int dowear(void)
 			pline("You are suddenly overcome with shame and change your mind.");
 		u.ublessed = 0; /* lose your god's protection */
 		makeknown(otmp->otyp);
-		botl = 1;
+		iflags.botl = 1;
 		return 1;
 	}
 
@@ -1451,7 +1451,7 @@ void find_ac(void)
 	if (uac < -128) uac = -128;	/* u.uac is an schar */
 	if (uac != u.uac){
 		u.uac = uac;
-		botl = 1;
+		iflags.botl = 1;
 	}
 }
 
@@ -1956,7 +1956,7 @@ void adj_abon(struct obj *otmp, schar delta)
 			makeknown(uarmg->otyp);
 			ABON(A_DEX) += (delta);
 		}
-		botl = 1;
+		iflags.botl = 1;
 	}
 	if (uarmh && uarmh == otmp && otmp->otyp == HELM_OF_BRILLIANCE) {
 		if (delta) {
@@ -1964,7 +1964,7 @@ void adj_abon(struct obj *otmp, schar delta)
 			ABON(A_INT) += (delta);
 			ABON(A_WIS) += (delta);
 		}
-		botl = 1;
+		iflags.botl = 1;
 	}
 }
 

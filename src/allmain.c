@@ -411,7 +411,7 @@ static void you_moved(void)
 	    run_regions(level);
 
 	    if (u.ublesscnt)  u.ublesscnt--;
-	    botl = 1;
+	    iflags.botl = 1;
 
 	    /* One possible result of prayer is healing.  Whether or
 		* not you get healed depends on your current hit points.
@@ -427,7 +427,7 @@ static void you_moved(void)
 		!is_pool(level, u.ux,u.uy) && !Is_waterlevel(&u.uz)) {
 		if (u.mh > 1) {
 		    u.mh--;
-		    botl = 1;
+		    iflags.botl = 1;
 		} else if (u.mh < 1)
 		    rehumanize();
 	    } else if (Upolyd && u.mh < u.mhmax) {
@@ -435,7 +435,7 @@ static void you_moved(void)
 		    rehumanize();
 		else if (Regeneration ||
 			    (wtcap < MOD_ENCUMBER && !(moves%20))) {
-		    botl = 1;
+		    iflags.botl = 1;
 		    u.mh++;
 		}
 	    } else if (u.uhp < u.uhpmax &&
@@ -449,14 +449,14 @@ static void you_moved(void)
 			heal = rnd(Con);
 			if (heal > u.ulevel-9) heal = u.ulevel-9;
 		    }
-		    botl = 1;
+		    iflags.botl = 1;
 		    u.uhp += heal;
 		    if (u.uhp > u.uhpmax)
 			u.uhp = u.uhpmax;
 		} else if (Regeneration ||
 			(u.ulevel <= 9 &&
 			!(moves % ((MAXULEV+12) / (u.ulevel+2) + 1)))) {
-		    botl = 1;
+		    iflags.botl = 1;
 		    u.uhp++;
 		}
 	    }
@@ -483,7 +483,7 @@ static void you_moved(void)
 		    || Energy_regeneration)) {
 		u.uen += rn1((int)(ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1,1);
 		if (u.uen > u.uenmax)  u.uen = u.uenmax;
-		botl = 1;
+		iflags.botl = 1;
 	    }
 
 	    if (!u.uinvulnerable) {
@@ -616,7 +616,7 @@ static void pre_move_tasks(boolean didmove)
     if (!flags.mv || Blind)
 	special_vision_handling();
     
-    if (botl)
+    if (iflags.botl)
 	bot();
 
     if ((u.uhave.amulet || Clairvoyant) &&
@@ -637,7 +637,7 @@ static void pre_move_tasks(boolean didmove)
 	if (!multi) {
 	    /* lookaround may clear multi */
 	    flags.move = 0;
-	    botl = 1;
+	    iflags.botl = 1;
 	}
     }
     
@@ -699,7 +699,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	deferred_goto();	/* after rhack() */
     /* !flags.move here: multiple movement command stopped */
     else if (!flags.move || !flags.mv)
-	botl = 1;
+	iflags.botl = 1;
 
     if (vision_full_recalc)
 	vision_recalc(0);	/* vision! */
@@ -707,7 +707,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     if ((!flags.run || iflags.runmode == RUN_TPORT) &&
 	    (multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
 	if (flags.run)
-	    botl = 1;
+	    iflags.botl = 1;
 	flush_screen();
     }
     
@@ -760,7 +760,7 @@ void stop_occupation(void)
 	if (!maybe_finished_meal(TRUE))
 	    pline("You stop %s.", occtxt);
 	occupation = 0;
-	botl = 1; /* in case u.uhs changed */
+	iflags.botl = 1; /* in case u.uhs changed */
 	nomul(0);
 	/* fainting stops your occupation, there's no reason to sync.
 	sync_hunger();
@@ -797,7 +797,7 @@ static void newgame(void)
     vision_reset();	/* set up internals for level (after mklev) */
     check_special_room(FALSE);
 
-    botl = 1;
+    iflags.botl = 1;
 
     /* Move the monster from under you or else
      * makedog() will fail when it calls makemon().

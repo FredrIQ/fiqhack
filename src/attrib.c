@@ -152,7 +152,7 @@ boolean adjattrib(
 	    pline("You feel %s%s!",
 		  (incr > 1 || incr < -1) ? "very ": "",
 		  (incr > 0) ? plusattr[ndx] : minusattr[ndx]);
-	botl = 1;
+	iflags.botl = 1;
 	if (moves > 1 && (ndx == A_STR || ndx == A_CON))
 		encumber_msg();
 	return TRUE;
