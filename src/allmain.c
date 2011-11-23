@@ -673,6 +673,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     if (multi >= 0 && occupation)
 	handle_occupation();
     else if (multi == 0) {
+	saved_cmd = cmdidx;
 	do_command(cmdidx, rep, TRUE, arg);
     } else if (multi > 0) {
 	if (cmd)
