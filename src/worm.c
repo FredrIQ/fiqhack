@@ -275,6 +275,21 @@ void wormhitu(struct monst *worm)
 	    mattacku(worm);
 }
 
+/*  cutoff()
+*
+*  Remove the tail of a worm and adjust the hp of the worm.
+*/
+static void cutoff(struct monst *worm, struct wseg *tail)
+{
+    if (flags.mon_moving)
+	pline("Part of the tail of %s is cut off.", mon_nam(worm));
+    else
+	pline("You cut part of the tail off of %s.", mon_nam(worm));
+    toss_wsegs(level, tail, TRUE);
+    if (worm->mhp > 1)
+	worm->mhp /= 2;
+}
+
 /*  cutworm()
  *
  *  Check for mon->wormno before calling this function!
@@ -336,17 +351,15 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
 
     /* Sometimes the tail end dies. */
     if (rn2(3) || !(new_wnum = get_wormno(level))) {
-	if (flags.mon_moving)
-	    pline("Part of the tail of %s is cut off.", mon_nam(worm));
-	else
-	    pline("You cut part of the tail off of %s.", mon_nam(worm));
-	toss_wsegs(worm->dlevel, new_tail, TRUE);
-	if (worm->mhp > 1) worm->mhp /= 2;
+	cutoff(worm, new_tail);
 	return;
     }
 
     remove_monster(x, y);		/* clone_mon puts new head here */
-    new_worm = clone_mon(worm, x, y);
+    if (!(new_worm = clone_mon(worm, x, y))) {
+	cutoff(worm, new_tail);
+	return;
+    }
     new_worm->wormno = new_wnum;	/* affix new worm number */
 
     /* Devalue the monster level of both halves of the worm. */
