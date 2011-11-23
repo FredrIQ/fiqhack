@@ -555,6 +555,18 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			tmp = 0;
 		    else
 			tmp = rnd(2);
+
+		    /* need to duplicate this check for silver arrows: they
+		     * aren't caught below as they're weapons, and aren't caught
+		     * in dmgval as they aren't melee weapons.
+		     */
+		    if (objects[obj->otyp].oc_material == SILVER &&
+			hates_silver(mdat)) {
+			silvermsg = TRUE;
+			silverobj = TRUE;
+			tmp += rnd(20);
+		    }
+
 		    if (!thrown && obj == uwep && obj->otyp == BOOMERANG &&
 			    rnl(4) == 4-1) {
 			boolean more_than_1 = (obj->quan > 1L);
