@@ -428,6 +428,7 @@ void attrcurse(void)
 	case 10: if (HProtection & INTRINSIC) {
 			HProtection &= ~INTRINSIC;
 			pline("You feel vulnerable.");
+			u.ublessed = 0;
 			break;
 		}
 	case 11: if (HAggravate_monster & INTRINSIC) {
