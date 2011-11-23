@@ -29,8 +29,10 @@ static void stoned_dialogue(void)
 {
 	long i = (Stoned & TIMEOUT);
 
-	if (i > 0L && i <= SIZE(stoned_texts))
+	if (i > 0L && i <= SIZE(stoned_texts)) {
 		pline(stoned_texts[SIZE(stoned_texts) - i]);
+		nomul(0); /* ensure the player is able to act on this message */
+	}
 	if (i == 5L)
 		HFast = 0L;
 	if (i == 3L)
