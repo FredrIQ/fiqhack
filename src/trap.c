@@ -2540,9 +2540,11 @@ int fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y
     return retval;
 }
 
-void water_damage(struct obj *obj, boolean force, boolean here)
+/* returns TRUE if obj is destroyed */
+boolean water_damage(struct obj *obj, boolean force, boolean here)
 {
-	struct obj *otmp;
+	struct obj *otmp, *obj_original = obj;
+	boolean obj_destroyed = FALSE;
 
 	/* Scrolls, spellbooks, potions, weapons and
 	   pieces of armor may get affected by the water */
@@ -2578,6 +2580,7 @@ void water_damage(struct obj *obj, boolean force, boolean here)
 				/* damage player/monster? */
 				pline("A potion explodes!");
 				delobj(obj);
+				obj_destroyed = (obj == obj_original);
 				continue;
 			} else if (obj->odiluted) {
 				obj->otyp = POT_WATER;
@@ -2594,7 +2597,9 @@ void water_damage(struct obj *obj, boolean force, boolean here)
 			   (uarmc->cursed && !rn2(3)))
 				obj->oeroded++;
 		}
+		obj_destroyed = FALSE;
 	}
+	return obj_destroyed;
 }
 
 /*
