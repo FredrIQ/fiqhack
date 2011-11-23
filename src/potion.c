@@ -357,6 +357,13 @@ int dopotion(struct obj *otmp)
 {
 	int retval;
 
+	if (otmp == uwep) {
+	    /* Unwield the potion to avoid a crash if its effect
+	     * causes the player to drop it. We don't print a message
+	     * here; setuwep doesn't either. */
+	    setuwep(0);
+	}
+
 	otmp->in_use = TRUE;
 	nothing = unkn = 0;
 	if ((retval = peffects(otmp)) >= 0) return retval;
