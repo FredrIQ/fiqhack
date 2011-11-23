@@ -1219,8 +1219,10 @@ static void lifesaved_monster(struct monst *mtmp)
 			if (attacktype(mtmp->data, AT_EXPL)
 			    || attacktype(mtmp->data, AT_BOOM))
 				pline("%s reconstitutes!", Monnam(mtmp));
-			else
+			else if (canseemon(mtmp))
 				pline("%s looks much better!", Monnam(mtmp));
+			else
+				pline("%s seems much better!", Monnam(mtmp));
 			pline("The medallion crumbles to dust!");
 		}
 		m_useup(mtmp, lifesave);

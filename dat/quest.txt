@@ -2618,7 +2618,7 @@ Things appear to have become so bad that you fear that soon
 "Did you bring me back any souvenirs?"
 %E
 %Cc Tou 00015
-"Is it really you, %p!  I had given up hope for your return.
+"It is really you, %p!  I had given up hope for your return.
 As you can %x, we are desperately in need of your talents.  Someone must
 defeat %n if our town is become what it once was.
 

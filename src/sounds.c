@@ -139,16 +139,22 @@ void dosounds(void)
 	    if (is_undead(mtmp->data) &&
 		mon_in_room(mtmp, MORGUE)) {
 		switch (rn2(2)+hallu) {
+		    case 1:
+			if (!strcmp(body_part(HAIR), "hair")) {
+			    pline("The %s on the back of your %s stands up.",
+				body_part(HAIR), body_part(NECK));
+			    break;
+			}
+			/* fall through */
+		    case 2:
+			if (!strcmp(body_part(HAIR), "hair")) {
+			    pline("The %s on your %s seems to stand up.",
+				    body_part(HAIR), body_part(HEAD));
+			    break;
+			}
+			/* fall through */
 		    case 0:
 			pline("You suddenly realize it is unnaturally quiet.");
-			break;
-		    case 1:
-			pline("The %s on the back of your %s stands up.",
-				body_part(HAIR), body_part(NECK));
-			break;
-		    case 2:
-			pline("The %s on your %s seems to stand up.",
-				body_part(HAIR), body_part(HEAD));
 			break;
 		}
 		return;
@@ -821,8 +827,13 @@ static int dochat(void)
 	return 0;
     }
 
-    if (u.usteed && dz > 0)
+    if (u.usteed && dz > 0) {
+	if (!u.usteed->mcanmove || u.usteed->msleeping) {
+	    pline("Your steed remains silent...");
+	    return 0;
+	}
 	return domonnoise(u.usteed);
+    }
     if (dz) {
 	pline("They won't hear you %s there.", dz < 0 ? "up" : "down");
 	return 0;
