@@ -436,6 +436,9 @@ int doengrave(void)
 	} else if (is_lava(level, u.ux, u.uy)) {
 		pline("You can't write on the lava!");
 		return 0;
+	} else if (Underwater) {
+		pline("You can't write underwater!");
+		return 0;
 	} else if (is_pool(level, u.ux,u.uy) || IS_FOUNTAIN(level->locations[u.ux][u.uy].typ)) {
 		pline("You can't write on the water!");
 		return 0;
