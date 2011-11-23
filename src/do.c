@@ -714,7 +714,8 @@ int dodown(void)
 	}
 	if (!stairs_down && !ladder_down) {
 		if (!(trap = t_at(level, u.ux,u.uy)) ||
-			(trap->ttyp != TRAPDOOR && trap->ttyp != HOLE)
+			(trap->ttyp != TRAPDOOR && trap->ttyp != HOLE &&
+			 trap->ttyp != PIT)
 			|| !can_fall_thru(level) || !trap->tseen) {
 
 			if (flags.autodig && !flags.nopick &&
@@ -746,9 +747,23 @@ int dodown(void)
 		return 0;
 	}
 
-	if (trap)
-	    pline("You %s %s.", locomotion(youmonst.data, "jump"),
-		trap->ttyp == HOLE ? "down the hole" : "through the trap door");
+	if (trap) {
+		if (trap->ttyp == PIT) {
+			if (u.utrap && (u.utraptype == TT_PIT)) {
+				pline("You are already in the pit."); /* YAFM needed */
+			} else {
+				u.utrap = 1;
+				u.utraptype = TT_PIT;
+				pline("You %s down into the pit.",
+					locomotion(youmonst.data, "go"));
+			}
+			return 0;
+		} else {
+			pline("You %s %s.", locomotion(youmonst.data, "jump"),
+				trap->ttyp == HOLE ? "down the hole" :
+				                     "through the trap door");
+		}
+	}
 
 	if (trap && Is_stronghold(&u.uz)) {
 		goto_hell(FALSE, TRUE);
