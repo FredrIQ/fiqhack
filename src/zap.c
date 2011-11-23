@@ -2368,7 +2368,7 @@ void weffects(struct obj *obj, schar dx, schar dy, schar dz)
 	    } else if (dz) {
 		disclose = zap_updown(obj, dz);
 	    } else {
-		beam_hit(dx, dy, rn1(8,6), ZAPPED_WAND, bhitm, bhito, obj);
+		beam_hit(dx, dy, rn1(8,6), ZAPPED_WAND, bhitm, bhito, obj, NULL);
 	    }
 	    /* give a clue if obj_zapped */
 	    if (obj_zapped)
@@ -2506,11 +2506,13 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		   int weapon,			/* see values in hack.h */
 		   int (*fhitm)(struct monst*, struct obj*),/* fns called when mon/obj hit */
 		   int (*fhito)(struct obj*, struct obj*),
-		   struct obj *obj)		/* object tossed/used */
+		   struct obj *obj,/* object tossed/used */
+		   boolean *obj_destroyed)/* has object been deallocated? may be NULL */
 {
 	struct monst *mtmp;
 	uchar typ;
 	boolean shopdoor = FALSE, point_blank = TRUE;
+	if (obj_destroyed) *obj_destroyed = FALSE;
 
 	if (weapon == KICKED_WEAPON) {
 	    /* object starts one square in front of player */
@@ -2554,6 +2556,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		    hits_bars(&obj, x - ddx, y - ddy,
 			      point_blank ? 0 : !rn2(5), 1)) {
 		/* caveat: obj might now be null... */
+		if (obj == NULL && obj_destroyed) *obj_destroyed = TRUE;
 		bhitpos.x -= ddx;
 		bhitpos.y -= ddy;
 		break;

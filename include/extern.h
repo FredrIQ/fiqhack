@@ -1743,7 +1743,7 @@ extern const char *exclam(int force);
 extern void hit(const char *,struct monst *,const char *);
 extern void miss(const char *,struct monst *);
 extern struct monst *beam_hit(int,int,int,int,int (*)(struct monst*,struct obj*),
-			     int (*)(struct obj*,struct obj*),struct obj *);
+			     int (*)(struct obj*,struct obj*),struct obj *, boolean *);
 extern struct monst *boomhit(int,int);
 extern int burn_floor_paper(int,int,boolean,boolean);
 extern void buzz(int,int,xchar,xchar,int,int);

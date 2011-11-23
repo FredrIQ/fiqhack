@@ -945,12 +945,16 @@ void throwit(struct obj *obj,
 		    range = 1;
 
 		if (Underwater) range = 1;
-
-		mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
+		
+		boolean obj_destroyed = FALSE;
+		mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj,
+			       &obj_destroyed);
 
 		/* have to do this after bhit() so u.ux & u.uy are correct */
 		if (Is_airlevel(&u.uz) || Levitation)
 		    hurtle(-dx, -dy, urange, TRUE);
+		
+		if (obj_destroyed) return;
 	}
 
 	if (mon) {
@@ -1682,7 +1686,8 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 			bhitpos.x = u.ux;
 			bhitpos.y = u.uy;
 		} else {
-			mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj);
+			mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL,
+				       obj, NULL);
 			if (mon) {
 			    if (ghitm(mon, obj))	/* was it caught? */
 				return 1;

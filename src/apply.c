@@ -67,7 +67,7 @@ static int use_camera(struct obj *obj)
 	} else if (!dx && !dy) {
 		zapyourself(obj, TRUE);
 	} else if ((mtmp = beam_hit(dx, dy, COLNO, FLASHED_LIGHT,
-				NULL, NULL, obj)) != 0) {
+				NULL, NULL, obj, NULL)) != 0) {
 		obj->ox = u.ux,  obj->oy = u.uy;
 		flash_hits_mon(mtmp, obj);
 	}
@@ -620,7 +620,7 @@ static int use_mirror(struct obj *obj)
 			(dz > 0) ? surface(u.ux,u.uy) : ceiling(u.ux,u.uy));
 		return 1;
 	}
-	mtmp = beam_hit(dx, dy, COLNO, INVIS_BEAM, NULL, NULL, obj);
+	mtmp = beam_hit(dx, dy, COLNO, INVIS_BEAM, NULL, NULL, obj, NULL);
 	if (!mtmp || !haseyes(mtmp->data))
 		return 1;
 
