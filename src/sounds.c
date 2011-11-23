@@ -179,7 +179,7 @@ void dosounds(void)
 	static const char * const zoo_msg[3] = {
 		"a sound reminiscent of an elephant stepping on a peanut.",
 		"a sound reminiscent of a seal barking.",
-		"Doctor Doolittle!",
+		"Doctor Dolittle!",
 	};
 	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
 	    if (DEADMONSTER(mtmp)) continue;
