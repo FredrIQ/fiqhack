@@ -957,12 +957,11 @@ int pickup_object(struct obj *obj, long count,
 		    gold_capacity == 1L ? "one" : "some", obj->quan, where);
 		pline("%s %ld gold piece%s.",
 		    nearloadmsg, gold_capacity, plur(gold_capacity));
+		costly_gold(obj->ox, obj->oy, gold_capacity);
 		u.ugold += gold_capacity;
 		obj->quan -= gold_capacity;
-		costly_gold(obj->ox, obj->oy, gold_capacity);
 	    } else {
-		u.ugold += count;
-		if ((nearload = near_capacity()) != 0)
+		if ((nearload = calc_capacity(GOLD_WT(count))) != 0)
 		    pline("%s %ld gold piece%s.",
 			  nearload < MOD_ENCUMBER ?
 			  moderateloadmsg : nearloadmsg,
@@ -970,6 +969,7 @@ int pickup_object(struct obj *obj, long count,
 		else
 		    prinv(NULL, obj, count);
 		costly_gold(obj->ox, obj->oy, count);
+		u.ugold += count;
 		if (count == obj->quan)
 		    delobj(obj);
 		else
