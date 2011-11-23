@@ -1183,10 +1183,10 @@ static int eatcorpse(struct obj *otmp)
 
 	if (mnum != PM_ACID_BLOB && !stoneable && rotted > 5L) {
 		boolean cannibal = maybe_cannibal(mnum, FALSE);
-		pline("Ulch - that %s was tainted%s!",
+		pline("Ulch!  that %s was tainted%s!",
 		      mons[mnum].mlet == S_FUNGUS ? "fungoid vegetation" :
 		      !vegetarian(&mons[mnum]) ? "meat" : "protoplasm",
-		      cannibal ? " cannibal" : "");
+		      cannibal ? "; you cannibal" : "");
 		if (Sick_resistance) {
 			pline("It doesn't seem at all sickening, though...");
 		} else {
