@@ -1013,11 +1013,10 @@ dumb:
 			exercise(A_STR, FALSE);
 			set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
 		}
-		if ((Is_airlevel(&u.uz) || Levitation) && rn2(2)) {
+		if ((Is_airlevel(&u.uz) || Levitation) && rn2(2))
 		    hurtle(-dx, -dy, 1, TRUE);
-		    return 1;		/* you moved, so use up a turn */
-		}
-		return 0;
+		
+		return 1; /* you moved, so use up a turn */
 	}
 
 	/* not enough leverage to kick open doors while levitating */
