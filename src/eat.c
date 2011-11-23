@@ -218,13 +218,13 @@ static void choke(struct obj *food) /* To a full belly all food is bad. (It.) */
 	} else {
 		killer_format = KILLED_BY_AN;
 		/*
-		 * Note all "killer"s below read "Choked on %s" on the
+		 * Note all "killer"s below read "Choked on a/an %s" on the
 		 * high score list & tombstone.  So plan accordingly.
 		 */
 		if (food) {
 			pline("You choke over your %s.", foodword(food));
 			if (food->oclass == COIN_CLASS) {
-				killer = "a very rich meal";
+				killer = "very rich meal";
 			} else {
 				killer = food_xname(food, FALSE);
 				if (food->otyp == CORPSE &&
