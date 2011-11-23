@@ -500,9 +500,9 @@ letknow:
 			You_hear("the shrill sound of a guard's whistle.");
 		    else
 			pline(um_dist(grd->mx, grd->my, 2) ?
-			    "You see an angry %s approaching." :
-			    "You are confronted by an angry %s.",
-			    g_monnam(grd));
+			    "You see %s approaching." :
+			    "You are confronted by %s.",
+			    x_monnam(grd, ARTICLE_A, "angry", SUPPRESS_IT, FALSE));
 		    return -1;
 		} else {
 		    verbalize("Well, begone.");
@@ -518,7 +518,7 @@ letknow:
 		  !egrd->gddone && !in_fcorridor(grd, u.ux, u.uy) &&
 		  level->locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ
 				 == egrd->fakecorr[0].ftyp) {
-		pline("The %s, confused, disappears.", g_monnam(grd));
+		pline("%s, confused, disappears.", noit_Monnam(grd));
 		disappear_msg_seen = TRUE;
 		goto cleanup;
 	    }
@@ -694,7 +694,7 @@ cleanup:
 		if (!semi_dead && (in_fcorridor(grd, u.ux, u.uy) ||
 				     cansee(x, y))) {
 		    if (!disappear_msg_seen && see_guard)
-			pline("Suddenly, the %s disappears.", g_monnam(grd));
+			pline("Suddenly, %s disappears.", noit_mon_nam(grd));
 		    return 1;
 		}
 		return -2;
