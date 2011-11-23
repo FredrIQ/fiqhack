@@ -587,7 +587,7 @@ void Amulet_off(void)
 		break;
 	case AMULET_OF_RESTFUL_SLEEP:
 		setworn(NULL, W_AMUL);
-		if (!ESleeping)
+		if (!ESleeping && !(HSleeping & INTRINSIC))
 			HSleeping = 0;
 		return;
 	case AMULET_OF_YENDOR:
