@@ -740,4 +740,13 @@ void weldmsg(struct obj *obj)
 	obj->owornmask = savewornmask;
 }
 
+/* Unwields all weapons silently. */
+void unwield_weapons_silently(void)
+{
+	setuwep(NULL);
+	setuswapwep(NULL);
+	setuqwep(NULL);
+	u.twoweap = FALSE;
+}
+
 /*wield.c*/

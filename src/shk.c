@@ -1642,12 +1642,17 @@ static void set_repo_loc(struct eshk *eshkp)
 	repo_location.y = oy;
 }
 
-/* called at game exit, after inventory disclosure but before making bones */
+/* Dump inventory to the floor, called at game exit, after inventory disclosure but
+ * before making bones */
 void finish_paybill(void)
 {
 	struct obj *otmp;
 	int ox = repo_location.x,
 	    oy = repo_location.y;
+
+	/* If twoweaponing and the swap weapon gets cursed, it slips to the
+	 * ground and we get a warning message. */
+	unwield_weapons_silently();
 
 	/* normally done by savebones(), but that's too late in this case */
 	unleash_all();
