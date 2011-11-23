@@ -1415,6 +1415,9 @@ void monstone(struct monst *mdef)
 	struct obj *otmp, *obj, *oldminvent;
 	xchar x = mdef->mx, y = mdef->my;
 	boolean wasinside = FALSE;
+#ifndef GOLDOBJ
+	long mgold = 0;
+#endif
 
 	/* we have to make the statue before calling mondead, to be able to
 	 * put inventory in it, and we have to check for lifesaving before
@@ -1447,6 +1450,13 @@ void monstone(struct monst *mdef)
 			oldminvent = obj;
 		    }
 		}
+#ifndef GOLDOBJ
+		/* set mdef->mgold to zero before the monster is copied during
+		 * statue creation. Otherwise 2 stacks of gold will be produced
+		 * during revival. */
+		mgold = mdef->mgold;
+		mdef->mgold = 0;
+#endif
 		/* defer statue creation until after inventory removal
 		   so that saved monster traits won't retain any stale
 		   item-conferred attributes */
@@ -1458,13 +1468,12 @@ void monstone(struct monst *mdef)
 		    add_to_container(otmp, obj);
 		}
 #ifndef GOLDOBJ
-		if (mdef->mgold) {
+		if (mgold) {
 			struct obj *au;
 			au = mksobj(level, GOLD_PIECE, FALSE, FALSE);
-			au->quan = mdef->mgold;
+			au->quan = mgold;
 			au->owt = weight(au);
 			add_to_container(otmp, au);
-			mdef->mgold = 0;
 		}
 #endif
 		/* Archeologists should not break unique statues */
