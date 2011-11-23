@@ -1799,7 +1799,7 @@ int dopickup(void)
 /* stop running if we see something interesting */
 /* turn around a corner if that is the only way we can proceed */
 /* do not turn left or right twice */
-void lookaround(schar dx, schar dy)
+void lookaround(void)
 {
     int x, y, i, x0 = 0, y0 = 0, m0 = 1, i0 = 9;
     int corrct = 0, noturn = 0;
@@ -1808,7 +1808,7 @@ void lookaround(schar dx, schar dy)
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe */
     /* they polymorphed while in the middle of a long move. */
-    if (u.umonnum == PM_GRID_BUG && dx && dy) {
+    if (u.umonnum == PM_GRID_BUG && u.dx && u.dy) {
 	nomul(0);
 	return;
     }
@@ -1826,12 +1826,12 @@ void lookaround(schar dx, schar dy)
 		    mtmp->m_ap_type != M_AP_OBJECT &&
 		    (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
 	    if ((flags.run != 1 && !mtmp->mtame)
-					|| (x == u.ux+dx && y == u.uy+dy))
+					|| (x == u.ux+u.dx && y == u.uy+u.dy))
 		goto stop;
 	}
 
 	if (level->locations[x][y].typ == STONE) continue;
-	if (x == u.ux-dx && y == u.uy-dy) continue;
+	if (x == u.ux-u.dx && y == u.uy-u.dy) continue;
 
 	if (IS_ROCK(level->locations[x][y].typ) || (level->locations[x][y].typ == ROOM) ||
 	    IS_AIR(level->locations[x][y].typ))
@@ -1847,7 +1847,7 @@ void lookaround(schar dx, schar dy)
 bcorr:
 	    if (level->locations[u.ux][u.uy].typ != ROOM) {
 		if (flags.run == 1 || flags.run == 3 || flags.run == 8) {
-		    i = dist2(x, y, u.ux+dx, u.uy+dy);
+		    i = dist2(x, y, u.ux+u.dx, u.uy+u.dy);
 		    if (i > 2) continue;
 		    if (corrct == 1 && dist2(x, y, x0, y0) != 1)
 			noturn = 1;
@@ -1863,14 +1863,14 @@ bcorr:
 	    continue;
 	} else if ((trap = t_at(level, x,y)) && trap->tseen) {
 	    if (flags.run == 1) goto bcorr;	/* if you must */
-	    if (x == u.ux+dx && y == u.uy+dy) goto stop;
+	    if (x == u.ux+u.dx && y == u.uy+u.dy) goto stop;
 	    continue;
 	} else if (is_pool(level, x,y) || is_lava(level, x,y)) {
 	    /* water and lava only stop you if directly in front, and stop
 	     * you even if you are running
 	     */
 	    if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-				x == u.ux+dx && y == u.uy+dy)
+				x == u.ux+u.dx && y == u.uy+u.dy)
 			/* No Wwalking check; otherwise they'd be able
 			 * to test boots by trying to SHIFT-direction
 			 * into a pool and seeing if the game allowed it
@@ -1881,8 +1881,8 @@ bcorr:
 	    if (flags.run == 1) goto bcorr;
 	    if (flags.run == 8) continue;
 	    if (mtmp) continue;		/* d */
-	    if (((x == u.ux - dx) && (y != u.uy + dy)) ||
-	       ((y == u.uy - dy) && (x != u.ux + dx)))
+	    if (((x == u.ux - u.dx) && (y != u.uy + u.dy)) ||
+	       ((y == u.uy - u.dy) && (x != u.ux + u.dx)))
 	       continue;
 	}
 stop:
@@ -1896,25 +1896,28 @@ stop:
     {
 	/* make sure that we do not turn too far */
 	if (i0 == 2) {
-	    if (dx == y0-u.uy && dy == u.ux-x0)
+	    if (u.dx == y0-u.uy && u.dy == u.ux-x0)
 		i = 2;		/* straight turn right */
 	    else
 		i = -2;		/* straight turn left */
-	} else if (dx && dy) {
-	    if ((dx == dy && y0 == u.uy) || (dx != dy && y0 != u.uy))
+	} else if (u.dx && u.dy) {
+	    if ((u.dx == u.dy && y0 == u.uy) || (u.dx != u.dy && y0 != u.uy))
 		i = -1;		/* half turn left */
 	    else
 		i = 1;		/* half turn right */
 	} else {
-	    if ((x0-u.ux == y0-u.uy && !dy) || (x0-u.ux != y0-u.uy && dy))
+	    if ((x0-u.ux == y0-u.uy && !u.dy) || (x0-u.ux != y0-u.uy && u.dy))
 		i = 1;		/* half turn right */
 	    else
 		i = -1;		/* half turn left */
 	}
 
 	i += u.last_str_turn;
-	if (i <= 2 && i >= -2)
+	if (i <= 2 && i >= -2) {
 	    u.last_str_turn = i;
+	    u.dx = x0-u.ux;
+	    u.dy = y0-u.uy;
+	}
     }
 }
 

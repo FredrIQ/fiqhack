@@ -205,7 +205,7 @@ void replay_end(void)
 
 static void parse_error(const char *str)
 {
-    raw_printf("Error parsing token %d (\"%s\"): %s\n", loginfo.next,
+    raw_printf("Error at token %d (\"%s\"): %s\n", loginfo.next,
 	       loginfo.tokens[loginfo.next-1], str);
     terminate();
 }

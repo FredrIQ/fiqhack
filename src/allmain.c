@@ -423,7 +423,8 @@ static void you_moved(void)
 	    if (u.uinvulnerable) {
 		/* for the moment at least, you're in tiptop shape */
 		wtcap = UNENCUMBERED;
-	    } else if (Upolyd && youmonst.data->mlet == S_EEL && !is_pool(level, u.ux,u.uy) && !Is_waterlevel(&u.uz)) {
+	    } else if (Upolyd && youmonst.data->mlet == S_EEL &&
+		!is_pool(level, u.ux,u.uy) && !Is_waterlevel(&u.uz)) {
 		if (u.mh > 1) {
 		    u.mh--;
 		    botl = 1;
@@ -632,7 +633,7 @@ static void pre_move_tasks(boolean didmove)
     u.umoved = FALSE;
 
     if (multi > 0) {
-	lookaround(0, 0);
+	lookaround();
 	if (!multi) {
 	    /* lookaround may clear multi */
 	    flags.move = 0;
@@ -688,7 +689,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	if (flags.mv) {
 	    if (multi < COLNO && !--multi)
 		flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-	    domove(0, 0, 0);
+	    domove(u.dx, u.dy, 0);
 	} else
 	    do_command(saved_cmd, multi, FALSE, arg);
     }

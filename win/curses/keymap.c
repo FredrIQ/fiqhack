@@ -26,19 +26,39 @@ static int prev_count = 0;
 #define Ctrl(c)		(0x1f & (c))
 #endif
 
-#define DIRCMD (1 << 30)
+#define DIRCMD		(1 << 29)
+#define DIRCMD_SHIFT	(1 << 30)
+#define DIRCMD_CTRL	(1 << 31)
 
 struct nh_cmd_desc builtin_commands[] = {
-    {"dir_west",       "", 'h', 0, CMD_UI | DIRCMD | DIR_W},
-    {"dir_north_west", "", 'y', 0, CMD_UI | DIRCMD | DIR_NW},
-    {"dir_north",      "", 'k', 0, CMD_UI | DIRCMD | DIR_N},
-    {"dir_north_east", "", 'u', 0, CMD_UI | DIRCMD | DIR_NE},
-    {"dir_east",       "", 'l', 0, CMD_UI | DIRCMD | DIR_E},
-    {"dir_south_east", "", 'n', 0, CMD_UI | DIRCMD | DIR_SE},
-    {"dir_south",      "", 'j', 0, CMD_UI | DIRCMD | DIR_S},
-    {"dir_south_west", "", 'b', 0, CMD_UI | DIRCMD | DIR_SW},
-    {"dir_up",         "", '<', 0, CMD_UI | DIRCMD | DIR_UP},
-    {"dir_down",       "", '>', 0, CMD_UI | DIRCMD | DIR_DOWN},
+    {"west",       "", 'h', 0, CMD_UI | DIRCMD | DIR_W},
+    {"north_west", "", 'y', 0, CMD_UI | DIRCMD | DIR_NW},
+    {"north",      "", 'k', 0, CMD_UI | DIRCMD | DIR_N},
+    {"north_east", "", 'u', 0, CMD_UI | DIRCMD | DIR_NE},
+    {"east",       "", 'l', 0, CMD_UI | DIRCMD | DIR_E},
+    {"south_east", "", 'n', 0, CMD_UI | DIRCMD | DIR_SE},
+    {"south",      "", 'j', 0, CMD_UI | DIRCMD | DIR_S},
+    {"south_west", "", 'b', 0, CMD_UI | DIRCMD | DIR_SW},
+    {"up",         "", '<', 0, CMD_UI | DIRCMD | DIR_UP},
+    {"down",       "", '>', 0, CMD_UI | DIRCMD | DIR_DOWN},
+    
+    {"west_run",       "", 'H', 0, CMD_UI | DIRCMD_SHIFT | DIR_W},
+    {"north_west_run", "", 'Y', 0, CMD_UI | DIRCMD_SHIFT | DIR_NW},
+    {"north_run",      "", 'K', 0, CMD_UI | DIRCMD_SHIFT | DIR_N},
+    {"north_east_run", "", 'U', 0, CMD_UI | DIRCMD_SHIFT | DIR_NE},
+    {"east_run",       "", 'L', 0, CMD_UI | DIRCMD_SHIFT | DIR_E},
+    {"south_east_run", "", 'N', 0, CMD_UI | DIRCMD_SHIFT | DIR_SE},
+    {"south_run",      "", 'J', 0, CMD_UI | DIRCMD_SHIFT | DIR_S},
+    {"south_west_run", "", 'B', 0, CMD_UI | DIRCMD_SHIFT | DIR_SW},
+    
+    {"west_far",       "", Ctrl('h'), 0, CMD_UI | DIRCMD_CTRL | DIR_W},
+    {"north_west_far", "", Ctrl('y'), 0, CMD_UI | DIRCMD_CTRL | DIR_NW},
+    {"north_far",      "", Ctrl('k'), 0, CMD_UI | DIRCMD_CTRL | DIR_N},
+    {"north_east_far", "", Ctrl('u'), 0, CMD_UI | DIRCMD_CTRL | DIR_NE},
+    {"east_far",       "", Ctrl('l'), 0, CMD_UI | DIRCMD_CTRL | DIR_E},
+    {"south_east_far", "", Ctrl('n'), 0, CMD_UI | DIRCMD_CTRL | DIR_SE},
+    {"south_far",      "", Ctrl('j'), 0, CMD_UI | DIRCMD_CTRL | DIR_S},
+    {"south_west_far", "", Ctrl('b'), 0, CMD_UI | DIRCMD_CTRL | DIR_SW},
     
     {"options",	"", 'O', 0, CMD_UI | UICMD_OPTIONS},
     {"extcommand",	"", '#', 0, CMD_UI | UICMD_EXTCMD},
@@ -70,7 +90,7 @@ static struct nh_cmd_desc *find_command(const char *cmdname)
 static void handle_internal_cmd(struct nh_cmd_desc **cmd,
 			    struct nh_cmd_arg *arg, int *count)
 {
-    int id = (*cmd)->flags & ~(CMD_UI | DIRCMD);
+    int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
     switch (id) {
 	case DIR_NW: case DIR_N: case DIR_NE:
 	case DIR_E:              case DIR_W:
@@ -78,7 +98,12 @@ static void handle_internal_cmd(struct nh_cmd_desc **cmd,
 	case DIR_UP: case DIR_DOWN:
 	    arg->argtype = CMD_ARG_DIR;
 	    arg->d = id;
-	    *cmd = find_command("move");
+	    if ((*cmd)->flags & DIRCMD)
+		*cmd = find_command("move");
+	    else if((*cmd)->flags & DIRCMD_SHIFT)
+		*cmd = find_command("run");
+	    else if((*cmd)->flags & DIRCMD_CTRL)
+		*cmd = find_command("go2");
 	    break;
 	    
 	case UICMD_OPTIONS:
@@ -120,6 +145,9 @@ static int get_cmdkey(void)
 	
 	curs_set(1);
 	key = nh_wgetch(stdscr);
+	/* reverse the translation performed by ncurses in number_pad mode */
+	if (key == KEY_BACKSPACE) /* all other CTRL combinations apper to be OK */
+	    key = Ctrl('h');
 	curs_set(0);
 	
 	if (key != ERR)
@@ -221,19 +249,19 @@ static void init_keymap(void)
     int count = sizeof(builtin_commands)/sizeof(struct nh_cmd_desc);
     
     /* num pad direction keys */
-    keymap[KEY_UP] = find_command("dir_north");
-    keymap[KEY_DOWN] = find_command("dir_south");
-    keymap[KEY_LEFT] = find_command("dir_west");
-    keymap[KEY_RIGHT] = find_command("dir_east");
-    keymap[KEY_A1] = find_command("dir_north_west");
-    keymap[KEY_A3] = find_command("dir_north_east");
-    keymap[KEY_C1] = find_command("dir_south_west");
-    keymap[KEY_C3] = find_command("dir_south_east");
+    keymap[KEY_UP] = find_command("north");
+    keymap[KEY_DOWN] = find_command("south");
+    keymap[KEY_LEFT] = find_command("west");
+    keymap[KEY_RIGHT] = find_command("east");
+    keymap[KEY_A1] = find_command("north_west");
+    keymap[KEY_A3] = find_command("north_east");
+    keymap[KEY_C1] = find_command("south_west");
+    keymap[KEY_C3] = find_command("south_east");
     /* diagonal keypad keys are not necessarily reported as A1, A3, C1, C3 */
-    keymap[KEY_HOME]  = find_command("dir_north_west");
-    keymap[KEY_PPAGE] = find_command("dir_north_east");
-    keymap[KEY_END]   = find_command("dir_south_west");
-    keymap[KEY_NPAGE] = find_command("dir_south_east");
+    keymap[KEY_HOME]  = find_command("north_west");
+    keymap[KEY_PPAGE] = find_command("north_east");
+    keymap[KEY_END]   = find_command("south_west");
+    keymap[KEY_NPAGE] = find_command("south_east");
     
     /* every command automatically gets its default key */
     for (i = 0; i < cmdcount; i++)

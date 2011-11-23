@@ -514,7 +514,7 @@ extern char *in_rooms(struct level *lev, xchar, xchar, int);
 extern boolean in_town(int,int);
 extern void check_special_room(boolean);
 extern int dopickup(void);
-extern void lookaround(schar, schar);
+extern void lookaround(void);
 extern int monster_nearby(void);
 extern void nomul(int);
 extern void unmul(const char *);
