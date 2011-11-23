@@ -1349,7 +1349,6 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 	    pline("You can't do that while you are buried!");
 	    res = 0;
 	} else {
-	    flags.move = TRUE;
 	    multi = repcount;
 	    
 	    switch (functype) {
@@ -1357,6 +1356,7 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 		    func = cmdlist[command].func;
 		    if (cmdlist[command].text && !occupation && multi > 1)
 			set_occupation(func, cmdlist[command].text, multi - 1);
+		    flags.move = TRUE;
 		    res = (*func)();		/* perform the command */
 		    break;
 		
@@ -1365,10 +1365,14 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 		    if (argtype == CMD_ARG_DIR) {
 			if (!dir_to_delta(arg->d, &dx, &dy, &dz))
 			    return COMMAND_BAD_ARG;
+			if (dx && dy && u.umonnum == PM_GRID_BUG)
+			    return COMMAND_BAD_ARG;
+			
 		    } else {
 			 /* invalid direction deltas indicate that no arg was given */
 			dx = -2; dy = -2; dz = -2;
 		    }
+		    flags.move = TRUE;
 		    res = func_dir(dx, dy, dz);
 		    break;
 		
@@ -1381,6 +1385,7 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 			x = -1;
 			y = -1;
 		    }
+		    flags.move = TRUE;
 		    func_pos(x, y);
 		    break;
 		    
