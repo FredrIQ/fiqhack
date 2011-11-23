@@ -559,6 +559,8 @@ static void you_moved(void)
     /* once-per-hero-took-time things go here */
     /******************************************/
 
+    if (u.utrap && u.utraptype == TT_LAVA)
+	handle_lava_trap(didmove);
 }
 
 
@@ -623,9 +625,6 @@ static void pre_move_tasks(boolean didmove)
 	!In_endgame(&u.uz) && !BClairvoyant &&
 	!(moves % 15) && !rn2(2))
 	    do_vicinity_map();
-
-    if (u.utrap && u.utraptype == TT_LAVA)
-	handle_lava_trap(didmove);
 
     if (iflags.sanity_check)
 	sanity_check();
