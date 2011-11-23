@@ -2091,6 +2091,8 @@ void selftouch(const char *arg)
 		        mons[uwep->corpsenm].mname);
 		sprintf(kbuf, "%s corpse", an(mons[uwep->corpsenm].mname));
 		instapetrify(kbuf);
+		if (!Stone_resistance)
+		    uwepgone();
 	}
 	/* Or your secondary weapon, if wielded */
 	if (u.twoweap && uswapwep && uswapwep->otyp == CORPSE &&
@@ -2099,6 +2101,8 @@ void selftouch(const char *arg)
 		        mons[uswapwep->corpsenm].mname);
 		sprintf(kbuf, "%s corpse", an(mons[uswapwep->corpsenm].mname));
 		instapetrify(kbuf);
+		if (!Stone_resistance)
+		    uswapwepgone();
 	}
 }
 
