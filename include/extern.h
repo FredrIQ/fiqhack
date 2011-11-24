@@ -485,8 +485,8 @@ extern void commit_bonesfile(char *bonesid);
 extern int open_bonesfile(char *bonesid);
 extern int delete_bonesfile(char *bonesid);
 extern void paniclog(const char *, const char *);
-extern boolean lock_file(const char *,int,int);
-extern void unlock_file(const char *);
+extern boolean lock_fd(int fd, int retry);
+extern void unlock_fd(int fd);
 
 /* ### fountain.c ### */
 

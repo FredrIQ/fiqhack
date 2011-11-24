@@ -188,15 +188,30 @@ void rungame(void)
 static void describe_save(char *buf, enum nh_log_status status, struct nh_save_info *si)
 {
     const char *mode_desc[] = {"", "\t[explore]", "\t[wizard]"};
-    if (status == LS_IN_PROGRESS)
-	snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s  (crashed?)\t%s",
-		 si->name, si->plrole, si->plrace, si->plgend, si->plalign,
-		 mode_desc[si->playmode]);
-    else
-	snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s%s\tafter %d moves%s",
-		 si->name, si->plrole, si->plrace, si->plgend, si->plalign,
-		 si->level_desc, si->has_amulet ? " with the amulet" : "",
-		 si->moves, mode_desc[si->playmode]);
+    switch (status) {
+	case LS_CRASHED:
+	    snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s  (crashed)\t%s",
+		    si->name, si->plrole, si->plrace, si->plgend, si->plalign,
+		    mode_desc[si->playmode]);
+	    break;
+	    
+	case LS_IN_PROGRESS:
+	    snprintf(buf, BUFSZ, "    %s\t%3.3s-%3.3s-%3.3s-%3.3s  (in progress)\t%s",
+		    si->name, si->plrole, si->plrace, si->plgend, si->plalign,
+		    mode_desc[si->playmode]);
+	    break;
+	    
+	case LS_SAVED:
+	    snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s%s\tafter %d moves%s",
+		    si->name, si->plrole, si->plrace, si->plgend, si->plalign,
+		    si->level_desc, si->has_amulet ? " with the amulet" : "",
+		    si->moves, mode_desc[si->playmode]);
+	    break;
+	    
+	default:
+	    buf[0] = '\0';
+	    break;
+    }
 }
 
 
@@ -227,13 +242,15 @@ boolean loadgame(void)
 	    !strcmp(&dp->d_name[namelen-7], ".nhgame")) {
 	    snprintf(filename, sizeof(filename), "%s%s", savedir, dp->d_name);
 	    
-	    fd = open(filename, O_RDONLY);
+	    fd = open(filename, O_RDWR, 0660);
 	    status = nh_get_savegame_status(fd, &si);
 	    close(fd);
 	    
-	    if (status == LS_SAVED || status == LS_IN_PROGRESS) {
+	    if (status == LS_SAVED || status == LS_CRASHED || status == LS_IN_PROGRESS) {
 		describe_save(buf, status, &si);
-		add_menu_item(items, size, icount, icount + 1, buf, 0, FALSE);
+		add_menu_item(items, size, icount,
+			      (status == LS_IN_PROGRESS) ? 0 : icount + 1,
+			      buf, 0, FALSE);
 		files = realloc(files, icount * sizeof(char*));
 		files[icount-1] = strdup(dp->d_name);
 	    }

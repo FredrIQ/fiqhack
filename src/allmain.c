@@ -260,7 +260,8 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     switch (nh_get_savegame_status(fd, NULL)) {
 	case LS_INVALID:	return ERR_BAD_FILE;
 	case LS_DONE:		return ERR_GAME_OVER;
-	case LS_IN_PROGRESS:	force_replay = TRUE; break;
+	case LS_CRASHED:	force_replay = TRUE; break;
+	case LS_IN_PROGRESS:	return ERR_IN_PROGRESS;
 	case LS_SAVED:		break; /* default, everything is A-OK */
     }
     

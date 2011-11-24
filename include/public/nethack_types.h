@@ -221,18 +221,21 @@ enum nh_exit_types {
 enum nh_restore_status {
     GAME_RESTORED,
     ERR_BAD_ARGS,
-    ERR_BAD_FILE, /* file isn't a saved game */
-    ERR_GAME_OVER, /* this is the log of a completed game, play cannot be resumed */
-    ERR_RESTORE_FAILED, /* restoring the saved game state did not succeed (try replaying the log instead) */
-    ERR_REPLAY_FAILED /* replaying the action log did not succeed */
+    ERR_BAD_FILE,	/* file isn't a saved game */
+    ERR_GAME_OVER,	/* this is the log of a completed game, play cannot be resumed */
+    ERR_IN_PROGRESS,	/* this game is active in a different process */
+    ERR_RESTORE_FAILED,	/* restoring the saved game state did not succeed
+                         * (try replaying the log instead) */
+    ERR_REPLAY_FAILED	/* replaying the action log did not succeed */
 };
 
 
 enum nh_log_status {
-    LS_INVALID = -1,
-    LS_SAVED,
-    LS_DONE, /* quit, died, ascended, etc */
-    LS_IN_PROGRESS
+    LS_CRASHED = -2,	/* the game crashed (or was "kill -9"ed) */
+    LS_INVALID = -1,	/* not a nethack log/savegame */
+    LS_SAVED,		/* an ordinary save */
+    LS_DONE, 		/* quit, died, ascended, etc */
+    LS_IN_PROGRESS	/* this game is active in a different process */
 };
 
 

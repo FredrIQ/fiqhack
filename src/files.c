@@ -36,7 +36,6 @@ static int lockptr;
 #define DeleteFile unlink
 #endif
 
-static char *make_lockname(const char *,char *);
 static const char *fqname(const char *, int, int);
 
 
@@ -172,122 +171,83 @@ int delete_bonesfile(char *bonesid)
 
 /* ----------  BEGIN FILE LOCKING HANDLING ----------- */
 
-static int nesting = 0;
-
-static char *make_lockname(const char *filename, char *lockname)
-{
-#if defined(UNIX) || defined(WIN32)
-	strcpy(lockname, filename);
-	strcat(lockname, "_lock");
-	return lockname;
-# else
-	lockname[0] = '\0';
-	return NULL;
-#endif  /* UNIX || WIN32 */
-}
-
-
-/* lock a file */
-boolean lock_file(const char *filename, int whichprefix, int retryct)
-{
-	char locknambuf[BUFSZ];
-	const char *lockname;
-
-	nesting++;
-	if (nesting > 1) {
-	    impossible("TRIED TO NEST LOCKS");
-	    return TRUE;
-	}
-
-	lockname = make_lockname(filename, locknambuf);
-	filename = fqname(filename, whichprefix, 0);
-	lockname = fqname(lockname, LOCKPREFIX, 2);
-
 #if defined(UNIX)
-	/* ensure the file exists before attempting to lock it */
-	close(open(filename, O_CREAT | O_RDWR, 0660));
-	
-	while (link(filename, lockname) == -1) {
-	    int errnosv = errno;
-
-	    switch (errnosv) {	/* George Barbanis */
-	    case EEXIST:
-		if (retryct--) {
-		    raw_printf("Waiting for access to %s.  (%d retries left).",
-			    filename, retryct);
-			sleep(1);
-		} else {
-		    raw_print("I give up.  Sorry.");
-		    raw_printf("Perhaps there is an old %s around?",
-					lockname);
-		    nesting--;
-		    return FALSE;
-		}
-
-		break;
-	    case ENOENT:
-		raw_printf("Can't find file %s to lock!", filename);
-		nesting--;
-		return FALSE;
-	    case EACCES:
-		raw_printf("No write permission to lock %s!", filename);
-		nesting--;
-		return FALSE;
-	    default:
-		perror(lockname);
-		raw_printf("Cannot lock %s for unknown reason (%d).",
-			       filename, errnosv);
-		nesting--;
-		return FALSE;
-	    }
-
-	}
-#endif  /* UNIX */
-
-#if defined(WIN32)
-#define OPENFAILURE(fd) (fd < 0)
-    lockptr = -1;
-    while (--retryct && OPENFAILURE(lockptr)) {
-	lockptr = sopen(lockname, O_RDWR|O_CREAT, SH_DENYRW, S_IWRITE);
-	if (OPENFAILURE(lockptr)) {
-	    raw_printf("Waiting for access to %s.  (%d retries left).\n",
-			filename, retryct);
-	    Delay(50);
-	}
-    }
-    if (!retryct) {
-	raw_printf("I give up.  Sorry.\n");
-	nesting--;
+/* lock any open file using fcntl */
+boolean lock_fd(int fd, int retry)
+{
+    struct flock sflock;
+    int ret;
+    
+    if (fd == -1)
 	return FALSE;
-    }
-#endif /* WIN32 */
-	return TRUE;
+    
+    sflock.l_type = F_WRLCK;
+    sflock.l_whence = SEEK_SET;
+    sflock.l_start = 0;
+    sflock.l_len = 0;
+    
+    while ((ret = fcntl(fd, F_SETLK, &sflock)) == -1 && retry--)
+	sleep(1);
+    
+    return ret != -1;
 }
 
-/* unlock file, which must be currently locked by lock_file */
-void unlock_file(const char *filename)
+
+void unlock_fd(int fd)
 {
-	char locknambuf[BUFSZ];
-	const char *lockname;
-
-	if (nesting == 1) {
-		lockname = make_lockname(filename, locknambuf);
-		lockname = fqname(lockname, LOCKPREFIX, 2);
-
-#if defined(UNIX)
-		if (unlink(lockname) < 0)
-			raw_printf("Can't unlink %s.\n", lockname);
-#endif  /* UNIX */
-
-#if defined(WIN32)
-		if (lockptr) Close(lockptr);
-		DeleteFile(lockname);
-		lockptr = 0;
-#endif /* WIN32 */
-	}
-
-	nesting--;
+    struct flock sflock;
+    
+    if (fd == -1)
+	return;
+    
+    sflock.l_type = F_UNLCK;
+    sflock.l_whence = SEEK_SET;
+    sflock.l_start = 0;
+    sflock.l_len = 0;
+    
+    fcntl(fd, F_SETLK, &sflock);
 }
+#elif defined (WIN32) /* windows versionf of lock_fd(), unlock_fd() */
+
+/* lock any open file using LockFileEx */
+boolean lock_fd(int fd, int retry)
+{
+    HANDLE hFile;
+    OVERLAPPED o;
+    DWORD fileSize;
+    BOOL ret;
+    
+    if (fd == -1)
+	return FALSE;
+
+    hFile = _get_osfhandle(fd);
+    fileSize = GetFileSize(hFile, NULL);
+    
+    o.hEvent = 0;
+    o.Offset = o.OffsetHigh = 0;
+    while ((ret = LockFileEx(hFile, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
+		      0 /* reserved */, fileSize, 0, &o)))
+	sleep(1);
+    return ret;
+}
+
+
+void unlock_fd(int fd)
+{
+    HANDLE hFile;
+    OVERLAPPED o;
+    DWORD fileSize;
+    if (fd == -1)
+	return;
+
+    hFile = _get_osfhandle(fd);
+    fileSize = GetFIleSize(hFile, NULL);
+    
+    o.hEvent = 0;
+    o.Offset = o.OffsetHigh = 0;
+    UnLockFileEx(hFile, 0 /* reserved */, fileSize, 0, &o);
+}
+#endif
 
 /* ----------  END FILE LOCKING HANDLING ----------- */
 

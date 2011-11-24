@@ -134,6 +134,9 @@ void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
 	return;
     
     iflags.disable_log = FALSE;
+    if (!lock_fd(logfd, 1))
+	panic("The game log is locked. Aborting.");
+	
     logfile = logfd;
     /* FIXME: needs file locking */
     
@@ -298,6 +301,8 @@ void log_finish(enum nh_log_status status)
     lprintf("NHGAME %4s %08x", statuscodes[status], last_cmd_pos);
     lseek(logfile, last_cmd_pos, SEEK_SET);
     
+    if (status != LS_IN_PROGRESS)
+	unlock_fd(logfile);
     logfile = -1;
     iflags.disable_log = TRUE;
 }

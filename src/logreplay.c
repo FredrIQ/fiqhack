@@ -101,6 +101,10 @@ void replay_set_logfile(int logfd)
     if (!program_state.restoring && logfile)
 	log_finish(LS_IN_PROGRESS);
     
+    if (!lock_fd(logfd, 1)) {
+	raw_printf("The game log is locked by another nethack process. Aborting.");
+	terminate();
+    }
     logfile = logfd;
 }
 
@@ -617,15 +621,21 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
 	       role, race, gend, algn);
     if (n != 12) return LS_INVALID;
     
-    if (!strcmp(status, "save"))
-	ret = LS_SAVED;
-    else if (!strcmp(status, "done"))
+    endpos = lseek(fd, 0, SEEK_END);
+    if (!strcmp(status, "done"))
 	return LS_DONE;
-    else if (!strcmp(status, "inpr"))
-	ret = LS_IN_PROGRESS;
+    else if (!strcmp(status, "inpr") || endpos == savepos)
+	ret = LS_CRASHED;
+    else if (!strcmp(status, "save"))
+	ret = LS_SAVED;
     else
 	return LS_INVALID;
     
+    /* if we can't lock the file, it's in use */
+    if (!lock_fd(fd, 0))
+	ret = LS_IN_PROGRESS;
+    unlock_fd(fd); /* don't need the lock, we're not going to write */
+
     if (!si)
 	return ret;
     
@@ -637,26 +647,21 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
     strcpy(si->plgend, gend);
     strcpy(si->plalign, algn);
     
-    if (ret == LS_IN_PROGRESS)
-	return LS_IN_PROGRESS;
+    if (ret == LS_CRASHED || ret == LS_IN_PROGRESS)
+	return ret;
     
-    endpos = lseek(fd, 0, SEEK_END);
-    lseek(fd, savepos, SEEK_SET);
-    
-    if (endpos == savepos)
-	return LS_IN_PROGRESS;
-
     if (!api_entry_checkpoint())
 	/* something went wrong, hopefully it isn't so bad that replay won't work */
-	return LS_IN_PROGRESS;
+	return LS_CRASHED;
 
     mf.len = endpos - savepos;
     mf.pos = 0;
     mf.buf = malloc(mf.len);
+    lseek(fd, savepos, SEEK_SET);
     if (!read(fd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
 	free(mf.buf);
 	api_exit();
-	return LS_IN_PROGRESS; /* probably still a valid game */
+	return LS_CRASHED; /* probably still a valid game */
     }
     
     mread(&mf, &sg_flags, sizeof(struct flag));

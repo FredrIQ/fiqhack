@@ -88,16 +88,15 @@ static void write_topten(const struct toptenentry *ttlist)
 static void update_log(const struct toptenentry *newtt)
 {
 #ifdef LOGFILE		/* used for debugging (who dies of what, where) */
-    FILE *file;
-    if (lock_file(LOGFILE, SCOREPREFIX, 10)) {
-	file = fopen_datafile(LOGFILE, "a", SCOREPREFIX);
-	if (!file) {
-	    raw_print("Cannot open log file!\n");
-	} else {
+    FILE *file = fopen_datafile(LOGFILE, "a", SCOREPREFIX);
+    if (!file)
+	raw_print("Cannot open log file!\n");
+    else {
+	if (lock_fd(fileno(file), 10)) {
 	    writeentry(file, newtt);
 	    fclose(file);
+	    unlock_fd(fileno(file));
 	}
-	unlock_file(LOGFILE);
     }
 #endif
 }
@@ -243,6 +242,7 @@ void update_topten(int how)
 {
     struct toptenentry *toptenlist, newtt;
     boolean need_rewrite;
+    FILE *file;
     
     if (program_state.panicking)
 	return;
@@ -256,13 +256,17 @@ void update_topten(int how)
     if (wizard || discover)
 	return;
 
-    if (!lock_file(RECORD, SCOREPREFIX, 60))
+    file = fopen_datafile(RECORD, "r", SCOREPREFIX);
+    if (!file || !lock_fd(fileno(file), 60)) {
+	fclose(file);
 	return;
+    }
     
     toptenlist = read_topten(TTLISTLEN);
     if (!toptenlist) {
 	raw_print("Cannot open record file!\n");
-	unlock_file(RECORD);
+	unlock_fd(fileno(file));
+	fclose(file);
 	return;
     }
     
@@ -271,7 +275,8 @@ void update_topten(int how)
     if (need_rewrite)
 	write_topten(toptenlist);
     
-    unlock_file(RECORD);
+    unlock_fd(fileno(file));
+    fclose(file);
     free(toptenlist);
 }
 
