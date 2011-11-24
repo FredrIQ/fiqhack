@@ -89,7 +89,7 @@ void draw_menu(struct gamewin *gw)
     struct nh_menuitem *item;
     char caption[BUFSZ];
     char *colstrs[MAXCOLS];
-    int i, j, col, scrlheight, scrlpos, attr;
+    int i, j, col, scrlheight, scrlpos, scrltop, attr;
     char *tab;
     
     wattron(gw->win, FRAME_ATTRS);
@@ -136,6 +136,7 @@ void draw_menu(struct gamewin *gw)
     if (mdat->icount <= mdat->innerheight)
 	return;
     /* draw scroll bar */
+    scrltop = mdat->title ? 3 : 1;
     scrlheight = mdat->innerheight * mdat->innerheight / mdat->icount;
     scrlpos = mdat->offset * (mdat->innerheight - scrlheight) / (mdat->icount - mdat->innerheight);
     for (i = 0; i < mdat->innerheight; i++) {
@@ -143,7 +144,7 @@ void draw_menu(struct gamewin *gw)
 	if (i >= scrlpos && i < scrlpos + scrlheight)
 	    attr = A_REVERSE;
 	wattron(gw->win, attr);
-	mvwaddch(gw->win, i + 3, mdat->innerwidth + 2, ' ');
+	mvwaddch(gw->win, i + scrltop, mdat->innerwidth + 2, ' ');
 	wattroff(gw->win, attr);
     }
 }
@@ -515,7 +516,7 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 void draw_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu*)gw->extra;
-    int i, scrlheight, scrlpos, attr;
+    int i, scrlheight, scrlpos, scrltop, attr;
     
     wattron(gw->win, FRAME_ATTRS);
     box(gw->win, 0 , 0);
@@ -538,6 +539,7 @@ void draw_objmenu(struct gamewin *gw)
 	return;
     
     /* draw scroll bar */
+    scrltop = mdat->title ? 3 : 1;
     scrlheight = mdat->innerheight * mdat->innerheight / mdat->icount;
     scrlpos = mdat->offset * (mdat->innerheight - scrlheight) / (mdat->icount - mdat->innerheight);
     for (i = 0; i < mdat->innerheight; i++) {
@@ -545,7 +547,7 @@ void draw_objmenu(struct gamewin *gw)
 	if (i >= scrlpos && i < scrlpos + scrlheight)
 	    attr = A_REVERSE;
 	wattron(gw->win, attr);
-	mvwaddch(gw->win, i + 3, mdat->innerwidth + 2, ' ');
+	mvwaddch(gw->win, i + scrltop, mdat->innerwidth + 2, ' ');
 	wattroff(gw->win, attr);
     }
 }
