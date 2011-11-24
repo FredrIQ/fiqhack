@@ -20,6 +20,9 @@ struct interface_flags ui_flags;
 char *hackdir;
 boolean interrupt_multi = FALSE;
 boolean game_is_running = FALSE;
+int initrole = ROLE_NONE, initrace = ROLE_NONE;
+int initgend = ROLE_NONE, initalign = ROLE_NONE;
+boolean random_player = FALSE;
 
 enum menuitems {
     NEWGAME = 1,
@@ -234,34 +237,34 @@ static void process_args(int argc, char *argv[])
 	case 'p': /* profession (role) */
 	    if (argv[0][2]) {
 		if ((i = nh_str2role(&argv[0][2])) >= 0)
-		    nh_set_role(i);
+		    initrole = i;
 	    } else if (argc > 1) {
 		    argc--;
 		    argv++;
 		if ((i = nh_str2role(argv[0])) >= 0)
-		    nh_set_role(i);
+		    initrole = i;
 	    }
 	    break;
 	    
 	case 'r': /* race */
 	    if (argv[0][2]) {
 		if ((i = nh_str2race(&argv[0][2])) >= 0)
-		    nh_set_race(i);
+		    initrace = i;
 	    } else if (argc > 1) {
 		    argc--;
 		    argv++;
 		if ((i = nh_str2race(argv[0])) >= 0)
-		    nh_set_race(i);
+		    initrace = i;
 	    }
 	    break;
 	    
 	case '@':
-	    nh_set_random_player();
+	    random_player = TRUE;
 	    break;
 	    
 	default:
 	    if ((i = nh_str2role(&argv[0][1])) >= 0) {
-		nh_set_role(i);
+		initrole = i;
 		    break;
 	    }
 	}

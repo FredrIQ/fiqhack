@@ -7,8 +7,8 @@
 #include "nhcurses.h"
 
 #define LISTSZ 32
-boolean curses_player_selection(int initrole, int initrace, int initgend,
-			            int initalign, int randomall)
+boolean player_selection(int *out_role, int *out_race, int *out_gend,
+			 int *out_align, int randomall)
 {
     struct nh_menuitem *items;
     int icount, size;
@@ -18,6 +18,11 @@ boolean curses_player_selection(int initrole, int initrace, int initgend,
     struct nh_listitem list[LISTSZ]; /* need enough space for lists of roles or races */
     char listbuffers[LISTSZ][256];
     int pick_list[2];
+    int initrole, initrace, initgend, initalign;
+    
+    initrole = *out_role; initrace = *out_race;
+    initalign = *out_align; initgend = *out_gend;
+    nh_get_role_defaults(&initrole, &initrace, &initgend, &initalign);
     
     for (i = 0; i < LISTSZ; i++) {
 	listbuffers[i][0] = '\0';
@@ -201,10 +206,11 @@ boolean curses_player_selection(int initrole, int initrace, int initgend,
 	    initalign = k;
 	}
     }
-    nh_set_role(initrole);
-    nh_set_race(initrace);
-    nh_set_gend(initgend);
-    nh_set_align(initalign);
+    
+    *out_role = initrole;
+    *out_race = initrace;
+    *out_gend = initgend;
+    *out_align = initalign;
     
     free(items);
     return TRUE;

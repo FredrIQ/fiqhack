@@ -202,9 +202,9 @@ static void post_init_tasks(void)
 }
 
 
-boolean nh_start_game(int fd, char *name, enum nh_game_modes playmode)
+boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
+		      int ialign, enum nh_game_modes playmode)
 {
-    boolean ret;
     if (!api_entry_checkpoint())
 	return FALSE; /* quit from player selection or init failed */
 
@@ -218,13 +218,11 @@ boolean nh_start_game(int fd, char *name, enum nh_game_modes playmode)
     
     startup_common(name, playmode);
     
-    /* prevent an unnecessary prompt in player selection */
-    rigid_role_checks();
-    ret = player_selection(flags.initrole, flags.initrace, flags.initgend,
-	                   flags.initalign, flags.randomall);
-    if (!ret || flags.initrole == -1 || flags.initrace == -1 ||
-	flags.initgend == -1 || flags.initalign == -1)
+    if (irole == ROLE_NONE || irace == ROLE_NONE ||
+	igend == ROLE_NONE || ialign == ROLE_NONE)
 	goto err_out;
+    flags.initrole = irole; flags.initrace = irace;
+    flags.initgend = igend; flags.initalign = ialign;
     
     log_newgame(fd, turntime, playmode);
     
@@ -292,7 +290,8 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	program_state.game_running = 1;
 	post_init_tasks();
     } else {
-	nh_start_game(fd, namebuf, playmode);
+	nh_start_game(fd, namebuf, flags.initrole, flags.initrace,
+		      flags.initgend, flags.initalign, playmode);
 	/* try replaying instead */
 	error = ERR_REPLAY_FAILED;
 	replay_run_cmdloop(FALSE);

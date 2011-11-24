@@ -173,6 +173,8 @@ extern struct nh_window_procs curses_windowprocs;
 extern WINDOW *mapwin, *msgwin, *statuswin, *sidebar;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;
 extern struct nh_player_info player;
+extern int initrole, initrace, initgend, initalign;
+extern boolean random_player;
 
 /*----------------------------------------------------------------------------*/
 
@@ -247,8 +249,8 @@ extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs);
 extern void curses_notify_level_changed(int dmode);
 
 /* playerselect.c */
-extern boolean curses_player_selection(int initrole, int initrace, int initgend,
-			            int initalign, int randomall);
+extern boolean player_selection(int *out_role, int *out_race, int *out_gend,
+				int *out_align, int randomall);
 
 /* rungame.c */
 extern void rungame(void);

@@ -22,7 +22,6 @@ const char quitchars[] = " \r\n\033";
 static SCREEN *curses_scr;
 
 struct nh_window_procs curses_windowprocs = {
-    curses_player_selection,
     curses_clear_map,
     curses_pause,
     curses_display_buffer,

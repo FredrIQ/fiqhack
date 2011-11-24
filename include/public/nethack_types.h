@@ -472,8 +472,6 @@ struct nh_topten_entry {
 };
 
 struct nh_window_procs {
-    boolean (*win_player_selection)(int initrole, int initrace, int initgend,
-			            int initalign, int randomall);
     void (*win_clear_map)(void);
     void (*win_pause)(enum nh_pause_reason reason);
     void (*win_display_buffer)(char *,boolean);

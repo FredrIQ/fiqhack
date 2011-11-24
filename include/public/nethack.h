@@ -30,7 +30,8 @@ extern EXPORT boolean nh_exit(int exit_type);
 extern EXPORT enum nh_restore_status nh_restore_game(int fd,
 	struct nh_window_procs *rwinprocs, boolean force_replay);
 
-extern EXPORT boolean nh_start_game(int fd, char *name, enum nh_game_modes playmode);
+extern EXPORT boolean nh_start_game(int fd, char *name, int role, int race,
+				    int gend, int align, enum nh_game_modes playmode);
 extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char *const *nh_get_copyright_banner(void);
 
@@ -53,6 +54,7 @@ extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs);
 
 /* role.c */
+extern EXPORT void nh_get_role_defaults(int*, int*, int*, int*);
 extern EXPORT int nh_get_valid_roles(int, int, int, struct nh_listitem*, int);
 extern EXPORT int nh_get_valid_races(int, int, int, struct nh_listitem*, int);
 extern EXPORT int nh_get_valid_genders(int, int, int, struct nh_listitem*, int);
@@ -65,11 +67,6 @@ extern EXPORT int nh_str2role(char *);
 extern EXPORT int nh_str2race(char *);
 extern EXPORT int nh_str2gend(char *);
 extern EXPORT int nh_str2align(char *);
-extern EXPORT void nh_set_role(int);
-extern EXPORT void nh_set_race(int);
-extern EXPORT void nh_set_gend(int);
-extern EXPORT void nh_set_align(int);
-extern EXPORT void nh_set_random_player(void);
 extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int);
 extern EXPORT const char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 

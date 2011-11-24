@@ -9,8 +9,6 @@ extern int logfile;
 extern unsigned int last_cmd_pos;
 
 
-static boolean replay_player_selection(int initrole, int initrace, int initgend,
-			               int initalign, int randomall);
 static void replay_clear_map(void) {}
 static void replay_pause(enum nh_pause_reason r) {}
 static void replay_display_buffer(char *buf, boolean trymove) {}
@@ -44,7 +42,6 @@ int first_cmd_token;
 static char **commands;
 static int cmdcount;
 static struct nh_option_desc *saved_options;
-static int restore_irole, restore_irace, restore_igend, restore_ialign;
 
 /* base 64 decoding table */
 static const char b64d[256] = {
@@ -62,7 +59,6 @@ static const char b64d[256] = {
 
 
 static const struct nh_window_procs replay_windowprocs = {
-    replay_player_selection,
     replay_clear_map,
     replay_pause,
     replay_display_buffer,
@@ -217,17 +213,6 @@ static char *next_log_token(void)
 	return NULL;
     
     return loginfo.tokens[loginfo.next++];
-}
-
-
-static boolean replay_player_selection(int initrole, int initrace, int initgend,
-			               int initalign, int randomall)
-{
-    nh_set_role(restore_irole);
-    nh_set_race(restore_irace);
-    nh_set_gend(restore_igend);
-    nh_set_align(restore_ialign);
-    return TRUE;
 }
 
 
@@ -453,13 +438,13 @@ void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
     *seed = strtoul(next_log_token(), NULL, 16);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
-    restore_irole = nh_str2role(next_log_token());
-    restore_irace = nh_str2race(next_log_token());
-    restore_igend = nh_str2gend(next_log_token());
-    restore_ialign = nh_str2align(next_log_token());
+    flags.initrole = nh_str2role(next_log_token());
+    flags.initrace = nh_str2race(next_log_token());
+    flags.initgend = nh_str2gend(next_log_token());
+    flags.initalign = nh_str2align(next_log_token());
     
-    if (restore_irole == ROLE_NONE || restore_irace == ROLE_NONE ||
-	restore_igend == ROLE_NONE || restore_ialign == ROLE_NONE)
+    if (flags.initrole == ROLE_NONE || flags.initrace == ROLE_NONE ||
+	flags.initgend == ROLE_NONE || flags.initalign == ROLE_NONE)
 	terminate();
     
     replay_read_commandlist();

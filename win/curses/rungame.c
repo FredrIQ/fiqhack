@@ -142,7 +142,7 @@ static void game_ended(int status, char *filename)
 
 void rungame(void)
 {
-    int ret;
+    int ret, role = initrole, race = initrace, gend = initgend, align = initalign;
     int fd = -1;
     char filename[1024];
     char savedir[BUFSZ];
@@ -154,6 +154,9 @@ void rungame(void)
     }
     
     query_birth_options();
+    if (!player_selection(&role, &race, &gend, &align, random_player))
+	return;
+    
     while (!settings.plname[0])
 	curses_getline("what is your name?", settings.plname);
     if (settings.plname[0] == '\033') /* canceled */
@@ -169,7 +172,7 @@ void rungame(void)
     }
     
     create_game_windows();
-    if (!nh_start_game(fd, settings.plname, ui_flags.playmode))
+    if (!nh_start_game(fd, settings.plname, role, race, gend, align, ui_flags.playmode))
 	return;
     
     load_keymap(); /* need to load the keymap after the game has been started */

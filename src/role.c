@@ -951,29 +951,23 @@ void rigid_role_checks(void)
 }
 
 
-void nh_set_role(int role)
+void nh_get_role_defaults(int *out_role, int *out_race, int *out_gend, int *out_align)
 {
-	flags.initrole  = role;
-}
+    if (*out_role != ROLE_NONE && *out_role != ROLE_RANDOM)
+	flags.initrole = *out_role;
+    if (*out_race != ROLE_NONE && *out_race != ROLE_RANDOM)
+	flags.initrace = *out_race;
+    if (*out_gend != ROLE_NONE && *out_gend != ROLE_RANDOM)
+	flags.initgend = *out_gend;
+    if (*out_align != ROLE_NONE && *out_align != ROLE_RANDOM)
+	flags.initalign = *out_align;
 
-void nh_set_race(int race)
-{
-	flags.initrace  = race;
-}
+    rigid_role_checks();
 
-void nh_set_gend(int gend)
-{
-	flags.initgend  = gend;
-}
-
-void nh_set_align(int algn)
-{
-	flags.initalign = algn;
-}
-
-void nh_set_random_player(void)
-{
-	flags.randomall = 1;
+    *out_role = flags.initrole;
+    *out_race = flags.initrace;
+    *out_gend = flags.initgend;
+    *out_align = flags.initalign;
 }
 
 
