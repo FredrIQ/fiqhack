@@ -657,11 +657,20 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
     
     endpos = lseek(fd, 0, SEEK_END);
     lseek(fd, savepos, SEEK_SET);
+    
+    if (endpos == savepos)
+	return LS_IN_PROGRESS;
+
+    if (!api_entry_checkpoint())
+	/* something went wrong, hopefully it isn't so bad that replay won't work */
+	return LS_IN_PROGRESS;
+
     mf.len = endpos - savepos;
     mf.pos = 0;
     mf.buf = malloc(mf.len);
     if (!read(fd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
 	free(mf.buf);
+	api_exit();
 	return LS_IN_PROGRESS; /* probably still a valid game */
     }
     
@@ -691,6 +700,8 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
 	    free_dungeons();
 	    dlb_cleanup();
     }
+    
+    api_exit();
     
     return LS_SAVED;
 }
