@@ -129,12 +129,16 @@ char curses_query_key(const char *query, int *count)
 
 int curses_msgwin(const char *msg)
 {
-    int key;
+    int key, len;
     int width = strlen(msg) + 4;
     int prevcurs = curs_set(0); /* cursor might be on if called from getpos() */
     WINDOW *win = newdialog(3, width);
     
-    mvwprintw(win, 1, 2, msg);
+    len = strlen(msg);
+    while (isspace(msg[len-1]))
+	len--;
+    
+    mvwaddnstr(win, 1, 2, msg, len);
     wrefresh(win);
     key = nh_wgetch(win); /* wait for any key */
     
