@@ -324,10 +324,11 @@ void delete_gamewin(struct gamewin *gw)
 
 void curses_pause(enum nh_pause_reason reason)
 {
-    if (reason == P_MESSAGE)
+    if (reason == P_MESSAGE && msgwin != NULL)
 	pause_messages();
-    else
-	/* P_MAP: pause to show the result of detection or similar */
+    else if (mapwin != NULL)
+	/* P_MAP: pause to show the result of detection or similar
+	 * we may wgetch on stdscr, but it's the map we actually care about */
 	nh_wgetch(stdscr);
 }
 
