@@ -515,7 +515,8 @@ static void add_keylist_command(struct nh_cmd_desc *cmd,
 	}
     }
     
-    sprintf(buf, "#%.15s\t%.50s\t%.16s", cmd->name, cmd->desc, keys);
+    sprintf(buf, "%s%.15s\t%.50s\t%.16s", cmd->flags & CMD_EXT ? "#" : "",
+	    cmd->name, cmd->desc, keys);
     set_menuitem(item, id, MI_NORMAL, buf, 0, FALSE);
 }
 
