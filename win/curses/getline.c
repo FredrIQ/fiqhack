@@ -343,34 +343,28 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
  * Read in an extended command, doing command line completion.  We
  * stop when we have found enough characters to make a unique command.
  */
-int curses_get_ext_cmd(const char **namelist, const char **desclist, int listlen)
+boolean curses_get_ext_cmd(char *cmd_out, const char **namelist,
+			   const char **desclist, int listlen)
 {
 	int i;
-	char buf[BUFSZ];
 	struct extcmd_hook_args hpa = {namelist, desclist, listlen};
 
-	if (settings.extmenu)
-	    return extcmd_via_menu(namelist, desclist, listlen);
-
-	/* maybe a runtime option? */
-	hooked_curses_getlin("extended command: (? for help)", buf,
-			     ext_cmd_getlin_hook, &hpa);
-	mungspaces(buf);
-	if (buf[0] == 0 || buf[0] == '\033')
-	    return -1;
-	
-	for (i = 0; i < listlen; i++)
-	    if (!strcmp(buf, namelist[i])) break;
-
-
-	if (i == listlen) {
-	    char msg[BUFSZ];
-	    sprintf(msg, "%s: unknown extended command.", buf);
-	    curses_msgwin(msg);
-	    i = -1;
+	if (settings.extmenu) {
+	    i = extcmd_via_menu(namelist, desclist, listlen);
+	    if (i == -1)
+		return FALSE;
+	    strcpy(cmd_out, namelist[i]);
+	    return TRUE;
 	}
 
-	return i;
+	/* maybe a runtime option? */
+	hooked_curses_getlin("extended command: (? for help)", cmd_out,
+			     ext_cmd_getlin_hook, &hpa);
+	mungspaces(cmd_out);
+	if (cmd_out[0] == 0 || cmd_out[0] == '\033')
+	    return FALSE;
+	
+	return TRUE;
 }
 
 /*getline.c*/

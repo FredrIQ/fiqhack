@@ -201,8 +201,8 @@ extern void curses_outrip(struct nh_menuitem *items, int icount, boolean tombsto
 
 /* getline.c */
 extern void draw_getline(struct gamewin *gw);
-extern int curses_get_ext_cmd(const char **namelist, const char **desclist,
-			      int listlen);
+extern boolean curses_get_ext_cmd(char *cmd_out, const char **namelist,
+			   const char **desclist, int listlen);
 extern void curses_getline(const char *query, char *buffer);
 
 /* keymap.c */

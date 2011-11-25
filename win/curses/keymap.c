@@ -273,6 +273,7 @@ static struct nh_cmd_desc *doextcmd(void)
 {
     int i, idx, size;
     struct nh_cmd_desc *retval = NULL;
+    char cmdbuf[BUFSZ];
     const char **namelist, **desclist;
     static const char exthelp[] = "?";
     int *idxmap;
@@ -295,26 +296,31 @@ static struct nh_cmd_desc *doextcmd(void)
 	if (commandlist[i].flags & CMD_EXT) {
 	    namelist[idx] = commandlist[i].name;
 	    desclist[idx] = commandlist[i].desc;
-	    idxmap[idx] = i;
 	    idx++;
 	}
     }
     
-    /* keep repeating until we don't run help or quit */
+    /* keep repeating until we don't run help */
     do {
-	idx = curses_get_ext_cmd(namelist, desclist, size+1);
-	if (idx < 0)
-	    goto freemem;
+	if (!curses_get_ext_cmd(cmdbuf, namelist, desclist, size+1))
+	    break;
 	
-	i = idxmap[idx];
-	
-	if (idx == size && namelist[idx] == exthelp)
+	if (!strcmp(cmdbuf, exthelp)) {
 	    doextlist(namelist, desclist, size+1);
-	else
-	    retval = &commandlist[i];
+	    continue;
+	}
+	
+	retval = find_command(cmdbuf);
+	
+	/* don't allow ui commands: they wouldn't be handled properly later on */
+	if (!retval || (retval->flags & CMD_UI)) {
+	    retval = NULL;
+	    char msg[BUFSZ];
+	    sprintf(msg, "%s: unknown extended command.", cmdbuf);
+	    curses_msgwin(msg);
+	}
     } while (!retval);
 
-freemem:
     free(namelist);
     free(desclist);
     free(idxmap);
