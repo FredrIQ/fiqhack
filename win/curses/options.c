@@ -375,8 +375,8 @@ static boolean get_option_value(struct win_menu *mdat, int idx)
 	    break;
 	    
 	case OPTTYPE_KEYMAP:
-	    show_keymap_menu();
-	    break;
+	    show_keymap_menu(FALSE);
+	    return FALSE;
 	    
 	default:
 	    return FALSE;

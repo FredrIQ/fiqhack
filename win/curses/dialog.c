@@ -18,6 +18,7 @@ WINDOW *newdialog(int height, int width)
     
     WINDOW *win = newwin(height, width, starty, startx);
     keypad(win, TRUE);
+    meta(win, TRUE);
     wattron(win, FRAME_ATTRS);
     box(win, 0 , 0);
     wattroff(win, FRAME_ATTRS);

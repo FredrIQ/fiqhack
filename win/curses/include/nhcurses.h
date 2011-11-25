@@ -24,6 +24,8 @@
 
 #define FRAME_ATTRS  (COLOR_PAIR(6)) /* magenta frames for better visibility */
 
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
 /* I'm not at all sure resizing is a good idea.
  * Resizing is essentially broken, because resizing in ncurses (5.9) is a mess.
  * I got crashes in malloc(?!) in the resizeterm callchain, far away from any
@@ -200,7 +202,7 @@ extern void curses_getline(const char *query, char *buffer);
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
-extern void show_keymap_menu(void);
+extern void show_keymap_menu(boolean readonly);
 extern enum nh_direction key_to_dir(int key);
 
 /* map.c */
