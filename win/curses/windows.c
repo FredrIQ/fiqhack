@@ -246,7 +246,7 @@ void rebuild_ui(void)
     }
 }
 
-
+#define META(c)  ((c)|0x80) /* bit 8 */
 int nh_wgetch(WINDOW *win)
 {
     int key = 0;
@@ -279,6 +279,21 @@ int nh_wgetch(WINDOW *win)
 	    }
 	}
 #endif
+	/* "hackaround": some terminals / shells / whatever don't directly pass
+	 * on any combinations with the alt key. Instead these become ESC,<key>
+	 * Try to reverse that here...
+	 */
+	if (key == KEY_ESC) {
+	    int key2;
+	    
+	    nodelay(win, TRUE);
+	    key2 = wgetch(win); /* check for a following letter */
+	    nodelay(win, FALSE);
+	    
+	    if ('a' <= key2 && key2 <= 'z')
+		key = META(key2);
+	}
+	    
     } while (!key);
     
     return key;
