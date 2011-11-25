@@ -546,16 +546,9 @@ static void get_config_name(char *buf, boolean ui)
     }
     
     /* look in regular location */
-    envval = getenv("XDG_CONFIG_HOME");
-    if (envval)
-	snprintf(buf, BUFSZ, "%s/NetHack/%s", envval, ui ? "curses.conf" : "NetHack.conf");
-    else {
-	envval = getenv("HOME");
-	if (!envval) /* HOME not set? just give up... */
-	    return;
-	snprintf(buf, BUFSZ, "%s/.config/NetHack/%s", envval,
-		    ui ? "curses.conf" : "NetHack.conf");
-    }
+    if (!get_gamedir(CONFIG_DIR, buf))
+	return;
+    strncat(buf, ui ? "curses.conf" : "NetHack.conf", BUFSZ);
     
 #if defined(WIN32)
     TCHAR szPath[MAX_PATH];

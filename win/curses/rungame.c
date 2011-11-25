@@ -17,31 +17,26 @@
 #include "nhcurses.h"
 
 
-enum game_dirs {
-    SAVE_DIR,
-    LOG_DIR
-};
-
-
-static boolean get_gamedir(enum game_dirs dirtype, char *buf)
+boolean get_gamedir(enum game_dirs dirtype, char *buf)
 {
     char *envval, *subdir;
     mode_t mask;
     
     switch (dirtype) {
-	case SAVE_DIR: subdir = "save"; break;
-	case LOG_DIR: subdir = "log"; break;
+	case CONFIG_DIR: subdir = ""; break;
+	case SAVE_DIR: subdir = "save/"; break;
+	case LOG_DIR: subdir = "log/"; break;
     }
     
     /* look in regular location */
     envval = getenv("XDG_CONFIG_HOME");
     if (envval)
-	snprintf(buf, BUFSZ, "%s/NetHack/%s/", envval, subdir);
+	snprintf(buf, BUFSZ, "%s/NetHack/%s", envval, subdir);
     else {
 	envval = getenv("HOME");
 	if (!envval) /* HOME not set? just give up... */
 	    return FALSE;
-	snprintf(buf, BUFSZ, "%s/.config/NetHack/%s/", envval, subdir);
+	snprintf(buf, BUFSZ, "%s/.config/NetHack/%s", envval, subdir);
     }
     
     mask = umask(0);

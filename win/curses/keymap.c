@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <ctype.h>
 
 #include "nhcurses.h"
 
@@ -21,6 +25,8 @@ static int cmdcount = 0;
 static struct nh_cmd_desc *prev_cmd = NULL;
 static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE};
 static int prev_count = 0;
+
+static void init_keymap(void);
 
 #define RESET_BINDINGS_ID (-10000)
 
@@ -245,70 +251,6 @@ enum nh_direction key_to_dir(int key)
 }
 
 
-static void init_keymap(void)
-{
-    int i;
-    int count = sizeof(builtin_commands)/sizeof(struct nh_cmd_desc);
-    
-    memset(keymap, 0, sizeof(keymap));
-    
-    /* num pad direction keys */
-    keymap[KEY_UP] = find_command("north");
-    keymap[KEY_DOWN] = find_command("south");
-    keymap[KEY_LEFT] = find_command("west");
-    keymap[KEY_RIGHT] = find_command("east");
-    keymap[KEY_A1] = find_command("north_west");
-    keymap[KEY_A3] = find_command("north_east");
-    keymap[KEY_C1] = find_command("south_west");
-    keymap[KEY_C3] = find_command("south_east");
-    /* diagonal keypad keys are not necessarily reported as A1, A3, C1, C3 */
-    keymap[KEY_HOME]  = find_command("north_west");
-    keymap[KEY_PPAGE] = find_command("north_east");
-    keymap[KEY_END]   = find_command("south_west");
-    keymap[KEY_NPAGE] = find_command("south_east");
-    
-    /* every command automatically gets its default key */
-    for (i = 0; i < cmdcount; i++)
-	if (commandlist[i].defkey)
-	    keymap[(unsigned int)commandlist[i].defkey] = &commandlist[i];
-	
-    for (i = 0; i < count; i++)
-	if (builtin_commands[i].defkey)
-	    keymap[(unsigned int)builtin_commands[i].defkey] = &builtin_commands[i];
-    
-    /* alt keys are assigned if the key is not in use */
-    for (i = 0; i < cmdcount; i++) {
-	if (commandlist[i].altkey && !keymap[(unsigned int)commandlist[i].altkey])
-	    keymap[(unsigned int)commandlist[i].altkey] = &commandlist[i];
-    }
-    
-    for (i = 0; i < count; i++) {
-	if (builtin_commands[i].altkey &&
-	    !keymap[(unsigned int)commandlist[i].altkey])
-	    keymap[(unsigned int)builtin_commands[i].altkey] = &builtin_commands[i];
-    }
-    
-}
-
-
-void load_keymap(void)
-{
-    struct nh_cmd_desc *cmdlist = nh_get_commands(&cmdcount);
-    
-    commandlist = malloc(cmdcount * sizeof(struct nh_cmd_desc));
-    memcpy(commandlist, cmdlist, cmdcount * sizeof(struct nh_cmd_desc));
-
-    init_keymap();
-}
-
-
-void free_keymap(void)
-{
-    free(commandlist);
-    commandlist = NULL;
-}
-
-
 /* here after #? - now list all full-word commands */
 int doextlist(const char **namelist, const char **desclist, int listlen)
 {
@@ -383,6 +325,173 @@ freemem:
 /*----------------------------------------------------------------------------*/
 
 
+/* read the user-configured keymap from keymap.conf.
+ * Return TRUE if this succeeds, FALSE otherwise */
+static boolean read_keymap(void)
+{
+    char filename[BUFSZ];
+    char *data, *line, *endptr;
+    int fd, size, pos, key, i;
+    struct nh_cmd_desc *cmd;
+    
+    filename[0] = '\0';
+    if (!get_gamedir(CONFIG_DIR, filename))
+	return FALSE;
+    strncat(filename, "keymap.conf", BUFSZ);
+    
+    fd = open(filename, O_RDONLY);
+    if (fd == -1)
+	return FALSE;
+    
+    size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    
+    data = malloc(size + 1);
+    read(fd, data, size);
+    data[size] = '\0';
+    close(fd);
+    
+    /* clear the EXT_CMD bit for all commands */
+    for (i = 0; i < cmdcount; i++)
+	commandlist[i].flags &= (~CMD_EXT);
+    
+    /* read the file */
+    line = strtok(data, "\r\n");
+    while (line) {
+	/* find the first non-space after the first space (ie the second word) */
+	pos = 0;
+	while (!isspace(line[pos]))
+	    pos++;
+	while (isspace(line[pos]))
+	    pos++;
+	
+	cmd = find_command(&line[pos]);
+	if (!cmd && line[pos] != '-')
+	    goto badmap;
+	
+	if (!strncmp(line, "EXT", 3)) {
+	    if (cmd)
+		cmd->flags |= CMD_EXT;
+	} else {
+	    key = strtol(line, &endptr, 16);
+	    if (key == 0 || endptr == line)
+		goto badmap;
+	    
+	    keymap[key] = cmd;
+	}
+	
+	line = strtok(NULL, "\r\n");
+    }
+    
+    
+    free(data);
+    return TRUE;
+    
+badmap:
+    curses_msgwin("Bad/damaged keymap.conf. Reverting to defaults.");
+    init_keymap();
+    return FALSE;
+}
+
+
+/* store the keymap in keymap.conf */
+static void write_keymap(void)
+{
+    int fd, i;
+    unsigned int key;
+    char filename[BUFSZ], buf[BUFSZ];
+    
+    filename[0] = '\0';
+    if (!get_gamedir(CONFIG_DIR, filename))
+	return;
+    strncat(filename, "keymap.conf", BUFSZ);
+    
+    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+    
+    for (key = 1; key < KEY_MAX; key++) {
+	sprintf(buf, "%x %s\n", key, keymap[key] ? keymap[key]->name : "-");
+	write(fd, buf, strlen(buf));
+    }
+    
+    for (i = 0; i < cmdcount; i++) {
+	if (commandlist[i].flags & CMD_EXT) {
+	    sprintf(buf, "EXT %s\n", commandlist[i].name);
+	    write(fd, buf, strlen(buf));
+	}
+    }
+    
+    close(fd);
+}
+
+
+/* initialize the keymap with the default keys suggested by NetHack */
+static void init_keymap(void)
+{
+    int i;
+    int count = sizeof(builtin_commands)/sizeof(struct nh_cmd_desc);
+    
+    memset(keymap, 0, sizeof(keymap));
+    
+    /* num pad direction keys */
+    keymap[KEY_UP] = find_command("north");
+    keymap[KEY_DOWN] = find_command("south");
+    keymap[KEY_LEFT] = find_command("west");
+    keymap[KEY_RIGHT] = find_command("east");
+    keymap[KEY_A1] = find_command("north_west");
+    keymap[KEY_A3] = find_command("north_east");
+    keymap[KEY_C1] = find_command("south_west");
+    keymap[KEY_C3] = find_command("south_east");
+    /* diagonal keypad keys are not necessarily reported as A1, A3, C1, C3 */
+    keymap[KEY_HOME]  = find_command("north_west");
+    keymap[KEY_PPAGE] = find_command("north_east");
+    keymap[KEY_END]   = find_command("south_west");
+    keymap[KEY_NPAGE] = find_command("south_east");
+    
+    /* every command automatically gets its default key */
+    for (i = 0; i < cmdcount; i++)
+	if (commandlist[i].defkey)
+	    keymap[(unsigned int)commandlist[i].defkey] = &commandlist[i];
+	
+    for (i = 0; i < count; i++)
+	if (builtin_commands[i].defkey)
+	    keymap[(unsigned int)builtin_commands[i].defkey] = &builtin_commands[i];
+    
+    /* alt keys are assigned if the key is not in use */
+    for (i = 0; i < cmdcount; i++) {
+	if (commandlist[i].altkey && !keymap[(unsigned int)commandlist[i].altkey])
+	    keymap[(unsigned int)commandlist[i].altkey] = &commandlist[i];
+    }
+    
+    for (i = 0; i < count; i++) {
+	if (builtin_commands[i].altkey &&
+	    !keymap[(unsigned int)commandlist[i].altkey])
+	    keymap[(unsigned int)builtin_commands[i].altkey] = &builtin_commands[i];
+    }
+    
+}
+
+
+void load_keymap(void)
+{
+    struct nh_cmd_desc *cmdlist = nh_get_commands(&cmdcount);
+    
+    commandlist = malloc(cmdcount * sizeof(struct nh_cmd_desc));
+    memcpy(commandlist, cmdlist, cmdcount * sizeof(struct nh_cmd_desc));
+
+    /* always init the keymap - read keymap might not set up every mapping */
+    init_keymap();
+    read_keymap();
+}
+
+
+void free_keymap(void)
+{
+    free(commandlist);
+    commandlist = NULL;
+}
+
+
+/* add the description of a command to the keymap menu */
 static void add_keylist_command(struct nh_cmd_desc *cmd,
 				struct nh_menuitem *item, int id)
 {
@@ -411,6 +520,7 @@ static void add_keylist_command(struct nh_cmd_desc *cmd,
 }
 
 
+/* display a menu to alter the key bindings for the given command */
 static void command_settings_menu(struct nh_cmd_desc *cmd)
 {
     char buf[BUFSZ];
@@ -445,10 +555,12 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	if (n < 1)
 	    break;
 	
-	if (selection[0] > 0)
+	/* int this menu, ids > 0 are used for "delete key" items and id is the
+	 * actual key. Negative ids are used for the 2 static menu items */
+	if (selection[0] > 0) /* delete a key */
 	    keymap[selection[0]] = NULL;
-	else if (selection[0] == -1) {
-	    sprintf(buf, "Press the key you wnt to use for \"%s\"", cmd->name);
+	else if (selection[0] == -1) { /* add a key */
+	    sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
 	    i = curses_msgwin(buf);
 	    if (keymap[i]) {
 		sprintf(buf, "That key is already in use by \"%s\"! Replace?", keymap[i]->name);
@@ -457,7 +569,7 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	    }
 	    keymap[i] = cmd;
 	    
-	} else if (selection[0] == -2) {
+	} else if (selection[0] == -2) { /* toggle extended command status */
 	    cmd->flags = (cmd->flags ^ CMD_EXT);
 	}
 	    
@@ -473,7 +585,7 @@ static boolean set_command_keys(struct win_menu *mdat, int idx)
     struct nh_cmd_desc *cmd;
     
     if (id == RESET_BINDINGS_ID) {
-	init_keymap();
+	init_keymap(); /* fully reset the keymap */
 	return TRUE;
     }
     
@@ -519,4 +631,6 @@ void show_keymap_menu(boolean readonly)
 	                        PICK_ONE, NULL, 0, 0, COLS, LINES, set_command_keys);
     } while(n > 0);
     free(items);
+    
+    write_keymap();
 }

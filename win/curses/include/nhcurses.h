@@ -33,6 +33,13 @@
 // #define ALLOW_RESIZE
 
 
+enum game_dirs {
+    CONFIG_DIR,
+    SAVE_DIR,
+    LOG_DIR
+};
+
+
 struct interface_flags {
     boolean done_hup;
     boolean ingame;
@@ -255,6 +262,7 @@ extern boolean player_selection(int *out_role, int *out_race, int *out_gend,
 				int *out_align, int randomall);
 
 /* rungame.c */
+extern boolean get_gamedir(enum game_dirs dirtype, char *buf);
 extern void rungame(void);
 extern boolean loadgame(void);
 
