@@ -366,9 +366,9 @@ static boolean read_keymap(void)
     while (line) {
 	/* find the first non-space after the first space (ie the second word) */
 	pos = 0;
-	while (!isspace(line[pos]))
+	while (line[pos] && !isspace(line[pos]))
 	    pos++;
-	while (isspace(line[pos]))
+	while (line[pos] && isspace(line[pos]))
 	    pos++;
 	
 	unknown = FALSE;
@@ -432,6 +432,8 @@ static void write_keymap(void)
     strncat(filename, "keymap.conf", BUFSZ);
     
     fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+    if (fd == -1)
+	return;
     
     for (key = 1; key < KEY_MAX; key++) {
 	name = keymap[key] ? keymap[key]->name :

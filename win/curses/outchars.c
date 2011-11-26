@@ -5,8 +5,12 @@
  * damage some symbols */
 
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "nhcurses.h"
 
@@ -185,7 +189,8 @@ static boolean apply_override_list(struct curses_symdef *list, int len,
     int i;
     for (i = 0; i < len; i++)
 	if (!strcmp(list[i].symname, ovr->symname)) {
-	    memcpy(list[i].unichar, ovr->unichar, sizeof(wchar_t) * CCHARW_MAX);
+	    if (ovr->unichar[0])
+		memcpy(list[i].unichar, ovr->unichar, sizeof(wchar_t) * CCHARW_MAX);
 	    if (ovr->ch)
 		list[i].ch = ovr->ch;
 	    if (ovr->color != -1)
@@ -268,6 +273,111 @@ static struct curses_drawing_info *load_nh_drawing_info(const struct nh_drawing_
 }
 
 
+static void read_sym_line(char *line)
+{
+    struct curses_symdef ovr;
+    char symname[64];
+    char *bp;
+    
+    if (!strlen(line) || line[0] != '"')
+	return;
+    
+    memset(&ovr, 0, sizeof(struct curses_symdef));
+    
+    /* line format: "symbol name" color unicode [combining marks] */
+    bp = &line[1];
+    while (*bp && *bp != '"') bp++; /* find the end of the symname */
+    strncpy(symname, &line[1], bp - &line[1]);
+    ovr.symname = symname;
+    bp++; /* go past the " at the end of the symname */
+    
+    while (*bp && isspace(*bp)) bp++; /* find the start of the next value */
+    sscanf(bp, "%d", &ovr.color);
+    
+    while (*bp && !isspace(*bp)) bp++; /* go past the previous value */
+    sscanf(bp, "%x", &ovr.unichar[0]);
+    
+    apply_override(unicode_drawing, &ovr, 1);
+}
+
+
+static void read_unisym_config(void)
+{
+    char filename[BUFSZ], *data, *line;
+    int fd, size;
+    
+    filename[0] = '\0';
+    if (!get_gamedir(CONFIG_DIR, filename))
+	return;
+    strncat(filename, "unicode.conf", BUFSZ);
+    
+    fd = open(filename, O_RDONLY);
+    if (fd == -1)
+	return;
+    
+    size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    
+    data = malloc(size + 1);
+    read(fd, data, size);
+    data[size] = '\0';
+    close(fd);
+    
+    line = strtok(data, "\r\n");
+    while (line) {
+	read_sym_line(line);
+	
+	line = strtok(NULL, "\r\n");
+    }
+    
+    free(data);
+}
+
+
+static void write_symlist(int fd, const struct curses_symdef *list, int len)
+{
+    char buf[BUFSZ];
+    int i;
+    
+    for (i = 0; i < len; i++) {
+	sprintf(buf, "\"%s\"\t%d\t%04x\n", list[i].symname, list[i].color,
+		list[i].unichar[0]);
+	write(fd, buf, strlen(buf));
+    }
+}
+
+
+static void write_unisym_config(void)
+{
+    char filename[BUFSZ];
+    int fd;
+    
+    filename[0] = '\0';
+    if (!get_gamedir(CONFIG_DIR, filename))
+	return;
+    strncat(filename, "unicode.conf", BUFSZ);
+    
+    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+    if (fd == -1)
+	return;
+    
+    write_symlist(fd, unicode_drawing->bgelements, unicode_drawing->num_bgelements);
+    write_symlist(fd, unicode_drawing->traps, unicode_drawing->num_traps);
+    write_symlist(fd, unicode_drawing->objects, unicode_drawing->num_objects);
+    write_symlist(fd, unicode_drawing->monsters, unicode_drawing->num_monsters);
+    write_symlist(fd, unicode_drawing->warnings, unicode_drawing->num_warnings);
+    write_symlist(fd, unicode_drawing->invis, 1);
+    write_symlist(fd, unicode_drawing->effects, unicode_drawing->num_effects);
+    write_symlist(fd, unicode_drawing->expltypes, unicode_drawing->num_expltypes);
+    write_symlist(fd, unicode_drawing->explsyms, NUMEXPCHARS);
+    write_symlist(fd, unicode_drawing->zaptypes, unicode_drawing->num_zaptypes);
+    write_symlist(fd, unicode_drawing->zapsyms, NUMZAPCHARS);
+    write_symlist(fd, unicode_drawing->swallowsyms, NUMSWALLOWCHARS);
+    
+    close(fd);
+}
+
+
 void init_displaychars(void)
 {
     int i;
@@ -284,6 +394,8 @@ void init_displaychars(void)
     apply_override(unicode_drawing, unicode_graphics_ovr,
 		   array_size(unicode_graphics_ovr));
     apply_override(rogue_drawing, rogue_graphics_ovr, array_size(rogue_graphics_ovr));
+    
+    read_unisym_config();
     
     cur_drawing = default_drawing;
     
@@ -329,6 +441,8 @@ static void free_drawing_info(struct curses_drawing_info *di)
 
 void free_displaychars(void)
 {
+    write_unisym_config();
+    
     free_drawing_info(default_drawing);
     free_drawing_info(ibm_drawing);
     free_drawing_info(dec_drawing);

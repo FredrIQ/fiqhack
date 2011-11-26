@@ -267,7 +267,7 @@ static int unnamed_cnt[MAXOCLASSES];
 static char *make_object_name(int otyp)
 {
     char buffer[41], buf2[41];
-    const char *nameptr, *classname;
+    const char *nameptr;
     char *ret;
     int class = (int)const_objects[otyp].oc_class;
     
@@ -275,7 +275,6 @@ static char *make_object_name(int otyp)
     buffer[0] = buf2[0] = '\0';
     buffer[40] = buf2[0] = '\0';
 
-    classname = oclass_names[class];
     nameptr = obj_descr[otyp].oc_name;
    
     /* catch dummy objects (scrolls, wands, ...) without names */
@@ -297,12 +296,16 @@ static char *make_object_name(int otyp)
     
     /* add a prefix to some object types to disambiguate
      * (wand of) fire from (scroll of) fire */
-    if (class == WAND_CLASS ||
-	class == RING_CLASS ||
-	class == POTION_CLASS ||
-	class == SPBOOK_CLASS ||
-	class == SCROLL_CLASS)
-	snprintf(buffer, 40, "%3.3s %s", classname, nameptr);
+    if (class == WAND_CLASS)
+	snprintf(buffer, 40, "wand of %s", nameptr);
+    else if (class == RING_CLASS)
+	snprintf(buffer, 40, "ring of %s", nameptr);
+    else if (class == POTION_CLASS)
+	snprintf(buffer, 40, "potion of %s", nameptr);
+    else if (class == SPBOOK_CLASS)
+	snprintf(buffer, 40, "spellbook of %s", nameptr);
+    else if (class == SCROLL_CLASS)
+	snprintf(buffer, 40, "scroll of %s", nameptr);
     else
 	snprintf(buffer, 40, "%s", nameptr);
     
