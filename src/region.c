@@ -216,6 +216,7 @@ void add_region(struct level *lev, struct region *reg)
 	}
 	lev->max_regions += 10;
     }
+    reg->lev = lev;
     lev->regions[lev->n_regions] = reg;
     lev->n_regions++;
     /* Check for monsters inside the region */
@@ -242,6 +243,7 @@ void add_region(struct level *lev, struct region *reg)
 void remove_region(struct region *reg)
 {
     int i, x, y;
+    struct level *lev = reg->lev;
 
     for (i = 0; i < reg->lev->n_regions; i++)
 	if (reg->lev->regions[i] == reg)
@@ -257,9 +259,9 @@ void remove_region(struct region *reg)
 		    newsym(x, y);
 
     free_region(reg);
-    reg->lev->regions[i] = reg->lev->regions[reg->lev->n_regions - 1];
-    reg->lev->regions[reg->lev->n_regions - 1] = NULL;
-    reg->lev->n_regions--;
+    lev->regions[i] = lev->regions[lev->n_regions - 1];
+    lev->regions[lev->n_regions - 1] = NULL;
+    lev->n_regions--;
 }
 
 /*
@@ -536,6 +538,7 @@ void rest_regions(struct memfile *mf, struct level *lev,
 	lev->regions = malloc(sizeof (struct region *) * lev->n_regions);
     for (i = 0; i < lev->n_regions; i++) {
 	lev->regions[i] = malloc(sizeof (struct region));
+	lev->regions[i]->lev = lev;
 	mread(mf, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
 	mread(mf, &lev->regions[i]->nrects, sizeof (short));
 
