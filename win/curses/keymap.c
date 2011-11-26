@@ -19,12 +19,12 @@ enum internal_commands {
     UICMD_PREVMSG
 };
 
-struct nh_cmd_desc *keymap[KEY_MAX];
-static struct nh_cmd_desc *commandlist;
-static int cmdcount = 0;
-static struct nh_cmd_desc *prev_cmd = NULL;
+struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
+static struct nh_cmd_desc *commandlist, *unknown_commands;
+static int cmdcount, unknown_count;
+static struct nh_cmd_desc *prev_cmd;
 static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE};
-static int prev_count = 0;
+static int prev_count;
 
 static void init_keymap(void);
 
@@ -337,8 +337,9 @@ static boolean read_keymap(void)
 {
     char filename[BUFSZ];
     char *data, *line, *endptr;
-    int fd, size, pos, key, i;
+    int fd, size, pos, key;
     struct nh_cmd_desc *cmd;
+    boolean unknown;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
@@ -357,9 +358,8 @@ static boolean read_keymap(void)
     data[size] = '\0';
     close(fd);
     
-    /* clear the EXT_CMD bit for all commands */
-    for (i = 0; i < cmdcount; i++)
-	commandlist[i].flags &= (~CMD_EXT);
+    unknown_count = 0;
+    memset(unknown_keymap, 0, sizeof(unknown_keymap));
     
     /* read the file */
     line = strtok(data, "\r\n");
@@ -371,19 +371,38 @@ static boolean read_keymap(void)
 	while (isspace(line[pos]))
 	    pos++;
 	
+	unknown = FALSE;
 	cmd = find_command(&line[pos]);
-	if (!cmd && line[pos] != '-')
-	    goto badmap;
+	/* record unknown commands in the keymap: these may simply be valid, but
+	 * unavailable in the current game. For example, the file might contain
+	 * mappings for wizard mode commands.
+	 */
+	if (!cmd && line[pos] != '-') {
+	    unknown = TRUE;
+	    unknown_count++;
+	    unknown_commands = realloc(unknown_commands,
+				       unknown_count * sizeof(struct nh_cmd_desc));
+	    cmd = &unknown_commands[unknown_count-1];
+	    memset(cmd, 0, sizeof(struct nh_cmd_desc));
+	    strncpy(cmd->name, &line[pos], sizeof(cmd->name));
+	    cmd->name[sizeof(cmd->name)-1] = '\0';
+	}
 	
-	if (!strncmp(line, "EXT", 3)) {
-	    if (cmd)
+	if (cmd) {
+	    if (!strncmp(line, "EXT", 3))
 		cmd->flags |= CMD_EXT;
-	} else {
-	    key = strtol(line, &endptr, 16);
-	    if (key == 0 || endptr == line)
-		goto badmap;
-	    
-	    keymap[key] = cmd;
+	    else if(!strncmp(line, "NOEXT", 5))
+		cmd->flags &= ~CMD_EXT;
+	    else {
+		key = strtol(line, &endptr, 16);
+		if (key == 0 || endptr == line)
+		    goto badmap;
+		
+		if (!unknown)
+		    keymap[key] = cmd;
+		else
+		    unknown_keymap[key] = cmd;
+	    }
 	}
 	
 	line = strtok(NULL, "\r\n");
@@ -405,7 +424,7 @@ static void write_keymap(void)
 {
     int fd, i;
     unsigned int key;
-    char filename[BUFSZ], buf[BUFSZ];
+    char filename[BUFSZ], buf[BUFSZ], *name;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
@@ -415,13 +434,28 @@ static void write_keymap(void)
     fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     
     for (key = 1; key < KEY_MAX; key++) {
-	sprintf(buf, "%x %s\n", key, keymap[key] ? keymap[key]->name : "-");
+	name = keymap[key] ? keymap[key]->name :
+	                (unknown_keymap[key] ? unknown_keymap[key]->name : "-");
+	sprintf(buf, "%x %s\n", key, name);
 	write(fd, buf, strlen(buf));
     }
     
     for (i = 0; i < cmdcount; i++) {
 	if (commandlist[i].flags & CMD_EXT) {
 	    sprintf(buf, "EXT %s\n", commandlist[i].name);
+	    write(fd, buf, strlen(buf));
+	} else {
+	    sprintf(buf, "NOEXT %s\n", commandlist[i].name);
+	    write(fd, buf, strlen(buf));
+	}
+    }
+    
+    for (i = 0; i < unknown_count; i++) {
+	if (unknown_commands[i].flags & CMD_EXT) {
+	    sprintf(buf, "EXT %s\n", unknown_commands[i].name);
+	    write(fd, buf, strlen(buf));
+	} else {
+	    sprintf(buf, "NOEXT %s\n", unknown_commands[i].name);
 	    write(fd, buf, strlen(buf));
 	}
     }
@@ -494,6 +528,11 @@ void free_keymap(void)
 {
     free(commandlist);
     commandlist = NULL;
+    
+    if (unknown_commands) {
+	free(unknown_commands);
+	unknown_commands = NULL;
+    }
 }
 
 
@@ -593,6 +632,16 @@ static boolean set_command_keys(struct win_menu *mdat, int idx)
     
     if (id == RESET_BINDINGS_ID) {
 	init_keymap(); /* fully reset the keymap */
+	
+	/* reset extcmds */
+	int i, count = 0;
+	struct nh_cmd_desc *cmdlist = nh_get_commands(&count);
+	for (i = 0; i < count; i++) {
+	    cmd = find_command(cmdlist[i].name);
+	    if (cmd)
+		cmd->flags = cmdlist[i].flags;
+	}
+	
 	return TRUE;
     }
     

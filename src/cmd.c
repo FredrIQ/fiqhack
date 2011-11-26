@@ -1046,12 +1046,13 @@ struct nh_cmd_desc *nh_get_commands(int *count)
 	ui_cmd = xmalloc(sizeof(struct nh_cmd_desc) * cmdcount);
 	if (!ui_cmd)
 	    return NULL;
+	memset(ui_cmd, 0, sizeof(struct nh_cmd_desc) * cmdcount);
 
 	j = 0;
 	for (i = 0; cmdlist[i].name; i++)
 	    if (wizard || !(cmdlist[i].flags & CMD_DEBUG)) {
-		ui_cmd[j].name = cmdlist[i].name;
-		ui_cmd[j].desc = cmdlist[i].desc;
+		strncpy(ui_cmd[j].name, cmdlist[i].name, sizeof(ui_cmd[j].name));
+		strncpy(ui_cmd[j].desc, cmdlist[i].desc, sizeof(ui_cmd[j].desc));
 		ui_cmd[j].defkey = cmdlist[i].defkey;
 		ui_cmd[j].altkey = cmdlist[i].altkey;
 		ui_cmd[j].flags = cmdlist[i].flags;

@@ -358,8 +358,8 @@ struct nh_save_info {
 
 
 struct nh_cmd_desc {
-    const char *name;
-    const char *desc;
+    char name[20];
+    char desc[80];
     unsigned char defkey, altkey;
     unsigned flags;
 };
