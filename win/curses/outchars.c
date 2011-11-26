@@ -15,7 +15,8 @@
 
 static int corpse_id;
 struct curses_drawing_info *default_drawing, *cur_drawing;
-static struct curses_drawing_info *ibm_drawing, *dec_drawing, *rogue_drawing;
+static struct curses_drawing_info *ibm_drawing, *dec_drawing, *unicode_drawing,
+                                  *rogue_drawing;
 
 
 static struct curses_symdef ibm_graphics_ovr[] = {
@@ -121,14 +122,69 @@ static struct curses_symdef rogue_graphics_ovr[] = {
 };
 
 
+static struct curses_symdef unicode_graphics_ovr[] = {
+    /* bg */
+    {"vwall",	-1,	{0x2502, 0},	0},	/* │ vertical rule */
+    {"hwall",	-1,	{0x2500, 0},	0},	/* ─ horizontal rule */
+    {"tlcorn",	-1,	{0x250C, 0},	0},	/* ┌ top left corner */
+    {"trcorn",	-1,	{0x2510, 0},	0},	/* ┐ top right corner */
+    {"blcorn",	-1,	{0x2514, 0},	0},	/* └ bottom left */
+    {"brcorn",	-1,	{0x2518, 0},	0},	/* ┘ bottom right */
+    {"crwall",	-1,	{0x253C, 0},	0},	/* ┼ cross */
+    {"tuwall",	-1,	{0x2534, 0},	0},	/* T up */
+    {"tdwall",	-1,	{0x252C, 0},	0},	/* T down */
+    {"tlwall",	-1,	{0x2524, 0},	0},	/* T left */
+    {"trwall",	-1,	{0x251C, 0},	0},	/* T right */
+    {"ndoor",	-1,	{0x00B7, 0},	0},	/* · centered dot */
+    {"vodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
+    {"hodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
+    {"bars",	-1,	{0x2261, 0},	0},	/* ≡ equivalence symbol */
+    {"tree",	-1,	{0x00B1, 0},	0},	/* ± plus-or-minus */
+    {"room",	-1,	{0x00B7, 0},	0},	/* · centered dot */
+    {"corr",	-1,	{0x2591, 0},	0},	/* ░ light shading */
+    {"litcorr",	-1,	{0x2592, 0},	0},	/* ▒ medium shading */
+    {"upladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
+    {"dnladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
+    {"pool",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
+    {"ice",	-1,	{0x00B7, 0},	0},	/* · centered dot */
+    {"lava",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
+    {"vodbridge",-1,	{0x00B7, 0},	0},	/* · centered dot */
+    {"hodbridge",-1,	{0x00B7, 0},	0},	/* · centered dot */
+    {"water",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
+    
+    /* zap */
+    {"zap_v",	-1,	{0x2502, 0},	0},	/* │ vertical rule */
+    {"zap_h",	-1,	{0x2500, 0},	0},	/* ─ horizontal rule */
+    
+    /* swallow */
+    {"swallow_top_c",-1,{0x23BA, 0},	0},	/* ⎺ high horizontal line */
+    {"swallow_mid_l",-1,{0x2502, 0},	0},	/* │ vertical rule */
+    {"swallow_mid_r",-1,{0x2502, 0},	0},	/* │ vertical rule */
+    {"swallow_bot_c",-1,{0x23BD, 0},	0},	/* ⎽ low horizontal line */
+    
+    /* explosion */
+    {"exp_top_c", -1,	{0x23BA, 0},	0},	/* ⎺ high horizontal line */
+    {"exp_mid_l", -1,	{0x2502, 0},	0},	/* │ vertical rule */
+    {"exp_mid_r", -1,	{0x2502, 0},	0},	/* │ vertical rule */
+    {"exp_bot_c", -1,	{0x23BD, 0},	0},	/* ⎽ low horizontal line */
+    
+    /* objects */
+    {"boulder", -1,	{0x25C6, 0},	0},	/* ◆ diamond */
+    
+    /* traps */
+    {"web", -1,		{0x00A4, 0},	0},	/* ¤ currency symbol */
+};
+
+
 static boolean apply_override_list(struct curses_symdef *list, int len,
 				   const struct curses_symdef *ovr)
 {
     int i;
     for (i = 0; i < len; i++)
 	if (!strcmp(list[i].symname, ovr->symname)) {
-	    list[i].ch = ovr->ch;
 	    memcpy(list[i].unichar, ovr->unichar, sizeof(wchar_t) * CCHARW_MAX);
+	    if (ovr->ch)
+		list[i].ch = ovr->ch;
 	    if (ovr->color != -1)
 		list[i].color = ovr->color;
 	    return TRUE;
@@ -217,10 +273,13 @@ void init_displaychars(void)
     default_drawing = load_nh_drawing_info(dinfo);
     ibm_drawing = load_nh_drawing_info(dinfo);
     dec_drawing = load_nh_drawing_info(dinfo);
+    unicode_drawing = load_nh_drawing_info(dinfo);
     rogue_drawing = load_nh_drawing_info(dinfo);
     
     apply_override(ibm_drawing, ibm_graphics_ovr, array_size(ibm_graphics_ovr));
     apply_override(dec_drawing, dec_graphics_ovr, array_size(dec_graphics_ovr));
+    apply_override(unicode_drawing, unicode_graphics_ovr,
+		   array_size(unicode_graphics_ovr));
     apply_override(rogue_drawing, rogue_graphics_ovr, array_size(rogue_graphics_ovr));
     
     cur_drawing = default_drawing;
@@ -270,6 +329,7 @@ void free_displaychars(void)
     free_drawing_info(default_drawing);
     free_drawing_info(ibm_drawing);
     free_drawing_info(dec_drawing);
+    free_drawing_info(unicode_drawing);
     free_drawing_info(rogue_drawing);
     
     default_drawing = ibm_drawing = dec_drawing = rogue_drawing = NULL;
@@ -369,20 +429,28 @@ void switch_graphics(enum nh_text_mode mode)
 	    cur_drawing = default_drawing;
 	    break;
 	    
-	case IBM_GRAPHICS:
 /*
  * Use the nice IBM Extended ASCII line-drawing characters (codepage 437).
  * This fails on UTF-8 terminals and on terminals that use other codepages.
  */
+	case IBM_GRAPHICS:
 	    cur_drawing = ibm_drawing;
 	    break;
 	    
-	case DEC_GRAPHICS:
 /*
  * Use the VT100 line drawing character set.
  * VT100 emulation is very common on Unix, so this should generally work.
  */
+	case DEC_GRAPHICS:
 	    cur_drawing = dec_drawing;
+	    break;
+	    
+/*
+ * Drawing with the full unicode charset. Naturally this reqires a unicode terminal.
+ */
+	case UNICODE_GRAPHICS:
+	    if (ui_flags.unicode)
+		cur_drawing = unicode_drawing;
 	    break;
     }
 }
@@ -424,4 +492,4 @@ void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
     }
 }
 
-/*mapglyph.c*/
+/* outchars.c */

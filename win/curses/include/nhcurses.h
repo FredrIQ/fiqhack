@@ -128,7 +128,8 @@ struct curses_drawing_info {
 enum nh_text_mode {
     ASCII_GRAPHICS,	/* regular characters: '-', '+', &c */
     IBM_GRAPHICS,	/* PC graphic characters */
-    DEC_GRAPHICS	/* VT100 line drawing characters */
+    DEC_GRAPHICS,	/* VT100 line drawing characters */
+    UNICODE_GRAPHICS	/* uses whatever charecters we want: they're ALL available */
 };
 
 typedef boolean (*getlin_hook_proc)(char *, void *);

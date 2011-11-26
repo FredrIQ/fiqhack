@@ -48,7 +48,8 @@ static struct nh_enum_option menu_headings_spec =
 static struct nh_listitem graphics_list[] = {
     {ASCII_GRAPHICS, "plain"},
     {DEC_GRAPHICS, "DEC graphics"},
-    {IBM_GRAPHICS, "IBM graphics"}
+    {IBM_GRAPHICS, "IBM graphics"},
+    {UNICODE_GRAPHICS, "Unicode graphics"}
 };
 static struct nh_enum_option graphics_spec = {graphics_list, listlen(graphics_list)};
 
