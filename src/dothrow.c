@@ -543,7 +543,7 @@ boolean hurtle_step(void *arg, int x, int y)
     if (--*range < 0)		/* make sure our range never goes negative */
 	*range = 0;
     if (*range != 0)
-	delay_output();
+	win_delay_output();
     return TRUE;
 }
 
@@ -815,7 +815,7 @@ static void sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
 	tmp_at(DISP_OBJECT, dbuf_objid(obj));
 	while (x != u.ux || y != u.uy) {
 	    tmp_at(x, y);
-	    delay_output();
+	    win_delay_output();
 	    x -= dx; y -= dy;
 	}
 	tmp_at(DISP_END, 0);
@@ -1031,7 +1031,7 @@ void throwit(struct obj *obj,
 			breaktest(obj)) {
 		    tmp_at(DISP_OBJECT, dbuf_objid(obj));
 		    tmp_at(bhitpos.x, bhitpos.y);
-		    delay_output();
+		    win_delay_output();
 		    tmp_at(DISP_END, 0);
 		    breakmsg(obj, cansee(bhitpos.x, bhitpos.y));
 		    breakobj(obj, bhitpos.x, bhitpos.y, TRUE, TRUE);

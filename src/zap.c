@@ -2680,7 +2680,7 @@ struct monst *beam_hit(int ddx, int ddy, int range,	/* direction and range */
 		    newsym(x, y);
 		}
 		tmp_at(bhitpos.x, bhitpos.y);
-		delay_output();
+		win_delay_output();
 		/* kicked objects fall in pools */
 		if ((weapon == KICKED_WEAPON) &&
 		   (is_pool(level, bhitpos.x, bhitpos.y) ||
@@ -2771,7 +2771,7 @@ struct monst *boomhit(int dx, int dy)
 			}
 		}
 		tmp_at(bhitpos.x, bhitpos.y);
-		delay_output();
+		win_delay_output();
 		if (ct % 5 != 0) i++;
 		if (IS_SINK(level->locations[bhitpos.x][bhitpos.y].typ))
 			break;	/* boomerang falls on sink */
@@ -3191,7 +3191,7 @@ void buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 		}
 		if (ZAP_POS(loc->typ) || cansee(lsx,lsy))
 		    tmp_at(sx,sy);
-		delay_output(); /* wait a little */
+		win_delay_output(); /* wait a little */
 	    }
 	} else
 	    goto make_bounce;

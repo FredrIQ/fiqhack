@@ -1273,7 +1273,7 @@ void mkinvokearea(void)
 	}
 
 	flush_screen();	/* make sure the new glyphs shows up */
-	delay_output();
+	win_delay_output();
     }
 
     pline("You are standing at the top of a stairwell leading down!");

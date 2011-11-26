@@ -1328,12 +1328,12 @@ void domove(schar dx, schar dy, schar dz)
 	    if (iflags.runmode != RUN_LEAP || !(moves % 7L)) {
 		iflags.botl = 1;
 		flush_screen();
-		delay_output();
+		win_delay_output();
 		if (iflags.runmode == RUN_CRAWL) {
-		    delay_output();
-		    delay_output();
-		    delay_output();
-		    delay_output();
+		    win_delay_output();
+		    win_delay_output();
+		    win_delay_output();
+		    win_delay_output();
 		}
 	    }
 	}

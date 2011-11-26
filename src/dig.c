@@ -109,7 +109,7 @@ static void mkcavearea(boolean rockit)
 	}
 
 	flush_screen();	/* make sure the new glyphs shows up */
-	delay_output();
+	win_delay_output();
     }
 
     if (!rockit && level->locations[u.ux][u.uy].typ == CORR) {
@@ -1138,7 +1138,7 @@ void zap_dig(schar dx, schar dy, schar dz)
 	    if (!isok(zx,zy)) break;
 	    room = &level->locations[zx][zy];
 	    tmp_at(zx,zy);
-	    delay_output();	/* wait a little bit */
+	    win_delay_output();	/* wait a little bit */
 	    if (closed_door(level, zx, zy) || room->typ == SDOOR) {
 		if (*in_rooms(level, zx,zy,SHOPBASE)) {
 		    add_damage(zx, zy, 400L);

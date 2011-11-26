@@ -418,10 +418,10 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 		    break;
 		}
 		tmp_at(bhitpos.x, bhitpos.y);
-		delay_output();
+		win_delay_output();
 	}
 	tmp_at(bhitpos.x, bhitpos.y);
-	delay_output();
+	win_delay_output();
 	tmp_at(DISP_END, 0);
 
 	if (blindinc) {

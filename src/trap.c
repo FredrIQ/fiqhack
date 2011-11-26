@@ -1304,7 +1304,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 
 		/* dstage@u.washington.edu -- Delay only if hero sees it */
 		if (cansee(bhitpos.x, bhitpos.y))
-			while (tmp-- > 0) delay_output();
+			while (tmp-- > 0) win_delay_output();
 
 		bhitpos.x += dx;
 		bhitpos.y += dy;

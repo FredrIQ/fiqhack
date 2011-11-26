@@ -117,7 +117,7 @@ int display_objects(struct nh_objitem *items, int icount, const char *title,
 
 
 /* delay 50 ms: check option before calling the window sys to do the job */
-void nh_delay_output(void)
+void win_delay_output(void)
 {
 	if (flags.nap)
 	    (*windowprocs.win_delay_output)();

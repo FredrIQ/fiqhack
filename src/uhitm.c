@@ -1681,8 +1681,8 @@ static void start_engulf(struct monst *mdef)
 		         0, dbuf_monid((&youmonst)), 0, 0);
 	}
 	pline("You engulf %s!", mon_nam(mdef));
-	delay_output();
-	delay_output();
+	win_delay_output();
+	win_delay_output();
 }
 
 static void end_engulf(struct monst *mdef)

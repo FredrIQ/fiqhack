@@ -194,7 +194,7 @@ void explode(int x, int y,
 					dbuf_effect(E_MISC, shield_static[k]));
 			}
 			flush_screen();	/* will flush screen and output */
-			delay_output();
+			win_delay_output();
 		    }
 
 		    /* Cover last shield glyph with blast symbol. */
@@ -205,8 +205,8 @@ void explode(int x, int y,
 		    }
 
 		} else {		/* delay a little bit. */
-		    delay_output();
-		    delay_output();
+		    win_delay_output();
+		    win_delay_output();
 		}
 
 		tmp_at(DISP_END, 0); /* clear the explosion */

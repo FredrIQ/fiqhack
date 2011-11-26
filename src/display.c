@@ -767,7 +767,7 @@ void shieldeff(xchar x, xchar y)
 	for (i = 0; i < SHIELD_COUNT; i++) {
 	    dbuf_set_effect(x, y, dbuf_effect(E_MISC, shield_static[i]));
 	    flush_screen();	/* make sure the effect shows up */
-	    delay_output();
+	    win_delay_output();
 	}
 	
 	dbuf_set_effect(x, y, 0);
