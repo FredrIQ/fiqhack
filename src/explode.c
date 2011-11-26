@@ -175,7 +175,7 @@ void explode(int x, int y,
 		for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 2) continue;
 			tmp_at(starting ? DISP_BEAM : DISP_CHANGE,
-				dbuf_effect(E_EXPLOSION, explosion[i][j]));
+				dbuf_explosion(expltype, explosion[i][j]));
 			tmp_at(i+x-1, j+y-1);
 			starting = 0;
 		}
@@ -201,7 +201,7 @@ void explode(int x, int y,
 		    for (i=0; i<3; i++) for (j=0; j<3; j++) {
 			if (explmask[i][j] == 1)
 			    dbuf_set_effect(i+x-1,j+y-1,
-					    dbuf_effect(E_EXPLOSION, explosion[i][j]));
+					    dbuf_explosion(expltype, explosion[i][j]));
 		    }
 
 		} else {		/* delay a little bit. */

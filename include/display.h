@@ -16,6 +16,7 @@
 #define dbuf_monid(mon) (what_mon(mon->mnum) + 1)
 #define dbuf_objid(obj) (what_obj(obj->otyp) + 1)
 #define dbuf_effect(type, id) ((type << 16) | (id + 1))
+#define dbuf_explosion(etype, id) ((E_EXPLOSION << 16) | (etype * NUMEXPCHARS + id + 1))
 
 
 /*

@@ -6,7 +6,6 @@
 
 extern struct nh_window_procs windowprocs;
 
-#define player_selection (*windowprocs.win_player_selection)
 #define win_clear_map (*windowprocs.win_clear_map)
 #define win_pause (*windowprocs.win_pause)
 #define display_buffer (*windowprocs.win_display_buffer)
