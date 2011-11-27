@@ -223,9 +223,10 @@ static char *next_log_token(void)
 static int replay_display_menu(struct nh_menuitem *items, int icount,
 				const char *title, int how, int *results)
 {
-    int i, val;
+    int i, j, val;
     char *token;
     char *resultbuf;
+    boolean id_ok;
     
     if (how == PICK_NONE)
 	return 0;
@@ -240,6 +241,14 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
     
     i = 0;
     while (sscanf(resultbuf, "%x:", &val)) {
+	/* make sure all ids are valid - program changes could have broken the save */
+	id_ok  = FALSE;
+	for (j = 0; j < icount && !id_ok; j++)
+	    if (items[j].id == val)
+		id_ok = TRUE;
+	if (!id_ok)
+	    parse_error("Invalid menu id in menu data");
+	
 	results[i++] = val;
 	resultbuf = strchr(resultbuf, ':') + 1;
     }
@@ -251,9 +260,10 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
 static int replay_display_objects(struct nh_objitem *items, int icount, const char *title,
 			int how, struct nh_objresult *pick_list)
 {
-    int i, id, count;
+    int i, j, id, count;
     char *token;
     char *resultbuf;
+    boolean id_ok;
     
     if (how == PICK_NONE)
 	return 0;
@@ -269,6 +279,14 @@ static int replay_display_objects(struct nh_objitem *items, int icount, const ch
     i = 0;
     count = -1;
     while (sscanf(resultbuf, "%x,%x:", &id, &count)) {
+	/* make sure all ids are valid - program changes could have broken the save */
+	id_ok  = FALSE;
+	for (j = 0; j < icount && !id_ok; j++)
+	    if (items[j].id == id)
+		id_ok = TRUE;
+	if (!id_ok)
+	    parse_error("Invalid menu id in object menu data");
+	
 	pick_list[i].id = id;
 	pick_list[i].count = count;
 	i++;
