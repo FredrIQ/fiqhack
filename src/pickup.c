@@ -307,9 +307,11 @@ static int autopick(struct obj *olist,	/* the object list */
 
 
 #ifndef AUTOPICKUP_EXCEPTIONS
-	    if (!*otypes || strchr(otypes, curr->oclass))
+	    if (!*otypes || strchr(otypes, curr->oclass)
+		|| (iflags.pickup_thrown && curr->was_thrown))
 #else
 	    if ((!*otypes || strchr(otypes, curr->oclass) ||
+		(iflags.pickup_thrown && curr->was_thrown) ||
 		 is_autopickup_exception(curr, TRUE)) &&
 	    	 !is_autopickup_exception(curr, FALSE))
 #endif
@@ -319,9 +321,11 @@ static int autopick(struct obj *olist,	/* the object list */
 	    *pick_list = pi = malloc(sizeof(struct object_pick) * n);
 	    for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
 #ifndef AUTOPICKUP_EXCEPTIONS
-		if (!*otypes || strchr(otypes, curr->oclass)) {
+		if (!*otypes || strchr(otypes, curr->oclass)
+		    || (iflags.pickup_thrown && curr->was_thrown)) {
 #else
 	    if ((!*otypes || strchr(otypes, curr->oclass) ||
+		(iflags.pickup_thrown && curr->was_thrown) ||
 		 is_autopickup_exception(curr, TRUE)) &&
 	    	 !is_autopickup_exception(curr, FALSE)) {
 #endif
@@ -1031,6 +1035,7 @@ int pickup_object(struct obj *obj, long count,
 	    obj = splitobj(obj, count);
 
 	obj = pick_obj(obj);
+	obj->was_thrown = 0;
 
 	if (uwep && uwep == obj) mrg_to_wielded = TRUE;
 	nearload = near_capacity();

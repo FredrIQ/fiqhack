@@ -88,6 +88,7 @@ static const struct nh_option_desc const_options[] = {
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
     {"lootabc",		"use a/b/c rather than o/i/b when looting",	OPTTYPE_BOOL, { VFALSE }},
     {"perm_invent",	"keep inventory in a permanent window",	OPTTYPE_BOOL, { VFALSE }},
+    {"pickup_thrown",	"autopickup items you threw or fired",	OPTTYPE_BOOL, { VTRUE }},
     {"prayconfirm",	"use confirmation prompt when #pray command issued",	OPTTYPE_BOOL, { VTRUE }},
     {"pushweapon",	"when wielding a new weapon, put your previous weapon into the secondary weapon slot",	OPTTYPE_BOOL, { VFALSE }},
     {"safe_pet",	"prevent you from (knowingly) attacking your pet(s)",	OPTTYPE_BOOL, { VTRUE }},
@@ -151,6 +152,7 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"lootabc", &iflags.lootabc},
 	/* for menu debugging only*/
 	{"perm_invent", &flags.perm_invent},
+	{"pickup_thrown", &iflags.pickup_thrown},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},
 	{"safe_pet", &flags.safe_dog},

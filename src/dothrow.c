@@ -832,6 +832,7 @@ void throwit(struct obj *obj,
 	boolean impaired = (Confusion || Stunned || Blind ||
 			   Hallucination || Fumbling);
 
+	obj->was_thrown = 1;
 	if ((obj->cursed || obj->greased) && (dx || dy) && !rn2(7)) {
 	    boolean slipok = TRUE;
 	    if (ammo_and_launcher(obj, uwep))

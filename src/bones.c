@@ -85,6 +85,7 @@ static void resetobjs(struct obj *ochain, boolean restore)
 			otmp->rknown = 0;
 			otmp->invlet = 0;
 			otmp->no_charge = 0;
+			otmp->was_thrown = 0;
 
 			if (otmp->otyp == SLIME_MOLD) goodfruit(otmp->spe);
 			else if (otmp->otyp == EGG) otmp->spe = 0;
