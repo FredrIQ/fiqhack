@@ -376,6 +376,21 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    
 }
 
+
+/* object comparison function for qsort */
+int obj_compare(const void *o1, const void *o2)
+{
+    struct obj *obj1 = *(struct obj**)o1;
+    struct obj *obj2 = *(struct obj**)o2;
+    
+    char *pos1 = strchr(flags.inv_order, obj1->oclass);
+    char *pos2 = strchr(flags.inv_order, obj2->oclass);
+    if (pos1 != pos2)
+	return (pos1 < pos2) ? -1 : 1;
+    
+    return strcmp(cxname2(obj1), cxname2(obj2));
+}
+
 /*
  * Put up a menu using the given object list.  Only those objects on the
  * list that meet the approval of the allow function are displayed.  Return
@@ -398,13 +413,11 @@ int query_objlist(const char *qstr,	/* query string */
 		  int how,		/* type of query */
 		  boolean (*allow)(struct obj*)) /* allow function */
 {
-	int n = 0;
+	int n = 0, i, prev_oclass, nr_objects;
 	struct obj *curr, *last;
-	char *pack;
-	boolean printed_type_name;
 	int nr_items = 0, cur_entry = 0;
 	struct nh_objitem *items = NULL;
-	struct obj **id_to_obj = NULL;
+	struct obj **objlist = NULL;
 	struct nh_objresult *selection = NULL;
 
 	*pick_list = NULL;
@@ -428,61 +441,52 @@ int query_objlist(const char *qstr,	/* query string */
 	    return 1;
 	}
 
-	nr_items = 10;
-	items = malloc(nr_items * sizeof(struct nh_objitem));
-	id_to_obj = malloc(nr_items * sizeof(struct obj*));
-	/*
-	 * Run through the list and add the objects to the menu.  If
-	 * INVORDER_SORT is set, we'll run through the list once for
-	 * each type so we can group them.  The allow function will only
-	 * be called once per object in the list.
-	 */
-	pack = flags.inv_order;
-	do {
-	    printed_type_name = FALSE;
-	    for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
-		if ((qflags & FEEL_COCKATRICE) && curr->otyp == CORPSE &&
-		     will_feel_cockatrice(curr, FALSE)) {
-			free(items);
-			free(id_to_obj);
-			look_here(0, FALSE);
-			return 0;
-		}
-		if ((!(qflags & INVORDER_SORT) || curr->oclass == *pack)
-							&& (*allow)(curr)) {
-
-		    /* if sorting, print type name (once only) */
-		    if (qflags & INVORDER_SORT && !printed_type_name) {
-			add_objitem(&items, &nr_items, MI_HEADING, cur_entry, 0,
-				    let_to_name(*pack, FALSE), NULL, FALSE);
-			id_to_obj = realloc(id_to_obj, 
-					    nr_items * sizeof(struct obj*));
-			id_to_obj[cur_entry] = NULL;
-			cur_entry++;
-			printed_type_name = TRUE;
-		    }
-		    
-		    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry, cur_entry+1,
-				doname(curr), curr, (qflags & USE_INVLET) != 0);
-		    id_to_obj = realloc(id_to_obj, nr_items * sizeof(struct obj*));
-		    id_to_obj[cur_entry] = curr;
-		    cur_entry++;
-		}
+	/* add all allowed objects to the list */
+	nr_objects = 0;
+	objlist = malloc(n * sizeof(struct obj*));
+	for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
+	    if ((qflags & FEEL_COCKATRICE) && curr->otyp == CORPSE &&
+		    will_feel_cockatrice(curr, FALSE)) {
+		    free(objlist);
+		    look_here(0, FALSE);
+		    return 0;
 	    }
-	    pack++;
-	} while (qflags & INVORDER_SORT && *pack);
-
+	    if ((!(qflags & INVORDER_SORT) || strchr(flags.inv_order, curr->oclass))
+		&& (*allow)(curr))
+		objlist[nr_objects++] = curr;
+	}
+	
+	/* sort the list in place according to (1)inv_order and (2)object name */
+	if (qflags & INVORDER_SORT)
+	    qsort(objlist, nr_objects, sizeof(struct obj*), obj_compare);
+	
+	/* nr_items will be greater than nr_objects, because it counts headers, too */
+	nr_items = nr_objects;
+	items = malloc(nr_items * sizeof(struct nh_objitem));
+	prev_oclass = -1;
+	cur_entry = 0;
+	for (i = 0; i < nr_objects; i++) {
+	    curr = objlist[i];
+	    /* if sorting, print type name */
+	    if ((qflags & INVORDER_SORT) && prev_oclass != curr->oclass)
+		add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
+		            let_to_name(curr->oclass, FALSE), NULL, FALSE);
+	    /* add the object to the list */
+	    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, i+1,
+	                doname(curr), curr, (qflags & USE_INVLET) != 0);
+	    prev_oclass = curr->oclass;
+	}
+	
 	if (cur_entry > 0) {
 	    selection = malloc(cur_entry * sizeof(struct nh_objresult));
 	    n = display_objects(items, cur_entry, qstr, how, selection);
 	}
 	
 	if (n > 0) {
-	    int i;
 	    *pick_list = malloc(n * sizeof(struct object_pick));
 	    
 	    for (i = 0; i < n; i++) {
-		curr = id_to_obj[selection[i].id - 1];
+		curr = objlist[selection[i].id - 1];
 		(*pick_list)[i].obj = curr;
 		if (selection[i].count == -1 || selection[i].count > curr->quan)
 		    (*pick_list)[i].count = curr->quan;
@@ -490,10 +494,10 @@ int query_objlist(const char *qstr,	/* query string */
 		    (*pick_list)[i].count = selection[i].count;
 	    }
 	} else if (n < 0) {
-	    n = 0;	/* caller's don't expect -1 */
+	    n = 0;	/* callers don't expect -1 */
 	}
 	free(selection);
-	free(id_to_obj);
+	free(objlist);
 	free(items);
 	
 	return n;

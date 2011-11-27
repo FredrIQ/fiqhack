@@ -1040,6 +1040,7 @@ extern char *doname(struct obj *);
 extern boolean not_fully_identified(struct obj *);
 extern char *corpse_xname(struct obj *,boolean);
 extern char *cxname(struct obj *);
+extern char *cxname2(struct obj *obj);
 extern char *killer_xname(struct obj *);
 extern const char *singular(struct obj *,char *(*)(struct obj*));
 extern char *an(const char *);
@@ -1096,6 +1097,7 @@ extern int pickup(int);
 extern int pickup_object(struct obj *, long, boolean);
 extern int query_category(const char *, struct obj *, int,
 				int*, int);
+extern int obj_compare(const void *, const void *);
 extern int query_objlist(const char *, struct obj *, int,
 				struct object_pick **, int, boolean (*)(struct obj*));
 extern void add_objitem(struct nh_objitem**, int*, enum nh_menuitem_role, int,

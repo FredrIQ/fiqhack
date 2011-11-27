@@ -801,27 +801,41 @@ static void container_contents(struct obj *list,
 {
 	struct obj *box, *obj;
 	char buf[BUFSZ];
-	struct menulist menu;
+	int i, nr_items = 10, icount = 0;
+	struct nh_objitem *items = malloc(nr_items * sizeof(struct nh_objitem));
+	struct obj **objlist;
 
 	for (box = list; box; box = box->nobj) {
 	    if (Is_container(box) || box->otyp == STATUE) {
 		if (box->otyp == BAG_OF_TRICKS) {
 		    continue;	/* wrong type of container */
 		} else if (box->cobj) {
-		    init_menulist(&menu);
-		    sprintf(buf, "Contents of %s:", the(xname(box)));
-		    add_menutext(&menu, buf);
-		    add_menutext(&menu, "");
+		    /* count contained objects */
+		    icount = 0;
+		    for (obj = box->cobj; obj; obj = obj->nobj) icount++;
+		    objlist = malloc(icount * sizeof(struct obj*));
+		    
+		    /* add the objects to a list */
+		    icount = 0;
 		    for (obj = box->cobj; obj; obj = obj->nobj) {
 			if (identified) {
 			    makeknown(obj->otyp);
-			    obj->known = obj->bknown =
-			    obj->dknown = obj->rknown = 1;
+			    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
 			}
-			add_menutext(&menu, doname(obj));
+			objlist[icount++] = obj;
 		    }
-		    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
-		    free(menu.items);
+		    
+		    /* sort the list */
+		    qsort(objlist, icount, sizeof(struct obj*), obj_compare);
+		    
+		    /* add the sorted objects to the menu */
+		    for (i = 0; i < icount; i++)
+			add_objitem(&items, &nr_items, MI_NORMAL, i, i+1,
+			            doname(objlist[i]), objlist[i], FALSE);
+		    
+		    free(objlist);
+		    sprintf(buf, "Contents of %s:", the(xname(box)));
+		    display_objects(items, icount, buf, PICK_NONE, NULL);
 		    if (all_containers)
 			container_contents(box->cobj, identified, TRUE);
 		} else {
@@ -832,6 +846,8 @@ static void container_contents(struct obj *list,
 	    if (!all_containers)
 		break;
 	}
+	
+	free(items);
 }
 
 

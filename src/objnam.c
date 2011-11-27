@@ -45,6 +45,7 @@ static const struct Jitem Japanese_items[] = {
 
 
 static const char *Japanese_item_name(int i);
+static char *xname2(struct obj *obj, boolean ignore_oquan);
 
 static char *strprepend(char *s, const char *pref)
 {
@@ -202,6 +203,12 @@ char *fruitname(boolean juice)
 
 
 char *xname(struct obj *obj)
+{
+    return xname2(obj, FALSE);
+}
+
+
+static char *xname2(struct obj *obj, boolean ignore_oquan)
 {
 	char *buf;
 	int typ = obj->otyp;
@@ -438,7 +445,7 @@ char *xname(struct obj *obj)
 	default:
 		sprintf(buf,"glorkum %d %d %d", obj->oclass, typ, obj->spe);
 	}
-	if (obj->quan != 1L) strcpy(buf, makeplural(buf));
+	if (!ignore_oquan && obj->quan != 1L) strcpy(buf, makeplural(buf));
 
 	if (obj->onamelth && obj->dknown) {
 		strcat(buf, " named ");
@@ -781,6 +788,7 @@ char *corpse_xname(struct obj *otmp,
 	    return makeplural(nambuf);
 }
 
+
 /* xname, unless it's a corpse, then corpse_xname(obj, FALSE) */
 char *cxname(struct obj *obj)
 {
@@ -788,6 +796,17 @@ char *cxname(struct obj *obj)
 	    return corpse_xname(obj, FALSE);
 	return xname(obj);
 }
+
+
+/* xname, unless it's a corpse, then corpse_xname(obj, TRUE)
+ * but ignore the quantity in either case */
+char *cxname2(struct obj *obj)
+{
+	if (obj->otyp == CORPSE)
+	    return corpse_xname(obj, TRUE);
+	return xname2(obj, TRUE);
+}
+
 
 /* treat an object as fully ID'd when it might be used as reason for death */
 char *killer_xname(struct obj *obj)
