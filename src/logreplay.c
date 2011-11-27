@@ -496,10 +496,10 @@ static void replay_read_option(char *token)
 	    value.s = strlen(valbuf) > 0 ? valbuf : NULL;
 	    break;
 	case 'e':
-	    value.e = atoi(valstr);
+	    sscanf(valstr, "%x", &value.e);
 	    break;
 	case 'i':
-	    value.i = atoi(valstr);
+	    sscanf(valstr, "%d", &value.i);
 	    break;
 	case 'b':
 	    value.b = atoi(valstr);

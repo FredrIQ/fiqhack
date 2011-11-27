@@ -324,6 +324,10 @@ void initoptions(void)
 	for (i = 0; options[i].name; i++)
 		nh_set_option(options[i].name, options[i].value, FALSE);
 	
+	/* at this point the user may no longer change their birth options.
+	 * active_birth_options will recieve birth option changes made during
+	 * log replay, so that we can show the user what birth options the
+	 * loaded game was started with */
 	active_birth_options = clone_optlist(birth_options);
 }
 

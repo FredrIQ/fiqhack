@@ -89,7 +89,7 @@ void log_option(struct nh_option_desc *opt)
 	    break;
 	    
 	case OPTTYPE_BOOL:
-	    lprintf("b:%x", opt->value.b);
+	    lprintf("b:%x", !!opt->value.b);
 	    break;
     }
     
