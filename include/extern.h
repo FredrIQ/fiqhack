@@ -612,6 +612,7 @@ extern int display_binventory(int,int,boolean);
 extern struct obj *display_cinventory(struct obj *);
 extern struct obj *display_minventory(struct monst *,int,char *);
 extern int dotypeinv(void);
+extern boolean update_location(boolean all_objects);
 extern int look_here(int,boolean);
 extern int dolook(void);
 extern boolean will_feel_cockatrice(struct obj *,boolean);

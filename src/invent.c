@@ -1612,6 +1612,67 @@ const char *dfeature_at(int x, int y, char *buf)
 	return dfeature;
 }
 
+
+/* update_location()
+ * companion to look_here, this function will fully describe the location
+ * for win_list_items,including traps and features. It does not call pline.
+ * This function will only list up to 4 items, unless the caller sets
+ * all_objects to TRUE. In that case the caller should also perform cockatrice
+ * checks. */
+boolean update_location(boolean all_objects)
+{
+	boolean ret;
+	struct obj *otmp = level->objects[u.ux][u.uy];
+	struct trap *trap;
+	char buf[BUFSZ], fbuf[BUFSZ];
+	const char *dfeature = NULL;
+	int ocount, icount = 0, size = 10;
+	struct nh_objitem *items;
+	
+	if (Blind && !can_reach_floor()) {
+	    win_list_items(NULL, 0, FALSE);
+	    return FALSE;
+	}
+	
+	if (u.uswallow && u.ustuck)
+	    otmp = u.ustuck->minvent;
+	
+	items = malloc(size * sizeof(struct nh_objitem));
+	if ((trap = t_at(level, u.ux, u.uy)) && trap->tseen) {
+	    sprintf(buf, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	}
+
+	dfeature = dfeature_at(u.ux, u.uy, fbuf);
+	if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
+		dfeature = NULL;
+	if (dfeature) {
+	    sprintf(buf, "There is %s here.", an(dfeature));
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	}
+	
+	if (icount && otmp)
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
+	
+	for (ocount = 0; otmp; otmp = otmp->nexthere) {
+	    if (all_objects || ocount < 5)
+		add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname(otmp),
+			    otmp, FALSE);
+	    ocount++;
+	}
+	
+	if (!all_objects && ocount >= 5) {
+	    sprintf(buf, "There are %s other objects here.",
+		    (ocount <= 10) ? "several" : "many");
+	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	}
+	
+	ret = win_list_items(items, icount, FALSE);
+	free(items);
+	return ret;
+}
+
+
 /* look at what is here; if there are many objects (5 or more),
    don't show them unless obj_cnt is 0 */
 int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess */
@@ -1627,11 +1688,13 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	int size = 10;
 	struct nh_objitem *items = NULL;
 	const char *title = Blind ? "Things that you feel here:" :
-					"Things that are here:";
+				    "Things that are here:";
 
-	/* notify the ui that any previous item list is invalid */
-	win_list_items(NULL, 0, FALSE);
-	
+	/* show the "things that are here" window iff
+	 * - the player didn't get the info via update_location -OR-
+	 * - it was explicitly requested (obj_cnt == 0) */
+	boolean skip_win = update_location(!skip_objects) || obj_cnt;
+
 	if (u.uswallow && u.ustuck) {
 	    struct monst *mtmp = u.ustuck;
 	    sprintf(fbuf, "Contents of %s %s",
@@ -1647,7 +1710,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		}
 		if (Blind) strcpy(fbuf, "You feel");
 		strcat(fbuf,":");
-	    	display_minventory(mtmp, MINV_ALL, fbuf);
+		display_minventory(mtmp, MINV_ALL, fbuf);
 	    } else {
 		pline("You %s no objects here.", verb);
 	    }
@@ -1673,7 +1736,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 			drift ? ""		: surface(u.ux, u.uy));
 		}
 		if (dfeature && !drift && !strcmp(dfeature, surface(u.ux,u.uy)))
-			dfeature = 0;		/* ice already identifed */
+			dfeature = NULL;	/* ice already identifed */
 		if (!can_reach_floor()) {
 			pline("But you can't reach it!");
 			return 0;
@@ -1683,7 +1746,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	if (dfeature)
 		sprintf(fbuf, "There is %s here.", an(dfeature));
 
-	if (!otmp || is_lava(level, u.ux,u.uy) || (is_pool(level, u.ux,u.uy) && !Underwater)) {
+	if (!otmp || is_lava(level, u.ux, u.uy) || (is_pool(level, u.ux, u.uy) && !Underwater)) {
 		if (dfeature) pline(fbuf);
 		read_engr_at(u.ux, u.uy);
 		if (!skip_objects && (Blind || !dfeature))
@@ -1692,45 +1755,28 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	}
 	/* we know there is something here */
 
-	items = malloc(size * sizeof(struct nh_objitem));
-	if (dfeature) {
-	    add_objitem(&items, &size, MI_TEXT, icount++, 0, fbuf, NULL, FALSE);
-	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
-	}
-	
 	if (skip_objects) {
-	    char buf[BUFSZ];
-	    add_objitem(&items, &size, MI_NORMAL, icount++, 0,
-			doname(otmp), otmp, FALSE);
-	    sprintf(buf, "There are %s other objects here.",
-		  (obj_cnt <= 10) ? "several" : "many");
-	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
-	    if (!win_list_items(items, icount, FALSE)) {
-		if (dfeature) pline(fbuf);
-		read_engr_at(u.ux, u.uy);
-		pline("There are %s%s objects here.",
-		    (obj_cnt <= 10) ? "several" : "many",
-		    picked_some ? " more" : "");
-	    }
-	    free(items);
-	} else if (!otmp->nexthere) { /* only one object */
-	    /* give the ui a nice list of items */
-	    add_objitem(&items, &size, MI_NORMAL, icount++, 0,
-			doname(otmp), otmp, FALSE);
-	    if (!win_list_items(items, icount, FALSE)) {
-		/* ui didn't want the item list so use pline instead */
-		if (dfeature) pline(fbuf);
-		read_engr_at(u.ux, u.uy);
+	    if (dfeature) pline(fbuf);
+	    read_engr_at(u.ux, u.uy);
+	    pline("There are %s%s objects here.",
+		  (obj_cnt <= 10) ? "several" : "many",
+		  picked_some ? " more" : "");
+	} else if (!otmp->nexthere) {
+	    /* only one object */
+	    if (dfeature) pline(fbuf);
+	    read_engr_at(u.ux, u.uy);
 #ifdef INVISIBLE_OBJECTS
-		if (otmp->oinvis && !See_invisible) verb = "feel";
+	    if (otmp->oinvis && !See_invisible) verb = "feel";
 #endif
-		pline("You %s here %s.", verb, doname(otmp));
-	    }
-	    free(items);
-	    if (otmp->otyp == CORPSE)
-		feel_cockatrice(otmp, FALSE);
-	    
+	    pline("You %s here %s.", verb, doname(otmp));
+	    if (otmp->otyp == CORPSE) feel_cockatrice(otmp, FALSE);
 	} else {
+	    items = malloc(size * sizeof(struct nh_objitem));
+	    if (dfeature) {
+		add_objitem(&items, &size, MI_TEXT, icount++, 0, fbuf, NULL, FALSE);
+		add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
+	    }
+
 	    for ( ; otmp; otmp = otmp->nexthere) {
 		if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, FALSE)) {
 			char buf[BUFSZ];
@@ -1744,13 +1790,14 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		add_objitem(&items, &size, MI_NORMAL, icount++, 0,
 			    doname(otmp), otmp, FALSE);
 	    }
-	    if (!win_list_items(items, icount, FALSE) || !obj_cnt)
+	    
+	    if (!skip_win || felt_cockatrice)
 		display_objects(items, icount, title, PICK_NONE, NULL);
 	    free(items);
 	    
 	    if (felt_cockatrice)
 		feel_cockatrice(otmp, FALSE);
-	    read_engr_at(u.ux, u.uy); /* Eric Backus */
+	    read_engr_at(u.ux, u.uy);
 	}
 	return !!Blind;
 }

@@ -644,6 +644,9 @@ static void pre_move_tasks(boolean didmove)
     
     if (moves % 100 == 0)
 	realtime_tasks();
+    
+    update_inventory();
+    update_location(FALSE);
 }
 
 
