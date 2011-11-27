@@ -8,6 +8,10 @@
 
 #define sgn(x) ((x) >= 0 ? 1 : -1)
 
+struct coord {
+    int x, y;
+};
+
 struct color {
     short r, g, b;
 };
@@ -127,6 +131,21 @@ void curses_clear_map(void)
 }
 
 
+static int compare_coord_dist(const void *p1, const void *p2)
+{
+    const struct coord *c1 = p1;
+    const struct coord *c2 = p2;
+    int dx, dy, dist1, dist2;
+    
+    dx = player.x - c1->x; dy = player.y - c1->y;
+    dist1 = dx * dx + dy * dy;
+    dx = player.x - c2->x; dy = player.y - c2->y;
+    dist2 = dx * dx + dy * dy;
+    
+    return dist1 - dist2;
+}
+
+
 int curses_getpos(int *x, int *y, boolean force, const char *goal)
 {
     int result = 0;
@@ -138,6 +157,15 @@ int curses_getpos(int *x, int *y, boolean force, const char *goal)
     char printbuf[BUFSZ];
     char *matching = NULL;
     enum nh_direction dir;
+    struct coord *monpos = NULL;
+    int moncount, monidx;
+    
+    werase(statuswin);
+    mvwaddstr(statuswin, 0, 0, "Move the cursor with the direction keys. Press "
+                               "the letter of a dungeon symbol");
+    mvwaddstr(statuswin, 1, 0, "to select it or use m to move to a nearby "
+                               "monster. Finish with one of .,;:");
+    wrefresh(statuswin);
 
     curs_set(1);
     
@@ -181,8 +209,34 @@ int curses_getpos(int *x, int *y, boolean force, const char *goal)
 	    goto nxtc;
 	}
 
+	if (key == 'm') {
+	    if (!monpos) {
+		moncount = 0;
+		int i, j;
+		for (i = 0; i < ROWNO; i++)
+		    for (j = 0; j < COLNO; j++)
+			if (display_buffer[i][j].mon && (j != player.x || i != player.y))
+			    moncount++;
+		monpos = malloc(moncount * sizeof(struct coord));
+		monidx = 0;
+		for (i = 0; i < ROWNO; i++)
+		    for (j = 0; j < COLNO; j++)
+			if (display_buffer[i][j].mon && (j != player.x || i != player.y)) {
+			    monpos[monidx].x = j;
+			    monpos[monidx].y = i;
+			    monidx++;
+			}
+		monidx = 0;
+		qsort(monpos, moncount, sizeof(struct coord), compare_coord_dist);
+	    }
 	    
-	if (!strchr(quitchars, key)) {
+	    if (moncount) { /* there is at least one monster to move to */
+		cx = monpos[monidx].x;
+		cy = monpos[monidx].y;
+		monidx = (monidx + 1) % moncount;
+	    }
+	    goto nxtc;
+	} else if (!strchr(quitchars, key)) {
 	    matching = malloc(default_drawing->num_bgelements);
 	    int k = 0, tx, ty;
 	    int pass, lo_x, lo_y, hi_x, hi_y;
@@ -232,7 +286,10 @@ nxtc:
     curs_set(0);
     *x = cx;
     *y = cy;
+    if (monpos)
+	free(monpos);
     if (matching)
 	free(matching);
+    curses_update_status(NULL); /* clear the help message */
     return result;
 }
