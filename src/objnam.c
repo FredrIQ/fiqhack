@@ -565,7 +565,8 @@ char *doname(struct obj *obj)
 		strcat(prefix, "cursed ");
 	    else if (obj->blessed)
 		strcat(prefix, "blessed ");
-	    else if ((!obj->known || !objects[obj->otyp].oc_charged ||
+	    else if (iflags.show_uncursed ||
+		((!obj->known || !objects[obj->otyp].oc_charged ||
 		      (obj->oclass == ARMOR_CLASS ||
 		       obj->oclass == RING_CLASS))
 		/* For most items with charges or +/-, if you know how many
@@ -580,7 +581,7 @@ char *doname(struct obj *obj)
 		 */
 			&& obj->otyp != FAKE_AMULET_OF_YENDOR
 			&& obj->otyp != AMULET_OF_YENDOR
-			&& !Role_if (PM_PRIEST))
+			&& !Role_if (PM_PRIEST)))
 		strcat(prefix, "uncursed ");
 	}
 
