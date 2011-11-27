@@ -188,7 +188,7 @@ void init_options(void)
     find_option("msgheight")->i.min = 1;
     find_option("msgheight")->i.max = 10;
     find_option("msghistory")->i.min = 20;   /* arbitrary min/max values */
-    find_option("msghistory")->i.max = 2000;
+    find_option("msghistory")->i.max = 20000;
     find_option("graphics")->e = graphics_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("scores_top")->i.max = 10000;

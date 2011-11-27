@@ -5,9 +5,11 @@
 #include <string.h>
 #include "nhcurses.h"
 
+/* save more of long messages than could be displayed in COLNO chars */
+#define MSGLEN 119
 
 struct message {
-    char msg[COLNO + 1]; /* longest printable message is COLNO chars + '\0' */
+    char msg[MSGLEN + 1]; /* longest printable message is COLNO chars + '\0' */
     int turn;
 };
 
@@ -29,8 +31,8 @@ static void store_message(int turn, const char *msg)
 	histpos = 0;
     
     msghistory[histpos].turn = turn;
-    strncpy(msghistory[histpos].msg, msg, COLNO);
-    msghistory[histpos].msg[COLNO] = '\0';
+    strncpy(msghistory[histpos].msg, msg, MSGLEN);
+    msghistory[histpos].msg[MSGLEN] = '\0';
 }
 
 
@@ -194,7 +196,7 @@ void pause_messages(void)
 void doprev_message(void)
 {
     struct nh_menuitem *items;
-    char buf[COLNO+1];
+    char buf[MSGLEN+1];
     int icount, size, i;
     
     icount = 0;
@@ -209,7 +211,7 @@ void doprev_message(void)
 	if (!msghistory[pos].turn)
 	    continue;
 	
-	snprintf(buf, COLNO+1, "T:%d\t%s", msghistory[pos].turn, msghistory[pos].msg);
+	snprintf(buf, MSGLEN+1, "T:%d\t%s", msghistory[pos].turn, msghistory[pos].msg);
 	add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
     
