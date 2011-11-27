@@ -97,7 +97,6 @@ void show_topten(char *player, int top, int around, boolean own)
 	add_menu_txt(items, size, icount, "", MI_TEXT);
     }
     
-    buf[BUFSZ] = '\0';
     makeheader(buf);
     add_menu_txt(items, size, icount, buf, MI_HEADING);
     
