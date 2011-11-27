@@ -116,14 +116,6 @@ int display_objects(struct nh_objitem *items, int icount, const char *title,
 }
 
 
-/* delay 50 ms: check option before calling the window sys to do the job */
-void win_delay_output(void)
-{
-	if (flags.nap)
-	    (*windowprocs.win_delay_output)();
-}
-
-
 boolean win_list_items(struct nh_objitem *items, int icount, boolean is_invent)
 {
     if (!windowprocs.win_list_items)

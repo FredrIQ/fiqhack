@@ -1659,7 +1659,6 @@ extern char query_key(const char *query, int *count);
 extern void getlin(const char *query, char *bufp);
 extern int display_menu(struct nh_menuitem*, int, const char*, int, int*);
 extern int display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
-extern void win_delay_output(void);
 extern boolean win_list_items(struct nh_objitem *items, int icount, boolean invent);
 
 /* ### wizard.c ### */

@@ -15,5 +15,6 @@ extern struct nh_window_procs windowprocs;
 #define raw_print (*windowprocs.win_raw_print)
 #define outrip (*windowprocs.win_outrip)
 #define level_changed (*windowprocs.win_level_changed)
+#define win_delay_output (*windowprocs.win_delay_output)
 
 #endif /* WINPROCS_H */

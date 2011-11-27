@@ -1275,7 +1275,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	an issue if empty checks are done before hand and the call
 	to here is short circuited away.
 	*/
-	if (!invent && !(flags.perm_invent && !lets && !want_reply)) {
+	if (!invent && !(!lets && !want_reply)) {
 #ifndef GOLDOBJ
 	    pline("Not carrying anything%s.", u.ugold ? " except gold" : "");
 #else

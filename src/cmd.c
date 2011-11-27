@@ -1209,11 +1209,13 @@ static int wiz_show_stats(void)
 	return 0;
 }
 
+#ifdef DEBUG_SANITY_CHECK
 void sanity_check(void)
 {
 	obj_sanity_check();
 	timer_sanity_check();
 }
+#endif
 
 #ifdef DEBUG_MIGRATING_MONS
 static int wiz_migrate_mons(void)
@@ -1450,9 +1452,6 @@ static int dotravel(int x, int y)
 	/* Keyboard travel command */
 	coord cc;
 
-	if (!iflags.travelcmd)
-	    return 0;
-	
 	if (x == -1 && y == -1) {
 	    cc.x = iflags.travelcc.x;
 	    cc.y = iflags.travelcc.y;

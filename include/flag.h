@@ -35,10 +35,8 @@ struct flag {
 				 * did NOT use up the move */
 	boolean  mv;
 	boolean  bypasses;	/* bypass flag is set on at least one fobj */
-	boolean  nap;		/* `timed_delay' option for display effects */
 	boolean  nopick;	/* do not pickup objects (as when running) */
 	boolean  null;		/* OK to send nulls to the terminal */
-	boolean  perm_invent;	/* keep full inventories up until dismissed */
 	boolean  pickup;	/* whether you pickup or move and look */
 
 	boolean  pushweapon;	/* When wielding, push old weapon into second slot */
@@ -128,13 +126,11 @@ struct instance_flags {
 	boolean  pickup_thrown; /* auto-pickup items you threw */
 	boolean  travel1;	/* first travel step */
 	coord    travelcc;	/* coordinates for travel_cache */
-	boolean  sanity_check;	/* run sanity checks */
 	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
 
 	/* Items which belong in flags, but are here to allow save compatibility */
 	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
 	boolean  showrace;	/* show hero glyph by race rather than by role */
-	boolean  travelcmd;	/* allow travel command */
 	int	 runmode;	/* update screen display during run moves */
 	boolean  disable_log;   /* don't append anything to the logfile */
 #ifdef AUTOPICKUP_EXCEPTIONS

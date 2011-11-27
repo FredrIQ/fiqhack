@@ -627,8 +627,9 @@ static void pre_move_tasks(boolean didmove)
 	!(moves % 15) && !rn2(2))
 	    do_vicinity_map();
 
-    if (iflags.sanity_check)
-	sanity_check();
+#ifdef DEBUG_SANITY_CHECK
+    sanity_check();
+#endif
 
     u.umoved = FALSE;
 
