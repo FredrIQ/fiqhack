@@ -3300,7 +3300,7 @@ buzzmonst:
 		miss(fltxt,mon);
 	    }
 	} else if (sx == u.ux && sy == u.uy && range >= 0) {
-	    nomul(0);
+	    nomul(0, NULL);
 	    if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, NULL)) {
 		    mon = u.usteed;
 		    goto buzzmonst;
@@ -3327,7 +3327,7 @@ buzzmonst:
 		if (!Blind) pline("Your vision quickly clears.");
 	    }
 	    stop_occupation();
-	    nomul(0);
+	    nomul(0, NULL);
 	}
 
 	if (!ZAP_POS(loc->typ) || (closed_door(level, sx, sy) && (range >= 0))) {

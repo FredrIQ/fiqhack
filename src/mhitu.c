@@ -285,7 +285,7 @@ int mattacku(struct monst *mtmp)
 		 * invisible, or you might be blind....
 		 */
 	
-	if (!ranged) nomul(0);
+	if (!ranged) nomul(0, NULL);
 	if (mtmp->mhp <= 0 || (Underwater && !is_swimmer(mtmp->data)))
 	    return 0;
 
@@ -1074,7 +1074,7 @@ dopois:
 			if (Blind) pline("You are frozen!");
 			else pline("You are frozen by %s!", mon_nam(mtmp));
 			nomovemsg = 0;	/* default: "you can move again" */
-			nomul(-rnd(10));
+			nomul(-rnd(10), "paralyzed by a monster");
 			exercise(A_DEX, FALSE);
 		    }
 		}

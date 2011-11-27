@@ -303,7 +303,7 @@ void read_engr_at(int x, int y)
 			et = ep->engr_txt;
 		pline("You %s: \"%s\".",
 		      (Blind) ? "feel the words" : "read",  et);
-		if (flags.run > 1) nomul(0);
+		if (flags.run > 1) nomul(0, NULL);
 	    }
 	}
 }

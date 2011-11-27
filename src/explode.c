@@ -500,7 +500,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 				if (scflags & MAY_HITYOU) {
 				    int hitvalu, hitu;
 
-				    if (multi) nomul(0);
+				    if (multi) nomul(0, NULL);
 				    hitvalu = 8 + stmp->obj->spe;
 				    if (bigmonst(youmonst.data)) hitvalu++;
 				    hitu = thitu(hitvalu,

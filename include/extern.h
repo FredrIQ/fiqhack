@@ -516,7 +516,7 @@ extern void check_special_room(boolean);
 extern int dopickup(void);
 extern void lookaround(void);
 extern int monster_nearby(void);
-extern void nomul(int);
+extern void nomul(int nval, const char *msg);
 extern void unmul(const char *);
 extern void losehp(int,const char *,boolean);
 extern int weight_cap(void);

@@ -60,7 +60,7 @@ static void check_here(boolean picked_some)
 
 	/* If there are objects here, take a look. */
 	if (ct) {
-	    if (flags.run) nomul(0);
+	    if (flags.run) nomul(0, NULL);
 	    flush_screen();
 	    look_here(ct, picked_some);
 	} else {
@@ -205,7 +205,7 @@ int pickup(int what)
 		}
 
 		/* if there's anything here, stop running */
-		if (OBJ_AT(u.ux, u.uy) && flags.run && flags.run != 8 && !flags.nopick) nomul(0);
+		if (OBJ_AT(u.ux, u.uy) && flags.run && flags.run != 8 && !flags.nopick) nomul(0, NULL);
 	}
 
 	add_valid_menu_class(0);	/* reset */
@@ -976,7 +976,7 @@ int pickup_object(struct obj *obj, long count,
 		    obj->quan -= count;
 	    }
 	    iflags.botl = 1;
-	    if (flags.run) nomul(0);
+	    if (flags.run) nomul(0, NULL);
 	    return 1;
 #endif
 	} else if (obj->otyp == CORPSE) {
@@ -1738,7 +1738,7 @@ int use_container(struct obj *obj, int held)
 	    chest_trap(obj, HAND, FALSE);
 	    /* even if the trap fails, you've used up this turn */
 	    if (multi >= 0) {	/* in case we didn't become paralyzed */
-		nomul(-1);
+		nomul(-1, "opening a trapped container");
 		nomovemsg = "";
 	    }
 	    return 1;

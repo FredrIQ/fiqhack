@@ -511,7 +511,7 @@ static void you_moved(void)
 			if (occupation)
 			    stop_occupation();
 			else
-			    nomul(0);
+			    nomul(0, NULL);
 			if (change == 1) polyself(FALSE);
 			else you_were();
 			change = 0;
@@ -682,7 +682,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	
 	/* allow interruption of multi-turn commands */
 	if (rep == -1) {
-	    nomul(0);
+	    nomul(0, NULL);
 	    return READY_FOR_INPUT;
 	}
 	
@@ -761,7 +761,7 @@ void stop_occupation(void)
 	    pline("You stop %s.", occtxt);
 	occupation = 0;
 	iflags.botl = 1; /* in case u.uhs changed */
-	nomul(0);
+	nomul(0, NULL);
 	/* fainting stops your occupation, there's no reason to sync.
 	sync_hunger();
 	 */

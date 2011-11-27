@@ -294,7 +294,7 @@ void growl(struct monst *mtmp)
 	growl_verb = growl_sound(mtmp);
     if (growl_verb) {
 	pline("%s %s!", Monnam(mtmp), vtense(NULL, growl_verb));
-	if (flags.run) nomul(0);
+	if (flags.run) nomul(0, NULL);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 18);
     }
 }
@@ -333,7 +333,7 @@ void yelp(struct monst *mtmp)
     }
     if (yelp_verb) {
 	pline("%s %s!", Monnam(mtmp), vtense(NULL, yelp_verb));
-	if (flags.run) nomul(0);
+	if (flags.run) nomul(0, NULL);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 12);
     }
 }
@@ -363,7 +363,7 @@ void whimper(struct monst *mtmp)
     }
     if (whimper_verb) {
 	pline("%s %s.", Monnam(mtmp), vtense(NULL, whimper_verb));
-	if (flags.run) nomul(0);
+	if (flags.run) nomul(0, NULL);
 	wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 6);
     }
 }
@@ -588,7 +588,7 @@ static int domonnoise(struct monst *mtmp)
 	case MS_BONES:
 	    pline("%s rattles noisily.", Monnam(mtmp));
 	    pline("You freeze for a moment.");
-	    nomul(-2);
+	    nomul(-2, "scared by rattling");
 	    break;
 	case MS_LAUGH:
 	    {

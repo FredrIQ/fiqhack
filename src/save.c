@@ -22,7 +22,7 @@ static void savegamestate(int,int);
 int dosave(void)
 {
 	if (yn("Really save?") == 'n') {
-		if (multi > 0) nomul(0);
+		if (multi > 0) nomul(0, NULL);
 	} else {
 		pline("Saving...");
 		if (dosave0(FALSE)) {

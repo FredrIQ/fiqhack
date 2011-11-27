@@ -247,7 +247,7 @@ fnd:
 	}
 
 	stop_occupation();		/* if occupied, stop it *now* */
-	if (multi > 0) { nomul(0); unmul(NULL); }
+	if (multi > 0) { nomul(0, NULL); unmul(NULL); }
 	trycount = 5;
 	do {
 	    getlin("\"Hello stranger, who are you?\" -", buf);

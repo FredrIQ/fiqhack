@@ -865,7 +865,7 @@ int use_pick_axe2(struct obj *obj, schar dx, schar dy, schar dz)
 				aobjnam(obj, "become"));
 			    /* you ought to be able to let go; tough luck */
 			    /* (maybe `move_into_trap()' would be better) */
-			    nomul(-dice(2,2));
+			    nomul(-dice(2,2), "stuck in a spider web");
 			    nomovemsg = "You pull free.";
 			} else if (loc->typ == IRONBARS) {
 			    pline("Clang!");

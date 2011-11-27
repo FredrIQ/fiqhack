@@ -550,7 +550,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 	boolean webmsgok = (!(trflags & NOWEBMSG));
 	boolean forcebungle = (trflags & FORCEBUNGLE);
 
-	nomul(0);
+	nomul(0, NULL);
 
 	/* KMH -- You can't escape the Sokoban level traps */
 	if (In_sokoban(&u.uz) &&
@@ -1327,7 +1327,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 				break;
 			}
 		} else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
-			if (multi) nomul(0);
+			if (multi) nomul(0, NULL);
 			if (thitu(9 + singleobj->spe,
 				  dmgval(singleobj, &youmonst),
 				  singleobj, NULL))
@@ -3552,7 +3552,7 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 		case 3:
 			if (!Free_action) {                        
 			pline("Suddenly you are frozen in place!");
-			nomul(-dice(5, 6));
+			nomul(-dice(5, 6), "frozen by a trap");
 			exercise(A_DEX, FALSE);
 			nomovemsg = "You can move again.";
 			} else pline("You momentarily stiffen.");

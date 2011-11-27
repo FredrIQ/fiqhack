@@ -360,7 +360,7 @@ void intemple(int roomno)
 		    set_malign(mtmp);
 		    if (flags.verbose)
 			pline("You are frightened to death, and unable to move.");
-		    nomul(-3);
+		    nomul(-3, "frightened to death");
 		    nomovemsg = "You regain your composure.";
 	       }
 	   }

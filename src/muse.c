@@ -1076,7 +1076,7 @@ static int mbhitm(struct monst *mtmp, struct obj *otmp)
 			    losehp(tmp, "wand", KILLED_BY_AN);
 			} else pline("The wand misses you.");
 			stop_occupation();
-			nomul(0);
+			nomul(0, NULL);
 		} else if (resists_magm(mtmp)) {
 			shieldeff(mtmp->mx, mtmp->my);
 			pline("Boing!");

@@ -541,7 +541,7 @@ drag:
 	if (near_capacity() > SLT_ENCUMBER && dist2(x, y, u.ux, u.uy) <= 2) {
 	    pline("You cannot %sdrag the heavy iron ball.",
 			    invent ? "carry all that and also " : "");
-	    nomul(0);
+	    nomul(0, NULL);
 	    return FALSE;
 	}
 
@@ -579,7 +579,7 @@ drag:
 		    u.uy = uchain->oy;
 		    newsym(u.ux0, u.uy0);
 		}
-		nomul(0);
+		nomul(0, NULL);
 
 		*bc_control = BC_BALL;
 		move_bc(1, *bc_control, *ballx, *bally, *chainx, *chainy);

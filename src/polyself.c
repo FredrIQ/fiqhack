@@ -697,7 +697,7 @@ void rehumanize(void)
 	    done(DIED);
 	}
 	if (!uarmg) selftouch("No longer petrify-resistant, you");
-	nomul(0);
+	nomul(0, NULL);
 
 	iflags.botl = 1;
 	vision_full_recalc = 1;
@@ -985,7 +985,7 @@ int dogaze(void)
 			    nomul((u.ulevel > 6 || rn2(4)) ?
 				    -dice((int)mtmp->m_lev+1,
 					    (int)mtmp->data->mattk[0].damd)
-				    : -200);
+				    : -200, "frozen by a monster's gaze");
 			    return 1;
 			} else
 			    pline("You stiffen momentarily under %s gaze.",

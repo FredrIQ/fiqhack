@@ -9,6 +9,7 @@ int (*occupation)(void);
 int bases[MAXOCLASSES];
 
 int multi;
+char multi_txt[BUFSZ];
 int occtime;
 
 int x_maze_max, y_maze_max;	/* initialized in main, used in mkmaze.c */
@@ -233,6 +234,7 @@ void init_data(void)
     memset(disco, 0, sizeof(disco));
     memset(&digging, 0, sizeof(digging));
     memset(&inv_pos, 0, sizeof(inv_pos));
+    memset(multi_txt, 0, sizeof(multi_txt));
     
     level = NULL;
     multi = occtime = killer_format = 0;

@@ -801,7 +801,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 			Hallucination ? "an orange" : "a pile of gold");
                     /* A pile of gold can't ride. */
 		    if (u.usteed) dismount_steed(DISMOUNT_FELL);
-		    nomul(-tmp);
+		    nomul(-tmp, "pretending to be a pile of gold");
 		    sprintf(buf, Hallucination ?
 			"You suddenly dread being peeled and mimic %s again!" :
 			"You now prefer mimicking %s again.",
@@ -1151,7 +1151,7 @@ static int rottenfood(struct obj *obj)
 			   surface(u.ux,u.uy);
 		pline("The world spins and %s %s.", what, where);
 		flags.soundok = 0;
-		nomul(-rnd(10));
+		nomul(-rnd(10), "unconscious from rotten food");
 		nomovemsg = "You are conscious again.";
 		afternmv = Hear_again;
 		return 1;
@@ -2132,7 +2132,7 @@ boolean is_fainted(void)
 /* call when a faint must be prematurely terminated */
 void reset_faint(void)
 {
-	if (is_fainted()) nomul(0);
+	if (is_fainted()) nomul(0, NULL);
 }
 
 
@@ -2193,7 +2193,7 @@ void newuhs(boolean incr)
 				stop_occupation();
 				pline("You faint from lack of food.");
 				flags.soundok = 0;
-				nomul(-10+(u.uhunger/10));
+				nomul(-10+(u.uhunger/10), "fainted from lack of food");
 				nomovemsg = "You regain consciousness.";
 				afternmv = unfaint;
 				newhs = FAINTED;
@@ -2356,7 +2356,7 @@ struct obj *floorfood(/* get food from floor or pack */
 void vomit(void)	/* A good idea from David Neves */
 {
 	make_sick(0L, NULL, TRUE, SICK_VOMITABLE);
-	nomul(-2);
+	nomul(-2, "vomiting");
 }
 
 int eaten_stat(int base, struct obj *obj)

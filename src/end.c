@@ -66,7 +66,7 @@ int done2(void)
 {
 	if (yn("Really quit?") == 'n') {
 		flush_screen();
-		if (multi > 0) nomul(0);
+		if (multi > 0) nomul(0, NULL);
 		if (multi == 0) {
 		    u.uinvulnerable = FALSE;	/* avoid ctrl-C bug -dlc */
 		    u.usleep = 0;
@@ -122,7 +122,12 @@ void done_in_by(struct monst *mtmp)
 		    sprintf(eos(buf), " called %s", NAME(mtmp));
 	}
 
-	if (multi) strcat(buf, ", while helpless");
+	if (multi) {
+	    if (strlen(multi_txt) > 0)
+		sprintf(eos(buf), ", while %s", multi_txt);
+	    else
+		strcat(buf, ", while helpless");
+	}
 	killer = buf;
 	if (mtmp->data->mlet == S_WRAITH)
 		u.ugrave_arise = PM_WRAITH;

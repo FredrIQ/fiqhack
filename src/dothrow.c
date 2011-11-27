@@ -587,13 +587,13 @@ void hurtle(int dx, int dy, int range, boolean verbose)
      */
     if (Punished && !carried(uball)) {
 	pline("You feel a tug from the iron ball.");
-	nomul(0);
+	nomul(0, NULL);
 	return;
     } else if (u.utrap) {
 	pline("You are anchored by the %s.",
 	    u.utraptype == TT_WEB ? "web" : u.utraptype == TT_LAVA ? "lava" :
 		u.utraptype == TT_INFLOOR ? surface(u.ux,u.uy) : "trap");
-	nomul(0);
+	nomul(0, NULL);
 	return;
     }
 
@@ -603,7 +603,7 @@ void hurtle(int dx, int dy, int range, boolean verbose)
 
     if (!range || (!dx && !dy) || u.ustuck) return; /* paranoia */
 
-    nomul(-range);
+    nomul(-range, "moving through the air");
     if (verbose)
 	pline("You %s in the opposite direction.", range > 1 ? "hurtle" : "float");
     /* if we're in the midst of shooting multiple projectiles, stop */
