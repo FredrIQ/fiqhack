@@ -211,7 +211,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	    
 	    /* if the command requres an arg AND the arg isn't set yet (by handle_internal_cmd) */
 	    if (cmd->flags & CMD_ARG_DIR && arg->argtype != CMD_ARG_DIR) {
-		key2 = nh_wgetch(stdscr);
+		key2 = get_cmdkey();
 		if (key2 == '\033') /* cancel silently */
 		    continue;
 		
