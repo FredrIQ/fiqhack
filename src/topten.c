@@ -23,6 +23,8 @@ struct toptenentry {
     int ver_major, ver_minor, patchlevel;
     int deathdate, birthdate;
     int uid;
+    int moves;
+    int how;
     char plrole[ROLESZ+1];
     char plrace[ROLESZ+1];
     char plgend[ROLESZ+1];
@@ -63,8 +65,8 @@ static void writeentry(FILE *rfile, const struct toptenentry *tt)
 	    tt->points, tt->deathdnum, tt->deathlev,
 	    tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
 	    tt->deathdate, tt->birthdate, tt->uid);
-    fprintf(rfile,"%s %s %s %s %s,%s\n",
-	    tt->plrole, tt->plrace, tt->plgend, tt->plalign,
+    fprintf(rfile,"%d %d %s %s %s %s %s,%s\n",
+	    tt->moves, tt->how, tt->plrole, tt->plrace, tt->plgend, tt->plalign,
 	    onlyspace(tt->name) ? "_" : tt->name, tt->death);
 }
 
@@ -88,7 +90,7 @@ static void write_topten(const struct toptenentry *ttlist)
 static void update_log(const struct toptenentry *newtt)
 {
 #ifdef LOGFILE		/* used for debugging (who dies of what, where) */
-    FILE *file = fopen_datafile(LOGFILE, "a", SCOREPREFIX);
+    FILE *file = fopen_datafile(LOGFILE, "a+", SCOREPREFIX);
     if (!file)
 	raw_print("Cannot open log file!\n");
     else {
@@ -108,14 +110,14 @@ static boolean readentry(FILE *rfile, struct toptenentry *tt)
      * "3.4.3 77 0 1 1 0 15 1 20110727 20110727 1000 Bar Orc Mal Cha daniel,killed by a newt"
      */
     static const char fmt[] = "%d.%d.%d %d %d %d %d %d %d %d %d"
-                              " %d %d %3s %3s %3s %3s %15[^,],%99[^\n]%*c";
+                              " %d %d %d %d %3s %3s %3s %3s %15[^,],%99[^\n]%*c";
     int rv;
     
     rv = fscanf(rfile, fmt, &tt->ver_major, &tt->ver_minor, &tt->patchlevel,
 		&tt->points, &tt->deathdnum, &tt->deathlev, &tt->maxlvl,
 		&tt->hp, &tt->maxhp, &tt->deaths, &tt->deathdate,
-		&tt->birthdate, &tt->uid, tt->plrole, tt->plrace, tt->plgend,
-		tt->plalign, tt->name, tt->death);
+		&tt->birthdate, &tt->uid, &tt->moves, &tt->how, tt->plrole,
+		tt->plrace, tt->plgend, tt->plalign, tt->name, tt->death);
     
     return rv == 19;
 }
@@ -165,6 +167,8 @@ static void fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->maxhp = u.uhpmax;
     newtt->deaths = u.umortality;
     newtt->uid = uid;
+    newtt->moves = moves;
+    newtt->how = how;
     strncpy(newtt->plrole, urole.filecode, ROLESZ);
     newtt->plrole[ROLESZ] = '\0';
     strncpy(newtt->plrace, urace.filecode, ROLESZ);
@@ -256,8 +260,9 @@ void update_topten(int how)
     if (wizard || discover)
 	return;
 
-    file = fopen_datafile(RECORD, "r", SCOREPREFIX);
-    if (!file || !lock_fd(fileno(file), 60)) {
+    file = fopen_datafile(RECORD, "w+", SCOREPREFIX); /* w+ to create if needed */
+    if (!file) return;
+    if (!lock_fd(fileno(file), 60)) {
 	fclose(file);
 	return;
     }
@@ -449,6 +454,8 @@ static void fill_nh_score_entry(struct toptenentry *in, struct nh_topten_entry *
     out->ver_minor = in->ver_minor;
     out->patchlevel = in->patchlevel;
     out->highlight = highlight;
+    out->moves = in->moves;
+    out->end_how = in->how;
     
     strncpy(out->name, in->name, NAMSZ);
     strncpy(out->death, in->death, DTHSZ);

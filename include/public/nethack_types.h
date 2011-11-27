@@ -464,6 +464,7 @@ struct nh_topten_entry {
     int deaths;
     int ver_major, ver_minor, patchlevel;
     int deathdate, birthdate; /* decimal representation, ex: 20101231 for 31 Dec 2010 */
+    int moves, end_how;
     char plrole[PLRBUFSZ];
     char plrace[PLRBUFSZ];
     char plgend[PLRBUFSZ];
