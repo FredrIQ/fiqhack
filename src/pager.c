@@ -661,7 +661,8 @@ static int do_look(boolean quick)
 
 	/* Finally, print out our explanation. */
 	if (found) {
-	    pline("%s", out_str);
+	    out_str[0] = highc(out_str[0]);
+	    pline("%s.", out_str);
 	    /* check the data file for information about this thing */
 	    if (found == 1 && ans != LOOK_QUICK && ans != LOOK_ONCE &&
 			(ans == LOOK_VERBOSE || (flags.help && !quick))) {
