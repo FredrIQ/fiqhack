@@ -1519,6 +1519,36 @@ int zapdir_to_effect(int dx, int dy, int beam_type)
 }
 
 
+/* Dump a rough ascii representation of the screen to the given dumpfp
+ * This may or may not look anything like what the player sees: they might be
+ * using tiles or a unicode charset. */
+void dump_screen(FILE *dumpfp)
+{
+    int x, y;
+    char scrline[COLNO+1];
+    const struct nh_drawing_info *di = nh_get_drawing_info();
+    const struct nh_dbuf_entry *dbe;
+    
+    for (y = 0; y < ROWNO; y++) {
+	for (x = 0; x < COLNO; x++) {
+	    dbe = &dbuf[y][x];
+	    scrline[x] = di->bgelements[dbe->bg].ch;
+	    if (dbe->trap)	scrline[x] = di->traps[dbe->trap-1].ch;
+	    if (dbe->obj)	scrline[x] = di->objects[dbe->obj-1].ch;
+	    if (dbe->invis)	scrline[x] = di->invis[0].ch;
+	    else if (dbe->mon) {
+		if (dbe->mon > di->num_monsters && (dbe->monflags & MON_WARNING))
+		    scrline[x] = di->warnings[dbe->mon - 1 - di->num_monsters].ch;
+		else
+		    scrline[x] = di->monsters[dbe->mon-1].ch;
+	    }
+	}
+	
+	scrline[COLNO] = '\0';
+	fprintf(dumpfp, "%s\n", scrline);
+    }
+}
+
 /* ------------------------------------------------------------------------- */
 /* Wall Angle -------------------------------------------------------------- */
 

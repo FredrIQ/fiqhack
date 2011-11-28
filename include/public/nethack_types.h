@@ -22,13 +22,10 @@
 
 #define BUFSZ		256	/* for getlin buffers */
 #define QBUFSZ		128	/* for building question text */
-#define TBUFSZ		300	/* toplines[] buffer max msg: 3 81char names */
-				/* plus longest prefix plus a few extra words */
 #define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
 #define PLRBUFSZ	16	/* player race/role names */
 
 #define FCMASK		0660	/* file creation mask */
-#define msleep(k) usleep((k)*1000)
 
 #define ROLE_NONE	(-1)
 #define ROLE_RANDOM	(-2)
@@ -134,6 +131,7 @@ enum nh_path_prefix {
     SCOREPREFIX,
     LOCKPREFIX,
     TROUBLEPREFIX,
+    DUMPPREFIX,
     PREFIX_COUNT
 };
 

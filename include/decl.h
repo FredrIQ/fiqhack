@@ -296,6 +296,11 @@ extern struct nh_option_desc *active_birth_options;
 extern struct nh_option_desc *birth_options;
 extern struct nh_option_desc *options;
 
+#define MSGCOUNT 20
+
+extern char toplines[MSGCOUNT][BUFSZ];
+extern int curline;
+
 #define add_menuitem(m, i, cap, acc, sel)\
     add_menu_item((m)->items, (m)->size, (m)->icount, i, cap, acc, sel)
 #define add_menuheading(m, c)\

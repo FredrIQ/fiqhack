@@ -209,6 +209,9 @@ struct nh_option_desc *active_birth_options;
 struct nh_option_desc *birth_options;
 struct nh_option_desc *options;
 
+char toplines[MSGCOUNT][BUFSZ];
+int curline;
+
 
 void init_data(void)
 {

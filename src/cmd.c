@@ -577,12 +577,11 @@ void enlightenment(int final)
     /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
 {
 	int ltmp;
-	char buf[BUFSZ];
+	char buf[BUFSZ], *title;
 	struct menulist menu;
 
 	init_menulist(&menu);
-	add_menutext(&menu, final ? "Final Attributes:" : "Current Attributes:");
-	add_menutext(&menu, "");
+	title = final ? "Final Attributes:" : "Current Attributes:";
 
 	if (flags.elbereth_enabled && u.uevent.uhand_of_elbereth) {
 	    static const char * const hofe_titles[3] = {
@@ -840,7 +839,7 @@ void enlightenment(int final)
 	if (p) enl_msg(&menu, You_, "have been killed ", p, buf);
     }
 
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, title, PICK_NONE, NULL);
 	free(menu.items);
 	return;
 }
@@ -959,9 +958,7 @@ void show_conduct(int final)
 
 	/* Create the conduct window */
 	init_menulist(&menu);
-	add_menutext(&menu, "Voluntary challenges:");
-	add_menutext(&menu, "");
-
+	
 	if (!u.uconduct.food)
 	    enl_msg(&menu, You_, "have gone", "went", " without food");
 	    /* But beverages are okay */
@@ -1029,7 +1026,7 @@ void show_conduct(int final)
 	}
 
 	/* Pop up the window and wait for a key */
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, "Voluntary challenges:", PICK_NONE, NULL);
 	free(menu.items);
 }
 

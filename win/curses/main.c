@@ -119,6 +119,8 @@ static char** init_game_paths(void)
 	append_slash(pathlist[i]);
     }
     
+    strcpy(pathlist[DUMPPREFIX], "./");
+    
     return pathlist;
 }
 

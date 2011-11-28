@@ -904,6 +904,36 @@ int enhance_weapon_skill(void)
     return 0;
 }
 
+
+int dump_skills(void)
+{
+    int pass, i;
+    char buf[BUFSZ], sklnambuf[BUFSZ];
+    struct menulist menu;
+
+    init_menulist(&menu);
+    
+    /* List the skills. */
+    for (pass = 0; pass < SIZE(skill_ranges); pass++)
+	for (i = skill_ranges[pass].first; i <= skill_ranges[pass].last; i++) {
+	    /* Print headings for skill types */
+	    if (i == skill_ranges[pass].first)
+		add_menuheading(&menu, skill_ranges[pass].name);
+
+	    if (P_RESTRICTED(i) || u.weapon_skills[i].skill == P_UNSKILLED)
+		continue;
+	    
+	    skill_level_name(i, sklnambuf);
+	    sprintf(buf, " %s\t[%s]", P_NAME(i), sklnambuf);
+	    add_menuitem(&menu, 0, buf, 0, FALSE);
+	}
+    display_menu(menu.items, menu.icount, "Your skills at the end:", PICK_NONE, NULL);
+    
+    free(menu.items);
+    return 0;
+}
+
+
 /*
  * Change from restricted to unrestricted, allowing P_BASIC as max.  This
  * function may be called with with P_NONE.  Used in pray.c.

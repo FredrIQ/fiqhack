@@ -23,13 +23,13 @@ static const struct val_list { struct valuable_data *list; int size; } valuables
 };
 
 static void disclose(int,boolean);
+static void dump_disclose(int);
 static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *,int);
 static void artifact_score(struct obj *,boolean,struct menulist *);
 static void savelife(int);
 static boolean check_survival(int how, char *kilbuf);
 static long calc_score(int how);
-static void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
 static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
 static boolean should_query_disclose_option(int,char *);
@@ -228,6 +228,7 @@ static boolean should_query_disclose_option(int category, char *defquery)
     return TRUE;
 }
 
+
 static void disclose(int how, boolean taken)
 {
 	char	c = 0, defquery;
@@ -284,6 +285,35 @@ static void disclose(int how, boolean taken)
 	    if (c == 'q') done_stopprint++;
 	}
 }
+
+
+/* like disclose, but don't ask any questions */
+static void dump_disclose(int how)
+{
+	struct obj *obj;
+
+	/* temporarily redirect menu window output into the dumpfile */
+	dump_catch_menus(TRUE);
+	
+	/* re-"display" all the disclosure menus */
+	/* make sure the inventory is fully identified, even if DYWYPI = n */
+	for (obj = invent; obj; obj = obj->nobj) {
+	    makeknown(obj->otyp);
+	    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
+	}
+	display_inventory(NULL, TRUE);
+	container_contents(invent, TRUE, TRUE);
+	dump_spells();
+	dump_skills();
+	enlightenment(how >= PANICKED ? 1 : 2); /* final */
+	list_vanquished('y', FALSE);
+	list_genocided('y', FALSE);
+	show_conduct(how >= PANICKED ? 1 : 2);
+	
+	/* make menus work normally again */
+	dump_catch_menus(FALSE);
+}
+
 
 /* try to get the player back in a viable state after being killed */
 static void savelife(int how)
@@ -497,7 +527,7 @@ static long calc_score(int how)
 }
 
 
-static void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
+void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 {
 	char outrip_buf[BUFSZ];
 	boolean show_endwin = FALSE;
@@ -764,6 +794,10 @@ void done(int how)
 
 	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
 		disclose(how, taken);
+	
+	begin_dump(how);
+	dump_disclose(how);
+	
 	/* finish_paybill should be called after disclosure but before bones */
 	if (bones_ok && taken) finish_paybill();
 
@@ -786,6 +820,7 @@ void done(int how)
 	done_money = umoney;
 #endif
 
+	end_dump(how, killbuf, pbuf, umoney);
 	display_rip(how, killbuf, pbuf, umoney);
 
 	/* generate a topten entry for this game.
@@ -901,8 +936,6 @@ static void list_vanquished(char defquery, boolean ask)
 	if (c == 'q') done_stopprint++;
 	if (c == 'y') {
 	    init_menulist(&menu);
-	    add_menutext(&menu,  "Vanquished creatures:");
-	    add_menutext(&menu,  "");
 
 	    /* countdown by monster "toughness" */
 	    for (lev = max_lev; lev >= 0; lev--)
@@ -941,7 +974,7 @@ static void list_vanquished(char defquery, boolean ask)
 		sprintf(buf, "%ld creatures vanquished.", total_killed);
 		add_menutext(&menu,  buf);
 	    }
-	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	    display_menu(menu.items, menu.icount, "Vanquished creatures:", PICK_NONE, NULL);
 	    free(menu.items);
 	}
     }

@@ -214,6 +214,7 @@ extern void flush_screen_disable(void);
 extern void flush_screen(void);
 extern int back_to_cmap(struct level *lev, xchar x, xchar y);
 extern int zapdir_to_effect(int,int,int);
+extern void dump_screen(FILE *dumpfp);
 extern void set_wall_state(struct level *lev);
 
 /* ### do.c ### */
@@ -353,6 +354,12 @@ extern boolean breaktest(struct obj *);
 extern boolean walk_path(coord *, coord *, boolean (*)(void *,int,int), void *);
 extern boolean hurtle_step(void *, int, int);
 
+/* ### dump.c ### */
+
+extern void begin_dump(int how);
+extern void end_dump(int how, char *kilbuf, char *pbuf, long umoney);
+extern void dump_catch_menus(boolean intercept);
+
 /* ### dungeon.c ### */
 
 extern void save_dungeon(int,boolean,boolean);
@@ -433,6 +440,7 @@ extern int done2(void);
 extern void done_in_by(struct monst *);
 extern void done(int);
 extern int num_genocides(void);
+extern void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
 
 /* ### engrave.c ### */
 
@@ -1411,6 +1419,7 @@ extern int spell_skilltype(int);
 extern int spelleffects(int,boolean);
 extern void losespells(void);
 extern int dovspell(void);
+extern void dump_spells(void);
 extern void initialspell(struct obj *);
 
 /* ### steal.c ### */
@@ -1610,6 +1619,7 @@ extern int mon_wield_item(struct monst *);
 extern int abon(void);
 extern int dbon(void);
 extern int enhance_weapon_skill(void);
+extern int dump_skills(void);
 extern void unrestrict_weapon_skill(int);
 extern void use_skill(int,int);
 extern void add_weapon_skill(int);

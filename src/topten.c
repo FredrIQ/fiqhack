@@ -76,9 +76,9 @@ static void write_topten(const struct toptenentry *ttlist)
     int i;
     FILE *rfile;
     
-    rfile = fopen_datafile(RECORD, "w", SCOREPREFIX);
+    rfile = fopen_datafile(RECORD, "r+", SCOREPREFIX);
     if (!rfile)
-	return;
+	rfile = fopen_datafile(RECORD, "w+", SCOREPREFIX);
     
     for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++)
 	writeentry(rfile, &ttlist[i]);
@@ -119,7 +119,7 @@ static boolean readentry(FILE *rfile, struct toptenentry *tt)
 		&tt->birthdate, &tt->uid, &tt->moves, &tt->how, tt->plrole,
 		tt->plrace, tt->plgend, tt->plalign, tt->name, tt->death);
     
-    return rv == 19;
+    return rv == 21;
 }
 
 
@@ -260,8 +260,9 @@ void update_topten(int how)
     if (wizard || discover)
 	return;
 
-    file = fopen_datafile(RECORD, "w+", SCOREPREFIX); /* w+ to create if needed */
-    if (!file) return;
+    file = fopen_datafile(RECORD, "r+", SCOREPREFIX);
+    if (!file)
+	file = fopen_datafile(RECORD, "w+", SCOREPREFIX);
     if (!lock_fd(fileno(file), 60)) {
 	fclose(file);
 	return;

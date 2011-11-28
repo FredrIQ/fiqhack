@@ -6,7 +6,6 @@
 #include "edog.h"
 
 static boolean no_repeat = FALSE;
-char toplines[TBUFSZ];
 
 static char *You_buf(int);
 
@@ -36,14 +35,15 @@ static void vpline(const char *line, va_list the_args)
 	    vsprintf(pbuf,line,the_args);
 	    line = pbuf;
 	}
-	if (no_repeat && !strcmp(line, toplines))
+	if (no_repeat && !strcmp(line, toplines[curline]))
 	    return;
 	if (vision_full_recalc)
 	    vision_recalc(0);
 	if (u.ux)
 	    flush_screen();
 	
-	strcpy(toplines, line);
+	strcpy(toplines[curline++], line);
+	curline %= MSGCOUNT;
 	print_message(moves, line);
 }
 

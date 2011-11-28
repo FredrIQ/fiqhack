@@ -1024,6 +1024,15 @@ static boolean dospellmenu(const char *prompt,
 	return FALSE;
 }
 
+
+void dump_spells(void)
+{
+    /* note: the actual dumping is done in dump_display_menu(), we just need
+     * to get the data there. */
+    dospellmenu("Spells known in the end:", SPELLMENU_VIEW, NULL);
+}
+
+
 /* Integer square root function without using floating point. */
 static int isqrt(int val)
 {
