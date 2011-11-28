@@ -69,9 +69,16 @@ static void classic_status(struct nh_player_info *pi)
 static void draw_bar(int barlen, int val_cur, int val_max, const char *prefix)
 {
     char str[COLNO], bar[COLNO];
-    int fill_len, bl, percent, colorattr, color;
+    int fill_len = 0, bl, percent, colorattr, color;
     
-    percent = 100 * val_cur / val_max;
+    bl = barlen-2;
+    if (val_max <= 0 || val_cur <= 0)
+	percent = 0;
+    else {
+	percent = 100 * val_cur / val_max;
+	fill_len = bl * val_cur / val_max;
+    }
+    
     if (percent < 25)
 	color = CLR_RED;
     else if (percent < 50)
@@ -82,9 +89,6 @@ static void draw_bar(int barlen, int val_cur, int val_max, const char *prefix)
 	color = CLR_GRAY; /* inverted this is white, with better text contrast */
     colorattr = curses_color_attr(color);
     
-    bl = barlen-2;
-    
-    fill_len = bl * val_cur / val_max;
     sprintf(str, "%s%d(%d)", prefix, val_cur, val_max);
     sprintf(bar, "%-*s", bl, str);
     waddch(statuswin, '[');
