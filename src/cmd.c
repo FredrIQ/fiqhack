@@ -99,8 +99,8 @@ const struct cmd_desc cmdlist[] = {
 	{"menuinv", "show a partial inventory", 'I', 0, TRUE, dotypeinv, CMD_ARG_NONE},
 	{"monster", "use a monster's special ability", M('m'), 0, TRUE, domonability, CMD_ARG_NONE | CMD_EXT},
 	{"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
-	{"name", "name an item or type of object", M('n'), 'N', TRUE, ddocall, CMD_ARG_NONE | CMD_EXT},
-	{"name mon", "christen a monster", 'C', 0, TRUE, do_mname, CMD_ARG_NONE},
+	{"name", "name a monster, item or type of object", M('n'), 'C', TRUE, do_naming, CMD_ARG_NONE | CMD_EXT},
+	{"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
 	{"offer", "offer a sacrifice to the gods", 0, 0, FALSE, dosacrifice, CMD_ARG_NONE | CMD_EXT},
 	{"open", "open a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE},
 	{"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE},
@@ -931,6 +931,7 @@ static boolean minimal_enlightenment(void)
 	n = display_menu(items, i, "Base Attributes", PICK_NONE, NULL);
 	return n != -1;
 }
+
 
 static int doattributes(void)
 {
