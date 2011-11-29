@@ -1693,7 +1693,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	/* show the "things that are here" window iff
 	 * - the player didn't get the info via update_location -OR-
 	 * - it was explicitly requested (obj_cnt == 0) */
-	boolean skip_win = update_location(!skip_objects) || obj_cnt;
+	boolean skip_win = update_location(!skip_objects) && obj_cnt;
 
 	if (u.uswallow && u.ustuck) {
 	    struct monst *mtmp = u.ustuck;
