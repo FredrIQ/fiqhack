@@ -384,15 +384,39 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 /* object comparison function for qsort */
 int obj_compare(const void *o1, const void *o2)
 {
+    int cmp, bo1, bo2;
     struct obj *obj1 = *(struct obj**)o1;
     struct obj *obj2 = *(struct obj**)o2;
     
+    /* compare positions in inv_order */
     char *pos1 = strchr(flags.inv_order, obj1->oclass);
     char *pos2 = strchr(flags.inv_order, obj2->oclass);
     if (pos1 != pos2)
-	return (pos1 < pos2) ? -1 : 1;
+	return pos1 - pos2;
     
-    return strcmp(cxname2(obj1), cxname2(obj2));
+    /* compare names */
+    cmp = strcmp(cxname2(obj1), cxname2(obj2));
+    if (cmp)
+	return cmp;
+    
+    /* BUC state -> int (sort order: unknown, blessed, cursed, uncursed)
+     * The expr. gives values of 0 (unkn.), 1 (b), 2 (c), 3 (u) */
+    bo1 = obj1->bknown * (3 ^ (obj1->blessed << 1) ^ (obj1->cursed));
+    bo2 = obj2->bknown * (3 ^ (obj2->blessed << 1) ^ (obj2->cursed));
+    if (bo1 != bo2)
+	return bo1 - bo2;
+    
+    /* compare enchantment */
+    if ((obj1->known) && (obj2->known))
+	return obj1->spe - obj2->spe;
+    else if ((obj1->known) && (!obj2->known))
+	/* always sort items with known enchantment after unknown */
+	return 1;
+    else if ((!obj1->known) && (obj2->known))
+	/* always sort items with known enchantment after unknown */
+	return -1;
+    
+    return 0;
 }
 
 /*
