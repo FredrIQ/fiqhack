@@ -154,7 +154,7 @@ void impossible (const char *s, ...)
 	    paniclog("impossible", pbuf);
 	}
 	vpline(s,the_args);
-	pline("Program in disorder - perhaps you'd better #quit.");
+	pline("Program in disorder - perhaps you'd better save.");
 	program_state.in_impossible = 0;
 	va_end(the_args);
 }
