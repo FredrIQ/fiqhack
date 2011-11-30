@@ -6,6 +6,8 @@
 #include "nhcurses.h"
 
 
+static boolean do_item_actions(char invlet);
+
 static int calc_colwidths(char *menustr, int *colwidth)
 {
     char *start, *tab;
@@ -635,6 +637,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     int i, key, idx, rv;
     boolean done, cancelled;
     char sbuf[BUFSZ];
+    boolean inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
     
     gw = alloc_gamewin(sizeof(struct win_objmenu));
     gw->draw = draw_objmenu;
@@ -646,7 +649,6 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     mdat->how = how;
     mdat->selcount = -1;
     mdat->selected = calloc(icount, sizeof(int));
-    
     
     if (how != PICK_NONE)
 	assign_objmenu_accelerators(mdat);
@@ -819,6 +821,11 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 		    if (mdat->how == PICK_ONE)
 			done = TRUE;
 		    
+		    /* inventory special case: show item actions menu */
+		    else if (inventory_special)
+			if (do_item_actions(mdat->items[idx].accel))
+			    done = TRUE;
+		    
 		} else if (mdat->how == PICK_ANY) { /* maybe it's a group accel? */
 		    int grouphits = 0;
 		    for (i = 0; i < mdat->icount; i++) {
@@ -859,3 +866,33 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 	
     return rv;
 }
+
+
+static boolean do_item_actions(char invlet)
+{
+    int ccount = 0, i, selected[1];
+    struct nh_cmd_desc *obj_cmd = nh_get_object_commands(&ccount, invlet);
+    struct nh_menuitem *items;
+    struct nh_cmd_arg arg;
+    
+    if (!obj_cmd || !ccount)
+	return FALSE;
+    
+    items = malloc(sizeof(struct nh_menuitem) * ccount);
+    
+    for (i = 0; i < ccount; i++)
+	set_menuitem(&items[i], i+1, MI_NORMAL, obj_cmd[i].desc, 0, FALSE);
+    
+    i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE, selected);
+    free(items);
+    
+    if (!i)
+	return FALSE;
+    
+    arg.argtype = CMD_ARG_OBJ;
+    arg.invlet = invlet;
+    set_next_command(obj_cmd[selected[0]-1].name, &arg);
+    
+    return TRUE;
+}
+

@@ -208,6 +208,7 @@ extern void curses_getline(const char *query, char *buffer);
 
 /* keymap.c */
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);
+extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
 extern void show_keymap_menu(boolean readonly);

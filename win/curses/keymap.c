@@ -23,7 +23,9 @@ struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
 static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count;
 static struct nh_cmd_desc *prev_cmd;
-static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE};
+static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE}, next_command_arg;
+static boolean have_next_command = FALSE;
+static char next_command_name[32];
 static int prev_count;
 
 static void init_keymap(void);
@@ -176,6 +178,14 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
     char line[BUFSZ];
     struct nh_cmd_desc *cmd, *cmd2;
     
+    /* inventory item actions may set the next command */
+    if (have_next_command) {
+	have_next_command = FALSE;
+	*count = 0;
+	*arg = next_command_arg;
+	return next_command_name;
+    }
+    
     do {
 	multi = 0;
 	cmd = NULL;
@@ -237,6 +247,14 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
     prev_count = *count;
     
     return cmd->name;
+}
+
+
+void set_next_command(const char *cmd, struct nh_cmd_arg *arg)
+{
+    have_next_command = TRUE;
+    next_command_arg = *arg;
+    strncpy(next_command_name, cmd, sizeof(next_command_name));
 }
 
 
