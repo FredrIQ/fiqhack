@@ -107,7 +107,7 @@ static const struct nh_option_desc const_options[] = {
     {"disclose_conduct", "disclose your conduct at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
-    {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"\")[%?+!=/(*`0_"}},
+    {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"$\")[%?+!=/(*`0_"}},
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
     {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
     {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
@@ -765,12 +765,6 @@ static int change_inv_order(char *op)
     char *sp, buf[BUFSZ];
 
     num = 0;
-#ifndef GOLDOBJ
-    if (!strchr(op, GOLD_SYM))
-	buf[num++] = COIN_CLASS;
-#else
-    /*  !!!! probably unnecessary with gold as normal inventory */
-#endif
 
     for (sp = op; *sp; sp++) {
 	oc_sym = def_char_to_objclass(*sp);

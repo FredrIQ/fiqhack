@@ -1741,9 +1741,6 @@ static void use_stone(struct obj *tstone)
     static const char scritch[] = "\"scritch, scritch\"";
     static const char allowall[3] = { COIN_CLASS, ALL_CLASSES, 0 };
     static const char justgems[3] = { ALLOW_NONE, GEM_CLASS, 0 };
-#ifndef GOLDOBJ
-    struct obj goldobj;
-#endif
 
     /* in case it was acquired while blinded */
     if (!Blind) tstone->dknown = 1;
@@ -1754,14 +1751,6 @@ static void use_stone(struct obj *tstone)
     sprintf(stonebuf, "rub on the stone%s", plur(tstone->quan));
     if ((obj = getobj(choices, stonebuf)) == 0)
 	return;
-#ifndef GOLDOBJ
-    if (obj->oclass == COIN_CLASS) {
-	u.ugold += obj->quan;	/* keep iflags.botl up to date */
-	goldobj = *obj;
-	dealloc_obj(obj);
-	obj = &goldobj;
-    }
-#endif
 
     if (obj == tstone && obj->quan == 1) {
 	pline("You can't rub %s on itself.", the(xname(obj)));
@@ -1778,9 +1767,6 @@ static void use_stone(struct obj *tstone)
 	else
 	    pline("A sharp crack shatters %s%s.",
 		  (obj->quan > 1) ? "one of " : "", the(xname(obj)));
-#ifndef GOLDOBJ
-     /* assert(obj != &goldobj); */
-#endif
 	useup(obj);
 	return;
     }

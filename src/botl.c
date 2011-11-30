@@ -102,17 +102,10 @@ void max_rank_sz(void)
 static long botl_score(void)
 {
     int deepest = deepest_lev_reached(FALSE);
-#ifndef GOLDOBJ
-    long ugold = u.ugold + hidden_gold();
-
-    if ((ugold -= u.ugold0) < 0L) ugold = 0L;
-    return ugold + u.urexp + (long)(50 * (deepest - 1))
-#else
     long umoney = money_cnt(invent) + hidden_gold();
 
     if ((umoney -= u.umoney0) < 0L) umoney = 0L;
     return umoney + u.urexp + (long)(50 * (deepest - 1))
-#endif
 			  + (long)(deepest > 30 ? 10000 :
 				   deepest > 20 ? 1000*(deepest - 20) : 0);
 }
@@ -207,11 +200,7 @@ static void make_player_info(struct nh_player_info *pi)
 	pi->enmax = u.uenmax;
 	pi->ac = u.uac;
 	
-#ifndef GOLDOBJ
-	pi->gold = u.ugold;
-#else
 	pi->gold = money_cnt(invent);
-#endif
 	pi->coinsym = def_oc_syms[COIN_CLASS];
 	describe_level(pi->level_desc);
 	

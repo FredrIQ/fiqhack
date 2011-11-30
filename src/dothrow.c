@@ -42,19 +42,6 @@ static int throw_obj(struct obj *obj, int shotlimit)
 	schar dx, dy, dz;
 
 	/* ask "in what direction?" */
-#ifndef GOLDOBJ
-	if (!getdir(NULL, &dx, &dy, &dz)) {
-		if (obj->oclass == COIN_CLASS) {
-		    u.ugold += obj->quan;
-		    iflags.botl = 1;
-		    dealloc_obj(obj);
-		}
-		return 0;
-	}
-
-	if (obj->oclass == COIN_CLASS)
-	    return throw_gold(obj, dx, dy, dz);
-#else
 	if (!getdir(NULL, &dx, &dy, &dz)) {
 	    /* obj might need to be merged back into the singular gold object */
 	    freeinv(obj);
@@ -72,7 +59,6 @@ static int throw_obj(struct obj *obj, int shotlimit)
         */
 	if (obj->oclass == COIN_CLASS && obj != uquiver)
 	    return throw_gold(obj, dx, dy, dz);
-#endif
 
 	if (!canletgo(obj,"throw"))
 		return 0;
@@ -1635,34 +1621,19 @@ static void breakmsg(struct obj *obj, boolean in_view)
 static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 {
 	int range, odx, ody;
-#ifndef GOLDOBJ
-	long zorks = obj->quan;
-#endif
 	struct monst *mon;
 
 	if (!dx && !dy && !dz) {
-#ifndef GOLDOBJ
-		u.ugold += obj->quan;
-		iflags.botl = 1;
-		dealloc_obj(obj);
-#endif
 		pline("You cannot throw gold at yourself.");
 		return 0;
 	}
-#ifdef GOLDOBJ
         freeinv(obj);
-#endif
+
 	if (u.uswallow) {
 		pline(is_animal(u.ustuck->data) ?
 			"%s in the %s's entrails." : "%s into %s.",
-#ifndef GOLDOBJ
-			"The gold disappears", mon_nam(u.ustuck));
-		u.ustuck->mgold += zorks;
-		dealloc_obj(obj);
-#else
 			"The money disappears", mon_nam(u.ustuck));
 		add_to_minv(u.ustuck, obj);
-#endif
 		return 1;
 	}
 

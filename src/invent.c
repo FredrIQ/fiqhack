@@ -41,13 +41,11 @@ void assigninvlet(struct obj *otmp)
 	int i;
 	struct obj *obj;
 
-#ifdef GOLDOBJ
         /* There is only one of these in inventory... */        
         if (otmp->oclass == COIN_CLASS) {
 	    otmp->invlet = GOLD_SYM;
 	    return;
 	}
-#endif
 
 	for (i = 0; i < 52; i++) inuse[i] = FALSE;
 	for (obj = invent; obj; obj = obj->nobj) if (obj != otmp) {
@@ -157,9 +155,6 @@ int merged(struct obj **potmp, struct obj **pobj)
 			    / (otmp->quan + obj->quan);
 
 		otmp->quan += obj->quan;
-#ifdef GOLDOBJ
-                /* temporary special case for gold objects!!!! */
-#endif
 		if (otmp->oclass == COIN_CLASS) otmp->owt = weight(otmp);
 		else otmp->owt += obj->owt;
 		if (!otmp->onamelth && obj->onamelth)
@@ -214,11 +209,7 @@ It may be valid to merge this code with with addinv_core2().
 void addinv_core1(struct obj *obj)
 {
 	if (obj->oclass == COIN_CLASS) {
-#ifndef GOLDOBJ
-		u.ugold += obj->quan;
-#else
 		iflags.botl = 1;
-#endif
 	} else if (obj->otyp == AMULET_OF_YENDOR) {
 		if (u.uhave.amulet) impossible("already have amulet?");
 		u.uhave.amulet = 1;
@@ -273,11 +264,6 @@ struct obj *addinv(struct obj *obj)
 	obj->no_charge = 0;	/* not meaningful for invent */
 
 	addinv_core1(obj);
-#ifndef GOLDOBJ
-	/* if handed gold, we're done */
-	if (obj->oclass == COIN_CLASS)
-	    return obj;
-#endif
 
 	/* merge if possible; find end of chain in the process */
 	for (prev = 0, otmp = invent; otmp; prev = otmp, otmp = otmp->nobj)
@@ -439,10 +425,6 @@ Should think of a better name...
 void freeinv_core(struct obj *obj)
 {
 	if (obj->oclass == COIN_CLASS) {
-#ifndef GOLDOBJ
-		u.ugold -= obj->quan;
-		obj->in_use = FALSE;
-#endif
 		iflags.botl = 1;
 		return;
 	} else if (obj->otyp == AMULET_OF_YENDOR) {
@@ -594,21 +576,6 @@ struct obj *gold_at(struct level *lev, int x, int y)
 }
 
 
-#ifndef GOLDOBJ
-/* Make a gold object from the hero's gold. */
-struct obj *mkgoldobj(long q)
-{
-	struct obj *otmp;
-
-	otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE);
-	u.ugold -= q;
-	otmp->quan = q;
-	otmp->owt = weight(otmp);
-	iflags.botl = 1;
-	return otmp;
-}
-#endif
-
 /* compact a string of inventory letters by dashing runs of letters */
 static void compactify(char *buf)
 {
@@ -654,10 +621,8 @@ static boolean putting_on(const char *action)
  *	struct obj *xxx:	object to do something with.
  *	NULL	error return: no object.
  *	&zeroobj		explicitly no object (as in w-).
-#ifdef GOLDOBJ
 !!!! test if gold can be used in unusual ways (eaten etc.)
 !!!! may be able to remove "usegold"
-#endif
  */
 struct obj *getobj(const char *let, const char *word)
 {
@@ -668,9 +633,6 @@ struct obj *getobj(const char *let, const char *word)
 	int foo = 0;
 	char *bp = buf;
 	xchar allowcnt = 0;	/* 0, 1 or 2 */
-#ifndef GOLDOBJ
-	boolean allowgold = FALSE;	/* can't use gold because they don't have any */
-#endif
 	boolean usegold = FALSE;	/* can't use gold because its illegal */
 	boolean allowall = FALSE;
 	boolean allownone = FALSE;
@@ -681,22 +643,13 @@ struct obj *getobj(const char *let, const char *word)
 	long dummymask;
 
 	if (*let == ALLOW_COUNT) let++, allowcnt = 1;
-#ifndef GOLDOBJ
-	if (*let == COIN_CLASS) let++,
-		usegold = TRUE, allowgold = (u.ugold ? TRUE : FALSE);
-#else
 	if (*let == COIN_CLASS) let++, usegold = TRUE;
-#endif
 
 	/* Equivalent of an "ugly check" for gold */
 	if (usegold && !strcmp(word, "eat") &&
 	    (!metallivorous(youmonst.data)
 	     || youmonst.data == &mons[PM_RUST_MONSTER]))
-#ifndef GOLDOBJ
-		usegold = allowgold = FALSE;
-#else
 		usegold = FALSE;
-#endif
 
 	if (*let == ALL_CLASSES) let++, allowall = TRUE;
 	if (*let == ALLOW_NONE) let++, allownone = TRUE;
@@ -714,23 +667,17 @@ struct obj *getobj(const char *let, const char *word)
 	    useboulder = TRUE;
 
 	if (allownone) *bp++ = '-';
-#ifndef GOLDOBJ
-	if (allowgold) *bp++ = def_oc_syms[COIN_CLASS];
-#endif
 	if (bp > buf && bp[-1] == '-') *bp++ = ' ';
 	ap = altlets;
 
 	ilet = 'a';
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
 	    if (!flags.invlet_constant)
-#ifdef GOLDOBJ
 		if (otmp->invlet != GOLD_SYM) /* don't reassign this */
-#endif
-		otmp->invlet = ilet;	/* reassign() */
+		    otmp->invlet = ilet;	/* reassign() */
+	    
 	    if (!*let || strchr(let, otmp->oclass)
-#ifdef GOLDOBJ
 		|| (usegold && otmp->invlet == GOLD_SYM)
-#endif
 		|| (useboulder && otmp->otyp == BOULDER)
 		) {
 		int otyp = otmp->otyp;
@@ -827,11 +774,7 @@ struct obj *getobj(const char *let, const char *word)
 		compactify(bp);
 	*ap = '\0';
 
-#ifndef GOLDOBJ
-	if (!foo && !allowall && !allowgold && !allownone) {
-#else
 	if (!foo && !allowall && !allownone) {
-#endif
 		pline("You don't have anything %sto %s.",
 			foox ? "else " : "", word);
 		return NULL;
@@ -876,11 +819,6 @@ struct obj *getobj(const char *let, const char *word)
 				pline("You cannot %s gold.", word);
 			    }
 			    return NULL;
-#ifndef GOLDOBJ
-			} else if (!allowgold) {
-				pline("You are not carrying any gold.");
-				return NULL;
-#endif
 			} 
 			if (cnt == 0 && prezero) return NULL;
 			/* Historic note: early Nethack had a bug which was
@@ -893,12 +831,6 @@ struct obj *getobj(const char *let, const char *word)
 	pline("The LRS would be very interested to know you have that much.");
 				return NULL;
 			}
-
-#ifndef GOLDOBJ
-			if (!(allowcnt == 2 && cnt < u.ugold))
-				cnt = u.ugold;
-			return mkgoldobj(cnt);
-#endif
 		}
 		if (ilet == '?' || ilet == '*') {
 		    char *allowed_choices = (ilet == '?') ? lets : NULL;
@@ -925,9 +857,7 @@ struct obj *getobj(const char *let, const char *word)
 		    /* permit counts for throwing gold, but don't accept
 		     * counts for other things since the throw code will
 		     * split off a single item anyway */
-#ifdef GOLDOBJ
 		    if (ilet != def_oc_syms[COIN_CLASS])
-#endif
 			allowcnt = 1;
 		    if (cnt == 0 && prezero) return NULL;
 		    if (cnt > 1) {
@@ -935,9 +865,8 @@ struct obj *getobj(const char *let, const char *word)
 			continue;
 		    }
 		}
-#ifdef GOLDOBJ
 		iflags.botl = 1; /* May have changed the amount of money */
-#endif
+
 		for (otmp = invent; otmp; otmp = otmp->nobj)
 			if (otmp->invlet == ilet) break;
 		if (!otmp) {
@@ -951,9 +880,7 @@ struct obj *getobj(const char *let, const char *word)
 		break;
 	}
 	if (!allowall && let && !strchr(let,otmp->oclass)
-#ifdef GOLDOBJ
 	   && !(usegold && otmp->oclass == COIN_CLASS)
-#endif
 	   ) {
 		silly_thing(word, otmp);
 		return NULL;
@@ -1104,10 +1031,6 @@ void identify_pack(int id_limit)
 /* should of course only be called for things in invent */
 static char obj_to_let(struct obj *obj)
 {
-#ifndef GOLDOBJ
-	if (obj->oclass == COIN_CLASS)
-		return GOLD_SYM;
-#endif
 	if (!flags.invlet_constant) {
 		obj->invlet = NOINVSYM;
 		reassign();
@@ -1155,11 +1078,6 @@ char *xprname(struct obj *obj,
 	sprintf(li, "%c - %-45s %6ld %s",
 		(dot && use_invlet ? obj->invlet : let),
 		(txt ? txt : doname(obj)), cost, currency(cost));
-#ifndef GOLDOBJ
-    } else if (obj && obj->oclass == COIN_CLASS) {
-	sprintf(li, "%d gold piece%s%s", obj->quan, plur(obj->quan),
-		(dot ? "." : ""));
-#endif
     } else {
 	/* ordinary inventory display or pickup message */
 	sprintf(li, "%c - %s%s",
@@ -1276,11 +1194,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	to here is short circuited away.
 	*/
 	if (!invent && !(!lets && !want_reply)) {
-#ifndef GOLDOBJ
-	    pline("Not carrying anything%s.", u.ugold ? " except gold" : "");
-#else
 	    pline("Not carrying anything.");
-#endif
 	    return 0;
 	}
 
@@ -1510,11 +1424,7 @@ int dotypeinv(void)
 	int pick_list[30];
 	const char *prompt = "What type of object do you want an inventory of?";
 
-#ifndef GOLDOBJ
-	if (!invent && !u.ugold && !billx) {
-#else
 	if (!invent && !billx) {
-#endif
 	    pline("You aren't carrying anything.");
 	    return 0;
 	}
@@ -1844,14 +1754,15 @@ void stackobj(struct obj *obj)
 	return;
 }
 
-/* returns TRUE if obj  & otmp can be merged */
+/* returns TRUE if obj & otmp can be merged */
 static boolean mergable(struct obj *otmp, struct obj *obj)
 {
 	if (obj->otyp != otmp->otyp) return FALSE;
-#ifdef GOLDOBJ
+
 	/* coins of the same kind will always merge */
-	if (obj->oclass == COIN_CLASS) return TRUE;
-#endif
+	if (obj->oclass == COIN_CLASS)
+	    return TRUE;
+
 	if (obj->unpaid != otmp->unpaid ||
 	    obj->spe != otmp->spe || obj->dknown != otmp->dknown ||
 	    (obj->bknown != otmp->bknown && !Role_if (PM_PRIEST)) ||
@@ -1924,18 +1835,12 @@ int doprgold(void)
 {
 	/* the messages used to refer to "carrying gold", but that didn't
 	   take containers into account */
-#ifndef GOLDOBJ
-	if (!u.ugold)
-	    pline("Your wallet is empty.");
-	else
-	    pline("Your wallet contains %ld gold piece%s.", u.ugold, plur(u.ugold));
-#else
         long umoney = money_cnt(invent);
 	if (!umoney)
 	    pline("Your wallet is empty.");
 	else
 	    pline("Your wallet contains %ld %s.", umoney, currency(umoney));
-#endif
+
 	shopper_financial_report();
 	return 0;
 }
@@ -2255,58 +2160,24 @@ static boolean worn_wield_only(struct obj *obj)
 struct obj *display_minventory(struct monst *mon, int dflags, char *title)
 {
 	struct obj *ret;
-#ifndef GOLDOBJ
-	struct obj m_gold;
-#endif
 	char tmp[QBUFSZ];
 	int n;
 	struct object_pick *selected = NULL;
-#ifndef GOLDOBJ
-	int do_all = (dflags & MINV_ALL) != 0,
-	    do_gold = (do_all && mon->mgold);
-#else
 	int do_all = (dflags & MINV_ALL) != 0;
-#endif
 
 	sprintf(tmp,"%s %s:", s_suffix(noit_Monnam(mon)),
 		do_all ? "possessions" : "armament");
 
-#ifndef GOLDOBJ
-	if (do_all ? (mon->minvent || mon->mgold)
-#else
 	if (do_all ? (mon->minvent != 0)
-#endif
 		   : (mon->misc_worn_check || MON_WEP(mon))) {
 	    /* Fool the 'weapon in hand' routine into
 	     * displaying 'weapon in claw', etc. properly.
 	     */
 	    youmonst.data = mon->data;
 
-#ifndef GOLDOBJ
-	    if (do_gold) {
-		/*
-		 * Make temporary gold object and insert at the head of
-		 * the mon's inventory.  We can get away with using a
-		 * stack variable object because monsters don't carry
-		 * gold in their inventory, so it won't merge.
-		 */
-		m_gold = zeroobj;
-		m_gold.otyp = GOLD_PIECE;  m_gold.oclass = COIN_CLASS;
-		m_gold.quan = mon->mgold;  m_gold.dknown = 1;
-		m_gold.where = OBJ_FREE;
-		/* we had better not merge and free this object... */
-		if (add_to_minv(mon, &m_gold))
-		    panic("display_minventory: static object freed.");
-	    }
-
-#endif
 	    n = query_objlist(title ? title : tmp, mon->minvent, INVORDER_SORT, &selected,
 			(dflags & MINV_NOLET) ? PICK_NONE : PICK_ONE,
 			do_all ? allow_all : worn_wield_only);
-
-#ifndef GOLDOBJ
-	    if (do_gold) obj_extract_self(&m_gold);
-#endif
 
 	    set_uasmon();
 	} else {
@@ -2317,15 +2188,6 @@ struct obj *display_minventory(struct monst *mon, int dflags, char *title)
 	if (n > 0) {
 	    ret = selected[0].obj;
 	    free(selected);
-#ifndef GOLDOBJ
-	    /*
-	     * Unfortunately, we can't return a pointer to our temporary
-	     * gold object.  We'll have to work out a scheme where this
-	     * can happen.  Maybe even put gold in the inventory list...
-	     */
-	    if (ret == &m_gold)
-		ret = NULL;
-#endif
 	} else
 	    ret = NULL;
 	return ret;

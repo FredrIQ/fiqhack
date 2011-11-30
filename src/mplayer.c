@@ -241,11 +241,7 @@ struct monst *mk_mplayer(const struct permonst *ptr,
 		    mongets(mtmp, rnd_class(DILITHIUM_CRYSTAL, JADE));
 		/* To get the gold "right" would mean a player can double his */
 		/* gold supply by killing one mplayer.  Not good. */
-#ifndef GOLDOBJ
-		mtmp->mgold = rn2(1000);
-#else
 		mkmonmoney(mtmp, rn2(1000));
-#endif
 		quan = rn2(10);
 		while (quan--)
 		    mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE));

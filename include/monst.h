@@ -130,9 +130,6 @@ struct monst {
 
 	int mtrapseen;		/* bitmap of traps we've been trapped in */
 	int mlstmv;		/* for catching up with lost time */
-#ifndef GOLDOBJ
-	int mgold;
-#endif
 	struct obj *minvent;
 
 	struct obj *mw;

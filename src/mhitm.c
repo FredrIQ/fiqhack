@@ -923,14 +923,6 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		break;
 	    case AD_SGLD:
 		tmp = 0;
-#ifndef GOLDOBJ
-		if (magr->mcan || !mdef->mgold) break;
-		/* technically incorrect; no check for stealing gold from
-		 * between mdef's feet...
-		 */
-		magr->mgold += mdef->mgold;
-		mdef->mgold = 0;
-#else
                 if (magr->mcan) break;
 		/* technically incorrect; no check for stealing gold from
 		 * between mdef's feet...
@@ -941,7 +933,6 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
                     obj_extract_self(gold);
 		    add_to_minv(magr, gold);
                 }
-#endif
 		mdef->mstrategy &= ~STRAT_WAITFORU;
 		if (vis) {
 		    strcpy(buf, Monnam(magr));

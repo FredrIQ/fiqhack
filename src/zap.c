@@ -345,6 +345,7 @@ int bhitm(struct monst *mtmp, struct obj *otmp)
 	return 0;
 }
 
+
 void probe_monster(struct monst *mtmp)
 {
 	struct obj *otmp;
@@ -352,11 +353,7 @@ void probe_monster(struct monst *mtmp)
 	mstatusline(mtmp);
 	if (notonhead) return;	/* don't show minvent for long worm tail */
 
-#ifndef GOLDOBJ
-	if (mtmp->minvent || mtmp->mgold) {
-#else
 	if (mtmp->minvent) {
-#endif
 	    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 		otmp->dknown = 1;	/* treat as "seen" */
 	    display_minventory(mtmp, MINV_ALL, NULL);
@@ -3252,9 +3249,6 @@ buzzmonst:
 			    else
 				hit(fltxt, mon, "!");
 			}
-#ifndef GOLDOBJ
-			mon->mgold = 0L;
-#endif
 
 /* note: worn amulet of life saving must be preserved in order to operate */
 #define oresist_disintegration(obj) \

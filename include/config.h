@@ -61,7 +61,6 @@
  * bugs left here.
  */
 
-/*#define GOLDOBJ */	/* Gold is kept on obj chains - Helge Hafting */
 /*#define AUTOPICKUP_EXCEPTIONS */ /* exceptions to autopickup */
 
 /* End of Section 5 */

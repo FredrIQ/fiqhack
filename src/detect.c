@@ -78,13 +78,8 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 	if (memobj) {
 	    /* there's some object shown here */
 	    if (oclass == ALL_CLASSES) {
-		return((boolean)( !(level->objects[x][y] ||     /* stale if nothing here */
-			    ((mtmp = m_at(level, x,y)) != 0 &&
-				(
-#ifndef GOLDOBJ
-				 mtmp->mgold ||
-#endif
-						 mtmp->minvent)))));
+		return ( !(level->objects[x][y] ||     /* stale if nothing here */
+			    ((mtmp = m_at(level, x,y)) != 0 && mtmp->minvent)));
 	    } else {
 		if (material && objects[memobj - 1].oc_material == material) {
 			/* the object shown here is of interest because material matches */
@@ -103,19 +98,10 @@ static boolean check_map_spot(int x, int y, char oclass, unsigned material)
 			for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
 				if (o_in(otmp, oclass)) return FALSE;
 			/* didn't find it; perhaps a monster is carrying it */
-#ifndef GOLDOBJ
-			if ((mtmp = m_at(level, x,y)) != 0) {
-				if (oclass == COIN_CLASS && mtmp->mgold)
-					return FALSE;
-				else for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
-					if (o_in(otmp, oclass)) return FALSE;
-		        }
-#else
 			if ((mtmp = m_at(level, x,y)) != 0) {
 				for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 					if (o_in(otmp, oclass)) return FALSE;
 		        }
-#endif
 			/* detection indicates removal of this object from the map */
 			return TRUE;
 	        }
@@ -160,11 +146,7 @@ int gold_detect(struct obj *sobj)
     /* look for gold carried by monsters (might be in a container) */
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably not needed in this case but... */
-#ifndef GOLDOBJ
-	if (mtmp->mgold || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-#else
 	if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-#endif
 	    known = TRUE;
 	    goto outgoldmap;	/* skip further searching */
 	} else for (obj = mtmp->minvent; obj; obj = obj->nobj)
@@ -192,21 +174,14 @@ int gold_detect(struct obj *sobj)
 	/* no gold found on floor or monster's inventory.
 	   adjust message if you have gold in your inventory */
 	if (sobj) {
-		char buf[BUFSZ];
-		if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
-			sprintf(buf, "You feel like a million %s!",
-				currency(2L));
-		} else if (hidden_gold() ||
-#ifndef GOLDOBJ
-				u.ugold)
-#else
-			        money_cnt(invent))
-#endif
-			strcpy(buf,
-				"You feel worried about your future financial situation.");
-		else
-			strcpy(buf, "You feel materially poor.");
-		strange_feeling(sobj, buf);
+	    char buf[BUFSZ];
+	    if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
+		    sprintf(buf, "You feel like a million %s!", currency(2L));
+	    } else if (hidden_gold() || money_cnt(invent))
+		    strcpy(buf, "You feel worried about your future financial situation.");
+	    else
+		    strcpy(buf, "You feel materially poor.");
+	    strange_feeling(sobj, buf);
         }
 	return 1;
     }
@@ -237,11 +212,7 @@ outgoldmap:
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably overkill here */
-#ifndef GOLDOBJ
-	if (mtmp->mgold || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-#else
 	if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-#endif
 	    struct obj gold;
 
 	    gold.otyp = GOLD_PIECE;
@@ -429,11 +400,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 	}
 	if ((is_cursed && mtmp->m_ap_type == M_AP_OBJECT &&
 	    (!class || class == objects[mtmp->mappearance].oc_class)) ||
-#ifndef GOLDOBJ
-	    (mtmp->mgold && (!class || class == COIN_CLASS))) {
-#else
 	    (findgold(mtmp->minvent) && (!class || class == COIN_CLASS))) {
-#endif
 	    ct++;
 	    break;
 	}
@@ -512,11 +479,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 	    temp.oy = mtmp->my;
 	    temp.corpsenm = PM_TENGU;		/* if mimicing a corpse */
 	    map_object(&temp, 1);
-#ifndef GOLDOBJ
-	} else if (mtmp->mgold && (!class || class == COIN_CLASS)) {
-#else
 	} else if (findgold(mtmp->minvent) && (!class || class == COIN_CLASS)) {
-#endif
 	    struct obj gold;
 
 	    gold.otyp = GOLD_PIECE;

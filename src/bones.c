@@ -144,15 +144,6 @@ static void drop_upon_death(struct monst *mtmp, struct obj *cont)
 		else
 			place_object(otmp, level, u.ux, u.uy);
 	}
-#ifndef GOLDOBJ
-	if (u.ugold) {
-		long ugold = u.ugold;
-		if (mtmp) mtmp->mgold = ugold;
-		else if (cont) add_to_container(cont, mkgoldobj(ugold));
-		else mkgold(ugold, level, u.ux, u.uy);
-		u.ugold = ugold;	/* undo mkgoldobj()'s removal */
-	}
-#endif
 	if (cont) cont->owt = weight(cont);
 }
 

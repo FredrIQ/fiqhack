@@ -134,9 +134,7 @@ extern int saved_cmd;
 extern int killer_format;
 extern const char *killer;
 extern const char *delayed_killer;
-#ifdef GOLDOBJ
 extern long done_money;
-#endif
 extern char killer_buf[BUFSZ];
 extern const char *configfile;
 extern char plname[PL_NSIZ];

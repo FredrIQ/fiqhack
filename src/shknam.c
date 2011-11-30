@@ -377,11 +377,7 @@ static int shkinit(const struct shclass	*shp, struct level *lev, struct mkroom *
 	ESHK(shk)->visitct = 0;
 	ESHK(shk)->following = 0;
 	ESHK(shk)->billct = 0;
-#ifndef GOLDOBJ
-	shk->mgold = 1000L + 30L*(long)rnd(100);	/* initial capital */
-#else
         mkmonmoney(shk, 1000L + 30L*(long)rnd(100));	/* initial capital */
-#endif
 	if (shp->shknms == shkrings)
 	    mongets(shk, TOUCHSTONE);
 	nameshk(shk, shp->shknms, lev);

@@ -359,15 +359,6 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 		}
 		corpse = mkcorpstat(CORPSE, NULL, mtmp->data,
 				level, xlocale, ylocale, FALSE);
-#ifndef GOLDOBJ
-		if (mtmp->mgold) {
-		    if (xlocale == 0 && ylocale == 0 && corpse) {
-			get_obj_location(corpse, &xlocale, &ylocale, 0);
-			mkgold(mtmp->mgold, level, xlocale, ylocale);
-		    }
-		    mtmp->mgold = 0L;
-		}
-#endif
 		mongone(mtmp);
 	    }
 	}

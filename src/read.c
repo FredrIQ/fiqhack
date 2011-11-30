@@ -856,10 +856,9 @@ int seffects(struct obj *sobj)
 		} else {
 		    for (obj = invent; obj; obj = obj->nobj) {
 			long wornmask;
-#ifdef GOLDOBJ
 			/* gold isn't subject to cursing and blessing */
 			if (obj->oclass == COIN_CLASS) continue;
-#endif
+
 			wornmask = (obj->owornmask & ~(W_BALL|W_ART|W_ARTI));
 			if (wornmask && !sobj->blessed) {
 			    /* handle a couple of special cases; we don't

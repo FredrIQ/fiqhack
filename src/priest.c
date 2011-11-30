@@ -409,20 +409,6 @@ void priest_talk(struct monst *priest)
 	    priest->mpeaceful = 0;
 	    return;
 	}
-#ifndef GOLDOBJ
-	if (!u.ugold) {
-	    if (coaligned && !strayed) {
-		if (priest->mgold > 0L) {
-		    /* Note: two bits is actually 25 cents.  Hmm. */
-		    pline("%s gives you %s for an ale.", Monnam(priest),
-			(priest->mgold == 1L) ? "one bit" : "two bits");
-		    if (priest->mgold > 1L)
-			u.ugold = 2L;
-		    else
-			u.ugold = 1L;
-		    priest->mgold -= u.ugold;
-		    iflags.botl = 1;
-#else
 	if (!money_cnt(invent)) {
 	    if (coaligned && !strayed) {
                 long pmoney = money_cnt(priest->minvent);
@@ -431,7 +417,6 @@ void priest_talk(struct monst *priest)
 		    pline("%s gives you %s for an ale.", Monnam(priest),
 			(pmoney == 1L) ? "one bit" : "two bits");
 		     money2u(priest, pmoney > 1L ? 2 : 1);
-#endif
 		} else
 		    pline("%s preaches the virtues of poverty.", Monnam(priest));
 		exercise(A_WIS, TRUE);
@@ -447,11 +432,7 @@ void priest_talk(struct monst *priest)
 		verbalize("Thou shalt regret thine action!");
 		if (coaligned) adjalign(-1);
 	    } else if (offer < (u.ulevel * 200)) {
-#ifndef GOLDOBJ
-		if (u.ugold > (offer * 2L)) verbalize("Cheapskate.");
-#else
 		if (money_cnt(invent) > (offer * 2L)) verbalize("Cheapskate.");
-#endif
 		else {
 		    verbalize("I thank thee for thy contribution.");
 		    /*  give player some token  */
@@ -459,11 +440,7 @@ void priest_talk(struct monst *priest)
 		}
 	    } else if (offer < (u.ulevel * 400)) {
 		verbalize("Thou art indeed a pious individual.");
-#ifndef GOLDOBJ
-		if (u.ugold < (offer * 2L)) {
-#else
 		if (money_cnt(invent) < (offer * 2L)) {
-#endif
 		    if (coaligned && u.ualign.record <= ALGN_SINNED)
 			adjalign(1);
 		    verbalize("I bestow upon thee a blessing.");
@@ -479,11 +456,7 @@ void priest_talk(struct monst *priest)
 		} else u.ublessed++;
 	    } else {
 		verbalize("Thy selfless generosity is deeply appreciated.");
-#ifndef GOLDOBJ
-		if (u.ugold < (offer * 2L) && coaligned) {
-#else
 		if (money_cnt(invent) < (offer * 2L) && coaligned) {
-#endif
 		    if (strayed && (moves - u.ucleansed) > 5000L) {
 			u.ualign.record = 0; /* cleanse thee */
 			u.ucleansed = moves;

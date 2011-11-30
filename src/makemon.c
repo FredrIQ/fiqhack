@@ -263,14 +263,14 @@ static void m_initweap(struct monst *mtmp)
 		    }
 		}
 		break;
-# ifdef KOPS
+#ifdef KOPS
 	    case S_KOP:		/* create Keystone Kops with cream pies to
 				 * throw. As suggested by KAA.	   [MRS]
 				 */
 		if (!rn2(4)) m_initthrow(mtmp, CREAM_PIE, 2);
 		if (!rn2(3)) mongets(mtmp,(rn2(2)) ? CLUB : RUBBER_HOSE);
 		break;
-# endif
+#endif
 	    case S_ORC:
 		if (rn2(2)) mongets(mtmp, ORCISH_HELM);
 		switch (mm != PM_ORC_CAPTAIN ? mm :
@@ -411,7 +411,6 @@ static void m_initweap(struct monst *mtmp)
 }
 
 
-#ifdef GOLDOBJ
 /*
  *   Makes up money for monster's inventory.
  *   This will change with silver & copper coins
@@ -422,7 +421,7 @@ void mkmonmoney(struct monst *mtmp, long amount)
     gold->quan = amount;
     add_to_minv(mtmp, gold);
 }
-#endif
+
 
 static void m_initinv(struct monst *mtmp)
 {
@@ -510,11 +509,7 @@ static void m_initinv(struct monst *mtmp)
 					     rn2(3) ? CLOAK_OF_PROTECTION :
 						 CLOAK_OF_MAGIC_RESISTANCE);
 		    mongets(mtmp, SMALL_SHIELD);
-#ifndef GOLDOBJ
-		    mtmp->mgold = (long)rn1(10,20);
-#else
 		    mkmonmoney(mtmp,(long)rn1(10,20));
-#endif
 		} else if (quest_mon_represents_role(ptr,PM_MONK)) {
 		    mongets(mtmp, rn2(11) ? ROBE :
 					     CLOAK_OF_MAGIC_RESISTANCE);
@@ -568,11 +563,7 @@ static void m_initinv(struct monst *mtmp)
 		}
 		break;
 	    case S_LEPRECHAUN:
-#ifndef GOLDOBJ
-		mtmp->mgold = (long) dice(level_difficulty(), 30);
-#else
 		mkmonmoney(mtmp, (long) dice(level_difficulty(), 30));
-#endif
 		break;
 	    case S_DEMON:
 	    	/* moved here from m_initweap() because these don't
@@ -595,14 +586,8 @@ static void m_initinv(struct monst *mtmp)
 		mongets(mtmp, rnd_defensive_item(mtmp));
 	if ((int) mtmp->m_lev > rn2(100))
 		mongets(mtmp, rnd_misc_item(mtmp));
-#ifndef GOLDOBJ
-	if (likes_gold(ptr) && !mtmp->mgold && !rn2(5))
-		mtmp->mgold =
-		      (long) dice(level_difficulty(), mtmp->minvent ? 5 : 10);
-#else
 	if (likes_gold(ptr) && !findgold(mtmp->minvent) && !rn2(5))
 		mkmonmoney(mtmp, (long) dice(level_difficulty(), mtmp->minvent ? 5 : 10));
-#endif
 }
 
 /* Note: for long worms, always call cutworm (cutworm calls clone_mon) */
@@ -642,9 +627,6 @@ struct monst *clone_mon(struct monst *mon,
 
 	m2->minvent = NULL; /* objects don't clone */
 	m2->mleashed = FALSE;
-#ifndef GOLDOBJ
-	m2->mgold = 0L;
-#endif
 	/* Max HP the same, but current HP halved for both.  The caller
 	 * might want to override this by halving the max HP also.
 	 * When current HP is odd, the original keeps the extra point.

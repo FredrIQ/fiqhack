@@ -30,9 +30,7 @@ int saved_cmd;
 int killer_format;
 const char *killer;
 const char *delayed_killer;
-#ifdef GOLDOBJ
 long done_money;
-#endif
 char killer_buf[BUFSZ];
 const char *nomovemsg;
 const char nul[40];			/* contains zeros */
