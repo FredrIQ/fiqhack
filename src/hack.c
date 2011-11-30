@@ -481,7 +481,7 @@ boolean invocation_pos(xchar x, xchar y)
 
 
 /* return TRUE if (dx,dy) is an OK place to move
- * mode is one of DO_MOVE, TEST_MOVE or TEST_TRAV
+ * mode is one of DO_MOVE, TEST_MOVE, TEST_TRAV or TEST_TRAP
  */
 boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 {
@@ -543,7 +543,7 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 			    }
 			} else pline("That door is closed.");
 		    }
-		} else if (mode == TEST_TRAV) goto testdiag;
+		} else if (mode == TEST_TRAV || mode == TEST_TRAP) goto testdiag;
 		return FALSE;
 	    }
 	} else {
@@ -581,15 +581,18 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
     /* Pick travel path that does not require crossing a trap.
      * Avoid water and lava using the usual running rules.
      * (but not u.ux/u.uy because findtravelpath walks toward u.ux/u.uy) */
-    if (flags.run == 8 && mode != DO_MOVE && (x != u.ux || y != u.uy)) {
+    if (flags.run == 8 && (mode == TEST_MOVE || mode == TEST_TRAP) &&
+	(x != u.ux || y != u.uy)) {
 	struct trap* t = t_at(level, x, y);
 
 	if ((t && t->tseen) ||
 	    (!Levitation && !Flying &&
 	     !is_clinger(youmonst.data) &&
 	     (is_pool(level, x, y) || is_lava(level, x, y)) && level->locations[x][y].seenv))
-	    return FALSE;
+	    return mode == TEST_TRAP;
     }
+
+    if (mode == TEST_TRAP) return FALSE; /* not a move through a trap */
 
     ust = &level->locations[ux][uy];
 
@@ -695,7 +698,8 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 
 		    if (!isok(nx, ny)) continue;
 		    if ((!Passes_walls && !can_ooze(&youmonst) &&
-			closed_door(level, x, y)) || sobj_at(BOULDER, level, x, y)) {
+			closed_door(level, x, y)) || sobj_at(BOULDER, level, x, y) ||
+			test_move(x, y, nx-x, ny-y, 0, TEST_TRAP)) {
 			/* closed doors and boulders usually
 			 * cause a delay, so prefer another path */
 			if (travel[x][y] > radius-3) {
