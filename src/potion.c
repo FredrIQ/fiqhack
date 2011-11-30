@@ -295,9 +295,8 @@ static void ghost_from_bottle(void)
 
 /* "Quaffing is like drinking, except you spill more."  -- Terry Pratchett
  */
-int dodrink(void)
+int dodrink(struct obj *potion)
 {
-	struct obj *otmp;
 	const char *potion_descr;
 
 	if (Strangled) {
@@ -327,29 +326,32 @@ int dodrink(void)
 		}
 	}
 
-	otmp = getobj(beverages, "drink");
-	if (!otmp) return 0;
-	otmp->in_use = TRUE;		/* you've opened the stopper */
+	if (potion && !validate_object(potion, beverages, "drink"))
+		return 0;
+	else if (!potion)
+		potion = getobj(beverages, "drink");
+	if (!potion) return 0;
+	potion->in_use = TRUE;		/* you've opened the stopper */
 
 #define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))	/* also in muse.c */
 
-	potion_descr = OBJ_DESCR(objects[otmp->otyp]);
+	potion_descr = OBJ_DESCR(objects[potion->otyp]);
 	if (potion_descr) {
 	    if (!strcmp(potion_descr, "milky") &&
 		    flags.ghost_count < MAXMONNO &&
 		    !rn2(POTION_OCCUPANT_CHANCE(flags.ghost_count))) {
 		ghost_from_bottle();
-		useup(otmp);
+		useup(potion);
 		return 1;
 	    } else if (!strcmp(potion_descr, "smoky") &&
 		    flags.djinni_count < MAXMONNO &&
 		    !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
-		djinni_from_bottle(otmp);
-		useup(otmp);
+		djinni_from_bottle(potion);
+		useup(potion);
 		return 1;
 	    }
 	}
-	return dopotion(otmp);
+	return dopotion(potion);
 }
 
 
@@ -1469,46 +1471,51 @@ boolean get_wet(struct obj *obj)
 	return FALSE;
 }
 
-int dodip(void)
+
+int dodip(struct obj *potion)
 {
-	struct obj *potion, *obj;
+	struct obj *obj;
 	struct obj *singlepotion;
 	const char *tmp;
 	uchar here;
-	char allowall[2];
+	char allowall[2] = {ALL_CLASSES, 0};
 	short mixture;
 	char qbuf[QBUFSZ], Your_buf[BUFSZ];
 
-	allowall[0] = ALL_CLASSES; allowall[1] = '\0';
-	if (!(obj = getobj(allowall, "dip")))
+	if (potion && !validate_object(potion, beverages, "dip into"))
 		return 0;
+	
+	obj = getobj(allowall, "dip");
+	if (!obj) return 0;
 
-	here = level->locations[u.ux][u.uy].typ;
-	/* Is there a fountain to dip into here? */
-	if (IS_FOUNTAIN(here)) {
-		if (yn("Dip it into the fountain?") == 'y') {
-			dipfountain(obj);
-			return 1;
-		}
-	} else if (is_pool(level, u.ux,u.uy)) {
-		tmp = waterbody_name(u.ux,u.uy);
-		sprintf(qbuf, "Dip it into the %s?", tmp);
-		if (yn(qbuf) == 'y') {
-		    if (Levitation) {
-			floating_above(tmp);
-		    } else if (u.usteed && !is_swimmer(u.usteed->data) &&
-			    P_SKILL(P_RIDING) < P_BASIC) {
-			rider_cant_reach(); /* not skilled enough to reach */
-		    } else {
-			get_wet(obj);
-			if (obj->otyp == POT_ACID) useup(obj);
-		    }
-		    return 1;
+	if (!potion) {
+		here = level->locations[u.ux][u.uy].typ;
+		/* Is there a fountain to dip into here? */
+		if (IS_FOUNTAIN(here)) {
+			if (yn("Dip it into the fountain?") == 'y') {
+				dipfountain(obj);
+				return 1;
+			}
+		} else if (is_pool(level, u.ux,u.uy)) {
+			tmp = waterbody_name(u.ux,u.uy);
+			sprintf(qbuf, "Dip it into the %s?", tmp);
+			if (yn(qbuf) == 'y') {
+			    if (Levitation) {
+				floating_above(tmp);
+			    } else if (u.usteed && !is_swimmer(u.usteed->data) &&
+				    P_SKILL(P_RIDING) < P_BASIC) {
+				rider_cant_reach(); /* not skilled enough to reach */
+			    } else {
+				get_wet(obj);
+				if (obj->otyp == POT_ACID) useup(obj);
+			    }
+			    return 1;
+			}
 		}
 	}
 
-	if (!(potion = getobj(beverages, "dip into")))
-		return 0;
+	if (!potion) potion = getobj(beverages, "dip into");
+	if (!potion) return 0;
 	if (potion == obj && potion->quan == 1L) {
 		pline("That is a potion bottle, not a Klein bottle!");
 		return 0;
@@ -1526,7 +1533,7 @@ int dodip(void)
 					  hcolor("amber"));
 				uncurse(obj);
 				obj->bknown=1;
-	poof:
+poof:
 				if (!(objects[potion->otyp].oc_name_known) &&
 				   !(objects[potion->otyp].oc_uname))
 					docall(potion);

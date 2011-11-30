@@ -1137,13 +1137,16 @@ static const char recharge_type[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 static const char invoke_types[] = { ALL_CLASSES, 0 };
 		/* #invoke: an "ugly check" filters out most objects */
 
-int doinvoke(void)
+int doinvoke(struct obj *obj)
 {
-    struct obj *obj;
-
-    obj = getobj(invoke_types, "invoke");
+    if (obj && !validate_object(obj, invoke_types, "invoke"))
+	return 0;
+    else if (!obj)
+	obj = getobj(invoke_types, "invoke");
     if (!obj) return 0;
-    if (obj->oartifact && !touch_artifact(obj, &youmonst)) return 1;
+    
+    if (obj->oartifact && !touch_artifact(obj, &youmonst))
+	return 1;
     return arti_invoke(obj);
 }
 

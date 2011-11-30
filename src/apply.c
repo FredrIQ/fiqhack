@@ -1084,9 +1084,12 @@ static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
 
 static const char cuddly[] = { TOOL_CLASS, GEM_CLASS, 0 };
 
-int dorub(void)
+int dorub(struct obj *obj)
 {
-	struct obj *obj = getobj(cuddly, "rub");
+	if (obj && !validate_object(obj, cuddly, "rub"))
+	    return 0;
+	else if (!obj)
+	    obj = getobj(cuddly, "rub");
 
 	if (obj && obj->oclass == GEM_CLASS) {
 	    if (is_graystone(obj)) {
@@ -1739,7 +1742,7 @@ static void use_stone(struct obj *tstone)
     const char *streak_color, *choices;
     char stonebuf[QBUFSZ];
     static const char scritch[] = "\"scritch, scritch\"";
-    static const char allowall[3] = { COIN_CLASS, ALL_CLASSES, 0 };
+    static const char allowall[3] = { ALL_CLASSES, 0 };
     static const char justgems[3] = { ALLOW_NONE, GEM_CLASS, 0 };
 
     /* in case it was acquired while blinded */
@@ -2617,9 +2620,8 @@ static void add_class(char *cl, char class)
 	strcat(cl, tmp);
 }
 
-int doapply(void)
+int doapply(struct obj *obj)
 {
-	struct obj *obj;
 	int res = 1;
 	char class_list[MAXOCLASSES+2];
 
@@ -2632,7 +2634,10 @@ int doapply(void)
 	if (carrying(CREAM_PIE) || carrying(EUCALYPTUS_LEAF))
 		add_class(class_list, FOOD_CLASS);
 
-	obj = getobj(class_list, "use or apply");
+	if (obj && !validate_object(obj, class_list, "use or apply"))
+	    return 0;
+	else if (!obj)
+	    obj = getobj(class_list, "use or apply");
 	if (!obj) return 0;
 
 	if (obj->oartifact && !touch_artifact(obj, &youmonst))

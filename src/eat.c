@@ -56,7 +56,6 @@ char msgbuf[BUFSZ];
 
 static const char comestibles[] = { FOOD_CLASS, 0 };
 
-/* Gold must come first for getobj(). */
 static const char allobj[] = {
 	COIN_CLASS, WEAPON_CLASS, ARMOR_CLASS, POTION_CLASS, SCROLL_CLASS,
 	WAND_CLASS, RING_CLASS, AMULET_CLASS, FOOD_CLASS, TOOL_CLASS,
@@ -1766,9 +1765,8 @@ static int edibility_prompts(struct obj *otmp)
 	return 0;
 }
 
-int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
+int doeat(struct obj *otmp)	/* generic "eat" command funtion (see cmd.c) */
 {
-	struct obj *otmp;
 	int basenutrit;			/* nutrition of full item */
 	boolean dont_start = FALSE;
 	
@@ -1776,7 +1774,11 @@ int doeat(void)	/* generic "eat" command funtion (see cmd.c) */
 		pline("If you can't breathe air, how can you consume solids?");
 		return 0;
 	}
-	if (!(otmp = floorfood("eat", 0))) return 0;
+	if (otmp && !validate_object(otmp, allobj, "eat"))
+		return 0;
+	else if (!otmp)
+		otmp = floorfood("eat", 0);
+	if (!otmp) return 0;
 	if (check_capacity(NULL)) return 0;
 
 	if (u.uedibility) {

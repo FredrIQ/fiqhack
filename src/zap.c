@@ -1743,14 +1743,17 @@ static void backfire(struct obj *otmp)
 
 static const char zap_syms[] = { WAND_CLASS, 0 };
 
-int dozap(void)
+int dozap(struct obj *obj)
 {
-	struct obj *obj;
 	int	damage;
 	schar dx = 0, dy = 0, dz = 0;
 
 	if (check_capacity(NULL)) return 0;
-	obj = getobj(zap_syms, "zap");
+	
+	if (obj && !validate_object(obj, zap_syms, "zap"))
+		return 0;
+	else if (!obj)
+		obj = getobj(zap_syms, "zap");
 	if (!obj) return 0;
 
 	check_unpaid(obj);

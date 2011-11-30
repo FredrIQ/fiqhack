@@ -32,14 +32,17 @@ static void maybe_tame(struct monst *,struct obj *);
 
 static void set_lit(int,int,void *);
 
-int doread(void)
+int doread(struct obj *scroll)
 {
-	struct obj *scroll;
 	boolean confused;
 
 	known = FALSE;
 	if (check_capacity(NULL)) return 0;
-	scroll = getobj(readable, "read");
+	
+	if (scroll && !validate_object(scroll, readable, "read"))
+	    return 0;
+	else if (!scroll)
+	    scroll = getobj(readable, "read");
 	if (!scroll) return 0;
 
 	/* outrumor has its own blindness check */

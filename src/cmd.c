@@ -69,20 +69,20 @@ static char *enlght_combatinc(const char *,int,int,char *);
 const struct cmd_desc cmdlist[] = {
 	/* "str", "", defkey, altkey, wiz, buried, func, arg*/
 	{"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize, CMD_ARG_NONE | CMD_EXT},
-	{"apply", "use a tool or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE},
+	{"apply", "use a tool or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"attributes", "show your attributes", C('x'), 0, TRUE, doattributes, CMD_ARG_NONE},
 	{"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
 	{"chat", "talk to someone", M('c'), 0, TRUE, dotalk, CMD_ARG_NONE | CMD_EXT},	/* converse? */
 	{"close", "close a door", 'c', 0, FALSE, doclose, CMD_ARG_NONE},
 	{"conduct", "list which challenges you have adhered to", 0, 0, TRUE, doconduct, CMD_ARG_NONE | CMD_EXT},
 	{"countgold", "show gold, debt, credit, and unpaid items", GOLD_SYM, 0, TRUE, doprgold, CMD_ARG_NONE},
-	{"dip", "dip an object into something", M('d'), 0, FALSE, dodip, CMD_ARG_NONE | CMD_EXT},
+	{"dip", "dip an object into something", M('d'), 0, FALSE, dodip, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
 	{"discoveries", "show your knowledge about items", '\\', 0, TRUE, dodiscovered, CMD_ARG_NONE},
-	{"drink", "quaff a potion", 'q', 0, FALSE, dodrink, CMD_ARG_NONE},
+	{"drink", "quaff a potion", 'q', 0, FALSE, dodrink, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"drop", "drop one item", 'd', 0, FALSE, dodrop, CMD_ARG_NONE},
-	{"eat", "eat an item from inventory or the floor", 'e', 0, FALSE, doeat, CMD_ARG_NONE},
+	{"eat", "eat an item from inventory or the floor", 'e', 0, FALSE, doeat, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"enhance", "advance or check weapons skills", M('e'), 0, TRUE, enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
-	{"engrave", "write on the floor", 'E', 0, FALSE, doengrave, CMD_ARG_NONE},
+	{"engrave", "write on the floor", 'E', 0, FALSE, doengrave, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"exploremode", "switch to non-scoring explore mode", 0, 0, TRUE, enter_explore_mode, CMD_ARG_NONE | CMD_EXT},
 	{"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis, CMD_ARG_NONE},
 	{"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE, dofight, CMD_ARG_DIR},
@@ -91,7 +91,7 @@ const struct cmd_desc cmdlist[] = {
 	{"help", "show the help menu", '?', 'h', TRUE, dohelp, CMD_ARG_NONE},
 	{"idtrap", "identify a trap", '^', 0, TRUE, doidtrap, CMD_ARG_NONE},
 	{"inventory", "show your inventory", 'i', 0, TRUE, ddoinv, CMD_ARG_NONE},
-	{"invoke", "invoke an object's powers", M('i'), 0, TRUE, doinvoke, CMD_ARG_NONE | CMD_EXT},
+	{"invoke", "invoke an object's powers", M('i'), 0, TRUE, doinvoke, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
 	{"jump", "jump to a location", M('j'), 'j', FALSE, dojump, CMD_ARG_NONE | CMD_EXT},
 	{"kick", "kick an adjacent object or monster", C('d'), 'k', FALSE, dokick, CMD_ARG_NONE}, /* "D" is for door!...? Msg is in dokick.c */
 	{"lookhere", "describe the current square", ':', 0, TRUE, dolook, CMD_ARG_NONE},
@@ -101,21 +101,20 @@ const struct cmd_desc cmdlist[] = {
 	{"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
 	{"name", "name a monster, item or type of object", M('n'), 'C', TRUE, do_naming, CMD_ARG_NONE | CMD_EXT},
 	{"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
-	{"offer", "offer a sacrifice to the gods", 0, 0, FALSE, dosacrifice, CMD_ARG_NONE | CMD_EXT},
 	{"open", "open a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE},
 	{"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE},
 	{"pickup", "take items from the floor", ',', 0, FALSE, dopickup, CMD_ARG_NONE},
 	{"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_ARG_NONE | CMD_EXT},
-	{"put on", "put on jewellery or accessories", 'P', 0, FALSE, doputon, CMD_ARG_NONE},
+	{"put on", "put on jewellery or accessories", 'P', 0, FALSE, doputon, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"quit", "exit without saving current game", M('q'), 0, TRUE, done2, CMD_ARG_NONE | CMD_EXT},
-	{"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver, CMD_ARG_NONE},
-	{"read", "repeat the previous command", 'r', 0, FALSE, doread, CMD_ARG_NONE},
+	{"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver, CMD_ARG_NONE | CMD_ARG_OBJ},
+	{"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"redraw", "redraw the screen", C('r'), C('l'), TRUE, doredraw, CMD_ARG_NONE},
-	{"remove", "remove jewellery or accessories", 'R', 0, FALSE, doremring, CMD_ARG_NONE},
+	{"remove", "remove jewellery or accessories", 'R', 0, FALSE, doremring, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"removearm", "remove", 'A', 0, FALSE, doddoremarm, CMD_ARG_NONE},
 	{"ride", "ride (or stop riding) a monster", 0, 0, FALSE, doride, CMD_ARG_NONE | CMD_EXT},
-	{"rub", "rub a lamp or a stone", M('r'), 0, FALSE, dorub, CMD_ARG_NONE | CMD_EXT},
-	{"sacrifice", "", M('o'), 0, FALSE, dosacrifice, CMD_ARG_NONE},
+	{"rub", "rub a lamp or a stone", M('r'), 0, FALSE, dorub, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
+	{"sacrifice", "offer a sacrifice to the gods", M('o'), 0, FALSE, dosacrifice, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
 	{"save", "save the game and exit", 'S', 0, TRUE, dosave, CMD_ARG_NONE},
 	{"search", "search for hidden doors and traps", 's', 0, TRUE, dosearch, CMD_ARG_NONE, "searching"},
 	{"showamulets", "list the amulets in your inventory", AMULET_SYM, 0, TRUE, dopramulet, CMD_ARG_NONE},
@@ -127,9 +126,9 @@ const struct cmd_desc cmdlist[] = {
 	{"sit", "sit down", M('s'), 0, FALSE, dosit, CMD_ARG_NONE | CMD_EXT},
 	{"spellbook", "display and change letters of spells", SPBOOK_SYM, 0, TRUE, dovspell, CMD_ARG_NONE},
 	{"swapweapon", "exchange wielded and alternate weapon", 'x', 0, FALSE, doswapweapon, CMD_ARG_NONE},
-	{"takeoff", "take off an item you are wearing", 'T', 0, FALSE, dotakeoff, CMD_ARG_NONE},
+	{"takeoff", "take off an item you are wearing", 'T', 0, FALSE, dotakeoff, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"teleport", "use intrinsic or magical teleportation ability", C('t'), 0, TRUE, dotele, CMD_ARG_NONE},
-	{"throw", "throw an item", 't', 0, FALSE, dothrow, CMD_ARG_NONE},
+	{"throw", "throw an item", 't', 0, FALSE, dothrow, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"togglepickup", "toggle the autopickup option", '@', 0, TRUE, dotogglepickup, CMD_ARG_NONE},
 	{"travel", "walk until a given square is reached", '_', 0, TRUE, dotravel, CMD_ARG_NONE | CMD_ARG_POS},
 	{"turn", "turn undead", M('t'), 0, TRUE, doturn, CMD_ARG_NONE | CMD_EXT},
@@ -139,12 +138,12 @@ const struct cmd_desc cmdlist[] = {
 	{"verhistory", "displays the version history", 'V', 0, TRUE, dohistory, CMD_ARG_NONE},
 	{"versionext", "list compile-time options", M('v'), 0, TRUE, doextversion, CMD_ARG_NONE},
 	{"wait", "do nothing for one turn", '.', ' ', TRUE, donull, CMD_ARG_NONE, "waiting"},
-	{"wear", "wear clothing or armor", 'W', 0, FALSE, dowear, CMD_ARG_NONE},
-	{"wield", "hold an item in your hands", 'w', 0, FALSE, dowield, CMD_ARG_NONE},
+	{"wear", "wear clothing or armor", 'W', 0, FALSE, dowear, CMD_ARG_NONE | CMD_ARG_OBJ},
+	{"wield", "hold an item in your hands", 'w', 0, FALSE, dowield, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"wipe", "wipe off your face", M('w'), 0, FALSE, dowipe, CMD_ARG_NONE | CMD_EXT},
 	{"whatdoes", "describe what a key does", '&', 0, TRUE, dowhatdoes, CMD_ARG_NONE},
 	{"whatis", "describe what a symbol means", '/', 0, TRUE, dowhatis, CMD_ARG_NONE},
-	{"zap", "zap a wand to use its magic", 'z', 0, FALSE, dozap, CMD_ARG_NONE},
+	{"zap", "zap a wand to use its magic", 'z', 0, FALSE, dozap, CMD_ARG_NONE | CMD_ARG_OBJ},
 	
 	{"move", "move one step", 0, 0, FALSE, domovecmd, CMD_ARG_DIR | CMD_MOVE},
 	{"move nopickup", "move, but don't fight or pick anything up", 'm', 0, FALSE, domovecmd_nopickup, CMD_ARG_DIR | CMD_MOVE},
@@ -1281,6 +1280,8 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 	schar dx, dy, dz;
 	int x, y;
 	int res, (*func)(void), (*func_dir)(int, int, int), (*func_pos)(int,int);
+	int (*func_obj)(struct obj*);
+	struct obj *obj, *otmp;
 	struct nh_cmd_arg noarg = {CMD_ARG_NONE};
 	int argtype, functype;
 	
@@ -1320,6 +1321,8 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 	argtype = (arg->argtype & cmdlist[command].flags);
 	if (!argtype)
 	    return COMMAND_BAD_ARG;
+	
+	res = 0;
 	
 	if (u.uburied && !cmdlist[command].can_if_buried) {
 	    pline("You can't do that while you are buried!");
@@ -1362,7 +1365,19 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 			y = -1;
 		    }
 		    flags.move = TRUE;
-		    func_pos(x, y);
+		    res = func_pos(x, y);
+		    break;
+		
+		case CMD_ARG_OBJ:
+		    func_obj = cmdlist[command].func;
+		    obj = NULL;
+		    if (argtype == CMD_ARG_POS) {
+			for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
+			    if (otmp->invlet == arg->invlet)
+				obj = otmp;
+		    }
+		    flags.move = TRUE;
+		    res = func_obj(obj);
 		    break;
 		    
 		default:

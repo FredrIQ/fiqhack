@@ -83,12 +83,12 @@
 #define CMD_ARG_NONE (1 << 1)  /* param can be empty */
 #define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
 #define CMD_ARG_POS  (1 << 3)  /* param can be a position */
-#define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS)
+#define CMD_ARG_OBJ  (1 << 4)  /* param can be an object (==inventory letter) */
+#define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS | CMD_ARG_OBJ)
 
 /* command usage hints */
 #define CMD_EXT        (1 << 10) /* an 'extended' command */
 #define CMD_MOVE       (1 << 11) /* this is a move command */
-#define CMD_OBJ        (1 << 12) /* command manipulates items */
 #define CMD_NOTIME     (1 << 13) /* command will not use up any game time */
 #define CMD_DEBUG      (1 << 14) /* a wizmode command */
 
@@ -371,6 +371,7 @@ struct nh_cmd_arg {
     union {
 	enum nh_direction d;
 	struct nh_cmdarg_pos pos;
+	char invlet;
     };
 };
 

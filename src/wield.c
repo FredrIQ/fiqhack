@@ -207,9 +207,9 @@ static const char ready_objs[] =
 static const char bullets[] =	/* (note: different from dothrow.c) */
 	{ ALL_CLASSES, ALLOW_NONE, GEM_CLASS, WEAPON_CLASS, 0 };
 
-int dowield(void)
+int dowield(struct obj *wep)
 {
-	struct obj *wep, *oldwep;
+	struct obj *oldwep;
 	int result;
 
 	/* May we attempt this? */
@@ -220,7 +220,11 @@ int dowield(void)
 	}
 
 	/* Prompt for a new weapon */
-	if (!(wep = getobj(wield_objs, "wield")))
+	if (wep && !validate_object(wep, wield_objs, "wield"))
+		return 0;
+	else if (!wep)
+		wep = getobj(wield_objs, "wield");
+	if (!wep)
 		/* Cancelled */
 		return 0;
 	else if (wep == uwep) {
@@ -300,9 +304,8 @@ int doswapweapon(void)
 	return result;
 }
 
-int dowieldquiver(void)
+int dowieldquiver(struct obj *newquiver)
 {
-	struct obj *newquiver;
 	const char *quivee_types = (uslinging() ||
 		  (uswapwep && objects[uswapwep->otyp].oc_skill == P_SLING)) ?
 				  bullets : ready_objs;
@@ -311,8 +314,12 @@ int dowieldquiver(void)
 	/* will_weld(), touch_petrifies(), etc. */
 	multi = 0;
 
-	/* Prompt for a new quiver */
-	if (!(newquiver = getobj(quivee_types, "ready")))
+	if (newquiver && !validate_object(newquiver, quivee_types, "ready"))
+		return 0;
+	else if (!newquiver)
+		/* Prompt for a new quiver */
+		newquiver = getobj(quivee_types, "ready");
+	if (!newquiver)
 		/* Cancelled */
 		return 0;
 

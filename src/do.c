@@ -16,7 +16,7 @@ static void final_level(void);
 /* static boolean badspot(XCHAR_P,XCHAR_P); */
 
 static const char drop_types[] =
-	{ ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, 0 };
+	{ ALLOW_COUNT, ALL_CLASSES, 0 };
 
 /* 'd' command: drop one inventory item */
 int dodrop(void)

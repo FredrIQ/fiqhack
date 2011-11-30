@@ -942,9 +942,8 @@ static const char clothes[] = {ARMOR_CLASS, 0};
 static const char accessories[] = {RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS, 0};
 
 /* the 'T' command */
-int dotakeoff(void)
+int dotakeoff(struct obj *otmp)
 {
-	struct obj *otmp = NULL;
 	boolean have_armor = FALSE;
 
 	if (uarmh || uarms || uarmg || uarmf || uarmc || uarm || uarmu)
@@ -961,7 +960,10 @@ int dotakeoff(void)
 		return 0;
 	}
 
-	otmp = getobj(clothes, "take off");
+	if (otmp && !validate_object(otmp, clothes, "take off"))
+		return 0;
+	else if (!otmp)
+		otmp = getobj(clothes, "take off");
 	if (otmp == 0) return 0;
 	if (!(otmp->owornmask & W_ARMOR)) {
 		pline("You are not wearing that.");
@@ -985,9 +987,8 @@ int dotakeoff(void)
 }
 
 /* the 'R' command */
-int doremring(void)
+int doremring(struct obj *otmp)
 {
-	struct obj *otmp = 0;
 	boolean have_accessories = FALSE;
 
 	if (uleft || uright || uamul || ublindf)
@@ -998,7 +999,10 @@ int doremring(void)
 		return 0;
 	}
 
-	otmp = getobj(accessories, "remove");
+	if (otmp && !validate_object(otmp, accessories, "remove"))
+		return 0;
+	else if (!otmp)
+		otmp = getobj(accessories, "remove");
 	if (!otmp) return 0;
 	if (!(otmp->owornmask & (W_RING | W_AMUL | W_TOOL))) {
 		pline("You are not wearing that.");
@@ -1246,9 +1250,8 @@ int canwearobj(struct obj *otmp, long *mask, boolean noisy)
 }
 
 /* the 'W' command */
-int dowear(void)
+int dowear(struct obj *otmp)
 {
-	struct obj *otmp;
 	int delay;
 	long mask = 0;
 
@@ -1259,10 +1262,13 @@ int dowear(void)
 		return 0;
 	}
 
-	otmp = getobj(clothes, "wear");
+	if (otmp && !validate_object(otmp, clothes, "wear"))
+		return 0;
+	else if (!otmp)
+		otmp = getobj(clothes, "wear");
 	if (!otmp) return 0;
 
-	if (!canwearobj(otmp,&mask,TRUE)) return 0;
+	if (!canwearobj(otmp, &mask, TRUE)) return 0;
 
 	if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
 	    return 1;	/* costs a turn even though it didn't get worn */
@@ -1305,9 +1311,8 @@ int dowear(void)
 	return 1;
 }
 
-int doputon(void)
+int doputon(struct obj *otmp)
 {
-	struct obj *otmp;
 	long mask = 0L;
 
 	if (uleft && uright && uamul && ublindf) {
@@ -1317,8 +1322,13 @@ int doputon(void)
 			ublindf->otyp==LENSES ? "some lenses" : "a blindfold");
 		return 0;
 	}
-	otmp = getobj(accessories, "put on");
+
+	if (otmp && !validate_object(otmp, accessories, "put on"))
+		return 0;
+	else if (!otmp)
+		otmp = getobj(accessories, "put on");
 	if (!otmp) return 0;
+
 	if (otmp->owornmask & (W_RING | W_AMUL | W_TOOL)) {
 		already_wearing(c_that_);
 		return 0;

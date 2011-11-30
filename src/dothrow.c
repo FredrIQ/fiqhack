@@ -21,10 +21,10 @@ static boolean mhurtle_step(void *,int,int);
 
 
 static const char toss_objs[] =
-	{ ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, WEAPON_CLASS, 0 };
+	{ ALLOW_COUNT, ALL_CLASSES, COIN_CLASS, WEAPON_CLASS, 0 };
 /* different default choices when wielding a sling (gold must be included) */
 static const char bullets[] =
-	{ ALLOW_COUNT, COIN_CLASS, ALL_CLASSES, GEM_CLASS, 0 };
+	{ ALLOW_COUNT, ALL_CLASSES, COIN_CLASS, GEM_CLASS, 0 };
 
 struct obj *thrownobj = 0;	/* tracks an object until it lands */
 
@@ -169,9 +169,8 @@ static int throw_obj(struct obj *obj, int shotlimit)
 }
 
 
-int dothrow(void)
+int dothrow(struct obj *obj)
 {
-	struct obj *obj;
 	int shotlimit;
 
 	/*
@@ -192,7 +191,11 @@ int dothrow(void)
 	}
 
 	if (check_capacity(NULL)) return 0;
-	obj = getobj(uslinging() ? bullets : toss_objs, "throw");
+	
+	if (obj && !validate_object(obj, uslinging() ? bullets : toss_objs, "throw"))
+	    return 0;
+	else if (!obj)
+	    obj = getobj(uslinging() ? bullets : toss_objs, "throw");
 	/* it is also possible to throw food */
 	/* (or jewels, or iron balls... ) */
 
@@ -281,12 +284,12 @@ int dofire(void)
 		if (!flags.autoquiver) {
 			/* Don't automatically fill the quiver */
 			pline("You have no ammunition readied!");
-			return dothrow();
+			return dothrow(NULL);
 		}
 		autoquiver();
 		if (!uquiver) {
 			pline("You have nothing appropriate for your quiver!");
-			return dothrow();
+			return dothrow(NULL);
 		} else {
 			pline("You fill your quiver:");
 			prinv(NULL, uquiver, 0L);

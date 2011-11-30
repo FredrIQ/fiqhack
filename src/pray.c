@@ -1077,9 +1077,9 @@ static void consume_offering(struct obj *otmp)
     exercise(A_WIS, TRUE);
 }
 
-int dosacrifice(void)
+
+int dosacrifice(struct obj *otmp)
 {
-    struct obj *otmp;
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(u.ux,u.uy);
@@ -1090,9 +1090,19 @@ int dosacrifice(void)
     }
 
     if (In_endgame(&u.uz)) {
-	if (!(otmp = getobj(sacrifice_types, "sacrifice"))) return 0;
+	if (otmp && !validate_object(otmp, sacrifice_types, "sacrifice"))
+	    return 0;
+	else if (!otmp)
+	    otmp = getobj(sacrifice_types, "sacrifice");
+	if (!otmp) return 0;
     } else {
-	if (!(otmp = floorfood("sacrifice", 1))) return 0;
+	if (otmp && otmp->otyp != CORPSE) {
+	    pline("You can't sacrifice that!");
+	    return 0;
+	}
+	else
+	    otmp = floorfood("sacrifice", 1);
+	if (!otmp) return 0;
     }
     /*
       Was based on nutritional value and aging behavior (< 50 moves).

@@ -387,7 +387,7 @@ static const char styluses[] =
  */
 
 /* return 1 if action took 1 (or more) moves, 0 if error or aborted */
-int doengrave(void)
+int doengrave(struct obj *otmp)
 {
 	boolean dengr = FALSE;	/* TRUE if we wipe out the current engraving */
 	boolean doblind = FALSE;/* TRUE if engraving blinds the player */
@@ -409,7 +409,6 @@ int doengrave(void)
 	int maxelen;		/* Max allowable length of engraving text */
 	struct engr *oep = engr_at(level, u.ux,u.uy);
 				/* The current engraving */
-	struct obj *otmp;	/* Object selected with which to engrave */
 	char *writer;
 
 	multi = 0;		/* moves consumed */
@@ -457,7 +456,10 @@ int doengrave(void)
 	 * Edited by GAN 10/20/86 so as not to change weapon wielded.
 	 */
 
-	otmp = getobj(styluses, "write with");
+	if (otmp && !validate_object(otmp, styluses, "write with"))
+		return 0;
+	else if (!otmp)
+		otmp = getobj(styluses, "write with");
 	if (!otmp) return 0;		/* otmp == zeroobj if fingers */
 
 	if (otmp == &zeroobj) writer = makeplural(body_part(FINGER));

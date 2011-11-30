@@ -12,8 +12,8 @@ extern void stop_occupation(void);
 
 /* ### apply.c ### */
 
-extern int doapply(void);
-extern int dorub(void);
+extern int doapply(struct obj *obj);
+extern int dorub(struct obj *obj);
 extern int dojump(void);
 extern int jump(int);
 extern int number_leashed(void);
@@ -59,7 +59,7 @@ extern void discover_artifact(xchar);
 extern boolean undiscovered_artifact(xchar);
 extern int disp_artifact_discoveries(struct menulist *);
 extern boolean artifact_hit(struct monst *,struct monst *,struct obj *,int *,int);
-extern int doinvoke(void);
+extern int doinvoke(struct obj *obj);
 extern void arti_speak(struct obj *);
 extern boolean artifact_light(struct obj *);
 extern boolean artifact_has_invprop(struct obj *, uchar);
@@ -289,12 +289,12 @@ extern void Ring_off(struct obj *);
 extern void Ring_gone(struct obj *);
 extern void Blindf_on(struct obj *);
 extern void Blindf_off(struct obj *);
-extern int dotakeoff(void);
-extern int doremring(void);
+extern int dotakeoff(struct obj *otmp);
+extern int doremring(struct obj *otmp);
 extern int cursed(struct obj *);
 extern int canwearobj(struct obj *, long *, boolean);
-extern int dowear(void);
-extern int doputon(void);
+extern int dowear(struct obj *otmp);
+extern int doputon(struct obj *otmp);
 extern void find_ac(void);
 extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
@@ -340,7 +340,7 @@ extern void impact_drop(struct obj *,xchar,xchar,xchar);
 
 /* ### dothrow.c ### */
 
-extern int dothrow(void);
+extern int dothrow(struct obj *obj);
 extern int dofire(void);
 extern void hitfloor(struct obj *);
 extern void hurtle(int,int,int,boolean);
@@ -414,7 +414,7 @@ extern boolean is_edible(struct obj *);
 extern void init_uhunger(void);
 extern int Hear_again(void);
 extern void reset_eat(void);
-extern int doeat(void);
+extern int doeat(struct obj *otmp);
 extern void gethungry(void);
 extern void morehungry(int);
 extern boolean is_fainted(void);
@@ -457,7 +457,7 @@ extern void read_engr_at(int,int);
 extern void make_engr_at(struct level *lev, int,int,const char *,long,xchar);
 extern void del_engr_at(struct level *lev, int,int);
 extern int freehand(void);
-extern int doengrave(void);
+extern int doengrave(struct obj *otmp);
 extern void save_engravings(int fd, struct level *lev, int mode);
 extern void rest_engravings(struct memfile *mf, struct level *lev);
 extern void del_engr(struct engr *);
@@ -606,7 +606,8 @@ extern boolean wearing_armor(void);
 extern boolean is_worn(struct obj *);
 extern struct obj *gold_at(struct level *lev, int x, int y);
 extern struct obj *mkgoldobj(long);
-extern struct obj *getobj(const char *,const char *);
+extern struct obj *getobj(const char *let, const char *word);
+extern boolean validate_object(struct obj *obj, const char *lets, const char *word);
 extern void fully_identify_obj(struct obj *);
 extern void identify_pack(int);
 extern void prinv(const char *,struct obj *,long);
@@ -1161,7 +1162,7 @@ extern void make_blinded(long,boolean);
 extern void make_sick(long, const char *, boolean,int);
 extern void make_vomiting(long,boolean);
 extern boolean make_hallucinated(long,boolean,long);
-extern int dodrink(void);
+extern int dodrink(struct obj *potion);
 extern int dopotion(struct obj *);
 extern int peffects(struct obj *);
 extern void healup(int,int,boolean,boolean);
@@ -1169,14 +1170,14 @@ extern void strange_feeling(struct obj *,const char *);
 extern void potionhit(struct monst *,struct obj *,boolean);
 extern void potionbreathe(struct obj *);
 extern boolean get_wet(struct obj *);
-extern int dodip(void);
+extern int dodip(struct obj *potion);
 extern void djinni_from_bottle(struct obj *);
 extern struct monst *split_mon(struct monst *,struct monst *);
 extern const char *bottlename(void);
 
 /* ### pray.c ### */
 
-extern int dosacrifice(void);
+extern int dosacrifice(struct obj *otmp);
 extern boolean can_pray(boolean);
 extern int dopray(void);
 extern const char *u_gname(void);
@@ -1233,7 +1234,7 @@ extern const struct permonst *qt_montype(void);
 
 /* ### read.c ### */
 
-extern int doread(void);
+extern int doread(struct obj *scroll);
 extern boolean is_chargeable(struct obj *);
 extern void recharge(struct obj *,int);
 extern void forget_objects(int);
@@ -1631,9 +1632,9 @@ extern void you_unwere(boolean);
 extern void setuwep(struct obj *);
 extern void setuqwep(struct obj *);
 extern void setuswapwep(struct obj *);
-extern int dowield(void);
+extern int dowield(struct obj *weapon);
 extern int doswapweapon(void);
-extern int dowieldquiver(void);
+extern int dowieldquiver(struct obj *newquiver);
 extern boolean wield_tool(struct obj *,const char *);
 extern int can_twoweapon(void);
 extern void drop_uswapwep(void);
@@ -1735,7 +1736,7 @@ extern int bhito(struct obj *,struct obj *);
 extern int bhitpile(struct obj *,int (*)(struct obj*,struct obj*),int,int);
 extern int zappable(struct obj *);
 extern void zapnodir(struct obj *);
-extern int dozap(void);
+extern int dozap(struct obj *obj);
 extern int zapyourself(struct obj *,boolean);
 extern boolean cancel_monst(struct monst *,struct obj *,
 			       boolean,boolean,boolean);
