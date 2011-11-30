@@ -101,7 +101,7 @@ const struct cmd_desc cmdlist[] = {
 	{"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
 	{"name", "name a monster, item or type of object", M('n'), 'C', TRUE, do_naming, CMD_ARG_NONE | CMD_EXT},
 	{"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
-	{"open", "open a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE},
+	{"open", "open a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE | CMD_ARG_DIR},
 	{"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE},
 	{"pickup", "take items from the floor", ',', 0, FALSE, dopickup, CMD_ARG_NONE},
 	{"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_ARG_NONE | CMD_EXT},

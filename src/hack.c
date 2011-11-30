@@ -1168,6 +1168,16 @@ void domove(schar dx, schar dy, schar dz)
 		}
 		return;
 	}
+	
+	/* If moving into a door, open it. */
+	if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
+	    tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN) {
+	    if (!doopen(dx, dy, 0)) {
+		flags.move = 0;
+		nomul(0, NULL);
+	    }
+	    return;
+	}
 
 	if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE)) {
 	    flags.move = 0;

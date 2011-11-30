@@ -473,12 +473,13 @@ int doforce(void)
 }
 
 /* try to open a door */
-int doopen(void)
+int doopen(int dx, int dy, int dz)
 {
 	coord cc;
 	struct rm *door;
 	struct monst *mtmp;
-	schar dz;
+	boolean got_dir = FALSE;
+	schar unused;
 
 	if (nohands(youmonst.data)) {
 	    pline("You can't open anything -- you have no hands!");
@@ -489,8 +490,15 @@ int doopen(void)
 	    pline("You can't reach over the edge of the pit.");
 	    return 0;
 	}
+	
+	if (dx != -2 && dy != -2 && dz != -2) { /* -2 signals no direction given  */
+	    cc.x = u.ux + dx;
+	    cc.y = u.uy + dy;
+	    if (isok(cc.x, cc.y))
+		got_dir = TRUE;
+	}
 
-	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz))
+	if (!got_dir && !get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &unused))
 	    return 0;
 
 	if ((cc.x == u.ux) && (cc.y == u.uy))

@@ -672,7 +672,7 @@ extern int pick_lock(struct obj *);
 extern int doforce(void);
 extern boolean boxlock(struct obj *,struct obj *);
 extern boolean doorlock(struct obj *,int,int);
-extern int doopen(void);
+extern int doopen(int dx, int dy, int dz);
 extern int doclose(void);
 
 /* ### log.c ### */
