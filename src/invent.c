@@ -1249,7 +1249,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 
 	if (icount) {
 	    selected = malloc(icount * sizeof(struct nh_objresult));
-	    n = display_objects(items, icount, NULL,
+	    n = display_objects(items, icount, want_reply ? NULL : "Inventory:",
 				want_reply ? PICK_ONE : PICK_NONE, selected);
 	}
 	if (n > 0) {

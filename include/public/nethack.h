@@ -39,6 +39,7 @@ extern EXPORT enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_i
 
 /* cmd.c */
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int *count);
+extern EXPORT struct nh_cmd_desc *nh_get_object_commands(int *count, char invlet);
 
 /* drawing.c */
 extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);
