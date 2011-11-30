@@ -1100,7 +1100,7 @@ int dosacrifice(struct obj *otmp)
 	    pline("You can't sacrifice that!");
 	    return 0;
 	}
-	else
+	else if (!otmp)
 	    otmp = floorfood("sacrifice", 1);
 	if (!otmp) return 0;
     }

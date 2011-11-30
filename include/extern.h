@@ -219,7 +219,7 @@ extern void set_wall_state(struct level *lev);
 
 /* ### do.c ### */
 
-extern int dodrop(void);
+extern int dodrop(struct obj *obj);
 extern boolean boulder_hits_pool(struct obj *,int,int,boolean);
 extern boolean flooreffects(struct obj *,int,int,const char *);
 extern void doaltarobj(struct obj *);

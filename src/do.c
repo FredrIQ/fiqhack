@@ -19,12 +19,13 @@ static const char drop_types[] =
 	{ ALLOW_COUNT, ALL_CLASSES, 0 };
 
 /* 'd' command: drop one inventory item */
-int dodrop(void)
+int dodrop(struct obj *obj)
 {
 	int result, i = (invent) ? 0 : (SIZE(drop_types) - 1);
 
 	if (*u.ushops) sellobj_state(SELL_DELIBERATE);
-	result = drop(getobj(&drop_types[i], "drop"));
+	if (!obj) obj = getobj(&drop_types[i], "drop");
+	result = drop(obj);
 	if (*u.ushops) sellobj_state(SELL_NORMAL);
 	reset_occupations();
 
