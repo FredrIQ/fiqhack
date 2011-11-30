@@ -975,6 +975,7 @@ int dopay(void)
 	struct monst *nxtm, *resident;
 	long ltmp, umoney;
 	int pass, tmp, sk = 0, seensk = 0;
+	char iprompt;
 	boolean paid = FALSE, stashed_gold = (hidden_gold() > 0L);
 
 	multi = 0;
@@ -1224,7 +1225,10 @@ proceed:
 
 	    /* this isn't quite right; it itemizes without asking if the
 	     * single item on the bill is partly used up and partly unpaid */
-	    itemize = (eshkp->billct > 1 ? yn("Itemized billing?") == 'y' : 1);
+	    iprompt = (eshkp->billct > 1 ? ynq("Itemized billing?") :'y');
+	    itemize = iprompt == 'y';
+	    if (iprompt == 'q')
+		goto thanks;
 
 	    for (pass = 0; pass <= 1; pass++) {
 		tmp = 0;
