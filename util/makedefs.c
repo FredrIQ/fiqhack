@@ -287,13 +287,7 @@ static void make_version(void)
 			| (1L <<  6)
 #endif
 		/* objects (10..14) */
-#ifdef GOLDOBJ
-			| (1L << 12)
-#endif
 		/* flag bits and/or other global variables (15..26) */
-#ifdef INSURANCE
-			| (1L << 18)
-#endif
 			);
 	/*
 	 * Value used for object & monster sanity check.
@@ -406,46 +400,17 @@ static void build_savebones_compat_string(void)
 }
 
 static const char *build_opts[] = {
-#ifdef ANSI_DEFAULT
-		"ANSI default terminal",
-#endif
 #ifdef AUTOPICKUP_EXCEPTIONS
 		"autopickup_exceptions",
-#endif
-#ifdef COM_COMPL
-		"command line completion",
 #endif
 #ifdef DLB
 		"data librarian",
 #endif
-#ifdef GOLDOBJ
-		"gold object in inventories",
-#endif
-#ifdef INSURANCE
-		"insurance files for recovering from crashes",
-#endif
 #ifdef KOPS
 		"Keystone Kops",
 #endif
-#ifdef HOLD_LOCKFILE_OPEN
-		"exclusive lock on level 0 file",
-#endif
 #ifdef LOGFILE
 		"log file",
-#endif
-#ifdef NEWS
-		"news file",
-#endif
-#ifdef NO_TERMS
-# ifdef SCREEN_VGA
-		"screen control via VGA graphics",
-# endif
-#  ifdef WIN32CON
-		"screen control via WIN32 console I/O",
-#  endif
-#endif
-#ifdef WALLIFIED_MAZE
-		"walled mazes",
 #endif
 		save_bones_compat_buf,
 		"basic NetHack features"
