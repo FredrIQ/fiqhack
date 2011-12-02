@@ -125,6 +125,7 @@ void hooked_curses_getlin(const char *query, char *buf,
 		done = TRUE;
 		break;
 		
+	    case KEY_BACKSPACE: /* different terminals send different codes... */
 	    case KEY_BACKDEL:
 		if (gldat->pos == 0) continue;
 		gldat->pos--;

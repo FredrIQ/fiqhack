@@ -155,9 +155,6 @@ static int get_cmdkey(void)
 	
 	curs_set(1);
 	key = nh_wgetch(stdscr);
-	/* reverse the translation performed by ncurses in number_pad mode */
-	if (key == KEY_BACKSPACE) /* all other CTRL combinations apper to be OK */
-	    key = Ctrl('h');
 	curs_set(0);
 	
 	if (key != ERR)
