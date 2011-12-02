@@ -101,6 +101,7 @@
 #define AUTOPICKUP_MAX_RULES 1000 /* this is intended as a rough sanity check to
                                    * detect pointers to autopickup rule structs
                                    * that instead point at random memory */
+#define OCLASS_ANY 'a' /* for autopickup */
 
 enum nh_direction {
     DIR_NONE = -1,

@@ -294,7 +294,7 @@ static boolean autopickup_match(struct obj *obj)
 	r = &iflags.ap_rules->rules[0];
 	for (i = 0; i < iflags.ap_rules->num_rules; i++, r++) {
 	    if ((!strlen(r->pattern) || pmatch(r->pattern, objdesc)) &&
-		(r->oclass == -1 || r->oclass == obj->oclass) &&
+		(r->oclass == OCLASS_ANY || r->oclass == def_oc_syms[(int)obj->oclass]) &&
 		(r->buc == B_DONT_CARE || r->buc == objbuc))
 		return r->action == AP_GRAB;
 	}

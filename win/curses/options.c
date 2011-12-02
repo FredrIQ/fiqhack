@@ -497,7 +497,7 @@ static int get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
     
     for (i = 0; i < desc->numclasses; i++)
 	add_menu_item(items, size, icount, desc->classes[i].id,
-		      desc->classes[i].caption, 0, 0);
+		      desc->classes[i].caption, (char)desc->classes[i].id, 0);
 	
     n = curses_display_menu(items, icount, "Object class match:", PICK_ONE, selected);
     free(items);
@@ -660,7 +660,7 @@ static void show_autopickup_menu(struct nh_option_desc *opt)
 		sprintf(buf + strlen(buf), "name matches \"%s\"", r->pattern);
 	    }
 	    
-	    if (r->oclass != -1) {
+	    if (r->oclass != OCLASS_ANY) {
 		char *classname = NULL;
 		for (j = 0; j < opt->a.numclasses && !classname; j++)
 		    if (opt->a.classes[j].id == r->oclass)

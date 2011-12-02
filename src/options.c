@@ -80,22 +80,22 @@ static const struct nh_listitem pettype_list[] = {
 static const struct nh_enum_option pettype_spec = {pettype_list, listlen(pettype_list)};
 
 static const struct nh_listitem ap_object_class_list[] = {
-	{-1,		"any"},
-	{WEAPON_CLASS,	"weapons"},
-	{ARMOR_CLASS,	"armor"},
-	{RING_CLASS,	"rings"},
-	{AMULET_CLASS,	"amulets"},
-	{TOOL_CLASS,	"tools"},
-	{FOOD_CLASS,	"food"},
-	{POTION_CLASS,	"potions"},
-	{SCROLL_CLASS,	"scrolls"},
-	{SPBOOK_CLASS,	"spellbooks"},
-	{WAND_CLASS,	"wands"},
-	{COIN_CLASS,	"coins"},
-	{GEM_CLASS,	"gems"},
-	{ROCK_CLASS,	"large stones"},
-	{BALL_CLASS,	"iron balls"},
-	{CHAIN_CLASS,	"chains"}
+	{'a',		"any"},
+	{GOLD_SYM,	"gold"},
+	{AMULET_SYM,	"amulets"},
+	{WEAPON_SYM,	"weapons"},
+	{ARMOR_SYM,	"armor"},
+	{RING_SYM,	"rings"},
+	{TOOL_SYM,	"tools"},
+	{FOOD_SYM,	"food"},
+	{POTION_SYM,	"potions"},
+	{SCROLL_SYM,	"scrolls"},
+	{SPBOOK_SYM,	"spellbooks"},
+	{WAND_SYM,	"wands"},
+	{GEM_SYM,	"gems"},
+	{ROCK_SYM,	"large stones"},
+	{BALL_SYM,	"iron balls"},
+	{CHAIN_SYM,	"chains"}
 };
 static const struct nh_autopick_option autopickup_spec =
 			{ap_object_class_list, listlen(ap_object_class_list)};
