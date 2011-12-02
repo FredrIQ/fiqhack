@@ -59,17 +59,6 @@ boolean get_gamedir(enum game_dirs dirtype, char *buf)
 }
 
 
-static void query_birth_options(void)
-{
-    char resp = 0;
-
-    resp = curses_yn_function("Do you want to modify your birth options?", "yn", 'n');
-    
-    if (resp == 'y')
-	display_options(TRUE);
-}
-
-
 static int commandloop(void)
 {
     const char *cmd;
@@ -148,7 +137,6 @@ void rungame(void)
 	return;
     }
     
-    query_birth_options();
     if (!player_selection(&role, &race, &gend, &align, random_player))
 	return;
     
