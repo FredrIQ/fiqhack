@@ -1337,7 +1337,6 @@ void clear_display_buffer(void)
 
 void cls(void)
 {
-    win_pause(P_MESSAGE); /* required due to screwy tty display logic */
     iflags.botl = 1;		/* force update of botl window */
     win_clear_map();	/* clear physical screen */
 
