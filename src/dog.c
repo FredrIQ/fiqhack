@@ -343,7 +343,7 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 		 * probably because the level is full.
 		 * Dump the monster's cargo and leave the monster dead.
 		 */
-	    	struct obj *obj, *corpse;
+		struct obj *obj;
 		while ((obj = mtmp->minvent) != 0) {
 		    obj_extract_self(obj);
 		    obj_no_longer_held(obj);
@@ -357,7 +357,7 @@ void mon_arrive(struct monst *mtmp, boolean with_you)
 			get_obj_location(obj, &xlocale, &ylocale, 0);
 		    }
 		}
-		corpse = mkcorpstat(CORPSE, NULL, mtmp->data,
+		mkcorpstat(CORPSE, NULL, mtmp->data,
 				level, xlocale, ylocale, FALSE);
 		mongone(mtmp);
 	    }

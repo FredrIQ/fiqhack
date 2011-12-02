@@ -40,10 +40,10 @@ static long *oracle_loc = 0;
 
 static void init_rumors(dlb *fp)
 {
-	char line[BUFSZ], *d;
+	char line[BUFSZ];
 
-	d = dlb_fgets(line, sizeof line, fp); /* skip "don't edit" comment */
-	d = dlb_fgets(line, sizeof line, fp);
+	dlb_fgets(line, sizeof line, fp); /* skip "don't edit" comment */
+	dlb_fgets(line, sizeof line, fp);
 	if (sscanf(line, "%6lx\n", &true_rumor_size) == 1 &&
 	    true_rumor_size > 0L) {
 	    dlb_fseek(fp, 0L, SEEK_CUR);
@@ -68,7 +68,7 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 {
 	dlb	*rumors;
 	long tidbit, beginning;
-	char	*endp, line[BUFSZ], xbuf[BUFSZ], *d;
+	char	*endp, line[BUFSZ], xbuf[BUFSZ];
 
 	rumor_buf[0] = '\0';
 	if (true_rumor_size < 0L)	/* we couldn't open RUMORFILE */
@@ -109,12 +109,12 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 			return strcpy(rumor_buf, "Oops...");
 		}
 		dlb_fseek(rumors, beginning + tidbit, SEEK_SET);
-		d = dlb_fgets(line, sizeof line, rumors);
+		dlb_fgets(line, sizeof line, rumors);
 		if (!dlb_fgets(line, sizeof line, rumors) ||
 		    (adjtruth > 0 && dlb_ftell(rumors) > true_rumor_end)) {
 			/* reached end of rumors -- go back to beginning */
 			dlb_fseek(rumors, beginning, SEEK_SET);
-			d = dlb_fgets(line, sizeof line, rumors);
+			dlb_fgets(line, sizeof line, rumors);
 		}
 		if ((endp = strchr(line, '\n')) != 0) *endp = 0;
 		strcat(rumor_buf, xcrypt(line, xbuf));
@@ -177,17 +177,17 @@ void outrumor(int truth, /* 1=true, -1=false, 0=either */
 static void init_oracles(dlb *fp)
 {
 	int i;
-	char line[BUFSZ], *d;
+	char line[BUFSZ];
 	int cnt = 0;
 
 	/* this assumes we're only called once */
-	d = dlb_fgets(line, sizeof line, fp); /* skip "don't edit" comment*/
-	d = dlb_fgets(line, sizeof line, fp);
+	dlb_fgets(line, sizeof line, fp); /* skip "don't edit" comment*/
+	dlb_fgets(line, sizeof line, fp);
 	if (sscanf(line, "%5d\n", &cnt) == 1 && cnt > 0) {
 	    oracle_cnt = (unsigned) cnt;
 	    oracle_loc = malloc((unsigned)cnt * sizeof (long));
 	    for (i = 0; i < cnt; i++) {
-		d = dlb_fgets(line, sizeof line, fp);
+		dlb_fgets(line, sizeof line, fp);
 		sscanf(line, "%5lx\n", &oracle_loc[i]);
 	    }
 	}

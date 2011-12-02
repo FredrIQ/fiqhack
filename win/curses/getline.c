@@ -42,7 +42,7 @@ static void buf_delete(char *buf, int pos)
 void draw_getline(struct gamewin *gw)
 {
     struct win_getline *glw = (struct win_getline *)gw->extra;
-    int width, height, i, offset = 0;
+    int width, i, offset = 0;
     int len = strlen(glw->buf);
     
     wclear(gw->win);
@@ -50,7 +50,7 @@ void draw_getline(struct gamewin *gw)
     box(gw->win, 0 , 0);
     wattroff(gw->win, FRAME_ATTRS);
     
-    getmaxyx(gw->win, height, width);
+    width = getmaxx(gw->win);
     mvwaddnstr(gw->win, 1, 2, glw->query, width - 4);
     if (glw->pos > width - 4)
 	offset = glw->pos - (width - 4);

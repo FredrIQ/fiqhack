@@ -21,7 +21,7 @@ set (NH_CURSES_SRC
 include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
-add_definitions (-Wall -fvisibility=hidden -g3 -DNETHACKDIR="${DATADIR}" -Wno-unused-but-set-variable)
+add_definitions (-Wall -fvisibility=hidden -g3 -DNETHACKDIR="${DATADIR}")
 link_directories (${NetHack_BINARY_DIR}/src)
 add_executable (nethack_curses ${NH_CURSES_SRC} )
 set_target_properties(nethack_curses PROPERTIES OUTPUT_NAME nethack-curses )

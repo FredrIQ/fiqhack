@@ -437,7 +437,7 @@ static void replay_read_commandlist(void)
 
 void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
 {
-    char *header, *gamename, *verstr;
+    char *header, *verstr;
     int ver1, ver2, ver3, n;
     
     header = next_log_token();
@@ -446,7 +446,7 @@ void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
     
     next_log_token(); /* marker */
     next_log_token(); /* end pos, see replay_begin() */
-    gamename = next_log_token();
+    next_log_token(); /* game name */
     verstr = next_log_token();
     
     n = sscanf(verstr, "%d.%d.%d", &ver1, &ver2, &ver3);

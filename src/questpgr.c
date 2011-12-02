@@ -335,10 +335,9 @@ static void convert_line(void)
 static void deliver_by_pline(struct qtmsg *qt_msg)
 {
 	long size;
-	char *d;
 
 	for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
-	    d = dlb_fgets(in_line, 80, msg_file);
+	    dlb_fgets(in_line, 80, msg_file);
 	    convert_line();
 	    pline(out_line);
 	}
@@ -348,12 +347,11 @@ static void deliver_by_pline(struct qtmsg *qt_msg)
 static void deliver_by_window(struct qtmsg *qt_msg)
 {
 	long size;
-	char *d;
 	struct menulist menu;
 	init_menulist(&menu);
 
 	for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
-	    d = dlb_fgets(in_line, 80, msg_file);
+	    dlb_fgets(in_line, 80, msg_file);
 	    convert_line();
 	    add_menutext(&menu, out_line);
 	}

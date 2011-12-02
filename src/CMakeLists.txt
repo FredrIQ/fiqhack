@@ -35,7 +35,7 @@ include_directories (
     ${NetHack_BINARY_DIR}/include )
 
 #add_definitions ()
-add_definitions (-Wall -fvisibility=hidden -g3 -Wno-unused-but-set-variable -Wold-style-definition -Wstrict-prototypes -Wold-style-declaration -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wshadow -Wunsafe-loop-optimizations)
+add_definitions (-Wall -fvisibility=hidden -g3 -Wold-style-definition -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wshadow)
 add_library(nethack SHARED ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
 
 add_dependencies (nethack makedefs_headers)
