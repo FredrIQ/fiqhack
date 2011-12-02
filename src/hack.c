@@ -691,6 +691,7 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 		static const int ordered[] = { 0, 2, 4, 6, 1, 3, 5, 7 };
 		/* no diagonal movement for grid bugs */
 		int dirmax = u.umonnum == PM_GRID_BUG ? 4 : 8;
+		boolean alreadyrepeated = FALSE;
 
 		for (dir = 0; dir < dirmax; ++dir) {
 		    int nx = x+xdir[ordered[dir]];
@@ -703,10 +704,13 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 			/* closed doors and boulders usually
 			 * cause a delay, so prefer another path */
 			if (travel[x][y] > radius-3) {
-			    travelstepx[1-set][nn] = x;
-			    travelstepy[1-set][nn] = y;
-			    /* don't change travel matrix! */
-			    nn++;
+			    if (!alreadyrepeated) {
+				travelstepx[1-set][nn] = x;
+				travelstepy[1-set][nn] = y;
+				/* don't change travel matrix! */
+				nn++;
+				alreadyrepeated = TRUE;
+			    }
 			    continue;
 			}
 		    }
