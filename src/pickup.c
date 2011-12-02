@@ -354,7 +354,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	if (role == MI_NORMAL && obj) {
 	    it->count = obj->quan;
 	    it->accel = use_invlet ? obj->invlet : 0;
-	    it->group_accel = def_oc_syms[(int)objects[obj->otyp].oc_class];
+	    it->group_accel = def_oc_syms[(int)obj->oclass];
 	    it->otype = obfuscate_object(obj->otyp + 1);
 	    it->oclass = obj->oclass;
 	    it->worn = !!obj->owornmask;
@@ -373,7 +373,8 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    else
 		it->buc = B_UNCURSED;
 	} else {
-	    it->accel = it->group_accel = 0;
+	    it->accel = 0;
+	    it->group_accel = obj ? def_oc_syms[(int)obj->oclass] : 0;
 	    it->otype = it->oclass = -1;
 	}
 	    
@@ -497,7 +498,7 @@ int query_objlist(const char *qstr,	/* query string */
 	    /* if sorting, print type name */
 	    if ((qflags & INVORDER_SORT) && prev_oclass != curr->oclass)
 		add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
-		            let_to_name(curr->oclass, FALSE), NULL, FALSE);
+		            let_to_name(curr->oclass, FALSE), curr, FALSE);
 	    /* add the object to the list */
 	    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, i+1,
 	                doname(curr), curr, (qflags & USE_INVLET) != 0);

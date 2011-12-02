@@ -1177,7 +1177,7 @@ nextclass:
 		if (!flags.sortpack || otmp->oclass == *invlet) {
 		    if (flags.sortpack && !classcount) {
 			add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
-				    let_to_name(*invlet, FALSE), NULL, FALSE);
+				    let_to_name(*invlet, FALSE), otmp, FALSE);
 			classcount++;
 		    }
 		    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, ilet,

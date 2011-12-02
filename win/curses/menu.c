@@ -439,8 +439,9 @@ static void layout_objmenu(struct gamewin *gw)
 	    sprintf(weightstr, " {%d}", mdat->items[i].weight);
 	    itemwidth += strlen(weightstr);
 	}
-	if (mdat->items[i].role == MI_NORMAL && mdat->items[i].accel)
-	    itemwidth += 4; /* "a - " */
+	if ((mdat->items[i].role == MI_NORMAL && mdat->items[i].accel) ||
+	    (mdat->items[i].role == MI_HEADING && mdat->items[i].group_accel))
+	    itemwidth += 4; /* "a - " or " ')'" */
 	maxwidth = max(maxwidth, itemwidth);
     }
     
@@ -477,6 +478,8 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 		txtattr = settings.menu_headings;
 	    wattron(win, txtattr);
 	    waddstr(win, items[i].caption);
+	    if (items[i].group_accel)
+		wprintw(win, " '%c'", items[i].group_accel);
 	    wattroff(win, txtattr);
 	    continue;
 	}	    
@@ -830,8 +833,11 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 		} else if (mdat->how == PICK_ANY) { /* maybe it's a group accel? */
 		    int grouphits = 0;
 		    for (i = 0; i < mdat->icount; i++) {
-			if (items[i].group_accel == key) {
-			    mdat->selected[i] = mdat->selcount;
+			if (items[i].group_accel == key && mdat->items[i].oclass != -1) {
+			    if (mdat->selected[i] == mdat->selcount)
+				mdat->selected[i] = 0;
+			    else
+				mdat->selected[i] = mdat->selcount;
 			    grouphits++;
 			}
 		    }
