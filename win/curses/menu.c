@@ -36,11 +36,11 @@ static int calc_menuwidth(int *colwidth, int *colpos, int maxcol)
 static void layout_menu(struct gamewin *gw, int x1, int y1, int x2, int y2)
 {
     struct win_menu *mdat = (struct win_menu*)gw->extra;
-    int i, col;
+    int i, col, w;
     int colwidth[MAXCOLS];
     int scrheight = y2 - y1;
     int scrwidth = x2 - x1;
-    int headerwidth = 0;
+    int singlewidth = 0;
     
     /* calc height */
     mdat->frameheight = 2;
@@ -62,7 +62,10 @@ static void layout_menu(struct gamewin *gw, int x1, int y1, int x2, int y2)
 	/* headings without tabs are not fitted into columns, but headers with
 	 * tabs are presumably column titles */
 	if (!strchr(mdat->items[i].caption, '\t')) {
-	    headerwidth = max(headerwidth, strlen(mdat->items[i].caption));
+	    w = strlen(mdat->items[i].caption);
+	    if (mdat->items[i].role == MI_NORMAL && mdat->items[i].id)
+		w += 4;
+	    singlewidth = max(singlewidth, w);
 	} else {
 	    col = calc_colwidths(mdat->items[i].caption, colwidth);
 	    mdat->maxcol = max(mdat->maxcol, col);
@@ -72,7 +75,7 @@ static void layout_menu(struct gamewin *gw, int x1, int y1, int x2, int y2)
 	colwidth[0] += 4; /* "a - " */
     
     mdat->innerwidth = max(calc_menuwidth(colwidth, mdat->colpos, mdat->maxcol),
-			   headerwidth);
+			   singlewidth);
     if (mdat->innerwidth > scrwidth - 4)/* make sure there is space for window borders */
 	mdat->innerwidth = scrwidth - 4;
     mdat->width = mdat->innerwidth + 4; /* border + space */
