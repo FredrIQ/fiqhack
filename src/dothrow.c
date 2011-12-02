@@ -284,7 +284,9 @@ int dofire(void)
 		if (!flags.autoquiver) {
 			/* Don't automatically fill the quiver */
 			pline("You have no ammunition readied!");
-			return dothrow(NULL);
+			dowieldquiver(NULL);
+			if (!uquiver)
+			    return dothrow(NULL);
 		}
 		autoquiver();
 		if (!uquiver) {
