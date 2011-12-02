@@ -622,7 +622,7 @@ out:
 static void show_autopickup_menu(struct nh_option_desc *opt)
 {
     struct nh_menuitem *items;
-    int i, j, n, icount, size, menusize, nr, parts, selected[1], id;
+    int i, j, n, icount, size, menusize, parts, selected[1], id;
     struct nh_autopickup_rule *r;
     char buf[BUFSZ];
     struct nh_autopickup_rule *rule;
@@ -639,19 +639,17 @@ static void show_autopickup_menu(struct nh_option_desc *opt)
 	memcpy(value.ar->rules, opt->value.ar->rules, size);
     }
     
-    nr = opt->value.ar ? opt->value.ar->num_rules : 0;
-    menusize = nr + 4;
+    menusize = value.ar->num_rules + 4;
     items = malloc(sizeof(struct nh_menuitem) * menusize);
     
     do {
 	icount = 0;
 	
-	if (nr)
-	    add_menu_txt(items, menusize, icount, "Pos\tRule\tAction", MI_HEADING);
+	add_menu_txt(items, menusize, icount, "Pos\tRule\tAction", MI_HEADING);
 	
 	/* list the rules in human-readable form */
-	for (i = 0; i < nr; i++) {
-	    r = &opt->value.ar->rules[i];
+	for (i = 0; i < value.ar->num_rules; i++) {
+	    r = &value.ar->rules[i];
 	    parts = 0;
 	    sprintf(buf, "%2d.\tIF ", i+1);
 	    
@@ -718,12 +716,10 @@ static void show_autopickup_menu(struct nh_option_desc *opt)
 	    id--;
 	
 	edit_ap_rule(&opt->a, value.ar, id);
-	nh_set_option(opt->name, value, FALSE);
-	
-	/* number of rules might have changed */
-	nr = opt->value.ar ? opt->value.ar->num_rules : 0;
-
     } while (n > 0);
+    
+    nh_set_option(opt->name, value, FALSE);
+    
     free(value.ar->rules);
     free(value.ar);
     free(items);
