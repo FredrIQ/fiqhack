@@ -61,8 +61,7 @@ static void layout_menu(struct gamewin *gw, int x1, int y1, int x2, int y2)
     for (i = 0; i < mdat->icount; i++) {
 	/* headings without tabs are not fitted into columns, but headers with
 	 * tabs are presumably column titles */
-	if (mdat->items[i].role == MI_HEADING &&
-	    !strchr(mdat->items[i].caption, '\t')) {
+	if (!strchr(mdat->items[i].caption, '\t')) {
 	    headerwidth = max(headerwidth, strlen(mdat->items[i].caption));
 	} else {
 	    col = calc_colwidths(mdat->items[i].caption, colwidth);
@@ -349,16 +348,14 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 		
 	    /* try to find an item for this key and, if one is found, select it */
 	    default:
-		if ((key >= 'A' && key <= 'Z') || (key >= 'a' && key <= 'z')) {
-		    idx = find_accel(key, mdat);
+		idx = find_accel(key, mdat);
+		
+		if (idx != -1 && /* valid accelerator */
+		    (!changefn || changefn(mdat, idx))) {
+		    mdat->selected[idx] = !mdat->selected[idx];
 		    
-		    if (idx != -1 && /* valid accelerator */
-			(!changefn || changefn(mdat, idx))) {
-			mdat->selected[idx] = !mdat->selected[idx];
-			
-			if (mdat->how == PICK_ONE)
-			    done = TRUE;
-		    }
+		    if (mdat->how == PICK_ONE)
+			done = TRUE;
 		}
 		break;
 	}
