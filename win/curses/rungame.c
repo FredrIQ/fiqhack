@@ -152,6 +152,11 @@ void rungame(void)
     if (!player_selection(&role, &race, &gend, &align, random_player))
 	return;
     
+    /* The player name is set to "wizard" (again) in nh_start_game, so setting
+     * it here just prevents wizmode player from being asked for a name. */
+    if (ui_flags.playmode == MODE_WIZARD)
+	strcpy(settings.plname, "wizard");
+    
     while (!settings.plname[0])
 	curses_getline("what is your name?", settings.plname);
     if (settings.plname[0] == '\033') /* canceled */
