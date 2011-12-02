@@ -634,7 +634,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
     boolean game_inited = (wiz1_level.dlevel != 0);
     struct you sg_you;
     struct flag sg_flags;
-    struct permonst sg_youmonst;
+    struct monst sg_youmonst;
     long sg_moves;
     
     lseek(fd, 0, SEEK_SET);
