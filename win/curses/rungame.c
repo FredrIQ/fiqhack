@@ -47,8 +47,8 @@ boolean get_gamedir(enum game_dirs dirtype, char *buf)
 	strcpy(dirbuf, buf);
 	basedir = dirname(dirbuf);
 	
-	mkdir(dirbuf, 0755); /* no need to check the return value: if it doesn't work, we're screwed */
-	if (mkdir(dirbuf, 0755) == -1) {
+	mkdir(basedir, 0755); /* no need to check the return value: if it doesn't work, we're screwed */
+	if (mkdir(buf, 0755) == -1) {
 	    umask(mask);
 	    return FALSE;
 	}
