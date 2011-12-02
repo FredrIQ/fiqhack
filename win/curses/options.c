@@ -706,7 +706,7 @@ static void show_autopickup_menu(struct nh_option_desc *opt)
 	    
 	    rule = &value.ar->rules[id];
 	    rule->pattern[0] = '\0';
-	    rule->oclass = -1;
+	    rule->oclass = OCLASS_ANY;
 	    rule->buc = B_DONT_CARE;
 	    rule->action = AP_GRAB;
 	} else if (id == -2) {
