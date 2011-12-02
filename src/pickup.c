@@ -272,9 +272,13 @@ static boolean autopickup_match(struct obj *obj)
 {
 	int i;
 	struct nh_autopickup_rule *r;
-	char *objdesc = makesingular(doname(obj));
+	char *objdesc;
 	enum nh_bucstatus objbuc;
 	
+	if (!iflags.ap_rules)
+	    return FALSE;
+	
+	objdesc = makesingular(doname(obj));
 	if (obj->bknown) {
 	    if (obj->blessed)
 		objbuc = B_BLESSED;
