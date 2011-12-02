@@ -604,8 +604,10 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 		if (iflags.ap_rules) {
 		    free(iflags.ap_rules->rules);
 		    free(iflags.ap_rules);
+		    iflags.ap_rules = NULL;
 		}
-		iflags.ap_rules = copy_autopickup_rules(option->value.ar);
+		if (program_state.game_running)
+		    iflags.ap_rules = copy_autopickup_rules(option->value.ar);
 	}
 	/* birth options */
 	else if (!strcmp("align", option->name)) {
@@ -674,7 +676,7 @@ struct nh_option_desc *nh_get_options(enum nh_option_list list)
 const char *nh_get_option_string(const struct nh_option_desc *option)
 {
     char valbuf[10], *outstr;
-    char *valstr;
+    char *valstr = NULL;
     int i;
     boolean freestr = FALSE;
     
@@ -706,10 +708,13 @@ const char *nh_get_option_string(const struct nh_option_desc *option)
 	    freestr = TRUE;
 	    valstr = autopickup_to_string(option->value.ar);
 	    break;
+	    
+	default: /* custom option type defined by the client? */
+	    return NULL;
     }
     
     /* copy the string to xmalloced memory so that we can forget about the pointer here */
-    outstr = xmalloc(strlen(valstr));
+    outstr = xmalloc(strlen(valstr) + 1);
     strcpy(outstr, valstr);
     if (freestr)
 	free(valstr);

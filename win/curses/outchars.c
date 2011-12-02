@@ -288,6 +288,7 @@ static void read_sym_line(char *line)
     bp = &line[1];
     while (*bp && *bp != '"') bp++; /* find the end of the symname */
     strncpy(symname, &line[1], bp - &line[1]);
+    symname[bp - &line[1]] = '\0';
     ovr.symname = symname;
     bp++; /* go past the " at the end of the symname */
     
