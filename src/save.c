@@ -403,9 +403,12 @@ void freedynamicdata(void)
 	free_waterlevel();
 	free_dungeons();
 
-#ifdef AUTOPICKUP_EXCEPTIONS
-	free_autopickup_exceptions();
-#endif
+	if (iflags.ap_rules) {
+	    free(iflags.ap_rules->rules);
+	    iflags.ap_rules->rules = NULL;
+	    free(iflags.ap_rules);
+	}
+	iflags.ap_rules = NULL;
 	free(artilist);
 	free(objects);
 	objects = NULL;

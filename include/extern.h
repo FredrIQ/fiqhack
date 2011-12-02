@@ -1078,11 +1078,8 @@ extern struct nh_option_desc *clone_optlist(const struct nh_option_desc *in);
 extern void free_optlist(struct nh_option_desc *opt);
 extern int dotogglepickup(void);
 extern int fruitadd(char *);
-#ifdef AUTOPICKUP_EXCEPTIONS
-#error FIXME
-extern int add_autopickup_exception(const char *);
-extern void free_autopickup_exceptions(void);
-#endif /* AUTOPICKUP_EXCEPTIONS */
+extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);
+extern struct nh_autopickup_rules *parse_autopickup_rules(const char *str);
 
 /* ### pager.c ### */
 
@@ -1115,7 +1112,6 @@ extern int use_container(struct obj *,int);
 extern int loot_mon(struct monst *,int *,boolean *);
 extern const char *safe_qbuf(const char *,unsigned,
 				const char *,const char *,const char *);
-extern boolean is_autopickup_exception(struct obj *, boolean);
 
 /* ### pline.c ### */
 

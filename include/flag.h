@@ -134,12 +134,8 @@ struct instance_flags {
 	boolean  showrace;	/* show hero glyph by race rather than by role */
 	int	 runmode;	/* update screen display during run moves */
 	boolean  disable_log;   /* don't append anything to the logfile */
-#ifdef AUTOPICKUP_EXCEPTIONS
-	struct autopickup_exception *autopickup_exceptions[2];
-#define AP_LEAVE 0
-#define AP_GRAB	 1
-#endif
 	boolean  botl;		/* redo status line */
+	struct nh_autopickup_rules *ap_rules;
 };
 
 extern struct flag flags;

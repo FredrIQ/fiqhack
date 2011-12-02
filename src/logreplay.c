@@ -475,7 +475,7 @@ void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
 
 static void replay_read_option(char *token)
 {
-    char *name, *otype, *valstr, optname[BUFSZ], valbuf[BUFSZ];
+    char *name, *otype, *valstr, *arbuf, optname[BUFSZ], valbuf[BUFSZ];
     union nh_optvalue value;
     
     name = token + 1;
@@ -503,6 +503,12 @@ static void replay_read_option(char *token)
 	    break;
 	case 'b':
 	    value.b = atoi(valstr);
+	    break;
+	case 'a':
+	    arbuf = malloc(strlen(valstr));
+	    base64_decode(valstr, arbuf);
+	    value.ar = parse_autopickup_rules(arbuf);
+	    free(arbuf);
 	    break;
 	    
 	default:

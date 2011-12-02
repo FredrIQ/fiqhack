@@ -31,10 +31,11 @@ enum extra_opttypes {
 };
 
 static void read_ui_config(void);
+static void show_autopickup_menu(struct nh_option_desc *opt);
 
 /*----------------------------------------------------------------------------*/
 
-#define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
+#define listlen(list) (sizeof(list)/sizeof(list[0]))
 
 static struct nh_listitem menu_headings_list[] = {
     {A_NORMAL, "none"},
@@ -60,6 +61,8 @@ static struct nh_listitem optstyle_list[] = {
 };
 static struct nh_enum_option optstyle_spec = {optstyle_list, listlen(optstyle_list)};
 
+
+static const char *const bucnames[] = {"unknown", "blessed", "uncursed", "cursed", "all"};
 
 
 #define VTRUE (void*)TRUE
@@ -205,47 +208,28 @@ void init_options(void)
 }
 
 
-static const char* get_option_string(struct nh_option_desc *option, char *valbuf)
+static const char* get_display_string(struct nh_option_desc *option)
 {
-    const char *valstr;
-    int i;
-    
     switch ((int)option->type) {
+	default:
 	case OPTTYPE_BOOL:
-	    valstr = option->value.b ? "true" : "false";
-	    break;
-	    
 	case OPTTYPE_ENUM:
-	    valstr = "(invalid)";
-	    for (i = 0; i < option->e.numchoices; i++)
-		if (option->value.e == option->e.choices[i].id)
-		    valstr = option->e.choices[i].caption;
-	    break;
-	    
 	case OPTTYPE_INT:
-	    sprintf(valbuf, "%d", option->value.i);
-	    valstr = valbuf;
-	    break;
-	    
 	case OPTTYPE_STRING:
-	    if (!option->value.s)
-		valstr = "";
-	    else
-		valstr = option->value.s;
-	    break;
+	    return nh_get_option_string(option);
 	    
+	case OPTTYPE_AUTOPICKUP_RULES:
 	case OPTTYPE_KEYMAP:
-	    valstr = "submenu";
+	    return "submenu";
     }
-    return valstr;
 }
 
 
 static void print_option_string(struct nh_option_desc *option, char *buf)
 {
-    char valbuf[8], fmt[16];
+    char fmt[16];
     const char *opttxt;
-    const char *valstr = get_option_string(option, valbuf);
+    const char *valstr = get_display_string(option);
     
     switch (settings.optstyle) {
 	case OPTSTYLE_DESC:
@@ -375,6 +359,10 @@ static boolean get_option_value(struct win_menu *mdat, int idx)
 		return FALSE;
 	    break;
 	    
+	case OPTTYPE_AUTOPICKUP_RULES:
+	    show_autopickup_menu(option);
+	    return FALSE;
+	    
 	case OPTTYPE_KEYMAP:
 	    show_keymap_menu(FALSE);
 	    return FALSE;
@@ -446,6 +434,302 @@ void display_options(boolean change_birth_opt)
     write_config();
 }
 
+/*----------------------------------------------------------------------------*/
+
+static void autopickup_rules_help(void)
+{
+    struct nh_menuitem items[] = {
+	{0, MI_TEXT, "The autopickup rules are only active if autopickup is on."},
+	{0, MI_TEXT, "If autopickup is on and you walk onto an item, the item is compared"},
+	{0, MI_TEXT, "to each rule in turn until a matching rule is found."},
+	{0, MI_TEXT, "If a match is found, the action specified in that rule is taken"},
+	{0, MI_TEXT, "and no other rules are considered."},
+	{0, MI_TEXT, ""},
+	{0, MI_TEXT, "Each rule may match any combination of object name, object type,"},
+	{0, MI_TEXT, "and object blessing (including unknown)."},
+	{0, MI_TEXT, "A rule that specifies none of these matches everything."},
+	{0, MI_TEXT, ""},
+	{0, MI_TEXT, "Suppose your rules look like this:"},
+	{0, MI_TEXT, " 1. IF name matches \"*lizard*\" AND type is \"food\": < GRAB"},
+	{0, MI_TEXT, " 2. IF name matches \"*corpse*\" AND type is \"food\":   LEAVE >"},
+	{0, MI_TEXT, " 3. IF type is \"food\":                             < GRAB"},
+	{0, MI_TEXT, ""},
+	{0, MI_TEXT, "A newt corpse will not match rule 1, but rule 2 applies, so"},
+	{0, MI_TEXT, "it won't be picked up and rule 3 won't be considered."},
+	{0, MI_TEXT, "(Strictly speaking, the \"type is food\" part of these rules is not"},
+	{0, MI_TEXT, "necessary; it's purpose here is to make the example more interesting.)"},
+	{0, MI_TEXT, ""},
+	{0, MI_TEXT, "A dagger will not match any of these rules and so it won't"},
+	{0, MI_TEXT, "be picked up either."},
+	{0, MI_TEXT, ""},
+	{0, MI_TEXT, "You may select any existing rule to edit it, change its position"},
+	{0, MI_TEXT, "in the list, or delete it."},
+    };
+    curses_display_menu(items, listlen(items), "Autopickup rules help:", PICK_NONE, NULL);
+}
+
+
+static enum nh_bucstatus get_autopickup_buc(enum nh_bucstatus cur)
+{
+    struct nh_menuitem items[] = {
+	{B_DONT_CARE + 1,MI_NORMAL, "all", 'a'},
+	{B_BLESSED + 1,	MI_NORMAL, "blessed", 'b'},
+	{B_CURSED + 1,	MI_NORMAL, "cursed", 'c'},
+	{B_UNCURSED + 1,MI_NORMAL, "uncursed", 'u'},
+	{B_UNKNOWN + 1,	MI_NORMAL, "unknown", 'U'}
+    };
+    int n, selected[1];
+    n = curses_display_menu(items, 5, "Beatitude match:", PICK_ONE, selected);
+    if (n <= 0)
+	return cur;
+    return selected[0]-1;
+}
+
+
+static int get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
+{
+    int i, n, size, icount, selected[1];
+    struct nh_menuitem *items;
+    
+    size = desc->numclasses;
+    items = malloc(sizeof(struct nh_menuitem) * size);
+    icount = 0;
+    
+    for (i = 0; i < desc->numclasses; i++)
+	add_menu_item(items, size, icount, desc->classes[i].id,
+		      desc->classes[i].caption, 0, 0);
+	
+    n = curses_display_menu(items, icount, "Object class match:", PICK_ONE, selected);
+    free(items);
+    if (n <= 0)
+	return cur;
+    return selected[0];
+}
+
+
+static void edit_ap_rule(struct nh_autopick_option *desc,
+			 struct nh_autopickup_rules *ar, int ruleno)
+{
+    struct nh_autopickup_rule *r = &ar->rules[ruleno];
+    struct nh_autopickup_rule tmprule;
+    struct nh_menuitem *items;
+    int i, icount, size = 7, n, selected[1], newpos;
+    char query[BUFSZ], buf[BUFSZ], *classname;
+    
+    items = malloc(sizeof(struct nh_menuitem) * size);
+    
+    do {
+	icount = 0;
+	sprintf(buf, "rule position:\t[%d]", ruleno + 1);
+	add_menu_item(items, size, icount, 1, buf, 0, 0);
+	
+	sprintf(buf, "name pattern:\t[%s]", r->pattern);
+	add_menu_item(items, size, icount, 2, buf, 0, 0);
+	
+	classname = NULL;
+	for (i = 0; i < desc->numclasses && !classname; i++)
+	    if (desc->classes[i].id == r->oclass)
+		classname = desc->classes[i].caption;
+	sprintf(buf, "object type:\t[%s]", classname);
+	add_menu_item(items, size, icount, 3, buf, 0, 0);
+	
+	sprintf(buf, "beatitude:\t[%s]", bucnames[r->buc]);
+	add_menu_item(items, size, icount, 4, buf, 0, 0);
+	
+	sprintf(buf, "action:\t[%s]", r->action == AP_GRAB ? "GRAB" : "LEAVE");
+	add_menu_item(items, size, icount, 5, buf, 0, 0);
+	add_menu_txt(items, size, icount, "", MI_TEXT);
+	add_menu_item(items, size, icount, 6, "delete this rule", 'x', 0);
+	
+	n = curses_display_menu(items, icount, "Edit rule:", PICK_ONE, selected);
+	if (n <= 0)
+	    break;
+	
+	switch (selected[0]) {
+	    /* move this rule */
+	    case 1:
+		sprintf(query, "New rule position: (1 - %d), currently: %d",
+			ar->num_rules, ruleno + 1);
+		buf[0] = '\0';
+		curses_getline(query, buf);
+		if (!*buf || *buf == '\033')
+		    break;
+		newpos = atoi(buf);
+		if (newpos <= 0 || newpos > ar->num_rules) {
+		    curses_msgwin("Invalid rule position.");
+		    break;
+		}
+		newpos--;
+		if (newpos == ruleno)
+		    break;
+		
+		tmprule = ar->rules[ruleno];
+		/* shift the rules around */
+		if (newpos > ruleno) {
+		    for (i = ruleno; i < newpos; i++)
+			ar->rules[i] = ar->rules[i+1];
+		} else {
+		    for (i = ruleno; i > newpos; i--)
+			ar->rules[i] = ar->rules[i-1];
+		}
+		ar->rules[newpos] = tmprule;
+		ruleno = newpos;
+		goto out;
+		
+	    /* edit the pattern */
+	    case 2:
+		sprintf(query, "New name pattern (empty matches everything):");
+		buf[0] = '\0';
+		curses_getline(query, buf);
+		if (*buf != '\033')
+		    strncpy(r->pattern, buf, sizeof(r->pattern));
+		r->pattern[sizeof(r->pattern)-1] = '\0';
+		break;
+	    
+	    /* edit object class match */
+	    case 3:
+		r->oclass = get_autopickup_oclass(desc, r->oclass);
+		break;
+	    
+	    /* edit beatitude match */
+	    case 4:
+		r->buc = get_autopickup_buc(r->buc);
+		break;
+		
+	    /* toggle action */
+	    case 5:
+		if (r->action == AP_GRAB)
+		    r->action = AP_LEAVE;
+		else
+		    r->action = AP_GRAB;
+		break;
+		
+	    /* delete */
+	    case 6:
+		for (i = ruleno; i < ar->num_rules - 1; i++)
+		    ar->rules[i] = ar->rules[i+1];
+		ar->num_rules--;
+		ar->rules = realloc(ar->rules, ar->num_rules * sizeof(struct nh_autopickup_rule));
+		goto out; /* break just beaks the switch .. doh */
+	}
+	
+    } while (n > 0);
+out:
+    free(items);
+}
+
+
+static void show_autopickup_menu(struct nh_option_desc *opt)
+{
+    struct nh_menuitem *items;
+    int i, j, n, icount, size, menusize, nr, parts, selected[1], id;
+    struct nh_autopickup_rule *r;
+    char buf[BUFSZ];
+    struct nh_autopickup_rule *rule;
+    union nh_optvalue value;
+    
+    /* clone autopickup rules */
+    value.ar = malloc(sizeof(struct nh_autopickup_rules));
+    value.ar->num_rules = 0;
+    value.ar->rules = NULL;
+    if (opt->value.ar){
+	value.ar->num_rules = opt->value.ar->num_rules;
+	size = value.ar->num_rules * sizeof(struct nh_autopickup_rule);
+	value.ar->rules = malloc(size);
+	memcpy(value.ar->rules, opt->value.ar->rules, size);
+    }
+    
+    nr = opt->value.ar ? opt->value.ar->num_rules : 0;
+    menusize = nr + 4;
+    items = malloc(sizeof(struct nh_menuitem) * menusize);
+    
+    do {
+	icount = 0;
+	
+	if (nr)
+	    add_menu_txt(items, menusize, icount, "Pos\tRule\tAction", MI_HEADING);
+	
+	/* list the rules in human-readable form */
+	for (i = 0; i < nr; i++) {
+	    r = &opt->value.ar->rules[i];
+	    parts = 0;
+	    sprintf(buf, "%2d.\tIF ", i+1);
+	    
+	    if (strlen(r->pattern)) {
+		parts++;
+		sprintf(buf + strlen(buf), "name matches \"%s\"", r->pattern);
+	    }
+	    
+	    if (r->oclass != -1) {
+		char *classname = NULL;
+		for (j = 0; j < opt->a.numclasses && !classname; j++)
+		    if (opt->a.classes[j].id == r->oclass)
+			classname = opt->a.classes[j].caption;
+		
+		if (parts++)
+		    strcat(buf, " AND ");
+		sprintf(buf + strlen(buf), "type is \"%s\"", classname);
+	    }
+	    
+	    if (r->buc != B_DONT_CARE) {
+		if (parts++)
+		    strcat(buf, " AND ");
+		sprintf(buf + strlen(buf), "beatitude is %s", bucnames[r->buc]);
+	    }
+	    
+	    if (!parts)
+		sprintf(buf, "%2d.\teverything", i+1);
+	    
+	    if (r->action == AP_GRAB)
+		sprintf(buf + strlen(buf), ":\t< GRAB");
+	    else
+		sprintf(buf + strlen(buf), ":\t  LEAVE >");
+	    
+	    add_menu_item(items, menusize, icount, i+1, buf, 0, 0);
+	}
+	
+	add_menu_txt(items, menusize, icount, "", MI_TEXT);
+	add_menu_item(items, menusize, icount, -1, "add a new rule", '!', 0);
+	add_menu_item(items, menusize, icount, -2, "help", '?', 0);
+	
+	/* TODO */
+	n = curses_display_menu(items, icount, "Autopickup rules:", PICK_ONE, selected);
+	if (n <= 0)
+	    break;
+	
+	/* add or edit a rule */
+	id = selected[0];
+	if (id == -1) {
+	    /* create a new rule */
+	    id = value.ar->num_rules;
+	    value.ar->num_rules++;
+	    size = value.ar->num_rules * sizeof(struct nh_autopickup_rule);
+	    value.ar->rules = realloc(value.ar->rules, size);
+	    
+	    rule = &value.ar->rules[id];
+	    rule->pattern[0] = '\0';
+	    rule->oclass = -1;
+	    rule->buc = B_DONT_CARE;
+	    rule->action = AP_GRAB;
+	} else if (id == -2) {
+	    autopickup_rules_help();
+	    continue;
+	} else
+	    id--;
+	
+	edit_ap_rule(&opt->a, value.ar, id);
+	nh_set_option(opt->name, value, FALSE);
+	
+	/* number of rules might have changed */
+	nr = opt->value.ar ? opt->value.ar->num_rules : 0;
+
+    } while (n > 0);
+    free(value.ar->rules);
+    free(value.ar);
+    free(items);
+}
+
+/*----------------------------------------------------------------------------*/
 
 /* parse a single line from the config file and set the option */
 static void read_config_line(char* line)
@@ -507,10 +791,17 @@ static void read_config_file(const char *filename)
     fseek(fp , 0 , SEEK_END);
     fsize = ftell(fp);
     rewind(fp);
+    
+    if (!fsize) {/* truncated config file */
+	    fclose(fp);
+	    return;
+    }
 
     buf = malloc(fsize+1);
-    if (!buf)
+    if (!buf) {
+	    fclose(fp);
 	    return;
+    }
 
     fread(buf, fsize, 1, fp);
     fclose(fp);
@@ -625,11 +916,10 @@ static FILE *open_config_file(char *filename)
 static void write_config_options(FILE *fp, struct nh_option_desc *options)
 {
     int i;
-    char workbuf[8];
     const char *optval;
     
     for (i = 0; options[i].name; i++) {
-	optval = get_option_string(&options[i], workbuf);
+	optval = nh_get_option_string(&options[i]);
 	if (options[i].type == OPTTYPE_STRING ||
 	    options[i].type == OPTTYPE_ENUM)
 	    fprintf(fp, "%s=\"%s\"\n", options[i].name, optval);

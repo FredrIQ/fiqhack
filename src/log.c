@@ -65,7 +65,7 @@ static int lprintf(const char *fmt, ...)
 void log_option(struct nh_option_desc *opt)
 {
     char encbuf[ENCBUFSZ];
-    char *str;
+    char *str, *encbuf2;
     
     if (iflags.disable_log || logfile == -1)
 	return;
@@ -90,6 +90,17 @@ void log_option(struct nh_option_desc *opt)
 	    
 	case OPTTYPE_BOOL:
 	    lprintf("b:%x", !!opt->value.b);
+	    break;
+	
+	case OPTTYPE_AUTOPICKUP_RULES:
+	    str = autopickup_to_string(opt->value.ar);
+	    lprintf("a:");
+	    encbuf2 = malloc(strlen(str) * 4 / 3 + 4);
+	    base64_encode(str, encbuf2);
+	    /* write directly, large numbers of rules might overflow outbuf in lprintf */
+	    write(logfile, encbuf2, strlen(encbuf2));
+	    free(encbuf2);
+	    free(str);
 	    break;
     }
     

@@ -7,10 +7,15 @@
 #define WINTYPELEN 16
 
 static int change_inv_order(char *op);
+static struct nh_autopickup_rules *copy_autopickup_rules(const struct nh_autopickup_rules *in);
 
 /* -------------------------------------------------------------------------- */
 
-#define listlen(list) (sizeof(list)/sizeof(struct nh_listitem))
+/* output array for parse_autopickup_rules. */
+static struct nh_autopickup_rule ap_rules_array[AUTOPICKUP_MAX_RULES];
+static struct nh_autopickup_rules ap_rules_static;
+
+#define listlen(list) (sizeof(list)/sizeof(list[0]))
 
 static const struct nh_listitem disclose_list[] = {
 	{DISCLOSE_NO_WITHOUT_PROMPT, "no"},
@@ -74,13 +79,34 @@ static const struct nh_listitem pettype_list[] = {
 };
 static const struct nh_enum_option pettype_spec = {pettype_list, listlen(pettype_list)};
 
+static const struct nh_listitem ap_object_class_list[] = {
+	{-1,		"any"},
+	{WEAPON_CLASS,	"weapons"},
+	{ARMOR_CLASS,	"armor"},
+	{RING_CLASS,	"rings"},
+	{AMULET_CLASS,	"amulets"},
+	{TOOL_CLASS,	"tools"},
+	{FOOD_CLASS,	"food"},
+	{POTION_CLASS,	"potions"},
+	{SCROLL_CLASS,	"scrolls"},
+	{SPBOOK_CLASS,	"spellbooks"},
+	{WAND_CLASS,	"wands"},
+	{COIN_CLASS,	"coins"},
+	{GEM_CLASS,	"gems"},
+	{ROCK_CLASS,	"large stones"},
+	{BALL_CLASS,	"iron balls"},
+	{CHAIN_CLASS,	"chains"}
+};
+static const struct nh_autopick_option autopickup_spec =
+			{ap_object_class_list, listlen(ap_object_class_list)};
+
 #define VTRUE (void*)TRUE
 #define VFALSE (void*)FALSE
 
 static const struct nh_option_desc const_options[] = {
-    /* boolean options */
     {"autodig",		"dig if moving and wielding digging tool",	OPTTYPE_BOOL, { VFALSE }},
     {"autopickup",	"automatically pick up objects you move over",	OPTTYPE_BOOL, { VTRUE }},
+    {"autopickup_rules", "rules to decide what to autopickup if autopickup is on", OPTTYPE_AUTOPICKUP_RULES, {0}},
     {"autoquiver",	"when firing with an empty quiver, select something suitable",	OPTTYPE_BOOL, { VFALSE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"fixinv",		"try to retain the same letter for the same object",	OPTTYPE_BOOL, { VTRUE }},
@@ -256,6 +282,7 @@ static void build_race_spec(void)
 	race_spec.choices = choices;
 }
 
+
 void init_opt_struct(void)
 {
 	options = clone_optlist(const_options);
@@ -273,9 +300,9 @@ void init_opt_struct(void)
 	find_option(options, "fruit")->s.maxlen = PL_FSIZ;
 	find_option(options, "menustyle")->e = menustyle_spec;
 	find_option(options, "pickup_burden")->e = pickup_burden_spec;
-	find_option(options, "pickup_types")->s.maxlen = MAXOCLASSES;
 	find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
 	find_option(options, "runmode")->e = runmode_spec;
+	find_option(options, "autopickup_rules")->a = autopickup_spec;
 	
 	find_option(birth_options, "align")->e = align_spec;
 	find_option(birth_options, "gender")->e = gender_spec;
@@ -308,7 +335,6 @@ void initoptions(void)
 	iflags.travelcc.x = iflags.travelcc.y = -1;
 	flags.warnlevel = 1;
 	flags.warntype = 0L;
-	flags.pickup_types[0] = '\0';
 	
 	/* init flags.inv_order this way, as setting it via the option
 	 * requires a preexisting order */
@@ -367,6 +393,11 @@ static boolean option_value_ok(struct nh_option_desc *option,
 		    value.s = NULL;
 		
 		return TRUE;
+		
+	    case OPTTYPE_AUTOPICKUP_RULES:
+		if (!value.ar || value.ar->num_rules > AUTOPICKUP_MAX_RULES)
+		    break;
+		return TRUE;
 	}
 	
 	return FALSE;
@@ -405,6 +436,10 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 		else
 		    value.s = NULL;
 		break;
+		
+	    case OPTTYPE_AUTOPICKUP_RULES:
+		value.ar = parse_autopickup_rules(str);
+		break;
 	}
 	
 	return value;
@@ -414,24 +449,66 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 /* copy values carefully: copying pointers to strings on the stack is not good */
 static boolean copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
 {
-	if (option->type == OPTTYPE_STRING) {
-	    if (option->value.s == value.s ||
-		(option->value.s && value.s && !strcmp(option->value.s, value.s)))
-		return FALSE; /* setting the option to it's current value; nothing to copy */
-	    
-	    if (option->value.s)
-		free(option->value.s);
-	    option->value.s = NULL;
-	    if (value.s) {
-		option->value.s = malloc(strlen(value.s) + 1);
-		strcpy(option->value.s, value.s);
-	    }
-	} else if ((option->type == OPTTYPE_ENUM && option->value.e == value.e) ||
-	    (option->type == OPTTYPE_INT && option->value.i == value.i) ||
-	    (option->type == OPTTYPE_BOOL && option->value.b == value.b))
-	    return FALSE;
-	else
-	    option->value = value;
+	struct nh_autopickup_rules *aold, *anew;
+	int i;
+    
+	switch (option->type) {
+	    case OPTTYPE_STRING:
+		if (option->value.s == value.s ||
+		    (option->value.s && value.s && !strcmp(option->value.s, value.s)))
+		    return FALSE; /* setting the option to it's current value; nothing to copy */
+		
+		if (option->value.s)
+		    free(option->value.s);
+		option->value.s = NULL;
+		if (value.s) {
+		    option->value.s = malloc(strlen(value.s) + 1);
+		    strcpy(option->value.s, value.s);
+		}
+		break;
+		
+	    case OPTTYPE_AUTOPICKUP_RULES:
+		aold = option->value.ar;
+		anew = value.ar;
+		/* check rule set equality */
+		if (aold && anew && aold->num_rules == anew->num_rules) {
+		    /* compare each individual rule */
+		    for (i = 0; i < aold->num_rules; i++)
+			if (strcmp(aold->rules[i].pattern, anew->rules[i].pattern) ||
+			    aold->rules[i].oclass != anew->rules[i].oclass ||
+			    aold->rules[i].buc != anew->rules[i].buc ||
+			    aold->rules[i].action != anew->rules[i].action)
+			    break; /* rule difference found */
+		    if (i == aold->num_rules)
+			return FALSE;
+		}
+		
+		if (aold) {
+		    free(aold->rules);
+		    free(aold);
+		}
+		
+		option->value.ar = copy_autopickup_rules(value.ar);
+		break;
+		
+	    case OPTTYPE_BOOL:
+		if (option->value.b == value.b)
+		    return FALSE;
+		option->value.b = value.b;
+		break;
+		
+	    case OPTTYPE_ENUM:
+		if (option->value.e == value.e)
+		    return FALSE;
+		option->value.e = value.e;
+		break;
+		
+	    case OPTTYPE_INT:
+		if (option->value.i == value.i)
+		    return FALSE;
+		option->value.i = value.i;
+		break;
+	}
 	
 	return TRUE;
 	
@@ -520,25 +597,16 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	else if (!strcmp("pickup_burden", option->name)) {
 		flags.pickup_burden = option->value.e;
 	}
-	else if (!strcmp("pickup_types", option->name)) {
-		int num = 0;
-		const char *op = option->value.s;
-		while (*op) {
-		    int oc_sym = def_char_to_objclass(*op);
-		    /* make sure all are valid obj symbols occuring once */
-		    if (oc_sym != MAXOCLASSES &&
-			!strchr(flags.pickup_types, oc_sym)) {
-			flags.pickup_types[num] = (char)oc_sym;
-			flags.pickup_types[++num] = '\0';
-		    } else
-			return FALSE;
-		    op++;
-		}
-	}
 	else if (!strcmp("runmode", option->name)) {
 		iflags.runmode = option->value.e;
 	}
-	
+	else if (!strcmp("autopickup_rules", option->name)) {
+		if (iflags.ap_rules) {
+		    free(iflags.ap_rules->rules);
+		    free(iflags.ap_rules);
+		}
+		iflags.ap_rules = copy_autopickup_rules(option->value.ar);
+	}
 	/* birth options */
 	else if (!strcmp("align", option->name)) {
 		flags.initalign = option->value.e;
@@ -603,6 +671,52 @@ struct nh_option_desc *nh_get_options(enum nh_option_list list)
 }
 
 
+const char *nh_get_option_string(const struct nh_option_desc *option)
+{
+    char valbuf[10], *outstr;
+    char *valstr;
+    int i;
+    boolean freestr = FALSE;
+    
+    switch (option->type) {
+	case OPTTYPE_BOOL:
+	    valstr = option->value.b ? "true" : "false";
+	    break;
+	    
+	case OPTTYPE_ENUM:
+	    valstr = "(invalid)";
+	    for (i = 0; i < option->e.numchoices; i++)
+		if (option->value.e == option->e.choices[i].id)
+		    valstr = option->e.choices[i].caption;
+	    break;
+	    
+	case OPTTYPE_INT:
+	    sprintf(valbuf, "%d", option->value.i);
+	    valstr = valbuf;
+	    break;
+	    
+	case OPTTYPE_STRING:
+	    if (!option->value.s)
+		valstr = "";
+	    else
+		valstr = option->value.s;
+	    break;
+	    
+	case OPTTYPE_AUTOPICKUP_RULES:
+	    freestr = TRUE;
+	    valstr = autopickup_to_string(option->value.ar);
+	    break;
+    }
+    
+    /* copy the string to xmalloced memory so that we can forget about the pointer here */
+    outstr = xmalloc(strlen(valstr));
+    strcpy(outstr, valstr);
+    if (freestr)
+	free(valstr);
+    return outstr;
+}
+
+
 struct nh_option_desc *clone_optlist(const struct nh_option_desc *in)
 {
 	int i;
@@ -614,9 +728,12 @@ struct nh_option_desc *clone_optlist(const struct nh_option_desc *in)
 	out = malloc(sizeof(struct nh_option_desc) * i);
 	memcpy(out, in, sizeof(struct nh_option_desc) * i);
 	
-	for (i = 0; in[i].name; i++)
+	for (i = 0; in[i].name; i++) {
 	    if (in[i].type == OPTTYPE_STRING && in[i].value.s)
 		out[i].value.s = strdup(in[i].value.s);
+	    else if (in[i].type == OPTTYPE_AUTOPICKUP_RULES && in[i].value.ar)
+		out[i].value.ar = copy_autopickup_rules(in[i].value.ar);
+	}
 	
 	return out;
 }
@@ -629,9 +746,14 @@ void free_optlist(struct nh_option_desc *opt)
 	if (!opt)
 	    return;
 	
-	for (i = 0; opt[i].name; i++)
+	for (i = 0; opt[i].name; i++) {
 	    if (opt[i].type == OPTTYPE_STRING && opt[i].value.s)
 		free(opt[i].value.s);
+	    else if (opt[i].type == OPTTYPE_AUTOPICKUP_RULES && opt[i].value.ar) {
+		free(opt[i].value.ar->rules);
+		free(opt[i].value.ar);
+	    }
+	}
 	
 	free(opt);
 }
@@ -718,43 +840,13 @@ nonew:
 }
 
 
-/*
- * Convert the given string of object classes to a string of default object
- * symbols.
- */
-static void oc_to_str(char *src, char *dest)
-{
-    int i;
-
-    while ((i = (int) *src++) != 0) {
-	if (i < 0 || i >= MAXOCLASSES)
-	    impossible("oc_to_str:  illegal object class %d", i);
-	else
-	    *dest++ = def_oc_syms[i];
-    }
-    *dest = '\0';
-}
-
-
 int dotogglepickup(void)
 {
-	char buf[BUFSZ], ocl[MAXOCLASSES+1];
-
-	flags.pickup = !flags.pickup;
-	if (flags.pickup) {
-	    oc_to_str(flags.pickup_types, ocl);
-	    sprintf(buf, "ON, for %s objects%s", ocl[0] ? ocl : "all",
-#ifdef AUTOPICKUP_EXCEPTIONS
-			(iflags.autopickup_exceptions[AP_LEAVE] ||
-			 iflags.autopickup_exceptions[AP_GRAB]) ?
-			 ((count_ape_maps(NULL, NULL) == 1) ?
-			    ", with one exception" : ", with some exceptions") :
-#endif
-			"");
-	} else {
-	    strcpy(buf, "OFF");
-	}
-	pline("Autopickup: %s.", buf);
+	union nh_optvalue val;
+	val.b = !flags.pickup;
+	set_option("autopickup", val, FALSE);
+	
+	pline("Autopickup: %s.", flags.pickup ? "ON" : "OFF");
 	return 0;
 }
 
@@ -799,5 +891,101 @@ void nh_setup_ui_options(struct nh_option_desc *uioptions,
     ui_boolopt_map = boolmap;
     ui_option_callback = callback;
 }
+
+
+static struct nh_autopickup_rules *copy_autopickup_rules(const struct nh_autopickup_rules *in)
+{
+    struct nh_autopickup_rules *out;
+    int size;
+    
+    if (!in || !in->num_rules)
+	return NULL;
+    
+    out = malloc(sizeof(struct nh_autopickup_rules));
+    out->num_rules = in->num_rules;
+    size = out->num_rules * sizeof(struct nh_autopickup_rule);
+    out->rules = malloc(size);
+    memcpy(out->rules, in->rules, size);
+    
+    return out;
+}
+
+
+char *autopickup_to_string(const struct nh_autopickup_rules *ar)
+{
+    int size, i;
+    char *buf, *bp, pattern[40];
+    
+    if (!ar || !ar->num_rules) {
+	buf = strdup("");
+	return buf;
+    }
+    
+    /* at this point, size is an upper bound on the stringified length of ar
+     * 3 stringified small numbers + a pattern with up to 40 chars < 64 chars */
+    size = 64 * ar->num_rules;
+    buf = malloc(size);
+    buf[0] = '\0';
+    
+    for (i = 0; i < ar->num_rules; i++) {
+	strncpy(pattern, ar->rules[i].pattern, sizeof(pattern));
+	
+	/* remove '"' and ';' from the pattern by replacing them by
+	 * '?' (single character wildcard), to simplify parsing */
+	bp = pattern;
+	while (*bp) {
+	    if (*bp == '"' || *bp == ';')
+		*bp = '?'; 
+	    bp++;
+	}
+	
+	snprintf(eos(buf), 64, "(\"%s\",%d,%u,%u);", pattern,
+		 ar->rules[i].oclass, ar->rules[i].buc, ar->rules[i].action);
+    }
+    
+    return buf;
+}
+
+
+struct nh_autopickup_rules *parse_autopickup_rules(const char *str)
+{
+    struct nh_autopickup_rules *out;
+    char *copy, *semi;
+    const char *start;
+    int n, i, rcount = 0;
+    
+    if (!str || !*str)
+	return NULL;
+    
+    start = str;
+    while ( (semi = strchr(start, ';')) ) {
+	start = ++semi;
+	rcount++;
+    }
+    
+    if (!rcount)
+	return NULL;
+    
+    out = &ap_rules_static;
+    out->rules = ap_rules_array;
+    out->num_rules = rcount;
+    
+    i = 0;
+    start = copy = strdup(str);
+    while ( (semi = strchr(start, ';')) && i < rcount ) {
+	*semi++ = '\0';
+	n = sscanf(start, "(\"%39[^,],%d,%u,%u);", out->rules[i].pattern,
+	       &out->rules[i].oclass, &out->rules[i].buc, &out->rules[i].action);
+	/* since %[ in sscanf requires a nonempty match, we allowed it to match
+	 * the closing '"' of the rule. Remove that now. */
+	out->rules[i].pattern[strlen(out->rules[i].pattern) - 1] = '\0';
+	i++;
+	start = semi;
+    }
+    
+    free(copy);
+    return out;
+}
+
 
 /*options.c*/

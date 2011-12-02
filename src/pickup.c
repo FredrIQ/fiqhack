@@ -267,24 +267,36 @@ menu_pickup:
 	return n_tried > 0;
 }
 
-#ifdef AUTOPICKUP_EXCEPTIONS
-boolean is_autopickup_exception(struct obj *obj,
-				boolean grab)	 /* forced pickup, rather than forced leave behind? */
+
+static boolean autopickup_match(struct obj *obj)
 {
-	/*
-	 *  Does the text description of this match an exception?
-	 */
+	int i;
+	struct nh_autopickup_rule *r;
 	char *objdesc = makesingular(doname(obj));
-	struct autopickup_exception *ape = (grab) ?
-					iflags.autopickup_exceptions[AP_GRAB] :
-					iflags.autopickup_exceptions[AP_LEAVE];
-	while (ape) {
-		if (pmatch(ape->pattern, objdesc)) return TRUE;
-		ape = ape->next;
+	enum nh_bucstatus objbuc;
+	
+	if (obj->bknown) {
+	    if (obj->blessed)
+		objbuc = B_BLESSED;
+	    else if (obj->cursed)
+		objbuc = B_CURSED;
+	    else
+		objbuc = B_UNCURSED;
+	} else
+	    objbuc = B_UNKNOWN;
+	
+	/* test the aotupickup rules in order. If any of the rules matches this
+	 * object, return the result */
+	r = &iflags.ap_rules->rules[0];
+	for (i = 0; i < iflags.ap_rules->num_rules; i++, r++) {
+	    if ((!strlen(r->pattern) || pmatch(r->pattern, objdesc)) &&
+		(r->oclass == -1 || r->oclass == obj->oclass) &&
+		(r->buc == B_DONT_CARE || r->buc == objbuc))
+		return r->action == AP_GRAB;
 	}
 	return FALSE;
 }
-#endif /* AUTOPICKUP_EXCEPTIONS */
+
 
 /*
  * Pick from the given list using flags.pickup_types.  Return the number
@@ -300,35 +312,18 @@ static int autopick(struct obj *olist,	/* the object list */
 	struct object_pick *pi;	/* pick item */
 	struct obj *curr;
 	int n;
-	const char *otypes = flags.pickup_types;
 
 	/* first count the number of eligible items */
 	for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
-
-
-#ifndef AUTOPICKUP_EXCEPTIONS
-	    if (!*otypes || strchr(otypes, curr->oclass)
-		|| (iflags.pickup_thrown && curr->was_thrown))
-#else
-	    if ((!*otypes || strchr(otypes, curr->oclass) ||
-		(iflags.pickup_thrown && curr->was_thrown) ||
-		 is_autopickup_exception(curr, TRUE)) &&
-	    	 !is_autopickup_exception(curr, FALSE))
-#endif
+	    if ((iflags.pickup_thrown && curr->was_thrown) ||
+		 autopickup_match(curr))
 		n++;
 
 	if (n) {
 	    *pick_list = pi = malloc(sizeof(struct object_pick) * n);
 	    for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
-#ifndef AUTOPICKUP_EXCEPTIONS
-		if (!*otypes || strchr(otypes, curr->oclass)
-		    || (iflags.pickup_thrown && curr->was_thrown)) {
-#else
-	    if ((!*otypes || strchr(otypes, curr->oclass) ||
-		(iflags.pickup_thrown && curr->was_thrown) ||
-		 is_autopickup_exception(curr, TRUE)) &&
-	    	 !is_autopickup_exception(curr, FALSE)) {
-#endif
+	    if ((iflags.pickup_thrown && curr->was_thrown) ||
+		 autopickup_match(curr)) {
 		    pi[n].obj = curr;
 		    pi[n].count = curr->quan;
 		    n++;

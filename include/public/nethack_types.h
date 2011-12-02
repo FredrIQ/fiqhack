@@ -98,6 +98,10 @@
 #define NH_ARG_NONE	(1<<0)
 #define NH_ARG_DIR	(1<<1)
 
+#define AUTOPICKUP_MAX_RULES 1000 /* this is intended as a rough sanity check to
+                                   * detect pointers to autopickup rule structs
+                                   * that instead point at random memory */
+
 enum nh_direction {
     DIR_NONE = -1,
     DIR_W = 0,
@@ -150,7 +154,10 @@ enum nh_opttype {
     OPTTYPE_BOOL,
     OPTTYPE_INT,
     OPTTYPE_ENUM,
-    OPTTYPE_STRING
+    OPTTYPE_STRING,
+    OPTTYPE_AUTOPICKUP_RULES /* so this is a special case... I considered creating
+                                a general purpose mechanism, but I came to the
+                                conclusion that YAGNI applies */
 };
 
 enum nh_option_list {
@@ -163,7 +170,8 @@ enum nh_bucstatus {
     B_UNKNOWN,
     B_BLESSED,
     B_UNCURSED,
-    B_CURSED
+    B_CURSED,
+    B_DONT_CARE /* objects never have this; it's used for autopickup matching */
 };
 
 enum nh_menuitem_role {
@@ -236,6 +244,11 @@ enum nh_log_status {
     LS_IN_PROGRESS	/* this game is active in a different process */
 };
 
+enum autopickup_action {
+    AP_GRAB,
+    AP_LEAVE
+};
+
 
 
 typedef signed char	boolean;		/* 0 or 1 */
@@ -245,6 +258,7 @@ struct nh_listitem {
     int id;
     char *caption;
 };
+
 
 struct nh_boolopt_map {
     const char *optname;
@@ -265,11 +279,29 @@ struct nh_string_option {
     int maxlen;
 };
 
+struct nh_autopick_option {
+    const struct nh_listitem *classes;
+    int numclasses;
+};
+
+struct nh_autopickup_rule {
+    char pattern[40];
+    int oclass; /* valid values are those given in the a.classes list */
+    enum nh_bucstatus buc;
+    enum autopickup_action action;
+};
+
+struct nh_autopickup_rules {
+    struct nh_autopickup_rule *rules;
+    int num_rules; /* < AUTOPICKUP_MAX_RULES */
+};
+
 union nh_optvalue {
     char *s; /* largest element first for static initialisation */
     boolean b;
     int i;
     int e;
+    struct nh_autopickup_rules *ar;
 };
 
 struct nh_option_desc {
@@ -283,6 +315,7 @@ struct nh_option_desc {
 	struct nh_int_option i;
 	struct nh_enum_option e;
 	struct nh_string_option s;
+	struct nh_autopick_option a;
     };
 };
 

@@ -50,6 +50,7 @@ extern EXPORT struct nh_option_desc *nh_get_options(enum nh_option_list list);
 extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 			 struct nh_boolopt_map *boolmap,
 			 boolean(*callback)(struct nh_option_desc *));
+extern EXPORT const char *nh_get_option_string(const struct nh_option_desc *opt);
 
 /* pager.c */
 extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs);
