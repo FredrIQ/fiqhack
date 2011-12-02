@@ -50,11 +50,11 @@ install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
         DESTINATION ${LIBDIR})
-install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack-curses
+install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack
         DESTINATION ${BINDIR})
         
 if (UNIX)
-    install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack-curses.sh
-            DESTINATION ${SHELLDIR} RENAME nethack-curses)
+    install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack.sh
+            DESTINATION ${SHELLDIR} RENAME nethack)
 endif()
 
