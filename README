@@ -33,10 +33,12 @@ Changes so far:
         inactive levels are now kept in memory rather than being written to disk.
 	This makes a bunch of locking unnecessary since there is no longer any chance
 	of different games trampling each other.
+    - autopickup rules replace pickup_types and AUTOPICKUP_EXCEPTIONS
+        "autopickup rules" provides a list of rules that are matched sequentially in order
+	to determine wether an item should be picked up.
 
 Plans:
     - fix help, it's horribly out of date
-    - redo autopickup+exceptions configuration
     - annotations
     - make it possible to view replays
     - track player history
