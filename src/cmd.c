@@ -136,7 +136,6 @@ const struct cmd_desc cmdlist[] = {
 	{"untrap", "untrap something", M('u'), 'u', FALSE, dountrap, CMD_ARG_NONE | CMD_EXT},
 	{"version", "displays the version number", 'v', 0, TRUE, doversion, CMD_ARG_NONE},
 	{"verhistory", "display the version history", 'V', 0, TRUE, dohistory, CMD_HELP | CMD_ARG_NONE},
-	{"versionext", "list compile-time options", M('v'), 0, TRUE, doextversion, CMD_ARG_NONE},
 	{"wait", "do nothing for one turn", '.', ' ', TRUE, donull, CMD_ARG_NONE, "waiting"},
 	{"wear", "wear clothing or armor", 'W', 0, FALSE, dowear, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"wield", "hold an item in your hands", 'w', 0, FALSE, dowield, CMD_ARG_NONE | CMD_ARG_OBJ},

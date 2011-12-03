@@ -38,11 +38,6 @@ int doversion(void)
 	return 0;
 }
 
-int doextversion(void)
-{
-	display_file(OPTIONS_USED, TRUE);
-	return 0;
-}
 
 boolean check_version(struct version_info *version_data, const char *filename,
 		      boolean complain)

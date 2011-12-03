@@ -19,7 +19,6 @@
 #define DATAFILE      "data"	/* file giving the meaning of symbols used */
 #define HISTORY       "history" /* file giving nethack's history */
 #define LICENSE       "license" /* file with license information */
-#define OPTIONS_USED  "options" /* compile-time options, for #version */
 
 #define LEV_EXT ".lev"		/* extension for special level files */
 

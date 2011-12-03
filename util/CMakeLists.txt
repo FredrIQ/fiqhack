@@ -39,12 +39,10 @@ include_directories (${NetHack_BINARY_DIR}/util)
 
 # create the headers named in MAKEDEFS_HEADERS
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/date.h
-                           ${NetHack_BINARY_DIR}/dat/options
                     COMMAND mkdir -p ${NetHack_BINARY_DIR}/include/
                     COMMAND mkdir -p ${NetHack_BINARY_DIR}/dat
                     COMMAND ${NetHack_BINARY_DIR}/util/makedefs
                     ARGS -v ${NetHack_BINARY_DIR}/include/date.h
-                            ${NetHack_BINARY_DIR}/dat/options
                     DEPENDS makedefs)
                     
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/onames.h

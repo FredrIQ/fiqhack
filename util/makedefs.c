@@ -53,7 +53,6 @@ void do_objs(const char *);
 void do_data(const char *,const char *);
 void do_dungeon(const char *,const char *);
 void do_date(const char *);
-void do_options(const char *);
 void do_monstr(const char *);
 void do_permonst(const char *);
 void do_questtxt(const char *,const char *);
@@ -72,7 +71,6 @@ static boolean d_filter(char *);
 static boolean h_filter(char *);
 static boolean ranged_attk(const struct permonst*);
 static int mstrength(const struct permonst *);
-static void build_savebones_compat_string(void);
 
 static boolean qt_comment(char *);
 static boolean qt_control(char *);
@@ -87,8 +85,6 @@ static void put_qt_hdrs(void);
 
 static char *tmpdup(const char *);
 static char *limit(char *,int);
-static char *eos(char *);
-
 /* input, output, tmp */
 static FILE *ifp, *ofp, *tfp;
 
@@ -157,9 +153,8 @@ int main(int argc, char	*argv[])
 		    
 	    case 'v':
 	    case 'V':
-		if (argc != 4) usage(argv[0], argv[1][1], 4);
+		if (argc != 3) usage(argv[0], argv[1][1], 3);
 		do_date(argv[2]);
-		do_options(argv[3]);
 		    break;
 		    
 	    case 'p':
@@ -312,9 +307,6 @@ static void make_version(void)
 static char *version_string(char *outbuf)
 {
     sprintf(outbuf, "%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
-#ifdef BETA
-    sprintf(eos(outbuf), "-%d", EDITLEVEL);
-#endif
     return outbuf;
 }
 
@@ -379,81 +371,6 @@ void do_date(const char *outfile)
 	return;
 }
 
-static char save_bones_compat_buf[BUFSZ];
-
-static void build_savebones_compat_string(void)
-{
-#ifdef VERSION_COMPATIBILITY
-	unsigned long uver = VERSION_COMPATIBILITY;
-#endif
-	strcpy(save_bones_compat_buf,
-		"save and bones files accepted from version");
-#ifdef VERSION_COMPATIBILITY
-	sprintf(eos(save_bones_compat_buf), "s %lu.%lu.%lu through %d.%d.%d",
-		((uver & 0xFF000000L) >> 24), ((uver & 0x00FF0000L) >> 16),
-		((uver & 0x0000FF00L) >> 8),
-		VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
-#else
-	sprintf(eos(save_bones_compat_buf), " %d.%d.%d only",
-		VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
-#endif
-}
-
-static const char *build_opts[] = {
-#ifdef AUTOPICKUP_EXCEPTIONS
-		"autopickup_exceptions",
-#endif
-#ifdef DLB
-		"data librarian",
-#endif
-#ifdef KOPS
-		"Keystone Kops",
-#endif
-#ifdef LOGFILE
-		"log file",
-#endif
-		save_bones_compat_buf,
-		"basic NetHack features"
-	};
-
-	
-void do_options(const char *outfile)
-{
-	int i, length;
-	const char *str, *indent = "    ";
-
-	if (!(ofp = fopen(outfile, WRTMODE))) {
-		perror(outfile);
-		exit(EXIT_FAILURE);
-	}
-
-	build_savebones_compat_string();
-	fprintf(ofp,
-#ifdef BETA
-		"\n    NetHack version %d.%d.%d [beta]\n",
-#else
-		"\n    NetHack version %d.%d.%d\n",
-#endif
-		VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
-
-	fprintf(ofp,"\nOptions compiled into this edition:\n");
-
-	length = COLNO + 1;	/* force 1st item onto new line */
-	for (i = 0; i < SIZE(build_opts); i++) {
-	    str = build_opts[i];
-	    if (length + strlen(str) > COLNO - 5)
-		fprintf(ofp,"\n%s", indent),  length = strlen(indent);
-	    else
-		fprintf(ofp," "),  length++;
-	    fprintf(ofp,"%s", str),  length += strlen(str);
-	    fprintf(ofp,(i < SIZE(build_opts) - 1) ? "," : "."),  length++;
-	}
-
-	fprintf(ofp,"\n\n");
-
-	fclose(ofp);
-	return;
-}
 
 /* routine to decide whether to discard something from data.base */
 static boolean d_filter(char *line)
@@ -1273,12 +1190,6 @@ static char *tmpdup(const char *str)
 	if (!str) return NULL;
 	strncpy(buf, str, 127);
 	return buf;
-}
-
-static char *eos(char *str)
-{
-    while (*str) str++;
-    return str;
 }
 
 

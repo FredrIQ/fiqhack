@@ -1574,7 +1574,6 @@ extern boolean gd_sound(void);
 
 extern char *version_string(char *);
 extern int doversion(void);
-extern int doextversion(void);
 extern boolean check_version(struct version_info *, const char *, boolean);
 extern boolean uptodate(struct memfile*,const char *);
 extern void store_version(int);

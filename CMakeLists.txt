@@ -38,7 +38,7 @@ install(DIRECTORY ${NetHack_BINARY_DIR}/dat/
         DESTINATION ${DATADIR}
         FILES_MATCHING PATTERN "*.lev"
         PATTERN "CMakeFiles" EXCLUDE)
-install(FILES ${NetHack_BINARY_DIR}/dat/dungeon ${NetHack_BINARY_DIR}/dat/options
+install(FILES ${NetHack_BINARY_DIR}/dat/dungeon
               ${NetHack_BINARY_DIR}/dat/quest.dat ${NetHack_BINARY_DIR}/dat/rumors
               ${NetHack_BINARY_DIR}/dat/data
               ${NetHack_BINARY_DIR}/dat/logfile ${NetHack_BINARY_DIR}/dat/oracles
