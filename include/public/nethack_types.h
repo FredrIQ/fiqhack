@@ -89,6 +89,7 @@
 /* command usage hints */
 #define CMD_EXT        (1 << 10) /* an 'extended' command */
 #define CMD_MOVE       (1 << 11) /* this is a move command */
+#define CMD_HELP       (1 << 12) /* this command should be listed on the help menu */
 #define CMD_NOTIME     (1 << 13) /* command will not use up any game time */
 #define CMD_DEBUG      (1 << 14) /* a wizmode command */
 

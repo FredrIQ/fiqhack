@@ -14,16 +14,11 @@
  */
 
 #define RECORD	      "record"	/* file containing list of topscorers */
-#define HELP	      "help"	/* file containing command descriptions */
-#define SHELP	      "hh"	/* abbreviated form of the same */
-#define DEBUGHELP     "wizhelp" /* file containing debug mode cmds */
 #define RUMORFILE     "rumors"	/* file with fortune cookies */
 #define ORACLEFILE    "oracles" /* file with oracular information */
 #define DATAFILE      "data"	/* file giving the meaning of symbols used */
-#define CMDHELPFILE   "cmdhelp" /* file telling what commands do */
 #define HISTORY       "history" /* file giving nethack's history */
 #define LICENSE       "license" /* file with license information */
-#define OPTIONFILE    "opthelp" /* file explaining runtime options */
 #define OPTIONS_USED  "options" /* compile-time options, for #version */
 
 #define LEV_EXT ".lev"		/* extension for special level files */

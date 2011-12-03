@@ -15,20 +15,11 @@ enum internal_commands {
     /* implicitly include enum nh_direction */
     UICMD_OPTIONS = DIR_SELF + 1,
     UICMD_EXTCMD,
+    UICMD_HELP,
     UICMD_REDO,
-    UICMD_PREVMSG
+    UICMD_PREVMSG,
+    UICMD_WHATDOES
 };
-
-struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
-static struct nh_cmd_desc *commandlist, *unknown_commands;
-static int cmdcount, unknown_count;
-static struct nh_cmd_desc *prev_cmd;
-static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE}, next_command_arg;
-static boolean have_next_command = FALSE;
-static char next_command_name[32];
-static int prev_count;
-
-static void init_keymap(void);
 
 #define RESET_BINDINGS_ID (-10000)
 
@@ -41,43 +32,67 @@ static void init_keymap(void);
 #define DIRCMD_CTRL	(1 << 31)
 
 struct nh_cmd_desc builtin_commands[] = {
-    {"east",       "regular direction keys for movement,", 'l', 0, CMD_UI | DIRCMD | DIR_E},
-    {"north",      "   spellcasting, etc.", 'k', 0, CMD_UI | DIRCMD | DIR_N},
-    {"north_east", "", 'u', 0, CMD_UI | DIRCMD | DIR_NE},
-    {"north_west", "", 'y', 0, CMD_UI | DIRCMD | DIR_NW},
-    {"south",      "", 'j', 0, CMD_UI | DIRCMD | DIR_S},
-    {"south_east", "", 'n', 0, CMD_UI | DIRCMD | DIR_SE},
-    {"south_west", "", 'b', 0, CMD_UI | DIRCMD | DIR_SW},
-    {"west",       "", 'h', 0, CMD_UI | DIRCMD | DIR_W},
-    {"up",         "climb stairs or ladders", '<', 0, CMD_UI | DIRCMD | DIR_UP},
+    {"east",       "move, fight or interact to the east",	'l', 0, CMD_UI | DIRCMD | DIR_E},
+    {"north",      "move, fight or interact to the north",	'k', 0, CMD_UI | DIRCMD | DIR_N},
+    {"north_east", "move, fight or interact to the northeast",	'u', 0, CMD_UI | DIRCMD | DIR_NE},
+    {"north_west", "move, fight or interact to the northwest",	'y', 0, CMD_UI | DIRCMD | DIR_NW},
+    {"south",      "move, fight or interact to the south",	'j', 0, CMD_UI | DIRCMD | DIR_S},
+    {"south_east", "move, fight or interact to the southeast",	'n', 0, CMD_UI | DIRCMD | DIR_SE},
+    {"south_west", "move, fight or interact to the southwest",	'b', 0, CMD_UI | DIRCMD | DIR_SW},
+    {"west",       "move, fight or interact to the west",	'h', 0, CMD_UI | DIRCMD | DIR_W},
+    {"up",         "climb stairs or ladders",			'<', 0, CMD_UI | DIRCMD | DIR_UP},
     {"down",       "go down stairs or ladders or jump into holes", '>', 0, CMD_UI | DIRCMD | DIR_DOWN},
     
-    {"run_east",       "go in specified direction until you", 'L', 0, CMD_UI | DIRCMD_SHIFT | DIR_E},
-    {"run_north",      "   hit a wall or run into something", 'K', 0, CMD_UI | DIRCMD_SHIFT | DIR_N},
-    {"run_north_east", "", 'U', 0, CMD_UI | DIRCMD_SHIFT | DIR_NE},
-    {"run_north_west", "", 'Y', 0, CMD_UI | DIRCMD_SHIFT | DIR_NW},
-    {"run_south",      "", 'J', 0, CMD_UI | DIRCMD_SHIFT | DIR_S},
-    {"run_south_east", "", 'N', 0, CMD_UI | DIRCMD_SHIFT | DIR_SE},
-    {"run_south_west", "", 'B', 0, CMD_UI | DIRCMD_SHIFT | DIR_SW},
-    {"run_west",       "", 'H', 0, CMD_UI | DIRCMD_SHIFT | DIR_W},
+    {"run_east",       "go east until you run into something", 'L', 0, CMD_UI | DIRCMD_SHIFT | DIR_E},
+    {"run_north",      "go north until you run into something", 'K', 0, CMD_UI | DIRCMD_SHIFT | DIR_N},
+    {"run_north_east", "go northeast until you run into something", 'U', 0, CMD_UI | DIRCMD_SHIFT | DIR_NE},
+    {"run_north_west", "go northwest until you run into something", 'Y', 0, CMD_UI | DIRCMD_SHIFT | DIR_NW},
+    {"run_south",      "go south until you run into something", 'J', 0, CMD_UI | DIRCMD_SHIFT | DIR_S},
+    {"run_south_east", "go southeast until you run into something", 'N', 0, CMD_UI | DIRCMD_SHIFT | DIR_SE},
+    {"run_south_west", "go southwest until you run into something", 'B', 0, CMD_UI | DIRCMD_SHIFT | DIR_SW},
+    {"run_west",       "go west until you run into something", 'H', 0, CMD_UI | DIRCMD_SHIFT | DIR_W},
     
-    {"go_east",       "run in direction <dir> until something", Ctrl('l'), 0, CMD_UI | DIRCMD_CTRL | DIR_E},
-    {"go_north",      "   interesting is seen", Ctrl('k'), 0, CMD_UI | DIRCMD_CTRL | DIR_N},
-    {"go_north_east", "", Ctrl('u'), 0, CMD_UI | DIRCMD_CTRL | DIR_NE},
-    {"go_north_west", "", Ctrl('y'), 0, CMD_UI | DIRCMD_CTRL | DIR_NW},
-    {"go_south",      "", Ctrl('j'), 0, CMD_UI | DIRCMD_CTRL | DIR_S},
-    {"go_south_east", "", Ctrl('n'), 0, CMD_UI | DIRCMD_CTRL | DIR_SE},
-    {"go_south_west", "", Ctrl('b'), 0, CMD_UI | DIRCMD_CTRL | DIR_SW},
-    {"go_west",       "", Ctrl('h'), 0, CMD_UI | DIRCMD_CTRL | DIR_W},
+    {"go_east",       "run east until something interesting is seen", Ctrl('l'), 0, CMD_UI | DIRCMD_CTRL | DIR_E},
+    {"go_north",      "run north until something interesting is seen", Ctrl('k'), 0, CMD_UI | DIRCMD_CTRL | DIR_N},
+    {"go_north_east", "run northeast until something interesting is seen", Ctrl('u'), 0, CMD_UI | DIRCMD_CTRL | DIR_NE},
+    {"go_north_west", "run northwest until something interesting is seen", Ctrl('y'), 0, CMD_UI | DIRCMD_CTRL | DIR_NW},
+    {"go_south",      "run south until something interesting is seen", Ctrl('j'), 0, CMD_UI | DIRCMD_CTRL | DIR_S},
+    {"go_south_east", "run southeast until something interesting is seen", Ctrl('n'), 0, CMD_UI | DIRCMD_CTRL | DIR_SE},
+    {"go_south_west", "run southwest until something interesting is seen", Ctrl('b'), 0, CMD_UI | DIRCMD_CTRL | DIR_SW},
+    {"go_west",       "run west until something interesting is seen", Ctrl('h'), 0, CMD_UI | DIRCMD_CTRL | DIR_W}, /* nutty konsole sends KEY_BACKSPACE when ^H is pressed... */
     
     {"extcommand", "perform an extended command", '#', 0, CMD_UI | UICMD_EXTCMD},
+    {"help",	   "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
     {"options",	   "show option settings, possibly change them", 'O', 0, CMD_UI | UICMD_OPTIONS},
-    {"redo",	   "redo the previous command", '\001', 0, CMD_UI | UICMD_REDO},
     {"prevmsg",	   "list previously displayed messages", Ctrl('p'), 0, CMD_UI | UICMD_PREVMSG},
+    {"redo",	   "redo the previous command", '\001', 0, CMD_UI | UICMD_REDO},
+    {"whatdoes",   "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
 };
 
 
+struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
+static struct nh_cmd_desc *commandlist, *unknown_commands;
+static int cmdcount, unknown_count;
+static struct nh_cmd_desc *prev_cmd;
+static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE}, next_command_arg;
+static boolean have_next_command = FALSE;
+static char next_command_name[32];
+static int prev_count;
+
+static void show_whatdoes(void);
+static struct nh_cmd_desc *show_help(void);
+static void init_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
+
+
+static const char *curses_keyname(int key)
+{
+    if (key == ' ')
+	return "SPACE";
+    else if (key == '\033')
+	return "ESC";
+    return keyname(key);
+}
 
 
 static struct nh_cmd_desc *find_command(const char *cmdname)
@@ -125,6 +140,11 @@ static void handle_internal_cmd(struct nh_cmd_desc **cmd,
 	    *cmd = doextcmd();
 	    break;
 	    
+	case UICMD_HELP:
+	    arg->argtype = CMD_ARG_NONE;
+	    *cmd = show_help();
+	    break;
+	    
 	case UICMD_REDO:
 	    *cmd = prev_cmd;
 	    *arg = prev_arg;
@@ -133,6 +153,11 @@ static void handle_internal_cmd(struct nh_cmd_desc **cmd,
 	    
 	case UICMD_PREVMSG:
 	    doprev_message();
+	    *cmd = NULL;
+	    break;
+	    
+	case UICMD_WHATDOES:
+	    show_whatdoes();
 	    *cmd = NULL;
 	    break;
     }
@@ -201,7 +226,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	    key = curses_msgwin(line);
 	};
 	
-	if (key == '\033' || key == '\n') /* filter out ESC and enter */
+	if (key == '\033') /* filter out ESC */
 	    continue;
 	
 	*count = multi;
@@ -342,6 +367,63 @@ static struct nh_cmd_desc *doextcmd(void)
     free(idxmap);
     
     return retval;
+}
+
+
+static void show_whatdoes(void)
+{
+    char buf[BUFSZ];
+    int key = curses_msgwin("What command?");
+    
+    if (!keymap[key])
+	snprintf(buf, BUFSZ, "'%s' is not bound to any command.", curses_keyname(key));
+    else
+	snprintf(buf, BUFSZ, "'%s': %s - %s", curses_keyname(key), keymap[key]->name,
+		 keymap[key]->desc);
+    curses_msgwin(buf);
+}
+
+
+static struct nh_cmd_desc* show_help(void)
+{
+    struct nh_menuitem *items;
+    int i, n, size, icount, selected[1];
+    
+    size = 10;
+    items = malloc(size * sizeof(struct nh_menuitem));
+    icount = 0;
+    
+    add_menu_item(items, size, icount, 1, "List of game commands.", 0, FALSE);
+    add_menu_item(items, size, icount, 2, "Information what a given key does.", 0, FALSE);
+    add_menu_item(items, size, icount, 3, "List of options.", 0, FALSE);
+    
+    for (i = 0; i < cmdcount; i++)
+	if (commandlist[i].flags & CMD_HELP)
+	    add_menu_item(items, size, icount, 100+i, commandlist[i].desc, 0, FALSE);
+    
+    n = curses_display_menu(items, icount, "Help topics:", PICK_ONE, selected);
+    free(items);
+    switch(selected[0]) {
+	case 1:
+	    show_keymap_menu(TRUE);
+	    break;
+	    
+	case 2:
+	    show_whatdoes();
+	    break;
+	    
+	case 3:
+	    print_options();
+	    break;
+	    
+	default:
+	    n = selected[0] - 100;
+	    if (n >= 0 && n < cmdcount)
+		return &commandlist[n];
+	    break;
+    }
+    
+    return NULL;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -560,7 +642,6 @@ static void add_keylist_command(struct nh_cmd_desc *cmd,
 {
     char buf[BUFSZ];
     char keys[BUFSZ];
-    const char *kname;
     int i, kl;
     
     keys[0] = '\0';
@@ -571,10 +652,7 @@ static void add_keylist_command(struct nh_cmd_desc *cmd,
 		keys[kl++] = ' ';
 		keys[kl] = '\0';
 	    }
-	    kname = keyname(i);
-	    if (kname[0] == ' ')
-		kname = "SPACE";
-	    strcat(keys, kname);
+	    strcat(keys, curses_keyname(i));
 	}
     }
     
@@ -588,7 +666,6 @@ static void add_keylist_command(struct nh_cmd_desc *cmd,
 static void command_settings_menu(struct nh_cmd_desc *cmd)
 {
     char buf[BUFSZ];
-    const char *kname;
     int i, n, size = 10, icount, selection[1];
     struct nh_menuitem *items = malloc(sizeof(struct nh_menuitem) * size);
     
@@ -596,10 +673,7 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	icount = 0;
 	for (i = 0; i < KEY_MAX; i++) {
 	    if (keymap[i] == cmd) {
-		kname = keyname(i);
-		if (kname[0] == ' ')
-		    kname = "SPACE";
-		sprintf(buf, "delete key %s", kname);
+		sprintf(buf, "delete key %s", curses_keyname(i));
 		add_menu_item(items, size, icount, i, buf, 0, FALSE);
 	    }
 	}
@@ -626,6 +700,10 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	else if (selection[0] == -1) { /* add a key */
 	    sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
 	    i = curses_msgwin(buf);
+	    if (i == KEY_ESC) {
+		curses_msgwin("Sorry, ESC cannot be bound to any function.");
+		continue;
+	    }
 	    if (keymap[i]) {
 		sprintf(buf, "That key is already in use by \"%s\"! Replace?", keymap[i]->name);
 		if ('y' != curses_yn_function(buf, "yn", 'n'))
@@ -697,10 +775,11 @@ void show_keymap_menu(boolean readonly)
 	    icount++;
 	}
 	
-	set_menuitem(&items[icount++], 0, MI_TEXT, "", 0, FALSE);
-	set_menuitem(&items[icount++], RESET_BINDINGS_ID, MI_NORMAL,
-		     "!!!\tReset all keybindings to built-in defaults\t!!!", 0, FALSE);
-
+	if (!readonly) {
+	    set_menuitem(&items[icount++], 0, MI_TEXT, "", 0, FALSE);
+	    set_menuitem(&items[icount++], RESET_BINDINGS_ID, MI_NORMAL,
+			"!!!\tReset all keybindings to built-in defaults\t!!!", 0, FALSE);
+	}
 	n = curses_display_menu_core(items, icount, "Keymap", readonly ? PICK_NONE :
 	                        PICK_ONE, NULL, 0, 0, COLS, LINES, set_command_keys);
     } while(n > 0);

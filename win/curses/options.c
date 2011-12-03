@@ -434,6 +434,44 @@ void display_options(boolean change_birth_opt)
     write_config();
 }
 
+
+void print_options(void)
+{
+    struct nh_menuitem *items;
+    int i, icount, size;
+    char buf[BUFSZ];
+    struct nh_option_desc *options;
+
+    icount = 0; size = 10;
+    items = malloc(sizeof(struct nh_menuitem) * size);
+    
+    add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
+    options = nh_get_options(CURRENT_BIRTH_OPTIONS);
+    for (i = 0; options[i].name; i++) {
+	snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
+	add_menu_txt(items, size, icount, buf, MI_TEXT);
+    }
+    add_menu_txt(items, size, icount, "", MI_TEXT);
+    
+    add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
+    options = nh_get_options(GAME_OPTIONS);
+    for (i = 0; options[i].name; i++) {
+	snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
+	add_menu_txt(items, size, icount, buf, MI_TEXT);
+    }
+    add_menu_txt(items, size, icount, "", MI_TEXT);
+
+    /* add tty-specific options */
+    add_menu_txt(items, size, icount, "TTY interface options:", MI_HEADING);
+    for (i = 0; tty_options[i].name; i++) {
+	snprintf(buf, BUFSZ, "%s\t%s", tty_options[i].name, tty_options[i].helptxt);
+	add_menu_txt(items, size, icount, buf, MI_TEXT);
+    }
+
+    curses_display_menu(items, icount, "Available options:", PICK_NONE, NULL);
+    free(items);
+}
+
 /*----------------------------------------------------------------------------*/
 
 static void autopickup_rules_help(void)

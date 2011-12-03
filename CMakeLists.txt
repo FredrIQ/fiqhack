@@ -1,4 +1,4 @@
-# CMakeLists.txt for NetHack post3.4.3
+# CMakeLists.txt for NetHack 4.0.0
 
 cmake_minimum_required (VERSION 2.6)
 project (NetHack)
@@ -43,10 +43,7 @@ install(FILES ${NetHack_BINARY_DIR}/dat/dungeon ${NetHack_BINARY_DIR}/dat/option
               ${NetHack_BINARY_DIR}/dat/data
               ${NetHack_BINARY_DIR}/dat/logfile ${NetHack_BINARY_DIR}/dat/oracles
         DESTINATION ${DATADIR})
-install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/help
-              ${NetHack_SOURCE_DIR}/dat/hh ${NetHack_SOURCE_DIR}/dat/cmdhelp
-              ${NetHack_SOURCE_DIR}/dat/history ${NetHack_SOURCE_DIR}/dat/opthelp
-              ${NetHack_SOURCE_DIR}/dat/wizhelp
+install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/history
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
         DESTINATION ${LIBDIR})

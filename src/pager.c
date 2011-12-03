@@ -14,8 +14,6 @@ static int describe_object(int x, int y, int votyp, char *buf);
 static void describe_mon(int x, int y, int monnum, char *buf);
 static void checkfile(const char *inp, struct permonst *, boolean, boolean);
 static int do_look(boolean);
-static boolean help_menu(int *);
-static char *dowhatdoes_core(char, char *);
 
 /* The explanations below are also used when the user gives a string
  * for blessed genocide, so no text should wholly contain any later
@@ -723,118 +721,13 @@ int doidtrap(void)
 	return 0;
 }
 
-char *dowhatdoes_core(char q, char *cbuf)
+
+int dolicense(void)
 {
-	dlb *fp;
-	char bufr[BUFSZ];
-	char *buf = &bufr[6], *ep, ctrl, meta;
-
-	fp = dlb_fopen(CMDHELPFILE, "r");
-	if (!fp) {
-		pline("Cannot open data file!");
-		return 0;
-	}
-
-  	ctrl = ((q <= '\033') ? (q - 1 + 'A') : 0);
-	meta = ((0x80 & q) ? (0x7f & q) : 0);
-	while (dlb_fgets(buf,BUFSZ-6,fp)) {
-	    if ((ctrl && *buf=='^' && *(buf+1)==ctrl) ||
-		(meta && *buf=='M' && *(buf+1)=='-' && *(buf+2)==meta) ||
-		*buf==q) {
-		ep = strchr(buf, '\n');
-		if (ep) *ep = 0;
-		if (ctrl && buf[2] == '\t'){
-			buf = bufr + 1;
-			strncpy(buf, "^?      ", 8);
-			buf[1] = ctrl;
-		} else if (meta && buf[3] == '\t'){
-			buf = bufr + 2;
-			strncpy(buf, "M-?     ", 8);
-			buf[2] = meta;
-		} else if (buf[1] == '\t'){
-			buf = bufr;
-			buf[0] = q;
-			strncpy(buf+1, "       ", 7);
-		}
-		dlb_fclose(fp);
-		strcpy(cbuf, buf);
-		return cbuf;
-	    }
-	}
-	dlb_fclose(fp);
-	return NULL;
-}
-
-int dowhatdoes(void)
-{
-	char bufr[BUFSZ];
-	char q, *reslt;
-
-	q = query_key("What command?", NULL);
-
-	reslt = dowhatdoes_core(q, bufr);
-	if (reslt)
-		pline("%s", reslt);
-	else
-		pline("I've never heard of such commands.");
+	display_file(LICENSE, TRUE);
 	return 0;
 }
 
-/* data for help_menu() */
-static const char *help_menu_items[] = {
-/* 0*/	"Long description of the game and commands.",
-/* 1*/	"List of game commands.",
-/* 2*/	"Concise history of NetHack.",
-/* 3*/	"Info on a character in the game display.",
-/* 4*/	"Info on what a given key does.",
-/* 5*/	"Longer explanation of game options.",
-/* 6*/	"The NetHack license.",
-#define WIZHLP_SLOT 7
-	"List of wizard-mode commands.",
-	"",
-	NULL
-};
-
-static boolean help_menu(int *sel)
-{
-	struct nh_menuitem items[SIZE(help_menu_items)];
-	int results[SIZE(help_menu_items)];
-	int i, n;
-	
-	if (!wizard) help_menu_items[WIZHLP_SLOT] = "",
-		     help_menu_items[WIZHLP_SLOT+1] = NULL;
-
-	for (i = 0; help_menu_items[i]; i++)
-	    set_menuitem(&items[i], (*help_menu_items[i]) ? i+1 : 0, MI_NORMAL,
-			 help_menu_items[i], 0, FALSE);
-	
-	n = display_menu(items, i, "Select one item:", PICK_ONE, results);
-	if (n > 0) {
-	    *sel = results[0] - 1;
-	    return TRUE;
-	}
-	return FALSE;
-}
-
-int dohelp(void)
-{
-	int sel = 0;
-
-	if (help_menu(&sel)) {
-		switch (sel) {
-			case  0:  display_file(HELP, TRUE);  break;
-			case  1:  display_file(SHELP, TRUE);  break;
-			case  2:  dohistory();  break;
-			case  3:  dowhatis();  break;
-			case  4:  dowhatdoes();  break;
-			case  5:  display_file(OPTIONFILE, TRUE);  break;
-			case  6:  display_file(LICENSE, TRUE);  break;
-			/* handle WIZHLP_SLOT */
-			default: display_file(DEBUGHELP, TRUE);  break;
-		}
-	}
-	return 0;
-}
 
 int dohistory(void)
 {

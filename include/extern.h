@@ -1086,8 +1086,7 @@ extern struct nh_autopickup_rules *parse_autopickup_rules(const char *str);
 extern int dowhatis(void);
 extern int doquickwhatis(void);
 extern int doidtrap(void);
-extern int dowhatdoes(void);
-extern int dohelp(void);
+extern int dolicense(void);
 extern int dohistory(void);
 
 /* ### pickup.c ### */

@@ -245,6 +245,7 @@ extern void cleanup_messages(void);
 
 /* options.c */
 extern void display_options(boolean change_birth_opt);
+extern void print_options(void);
 extern void init_options(void);
 extern void read_nh_config(void);
 extern void write_config(void);
