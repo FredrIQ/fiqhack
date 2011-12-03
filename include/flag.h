@@ -130,7 +130,6 @@ struct instance_flags {
 	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
 
 	/* Items which belong in flags, but are here to allow save compatibility */
-	boolean  lootabc;	/* use "a/b/c" rather than "o/i/b" when looting */
 	boolean  show_uncursed;	/* always show uncursed items as such */
 	boolean  showrace;	/* show hero glyph by race rather than by role */
 	int	 runmode;	/* update screen display during run moves */

@@ -112,7 +112,6 @@ static const struct nh_option_desc const_options[] = {
     {"disclose",	"wether to disclose information at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit",		"the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
-    {"lootabc",		"use a/b/c rather than o/i/b when looting",	OPTTYPE_BOOL, { VFALSE }},
     {"menustyle",	"user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
     {"packorder",	"the inventory order of the items in your pack", OPTTYPE_STRING, {"$\")[%?+!=/(*`0_"}},
     {"pickup_burden",	"maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
@@ -161,8 +160,6 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"female", &flags.female},
 	{"legacy", &flags.legacy},
 	{"lit_corridor", &flags.lit_corridor},
-	{"lootabc", &iflags.lootabc},
-	/* for menu debugging only*/
 	{"pickup_thrown", &iflags.pickup_thrown},
 	{"prayconfirm", &flags.prayconfirm},
 	{"pushweapon", &flags.pushweapon},

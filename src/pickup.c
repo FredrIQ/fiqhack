@@ -1847,29 +1847,21 @@ static int in_or_out_menu(const char *prompt, struct obj *obj,
 {
     struct nh_menuitem items[3];
     int selection[1];
-    char buf[BUFSZ], mlet;
+    char buf[BUFSZ];
     int n, nr = 0;
-    const char *menuselector = "abc";
 
     if (outokay) {
-	mlet = iflags.lootabc ? menuselector[nr] : 'o';
 	sprintf(buf,"Take something out of %s", the(xname(obj)));
-	set_menuitem(&items[nr], 1, MI_NORMAL, buf, mlet, FALSE);
-	nr++;
+	set_menuitem(&items[nr], 1, MI_NORMAL, buf, 'o', FALSE);
     }
     
     if (inokay) {
-	mlet = iflags.lootabc ? menuselector[nr] : 'i';
 	sprintf(buf,"Put something into %s", the(xname(obj)));
-	set_menuitem(&items[nr], 2, MI_NORMAL, buf, mlet, FALSE);
-	nr++;
+	set_menuitem(&items[nr], 2, MI_NORMAL, buf, 'i', FALSE);
     }
     
-    if (outokay && inokay) {
-	mlet = iflags.lootabc ? menuselector[nr] : 'b';
-	set_menuitem(&items[nr], 3, MI_NORMAL, "Both of the above", mlet, FALSE);
-	nr++;
-    }
+    if (outokay && inokay)
+	set_menuitem(&items[nr], 3, MI_NORMAL, "Both of the above", 'b', FALSE);
     
     n = display_menu(items, nr, prompt, PICK_ONE, selection);
     if (n > 0)
