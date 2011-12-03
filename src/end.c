@@ -985,39 +985,53 @@ int num_genocides(void)
 static void list_genocided(char defquery, boolean ask)
 {
     int i;
-    int ngenocided;
-    char c;
+    int ngenocided, nextincted;
+    char c, *query, *title;
     char buf[BUFSZ];
     struct menulist menu;
 
-    ngenocided = num_genocides();
+    ngenocided = nextincted = 0;
+    for (i = LOW_PM; i < NUMMONS; ++i) {
+	if (mvitals[i].mvflags & G_GENOD)
+	    ngenocided++;
+	if ((mvitals[i].mvflags & G_GONE) && !(mons[i].geno & G_UNIQ))
+	    nextincted++;
+    }
 
     /* genocided species list */
-    if (ngenocided != 0) {
-	c = ask ? yn_function("Do you want a list of species genocided?",
-			      ynqchars, defquery) : defquery;
+    if (ngenocided != 0 || nextincted != 0) {
+	query = nextincted ? "Do you want a list of species genocided or extinct?" :
+	                     "Do you want a list of species genocided?";
+	c = ask ? yn_function(query, ynqchars, defquery) : defquery;
 	if (c == 'q') done_stopprint++;
 	if (c == 'y') {
 	    init_menulist(&menu);
-	    add_menutext(&menu, "Genocided species:");
-	    add_menutext(&menu, "");
-
 	    for (i = LOW_PM; i < NUMMONS; i++)
-		if (mvitals[i].mvflags & G_GENOD) {
+		if ((mvitals[i].mvflags & G_GENOD) ||
+		    ((mvitals[i].mvflags & G_EXTINCT) && !(mons[i].geno & G_UNIQ))) {
 		    if ((mons[i].geno & G_UNIQ) && i != PM_HIGH_PRIEST)
 			sprintf(buf, "%s%s",
 				!type_is_pname(&mons[i]) ? "" : "the ",
 				mons[i].mname);
 		    else
 			strcpy(buf, makeplural(mons[i].mname));
+		
+		    if( !(mvitals[i].mvflags & G_GENOD) )
+			strcat(buf, " (extinct)");
 		    add_menutext(&menu, buf);
 		}
 
 	    add_menutext(&menu, "");
 	    sprintf(buf, "%d species genocided.", ngenocided);
-	    add_menutext(&menu, buf);
+	    if (ngenocided)
+		add_menutext(&menu, buf);
+	    sprintf(buf, "%d species extinct.", nextincted);
+	    if (nextincted)
+		add_menutext(&menu, buf);
 
-	    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	    title = nextincted ? "Genocided or extinct species:" :
+	                         "Genocided species:";
+	    display_menu(menu.items, menu.icount, title, PICK_NONE, NULL);
 	    free(menu.items);
 	}
     }
