@@ -917,7 +917,7 @@ int pick_align(int rolenum, int racenum, int gendnum, int pickhow)
     return ROLE_NONE;
 }
 
-void rigid_role_checks(void)
+static void rigid_role_checks(int *irole, int *irace, int *igend, int *ialign)
 {
     /* Some roles are limited to a single race, alignment, or gender and
      * calling this routine prior to XXX_player_selection() will help
@@ -927,47 +927,38 @@ void rigid_role_checks(void)
      * single possible selection, otherwise it returns ROLE_NONE.
      *
      */
-    if (flags.initrole == ROLE_RANDOM) {
+    if (*irole == ROLE_RANDOM) {
 	/* If the role was explicitly specified as ROLE_RANDOM
 	 * via -uXXXX-@ then choose the role in here to narrow down
 	 * later choices. Pick a random role in this case.
 	 */
-	flags.initrole = pick_role(flags.initrace, flags.initgend,
-					flags.initalign, PICK_RANDOM);
-	if (flags.initrole < 0)
-	    flags.initrole = randrole();
+	*irole = pick_role(*irace, *igend, *ialign, PICK_RANDOM);
+	if (*irole < 0)
+	    *irole = randrole();
     }
-    if (flags.initrole != ROLE_NONE) {
-	if (flags.initrace == ROLE_NONE)
-	     flags.initrace = pick_race(flags.initrole, flags.initgend,
-						flags.initalign, PICK_RIGID);
-	if (flags.initalign == ROLE_NONE)
-	     flags.initalign = pick_align(flags.initrole, flags.initrace,
-						flags.initgend, PICK_RIGID);
-	if (flags.initgend == ROLE_NONE)
-	     flags.initgend = pick_gend(flags.initrole, flags.initrace,
-						flags.initalign, PICK_RIGID);
+    if (*irole != ROLE_NONE) {
+	if (*irace == ROLE_NONE)
+	     *irace = pick_race(*irole, *igend, *ialign, PICK_RIGID);
+	if (*ialign == ROLE_NONE)
+	     *ialign = pick_align(*irole, *irace, *igend, PICK_RIGID);
+	if (*igend == ROLE_NONE)
+	     *igend = pick_gend(*irole, *irace, *ialign, PICK_RIGID);
     }
 }
 
 
 void nh_get_role_defaults(int *out_role, int *out_race, int *out_gend, int *out_align)
 {
-    if (*out_role != ROLE_NONE && *out_role != ROLE_RANDOM)
-	flags.initrole = *out_role;
-    if (*out_race != ROLE_NONE && *out_race != ROLE_RANDOM)
-	flags.initrace = *out_race;
-    if (*out_gend != ROLE_NONE && *out_gend != ROLE_RANDOM)
-	flags.initgend = *out_gend;
-    if (*out_align != ROLE_NONE && *out_align != ROLE_RANDOM)
-	flags.initalign = *out_align;
+    if (*out_role == ROLE_NONE)
+	*out_role = flags.init_role;
+    if (*out_race == ROLE_NONE)
+	*out_race = flags.init_race;
+    if (*out_gend == ROLE_NONE)
+	*out_gend = flags.init_gend;
+    if (*out_align == ROLE_NONE)
+	*out_align = flags.init_align;
 
-    rigid_role_checks();
-
-    *out_role = flags.initrole;
-    *out_race = flags.initrace;
-    *out_gend = flags.initgend;
-    *out_align = flags.initalign;
+    rigid_role_checks(out_role, out_race, out_gend, out_align);
 }
 
 
@@ -1323,42 +1314,42 @@ void role_init(void)
 {
 	int alignmnt;
 
-	/* Check for a valid role.  Try flags.initrole first. */
-	if (!nh_validrole(flags.initrole)) {
+	/* Check for a valid role.  Try u.initrole first. */
+	if (!nh_validrole(u.initrole)) {
 	    /* Try the player letter second */
-	    if ((flags.initrole = nh_str2role(pl_character)) < 0)
+	    if ((u.initrole = nh_str2role(pl_character)) < 0)
 	    	/* None specified; pick a random role */
-	    	flags.initrole = randrole();
+	    	u.initrole = randrole();
 	}
 
 	/* We now have a valid role index.  Copy the role name back. */
 	/* This should become OBSOLETE */
-	strcpy(pl_character, roles[flags.initrole].name.m);
+	strcpy(pl_character, roles[u.initrole].name.m);
 	pl_character[PL_CSIZ-1] = '\0';
 
 	/* Check for a valid race */
-	if (!nh_validrace(flags.initrole, flags.initrace))
-	    flags.initrace = randrace(flags.initrole);
+	if (!nh_validrace(u.initrole, u.initrace))
+	    u.initrace = randrace(u.initrole);
 
 	/* Check for a valid gender.  If new game, check both initgend
 	 * and female.  On restore, assume flags.female is correct. */
 	if (flags.pantheon == -1) {	/* new game */
-	    if (!nh_validgend(flags.initrole, flags.initrace, flags.female))
+	    if (!nh_validgend(u.initrole, u.initrace, flags.female))
 		flags.female = !flags.female;
 	}
-	if (!nh_validgend(flags.initrole, flags.initrace, flags.initgend))
+	if (!nh_validgend(u.initrole, u.initrace, u.initgend))
 	    /* Note that there is no way to check for an unspecified gender. */
-	    flags.initgend = flags.female;
+	    u.initgend = flags.female;
 
 	/* Check for a valid alignment */
-	if (!nh_validalign(flags.initrole, flags.initrace, flags.initalign))
+	if (!nh_validalign(u.initrole, u.initrace, u.initalign))
 	    /* Pick a random alignment */
-	    flags.initalign = randalign(flags.initrole, flags.initrace);
-	alignmnt = aligns[flags.initalign].value;
+	    u.initalign = randalign(u.initrole, u.initrace);
+	alignmnt = aligns[u.initalign].value;
 
 	/* Initialize urole and urace */
-	urole = roles[flags.initrole];
-	urace = races[flags.initrace];
+	urole = roles[u.initrole];
+	urace = races[u.initrace];
 
 	/* Fix up the quest leader */
 	pm_leader = mons[urole.ldrnum];
@@ -1387,7 +1378,7 @@ void role_init(void)
 
 	/* Fix up the god names */
 	if (flags.pantheon == -1) {		/* new game */
-	    flags.pantheon = flags.initrole;	/* use own gods */
+	    flags.pantheon = u.initrole;	/* use own gods */
 	    while (!roles[flags.pantheon].lgod)	/* unless they're missing */
 		flags.pantheon = randrole();
 	}

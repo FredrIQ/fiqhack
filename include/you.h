@@ -185,6 +185,11 @@ struct you {
 	xchar	skill_record[P_SKILL_LIMIT];	/* skill advancements */
 	struct skills weapon_skills[P_NUM_SKILLS];
 	boolean twoweap;		/* KMH -- Using two-weapon combat */
+	
+	int	 initrole;	/* starting role      (index into roles[])   */
+	int	 initrace;	/* starting race      (index into races[])   */
+	int	 initgend;	/* starting gender    (index into genders[]) */
+	int	 initalign;	/* starting alignment (index into aligns[])  */
 
 };	/* end of `struct you' */
 

@@ -54,7 +54,7 @@ void init_artilist(void)
 static void hack_artifacts(void)
 {
 	struct artifact *art;
-	int alignmnt = aligns[flags.initalign].value;
+	int alignmnt = aligns[u.initalign].value;
 
 	/* Fix up the alignments of "gift" artifacts */
 	for (art = artilist+1; art->otyp; art++)

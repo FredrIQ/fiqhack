@@ -610,16 +610,16 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	}
 	/* birth options */
 	else if (!strcmp("align", option->name)) {
-		flags.initalign = option->value.e;
+		flags.init_align = option->value.e;
 	}
 	else if (!strcmp("gender", option->name)) {
-		flags.initgend = option->value.e;
+		flags.init_gend = option->value.e;
 	}
 	else if (!strcmp("race", option->name)) {
-		flags.initrace = option->value.e;
+		flags.init_race = option->value.e;
 	}
 	else if (!strcmp("role", option->name)) {
-		flags.initrole = option->value.e;
+		flags.init_role = option->value.e;
 	}
 	
 	else if (!strcmp("catname", option->name)) {

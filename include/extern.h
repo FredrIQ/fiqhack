@@ -1286,7 +1286,6 @@ extern int randrole(void);
 extern void role_init(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
-extern void rigid_role_checks(void);
 
 /* ### rumors.c ### */
 

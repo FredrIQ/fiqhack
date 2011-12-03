@@ -221,8 +221,8 @@ boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
     if (irole == ROLE_NONE || irace == ROLE_NONE ||
 	igend == ROLE_NONE || ialign == ROLE_NONE)
 	goto err_out;
-    flags.initrole = irole; flags.initrace = irace;
-    flags.initgend = igend; flags.initalign = ialign;
+    u.initrole = irole; u.initrace = irace;
+    u.initgend = igend; u.initalign = ialign;
     
     log_newgame(fd, turntime, playmode);
     
@@ -291,8 +291,8 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	program_state.game_running = 1;
 	post_init_tasks();
     } else {
-	nh_start_game(fd, namebuf, flags.initrole, flags.initrace,
-		      flags.initgend, flags.initalign, playmode);
+	nh_start_game(fd, namebuf, u.initrole, u.initrace,
+		      u.initgend, u.initalign, playmode);
 	/* try replaying instead */
 	error = ERR_REPLAY_FAILED;
 	replay_run_cmdloop(FALSE);
@@ -847,7 +847,7 @@ static void welcome(
 	sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
     if (!urole.name.f &&
 	    (new_game ? (urole.allow & ROLE_GENDMASK) == (ROLE_MALE|ROLE_FEMALE) :
-	     currentgend != flags.initgend))
+	     currentgend != u.initgend))
 	sprintf(eos(buf), " %s", genders[currentgend].adj);
 
     pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s."

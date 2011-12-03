@@ -406,8 +406,8 @@ int dorecover(int infd)
 	mread(&mf, &flags, sizeof(struct flag));
 	flags.bypasses = 0;	/* never use the saved value of bypasses */
 
-	role_init();	/* Reset the initial role, race, gender, and alignment */
 	mread(&mf, &u, sizeof(struct you));
+	role_init();	/* Reset the initial role, race, gender, and alignment */
 	mread(&mf, &youmonst, sizeof(youmonst));
 	set_uasmon(); /* fix up youmonst.data */
 	mread(&mf, &moves, sizeof(moves));

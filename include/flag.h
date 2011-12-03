@@ -100,12 +100,16 @@ struct flag {
 	 * is initialized or restored (specifically, after role_init()
 	 * is called).
 	 */
-	int	 initrole;	/* starting role      (index into roles[])   */
-	int	 initrace;	/* starting race      (index into races[])   */
-	int	 initgend;	/* starting gender    (index into genders[]) */
-	int	 initalign;	/* starting alignment (index into aligns[])  */
-	int	 randomall;	/* randomly assign everything not specified */
-	int	 pantheon;	/* deity selection for priest character */
+	
+	/* Default starting role, race, gender and alignment, as per the options.
+	 * The actual values in use for an ongoing game are in struct you. */
+	int	init_role; /* (index into roles[])   */
+	int	init_race; /* (index into races[])   */
+	int	init_gend; /* (index into genders[]) */
+	int	init_align;/* (index into aligns[])  */
+	
+	int randomall;	/* randomly assign everything not specified */
+	int pantheon;	/* deity selection for priest character */
 	
 	/* birth option flags */
 	boolean  elbereth_enabled; /* should the E-word repel monsters? */

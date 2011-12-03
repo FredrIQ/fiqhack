@@ -864,9 +864,9 @@ static boolean minimal_enlightenment(void)
 	sprintf(buf, fmtstr, "race", urace.noun);
 	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 	sprintf(buf, fmtstr, "role",
-		(flags.initgend && urole.name.f) ? urole.name.f : urole.name.m);
+		(u.initgend && urole.name.f) ? urole.name.f : urole.name.m);
 	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	sprintf(buf, fmtstr, "gender", genders[flags.initgend].adj);
+	sprintf(buf, fmtstr, "gender", genders[u.initgend].adj);
 	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
 
 	/* Starting alignment */

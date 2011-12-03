@@ -590,7 +590,7 @@ int newhp(void)
 	    if (urace.hpadv.inrnd > 0) hp += rnd(urace.hpadv.inrnd);
 
 	    /* Initialize alignment stuff */
-	    u.ualign.type = aligns[flags.initalign].value;
+	    u.ualign.type = aligns[u.initalign].value;
 	    u.ualign.record = urole.initrecord;
 
 		return hp;

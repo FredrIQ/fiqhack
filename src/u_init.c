@@ -501,12 +501,9 @@ void u_init(void)
 	int i;
 	struct trobj *trobj_list = NULL;
 
-	flags.female = flags.initgend;
+	flags.female = u.initgend;
 	flags.beginner = 1;
-
-	/* zero u, including pointer values --
-	 * necessary when aborting from a failed restore */
-	memset(&u, 0, sizeof(u));
+	
 	u.ustuck = NULL;
 
 	u.uz.dlevel = 1;
@@ -538,7 +535,7 @@ void u_init(void)
 	for (i = 0; i <= MAXSPELL; i++) spl_book[i].sp_id = NO_SPELL;
 	u.ublesscnt = 300;			/* no prayers just yet */
 	u.ualignbase[A_CURRENT] = u.ualignbase[A_ORIGINAL] = u.ualign.type =
-			aligns[flags.initalign].value;
+			aligns[u.initalign].value;
 	u.ulycn = NON_PM;
 
 	u.ubirthday = turntime;

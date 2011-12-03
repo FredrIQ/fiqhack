@@ -460,13 +460,13 @@ void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
     *seed = strtoul(next_log_token(), NULL, 16);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
-    flags.initrole = nh_str2role(next_log_token());
-    flags.initrace = nh_str2race(next_log_token());
-    flags.initgend = nh_str2gend(next_log_token());
-    flags.initalign = nh_str2align(next_log_token());
+    u.initrole = nh_str2role(next_log_token());
+    u.initrace = nh_str2race(next_log_token());
+    u.initgend = nh_str2gend(next_log_token());
+    u.initalign = nh_str2align(next_log_token());
     
-    if (flags.initrole == ROLE_NONE || flags.initrace == ROLE_NONE ||
-	flags.initgend == ROLE_NONE || flags.initalign == ROLE_NONE)
+    if (u.initrole == ROLE_NONE || u.initrace == ROLE_NONE ||
+	u.initgend == ROLE_NONE || u.initalign == ROLE_NONE)
 	terminate();
     
     replay_read_commandlist();
@@ -691,8 +691,8 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
     mread(&mf, &sg_flags, sizeof(struct flag));
     flags.bypasses = 0;	/* never use the saved value of bypasses */
 
-    role_init();	/* Reset the initial role, race, gender, and alignment */
     mread(&mf, &sg_you, sizeof(struct you));
+    role_init(); /* set up stuff related to the role (quest, ...). needed here? */
     mread(&mf, &sg_youmonst, sizeof(youmonst));
     set_uasmon(); /* fix up youmonst.data */
     mread(&mf, &sg_moves, sizeof(moves));

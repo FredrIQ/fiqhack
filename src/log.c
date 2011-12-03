@@ -151,17 +151,17 @@ void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
     logfile = logfd;
     /* FIXME: needs file locking */
     
-    if (flags.initgend == 1 && roles[flags.initrole].name.f)
-	role = roles[flags.initrole].name.f;
+    if (u.initgend == 1 && roles[u.initrole].name.f)
+	role = roles[u.initrole].name.f;
     else
-	role = roles[flags.initrole].name.m;
+	role = roles[u.initrole].name.m;
 
     lprintf("NHGAME inpr %08x NetHack %d.%d.%d\n", 0, VERSION_MAJOR,
 	    VERSION_MINOR, PATCHLEVEL);
     
     base64_encode(plname, encbuf);
     lprintf("%x %x %s %s %s %s %s\n", rnd_seed, playmode, encbuf, role,
-	    races[flags.initrace].noun, genders[flags.initgend].adj, aligns[flags.initalign].adj);
+	    races[u.initrace].noun, genders[u.initgend].adj, aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();
 }
