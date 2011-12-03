@@ -1813,7 +1813,7 @@ static int menu_loot(int retry, struct obj *container, boolean put_in)
 	}
     } else {
 	mflags = INVORDER_SORT;
-	if (put_in && flags.invlet_constant) mflags |= USE_INVLET;
+	if (put_in) mflags |= USE_INVLET;
 	sprintf(buf,"%s what?", put_in ? putin : takeout);
 	n = query_objlist(buf, put_in ? invent : container->cobj,
 			  mflags, &obj_pick_list, PICK_ANY,

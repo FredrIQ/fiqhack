@@ -25,7 +25,6 @@ struct flag {
 	boolean  female;
 	boolean  forcefight;
 	boolean  friday13;	/* it's Friday the 13th */
-	boolean  invlet_constant; /* let objects keep their inventory symbol */
 	boolean  legacy;	/* print game entry "story" */
 	boolean  lit_corridor;	/* show a dark corr as lit if it is in sight */
 	boolean  made_amulet;

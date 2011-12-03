@@ -23,7 +23,6 @@ static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
 static int identify(struct obj *);
 static const char *dfeature_at(int,int,char *);
-static void reassign(void);
 
 
 enum obj_use_status {
@@ -265,7 +264,7 @@ Adjust hero attributes as necessary.
 */
 struct obj *addinv(struct obj *obj)
 {
-	struct obj *otmp, *prev;
+	struct obj *otmp;
 
 	if (obj->where != OBJ_FREE)
 	    panic("addinv: obj not free");
@@ -274,21 +273,17 @@ struct obj *addinv(struct obj *obj)
 	addinv_core1(obj);
 
 	/* merge if possible; find end of chain in the process */
-	for (prev = 0, otmp = invent; otmp; prev = otmp, otmp = otmp->nobj)
+	for (otmp = invent; otmp; otmp = otmp->nobj)
 	    if (merged(&otmp, &obj)) {
 		obj = otmp;
 		goto added;
 	    }
+	
 	/* didn't merge, so insert into chain */
-	if (flags.invlet_constant || !prev) {
-	    if (flags.invlet_constant) assigninvlet(obj);
-	    obj->nobj = invent;		/* insert at beginning */
-	    invent = obj;
-	    if (flags.invlet_constant) reorder_invent();
-	} else {
-	    prev->nobj = obj;		/* insert at end */
-	    obj->nobj = 0;
-	}
+	assigninvlet(obj);
+	obj->nobj = invent;		/* insert at beginning */
+	invent = obj;
+	reorder_invent();
 	obj->where = OBJ_INVENT;
 
 added:
@@ -753,10 +748,6 @@ struct obj *getobj(const char *let, const char *word)
 
 	ilet = 'a';
 	for (otmp = invent; otmp; otmp = otmp->nobj) {
-	    if (!flags.invlet_constant)
-		if (otmp->invlet != GOLD_SYM) /* don't reassign this */
-		    otmp->invlet = ilet;	/* reassign() */
-	    
 	    if (!*let || strchr(let, otmp->oclass)
 		|| (useboulder && otmp->otyp == BOULDER)) {
 		bp[foo++] = otmp->invlet;
@@ -1062,10 +1053,6 @@ void identify_pack(int id_limit)
 /* should of course only be called for things in invent */
 static char obj_to_let(struct obj *obj)
 {
-	if (!flags.invlet_constant) {
-		obj->invlet = NOINVSYM;
-		reassign();
-	}
 	return obj->invlet;
 }
 
@@ -1091,7 +1078,7 @@ char *xprname(struct obj *obj,
 	      long quan)	/* if non-0, print this quantity, not obj->quan */
 {
     static char li[BUFSZ];
-    boolean use_invlet = flags.invlet_constant && let != CONTAINED_SYM;
+    boolean use_invlet = let != CONTAINED_SYM;
     long savequan = 0;
 
     if (quan && obj) {
@@ -1228,9 +1215,6 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	    pline("Not carrying anything.");
 	    return 0;
 	}
-
-	/* oxymoron? temporarily assign permanent inventory letters */
-	if (!flags.invlet_constant) reassign();
 
 	if (lets && strlen(lets) == 1) {
 	    /* when only one item of interest, use pline instead of menus */
@@ -1375,8 +1359,6 @@ static void dounpaid(void)
 
     totcost = 0;
     num_so_far = 0;	/* count of # printed so far */
-    if (!flags.invlet_constant)
-	reassign();
 
     init_menulist(&menu);
     do {
@@ -1485,8 +1467,7 @@ int dotypeinv(void)
 	}
 	
 	struct object_pick *dummy;
-	if (query_objlist(NULL, invent,
-		    (flags.invlet_constant ? USE_INVLET : 0)|INVORDER_SORT,
+	if (query_objlist(NULL, invent, USE_INVLET | INVORDER_SORT,
 		    &dummy, PICK_NONE, this_type_only) > 0)
 	    free(dummy);
 	return 0;
@@ -2058,16 +2039,6 @@ void free_invbuf(void)
 }
 
 
-void reassign(void)
-{
-	int i;
-	struct obj *obj;
-
-	for (obj = invent, i = 0; obj; obj = obj->nobj, i++)
-		obj->invlet = (i < 26) ? ('a'+i) : ('A'+i-26);
-	lastinvnr = i;
-}
-
 int doorganize(void)	/* inventory organizer by Del Lamb */
 {
 	struct obj *obj, *otmp;
@@ -2078,7 +2049,6 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	char allowall[2];
 	const char *adj_type;
 
-	if (!flags.invlet_constant) reassign();
 	/* get a pointer to the object the user wants to organize */
 	allowall[0] = ALL_CLASSES; allowall[1] = '\0';
 	if (!(obj = getobj(allowall,"adjust"))) return 0;
@@ -2141,7 +2111,7 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 			otmp = otmp->nobj;
 		}
 
-	/* inline addinv (assuming flags.invlet_constant and !merged) */
+	/* inline addinv (assuming !merged) */
 	obj->invlet = let;
 	obj->nobj = invent; /* insert at beginning */
 	obj->where = OBJ_INVENT;
