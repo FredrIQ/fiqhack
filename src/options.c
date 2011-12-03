@@ -606,8 +606,7 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 		    free(iflags.ap_rules);
 		    iflags.ap_rules = NULL;
 		}
-		if (program_state.game_running)
-		    iflags.ap_rules = copy_autopickup_rules(option->value.ar);
+		iflags.ap_rules = copy_autopickup_rules(option->value.ar);
 	}
 	/* birth options */
 	else if (!strcmp("align", option->name)) {

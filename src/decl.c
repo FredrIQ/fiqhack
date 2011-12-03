@@ -214,7 +214,11 @@ int curline;
 void init_data(void)
 {
     boolean in_restore = program_state.restoring;
+    
+    /* iflags may already contain valid, important data, because init_data() runs
+     * as part of the game init sequence after options have been set, etc. */
     boolean nolog = iflags.disable_log;
+    struct nh_autopickup_rules *rules = iflags.ap_rules;
     moves = 1;
     
     memset(&program_state, 0, sizeof(program_state));
@@ -261,6 +265,7 @@ void init_data(void)
     
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;
+    iflags.ap_rules = rules;
     flags.moonphase = 10; /* invalid value, so that the first call to realtime_tasks will dtrt */
     lastinvnr = 51;
     flags.soundok = 1;
