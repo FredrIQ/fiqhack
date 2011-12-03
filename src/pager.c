@@ -393,7 +393,7 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
 /*
  * Look in the "data" file for more info.  Called if the user typed in the
  * whole name (user_typed_name == TRUE), or we've found a possible match
- * with a character/glyph and flags.help is TRUE.
+ * with a character/glyph.
  */
 static void checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
 		      boolean without_asking)
@@ -663,7 +663,7 @@ static int do_look(boolean quick)
 	    pline("%s.", out_str);
 	    /* check the data file for information about this thing */
 	    if (found == 1 && ans != LOOK_QUICK && ans != LOOK_ONCE &&
-			(ans == LOOK_VERBOSE || (flags.help && !quick))) {
+			(ans == LOOK_VERBOSE || !quick)) {
 		checkfile(firstmatch, NULL, FALSE, ans == LOOK_VERBOSE);
 	    }
 	} else {
