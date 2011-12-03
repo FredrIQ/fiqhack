@@ -230,7 +230,7 @@ void transfer_lights(struct level *oldlev, struct level *newlev)
 	/* associate all global light sources with the new level */
 	if (is_global) {
 	    *prev = curr->next;
-	    curr = newlev->lev_lights;
+	    curr->next = newlev->lev_lights;
 	    newlev->lev_lights = curr;
 	} else {
 	    prev = &(*prev)->next;
