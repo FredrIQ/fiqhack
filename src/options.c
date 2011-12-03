@@ -135,7 +135,6 @@ static const struct nh_option_desc const_options[] = {
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
     {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"$\")[%?+!=/(*`0_"}},
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
-    {"pickup_types", "types of objects to pick up automatically", OPTTYPE_STRING, {NULL}},
     {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
