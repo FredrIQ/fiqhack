@@ -1050,6 +1050,8 @@ void under_ground(int mode)
 void see_monsters(void)
 {
     struct monst *mon;
+    
+    if (!level) return; /* can be called during startup, before any level exists */
 
     for (mon = level->monlist; mon; mon = mon->nmon) {
 	if (DEADMONSTER(mon)) continue;
