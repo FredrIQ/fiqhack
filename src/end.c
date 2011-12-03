@@ -32,7 +32,7 @@ static boolean check_survival(int how, char *kilbuf);
 static long calc_score(int how);
 static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
-static boolean should_query_disclose_option(int,char *);
+static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *,boolean,boolean);
 
 #define done_stopprint program_state.stopprint
@@ -193,39 +193,20 @@ void panic(const char *str, ...)
 	done(PANICKED);
 }
 
-static boolean should_query_disclose_option(int category, char *defquery)
+static boolean should_query_disclose_options(char *defquery)
 {
-    int idx;
-    char *dop = strchr(disclosure_options, category);
-
-    if (dop && defquery) {
-	idx = dop - disclosure_options;
-	if (idx < 0 || idx > (NUM_DISCLOSURE_OPTIONS - 1)) {
-	    impossible(
-		   "should_query_disclose_option: bad disclosure index %d %c",
-		       idx, category);
-	    *defquery = DISCLOSE_PROMPT_DEFAULT_YES;
-	    return TRUE;
-	}
-	if (flags.end_disclose[idx] == DISCLOSE_YES_WITHOUT_PROMPT) {
-	    *defquery = 'y';
-	    return FALSE;
-	} else if (flags.end_disclose[idx] == DISCLOSE_NO_WITHOUT_PROMPT) {
-	    *defquery = 'n';
-	    return FALSE;
-	} else if (flags.end_disclose[idx] == DISCLOSE_PROMPT_DEFAULT_YES) {
-	    *defquery = 'y';
-	    return TRUE;
-	} else if (flags.end_disclose[idx] == DISCLOSE_PROMPT_DEFAULT_NO) {
-	    *defquery = 'n';
-	    return TRUE;
-	}
-    }
-    if (defquery)
-	impossible("should_query_disclose_option: bad category %c", category);
-    else
+    if (!defquery) {
 	impossible("should_query_disclose_option: null defquery");
-    return TRUE;
+	return TRUE;
+    }
+	
+    switch (flags.end_disclose) {
+	default: /* fall through */
+	case DISCLOSE_PROMPT_DEFAULT_YES: *defquery = 'y'; return TRUE;
+	case DISCLOSE_YES_WITHOUT_PROMPT: *defquery = 'y'; return FALSE;
+	case DISCLOSE_PROMPT_DEFAULT_NO: *defquery = 'n'; return TRUE;
+	case DISCLOSE_NO_WITHOUT_PROMPT: *defquery = 'n'; return FALSE;
+    }
 }
 
 
@@ -233,7 +214,7 @@ static void disclose(int how, boolean taken)
 {
 	char	c = 0, defquery;
 	char	qbuf[QBUFSZ];
-	boolean ask;
+	boolean ask = should_query_disclose_options(&defquery);
 
 	if (invent) {
 	    if (taken)
@@ -242,7 +223,6 @@ static void disclose(int how, boolean taken)
 	    else
 		strcpy(qbuf,"Do you want your possessions identified?");
 
-	    ask = should_query_disclose_option('i', &defquery);
 	    if (!done_stopprint) {
 		c = ask ? yn_function(qbuf, ynqchars, defquery) : defquery;
 		if (c == 'y') {
@@ -259,7 +239,6 @@ static void disclose(int how, boolean taken)
 	    }
 	}
 
-	ask = should_query_disclose_option('a', &defquery);
 	if (!done_stopprint) {
 	    c = ask ? yn_function("Do you want to see your attributes?",
 				  ynqchars, defquery) : defquery;
@@ -268,15 +247,12 @@ static void disclose(int how, boolean taken)
 	    if (c == 'q') done_stopprint++;
 	}
 
-	ask = should_query_disclose_option('v', &defquery);
 	if (!done_stopprint)
 	    list_vanquished(defquery, ask);
 
-	ask = should_query_disclose_option('g', &defquery);
 	if (!done_stopprint)
 	    list_genocided(defquery, ask);
 
-	ask = should_query_disclose_option('c', &defquery);
 	if (!done_stopprint) {
 	    c = ask ? yn_function("Do you want to see your conduct?",
 				  ynqchars, defquery) : defquery;
@@ -787,7 +763,7 @@ void done(int how)
 
 	win_pause(P_MESSAGE);
 
-	if (strcmp(flags.end_disclose, "none") && how != PANICKED)
+	if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT && how != PANICKED)
 		disclose(how, taken);
 	
 	begin_dump(how);

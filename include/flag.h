@@ -70,8 +70,7 @@ struct flag {
 #define DISCLOSE_PROMPT_DEFAULT_NO	'n'
 #define DISCLOSE_YES_WITHOUT_PROMPT	'+'
 #define DISCLOSE_NO_WITHOUT_PROMPT	'-'
-	char	 end_disclose[NUM_DISCLOSURE_OPTIONS + 1];  /* disclose various info
-								upon exit */
+	char	 end_disclose;  /* disclose various info upon exit */
 	char	 menu_style;	/* User interface style setting */
 
 	/* KMH, role patch -- Variables used during startup.

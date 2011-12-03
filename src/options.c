@@ -126,16 +126,12 @@ static const struct nh_option_desc const_options[] = {
     {"verbose",		"print more commentary during the game",	OPTTYPE_BOOL, { VTRUE }},
     
     /* complicated options */
-    {"disclose_inventory", "the kinds of information to disclose at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"disclose_attribs", "disclose your attributes at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"disclose_vanquished", "disclose the list of vanquished enemies at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"disclose_genocided", "disclose which monsters were genocided at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"disclose_conduct", "disclose your conduct at end of the game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
+    {"disclose",  "wether to disclose information at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
+    {"fruit",     "the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
     {"packorder", "the inventory order of the items in your pack", OPTTYPE_STRING, {"$\")[%?+!=/(*`0_"}},
     {"pickup_burden",  "maximum burden picked up before prompt", OPTTYPE_ENUM, {(void*)MOD_ENCUMBER}},
-    {"runmode", "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
+    {"runmode",   "display frequency when `running' or `travelling'", OPTTYPE_ENUM, {(void*)RUN_LEAP}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -291,11 +287,7 @@ void init_opt_struct(void)
 	build_race_spec();
 	
 	/* initialize option definitions */
-	find_option(options, "disclose_inventory")->e = disclose_spec;
-	find_option(options, "disclose_attribs")->e = disclose_spec;
-	find_option(options, "disclose_vanquished")->e = disclose_spec;
-	find_option(options, "disclose_genocided")->e = disclose_spec;
-	find_option(options, "disclose_conduct")->e = disclose_spec;
+	find_option(options, "disclose")->e = disclose_spec;
 	find_option(options, "fruit")->s.maxlen = PL_FSIZ;
 	find_option(options, "menustyle")->e = menustyle_spec;
 	find_option(options, "pickup_burden")->e = pickup_burden_spec;
@@ -566,20 +558,8 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	else if (is_ui)
 	    return ui_option_callback(option);
 	/* regular non-boolean options */
-	else if (!strcmp("disclose_inventory", option->name)) {
-		flags.end_disclose[0] = option->value.e;
-	}
-	else if (!strcmp("disclose_attribs", option->name)) {
-		flags.end_disclose[1] = option->value.e;
-	}
-	else if (!strcmp("disclose_genocided", option->name)) {
-		flags.end_disclose[2] = option->value.e;
-	}
-	else if (!strcmp("disclose_vanquished", option->name)) {
-		flags.end_disclose[3] = option->value.e;
-	}
-	else if (!strcmp("disclose_conduct", option->name)) {
-		flags.end_disclose[4] = option->value.e;
+	else if (!strcmp("disclose", option->name)) {
+		flags.end_disclose = option->value.e;
 	}
 	else if (!strcmp("fruit", option->name)) {
 		strncpy(pl_fruit, option->value.s, PL_FSIZ);
