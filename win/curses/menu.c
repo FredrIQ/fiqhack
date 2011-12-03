@@ -79,7 +79,7 @@ static void layout_menu(struct gamewin *gw, int x1, int y1, int x2, int y2)
     if (mdat->innerwidth > scrwidth - 4)/* make sure there is space for window borders */
 	mdat->innerwidth = scrwidth - 4;
     mdat->width = mdat->innerwidth + 4; /* border + space */
-    mdat->colpos[mdat->maxcol+1] = mdat->innerwidth;
+    mdat->colpos[mdat->maxcol+1] = mdat->innerwidth+1;
     
     if (mdat->title && mdat->width < strlen(mdat->title) + 4) {
 	mdat->innerwidth = strlen(mdat->title);
@@ -128,11 +128,14 @@ void draw_menu(struct gamewin *gw)
 	if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel)
 	    wprintw(mdat->content, "%c %c ", item->accel,
 		    mdat->selected[mdat->offset + i] ? '+' : '-');
-	wprintw(mdat->content, "%-*s", mdat->colpos[1]-1, colstrs[0]);
-	for (j = 1; j <= col; j++) {
-	    wmove(mdat->content, i, mdat->colpos[j]);
-	    wprintw(mdat->content, "%-*s", mdat->colpos[j+1]-mdat->colpos[j]-1, colstrs[j]);
-	}
+	
+	if (col)
+	    for (j = 0; j <= col; j++) {
+		wprintw(mdat->content, "%-*s", mdat->colpos[j+1]-mdat->colpos[j]-1, colstrs[j]);
+		wmove(mdat->content, i, mdat->colpos[j+1]);
+	    }
+	else
+	    waddstr(mdat->content, caption);
 	
 	if (item->role == MI_HEADING)
 	    wattroff(mdat->content, settings.menu_headings);
