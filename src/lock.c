@@ -417,17 +417,13 @@ int doforce(void)
 	char qbuf[QBUFSZ];
 
 	if (!uwep ||	/* proper type test */
-	   (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep) &&
-	    uwep->oclass != ROCK_CLASS) ||
-	   (objects[uwep->otyp].oc_skill < P_DAGGER) ||
-	   (objects[uwep->otyp].oc_skill > P_LANCE) ||
-	   uwep->otyp == FLAIL || uwep->otyp == AKLYS
-#ifdef KOPS
-	   || uwep->otyp == RUBBER_HOSE
-#endif
-	  ) {
-	    pline("You can't force anything without a %sweapon.",
-		  (uwep) ? "proper " : "");
+	    (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep) &&
+	     uwep->oclass != ROCK_CLASS) ||
+	    (objects[uwep->otyp].oc_skill < P_DAGGER) ||
+	    (objects[uwep->otyp].oc_skill > P_LANCE) ||
+	    uwep->otyp == FLAIL || uwep->otyp == AKLYS ||
+	    uwep->otyp == RUBBER_HOSE) {
+	    pline("You can't force anything without a %sweapon.", (uwep) ? "proper " : "");
 	    return 0;
 	}
 

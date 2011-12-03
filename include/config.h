@@ -41,17 +41,6 @@
 
 /* #define STRNCMPI */	/* compiler/library has the strncmpi function */
 
-/*
- * Section 4:  THE FUN STUFF!!!
- *
- * Conditional compilation of special options are controlled here.
- * If you define the following flags, you will add not only to the
- * complexity of the game but also to the size of the load module.
- */
-
-/* monsters & objects */
-#define KOPS		/* Keystone Kops by Scott R. Turner */
-
 #include "global.h"	/* Define everything else according to choices above */
 
 #endif /* CONFIG_H */

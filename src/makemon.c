@@ -263,14 +263,12 @@ static void m_initweap(struct monst *mtmp)
 		    }
 		}
 		break;
-#ifdef KOPS
 	    case S_KOP:		/* create Keystone Kops with cream pies to
 				 * throw. As suggested by KAA.	   [MRS]
 				 */
 		if (!rn2(4)) m_initthrow(mtmp, CREAM_PIE, 2);
 		if (!rn2(3)) mongets(mtmp,(rn2(2)) ? CLUB : RUBBER_HOSE);
 		break;
-#endif
 	    case S_ORC:
 		if (rn2(2)) mongets(mtmp, ORCISH_HELM);
 		switch (mm != PM_ORC_CAPTAIN ? mm :

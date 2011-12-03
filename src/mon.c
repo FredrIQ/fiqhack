@@ -1286,7 +1286,6 @@ void mondead(struct monst *mtmp)
 	if (mtmp->m_id == quest_status.leader_m_id)
 	    quest_status.leader_is_dead = TRUE;
 
-#ifdef KOPS
 	if (mtmp->data->mlet == S_KOP) {
 	    /* Dead Kops may come back. */
 	    switch(rnd(5)) {
@@ -1300,7 +1299,7 @@ void mondead(struct monst *mtmp)
 			break;
 	    }
 	}
-#endif
+
 	if (mtmp->iswiz) wizdead();
 	if (mtmp->data->msound == MS_NEMESIS) nemdead();
 	if (level->locations[mtmp->mx][mtmp->my].mem_invis)
@@ -1605,10 +1604,7 @@ void xkilled(struct monst *mtmp, int dest)
 	} else if (x != u.ux || y != u.uy) {
 		/* might be here after swallowed */
 		if (!rn2(6) && !(mvitals[mndx].mvflags & G_NOCORPSE)
-#ifdef KOPS
-					&& mdat->mlet != S_KOP
-#endif
-							) {
+					&& mdat->mlet != S_KOP) {
 			int typ;
 
 			otmp = mkobj_at(RANDOM_CLASS, level, x, y, TRUE);
