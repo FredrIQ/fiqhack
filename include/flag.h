@@ -45,7 +45,6 @@ struct flag {
 	boolean  soundok;	/* ok to tell about sounds heard */
 	boolean  sparkle;	/* show "resisting" special FX (Scott Bigham) */
 	boolean  tombstone;	/* print tombstone */
-	boolean  toptenwin;	/* ending list in window instead of stdout */
 	boolean  verbose;	/* max battle info */
 	boolean  prayconfirm;	/* confirm before praying */
 	unsigned ident;		/* social security number for each monster */
