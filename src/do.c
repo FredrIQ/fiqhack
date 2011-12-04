@@ -1083,8 +1083,6 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		movebubbles();
 
 	if (level_info[new_ledger].flags & FORGOTTEN) {
-	    forget_map(ALL_MAP);	/* forget the map */
-	    forget_traps();		/* forget all traps too */
 	    familiar = TRUE;
 	    level_info[new_ledger].flags &= ~FORGOTTEN;
 	}

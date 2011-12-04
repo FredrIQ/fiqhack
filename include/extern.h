@@ -1234,8 +1234,6 @@ extern boolean is_chargeable(struct obj *);
 extern void recharge(struct obj *,int);
 extern void forget_objects(int);
 extern void forget_levels(int);
-extern void forget_traps(void);
-extern void forget_map(int);
 extern int seffects(struct obj *);
 extern void litroom(boolean,struct obj *);
 extern void do_genocide(int);

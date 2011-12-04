@@ -463,34 +463,34 @@ void forget_objects(int percent)
 
 
 /* Forget some or all of map (depends on parameters). */
-void forget_map(int howmuch)
+static void forget_map(struct level *lev, boolean forget_all)
 {
 	int zx, zy;
 
-	if (In_sokoban(&u.uz))
+	if (In_sokoban(&lev->z))
 	    return;
 
 	known = TRUE;
 	for (zx = 0; zx < COLNO; zx++) for(zy = 0; zy < ROWNO; zy++)
-	    if (howmuch & ALL_MAP || rn2(7)) {
+	    if (forget_all || rn2(7)) {
 		/* Zonk all memory of this location. */
-		level->locations[zx][zy].seenv = 0;
-		level->locations[zx][zy].waslit = 0;
-		level->locations[zx][zy].mem_bg = S_unexplored;
-		level->locations[zx][zy].mem_trap = 0;
-		level->locations[zx][zy].mem_obj = 0;
-		level->locations[zx][zy].mem_obj_mn = 0;
-		level->locations[zx][zy].mem_invis = 0;
+		lev->locations[zx][zy].seenv = 0;
+		lev->locations[zx][zy].waslit = 0;
+		lev->locations[zx][zy].mem_bg = S_unexplored;
+		lev->locations[zx][zy].mem_trap = 0;
+		lev->locations[zx][zy].mem_obj = 0;
+		lev->locations[zx][zy].mem_obj_mn = 0;
+		lev->locations[zx][zy].mem_invis = 0;
 	    }
 }
 
 /* Forget all traps on the level. */
-void forget_traps(void)
+static void forget_traps(struct level *lev)
 {
 	struct trap *trap;
 
 	/* forget all traps (except the one the hero is in :-) */
-	for (trap = level->lev_traps; trap; trap = trap->ntrap)
+	for (trap = lev->lev_traps; trap; trap = trap->ntrap)
 	    if ((trap->tx != u.ux || trap->ty != u.uy) && (trap->ttyp != HOLE))
 		trap->tseen = 0;
 }
@@ -538,6 +538,8 @@ void forget_levels(int percent)
 	count = ((count * percent) + 50) / 100;
 	for (i = 0; i < count; i++) {
 	    level_info[indices[i]].flags |= FORGOTTEN;
+	    forget_map(levels[indices[i]], TRUE);
+	    forget_traps(levels[indices[i]]);
 	}
 }
 
@@ -559,8 +561,8 @@ static void forget(int howmuch)
 
 	if (Punished) u.bc_felt = 0;	/* forget felt ball&chain */
 
-	forget_map(howmuch);
-	forget_traps();
+	forget_map(level, (howmuch & ALL_MAP));
+	forget_traps(level);
 
 	/* 1 in 3 chance of forgetting some levels */
 	if (!rn2(3)) forget_levels(rn2(25));
