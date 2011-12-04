@@ -1177,10 +1177,11 @@ static int arti_invoke(struct obj *obj)
 	switch(oart->inv_prop) {
 	case TAMING: {
 	    struct obj pseudo;
+	    boolean unused_known;
 
 	    pseudo = zeroobj;	/* neither cursed nor blessed */
 	    pseudo.otyp = SCR_TAMING;
-	    seffects(&pseudo);
+	    seffects(&pseudo, &unused_known);
 	    break;
 	  }
 	case HEALING: {

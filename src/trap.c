@@ -2435,12 +2435,13 @@ static void domagictrap(void)
 	     case 20:
 		    /* uncurse stuff */
 		   {	struct obj pseudo;
+			boolean dummy;
 			long save_conf = HConfusion;
 
 			pseudo = zeroobj;   /* neither cursed nor blessed */
 			pseudo.otyp = SCR_REMOVE_CURSE;
 			HConfusion = 0L;
-			seffects(&pseudo);
+			seffects(&pseudo, &dummy);
 			HConfusion = save_conf;
 			break;
 		   }

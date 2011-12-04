@@ -143,8 +143,8 @@ void init_data(void);
 
 /* ### detect.c ### */
 
-extern int gold_detect(struct obj *);
-extern int food_detect(struct obj *);
+extern int gold_detect(struct obj *sobj, boolean *scr_known);
+extern int food_detect(struct obj *sobj, boolean *scr_known);
 extern int object_detect(struct obj *,int);
 extern int monster_detect(struct obj *,int);
 extern int trap_detect(struct obj *);
@@ -1234,7 +1234,7 @@ extern boolean is_chargeable(struct obj *);
 extern void recharge(struct obj *,int);
 extern void forget_objects(int);
 extern void forget_levels(int);
-extern int seffects(struct obj *);
+extern int seffects(struct obj *scroll, boolean *known);
 extern void litroom(boolean,struct obj *);
 extern void do_genocide(int);
 extern void punish(struct obj *);

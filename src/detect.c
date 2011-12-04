@@ -9,8 +9,6 @@
 #include "hack.h"
 #include "artifact.h"
 
-extern boolean known;	/* from read.c */
-
 static struct obj *o_in(struct obj*, char);
 static struct obj *o_material(struct obj*,unsigned);
 static void do_dknown_of(struct obj *);
@@ -132,7 +130,7 @@ static boolean clear_stale_map(char oclass, unsigned material)
 }
 
 /* look for gold, on the floor or in monsters' possession */
-int gold_detect(struct obj *sobj)
+int gold_detect(struct obj *sobj, boolean *scr_known)
 {
     struct obj *obj;
     struct monst *mtmp;
@@ -140,21 +138,20 @@ int gold_detect(struct obj *sobj)
     struct obj *temp;
     boolean stale;
 
-    known = stale = clear_stale_map(COIN_CLASS,
-				(unsigned)(sobj->blessed ? GOLD : 0));
+    *scr_known = stale = clear_stale_map(COIN_CLASS, sobj->blessed ? GOLD : 0);
 
     /* look for gold carried by monsters (might be in a container) */
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
     	if (DEADMONSTER(mtmp)) continue;	/* probably not needed in this case but... */
 	if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
-	    known = TRUE;
+	    *scr_known = TRUE;
 	    goto outgoldmap;	/* skip further searching */
 	} else for (obj = mtmp->minvent; obj; obj = obj->nobj)
 	    if (sobj->blessed && o_material(obj, GOLD)) {
-	    	known = TRUE;
+	    	*scr_known = TRUE;
 	    	goto outgoldmap;
 	    } else if (o_in(obj, COIN_CLASS)) {
-		known = TRUE;
+		*scr_known = TRUE;
 		goto outgoldmap;	/* skip further searching */
 	    }
     }
@@ -162,15 +159,15 @@ int gold_detect(struct obj *sobj)
     /* look for gold objects */
     for (obj = level->objlist; obj; obj = obj->nobj) {
 	if (sobj->blessed && o_material(obj, GOLD)) {
-	    known = TRUE;
+	    *scr_known = TRUE;
 	    if (obj->ox != u.ux || obj->oy != u.uy) goto outgoldmap;
 	} else if (o_in(obj, COIN_CLASS)) {
-	    known = TRUE;
+	    *scr_known = TRUE;
 	    if (obj->ox != u.ux || obj->oy != u.uy) goto outgoldmap;
 	}
     }
 
-    if (!known) {
+    if (!*scr_known) {
 	/* no gold found on floor or monster's inventory.
 	   adjust message if you have gold in your inventory */
 	if (sobj) {
@@ -246,7 +243,7 @@ outgoldmap:
 
 /* returns 1 if nothing was detected		*/
 /* returns 0 if something was detected		*/
-int food_detect(struct obj *sobj)
+int food_detect(struct obj *sobj, boolean *scr_known)
 {
     struct obj *obj;
     struct monst *mtmp;
@@ -273,7 +270,7 @@ int food_detect(struct obj *sobj)
     }
     
     if (!ct && !ctu) {
-	known = stale && !confused;
+	*scr_known = stale && !confused;
 	if (stale) {
 	    doredraw();
 	    pline("You sense a lack of %s nearby.", what);
@@ -296,7 +293,7 @@ int food_detect(struct obj *sobj)
 	}
 	return !stale;
     } else if (!ct) {
-	known = TRUE;
+	*scr_known = TRUE;
 	pline("You %s %s nearby.", sobj ? "smell" : "sense", what);
 	if (sobj && sobj->blessed) {
 		if (!u.uedibility) pline("Your %s starts to tingle.", body_part(NOSE));
@@ -304,7 +301,7 @@ int food_detect(struct obj *sobj)
 	}
     } else {
 	struct obj *temp;
-	known = TRUE;
+	*scr_known = TRUE;
 	cls();
 	u.uinwater = 0;
 	for (obj = level->objlist; obj; obj = obj->nobj)

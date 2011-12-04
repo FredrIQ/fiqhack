@@ -14,8 +14,6 @@
 	((mndx) == urace.malenum || \
 	 (urace.femalenum != NON_PM && (mndx) == urace.femalenum))
 
-boolean	known;
-
 static const char readable[] =
 		   { ALL_CLASSES, SCROLL_CLASS, SPBOOK_CLASS, 0 };
 static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
@@ -34,7 +32,7 @@ static void set_lit(int,int,void *);
 
 int doread(struct obj *scroll)
 {
-	boolean confused;
+	boolean confused, known;
 
 	known = FALSE;
 	if (check_capacity(NULL)) return 0;
@@ -131,7 +129,7 @@ int doread(struct obj *scroll)
 			is_silent(youmonst.data) ? "understand" : "pronounce");
 	  }
 	}
-	if (!seffects(scroll))  {
+	if (!seffects(scroll, &known))  {
 		if (!objects[scroll->otyp].oc_name_known) {
 		    if (known) {
 			makeknown(scroll->otyp);
@@ -470,7 +468,6 @@ static void forget_map(struct level *lev, boolean forget_all)
 	if (In_sokoban(&lev->z))
 	    return;
 
-	known = TRUE;
 	for (zx = 0; zx < COLNO; zx++) for(zy = 0; zy < ROWNO; zy++)
 	    if (forget_all || rn2(7)) {
 		/* Zonk all memory of this location. */
@@ -597,7 +594,7 @@ static void maybe_tame(struct monst *mtmp, struct obj *sobj)
 	}
 }
 
-int seffects(struct obj *sobj)
+int seffects(struct obj *sobj, boolean *known)
 {
 	int cval;
 	boolean confused = (Confusion != 0);
@@ -711,7 +708,7 @@ int seffects(struct obj *sobj)
 		if (s) {
 			otmp->spe += s;
 			adj_abon(otmp, s);
-			known = otmp->known;
+			*known = otmp->known;
 		}
 
 		if ((otmp->spe > (special_armor ? 5 : 3)) &&
@@ -742,7 +739,7 @@ int seffects(struct obj *sobj)
 			exercise(A_CON, FALSE);
 			return 1;
 		    } else
-			known = TRUE;
+			*known = TRUE;
 		} else {	/* armor and scroll both cursed */
 		    pline("Your %s %s.", xname(otmp), otense(otmp, "vibrate"));
 		    if (otmp->spe >= -6) {
@@ -840,7 +837,7 @@ int seffects(struct obj *sobj)
 		pline("You don't remember there being any magic words on this scroll.");
 	    else
 		pline("This scroll seems to be blank.");
-	    known = TRUE;
+	    *known = TRUE;
 	    break;
 	case SCR_REMOVE_CURSE:
 	case SPE_REMOVE_CURSE:
@@ -905,7 +902,7 @@ int seffects(struct obj *sobj)
 	    if (create_critters(1 + ((confused || sobj->cursed) ? 12 : 0) +
 				((sobj->blessed || rn2(73)) ? 0 : rnd(4)),
 			confused ? &mons[PM_ACID_BLOB] : NULL))
-		known = TRUE;
+		*known = TRUE;
 	    /* no need to flush monsters; we ask for identification only if the
 	     * monsters are not visible
 	     */
@@ -954,34 +951,34 @@ int seffects(struct obj *sobj)
 		break;
 	case SCR_GENOCIDE:
 		pline("You have found a scroll of genocide!");
-		known = TRUE;
+		*known = TRUE;
 		if (sobj->blessed) do_class_genocide();
 		else do_genocide((!sobj->cursed) | (2 * !!Confusion));
 		break;
 	case SCR_LIGHT:
-		if (!Blind) known = TRUE;
+		if (!Blind) *known = TRUE;
 		litroom(!confused && !sobj->cursed, sobj);
 		break;
 	case SCR_TELEPORTATION:
 		if (confused || sobj->cursed) level_tele();
 		else {
 			if (sobj->blessed && !Teleport_control) {
-				known = TRUE;
+				*known = TRUE;
 				if (yn("Do you wish to teleport?")=='n')
 					break;
 			}
 			tele();
 			if (Teleport_control || !couldsee(u.ux0, u.uy0) ||
 			   (distu(u.ux0, u.uy0) >= 16))
-				known = TRUE;
+				*known = TRUE;
 		}
 		break;
 	case SCR_GOLD_DETECTION:
 		if (confused || sobj->cursed) return trap_detect(sobj);
-		else return gold_detect(sobj);
+		else return gold_detect(sobj, known);
 	case SCR_FOOD_DETECTION:
 	case SPE_DETECT_FOOD:
-		if (food_detect(sobj))
+		if (food_detect(sobj, known))
 			return 1;	/* nothing detected */
 		break;
 	case SPE_IDENTIFY:
@@ -1016,7 +1013,7 @@ int seffects(struct obj *sobj)
 		    iflags.botl = 1;
 		    break;
 		}
-		known = TRUE;
+		*known = TRUE;
 		pline("This is a charging scroll.");
 		otmp = getobj(all_count, "charge");
 		if (!otmp) break;
@@ -1041,7 +1038,7 @@ int seffects(struct obj *sobj)
 				cvt_sdoor_to_door(&level->locations[x][y]);
 		    /* do_mapping() already reveals secret passages */
 		}
-		known = TRUE;
+		*known = TRUE;
 	case SPE_MAGIC_MAPPING:
 		if (level->flags.nommap) {
 		    pline("Your %s spins as something blocks the spell!", body_part(HEAD));
@@ -1058,7 +1055,7 @@ int seffects(struct obj *sobj)
 		}
 		break;
 	case SCR_AMNESIA:
-		known = TRUE;
+		*known = TRUE;
 		forget(	(!sobj->blessed ? ALL_SPELLS : 0) |
 			(!confused || sobj->cursed ? ALL_MAP : 0) );
 		if (Hallucination) /* Ommmmmm! */
@@ -1114,7 +1111,7 @@ int seffects(struct obj *sobj)
 		/* Identify the scroll */
 		pline("The %s rumbles %s you!", ceiling(u.ux,u.uy),
 				sobj->blessed ? "around" : "above");
-		known = 1;
+		*known = TRUE;
 		if (In_sokoban(&u.uz))
 		    change_luck(-1);	/* Sokoban guilt */
 
@@ -1219,7 +1216,7 @@ int seffects(struct obj *sobj)
 	    }
 	    break;
 	case SCR_PUNISHMENT:
-		known = TRUE;
+		*known = TRUE;
 		if (confused || sobj->blessed) {
 			pline("You feel guilty.");
 			break;
@@ -1230,7 +1227,7 @@ int seffects(struct obj *sobj)
 	        coord cc;
 
 		pline("You have found a scroll of stinking cloud!");
-		known = TRUE;
+		*known = TRUE;
 		pline("Where do you want to center the cloud?");
 		cc.x = u.ux;
 		cc.y = u.uy;

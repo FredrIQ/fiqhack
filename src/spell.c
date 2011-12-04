@@ -651,6 +651,7 @@ int spelleffects(int spell, boolean atme)
 	int skill, role_skill;
 	boolean confused = (Confusion != 0);
 	struct obj *pseudo;
+	boolean dummy;
 	coord cc;
 	schar dx, dy, dz;
 
@@ -844,7 +845,7 @@ int spelleffects(int spell, boolean atme)
 	case SPE_MAGIC_MAPPING:
 	case SPE_CREATE_MONSTER:
 	case SPE_IDENTIFY:
-		seffects(pseudo);
+		seffects(pseudo, &dummy);
 		break;
 
 	/* these are all duplicates of potion effects */
