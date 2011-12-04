@@ -71,10 +71,7 @@ static void sigint_handler(int signum)
     if (!game_is_running)
 	return;
     
-    if (settings.ignintr)
-	interrupt_multi = TRUE;
-    else
-	nh_exit(EXIT_REQUEST_QUIT);
+    nh_exit(EXIT_REQUEST_SAVE);
 }
 
 static void setup_signals(void)

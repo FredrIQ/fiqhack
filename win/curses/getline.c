@@ -189,7 +189,7 @@ void curses_getline(const char *query, char *buffer)
 
 /*
  * Implement extended command completion by using this hook into
- * tty_getlin.  Check the characters already typed, if they uniquely
+ * curses_getlin.  Check the characters already typed, if they uniquely
  * identify an extended command, expand the string to the whole
  * command.
  *

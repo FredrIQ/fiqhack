@@ -67,32 +67,30 @@ static const char *const bucnames[] = {"unknown", "blessed", "uncursed", "cursed
 
 #define VTRUE (void*)TRUE
 
-struct nh_option_desc tty_options[] = {
+struct nh_option_desc curses_options[] = {
     {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {NULL}},
     {"blink", "show multiple symbols for each location by switching between them", OPTTYPE_BOOL, { VTRUE }},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, { VTRUE }},    
-    {"status3", "3 line status display", OPTTYPE_BOOL, { VTRUE }},
+    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
     {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { FALSE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
-    {"ignintr", "ignore interrupt signal, including breaks", OPTTYPE_BOOL, { FALSE }},
-    {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
-    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {FALSE}},
-    {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
-    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
-    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
-    {"unicode", "try to use unicode for drawing", OPTTYPE_BOOL, { VTRUE }},
+    {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {}},
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)A_REVERSE}},
     {"msgheight", "message window height", OPTTYPE_INT, {(void*)4}},
     {"msghistory", "number of messages saved for prevmsg", OPTTYPE_INT, {(void*)256}},
     {"optstyle", "option menu display style", OPTTYPE_ENUM, {(void*)OPTSTYLE_FULL}},
-
-    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
     {"scores_own", "show all your own scores in the list", OPTTYPE_BOOL, { FALSE }},
     {"scores_top", "how many top scores to show", OPTTYPE_INT, {(void*)3}},
     {"scores_around", "the number of scores shown around your score", OPTTYPE_INT, {(void*)2}},
+    {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
+    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {FALSE}},
     {"sidebar", "draw the inventory sidebar", OPTTYPE_BOOL, { VTRUE }},    
-    {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {}},
+    {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
+    {"status3", "3 line status display", OPTTYPE_BOOL, { VTRUE }},
+    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
+    {"unicode", "try to use unicode for drawing", OPTTYPE_BOOL, { VTRUE }},
+    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
@@ -102,16 +100,15 @@ struct nh_boolopt_map boolopt_map[] = {
     {"frame", &settings.frame},
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
-    {"status3", &settings.status3},
     {"scores_own", &settings.end_own},
     {"showexp", &settings.showexp},
     {"showscore", &settings.showscore},
     {"sidebar", &settings.sidebar},
     {"standout", &settings.standout},
+    {"status3", &settings.status3},
     {"time", &settings.time},
-    {"use_inverse", &settings.use_inverse},
-    {"ignintr", &settings.ignintr},
     {"unicode", &settings.unicode},
+    {"use_inverse", &settings.use_inverse},
     {NULL, NULL}
 };
 
@@ -174,9 +171,9 @@ boolean option_change_callback(struct nh_option_desc *option)
 static struct nh_option_desc *find_option(const char *name)
 {
     int i;
-    for (i = 0; tty_options[i].name; i++)
-	if (!strcmp(name, tty_options[i].name))
-	    return &tty_options[i];
+    for (i = 0; curses_options[i].name; i++)
+	if (!strcmp(name, curses_options[i].name))
+	    return &curses_options[i];
     
     return NULL;
 }
@@ -197,12 +194,12 @@ void init_options(void)
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
     
-    nh_setup_ui_options(tty_options, boolopt_map, option_change_callback);
+    nh_setup_ui_options(curses_options, boolopt_map, option_change_callback);
     
     /* set up option defaults; this is necessary for options that are not
      * specified in the config file */
-    for (i = 0; tty_options[i].name; i++)
-	nh_set_option(tty_options[i].name, tty_options[i].value, FALSE);
+    for (i = 0; curses_options[i].name; i++)
+	nh_set_option(curses_options[i].name, curses_options[i].value, FALSE);
     
     read_ui_config();
 }
@@ -324,7 +321,7 @@ static boolean get_option_value(struct win_menu *mdat, int idx)
 	case GAME_OPTS:
 	    optlist = nh_get_options(GAME_OPTIONS); break;
 	case UI_OPTS:
-	    optlist = tty_options; break;
+	    optlist = curses_options; break;
 	    
 	default:
 	    return FALSE;
@@ -422,9 +419,9 @@ void display_options(boolean change_birth_opt)
 	    menu_add_options(&items, &size, &icount, GAME_OPTS, nhoptions, FALSE);
 	}
 	
-	/* add tty-specific options */
-	add_menu_txt(items, size, icount, "TTY interface options:", MI_HEADING);
-	menu_add_options(&items, &size, &icount, UI_OPTS, tty_options, FALSE);
+	/* add UI specific options */
+	add_menu_txt(items, size, icount, "Interface options:", MI_HEADING);
+	menu_add_options(&items, &size, &icount, UI_OPTS, curses_options, FALSE);
 	
 	n = curses_display_menu_core(items, icount, "Set what options?", PICK_ONE,
 				NULL, 0, 0, COLS, LINES, get_option_value);
@@ -461,10 +458,10 @@ void print_options(void)
     }
     add_menu_txt(items, size, icount, "", MI_TEXT);
 
-    /* add tty-specific options */
-    add_menu_txt(items, size, icount, "TTY interface options:", MI_HEADING);
-    for (i = 0; tty_options[i].name; i++) {
-	snprintf(buf, BUFSZ, "%s\t%s", tty_options[i].name, tty_options[i].helptxt);
+    /* add UI specific options */
+    add_menu_txt(items, size, icount, "Interface options:", MI_HEADING);
+    for (i = 0; curses_options[i].name; i++) {
+	snprintf(buf, BUFSZ, "%s\t%s", curses_options[i].name, curses_options[i].helptxt);
 	add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
 
@@ -981,7 +978,7 @@ void write_config(void)
     
     fp = open_config_file(uiconfname);
     if (fp) {
-	write_config_options(fp, tty_options);
+	write_config_options(fp, curses_options);
 	fclose(fp);
     }
 }
