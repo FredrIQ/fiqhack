@@ -742,7 +742,7 @@ int buzzmu(struct monst *mtmp, const struct attack  *mattk)
 			  flash_types[ad_to_typ(mattk->adtyp)]);
 		buzz(-ad_to_typ(mattk->adtyp), (int)mattk->damn,
 		     mtmp->mx, mtmp->my, sgn(tbx), sgn(tby));
-	    } else impossible("Monster spell %d cast", mattk->adtyp-1);
+	    }
 	}
 	return 1;
 }
