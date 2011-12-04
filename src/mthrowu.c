@@ -196,7 +196,7 @@ int ohitmon(struct monst *mtmp,	/* accidental target */
 			? "destroyed" : "killed");
 		/* don't blame hero for unknown rolling boulder trap */
 		if (!flags.mon_moving &&
-		    (otmp->otyp != BOULDER || range >= 0 || !otmp->otrapped))
+		    (otmp->otyp != BOULDER || range >= 0 || otmp->otrapped))
 		    xkilled(mtmp,0);
 		else mondied(mtmp);
 	    }
