@@ -812,7 +812,7 @@ int spelleffects(int spell, boolean atme)
 	case SPE_EXTRA_HEALING:
 	case SPE_DRAIN_LIFE:
 	case SPE_STONE_TO_FLESH:
-		if (!(objects[pseudo->otyp].oc_dir == NODIR)) {
+		if (objects[pseudo->otyp].oc_dir != NODIR) {
 			if (atme)
 			    dx = dy = dz = 0;
 			else if (!getdir(NULL, &dx, &dy, &dz)) {
@@ -828,7 +828,7 @@ int spelleffects(int spell, boolean atme)
 				losehp(damage, buf, NO_KILLER_PREFIX);
 			    }
 			} else weffects(pseudo, dx, dy, dz);
-		} else weffects(pseudo, dx, dy, dz);
+		} else weffects(pseudo, 0, 0, 0);
 		update_inventory();	/* spell may modify inventory */
 		break;
 
