@@ -678,10 +678,12 @@ int dodown(void)
 	    return 0;   /* didn't move */
 	}
 	if (!stairs_down && !ladder_down) {
-		if (!(trap = t_at(level, u.ux,u.uy)) ||
+		trap = t_at(level, u.ux, u.uy);
+		boolean can_fall = trap && (trap->ttyp == TRAPDOOR || trap->ttyp == HOLE);
+		if (!trap ||
 			(trap->ttyp != TRAPDOOR && trap->ttyp != HOLE &&
 			 trap->ttyp != PIT)
-			|| !can_fall_thru(level) || !trap->tseen) {
+			|| (!can_fall_thru(level) && can_fall) || !trap->tseen) {
 
 			if (flags.autodig && !flags.nopick &&
 				uwep && is_pick(uwep)) {
