@@ -38,7 +38,6 @@ Changes so far:
 	to determine wether an item should be picked up.
 
 Plans:
-    - fix help, it's horribly out of date
     - annotations
     - make it possible to view replays
     - track player history
