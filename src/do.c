@@ -897,7 +897,10 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	 *  normal vision.
 	 */
 	vision_recalc(2);
-
+	
+	/* mark the level as visited, so that it can be forgotten by amnesia */
+	level_info[ledger_no(&u.uz)].flags |= VISITED;
+	
 	if (iflags.purge_monsters) {
 		/* purge any dead monsters */
 		dmonsfree(level);
@@ -915,7 +918,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	origlev = level;
 	level = NULL;
 	
-	if (!(level_info[new_ledger].flags & LFILE_EXISTS)) {
+	if (!levels[new_ledger]) {
 		/* entering this level for first time; make it now */
 		level = mklev(&u.uz);
 		new = TRUE;	/* made the level */

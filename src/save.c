@@ -138,8 +138,6 @@ void savelev(int fd, xchar levnum, int mode)
 		dmonsfree(lev);
 	}
 
-	if (levnum >= 0 && levnum <= maxledgerno())
-	    level_info[levnum].flags |= VISITED;
 	bwrite(fd,&levnum,sizeof(levnum));
 	bwrite(fd,&lev->z,sizeof(lev->z));
 	bwrite(fd,lev->locations,sizeof(lev->locations));
