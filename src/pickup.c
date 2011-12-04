@@ -384,39 +384,52 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 /* object comparison function for qsort */
 int obj_compare(const void *o1, const void *o2)
 {
-    int cmp, bo1, bo2;
-    struct obj *obj1 = *(struct obj**)o1;
-    struct obj *obj2 = *(struct obj**)o2;
-    
-    /* compare positions in inv_order */
-    char *pos1 = strchr(flags.inv_order, obj1->oclass);
-    char *pos2 = strchr(flags.inv_order, obj2->oclass);
-    if (pos1 != pos2)
-	return pos1 - pos2;
-    
-    /* compare names */
-    cmp = strcmp(cxname2(obj1), cxname2(obj2));
-    if (cmp)
-	return cmp;
-    
-    /* BUC state -> int (sort order: unknown, blessed, cursed, uncursed)
-     * The expr. gives values of 0 (unkn.), 1 (b), 2 (c), 3 (u) */
-    bo1 = obj1->bknown * (3 ^ (obj1->blessed << 1) ^ (obj1->cursed));
-    bo2 = obj2->bknown * (3 ^ (obj2->blessed << 1) ^ (obj2->cursed));
-    if (bo1 != bo2)
-	return bo1 - bo2;
-    
-    /* compare enchantment */
-    if ((obj1->known) && (obj2->known))
-	return obj1->spe - obj2->spe;
-    else if ((obj1->known) && (!obj2->known))
-	/* always sort items with known enchantment after unknown */
-	return 1;
-    else if ((!obj1->known) && (obj2->known))
-	/* always sort items with known enchantment after unknown */
-	return -1;
-    
-    return 0;
+	int cmp, val1, val2;
+	struct obj *obj1 = *(struct obj**)o1;
+	struct obj *obj2 = *(struct obj**)o2;
+	
+	/* compare positions in inv_order */
+	char *pos1 = strchr(flags.inv_order, obj1->oclass);
+	char *pos2 = strchr(flags.inv_order, obj2->oclass);
+	if (pos1 != pos2)
+	    return pos1 - pos2;
+	
+	/* compare names */
+	cmp = strcmp(cxname2(obj1), cxname2(obj2));
+	if (cmp)
+	    return cmp;
+	
+	/* Sort by enchantment.
+	 * Map unknown to -1000, which is comfortably below the range of ->spe. */
+	val1 = obj1->known ? obj1->spe : -1000;
+	val2 = obj2->known ? obj2->spe : -1000;
+	if (val1 != val2)
+	    return val2 - val1; /* Because bigger is better. */
+	
+	/* BUC state -> int (sort order: blessed, uncursed, cursed, unknown)
+	 * blessed = 3, uncursed = 2, cursed = 1, unknown = 0 */
+	val1 = obj1->bknown ? (obj1->blessed + !obj1->cursed + 1) : 0;
+	val2 = obj2->bknown ? (obj2->blessed + !obj2->cursed + 1) : 0;
+	if (val1 != val2)
+	    return val2 - val1;
+	
+	/* Sort by erodeproofing. Map known-invulnerable to 1, and both
+	 * known-vulnerable and unknown-vulnerability to 0. */
+	val1 = obj1->rknown && obj1->oerodeproof;
+	val2 = obj2->rknown && obj2->oerodeproof;
+	if (val1 != val2)
+	    return val2 - val1; /* Because bigger is better. */
+	
+	/* Sort by erosion. The effective amount is what matters. */
+	val1 = greatest_erosion(obj1);
+	val2 = greatest_erosion(obj2);
+	if (val1 != val2)
+	    return val1 - val2; /* Because bigger is WORSE. */
+	
+	if (obj1->greased != obj2->greased)
+	    return obj2->greased - obj1->greased;
+	
+	return 0;
 }
 
 /*
