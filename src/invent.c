@@ -1537,7 +1537,7 @@ const char *dfeature_at(int x, int y, char *buf)
 /* update_location()
  * companion to look_here, this function will fully describe the location
  * for win_list_items,including traps and features. It does not call pline.
- * This function will only list up to 4 items, unless the caller sets
+ * This function will only list up to 4 items if Blind, unless the caller sets
  * all_objects to TRUE. In that case the caller should also perform cockatrice
  * checks. */
 boolean update_location(boolean all_objects)
@@ -1576,13 +1576,13 @@ boolean update_location(boolean all_objects)
 	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
 	
 	for (ocount = 0; otmp; otmp = otmp->nexthere) {
-	    if (all_objects || ocount < 5)
+	    if (!Blind || all_objects || ocount < 5)
 		add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname(otmp),
 			    otmp, FALSE);
 	    ocount++;
 	}
 	
-	if (!all_objects && ocount >= 5) {
+	if (Blind && !all_objects && ocount >= 5) {
 	    sprintf(buf, "There are %s other objects here.",
 		    (ocount <= 10) ? "several" : "many");
 	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
