@@ -1556,8 +1556,6 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 	if (!argtype)
 	    return COMMAND_BAD_ARG;
 	
-	res = 0;
-	
 	if (u.uburied && !cmdlist[command].can_if_buried) {
 	    pline("You can't do that while you are buried!");
 	    res = 0;
