@@ -508,6 +508,7 @@ struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 	lev = levels[dlvl] = alloc_level(NULL);
 
 	mread(mf, &lev->z,sizeof(lev->z));
+	mread(mf, lev->levname, sizeof(lev->levname));
 	mread(mf, lev->locations, sizeof(lev->locations));
 	mread(mf, &lev->lastmoves, sizeof(lev->lastmoves));
 	mread(mf, &lev->upstair, sizeof(stairway));

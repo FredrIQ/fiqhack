@@ -407,6 +407,8 @@ extern boolean Invocation_lev(d_level *);
 extern xchar level_difficulty(void);
 extern schar lev_by_name(const char *);
 extern schar print_dungeon(boolean,schar *,xchar *);
+extern int donamelevel(void);
+extern int dooverview(void);
 
 /* ### eat.c ### */
 

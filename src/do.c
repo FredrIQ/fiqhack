@@ -1172,6 +1172,9 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	else
 	    onquest();
 	assign_level(&u.uz0, &u.uz); /* reset u.uz0 */
+	
+	if (*level->levname)
+	    pline("You named this level: %s.", level->levname);
 
 	/* assume this will always return TRUE when changing level */
 	in_out_region(level, u.ux, u.uy);

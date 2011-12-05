@@ -537,6 +537,7 @@ void forget_levels(int percent)
 	    level_info[indices[i]].flags |= FORGOTTEN;
 	    forget_map(levels[indices[i]], TRUE);
 	    forget_traps(levels[indices[i]]);
+	    levels[indices[i]]->levname[0] = '\0';
 	}
 }
 

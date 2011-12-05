@@ -140,6 +140,7 @@ void savelev(int fd, xchar levnum, int mode)
 
 	bwrite(fd,&levnum,sizeof(levnum));
 	bwrite(fd,&lev->z,sizeof(lev->z));
+	bwrite(fd,lev->levname,sizeof(lev->levname));
 	bwrite(fd,lev->locations,sizeof(lev->locations));
 	bwrite(fd,&lev->lastmoves,sizeof(lev->lastmoves));
 	bwrite(fd,&lev->upstair,sizeof(stairway));

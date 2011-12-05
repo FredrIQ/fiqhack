@@ -69,6 +69,7 @@ static char *enlght_combatinc(const char *,int,int,char *);
 const struct cmd_desc cmdlist[] = {
 	/* "str", "", defkey, altkey, wiz, buried, func, arg*/
 	{"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize, CMD_ARG_NONE | CMD_EXT},
+	{"annotate", "name the current level", 0, 0, TRUE, donamelevel, CMD_ARG_NONE | CMD_EXT},
 	{"apply", "use a tool or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"attributes", "show your attributes", C('x'), 0, TRUE, doattributes, CMD_ARG_NONE},
 	{"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
@@ -102,6 +103,7 @@ const struct cmd_desc cmdlist[] = {
 	{"name", "name a monster, item or type of object", M('n'), 'C', TRUE, do_naming, CMD_ARG_NONE | CMD_EXT},
 	{"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
 	{"open", "open a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE | CMD_ARG_DIR},
+	{"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview, CMD_ARG_NONE | CMD_EXT},
 	{"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE},
 	{"pickup", "take items from the floor", ',', 0, FALSE, dopickup, CMD_ARG_NONE},
 	{"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_ARG_NONE | CMD_EXT},
@@ -159,7 +161,7 @@ const struct cmd_desc cmdlist[] = {
 	{"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE, wiz_mon_polycontrol, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"panic", "(DEBUG) test panic routine (fatal to game)", 0, 0, TRUE, wiz_panic, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"polyself", "(DEBUG) polymorph self", 0, 0, TRUE, wiz_polyself, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
-	{"printdungeon", "(DEBUG) print dungeon structure", C('o'), 0, TRUE, wiz_where, CMD_ARG_NONE | CMD_DEBUG},
+	{"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where, CMD_ARG_NONE | CMD_DEBUG},
 	{"seenv", "(DEBUG) show seen vectors", 0, 0, TRUE, wiz_show_seenv, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"showmap", "(DEBUG) reveal the entire map", C('f'), 0, TRUE, wiz_map, CMD_ARG_NONE | CMD_DEBUG},
 	{"stats", "(DEBUG) show memory statistics", 0, 0, TRUE, wiz_show_stats, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},

@@ -443,6 +443,7 @@ struct wseg {
 
 struct ls_t;
 struct level {
+    char		levname[64]; /* as given by the player via donamelevel */
     struct rm		locations[COLNO][ROWNO];
     struct obj		*objects[COLNO][ROWNO];
     struct monst	*monsters[COLNO][ROWNO];

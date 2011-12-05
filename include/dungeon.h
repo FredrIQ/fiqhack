@@ -87,6 +87,18 @@ typedef struct branch {
 #define BR_PORTAL  3	/* Connection by magic portals (traps) */
 
 
+/* dungeon overview information, generated and used by dooverview */
+struct overview_info {
+	char fountains, sinks, thrones, trees, temples;
+	char altars; /* no of altars outside of temple */
+	char altaralign; /* any combinaton of AM_CHAOTIC, AM_NEUTRAL, AM_LAWFUL */
+	char shopcount;
+	schar shoptype; /* -1: multiple shops */
+	boolean branch, portal; /* branch, magic portal on this level */
+	struct d_level branch_dst, portal_dst; /* where to? */
+};
+
+
 /* A particular dungeon contains num_dunlevs d_levels with dlevel 1..
  * num_dunlevs.  Ledger_start and depth_start are bases that are added
  * to the dlevel of a particular d_level to get the effective ledger_no

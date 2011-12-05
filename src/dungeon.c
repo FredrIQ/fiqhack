@@ -1597,4 +1597,290 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
     return 0;
 }
 
+
+/* add a custom name to the current level */
+int donamelevel(void)
+{
+	char query[QBUFSZ], buf[BUFSZ];
+
+	if (level->levname[0])
+		sprintf(query, "Replace previous name \"%s\" with?", level->levname);
+	else
+		sprintf(query,"What do you want to call this dungeon level?");
+	getlin(query, buf);
+
+	if (buf[0] == '\033')
+	    return 0;
+
+	strncpy(level->levname, buf, sizeof(level->levname)-1);
+	level->levname[sizeof(level->levname)-1] = '\0';
+	return 0;
+}
+
+
+static boolean overview_is_interesting(struct level *lev, struct overview_info *oi)
+{
+	/* not interesting if it hasn't been created yet */
+	if (!lev)
+	    return FALSE;
+	
+	/* interesting if you're on this level */
+	if (lev == level)
+	    return TRUE;
+	
+	/* interesting if it is named ("stash", "danger, demon!") */
+	if (*lev->levname)
+	    return TRUE;
+	
+	/* if overview_scan found _anything_ the level is also interesting */
+	if (oi->fountains || oi->sinks || oi->thrones || oi->trees || oi->temples ||
+	    oi->altars || oi->shopcount || oi->branch || oi->portal)
+	    return TRUE;
+	
+	/* "boring" describes this level very well */
+	return FALSE;
+}
+
+
+static void overview_scan(struct level *lev, struct overview_info *oi)
+{
+	int x, y, rnum, rtyp;
+	struct trap *trap;
+	boolean seen_shop[MAXNROFROOMS * 2];
+	
+	memset(seen_shop, 0, sizeof(seen_shop));
+	memset(oi, 0, sizeof(struct overview_info));
+	if (!lev)
+	    return;
+	
+	for (y = 0; y < ROWNO; y++) {
+	    for (x = 0; x < COLNO; x++) {
+		if (!lev->locations[x][y].seenv)
+		    continue;
+		
+		switch (lev->locations[x][y].mem_bg) {
+		    case S_upstair: case S_dnstair: case S_upladder: case S_dnladder:
+			if (lev->sstairs.sx == x && lev->sstairs.sy == y &&
+			    levels[ledger_no(&lev->sstairs.tolev)]) {
+			    oi->branch = TRUE;
+			    oi->branch_dst = lev->sstairs.tolev;
+			}
+			break;
+		    
+		    case S_fountain:
+			oi->fountains++;
+			break;
+			
+		    case S_sink:
+			oi->sinks++;
+			break;
+			
+		    case S_throne:
+			oi->thrones++; /* don't care about throne rooms */
+			break;
+			
+		    case S_altar:
+			oi->altars++;
+			oi->altaralign |= (lev->locations[x][y].altarmask & AM_MASK);
+			if (lev->locations[x][y].roomno)
+			    oi->temples++;
+			break;
+			
+		    case S_tree:
+			oi->trees++;
+			break;
+			
+		    case S_room:
+			rnum = lev->locations[x][y].roomno;
+			rtyp = lev->rooms[rnum].rtype;
+			if (rtyp >= SHOPBASE && !seen_shop[rnum]) {
+			    seen_shop[rnum] = TRUE;
+			    if (oi->shopcount == 0)
+				oi->shoptype = rtyp - SHOPBASE;
+			    else
+				oi->shoptype = -1; /* multiple shops */
+			    oi->shopcount++;
+			}
+		}
+	    }
+	}
+	
+	/* find the magic portal, if it exists */
+	for (trap = lev->lev_traps; trap; trap = trap->ntrap)
+	    if (trap->tseen && trap->ttyp == MAGIC_PORTAL && levels[ledger_no(&trap->dst)]) {
+		oi->portal = TRUE;
+		oi->portal_dst = trap->dst;
+	    }
+}
+
+
+static void overview_print_dun(char *buf, struct level *lev)
+{
+	int dnum = lev->z.dnum;
+	int depthstart = dungeons[dnum].depth_start;
+	if (dnum == quest_dnum || dnum == knox_level.dnum)
+	    /* The quest and knox should appear to be level 1 to match other text. */
+	    depthstart = 1;
+	
+	/* Sokoban lies about dunlev_ureached and we should suppress
+	 * the negative numbers in the endgame. */
+	if (dungeons[dnum].dunlev_ureached == 1 ||
+	    dnum == sokoban_dnum || In_endgame(&lev->z))
+	    sprintf(buf, "%s:", dungeons[dnum].dname);
+	else
+	    sprintf(buf, "%s: levels %d to %d", dungeons[dnum].dname,
+		    depthstart, depthstart + dungeons[dnum].dunlev_ureached - 1);
+}
+
+
+static void overview_print_lev(char *buf, struct level *lev)
+{
+	int i, depthstart;
+	
+	depthstart = dungeons[lev->z.dnum].depth_start;
+	if (lev->z.dnum == quest_dnum || lev->z.dnum == knox_level.dnum)
+	    /* The quest and knox should appear to be level 1 to match other text. */
+	    depthstart = 1;
+	
+	/* calculate level number */
+	i = depthstart + lev->z.dlevel - 1;
+	if (Is_astralevel(&lev->z))
+		sprintf(buf, " Astral Plane:");
+	else if (In_endgame(&lev->z))
+	    /* Negative numbers are mildly confusing, since they are never
+	     * shown to the player, except in wizard mode.  We could show
+	     * "Level -1" for the earth plane, for example.  Instead,
+	     * show "Plane 1" for the earth plane to differentiate from
+	     * level 1.  There's not much to show, but maybe the player
+	     * wants to #annotate them for some bizarre reason.
+	     */
+	    sprintf(buf, " Plane %i:", -i);
+	else
+	    sprintf(buf, " Level %d:", i);
+	
+	if (*lev->levname)
+	    sprintf(eos(buf), " (%s)", lev->levname);
+	
+	sprintf(eos(buf), "%s", lev == level ?
+	    (program_state.gameover ? " <- You were here" : " <- You are here") : "");
+}
+
+
+static char *seen_string(xchar x, const char *obj)
+{
+	/* players are computer scientists: 0, 1, 2, n */
+	switch(x) {
+	    case 0: return "no";
+	    /* an() returns too much.  index is ok in this case */
+	    case 1: return index(vowels, *obj) ? "an" : "a";
+	    case 2:
+	    case 3: return "some";
+	    default: return "many";
+	}
+}
+
+
+#define COMMA (i++ > 0 ? ", " : "   ")
+#define ADDNTOBUF(nam, var) { if (var) \
+	sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
+	((var) != 1 ? "s" : "")); }
+
+#if MAXRTYPE != CANDLESHOP
+# warning you must extend the shopnames array!
+#endif
+static const char *const shopnames[] = {
+	/* SHOPBASE */	"a general store",
+	/* ARMORSHOP */	"an armor shop",
+	/* SCROLLSHOP */"a scroll shop",
+	/* POTIONSHOP */"a potion shop",
+	/* WEAPONSHOP */"a weapon shop",
+	/* FOODSHOP */	"a delicatessen store",
+	/* RINGSHOP */	"a jewelry store",
+	/* WANDSHOP */	"a wand shop",
+	/* BOOKSHOP */	"a bookstore",
+	/* CANDLESHOP */"a lighting shop"
+};
+
+static void overview_print_info(char *buf, struct overview_info *oi)
+{
+	int i = 0;
+	buf[0] = '\0';
+	
+	if (oi->shopcount > 1)
+		ADDNTOBUF("shop", oi->shopcount)
+	else if (oi->shopcount == 1)
+		sprintf(eos(buf), "%s%s", COMMA, shopnames[oi->shoptype]);
+
+	/* Temples + non-temple altars get munged into just "altars" */
+	if (!oi->temples || oi->temples != oi->altars)
+		ADDNTOBUF("altar", oi->altars)
+	else
+		ADDNTOBUF("temple", oi->temples)
+
+	/* only print out altar's god if they are all to your god */
+	if (oi->altaralign == u.ualign.type)
+		sprintf(eos(buf), " to %s", align_gname(u.ualign.type));
+
+	ADDNTOBUF("fountain", oi->fountains)
+	ADDNTOBUF("sink", oi->sinks)
+	ADDNTOBUF("throne", oi->thrones)
+	ADDNTOBUF("tree", oi->trees);
+}
+
+
+static void overview_print_branch(char *buf, struct overview_info *oi)
+{
+	if (oi->portal)
+	    sprintf(buf, "   Portal to %s", dungeons[oi->portal_dst.dnum].dname);
+	if (oi->branch)
+	    sprintf(buf, "   Stairs to %s", dungeons[oi->branch_dst.dnum].dname);
+}
+
+
+/* print a dungeon overview */
+int dooverview(void)
+{
+	struct overview_info oinfo;
+	struct menulist menu;
+	int i, dnum;
+	char buf[BUFSZ];
+	
+	init_menulist(&menu);
+	
+	dnum = -1;
+	for (i = 0; i < maxledgerno(); i++) {
+	    overview_scan(levels[i], &oinfo);
+	    if (!overview_is_interesting(levels[i], &oinfo))
+		continue;
+	    
+	    if (levels[i]->z.dnum != dnum) {
+		if (i > 0)
+		    add_menutext(&menu, "");
+		overview_print_dun(buf, levels[i]);
+		add_menuheading(&menu, buf);
+		dnum = levels[i]->z.dnum;
+	    }
+	    
+	    /* "Level 3 (my level name)" */
+	    overview_print_lev(buf, levels[i]);
+	    add_menuitem(&menu, i+1, buf, 0, FALSE);
+	    
+	    /* "some fountains, an altar" */
+	    overview_print_info(buf, &oinfo);
+	    if (*buf)
+		add_menutext(&menu, buf);
+	    
+	    /* "Stairs to the Gnomish Mines" */
+	    if (oinfo.branch || oinfo.portal) {
+		overview_print_branch(buf, &oinfo);
+		add_menutext(&menu, buf);
+	    }
+	}
+	
+	display_menu(menu.items, menu.icount, "Dungeon overview:", PICK_NONE, NULL);
+	free(menu.items);
+	
+	return 0;
+}
+
 /*dungeon.c*/
