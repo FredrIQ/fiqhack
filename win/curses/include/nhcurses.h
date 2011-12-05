@@ -187,6 +187,10 @@ extern boolean random_player;
 
 /*----------------------------------------------------------------------------*/
 
+/* color.c */
+extern void init_nhcolors(void);
+extern int curses_color_attr(int nh_color);
+
 /* dialog.c */
 extern WINDOW *newdialog(int height, int width);
 extern enum nh_direction curses_getdir(const char *query, boolean restricted);
@@ -214,7 +218,6 @@ extern void show_keymap_menu(boolean readonly);
 extern enum nh_direction key_to_dir(int key);
 
 /* map.c */
-extern void init_nhcolors(void);
 extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
 extern void curses_clear_map(void);
 extern int curses_getpos(int *x, int *y, boolean force, const char *goal);
@@ -255,7 +258,6 @@ extern void free_displaychars(void);
 extern int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms);
 extern void set_rogue_level(boolean enable);
 extern void switch_graphics(enum nh_text_mode mode);
-extern int curses_color_attr(int nh_color);
 extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs);
 extern void curses_notify_level_changed(int dmode);
 

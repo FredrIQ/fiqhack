@@ -2,6 +2,7 @@
 
 set (NH_CURSES_SRC
     main.c
+    color.c
     dialog.c
     gameover.c
     getline.c

@@ -577,20 +577,6 @@ void switch_graphics(enum nh_text_mode mode)
 }
 
 
-int curses_color_attr(int nh_color)
-{
-    int color = nh_color + 1;
-    int cattr = A_NORMAL;
-    
-    if (COLORS < 16 && color > 8) {
-	color -= 8;
-	cattr = A_BOLD;
-    }
-    cattr |= COLOR_PAIR(color);
-    return cattr;
-}
-
-
 void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
 {
     int attr;
