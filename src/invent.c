@@ -2046,12 +2046,11 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	char let;
 	char alphabet[52+1], buf[52+1];
 	char qbuf[QBUFSZ];
-	char allowall[2];
+	char allowallcnt[3] = {ALLOW_COUNT, ALL_CLASSES, 0};
 	const char *adj_type;
 
 	/* get a pointer to the object the user wants to organize */
-	allowall[0] = ALL_CLASSES; allowall[1] = '\0';
-	if (!(obj = getobj(allowall,"adjust"))) return 0;
+	if (!(obj = getobj(allowallcnt,"adjust"))) return 0;
 
 	/* initialize the list with all upper and lower case letters */
 	for (let = 'a', ix = 0;  let <= 'z';) alphabet[ix++] = let++;
@@ -2080,7 +2079,7 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 		let = query_key(qbuf, NULL);
 		if (strchr(quitchars,let)) {
 			pline("Never mind.");
-			return 0;
+			goto cleansplit;
 		}
 		if (let == '@' || !letter(let))
 			pline("Select an inventory slot letter.");
@@ -2089,7 +2088,6 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	}
 
 	/* change the inventory and print the resulting item */
-	adj_type = "Moving:";
 
 	/*
 	 * don't use freeinv/addinv to avoid double-touching artifacts,
@@ -2097,19 +2095,39 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	 */
 	extract_nobj(obj, &invent);
 
-	for (otmp = invent; otmp;)
-		if (merged(&otmp,&obj)) {
-			adj_type = "Merging:";
-			obj = otmp;
-			otmp = otmp->nobj;
-			extract_nobj(obj, &invent);
-		} else {
-			if (otmp->invlet == let) {
-				adj_type = "Swapping:";
-				otmp->invlet = obj->invlet;
+	for (otmp = invent; otmp && otmp->invlet != let;)
+		otmp = otmp->nobj;
+	if (!otmp)
+		adj_type = "Moving:";
+	else if (merged(&otmp,&obj)) {
+		adj_type = "Merging:";
+		obj = otmp;
+		extract_nobj(obj, &invent);
+	} else {
+		struct obj *otmp2;
+		for (otmp2 = invent; otmp2 && otmp2->invlet != obj->invlet;)
+		    otmp2 = otmp2->nobj;
+
+		if (otmp2) {
+			char oldlet = obj->invlet;
+
+			adj_type = "Displacing:";
+
+			/* Here be a nasty hack; solutions that don't
+			* require duplication of assigninvlet's code
+			* here are welcome.
+			*/
+			assigninvlet(obj);
+
+			if (obj->invlet == NOINVSYM) {
+				pline("There's nowhere to put that.");
+				obj->invlet = oldlet;
+				goto cleansplit;
 			}
-			otmp = otmp->nobj;
-		}
+		} else
+			adj_type = "Swapping:";
+		otmp->invlet = obj->invlet;
+	}
 
 	/* inline addinv (assuming !merged) */
 	obj->invlet = let;
@@ -2121,7 +2139,15 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	prinv(adj_type, obj, 0L);
 	update_inventory();
 	return 0;
+
+cleansplit:
+	for (otmp = invent; otmp; otmp = otmp->nobj)
+                if (otmp != obj && otmp->invlet == obj->invlet)
+                        merged( &otmp, &obj );
+
+	return 0;
 }
+
 
 /* common to display_minventory and display_cinventory */
 static void invdisp_nothing(const char *hdr, const char *txt)
