@@ -489,7 +489,8 @@ extern void makerogueghost(struct level *lev);
 /* ### files.c ### */
 
 extern void display_file(const char *, boolean);
-extern FILE *fopen_datafile(const char *,const char *,int);
+extern FILE *fopen_datafile(const char *filename, const char *mode, int prefix);
+extern int open_datafile(const char *filename, int flags, int prefix);
 extern int create_bonesfile(char *bonesid, char errbuf[]);
 extern void commit_bonesfile(char *bonesid);
 extern int open_bonesfile(char *bonesid);

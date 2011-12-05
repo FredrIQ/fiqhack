@@ -5,6 +5,8 @@
 #include "patchlevel.h"
 #include "dlb.h"
 
+#include <fcntl.h>
+
 /* 10000 highscore entries should be enough for _anybody_
  * <500 bytes per entry * 10000 ~= 5MB max file size. Seems reasonable. */
 #define TTLISTLEN 10000
@@ -35,10 +37,10 @@ struct toptenentry {
 
 #define validentry(x) ((x).points > 0 || (x).deathlev)
 
-static void writeentry(FILE *rfile, const struct toptenentry *tt);
+static void writeentry(int fd, const struct toptenentry *tt);
 static void write_topten(const struct toptenentry *ttlist);
 static void update_log(const struct toptenentry *newtt);
-static boolean readentry(FILE *rfile, struct toptenentry *tt);
+static boolean readentry(char *line, struct toptenentry *tt);
 static struct toptenentry *read_topten(int limit);
 static void fill_topten_entry(struct toptenentry *newtt, int how);
 static boolean toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt);
@@ -58,53 +60,54 @@ const char * const killed_by_prefix[] = {
 static int end_how;
 
 
-static void writeentry(FILE *rfile, const struct toptenentry *tt)
+static void writeentry(int fd, const struct toptenentry *tt)
 {
-    fprintf(rfile,"%d.%d.%d %d %d %d %d %d %d %d %d %d %d ",
-	    tt->ver_major, tt->ver_minor, tt->patchlevel,
-	    tt->points, tt->deathdnum, tt->deathlev,
-	    tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
-	    tt->deathdate, tt->birthdate, tt->uid);
-    fprintf(rfile,"%d %d %s %s %s %s %s,%s\n",
+    char buf[1024];
+    int len;
+    
+    snprintf(buf, 1024, "%d.%d.%d %d %d %d %d %d %d %d %d %d %d ",
+	     tt->ver_major, tt->ver_minor, tt->patchlevel,
+	     tt->points, tt->deathdnum, tt->deathlev,
+	     tt->maxlvl, tt->hp, tt->maxhp, tt->deaths,
+	     tt->deathdate, tt->birthdate, tt->uid);
+    len = strlen(buf);
+    if (write(fd, buf, len) != len) panic("Failed to write topten. Out of disk?");
+    
+    snprintf(buf, 1024, "%d %d %s %s %s %s %s,%s\n",
 	    tt->moves, tt->how, tt->plrole, tt->plrace, tt->plgend, tt->plalign,
 	    onlyspace(tt->name) ? "_" : tt->name, tt->death);
+    len = strlen(buf);
+    if (write(fd, buf, len) != len) panic("Failed to write topten. Out of disk?");
 }
 
 
 static void write_topten(const struct toptenentry *ttlist)
 {
-    int i;
-    FILE *rfile;
+    int i, fd;
     
-    rfile = fopen_datafile(RECORD, "r+", SCOREPREFIX);
-    if (!rfile)
-	rfile = fopen_datafile(RECORD, "w+", SCOREPREFIX);
+    fd = open_datafile(RECORD, O_CREAT | O_TRUNC | O_WRONLY, SCOREPREFIX);
     
     for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++)
-	writeentry(rfile, &ttlist[i]);
+	writeentry(fd, &ttlist[i]);
     
-    fclose(rfile);
+    close(fd);
 }
 
 
 static void update_log(const struct toptenentry *newtt)
 {
 #ifdef LOGFILE		/* used for debugging (who dies of what, where) */
-    FILE *file = fopen_datafile(LOGFILE, "a+", SCOREPREFIX);
-    if (!file)
-	raw_print("Cannot open log file!\n");
-    else {
-	if (lock_fd(fileno(file), 10)) {
-	    writeentry(file, newtt);
-	    fclose(file);
-	    unlock_fd(fileno(file));
-	}
+    int fd = open_datafile(LOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
+    if (lock_fd(fd, 10)) {
+	writeentry(fd, newtt);
+	close(fd);
+	unlock_fd(fd);
     }
 #endif
 }
 
 
-static boolean readentry(FILE *rfile, struct toptenentry *tt)
+static boolean readentry(char *line, struct toptenentry *tt)
 {
     /* 
      * "3.4.3 77 0 1 1 0 15 1 20110727 20110727 1000 Bar Orc Mal Cha daniel,killed by a newt"
@@ -113,7 +116,7 @@ static boolean readentry(FILE *rfile, struct toptenentry *tt)
                               " %d %d %d %d %3s %3s %3s %3s %15[^,],%99[^\n]%*c";
     int rv;
     
-    rv = fscanf(rfile, fmt, &tt->ver_major, &tt->ver_minor, &tt->patchlevel,
+    rv = sscanf(line, fmt, &tt->ver_major, &tt->ver_minor, &tt->patchlevel,
 		&tt->points, &tt->deathdnum, &tt->deathlev, &tt->maxlvl,
 		&tt->hp, &tt->maxhp, &tt->deaths, &tt->deathdate,
 		&tt->birthdate, &tt->uid, &tt->moves, &tt->how, tt->plrole,
@@ -125,25 +128,33 @@ static boolean readentry(FILE *rfile, struct toptenentry *tt)
 
 static struct toptenentry *read_topten(int limit)
 {
-    int i;
+    int i, fd, size;
     struct toptenentry *ttlist;
-    FILE *file;
+    char *data, *line;
     
-    file = fopen_datafile(RECORD, "r", SCOREPREFIX);
-    if (!file)
+    fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
+    if (fd == -1)
 	return NULL;
     
+    size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    data = malloc(size+1);
+    read(fd, data, size);
+    data[size] = 0;
+    close(fd);
+   
     ttlist = calloc(limit + 1, sizeof(struct toptenentry));
-    
+    line = data;
     for (i = 0; i < limit; i++) {
-	if (!readentry(file, &ttlist[i]))
+	if (!readentry(line, &ttlist[i]))
 	    break;
+	line = strchr(line, '\n') + 1;
     }
     
-    
-    fclose(file);
+    free(data);
     return ttlist;
 }
+
 
 static void fill_topten_entry(struct toptenentry *newtt, int how)
 {
@@ -246,7 +257,7 @@ void update_topten(int how)
 {
     struct toptenentry *toptenlist, newtt;
     boolean need_rewrite;
-    FILE *file;
+    int  fd;
     
     if (program_state.panicking)
 	return;
@@ -260,19 +271,17 @@ void update_topten(int how)
     if (wizard || discover)
 	return;
 
-    file = fopen_datafile(RECORD, "r+", SCOREPREFIX);
-    if (!file)
-	file = fopen_datafile(RECORD, "w+", SCOREPREFIX);
-    if (!lock_fd(fileno(file), 60)) {
-	fclose(file);
+    fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
+    if (!lock_fd(fd, 60)) {
+	close(fd);
 	return;
     }
     
     toptenlist = read_topten(TTLISTLEN);
     if (!toptenlist) {
 	raw_print("Cannot open record file!\n");
-	unlock_fd(fileno(file));
-	fclose(file);
+	unlock_fd(fd);
+	close(fd);
 	return;
     }
     
@@ -281,8 +290,8 @@ void update_topten(int how)
     if (need_rewrite)
 	write_topten(toptenlist);
     
-    unlock_fd(fileno(file));
-    fclose(file);
+    unlock_fd(fd);
+    close(fd);
     free(toptenlist);
 }
 

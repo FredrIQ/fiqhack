@@ -89,7 +89,7 @@ const char *fqname(const char *filename, int whichprefix, int buffnum)
 }
 
 
-/* fopen a file, with OS-dependent bells and whistles */
+/* fopen a file */
 /* NOTE: a simpler version of this routine also exists in util/dlb_main.c */
 FILE *fopen_datafile(const char *filename, const char *mode, int prefix)
 {
@@ -98,6 +98,16 @@ FILE *fopen_datafile(const char *filename, const char *mode, int prefix)
 	filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
 	fp = fopen(filename, mode);
 	return fp;
+}
+
+/* open a file */
+int open_datafile(const char *filename, int oflags, int prefix)
+{
+	int fd;
+
+	filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
+	fd = open(filename, oflags, S_IRUSR | S_IWUSR);
+	return fd;
 }
 
 
