@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "nhcurses.h"
 
 #define LISTSZ 32
@@ -28,6 +29,8 @@ boolean player_selection(int *out_role, int *out_race, int *out_gend,
 	listbuffers[i][0] = '\0';
 	list[i].caption = listbuffers[i];
     }
+    
+    srand(time(NULL));
     
     /* Should we randomly pick for the player? */
     if (!randomall &&
