@@ -13,7 +13,7 @@ struct message {
     int turn;
 };
 
-#define MAX_MSGLINES 10
+#define MAX_MSGLINES 40
 
 static struct message *msghistory;
 static int histsize, histpos;
