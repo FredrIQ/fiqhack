@@ -65,6 +65,7 @@ struct settings {
     int      msgheight; /* requested height of the message win */
     int      msghistory;/* # of historic messages to keep for prevmsg display */
     int      optstyle;	/* option display style */
+    boolean  darkgray;  /* use bolded black instead of dark blue for CLR_BLACK */
     boolean  extmenu;	/* extended commands use menu interface */
     boolean  hilite_pet;/* hilight pets */
     boolean  showexp;	/* show experience points */
@@ -190,6 +191,7 @@ extern boolean random_player;
 /* color.c */
 extern void init_nhcolors(void);
 extern int curses_color_attr(int nh_color);
+extern void set_darkgray(void);
 
 /* dialog.c */
 extern WINDOW *newdialog(int height, int width);

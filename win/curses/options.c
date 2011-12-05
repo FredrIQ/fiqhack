@@ -70,6 +70,7 @@ static const char *const bucnames[] = {"unknown", "blessed", "uncursed", "cursed
 struct nh_option_desc curses_options[] = {
     {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {NULL}},
     {"blink", "show multiple symbols for each location by switching between them", OPTTYPE_BOOL, { VTRUE }},
+    {"darkgray", "try to show 'black' as dark gray instead of dark blue", OPTTYPE_BOOL, {FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, { VTRUE }},    
     {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
@@ -96,6 +97,7 @@ struct nh_option_desc curses_options[] = {
 
 struct nh_boolopt_map boolopt_map[] = {
     {"blink", &settings.blink},
+    {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"frame", &settings.frame},
     {"hilite_pet", &settings.hilite_pet},
@@ -121,13 +123,16 @@ boolean option_change_callback(struct nh_option_desc *option)
 	rebuild_ui();
 	return TRUE;
     }
-    
-    if (!strcmp(option->name, "showexp") ||
+    else if (!strcmp(option->name, "showexp") ||
 	!strcmp(option->name, "showscore") ||
-	!strcmp(option->name, "time"))
+	!strcmp(option->name, "time")) {
 	curses_update_status(NULL);
-    
-    if (!strcmp(option->name, "menu_headings")) {
+    }
+    else if (!strcmp(option->name, "darkgray")) {
+	set_darkgray();
+	draw_map(0);
+    }
+    else if (!strcmp(option->name, "menu_headings")) {
 	settings.menu_headings = option->value.e;
     }
     else if (!strcmp(option->name, "graphics")) {
