@@ -1745,7 +1745,7 @@ static void overview_print_lev(char *buf, struct level *lev)
 	/* calculate level number */
 	i = depthstart + lev->z.dlevel - 1;
 	if (Is_astralevel(&lev->z))
-		sprintf(buf, " Astral Plane:");
+		sprintf(buf, "Astral Plane");
 	else if (In_endgame(&lev->z))
 	    /* Negative numbers are mildly confusing, since they are never
 	     * shown to the player, except in wizard mode.  We could show
@@ -1754,9 +1754,9 @@ static void overview_print_lev(char *buf, struct level *lev)
 	     * level 1.  There's not much to show, but maybe the player
 	     * wants to #annotate them for some bizarre reason.
 	     */
-	    sprintf(buf, " Plane %i:", -i);
+	    sprintf(buf, "Plane %i", -i);
 	else
-	    sprintf(buf, " Level %d:", i);
+	    sprintf(buf, "Level %d", i);
 	
 	if (*lev->levname)
 	    sprintf(eos(buf), " (%s)", lev->levname);
@@ -1780,7 +1780,7 @@ static char *seen_string(xchar x, const char *obj)
 }
 
 
-#define COMMA (i++ > 0 ? ", " : "   ")
+#define COMMA (i++ > 0 ? ", " : "      ")
 #define ADDNTOBUF(nam, var) { if (var) \
 	sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
 	((var) != 1 ? "s" : "")); }
@@ -1831,9 +1831,9 @@ static void overview_print_info(char *buf, struct overview_info *oi)
 static void overview_print_branch(char *buf, struct overview_info *oi)
 {
 	if (oi->portal)
-	    sprintf(buf, "   Portal to %s", dungeons[oi->portal_dst.dnum].dname);
+	    sprintf(buf, "      Portal to %s", dungeons[oi->portal_dst.dnum].dname);
 	if (oi->branch)
-	    sprintf(buf, "   Stairs to %s", dungeons[oi->branch_dst.dnum].dname);
+	    sprintf(buf, "      Stairs to %s", dungeons[oi->branch_dst.dnum].dname);
 }
 
 
@@ -1842,16 +1842,18 @@ int dooverview(void)
 {
 	struct overview_info oinfo;
 	struct menulist menu;
-	int i, dnum;
+	int i, n, x, y, dnum, selected[1];
 	char buf[BUFSZ];
+	struct level *lev;
 	
 	init_menulist(&menu);
+	add_menutext(&menu, "Select a level to view it");
+	add_menutext(&menu, "");
 	
 	dnum = -1;
 	for (i = 0; i < maxledgerno(); i++) {
+	    if (!levels[i]) continue;
 	    overview_scan(levels[i], &oinfo);
-	    if (!overview_is_interesting(levels[i], &oinfo))
-		continue;
 	    
 	    if (levels[i]->z.dnum != dnum) {
 		if (i > 0)
@@ -1865,6 +1867,9 @@ int dooverview(void)
 	    overview_print_lev(buf, levels[i]);
 	    add_menuitem(&menu, i+1, buf, 0, FALSE);
 	    
+	    if (!overview_is_interesting(levels[i], &oinfo))
+		continue;
+	    
 	    /* "some fountains, an altar" */
 	    overview_print_info(buf, &oinfo);
 	    if (*buf)
@@ -1877,8 +1882,30 @@ int dooverview(void)
 	    }
 	}
 	
-	display_menu(menu.items, menu.icount, "Dungeon overview:", PICK_NONE, NULL);
+	n = display_menu(menu.items, menu.icount, "Dungeon overview:", PICK_ONE, selected);
 	free(menu.items);
+	if (n <= 0)
+	    return 0;
+	
+	/* remote viewing */
+	lev = levels[selected[0]-1];
+	if (level == lev)
+	    return 0;
+	
+	/* set the display buffer from the remembered  */
+	for (y = 0; y < ROWNO; y++)
+	    for (x = 0; x < COLNO; x++)
+		dbuf_set(x, y, lev->locations[x][y].mem_bg,
+			 lev->locations[x][y].mem_trap, lev->locations[x][y].mem_obj,
+			 lev->locations[x][y].mem_obj_mn,
+			 lev->locations[x][y].mem_invis, 0, 0, 0);
+	
+	overview_print_lev(buf, lev);
+	pline("Now viewing %s%s.  Press any key to return.",
+	      Is_astralevel(&lev->z) ? "the " : "", buf);
+	flush_screen();
+	win_pause(P_MAP);
+	doredraw();
 	
 	return 0;
 }
