@@ -144,7 +144,7 @@ const struct nh_symdef defsyms[] = {
 	{'#', "bars",		HI_METAL},
 	{'#', "tree",		CLR_GREEN},
 /*20*/	{'.', "room",		CLR_GRAY},
-	{' ', "darkroom",	CLR_GRAY},
+	{'.', "darkroom",	CLR_BLACK},
 	{'#', "corr",		CLR_GRAY},
 	{'#', "litcorr",	CLR_WHITE},
 	{'<', "upstair",	CLR_GRAY},

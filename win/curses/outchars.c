@@ -42,6 +42,7 @@ static struct curses_symdef ibm_graphics_ovr[] = {
     {"bars",	-1,	{0x2261, 0},	0xf0},	/* ≡ equivalence symbol */
     {"tree",	-1,	{0x00B1, 0},	0xf1},	/* ± plus or minus symbol */
     {"room",	-1,	{0x00B7, 0},	0xfa},	/* · centered dot */
+    {"darkroom",-1,	{0x00B7, 0},	0xfa},	/* · centered dot */
     {"corr",	-1,	{0x2591, 0},	0xb0},	/* ░ light shading */
     {"litcorr",	-1,	{0x2592, 0},	0xb1},	/* ▒ medium shading */
     {"fountain",-1,	{0x2320, 0},	0xf4},	/* ⌠ integral top half */
@@ -85,6 +86,7 @@ static struct curses_symdef dec_graphics_ovr[] = {
     {"bars",	-1,	{0x03C0, 0},	0xfb},	/* π small pi */
     {"tree",	-1,	{0x00B1, 0},	0xe7},	/* ± plus-or-minus */
     {"room",	-1,	{0x00B7, 0},	0xfe},	/* · centered dot */
+    {"darkroom",-1,	{0x00B7, 0},	0xfe},	/* · centered dot */
     {"upladder",-1,	{0x2265, 0},	0xf9},	/* ≥ greater-than-or-equals */
     {"dnladder",-1,	{0x2264, 0},	0xfa},	/* ≤ less-than-or-equals */
     {"pool",	-1,	{0x25C6, 0},	0xe0},	/* ◆ diamond */
@@ -146,6 +148,7 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"tree",	-1,	{0x03a8, 0},	0},	/* Ψ GREEK CAPITAL LETTER PSI */
     {"fountain",-1,	{0x00b6, 0},	0},	/* ¶ PILCROW SIGN */
     {"room",	-1,	{0x00B7, 0},	0},	/* · centered dot */
+    {"darkroom",-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"corr",	-1,	{0x2591, 0},	0},	/* ░ light shading */
     {"litcorr",	-1,	{0x2592, 0},	0},	/* ▒ medium shading */
     {"upladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
