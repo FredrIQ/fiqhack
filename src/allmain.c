@@ -63,6 +63,10 @@ boolean nh_exit(int exit_type)
 	iflags.disable_log = log_disabled;
 	return TRUE; /* terminate was called, so exit is successful */
     }
+    
+    /* clean up after viewing a game replay */
+    if (program_state.viewing)
+	nh_view_replay_finish();
 	
     xmalloc_cleanup();
     iflags.disable_log = TRUE;
@@ -106,7 +110,7 @@ boolean nh_exit(int exit_type)
     }
     iflags.disable_log = log_disabled;
     /* calling terminate() will get us out of nested contexts safely, eg:
-     * UI_cmdloop -> nh_do_move -> UI_update_screen (problem happens here) -> nh_exit
+     * UI_cmdloop -> nh_command -> UI_update_screen (problem happens here) -> nh_exit
      * will jump all the way back to UI_cmdloop */
     terminate();
     
@@ -224,6 +228,7 @@ boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
     u.initrole = irole; u.initrace = irace;
     u.initgend = igend; u.initalign = ialign;
     
+    /* write out a new logfile header "NHGAME ..." with all the initial details */
     log_newgame(fd, turntime, playmode);
     
     newgame();
@@ -233,7 +238,7 @@ boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
     set_wear();
     pickup(1);
     
-    program_state.game_running = 1;
+    program_state.game_running = TRUE;
     youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
     post_init_tasks();
     
@@ -249,7 +254,6 @@ err_out:
 enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
 				       boolean force_replay)
 {
-    struct nh_window_procs def_windowprocs = windowprocs;
     int playmode;
     char namebuf[PL_NSIZ];
     enum nh_restore_status error = GAME_RESTORED;
@@ -269,12 +273,13 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	goto error_out;
     
     error = ERR_BAD_FILE;
-    replay_set_logfile(fd);
-    replay_begin();
+    replay_set_logfile(fd); /* store the fd and try to get a lock or exit */
+    replay_begin(); /* read and tokenize the entire log */
     
     program_state.restoring = TRUE;
-    iflags.disable_log = TRUE;
+    iflags.disable_log = TRUE; /* don't log any of the commands, they're already in the log */
     
+    /* Read the log header for this game. This will set up u.inirole et al. */
     replay_read_newgame(&turntime, &playmode, namebuf);
        
     /* set special windowprocs which will autofill requests for user input
@@ -284,7 +289,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     if (!force_replay) {
 	startup_common(namebuf, playmode);
 	error = ERR_RESTORE_FAILED;
-	replay_run_cmdloop(TRUE);
+	replay_run_cmdloop(TRUE, FALSE);
 	if (!dorecover(fd))
 	    goto error_out2;
 	wd_message();
@@ -295,11 +300,11 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 		      u.initgend, u.initalign, playmode);
 	/* try replaying instead */
 	error = ERR_REPLAY_FAILED;
-	replay_run_cmdloop(FALSE);
+	replay_run_cmdloop(FALSE, FALSE);
     }
     
     /* restore standard window procs */
-    windowprocs = def_windowprocs;
+    replay_restore_windowprocs();
     program_state.restoring = FALSE;
     iflags.disable_log = FALSE;
 
@@ -322,7 +327,7 @@ error_out2:
     api_exit();
     
 error_out:
-    windowprocs = def_windowprocs;
+    replay_restore_windowprocs();
     program_state.restoring = FALSE;
     iflags.disable_log = FALSE;
     replay_end();
@@ -650,30 +655,11 @@ static void pre_move_tasks(boolean didmove)
 }
 
 
-int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
+/* perform the command given by cmdidx (in index into cmdlist in cmd.c)
+ * returns -1 if the command completes */
+int command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
-    int cmdidx;
-    
-    if (!program_state.game_running)
-	return ERR_GAME_NOT_RUNNING;
-    
-    if (!api_entry_checkpoint()) {
-	/* terminate() in end.c will arrive here */
-	if (program_state.panicking)
-	    return GAME_PANICKED;
-	if (!program_state.gameover)
-	    return GAME_SAVED;
-	return GAME_OVER;
-    }
-    
-    if (!program_state.restoring)
-	/* if the game is being restored, turntime is set in restore_read_command */
-	turntime = time(NULL);
-    
-    cmdidx = get_command_idx(cmd);
-    log_command(cmdidx, rep, arg);
-    
     
     if (multi >= 0 && occupation)
 	handle_occupation();
@@ -681,7 +667,7 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	saved_cmd = cmdidx;
 	do_command(cmdidx, rep, TRUE, arg);
     } else if (multi > 0) {
-	if (cmd)
+	if (cmdidx != -1)
 	    return ERR_NO_INPUT_ALLOWED;
 	
 	/* allow interruption of multi-turn commands */
@@ -730,10 +716,49 @@ int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg)
     pre_move_tasks(didmove);
     if (multi == 0 && !occupation)
 	flush_screen(); /* Flush screen buffer */
+	
+    return -1;
+}
+
+
+/* command wrapper function: make sure the game is able to run commands, perform
+ * logging and generate reasonable return values for api clients with no access
+ * to internal state */
+int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
+{
+    int cmdidx, cmdresult;
+
+    if (!program_state.game_running)
+	return ERR_GAME_NOT_RUNNING;
+    
+    if (!api_entry_checkpoint()) {
+	/* terminate() in end.c will arrive here */
+	if (program_state.panicking)
+	    return GAME_PANICKED;
+	if (!program_state.gameover)
+	    return GAME_SAVED;
+	return GAME_OVER;
+    }
+    
+    if (program_state.viewing)
+	return ERR_NO_INPUT_ALLOWED;
+    
+    /* if the game is being restored, turntime is set in restore_read_command */
+    turntime = time(NULL);
+
+    cmdidx = get_command_idx(cmd);
+    log_command(cmdidx, rep, arg);
+    
+    /* do the deed. command_input returns -1 if the command completed normally */
+    cmdresult = command_input(cmdidx, rep, arg);
     
     log_command_result();
     
-    api_exit();
+    api_exit(); /* no unsafe operations after this point */
+    
+    if (cmdresult != -1)
+	return cmdresult;
+    
     /*
      * performing a command can put the game into several different states:
      *  - the command completes immediately: a simple move or an attack etc

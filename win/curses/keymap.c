@@ -262,7 +262,6 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	}
     } while (!cmd);
     
-    newturn(); /* re-enable output if it was stopped */
     wmove(mapwin, player.y, player.x - 1);
     
     prev_cmd = cmd;

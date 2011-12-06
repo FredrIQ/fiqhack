@@ -32,10 +32,16 @@ extern EXPORT enum nh_restore_status nh_restore_game(int fd,
 
 extern EXPORT boolean nh_start_game(int fd, char *name, int role, int race,
 				    int gend, int align, enum nh_game_modes playmode);
-extern EXPORT int nh_do_move(const char *cmd, int rep, struct nh_cmd_arg *arg);
+extern EXPORT int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char *const *nh_get_copyright_banner(void);
 
-extern EXPORT enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si);
+/* logreplay.c */
+extern EXPORT boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
+					   struct nh_replay_info *info);
+extern EXPORT boolean nh_view_replay_step(struct nh_replay_info *info,
+					  enum replay_control action, int count);
+extern EXPORT void nh_view_replay_finish(void);
+extern EXPORT enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *si);
 
 /* cmd.c */
 extern EXPORT struct nh_cmd_desc *nh_get_commands(int *count);

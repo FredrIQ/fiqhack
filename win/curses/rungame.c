@@ -78,7 +78,7 @@ static int commandloop(void)
 	    count = -1;
 	
 	interrupt_multi = FALSE; /* could have been set while no multi was in progress */
-	gamestate = nh_do_move(cmd, count, &cmdarg);
+	gamestate = nh_command(cmd, count, &cmdarg);
     }
     
     game_is_running = FALSE;
@@ -173,28 +173,35 @@ void rungame(void)
 }
 
 
-static void describe_save(char *buf, enum nh_log_status status, struct nh_save_info *si)
+static void describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi)
 {
     const char *mode_desc[] = {"", "\t[explore]", "\t[wizard]"};
     switch (status) {
 	case LS_CRASHED:
 	    snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s  (crashed)\t%s",
-		    si->name, si->plrole, si->plrace, si->plgend, si->plalign,
-		    mode_desc[si->playmode]);
+		    gi->name, gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+		    mode_desc[gi->playmode]);
 	    break;
 	    
 	case LS_IN_PROGRESS:
 	    snprintf(buf, BUFSZ, "    %s\t%3.3s-%3.3s-%3.3s-%3.3s  (in progress)\t%s",
-		    si->name, si->plrole, si->plrace, si->plgend, si->plalign,
-		    mode_desc[si->playmode]);
+		    gi->name, gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+		    mode_desc[gi->playmode]);
 	    break;
 	    
 	case LS_SAVED:
 	    snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s%s\tafter %d moves%s",
-		    si->name, si->plrole, si->plrace, si->plgend, si->plalign,
-		    si->level_desc, si->has_amulet ? " with the amulet" : "",
-		    si->moves, mode_desc[si->playmode]);
+		    gi->name, gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+		    gi->level_desc, gi->has_amulet ? " with the amulet" : "",
+		    gi->moves, mode_desc[gi->playmode]);
 	    break;
+	    
+	case LS_DONE:
+	    snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s\tafter %d moves%s",
+		    gi->name, gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+		    gi->death, gi->moves, mode_desc[gi->playmode]);
+	    break;
+	    
 	    
 	default:
 	    buf[0] = '\0';
@@ -203,68 +210,104 @@ static void describe_save(char *buf, enum nh_log_status status, struct nh_save_i
 }
 
 
+int compare_filetime(const void *arg1, const void *arg2)
+{
+    const char *file1 = *(const char**)arg1;
+    const char *file2 = *(const char**)arg2;
+    
+    struct stat s1, s2;
+    
+    stat(file1, &s1);
+    stat(file2, &s2);
+    
+    return s2.st_mtime - s1.st_mtime;
+}
+
+
+char **list_gamefiles(char *dir, int *count)
+{
+    char filename[1024], **files;
+    DIR *dirp;
+    struct dirent *dp;
+    int namelen, fd;
+    enum nh_log_status status;
+    
+    files = NULL;
+    *count = 0;
+    
+    dirp = opendir(dir);
+    while ((dp = readdir(dirp)) != NULL) {
+	namelen = strlen(dp->d_name);
+	if (namelen > 7 && /* ".nhgame" */
+	    !strcmp(&dp->d_name[namelen-7], ".nhgame")) {
+	    snprintf(filename, sizeof(filename), "%s%s", dir, dp->d_name);
+	    
+	    fd = open(filename, O_RDWR, 0660);
+	    status = nh_get_savegame_status(fd, NULL);
+	    close(fd);
+	    
+	    if (status == LS_INVALID)
+		continue;
+	    
+	    (*count)++;
+	    files = realloc(files, (*count) * sizeof(char*));
+	    files[*count - 1] = strdup(filename);
+	}
+    }
+    closedir(dirp);
+    
+    qsort(files, *count, sizeof(char*), compare_filetime);
+    
+    return files;
+}
+
+
 boolean loadgame(void)
 {
     char buf[BUFSZ], savedir[BUFSZ], filename[1024], **files;
-    DIR *dirp;
-    struct dirent *dp;
     struct nh_menuitem *items;
-    int namelen, size, icount, fd, i, n, ret, pick[1];
+    int size, icount, fd, i, n, ret, pick[1];
     enum nh_log_status status;
-    struct nh_save_info si;
+    struct nh_game_info gi;
     
     if (!get_gamedir(SAVE_DIR, savedir)) {
 	curses_raw_print("Could not find or create the save directory.");
 	return FALSE;
     }
     
-    size = 10;
-    icount = 0;
-    items = malloc(size * sizeof(struct nh_menuitem));
-    files = NULL;
-    
-    dirp = opendir(savedir);
-    while ((dp = readdir(dirp)) != NULL) {
-	namelen = strlen(dp->d_name);
-	if (namelen > 7 && /* ".nhgame" */
-	    !strcmp(&dp->d_name[namelen-7], ".nhgame")) {
-	    snprintf(filename, sizeof(filename), "%s%s", savedir, dp->d_name);
-	    
-	    fd = open(filename, O_RDWR, 0660);
-	    status = nh_get_savegame_status(fd, &si);
-	    close(fd);
-	    
-	    if (status == LS_SAVED || status == LS_CRASHED || status == LS_IN_PROGRESS) {
-		describe_save(buf, status, &si);
-		add_menu_item(items, size, icount,
-			      (status == LS_IN_PROGRESS) ? 0 : icount + 1,
-			      buf, 0, FALSE);
-		files = realloc(files, icount * sizeof(char*));
-		files[icount-1] = strdup(dp->d_name);
-	    }
-	}
-    }
-    closedir(dirp);
-
-    if (!icount) {
-	free(items);
+    files = list_gamefiles(savedir, &size);
+    if (!size) {
 	curses_msgwin("No saved games found.");
 	return FALSE;
     }
     
+    icount = 0;
+    items = malloc(size * sizeof(struct nh_menuitem));
+
+    for (i = 0; i < size; i++) {
+	fd = open(files[i], O_RDWR, 0660);
+	status = nh_get_savegame_status(fd, &gi);
+	close(fd);
+	
+	describe_game(buf, status, &gi);
+	add_menu_item(items, size, icount, (status == LS_IN_PROGRESS) ? 0 : icount + 1,
+			buf, 0, FALSE);
+    }
+
     n = curses_display_menu(items, icount, "saved games", PICK_ONE, pick);    
     free(items);
-    if (n <= 0)
-	return FALSE;
+    if (n > 0)
+	strncpy(filename, files[pick[0]-1], sizeof(filename));
 
-    snprintf(filename, sizeof(filename), "%s%s", savedir, files[pick[0]-1]);
     for (i = 0; i < icount; i++)
 	free(files[i]);
     free(files);
+    if (n <= 0)
+	return FALSE;
     
     fd = open(filename, O_RDWR, 0660);
     create_game_windows();
-    if (nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
+    if (nh_restore_game(fd, NULL, TRUE) != GAME_RESTORED) {
 	curses_msgwin("Failed to restore saved game.");
 	destroy_game_windows();
 	return FALSE;
@@ -282,3 +325,170 @@ boolean loadgame(void)
 }
 
 
+static void draw_replay_info(struct nh_replay_info *rinfo)
+{
+    char buf[BUFSZ];
+    
+    sprintf(buf, "REPLAY action %d/%d", rinfo->actions, rinfo->max_actions);
+    if (*rinfo->last_command)
+	sprintf(buf + strlen(buf), "; last command: %s.", rinfo->last_command);
+    
+    mvwhline(stdscr, 2 + ui_flags.msgheight + ROWNO, 1, ACS_HLINE, COLNO);
+    wattron(stdscr, COLOR_PAIR(4) | A_BOLD);
+    mvwaddstr(stdscr, 2 + ui_flags.msgheight + ROWNO, 2, buf);
+    wattroff(stdscr, COLOR_PAIR(4) | A_BOLD);
+    redraw_game_windows();
+}
+
+
+static void replay_commandloop(int fd)
+{
+    int key, move;
+    char buf[BUFSZ], qbuf[BUFSZ];
+    boolean ret;
+    struct nh_replay_info rinfo;
+    
+    create_game_windows();
+    nh_view_replay_start(fd, &curses_windowprocs, &rinfo);
+    draw_replay_info(&rinfo);
+    while (1) {
+	key = nh_wgetch(stdscr);
+	switch (key) {
+	    /* step forward */
+	    case KEY_RIGHT:
+	    case ' ':
+		ret = nh_view_replay_step(&rinfo, REPLAY_FORWARD, 1);
+		draw_replay_info(&rinfo);
+		if (ret == FALSE) {
+		    key = curses_msgwin("You have reached the end of this game. "
+		                        "Go back or press ESC to exit.");
+		    if (key == KEY_ESC)
+			goto out;
+		}
+		break;
+		
+	    /* step backward */
+	    case KEY_LEFT:
+		ret = nh_view_replay_step(&rinfo, REPLAY_BACKWARD, 1);
+		draw_replay_info(&rinfo);
+		if (ret == FALSE) {
+		    key = curses_msgwin("You have reached the beginning of this game. "
+		                        "Go forward or press ESC to exit.");
+		    if (key == KEY_ESC)
+			goto out;
+		}
+		break;
+		
+	    case KEY_ESC:
+		goto out;
+
+	    case 'g':
+		strncpy(qbuf, "What move do you want to go to?", BUFSZ);
+		if (rinfo.max_moves > 0)
+		    sprintf(qbuf + strlen(qbuf), " (Max: %d)", rinfo.max_moves);
+		
+		curses_getline(qbuf, buf);
+		if (buf[0] == '\033' || !(move = atoi(buf)))
+		    break;
+		ret = nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
+		draw_replay_info(&rinfo);
+		if (ret == FALSE) {
+		    sprintf(buf, "You tried to go to move %d but move %d is the last.",
+			    move, rinfo.moves);
+		    curses_msgwin(buf);
+		}
+		
+		break;
+	}
+    }
+    
+out:
+    nh_view_replay_finish();
+    destroy_game_windows();
+    cleanup_messages();
+}
+
+
+void replay(void)
+{
+    char buf[BUFSZ], logdir[BUFSZ], savedir[BUFSZ], filename[1024], *dir, **files;
+    struct nh_menuitem *items;
+    int i, n, fd, icount, size, filecount, pick[1];
+    enum nh_log_status status;
+    struct nh_game_info gi;
+    
+    if (!get_gamedir(LOG_DIR, logdir))	logdir[0] = '\0';
+    if (!get_gamedir(SAVE_DIR, savedir))savedir[0] = '\0';
+    
+    if (*logdir)	dir = logdir;
+    else if (*savedir)	dir = savedir;
+    else {
+	curses_msgwin("There are no games to replay.");
+	return;
+    }
+    
+    while (1) {
+	filename[0] = '\0';
+	files = list_gamefiles(dir, &filecount);
+	/* make sure there are some files to show */
+	if (!filecount) {
+	    if (dir == savedir) {
+		curses_msgwin("There are no saved games to replay.");
+		savedir[0] = '\0';
+	    } else {
+		curses_msgwin("There are no completed games to replay.");
+		logdir[0] = '\0';
+	    }
+	    
+	    dir = (dir == savedir) ? logdir : savedir;
+	    if (!*dir) return;
+	    continue;
+	}
+	
+	icount = 0;
+	size = filecount + 2;
+	items = malloc(size * sizeof(struct nh_menuitem));
+	
+	/* add all the files to the menu */
+	for (i = 0; i < filecount; i++) {
+	    fd = open(files[i], O_RDWR, 0660);
+	    status = nh_get_savegame_status(fd, &gi);
+	    close(fd);
+	    
+	    describe_game(buf, status, &gi);
+	    add_menu_item(items, size, icount,
+			    (status == LS_IN_PROGRESS) ? 0 : icount + 1,
+			    buf, 0, FALSE);
+	}
+	
+	if (dir == logdir && *savedir) {
+	    add_menu_item(items, size, icount, -1, "View saved games instead", 0, FALSE);
+	} else if (dir == savedir && *logdir) {
+	    add_menu_item(items, size, icount, -1, "View saved games instead", 0, FALSE);
+	}
+	
+	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, pick);    
+	free(items);
+	if (n > 0 && pick[0] != -1)
+	    strncpy(filename, files[pick[0]-1], sizeof(filename));
+	
+	for (i = 0; i < filecount; i++)
+	    free(files[i]);
+	free(files);
+	
+	if (n <= 0)
+	    return;
+	
+	if (pick[0] == -1) {
+	    dir = (dir == savedir) ? logdir : savedir;
+	    continue;
+	}
+	
+	/* we have a valid filename */
+	break;
+    }
+    
+    fd = open(filename, O_RDWR, 0660);
+    replay_commandloop(fd);
+    close(fd);
+}

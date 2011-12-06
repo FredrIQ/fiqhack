@@ -67,6 +67,41 @@ void display_file(const char *fname, boolean complain)
 }
 
 
+/* load a file into malloc'd memory, starting at the current file position */
+char *loadfile(int fd, int *datasize)
+{
+	int start, end, len, bytes_left, ret;
+	char *data;
+	
+	if (fd == -1)
+	    return NULL;
+	
+	start = lseek(fd, 0, SEEK_CUR);
+	end = lseek(fd, 0, SEEK_END);
+	lseek(fd, start, SEEK_SET);
+	
+	len = end - start;
+	if (len == 0)
+	    return NULL;
+	
+	data = malloc(len + 1);
+	bytes_left = len;
+	do {
+	    /* read my return fewer bytes than requested for reasons that are not errors */
+	    ret = read(fd, &data[len - bytes_left], bytes_left);
+	    if (ret == -1) {
+		free(data);
+		return NULL;
+	    }
+	    
+	    bytes_left -= ret;
+	} while (bytes_left);
+	
+	*datasize = len;
+	return data;
+}
+
+
 const char *fqname(const char *filename, int whichprefix, int buffnum)
 {
 	if (!filename || whichprefix < 0 || whichprefix >= PREFIX_COUNT)

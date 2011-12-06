@@ -35,13 +35,13 @@ static struct loginfo {
     char **tokens;
     int tokencount;
     int next;
+    int cmdcount; /* number of tokens that look like commands ">..." */
 } loginfo;
 
-int first_cmd_token;
-
 static char **commands;
-static int cmdcount;
+static int cmdcount, lastcmd;
 static struct nh_option_desc *saved_options;
+static struct nh_window_procs replay_windowprocs, orig_windowprocs;
 
 /* base 64 decoding table */
 static const char b64d[256] = {
@@ -58,7 +58,7 @@ static const char b64d[256] = {
 };
 
 
-static const struct nh_window_procs replay_windowprocs = {
+static const struct nh_window_procs def_replay_windowprocs = {
     replay_clear_map,
     replay_pause,
     replay_display_buffer,
@@ -142,12 +142,17 @@ void replay_begin(void)
     read(logfile, loginfo.mem, endpos);
     loginfo.mem[endpos] = '\0';
     
+    /* split the logfile into tokens */
     nr_tokens = 1024;
     loginfo.tokens = malloc(nr_tokens * sizeof(char*));
+    loginfo.next = loginfo.cmdcount = 0;
     
     nexttoken = strtok(loginfo.mem, " \r\n");
     while (nexttoken) {
 	loginfo.tokens[loginfo.next++] = nexttoken;
+	if (nexttoken[0] == '>')
+	    loginfo.cmdcount++;
+	
 	nexttoken = strtok(NULL, " \r\n");
 	if (loginfo.next >= nr_tokens) {
 	    nr_tokens *= 2;
@@ -294,6 +299,16 @@ static int replay_display_objects(struct nh_objitem *items, int icount, const ch
 	count = -1;
     }
     
+    if (program_state.viewing && how != PICK_NONE) {
+	char buf[BUFSZ] = "(none selected)";
+	if (i == 1) {
+	    for (j = 0; j < icount && items[j].id != pick_list[0].id; j++);
+	    strcpy(buf, items[j].caption);
+	} else
+	    sprintf(buf, "(%d selected)", i);
+	pline("<%s: %s>", title ? title : "List of items", buf);
+    }
+    
     return i;
 }
 
@@ -311,6 +326,11 @@ static char replay_query_key(const char *query, int *count)
     if (count)
 	*count = cnt;
     
+    if (program_state.viewing) {
+	char buf[BUFSZ] = "";
+	if (count && cnt != -1) sprintf(buf, "%d ", cnt);
+	pline("<%s: %s%c>", query, buf, key);
+    }
     return key;
 }
 
@@ -324,18 +344,25 @@ static int replay_getpos(int *x, int *y, boolean force, const char *goal)
     if (n != 3)
 	parse_error("Bad getpos data");
     
+    if (program_state.viewing)
+	pline("<get pos: (%d, %d)>", *x, *y);
     return ret;
 }
 
 
 static enum nh_direction replay_getdir(const char *query, boolean restricted)
 {
+    const char *const dirnames[] = {"no direction", "west", "nortwest", "north", "northeast",
+	"east", "southeast", "south", "southwest", "up", "down", "self"};
     enum nh_direction dir;
     char *token = next_log_token();
     
     int n = sscanf(token, "d:%d", &dir);
     if (n != 1)
 	parse_error("Bad getdir data");
+    
+    if (program_state.viewing)
+	pline("<%s: %s>", query ? query : "What direction?", dirnames[dir+1]);
     
     return dir;
 }
@@ -349,7 +376,9 @@ static char replay_yn_function(const char *query, const char *rset, char defchoi
     int n = sscanf(token, "y:%hhx", &key);
     if (n != 1)
 	parse_error("Bad yn_function data");
-    
+
+    if (program_state.viewing)
+	pline("<%s [%s]: %c>", query, rset, key);
     return key;
 }
 
@@ -366,6 +395,8 @@ static void replay_getlin(const char *query, char *buf)
 	parse_error("Encoded getlin string is too long to decode into the target buffer.");
     
     base64_decode(encdata+1, buf);
+    if (program_state.viewing)
+	pline("<%s: %s>", query, buf[0] == '\033' ? "ESC" : buf);
 }
 
 
@@ -393,9 +424,12 @@ char *replay_bones(int *buflen)
 void replay_setup_windowprocs(const struct nh_window_procs *procs)
 {
     void (*win_raw_print)(const char *str);
+    
+    orig_windowprocs = windowprocs;
+    
     if (!procs) {
 	win_raw_print = windowprocs.win_raw_print;
-	windowprocs = replay_windowprocs;
+	windowprocs = def_replay_windowprocs;
 	windowprocs.win_raw_print = win_raw_print;
 	return;
     }
@@ -408,6 +442,15 @@ void replay_setup_windowprocs(const struct nh_window_procs *procs)
     windowprocs.win_getdir = replay_getdir;
     windowprocs.win_display_menu = replay_display_menu;
     windowprocs.win_display_objects = replay_display_objects;
+    
+    replay_windowprocs = windowprocs;
+}
+
+
+void replay_restore_windowprocs(void)
+{
+    if (orig_windowprocs.win_raw_print) /* test if orig_windowprocs is inited */
+	windowprocs = orig_windowprocs;
 }
 
 
@@ -430,8 +473,6 @@ static void replay_read_commandlist(void)
 	base64_decode(token, decbuf);
 	commands[i] = strdup(decbuf);
     }
-    
-    first_cmd_token = loginfo.next;
 }
 
 
@@ -559,6 +600,7 @@ static void replay_read_command(char *cmdtok, char **cmd, int *count,
     if (n != 3 || cmdidx > cmdcount)
 	parse_error("Error: Incorrect command spec\n");
     
+    lastcmd = cmdidx;
     *cmd = commands[cmdidx];
     
     if (!replay_parse_arg(next_log_token(), arg))
@@ -583,15 +625,13 @@ static void replay_check_cmdresult(void)
 }
 
 
-void replay_run_cmdloop(boolean optonly)
+boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 {
     char *cmd;
-    int count;
+    int count, cmdidx;
     struct nh_cmd_arg cmdarg;
-    enum nh_input_status gamestate = READY_FOR_INPUT;
     struct nh_option_desc *tmp;
-    
-    loginfo.next = first_cmd_token;
+    boolean did_action = FALSE;
     
     /* the log contains the birth options that are required for this game,
      * so nh_set_option calls during the replay must change active_birth_options */
@@ -601,17 +641,24 @@ void replay_run_cmdloop(boolean optonly)
     
     char *token = next_log_token();
     
-    while (token && gamestate < GAME_OVER) {
+    while (token) {
 	if (token[0] == '!') {
 	    replay_read_option(token);
 	    token = next_log_token();
 	    continue;
-	} else if (optonly)
+	} else if (optonly) {
+	    loginfo.next--;
 	    break; /* first non-option token - initial option setup is done */
+	}
 	
 	replay_read_command(token, &cmd, &count, &cmdarg);
-	gamestate = nh_do_move(cmd, count, &cmdarg);
+	cmdidx = get_command_idx(cmd);
+	command_input(cmdidx, count, &cmdarg);
 	replay_check_cmdresult();
+	did_action = TRUE;
+	
+	if (singlestep)
+	    break;
 	
 	token = next_log_token();
     }
@@ -620,10 +667,107 @@ void replay_run_cmdloop(boolean optonly)
     tmp = birth_options;
     birth_options = active_birth_options;
     active_birth_options = tmp;
+    
+    return did_action;
 }
 
 
-enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
+boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
+			     struct nh_replay_info *info)
+{
+    int playmode;
+    char namebuf[PL_NSIZ];
+    struct nh_game_info gi;
+        
+    if (!api_entry_checkpoint())
+	return FALSE;
+    
+    memset(info, 0, sizeof(struct nh_replay_info));
+    if (nh_get_savegame_status(fd, &gi) == LS_INVALID)
+	return FALSE;
+    
+    program_state.restoring = TRUE;
+    iflags.disable_log = TRUE;
+    replay_set_logfile(fd);
+    replay_begin();
+    replay_read_newgame(&turntime, &playmode, namebuf);
+    replay_setup_windowprocs(rwinprocs);
+    
+    nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign, playmode);
+    replay_run_cmdloop(TRUE, FALSE); /* (re)set options */
+    program_state.viewing = TRUE;
+    replay_restore_windowprocs();
+    
+    info->max_moves = gi.moves;
+    info->max_actions = loginfo.cmdcount;
+    
+    api_exit();
+    
+    return TRUE;
+}
+
+
+boolean nh_view_replay_step(struct nh_replay_info *info,
+					  enum replay_control action, int count)
+{
+    boolean did_action;
+    const char *cmdstr;
+    int i;
+    
+    if (!program_state.viewing || !api_entry_checkpoint()) {
+	info->actions++;
+	replay_restore_windowprocs();
+	return FALSE;
+    }
+    
+    replay_setup_windowprocs(&replay_windowprocs);
+    info->moves = moves;
+    switch (action) {
+	case REPLAY_FORWARD:
+	    did_action = info->actions < info->max_actions;
+	    i = 0;
+	    while (i++ < count && did_action) {
+		did_action = replay_run_cmdloop(FALSE, TRUE);
+		if (did_action)
+		    info->actions++;
+	    }
+	    cmdstr = commands[lastcmd] ? commands[lastcmd] : "<continue>";
+	    strncpy(info->last_command, cmdstr, sizeof(info->last_command));
+	    break;
+	    
+	case REPLAY_BACKWARD:
+	    did_action = FALSE;
+	    break;
+	    
+	case REPLAY_GOTO:
+	    did_action = info->actions < info->max_actions;
+	    while (moves < count && did_action) {
+		did_action = replay_run_cmdloop(FALSE, TRUE);
+		if (did_action)
+		    info->actions++;
+	    }
+	    did_action = moves == count;
+	    break;
+    }
+    
+    replay_restore_windowprocs();
+    
+    api_exit();
+    return did_action;
+}
+
+
+void nh_view_replay_finish(void)
+{
+    replay_restore_windowprocs();
+    replay_end();
+    program_state.viewing = FALSE;
+    program_state.game_running = FALSE;
+    freedynamicdata();
+}
+
+
+enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
 {
     char header[128], status[8], encplname[PL_NSIZ * 2];
     char role[PLRBUFSZ], race[PLRBUFSZ], gend[PLRBUFSZ], algn[PLRBUFSZ];
@@ -647,7 +791,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
     
     endpos = lseek(fd, 0, SEEK_END);
     if (!strcmp(status, "done"))
-	return LS_DONE;
+	ret = LS_DONE;
     else if (!strcmp(status, "inpr") || endpos == savepos)
 	ret = LS_CRASHED;
     else if (!strcmp(status, "save"))
@@ -660,16 +804,17 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
 	ret = LS_IN_PROGRESS;
     unlock_fd(fd); /* don't need the lock, we're not going to write */
 
-    if (!si)
+    if (!gi)
 	return ret;
     
-    si->playmode = playmode;
-    base64_decode(encplname, si->name);
+    memset(gi, 0, sizeof(struct nh_game_info));
+    gi->playmode = playmode;
+    base64_decode(encplname, gi->name);
     role[0] = lowc(role[0]);
-    strcpy(si->plrole, role);
-    strcpy(si->plrace, race);
-    strcpy(si->plgend, gend);
-    strcpy(si->plalign, algn);
+    strcpy(gi->plrole, role);
+    strcpy(gi->plrace, race);
+    strcpy(gi->plgend, gend);
+    strcpy(gi->plalign, algn);
     
     if (ret == LS_CRASHED || ret == LS_IN_PROGRESS)
 	return ret;
@@ -678,44 +823,53 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_save_info *si)
 	/* something went wrong, hopefully it isn't so bad that replay won't work */
 	return LS_CRASHED;
 
-    mf.len = endpos - savepos;
-    mf.pos = 0;
-    mf.buf = malloc(mf.len);
     lseek(fd, savepos, SEEK_SET);
-    if (!read(fd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
-	free(mf.buf);
-	api_exit();
-	return LS_CRASHED; /* probably still a valid game */
-    }
-    
-    mread(&mf, &sg_flags, sizeof(struct flag));
-    flags.bypasses = 0;	/* never use the saved value of bypasses */
+    if (ret == LS_SAVED) {
+	mf.len = endpos - savepos;
+	mf.pos = 0;
+	mf.buf = malloc(mf.len);
+	if (!read(fd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
+	    free(mf.buf);
+	    api_exit();
+	    return LS_CRASHED; /* probably still a valid game */
+	}
+	
+	mread(&mf, &sg_flags, sizeof(struct flag));
+	flags.bypasses = 0;	/* never use the saved value of bypasses */
 
-    mread(&mf, &sg_you, sizeof(struct you));
-    role_init(); /* set up stuff related to the role (quest, ...). needed here? */
-    mread(&mf, &sg_youmonst, sizeof(youmonst));
-    set_uasmon(); /* fix up youmonst.data */
-    mread(&mf, &sg_moves, sizeof(moves));
-    free(mf.buf);
-    
-    /* make sure topten_level_name can work correctly */
-    if (!game_inited) {
-	dlb_init();
-	init_dungeons();
-    }
-    
-    si->depth = depth(&sg_you.uz);
-    si->moves = sg_moves;
-    si->level_desc[0] = '\0';
-    si->has_amulet = sg_you.uhave.amulet;
-    topten_level_name(sg_you.uz.dnum, sg_you.uz.dlevel, si->level_desc);
-    
-    if (!game_inited) {
-	    free_dungeons();
-	    dlb_cleanup();
+	mread(&mf, &sg_you, sizeof(struct you));
+	role_init(); /* set up stuff related to the role (quest, ...). needed here? */
+	mread(&mf, &sg_youmonst, sizeof(youmonst));
+	set_uasmon(); /* fix up youmonst.data */
+	mread(&mf, &sg_moves, sizeof(moves));
+	free(mf.buf);
+	
+	/* make sure topten_level_name can work correctly */
+	if (!game_inited) {
+	    dlb_init();
+	    init_dungeons();
+	}
+	
+	gi->depth = depth(&sg_you.uz);
+	gi->moves = sg_moves;
+	gi->level_desc[0] = '\0';
+	gi->has_amulet = sg_you.uhave.amulet;
+	topten_level_name(sg_you.uz.dnum, sg_you.uz.dlevel, gi->level_desc);
+	
+	if (!game_inited) {
+		free_dungeons();
+		dlb_cleanup();
+	}
+    } else if (ret == LS_DONE) {
+	struct nh_topten_entry tt;
+	
+	read_log_toptenentry(fd, &tt);
+	gi->moves = tt.moves;
+	gi->depth = tt.maxlvl;
+	strncpy(gi->death, tt.death, BUFSZ);
     }
     
     api_exit();
     
-    return LS_SAVED;
+    return ret;
 }

@@ -9,8 +9,6 @@
 #include <fcntl.h>
 #endif
 
-extern int logfile;
-
 static void savelevchn(int,int);
 static void savedamage(int fd, struct level *lev, int mode);
 static void saveobjchn(int,struct obj *,int);

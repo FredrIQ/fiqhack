@@ -20,6 +20,7 @@ static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
 static boolean stopprint;
+static int prevturn;
 
 static void newline(void);
 
@@ -61,9 +62,7 @@ void alloc_hist_array(void)
 }
 
 
-/* called at the start of each player turn (after a key has been pressed, but
- * before the action is performed) */
-void newturn(void)
+static void newturn(void)
 {
     /* pressing ESC at the more prompt should only cause printing to stop
      * for one turn */
@@ -154,6 +153,10 @@ void curses_print_message(int turn, const char *inmsg)
     
     store_message(turn, msg);
     
+    if (turn != prevturn)
+	newturn(); /* re-enable output if it was stopped and start a new line */
+    prevturn = turn;
+    
     if (stopprint)
 	return;
     
@@ -170,7 +173,7 @@ void curses_print_message(int turn, const char *inmsg)
 	maxlen -= 8; /* for "--More--" */
     
     died = !strncmp(msg, "You die", 7);
-    if (strlen(msglines[curline]) + strlen(msg) < maxlen && !died) {
+    if (strlen(msglines[curline]) + strlen(msg) + 1 < maxlen && !died) {
 	if (msglines[curline][0])
 	    strcat(msglines[curline], "  ");
 	strcat(msglines[curline], msg);
@@ -224,6 +227,7 @@ void cleanup_messages(void)
 {
     int i;
     free(msghistory);
+    prevturn = 0;
     
     /* extra cleanup to prevent old messages from appearing in a new game */
     msghistory = NULL;

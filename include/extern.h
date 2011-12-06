@@ -9,6 +9,7 @@
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
+extern int command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
 
 /* ### apply.c ### */
 
@@ -491,6 +492,7 @@ extern void makerogueghost(struct level *lev);
 extern void display_file(const char *, boolean);
 extern FILE *fopen_datafile(const char *filename, const char *mode, int prefix);
 extern int open_datafile(const char *filename, int flags, int prefix);
+extern char *loadfile(int fd, int *datasize);
 extern int create_bonesfile(char *bonesid, char errbuf[]);
 extern void commit_bonesfile(char *bonesid);
 extern int open_bonesfile(char *bonesid);
@@ -702,8 +704,9 @@ extern void replay_begin(void);
 extern void replay_end(void);
 extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
+extern void replay_restore_windowprocs(void);
 extern void replay_read_newgame(time_t *seed, int *playmode, char *name);
-extern void replay_run_cmdloop(boolean optonly);
+extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep);
 
 
 /* ### makemon.c ### */
@@ -1499,6 +1502,8 @@ extern void timer_sanity_check(void);
 extern void update_topten(int how);
 extern struct obj *tt_oname(struct obj *);
 extern void topten_level_name(int dnum, int dlev, char *outbuf);
+extern void write_log_toptenentry(int fd, int how);
+extern void read_log_toptenentry(int fd, struct nh_topten_entry *entry);
 
 /* ### track.c ### */
 

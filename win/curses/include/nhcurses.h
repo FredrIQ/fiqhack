@@ -241,7 +241,6 @@ extern void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 /* messages.c */
 extern void alloc_hist_array(void);
 extern void curses_print_message(int turn, const char *msg);
-extern void newturn(void);
 extern void draw_msgwin(void);
 extern void pause_messages(void);
 extern void doprev_message(void);
@@ -271,6 +270,7 @@ extern boolean player_selection(int *out_role, int *out_race, int *out_gend,
 extern boolean get_gamedir(enum game_dirs dirtype, char *buf);
 extern void rungame(void);
 extern boolean loadgame(void);
+extern void replay(void);
 
 /* sidebar.c */
 extern void draw_sidebar(void);

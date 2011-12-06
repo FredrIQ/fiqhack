@@ -31,7 +31,6 @@ struct bucket {
 
 static void clear_id_mapping(void);
 static void add_id_mapping(unsigned, unsigned);
-static long filepos(int fd);
 
 static int n_ids_mapped = 0;
 static struct bucket *id_map = 0;
@@ -386,19 +385,19 @@ int dorecover(int infd)
 	int count;
 	xchar ltmp;
 	struct obj *otmp;
-	long initial_pos, endpos;
+	long initial_pos;
 	struct memfile mf = {NULL, 0, 0};
 
 	level = NULL; /* level restore must not use this pointer */
 	restoring = TRUE;
 
-	initial_pos = filepos(infd);
-	endpos = lseek(infd, 0, SEEK_END);
-	lseek(infd, initial_pos, SEEK_SET);
-	mf.len = endpos - initial_pos;
+	initial_pos = lseek(infd, 0, SEEK_CUR);
 	mf.pos = 0;
-	mf.buf = malloc(mf.len);
-	if (!read(infd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
+	mf.buf = loadfile(infd, &mf.len);
+	if (!mf.buf)
+	    return 0;
+	
+	if (!uptodate(&mf, NULL)) {
 	    free(mf.buf);
 	    return 0;
 	}
@@ -739,10 +738,5 @@ void mread(struct memfile *mf, void *buf, unsigned int len)
 	}
 }
 
-
-static long filepos(int fd)
-{
-    return lseek(fd, 0, SEEK_CUR);
-}
 
 /*restore.c*/

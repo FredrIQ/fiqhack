@@ -98,6 +98,7 @@ extern struct fruit *ffruit;
 extern struct sinfo {
 	int game_running;	/* ok to call nh_do_move */
 	int restoring;		/* game is currently non-interactive (user input via log restore) */
+	int viewing;		/* non-interactive: viewing a game replay */
 	int gameover;		/* self explanatory? */
 	int stopprint;		/* inhibit further end of game disclosure */
 	int something_worth_saving;	/* in case of panic */
@@ -303,5 +304,7 @@ struct memfile {
     int len;
     int pos;
 };
+
+extern int logfile;
 
 #endif /* DECL_H */

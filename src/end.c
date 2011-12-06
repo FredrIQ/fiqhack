@@ -688,11 +688,16 @@ void done(int how)
 	if (check_survival(how, killbuf))
 	    return;
 	
+	/* replays are done here: no dumping or high-score calculation required */
+	if (program_state.viewing)
+	    terminate();
+	
 	/*
 	 *	The game is now over...
 	 */
 	program_state.gameover = 1;
 	log_command_result();
+	write_log_toptenentry(logfile, how);
 	log_finish(LS_DONE);
 	/* in case of a subsequent panic(), there's no point trying to save */
 	program_state.something_worth_saving = 0;

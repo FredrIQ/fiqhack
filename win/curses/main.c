@@ -27,6 +27,7 @@ boolean random_player = FALSE;
 enum menuitems {
     NEWGAME = 1,
     LOAD,
+    REPLAY,
     OPTIONS,
     TOPTEN,
     EXITGAME
@@ -35,6 +36,7 @@ enum menuitems {
 struct nh_menuitem mainmenu_items[] = {
     {NEWGAME, MI_NORMAL, "new game", 'n'},
     {LOAD, MI_NORMAL, "load game", 'l'},
+    {REPLAY, MI_NORMAL, "view replay", 'v'},
     {OPTIONS, MI_NORMAL, "set options", 'o'},
     {TOPTEN, MI_NORMAL, "show score list", 's'},
     {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
@@ -145,7 +147,7 @@ static void mainmenu(void)
 	wrefresh(stdscr);
 
 	menuresult[0] = EXITGAME; /* default action */
-	n = curses_display_menu_core(mainmenu_items, 5, NULL, PICK_ONE,
+	n = curses_display_menu_core(mainmenu_items, 6, NULL, PICK_ONE,
 				     menuresult, 0, logoheight, COLS, ROWNO+3, NULL);
 	
 	wclear(stdscr);
@@ -158,6 +160,10 @@ static void mainmenu(void)
 		
 	    case LOAD:
 		loadgame();
+		break;
+		
+	    case REPLAY:
+		replay();
 		break;
 		
 	    case OPTIONS:

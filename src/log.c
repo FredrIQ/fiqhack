@@ -141,7 +141,7 @@ void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
     char encbuf[ENCBUFSZ];
     const char *role;
     
-    if (program_state.restoring)
+    if (program_state.restoring || iflags.disable_log)
 	return;
     
     iflags.disable_log = FALSE;
@@ -292,7 +292,12 @@ void log_objmenu(int n, struct nh_objresult *pick_list)
 /* bones files must also be logged, since they are an input into the game state */
 void log_bones(const char *bonesbuf, int buflen)
 {
-    char *b64buf = malloc(buflen / 3 * 4 + 5);
+    char *b64buf;
+    
+    if (iflags.disable_log)
+	return;
+    
+    b64buf = malloc(buflen / 3 * 4 + 5);
     base64_encode_binary((const unsigned char*)bonesbuf, b64buf, buflen);
     
     /* don't use lprintf, b64buf might be too big for the buffer used by lprintf */
@@ -305,7 +310,7 @@ void log_bones(const char *bonesbuf, int buflen)
 
 void log_finish(enum nh_log_status status)
 {
-    if (!program_state.something_worth_saving || logfile == -1)
+    if (!program_state.something_worth_saving || logfile == -1 || iflags.disable_log)
 	return;
     
     lseek(logfile, 0, SEEK_SET);

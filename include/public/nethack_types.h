@@ -237,7 +237,6 @@ enum nh_restore_status {
     ERR_REPLAY_FAILED	/* replaying the action log did not succeed */
 };
 
-
 enum nh_log_status {
     LS_CRASHED = -2,	/* the game crashed (or was "kill -9"ed) */
     LS_INVALID = -1,	/* not a nethack log/savegame */
@@ -251,6 +250,11 @@ enum autopickup_action {
     AP_LEAVE
 };
 
+enum replay_control {
+    REPLAY_FORWARD,
+    REPLAY_BACKWARD,
+    REPLAY_GOTO
+};
 
 
 typedef signed char	boolean;		/* 0 or 1 */
@@ -368,7 +372,7 @@ struct nh_player_info {
 
 
 /* info about saved games as provided by nh_get_savegame_status */
-struct nh_save_info {
+struct nh_game_info {
     enum nh_game_modes playmode;
     char name[PL_NSIZ];
     char plrole[PLRBUFSZ];
@@ -387,6 +391,16 @@ struct nh_save_info {
     int moves, depth;
     boolean has_amulet;
     /* most of nh_player_info is possible, but what makes sense? */
+    
+    /* if the status is LS_DONE */
+    char death[BUFSZ];
+};
+
+
+struct nh_replay_info {
+    char last_command[64];
+    int actions, max_actions;
+    int moves, max_moves;
 };
 
 

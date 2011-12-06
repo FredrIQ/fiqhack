@@ -579,3 +579,39 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     api_exit();
     return score_list;
 }
+
+
+/* append the topten entry for the completed game to that game's logfile */
+void write_log_toptenentry(int fd, int how)
+{
+    struct toptenentry tt;
+    
+    fill_topten_entry(&tt, how);
+    writeentry(fd, &tt);
+}
+
+
+/* read the toptenentry appended to the end of a game log */
+void read_log_toptenentry(int fd, struct nh_topten_entry *entry)
+{
+    struct toptenentry tt;
+    int pos, end, size;
+    char *line;
+    
+    pos = lseek(fd, 0, SEEK_CUR);
+    end = lseek(fd, 0, SEEK_END);
+    lseek(fd, pos, SEEK_SET);
+    
+    size = end - pos;
+    if (0 == size)
+	return;
+    
+    line = malloc(size + 1);
+    read(fd, line, size);
+    line[size] = '\0';
+    
+    readentry(line, &tt);
+    fill_nh_score_entry(&tt, entry, -1, FALSE);
+}
+
+/* topten.c */
