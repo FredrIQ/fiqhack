@@ -1171,13 +1171,13 @@ void do_storms(void)
  *
  *
  * Save/Restore:
- *	void save_timers(int fd, int mode, int range)
+ *	void save_timers(struct memfile *mf, int mode, int range)
  *		Save all timers of range 'range'.  Range is either global
  *		or local.  Global timers follow game play, local timers
  *		are saved with a level.  Object and monster timers are
  *		saved using their respective id's instead of pointers.
  *
- *	void restore_timers(int fd, int range, boolean ghostly, long adjust)
+ *	void restore_timers(struct memfile *mf, int range, boolean ghostly, long adjust)
  *		Restore timers of range 'range'.  If from a ghost pile,
  *		adjust the timeout by 'adjust'.  The object and monster
  *		ids are not restored until later.
@@ -1201,10 +1201,10 @@ static const char *kind_name(short);
 static void print_queue(struct menulist *menu, timer_element *);
 static void insert_timer(struct level *lev, timer_element *gnu);
 static timer_element *remove_timer(timer_element **, short,void *);
-static void write_timer(int, timer_element *);
+static void write_timer(struct memfile *mf, timer_element *);
 static boolean mon_is_local(struct monst *);
 static boolean timer_is_local(timer_element *);
-static int maybe_write_timer(int fd, struct level *lev, int range, boolean write_it);
+static int maybe_write_timer(struct memfile *mf, struct level *lev, int range, boolean write_it);
 
 /* ordered timer list */
 static unsigned long timer_id = 1;
@@ -1481,7 +1481,7 @@ static timer_element *remove_timer(timer_element **base, short func_index,
 }
 
 
-static void write_timer(int fd, timer_element *timer)
+static void write_timer(struct memfile *mf, timer_element *timer)
 {
     void * arg_save;
 
@@ -1489,18 +1489,18 @@ static void write_timer(int fd, timer_element *timer)
 	case TIMER_GLOBAL:
 	case TIMER_LEVEL:
 	    /* assume no pointers in arg */
-	    bwrite(fd, timer, sizeof(timer_element));
+	    mwrite(mf, timer, sizeof(timer_element));
 	    break;
 
 	case TIMER_OBJECT:
 	    if (timer->needs_fixup)
-		bwrite(fd, timer, sizeof(timer_element));
+		mwrite(mf, timer, sizeof(timer_element));
 	    else {
 		/* replace object pointer with id */
 		arg_save = timer->arg;
 		timer->arg = (void *)((struct obj *)timer->arg)->o_id;
 		timer->needs_fixup = 1;
-		bwrite(fd, timer, sizeof(timer_element));
+		mwrite(mf, timer, sizeof(timer_element));
 		timer->arg = arg_save;
 		timer->needs_fixup = 0;
 	    }
@@ -1569,7 +1569,7 @@ static boolean timer_is_local(timer_element *timer)
  * Part of the save routine.  Count up the number of timers that would
  * be written.  If write_it is true, actually write the timer.
  */
-static int maybe_write_timer(int fd, struct level *lev, int range, boolean write_it)
+static int maybe_write_timer(struct memfile *mf, struct level *lev, int range, boolean write_it)
 {
     int count = 0;
     timer_element *curr;
@@ -1580,7 +1580,7 @@ static int maybe_write_timer(int fd, struct level *lev, int range, boolean write
 
 	    if (!timer_is_local(curr)) {
 		count++;
-		if (write_it) write_timer(fd, curr);
+		if (write_it) write_timer(mf, curr);
 	    }
 
 	} else {
@@ -1588,7 +1588,7 @@ static int maybe_write_timer(int fd, struct level *lev, int range, boolean write
 
 	    if (timer_is_local(curr)) {
 		count++;
-		if (write_it) write_timer(fd, curr);
+		if (write_it) write_timer(mf, curr);
 	    }
 
 	}
@@ -1634,18 +1634,18 @@ void transfer_timers(struct level *oldlev, struct level *newlev)
  *		+ timeouts that are level specific (e.g. storms)
  *		+ timeouts that stay with the level (obj & monst)
  */
-void save_timers(int fd, struct level *lev, int mode, int range)
+void save_timers(struct memfile *mf, struct level *lev, int mode, int range)
 {
     timer_element *curr, *prev, *next_timer=0;
     int count;
 
-    if (perform_bwrite(mode)) {
+    if (perform_mwrite(mode)) {
 	if (range == RANGE_GLOBAL)
-	    bwrite(fd, &timer_id, sizeof(timer_id));
+	    mwrite(mf, &timer_id, sizeof(timer_id));
 
-	count = maybe_write_timer(fd, lev, range, FALSE);
-	bwrite(fd, &count, sizeof count);
-	maybe_write_timer(fd, lev, range, TRUE);
+	count = maybe_write_timer(mf, lev, range, FALSE);
+	mwrite(mf, &count, sizeof count);
+	maybe_write_timer(mf, lev, range, TRUE);
     }
 
     if (release_data(mode)) {

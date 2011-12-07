@@ -201,15 +201,15 @@ void oinit(void)	/* level dependent initialization */
 	setgemprobs(&u.uz);
 }
 
-void savenames(int fd, int mode)
+void savenames(struct memfile *mf, int mode)
 {
 	int i;
 	unsigned int len;
 
-	if (perform_bwrite(mode)) {
-	    bwrite(fd, bases, sizeof bases);
-	    bwrite(fd, disco, sizeof disco);
-	    bwrite(fd, objects,
+	if (perform_mwrite(mode)) {
+	    mwrite(mf, bases, sizeof bases);
+	    mwrite(mf, disco, sizeof disco);
+	    mwrite(mf, objects,
 		   sizeof(struct objclass) * NUM_OBJECTS);
 	}
 	/* as long as we use only one version of Hack we
@@ -217,10 +217,10 @@ void savenames(int fd, int mode)
 	   oc_uname for all objects */
 	for (i = 0; i < NUM_OBJECTS; i++)
 	    if (objects[i].oc_uname) {
-		if (perform_bwrite(mode)) {
+		if (perform_mwrite(mode)) {
 		    len = strlen(objects[i].oc_uname)+1;
-		    bwrite(fd, &len, sizeof len);
-		    bwrite(fd, objects[i].oc_uname, len);
+		    mwrite(mf, &len, sizeof len);
+		    mwrite(mf, objects[i].oc_uname, len);
 		}
 		if (release_data(mode)) {
 		    free(objects[i].oc_uname);

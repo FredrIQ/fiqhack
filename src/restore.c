@@ -380,54 +380,38 @@ static void restgamestate(struct memfile *mf)
 }
 
 
-int dorecover(int infd)
+int dorecover(struct memfile *mf)
 {
 	int count;
 	xchar ltmp;
 	struct obj *otmp;
-	long initial_pos;
-	struct memfile mf = {NULL, 0, 0};
-
+	
 	level = NULL; /* level restore must not use this pointer */
-	restoring = TRUE;
-
-	initial_pos = lseek(infd, 0, SEEK_CUR);
-	mf.pos = 0;
-	mf.buf = loadfile(infd, &mf.len);
-	if (!mf.buf)
+	
+	if (!uptodate(mf, NULL))
 	    return 0;
 	
-	if (!uptodate(&mf, NULL)) {
-	    free(mf.buf);
-	    return 0;
-	}
-	
-	mread(&mf, &flags, sizeof(struct flag));
+	mread(mf, &flags, sizeof(struct flag));
 	flags.bypasses = 0;	/* never use the saved value of bypasses */
 
-	mread(&mf, &u, sizeof(struct you));
+	mread(mf, &u, sizeof(struct you));
 	role_init();	/* Reset the initial role, race, gender, and alignment */
-	mread(&mf, &youmonst, sizeof(youmonst));
+	mread(mf, &youmonst, sizeof(youmonst));
 	set_uasmon(); /* fix up youmonst.data */
-	mread(&mf, &moves, sizeof(moves));
+	mread(mf, &moves, sizeof(moves));
 	
 	/* restore dungeon */
-	restore_dungeon(&mf);
-	restlevchn(&mf);
+	restore_dungeon(mf);
+	restlevchn(mf);
 	
 	/* restore levels */
-	mread(&mf, &count, sizeof(count));
+	mread(mf, &count, sizeof(count));
 	for ( ; count; count--) {
-	    mread(&mf, &ltmp, sizeof ltmp);
-	    getlev(&mf, ltmp, FALSE);
+	    mread(mf, &ltmp, sizeof ltmp);
+	    getlev(mf, ltmp, FALSE);
 	}
 	
-	restgamestate(&mf);
-	free(mf.buf);
-
-	/* erase the binary portion of the logfile */
-	lseek(infd, initial_pos, SEEK_SET);
-	ftruncate(infd, initial_pos);
+	restgamestate(mf);
 
 	/* all data has been read, prepare for player */
 	level = levels[ledger_no(&u.uz)];
@@ -465,6 +449,34 @@ int dorecover(int infd)
 	/* Success! */
 	return 1;
 }
+
+
+/* wrapper for dorecover so that data can come from a file */
+int dorecover_fd(int infd)
+{
+	int ret;
+	struct memfile mf = {NULL, 0, 0};
+	long initial_pos;
+
+	restoring = TRUE;
+
+	initial_pos = lseek(infd, 0, SEEK_CUR);
+	mf.buf = loadfile(infd, &mf.len);
+	if (!mf.buf)
+	    return 0;
+	
+	ret = dorecover(&mf);
+	free(mf.buf);
+	
+	if (ret) {
+	    /* erase the binary portion of the logfile */
+	    lseek(infd, initial_pos, SEEK_SET);
+	    ftruncate(infd, initial_pos);
+	}
+	
+	return ret;
+}
+
 
 void trickery(char *reason)
 {

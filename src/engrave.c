@@ -1067,7 +1067,7 @@ int doengrave(struct obj *otmp)
 	return 1;
 }
 
-void save_engravings(int fd, struct level *lev, int mode)
+void save_engravings(struct memfile *mf, struct level *lev, int mode)
 {
 	struct engr *ep = lev->lev_engr;
 	struct engr *ep2;
@@ -1075,16 +1075,16 @@ void save_engravings(int fd, struct level *lev, int mode)
 
 	while (ep) {
 	    ep2 = ep->nxt_engr;
-	    if (ep->engr_lth && ep->engr_txt[0] && perform_bwrite(mode)) {
-		bwrite(fd, &(ep->engr_lth), sizeof(ep->engr_lth));
-		bwrite(fd, ep, sizeof(struct engr) + ep->engr_lth);
+	    if (ep->engr_lth && ep->engr_txt[0] && perform_mwrite(mode)) {
+		mwrite(mf, &(ep->engr_lth), sizeof(ep->engr_lth));
+		mwrite(mf, ep, sizeof(struct engr) + ep->engr_lth);
 	    }
 	    if (release_data(mode))
 		dealloc_engr(ep);
 	    ep = ep2;
 	}
-	if (perform_bwrite(mode))
-	    bwrite(fd, &no_more_engr, sizeof no_more_engr);
+	if (perform_mwrite(mode))
+	    mwrite(mf, &no_more_engr, sizeof no_more_engr);
 	if (release_data(mode))
 	    lev->lev_engr = NULL;
 }

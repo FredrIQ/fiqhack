@@ -41,8 +41,8 @@
 #define LSF_SHOW	0x1		/* display the light source */
 #define LSF_NEEDS_FIXUP	0x2		/* need oid fixup */
 
-static void write_ls(int, light_source *);
-static int maybe_write_ls(int fd, struct level *lev, int range, boolean write_it);
+static void write_ls(struct memfile *mf, light_source *);
+static int maybe_write_ls(struct memfile *mf, struct level *lev, int range, boolean write_it);
 
 /* imported from vision.c, for small circles */
 extern const char circle_data[];
@@ -240,15 +240,15 @@ void transfer_lights(struct level *oldlev, struct level *newlev)
 
 
 /* Save all light sources of the given range. */
-void save_light_sources(int fd, struct level *lev, int mode, int range)
+void save_light_sources(struct memfile *mf, struct level *lev, int mode, int range)
 {
     int count, actual, is_global;
     light_source **prev, *curr;
 
-    if (perform_bwrite(mode)) {
-	count = maybe_write_ls(fd, lev, range, FALSE);
-	bwrite(fd, &count, sizeof count);
-	actual = maybe_write_ls(fd, lev, range, TRUE);
+    if (perform_mwrite(mode)) {
+	count = maybe_write_ls(mf, lev, range, FALSE);
+	mwrite(mf, &count, sizeof count);
+	actual = maybe_write_ls(mf, lev, range, TRUE);
 	if (actual != count)
 	    panic("counted %d light sources, wrote %d! [range=%d]",
 		  count, actual, range);
@@ -342,7 +342,7 @@ void relink_light_sources(boolean ghostly, struct level *lev)
  * sources that would be written.  If write_it is true, actually write
  * the light source out.
  */
-static int maybe_write_ls(int fd, struct level *lev, int range, boolean write_it)
+static int maybe_write_ls(struct memfile *mf, struct level *lev, int range, boolean write_it)
 {
     int count = 0, is_global;
     light_source *ls;
@@ -368,7 +368,7 @@ static int maybe_write_ls(int fd, struct level *lev, int range, boolean write_it
 	/* if global and not doing local, or vice versa, count it */
 	if (is_global ^ (range == RANGE_LEVEL)) {
 	    count++;
-	    if (write_it) write_ls(fd, ls);
+	    if (write_it) write_ls(mf, ls);
 	}
     }
 
@@ -376,7 +376,7 @@ static int maybe_write_ls(int fd, struct level *lev, int range, boolean write_it
 }
 
 /* Write a light source structure to disk. */
-static void write_ls(int fd, light_source *ls)
+static void write_ls(struct memfile *mf, light_source *ls)
 {
     void * arg_save;
     struct obj *otmp;
@@ -384,7 +384,7 @@ static void write_ls(int fd, light_source *ls)
 
     if (ls->type == LS_OBJECT || ls->type == LS_MONSTER) {
 	if (ls->flags & LSF_NEEDS_FIXUP)
-	    bwrite(fd, ls, sizeof(light_source));
+	    mwrite(mf, ls, sizeof(light_source));
 	else {
 	    /* replace object pointer with id for write, then put back */
 	    arg_save = ls->id;
@@ -404,7 +404,7 @@ static void write_ls(int fd, light_source *ls)
 #endif
 	    }
 	    ls->flags |= LSF_NEEDS_FIXUP;
-	    bwrite(fd, ls, sizeof(light_source));
+	    mwrite(mf, ls, sizeof(light_source));
 	    ls->id = arg_save;
 	    ls->flags &= ~LSF_NEEDS_FIXUP;
 	}

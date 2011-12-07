@@ -290,7 +290,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	startup_common(namebuf, playmode);
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE, FALSE);
-	if (!dorecover(fd))
+	if (!dorecover_fd(fd))
 	    goto error_out2;
 	wd_message();
 	program_state.game_running = 1;

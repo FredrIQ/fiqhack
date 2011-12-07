@@ -67,7 +67,9 @@ void display_file(const char *fname, boolean complain)
 }
 
 
-/* load a file into malloc'd memory, starting at the current file position */
+/* load a file into malloc'd memory, starting at the current file position
+ * A single '\0' byte is appended to the file data, so that it can be treated as
+ * a string safely. */
 char *loadfile(int fd, int *datasize)
 {
 	int start, end, len, bytes_left, ret;
@@ -96,6 +98,7 @@ char *loadfile(int fd, int *datasize)
 	    
 	    bytes_left -= ret;
 	} while (bytes_left);
+	data[len] = '\0';
 	
 	*datasize = len;
 	return data;

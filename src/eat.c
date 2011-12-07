@@ -2436,16 +2436,16 @@ boolean maybe_finished_meal(boolean stopping)
 }
 
 
-void save_food(int fd)
+void save_food(struct memfile *mf)
 {
     int oid;
     oid = victual.piece ? victual.piece->o_id : 0;
-    bwrite(fd, &victual, sizeof(victual));
-    bwrite(fd, &oid, sizeof(oid));
+    mwrite(mf, &victual, sizeof(victual));
+    mwrite(mf, &oid, sizeof(oid));
     
     oid = tin.tin ? tin.tin->o_id : 0;
-    bwrite(fd, &tin, sizeof(tin));
-    bwrite(fd, &oid, sizeof(oid));    
+    mwrite(mf, &tin, sizeof(tin));
+    mwrite(mf, &oid, sizeof(oid));
 }
 
 

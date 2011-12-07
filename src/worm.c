@@ -436,26 +436,26 @@ void detect_wsegs(struct monst *worm, boolean use_detection_glyph)
  *  Save the worm information for later use.  The count is the number
  *  of segments, including the dummy.  Called from save.c.
  */
-void save_worm(int fd, struct level *lev, int mode)
+void save_worm(struct memfile *mf, struct level *lev, int mode)
 {
     int i;
     int count;
     struct wseg *curr, *temp;
 
-    if (perform_bwrite(mode)) {
+    if (perform_mwrite(mode)) {
 	for (i = 1; i < MAX_NUM_WORMS; i++) {
 	    for (count = 0, curr = lev->wtails[i]; curr; curr = curr->nseg) count++;
 	    /* Save number of segments */
-	    bwrite(fd, &count, sizeof(int));
+	    mwrite(mf, &count, sizeof(int));
 	    /* Save segment locations of the monster. */
 	    if (count) {
 		for (curr = lev->wtails[i]; curr; curr = curr->nseg) {
-		    bwrite(fd, &(curr->wx), sizeof(xchar));
-		    bwrite(fd, &(curr->wy), sizeof(xchar));
+		    mwrite(mf, &(curr->wx), sizeof(xchar));
+		    mwrite(mf, &(curr->wy), sizeof(xchar));
 		}
 	    }
 	}
-	bwrite(fd, lev->wgrowtime, sizeof(lev->wgrowtime));
+	mwrite(mf, lev->wgrowtime, sizeof(lev->wgrowtime));
     }
 
     if (release_data(mode)) {

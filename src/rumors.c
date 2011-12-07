@@ -194,12 +194,12 @@ static void init_oracles(dlb *fp)
 	return;
 }
 
-void save_oracles(int fd, int mode)
+void save_oracles(struct memfile *mf, int mode)
 {
-	if (perform_bwrite(mode)) {
-	    bwrite(fd, &oracle_cnt, sizeof oracle_cnt);
+	if (perform_mwrite(mode)) {
+	    mwrite(mf, &oracle_cnt, sizeof oracle_cnt);
 	    if (oracle_cnt)
-		bwrite(fd, oracle_loc, oracle_cnt*sizeof (long));
+		mwrite(mf, oracle_loc, oracle_cnt*sizeof (long));
 	}
 	if (release_data(mode)) {
 	    if (oracle_cnt) {

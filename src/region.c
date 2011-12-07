@@ -473,46 +473,46 @@ struct region *visible_region_at(struct level *lev, xchar x, xchar y)
 /**
  * save_regions :
  */
-void save_regions(int fd, struct level *lev, int mode)
+void save_regions(struct memfile *mf, struct level *lev, int mode)
 {
     int i, j;
     unsigned n;
 
-    if (!perform_bwrite(mode)) goto skip_lots;
+    if (!perform_mwrite(mode)) goto skip_lots;
 
-    bwrite(fd, &moves, sizeof (moves));	/* timestamp */
-    bwrite(fd, &lev->n_regions, sizeof (lev->n_regions));
+    mwrite(mf, &moves, sizeof (moves));	/* timestamp */
+    mwrite(mf, &lev->n_regions, sizeof (lev->n_regions));
     for (i = 0; i < lev->n_regions; i++) {
-	bwrite(fd, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
-	bwrite(fd, &lev->regions[i]->nrects, sizeof (short));
+	mwrite(mf, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
+	mwrite(mf, &lev->regions[i]->nrects, sizeof (short));
 	for (j = 0; j < lev->regions[i]->nrects; j++)
-	    bwrite(fd, &lev->regions[i]->rects[j], sizeof (struct nhrect));
-	bwrite(fd, &lev->regions[i]->attach_2_u, sizeof (boolean));
+	    mwrite(mf, &lev->regions[i]->rects[j], sizeof (struct nhrect));
+	mwrite(mf, &lev->regions[i]->attach_2_u, sizeof (boolean));
 	n = 0;
-	bwrite(fd, &lev->regions[i]->attach_2_m, sizeof (unsigned));
+	mwrite(mf, &lev->regions[i]->attach_2_m, sizeof (unsigned));
 	n = lev->regions[i]->enter_msg != NULL ? strlen(lev->regions[i]->enter_msg) : 0;
-	bwrite(fd, &n, sizeof n);
+	mwrite(mf, &n, sizeof n);
 	if (n > 0)
-	    bwrite(fd, (void *)lev->regions[i]->enter_msg, n);
+	    mwrite(mf, (void *)lev->regions[i]->enter_msg, n);
 	n = lev->regions[i]->leave_msg != NULL ? strlen(lev->regions[i]->leave_msg) : 0;
-	bwrite(fd, &n, sizeof n);
+	mwrite(mf, &n, sizeof n);
 	if (n > 0)
-	    bwrite(fd, (void *)lev->regions[i]->leave_msg, n);
-	bwrite(fd, &lev->regions[i]->ttl, sizeof (short));
-	bwrite(fd, &lev->regions[i]->expire_f, sizeof (short));
-	bwrite(fd, &lev->regions[i]->can_enter_f, sizeof (short));
-	bwrite(fd, &lev->regions[i]->enter_f, sizeof (short));
-	bwrite(fd, &lev->regions[i]->can_leave_f, sizeof (short));
-	bwrite(fd, &lev->regions[i]->leave_f, sizeof (short));
-	bwrite(fd, &lev->regions[i]->inside_f, sizeof (short));
-	bwrite(fd, &lev->regions[i]->player_flags, sizeof (boolean));
-	bwrite(fd, &lev->regions[i]->n_monst, sizeof (short));
+	    mwrite(mf, (void *)lev->regions[i]->leave_msg, n);
+	mwrite(mf, &lev->regions[i]->ttl, sizeof (short));
+	mwrite(mf, &lev->regions[i]->expire_f, sizeof (short));
+	mwrite(mf, &lev->regions[i]->can_enter_f, sizeof (short));
+	mwrite(mf, &lev->regions[i]->enter_f, sizeof (short));
+	mwrite(mf, &lev->regions[i]->can_leave_f, sizeof (short));
+	mwrite(mf, &lev->regions[i]->leave_f, sizeof (short));
+	mwrite(mf, &lev->regions[i]->inside_f, sizeof (short));
+	mwrite(mf, &lev->regions[i]->player_flags, sizeof (boolean));
+	mwrite(mf, &lev->regions[i]->n_monst, sizeof (short));
 	for (j = 0; j < lev->regions[i]->n_monst; j++)
-	    bwrite(fd, &lev->regions[i]->monsters[j],
+	    mwrite(mf, &lev->regions[i]->monsters[j],
 	     sizeof (unsigned));
-	bwrite(fd, &lev->regions[i]->visible, sizeof (boolean));
-	bwrite(fd, &lev->regions[i]->effect_id, sizeof (int));
-	bwrite(fd, &lev->regions[i]->arg, sizeof (void *));
+	mwrite(mf, &lev->regions[i]->visible, sizeof (boolean));
+	mwrite(mf, &lev->regions[i]->effect_id, sizeof (int));
+	mwrite(mf, &lev->regions[i]->arg, sizeof (void *));
     }
 
 skip_lots:

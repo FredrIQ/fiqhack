@@ -185,6 +185,7 @@ void savebones(struct obj *corpse)
 	const struct permonst *mptr;
 	struct fruit *f;
 	char c, whynot[BUFSZ], bonesid[10];
+	struct memfile mf;
 
 	/* caller has already checked `can_make_bones()' */
 
@@ -307,12 +308,15 @@ make_bones:
 	}
 	c = (char) (strlen(bonesid) + 1);
 
-	store_version(fd);
-	bwrite(fd, &c, sizeof c);
-	bwrite(fd, bonesid, (unsigned) c);	/* DD.nnn */
-	savefruitchn(fd, WRITE_SAVE | FREE_SAVE);
+	store_version(&mf);
+	mwrite(&mf, &c, sizeof c);
+	mwrite(&mf, bonesid, (unsigned) c);	/* DD.nnn */
+	savefruitchn(&mf, WRITE_SAVE | FREE_SAVE);
 	update_mlstmv();	/* update monsters for eventual restoration */
-	savelev(fd, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
+	savelev(&mf, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
+	
+	store_mf(fd, &mf);
+	
 	close(fd);
 	commit_bonesfile(bonesid);
 }
@@ -419,7 +423,7 @@ int getbones(d_level *levnum)
 		 * -- just generate a new level for those N-1 games.
 		 */
 		/* pline("Cannot unlink bones."); */
-		savelev(-1, ledger_no(levnum), FREE_SAVE);
+		savelev(NULL, ledger_no(levnum), FREE_SAVE);
 		return 0;
 	}
 	return ok;

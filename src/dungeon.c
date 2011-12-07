@@ -108,29 +108,29 @@ static void dumpit(void)
 #endif
 
 /* Save the dungeon structures. */
-void save_dungeon(int fd, boolean perform_write, boolean free_data)
+void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data)
 {
     branch *curr, *next;
     int    count;
 
     if (perform_write) {
-	bwrite(fd, &n_dgns, sizeof n_dgns);
-	bwrite(fd, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
-	bwrite(fd, &dungeon_topology, sizeof dungeon_topology);
-	bwrite(fd, tune, sizeof tune);
+	mwrite(mf, &n_dgns, sizeof n_dgns);
+	mwrite(mf, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+	mwrite(mf, &dungeon_topology, sizeof dungeon_topology);
+	mwrite(mf, tune, sizeof tune);
 
 	for (count = 0, curr = branches; curr; curr = curr->next)
 	    count++;
-	bwrite(fd, &count, sizeof(count));
+	mwrite(mf, &count, sizeof(count));
 
 	for (curr = branches; curr; curr = curr->next)
-	    bwrite(fd, curr, sizeof (branch));
+	    mwrite(mf, curr, sizeof (branch));
 
 	count = maxledgerno();
-	bwrite(fd, &count, sizeof count);
-	bwrite(fd, level_info,
+	mwrite(mf, &count, sizeof count);
+	mwrite(mf, level_info,
 			(unsigned)count * sizeof (struct linfo));
-	bwrite(fd, &inv_pos, sizeof inv_pos);
+	mwrite(mf, &inv_pos, sizeof inv_pos);
     }
 
     if (free_data) {

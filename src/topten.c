@@ -133,14 +133,11 @@ static struct toptenentry *read_topten(int limit)
     char *data, *line;
     
     fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
-    if (fd == -1)
+    lseek(fd, 0, SEEK_SET);
+    data = loadfile(fd, &size);
+    if (!data)
 	return NULL;
     
-    size = lseek(fd, 0, SEEK_END);
-    lseek(fd, 0, SEEK_SET);
-    data = malloc(size+1);
-    read(fd, data, size);
-    data[size] = 0;
     close(fd);
    
     ttlist = calloc(limit + 1, sizeof(struct toptenentry));
@@ -595,23 +592,14 @@ void write_log_toptenentry(int fd, int how)
 void read_log_toptenentry(int fd, struct nh_topten_entry *entry)
 {
     struct toptenentry tt;
-    int pos, end, size;
-    char *line;
-    
-    pos = lseek(fd, 0, SEEK_CUR);
-    end = lseek(fd, 0, SEEK_END);
-    lseek(fd, pos, SEEK_SET);
-    
-    size = end - pos;
-    if (0 == size)
+    int size;
+    char *line = loadfile(fd, &size);
+    if (!line)
 	return;
-    
-    line = malloc(size + 1);
-    read(fd, line, size);
-    line[size] = '\0';
     
     readentry(line, &tt);
     fill_nh_score_entry(&tt, entry, -1, FALSE);
+    free(line);
 }
 
 /* topten.c */

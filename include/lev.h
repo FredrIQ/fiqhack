@@ -11,7 +11,7 @@
 #define FREE_SAVE	0x4
 
 /* operations of the various saveXXXchn & co. routines */
-#define perform_bwrite(mode)	((mode) & (COUNT_SAVE|WRITE_SAVE))
+#define perform_mwrite(mode)	((mode) & (COUNT_SAVE|WRITE_SAVE))
 #define release_data(mode)	((mode) & FREE_SAVE)
 
 /* The following are used in mkmaze.c */

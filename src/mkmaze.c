@@ -960,22 +960,23 @@ void water_friction(schar *udx, schar *udy)
 	if (eff) pline("Water turbulence affects your movements.");
 }
 
-void save_waterlevel(int fd, int mode)
+
+void save_waterlevel(struct memfile *mf, int mode)
 {
 	struct bubble *b;
 
 	if (!Is_waterlevel(&u.uz)) return;
 
-	if (perform_bwrite(mode)) {
+	if (perform_mwrite(mode)) {
 	    int n = 0;
 	    for (b = bbubbles; b; b = b->next) ++n;
-	    bwrite(fd, &n, sizeof (int));
-	    bwrite(fd, &xmin, sizeof (int));
-	    bwrite(fd, &ymin, sizeof (int));
-	    bwrite(fd, &xmax, sizeof (int));
-	    bwrite(fd, &ymax, sizeof (int));
+	    mwrite(mf, &n, sizeof (int));
+	    mwrite(mf, &xmin, sizeof (int));
+	    mwrite(mf, &ymin, sizeof (int));
+	    mwrite(mf, &xmax, sizeof (int));
+	    mwrite(mf, &ymax, sizeof (int));
 	    for (b = bbubbles; b; b = b->next)
-		bwrite(fd, b, sizeof (struct bubble));
+		mwrite(mf, b, sizeof (struct bubble));
 	}
 	if (release_data(mode))
 	    unsetup_waterlevel();

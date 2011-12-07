@@ -101,12 +101,12 @@ unsigned int mt_nextstate(void)
 }
 
 
-void save_mt_state(int fd)
+void save_mt_state(struct memfile *mf)
 {
     unsigned int pos = next - state;
-    bwrite(fd, state, sizeof(state));
-    bwrite(fd, &pos, sizeof(pos));
-    bwrite(fd, &left, sizeof(left));
+    mwrite(mf, state, sizeof(state));
+    mwrite(mf, &pos, sizeof(pos));
+    mwrite(mf, &left, sizeof(left));
 }
 
 

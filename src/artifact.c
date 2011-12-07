@@ -81,10 +81,10 @@ void init_artifacts(void)
 	hack_artifacts();
 }
 
-void save_artifacts(int fd)
+void save_artifacts(struct memfile *mf)
 {
-	bwrite(fd, artiexist, sizeof artiexist);
-	bwrite(fd, artidisco, sizeof artidisco);
+	mwrite(mf, artiexist, sizeof artiexist);
+	mwrite(mf, artidisco, sizeof artidisco);
 }
 
 void restore_artifacts(struct memfile *mf)

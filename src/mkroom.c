@@ -25,7 +25,7 @@ static coord * shrine_pos(struct level *lev, int roomno);
 static const struct permonst * morguemon(void);
 static const struct permonst * antholemon(void);
 static const struct permonst * squadmon(void);
-static void save_room(int fd, struct mkroom *);
+static void save_room(struct memfile *mf, struct mkroom *);
 static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r);
 static boolean has_dnstairs(struct level *lev, struct mkroom *);
 static boolean has_upstairs(struct level *lev, struct mkroom *);
@@ -590,7 +590,7 @@ gotone:
  * save_room : A recursive function that saves a room and its subrooms
  * (if any).
  */
-static void save_room(int fd, struct mkroom *r)
+static void save_room(struct memfile *mf, struct mkroom *r)
 {
 	short i;
 	/*
@@ -598,22 +598,22 @@ static void save_room(int fd, struct mkroom *r)
 	 * of writing the whole structure. That is I should not write
 	 * the subrooms pointers, but who cares ?
 	 */
-	bwrite(fd, r, sizeof(struct mkroom));
+	mwrite(mf, r, sizeof(struct mkroom));
 	for (i=0; i<r->nsubrooms; i++)
-	    save_room(fd, r->sbrooms[i]);
+	    save_room(mf, r->sbrooms[i]);
 }
 
 /*
  * save_rooms : Save all the rooms on disk!
  */
-void save_rooms(int fd, struct level *lev)
+void save_rooms(struct memfile *mf, struct level *lev)
 {
 	short i;
 
 	/* First, write the number of rooms */
-	bwrite(fd, &lev->nroom, sizeof(lev->nroom));
+	mwrite(mf, &lev->nroom, sizeof(lev->nroom));
 	for (i=0; i<lev->nroom; i++)
-	    save_room(fd, &lev->rooms[i]);
+	    save_room(mf, &lev->rooms[i]);
 }
 
 static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r)

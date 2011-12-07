@@ -9,12 +9,12 @@
 #include <fcntl.h>
 #endif
 
-static void savelevchn(int,int);
-static void savedamage(int fd, struct level *lev, int mode);
-static void saveobjchn(int,struct obj *,int);
-static void savemonchn(int,struct monst *,int);
-static void savetrapchn(int,struct trap *,int);
-static void savegamestate(int,int);
+static void savelevchn(struct memfile *mf, int);
+static void savedamage(struct memfile *mf, struct level *lev, int mode);
+static void saveobjchn(struct memfile *mf, struct obj *,int);
+static void savemonchn(struct memfile *mf, struct monst *,int);
+static void savetrapchn(struct memfile *mf, struct trap *,int);
+static void savegamestate(struct memfile *mf, int);
 
 
 int dosave(void)
@@ -36,91 +36,102 @@ int dosave(void)
 /* returns 1 if save successful */
 int dosave0(boolean emergency)
 {
-	int fd, count = 0;
-	xchar ltmp;
+	int fd;
+	struct memfile mf = {NULL, 0, 0};
 
 	fd = logfile;
 	
 	log_finish(LS_SAVED);
 	vision_recalc(2);	/* shut down vision to prevent problems
 				   in the event of an impossible() call */
-	store_version(fd);
 	
-	/* Place flags, player info & moves at the beginning of the save.
-	 * This makes it possible to read them in nh_get_savegame_status without
-	 * parsing all the dungeon and level data */
-	bwrite(fd, &flags, sizeof(struct flag));
-	bwrite(fd, &u, sizeof(struct you));
-	bwrite(fd, &youmonst, sizeof(youmonst));
-	bwrite(fd, &moves, sizeof moves);
-
-	/* store dungeon layout */
-	save_dungeon(fd, TRUE, FALSE);
-	savelevchn(fd, WRITE_SAVE);
+	savegame(&mf);
+	store_mf(fd, &mf);
 	
-	/* store levels */
-	for (ltmp = 1; ltmp <= maxledgerno(); ltmp++)
-	    if (levels[ltmp])
-		count++;
-	bwrite(fd, &count, sizeof(count));
-	for (ltmp = 1; ltmp <= maxledgerno(); ltmp++) {
-		if (!levels[ltmp])
-		    continue;
-		bwrite(fd, &ltmp, sizeof ltmp); /* level number*/
-		savelev(fd, ltmp, WRITE_SAVE); /* actual level*/
-	}
-	
-	savegamestate(fd, WRITE_SAVE | FREE_SAVE);
 	freedynamicdata();
 
 	return TRUE;
 }
 
 
-static void savegamestate(int fd, int mode)
+void savegame(struct memfile *mf)
+{
+	int count = 0;
+	xchar ltmp;
+	
+	store_version(mf);
+	
+	/* Place flags, player info & moves at the beginning of the save.
+	 * This makes it possible to read them in nh_get_savegame_status without
+	 * parsing all the dungeon and level data */
+	mwrite(mf, &flags, sizeof(struct flag));
+	mwrite(mf, &u, sizeof(struct you));
+	mwrite(mf, &youmonst, sizeof(youmonst));
+	mwrite(mf, &moves, sizeof moves);
+	
+	/* store dungeon layout */
+	save_dungeon(mf, TRUE, FALSE);
+	savelevchn(mf, WRITE_SAVE);
+	
+	/* store levels */
+	for (ltmp = 1; ltmp <= maxledgerno(); ltmp++)
+	    if (levels[ltmp])
+		count++;
+	mwrite(mf, &count, sizeof(count));
+	for (ltmp = 1; ltmp <= maxledgerno(); ltmp++) {
+		if (!levels[ltmp])
+		    continue;
+		mwrite(mf, &ltmp, sizeof ltmp); /* level number*/
+		savelev(mf, ltmp, WRITE_SAVE); /* actual level*/
+	}
+	savegamestate(mf, WRITE_SAVE);
+}
+
+
+static void savegamestate(struct memfile *mf, int mode)
 {
 	unsigned ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
 	unsigned usteed_id = (u.usteed ? u.usteed->m_id : 0);
 	unsigned book_id;
 
 	/* must come before migrating_objs and migrating_mons are freed */
-	save_timers(fd, level, mode, RANGE_GLOBAL);
-	save_light_sources(fd, level, mode, RANGE_GLOBAL);
+	save_timers(mf, level, mode, RANGE_GLOBAL);
+	save_light_sources(mf, level, mode, RANGE_GLOBAL);
 
-	saveobjchn(fd, invent, mode);
-	saveobjchn(fd, migrating_objs, mode);
-	savemonchn(fd, migrating_mons, mode);
+	saveobjchn(mf, invent, mode);
+	saveobjchn(mf, migrating_objs, mode);
+	savemonchn(mf, migrating_mons, mode);
 	if (release_data(mode)) {
 	    invent = 0;
 	    migrating_objs = 0;
 	    migrating_mons = 0;
 	}
-	bwrite(fd, mvitals, sizeof(mvitals));
+	mwrite(mf, mvitals, sizeof(mvitals));
 
-	bwrite(fd, &quest_status, sizeof(struct q_score));
-	bwrite(fd, spl_book, sizeof(struct spell) * (MAXSPELL + 1));
-	save_artifacts(fd);
-	save_oracles(fd, mode);
+	mwrite(mf, &quest_status, sizeof(struct q_score));
+	mwrite(mf, spl_book, sizeof(struct spell) * (MAXSPELL + 1));
+	save_artifacts(mf);
+	save_oracles(mf, mode);
 	if (ustuck_id)
-	    bwrite(fd, &ustuck_id, sizeof ustuck_id);
+	    mwrite(mf, &ustuck_id, sizeof ustuck_id);
 	if (usteed_id)
-	    bwrite(fd, &usteed_id, sizeof usteed_id);
-	bwrite(fd, pl_character, sizeof pl_character);
-	bwrite(fd, pl_fruit, sizeof pl_fruit);
-	bwrite(fd, &current_fruit, sizeof current_fruit);
-	savefruitchn(fd, mode);
-	savenames(fd, mode);
-	save_waterlevel(fd, mode);
-	bwrite(fd, &lastinvnr, sizeof(lastinvnr));
-	save_mt_state(fd);
-	save_track(fd);
-	save_food(fd);
+	    mwrite(mf, &usteed_id, sizeof usteed_id);
+	mwrite(mf, pl_character, sizeof pl_character);
+	mwrite(mf, pl_fruit, sizeof pl_fruit);
+	mwrite(mf, &current_fruit, sizeof current_fruit);
+	savefruitchn(mf, mode);
+	savenames(mf, mode);
+	save_waterlevel(mf, mode);
+	mwrite(mf, &lastinvnr, sizeof(lastinvnr));
+	save_mt_state(mf);
+	save_track(mf);
+	save_food(mf);
 	book_id = book ? book->o_id : 0;
-	bwrite(fd, &book_id, sizeof(book_id));
+	mwrite(mf, &book_id, sizeof(book_id));
 }
 
 
-void savelev(int fd, xchar levnum, int mode)
+void savelev(struct memfile *mf, xchar levnum, int mode)
 {
 	struct level *lev = levels[levnum];
 	
@@ -136,34 +147,34 @@ void savelev(int fd, xchar levnum, int mode)
 		dmonsfree(lev);
 	}
 
-	bwrite(fd,&levnum,sizeof(levnum));
-	bwrite(fd,&lev->z,sizeof(lev->z));
-	bwrite(fd,lev->levname,sizeof(lev->levname));
-	bwrite(fd,lev->locations,sizeof(lev->locations));
-	bwrite(fd,&lev->lastmoves,sizeof(lev->lastmoves));
-	bwrite(fd,&lev->upstair,sizeof(stairway));
-	bwrite(fd,&lev->dnstair,sizeof(stairway));
-	bwrite(fd,&lev->upladder,sizeof(stairway));
-	bwrite(fd,&lev->dnladder,sizeof(stairway));
-	bwrite(fd,&lev->sstairs,sizeof(stairway));
-	bwrite(fd,&lev->updest,sizeof(dest_area));
-	bwrite(fd,&lev->dndest,sizeof(dest_area));
-	bwrite(fd,&lev->flags,sizeof(lev->flags));
-	bwrite(fd, lev->doors, sizeof(lev->doors));
-	save_rooms(fd, lev);	/* no dynamic memory to reclaim */
+	mwrite(mf, &levnum, sizeof(levnum));
+	mwrite(mf, &lev->z, sizeof(lev->z));
+	mwrite(mf, lev->levname, sizeof(lev->levname));
+	mwrite(mf, lev->locations, sizeof(lev->locations));
+	mwrite(mf, &lev->lastmoves, sizeof(lev->lastmoves));
+	mwrite(mf, &lev->upstair, sizeof(stairway));
+	mwrite(mf, &lev->dnstair, sizeof(stairway));
+	mwrite(mf, &lev->upladder, sizeof(stairway));
+	mwrite(mf, &lev->dnladder, sizeof(stairway));
+	mwrite(mf, &lev->sstairs, sizeof(stairway));
+	mwrite(mf, &lev->updest, sizeof(dest_area));
+	mwrite(mf, &lev->dndest, sizeof(dest_area));
+	mwrite(mf, &lev->flags, sizeof(lev->flags));
+	mwrite(mf, lev->doors, sizeof(lev->doors));
+	save_rooms(mf, lev);	/* no dynamic memory to reclaim */
 
 	/* from here on out, saving also involves allocated memory cleanup */
 skip_lots:
 	/* must be saved before mons, objs, and buried objs */
-	save_timers(fd, lev, mode, RANGE_LEVEL);
-	save_light_sources(fd, lev, mode, RANGE_LEVEL);
+	save_timers(mf, lev, mode, RANGE_LEVEL);
+	save_light_sources(mf, lev, mode, RANGE_LEVEL);
 
-	savemonchn(fd, lev->monlist, mode);
-	save_worm(fd, lev, mode);	/* save worm information */
-	savetrapchn(fd, lev->lev_traps, mode);
-	saveobjchn(fd, lev->objlist, mode);
-	saveobjchn(fd, lev->buriedobjlist, mode);
-	saveobjchn(fd, lev->billobjs, mode);
+	savemonchn(mf, lev->monlist, mode);
+	save_worm(mf, lev, mode);	/* save worm information */
+	savetrapchn(mf, lev->lev_traps, mode);
+	saveobjchn(mf, lev->objlist, mode);
+	saveobjchn(mf, lev->buriedobjlist, mode);
+	saveobjchn(mf, lev->billobjs, mode);
 	if (release_data(mode)) {
 	    lev->monlist = NULL;
 	    lev->lev_traps = NULL;
@@ -171,9 +182,9 @@ skip_lots:
 	    lev->buriedobjlist = NULL;
 	    lev->billobjs = NULL;
 	}
-	save_engravings(fd, lev, mode);
-	savedamage(fd, lev, mode);
-	save_regions(fd, lev, mode);
+	save_engravings(mf, lev, mode);
+	savedamage(mf, lev, mode);
+	save_regions(mf, lev, mode);
 	
 	if (release_data(mode)) {
 	    free(lev);
@@ -182,29 +193,53 @@ skip_lots:
 }
 
 
-void bwrite(int fd, void *loc, unsigned num)
+void mwrite(struct memfile *mf, const void *buf, unsigned int num)
 {
-    boolean failed;
-
-    failed = (write(fd, loc, num) != num);
-    if (failed)
-	panic("cannot write %u bytes to file #%d", num, fd);
+	boolean do_realloc = FALSE;
+	while (mf->len < mf->pos + num) {
+	    mf->len += 4096;
+	    do_realloc = TRUE;
+	}
+	
+	if (do_realloc)
+	    mf->buf = realloc(mf->buf, mf->len);
+	memcpy(&mf->buf[mf->pos], buf, num);
+	mf->pos += num;
 }
 
 
-static void savelevchn(int fd, int mode)
+void store_mf(int fd, struct memfile *mf)
+{
+	int len, left, ret;
+	
+	len = left = mf->pos;
+	while (left) {
+	    ret = write(fd, &mf->buf[len - left], left);
+	    if (ret == -1) /* error */
+		goto out;
+	    left -= ret;
+	}
+
+out:
+	free(mf->buf);
+	mf->buf = NULL;
+	mf->pos = mf->len = 0;
+}
+
+
+static void savelevchn(struct memfile *mf, int mode)
 {
 	s_level	*tmplev, *tmplev2;
 	int cnt = 0;
 
 	for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next) cnt++;
-	if (perform_bwrite(mode))
-	    bwrite(fd, &cnt, sizeof(int));
+	if (perform_mwrite(mode))
+	    mwrite(mf, &cnt, sizeof(int));
 
 	for (tmplev = sp_levchn; tmplev; tmplev = tmplev2) {
 	    tmplev2 = tmplev->next;
-	    if (perform_bwrite(mode))
-		bwrite(fd, tmplev, sizeof(s_level));
+	    if (perform_mwrite(mode))
+		mwrite(mf, tmplev, sizeof(s_level));
 	    if (release_data(mode))
 		free(tmplev);
 	}
@@ -213,7 +248,7 @@ static void savelevchn(int fd, int mode)
 }
 
 
-static void savedamage(int fd, struct level *lev, int mode)
+static void savedamage(struct memfile *mf, struct level *lev, int mode)
 {
 	struct damage *damageptr, *tmp_dam;
 	unsigned int xl = 0;
@@ -221,12 +256,12 @@ static void savedamage(int fd, struct level *lev, int mode)
 	damageptr = lev->damagelist;
 	for (tmp_dam = damageptr; tmp_dam; tmp_dam = tmp_dam->next)
 	    xl++;
-	if (perform_bwrite(mode))
-	    bwrite(fd, &xl, sizeof(xl));
+	if (perform_mwrite(mode))
+	    mwrite(mf, &xl, sizeof(xl));
 
 	while (xl--) {
-	    if (perform_bwrite(mode))
-		bwrite(fd, damageptr, sizeof(*damageptr));
+	    if (perform_mwrite(mode))
+		mwrite(mf, damageptr, sizeof(*damageptr));
 	    tmp_dam = damageptr;
 	    damageptr = damageptr->next;
 	    if (release_data(mode))
@@ -237,7 +272,7 @@ static void savedamage(int fd, struct level *lev, int mode)
 }
 
 
-static void saveobjchn(int fd, struct obj *otmp, int mode)
+static void saveobjchn(struct memfile *mf, struct obj *otmp, int mode)
 {
 	struct obj *otmp2;
 	unsigned int xl;
@@ -245,13 +280,13 @@ static void saveobjchn(int fd, struct obj *otmp, int mode)
 
 	while (otmp) {
 	    otmp2 = otmp->nobj;
-	    if (perform_bwrite(mode)) {
+	    if (perform_mwrite(mode)) {
 		xl = otmp->oxlth + otmp->onamelth;
-		bwrite(fd, &xl, sizeof(int));
-		bwrite(fd, otmp, xl + sizeof(struct obj));
+		mwrite(mf, &xl, sizeof(int));
+		mwrite(mf, otmp, xl + sizeof(struct obj));
 	    }
 	    if (Has_contents(otmp))
-		saveobjchn(fd,otmp->cobj,mode);
+		saveobjchn(mf, otmp->cobj,mode);
 	    if (release_data(mode)) {
 		otmp->where = OBJ_FREE;	/* set to free so dealloc will work */
 		otmp->timed = 0;	/* not timed any more */
@@ -260,51 +295,51 @@ static void saveobjchn(int fd, struct obj *otmp, int mode)
 	    }
 	    otmp = otmp2;
 	}
-	if (perform_bwrite(mode))
-	    bwrite(fd, &minusone, sizeof(int));
+	if (perform_mwrite(mode))
+	    mwrite(mf, &minusone, sizeof(int));
 }
 
-static void savemonchn(int fd, struct monst *mtmp, int mode)
+static void savemonchn(struct memfile *mf, struct monst *mtmp, int mode)
 {
 	struct monst *mtmp2;
 	unsigned int xl;
 	int minusone = -1;
 	const struct permonst *monbegin = &mons[0];
 
-	if (perform_bwrite(mode))
-	    bwrite(fd, &monbegin, sizeof(monbegin));
+	if (perform_mwrite(mode))
+	    mwrite(mf, &monbegin, sizeof(monbegin));
 
 	while (mtmp) {
 	    mtmp2 = mtmp->nmon;
-	    if (perform_bwrite(mode)) {
+	    if (perform_mwrite(mode)) {
 		xl = mtmp->mxlth + mtmp->mnamelth;
-		bwrite(fd, &xl, sizeof(int));
-		bwrite(fd, mtmp, xl + sizeof(struct monst));
+		mwrite(mf, &xl, sizeof(int));
+		mwrite(mf, mtmp, xl + sizeof(struct monst));
 	    }
 	    if (mtmp->minvent)
-		saveobjchn(fd,mtmp->minvent,mode);
+		saveobjchn(mf,mtmp->minvent,mode);
 	    if (release_data(mode))
 		dealloc_monst(mtmp);
 	    mtmp = mtmp2;
 	}
-	if (perform_bwrite(mode))
-	    bwrite(fd, &minusone, sizeof(int));
+	if (perform_mwrite(mode))
+	    mwrite(mf, &minusone, sizeof(int));
 }
 
-static void savetrapchn(int fd, struct trap *trap, int mode)
+static void savetrapchn(struct memfile *mf, struct trap *trap, int mode)
 {
 	struct trap *trap2;
 
 	while (trap) {
 	    trap2 = trap->ntrap;
-	    if (perform_bwrite(mode))
-		bwrite(fd, trap, sizeof(struct trap));
+	    if (perform_mwrite(mode))
+		mwrite(mf, trap, sizeof(struct trap));
 	    if (release_data(mode))
 		dealloc_trap(trap);
 	    trap = trap2;
 	}
-	if (perform_bwrite(mode))
-	    bwrite(fd, (void*)nul, sizeof(struct trap));
+	if (perform_mwrite(mode))
+	    mwrite(mf, (void*)nul, sizeof(struct trap));
 }
 
 /* save all the fruit names and ID's; this is used only in saving whole games
@@ -312,21 +347,21 @@ static void savetrapchn(int fd, struct trap *trap, int mode)
  * we only want to save the fruits which exist on the bones level; the bones
  * level routine marks nonexistent fruits by making the fid negative.
  */
-void savefruitchn(int fd, int mode)
+void savefruitchn(struct memfile *mf, int mode)
 {
 	struct fruit *f2, *f1;
 
 	f1 = ffruit;
 	while (f1) {
 	    f2 = f1->nextf;
-	    if (f1->fid >= 0 && perform_bwrite(mode))
-		bwrite(fd, f1, sizeof(struct fruit));
+	    if (f1->fid >= 0 && perform_mwrite(mode))
+		mwrite(mf, f1, sizeof(struct fruit));
 	    if (release_data(mode))
 		dealloc_fruit(f1);
 	    f1 = f2;
 	}
-	if (perform_bwrite(mode))
-	    bwrite(fd, (void *)nul, sizeof(struct fruit));
+	if (perform_mwrite(mode))
+	    mwrite(mf, (void *)nul, sizeof(struct fruit));
 	if (release_data(mode))
 	    ffruit = 0;
 }

@@ -84,7 +84,7 @@ boolean uptodate(struct memfile *mf, const char *name)
     return TRUE;
 }
 
-void store_version(int fd)
+void store_version(struct memfile *mf)
 {
 	static const struct version_info version_data = {
 			VERSION_NUMBER, VERSION_FEATURES,
@@ -92,7 +92,7 @@ void store_version(int fd)
 	};
 
 	/* bwrite() before bufon() uses plain write() */
-	bwrite(fd,(void *)&version_data, sizeof version_data);
+	mwrite(mf, &version_data, sizeof(version_data));
 	return;
 }
 
