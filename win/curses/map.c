@@ -51,13 +51,6 @@ void draw_map(int frame)
 }
 
 
-void curses_clear_map(void)
-{
-    werase(mapwin);
-    wrefresh(mapwin);
-}
-
-
 static int compare_coord_dist(const void *p1, const void *p2)
 {
     const struct coord *c1 = p1;

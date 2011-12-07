@@ -1324,18 +1324,9 @@ boolean warning_at(int x, int y)
 }
 
 
-void clear_display_buffer(void)
-{
-    memset(dbuf, 0, sizeof(struct nh_dbuf_entry) * ROWNO * COLNO);
-}
-
-
 void cls(void)
 {
-    iflags.botl = 1;		/* force update of botl window */
-    win_clear_map();	/* clear physical screen */
-
-    clear_display_buffer();
+    memset(dbuf, 0, sizeof(struct nh_dbuf_entry) * ROWNO * COLNO);
 }
 
 

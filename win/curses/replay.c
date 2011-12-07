@@ -12,7 +12,6 @@ static void dummy_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void dummy_delay_output(void) {}
 
 static struct nh_window_procs curses_replay_windowprocs = {
-    curses_clear_map,
     curses_pause,
     curses_display_buffer,
     curses_update_status_silent,

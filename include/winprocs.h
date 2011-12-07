@@ -6,7 +6,6 @@
 
 extern struct nh_window_procs windowprocs;
 
-#define win_clear_map (*windowprocs.win_clear_map)
 #define win_pause_output (*windowprocs.win_pause)
 #define display_buffer (*windowprocs.win_display_buffer)
 #define update_status (*windowprocs.win_update_status)

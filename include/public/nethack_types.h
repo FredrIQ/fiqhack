@@ -524,7 +524,6 @@ struct nh_topten_entry {
 };
 
 struct nh_window_procs {
-    void (*win_clear_map)(void);
     void (*win_pause)(enum nh_pause_reason reason);
     void (*win_display_buffer)(char *,boolean);
     void (*win_update_status)(struct nh_player_info *pi);

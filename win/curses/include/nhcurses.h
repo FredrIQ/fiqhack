@@ -228,7 +228,6 @@ extern enum nh_direction key_to_dir(int key);
 
 /* map.c */
 extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
-extern void curses_clear_map(void);
 extern int curses_getpos(int *x, int *y, boolean force, const char *goal);
 extern void draw_map(int frame);
 

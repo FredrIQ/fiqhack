@@ -9,7 +9,6 @@ extern int logfile;
 extern unsigned int last_cmd_pos;
 
 
-static void replay_clear_map(void) {}
 static void replay_pause(enum nh_pause_reason r) {}
 static void replay_display_buffer(char *buf, boolean trymove) {}
 static void replay_update_status(struct nh_player_info *pi) {}
@@ -66,7 +65,6 @@ static const char b64d[256] = {
 
 
 static const struct nh_window_procs def_replay_windowprocs = {
-    replay_clear_map,
     replay_pause,
     replay_display_buffer,
     replay_update_status,

@@ -163,7 +163,7 @@ void startup_common(char *name, int playmode)
     if (wizard)
 	strcpy(plname, "wizard");
 
-    clear_display_buffer();
+    cls();
 
     initrack();
 }
