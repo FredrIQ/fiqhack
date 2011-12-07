@@ -38,8 +38,8 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
     char buf[BUFSZ];
     
     sprintf(buf, "REPLAY action %d/%d", rinfo->actions, rinfo->max_actions);
-    if (*rinfo->last_command)
-	sprintf(buf + strlen(buf), "; last command: %s.", rinfo->last_command);
+    if (*rinfo->nextcmd)
+	sprintf(buf + strlen(buf), "; next command: %s.", rinfo->nextcmd);
     
     mvwhline(stdscr, 2 + ui_flags.msgheight + ROWNO, 1, ACS_HLINE, COLNO);
     wattron(stdscr, COLOR_PAIR(4) | A_BOLD);

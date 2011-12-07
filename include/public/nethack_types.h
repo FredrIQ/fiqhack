@@ -398,7 +398,7 @@ struct nh_game_info {
 
 
 struct nh_replay_info {
-    char last_command[64];
+    char nextcmd[64];
     int actions, max_actions;
     int moves, max_moves;
 };

@@ -45,7 +45,7 @@ struct replay_checkpoint {
 
 static struct replay_checkpoint *checkpoints;
 static char **commands;
-static int cmdcount, lastcmd, cpcount;
+static int cmdcount, cpcount;
 static struct nh_option_desc *saved_options;
 static struct nh_window_procs replay_windowprocs, orig_windowprocs;
 
@@ -234,7 +234,7 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
 				const char *title, int how, int *results)
 {
     int i, j, val;
-    char *token;
+    char *token, *tab;
     char *resultbuf;
     boolean id_ok;
     
@@ -261,6 +261,18 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
 	
 	results[i++] = val;
 	resultbuf = strchr(resultbuf, ':') + 1;
+    }
+    
+    if (program_state.viewing && how != PICK_NONE) {
+	char buf[BUFSZ] = "(none selected)";
+	if (i == 1) {
+	    for (j = 0; j < icount && items[j].id != results[0]; j++);
+	    strcpy(buf, items[j].caption);
+	    if ( (tab = strchr(buf, '\t')) )
+		*tab = '\0';
+	} else
+	    sprintf(buf, "(%d selected)", i);
+	pline("<%s: %s>", title ? title : "List of items", buf);
     }
     
     return i;
@@ -607,7 +619,6 @@ static void replay_read_command(char *cmdtok, char **cmd, int *count,
     if (n != 3 || cmdidx > cmdcount)
 	parse_error("Error: Incorrect command spec\n");
     
-    lastcmd = cmdidx;
     *cmd = commands[cmdidx];
     
     if (!replay_parse_arg(next_log_token(), arg))
@@ -737,6 +748,30 @@ static void free_checkpoints(void)
 }
 
 
+static boolean find_next_command(char *buf, int buflen)
+{
+    int i, n, cmdidx, count;
+    long dummy;
+    const char *cmdname;
+    
+    buf[0] = '\0';
+    for (i = loginfo.next; i < loginfo.tokencount; i++)
+	if (*loginfo.tokens[i] == '>')
+	    break;
+	
+    if (i == loginfo.tokencount)
+	return FALSE;
+    
+    n = sscanf(loginfo.tokens[i], ">%lx:%x:%d", &dummy, &cmdidx, &count);
+    if (n != 3)
+	return FALSE;
+    
+    cmdname = commands[cmdidx] ? commands[cmdidx] : "<continue>";
+    strncpy(buf, cmdname, buflen);
+    return TRUE;
+}
+
+
 boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 			     struct nh_replay_info *info)
 {
@@ -771,6 +806,7 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     
     info->max_moves = gi.moves;
     info->max_actions = loginfo.cmdcount;
+    find_next_command(info->nextcmd, sizeof(info->nextcmd));
     make_checkpoint(0);
     
     api_exit();
@@ -783,12 +819,12 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 					  enum replay_control action, int count)
 {
     boolean did_action;
-    const char *cmdstr;
     int i, prev_actions, target;
     
     if (!program_state.viewing || !api_entry_checkpoint()) {
 	info->actions++;
 	info->moves = moves;
+	info->nextcmd[0] = '\0';
 	replay_restore_windowprocs();
 	flush_screen();
 	return TRUE;
@@ -806,7 +842,6 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 	
 	    /* rewind the entire game state to the checkpoint */
 	    info->actions = load_checkpoint(i);
-	    info->moves = moves;
 	    count = target - info->actions;
 	    if (count == 0) {
 		did_action = TRUE;
@@ -826,8 +861,6 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 			make_checkpoint(info->actions);
 		}
 	    }
-	    cmdstr = commands[lastcmd] ? commands[lastcmd] : "<continue>";
-	    strncpy(info->last_command, cmdstr, sizeof(info->last_command));
 	    break;
 	    
 	case REPLAY_GOTO:
@@ -838,7 +871,6 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 			break;
 		/* rewind the entire game state to the checkpoint */
 		info->actions = load_checkpoint(i);
-		info->moves = moves;
 	    }
 	    
 	    did_action = info->actions < info->max_actions;
@@ -847,12 +879,13 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 		if (did_action)
 		    info->actions++;
 	    }
-	    info->moves = moves;
 	    did_action = moves == count;
 	    break;
     }
     
 out:
+    info->moves = moves;
+    find_next_command(info->nextcmd, sizeof(info->nextcmd));
     replay_restore_windowprocs();
     flush_screen(); /* must happen after replay_restore_windowprocs to ensure output */
     
