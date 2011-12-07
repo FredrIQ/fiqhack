@@ -168,8 +168,12 @@ static void curses_print_message_core(int turn, const char *inmsg, boolean canbl
 	    strcat(msglines[curline], "  ");
 	strcat(msglines[curline], msg);
     } else {
-	if (strlen(msglines[curline]) > 0 && canblock)
-	    more();
+	if (strlen(msglines[curline]) > 0) {
+	    if (canblock)
+		more();
+	    else
+		newline();
+	}
 	if (!stopprint) /* may get set in more() */
 	    strcpy(msglines[curline], msg);
     }
