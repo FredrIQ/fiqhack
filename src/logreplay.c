@@ -692,8 +692,11 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 
 static void make_checkpoint(int actions)
 {
-    if (cpcount > 0 && (actions <= checkpoints[cpcount-1].actions ||
-	                  moves <= checkpoints[cpcount-1].moves))
+    /* only make a checkpoint if enough actions have happened since the last
+     * one and creating a checkpoint is safe */
+    if ((cpcount > 0 && (actions <= checkpoints[cpcount-1].actions + 1000 ||
+	                   moves <= checkpoints[cpcount-1].moves)) ||
+	multi || occupation) /* checkpointing while something is in progress doesn't work */
 	return;
     
     cpcount++;
@@ -727,10 +730,10 @@ static int load_checkpoint(int idx)
     startup_common(namebuf, playmode);
     dorecover(&checkpoints[idx].cpdata);
     checkpoints[idx].cpdata.pos = 0;
-    program_state.restoring = FALSE;
     
     iflags.disable_log = TRUE;
     program_state.viewing = TRUE;
+    program_state.game_running = TRUE;
     
     return checkpoints[idx].actions;
 }
@@ -857,8 +860,7 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 		did_action = replay_run_cmdloop(FALSE, TRUE);
 		if (did_action) {
 		    info->actions++;
-		    if (info->actions % 1000 == 0)
-			make_checkpoint(info->actions);
+		    make_checkpoint(info->actions);
 		}
 	    }
 	    break;
@@ -876,8 +878,10 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 	    did_action = info->actions < info->max_actions;
 	    while (moves < count && did_action) {
 		did_action = replay_run_cmdloop(FALSE, TRUE);
-		if (did_action)
+		if (did_action) {
 		    info->actions++;
+		    make_checkpoint(info->actions);
+		}
 	    }
 	    did_action = moves == count;
 	    break;
@@ -888,6 +892,10 @@ out:
     find_next_command(info->nextcmd, sizeof(info->nextcmd));
     replay_restore_windowprocs();
     flush_screen(); /* must happen after replay_restore_windowprocs to ensure output */
+    
+    /* if we're going backwards, the timestamp on this message
+     * will let the ui know it should erase messages in the future */
+    print_message(moves, "");
     
     api_exit();
     return did_action;

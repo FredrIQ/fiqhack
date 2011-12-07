@@ -81,35 +81,22 @@ static void replay_commandloop(int fd)
 		
 	    /* step backward */
 	    case KEY_LEFT:
-		ret = nh_view_replay_step(&rinfo, REPLAY_BACKWARD, 1);
+		nh_view_replay_step(&rinfo, REPLAY_BACKWARD, 1);
 		draw_replay_info(&rinfo);
-		if (ret == FALSE) {
-		    key = curses_msgwin("You have reached the beginning of this game. "
-		                        "Go forward or press ESC to exit.");
-		    if (key == KEY_ESC)
-			goto out;
-		}
 		break;
 		
 	    case KEY_ESC:
 		goto out;
 
 	    case 'g':
-		strncpy(qbuf, "What move do you want to go to?", BUFSZ);
+		strncpy(qbuf, "What move do you want to jump to?", BUFSZ);
 		if (rinfo.max_moves > 0)
 		    sprintf(qbuf + strlen(qbuf), " (Max: %d)", rinfo.max_moves);
 		
 		curses_getline(qbuf, buf);
 		if (buf[0] == '\033' || !(move = atoi(buf)))
 		    break;
-		ret = nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
-		draw_replay_info(&rinfo);
-		if (ret == FALSE) {
-		    sprintf(buf, "You tried to go to move %d but move %d is the last.",
-			    move, rinfo.moves);
-		    curses_msgwin(buf);
-		}
-		
+		nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
 		break;
 	}
     }

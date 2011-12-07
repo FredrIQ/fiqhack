@@ -25,6 +25,9 @@ static void newline(void);
 
 static void store_message(int turn, const char *msg)
 {
+    if (!*msg)
+	return;
+    
     histpos++;
     if (histpos >= histsize)
 	histpos = 0;
@@ -68,6 +71,47 @@ static void newline(void)
 	    curline = 0;
 	
 	msglines[curline][0] = '\0';
+    }
+}
+
+
+static void prune_messages(int maxturn)
+{
+    int i, pos;
+    const char *msg;
+    
+    /* remove future messages from the history */
+    while (msghistory[histpos].turn >= maxturn) {
+	msghistory[histpos].turn = 0;
+	msghistory[histpos].msg[0] = '\0';
+	histpos--;
+	if (histpos < 0)
+	    histpos += histsize;
+    }
+    
+    /* rebuild msglines */
+    curline = 0;
+    for (i = 0; i < MAX_MSGLINES; i++)
+	msglines[i][0] = '\0';
+    for (i = 0; i < histsize; i++) {
+	pos = histpos + i + 1;
+	if (pos > histsize)
+	    pos -= histsize;
+	
+	msg = msghistory[pos].msg;
+	if (!*msg)
+	    continue;
+	prevturn = msghistory[pos].turn;
+	
+	if (strlen(msglines[curline]) + strlen(msg) + 1 < COLNO) {
+	    if (msglines[curline][0])
+		strcat(msglines[curline], "  ");
+	    strcat(msglines[curline], msg);
+	} else {
+	    if (strlen(msglines[curline]) > 0)
+		newline();
+	    strcpy(msglines[curline], msg);
+	}
     }
 }
 
@@ -138,14 +182,20 @@ static void curses_print_message_core(int turn, const char *inmsg, boolean canbl
     if (!msghistory)
 	alloc_hist_array();
     
-    store_message(turn, msg);
+    if (turn < prevturn) /* going back in time can happen during replay */
+	prune_messages(turn);
+
+    if (!*msg)
+	return; /* empty message. done. */
     
-    if (turn != prevturn) {
+    if (turn > prevturn) {
 	/* re-enable output if it was stopped and start a new line */
 	stopprint = FALSE;
 	newline();
     }
     prevturn = turn;
+
+    store_message(turn, msg);
     
     if (stopprint)
 	return;
