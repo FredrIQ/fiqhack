@@ -1,9 +1,7 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>

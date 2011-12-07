@@ -1720,7 +1720,7 @@ void zapnodir(struct obj *obj)
 		case WAN_ENLIGHTENMENT:
 			known = TRUE;
 			pline("You feel self-knowledgeable...");
-			win_pause(P_MESSAGE);
+			win_pause_output(P_MESSAGE);
 			enlightenment(FALSE);
 			pline("The feeling subsides.");
 			exercise(A_WIS, TRUE);

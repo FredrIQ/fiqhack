@@ -262,7 +262,7 @@ make_bones:
 		newsym(u.ux, u.uy);
 		pline("Your body rises from the dead as %s...",
 			an(mons[u.ugrave_arise].mname));
-		win_pause(P_MESSAGE);
+		win_pause_output(P_MESSAGE);
 		drop_upon_death(mtmp, NULL);
 		m_dowear(mtmp, TRUE);
 	}

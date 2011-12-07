@@ -1,8 +1,6 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdlib.h>
-#include <string.h>
 #include "nhcurses.h"
 
 /* save more of long messages than could be displayed in COLNO chars */
@@ -59,17 +57,6 @@ void alloc_hist_array(void)
     }
     
     free(oldhistory);
-}
-
-
-static void newturn(void)
-{
-    /* pressing ESC at the more prompt should only cause printing to stop
-     * for one turn */
-    stopprint = FALSE;
-    
-    newline();
-    draw_msgwin();
 }
 
 
@@ -138,7 +125,7 @@ static void more(void)
 }
 
 
-void curses_print_message(int turn, const char *inmsg)
+static void curses_print_message_core(int turn, const char *inmsg, boolean canblock)
 {
     char msg[COLNO+1];
     int maxlen;
@@ -153,8 +140,11 @@ void curses_print_message(int turn, const char *inmsg)
     
     store_message(turn, msg);
     
-    if (turn != prevturn)
-	newturn(); /* re-enable output if it was stopped and start a new line */
+    if (turn != prevturn) {
+	/* re-enable output if it was stopped and start a new line */
+	stopprint = FALSE;
+	newline();
+    }
     prevturn = turn;
     
     if (stopprint)
@@ -178,14 +168,28 @@ void curses_print_message(int turn, const char *inmsg)
 	    strcat(msglines[curline], "  ");
 	strcat(msglines[curline], msg);
     } else {
-	if (strlen(msglines[curline]) > 0)
+	if (strlen(msglines[curline]) > 0 && canblock)
 	    more();
 	if (!stopprint) /* may get set in more() */
 	    strcpy(msglines[curline], msg);
     }
     
-    draw_msgwin();
+    if (canblock)
+	draw_msgwin();
 }
+
+
+void curses_print_message(int turn, const char *inmsg)
+{
+    curses_print_message_core(turn, inmsg, TRUE);
+}
+
+
+void curses_print_message_nonblocking(int turn, const char *inmsg)
+{
+    curses_print_message_core(turn, inmsg, FALSE);
+}
+
 
 
 void pause_messages(void)

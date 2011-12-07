@@ -951,7 +951,7 @@ int pickup_object(struct obj *obj, long count,
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
 				&& !Stone_resistance && !telekinesis) {
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-		    win_pause(P_MESSAGE);
+		    win_pause_output(P_MESSAGE);
 		else {
 			char kbuf[BUFSZ];
 
@@ -1423,7 +1423,7 @@ static int in_container(struct obj *obj)
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
 		 && !Stone_resistance) {
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-		    win_pause(P_MESSAGE);
+		    win_pause_output(P_MESSAGE);
 		else {
 		    char kbuf[BUFSZ];
 
@@ -1538,7 +1538,7 @@ static int out_container(struct obj *obj)
 	    if ( (touch_petrifies(&mons[obj->corpsenm])) && !uarmg
 		 && !Stone_resistance) {
 		if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-		    win_pause(P_MESSAGE);
+		    win_pause_output(P_MESSAGE);
 		else {
 		    char kbuf[BUFSZ];
 

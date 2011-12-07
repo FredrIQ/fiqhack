@@ -119,7 +119,7 @@ boolean nh_exit(int exit_type)
 }
 
 
-static void startup_common(char *name, int playmode)
+void startup_common(char *name, int playmode)
 {
     /* (re)init all global data */
     init_data();

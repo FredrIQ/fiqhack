@@ -508,7 +508,7 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	
 	/* clean up unneeded windows */
 	if (program_state.game_running) {
-	    win_pause(P_MESSAGE);
+	    win_pause_output(P_MESSAGE);
 
 	    if (!done_stopprint || flags.tombstone)
 		show_endwin = TRUE;
@@ -766,7 +766,7 @@ void done(int how)
 	    clearpriests();
 	} else	taken = FALSE;	/* lint; assert( !bones_ok ); */
 
-	win_pause(P_MESSAGE);
+	win_pause_output(P_MESSAGE);
 
 	if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT && how != PANICKED)
 		disclose(how, taken);
@@ -847,7 +847,7 @@ static void container_contents(struct obj *list,
 			container_contents(box->cobj, identified, TRUE);
 		} else {
 		    pline("%s empty.", Tobjnam(box, "are"));
-		    win_pause(P_MESSAGE);
+		    win_pause_output(P_MESSAGE);
 		}
 	    }
 	    if (!all_containers)

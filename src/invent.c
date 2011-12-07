@@ -1266,7 +1266,7 @@ void update_inventory(void)
 	int icount = 0;
 	struct nh_objitem *items;
 
-	if (!windowprocs.win_list_items)
+	if (!windowprocs.win_list_items || program_state.restoring)
 	    return;
 
 	items = make_invlist(NULL, &icount);

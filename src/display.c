@@ -1173,13 +1173,6 @@ int doredraw(void)
     /* shut down vision */
     vision_recalc(2);
 
-    /*
-     * This routine assumes that cls() does the following:
-     *      + fills the physical screen with the symbol for rock
-     *      + clears the glyph buffer
-     */
-    cls();
-
     /* display memory */
     for (x = 1; x < COLNO; x++) {
 	for (y = 0; y < ROWNO; y++)

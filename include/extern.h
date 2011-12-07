@@ -9,6 +9,7 @@
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
+extern void startup_common(char *name, int playmode);
 extern int command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
 
 /* ### apply.c ### */

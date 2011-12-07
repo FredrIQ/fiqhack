@@ -638,7 +638,7 @@ int dokick(void)
 
 	if (no_kick) {
 		/* ignore direction typed before player notices kick failed */
-		win_pause(P_MESSAGE);	/* --More-- */
+		win_pause_output(P_MESSAGE);	/* --More-- */
 		return 0;
 	}
 

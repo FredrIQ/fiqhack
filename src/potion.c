@@ -500,7 +500,7 @@ int peffects(struct obj *otmp)
 				adjattrib(A_WIS, 1, FALSE);
 			}
 			pline("You feel self-knowledgeable...");
-			win_pause(P_MESSAGE);
+			win_pause_output(P_MESSAGE);
 			enlightenment(0);
 			pline("The feeling subsides.");
 			exercise(A_WIS, TRUE);

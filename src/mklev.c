@@ -1250,7 +1250,7 @@ void mkinvokearea(void)
 
     pline("The floor shakes violently under you!");
     pline("The walls around you begin to bend and crumble!");
-    win_pause(P_MESSAGE);
+    win_pause_output(P_MESSAGE);
 
     mkinvpos(xmin, ymin, 0);		/* middle, before placing stairs */
 

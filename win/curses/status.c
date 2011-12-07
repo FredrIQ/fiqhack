@@ -1,8 +1,6 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include "nhcurses.h"
 
@@ -181,4 +179,10 @@ void curses_update_status(struct nh_player_info *pi)
 	classic_status(&player);
     
     wrefresh(statuswin);
+}
+
+void curses_update_status_silent(struct nh_player_info *pi)
+{
+    if (pi)
+	player = *pi;
 }

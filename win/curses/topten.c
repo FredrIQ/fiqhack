@@ -1,10 +1,8 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "nhcurses.h"
+
 static void topten_add_score(struct nh_topten_entry *entry,
 			     struct nh_menuitem **items, int *size, int *icount,
 			     int maxwidth)

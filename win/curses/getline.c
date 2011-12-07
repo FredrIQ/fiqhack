@@ -2,8 +2,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "nhcurses.h"
 

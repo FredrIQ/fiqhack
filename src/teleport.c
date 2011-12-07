@@ -580,7 +580,7 @@ void level_tele(void)
 		if (ynq("Go to Nowhere.  Are you sure?") != 'y') return;
 		pline("You %s in agony as your body begins to warp...",
 		    is_silent(youmonst.data) ? "writhe" : "scream");
-		win_pause(P_MESSAGE);
+		win_pause_output(P_MESSAGE);
 		pline("You cease to exist.");
 		if (invent) pline("Your possessions land on the %s with a thud.",
 				surface(u.ux, u.uy));
@@ -656,7 +656,7 @@ void level_tele(void)
 		} else if (newlev == -9) {
 			pline("You feel deliriously happy. ");
 			pline("(In fact, you're on Cloud 9!) ");
-			win_pause(P_MESSAGE);
+			win_pause_output(P_MESSAGE);
 		} else
 			pline("You are now high above the clouds...");
 

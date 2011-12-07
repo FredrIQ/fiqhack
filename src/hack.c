@@ -1079,7 +1079,7 @@ void domove(schar dx, schar dy, schar dz)
 		if (u.utraptype == TT_PIT) {
 		    if (!rn2(2) && sobj_at(BOULDER, level, u.ux, u.uy)) {
 			pline("Your %s gets stuck in a crevice.", body_part(LEG));
-			win_pause(P_MESSAGE);
+			win_pause_output(P_MESSAGE);
 			pline("You free your %s.", body_part(LEG));
 		    } else if (!(--u.utrap)) {
 			pline("You %s to the edge of the pit.",

@@ -1,8 +1,6 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdlib.h>
-#include <string.h>
 #include "nhcurses.h"
 
 
@@ -11,7 +9,8 @@ static struct nh_objitem *flooritems, *inventory;
 static int floor_icount, inv_icount;
 
 
-boolean curses_list_items(struct nh_objitem *items, int icount, boolean invent)
+static boolean curses_list_items_core(struct nh_objitem *items, int icount,
+			              boolean invent, boolean draw)
 {
     struct nh_objitem **list;
     if (invent) {
@@ -30,11 +29,22 @@ boolean curses_list_items(struct nh_objitem *items, int icount, boolean invent)
 	memcpy(*list, items, icount * sizeof(struct nh_objitem));
     }
     
-    draw_sidebar();
+    if (draw)
+	draw_sidebar();
     
     return ui_flags.draw_sidebar;
 }
 
+
+boolean curses_list_items(struct nh_objitem *items, int icount, boolean invent)
+{
+    return curses_list_items_core(items, icount, invent, TRUE);
+}
+
+boolean curses_list_items_nonblocking(struct nh_objitem *items, int icount, boolean invent)
+{
+    return curses_list_items_core(items, icount, invent, FALSE);
+}
 
 
 void draw_sidebar(void)

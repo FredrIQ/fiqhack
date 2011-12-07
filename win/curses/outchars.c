@@ -4,9 +4,7 @@
 /* NOTE: This file is utf-8 encoded; saving with a non utf-8 aware editor WILL
  * damage some symbols */
 
-#include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>

@@ -347,7 +347,7 @@ static int shkinit(const struct shclass	*shp, struct level *lev, struct mkroom *
 		    pline("door [%d,%d]", doors[sh].x, doors[sh].y);
 		    sh++;
 		}
-		win_pause(P_MESSAGE);
+		win_pause_output(P_MESSAGE);
 	    }
 #endif
 

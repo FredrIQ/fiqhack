@@ -4,8 +4,15 @@
 #ifndef NHCURSES_H
 #define NHCURSES_H
 
+/* _GNU_SOURCE activates lots of stuff in the in glibc headers.
+ * _XOPEN_SOURCE_EXTENDED is needed for ncurses to activate widechars */
+#define _GNU_SOURCE
 #define _XOPEN_SOURCE_EXTENDED
+
+#include <stdlib.h>
+#include <string.h>
 #include <ncursesw/curses.h>
+
 #include "nethack.h"
 
 #ifndef max
@@ -241,6 +248,7 @@ extern void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 /* messages.c */
 extern void alloc_hist_array(void);
 extern void curses_print_message(int turn, const char *msg);
+extern void curses_print_message_nonblocking(int turn, const char *inmsg);
 extern void draw_msgwin(void);
 extern void pause_messages(void);
 extern void doprev_message(void);
@@ -266,19 +274,25 @@ extern void curses_notify_level_changed(int dmode);
 extern boolean player_selection(int *out_role, int *out_race, int *out_gend,
 				int *out_align, int randomall);
 
+/* replay.c */
+extern void replay(void);
+extern void describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi);
+
 /* rungame.c */
 extern boolean get_gamedir(enum game_dirs dirtype, char *buf);
 extern void rungame(void);
 extern boolean loadgame(void);
-extern void replay(void);
+extern char **list_gamefiles(char *dir, int *count);
 
 /* sidebar.c */
 extern void draw_sidebar(void);
 extern boolean curses_list_items(struct nh_objitem *items, int icount, boolean invent);
+extern boolean curses_list_items_nonblocking(struct nh_objitem *items, int icount, boolean invent);
 extern void cleanup_sidebar(boolean dealloc);
 
 /* status.c */
 extern void curses_update_status(struct nh_player_info *pi);
+extern void curses_update_status_silent(struct nh_player_info *pi);
 
 /* topten.c */
 extern void show_topten(char *player, int top, int around, boolean own);

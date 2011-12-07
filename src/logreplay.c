@@ -38,8 +38,15 @@ static struct loginfo {
     int cmdcount; /* number of tokens that look like commands ">..." */
 } loginfo;
 
+
+struct replay_checkpoint {
+    int actions, moves, nexttoken;
+    struct memfile cpdata;
+};
+
+static struct replay_checkpoint *checkpoints;
 static char **commands;
-static int cmdcount, lastcmd;
+static int cmdcount, lastcmd, cpcount;
 static struct nh_option_desc *saved_options;
 static struct nh_window_procs replay_windowprocs, orig_windowprocs;
 
@@ -442,6 +449,8 @@ void replay_setup_windowprocs(const struct nh_window_procs *procs)
     windowprocs.win_getdir = replay_getdir;
     windowprocs.win_display_menu = replay_display_menu;
     windowprocs.win_display_objects = replay_display_objects;
+    windowprocs.win_pause = replay_pause;
+    windowprocs.win_delay = replay_delay_output;
     
     replay_windowprocs = windowprocs;
 }
@@ -672,6 +681,64 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 }
 
 
+static void make_checkpoint(int actions)
+{
+    if (cpcount > 0 && (actions <= checkpoints[cpcount-1].actions ||
+	                  moves <= checkpoints[cpcount-1].moves))
+	return;
+    
+    cpcount++;
+    checkpoints = realloc(checkpoints, sizeof(struct replay_checkpoint) * cpcount);
+    checkpoints[cpcount-1].actions = actions;
+    checkpoints[cpcount-1].moves = moves;
+    checkpoints[cpcount-1].nexttoken = loginfo.next;
+    memset(&checkpoints[cpcount-1].cpdata, 0, sizeof(struct memfile));
+    savegame(&checkpoints[cpcount-1].cpdata);
+    checkpoints[cpcount-1].cpdata.len = checkpoints[cpcount-1].cpdata.pos;
+    checkpoints[cpcount-1].cpdata.pos = 0;
+}
+
+
+static int load_checkpoint(int idx)
+{
+    int playmode;
+    char namebuf[BUFSZ];
+    
+    if (idx < 0 || idx >= cpcount)
+	return -1;
+    
+    replay_end();
+    freedynamicdata();
+    
+    replay_begin();/* tokens get mangled during replay, so a new token list is needed */
+    replay_read_newgame(&turntime, &playmode, namebuf);
+    loginfo.next = checkpoints[idx].nexttoken;
+    
+    program_state.restoring = TRUE;
+    startup_common(namebuf, playmode);
+    dorecover(&checkpoints[idx].cpdata);
+    checkpoints[idx].cpdata.pos = 0;
+    program_state.restoring = FALSE;
+    
+    iflags.disable_log = TRUE;
+    program_state.viewing = TRUE;
+    
+    return checkpoints[idx].actions;
+}
+
+
+static void free_checkpoints(void)
+{
+    int i;
+    
+    for (i = 0; i < cpcount; i++)
+	free(checkpoints[i].cpdata.buf);
+    free(checkpoints);
+    checkpoints = NULL;
+    cpcount = 0;
+}
+
+
 boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 			     struct nh_replay_info *info)
 {
@@ -683,8 +750,10 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 	return FALSE;
     
     memset(info, 0, sizeof(struct nh_replay_info));
-    if (nh_get_savegame_status(fd, &gi) == LS_INVALID)
+    if (nh_get_savegame_status(fd, &gi) == LS_INVALID) {
+	api_exit();
 	return FALSE;
+    }
     
     program_state.restoring = TRUE;
     iflags.disable_log = TRUE;
@@ -698,8 +767,13 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     program_state.viewing = TRUE;
     replay_restore_windowprocs();
     
+    /* the win_update_screen proc in the replay_windowprocs does nothing, so
+     * flush (again) after switching back to regular window procs */
+    flush_screen();
+    
     info->max_moves = gi.moves;
     info->max_actions = loginfo.cmdcount;
+    make_checkpoint(0);
     
     api_exit();
     
@@ -712,45 +786,77 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 {
     boolean did_action;
     const char *cmdstr;
-    int i;
+    int i, prev_actions, target;
     
     if (!program_state.viewing || !api_entry_checkpoint()) {
 	info->actions++;
+	info->moves = moves;
 	replay_restore_windowprocs();
-	return FALSE;
+	flush_screen();
+	return TRUE;
     }
     
     replay_setup_windowprocs(&replay_windowprocs);
     info->moves = moves;
     switch (action) {
+	case REPLAY_BACKWARD:
+	    prev_actions = info->actions;
+	    target = prev_actions - count;
+	    for (i = 0; i < cpcount-1; i++)
+		if (checkpoints[i+1].actions >= target)
+		    break;
+	
+	    /* rewind the entire game state to the checkpoint */
+	    info->actions = load_checkpoint(i);
+	    info->moves = moves;
+	    count = target - info->actions;
+	    if (count == 0) {
+		did_action = TRUE;
+		goto out;
+	    }
+	    /* else fall through */
+	    
 	case REPLAY_FORWARD:
 	    did_action = info->actions < info->max_actions;
 	    i = 0;
-	    while (i++ < count && did_action) {
+	    while (i < count && did_action) {
+		i++;
 		did_action = replay_run_cmdloop(FALSE, TRUE);
-		if (did_action)
+		if (did_action) {
 		    info->actions++;
+		    if (info->actions % 1000 == 0)
+			make_checkpoint(info->actions);
+		}
 	    }
 	    cmdstr = commands[lastcmd] ? commands[lastcmd] : "<continue>";
 	    strncpy(info->last_command, cmdstr, sizeof(info->last_command));
 	    break;
 	    
-	case REPLAY_BACKWARD:
-	    did_action = FALSE;
-	    break;
-	    
 	case REPLAY_GOTO:
+	    target = count;
+	    if (target < moves) {
+		for (i = 0; i < cpcount-1; i++)
+		    if (checkpoints[i+1].moves >= target)
+			break;
+		/* rewind the entire game state to the checkpoint */
+		info->actions = load_checkpoint(i);
+		info->moves = moves;
+	    }
+	    
 	    did_action = info->actions < info->max_actions;
 	    while (moves < count && did_action) {
 		did_action = replay_run_cmdloop(FALSE, TRUE);
 		if (did_action)
 		    info->actions++;
 	    }
+	    info->moves = moves;
 	    did_action = moves == count;
 	    break;
     }
     
+out:
     replay_restore_windowprocs();
+    flush_screen(); /* must happen after replay_restore_windowprocs to ensure output */
     
     api_exit();
     return did_action;
@@ -764,6 +870,7 @@ void nh_view_replay_finish(void)
     program_state.viewing = FALSE;
     program_state.game_running = FALSE;
     freedynamicdata();
+    free_checkpoints();
 }
 
 

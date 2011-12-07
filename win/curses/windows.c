@@ -2,8 +2,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <signal.h>
-#include <stdlib.h>
-#include <string.h>
 #include <locale.h>
 #include <unistd.h>
 #include "nhcurses.h"

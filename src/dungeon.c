@@ -1904,7 +1904,7 @@ int dooverview(void)
 	pline("Now viewing %s%s.  Press any key to return.",
 	      Is_astralevel(&lev->z) ? "the " : "", buf);
 	flush_screen();
-	win_pause(P_MAP);
+	win_pause_output(P_MAP);
 	doredraw();
 	
 	return 0;

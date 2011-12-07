@@ -1,8 +1,6 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include "nhcurses.h"
 

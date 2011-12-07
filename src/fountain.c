@@ -205,7 +205,7 @@ void drinkfountain(void)
 			break;
 		    if (++i >= A_MAX) i = 0;
 		}
-		win_pause(P_MESSAGE);
+		win_pause_output(P_MESSAGE);
 		pline("A wisp of vapor escapes the fountain...");
 		exercise(A_WIS, TRUE);
 		level->locations[u.ux][u.uy].blessedftn = 0;
@@ -223,7 +223,7 @@ void drinkfountain(void)
 		case 19: /* Self-knowledge */
 
 			pline("You feel self-knowledgeable...");
-			win_pause(P_MESSAGE);
+			win_pause_output(P_MESSAGE);
 			enlightenment(0);
 			exercise(A_WIS, TRUE);
 			pline("The feeling subsides.");

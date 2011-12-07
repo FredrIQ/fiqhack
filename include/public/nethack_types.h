@@ -539,7 +539,7 @@ struct nh_window_procs {
     enum nh_direction (*win_getdir)(const char *, boolean);
     char (*win_yn_function)(const char *query, const char *rset, char defchoice);
     void (*win_getlin)(const char *,char *);
-    void (*win_delay_output)(void);
+    void (*win_delay)(void);
     void (*win_level_changed)(int displaymode);
     void (*win_outrip)(struct nh_menuitem*,int, boolean, char *, long, char *, int);
 };

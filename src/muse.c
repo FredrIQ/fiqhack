@@ -1781,7 +1781,7 @@ static void you_aggravate(struct monst *mtmp)
 	dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0, dbuf_monid(mtmp), 0, 0);
 	display_self();
 	pline("You feel aggravated at %s.", noit_mon_nam(mtmp));
-	win_pause(P_MAP);
+	win_pause_output(P_MAP);
 	doredraw();
 	if (unconscious()) {
 		multi = -1;

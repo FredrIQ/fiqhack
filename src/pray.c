@@ -1259,7 +1259,7 @@ int dosacrifice(struct obj *otmp)
 		adjalign(10);
 pline("An invisible choir sings, and you are bathed in radiance...");
 		godvoice(altaralign, "Congratulations, mortal!");
-		win_pause(P_MESSAGE);
+		win_pause_output(P_MESSAGE);
 verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		pline("You ascend to the status of Demigod%s...",
 		    flags.female ? "dess" : "");

@@ -13,6 +13,7 @@ set (NH_CURSES_SRC
     options.c
     outchars.c
     playerselect.c
+    replay.c
     rungame.c
     sidebar.c
     status.c

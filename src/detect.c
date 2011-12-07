@@ -233,7 +233,7 @@ outgoldmap:
     newsym(u.ux,u.uy);
     pline("You feel very greedy, and sense gold!");
     exercise(A_WIS, TRUE);
-    win_pause(P_MAP);
+    win_pause_output(P_MAP);
     doredraw();
     u.uinwater = uw;
     if (Underwater) under_water(2);
@@ -331,7 +331,7 @@ int food_detect(struct obj *sobj, boolean *scr_known)
 		pline("Your %s tingles and you smell %s.", body_part(NOSE), what);
 	}
 	else pline("You sense %s.", what);
-	win_pause(P_MAP);
+	win_pause_output(P_MAP);
 	exercise(A_WIS, TRUE);
 	doredraw();
 	u.uinwater = uw;
@@ -488,7 +488,7 @@ int object_detect(struct obj *detector, /* object doing the detecting */
 
     newsym(u.ux,u.uy);
     pline("You detect the %s of %s.", ct ? "presence" : "absence", stuff);
-    win_pause(P_MAP);
+    win_pause_output(P_MAP);
     /*
      * What are we going to do when the hero does an object detect while blind
      * and the detected object covers a known pool?
@@ -557,7 +557,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 	pline("You sense the presence of monsters.");
 	if (woken)
 	    pline("Monsters sense the presence of you.");
-	win_pause(P_MAP);
+	win_pause_output(P_MAP);
 	doredraw();
 	if (Underwater) under_water(2);
 	if (u.uburied) under_ground(2);
@@ -654,7 +654,7 @@ outtrapmap:
 
     newsym(u.ux,u.uy);
     pline("You feel %s.", sobj && sobj->cursed ? "very greedy" : "entrapped");
-    win_pause(P_MAP);
+    win_pause_output(P_MAP);
     doredraw();
     u.uinwater = uw;
     if (Underwater) under_water(2);
@@ -860,7 +860,7 @@ void do_mapping(void)
     u.uinwater = uw;
     if (!level->flags.hero_memory || Underwater) {
 	flush_screen();			/* flush temp screen */
-	win_pause(P_MAP);	/* wait */
+	win_pause_output(P_MAP);	/* wait */
 	doredraw();
     }
 }
@@ -880,7 +880,7 @@ void do_vicinity_map(void)
 
     if (!level->flags.hero_memory || Underwater) {
 	flush_screen();			/* flush temp screen */
-	win_pause(P_MAP);	/* wait */
+	win_pause_output(P_MAP);	/* wait */
 	doredraw();
     }
 }
@@ -1046,7 +1046,7 @@ void find_trap(struct trap *trap)
     pline("You find %s.", an(trapexplain[tt-1]));
 
     if (cleared) {
-	win_pause(P_MAP);	/* wait */
+	win_pause_output(P_MAP);	/* wait */
 	doredraw();
     }
 }

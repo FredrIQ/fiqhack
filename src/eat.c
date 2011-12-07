@@ -814,7 +814,7 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 		    newsym(u.ux,u.uy);
 		    flush_screen();
 		    /* make gold symbol show up now */
-		    win_pause(P_MAP);
+		    win_pause_output(P_MAP);
 		}
 		break;
 	    case PM_QUANTUM_MECHANIC:
