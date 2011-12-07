@@ -1354,7 +1354,8 @@ extern void sellobj(struct obj *,xchar,xchar);
 extern int doinvbill(int);
 extern struct monst *shkcatch(struct obj *,xchar,xchar);
 extern void add_damage(xchar,xchar,long);
-extern int repair_damage(struct monst *,struct damage *,boolean);
+extern int repair_damage(struct level *lev, struct monst *shkp,
+			 struct damage *tmp_dam, boolean catchup);
 extern int shk_move(struct monst *);
 extern void after_shk_move(struct monst *);
 extern boolean is_fshk(struct monst *);

@@ -133,7 +133,7 @@ static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 		struct monst *shkp = shop_keeper(lev, *shp);
 
 		if (shkp && inhishop(shkp) &&
-			repair_damage(shkp, tmp_dam, TRUE))
+			repair_damage(lev, shkp, tmp_dam, TRUE))
 		    break;
 	    }
 	    
