@@ -54,9 +54,11 @@ static void show_replay_help()
 	{0, MI_TEXT, "KEY_RIGHT or SPACE\t- advance one move"},
 	{0, MI_TEXT, "KEY_LEFT\t- go back one move"},
 	{0, MI_TEXT, "g\t- go to any move"},
-	{0, MI_TEXT, "ESC\t- leave the replay"}
+	{0, MI_TEXT, "ESC\t- leave the replay"},
+	{0, MI_TEXT, ""},
+	{0, MI_TEXT, "Informational game commands like \"inventory\" or \"discoveries\" will also work"}
     };
-    curses_display_menu(items, 4, "Replay help:", PICK_NONE, NULL);
+    curses_display_menu(items, 6, "Replay help:", PICK_NONE, NULL);
 }
 
 
