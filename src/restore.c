@@ -359,6 +359,7 @@ static void restgamestate(struct memfile *mf)
 	mread(mf, &bookid, sizeof(bookid));
 	if (bookid)
 	    book = find_oid(bookid);
+	mread(mf, &multi, sizeof(multi));
 	
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE, lev);

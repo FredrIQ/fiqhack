@@ -128,6 +128,7 @@ static void savegamestate(struct memfile *mf, int mode)
 	save_food(mf);
 	book_id = book ? book->o_id : 0;
 	mwrite(mf, &book_id, sizeof(book_id));
+	mwrite(mf, &multi, sizeof(multi));
 }
 
 
