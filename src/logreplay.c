@@ -941,12 +941,15 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
     endpos = lseek(fd, 0, SEEK_END);
     if (!strcmp(status, "done"))
 	ret = LS_DONE;
-    else if (!strcmp(status, "inpr") || endpos == savepos)
+    else if (!strcmp(status, "inpr"))
 	ret = LS_CRASHED;
     else if (!strcmp(status, "save"))
 	ret = LS_SAVED;
     else
 	return LS_INVALID;
+    
+    if (ret == LS_SAVED && endpos == savepos)
+	ret = LS_IN_PROGRESS;
     
     /* if we can't lock the file, it's in use */
     if (!lock_fd(fd, 0))
