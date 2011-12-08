@@ -800,6 +800,7 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     
     nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign, playmode);
     replay_run_cmdloop(TRUE, FALSE); /* (re)set options */
+    program_state.restoring = FALSE;
     program_state.viewing = TRUE;
     replay_restore_windowprocs();
     
@@ -810,6 +811,7 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     info->max_moves = gi.moves;
     info->max_actions = loginfo.cmdcount;
     find_next_command(info->nextcmd, sizeof(info->nextcmd));
+    update_inventory();
     make_checkpoint(0);
     
     api_exit();
@@ -826,13 +828,11 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
     
     if (!program_state.viewing || !api_entry_checkpoint()) {
 	info->actions++;
-	info->moves = moves;
-	info->nextcmd[0] = '\0';
-	replay_restore_windowprocs();
-	flush_screen();
-	return TRUE;
+	did_action = TRUE;
+	goto out2;
     }
     
+    program_state.restoring = TRUE;
     replay_setup_windowprocs(&replay_windowprocs);
     info->moves = moves;
     switch (action) {
@@ -888,16 +888,19 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
     }
     
 out:
+    api_exit();
+out2:
+    program_state.restoring = FALSE;
     info->moves = moves;
     find_next_command(info->nextcmd, sizeof(info->nextcmd));
     replay_restore_windowprocs();
     flush_screen(); /* must happen after replay_restore_windowprocs to ensure output */
+    update_inventory();
     
     /* if we're going backwards, the timestamp on this message
      * will let the ui know it should erase messages in the future */
     print_message(moves, "");
     
-    api_exit();
     return did_action;
 }
 

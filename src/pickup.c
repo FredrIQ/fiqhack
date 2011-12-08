@@ -1864,16 +1864,16 @@ static int in_or_out_menu(const char *prompt, struct obj *obj,
 
     if (outokay) {
 	sprintf(buf,"Take something out of %s", the(xname(obj)));
-	set_menuitem(&items[nr], 1, MI_NORMAL, buf, 'o', FALSE);
+	set_menuitem(&items[nr++], 1, MI_NORMAL, buf, 'o', FALSE);
     }
     
     if (inokay) {
 	sprintf(buf,"Put something into %s", the(xname(obj)));
-	set_menuitem(&items[nr], 2, MI_NORMAL, buf, 'i', FALSE);
+	set_menuitem(&items[nr++], 2, MI_NORMAL, buf, 'i', FALSE);
     }
     
     if (outokay && inokay)
-	set_menuitem(&items[nr], 3, MI_NORMAL, "Both of the above", 'b', FALSE);
+	set_menuitem(&items[nr++], 3, MI_NORMAL, "Both of the above", 'b', FALSE);
     
     n = display_menu(items, nr, prompt, PICK_ONE, selection);
     if (n > 0)
