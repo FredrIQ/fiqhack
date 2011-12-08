@@ -804,6 +804,8 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     program_state.viewing = TRUE;
     replay_restore_windowprocs();
     
+    unlock_fd(fd); /* we won't be writing to the file, and don't mind if anyone else does */
+    
     /* the win_update_screen proc in the replay_windowprocs does nothing, so
      * flush (again) after switching back to regular window procs */
     flush_screen();
