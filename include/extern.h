@@ -720,6 +720,8 @@ extern struct monst *makemon(const struct permonst *, struct level *lev,int,int,
 extern boolean create_critters(int, const struct permonst *);
 extern const struct permonst *rndmonst(void);
 extern void reset_rndmonst(int);
+extern void save_rndmonst_state(struct memfile *mf);
+extern void restore_rndmonst_state(struct memfile *mf);
 extern const struct permonst *mkclass(char,int);
 extern int adj_lev(const struct permonst *);
 extern const struct permonst *grow_up(struct monst *,struct monst *);

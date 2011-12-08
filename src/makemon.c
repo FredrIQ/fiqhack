@@ -1068,14 +1068,9 @@ static boolean uncommon(int mndx)
  */
 static int align_shift(const struct permonst *ptr)
 {
-    static long oldmoves = 0L;	/* != 1, starting value of moves */
-    static s_level *lev;
+    s_level *lev = Is_special(&u.uz);
     int alshift;
-
-    if (oldmoves != moves) {
-	lev = Is_special(&u.uz);
-	oldmoves = moves;
-    }
+    
     switch((lev) ? lev->flags.align : dungeons[u.uz.dnum].flags.align) {
     default:	/* just in case */
     case AM_NONE:	alshift = 0;
@@ -1189,6 +1184,18 @@ void reset_rndmonst(int mndx)
 	    rndmonst_state.choice_count -= rndmonst_state.mchoices[mndx];
 	    rndmonst_state.mchoices[mndx] = 0;
 	} /* note: safe to ignore extinction of unique monsters */
+}
+
+
+void save_rndmonst_state(struct memfile *mf)
+{
+	mwrite(mf, &rndmonst_state, sizeof(rndmonst_state));
+}
+
+
+void restore_rndmonst_state(struct memfile *mf)
+{
+	mread(mf, &rndmonst_state, sizeof(rndmonst_state));
 }
 
 

@@ -129,6 +129,7 @@ static void savegamestate(struct memfile *mf, int mode)
 	book_id = book ? book->o_id : 0;
 	mwrite(mf, &book_id, sizeof(book_id));
 	mwrite(mf, &multi, sizeof(multi));
+	save_rndmonst_state(mf);
 }
 
 

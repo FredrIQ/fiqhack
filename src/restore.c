@@ -360,6 +360,7 @@ static void restgamestate(struct memfile *mf)
 	if (bookid)
 	    book = find_oid(bookid);
 	mread(mf, &multi, sizeof(multi));
+	restore_rndmonst_state(mf);
 	
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE, lev);
