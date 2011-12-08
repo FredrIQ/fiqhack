@@ -40,11 +40,23 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
     if (*rinfo->nextcmd)
 	sprintf(buf + strlen(buf), "; next command: %s.", rinfo->nextcmd);
     
-    mvwhline(stdscr, 2 + ui_flags.msgheight + ROWNO, 1, ACS_HLINE, COLNO);
-    wattron(stdscr, COLOR_PAIR(4) | A_BOLD);
-    mvwaddstr(stdscr, 2 + ui_flags.msgheight + ROWNO, 2, buf);
-    wattroff(stdscr, COLOR_PAIR(4) | A_BOLD);
-    wrefresh(stdscr);
+    if (ui_flags.draw_frame) {
+	/* draw the replay state on top of the frame under the map */
+	mvwhline(stdscr, 2 + ui_flags.msgheight + ROWNO, 1, ACS_HLINE, COLNO);
+	wattron(stdscr, COLOR_PAIR(4) | A_BOLD);
+	mvwaddstr(stdscr, 2 + ui_flags.msgheight + ROWNO, 2, buf);
+	wattroff(stdscr, COLOR_PAIR(4) | A_BOLD);
+	wrefresh(stdscr);
+    } else {
+	/* try to draw under the status */
+	int h = ui_flags.msgheight + ROWNO + (ui_flags.status3 ? 3 : 2);
+	if (h < LINES) {
+	    wattron(stdscr, COLOR_PAIR(4) | A_BOLD);
+	    mvwaddstr(stdscr, h, 0, buf);
+	    wattroff(stdscr, COLOR_PAIR(4) | A_BOLD);
+	    wclrtoeol(stdscr);
+	} /* else: make do without replay info */
+    }
 }
 
 
