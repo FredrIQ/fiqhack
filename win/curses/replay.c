@@ -32,7 +32,6 @@ static struct nh_window_procs curses_replay_windowprocs = {
 };
 
 
-
 static void draw_replay_info(struct nh_replay_info *rinfo)
 {
     char buf[BUFSZ];
@@ -49,11 +48,23 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
 }
 
 
+static void show_replay_help()
+{
+    static struct nh_menuitem items[] = {
+	{0, MI_TEXT, "KEY_RIGHT or SPACE\t- advance one move"},
+	{0, MI_TEXT, "KEY_LEFT\t- go back one move"},
+	{0, MI_TEXT, "g\t- go to any move"},
+	{0, MI_TEXT, "ESC\t- leave the replay"}
+    };
+    curses_display_menu(items, 4, "Replay help:", PICK_NONE, NULL);
+}
+
+
 static void replay_commandloop(int fd)
 {
     int key, move;
     char buf[BUFSZ], qbuf[BUFSZ];
-    boolean ret;
+    boolean ret, firsttime = TRUE;
     struct nh_replay_info rinfo;
     
     create_game_windows();
@@ -63,6 +74,9 @@ static void replay_commandloop(int fd)
 	curses_update_status(NULL);
 	draw_sidebar();
 	draw_replay_info(&rinfo);
+	if (firsttime)
+	    show_replay_help();
+	firsttime = FALSE;
 
 	key = nh_wgetch(stdscr);
 	switch (key) {
