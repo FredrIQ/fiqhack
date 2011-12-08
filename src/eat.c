@@ -62,6 +62,9 @@ static const char allobj[] = {
 	GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, SPBOOK_CLASS, 0 };
 
 static boolean force_save_hs = FALSE;
+static unsigned newuhs_save_hs;
+static boolean newuhs_saved_hs = FALSE;
+
 
 const char *const hu_stat[] = {
 	"Satiated",
@@ -2132,13 +2135,10 @@ void reset_faint(void)
 	if (is_fainted()) nomul(0, NULL);
 }
 
-
 /* compute and comment on your (new?) hunger status */
 void newuhs(boolean incr)
 {
 	unsigned newhs;
-	static unsigned save_hs;
-	static boolean saved_hs = FALSE;
 	int h = u.uhunger;
 
 	newhs = (h > 1000) ? SATIATED :
@@ -2169,16 +2169,16 @@ void newuhs(boolean incr)
 	 * gap to fit two bites.
 	 */
 	if (occupation == eatfood || force_save_hs) {
-		if (!saved_hs) {
-			save_hs = u.uhs;
-			saved_hs = TRUE;
+		if (!newuhs_saved_hs) {
+			newuhs_save_hs = u.uhs;
+			newuhs_saved_hs = TRUE;
 		}
 		u.uhs = newhs;
 		return;
 	} else {
-		if (saved_hs) {
-			u.uhs = save_hs;
-			saved_hs = FALSE;
+		if (newuhs_saved_hs) {
+			u.uhs = newuhs_save_hs;
+			newuhs_saved_hs = FALSE;
 		}
 	}
 
@@ -2459,6 +2459,15 @@ void restore_food(struct memfile *mf)
     mread(mf, &tin, sizeof(tin));
     mread(mf, &oid, sizeof(oid));
     tin.tin = oid ? find_oid(oid) : NULL;
+}
+
+
+void reset_food(void)
+{
+    memset(&victual, 0, sizeof(victual));
+    memset(&tin, 0, sizeof(tin));
+    newuhs_save_hs = 0;
+    newuhs_saved_hs = 0;
 }
 
 /*eat.c*/

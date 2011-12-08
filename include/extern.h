@@ -435,6 +435,7 @@ extern void consume_oeaten(struct obj *,int);
 extern boolean maybe_finished_meal(boolean);
 extern void save_food(struct memfile *mf);
 extern void restore_food(struct memfile *mf);
+extern void reset_food(void);
 
 /* ### end.c ### */
 
