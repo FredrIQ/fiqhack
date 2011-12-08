@@ -687,6 +687,7 @@ extern int doclose(void);
 extern void log_newgame(int logfd, unsigned int rnd_seed, int playmode);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
 extern void log_command_result(void);
+extern void log_revert_command(void);
 extern void log_option(struct nh_option_desc *opt);
 extern void log_getpos(int ret, int x, int y);
 extern void log_getdir(enum nh_direction dir);

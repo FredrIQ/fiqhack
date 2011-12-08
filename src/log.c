@@ -202,6 +202,18 @@ void log_command_result(void)
 }
 
 
+/* remove the ongoing command fom the logfile. This is used to suppress the
+ * logging of commands marked as CMD_NOTIME */
+void log_revert_command(void)
+{
+    if (iflags.disable_log || logfile == -1)
+	return;
+    
+    lseek(logfile, last_cmd_pos, SEEK_SET);
+    ftruncate(logfile, last_cmd_pos);
+}
+
+
 void log_getpos(int ret, int x, int y)
 {
     if (iflags.disable_log)

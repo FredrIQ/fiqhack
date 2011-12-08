@@ -90,7 +90,8 @@
 #define CMD_EXT        (1 << 10) /* an 'extended' command */
 #define CMD_MOVE       (1 << 11) /* this is a move command */
 #define CMD_HELP       (1 << 12) /* this command should be listed on the help menu */
-#define CMD_NOTIME     (1 << 13) /* command will not use up any game time */
+#define CMD_NOTIME     (1 << 13) /* command does not use any time or alter the game
+                                    state in any way. Marked commands will not be logged */
 #define CMD_DEBUG      (1 << 14) /* a wizmode command */
 
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */

@@ -11,6 +11,8 @@
 #include "hack.h"
 #include "patchlevel.h"
 
+extern const struct cmd_desc cmdlist[];
+
 static const char *const copyright_banner[] =
 {COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL};
 
@@ -727,7 +729,8 @@ int command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
  * to internal state */
 int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
 {
-    int cmdidx, cmdresult;
+    int cmdidx, cmdresult, pre_moves;
+    unsigned int pre_rngstate;
 
     if (!program_state.game_running)
 	return ERR_GAME_NOT_RUNNING;
@@ -750,11 +753,19 @@ int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
     cmdidx = get_command_idx(cmd);
     log_command(cmdidx, rep, arg);
     
+    pre_rngstate = mt_nextstate();
+    pre_moves = moves;
+    
     /* do the deed. command_input returns -1 if the command completed normally */
     cmdresult = command_input(cmdidx, rep, arg);
     
-    log_command_result();
-    
+    /* make sure we actually want this command to be logged */
+    if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
+	pre_rngstate == mt_nextstate() && pre_moves == moves)
+	log_revert_command(); /* nope, cut it out of the log */
+    else
+	log_command_result(); /* log the result */
+
     api_exit(); /* no unsafe operations after this point */
     
     if (cmdresult != -1)
