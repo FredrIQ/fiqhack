@@ -62,13 +62,17 @@ static void show_replay_help()
 
 static void replay_commandloop(int fd)
 {
-    int key, move;
+    int key, move, count;
     char buf[BUFSZ], qbuf[BUFSZ];
     boolean ret, firsttime = TRUE;
     struct nh_replay_info rinfo;
+    struct nh_cmd_arg noarg;
+    struct nh_cmd_desc *cmd;
     
     create_game_windows();
     nh_view_replay_start(fd, &curses_replay_windowprocs, &rinfo);
+    load_keymap();
+    
     while (1) {
 	draw_msgwin();
 	curses_update_status(NULL);
@@ -78,7 +82,7 @@ static void replay_commandloop(int fd)
 	    show_replay_help();
 	firsttime = FALSE;
 
-	key = nh_wgetch(stdscr);
+	key = get_cmdkey();
 	switch (key) {
 	    /* step forward */
 	    case KEY_RIGHT:
@@ -112,11 +116,24 @@ static void replay_commandloop(int fd)
 		    break;
 		nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
 		break;
+		
+	    default:
+		count = 0;
+		noarg.argtype = CMD_ARG_NONE;
+		cmd = keymap[key];
+		if (!cmd)
+		    break;
+		if (cmd->flags & CMD_UI)
+		    handle_internal_cmd(&cmd, &noarg, &count);
+		if (cmd)
+		    nh_command(cmd->name, count, &noarg);
+		break;
 	}
     }
     
 out:
     nh_view_replay_finish();
+    free_keymap();
     destroy_game_windows();
     cleanup_messages();
 }

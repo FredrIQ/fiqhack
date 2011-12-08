@@ -735,6 +735,10 @@ int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
     if (!program_state.game_running)
 	return ERR_GAME_NOT_RUNNING;
     
+    cmdidx = get_command_idx(cmd);
+    if (program_state.viewing && (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME)))
+	return ERR_COMMAND_FORBIDDEN; /*  */
+	
     if (!api_entry_checkpoint()) {
 	/* terminate() in end.c will arrive here */
 	if (program_state.panicking)
@@ -744,13 +748,8 @@ int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	return GAME_OVER;
     }
     
-    if (program_state.viewing)
-	return ERR_NO_INPUT_ALLOWED;
-    
     /* if the game is being restored, turntime is set in restore_read_command */
     turntime = time(NULL);
-
-    cmdidx = get_command_idx(cmd);
     log_command(cmdidx, rep, arg);
     
     pre_rngstate = mt_nextstate();

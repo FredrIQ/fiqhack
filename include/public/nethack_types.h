@@ -197,6 +197,7 @@ enum nh_input_status {
     OCCUPATION_IN_PROGRESS,
     POST_ACTION_DELAY,
     ERR_NO_INPUT_ALLOWED,
+    ERR_COMMAND_FORBIDDEN, /* tried to alter the game state while viewing a replay */
     
     /* for a status >= GAME_OVER exit the command loop */
     GAME_OVER, /* i.e. player died */

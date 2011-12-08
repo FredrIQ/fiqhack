@@ -192,6 +192,7 @@ extern struct curses_drawing_info *default_drawing, *cur_drawing;
 extern struct nh_player_info player;
 extern int initrole, initrace, initgend, initalign;
 extern boolean random_player;
+extern struct nh_cmd_desc *keymap[KEY_MAX];
 
 /*----------------------------------------------------------------------------*/
 
@@ -219,6 +220,8 @@ extern boolean curses_get_ext_cmd(char *cmd_out, const char **namelist,
 extern void curses_getline(const char *query, char *buffer);
 
 /* keymap.c */
+extern int get_cmdkey(void);
+extern void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *count);
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);
 extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);

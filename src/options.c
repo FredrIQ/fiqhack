@@ -501,18 +501,24 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	struct nh_option_desc *option = NULL;
 	
 	if (options)
-	    option = find_option(options, name);
+		option = find_option(options, name);
 	
 	if (!option && !program_state.game_running && birth_options)
-	    option = find_option(birth_options, name);
+		option = find_option(birth_options, name);
 	
 	if (!option && ui_options) {
-	    option = find_option(ui_options, name);
-	    is_ui = TRUE;
+		option = find_option(ui_options, name);
+		is_ui = TRUE;
 	}
 	    
 	if (!option)
-	    return FALSE;
+		return FALSE;
+	
+	/* if this option change affects game options (!is_ui)
+	 * and happens during a replay (program_state.viewing)
+	 * and the change isn't triggered by the replay (!program_state.restoring) */
+	if (!is_ui && program_state.viewing && !program_state.restoring)
+		return FALSE; /* Nope, sorry. That would mess up the replay */
 	
 	if (isstring)
 	    value = string_to_optvalue(option, value.s);

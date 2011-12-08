@@ -110,8 +110,7 @@ static struct nh_cmd_desc *find_command(const char *cmdname)
 }
 
 
-static void handle_internal_cmd(struct nh_cmd_desc **cmd,
-			    struct nh_cmd_arg *arg, int *count)
+void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *count)
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
     switch (id) {
@@ -162,7 +161,7 @@ static void handle_internal_cmd(struct nh_cmd_desc **cmd,
 }
 
 
-static int get_cmdkey(void)
+int get_cmdkey(void)
 {
     int key = ERR;
     int frame = 0;
