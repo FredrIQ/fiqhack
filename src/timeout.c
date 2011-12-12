@@ -1636,36 +1636,28 @@ void transfer_timers(struct level *oldlev, struct level *newlev)
  *		+ timeouts that are level specific (e.g. storms)
  *		+ timeouts that stay with the level (obj & monst)
  */
-void save_timers(struct memfile *mf, struct level *lev, int mode, int range)
+void save_timers(struct memfile *mf, struct level *lev, int range)
 {
-    timer_element *curr, *prev, *next_timer=0;
     int count;
 
-    if (perform_mwrite(mode)) {
-	if (range == RANGE_GLOBAL)
-	    mwrite32(mf, timer_id);
+    if (range == RANGE_GLOBAL)
+	mwrite32(mf, timer_id);
 
-	count = maybe_write_timer(mf, lev, range, FALSE);
-	mwrite32(mf, count);
-	maybe_write_timer(mf, lev, range, TRUE);
+    count = maybe_write_timer(mf, lev, range, FALSE);
+    mwrite32(mf, count);
+    maybe_write_timer(mf, lev, range, TRUE);
+}
+
+
+void free_timers(struct level *lev)
+{
+    timer_element *curr, *next = NULL;
+
+    for (curr = lev->lev_timers; curr; curr = next) {
+	next = curr->next;
+	free(curr);
     }
-
-    if (release_data(mode)) {
-	for (prev = 0, curr = lev->lev_timers; curr; curr = next_timer) {
-	    next_timer = curr->next;	/* in case curr is removed */
-
-	    if ( !(!!(range == RANGE_LEVEL) ^ !!timer_is_local(curr)) ) {
-		if (prev)
-		    prev->next = curr->next;
-		else
-		    lev->lev_timers = curr->next;
-		free(curr);
-		/* prev stays the same */
-	    } else {
-		prev = curr;
-	    }
-	}
-    }
+    lev->lev_timers = NULL;
 }
 
 

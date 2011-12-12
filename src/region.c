@@ -12,7 +12,6 @@
 
 #define NO_CALLBACK (-1)
 
-static void clear_regions(struct level *lev);
 static boolean inside_gas_cloud(void *,void *);
 static boolean expire_gas_cloud(void *,void *);
 static boolean inside_rect(struct nhrect *,int,int);
@@ -268,7 +267,7 @@ void remove_region(struct region *reg)
  * Remove all regions and clear all related data (This must be down
  * when changing level, for instance).
  */
-void clear_regions(struct level *lev)
+void free_regions(struct level *lev)
 {
     int i;
 
@@ -473,14 +472,11 @@ struct region *visible_region_at(struct level *lev, xchar x, xchar y)
 /**
  * save_regions :
  */
-void save_regions(struct memfile *mf, struct level *lev, int mode)
+void save_regions(struct memfile *mf, struct level *lev)
 {
     int i, j;
     unsigned len1, len2;
     struct region *r;
-
-    if (!perform_mwrite(mode))
-	goto skip_lots;
 
     mfmagic_set(mf, REGION_MAGIC);
     mwrite32(mf, moves);	/* timestamp */
@@ -522,10 +518,6 @@ void save_regions(struct memfile *mf, struct level *lev, int mode)
 	if (len2 > 0)
 	    mwrite(mf, r->leave_msg, len2);
     }
-
-skip_lots:
-    if (release_data(mode))
-	clear_regions(lev);
 }
 
 void rest_regions(struct memfile *mf, struct level *lev,
@@ -537,7 +529,7 @@ void rest_regions(struct memfile *mf, struct level *lev,
     char *msg_buf;
     struct region *r;
 
-    clear_regions(lev);		/* Just for security */
+    free_regions(lev);		/* Just for security */
     mfmagic_check(mf, REGION_MAGIC);
     tmstamp = mread32(mf);
     if (ghostly)

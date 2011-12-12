@@ -21,7 +21,6 @@ static boolean put_lregion_here(struct level *lev,xchar,xchar,xchar,
 static void fixup_special(struct level *lev);
 static void move(int *,int *,int);
 static void setup_waterlevel(struct level *lev);
-static void unsetup_waterlevel(void);
 static boolean bad_location(struct level *lev, xchar x, xchar y,
 		     xchar lx, xchar ly, xchar hx, xchar hy);
 
@@ -320,7 +319,7 @@ static void fixup_special(struct level *lev)
     if (was_waterlevel) {
 	was_waterlevel = FALSE;
 	u.uinwater = 0;
-	unsetup_waterlevel();
+	free_waterlevel();
     } else if (Is_waterlevel(&u.uz)) {
 	lev->flags.hero_memory = 0;
 	was_waterlevel = TRUE;
@@ -963,31 +962,27 @@ void water_friction(schar *udx, schar *udy)
 }
 
 
-void save_waterlevel(struct memfile *mf, int mode)
+void save_waterlevel(struct memfile *mf)
 {
 	struct bubble *b;
 
 	if (!Is_waterlevel(&u.uz)) return;
 
-	if (perform_mwrite(mode)) {
-	    int n = 0;
-	    for (b = bbubbles; b; b = b->next)
-		++n;
-	    mwrite32(mf, n);
-	    mwrite32(mf, xmin);
-	    mwrite32(mf, ymin);
-	    mwrite32(mf, xmax);
-	    mwrite32(mf, ymax);
-	    mwrite8(mf, bubble_up);
-	    for (b = bbubbles; b; b = b->next) {
-		mwrite8(mf, b->x);
-		mwrite8(mf, b->y);
-		mwrite8(mf, b->dx);
-		mwrite8(mf, b->dy);
-	    }
+	int n = 0;
+	for (b = bbubbles; b; b = b->next)
+	    ++n;
+	mwrite32(mf, n);
+	mwrite32(mf, xmin);
+	mwrite32(mf, ymin);
+	mwrite32(mf, xmax);
+	mwrite32(mf, ymax);
+	mwrite8(mf, bubble_up);
+	for (b = bbubbles; b; b = b->next) {
+	    mwrite8(mf, b->x);
+	    mwrite8(mf, b->y);
+	    mwrite8(mf, b->dx);
+	    mwrite8(mf, b->dy);
 	}
-	if (release_data(mode))
-	    unsetup_waterlevel();
 }
 
 void restore_waterlevel(struct memfile *mf)
@@ -1090,7 +1085,7 @@ static void setup_waterlevel(struct level *lev)
 			mk_bubble(lev, x, y, rn2(7));
 }
 
-static void unsetup_waterlevel(void)
+void free_waterlevel(void)
 {
 	struct bubble *b, *bb;
 

@@ -240,50 +240,30 @@ void transfer_lights(struct level *oldlev, struct level *newlev)
 
 
 /* Save all light sources of the given range. */
-void save_light_sources(struct memfile *mf, struct level *lev, int mode, int range)
+void save_light_sources(struct memfile *mf, struct level *lev, int range)
 {
-    int count, actual, is_global;
-    light_source **prev, *curr;
+    int count, actual;
 
-    if (perform_mwrite(mode)) {
-	count = maybe_write_ls(mf, lev, range, FALSE);
-	mwrite32(mf, count);
-	
-	actual = maybe_write_ls(mf, lev, range, TRUE);
-	if (actual != count)
-	    panic("counted %d light sources, wrote %d! [range=%d]",
-		  count, actual, range);
-    }
-
-    if (release_data(mode)) {
-	for (prev = &lev->lev_lights; (curr = *prev) != 0; ) {
-	    if (!curr->id) {
-		impossible("save_light_sources: no id! [range=%d]", range);
-		is_global = 0;
-	    } else
-	    switch (curr->type) {
-	    case LS_OBJECT:
-		is_global = !obj_is_local((struct obj *)curr->id);
-		break;
-	    case LS_MONSTER:
-		is_global = !mon_is_local((struct monst *)curr->id);
-		break;
-	    default:
-		is_global = 0;
-		impossible("save_light_sources: bad type (%d) [range=%d]",
-			   curr->type, range);
-		break;
-	    }
-	    /* if global and not doing local, or vice versa, remove it */
-	    if (is_global ^ (range == RANGE_LEVEL)) {
-		*prev = curr->next;
-		free(curr);
-	    } else {
-		prev = &(*prev)->next;
-	    }
-	}
-    }
+    count = maybe_write_ls(mf, lev, range, FALSE);
+    mwrite32(mf, count);
+    
+    actual = maybe_write_ls(mf, lev, range, TRUE);
+    if (actual != count)
+	panic("counted %d light sources, wrote %d! [range=%d]", count, actual, range);
 }
+
+
+void free_light_sources(struct level *lev)
+{
+    light_source *next, *curr;
+    
+    for (curr = lev->lev_lights; curr; curr = next) {
+	next = curr->next;
+	free(curr);
+    }
+    lev->lev_lights = NULL;
+}
+
 
 /*
  * Pull in the structures from disk, but don't recalculate the object

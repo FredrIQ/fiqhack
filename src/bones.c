@@ -311,9 +311,9 @@ make_bones:
 	store_version(&mf);
 	mwrite(&mf, &c, sizeof c);
 	mwrite(&mf, bonesid, (unsigned) c);	/* DD.nnn */
-	savefruitchn(&mf, WRITE_SAVE | FREE_SAVE);
+	savefruitchn(&mf);
 	update_mlstmv();	/* update monsters for eventual restoration */
-	savelev(&mf, ledger_no(&u.uz), WRITE_SAVE | FREE_SAVE);
+	savelev(&mf, ledger_no(&u.uz));
 	
 	store_mf(fd, &mf);
 	
@@ -423,7 +423,7 @@ int getbones(d_level *levnum)
 		 * -- just generate a new level for those N-1 games.
 		 */
 		/* pline("Cannot unlink bones."); */
-		savelev(NULL, ledger_no(levnum), FREE_SAVE);
+		freelev(ledger_no(levnum));
 		return 0;
 	}
 	return ok;

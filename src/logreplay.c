@@ -1007,7 +1007,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
 	topten_level_name(sg_you.uz.dnum, sg_you.uz.dlevel, gi->level_desc);
 	
 	if (!game_inited) {
-		free_dungeons();
+		free_dungeon();
 		dlb_cleanup();
 	}
     } else if (ret == LS_DONE) {

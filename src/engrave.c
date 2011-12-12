@@ -1067,18 +1067,15 @@ int doengrave(struct obj *otmp)
 	return 1;
 }
 
-void save_engravings(struct memfile *mf, struct level *lev, int mode)
+void save_engravings(struct memfile *mf, struct level *lev)
 {
-	struct engr *ep = lev->lev_engr;
-	struct engr *ep2;
+	struct engr *ep;
 	char *txtbase; /* ep->engr_txt may have been incremented */
 
-	if (perform_mwrite(mode))
-	    mfmagic_set(mf, ENGRAVE_MAGIC);
+	mfmagic_set(mf, ENGRAVE_MAGIC);
 	
-	while (ep) {
-	    ep2 = ep->nxt_engr;
-	    if (ep->engr_lth && ep->engr_txt[0] && perform_mwrite(mode)) {
+	for (ep = lev->lev_engr; ep; ep = ep->nxt_engr) {
+	    if (ep->engr_lth && ep->engr_txt[0]) {
 		mwrite32(mf, ep->engr_lth);
 		mwrite8(mf, ep->engr_x);
 		mwrite8(mf, ep->engr_y);
@@ -1086,15 +1083,23 @@ void save_engravings(struct memfile *mf, struct level *lev, int mode)
 		txtbase = (char *)(ep + 1);
 		mwrite(mf, txtbase, ep->engr_lth);
 	    }
-	    if (release_data(mode))
-		dealloc_engr(ep);
+	}
+	mwrite32(mf, 0); /* no more engravings */
+}
+
+
+void free_engravings(struct level *lev)
+{
+	struct engr *ep2, *ep = lev->lev_engr;
+	
+	while (ep) {
+	    ep2 = ep->nxt_engr;
+	    dealloc_engr(ep);
 	    ep = ep2;
 	}
-	if (perform_mwrite(mode))
-	    mwrite32(mf, 0); /* no more engravings */
-	if (release_data(mode))
-	    lev->lev_engr = NULL;
+	lev->lev_engr = NULL;
 }
+
 
 void rest_engravings(struct memfile *mf, struct level *lev)
 {

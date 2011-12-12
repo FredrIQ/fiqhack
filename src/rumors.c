@@ -194,24 +194,26 @@ static void init_oracles(dlb *fp)
 	return;
 }
 
-void save_oracles(struct memfile *mf, int mode)
+void save_oracles(struct memfile *mf)
 {
 	int i;
-	if (perform_mwrite(mode)) {
-	    mwrite32(mf, oracle_cnt);
-	    if (oracle_cnt)
-		for (i = 0; i < oracle_cnt; i++)
-		    mwrite32(mf, oracle_loc[i]);
-	}
-	if (release_data(mode)) {
-	    if (oracle_cnt) {
-		free(oracle_loc);
-		oracle_loc = NULL;
-		oracle_cnt = 0;
-		oracle_flg = 0;
-	    }
+	mwrite32(mf, oracle_cnt);
+	if (oracle_cnt)
+	    for (i = 0; i < oracle_cnt; i++)
+		mwrite32(mf, oracle_loc[i]);
+}
+
+
+void free_oracles(void)
+{
+	if (oracle_cnt) {
+	    free(oracle_loc);
+	    oracle_loc = NULL;
+	    oracle_cnt = 0;
+	    oracle_flg = 0;
 	}
 }
+
 
 void restore_oracles(struct memfile *mf)
 {

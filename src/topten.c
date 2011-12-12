@@ -566,7 +566,7 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     }
     
     if (!game_inited) {
-	    free_dungeons();
+	    free_dungeon();
 	    dlb_cleanup();
     }
     

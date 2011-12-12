@@ -108,7 +108,19 @@ static void dumpit(void)
 #endif
 
 
-void reset_branches(void)
+static void freelevchn(void)
+{
+	s_level	*tmplev, *tmplev2;
+
+	for (tmplev = sp_levchn; tmplev; tmplev = tmplev2) {
+	    tmplev2 = tmplev->next;
+	    free(tmplev);
+	}
+	sp_levchn = NULL;
+}
+
+
+void free_dungeon(void)
 {
     branch *curr, *next;
     
@@ -117,6 +129,8 @@ void reset_branches(void)
 	free(curr);
     }
     branches = NULL;
+    
+    freelevchn();
 }
 
 
@@ -156,33 +170,28 @@ static void save_branch(struct memfile *mf, const branch *b)
 
 
 /* Save the dungeon structures. */
-void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data)
+void save_dungeon(struct memfile *mf)
 {
     branch *curr;
     int    count, i;
 
-    if (perform_write) {
-	mwrite(mf, &n_dgns, sizeof n_dgns);
-	for (i = 0; i < n_dgns; i++)
-	    save_dungeon_struct(mf, &dungeons[i]);
-	
-	/* writing dungeon_topology directly should be ok, it's just a
-	 * fancy collection of single byte values */
-	mwrite(mf, &dungeon_topology, sizeof dungeon_topology);
-	mwrite(mf, tune, sizeof tune);
+    mwrite(mf, &n_dgns, sizeof n_dgns);
+    for (i = 0; i < n_dgns; i++)
+	save_dungeon_struct(mf, &dungeons[i]);
+    
+    /* writing dungeon_topology directly should be ok, it's just a
+	* fancy collection of single byte values */
+    mwrite(mf, &dungeon_topology, sizeof dungeon_topology);
+    mwrite(mf, tune, sizeof tune);
 
-	for (count = 0, curr = branches; curr; curr = curr->next)
-	    count++;
-	mwrite32(mf, count);
+    for (count = 0, curr = branches; curr; curr = curr->next)
+	count++;
+    mwrite32(mf, count);
 
-	for (curr = branches; curr; curr = curr->next)
-	    save_branch(mf, curr);
+    for (curr = branches; curr; curr = curr->next)
+	save_branch(mf, curr);
 
-	mwrite(mf, &inv_pos, sizeof(coord));
-    }
-
-    if (free_data)
-	reset_branches();
+    mwrite(mf, &inv_pos, sizeof(coord));
 }
 
 

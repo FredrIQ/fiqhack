@@ -239,29 +239,30 @@ static void saveobjclass(struct memfile *mf, struct objclass *ocl)
 }
 
 
-void savenames(struct memfile *mf, int mode)
+void savenames(struct memfile *mf)
 {
 	int i;
 
-	if (perform_mwrite(mode)) {
-	    mfmagic_set(mf, OCLASSES_MAGIC);
-	    for (i = 0; i < MAXOCLASSES; i++)
-		mwrite32(mf, bases[i]);
-	    
-	    for (i = 0; i < NUM_OBJECTS; i++)
-		mwrite32(mf, disco[i]);
-	    
-	    for (i = 0; i < NUM_OBJECTS; i++)
-		saveobjclass(mf, &objects[i]);
-	}
+	mfmagic_set(mf, OCLASSES_MAGIC);
+	for (i = 0; i < MAXOCLASSES; i++)
+	    mwrite32(mf, bases[i]);
 	
-	if (release_data(mode)) {
-	    for (i = 0; i < NUM_OBJECTS; i++)
-		if (objects[i].oc_uname) {
-		    free(objects[i].oc_uname);
-		    objects[i].oc_uname = NULL;
-		}
-	}
+	for (i = 0; i < NUM_OBJECTS; i++)
+	    mwrite32(mf, disco[i]);
+	
+	for (i = 0; i < NUM_OBJECTS; i++)
+	    saveobjclass(mf, &objects[i]);
+}
+
+
+void freenames(void)
+{
+	int i;
+	for (i = 0; i < NUM_OBJECTS; i++)
+	    if (objects[i].oc_uname) {
+		free(objects[i].oc_uname);
+		objects[i].oc_uname = NULL;
+	    }
 }
 
 
