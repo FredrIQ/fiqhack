@@ -11,7 +11,7 @@ struct trobj {
 	unsigned trbless:2;
 };
 
-static void ini_inv(const struct trobj *);
+static void ini_inv(const struct trobj *, short nocreate[4]);
 static void knows_object(int);
 static void knows_class(char);
 static boolean restricted_spell_discipline(int);
@@ -500,6 +500,7 @@ void u_init(void)
 {
 	int i;
 	struct trobj *trobj_list = NULL;
+	short nclist[4] = {STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT};
 
 	flags.female = u.initgend;
 	flags.beginner = 1;
@@ -556,10 +557,10 @@ void u_init(void)
 	 * skew the results if we use rn2(2)...  --KAA
 	 */
 	case PM_ARCHEOLOGIST:
-		ini_inv(Archeologist);
-		if (!rn2(10)) ini_inv(Tinopener);
-		else if (!rn2(4)) ini_inv(Lamp);
-		else if (!rn2(10)) ini_inv(Magicmarker);
+		ini_inv(Archeologist, nclist);
+		if (!rn2(10)) ini_inv(Tinopener, nclist);
+		else if (!rn2(4)) ini_inv(Lamp, nclist);
+		else if (!rn2(10)) ini_inv(Magicmarker, nclist);
 		knows_object(SACK);
 		knows_object(TOUCHSTONE);
 		skill_init(Skill_A);
@@ -570,8 +571,8 @@ void u_init(void)
 		    trobj_list[B_MAJOR].trotyp = BATTLE_AXE;
 		    trobj_list[B_MINOR].trotyp = SHORT_SWORD;
 		}
-		ini_inv(trobj_list);
-		if (!rn2(6)) ini_inv(Lamp);
+		ini_inv(trobj_list, nclist);
+		if (!rn2(6)) ini_inv(Lamp, nclist);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_B);
@@ -579,18 +580,18 @@ void u_init(void)
 	case PM_CAVEMAN:
 		trobj_list = copy_trobj_list(Cave_man);
 		trobj_list[C_AMMO].trquan = rn1(11, 10);	/* 10..20 */
-		ini_inv(trobj_list);
+		ini_inv(trobj_list, nclist);
 		skill_init(Skill_C);
 		break;
 	case PM_HEALER:
 		u.umoney0 = rn1(1000, 1001);
-		ini_inv(Healer);
-		if (!rn2(25)) ini_inv(Lamp);
+		ini_inv(Healer, nclist);
+		if (!rn2(25)) ini_inv(Lamp, nclist);
 		knows_object(POT_FULL_HEALING);
 		skill_init(Skill_H);
 		break;
 	case PM_KNIGHT:
-		ini_inv(Knight);
+		ini_inv(Knight, nclist);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		/* give knights chess-like mobility
@@ -605,16 +606,16 @@ void u_init(void)
 		    case 1: trobj_list[M_BOOK].trotyp = SPE_PROTECTION; break;
 		    case 2: trobj_list[M_BOOK].trotyp = SPE_SLEEP; break;
 		}
-		ini_inv(trobj_list);
-		if (!rn2(5)) ini_inv(Magicmarker);
-		else if (!rn2(10)) ini_inv(Lamp);
+		ini_inv(trobj_list, nclist);
+		if (!rn2(5)) ini_inv(Magicmarker, nclist);
+		else if (!rn2(10)) ini_inv(Lamp, nclist);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_Mon);
 		break;
 	case PM_PRIEST:
-		ini_inv(Priest);
-		if (!rn2(10)) ini_inv(Magicmarker);
-		else if (!rn2(10)) ini_inv(Lamp);
+		ini_inv(Priest, nclist);
+		if (!rn2(10)) ini_inv(Magicmarker, nclist);
+		else if (!rn2(10)) ini_inv(Lamp, nclist);
 		knows_object(POT_WATER);
 		skill_init(Skill_P);
 		/* KMH, conduct --
@@ -629,23 +630,23 @@ void u_init(void)
 		trobj_list = copy_trobj_list(Ranger);
 		trobj_list[RAN_TWO_ARROWS].trquan = rn1(10, 50);
 		trobj_list[RAN_ZERO_ARROWS].trquan = rn1(10, 30);
-		ini_inv(trobj_list);
+		ini_inv(trobj_list, nclist);
 		skill_init(Skill_Ran);
 		break;
 	case PM_ROGUE:
 		trobj_list = copy_trobj_list(Rogue);
 		trobj_list[R_DAGGERS].trquan = rn1(10, 6);
 		u.umoney0 = 0;
-		ini_inv(trobj_list);
-		if (!rn2(5)) ini_inv(Blindfold);
+		ini_inv(trobj_list, nclist);
+		if (!rn2(5)) ini_inv(Blindfold, nclist);
 		knows_object(SACK);
 		skill_init(Skill_R);
 		break;
 	case PM_SAMURAI:
 		trobj_list = copy_trobj_list(Samurai);
 		trobj_list[S_ARROWS].trquan = rn1(20, 26);
-		ini_inv(trobj_list);
-		if (!rn2(5)) ini_inv(Blindfold);
+		ini_inv(trobj_list, nclist);
+		if (!rn2(5)) ini_inv(Blindfold, nclist);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_S);
@@ -654,24 +655,24 @@ void u_init(void)
 		trobj_list = copy_trobj_list(Tourist);
 		trobj_list[T_DARTS].trquan = rn1(20, 21);
 		u.umoney0 = rnd(1000);
-		ini_inv(trobj_list);
-		if (!rn2(25)) ini_inv(Tinopener);
-		else if (!rn2(25)) ini_inv(Leash);
-		else if (!rn2(25)) ini_inv(Towel);
-		else if (!rn2(25)) ini_inv(Magicmarker);
+		ini_inv(trobj_list, nclist);
+		if (!rn2(25)) ini_inv(Tinopener, nclist);
+		else if (!rn2(25)) ini_inv(Leash, nclist);
+		else if (!rn2(25)) ini_inv(Towel, nclist);
+		else if (!rn2(25)) ini_inv(Magicmarker, nclist);
 		skill_init(Skill_T);
 		break;
 	case PM_VALKYRIE:
-		ini_inv(Valkyrie);
-		if (!rn2(6)) ini_inv(Lamp);
+		ini_inv(Valkyrie, nclist);
+		if (!rn2(6)) ini_inv(Lamp, nclist);
 		knows_class(WEAPON_CLASS);
 		knows_class(ARMOR_CLASS);
 		skill_init(Skill_V);
 		break;
 	case PM_WIZARD:
-		ini_inv(Wizard);
-		if (!rn2(5)) ini_inv(Magicmarker);
-		if (!rn2(5)) ini_inv(Blindfold);
+		ini_inv(Wizard, nclist);
+		if (!rn2(5)) ini_inv(Magicmarker, nclist);
+		if (!rn2(5)) ini_inv(Blindfold, nclist);
 		skill_init(Skill_W);
 		break;
 
@@ -702,7 +703,7 @@ void u_init(void)
 		    BELL, BUGLE, LEATHER_DRUM
 		};
 		trobj_list[0].trotyp = trotyp[rn2(SIZE(trotyp))];
-		ini_inv(trobj_list);
+		ini_inv(trobj_list, nclist);
 	    }
 
 	    /* Elves can recognize all elvish objects */
@@ -736,7 +737,7 @@ void u_init(void)
 	case PM_ORC:
 	    /* compensate for generally inferior equipment */
 	    if (!Role_if (PM_WIZARD))
-		ini_inv(Xtra_food);
+		ini_inv(Xtra_food, nclist);
 	    /* Orcs can recognize all orcish objects */
 	    knows_object(ORCISH_SHORT_SWORD);
 	    knows_object(ORCISH_ARROW);
@@ -759,9 +760,9 @@ void u_init(void)
 	    free(trobj_list);
 
 	if (discover)
-		ini_inv(Wishing);
+		ini_inv(Wishing, nclist);
 
-	if (u.umoney0) ini_inv(Money);
+	if (u.umoney0) ini_inv(Money, nclist);
 	u.umoney0 += hidden_gold();	/* in case sack has gold in it */
 
 	find_ac();			/* get initial ac value */
@@ -818,7 +819,7 @@ static boolean restricted_spell_discipline(int otyp)
     return TRUE;
 }
 
-static void ini_inv(const struct trobj *trop)
+static void ini_inv(const struct trobj *trop, short nocreate[4])
 {
 	struct obj *obj;
 	int otyp, i;
@@ -838,10 +839,6 @@ static void ini_inv(const struct trobj *trop)
 			}
 			obj = mksobj(level, otyp, TRUE, FALSE);
 		} else {	/* UNDEF_TYP */
-			static short nocreate = STRANGE_OBJECT;
-			static short nocreate2 = STRANGE_OBJECT;
-			static short nocreate3 = STRANGE_OBJECT;
-			static short nocreate4 = STRANGE_OBJECT;
 		/*
 		 * For random objects, do not create certain overly powerful
 		 * items: wand of wishing, ring of levitation, or the
@@ -855,10 +852,10 @@ static void ini_inv(const struct trobj *trop)
 			obj = mkobj(level, trop->trclass, FALSE);
 			otyp = obj->otyp;
 			while (otyp == WAN_WISHING
-				|| otyp == nocreate
-				|| otyp == nocreate2
-				|| otyp == nocreate3
-				|| otyp == nocreate4
+				|| otyp == nocreate[0]
+				|| otyp == nocreate[1]
+				|| otyp == nocreate[2]
+				|| otyp == nocreate[3]
 				|| (otyp == RIN_LEVITATION && flags.elbereth_enabled)
 				/* 'useless' items */
 				|| otyp == POT_HALLUCINATION
@@ -902,17 +899,17 @@ static void ini_inv(const struct trobj *trop)
 			    case WAN_POLYMORPH:
 			    case RIN_POLYMORPH:
 			    case POT_POLYMORPH:
-				nocreate = RIN_POLYMORPH_CONTROL;
+				nocreate[0] = RIN_POLYMORPH_CONTROL;
 				break;
 			    case RIN_POLYMORPH_CONTROL:
-				nocreate = RIN_POLYMORPH;
-				nocreate2 = SPE_POLYMORPH;
-				nocreate3 = POT_POLYMORPH;
+				nocreate[0] = RIN_POLYMORPH;
+				nocreate[1] = SPE_POLYMORPH;
+				nocreate[2] = POT_POLYMORPH;
 			}
 			/* Don't have 2 of the same ring or spellbook */
 			if (obj->oclass == RING_CLASS ||
 			    obj->oclass == SPBOOK_CLASS)
-				nocreate4 = otyp;
+				nocreate[3] = otyp;
 		}
 
 		if (trop->trclass == COIN_CLASS) {

@@ -418,6 +418,8 @@ static void restgamestate(struct memfile *mf)
 	bookid = mread32(mf);
 	if (bookid)
 	    book = find_oid(bookid);
+	stetho_last_used_move = mread32(mf);
+	stetho_last_used_movement = mread32(mf);
 	multi = mread32(mf);
 	restore_rndmonst_state(mf);
 	

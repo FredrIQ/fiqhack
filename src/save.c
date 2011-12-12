@@ -238,6 +238,8 @@ static void savegamestate(struct memfile *mf, int mode)
 	save_food(mf);
 	book_id = book ? book->o_id : 0;
 	mwrite32(mf, book_id);
+	mwrite32(mf, stetho_last_used_move);
+	mwrite32(mf, stetho_last_used_movement);
 	mwrite32(mf, multi);
 	save_rndmonst_state(mf);
 }

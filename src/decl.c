@@ -72,9 +72,12 @@ struct multishot m_shot = { 0, 0, STRANGE_OBJECT, FALSE };
 
 struct dig_info digging;
 
+int stetho_last_used_move, stetho_last_used_movement;
+
+int branch_id;
 dungeon dungeons[MAXDUNGEON];	/* ini'ed by init_dungeon() */
 s_level *sp_levchn;
-coord inv_pos;
+coord inv_pos; /* vibrating square position */
 
 boolean in_mklev;
 boolean stoned;	/* done to monsters hit by 'c' */
@@ -259,6 +262,9 @@ void init_data(void)
     vision_full_recalc = FALSE;
     viz_array = NULL;
     artilist = NULL;
+    stetho_last_used_movement = 0;
+    stetho_last_used_move = -1;
+    branch_id = 0;
     
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;

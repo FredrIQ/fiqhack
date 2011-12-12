@@ -114,13 +114,15 @@ struct monst *make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
 	return mtmp;
 }
 
+/* this function is only called from newgame, so we know:
+ *   - pets aren't genocided so makemon will always work
+ *   - the petname has not been used yet */
 struct monst *makedog(void)
 {
 	struct monst *mtmp;
 	struct obj *otmp;
 	const char *petname;
 	int   pettype;
-	static int petname_used = 0;
 
 	if (preferred_pet == 'n') return NULL;
 
@@ -143,8 +145,6 @@ struct monst *makedog(void)
 
 	mtmp = makemon(&mons[pettype], level, u.ux, u.uy, MM_EDOG);
 
-	if (!mtmp) return NULL; /* pets were genocided */
-
 	/* Horses already wear a saddle */
 	if (pettype == PM_PONY && !!(otmp = mksobj(level, SADDLE, TRUE, FALSE))) {
 	    if (mpickobj(mtmp, otmp))
@@ -156,7 +156,7 @@ struct monst *makedog(void)
 	    update_mon_intrinsics(mtmp, otmp, TRUE, TRUE);
 	}
 
-	if (!petname_used++ && *petname)
+	if (*petname)
 		mtmp = christen_monst(mtmp, petname);
 
 	initedog(mtmp);

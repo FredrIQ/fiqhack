@@ -26,6 +26,9 @@ static boolean bad_location(struct level *lev, xchar x, xchar y,
 		     xchar lx, xchar ly, xchar hx, xchar hy);
 
 
+static boolean bubble_up;
+
+
 static boolean iswall(struct level *lev, int x, int y)
 {
     int type;
@@ -807,7 +810,6 @@ static void mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boole
 
 void movebubbles(void)
 {
-	static boolean up;
 	struct bubble *b;
 	int x, y, i, j;
 	struct trap *btrap;
@@ -826,7 +828,7 @@ void movebubbles(void)
 	 * locations.
 	 */
 
-	for (b = up ? bbubbles : ebubbles; b; b = up ? b->next : b->prev) {
+	for (b = bubble_up ? bbubbles : ebubbles; b; b = bubble_up ? b->next : b->prev) {
 	    if (b->cons) panic("movebubbles: cons != null");
 	    for (i = 0, x = b->x; i < (int) b->bm[0]; i++, x++)
 		for (j = 0, y = b->y; j < (int) b->bm[1]; j++, y++)
@@ -913,8 +915,8 @@ void movebubbles(void)
 	 * would eventually end up in the last bubble in the chain.
 	 */
 
-	up = !up;
-	for (b = up ? bbubbles : ebubbles; b; b = up ? b->next : b->prev) {
+	bubble_up = !bubble_up;
+	for (b = bubble_up ? bbubbles : ebubbles; b; b = bubble_up ? b->next : b->prev) {
 		int rx = rn2(3), ry = rn2(3);
 
 		mv_bubble(level, b, b->dx + 1 - (!b->dx ? rx : (rx ? 1 : 0)),
@@ -976,6 +978,7 @@ void save_waterlevel(struct memfile *mf, int mode)
 	    mwrite32(mf, ymin);
 	    mwrite32(mf, xmax);
 	    mwrite32(mf, ymax);
+	    mwrite8(mf, bubble_up);
 	    for (b = bbubbles; b; b = b->next) {
 		mwrite8(mf, b->x);
 		mwrite8(mf, b->y);
@@ -1001,6 +1004,7 @@ void restore_waterlevel(struct memfile *mf)
 	ymin = mread32(mf);
 	xmax = mread32(mf);
 	ymax = mread32(mf);
+	bubble_up = mread8(mf);
 	
 	for (i = 0; i < n; i++) {
 		btmp = b;

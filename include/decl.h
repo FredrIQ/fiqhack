@@ -80,6 +80,7 @@ extern struct dgn_topology {		/* special dungeon levels for speed */
 #define xupstair	(upstair.sx)
 #define yupstair	(upstair.sy)
 
+extern int branch_id;
 extern coord inv_pos;
 extern dungeon dungeons[];
 extern s_level *sp_levchn;
@@ -158,6 +159,8 @@ extern struct dig_info {		/* apply.c, hack.c */
 	long lastdigtime;
 	boolean down, chew, warned, quiet;
 } digging;
+
+extern int stetho_last_used_move, stetho_last_used_movement;
 
 extern unsigned int moves;
 extern long wailmsg;

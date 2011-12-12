@@ -466,7 +466,6 @@ void insert_branch(branch *new_branch, boolean extract_first)
 /* Add a dungeon branch to the branch list. */
 static branch *add_branch(int dgn, int child_entry_level, struct proto_dungeon *pd)
 {
-    static int branch_id = 0;
     int branch_num;
     branch *new_branch;
 

@@ -184,8 +184,6 @@ static const char hollow_str[] = "a hollow sound.  This must be a secret %s!";
    uses up the turn; this makes curse status have a tangible effect. */
 static int use_stethoscope(struct obj *obj)
 {
-	static long last_used_move = -1;
-	static short last_used_movement = 0;
 	struct monst *mtmp;
 	struct rm *loc;
 	int rx, ry, res;
@@ -203,10 +201,10 @@ static int use_stethoscope(struct obj *obj)
 	if (!getdir(NULL, &dx, &dy, &dz))
 	    return 0;
 
-	res = (moves == last_used_move) &&
-	      (youmonst.movement == last_used_movement);
-	last_used_move = moves;
-	last_used_movement = youmonst.movement;
+	res = (moves == stetho_last_used_move) &&
+	      (youmonst.movement == stetho_last_used_movement);
+	stetho_last_used_move = moves;
+	stetho_last_used_movement = youmonst.movement;
 
 	if (u.usteed && dz > 0) {
 		if (interference) {
