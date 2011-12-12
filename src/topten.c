@@ -135,10 +135,13 @@ static struct toptenentry *read_topten(int limit)
     fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
     lseek(fd, 0, SEEK_SET);
     data = loadfile(fd, &size);
-    if (!data)
-	return NULL;
-    
     close(fd);
+    if (!data)
+	/* the only sensible reason for not getting any data is that the record
+	 * file doesn't exist or is empty. If it does have data but is unreadable
+	 * for some other reason, writing will fail later on, so pretending it's
+	 * empty won't hurt anything. */
+	return calloc(limit + 1, sizeof(struct toptenentry));
    
     ttlist = calloc(limit + 1, sizeof(struct toptenentry));
     line = data;
