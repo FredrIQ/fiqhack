@@ -364,6 +364,7 @@ extern void dump_catch_menus(boolean intercept);
 
 /* ### dungeon.c ### */
 
+extern void reset_branches(void);
 extern void save_d_flags(struct memfile *mf, d_flags f);
 extern void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data);
 extern d_flags restore_d_flags(struct memfile *mf);

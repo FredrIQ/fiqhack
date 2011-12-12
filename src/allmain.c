@@ -130,6 +130,7 @@ void startup_common(char *name, int playmode)
     init_objlist();
     init_artilist();
     reset_rndmonst(NON_PM);
+    reset_branches();
     
     program_state.game_running = 0;
     initoptions();

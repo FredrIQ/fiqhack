@@ -108,6 +108,18 @@ static void dumpit(void)
 #endif
 
 
+void reset_branches(void)
+{
+    branch *curr, *next;
+    
+    for (curr = branches; curr; curr = next) {
+	next = curr->next;
+	free(curr);
+    }
+    branches = NULL;
+}
+
+
 void save_d_flags(struct memfile *mf, d_flags f)
 {
     unsigned int dflags;
@@ -146,7 +158,7 @@ static void save_branch(struct memfile *mf, const branch *b)
 /* Save the dungeon structures. */
 void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data)
 {
-    branch *curr, *next;
+    branch *curr;
     int    count, i;
 
     if (perform_write) {
@@ -169,13 +181,8 @@ void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data)
 	mwrite(mf, &inv_pos, sizeof(coord));
     }
 
-    if (free_data) {
-	for (curr = branches; curr; curr = next) {
-	    next = curr->next;
-	    free(curr);
-	}
-	branches = 0;
-    }
+    if (free_data)
+	reset_branches();
 }
 
 
