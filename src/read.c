@@ -519,8 +519,7 @@ void forget_levels(int percent)
 	 * instead of forgetting fewer levels.
 	 */
 	for (count = 0, i = 0; i <= maxl; i++)
-	    if ((level_info[i].flags & VISITED) &&
-			!(level_info[i].flags & FORGOTTEN) && i != this_lev) {
+	    if ((levels[i] && !levels[i]->flags.forgotten) && i != this_lev) {
 		if (ledger_to_dnum(i) == sokoban_dnum)
 		    percent += 2;
 		else
@@ -534,7 +533,7 @@ void forget_levels(int percent)
 	/* forget first % of randomized indices */
 	count = ((count * percent) + 50) / 100;
 	for (i = 0; i < count; i++) {
-	    level_info[indices[i]].flags |= FORGOTTEN;
+	    levels[indices[i]]->flags.forgotten = TRUE;
 	    forget_map(levels[indices[i]], TRUE);
 	    forget_traps(levels[indices[i]]);
 	    levels[indices[i]]->levname[0] = '\0';

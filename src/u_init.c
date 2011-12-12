@@ -982,4 +982,305 @@ static void ini_inv(const struct trobj *trop)
 	}
 }
 
+
+void restore_you(struct memfile *mf, struct you *y)
+{
+	int i;
+	unsigned int yflags, eflags, hflags;
+
+	memset(y, 0, sizeof(struct you));
+	
+	yflags = mread32(mf);
+	eflags = mread32(mf);
+	hflags = mread32(mf);
+	
+	y->uswallow	= (yflags >> 31) & 1;
+	y->uinwater	= (yflags >> 30) & 1;
+	y->uundetected	= (yflags >> 29) & 1;
+	y->mfemale	= (yflags >> 28) & 1;
+	y->uinvulnerable= (yflags >> 27) & 1;
+	y->uburied	= (yflags >> 26) & 1;
+	y->uedibility	= (yflags >> 25) & 1;
+	y->usick_type	= (yflags >> 23) & 3;
+	
+	y->uevent.minor_oracle		= (eflags >> 31) & 1;
+	y->uevent.major_oracle		= (eflags >> 30) & 1;
+	y->uevent.qcalled		= (eflags >> 29) & 1;
+	y->uevent.qexpelled		= (eflags >> 28) & 1;
+	y->uevent.qcompleted		= (eflags >> 27) & 1;
+	y->uevent.uheard_tune		= (eflags >> 25) & 3;
+	y->uevent.uopened_dbridge	= (eflags >> 24) & 1;
+	y->uevent.invoked		= (eflags >> 23) & 1;
+	y->uevent.gehennom_entered	= (eflags >> 22) & 1;
+	y->uevent.uhand_of_elbereth	= (eflags >> 20) & 3;
+	y->uevent.udemigod		= (eflags >> 19) & 1;
+	y->uevent.ascended		= (eflags >> 18) & 1;
+	
+	y->uhave.amulet		= (hflags >> 31) & 1;
+	y->uhave.bell		= (hflags >> 30) & 1;
+	y->uhave.book		= (hflags >> 29) & 1;
+	y->uhave.menorah	= (hflags >> 28) & 1;
+	y->uhave.questart	= (hflags >> 27) & 1;
+	
+	y->uhp = mread32(mf);
+	y->uhpmax = mread32(mf);
+	y->uen = mread32(mf);
+	y->uenmax = mread32(mf);
+	y->ulevel = mread32(mf);
+	y->umoney0 = mread32(mf);
+	y->uexp = mread32(mf);
+	y->urexp = mread32(mf);
+	y->ulevelmax = mread32(mf);
+	y->umonster = mread32(mf);
+	y->umonnum = mread32(mf);
+	y->mh = mread32(mf);
+	y->mhmax = mread32(mf);
+	y->mtimedone = mread32(mf);
+	y->ulycn = mread32(mf);
+	y->last_str_turn = mread32(mf);
+	y->utrap = mread32(mf);
+	y->utraptype = mread32(mf);
+	y->uhunger = mread32(mf);
+	y->uhs = mread32(mf);
+	y->umconf = mread32(mf);
+	y->nv_range = mread32(mf);
+	y->xray_range = mread32(mf);
+	y->bglyph = mread32(mf);
+	y->cglyph = mread32(mf);
+	y->bc_order = mread32(mf);
+	y->bc_felt = mread32(mf);
+	y->ucreamed = mread32(mf);
+	y->uswldtim = mread32(mf);
+	y->udg_cnt = mread32(mf);
+	y->next_attr_check = mread32(mf);
+	y->ualign.record = mread32(mf);
+	y->ugangr = mread32(mf);
+	y->ugifts = mread32(mf);
+	y->ublessed = mread32(mf);
+	y->ublesscnt = mread32(mf);
+	y->ucleansed = mread32(mf);
+	y->usleep = mread32(mf);
+	y->uinvault = mread32(mf);
+	y->ugallop = mread32(mf);
+	y->urideturns = mread32(mf);
+	y->umortality = mread32(mf);
+	y->ugrave_arise = mread32(mf);
+	y->weapon_slots = mread32(mf);
+	y->skills_advanced = mread32(mf);
+	y->initrole = mread32(mf);
+	y->initrace = mread32(mf);
+	y->initgend = mread32(mf);
+	y->initalign = mread32(mf);
+	y->uconduct.unvegetarian = mread32(mf);
+	y->uconduct.unvegan = mread32(mf);
+	y->uconduct.food = mread32(mf);
+	y->uconduct.gnostic = mread32(mf);
+	y->uconduct.weaphit = mread32(mf);
+	y->uconduct.killer = mread32(mf);
+	y->uconduct.literate = mread32(mf);
+	y->uconduct.polypiles = mread32(mf);
+	y->uconduct.polyselfs = mread32(mf);
+	y->uconduct.wishes = mread32(mf);
+	y->uconduct.wisharti = mread32(mf);
+	
+	y->ux = mread8(mf);
+	y->uy = mread8(mf);
+	y->dx = mread8(mf);
+	y->dy = mread8(mf);
+	y->tx = mread8(mf);
+	y->ty = mread8(mf);
+	y->ux0 = mread8(mf);
+	y->uy0 = mread8(mf);
+	y->uz.dnum = mread8(mf);
+	y->uz.dlevel = mread8(mf);
+	y->uz0.dnum = mread8(mf);
+	y->uz0.dlevel = mread8(mf);
+	y->utolev.dnum = mread8(mf);
+	y->utolev.dlevel = mread8(mf);
+	y->utotype = mread8(mf);
+	y->umoved = mread8(mf);
+	y->ualign.type = mread8(mf);
+	y->ualignbase[0] = mread8(mf);
+	y->ualignbase[1] = mread8(mf);
+	y->uluck = mread8(mf);
+	y->moreluck = mread8(mf);
+	y->uhitinc = mread8(mf);
+	y->udaminc = mread8(mf);
+	y->uac = mread8(mf);
+	y->uspellprot = mread8(mf);
+	y->usptime = mread8(mf);
+	y->uspmtime = mread8(mf);
+	y->twoweap = mread8(mf);
+
+	mread(mf, y->usick_cause, sizeof(y->usick_cause));
+	mread(mf, y->urooms, sizeof(y->urooms));
+	mread(mf, y->urooms0, sizeof(y->urooms0));
+	mread(mf, y->uentered, sizeof(y->uentered));
+	mread(mf, y->ushops, sizeof(y->ushops));
+	mread(mf, y->ushops0, sizeof(y->ushops0));
+	mread(mf, y->ushops_entered, sizeof(y->ushops_entered));
+	mread(mf, y->ushops_left, sizeof(y->ushops_left));
+	mread(mf, y->macurr.a, sizeof(y->macurr.a));
+	mread(mf, y->mamax.a, sizeof(y->mamax.a));
+	mread(mf, y->acurr.a, sizeof(y->acurr.a));
+	mread(mf, y->aexe.a, sizeof(y->aexe.a));
+	mread(mf, y->abon.a, sizeof(y->abon.a));
+	mread(mf, y->amax.a, sizeof(y->amax.a));
+	mread(mf, y->atemp.a, sizeof(y->atemp.a));
+	mread(mf, y->atime.a, sizeof(y->atime.a));
+	mread(mf, y->skill_record, sizeof(y->skill_record));
+    
+	for (i = 0; i <= LAST_PROP; i++) {
+	    y->uprops[i].extrinsic = mread32(mf);
+	    y->uprops[i].blocked = mread32(mf);
+	    y->uprops[i].intrinsic = mread32(mf);
+	}
+	for (i = 0; i < P_NUM_SKILLS; i++) {
+	    y->weapon_skills[i].skill = mread8(mf);
+	    y->weapon_skills[i].max_skill = mread8(mf);
+	    y->weapon_skills[i].advance = mread16(mf);
+	}
+}
+
+
+void save_you(struct memfile *mf, struct you *y)
+{
+	int i;
+	unsigned int yflags, eflags, hflags;
+	yflags = (y->uswallow << 31) | (y->uinwater << 30) | (y->uundetected << 29) |
+		(y->mfemale << 28) | (y->uinvulnerable << 27) | (y->uburied << 26) |
+		(y->uedibility << 25) | (y->usick_type << 23);
+	eflags = (y->uevent.minor_oracle << 31) | (y->uevent.major_oracle << 30) |
+		(y->uevent.qcalled << 29) | (y->uevent.qexpelled << 28) |
+		(y->uevent.qcompleted << 27) | (y->uevent.uheard_tune << 25) |
+		(y->uevent.uopened_dbridge << 24) | (y->uevent.invoked << 23) |
+		(y->uevent.gehennom_entered << 22) | (y->uevent.uhand_of_elbereth << 20) |
+		(y->uevent.udemigod << 19) | (y->uevent.ascended << 18);
+	hflags = (y->uhave.amulet << 31) | (y->uhave.bell << 30) |
+		(y->uhave.book << 29) | (y->uhave.menorah << 28) |
+		(y->uhave.questart << 27);
+
+	mwrite32(mf, yflags);
+	mwrite32(mf, eflags);
+	mwrite32(mf, hflags);
+	mwrite32(mf, y->uhp);
+	mwrite32(mf, y->uhpmax);
+	mwrite32(mf, y->uen);
+	mwrite32(mf, y->uenmax);
+	mwrite32(mf, y->ulevel);
+	mwrite32(mf, y->umoney0);
+	mwrite32(mf, y->uexp);
+	mwrite32(mf, y->urexp);
+	mwrite32(mf, y->ulevelmax);
+	mwrite32(mf, y->umonster);
+	mwrite32(mf, y->umonnum);
+	mwrite32(mf, y->mh);
+	mwrite32(mf, y->mhmax);
+	mwrite32(mf, y->mtimedone);
+	mwrite32(mf, y->ulycn);
+	mwrite32(mf, y->last_str_turn);
+	mwrite32(mf, y->utrap);
+	mwrite32(mf, y->utraptype);
+	mwrite32(mf, y->uhunger);
+	mwrite32(mf, y->uhs);
+	mwrite32(mf, y->umconf);
+	mwrite32(mf, y->nv_range);
+	mwrite32(mf, y->xray_range);
+	mwrite32(mf, y->bglyph);
+	mwrite32(mf, y->cglyph);
+	mwrite32(mf, y->bc_order);
+	mwrite32(mf, y->bc_felt);
+	mwrite32(mf, y->ucreamed);
+	mwrite32(mf, y->uswldtim);
+	mwrite32(mf, y->udg_cnt);
+	mwrite32(mf, y->next_attr_check);
+	mwrite32(mf, y->ualign.record);
+	mwrite32(mf, y->ugangr);
+	mwrite32(mf, y->ugifts);
+	mwrite32(mf, y->ublessed);
+	mwrite32(mf, y->ublesscnt);
+	mwrite32(mf, y->ucleansed);
+	mwrite32(mf, y->usleep);
+	mwrite32(mf, y->uinvault);
+	mwrite32(mf, y->ugallop);
+	mwrite32(mf, y->urideturns);
+	mwrite32(mf, y->umortality);
+	mwrite32(mf, y->ugrave_arise);
+	mwrite32(mf, y->weapon_slots);
+	mwrite32(mf, y->skills_advanced);
+	mwrite32(mf, y->initrole);
+	mwrite32(mf, y->initrace);
+	mwrite32(mf, y->initgend);
+	mwrite32(mf, y->initalign);
+	mwrite32(mf, y->uconduct.unvegetarian);
+	mwrite32(mf, y->uconduct.unvegan);
+	mwrite32(mf, y->uconduct.food);
+	mwrite32(mf, y->uconduct.gnostic);
+	mwrite32(mf, y->uconduct.weaphit);
+	mwrite32(mf, y->uconduct.killer);
+	mwrite32(mf, y->uconduct.literate);
+	mwrite32(mf, y->uconduct.polypiles);
+	mwrite32(mf, y->uconduct.polyselfs);
+	mwrite32(mf, y->uconduct.wishes);
+	mwrite32(mf, y->uconduct.wisharti);
+	
+	mwrite8(mf, y->ux);
+	mwrite8(mf, y->uy);
+	mwrite8(mf, y->dx);
+	mwrite8(mf, y->dy);
+	mwrite8(mf, y->tx);
+	mwrite8(mf, y->ty);
+	mwrite8(mf, y->ux0);
+	mwrite8(mf, y->uy0);
+	mwrite8(mf, y->uz.dnum);
+	mwrite8(mf, y->uz.dlevel);
+	mwrite8(mf, y->uz0.dnum);
+	mwrite8(mf, y->uz0.dlevel);
+	mwrite8(mf, y->utolev.dnum);
+	mwrite8(mf, y->utolev.dlevel);
+	mwrite8(mf, y->utotype);
+	mwrite8(mf, y->umoved);
+	mwrite8(mf, y->ualign.type);
+	mwrite8(mf, y->ualignbase[0]);
+	mwrite8(mf, y->ualignbase[1]);
+	mwrite8(mf, y->uluck);
+	mwrite8(mf, y->moreluck);
+	mwrite8(mf, y->uhitinc);
+	mwrite8(mf, y->udaminc);
+	mwrite8(mf, y->uac);
+	mwrite8(mf, y->uspellprot);
+	mwrite8(mf, y->usptime);
+	mwrite8(mf, y->uspmtime);
+	mwrite8(mf, y->twoweap);
+
+	mwrite(mf, y->usick_cause, sizeof(y->usick_cause));
+	mwrite(mf, y->urooms, sizeof(y->urooms));
+	mwrite(mf, y->urooms0, sizeof(y->urooms0));
+	mwrite(mf, y->uentered, sizeof(y->uentered));
+	mwrite(mf, y->ushops, sizeof(y->ushops));
+	mwrite(mf, y->ushops0, sizeof(y->ushops0));
+	mwrite(mf, y->ushops_entered, sizeof(y->ushops_entered));
+	mwrite(mf, y->ushops_left, sizeof(y->ushops_left));
+	mwrite(mf, y->macurr.a, sizeof(y->macurr.a));
+	mwrite(mf, y->mamax.a, sizeof(y->mamax.a));
+	mwrite(mf, y->acurr.a, sizeof(y->acurr.a));
+	mwrite(mf, y->aexe.a, sizeof(y->aexe.a));
+	mwrite(mf, y->abon.a, sizeof(y->abon.a));
+	mwrite(mf, y->amax.a, sizeof(y->amax.a));
+	mwrite(mf, y->atemp.a, sizeof(y->atemp.a));
+	mwrite(mf, y->atime.a, sizeof(y->atime.a));
+	mwrite(mf, y->skill_record, sizeof(y->skill_record));
+    
+	for (i = 0; i <= LAST_PROP; i++) {
+	    mwrite32(mf, y->uprops[i].extrinsic);
+	    mwrite32(mf, y->uprops[i].blocked);
+	    mwrite32(mf, y->uprops[i].intrinsic);
+	}
+	for (i = 0; i < P_NUM_SKILLS; i++) {
+	    mwrite8(mf, y->weapon_skills[i].skill);
+	    mwrite8(mf, y->weapon_skills[i].max_skill);
+	    mwrite16(mf, y->weapon_skills[i].advance);
+	}
+}
+
 /*u_init.c*/

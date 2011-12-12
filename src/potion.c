@@ -29,14 +29,14 @@ static long itimeout_incr(long old, int incr)
 }
 
 /* set the timeout field of intrinsic `which' */
-void set_itimeout(long *which, long val)
+void set_itimeout(unsigned int *which, long val)
 {
     *which &= ~TIMEOUT;
     *which |= itimeout(val);
 }
 
 /* increment the timeout field of intrinsic `which' */
-void incr_itimeout(long *which, int incr)
+void incr_itimeout(unsigned int *which, long incr)
 {
     set_itimeout(which, itimeout_incr(*which, incr));
 }

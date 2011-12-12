@@ -969,14 +969,19 @@ void save_waterlevel(struct memfile *mf, int mode)
 
 	if (perform_mwrite(mode)) {
 	    int n = 0;
-	    for (b = bbubbles; b; b = b->next) ++n;
-	    mwrite(mf, &n, sizeof (int));
-	    mwrite(mf, &xmin, sizeof (int));
-	    mwrite(mf, &ymin, sizeof (int));
-	    mwrite(mf, &xmax, sizeof (int));
-	    mwrite(mf, &ymax, sizeof (int));
 	    for (b = bbubbles; b; b = b->next)
-		mwrite(mf, b, sizeof (struct bubble));
+		++n;
+	    mwrite32(mf, n);
+	    mwrite32(mf, xmin);
+	    mwrite32(mf, ymin);
+	    mwrite32(mf, xmax);
+	    mwrite32(mf, ymax);
+	    for (b = bbubbles; b; b = b->next) {
+		mwrite8(mf, b->x);
+		mwrite8(mf, b->y);
+		mwrite8(mf, b->dx);
+		mwrite8(mf, b->dy);
+	    }
 	}
 	if (release_data(mode))
 	    unsetup_waterlevel();
@@ -991,15 +996,20 @@ void restore_waterlevel(struct memfile *mf)
 	if (!Is_waterlevel(&u.uz)) return;
 
 	set_wportal();
-	mread(mf,&n,sizeof(int));
-	mread(mf,&xmin,sizeof(int));
-	mread(mf,&ymin,sizeof(int));
-	mread(mf,&xmax,sizeof(int));
-	mread(mf,&ymax,sizeof(int));
+	n = mread32(mf);
+	xmin = mread32(mf);
+	ymin = mread32(mf);
+	xmax = mread32(mf);
+	ymax = mread32(mf);
+	
 	for (i = 0; i < n; i++) {
 		btmp = b;
 		b = malloc(sizeof(struct bubble));
-		mread(mf,b,sizeof(struct bubble));
+		b->x = mread8(mf);
+		b->y = mread8(mf);
+		b->dx = mread8(mf);
+		b->dy = mread8(mf);
+		
 		if (bbubbles) {
 			btmp->next = b;
 			b->prev = btmp;

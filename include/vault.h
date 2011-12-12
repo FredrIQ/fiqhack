@@ -17,7 +17,6 @@ struct egd {
 	d_level gdlevel;	/* level (& dungeon) guard was created in */
 	xchar warncnt;		/* number of warnings to follow */
 	unsigned gddone:1;	/* true iff guard has released player */
-	unsigned unused:7;
 	struct fakecorridor fakecorr[FCSIZ];
 };
 

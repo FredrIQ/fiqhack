@@ -862,7 +862,7 @@ static boolean write_common_data(int fd, int typ, lev_init *init, long flgs)
 	uchar len;
 	static struct version_info version_data = {
 			VERSION_NUMBER, VERSION_FEATURES,
-			VERSION_SANITY1, VERSION_SANITY2
+			VERSION_SANITY1
 	};
 
 	Write(fd, &version_data, sizeof version_data);

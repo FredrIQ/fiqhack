@@ -476,43 +476,51 @@ struct region *visible_region_at(struct level *lev, xchar x, xchar y)
 void save_regions(struct memfile *mf, struct level *lev, int mode)
 {
     int i, j;
-    unsigned n;
+    unsigned len1, len2;
+    struct region *r;
 
-    if (!perform_mwrite(mode)) goto skip_lots;
+    if (!perform_mwrite(mode))
+	goto skip_lots;
 
-    mwrite(mf, &moves, sizeof (moves));	/* timestamp */
-    mwrite(mf, &lev->n_regions, sizeof (lev->n_regions));
+    mfmagic_set(mf, REGION_MAGIC);
+    mwrite32(mf, moves);	/* timestamp */
+    mwrite32(mf, lev->n_regions);
+    
     for (i = 0; i < lev->n_regions; i++) {
-	mwrite(mf, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
-	mwrite(mf, &lev->regions[i]->nrects, sizeof (short));
-	for (j = 0; j < lev->regions[i]->nrects; j++)
-	    mwrite(mf, &lev->regions[i]->rects[j], sizeof (struct nhrect));
-	mwrite(mf, &lev->regions[i]->attach_2_u, sizeof (boolean));
-	n = 0;
-	mwrite(mf, &lev->regions[i]->attach_2_m, sizeof (unsigned));
-	n = lev->regions[i]->enter_msg != NULL ? strlen(lev->regions[i]->enter_msg) : 0;
-	mwrite(mf, &n, sizeof n);
-	if (n > 0)
-	    mwrite(mf, (void *)lev->regions[i]->enter_msg, n);
-	n = lev->regions[i]->leave_msg != NULL ? strlen(lev->regions[i]->leave_msg) : 0;
-	mwrite(mf, &n, sizeof n);
-	if (n > 0)
-	    mwrite(mf, (void *)lev->regions[i]->leave_msg, n);
-	mwrite(mf, &lev->regions[i]->ttl, sizeof (short));
-	mwrite(mf, &lev->regions[i]->expire_f, sizeof (short));
-	mwrite(mf, &lev->regions[i]->can_enter_f, sizeof (short));
-	mwrite(mf, &lev->regions[i]->enter_f, sizeof (short));
-	mwrite(mf, &lev->regions[i]->can_leave_f, sizeof (short));
-	mwrite(mf, &lev->regions[i]->leave_f, sizeof (short));
-	mwrite(mf, &lev->regions[i]->inside_f, sizeof (short));
-	mwrite(mf, &lev->regions[i]->player_flags, sizeof (boolean));
-	mwrite(mf, &lev->regions[i]->n_monst, sizeof (short));
-	for (j = 0; j < lev->regions[i]->n_monst; j++)
-	    mwrite(mf, &lev->regions[i]->monsters[j],
-	     sizeof (unsigned));
-	mwrite(mf, &lev->regions[i]->visible, sizeof (boolean));
-	mwrite(mf, &lev->regions[i]->effect_id, sizeof (int));
-	mwrite(mf, &lev->regions[i]->arg, sizeof (void *));
+	r = lev->regions[i];
+	
+	mwrite(mf, &r->bounding_box, sizeof (struct nhrect));
+	mwrite32(mf, r->attach_2_m);
+	mwrite32(mf, r->effect_id);
+	mwrite32(mf, r->arg);
+	mwrite16(mf, r->nrects);
+	for (j = 0; j < r->nrects; j++)
+	    mwrite(mf, &r->rects[j], sizeof (struct nhrect));
+	mwrite16(mf, r->ttl);
+	mwrite16(mf, r->expire_f);
+	mwrite16(mf, r->can_enter_f);
+	mwrite16(mf, r->enter_f);
+	mwrite16(mf, r->can_leave_f);
+	mwrite16(mf, r->leave_f);
+	mwrite16(mf, r->inside_f);
+	mwrite16(mf, r->n_monst);
+	mwrite8(mf, r->player_flags);
+	mwrite8(mf, r->attach_2_u);
+	mwrite8(mf, r->visible);
+	
+	for (j = 0; j < r->n_monst; j++)
+	    mwrite32(mf, r->monsters[j]);
+	
+	len1 = r->enter_msg ? strlen(r->enter_msg) + 1 : 0;
+	mwrite16(mf, len1);
+	len2 = r->leave_msg ? strlen(r->leave_msg) + 1 : 0;
+	mwrite16(mf, len2);
+	
+	if (len1 > 0)
+	    mwrite(mf, r->enter_msg, len1);
+	
+	if (len2 > 0)
+	    mwrite(mf, r->leave_msg, len2);
     }
 
 skip_lots:
@@ -524,78 +532,85 @@ void rest_regions(struct memfile *mf, struct level *lev,
 		  boolean ghostly) /* If a bones file restore */
 {
     int i, j;
-    unsigned n;
+    unsigned len1, len2;
     long tmstamp;
     char *msg_buf;
+    struct region *r;
 
     clear_regions(lev);		/* Just for security */
-    mread(mf, &tmstamp, sizeof (tmstamp));
-    if (ghostly) tmstamp = 0;
-    else tmstamp = (moves - tmstamp);
-    mread(mf, &lev->n_regions, sizeof (lev->n_regions));
+    mfmagic_check(mf, REGION_MAGIC);
+    tmstamp = mread32(mf);
+    if (ghostly)
+	tmstamp = 0;
+    else
+	tmstamp = (moves - tmstamp);
+    lev->n_regions = mread32(mf);
     lev->max_regions = lev->n_regions;
     if (lev->n_regions > 0)
 	lev->regions = malloc(sizeof (struct region *) * lev->n_regions);
+    
     for (i = 0; i < lev->n_regions; i++) {
 	lev->regions[i] = malloc(sizeof (struct region));
-	lev->regions[i]->lev = lev;
-	mread(mf, &lev->regions[i]->bounding_box, sizeof (struct nhrect));
-	mread(mf, &lev->regions[i]->nrects, sizeof (short));
-
-	if (lev->regions[i]->nrects > 0)
-	    lev->regions[i]->rects = malloc(sizeof (struct nhrect) * lev->regions[i]->nrects);
-	for (j = 0; j < lev->regions[i]->nrects; j++)
-	    mread(mf, &lev->regions[i]->rects[j], sizeof (struct nhrect));
-	mread(mf, &lev->regions[i]->attach_2_u, sizeof (boolean));
-	mread(mf, &lev->regions[i]->attach_2_m, sizeof (unsigned));
-
-	mread(mf, &n, sizeof n);
-	if (n > 0) {
-	    msg_buf = malloc(n + 1);
-	    mread(mf, msg_buf, n);
-	    msg_buf[n] = '\0';
-	    lev->regions[i]->enter_msg = (const char *) msg_buf;
-	} else
-	    lev->regions[i]->enter_msg = NULL;
-
-	mread(mf, &n, sizeof n);
-	if (n > 0) {
-	    msg_buf = malloc(n + 1);
-	    mread(mf, msg_buf, n);
-	    msg_buf[n] = '\0';
-	    lev->regions[i]->leave_msg = (const char *) msg_buf;
-	} else
-	    lev->regions[i]->leave_msg = NULL;
-
-	mread(mf, &lev->regions[i]->ttl, sizeof (short));
-	/* check for expired region */
-	if (lev->regions[i]->ttl >= 0)
-	    lev->regions[i]->ttl =
-		(lev->regions[i]->ttl > tmstamp) ? lev->regions[i]->ttl - tmstamp : 0;
-	mread(mf, &lev->regions[i]->expire_f, sizeof (short));
-	mread(mf, &lev->regions[i]->can_enter_f, sizeof (short));
-	mread(mf, &lev->regions[i]->enter_f, sizeof (short));
-	mread(mf, &lev->regions[i]->can_leave_f, sizeof (short));
-	mread(mf, &lev->regions[i]->leave_f, sizeof (short));
-	mread(mf, &lev->regions[i]->inside_f, sizeof (short));
-	mread(mf, &lev->regions[i]->player_flags, sizeof (boolean));
-	if (ghostly) {	/* settings pertained to old player */
-	    clear_hero_inside(lev->regions[i]);
-	    clear_heros_fault(lev->regions[i]);
+	
+	r = lev->regions[i];
+	memset(r, 0, sizeof(struct region));
+	
+	r->lev = lev;
+	
+	mread(mf, &r->bounding_box, sizeof (struct nhrect));
+	r->attach_2_m = mread32(mf);
+	r->effect_id = mread32(mf);
+	r->arg = mread32(mf);
+	r->nrects = mread16(mf);
+	if (r->nrects > 0)
+	    r->rects = malloc(sizeof (struct nhrect) * r->nrects);
+	for (j = 0; j < r->nrects; j++)
+	    mread(mf, &r->rects[j], sizeof (struct nhrect));
+	r->ttl = mread16(mf);
+	r->expire_f = mread16(mf);
+	r->can_enter_f = mread16(mf);
+	r->enter_f = mread16(mf);
+	r->can_leave_f = mread16(mf);
+	r->leave_f = mread16(mf);
+	r->inside_f = mread16(mf);
+	r->n_monst = mread16(mf);
+	r->max_monst = r->n_monst;
+	r->player_flags = mread8(mf);
+	r->attach_2_u = mread8(mf);
+	r->visible = mread8(mf);
+	
+	if (r->n_monst > 0)
+	    r->monsters = malloc(sizeof (unsigned) * r->n_monst);
+	for (j = 0; j < r->n_monst; j++)
+	    r->monsters[j] = mread32(mf);
+	
+	len1 = r->enter_msg ? strlen(r->enter_msg) + 1 : 0;
+	len1 = mread16(mf);
+	len2 = r->leave_msg ? strlen(r->leave_msg) + 1 : 0;
+	len2 = mread16(mf);
+	
+	if (len1 > 0) {
+	    msg_buf = malloc(len1);
+	    mread(mf, msg_buf, len1);
+	    msg_buf[len1 - 1] = '\0';
+	    r->enter_msg = msg_buf;
 	}
-	mread(mf, &lev->regions[i]->n_monst, sizeof (short));
-	if (lev->regions[i]->n_monst > 0)
-	    lev->regions[i]->monsters =
-		malloc(sizeof (unsigned) * lev->regions[i]->n_monst);
-	else
-	    lev->regions[i]->monsters = NULL;
-	lev->regions[i]->max_monst = lev->regions[i]->n_monst;
-	for (j = 0; j < lev->regions[i]->n_monst; j++)
-	    mread(mf, &lev->regions[i]->monsters[j],
-		  sizeof (unsigned));
-	mread(mf, &lev->regions[i]->visible, sizeof (boolean));
-	mread(mf, &lev->regions[i]->effect_id, sizeof (int));
-	mread(mf, &lev->regions[i]->arg, sizeof (void *));
+	
+	if (len2 > 0) {
+	    msg_buf = malloc(len2);
+	    mread(mf, msg_buf, len2);
+	    msg_buf[len2 - 1] = '\0';
+	    r->leave_msg = msg_buf;
+	}
+
+	/* check for expired region */
+	if (r->ttl >= 0)
+	    r->ttl = (r->ttl > tmstamp) ? r->ttl - tmstamp : 0;
+	
+	if (ghostly) {	/* settings pertained to old player */
+	    clear_hero_inside(r);
+	    clear_heros_fault(r);
+	}
     }
     /* remove expired lev->regions, do not trigger the expire_f callback (yet!);
        also update monster lists if this data is coming from a bones file */
@@ -638,15 +653,15 @@ static void reset_region_mids(struct region *reg)
 boolean expire_gas_cloud(void *p1, void *p2)
 {
     struct region *reg;
-    long damage;
+    int damage;
 
     reg = (struct region *) p1;
-    damage = (long) reg->arg;
+    damage = reg->arg;
 
     /* If it was a thick cloud, it dissipates a little first */
     if (damage >= 5) {
 	damage /= 2;		/* It dissipates, let's do less damage */
-	reg->arg = (void *)damage;
+	reg->arg = damage;
 	reg->ttl = 2;		/* Here's the trick : reset ttl */
 	return FALSE;		/* THEN return FALSE, means "still there" */
     }
@@ -704,7 +719,7 @@ boolean inside_gas_cloud(void * p1, void * p2)
     return FALSE;		/* Monster is still alive */
 }
 
-struct region *create_gas_cloud(struct level *lev, xchar x, xchar y, int radius, long damage)
+struct region *create_gas_cloud(struct level *lev, xchar x, xchar y, int radius, int damage)
 {
     struct region *cloud;
     int i, nrect;
@@ -728,7 +743,7 @@ struct region *create_gas_cloud(struct level *lev, xchar x, xchar y, int radius,
 	set_heros_fault(cloud);		/* assume player has created it */
     cloud->inside_f = INSIDE_GAS_CLOUD;
     cloud->expire_f = EXPIRE_GAS_CLOUD;
-    cloud->arg = (void *)damage;
+    cloud->arg = damage;
     cloud->visible = TRUE;
     cloud->effect_id = dbuf_effect(E_MISC, E_gascloud);
     add_region(lev, cloud);

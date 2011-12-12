@@ -973,7 +973,7 @@ void show_conduct(int final)
 	if (!u.uconduct.weaphit)
 	    you_have_never(&menu, "hit with a wielded weapon");
 	else if (wizard) {
-	    sprintf(buf, "used a wielded weapon %ld time%s",
+	    sprintf(buf, "used a wielded weapon %d time%s",
 		    u.uconduct.weaphit, plur(u.uconduct.weaphit));
 	    you_have_X(&menu, buf);
 	}
@@ -983,7 +983,7 @@ void show_conduct(int final)
 	if (!u.uconduct.literate)
 	    you_have_been(&menu, "illiterate");
 	else if (wizard) {
-	    sprintf(buf, "read items or engraved %ld time%s",
+	    sprintf(buf, "read items or engraved %d time%s",
 		    u.uconduct.literate, plur(u.uconduct.literate));
 	    you_have_X(&menu, buf);
 	}
@@ -1000,7 +1000,7 @@ void show_conduct(int final)
 	if (!u.uconduct.polypiles)
 	    you_have_never(&menu, "polymorphed an object");
 	else if (wizard) {
-	    sprintf(buf, "polymorphed %ld item%s",
+	    sprintf(buf, "polymorphed %d item%s",
 		    u.uconduct.polypiles, plur(u.uconduct.polypiles));
 	    you_have_X(&menu, buf);
 	}
@@ -1008,7 +1008,7 @@ void show_conduct(int final)
 	if (!u.uconduct.polyselfs)
 	    you_have_never(&menu, "changed form");
 	else if (wizard) {
-	    sprintf(buf, "changed form %ld time%s",
+	    sprintf(buf, "changed form %d time%s",
 		    u.uconduct.polyselfs, plur(u.uconduct.polyselfs));
 	    you_have_X(&menu, buf);
 	}
@@ -1016,7 +1016,7 @@ void show_conduct(int final)
 	if (!u.uconduct.wishes)
 	    you_have_X(&menu, "used no wishes");
 	else {
-	    sprintf(buf, "used %ld wish%s",
+	    sprintf(buf, "used %d wish%s",
 		    u.uconduct.wishes, (u.uconduct.wishes > 1L) ? "es" : "");
 	    you_have_X(&menu, buf);
 

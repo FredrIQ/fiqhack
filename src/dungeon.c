@@ -107,30 +107,66 @@ static void dumpit(void)
 }
 #endif
 
+
+void save_d_flags(struct memfile *mf, d_flags f)
+{
+    unsigned int dflags;
+    
+    /* bitfield layouts are architecture and compiler-dependent, so d_flags can't be written directly */
+    dflags = (f.town << 31) | (f.hellish << 30) | (f.maze_like << 29) |
+             (f.rogue_like << 28) | (f.align << 25);
+    mwrite32(mf, dflags);
+}
+
+
+static void save_dungeon_struct(struct memfile *mf, const dungeon *dgn)
+{
+    mwrite(mf, dgn->dname, sizeof(dgn->dname));
+    mwrite(mf, dgn->proto, sizeof(dgn->proto));
+    mwrite8(mf, dgn->boneid);
+    save_d_flags(mf, dgn->flags);
+    mwrite8(mf, dgn->entry_lev);
+    mwrite8(mf, dgn->num_dunlevs);
+    mwrite8(mf, dgn->dunlev_ureached);
+    mwrite32(mf, dgn->ledger_start);
+    mwrite32(mf, dgn->depth_start);
+}
+
+
+static void save_branch(struct memfile *mf, const branch *b)
+{
+    mwrite32(mf, b->id);
+    mwrite32(mf, b->type);
+    mwrite(mf, &b->end1, sizeof(d_level));
+    mwrite(mf, &b->end2, sizeof(d_level));
+    mwrite8(mf, b->end1_up);
+}
+
+
 /* Save the dungeon structures. */
 void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data)
 {
     branch *curr, *next;
-    int    count;
+    int    count, i;
 
     if (perform_write) {
 	mwrite(mf, &n_dgns, sizeof n_dgns);
-	mwrite(mf, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+	for (i = 0; i < n_dgns; i++)
+	    save_dungeon_struct(mf, &dungeons[i]);
+	
+	/* writing dungeon_topology directly should be ok, it's just a
+	 * fancy collection of single byte values */
 	mwrite(mf, &dungeon_topology, sizeof dungeon_topology);
 	mwrite(mf, tune, sizeof tune);
 
 	for (count = 0, curr = branches; curr; curr = curr->next)
 	    count++;
-	mwrite(mf, &count, sizeof(count));
+	mwrite32(mf, count);
 
 	for (curr = branches; curr; curr = curr->next)
-	    mwrite(mf, curr, sizeof (branch));
+	    save_branch(mf, curr);
 
-	count = maxledgerno();
-	mwrite(mf, &count, sizeof count);
-	mwrite(mf, level_info,
-			(unsigned)count * sizeof (struct linfo));
-	mwrite(mf, &inv_pos, sizeof inv_pos);
+	mwrite(mf, &inv_pos, sizeof(coord));
     }
 
     if (free_data) {
@@ -142,6 +178,48 @@ void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data)
     }
 }
 
+
+d_flags restore_d_flags(struct memfile *mf)
+{
+    unsigned int dflags;
+    d_flags f;
+    
+    dflags = mread32(mf);
+    f.town = (dflags >> 31) & 1;
+    f.hellish = (dflags >> 30) & 1;
+    f.maze_like = (dflags >> 29) & 1;
+    f.rogue_like = (dflags >> 28) & 1;
+    f.align = (dflags >> 25) & 7;
+    
+    return f;
+}
+
+
+static void restore_dungeon_struct(struct memfile *mf, dungeon *dgn)
+{
+    mread(mf, dgn->dname, sizeof(dgn->dname));
+    mread(mf, dgn->proto, sizeof(dgn->proto));
+    dgn->boneid = mread8(mf);
+    dgn->flags = restore_d_flags(mf);
+    dgn->entry_lev = mread8(mf);
+    dgn->num_dunlevs = mread8(mf);
+    dgn->dunlev_ureached = mread8(mf);
+    dgn->ledger_start = mread32(mf);
+    dgn->depth_start = mread32(mf);
+}
+
+
+static void restore_branch(struct memfile *mf, branch *b)
+{
+    b->next = NULL;
+    b->id = mread32(mf);
+    b->type = mread32(mf);
+    mread(mf, &b->end1, sizeof(d_level));
+    mread(mf, &b->end2, sizeof(d_level));
+    b->end1_up = mread8(mf);
+}
+
+
 /* Restore the dungeon structures. */
 void restore_dungeon(struct memfile *mf)
 {
@@ -149,17 +227,17 @@ void restore_dungeon(struct memfile *mf)
     int    count, i;
 
     mread(mf, &n_dgns, sizeof(n_dgns));
-    mread(mf, dungeons, sizeof(dungeon) * (unsigned)n_dgns);
+    for (i = 0; i < n_dgns; i++)
+	restore_dungeon_struct(mf, &dungeons[i]);
     mread(mf, &dungeon_topology, sizeof dungeon_topology);
     mread(mf, tune, sizeof tune);
 
     last = branches = NULL;
 
-    mread(mf, &count, sizeof(count));
+    count = mread32(mf);
     for (i = 0; i < count; i++) {
 	curr = malloc(sizeof(branch));
-	mread(mf, curr, sizeof(branch));
-	curr->next = NULL;
+	restore_branch(mf, curr);
 	if (last)
 	    last->next = curr;
 	else
@@ -167,11 +245,7 @@ void restore_dungeon(struct memfile *mf)
 	last = curr;
     }
 
-    mread(mf, &count, sizeof(count));
-    if (count >= MAXLINFO)
-	panic("level information count larger (%d) than allocated size", count);
-    mread(mf, level_info, (unsigned)count*sizeof(struct linfo));
-    mread(mf, &inv_pos, sizeof inv_pos);
+    mread(mf, &inv_pos, sizeof(coord));
 }
 
 static void Fread(void *ptr, int size, int nitems, dlb *stream)
@@ -1375,9 +1449,8 @@ schar lev_by_name(const char *nam)
 			dlev.dnum == medusa_level.dnum) ||
 		(u.uz.dnum == medusa_level.dnum &&
 			dlev.dnum == valley_level.dnum)) &&
-	    (	/* either wizard mode or else seen and not forgotten */
-	     wizard ||
-		(level_info[idx].flags & (FORGOTTEN|VISITED)) == VISITED)) {
+	    (/* either wizard mode or else seen and not forgotten */
+	     wizard || (levels[idx] && !levels[idx]->flags.forgotten))) {
 	    lev = depth(&slev->dlevel);
 	}
     } else {	/* not a specific level; try branch names */
@@ -1391,8 +1464,8 @@ schar lev_by_name(const char *nam)
 	    idx &= 0x00FF;
 	    if (  /* either wizard mode, or else _both_ sides of branch seen */
 		wizard ||
-		((level_info[idx].flags & (FORGOTTEN|VISITED)) == VISITED &&
-		 (level_info[idxtoo].flags & (FORGOTTEN|VISITED)) == VISITED)) {
+		((levels[idx] && !levels[idx]->flags.forgotten) &&
+		 (levels[idxtoo] && !levels[idxtoo]->flags.forgotten))) {
 		if (ledger_to_dnum(idxtoo) == u.uz.dnum) idx = idxtoo;
 		dlev.dnum = ledger_to_dnum(idx);
 		dlev.dlevel = ledger_to_dlev(idx);

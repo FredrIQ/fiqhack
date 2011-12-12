@@ -133,12 +133,12 @@ static const struct { const char *txt; int nut; } tintxts[] = {
 };
 #define TTSZ	SIZE(tintxts)
 
-static struct {
+static struct tin {
 	struct	obj *tin;
 	int	usedtime, reqtime;
 } tin;
 
-static struct {
+static struct victual {
 	struct	obj *piece;	/* the thing being eaten, or last thing that
 				 * was partially eaten, unless that thing was
 				 * a tin, which uses the tin structure above,
@@ -2438,27 +2438,45 @@ boolean maybe_finished_meal(boolean stopping)
 
 void save_food(struct memfile *mf)
 {
-    int oid;
+    unsigned int oid, vflags;
+    
     oid = victual.piece ? victual.piece->o_id : 0;
-    mwrite(mf, &victual, sizeof(victual));
-    mwrite(mf, &oid, sizeof(oid));
+    mwrite32(mf, oid);
+    mwrite32(mf, victual.usedtime);
+    mwrite32(mf, victual.reqtime);
+    mwrite32(mf, victual.nmod);
+    
+    vflags = (victual.canchoke << 31) | (victual.fullwarn << 30) |
+             (victual.eating << 29) | (victual.doreset << 28);
+    mwrite32(mf, vflags);
     
     oid = tin.tin ? tin.tin->o_id : 0;
-    mwrite(mf, &tin, sizeof(tin));
-    mwrite(mf, &oid, sizeof(oid));
+    mwrite32(mf, oid);
+    mwrite32(mf, tin.usedtime);
+    mwrite32(mf, tin.reqtime);
 }
 
 
 void restore_food(struct memfile *mf)
 {
-    int oid;
-    mread(mf, &victual, sizeof(victual));
-    mread(mf, &oid, sizeof(oid));
+    unsigned int oid, vflags;
+    oid = mread32(mf);
     victual.piece = oid ? find_oid(oid) : NULL;
+    victual.usedtime = mread32(mf);
+    victual.reqtime = mread32(mf);
+    victual.nmod = mread32(mf);
     
-    mread(mf, &tin, sizeof(tin));
-    mread(mf, &oid, sizeof(oid));
+    vflags = mread32(mf);
+    victual.canchoke = (vflags >> 31) & 1;
+    victual.fullwarn = (vflags >> 30) & 1;
+    victual.eating   = (vflags >> 29) & 1;
+    victual.doreset  = (vflags >> 28) & 1;
+    
+    oid = tin.tin ? tin.tin->o_id : 0;
+    oid = mread32(mf);
     tin.tin = oid ? find_oid(oid) : NULL;
+    tin.usedtime = mread32(mf);
+    tin.reqtime = mread32(mf);
 }
 
 

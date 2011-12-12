@@ -158,7 +158,7 @@ char *simple_typename(int otyp)
     return bufp;
 }
 
-boolean obj_is_pname(struct obj *obj)
+boolean obj_is_pname(const struct obj *obj)
 {
     return((boolean)(obj->dknown && obj->known && obj->onamelth &&
 		     /* Since there aren't any objects which are both
@@ -476,7 +476,7 @@ char *mshot_xname(struct obj *obj)
 
 
 /* used for naming "the unique_item" instead of "a unique_item" */
-boolean the_unique_obj(struct obj *obj)
+boolean the_unique_obj(const struct obj *obj)
 {
     if (!obj->dknown)
 	return FALSE;
@@ -775,7 +775,7 @@ boolean not_fully_identified(struct obj *otmp)
 			 is_flammable(otmp));
 }
 
-char *corpse_xname(struct obj *otmp,
+char *corpse_xname(const struct obj *otmp,
 		   boolean ignore_oquan)	/* to force singular */
 {
 	char *nambuf = nextobuf();
@@ -811,14 +811,14 @@ char *cxname2(struct obj *obj)
 /* treat an object as fully ID'd when it might be used as reason for death */
 char *killer_xname(struct obj *obj)
 {
-    struct obj save_obj;
+    struct obj saved_obj;
     unsigned save_ocknown;
     char *buf, *save_ocuname;
 
     /* remember original settings for core of the object;
        oname and oattached extensions don't matter here--since they
        aren't modified they don't need to be saved and restored */
-    save_obj = *obj;
+    saved_obj = *obj;
     /* killer name should be more specific than general xname; however, exact
        info like blessed/cursed and rustproof makes things be too verbose */
     obj->known = obj->dknown = 1;
@@ -842,7 +842,7 @@ char *killer_xname(struct obj *obj)
 
     objects[obj->otyp].oc_name_known = save_ocknown;
     objects[obj->otyp].oc_uname = save_ocuname;
-    *obj = save_obj;	/* restore object's core settings */
+    *obj = saved_obj;	/* restore object's core settings */
 
     return buf;
 }

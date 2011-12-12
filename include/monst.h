@@ -36,82 +36,7 @@
 #include "align.h"
 #endif
 
-struct monst {
-	struct monst *nmon;
-	const struct permonst *data;
-	struct level *dlevel;	/* pointer to the level this monster is on */
-	long m_id;
-	short mnum;		/* permanent monster index number */
-	short movement;		/* movement points (derived from permonst definition and added effects */
-	uchar m_lev;		/* adjusted difficulty level of monster */
-	aligntyp malign;	/* alignment of this monster, relative to the
-				   player (positive = good to kill) */
-	xchar mx, my;
-	xchar mux, muy;		/* where the monster thinks you are */
-#define MTSZ	4
-	coord mtrack[MTSZ];	/* monster track */
-	int mhp, mhpmax;
-	unsigned mappearance;	/* for undetected mimics and the wiz */
-	uchar	 m_ap_type;	/* what mappearance is describing: */
-#define M_AP_NOTHING	0	/* mappearance is unused -- monster appears
-				   as itself */
-#define M_AP_FURNITURE	1	/* stairs, a door, an altar, etc. */
-#define M_AP_OBJECT	2	/* an object */
-#define M_AP_MONSTER	3	/* a monster */
-
-	schar mtame;		/* level of tameness, implies peaceful */
-	unsigned short mintrinsics;	/* low 8 correspond to mresists */
-	int mspec_used;		/* monster's special ability attack timeout */
-
-	unsigned female:1;	/* is female */
-	unsigned minvis:1;	/* currently invisible */
-	unsigned invis_blkd:1;	/* invisibility blocked */
-	unsigned perminvis:1;	/* intrinsic minvis value */
-	unsigned cham:3;	/* shape-changer */
-/* note: lychanthropes are handled elsewhere */
-#define CHAM_ORDINARY		0	/* not a shapechanger */
-#define CHAM_CHAMELEON		1	/* animal */
-#define CHAM_DOPPELGANGER	2	/* demi-human */
-#define CHAM_SANDESTIN		3	/* demon */
-#define CHAM_MAX_INDX		CHAM_SANDESTIN
-	unsigned mundetected:1;	/* not seen in present hiding place */
-				/* implies one of M1_CONCEAL or M1_HIDE,
-				 * but not mimic (that is, snake, spider,
-				 * trapper, piercer, eel)
-				 */
-
-	unsigned mcan:1;	/* has been cancelled */
-	unsigned mburied:1;	/* has been buried */
-	unsigned mspeed:2;	/* current speed */
-	unsigned permspeed:2;	/* intrinsic mspeed value */
-	unsigned mrevived:1;	/* has been revived from the dead */
-	unsigned mavenge:1;	/* did something to deserve retaliation */
-
-	unsigned mflee:1;	/* fleeing */
-	unsigned mfleetim:7;	/* timeout for mflee */
-
-	unsigned mcansee:1;	/* cansee 1, temp.blinded 0, blind 0 */
-	unsigned mblinded:7;	/* cansee 0, temp.blinded n, blind 0 */
-
-	unsigned mcanmove:1;	/* paralysis, similar to mblinded */
-	unsigned mfrozen:7;
-
-	unsigned msleeping:1;	/* asleep until woken */
-	unsigned mstun:1;	/* stunned (off balance) */
-	unsigned mconf:1;	/* confused */
-	unsigned mpeaceful:1;	/* does not attack unprovoked */
-	unsigned mtrapped:1;	/* trapped in a pit, web or bear trap */
-	unsigned mleashed:1;	/* monster is on a leash */
-	unsigned isshk:1;	/* is shopkeeper */
-	unsigned isminion:1;	/* is a minion */
-
-	unsigned isgd:1;	/* is guard */
-	unsigned ispriest:1;	/* is a priest */
-	unsigned iswiz:1;	/* is the Wizard of Yendor */
-	unsigned wormno:5;	/* at most 31 worms on any level */
-#define MAX_NUM_WORMS	32	/* should be 2^(wormno bitfield size) */
-
-	int mstrategy;		/* for monsters with mflag3: current strategy */
+/* strategy flags for mstrategy */
 #define STRAT_ARRIVE	0x40000000L	/* just arrived on current level */
 #define STRAT_WAITFORU	0x20000000L
 #define STRAT_CLOSE	0x10000000L
@@ -128,18 +53,91 @@ struct monst {
 #define STRAT_GOALX(s)	((xchar)((s & STRAT_XMASK) >> 16))
 #define STRAT_GOALY(s)	((xchar)((s & STRAT_YMASK) >> 8))
 
-	int mtrapseen;		/* bitmap of traps we've been trapped in */
-	int mlstmv;		/* for catching up with lost time */
+
+struct monst {
+	struct monst *nmon;
+	const struct permonst *data;
+	struct level *dlevel;	/* pointer to the level this monster is on */
 	struct obj *minvent;
+	struct obj *mw;		/* weapon */
+	unsigned int m_id;
+	int mhp, mhpmax;
+	int mspec_used;		/* monster's special ability attack timeout */
+	unsigned int mtrapseen;	/* bitmap of traps we've been trapped in */
+	unsigned int mlstmv;	/* for catching up with lost time */
+	
+	int mstrategy;		/* for monsters with mflag3: current strategy */
+#define MTSZ	4
+	coord mtrack[MTSZ];	/* monster track */
 
-	struct obj *mw;
-	int misc_worn_check;
+	short mnum;		/* permanent monster index number */
+	uchar m_lev;		/* adjusted difficulty level of monster */
+	xchar mx, my;
+	xchar mux, muy;		/* where the monster thinks you are */
+	aligntyp malign;	/* alignment of this monster, relative to the
+				   player (positive = good to kill) */
+	short movement;		/* movement points (derived from permonst definition and added effects */
+	unsigned short mintrinsics;	/* low 8 correspond to mresists */
+	schar mtame;		/* level of tameness, implies peaceful */
+	uchar m_ap_type;	/* what mappearance is describing: */
+#define M_AP_NOTHING	0	/* mappearance is unused -- monster appears as itself */
+#define M_AP_FURNITURE	1	/* stairs, a door, an altar, etc. */
+#define M_AP_OBJECT	2	/* an object */
+#define M_AP_MONSTER	3	/* a monster */
+
+	uchar mfrozen;
+	uchar mblinded;		/* cansee 0, temp.blinded n, blind 0 */
+	
+	unsigned int mappearance;/* for undetected mimics and the wiz */
+	
+	unsigned female:1;	/* is female */
+	unsigned minvis:1;	/* currently invisible */
+	unsigned invis_blkd:1;	/* invisibility blocked */
+	unsigned perminvis:1;	/* intrinsic minvis value */
+	unsigned cham:3;	/* shape-changer */
+/* note: lychanthropes are handled elsewhere */
+#define CHAM_ORDINARY		0	/* not a shapechanger */
+#define CHAM_CHAMELEON		1	/* animal */
+#define CHAM_DOPPELGANGER	2	/* demi-human */
+#define CHAM_SANDESTIN		3	/* demon */
+#define CHAM_MAX_INDX		CHAM_SANDESTIN
+	unsigned mundetected:1;	/* not seen in present hiding place */
+				/* implies one of M1_CONCEAL or M1_HIDE,
+				 * but not mimic (that is, snake, spider,
+				 * trapper, piercer, eel)
+				 */
+	unsigned mcan:1;	/* has been cancelled */
+	unsigned mburied:1;	/* has been buried */
+	unsigned mspeed:2;	/* current speed */
+	unsigned permspeed:2;	/* intrinsic mspeed value */
+	unsigned mrevived:1;	/* has been revived from the dead */
+	unsigned mavenge:1;	/* did something to deserve retaliation */
+	unsigned mflee:1;	/* fleeing */
+	unsigned mcansee:1;	/* cansee 1, temp.blinded 0, blind 0 */
+	unsigned mcanmove:1;	/* paralysis, similar to mblinded */
+	unsigned msleeping:1;	/* asleep until woken */
+	unsigned mstun:1;	/* stunned (off balance) */
+	unsigned mconf:1;	/* confused */
+	unsigned mpeaceful:1;	/* does not attack unprovoked */
+	unsigned mtrapped:1;	/* trapped in a pit, web or bear trap */
+	unsigned mleashed:1;	/* monster is on a leash */
+	
+	unsigned isshk:1;	/* is shopkeeper */
+	unsigned isminion:1;	/* is a minion */
+	unsigned isgd:1;	/* is guard */
+	unsigned ispriest:1;	/* is a priest */
+	unsigned iswiz:1;	/* is the Wizard of Yendor */
+	uchar mfleetim;		/* timeout for mflee */
+	uchar wormno;		/* at most 31 worms on any level */
+#define MAX_NUM_WORMS	32	/* wormno could hold larger worm ids, but 32 is (still) fine */
 	xchar weapon_check;
-
-	uchar mnamelth;		/* length of name (following mxlth) */
-	short mxlth;		/* length of following data */
-	int meating;		/* monster is eating timeout */
-	int mextra[1]; /* monster dependent info */
+	int misc_worn_check;
+	
+	uchar mnamelth;	/* length of name (following mxlth) */
+	uchar mxtyp;	/* type of the following data (MX_* flags in permonst.h) */
+	short mxlth;	/* length of following data */
+	int meating;	/* monster is eating timeout */
+	int mextra[0]; /* monster dependent info */
 };
 
 /*
@@ -159,7 +157,6 @@ struct monst {
  * exception being the guardian angels which are tame on creation).
  */
 
-#define newmonst(xl) malloc((unsigned)(xl) + sizeof(struct monst))
 #define dealloc_monst(mon) free((mon))
 
 /* these are in mspeed */

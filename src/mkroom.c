@@ -593,13 +593,19 @@ gotone:
 static void save_room(struct memfile *mf, struct mkroom *r)
 {
 	short i;
-	/*
-	 * Well, I really should write only useful information instead
-	 * of writing the whole structure. That is I should not write
-	 * the subrooms pointers, but who cares ?
-	 */
-	mwrite(mf, r, sizeof(struct mkroom));
-	for (i=0; i<r->nsubrooms; i++)
+	
+	mwrite8(mf, r->lx);
+	mwrite8(mf, r->hx);
+	mwrite8(mf, r->ly);
+	mwrite8(mf, r->hy);
+	mwrite8(mf, r->rtype);
+	mwrite8(mf, r->rlit);
+	mwrite8(mf, r->doorct);
+	mwrite8(mf, r->fdoor);
+	mwrite8(mf, r->nsubrooms);
+	mwrite8(mf, r->irregular);
+	
+	for (i = 0; i < r->nsubrooms; i++)
 	    save_room(mf, r->sbrooms[i]);
 }
 
@@ -610,9 +616,10 @@ void save_rooms(struct memfile *mf, struct level *lev)
 {
 	short i;
 
+	mfmagic_set(mf, ROOMS_MAGIC); /* "RDAT" */
 	/* First, write the number of rooms */
-	mwrite(mf, &lev->nroom, sizeof(lev->nroom));
-	for (i=0; i<lev->nroom; i++)
+	mwrite32(mf, lev->nroom);
+	for (i = 0; i < lev->nroom; i++)
 	    save_room(mf, &lev->rooms[i]);
 }
 
@@ -620,11 +627,21 @@ static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r)
 {
 	short i;
 
-	mread(mf, r, sizeof(struct mkroom));
+	r->lx = mread8(mf);
+	r->hx = mread8(mf);
+	r->ly = mread8(mf);
+	r->hy = mread8(mf);
+	r->rtype = mread8(mf);
+	r->rlit = mread8(mf);
+	r->doorct = mread8(mf);
+	r->fdoor = mread8(mf);
+	r->nsubrooms = mread8(mf);
+	r->irregular = mread8(mf);
+
 	for (i=0; i<r->nsubrooms; i++) {
-		r->sbrooms[i] = &lev->subrooms[lev->nsubroom];
-		rest_room(mf, lev, &lev->subrooms[lev->nsubroom]);
-		lev->subrooms[lev->nsubroom++].resident = NULL;
+	    r->sbrooms[i] = &lev->subrooms[lev->nsubroom];
+	    rest_room(mf, lev, &lev->subrooms[lev->nsubroom]);
+	    lev->subrooms[lev->nsubroom++].resident = NULL;
 	}
 }
 
@@ -636,7 +653,8 @@ void rest_rooms(struct memfile *mf, struct level *lev)
 {
 	short i;
 
-	mread(mf, &lev->nroom, sizeof(lev->nroom));
+	mfmagic_check(mf, ROOMS_MAGIC); /* "RDAT" */
+	lev->nroom = mread32(mf);
 	lev->nsubroom = 0;
 	for (i = 0; i<lev->nroom; i++) {
 	    rest_room(mf, lev, &lev->rooms[i]);

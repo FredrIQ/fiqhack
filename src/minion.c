@@ -104,7 +104,7 @@ void summon_minion(aligntyp alignment, boolean talk)
     }
     if (mnum == NON_PM) {
 	mon = 0;
-    } else if (mons[mnum].pxlth == 0) {
+    } else if (mons[mnum].pxtyp == MX_NONE) {
 	const struct permonst *pm = &mons[mnum];
 	mon = makemon(pm, level, u.ux, u.uy, MM_EMIN);
 	if (mon) {

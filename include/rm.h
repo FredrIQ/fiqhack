@@ -432,6 +432,8 @@ struct levelflags {
 
 	unsigned is_cavernous_lev:1;
 	unsigned arboreal:1;		/* Trees replace rock */
+	
+	unsigned forgotten:1;	/* previously visited but forgotten (amnesia) */
 };
 
 /* worm segment structure */
@@ -471,8 +473,8 @@ struct level {
     dest_area		dndest;
 
     struct wseg 	*wheads[MAX_NUM_WORMS], *wtails[MAX_NUM_WORMS];
-    long		wgrowtime[MAX_NUM_WORMS];
-    long		lastmoves; /* when the level was last visited */
+    int			wgrowtime[MAX_NUM_WORMS];
+    int			lastmoves; /* when the level was last visited */
     int 		nroom;
     int			nsubroom;
     int			doorindex;

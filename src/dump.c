@@ -78,7 +78,7 @@ static void dump_status(void)
     fprintf(dumpfp, "  Energy: %d(%d)\n", u.uen, u.uenmax);
     fprintf(dumpfp, "  AC: %d\n", u.uac);
     fprintf(dumpfp, "  Gold: %ld\n", money_cnt(invent));
-    fprintf(dumpfp, "  Moves: %ld\n", moves);
+    fprintf(dumpfp, "  Moves: %d\n", moves);
     
     fprintf(dumpfp, "\n\n");
 }

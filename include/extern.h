@@ -364,7 +364,9 @@ extern void dump_catch_menus(boolean intercept);
 
 /* ### dungeon.c ### */
 
+extern void save_d_flags(struct memfile *mf, d_flags f);
 extern void save_dungeon(struct memfile *mf, boolean perform_write, boolean free_data);
+extern d_flags restore_d_flags(struct memfile *mf);
 extern void restore_dungeon(struct memfile *mf);
 extern void insert_branch(branch *,boolean);
 extern void init_dungeons(void);
@@ -714,6 +716,7 @@ extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep);
 
 /* ### makemon.c ### */
 
+extern struct monst *newmonst(int extyp, int namelen);
 extern boolean is_home_elemental(const struct permonst *);
 extern struct monst *clone_mon(struct monst *,xchar,xchar);
 extern struct monst *makemon(const struct permonst *, struct level *lev,int,int,int);
@@ -735,11 +738,27 @@ extern void mimic_hit_msg(struct monst *,short);
 extern void mkmonmoney(struct monst *, long);
 extern void bagotricks(struct obj *);
 extern boolean propagate(int,boolean,boolean);
+extern struct monst *restore_mon(struct memfile *mf);
+extern void save_mon(struct memfile *mf, const struct monst *mon);
 
 /* ### mcastu.c ### */
 
 extern int castmu(struct monst *, const struct attack *, boolean, boolean);
 extern int buzzmu(struct monst *, const struct attack *);
+
+/* ### memfile.c ### */
+
+extern void mwrite(struct memfile *mf, const void *buf, unsigned int num);
+extern void mwrite8(struct memfile *mf, int8_t value);
+extern void mwrite16(struct memfile *mf, int16_t value);
+extern void mwrite32(struct memfile *mf, int32_t value);
+extern void store_mf(int fd, struct memfile *mf);
+extern void mread(struct memfile *mf,void *,unsigned int);
+extern int8_t mread8(struct memfile *mf);
+extern int16_t mread16(struct memfile *mf);
+extern int32_t mread32(struct memfile *mf);
+extern void mfmagic_check(struct memfile *mf, int32_t magic);
+extern void mfmagic_set(struct memfile *mf, int32_t magic);
 
 /* ### mhitm.c ### */
 
@@ -862,6 +881,8 @@ extern void obj_ice_effects(int, int, boolean);
 extern long peek_at_iced_corpse_age(struct obj *);
 extern void obj_sanity_check(void);
 extern void set_obj_level(struct level *lev, struct obj *obj);
+extern struct obj *restore_obj(struct memfile *mf);
+extern void save_obj(struct memfile *mf, struct obj *obj);
 
 /* ### mkroom.c ### */
 
@@ -1047,15 +1068,15 @@ extern int dodiscovered(void);
 
 extern char *obj_typename(int);
 extern char *simple_typename(int);
-extern boolean obj_is_pname(struct obj *);
-extern char *distant_name(struct obj *,char *(*)(struct obj*));
+extern boolean obj_is_pname(const struct obj *);
+extern char *distant_name(struct obj *obj, char *(*func)(struct obj*));
 extern char *fruitname(boolean);
 extern char *xname(struct obj *);
 extern char *mshot_xname(struct obj *);
-extern boolean the_unique_obj(struct obj *obj);
+extern boolean the_unique_obj(const struct obj *obj);
 extern char *doname(struct obj *);
 extern boolean not_fully_identified(struct obj *);
-extern char *corpse_xname(struct obj *,boolean);
+extern char *corpse_xname(const struct obj *, boolean);
 extern char *cxname(struct obj *);
 extern char *cxname2(struct obj *obj);
 extern char *killer_xname(struct obj *);
@@ -1160,8 +1181,8 @@ extern void ugolemeffects(int,int);
 
 /* ### potion.c ### */
 
-extern void set_itimeout(long *,long);
-extern void incr_itimeout(long *,int);
+extern void set_itimeout(unsigned int *which, long val);
+extern void incr_itimeout(unsigned int *which, long incr);
 extern void make_confused(long,boolean);
 extern void make_stunned(long,boolean);
 extern void make_blinded(long,boolean);
@@ -1269,7 +1290,7 @@ extern void update_monster_region(struct monst *mon);
 extern struct region *visible_region_at(struct level *lev, xchar x, xchar y);
 extern void save_regions(struct memfile *mf, struct level *lev, int mode);
 extern void rest_regions(struct memfile *mf, struct level *lev, boolean ghostly);
-extern struct region* create_gas_cloud(struct level *lev, xchar, xchar, int, long);
+extern struct region* create_gas_cloud(struct level *lev, xchar, xchar, int, int);
 
 /* ### restore.c ### */
 
@@ -1277,9 +1298,9 @@ extern void inven_inuse(boolean);
 extern int dorecover(struct memfile *mf);
 extern int dorecover_fd(int fd);
 extern void trickery(char *);
+extern void restore_flags(struct memfile *mf, struct flag *f);
 extern struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
-extern void mread(struct memfile *mf,void *,unsigned int);
 
 /* ### rnd.c ### */
 
@@ -1311,8 +1332,6 @@ extern int dosave(void);
 extern int dosave0(boolean emergency);
 extern void savegame(struct memfile *mf);
 extern void savelev(struct memfile *mf, xchar levnum, int mode);
-extern void mwrite(struct memfile *mf, const void *buf, unsigned int num);
-extern void store_mf(int fd, struct memfile *mf);
 extern void savefruitchn(struct memfile *mf, int);
 extern void free_dungeons(void);
 extern void freedynamicdata(void);
@@ -1559,6 +1578,8 @@ extern void blow_up_landmine(struct trap *);
 /* ### u_init.c ### */
 
 extern void u_init(void);
+extern void restore_you(struct memfile *mf, struct you *y);
+extern void save_you(struct memfile *mf, struct you *y);
 
 /* ### uhitm.c ### */
 

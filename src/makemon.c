@@ -5,6 +5,8 @@
 #include "epri.h"
 #include "emin.h"
 #include "edog.h"
+#include "eshk.h"
+#include "vault.h"
 #include <ctype.h>
 
 /* this assumes that a human quest leader or nemesis is an archetype
@@ -29,6 +31,31 @@ extern const int monstr[];
 #define toostrong(monindx, lev) (monstr[monindx] > lev)
 #define tooweak(monindx, lev)	(monstr[monindx] < lev)
 
+
+struct monst *newmonst(int extyp, int namelen)
+{
+	struct monst *mon;
+	int xlen;
+	
+	switch (extyp) {
+	    case MX_EMIN: xlen = sizeof(struct emin); break;
+	    case MX_EPRI: xlen = sizeof(struct epri); break;
+	    case MX_EGD:  xlen = sizeof(struct egd);  break;
+	    case MX_ESHK: xlen = sizeof(struct eshk); break;
+	    case MX_EDOG: xlen = sizeof(struct edog); break;
+	    default:      xlen = 0; break;
+	}
+	
+	mon = malloc(sizeof(struct monst) + namelen + xlen);
+	memset(mon, 0, sizeof(struct monst) + namelen + xlen);
+	mon->mxtyp = extyp;
+	mon->mxlth = xlen;
+	mon->mnamelth = namelen;
+	
+	return mon;
+}
+
+
 boolean is_home_elemental(const struct permonst *ptr)
 {
 	if (ptr->mlet == S_ELEMENTAL)
@@ -46,21 +73,21 @@ boolean is_home_elemental(const struct permonst *ptr)
  */
 static boolean wrong_elem_type(const struct permonst *ptr)
 {
-    if (ptr->mlet == S_ELEMENTAL) {
-	return (boolean)(!is_home_elemental(ptr));
-    } else if (Is_earthlevel(&u.uz)) {
-	/* no restrictions? */
-    } else if (Is_waterlevel(&u.uz)) {
-	/* just monsters that can swim */
-	if (!is_swimmer(ptr)) return TRUE;
-    } else if (Is_firelevel(&u.uz)) {
-	if (!pm_resistance(ptr,MR_FIRE)) return TRUE;
-    } else if (Is_airlevel(&u.uz)) {
-	if (!(is_flyer(ptr) && ptr->mlet != S_TRAPPER) && !is_floater(ptr)
-	   && !amorphous(ptr) && !noncorporeal(ptr) && !is_whirly(ptr))
-	    return TRUE;
-    }
-    return FALSE;
+	if (ptr->mlet == S_ELEMENTAL) {
+	    return (boolean)(!is_home_elemental(ptr));
+	} else if (Is_earthlevel(&u.uz)) {
+	    /* no restrictions? */
+	} else if (Is_waterlevel(&u.uz)) {
+	    /* just monsters that can swim */
+	    if (!is_swimmer(ptr)) return TRUE;
+	} else if (Is_firelevel(&u.uz)) {
+	    if (!pm_resistance(ptr,MR_FIRE)) return TRUE;
+	} else if (Is_airlevel(&u.uz)) {
+	    if (!(is_flyer(ptr) && ptr->mlet != S_TRAPPER) && !is_floater(ptr)
+	    && !amorphous(ptr) && !noncorporeal(ptr) && !is_whirly(ptr))
+		return TRUE;
+	}
+	return FALSE;
 }
 
 /* make a group just like mtmp */
@@ -614,7 +641,7 @@ struct monst *clone_mon(struct monst *mon,
 		    return NULL;
 	    }
 	}
-	m2 = newmonst(0);
+	m2 = newmonst(MX_NONE, 0);
 	*m2 = *mon;			/* copy condition of old monster */
 	m2->nmon = level->monlist;
 	level->monlist = m2;
@@ -666,8 +693,9 @@ struct monst *clone_mon(struct monst *mon,
 	    struct monst *m3;
 
 	    if (mon->isminion) {
-		m3 = newmonst(sizeof(struct epri) + mon->mnamelth);
+		m3 = newmonst(MX_EPRI, mon->mnamelth);
 		*m3 = *m2;
+		m3->mxtyp = MX_EPRI;
 		m3->mxlth = sizeof(struct epri);
 		if (m2->mnamelth) strcpy(NAME(m3), NAME(m2));
 		*(EPRI(m3)) = *(EPRI(mon));
@@ -737,7 +765,7 @@ struct monst *makemon(const struct permonst *ptr,
 		      struct level *lev, int x, int y, int mmflags)
 {
 	struct monst *mtmp;
-	int mndx, mcham, ct, mitem, xlth;
+	int mndx, mcham, ct, mitem, xtyp;
 	boolean anymon = (!ptr);
 	boolean byyou = (x == u.ux && y == u.uy);
 	boolean allow_minvent = ((mmflags & NO_MINVENT) == 0);
@@ -817,14 +845,13 @@ struct monst *makemon(const struct permonst *ptr,
 	
 	propagate(mndx, countbirth, FALSE);
 
-	xlth = ptr->pxlth;
+	xtyp = ptr->pxtyp;
 	if (mmflags & MM_EDOG)
-	    xlth += sizeof(struct edog);
+	    xtyp = MX_EDOG;
 	else if (mmflags & MM_EMIN)
-	    xlth += sizeof(struct emin);
+	    xtyp = MX_EMIN;
 	
-	mtmp = newmonst(xlth);
-	memset(mtmp, 0, sizeof(struct monst) + xlth);
+	mtmp = newmonst(xtyp, 0);
 	mtmp->nmon = lev->monlist;
 	lev->monlist = mtmp;
 	mtmp->m_id = flags.ident++;
@@ -834,7 +861,6 @@ struct monst *makemon(const struct permonst *ptr,
 	
 	if (mtmp->data->msound == MS_LEADER)
 	    quest_status.leader_m_id = mtmp->m_id;
-	mtmp->mxlth = xlth;
 	mtmp->mnum = mndx;
 
 	mtmp->m_lev = adj_lev(ptr);
@@ -1085,7 +1111,7 @@ static int align_shift(const struct permonst *ptr)
     return alshift;
 }
 
-static struct {
+static struct rndmonst_state {
 	int choice_count;
 	char mchoices[SPECIAL_PM];	/* value range is 0..127 */
 } rndmonst_state;
@@ -1189,13 +1215,15 @@ void reset_rndmonst(int mndx)
 
 void save_rndmonst_state(struct memfile *mf)
 {
-	mwrite(mf, &rndmonst_state, sizeof(rndmonst_state));
+	mwrite32(mf, rndmonst_state.choice_count);
+	mwrite(mf, rndmonst_state.mchoices, sizeof(rndmonst_state.mchoices));
 }
 
 
 void restore_rndmonst_state(struct memfile *mf)
 {
-	mread(mf, &rndmonst_state, sizeof(rndmonst_state));
+	rndmonst_state.choice_count = mread32(mf);
+	mread(mf, rndmonst_state.mchoices, sizeof(rndmonst_state.mchoices));
 }
 
 
@@ -1662,5 +1690,350 @@ void bagotricks(struct obj *bag)
     }
 }
 
+
+static void restore_shkbill(struct memfile *mf, struct bill_x *b)
+{
+    b->bo_id = mread32(mf);
+    b->price = mread32(mf);
+    b->bquan = mread32(mf);
+    b->useup = mread8(mf);
+}
+
+
+static void restore_fcorr(struct memfile *mf, struct fakecorridor *f)
+{
+    f->fx = mread8(mf);
+    f->fy = mread8(mf);
+    f->ftyp = mread8(mf);
+}
+
+
+struct monst *restore_mon(struct memfile *mf)
+{
+    struct monst *mon;
+    short namelen, xtyp;
+    int idx, i, billid;
+    unsigned int mflags;
+    struct eshk *shk;
+    
+    mfmagic_check(mf, MON_MAGIC);
+    
+    namelen = mread16(mf);
+    xtyp = mread16(mf);
+    mon = newmonst(xtyp, namelen);
+    
+    idx = mread32(mf);
+    switch (idx) {
+	case -1000: mon->data = &pm_leader; break;
+	case -2000: mon->data = &pm_guardian; break;
+	case -3000: mon->data = &pm_nemesis; break;
+	case -4000: mon->data = &pm_you_male; break;
+	case -5000: mon->data = &pm_you_female; break;
+	case -6000: mon->data = NULL; break;
+	default:
+	    if (LOW_PM <= idx && idx < NUMMONS)
+		mon->data = &mons[idx];
+	    else
+		panic("Restoring bad monster data.");
+	    break;
+    }
+    
+    mon->m_id = mread32(mf);
+    mon->mhp = mread32(mf);
+    mon->mhpmax = mread32(mf);
+    mon->mspec_used = mread32(mf);
+    mon->mtrapseen = mread32(mf);
+    mon->mlstmv = mread32(mf);
+    mon->mstrategy = mread32(mf);
+    mread(mf, mon->mtrack, sizeof(mon->mtrack));
+    mon->mnum = mread16(mf);
+    mon->mx = mread8(mf);
+    mon->my = mread8(mf);
+    mon->mux = mread8(mf);
+    mon->muy = mread8(mf);
+    mon->m_lev = mread8(mf);
+    mon->malign = mread8(mf);
+    mon->movement = mread16(mf);
+    mon->mintrinsics = mread16(mf);
+    mon->mtame = mread8(mf);
+    mon->m_ap_type = mread8(mf);
+    mon->mfrozen = mread8(mf);
+    mon->mblinded = mread8(mf);
+    mon->mappearance = mread32(mf);
+    mflags = mread32(mf);
+    
+    mon->mfleetim = mread8(mf);
+    mon->weapon_check = mread8(mf);
+    mon->misc_worn_check = mread32(mf);
+    mon->wormno = mread8(mf);
+    
+    /* just mark the pointers for later restoration */
+    mon->minvent = mread8(mf) ? (void*)1 : NULL;
+    mon->mw = mread8(mf) ? (void*)1 : NULL;
+    
+    if (mon->mnamelth)
+	mread(mf, NAME(mon), mon->mnamelth);
+    
+    switch (mon->mxtyp) {
+	case MX_EPRI:
+	    EPRI(mon)->shralign = mread8(mf);
+	    EPRI(mon)->shroom = mread8(mf);
+	    EPRI(mon)->shrpos.x = mread8(mf);
+	    EPRI(mon)->shrpos.y = mread8(mf);
+	    EPRI(mon)->shrlevel.dnum = mread8(mf);
+	    EPRI(mon)->shrlevel.dlevel = mread8(mf);
+	    break;
+	    
+	case MX_EMIN:
+	    EMIN(mon)->min_align = mread8(mf);
+	    break;
+	    
+	case MX_EDOG:
+	    EDOG(mon)->droptime = mread32(mf);
+	    EDOG(mon)->dropdist = mread32(mf);
+	    EDOG(mon)->apport = mread32(mf);
+	    EDOG(mon)->whistletime = mread32(mf);
+	    EDOG(mon)->hungrytime = mread32(mf);
+	    EDOG(mon)->abuse = mread32(mf);
+	    EDOG(mon)->revivals = mread32(mf);
+	    EDOG(mon)->mhpmax_penalty = mread32(mf);
+	    EDOG(mon)->ogoal.x = mread8(mf);
+	    EDOG(mon)->ogoal.y = mread8(mf);
+	    EDOG(mon)->killed_by_u = mread8(mf);
+	    break;
+	    
+	case MX_ESHK:
+	    shk = ESHK(mon);
+	    billid = mread32(mf);
+	    shk->bill_p = (billid == -1000) ? (struct bill_x*)-1000 : &shk->bill[billid];
+	    shk->shk.x = mread8(mf);
+	    shk->shk.y = mread8(mf);
+	    shk->shd.x = mread8(mf);
+	    shk->shd.y = mread8(mf);
+	    shk->robbed = mread32(mf);
+	    shk->credit = mread32(mf);
+	    shk->debit = mread32(mf);
+	    shk->loan = mread32(mf);
+	    shk->shoptype = mread16(mf);
+	    shk->billct = mread16(mf);
+	    shk->visitct = mread16(mf);
+	    shk->shoplevel.dnum = mread8(mf);
+	    shk->shoplevel.dlevel = mread8(mf);
+	    shk->shoproom = mread8(mf);
+	    shk->following = mread8(mf);
+	    shk->surcharge = mread8(mf);
+	    mread(mf, shk->customer, sizeof(shk->customer));
+	    mread(mf, shk->shknam, sizeof(shk->shknam));
+	    for (i = 0; i < BILLSZ; i++)
+		restore_shkbill(mf, &shk->bill[i]);
+	    break;
+	    
+	case MX_EGD:
+	    EGD(mon)->fcbeg = mread32(mf);
+	    EGD(mon)->fcend = mread32(mf);
+	    EGD(mon)->vroom = mread32(mf);
+	    EGD(mon)->gdx = mread8(mf);
+	    EGD(mon)->gdy = mread8(mf);
+	    EGD(mon)->ogx = mread8(mf);
+	    EGD(mon)->ogy = mread8(mf);
+	    EGD(mon)->gdlevel.dnum = mread8(mf);
+	    EGD(mon)->gdlevel.dlevel = mread8(mf);
+	    EGD(mon)->warncnt = mread8(mf);
+	    EGD(mon)->gddone = mread8(mf);
+	    for (i = 0; i < FCSIZ; i++)
+		restore_fcorr(mf, &EGD(mon)->fakecorr[i]);
+	    break;
+    }
+    
+    mon->female		= (mflags >> 31) & 1;
+    mon->minvis		= (mflags >> 30) & 1;
+    mon->invis_blkd	= (mflags >> 29) & 1;
+    mon->perminvis	= (mflags >> 28) & 1;
+    mon->cham		= (mflags >> 25) & 7;
+    mon->mundetected	= (mflags >> 24) & 1;
+    mon->mcan		= (mflags >> 23) & 1;
+    mon->mburied	= (mflags >> 22) & 1;
+    mon->mspeed		= (mflags >> 20) & 3;
+    mon->permspeed	= (mflags >> 18) & 3;
+    mon->mrevived	= (mflags >> 17) & 1;
+    mon->mavenge	= (mflags >> 16) & 1;
+    mon->mflee		= (mflags >> 15) & 1;
+    mon->mcansee	= (mflags >> 14) & 1;
+    mon->mcanmove	= (mflags >> 13) & 1;
+    mon->msleeping	= (mflags >> 12) & 1;
+    mon->mstun		= (mflags >> 11) & 1;
+    mon->mconf		= (mflags >> 10) & 1;
+    mon->mpeaceful	= (mflags >> 9) & 1;
+    mon->mtrapped	= (mflags >> 8) & 1;
+    mon->mleashed	= (mflags >> 7) & 1;
+    mon->isshk		= (mflags >> 6) & 1;
+    mon->isminion	= (mflags >> 5) & 1;
+    mon->isgd		= (mflags >> 4) & 1;
+    mon->ispriest	= (mflags >> 3) & 1;
+    mon->iswiz		= (mflags >> 2) & 1;
+
+    return mon;
+}
+
+
+static void save_shkbill(struct memfile *mf, const struct bill_x *b)
+{
+    mwrite32(mf, b->bo_id);
+    mwrite32(mf, b->price);
+    mwrite32(mf, b->bquan);
+    mwrite8(mf, b->useup);
+}
+
+
+static void save_fcorr(struct memfile *mf, const struct fakecorridor *f)
+{
+    mwrite8(mf, f->fx);
+    mwrite8(mf, f->fy);
+    mwrite8(mf, f->ftyp);
+}
+
+
+void save_mon(struct memfile *mf, const struct monst *mon)
+{
+    int idx, i;
+    unsigned int mflags;
+    struct eshk *shk;
+    
+    mfmagic_set(mf, MON_MAGIC);
+    
+    mwrite16(mf, mon->mnamelth);
+    mwrite16(mf, mon->mxtyp);
+
+    /* mon->data is null for monst structs that are attached to objects.
+     * mon->data is non-null but not in the mons array for customized monsters
+     * monsndx() does not handle these cases. */
+    idx = mon->data - mons;
+    idx = (LOW_PM <= idx && idx < NUMMONS) ? idx : 0;
+    if (&mons[idx] != mon->data) {
+	if      (mon->data == &pm_leader)   idx = -1000;
+	else if (mon->data == &pm_guardian) idx = -2000;
+	else if (mon->data == &pm_nemesis)  idx = -3000;
+	else if (mon->data == &pm_you_male) idx = -4000;
+	else if (mon->data == &pm_you_female) idx = -5000;
+	else if (mon->data == NULL)         idx = -6000;
+	else impossible("Bad monster type detected.");
+    }
+    mwrite32(mf, idx);
+    mwrite32(mf, mon->m_id);
+    mwrite32(mf, mon->mhp);
+    mwrite32(mf, mon->mhpmax);
+    mwrite32(mf, mon->mspec_used);
+    mwrite32(mf, mon->mtrapseen);
+    mwrite32(mf, mon->mlstmv);
+    mwrite32(mf, mon->mstrategy);
+    mwrite(mf, mon->mtrack, sizeof(mon->mtrack));
+    mwrite16(mf, mon->mnum);
+    mwrite8(mf, mon->mx);
+    mwrite8(mf, mon->my);
+    mwrite8(mf, mon->mux);
+    mwrite8(mf, mon->muy);
+    mwrite8(mf, mon->m_lev);
+    mwrite8(mf, mon->malign);
+    mwrite16(mf, mon->movement);
+    mwrite16(mf, mon->mintrinsics);
+    mwrite8(mf, mon->mtame);
+    mwrite8(mf, mon->m_ap_type);
+    mwrite8(mf, mon->mfrozen);
+    mwrite8(mf, mon->mblinded);
+    mwrite32(mf, mon->mappearance);
+    
+    mflags = (mon->female << 31) | (mon->minvis << 30) | (mon->invis_blkd << 29) |
+             (mon->perminvis << 28) | (mon->cham << 25) | (mon->mundetected << 24) |
+             (mon->mcan << 23) | (mon->mburied << 22) | (mon->mspeed << 20) |
+             (mon->permspeed << 18) | (mon->mrevived << 17) | (mon->mavenge << 16) |
+             (mon->mflee << 15) | (mon->mcansee << 14) | (mon->mcanmove << 13) |
+             (mon->msleeping << 12) | (mon->mstun << 11) | (mon->mconf << 10) |
+             (mon->mpeaceful << 9) | (mon->mtrapped << 8) | (mon->mleashed << 7) |
+             (mon->isshk << 6) | (mon->isminion << 5) | (mon->isgd << 4) |
+             (mon->ispriest << 3) | (mon->iswiz << 2);
+    mwrite32(mf, mflags);
+    
+    mwrite8(mf, mon->mfleetim);
+    mwrite8(mf, mon->weapon_check);
+    mwrite32(mf, mon->misc_worn_check);
+    mwrite8(mf, mon->wormno);
+    
+    /* just mark that the pointers had values */
+    mwrite8(mf, mon->minvent ? 1 : 0);
+    mwrite8(mf, mon->mw ? 1 : 0);
+    
+    if (mon->mnamelth)
+	mwrite(mf, NAME(mon), mon->mnamelth);
+    
+    switch (mon->mxtyp) {
+	case MX_EPRI:
+	    mwrite8(mf, EPRI(mon)->shralign);
+	    mwrite8(mf, EPRI(mon)->shroom);
+	    mwrite8(mf, EPRI(mon)->shrpos.x);
+	    mwrite8(mf, EPRI(mon)->shrpos.y);
+	    mwrite8(mf, EPRI(mon)->shrlevel.dnum);
+	    mwrite8(mf, EPRI(mon)->shrlevel.dlevel);
+	    break;
+	    
+	case MX_EMIN:
+	    mwrite8(mf, EMIN(mon)->min_align);
+	    break;
+	    
+	case MX_EDOG:
+	    mwrite32(mf, EDOG(mon)->droptime);
+	    mwrite32(mf, EDOG(mon)->dropdist);
+	    mwrite32(mf, EDOG(mon)->apport);
+	    mwrite32(mf, EDOG(mon)->whistletime);
+	    mwrite32(mf, EDOG(mon)->hungrytime);
+	    mwrite32(mf, EDOG(mon)->abuse);
+	    mwrite32(mf, EDOG(mon)->revivals);
+	    mwrite32(mf, EDOG(mon)->mhpmax_penalty);
+	    mwrite8(mf, EDOG(mon)->ogoal.x);
+	    mwrite8(mf, EDOG(mon)->ogoal.y);
+	    mwrite8(mf, EDOG(mon)->killed_by_u);
+	    break;
+	    
+	case MX_ESHK:
+	    shk = ESHK(mon);
+	    mwrite32(mf, (shk->bill_p == (struct bill_x*)-1000) ? -1000 : (shk->bill_p - shk->bill));
+	    mwrite8(mf, shk->shk.x);
+	    mwrite8(mf, shk->shk.y);
+	    mwrite8(mf, shk->shd.x);
+	    mwrite8(mf, shk->shd.y);
+	    mwrite32(mf, shk->robbed);
+	    mwrite32(mf, shk->credit);
+	    mwrite32(mf, shk->debit);
+	    mwrite32(mf, shk->loan);
+	    mwrite16(mf, shk->shoptype);
+	    mwrite16(mf, shk->billct);
+	    mwrite16(mf, shk->visitct);
+	    mwrite8(mf, shk->shoplevel.dnum);
+	    mwrite8(mf, shk->shoplevel.dlevel);
+	    mwrite8(mf, shk->shoproom);
+	    mwrite8(mf, shk->following);
+	    mwrite8(mf, shk->surcharge);
+	    mwrite(mf, shk->customer, sizeof(shk->customer));
+	    mwrite(mf, shk->shknam, sizeof(shk->shknam));
+	    for (i = 0; i < BILLSZ; i++)
+		save_shkbill(mf, &shk->bill[i]);
+	    break;
+	    
+	case MX_EGD:
+	    mwrite32(mf, EGD(mon)->fcbeg);
+	    mwrite32(mf, EGD(mon)->fcend);
+	    mwrite32(mf, EGD(mon)->vroom);
+	    mwrite8(mf, EGD(mon)->gdx);
+	    mwrite8(mf, EGD(mon)->gdy);
+	    mwrite8(mf, EGD(mon)->ogx);
+	    mwrite8(mf, EGD(mon)->ogy);
+	    mwrite8(mf, EGD(mon)->gdlevel.dnum);
+	    mwrite8(mf, EGD(mon)->gdlevel.dlevel);
+	    mwrite8(mf, EGD(mon)->warncnt);
+	    mwrite8(mf, EGD(mon)->gddone);
+	    for (i = 0; i < FCSIZ; i++)
+		save_fcorr(mf, &EGD(mon)->fakecorr[i]);
+	    break;
+    }
+}
 
 /*makemon.c*/

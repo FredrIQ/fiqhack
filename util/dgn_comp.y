@@ -612,7 +612,7 @@ void output_dgn(void)
 		    cb = 0, nb = 0;
 	static struct version_info version_data = {
 			VERSION_NUMBER, VERSION_FEATURES,
-			VERSION_SANITY1, VERSION_SANITY2
+			VERSION_SANITY1
 	};
 
 	if(++n_dgns <= 0) {

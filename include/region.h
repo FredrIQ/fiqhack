@@ -54,7 +54,7 @@ struct region {
 
   boolean visible;		/* Is the region visible ? */
   int effect_id;		/* How to display if visible */
-  void * arg;		/* Optional user argument (Ex: strength of
+  int arg;		/* Optional user argument (Ex: strength of
 				   force field, damage of a fire zone, ...*/
 };
 

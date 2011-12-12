@@ -201,49 +201,132 @@ void oinit(void)	/* level dependent initialization */
 	setgemprobs(&u.uz);
 }
 
-void savenames(struct memfile *mf, int mode)
-{
-	int i;
-	unsigned int len;
 
-	if (perform_mwrite(mode)) {
-	    mwrite(mf, bases, sizeof bases);
-	    mwrite(mf, disco, sizeof disco);
-	    mwrite(mf, objects,
-		   sizeof(struct objclass) * NUM_OBJECTS);
-	}
+static void saveobjclass(struct memfile *mf, struct objclass *ocl)
+{
+	int namelen = 0;
+	unsigned int oflags;
+	
+	oflags = (ocl->oc_name_known << 31) | (ocl->oc_merge << 30) | (ocl->oc_uses_known << 29) |
+	         (ocl->oc_pre_discovered << 28) | (ocl->oc_magic << 27) | (ocl->oc_charged << 26) |
+	         (ocl->oc_unique << 25) | (ocl->oc_nowish << 24) | (ocl->oc_big << 23) |
+	         (ocl->oc_tough << 22) | (ocl->oc_dir << 20) | (ocl->oc_material << 15);
+	mwrite32(mf, oflags);
+	mwrite16(mf, ocl->oc_name_idx);
+	mwrite16(mf, ocl->oc_descr_idx);
+	mwrite16(mf, ocl->oc_weight);
+	mwrite16(mf, ocl->oc_prob);
+	mwrite16(mf, ocl->oc_cost);
+	mwrite16(mf, ocl->oc_nutrition);
+	
+	mwrite8(mf, ocl->oc_subtyp);
+	mwrite8(mf, ocl->oc_oprop);
+	mwrite8(mf, ocl->oc_class);
+	mwrite8(mf, ocl->oc_delay);
+	mwrite8(mf, ocl->oc_color);
+	mwrite8(mf, ocl->oc_wsdam);
+	mwrite8(mf, ocl->oc_wldam);
+	mwrite8(mf, ocl->oc_oc1);
+	mwrite8(mf, ocl->oc_oc2);
+	
 	/* as long as we use only one version of Hack we
 	   need not save oc_name and oc_descr, but we must save
 	   oc_uname for all objects */
-	for (i = 0; i < NUM_OBJECTS; i++)
-	    if (objects[i].oc_uname) {
-		if (perform_mwrite(mode)) {
-		    len = strlen(objects[i].oc_uname)+1;
-		    mwrite(mf, &len, sizeof len);
-		    mwrite(mf, objects[i].oc_uname, len);
-		}
-		if (release_data(mode)) {
-		    free(objects[i].oc_uname);
-		    objects[i].oc_uname = 0;
-		}
-	    }
+	namelen = ocl->oc_uname ? strlen(ocl->oc_uname) + 1 : 0;
+	mwrite32(mf, namelen);
+	if (namelen)
+	    mwrite(mf, ocl->oc_uname, namelen);
 }
+
+
+void savenames(struct memfile *mf, int mode)
+{
+	int i;
+
+	if (perform_mwrite(mode)) {
+	    mfmagic_set(mf, OCLASSES_MAGIC);
+	    for (i = 0; i < MAXOCLASSES; i++)
+		mwrite32(mf, bases[i]);
+	    
+	    for (i = 0; i < NUM_OBJECTS; i++)
+		mwrite32(mf, disco[i]);
+	    
+	    for (i = 0; i < NUM_OBJECTS; i++)
+		saveobjclass(mf, &objects[i]);
+	}
+	
+	if (release_data(mode)) {
+	    for (i = 0; i < NUM_OBJECTS; i++)
+		if (objects[i].oc_uname) {
+		    free(objects[i].oc_uname);
+		    objects[i].oc_uname = NULL;
+		}
+	}
+}
+
+
+static void restobjclass(struct memfile *mf, struct objclass *ocl)
+{
+	int namelen;
+	unsigned int oflags;
+	
+	oflags = mread32(mf);
+	ocl->oc_name_known = (oflags >> 31) & 1;
+	ocl->oc_merge = (oflags >> 30) & 1;
+	ocl->oc_uses_known = (oflags >> 29) & 1;
+	ocl->oc_pre_discovered = (oflags >> 28) & 1;
+	ocl->oc_magic = (oflags >> 27) & 1;
+	ocl->oc_charged = (oflags >> 26) & 1;
+	ocl->oc_unique = (oflags >> 25) & 1;
+	ocl->oc_nowish = (oflags >> 24) & 1;
+	ocl->oc_big = (oflags >> 23) & 1;
+	ocl->oc_tough = (oflags >> 22) & 1;
+	ocl->oc_dir = (oflags >> 20) & 3;
+	ocl->oc_material = (oflags >> 15) & 31;
+	
+	ocl->oc_name_idx = mread16(mf);
+	ocl->oc_descr_idx = mread16(mf);
+	ocl->oc_weight = mread16(mf);
+	ocl->oc_prob = mread16(mf);
+	ocl->oc_cost = mread16(mf);
+	ocl->oc_nutrition = mread16(mf);
+	
+	ocl->oc_subtyp = mread8(mf);
+	ocl->oc_oprop = mread8(mf);
+	ocl->oc_class = mread8(mf);
+	ocl->oc_delay = mread8(mf);
+	ocl->oc_color = mread8(mf);
+	ocl->oc_wsdam = mread8(mf);
+	ocl->oc_wldam = mread8(mf);
+	ocl->oc_oc1 = mread8(mf);
+	ocl->oc_oc2 = mread8(mf);
+	
+	ocl->oc_uname = NULL;
+	namelen = mread32(mf);
+	if (namelen) {
+	    ocl->oc_uname = malloc(namelen);
+	    mread(mf, ocl->oc_uname, namelen);
+	}
+	    
+}
+
 
 void restnames(struct memfile *mf)
 {
 	int i;
-	unsigned int len;
+	
+	mfmagic_check(mf, OCLASSES_MAGIC);
 
-	mread(mf, bases, sizeof bases);
-	mread(mf, disco, sizeof disco);
-	mread(mf, objects, sizeof(struct objclass) * NUM_OBJECTS);
+	for (i = 0; i < MAXOCLASSES; i++)
+	    bases[i] = mread32(mf);
+	
 	for (i = 0; i < NUM_OBJECTS; i++)
-	    if (objects[i].oc_uname) {
-		mread(mf, &len, sizeof len);
-		objects[i].oc_uname = malloc(len);
-		mread(mf, objects[i].oc_uname, len);
-	    }
+	    disco[i] = mread32(mf);
+	
+	for (i = 0; i < NUM_OBJECTS; i++)
+	    restobjclass(mf, &objects[i]);
 }
+
 
 void discover_object(int oindx, boolean mark_as_known, boolean credit_hero)
 {

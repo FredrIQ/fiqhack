@@ -450,12 +450,12 @@ void save_worm(struct memfile *mf, struct level *lev, int mode)
 	    /* Save segment locations of the monster. */
 	    if (count) {
 		for (curr = lev->wtails[i]; curr; curr = curr->nseg) {
-		    mwrite(mf, &(curr->wx), sizeof(xchar));
-		    mwrite(mf, &(curr->wy), sizeof(xchar));
+		    mwrite8(mf, curr->wx);
+		    mwrite8(mf, curr->wy);
 		}
+		mwrite32(mf, lev->wgrowtime[i]);
 	    }
 	}
-	mwrite(mf, lev->wgrowtime, sizeof(lev->wgrowtime));
     }
 
     if (release_data(mode)) {
@@ -486,24 +486,24 @@ void rest_worm(struct memfile *mf, struct level *lev)
     struct wseg *curr, *temp;
 
     for (i = 1; i < MAX_NUM_WORMS; i++) {
-	mread(mf, &count, sizeof(int));
+	count = mread32(mf);
 	if (!count) continue;	/* none */
 
 	/* Get the segments. */
 	for (curr = NULL, j = 0; j < count; j++) {
 	    temp = malloc(sizeof(struct wseg));
 	    temp->nseg = NULL;
-	    mread(mf, &(temp->wx), sizeof(xchar));
-	    mread(mf, &(temp->wy), sizeof(xchar));
+	    temp->wx = mread8(mf);
+	    temp->wy = mread8(mf);
 	    if (curr)
 		curr->nseg = temp;
 	    else
 		lev->wtails[i] = temp;
 	    curr = temp;
 	}
+	lev->wgrowtime[i] = mread32(mf);
 	lev->wheads[i] = curr;
     }
-    mread(mf, lev->wgrowtime, sizeof(lev->wgrowtime));
 }
 
 /*

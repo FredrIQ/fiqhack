@@ -1207,7 +1207,7 @@ static boolean timer_is_local(timer_element *);
 static int maybe_write_timer(struct memfile *mf, struct level *lev, int range, boolean write_it);
 
 /* ordered timer list */
-static unsigned long timer_id = 1;
+static unsigned int timer_id = 1;
 
 /* If defined, then include names when printing out the timer queue */
 #define VERBOSE_TIMER
@@ -1255,12 +1255,11 @@ static void print_queue(struct menulist *menu, timer_element *base)
 	add_menutext(menu, "timeout  id   kind   call");
 	for (curr = base; curr; curr = curr->next) {
 #ifdef VERBOSE_TIMER
-	    sprintf(buf, " %4ld   %4ld  %-6s %s(%p)",
+	    sprintf(buf, " %4d   %4d  %-6s %s(%p)",
 		curr->timeout, curr->tid, kind_name(curr->kind),
-		timeout_funcs[curr->func_index].name,
-		curr->arg);
+		timeout_funcs[curr->func_index].name, curr->arg);
 #else
-	    sprintf(buf, " %4ld   %4ld  %-6s #%d(%p)",
+	    sprintf(buf, " %4d   %4d  %-6s #%d(%p)",
 		curr->timeout, curr->tid, kind_name(curr->kind),
 		curr->func_index, curr->arg);
 #endif
@@ -1276,7 +1275,7 @@ int wiz_timeout_queue(void)
 
     init_menulist(&menu);
 
-    sprintf(buf, "Current time = %ld.", moves);
+    sprintf(buf, "Current time = %d.", moves);
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
     add_menutext(&menu, "Active timeout queue:");
@@ -1435,8 +1434,7 @@ void obj_stop_timers(struct obj *obj)
 	    else
 		obj->olev->lev_timers = curr->next;
 	    if (timeout_funcs[curr->func_index].cleanup)
-		(*timeout_funcs[curr->func_index].cleanup)(curr->arg,
-			curr->timeout);
+		(*timeout_funcs[curr->func_index].cleanup)(curr->arg, curr->timeout);
 	    free(curr);
 	} else {
 	    prev = curr;
@@ -1483,26 +1481,23 @@ static timer_element *remove_timer(timer_element **base, short func_index,
 
 static void write_timer(struct memfile *mf, timer_element *timer)
 {
-    void * arg_save;
+    long argval;
+    boolean needs_fixup = FALSE;
 
     switch (timer->kind) {
 	case TIMER_GLOBAL:
 	case TIMER_LEVEL:
 	    /* assume no pointers in arg */
-	    mwrite(mf, timer, sizeof(timer_element));
+	    argval = (long)timer->arg;
 	    break;
 
 	case TIMER_OBJECT:
 	    if (timer->needs_fixup)
-		mwrite(mf, timer, sizeof(timer_element));
+		argval = (long)timer->arg;
 	    else {
 		/* replace object pointer with id */
-		arg_save = timer->arg;
-		timer->arg = (void *)((struct obj *)timer->arg)->o_id;
-		timer->needs_fixup = 1;
-		mwrite(mf, timer, sizeof(timer_element));
-		timer->arg = arg_save;
-		timer->needs_fixup = 0;
+		argval = ((struct obj *)timer->arg)->o_id;
+		needs_fixup = TRUE;
 	    }
 	    break;
 
@@ -1510,6 +1505,13 @@ static void write_timer(struct memfile *mf, timer_element *timer)
 	    panic("write_timer");
 	    break;
     }
+    
+    mwrite32(mf, timer->tid);
+    mwrite32(mf, timer->timeout);
+    mwrite32(mf, argval);
+    mwrite16(mf, timer->kind);
+    mwrite8(mf, timer->func_index);
+    mwrite8(mf, needs_fixup);
 }
 
 
@@ -1641,10 +1643,10 @@ void save_timers(struct memfile *mf, struct level *lev, int mode, int range)
 
     if (perform_mwrite(mode)) {
 	if (range == RANGE_GLOBAL)
-	    mwrite(mf, &timer_id, sizeof(timer_id));
+	    mwrite32(mf, timer_id);
 
 	count = maybe_write_timer(mf, lev, range, FALSE);
-	mwrite(mf, &count, sizeof count);
+	mwrite32(mf, count);
 	maybe_write_timer(mf, lev, range, TRUE);
     }
 
@@ -1677,15 +1679,24 @@ void restore_timers(struct memfile *mf, struct level *lev, int range,
 {
     int count;
     timer_element *curr;
+    long argval;
 
     if (range == RANGE_GLOBAL)
-	mread(mf, &timer_id, sizeof timer_id);
+	timer_id = mread32(mf);
 
     /* restore elements */
-    mread(mf, &count, sizeof count);
+    count = mread32(mf);
     while (count-- > 0) {
 	curr = malloc(sizeof(timer_element));
-	mread(mf, curr, sizeof(timer_element));
+	
+	curr->tid = mread32(mf);
+	curr->timeout = mread32(mf);
+	argval = mread32(mf);
+	curr->arg = (void*)argval;
+	curr->kind = mread16(mf);
+	curr->func_index = mread8(mf);
+	curr->needs_fixup = mread8(mf);
+	
 	if (ghostly)
 	    curr->timeout += adjust;
 	insert_timer(lev, curr);

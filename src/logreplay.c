@@ -929,7 +929,6 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
     boolean game_inited = (wiz1_level.dlevel != 0);
     struct you sg_you;
     struct flag sg_flags;
-    struct monst sg_youmonst;
     long sg_moves;
     
     lseek(fd, 0, SEEK_SET);
@@ -979,23 +978,20 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
 
     lseek(fd, savepos, SEEK_SET);
     if (ret == LS_SAVED) {
-	mf.len = endpos - savepos;
 	mf.pos = 0;
-	mf.buf = malloc(mf.len);
-	if (!read(fd, mf.buf, mf.len) == mf.len || !uptodate(&mf, NULL)) {
+	mf.buf = loadfile(fd, &mf.len);
+	if (!mf.buf)
+	    return 0;
+	
+	if (!uptodate(&mf, NULL)) {
 	    free(mf.buf);
 	    api_exit();
 	    return LS_CRASHED; /* probably still a valid game */
 	}
 	
-	mread(&mf, &sg_flags, sizeof(struct flag));
-	flags.bypasses = 0;	/* never use the saved value of bypasses */
-
-	mread(&mf, &sg_you, sizeof(struct you));
-	role_init(); /* set up stuff related to the role (quest, ...). needed here? */
-	mread(&mf, &sg_youmonst, sizeof(youmonst));
-	set_uasmon(); /* fix up youmonst.data */
-	mread(&mf, &sg_moves, sizeof(moves));
+	restore_flags(&mf, &sg_flags);
+	restore_you(&mf, &sg_you);
+	sg_moves = mread32(&mf);
 	free(mf.buf);
 	
 	/* make sure topten_level_name can work correctly */

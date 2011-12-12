@@ -755,8 +755,9 @@ struct monst *tamedog(struct monst *mtmp, struct obj *obj)
 	    return NULL;
 
 	/* make a new monster which has the pet extension */
-	mtmp2 = newmonst(sizeof(struct edog) + mtmp->mnamelth);
+	mtmp2 = newmonst(MX_EDOG, mtmp->mnamelth);
 	*mtmp2 = *mtmp;
+	mtmp2->mxtyp = MX_EDOG;
 	mtmp2->mxlth = sizeof(struct edog);
 	if (mtmp->mnamelth) strcpy(NAME(mtmp2), NAME(mtmp));
 	initedog(mtmp2);

@@ -78,46 +78,46 @@
 /* Definitions were moved here from obj.h and you.h */
 struct prop {
 	/*** Properties conveyed by objects ***/
-	long extrinsic;
+	unsigned int extrinsic;
 	/* Armor */
-#	define W_ARM	    0x00000001L /* Body armor */
-#	define W_ARMC	    0x00000002L /* Cloak */
-#	define W_ARMH	    0x00000004L /* Helmet/hat */
-#	define W_ARMS	    0x00000008L /* Shield */
-#	define W_ARMG	    0x00000010L /* Gloves/gauntlets */
-#	define W_ARMF	    0x00000020L /* Footwear */
-#	define W_ARMU	    0x00000040L /* Undershirt */
+#	define W_ARM	    0x00000001U /* Body armor */
+#	define W_ARMC	    0x00000002U /* Cloak */
+#	define W_ARMH	    0x00000004U /* Helmet/hat */
+#	define W_ARMS	    0x00000008U /* Shield */
+#	define W_ARMG	    0x00000010U /* Gloves/gauntlets */
+#	define W_ARMF	    0x00000020U /* Footwear */
+#	define W_ARMU	    0x00000040U /* Undershirt */
 #	define W_ARMOR	     (W_ARM | W_ARMC | W_ARMH | W_ARMS | W_ARMG | W_ARMF | W_ARMU)
 	/* Weapons and artifacts */
-#	define W_WEP	    0x00000100L /* Wielded weapon */
-#	define W_QUIVER     0x00000200L /* Quiver for (f)iring ammo */
-#	define W_SWAPWEP    0x00000400L /* Secondary weapon */
-#	define W_ART	    0x00001000L /* Carrying artifact (not really worn) */
-#	define W_ARTI	    0x00002000L /* Invoked artifact  (not really worn) */
+#	define W_WEP	    0x00000100U /* Wielded weapon */
+#	define W_QUIVER     0x00000200U /* Quiver for (f)iring ammo */
+#	define W_SWAPWEP    0x00000400U /* Secondary weapon */
+#	define W_ART	    0x00001000U /* Carrying artifact (not really worn) */
+#	define W_ARTI	    0x00002000U /* Invoked artifact  (not really worn) */
 	/* Amulets, rings, tools, and other items */
-#	define W_AMUL	    0x00010000L /* Amulet */
-#	define W_RINGL	    0x00020000L /* Left ring */
-#	define W_RINGR	    0x00040000L /* Right ring */
+#	define W_AMUL	    0x00010000U /* Amulet */
+#	define W_RINGL	    0x00020000U /* Left ring */
+#	define W_RINGR	    0x00040000U /* Right ring */
 #	define W_RING	    (W_RINGL | W_RINGR)
-#	define W_TOOL	    0x00080000L /* Eyewear */
-#	define W_SADDLE     0x00100000L	/* KMH -- For riding monsters */
-#	define W_BALL	    0x00200000L /* Punishment ball */
-#	define W_CHAIN	    0x00400000L /* Punishment chain */
+#	define W_TOOL	    0x00080000U /* Eyewear */
+#	define W_SADDLE     0x00100000U	/* KMH -- For riding monsters */
+#	define W_BALL	    0x00200000U /* Punishment ball */
+#	define W_CHAIN	    0x00400000U /* Punishment chain */
 
 	/*** Property is blocked by an object ***/
-	long blocked;					/* Same assignments as extrinsic */
+	unsigned int blocked;					/* Same assignments as extrinsic */
 
 	/*** Timeouts, permanent properties, and other flags ***/
-	long intrinsic;
+	unsigned int intrinsic;
 	/* Timed properties */
-#	define TIMEOUT	    0x00ffffffL /* Up to 16 million turns */
+#	define TIMEOUT	    0x00ffffffU /* Up to 16 million turns */
 	/* Permanent properties */
-#	define FROMEXPER    0x01000000L /* Gain/lose with experience, for role */
-#	define FROMRACE     0x02000000L /* Gain/lose with experience, for race */
-#	define FROMOUTSIDE  0x04000000L /* By corpses, prayer, thrones, etc. */
+#	define FROMEXPER    0x01000000U /* Gain/lose with experience, for role */
+#	define FROMRACE     0x02000000U /* Gain/lose with experience, for race */
+#	define FROMOUTSIDE  0x04000000U /* By corpses, prayer, thrones, etc. */
 #	define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMEXPER)
 	/* Control flags */
-#	define I_SPECIAL    0x10000000L /* Property is controllable */
+#	define I_SPECIAL    0x10000000U /* Property is controllable */
 };
 
 /*** Definitions for backwards compatibility ***/

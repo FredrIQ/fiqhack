@@ -1071,20 +1071,27 @@ void save_engravings(struct memfile *mf, struct level *lev, int mode)
 {
 	struct engr *ep = lev->lev_engr;
 	struct engr *ep2;
-	unsigned no_more_engr = 0;
+	char *txtbase; /* ep->engr_txt may have been incremented */
 
+	if (perform_mwrite(mode))
+	    mfmagic_set(mf, ENGRAVE_MAGIC);
+	
 	while (ep) {
 	    ep2 = ep->nxt_engr;
 	    if (ep->engr_lth && ep->engr_txt[0] && perform_mwrite(mode)) {
-		mwrite(mf, &(ep->engr_lth), sizeof(ep->engr_lth));
-		mwrite(mf, ep, sizeof(struct engr) + ep->engr_lth);
+		mwrite32(mf, ep->engr_lth);
+		mwrite8(mf, ep->engr_x);
+		mwrite8(mf, ep->engr_y);
+		mwrite8(mf, ep->engr_type);
+		txtbase = (char *)(ep + 1);
+		mwrite(mf, txtbase, ep->engr_lth);
 	    }
 	    if (release_data(mode))
 		dealloc_engr(ep);
 	    ep = ep2;
 	}
 	if (perform_mwrite(mode))
-	    mwrite(mf, &no_more_engr, sizeof no_more_engr);
+	    mwrite32(mf, 0); /* no more engravings */
 	if (release_data(mode))
 	    lev->lev_engr = NULL;
 }
@@ -1094,15 +1101,23 @@ void rest_engravings(struct memfile *mf, struct level *lev)
 	struct engr *ep;
 	unsigned lth;
 
+	mfmagic_check(mf, ENGRAVE_MAGIC);
 	lev->lev_engr = NULL;
 	while (1) {
-		mread(mf, &lth, sizeof(unsigned));
-		if (lth == 0) return;
+		lth = mread32(mf);
+		if (!lth) /* no more engravings */
+		    return;
+		
 		ep = newengr(lth);
-		mread(mf, ep, sizeof(struct engr) + lth);
+		ep->engr_lth = lth;
+		ep->engr_x = mread8(mf);
+		ep->engr_y = mread8(mf);
+		ep->engr_type = mread8(mf);
+		ep->engr_txt = (char *)(ep + 1);
+		mread(mf, ep->engr_txt, lth);
+		
 		ep->nxt_engr = lev->lev_engr;
 		lev->lev_engr = ep;
-		ep->engr_txt = (char *) (ep + 1);	/* Andreas Bormann */
 		while (ep->engr_txt[0] == ' ')
 		    ep->engr_txt++;
 		/* mark as finished for bones levels -- no problem for

@@ -29,13 +29,13 @@ typedef void (*timeout_proc)(void *, long);
 #define NUM_TIME_FUNCS	6
 
 /* used in timeout.c */
-typedef struct fe {
-    struct fe *next;		/* next item in chain */
+typedef struct timer_element {
+    struct timer_element *next;	/* next item in chain */
     void *arg;			/* pointer to timeout argument */
-    long timeout;		/* when we time out */
-    unsigned long tid;		/* timer ID */
+    unsigned int timeout;	/* when we time out */
+    unsigned int tid;		/* timer ID */
     short kind;			/* kind of use */
-    short func_index;		/* what to call when we time out */
+    uchar func_index;		/* what to call when we time out */
     unsigned needs_fixup:1;	/* does arg need to be patched? */
 } timer_element;
 

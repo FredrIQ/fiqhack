@@ -4,6 +4,15 @@
 #ifndef PERMONST_H
 #define PERMONST_H
 
+enum mon_extypes {
+    MX_NONE = 0,
+    MX_EPRI,
+    MX_EMIN,
+    MX_EDOG,
+    MX_ESHK,
+    MX_EGD
+};
+
 /*	This structure covers all attack forms.
  *	aatyp is the gross attack type (eg. claw, bite, breath, ...)
  *	adtyp is the damage type (eg. physical, fire, cold, spell, ...)
@@ -49,7 +58,7 @@ struct permonst {
 	struct attack 	mattk[NATTK];		/* attacks matrix */
 	unsigned short	cwt,			/* weight of corpse */
 			cnutrit;		/* its nutritional value */
-	short		pxlth;			/* length of extension */
+	short		pxtyp;			/* type of extension */
 	uchar		msound;			/* noise it makes (6 bits) */
 	uchar		msize;			/* physical size (3 bits) */
 	unsigned int	mflags1,		/* boolean bitflags */

@@ -595,7 +595,7 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 		if (!done_stopprint) strcat(pbuf, " ");
 	    }
 	    if (!done_stopprint) {
-		sprintf(eos(pbuf), "%s with %ld point%s,",
+		sprintf(eos(pbuf), "%s with %d point%s,",
 			how==ASCENDED ? "went to your reward" :
 					"escaped from the dungeon",
 			u.urexp, plur(u.urexp));
@@ -651,13 +651,13 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 			    In_quest(&u.uz) ? dunlev(&u.uz) : depth(&u.uz));
 	    }
 
-	    sprintf(eos(pbuf), " with %ld point%s,",
+	    sprintf(eos(pbuf), " with %d point%s,",
 		    u.urexp, plur(u.urexp));
 	    add_menutext(&menu, pbuf);
 	}
 
 	if (!done_stopprint) {
-	    sprintf(pbuf, "and %ld piece%s of gold, after %ld move%s.",
+	    sprintf(pbuf, "and %ld piece%s of gold, after %d move%s.",
 		    umoney, plur(umoney), moves, plur(moves));
 	    add_menutext(&menu, pbuf);
 	}

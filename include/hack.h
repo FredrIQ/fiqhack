@@ -99,6 +99,7 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #include "rect.h"
 #include "region.h"
 #include "extern.h"
+#include "magic.h"
 #include "winprocs.h"
 
 #define NO_SPELL	0

@@ -294,13 +294,7 @@ static void make_version(void)
 	version.entity_count = (version.entity_count << 12) | (unsigned long)i;
 	for (i = 0; mons[i].mlet; i++) continue;
 	version.entity_count = (version.entity_count << 12) | (unsigned long)i;
-	/*
-	 * Value used for compiler (word size/field alignment/padding) check.
-	 */
-	version.struct_sizes = (((unsigned long)sizeof (struct flag)  << 24) |
-				((unsigned long)sizeof (struct obj)   << 17) |
-				((unsigned long)sizeof (struct monst) << 10) |
-				((unsigned long)sizeof (struct you)));
+
 	return;
 }
 
@@ -333,7 +327,6 @@ void do_date(const char *outfile)
 {
 	long clocktim = 0;
 	char *c, cbuf[60], buf[BUFSZ];
-	const char *ul_sfx;
 
 	if (!(ofp = fopen(outfile, WRTMODE))) {
 		perror(outfile);
@@ -349,19 +342,16 @@ void do_date(const char *outfile)
 	fprintf(ofp,"#define BUILD_TIME (%ldL)\n", clocktim);
 	fprintf(ofp,"\n");
 	
-	ul_sfx = "UL";
-	fprintf(ofp,"#define VERSION_NUMBER 0x%08lx%s\n",
-		version.incarnation, ul_sfx);
-	fprintf(ofp,"#define VERSION_FEATURES 0x%08lx%s\n",
-		version.feature_set, ul_sfx);
+	fprintf(ofp,"#define VERSION_NUMBER 0x%08xU\n",
+		version.incarnation);
+	fprintf(ofp,"#define VERSION_FEATURES 0x%08xU\n",
+		version.feature_set);
 #ifdef IGNORED_FEATURES
-	fprintf(ofp,"#define IGNORED_FEATURES 0x%08lx%s\n",
-		(unsigned long) IGNORED_FEATURES, ul_sfx);
+	fprintf(ofp,"#define IGNORED_FEATURES 0x%08xU\n",
+		(unsigned int) IGNORED_FEATURES);
 #endif
-	fprintf(ofp,"#define VERSION_SANITY1 0x%08lx%s\n",
-		version.entity_count, ul_sfx);
-	fprintf(ofp,"#define VERSION_SANITY2 0x%08lx%s\n",
-		version.struct_sizes, ul_sfx);
+	fprintf(ofp,"#define VERSION_SANITY1 0x%08xU\n",
+		version.entity_count);
 	fprintf(ofp,"\n");
 	fprintf(ofp,"#define VERSION_STRING \"%s\"\n", version_string(buf));
 	fprintf(ofp,"#define VERSION_ID \\\n \"%s\"\n",

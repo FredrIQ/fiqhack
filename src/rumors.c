@@ -31,11 +31,11 @@ static void init_rumors(dlb *);
 static void init_oracles(dlb *);
 static void outoracle(boolean, boolean);
 
-static long true_rumor_start,  true_rumor_size,  true_rumor_end,
-	    false_rumor_start, false_rumor_size, false_rumor_end;
+static int true_rumor_start,  true_rumor_size,  true_rumor_end,
+	   false_rumor_start, false_rumor_size, false_rumor_end;
 static int oracle_flg = 0;  /* -1=>don't use, 0=>need init, 1=>init done */
 static unsigned oracle_cnt = 0;
-static long *oracle_loc = 0;
+static int *oracle_loc = 0;
 
 
 static void init_rumors(dlb *fp)
@@ -44,7 +44,7 @@ static void init_rumors(dlb *fp)
 
 	dlb_fgets(line, sizeof line, fp); /* skip "don't edit" comment */
 	dlb_fgets(line, sizeof line, fp);
-	if (sscanf(line, "%6lx\n", &true_rumor_size) == 1 &&
+	if (sscanf(line, "%6x\n", &true_rumor_size) == 1 &&
 	    true_rumor_size > 0L) {
 	    dlb_fseek(fp, 0L, SEEK_CUR);
 	    true_rumor_start  = dlb_ftell(fp);
@@ -67,7 +67,7 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 	       boolean exclude_cookie)
 {
 	dlb	*rumors;
-	long tidbit, beginning;
+	int tidbit, beginning;
 	char	*endp, line[BUFSZ], xbuf[BUFSZ];
 
 	rumor_buf[0] = '\0';
@@ -178,17 +178,17 @@ static void init_oracles(dlb *fp)
 {
 	int i;
 	char line[BUFSZ];
-	int cnt = 0;
+	unsigned int cnt = 0;
 
 	/* this assumes we're only called once */
 	dlb_fgets(line, sizeof line, fp); /* skip "don't edit" comment*/
 	dlb_fgets(line, sizeof line, fp);
 	if (sscanf(line, "%5d\n", &cnt) == 1 && cnt > 0) {
-	    oracle_cnt = (unsigned) cnt;
-	    oracle_loc = malloc((unsigned)cnt * sizeof (long));
+	    oracle_cnt = cnt;
+	    oracle_loc = malloc(cnt * sizeof(int));
 	    for (i = 0; i < cnt; i++) {
 		dlb_fgets(line, sizeof line, fp);
-		sscanf(line, "%5lx\n", &oracle_loc[i]);
+		sscanf(line, "%5x\n", &oracle_loc[i]);
 	    }
 	}
 	return;
@@ -196,25 +196,31 @@ static void init_oracles(dlb *fp)
 
 void save_oracles(struct memfile *mf, int mode)
 {
+	int i;
 	if (perform_mwrite(mode)) {
-	    mwrite(mf, &oracle_cnt, sizeof oracle_cnt);
+	    mwrite32(mf, oracle_cnt);
 	    if (oracle_cnt)
-		mwrite(mf, oracle_loc, oracle_cnt*sizeof (long));
+		for (i = 0; i < oracle_cnt; i++)
+		    mwrite32(mf, oracle_loc[i]);
 	}
 	if (release_data(mode)) {
 	    if (oracle_cnt) {
 		free(oracle_loc);
-		oracle_loc = 0,  oracle_cnt = 0,  oracle_flg = 0;
+		oracle_loc = NULL;
+		oracle_cnt = 0;
+		oracle_flg = 0;
 	    }
 	}
 }
 
 void restore_oracles(struct memfile *mf)
 {
-	mread(mf, &oracle_cnt, sizeof oracle_cnt);
+	int i;
+	oracle_cnt = mread32(mf);
 	if (oracle_cnt) {
-	    oracle_loc = malloc(oracle_cnt * sizeof (long));
-	    mread(mf, oracle_loc, oracle_cnt * sizeof (long));
+	    oracle_loc = malloc(oracle_cnt * sizeof(int));
+	    for (i = 0; i < oracle_cnt; i++)
+		oracle_loc[i] = mread32(mf);
 	    oracle_flg = 1;	/* no need to call init_oracles() */
 	}
 }
@@ -276,7 +282,7 @@ void outoracle(boolean special, boolean delphi)
 
 int doconsult(struct monst *oracl)
 {
-        long umoney = money_cnt(invent);
+        int umoney = money_cnt(invent);
 	int u_pay, minor_cost = 50, major_cost = 500 + 50 * u.ulevel;
 	int add_xpts;
 	char qbuf[QBUFSZ];
@@ -296,31 +302,31 @@ int doconsult(struct monst *oracl)
 
 	sprintf(qbuf,
 		"\"Wilt thou settle for a minor consultation?\" (%d %s)",
-		minor_cost, currency((long)minor_cost));
+		minor_cost, currency(minor_cost));
 	switch (ynq(qbuf)) {
 	    default:
 	    case 'q':
 		return 0;
 	    case 'y':
-		if (umoney < (long)minor_cost) {
+		if (umoney < minor_cost) {
 		    pline("You don't even have enough money for that!");
 		    return 0;
 		}
 		u_pay = minor_cost;
 		break;
 	    case 'n':
-		if (umoney <= (long)minor_cost ||	/* don't even ask */
+		if (umoney <= minor_cost ||	/* don't even ask */
 		    (oracle_cnt == 1 || oracle_flg < 0)) return 0;
 		sprintf(qbuf,
 			"\"Then dost thou desire a major one?\" (%d %s)",
-			major_cost, currency((long)major_cost));
+			major_cost, currency(major_cost));
 		if (yn(qbuf) != 'y') return 0;
-		u_pay = (umoney < (long)major_cost ? (int)umoney : major_cost);
+		u_pay = (umoney < major_cost ? umoney : major_cost);
 
 		break;
 	}
 
-	money2mon(oracl, (long)u_pay);
+	money2mon(oracl, u_pay);
 	iflags.botl = 1;
 	add_xpts = 0;	/* first oracle of each type gives experience points */
 	if (u_pay == minor_cost) {

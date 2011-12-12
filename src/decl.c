@@ -30,7 +30,7 @@ int saved_cmd;
 int killer_format;
 const char *killer;
 const char *delayed_killer;
-long done_money;
+int done_money;
 char killer_buf[BUFSZ];
 const char *nomovemsg;
 const char nul[40];			/* contains zeros */
@@ -57,8 +57,6 @@ const char disclosure_options[] = "iavgc";
 char hackdir[PATHLEN];		/* where rumors, help, record are */
 #endif
 
-
-struct linfo level_info[MAXLINFO];
 
 struct sinfo program_state;
 
@@ -121,7 +119,7 @@ const int shield_static[SHIELD_COUNT] = {
 
 struct spell spl_book[MAXSPELL + 1];
 
-long moves;
+unsigned int moves;
 long wailmsg;
 
 /* objects that are moving to another dungeon level */
@@ -225,7 +223,6 @@ void init_data(void)
     memset(&flags, 0, sizeof(flags));
     memset(&iflags, 0, sizeof(iflags));
     memset(&quest_status, 0, sizeof(quest_status));
-    memset(&level_info, 0, sizeof(level_info));
     memset(&levels, 0, sizeof(levels));
     memset(bases, 0, sizeof(bases));
     memset(&u, 0, sizeof(u));

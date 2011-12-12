@@ -19,6 +19,14 @@
  *		playground.
  */
 
+
+/* swap byte order while reading and writing saves and bones files. This should
+ * enable portability between architectures.
+ * If you do not intend to import or export saves or bones files, this option
+ * doesn't matter.
+ * Endianness can be autodetected on some systems. */
+/* #define IS_BIG_ENDIAN */
+
 #ifndef WIZARD		/* allow for compile-time or Makefile changes */
 # define WIZARD  "daniel" /* the person allowed to use the -D option */
 #endif

@@ -15,6 +15,7 @@ static void saveobjchn(struct memfile *mf, struct obj *,int);
 static void savemonchn(struct memfile *mf, struct monst *,int);
 static void savetrapchn(struct memfile *mf, struct trap *,int);
 static void savegamestate(struct memfile *mf, int);
+static void save_flags(struct memfile *mf);
 
 
 int dosave(void)
@@ -64,10 +65,10 @@ void savegame(struct memfile *mf)
 	/* Place flags, player info & moves at the beginning of the save.
 	 * This makes it possible to read them in nh_get_savegame_status without
 	 * parsing all the dungeon and level data */
-	mwrite(mf, &flags, sizeof(struct flag));
-	mwrite(mf, &u, sizeof(struct you));
-	mwrite(mf, &youmonst, sizeof(youmonst));
-	mwrite(mf, &moves, sizeof moves);
+	save_flags(mf);
+	save_you(mf, &u);
+	mwrite32(mf, moves);
+	save_mon(mf, &youmonst);
 	
 	/* store dungeon layout */
 	save_dungeon(mf, TRUE, FALSE);
@@ -77,14 +78,120 @@ void savegame(struct memfile *mf)
 	for (ltmp = 1; ltmp <= maxledgerno(); ltmp++)
 	    if (levels[ltmp])
 		count++;
-	mwrite(mf, &count, sizeof(count));
+	mwrite32(mf, count);
 	for (ltmp = 1; ltmp <= maxledgerno(); ltmp++) {
 		if (!levels[ltmp])
 		    continue;
-		mwrite(mf, &ltmp, sizeof ltmp); /* level number*/
+		mwrite8(mf, ltmp); /* level number*/
 		savelev(mf, ltmp, WRITE_SAVE); /* actual level*/
 	}
 	savegamestate(mf, WRITE_SAVE);
+}
+
+
+static void save_flags(struct memfile *mf)
+{
+	mwrite32(mf, flags.ident);
+	mwrite32(mf, flags.moonphase);
+	mwrite32(mf, flags.no_of_wizards);
+	mwrite32(mf, flags.init_role);
+	mwrite32(mf, flags.init_race);
+	mwrite32(mf, flags.init_gend);
+	mwrite32(mf, flags.init_align);
+	mwrite32(mf, flags.randomall);
+	mwrite32(mf, flags.pantheon);
+	mwrite32(mf, flags.run);
+	mwrite32(mf, flags.warntype);
+	mwrite32(mf, flags.warnlevel);
+	mwrite32(mf, flags.djinni_count);
+	mwrite32(mf, flags.ghost_count);
+	mwrite32(mf, flags.pickup_burden);
+	
+	mwrite8(mf, flags.autodig);
+	mwrite8(mf, flags.autoquiver);
+	mwrite8(mf, flags.beginner);
+	mwrite8(mf, flags.confirm);
+	mwrite8(mf, flags.debug);
+	mwrite8(mf, flags.explore);
+	mwrite8(mf, flags.female);
+	mwrite8(mf, flags.forcefight);
+	mwrite8(mf, flags.friday13);
+	mwrite8(mf, flags.legacy);
+	mwrite8(mf, flags.lit_corridor);
+	mwrite8(mf, flags.made_amulet);
+	mwrite8(mf, flags.mon_moving);
+	mwrite8(mf, flags.move);
+	mwrite8(mf, flags.mv);
+	mwrite8(mf, flags.nopick);
+	mwrite8(mf, flags.null);
+	mwrite8(mf, flags.pickup);
+	mwrite8(mf, flags.pushweapon);
+	mwrite8(mf, flags.rest_on_space);
+	mwrite8(mf, flags.safe_dog);
+	mwrite8(mf, flags.silent);
+	mwrite8(mf, flags.sortpack);
+	mwrite8(mf, flags.soundok);
+	mwrite8(mf, flags.sparkle);
+	mwrite8(mf, flags.tombstone);
+	mwrite8(mf, flags.verbose);
+	mwrite8(mf, flags.prayconfirm);
+	mwrite8(mf, flags.travel);
+	mwrite8(mf, flags.end_disclose);
+	mwrite8(mf, flags.menu_style);
+	mwrite8(mf, flags.elbereth_enabled);
+	mwrite8(mf, flags.rogue_enabled);
+	mwrite8(mf, flags.seduce_enabled);
+	mwrite8(mf, flags.bones_enabled);
+	
+	mwrite(mf, flags.inv_order, sizeof(flags.inv_order));
+}
+
+
+static void save_mvitals(struct memfile *mf)
+{
+	int i;
+	for (i = 0; i < NUMMONS; i++) {
+	    mwrite8(mf, mvitals[i].born);
+	    mwrite8(mf, mvitals[i].died);
+	    mwrite8(mf, mvitals[i].mvflags);
+	}
+}
+
+
+static void save_quest_status(struct memfile *mf)
+{
+	unsigned int qflags;
+	
+	qflags = (quest_status.first_start << 31) |
+	         (quest_status.met_leader << 30) |
+	         (quest_status.not_ready << 27) |
+	         (quest_status.pissed_off << 26) |
+	         (quest_status.got_quest << 25) |
+	         (quest_status.first_locate << 24) |
+	         (quest_status.met_intermed << 23) |
+	         (quest_status.got_final << 22) |
+	         (quest_status.made_goal << 19) |
+	         (quest_status.met_nemesis << 18) |
+	         (quest_status.killed_nemesis << 17) |
+	         (quest_status.in_battle << 16) |
+	         (quest_status.cheater << 15) |
+	         (quest_status.touched_artifact << 14) |
+	         (quest_status.offered_artifact << 13) |
+	         (quest_status.got_thanks << 12) |
+	         (quest_status.leader_is_dead << 11);
+	mwrite32(mf, qflags);
+	mwrite32(mf, quest_status.leader_m_id);
+}
+
+
+static void save_spellbook(struct memfile *mf)
+{
+	int i;
+	for (i = 0; i < MAXSPELL + 1; i++) {
+	    mwrite32(mf, spl_book[i].sp_know);
+	    mwrite16(mf, spl_book[i].sp_id);
+	    mwrite8(mf, spl_book[i].sp_lev);
+	}
 }
 
 
@@ -94,6 +201,8 @@ static void savegamestate(struct memfile *mf, int mode)
 	unsigned usteed_id = (u.usteed ? u.usteed->m_id : 0);
 	unsigned book_id;
 
+	mfmagic_set(mf, STATE_MAGIC);
+	
 	/* must come before migrating_objs and migrating_mons are freed */
 	save_timers(mf, level, mode, RANGE_GLOBAL);
 	save_light_sources(mf, level, mode, RANGE_GLOBAL);
@@ -102,39 +211,65 @@ static void savegamestate(struct memfile *mf, int mode)
 	saveobjchn(mf, migrating_objs, mode);
 	savemonchn(mf, migrating_mons, mode);
 	if (release_data(mode)) {
-	    invent = 0;
-	    migrating_objs = 0;
-	    migrating_mons = 0;
+	    invent = NULL;
+	    migrating_objs = NULL;
+	    migrating_mons = NULL;
 	}
-	mwrite(mf, mvitals, sizeof(mvitals));
+	save_mvitals(mf);
 
-	mwrite(mf, &quest_status, sizeof(struct q_score));
-	mwrite(mf, spl_book, sizeof(struct spell) * (MAXSPELL + 1));
+	save_quest_status(mf);
+	save_spellbook(mf);
 	save_artifacts(mf);
 	save_oracles(mf, mode);
 	if (ustuck_id)
-	    mwrite(mf, &ustuck_id, sizeof ustuck_id);
+	    mwrite32(mf, ustuck_id);
 	if (usteed_id)
-	    mwrite(mf, &usteed_id, sizeof usteed_id);
+	    mwrite32(mf, usteed_id);
+	
 	mwrite(mf, pl_character, sizeof pl_character);
 	mwrite(mf, pl_fruit, sizeof pl_fruit);
-	mwrite(mf, &current_fruit, sizeof current_fruit);
+	mwrite32(mf, current_fruit);
 	savefruitchn(mf, mode);
 	savenames(mf, mode);
 	save_waterlevel(mf, mode);
-	mwrite(mf, &lastinvnr, sizeof(lastinvnr));
+	mwrite32(mf, lastinvnr);
 	save_mt_state(mf);
 	save_track(mf);
 	save_food(mf);
 	book_id = book ? book->o_id : 0;
-	mwrite(mf, &book_id, sizeof(book_id));
-	mwrite(mf, &multi, sizeof(multi));
+	mwrite32(mf, book_id);
+	mwrite32(mf, multi);
 	save_rndmonst_state(mf);
+}
+
+
+static void save_location(struct memfile *mf, struct rm *loc)
+{
+	unsigned int lflags1;
+	unsigned short lflags2;
+	
+	lflags1 = (loc->mem_bg << 26) |
+	          (loc->mem_trap << 21) |
+	          (loc->mem_obj << 11) |
+	          (loc->mem_obj_mn << 2) |
+	          (loc->mem_invis << 1);
+	lflags2 = (loc->flags << 11) |
+	          (loc->horizontal << 10) |
+	          (loc->lit << 9) |
+	          (loc->waslit << 8) |
+	          (loc->roomno << 2) |
+	          (loc->edge << 1);
+	mwrite32(mf, lflags1);
+	mwrite8(mf, loc->typ);
+	mwrite8(mf, loc->seenv);
+	mwrite16(mf, lflags2);
 }
 
 
 void savelev(struct memfile *mf, xchar levnum, int mode)
 {
+	int x, y;
+	unsigned int lflags;
 	struct level *lev = levels[levnum];
 	
 	/* if we're tearing down the current level without saving anything
@@ -148,12 +283,18 @@ void savelev(struct memfile *mf, xchar levnum, int mode)
 		 * create statue trap then immediately level teleport) */
 		dmonsfree(lev);
 	}
+	
+	mfmagic_set(mf, LEVEL_MAGIC);
 
-	mwrite(mf, &levnum, sizeof(levnum));
-	mwrite(mf, &lev->z, sizeof(lev->z));
+	mwrite8(mf, lev->z.dnum);
+	mwrite8(mf, lev->z.dlevel);
 	mwrite(mf, lev->levname, sizeof(lev->levname));
-	mwrite(mf, lev->locations, sizeof(lev->locations));
-	mwrite(mf, &lev->lastmoves, sizeof(lev->lastmoves));
+	
+	for (x = 0; x < COLNO; x++)
+	    for (y = 0; y < ROWNO; y++)
+		save_location(mf, &lev->locations[x][y]);
+	
+	mwrite32(mf, lev->lastmoves);
 	mwrite(mf, &lev->upstair, sizeof(stairway));
 	mwrite(mf, &lev->dnstair, sizeof(stairway));
 	mwrite(mf, &lev->upladder, sizeof(stairway));
@@ -161,7 +302,20 @@ void savelev(struct memfile *mf, xchar levnum, int mode)
 	mwrite(mf, &lev->sstairs, sizeof(stairway));
 	mwrite(mf, &lev->updest, sizeof(dest_area));
 	mwrite(mf, &lev->dndest, sizeof(dest_area));
-	mwrite(mf, &lev->flags, sizeof(lev->flags));
+	mwrite8(mf, lev->flags.nfountains);
+	mwrite8(mf, lev->flags.nsinks);
+	
+	lflags = (lev->flags.has_shop << 31) | (lev->flags.has_vault << 30) |
+	         (lev->flags.has_zoo << 29) | (lev->flags.has_court << 28) |
+	         (lev->flags.has_morgue << 27) | (lev->flags.has_beehive << 26) |
+	         (lev->flags.has_barracks << 25) | (lev->flags.has_temple << 24) |
+	         (lev->flags.has_swamp << 23) | (lev->flags.noteleport << 22) |
+	         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
+	         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
+	         (lev->flags.graveyard << 17) | (lev->flags.is_maze_lev << 16) |
+	         (lev->flags.is_cavernous_lev << 15) | (lev->flags.arboreal << 14) |
+	         (lev->flags.forgotten << 13);
+	mwrite32(mf, lflags);
 	mwrite(mf, lev->doors, sizeof(lev->doors));
 	save_rooms(mf, lev);	/* no dynamic memory to reclaim */
 
@@ -195,53 +349,25 @@ skip_lots:
 }
 
 
-void mwrite(struct memfile *mf, const void *buf, unsigned int num)
-{
-	boolean do_realloc = FALSE;
-	while (mf->len < mf->pos + num) {
-	    mf->len += 4096;
-	    do_realloc = TRUE;
-	}
-	
-	if (do_realloc)
-	    mf->buf = realloc(mf->buf, mf->len);
-	memcpy(&mf->buf[mf->pos], buf, num);
-	mf->pos += num;
-}
-
-
-void store_mf(int fd, struct memfile *mf)
-{
-	int len, left, ret;
-	
-	len = left = mf->pos;
-	while (left) {
-	    ret = write(fd, &mf->buf[len - left], left);
-	    if (ret == -1) /* error */
-		goto out;
-	    left -= ret;
-	}
-
-out:
-	free(mf->buf);
-	mf->buf = NULL;
-	mf->pos = mf->len = 0;
-}
-
-
 static void savelevchn(struct memfile *mf, int mode)
 {
 	s_level	*tmplev, *tmplev2;
 	int cnt = 0;
 
-	for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next) cnt++;
+	for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next)
+	    cnt++;
 	if (perform_mwrite(mode))
-	    mwrite(mf, &cnt, sizeof(int));
+	    mwrite32(mf, cnt);
 
 	for (tmplev = sp_levchn; tmplev; tmplev = tmplev2) {
 	    tmplev2 = tmplev->next;
-	    if (perform_mwrite(mode))
-		mwrite(mf, tmplev, sizeof(s_level));
+	    if (perform_mwrite(mode)) {
+		save_d_flags(mf, tmplev->flags);
+		mwrite(mf, &tmplev->dlevel, sizeof(tmplev->dlevel));
+		mwrite(mf, tmplev->proto, sizeof(tmplev->proto));
+		mwrite8(mf, tmplev->boneid);
+		mwrite8(mf, tmplev->rndlevs);
+	    }
 	    if (release_data(mode))
 		free(tmplev);
 	}
@@ -259,11 +385,16 @@ static void savedamage(struct memfile *mf, struct level *lev, int mode)
 	for (tmp_dam = damageptr; tmp_dam; tmp_dam = tmp_dam->next)
 	    xl++;
 	if (perform_mwrite(mode))
-	    mwrite(mf, &xl, sizeof(xl));
+	    mwrite32(mf, xl);
 
 	while (xl--) {
-	    if (perform_mwrite(mode))
-		mwrite(mf, damageptr, sizeof(*damageptr));
+	    if (perform_mwrite(mode)) {
+		mwrite32(mf, damageptr->when);
+		mwrite32(mf, damageptr->cost);
+		mwrite8(mf, damageptr->place.x);
+		mwrite8(mf, damageptr->place.y);
+		mwrite8(mf, damageptr->typ);
+	    }
 	    tmp_dam = damageptr;
 	    damageptr = damageptr->next;
 	    if (release_data(mode))
@@ -274,74 +405,121 @@ static void savedamage(struct memfile *mf, struct level *lev, int mode)
 }
 
 
-static void saveobjchn(struct memfile *mf, struct obj *otmp, int mode)
+static void free_objchn(struct obj *otmp)
 {
 	struct obj *otmp2;
-	unsigned int xl;
-	int minusone = -1;
-
 	while (otmp) {
 	    otmp2 = otmp->nobj;
-	    if (perform_mwrite(mode)) {
-		xl = otmp->oxlth + otmp->onamelth;
-		mwrite(mf, &xl, sizeof(int));
-		mwrite(mf, otmp, xl + sizeof(struct obj));
-	    }
 	    if (Has_contents(otmp))
-		saveobjchn(mf, otmp->cobj,mode);
-	    if (release_data(mode)) {
-		otmp->where = OBJ_FREE;	/* set to free so dealloc will work */
-		otmp->timed = 0;	/* not timed any more */
-		otmp->lamplit = 0;	/* caller handled lights */
-		dealloc_obj(otmp);
-	    }
+		free_objchn(otmp->cobj);
+	    
+	    otmp->where = OBJ_FREE;	/* set to free so dealloc will work */
+	    otmp->timed = 0;	/* not timed any more */
+	    otmp->lamplit = 0;	/* caller handled lights */
+	    dealloc_obj(otmp);
 	    otmp = otmp2;
 	}
-	if (perform_mwrite(mode))
-	    mwrite(mf, &minusone, sizeof(int));
 }
+
+
+static void saveobjchn(struct memfile *mf, struct obj *otmp, int mode)
+{
+	int count = 0;
+	struct obj *otmp2;
+	
+	if (!perform_mwrite(mode)) {
+	    free_objchn(otmp);
+	    return;
+	}
+
+	mfmagic_set(mf, OBJCHAIN_MAGIC);
+	for (otmp2 = otmp; otmp2; otmp2 = otmp2->nobj)
+	    count++;
+	mwrite32(mf, count);
+	
+	while (otmp) {
+	    if (perform_mwrite(mode))
+		save_obj(mf, otmp);
+	    
+	    if (Has_contents(otmp))
+		saveobjchn(mf, otmp->cobj, mode);
+	    
+	    otmp = otmp->nobj;
+	}
+}
+
+
+static void free_monchn(struct monst *mon)
+{
+	struct monst *mtmp2;
+
+	while (mon) {
+	    mtmp2 = mon->nmon;
+	    
+	    if (mon->minvent)
+		free_objchn(mon->minvent);
+	    dealloc_monst(mon);
+	    mon = mtmp2;
+	}
+}
+
 
 static void savemonchn(struct memfile *mf, struct monst *mtmp, int mode)
 {
 	struct monst *mtmp2;
-	unsigned int xl;
-	int minusone = -1;
-	const struct permonst *monbegin = &mons[0];
-
-	if (perform_mwrite(mode))
-	    mwrite(mf, &monbegin, sizeof(monbegin));
+	unsigned int count = 0;
+	
+	if (!perform_mwrite(mode)) {
+	    free_monchn(mtmp);
+	    return;
+	}
+	
+	mfmagic_set(mf, MONCHAIN_MAGIC);
+	for (mtmp2 = mtmp; mtmp2; mtmp2 = mtmp2->nmon)
+	    count++;
+	mwrite32(mf, count);
 
 	while (mtmp) {
 	    mtmp2 = mtmp->nmon;
-	    if (perform_mwrite(mode)) {
-		xl = mtmp->mxlth + mtmp->mnamelth;
-		mwrite(mf, &xl, sizeof(int));
-		mwrite(mf, mtmp, xl + sizeof(struct monst));
-	    }
+	    save_mon(mf, mtmp);
+	    
 	    if (mtmp->minvent)
-		saveobjchn(mf,mtmp->minvent,mode);
-	    if (release_data(mode))
-		dealloc_monst(mtmp);
+		saveobjchn(mf, mtmp->minvent, mode);
 	    mtmp = mtmp2;
 	}
-	if (perform_mwrite(mode))
-	    mwrite(mf, &minusone, sizeof(int));
 }
+
 
 static void savetrapchn(struct memfile *mf, struct trap *trap, int mode)
 {
 	struct trap *trap2;
+	unsigned short tflags;
+	int count = 0;
+	
+	if (perform_mwrite(mode)) {
+	    mfmagic_set(mf, TRAPCHAIN_MAGIC);
+	    for (trap2 = trap; trap2; trap2 = trap2->ntrap)
+		count++;
+	    mwrite32(mf, count);
+	}
 
 	while (trap) {
 	    trap2 = trap->ntrap;
-	    if (perform_mwrite(mode))
-		mwrite(mf, trap, sizeof(struct trap));
+	    if (perform_mwrite(mode)) {
+		mwrite8(mf, trap->tx);
+		mwrite8(mf, trap->ty);
+		mwrite8(mf, trap->dst.dnum);
+		mwrite8(mf, trap->dst.dlevel);
+		mwrite8(mf, trap->launch.x);
+		mwrite8(mf, trap->launch.y);
+		tflags = (trap->ttyp << 11) | (trap->tseen << 10) |
+		         (trap->once << 9) | (trap->madeby_u << 8);
+		mwrite16(mf, tflags);
+	    }
 	    if (release_data(mode))
 		dealloc_trap(trap);
 	    trap = trap2;
 	}
-	if (perform_mwrite(mode))
-	    mwrite(mf, (void*)nul, sizeof(struct trap));
 }
 
 /* save all the fruit names and ID's; this is used only in saving whole games
@@ -352,20 +530,28 @@ static void savetrapchn(struct memfile *mf, struct trap *trap, int mode)
 void savefruitchn(struct memfile *mf, int mode)
 {
 	struct fruit *f2, *f1;
+	unsigned int count = 0;
+	
+	if (perform_mwrite(mode)) {
+	    mfmagic_set(mf, FRUITCHAIN_MAGIC);
+	    for (f1 = ffruit; f1; f1 = f1->nextf)
+		count++;
+	    mwrite32(mf, count);
+	}
 
 	f1 = ffruit;
 	while (f1) {
 	    f2 = f1->nextf;
-	    if (f1->fid >= 0 && perform_mwrite(mode))
-		mwrite(mf, f1, sizeof(struct fruit));
+	    if (f1->fid >= 0 && perform_mwrite(mode)) {
+		mwrite(mf, f1->fname, sizeof(f1->fname));
+		mwrite32(mf, f1->fid);
+	    }
 	    if (release_data(mode))
 		dealloc_fruit(f1);
 	    f1 = f2;
 	}
-	if (perform_mwrite(mode))
-	    mwrite(mf, (void *)nul, sizeof(struct fruit));
 	if (release_data(mode))
-	    ffruit = 0;
+	    ffruit = NULL;
 }
 
 /* also called by prscore(); this probably belongs in dungeon.c... */
@@ -388,8 +574,6 @@ void freedynamicdata(void)
 	free_invbuf();	/* let_to_name (invent.c) */
 	free_youbuf();	/* You_buf,&c (pline.c) */
 	tmp_at(DISP_FREEMEM, 0);	/* temporary display effects */
-# define freeobjchn(X)	(saveobjchn(0, X, FREE_SAVE),  X = 0)
-# define freemonchn(X)	(savemonchn(0, X, FREE_SAVE),  X = 0)
 # define freetrapchn(X)	(savetrapchn(0, X, FREE_SAVE), X = 0)
 # define freefruitchn()	 savefruitchn(0, FREE_SAVE)
 # define freenames()	 savenames(0, FREE_SAVE)
@@ -412,12 +596,12 @@ void freedynamicdata(void)
 	    free_light_sources(lev, RANGE_LEVEL);
 	    free_timers(lev, RANGE_GLOBAL);
 	    free_light_sources(lev, RANGE_GLOBAL);
-	    freemonchn(lev->monlist);
+	    free_monchn(lev->monlist);
 	    free_worm(lev);		/* release worm segment information */
 	    freetrapchn(lev->lev_traps);
-	    freeobjchn(lev->objlist);
-	    freeobjchn(lev->buriedobjlist);
-	    freeobjchn(lev->billobjs);
+	    free_objchn(lev->objlist);
+	    free_objchn(lev->buriedobjlist);
+	    free_objchn(lev->billobjs);
 	    free_engravings(lev);
 	    freedamage(lev);
 	    
@@ -425,10 +609,10 @@ void freedynamicdata(void)
 	}
 
 	/* game-state data */
-	freeobjchn(invent);
-	freeobjchn(migrating_objs);
-	freemonchn(migrating_mons);
-	freemonchn(mydogs);		/* ascension or dungeon escape */
+	free_objchn(invent);
+	free_objchn(migrating_objs);
+	free_monchn(migrating_mons);
+	free_monchn(mydogs);		/* ascension or dungeon escape */
      /* freelevchn();	[folded into free_dungeons()] */
 	free_animals();
 	free_oracles();

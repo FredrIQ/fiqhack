@@ -23,10 +23,9 @@ struct monst *christen_monst(struct monst *mtmp, const char *name)
 		if (lth) strcpy(NAME(mtmp), name);
 		return mtmp;
 	}
-	mtmp2 = newmonst(mtmp->mxlth + lth);
+	mtmp2 = newmonst(mtmp->mxtyp, lth);
 	*mtmp2 = *mtmp;
-	memcpy(mtmp2->mextra,
-		      mtmp->mextra, mtmp->mxlth);
+	memcpy(mtmp2->mextra, mtmp->mextra, mtmp->mxlth);
 	mtmp2->mnamelth = lth;
 	if (lth) strcpy(NAME(mtmp2), name);
 	replmon(mtmp,mtmp2);
@@ -143,57 +142,60 @@ struct obj *realloc_obj(struct obj *obj, int oextra_size, void *oextra_src,
 	*otmp = *obj;	/* the cobj pointer is copied to otmp */
 	if (oextra_size) {
 	    if (oextra_src)
-		memcpy(otmp->oextra, oextra_src,
-							oextra_size);
+		memcpy(otmp->oextra, oextra_src, oextra_size);
 	} else {
 	    otmp->oattached = OATTACHED_NOTHING;
 	}
 	otmp->oxlth = oextra_size;
-
 	otmp->onamelth = oname_size;
-	otmp->timed = 0;	/* not timed, yet */
-	otmp->lamplit = 0;	/* ditto */
-	/* __GNUC__ note:  if the assignment of otmp->onamelth immediately
-	   precedes this `if' statement, a gcc bug will miscompile the
-	   test on vax (`insv' instruction used to store bitfield does
-	   not set condition codes, but optimizer behaves as if it did).
-	   gcc-2.7.2.1 finally fixed this. */
+	
 	if (oname_size) {
 	    if (name)
 		strcpy(ONAME(otmp), name);
 	}
 
-	if (obj->owornmask) {
-		boolean save_twoweap = u.twoweap;
-		/* unwearing the old instance will clear dual-wield mode
-		   if this object is either of the two weapons */
-		setworn(NULL, obj->owornmask);
-		setworn(otmp, otmp->owornmask);
-		u.twoweap = save_twoweap;
+	/* !obj->olev means the obj is currently being restored and no pointer
+	 * from or to it is valid. Re-equipping, timer linking, etc. will happen
+	 * elsewhere in that case. */
+	if (obj->olev) { 
+	    if (obj->owornmask) {
+		    boolean save_twoweap = u.twoweap;
+		    /* unwearing the old instance will clear dual-wield mode
+		    if this object is either of the two weapons */
+		    setworn(NULL, obj->owornmask);
+		    setworn(otmp, otmp->owornmask);
+		    u.twoweap = save_twoweap;
+	    }
+
+	    /* replace obj with otmp */
+	    replace_object(obj, otmp);
+
+	    /* fix ocontainer pointers */
+	    if (Has_contents(obj)) {
+		    struct obj *inside;
+
+		    for (inside = obj->cobj; inside; inside = inside->nobj)
+			    inside->ocontainer = otmp;
+	    }
+
+	    /* move timers and light sources from obj to otmp */
+	    otmp->timed = 0;	/* not timed, yet */
+	    if (obj->timed) obj_move_timers(obj, otmp);
+	    otmp->lamplit = 0;	/* ditto */
+	    if (obj->lamplit) obj_move_light_source(obj, otmp);
+
+	    /* objects possibly being manipulated by multi-turn occupations
+	    which have been interrupted but might be subsequently resumed */
+	    if (obj->oclass == FOOD_CLASS)
+		food_substitution(obj, otmp);	/* eat food or open tin */
+	    else if (obj->oclass == SPBOOK_CLASS)
+		book_substitution(obj, otmp);	/* read spellbook */
+	} else {
+	    /* make sure dealloc_obj doesn't explode */
+	    obj->where = OBJ_FREE;
+	    obj->timed = FALSE;
+	    obj->lamplit = FALSE;
 	}
-
-	/* replace obj with otmp */
-	replace_object(obj, otmp);
-
-	/* fix ocontainer pointers */
-	if (Has_contents(obj)) {
-		struct obj *inside;
-
-		for (inside = obj->cobj; inside; inside = inside->nobj)
-			inside->ocontainer = otmp;
-	}
-
-	/* move timers and light sources from obj to otmp */
-	if (obj->timed) obj_move_timers(obj, otmp);
-	if (obj->lamplit) obj_move_light_source(obj, otmp);
-
-	/* objects possibly being manipulated by multi-turn occupations
-	   which have been interrupted but might be subsequently resumed */
-	if (obj->oclass == FOOD_CLASS)
-	    food_substitution(obj, otmp);	/* eat food or open tin */
-	else if (obj->oclass == SPBOOK_CLASS)
-	    book_substitution(obj, otmp);	/* read spellbook */
-
 	/* obfree(obj, otmp);	now unnecessary: no pointers on bill */
 	dealloc_obj(obj);	/* let us hope nobody else saved a pointer */
 	return otmp;

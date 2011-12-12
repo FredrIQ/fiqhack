@@ -883,8 +883,7 @@ struct obj *obj_attach_mid(struct obj *obj, unsigned mid)
     else {
 	otmp = obj;
 	otmp->oxlth = sizeof(mid);
-	memcpy(otmp->oextra, (void *)&mid,
-								sizeof(mid));
+	memcpy(otmp->oextra, (void *)&mid, sizeof(mid));
     }
     if (otmp && otmp->oxlth) otmp->oattached = OATTACHED_M_ID;	/* mark it */
     return otmp;
@@ -924,11 +923,9 @@ struct monst *get_mtraits(struct obj *obj, boolean copyof)
 		mtmp = (struct monst *)obj->oextra;
 	if (mtmp) {
 	    if (copyof) {
-		int lth = mtmp->mxlth + mtmp->mnamelth;
-		mnew = newmonst(lth);
-		lth += sizeof(struct monst);
-		memcpy(mnew,
-				mtmp, lth);
+		int lth = mtmp->mxlth + mtmp->mnamelth + sizeof(struct monst);
+		mnew = newmonst(mtmp->mxtyp, mtmp->mnamelth);
+		memcpy(mnew, mtmp, lth);
 	    } else {
 	      /* Never insert this returned pointer into mon chains! */
 	    	mnew = mtmp;
@@ -1493,6 +1490,127 @@ void set_obj_level(struct level *lev, struct obj *obj)
     obj->olev = lev;
     for (cobj = obj->cobj; cobj; obj = obj->nobj)
 	set_obj_level(lev, cobj);
+}
+
+
+struct obj *restore_obj(struct memfile *mf)
+{
+    unsigned int oflags;
+    char namelen;
+    struct obj *otmp;
+    
+    mfmagic_check(mf, OBJ_MAGIC);
+    
+    namelen = mread32(mf);
+    otmp = newobj(namelen);
+    memset(otmp, 0, namelen + sizeof(struct obj));
+    
+    otmp->o_id = mread32(mf);
+    otmp->owt = mread32(mf);
+    otmp->quan = mread32(mf);
+    otmp->corpsenm = mread32(mf);
+    otmp->oeaten = mread32(mf);
+    otmp->age = mread32(mf);
+    otmp->owornmask = mread32(mf);
+    oflags = mread32(mf);
+    
+    otmp->otyp = mread16(mf);
+    
+    otmp->ox = mread8(mf);
+    otmp->oy = mread8(mf);
+    otmp->spe = mread8(mf);
+    otmp->oclass = mread8(mf);
+    otmp->invlet = mread8(mf);
+    otmp->oartifact = mread8(mf);
+    otmp->where = mread8(mf);
+    otmp->timed = mread8(mf);
+    otmp->cobj = mread8(mf) ? (void*)1 : NULL; /* set the pointer to 1 if there will be contents */
+    otmp->onamelth = namelen;
+    
+    otmp->cursed	= (oflags >> 31) & 1;
+    otmp->blessed	= (oflags >> 30) & 1;
+    otmp->unpaid	= (oflags >> 29) & 1;
+    otmp->no_charge	= (oflags >> 28) & 1;
+    otmp->known 	= (oflags >> 27) & 1;
+    otmp->dknown	= (oflags >> 26) & 1;
+    otmp->bknown	= (oflags >> 25) & 1;
+    otmp->rknown	= (oflags >> 24) & 1;
+    otmp->oeroded	= (oflags >> 22) & 3;
+    otmp->oeroded2	= (oflags >> 20) & 3;
+    otmp->oerodeproof	= (oflags >> 19) & 1;
+    otmp->olocked	= (oflags >> 18) & 1;
+    otmp->obroken	= (oflags >> 17) & 1;
+    otmp->otrapped	= (oflags >> 16) & 1;
+    otmp->recharged	= (oflags >> 13) & 7;
+    otmp->lamplit	= (oflags >> 12) & 1;
+    otmp->greased	= (oflags >> 11) & 1;
+    otmp->oattached	= (oflags >>  9) & 3;
+    otmp->in_use	= (oflags >>  8) & 1;
+    otmp->was_thrown	= (oflags >>  7) & 1;
+    otmp->bypass	= (oflags >>  6) & 1;
+    
+    if (otmp->onamelth)
+	mread(mf, ONAME(otmp), otmp->onamelth);
+    
+    if (otmp->oattached == OATTACHED_MONST) {
+	struct monst *mtmp = restore_mon(mf);
+	int monlen = sizeof(struct monst) + mtmp->mnamelth + mtmp->mxlth;
+	otmp = realloc_obj(otmp, monlen, mtmp, otmp->onamelth, ONAME(otmp));
+	dealloc_monst(mtmp);
+    } else if (otmp->oattached == OATTACHED_M_ID) {
+	unsigned int mid = mread32(mf);
+	otmp = obj_attach_mid(otmp, mid);
+    }
+    
+    return otmp;
+}
+
+
+void save_obj(struct memfile *mf, struct obj *obj)
+{
+    unsigned int oflags;
+    
+    oflags = (obj->cursed << 31) | (obj->blessed << 30) | (obj->unpaid << 29) |
+	     (obj->no_charge << 28) | (obj->known << 27) | (obj->dknown << 26) |
+	     (obj->bknown << 25) | (obj->rknown << 24) | (obj->oeroded << 22) |
+	     (obj->oeroded2 << 20) | (obj->oerodeproof << 19) | (obj->olocked << 18) |
+	     (obj->obroken << 17) | (obj->otrapped << 16) | (obj->recharged << 13) |
+	     (obj->lamplit << 12) | (obj->greased << 11) | (obj->oattached << 9) |
+	     (obj->in_use << 8) | (obj->was_thrown << 7) | (obj->bypass << 6);
+    
+    mfmagic_set(mf, OBJ_MAGIC);
+    
+    mwrite32(mf, obj->onamelth);    
+    mwrite32(mf, obj->o_id);
+    mwrite32(mf, obj->owt);
+    mwrite32(mf, obj->quan);
+    mwrite32(mf, obj->corpsenm);
+    mwrite32(mf, obj->oeaten);
+    mwrite32(mf, obj->age);
+    mwrite32(mf, obj->owornmask);
+    mwrite32(mf, oflags);
+    
+    mwrite16(mf, obj->otyp);
+    
+    mwrite8(mf, obj->ox);
+    mwrite8(mf, obj->oy);
+    mwrite8(mf, obj->spe);
+    mwrite8(mf, obj->oclass);
+    mwrite8(mf, obj->invlet);
+    mwrite8(mf, obj->oartifact);
+    mwrite8(mf, obj->where);
+    mwrite8(mf, obj->timed);
+    /* no need to save the value of the cobj pointer, but we will need to know
+     * if there is something in here that needs to be restored */
+    mwrite8(mf, obj->cobj ? 1 : 0);
+    
+    if (obj->onamelth)
+	mwrite(mf, ONAME(obj), obj->onamelth);
+    
+    if (obj->oattached == OATTACHED_MONST)
+	save_mon(mf, (struct monst*)obj->oextra);
+    else if (obj->oattached == OATTACHED_M_ID)
+	mwrite32(mf, *(unsigned int*)obj->oextra);
 }
 
 /*mkobj.c*/

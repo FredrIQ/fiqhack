@@ -20,7 +20,7 @@ const char	* const plusattr[] = {
 static
 const struct innate {
 	schar	ulevel;
-	long	*ability;
+	unsigned int *ability;
 	const char *gainstr, *losestr;
 }	arc_abil[] = { {	 1, &(HStealth), "", "" },
 		     {   1, &(HFast), "", "" },
@@ -94,7 +94,7 @@ const struct innate {
 		     {	 0, 0, 0, 0 } };
 
 static void exerper(void);
-static void postadjabil(long *);
+static void postadjabil(unsigned int *);
 
 /* adjust an attribute; return TRUE if change is made, FALSE otherwise */
 boolean adjattrib(
@@ -490,7 +490,7 @@ void redist_attr(void)
 	encumber_msg();
 }
 
-static void postadjabil(long *ability)
+static void postadjabil(unsigned int *ability)
 {
 	if (!ability) return;
 	if (ability == &(HWarning) || ability == &(HSee_invisible))

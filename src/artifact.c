@@ -83,6 +83,8 @@ void init_artifacts(void)
 
 void save_artifacts(struct memfile *mf)
 {
+	/* artiexist and artidisco are arrays of bytes, so writing them in one
+	 * go is safe and portable */
 	mwrite(mf, artiexist, sizeof artiexist);
 	mwrite(mf, artidisco, sizeof artidisco);
 }
@@ -310,7 +312,7 @@ boolean protects(int adtyp, struct obj *otmp)
  */
 void set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
 {
-	long *mask = 0;
+	unsigned int *mask = 0;
 	const struct artifact *oart = get_artifact(otmp);
 	uchar dtyp;
 	long spfx;

@@ -18,7 +18,7 @@ struct obj {
 #define ocarry		v.v_ocarry
 
 	struct obj *cobj;	/* contents list for containers */
-	long o_id;
+	unsigned int o_id;
 	struct level *olev;	/* the level it is on */
 	xchar ox,oy;
 	short otyp;		/* object class number */

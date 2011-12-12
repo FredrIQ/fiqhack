@@ -103,19 +103,22 @@ unsigned int mt_nextstate(void)
 
 void save_mt_state(struct memfile *mf)
 {
-    unsigned int pos = next - state;
-    mwrite(mf, state, sizeof(state));
-    mwrite(mf, &pos, sizeof(pos));
-    mwrite(mf, &left, sizeof(left));
+    unsigned int i, pos = next - state;
+    
+    for (i = 0; i < N+1; i++)
+	mwrite32(mf, state[i]);
+    mwrite32(mf, pos);
+    mwrite32(mf, left);
 }
 
 
 void restore_mt_state(struct memfile *mf)
 {
-    unsigned int pos;
-    mread(mf, state, sizeof(state));
-    mread(mf, &pos, sizeof(pos));
-    mread(mf, &left, sizeof(left));
+    unsigned int i, pos;
+    for (i = 0; i < N+1; i++)
+	state[i] = mread32(mf);
+    pos = mread32(mf);
+    left = mread32(mf);
     next = &state[pos];
 }
 

@@ -43,17 +43,17 @@ struct u_event {
  * times a challenge has been violated.
  */
 struct u_conduct {		/* number of times... */
-	long	unvegetarian;	/* eaten any animal */
-	long	unvegan;	/* ... or any animal byproduct */
-	long	food;		/* ... or any comestible */
-	long	gnostic;	/* used prayer, priest, or altar */
-	long	weaphit;	/* hit a monster with a weapon */
-	long	killer;		/* killed a monster yourself */
-	long	literate;	/* read something (other than BotD) */
-	long	polypiles;	/* polymorphed an object */
-	long	polyselfs;	/* transformed yourself */
-	long	wishes;		/* used a wish */
-	long	wisharti;	/* wished for an artifact */
+	unsigned int unvegetarian;/* eaten any animal */
+	unsigned int unvegan;	/* ... or any animal byproduct */
+	unsigned int food;	/* ... or any comestible */
+	unsigned int gnostic;	/* used prayer, priest, or altar */
+	unsigned int weaphit;	/* hit a monster with a weapon */
+	unsigned int killer;	/* killed a monster yourself */
+	unsigned int literate;	/* read something (other than BotD) */
+	unsigned int polypiles;	/* polymorphed an object */
+	unsigned int polyselfs;	/* transformed yourself */
+	unsigned int wishes;	/* used a wish */
+	unsigned int wisharti;	/* wished for an artifact */
 				/* genocides already listed at end of game */
 };
 
@@ -62,9 +62,8 @@ struct u_conduct {		/* number of times... */
 struct you {
 	xchar ux, uy;
 	schar dx, dy;		/* direction of the ongoing multi-turn move */
-	schar di;		/* direction of FF */
 	xchar tx, ty;		/* destination of travel */
-	xchar ux0, uy0;		/* initial position FF */
+	xchar ux0, uy0;		/* initial position of a move */
 	d_level uz, uz0;	/* your level on this and the previous turn */
 	d_level utolev;		/* level monster teleported you to, or uz */
 	uchar utotype;		/* bitmask of goto_level() flags for utolev */
@@ -167,14 +166,14 @@ struct you {
 	int ugangr;			/* if the gods are angry at you */
 	int ugifts;			/* number of artifacts bestowed */
 	int ublessed, ublesscnt;	/* blessing/duration from #pray */
-	long	umoney0;
-	long	uexp, urexp;
-	long	ucleansed;	/* to record moves when player was cleansed */
-	long	usleep;		/* sleeping; monstermove you last started */
+	int	umoney0;
+	int	uexp, urexp;
+	int	ucleansed;	/* to record moves when player was cleansed */
+	int	usleep;		/* sleeping; monstermove you last started */
 	int uinvault;
 	struct monst *ustuck;
 	struct monst *usteed;
-	long ugallop;
+	int ugallop;
 	int urideturns;
 	int	umortality;		/* how many times you died */
 	int ugrave_arise; /* you die and become something aside from a ghost */

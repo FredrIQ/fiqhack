@@ -16,15 +16,15 @@
 #define TABU	7
 
 struct edog {
-	long droptime;			/* moment dog dropped object */
-	unsigned dropdist;		/* dist of drpped obj from @ */
+	unsigned int droptime;		/* moment dog dropped object */
+	unsigned int dropdist;		/* dist of drpped obj from @ */
 	int apport;			/* amount of training */
-	long whistletime;		/* last time he whistled */
-	long hungrytime;		/* will get hungry at this time */
-	coord ogoal;			/* previous goal location */
+	unsigned int whistletime;	/* last time he whistled */
+	unsigned int hungrytime;	/* will get hungry at this time */
 	int abuse;			/* track abuses to this pet */
 	int revivals;			/* count pet deaths */
 	int mhpmax_penalty;		/* while starving, points reduced */
+	coord ogoal;			/* previous goal location */
 	unsigned killed_by_u:1;		/* you attempted to kill him */
 };
 #define EDOG(mon)	((struct edog *)&(mon)->mextra[0])

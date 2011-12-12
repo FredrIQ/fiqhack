@@ -56,17 +56,25 @@ coord *gettrack(int x, int y)
 
 void save_track(struct memfile *mf)
 {
-    mwrite(mf, utrack, sizeof(utrack));
-    mwrite(mf, &utcnt, sizeof(utcnt));
-    mwrite(mf, &utpnt, sizeof(utpnt));
+    int i;
+    for (i = 0; i < UTSZ; i++) {
+	mwrite8(mf, utrack[i].x);
+	mwrite8(mf, utrack[i].y);
+    }
+    mwrite32(mf, utcnt);
+    mwrite32(mf, utpnt);
 }
 
 
 void restore_track(struct memfile *mf)
 {
-    mread(mf, utrack, sizeof(utrack));
-    mread(mf, &utcnt, sizeof(utcnt));
-    mread(mf, &utpnt, sizeof(utpnt));
+    int i;
+    for (i = 0; i < UTSZ; i++) {
+	utrack[i].x = mread8(mf);
+	utrack[i].y = mread8(mf);
+    }
+    utcnt = mread32(mf);
+    utpnt = mread32(mf);
 }
 
 /*track.c*/

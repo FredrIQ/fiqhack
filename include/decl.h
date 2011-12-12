@@ -115,8 +115,6 @@ extern struct sinfo {
 extern char tune[6];
 
 #define MAXLINFO (MAXDUNGEON * MAXLEVEL)
-extern struct linfo level_info[MAXLINFO];
-
 extern boolean restoring;
 
 extern const char quitchars[];
@@ -135,7 +133,7 @@ extern int saved_cmd;
 extern int killer_format;
 extern const char *killer;
 extern const char *delayed_killer;
-extern long done_money;
+extern int done_money;
 extern char killer_buf[BUFSZ];
 extern const char *configfile;
 extern char plname[PL_NSIZ];
@@ -161,7 +159,7 @@ extern struct dig_info {		/* apply.c, hack.c */
 	boolean down, chew, warned, quiet;
 } digging;
 
-extern long moves;
+extern unsigned int moves;
 extern long wailmsg;
 
 extern boolean in_mklev;

@@ -80,15 +80,15 @@ void new_light_source(struct level *lev, xchar x, xchar y, int range, int type, 
 void del_light_source(struct level *lev, int type, void *id)
 {
     light_source *curr, *prev;
-    void * tmp_id;
+    long tmp_id;
 
     /* need to be prepared for dealing a with light source which
        has only been partially restored during a level change
        (in particular: chameleon vs prot. from shape changers) */
     switch (type) {
-    case LS_OBJECT:	tmp_id = (void *)(((struct obj *)id)->o_id);
+    case LS_OBJECT:	tmp_id = (((struct obj *)id)->o_id);
 			break;
-    case LS_MONSTER:	tmp_id = (void *)(((struct monst *)id)->m_id);
+    case LS_MONSTER:	tmp_id = (((struct monst *)id)->m_id);
 			break;
     default:		tmp_id = 0;
 			break;
@@ -96,7 +96,7 @@ void del_light_source(struct level *lev, int type, void *id)
 
     for (prev = 0, curr = lev->lev_lights; curr; prev = curr, curr = curr->next) {
 	if (curr->type != type) continue;
-	if (curr->id == ((curr->flags & LSF_NEEDS_FIXUP) ? tmp_id : id)) {
+	if (curr->id == ((curr->flags & LSF_NEEDS_FIXUP) ? (void*)tmp_id : id)) {
 	    if (prev)
 		prev->next = curr->next;
 	    else
@@ -247,7 +247,8 @@ void save_light_sources(struct memfile *mf, struct level *lev, int mode, int ran
 
     if (perform_mwrite(mode)) {
 	count = maybe_write_ls(mf, lev, range, FALSE);
-	mwrite(mf, &count, sizeof count);
+	mwrite32(mf, count);
+	
 	actual = maybe_write_ls(mf, lev, range, TRUE);
 	if (actual != count)
 	    panic("counted %d light sources, wrote %d! [range=%d]",
@@ -291,14 +292,22 @@ void save_light_sources(struct memfile *mf, struct level *lev, int mode, int ran
 void restore_light_sources(struct memfile *mf, struct level *lev)
 {
     int count;
+    long id;
     light_source *ls;
 
     /* restore elements */
-    mread(mf, &count, sizeof count);
+    count = mread32(mf);
 
     while (count-- > 0) {
 	ls = malloc(sizeof(light_source));
-	mread(mf, ls, sizeof(light_source));
+	ls->type = mread32(mf);
+	ls->range = mread16(mf);
+	ls->flags = mread16(mf);
+	id = mread32(mf); /* prevent: "cast to pointer from integer of different size" */
+	ls->id = (void*)id;
+	ls->x = mread8(mf);
+	ls->y = mread8(mf);
+	
 	ls->next = lev->lev_lights;
 	lev->lev_lights = ls;
     }
@@ -378,39 +387,28 @@ static int maybe_write_ls(struct memfile *mf, struct level *lev, int range, bool
 /* Write a light source structure to disk. */
 static void write_ls(struct memfile *mf, light_source *ls)
 {
-    void * arg_save;
     struct obj *otmp;
     struct monst *mtmp;
 
-    if (ls->type == LS_OBJECT || ls->type == LS_MONSTER) {
-	if (ls->flags & LSF_NEEDS_FIXUP)
-	    mwrite(mf, ls, sizeof(light_source));
-	else {
-	    /* replace object pointer with id for write, then put back */
-	    arg_save = ls->id;
-	    if (ls->type == LS_OBJECT) {
-		otmp = (struct obj *)ls->id;
-		ls->id = (void *)otmp->o_id;
-#ifdef DEBUG
-		if (find_oid((unsigned)ls->id) != otmp)
-		    panic("write_ls: can't find obj #%u!", (unsigned)ls->id);
-#endif
-	    } else { /* ls->type == LS_MONSTER */
-		mtmp = (struct monst *)ls->id;
-		ls->id = (void *)mtmp->m_id;
-#ifdef DEBUG
-		if (find_mid((unsigned)ls->id, FM_EVERYWHERE) != mtmp)
-		    panic("write_ls: can't find mon #%u!", (unsigned)ls->id);
-#endif
-	    }
-	    ls->flags |= LSF_NEEDS_FIXUP;
-	    mwrite(mf, ls, sizeof(light_source));
-	    ls->id = arg_save;
-	    ls->flags &= ~LSF_NEEDS_FIXUP;
-	}
-    } else {
+    mwrite32(mf, ls->type);
+    mwrite16(mf, ls->range);
+    
+    if ((ls->flags & LSF_NEEDS_FIXUP)) {
+	mwrite16(mf, ls->flags);
+	mwrite32(mf, (*(int32_t*)ls->id));
+    } else if (ls->type == LS_OBJECT) {
+	mwrite16(mf, ls->flags | LSF_NEEDS_FIXUP);
+	otmp = (struct obj *)ls->id;
+	mwrite32(mf, otmp->o_id);
+    } else if (ls->type == LS_MONSTER) {
+	mwrite16(mf, ls->flags | LSF_NEEDS_FIXUP);
+	mtmp = (struct monst *)ls->id;
+	mwrite32(mf, mtmp->m_id);
+    } else
 	impossible("write_ls: bad type (%d)", ls->type);
-    }
+    
+    mwrite8(mf, ls->x);
+    mwrite8(mf, ls->y);
 }
 
 /* Change light source's ID from src to dest. */

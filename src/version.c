@@ -60,8 +60,7 @@ boolean check_version(struct version_info *version_data, const char *filename,
 		   (version_data->feature_set & ~IGNORED_FEATURES) !=
 			  (VERSION_FEATURES & ~IGNORED_FEATURES) ||
 #endif
-		   version_data->entity_count != VERSION_SANITY1 ||
-		   version_data->struct_sizes != VERSION_SANITY2) {
+		   version_data->entity_count != VERSION_SANITY1) {
 	    if (complain)
 		pline("Configuration incompatibility for file \"%s\".",
 		      filename);
@@ -77,7 +76,9 @@ boolean uptodate(struct memfile *mf, const char *name)
     struct version_info vers_info;
     boolean verbose = name ? TRUE : FALSE;
 
-    mread(mf, &vers_info, sizeof(vers_info));
+    vers_info.incarnation = mread32(mf);
+    vers_info.feature_set = mread32(mf);
+    vers_info.entity_count = mread32(mf);
     if (!check_version(&vers_info, name, verbose))
 	return FALSE;
     
@@ -86,13 +87,9 @@ boolean uptodate(struct memfile *mf, const char *name)
 
 void store_version(struct memfile *mf)
 {
-	static const struct version_info version_data = {
-			VERSION_NUMBER, VERSION_FEATURES,
-			VERSION_SANITY1, VERSION_SANITY2
-	};
-
-	/* bwrite() before bufon() uses plain write() */
-	mwrite(mf, &version_data, sizeof(version_data));
+	mwrite32(mf, VERSION_NUMBER);
+	mwrite32(mf, VERSION_FEATURES);
+	mwrite32(mf, VERSION_SANITY1);
 	return;
 }
 
