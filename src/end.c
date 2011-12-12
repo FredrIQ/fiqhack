@@ -696,6 +696,11 @@ void done(int how)
 	 *	The game is now over...
 	 */
 	program_state.gameover = 1;
+	
+	/* don't do the whole post-game dance if the game exploded */
+	if (how == PANICKED)
+	    terminate();
+	
 	log_command_result();
 	write_log_toptenentry(logfile, how);
 	log_finish(LS_DONE);
@@ -756,25 +761,21 @@ void done(int how)
 			strcpy(killbuf, "quit while already on Charon's boat");
 		}
 	}
-	if (how == ESCAPED || how == PANICKED)
+	if (how == ESCAPED)
 		killer_format = NO_KILLER_PREFIX;
 
-	if (how != PANICKED) {
-	    /* these affect score and/or bones, but avoid them during panic */
-	    taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
-	    paygd();
-	    clearpriests();
-	} else	taken = FALSE;	/* lint; assert( !bones_ok ); */
+	/* these affect score and/or bones, but avoid them during panic */
+	taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
+	paygd();
+	clearpriests();
 
 	win_pause_output(P_MESSAGE);
 
-	if (how != PANICKED) {
-	    if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
-		disclose(how, taken);
-	
-	    begin_dump(how);
-	    dump_disclose(how);
-	}
+	if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
+	    disclose(how, taken);
+    
+	begin_dump(how);
+	dump_disclose(how);
 	
 	/* finish_paybill should be called after disclosure but before bones */
 	if (bones_ok && taken) finish_paybill();
