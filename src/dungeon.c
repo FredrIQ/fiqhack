@@ -692,12 +692,10 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    char tbuf[BUFSZ];
 	    sprintf(tbuf, "Cannot open dungeon description - \"%s",
 		DUNGEON_FILE);
-# if defined(DLB)
 	    strcat(tbuf, "\" from ");
 	    strcat(tbuf, "\n\"");
 	    if (fqn_prefix[DATAPREFIX]) strcat(tbuf, fqn_prefix[DATAPREFIX]);
 	    strcat(tbuf, DLBFILE);
-# endif
 	    strcat(tbuf, "\" file!");
 #ifdef WIN32
 	    interject_assistance(1, INTERJECT_PANIC, tbuf,

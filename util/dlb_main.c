@@ -11,8 +11,6 @@
 
 static void xexit(int);
 
-#ifdef DLB
-
 #define DLB_DIRECTORY "Directory"	/* name of lib directory */
 #define LIBLISTFILE "dlb.lst"		/* default list file */
 
@@ -66,8 +64,7 @@ static const char *list_file = LIBLISTFILE;
  *  C dir	chdir to dir (used ONCE, not like tar's -C)
  */
 
-static void
-usage()
+static void usage(void)
 {
     printf("Usage: %s [ctxCIfv] arguments... [files...]\n", progname);
     printf("  default library is %s\n", library_file);
@@ -75,8 +72,7 @@ usage()
     xexit(EXIT_FAILURE);
 }
 
-static void
-verbose_help()
+static void verbose_help(void)
 {
     static const char *long_help[] = {
 	"",
@@ -102,43 +98,30 @@ verbose_help()
     usage();
 }
 
-static void
-Write(out,buf,len)
-    int out;
-    char *buf;
-    long len;
+static void Write(int out, char *buf, long len)
 {
     if (write(out,buf,len) != len) {
-	printf("Write Error in '%s'\n",library_file);
+	printf("Write Error in '%s'\n", library_file);
 	xexit(EXIT_FAILURE);
     }
 }
 
 
-char *
-eos(s)
-    char *s;
+char *eos(char *s)
 {
     while (*s) s++;
     return s;
 }
 
 /* open_library(dlb.c) needs this (which normally comes from src/files.c) */
-FILE *
-fopen_datafile(filename, mode)
-const char *filename, *mode;
+FILE *fopen_datafile(const char *filename, const char *mode)
 {
     return fopen(filename, mode);
 }
 
-#endif	/* DLB */
 
-int
-main(argc, argv)
-    int argc;
-    char **argv;
+int main(int argc, char *argv[])
 {
-#ifdef DLB
     int i, r;
     int ap=2;				/* argument pointer */
     int cp;				/* command pointer */
@@ -153,7 +136,7 @@ main(argc, argv)
 	/* doesn't return */
     }
 
-    for (cp=0;argv[1][cp];cp++){
+    for (cp=0; argv[1][cp]; cp++){
 	switch(argv[1][cp]){
 	    default:
 		usage();	/* doesn't return */
@@ -316,7 +299,7 @@ main(argc, argv)
 								MAX_DLB_FILES);
 		    break;
 		}
-		ld[nfiles].fname = (char *) alloc(strlen(argv[ap]) + 1);
+		ld[nfiles].fname = malloc(strlen(argv[ap]) + 1);
 		strcpy(ld[nfiles].fname, argv[ap]);
 	    }
 	}
@@ -337,7 +320,7 @@ main(argc, argv)
 		    break;
 		}
 		*(eos(buf)-1) = '\0';	/* strip newline */
-		ld[nfiles].fname = (char *) alloc(strlen(buf) + 1);
+		ld[nfiles].fname = malloc(strlen(buf) + 1);
 		strcpy(ld[nfiles].fname, buf);
 	    }
 	    fclose(list);
@@ -425,20 +408,15 @@ main(argc, argv)
 	xexit(EXIT_SUCCESS);
 	}
     }
-#endif	/* DLB */
 
     xexit(EXIT_SUCCESS);
     /*NOTREACHED*/
     return 0;
 }
 
-#ifdef DLB
 
-static void
-write_dlb_directory(out, nfiles, ld, slen, dir_size, flen)
-int out, nfiles;
-libdir *ld;
-long slen, dir_size, flen;
+static void write_dlb_directory(int out, int nfiles, libdir *ld, long slen,
+				long dir_size, long flen)
 {
     char buf[BUFSIZ];
     int i;
@@ -465,11 +443,7 @@ long slen, dir_size, flen;
     }
 }
 
-#endif	/* DLB */
-
-static void
-xexit(retcd)
-    int retcd;
+static void xexit(int retcd)
 {
     exit(retcd);
 }

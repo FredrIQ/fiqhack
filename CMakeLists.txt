@@ -34,16 +34,9 @@ add_subdirectory (win/curses)
 add_subdirectory (dat)
 
 
-install(DIRECTORY ${NetHack_BINARY_DIR}/dat/
-        DESTINATION ${DATADIR}
-        FILES_MATCHING PATTERN "*.lev"
-        PATTERN "CMakeFiles" EXCLUDE)
-install(FILES ${NetHack_BINARY_DIR}/dat/dungeon
-              ${NetHack_BINARY_DIR}/dat/quest.dat ${NetHack_BINARY_DIR}/dat/rumors
-              ${NetHack_BINARY_DIR}/dat/data
-              ${NetHack_BINARY_DIR}/dat/logfile ${NetHack_BINARY_DIR}/dat/oracles
+install(FILES ${NetHack_BINARY_DIR}/dat/nhdat
         DESTINATION ${DATADIR})
-install(FILES ${NetHack_SOURCE_DIR}/dat/license ${NetHack_SOURCE_DIR}/dat/history
+install(FILES ${NetHack_SOURCE_DIR}/dat/license
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
         DESTINATION ${LIBDIR})

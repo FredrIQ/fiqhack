@@ -89,7 +89,7 @@ char *loadfile(int fd, int *datasize)
 	data = malloc(len + 1);
 	bytes_left = len;
 	do {
-	    /* read my return fewer bytes than requested for reasons that are not errors */
+	    /* read may return fewer bytes than requested for reasons that are not errors */
 	    ret = read(fd, &data[len - bytes_left], bytes_left);
 	    if (ret == -1) {
 		free(data);

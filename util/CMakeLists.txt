@@ -26,11 +26,16 @@ set ( LEV_COMP_SRC
     ${NetHack_BINARY_DIR}/util/lev_parser.c
     ${NetHack_BINARY_DIR}/util/lev_scanner.c    
     )
-set (MAKEDEFS_HEADERS
+set ( MAKEDEFS_HEADERS
     ${NetHack_BINARY_DIR}/include/date.h
     ${NetHack_BINARY_DIR}/include/onames.h
     ${NetHack_BINARY_DIR}/include/pm.h
     )
+set ( DLB_SRC
+    dlb_main.c
+    ${NetHack_SOURCE_DIR}/src/dlb.c
+    )
+
 
 include_directories (${NetHack_SOURCE_DIR}/include)
 include_directories (${NetHack_SOURCE_DIR}/include/public)
@@ -87,11 +92,12 @@ add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_scanner.c
                         ${NetHack_SOURCE_DIR}/util/lev_comp.l
                    DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.l)
 #
-add_definitions( -Wall )
+add_definitions (-Wall -fvisibility=hidden -g3 -Wold-style-definition -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith)
 # targets
 add_executable (makedefs ${MAKEDEFS_SRC})
 add_executable (dgn_comp ${DGN_COMP_SRC})
 add_executable (lev_comp ${LEV_COMP_SRC})
+add_executable (dlb ${DLB_SRC})
 
 add_custom_target (makedefs_headers DEPENDS ${MAKEDEFS_HEADERS})
 add_dependencies (dgn_comp makedefs_headers)

@@ -35,13 +35,6 @@
 #define PANICLOG "paniclog"	/* log of panic and impossible events */
 
 /*
- *	Data librarian.  Defining DLB places most of the support files into
- *	a tar-like file, thus making a neater installation.  See *conf.h
- *	for detailed configuration.
- */
-/* #define DLB */	/* not supported on all platforms */
-
-/*
  * Section 3:	Definitions that may vary with system type.
  */
 

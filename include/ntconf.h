@@ -77,9 +77,7 @@ extern void interject(int);
 #define C(c)		(0x1f & (c))
 #endif
 
-#if defined(DLB)
 #define FILENAME_CMP  stricmp		      /* case insensitive */
-#endif
 
 extern const char *alllevels, *allbones;
 extern char hackdir[];

@@ -8,7 +8,6 @@
 /* without extern.h via hack.h, these haven't been declared for us */
 extern FILE *fopen_datafile(const char *,const char *,int);
 
-#ifdef DLB
 /*
  * Data librarian.  Present a STDIO-like interface to NetHack while
  * multiplexing on one or more "data libraries".  If a file is not found
@@ -158,7 +157,7 @@ static boolean readlibdir(library *lp)
  * Look for the file in our directory structure.  Return 1 if successful,
  * 0 if not found.  Fill in the size and starting position.
  */
-static boolean find_file(const char *name, library **lib, long *startp, *sizep)
+static boolean find_file(const char *name, library **lib, long *startp, long *sizep)
 {
     int i, j;
     library *lp;
@@ -421,10 +420,10 @@ int dlb_fclose(dlb *dp)
     return ret;
 }
 
-int dlb_fread(char *buf, int size, int quan, dlb *dp)
+int dlb_fread(void *buf, int size, int quan, dlb *dp)
 {
     if (!dlb_initialized || size <= 0 || quan <= 0) return 0;
-    if (dp->fp) return int) fread(buf, size, quan, dp->fp;
+    if (dp->fp) return fread(buf, size, quan, dp->fp);
     return do_dlb_fread(buf, size, quan, dp);
 }
 
@@ -435,7 +434,7 @@ int dlb_fseek(dlb *dp, long pos, int whence)
     return do_dlb_fseek(dp, pos, whence);
 }
 
-char *dlb_fgets(char *buf, int len, dlb *dp)
+char *dlb_fgets(void *buf, int len, dlb *dp)
 {
     if (!dlb_initialized) return NULL;
     if (dp->fp) return fgets(buf, len, dp->fp);
@@ -455,14 +454,5 @@ long dlb_ftell(dlb *dp)
     if (dp->fp) return ftell(dp->fp);
     return do_dlb_ftell(dp);
 }
-
-#else
-
-FILE* dlb_fopen(const char *filename, const char *mode)
-{
-    return fopen_datafile(filename, mode, DATAPREFIX);
-}
-
-#endif /* DLB */
 
 /*dlb.c*/

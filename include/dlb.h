@@ -3,9 +3,6 @@
 
 #ifndef DLB_H
 #define DLB_H
-/* definitions for data library */
-
-#ifdef DLB
 
 /* directory structure in memory */
 typedef struct dlb_directory {
@@ -27,12 +24,12 @@ typedef struct dlb_library {
 } library;
 
 /* library definitions */
-# ifndef DLBFILE
-#  define DLBFILE	"nhdat"			/* name of library */
-# endif
-# ifndef FILENAME_CMP
-#  define FILENAME_CMP	strcmp			/* case sensitive */
-# endif
+#ifndef DLBFILE
+# define DLBFILE	"nhdat"			/* name of library */
+#endif
+#ifndef FILENAME_CMP
+# define FILENAME_CMP	strcmp			/* case sensitive */
+#endif
 
 
 
@@ -51,29 +48,11 @@ void dlb_cleanup(void);
 
 dlb *dlb_fopen(const char *,const char *);
 int dlb_fclose(DLB_P);
-int dlb_fread(char *,int,int,DLB_P);
+int dlb_fread(void *,int,int,DLB_P);
 int dlb_fseek(DLB_P,long,int);
-char *dlb_fgets(char *,int,DLB_P);
+char *dlb_fgets(void *,int,DLB_P);
 int dlb_fgetc(DLB_P);
 long dlb_ftell(DLB_P);
-
-
-#else /* DLB */
-
-# define dlb FILE
-
-# define dlb_init()
-# define dlb_cleanup()
-
-FILE *dlb_fopen(const char*, const char*);
-# define dlb_fclose	fclose
-# define dlb_fread	fread
-# define dlb_fseek	fseek
-# define dlb_fgets	fgets
-# define dlb_fgetc	fgetc
-# define dlb_ftell	ftell
-
-#endif /* DLB */
 
 
 /* various other I/O stuff we don't want to replicate everywhere */
@@ -89,15 +68,13 @@ FILE *dlb_fopen(const char*, const char*);
 #endif
 
 #define RDTMODE "r"
-#if defined(WIN32) && defined(DLB)
-#define WRTMODE "w+b"
-#else
-#define WRTMODE "w+"
-#endif
-#if defined(THINK_C) || defined(__MWERKS__) || defined(WIN32)
+
+#if defined(WIN32)
+# define WRTMODE "w+b"
 # define RDBMODE "rb"
 # define WRBMODE "w+b"
 #else
+# define WRTMODE "w+"
 # define RDBMODE "r"
 # define WRBMODE "w+"
 #endif
