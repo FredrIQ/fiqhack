@@ -768,11 +768,13 @@ void done(int how)
 
 	win_pause_output(P_MESSAGE);
 
-	if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT && how != PANICKED)
+	if (how != PANICKED) {
+	    if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
 		disclose(how, taken);
 	
-	begin_dump(how);
-	dump_disclose(how);
+	    begin_dump(how);
+	    dump_disclose(how);
+	}
 	
 	/* finish_paybill should be called after disclosure but before bones */
 	if (bones_ok && taken) finish_paybill();
