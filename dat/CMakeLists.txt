@@ -61,7 +61,7 @@ set (COMPILED_LEVELS
     )
 
 set ( NHDAT_SRC
-    dungeon quest.dat rumors oracles ${COMPILED_LEVELS} history
+    dungeon quest.dat rumors oracles ${COMPILED_LEVELS} history data
     )
 
 configure_file(${NetHack_SOURCE_DIR}/dat/history history COPYONLY)
@@ -105,7 +105,7 @@ add_custom_target (level_files
 add_custom_command (OUTPUT nhdat
                     COMMAND dlb
                     ARGS cf nhdat ${NHDAT_SRC}
-                    DEPENDS level_files dungeon quest.dat rumors oracles)
+                    DEPENDS level_files dungeon quest.dat rumors oracles data)
 
 # pseudo-target: depend on all other generated data
 add_custom_target (nethack_data_files ALL
