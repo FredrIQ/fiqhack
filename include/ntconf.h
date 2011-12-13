@@ -18,7 +18,7 @@
  *  The remaining code shouldn't need modification.
  * -----------------------------------------------------------------
  */
-/* #define SHORT_FILENAMES	/* All NT filesystems support long names now */
+/* #define SHORT_FILENAMES */	/* All NT filesystems support long names now */
 
 #define NOCWD_ASSUMPTIONS	/* Always define this. There are assumptions that
                                    it is defined for WIN32.

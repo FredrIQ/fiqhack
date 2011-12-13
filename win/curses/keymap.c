@@ -1,10 +1,8 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <ctype.h>
 
 #include "nhcurses.h"

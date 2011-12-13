@@ -1,5 +1,23 @@
 # curses/CMakeLists.txt: build the curses window port for libnethack
 
+
+if (NOT WIN32)
+    set (USE_PDCURSES FALSE CACHE BOOL "Use PDCurses?")
+    set (PDCURSES_LIBNAME "XCurses")
+else ()
+    set (USE_PDCURSES TRUE)
+    set (PDCURSES_LIBNAME "pdcurses")
+endif ()
+
+if (USE_PDCURSES)
+    set (PDCURSES_LIB_DIR "" CACHE STRING "Location of the pdcurses library")
+    set (PDCURSES_INC_DIR "" CACHE STRING "Location of the pdcurses header")
+    link_directories (${PDCURSES_LIB_DIR})
+    include_directories (${PDCURSES_INC_DIR})
+    add_definitions (-DPDCURSES)
+endif ()
+
+
 set (NH_CURSES_SRC
     main.c
     color.c
@@ -23,13 +41,24 @@ set (NH_CURSES_SRC
 include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
-add_definitions (-Wall -fvisibility=hidden -g3 -DNETHACKDIR="${DATADIR}")
+if (CMAKE_COMPILER_IS_GNUCC)
+    add_definitions (-Wall -g3)
+    if (UNIX)
+	add_definitions (-fvisibility=hidden)
+    endif ()
+endif ()
+add_definitions(-DNETHACKDIR="${DATADIR}")
+
 link_directories (${NetHack_BINARY_DIR}/src)
 add_executable (nethack_curses ${NH_CURSES_SRC} )
 set_target_properties(nethack_curses PROPERTIES OUTPUT_NAME nethack )
-target_link_libraries(nethack_curses nethack ncursesw)
+target_link_libraries(nethack_curses nethack)
 
-add_dependencies(nethack_curses nethack)
+if (USE_PDCURSES)
+    target_link_libraries (nethack_curses ${PDCURSES_LIBNAME})
+else ()
+    target_link_libraries (nethack_curses ncursesw )
+endif ()
 
 
 if (UNIX)

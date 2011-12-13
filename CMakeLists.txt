@@ -3,36 +3,37 @@
 cmake_minimum_required (VERSION 2.6)
 project (NetHack)
 
+if (WIN32)
+    set(INSTALL_BASE "$ENV{USERPROFILE}")
+else ()
+    set(INSTALL_BASE "$ENV{HOME}")
+endif ()
+
 # default installation paths in $HOME/nethack
 if (NOT BINDIR)
-    set (BINDIR "$ENV{HOME}/nethack/nethack-data"
+    set (BINDIR "${INSTALL_BASE}/nethack/nethack-data"
          CACHE PATH "binary location" )
 endif()
 
 if (NOT LIBDIR)
-    set (LIBDIR "$ENV{HOME}/nethack/nethack-data"
+    set (LIBDIR "${INSTALL_BASE}/nethack/nethack-data"
          CACHE PATH "library location" )
 endif()
 
 if (NOT DATADIR)
-    set (DATADIR "$ENV{HOME}/nethack/nethack-data"
+    set (DATADIR "${INSTALL_BASE}/nethack/nethack-data"
          CACHE PATH "data location" )
 endif()
 
 if (NOT SHELLDIR)
-    set (SHELLDIR "$ENV{HOME}/nethack"
+    set (SHELLDIR "${INSTALL_BASE}/nethack"
          CACHE PATH "launch script location" )
 endif()
-
-
-message(${DATADIR})
-
 
 add_subdirectory (util)
 add_subdirectory (src)
 add_subdirectory (win/curses)
 add_subdirectory (dat)
-
 
 install(FILES ${NetHack_BINARY_DIR}/dat/nhdat
         DESTINATION ${DATADIR})

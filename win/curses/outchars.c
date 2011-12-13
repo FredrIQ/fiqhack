@@ -5,9 +5,7 @@
  * damage some symbols */
 
 #include <ctype.h>
-#include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
 
 #include "nhcurses.h"
@@ -214,10 +212,15 @@ static void apply_override(struct curses_drawing_info *di,
 	ok |= apply_override_list(di->bgelements, di->num_bgelements, &ovr[i]);
 	ok |= apply_override_list(di->traps, di->num_traps, &ovr[i]);
 	ok |= apply_override_list(di->objects, di->num_objects, &ovr[i]);
+	ok |= apply_override_list(di->monsters, di->num_monsters, &ovr[i]);
+	ok |= apply_override_list(di->warnings, di->num_warnings, &ovr[i]);
+	ok |= apply_override_list(di->invis, 1, &ovr[i]);
 	ok |= apply_override_list(di->effects, di->num_effects, &ovr[i]);
+	ok |= apply_override_list(di->expltypes, di->num_expltypes, &ovr[i]);
 	ok |= apply_override_list(di->explsyms, NUMEXPCHARS, &ovr[i]);
-	ok |= apply_override_list(di->swallowsyms, NUMSWALLOWCHARS, &ovr[i]);
+	ok |= apply_override_list(di->zaptypes, di->num_zaptypes, &ovr[i]);
 	ok |= apply_override_list(di->zapsyms, NUMZAPCHARS, &ovr[i]);
+	ok |= apply_override_list(di->swallowsyms, NUMSWALLOWCHARS, &ovr[i]);
 	
 	if (!ok)
 	    fprintf(stdout, "sym override %s could not be applied\n", ovr[i].symname);

@@ -4,7 +4,6 @@
 #ifndef O_RDONLY
 #include <fcntl.h>
 #endif
-#include <unistd.h>
 #include <time.h>
 #include <dirent.h>
 #include <sys/stat.h>

@@ -11,9 +11,35 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ncursesw/curses.h>
+#include <stdio.h>
+
+#if !defined(WIN32) /* UNIX + APPLE */
+# include <unistd.h>
+#else	/* WINDOWS */
+# define PDCURSES /* there is no ncurses on windows */
+
+# if defined (_MSC_VER)
+/* If we're using the Microsoft compiler, we also get the Microsoft C lib which
+ * doesn't have plain snprintf.  Note that this macro is an MSVC-style variadic
+ * macro, which is not understood by gcc (it uses a different notation). */
+#  define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
+# endif
+
+#endif
 
 #include "nethack.h"
+
+#ifndef PDCURSES
+# include <ncursesw/curses.h>
+#else
+# define PDC_WIDE
+# ifdef WIN32
+#  include <curses.h>
+# else
+#  include <xcurses.h>
+# endif
+# define CCHARW_MAX 1 /* not set by pdcurses */
+#endif
 
 #ifndef max
 # define max(a,b) ((a) > (b) ? (a) : (b))

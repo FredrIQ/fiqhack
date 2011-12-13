@@ -36,6 +36,8 @@ set ( DLB_SRC
     ${NetHack_SOURCE_DIR}/src/dlb.c
     )
 
+file(MAKE_DIRECTORY ${NetHack_BINARY_DIR}/include)
+file(MAKE_DIRECTORY ${NetHack_BINARY_DIR}/dat)
 
 include_directories (${NetHack_SOURCE_DIR}/include)
 include_directories (${NetHack_SOURCE_DIR}/include/public)
@@ -44,20 +46,16 @@ include_directories (${NetHack_BINARY_DIR}/util)
 
 # create the headers named in MAKEDEFS_HEADERS
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/date.h
-                    COMMAND mkdir -p ${NetHack_BINARY_DIR}/include/
-                    COMMAND mkdir -p ${NetHack_BINARY_DIR}/dat
                     COMMAND ${NetHack_BINARY_DIR}/util/makedefs
                     ARGS -v ${NetHack_BINARY_DIR}/include/date.h
                     DEPENDS makedefs)
                     
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/onames.h
-                    COMMAND mkdir -p ${NetHack_BINARY_DIR}/include/
                     COMMAND ${NetHack_BINARY_DIR}/util/makedefs
                     ARGS -o ${NetHack_BINARY_DIR}/include/onames.h
                     DEPENDS makedefs)
                     
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/pm.h
-                    COMMAND mkdir -p ${NetHack_BINARY_DIR}/include/
                     COMMAND ${NetHack_BINARY_DIR}/util/makedefs
                     ARGS -p ${NetHack_BINARY_DIR}/include/pm.h
                     DEPENDS makedefs)
@@ -91,8 +89,14 @@ add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_scanner.c
                    ARGS -o${NetHack_BINARY_DIR}/util/lev_scanner.c
                         ${NetHack_SOURCE_DIR}/util/lev_comp.l
                    DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.l)
-#
-add_definitions (-Wall -fvisibility=hidden -g3 -Wold-style-definition -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith)
+
+if (CMAKE_COMPILER_IS_GNUCC)
+    add_definitions (-Wall -g3 -Wold-style-definition -Wstrict-prototypes
+                     -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith)
+    if (UNIX)
+	add_definitions (-fvisibility=hidden)
+    endif ()
+endif ()
 # targets
 add_executable (makedefs ${MAKEDEFS_SRC})
 add_executable (dgn_comp ${DGN_COMP_SRC})

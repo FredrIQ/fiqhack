@@ -3,15 +3,19 @@
 
 #include <signal.h>
 #include <locale.h>
-#include <unistd.h>
 #include "nhcurses.h"
 
+#if !defined(PDCURSES)
 /*
  * _nc_unicode_locale(): return true, if the locale supports unicode
  * ncurses has _nc_unicode_locale(), but it is not part of the curses API.
  * For portability this function should probably be reimplemented.
  */
 extern int _nc_unicode_locale(void);
+#else
+# define set_escdelay(x)
+# define _nc_unicode_locale() (1) /* ... as a macro, for example ... */
+#endif
 
 WINDOW *mapwin, *msgwin, *statuswin, *sidebar;
 struct gamewin *firstgw, *lastgw;

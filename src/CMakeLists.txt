@@ -34,8 +34,15 @@ include_directories (
     ${NetHack_SOURCE_DIR}/include/public
     ${NetHack_BINARY_DIR}/include )
 
-#add_definitions ()
-add_definitions (-Wall -fvisibility=hidden -g3 -Wold-style-definition -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wshadow)
+if (CMAKE_COMPILER_IS_GNUCC)
+    add_definitions (-Wall -g3 -Wold-style-definition -Wstrict-prototypes
+                     -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith
+                     -Wshadow)
+    if (UNIX)
+	add_definitions (-fvisibility=hidden)
+    endif ()
+endif ()
+
 add_library(nethack SHARED ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
 
 add_dependencies (nethack makedefs_headers)

@@ -1,7 +1,6 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>

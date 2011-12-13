@@ -1,8 +1,6 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <stdio.h>
-
 #include "nhcurses.h"
 
 struct extcmd_hook_args {
