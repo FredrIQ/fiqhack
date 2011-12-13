@@ -83,11 +83,20 @@ static struct nh_cmd_desc *doextcmd(void);
 
 static const char *curses_keyname(int key)
 {
+    static char knbuf[16];
+    const char *kname;
     if (key == ' ')
 	return "SPACE";
     else if (key == '\033')
 	return "ESC";
-    return keyname(key);
+    
+    /* if ncurses doesn't know a key, keyname() returns NULL.
+     * This can happen if you create a keymap with pdcurses, and then read it with ncurses */
+    kname = keyname(key);
+    if (kname)
+	return kname;
+    snprintf(knbuf, sizeof(knbuf), "KEY_#%d", key);
+    return knbuf;
 }
 
 
@@ -174,7 +183,7 @@ int get_cmdkey(void)
 	}
 	
 	curs_set(1);
-	key = nh_wgetch(stdscr);
+	key = nh_wgetch(mapwin);
 	curs_set(0);
 	
 	if (key != ERR)
@@ -490,13 +499,16 @@ static boolean read_keymap(void)
 		if (key == 0 || endptr == line)
 		    goto badmap;
 		
+		if (key < 0 || key >= KEY_MAX) /* manual edit or version difference */
+		    goto nextline; /* nothing we can do with this, except perhaps complain */
+		
 		if (!unknown)
 		    keymap[key] = cmd;
 		else
 		    unknown_keymap[key] = cmd;
 	    }
 	}
-	
+nextline:
 	line = strtok(NULL, "\r\n");
     }
     

@@ -59,12 +59,16 @@
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
-/* I'm not at all sure resizing is a good idea.
- * Resizing is essentially broken, because resizing in ncurses (5.9) is a mess.
+
+#if defined(NCURSES_VERSION)
+/* I'm not at all sure resizing is a good idea on ncurses.
  * I got crashes in malloc(?!) in the resizeterm callchain, far away from any
  * of this code. */
-// #define ALLOW_RESIZE
-
+#undef ALLOW_RESIZE
+#else
+/* it does, however, appear to work on pdcurses */
+#define ALLOW_RESIZE
+#endif
 
 enum game_dirs {
     CONFIG_DIR,

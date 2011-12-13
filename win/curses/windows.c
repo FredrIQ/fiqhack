@@ -247,6 +247,7 @@ void rebuild_ui(void)
     }
 }
 
+
 #define META(c)  ((c)|0x80) /* bit 8 */
 int nh_wgetch(WINDOW *win)
 {
@@ -268,6 +269,7 @@ int nh_wgetch(WINDOW *win)
 	if (key == KEY_RESIZE) {
 	    struct gamewin *gw;
 	    key = 0;
+	    resize_term(0, 0);
 	    rebuild_ui();
 	    
 	    for (gw = firstgw; gw; gw = gw->next) {
@@ -296,6 +298,13 @@ int nh_wgetch(WINDOW *win)
 	}
 	    
     } while (!key);
+    
+#if defined(PDCURSES)
+    /* PDCurses provides exciting new names for the enter key.
+     * Translate these here, instead of checking for them all over the place. */
+    if (key == PADENTER || key == '\r')
+	key = '\n';
+#endif
     
     return key;
 }
