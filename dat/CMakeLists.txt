@@ -98,16 +98,12 @@ add_custom_command (OUTPUT dungeon
                     ARGS dungeon.pdf
                     DEPENDS dungeon.pdf)
 
-add_custom_target (level_files
-                    COMMAND lev_comp ${LEVEL_DESCRIPTIONS}
-                    DEPENDS lev_comp)
-
 add_custom_command (OUTPUT nhdat
+                    COMMAND lev_comp ${LEVEL_DESCRIPTIONS}
                     COMMAND dlb
                     ARGS cf nhdat ${NHDAT_SRC}
-                    DEPENDS level_files dungeon quest.dat rumors oracles data)
+                    DEPENDS lev_comp dungeon quest.dat rumors oracles data ${LEVEL_DESCRIPTIONS})
 
 # pseudo-target: depend on all other generated data
 add_custom_target (nethack_data_files ALL
-                   COMMAND touch logfile
                    DEPENDS nhdat)
