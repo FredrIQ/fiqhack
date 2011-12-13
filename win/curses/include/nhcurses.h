@@ -55,20 +55,11 @@
 #define KEY_ESC 27
 #define KEY_BACKDEL 127
 
+/* attributes for dialog frames */
 #define FRAME_ATTRS  (COLOR_PAIR(6)) /* magenta frames for better visibility */
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
-
-#if defined(NCURSES_VERSION)
-/* I'm not at all sure resizing is a good idea on ncurses.
- * I got crashes in malloc(?!) in the resizeterm callchain, far away from any
- * of this code. */
-#undef ALLOW_RESIZE
-#else
-/* it does, however, appear to work on pdcurses */
-#define ALLOW_RESIZE
-#endif
 
 enum game_dirs {
     CONFIG_DIR,

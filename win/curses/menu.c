@@ -31,14 +31,22 @@ static int calc_menuwidth(int *colwidth, int *colpos, int maxcol)
 }
 
 
-static void layout_menu(struct gamewin *gw, int x1, int y1, int x2, int y2)
+static void layout_menu(struct gamewin *gw)
 {
     struct win_menu *mdat = (struct win_menu*)gw->extra;
-    int i, col, w;
+    int i, col, w, x1, x2, y1, y2;
     int colwidth[MAXCOLS];
-    int scrheight = y2 - y1;
-    int scrwidth = x2 - x1;
+    int scrheight;
+    int scrwidth;
     int singlewidth = 0;
+    
+    x1 = (mdat->x1 > 0) ? mdat->x1 : 0;
+    y1 = (mdat->y1 > 0) ? mdat->y1 : 0;
+    x2 = (mdat->x2 > 0) ? mdat->x2 : COLS;
+    y2 = (mdat->y2 > 0) ? mdat->y2 : LINES;
+    
+    scrheight = y2 - y1;
+    scrwidth = x2 - x1;
     
     /* calc height */
     mdat->frameheight = 2;
@@ -160,19 +168,17 @@ void resize_menu(struct gamewin *gw)
 {
     struct win_menu *mdat = (struct win_menu*)gw->extra;
     
-    delwin(mdat->content);
-    delwin(gw->win);
+    layout_menu(gw);
     
-    layout_menu(gw, mdat->x1, mdat->y1, mdat->x2, mdat->y2);
+    delwin(mdat->content);
+    wresize(gw->win, mdat->height, mdat->width);
+    mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
+			   mdat->frameheight-1, 2);
     
     int starty = (LINES - mdat->height) / 2;
     int startx = (COLS - mdat->width) / 2;
     
-    gw->win = newwin(mdat->height, mdat->width, starty, startx);
-    keypad(gw->win, TRUE);
-    box(gw->win, 0 , 0);
-    mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
-			   mdat->frameheight-1, 2);
+    mvwin(gw->win, starty, startx);
     
     draw_menu(gw);
 }
@@ -250,9 +256,14 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     mdat->selected = calloc(icount, sizeof(boolean));
     mdat->x1 = x1; mdat->y1 = y1; mdat->x2 = x2; mdat->y2 = y2;
     
+    if (x1 < 0) x1 = 0;
+    if (y1 < 0) y1 = 0;
+    if (x2 < 0) x2 = COLS;
+    if (y2 < 0) y2 = LINES;
+    
     
     assign_menu_accelerators(mdat);
-    layout_menu(gw, x1, y1, x2, y2);
+    layout_menu(gw);
     
     int starty = (y2 - y1 - mdat->height) / 2 + y1;
     int startx = (x2 - x1 - mdat->width) / 2 + x1;
@@ -396,7 +407,7 @@ int curses_display_menu(struct nh_menuitem *items, int icount,
     int n;
     
     n = curses_display_menu_core(items, icount, title, how, results, 0, 0,
-				 COLS, LINES, NULL);
+				 -1, -1, NULL);
     return n;
 }
 
@@ -564,21 +575,17 @@ void resize_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu*)gw->extra;
     
-    delwin(mdat->content);
-    delwin(gw->win);
-    
     layout_objmenu(gw);
     
+    delwin(mdat->content);
+    wresize(gw->win, mdat->height, mdat->width);
+    mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
+			   mdat->frameheight-1, 2);
+     
     int starty = (LINES - mdat->height) / 2;
     int startx = (COLS - mdat->width) / 2;
     
-    gw->win = newwin(mdat->height, mdat->width, starty, startx);
-    keypad(gw->win, TRUE);
-    wattron(gw->win, FRAME_ATTRS);
-    box(gw->win, 0 , 0);
-    wattroff(gw->win, FRAME_ATTRS);
-    mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
-			   mdat->frameheight-1, 2);
+    mvwin(gw->win, starty, startx);
     
     draw_objmenu(gw);
 }

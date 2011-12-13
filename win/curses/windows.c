@@ -119,7 +119,7 @@ void draw_frame(void)
 }
 
 
-void create_game_windows(void)
+void layout_game_windows(void)
 {
     ui_flags.draw_frame = ui_flags.draw_sidebar = FALSE;
     int statusheight = settings.status3 ? 3 : 2;
@@ -142,19 +142,10 @@ void create_game_windows(void)
     if (ui_flags.draw_frame) {
 	ui_flags.msgheight = settings.msgheight;
 	ui_flags.status3 = settings.status3;
-	
-	msgwin = derwin(stdscr, ui_flags.msgheight, COLNO, 1, 1);
-	mapwin = derwin(stdscr, ROWNO, COLNO, ui_flags.msgheight + 2, 1);
-	statuswin = derwin(stdscr, statusheight, COLNO,
-			   ui_flags.msgheight + ROWNO + 3, 1);
 	ui_flags.viewheight = ui_flags.msgheight + ROWNO + statusheight + 2;
-	
-	if (ui_flags.draw_sidebar)
-	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
-	
-	draw_frame();
     } else {
 	int spare_lines = LINES - ROWNO - 2;
+	spare_lines = spare_lines >= 1 ? spare_lines : 1;
 	ui_flags.msgheight = min(settings.msgheight, spare_lines);
 	if (ui_flags.msgheight < spare_lines)
 	    ui_flags.status3 = settings.status3;
@@ -163,19 +154,85 @@ void create_game_windows(void)
 	    statusheight = 2;
 	}
 	    
-	msgwin = derwin(stdscr, ui_flags.msgheight, COLNO, 0, 0);
-	mapwin = derwin(stdscr, ROWNO, COLNO, ui_flags.msgheight, 0);
-	statuswin = derwin(stdscr, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
 	ui_flags.viewheight = ui_flags.msgheight + ROWNO + statusheight;
+    }
+}
+
+
+void create_game_windows(void)
+{
+    layout_game_windows();
+    
+    int statusheight = ui_flags.status3 ? 3 : 2;
+    
+    if (ui_flags.draw_frame) {
+	msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
+	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight + 2, 1);
+	statuswin = newwin(statusheight, COLNO,
+			   ui_flags.msgheight + ROWNO + 3, 1);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
+	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
+	
+	draw_frame();
+    } else {
+	msgwin = newwin(ui_flags.msgheight, COLNO, 0, 0);
+	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight, 0);
+	statuswin = newwin(statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	
+	if (ui_flags.draw_sidebar)
+	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
     keypad(mapwin, TRUE);
     keypad(msgwin, TRUE);
     
     ui_flags.ingame = TRUE;
+    redraw_game_windows();
+}
+
+
+void resize_game_windows(void)
+{
+    layout_game_windows();
+    
+    int statusheight = ui_flags.status3 ? 3 : 2;
+    
+    if (!ui_flags.ingame)
+	return;
+    
+    /* statuswin and sidebar never accept input, so simply recreating those is
+     * easiest. */
+    delwin(statuswin);
+    if (sidebar) {
+	delwin(sidebar);
+	sidebar = NULL;
+    }
+    
+    /* ncurses might have automatically changed the window sizes in resizeterm
+     * while trying to do the right thing. Of course no size other than
+     * COLNO x ROWNO is ever right for the map... */
+    wresize(msgwin, ui_flags.msgheight, COLNO);
+    wresize(mapwin, ROWNO, COLNO);
+    
+    if (ui_flags.draw_frame) {
+	mvwin(msgwin, 1, 1);
+	mvwin(mapwin, ui_flags.msgheight + 2, 1);
+	statuswin = newwin(statusheight, COLNO,
+			   ui_flags.msgheight + ROWNO + 3, 1);
+	
+	if (ui_flags.draw_sidebar)
+	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
+	draw_frame();
+    } else {
+	mvwin(msgwin, 0, 0);
+	mvwin(mapwin, ui_flags.msgheight, 0);
+	statuswin = newwin(statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	
+	if (ui_flags.draw_sidebar)
+	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO, 0, COLNO);
+    }
+    
     redraw_game_windows();
 }
 
@@ -213,6 +270,8 @@ void redraw_game_windows(void)
 	wnoutrefresh(msgwin);
 	wnoutrefresh(statuswin);
 	
+	draw_frame();
+	
 	if (ui_flags.draw_sidebar) {
 	    redrawwin(sidebar);
 	    wnoutrefresh(sidebar);
@@ -232,18 +291,19 @@ void redraw_game_windows(void)
 void rebuild_ui(void)
 {
     if (ui_flags.ingame) {
-	destroy_game_windows();
-	clear();
-	create_game_windows();
+	wclear(stdscr);
+	resize_game_windows();
 	
-	/* map, status and messagewin are now empty, because they were re-created */
+	/* some windows are now empty because they were re-created */
 	draw_msgwin();
 	draw_map(0);
 	curses_update_status(&player);
 	draw_sidebar();
 	
-	/* draw all dialogs on top of the basic windows */
 	redraw_game_windows();
+    } else if (stdscr) {
+	redrawwin(stdscr);
+	wrefresh(stdscr);
     }
 }
 
@@ -265,11 +325,13 @@ int nh_wgetch(WINDOW *win)
 	    key = 0;
 #endif
 	}
-#ifdef ALLOW_RESIZE
+
 	if (key == KEY_RESIZE) {
 	    struct gamewin *gw;
 	    key = 0;
+#ifdef PDCURSES
 	    resize_term(0, 0);
+#endif
 	    rebuild_ui();
 	    
 	    for (gw = firstgw; gw; gw = gw->next) {
@@ -280,8 +342,9 @@ int nh_wgetch(WINDOW *win)
 		redrawwin(gw->win);
 		wnoutrefresh(gw->win);
 	    }
+	    doupdate();
 	}
-#endif
+
 	/* "hackaround": some terminals / shells / whatever don't directly pass
 	 * on any combinations with the alt key. Instead these become ESC,<key>
 	 * Try to reverse that here...
