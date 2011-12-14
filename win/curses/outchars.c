@@ -182,7 +182,7 @@ static struct curses_symdef unicode_graphics_ovr[] = {
 };
 
 
-static boolean apply_override_list(struct curses_symdef *list, int len,
+static nh_bool apply_override_list(struct curses_symdef *list, int len,
 				   const struct curses_symdef *ovr)
 {
     int i;
@@ -204,7 +204,7 @@ static void apply_override(struct curses_drawing_info *di,
 			   const struct curses_symdef *ovr, int olen)
 {
     int i;
-    boolean ok;
+    nh_bool ok;
     
     for (i = 0; i < olen; i++) {
 	ok = FALSE;
@@ -528,7 +528,7 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms)
 }
 
 
-void set_rogue_level(boolean enable)
+void set_rogue_level(nh_bool enable)
 {
     if (enable)
 	cur_drawing = rogue_drawing;

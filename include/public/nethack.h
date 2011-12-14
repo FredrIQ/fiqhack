@@ -26,19 +26,19 @@
 
 /* allmain.c */
 extern EXPORT void nh_init(struct nh_window_procs *, char **);
-extern EXPORT boolean nh_exit(int exit_type);
+extern EXPORT nh_bool nh_exit(int exit_type);
 extern EXPORT enum nh_restore_status nh_restore_game(int fd,
-	struct nh_window_procs *rwinprocs, boolean force_replay);
+	struct nh_window_procs *rwinprocs, nh_bool force_replay);
 
-extern EXPORT boolean nh_start_game(int fd, char *name, int role, int race,
+extern EXPORT nh_bool nh_start_game(int fd, char *name, int role, int race,
 				    int gend, int align, enum nh_game_modes playmode);
 extern EXPORT int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char *const *nh_get_copyright_banner(void);
 
 /* logreplay.c */
-extern EXPORT boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
+extern EXPORT nh_bool nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 					   struct nh_replay_info *info);
-extern EXPORT boolean nh_view_replay_step(struct nh_replay_info *info,
+extern EXPORT nh_bool nh_view_replay_step(struct nh_replay_info *info,
 					  enum replay_control action, int count);
 extern EXPORT void nh_view_replay_finish(void);
 extern EXPORT enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *si);
@@ -51,11 +51,11 @@ extern EXPORT struct nh_cmd_desc *nh_get_object_commands(int *count, char invlet
 extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);
 
 /* options.c */
-extern EXPORT boolean nh_set_option(const char *name, union nh_optvalue value, boolean isstr);
+extern EXPORT nh_bool nh_set_option(const char *name, union nh_optvalue value, nh_bool isstr);
 extern EXPORT struct nh_option_desc *nh_get_options(enum nh_option_list list);
 extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 			 struct nh_boolopt_map *boolmap,
-			 boolean(*callback)(struct nh_option_desc *));
+			 nh_bool(*callback)(struct nh_option_desc *));
 extern EXPORT const char *nh_get_option_string(const struct nh_option_desc *opt);
 
 /* pager.c */
@@ -67,10 +67,10 @@ extern EXPORT int nh_get_valid_roles(int, int, int, struct nh_listitem*, int);
 extern EXPORT int nh_get_valid_races(int, int, int, struct nh_listitem*, int);
 extern EXPORT int nh_get_valid_genders(int, int, int, struct nh_listitem*, int);
 extern EXPORT int nh_get_valid_aligns(int, int, int, struct nh_listitem*, int);
-extern EXPORT boolean nh_validrole(int);
-extern EXPORT boolean nh_validrace(int, int);
-extern EXPORT boolean nh_validgend(int, int, int);
-extern EXPORT boolean nh_validalign(int, int, int);
+extern EXPORT nh_bool nh_validrole(int);
+extern EXPORT nh_bool nh_validrace(int, int);
+extern EXPORT nh_bool nh_validgend(int, int, int);
+extern EXPORT nh_bool nh_validalign(int, int, int);
 extern EXPORT int nh_str2role(char *);
 extern EXPORT int nh_str2race(char *);
 extern EXPORT int nh_str2gend(char *);
@@ -80,7 +80,7 @@ extern EXPORT const char *nh_root_plselection_prompt(char *, int, int, int, int,
 
 /* topten.c */
 extern EXPORT struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
-				      char *player, int top, int around, boolean own);
+				      char *player, int top, int around, nh_bool own);
 
 
 #define set_menuitem(it, i, r, cap, acc, sel) \

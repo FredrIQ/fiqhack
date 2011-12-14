@@ -17,7 +17,7 @@ static struct message *msghistory;
 static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
-static boolean stopprint;
+static nh_bool stopprint;
 static int prevturn;
 
 static void newline(void);
@@ -172,11 +172,11 @@ static void more(void)
 }
 
 
-static void curses_print_message_core(int turn, const char *inmsg, boolean canblock)
+static void curses_print_message_core(int turn, const char *inmsg, nh_bool canblock)
 {
     char msg[COLNO+1];
     int maxlen;
-    boolean died;
+    nh_bool died;
     
     /* guard against malformed input strings */
     strncpy(msg, inmsg, COLNO);

@@ -6,7 +6,7 @@
 #include "nhcurses.h"
 
 #define LISTSZ 32
-boolean player_selection(int *out_role, int *out_race, int *out_gend,
+nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 			 int *out_align, int randomall)
 {
     struct nh_menuitem *items;

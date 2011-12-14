@@ -14,7 +14,7 @@
 #include "nhcurses.h"
 
 
-boolean get_gamedir(enum game_dirs dirtype, char *buf)
+nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
 {
     char *envval, *subdir;
     mode_t mask;
@@ -259,7 +259,7 @@ char **list_gamefiles(char *dir, int *count)
 }
 
 
-boolean loadgame(void)
+nh_bool loadgame(void)
 {
     char buf[BUFSZ], savedir[BUFSZ], filename[1024], **files;
     struct nh_menuitem *items;

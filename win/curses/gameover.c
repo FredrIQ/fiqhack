@@ -40,7 +40,7 @@ static void center(char *line, char *text)
 }
 
 
-void curses_outrip(struct nh_menuitem *items, int icount, boolean tombstone,
+void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
 		          char *plname, long gold, char *killbuf, int year)
 {
     char **dp, **rip;

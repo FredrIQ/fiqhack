@@ -71,7 +71,7 @@ static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count;
 static struct nh_cmd_desc *prev_cmd;
 static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE}, next_command_arg;
-static boolean have_next_command = FALSE;
+static nh_bool have_next_command = FALSE;
 static char next_command_name[32];
 static int prev_count;
 
@@ -434,13 +434,13 @@ static struct nh_cmd_desc* show_help(void)
 
 /* read the user-configured keymap from keymap.conf.
  * Return TRUE if this succeeds, FALSE otherwise */
-static boolean read_keymap(void)
+static nh_bool read_keymap(void)
 {
     char filename[BUFSZ];
     char *data, *line, *endptr;
     int fd, size, pos, key;
     struct nh_cmd_desc *cmd;
-    boolean unknown;
+    nh_bool unknown;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
@@ -727,7 +727,7 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 }
 
 
-static boolean set_command_keys(struct win_menu *mdat, int idx)
+static nh_bool set_command_keys(struct win_menu *mdat, int idx)
 {
     int id = mdat->items[idx].id;
     struct nh_cmd_desc *cmd;
@@ -758,7 +758,7 @@ static boolean set_command_keys(struct win_menu *mdat, int idx)
 }
 
 
-void show_keymap_menu(boolean readonly)
+void show_keymap_menu(nh_bool readonly)
 {
     int i, n, icount;
     struct nh_menuitem *items = malloc(sizeof(struct nh_menuitem) *

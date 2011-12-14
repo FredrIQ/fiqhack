@@ -14,11 +14,11 @@ void append_slash(char *name);
 struct settings settings;
 struct interface_flags ui_flags;
 char *hackdir;
-boolean interrupt_multi = FALSE;
-boolean game_is_running = FALSE;
+nh_bool interrupt_multi = FALSE;
+nh_bool game_is_running = FALSE;
 int initrole = ROLE_NONE, initrace = ROLE_NONE;
 int initgend = ROLE_NONE, initalign = ROLE_NONE;
-boolean random_player = FALSE;
+nh_bool random_player = FALSE;
 
 enum menuitems {
     NEWGAME = 1,

@@ -28,6 +28,7 @@
 
 typedef signed char	schar;
 typedef unsigned char	uchar;
+typedef signed char	boolean;		/* 0 or 1 */
 
 /*
  * type xchar: small integers in the range 0 - 127, usually coordinates

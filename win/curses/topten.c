@@ -65,7 +65,7 @@ static void makeheader(char *linebuf)
 }
 
 
-void show_topten(char *player, int top, int around, boolean own)
+void show_topten(char *player, int top, int around, nh_bool own)
 {
     struct nh_topten_entry *scores;
     char buf[BUFSZ];

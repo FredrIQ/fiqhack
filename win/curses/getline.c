@@ -9,7 +9,7 @@ struct extcmd_hook_args {
     int listlen;
 };
 
-static boolean ext_cmd_getlin_hook(char *, void *);
+static nh_bool ext_cmd_getlin_hook(char *, void *);
 
 
 static void buf_insert(char *buf, int pos, char key)
@@ -90,8 +90,8 @@ void hooked_curses_getlin(const char *query, char *buf,
     struct gamewin *gw;
     struct win_getline *gldat;
     int height, width, key, len = 0;
-    boolean done = FALSE;
-    boolean autocomplete = FALSE;
+    nh_bool done = FALSE;
+    nh_bool autocomplete = FALSE;
     
     height = 4;
     width = COLS - 2;
@@ -195,7 +195,7 @@ void curses_getline(const char *query, char *buffer)
  *	+ we don't change the characters that are already in base
  *	+ base has enough room to hold our string
  */
-static boolean ext_cmd_getlin_hook(char *base, void *hook_arg)
+static nh_bool ext_cmd_getlin_hook(char *base, void *hook_arg)
 {
     int oindex, com_index;
     struct extcmd_hook_args *hpa = hook_arg;
@@ -221,7 +221,7 @@ static boolean ext_cmd_getlin_hook(char *base, void *hook_arg)
 char *mungspaces(char *bp)
 {
     char c, *p, *p2;
-    boolean was_space = TRUE;
+    nh_bool was_space = TRUE;
 
     for (p = p2 = bp; (c = *p) != '\0'; p++) {
 	if (c == '\t') c = ' ';
@@ -340,7 +340,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
  * Read in an extended command, doing command line completion.  We
  * stop when we have found enough characters to make a unique command.
  */
-boolean curses_get_ext_cmd(char *cmd_out, const char **namelist,
+nh_bool curses_get_ext_cmd(char *cmd_out, const char **namelist,
 			   const char **desclist, int listlen)
 {
 	int i;

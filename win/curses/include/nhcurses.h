@@ -69,13 +69,13 @@ enum game_dirs {
 
 
 struct interface_flags {
-    boolean done_hup;
-    boolean ingame;
-    boolean draw_frame;
-    boolean draw_sidebar;
-    boolean status3; /* draw the 3 line status instead of the classic 2 lines */
-    boolean color; /* the terminal has color capability */
-    boolean unicode; /* ncurses detected a unicode locale */
+    nh_bool done_hup;
+    nh_bool ingame;
+    nh_bool draw_frame;
+    nh_bool draw_sidebar;
+    nh_bool status3; /* draw the 3 line status instead of the classic 2 lines */
+    nh_bool color; /* the terminal has color capability */
+    nh_bool unicode; /* ncurses detected a unicode locale */
     int levelmode;
     int playmode;
     int viewheight;
@@ -86,27 +86,27 @@ struct settings {
     char     plname[BUFSZ]; /* standard player name;
                              * size is BUFSZ rather than PL_NSIZ, because the
 			     * buffer may be written to directly via curses_getline */
-    boolean  end_own;	/* list all own scores */
+    nh_bool  end_own;	/* list all own scores */
     int      end_top, end_around;	/* describe desired score list */
     int      graphics;
     int      menu_headings; /* ATR for menu headings */
     int      msgheight; /* requested height of the message win */
     int      msghistory;/* # of historic messages to keep for prevmsg display */
     int      optstyle;	/* option display style */
-    boolean  darkgray;  /* use bolded black instead of dark blue for CLR_BLACK */
-    boolean  extmenu;	/* extended commands use menu interface */
-    boolean  hilite_pet;/* hilight pets */
-    boolean  showexp;	/* show experience points */
-    boolean  showscore;	/* show score */
-    boolean  standout;	/* use standout for --More-- */
-    boolean  time;	/* display elapsed 'time' */
-    boolean  use_inverse; /* use inverse video for some things   */
-    boolean  unicode;	/* try to display unicode chars */
-    boolean  invweight;	/* show item weight in the inventory */
-    boolean  blink;	/* show multiple symbols for each location by blinking */
-    boolean  sidebar;   /* draw the inventory sidebar */
-    boolean  frame;     /* draw a frame around the window sections */
-    boolean  status3;	/* draw 3 line status */
+    nh_bool  darkgray;  /* use bolded black instead of dark blue for CLR_BLACK */
+    nh_bool  extmenu;	/* extended commands use menu interface */
+    nh_bool  hilite_pet;/* hilight pets */
+    nh_bool  showexp;	/* show experience points */
+    nh_bool  showscore;	/* show score */
+    nh_bool  standout;	/* use standout for --More-- */
+    nh_bool  time;	/* display elapsed 'time' */
+    nh_bool  use_inverse; /* use inverse video for some things   */
+    nh_bool  unicode;	/* try to display unicode chars */
+    nh_bool  invweight;	/* show item weight in the inventory */
+    nh_bool  blink;	/* show multiple symbols for each location by blinking */
+    nh_bool  sidebar;   /* draw the inventory sidebar */
+    nh_bool  frame;     /* draw a frame around the window sections */
+    nh_bool  status3;	/* draw 3 line status */
 };
 
 
@@ -160,7 +160,7 @@ enum nh_text_mode {
     UNICODE_GRAPHICS	/* uses whatever charecters we want: they're ALL available */
 };
 
-typedef boolean (*getlin_hook_proc)(char *, void *);
+typedef nh_bool (*getlin_hook_proc)(char *, void *);
 
 
 
@@ -205,14 +205,14 @@ struct win_getline {
 
 extern struct settings settings;
 extern struct interface_flags ui_flags;
-extern boolean interrupt_multi, game_is_running;
+extern nh_bool interrupt_multi, game_is_running;
 extern const char quitchars[];
 extern struct nh_window_procs curses_windowprocs;
 extern WINDOW *mapwin, *msgwin, *statuswin, *sidebar;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;
 extern struct nh_player_info player;
 extern int initrole, initrace, initgend, initalign;
-extern boolean random_player;
+extern nh_bool random_player;
 extern struct nh_cmd_desc *keymap[KEY_MAX];
 
 /*----------------------------------------------------------------------------*/
@@ -224,19 +224,19 @@ extern void set_darkgray(void);
 
 /* dialog.c */
 extern WINDOW *newdialog(int height, int width);
-extern enum nh_direction curses_getdir(const char *query, boolean restricted);
+extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern char curses_query_key(const char *query, int *count);
 extern int curses_msgwin(const char *msg);
 
 /* gameover.c */
-extern void curses_outrip(struct nh_menuitem *items, int icount, boolean tombstone,
+extern void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
 		          char *plname, long gold, char *killbuf, int year);
 
 
 /* getline.c */
 extern void draw_getline(struct gamewin *gw);
-extern boolean curses_get_ext_cmd(char *cmd_out, const char **namelist,
+extern nh_bool curses_get_ext_cmd(char *cmd_out, const char **namelist,
 			   const char **desclist, int listlen);
 extern void curses_getline(const char *query, char *buffer);
 
@@ -247,12 +247,12 @@ extern const char *get_command(int *count, struct nh_cmd_arg *arg);
 extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
-extern void show_keymap_menu(boolean readonly);
+extern void show_keymap_menu(nh_bool readonly);
 extern enum nh_direction key_to_dir(int key);
 
 /* map.c */
 extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
-extern int curses_getpos(int *x, int *y, boolean force, const char *goal);
+extern int curses_getpos(int *x, int *y, nh_bool force, const char *goal);
 extern void draw_map(int frame);
 
 /* menu.c */
@@ -262,7 +262,7 @@ extern int curses_display_menu(struct nh_menuitem *items, int icount,
 extern int curses_display_menu_core(struct nh_menuitem *items, int icount,
 			     const char *title, int how, int *results,
 			     int x1, int y1, int x2, int y2,
-			     boolean (*changefn)(struct win_menu*, int));
+			     nh_bool (*changefn)(struct win_menu*, int));
 extern int curses_display_objects(struct nh_objitem *items, int icount,
 		  const char *title, int how, struct nh_objresult *pick_list);
 extern void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
@@ -278,7 +278,7 @@ extern void doprev_message(void);
 extern void cleanup_messages(void);
 
 /* options.c */
-extern void display_options(boolean change_birth_opt);
+extern void display_options(nh_bool change_birth_opt);
 extern void print_options(void);
 extern void init_options(void);
 extern void read_nh_config(void);
@@ -288,13 +288,13 @@ extern void write_config(void);
 extern void init_displaychars(void);
 extern void free_displaychars(void);
 extern int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms);
-extern void set_rogue_level(boolean enable);
+extern void set_rogue_level(nh_bool enable);
 extern void switch_graphics(enum nh_text_mode mode);
 extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs);
 extern void curses_notify_level_changed(int dmode);
 
 /* playerselect.c */
-extern boolean player_selection(int *out_role, int *out_race, int *out_gend,
+extern nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 				int *out_align, int randomall);
 
 /* replay.c */
@@ -302,23 +302,23 @@ extern void replay(void);
 extern void describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi);
 
 /* rungame.c */
-extern boolean get_gamedir(enum game_dirs dirtype, char *buf);
+extern nh_bool get_gamedir(enum game_dirs dirtype, char *buf);
 extern void rungame(void);
-extern boolean loadgame(void);
+extern nh_bool loadgame(void);
 extern char **list_gamefiles(char *dir, int *count);
 
 /* sidebar.c */
 extern void draw_sidebar(void);
-extern boolean curses_list_items(struct nh_objitem *items, int icount, boolean invent);
-extern boolean curses_list_items_nonblocking(struct nh_objitem *items, int icount, boolean invent);
-extern void cleanup_sidebar(boolean dealloc);
+extern nh_bool curses_list_items(struct nh_objitem *items, int icount, nh_bool invent);
+extern nh_bool curses_list_items_nonblocking(struct nh_objitem *items, int icount, nh_bool invent);
+extern void cleanup_sidebar(nh_bool dealloc);
 
 /* status.c */
 extern void curses_update_status(struct nh_player_info *pi);
 extern void curses_update_status_silent(struct nh_player_info *pi);
 
 /* topten.c */
-extern void show_topten(char *player, int top, int around, boolean own);
+extern void show_topten(char *player, int top, int around, nh_bool own);
 
 /* windows.c */
 extern void init_curses_ui(void);
@@ -331,7 +331,7 @@ extern int nh_wgetch(WINDOW *win);
 extern struct gamewin *alloc_gamewin(int extra);
 extern void delete_gamewin(struct gamewin *win);
 extern void curses_pause(enum nh_pause_reason reason);
-extern void curses_display_buffer(char *buf, boolean trymove);
+extern void curses_display_buffer(char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
 extern void curses_delay_output(void);
 

@@ -112,7 +112,7 @@ struct nh_boolopt_map boolopt_map[] = {
 };
 
 
-boolean option_change_callback(struct nh_option_desc *option)
+nh_bool option_change_callback(struct nh_option_desc *option)
 {
     if (!strcmp(option->name, "frame") ||
 	!strcmp(option->name, "status3") ||
@@ -256,7 +256,7 @@ static void print_option_string(struct nh_option_desc *option, char *buf)
 
 /* add a list of options to the given selection menu */
 static int menu_add_options(struct nh_menuitem **items, int *size, int *icount,
-	    int listid, struct nh_option_desc *options, boolean read_only)
+	    int listid, struct nh_option_desc *options, nh_bool read_only)
 {
     int i, id;
     char optbuf[256];
@@ -305,7 +305,7 @@ static void select_enum_value(union nh_optvalue *value, struct nh_option_desc *o
 
 
 /* get a new value of the appropriate type for the given option */
-static boolean get_option_value(struct win_menu *mdat, int idx)
+static nh_bool get_option_value(struct win_menu *mdat, int idx)
 {
     char buf[BUFSZ], query[BUFSZ];
     union nh_optvalue value;
@@ -385,7 +385,7 @@ static boolean get_option_value(struct win_menu *mdat, int idx)
 
 
 /* display the option dialog */
-void display_options(boolean change_birth_opt)
+void display_options(nh_bool change_birth_opt)
 {
     struct nh_menuitem *items;
     int icount, size;
@@ -856,7 +856,7 @@ static void read_config_file(const char *filename)
 
 
 /* determine the correct filename for the config file */
-static void get_config_name(char *buf, boolean ui)
+static void get_config_name(char *buf, nh_bool ui)
 {
     char *envval;
     buf[0] = '\0';

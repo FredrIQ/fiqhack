@@ -451,7 +451,7 @@ static char *tabexpand(char *sbuf)
 }
 
 
-void curses_display_buffer(char *buf, boolean trymove)
+void curses_display_buffer(char *buf, nh_bool trymove)
 {
     char *line;
     char linebuf[BUFSZ];

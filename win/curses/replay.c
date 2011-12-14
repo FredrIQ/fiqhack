@@ -82,7 +82,7 @@ static void replay_commandloop(int fd)
 {
     int key, move, count;
     char buf[BUFSZ], qbuf[BUFSZ];
-    boolean ret, firsttime = TRUE;
+    nh_bool ret, firsttime = TRUE;
     struct nh_replay_info rinfo;
     struct nh_cmd_arg noarg;
     struct nh_cmd_desc *cmd;

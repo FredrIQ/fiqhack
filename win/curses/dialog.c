@@ -25,7 +25,7 @@ WINDOW *newdialog(int height, int width)
 }
 
 
-enum nh_direction curses_getdir(const char *query, boolean restricted)
+enum nh_direction curses_getdir(const char *query, nh_bool restricted)
 {
     int key;
     enum nh_direction dir;
@@ -97,7 +97,7 @@ char curses_query_key(const char *query, int *count)
     int width, height, key;
     WINDOW *win;
     int cnt = 0;
-    boolean hascount = FALSE;
+    nh_bool hascount = FALSE;
     
     height = 3;
     width = strlen(query) + 4;

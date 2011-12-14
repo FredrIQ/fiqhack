@@ -4,7 +4,7 @@
 #include "nhcurses.h"
 
 
-static boolean do_item_actions(char invlet);
+static nh_bool do_item_actions(char invlet);
 
 static int calc_colwidths(char *menustr, int *colwidth)
 {
@@ -237,12 +237,12 @@ static int find_accel(int accel, struct win_menu *mdat)
 int curses_display_menu_core(struct nh_menuitem *items, int icount,
 			     const char *title, int how, int *results,
 			     int x1, int y1, int x2, int y2,
-			     boolean (*changefn)(struct win_menu*, int))
+			     nh_bool (*changefn)(struct win_menu*, int))
 {
     struct gamewin *gw;
     struct win_menu *mdat;
     int i, key, idx, rv;
-    boolean done, cancelled;
+    nh_bool done, cancelled;
     char sbuf[BUFSZ];
     
     gw = alloc_gamewin(sizeof(struct win_menu));
@@ -253,7 +253,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     mdat->icount = icount;
     mdat->title = title;
     mdat->how = how;
-    mdat->selected = calloc(icount, sizeof(boolean));
+    mdat->selected = calloc(icount, sizeof(nh_bool));
     mdat->x1 = x1; mdat->y1 = y1; mdat->x2 = x2; mdat->y2 = y2;
     
     if (x1 < 0) x1 = 0;
@@ -647,9 +647,9 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     struct gamewin *gw;
     struct win_objmenu *mdat;
     int i, key, idx, rv;
-    boolean done, cancelled;
+    nh_bool done, cancelled;
     char sbuf[BUFSZ];
-    boolean inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
+    nh_bool inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
     
     gw = alloc_gamewin(sizeof(struct win_objmenu));
     gw->draw = draw_objmenu;
@@ -883,7 +883,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 }
 
 
-static boolean do_item_actions(char invlet)
+static nh_bool do_item_actions(char invlet)
 {
     int ccount = 0, i, selected[1];
     struct nh_cmd_desc *obj_cmd = nh_get_object_commands(&ccount, invlet);

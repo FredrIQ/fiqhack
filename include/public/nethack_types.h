@@ -12,8 +12,8 @@
 #endif
 
 #ifndef TRUE	/* defined in some systems' native include files */
-#define FALSE	((boolean)0)
-#define TRUE	((boolean)!0)
+#define FALSE	((nh_bool)0)
+#define TRUE	((nh_bool)!0)
 #endif
 
 /* size of terminal screen is (at least) (ROWNO+3) by COLNO */
@@ -258,8 +258,8 @@ enum replay_control {
     REPLAY_GOTO
 };
 
-
-typedef signed char	boolean;		/* 0 or 1 */
+/* the name "boolean" is too common to use here */
+typedef signed char	nh_bool;		/* 0 or 1 */
 
 
 struct nh_listitem {
@@ -270,7 +270,7 @@ struct nh_listitem {
 
 struct nh_boolopt_map {
     const char *optname;
-    boolean *addr;
+    nh_bool *addr;
 };
 
 struct nh_int_option {
@@ -306,7 +306,7 @@ struct nh_autopickup_rules {
 
 union nh_optvalue {
     char *s; /* largest element first for static initialisation */
-    boolean b;
+    nh_bool b;
     int i;
     int e;
     struct nh_autopickup_rules *ar;
@@ -333,7 +333,7 @@ struct nh_menuitem {
     char caption[BUFSZ];
     char accel;
     char group_accel;
-    boolean selected;
+    nh_bool selected;
 };
 
 struct nh_objitem {
@@ -347,7 +347,7 @@ struct nh_objitem {
     enum nh_bucstatus buc;
     char accel;
     char group_accel;
-    boolean worn;
+    nh_bool worn;
 };
 
 struct nh_objresult {
@@ -369,7 +369,7 @@ struct nh_player_info {
     int hp, hpmax, en, enmax, ac, level;
     char coinsym;
     int monnum, cur_monnum;
-    boolean enhance_possible;
+    nh_bool enhance_possible;
 };
 
 
@@ -391,7 +391,7 @@ struct nh_game_info {
      */
     char level_desc[COLNO];
     int moves, depth;
-    boolean has_amulet;
+    nh_bool has_amulet;
     /* most of nh_player_info is possible, but what makes sense? */
     
     /* if the status is LS_DONE */
@@ -436,7 +436,7 @@ struct nh_dbuf_entry {
     short obj_mn;
     short mon;
     short monflags;
-    boolean invis;
+    nh_bool invis;
 };
 
 #define NH_EFFECT_TYPE(e) ((enum nh_effect_types)((e) >> 16))
@@ -522,27 +522,27 @@ struct nh_topten_entry {
     char name[PL_NSIZ];
     char death[BUFSZ];
     char entrytxt[BUFSZ];
-    boolean highlight;
+    nh_bool highlight;
 };
 
 struct nh_window_procs {
     void (*win_pause)(enum nh_pause_reason reason);
-    void (*win_display_buffer)(char *,boolean);
+    void (*win_display_buffer)(char *,nh_bool);
     void (*win_update_status)(struct nh_player_info *pi);
     void (*win_print_message)(int turn, const char *msg);
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
-    boolean (*win_list_items)(struct nh_objitem *items, int icount, boolean invent);
+    nh_bool (*win_list_items)(struct nh_objitem *items, int icount, nh_bool invent);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
     void (*win_raw_print)(const char *str);
     char (*win_query_key)(const char *query, int *count);
-    int (*win_getpos)(int *, int *, boolean, const char*);
-    enum nh_direction (*win_getdir)(const char *, boolean);
+    int (*win_getpos)(int *, int *, nh_bool, const char*);
+    enum nh_direction (*win_getdir)(const char *, nh_bool);
     char (*win_yn_function)(const char *query, const char *rset, char defchoice);
     void (*win_getlin)(const char *,char *);
     void (*win_delay)(void);
     void (*win_level_changed)(int displaymode);
-    void (*win_outrip)(struct nh_menuitem*,int, boolean, char *, long, char *, int);
+    void (*win_outrip)(struct nh_menuitem*,int, nh_bool, char *, long, char *, int);
 };
 
 #endif

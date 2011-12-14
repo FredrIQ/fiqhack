@@ -9,8 +9,8 @@ static struct nh_objitem *flooritems, *inventory;
 static int floor_icount, inv_icount;
 
 
-static boolean curses_list_items_core(struct nh_objitem *items, int icount,
-			              boolean invent, boolean draw)
+static nh_bool curses_list_items_core(struct nh_objitem *items, int icount,
+			              nh_bool invent, nh_bool draw)
 {
     struct nh_objitem **list;
     if (invent) {
@@ -36,12 +36,12 @@ static boolean curses_list_items_core(struct nh_objitem *items, int icount,
 }
 
 
-boolean curses_list_items(struct nh_objitem *items, int icount, boolean invent)
+nh_bool curses_list_items(struct nh_objitem *items, int icount, nh_bool invent)
 {
     return curses_list_items_core(items, icount, invent, TRUE);
 }
 
-boolean curses_list_items_nonblocking(struct nh_objitem *items, int icount, boolean invent)
+nh_bool curses_list_items_nonblocking(struct nh_objitem *items, int icount, nh_bool invent)
 {
     return curses_list_items_core(items, icount, invent, FALSE);
 }
@@ -99,7 +99,7 @@ void draw_sidebar(void)
 }
 
 
-void cleanup_sidebar(boolean dealloc)
+void cleanup_sidebar(nh_bool dealloc)
 {
     if (dealloc) {
 	free(flooritems);

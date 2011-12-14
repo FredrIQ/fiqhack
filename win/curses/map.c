@@ -66,7 +66,7 @@ static int compare_coord_dist(const void *p1, const void *p2)
 }
 
 
-int curses_getpos(int *x, int *y, boolean force, const char *goal)
+int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 {
     int result = 0;
     int cx, cy;
