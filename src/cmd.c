@@ -1091,6 +1091,11 @@ struct nh_cmd_desc *nh_get_object_commands(int *count, char invlet)
 	struct nh_cmd_desc *obj_cmd;
 	struct obj *obj;
 	
+	/* returning a list of commands when .viewing is true doesn't hurt
+	 * anything, but since they won't work there is no point. */
+	if (program_state.viewing)
+	    return NULL;
+	
 	for (obj = invent; obj; obj = obj->nobj)
 	    if (obj->invlet == invlet)
 		break;
