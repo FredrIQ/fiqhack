@@ -56,6 +56,11 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
 	    wclrtoeol(stdscr);
 	} /* else: make do without replay info */
     }
+    /* refresh on stdscr erases the windows on top of it ... */
+    touchwin(msgwin);
+    wrefresh(msgwin);
+    touchwin(mapwin);
+    wrefresh(mapwin);
 }
 
 

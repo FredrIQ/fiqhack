@@ -53,6 +53,12 @@ void init_curses_ui(void)
     curses_scr = newterm(NULL, stdout, stdin);
     set_term(curses_scr);
     
+    if (LINES < 24 || COLS < COLNO) {
+	fprintf(stderr, "Sorry, your terminal is too small for NetHack.\n");
+	endwin();
+	exit(0);
+    }
+    
     noecho();
     raw();
     meta(stdscr, TRUE);
@@ -168,20 +174,20 @@ void create_game_windows(void)
     if (ui_flags.draw_frame) {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
 	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight + 2, 1);
-	statuswin = newwin(statusheight, COLNO,
+	statuswin = derwin(stdscr, statusheight, COLNO,
 			   ui_flags.msgheight + ROWNO + 3, 1);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
+	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
 	
 	draw_frame();
     } else {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 0, 0);
 	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight, 0);
-	statuswin = newwin(statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	statuswin = derwin(stdscr, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO, 0, COLNO);
+	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
     keypad(mapwin, TRUE);
@@ -218,19 +224,19 @@ void resize_game_windows(void)
     if (ui_flags.draw_frame) {
 	mvwin(msgwin, 1, 1);
 	mvwin(mapwin, ui_flags.msgheight + 2, 1);
-	statuswin = newwin(statusheight, COLNO,
+	statuswin = derwin(stdscr, statusheight, COLNO,
 			   ui_flags.msgheight + ROWNO + 3, 1);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
+	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
 	draw_frame();
     } else {
 	mvwin(msgwin, 0, 0);
 	mvwin(mapwin, ui_flags.msgheight, 0);
-	statuswin = newwin(statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	statuswin = derwin(stdscr, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = newwin(ui_flags.viewheight, COLS - COLNO, 0, COLNO);
+	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
     redraw_game_windows();
@@ -264,18 +270,22 @@ void redraw_game_windows(void)
     if (ui_flags.ingame) {
 	redrawwin(mapwin);
 	redrawwin(msgwin);
-	redrawwin(statuswin);
 	
 	wnoutrefresh(mapwin);
 	wnoutrefresh(msgwin);
-	wnoutrefresh(statuswin);
 	
-	draw_frame();
+	/* statuswin can become NULL if the terminal is resized to microscopic dimensions */
+	if (statuswin) {
+	    redrawwin(statuswin);
+	    wnoutrefresh(statuswin);
+	}
 	
-	if (ui_flags.draw_sidebar) {
+	if (sidebar) {
 	    redrawwin(sidebar);
 	    wnoutrefresh(sidebar);
 	}
+	
+	draw_frame();
     }
     
     for (gw = firstgw; gw; gw = gw->next) {
@@ -414,9 +424,8 @@ void curses_pause(enum nh_pause_reason reason)
     if (reason == P_MESSAGE && msgwin != NULL)
 	pause_messages();
     else if (mapwin != NULL)
-	/* P_MAP: pause to show the result of detection or similar
-	 * we may wgetch on stdscr, but it's the map we actually care about */
-	nh_wgetch(stdscr);
+	/* P_MAP: pause to show the result of detection or similar */
+	nh_wgetch(mapwin);
 }
 
 
