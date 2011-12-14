@@ -436,7 +436,7 @@ static struct nh_cmd_desc* show_help(void)
  * Return TRUE if this succeeds, FALSE otherwise */
 static nh_bool read_keymap(void)
 {
-    char filename[BUFSZ];
+    fnchar filename[BUFSZ];
     char *data, *line, *endptr;
     int fd, size, pos, key;
     struct nh_cmd_desc *cmd;
@@ -445,9 +445,9 @@ static nh_bool read_keymap(void)
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
 	return FALSE;
-    strncat(filename, "keymap.conf", BUFSZ);
-    
-    fd = open(filename, O_RDONLY);
+    fnncat(filename, FN("keymap.conf"), BUFSZ);
+
+    fd = sys_open(filename, O_RDONLY, 0);
     if (fd == -1)
 	return FALSE;
     
@@ -528,14 +528,15 @@ static void write_keymap(void)
 {
     int fd, i;
     unsigned int key;
-    char filename[BUFSZ], buf[BUFSZ], *name;
+    fnchar filename[BUFSZ];
+    char buf[BUFSZ], *name;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
 	return;
-    strncat(filename, "keymap.conf", BUFSZ);
-    
-    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+    fnncat(filename, FN("keymap.conf"), BUFSZ);
+
+    fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)
 	return;
     

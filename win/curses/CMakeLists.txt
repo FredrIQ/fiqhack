@@ -68,3 +68,6 @@ if (UNIX)
     add_custom_target(nethack_curses_shell_script ALL
                       DEPENDS nethack.sh)
 endif()
+
+install(TARGETS nethack_curses
+        DESTINATION ${LIBDIR})

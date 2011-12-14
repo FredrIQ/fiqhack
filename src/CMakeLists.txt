@@ -46,3 +46,6 @@ endif ()
 add_library(nethack SHARED ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
 
 add_dependencies (nethack makedefs_headers)
+
+install(TARGETS nethack
+        DESTINATION ${BINDIR})

@@ -333,8 +333,8 @@ int nh_wgetch(WINDOW *win)
 	    kill(0, SIGINT);
 	    curs_set(0);
 	    key = 0;
-#endif
 	}
+#endif
 
 	if (key == KEY_RESIZE) {
 	    struct gamewin *gw;
@@ -491,6 +491,10 @@ void curses_raw_print(const char *str)
 /* sleep for 50 ms */
 void curses_delay_output(void)
 {
+#if defined(WIN32)
+    Sleep(45);
+#else
     usleep(50 * 1000);
+#endif
 }
 

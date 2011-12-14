@@ -159,7 +159,8 @@ out:
 
 void replay(void)
 {
-    char buf[BUFSZ], logdir[BUFSZ], savedir[BUFSZ], filename[1024], *dir, **files;
+    char buf[BUFSZ];
+    fnchar logdir[BUFSZ], savedir[BUFSZ], filename[1024], *dir, **files;
     struct nh_menuitem *items;
     int i, n, fd, icount, size, filecount, pick[1];
     enum nh_log_status status;
@@ -199,7 +200,7 @@ void replay(void)
 	
 	/* add all the files to the menu */
 	for (i = 0; i < filecount; i++) {
-	    fd = open(files[i], O_RDWR, 0660);
+	    fd = sys_open(files[i], O_RDWR, 0660);
 	    status = nh_get_savegame_status(fd, &gi);
 	    close(fd);
 	    
@@ -217,8 +218,9 @@ void replay(void)
 	
 	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, pick);
 	free(items);
+	filename[0] = '\0';
 	if (n > 0 && pick[0] != -1)
-	    strncpy(filename, files[pick[0]-1], sizeof(filename));
+	    fnncat(filename, files[pick[0]-1], sizeof(filename)/sizeof(fnchar));
 	
 	for (i = 0; i < filecount; i++)
 	    free(files[i]);
@@ -236,7 +238,7 @@ void replay(void)
 	break;
     }
     
-    fd = open(filename, O_RDWR, 0660);
+    fd = sys_open(filename, O_RDWR, 0660);
     replay_commandloop(fd);
     close(fd);
 }

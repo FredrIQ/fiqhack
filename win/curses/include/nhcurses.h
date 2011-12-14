@@ -8,6 +8,7 @@
  * _XOPEN_SOURCE_EXTENDED is needed for ncurses to activate widechars */
 #define _GNU_SOURCE
 #define _XOPEN_SOURCE_EXTENDED
+#define UNICODE
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +17,11 @@
 #if !defined(WIN32) /* UNIX + APPLE */
 # include <unistd.h>
 #else	/* WINDOWS */
-# define PDCURSES /* there is no ncurses on windows */
+
+# include <windows.h>
+# include <shlobj.h>
+# undef MOUSE_MOVED /* this definition from windows.h conflicts with a definition from curses */
+# define random rand
 
 # if defined (_MSC_VER)
 /* If we're using the Microsoft compiler, we also get the Microsoft C lib which
@@ -24,8 +29,33 @@
  * macro, which is not understood by gcc (it uses a different notation). */
 #  define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 # endif
-
 #endif
+
+/* File handling compatibility.
+ * On UNIX + APPLE, the normal API can handle multibyte strings, so no special
+ * consideration for international charsets is required.  Windows on the other
+ * hand has special variants of all api functions that take wchar_t strings.
+ * The following abstactions are introduced to handle this:
+ *  fnchar: a filename character
+ *  fnncat: strncat for fnchars
+ *  sys_open: system-dependent open
+ */
+#if !defined(WIN32) /* UNIX + APPLE */
+typedef char fnchar;
+# define sys_open  open
+# define fnncat(str1, str2, len) strncat(str1, str2, len)
+# define FN(x) (x)
+# define FN_FMT "%s"
+#else
+
+typedef wchar_t fnchar;
+# define fnncat(str1, str2, len) wcsncat(str1, str2, len)
+# define fopen(name, mode)  _wfopen(name, L ## mode)
+# define sys_open(name, args, mode)  _wopen(name, args)
+# define FN(x) (L ## x)
+# define FN_FMT "%ls"
+#endif
+
 
 #include "nethack.h"
 
@@ -302,10 +332,10 @@ extern void replay(void);
 extern void describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi);
 
 /* rungame.c */
-extern nh_bool get_gamedir(enum game_dirs dirtype, char *buf);
+extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar *buf);
 extern void rungame(void);
 extern nh_bool loadgame(void);
-extern char **list_gamefiles(char *dir, int *count);
+extern fnchar **list_gamefiles(fnchar *dir, int *count);
 
 /* sidebar.c */
 extern void draw_sidebar(void);

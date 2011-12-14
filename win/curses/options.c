@@ -1,6 +1,7 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
@@ -8,6 +9,7 @@
 #include <sys/types.h>
 
 #include "nhcurses.h"
+
 
 enum option_lists {
     NO_LIST,
@@ -810,7 +812,7 @@ static void read_config_line(char* line)
 
 
 /* open a config file and separate it into lines for read_config_line() */
-static void read_config_file(const char *filename)
+static void read_config_file(const fnchar *filename)
 {
     FILE *fp;
     int fsize;
@@ -856,11 +858,12 @@ static void read_config_file(const char *filename)
 
 
 /* determine the correct filename for the config file */
-static void get_config_name(char *buf, nh_bool ui)
+static void get_config_name(fnchar *buf, nh_bool ui)
 {
-    char *envval;
     buf[0] = '\0';
-    
+
+#if defined(UNIX)
+    char *envval;
     if (!ui) {
 	/* check for env override first */
 	envval = getenv("NETHACKOPTIONS");
@@ -869,74 +872,42 @@ static void get_config_name(char *buf, nh_bool ui)
 	    return;
 	}
     }
+#endif
     
     /* look in regular location */
     if (!get_gamedir(CONFIG_DIR, buf))
 	return;
-    strncat(buf, ui ? "curses.conf" : "NetHack.conf", BUFSZ);
-    
-#if defined(WIN32)
-    TCHAR szPath[MAX_PATH];
-    /* get the application data directory: 
-	* C:\Users\somename\AppData\roaming\ on Vista and 7 */
-    if (!SUCCEEDED(SHGetFolderPath( NULL, CSIDL_APPDATA, NULL, 0, szPath )))
-	return;
-    PathAppend( szPath, _T("\\NetHack\\NetHack.conf") );
-#endif
+
+    fnncat(buf, ui ? FN("curses.conf") : FN("NetHack.conf"), BUFSZ);
 }
 
 
 void read_nh_config(void)
 {
-    char filename[BUFSZ];
+    fnchar filename[BUFSZ];
     get_config_name(filename, FALSE);
     read_config_file(filename);
 }
 
 void read_ui_config(void)
 {
-    char uiconfname[BUFSZ];
+    fnchar uiconfname[BUFSZ];
     get_config_name(uiconfname, TRUE);
     read_config_file(uiconfname);    
 }
 
 
-static void make_config_dir(char *filename)
-{
-    char filename_copy[BUFSZ];
-    char *dir;
-    mode_t mask;
-    
-    /* dirname may modify its argument */
-    strncpy(filename_copy, filename, BUFSZ);
-    dir = dirname(filename_copy);
-    
-    mask = umask(0);
-    if (mkdir(dir, 0755) == -1) {
-	/* couldn't create last level dir; try creating 2 levels */
-	dir = dirname(dir);
-	mkdir(dir, 0755);
-	
-	strncpy(filename_copy, filename, BUFSZ);
-	dir = dirname(filename_copy);
-	mkdir(dir, 0755);
-    }
-    umask(mask);
-}
-
-
-static FILE *open_config_file(char *filename)
+static FILE *open_config_file(fnchar *filename)
 {
     FILE *fp;
     
     fp = fopen(filename, "w");
     if (!fp && (errno == ENOTDIR || errno == ENOENT)) {
-	make_config_dir(filename);
 	fp = fopen(filename, "w");
     }
     
     if (!fp) {
-	fprintf(stderr, "could not open %s: %s", filename, strerror(errno));
+	fprintf(stderr, "could not open " FN_FMT ": %s", filename, strerror(errno));
 	return NULL;
     }
     
@@ -965,8 +936,8 @@ static void write_config_options(FILE *fp, struct nh_option_desc *options)
 void write_config(void)
 {
     FILE *fp;
-    char filename[BUFSZ];
-    char uiconfname[BUFSZ];
+    fnchar filename[BUFSZ];
+    fnchar uiconfname[BUFSZ];
     
     get_config_name(filename, FALSE);
     get_config_name(uiconfname, TRUE);

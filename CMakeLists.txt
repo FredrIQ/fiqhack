@@ -39,10 +39,6 @@ install(FILES ${NetHack_BINARY_DIR}/dat/nhdat
         DESTINATION ${DATADIR})
 install(FILES ${NetHack_SOURCE_DIR}/dat/license
         DESTINATION ${DATADIR})
-install(FILES ${NetHack_BINARY_DIR}/src/libnethack.so
-        DESTINATION ${LIBDIR})
-install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack
-        DESTINATION ${BINDIR})
         
 if (UNIX)
     install(PROGRAMS ${NetHack_BINARY_DIR}/win/curses/nethack.sh

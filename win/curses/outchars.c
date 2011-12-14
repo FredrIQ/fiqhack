@@ -308,15 +308,16 @@ static void read_sym_line(char *line)
 
 static void read_unisym_config(void)
 {
-    char filename[BUFSZ], *data, *line;
+    fnchar filename[BUFSZ];
+    char *data, *line;
     int fd, size;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
 	return;
-    strncat(filename, "unicode.conf", BUFSZ);
+    fnncat(filename, FN("unicode.conf"), BUFSZ);
     
-    fd = open(filename, O_RDONLY);
+    fd = sys_open(filename, O_RDONLY, 0);
     if (fd == -1)
 	return;
     
@@ -354,15 +355,15 @@ static void write_symlist(int fd, const struct curses_symdef *list, int len)
 
 static void write_unisym_config(void)
 {
-    char filename[BUFSZ];
+    fnchar filename[BUFSZ];
     int fd;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
 	return;
-    strncat(filename, "unicode.conf", BUFSZ);
+    fnncat(filename, FN("unicode.conf"), BUFSZ);
     
-    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+    fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)
 	return;
     

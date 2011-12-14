@@ -1,9 +1,7 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#ifndef O_RDONLY
 #include <fcntl.h>
-#endif
 #include <time.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -13,6 +11,34 @@
 
 #include "nhcurses.h"
 
+#if defined(WIN32)
+
+nh_bool get_gamedir(enum game_dirs dirtype, wchar_t *buf)
+{
+    wchar_t *subdir;
+    wchar_t appPath[MAX_PATH], nhPath[MAX_PATH];
+    
+    /* Get the location of "AppData\Roaming" (Vista, 7) or "Application Data" (XP).
+     * The returned Path does not include a trailing backslash. */
+    if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
+	return FALSE;
+    
+    switch (dirtype) {
+	case CONFIG_DIR: subdir = L"\\"; break;
+	case SAVE_DIR:   subdir = L"\\save\\"; break;
+	case LOG_DIR:    subdir = L"\\log\\"; break;
+    }
+    
+    snwprintf(nhPath, MAX_PATH, L"%s\\NetHack", appPath);
+    _wmkdir(nhPath);
+    
+    snwprintf(buf, BUFSZ, L"%s%s", nhPath, subdir);
+    _wmkdir(buf);
+    
+    return TRUE;
+}
+
+#else /* defined(WIN32) */
 
 nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
 {
@@ -21,8 +47,8 @@ nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
     
     switch (dirtype) {
 	case CONFIG_DIR: subdir = ""; break;
-	case SAVE_DIR: subdir = "save/"; break;
-	case LOG_DIR: subdir = "log/"; break;
+	case SAVE_DIR:   subdir = "save/"; break;
+	case LOG_DIR:    subdir = "log/"; break;
     }
     
     /* look in regular location */
@@ -55,6 +81,8 @@ nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
     return TRUE;
 }
 
+#endif
+
 
 static int commandloop(void)
 {
@@ -83,9 +111,9 @@ static int commandloop(void)
 }
 
 
-static void game_ended(int status, char *filename)
+static void game_ended(int status, fnchar *filename)
 {
-    char fncopy[1024], logname[1024], savedir[BUFSZ], *fdir, *fname;
+    fnchar fncopy[1024], logname[1024], savedir[BUFSZ], *fdir, *fname;
     
     if (status == GAME_SAVED) {
 	printf("Be seeing you...");
@@ -101,7 +129,7 @@ static void game_ended(int status, char *filename)
      * out of the save/ dir and into the log/ dir, since it's only use now is as
      * a tropy.
      */
-    
+#if !defined(WIN32)
     /* dirname and basename may modify the input string, depending on the system */
     strncpy(fncopy, filename, sizeof(fncopy));
     fdir = dirname(fncopy);
@@ -118,6 +146,7 @@ static void game_ended(int status, char *filename)
     
     /* don't care about errors: rename is nice to have, not essential */
     rename(filename, logname);
+#endif
 }
 
 
@@ -125,8 +154,8 @@ void rungame(void)
 {
     int ret, role = initrole, race = initrace, gend = initgend, align = initalign;
     int fd = -1;
-    char filename[1024];
-    char savedir[BUFSZ];
+    fnchar filename[1024];
+    fnchar savedir[BUFSZ];
     long t;
     
     if (!get_gamedir(SAVE_DIR, savedir)) {
@@ -148,9 +177,14 @@ void rungame(void)
 	return;
 
     t = (long)time(NULL);
-    snprintf(filename, sizeof(filename), "%s%ld_%s.nhgame", savedir,
+#if defined(WIN32)
+    snwprintf(filename, 1024, L"%ls%ld_%s.nhgame", savedir,
 	     t, settings.plname);
-    fd = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+#else
+    snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir,
+	     t, settings.plname);
+#endif
+    fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1) {
 	curses_raw_print("Could not create the logfile.");
 	return;
@@ -220,6 +254,13 @@ int compare_filetime(const void *arg1, const void *arg2)
     return s2.st_mtime - s1.st_mtime;
 }
 
+#if defined(WIN32)
+wchar_t **list_gamefiles(wchar_t *dir, int *count)
+{
+    return NULL;
+}
+
+#else
 
 char **list_gamefiles(char *dir, int *count)
 {
@@ -257,11 +298,13 @@ char **list_gamefiles(char *dir, int *count)
     
     return files;
 }
+#endif
 
 
 nh_bool loadgame(void)
 {
-    char buf[BUFSZ], savedir[BUFSZ], filename[1024], **files;
+    char buf[BUFSZ];
+    fnchar savedir[BUFSZ], filename[1024], **files;
     struct nh_menuitem *items;
     int size, icount, fd, i, n, ret, pick[1];
     enum nh_log_status status;
@@ -282,7 +325,7 @@ nh_bool loadgame(void)
     items = malloc(size * sizeof(struct nh_menuitem));
 
     for (i = 0; i < size; i++) {
-	fd = open(files[i], O_RDWR, 0660);
+	fd = sys_open(files[i], O_RDWR, 0660);
 	status = nh_get_savegame_status(fd, &gi);
 	close(fd);
 	
@@ -293,8 +336,9 @@ nh_bool loadgame(void)
 
     n = curses_display_menu(items, icount, "saved games", PICK_ONE, pick);    
     free(items);
+    filename[0] = '\0';
     if (n > 0)
-	strncpy(filename, files[pick[0]-1], sizeof(filename));
+	fnncat(filename, files[pick[0]-1], sizeof(filename)/sizeof(fnchar));
 
     for (i = 0; i < icount; i++)
 	free(files[i]);
@@ -302,7 +346,7 @@ nh_bool loadgame(void)
     if (n <= 0)
 	return FALSE;
     
-    fd = open(filename, O_RDWR, 0660);
+    fd = sys_open(filename, O_RDWR, 0660);
     create_game_windows();
     if (nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
 	curses_msgwin("Failed to restore saved game.");
