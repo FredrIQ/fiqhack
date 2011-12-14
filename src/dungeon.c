@@ -1900,7 +1900,7 @@ static void overview_print_info(char *buf, struct overview_info *oi)
 		ADDNTOBUF("temple", oi->temples)
 
 	/* only print out altar's god if they are all to your god */
-	if (oi->altaralign == u.ualign.type)
+	if (oi->altars && oi->altaralign == u.ualign.type)
 		sprintf(eos(buf), " to %s", align_gname(u.ualign.type));
 
 	ADDNTOBUF("fountain", oi->fountains)
