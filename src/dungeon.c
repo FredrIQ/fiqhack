@@ -697,10 +697,6 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	    if (fqn_prefix[DATAPREFIX]) strcat(tbuf, fqn_prefix[DATAPREFIX]);
 	    strcat(tbuf, DLBFILE);
 	    strcat(tbuf, "\" file!");
-#ifdef WIN32
-	    interject_assistance(1, INTERJECT_PANIC, tbuf,
-				 fqn_prefix[DATAPREFIX]);
-#endif
 	    panic(tbuf);
 	}
 
@@ -1858,7 +1854,7 @@ static char *seen_string(xchar x, const char *obj)
 	switch(x) {
 	    case 0: return "no";
 	    /* an() returns too much.  index is ok in this case */
-	    case 1: return index(vowels, *obj) ? "an" : "a";
+	    case 1: return strchr(vowels, *obj) ? "an" : "a";
 	    case 2:
 	    case 3: return "some";
 	    default: return "many";

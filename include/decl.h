@@ -266,6 +266,17 @@ struct menulist {
 extern struct permonst pm_leader, pm_guardian, pm_nemesis;
 extern struct permonst pm_you_male, pm_you_female;
 
+/* type of setjmp calls: sigsetjmp for UNIX, plain setjmp otherwise. */
+#ifdef UNIX
+# define nh_jmp_buf sigjmp_buf
+# define nh_longjmp(buf, val) siglongjmp(buf, val)
+# define nh_setjmp(buf) sigsetjmp(buf, 1)
+#else
+# define nh_jmp_buf jmp_buf
+# define nh_longjmp(buf, val) longjmp(buf, val)
+# define nh_setjmp(buf) setjmp(buf)
+#endif
+
 extern int exit_jmp_buf_valid;
 extern nh_jmp_buf exit_jmp_buf;
 

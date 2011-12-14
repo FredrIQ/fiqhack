@@ -3875,7 +3875,7 @@ int destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
 }
 
 
-int resist(struct monst *mtmp, char oclass, int damage, int tell)
+int resist(struct monst *mtmp, char oclass, int damage, int domsg)
 {
 	int resisted;
 	int alev, dlev;
@@ -3897,7 +3897,7 @@ int resist(struct monst *mtmp, char oclass, int damage, int tell)
 
 	resisted = rn2(100 + alev - dlev) < mtmp->data->mr;
 	if (resisted) {
-	    if (tell) {
+	    if (domsg) {
 		shieldeff(mtmp->mx, mtmp->my);
 		pline("%s resists!", Monnam(mtmp));
 	    }

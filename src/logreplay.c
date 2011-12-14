@@ -332,11 +332,11 @@ static int replay_display_objects(struct nh_objitem *items, int icount, const ch
 
 static char replay_query_key(const char *query, int *count)
 {
-    char key;
+    int key;
     char *token = next_log_token();
     int cnt = -1, n;
     
-    n = sscanf(token, "k:%hhx:%x", &key, &cnt);
+    n = sscanf(token, "k:%x:%x", &key, &cnt);
     if (n < 1)
 	parse_error("Bad query_key data");
     
@@ -387,10 +387,10 @@ static enum nh_direction replay_getdir(const char *query, boolean restricted)
 
 static char replay_yn_function(const char *query, const char *rset, char defchoice)
 {
-    char key;
+    int key;
     char *token = next_log_token();
     
-    int n = sscanf(token, "y:%hhx", &key);
+    int n = sscanf(token, "y:%x", &key);
     if (n != 1)
 	parse_error("Bad yn_function data");
 

@@ -241,6 +241,36 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 /* negative armor class is randomly weakened to prevent invulnerability */
 #define AC_VALUE(AC)	((AC) >= 0 ? (AC) : -rnd(-(AC)))
 
+/* Byte swapping macros for the savefile code to make endian-independent saves.
+ * Many systems have such macros, but using different names every time.
+ * Defining out own is easier than figuring that out.
+ */
+#define _byteswap16(x) ((((x) & 0x00ffU) << 8) | \
+                        (((x) & 0xff00U) >> 8))
+
+#define _byteswap32(x) ((((x) & 0x000000ffU) << 24) | \
+                        (((x) & 0x0000ff00U) <<  8) | \
+                        (((x) & 0x00ff0000U) >>  8) | \
+                        (((x) & 0xff000000U) >> 24))
+
+/* If endian.h exists (on Linux for example and perhaps on other UNIX) and is
+ * indirectly included via the system headers, we may be able to find out what
+ * the endianness is.  Otherwise define IS_BIG_ENDIAN in config.h */
+#if __BYTE_ORDER == __BIG_ENDIAN
+# define IS_BIG_ENDIAN
+#endif
+
+#ifdef IS_BIG_ENDIAN
+# define host_to_le16(x) _byteswap16(x)
+# define host_to_le32(x) _byteswap32(x)
+# define le16_to_host(x) _byteswap16(x)
+# define le32_to_host(x) _byteswap32(x)
+#else
+# define host_to_le16(x) (x)
+# define host_to_le32(x) (x)
+# define le16_to_host(x) (x)
+# define le32_to_host(x) (x)
+#endif
 
 /* 
  * every api function that might ultimately call panic() must use

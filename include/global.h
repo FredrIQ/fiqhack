@@ -24,7 +24,7 @@
 
 
 /* Assorted definitions that may depend on selections in config.h. */
-
+#include <stdint.h>
 
 typedef signed char	schar;
 typedef unsigned char	uchar;

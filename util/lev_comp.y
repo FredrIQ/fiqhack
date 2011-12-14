@@ -230,7 +230,7 @@ room_level	: level_def flags lev_init messages rreg_init rooms corridors_def
 
 level_def	: LEVEL_ID ':' string
 		  {
-			if (index($3, '.'))
+			if (strchr($3, '.'))
 			    yyerror("Invalid dot ('.') in level name.");
 			if ((int) strlen($3) > 8)
 			    yyerror("Level names limited to 8 characters.");
@@ -607,7 +607,7 @@ door_pos	: INTEGER
 maze_def	: MAZE_ID ':' string ',' filling
 		  {
 			maze.filling = (schar) $5;
-			if (index($3, '.'))
+			if (strchr($3, '.'))
 			    yyerror("Invalid dot ('.') in level name.");
 			if ((int) strlen($3) > 8)
 			    yyerror("Level names limited to 8 characters.");

@@ -12,8 +12,7 @@
 boolean panicking;
 void panic(char *,...);
 
-void
-panic (char *str, ...)
+void panic (char *str, ...)
 {
 	va_list the_args;
 	va_start(the_args, str);
@@ -23,24 +22,10 @@ panic (char *str, ...)
 	fputs(" ERROR:  ", stderr);
 	vfprintf(stderr, str, the_args);
 	fflush(stderr);
-#if defined(UNIX)
-	    abort();	/* generate core dump */
-#endif
+
 	va_end(the_args);
 	exit(EXIT_FAILURE);		/* redundant */
 	return;
 }
-
-#ifdef ALLOCA_HACK
-/*
- * In case bison-generated foo_yacc.c tries to use alloca(); if we don't
- * have it then just use malloc() instead.  This may not work on some
- * systems, but they should either use yacc or get a real alloca routine.
- */
-long *alloca(unsigned cnt)
-{
-	return cnt ? alloc(cnt) : NULL;
-}
-#endif
 
 /*panic.c*/

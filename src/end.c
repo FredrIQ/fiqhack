@@ -185,9 +185,6 @@ void panic(const char *str, ...)
 	vsprintf(buf,str,the_args);
 	raw_print(buf);
 	paniclog("panic", buf);
-#ifdef WIN32
-	interject(INTERJECT_PANIC);
-#endif
 
 	va_end(the_args);
 	done(PANICKED);

@@ -4,6 +4,8 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+/* Note: this header defines features of _UNIX_ systems. */
+
 #if !defined(__cplusplus)
 
 #include <sys/types.h>
@@ -55,43 +57,6 @@ extern gid_t getgid(void);
 extern struct tm *localtime(const time_t *);
 
 extern time_t time(time_t *);
-
-#ifdef UNIX
-# define nh_jmp_buf sigjmp_buf
-# define nh_longjmp(buf, val) siglongjmp(buf, val)
-# define nh_setjmp(buf) sigsetjmp(buf, 1)
-#else
-# define nh_jmp_buf jmp_buf
-# define nh_longjmp(buf, val) longjmp(buf, val)
-# define nh_setjmp(buf) setjmp(buf)
-#endif
-
-#define _byteswap16(x) ((((x) & 0x00ffU) << 8) | \
-                        (((x) & 0xff00U) >> 8))
-
-#define _byteswap32(x) ((((x) & 0x000000ffU) << 24) | \
-                        (((x) & 0x0000ff00U) <<  8) | \
-                        (((x) & 0x00ff0000U) >>  8) | \
-                        (((x) & 0xff000000U) >> 24))
-
-/* if endian.h exists and is indirectly included via the system headers, we may
- * be able to find out what the endianness is */
-#if __BYTE_ORDER == __BIG_ENDIAN
-# define IS_BIG_ENDIAN
-#endif
-
-#ifdef IS_BIG_ENDIAN
-# define host_to_le16(x) _byteswap16(x)
-# define host_to_le32(x) _byteswap32(x)
-# define le16_to_host(x) _byteswap16(x)
-# define le32_to_host(x) _byteswap32(x)
-#else
-# define host_to_le16(x) (x)
-# define host_to_le32(x) (x)
-# define le16_to_host(x) (x)
-# define le32_to_host(x) (x)
-#endif
-
 
 #endif /*  !__cplusplus */
 
