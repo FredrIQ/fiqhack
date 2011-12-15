@@ -63,7 +63,7 @@ endif ()
 
 if (UNIX)
     add_custom_command(OUTPUT nethack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nethack-curses $@" >> nethack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nethack $@" >> nethack.sh
                        VERBATIM)
     add_custom_target(nethack_curses_shell_script ALL
                       DEPENDS nethack.sh)
