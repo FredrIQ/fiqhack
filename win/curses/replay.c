@@ -40,22 +40,22 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
     
     if (ui_flags.draw_frame) {
 	/* draw the replay state on top of the frame under the map */
-	mvwhline(stdscr, 2 + ui_flags.msgheight + ROWNO, 1, ACS_HLINE, COLNO);
-	wattron(stdscr, COLOR_PAIR(4) | A_BOLD);
-	mvwaddstr(stdscr, 2 + ui_flags.msgheight + ROWNO, 2, buf);
-	wattroff(stdscr, COLOR_PAIR(4) | A_BOLD);
-	wrefresh(stdscr);
+	mvwhline(basewin, 2 + ui_flags.msgheight + ROWNO, 1, ACS_HLINE, COLNO);
+	wattron(basewin, COLOR_PAIR(4) | A_BOLD);
+	mvwaddstr(basewin, 2 + ui_flags.msgheight + ROWNO, 2, buf);
+	wattroff(basewin, COLOR_PAIR(4) | A_BOLD);
+	wrefresh(basewin);
     } else {
 	/* try to draw under the status */
 	int h = ui_flags.msgheight + ROWNO + (ui_flags.status3 ? 3 : 2);
 	if (h < LINES) {
-	    wattron(stdscr, COLOR_PAIR(4) | A_BOLD);
-	    mvwaddstr(stdscr, h, 0, buf);
-	    wattroff(stdscr, COLOR_PAIR(4) | A_BOLD);
-	    wclrtoeol(stdscr);
+	    wattron(basewin, COLOR_PAIR(4) | A_BOLD);
+	    mvwaddstr(basewin, h, 0, buf);
+	    wattroff(basewin, COLOR_PAIR(4) | A_BOLD);
+	    wclrtoeol(basewin);
 	} /* else: make do without replay info */
     }
-    /* refresh on stdscr erases the windows on top of it ... */
+    /* refresh on basewin erases the windows on top of it ... */
     touchwin(msgwin);
     wrefresh(msgwin);
     touchwin(mapwin);

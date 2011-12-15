@@ -17,7 +17,7 @@ extern int _nc_unicode_locale(void);
 # define _nc_unicode_locale() (1) /* ... as a macro, for example ... */
 #endif
 
-WINDOW *mapwin, *msgwin, *statuswin, *sidebar;
+WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 struct gamewin *firstgw, *lastgw;
 int orig_cursor;
 const char quitchars[] = " \r\n\033";
@@ -61,14 +61,19 @@ void init_curses_ui(void)
     
     noecho();
     raw();
-    meta(stdscr, TRUE);
+    meta(basewin, TRUE);
     orig_cursor = curs_set(0);
-    keypad(stdscr, TRUE);
+    keypad(basewin, TRUE);
     set_escdelay(20);
     
     init_nhcolors();
     ui_flags.playmode = MODE_NORMAL;
     ui_flags.unicode = _nc_unicode_locale();
+    
+    /* with PDCurses/Win32 stdscr is not NULL before newterm runs, which caused
+     * crashes. So basewin is a copy of stdscr which is known to be NULL before
+     * curses is inited. */
+    basewin = stdscr;
 }
 
 
@@ -78,6 +83,7 @@ void exit_curses_ui(void)
     curs_set(orig_cursor);
     endwin();
     delscreen(curses_scr);
+    basewin = NULL;
 }
 
 
@@ -87,41 +93,41 @@ void draw_frame(void)
 	return;
     
     /* vertical lines */
-    mvwvline(stdscr, 1, 0, ACS_VLINE, ui_flags.viewheight);
-    mvwvline(stdscr, 1, COLNO + 1, ACS_VLINE, ui_flags.viewheight);
+    mvwvline(basewin, 1, 0, ACS_VLINE, ui_flags.viewheight);
+    mvwvline(basewin, 1, COLNO + 1, ACS_VLINE, ui_flags.viewheight);
 
     /* horizontal top line above the message win */
-    mvwaddch(stdscr, 0, 0, ACS_ULCORNER);
-    whline(stdscr, ACS_HLINE, COLNO);
-    mvwaddch(stdscr, 0, COLNO + 1, ACS_URCORNER);
+    mvwaddch(basewin, 0, 0, ACS_ULCORNER);
+    whline(basewin, ACS_HLINE, COLNO);
+    mvwaddch(basewin, 0, COLNO + 1, ACS_URCORNER);
     
     /* horizontal line between message and map windows */
-    mvwaddch(stdscr, 1 + ui_flags.msgheight, 0, ACS_LTEE);
-    whline(stdscr, ACS_HLINE, COLNO);
-    mvwaddch(stdscr, 1 + ui_flags.msgheight, COLNO + 1, ACS_RTEE);
+    mvwaddch(basewin, 1 + ui_flags.msgheight, 0, ACS_LTEE);
+    whline(basewin, ACS_HLINE, COLNO);
+    mvwaddch(basewin, 1 + ui_flags.msgheight, COLNO + 1, ACS_RTEE);
     
     /* horizontal line between map and status */
-    mvwaddch(stdscr, 2 + ui_flags.msgheight + ROWNO, 0, ACS_LTEE);
-    whline(stdscr, ACS_HLINE, COLNO);
-    mvwaddch(stdscr, 2 + ui_flags.msgheight + ROWNO, COLNO + 1, ACS_RTEE);
+    mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, 0, ACS_LTEE);
+    whline(basewin, ACS_HLINE, COLNO);
+    mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, COLNO + 1, ACS_RTEE);
     
     /* horizontal bottom line */
-    mvwaddch(stdscr, ui_flags.viewheight + 1, 0, ACS_LLCORNER);
-    whline(stdscr, ACS_HLINE, COLNO);
-    mvwaddch(stdscr, ui_flags.viewheight + 1, COLNO + 1, ACS_LRCORNER);
+    mvwaddch(basewin, ui_flags.viewheight + 1, 0, ACS_LLCORNER);
+    whline(basewin, ACS_HLINE, COLNO);
+    mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, ACS_LRCORNER);
     
     if (!ui_flags.draw_sidebar)
 	return;
     
-    mvwaddch(stdscr, 0, COLNO + 1, ACS_TTEE);
-    whline(stdscr, ACS_HLINE, COLS - COLNO - 3);
-    mvwaddch(stdscr, 0, COLS - 1, ACS_URCORNER);
+    mvwaddch(basewin, 0, COLNO + 1, ACS_TTEE);
+    whline(basewin, ACS_HLINE, COLS - COLNO - 3);
+    mvwaddch(basewin, 0, COLS - 1, ACS_URCORNER);
     
-    mvwaddch(stdscr, ui_flags.viewheight + 1, COLNO + 1, ACS_BTEE);
-    whline(stdscr, ACS_HLINE, COLS - COLNO - 3);
-    mvwaddch(stdscr, ui_flags.viewheight + 1, COLS - 1, ACS_LRCORNER);
+    mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, ACS_BTEE);
+    whline(basewin, ACS_HLINE, COLS - COLNO - 3);
+    mvwaddch(basewin, ui_flags.viewheight + 1, COLS - 1, ACS_LRCORNER);
     
-    mvwvline(stdscr, 1, COLS - 1, ACS_VLINE, ui_flags.viewheight);
+    mvwvline(basewin, 1, COLS - 1, ACS_VLINE, ui_flags.viewheight);
 }
 
 
@@ -175,20 +181,20 @@ void create_game_windows(void)
     if (ui_flags.draw_frame) {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
 	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight + 2, 1);
-	statuswin = derwin(stdscr, statusheight, COLNO,
+	statuswin = derwin(basewin, statusheight, COLNO,
 			   ui_flags.msgheight + ROWNO + 3, 1);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
+	    sidebar = derwin(basewin, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
 	
 	draw_frame();
     } else {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 0, 0);
 	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight, 0);
-	statuswin = derwin(stdscr, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	statuswin = derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
+	    sidebar = derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
     keypad(mapwin, TRUE);
@@ -225,19 +231,19 @@ void resize_game_windows(void)
     if (ui_flags.draw_frame) {
 	mvwin(msgwin, 1, 1);
 	mvwin(mapwin, ui_flags.msgheight + 2, 1);
-	statuswin = derwin(stdscr, statusheight, COLNO,
+	statuswin = derwin(basewin, statusheight, COLNO,
 			   ui_flags.msgheight + ROWNO + 3, 1);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
+	    sidebar = derwin(basewin, ui_flags.viewheight, COLS - COLNO - 3, 1, COLNO+2);
 	draw_frame();
     } else {
 	mvwin(msgwin, 0, 0);
 	mvwin(mapwin, ui_flags.msgheight, 0);
-	statuswin = derwin(stdscr, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+	statuswin = derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
 	
 	if (ui_flags.draw_sidebar)
-	    sidebar = derwin(stdscr, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
+	    sidebar = derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
     redraw_game_windows();
@@ -265,8 +271,8 @@ void redraw_game_windows(void)
 {
     struct gamewin *gw;
     
-    redrawwin(stdscr);
-    wnoutrefresh(stdscr);
+    redrawwin(basewin);
+    wnoutrefresh(basewin);
     
     if (ui_flags.ingame) {
 	redrawwin(mapwin);
@@ -302,7 +308,7 @@ void redraw_game_windows(void)
 void rebuild_ui(void)
 {
     if (ui_flags.ingame) {
-	wclear(stdscr);
+	wclear(basewin);
 	resize_game_windows();
 	
 	/* some windows are now empty because they were re-created */
@@ -312,9 +318,9 @@ void rebuild_ui(void)
 	draw_sidebar();
 	
 	redraw_game_windows();
-    } else if (stdscr) {
-	redrawwin(stdscr);
-	wrefresh(stdscr);
+    } else if (basewin) {
+	redrawwin(basewin);
+	wrefresh(basewin);
     }
 }
 

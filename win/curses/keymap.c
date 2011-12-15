@@ -173,7 +173,7 @@ int get_cmdkey(void)
     int frame = 0;
     
     if (settings.blink)
-	wtimeout(stdscr, 666); /* wait 2/3 of a second before switching */
+	wtimeout(mapwin, 666); /* wait 2/3 of a second before switching */
     
     while (1) {
 	if (player.x) { /* x == 0 is not a valid coordinate */
@@ -191,7 +191,7 @@ int get_cmdkey(void)
 	draw_map(++frame);
     };
     draw_map(0);
-    wtimeout(stdscr, -1);
+    wtimeout(mapwin, -1);
     
     return key;
 }

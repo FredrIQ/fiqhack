@@ -132,24 +132,24 @@ static void mainmenu(void)
     
     while (n > 0) {
 	logoheight = sizeof(nhlogo) / sizeof(nhlogo[0]);
-	wclear(stdscr);
-	wattron(stdscr, A_BOLD | COLOR_PAIR(4));
+	wclear(basewin);
+	wattron(basewin, A_BOLD | COLOR_PAIR(4));
 	for (i = 0; i < logoheight; i++) {
-	    wmove(stdscr, i, (COLS - strlen(nhlogo[0])) / 2);
-	    waddstr(stdscr, nhlogo[i]);
+	    wmove(basewin, i, (COLS - strlen(nhlogo[0])) / 2);
+	    waddstr(basewin, nhlogo[i]);
 	}
-	wattroff(stdscr, A_BOLD | COLOR_PAIR(4));
-	mvwaddstr(stdscr, LINES-3, 0, copybanner[0]);
-	mvwaddstr(stdscr, LINES-2, 0, copybanner[1]);
-	mvwaddstr(stdscr, LINES-1, 0, copybanner[2]);
-	wrefresh(stdscr);
+	wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+	mvwaddstr(basewin, LINES-3, 0, copybanner[0]);
+	mvwaddstr(basewin, LINES-2, 0, copybanner[1]);
+	mvwaddstr(basewin, LINES-1, 0, copybanner[2]);
+	wrefresh(basewin);
 
 	menuresult[0] = EXITGAME; /* default action */
 	n = curses_display_menu_core(mainmenu_items, 6, NULL, PICK_ONE,
 				     menuresult, 0, logoheight, COLS, ROWNO+3, NULL);
 	
-	wclear(stdscr);
-	wrefresh(stdscr);
+	wclear(basewin);
+	wrefresh(basewin);
 	
 	switch (menuresult[0]) {
 	    case NEWGAME:

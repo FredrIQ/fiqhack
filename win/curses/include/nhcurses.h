@@ -242,7 +242,7 @@ extern struct interface_flags ui_flags;
 extern nh_bool interrupt_multi, game_is_running;
 extern const char quitchars[];
 extern struct nh_window_procs curses_windowprocs;
-extern WINDOW *mapwin, *msgwin, *statuswin, *sidebar;
+extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;
 extern struct nh_player_info player;
 extern int initrole, initrace, initgend, initalign;
