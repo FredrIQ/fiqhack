@@ -1,8 +1,8 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <ctype.h>
 #include "nhcurses.h"
+#include <ctype.h>
 
 #define sgn(x) ((x) >= 0 ? 1 : -1)
 
@@ -131,8 +131,8 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 
 	if (key == 'm') {
 	    if (!monpos) {
-		moncount = 0;
 		int i, j;
+		moncount = 0;
 		for (i = 0; i < ROWNO; i++)
 		    for (j = 0; j < COLNO; j++)
 			if (display_buffer[i][j].mon && (j != player.x || i != player.y))
@@ -157,9 +157,9 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 	    }
 	    goto nxtc;
 	} else if (!strchr(quitchars, key)) {
-	    matching = malloc(default_drawing->num_bgelements);
 	    int k = 0, tx, ty;
 	    int pass, lo_x, lo_y, hi_x, hi_y;
+	    matching = malloc(default_drawing->num_bgelements);
 	    memset(matching, 0, default_drawing->num_bgelements);
 	    for (sidx = 1; sidx < default_drawing->num_bgelements; sidx++)
 		if (key == default_drawing->bgelements[sidx].ch)

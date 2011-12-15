@@ -678,8 +678,9 @@ int dodown(void)
 	    return 0;   /* didn't move */
 	}
 	if (!stairs_down && !ladder_down) {
+		boolean can_fall;
 		trap = t_at(level, u.ux, u.uy);
-		boolean can_fall = trap && (trap->ttyp == TRAPDOOR || trap->ttyp == HOLE);
+		can_fall = trap && (trap->ttyp == TRAPDOOR || trap->ttyp == HOLE);
 		if (!trap ||
 			(trap->ttyp != TRAPDOOR && trap->ttyp != HOLE &&
 			 trap->ttyp != PIT)

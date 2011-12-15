@@ -1,11 +1,10 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
-
-#include "nhcurses.h"
 
 enum internal_commands {
     /* implicitly include enum nh_direction */
@@ -358,8 +357,8 @@ static struct nh_cmd_desc *doextcmd(void)
 	
 	/* don't allow ui commands: they wouldn't be handled properly later on */
 	if (!retval || (retval->flags & CMD_UI)) {
-	    retval = NULL;
 	    char msg[BUFSZ];
+	    retval = NULL;
 	    sprintf(msg, "%s: unknown extended command.", cmdbuf);
 	    curses_msgwin(msg);
 	}
@@ -731,14 +730,14 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 static nh_bool set_command_keys(struct win_menu *mdat, int idx)
 {
     int id = mdat->items[idx].id;
-    struct nh_cmd_desc *cmd;
+    struct nh_cmd_desc *cmd, *cmdlist;
     
     if (id == RESET_BINDINGS_ID) {
+	int i, count = 0;
 	init_keymap(); /* fully reset the keymap */
 	
 	/* reset extcmds */
-	int i, count = 0;
-	struct nh_cmd_desc *cmdlist = nh_get_commands(&count);
+	cmdlist = nh_get_commands(&count);
 	for (i = 0; i < count; i++) {
 	    cmd = find_command(cmdlist[i].name);
 	    if (cmd)

@@ -31,9 +31,15 @@ static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
 char bones[] = "bonesnn.xxx";
 
 #if defined(WIN32)
-#define IMPORT __declspec(dllimport) extern __stdcall
+# define WIN32_LEAN_AND_MEAN
+# include <Windows.h>
+
+# if !defined(S_IRUSR)
+#  define S_IRUSR _S_IREAD
+#  define S_IWUSR _S_IWRITE
+# endif
+
 #define sleep Sleep
-IMPORT void Sleep(int);
 #endif
 
 static const char *fqname(const char *, int, int);
@@ -256,42 +262,6 @@ void unlock_fd(int fd)
     fcntl(fd, F_SETLK, &sflock);
 }
 #elif defined (WIN32) /* windows versionf of lock_fd(), unlock_fd() */
-
-/*
- * Hack alert!
- * All of the following definitions are from <windows.h>.  Why not include the file?
- * As it turns out, windows.h is huge and causes all kinds of conflicts.
- * It just didn't seem worthwhile to untangle them, just for 3 functions.
- */
-typedef void* HANDLE;
-typedef void* PVOID;
-typedef unsigned long* ULONG_PTR;
-typedef unsigned long DWORD;
-typedef DWORD* LPDWORD;
-typedef int BOOL;
-
-#define LOCKFILE_FAIL_IMMEDIATELY   0x00000001
-#define LOCKFILE_EXCLUSIVE_LOCK     0x00000002
-
-typedef struct _OVERLAPPED {
-    ULONG_PTR Internal;
-    ULONG_PTR InternalHigh;
-    union {
-        struct {
-            DWORD Offset;
-            DWORD OffsetHigh;
-        };
-        PVOID Pointer;
-    };
-
-    HANDLE  hEvent;
-} OVERLAPPED, *LPOVERLAPPED;
-
-IMPORT BOOL LockFileEx(HANDLE hFile, DWORD dwFlags,DWORD dwReserved, DWORD nNumberOfBytesToLockLow,
-		       DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped);
-IMPORT BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
-			 DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
-IMPORT DWORD GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh);
 
 /* lock any open file using LockFileEx */
 boolean lock_fd(int fd, int retry)

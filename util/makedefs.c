@@ -325,7 +325,7 @@ static char *version_id_string(char *outbuf, const char *build_date)
 
 void do_date(const char *outfile)
 {
-	long clocktim = 0;
+	time_t clocktim = 0;
 	char *c, cbuf[60], buf[BUFSZ];
 
 	if (!(ofp = fopen(outfile, WRTMODE))) {
@@ -334,7 +334,7 @@ void do_date(const char *outfile)
 	}
 	fprintf(ofp, "%s", Dont_Edit_Code);
 
-	time((time_t *)&clocktim);
+	time(&clocktim);
 	strcpy(cbuf, ctime((time_t *)&clocktim));
 	for (c = cbuf; *c; c++) if (*c == '\n') break;
 	*c = '\0';	/* strip off the '\n' */

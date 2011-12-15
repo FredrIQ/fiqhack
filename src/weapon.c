@@ -785,7 +785,7 @@ static const struct skill_range {
 int enhance_weapon_skill(void)
 {
     int pass, i, n, len, longest, id,
-	to_advance, eventually_advance, maxxed_cnt;
+	to_advance, eventually_advance, maxxed_cnt, selected[1];
     char buf[BUFSZ], sklnambuf[BUFSZ];
     const char *prefix;
     struct menulist menu;
@@ -875,7 +875,6 @@ int enhance_weapon_skill(void)
 	if (wizard && !speedy)
 	    sprintf(eos(buf), "  (%d slot%s available)",
 		    u.weapon_slots, plur(u.weapon_slots));
-	int selected[1];
 	n = display_menu(menu.items, menu.icount, buf,
 			    to_advance ? PICK_ONE : PICK_NONE, selected);
 	if (n == 1) {

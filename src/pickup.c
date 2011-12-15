@@ -340,12 +340,14 @@ static int autopick(struct obj *olist,	/* the object list */
 void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role role,
 		 int idx, int id, char *caption, struct obj *obj, boolean use_invlet)
 {
+	struct nh_objitem *it;
+	
 	if (idx >= *nr_items) {
 	    *nr_items = *nr_items * 2;
 	    *items = realloc(*items, *nr_items * sizeof(struct nh_objitem));
 	}
 	
-	struct nh_objitem *it = &((*items)[idx]);
+	it = &((*items)[idx]);
 	it->id = id;
 	it->weight = -1;
 	it->role = role;

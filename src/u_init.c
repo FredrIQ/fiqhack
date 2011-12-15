@@ -697,11 +697,11 @@ void u_init(void)
 	     * get only non-magic instruments.
 	     */
 	    if (Role_if (PM_PRIEST) || Role_if(PM_WIZARD)) {
-		trobj_list = copy_trobj_list(Instrument);
 		static const int trotyp[] = {
 		    WOODEN_FLUTE, TOOLED_HORN, WOODEN_HARP,
 		    BELL, BUGLE, LEATHER_DRUM
 		};
+		trobj_list = copy_trobj_list(Instrument);
 		trobj_list[0].trotyp = trotyp[rn2(SIZE(trotyp))];
 		ini_inv(trobj_list, nclist);
 	    }

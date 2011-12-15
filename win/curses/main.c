@@ -1,6 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -8,7 +9,6 @@
 #include <ctype.h>
 #include <signal.h>
 
-#include "nhcurses.h"
 
 static void process_args(int, char **);
 void append_slash(char *name);

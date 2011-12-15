@@ -1,8 +1,8 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <ctype.h>
 #include "nhcurses.h"
+#include <ctype.h>
 
 struct nh_player_info player;
 

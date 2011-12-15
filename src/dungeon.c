@@ -1629,7 +1629,7 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
     
     if (bymenu) {
     	int n;
-	int selected[menu.icount];
+	int selected[1];
 	int idx;
 	
 	n = display_menu(menu.items, menu.icount, "Level teleport to where:",

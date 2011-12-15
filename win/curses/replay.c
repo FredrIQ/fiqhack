@@ -1,11 +1,10 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#include "nhcurses.h"
 
 static void dummy_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void dummy_delay_output(void) {}

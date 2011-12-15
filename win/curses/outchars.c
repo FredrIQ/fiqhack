@@ -4,11 +4,11 @@
 /* NOTE: This file is utf-8 encoded; saving with a non utf-8 aware editor WILL
  * damage some symbols */
 
+#include "nhcurses.h"
 #include <ctype.h>
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "nhcurses.h"
 
 #define array_size(x) (sizeof(x)/sizeof(x[0]))
 

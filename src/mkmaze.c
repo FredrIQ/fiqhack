@@ -965,10 +965,11 @@ void water_friction(schar *udx, schar *udy)
 void save_waterlevel(struct memfile *mf)
 {
 	struct bubble *b;
+	int n;
 
 	if (!Is_waterlevel(&u.uz)) return;
 
-	int n = 0;
+	n = 0;
 	for (b = bbubbles; b; b = b->next)
 	    ++n;
 	mwrite32(mf, n);

@@ -14,7 +14,7 @@ static nh_bool ext_cmd_getlin_hook(char *, void *);
 
 static void buf_insert(char *buf, int pos, char key)
 {
-    int len = strlen(buf);
+    size_t len = strlen(buf);
     
     while (len >= pos) {
 	buf[len+1] = buf[len];
@@ -26,7 +26,7 @@ static void buf_insert(char *buf, int pos, char key)
 
 static void buf_delete(char *buf, int pos)
 {
-    int len = strlen(buf);
+    size_t len = strlen(buf);
     
     while (len >= pos) {
 	buf[pos] = buf[pos+1];
@@ -39,7 +39,7 @@ void draw_getline(struct gamewin *gw)
 {
     struct win_getline *glw = (struct win_getline *)gw->extra;
     int width, i, offset = 0;
-    int len = strlen(glw->buf);
+    size_t len = strlen(glw->buf);
     
     wclear(gw->win);
     wattron(gw->win, FRAME_ATTRS);
@@ -64,14 +64,14 @@ void draw_getline(struct gamewin *gw)
 
 static void resize_getline(struct gamewin *gw)
 {
-    int height, width;
+    int height, width, startx, starty;
     
     getmaxyx(gw->win, height, width);
     if (height > LINES) height = LINES;
     if (width > COLS) width = COLS;
     
-    int starty = (LINES - height) / 2;
-    int startx = (COLS - width) / 2;
+    starty = (LINES - height) / 2;
+    startx = (COLS - width) / 2;
     
     mvwin(gw->win, starty, startx);
     wresize(gw->win, height, width);
@@ -89,7 +89,8 @@ void hooked_curses_getlin(const char *query, char *buf,
 {
     struct gamewin *gw;
     struct win_getline *gldat;
-    int height, width, key, len = 0;
+    int height, width, key;
+    size_t len = 0;
     nh_bool done = FALSE;
     nh_bool autocomplete = FALSE;
     
@@ -238,7 +239,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 {
     struct nh_menuitem *items;
     int icount, size, *pick_list;
-    int choices[listlen+1];
+    int *choices;
     char buf[BUFSZ];
     char cbuf[QBUFSZ], prompt[QBUFSZ], fmtstr[20];
     int i, n, nchoices, acount;
@@ -248,6 +249,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
     
     size = 10;
     items = malloc(sizeof(struct nh_menuitem) * size);
+    choices = malloc((listlen + 1) * sizeof(int));
     
     ret = 0;
     cbuf[0] = '\0';
@@ -331,6 +333,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 	free(pick_list);
     }
     
+    free(choices);
     free(items);
     return ret;
 }

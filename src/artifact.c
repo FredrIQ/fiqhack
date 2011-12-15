@@ -1245,7 +1245,8 @@ static int arti_invoke(struct obj *obj)
 	    int i, num_ok_dungeons, last_ok_dungeon = 0;
 	    d_level newlev;
 	    extern int n_dgns; /* from dungeon.c */
-	    struct nh_menuitem items[n_dgns];
+	    struct nh_menuitem *items;
+	    items = malloc(n_dgns * sizeof(struct nh_menuitem));
 
 	    num_ok_dungeons = 0;
 	    for (i = 0; i < n_dgns; i++) {
@@ -1263,15 +1264,18 @@ static int arti_invoke(struct obj *obj)
 	    if (num_ok_dungeons > 1) {
 		/* more than one entry; display menu for choices */
 		int n;
-		int selected[n_dgns];
+		int selected[1];
 
 		n = display_menu(items, num_ok_dungeons, "Open a portal to which dungeon?", PICK_ONE, selected);
+		free(items);
 		if (n <= 0)
 		    goto nothing_special;
 		
 		i = selected[0] - 1;
-	    } else
+	    } else {
+		free(items);
 		i = last_ok_dungeon;	/* also first & only OK dungeon */
+	    }
 
 	    /*
 	     * i is now index into dungeon structure for the new dungeon.

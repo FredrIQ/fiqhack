@@ -1,20 +1,22 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include <ctype.h>
-
 #include "nhcurses.h"
+#include <ctype.h>
 
 
 WINDOW *newdialog(int height, int width)
 {
+    int starty, startx;
+    WINDOW *win;
+
     if (height > LINES) height = LINES;
     if (width > COLS) width = COLS;
     
-    int starty = (LINES - height) / 2;
-    int startx = (COLS - width) / 2;
+    starty = (LINES - height) / 2;
+    startx = (COLS - width) / 2;
     
-    WINDOW *win = newwin(height, width, starty, startx);
+    win = newwin(height, width, starty, startx);
     keypad(win, TRUE);
     meta(win, TRUE);
     wattron(win, FRAME_ATTRS);

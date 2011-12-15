@@ -898,6 +898,7 @@ void throwit(struct obj *obj,
 			return;
 		}
 	} else {
+		boolean obj_destroyed;
 		urange = (int)(ACURRSTR)/2;
 		/* balls are easy to throw or at least roll */
 		/* also, this insures the maximum range of a ball is greater
@@ -938,7 +939,7 @@ void throwit(struct obj *obj,
 
 		if (Underwater) range = 1;
 		
-		boolean obj_destroyed = FALSE;
+		obj_destroyed = FALSE;
 		mon = beam_hit(dx, dy, range, THROWN_WEAPON, NULL, NULL, obj,
 			       &obj_destroyed);
 

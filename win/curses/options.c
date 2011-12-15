@@ -1,14 +1,13 @@
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
-#include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "nhcurses.h"
 
 
 enum option_lists {
@@ -75,7 +74,7 @@ struct nh_option_desc curses_options[] = {
     {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
     {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { FALSE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
-    {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {}},
+    {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {0}},
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)A_REVERSE}},
     {"msgheight", "message window height", OPTTYPE_INT, {(void*)8}},
     {"msghistory", "number of messages saved for prevmsg", OPTTYPE_INT, {(void*)256}},

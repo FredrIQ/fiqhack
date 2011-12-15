@@ -1,9 +1,9 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <signal.h>
 #include <locale.h>
-#include "nhcurses.h"
 
 #if !defined(PDCURSES)
 /*
@@ -127,8 +127,9 @@ void draw_frame(void)
 
 void layout_game_windows(void)
 {
+    int statusheight;
     ui_flags.draw_frame = ui_flags.draw_sidebar = FALSE;
-    int statusheight = settings.status3 ? 3 : 2;
+    statusheight = settings.status3 ? 3 : 2;
     
     /* 3 variable elements contribute to height: 
      *  - message area (most important)
@@ -167,9 +168,9 @@ void layout_game_windows(void)
 
 void create_game_windows(void)
 {
-    layout_game_windows();
-    
     int statusheight = ui_flags.status3 ? 3 : 2;
+
+    layout_game_windows();
     
     if (ui_flags.draw_frame) {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
@@ -200,9 +201,9 @@ void create_game_windows(void)
 
 void resize_game_windows(void)
 {
-    layout_game_windows();
-    
     int statusheight = ui_flags.status3 ? 3 : 2;
+    
+    layout_game_windows();
     
     if (!ui_flags.ingame)
 	return;

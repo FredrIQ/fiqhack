@@ -154,6 +154,7 @@ void done_in_by(struct monst *mtmp)
 /*VARARGS1*/
 void panic(const char *str, ...)
 {
+	char buf[BUFSZ];
 	va_list the_args;
 	va_start(the_args, str);
 
@@ -181,7 +182,6 @@ void panic(const char *str, ...)
 	if (program_state.something_worth_saving)
 	    dosave0(TRUE);
 	
-	char buf[BUFSZ];
 	vsprintf(buf,str,the_args);
 	raw_print(buf);
 	paniclog("panic", buf);

@@ -49,7 +49,7 @@ nh_bool curses_list_items_nonblocking(struct nh_objitem *items, int icount, nh_b
 
 void draw_sidebar(void)
 {
-    int flheight = 0, invheight = 0;
+    int flheight = 0, invheight = 0, invwh;
     int sbwidth = getmaxx(sidebar);
     
     if (!ui_flags.draw_sidebar)
@@ -85,7 +85,7 @@ void draw_sidebar(void)
 	mvwaddstr(sidebar, flheight ? flheight + 1 : 0, 0, "Inventory:");
 	wattroff(sidebar, A_UNDERLINE);
 	
-	int invwh = invheight-1;
+	invwh = invheight-1;
 	if (invwh < inv_icount) {
 	    invwh--;
 	    mvwprintw(sidebar, ui_flags.viewheight - 1, 0, "(%d more omitted)",

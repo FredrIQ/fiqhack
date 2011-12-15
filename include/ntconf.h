@@ -47,9 +47,12 @@
 
 #ifdef _MSC_VER
 # pragma warning(disable:4761)	/* integral size mismatch in arg; conv supp*/
+# pragma warning(disable:4996)	/* POSIX name is deprecated*/
 # ifdef YYPREFIX
 #  pragma warning(disable:4102)	/* unreferenced label */
 # endif
+# define YY_NO_UNISTD_H
+# define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 #endif
 
 #endif /* NTCONF_H */

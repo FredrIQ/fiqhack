@@ -210,10 +210,11 @@ static void describe_bg(int x, int y, int bg, char *buf)
 static int describe_object(int x, int y, int votyp, char *buf)
 {
     int num_objs = 0;
+    struct obj *otmp;
     if (votyp == -1)
 	return -1;
     
-    struct obj *otmp = vobj_at(x,y);
+    otmp = vobj_at(x,y);
     
     if (!otmp || otmp->otyp != votyp) {
 	if (votyp != STRANGE_OBJECT) {
@@ -264,6 +265,7 @@ static void describe_mon(int x, int y, int monnum, char *buf)
     boolean accurate = !Hallucination;
     char steedbuf[BUFSZ];
     struct monst *mtmp;
+    char visionbuf[BUFSZ], temp_buf[BUFSZ];
     
     if (monnum == -1)
 	return;
@@ -344,7 +346,6 @@ static void describe_mon(int x, int y, int monnum, char *buf)
 		sprintf(eos(buf), ", trapped in %s", an(trapexplain[tt]));
 	}
 
-	char visionbuf[BUFSZ], temp_buf[BUFSZ];
 	mon_vision_summary(mtmp, visionbuf);
 	if (visionbuf[0]) {
 	    sprintf(temp_buf, " [seen: %s]", visionbuf);

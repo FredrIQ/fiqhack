@@ -645,7 +645,7 @@ static void replay_check_cmdresult(void)
 
 boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 {
-    char *cmd;
+    char *cmd, *token;
     int count, cmdidx;
     struct nh_cmd_arg cmdarg;
     struct nh_option_desc *tmp;
@@ -657,7 +657,7 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
     birth_options = active_birth_options;
     active_birth_options = tmp;
     
-    char *token = next_log_token();
+    token = next_log_token();
     
     while (token) {
 	if (token[0] == '!') {

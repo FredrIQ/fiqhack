@@ -56,7 +56,7 @@ static void topten_add_score(struct nh_topten_entry *entry,
 
 static void makeheader(char *linebuf)
 {
-    int i;
+    size_t i;
 
     strcpy(linebuf, " No     Points   Name");
     for (i = strlen(linebuf); i < COLS - strlen(" Hp [max] ") - 4; i++)

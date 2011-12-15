@@ -1435,6 +1435,7 @@ int dotypeinv(void)
 	int unpaid_count;
 	boolean billx = *u.ushops && doinvbill(0);
 	int pick_list[30];
+	struct object_pick *dummy;
 	const char *prompt = "What type of object do you want an inventory of?";
 
 	if (!invent && !billx) {
@@ -1466,7 +1467,6 @@ int dotypeinv(void)
 	    return 0;
 	}
 	
-	struct object_pick *dummy;
 	if (query_objlist(NULL, invent, USE_INVLET | INVORDER_SORT,
 		    &dummy, PICK_NONE, this_type_only) > 0)
 	    free(dummy);

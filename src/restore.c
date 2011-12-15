@@ -213,7 +213,7 @@ static struct monst *restmonchn(struct memfile *mf, struct level *lev, boolean g
 	struct monst *mtmp, *mtmp2 = NULL;
 	struct monst *first = NULL;
 	struct obj *obj;
-	unsigned int count;
+	unsigned int count, mndx;
 
 	/* get the original base address */
 	mfmagic_check(mf, MONCHAIN_MAGIC);
@@ -232,7 +232,7 @@ static struct monst *restmonchn(struct memfile *mf, struct level *lev, boolean g
 		add_id_mapping(mtmp->m_id, nid);
 		mtmp->m_id = nid;
 
-		int mndx = monsndx(mtmp->data);
+		mndx = monsndx(mtmp->data);
 		if (propagate(mndx, TRUE, ghostly) == 0) {
 		    /* cookie to trigger purge in getbones() */
 		    mtmp->mhpmax = DEFUNCT_MONSTER;	

@@ -1,9 +1,9 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <ctype.h>
 #include <time.h>
-#include "nhcurses.h"
 
 #define LISTSZ 32
 nh_bool player_selection(int *out_role, int *out_race, int *out_gend,

@@ -1646,6 +1646,7 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 #endif
 	int halfeaten, mntmp, contents;
 	int islit, unlabeled, ishistoric, isdiluted;
+	const struct alt_spellings *as = spellings;
 	struct fruit *f;
 	int ftype = current_fruit;
 	char fruitbuf[BUFSZ];
@@ -1920,8 +1921,6 @@ struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 	}
 
 	/* Alternate spellings (pick-ax, silver sabre, &c) */
-	const struct alt_spellings *as = spellings;
-
 	while (as->sp) {
 		if (fuzzymatch(bp, as->sp, " -", TRUE)) {
 			typ = as->ob;

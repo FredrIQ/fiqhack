@@ -167,6 +167,7 @@ void draw_menu(struct gamewin *gw)
 void resize_menu(struct gamewin *gw)
 {
     struct win_menu *mdat = (struct win_menu*)gw->extra;
+    int startx, starty;
     
     layout_menu(gw);
     
@@ -175,8 +176,8 @@ void resize_menu(struct gamewin *gw)
     mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
 			   mdat->frameheight-1, 2);
     
-    int starty = (LINES - mdat->height) / 2;
-    int startx = (COLS - mdat->width) / 2;
+    starty = (LINES - mdat->height) / 2;
+    startx = (COLS - mdat->width) / 2;
     
     mvwin(gw->win, starty, startx);
     
@@ -241,7 +242,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 {
     struct gamewin *gw;
     struct win_menu *mdat;
-    int i, key, idx, rv;
+    int i, key, idx, rv, startx, starty;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     
@@ -265,8 +266,8 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     assign_menu_accelerators(mdat);
     layout_menu(gw);
     
-    int starty = (y2 - y1 - mdat->height) / 2 + y1;
-    int startx = (x2 - x1 - mdat->width) / 2 + x1;
+    starty = (y2 - y1 - mdat->height) / 2 + y1;
+    startx = (x2 - x1 - mdat->width) / 2 + x1;
     
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
@@ -574,6 +575,7 @@ void draw_objmenu(struct gamewin *gw)
 void resize_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu*)gw->extra;
+    int startx, starty;
     
     layout_objmenu(gw);
     
@@ -582,8 +584,8 @@ void resize_objmenu(struct gamewin *gw)
     mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
 			   mdat->frameheight-1, 2);
      
-    int starty = (LINES - mdat->height) / 2;
-    int startx = (COLS - mdat->width) / 2;
+    starty = (LINES - mdat->height) / 2;
+    startx = (COLS - mdat->width) / 2;
     
     mvwin(gw->win, starty, startx);
     
@@ -646,7 +648,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 {
     struct gamewin *gw;
     struct win_objmenu *mdat;
-    int i, key, idx, rv;
+    int i, key, idx, rv, startx, starty;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
@@ -666,8 +668,8 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 	assign_objmenu_accelerators(mdat);
     layout_objmenu(gw);
     
-    int starty = (LINES - mdat->height) / 2;
-    int startx = (COLS - mdat->width) / 2;
+    starty = (LINES - mdat->height) / 2;
+    startx = (COLS - mdat->width) / 2;
     
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);

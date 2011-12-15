@@ -1,15 +1,17 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include "nhcurses.h"
 #include <fcntl.h>
 #include <time.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <libgen.h>
 #include <errno.h>
+#if !defined(WIN32)
+# include <dirent.h>
+# include <libgen.h>
+#endif
 
-#include "nhcurses.h"
 
 #if defined(WIN32)
 

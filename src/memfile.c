@@ -109,8 +109,9 @@ static void mfalign(struct memfile *mf, int aln)
 
 void mfmagic_check(struct memfile *mf, int32_t magic)
 {
+	int32_t m2;
 	mfalign(mf, 4);
-	int32_t m2 = mread32(mf);
+	m2 = mread32(mf);
 	if (magic != m2)
 	    panic("damaged save!");
 }
