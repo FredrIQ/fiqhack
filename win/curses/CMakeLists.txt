@@ -45,12 +45,6 @@ endif ()
 include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
-if (CMAKE_COMPILER_IS_GNUCC)
-    add_definitions (-Wall -g3)
-    if (UNIX)
-	add_definitions (-fvisibility=hidden)
-    endif ()
-endif ()
 add_definitions(-DNETHACKDIR="${DATADIR}")
 
 link_directories (${NetHack_BINARY_DIR}/src)

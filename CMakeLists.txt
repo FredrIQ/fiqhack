@@ -3,6 +3,8 @@
 cmake_minimum_required (VERSION 2.6)
 project (NetHack)
 
+set ( CMAKE_BUILD_TYPE Debug )
+
 if (WIN32)
     set(INSTALL_BASE "$ENV{USERPROFILE}")
 else ()
@@ -29,6 +31,16 @@ if (NOT SHELLDIR)
     set (SHELLDIR "${INSTALL_BASE}/nethack"
          CACHE PATH "launch script location" )
 endif()
+
+
+
+if (CMAKE_COMPILER_IS_GNUCC)
+    set (CMAKE_C_FLAGS_DEBUG "-Wall -g3 -Wold-style-definition -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith")
+    if (UNIX)
+	add_definitions (-fvisibility=hidden)
+    endif ()
+endif ()
+
 
 add_subdirectory (util)
 add_subdirectory (src)

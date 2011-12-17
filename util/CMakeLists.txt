@@ -99,14 +99,6 @@ add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_scanner.c
                         ${NetHack_SOURCE_DIR}/util/lev_comp.l
                    DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.l)
 
-if (CMAKE_COMPILER_IS_GNUCC)
-    add_definitions (-Wall -g3 -Wold-style-definition -Wstrict-prototypes
-                     -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith)
-    if (UNIX)
-	add_definitions (-fvisibility=hidden)
-    endif ()
-endif ()
-
 add_custom_target (makedefs_headers DEPENDS ${MAKEDEFS_HEADERS})
 add_dependencies (dgn_comp makedefs_headers)
 add_dependencies (lev_comp makedefs_headers)
