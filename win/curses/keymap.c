@@ -295,7 +295,7 @@ enum nh_direction key_to_dir(int key)
 
 
 /* here after #? - now list all full-word commands */
-int doextlist(const char **namelist, const char **desclist, int listlen)
+static int doextlist(const char **namelist, const char **desclist, int listlen)
 {
     char buf[BUFSZ];
     int i, icount = 0, size = listlen;

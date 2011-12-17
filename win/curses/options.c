@@ -117,7 +117,7 @@ struct nh_boolopt_map boolopt_map[] = {
 };
 
 
-nh_bool option_change_callback(struct nh_option_desc *option)
+static nh_bool option_change_callback(struct nh_option_desc *option)
 {
     if (!strcmp(option->name, "frame") ||
 	!strcmp(option->name, "status3") ||

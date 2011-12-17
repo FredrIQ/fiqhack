@@ -95,7 +95,7 @@ void exit_curses_ui(void)
 }
 
 
-void draw_frame(void)
+static void draw_frame(void)
 {
     if (!ui_flags.draw_frame)
 	return;
@@ -139,7 +139,7 @@ void draw_frame(void)
 }
 
 
-void layout_game_windows(void)
+static void layout_game_windows(void)
 {
     int statusheight;
     ui_flags.draw_frame = ui_flags.draw_sidebar = FALSE;
@@ -214,7 +214,7 @@ void create_game_windows(void)
 }
 
 
-void resize_game_windows(void)
+static void resize_game_windows(void)
 {
     int statusheight = ui_flags.status3 ? 3 : 2;
     

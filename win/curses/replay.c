@@ -63,7 +63,7 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
 }
 
 
-static void show_replay_help()
+static void show_replay_help(void)
 {
     static struct nh_menuitem items[] = {
 	{0, MI_TEXT, "KEY_RIGHT or SPACE\t- advance one move"},

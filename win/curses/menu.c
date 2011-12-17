@@ -164,7 +164,7 @@ void draw_menu(struct gamewin *gw)
 }
 
 
-void resize_menu(struct gamewin *gw)
+static void resize_menu(struct gamewin *gw)
 {
     struct win_menu *mdat = (struct win_menu*)gw->extra;
     int startx, starty;
@@ -536,7 +536,7 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 }
 
 
-void draw_objmenu(struct gamewin *gw)
+static void draw_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu*)gw->extra;
     int i, scrlheight, scrlpos, scrltop, attr;
@@ -576,7 +576,7 @@ void draw_objmenu(struct gamewin *gw)
 }
 
 
-void resize_objmenu(struct gamewin *gw)
+static void resize_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu*)gw->extra;
     int startx, starty;

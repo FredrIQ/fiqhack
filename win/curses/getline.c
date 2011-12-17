@@ -84,7 +84,7 @@ static void resize_getline(struct gamewin *gw)
  * Reading can be interrupted by an escape ('\033') - now the
  * resulting string is "\033".
  */
-void hooked_curses_getlin(const char *query, char *buf,
+static void hooked_curses_getlin(const char *query, char *buf,
 		       getlin_hook_proc hook, void *hook_proc_arg)
 {
     struct gamewin *gw;
@@ -222,7 +222,7 @@ static nh_bool ext_cmd_getlin_hook(char *base, void *hook_arg)
 }
 
 /* remove excess whitespace from a string buffer (in place) */
-char *mungspaces(char *bp)
+static char *mungspaces(char *bp)
 {
     char c, *p, *p2;
     nh_bool was_space = TRUE;
