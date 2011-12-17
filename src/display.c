@@ -1299,6 +1299,7 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
     dbuf[y][x].mon = mon;
     dbuf[y][x].monflags = monflags;
     dbuf[y][x].effect = effect;
+    dbuf[y][x].visible = cansee(x, y);
 }
 
 
