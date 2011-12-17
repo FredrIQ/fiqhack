@@ -38,6 +38,10 @@ set (NH_CURSES_SRC
     topten.c
     windows.c)
 
+if (WIN32)
+    set (NH_CURSES_SRC ${NH_CURSES_SRC} rc/nh_ico.rc)
+endif ()
+
 include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
