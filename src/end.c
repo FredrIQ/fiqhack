@@ -282,6 +282,7 @@ static void dump_disclose(int how)
 	list_vanquished('y', FALSE);
 	list_genocided('y', FALSE);
 	show_conduct(how >= PANICKED ? 1 : 2);
+	dooverview();
 	
 	/* make menus work normally again */
 	dump_catch_menus(FALSE);

@@ -1929,8 +1929,11 @@ int dooverview(void)
 	struct level *lev;
 	
 	init_menulist(&menu);
-	add_menutext(&menu, "Select a level to view it");
-	add_menutext(&menu, "");
+	
+	if (!program_state.gameover) {
+	    add_menutext(&menu, "Select a level to view it");
+	    add_menutext(&menu, "");
+	}
 	
 	dnum = -1;
 	for (i = 0; i < maxledgerno(); i++) {
