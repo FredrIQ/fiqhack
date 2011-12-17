@@ -292,6 +292,11 @@ void init_opt_struct(void)
 	find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
 	find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
+
+	/* If no config file exists, these values will not get set until they
+	 * have already been used during game startup.  (-1) is a much better
+	 * default, as 0 will always cause a lawful male Archologist to be created */
+	flags.init_align = flags.init_gend = flags.init_race = flags.init_role = -1;
 }
 
 
