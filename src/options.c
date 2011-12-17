@@ -375,7 +375,7 @@ static boolean option_value_ok(struct nh_option_desc *option,
 		return TRUE;
 		
 	    case OPTTYPE_AUTOPICKUP_RULES:
-		if (!value.ar || value.ar->num_rules > AUTOPICKUP_MAX_RULES)
+		if (value.ar && value.ar->num_rules > AUTOPICKUP_MAX_RULES)
 		    break;
 		return TRUE;
 	}
