@@ -147,9 +147,6 @@ void done_in_by(struct monst *mtmp)
 	return;
 }
 
-#if defined(WIN32)
-#define NOTIFY_NETHACK_BUGS
-#endif
 
 /*VARARGS1*/
 void panic(const char *str, ...)

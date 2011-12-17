@@ -565,12 +565,6 @@ void makemaz(struct level *lev, const char *s)
 	    int x_range = x_maze_max - x_maze_min - 2*INVPOS_X_MARGIN - 1,
 		y_range = y_maze_max - y_maze_min - 2*INVPOS_Y_MARGIN - 1;
 
-#ifdef DEBUG
-	    if (x_range <= INVPOS_X_MARGIN || y_range <= INVPOS_Y_MARGIN ||
-		   (x_range * y_range) <= (INVPOS_DISTANCE * INVPOS_DISTANCE))
-		panic("inv_pos: maze is too small! (%d x %d)",
-		      x_maze_max, y_maze_max);
-#endif
 	    inv_pos.x = inv_pos.y = 0; /*{occupied() => invocation_pos()}*/
 	    do {
 		x = rn1(x_range, x_maze_min + INVPOS_X_MARGIN + 1);
@@ -772,10 +766,6 @@ void mkportal(struct level *lev, xchar x, xchar y, xchar todnum, xchar todlevel)
 		impossible("portal on top of portal??");
 		return;
 	}
-#ifdef DEBUG
-	pline("mkportal: at (%d,%d), to %s, level %d",
-		x, y, dungeons[todnum].dname, todlevel);
-#endif
 	ttmp->dst.dnum = todnum;
 	ttmp->dst.dlevel = todlevel;
 	return;

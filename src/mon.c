@@ -1111,13 +1111,9 @@ void replmon(struct monst *mtmp, struct monst *mtmp2)
     struct obj *otmp;
 
     /* transfer the monster's inventory */
-    for (otmp = mtmp2->minvent; otmp; otmp = otmp->nobj) {
-#ifdef DEBUG
-	if (otmp->where != OBJ_MINVENT || otmp->ocarry != mtmp)
-	    panic("replmon: minvent inconsistency");
-#endif
+    for (otmp = mtmp2->minvent; otmp; otmp = otmp->nobj)
 	otmp->ocarry = mtmp2;
-    }
+
     mtmp->minvent = 0;
 
     /* remove the old monster from the map and from `level->monlist' list */

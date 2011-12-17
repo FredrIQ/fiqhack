@@ -31,24 +31,6 @@ static dlb	*msg_file;
 /* used by ldrname() and neminame(), then copied into cvt_buf */
 static char	nambuf[sizeof cvt_buf];
 
-#ifdef DEBUG
-static void dump_qtlist(void);
-
-/* dump the character msg list to check appearance */
-static void dump_qtlist(void)
-{
-	struct	qtmsg	*msg;
-	long	size;
-
-	for (msg = qt_list.chrole; msg->msgnum > 0; msg++) {
-		pline("msgnum %d: delivery %c",
-			msg->msgnum, msg->delivery);
-		more();
-		dlb_fseek(msg_file, msg->offset, SEEK_SET);
-		deliver_by_window(msg, NHW_TEXT);
-	}
-}
-#endif /* DEBUG */
 
 static void Fread(void *ptr, int size, int nitems, dlb *stream)
 {
@@ -81,7 +63,6 @@ static struct qtmsg *construct_qtlist(long hdr_offset)
 
 void load_qtlist(void)
 {
-
 	int	n_classes, i;
 	char	qt_classes[N_HDR][LEN_HDR];
 	long	qt_offsets[N_HDR];
@@ -94,7 +75,6 @@ void load_qtlist(void)
 	 * Read in the number of classes, then the ID's & offsets for
 	 * each header.
 	 */
-
 	Fread(&n_classes, sizeof(int), 1, msg_file);
 	Fread(&qt_classes[0][0], sizeof(char)*LEN_HDR, n_classes, msg_file);
 	Fread(qt_offsets, sizeof(long), n_classes, msg_file);
@@ -115,9 +95,6 @@ void load_qtlist(void)
 
 	if (!qt_list.common || !qt_list.chrole)
 	    impossible("load_qtlist: cannot load quest text.");
-#ifdef DEBUG
-	dump_qtlist();
-#endif
 	return;	/* no ***DON'T*** close the msg_file */
 }
 

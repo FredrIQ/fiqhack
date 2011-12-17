@@ -110,9 +110,6 @@ static int swallow_to_effect(int, int);
 static void display_warning(struct monst *);
 
 static int check_pos(struct level *lev, int, int, int);
-#ifdef WA_VERBOSE
-static boolean more_than_one(int, int, int, int, int);
-#endif
 static int set_twall(struct level *lev, int,int, int,int, int,int, int,int);
 static int set_wall(struct level *lev, int, int, int);
 static int set_corn(struct level *lev, int,int, int,int, int,int, int,int);
@@ -1537,41 +1534,6 @@ void dump_screen(FILE *dumpfp)
 /* ------------------------------------------------------------------------- */
 /* Wall Angle -------------------------------------------------------------- */
 
-/*#define WA_VERBOSE*/	/* give (x,y) locations for all "bad" spots */
-
-#ifdef WA_VERBOSE
-
-static const char *type_to_name(int);
-static void error4(int,int,int,int,int,int);
-
-static int bad_count[MAX_TYPE]; /* count of positions flagged as bad */
-static const char *type_names[MAX_TYPE] = {
-	"STONE",	"VWALL",	"HWALL",	"TLCORNER",
-	"TRCORNER",	"BLCORNER",	"BRCORNER",	"CROSSWALL",
-	"TUWALL",	"TDWALL",	"TLWALL",	"TRWALL",
-	"DBWALL",	"SDOOR",	"SCORR",	"POOL",
-	"MOAT",		"WATER",	"DRAWBRIDGE_UP","LAVAPOOL",
-	"DOOR",		"CORR",		"ROOM",		"STAIRS",
-	"LADDER",	"FOUNTAIN",	"THRONE",	"SINK",
-	"ALTAR",	"ICE",		"DRAWBRIDGE_DOWN","AIR",
-	"CLOUD"
-};
-
-
-static const char *type_to_name(int type)
-{
-    return (type < 0 || type > MAX_TYPE) ? "unknown" : type_names[type];
-}
-
-static void error4(int x, int y, int a, int b, int c, int dd)
-{
-    pline("set_wall_state: %s @ (%d,%d) %s%s%s%s",
-	type_to_name(level->locations[x][y].typ), x, y,
-	a ? "1":"", b ? "2":"", c ? "3":"", dd ? "4":"");
-    bad_count[level->locations[x][y].typ]++;
-}
-#endif /* WA_VERBOSE */
-
 /*
  * Return 'which' if position is implies an unfinshed exterior.  Return
  * zero otherwise.  Unfinished implies outer area is rock or a corridor.
@@ -1588,19 +1550,8 @@ static int check_pos(struct level *lev, int x, int y, int which)
 }
 
 /* Return TRUE if more than one is non-zero. */
-/*ARGSUSED*/
-#ifdef WA_VERBOSE
-static boolean more_than_one(int x, int y, int a, int b, int c)
-{
-    if ((a && (b|c)) || (b && (a|c)) || (c && (a|b))) {
-	error4(x,y,a,b,c,0);
-	return TRUE;
-    }
-    return FALSE;
-}
-#else
-#define more_than_one(x, y, a, b, c) (((a) && ((b)|(c))) || ((b) && ((a)|(c))) || ((c) && ((a)|(b))))
-#endif
+#define more_than_one(a, b, c) \
+    (((a) && ((b)|(c))) || ((b) && ((a)|(c))) || ((c) && ((a)|(b))))
 
 /* Return the wall mode for a T wall. */
 static int set_twall(struct level *lev, int x0, int y0, int x1, int y1,
@@ -1611,7 +1562,7 @@ static int set_twall(struct level *lev, int x0, int y0, int x1, int y1,
     is_1 = check_pos(lev, x1, y1, WM_T_LONG);
     is_2 = check_pos(lev, x2, y2, WM_T_BL);
     is_3 = check_pos(lev, x3, y3, WM_T_BR);
-    if (more_than_one(x0, y0, is_1, is_2, is_3)) {
+    if (more_than_one(is_1, is_2, is_3)) {
 	wmode = 0;
     } else {
 	wmode = is_1 + is_2 + is_3;
@@ -1631,7 +1582,7 @@ static int set_wall(struct level *lev, int x, int y, int horiz)
 	is_1 = check_pos(lev, x-1,y, WM_W_LEFT);
 	is_2 = check_pos(lev, x+1,y, WM_W_RIGHT);
     }
-    if (more_than_one(x, y, is_1, is_2, 0)) {
+    if (more_than_one(is_1, is_2, 0)) {
 	wmode = 0;
     } else {
 	wmode = is_1 + is_2;
@@ -1685,9 +1636,6 @@ static int set_crosswall(struct level *lev, int x, int y)
 	} else if (is_2 && is_4 && (is_1+is_3 == 0)) {
 	    wmode = WM_X_BLTR;
 	} else {
-#ifdef WA_VERBOSE
-	    error4(x,y,is_1,is_2,is_3,is_4);
-#endif
 	    wmode = 0;
 	}
     } else if (is_1)
@@ -1708,10 +1656,6 @@ void set_wall_state(struct level *lev)
     int x, y;
     int wmode;
     struct rm *loc;
-
-#ifdef WA_VERBOSE
-    for (x = 0; x < MAX_TYPE; x++) bad_count[x] = 0;
-#endif
 
     for (x = 0; x < COLNO; x++)
 	for (loc = &lev->locations[x][0], y = 0; y < ROWNO; y++, loc++) {
@@ -1761,18 +1705,6 @@ void set_wall_state(struct level *lev)
 	if (wmode >= 0)
 	    loc->wall_info = (loc->wall_info & ~WM_MASK) | wmode;
 	}
-
-#ifdef WA_VERBOSE
-    /* check if any bad positions found */
-    for (x = y = 0; x < MAX_TYPE; x++)
-	if (bad_count[x]) {
-	    if (y == 0) {
-		y = 1;	/* only print once */
-		pline("set_wall_type: wall mode problems with: ");
-	    }
-	    pline("%s %d;", type_names[x], bad_count[x]);
-	}
-#endif /* WA_VERBOSE */
 }
 
 /* ------------------------------------------------------------------------- */

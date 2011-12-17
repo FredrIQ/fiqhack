@@ -602,10 +602,6 @@ int query_category(const char *qstr,	/* query string */
 	    if (curr) {
 		pick_list[0] = curr->oclass;
 		return 1;
-	    } else {
-#ifdef DEBUG
-		impossible("query_category: no single object match");
-#endif
 	    }
 	    return 0;
 	}

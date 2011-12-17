@@ -294,10 +294,6 @@ char *strstri(const char *str, const char *sub)
     int i, k;
 # define TABSIZ 0x20	/* 0x40 would be case-sensitive */
     char tstr[TABSIZ], tsub[TABSIZ];	/* nibble count tables */
-# if 0
-    assert( (TABSIZ & ~(TABSIZ-1)) == TABSIZ ); /* must be exact power of 2 */
-    assert( &lowc != 0 );			/* can't be unsafe macro */
-# endif
 
     /* special case: empty substring */
     if (!*sub)	return (char *) str;

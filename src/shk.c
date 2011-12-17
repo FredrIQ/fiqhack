@@ -1044,12 +1044,9 @@ int dopay(void)
 		shkp = mtmp;
 	}
 
-	if (!shkp) {
-#ifdef DEBUG
-		pline("dopay: null shkp.");
-#endif
+	if (!shkp)
 		return 0;
-	}
+
 proceed:
 	eshkp = ESHK(shkp);
 	ltmp = eshkp->robbed;

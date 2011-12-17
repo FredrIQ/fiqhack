@@ -245,9 +245,6 @@ void restore_attrib(void)
 void
 exercise(int i, boolean inc_or_dec)
 {
-#ifdef DEBUG
-	pline("Exercise:");
-#endif
 	if (i == A_INT || i == A_CHA) return;	/* can't exercise these */
 
 	/* no physical exercise while polymorphed; the body's temporary */
@@ -264,12 +261,6 @@ exercise(int i, boolean inc_or_dec)
 		 *	Note: *YES* ACURR is the right one to use.
 		 */
 		AEXE(i) += (inc_or_dec) ? (rn2(19) > ACURR(i)) : -rn2(2);
-#ifdef DEBUG
-		pline("%s, %s AEXE = %d",
-			(i == A_STR) ? "Str" : (i == A_WIS) ? "Wis" :
-			(i == A_DEX) ? "Dex" : "Con",
-			(inc_or_dec) ? "inc" : "dec", AEXE(i));
-#endif
 	}
 	if (moves > 0 && (i == A_STR || i == A_CON)) encumber_msg();
 }
@@ -287,15 +278,11 @@ static void exerper(void)
 {
 	if (!(moves % 10)) {
 		/* Hunger Checks */
-
 		int hs = (u.uhunger > 1000) ? SATIATED :
 			 (u.uhunger > 150) ? NOT_HUNGRY :
 			 (u.uhunger > 50) ? HUNGRY :
 			 (u.uhunger > 0) ? WEAK : FAINTING;
 
-#ifdef DEBUG
-		pline("exerper: Hunger checks");
-#endif
 		switch (hs) {
 		    case SATIATED:	exercise(A_DEX, FALSE);
 					if (Role_if (PM_MONK))
@@ -311,9 +298,6 @@ static void exerper(void)
 		}
 
 		/* Encumberance Checks */
-#ifdef DEBUG
-		pline("exerper: Encumber checks");
-#endif
 		switch (near_capacity()) {
 		    case MOD_ENCUMBER:	exercise(A_STR, TRUE); break;
 		    case HVY_ENCUMBER:	exercise(A_STR, TRUE);
@@ -326,9 +310,6 @@ static void exerper(void)
 
 	/* status checks */
 	if (!(moves % 5)) {
-#ifdef DEBUG
-		pline("exerper: Status checks");
-#endif
 		if ((HClairvoyant & (INTRINSIC|TIMEOUT)) && !BClairvoyant)
 			exercise(A_WIS, TRUE);
 		if (HRegeneration)
@@ -349,15 +330,8 @@ void exerchk(void)
 	/*	Check out the periodic accumulations */
 	exerper();
 
-#ifdef DEBUG
-	if (moves >= u.next_attr_check)
-		pline("exerchk: ready to test. multi = %d.", multi);
-#endif
 	/*	Are we ready for a test?	*/
 	if (moves >= u.next_attr_check && !multi) {
-#ifdef DEBUG
-	    pline("exerchk: testing.");
-#endif
 	    /*
 	     *	Law of diminishing returns (Part II):
 	     *
@@ -371,11 +345,6 @@ void exerchk(void)
 		if (ABASE(i) >= 18 || !AEXE(i)) continue;
 		if (i == A_INT || i == A_CHA) continue;/* can't exercise these */
 
-#ifdef DEBUG
-		pline("exerchk: testing %s (%d).",
-			(i == A_STR) ? "Str" : (i == A_WIS) ? "Wis" :
-			(i == A_DEX) ? "Dex" : "Con", AEXE(i));
-#endif
 		/*
 		 *	Law of diminishing returns (Part III):
 		 *
@@ -386,13 +355,7 @@ void exerchk(void)
 		    continue;
 		mod_val = sgn(AEXE(i));
 
-#ifdef DEBUG
-		pline("exerchk: changing %d.", i);
-#endif
 		if (adjattrib(i, mod_val, -1)) {
-#ifdef DEBUG
-		    pline("exerchk: changed %d.", i);
-#endif
 		    /* if you actually changed an attrib - zero accumulation */
 		    AEXE(i) = 0;
 		    /* then print an explanation */
@@ -417,9 +380,6 @@ void exerchk(void)
 		}
 	    }
 	    u.next_attr_check += rn1(200,800);
-#ifdef DEBUG
-	    pline("exerchk: next check at %ld.", u.next_attr_check);
-#endif
 	}
 }
 
@@ -624,11 +584,7 @@ schar acurr(int x)
 
 	if (x == A_STR) {
 		if (uarmg && uarmg->otyp == GAUNTLETS_OF_POWER) return 125;
-#ifdef WIN32_BUG
-		else return x=((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
-#else
 		else return (schar)((tmp >= 125) ? 125 : (tmp <= 3) ? 3 : tmp);
-#endif
 	} else if (x == A_CHA) {
 		if (tmp < 18 && (youmonst.data->mlet == S_NYMPH ||
 		    u.umonnum==PM_SUCCUBUS || u.umonnum == PM_INCUBUS))
@@ -639,11 +595,7 @@ schar acurr(int x)
 		 */
 		if (uarmh && uarmh->otyp == DUNCE_CAP) return 6;
 	}
-#ifdef WIN32_BUG
-	return x=((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp);
-#else
 	return (schar)((tmp >= 25) ? 25 : (tmp <= 3) ? 3 : tmp);
-#endif
 }
 
 /* condense clumsy ACURR(A_STR) value into value that fits into game formulas

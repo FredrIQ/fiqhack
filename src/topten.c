@@ -96,14 +96,13 @@ static void write_topten(const struct toptenentry *ttlist)
 
 static void update_log(const struct toptenentry *newtt)
 {
-#ifdef LOGFILE		/* used for debugging (who dies of what, where) */
+    /* used for debugging (who dies of what, where) */
     int fd = open_datafile(LOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
     if (lock_fd(fd, 10)) {
 	writeentry(fd, newtt);
 	close(fd);
 	unlock_fd(fd);
     }
-#endif
 }
 
 

@@ -369,15 +369,6 @@ void mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 {
 	int imv = 0;	/* avoid zillions of casts and lint warnings */
 
-#if defined(DEBUG) || defined(BETA)
-	if (nmv < 0L) {			/* crash likely... */
-	    panic("catchup from future time?");
-	    /*NOTREACHED*/
-	    return;
-	} else if (nmv == 0L) {		/* safe, but should'nt happen */
-	    impossible("catchup from now?");
-	} else
-#endif
 	if (nmv >= LARGEST_INT)		/* paranoia */
 	    imv = LARGEST_INT - 1;
 	else

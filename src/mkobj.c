@@ -8,8 +8,6 @@ static void mkbox_cnts(struct obj *);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
 static void container_weight(struct obj *);
 static struct obj *save_mtraits(struct obj *, struct monst *);
-static const char *where_name(int);
-static void check_contained(struct obj *,const char *);
 static void extract_nexthere(struct obj *, struct obj **);
 
 extern struct obj *thrownobj;		/* defined in dothrow.c */
@@ -1062,12 +1060,6 @@ long peek_at_iced_corpse_age(struct obj *otmp)
 	/* Adjust the age; must be same as obj_timer_checks() for off ice*/
 	age = moves - otmp->age;
 	retval = otmp->age + (age / ROT_ICE_ADJUSTMENT);
-#ifdef DEBUG_EFFECTS
-	pline("The %s age has ice modifications:otmp->age = %ld, returning %ld.",
-		s_suffix(doname(otmp)),otmp->age, retval);
-	pline("Effective age of corpse: %ld.",
-		moves - retval);
-#endif
     }
     return retval;
 }
@@ -1094,9 +1086,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 	    tleft = tleft - moves;
 	    /* mark the corpse as being on ice */
 	    ON_ICE(otmp) = 1;
-#ifdef DEBUG_EFFECTS
-	    pline("%s is now on ice at %d,%d.", The(xname(otmp)),x,y);
-#endif
+
 	    /* Adjust the time remaining */
 	    tleft *= ROT_ICE_ADJUSTMENT;
 	    restart_timer = TRUE;
@@ -1119,9 +1109,7 @@ static void obj_timer_checks(struct obj *otmp, xchar x, xchar y,
 
 		tleft = tleft - moves;
 		ON_ICE(otmp) = 0;
-#ifdef DEBUG_EFFECTS
-	    	pline("%s is no longer on ice at %d,%d.", The(xname(otmp)),x,y);
-#endif
+
 		/* Adjust the remaining time */
 		tleft /= ROT_ICE_ADJUSTMENT;
 		restart_timer = TRUE;
@@ -1367,116 +1355,6 @@ void dealloc_obj(struct obj *obj)
     if (obj == thrownobj) thrownobj = NULL;
 
     free(obj);
-}
-
-
-/* Check all object lists for consistency. */
-void obj_sanity_check(void)
-{
-    int x, y;
-    struct obj *obj;
-    struct monst *mon;
-    const char *mesg;
-
-    mesg = "level->objlist sanity";
-    for (obj = level->objlist; obj; obj = obj->nobj) {
-	if (obj->where != OBJ_FLOOR) {
-	    pline("%s obj %p %s@(%d,%d): %s\n", mesg,
-		obj, where_name(obj->where),
-		obj->ox, obj->oy, doname(obj));
-	}
-	check_contained(obj, mesg);
-    }
-
-    mesg = "location sanity";
-    for (x = 0; x < COLNO; x++)
-	for (y = 0; y < ROWNO; y++)
-	    for (obj = level->objects[x][y]; obj; obj = obj->nexthere)
-		if (obj->where != OBJ_FLOOR) {
-		    pline("%s obj %p %s@(%d,%d): %s\n", mesg,
-			obj, where_name(obj->where),
-			obj->ox, obj->oy, doname(obj));
-		}
-
-    mesg = "invent sanity";
-    for (obj = invent; obj; obj = obj->nobj) {
-	if (obj->where != OBJ_INVENT) {
-	    pline("%s obj %p %s: %s\n", mesg,
-		obj, where_name(obj->where), doname(obj));
-	}
-	check_contained(obj, mesg);
-    }
-
-    mesg = "migrating sanity";
-    for (obj = migrating_objs; obj; obj = obj->nobj) {
-	if (obj->where != OBJ_MIGRATING) {
-	    pline("%s obj %p %s: %s\n", mesg,
-		obj, where_name(obj->where), doname(obj));
-	}
-	check_contained(obj, mesg);
-    }
-
-    mesg = "buried sanity";
-    for (obj = level->buriedobjlist; obj; obj = obj->nobj) {
-	if (obj->where != OBJ_BURIED) {
-	    pline("%s obj %p %s: %s\n", mesg,
-		obj, where_name(obj->where), doname(obj));
-	}
-	check_contained(obj, mesg);
-    }
-
-    mesg = "bill sanity";
-    for (obj = level->billobjs; obj; obj = obj->nobj) {
-	if (obj->where != OBJ_ONBILL) {
-	    pline("%s obj %p %s: %s\n", mesg,
-		obj, where_name(obj->where), doname(obj));
-	}
-	/* shouldn't be a full container on the bill */
-	if (obj->cobj) {
-	    pline("%s obj %s contains something! %s\n", mesg,
-		obj, doname(obj));
-	}
-    }
-
-    mesg = "minvent sanity";
-    for (mon = level->monlist; mon; mon = mon->nmon)
-	for (obj = mon->minvent; obj; obj = obj->nobj) {
-	    if (obj->where != OBJ_MINVENT) {
-		pline("%s obj %p %s: %s\n", mesg,
-			obj, where_name(obj->where), doname(obj));
-	    }
-	    if (obj->ocarry != mon) {
-		pline("%s obj %p (%s) not held by mon %p (%s)\n", mesg,
-			obj, doname(obj), mon, mon_nam(mon));
-	    }
-	    check_contained(obj, mesg);
-	}
-}
-
-/* This must stay consistent with the defines in obj.h. */
-static const char *const obj_state_names[NOBJ_STATES] = {
-	"free",		"floor",	"contained",	"invent",
-	"minvent",	"migrating",	"buried",	"onbill"
-};
-
-static const char *where_name(int where)
-{
-    return (where<0 || where>=NOBJ_STATES) ? "unknown" : obj_state_names[where];
-}
-
-/* obj sanity check: check objs contained by container */
-static void check_contained(struct obj *container, const char *mesg)
-{
-    struct obj *obj;
-
-    for (obj = container->cobj; obj; obj = obj->nobj) {
-	if (obj->where != OBJ_CONTAINED)
-	    pline("contained %s obj %p: %s\n", mesg,
-		obj, where_name(obj->where));
-	else if (obj->ocontainer != container)
-	    pline("%s obj %p not in container %p\n", mesg,
-		obj,container);
-    }
 }
 
 

@@ -1498,12 +1498,8 @@ int bhito(struct obj *obj, struct obj *otmp)
 		 */
 		if (flags.bypasses)
 			return 0;
-		else {
-#ifdef DEBUG
-			pline("%s for a moment.", Tobjnam(obj, "pulsate"));
-#endif
+		else
 			obj->bypass = 0;
-		}
 	}
 
 	/*
@@ -2799,11 +2795,6 @@ static int zap_hit_mon(struct monst *mon, int type, int nd,
 		tmp = dice(nd,6);
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
-#ifdef WIZ_PATCH_DEBUG
-		if (spellcaster)
-		    pline("Damage = %d + %d", tmp-spell_damage_bonus(),
-			spell_damage_bonus());
-#endif
 		break;
 	case ZT_FIRE:
 		if (resists_fire(mon)) {
@@ -2814,11 +2805,7 @@ static int zap_hit_mon(struct monst *mon, int type, int nd,
 		if (resists_cold(mon)) tmp += 7;
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
-#ifdef WIZ_PATCH_DEBUG
-		if (spellcaster)
-		    pline("Damage = %d + %d",tmp-spell_damage_bonus(),
-			spell_damage_bonus());
-#endif
+		
 		if (burnarmor(mon)) {
 		    if (!rn2(3)) destroy_mitem(mon, POTION_CLASS, AD_FIRE);
 		    if (!rn2(3)) destroy_mitem(mon, SCROLL_CLASS, AD_FIRE);
@@ -2834,12 +2821,8 @@ static int zap_hit_mon(struct monst *mon, int type, int nd,
 		if (resists_fire(mon)) tmp += dice(nd, 3);
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
-#ifdef WIZ_PATCH_DEBUG
-		if (spellcaster)
-		    pline("Damage = %d + %d", tmp-spell_damage_bonus(),
-			spell_damage_bonus());
-#endif
-		if (!rn2(3)) destroy_mitem(mon, POTION_CLASS, AD_COLD);
+		if (!rn2(3))
+		    destroy_mitem(mon, POTION_CLASS, AD_COLD);
 		break;
 	case ZT_SLEEP:
 		tmp = 0;
@@ -2898,11 +2881,7 @@ static int zap_hit_mon(struct monst *mon, int type, int nd,
 		    tmp = dice(nd,6);
 		if (spellcaster)
 		    tmp += spell_damage_bonus();
-#ifdef WIZ_PATCH_DEBUG
-		if (spellcaster)
-		    pline("Damage = %d + %d", tmp-spell_damage_bonus(),
-			spell_damage_bonus());
-#endif
+		
 		if (!resists_blnd(mon) &&
 				!(type > 0 && u.uswallow && mon == u.ustuck)) {
 			unsigned rnd_tmp = rnd(50);
@@ -2938,10 +2917,8 @@ static int zap_hit_mon(struct monst *mon, int type, int nd,
 	if (tmp > 0 && type >= 0 &&
 		resist(mon, type < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))
 	    tmp /= 2;
-	if (tmp < 0) tmp = 0;		/* don't allow negative damage */
-#ifdef WIZ_PATCH_DEBUG
-	pline("zapped monster hp = %d (= %d - %d)", mon->mhp-tmp,mon->mhp,tmp);
-#endif
+	if (tmp < 0)
+	    tmp = 0;		/* don't allow negative damage */
 	mon->mhp -= tmp;
 	return tmp;
 }

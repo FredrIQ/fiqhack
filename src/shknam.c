@@ -199,25 +199,6 @@ const struct shclass shtypes[] = {
 	{NULL, 0, 0, 0, {{0, 0}, {0, 0}, {0, 0}}, 0}
 };
 
-#if DEBUG
-/* validate shop probabilities; otherwise incorrect local changes could
-   end up provoking infinite loops or wild subscripts fetching garbage */
-void init_shop_selection(void)
-{
-	int i, j, item_prob, shop_prob;
-
-	for (shop_prob = 0, i = 0; i < SIZE(shtypes); i++) {
-		shop_prob += shtypes[i].prob;
-		for (item_prob = 0, j = 0; j < SIZE(shtypes[0].iprobs); j++)
-			item_prob += shtypes[i].iprobs[j].iprob;
-		if (item_prob != 100)
-			panic("item probabilities total to %d for %s shops!",
-				item_prob, shtypes[i].name);
-	}
-	if (shop_prob != 100)
-		panic("shop probabilities total to %d!", shop_prob);
-}
-#endif /* DEBUG */
 
 /* make an object of the appropriate type for a shop square */
 static void mkshobj_at(const struct shclass *shp, struct level *lev, int sx, int sy)
@@ -329,28 +310,9 @@ static int shkinit(const struct shclass	*shp, struct level *lev, struct mkroom *
 	else if (sx == sroom->lx-1) sx++;
 	else if (sx == sroom->hx+1) sx--;
 	else if (sy == sroom->ly-1) sy++;
-	else if (sy == sroom->hy+1) sy--; else {
-	shk_failed:
-	
-#ifdef DEBUG
-	    /* Said to happen sometimes, but I have never seen it. */
-	    /* Supposedly fixed by fdoor change in mklev.c */
-	    if (wizard) {
-		int j = sroom->doorct;
-
-		pline("Where is shopdoor?");
-		pline("Room at (%d,%d),(%d,%d).",
-		      sroom->lx, sroom->ly, sroom->hx, sroom->hy);
-		pline("doormax=%d doorct=%d fdoor=%d",
-		      lev->doorindex, sroom->doorct, sh);
-		while (j--) {
-		    pline("door [%d,%d]", doors[sh].x, doors[sh].y);
-		    sh++;
-		}
-		win_pause_output(P_MESSAGE);
-	    }
-#endif
-
+	else if (sy == sroom->hy+1) sy--;
+	else {
+shk_failed:
 	    return -1;
 	}
 

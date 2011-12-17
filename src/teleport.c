@@ -101,12 +101,10 @@ boolean enexto_core(coord *cc, struct level *lev, xchar xx, xchar yy,
     struct monst fakemon;	/* dummy monster */
 
     if (!mdat) {
-#ifdef DEBUG
-	pline("enexto() called with mdat==0");
-#endif
 	/* default to player's original monster type */
 	mdat = &mons[u.umonster];
     }
+    
     fakemon.data = mdat;	/* set up for goodpos */
     good_ptr = good;
     range = 1;

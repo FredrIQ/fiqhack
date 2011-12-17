@@ -2,15 +2,9 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-/* #define DEBUG */	/* uncomment to enable code debugging */
-
-#ifdef DEBUG
-#define debugpline	if (wizard) pline
-#endif
 
 /* croom->lx etc are schar (width <= int), so % arith ensures that */
 /* conversion of result to int is reasonable */
-
 
 static void mkfount(struct level *lev, int,struct mkroom *);
 static void mksink(struct level *lev, struct mkroom *);
@@ -588,9 +582,6 @@ static void makelevel(struct level *lev)
 	/* make a secret treasure vault, not connected to the rest */
 	if (do_vault()) {
 		xchar w,h;
-#ifdef DEBUG
-		debugpline("trying to make a vault...");
-#endif
 		w = 1;
 		h = 1;
 		if (check_room(lev, &vault_x, &w, &vault_y, &h, TRUE)) {
@@ -1400,9 +1391,6 @@ static void mk_knox_portal(struct level *lev, xchar x, xchar y)
 	*source = lev->z;
 	insert_branch(br, TRUE);
 
-#ifdef DEBUG
-	pline("Made knox portal.");
-#endif
 	place_branch(lev, br, x, y);
 }
 

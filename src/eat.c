@@ -2,11 +2,6 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-/* #define DEBUG */	/* uncomment to enable new eat code debugging */
-
-#ifdef DEBUG
-#define debugpline	if (wizard) pline
-#endif
 
 static int eatmdone(void);
 static int eatfood(void);
@@ -250,15 +245,7 @@ static void recalc_wt(void)
 {
 	struct obj *piece = victual.piece;
 
-#ifdef DEBUG
-	debugpline("Old weight = %d", piece->owt);
-	debugpline("Used time = %d, Req'd time = %d",
-		victual.usedtime, victual.reqtime);
-#endif
 	piece->owt = weight(piece);
-#ifdef DEBUG
-	debugpline("New weight = %d", piece->owt);
-#endif
 }
 
 void reset_eat(void)	/* called when eating interrupted by an event */
@@ -266,12 +253,9 @@ void reset_eat(void)	/* called when eating interrupted by an event */
     /* we only set a flag here - the actual reset process is done after
      * the round is spent eating.
      */
-	if (victual.eating && !victual.doreset) {
-#ifdef DEBUG
-	    debugpline("reset_eat...");
-#endif
+	if (victual.eating && !victual.doreset)
 	    victual.doreset = TRUE;
-	}
+
 	return;
 }
 
@@ -282,9 +266,6 @@ static struct obj *touchfood(struct obj *otmp)
 		splitobj(otmp, otmp->quan - 1L);
 	    else
 		otmp = splitobj(otmp, 1L);
-#ifdef DEBUG
-	    debugpline("split object,");
-#endif
 	}
 
 	if (!otmp->oeaten) {
@@ -337,9 +318,6 @@ void food_substitution(struct obj *old_obj, struct obj *new_obj)
 
 static void do_reset_eat(void)
 {
-#ifdef DEBUG
-	debugpline("do_reset_eat...");
-#endif
 	if (victual.piece) {
 		victual.piece = touchfood(victual.piece);
 		recalc_wt();
@@ -499,86 +477,32 @@ static int intrinsic_possible(int type, const struct permonst *ptr)
 {
 	switch (type) {
 	    case FIRE_RES:
-#ifdef DEBUG
-		if (ptr->mconveys & MR_FIRE) {
-			debugpline("can get fire resistance");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return ptr->mconveys & MR_FIRE;
-#endif
+
 	    case SLEEP_RES:
-#ifdef DEBUG
-		if (ptr->mconveys & MR_SLEEP) {
-			debugpline("can get sleep resistance");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return ptr->mconveys & MR_SLEEP;
-#endif
+
 	    case COLD_RES:
-#ifdef DEBUG
-		if (ptr->mconveys & MR_COLD) {
-			debugpline("can get cold resistance");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return ptr->mconveys & MR_COLD;
-#endif
+
 	    case DISINT_RES:
-#ifdef DEBUG
-		if (ptr->mconveys & MR_DISINT) {
-			debugpline("can get disintegration resistance");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return ptr->mconveys & MR_DISINT;
-#endif
+
 	    case SHOCK_RES:	/* shock (electricity) resistance */
-#ifdef DEBUG
-		if (ptr->mconveys & MR_ELEC) {
-			debugpline("can get shock resistance");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return ptr->mconveys & MR_ELEC;
-#endif
+
 	    case POISON_RES:
-#ifdef DEBUG
-		if (ptr->mconveys & MR_POISON) {
-			debugpline("can get poison resistance");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return ptr->mconveys & MR_POISON;
-#endif
+
 	    case TELEPORT:
-#ifdef DEBUG
-		if (can_teleport(ptr)) {
-			debugpline("can get teleport");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return can_teleport(ptr);
-#endif
+
 	    case TELEPORT_CONTROL:
-#ifdef DEBUG
-		if (control_teleport(ptr)) {
-			debugpline("can get teleport control");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return control_teleport(ptr);
-#endif
+
 	    case TELEPAT:
-#ifdef DEBUG
-		if (telepathic(ptr)) {
-			debugpline("can get telepathy");
-			return TRUE;
-		} else  return FALSE;
-#else
 		return telepathic(ptr);
-#endif
+
 	    default:
 		return FALSE;
 	}
@@ -592,9 +516,6 @@ static void givit(int type, const struct permonst *ptr)
 {
 	int chance;
 
-#ifdef DEBUG
-	debugpline("Attempting to give intrinsic %d", type);
-#endif
 	/* some intrinsics are easier to get than others */
 	switch (type) {
 		case POISON_RES:
@@ -623,37 +544,28 @@ static void givit(int type, const struct permonst *ptr)
 
 	switch (type) {
 	    case FIRE_RES:
-#ifdef DEBUG
-		debugpline("Trying to give fire resistance");
-#endif
 		if (!(HFire_resistance & FROMOUTSIDE)) {
 			pline (Hallucination ? "You be chillin'." :
 			    "You feel a momentary chill.");
 			HFire_resistance |= FROMOUTSIDE;
 		}
 		break;
+
 	    case SLEEP_RES:
-#ifdef DEBUG
-		debugpline("Trying to give sleep resistance");
-#endif
 		if (!(HSleep_resistance & FROMOUTSIDE)) {
 			pline("You feel wide awake.");
 			HSleep_resistance |= FROMOUTSIDE;
 		}
 		break;
+
 	    case COLD_RES:
-#ifdef DEBUG
-		debugpline("Trying to give cold resistance");
-#endif
 		if (!(HCold_resistance & FROMOUTSIDE)) {
 			pline("You feel full of hot air.");
 			HCold_resistance |= FROMOUTSIDE;
 		}
 		break;
+
 	    case DISINT_RES:
-#ifdef DEBUG
-		debugpline("Trying to give disintegration resistance");
-#endif
 		if (!(HDisint_resistance & FROMOUTSIDE)) {
 			pline(Hallucination ?
 			    "You feel totally together, man." :
@@ -661,10 +573,8 @@ static void givit(int type, const struct permonst *ptr)
 			HDisint_resistance |= FROMOUTSIDE;
 		}
 		break;
+
 	    case SHOCK_RES:	/* shock (electricity) resistance */
-#ifdef DEBUG
-		debugpline("Trying to give shock resistance");
-#endif
 		if (!(HShock_resistance & FROMOUTSIDE)) {
 			if (Hallucination)
 				pline("You feel grounded in reality.");
@@ -673,30 +583,24 @@ static void givit(int type, const struct permonst *ptr)
 			HShock_resistance |= FROMOUTSIDE;
 		}
 		break;
+
 	    case POISON_RES:
-#ifdef DEBUG
-		debugpline("Trying to give poison resistance");
-#endif
 		if (!(HPoison_resistance & FROMOUTSIDE)) {
 			pline(Poison_resistance ?
 				 "You feel especially healthy." : "You feel healthy.");
 			HPoison_resistance |= FROMOUTSIDE;
 		}
 		break;
+
 	    case TELEPORT:
-#ifdef DEBUG
-		debugpline("Trying to give teleport");
-#endif
 		if (!(HTeleportation & FROMOUTSIDE)) {
 			pline(Hallucination ? "You feel diffuse." :
 			    "You feel very jumpy.");
 			HTeleportation |= FROMOUTSIDE;
 		}
 		break;
+
 	    case TELEPORT_CONTROL:
-#ifdef DEBUG
-		debugpline("Trying to give teleport control");
-#endif
 		if (!(HTeleport_control & FROMOUTSIDE)) {
 			pline(Hallucination ?
 			    "You feel centered in your personal space." :
@@ -704,10 +608,8 @@ static void givit(int type, const struct permonst *ptr)
 			HTeleport_control |= FROMOUTSIDE;
 		}
 		break;
+
 	    case TELEPAT:
-#ifdef DEBUG
-		debugpline("Trying to give telepathy");
-#endif
 		if (!(HTelepat & FROMOUTSIDE)) {
 			pline(Hallucination ?
 			    "You feel in touch with the cosmos." :
@@ -717,10 +619,8 @@ static void givit(int type, const struct permonst *ptr)
 			if (Blind) see_monsters();
 		}
 		break;
+
 	    default:
-#ifdef DEBUG
-		debugpline("Tried to give an impossible intrinsic");
-#endif
 		break;
 	}
 }
@@ -898,13 +798,8 @@ static void cpostfx(int pm)	/* called after completely consuming a corpse */
 				 * that 1 in 1 and 0 in 1 are what we want
 				 * for the first one
 				 */
-				if (!rn2(count)) {
-#ifdef DEBUG
-					debugpline("Intrinsic %d replacing %d",
-								i, tmp);
-#endif
+				if (!rn2(count))
 					tmp = i;
-				}
 			}
 		 }
 
@@ -1264,13 +1159,6 @@ static int eatcorpse(struct obj *otmp)
 
 static void start_eating(struct obj *otmp) /* called as you start to eat */
 {
-#ifdef DEBUG
-	debugpline("start_eating: %lx (victual = %lx)", otmp, victual.piece);
-	debugpline("reqtime = %d", victual.reqtime);
-	debugpline("(original reqtime = %d)", objects[otmp->otyp].oc_delay);
-	debugpline("nmod = %d", victual.nmod);
-	debugpline("oeaten = %d", otmp->oeaten);
-#endif
 	victual.fullwarn = victual.doreset = FALSE;
 	victual.eating = TRUE;
 
@@ -1966,15 +1854,9 @@ int doeat(struct obj *otmp)	/* generic "eat" command funtion (see cmd.c) */
 	if (otmp->otyp == CORPSE) basenutrit = mons[otmp->corpsenm].cnutrit;
 	else basenutrit = objects[otmp->otyp].oc_nutrition;
 
-#ifdef DEBUG
-	debugpline("before rounddiv: victual.reqtime == %d", victual.reqtime);
-	debugpline("oeaten == %d, basenutrit == %d", otmp->oeaten, basenutrit);
-#endif
 	victual.reqtime = (basenutrit == 0 ? 0 :
 		rounddiv(victual.reqtime * (long)otmp->oeaten, basenutrit));
-#ifdef DEBUG
-	debugpline("after rounddiv: victual.reqtime == %d", victual.reqtime);
-#endif
+
 	/* calculate the modulo value (nutrit. units per round eating)
 	 * note: this isn't exact - you actually lose a little nutrition
 	 *	 due to this method.
@@ -2074,9 +1956,7 @@ static void lesshungry(int num)
 {
 	/* See comments in newuhs() for discussion on force_save_hs */
 	boolean iseating = (occupation == eatfood) || force_save_hs;
-#ifdef DEBUG
-	debugpline("lesshungry(%d)", num);
-#endif
+
 	u.uhunger += num;
 	if (u.uhunger >= 2000) {
 	    if (!iseating || victual.canchoke) {

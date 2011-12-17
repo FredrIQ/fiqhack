@@ -42,11 +42,7 @@ const struct objdescr obj_descr[] = {
 # define OBJECT(obj,bits,prp,sym,prob,dly,wt,cost,sdam,ldam,oc1,oc2,nut,color) \
 	{0, 0, NULL, bits, prp, sym, dly, COLOR_FIELD(color) \
 	 prob, wt, cost, sdam, ldam, oc1, oc2, nut}
-# ifndef lint
-#  define HARDGEM(n) (n >= 8)
-# else
-#  define HARDGEM(n) (0)
-# endif
+# define HARDGEM(n) (n >= 8)
 
 struct objclass *objects;
 const struct objclass const_objects[] = {

@@ -5,10 +5,6 @@
 #include "lev.h"
 #include "quest.h"
 
-#if !defined(LSC) && !defined(O_WRONLY)
-#include <fcntl.h>
-#endif
-
 static void savelevchn(struct memfile *mf);
 static void savedamage(struct memfile *mf, struct level *lev);
 static void freedamage(struct level *lev);

@@ -31,7 +31,6 @@
 # define WIZARD  "daniel" /* the person allowed to use the -D option */
 #endif
 
-#define LOGFILE "logfile"	/* larger file for debugging purposes */
 #define PANICLOG "paniclog"	/* log of panic and impossible events */
 
 /*

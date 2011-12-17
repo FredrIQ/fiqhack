@@ -124,7 +124,6 @@ extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);
 extern void confdir(schar *dx, schar *dy);
 extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *, schar *);
-extern void sanity_check(void);
 
 /* ### dbridge.c ### */
 
@@ -883,7 +882,6 @@ extern void add_to_buried(struct obj *obj);
 extern void dealloc_obj(struct obj *);
 extern void obj_ice_effects(int, int, boolean);
 extern long peek_at_iced_corpse_age(struct obj *);
-extern void obj_sanity_check(void);
 extern void set_obj_level(struct level *lev, struct obj *obj);
 extern struct obj *restore_obj(struct memfile *mf);
 extern void save_obj(struct memfile *mf, struct obj *obj);
@@ -1531,7 +1529,6 @@ extern void restore_timers(struct memfile *mf, struct level *lev, int range,
 		           boolean ghostly, long adjust);
 extern void relink_timers(boolean ghostly, struct level *lev);
 extern int wiz_timeout_queue(void);
-extern void timer_sanity_check(void);
 
 /* ### topten.c ### */
 

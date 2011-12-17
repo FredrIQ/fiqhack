@@ -393,14 +393,9 @@ int getbones(d_level *levnum)
 			 * set to the magic DEFUNCT_MONSTER cookie value.
 			 */
 			for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon) {
-			    if (mtmp->mhpmax == DEFUNCT_MONSTER) {
-#if defined(DEBUG)
-				if (wizard)
-				    pline("Removing defunct monster %s from bones.",
-					mtmp->data->mname);
-#endif
+			    if (mtmp->mhpmax == DEFUNCT_MONSTER)
 				mongone(mtmp);
-			    } else
+			    else
 				/* to correctly reset named artifacts on the level */
 				resetobjs(mtmp->minvent,TRUE);
 			}

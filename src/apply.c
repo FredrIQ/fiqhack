@@ -1510,12 +1510,9 @@ void fig_transform(void *arg, long timeout)
 	boolean redraw = FALSE;
 	char monnambuf[BUFSZ], carriedby[BUFSZ];
 
-	if (!figurine) {
-#ifdef DEBUG
-	    pline("null figurine in fig_transform()");
-#endif
+	if (!figurine)
 	    return;
-	}
+
 	silent = (timeout != moves); /* happened while away */
 	okay_spot = get_obj_location(figurine, &cc.x, &cc.y, 0);
 	if (figurine->where == OBJ_INVENT ||

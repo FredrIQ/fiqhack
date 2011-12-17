@@ -12,15 +12,6 @@
 
 #define CMD_TRAVEL (char)0x90
 
-#ifdef DEBUG
-/*
- * only one "wiz_debug_cmd" routine should be available (in whatever
- * module you are trying to debug) or things are going to get rather
- * hard to link :-)
- */
-extern int wiz_debug_cmd(void);
-#endif
-
 static int (*timed_occ_fn)(void);
 
 static int timed_occupation(void);
@@ -40,9 +31,6 @@ static int wiz_show_seenv(void);
 static int wiz_show_vision(void);
 static int wiz_mon_polycontrol(void);
 static int wiz_show_wmodes(void);
-#ifdef DEBUG_MIGRATING_MONS
-static int wiz_migrate_mons(void);
-#endif
 static void count_obj(struct obj *, long *, long *, boolean, boolean);
 static void obj_chain(struct menulist *, const char *, struct obj *, long *, long *);
 static void mon_invent_chain(struct menulist *, const char *, struct monst *,
@@ -1446,42 +1434,6 @@ static int wiz_show_stats(void)
 	free(menu.items);
 	return 0;
 }
-
-#ifdef DEBUG_SANITY_CHECK
-void sanity_check(void)
-{
-	obj_sanity_check();
-	timer_sanity_check();
-}
-#endif
-
-#ifdef DEBUG_MIGRATING_MONS
-static int wiz_migrate_mons(void)
-{
-	int mcount = 0;
-	char inbuf[BUFSZ];
-	struct permonst *ptr;
-	struct monst *mtmp;
-	d_level tolevel;
-	getlin("How many random monsters to migrate? [0]", inbuf);
-	if (*inbuf == '\033') return 0;
-	mcount = atoi(inbuf);
-	if (mcount < 0 || mcount > (COLNO * ROWNO) || Is_botlevel(&u.uz))
-		return 0;
-	while (mcount > 0) {
-		if (Is_stronghold(&u.uz))
-		    assign_level(&tolevel, &valley_level);
-		else
-		    get_level(&tolevel, depth(&u.uz) + 1);
-		ptr = rndmonst();
-		mtmp = makemon(ptr, 0, 0, NO_MM_FLAGS);
-		if (mtmp) migrate_to_level(mtmp, ledger_no(&tolevel),
-				MIGR_RANDOM, NULL);
-		mcount--;
-	}
-	return 0;
-}
-#endif
 
 
 boolean dir_to_delta(enum nh_direction dir, schar *dx, schar *dy, schar *dz)

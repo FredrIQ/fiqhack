@@ -744,10 +744,6 @@ boolean propagate(int mndx, boolean tally, boolean ghostly)
 		 mvitals[mndx].born++;
 	if ((int) mvitals[mndx].born >= lim && !(mons[mndx].geno & G_NOGEN) &&
 		!(mvitals[mndx].mvflags & G_EXTINCT)) {
-#if defined(DEBUG)
-		if (wizard) pline("Automatically extinguished %s.",
-					makeplural(mons[mndx].mname));
-#endif
 		mvitals[mndx].mvflags |= G_EXTINCT;
 		reset_rndmonst(mndx);
 	}
@@ -810,12 +806,8 @@ struct monst *makemon(const struct permonst *ptr,
 		mndx = monsndx(ptr);
 		/* if you are to make a specific monster and it has
 		   already been genocided, return */
-		if (mvitals[mndx].mvflags & G_GENOD) return NULL;
-#if defined(DEBUG)
-		if (wizard && (mvitals[mndx].mvflags & G_EXTINCT))
-		    pline("Explicitly creating extinct monster %s.",
-			mons[mndx].mname);
-#endif
+		if (mvitals[mndx].mvflags & G_GENOD)
+		    return NULL;
 	} else {
 		/* make a random (common) monster that can survive here.
 		 * (the special levels ask for random monsters at specific
@@ -826,9 +818,6 @@ struct monst *makemon(const struct permonst *ptr,
 		struct monst fakemon;
 		do {
 			if (!(ptr = rndmonst())) {
-#ifdef DEBUG
-			    pline("Warning: no monster.");
-#endif
 			    return NULL;	/* no more monsters! */
 			}
 			fakemon.data = ptr;	/* set up for goodpos */
@@ -1138,9 +1127,6 @@ const struct permonst *rndmonst(void)
 	    }		
 	    if (mndx == SPECIAL_PM) {
 		/* evidently they've all been exterminated */
-#ifdef DEBUG
-		pline("rndmonst: no common mons!");
-#endif
 		return NULL;
 	    } /* else `mndx' now ready for use below */
 	    zlevel = level_difficulty();
@@ -1178,9 +1164,6 @@ const struct permonst *rndmonst(void)
 
 	if (rndmonst_state.choice_count <= 0) {
 	    /* maybe no common mons left, or all are too weak or too strong */
-#ifdef DEBUG
-	    Norep("rndmonst: choice_count=%d", rndmonst_state.choice_count);
-#endif
 	    return NULL;
 	}
 

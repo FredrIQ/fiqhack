@@ -10,11 +10,6 @@
 
 #include "hack.h"
 #include "dlb.h"
-/* #define DEBUG */	/* uncomment to enable code debugging */
-
-#ifdef DEBUG
-#define debugpline	if (wizard) pline
-#endif
 
 #include "sp_lev.h"
 #include "rect.h"
@@ -309,11 +304,9 @@ chk:
 		
 		for (; y <= ymax; y++) {
 			if (loc++->typ) {
-#ifdef DEBUG
-				if (!vault)
-				    debugpline("strange area [%d,%d] in check_room.",x,y);
-#endif
-				if (!rn2(3))	return FALSE;
+				if (!rn2(3))
+				    return FALSE;
+
 				if (x < *lowx)
 				    *lowx = x + xlim + 1;
 				else
@@ -378,12 +371,9 @@ boolean create_room(struct level *lev, xchar x, xchar y, xchar w, xchar h,
 			xchar hx, hy, lx, ly, dx, dy;
 			r1 = rnd_rect(); /* Get a random rectangle */
 
-			if (!r1) { /* No more free rectangles ! */
-#ifdef DEBUG
-				debugpline("No more rects...");
-#endif
+			if (!r1) /* No more free rectangles ! */
 				return FALSE;
-			}
+
 			hx = r1->hx;
 			hy = r1->hy;
 			lx = r1->lx;
@@ -1189,13 +1179,9 @@ boolean dig_corridor(struct level *lev, coord *org, coord *dest, boolean nxcor,
 	tx = dest->x; ty = dest->y;
 	if (xx <= 0 || yy <= 0 || tx <= 0 || ty <= 0 ||
 	    xx > COLNO-1 || tx > COLNO-1 ||
-	    yy > ROWNO-1 || ty > ROWNO-1) {
-#ifdef DEBUG
-		debugpline("dig_corridor: bad coords : (%d,%d) (%d,%d).",
-			   xx,yy,tx,ty);
-#endif
+	    yy > ROWNO-1 || ty > ROWNO-1)
 		return FALSE;
-	}
+
 	if (tx > xx)		dx = 1;
 	else if (ty > yy)	dy = 1;
 	else if (tx < xx)	dx = -1;

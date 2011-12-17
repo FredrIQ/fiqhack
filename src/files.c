@@ -8,16 +8,6 @@
 #include <fcntl.h>
 
 #include <errno.h>
-#ifdef _MSC_VER	/* MSC 6.0 defines errno quite differently */
-# if (_MSC_VER >= 600)
-#  define SKIP_ERRNO
-# endif
-#else
-# define SKIP_ERRNO
-#endif
-#ifndef SKIP_ERRNO
-extern int errno;
-#endif
 
 #if defined(WIN32)
 #include <sys/stat.h>

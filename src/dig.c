@@ -1221,9 +1221,6 @@ static struct obj *bury_an_obj(struct obj *otmp)
 	struct obj *otmp2;
 	boolean under_ice;
 
-#ifdef DEBUG
-	pline("bury_an_obj: %s", xname(otmp));
-#endif
 	if (otmp == uball)
 		unpunish();
 	/* after unpunish(), or might get deallocated chain */
@@ -1272,10 +1269,6 @@ void bury_objs(int x, int y)
 {
 	struct obj *otmp, *otmp2;
 
-#ifdef DEBUG
-	if (level->objects[x][y] != NULL)
-		pline("bury_objs: at %d, %d", x, y);
-#endif
 	for (otmp = level->objects[x][y]; otmp; otmp = otmp2)
 		otmp2 = bury_an_obj(otmp);
 
@@ -1289,9 +1282,6 @@ void unearth_objs(struct level *lev, int x, int y)
 {
 	struct obj *otmp, *otmp2;
 
-#ifdef DEBUG
-	pline("unearth_objs: at %d, %d", x, y);
-#endif
 	for (otmp = lev->buriedobjlist; otmp; otmp = otmp2) {
 		otmp2 = otmp->nobj;
 		if (otmp->ox == x && otmp->oy == y) {
@@ -1374,19 +1364,5 @@ void rot_corpse(void *arg, long timeout)
 	if (on_floor) newsym(x, y);
 	else if (in_invent) update_inventory();
 }
-
-
-#ifdef DEBUG
-int wiz_debug_cmd(void) /* in this case, bury everything at your loc and around */
-{
-	int x, y;
-
-	for (x = u.ux - 1; x <= u.ux + 1; x++)
-	    for (y = u.uy - 1; y <= u.uy + 1; y++)
-		if (isok(x,y)) bury_objs(x,y);
-	return 0;
-}
-
-#endif /* DEBUG */
 
 /*dig.c*/

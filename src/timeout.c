@@ -1288,21 +1288,6 @@ int wiz_timeout_queue(void)
     return 0;
 }
 
-void timer_sanity_check(void)
-{
-    timer_element *curr;
-
-    /* this should be much more complete */
-    for (curr = level->lev_timers; curr; curr = curr->next)
-	if (curr->kind == TIMER_OBJECT) {
-	    struct obj *obj = (struct obj *) curr->arg;
-	    if (obj->timed == 0) {
-		pline("timer sanity: untimed obj %p, timer %ld",
-		      obj, curr->tid);
-	    }
-	}
-}
-
 
 /*
  * Pick off timeout elements from the global queue and call their functions.
