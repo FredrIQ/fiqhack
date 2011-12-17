@@ -427,7 +427,8 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 }
 
 
-/* copy values carefully: copying pointers to strings on the stack is not good */
+/* copy values carefully: copying pointers to strings on the stack is not good
+ * return TRUE if the new value differs from the current value */
 static boolean copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
 {
 	struct nh_autopickup_rules *aold, *anew;
@@ -451,6 +452,10 @@ static boolean copy_option_value(struct nh_option_desc *option, union nh_optvalu
 	    case OPTTYPE_AUTOPICKUP_RULES:
 		aold = option->value.ar;
 		anew = value.ar;
+		
+		if (!aold && !anew)
+		    return FALSE;
+		
 		/* check rule set equality */
 		if (aold && anew && aold->num_rules == anew->num_rules) {
 		    /* compare each individual rule */
