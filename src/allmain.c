@@ -335,6 +335,7 @@ error_out:
     program_state.restoring = FALSE;
     iflags.disable_log = FALSE;
     replay_end();
+    unlock_fd(fd);
     
     if (error == ERR_RESTORE_FAILED) {
 	raw_printf("Restore failed. Attempting to replay instead.\n");
