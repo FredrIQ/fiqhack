@@ -48,9 +48,9 @@ static void base64_decode(const char* in, char *out)
 
 static void parse_option_token(char *token, long tnum)
 {
-    long optval;
+    int optval;
     char *name, *val, *type;
-    char namebuf[512], valbuf[512];
+    char namebuf[512], valbuf[512], *vb2;
     
     name = token + 1;
     type = strchr(name, ':');
@@ -74,26 +74,31 @@ static void parse_option_token(char *token, long tnum)
 	    
 	case 'b':
 	    optval = strtol(val, NULL, 16);
-	    printf("(BOOL) = %ld\n", optval);
+	    printf("(BOOL) = %d\n", optval);
 	    break;
 	    
 	case 'e':
 	    optval = strtol(val, NULL, 16);
-	    printf("(ENUM) = %ld\n", optval);
+	    printf("(ENUM) = %d\n", optval);
 	    break;
 	    
 	case 'i':
 	    optval = strtol(val, NULL, 10);
-	    printf("(INT) = %ld\n", optval);
+	    printf("(INT) = %d\n", optval);
 	    break;
 	    
+	case 'a':
+	    vb2 = malloc(strlen(val) + 1);
+	    base64_decode(val, vb2);
+	    printf("(AP_RULES) = \"%s\"\n", vb2);
+	    free(vb2);
     }
 }
 
 
 static void parse_command_token(char **tokens, long *tnum, long tcount)
 {
-    char *token, *pos, timebuf[256], *cmdname;
+    char *token, *pos, timebuf[256], *cmdname, invlet;
     long time;
     int cmd, rep, dir, x, y;
     
@@ -142,6 +147,11 @@ static void parse_command_token(char **tokens, long *tnum, long tcount)
 	case 'p':
 	    sscanf(token, "p:%x,%x", &x, &y);
 	    printf("(%d, %d)   ", x, y);
+	    break;
+	    
+	case 'o':
+	    sscanf(token, "o:%c", &invlet);
+	    printf("obj:'%c'   ", invlet);
 	    break;
     }
 }
