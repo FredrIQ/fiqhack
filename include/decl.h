@@ -293,7 +293,7 @@ struct cmd_desc {
 	const char *text;
 };
 
-extern time_t turntime;
+extern unsigned long long turntime;
 
 extern struct nh_option_desc *active_birth_options;
 extern struct nh_option_desc *birth_options;

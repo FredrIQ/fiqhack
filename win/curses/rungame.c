@@ -115,12 +115,9 @@ static int commandloop(void)
 
 static void game_ended(int status, fnchar *filename)
 {
-    fnchar fncopy[1024], logname[1024], savedir[BUFSZ], *fdir, *fname;
+    fnchar fncopy[1024], logname[1024], savedir[BUFSZ], *bp, *fname;
     
-    if (status == GAME_SAVED) {
-	printf("Be seeing you...");
-	return;
-    } else if (status != GAME_OVER)
+    if (status != GAME_OVER)
 	return;
     
     show_topten(player.plname, settings.end_top, settings.end_around,
@@ -134,11 +131,11 @@ static void game_ended(int status, fnchar *filename)
 #if !defined(WIN32)
     /* dirname and basename may modify the input string, depending on the system */
     strncpy(fncopy, filename, sizeof(fncopy));
-    fdir = dirname(fncopy);
+    bp = dirname(fncopy);
     
     get_gamedir(SAVE_DIR, savedir);
     savedir[strlen(savedir)-1] = '\0'; /* remove the trailing '/' */
-    if (strcmp(fdir, savedir) != 0)
+    if (strcmp(bp, savedir) != 0)
 	return; /* file was not in savedir, so don't touch it */
     
     get_gamedir(LOG_DIR, logname);
@@ -148,6 +145,17 @@ static void game_ended(int status, fnchar *filename)
     
     /* don't care about errors: rename is nice to have, not essential */
     rename(filename, logname);
+#else
+    bp = wcsrchr(filename, L'\\');
+    get_gamedir(SAVE_DIR, savedir);
+    if (!bp || wcsncmp(filename, savedir, wcslen(savedir)))
+	return;
+
+    get_gamedir(LOG_DIR, logname);
+    wcsncat(logname, bp+1, 1024);
+    
+    /* don't care about errors: rename is nice to have, not essential */
+    _wrename(filename, logname);
 #endif
 }
 
@@ -180,13 +188,13 @@ void rungame(void)
 
     t = (long)time(NULL);
 #if defined(WIN32)
-    snwprintf(filename, 1024, L"%ls%ld_%s.nhgame", savedir,
+    snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame", savedir,
 	     t, settings.plname);
 #else
     snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir,
 	     t, settings.plname);
 #endif
-    fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
+    fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, FILE_OPEN_MASK);
     if (fd == -1) {
 	curses_raw_print("Could not create the logfile.");
 	return;
@@ -243,7 +251,73 @@ void describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi
 }
 
 
-int compare_filetime(const void *arg1, const void *arg2)
+#if defined(WIN32)
+
+
+static int compare_filetime(const void *arg1, const void *arg2)
+{
+    const WIN32_FIND_DATA *file1 = (const WIN32_FIND_DATA*)arg1;
+    const WIN32_FIND_DATA *file2 = (const WIN32_FIND_DATA*)arg2;
+    
+    if (file1->ftLastWriteTime.dwHighDateTime != file2->ftLastWriteTime.dwHighDateTime)
+	return file1->ftLastWriteTime.dwHighDateTime - file2->ftLastWriteTime.dwHighDateTime;
+    return file1->ftLastWriteTime.dwLowDateTime - file2->ftLastWriteTime.dwLowDateTime;
+}
+
+
+wchar_t **list_gamefiles(wchar_t *dir, int *count)
+{
+    wchar_t filepattern[1024], fullname[1024], **filenames;
+    WIN32_FIND_DATA *find_data;
+    HANDLE h_search;
+    int fd, i;
+    enum nh_log_status status;
+
+    wcsncpy(filepattern, dir, 1024);
+    wcsncat(filepattern, L"*.nhgame", 1024);
+    *count = 0;
+    find_data = malloc(1 * sizeof(WIN32_FIND_DATA));
+
+    h_search = FindFirstFile(filepattern, &find_data[0]);
+    if (h_search == INVALID_HANDLE_VALUE)
+	return NULL;
+
+    do {
+	if (find_data[*count].nFileSizeHigh == 0 && find_data[*count].nFileSizeLow < 64)
+	    continue; /* too small to be valid */
+
+	_snwprintf(fullname, 1024, L"%s%s", dir, find_data[*count].cFileName);
+	fd = _wopen(fullname, O_RDWR, _S_IREAD | _S_IWRITE);
+	if (fd == -1)
+	    continue;
+
+	status = nh_get_savegame_status(fd, NULL);
+	close(fd);
+
+	if (status != LS_INVALID) {
+	     (*count)++;
+	     find_data = realloc(find_data, (*count + 1) * sizeof(WIN32_FIND_DATA));
+	}
+    } while (FindNextFile(h_search, &find_data[*count]));
+
+    if (h_search != INVALID_HANDLE_VALUE)
+	FindClose(h_search);
+
+    qsort(find_data, *count, sizeof(WIN32_FIND_DATA), compare_filetime);
+
+    filenames = malloc(*count * sizeof(wchar_t*));
+    for (i = 0; i < *count; i++) {
+	_snwprintf(fullname, 1024, L"%s%s", dir, find_data[i].cFileName);
+	filenames[i] = _wcsdup(fullname);
+    }
+    free(find_data);
+
+    return filenames;
+}
+
+#else
+
+static int compare_filetime(const void *arg1, const void *arg2)
 {
     const char *file1 = *(const char**)arg1;
     const char *file2 = *(const char**)arg2;
@@ -256,13 +330,6 @@ int compare_filetime(const void *arg1, const void *arg2)
     return s2.st_mtime - s1.st_mtime;
 }
 
-#if defined(WIN32)
-wchar_t **list_gamefiles(wchar_t *dir, int *count)
-{
-    return NULL;
-}
-
-#else
 
 char **list_gamefiles(char *dir, int *count)
 {
@@ -327,7 +394,7 @@ nh_bool loadgame(void)
     items = malloc(size * sizeof(struct nh_menuitem));
 
     for (i = 0; i < size; i++) {
-	fd = sys_open(files[i], O_RDWR, 0660);
+	fd = sys_open(files[i], O_RDWR, FILE_OPEN_MASK);
 	status = nh_get_savegame_status(fd, &gi);
 	close(fd);
 	
@@ -348,7 +415,7 @@ nh_bool loadgame(void)
     if (n <= 0)
 	return FALSE;
     
-    fd = sys_open(filename, O_RDWR, 0660);
+    fd = sys_open(filename, O_RDWR, FILE_OPEN_MASK);
     create_game_windows();
     if (nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
 	curses_msgwin("Failed to restore saved game.");

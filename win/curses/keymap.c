@@ -92,7 +92,7 @@ static const char *curses_keyname(int key)
     /* if ncurses doesn't know a key, keyname() returns NULL.
      * This can happen if you create a keymap with pdcurses, and then read it with ncurses */
     kname = keyname(key);
-    if (kname)
+    if (kname && strcmp(kname, "UNKNOWN KEY"))
 	return kname;
     snprintf(knbuf, sizeof(knbuf), "KEY_#%d", key);
     return knbuf;
@@ -570,6 +570,24 @@ static void write_keymap(void)
 }
 
 
+#if defined(WIN32) && defined (PDCURSES)
+/* PDCurses for WIN32 has special keycodes for alt-combinations */
+static unsigned int keytrans(unsigned int key)
+{
+    unsigned int unmeta = key & (~0x0080);
+
+    if (key != unmeta && 'a' <= unmeta && unmeta <= 'z')
+	return unmeta - 'a' + ALT_A;
+    if (key != unmeta && '0' <= unmeta && unmeta <= '9')
+	return unmeta - '0' + ALT_0;
+
+    return key;
+}
+#else
+#define keytrans(x) ((unsigned int)(x))
+#endif
+
+
 /* initialize the keymap with the default keys suggested by NetHack */
 static void init_keymap(void)
 {
@@ -596,22 +614,22 @@ static void init_keymap(void)
     /* every command automatically gets its default key */
     for (i = 0; i < cmdcount; i++)
 	if (commandlist[i].defkey)
-	    keymap[(unsigned int)commandlist[i].defkey] = &commandlist[i];
+	    keymap[keytrans(commandlist[i].defkey)] = &commandlist[i];
 	
     for (i = 0; i < count; i++)
 	if (builtin_commands[i].defkey)
-	    keymap[(unsigned int)builtin_commands[i].defkey] = &builtin_commands[i];
+	    keymap[keytrans(builtin_commands[i].defkey)] = &builtin_commands[i];
     
     /* alt keys are assigned if the key is not in use */
     for (i = 0; i < cmdcount; i++) {
-	if (commandlist[i].altkey && !keymap[(unsigned int)commandlist[i].altkey])
-	    keymap[(unsigned int)commandlist[i].altkey] = &commandlist[i];
+	if (commandlist[i].altkey && !keymap[keytrans(commandlist[i].altkey)])
+	    keymap[keytrans(commandlist[i].altkey)] = &commandlist[i];
     }
     
     for (i = 0; i < count; i++) {
 	if (builtin_commands[i].altkey &&
-	    !keymap[(unsigned int)commandlist[i].altkey])
-	    keymap[(unsigned int)builtin_commands[i].altkey] = &builtin_commands[i];
+	    !keymap[keytrans(commandlist[i].altkey)])
+	    keymap[keytrans(builtin_commands[i].altkey)] = &builtin_commands[i];
     }
     
 }
@@ -761,7 +779,13 @@ static nh_bool set_command_keys(struct win_menu *mdat, int idx)
 void show_keymap_menu(nh_bool readonly)
 {
     int i, n, icount;
-    struct nh_menuitem *items = malloc(sizeof(struct nh_menuitem) *
+    nh_bool need_init = !cmdcount;
+    struct nh_menuitem *items;
+
+    if (need_init)
+	load_keymap();
+
+    items = malloc(sizeof(struct nh_menuitem) *
                                  (ARRAY_SIZE(builtin_commands) + cmdcount + 4));
     
     do {
@@ -792,4 +816,7 @@ void show_keymap_menu(nh_bool readonly)
     free(items);
     
     write_keymap();
+
+    if (need_init)
+	free_keymap();
 }

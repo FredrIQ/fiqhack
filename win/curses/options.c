@@ -90,6 +90,10 @@ struct nh_option_desc curses_options[] = {
     {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
     {"unicode", "try to use unicode for drawing", OPTTYPE_BOOL, { VTRUE }},
     {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
+#if defined(PDCURSES) && defined(WIN32)
+    {"win_width", "window width", OPTTYPE_INT, {(void*)130}},
+    {"win_height", "window height", OPTTYPE_INT, {(void*)40}},
+#endif
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
 
@@ -158,6 +162,18 @@ nh_bool option_change_callback(struct nh_option_desc *option)
 	settings.msghistory = option->value.i;
 	alloc_hist_array();
     }
+#if defined(PDCURSES) && defined(WIN32)
+    else if (!strcmp(option->name, "win_width")) {
+	settings.win_width = option->value.i;
+	resize_term(settings.win_height, settings.win_width);
+	handle_resize();
+    }
+    else if (!strcmp(option->name, "win_height")) {
+	settings.win_height = option->value.i;
+	resize_term(settings.win_height, settings.win_width);
+	handle_resize();
+    }
+#endif
     else if (!strcmp(option->name, "name")) {
 	if (option->value.s)
 	    strcpy(settings.plname, option->value.s);
@@ -196,7 +212,12 @@ void init_options(void)
     find_option("optstyle")->e = optstyle_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
-    
+#if defined(PDCURSES) && defined(WIN32)
+    find_option("win_width")->i.min = COLNO; /* can never be narrower than COLNO */
+    find_option("win_width")->i.max = 100 + COLNO; /* 100 chars wide sidebar already looks pretty silly */
+    find_option("win_height")->i.min = ROWNO + 3;
+    find_option("win_height")->i.max = 70; /* ROWNO + max msgheight + extra for status and frame */
+#endif
     nh_setup_ui_options(curses_options, boolopt_map, option_change_callback);
     
     /* set up option defaults; this is necessary for options that are not

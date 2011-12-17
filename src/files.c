@@ -38,8 +38,6 @@ char bones[] = "bonesnn.xxx";
 #  define S_IRUSR _S_IREAD
 #  define S_IWUSR _S_IWRITE
 # endif
-
-#define sleep Sleep
 #endif
 
 static const char *fqname(const char *, int, int);
@@ -263,25 +261,20 @@ void unlock_fd(int fd)
 }
 #elif defined (WIN32) /* windows versionf of lock_fd(), unlock_fd() */
 
-/* lock any open file using LockFileEx */
+/* lock any open file using LockFile */
 boolean lock_fd(int fd, int retry)
 {
     HANDLE hFile;
-    OVERLAPPED o;
-    DWORD fileSize;
     BOOL ret;
     
     if (fd == -1)
 	return FALSE;
 
     hFile = (HANDLE)_get_osfhandle(fd);
-    fileSize = GetFileSize(hFile, NULL);
     
-    o.hEvent = 0;
-    o.Offset = o.OffsetHigh = 0;
-    while ((ret = LockFileEx(hFile, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
-		      0 /* reserved */, fileSize, 0, &o)))
-	sleep(1);
+    /* lock only the first 64 bytes of the file to avoid problems with mismatching lock/unlock ranges*/
+    while (!(ret = LockFile(hFile, 0, 0, 64, 0)) && retry--)
+	Sleep(1);
     return ret;
 }
 
@@ -289,17 +282,12 @@ boolean lock_fd(int fd, int retry)
 void unlock_fd(int fd)
 {
     HANDLE hFile;
-    OVERLAPPED o;
-    DWORD fileSize;
     if (fd == -1)
 	return;
 
     hFile = (HANDLE)_get_osfhandle(fd);
-    fileSize = GetFileSize(hFile, NULL);
     
-    o.hEvent = 0;
-    o.Offset = o.OffsetHigh = 0;
-    UnlockFileEx(hFile, 0 /* reserved */, fileSize, 0, &o);
+    UnlockFile(hFile, 0, 0, 64, 0);
 }
 #endif
 

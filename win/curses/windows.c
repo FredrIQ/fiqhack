@@ -54,7 +54,7 @@ void init_curses_ui(void)
     set_term(curses_scr);
     
     if (LINES < 24 || COLS < COLNO) {
-	fprintf(stderr, "Sorry, your terminal is too small for NetHack.\n");
+	fprintf(stderr, "Sorry, your terminal is too small for NetHack. Current: (%x, %x)\n", COLS, LINES);
 	endwin();
 	exit(0);
     }
@@ -74,6 +74,14 @@ void init_curses_ui(void)
      * crashes. So basewin is a copy of stdscr which is known to be NULL before
      * curses is inited. */
     basewin = stdscr;
+
+#if defined(PDCURSES)
+    PDC_set_title("NetHack");
+#if defined(WIN32)
+    if (settings.win_height > 0 && settings.win_width > 0)
+	resize_term(settings.win_height, settings.win_width);
+#endif
+#endif
 }
 
 
@@ -174,9 +182,10 @@ void layout_game_windows(void)
 
 void create_game_windows(void)
 {
-    int statusheight = ui_flags.status3 ? 3 : 2;
+    int statusheight;
 
     layout_game_windows();
+    statusheight = ui_flags.status3 ? 3 : 2;
     
     if (ui_flags.draw_frame) {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
@@ -325,6 +334,24 @@ void rebuild_ui(void)
 }
 
 
+void handle_resize(void)
+{
+    struct gamewin *gw;
+
+    for (gw = firstgw; gw; gw = gw->next) {
+	if (!gw->resize)
+	    continue;
+
+	gw->resize(gw);
+	redrawwin(gw->win);
+	wnoutrefresh(gw->win);
+    }
+
+    rebuild_ui();
+    doupdate();
+}
+
+
 #define META(c)  ((c)|0x80) /* bit 8 */
 int nh_wgetch(WINDOW *win)
 {
@@ -344,24 +371,14 @@ int nh_wgetch(WINDOW *win)
 #endif
 
 	if (key == KEY_RESIZE) {
-	    struct gamewin *gw;
 	    key = 0;
 #ifdef PDCURSES
 	    resize_term(0, 0);
 #endif
-	    rebuild_ui();
-	    
-	    for (gw = firstgw; gw; gw = gw->next) {
-		if (!gw->resize)
-		    continue;
-		
-		gw->resize(gw);
-		redrawwin(gw->win);
-		wnoutrefresh(gw->win);
-	    }
-	    doupdate();
+	    handle_resize();
 	}
 
+#if !defined(WIN32)
 	/* "hackaround": some terminals / shells / whatever don't directly pass
 	 * on any combinations with the alt key. Instead these become ESC,<key>
 	 * Try to reverse that here...
@@ -376,6 +393,7 @@ int nh_wgetch(WINDOW *win)
 	    if ('a' <= key2 && key2 <= 'z')
 		key = META(key2);
 	}
+#endif
 	    
     } while (!key);
     

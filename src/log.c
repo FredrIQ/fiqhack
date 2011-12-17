@@ -47,9 +47,9 @@ static void base64_encode(const char* in, char *out)
 
 static int lprintf(const char *fmt, ...)
 {
+    va_list vargs;
     char outbuf[4096];
     int size;
-    va_list vargs;
     
     va_start(vargs, fmt);    
     size = vsnprintf(outbuf, sizeof(outbuf), fmt, vargs);
@@ -136,7 +136,7 @@ static void log_command_list(void)
 }
 
 
-void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
+void log_newgame(int logfd, unsigned long long start_time, int playmode)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
@@ -160,7 +160,7 @@ void log_newgame(int logfd, unsigned int rnd_seed, int playmode)
 	    VERSION_MINOR, PATCHLEVEL);
     
     base64_encode(plname, encbuf);
-    lprintf("%x %x %s %s %s %s %s\n", rnd_seed, playmode, encbuf, role,
+    lprintf("%llx %x %s %s %s %s %s\n", start_time, playmode, encbuf, role,
 	    races[u.initrace].noun, genders[u.initgend].adj, aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();
@@ -173,7 +173,7 @@ void log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 	return;
     
     /* command numbers are shifted by 1, so that they can be array indices during replay */
-    lprintf("\n>%lx:%x:%d ", turntime, cmd+1, rep);
+    lprintf("\n>%llx:%x:%d ", turntime, cmd+1, rep);
     switch (arg->argtype) {
 	case CMD_ARG_NONE:
 	    lprintf("n");
@@ -183,6 +183,9 @@ void log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 	    break;
 	case CMD_ARG_POS:
 	    lprintf("p:%x:%x", arg->pos.x, arg->pos.y);
+	    break;
+	case CMD_ARG_OBJ:
+	    lprintf("o:%c", arg->invlet);
 	    break;
     }
 }

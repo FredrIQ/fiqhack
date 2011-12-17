@@ -256,20 +256,8 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 /* If endian.h exists (on Linux for example and perhaps on other UNIX) and is
  * indirectly included via the system headers, we may be able to find out what
  * the endianness is.  Otherwise define IS_BIG_ENDIAN in config.h */
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && __BYTE_ORDER == __BIG_ENDIAN
 # define IS_BIG_ENDIAN
-#endif
-
-#ifdef IS_BIG_ENDIAN
-# define host_to_le16(x) _byteswap16(x)
-# define host_to_le32(x) _byteswap32(x)
-# define le16_to_host(x) _byteswap16(x)
-# define le32_to_host(x) _byteswap32(x)
-#else
-# define host_to_le16(x) (x)
-# define host_to_le32(x) (x)
-# define le16_to_host(x) (x)
-# define le32_to_host(x) (x)
 #endif
 
 /* 

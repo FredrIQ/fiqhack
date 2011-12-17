@@ -17,6 +17,7 @@
 
 #if !defined(WIN32) /* UNIX + APPLE */
 # include <unistd.h>
+#define FILE_OPEN_MASK 0660
 #else	/* WINDOWS */
 
 # include <windows.h>
@@ -33,6 +34,7 @@
 #  define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 #  define snwprintf _snwprintf
 # endif
+#define FILE_OPEN_MASK (_S_IREAD | _S_IWRITE)
 #endif
 
 /* File handling compatibility.
@@ -53,9 +55,10 @@ typedef char fnchar;
 #else
 
 typedef wchar_t fnchar;
+# define umask(x)
 # define fnncat(str1, str2, len) wcsncat(str1, str2, len)
 # define fopen(name, mode)  _wfopen(name, L ## mode)
-# define sys_open(name, args, mode)  _wopen(name, args)
+# define sys_open(name, flags, perm)  _wopen(name, flags | _O_BINARY, perm)
 # define FN(x) (L ## x)
 # define FN_FMT "%ls"
 #endif
@@ -69,6 +72,9 @@ typedef wchar_t fnchar;
 # define PDC_WIDE
 # ifdef WIN32
 #  include <curses.h>
+/* Windows support for Underline is a joke: it simply switches to color 1 (dark blue!) */
+#  undef A_UNDERLINE
+#  define A_UNDERLINE A_NORMAL
 # else
 #  include <xcurses.h>
 # endif
@@ -127,6 +133,8 @@ struct settings {
     int      msgheight; /* requested height of the message win */
     int      msghistory;/* # of historic messages to keep for prevmsg display */
     int      optstyle;	/* option display style */
+    int      win_height;/* window height, PDCurses on WIN32 only */
+    int      win_width; /* window height, PDCurses on WIN32 only */
     nh_bool  darkgray;  /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool  extmenu;	/* extended commands use menu interface */
     nh_bool  hilite_pet;/* hilight pets */
@@ -360,6 +368,7 @@ extern void exit_curses_ui(void);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);
+extern void handle_resize(void);
 extern void rebuild_ui(void);
 extern int nh_wgetch(WINDOW *win);
 extern struct gamewin *alloc_gamewin(int extra);

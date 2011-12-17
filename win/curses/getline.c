@@ -14,7 +14,7 @@ static nh_bool ext_cmd_getlin_hook(char *, void *);
 
 static void buf_insert(char *buf, int pos, char key)
 {
-    size_t len = strlen(buf);
+    int len = strlen(buf); /* len must be signed, it may go to -1 */
     
     while (len >= pos) {
 	buf[len+1] = buf[len];
@@ -26,7 +26,7 @@ static void buf_insert(char *buf, int pos, char key)
 
 static void buf_delete(char *buf, int pos)
 {
-    size_t len = strlen(buf);
+    int len = strlen(buf);
     
     while (len >= pos) {
 	buf[pos] = buf[pos+1];
@@ -55,7 +55,7 @@ void draw_getline(struct gamewin *gw)
     wattron(gw->win, A_UNDERLINE);
     waddnstr(gw->win, &glw->buf[offset], width - 4);
     for (i = len; i < width - 4; i++)
-	wprintw(gw->win, "%c", ' ');
+	wprintw(gw->win, "%c", (A_UNDERLINE != A_NORMAL) ? ' ' : '_');
     wattroff(gw->win, A_UNDERLINE);
     wmove(gw->win, 2, glw->pos - offset + 2);
     wrefresh(gw->win);
@@ -121,9 +121,12 @@ void hooked_curses_getlin(const char *query, char *buf,
 	    case '\n':
 		done = TRUE;
 		break;
-		
+
 	    case KEY_BACKSPACE: /* different terminals send different codes... */
 	    case KEY_BACKDEL:
+#if defined(PDCURSES)
+	    case 8: /* ^H */
+#endif
 		if (gldat->pos == 0) continue;
 		gldat->pos--;
 		/* fall through */

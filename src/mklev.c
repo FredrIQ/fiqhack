@@ -51,8 +51,15 @@ static int do_comp(const void *vx, const void *vy)
 
 	x = (const struct mkroom *)vx;
 	y = (const struct mkroom *)vy;
-	if (x->lx < y->lx) return -1;
-	return x->lx > y->lx;
+
+	/* sort by x coord first */
+	if (x->lx != y->lx)
+	    return x->lx - y->lx;
+
+	/* sort by ly if lx is equal
+	 * The additional criterium is necessary to get consistent sorting across
+	 * platforms with different qsort implementations. */
+	return x->ly - y->ly;
 }
 
 static void finddpos(struct level *lev, coord *cc, xchar xl, xchar yl, xchar xh, xchar yh)

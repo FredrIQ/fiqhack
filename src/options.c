@@ -388,6 +388,7 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 {
 	union nh_optvalue value;
 	int i;
+	value.i = -99999;
     
 	switch (option->type) {
 	    case OPTTYPE_BOOL:

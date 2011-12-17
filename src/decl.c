@@ -198,7 +198,7 @@ nh_jmp_buf exit_jmp_buf;
 struct artifact *artilist;
 short disco[NUM_OBJECTS]; /* discovered objects */
 
-time_t turntime;
+unsigned long long turntime;
 
 /* If one game (A) is started and then saved, followed by game B with different
  * birth_options, after which game A is restored, then A must run with it's

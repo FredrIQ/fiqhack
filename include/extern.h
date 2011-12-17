@@ -689,7 +689,7 @@ extern int doclose(void);
 
 /* ### log.c ### */
 
-extern void log_newgame(int logfd, unsigned int rnd_seed, int playmode);
+extern void log_newgame(int logfd, unsigned long long start_time, int playmode);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
 extern void log_command_result(void);
 extern void log_revert_command(void);
@@ -713,7 +713,7 @@ extern void replay_end(void);
 extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
 extern void replay_restore_windowprocs(void);
-extern void replay_read_newgame(time_t *seed, int *playmode, char *name);
+extern void replay_read_newgame(unsigned long long *time, int *playmode, char *name);
 extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep);
 
 

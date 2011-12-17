@@ -862,7 +862,7 @@ void terminate(void)
 {
 	/* don't bother to try to release memory if we're in panic mode, to
 	   avoid trouble in case that happens to be due to memory problems */
-	if (!program_state.panicking) {
+	if (!program_state.panicking && !program_state.viewing) {
 	    freedynamicdata();
 	    dlb_cleanup();
 	}

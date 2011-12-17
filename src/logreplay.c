@@ -495,7 +495,7 @@ static void replay_read_commandlist(void)
 }
 
 
-void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
+void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
 {
     char *header, *verstr;
     int ver1, ver2, ver3, n;
@@ -517,7 +517,7 @@ void replay_read_newgame(time_t *seed, int *playmode, char *namebuf)
 	raw_printf("Warning: Version mismatch; expected %d.%d, got %d.%d\n",
 		   VERSION_MAJOR, VERSION_MINOR, ver1, ver2);
 
-    *seed = strtoul(next_log_token(), NULL, 16);
+    sscanf(next_log_token(), "%llx", init);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
     u.initrole = nh_str2role(next_log_token());
@@ -565,7 +565,7 @@ static void replay_read_option(char *token)
 	    value.b = atoi(valstr);
 	    break;
 	case 'a':
-	    arbuf = malloc(strlen(valstr));
+	    arbuf = malloc(strlen(valstr) + 1);
 	    base64_decode(valstr, arbuf);
 	    value.ar = parse_autopickup_rules(arbuf);
 	    free(arbuf);
@@ -600,6 +600,11 @@ static boolean replay_parse_arg(char *argstr, struct nh_cmd_arg *arg)
 	    arg->argtype = CMD_ARG_POS;
 	    n = sscanf(argstr, "p:%hx:%hx", &arg->pos.x, &arg->pos.y);
 	    return n == 2;
+
+	case 'o':
+	    arg->argtype = CMD_ARG_OBJ;
+	    n = sscanf(argstr, "o:%c", &arg->invlet);
+	    return n == 1;
 	    
 	default:
 	    raw_printf("Error: unrecognized arg type %c\n", argstr[0]);
@@ -615,7 +620,7 @@ static void replay_read_command(char *cmdtok, char **cmd, int *count,
     if (!cmdtok)
 	return;
     
-    n = sscanf(cmdtok, ">%lx:%x:%d", &turntime, &cmdidx, count);
+    n = sscanf(cmdtok, ">%llx:%x:%d", &turntime, &cmdidx, count);
     if (n != 3 || cmdidx > cmdcount)
 	parse_error("Error: Incorrect command spec\n");
     
@@ -950,7 +955,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
 	return LS_INVALID;
     
     if (ret == LS_SAVED && endpos == savepos)
-	ret = LS_IN_PROGRESS;
+	ret = LS_CRASHED;
     
     /* if we can't lock the file, it's in use */
     if (!lock_fd(fd, 0))

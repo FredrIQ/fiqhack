@@ -3,6 +3,18 @@
 
 #include "hack.h"
 
+#ifdef IS_BIG_ENDIAN
+static unsigned short host_to_le16(unsigned short x) { return _byteswap16(x); }
+static unsigned int   host_to_le32(unsigned int x)   { return _byteswap32(x); }
+static unsigned short le16_to_host(unsigned short x) { return _byteswap16(x); }
+static unsigned int   le32_to_host(unsigned int x)   { return _byteswap32(x); }
+#else
+static unsigned short host_to_le16(unsigned short x) { return x; }
+static unsigned int   host_to_le32(unsigned int x)   { return x; }
+static unsigned short le16_to_host(unsigned short x) { return x; }
+static unsigned int   le32_to_host(unsigned int x)   { return x; }
+#endif
+
 
 void mwrite(struct memfile *mf, const void *buf, unsigned int num)
 {

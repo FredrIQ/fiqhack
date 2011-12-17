@@ -44,19 +44,28 @@ include_directories (${NetHack_SOURCE_DIR}/include/public)
 include_directories (${NetHack_BINARY_DIR}/include)
 include_directories (${NetHack_BINARY_DIR}/util)
 
+# targets
+add_executable (makedefs ${MAKEDEFS_SRC})
+add_executable (dgn_comp ${DGN_COMP_SRC})
+add_executable (lev_comp ${LEV_COMP_SRC})
+add_executable (dlb ${DLB_SRC})
+
+get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
+
+
 # create the headers named in MAKEDEFS_HEADERS
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/date.h
-                    COMMAND ${NetHack_BINARY_DIR}/util/makedefs
+                    COMMAND ${MAKEDEFS_BIN}
                     ARGS -v ${NetHack_BINARY_DIR}/include/date.h
                     DEPENDS makedefs)
                     
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/onames.h
-                    COMMAND ${NetHack_BINARY_DIR}/util/makedefs
+                    COMMAND ${MAKEDEFS_BIN}
                     ARGS -o ${NetHack_BINARY_DIR}/include/onames.h
                     DEPENDS makedefs)
                     
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/pm.h
-                    COMMAND ${NetHack_BINARY_DIR}/util/makedefs
+                    COMMAND ${MAKEDEFS_BIN}
                     ARGS -p ${NetHack_BINARY_DIR}/include/pm.h
                     DEPENDS makedefs)
 
@@ -97,11 +106,6 @@ if (CMAKE_COMPILER_IS_GNUCC)
 	add_definitions (-fvisibility=hidden)
     endif ()
 endif ()
-# targets
-add_executable (makedefs ${MAKEDEFS_SRC})
-add_executable (dgn_comp ${DGN_COMP_SRC})
-add_executable (lev_comp ${LEV_COMP_SRC})
-add_executable (dlb ${DLB_SRC})
 
 add_custom_target (makedefs_headers DEPENDS ${MAKEDEFS_HEADERS})
 add_dependencies (dgn_comp makedefs_headers)

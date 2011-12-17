@@ -220,9 +220,9 @@ boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
 	goto err_out;
     
     if (!program_state.restoring)
-	turntime = time(NULL);
+	turntime = (unsigned long long)time(NULL);
     /* initialize the random number generator */
-    mt_srand(turntime);
+    mt_srand((unsigned int)turntime);
     
     startup_common(name, playmode);
     

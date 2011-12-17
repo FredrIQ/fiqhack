@@ -23,9 +23,11 @@ set (LIBNETHACK_GENERATED_SRC
 
 set_source_files_properties(${LIBNETHACK_GENERATED_SRC} GENERATED)
 
+get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
+
 
 add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/src/monstr.c
-                    COMMAND ${NetHack_BINARY_DIR}/util/makedefs
+                    COMMAND ${MAKEDEFS_BIN}
                     ARGS -m ${NetHack_BINARY_DIR}/src/monstr.c
                     DEPENDS makedefs)
 

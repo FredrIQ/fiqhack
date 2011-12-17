@@ -361,7 +361,7 @@ static struct tm *getlt(void);
 
 static struct tm *getlt(void)
 {
-	return localtime(&turntime);
+	return localtime((time_t*)&turntime);
 }
 
 int getyear(void)
