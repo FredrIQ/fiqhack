@@ -185,7 +185,7 @@ void savebones(struct obj *corpse)
 	const struct permonst *mptr;
 	struct fruit *f;
 	char c, whynot[BUFSZ], bonesid[10];
-	struct memfile mf;
+	struct memfile mf = {NULL, 0, 0};
 
 	/* caller has already checked `can_make_bones()' */
 
