@@ -42,8 +42,8 @@ static void layout_menu(struct gamewin *gw)
     
     x1 = (mdat->x1 > 0) ? mdat->x1 : 0;
     y1 = (mdat->y1 > 0) ? mdat->y1 : 0;
-    x2 = (mdat->x2 > 0) ? mdat->x2 : COLS;
-    y2 = (mdat->y2 > 0) ? mdat->y2 : LINES;
+    x2 = (mdat->x2 > 0 && mdat->x2 <= COLS) ? mdat->x2 : COLS;
+    y2 = (mdat->y2 > 0 && mdat->y2 <= LINES) ? mdat->y2 : LINES;
     
     scrheight = y2 - y1;
     scrwidth = x2 - x1;
@@ -170,7 +170,11 @@ void resize_menu(struct gamewin *gw)
     int startx, starty;
     
     layout_menu(gw);
-    
+    /* if the window got longer and the last line was already visible, draw_menu
+     * would go past the end of mdat->items without this */
+    if (mdat->offset > mdat->icount - mdat->innerheight)
+	mdat->offset = mdat->icount - mdat->innerheight;
+
     delwin(mdat->content);
     wresize(gw->win, mdat->height, mdat->width);
     mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,

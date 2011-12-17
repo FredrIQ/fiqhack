@@ -448,7 +448,7 @@ void display_options(nh_bool change_birth_opt)
 	menu_add_options(&items, &size, &icount, UI_OPTS, curses_options, FALSE);
 	
 	n = curses_display_menu_core(items, icount, "Set what options?", PICK_ONE,
-				NULL, 0, 0, COLS, LINES, get_option_value);
+				NULL, 0, 0, -1, -1, get_option_value);
     } while (n > 0);
     free(items);
     
