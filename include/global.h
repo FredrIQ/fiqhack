@@ -4,8 +4,14 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#if defined(__linux__) && defined(__GNUC__) && !defined(_GNU_SOURCE)
+/* ensure _GNU_SOURCE is defined before including any system headers */
+# define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <setjmp.h>
+#include <stdarg.h>
 
 #include "nethack_types.h"
 
