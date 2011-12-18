@@ -164,6 +164,7 @@ void rungame(void)
 {
     int ret, role = initrole, race = initrace, gend = initgend, align = initalign;
     int fd = -1;
+    char plname[BUFSZ];
     fnchar filename[1024];
     fnchar savedir[BUFSZ];
     long t;
@@ -176,23 +177,22 @@ void rungame(void)
     if (!player_selection(&role, &race, &gend, &align, random_player))
 	return;
     
+    strncpy(plname, settings.plname, PL_NSIZ);
     /* The player name is set to "wizard" (again) in nh_start_game, so setting
      * it here just prevents wizmode player from being asked for a name. */
     if (ui_flags.playmode == MODE_WIZARD)
-	strcpy(settings.plname, "wizard");
+	strcpy(plname, "wizard");
     
-    while (!settings.plname[0])
-	curses_getline("what is your name?", settings.plname);
-    if (settings.plname[0] == '\033') /* canceled */
+    while (!plname[0])
+	curses_getline("what is your name?", plname);
+    if (plname[0] == '\033') /* canceled */
 	return;
 
     t = (long)time(NULL);
 #if defined(WIN32)
-    snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame", savedir,
-	     t, settings.plname);
+    snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame", savedir, t, plname);
 #else
-    snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir,
-	     t, settings.plname);
+    snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir, t, plname);
 #endif
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, FILE_OPEN_MASK);
     if (fd == -1) {
@@ -201,7 +201,7 @@ void rungame(void)
     }
     
     create_game_windows();
-    if (!nh_start_game(fd, settings.plname, role, race, gend, align, ui_flags.playmode))
+    if (!nh_start_game(fd, plname, role, race, gend, align, ui_flags.playmode))
 	return;
     
     load_keymap(); /* need to load the keymap after the game has been started */
