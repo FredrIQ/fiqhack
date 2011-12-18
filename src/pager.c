@@ -730,7 +730,7 @@ int dolicense(void)
 }
 
 
-int dohistory(void)
+int doverhistory(void)
 {
 	display_file(HISTORY, TRUE);
 	return 0;

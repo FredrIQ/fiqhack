@@ -344,6 +344,7 @@ int doconsult(struct monst *oracl)
 		    add_xpts = u_pay / (u.uevent.minor_oracle ? 25 : 10);
 		    /* ~100 pts if very 1st, ~40 pts if minor already done */
 		u.uevent.major_oracle = TRUE;
+		historic_event(FALSE, "received advice from The Oracle.");
 		exercise(A_WIS, !cheapskate);
 	}
 	if (add_xpts) {

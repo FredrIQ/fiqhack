@@ -238,6 +238,7 @@ static void savegamestate(struct memfile *mf)
 	mwrite32(mf, stetho_last_used_movement);
 	mwrite32(mf, multi);
 	save_rndmonst_state(mf);
+	save_history(mf);
 }
 
 
@@ -601,6 +602,7 @@ void freedynamicdata(void)
 	freenames();
 	free_waterlevel();
 	free_dungeon();
+	free_history();
 
 	if (iflags.ap_rules) {
 	    free(iflags.ap_rules->rules);

@@ -220,6 +220,7 @@ void addinv_core1(struct obj *obj)
 	} else if (obj->otyp == AMULET_OF_YENDOR) {
 		if (u.uhave.amulet) impossible("already have amulet?");
 		u.uhave.amulet = 1;
+		historic_event(!obj->known, "gained the Amulet of Yendor!");
 	} else if (obj->otyp == CANDELABRUM_OF_INVOCATION) {
 		if (u.uhave.menorah) impossible("already have candelabrum?");
 		u.uhave.menorah = 1;
@@ -434,6 +435,10 @@ void freeinv_core(struct obj *obj)
 	} else if (obj->otyp == AMULET_OF_YENDOR) {
 		if (!u.uhave.amulet) impossible("don't have amulet?");
 		u.uhave.amulet = 0;
+		/* Minor information leak about the Amulet of Yendor (vs fakes).
+		 * You don't get any more info than you do by turning on
+		 * show_uncursed though. */
+		historic_event(!obj->known, "lost the Amulet of Yendor.");
 	} else if (obj->otyp == CANDELABRUM_OF_INVOCATION) {
 		if (!u.uhave.menorah) impossible("don't have candelabrum?");
 		u.uhave.menorah = 0;

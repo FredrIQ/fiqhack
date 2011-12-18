@@ -422,6 +422,7 @@ static void restgamestate(struct memfile *mf)
 	stetho_last_used_movement = mread32(mf);
 	multi = mread32(mf);
 	restore_rndmonst_state(mf);
+	restore_history(mf);
 	
 	/* must come after all mons & objs are restored */
 	relink_timers(FALSE, lev);

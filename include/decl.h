@@ -293,6 +293,15 @@ struct cmd_desc {
 	const char *text;
 };
 
+struct histevent {
+    unsigned int when, hidden;
+    char what[BUFSZ];
+};
+
+extern unsigned int histcount;
+extern struct histevent *histevents;
+
+
 extern unsigned long long turntime;
 
 extern struct nh_option_desc *active_birth_options;

@@ -862,13 +862,13 @@ void init_dungeons(void)	/* initialize the "dungeon" structs */
 	}
 }
 
-xchar dunlev(d_level *lev)	/* return the level number for lev in *this* dungeon */
+xchar dunlev(const d_level *lev) /* return the level number for lev in *this* dungeon */
 {
 	return lev->dlevel;
 }
 
 /* return the lowest level number for *this* dungeon*/
-xchar dunlevs_in_dungeon(d_level *lev)
+xchar dunlevs_in_dungeon(const d_level *lev)
 {
 	return dungeons[lev->dnum].num_dunlevs;
 }
@@ -907,7 +907,7 @@ xchar deepest_lev_reached(boolean noquest)
 
 /* return a bookkeeping level number for purpose of comparisons and
  * save/restore */
-xchar ledger_no(d_level *lev)
+xchar ledger_no(const d_level *lev)
 {
 	return (xchar)(lev->dlevel + dungeons[lev->dnum].ledger_start);
 }
@@ -953,20 +953,20 @@ xchar ledger_to_dlev(xchar ledgerno)
 
 /* returns the depth of a level, in floors below the surface	*/
 /* (note levels in different dungeons can have the same depth).	*/
-schar depth(d_level *lev)
+schar depth(const d_level *lev)
 {
 	return (schar)( dungeons[lev->dnum].depth_start + lev->dlevel - 1);
 }
 
 /* are "lev1" and "lev2" actually the same? */
-boolean on_level(d_level *lev1, d_level *lev2)
+boolean on_level(const d_level *lev1, const d_level *lev2)
 {
 	return (boolean)((lev1->dnum == lev2->dnum) && (lev1->dlevel == lev2->dlevel));
 }
 
 
 /* is this level referenced in the special level chain? */
-s_level *Is_special(d_level *lev)
+s_level *Is_special(const d_level *lev)
 {
 	s_level *levtmp;
 
@@ -980,7 +980,7 @@ s_level *Is_special(d_level *lev)
  * Is this a multi-dungeon branch level?  If so, return a pointer to the
  * branch.  Otherwise, return null.
  */
-branch *Is_branchlev(d_level *lev)
+branch *Is_branchlev(const d_level *lev)
 {
 	branch *curr;
 
@@ -1092,12 +1092,12 @@ boolean On_stairs(xchar x, xchar y)
 	       (x == level->sstairs.sx && y == level->sstairs.sy));
 }
 
-boolean Is_botlevel(d_level *lev)
+boolean Is_botlevel(const d_level *lev)
 {
 	return (lev->dlevel == dungeons[lev->dnum].num_dunlevs);
 }
 
-boolean can_dig_down(struct level *lev)
+boolean can_dig_down(const struct level *lev)
 {
 	return (!lev->flags.hardfloor && !Is_botlevel(&lev->z) &&
 	        !Invocation_lev(&lev->z));
@@ -1108,7 +1108,7 @@ boolean can_dig_down(struct level *lev)
  * stronghold level->  Normally, the bottom level of a dungeon resists
  * both digging and falling.
  */
-boolean can_fall_thru(struct level *lev)
+boolean can_fall_thru(const struct level *lev)
 {
 	return (can_dig_down(lev) || Is_stronghold(&lev->z));
 }
@@ -1119,7 +1119,7 @@ boolean can_fall_thru(struct level *lev)
  * level that has a stairwell style branch to the next higher dungeon.
  * Checks for amulets and such must be done elsewhere.
  */
-boolean Can_rise_up(int x, int y, d_level *lev)
+boolean Can_rise_up(int x, int y, const d_level *lev)
 {
     /* can't rise up from inside the top of the Wizard's tower */
     /* KMH -- or in sokoban */
@@ -1188,13 +1188,13 @@ void get_level(d_level *newlevel, int levnum)
 }
 
 
-boolean In_quest(d_level *lev)	/* are you in the quest dungeon? */
+boolean In_quest(const d_level *lev)	/* are you in the quest dungeon? */
 {
 	return (boolean)(lev->dnum == quest_dnum);
 }
 
 
-boolean In_mines(d_level *lev)	/* are you in the mines dungeon? */
+boolean In_mines(const d_level *lev)	/* are you in the mines dungeon? */
 {
 	return (boolean)(lev->dnum == mines_dnum);
 }
@@ -1239,12 +1239,12 @@ boolean at_dgn_entrance(const char *s)
     return (boolean)(on_level(&u.uz, &br->end1) ? TRUE : FALSE);
 }
 
-boolean In_V_tower(d_level *lev) /* is `lev' part of Vlad's tower? */
+boolean In_V_tower(const d_level *lev) /* is `lev' part of Vlad's tower? */
 {
 	return (boolean)(lev->dnum == tower_dnum);
 }
 
-boolean On_W_tower_level(d_level *lev) /* is `lev' a level containing the Wizard's tower? */
+boolean On_W_tower_level(const d_level *lev) /* is `lev' a level containing the Wizard's tower? */
 {
 	return (boolean)(Is_wiz1_level(lev) ||
 			 Is_wiz2_level(lev) ||
@@ -1252,7 +1252,7 @@ boolean On_W_tower_level(d_level *lev) /* is `lev' a level containing the Wizard
 }
 
 /* is <x,y> of `lev' inside the Wizard's tower? */
-boolean In_W_tower(int x, int y, d_level *lev)
+boolean In_W_tower(int x, int y, const d_level *lev)
 {
 	if (!On_W_tower_level(lev)) return FALSE;
 	/*
@@ -1269,7 +1269,7 @@ boolean In_W_tower(int x, int y, d_level *lev)
 }
 
 
-boolean In_hell(d_level *lev) /* are you in one of the Hell levels? */
+boolean In_hell(const d_level *lev) /* are you in one of the Hell levels? */
 {
 	return (boolean)(dungeons[lev->dnum].flags.hellish);
 }
@@ -1289,14 +1289,14 @@ void goto_hell(boolean at_stairs, boolean falling) /* go directly to hell... */
 	goto_level(&lev, at_stairs, falling, FALSE);
 }
 
-void assign_level(d_level *dest, d_level *src) /* equivalent to dest = source */
+void assign_level(d_level *dest, const d_level *src) /* equivalent to dest = source */
 {
 	dest->dnum = src->dnum;
 	dest->dlevel = src->dlevel;
 }
 
 /* dest = src + rn1(range) */
-void assign_rnd_level(d_level *dest, d_level *src, int range)
+void assign_rnd_level(d_level *dest, const d_level *src, int range)
 {
 	dest->dnum = src->dnum;
 	dest->dlevel = src->dlevel + ((range > 0) ? rnd(range) : -rnd(-range)) ;
@@ -1324,7 +1324,7 @@ int induced_align(int pct)
 }
 
 
-boolean Invocation_lev(d_level *lev)
+boolean Invocation_lev(const d_level *lev)
 {
 	return (boolean)(In_hell(lev) &&
 		lev->dlevel == (dungeons[lev->dnum].num_dunlevs - 1));
@@ -1620,7 +1620,8 @@ int donamelevel(void)
 }
 
 
-static boolean overview_is_interesting(struct level *lev, struct overview_info *oi)
+static boolean overview_is_interesting(const struct level *lev,
+				       const struct overview_info *oi)
 {
 	/* not interesting if it hasn't been created yet */
 	if (!lev)
@@ -1644,7 +1645,7 @@ static boolean overview_is_interesting(struct level *lev, struct overview_info *
 }
 
 
-static void overview_scan(struct level *lev, struct overview_info *oi)
+static void overview_scan(const struct level *lev, struct overview_info *oi)
 {
 	int x, y, rnum, rtyp;
 	struct trap *trap;
@@ -1716,7 +1717,7 @@ static void overview_scan(struct level *lev, struct overview_info *oi)
 }
 
 
-static void overview_print_dun(char *buf, struct level *lev)
+static void overview_print_dun(char *buf, const struct level *lev)
 {
 	int dnum = lev->z.dnum;
 	int depthstart = dungeons[dnum].depth_start;
@@ -1735,7 +1736,7 @@ static void overview_print_dun(char *buf, struct level *lev)
 }
 
 
-static void overview_print_lev(char *buf, struct level *lev)
+static void overview_print_lev(char *buf, const struct level *lev)
 {
 	int i, depthstart;
 	
@@ -1803,7 +1804,7 @@ static const char *const shopnames[] = {
 	/* CANDLESHOP */"a lighting shop"
 };
 
-static void overview_print_info(char *buf, struct overview_info *oi)
+static void overview_print_info(char *buf, const struct overview_info *oi)
 {
 	int i = 0;
 	buf[0] = '\0';
@@ -1830,7 +1831,7 @@ static void overview_print_info(char *buf, struct overview_info *oi)
 }
 
 
-static void overview_print_branch(char *buf, struct overview_info *oi)
+static void overview_print_branch(char *buf, const struct overview_info *oi)
 {
 	if (oi->portal)
 	    sprintf(buf, "      Portal to %s", dungeons[oi->portal_dst.dnum].dname);

@@ -251,24 +251,24 @@ extern struct obj *oname(struct obj *,const char *);
 extern int do_naming(void);
 extern void docall(struct obj *);
 extern const char *rndghostname(void);
-extern char *x_monnam(struct monst *,int,const char *,int,boolean);
-extern char *l_monnam(struct monst *);
-extern char *mon_nam(struct monst *);
-extern char *noit_mon_nam(struct monst *);
-extern char *Monnam(struct monst *);
-extern char *noit_Monnam(struct monst *);
-extern char *m_monnam(struct monst *);
-extern char *y_monnam(struct monst *);
-extern char *Adjmonnam(struct monst *,const char *);
-extern char *Amonnam(struct monst *);
-extern char *a_monnam(struct monst *);
-extern char *distant_monnam(struct monst *,int,char *);
+extern char *x_monnam(const struct monst *mon, int, const char *, int, boolean);
+extern char *l_monnam(const struct monst *);
+extern char *mon_nam(const struct monst *);
+extern char *noit_mon_nam(const struct monst *);
+extern char *Monnam(const struct monst *);
+extern char *noit_Monnam(const struct monst *);
+extern char *m_monnam(const struct monst *);
+extern char *y_monnam(const struct monst *);
+extern char *Adjmonnam(const struct monst *,const char *);
+extern char *Amonnam(const struct monst *);
+extern char *a_monnam(const struct monst *);
+extern char *distant_monnam(const struct monst *,int,char *);
 extern const char *rndmonnam(void);
 extern const char *hcolor(const char *);
 extern const char *rndcolor(void);
 extern const char *roguename(void);
 extern struct obj *realloc_obj(struct obj *, int, void *, int, const char *);
-extern char *coyotename(struct monst *,char *);
+extern char *coyotename(const struct monst *,char *);
 
 /* ### do_wear.c ### */
 
@@ -371,43 +371,43 @@ extern void restore_dungeon(struct memfile *mf);
 extern void insert_branch(branch *,boolean);
 extern void init_dungeons(void);
 extern s_level *find_level(const char *);
-extern s_level *Is_special(d_level *);
-extern branch *Is_branchlev(d_level *);
-extern xchar ledger_no(d_level *);
+extern s_level *Is_special(const d_level *);
+extern branch *Is_branchlev(const d_level *);
+extern xchar ledger_no(const d_level *);
 extern xchar maxledgerno(void);
-extern schar depth(d_level *);
-extern xchar dunlev(d_level *);
-extern xchar dunlevs_in_dungeon(d_level *);
+extern schar depth(const d_level *);
+extern xchar dunlev(const d_level *);
+extern xchar dunlevs_in_dungeon(const d_level *);
 extern xchar ledger_to_dnum(xchar);
 extern xchar ledger_to_dlev(xchar);
 extern xchar deepest_lev_reached(boolean);
-extern boolean on_level(d_level *,d_level *);
+extern boolean on_level(const d_level *, const d_level *);
 extern void next_level(boolean);
 extern void prev_level(boolean);
 extern void u_on_newpos(int,int);
 extern void u_on_sstairs(void);
 extern void u_on_upstairs(void);
 extern void u_on_dnstairs(void);
-extern boolean On_stairs(xchar,xchar);
-extern void get_level(d_level *,int);
-extern boolean Is_botlevel(d_level *);
-extern boolean can_fall_thru(struct level *lev);
-extern boolean can_dig_down(struct level *lev);
-extern boolean Can_rise_up(int,int,d_level *);
-extern boolean In_quest(d_level *);
-extern boolean In_mines(d_level *);
+extern boolean On_stairs(xchar, xchar);
+extern void get_level(d_level *, int);
+extern boolean Is_botlevel(const d_level *);
+extern boolean can_fall_thru(const struct level *lev);
+extern boolean can_dig_down(const struct level *lev);
+extern boolean Can_rise_up(int,int, const d_level *);
+extern boolean In_quest(const d_level *);
+extern boolean In_mines(const d_level *);
 extern branch *dungeon_branch(const char *);
 extern boolean at_dgn_entrance(const char *);
-extern boolean In_hell(d_level *);
-extern boolean In_V_tower(d_level *);
-extern boolean On_W_tower_level(d_level *);
-extern boolean In_W_tower(int,int,d_level *);
+extern boolean In_hell(const d_level *);
+extern boolean In_V_tower(const d_level *);
+extern boolean On_W_tower_level(const d_level *);
+extern boolean In_W_tower(int, int, const d_level *);
 extern void find_hell(d_level *);
 extern void goto_hell(boolean,boolean);
-extern void assign_level(d_level *,d_level *);
-extern void assign_rnd_level(d_level *,d_level *,int);
+extern void assign_level(d_level *dest, const d_level *src);
+extern void assign_rnd_level(d_level *dest, const d_level *src, int range);
 extern int induced_align(int);
-extern boolean Invocation_lev(d_level *);
+extern boolean Invocation_lev(const d_level *);
 extern xchar level_difficulty(void);
 extern schar lev_by_name(const char *);
 extern schar print_dungeon(boolean,schar *,xchar *);
@@ -589,6 +589,15 @@ extern int phase_of_the_moon(void);
 extern boolean friday_13th(void);
 extern int night(void);
 extern int midnight(void);
+
+/* ### history.c ### */
+
+extern int dohistory(void);
+extern void historic_event(boolean hidden, const char *fmt, ...);
+extern void save_history(struct memfile *mf);
+extern void restore_history(struct memfile *mf);
+extern void free_history(void);
+extern const char *hist_lev_name(const d_level *l, boolean in_or_on);
 
 /* ### invent.c ### */
 
@@ -1122,7 +1131,7 @@ extern int dowhatis(void);
 extern int doquickwhatis(void);
 extern int doidtrap(void);
 extern int dolicense(void);
-extern int dohistory(void);
+extern int doverhistory(void);
 
 /* ### pickup.c ### */
 
@@ -1227,8 +1236,8 @@ extern int move_special(struct monst *,boolean,schar,boolean,boolean,
 extern char temple_occupied(char *);
 extern int pri_move(struct monst *);
 extern void priestini(struct level *lev, struct mkroom *,int,int,boolean);
-extern char *priestname(struct monst *,char *);
-extern boolean p_coaligned(struct monst *);
+extern char *priestname(const struct monst *,char *);
+extern boolean p_coaligned(const struct monst *mon);
 extern struct monst *findpriest(char);
 extern void intemple(int);
 extern void priest_talk(struct monst *);
@@ -1345,7 +1354,7 @@ extern void freedynamicdata(void);
 
 extern long money2mon(struct monst *, long);
 extern void money2u(struct monst *, long);
-extern char *shkname(struct monst *);
+extern char *shkname(const struct monst *);
 extern void shkgone(struct monst *);
 extern void set_residency(struct monst *,boolean);
 extern void replshk(struct monst *,struct monst *);

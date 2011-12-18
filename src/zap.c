@@ -3916,10 +3916,12 @@ retry:
 	    otmp = readobjnam(NULL, NULL, TRUE);
 	    if (!otmp) return;	/* for safety; should never happen */
 	} else if (otmp == &nothing) {
+	    historic_event(FALSE, "refused a wish.");
 	    /* explicitly wished for "nothing", presumeably attempting
 	       to retain wishless conduct */
 	    return;
-	}
+	} else
+	    historic_event(FALSE, "wished for \"%s\".", buf);
 
 	/* KMH, conduct */
 	u.uconduct.wishes++;

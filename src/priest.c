@@ -11,7 +11,7 @@
 #define ALGN_SINNED	(-4)	/* worse than strayed */
 
 static boolean histemple_at(struct monst *,xchar,xchar);
-static boolean has_shrine(struct monst *);
+static boolean has_shrine(const struct monst *);
 
 /*
  * Move for priests and shopkeepers.  Called from shk_move() and pri_move().
@@ -218,7 +218,7 @@ void priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
  *	- caller needs to inhibit Hallucination if it wants to force
  *		the true name even when under that influence
  */
-char *priestname(struct monst *mon,
+char *priestname(const struct monst *mon,
 		 char *pname)	/* caller-supplied output buffer */
 {
 	const char *what = Hallucination ? rndmonnam() : mon->data->mname;
@@ -258,12 +258,12 @@ char *priestname(struct monst *mon,
 	return pname;
 }
 
-boolean p_coaligned(struct monst *priest)
+boolean p_coaligned(const struct monst *priest)
 {
 	return (boolean)(u.ualign.type == ((int)EPRI(priest)->shralign));
 }
 
-static boolean has_shrine(struct monst *pri)
+static boolean has_shrine(const struct monst *pri)
 {
 	struct rm *loc;
 

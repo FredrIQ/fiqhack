@@ -198,6 +198,9 @@ nh_jmp_buf exit_jmp_buf;
 struct artifact *artilist;
 short disco[NUM_OBJECTS]; /* discovered objects */
 
+unsigned int histcount;
+struct histevent *histevents;
+
 unsigned long long turntime;
 
 /* If one game (A) is started and then saved, followed by game B with different
@@ -265,6 +268,8 @@ void init_data(void)
     stetho_last_used_movement = 0;
     stetho_last_used_move = -1;
     branch_id = 0;
+    histevents = NULL;
+    histcount = 0;
     
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;

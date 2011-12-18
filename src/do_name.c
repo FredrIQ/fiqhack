@@ -369,7 +369,7 @@ const char * rndghostname(void)
 /* Bug: if the monster is a priest or shopkeeper, not every one of these
  * options works, since those are special cases.
  */
-char *x_monnam(struct monst *mtmp,
+char *x_monnam(const struct monst *mtmp,
 	       int article, /* ARTICLE_NONE, ARTICLE_THE, ARTICLE_A: obvious
 	                     * ARTICLE_YOUR: "your" on pets, "the" on everything
 			     * else
@@ -415,20 +415,22 @@ char *x_monnam(struct monst *mtmp,
 
 	/* priests and minions: don't even use this function */
 	if (mtmp->ispriest || mtmp->isminion) {
+	    struct monst *priestmon = newmonst(mtmp->mxtyp, mtmp->mnamelth);
 	    char priestnambuf[BUFSZ];
 	    char *name;
 	    long save_prop = EHalluc_resistance;
-	    unsigned save_invis = mtmp->minvis;
+	    memcpy(priestmon, mtmp, sizeof(struct monst) + mtmp->mxlth + mtmp->mnamelth);
 
 	    /* when true name is wanted, explicitly block Hallucination */
 	    if (!do_hallu) EHalluc_resistance = 1L;
-	    if (!do_invis) mtmp->minvis = 0;
-	    name = priestname(mtmp, priestnambuf);
+	    if (!do_invis) priestmon->minvis = 0;
+	    name = priestname(priestmon, priestnambuf);
 	    EHalluc_resistance = save_prop;
-	    mtmp->minvis = save_invis;
 	    if (article == ARTICLE_NONE && !strncmp(name, "the ", 4))
 		name += 4;
-	    return strcpy(buf, name);
+	    strcpy(buf, name);
+	    free(priestmon);
+	    return buf;
 	}
 
 	/* Shopkeepers: use shopkeeper name.  For normal shopkeepers, just
@@ -544,14 +546,14 @@ char *x_monnam(struct monst *mtmp,
 }
 
 
-char *l_monnam(struct monst *mtmp)
+char *l_monnam(const struct monst *mtmp)
 {
 	return(x_monnam(mtmp, ARTICLE_NONE, NULL, 
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, TRUE));
 }
 
 
-char *mon_nam(struct monst *mtmp)
+char *mon_nam(const struct monst *mtmp)
 {
 	return(x_monnam(mtmp, ARTICLE_THE, NULL,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE));
@@ -561,14 +563,14 @@ char *mon_nam(struct monst *mtmp)
  * can always see the monster--used for probing and for monsters aggravating
  * the player with a cursed potion of invisibility
  */
-char *noit_mon_nam(struct monst *mtmp)
+char *noit_mon_nam(const struct monst *mtmp)
 {
 	return(x_monnam(mtmp, ARTICLE_THE, NULL,
 		mtmp->mnamelth ? (SUPPRESS_SADDLE|SUPPRESS_IT) :
 		    SUPPRESS_IT, FALSE));
 }
 
-char *Monnam(struct monst *mtmp)
+char *Monnam(const struct monst *mtmp)
 {
 	char *bp = mon_nam(mtmp);
 
@@ -576,7 +578,7 @@ char *Monnam(struct monst *mtmp)
 	return bp;
 }
 
-char *noit_Monnam(struct monst *mtmp)
+char *noit_Monnam(const struct monst *mtmp)
 {
 	char *bp = noit_mon_nam(mtmp);
 
@@ -585,13 +587,13 @@ char *noit_Monnam(struct monst *mtmp)
 }
 
 /* monster's own name */
-char *m_monnam(struct monst *mtmp)
+char *m_monnam(const struct monst *mtmp)
 {
 	return x_monnam(mtmp, ARTICLE_NONE, NULL, EXACT_NAME, FALSE);
 }
 
 /* pet name: "your little dog" */
-char *y_monnam(struct monst *mtmp)
+char *y_monnam(const struct monst *mtmp)
 {
 	int prefix, suppression_flag;
 
@@ -603,7 +605,7 @@ char *y_monnam(struct monst *mtmp)
 }
 
 
-char *Adjmonnam(struct monst *mtmp, const char *adj)
+char *Adjmonnam(const struct monst *mtmp, const char *adj)
 {
 	char *bp = x_monnam(mtmp, ARTICLE_THE, adj,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
@@ -612,13 +614,13 @@ char *Adjmonnam(struct monst *mtmp, const char *adj)
 	return bp;
 }
 
-char *a_monnam(struct monst *mtmp)
+char *a_monnam(const struct monst *mtmp)
 {
 	return x_monnam(mtmp, ARTICLE_A, NULL,
 		mtmp->mnamelth ? SUPPRESS_SADDLE : 0, FALSE);
 }
 
-char *Amonnam(struct monst *mtmp)
+char *Amonnam(const struct monst *mtmp)
 {
 	char *bp = a_monnam(mtmp);
 
@@ -629,7 +631,7 @@ char *Amonnam(struct monst *mtmp)
 /* used for monster ID by the '/', ';', and 'C' commands to block remote
    identification of the endgame altars via their attending priests */
 /* article: only ARTICLE_NONE and ARTICLE_THE are handled here */
-char *distant_monnam(struct monst *mon, int article, char *outbuf)
+char *distant_monnam(const struct monst *mon, int article, char *outbuf)
 {
     /* high priest(ess)'s identity is concealed on the Astral Plane,
        unless you're adjacent (overridden for hallucination which does
@@ -777,7 +779,7 @@ static const char * const coynames[] = {
 	"Nemesis Riduclii","Canis latrans"
 };
 	
-char *coyotename(struct monst *mtmp, char *buf)
+char *coyotename(const struct monst *mtmp, char *buf)
 {
     if (mtmp && buf) {
 	sprintf(buf, "%s - %s",

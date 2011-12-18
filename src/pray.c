@@ -630,12 +630,14 @@ static void gcrownu(void)
     case A_LAWFUL:
 	u.uevent.uhand_of_elbereth = 1;
 	verbalize("I crown thee...  The Hand of Elbereth!");
+	historic_event(FALSE, "were crowned as the Hand of Elbereth!");
 	break;
     case A_NEUTRAL:
 	u.uevent.uhand_of_elbereth = 2;
 	in_hand = (uwep && uwep->oartifact == ART_VORPAL_BLADE);
 	already_exists = exist_artifact(LONG_SWORD, artiname(ART_VORPAL_BLADE));
 	verbalize("Thou shalt be my Envoy of Balance!");
+	historic_event(FALSE, "were named as the Envoy of Balance!");
 	break;
     case A_CHAOTIC:
 	u.uevent.uhand_of_elbereth = 3;
@@ -643,6 +645,8 @@ static void gcrownu(void)
 	already_exists = exist_artifact(RUNESWORD, artiname(ART_STORMBRINGER));
 	verbalize("Thou art chosen to %s for My Glory!",
 		  already_exists && !in_hand ? "take lives" : "steal souls");
+	historic_event(FALSE, "were chosen to %s for your god's glory!",
+		       already_exists && !in_hand ? "take lives" : "steal souls");
 	break;
     }
 
@@ -1253,7 +1257,7 @@ int dosacrifice(struct obj *otmp)
 		pline("%s is enraged...", u_gname());
 		pline("Fortunately, %s permits you to live...", a_gname());
 		pline("A cloud of %s smoke surrounds you...",
-		      hcolor((const char *)"orange"));
+		      hcolor("orange"));
 		done(ESCAPED);
 	    } else { /* super big win */
 		adjalign(10);
@@ -1263,6 +1267,8 @@ pline("An invisible choir sings, and you are bathed in radiance...");
 verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		pline("You ascend to the status of Demigod%s...",
 		    flags.female ? "dess" : "");
+		historic_event(FALSE, "offered the Amulet of Yendor to %s and ascended"
+		               " to the status of Demigod%s!", u_gname(), flags.female ? "dess" : "");
 		done(ASCENDED);
 	    }
 	}
@@ -1446,6 +1452,8 @@ verbalize("In return for thy service, I grant thee the gift of Immortality!");
 		    dropy(otmp);
 		    at_your_feet("An object");
 		    godvoice(u.ualign.type, "Use my gift wisely!");
+		    historic_event(FALSE, "received %s from %s.",
+				   artiname(otmp->oartifact), u_gname());
 		    u.ugifts++;
 		    u.ublesscnt = rnz(300 + (50 * nartifacts));
 		    exercise(A_WIS, TRUE);

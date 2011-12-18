@@ -904,13 +904,16 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		dmonsfree(level);
 	}
 	update_mlstmv();	/* current monsters are becoming inactive */
+	
 
 	assign_level(&u.uz0, &u.uz);
 	assign_level(&u.uz, newlevel);
 	assign_level(&u.utolev, newlevel);
 	u.utotype = 0;
-	if (dunlev_reached(&u.uz) < dunlev(&u.uz))
+	if (dunlev_reached(&u.uz) < dunlev(&u.uz)) {
 		dunlev_reached(&u.uz) = dunlev(&u.uz);
+		historic_event(FALSE, "reached %s.", hist_lev_name(&u.uz, FALSE));
+	}
 	reset_rndmonst(NON_PM);   /* u.uz change affects monster generation */
 
 	origlev = level;

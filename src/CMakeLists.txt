@@ -5,7 +5,7 @@ set (LIBNETHACK_SRC
     botl.c     cmd.c      dbridge.c  decl.c     detect.c  dig.c      display.c
     dlb.c      do.c       dog.c      dogmove.c  dokick.c  do_name.c  dothrow.c
     do_wear.c  drawing.c  dump.c     dungeon.c  eat.c     end.c      engrave.c  exper.c
-    explode.c  extralev.c files.c    fountain.c hack.c    hacklib.c  invent.c
+    explode.c  extralev.c files.c    fountain.c hack.c    hacklib.c  history.c invent.c
     light.c    lock.c     log.c      logreplay.c makemon.c mcastu.c  memfile.c mhitm.c    mhitu.c
     minion.c   mklev.c    mkmap.c    mkmaze.c   mkobj.c   mkroom.c   mon.c
     mondata.c  monmove.c  monst.c    mplayer.c  mthrowu.c mtrand.c   muse.c     music.c

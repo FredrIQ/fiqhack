@@ -854,6 +854,8 @@ static void newgame(void)
     }
 
     program_state.something_worth_saving++;	/* useful data now exists */
+    
+    historic_event(FALSE, "entered the Dungeons of Doom to retrieve the Amulet of Yendor!");
 
     /* Success! */
     welcome(TRUE);

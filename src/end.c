@@ -280,6 +280,7 @@ static void dump_disclose(int how)
 	list_genocided('y', FALSE);
 	show_conduct(how >= PANICKED ? 1 : 2);
 	dooverview();
+	dohistory();
 	
 	/* make menus work normally again */
 	dump_catch_menus(FALSE);
@@ -448,6 +449,7 @@ static boolean check_survival(int how, char *kilbuf)
 		else {
 			killer = 0;
 			killer_format = 0;
+			historic_event(FALSE, "were saved from death by your amulet of life saving!");
 			return TRUE;
 		}
 	}
@@ -461,6 +463,7 @@ static boolean check_survival(int how, char *kilbuf)
 		savelife(how);
 		killer = 0;
 		killer_format = 0;
+		historic_event(FALSE, "were saved from death by your wizard powers!");
 		return TRUE;
 	}
 	
