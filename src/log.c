@@ -144,7 +144,6 @@ void log_newgame(int logfd, unsigned long long start_time, int playmode)
     if (program_state.restoring || iflags.disable_log)
 	return;
     
-    iflags.disable_log = FALSE;
     if (!lock_fd(logfd, 1))
 	panic("The game log is locked. Aborting.");
 	
@@ -209,7 +208,7 @@ void log_command_result(void)
  * logging of commands marked as CMD_NOTIME */
 void log_revert_command(void)
 {
-    if (iflags.disable_log || logfile == -1)
+    if (logfile == -1 || iflags.disable_log || logfile == -1)
 	return;
     
     lseek(logfile, last_cmd_pos, SEEK_SET);
@@ -219,7 +218,7 @@ void log_revert_command(void)
 
 void log_getpos(int ret, int x, int y)
 {
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     lprintf(" p:%d:%x:%x", ret, x, y);
 }
@@ -227,7 +226,7 @@ void log_getpos(int ret, int x, int y)
 
 void log_getdir(enum nh_direction dir)
 {
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     lprintf(" d:%d", dir);
 }
@@ -235,7 +234,7 @@ void log_getdir(enum nh_direction dir)
 
 void log_query_key(char key, int *count)
 {
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     
     lprintf(" k:%hhx", key);
@@ -247,7 +246,7 @@ void log_query_key(char key, int *count)
 void log_getlin(char *buf)
 {
     char encodebuf[ENCBUFSZ];
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     base64_encode(buf, encodebuf);
     lprintf(" l:%s", encodebuf);
@@ -256,7 +255,7 @@ void log_getlin(char *buf)
 
 void log_yn_function(char key)
 {
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     lprintf(" y:%hhx", key);
 }
@@ -265,7 +264,7 @@ void log_yn_function(char key)
 void log_menu(int n, int *results)
 {
     int i;
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     
     if (n == -1) {
@@ -284,7 +283,7 @@ void log_menu(int n, int *results)
 void log_objmenu(int n, struct nh_objresult *pick_list)
 {
     int i;
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     
     if (n == -1) {
@@ -309,7 +308,7 @@ void log_bones(const char *bonesbuf, int buflen)
 {
     char *b64buf;
     
-    if (iflags.disable_log)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     
     b64buf = malloc(buflen / 3 * 4 + 5);
@@ -335,7 +334,6 @@ void log_finish(enum nh_log_status status)
     if (status != LS_IN_PROGRESS)
 	unlock_fd(logfile);
     logfile = -1;
-    iflags.disable_log = TRUE;
 }
 
 void log_truncate(void)

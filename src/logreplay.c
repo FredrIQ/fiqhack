@@ -929,6 +929,7 @@ void nh_view_replay_finish(void)
     program_state.game_running = FALSE;
     freedynamicdata();
     free_checkpoints();
+    iflags.disable_log = FALSE;
 }
 
 

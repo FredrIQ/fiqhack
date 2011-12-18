@@ -585,6 +585,9 @@ void write_log_toptenentry(int fd, int how)
 {
     struct toptenentry tt;
     
+    if (fd == -1)
+	return;
+    
     fill_topten_entry(&tt, how);
     writeentry(fd, &tt);
 }
