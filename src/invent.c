@@ -2061,7 +2061,9 @@ int doorganize(void)	/* inventory organizer by Del Lamb */
 	/* except those that will be merged with the selected object   */
 	for (otmp = invent; otmp; otmp = otmp->nobj)
 		if (otmp != obj && !mergable(otmp,obj)) {
-			if (otmp->invlet <= 'Z')
+			if (otmp->invlet == '$')
+				continue; /* can't adjust to or from $ (gold) */
+			else if (otmp->invlet <= 'Z')
 				alphabet[(otmp->invlet) - 'A' + 26] = ' ';
 			else	alphabet[(otmp->invlet) - 'a']	    = ' ';
 		}
