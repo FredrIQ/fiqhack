@@ -105,21 +105,22 @@ static void draw_bar(int barlen, int val_cur, int val_max, const char *prefix)
 static void status3(struct nh_player_info *pi)
 {
     char buf[COLNO];
-    int i;
+    int i, namelen;
     
     /* line 1 */
-    sprintf(buf, "%.10s the %-*s  ", pi->plname,
-	    pi->max_rank_sz + 8 - (int)strlen(pi->plname), pi->rank);
+    namelen = strlen(pi->plname) < 13 ? strlen(pi->plname) : 13;
+    sprintf(buf, "%.13s the %-*s  ", pi->plname,
+	    pi->max_rank_sz + 13 - namelen, pi->rank);
     buf[0] = toupper(buf[0]);
     mvwaddstr(statuswin, 0, 0, buf);
-    wprintw(statuswin, "Con:%-1d Str:", pi->co);
+    wprintw(statuswin, "Con:%2d Str:", pi->co);
     if (pi->st == 18 && pi->st_extra) {
 	if (pi->st_extra < 100)
 	    wprintw(statuswin, "18/%02d  ", pi->st_extra);
 	else
 	    wprintw(statuswin,"18/**  ");
     } else
-	wprintw(statuswin, "%-1d  ", pi->st);
+	wprintw(statuswin, "%2d  ", pi->st);
 
     waddstr(statuswin, pi->level_desc);
 
@@ -133,8 +134,8 @@ static void status3(struct nh_player_info *pi)
     
     /* line 2 */
     wmove(statuswin, 1, 0);
-    draw_bar(14 + pi->max_rank_sz, pi->hp, pi->hpmax, "HP:");
-    wprintw(statuswin, " Int:%-1d Wis:%-1d  %c:%-2ld  AC:%-2d  ", pi->in, pi->wi,
+    draw_bar(18 + pi->max_rank_sz, pi->hp, pi->hpmax, "HP:");
+    wprintw(statuswin, "  Int:%2d Wis:%2d  %c:%-2ld  AC:%-2d  ", pi->in, pi->wi,
 	    pi->coinsym, pi->gold, pi->ac);
     
     if (pi->monnum != pi->cur_monnum)
@@ -154,8 +155,8 @@ static void status3(struct nh_player_info *pi)
 
     /* line 3 */
     wmove(statuswin, 2, 0);
-    draw_bar(14 + pi->max_rank_sz, pi->en, pi->enmax, "Pw:");
-    wprintw(statuswin, " Dex:%-1d Cha:%-1d ", pi->dx, pi->ch);
+    draw_bar(18 + pi->max_rank_sz, pi->en, pi->enmax, "Pw:");
+    wprintw(statuswin, "  Dex:%2d Cha:%2d ", pi->dx, pi->ch);
     
     wattron(statuswin, curses_color_attr(CLR_YELLOW));
     for (i = 0; i < pi->nr_items; i++)
