@@ -260,8 +260,8 @@ static int compare_filetime(const void *arg1, const void *arg2)
     const WIN32_FIND_DATA *file2 = (const WIN32_FIND_DATA*)arg2;
     
     if (file1->ftLastWriteTime.dwHighDateTime != file2->ftLastWriteTime.dwHighDateTime)
-	return file1->ftLastWriteTime.dwHighDateTime - file2->ftLastWriteTime.dwHighDateTime;
-    return file1->ftLastWriteTime.dwLowDateTime - file2->ftLastWriteTime.dwLowDateTime;
+	return file2->ftLastWriteTime.dwHighDateTime - file1->ftLastWriteTime.dwHighDateTime;
+    return file2->ftLastWriteTime.dwLowDateTime - file1->ftLastWriteTime.dwLowDateTime;
 }
 
 
