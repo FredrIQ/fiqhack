@@ -13,7 +13,8 @@ enum internal_commands {
     UICMD_HELP,
     UICMD_REDO,
     UICMD_PREVMSG,
-    UICMD_WHATDOES
+    UICMD_WHATDOES,
+    UICMD_NOTHING
 };
 
 #define RESET_BINDINGS_ID (-10000)
@@ -62,6 +63,7 @@ struct nh_cmd_desc builtin_commands[] = {
     {"prevmsg",	   "list previously displayed messages", Ctrl('p'), 0, CMD_UI | UICMD_PREVMSG},
     {"redo",	   "redo the previous command", '\001', 0, CMD_UI | UICMD_REDO},
     {"whatdoes",   "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
+    {"(nothing)",  "bind keys to this command to suppress \"Bad command\".", 0, 0, CMD_UI | UICMD_NOTHING},
 };
 
 
@@ -161,6 +163,10 @@ void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *
 	    
 	case UICMD_WHATDOES:
 	    show_whatdoes();
+	    *cmd = NULL;
+	    break;
+	    
+	case UICMD_NOTHING:
 	    *cmd = NULL;
 	    break;
     }
