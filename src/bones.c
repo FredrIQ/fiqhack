@@ -343,14 +343,10 @@ int getbones(d_level *levnum)
 		if (!mf.buf || !mf.len) return 0;
 	} else {
 		int fd = open_bonesfile(bonesid);
-		if (fd < 0) return 0;
-		
-		mf.len = lseek(fd, 0, SEEK_END);
-		lseek(fd, 0, SEEK_SET);
-		mf.buf = malloc(mf.len);
-		read(fd, mf.buf, mf.len);
-		
+		mf.buf = loadfile(fd, &mf.len);
 		close(fd);
+		if (!mf.buf)
+		    return 0;
 		log_bones(mf.buf, mf.len);
 	}
 
