@@ -3,8 +3,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (NetHack)
 
-set ( CMAKE_BUILD_TYPE Debug )
-
 if (WIN32)
     set(INSTALL_BASE "$ENV{USERPROFILE}")
 else ()
