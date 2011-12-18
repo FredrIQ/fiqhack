@@ -40,7 +40,8 @@ static struct loginfo {
 
 struct replay_checkpoint {
     int actions, moves, nexttoken;
-    struct memfile cpdata;
+    struct nh_option_desc *opt; /* option state at the time of the checkpoint */
+    struct memfile cpdata; /* binary save data */
 };
 
 static struct replay_checkpoint *checkpoints;
@@ -709,6 +710,8 @@ static void make_checkpoint(int actions)
     checkpoints[cpcount-1].actions = actions;
     checkpoints[cpcount-1].moves = moves;
     checkpoints[cpcount-1].nexttoken = loginfo.next;
+    /* the active option list must be saved: it is not part of the normal binary save */
+    checkpoints[cpcount-1].opt = clone_optlist(options);
     memset(&checkpoints[cpcount-1].cpdata, 0, sizeof(struct memfile));
     savegame(&checkpoints[cpcount-1].cpdata);
     checkpoints[cpcount-1].cpdata.len = checkpoints[cpcount-1].cpdata.pos;
@@ -718,7 +721,7 @@ static void make_checkpoint(int actions)
 
 static int load_checkpoint(int idx)
 {
-    int playmode;
+    int playmode, i;
     char namebuf[BUFSZ];
     
     if (idx < 0 || idx >= cpcount)
@@ -740,6 +743,10 @@ static int load_checkpoint(int idx)
     program_state.viewing = TRUE;
     program_state.game_running = TRUE;
     
+    /* restore the full option state of the time of the checkpoint */
+    for (i = 0; checkpoints[idx].opt[i].name; i++)
+	nh_set_option(checkpoints[idx].opt[i].name, checkpoints[idx].opt[i].value, FALSE);
+    
     return checkpoints[idx].actions;
 }
 
@@ -748,8 +755,10 @@ static void free_checkpoints(void)
 {
     int i;
     
-    for (i = 0; i < cpcount; i++)
+    for (i = 0; i < cpcount; i++) {
+	free_optlist(checkpoints[i].opt);
 	free(checkpoints[i].cpdata.buf);
+    }
     free(checkpoints);
     checkpoints = NULL;
     cpcount = 0;
