@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <time.h>
 
 static void dummy_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void dummy_delay_output(void) {}
@@ -28,6 +29,43 @@ static struct nh_window_procs curses_replay_windowprocs = {
     curses_notify_level_changed,
     curses_outrip,
 };
+
+
+#if defined(WIN32)
+#define TIMETEST_OK
+
+typedef __int64 hp_time;
+
+static void gettime(hp_time *t)
+{
+    QueryPerformanceCounter((LARGE_INTEGER*)t);
+}
+
+static long clock_delta_ms(hp_time *t_start, hp_time *t_end)
+{
+    __int64 freq;
+    QueryPerformanceFrequency((LARGE_INTEGER*)&freq);
+    
+    return (*t_end - *t_start) * 1000 / freq;
+}
+
+#elif defined(UNIX) && defined(_POSIX_MONOTONIC_CLOCK)
+#define TIMETEST_OK
+
+typedef struct timespec hp_time;
+
+static void gettime(hp_time *t)
+{
+    clock_gettime(CLOCK_MONOTONIC, t);
+}
+
+static long clock_delta_ms(hp_time *t_start, hp_time *t_end)
+{
+    return (t_end->tv_sec - t_start->tv_sec) * 1000 +
+           (t_end->tv_nsec - t_start->tv_nsec) / 1000000;
+}
+
+#endif
 
 
 static void draw_replay_info(struct nh_replay_info *rinfo)
@@ -61,6 +99,65 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
     touchwin(mapwin);
     wrefresh(mapwin);
 }
+
+
+#if defined(TIMETEST_OK)
+static void timetest(int fd, struct nh_replay_info *rinfo)
+{
+    char buf[BUFSZ];
+    hp_time t_start, t_end;
+    long ms;
+    int mmax, initial, revpos;
+    
+    initial = rinfo->moves;
+    nh_view_replay_step(rinfo, REPLAY_GOTO, 0);
+    
+    /* run forward */
+    gettime(&t_start);
+    while (rinfo->actions < rinfo->max_actions) {
+	nh_view_replay_step(rinfo, REPLAY_FORWARD, 1);
+	curses_update_status(NULL);
+	draw_replay_info(rinfo);
+    }
+    gettime(&t_end);
+    ms = clock_delta_ms(&t_start, &t_end);
+    snprintf(buf, BUFSZ, "%d actions replayed with display in %ld ms. (%ld actions/sec)",
+	     rinfo->max_actions, ms, rinfo->max_actions * 1000 / ms);
+    curses_msgwin(buf);
+    
+    /* reset the entire replay state to delete checkpoints */
+    mmax = rinfo->moves; /* max_moves may not be available if this is a replay of a crashed game */
+    nh_view_replay_finish();
+    nh_view_replay_start(fd, &curses_replay_windowprocs, rinfo);
+    
+    /* run forward without showing the map etc. */
+    gettime(&t_start);
+    nh_view_replay_step(rinfo, REPLAY_GOTO, mmax);
+    gettime(&t_end);
+    ms = clock_delta_ms(&t_start, &t_end);
+    snprintf(buf, BUFSZ, "%d actions replayed without display in %ld ms. (%ld actions/sec)",
+	     rinfo->actions, ms, rinfo->actions * 1000 / ms);
+    curses_msgwin(buf);
+    
+    /* run backward */
+    revpos = rinfo->actions;
+    gettime(&t_start);
+    while (rinfo->actions > 0 && revpos < rinfo->actions + 1000) {
+	nh_view_replay_step(rinfo, REPLAY_BACKWARD, 1);
+	curses_update_status(NULL);
+	draw_replay_info(rinfo);
+    }
+    gettime(&t_end);
+    ms = clock_delta_ms(&t_start, &t_end);
+    snprintf(buf, BUFSZ, "%d actions replayed backward with display in %ld ms. (%ld actions/sec)",
+	     revpos - rinfo->actions, ms, (revpos - rinfo->actions) * 1000 / ms);
+    curses_msgwin(buf);
+    
+    nh_view_replay_step(rinfo, REPLAY_GOTO, initial);
+}
+#else
+static void timetest(int fd, struct nh_replay_info *rinfo) {}
+#endif
 
 
 static void show_replay_help(void)
@@ -132,6 +229,10 @@ static void replay_commandloop(int fd)
 		if (buf[0] == '\033' || !(move = atoi(buf)))
 		    break;
 		nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
+		break;
+
+	    case KEY_F(12): /* timetest! */
+		timetest(fd, &rinfo);
 		break;
 		
 	    default:

@@ -58,6 +58,12 @@ else ()
     target_link_libraries (nethack_curses ncursesw )
 endif ()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Linux has clock_gettime in librt. FreeBSD doesn't need extra libs: it has
+    # clock_gettime in libc. OS X doesn't have the function at all.
+    target_link_libraries (nethack_curses rt)
+endif ()
+
 
 if (UNIX)
     add_custom_command(OUTPUT nethack.sh
