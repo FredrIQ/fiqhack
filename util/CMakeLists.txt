@@ -1,48 +1,48 @@
-# util/CMakeLists.txt : build nethack utilities
+# util/CMakeLists.txt : build nitrohack utilities
 
 find_program(FLEX_EXECUTABLE NAMES flex flex.exe )
 find_program(BISON_EXECUTABLE NAMES bison bison.exe )
 
 set ( MAKEDEFS_SRC
     makedefs.c
-    ${NetHack_SOURCE_DIR}/src/monst.c
-    ${NetHack_SOURCE_DIR}/src/objects.c
+    ${NitroHack_SOURCE_DIR}/src/monst.c
+    ${NitroHack_SOURCE_DIR}/src/objects.c
     )
     
 set ( DGN_COMP_SRC
     dgn_main.c
     panic.c
-    ${NetHack_BINARY_DIR}/util/dgn_parser.c
-    ${NetHack_BINARY_DIR}/util/dgn_scanner.c    
+    ${NitroHack_BINARY_DIR}/util/dgn_parser.c
+    ${NitroHack_BINARY_DIR}/util/dgn_scanner.c    
     )
     
 set ( LEV_COMP_SRC
     lev_main.c
     panic.c
-    ${NetHack_SOURCE_DIR}/src/symclass.c
-    ${NetHack_SOURCE_DIR}/src/decl.c
-    ${NetHack_SOURCE_DIR}/src/monst.c
-    ${NetHack_SOURCE_DIR}/src/objects.c
-    ${NetHack_BINARY_DIR}/util/lev_parser.c
-    ${NetHack_BINARY_DIR}/util/lev_scanner.c    
+    ${NitroHack_SOURCE_DIR}/src/symclass.c
+    ${NitroHack_SOURCE_DIR}/src/decl.c
+    ${NitroHack_SOURCE_DIR}/src/monst.c
+    ${NitroHack_SOURCE_DIR}/src/objects.c
+    ${NitroHack_BINARY_DIR}/util/lev_parser.c
+    ${NitroHack_BINARY_DIR}/util/lev_scanner.c    
     )
 set ( MAKEDEFS_HEADERS
-    ${NetHack_BINARY_DIR}/include/date.h
-    ${NetHack_BINARY_DIR}/include/onames.h
-    ${NetHack_BINARY_DIR}/include/pm.h
+    ${NitroHack_BINARY_DIR}/include/date.h
+    ${NitroHack_BINARY_DIR}/include/onames.h
+    ${NitroHack_BINARY_DIR}/include/pm.h
     )
 set ( DLB_SRC
     dlb_main.c
-    ${NetHack_SOURCE_DIR}/src/dlb.c
+    ${NitroHack_SOURCE_DIR}/src/dlb.c
     )
 
-file(MAKE_DIRECTORY ${NetHack_BINARY_DIR}/include)
-file(MAKE_DIRECTORY ${NetHack_BINARY_DIR}/dat)
+file(MAKE_DIRECTORY ${NitroHack_BINARY_DIR}/include)
+file(MAKE_DIRECTORY ${NitroHack_BINARY_DIR}/dat)
 
-include_directories (${NetHack_SOURCE_DIR}/include)
-include_directories (${NetHack_SOURCE_DIR}/include/public)
-include_directories (${NetHack_BINARY_DIR}/include)
-include_directories (${NetHack_BINARY_DIR}/util)
+include_directories (${NitroHack_SOURCE_DIR}/include)
+include_directories (${NitroHack_SOURCE_DIR}/include/public)
+include_directories (${NitroHack_BINARY_DIR}/include)
+include_directories (${NitroHack_BINARY_DIR}/util)
 
 # targets
 add_executable (makedefs ${MAKEDEFS_SRC})
@@ -54,50 +54,50 @@ get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 
 
 # create the headers named in MAKEDEFS_HEADERS
-add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/date.h
+add_custom_command (OUTPUT ${NitroHack_BINARY_DIR}/include/date.h
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -v ${NetHack_BINARY_DIR}/include/date.h
+                    ARGS -v ${NitroHack_BINARY_DIR}/include/date.h
                     DEPENDS makedefs)
                     
-add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/onames.h
+add_custom_command (OUTPUT ${NitroHack_BINARY_DIR}/include/onames.h
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -o ${NetHack_BINARY_DIR}/include/onames.h
+                    ARGS -o ${NitroHack_BINARY_DIR}/include/onames.h
                     DEPENDS makedefs)
                     
-add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/include/pm.h
+add_custom_command (OUTPUT ${NitroHack_BINARY_DIR}/include/pm.h
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -p ${NetHack_BINARY_DIR}/include/pm.h
+                    ARGS -p ${NitroHack_BINARY_DIR}/include/pm.h
                     DEPENDS makedefs)
 
 # generate parser & scanner for dgn_comp
-add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/dgn_parser.c
-                          ${NetHack_BINARY_DIR}/util/dgn_comp.h
+add_custom_command(OUTPUT ${NitroHack_BINARY_DIR}/util/dgn_parser.c
+                          ${NitroHack_BINARY_DIR}/util/dgn_comp.h
                    COMMAND ${BISON_EXECUTABLE}
-                   ARGS -y --defines=${NetHack_BINARY_DIR}/util/dgn_comp.h
-                        -o ${NetHack_BINARY_DIR}/util/dgn_parser.c
-                        ${NetHack_SOURCE_DIR}/util/dgn_comp.y
-                   DEPENDS ${NetHack_SOURCE_DIR}/util/dgn_comp.y)
+                   ARGS -y --defines=${NitroHack_BINARY_DIR}/util/dgn_comp.h
+                        -o ${NitroHack_BINARY_DIR}/util/dgn_parser.c
+                        ${NitroHack_SOURCE_DIR}/util/dgn_comp.y
+                   DEPENDS ${NitroHack_SOURCE_DIR}/util/dgn_comp.y)
 
-add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/dgn_scanner.c
+add_custom_command(OUTPUT ${NitroHack_BINARY_DIR}/util/dgn_scanner.c
                    COMMAND ${FLEX_EXECUTABLE}
-                   ARGS -o${NetHack_BINARY_DIR}/util/dgn_scanner.c
-                        ${NetHack_SOURCE_DIR}/util/dgn_comp.l
-                   DEPENDS ${NetHack_SOURCE_DIR}/util/dgn_comp.l)
+                   ARGS -o${NitroHack_BINARY_DIR}/util/dgn_scanner.c
+                        ${NitroHack_SOURCE_DIR}/util/dgn_comp.l
+                   DEPENDS ${NitroHack_SOURCE_DIR}/util/dgn_comp.l)
 
 # generate parser & scanner for lev_comp
-add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_parser.c
-                          ${NetHack_BINARY_DIR}/util/lev_comp.h
+add_custom_command(OUTPUT ${NitroHack_BINARY_DIR}/util/lev_parser.c
+                          ${NitroHack_BINARY_DIR}/util/lev_comp.h
                    COMMAND ${BISON_EXECUTABLE}
-                   ARGS -y --defines=${NetHack_BINARY_DIR}/util/lev_comp.h
-                        -o ${NetHack_BINARY_DIR}/util/lev_parser.c
-                        ${NetHack_SOURCE_DIR}/util/lev_comp.y
-                   DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.y)
+                   ARGS -y --defines=${NitroHack_BINARY_DIR}/util/lev_comp.h
+                        -o ${NitroHack_BINARY_DIR}/util/lev_parser.c
+                        ${NitroHack_SOURCE_DIR}/util/lev_comp.y
+                   DEPENDS ${NitroHack_SOURCE_DIR}/util/lev_comp.y)
 
-add_custom_command(OUTPUT ${NetHack_BINARY_DIR}/util/lev_scanner.c
+add_custom_command(OUTPUT ${NitroHack_BINARY_DIR}/util/lev_scanner.c
                    COMMAND ${FLEX_EXECUTABLE}
-                   ARGS -o${NetHack_BINARY_DIR}/util/lev_scanner.c
-                        ${NetHack_SOURCE_DIR}/util/lev_comp.l
-                   DEPENDS ${NetHack_SOURCE_DIR}/util/lev_comp.l)
+                   ARGS -o${NitroHack_BINARY_DIR}/util/lev_scanner.c
+                        ${NitroHack_SOURCE_DIR}/util/lev_comp.l
+                   DEPENDS ${NitroHack_SOURCE_DIR}/util/lev_comp.l)
 
 add_custom_target (makedefs_headers DEPENDS ${MAKEDEFS_HEADERS})
 add_dependencies (dgn_comp makedefs_headers)

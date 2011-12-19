@@ -1,5 +1,5 @@
 /* Copyright (c) Mike Stephenson, Izchak Miller  1991.		  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef ALIGN_H
 #define ALIGN_H
@@ -15,7 +15,7 @@ typedef struct	align {		/* alignment & record */
 #define ALIGNLIM	(10L + (moves/200L))
 
 #define A_NONE	      (-128)	/* the value range of type */
-/* A_{CHAOTIC,NEUTRAL,LAWFUL} moved to nethack_types.h */
+/* A_{CHAOTIC,NEUTRAL,LAWFUL} moved to nitrohack_types.h */
 
 #define A_COALIGNED	 1
 #define A_OPALIGNED	(-1)

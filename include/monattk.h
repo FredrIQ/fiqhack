@@ -1,4 +1,4 @@
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 /* Copyright 1988, M. Stephenson */
 
 #ifndef MONATTK_H

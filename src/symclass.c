@@ -1,5 +1,5 @@
 /* Copyright (c) NetHack Development Team 1992.			  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 

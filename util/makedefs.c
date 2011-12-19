@@ -1,7 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.			  */
 /* Copyright (c) Dean Luick, 1990.				  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #define MAKEDEFS_C	/* use to conditionally include file sections */
 /* #define DEBUG */	/* uncomment for debugging info */
@@ -317,7 +317,7 @@ static char *version_id_string(char *outbuf, const char *build_date)
     strcat(subbuf, " Beta");
 #endif
 
-    sprintf(outbuf, "%s NetHack%s Version %s - last build %s.",
+    sprintf(outbuf, "%s NitroHack%s Version %s - last build %s.",
 	    PORT_ID, subbuf, version_string(versbuf), build_date);
     return outbuf;
 }

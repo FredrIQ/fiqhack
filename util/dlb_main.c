@@ -1,5 +1,5 @@
 /* Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /* data librarian; only useful if you are making the library version, DLBLIB */
 

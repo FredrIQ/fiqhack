@@ -1,5 +1,5 @@
-#ifndef NETHACK_TYPES_H
-#define NETHACK_TYPES_H
+#ifndef NITROHACK_TYPES_H
+#define NITROHACK_TYPES_H
 
 /*
  * System autodetection: greatly simplified, as we only care about
@@ -69,7 +69,7 @@
  * level display modes
  * These defines are used by notify_levelchange() to inform the window port 
  * about some characteristic of the new level that might be worth displaying
- * in some nonstandard way (eg the rogue level in tty nethack, or alternate
+ * in some nonstandard way (eg the rogue level in tty nitrohack, or alternate
  * tiles for mines/hell in tiles versions)
  */
 #define LDM_DEFAULT	0
@@ -202,7 +202,7 @@ enum nh_input_status {
     /* for a status >= GAME_OVER exit the command loop */
     GAME_OVER, /* i.e. player died */
     GAME_SAVED,
-    GAME_PANICKED, /* something went wrong in libnethack and panic() was called */
+    GAME_PANICKED, /* something went wrong in libnitrohack and panic() was called */
     ERR_GAME_NOT_RUNNING /* possibilities: the init sequence was incorrect and
                                            the game is not running YET
                                         or some api call other than nh_do_move    
@@ -241,7 +241,7 @@ enum nh_restore_status {
 
 enum nh_log_status {
     LS_CRASHED = -2,	/* the game crashed (or was "kill -9"ed) */
-    LS_INVALID = -1,	/* not a nethack log/savegame */
+    LS_INVALID = -1,	/* not a nitrohack log/savegame */
     LS_SAVED,		/* an ordinary save */
     LS_DONE, 		/* quit, died, ascended, etc */
     LS_IN_PROGRESS	/* this game is active in a different process */

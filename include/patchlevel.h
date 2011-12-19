@@ -1,7 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
-/* NetHack 4.0.0 */
+/* NitroHack 4.0.0 */
 #define VERSION_MAJOR	4
 #define VERSION_MINOR	0
 /*
@@ -15,7 +15,7 @@
 #define EDITLEVEL	0
 
 #define COPYRIGHT_BANNER_A \
-"NetHack, Copyright 1985-2011"
+"NitroHack, Copyright 1985-2011"
 
 #define COPYRIGHT_BANNER_B \
 "         By Stichting Mathematisch Centrum and M. Stephenson."

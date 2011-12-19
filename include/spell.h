@@ -1,5 +1,5 @@
 /* Copyright 1986, M. Stephenson				  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef SPELL_H
 #define SPELL_H

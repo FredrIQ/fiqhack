@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef GLOBAL_H
 #define GLOBAL_H
@@ -13,7 +13,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
-#include "nethack_types.h"
+#include "nitrohack_types.h"
 
 /*
  * Files expected to exist in the playground directory.
@@ -25,7 +25,7 @@
 #define RUMORFILE     "rumors"	/* file with fortune cookies */
 #define ORACLEFILE    "oracles" /* file with oracular information */
 #define DATAFILE      "data"	/* file giving the meaning of symbols used */
-#define HISTORY       "history" /* file giving nethack's history */
+#define HISTORY       "history" /* file giving nitrohack's history */
 #define LICENSE       "license" /* file with license information */
 
 #define LEV_EXT ".lev"		/* extension for special level files */
@@ -53,7 +53,7 @@ typedef schar	xchar;
 #define SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 
 
-/* A limit for some NetHack int variables.  It need not, and for comparable
+/* A limit for some NitroHack int variables.  It need not, and for comparable
  * scoring should not, depend on the actual limit on integers for a
  * particular machine, although it is set to the minimum required maximum
  * signed integer for C (2^15 -1).

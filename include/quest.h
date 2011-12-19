@@ -1,5 +1,5 @@
 /* Copyright (c) Mike Stephenson 1991.				  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef QUEST_H
 #define QUEST_H

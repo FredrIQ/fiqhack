@@ -1,5 +1,5 @@
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /*
  * This file contains the various functions that are related to the special

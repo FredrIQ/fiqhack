@@ -1,31 +1,31 @@
-NetHack, experimental dev version
+NitroHack, experimental dev version
 
 Changes so far:
     - removed support for obsolete systems, OSes, compilers
     - removed all old window ports.
     - new ncurses based window port - with unicode, colors, etc.
     - new build system: cmake. yay!
-    - libification: NetHack is now a shared library (libnethack.so) that
+    - libification: NitroHack is now a shared library (libnitrohack.so) that
 	is included by the tty window port binary.
-	Other window ports can each have their own binaries (eg. nethack_qt,...)
-	libnethack now has a sane, limited and reasonably consistent API. There
+	Other window ports can each have their own binaries (eg. nitrohack_qt,...)
+	libnitrohack now has a sane, limited and reasonably consistent API. There
 	is no more shared global state
     - new option handling that allows for graceful handling of window port
 	options. Several options have been moved int the tty port code.
     - new option file locations & formats
-	New location: $XDG_CONFIG_HOME/NetHack/ or $HOME/.config/NetHack/
+	New location: $XDG_CONFIG_HOME/NitroHack/ or $HOME/.config/NitroHack/
     - automatcally updated config files
 	Option changes are written back to the config file
     - introduced "birth options" that may be set before the game starts. They
 	replace all options that could previously only be changed by editing the
 	config file.
     - converted the ELBERETH, REINCARNATION and SEDUCE compile options to birth options.
-    - command input has been changed completely: instead of a moveloop in libnethack,
+    - command input has been changed completely: instead of a moveloop in libnitrohack,
 	looping is now done in the windowing code, which calls nh_do_move
 	to perform user commands.
     - drawing (selection of appropriate output char / tile) has been completely
-        separated from libnethack and is handled entirely in the window port.
-        libnethack uses symbol ids to tell the window port what to display.
+        separated from libnitrohack and is handled entirely in the window port.
+        libnitrohack uses symbol ids to tell the window port what to display.
     - replay-based save/restore
         the starting state and all moves are now logged during play and can be replayed
 	in order to restore a game
@@ -51,4 +51,4 @@ From the top source dir run
     cmake ..
     ccmake . # only necessary if you want to edit the install target paths
     make
-    make install # into $HOME/nethack if you didn't change the paths in ccmake
+    make install # into $HOME/nitrohack if you didn't change the paths in ccmake

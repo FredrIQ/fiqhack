@@ -1,5 +1,5 @@
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "epri.h"

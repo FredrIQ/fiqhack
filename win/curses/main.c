@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <fcntl.h>
@@ -97,7 +97,7 @@ static char** init_game_paths(void)
     char *dir;
     int i;
     
-    dir = getenv("NETHACKDIR");
+    dir = getenv("NITROHACKDIR");
     if (!dir)
 	dir = getenv("HACKDIR");
     
@@ -105,7 +105,7 @@ static char** init_game_paths(void)
 	dir = hackdir;
 
     if (!dir)
-	dir = NETHACKDIR;
+	dir = NITROHACKDIR;
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;

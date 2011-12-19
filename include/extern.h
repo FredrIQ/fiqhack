@@ -1,5 +1,5 @@
 /* Copyright (c) Steve Creps, 1988.				  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef EXTERN_H
 #define EXTERN_H

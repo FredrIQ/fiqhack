@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "lev.h"
@@ -154,7 +154,7 @@ void outrumor(int truth, /* 1=true, -1=false, 0=either */
 	}
 	line = getrumor(truth, buf, reading ? FALSE : TRUE);
 	if (!*line)
-		line = "NetHack rumors file closed for renovation.";
+		line = "NitroHack rumors file closed for renovation.";
 	switch (mechanism) {
 	    case BY_ORACLE:
 	 	/* Oracle delivers the rumor */

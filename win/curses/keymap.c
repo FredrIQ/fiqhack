@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011 */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <sys/types.h>
@@ -594,7 +594,7 @@ static unsigned int keytrans(unsigned int key)
 #endif
 
 
-/* initialize the keymap with the default keys suggested by NetHack */
+/* initialize the keymap with the default keys suggested by NitroHack */
 static void init_keymap(void)
 {
     int i;
@@ -804,7 +804,7 @@ void show_keymap_menu(nh_bool readonly)
 	    icount++;
 	}
 	
-	/* add NetHack commands */
+	/* add NitroHack commands */
 	for (i = 0; i < cmdcount; i++) {
 	    add_keylist_command(&commandlist[i], &items[icount],
 				readonly ? 0 : (i+1));

@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef SKILLS_H
 #define SKILLS_H

@@ -1,5 +1,5 @@
 /*	Copyright Scott R. Turner, srt@ucla, 10/27/86 */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /* Code for drinking from fountains. */
 

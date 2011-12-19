@@ -1,5 +1,5 @@
 /* Copyright (c) Steve Linhart, Eric Raymond, 1989. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef COLOR_H
 #define COLOR_H

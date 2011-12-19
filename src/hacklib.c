@@ -1,12 +1,12 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991		  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /* We could include only config.h, except for the overlay definitions... */
 #include "hack.h"
 /*=
     Assorted 'small' utility routines.	They're virtually independent of
-NetHack, except that rounddiv may call panic().
+NitroHack, except that rounddiv may call panic().
 
       return type     routine name    argument type(s)
 	boolean		digit		(char)

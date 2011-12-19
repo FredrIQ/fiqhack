@@ -1,5 +1,5 @@
 /*	Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /*
  * Polymorph self routine.

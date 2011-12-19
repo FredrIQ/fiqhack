@@ -1,30 +1,30 @@
 # dat/CMakeLists.txt: generate game data files
 
 set (LEVEL_DESCRIPTIONS
-    ${NetHack_SOURCE_DIR}/dat/Arch.des
-    ${NetHack_SOURCE_DIR}/dat/Barb.des
-    ${NetHack_SOURCE_DIR}/dat/bigroom.des
-    ${NetHack_SOURCE_DIR}/dat/castle.des
-    ${NetHack_SOURCE_DIR}/dat/Caveman.des
-    ${NetHack_SOURCE_DIR}/dat/endgame.des
-    ${NetHack_SOURCE_DIR}/dat/gehennom.des
-    ${NetHack_SOURCE_DIR}/dat/Healer.des
-    ${NetHack_SOURCE_DIR}/dat/Knight.des
-    ${NetHack_SOURCE_DIR}/dat/knox.des
-    ${NetHack_SOURCE_DIR}/dat/medusa.des
-    ${NetHack_SOURCE_DIR}/dat/mines.des
-    ${NetHack_SOURCE_DIR}/dat/Monk.des
-    ${NetHack_SOURCE_DIR}/dat/oracle.des
-    ${NetHack_SOURCE_DIR}/dat/Priest.des
-    ${NetHack_SOURCE_DIR}/dat/Ranger.des
-    ${NetHack_SOURCE_DIR}/dat/Rogue.des
-    ${NetHack_SOURCE_DIR}/dat/Samurai.des
-    ${NetHack_SOURCE_DIR}/dat/sokoban.des
-    ${NetHack_SOURCE_DIR}/dat/Tourist.des
-    ${NetHack_SOURCE_DIR}/dat/tower.des
-    ${NetHack_SOURCE_DIR}/dat/Valkyrie.des
-    ${NetHack_SOURCE_DIR}/dat/Wizard.des
-    ${NetHack_SOURCE_DIR}/dat/yendor.des 
+    ${NitroHack_SOURCE_DIR}/dat/Arch.des
+    ${NitroHack_SOURCE_DIR}/dat/Barb.des
+    ${NitroHack_SOURCE_DIR}/dat/bigroom.des
+    ${NitroHack_SOURCE_DIR}/dat/castle.des
+    ${NitroHack_SOURCE_DIR}/dat/Caveman.des
+    ${NitroHack_SOURCE_DIR}/dat/endgame.des
+    ${NitroHack_SOURCE_DIR}/dat/gehennom.des
+    ${NitroHack_SOURCE_DIR}/dat/Healer.des
+    ${NitroHack_SOURCE_DIR}/dat/Knight.des
+    ${NitroHack_SOURCE_DIR}/dat/knox.des
+    ${NitroHack_SOURCE_DIR}/dat/medusa.des
+    ${NitroHack_SOURCE_DIR}/dat/mines.des
+    ${NitroHack_SOURCE_DIR}/dat/Monk.des
+    ${NitroHack_SOURCE_DIR}/dat/oracle.des
+    ${NitroHack_SOURCE_DIR}/dat/Priest.des
+    ${NitroHack_SOURCE_DIR}/dat/Ranger.des
+    ${NitroHack_SOURCE_DIR}/dat/Rogue.des
+    ${NitroHack_SOURCE_DIR}/dat/Samurai.des
+    ${NitroHack_SOURCE_DIR}/dat/sokoban.des
+    ${NitroHack_SOURCE_DIR}/dat/Tourist.des
+    ${NitroHack_SOURCE_DIR}/dat/tower.des
+    ${NitroHack_SOURCE_DIR}/dat/Valkyrie.des
+    ${NitroHack_SOURCE_DIR}/dat/Wizard.des
+    ${NitroHack_SOURCE_DIR}/dat/yendor.des 
     )
 
 # the compiled levels that will be added to nhdat
@@ -64,7 +64,7 @@ set ( NHDAT_SRC
     dungeon quest.dat rumors oracles ${COMPILED_LEVELS} history data
     )
 
-configure_file(${NetHack_SOURCE_DIR}/dat/history history COPYONLY)
+configure_file(${NitroHack_SOURCE_DIR}/dat/history history COPYONLY)
 
 get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 get_property(DGN_COMP_BIN TARGET dgn_comp PROPERTY LOCATION)
@@ -75,33 +75,33 @@ get_property(DLB_BIN TARGET dlb PROPERTY LOCATION)
 # makedefs -d
 add_custom_command (OUTPUT data
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -d ${NetHack_SOURCE_DIR}/dat/data.base data
+                    ARGS -d ${NitroHack_SOURCE_DIR}/dat/data.base data
                     DEPENDS makedefs)
 # makedefs -e 
 add_custom_command (OUTPUT dungeon.pdf
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -e ${NetHack_SOURCE_DIR}/dat/dungeon.def dungeon.pdf
+                    ARGS -e ${NitroHack_SOURCE_DIR}/dat/dungeon.def dungeon.pdf
                     DEPENDS makedefs)
 # makedefs -q
 add_custom_command (OUTPUT quest.dat
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -q ${NetHack_SOURCE_DIR}/dat/quest.txt quest.dat
+                    ARGS -q ${NitroHack_SOURCE_DIR}/dat/quest.txt quest.dat
                     DEPENDS makedefs)
 # makedefs -r
 add_custom_command (OUTPUT rumors
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -r ${NetHack_SOURCE_DIR}/dat/rumors.tru
-                            ${NetHack_SOURCE_DIR}/dat/rumors.fal rumors
+                    ARGS -r ${NitroHack_SOURCE_DIR}/dat/rumors.tru
+                            ${NitroHack_SOURCE_DIR}/dat/rumors.fal rumors
                     DEPENDS makedefs)
 # makedefs -h
 add_custom_command (OUTPUT oracles
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -h ${NetHack_SOURCE_DIR}/dat/oracles.txt oracles
+                    ARGS -h ${NitroHack_SOURCE_DIR}/dat/oracles.txt oracles
                     DEPENDS makedefs)
 
 add_custom_command (OUTPUT dungeon
                     COMMAND ${DGN_COMP_BIN}
-                    ARGS ${NetHack_BINARY_DIR}/dat/dungeon.pdf
+                    ARGS ${NitroHack_BINARY_DIR}/dat/dungeon.pdf
                     DEPENDS dungeon.pdf)
 
 add_custom_command (OUTPUT nhdat
@@ -111,5 +111,5 @@ add_custom_command (OUTPUT nhdat
                     DEPENDS lev_comp dungeon quest.dat rumors oracles data ${LEVEL_DESCRIPTIONS})
 
 # pseudo-target: depend on all other generated data
-add_custom_target (nethack_data_files ALL
+add_custom_target (nitrohack_data_files ALL
                    DEPENDS nhdat)

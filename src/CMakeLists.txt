@@ -1,6 +1,6 @@
-# src/CMakeLists.txt : build libnethack
+# src/CMakeLists.txt : build libnitrohack
 
-set (LIBNETHACK_SRC
+set (LIBNITROHACK_SRC
     allmain.c  apply.c    artifact.c attrib.c   ball.c    bones.c
     botl.c     cmd.c      dbridge.c  decl.c     detect.c  dig.c      display.c
     dlb.c      do.c       dog.c      dogmove.c  dokick.c  do_name.c  dothrow.c
@@ -17,28 +17,28 @@ set (LIBNETHACK_SRC
     uhitm.c    u_init.c   vault.c    version.c  vision.c  weapon.c   were.c
     wield.c    windows.c  wizard.c   worm.c     worn.c    write.c    xmalloc.c zap.c
     )
-set (LIBNETHACK_GENERATED_SRC
-    ${NetHack_BINARY_DIR}/src/monstr.c
+set (LIBNITROHACK_GENERATED_SRC
+    ${NitroHack_BINARY_DIR}/src/monstr.c
     )
 
-set_source_files_properties(${LIBNETHACK_GENERATED_SRC} GENERATED)
+set_source_files_properties(${LIBNITROHACK_GENERATED_SRC} GENERATED)
 
 get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 
 
-add_custom_command (OUTPUT ${NetHack_BINARY_DIR}/src/monstr.c
+add_custom_command (OUTPUT ${NitroHack_BINARY_DIR}/src/monstr.c
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -m ${NetHack_BINARY_DIR}/src/monstr.c
+                    ARGS -m ${NitroHack_BINARY_DIR}/src/monstr.c
                     DEPENDS makedefs)
 
 include_directories (
-    ${NetHack_SOURCE_DIR}/include
-    ${NetHack_SOURCE_DIR}/include/public
-    ${NetHack_BINARY_DIR}/include )
+    ${NitroHack_SOURCE_DIR}/include
+    ${NitroHack_SOURCE_DIR}/include/public
+    ${NitroHack_BINARY_DIR}/include )
 
-add_library(nethack SHARED ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
+add_library(nitrohack SHARED ${LIBNITROHACK_SRC} ${LIBNITROHACK_GENERATED_SRC})
 
-add_dependencies (nethack makedefs_headers)
+add_dependencies (nitrohack makedefs_headers)
 
-install(TARGETS nethack
+install(TARGETS nitrohack
         DESTINATION ${BINDIR})

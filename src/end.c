@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "eshk.h"
@@ -163,19 +163,10 @@ void panic(const char *str, ...)
 		  !program_state.something_worth_saving ?
 		  "Program initialization has failed.\n" :
 		  "Suddenly, the dungeon collapses.\n");
-# if defined(NOTIFY_NETHACK_BUGS)
 	if (!wizard)
-	    raw_printf("Report the following error to \"%s\".\n",
-			"nethack-bugs@nethack.org\n");
-	else if (program_state.something_worth_saving)
-	    raw_print("\nError save file being written.\n");
-# else
-	if (!wizard)
-	    raw_printf("Report error to \"%s\"%s.\n",
-			WIZARD,
+	    raw_printf("Report error to \"%s\"%s.\n", WIZARD,
 			!program_state.something_worth_saving ? "" :
 			" and it may be possible to rebuild.");
-# endif
 	if (program_state.something_worth_saving)
 	    dosave0(TRUE);
 	

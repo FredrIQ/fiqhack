@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "artifact.h"
@@ -1393,7 +1393,7 @@ void arti_speak(struct obj *obj)
 
 	line = getrumor(bcsign(obj), buf, TRUE);
 	if (!*line)
-		line = "NetHack rumors file closed for renovation.";
+		line = "NitroHack rumors file closed for renovation.";
 	pline("%s:", Tobjnam(obj, "whisper"));
 	verbalize("%s", line);
 	return;

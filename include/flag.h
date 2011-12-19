@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /* If you change the flag structure make sure you increment EDITLEVEL in   */
 /* patchlevel.h if needed.  Changing the instance_flags structure does	   */

@@ -1,5 +1,5 @@
 /*	Monster symbols and creation information rev 1.0	  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef MONSYM_H
 #define MONSYM_H

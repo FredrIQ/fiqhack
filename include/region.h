@@ -1,5 +1,5 @@
 /* Copyright (c) 1996 by Jean-Christophe Collet			  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef REGION_H
 #define REGION_H
@@ -8,12 +8,6 @@
 
 typedef boolean (*callback_proc)(void *, void *);
 
-/*
- * Overload the old player_inside field with two values, coded in such
- * a way as to retain compatibility with 3.4.0 save and bones files;
- * this relies on the fact that nethack's `boolean' is really stored
- * in a `char' (or bigger type) rather than in a single bit.
- */
 #define REG_HERO_INSIDE	1
 #define REG_NOT_HEROS	2
 #define hero_inside(r)	((unsigned)(r)->player_flags & REG_HERO_INSIDE)
@@ -43,7 +37,7 @@ struct region {
   short leave_f;		/* Function to call when the player leaves */
   short inside_f;		/* Function to call every turn if player's
 				   inside */
-  boolean player_flags;	/* (see above) */
+  xchar player_flags;	/* (see above) */
   unsigned int* monsters;	/* Monsters currently inside this region */
   short n_monst;		/* Number of monsters inside this region */
   short max_monst;		/* Maximum number of monsters that can be

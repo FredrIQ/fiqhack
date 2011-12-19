@@ -1,4 +1,4 @@
-# curses/CMakeLists.txt: build the curses window port for libnethack
+# curses/CMakeLists.txt: build the curses window port for libnitrohack
 
 
 if (NOT WIN32)
@@ -42,36 +42,36 @@ if (WIN32)
     set (NH_CURSES_SRC ${NH_CURSES_SRC} rc/nh_ico.rc)
 endif ()
 
-include_directories (${NetHack_SOURCE_DIR}/include/public)
+include_directories (${NitroHack_SOURCE_DIR}/include/public)
 include_directories (include)
 
-add_definitions(-DNETHACKDIR="${DATADIR}")
+add_definitions(-DNITROHACKDIR="${DATADIR}")
 
-link_directories (${NetHack_BINARY_DIR}/src)
-add_executable (nethack_curses ${NH_CURSES_SRC} )
-set_target_properties(nethack_curses PROPERTIES OUTPUT_NAME nethack )
-target_link_libraries(nethack_curses nethack)
+link_directories (${NitroHack_BINARY_DIR}/src)
+add_executable (nitrohack_curses ${NH_CURSES_SRC} )
+set_target_properties(nitrohack_curses PROPERTIES OUTPUT_NAME nitrohack )
+target_link_libraries(nitrohack_curses nitrohack)
 
 if (USE_PDCURSES)
-    target_link_libraries (nethack_curses ${PDCURSES_LIBNAME})
+    target_link_libraries (nitrohack_curses ${PDCURSES_LIBNAME})
 else ()
-    target_link_libraries (nethack_curses ncursesw )
+    target_link_libraries (nitrohack_curses ncursesw )
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # Linux has clock_gettime in librt. FreeBSD doesn't need extra libs: it has
     # clock_gettime in libc. OS X doesn't have the function at all.
-    target_link_libraries (nethack_curses rt)
+    target_link_libraries (nitrohack_curses rt)
 endif ()
 
 
 if (UNIX)
-    add_custom_command(OUTPUT nethack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nethack $@" >> nethack.sh
+    add_custom_command(OUTPUT nitrohack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nitrohack $@" >> nitrohack.sh
                        VERBATIM)
-    add_custom_target(nethack_curses_shell_script ALL
-                      DEPENDS nethack.sh)
+    add_custom_target(nitrohack_curses_shell_script ALL
+                      DEPENDS nitrohack.sh)
 endif()
 
-install(TARGETS nethack_curses
+install(TARGETS nitrohack_curses
         DESTINATION ${LIBDIR})

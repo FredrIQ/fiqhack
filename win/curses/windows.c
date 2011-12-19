@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <signal.h>
@@ -54,7 +54,7 @@ void init_curses_ui(void)
     set_term(curses_scr);
     
     if (LINES < 24 || COLS < COLNO) {
-	fprintf(stderr, "Sorry, your terminal is too small for NetHack. Current: (%x, %x)\n", COLS, LINES);
+	fprintf(stderr, "Sorry, your terminal is too small for NitroHack. Current: (%x, %x)\n", COLS, LINES);
 	endwin();
 	exit(0);
     }
@@ -76,7 +76,7 @@ void init_curses_ui(void)
     basewin = stdscr;
 
 #if defined(PDCURSES)
-    PDC_set_title("NetHack");
+    PDC_set_title("NitroHack");
 #if defined(WIN32)
     if (settings.win_height > 0 && settings.win_width > 0)
 	resize_term(settings.win_height, settings.win_width);

@@ -1,15 +1,15 @@
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
-/* this header defines the interface between libnethack and window ports
+/* this header defines the interface between libnitrohack and window ports
  * it should never include any private headers, as those are not on the
  * search path for window ports. */
 
-#ifndef NETHACK_API_H
-#define NETHACK_API_H
+#ifndef NITROHACK_H
+#define NITROHACK_H
 
-#include "nethack_types.h"
+#include "nitrohack_types.h"
 
-#if defined (nethack_EXPORTS)/* defined by cmake while building libnethack */
+#if defined (nitrohack_EXPORTS)/* defined by cmake while building libnitrohack */
 # if defined (_MSC_VER)
 #  define EXPORT __declspec(dllexport)
 # else /* gcc & clang with -fvisibility=hidden need this for exported syms */

@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011				  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef NHCURSES_H
 #define NHCURSES_H
@@ -64,7 +64,7 @@ typedef wchar_t fnchar;
 #endif
 
 
-#include "nethack.h"
+#include "nitrohack.h"
 
 #ifndef PDCURSES
 # include <ncursesw/curses.h>
@@ -88,8 +88,8 @@ typedef wchar_t fnchar;
 # define min(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
-#ifndef NETHACKDIR
-#define NETHACKDIR "/usr/share/NetHack/"
+#ifndef NITROHACKDIR
+#define NITROHACKDIR "/usr/share/NitroHack/"
 #endif
 
 #define KEY_ESC 27

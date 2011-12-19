@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011 */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 /* NOTE: This file is utf-8 encoded; saving with a non utf-8 aware editor WILL
  * damage some symbols */
@@ -589,7 +589,7 @@ void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
     int attr;
     cchar_t uni_out;
     
-    /* nethack color index -> curses color */
+    /* nitrohack color index -> curses color */
     attr = A_NORMAL | extra_attrs;
     if (ui_flags.color)
 	attr |= curses_color_attr(sym->color);

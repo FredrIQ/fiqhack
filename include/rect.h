@@ -1,5 +1,5 @@
 /* Copyright (c) 1990 by Jean-Christophe Collet			  */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #ifndef RECT_H
 #define RECT_H

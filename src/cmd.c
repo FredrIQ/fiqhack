@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NetHack may be freely redistributed.  See license for details. */
+/* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 /* #define DEBUG */	/* uncomment for debugging */
@@ -83,7 +83,7 @@ const struct cmd_desc cmdlist[] = {
 	{"invoke", "invoke an object's powers", M('i'), 0, TRUE, doinvoke, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
 	{"jump", "jump to a location", M('j'), 'j', FALSE, dojump, CMD_ARG_NONE | CMD_EXT},
 	{"kick", "kick an adjacent object or monster", C('d'), 'k', FALSE, dokick, CMD_ARG_NONE},
-	{"license", "show the NetHack license", 0, 0, TRUE, dolicense, CMD_ARG_NONE | CMD_HELP | CMD_NOTIME},
+	{"license", "show the NitroHack license", 0, 0, TRUE, dolicense, CMD_ARG_NONE | CMD_HELP | CMD_NOTIME},
 	{"lookhere", "describe the current square", ':', 0, TRUE, dolook, CMD_ARG_NONE | CMD_NOTIME},
 	{"loot", "loot a bag or box on the floor", M('l'), 'l', FALSE, doloot, CMD_ARG_NONE | CMD_EXT},
 	{"menuinv", "show a partial inventory", 'I', 0, TRUE, dotypeinv, CMD_ARG_NONE | CMD_NOTIME},
