@@ -343,6 +343,8 @@ int getbones(d_level *levnum)
 		if (!mf.buf || !mf.len) return 0;
 	} else {
 		int fd = open_bonesfile(bonesid);
+		if (fd == -1)
+		    return 0;
 		mf.buf = loadfile(fd, &mf.len);
 		close(fd);
 		if (!mf.buf)
