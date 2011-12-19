@@ -666,27 +666,38 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
     token = next_log_token();
     
     while (token) {
-	if (token[0] == '!') {
-	    replay_read_option(token);
-	    token = next_log_token();
-	    continue;
-	} else if (optonly) {
-	    loginfo.next--;
-	    break; /* first non-option token - initial option setup is done */
+	switch (token[0]) {
+	    case '!': /* Option */
+		replay_read_option(token);
+		break;
+		
+	    case '>': /* command */
+		if (!optonly) {
+		    replay_read_command(token, &cmd, &count, &cmdarg);
+		    cmdidx = get_command_idx(cmd);
+		    command_input(cmdidx, count, &cmdarg);
+		    replay_check_cmdresult();
+		    did_action = TRUE;
+		}
+		
+		if (singlestep) {
+		    if (optonly)
+			loginfo.next--; /* put the token back for later use */
+		    goto out;
+		}
+		    
+		break;
+		
+	    case '<': /* a command result: an error at this point */
+		if (!optonly)
+		    parse_error("found a command result when a command was expected");
+		break;
 	}
-	
-	replay_read_command(token, &cmd, &count, &cmdarg);
-	cmdidx = get_command_idx(cmd);
-	command_input(cmdidx, count, &cmdarg);
-	replay_check_cmdresult();
-	did_action = TRUE;
-	
-	if (singlestep)
-	    break;
 	
 	token = next_log_token();
     }
 
+out:
     /* return the birth options to normal */
     tmp = birth_options;
     birth_options = active_birth_options;
@@ -813,7 +824,7 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     replay_setup_windowprocs(rwinprocs);
     
     nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign, playmode);
-    replay_run_cmdloop(TRUE, FALSE); /* (re)set options */
+    replay_run_cmdloop(TRUE, TRUE); /* (re)set options */
     program_state.restoring = FALSE;
     program_state.viewing = TRUE;
     replay_restore_windowprocs();
