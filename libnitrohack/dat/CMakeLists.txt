@@ -1,30 +1,30 @@
 # dat/CMakeLists.txt: generate game data files
 
 set (LEVEL_DESCRIPTIONS
-    ${NitroHack_SOURCE_DIR}/dat/Arch.des
-    ${NitroHack_SOURCE_DIR}/dat/Barb.des
-    ${NitroHack_SOURCE_DIR}/dat/bigroom.des
-    ${NitroHack_SOURCE_DIR}/dat/castle.des
-    ${NitroHack_SOURCE_DIR}/dat/Caveman.des
-    ${NitroHack_SOURCE_DIR}/dat/endgame.des
-    ${NitroHack_SOURCE_DIR}/dat/gehennom.des
-    ${NitroHack_SOURCE_DIR}/dat/Healer.des
-    ${NitroHack_SOURCE_DIR}/dat/Knight.des
-    ${NitroHack_SOURCE_DIR}/dat/knox.des
-    ${NitroHack_SOURCE_DIR}/dat/medusa.des
-    ${NitroHack_SOURCE_DIR}/dat/mines.des
-    ${NitroHack_SOURCE_DIR}/dat/Monk.des
-    ${NitroHack_SOURCE_DIR}/dat/oracle.des
-    ${NitroHack_SOURCE_DIR}/dat/Priest.des
-    ${NitroHack_SOURCE_DIR}/dat/Ranger.des
-    ${NitroHack_SOURCE_DIR}/dat/Rogue.des
-    ${NitroHack_SOURCE_DIR}/dat/Samurai.des
-    ${NitroHack_SOURCE_DIR}/dat/sokoban.des
-    ${NitroHack_SOURCE_DIR}/dat/Tourist.des
-    ${NitroHack_SOURCE_DIR}/dat/tower.des
-    ${NitroHack_SOURCE_DIR}/dat/Valkyrie.des
-    ${NitroHack_SOURCE_DIR}/dat/Wizard.des
-    ${NitroHack_SOURCE_DIR}/dat/yendor.des 
+    ${LNH_DAT}/Arch.des
+    ${LNH_DAT}/Barb.des
+    ${LNH_DAT}/bigroom.des
+    ${LNH_DAT}/castle.des
+    ${LNH_DAT}/Caveman.des
+    ${LNH_DAT}/endgame.des
+    ${LNH_DAT}/gehennom.des
+    ${LNH_DAT}/Healer.des
+    ${LNH_DAT}/Knight.des
+    ${LNH_DAT}/knox.des
+    ${LNH_DAT}/medusa.des
+    ${LNH_DAT}/mines.des
+    ${LNH_DAT}/Monk.des
+    ${LNH_DAT}/oracle.des
+    ${LNH_DAT}/Priest.des
+    ${LNH_DAT}/Ranger.des
+    ${LNH_DAT}/Rogue.des
+    ${LNH_DAT}/Samurai.des
+    ${LNH_DAT}/sokoban.des
+    ${LNH_DAT}/Tourist.des
+    ${LNH_DAT}/tower.des
+    ${LNH_DAT}/Valkyrie.des
+    ${LNH_DAT}/Wizard.des
+    ${LNH_DAT}/yendor.des 
     )
 
 # the compiled levels that will be added to nhdat
@@ -60,11 +60,9 @@ set (COMPILED_LEVELS
     Wiz-strt.lev
     )
 
-set ( NHDAT_SRC
-    dungeon quest.dat rumors oracles ${COMPILED_LEVELS} history data
-    )
+set (NHDAT_SRC dungeon quest.dat rumors oracles ${COMPILED_LEVELS} history data)
 
-configure_file(${NitroHack_SOURCE_DIR}/dat/history history COPYONLY)
+configure_file(${LNH_DAT}/history history COPYONLY)
 
 get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 get_property(DGN_COMP_BIN TARGET dgn_comp PROPERTY LOCATION)
@@ -75,33 +73,33 @@ get_property(DLB_BIN TARGET dlb PROPERTY LOCATION)
 # makedefs -d
 add_custom_command (OUTPUT data
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -d ${NitroHack_SOURCE_DIR}/dat/data.base data
+                    ARGS -d ${LNH_DAT}/data.base data
                     DEPENDS makedefs)
 # makedefs -e 
 add_custom_command (OUTPUT dungeon.pdf
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -e ${NitroHack_SOURCE_DIR}/dat/dungeon.def dungeon.pdf
+                    ARGS -e ${LNH_DAT}/dungeon.def dungeon.pdf
                     DEPENDS makedefs)
 # makedefs -q
 add_custom_command (OUTPUT quest.dat
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -q ${NitroHack_SOURCE_DIR}/dat/quest.txt quest.dat
+                    ARGS -q ${LNH_DAT}/quest.txt quest.dat
                     DEPENDS makedefs)
 # makedefs -r
 add_custom_command (OUTPUT rumors
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -r ${NitroHack_SOURCE_DIR}/dat/rumors.tru
-                            ${NitroHack_SOURCE_DIR}/dat/rumors.fal rumors
+                    ARGS -r ${LNH_DAT}/rumors.tru
+                            ${LNH_DAT}/rumors.fal rumors
                     DEPENDS makedefs)
 # makedefs -h
 add_custom_command (OUTPUT oracles
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -h ${NitroHack_SOURCE_DIR}/dat/oracles.txt oracles
+                    ARGS -h ${LNH_DAT}/oracles.txt oracles
                     DEPENDS makedefs)
 
 add_custom_command (OUTPUT dungeon
                     COMMAND ${DGN_COMP_BIN}
-                    ARGS ${NitroHack_BINARY_DIR}/dat/dungeon.pdf
+                    ARGS ${LNH_DAT_GEN}/dungeon.pdf
                     DEPENDS dungeon.pdf)
 
 add_custom_command (OUTPUT nhdat
@@ -113,3 +111,8 @@ add_custom_command (OUTPUT nhdat
 # pseudo-target: depend on all other generated data
 add_custom_target (nitrohack_data_files ALL
                    DEPENDS nhdat)
+
+install(FILES ${LNH_DAT_GEN}/nhdat
+        DESTINATION ${DATADIR})
+install(FILES license
+        DESTINATION ${DATADIR})

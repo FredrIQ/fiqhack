@@ -9,7 +9,7 @@
 
 #include "nitrohack_types.h"
 
-#if defined (nitrohack_EXPORTS)/* defined by cmake while building libnitrohack */
+#if defined (libnitrohack_EXPORTS)/* defined by cmake while building libnitrohack */
 # if defined (_MSC_VER)
 #  define EXPORT __declspec(dllexport)
 # else /* gcc & clang with -fvisibility=hidden need this for exported syms */

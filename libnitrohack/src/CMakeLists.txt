@@ -18,7 +18,7 @@ set (LIBNITROHACK_SRC
     wield.c    windows.c  wizard.c   worm.c     worn.c    write.c    xmalloc.c zap.c
     )
 set (LIBNITROHACK_GENERATED_SRC
-    ${NitroHack_BINARY_DIR}/src/monstr.c
+    ${LNH_SRC_GEN}/monstr.c
     )
 
 set_source_files_properties(${LIBNITROHACK_GENERATED_SRC} GENERATED)
@@ -26,19 +26,20 @@ set_source_files_properties(${LIBNITROHACK_GENERATED_SRC} GENERATED)
 get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 
 
-add_custom_command (OUTPUT ${NitroHack_BINARY_DIR}/src/monstr.c
+add_custom_command (OUTPUT ${LNH_SRC_GEN}/monstr.c
                     COMMAND ${MAKEDEFS_BIN}
-                    ARGS -m ${NitroHack_BINARY_DIR}/src/monstr.c
+                    ARGS -m ${LNH_SRC_GEN}/monstr.c
                     DEPENDS makedefs)
 
 include_directories (
+    ${NitroHack_SOURCE_DIR}/libnitrohack/include
     ${NitroHack_SOURCE_DIR}/include
-    ${NitroHack_SOURCE_DIR}/include/public
-    ${NitroHack_BINARY_DIR}/include )
+    ${NitroHack_BINARY_DIR}/libnitrohack/include )
 
-add_library(nitrohack SHARED ${LIBNITROHACK_SRC} ${LIBNITROHACK_GENERATED_SRC})
+add_library(libnitrohack SHARED ${LIBNITROHACK_SRC} ${LIBNITROHACK_GENERATED_SRC})
+set_target_properties(libnitrohack PROPERTIES OUTPUT_NAME nitrohack )
 
-add_dependencies (nitrohack makedefs_headers)
+add_dependencies (libnitrohack makedefs_headers)
 
-install(TARGETS nitrohack
+install(TARGETS libnitrohack
         DESTINATION ${BINDIR})

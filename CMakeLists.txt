@@ -39,19 +39,5 @@ if (CMAKE_COMPILER_IS_GNUCC)
     endif ()
 endif ()
 
-
-add_subdirectory (util)
-add_subdirectory (src)
-add_subdirectory (win/curses)
-add_subdirectory (dat)
-
-install(FILES ${NitroHack_BINARY_DIR}/dat/nhdat
-        DESTINATION ${DATADIR})
-install(FILES ${NitroHack_SOURCE_DIR}/dat/license
-        DESTINATION ${DATADIR})
-        
-if (UNIX)
-    install(PROGRAMS ${NitroHack_BINARY_DIR}/win/curses/nitrohack.sh
-            DESTINATION ${SHELLDIR} RENAME nitrohack)
-endif()
-
+add_subdirectory (libnitrohack)
+add_subdirectory (nitrohack)

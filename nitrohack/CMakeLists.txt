@@ -19,35 +19,35 @@ endif ()
 
 
 set (NH_CURSES_SRC
-    main.c
-    color.c
-    dialog.c
-    gameover.c
-    getline.c
-    keymap.c
-    map.c
-    menu.c
-    messages.c
-    options.c
-    outchars.c
-    playerselect.c
-    replay.c
-    rungame.c
-    sidebar.c
-    status.c
-    topten.c
-    windows.c)
+    src/main.c
+    src/color.c
+    src/dialog.c
+    src/gameover.c
+    src/getline.c
+    src/keymap.c
+    src/map.c
+    src/menu.c
+    src/messages.c
+    src/options.c
+    src/outchars.c
+    src/playerselect.c
+    src/replay.c
+    src/rungame.c
+    src/sidebar.c
+    src/status.c
+    src/topten.c
+    src/windows.c)
 
 if (WIN32)
     set (NH_CURSES_SRC ${NH_CURSES_SRC} rc/nh_ico.rc)
 endif ()
 
-include_directories (${NitroHack_SOURCE_DIR}/include/public)
-include_directories (include)
+include_directories (${NitroHack_SOURCE_DIR}/include
+                     include)
 
 add_definitions(-DNITROHACKDIR="${DATADIR}")
 
-link_directories (${NitroHack_BINARY_DIR}/src)
+link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
 add_executable (nitrohack_curses ${NH_CURSES_SRC} )
 set_target_properties(nitrohack_curses PROPERTIES OUTPUT_NAME nitrohack )
 target_link_libraries(nitrohack_curses nitrohack)
@@ -71,6 +71,8 @@ if (UNIX)
                        VERBATIM)
     add_custom_target(nitrohack_curses_shell_script ALL
                       DEPENDS nitrohack.sh)
+    install(PROGRAMS ${NitroHack_BINARY_DIR}/nitrohack/nitrohack.sh
+            DESTINATION ${SHELLDIR} RENAME nitrohack)
 endif()
 
 install(TARGETS nitrohack_curses
