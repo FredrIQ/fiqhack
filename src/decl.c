@@ -202,6 +202,7 @@ unsigned int histcount;
 struct histevent *histevents;
 
 unsigned long long turntime;
+int current_timezone, replay_timezone;
 
 /* If one game (A) is started and then saved, followed by game B with different
  * birth_options, after which game A is restored, then A must run with it's

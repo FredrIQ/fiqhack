@@ -699,6 +699,7 @@ extern int doclose(void);
 
 extern void log_newgame(int logfd, unsigned long long start_time, int playmode);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
+extern void log_timezone(int tz_offset);
 extern void log_command_result(void);
 extern void log_revert_command(void);
 extern void log_option(struct nh_option_desc *opt);

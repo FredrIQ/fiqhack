@@ -52,6 +52,9 @@ void nh_init(struct nh_window_procs *procs, char **paths)
     init_opt_struct();
     turntime = 0;
     
+    tzset(); /* will set the extern timezone which is used below */
+    current_timezone = timezone;
+    
     api_exit();
 }
 

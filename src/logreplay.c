@@ -198,6 +198,10 @@ void replay_end(void)
     free(loginfo.mem);
     free(loginfo.tokens);
     memset(&loginfo, 0, sizeof(loginfo));
+    
+    tzset(); /* sets the extern "timezone" which has the offset from UTC in seconds */
+    if (timezone != replay_timezone)
+	log_timezone(timezone);
 
     /* restore saved options */
     for (i = 0; saved_options[i].name; i++)
@@ -534,6 +538,16 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
 }
 
 
+static void replay_read_timezone(char *token)
+{
+    int n;
+    
+    n = sscanf(token, "TZ%d", &replay_timezone);
+    if (n != 1)
+	parse_error("Bad timezone offset data.");
+}
+
+
 static void replay_read_option(char *token)
 {
     char *name, *otype, *valstr, *arbuf, optname[BUFSZ], valbuf[BUFSZ];
@@ -669,6 +683,10 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 	switch (token[0]) {
 	    case '!': /* Option */
 		replay_read_option(token);
+		break;
+		
+	    case 'T': /* timezone offset */
+		replay_read_timezone(token);
 		break;
 		
 	    case '>': /* command */

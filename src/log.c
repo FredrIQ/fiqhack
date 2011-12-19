@@ -163,6 +163,19 @@ void log_newgame(int logfd, unsigned long long start_time, int playmode)
 	    races[u.initrace].noun, genders[u.initgend].adj, aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();
+    /* all the timestamps are UTC, so timezone info is required to interpret them */
+    tzset(); /* sets the extern "timezone" which has the offset from UTC in seconds */
+    log_timezone(timezone);
+}
+
+
+
+void log_timezone(int tz_offset)
+{
+    if (iflags.disable_log || logfile == -1)
+	return;
+    
+    lprintf("\nTZ%d", tz_offset);
 }
 
 

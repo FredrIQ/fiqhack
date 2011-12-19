@@ -219,6 +219,14 @@ static void parse_dir(char *token)
 }
 
 
+static void parse_timezone(char *token, long tcount)
+{
+    int tz;
+    sscanf(token, "TZ%d", &tz);
+    printf("%05ld: Timezone offset: %d seconds\n", tcount, tz);
+}
+
+
 int main(int argc, char *argv[])
 {
     FILE *fp;
@@ -301,10 +309,11 @@ int main(int argc, char *argv[])
 	    case 'd': parse_dir(tokens[tnum]); break;
 	    case 'l': parse_line(tokens[tnum]); break;
 	    case 'y': parse_yesno(tokens[tnum]); break;
+	    case 'T': parse_timezone(tokens[tnum], tnum); break;
 	    case 'm': printf("menu "); break;
 	    case 'o': printf("objects "); break;
 	    case '<': printf("\n"); break;
-	    default: printf(" [strange token]"); break;
+	    default: printf("  [strange token]  "); break;
 	}
     }
     

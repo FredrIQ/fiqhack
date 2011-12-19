@@ -357,6 +357,15 @@ static struct tm *getlt(void);
 
 static struct tm *getlt(void)
 {
+	if (program_state.restoring) {
+	    /* the game might have been started in a different timezone.
+	     * Our timestamps are utc time. localtime() will subtract the current
+	     * timezone offset from the timestamp to form a local timestamp.
+	     * The following calculation causes localtime to return data that is
+	     * local to the original timezone, not the current one. */
+	    unsigned long long adjusted = turntime + current_timezone - replay_timezone;
+	    return localtime((time_t*)&adjusted);
+	}
 	return localtime((time_t*)&turntime);
 }
 
