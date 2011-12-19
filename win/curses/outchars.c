@@ -141,7 +141,6 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"vodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
     {"hodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
     {"bars",	-1,	{0x2261, 0},	0},	/* ≡ equivalence symbol */
-    {"tree",	-1,	{0x03a8, 0},	0},	/* Ψ GREEK CAPITAL LETTER PSI */
     {"fountain",-1,	{0x00b6, 0},	0},	/* ¶ PILCROW SIGN */
     {"room",	-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"darkroom",-1,	{0x00B7, 0},	0},	/* · centered dot */
@@ -151,12 +150,9 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"dnladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
     {"altar",	-1,	{0x03A9, 0},	0},	/* Ω GREEK CAPITAL LETTER OMEGA */
     {"grave",	-1,	{0x2020, 0},	0},	/* † DAGGER */
-    {"pool",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"ice",	-1,	{0x00B7, 0},	0},	/* · centered dot */
-    {"lava",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"vodbridge",-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"hodbridge",-1,	{0x00B7, 0},	0},	/* · centered dot */
-    {"water",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     
     /* zap */
     {"zap_v",	-1,	{0x2502, 0},	0},	/* │ vertical rule */
@@ -174,11 +170,20 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"exp_mid_r", -1,	{0x2595, 0},	0},	/* ▕ RIGHT ONE EIGHTH BLOCK */
     {"exp_bot_c", -1,	{0x2581, 0},	0},	/* ▁ LOWER ONE EIGHTH BLOCK */
     
-    /* objects */
-    {"boulder", -1,	{0x25C6, 0},	0},	/* ◆ diamond */
-    
     /* traps */
     {"web",	-1,	{0x00A4, 0},	0},	/* ¤ currency symbol */
+
+#if !defined(WIN32)
+    {"pool",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
+    {"lava",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
+    {"water",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
+    {"tree",	-1,	{0x03a8, 0},	0},	/* Ψ GREEK CAPITAL LETTER PSI */
+    
+    /* objects */
+    {"boulder", -1,	{0x25C6, 0},	0},	/* ◆ diamond */
+#else
+    {"boulder", -1,	{0x0030, 0},	0},	/* 0 zero */
+#endif
 };
 
 
