@@ -207,6 +207,7 @@ void rungame(void)
     load_keymap(); /* need to load the keymap after the game has been started */
     ret = commandloop();
     free_keymap();
+    close(fd);
     
     destroy_game_windows();
     cleanup_messages();
@@ -426,6 +427,7 @@ nh_bool loadgame(void)
     load_keymap(); /* need to load the keymap after the game has been started */
     ret = commandloop();
     free_keymap();
+    close(fd);
     
     destroy_game_windows();
     cleanup_messages();
