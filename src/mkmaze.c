@@ -793,9 +793,26 @@ static int xmin, ymin, xmax, ymax;	/* level boundaries */
 #define bxmax (xmax - 1)
 #define bymax (ymax - 1)
 
-static void set_wportal(void);
+static void set_wportal(struct level *lev);
 static void mk_bubble(struct level *lev, int x, int y, int n);
 static void mv_bubble(struct level *lev, struct bubble *b, int dx, int dy, boolean ini);
+
+/*
+ * These bit masks make visually pleasing bubbles on a normal aspect
+ * 25x80 terminal, which naturally results in them being mathematically
+ * anything but symmetric.  For this reason they cannot be computed
+ * in situ, either.  The first two elements tell the dimensions of
+ * the bubble's bounding box.
+ */
+static const uchar
+	bm2[] = {2,1,0x3},
+	bm3[] = {3,2,0x7,0x7},
+	bm4[] = {4,3,0x6,0xf,0x6},
+	bm5[] = {5,3,0xe,0x1f,0xe},
+	bm6[] = {6,4,0x1e,0x3f,0x3f,0x1e},
+	bm7[] = {7,4,0x3e,0x7f,0x7f,0x3e},
+	bm8[] = {8,4,0x7e,0xff,0xff,0x7e},
+	*const bmask[] = {bm2,bm3,bm4,bm5,bm6,bm7,bm8};
 
 void movebubbles(void)
 {
@@ -806,7 +823,7 @@ void movebubbles(void)
 	    0, 0, 0, 0, 0, 0, 0 };
 
 	/* set up the portal the first time bubbles are moved */
-	if (!wportal) set_wportal();
+	if (!wportal) set_wportal(level);
 
 	vision_recalc(2);
 	/* keep attached ball&chain separate from bubble objects */
@@ -955,7 +972,7 @@ void water_friction(schar *udx, schar *udy)
 void save_waterlevel(struct memfile *mf)
 {
 	struct bubble *b;
-	int n;
+	int i, n;
 
 	if (!Is_waterlevel(&u.uz)) return;
 
@@ -973,18 +990,21 @@ void save_waterlevel(struct memfile *mf)
 	    mwrite8(mf, b->y);
 	    mwrite8(mf, b->dx);
 	    mwrite8(mf, b->dy);
+	    for (i = 0; i < SIZE(bmask); i++)
+		if (b->bm == bmask[i])
+		    mwrite8(mf, i);
 	}
 }
 
-void restore_waterlevel(struct memfile *mf)
+void restore_waterlevel(struct memfile *mf, struct level *lev)
 {
 	struct bubble *b = NULL, *btmp;
-	int i;
+	int i, idx;
 	int n;
 
-	if (!Is_waterlevel(&u.uz)) return;
+	if (!Is_waterlevel(&lev->z)) return;
 
-	set_wportal();
+	set_wportal(lev);
 	n = mread32(mf);
 	xmin = mread32(mf);
 	ymin = mread32(mf);
@@ -999,6 +1019,8 @@ void restore_waterlevel(struct memfile *mf)
 		b->y = mread8(mf);
 		b->dx = mread8(mf);
 		b->dy = mread8(mf);
+		idx = mread8(mf);
+		b->bm = bmask[idx];
 		
 		if (bbubbles) {
 			btmp->next = b;
@@ -1007,7 +1029,6 @@ void restore_waterlevel(struct memfile *mf)
 			bbubbles = b;
 			b->prev = NULL;
 		}
-		mv_bubble(level, b, 0, 0, TRUE);
 	}
 	ebubbles = b;
 	b->next = NULL;
@@ -1041,10 +1062,10 @@ const char *waterbody_name(xchar x, xchar y)
 	else return "water";
 }
 
-static void set_wportal(void)
+static void set_wportal(struct level *lev)
 {
 	/* there better be only one magic portal on water level... */
-	for (wportal = level->lev_traps; wportal; wportal = wportal->ntrap)
+	for (wportal = lev->lev_traps; wportal; wportal = wportal->ntrap)
 		if (wportal->ttyp == MAGIC_PORTAL) return;
 	impossible("set_wportal(): no portal!");
 }
@@ -1089,25 +1110,9 @@ void free_waterlevel(void)
 	bbubbles = ebubbles = NULL;
 }
 
+
 static void mk_bubble(struct level *lev, int x, int y, int n)
 {
-	/*
-	 * These bit masks make visually pleasing bubbles on a normal aspect
-	 * 25x80 terminal, which naturally results in them being mathematically
-	 * anything but symmetric.  For this reason they cannot be computed
-	 * in situ, either.  The first two elements tell the dimensions of
-	 * the bubble's bounding box.
-	 */
-	static const uchar
-		bm2[] = {2,1,0x3},
-		bm3[] = {3,2,0x7,0x7},
-		bm4[] = {4,3,0x6,0xf,0x6},
-		bm5[] = {5,3,0xe,0x1f,0xe},
-		bm6[] = {6,4,0x1e,0x3f,0x3f,0x1e},
-		bm7[] = {7,4,0x3e,0x7f,0x7f,0x3e},
-		bm8[] = {8,4,0x7e,0xff,0xff,0x7e},
-		*const bmask[] = {bm2,bm3,bm4,bm5,bm6,bm7,bm8};
-
 	struct bubble *b;
 
 	if (x >= bxmax || y >= bymax) return;

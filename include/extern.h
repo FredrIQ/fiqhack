@@ -846,7 +846,7 @@ extern void movebubbles(void);
 extern void water_friction(schar *, schar *);
 extern void free_waterlevel(void);
 extern void save_waterlevel(struct memfile *mf);
-extern void restore_waterlevel(struct memfile *mf);
+extern void restore_waterlevel(struct memfile *mf, struct level *lev);
 extern const char *waterbody_name(xchar,xchar);
 
 /* ### mkobj.c ### */

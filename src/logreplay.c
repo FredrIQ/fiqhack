@@ -1020,7 +1020,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
 	gi->moves = sg_moves;
 	gi->level_desc[0] = '\0';
 	gi->has_amulet = sg_you.uhave.amulet;
-	topten_level_name(sg_you.uz.dnum, sg_you.uz.dlevel, gi->level_desc);
+	topten_level_name(sg_you.uz.dnum, depth(&sg_you.uz), gi->level_desc);
 	
 	if (!game_inited) {
 		free_dungeon();

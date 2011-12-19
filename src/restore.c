@@ -410,7 +410,7 @@ static void restgamestate(struct memfile *mf)
 	ffruit = loadfruitchn(mf);
 
 	restnames(mf);
-	restore_waterlevel(mf);
+	restore_waterlevel(mf, lev);
 	lastinvnr = mread32(mf);
 	restore_mt_state(mf);
 	restore_track(mf);
