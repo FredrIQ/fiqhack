@@ -213,9 +213,35 @@ int main(int argc, char *argv[])
 }
 
 
+static int str2role(const struct nh_roles_info *ri, const char *str)
+{
+    int i, role = -1;
+    
+    for (i = 0; i < ri->num_roles && role == -1; i++)
+	if (!strncasecmp(ri->rolenames_m[i], str, strlen(str)) ||
+	    (ri->rolenames_f[i] && !strncasecmp(ri->rolenames_f[i], str, strlen(str))))
+	    role = i;
+
+    return role;
+}
+
+
+static int str2race(const struct nh_roles_info *ri, const char *str)
+{
+    int i, race = -1;
+    
+    for (i = 0; i < ri->num_races && race == -1; i++)
+	if (!strncasecmp(ri->racenames[i], str, strlen(str)))
+	    race = i;
+
+    return race;
+}
+
+
 static void process_args(int argc, char *argv[])
 {
     int i;
+    const struct nh_roles_info *ri = nh_get_roles();
 
     /*
      * Process options.
@@ -245,24 +271,28 @@ static void process_args(int argc, char *argv[])
 	    
 	case 'p': /* profession (role) */
 	    if (argv[0][2]) {
-		if ((i = nh_str2role(&argv[0][2])) >= 0)
+		i = str2role(ri, &argv[0][2]);
+		if (i >= 0)
 		    initrole = i;
 	    } else if (argc > 1) {
-		    argc--;
-		    argv++;
-		if ((i = nh_str2role(argv[0])) >= 0)
+		argc--;
+		argv++;
+		i = str2role(ri, argv[0]);
+		if (i >= 0)
 		    initrole = i;
 	    }
 	    break;
 	    
 	case 'r': /* race */
 	    if (argv[0][2]) {
-		if ((i = nh_str2race(&argv[0][2])) >= 0)
+		i = str2race(ri, &argv[0][2]);
+		if (i >= 0)
 		    initrace = i;
 	    } else if (argc > 1) {
-		    argc--;
-		    argv++;
-		if ((i = nh_str2race(argv[0])) >= 0)
+		argc--;
+		argv++;
+		i = str2race(ri, argv[0]);
+		if (i >= 0)
 		    initrace = i;
 	    }
 	    break;
@@ -272,10 +302,9 @@ static void process_args(int argc, char *argv[])
 	    break;
 	    
 	default:
-	    if ((i = nh_str2role(&argv[0][1])) >= 0) {
+	    i = str2role(ri, argv[0]);
+	    if (i >= 0)
 		initrole = i;
-		    break;
-	    }
 	}
     }
 }

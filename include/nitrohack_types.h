@@ -399,6 +399,26 @@ struct nh_game_info {
 };
 
 
+struct nh_roles_info {
+    int num_roles, num_races, num_genders, num_aligns;
+    int def_role, def_race, def_gend, def_align;
+    const char *const *rolenames_m;
+    const char *const *rolenames_f;
+    const char *const *racenames;
+    const char *const *gendnames;
+    const char *const *alignnames;
+    
+    /* race/role/gend/align compatibility matrix
+     * size = num_role * num_races * num_genders * num_aligns */
+    const nh_bool *matrix;
+};
+
+/* generate an index in the compat matrix */
+#define nh_cm_idx(_ri, _rolenum, _racenum, _gendnum, _alignnum) \
+    ((((_rolenum) * (_ri).num_races + (_racenum)) * \
+    (_ri).num_genders + (_gendnum)) * (_ri).num_aligns + (_alignnum))
+
+
 struct nh_replay_info {
     char nextcmd[64];
     int actions, max_actions;

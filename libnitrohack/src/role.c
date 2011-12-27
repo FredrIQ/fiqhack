@@ -3,14 +3,9 @@
 
 #include "hack.h"
 
-static boolean ok_role(int, int, int, int);
 static boolean ok_race(int, int, int, int);
 static boolean ok_gend(int, int, int, int);
 static boolean ok_align(int, int, int, int);
-static int pick_role(int, int, int, int);
-static int pick_race(int, int, int, int);
-static int pick_gend(int, int, int, int);
-static int pick_align(int, int, int, int);
 static int randrace(int);
 static int randalign(int, int);
 
@@ -480,7 +475,7 @@ static int race_alignmentcount(int);
 static const char randomstr[] = "random";
 
 
-boolean nh_validrole(int rolenum)
+static boolean validrole(int rolenum)
 {
 	return rolenum >= 0 && rolenum < SIZE(roles)-1;
 }
@@ -492,7 +487,7 @@ int randrole(void)
 }
 
 
-int nh_str2role(char *str)
+int str2role(char *str)
 {
 	int i, len;
 
@@ -523,7 +518,7 @@ int nh_str2role(char *str)
 }
 
 
-boolean nh_validrace(int rolenum, int racenum)
+static boolean validrace(int rolenum, int racenum)
 {
 	/* Assumes nh_validrole */
 	return (racenum >= 0 && racenum < SIZE(races)-1 &&
@@ -554,7 +549,7 @@ int randrace(int rolenum)
 }
 
 
-int nh_str2race(char *str)
+int str2race(char *str)
 {
 	int i, len;
 
@@ -582,7 +577,7 @@ int nh_str2race(char *str)
 }
 
 
-boolean nh_validgend(int rolenum, int racenum, int gendnum)
+static boolean validgend(int rolenum, int racenum, int gendnum)
 {
 	/* Assumes nh_validrole and nh_validrace */
 	return (gendnum >= 0 && gendnum < ROLE_GENDERS &&
@@ -591,7 +586,7 @@ boolean nh_validgend(int rolenum, int racenum, int gendnum)
 }
 
 
-int nh_str2gend(char *str)
+int str2gend(char *str)
 {
 	int i, len;
 
@@ -618,7 +613,7 @@ int nh_str2gend(char *str)
 }
 
 
-boolean nh_validalign(int rolenum, int racenum, int alignnum)
+static boolean validalign(int rolenum, int racenum, int alignnum)
 {
 	/* Assumes nh_validrole and nh_validrace */
 	return (alignnum >= 0 && alignnum < ROLE_ALIGNS &&
@@ -651,7 +646,7 @@ int randalign(int rolenum, int racenum)
 }
 
 
-int nh_str2align(char *str)
+int str2align(char *str)
 {
 	int i, len;
 
@@ -677,67 +672,6 @@ int nh_str2align(char *str)
 	return ROLE_NONE;
 }
 
-/* is rolenum compatible with any racenum/gendnum/alignnum constraints? */
-boolean ok_role(int rolenum, int racenum, int gendnum, int alignnum)
-{
-    int i;
-    short allow;
-
-    if (rolenum >= 0 && rolenum < SIZE(roles)-1) {
-	allow = roles[rolenum].allow;
-	if (racenum >= 0 && racenum < SIZE(races)-1 &&
-		!(allow & races[racenum].allow & ROLE_RACEMASK))
-	    return FALSE;
-	if (gendnum >= 0 && gendnum < ROLE_GENDERS &&
-		!(allow & genders[gendnum].allow & ROLE_GENDMASK))
-	    return FALSE;
-	if (alignnum >= 0 && alignnum < ROLE_ALIGNS &&
-		!(allow & aligns[alignnum].allow & ROLE_ALIGNMASK))
-	    return FALSE;
-	return TRUE;
-    } else {
-	for (i = 0; i < SIZE(roles)-1; i++) {
-	    allow = roles[i].allow;
-	    if (racenum >= 0 && racenum < SIZE(races)-1 &&
-		    !(allow & races[racenum].allow & ROLE_RACEMASK))
-		continue;
-	    if (gendnum >= 0 && gendnum < ROLE_GENDERS &&
-		    !(allow & genders[gendnum].allow & ROLE_GENDMASK))
-		continue;
-	    if (alignnum >= 0 && alignnum < ROLE_ALIGNS &&
-		    !(allow & aligns[alignnum].allow & ROLE_ALIGNMASK))
-		continue;
-	    return TRUE;
-	}
-	return FALSE;
-    }
-}
-
-/* pick a random role subject to any racenum/gendnum/alignnum constraints */
-/* If pickhow == PICK_RIGID a role is returned only if there is  */
-/* a single possibility */
-int pick_role(int racenum, int gendnum, int alignnum, int pickhow)
-{
-    int i;
-    int roles_ok = 0;
-
-    for (i = 0; i < SIZE(roles)-1; i++) {
-	if (ok_role(i, racenum, gendnum, alignnum))
-	    roles_ok++;
-    }
-    if (roles_ok == 0 || (roles_ok > 1 && pickhow == PICK_RIGID))
-	return ROLE_NONE;
-    roles_ok = rn2(roles_ok);
-    for (i = 0; i < SIZE(roles)-1; i++) {
-	if (ok_role(i, racenum, gendnum, alignnum)) {
-	    if (roles_ok == 0)
-		return i;
-	    else
-		roles_ok--;
-	}
-    }
-    return ROLE_NONE;
-}
 
 /* is racenum compatible with any rolenum/gendnum/alignnum constraints? */
 boolean ok_race(int rolenum, int racenum, int gendnum, int alignnum)
@@ -775,31 +709,6 @@ boolean ok_race(int rolenum, int racenum, int gendnum, int alignnum)
     }
 }
 
-/* pick a random race subject to any rolenum/gendnum/alignnum constraints */
-/* If pickhow == PICK_RIGID a race is returned only if there is  */
-/* a single possibility */
-int pick_race(int rolenum, int gendnum, int alignnum, int pickhow)
-{
-    int i;
-    int races_ok = 0;
-
-    for (i = 0; i < SIZE(races)-1; i++) {
-	if (ok_race(rolenum, i, gendnum, alignnum))
-	    races_ok++;
-    }
-    if (races_ok == 0 || (races_ok > 1 && pickhow == PICK_RIGID))
-	return ROLE_NONE;
-    races_ok = rn2(races_ok);
-    for (i = 0; i < SIZE(races)-1; i++) {
-	if (ok_race(rolenum, i, gendnum, alignnum)) {
-	    if (races_ok == 0)
-		return i;
-	    else
-		races_ok--;
-	}
-    }
-    return ROLE_NONE;
-}
 
 /* is gendnum compatible with any rolenum/racenum/alignnum constraints? */
 /* gender and alignment are not comparable (and also not constrainable) */
@@ -832,32 +741,6 @@ boolean ok_gend(int rolenum, int racenum, int gendnum, int alignnum)
     }
 }
 
-/* pick a random gender subject to any rolenum/racenum/alignnum constraints */
-/* gender and alignment are not comparable (and also not constrainable) */
-/* If pickhow == PICK_RIGID a gender is returned only if there is  */
-/* a single possibility */
-int pick_gend(int rolenum, int racenum, int alignnum, int pickhow)
-{
-    int i;
-    int gends_ok = 0;
-
-    for (i = 0; i < ROLE_GENDERS; i++) {
-	if (ok_gend(rolenum, racenum, i, alignnum))
-	    gends_ok++;
-    }
-    if (gends_ok == 0 || (gends_ok > 1 && pickhow == PICK_RIGID))
-	return ROLE_NONE;
-    gends_ok = rn2(gends_ok);
-    for (i = 0; i < ROLE_GENDERS; i++) {
-	if (ok_gend(rolenum, racenum, i, alignnum)) {
-	    if (gends_ok == 0)
-		return i;
-	    else
-		gends_ok--;
-	}
-    }
-    return ROLE_NONE;
-}
 
 /* is alignnum compatible with any rolenum/racenum/gendnum constraints? */
 /* alignment and gender are not comparable (and also not constrainable) */
@@ -890,77 +773,6 @@ boolean ok_align(int rolenum, int racenum, int gendnum, int alignnum)
     }
 }
 
-/* pick a random alignment subject to any rolenum/racenum/gendnum constraints */
-/* alignment and gender are not comparable (and also not constrainable) */
-/* If pickhow == PICK_RIGID an alignment is returned only if there is  */
-/* a single possibility */
-int pick_align(int rolenum, int racenum, int gendnum, int pickhow)
-{
-    int i;
-    int aligns_ok = 0;
-
-    for (i = 0; i < ROLE_ALIGNS; i++) {
-	if (ok_align(rolenum, racenum, gendnum, i))
-	    aligns_ok++;
-    }
-    if (aligns_ok == 0 || (aligns_ok > 1 && pickhow == PICK_RIGID))
-	return ROLE_NONE;
-    aligns_ok = rn2(aligns_ok);
-    for (i = 0; i < ROLE_ALIGNS; i++) {
-	if (ok_align(rolenum, racenum, gendnum, i)) {
-	    if (aligns_ok == 0)
-		return i;
-	    else
-		aligns_ok--;
-	}
-    }
-    return ROLE_NONE;
-}
-
-static void rigid_role_checks(int *irole, int *irace, int *igend, int *ialign)
-{
-    /* Some roles are limited to a single race, alignment, or gender and
-     * calling this routine prior to XXX_player_selection() will help
-     * prevent an extraneous prompt that actually doesn't allow
-     * you to choose anything further. Note the use of PICK_RIGID which
-     * causes the pick_XX() routine to return a value only if there is one
-     * single possible selection, otherwise it returns ROLE_NONE.
-     *
-     */
-    if (*irole == ROLE_RANDOM) {
-	/* If the role was explicitly specified as ROLE_RANDOM
-	 * via -uXXXX-@ then choose the role in here to narrow down
-	 * later choices. Pick a random role in this case.
-	 */
-	*irole = pick_role(*irace, *igend, *ialign, PICK_RANDOM);
-	if (*irole < 0)
-	    *irole = randrole();
-    }
-    if (*irole != ROLE_NONE) {
-	if (*irace == ROLE_NONE)
-	     *irace = pick_race(*irole, *igend, *ialign, PICK_RIGID);
-	if (*ialign == ROLE_NONE)
-	     *ialign = pick_align(*irole, *irace, *igend, PICK_RIGID);
-	if (*igend == ROLE_NONE)
-	     *igend = pick_gend(*irole, *irace, *ialign, PICK_RIGID);
-    }
-}
-
-
-void nh_get_role_defaults(int *out_role, int *out_race, int *out_gend, int *out_align)
-{
-    if (*out_role == ROLE_NONE)
-	*out_role = flags.init_role;
-    if (*out_race == ROLE_NONE)
-	*out_race = flags.init_race;
-    if (*out_gend == ROLE_NONE)
-	*out_gend = flags.init_gend;
-    if (*out_align == ROLE_NONE)
-	*out_align = flags.init_align;
-
-    rigid_role_checks(out_role, out_race, out_gend, out_align);
-}
-
 
 #define BP_ALIGN	0
 #define BP_GEND		1
@@ -985,7 +797,7 @@ static char *promptsep(char *buf, int num_post_attribs)
 static int role_gendercount(int rolenum)
 {
 	int gendcount = 0;
-	if (nh_validrole(rolenum)) {
+	if (validrole(rolenum)) {
 		if (roles[rolenum].allow & ROLE_MALE) ++gendcount;
 		if (roles[rolenum].allow & ROLE_FEMALE) ++gendcount;
 		if (roles[rolenum].allow & ROLE_NEUTER) ++gendcount;
@@ -1005,101 +817,75 @@ static int race_alignmentcount(int racenum)
 }
 
 
-int nh_get_valid_roles(int racenum, int gendnum, int alignnum,
-		       struct nh_listitem *list, int maxlen)
+struct nh_roles_info *nh_get_roles(void)
 {
-	char rolenamebuf[BUFSZ];
-	int count = 0, rolenum;
+	int i, rolenum, racenum, gendnum, alignnum, arrsize;
+	struct nh_roles_info *info = xmalloc(sizeof(struct nh_roles_info));
+	const char **names, **names2;
+	nh_bool *tmpmatrix;
 	
-	for (rolenum = 0; roles[rolenum].name.m; rolenum++) {
-	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
-		ok_race(rolenum, racenum, gendnum, alignnum) &&
-		ok_gend(rolenum, racenum, gendnum, alignnum) &&
-		ok_align(rolenum, racenum, gendnum, alignnum)) {
-		
-		if (gendnum != ROLE_NONE && gendnum != ROLE_RANDOM) {
-			if (gendnum == 1  && roles[rolenum].name.f)
-				strcpy(rolenamebuf, roles[rolenum].name.f);
-			else
-				strcpy(rolenamebuf, roles[rolenum].name.m);
-		} else {
-			if (roles[rolenum].name.f) {
-				strcpy(rolenamebuf, roles[rolenum].name.m);
-				strcat(rolenamebuf, "/");
-				strcat(rolenamebuf, roles[rolenum].name.f);
-			} else 
-				strcpy(rolenamebuf, roles[rolenum].name.m);
+	/* number of choices */
+	for (i = 0; roles[i].name.m; i++);
+	info->num_roles = i;
+	
+	for (i = 0; races[i].noun; i++);
+	info->num_races = i;
+	
+	info->num_genders = ROLE_GENDERS;
+	info->num_aligns = ROLE_ALIGNS;
+	
+	/* names of choices */
+	names = xmalloc(info->num_roles * sizeof(char*));
+	names2 = xmalloc(info->num_roles * sizeof(char*));
+	for (i = 0; i < info->num_roles; i++) {
+	    names[i]  = roles[i].name.m;
+	    names2[i] = roles[i].name.f;
+	}
+	info->rolenames_m = names;
+	info->rolenames_f = names2;
+
+	names = xmalloc(info->num_races * sizeof(char*));
+	for (i = 0; i < info->num_races; i++)
+	    names[i] = races[i].noun;
+	info->racenames = names;
+	
+	names = xmalloc(info->num_genders * sizeof(char*));
+	for (i = 0; i < info->num_genders; i++)
+	    names[i] = genders[i].adj;
+	info->gendnames = names;
+	
+	names = xmalloc(info->num_aligns * sizeof(char*));
+	for (i = 0; i < info->num_aligns; i++)
+	    names[i] = aligns[i].adj;
+	info->alignnames = names;
+	
+	/* default choices */
+	info->def_role = flags.init_role;
+	info->def_race = flags.init_race;
+	info->def_gend = flags.init_gend;
+	info->def_align = flags.init_align;
+	
+	/* valid combinations of choices */
+	arrsize = info->num_roles * info->num_races * info->num_genders * info->num_aligns;
+	tmpmatrix = xmalloc(arrsize * sizeof(nh_bool));
+	memset(tmpmatrix, FALSE, arrsize * sizeof(nh_bool));
+	for (rolenum = 0; rolenum < info->num_roles; rolenum++) {
+	    for (racenum = 0; racenum < info->num_races; racenum++) {
+		if (!ok_race(rolenum, racenum, ROLE_NONE, ROLE_NONE))
+		    continue;
+		for (gendnum = 0; gendnum < info->num_genders; gendnum++) {
+		    if (!ok_gend(rolenum, racenum, gendnum, ROLE_NONE))
+			continue;
+		    for (alignnum = 0; alignnum < info->num_aligns; alignnum++) {
+			tmpmatrix[nh_cm_idx((*info), rolenum, racenum, gendnum, alignnum)] =
+			    ok_align(rolenum, racenum, gendnum, alignnum);
+		    }
 		}
-		strcpy(list[count].caption, rolenamebuf);
-		list[count].id = rolenum;
-		count++;
 	    }
 	}
+	info->matrix = tmpmatrix;
 	
-	return count;
-}
-
-
-int nh_get_valid_races(int rolenum, int gendnum, int alignnum,
-		       struct nh_listitem *list, int maxlen)
-{
-	int count = 0, racenum;
-	
-	for (racenum = 0; races[racenum].noun; racenum++) {
-	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
-		ok_race(rolenum, racenum, gendnum, alignnum) &&
-		ok_gend(rolenum, racenum, gendnum, alignnum) &&
-		ok_align(rolenum, racenum, gendnum, alignnum)) {
-		
-		strcpy(list[count].caption, races[racenum].noun);
-		list[count].id = racenum;
-		count++;
-	    }
-	}
-	
-	return count;
-}
-
-
-int nh_get_valid_genders(int rolenum, int racenum, int alignnum,
-			 struct nh_listitem *list, int maxlen)
-{
-	int count = 0, gendnum;
-	
-	for (gendnum = 0; gendnum < ROLE_GENDERS; gendnum++) {
-	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
-		ok_race(rolenum, racenum, gendnum, alignnum) &&
-		ok_gend(rolenum, racenum, gendnum, alignnum) &&
-		ok_align(rolenum, racenum, gendnum, alignnum)) {
-		
-		strcpy(list[count].caption, genders[gendnum].adj);
-		list[count].id = gendnum;
-		count++;
-	    }
-	}
-	
-	return count;
-}
-
-
-int nh_get_valid_aligns(int rolenum, int racenum, int gendnum,
-			struct nh_listitem *list, int maxlen)
-{
-	int count = 0, alignnum;
-	
-	for (alignnum = 0; alignnum < ROLE_ALIGNS; alignnum++) {
-	    if (ok_role(rolenum, racenum, gendnum, alignnum) &&
-		ok_race(rolenum, racenum, gendnum, alignnum) &&
-		ok_gend(rolenum, racenum, gendnum, alignnum) &&
-		ok_align(rolenum, racenum, gendnum, alignnum)) {
-		
-		strcpy(list[count].caption, aligns[alignnum].adj);
-		list[count].id = alignnum;
-		count++;
-	    }
-	}
-	
-	return count;
+	return info;
 }
 
 
@@ -1150,11 +936,11 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 	/* <your lawful> */
 
 	/* How many genders are allowed for the desired role? */
-	if (nh_validrole(rolenum))
+	if (validrole(rolenum))
 		gendercount = role_gendercount(rolenum);
 
 	if (gendnum != ROLE_NONE  && gendnum != ROLE_RANDOM) {
-		if (nh_validrole(rolenum)) {
+		if (validrole(rolenum)) {
 		     /* if role specified, and multiple choice of genders for it,
 			and name of role itself does not distinguish gender */
 			if ((rolenum != ROLE_NONE) && (gendercount > 1)
@@ -1172,7 +958,7 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 		/* if gender not specified, but role is specified
 			and only one choice of gender then
 			don't include it in the later list */
-		if ((nh_validrole(rolenum) && (gendercount > 1)) || !nh_validrole(rolenum)) {
+		if ((validrole(rolenum) && (gendercount > 1)) || !validrole(rolenum)) {
 			pa[BP_GEND] = 1;
 			post_attribs++;
 		}
@@ -1180,13 +966,13 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 	/* <your lawful female> */
 
 	if (racenum != ROLE_NONE && racenum != ROLE_RANDOM) {
-		if (nh_validrole(rolenum) && ok_race(rolenum, racenum, gendnum, alignnum)) {
+		if (validrole(rolenum) && ok_race(rolenum, racenum, gendnum, alignnum)) {
 			if (donefirst) strcat(buf, " "); 
 			strcat(buf, (rolenum == ROLE_NONE) ?
 				races[racenum].noun :
 				races[racenum].adj);
 			donefirst = TRUE;
-		} else if (!nh_validrole(rolenum)) {
+		} else if (!validrole(rolenum)) {
 			if (donefirst) strcat(buf, " ");
 			strcat(buf, races[racenum].noun);
 			donefirst = TRUE;
@@ -1200,7 +986,7 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 	}
 	/* <your lawful female gnomish> || <your lawful female gnome> */
 
-	if (nh_validrole(rolenum)) {
+	if (validrole(rolenum)) {
 		if (donefirst) strcat(buf, " ");
 		if (gendnum != ROLE_NONE) {
 		    if (gendnum == 1  && roles[rolenum].name.f)
@@ -1221,7 +1007,7 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 		post_attribs++;
 	}
 	
-	if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) && !nh_validrole(rolenum)) {
+	if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) && !validrole(rolenum)) {
 		if (donefirst) strcat(buf, " ");
 		strcat(buf, "character");
 	}
@@ -1246,7 +1032,7 @@ char *nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenu
 		return (char *)defprompt;
 
 	strcpy(tmpbuf, "Shall I pick ");
-	if (racenum != ROLE_NONE || nh_validrole(rolenum))
+	if (racenum != ROLE_NONE || validrole(rolenum))
 		strcat(tmpbuf, "your ");
 	else {
 		strcat(tmpbuf, "a ");
@@ -1315,9 +1101,9 @@ void role_init(void)
 	int alignmnt;
 
 	/* Check for a valid role.  Try u.initrole first. */
-	if (!nh_validrole(u.initrole)) {
+	if (!validrole(u.initrole)) {
 	    /* Try the player letter second */
-	    if ((u.initrole = nh_str2role(pl_character)) < 0)
+	    if ((u.initrole = str2role(pl_character)) < 0)
 	    	/* None specified; pick a random role */
 	    	u.initrole = randrole();
 	}
@@ -1328,21 +1114,21 @@ void role_init(void)
 	pl_character[PL_CSIZ-1] = '\0';
 
 	/* Check for a valid race */
-	if (!nh_validrace(u.initrole, u.initrace))
+	if (!validrace(u.initrole, u.initrace))
 	    u.initrace = randrace(u.initrole);
 
 	/* Check for a valid gender.  If new game, check both initgend
 	 * and female.  On restore, assume flags.female is correct. */
 	if (flags.pantheon == -1) {	/* new game */
-	    if (!nh_validgend(u.initrole, u.initrace, flags.female))
+	    if (!validgend(u.initrole, u.initrace, flags.female))
 		flags.female = !flags.female;
 	}
-	if (!nh_validgend(u.initrole, u.initrace, u.initgend))
+	if (!validgend(u.initrole, u.initrace, u.initgend))
 	    /* Note that there is no way to check for an unspecified gender. */
 	    u.initgend = flags.female;
 
 	/* Check for a valid alignment */
-	if (!nh_validalign(u.initrole, u.initrace, u.initalign))
+	if (!validalign(u.initrole, u.initrace, u.initalign))
 	    /* Pick a random alignment */
 	    u.initalign = randalign(u.initrole, u.initrace);
 	alignmnt = aligns[u.initalign].value;

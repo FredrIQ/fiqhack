@@ -62,19 +62,7 @@ extern EXPORT const char *nh_get_option_string(const struct nh_option_desc *opt)
 extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs);
 
 /* role.c */
-extern EXPORT void nh_get_role_defaults(int*, int*, int*, int*);
-extern EXPORT int nh_get_valid_roles(int, int, int, struct nh_listitem*, int);
-extern EXPORT int nh_get_valid_races(int, int, int, struct nh_listitem*, int);
-extern EXPORT int nh_get_valid_genders(int, int, int, struct nh_listitem*, int);
-extern EXPORT int nh_get_valid_aligns(int, int, int, struct nh_listitem*, int);
-extern EXPORT nh_bool nh_validrole(int);
-extern EXPORT nh_bool nh_validrace(int, int);
-extern EXPORT nh_bool nh_validgend(int, int, int);
-extern EXPORT nh_bool nh_validalign(int, int, int);
-extern EXPORT int nh_str2role(char *);
-extern EXPORT int nh_str2race(char *);
-extern EXPORT int nh_str2gend(char *);
-extern EXPORT int nh_str2align(char *);
+extern EXPORT struct nh_roles_info *nh_get_roles(void);
 extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int, int);
 extern EXPORT const char *nh_root_plselection_prompt(char *, int, int, int, int, int);
 

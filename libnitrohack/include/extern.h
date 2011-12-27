@@ -1327,6 +1327,10 @@ extern int rnz(int);
 
 /* ### role.c ### */
 
+extern int str2role(char *);
+extern int str2race(char *);
+extern int str2gend(char *);
+extern int str2align(char *);
 extern int randrole(void);
 extern void role_init(void);
 extern const char *Hello(struct monst *);

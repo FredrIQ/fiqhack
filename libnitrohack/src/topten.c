@@ -444,10 +444,10 @@ static void fill_nh_score_entry(struct toptenentry *in, struct nh_topten_entry *
 				int rank, boolean highlight)
 {
     
-    int rolenum = nh_str2role(in->plrole);
-    int racenum = nh_str2race(in->plrace);
-    int gendnum = nh_str2gend(in->plgend);
-    int alignnum = nh_str2align(in->plalign);
+    int rolenum = str2role(in->plrole);
+    int racenum = str2race(in->plrace);
+    int gendnum = str2gend(in->plgend);
+    int alignnum = str2align(in->plalign);
     
     if (rolenum == ROLE_NONE || racenum == ROLE_NONE ||
 	gendnum == ROLE_NONE || alignnum == ROLE_NONE)

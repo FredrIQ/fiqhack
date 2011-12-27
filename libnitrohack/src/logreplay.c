@@ -525,10 +525,10 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
     sscanf(next_log_token(), "%llx", init);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
-    u.initrole = nh_str2role(next_log_token());
-    u.initrace = nh_str2race(next_log_token());
-    u.initgend = nh_str2gend(next_log_token());
-    u.initalign = nh_str2align(next_log_token());
+    u.initrole = str2role(next_log_token());
+    u.initrace = str2race(next_log_token());
+    u.initgend = str2gend(next_log_token());
+    u.initalign = str2align(next_log_token());
     
     if (u.initrole == ROLE_NONE || u.initrace == ROLE_NONE ||
 	u.initgend == ROLE_NONE || u.initalign == ROLE_NONE)
