@@ -63,7 +63,7 @@ const char *nhlogo[] = { /* this _beautiful_ logo was created by exporting an
 static void sighup_handler(int signum)
 {
     if (!ui_flags.done_hup++)
-	nh_exit(EXIT_FORCE_SAVE);
+	nh_exit_game(EXIT_FORCE_SAVE);
 }
 
 static void sigint_handler(int signum)
@@ -71,7 +71,7 @@ static void sigint_handler(int signum)
     if (!game_is_running)
 	return;
     
-    nh_exit(EXIT_REQUEST_SAVE);
+    nh_exit_game(EXIT_REQUEST_SAVE);
 }
 
 static void setup_signals(void)
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     init_options();
     
     gamepaths = init_game_paths();
-    nh_init(&curses_windowprocs, gamepaths);
+    nh_lib_init(&curses_windowprocs, gamepaths);
     for (i = 0; i < PREFIX_COUNT; i++)
 	free(gamepaths[i]);
     free(gamepaths);
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
     mainmenu();
     
     exit_curses_ui();
-    nh_exit(0);
+    nh_lib_exit();
     free_displaychars();
 
     exit(EXIT_SUCCESS);

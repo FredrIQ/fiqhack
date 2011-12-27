@@ -36,7 +36,7 @@ const char *const *nh_get_copyright_banner(void)
     return copyright_banner;
 }
 
-void nh_init(struct nh_window_procs *procs, char **paths)
+void nh_lib_init(struct nh_window_procs *procs, char **paths)
 {
     int i;
             
@@ -59,15 +59,28 @@ void nh_init(struct nh_window_procs *procs, char **paths)
 }
 
 
-boolean nh_exit(int exit_type)
+void nh_lib_exit(void)
 {
     int i;
+    for (i = 0; i < PREFIX_COUNT; i++) {
+	free(fqn_prefix[i]);
+	fqn_prefix[i] = NULL;
+    }
+    
+    cleanup_opt_struct();
+}
+
+
+boolean nh_exit_game(int exit_type)
+{
     boolean log_disabled = iflags.disable_log;
     
     if (!api_entry_checkpoint()) { /* not sure anything in here can actually call panic */
 	iflags.disable_log = log_disabled;
 	return TRUE; /* terminate was called, so exit is successful */
     }
+    
+    program_state.forced_exit = TRUE;
     
     /* clean up after viewing a game replay */
     if (program_state.viewing)
@@ -107,15 +120,9 @@ boolean nh_exit(int exit_type)
 	return FALSE;
     }
     
-    cleanup_opt_struct();
-    
-    for (i = 0; i < PREFIX_COUNT; i++) {
-	free(fqn_prefix[i]);
-	fqn_prefix[i] = NULL;
-    }
     iflags.disable_log = log_disabled;
     /* calling terminate() will get us out of nested contexts safely, eg:
-     * UI_cmdloop -> nh_command -> UI_update_screen (problem happens here) -> nh_exit
+     * UI_cmdloop -> nh_command -> UI_update_screen (problem happens here) -> nh_exit_game
      * will jump all the way back to UI_cmdloop */
     terminate();
     
@@ -746,6 +753,8 @@ int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
 	    return GAME_PANICKED;
 	if (!program_state.gameover)
 	    return GAME_SAVED;
+	if (program_state.forced_exit)
+	    return ERR_FORCED_EXIT;
 	return GAME_OVER;
     }
     

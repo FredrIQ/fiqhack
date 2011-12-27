@@ -25,8 +25,9 @@
 #endif
 
 /* allmain.c */
-extern EXPORT void nh_init(struct nh_window_procs *, char **);
-extern EXPORT nh_bool nh_exit(int exit_type);
+extern EXPORT void nh_lib_init(struct nh_window_procs *, char **);
+extern EXPORT void nh_lib_exit(void);
+extern EXPORT nh_bool nh_exit_game(int exit_type);
 extern EXPORT enum nh_restore_status nh_restore_game(int fd,
 	struct nh_window_procs *rwinprocs, nh_bool force_replay);
 

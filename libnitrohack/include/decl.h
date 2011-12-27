@@ -101,6 +101,7 @@ extern struct sinfo {
 	int restoring;		/* game is currently non-interactive (user input via log restore) */
 	int viewing;		/* non-interactive: viewing a game replay */
 	int gameover;		/* self explanatory? */
+	int forced_exit;	/* exit was triggered by nh_exit_game */
 	int stopprint;		/* inhibit further end of game disclosure */
 	int something_worth_saving;	/* in case of panic */
 	int panicking;		/* `panic' is in progress */
