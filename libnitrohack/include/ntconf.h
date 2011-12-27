@@ -15,9 +15,7 @@
 #endif
 
 #include <string.h>	/* Provides prototypes of strncmpi(), etc.     */
-#ifdef STRNCMPI
 #define strncmpi(a,b,c) strnicmp(a,b,c)
-#endif
 
 #include <sys/types.h>
 #include <stdlib.h>

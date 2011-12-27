@@ -268,24 +268,6 @@ pmatch_top:
 }
 
 
-#ifndef STRNCMPI
-/* case insensitive counted string comparison */
-int strncmpi(const char *s1, const char *s2, int n)
-{
-    char t1, t2;
-
-    while (n--) {
-	if (!*s2) return *s1 != 0;	/* s1 >= s2 */
-	else if (!*s1) return -1;	/* s1  < s2 */
-	t1 = lowc(*s1++);
-	t2 = lowc(*s2++);
-	if (t1 != t2) return (t1 > t2) ? 1 : -1;
-    }
-    return 0;				/* s1 == s2 */
-}
-#endif	/* STRNCMPI */
-
-
 #ifndef STRSTRI
 /* case insensitive substring search */
 char *strstri(const char *str, const char *sub)

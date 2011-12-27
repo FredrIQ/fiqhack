@@ -18,8 +18,6 @@
 
 #define PANICLOG "paniclog"	/* log of panic and impossible events */
 
-/* #define STRNCMPI */	/* compiler/library has the strncmpi function */
-
 #include "global.h"	/* Define everything else according to choices above */
 
 #endif /* CONFIG_H */

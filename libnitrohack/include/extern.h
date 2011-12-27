@@ -556,9 +556,6 @@ extern int dofight(int,int,int);
 /* ### hacklib.c ### */
 
 extern char *tabexpand(char *);
-#ifndef STRNCMPI
-extern int strncmpi(const char *,const char *,int);
-#endif
 extern void init_menulist(struct menulist *m);
 extern boolean letter(char);
 extern boolean digit(char);
