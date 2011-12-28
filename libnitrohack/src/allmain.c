@@ -62,6 +62,9 @@ void nh_lib_init(struct nh_window_procs *procs, char **paths)
 void nh_lib_exit(void)
 {
     int i;
+    
+    xmalloc_cleanup();
+    
     for (i = 0; i < PREFIX_COUNT; i++) {
 	free(fqn_prefix[i]);
 	fqn_prefix[i] = NULL;

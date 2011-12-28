@@ -52,21 +52,23 @@ static int get_valid_roles(const struct nh_roles_info *ri, int racenum,
 	if (!is_valid_character(ri, i, racenum, gendnum, alignnum))
 	    continue;
 	
-	if (gendnum != ROLE_NONE && gendnum != ROLE_RANDOM) {
-	    if (gendnum == 1  && ri->rolenames_f[i])
-		strcpy(rolenamebuf, ri->rolenames_f[i]);
-	    else
-		strcpy(rolenamebuf, ri->rolenames_m[i]);
-	} else {
-	    if (ri->rolenames_f[i]) {
-		strcpy(rolenamebuf, ri->rolenames_m[i]);
-		strcat(rolenamebuf, "/");
-		strcat(rolenamebuf, ri->rolenames_f[i]);
-	    } else
-		strcpy(rolenamebuf, ri->rolenames_m[i]);
+	if (list && count < listlen) {
+	    if (gendnum != ROLE_NONE && gendnum != ROLE_RANDOM) {
+		if (gendnum == 1  && ri->rolenames_f[i])
+		    strcpy(rolenamebuf, ri->rolenames_f[i]);
+		else
+		    strcpy(rolenamebuf, ri->rolenames_m[i]);
+	    } else {
+		if (ri->rolenames_f[i]) {
+		    strcpy(rolenamebuf, ri->rolenames_m[i]);
+		    strcat(rolenamebuf, "/");
+		    strcat(rolenamebuf, ri->rolenames_f[i]);
+		} else
+		    strcpy(rolenamebuf, ri->rolenames_m[i]);
+	    }
+	    strcpy(list[count].caption, rolenamebuf);
+	    list[count].id = i;
 	}
-	strcpy(list[count].caption, rolenamebuf);
-	list[count].id = i;
 	count++;
     }
     return count;
@@ -83,8 +85,10 @@ static int get_valid_races(const struct nh_roles_info *ri, int rolenum,
 	if (!is_valid_character(ri, rolenum, i, gendnum, alignnum))
 	    continue;
 	
-	strcpy(list[count].caption, ri->racenames[i]);
-	list[count].id = i;
+	if (list && count < listlen) {
+	    strcpy(list[count].caption, ri->racenames[i]);
+	    list[count].id = i;
+	}
 	count++;
     }
     return count;
@@ -101,8 +105,10 @@ static int get_valid_genders(const struct nh_roles_info *ri, int rolenum,
 	if (!is_valid_character(ri, rolenum, racenum, i, alignnum))
 	    continue;
 	
-	strcpy(list[count].caption, ri->gendnames[i]);
-	list[count].id = i;
+	if (list && count < listlen) {
+	    strcpy(list[count].caption, ri->gendnames[i]);
+	    list[count].id = i;
+	}
 	count++;
     }
     return count;
@@ -119,11 +125,71 @@ static int get_valid_aligns(const struct nh_roles_info *ri, int rolenum,
 	if (!is_valid_character(ri, rolenum, racenum, gendnum, i))
 	    continue;
 	
-	strcpy(list[count].caption, ri->alignnames[i]);
-	list[count].id = i;
+	if (list && count < listlen) {
+	    strcpy(list[count].caption, ri->alignnames[i]);
+	    list[count].id = i;
+	}
 	count++;
     }
     return count;
+}
+
+
+static void validate_character_presets(const struct nh_roles_info *ri,
+				       int *initrole, int *initrace,
+				       int *initgend, int *initalign)
+{
+    struct nh_listitem list[1];
+    char listbuffer[256];
+    
+    list[0].caption = listbuffer;
+    
+    /* throw out obviously invalid values */
+    if (*initrole < ROLE_RANDOM || *initrole >= ri->num_roles)
+	*initrole = ROLE_NONE;
+    if (*initrace < ROLE_RANDOM || *initrace >= ri->num_races)
+	*initrace = ROLE_NONE;
+    if (*initgend < ROLE_RANDOM || *initgend >= ri->num_genders)
+	*initgend = ROLE_NONE;
+    if (*initalign < ROLE_RANDOM || *initalign >= ri->num_aligns)
+	*initalign = ROLE_NONE;
+    
+    /* catch mutually incompatible character options (male valkyrie) */
+    if (!is_valid_character(ri, *initrole, *initrace, *initgend, *initalign)) {
+	/* always keep the role */
+	if (is_valid_character(ri, *initrole, *initrace, *initgend, ROLE_NONE)) {
+	    curses_msgwin("Incompatible alignment!");
+	    *initalign = ROLE_NONE;
+	} else if (is_valid_character(ri, *initrole, *initrace, ROLE_NONE, *initalign)) {
+	    curses_msgwin("Incompatible gender!");
+	    *initgend = ROLE_NONE;
+	} else if (is_valid_character(ri, *initrole, ROLE_NONE, *initgend, *initalign)) {
+	    curses_msgwin("Incompatible race!");
+	    *initrace = ROLE_NONE;
+	} else {
+	    curses_msgwin("Incompatible character presets!");
+	    *initrace = ROLE_NONE;
+	    *initgend = ROLE_NONE;
+	    *initalign = ROLE_NONE;
+	}
+    }
+    
+    /* if there is only one possible option for any attribute, choose it here */
+    if ((*initrole == ROLE_NONE || *initrole == ROLE_RANDOM) &&
+	get_valid_roles(ri, *initrace, *initgend, *initalign, list, 1) == 1)
+	*initrole = list[0].id;
+    
+    if ((*initrace == ROLE_NONE || *initrace == ROLE_RANDOM) &&
+	get_valid_races(ri, *initrole, *initgend, *initalign, list, 1) == 1)
+	*initrace = list[0].id;
+    
+    if ((*initgend == ROLE_NONE || *initgend == ROLE_RANDOM) &&
+	get_valid_genders(ri, *initrole, *initrace, *initalign, list, 1) == 1)
+	*initgend = list[0].id;
+    
+    if ((*initalign == ROLE_NONE || *initalign == ROLE_RANDOM) &&
+	get_valid_aligns(ri, *initrole, *initrace, *initgend, list, 1) == 1)
+	*initalign = list[0].id;
 }
 
 
@@ -147,6 +213,8 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
     if (initrace == ROLE_NONE) initrace = ri->def_race;
     if (initgend == ROLE_NONE) initgend = ri->def_gend;
     if (initalign == ROLE_NONE) initalign = ri->def_align;
+    
+    validate_character_presets(ri, &initrole, &initrace, &initgend, &initalign);
     
     for (i = 0; i < LISTSZ; i++) {
 	listbuffers[i][0] = '\0';
@@ -173,14 +241,10 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
     items = malloc(sizeof(struct nh_menuitem) * size);
 
     /* Select a role, if necessary */
-    /* we'll try to be compatible with pre-selected race/gender/alignment,
-	* but may not succeed */
+    /* if pre-selected race/gender/alignment are still set after
+     * validate_character_presets we know they're OK */
     if (initrole < 0) {
 	listlen = get_valid_roles(ri, initrace, initgend, initalign, list, LISTSZ);
-	if (listlen == 0) {
-	    curses_msgwin("Incompatible role!");
-	    listlen = get_valid_roles(ri, ROLE_NONE, ROLE_NONE, ROLE_NONE, list, LISTSZ);
-	}
 	
 	/* Process the choice */
 	if (pick4u == 'y' || initrole == ROLE_RANDOM || randomall) {
@@ -215,15 +279,8 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
     }
     
     /* Select a race, if necessary */
-    /* force compatibility with role, try for compatibility with
-	* pre-selected gender/alignment */
-    if (initrace < 0 || !is_valid_character(ri, initrole, initrace, ROLE_NONE, ROLE_NONE)) {
+    if (initrace < 0) {
 	listlen = get_valid_races(ri, initrole, initgend, initalign, list, LISTSZ);
-	if (listlen == 0) {
-	    /* pre-selected race not valid */
-	    curses_msgwin("Incompatible race!");
-	    listlen = get_valid_races(ri, initrole, ROLE_NONE, ROLE_NONE, list, LISTSZ);
-	}
 	
 	if (pick4u == 'y' || initrace == ROLE_RANDOM || randomall) {
 	    initrace = list[random() % listlen].id;
@@ -258,15 +315,9 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
     }
 
     /* Select a gender, if necessary */
-    /* force compatibility with role/race, try for compatibility with
-	* pre-selected alignment */
-    if (initgend < 0 || !is_valid_character(ri, initrole, initrace, initgend, ROLE_NONE)) {
+    if (initgend < 0) {
 	listlen = get_valid_genders(ri, initrole, initrace, initalign, list, LISTSZ);
-	if (listlen == 0) {
-	    /* pre-selected gender not valid */
-	    curses_msgwin("Incompatible gender!");
-	    listlen = get_valid_genders(ri, initrole, initrace, ROLE_NONE, list, LISTSZ);
-	}
+
 	if (pick4u == 'y' || initgend == ROLE_RANDOM || randomall) {
 	    initgend = list[random() % listlen].id;
 	} else {	/* pick4u == 'n' */
@@ -300,8 +351,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
     }
 
     /* Select an alignment, if necessary */
-    /* force compatibility with role/race/gender */
-    if (initalign < 0 || !is_valid_character(ri, initrole, initrace, ROLE_NONE, initalign)) {
+    if (initalign < 0) {
 	listlen = get_valid_aligns(ri, initrole, initrace, initgend, list, LISTSZ);
 	
 	if (pick4u == 'y' || initalign == ROLE_RANDOM || randomall) {

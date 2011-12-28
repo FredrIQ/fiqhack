@@ -774,49 +774,6 @@ boolean ok_align(int rolenum, int racenum, int gendnum, int alignnum)
 }
 
 
-#define BP_ALIGN	0
-#define BP_GEND		1
-#define BP_RACE		2
-#define BP_ROLE		3
-#define NUM_BP		4
-
-static char pa[NUM_BP], post_attribs;
-
-static char *promptsep(char *buf, int num_post_attribs)
-{
-	const char *conj = "and ";
-	if (num_post_attribs > 1
-	    && post_attribs < num_post_attribs && post_attribs > 1)
-	 	strcat(buf, ","); 
-	strcat(buf, " ");
-	--post_attribs;
-	if (!post_attribs && num_post_attribs > 1) strcat(buf, conj);
-	return buf;
-}
-
-static int role_gendercount(int rolenum)
-{
-	int gendcount = 0;
-	if (validrole(rolenum)) {
-		if (roles[rolenum].allow & ROLE_MALE) ++gendcount;
-		if (roles[rolenum].allow & ROLE_FEMALE) ++gendcount;
-		if (roles[rolenum].allow & ROLE_NEUTER) ++gendcount;
-	}
-	return gendcount;
-}
-
-static int race_alignmentcount(int racenum)
-{
-	int aligncount = 0;
-	if (racenum != ROLE_NONE && racenum != ROLE_RANDOM) {
-		if (races[racenum].allow & ROLE_CHAOTIC) ++aligncount;
-		if (races[racenum].allow & ROLE_LAWFUL) ++aligncount;
-		if (races[racenum].allow & ROLE_NEUTRAL) ++aligncount;
-	}
-	return aligncount;
-}
-
-
 struct nh_roles_info *nh_get_roles(void)
 {
 	int i, rolenum, racenum, gendnum, alignnum, arrsize;
@@ -886,6 +843,49 @@ struct nh_roles_info *nh_get_roles(void)
 	info->matrix = tmpmatrix;
 	
 	return info;
+}
+
+
+#define BP_ALIGN	0
+#define BP_GEND		1
+#define BP_RACE		2
+#define BP_ROLE		3
+#define NUM_BP		4
+
+static char pa[NUM_BP], post_attribs;
+
+static char *promptsep(char *buf, int num_post_attribs)
+{
+	const char *conj = "and ";
+	if (num_post_attribs > 1
+	    && post_attribs < num_post_attribs && post_attribs > 1)
+		strcat(buf, ",");
+	strcat(buf, " ");
+	--post_attribs;
+	if (!post_attribs && num_post_attribs > 1) strcat(buf, conj);
+	return buf;
+}
+
+static int role_gendercount(int rolenum)
+{
+	int gendcount = 0;
+	if (validrole(rolenum)) {
+		if (roles[rolenum].allow & ROLE_MALE) ++gendcount;
+		if (roles[rolenum].allow & ROLE_FEMALE) ++gendcount;
+		if (roles[rolenum].allow & ROLE_NEUTER) ++gendcount;
+	}
+	return gendcount;
+}
+
+static int race_alignmentcount(int racenum)
+{
+	int aligncount = 0;
+	if (racenum != ROLE_NONE && racenum != ROLE_RANDOM) {
+		if (races[racenum].allow & ROLE_CHAOTIC) ++aligncount;
+		if (races[racenum].allow & ROLE_LAWFUL) ++aligncount;
+		if (races[racenum].allow & ROLE_NEUTRAL) ++aligncount;
+	}
+	return aligncount;
 }
 
 

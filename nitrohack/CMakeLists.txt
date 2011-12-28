@@ -1,4 +1,4 @@
-# curses/CMakeLists.txt: build the curses window port for libnitrohack
+# build the curses window port for libnitrohack
 
 
 if (NOT WIN32)
@@ -64,6 +64,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     target_link_libraries (nitrohack_curses rt)
 endif ()
 
+add_dependencies (nitrohack_curses libnitrohack)
 
 if (UNIX)
     add_custom_command(OUTPUT nitrohack.sh
@@ -76,4 +77,4 @@ if (UNIX)
 endif()
 
 install(TARGETS nitrohack_curses
-        DESTINATION ${LIBDIR})
+        DESTINATION ${BINDIR})
