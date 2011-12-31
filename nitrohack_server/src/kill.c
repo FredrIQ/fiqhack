@@ -36,13 +36,13 @@ int create_pidfile(void)
     FILE *pidfile;
     
     if ( (pid = read_pid()) ) {
-	fprintf(stderr, "Error: The server is already running as pid %d.", pid);
+	log_msg("Error: The server is already running as pid %d.", pid);
 	return FALSE;
     }
     
     pidfile = fopen(settings.pidfile, "w");
     if (!pidfile) {
-	fprintf(stderr, "Error: Could not create pid files %s: %s.\n",
+	log_msg("Error: Could not create pid files %s: %s.\n",
 		settings.pidfile, strerror(errno));
 	return FALSE;
     }
@@ -51,6 +51,13 @@ int create_pidfile(void)
     fclose(pidfile);
     
     return TRUE;
+}
+
+
+void remove_pidfile(void)
+{
+    if (read_pid() == getpid())
+	unlink(settings.pidfile);
 }
 
 

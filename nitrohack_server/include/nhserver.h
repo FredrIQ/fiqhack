@@ -129,6 +129,7 @@ extern void db_restore_options(int uid);
 
 /* kill.c */
 extern int create_pidfile(void);
+extern void remove_pidfile(void);
 extern void kill_server(void);
 
 /* log.c */

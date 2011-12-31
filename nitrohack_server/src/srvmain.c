@@ -41,21 +41,25 @@ int main(int argc, char *argv[])
     /* Init files and directories.
      * Start logging last, so that the log is only created if startup succeeds. */
     if (!init_workdir() ||
-	(!settings.nodaemon && !create_pidfile()) ||
 	!init_database() ||
 	!check_database() ||
 	!begin_logging())
 	return 1;
     
-    if (!settings.nodaemon)
+    if (!settings.nodaemon) {
     	daemon(0, 0);
+	if (!create_pidfile())
+	    return 1;
+    }
 
-    /* give this process and its children an own process group id for kill */
+    /* give this process and its children their own process group id for kill() */
     setpgid(0, 0);
     report_startup();
     
     runserver();
     
+    /* shutdown */
+    remove_pidfile();
     end_logging();
     close_database();
     free_config();
@@ -104,7 +108,7 @@ static int read_parameters(int argc, char *argv[], char **conffile, int *request
 {
     int opt;
     
-    while ((opt = getopt(argc, argv, "4:6:a:c:D:d:H:hk:l:no:P:p:t:u:w:")) != -1) {
+    while ((opt = getopt(argc, argv, "4:6:a:c:D:d:H:hkl:no:P:p:t:u:w:")) != -1) {
 	switch (opt) {
 	    case '4': /* bind address */
 		if (!parse_ip_addr(optarg, (struct sockaddr*)&settings.bind_addr_4, TRUE)) {
