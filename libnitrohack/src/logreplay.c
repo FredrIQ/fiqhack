@@ -17,7 +17,7 @@ static void replay_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void replay_delay_output(void) {}
 static void replay_level_changed(int displaymode) {}
 static void replay_outrip(struct nh_menuitem *items,int icount, boolean tombstone,
-			   char *name, long gold, char *killbuf, int year) {}
+			   char *name, int gold, char *killbuf, int end_how, int year) {}
 static int replay_display_menu(struct nh_menuitem *items, int icount,
 				const char *title, int how, int *results);
 static int replay_display_objects(struct nh_objitem *items, int icount, const char *title,

@@ -564,7 +564,8 @@ struct nh_window_procs {
     void (*win_getlin)(const char *,char *);
     void (*win_delay)(void);
     void (*win_level_changed)(int displaymode);
-    void (*win_outrip)(struct nh_menuitem*,int, nh_bool, char *, long, char *, int);
+    void (*win_outrip)(struct nh_menuitem *items,int icount, nh_bool tombstone,
+		       char *name, int gold, char *killbuf, int end_how, int year);
 };
 
 #endif

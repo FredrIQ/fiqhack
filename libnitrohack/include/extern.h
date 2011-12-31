@@ -9,7 +9,7 @@
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
-extern void startup_common(char *name, int playmode);
+extern void startup_common(const char *name, int playmode);
 extern int command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
 
 /* ### apply.c ### */
@@ -1329,6 +1329,10 @@ extern int str2race(char *);
 extern int str2gend(char *);
 extern int str2align(char *);
 extern int randrole(void);
+extern boolean validrole(int rolenum);
+extern boolean validrace(int rolenum, int racenum);
+extern boolean validgend(int rolenum, int racenum, int gendnum);
+extern boolean validalign(int rolenum, int racenum, int alignnum);
 extern void role_init(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);

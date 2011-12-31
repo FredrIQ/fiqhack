@@ -36,7 +36,7 @@ const char *const *nh_get_copyright_banner(void)
     return copyright_banner;
 }
 
-void nh_lib_init(struct nh_window_procs *procs, char **paths)
+void nh_lib_init(const struct nh_window_procs *procs, char **paths)
 {
     int i;
             
@@ -134,7 +134,7 @@ boolean nh_exit_game(int exit_type)
 }
 
 
-void startup_common(char *name, int playmode)
+void startup_common(const char *name, int playmode)
 {
     /* (re)init all global data */
     init_data();
@@ -223,13 +223,13 @@ static void post_init_tasks(void)
 }
 
 
-boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
+boolean nh_start_game(int fd, const char *name, int irole, int irace, int igend,
 		      int ialign, enum nh_game_modes playmode)
 {
     if (!api_entry_checkpoint())
-	return FALSE; /* quit from player selection or init failed */
+	return FALSE; /* init failed; programmer error! */
 
-    if (fd == -1 || !name)
+    if (fd == -1 || !name || !*name)
 	goto err_out;
     
     if (!program_state.restoring)
@@ -239,8 +239,8 @@ boolean nh_start_game(int fd, char *name, int irole, int irace, int igend,
     
     startup_common(name, playmode);
     
-    if (irole == ROLE_NONE || irace == ROLE_NONE ||
-	igend == ROLE_NONE || ialign == ROLE_NONE)
+    if (!validrole(irole) || !validrace(irole, irace) ||
+	!validgend(irole, irace, igend) || !validalign(irole, irace, ialign))
 	goto err_out;
     u.initrole = irole; u.initrace = irace;
     u.initgend = igend; u.initalign = ialign;

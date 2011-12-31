@@ -274,7 +274,7 @@ extern int curses_msgwin(const char *msg);
 
 /* gameover.c */
 extern void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-		          char *plname, long gold, char *killbuf, int year);
+		          char *plname, int gold, char *killbuf, int how, int year);
 
 
 /* getline.c */

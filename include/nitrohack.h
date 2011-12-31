@@ -25,13 +25,13 @@
 #endif
 
 /* allmain.c */
-extern EXPORT void nh_lib_init(struct nh_window_procs *, char **);
+extern EXPORT void nh_lib_init(const struct nh_window_procs *, char **paths);
 extern EXPORT void nh_lib_exit(void);
 extern EXPORT nh_bool nh_exit_game(int exit_type);
 extern EXPORT enum nh_restore_status nh_restore_game(int fd,
 	struct nh_window_procs *rwinprocs, nh_bool force_replay);
 
-extern EXPORT nh_bool nh_start_game(int fd, char *name, int role, int race,
+extern EXPORT nh_bool nh_start_game(int fd, const char *name, int role, int race,
 				    int gend, int align, enum nh_game_modes playmode);
 extern EXPORT int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg);
 extern EXPORT const char *const *nh_get_copyright_banner(void);
@@ -69,7 +69,7 @@ extern EXPORT const char *nh_root_plselection_prompt(char *, int, int, int, int,
 
 /* topten.c */
 extern EXPORT struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
-				      char *player, int top, int around, nh_bool own);
+				      const char *player, int top, int around, nh_bool own);
 
 
 #define set_menuitem(it, i, r, cap, acc, sel) \

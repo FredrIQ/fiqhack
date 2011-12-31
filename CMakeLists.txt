@@ -30,6 +30,15 @@ if (NOT SHELLDIR)
          CACHE PATH "launch script location" )
 endif()
 
+# NitroHack server currently uses several Linux-specific apis.
+# Generalizing the code to the point where it will work on other systems
+# is not impossible, but the work has not been done.
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set (ENABLE_SERVER TRUE CACHE BOOL "Build the NitroHack network server")
+else ()
+    set (ENABLE_SERVER FALSE)
+endif ()
+
 
 
 if (CMAKE_COMPILER_IS_GNUCC)
@@ -39,5 +48,12 @@ if (CMAKE_COMPILER_IS_GNUCC)
     endif ()
 endif ()
 
+# nitrohack core
 add_subdirectory (libnitrohack)
+
+# nitrohack text ui
 add_subdirectory (nitrohack)
+
+if (ENABLE_SERVER)
+    add_subdirectory (nitrohack_server)
+endif ()

@@ -483,7 +483,7 @@ static void fill_nh_score_entry(struct toptenentry *in, struct nh_topten_entry *
 
 
 struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
-				      char *player, int top, int around, boolean own)
+				      const char *player, int top, int around, boolean own)
 {
     struct toptenentry *ttlist, newtt;
     struct nh_topten_entry *score_list;

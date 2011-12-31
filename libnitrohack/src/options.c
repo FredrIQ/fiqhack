@@ -556,9 +556,10 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 			return FALSE;
 		
 		*bvar = option->value.b;
-		/* allow the ui to "see" changes to booleans, but the return
-		 * value doesn't mattter as the option was set here. */
-		ui_option_callback(option);
+		if (is_ui && ui_option_callback)
+		    /* allow the ui to "see" changes to booleans, but the return
+		     * value doesn't mattter as the option was set here. */
+		    ui_option_callback(option);
 		return TRUE;
 	}
 	else if (is_ui)

@@ -41,7 +41,7 @@ static void center(char *line, char *text)
 
 
 void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-		          char *plname, long gold, char *killbuf, int year)
+		          char *plname, int gold, char *killbuf, int end_how, int year)
 {
     char **dp, **rip;
     char *dpx;
@@ -65,7 +65,7 @@ void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
 	center(rip[NAME_LINE], buf);
 
 	/* Put $ on stone */
-	sprintf(buf, "%ld Au", gold);
+	sprintf(buf, "%d Au", gold);
 	buf[STONE_LINE_LEN] = 0; /* It could be a *lot* of gold :-) */
 	center(rip[GOLD_LINE], buf);
 

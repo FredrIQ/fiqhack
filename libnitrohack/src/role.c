@@ -475,7 +475,7 @@ static int race_alignmentcount(int);
 static const char randomstr[] = "random";
 
 
-static boolean validrole(int rolenum)
+boolean validrole(int rolenum)
 {
 	return rolenum >= 0 && rolenum < SIZE(roles)-1;
 }
@@ -518,7 +518,7 @@ int str2role(char *str)
 }
 
 
-static boolean validrace(int rolenum, int racenum)
+boolean validrace(int rolenum, int racenum)
 {
 	/* Assumes nh_validrole */
 	return (racenum >= 0 && racenum < SIZE(races)-1 &&
@@ -577,7 +577,7 @@ int str2race(char *str)
 }
 
 
-static boolean validgend(int rolenum, int racenum, int gendnum)
+boolean validgend(int rolenum, int racenum, int gendnum)
 {
 	/* Assumes nh_validrole and nh_validrace */
 	return (gendnum >= 0 && gendnum < ROLE_GENDERS &&
@@ -613,7 +613,7 @@ int str2gend(char *str)
 }
 
 
-static boolean validalign(int rolenum, int racenum, int alignnum)
+boolean validalign(int rolenum, int racenum, int alignnum)
 {
 	/* Assumes nh_validrole and nh_validrace */
 	return (alignnum >= 0 && alignnum < ROLE_ALIGNS &&

@@ -658,8 +658,8 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	    add_menutext(&menu, "");
 	}
 	if (!done_stopprint)
-	    outrip(menu.items, menu.icount, how <= GENOCIDED, plname, umoney, outrip_buf,
-		   getyear());
+	    outrip(menu.items, menu.icount, how <= GENOCIDED, plname, umoney,
+		   outrip_buf, how, getyear());
 	
 	free(menu.items);
 }

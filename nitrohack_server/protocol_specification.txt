@@ -1,0 +1,33 @@
+NitroHack Network Protocol v1
+=============================
+
+0) Basics
+---------
+The protocol is based on JSON. Each client command and each server response is
+a single, valid JSON object in UTF8 encoding.
+
+
+1) Interaction
+--------------
+Once the client has connected to the server, it must send either an *auth*  or
+a *register* command. If the client sends a successful register command, a
+following *auth* command is not necessary.
+
+When the client is authenticated any other command may be sent to the server.
+
+2) Client commands
+------------------
+
+*auth*:    Authenticate the client with the server. Parameters: "username" is a
+           valid UTF8 string, which no more than 50 multibyte characters long.
+           The server may impose additional restrictions regarding forbidden
+           characters. "password" is an arbitrary sequence of bytes of any
+           length.
+           The total length of a JSON-encoded *auth* command may not exceed 500
+           bytes.
+           Example:  {"auth" : {"username" : "a name", "password" : "p4ssw0rd"}}
+
+*register* Register a new user on the server. Like the *auth* command, but there
+           is an additional optional parameter "email". If given, it specifies
+           an email address for password resets.
+           Like *auth* the total command length may not be greater than 500 bytes.
