@@ -24,7 +24,7 @@ int parse_ip_addr(const char *str, struct sockaddr *out, int want_v4)
     };
     struct addrinfo *gai_res = NULL;
     
-    if (getaddrinfo(optarg, NULL, &gai_hints, &gai_res) != 0)
+    if (getaddrinfo(str, NULL, &gai_hints, &gai_res) != 0)
 	return FALSE;
     
     struct addrinfo *next;
@@ -108,7 +108,7 @@ static int parse_config_line(char *line)
     
     else if (!strcmp(line, "ipv6addr")) {
 	struct sockaddr_in6 tmp;
-	if (!parse_ip_addr(optarg, (struct sockaddr*)&tmp, FALSE)) {
+	if (!parse_ip_addr(val, (struct sockaddr*)&tmp, FALSE)) {
 	    fprintf(stderr, "Error: %s is not a valid ipv6 address.\n", val);
 	    return FALSE;
 	}
@@ -119,7 +119,7 @@ static int parse_config_line(char *line)
     
     else if (!strcmp(line, "ipv4addr")) {
 	struct sockaddr_in tmp;
-	if (!parse_ip_addr(optarg, (struct sockaddr*)&tmp, TRUE)) {
+	if (!parse_ip_addr(val, (struct sockaddr*)&tmp, TRUE)) {
 	    fprintf(stderr, "Error: %s is not a valid ipv4 address.\n", val);
 	    return FALSE;
 	}
