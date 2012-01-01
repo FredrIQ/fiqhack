@@ -804,7 +804,7 @@ int fruitadd(char *str)
 			{
 			    strcpy(buf, pl_fruit);
 			    strcpy(pl_fruit, "candied ");
-			    strncat(pl_fruit+8, buf, PL_FSIZ-8);
+			    strncat(pl_fruit+8, buf, PL_FSIZ-8-1);
 			}
 	}
 	for (f=ffruit; f; f = f->nextf) {

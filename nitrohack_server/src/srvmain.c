@@ -47,7 +47,11 @@ int main(int argc, char *argv[])
 	return 1;
     
     if (!settings.nodaemon) {
-    	daemon(0, 0);
+    	if (daemon(0, 0) == -1) {
+	    settings.nodaemon = TRUE;
+	    log_msg("could not detach from terminal: %s", strerror(errno));
+	    return 1;
+	}
 	if (!create_pidfile())
 	    return 1;
     }

@@ -141,7 +141,7 @@ static void game_ended(int status, fnchar *filename)
     get_gamedir(LOG_DIR, logname);
     strncpy(fncopy, filename, sizeof(fncopy));
     fname = basename(fncopy);
-    strncat(logname, fname, sizeof(logname));
+    strncat(logname, fname, sizeof(logname)-1);
     
     /* don't care about errors: rename is nice to have, not essential */
     rename(filename, logname);
@@ -408,7 +408,7 @@ nh_bool loadgame(void)
     free(items);
     filename[0] = '\0';
     if (n > 0)
-	fnncat(filename, files[pick[0]-1], sizeof(filename)/sizeof(fnchar));
+	fnncat(filename, files[pick[0]-1], sizeof(filename)/sizeof(fnchar)-1);
 
     for (i = 0; i < icount; i++)
 	free(files[i]);

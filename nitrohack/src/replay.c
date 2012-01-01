@@ -320,7 +320,7 @@ void replay(void)
 	free(items);
 	filename[0] = '\0';
 	if (n > 0 && pick[0] != -1)
-	    fnncat(filename, files[pick[0]-1], sizeof(filename)/sizeof(fnchar));
+	    fnncat(filename, files[pick[0]-1], sizeof(filename)/sizeof(fnchar)-1);
 	
 	for (i = 0; i < filecount; i++)
 	    free(files[i]);

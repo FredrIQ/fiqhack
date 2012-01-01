@@ -10,15 +10,15 @@
 
 static int read_pid(void)
 {
-    int pid;
+    int pid, n;
     FILE *pidfile;
     
     pidfile = fopen(settings.pidfile, "r");
     if (!pidfile)
 	return 0;
     
-    fscanf(pidfile, "%d", &pid);
-    if (!pid)
+    n = fscanf(pidfile, "%d", &pid);
+    if (!n || !pid)
 	return 0;
     
     /* kill with sig=0 only performs error checking without actually sending a
