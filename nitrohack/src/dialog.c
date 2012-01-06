@@ -64,7 +64,6 @@ char curses_yn_function(const char *query, const char *resp, char def)
     win = newdialog(height, width);
     mvwprintw(win, 1, 2, prompt);
     wrefresh(win);
-    curs_set(1);
     
     do {
 	key = tolower(nh_wgetch(win));
@@ -87,7 +86,6 @@ char curses_yn_function(const char *query, const char *resp, char def)
 	
     } while (!key);
     
-    curs_set(0);
     delwin(win);
     redraw_game_windows();
     return key;
@@ -107,7 +105,6 @@ char curses_query_key(const char *query, int *count)
     mvwprintw(win, 1, 2, query);
     wrefresh(win);
     
-    curs_set(1);
     key = nh_wgetch(win);
     while ((isdigit(key) || key == KEY_BACKSPACE) && count != NULL) {
 	cnt = 10*cnt + (key - '0');
@@ -121,7 +118,6 @@ char curses_query_key(const char *query, int *count)
 	*count = cnt;
     }
     
-    curs_set(0);
     delwin(win);
     redraw_game_windows();
     return key;
@@ -132,7 +128,7 @@ int curses_msgwin(const char *msg)
 {
     int key, len;
     int width = strlen(msg) + 4;
-    int prevcurs = curs_set(0); /* cursor might be on if called from getpos() */
+    int prevcurs = curs_set(0);
     WINDOW *win = newdialog(3, width);
     
     len = strlen(msg);

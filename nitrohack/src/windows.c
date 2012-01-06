@@ -62,7 +62,7 @@ void init_curses_ui(void)
     noecho();
     raw();
     meta(basewin, TRUE);
-    orig_cursor = curs_set(0);
+    orig_cursor = curs_set(1);
     keypad(basewin, TRUE);
     set_escdelay(20);
     
@@ -363,9 +363,7 @@ int nh_wgetch(WINDOW *win)
 	if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {
 	    /* we're running in raw mode, so ctrl+c doesn't work.
 	     * for wizard we emulate this to allow breaking into gdb. */
-	    curs_set(orig_cursor);
 	    kill(0, SIGINT);
-	    curs_set(0);
 	    key = 0;
 	}
 #endif

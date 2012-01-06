@@ -104,8 +104,6 @@ static void hooked_curses_getlin(const char *query, char *buf,
     gldat->buf = buf;
     gldat->query = query;
     
-    curs_set(1);
-    
     buf[0] = 0;
     while (!done) {
 	draw_getline(gw);
@@ -174,7 +172,6 @@ static void hooked_curses_getlin(const char *query, char *buf,
 	}
     }
     
-    curs_set(0);
     delwin(gw->win);
     delete_gamewin(gw);
     redraw_game_windows();

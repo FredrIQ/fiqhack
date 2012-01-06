@@ -46,6 +46,9 @@ void draw_map(int frame)
 	    print_sym(mapwin, &syms[frame % symcount], attr);
 	}
     }
+    
+    if (player.x)
+	wmove(mapwin, player.y, player.x - 1);
 
     wrefresh(mapwin);
 }
@@ -86,8 +89,6 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     mvwaddstr(statuswin, 1, 0, "to select it or use m to move to a nearby "
                                "monster. Finish with one of .,;:");
     wrefresh(statuswin);
-
-    curs_set(1);
     
     cx = *x >= 1 ? *x : 1;
     cy = *y >= 0 ? *y : 0;
@@ -203,7 +204,6 @@ nxtc:
 	wrefresh(mapwin);
     }
     
-    curs_set(0);
     *x = cx;
     *y = cy;
     if (monpos)

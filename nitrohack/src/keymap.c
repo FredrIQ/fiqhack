@@ -187,10 +187,7 @@ int get_cmdkey(void)
 	    wrefresh(mapwin);
 	}
 	
-	curs_set(1);
 	key = nh_wgetch(mapwin);
-	curs_set(0);
-	
 	if (key != ERR)
 	    break;
 	
