@@ -127,7 +127,7 @@ static void ccmd_restore_game(json_t *params)
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
     
-    status = nh_restore_game(fd, NULL, TRUE);
+    status = nh_restore_game(fd, NULL, FALSE);
     
     client_msg("restore_game", json_pack("{si}", "return", status));
     

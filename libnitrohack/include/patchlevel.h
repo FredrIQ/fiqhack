@@ -15,7 +15,7 @@
 #define EDITLEVEL	0
 
 #define COPYRIGHT_BANNER_A \
-"NitroHack, Copyright 1985-2011"
+"NitroHack, Copyright 1985-2012"
 
 #define COPYRIGHT_BANNER_B \
 "         By Stichting Mathematisch Centrum and M. Stephenson."

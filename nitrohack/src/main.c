@@ -45,22 +45,36 @@ struct nh_menuitem mainmenu_items[] = {
 };
 
 
-const char *nhlogo[12] = { /* this _beautiful_ logo was created by exporting an
+const char *nhlogo_small[12] = { /* this _beautiful_ logo was created by exporting an
                             160x24 image from gimp using aalib */
-"]QQQ,   ]QQf             _aa/    ]QQf    ]QQf                       ]QQf       ",
-"]QQQm   ]QQf             ]QQf    ]QQf    ]QQf                       ]QQf       ",
-"]QQQQ/  ]QQf             ]QQf    ]QQf    ]QQf                       ]QQf       ",
-"]QQ@Qm  ]QQf   _yQQmw.  QQQQQQQf ]QQf    ]QQf  ]mQQQmw,    _wmQQg/  ]QQf  yQQ[ ",
-"]QQf$Q/ ]QQf  jQQQQQWm. QQQQQQQf ]QQf    ]QQf  ]QQQQQQm   <QQQQQQf  ]QQf jQQ[  ",
-"]QQf]Wm ]QQf .QW@' ]QQL  ]QQf    ]QQQQQQQQQQf       4QQ( .QQQ!  \"[  ]QQfjQQ(   ",
-"]QQf $Qc]QQf ]QQ6aaaWQm  ]QQf    ]QQQQQQQQQQf  _wmQQQQQf ]QQF       ]QQQQQ(    ",
-"]QQf ]Wh]QQf ]QQQQWWQQQ  ]QQf    ]QQf    ]QQf _QQQQQQQQf ]QQf       ]QQQQQ,    ",
-"]QQf  $QmQQf ]QQF\"\"\"\"\"^  ]QQf    ]QQf    ]QQf ]QQP  jQQf ]WQk       ]QQPQQm,   ",
-"]QQf  )WQQQf -QWQ,.._a/  ]QQf    ]QQf    ]QQf ]QQk _mQQf -QQQc  <r  ]QQf)WQm,  ",
-"]QQf   4QQQf  ]QQQQQQQf  +QQQQQ  ]QQf    ]QQf -QQQQQ$QQf  )QQQQQQf  ]QQf )QQm, ",
-"]QQf   )QQQf   \"9WQWV!    ?$QQQ  ]QQf    ]QQf  )$W@!]QQf   \"9$QWU'  ]QQf  ]QQm,",
+"_aa/    aa/ ]QQ                         _aa     aa/                   ]QQ       ",
+"]QQQ.   QQf ]QQ  ]QQ                    ]QQ     QQf                   ]QQ       ",
+"]QQQL   QQf      ]QQ                    ]QQ     QQf                   ]QQ       ",
+"]QQQQ,  QQf _aa ajQQaaa aa/ sa/ .saa,.  ]QQ     QQf ._aaa,.     _aa,. ]QQ   aaa,",
+"]QQ4WL  QQf ]QQ QQQQQQQ QQLmQWfjWQWWQm, ]QQ     QQf QQQQWQQ,  _mQQQQm ]QQ .yQW( ",
+"]QQ-QQ, QQf ]QQ ?4QQ??? QQQ@?9mWWD?9WQm ]QQQQQQQQQf @T??TQWk  mQQT?9Q ]QQ.yQW(  ",
+"]QQ ]Qk QQf ]QQ  ]QQ    QQ@   dQE   )WQ(]QQQQQQQQQf  _aaajQQ )QQ(   - ]QQmQW'   ",
+"]QQ  QQ/QQf ]QQ  ]QQ    QQf   QQf    QQ[]QQ     QQf yQQWWQQQ ]QQ      ]QQQQ[    ",
+"]QQ  ]QkQQf ]QQ  ]QQ    QQf   QQL   .QQ[]QQ     QQf]QQ^  jQQ ]QQ,     ]QQ$QQc   ",
+"]QQ   $QQQf ]QQ  ]QQ,   QQf   4QQ, .jQQ`]QQ     QQf]WQ,._QWQ -QQg, _j ]QQ-$QQc  ",
+"]QQ   )QQQf ]QQ  )QQQQf QQf   -QWQQQQQf ]QQ     QQf-QQQQQ$QQ  3WQQQQQ ]QQ -$QQc ",
+"]QQ    $QQf ]QQ   ?QQQf QQf    -9$QWV\"  ]QQ     QQf )$Q@!]QQ   \"9QWD^ ]QQ  -$QQc"
 };
 
+const char *nhlogo_large[12] = {
+"_aaa    aaa    QQQ                                 aaa     aaa                         QQQ       ",
+"]QQQc   QQQ    QQQ    QQQ                          QQQ     QQQ                         QQQ       ",
+"]QQQQ   QQQ           QQQ                          QQQ     QQQ                         QQQ       ",
+"]QQQQc  QQQ    QQQ  QQQQQQQQ  QQQ_yQQ  .wmQQg,     QQQ     QQQ   _ymQQmw.     _yQQmw   QQQ  jWQf ",
+"]QQPQQ  QQQ    QQQ  QQQQQQQQ  QQQmQQQ .mQWQQWQc    QQQ     QQQ   ]QQQQQWm    jQQQQQQ   QQQ <QWf  ",
+"]QQf4Q[ QQQ    QQQ    QQQ     QQQP` ' jQQF \"QWQ,   QQQQQQQQQQQ   \"~  -4QQ(  .QWQ( -4   QQQ<QQF   ",
+"]QQf+QQ QQQ    QQQ    QQQ     QQQ'    QQQ`  jQQ[   QQQQQQQQQQQ    _aaajQQf  ]QQF       QQQQWF    ",
+"]QQf 4Q[QQQ    QQQ    QQQ     QQQ     QWQ   ]QQ[   QQQ     QQQ   yQQWQQQQf  ]QQf       QQQQQc    ",
+"]QQf )QQQQQ    QQQ    QQQ     QQQ     WQQ.  jQQ[   QQQ     QQQ  ]QQP  jQQf  ]QQL       QQQ4QQ/   ",
+"]QQf  4QQQQ    QQQ    QQQ     QQQ     3WQL _QQQ`   QQQ     QQQ  ]QQk _mQQf  -QQQc .j   QQQ-$QQ,  ",
+"]QQf  +QQQQ    QQQ    QQQQQ   QQQ     -$QQQQQQ[    QQQ     QQQ  +WQQQQWQQf   ]QQWQQQ   QQQ -QWQ, ",
+"]QQf   4QQQ    QQQ    ?$QQQ   QQQ      -9$QWV\"     QQQ     QQQ   )$W@!]QQf    \"9WQ@T   QQQ  -QQm,"
+};
 #ifdef UNIX
 
 /* the terminal went away - do not pass go, etc. */
@@ -135,9 +149,14 @@ static void mainmenu(void)
     int menuresult[1];
     int n = 1, logoheight, i;
     const char * const *copybanner = nh_get_copyright_banner();
+    const char **nhlogo;
     
     while (n > 0) {
-	logoheight = sizeof(nhlogo) / sizeof(nhlogo[0]);
+	if (COLS >= 100)
+	    nhlogo = nhlogo_large;
+	else
+	    nhlogo = nhlogo_small;
+	logoheight = sizeof(nhlogo_small) / sizeof(nhlogo_small[0]);
 	wclear(basewin);
 	wattron(basewin, A_BOLD | COLOR_PAIR(4));
 	for (i = 0; i < logoheight; i++) {
