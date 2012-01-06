@@ -2,9 +2,9 @@
 /* NitroHack may be freely redistributed.  See license for details. */
 
 #include <stdlib.h>
-#include <stdio.h>
 
-#include "hack.h"
+void *xmalloc(int size);
+void xmalloc_cleanup(void);
 
 /* malloc wrapper functions for "external" memory allocations
  * 

@@ -166,7 +166,9 @@ enum nh_opttype {
 enum nh_option_list {
     CURRENT_BIRTH_OPTIONS,
     ACTIVE_BIRTH_OPTIONS,
-    GAME_OPTIONS
+    GAME_OPTIONS,
+    
+    OPTION_LIST_COUNT
 };
 
 enum nh_bucstatus {
@@ -363,14 +365,14 @@ struct nh_player_info {
     char rank[PL_NSIZ];
     char level_desc[COLNO];
     char statusitems[12][ITEMLEN];
-    long score, xp, gold, moves;
+    int score, xp, gold, moves;
     int max_rank_sz;
     int st, st_extra, dx, co, in, wi, ch;
     int align, nr_items;
     int hp, hpmax, en, enmax, ac, level;
     char coinsym;
     int monnum, cur_monnum;
-    nh_bool enhance_possible;
+    nh_bool can_enhance;
 };
 
 
@@ -549,7 +551,7 @@ struct nh_topten_entry {
 
 struct nh_window_procs {
     void (*win_pause)(enum nh_pause_reason reason);
-    void (*win_display_buffer)(char *,nh_bool);
+    void (*win_display_buffer)(const char *buf, nh_bool trymove);
     void (*win_update_status)(struct nh_player_info *pi);
     void (*win_print_message)(int turn, const char *msg);
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
@@ -565,7 +567,7 @@ struct nh_window_procs {
     void (*win_delay)(void);
     void (*win_level_changed)(int displaymode);
     void (*win_outrip)(struct nh_menuitem *items,int icount, nh_bool tombstone,
-		       char *name, int gold, char *killbuf, int end_how, int year);
+		       const char *name, int gold, const char *killbuf, int end_how, int year);
 };
 
 #endif

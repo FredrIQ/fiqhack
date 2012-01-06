@@ -20,6 +20,7 @@ static void signal_quit(int ignored)
 void setup_signals(void)
 {
     struct sigaction quitaction;
+    struct sigaction ignoreaction;
     sigset_t set;
     
     sigfillset(&set);
@@ -27,10 +28,12 @@ void setup_signals(void)
     quitaction.sa_handler = signal_quit;
     quitaction.sa_mask = set;
     quitaction.sa_flags = 0;
+    ignoreaction.sa_handler = SIG_IGN;
     
     /* terminate safely in response to SIGINT and SIGTERM */
     sigaction(SIGINT, &quitaction, NULL);
     sigaction(SIGTERM, &quitaction, NULL);
+    sigaction(SIGPIPE, &ignoreaction, NULL);
 }
 
 

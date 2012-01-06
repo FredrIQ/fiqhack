@@ -16,6 +16,7 @@
 #include <jansson.h>
 
 #include "nitrohack.h"
+#include "nitrohack_client.h" /* for enum authresult */
 
 #define DEFAULT_PORT 7114 /* chosen at random, not in use by anything else */
 
@@ -38,13 +39,6 @@
 #if !defined(DEFAULT_CLIENT_TIMEOUT)
 # define DEFAULT_CLIENT_TIMEOUT (15 * 60) /* 15 minutes */
 #endif
-
-
-enum authresult {
-    AUTH_FAILED,
-    AUTH_SUCCESS_NEW,
-    AUTH_SUCCESS_RECONNECT
-};
 
 
 struct settings {
@@ -95,8 +89,8 @@ extern const struct client_command clientcmd[];
 /*---------------------------------------------------------------------------*/
 
 /* auth.c */
-extern int auth_user(char *authbuf);
-extern void auth_send_result(int sockfd, enum authresult);
+extern int auth_user(char *authbuf, int *is_reg, int *reconnect_id);
+extern void auth_send_result(int sockfd, enum authresult, int is_reg, int connid);
 
 /* clientmain.c */
 extern void client_main(int userid, int infd, int outfd);
@@ -147,6 +141,7 @@ extern int init_workdir(void);
 extern int runserver(void);
 
 /* winprocs.c */
-json_t *get_display_data(void);
+extern json_t *get_display_data(void);
+extern void reset_cached_diplaydata(void);
 
 #endif

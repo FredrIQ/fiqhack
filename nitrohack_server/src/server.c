@@ -87,12 +87,15 @@ struct client_data {
     enum comm_status state;
     int pid;
     int userid; /* owner of this game */
+    int connid;
     struct client_data *prev, *next;
     int pipe_out; /* master -> game pipe */
     int pipe_in;/* game -> master pipe */
     int sock; /* master <-> client socket */
     int authdatalen;
+    int unsent_data_size;
     char *authbuf;
+    char *unsent_data;
 };
 
 
@@ -224,7 +227,7 @@ static void server_socket_event(int server_fd, int epfd)
     
     log_msg("New connection from %s.", addr2str(&addr));
     
-    ev.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+    ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
     ev.data.ptr = NULL;
     ev.data.fd = newfd;
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, newfd, &ev) == -1) {
@@ -249,13 +252,48 @@ static void server_socket_event(int server_fd, int epfd)
 
 
 /*
+ * The client inherits sevaral things that aren't needed to run a game
+ * Free them here.
+ */
+static void post_fork_cleanup(void)
+{
+    int i;
+    struct client_data *ccur, *cnext;
+    
+    /* forking doesn't actually close any of the CLOEXEC file
+     * descriptors. CLOEXEC is still nice to have and we can use it as
+     * a flag to get rid of lots of stuff here. */
+    for (i = 0; i < get_open_max(); i++)
+	if (fcntl(i, F_GETFD) & FD_CLOEXEC)
+	    close(i);
+    
+    for (ccur = init_list_head.next; ccur; ccur = cnext) {
+	cnext = ccur->next;
+	free(ccur);
+    }
+
+    for (ccur = disconnected_list_head.next; ccur; ccur = cnext) {
+	cnext = ccur->next;
+	free(ccur);
+    }
+    
+    for (ccur = connected_list_head.next; ccur; ccur = cnext) {
+	cnext = ccur->next;
+	free(ccur);
+    }
+    
+    free(fd_to_client);
+}
+
+
+/*
  * A new game process is needed.
  * Create the communication pipes, register them with epoll and fork the new
  * process.
  */
 static int fork_client(struct client_data *client, int epfd)
 {
-    int ret1, ret2, i;
+    int ret1, ret2, userid;
     int pipe_out_fd[2];
     int pipe_in_fd[2];
     struct epoll_event ev;
@@ -289,16 +327,11 @@ static int fork_client(struct client_data *client, int epfd)
     client->pid = fork();
     if (client->pid > 0) { /* parent */
     } else if (client->pid == 0) { /* child */
-	/* forking doesn't actually close any of the CLOEXEC file
-	 * descriptors. CLOEXEC is still nice to have and we can use it as
-	 * a flag to get rid of lots of stuff here. */
-	for (i = 0; i < get_open_max(); i++)
-	    if (fcntl(i, F_GETFD) & FD_CLOEXEC)
-		close(i);
-	
-	/* no auth status to client */
-	client_main(client->userid, pipe_out_fd[0], pipe_in_fd[1]);
-	exit(0); /* client is done. */
+	userid = client->userid;
+	free(client->authbuf);
+	post_fork_cleanup();
+	client_main(userid, pipe_out_fd[0], pipe_in_fd[1]);
+	exit(0); /* shouldn't get here... client is done. */
     } else if (client->pid == -1) { /* error */
 	/* can't proceed, so clean up. The client side of the pipes needs to be
 	 * closed here, this end gets handled in cleanup_game_process */
@@ -337,10 +370,11 @@ static int fork_client(struct client_data *client, int epfd)
  */
 static void handle_new_connection(struct client_data *client, int epfd)
 {
-    int ret, pos;
+    int ret, pos, is_reg, reconnect_id;
     struct client_data *ccur;
     int buflen = AUTHBUFSIZE - client->authdatalen - 1;
     char *bufp = &client->authbuf[client->authdatalen];
+    static int connection_id = 1;
     
     ret = read(client->sock, bufp, buflen);
     if (ret == 0) {
@@ -381,28 +415,41 @@ static void handle_new_connection(struct client_data *client, int epfd)
     /*
      * ready to authenticate the user here
      */
-    client->userid = auth_user(client->authbuf);
-    if (!client->userid) {
-	auth_send_result(client->sock, AUTH_FAILED);
+    client->userid = auth_user(client->authbuf, &is_reg, &reconnect_id);
+    if (client->userid <= 0) {
+	if (!client->userid)
+	    auth_send_result(client->sock, AUTH_FAILED_UNKNOWN_USER, is_reg, 0);
+	else
+	    auth_send_result(client->sock, AUTH_FAILED_BAD_PASSWORD, is_reg, 0);
 	/* shutdown instead of close here to allow for transmission of the auth status */
-	shutdown(client->sock, SHUT_RD);
+	shutdown(client->sock, SHUT_RDWR);
 	/* the socket and client struct will be mopped up when that's done and
 	 * epoll reports an EPOLLRDHUP for the socket. */
 	return;
     }
     
-    /* is the client re-esablishing a connection to an existing, disconnected game? */
+    /* is the client re-establishing a connection to an existing, disconnected game? */
     for (ccur = disconnected_list_head.next; ccur; ccur = ccur->next)
-	if (ccur->userid == client->userid)
+	if (ccur->userid == client->userid &&
+	    (!reconnect_id || reconnect_id == ccur->connid))
 	    break;
+    if (reconnect_id && !ccur) {
+	/* now search through the active connections. The client might have a
+	 * new IP address, which would leave the socket open and seemingly valid. */
+	for (ccur = connected_list_head.next; ccur; ccur = ccur->next)
+	    if (ccur->userid == client->userid && reconnect_id == ccur->connid)
+		break;
+    }
+    
     if (ccur) {
 	/* there is a running, disconnected game process for this user */
-	auth_send_result(client->sock, AUTH_SUCCESS_RECONNECT);
+	auth_send_result(client->sock, AUTH_SUCCESS_RECONNECT, is_reg, ccur->connid);
 	ccur->sock = client->sock;
 	map_fd_to_client(ccur->sock, ccur);
 	ccur->state = CLIENT_CONNECTED;
 	unlink_client_data(ccur);
 	link_client_data(ccur, &connected_list_head);
+	write(client->pipe_out, "\033", 1); /* signal to reset the read buffer */
 	
 	client->sock = -1; /* sock is now owned by ccur */
 	client->pid = 0;
@@ -411,9 +458,11 @@ static void handle_new_connection(struct client_data *client, int epfd)
 		ccur->pid, ccur->userid);
 	return;
     } else {
+	client->connid = connection_id++;
 	/* there is no process yet */
 	if (fork_client(client, epfd))
-	    auth_send_result(client->sock, AUTH_SUCCESS_NEW);
+	    auth_send_result(client->sock, AUTH_SUCCESS_NEW, is_reg, client->connid);
+	/* else: client communication is shutdown if fork_client errors out */
     }
 }
 
@@ -430,7 +479,7 @@ static void cleanup_game_process(struct client_data *client, int epfd)
     /* close all file descriptors and free data structures */
     if (client->sock != -1) {
 	epoll_ctl(epfd, EPOLL_CTL_DEL, client->sock, NULL);
-	shutdown(client->sock, 0);
+	shutdown(client->sock, SHUT_RDWR);
 	close(client->sock);
 	fd_to_client[client->sock] = NULL;
     }
@@ -484,13 +533,55 @@ static void close_client_pipe(struct client_data *client, int epfd)
     
     if (client->sock)
 	/* allow a send to complete (incl retransmits). close() is too brutal. */
-	shutdown(client->sock, SHUT_RD);
+	shutdown(client->sock, SHUT_RDWR);
     else {
 	/* don't try to send a signal in cleanup_game_process - the process may be
 	 * gone already */
 	client->pid = 0;
 	cleanup_game_process(client, epfd);
     }
+}
+
+
+static int send_to_client(struct client_data *client, char *buffer, int sendlen)
+{
+    int sent, ret;
+    char *newbuf;
+    
+    if (!buffer) {
+	buffer = client->unsent_data;
+	sendlen = client->unsent_data_size;
+	if (!buffer)
+	    return 0;
+    }
+    
+    sent = 0;
+    do {
+	ret = write(client->sock, &buffer[sent], sendlen - sent);
+	if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+	    /* be careful, buffer == client->unsent_data is possible */
+	    newbuf = malloc(sendlen - sent);
+	    memcpy(newbuf, buffer, sendlen - sent);
+	    if (client->unsent_data)
+		free(client->unsent_data);
+	    client->unsent_data = newbuf;
+	    client->unsent_data_size = sendlen - sent;
+	    return sent;
+	}
+	else if (ret == -1 && errno == EPIPE) {
+	    shutdown(client->sock, SHUT_RDWR);
+	    return -1;
+	} else if (ret == -1 && errno != EINTR)
+	    return -1;
+	sent += ret;
+    } while (sent < sendlen);
+    
+    if (client->unsent_data)
+	free(client->unsent_data);
+    client->unsent_data = NULL;
+    client->unsent_data_size = 0;
+    
+    return sent;
 }
 
 
@@ -503,8 +594,9 @@ static void close_client_pipe(struct client_data *client, int epfd)
  */
 static void handle_communication(int fd, int epfd, unsigned int event_mask)
 {
-    int ret, closed;
+    int ret, closed, write_count, errno_orig;
     struct client_data *client = fd_to_client[fd];
+    struct epoll_event ev;
     
     if (event_mask & EPOLLERR || /* fd error */
 	event_mask & EPOLLHUP || /* fd closed */
@@ -529,17 +621,38 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 		client->pid = 0;
 		cleanup_game_process(client, epfd);
 	    }
+	    /* Maybe the destination vanished before sending completed...
+	     * unsent_data is likely to be an incomplete JSON object; deleting
+	     * it is the only sane option. */
+	    if (client->unsent_data)
+		free(client->unsent_data);
+	    client->unsent_data = NULL;
+	    client->unsent_data_size = 0;
 		
 	    
-	} else { /* there is data to receive */
-	    do {
-		ret = splice(client->sock, NULL, client->pipe_out, NULL,
-			     1024 * 1024, SPLICE_F_NONBLOCK);
-	    } while (ret == 1024 * 1024);
-	    if (ret == -1) {
-		log_msg("splice error while receiving: %s", strerror(errno));
-		if (errno == EBADF) /* client pipe gone, maybe it crashed? */
-		    cleanup_game_process(client, epfd);
+	} else { /* it is possible to receive or send data */
+	    if (event_mask & EPOLLIN) {
+		do {
+		    ret = splice(client->sock, NULL, client->pipe_out, NULL,
+				1024 * 1024, SPLICE_F_NONBLOCK);
+		} while (ret == 1024 * 1024);
+		if (ret == -1) {
+		    log_msg("splice error while receiving: %s", strerror(errno));
+		    if (errno == EBADF) /* client pipe gone, maybe it crashed? */
+			cleanup_game_process(client, epfd);
+		}
+	    }
+	    if ((event_mask & EPOLLOUT) && client->unsent_data) {
+		write_count = send_to_client(client, NULL, 0);
+		if (write_count == -1)
+		    log_msg("error while sending: %s", strerror(errno));
+		
+		/* re-arm pipe_in notification: there may be more data to send in the
+		 * pipe for which an event was already received but not acted upon */
+		ev.data.ptr = NULL;
+		ev.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+		ev.data.fd = client->pipe_in;
+		epoll_ctl(epfd, EPOLL_CTL_MOD, client->pipe_in, &ev);
 	    }
 	}
 
@@ -548,27 +661,31 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 	    close_client_pipe(client, epfd);
 
 	else { /* there is data to send */
+	    if (client->unsent_data)
+		return; /* socket isn't ready for sending */
+	    
 	    /* oddity alert: this code originally used splice for sending.
 	     * That would match the receive case above and no buffer would be
 	     * required. Unfortunately sending that way is significantly slower.
 	     * splice: 200ms - read+write: 0.2ms! Ouch! */
-	    char buf[8192];
-	    int write_status, errno_orig, write_count;
+	    char buf[16384];
 	    do {
 		/* read from the pipe */
 		ret = read(client->pipe_in, buf, sizeof(buf));
 		errno_orig = errno;
-
-		/* write to the socket; be careful to write all of it... */
-		write_count = 0;
-		do {
-		    write_status = write(client->sock, buf, ret);
-		    write_count += write_status;
-		} while (write_count < ret && write_status > 0);
+		if (ret == -1 && errno == EINTR)
+		    continue;
+		else if (ret > 0) {
+		    /* write to the socket; be careful to write all of it... */
+		    write_count = send_to_client(client, buf, ret);
+		    /* write_count != ret if no more data could be sent and the
+		     * remainder buf was copied to client->unsent_data for later
+		     * sending  */
+		}
 	    } while (ret == write_count && ret == sizeof(buf));
 	    if (ret == -1)
 		log_msg("error while reading from pipe: %s", strerror(errno_orig));
-	    if (write_status == -1)
+	    if (write_count == -1)
 		log_msg("error while sending: %s", strerror(errno));
 	}
 
@@ -733,6 +850,8 @@ int runserver(void)
 			cleanup_game_process(client, epfd);
 		    else if (events[i].events & EPOLLIN)
 			handle_new_connection(client, epfd);
+		    else if (events[i].events & EPOLLOUT)
+			;
 		    else {
 			log_msg("Unexpected event type %08x on new client socket???",
 				events[i].events);
@@ -750,9 +869,9 @@ int runserver(void)
 			events[i].events & EPOLLHUP || /* connection closed */
 			events[i].events & EPOLLRDHUP) /* connection closed */
 			cleanup_game_process(client, epfd);
-		    else {
+		    else if (events[i].events & EPOLLIN) {
 			/* Perhaps the game process was just writing data to
-			 * the pipe, when the client disconnected.
+			 * the pipe when the client disconnected.
 			 * There is nothing we can do with this data here, but
 			 * we don't want to kill the game either, so just read
 			 * and discard the data. */
@@ -786,6 +905,7 @@ finally:
 	close(ipv4fd);
     if (ipv6fd > 0)
 	close(ipv6fd);
+    free(fd_to_client);
 
     return TRUE;
 }

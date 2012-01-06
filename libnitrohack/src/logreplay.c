@@ -10,14 +10,14 @@ extern unsigned int last_cmd_pos;
 
 
 static void replay_pause(enum nh_pause_reason r) {}
-static void replay_display_buffer(char *buf, boolean trymove) {}
+static void replay_display_buffer(const char *buf, boolean trymove) {}
 static void replay_update_status(struct nh_player_info *pi) {}
 static void replay_print_message(int turn, const char *msg) {}
 static void replay_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void replay_delay_output(void) {}
 static void replay_level_changed(int displaymode) {}
 static void replay_outrip(struct nh_menuitem *items,int icount, boolean tombstone,
-			   char *name, int gold, char *killbuf, int end_how, int year) {}
+	const char *name, int gold, const char *killbuf, int end_how, int year) {}
 static int replay_display_menu(struct nh_menuitem *items, int icount,
 				const char *title, int how, int *results);
 static int replay_display_objects(struct nh_objitem *items, int icount, const char *title,
@@ -1052,8 +1052,8 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
 	topten_level_name(sg_you.uz.dnum, depth(&sg_you.uz), gi->level_desc);
 	
 	if (!game_inited) {
-		free_dungeon();
-		dlb_cleanup();
+	    free_dungeon();
+	    dlb_cleanup();
 	}
     } else if (ret == LS_DONE) {
 	struct nh_topten_entry tt;

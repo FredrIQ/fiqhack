@@ -15,6 +15,7 @@ static int infd, outfd;
 int gamefd;
 long gameid; /* id in the database */
 struct user_info user_info;
+int can_send_msg;
 
 
 static char** init_game_paths(void)
@@ -67,25 +68,30 @@ void client_msg(const char *key, json_t *value)
     }
     
     /* actual message content */
-    json_object_set(jval, key, value);
+    json_object_set_new(jval, key, value);
     jsonstr = json_dumps(jval, JSON_COMPACT);
     json_decref(jval);
     
-    len = strlen(jsonstr);
-    pos = 0;
-    do {
-	ret = write(outfd, &jsonstr[pos], len - pos);
-	if (ret == -1 && errno == EINTR)
-	    continue;
-	else if (ret == -1 || ret == 0) { /* bad news */
-	    /* since we just found we can't write output to the pipe, prevent any more tries */
-	    close(infd);
-	    close(outfd);
-	    infd = outfd = -1;
-	    exit_client(NULL); /* Goodbye. */
-	}
-	pos += ret;
-    } while(pos < len);
+    if (can_send_msg) {
+	len = strlen(jsonstr);
+	pos = 0;
+	do {
+	    ret = write(outfd, &jsonstr[pos], len - pos);
+	    if (ret == -1 && (errno == EINTR || errno == EAGAIN))
+		continue;
+	    else if (ret == -1 || ret == 0) { /* bad news */
+		/* since we just found we can't write output to the pipe,
+		 * prevent any more tries */
+		close(infd);
+		close(outfd);
+		infd = outfd = -1;
+		exit_client(NULL); /* Goodbye. */
+	    }
+	    pos += ret;
+	} while(pos < len);
+    }
+    /* this message is sent; don't send another */
+    can_send_msg = FALSE;
     
     free(jsonstr);
 }
@@ -103,8 +109,10 @@ void exit_client(const char *err)
 	
 	json_object_set_new(exit_obj, "error", err ? json_true() : json_false());
 	json_object_set_new(exit_obj, "message", json_string(msg));
-	client_msg("client_exit", exit_obj);
-	json_decref(exit_obj);
+	if (can_send_msg)
+	    client_msg("server_error", exit_obj);
+	else
+	    json_decref(exit_obj);
 	
 	usleep(100); /* try to make sure the server process handles write() before close(). */
 	close(infd);
@@ -119,6 +127,8 @@ void exit_client(const char *err)
     if (user_info.username)
 	free(user_info.username);
     free_config();
+    reset_cached_diplaydata();
+    end_logging();
     exit(err != NULL);
 }
 
@@ -144,8 +154,19 @@ json_t *read_input(void)
 	    continue; /* sone signals will set termination_flag, others won't */
 	else if (ret == 0)
 	    exit_client("Input pipe lost");
-	else
-	    datalen += ret;
+	datalen += ret;
+	
+	if (commbuf[datalen-ret] == '\033') {
+	    /* this is a request to reset the buffer when recovering from a
+	     * connection error. After such an error it simply isn't possible
+	     * to know what data actually arrived. */
+	    /* do a memmove in case there was already some new legitimate data
+	     * queued after the '\033' reset request. */
+	    memmove(commbuf, &commbuf[datalen-ret+1], ret - 1);
+	    datalen = ret - 1;
+	    /* also reset the cached display data to make sure all display state is re-sent */
+	    continue;
+	}
 	
 	commbuf[datalen] = '\0'; /* terminate the string */
 	bp = &commbuf[datalen - 1];
@@ -164,7 +185,8 @@ json_t *read_input(void)
 	if (!jval && datalen >= COMMBUF_SIZE - 1)
 	    exit_client("Max allowed input length exceeded"); /* too much data received */
     }
-    
+    /* message received; mow it's our turn to send */
+    can_send_msg = TRUE;
     return jval;
 }
 

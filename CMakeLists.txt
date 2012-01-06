@@ -57,3 +57,6 @@ add_subdirectory (nitrohack)
 if (ENABLE_SERVER)
     add_subdirectory (nitrohack_server)
 endif ()
+
+# nitrohack network client
+add_subdirectory (libnitrohack_client)

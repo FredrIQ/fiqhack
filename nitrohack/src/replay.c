@@ -7,6 +7,12 @@
 #include <fcntl.h>
 #include <time.h>
 
+#if defined(NETCLIENT)
+# define allow_timetest() (!nhnet_active())
+#else
+# define allow_timetest() (1)
+#endif
+
 static void dummy_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
 static void dummy_delay_output(void) {}
 
@@ -174,7 +180,7 @@ static void show_replay_help(void)
 }
 
 
-static void replay_commandloop(int fd)
+void replay_commandloop(int fd)
 {
     int key, move, count;
     char buf[BUFSZ], qbuf[BUFSZ];
@@ -232,7 +238,8 @@ static void replay_commandloop(int fd)
 		break;
 
 	    case KEY_F(12): /* timetest! */
-		timetest(fd, &rinfo);
+		if (allow_timetest())
+		    timetest(fd, &rinfo);
 		break;
 		
 	    default:

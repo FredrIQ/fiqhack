@@ -40,10 +40,10 @@ static int is_valid_username(const char *name)
 }
 
 
-int auth_user(char *authbuf)
+int auth_user(char *authbuf, int *is_reg, int *reconnect_id)
 {
     json_error_t err;
-    json_t *obj, *cmd, *name, *pass, *email;
+    json_t *obj, *cmd, *name, *pass, *email, *reconn;
     const char *namestr, *passstr, *emailstr;
     int is_auth = 1;
     int userid = 0;
@@ -65,6 +65,7 @@ int auth_user(char *authbuf)
     name = json_object_get(cmd, "username");
     pass = json_object_get(cmd, "password");
     email = json_object_get(cmd, "email"); /* is null for auth */
+    reconn = json_object_get(cmd, "reconnect");
     
     if (!name || !pass)
 	goto err;
@@ -76,8 +77,13 @@ int auth_user(char *authbuf)
 	!is_valid_username(namestr))
 	goto err;
     
+    *reconnect_id = 0;
     if (is_auth) {
+	if (reconn && json_is_integer(reconn))
+	    *reconnect_id = json_integer_value(reconn);
+	
 	/* authenticate against a user database */
+	*is_reg = FALSE;
 	userid = db_auth_user(namestr, passstr);
     } else {
 	/* register a new user */
@@ -85,6 +91,7 @@ int auth_user(char *authbuf)
 	if (strlen(emailstr) > 100)
 	    goto err;
 	
+	*is_reg = TRUE;
 	userid = db_register_user(namestr, passstr, emailstr);
 	if (userid) {
 	    char savedir[1024];
@@ -103,11 +110,19 @@ err:
 }
 
 
-void auth_send_result(int sockfd, enum authresult result)
+void auth_send_result(int sockfd, enum authresult result, int is_reg, int connid)
 {
     int ret, written, len;
-    json_t *jval = json_pack("{si}", "authresult", (int)result);
-    char *jstr = json_dumps(jval, JSON_COMPACT);
+    json_t *jval;
+    char *jstr;
+    const char *key;
+    
+    key = "auth";
+    if (is_reg)
+	key = "register";
+    
+    jval = json_pack("{s:{si,si}}", key, "return", result, "connection", connid);
+    jstr = json_dumps(jval, JSON_COMPACT);
     len = strlen(jstr);
     written = 0;
     do {
@@ -116,7 +131,7 @@ void auth_send_result(int sockfd, enum authresult result)
 	    written += ret;
 	/* don't care if it fails - if it does, the main event loop will be
 	 * notified by epoll and perform cleanup later. */
-    } while (ret && written < len);
+    } while (ret > 0 && written < len);
     
     free(jstr);
     json_decref(jval);

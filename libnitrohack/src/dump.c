@@ -11,7 +11,7 @@ static int dump_display_menu(struct nh_menuitem*, int, const char*, int, int*);
 static int dump_display_objects(struct nh_objitem*, int, const char*, int,
 				struct nh_objresult*);
 static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
-		          char *plname, int gold, char *killbuf, int end_how, int year);
+    const char *plname, int gold, const char *killbuf, int end_how, int year);
 
 void begin_dump(int how)
 {
@@ -208,7 +208,7 @@ static int dump_display_objects(struct nh_objitem *items, int icount,
 
 
 static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
-		          char *name, int gold, char *killbuf, int end_how, int year)
+	const char *name, int gold, const char *killbuf, int end_how, int year)
 {
     dump_display_menu(items, icount, "Final status:", PICK_NONE, NULL);
 }

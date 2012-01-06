@@ -59,8 +59,12 @@ const struct client_command clientcmd[] = {
 /* shutdown: The client is done and the server process is no longer needed. */
 static void ccmd_shutdown(json_t *ignored)
 {
+    json_t *jmsg;
+
     /* pretend we got a signal and use the same shutdown code */
     termination_flag = 3;
+    jmsg = json_pack("{si}", "return", 1);
+    client_msg("shutdown", jmsg);
 }
 
 /* start_game: Start a new game
@@ -99,8 +103,10 @@ static void ccmd_start_game(json_t *params)
 	j_msg = json_pack("{si,si}", "return", ret, "gameid", -1);
     }
     
+    /* reset cached display data from a previous game */
+    reset_cached_diplaydata();
+    
     client_msg("start_game", j_msg);
-    json_decref(j_msg);
 }
 
 
@@ -108,24 +114,22 @@ static void ccmd_restore_game(json_t *params)
 {
     int gid, fd, status;
     char filename[1024];
-    json_t *jmsg;
     
     if (json_unpack(params, "{si!}", "gameid", &gid) == -1)
 	exit_client("Bad set of parameters for restore_game");
     
     if (!db_get_game_filename(user_info.uid, gid, filename, 1024) ||
 	(fd = open(filename, O_RDWR)) == -1) {
-	jmsg = json_pack("{si}", "return", ERR_BAD_FILE);
-	client_msg("restore_game", jmsg);
-	json_decref(jmsg);
+	client_msg("restore_game", json_pack("{si}", "return", ERR_BAD_FILE));
 	return;
     }
     
-    status = nh_restore_game(fd, NULL, FALSE);
+    /* reset cached display data from a previous game */
+    reset_cached_diplaydata();
     
-    jmsg = json_pack("{si}", "return", status);
-    client_msg("restore_game", jmsg);
-    json_decref(jmsg);
+    status = nh_restore_game(fd, NULL, TRUE);
+    
+    client_msg("restore_game", json_pack("{si}", "return", status));
     
     if (status == GAME_RESTORED) {
 	gameid = gid;
@@ -138,7 +142,6 @@ static void ccmd_restore_game(json_t *params)
 static void ccmd_exit_game(json_t *params)
 {
     int etype, status;
-    json_t *jmsg;
     
     if (json_unpack(params, "{si!}", "exit_type", &etype) == -1)
 	exit_client("Bad set of parameters for exit_game");
@@ -151,15 +154,13 @@ static void ccmd_exit_game(json_t *params)
 	gamefd = -1;
     }
     
-    jmsg = json_pack("{si}", "return", status);
-    client_msg("exit_game", jmsg);
-    json_decref(jmsg);
+    client_msg("exit_game", json_pack("{si}", "return", status));
 }
 
 
 static void ccmd_game_command(json_t *params)
 {
-    json_t *jmsg, *jarg;
+    json_t *jarg;
     int count, result, gid;
     const char *cmd;
     struct nh_cmd_arg arg;
@@ -173,17 +174,17 @@ static void ccmd_game_command(json_t *params)
     
     switch (arg.argtype) {
 	case CMD_ARG_DIR:
-	    if (json_unpack(params, "{si*}", "d", &arg.d) == -1)
+	    if (json_unpack(jarg, "{si*}", "d", &arg.d) == -1)
 		exit_client("Bad direction arg in game_command");
 	    break;
 	    
 	case CMD_ARG_POS:
-	    if (json_unpack(params, "{si,si*}", "x", &arg.pos.x, "y", &arg.pos.y) == -1)
+	    if (json_unpack(jarg, "{si,si*}", "x", &arg.pos.x, "y", &arg.pos.y) == -1)
 		exit_client("Bad position arg in game_command");
 	    break;
 	    
 	case CMD_ARG_OBJ:
-	    if (json_unpack(params, "{si*}", "invlet", &arg.invlet) == -1)
+	    if (json_unpack(jarg, "{si*}", "invlet", &arg.invlet) == -1)
 		exit_client("Bad invlet arg in game_command");
 	    break;
 	    
@@ -205,9 +206,7 @@ static void ccmd_game_command(json_t *params)
 	gameid = 0;
     }
     
-    jmsg = json_pack("{si}", "return", result);
-    client_msg("game_command", jmsg);
-    json_decref(jmsg);
+    client_msg("game_command", json_pack("{si}", "return", result));
     
     /* move the finished game to its final resting place */
     if (result == GAME_OVER) {
@@ -238,7 +237,6 @@ static void ccmd_view_start(json_t *params)
 	(fd = open(filename, O_RDWR)) == -1) {
 	jmsg = json_pack("{si}", "return", FALSE);
 	client_msg("view_start", jmsg);
-	json_decref(jmsg);
 	return;
     }
     
@@ -247,9 +245,7 @@ static void ccmd_view_start(json_t *params)
     jmsg = json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
 		     info.nextcmd, "actions", info.actions, "max_actions",
 		     info.max_actions, "moves", info.moves, "max_moves", info.max_moves);
-    
     client_msg("view_start", jmsg);
-    json_decref(jmsg);
 }
 
 
@@ -260,34 +256,32 @@ static void ccmd_view_step(json_t *params)
     struct nh_replay_info info;
     json_t *jmsg;
     
-    if (json_unpack(params, "{si,si!}", "action", &action, "count", &count) == -1)
+    if (json_unpack(params, "{si,si,s:{si,si,si,si}!}", "action", &action,
+		    "count", &count, "info", "actions", &info.actions,
+		    "max_actions", &info.max_actions, "moves", &info.moves,
+		    "max_moves", &info.max_moves) == -1)
 	exit_client("Bad set of parameters for view_step");
     
+    info.nextcmd[0] = '\0';
     ret = nh_view_replay_step(&info, action, count);
     
     jmsg = json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
 		     info.nextcmd, "actions", info.actions, "max_actions",
 		     info.max_actions, "moves", info.moves, "max_moves", info.max_moves);
-    
-    client_msg("view_start", jmsg);
-    json_decref(jmsg);
+    client_msg("view_step", jmsg);
 }
 
 
 static void ccmd_view_finish(json_t *params)
 {
     void *iter;
-    json_t *jmsg;
-    
     iter = json_object_iter(params);
     if (iter)
 	exit_client("non-empty parameter list for view_finish");
     
     nh_view_replay_finish();
     
-    jmsg = json_object();
-    client_msg("view_start", jmsg);
-    json_decref(jmsg);
+    client_msg("view_finish", json_object());
 }
 
 
@@ -297,7 +291,7 @@ static void ccmd_list_games(json_t *params)
     struct gamefile_info *files;
     enum nh_log_status status;
     struct nh_game_info gi;
-    json_t *jmsg, *jarr, *jobj;
+    json_t *jarr, *jobj;
     
     if (json_unpack(params, "{si,si!}", "completed", &completed, "limit", &limit) == -1)
 	exit_client("Bad parameters for list_games");
@@ -336,10 +330,7 @@ static void ccmd_list_games(json_t *params)
     }
     free(files);
     
-    jmsg = json_pack("{so}", "games", jarr);
-    
-    client_msg("list_games", jmsg);
-    json_decref(jmsg);
+    client_msg("list_games", json_pack("{so}", "games", jarr));
 }
 
 
@@ -350,8 +341,7 @@ static json_t *json_symarray(struct nh_symdef *array, int len)
     
     jarr = json_array();
     for (i = 0; i < len; i++) {
-	jobj = json_pack("{ss,si,si}", "sn", array[i].symname, "ch", array[i].ch,
-			 "co", array[i].color);
+	jobj = json_pack("[s,i,i]", array[i].symname, array[i].ch, array[i].color);
 	json_array_append_new(jarr, jobj);
     }
     return jarr;
@@ -392,7 +382,6 @@ static void ccmd_get_drawing_info(json_t *params)
     json_object_set_new(jobj, "invis", json_symarray(di->invis, 1));
     
     client_msg("get_drawing_info", jobj);
-    json_decref(jobj);
 }
 
 
@@ -408,15 +397,15 @@ static void ccmd_get_roles(json_t *params)
 	exit_client("non-empty parameter list for get_roles");
     
     ri = nh_get_roles();
-    jmsg = json_object();
-    json_object_set_new(jmsg, "num_roles", json_integer(ri->num_roles));
-    json_object_set_new(jmsg, "num_races", json_integer(ri->num_races));
-    json_object_set_new(jmsg, "num_genders", json_integer(ri->num_genders));
-    json_object_set_new(jmsg, "num_aligns", json_integer(ri->num_aligns));
-    json_object_set_new(jmsg, "def_role", json_integer(ri->def_role));
-    json_object_set_new(jmsg, "def_race", json_integer(ri->def_race));
-    json_object_set_new(jmsg, "def_gend", json_integer(ri->def_gend));
-    json_object_set_new(jmsg, "def_align", json_integer(ri->def_align));
+    jmsg = json_pack("{si,si,si,si,si,si,si,si}",
+		     "num_roles", ri->num_roles,
+		     "num_races", ri->num_races,
+		     "num_genders", ri->num_genders,
+		     "num_aligns", ri->num_aligns,
+		     "def_role", ri->def_role,
+		     "def_race", ri->def_race,
+		     "def_gend", ri->def_gend,
+		     "def_align", ri->def_align);
     
     /* rolenames_m */
     jarr = json_array();
@@ -467,7 +456,6 @@ static void ccmd_get_roles(json_t *params)
     json_object_set_new(jmsg, "matrix", jarr);
     
     client_msg("get_roles", jmsg);
-    json_decref(jmsg);
 }
 
 
@@ -515,8 +503,7 @@ static void ccmd_get_topten(json_t *params)
 	json_array_append_new(jarr, jobj);
     }
     jmsg = json_pack("{so,ss}", "toplist", jarr, "msg", buf);
-    client_msg("get_roles", jmsg);
-    json_decref(jmsg);
+    client_msg("get_topten", jmsg);
 }
 
 
@@ -543,10 +530,7 @@ static void ccmd_get_commands(json_t *params)
 			 "flags", cmdlist[i].flags);
 	json_array_append_new(jarr, jobj);
     }
-    jobj = json_pack("{so,si}", "cmdlist", jarr, "cmdcount", cmdcount);
-    
-    client_msg("get_commands", jobj);
-    json_decref(jobj);
+    client_msg("get_commands", json_pack("{so}", "cmdlist", jarr));
 }
 
 
@@ -570,10 +554,7 @@ static void ccmd_get_obj_commands(json_t *params)
 			 "flags", cmdlist[i].flags);
 	json_array_append_new(jarr, jobj);
     }
-    jobj = json_pack("{so,si}", "cmdlist", jarr, "cmdcount", cmdcount);
-    
-    client_msg("get_obj_commands", jobj);
-    json_decref(jobj);
+    client_msg("get_obj_commands", json_pack("{so}", "cmdlist", jarr));
 }
 
 
@@ -596,7 +577,6 @@ static void ccmd_describe_pos(json_t *params)
 		     "effectdesc", db.effectdesc,
 		     "objcount", db.objcount);
     client_msg("describe_pos", jmsg);
-    json_decref(jmsg);
 }
 
 
@@ -674,7 +654,7 @@ static json_t *json_option(const struct nh_option_desc *option)
 
 static void ccmd_set_option(json_t *params)
 {
-    const char *optname, *optstr;
+    const char *optname, *optstr, *pattern;
     json_t *jmsg, *joval, *jopt;
     int isstr, i, ret;
     const struct nh_option_desc *gameopt, *birthopt, *option;
@@ -692,10 +672,8 @@ static void ccmd_set_option(json_t *params)
     birthopt = nh_get_options(gameid ? ACTIVE_BIRTH_OPTIONS : CURRENT_BIRTH_OPTIONS);
     option = find_option(optname, gameopt, birthopt);
     if (!option) {
-	jmsg = json_pack("{si,so,so}", "return", 0, "option", json_null(),
-			 "optstr", json_null());
+	jmsg = json_pack("{si,so}", "return", FALSE, "option", json_object());
 	client_msg("set_option", jmsg);
-	json_decref(jmsg);
 	return;
     }
     
@@ -715,16 +693,20 @@ static void ccmd_set_option(json_t *params)
 	if (!json_is_array(joval))
 	    exit_client("could not decode option");
 	
-	value.ar = &ar;
 	ar.num_rules = json_array_size(joval);
 	ar.rules = malloc(sizeof(struct nh_autopickup_rule) * ar.num_rules);
-	for (i = 0; i < ar.num_rules; i++) {
-	    r = &ar.rules[i];
-	    if (json_unpack(json_array_get(joval, i), "{ss,si,si,si}", "pattern",
-			    &r->pattern, "oclass", &r->oclass, "buc", &r->buc,
-			    "action", &r->action) == -1)
-		exit_client("Error unpacking autopickup rule");
-	}
+	if (ar.num_rules) {
+	    value.ar = &ar;
+	    for (i = 0; i < ar.num_rules; i++) {
+		r = &ar.rules[i];
+		if (json_unpack(json_array_get(joval, i), "{ss,si,si,si}",
+			        "pattern", &pattern, "oclass", &r->oclass,
+			        "buc", &r->buc, "action", &r->action) == -1)
+		    exit_client("Error unpacking autopickup rule");
+		strncpy(r->pattern, pattern, sizeof(r->pattern) - 1);
+	    }
+	} else
+	    value.ar = NULL;
     }
     
     ret = nh_set_option(optname, value, isstr);
@@ -732,7 +714,6 @@ static void ccmd_set_option(json_t *params)
     if (option->type == OPTTYPE_AUTOPICKUP_RULES)
 	free(ar.rules);
     
-    /* re-get the option and it's string representation */
     gameopt = nh_get_options(GAME_OPTIONS);
     birthopt = nh_get_options(gameid ? ACTIVE_BIRTH_OPTIONS : CURRENT_BIRTH_OPTIONS);
     option = find_option(optname, gameopt, birthopt);
@@ -740,14 +721,12 @@ static void ccmd_set_option(json_t *params)
     jopt = json_option(option);
     optstr = nh_get_option_string(option);
     
+    db_set_option(user_info.uid, optname, option->type, optstr);
     /* return the altered option struct and the string representation to the
      * client. The intent is to save some network round trips and make a
      * separate get_option_string message unneccessary */
-    jmsg = json_pack("{si,so,ss}", "return", ret, "option", jopt, "optstr", optstr);
+    jmsg = json_pack("{si,so}", "return", ret, "option", jopt);
     client_msg("set_option", jmsg);
-    
-    db_set_option(user_info.uid, optname, option->type, optstr);
-    json_decref(jmsg);
 }
 
 
@@ -755,21 +734,17 @@ static void ccmd_get_options(json_t *params)
 {
     int list, i;
     const struct nh_option_desc *options;
-    json_t *jmsg, *jarr, *jarr2;
+    json_t *jmsg, *jarr;
     
     if (json_unpack(params, "{si!}", "list", &list) == -1)
 	exit_client("Bad parameters for get_options");
     
     jarr = json_array();
-    jarr2 = json_array();
     options = nh_get_options(list);
-    for (i = 0; options[i].name; i++) {
+    for (i = 0; options[i].name; i++)
 	json_array_append_new(jarr, json_option(&options[i]));
-	json_array_append_new(jarr2, json_string(nh_get_option_string(&options[i])));
-    }
-    jmsg = json_pack("{so,so}", "options", jarr, "option_strings", jarr2);
+    jmsg = json_pack("{so}", "options", jarr);
     client_msg("get_options", jmsg);
-    json_decref(jmsg);
 }
 
 
@@ -777,16 +752,13 @@ static void ccmd_get_pl_prompt(json_t *params)
 {
     int rolenum, racenum, gendnum, alignnum;
     char buf[1024], *bp;
-    json_t *jmsg;
     
     if (json_unpack(params, "{si,si,si,si!}", "role", &rolenum, "race",
 	&racenum, "gend", &gendnum, "align", &alignnum) == -1)
 	exit_client("Bad parameters for get_pl_prompt");
     
     bp = nh_build_plselection_prompt(buf, 1024, rolenum, racenum, gendnum, alignnum);
-    jmsg = json_pack("{ss}", "prompt", bp);
-    client_msg("get_pl_prompt", jmsg);
-    json_decref(jmsg);
+    client_msg("get_pl_prompt", json_pack("{ss}", "prompt", bp));
 }
 
 
@@ -795,16 +767,13 @@ static void ccmd_get_root_pl_prompt(json_t *params)
     int rolenum, racenum, gendnum, alignnum;
     char buf[1024];
     const char *bp;
-    json_t *jmsg;
     
     if (json_unpack(params, "{si,si,si,si!}", "role", &rolenum, "race",
 	&racenum, "gend", &gendnum, "align", &alignnum) == -1)
 	exit_client("Bad parameters for get_root_pl_prompt");
     
     bp = nh_root_plselection_prompt(buf, 1024, rolenum, racenum, gendnum, alignnum);
-    jmsg = json_pack("{ss}", "prompt", bp);
-    client_msg("get_root_pl_prompt", jmsg);
-    json_decref(jmsg);
+    client_msg("get_root_pl_prompt", json_pack("{ss}", "prompt", bp));
 }
 
 /* clientcmd.c */

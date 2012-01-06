@@ -653,8 +653,9 @@ struct nh_option_desc *nh_get_options(enum nh_option_list list)
 		return active_birth_options;
 	    case GAME_OPTIONS:
 		return options;
+	    default:
+		return NULL;
 	}
-	return NULL;
 }
 
 

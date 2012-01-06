@@ -86,7 +86,7 @@ nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
 #endif
 
 
-static int commandloop(void)
+int commandloop(void)
 {
     const char *cmd;
     int gamestate, count;
@@ -201,8 +201,10 @@ void rungame(void)
     }
     
     create_game_windows();
-    if (!nh_start_game(fd, plname, role, race, gend, align, ui_flags.playmode))
+    if (!nh_start_game(fd, plname, role, race, gend, align, ui_flags.playmode)) {
+	destroy_game_windows();
 	return;
+    }
     
     load_keymap(); /* need to load the keymap after the game has been started */
     ret = commandloop();

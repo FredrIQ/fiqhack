@@ -17,6 +17,8 @@ if (USE_PDCURSES)
     add_definitions (-DPDCURSES)
 endif ()
 
+set (ENABLE_NETCLIENT TRUE CACHE BOOL "Enable network client mode")
+
 
 set (NH_CURSES_SRC
     src/main.c
@@ -37,7 +39,13 @@ set (NH_CURSES_SRC
     src/status.c
     src/topten.c
     src/windows.c)
-
+if (ENABLE_NETCLIENT)
+    set (NH_CURSES_SRC
+        ${NH_CURSES_SRC}
+        src/netgame.c
+        src/netplay.c)
+endif ()
+    
 if (WIN32)
     set (NH_CURSES_SRC ${NH_CURSES_SRC} rc/nh_ico.rc)
 endif ()
@@ -46,8 +54,12 @@ include_directories (${NitroHack_SOURCE_DIR}/include
                      include)
 
 add_definitions(-DNITROHACKDIR="${DATADIR}")
+if (ENABLE_NETCLIENT)
+    add_definitions(-DNETCLIENT)
+endif ()
 
 link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
+link_directories (${NitroHack_BINARY_DIR}/libnitrohack_client)
 add_executable (nitrohack_curses ${NH_CURSES_SRC} )
 set_target_properties(nitrohack_curses PROPERTIES OUTPUT_NAME nitrohack )
 target_link_libraries(nitrohack_curses nitrohack)
@@ -55,7 +67,12 @@ target_link_libraries(nitrohack_curses nitrohack)
 if (USE_PDCURSES)
     target_link_libraries (nitrohack_curses ${PDCURSES_LIBNAME})
 else ()
-    target_link_libraries (nitrohack_curses ncursesw )
+    target_link_libraries (nitrohack_curses ncursesw)
+endif ()
+
+if (ENABLE_NETCLIENT)
+    add_dependencies (nitrohack_curses libnitrohack_client)
+    target_link_libraries (nitrohack_curses nitrohack_client)
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

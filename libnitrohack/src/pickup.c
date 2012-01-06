@@ -348,6 +348,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	}
 	
 	it = &((*items)[idx]);
+	memset(it, 0, sizeof(struct nh_objitem));
 	it->id = id;
 	it->weight = -1;
 	it->role = role;

@@ -41,7 +41,7 @@ static void center(char *line, char *text)
 
 
 void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-		          char *plname, int gold, char *killbuf, int end_how, int year)
+	const char *plname, int gold, const char *killbuf, int end_how, int year)
 {
     char **dp, **rip;
     char *dpx;

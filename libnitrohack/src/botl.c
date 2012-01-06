@@ -224,7 +224,7 @@ static void make_player_info(struct nh_player_info *pi)
 	    if (can_advance(i, FALSE))
 		advskills++;
 	}
-	pi->enhance_possible = advskills > 0;
+	pi->can_enhance = advskills > 0;
 	
 	/* add status items for various problems */
 	if (strcmp(hu_stat[u.uhs], "        "))

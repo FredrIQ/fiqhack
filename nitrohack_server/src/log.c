@@ -10,7 +10,9 @@
 #include <ctype.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+
 static FILE *logfile;
+static int startup_pid;
 
 
 void log_msg(const char *fmt, ...)
@@ -107,13 +109,17 @@ void report_startup(void)
     log_msg("  dbuser = %s", settings.dbuser ? settings.dbuser : "(not set)");
     log_msg("  dbpass = %s", settings.dbpass ? "(not shown)" : "(not set)");
     log_msg("  dbname = %s", settings.dbname ? settings.dbname : "(not set)");
+    
+    startup_pid = getpid();
 }
 
 
 void end_logging(void)
 {
-    log_msg("----- Server shutdown. -----");
+    if (startup_pid == getpid())
+	log_msg("----- Server shutdown. -----");
     fclose(logfile);
+    logfile = NULL;
 }
 
 /* log.c */

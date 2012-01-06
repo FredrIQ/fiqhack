@@ -67,6 +67,11 @@ typedef wchar_t fnchar;
 
 #include "nitrohack.h"
 
+#ifdef NETCLIENT
+# define NHNET_TRANSPARENT
+# include "nitrohack_client.h"
+#endif
+
 #ifndef PDCURSES
 # include <ncursesw/curses.h>
 #else
@@ -257,6 +262,7 @@ extern struct nh_player_info player;
 extern int initrole, initrace, initgend, initalign;
 extern nh_bool random_player;
 extern struct nh_cmd_desc *keymap[KEY_MAX];
+extern const char *nhlogo[12];
 
 /*----------------------------------------------------------------------------*/
 
@@ -274,7 +280,7 @@ extern int curses_msgwin(const char *msg);
 
 /* gameover.c */
 extern void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-		          char *plname, int gold, char *killbuf, int how, int year);
+	const char *plname, int gold, const char *killbuf, int how, int year);
 
 
 /* getline.c */
@@ -343,9 +349,11 @@ extern nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 /* replay.c */
 extern void replay(void);
 extern void describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi);
+extern void replay_commandloop(int fd);
 
 /* rungame.c */
 extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar *buf);
+extern int commandloop(void);
 extern void rungame(void);
 extern nh_bool loadgame(void);
 extern fnchar **list_gamefiles(fnchar *dir, int *count);
@@ -375,8 +383,18 @@ extern int nh_wgetch(WINDOW *win);
 extern struct gamewin *alloc_gamewin(int extra);
 extern void delete_gamewin(struct gamewin *win);
 extern void curses_pause(enum nh_pause_reason reason);
-extern void curses_display_buffer(char *buf, nh_bool trymove);
+extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
 extern void curses_delay_output(void);
+
+#if defined(NETCLIENT)
+/* netgame.c */
+extern void netgame(void);
+
+/* netplay.c */
+extern void net_rungame(void);
+extern void net_loadgame(void);
+extern void net_replay(void);
+#endif
 
 #endif

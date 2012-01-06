@@ -476,17 +476,17 @@ static char *tabexpand(char *sbuf)
 }
 
 
-void curses_display_buffer(char *buf, nh_bool trymove)
+void curses_display_buffer(const char *inbuf, nh_bool trymove)
 {
-    char *line;
+    char *line, *buf;
     char linebuf[BUFSZ];
     int icount, size;
     struct nh_menuitem *items;
     
+    buf = strdup(inbuf);
     icount = 0;
     size = 10;
     items = malloc(size * sizeof(struct nh_menuitem));
-
 
     line = strtok(buf, "\n");
     do {
@@ -500,6 +500,7 @@ void curses_display_buffer(char *buf, nh_bool trymove)
     
     curses_display_menu(items, icount, NULL, PICK_NONE, NULL);
     free(items);
+    free(buf);
 }
 
 

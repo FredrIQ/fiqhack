@@ -31,6 +31,14 @@ enum extra_opttypes {
 static void read_ui_config(void);
 static void show_autopickup_menu(struct nh_option_desc *opt);
 
+
+#if defined(NETCLIENT)
+# define should_write_config() (nhnet_active())
+#else
+# define should_write_config() (1)
+#endif
+
+
 /*----------------------------------------------------------------------------*/
 
 #define listlen(list) (sizeof(list)/sizeof(list[0]))
@@ -452,7 +460,8 @@ void display_options(nh_bool change_birth_opt)
     } while (n > 0);
     free(items);
     
-    write_config();
+    if (should_write_config())
+	write_config();
 }
 
 
@@ -840,7 +849,7 @@ static void read_config_file(const fnchar *filename)
     
     fp = fopen(filename, "rb");
     if (!fp)
-	    return;
+	return;
 
     /* obtain file size. */
     fseek(fp , 0 , SEEK_END);
@@ -848,14 +857,14 @@ static void read_config_file(const fnchar *filename)
     rewind(fp);
     
     if (!fsize) {/* truncated config file */
-	    fclose(fp);
-	    return;
+	fclose(fp);
+	return;
     }
 
     buf = malloc(fsize+1);
     if (!buf) {
-	    fclose(fp);
-	    return;
+	fclose(fp);
+	return;
     }
 
     fread(buf, fsize, 1, fp);

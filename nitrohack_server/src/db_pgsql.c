@@ -65,9 +65,9 @@ static const char SQL_last_reg_id[] =
     "SELECT currval('users_uid_seq');";
 
 static const char SQL_auth_user[] =
-    "SELECT uid "
+    "SELECT uid, pwhash = crypt($2::text, pwhash) AS auth_ok "
     "FROM   users "
-    "WHERE  name = $1::varchar(50) AND pwhash = crypt($2::text, pwhash);";
+    "WHERE  name = $1::varchar(50);";
 
 static const char SQL_get_user_info[] =
     "SELECT name, can_debug "
@@ -106,7 +106,7 @@ static const char SQL_list_games[] =
     "SELECT g.gid, g.filename, u.name "
     "FROM games AS g JOIN users AS u ON g.owner = u.uid "
     "WHERE (u.uid = $1::integer OR $1::integer = 0) AND g.done = $2::boolean "
-    "ORDER BY g.ts "
+    "ORDER BY g.ts DESC "
     "LIMIT $3::integer;";
 
 static const char SQL_update_option[] =
@@ -272,20 +272,24 @@ int db_auth_user(const char *name, const char *pass)
 {
     PGresult *res;
     const char * const params[] = {name, pass};
-    int uid;
+    int uid, auth_ok, col;
     const char *uidstr;
     
     res = PQexecPrepared(conn, PREP_AUTH, 2, params, NULL, NULL, 0);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
 	return 0;
     }
     
-    uidstr = PQgetvalue(res, 0, 0);
+    col = PQfnumber(res, "uid");
+    uidstr = PQgetvalue(res, 0, col);
     uid = atoi(uidstr);
+    
+    col = PQfnumber(res, "auth_ok");
+    auth_ok = (PQgetvalue(res, 0, col)[0] == 't');
     PQclear(res);
     
-    return uid;
+    return auth_ok ? uid : -uid;
 }
 
 
@@ -504,13 +508,15 @@ void db_set_option(int uid, const char *optname, int type, const char *optval)
     char uidstr[16], typestr[16];
     const char * const params[] = {optval, uidstr, optname, typestr};
     const int paramFormats[] = {0, 0, 0, 0};
+    const char *numrows;
     
     sprintf(uidstr, "%d", uid);
     sprintf(typestr, "%d", type);
     
     /* try to update first */
     res = PQexecParams(conn, SQL_update_option, 3, NULL, params, NULL, paramFormats, 0);
-    if (PQresultStatus(res) == PGRES_COMMAND_OK) {
+    numrows = PQcmdTuples(res);
+    if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
 	PQclear(res);
 	return;
     }
@@ -518,7 +524,8 @@ void db_set_option(int uid, const char *optname, int type, const char *optval)
     
     /* update failed, try to insert */
     res = PQexecParams(conn, SQL_insert_option, 4, NULL, params, NULL, paramFormats, 0);
-    if (PQresultStatus(res) == PGRES_COMMAND_OK) {
+    numrows = PQcmdTuples(res);
+    if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
 	PQclear(res);
 	return;
     }

@@ -9,14 +9,14 @@
 
 static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
-static void srv_display_buffer(char *buf, nh_bool trymove);
+static void srv_display_buffer(const char *buf, nh_bool trymove);
 static void srv_update_status(struct nh_player_info *pi);
 static void srv_print_message(int turn, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
 static void srv_delay_output(void);
 static void srv_level_changed(int displaymode);
 static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
-			   char *name, int gold, char *killbuf, int end_how, int year);
+	const char *name, int gold, const char *killbuf, int end_how, int year);
 static int srv_display_menu(struct nh_menuitem *items, int icount,
 				const char *title, int how, int *results);
 static int srv_display_objects(struct nh_objitem *items, int icount, const char *title,
@@ -30,21 +30,21 @@ static void srv_getline(const char *query, char *buf);
 
 static void srv_alt_raw_print(const char *str);
 static void srv_alt_pause(enum nh_pause_reason r);
-static void srv_alt_display_buffer(char *buf, nh_bool trymove);
+static void srv_alt_display_buffer(const char *buf, nh_bool trymove);
 static void srv_alt_update_status(struct nh_player_info *pi);
 static void srv_alt_print_message(int turn, const char *msg);
 static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
 static void srv_alt_delay_output(void);
 static void srv_alt_level_changed(int displaymode);
 static void srv_alt_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
-			   char *name, int gold, char *killbuf, int end_how, int year);
+	const char *name, int gold, const char *killbuf, int end_how, int year);
 static nh_bool srv_alt_list_items(struct nh_objitem *items, int icount, nh_bool invent);
 
 /*---------------------------------------------------------------------------*/
 
 static struct nh_player_info prev_player_info;
 static struct nh_dbuf_entry prev_dbuf[ROWNO][COLNO];
-static int prev_invent_icount;
+static int prev_invent_icount, prev_floor_icount;
 static struct nh_objitem *prev_invent;
 static const struct nh_dbuf_entry zero_dbuf; /* an entry of all zeroes */
 static json_t *display_data, *jinvent_items, *jfloor_items;
@@ -99,7 +99,6 @@ static json_t *client_request(const char *funcname, json_t *request_msg)
     json_t *jret, *jobj;
     
     client_msg(funcname, request_msg);
-    json_decref(request_msg);
     
     /* client response */
     jret = read_input();
@@ -137,6 +136,7 @@ static void add_display_data(const char *key, json_t *data)
 
 json_t *get_display_data(void)
 {
+    json_t *dd;
     if (jfloor_items) {
 	add_display_data("list_items", jfloor_items);
 	jfloor_items = NULL;
@@ -145,7 +145,9 @@ json_t *get_display_data(void)
 	add_display_data("list_items", jinvent_items);
 	jinvent_items = NULL;
     }
-    return display_data;
+    dd = display_data;
+    display_data = NULL;
+    return dd;
 }
 
 
@@ -169,7 +171,7 @@ static void srv_pause(enum nh_pause_reason r)
 }
 
 
-static void srv_display_buffer(char *buf, nh_bool trymove)
+static void srv_display_buffer(const char *buf, nh_bool trymove)
 {
     json_t *jobj = json_pack("{ss,si}", "buf", buf, "trymove", trymove);
     add_display_data("pause", jobj);
@@ -179,65 +181,97 @@ static void srv_display_buffer(char *buf, nh_bool trymove)
 static void srv_update_status(struct nh_player_info *pi)
 {
     json_t *jobj, *jarr;
-    int i;
+    struct nh_player_info *oi = &prev_player_info;
+    int i, all;
     
     if (!memcmp(&prev_player_info, pi, sizeof(struct nh_player_info)))
 	return;
     
-    prev_player_info = *pi;
-    jobj = json_object();
-    json_object_set_new(jobj, "plname", json_string(pi->plname));
-    json_object_set_new(jobj, "rank", json_string(pi->rank));
-    json_object_set_new(jobj, "level_desc", json_string(pi->level_desc));
-    json_object_set_new(jobj, "x", json_integer(pi->x));
-    json_object_set_new(jobj, "y", json_integer(pi->y));
-    json_object_set_new(jobj, "z", json_integer(pi->z));
-    json_object_set_new(jobj, "score", json_integer(pi->score));
-    json_object_set_new(jobj, "xp", json_integer(pi->xp));
-    json_object_set_new(jobj, "gold", json_integer(pi->gold));
-    json_object_set_new(jobj, "moves", json_integer(pi->moves));
-    json_object_set_new(jobj, "max_rank_sz", json_integer(pi->max_rank_sz));
-    json_object_set_new(jobj, "st", json_integer(pi->st));
-    json_object_set_new(jobj, "st_extra", json_integer(pi->st_extra));
-    json_object_set_new(jobj, "dx", json_integer(pi->dx));
-    json_object_set_new(jobj, "co", json_integer(pi->co));
-    json_object_set_new(jobj, "in", json_integer(pi->in));
-    json_object_set_new(jobj, "wi", json_integer(pi->wi));
-    json_object_set_new(jobj, "ch", json_integer(pi->ch));
-    json_object_set_new(jobj, "align", json_integer(pi->align));
-    json_object_set_new(jobj, "nr_items", json_integer(pi->nr_items));
-    json_object_set_new(jobj, "hp", json_integer(pi->hp));
-    json_object_set_new(jobj, "hpmax", json_integer(pi->hpmax));
-    json_object_set_new(jobj, "en", json_integer(pi->en));
-    json_object_set_new(jobj, "enmax", json_integer(pi->enmax));
-    json_object_set_new(jobj, "ac", json_integer(pi->ac));
-    json_object_set_new(jobj, "level", json_integer(pi->level));
-    json_object_set_new(jobj, "coinsym", json_integer(pi->coinsym));
-    json_object_set_new(jobj, "monnum", json_integer(pi->monnum));
-    json_object_set_new(jobj, "cur_monnum", json_integer(pi->cur_monnum));
-    json_object_set_new(jobj, "enhance_possible", json_integer(pi->enhance_possible));
+    all = !prev_player_info.plname[0];
     
-    jarr = json_array();
-    for (i = 0; i < pi->nr_items; i++)
-	json_array_append_new(jarr, json_string(pi->statusitems[i]));
-    json_object_set_new(jobj, "statusitems", jarr);
-
-    add_display_data("player_info", jobj);
+    /* only send fields that have changed since the last transmission */
+    jobj = json_object();
+    if (all) {
+	json_object_set_new(jobj, "plname", json_string(pi->plname));
+	json_object_set_new(jobj, "coinsym", json_integer(pi->coinsym));
+	json_object_set_new(jobj, "max_rank_sz", json_integer(pi->max_rank_sz));
+    }
+    if (all || strcmp(pi->rank, oi->rank))
+	json_object_set_new(jobj, "rank", json_string(pi->rank));
+    if (all || strcmp(pi->level_desc, oi->level_desc))
+	json_object_set_new(jobj, "level_desc", json_string(pi->level_desc));
+    if (all || pi->x != oi->x)
+	json_object_set_new(jobj, "x", json_integer(pi->x));
+    if (all || pi->y != oi->y)
+	json_object_set_new(jobj, "y", json_integer(pi->y));
+    if (all || pi->z != oi->z)
+	json_object_set_new(jobj, "z", json_integer(pi->z));
+    if (all || pi->score != oi->score)
+	json_object_set_new(jobj, "score", json_integer(pi->score));
+    if (all || pi->xp != oi->xp)
+	json_object_set_new(jobj, "xp", json_integer(pi->xp));
+    if (all || pi->gold != oi->gold)
+	json_object_set_new(jobj, "gold", json_integer(pi->gold));
+    if (all || pi->moves != oi->moves)
+	json_object_set_new(jobj, "moves", json_integer(pi->moves));
+    if (all || pi->st != oi->st)
+	json_object_set_new(jobj, "st", json_integer(pi->st));
+    if (all || pi->st_extra != oi->st_extra)
+	json_object_set_new(jobj, "st_extra", json_integer(pi->st_extra));
+    if (all || pi->dx != oi->dx)
+	json_object_set_new(jobj, "dx", json_integer(pi->dx));
+    if (all || pi->co != oi->co)
+	json_object_set_new(jobj, "co", json_integer(pi->co));
+    if (all || pi->in != oi->in)
+	json_object_set_new(jobj, "in", json_integer(pi->in));
+    if (all || pi->wi != oi->wi)
+	json_object_set_new(jobj, "wi", json_integer(pi->wi));
+    if (all || pi->ch != oi->ch)
+	json_object_set_new(jobj, "ch", json_integer(pi->ch));
+    if (all || pi->align != oi->align)
+	json_object_set_new(jobj, "align", json_integer(pi->align));
+    if (all || pi->nr_items != oi->nr_items)
+	json_object_set_new(jobj, "nr_items", json_integer(pi->nr_items));
+    if (all || pi->hp != oi->hp)
+	json_object_set_new(jobj, "hp", json_integer(pi->hp));
+    if (all || pi->hpmax != oi->hpmax)
+	json_object_set_new(jobj, "hpmax", json_integer(pi->hpmax));
+    if (all || pi->en != oi->en)
+	json_object_set_new(jobj, "en", json_integer(pi->en));
+    if (all || pi->enmax != oi->enmax)
+	json_object_set_new(jobj, "enmax", json_integer(pi->enmax));
+    if (all || pi->ac != oi->ac)
+	json_object_set_new(jobj, "ac", json_integer(pi->ac));
+    if (all || pi->level != oi->level)
+	json_object_set_new(jobj, "level", json_integer(pi->level));
+    if (all || pi->monnum != oi->monnum)
+	json_object_set_new(jobj, "monnum", json_integer(pi->monnum));
+    if (all || pi->cur_monnum != oi->cur_monnum)
+	json_object_set_new(jobj, "cur_monnum", json_integer(pi->cur_monnum));
+    if (all || pi->can_enhance != oi->can_enhance)
+	json_object_set_new(jobj, "can_enhance", json_integer(pi->can_enhance));
+    if (all || memcmp(pi->statusitems, oi->statusitems, sizeof(pi->statusitems))) {
+	jarr = json_array();
+	for (i = 0; i < pi->nr_items; i++)
+	    json_array_append_new(jarr, json_string(pi->statusitems[i]));
+	json_object_set_new(jobj, "statusitems", jarr);
+    }
+    prev_player_info = *pi;
+    
+    add_display_data("update_status", jobj);
 }
 
 
 static void srv_print_message(int turn, const char *msg)
 {
-    json_t *jobj = json_object();
-    json_object_set_new(jobj, "turn", json_integer(turn));
-    json_object_set_new(jobj, "msg", json_string(msg));
+    json_t *jobj = json_pack("{si,ss}", "turn", turn, "msg", msg);
     add_display_data("print_message", jobj);
 }
 
 
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
 {
-    int i, x, y, samedbe, samecols, zerodbe, zerocols;
+    int i, x, y, samedbe, samecols, zerodbe, zerocols, is_same, is_zero;
     json_t *jdbuf, *dbufcol, *dbufent;
     
     samecols = 0;
@@ -248,42 +282,59 @@ static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
 	zerodbe = 0;
 	dbufcol = json_array();
 	for (y = 0; y < ROWNO; y++) {
+	    /* an entry may be both the same as before and zero. Check for both
+	     * so that both conditions can be counted */
+	    is_zero = is_same = FALSE;
+	    if (!memcmp(&dbuf[y][x], &zero_dbuf, sizeof(dbuf[y][x]))) {
+		zerodbe++;
+		is_zero = TRUE;
+		json_array_append_new(dbufcol, json_integer(0));
+	    }
 	    if (!memcmp(&dbuf[y][x], &prev_dbuf[y][x], sizeof(dbuf[y][x]))) {
 		samedbe++;
-		json_array_append_new(dbufcol, json_integer(-1));
-	    } else if (!memcmp(&dbuf[y][x], &zero_dbuf, sizeof(dbuf[y][x]))) {
-		zerodbe++;
-		json_array_append_new(dbufcol, json_integer(0));
-	    } else {
-		dbufent = json_pack("{si,si,si,si,si,si,si,si,si}",
-				    "effect", dbuf[y][x].effect,
-				    "bg", dbuf[y][x].bg,
-				    "trap", dbuf[y][x].trap,
-				    "obj", dbuf[y][x].obj,
-				    "obj_mn", dbuf[y][x].obj_mn,
-				    "mon", dbuf[y][x].mon,
-				    "monflags", dbuf[y][x].monflags,
-				    "invis", dbuf[y][x].invis,
-				    "visible", dbuf[y][x].visible);
+		is_same = TRUE;
+		if (!is_zero)
+		    json_array_append_new(dbufcol, json_integer(1));
+	    }
+	    if (!is_same && !is_zero) {
+		/* It pains me to make this an array rather than a struct, but
+		 * it does cause much less data to be sent. */
+		dbufent = json_pack("[i,i,i,i,i,i,i,i,i]",
+				    dbuf[y][x].effect,
+				    dbuf[y][x].bg,
+				    dbuf[y][x].trap,
+				    dbuf[y][x].obj,
+				    dbuf[y][x].obj_mn,
+				    dbuf[y][x].mon,
+				    dbuf[y][x].monflags,
+				    dbuf[y][x].invis,
+				    dbuf[y][x].visible);
 		json_array_append_new(dbufcol, dbufent);
 	    }
 	}
 	
+	is_zero = is_same = FALSE;
+	if (zerodbe == ROWNO) { /* entire column is zero */
+	    zerocols++;
+	    is_zero = TRUE;
+	    json_array_append_new(jdbuf, json_integer(0));
+	}
 	if (samedbe == ROWNO) { /* entire column is unchanged */
 	    samecols++;
-	    json_array_append_new(jdbuf, json_integer(-1));
-	} else if (zerodbe == ROWNO) { /* entire column is zero */
-	    zerocols++;
-	    json_array_append_new(jdbuf, json_integer(0));
-	} else
+	    is_same = TRUE;
+	    if (!is_zero)
+		json_array_append_new(jdbuf, json_integer(1));
+	}
+	if (!is_same && !is_zero)
 	    json_array_append(jdbuf, dbufcol);
-	
 	json_decref(dbufcol);
     }
     
     if (samecols == COLNO) {
-	add_display_data("update_screen", json_integer(-1));
+	json_decref(jdbuf);
+	return; /* no point in sending out a message that nothing changed */
     } else if (zerocols == COLNO) {
+	json_decref(jdbuf);
 	add_display_data("update_screen", json_integer(0));
     } else
 	add_display_data("update_screen", jdbuf);
@@ -315,7 +366,7 @@ static json_t *json_menuitem(struct nh_menuitem *mi)
 
 
 static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
-			   char *name, int gold, char *killbuf, int end_how, int year)
+	const char *name, int gold, const char *killbuf, int end_how, int year)
 {
     int i;
     json_t *jobj, *jarr;
@@ -323,8 +374,8 @@ static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
     jarr = json_array();
     for (i = 0; i < icount; i++)
 	json_array_append_new(jarr, json_menuitem(&items[i]));
-    jobj = json_pack("{so,si,si,si,si,ss,ss}", "items", jarr, "icount", icount,
-		     "tombstone", tombstone, "gold", gold, "year", year,
+    jobj = json_pack("{so,si,si,si,si,si,ss,ss}", "items", jarr, "icount", icount,
+		     "tombstone", tombstone, "gold", gold, "year", year, "how", end_how,
 		     "name", name, "killbuf", killbuf);
     
     add_display_data("outrip", jobj);
@@ -347,7 +398,7 @@ static int srv_display_menu(struct nh_menuitem *items, int icount,
     for (i = 0; i < icount; i++)
 	json_array_append_new(jarr, json_menuitem(&items[i]));
     jobj = json_pack("{so,si,si,ss}", "items", jarr, "icount", icount,
-		     "how", how, "title", title);
+		     "how", how, "title", title ? title : "");
     
     if (how == PICK_NONE) {
 	add_display_data("display_menu", jobj);
@@ -355,7 +406,7 @@ static int srv_display_menu(struct nh_menuitem *items, int icount,
     }
     
     jobj = client_request("display_menu", jobj);
-    if (json_unpack(jobj, "{si,so!}", "return", &ret, "results", jarr) == -1)
+    if (json_unpack(jobj, "{si,so!}", "return", &ret, "results", &jarr) == -1)
 	exit_client("Bad parameter for display_menu");
     
     for (i = 0; i < json_array_size(jarr); i++)
@@ -369,11 +420,11 @@ static int srv_display_menu(struct nh_menuitem *items, int icount,
 static json_t *json_objitem(struct nh_objitem *oi)
 {
     json_t *jobj;
-    jobj = json_pack("{ss,si,si,si,si,si,si,si,si,si,si}", "caption", oi->caption,
-		     "id", oi->id, "role", oi->role, "count", oi->count,
-		     "otype", oi->otype, "oclass", oi->oclass,
-		     "weight", oi->weight, "buc", oi->buc, "accel", oi->accel,
-		     "group_accel", oi->group_accel, "worn", oi->worn);
+    /* This array should have been an object, but transmission size prevents
+     * that. */
+    jobj = json_pack("[s,i,i,i,i,i,i,i,i,i,i]", oi->caption,
+		     oi->id, oi->role, oi->count, oi->otype, oi->oclass,
+		     oi->weight, oi->buc, oi->accel, oi->group_accel, oi->worn);
     return jobj;
 }
 
@@ -388,7 +439,7 @@ static int srv_display_objects(struct nh_objitem *items, int icount, const char 
     for (i = 0; i < icount; i++)
 	json_array_append_new(jarr, json_objitem(&items[i]));
     jobj = json_pack("{so,si,si,ss}", "items", jarr, "icount", icount,
-		     "how", how, "title", title);
+		     "how", how, "title", title ? title : "");
     
     if (how == PICK_NONE) {
 	add_display_data("display_objects", jobj);
@@ -396,7 +447,7 @@ static int srv_display_objects(struct nh_objitem *items, int icount, const char 
     }
     
     jobj = client_request("display_objects", jobj);
-    if (json_unpack(jobj, "{si,so!}", "return", &ret, "pick_list", jarr) == -1)
+    if (json_unpack(jobj, "{si,so!}", "return", &ret, "pick_list", &jarr) == -1)
 	exit_client("Bad parameter for display_objects");
     
     for (i = 0; i < json_array_size(jarr); i++) {
@@ -419,13 +470,16 @@ static nh_bool srv_list_items(struct nh_objitem *items, int icount, nh_bool inve
     if (invent && prev_invent && icount == prev_invent_icount &&
 	!memcmp(items, prev_invent, sizeof(struct nh_objitem) * icount))
 	return TRUE;
+    if (!invent && icount == 0 && prev_floor_icount == 0)
+	return TRUE;
     
     if (invent) {
 	prev_invent_icount = icount;
 	free(prev_invent);
 	prev_invent = malloc(sizeof(struct nh_objitem) * icount);
 	memcpy(prev_invent, items, sizeof(struct nh_objitem) * icount);
-    }
+    } else
+	prev_floor_icount = icount;
     
     jarr = json_array();
     for (i = 0; i < icount; i++)
@@ -463,7 +517,7 @@ static char srv_query_key(const char *query, int *count)
     jobj = json_pack("{ss,sb}", "query", query, "allow_count", !!count);
     
     jobj = client_request("query_key", jobj);
-    if (json_unpack(jobj, "{si,si,si!}", "return", &ret, "count", &c) == -1)
+    if (json_unpack(jobj, "{si,si!}", "return", &ret, "count", &c) == -1)
 	exit_client("Bad parameters for query_key");
     json_decref(jobj);
     
@@ -554,7 +608,7 @@ static void srv_alt_pause(enum nh_pause_reason r)
 }
 
 
-static void srv_alt_display_buffer(char *buf, nh_bool trymove)
+static void srv_alt_display_buffer(const char *buf, nh_bool trymove)
 {
     altproc = TRUE;
     srv_display_buffer(buf, trymove);
@@ -603,7 +657,7 @@ static void srv_alt_level_changed(int displaymode)
 
 
 static void srv_alt_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-			   char *name, int gold, char *killbuf, int end_how, int year)
+	    const char *name, int gold, const char *killbuf, int end_how, int year)
 {
     altproc = TRUE;
     srv_alt_outrip(items, icount, tombstone, name, gold, killbuf, end_how, year);
@@ -618,6 +672,26 @@ static nh_bool srv_alt_list_items(struct nh_objitem *items, int icount, nh_bool 
     ret = srv_list_items(items, icount, invent);
     altproc = FALSE;
     return ret;
+}
+
+
+void reset_cached_diplaydata(void)
+{
+    if (display_data)
+	json_decref(display_data);
+    if (jinvent_items)
+	json_decref(jinvent_items);
+    if (jfloor_items)
+	json_decref(jfloor_items);
+    display_data = jinvent_items = jfloor_items = NULL;
+    
+    if (prev_invent)
+	free(prev_invent);
+    prev_invent = NULL;
+    prev_invent_icount = prev_floor_icount = 0;
+    
+    memset(&prev_player_info, 0, sizeof(prev_player_info));
+    memset(&prev_dbuf, 0, sizeof(prev_dbuf));
 }
 
 /* winprocs.c */

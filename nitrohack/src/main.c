@@ -28,6 +28,7 @@ enum menuitems {
     REPLAY,
     OPTIONS,
     TOPTEN,
+    NETWORK,
     EXITGAME
 };
 
@@ -37,11 +38,14 @@ struct nh_menuitem mainmenu_items[] = {
     {REPLAY, MI_NORMAL, "view replay", 'v'},
     {OPTIONS, MI_NORMAL, "set options", 'o'},
     {TOPTEN, MI_NORMAL, "show score list", 's'},
+#if defined(NETCLIENT)
+    {NETWORK, MI_NORMAL, "connect to server", 'c'},
+#endif
     {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
 
-const char *nhlogo[] = { /* this _beautiful_ logo was created by exporting an
+const char *nhlogo[12] = { /* this _beautiful_ logo was created by exporting an
                             160x24 image from gimp using aalib */
 "]QQQ,   ]QQf             _aa/    ]QQf    ]QQf                       ]QQf       ",
 "]QQQm   ]QQf             ]QQf    ]QQf    ]QQf                       ]QQf       ",
@@ -147,8 +151,9 @@ static void mainmenu(void)
 	wrefresh(basewin);
 
 	menuresult[0] = EXITGAME; /* default action */
-	n = curses_display_menu_core(mainmenu_items, 6, NULL, PICK_ONE,
-				     menuresult, 0, logoheight, COLS, ROWNO+3, NULL);
+	n = curses_display_menu_core(mainmenu_items, ARRAY_SIZE(mainmenu_items),
+				     NULL, PICK_ONE, menuresult, 0, logoheight,
+				     COLS, ROWNO+3, NULL);
 	
 	wclear(basewin);
 	wrefresh(basewin);
@@ -169,6 +174,12 @@ static void mainmenu(void)
 	    case OPTIONS:
 		display_options(TRUE);
 		break;
+		
+#if defined(NETCLIENT)
+	    case NETWORK:
+		netgame();
+		break;
+#endif
 		
 	    case TOPTEN:
 		show_topten(NULL, -1, FALSE, FALSE);
