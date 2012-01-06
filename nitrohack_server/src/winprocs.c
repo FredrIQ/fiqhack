@@ -166,7 +166,7 @@ static void srv_pause(enum nh_pause_reason r)
     json_t *jobj = json_integer(r);
     /* since the display may stop here, the sidebar info should be up-to-date
      * sidebar data is added to the output as a side-effect of get_display_data() */
-    get_display_data();
+    display_data = get_display_data();
     add_display_data("pause", jobj);
 }
 

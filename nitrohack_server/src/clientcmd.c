@@ -82,6 +82,9 @@ static void ccmd_start_game(json_t *params)
 	"race", &race, "gender", &gend, "alignment", &align, "mode", &mode) == -1)
 	exit_client("Bad set of parameters for start_game");
     
+    /* reset cached display data from a previous game */
+    reset_cached_diplaydata();
+    
     if (mode == MODE_WIZARD && !user_info.can_debug)
 	mode = MODE_EXPLORE;
     
@@ -102,9 +105,6 @@ static void ccmd_start_game(json_t *params)
 	unlink(filename);
 	j_msg = json_pack("{si,si}", "return", ret, "gameid", -1);
     }
-    
-    /* reset cached display data from a previous game */
-    reset_cached_diplaydata();
     
     client_msg("start_game", j_msg);
 }
