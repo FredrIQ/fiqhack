@@ -76,6 +76,7 @@ struct nhnet_game *nhnet_list_games(int done, int *count)
 	gamebuf = xmalloc(*count * sizeof(struct nhnet_game));
 	for (i = 0; i < *count; i++) {
 	    gb = &gamebuf[i];
+	    memset(gb, 0, sizeof(struct nhnet_game));
 	    jobj = json_array_get(jarr, i);
 	    if (json_unpack(jobj, "{si,si,si,ss,ss,ss,ss,ss*}", "gameid",
 		&gb->gameid, "status", &gb->status, "playmode", &gb->i.playmode,
@@ -97,7 +98,8 @@ struct nhnet_game *nhnet_list_games(int done, int *count)
 		gb->i.has_amulet = has_amulet;
 		strncpy(gb->i.level_desc, level_desc, sizeof(gb->i.level_desc)-1);
 	    } else if (gb->status == LS_DONE) {
-		json_unpack(jobj, "{ss*}", "death", &death);
+		json_unpack(jobj, "{ss,si,si*}", "death", &death, "moves",
+			    &gb->i.moves, "depth", &gb->i.depth);
 		strncpy(gb->i.death, death, sizeof(gb->i.death)-1);
 	    }
 	}

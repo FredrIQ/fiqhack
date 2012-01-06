@@ -89,7 +89,7 @@ static const char SQL_last_game_id[] =
 
 static const char SQL_set_game_done[] =
     "UPDATE games "
-    "SET end_how = $1::integer "
+    "SET end_how = $1::integer, done = TRUE "
     "WHERE gid = $2::integer;";
 
 static const char SQL_update_game_ts[] =
@@ -101,6 +101,11 @@ static const char SQL_get_game_filename[] =
     "SELECT filename "
     "FROM games "
     "WHERE owner = $1::integer AND gid = $2::integer;";
+
+static const char SQL_set_game_filename[] =
+    "UPDATE games "
+    "SET filename = $1::text "
+    "WHERE gid = $2::integer;";
 
 static const char SQL_list_games[] =
     "SELECT g.gid, g.filename, u.name "
@@ -391,7 +396,7 @@ long db_add_new_game(int uid, const char *filename, int role, int race,
 	return 0;
     }
     
-    res = PQexec(conn, SQL_last_reg_id);
+    res = PQexec(conn, SQL_last_game_id);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
 	return 0;
@@ -408,16 +413,19 @@ long db_add_new_game(int uid, const char *filename, int role, int race,
 void db_set_game_done(int gameid, int end_how)
 {
     PGresult *res;
-    char gidstr[16], endstr[16];
-    const char * const params[] = {gidstr, endstr};
+    char gidstr[16], endstr[16], *numrows;
+    const char * const params[] = {endstr, gidstr};
     const int paramFormats[] = {0, 0};
     
-    sprintf(gidstr, "%d", gameid);
     sprintf(endstr, "%d", end_how);
+    sprintf(gidstr, "%d", gameid);
     
     res = PQexecParams(conn, SQL_set_game_done, 2, NULL, params, NULL, paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	log_msg("set_game_done error: %s", PQerrorMessage(conn));
+    numrows = PQcmdTuples(res);
+    if (atoi(numrows) < 1)
+	log_msg("set_game_done for game %d (status %d) failed", gameid, end_how);
     PQclear(res);
 }
 
@@ -458,6 +466,21 @@ int db_get_game_filename(int uid, int gid, char *namebuf, int buflen)
     strncpy(namebuf, PQgetvalue(res, 0, 0), buflen);
     PQclear(res);
     return TRUE;
+}
+
+
+void db_set_game_filename(int gid, const char *filename)
+{
+    PGresult *res;
+    char gidstr[16];
+    const char * const params[] = {filename, gidstr};
+    const int paramFormats[] = {0, 0};
+    
+    sprintf(gidstr, "%d", gid);
+    res = PQexecParams(conn, SQL_set_game_filename, 2, NULL, params, NULL, paramFormats, 0);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	log_msg("db_set_game_filename error: %s", PQerrorMessage(conn));
+    PQclear(res);
 }
 
 

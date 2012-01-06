@@ -219,6 +219,7 @@ static void ccmd_game_command(json_t *params)
 	    return;
 	snprintf(final_name, 1024, "%s/completed/%s", settings.workdir, filename+1);
 	rename(full_name, final_name);
+	db_set_game_filename(gid, final_name);
     }
 }
 
@@ -303,8 +304,8 @@ static void ccmd_list_games(json_t *params)
     /* step 2: get extra info for each file. */
     for (i = 0; i < count; i++) {
 	fd = open(files[i].filename, O_RDWR);
-	if (fd == -1) { /* to error out or not, that is the question... */
-	    log_msg("Game file %s could not be opened in ccmd_list_games.");
+	if (fd == -1) {
+	    log_msg("Game file %s could not be opened in ccmd_list_games.", files[i].filename);
 	    continue;
 	}
 	
@@ -320,6 +321,8 @@ static void ccmd_list_games(json_t *params)
 	    json_object_set_new(jobj, "has_amulet", json_integer(gi.has_amulet));
 	} else if (status == LS_DONE) {
 	    json_object_set_new(jobj, "death", json_string(gi.death));
+	    json_object_set_new(jobj, "moves", json_integer(gi.moves));
+	    json_object_set_new(jobj, "depth", json_integer(gi.depth));
 	}
 	json_array_append_new(jarr, jobj);
 	

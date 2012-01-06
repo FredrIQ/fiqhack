@@ -190,13 +190,13 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	
 	json_decref(jmsg);
 	json_decref(jobj);
-	jdisplay = json_object_get(recv_msg, "display_data");
+	jdisplay = json_object_get(recv_msg, "display");
 	if (jdisplay) {
 	    if (json_is_array(jdisplay))
 		handle_display_list(jdisplay);
 	    else
 		print_error("New display list doesn't have the right data type.");
-	    json_object_del(recv_msg, "display_data");
+	    json_object_del(recv_msg, "display");
 	}
 	
 	iter = json_object_iter(recv_msg);
@@ -358,8 +358,8 @@ static int do_connect(const char *host, int port, const char *user, const char *
     json_decref(jmsg);
     
     strncpy(saved_hostname, host, sizeof(saved_hostname));
-    strncpy(saved_username, host, sizeof(saved_username));
-    strncpy(saved_password, host, sizeof(saved_password));
+    strncpy(saved_username, user, sizeof(saved_username));
+    strncpy(saved_password, pass, sizeof(saved_password));
     saved_port = port;
     conn_err = FALSE;
     net_active = TRUE;
@@ -424,7 +424,7 @@ int restart_connection(void)
     
     ret = do_connect(saved_hostname, saved_port, saved_username, saved_password,
 		     NULL, 0, connection_id);
-    if (ret != AUTH_SUCCESS_NEW || ret != AUTH_SUCCESS_RECONNECT)
+    if (ret != AUTH_SUCCESS_NEW && ret != AUTH_SUCCESS_RECONNECT)
 	return FALSE;
     
     if (ret == AUTH_SUCCESS_NEW && current_game) {

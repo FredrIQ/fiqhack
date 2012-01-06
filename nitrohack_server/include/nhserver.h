@@ -117,6 +117,7 @@ extern long db_add_new_game(int uid, const char *filename, int role, int race,
 extern void db_set_game_done(int gameid, int end_how);
 extern void db_update_game_ts(int gameid);
 extern int db_get_game_filename(int uid, int gid, char *namebuf, int buflen);
+extern void db_set_game_filename(int gid, const char *filename);
 extern struct gamefile_info *db_list_games(int completed, int uid, int limit, int *count);
 extern void db_set_option(int uid, const char *optname, int type, const char *optval);
 extern void db_restore_options(int uid);

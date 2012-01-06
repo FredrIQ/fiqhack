@@ -40,10 +40,15 @@ int dosave0(boolean emergency)
 {
 	int fd;
 	struct memfile mf = {NULL, 0, 0};
+	boolean log_disabled = iflags.disable_log;
 
 	fd = logfile;
 	
+	/* when  we leave via nh_exit, logging is disabled. It needs to be
+	 * enabled briefly so that log_finish will update the log header. */
+	iflags.disable_log = FALSE;
 	log_finish(LS_SAVED);
+	iflags.disable_log = log_disabled;
 	vision_recalc(2);	/* shut down vision to prevent problems
 				   in the event of an impossible() call */
 	

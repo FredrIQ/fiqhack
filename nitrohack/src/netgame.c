@@ -428,6 +428,10 @@ static void netgame_mainmenu(struct server_info *server)
 	    case DISCONNECT:
 		return;
 	}
+	
+	/* unrecoverable connection error? */
+	if (!nhnet_connected())
+	    break;
     }
 }
 

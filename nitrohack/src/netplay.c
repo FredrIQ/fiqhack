@@ -59,6 +59,8 @@ void net_loadgame(void)
     icount = 0;
     items = malloc(size * sizeof(struct nh_menuitem));
     for (i = 0; i < size; i++) {
+	if (gamelist[i].status == LS_DONE || gamelist[i].status == LS_INVALID)
+	    continue;
 	describe_game(buf, gamelist[i].status, &gamelist[i].i);
 	id = (gamelist[i].status == LS_IN_PROGRESS) ? 0 : gamelist[i].gameid;
 	add_menu_item(items, size, icount, id, buf, 0, FALSE);

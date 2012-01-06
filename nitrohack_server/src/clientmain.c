@@ -63,7 +63,7 @@ void client_msg(const char *key, json_t *value)
     /* send out display data whenever anything else goes out */
     display_data = get_display_data();
     if (display_data) {
-	json_object_set_new(jval, "display_data", display_data);
+	json_object_set_new(jval, "display", display_data);
 	display_data = NULL;
     }
     
