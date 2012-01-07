@@ -561,7 +561,7 @@ static int send_to_client(struct client_data *client, char *buffer, int sendlen)
 	if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
 	    /* be careful, buffer == client->unsent_data is possible */
 	    newbuf = malloc(sendlen - sent);
-	    memcpy(newbuf, buffer, sendlen - sent);
+	    memcpy(newbuf, &buffer[sent], sendlen - sent);
 	    if (client->unsent_data)
 		free(client->unsent_data);
 	    client->unsent_data = newbuf;
@@ -575,7 +575,7 @@ static int send_to_client(struct client_data *client, char *buffer, int sendlen)
 	    return -1;
 	sent += ret;
     } while (sent < sendlen);
-    
+
     if (client->unsent_data)
 	free(client->unsent_data);
     client->unsent_data = NULL;
