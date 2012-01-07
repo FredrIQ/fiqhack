@@ -14,7 +14,7 @@
 
 /* SQL statements used */
 static const char SQL_init_user_table[] =
-    "CREATE TABLE IF NOT EXISTS users("
+    "CREATE TABLE users("
        "uid SERIAL PRIMARY KEY, "
        "name varchar(50) UNIQUE NOT NULL, "
        "pwhash text NOT NULL, "
@@ -24,7 +24,7 @@ static const char SQL_init_user_table[] =
     ");";
 
 static const char SQL_init_games_table[] =
-    "CREATE TABLE IF NOT EXISTS games("
+    "CREATE TABLE games("
        "gid SERIAL PRIMARY KEY, "
        "filename text NOT NULL, "
        "plname text NOT NULL, "
@@ -40,7 +40,7 @@ static const char SQL_init_games_table[] =
     ");";
 
 static const char SQL_init_options_table[] =
-    "CREATE TABLE IF NOT EXISTS options("
+    "CREATE TABLE options("
 	"uid integer NOT NULL REFERENCES users (uid), "
 	"optname text NOT NULL, "
 	"opttype integer NOT NULL, "
@@ -137,40 +137,11 @@ static PGconn *conn;
  */
 int init_database(void)
 {
-    const char *connect_keywords[10];
-    const char *connect_values[10];
-    int kwcount = 0;
-    
     if (conn)
 	close_database();
 
-    memset(connect_keywords, 0, sizeof(connect_keywords));
-    memset(connect_values, 0, sizeof(connect_values));
-    if (settings.dbhost) {
-	connect_keywords[kwcount] = "host";
-	connect_values[kwcount++] = settings.dbhost;
-    }
-    if (settings.dbport) {
-	connect_keywords[kwcount] = "port";
-	connect_values[kwcount++] = settings.dbport;
-    }
-    if (settings.dbname) {
-	connect_keywords[kwcount] = "dbname";
-	connect_values[kwcount++] = settings.dbname;
-    }
-    if (settings.dbuser) {
-	connect_keywords[kwcount] = "user";
-	connect_values[kwcount++] = settings.dbuser;
-    }
-    if (settings.dbpass) {
-	connect_keywords[kwcount] = "password";
-	connect_values[kwcount++] = settings.dbpass;
-    }
-    connect_keywords[kwcount] = "application_name";
-    connect_values[kwcount++] = "NitroHack server";
-    
-    /* PQconnectdbParams never returns NULL */
-    conn = PQconnectdbParams(connect_keywords, connect_values, 0);
+    conn = PQsetdbLogin(settings.dbhost, settings.dbport, NULL, NULL,
+			settings.dbname, settings.dbuser, settings.dbpass);
     if (PQstatus(conn) == CONNECTION_BAD) {
 	fprintf(stderr, "Database connection failed. Check your settings.\n");
 	goto err;
