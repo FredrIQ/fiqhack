@@ -647,12 +647,16 @@ static json_t *cmd_server_error(json_t *params, int display_only)
     if (json_unpack(params, "{sb,ss!}", "error", &is_error, "message", &msg) == -1)
 	return NULL;
     
-    snprintf(errmsg, BUFSZ, "Server reports error: %s", msg);
-    print_error(errmsg);
+    if (is_error) {
+	snprintf(errmsg, BUFSZ, "Server reports error: %s", msg);
+	print_error(errmsg);
+    }
     
     if (!restart_connection()) {
 	print_error("Connection to server could not be re-established.");
 	nhnet_disconnect();
+	if (ex_jmp_buf_valid)
+	    longjmp(ex_jmp_buf, 1);
     }
     
     return NULL;

@@ -138,7 +138,7 @@ json_t *read_input(void)
     int ret, datalen, done;
     static char commbuf[COMMBUF_SIZE];
     char *bp;
-    json_t *jval;
+    json_t *jval = NULL;
     json_error_t err;
     struct pollfd pfd[1] = {{infd, POLLIN | POLLRDHUP | POLLERR | POLLHUP, 0}};
     
@@ -200,6 +200,11 @@ static void client_main_loop(void)
     
     while (!termination_flag) {
 	obj = read_input();
+	if (termination_flag) {
+	    if (obj)
+		json_decref(obj);
+	    return;
+	}
 	db_update_user_ts(user_info.uid);
 	
 	iter = json_object_iter(obj);
