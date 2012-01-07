@@ -1,5 +1,9 @@
 # build the network server for libnitrohack
 
+include (CheckIncludeFiles)
+
+check_include_files(postgresql/libpq-fe.h LIBPQFE_IN_SUBDIR)
+
 find_library(JANSSON_LIB jansson DOC "Library for encoding and decoding JSON data")
 find_library(PQ_LIB pq DOC "PostgreSQL client library")
 
@@ -32,6 +36,9 @@ add_definitions(-DDEFAULT_LOG_FILE="${NH_SERVER_LOG_FILE}")
 add_definitions(-DDEFAULT_WORK_DIR="${NH_SERVER_WORK_DIR}")
 
 add_definitions(-DNITROHACKDIR="${DATADIR}")
+if (LIBPQFE_IN_SUBDIR)
+    add_definitions(-DLIBPQFE_IN_SUBDIR)
+endif ()
 
 link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
 add_executable (nitrohack_server ${NH_SERVER_SRC} )

@@ -6,7 +6,11 @@
 
 #include "nhserver.h"
 
-#include <libpq-fe.h>
+#if defined(LIBPQFE_IN_SUBDIR)
+# include <postgresql/libpq-fe.h>
+#else
+# include <libpq-fe.h>
+#endif
 
 /* prepared statement names */
 #define PREP_AUTH	"auth_user"
