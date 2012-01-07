@@ -594,9 +594,10 @@ static int send_to_client(struct client_data *client, char *buffer, int sendlen)
  */
 static void handle_communication(int fd, int epfd, unsigned int event_mask)
 {
-    int ret, closed, write_count, errno_orig;
+    int ret, closed, write_count, errno_orig, read_ret, write_ret;
     struct client_data *client = fd_to_client[fd];
     struct epoll_event ev;
+    char buf[16384];
     
     if (event_mask & EPOLLERR || /* fd error */
 	event_mask & EPOLLHUP || /* fd closed */
@@ -633,14 +634,24 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 	} else { /* it is possible to receive or send data */
 	    if (event_mask & EPOLLIN) {
 		do {
-		    ret = splice(client->sock, NULL, client->pipe_out, NULL,
-				1024 * 1024, SPLICE_F_NONBLOCK);
-		} while (ret == 1024 * 1024);
-		if (ret == -1) {
-		    log_msg("splice error while receiving: %s", strerror(errno));
-		    if (errno == EBADF) /* client pipe gone, maybe it crashed? */
-			cleanup_game_process(client, epfd);
-		}
+		    read_ret = read(client->sock, buf, sizeof(buf));
+		    if (read_ret == -1 && errno == EINTR)
+			continue;
+		    else if (read_ret <= 0)
+			break;
+		    write_count = 0;
+		    do {
+			write_ret = write(client->pipe_out, &buf[write_count],
+					  read_ret - write_count);
+			if (write_ret == -1 && errno == EINTR)
+			    continue;
+			else if (write_ret == -1)
+			    break;
+			write_count += write_ret;
+		    } while (write_count < read_ret);
+		} while (read_ret == sizeof(buf) && write_ret != -1);
+		if (read_ret <= 0 || write_ret == -1)
+		    cleanup_game_process(client, epfd);
 	    }
 	    if ((event_mask & EPOLLOUT) && client->unsent_data) {
 		write_count = send_to_client(client, NULL, 0);
@@ -668,7 +679,6 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 	     * That would match the receive case above and no buffer would be
 	     * required. Unfortunately sending that way is significantly slower.
 	     * splice: 200ms - read+write: 0.2ms! Ouch! */
-	    char buf[16384];
 	    do {
 		/* read from the pipe */
 		ret = read(client->pipe_in, buf, sizeof(buf));
