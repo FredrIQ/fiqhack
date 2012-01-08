@@ -226,16 +226,20 @@ static void post_init_tasks(void)
 boolean nh_start_game(int fd, const char *name, int irole, int irace, int igend,
 		      int ialign, enum nh_game_modes playmode)
 {
+    unsigned int seed = 0;
+    
     if (!api_entry_checkpoint())
 	return FALSE; /* init failed; programmer error! */
 
     if (fd == -1 || !name || !*name)
 	goto err_out;
     
-    if (!program_state.restoring)
+    if (!program_state.restoring) {
 	turntime = (unsigned long long)time(NULL);
-    /* initialize the random number generator */
-    mt_srand((unsigned int)turntime);
+	seed = turntime ^ get_seedval();
+	/* initialize the random number generator */
+	mt_srand(seed);
+    } /* else: turntime and rng seeding are done in logreplay.c */
     
     startup_common(name, playmode);
     
@@ -246,7 +250,7 @@ boolean nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     u.initgend = igend; u.initalign = ialign;
     
     /* write out a new logfile header "NHGAME ..." with all the initial details */
-    log_newgame(fd, turntime, playmode);
+    log_newgame(fd, turntime, seed, playmode);
     
     newgame();
     wd_message();

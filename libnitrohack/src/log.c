@@ -136,7 +136,8 @@ static void log_command_list(void)
 }
 
 
-void log_newgame(int logfd, unsigned long long start_time, int playmode)
+void log_newgame(int logfd, unsigned long long start_time,
+		 unsigned int seed, int playmode)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
@@ -159,7 +160,7 @@ void log_newgame(int logfd, unsigned long long start_time, int playmode)
 	    VERSION_MINOR, PATCHLEVEL);
     
     base64_encode(plname, encbuf);
-    lprintf("%llx %x %s %s %s %s %s\n", start_time, playmode, encbuf, role,
+    lprintf("%llx %x %d %s %s %s %s %s\n", start_time, seed, playmode, encbuf, role,
 	    races[u.initrace].noun, genders[u.initgend].adj, aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();

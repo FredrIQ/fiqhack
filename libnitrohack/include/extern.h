@@ -587,6 +587,7 @@ extern int phase_of_the_moon(void);
 extern boolean friday_13th(void);
 extern int night(void);
 extern int midnight(void);
+extern unsigned int get_seedval(void);
 
 /* ### history.c ### */
 
@@ -695,7 +696,8 @@ extern int doclose(void);
 
 /* ### log.c ### */
 
-extern void log_newgame(int logfd, unsigned long long start_time, int playmode);
+extern void log_newgame(int logfd, unsigned long long start_time,
+			unsigned int seed, int playmode);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
 extern void log_timezone(int tz_offset);
 extern void log_command_result(void);

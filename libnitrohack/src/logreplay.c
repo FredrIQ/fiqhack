@@ -504,6 +504,7 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
 {
     char *header, *verstr;
     int ver1, ver2, ver3, n;
+    unsigned int seed;
     
     header = next_log_token();
     if (!header || strcmp(header, "NHGAME"))
@@ -523,6 +524,7 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
 		   VERSION_MAJOR, VERSION_MINOR, ver1, ver2);
 
     sscanf(next_log_token(), "%llx", init);
+    sscanf(next_log_token(), "%x", &seed);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
     u.initrole = str2role(next_log_token());
@@ -533,6 +535,8 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
     if (u.initrole == ROLE_NONE || u.initrace == ROLE_NONE ||
 	u.initgend == ROLE_NONE || u.initalign == ROLE_NONE)
 	terminate();
+    
+    mt_srand(seed);
     
     replay_read_commandlist();
 }
@@ -975,14 +979,15 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
     struct you sg_you;
     struct flag sg_flags;
     long sg_moves;
+    long long starttime;
     
     lseek(fd, 0, SEEK_SET);
     read(fd, header, 127);
     header[127] = '\0';
-    n = sscanf(header, "NHGAME %4s %x NitroHack %d.%d.%d\n%x %x %s %s %s %s %s",
-	       status, &savepos, &v1, &v2, &v3, &seed, &playmode, encplname,
+    n = sscanf(header, "NHGAME %4s %x NitroHack %d.%d.%d\n%llx %x %x %s %s %s %s %s",
+	       status, &savepos, &v1, &v2, &v3, &starttime, &seed, &playmode, encplname,
 	       role, race, gend, algn);
-    if (n != 12) return LS_INVALID;
+    if (n != 13) return LS_INVALID;
     
     endpos = lseek(fd, 0, SEEK_END);
     if (!strcmp(status, "done"))

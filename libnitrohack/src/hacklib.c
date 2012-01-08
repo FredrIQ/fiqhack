@@ -4,6 +4,7 @@
 
 /* We could include only config.h, except for the overlay definitions... */
 #include "hack.h"
+#include <sys/time.h>
 /*=
     Assorted 'small' utility routines.	They're virtually independent of
 NitroHack, except that rounddiv may call panic().
@@ -423,6 +424,19 @@ int night(void)
 int midnight(void)
 {
 	return getlt()->tm_hour == 0;
+}
+
+/* used to make the rng seed unguessable; this is only useful for server games
+ * as otherwise you can simply read the seed from the logfile */
+unsigned int get_seedval(void)
+{
+#if defined(UNIX)
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_usec;
+#else
+    return 0;
+#endif
 }
 
 /*hacklib.c*/
