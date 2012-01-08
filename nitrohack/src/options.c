@@ -33,7 +33,7 @@ static void show_autopickup_menu(struct nh_option_desc *opt);
 
 
 #if defined(NETCLIENT)
-# define should_write_config() (nhnet_active())
+# define should_write_config() (!nhnet_active())
 #else
 # define should_write_config() (1)
 #endif
@@ -460,8 +460,7 @@ void display_options(nh_bool change_birth_opt)
     } while (n > 0);
     free(items);
     
-    if (should_write_config())
-	write_config();
+    write_config();
 }
 
 
@@ -972,7 +971,7 @@ void write_config(void)
     get_config_name(uiconfname, TRUE);
     
     fp = open_config_file(filename);
-    if (fp) {
+    if (fp && should_write_config()) {
 	write_config_options(fp, nh_get_options(GAME_OPTIONS));
 	write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
 	fclose(fp);

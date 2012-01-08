@@ -328,8 +328,9 @@ static struct server_info *connect_server_menu(struct server_info **servlist)
 
 static int connect_server(struct server_info *server)
 {
-    int ret;
+    int ret, i;
     char buf[BUFSZ];
+    struct nh_option_desc *game_opts, *birth_opts;
     
     while (1) {
 	ret = nhnet_connect(server->hostname, server->port, server->username,
@@ -354,6 +355,11 @@ static int connect_server(struct server_info *server)
 	    server->password = strdup(buf);
 	    continue;
 	} else {/* AUTH_FAILED_UNKNOWN_USER */
+	    nhnet_lib_exit(); /* need to acces the local options */
+	    game_opts = nh_get_options(GAME_OPTIONS);
+	    birth_opts = nh_get_options(CURRENT_BIRTH_OPTIONS);
+	    nhnet_lib_init(&curses_windowprocs);
+	    
 	    sprintf(buf, "The account \"%s\" will be created for you.", server->username);
 	    curses_msgwin(buf);
 	    curses_getline("(Optional) You may give an email address for password resets:", buf);
@@ -363,6 +369,16 @@ static int connect_server(struct server_info *server)
 		curses_msgwin("Sorry, the registration failed.");
 		return FALSE;
 	    }
+	    
+	    /* upload current options */
+	    if (curses_yn_function("Do you want to copy your current game "
+		                   "options to the server?", "yn", 'y') == 'y') {
+		for (i = 0; game_opts[i].name; i++)
+		    nh_set_option(game_opts[i].name, game_opts[i].value, 0);
+		for (i = 0; birth_opts[i].name; i++)
+		    nh_set_option(birth_opts[i].name, birth_opts[i].value, 0);
+	    }
+	    
 	    return TRUE;
 	}
     }

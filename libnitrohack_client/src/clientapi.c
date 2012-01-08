@@ -601,7 +601,7 @@ nh_bool nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isst
     if (opt) {
 	if (isstr || opt->type == OPTTYPE_STRING)
 	    joval = json_string(value.s);
-	else if (opt->type == OPTTYPE_INT || opt->type == OPTTYPE_INT ||
+	else if (opt->type == OPTTYPE_INT || opt->type == OPTTYPE_ENUM ||
 	    opt->type == OPTTYPE_BOOL) {
 	    joval = json_integer(value.i);
 	} else if (opt->type == OPTTYPE_AUTOPICKUP_RULES) {

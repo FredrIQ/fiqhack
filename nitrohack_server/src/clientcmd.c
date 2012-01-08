@@ -686,7 +686,7 @@ static void ccmd_set_option(json_t *params)
 	    exit_client("could not decode option string");
 	value.s = (char*)json_string_value(joval);
     
-    } else if (option->type == OPTTYPE_INT || option->type == OPTTYPE_INT ||
+    } else if (option->type == OPTTYPE_INT || option->type == OPTTYPE_ENUM ||
 	       option->type == OPTTYPE_BOOL) {
 	if (!json_is_integer(joval))
 	    exit_client("could not decode option value");
@@ -724,7 +724,8 @@ static void ccmd_set_option(json_t *params)
     jopt = json_option(option);
     optstr = nh_get_option_string(option);
     
-    db_set_option(user_info.uid, optname, option->type, optstr);
+    if (ret == TRUE)
+	db_set_option(user_info.uid, optname, option->type, optstr);
     /* return the altered option struct and the string representation to the
      * client. The intent is to save some network round trips and make a
      * separate get_option_string message unneccessary */
