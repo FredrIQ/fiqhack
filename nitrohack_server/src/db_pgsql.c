@@ -24,7 +24,8 @@ static const char SQL_init_user_table[] =
        "pwhash text NOT NULL, "
        "email text NOT NULL default '', "
        "can_debug BOOLEAN NOT NULL DEFAULT FALSE, "
-       "lastactivity timestamp NOT NULL"
+       "ts timestamp NOT NULL, "
+       "reg_ts timestamp NOT NULL"
     ");";
 
 static const char SQL_init_games_table[] =
@@ -40,7 +41,8 @@ static const char SQL_init_games_table[] =
        "done boolean NOT NULL DEFAULT FALSE, "
        "owner integer NOT NULL REFERENCES users (uid), "
        "end_how integer, "
-       "ts timestamp NOT NULL"
+       "ts timestamp NOT NULL, "
+       "start_ts timestamp NOT NULL"
     ");";
 
 static const char SQL_init_options_table[] =
@@ -62,8 +64,8 @@ static const char SQL_check_pgcrypto[] =
     "SELECT 'crypt(text,text)'::regprocedure;";
 
 static const char SQL_register_user[] =
-    "INSERT INTO users (name, pwhash, email, lastactivity) "
-    "VALUES ($1::varchar(50), crypt($2::text, gen_salt('bf', 8)), $3::text, 'now');";
+    "INSERT INTO users (name, pwhash, email, ts, reg_ts) "
+    "VALUES ($1::varchar(50), crypt($2::text, gen_salt('bf', 8)), $3::text, 'now', 'now');";
     
 static const char SQL_last_reg_id[] =
     "SELECT currval('users_uid_seq');";
@@ -80,13 +82,13 @@ static const char SQL_get_user_info[] =
 
 static const char SQL_update_user_ts[] =
     "UPDATE users "
-    "SET lastactivity = 'now' "
+    "SET ts = 'now' "
     "WHERE uid = $1::integer;";
 
 static const char SQL_add_game[] =
-    "INSERT INTO games (filename, role, race, gender, alignment, mode, owner, plname, ts) "
+    "INSERT INTO games (filename, role, race, gender, alignment, mode, owner, plname, ts, start_ts) "
     "VALUES ($1::text, $2::integer, $3::integer, $4::integer, "
-            "$5::integer, $6::integer, $7::integer, $8::text, 'now')";
+            "$5::integer, $6::integer, $7::integer, $8::text, 'now', 'now')";
     
 static const char SQL_last_game_id[] =
     "SELECT currval('games_gid_seq');";
@@ -282,6 +284,7 @@ int db_register_user(const char *name, const char *pass, const char *email)
     
     res = PQexecPrepared(conn, PREP_REGISTER, 3, params, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+	log_msg("db_register_user failed: %s", PQerrorMessage(conn));
         PQclear(res);
 	return 0;
     }
@@ -289,6 +292,7 @@ int db_register_user(const char *name, const char *pass, const char *email)
     
     res = PQexec(conn, SQL_last_reg_id);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+	log_msg("db_register_user get last id failed: %s", PQerrorMessage(conn));
         PQclear(res);
 	return 0;
     }
