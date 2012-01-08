@@ -89,7 +89,7 @@ extern const struct client_command clientcmd[];
 /*---------------------------------------------------------------------------*/
 
 /* auth.c */
-extern int auth_user(char *authbuf, int *is_reg, int *reconnect_id);
+extern int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id);
 extern void auth_send_result(int sockfd, enum authresult, int is_reg, int connid);
 
 /* clientmain.c */

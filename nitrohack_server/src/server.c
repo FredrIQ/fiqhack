@@ -247,7 +247,7 @@ static void server_socket_event(int server_fd, int epfd)
     client->authbuf = malloc(AUTHBUFSIZE);
     memset(client->authbuf, 0, AUTHBUFSIZE);
     
-    log_msg("There are now %d clients on the server", client_count);
+    log_msg("There are now %d client structs on the server", client_count);
 }
 
 
@@ -375,6 +375,8 @@ static void handle_new_connection(struct client_data *client, int epfd)
     int buflen = AUTHBUFSIZE - client->authdatalen - 1;
     char *bufp = &client->authbuf[client->authdatalen];
     static int connection_id = 1;
+    struct sockaddr_storage peer;
+    socklen_t len = sizeof(peer);
     
     ret = read(client->sock, bufp, buflen);
     if (ret == 0) {
@@ -394,11 +396,10 @@ static void handle_new_connection(struct client_data *client, int epfd)
     client->authdatalen += ret;
     client->authbuf[client->authdatalen] = '\0'; /* make it safe to use as a string */
     
+    getpeername(client->sock, (struct sockaddr*)&peer, &len);
+    
     /* did we receive too much data? */
     if (client->authdatalen >= AUTH_MAXLEN) {
-	struct sockaddr_in6 peer; /**/
-	socklen_t len = sizeof(peer);
-	getpeername(client->sock, (struct sockaddr*)&peer, &len);
 	log_msg("Auth buffer overrun attempt from %s? Peer disconnected.", addr2str(&peer));
 	cleanup_game_process(client, epfd);
 	return;
@@ -415,7 +416,7 @@ static void handle_new_connection(struct client_data *client, int epfd)
     /*
      * ready to authenticate the user here
      */
-    client->userid = auth_user(client->authbuf, &is_reg, &reconnect_id);
+    client->userid = auth_user(client->authbuf, addr2str(&peer), &is_reg, &reconnect_id);
     if (client->userid <= 0) {
 	if (!client->userid)
 	    auth_send_result(client->sock, AUTH_FAILED_UNKNOWN_USER, is_reg, 0);
@@ -453,9 +454,9 @@ static void handle_new_connection(struct client_data *client, int epfd)
 	
 	client->sock = -1; /* sock is now owned by ccur */
 	client->pid = 0;
-	cleanup_game_process(client, epfd);
 	log_msg("Connection to game at pid %d reestablished for user %d",
 		ccur->pid, ccur->userid);
+	cleanup_game_process(client, epfd);
 	return;
     } else {
 	client->connid = connection_id++;
@@ -503,7 +504,7 @@ static void cleanup_game_process(struct client_data *client, int epfd)
     unlink_client_data(client);
     free(client);
     
-    log_msg("There are now %d clients on the server", client_count);
+    log_msg("There are now %d client structs on the server", client_count);
 }
 
 

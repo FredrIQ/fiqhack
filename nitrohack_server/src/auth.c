@@ -40,14 +40,14 @@ static int is_valid_username(const char *name)
 }
 
 
-int auth_user(char *authbuf, int *is_reg, int *reconnect_id)
+int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id)
 {
     json_error_t err;
     json_t *obj, *cmd, *name, *pass, *email, *reconn;
     const char *namestr, *passstr, *emailstr;
     int is_auth = 1;
     int userid = 0;
-    
+   
     obj = json_loads(authbuf, 0, &err);
     if (!obj)
 	return 0;
@@ -85,6 +85,12 @@ int auth_user(char *authbuf, int *is_reg, int *reconnect_id)
 	/* authenticate against a user database */
 	*is_reg = FALSE;
 	userid = db_auth_user(namestr, passstr);
+	if (userid > 0)
+	    log_msg("%s has logged in as \"%s\" (userid %d)",
+		    peername, namestr, userid);
+	else if (userid < 0)
+	    log_msg("%s has failed to log in as \"%s\" (userid %d)",
+		    peername, namestr, -userid);
     } else {
 	/* register a new user */
 	emailstr = email ? json_string_value(email) : "";
@@ -97,7 +103,8 @@ int auth_user(char *authbuf, int *is_reg, int *reconnect_id)
 	    char savedir[1024];
 	    snprintf(savedir, 1024, "%s/save/%s", settings.workdir, namestr);
 	    mkdir(savedir, 0700);
-	    log_msg("New user registered: %s", namestr);
+	    log_msg("%s has registered as \"%s\" (userid: %d)",
+		    peername, namestr, userid);
 	}
     }
     
