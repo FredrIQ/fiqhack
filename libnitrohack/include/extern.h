@@ -213,6 +213,7 @@ extern void cls(void);
 extern void flush_screen_enable(void);
 extern void flush_screen_disable(void);
 extern void flush_screen(void);
+extern void flush_screen_nopos(void);
 extern int back_to_cmap(struct level *lev, xchar x, xchar y);
 extern int zapdir_to_effect(int,int,int);
 extern void dump_screen(FILE *dumpfp);

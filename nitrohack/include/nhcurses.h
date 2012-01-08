@@ -300,9 +300,9 @@ extern void show_keymap_menu(nh_bool readonly);
 extern enum nh_direction key_to_dir(int key);
 
 /* map.c */
-extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
+extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
 extern int curses_getpos(int *x, int *y, nh_bool force, const char *goal);
-extern void draw_map(int frame);
+extern void draw_map(int frame, int cx, int cy);
 
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);

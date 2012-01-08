@@ -322,7 +322,7 @@ void rebuild_ui(void)
 	
 	/* some windows are now empty because they were re-created */
 	draw_msgwin();
-	draw_map(0);
+	draw_map(0, player.x, player.y);
 	curses_update_status(&player);
 	draw_sidebar();
 	

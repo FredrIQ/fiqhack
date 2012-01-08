@@ -1347,10 +1347,19 @@ void flush_screen(void)
 {
     if (delay_flushing) return;
 
-    update_screen(dbuf);
+    update_screen(dbuf, u.ux, u.uy);
 
     if (iflags.botl)
 	bot();
+}
+
+
+/* for remote level viewing from the overview menu: display the level, but
+ * send a player position of (-1, -1) to indicate that the player's location
+ * shouldn't be highlighted */
+void flush_screen_nopos(void)
+{
+    update_screen(dbuf, -1, -1);
 }
 
 /* ========================================================================= */

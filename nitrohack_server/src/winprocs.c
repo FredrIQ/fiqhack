@@ -12,7 +12,7 @@ static void srv_pause(enum nh_pause_reason r);
 static void srv_display_buffer(const char *buf, nh_bool trymove);
 static void srv_update_status(struct nh_player_info *pi);
 static void srv_print_message(int turn, const char *msg);
-static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
+static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
 static void srv_delay_output(void);
 static void srv_level_changed(int displaymode);
 static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
@@ -33,7 +33,7 @@ static void srv_alt_pause(enum nh_pause_reason r);
 static void srv_alt_display_buffer(const char *buf, nh_bool trymove);
 static void srv_alt_update_status(struct nh_player_info *pi);
 static void srv_alt_print_message(int turn, const char *msg);
-static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
+static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
 static void srv_alt_delay_output(void);
 static void srv_alt_level_changed(int displaymode);
 static void srv_alt_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
@@ -269,10 +269,10 @@ static void srv_print_message(int turn, const char *msg)
 }
 
 
-static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
+static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 {
     int i, x, y, samedbe, samecols, zerodbe, zerocols, is_same, is_zero;
-    json_t *jdbuf, *dbufcol, *dbufent;
+    json_t *jmsg, *jdbuf, *dbufcol, *dbufent;
     
     samecols = 0;
     zerocols = 0;
@@ -335,9 +335,11 @@ static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
 	return; /* no point in sending out a message that nothing changed */
     } else if (zerocols == COLNO) {
 	json_decref(jdbuf);
-	add_display_data("update_screen", json_integer(0));
+	jmsg = json_pack("{si,si,so}", "ux", ux, "uy", uy, "dbuf", json_integer(0));
     } else
-	add_display_data("update_screen", jdbuf);
+	jmsg = json_pack("{si,si,so}", "ux", ux, "uy", uy, "dbuf", jdbuf);
+    
+    add_display_data("update_screen", jmsg);
     
     for (i = 0; i < ROWNO; i++)
 	memcpy(&prev_dbuf[i], &dbuf[i], sizeof(dbuf[i]));
@@ -632,10 +634,10 @@ static void srv_alt_print_message(int turn, const char *msg)
 }
 
 
-static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
+static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 {
     altproc = TRUE;
-    srv_update_screen(dbuf);
+    srv_update_screen(dbuf, ux, uy);
     altproc = FALSE;
 }
 

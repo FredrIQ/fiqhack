@@ -184,6 +184,7 @@ int get_cmdkey(void)
     while (1) {
 	if (player.x) { /* x == 0 is not a valid coordinate */
 	    wmove(mapwin, player.y, player.x - 1);
+	    curs_set(1);
 	    wrefresh(mapwin);
 	}
 	
@@ -191,9 +192,9 @@ int get_cmdkey(void)
 	if (key != ERR)
 	    break;
 	
-	draw_map(++frame);
+	draw_map(++frame, player.x, player.y);
     };
-    draw_map(0);
+    draw_map(0, player.x, player.y);
     wtimeout(mapwin, -1);
     
     return key;

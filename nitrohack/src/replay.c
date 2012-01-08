@@ -13,7 +13,7 @@
 # define allow_timetest() (1)
 #endif
 
-static void dummy_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
+static void dummy_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy) {}
 static void dummy_delay_output(void) {}
 
 static struct nh_window_procs curses_replay_windowprocs = {

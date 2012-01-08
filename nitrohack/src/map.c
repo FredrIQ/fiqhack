@@ -15,19 +15,19 @@ static const int xdir[8] = { -1,-1, 0, 1, 1, 1, 0,-1 };
 static const int ydir[8] = {  0,-1,-1,-1, 0, 1, 1, 1 };
 
 
-void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO])
+void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 {
     display_buffer = dbuf;
-    draw_map(0);
+    draw_map(0, ux, uy);
 }
 
 
-void draw_map(int frame)
+void draw_map(int frame, int cx, int cy)
 {
     int x, y, symcount, attr;
     struct curses_symdef syms[4];
     
-    if (!display_buffer)
+    if (!display_buffer || !mapwin)
 	return;
        
     for (y = 0; y < ROWNO; y++) {
@@ -47,8 +47,11 @@ void draw_map(int frame)
 	}
     }
     
-    if (player.x)
-	wmove(mapwin, player.y, player.x - 1);
+    if (cx > 0) {
+	curs_set(1);
+	wmove(mapwin, cy, cx - 1);
+    } else
+	curs_set(0);
 
     wrefresh(mapwin);
 }

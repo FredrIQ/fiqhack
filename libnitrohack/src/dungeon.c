@@ -1909,7 +1909,7 @@ int dooverview(void)
 	overview_print_lev(buf, lev);
 	pline("Now viewing %s%s.  Press any key to return.",
 	      Is_astralevel(&lev->z) ? "the " : "", buf);
-	flush_screen();
+	flush_screen_nopos();
 	win_pause_output(P_MAP);
 	doredraw();
 	

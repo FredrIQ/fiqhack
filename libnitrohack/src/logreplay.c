@@ -13,7 +13,7 @@ static void replay_pause(enum nh_pause_reason r) {}
 static void replay_display_buffer(const char *buf, boolean trymove) {}
 static void replay_update_status(struct nh_player_info *pi) {}
 static void replay_print_message(int turn, const char *msg) {}
-static void replay_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO]) {}
+static void replay_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy) {}
 static void replay_delay_output(void) {}
 static void replay_level_changed(int displaymode) {}
 static void replay_outrip(struct nh_menuitem *items,int icount, boolean tombstone,

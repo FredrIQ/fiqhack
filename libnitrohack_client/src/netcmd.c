@@ -259,7 +259,7 @@ static json_t *cmd_print_message(json_t *params, int display_only)
 {
     int turn;
     const char *msg;
-    if (json_unpack(params, "{si,ss}", "turn", &turn, "msg", &msg) == -1) {
+    if (json_unpack(params, "{si,ss!}", "turn", &turn, "msg", &msg) == -1) {
 	print_error("Incorrect parameters in cmd_print_message");
 	return NULL;
     }
@@ -272,27 +272,33 @@ static json_t *cmd_print_message(json_t *params, int display_only)
 static json_t *cmd_update_screen(json_t *params, int display_only)
 {
     static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
+    int ux, uy;
     int x, y, effect, bg, trap, obj, obj_mn, mon, monflags, invis, visible;
-    json_t *col, *elem;
+    json_t *jdbuf, *col, *elem;
+    
+    if (json_unpack(params, "{si,si,so!}", "ux", &ux, "uy", &uy, "dbuf", &jdbuf) == -1) {
+	print_error("Incorrect parameters in cmd_update_screen");
+	return NULL;
+    }
 
-    if (json_is_integer(params)) {
-	if (json_integer_value(params) == 0) {
+    if (json_is_integer(jdbuf)) {
+	if (json_integer_value(jdbuf) == 0) {
 	    memset(dbuf, 0, sizeof(struct nh_dbuf_entry) * ROWNO * COLNO);
-	    cur_wndprocs.win_update_screen(dbuf);
+	    cur_wndprocs.win_update_screen(dbuf, ux, uy);
 	} else
 	    print_error("Incorrect parameter in cmd_update_screen");
 	return NULL;
     }
     
-    if (!json_is_array(params)) {
+    if (!json_is_array(jdbuf)) {
 	print_error("Incorrect parameter in cmd_update_screen");
 	return NULL;
     }
     
-    if (json_array_size(params) != COLNO)
+    if (json_array_size(jdbuf) != COLNO)
 	print_error("Wrong number of columns in cmd_update_screen");
     for (x = 0; x < COLNO; x++) {
-	col = json_array_get(params, x);
+	col = json_array_get(jdbuf, x);
 	if (json_is_integer(col)) {
 	    if (json_integer_value(col) == 0) {
 		for (y = 0; y < ROWNO; y++)
@@ -334,7 +340,7 @@ static json_t *cmd_update_screen(json_t *params, int display_only)
 	}
     }
     
-    cur_wndprocs.win_update_screen(dbuf);
+    cur_wndprocs.win_update_screen(dbuf, ux, uy);
     return NULL;
 }
 

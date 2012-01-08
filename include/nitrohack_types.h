@@ -557,7 +557,7 @@ struct nh_window_procs {
     int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
     int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
     nh_bool (*win_list_items)(struct nh_objitem *items, int icount, nh_bool invent);
-    void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO]);
+    void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
     void (*win_raw_print)(const char *str);
     char (*win_query_key)(const char *query, int *count);
     int (*win_getpos)(int *, int *, nh_bool, const char*);
