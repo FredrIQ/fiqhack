@@ -54,8 +54,6 @@ static struct nh_enum_option menu_headings_spec =
 
 static struct nh_listitem graphics_list[] = {
     {ASCII_GRAPHICS, "plain"},
-    {DEC_GRAPHICS, "DEC graphics"},
-    {IBM_GRAPHICS, "IBM graphics"},
     {UNICODE_GRAPHICS, "Unicode graphics"}
 };
 static struct nh_enum_option graphics_spec = {graphics_list, listlen(graphics_list)};
@@ -96,7 +94,6 @@ struct nh_option_desc curses_options[] = {
     {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
     {"status3", "3 line status display", OPTTYPE_BOOL, { VTRUE }},
     {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
-    {"unicode", "try to use unicode for drawing", OPTTYPE_BOOL, { VTRUE }},
     {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, { VTRUE }},
 #if defined(PDCURSES) && defined(WIN32)
     {"win_width", "window width", OPTTYPE_INT, {(void*)130}},
@@ -119,7 +116,6 @@ struct nh_boolopt_map boolopt_map[] = {
     {"standout", &settings.standout},
     {"status3", &settings.status3},
     {"time", &settings.time},
-    {"unicode", &settings.unicode},
     {"use_inverse", &settings.use_inverse},
     {NULL, NULL}
 };

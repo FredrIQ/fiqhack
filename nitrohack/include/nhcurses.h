@@ -149,7 +149,6 @@ struct settings {
     nh_bool  standout;	/* use standout for --More-- */
     nh_bool  time;	/* display elapsed 'time' */
     nh_bool  use_inverse; /* use inverse video for some things   */
-    nh_bool  unicode;	/* try to display unicode chars */
     nh_bool  invweight;	/* show item weight in the inventory */
     nh_bool  blink;	/* show multiple symbols for each location by blinking */
     nh_bool  sidebar;   /* draw the inventory sidebar */
@@ -203,8 +202,6 @@ struct curses_drawing_info {
  */
 enum nh_text_mode {
     ASCII_GRAPHICS,	/* regular characters: '-', '+', &c */
-    IBM_GRAPHICS,	/* PC graphic characters */
-    DEC_GRAPHICS,	/* VT100 line drawing characters */
     UNICODE_GRAPHICS	/* uses whatever charecters we want: they're ALL available */
 };
 
