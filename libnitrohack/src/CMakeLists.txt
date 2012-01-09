@@ -42,4 +42,4 @@ set_target_properties(libnitrohack PROPERTIES OUTPUT_NAME nitrohack )
 add_dependencies (libnitrohack makedefs_headers)
 
 install(TARGETS libnitrohack
-        DESTINATION ${BINDIR})
+        DESTINATION ${LIBDIR})

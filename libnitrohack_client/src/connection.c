@@ -104,7 +104,7 @@ static json_t *receive_json_msg(void)
     datalen = 0;
     while (!recv_msg) {
 	/* leave the last byte in the buffer free for the '\0' */
-	ret = read(sockfd, &rbuf[datalen], rbufsize - datalen - 1);
+	ret = recv(sockfd, &rbuf[datalen], rbufsize - datalen - 1, 0);
 	if (ret == -1 && errno == EINTR)
 	    continue;
 	else if (ret <= 0) {
@@ -247,35 +247,34 @@ error:
 static int parse_ip_addr(const char *host, int port, int want_v4,
 			 struct sockaddr_storage *out)
 {
+    int res;
     char portstr[16];
+    struct addrinfo *gai_res = NULL;
+    struct addrinfo *next;
+    struct addrinfo gai_hints;
+    memset(&gai_hints, 0, sizeof(gai_hints));
+    gai_hints.ai_flags = AI_NUMERICSERV;
+    gai_hints.ai_family = want_v4 ? AF_INET : AF_INET6;
+    gai_hints.ai_socktype = SOCK_STREAM;
+
     sprintf(portstr, "%d", port);
     
-    const struct addrinfo gai_hints = {
-	.ai_flags = AI_NUMERICSERV,
-	.ai_family = want_v4 ? AF_INET : AF_INET6,
-	.ai_socktype = SOCK_STREAM,
-	.ai_protocol = 0,
-	.ai_addr = NULL,
-	.ai_canonname = NULL,
-	.ai_next = NULL
-    };
-    struct addrinfo *gai_res = NULL;
-    
-    if (getaddrinfo(host, portstr, &gai_hints, &gai_res) != 0)
+    res = getaddrinfo(host, portstr, &gai_hints, &gai_res);
+    if (res != 0)
 	return FALSE;
-    
-    struct addrinfo *next;
     if (want_v4)
 	memcpy(out, gai_res->ai_addr,sizeof(struct sockaddr_in));
     else
 	memcpy(out, gai_res->ai_addr,sizeof(struct sockaddr_in6));
     
+#ifndef WIN32 /* it seems the result structures should not be free'd on Windows */
     do {
 	next = gai_res->ai_next;
 	free(gai_res);
 	gai_res = next;
     } while (gai_res);
-    
+#endif
+
     return TRUE;
 }
 

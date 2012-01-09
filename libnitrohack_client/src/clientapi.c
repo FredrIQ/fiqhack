@@ -12,6 +12,11 @@ struct nh_option_desc *option_lists[OPTION_LIST_COUNT];
 
 void nhnet_lib_init(const struct nh_window_procs *winprocs)
 {
+#ifdef WIN32
+    WSADATA wsa_data;
+    WSAStartup(0x0202, &wsa_data);
+#endif
+
     windowprocs = *winprocs;
     alt_windowprocs = *winprocs;
 }
@@ -24,6 +29,10 @@ void nhnet_lib_exit(void)
     
     xmalloc_cleanup();
     conn_err = FALSE;
+
+#ifdef WIN32
+    WSACleanup();
+#endif
 }
 
 

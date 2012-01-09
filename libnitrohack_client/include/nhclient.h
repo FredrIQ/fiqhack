@@ -8,14 +8,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <setjmp.h>
 #include <sys/types.h>
+#if defined UNIX
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <netdb.h>
+#else
+#include <Winsock2.h>
+#include <Ws2def.h>
+#include <Ws2tcpip.h>
 
+# define MSG_NOSIGNAL 0 /* windows doesn't have this flag as it doesn't have signals */
+# define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
+# define close closesocket
+#endif
 #include <jansson.h>
 
 #define DEFAULT_PORT 7114 /* matches the definition in nhserver.h */

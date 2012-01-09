@@ -45,7 +45,6 @@ int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id)
     json_error_t err;
     json_t *obj, *cmd, *name, *pass, *email, *reconn;
     const char *namestr, *passstr, *emailstr;
-    int is_auth = 1;
     int userid = 0;
    
     obj = json_loads(authbuf, 0, &err);
@@ -53,10 +52,11 @@ int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id)
 	return 0;
     
     /* try 1: is it an auth command? */
+    *is_reg = 0;
     cmd = json_object_get(obj, "auth");
     if (!cmd) {
 	/* try 2: register? */
-	is_auth = 0;
+	*is_reg = 1;
 	cmd = json_object_get(obj, "register");
     }
     if (!cmd) /* not a recognized command */
@@ -78,12 +78,11 @@ int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id)
 	goto err;
     
     *reconnect_id = 0;
-    if (is_auth) {
+    if (!*is_reg) {
 	if (reconn && json_is_integer(reconn))
 	    *reconnect_id = json_integer_value(reconn);
 	
 	/* authenticate against a user database */
-	*is_reg = FALSE;
 	userid = db_auth_user(namestr, passstr);
 	if (userid > 0)
 	    log_msg("%s has logged in as \"%s\" (userid %d)",
@@ -97,7 +96,6 @@ int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id)
 	if (strlen(emailstr) > 100)
 	    goto err;
 	
-	*is_reg = TRUE;
 	userid = db_register_user(namestr, passstr, emailstr);
 	if (userid) {
 	    char savedir[1024];
