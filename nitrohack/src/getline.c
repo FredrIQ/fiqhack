@@ -89,10 +89,12 @@ static void hooked_curses_getlin(const char *query, char *buf,
 {
     struct gamewin *gw;
     struct win_getline *gldat;
-    int height, width, key;
+    int height, width, key, prev_curs;
     size_t len = 0;
     nh_bool done = FALSE;
     nh_bool autocomplete = FALSE;
+    
+    prev_curs = curs_set(1);
     
     height = 4;
     width = COLS - 2;
@@ -171,6 +173,8 @@ static void hooked_curses_getlin(const char *query, char *buf,
 		break;
 	}
     }
+    
+    curs_set(prev_curs);
     
     delwin(gw->win);
     delete_gamewin(gw);
