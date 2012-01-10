@@ -7,7 +7,7 @@
 #define MSGLEN 119
 
 struct message {
-    char msg[MSGLEN + 1]; /* longest printable message is COLNO chars + '\0' */
+    char msg[MSGLEN + 1];
     int turn;
 };
 
@@ -198,7 +198,7 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
     }
     prevturn = turn;
 
-    store_message(turn, msg);
+    store_message(turn, inmsg);
     
     if (stopprint)
 	return;
