@@ -1,47 +1,328 @@
-NitroHack, experimental dev version
+NitroHack
+=========
 
-Changes so far:
-    - removed support for obsolete systems, OSes, compilers
-    - removed all old window ports.
-    - new ncurses based window port - with unicode, colors, etc.
-    - new build system: cmake. yay!
-    - libification: NitroHack is now a shared library (libnitrohack.so) that
-	is included by the tty window port binary.
-	Other window ports can each have their own binaries (eg. nitrohack_qt,...)
-	libnitrohack now has a sane, limited and reasonably consistent API. There
-	is no more shared global state
-    - new option handling that allows for graceful handling of window port
-	options. Several options have been moved int the tty port code.
-    - new option file locations & formats
-	New location: $XDG_CONFIG_HOME/NitroHack/ or $HOME/.config/NitroHack/
-    - automatcally updated config files
-	Option changes are written back to the config file
-    - introduced "birth options" that may be set before the game starts. They
-	replace all options that could previously only be changed by editing the
-	config file.
-    - converted the ELBERETH, REINCARNATION and SEDUCE compile options to birth options.
-    - command input has been changed completely: instead of a moveloop in libnitrohack,
-	looping is now done in the windowing code, which calls nh_do_move
-	to perform user commands.
-    - drawing (selection of appropriate output char / tile) has been completely
-        separated from libnitrohack and is handled entirely in the window port.
-        libnitrohack uses symbol ids to tell the window port what to display.
-    - replay-based save/restore
-        the starting state and all moves are now logged during play and can be replayed
-	in order to restore a game
-    - change level handling
-        inactive levels are now kept in memory rather than being written to disk.
-	This makes a bunch of locking unnecessary since there is no longer any chance
-	of different games trampling each other.
-    - autopickup rules replace pickup_types and AUTOPICKUP_EXCEPTIONS
-        "autopickup rules" provides a list of rules that are matched sequentially in order
-	to determine wether an item should be picked up.
+NitroHack is a modernized, network-capable fork of NetHack.
+
+
+Back end features:
+    - NitroHack network protocol
+      NitroHack supports netowrk play without telnet or ssh over its own
+      protocol. The protocol is based on JSON and should make it very easy to
+      implement a browser-based NitroHack client (TODO!).
+      
+    - New save game format
+      The old format was mostly just a dump of the data structures from memory
+      onto disk.
+      The new format has 2 sections:
+      1) A log of the initial random seed and every game action performed
+         afterwards. This allows a perfect reconstruction of the game.
+      2) A binary save appended after the log. It uses a fixed-width,
+         fixed-endian architecture and compiler independent format, but is
+         otherwise a direct descendant of the old save format. This format was
+         kept mostly so that bones files could be created in it, but it is also
+         used in the savegames for slightly improved loading speed.
+      The log file is written continuously, so the "INSURANCE" option and the
+      recover utility are gone - a crashed game can always be restored by
+      replaying the log. After the game ends, the log marked as closed and kept.
+      
+    - Built in game replay viewing (aka new and improved ttyrec)
+      The reason for keeping logs of finished games. Once there was a way to
+      reconstruct the state of the game at any point it would have been silly
+      not to use it for game viewing.
+      Since the replay mode is based on abstract game commands rather than
+      directly recorded screen output, it is completely feasible to replay a
+      that was played on a unix tty in a windows tile port or vice versa.
+      A viewer for games is built into the new nethack UI. You can perform
+      commands that don't affect the game state (like view inventory) while
+      viewing a game replay.
+      
+    - New options code
+      Options changed ingame are written back to the options file, which you are
+      not supposed to edit by hand any more. The options have moved from
+      ~/.nethackrc to ~/.config/NitroHack/NitroHack.conf (for game options) and
+      ~/.config/NitroHack/curses.conf for the options of the curses UI.
+      Logs of active and completed games are also under ~/.config/NitroHack/
+      
+    - Birth options
+      Want to play without Elbereth? It is now possible to do so without
+      recompiling. ELBERETH, REINCARNATION, SEDUCE and bones files have become
+      a new kind of option: birth options, which can only be set before the
+      character is created.
+      
+    - Full separation of user interface code from game code.
+      The core game code has moved into a library (libnitrohack.so or
+      nitrohack.dll). The game library exposes an API of exactly 23 functions
+      and is largely OS independent. The display code is part of the OS/platform
+      dependent executable and must provide a list of callbacks (windowprocs)
+      to the game. There is no shared global state between the two.
+      This was a prerequisite for the network protocol, which encodes the api
+      calls and callbacks almost literally.
+      With this change, the days of multiple window port binaries are over. It
+      now makes much more sense to have separate programs, for example
+      nitrohack-qt and xnitrohack.
+      The NitroHack network server is technically a UI port and uses the same
+      mechanisms.
+      
+    - rewritten input system
+      The came core never, ever requests a key from the UI. All interactions
+      happen on an abstract level: The ui sends commands to the core as a string
+      ("wait", "move", etc.), the game my request a direction or a position
+      (etc).
+      This allows the UI to perform key mapping safely, because it is never
+      necessary to guess what context some request for input occurs in.
+      
+    - All-new curses based text mode UI
+      All the old window ports became obsolete due to the extensive API changes.
+      A new UI based on curses (ncurses on unix, pdcurses on windows) has been
+      written. It is a significant upgrade compared to the old tty port in terms
+      of usability and features:
+       * unicode display, with customizable display chars
+       * configurable keymap, with a configuration dialog
+       * full arrow key and function key use
+       * multiple visible message lines
+       * improved status
+       * permanent inventory display (if your terminal is wide)
+       * Inventory menu with item actions
+       * real line editing
+      
+    - Layered drawing
+      The game core provides a set of display items for each location to the UI,
+      rather than a single display char. For example a monster on an item on a
+      trap can be represented logically.
+      The curses UI displays the alternatives by blinking between them (unless
+      you disable blinking in the options).
+      
+    - Mersenne twister random number generator
+      An OS independent RNG with known state was required in order to make game
+      logs replayable. The mersenne twister is the best choice.
+      
+    - Re-runnable game core.
+      Several of the main data structures have been made const, all others are
+      carefully re-initialized when a game is started or loaded.
+      This makes it possible to have a main menu for starting games, viewing the
+      top ten or changing options.
+      Previously this was not possible, as the altered global state from one
+      game would have affected a second, so quitting was the only option.
+      NitroHack now uses an exception mechanism based on setjmp/longjmp to
+      escape from deep callchains when the game ends or panics
+      
+    - No more level files and no more lock files.
+      All levels are now kept in memory at all times. This makes a lot of
+      locking unnecessary. It also allows viewing of levels you are not
+      currently on.
+      The only remaining locking is of active game logs via OS mechanisms which
+      are not based on files: fcntl on UNIX and LockFile on Windows.
+      (For a game where all levels have been visited, this change could result
+      in up to 5 Mb of extra memory use! The horror!!)
+      
+    - No more support for antique systems and compilers
+      Support for everything that belongs in a computer history museum has been
+      removed: BE, DOS, Classic Mac, Atari, VMS, Ultrix, etc ...
+      The list of supported compilers has likewise been reduced to gcc, clang
+      and msvc (and probably Intel's compiler, too).
+      This allowed the removal of lots and lots of crufty code and compat macros.
+      All current compilers support "void" and "static", so wrapping them in
+      #defines not necessary any more.
+      
+    - Code cleanups
+      The number of "#ifdef FOO" has been cut down from 1938 to just 51. That
+      makes the code much more readable, because the indentation isn't being
+      interrupted every couple of lines. To this end almost all compile options
+      that didn't becom birth options were enabled unconditionally or removed
+      due to being obsolete.
+      All functions have been converted to use standard prototypes rather than
+      K&R declarations. Ugly things like prototype widening and the follow-on
+      <FOO>_P #defines went away. Tools like git diff can now correctly show
+      what function a line is in.
+      All instances of the keyword "register" have been removed - optimizing
+      compilers handle this for us. Likewise NEARDATA; that only made sense on
+      16-bit computers.
+      
+    - New build system: Cmake
+      This replaces some of the ugliest Makefiles known to man (I kid).
+      On Linux you get safe parallel builds with pretty colorized output, on
+      Windows the generated Visual Studio 2010 project builds without problems
+
+      
+Game features:
+    - Autopickup rules
+      Real rule sets that control what gets picked up replace the pickup list +
+      exceptions system. Rules can match based on the name, object type and BUC
+      status.
+      The following rule set picks up all food as well as lizard corpses, but
+      no other corpses:
+       1. IF name matches "*lizard*" AND type is "food": < GRAB
+       2. IF name matches "*corpse*" AND type is "food":   LEAVE >
+       3. IF type is "food":                             < GRAB
+      Rules are evaluated in order until a matching rule is found. If no rule
+      matches, the item is left behind by default.
+      
+    - Character history tracking
+      NitroHack will automatically track the following items (with a turn
+      timestamp) for use in your ascension posts:
+       * new depth reached
+       * new experience level reached
+       * wishes with the exact wish text
+       * killed a unique monster
+       * lifesaved
+       * crowning
+       * artifact gifts
+       * basic quest status
+       * major oracle consultations
+       * performed the invocation
+       * gained/lost the amulet of yendor (only shown if the amulet is
+         identified)
+      You can view your heroic deeds with #history
+    
+    - Dungeon overview + dungeon annotations
+      This change was inspired by the "Dungeon Map Overview 3" patch (by Hojita
+      Discordia) as found in UnNetHack.
+      You can now #annotate a level to name/describe it.
+      #overview / Ctrl+O will show a menu of all the levels you remember
+      including your annotations and significant features (shops, altars, ...)
+      You can select a level from the overview menu to view your memory of it.
+    
+    - Dump log
+      Inspired by Jukka Lahtinen's dumplog patch.
+      When you die, a dump log containing the following information will be
+      created:
+       * Final (ascii) screenshot
+       * Player stats
+       * Full inventory, including listings of the contents of containers
+       * Player attributes
+       * Known spells
+       * Skills
+       * Conducts
+       * Vanquished opponents
+       * Final messages
+       * dungeon overview
+       * heroic deeds
+      
+    - sorted loot
+      based on code by Jukka Lahtinen and Patric Müller in UnNetHack.
+      Item types are sorted based on:
+       1) item name
+       2) enchantment
+       3) BUC
+       4) erodeproofing
+       5) erosion
+       6) greasedness
+       
+    - Miscellaneous changes, in no particular order
+       * You can use adjust to split stacks (Sam Dennis)
+       * Top ten saves 10000 entries by default
+       * Unexplored locations, stone and dark rooms are all logically different
+         in the drawing code (but only dark rooms are shown differently)
+       * object class symbols are shown in menu headers
+       * you may choose to always show uncursed status in the options
+         (Pasi Kallinen)
+       * you will be prompted to quiver if firing with an empty quiver
+         (Jukka Lahtinen)
+       * thrown or fired items will always be picked up automatically if you
+         set pickup_thrown in the options (Roderick Schertler)
+       * reading spellbooks early is allowed (Alex Smith)
+       * naming of monsters, items & item types via menu (from NAO)
+       * Improved the died while helpless descriptions (Pasi Kallinen)
+       * monster targeting with m when a position is requested (inspired by
+         Pasi Kallinen's patch)
+       * Very long message history (20k messages)
+       * Removing armor and accessories will always trigger a prompt, even if
+         there is only one possible choice.
+       * Open doors when the player walks into them (AceHack)
+       * extinct species are shown together with genocided species (based on a
+         patch by Jukka Lahtinen)
+    
+    - Fix about 10% of all known NetHack bugs
+      C343-  2 Wielded silver arrows don't cause silver damage on some silver-
+               haters. (Alex Smith)
+      C343-  7 When a steed pushes a boulder into a pool, the message misuses
+               "you". (Alex Smith)
+      C343-  8 Plural of Nazgul is Nazgul - not Nazguls. (Patric Müller)
+      C343- 12 You can't use '>' to enter a pit. (Patric Müller)
+      C343- 15 You can get a message that an invisible monster looks much
+               better. (Alex Smith)
+      C343- 18 Scaring a mimicing mimic gives an incorrect "turns to flee"
+               message. (Alex Smith)
+      C343- 30 Cursed scroll of destroy armor on cursed armor doesn’t always
+               interact correctly. (Alex Smith)
+      C343- 50 A sleeping steed may answer a #chat. (Alex Smith)
+      C343- 54,-55 "Ulch" message fixes. (Alex Smith)
+      C343- 74 Entering a long running, uninterruptible command after stoning
+               starts will kill you. (Patric Müller)
+      C343- 88 Polymorphing a statue into a boulder can leave an incorrect
+               display. (Alex Smith)
+      C343- 94,SC343-8 Probing a re-anmiated statue may cause a panic.
+               (Patric Müller)
+      C343-100 Game may crash if thrown potion hits bars before a monster.
+               (Patric Müller)
+      C343-109 There is a grammar error in the Tourist leader's greeting.
+               (Alex Smith)
+      C343-111 Grammar of some graveyard sounds messages is wrong in some cases.
+               (Alex Smith)
+      C343-116 Grammar error in messages related to choking on gold.
+               (Patric Müller)
+      C343-123 Plural of "mother-in-law" is incorrect. (Alex Smith)
+      C343-136 A samurai quest guardian message uses "ninja" where "ronin" is
+               intended. (Patric Müller)
+      C343-160 The name "leather spellbook" is misleading. (Alex Smith)
+      C343-171 Silver weapon damage message is sometimes missing when hero is
+               polymorphed. (Patric Müller)
+      C343-179 If a potion of acid is destroyed by water, the game may crash.
+               (Patric Müller)
+      C343-189 Temple donations and protection lost to gremlin attack interact
+               incorrectly. (Patric Müller)
+      C343-211 Engraving under water gives a poorly worded message. (Patric Müller)
+      C343-218 Applying a wielded cream pie can crash the game. (Patric Müller)
+      C343-222 It's possible to end up wielding a cockatrice corpse when no
+               longer polymorphed. (Quuxplusone)
+      C343-231 Time is distorted while sinking into lava.
+      C343-235 Casting spell of protection gives incorrect message if hero is
+               swallowed or in rock. (Patric Müller)
+      C343-248 You can’t put candles in a candelabrum while underwater (Sgeo)
+      C343-252 There is a typo in the quote from "The Count of Monte Cristo."
+               (Patric Müller)
+      C343-258 Grammar error in samurai quest: "wakarimasu?" instead of
+               "wakarimasu ka?" (Patric Müller)
+      C343-259 "Dr. Dolittle" is spelled incorrectly. (Patric Müller)
+      C343-270 Dying in a shop while wielding two weapons may cause a warning
+               message. (Patric Müller)
+      C343-275 If a lit, wielded, candle or potion of oil burns out, the game
+               may crash. (Patric Müller)
+      C343-276 If a figurine auto-transforms while wielded or worn, the game
+               may crash. (Patric Müller)
+      C343-298 Kicking at "empty space" uses no time.
+      C343-318 Opening or closing the castle drawbridge using music takes no
+               time. (Alex Smith)
+      C343-324 Bisecting a long worm with 1hp crashes the game. (Patric Müller)
+      C343-356 Wearing an amulet of restful sleep confuses internal sleep state
+               bookkeeping. (L's "Gremlin's Curse")
+      C343-386 Pearl rings can rust. (Alex Smith)
+      C343-398 The game may crash if a wielded potion of polymorph is drunk.
+               (Alex Smith)
+      C343-399 Messages referring to a named vault guard have grammatical errors.
+               (Alex Smith)
+      SC343-12 Calling high priests on Astral reveals their identity.
+      SC343-20 Hangup save while picking up gold in a shop may duplicate the
+               gold. (Patric Müller)
+      My sources for these fixes were UnNetHack, AceHack, the Patchdb.
+      Aside:
+       While gathering these fixes, he official bug list became a major source
+       of annoyance to me. It seemed to say: "Look, we have all these fixes and
+       you don't. Nee nee nee."
+
+
+What didn't change:
+    - The game mechanics, monsters items etc are exactly as in NetHack 3.4.3.
+      I am not opposed to changing these things and in fact I think several
+      things should be changed.
+    - There is a lot of code in the core that remains very obscure, because the
+      cleanups only improved it superficially.
+
 
 Plans:
-    - annotations
-    - make it possible to view replays
-    - track player history
-    - create a qt4-based tile port
+    - QT4 based tile UI
+    - Browser based network client
+    - Maybe: port Vulture?
 
 
 Build instructions:
