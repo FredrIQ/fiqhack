@@ -77,7 +77,7 @@ struct nh_option_desc curses_options[] = {
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", OPTTYPE_BOOL, {FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, { VTRUE }},    
-    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)ASCII_GRAPHICS}},
+    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)UNICODE_GRAPHICS}},
     {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { FALSE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
     {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {0}},
