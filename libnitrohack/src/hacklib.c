@@ -4,7 +4,10 @@
 
 /* We could include only config.h, except for the overlay definitions... */
 #include "hack.h"
+#if defined(UNIX)
 #include <sys/time.h>
+#endif
+
 /*=
     Assorted 'small' utility routines.	They're virtually independent of
 NitroHack, except that rounddiv may call panic().
