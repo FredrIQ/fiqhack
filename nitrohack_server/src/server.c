@@ -766,7 +766,7 @@ static int trigger_server_shutdown(struct timeval *tv, int *ipv4fd, int *ipv6fd,
  */
 int runserver(void)
 {
-    int i, ipv4fd, ipv6fd, unixfd, epfd, nfds, timeout, fd;
+    int i, ipv4fd, ipv6fd, unixfd, epfd, nfds, timeout, fd, childstatus;
     struct epoll_event events[MAX_EVENTS];
     struct client_data *client;
     struct timeval sigtime, curtime, tmp;
@@ -799,12 +799,16 @@ int runserver(void)
 		timeout = 0;
 	}
 	
+	/* make sure child processes are cleaned up */
+	waitpid(-1, &childstatus, WNOHANG);
+	
 	nfds = epoll_wait(epfd, events, MAX_EVENTS, timeout);
 	if (nfds == -1) {
 	    if (errno != EINTR) { /* serious problem */
 		log_msg("Error from epoll_wait in main event loop: %s", strerror(errno));
 		goto finally;
 	    }
+	    
 	    /* some signal - SIGTERM? */
 	    if (!termination_flag)
 		continue;
