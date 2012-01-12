@@ -71,7 +71,6 @@ static int get_open_max(void) { return sysconf(_SC_OPEN_MAX); }
 #define AUTHBUFSIZE 512
 
 enum comm_status {
-    NEW_CONNECTION,
     CLIENT_DISCONNECTED,
     CLIENT_CONNECTED
 };
@@ -92,19 +91,12 @@ struct client_data {
     int pipe_out; /* master -> game pipe */
     int pipe_in;/* game -> master pipe */
     int sock; /* master <-> client socket */
-    int authdatalen;
     int unsent_data_size;
-    char *authbuf;
     char *unsent_data;
 };
 
 
 /*---------------------------------------------------------------------------*/
-
-/* init_list_head: list of connections that have been fully established
- * but not yet authenticated or connected to a game instance.
- * In these sockfd structures, only authbuf, sockfd and status are valid. */
-static struct client_data init_list_head;
 
 /* disconnected_list_head: list of games which are fully established, but the
  * client has disconnected. The client can reconnect to the running game later.
@@ -150,7 +142,6 @@ static struct client_data *alloc_client_data(struct client_data *list_start)
     struct client_data *client = malloc(sizeof(struct client_data));
     memset(client, 0, sizeof(struct client_data));
     link_client_data(client, list_start);
-    client->state = NEW_CONNECTION;
     client->sock = client->pipe_in = client->pipe_out = -1;
     
     return client;
@@ -174,7 +165,7 @@ static void map_fd_to_client(int fd, struct client_data *client)
 /* full setup for both ipv4 and ipv6 server sockets */
 static int init_server_socket(struct sockaddr *sa)
 {
-    int fd, v4, opt_enable = 1;
+    int fd, v4, opt_enable = 1, defer_seconds = 20;
     
     v4 = sa->sa_family == AF_INET;
     
@@ -187,6 +178,10 @@ static int init_server_socket(struct sockaddr *sa)
     /* Enable fast address re-use. Nice to have during development, probably
      * irrelevant otherwise. */
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt_enable, sizeof(int));
+    
+    /* don't accept client connections until there is data */
+    if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, &defer_seconds, sizeof(int)) == -1)
+	log_msg("Failed to set the DEFER_ACCEPT socket option: %s.", strerror(errno));
     
     /* Setting the IPV6_V6ONLY socket option allows the ipv6 socket to bind to
      * the same port as the ipv4 socket. Using one socket for each protocol is
@@ -212,46 +207,6 @@ static int init_server_socket(struct sockaddr *sa)
 
 
 /*
- * Accept a new client connection on one of the listening sockets.
- */
-static void server_socket_event(int server_fd, int epfd)
-{
-    struct epoll_event ev;
-    struct client_data *client;
-    struct sockaddr_in6 addr; /* sockaddr_in6 is larger than plain sockaddr */
-    int newfd, opt_enable = 1;
-    socklen_t addrlen = sizeof(addr);
-    newfd = accept4(server_fd, (struct sockaddr*)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
-    if (newfd == -1) /* maybe the connection attempt was aborted early? */
-	return;
-    
-    log_msg("New connection from %s.", addr2str(&addr));
-    
-    ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
-    ev.data.ptr = NULL;
-    ev.data.fd = newfd;
-    if (epoll_ctl(epfd, EPOLL_CTL_ADD, newfd, &ev) == -1) {
-	log_msg("Error in epoll_ctl for %s: %s", addr2str(&addr), strerror(errno));
-	close(newfd);
-	return;
-    }
-    
-    if (setsockopt(newfd, IPPROTO_TCP, TCP_NODELAY, &opt_enable, sizeof(int)) == -1) {
-	log_msg("setting TCP_NODELAY failed: %s", strerror(errno));
-    }
-    
-    client = alloc_client_data(&init_list_head);
-    client->sock = newfd;
-    map_fd_to_client(newfd, client);
-    
-    client->authbuf = malloc(AUTHBUFSIZE);
-    memset(client->authbuf, 0, AUTHBUFSIZE);
-    
-    log_msg("There are now %d client structs on the server", client_count);
-}
-
-
-/*
  * The client inherits sevaral things that aren't needed to run a game
  * Free them here.
  */
@@ -267,11 +222,6 @@ static void post_fork_cleanup(void)
 	if (fcntl(i, F_GETFD) & FD_CLOEXEC)
 	    close(i);
     
-    for (ccur = init_list_head.next; ccur; ccur = cnext) {
-	cnext = ccur->next;
-	free(ccur);
-    }
-
     for (ccur = disconnected_list_head.next; ccur; ccur = cnext) {
 	cnext = ccur->next;
 	free(ccur);
@@ -328,7 +278,6 @@ static int fork_client(struct client_data *client, int epfd)
     if (client->pid > 0) { /* parent */
     } else if (client->pid == 0) { /* child */
 	userid = client->userid;
-	free(client->authbuf);
 	post_fork_cleanup();
 	client_main(userid, pipe_out_fd[0], pipe_in_fd[1]);
 	exit(0); /* shouldn't get here... client is done. */
@@ -362,109 +311,118 @@ static int fork_client(struct client_data *client, int epfd)
 }
 
 
-/* 
- * Data is available on client->sock.
- * Now we want to read enough data to authenticate the client. If the client
- * can be authenticated, do so and move the connection into the CLIENT_CONNECTED
- * state. This may involve forking a new game process for the client.
+/*
+ * Accept and authenticate a new client connection on one of the listening sockets.
  */
-static void handle_new_connection(struct client_data *client, int epfd)
+static void server_socket_event(int server_fd, int epfd)
 {
-    int ret, pos, is_reg, reconnect_id;
-    struct client_data *ccur;
-    int buflen = AUTHBUFSIZE - client->authdatalen - 1;
-    char *bufp = &client->authbuf[client->authdatalen];
+    struct epoll_event ev;
+    struct client_data *client;
+    struct sockaddr_storage addr;
+    int newfd, opt_enable = 1;
+    socklen_t addrlen = sizeof(addr);
+    int pos, is_reg, reconnect_id, authlen, userid;
+    char authbuf[AUTHBUFSIZE];
     static int connection_id = 1;
-    struct sockaddr_storage peer;
-    socklen_t len = sizeof(peer);
     
-    ret = read(client->sock, bufp, buflen);
-    if (ret == 0) {
-	/* socket closed by client (this case should have been caught by epoll
-	 * (EPOLLRDHUP), but for safety lets check again. */
-	cleanup_game_process(client, epfd);
+    newfd = accept4(server_fd, (struct sockaddr*)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    if (newfd == -1) /* maybe the connection attempt was aborted early? */
 	return;
-    } else if (ret == -1) { /* error? why did epoll give us this fd? */
-	log_msg("Error reading socket descriptor that epoll considered ready: %s",
-		strerror(errno));
-	/* kill it to avoid an infinite loop when epoll reports the same event again. */
-	if (errno != EAGAIN)
-	    cleanup_game_process(client, epfd);
+    
+    log_msg("New connection from %s.", addr2str(&addr));
+    
+    /* it should be possible to read immediately due to the "defer" sockopt */
+    authlen = read(newfd, authbuf, AUTHBUFSIZE-1);
+    if (authlen <= 0) {
+	log_msg("Error: no authentication data on new connections.");
+	close(newfd);
 	return;
     }
     
-    client->authdatalen += ret;
-    client->authbuf[client->authdatalen] = '\0'; /* make it safe to use as a string */
-    
-    getpeername(client->sock, (struct sockaddr*)&peer, &len);
+    authbuf[authlen] = '\0'; /* make it safe to use as a string */
     
     /* did we receive too much data? */
-    if (client->authdatalen >= AUTH_MAXLEN) {
-	log_msg("Auth buffer overrun attempt from %s? Peer disconnected.", addr2str(&peer));
-	cleanup_game_process(client, epfd);
+    if (authlen >= AUTH_MAXLEN) {
+	log_msg("Auth buffer overrun attempt from %s? Peer disconnected.", addr2str(&addr));
+	close(newfd);
 	return;
     }
     
     /* check the end of the received auth data: a JSON object always ends with '}' */
-    pos = client->authdatalen - 1;
-    while (isspace(client->authbuf[pos]))
+    pos = authlen - 1;
+    while (pos > 0 && isspace(authbuf[pos]))
 	pos--;
     
-    if (client->authbuf[pos] != '}') /* not the end of JSON auth data, wait for more */
+    if (authbuf[pos] != '}') /* not the end of JSON auth data, wait for more */
 	return;
     
     /*
      * ready to authenticate the user here
      */
-    client->userid = auth_user(client->authbuf, addr2str(&peer), &is_reg, &reconnect_id);
-    if (client->userid <= 0) {
-	if (!client->userid)
-	    auth_send_result(client->sock, AUTH_FAILED_UNKNOWN_USER, is_reg, 0);
+    userid = auth_user(authbuf, addr2str(&addr), &is_reg, &reconnect_id);
+    if (userid <= 0) {
+	if (!userid)
+	    auth_send_result(newfd, AUTH_FAILED_UNKNOWN_USER, is_reg, 0);
 	else
-	    auth_send_result(client->sock, AUTH_FAILED_BAD_PASSWORD, is_reg, 0);
-	/* shutdown instead of close here to allow for transmission of the auth status */
-	shutdown(client->sock, SHUT_RDWR);
-	/* the socket and client struct will be mopped up when that's done and
-	 * epoll reports an EPOLLRDHUP for the socket. */
+	    auth_send_result(newfd, AUTH_FAILED_BAD_PASSWORD, is_reg, 0);
+	close(newfd);
 	return;
+    }
+    
+    /* user ok, we'll keep this socket */
+    ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
+    ev.data.ptr = NULL;
+    ev.data.fd = newfd;
+    if (epoll_ctl(epfd, EPOLL_CTL_ADD, newfd, &ev) == -1) {
+	log_msg("Error in epoll_ctl for %s: %s", addr2str(&addr), strerror(errno));
+	close(newfd);
+	return;
+    }
+    
+    if (setsockopt(newfd, IPPROTO_TCP, TCP_NODELAY, &opt_enable, sizeof(int)) == -1) {
+	log_msg("setting TCP_NODELAY failed: %s", strerror(errno));
     }
     
     /* is the client re-establishing a connection to an existing, disconnected game? */
-    for (ccur = disconnected_list_head.next; ccur; ccur = ccur->next)
-	if (ccur->userid == client->userid &&
-	    (!reconnect_id || reconnect_id == ccur->connid))
+    for (client = disconnected_list_head.next; client; client = client->next)
+	if (client->userid == userid &&
+	    (!reconnect_id || reconnect_id == client->connid))
 	    break;
-    if (reconnect_id && !ccur) {
+    if (reconnect_id && !client) {
 	/* now search through the active connections. The client might have a
 	 * new IP address, which would leave the socket open and seemingly valid. */
-	for (ccur = connected_list_head.next; ccur; ccur = ccur->next)
-	    if (ccur->userid == client->userid && reconnect_id == ccur->connid)
+	for (client = connected_list_head.next; client; client = client->next)
+	    if (client->userid == userid && reconnect_id == client->connid)
 		break;
     }
     
-    if (ccur) {
+    if (client) {
 	/* there is a running, disconnected game process for this user */
-	auth_send_result(client->sock, AUTH_SUCCESS_RECONNECT, is_reg, ccur->connid);
-	ccur->sock = client->sock;
-	map_fd_to_client(ccur->sock, ccur);
-	ccur->state = CLIENT_CONNECTED;
-	unlink_client_data(ccur);
-	link_client_data(ccur, &connected_list_head);
+	auth_send_result(newfd, AUTH_SUCCESS_RECONNECT, is_reg, client->connid);
+	client->sock = newfd;
+	map_fd_to_client(client->sock, client);
+	client->state = CLIENT_CONNECTED;
+	unlink_client_data(client);
+	link_client_data(client, &connected_list_head);
 	write(client->pipe_out, "\033", 1); /* signal to reset the read buffer */
 	
-	client->sock = -1; /* sock is now owned by ccur */
-	client->pid = 0;
 	log_msg("Connection to game at pid %d reestablished for user %d",
-		ccur->pid, ccur->userid);
-	cleanup_game_process(client, epfd);
+		client->pid, client->userid);
 	return;
     } else {
+	client = alloc_client_data(&connected_list_head);
+	client->state = CLIENT_CONNECTED;
+	client->sock = newfd;
+	map_fd_to_client(newfd, client);
 	client->connid = connection_id++;
+	client->userid = userid;
 	/* there is no process yet */
 	if (fork_client(client, epfd))
-	    auth_send_result(client->sock, AUTH_SUCCESS_NEW, is_reg, client->connid);
+	    auth_send_result(newfd, AUTH_SUCCESS_NEW, is_reg, client->connid);
 	/* else: client communication is shutdown if fork_client errors out */
     }
+
+    log_msg("There are now %d clients on the server", client_count);
 }
 
 
@@ -496,9 +454,6 @@ static void cleanup_game_process(struct client_data *client, int epfd)
 	close(client->pipe_in);
 	fd_to_client[client->pipe_in] = NULL;
     }
-    
-    if (client->authbuf)
-	free(client->authbuf);
     
     client->pipe_in = client->pipe_out = client->sock = -1;
     unlink_client_data(client);
@@ -854,22 +809,6 @@ int runserver(void)
 		continue;
 	    
 	    switch (client->state) {
-		case NEW_CONNECTION:
-		    if (events[i].events & EPOLLERR || /* error */
-			events[i].events & EPOLLHUP || /* connection closed */
-			events[i].events & EPOLLRDHUP) /* connection closed */
-			cleanup_game_process(client, epfd);
-		    else if (events[i].events & EPOLLIN)
-			handle_new_connection(client, epfd);
-		    else if (events[i].events & EPOLLOUT)
-			;
-		    else {
-			log_msg("Unexpected event type %08x on new client socket???",
-				events[i].events);
-			cleanup_game_process(client, epfd);
-		    }
-		    break;
-		    
 		case CLIENT_DISCONNECTED:
 		    /* When the client is disconnected, activity usually only
 		     * happens on the pipes: either the game process is
@@ -904,8 +843,6 @@ int runserver(void)
     } /* while(1) */
 
 finally:
-    while (init_list_head.next)
-	cleanup_game_process(init_list_head.next, epfd);
     while (disconnected_list_head.next)
 	cleanup_game_process(disconnected_list_head.next, epfd);
     while (connected_list_head.next)
