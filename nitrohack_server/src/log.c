@@ -59,7 +59,7 @@ int begin_logging(void)
 }
 
 
-char *addr2str(const void *sockaddr)
+const char *addr2str(const void *sockaddr)
 {
     static char buf[INET6_ADDRSTRLEN+1];
     const struct sockaddr_in *sa4 = sockaddr;
@@ -68,8 +68,11 @@ char *addr2str(const void *sockaddr)
     int family = ((struct sockaddr*)sockaddr)->sa_family;
     int v4 = family == AF_INET;
     
-    inet_ntop(family, v4 ? (void*)&sa4->sin_addr : (void*)&sa6->sin6_addr,
-		buf, INET6_ADDRSTRLEN);
+    if (family == AF_UNIX) {
+	return settings.bind_addr_unix.sun_path;
+    } else
+	inet_ntop(family, v4 ? (void*)&sa4->sin_addr : (void*)&sa6->sin6_addr,
+		    buf, INET6_ADDRSTRLEN);
 
     return buf;
 }
@@ -100,6 +103,7 @@ void report_startup(void)
 	
     log_msg("  ipv4addr = %s", addr2str(&settings.bind_addr_4));
     log_msg("  ipv6addr = %s", addr2str(&settings.bind_addr_6));
+    log_msg("  unixsocket = %s", addr2str(&settings.bind_addr_unix));
     log_msg("  port = %d", settings.port);
     log_msg("  client_timeout = %d", settings.client_timeout);
     

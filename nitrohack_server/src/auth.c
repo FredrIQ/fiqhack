@@ -40,7 +40,7 @@ static int is_valid_username(const char *name)
 }
 
 
-int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id)
+int auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id)
 {
     json_error_t err;
     json_t *obj, *cmd, *name, *pass, *email, *reconn;

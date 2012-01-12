@@ -294,6 +294,7 @@ static int connect_server(const char *host, int port, int want_v4, char *errmsg,
 	
 	if (connect(fd, (struct sockaddr*)&sa, sizeof(sa)) == -1) {
 	    snprintf(errmsg, msglen, "could not connect: %s\n", strerror(errno));
+	    close(fd);
 	    return -1;
 	}
     }
@@ -305,12 +306,28 @@ static int connect_server(const char *host, int port, int want_v4, char *errmsg,
 static int do_connect(const char *host, int port, const char *user, const char *pass,
 		      const char *email, int reg_user, int connid)
 {
-    int fd, authresult;
+    int fd = -1, authresult;
     char ipv6_error[120], ipv4_error[120], errmsg[256];
     json_t *jmsg;
     
-    /* try ipv6 first */
-    fd = connect_server(host, port, FALSE, ipv6_error, 120);
+#ifdef UNIX
+    /* try to connect to a local unix socket */
+    struct sockaddr_un sun;
+    sun.sun_family = AF_UNIX;
+    memcpy(sun.sun_path, host, sizeof(sun.sun_path) - 1);
+    sun.sun_path[sizeof(sun.sun_path) - 1] = '\0';
+    fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (fd >= 0) {
+	if (connect(fd, (struct sockaddr*)&sun, sizeof(sun)) == -1) {
+	    close(fd);
+	    fd = -1;
+	}
+    }
+#endif
+
+    /* try ipv6 */
+    if (fd == -1)
+	fd = connect_server(host, port, FALSE, ipv6_error, 120);
     
     if (fd == -1)
 	/* no ipv6 connection, try ipv4 */

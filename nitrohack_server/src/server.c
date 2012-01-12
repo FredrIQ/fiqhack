@@ -165,9 +165,8 @@ static void map_fd_to_client(int fd, struct client_data *client)
 /* full setup for both ipv4 and ipv6 server sockets */
 static int init_server_socket(struct sockaddr *sa)
 {
-    int fd, v4, opt_enable = 1, defer_seconds = 20;
-    
-    v4 = sa->sa_family == AF_INET;
+    int fd, opt_enable = 1, defer_seconds = 20;
+    socklen_t len;
     
     fd = socket(sa->sa_family, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
     if (fd < 0) {
@@ -179,18 +178,36 @@ static int init_server_socket(struct sockaddr *sa)
      * irrelevant otherwise. */
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt_enable, sizeof(int));
     
-    /* don't accept client connections until there is data */
-    if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, &defer_seconds, sizeof(int)) == -1)
-	log_msg("Failed to set the DEFER_ACCEPT socket option: %s.", strerror(errno));
+    switch (sa->sa_family) {
+	case AF_INET:
+	    len = sizeof(struct sockaddr_in);
+	    break;
+	case AF_INET6:
+	    len = sizeof(struct sockaddr_in6);
+	    /* Setting the IPV6_V6ONLY socket option allows the ipv6 socket to
+	     * bind to the same port as the ipv4 socket. Using one socket for
+	     * each protocol is better than using one ipv4-compatible ipv6
+	     * socket, as that limits the possible ipv6 addresses to ipv4
+	     * compatible ones. */
+	    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
+		           &opt_enable, sizeof(int)) == -1)
+		log_msg("Failed to set the IPV6_V6ONLY socket option: %s.",
+			strerror(errno));
+	    break;
+	case AF_UNIX:
+	    len = sizeof(struct sockaddr_un);
+	    break;
+    }
     
-    /* Setting the IPV6_V6ONLY socket option allows the ipv6 socket to bind to
-     * the same port as the ipv4 socket. Using one socket for each protocol is
-     * better than using one ipv4-compatible ipv6 socket, as that limits the
-     * possible ipv6 addresses to ipv4 compatible ones. */
-    if (!v4 && setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &opt_enable, sizeof(int)) == -1)
-	log_msg("Failed to set the IPV6_V6ONLY socket option: %s.", strerror(errno));
-    
-    if (bind(fd, sa, v4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)) == -1) {
+    if (sa->sa_family != AF_UNIX) {
+	/* don't accept client connections until there is data */
+	if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+	               &defer_seconds, sizeof(int)) == -1)
+	    log_msg("Failed to set the DEFER_ACCEPT socket option: %s.",
+		    strerror(errno));
+    }
+
+    if (bind(fd, sa, len) == -1) {
 	close(fd);
 	log_msg("Error binding server socket (%s): %s", addr2str(sa), strerror(errno));
 	return -1;
@@ -325,11 +342,16 @@ static void server_socket_event(int server_fd, int epfd)
     char authbuf[AUTHBUFSIZE];
     static int connection_id = 1;
     
+    memset(&addr, 0, addrlen);
     newfd = accept4(server_fd, (struct sockaddr*)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
     if (newfd == -1) /* maybe the connection attempt was aborted early? */
 	return;
     
     log_msg("New connection from %s.", addr2str(&addr));
+    
+    /* no need to complain if this setsockopt fails; TCP_NODELAY doesn't exist
+     * for AF_UNIX sockets. */
+    setsockopt(newfd, IPPROTO_TCP, TCP_NODELAY, &opt_enable, sizeof(int));
     
     /* it should be possible to read immediately due to the "defer" sockopt */
     authlen = read(newfd, authbuf, AUTHBUFSIZE-1);
@@ -377,10 +399,6 @@ static void server_socket_event(int server_fd, int epfd)
 	log_msg("Error in epoll_ctl for %s: %s", addr2str(&addr), strerror(errno));
 	close(newfd);
 	return;
-    }
-    
-    if (setsockopt(newfd, IPPROTO_TCP, TCP_NODELAY, &opt_enable, sizeof(int)) == -1) {
-	log_msg("setting TCP_NODELAY failed: %s", strerror(errno));
     }
     
     /* is the client re-establishing a connection to an existing, disconnected game? */
@@ -459,7 +477,7 @@ static void cleanup_game_process(struct client_data *client, int epfd)
     unlink_client_data(client);
     free(client);
     
-    log_msg("There are now %d client structs on the server", client_count);
+    log_msg("There are now %d clients on the server", client_count);
 }
 
 
@@ -667,7 +685,7 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 }
 
 
-static int setup_server_sockets(int *ipv4fd, int *ipv6fd, int epfd)
+static int setup_server_sockets(int *ipv4fd, int *ipv6fd, int *unixfd, int epfd)
 {
     struct epoll_event ev;
     ev.data.ptr = NULL;
@@ -691,6 +709,13 @@ static int setup_server_sockets(int *ipv4fd, int *ipv6fd, int epfd)
     } else
 	*ipv4fd = -1;
     
+    if (settings.bind_addr_unix.sun_family && remove_unix_socket()) {
+	*unixfd = init_server_socket((struct sockaddr*)&settings.bind_addr_unix);
+	ev.data.fd = *unixfd;
+	if (*unixfd != -1)
+	    epoll_ctl(epfd, EPOLL_CTL_ADD, *unixfd, &ev);
+    }
+    
     if (*ipv4fd == -1 && *ipv6fd == -1) {
 	log_msg("Failed to create any listening socket. Nothing to do except shut down.");
 	return FALSE;
@@ -706,7 +731,7 @@ static int setup_server_sockets(int *ipv4fd, int *ipv6fd, int epfd)
  * In response, this function is called from the epoll event loop to close the
  * server sockets and record the shutdown request time.
  */
-static int trigger_server_shutdown(struct timeval *tv, int *ipv4fd, int *ipv6fd)
+static int trigger_server_shutdown(struct timeval *tv, int *ipv4fd, int *ipv6fd, int *unixfd)
 {
     termination_flag = 2;
     
@@ -719,6 +744,10 @@ static int trigger_server_shutdown(struct timeval *tv, int *ipv4fd, int *ipv6fd)
     if (*ipv6fd != -1) {
 	close(*ipv6fd);
 	*ipv6fd = -1;
+    }
+    if (*unixfd != -1) {
+	close(*unixfd);
+	*unixfd = -1;
     }
     if (client_count) {
 	log_msg("Server sockets closed, will wait 5 seconds "
@@ -737,7 +766,7 @@ static int trigger_server_shutdown(struct timeval *tv, int *ipv4fd, int *ipv6fd)
  */
 int runserver(void)
 {
-    int i, ipv4fd, ipv6fd, epfd, nfds, timeout, fd;
+    int i, ipv4fd, ipv6fd, unixfd, epfd, nfds, timeout, fd;
     struct epoll_event events[MAX_EVENTS];
     struct client_data *client;
     struct timeval sigtime, curtime, tmp;
@@ -751,7 +780,7 @@ int runserver(void)
 	return FALSE;
     }
     
-    if (!setup_server_sockets(&ipv4fd, &ipv6fd, epfd))
+    if (!setup_server_sockets(&ipv4fd, &ipv6fd, &unixfd, epfd))
 	return FALSE;
     
     /*
@@ -761,7 +790,7 @@ int runserver(void)
 	timeout = 10 * 60 * 1000;
 	if (termination_flag) {
 	    if (termination_flag == 1) /* signal didn't interrupt epoll_wait */
-		trigger_server_shutdown(&sigtime, &ipv4fd, &ipv6fd);
+		trigger_server_shutdown(&sigtime, &ipv4fd, &ipv6fd, &unixfd);
 	    gettimeofday(&curtime, NULL);
 	    /* calculate the elapsed time since the quit request */
 	    timersub(&curtime, &sigtime, &tmp);
@@ -781,7 +810,7 @@ int runserver(void)
 		continue;
 	    
 	    /* begin server shutdown sequence */
-	    if (!trigger_server_shutdown(&sigtime, &ipv4fd, &ipv6fd))
+	    if (!trigger_server_shutdown(&sigtime, &ipv4fd, &ipv6fd, &unixfd))
 		continue;
 	    else
 		goto finally;
@@ -797,7 +826,8 @@ int runserver(void)
 	for (i = 0; i < nfds; i++) {
 	    fd = events[i].data.fd;
 	    
-	    if (fd == ipv4fd || fd == ipv6fd) { /* server socket ready for accept */
+	    if (fd == ipv4fd || fd == ipv6fd || fd == unixfd) {
+		/* server socket ready for accept */
 		server_socket_event(fd, epfd);
 		continue;
 	    }
@@ -849,10 +879,12 @@ finally:
 	cleanup_game_process(connected_list_head.next, epfd);
 
     close(epfd);
-    if (ipv4fd > 0)
+    if (ipv4fd != -1)
 	close(ipv4fd);
-    if (ipv6fd > 0)
+    if (ipv6fd != -1)
 	close(ipv6fd);
+    if (unixfd != -1)
+	close(unixfd);
     free(fd_to_client);
 
     return TRUE;

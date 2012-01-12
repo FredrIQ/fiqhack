@@ -61,11 +61,12 @@ int main(int argc, char *argv[])
     report_startup();
     
     runserver();
-    
+        
     /* shutdown */
     remove_pidfile();
     end_logging();
     close_database();
+    remove_unix_socket();
     free_config();
     
     return 0;
@@ -79,6 +80,7 @@ static void print_usage(const char *progname)
     printf("                     Default: bind to all v4 host addresses.\n");
     printf("  -6 <ipv6 addr>   The ipv6 host address which should be used.\n");
     printf("                     Default: bind to all v6 host addresses.\n");
+    printf("  -s <file name>   File name for a unix socket.\n");
     printf("  -c <file name>   Config file to use insted of the default.\n");
     printf("                     Default: \"" DEFAULT_CONFIG_FILE "\"\n");
     printf("  -d <\"v4\"|\"v6\">   -d v4: disable ipv4; -d v6 disable ipv6.\n");
@@ -112,7 +114,7 @@ static int read_parameters(int argc, char *argv[], char **conffile, int *request
 {
     int opt;
     
-    while ((opt = getopt(argc, argv, "4:6:a:c:D:d:H:hkl:no:P:p:t:u:w:")) != -1) {
+    while ((opt = getopt(argc, argv, "4:6:a:c:D:d:H:hkl:no:P:p:s:t:u:w:")) != -1) {
 	switch (opt) {
 	    case '4': /* bind address */
 		if (!parse_ip_addr(optarg, (struct sockaddr*)&settings.bind_addr_4, TRUE)) {
@@ -181,6 +183,17 @@ static int read_parameters(int argc, char *argv[], char **conffile, int *request
 		
 	    case 'p': /* pid file */
 		settings.pidfile = strdup(optarg);
+		break;
+		
+	    case 's':
+		if (strlen(optarg) > SUN_PATH_MAX - 1) {
+		    fprintf(stderr, "Error: The unix socket filename is too long.\n");
+		    return FALSE;
+		}
+		    
+		settings.bind_addr_unix.sun_family = AF_UNIX;
+		strncpy(settings.bind_addr_unix.sun_path, optarg, SUN_PATH_MAX - 1);
+		settings.bind_addr_unix.sun_path[SUN_PATH_MAX-1] = '\0';
 		break;
 		
 	    case 't':

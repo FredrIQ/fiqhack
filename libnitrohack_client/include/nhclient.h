@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <netdb.h>
+#include <sys/un.h>
 #else
 #include <Winsock2.h>
 #include <Ws2def.h>

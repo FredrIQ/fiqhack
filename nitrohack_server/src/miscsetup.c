@@ -69,4 +69,27 @@ int init_workdir(void)
     return TRUE;
 }
 
+
+int remove_unix_socket(void)
+{
+    struct stat statbuf;
+    int ret;
+    
+    if (!settings.bind_addr_unix.sun_family)
+	return TRUE;
+    
+    ret = stat(settings.bind_addr_unix.sun_path, &statbuf);
+    if (ret == -1)
+	/* file doesn't exist */
+	return TRUE;
+    
+    if (!S_ISSOCK(statbuf.st_mode)) {
+	log_msg("Error: %s already exists and is not a socket",
+		settings.bind_addr_unix.sun_path);
+	return FALSE;
+    }
+    
+    return unlink(settings.bind_addr_unix.sun_path) == 0;
+}
+
 /* miscsetup.c */

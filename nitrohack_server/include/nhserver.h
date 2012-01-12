@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -47,6 +48,7 @@ struct settings {
     char *pidfile;
     struct sockaddr_in  bind_addr_4;
     struct sockaddr_in6 bind_addr_6;
+    struct sockaddr_un  bind_addr_unix;
     int port;
     int client_timeout;
     char nodaemon;
@@ -54,6 +56,7 @@ struct settings {
     char disable_ipv6;
     char *dbhost, *dbname, *dbport, *dbuser, *dbpass;
 };
+#define SUN_PATH_MAX (sizeof(settings.bind_addr_unix.sun_path))
 
 
 struct user_info {
@@ -89,7 +92,7 @@ extern const struct client_command clientcmd[];
 /*---------------------------------------------------------------------------*/
 
 /* auth.c */
-extern int auth_user(char *authbuf, char *peername, int *is_reg, int *reconnect_id);
+extern int auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id);
 extern void auth_send_result(int sockfd, enum authresult, int is_reg, int connid);
 
 /* clientmain.c */
@@ -132,11 +135,12 @@ extern void log_msg(const char *fmt, ...);
 extern int begin_logging(void);
 extern void end_logging(void);
 extern void report_startup(void);
-extern char *addr2str(const void *sockaddr);
+extern const char *addr2str(const void *sockaddr);
 
 /* miscsetup.c */
 extern void setup_signals(void);
 extern int init_workdir(void);
+extern int remove_unix_socket(void);
 
 /* server.c */
 extern int runserver(void);

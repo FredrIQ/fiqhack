@@ -138,6 +138,19 @@ static int parse_config_line(char *line)
 	}
     }
     
+    else if (!strcmp(line, "unixsocket")) {
+	if (strlen(val) > SUN_PATH_MAX - 1) {
+	    fprintf(stderr, "Error: The unix socket filename is too long.\n");
+	    return FALSE;
+	}
+	    
+	if (settings.bind_addr_unix.sun_family == 0) {
+	    settings.bind_addr_unix.sun_family = AF_UNIX;
+	    strncpy(settings.bind_addr_unix.sun_path, val, SUN_PATH_MAX - 1);
+	    settings.bind_addr_unix.sun_path[SUN_PATH_MAX-1] = '\0';
+	}
+    }
+    
     else if (!strcmp(line, "nodaemon")) {
 	if (*val == '1' || !strcmp(val, "true"))
 	    settings.nodaemon = TRUE;
