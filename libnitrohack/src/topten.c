@@ -491,7 +491,7 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     boolean game_complete = game_inited && moves && program_state.gameover;
     int rank = -1; /* index of the completed game in the topten list */
     int i, j, sel_count;
-    boolean *selected;
+    boolean *selected, off_list = FALSE;
     
     statusbuf[0] = '\0';
     *out_len = 0;
@@ -557,6 +557,14 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
 	    sel_count++;
     }
     
+    if (sel_count == 0) {
+	/* didn't make it onto the list and nothing else is selected */
+	ttlist[0] = newtt;
+	selected[0] = TRUE;
+	sel_count++;
+	off_list = TRUE;
+    }
+    
     
     score_list = xmalloc(sel_count * sizeof(struct nh_topten_entry));
     memset(score_list, 0, sel_count * sizeof(struct nh_topten_entry));
@@ -565,6 +573,11 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++) {
 	if (selected[i])
 	    fill_nh_score_entry(&ttlist[i], &score_list[j++], i+1, i == rank);
+    }
+    
+    if (off_list) {
+	score_list[0].rank = -1;
+	score_list[0].highlight = TRUE;
     }
     
     if (!game_inited) {

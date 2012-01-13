@@ -65,16 +65,20 @@ const char *addr2str(const void *sockaddr)
     const struct sockaddr_in *sa4 = sockaddr;
     const struct sockaddr_in6 *sa6 = sockaddr;
     
-    int family = ((struct sockaddr*)sockaddr)->sa_family;
-    int v4 = family == AF_INET;
-    
-    if (family == AF_UNIX) {
-	return settings.bind_addr_unix.sun_path;
-    } else
-	inet_ntop(family, v4 ? (void*)&sa4->sin_addr : (void*)&sa6->sin6_addr,
-		    buf, INET6_ADDRSTRLEN);
+    switch (((struct sockaddr*)sockaddr)->sa_family) {
+	case AF_UNIX:
+	    return settings.bind_addr_unix.sun_path;
 
-    return buf;
+	case AF_INET:
+	    inet_ntop(AF_INET, &sa4->sin_addr, buf, INET6_ADDRSTRLEN);
+	    return buf;
+
+	case AF_INET6:
+	    inet_ntop(AF_INET6, &sa6->sin6_addr, buf, INET6_ADDRSTRLEN);
+	    return buf;
+    }
+
+    return "(none)";
 }
 
 

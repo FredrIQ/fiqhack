@@ -88,6 +88,7 @@ extern int termination_flag;
 extern int gamefd;
 extern long gameid;
 extern const struct client_command clientcmd[];
+extern struct nh_player_info player_info;
 
 /*---------------------------------------------------------------------------*/
 
@@ -115,15 +116,17 @@ extern int db_auth_user(const char *name, const char *pass);
 extern int db_register_user(const char *name, const char *pass, const char*email);
 extern int db_get_user_info(int uid, struct user_info *info);
 extern void db_update_user_ts(int uid);
-extern long db_add_new_game(int uid, const char *filename, int role, int race,
-			    int gend, int align, int mode, const char *plname);
-extern void db_set_game_done(int gameid, int end_how);
-extern void db_update_game_ts(int gameid);
+extern long db_add_new_game(int uid, const char *filename, const char *role,
+			    const char *race, const char *gend, const char *align,
+			    int mode, const char *plname, const char *levdesc);
+extern void db_set_game_done(int gameid, const char *filename);
+extern void db_update_game(int gameid, int moves, int depth, const char *levdesc);
 extern int db_get_game_filename(int uid, int gid, char *namebuf, int buflen);
-extern void db_set_game_filename(int gid, const char *filename);
 extern struct gamefile_info *db_list_games(int completed, int uid, int limit, int *count);
 extern void db_set_option(int uid, const char *optname, int type, const char *optval);
 extern void db_restore_options(int uid);
+extern void db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,
+			int end_how, const char *death, const char *entrytxt);
 
 /* kill.c */
 extern int create_pidfile(void);

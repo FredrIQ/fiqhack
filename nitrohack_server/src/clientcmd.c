@@ -97,8 +97,14 @@ static void ccmd_start_game(json_t *params)
     
     ret = nh_start_game(fd, name, role, race, gend, align, mode);
     if (ret) {
+	struct nh_roles_info *ri = nh_get_roles();
+	const char *rolename = (gend && ri->rolenames_f[role]) ?
+			       ri->rolenames_f[role] : ri->rolenames_m[role];
 	gamefd = fd;
-	gameid = db_add_new_game(user_info.uid, filename, role, race, gend, align, mode, name);
+	gameid = db_add_new_game(user_info.uid, filename, rolename,
+				 ri->racenames[race], ri->gendnames[gend],
+				 ri->alignnames[align], mode, name,
+				 player_info.level_desc);
 	log_msg("%s has started a new game (%d) as %s",
 		user_info.username, gameid, name);
 	j_msg = json_pack("{si,si}", "return", ret, "gameid", gameid);
@@ -136,7 +142,7 @@ static void ccmd_restore_game(json_t *params)
     if (status == GAME_RESTORED) {
 	gameid = gid;
 	gamefd = fd;
-	db_update_game_ts(gameid);
+	db_update_game(gameid, player_info.moves, player_info.z, player_info.level_desc);
 	log_msg("%s has restored game %d", user_info.username, gameid);
     }
 }
@@ -151,7 +157,7 @@ static void ccmd_exit_game(json_t *params)
     
     status = nh_exit_game(etype);
     if (status) {
-	db_update_game_ts(gameid);
+	db_update_game(gameid, player_info.moves, player_info.z, player_info.level_desc);
 	log_msg("%s has closed game %d", user_info.username, gameid);
 	gameid = 0;
 	close(gamefd);
@@ -200,7 +206,6 @@ static void ccmd_game_command(json_t *params)
     if (cmd[0] == '\0')
 	cmd = NULL;
     
-    db_update_game_ts(gameid);
     result = nh_command(cmd, count, &arg);
     
     gid = gameid;
@@ -213,10 +218,16 @@ static void ccmd_game_command(json_t *params)
     }
     
     client_msg("game_command", json_pack("{si}", "return", result));
+    db_update_game(gameid, player_info.moves, player_info.z, player_info.level_desc);
     
     /* move the finished game to its final resting place */
     if (result == GAME_OVER) {
 	char full_name[1024], final_name[1024], *filename;
+	int len;
+	char buf[BUFSZ];
+	/* get the topten entry for the current game */
+	struct nh_topten_entry *tte = nh_get_topten(&len, buf, NULL, 0, 0, 0);
+	
 	if (!db_get_game_filename(user_info.uid, gid, full_name, 1024))
 	    return;
 
@@ -225,7 +236,9 @@ static void ccmd_game_command(json_t *params)
 	    return;
 	snprintf(final_name, 1024, "%s/completed/%s", settings.workdir, filename+1);
 	rename(full_name, final_name);
-	db_set_game_filename(gid, final_name);
+	db_set_game_done(gid, final_name);
+	db_add_topten_entry(gid, tte->points, tte->hp, tte->maxhp, tte->deaths,
+			    tte->end_how, tte->death, tte->entrytxt);
     }
 }
 

@@ -33,14 +33,16 @@ static const char SQL_init_games_table[] =
        "gid SERIAL PRIMARY KEY, "
        "filename text NOT NULL, "
        "plname text NOT NULL, "
-       "role integer NOT NULL, "
-       "race integer NOT NULL, "
-       "gender integer NOT NULL, "
-       "alignment integer NOT NULL, "
+       "role text NOT NULL, "
+       "race text NOT NULL, "
+       "gender text NOT NULL, "
+       "alignment text NOT NULL, "
        "mode integer NOT NULL, "
+       "moves integer NOT NULL, "
+       "depth integer NOT NULL, "
+       "level_desc text NOT NULL, "
        "done boolean NOT NULL DEFAULT FALSE, "
        "owner integer NOT NULL REFERENCES users (uid), "
-       "end_how integer, "
        "ts timestamp NOT NULL, "
        "start_ts timestamp NOT NULL"
     ");";
@@ -52,6 +54,18 @@ static const char SQL_init_options_table[] =
 	"opttype integer NOT NULL, "
 	"optvalue text NOT NULL, "
 	"PRIMARY KEY(uid, optname)"
+    ");";
+
+static const char SQL_init_topten_table[] =
+    "CREATE TABLE topten("
+	"gid integer PRIMARY KEY REFERENCES games (gid), "
+	"points integer NOT NULL, "
+	"hp integer NOT NULL, "
+	"maxhp integer NOT NULL, "
+	"deaths integer NOT NULL, "
+	"end_how integer NOT NULL, "
+	"death text NOT NULL, "
+	"entrytxt text NOT NULL"
     ");";
 
 static const char SQL_check_table[] =
@@ -86,21 +100,17 @@ static const char SQL_update_user_ts[] =
     "WHERE uid = $1::integer;";
 
 static const char SQL_add_game[] =
-    "INSERT INTO games (filename, role, race, gender, alignment, mode, owner, plname, ts, start_ts) "
-    "VALUES ($1::text, $2::integer, $3::integer, $4::integer, "
-            "$5::integer, $6::integer, $7::integer, $8::text, 'now', 'now')";
+    "INSERT INTO games (filename, role, race, gender, alignment, mode, moves, "
+                       "depth, owner, plname, level_desc, ts, start_ts) "
+    "VALUES ($1::text, $2::text, $3::text, $4::text, $5::text, "
+            "$6::integer, 1, 1, $7::integer, $8::text, $9::text, 'now', 'now')";
     
 static const char SQL_last_game_id[] =
     "SELECT currval('games_gid_seq');";
 
-static const char SQL_set_game_done[] =
+static const char SQL_update_game[] =
     "UPDATE games "
-    "SET end_how = $1::integer, done = TRUE "
-    "WHERE gid = $2::integer;";
-
-static const char SQL_update_game_ts[] =
-    "UPDATE games "
-    "SET ts = 'now' "
+    "SET ts = 'now', moves = $2::integer, depth = $3::integer, level_desc = $4::text "
     "WHERE gid = $1::integer;";
 
 static const char SQL_get_game_filename[] =
@@ -108,9 +118,9 @@ static const char SQL_get_game_filename[] =
     "FROM games "
     "WHERE owner = $1::integer AND gid = $2::integer;";
 
-static const char SQL_set_game_filename[] =
+static const char SQL_set_game_done[] =
     "UPDATE games "
-    "SET filename = $1::text "
+    "SET filename = $1::text, done = TRUE "
     "WHERE gid = $2::integer;";
 
 static const char SQL_list_games[] =
@@ -133,6 +143,11 @@ static const char SQL_get_options[] =
     "SELECT optname, optvalue "
     "FROM options "
     "WHERE uid = $1::integer;";
+
+static const char SQL_add_topten_entry[] =
+    "INSERT INTO topten (gid, points, hp, maxhp, deaths, end_how, death, entrytxt) "
+    "VALUES ($1::integer, $2::integer, $3::integer, $4::integer, "
+            "$5::integer, $6::integer, $7::text, $8::text);";
 
 
 static PGconn *conn;
@@ -213,6 +228,7 @@ int check_database(void)
      */
     if (!check_create_table("users", SQL_init_user_table) ||
 	!check_create_table("games", SQL_init_games_table) ||
+	!check_create_table("topten", SQL_init_topten_table) ||
 	!check_create_table("options", SQL_init_options_table))
 	goto err;
     
@@ -349,25 +365,22 @@ void db_update_user_ts(int uid)
 }
 
 
-long db_add_new_game(int uid, const char *filename, int role, int race,
-			    int gend, int align, int mode, const char *plname)
+long db_add_new_game(int uid, const char *filename, const char *role,
+		     const char *race, const char *gend, const char *align,
+		     int mode, const char *plname, const char *levdesc)
 {
     PGresult *res;
-    char uidstr[16], rolestr[16], racestr[16], gendstr[16], alignstr[16], modestr[16];
-    const char *const params[] = {filename, rolestr, racestr, gendstr,
-                                  alignstr, modestr, uidstr, plname};
-    const int paramFormats[] = {0, 0, 0, 0, 0, 0, 0, 0};
+    char uidstr[16], modestr[16];
+    const char *const params[] = {filename, role, race, gend,
+                                  align, modestr, uidstr, plname, levdesc};
+    const int paramFormats[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     const char *gameid_str;
     int gid;
     
     sprintf(uidstr, "%d", uid);
-    sprintf(rolestr, "%d", role);
-    sprintf(racestr, "%d", race);
-    sprintf(gendstr, "%d", gend);
-    sprintf(alignstr, "%d", align);
     sprintf(modestr, "%d", mode);
     
-    res = PQexecParams(conn, SQL_add_game, 8, NULL, params, NULL, paramFormats, 0);
+    res = PQexecParams(conn, SQL_add_game, 9, NULL, params, NULL, paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
 	log_msg("db_add_new_game error while adding (%s - %s): %s",
 		plname, filename, PQerrorMessage(conn));
@@ -389,36 +402,18 @@ long db_add_new_game(int uid, const char *filename, int role, int race,
 }
 
 
-void db_set_game_done(int gameid, int end_how)
+void db_update_game(int gameid, int moves, int depth, const char *levdesc)
 {
     PGresult *res;
-    char gidstr[16], endstr[16], *numrows;
-    const char * const params[] = {endstr, gidstr};
-    const int paramFormats[] = {0, 0};
-    
-    sprintf(endstr, "%d", end_how);
-    sprintf(gidstr, "%d", gameid);
-    
-    res = PQexecParams(conn, SQL_set_game_done, 2, NULL, params, NULL, paramFormats, 0);
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("set_game_done error: %s", PQerrorMessage(conn));
-    numrows = PQcmdTuples(res);
-    if (atoi(numrows) < 1)
-	log_msg("set_game_done for game %d (status %d) failed", gameid, end_how);
-    PQclear(res);
-}
-
-
-void db_update_game_ts(int gameid)
-{
-    PGresult *res;
-    char gidstr[16];
-    const char * const params[] = {gidstr};
-    const int paramFormats[] = {0};
+    char gidstr[16], movesstr[16], depthstr[16];
+    const char * const params[] = {gidstr, movesstr, depthstr, levdesc};
+    const int paramFormats[] = {0,0,0,0};
     
     sprintf(gidstr, "%d", gameid);
+    sprintf(movesstr, "%d", moves);
+    sprintf(depthstr, "%d", depth);
     
-    res = PQexecParams(conn, SQL_update_game_ts, 1, NULL, params, NULL, paramFormats, 0);
+    res = PQexecParams(conn, SQL_update_game, 4, NULL, params, NULL, paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	log_msg("update_game_ts error: %s", PQerrorMessage(conn));
     PQclear(res);
@@ -448,7 +443,7 @@ int db_get_game_filename(int uid, int gid, char *namebuf, int buflen)
 }
 
 
-void db_set_game_filename(int gid, const char *filename)
+void db_set_game_done(int gid, const char *filename)
 {
     PGresult *res;
     char gidstr[16];
@@ -456,9 +451,9 @@ void db_set_game_filename(int gid, const char *filename)
     const int paramFormats[] = {0, 0};
     
     sprintf(gidstr, "%d", gid);
-    res = PQexecParams(conn, SQL_set_game_filename, 2, NULL, params, NULL, paramFormats, 0);
+    res = PQexecParams(conn, SQL_set_game_done, 2, NULL, params, NULL, paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("db_set_game_filename error: %s", PQerrorMessage(conn));
+	log_msg("set_game_done error: %s", PQerrorMessage(conn));
     PQclear(res);
 }
 
@@ -548,7 +543,7 @@ void db_restore_options(int uid)
     const int paramFormats[] = {0};
     int i, count, ncol, vcol;
     union nh_optvalue value;
-    
+
     sprintf(uidstr, "%d", uid);
     
     res = PQexecParams(conn, SQL_get_options, 1, NULL, params, NULL, paramFormats, 0);
@@ -567,6 +562,31 @@ void db_restore_options(int uid)
 	nh_set_option(optname, value, 1);
     }
     PQclear(res);
+}
+
+
+void db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,
+			 int end_how, const char *death, const char *entrytxt)
+{
+    PGresult *res;
+    char gidstr[16], pointstr[16], hpstr[16], maxhpstr[16], dcountstr[16], endstr[16];
+    const char * const params[] = {gidstr, pointstr, hpstr, maxhpstr,
+                                   dcountstr, endstr, death, entrytxt};
+    const int paramFormats[] = {0, 0, 0, 0, 0, 0, 0, 0};
+    
+    sprintf(gidstr, "%d", gid);
+    sprintf(pointstr, "%d", points);
+    sprintf(hpstr, "%d", hp);
+    sprintf(maxhpstr, "%d", maxhp);
+    sprintf(dcountstr, "%d", deaths);
+    sprintf(endstr, "%d", end_how);
+    
+    res = PQexecParams(conn, SQL_add_topten_entry, 8, NULL, params, NULL, paramFormats, 0);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	log_msg("add_topten_entry error: %s", PQerrorMessage(conn));
+    
+    PQclear(res);
+    return;
 }
 
 /* db_pgsql.c */

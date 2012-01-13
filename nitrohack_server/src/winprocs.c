@@ -42,7 +42,7 @@ static nh_bool srv_alt_list_items(struct nh_objitem *items, int icount, nh_bool 
 
 /*---------------------------------------------------------------------------*/
 
-static struct nh_player_info prev_player_info;
+struct nh_player_info player_info;
 static struct nh_dbuf_entry prev_dbuf[ROWNO][COLNO];
 static int prev_invent_icount, prev_floor_icount;
 static struct nh_objitem *prev_invent;
@@ -181,13 +181,13 @@ static void srv_display_buffer(const char *buf, nh_bool trymove)
 static void srv_update_status(struct nh_player_info *pi)
 {
     json_t *jobj, *jarr;
-    struct nh_player_info *oi = &prev_player_info;
+    struct nh_player_info *oi = &player_info;
     int i, all;
     
-    if (!memcmp(&prev_player_info, pi, sizeof(struct nh_player_info)))
+    if (!memcmp(&player_info, pi, sizeof(struct nh_player_info)))
 	return;
     
-    all = !prev_player_info.plname[0];
+    all = !player_info.plname[0];
     
     /* only send fields that have changed since the last transmission */
     jobj = json_object();
@@ -256,7 +256,7 @@ static void srv_update_status(struct nh_player_info *pi)
 	    json_array_append_new(jarr, json_string(pi->statusitems[i]));
 	json_object_set_new(jobj, "statusitems", jarr);
     }
-    prev_player_info = *pi;
+    player_info = *pi;
     
     add_display_data("update_status", jobj);
 }
@@ -381,8 +381,6 @@ static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
 		     "name", name, "killbuf", killbuf);
     
     add_display_data("outrip", jobj);
-    
-    db_set_game_done(gameid, end_how);
 }
 
 
@@ -692,7 +690,7 @@ void reset_cached_diplaydata(void)
     prev_invent = NULL;
     prev_invent_icount = prev_floor_icount = 0;
     
-    memset(&prev_player_info, 0, sizeof(prev_player_info));
+    memset(&player_info, 0, sizeof(player_info));
     memset(&prev_dbuf, 0, sizeof(prev_dbuf));
 }
 
