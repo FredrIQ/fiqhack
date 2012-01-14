@@ -73,6 +73,15 @@ endif ()
 if (ENABLE_NETCLIENT)
     add_dependencies (nitrohack_curses libnitrohack_client)
     target_link_libraries (nitrohack_curses nitrohack_client)
+    # this is a kludge; these libraries are required by libnitrohack_client, but
+    # for static linking they must be specified here. I couldn't figure out how
+    # to set the dependencies from the libnitrohack_client CMakeLists.txt
+    if (ALL_STATIC)
+	target_link_libraries(nitrohack_curses jansson)
+	if (WIN32)
+	    target_link_libraries(nitrohack_curses Ws2_32)
+	endif ()
+    endif()
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

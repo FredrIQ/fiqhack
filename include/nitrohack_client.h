@@ -5,6 +5,7 @@
 
 #include "nitrohack_types.h"
 
+#if !defined(STATIC_BUILD)
 #if defined (libnitrohack_client_EXPORTS)/* defined by cmake */
 # if defined (_MSC_VER)
 #  define EXPORT __declspec(dllexport)
@@ -18,6 +19,9 @@
 # else
 #  define EXPORT
 # endif
+#endif
+#else
+#define EXPORT
 #endif
 
 /* extra return status for nhnet_command and nhnet_restore_game */

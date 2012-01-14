@@ -251,7 +251,7 @@ struct win_getline {
 extern struct settings settings;
 extern struct interface_flags ui_flags;
 extern nh_bool interrupt_multi, game_is_running;
-extern const char quitchars[];
+extern const char quit_chars[];
 extern struct nh_window_procs curses_windowprocs;
 extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;

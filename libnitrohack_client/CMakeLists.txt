@@ -19,12 +19,14 @@ include_directories (${NitroHack_SOURCE_DIR}/include
                      include)
 
 link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
-add_library(libnitrohack_client SHARED ${LIBNITROHACK_CLIENT_SRC})
+add_library(libnitrohack_client ${LIB_TYPE} ${LIBNITROHACK_CLIENT_SRC})
 set_target_properties(libnitrohack_client PROPERTIES OUTPUT_NAME nitrohack_client)
 
-target_link_libraries(libnitrohack_client nitrohack jansson)
-if (WIN32)
-    target_link_libraries(libnitrohack_client Ws2_32)
+if (NOT ALL_STATIC)
+    target_link_libraries(libnitrohack_client nitrohack jansson)
+    if (WIN32)
+	target_link_libraries(libnitrohack_client Ws2_32)
+    endif ()
 endif ()
 
 add_dependencies (libnitrohack_client libnitrohack)

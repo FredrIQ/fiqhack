@@ -30,6 +30,14 @@ if (NOT SHELLDIR)
          CACHE PATH "launch script location" )
 endif()
 
+set (ALL_STATIC FALSE CACHE BOOL "Fully static build")
+if (NOT ALL_STATIC)
+    set (LIB_TYPE SHARED)
+else ()
+    add_definitions(-fPIC -DSTATIC_BUILD)
+    set (LIB_TYPE STATIC)
+endif ()
+
 # NitroHack server currently uses several Linux-specific apis.
 # Generalizing the code to the point where it will work on other systems
 # is not impossible, but the work has not been done.
@@ -51,12 +59,12 @@ endif ()
 # nitrohack core
 add_subdirectory (libnitrohack)
 
+# nitrohack network client
+add_subdirectory (libnitrohack_client)
+
 # nitrohack text ui
 add_subdirectory (nitrohack)
 
 if (ENABLE_SERVER)
     add_subdirectory (nitrohack_server)
 endif ()
-
-# nitrohack network client
-add_subdirectory (libnitrohack_client)

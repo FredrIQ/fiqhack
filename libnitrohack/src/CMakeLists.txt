@@ -36,7 +36,7 @@ include_directories (
     ${NitroHack_SOURCE_DIR}/include
     ${NitroHack_BINARY_DIR}/libnitrohack/include )
 
-add_library(libnitrohack SHARED ${LIBNITROHACK_SRC} ${LIBNITROHACK_GENERATED_SRC})
+add_library(libnitrohack ${LIB_TYPE} ${LIBNITROHACK_SRC} ${LIBNITROHACK_GENERATED_SRC})
 set_target_properties(libnitrohack PROPERTIES OUTPUT_NAME nitrohack )
 
 add_dependencies (libnitrohack makedefs_headers)

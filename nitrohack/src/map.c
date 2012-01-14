@@ -160,7 +160,7 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 		monidx = (monidx + 1) % moncount;
 	    }
 	    goto nxtc;
-	} else if (!strchr(quitchars, key)) {
+	} else if (!strchr(quit_chars, key)) {
 	    int k = 0, tx, ty;
 	    int pass, lo_x, lo_y, hi_x, hi_y;
 	    matching = malloc(default_drawing->num_bgelements);
@@ -195,7 +195,7 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 			!force ? " (aborted)" : "");
 		curses_msgwin(printbuf);
 	    }
-	} /* !quitchars */
+	} /* !quit_chars */
 	if (force) goto nxtc;
 	cx = -1;
 	cy = 0;

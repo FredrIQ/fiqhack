@@ -20,7 +20,7 @@ extern int _nc_unicode_locale(void);
 WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 struct gamewin *firstgw, *lastgw;
 int orig_cursor;
-const char quitchars[] = " \r\n\033";
+const char quit_chars[] = " \r\n\033";
 static SCREEN *curses_scr;
 
 struct nh_window_procs curses_windowprocs = {

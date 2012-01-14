@@ -76,7 +76,7 @@ char curses_yn_function(const char *query, const char *resp, char def)
 	    else
 		key = def;
 	    break;
-	} else if (strchr(quitchars, key)) {
+	} else if (strchr(quit_chars, key)) {
 	    key = def;
 	    break;
 	}

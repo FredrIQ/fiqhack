@@ -9,19 +9,23 @@
 
 #include "nitrohack_types.h"
 
-#if defined (libnitrohack_EXPORTS)/* defined by cmake while building libnitrohack */
-# if defined (_MSC_VER)
-#  define EXPORT __declspec(dllexport)
-# else /* gcc & clang with -fvisibility=hidden need this for exported syms */
-#  define EXPORT __attribute__((__visibility__("default")))
-# endif
+#if !defined(STATIC_BUILD)
+# if defined (libnitrohack_EXPORTS)/* defined by cmake while building libnitrohack */
+#  if defined (_MSC_VER)
+#   define EXPORT __declspec(dllexport)
+#  else /* gcc & clang with -fvisibility=hidden need this for exported syms */
+#   define EXPORT __attribute__((__visibility__("default")))
+#  endif
 
-#else /* building a window port */
-# if defined (_MSC_VER)
-#  define EXPORT __declspec(dllimport)
-# else
-#  define EXPORT
+# else /* building a window port */
+#  if defined (_MSC_VER)
+#   define EXPORT __declspec(dllimport)
+#  else
+#   define EXPORT
+#  endif
 # endif
+#else
+# define EXPORT
 #endif
 
 /* allmain.c */
