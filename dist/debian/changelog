@@ -1,0 +1,5 @@
+nitrohack (4.0.0-1) unstable; urgency=low
+  * Created a new debian/ directory with packaging info; lets hope this is all OK.
+
+ -- Daniel Thaler <daniel@dthaler.de>  Sat, 12 Jan 2012 20:22:00 +0100
+

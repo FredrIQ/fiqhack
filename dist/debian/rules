@@ -1,0 +1,119 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=0
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+#DPKG_ARCH#
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+#CONFIGURE#
+
+#Architecture 
+build: build-arch build-indep
+
+build-arch: build-arch-stamp
+build-arch-stamp: #CONFIGURE_STAMP# #CONFIG_STATUS#
+
+	# build nitrohack
+	-mkdir build
+	cd build && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DLIBDIR=/usr/lib -DDATADIR=/usr/lib/games/nitrohack -DBINDIR=/usr/bin .. && \
+	$(MAKE) all
+
+build-indep: build-indep-stamp
+build-indep-stamp: #CONFIGURE_STAMP# #CONFIG_STATUS#
+	
+	# Add here commands to compile the indep part of the package.
+	#$(MAKE) doc
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-arch-stamp build-indep-stamp config-stamp
+
+	# Add here commands to clean up after the build process.
+	-rm -rf build/
+	
+	dh_clean
+
+install: install-arch
+
+install-arch:
+	dh_testdir
+	dh_testroot
+	dh_clean -k -a
+	dh_installdirs -a
+
+	# Add here commands to install the arch part of the package into 
+	# debian/tmp.
+	#INSTALL#
+
+	#install nitrohack
+	install -m 0644 -o root -g root libnitrohack/dat/license \
+	  debian/nitrohack/usr/lib/games/nitrohack/
+
+	install -m 0644 -o root -g root build/libnitrohack/dat/nhdat \
+	  debian/nitrohack/usr/lib/games/nitrohack/
+
+	install -m 0755 -o root -g root build/nitrohack/nitrohack \
+	  debian/nitrohack/usr/bin/
+
+	install -m 0755 -o root -g root build/libnitrohack/src/libnitrohack*.so \
+	  debian/nitrohack/usr/lib/
+
+	install -m 0755 -o root -g root build/libnitrohack_client/libnitrohack_client*.so \
+	  debian/nitrohack/usr/lib/
+
+	#install nitrohack_server
+	install -m 0755 -o root -g root build/nitrohack_server/nitrohack_server \
+	  debian/nitrohack-server/usr/bin/
+
+# Must not depend on anything. This is to be called by
+# binary-arch/binary-multi
+# in another 'make' thread.
+binary-common:
+	dh_testdir
+	dh_testroot
+#	dh_installdebconf	
+	dh_installdocs
+	dh_installman
+	dh_installmenu
+	dh_installchangelogs #CHANGELOGS#
+	dh_link
+	dh_strip
+	dh_compress 
+#	dh_fixperms -Xvulture
+	dh_installdeb
+	dh_shlibdeps
+#	dh_perl
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+# Build architecture independant packages using the common target.
+binary-indep: build-indep
+	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+
+# Build architecture dependant packages using the common target.
+binary-arch: build-arch install-arch
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+binary: binary-arch binary-indep
+.PHONY: build clean binary-indep binary-arch binary install install-arch #PHONY_CONFIGURE#

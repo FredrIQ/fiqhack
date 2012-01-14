@@ -1,0 +1,32 @@
+Source: nitrohack
+Section: games
+Priority: optional
+Maintainer: Daniel Thaler <daniel@dthaler.de>
+Build-Depends: debhelper (>= 7.0.0), libncursesw5-dev, bison, flex, libpq-dev
+Standards-Version: 3.6.2
+
+Package: nitrohack
+Architecture: any
+Depends: libc6, libncursesw5
+Replaces: nethack
+Description: dungeon crawl game
+ NitroHack is a modernized version of the classic roguelike game NetHack. It
+ adds a completely new user interface, a network mode for playing on public
+ servers and much more.
+ .
+ NitroHack is a single player dungeon exploration game.
+ Unlike many other Dungeons & Dragons-inspired games, the
+ emphasis in NitroHack is on discovering the detail of the dungeon and not simply
+ killing everything in sight - in fact, killing everything in sight is a good
+ way to die quickly. Each game presents a different landscape - the random
+ number generator provides an essentially unlimited number of variations of the
+ dungeon and its denizens to be discovered by the player in one of a number of
+ characters: you can pick your race, your role, and your gender.
+
+Package: nitrohack-server
+Architecture: any
+Depends: NitroHack, postgresql
+Description: network server for NitroHack
+ This is a server that can run remote NitroHack games. This package includes only
+ the bare server daemon; the web interface etc. is not included (yet).
+
