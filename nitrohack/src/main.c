@@ -15,7 +15,6 @@ void append_slash(char *name);
 
 struct settings settings;
 struct interface_flags ui_flags;
-char *hackdir;
 nh_bool interrupt_multi = FALSE;
 nh_bool game_is_running = FALSE;
 int initrole = ROLE_NONE, initrace = ROLE_NONE;
@@ -111,8 +110,11 @@ static void setup_signals(void)
 static void setup_signals(void) {}
 #endif
 
-static char** init_game_paths(void)
+static char** init_game_paths(const char *argv0)
 {
+#ifdef WIN32
+    char dirbuf[1024], docpath[MAX_PATH], *pos;
+#endif
     char **pathlist = malloc(sizeof(char*) * PREFIX_COUNT);
     char *dir;
     int i;
@@ -120,15 +122,39 @@ static char** init_game_paths(void)
     dir = getenv("NITROHACKDIR");
     if (!dir)
 	dir = getenv("HACKDIR");
-    
-    if (!dir)
-	dir = hackdir;
 
+#if defined(UNIX)
     if (!dir)
 	dir = NITROHACKDIR;
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
+    pathlist[DUMPPREFIX] = getenv("HOME");
+    if (!pathlist[DUMPPREFIX])
+	pathlist[DUMPPREFIX] = "./";
+    
+#elif defined(WIN32)
+    if (!dir) {
+	strncpy(dirbuf, argv0, 1023);
+	pos = strrchr(dirbuf, '\\');
+	if (!pos)
+	    pos = strrchr(dirbuf, '/');
+	if (!pos) {
+	    /* argv0 doesn't contain a path */
+	    strcpy(dirbuf, ".\\");
+	    pos = &dirbuf[1];
+	}
+	*(++pos) = '\0';
+	dir = dirbuf;
+    }
+    
+    for (i = 0; i < PREFIX_COUNT; i++)
+	pathlist[i] = dir;
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, docpath)))
+	pathlist[DUMPPREFIX] = docpath;
+    else
+	pathlist[DUMPPREFIX] = ".\\";
+#endif
     
     /* alloc memory for the paths and append slashes as required */
     for (i = 0; i < PREFIX_COUNT; i++) {
@@ -137,8 +163,6 @@ static char** init_game_paths(void)
 	strcpy(pathlist[i], tmp);
 	append_slash(pathlist[i]);
     }
-    
-    strcpy(pathlist[DUMPPREFIX], "./");
     
     return pathlist;
 }
@@ -220,7 +244,7 @@ int main(int argc, char *argv[])
     
     init_options();
     
-    gamepaths = init_game_paths();
+    gamepaths = init_game_paths(argv[0]);
     nh_lib_init(&curses_windowprocs, gamepaths);
     for (i = 0; i < PREFIX_COUNT; i++)
 	free(gamepaths[i]);
