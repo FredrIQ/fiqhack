@@ -227,6 +227,8 @@ nh_bool nhnet_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     if (!api_entry())
 	return FALSE;
     
+    alt_windowprocs = *rwinprocs;
+    
     jmsg = send_receive_msg("view_start", json_pack("{si}", "gameid", fd));
     if (json_unpack(jmsg, "{si,s:{ss,si,si,si,si}}", "return", &ret, "info",
 		    "nextcmd", &nextcmd, "actions", &info->actions, "max_actions",
@@ -277,6 +279,8 @@ void nhnet_view_replay_finish(void)
 	return nh_view_replay_finish();
     
     xmalloc_cleanup();
+    
+    alt_windowprocs = windowprocs;
     
     if (!api_entry())
 	return;
