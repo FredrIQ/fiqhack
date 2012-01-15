@@ -812,7 +812,7 @@ void show_keymap_menu(nh_bool readonly)
 	if (!readonly) {
 	    set_menuitem(&items[icount++], 0, MI_TEXT, "", 0, FALSE);
 	    set_menuitem(&items[icount++], RESET_BINDINGS_ID, MI_NORMAL,
-			"!!!\tReset all keybindings to built-in defaults\t!!!", 0, FALSE);
+			"!!!\tReset all key bindings to built-in defaults\t!!!", '!', FALSE);
 	}
 	n = curses_display_menu_core(items, icount, "Keymap", readonly ? PICK_NONE :
 	                        PICK_ONE, NULL, 0, 0, COLS, LINES, set_command_keys);
