@@ -29,7 +29,7 @@ void init_yyout(FILE *);
 
 int main(int argc, char **argv)
 {
-	char	infile[64], outfile[64], basename[64];
+	char	infile[1024], outfile[1024], basename[64];
 	FILE	*fin, *fout;
 	int	i, len;
 	boolean errors_encountered = FALSE;
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 	    }
 	    /* Otherwise every argument is a filename */
 	    for (; i<argc; i++) {
-		fname = strcpy(infile, argv[i]);
+		fname = strncpy(infile, argv[i], sizeof(infile));
 		/* the input file had better be a .pdf file */
 		len = strlen(fname) - 4;	/* length excluding suffix */
 		if (len < 0 || strncmp(".pdf", fname + len, 4)) {
