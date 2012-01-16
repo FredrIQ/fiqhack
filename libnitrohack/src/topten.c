@@ -557,7 +557,7 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
 	    sel_count++;
     }
     
-    if (sel_count == 0) {
+    if (game_complete && sel_count == 0) {
 	/* didn't make it onto the list and nothing else is selected */
 	ttlist[0] = newtt;
 	selected[0] = TRUE;

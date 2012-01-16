@@ -882,7 +882,7 @@ struct nh_topten_entry *nhnet_get_topten(int *out_len, char *statusbuf,
     if (!api_entry())
 	return NULL;
     
-    jmsg = json_pack("{ss,si,si,si}", "player", player, "top", top,
+    jmsg = json_pack("{ss,si,si,si}", "player", player ? player : "", "top", top,
 		     "around", around, "own", own);
     jmsg = send_receive_msg("get_topten", jmsg);
     if (json_unpack(jmsg, "{so,ss!}", "toplist", &jarr, "msg", &msg) == -1 ||

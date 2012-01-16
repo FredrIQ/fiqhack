@@ -165,6 +165,9 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
     if (!test_restore_connection())
 	return NULL;
     
+    if (!jmsg)
+	return NULL;
+    
     sendkey = msgtype;
     do {
 	/* send the message */
