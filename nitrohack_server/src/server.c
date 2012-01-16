@@ -356,7 +356,6 @@ static void server_socket_event(int server_fd, int epfd)
     /* it should be possible to read immediately due to the "defer" sockopt */
     authlen = read(newfd, authbuf, AUTHBUFSIZE-1);
     if (authlen <= 0) {
-	log_msg("Error: no authentication data on new connections.");
 	close(newfd);
 	return;
     }
@@ -375,8 +374,10 @@ static void server_socket_event(int server_fd, int epfd)
     while (pos > 0 && isspace(authbuf[pos]))
 	pos--;
     
-    if (authbuf[pos] != '}') /* not the end of JSON auth data, wait for more */
+    if (authbuf[pos] != '}') { /* not the end of JSON auth data */
+	log_msg("authentication for %s failed due to incomplete JSON", addr2str(&addr));
 	return;
+    }
     
     /*
      * ready to authenticate the user here
@@ -387,6 +388,7 @@ static void server_socket_event(int server_fd, int epfd)
 	    auth_send_result(newfd, AUTH_FAILED_UNKNOWN_USER, is_reg, 0);
 	else
 	    auth_send_result(newfd, AUTH_FAILED_BAD_PASSWORD, is_reg, 0);
+	log_msg("authentication failed for %s", addr2str(&addr));
 	close(newfd);
 	return;
     }
