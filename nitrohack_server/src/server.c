@@ -347,8 +347,6 @@ static void server_socket_event(int server_fd, int epfd)
     if (newfd == -1) /* maybe the connection attempt was aborted early? */
 	return;
     
-    log_msg("New connection from %s.", addr2str(&addr));
-    
     /* no need to complain if this setsockopt fails; TCP_NODELAY doesn't exist
      * for AF_UNIX sockets. */
     setsockopt(newfd, IPPROTO_TCP, TCP_NODELAY, &opt_enable, sizeof(int));
@@ -359,6 +357,8 @@ static void server_socket_event(int server_fd, int epfd)
 	close(newfd);
 	return;
     }
+    
+    log_msg("New connection from %s.", addr2str(&addr));
     
     authbuf[authlen] = '\0'; /* make it safe to use as a string */
     
