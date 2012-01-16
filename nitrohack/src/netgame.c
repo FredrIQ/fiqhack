@@ -203,7 +203,7 @@ static struct server_info *add_server_menu(struct server_info **servlist)
 	    return NULL;
 	
 	do {
-	    curses_getline("New password:", passbuf);
+	    curses_getline("New password: (Beware - it is transmitted in plain text)", passbuf);
 	    if (passbuf[0] == '\033' || passbuf[0] == '\0')
 		return NULL;
 	    curses_getline("Confirm password:", passbuf2);
