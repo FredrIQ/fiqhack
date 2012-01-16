@@ -710,10 +710,12 @@ static int setup_server_sockets(int *ipv4fd, int *ipv6fd, int *unixfd, int epfd)
 	*ipv4fd = -1;
     
     if (settings.bind_addr_unix.sun_family && remove_unix_socket()) {
+	int prevmask = umask(0);
 	*unixfd = init_server_socket((struct sockaddr*)&settings.bind_addr_unix);
 	ev.data.fd = *unixfd;
 	if (*unixfd != -1)
 	    epoll_ctl(epfd, EPOLL_CTL_ADD, *unixfd, &ev);
+	umask(prevmask);
     }
     
     if (*ipv4fd == -1 && *ipv6fd == -1) {
