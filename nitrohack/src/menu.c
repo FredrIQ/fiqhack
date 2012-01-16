@@ -246,7 +246,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 {
     struct gamewin *gw;
     struct win_menu *mdat;
-    int i, key, idx, rv, startx, starty;
+    int i, key, idx, rv, startx, starty, prevcurs;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     
@@ -273,7 +273,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     starty = (y2 - y1 - mdat->height) / 2 + y1;
     startx = (x2 - x1 - mdat->width) / 2 + x1;
     
-    curs_set(0);
+    prevcurs = curs_set(0);
     
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
@@ -400,7 +400,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 	}
     }
     
-    curs_set(1);
+    curs_set(prevcurs);
     
     free(mdat->selected);
     delete_gamewin(gw);
@@ -656,7 +656,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 {
     struct gamewin *gw;
     struct win_objmenu *mdat;
-    int i, key, idx, rv, startx, starty;
+    int i, key, idx, rv, startx, starty, prevcurs;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
@@ -679,7 +679,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
     
-    curs_set(0);
+    prevcurs = curs_set(0);
     
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
@@ -887,7 +887,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 	}
     }
     
-    curs_set(1);
+    curs_set(prevcurs);
     
     free(mdat->selected);
     delete_gamewin(gw);
