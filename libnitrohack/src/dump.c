@@ -19,6 +19,9 @@ void begin_dump(int how)
     const char *rolename;
     time_t t;
     struct tm *tmp;
+    
+    /* back up the window procs */
+    winprocs_original = windowprocs;
 
     /* make a timestamp like "2011-11-30 18:45" */
     t = time(NULL);
@@ -39,9 +42,6 @@ void begin_dump(int how)
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
 	return;
-    
-    /* back up the window procs */
-    winprocs_original = windowprocs;
     
     rolename = (flags.female && urole.name.f) ? urole.name.f : urole.name.m;
     fprintf(dumpfp, "%s, %s %s %s %s\n", plname, aligns[1-u.ualign.type].adj,
