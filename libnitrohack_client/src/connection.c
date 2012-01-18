@@ -12,6 +12,12 @@ static int connection_id;
 static int net_active;
 int conn_err;
 
+/* Prevent automatic retries during connection setup or teardown.
+ * When the connection is being set up, it is better to report a failure
+ * immediately; when the connection is being closed it doesn't matter if it
+ * already is */
+static int in_connect_disconnect;
+
 /* saved connection details */
 static char saved_hostname[256];
 static int saved_port;
@@ -355,6 +361,7 @@ static int do_connect(const char *host, int port, const char *user, const char *
 	return NO_CONNECTION;
     }
     
+    in_connect_disconnect = TRUE;
     sockfd = fd;
     jmsg = json_pack("{ss,ss}", "username", user, "password", pass);
     if (reg_user) {
@@ -366,6 +373,7 @@ static int do_connect(const char *host, int port, const char *user, const char *
 	    json_object_set_new(jmsg, "reconnect", json_integer(connid));
 	jmsg = send_receive_msg("auth", jmsg);
     }
+    in_connect_disconnect = FALSE;
     
     if (!jmsg || json_unpack(jmsg, "{si,si!}", "return", &authresult,
 	"connection", &connection_id) == -1) {
@@ -401,7 +409,9 @@ void nhnet_disconnect(void)
 {
     json_t *msg;
     if (sockfd != -1) {
+	in_connect_disconnect = TRUE;
 	msg = send_receive_msg("shutdown", json_object());
+	in_connect_disconnect = FALSE;
 	if (msg)
 	    json_decref(msg);
 	close(sockfd);
@@ -440,6 +450,9 @@ int restart_connection(void)
     if (sockfd != -1)
 	close(sockfd);
     sockfd = -1;
+    
+    if (in_connect_disconnect)
+	return FALSE;
     
     ret = do_connect(saved_hostname, saved_port, saved_username, saved_password,
 		     NULL, 0, connection_id);
