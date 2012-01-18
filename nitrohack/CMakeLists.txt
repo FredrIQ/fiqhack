@@ -94,7 +94,7 @@ add_dependencies (nitrohack_curses libnitrohack)
 
 if (UNIX)
     add_custom_command(OUTPUT nitrohack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nitrohack $@" >> nitrohack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${LIBDIR} ${BINDIR}/nitrohack $@" >> nitrohack.sh
                        VERBATIM)
     add_custom_target(nitrohack_curses_shell_script ALL
                       DEPENDS nitrohack.sh)
