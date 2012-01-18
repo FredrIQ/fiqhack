@@ -54,6 +54,7 @@
 #include <netinet/tcp.h>
 #include <sys/epoll.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #if defined(OPEN_MAX)
 static int get_open_max(void) { return OPEN_MAX; }
@@ -71,6 +72,7 @@ static int get_open_max(void) { return sysconf(_SC_OPEN_MAX); }
 #define AUTHBUFSIZE 512
 
 enum comm_status {
+    NEW_CONNECTION,
     CLIENT_DISCONNECTED,
     CLIENT_CONNECTED
 };
@@ -98,6 +100,8 @@ struct client_data {
 
 /*---------------------------------------------------------------------------*/
 
+static struct client_data new_connection_dummy = {NEW_CONNECTION, 0 /*, 0 etc */};
+
 /* disconnected_list_head: list of games which are fully established, but the
  * client has disconnected. The client can reconnect to the running game later.
  * in these client_data structures, sockfd will be -1, but everything else is valid.*/
@@ -114,6 +118,9 @@ static int client_count, fd_to_client_max;
 
 
 static void cleanup_game_process(struct client_data *client, int epfd);
+static int init_server_socket(struct sockaddr *sa);
+static int fork_client(struct client_data *client, int epfd);
+static void handle_new_connection(int newfd, int epfd);
 
 
 static void link_client_data(struct client_data *client, struct client_data *list)
@@ -334,13 +341,9 @@ static int fork_client(struct client_data *client, int epfd)
 static void server_socket_event(int server_fd, int epfd)
 {
     struct epoll_event ev;
-    struct client_data *client;
     struct sockaddr_storage addr;
     int newfd, opt_enable = 1;
     socklen_t addrlen = sizeof(addr);
-    int pos, is_reg, reconnect_id, authlen, userid;
-    char authbuf[AUTHBUFSIZE];
-    static int connection_id = 1;
     
     memset(&addr, 0, addrlen);
     newfd = accept4(server_fd, (struct sockaddr*)&addr, &addrlen, SOCK_NONBLOCK | SOCK_CLOEXEC);
@@ -351,6 +354,40 @@ static void server_socket_event(int server_fd, int epfd)
      * for AF_UNIX sockets. */
     setsockopt(newfd, IPPROTO_TCP, TCP_NODELAY, &opt_enable, sizeof(int));
     
+    if (addr.ss_family == AF_UNIX) {
+	/* unix sockets don't have defer_accept, so the auth data might not be
+	 * ready yet. Additionally, as the socket is local, it gets a higher
+	 * level of trust. */
+	ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
+	ev.data.ptr = NULL;
+	ev.data.fd = newfd;
+	if (epoll_ctl(epfd, EPOLL_CTL_ADD, newfd, &ev) == -1) {
+	    log_msg("Error in epoll_ctl for %s: %s", addr2str(&addr), strerror(errno));
+	    close(newfd);
+	    return;
+	}
+	map_fd_to_client(newfd, &new_connection_dummy);
+	return;
+    } else
+	handle_new_connection(newfd, epfd);
+}
+
+    
+static void handle_new_connection(int newfd, int epfd)
+{
+    struct epoll_event ev;
+    struct client_data *client;
+    struct sockaddr_storage addr;
+    socklen_t addrlen = sizeof(addr);
+    char authbuf[AUTHBUFSIZE];
+    int pos, is_reg, reconnect_id, authlen, userid;
+    static int connection_id = 1;
+    
+    if (fd_to_client_max > newfd && fd_to_client[newfd] == &new_connection_dummy) {
+	epoll_ctl(epfd, EPOLL_CTL_DEL, newfd, &ev);
+	fd_to_client[newfd] = NULL;
+    }
+    
     /* it should be possible to read immediately due to the "defer" sockopt */
     authlen = read(newfd, authbuf, AUTHBUFSIZE-1);
     if (authlen <= 0) {
@@ -358,6 +395,7 @@ static void server_socket_event(int server_fd, int epfd)
 	return;
     }
     
+    getpeername(newfd, (struct sockaddr*)&addr, &addrlen);
     log_msg("New connection from %s.", addr2str(&addr));
     
     authbuf[authlen] = '\0'; /* make it safe to use as a string */
@@ -847,6 +885,15 @@ int runserver(void)
 		continue;
 	    
 	    switch (client->state) {
+		case NEW_CONNECTION:
+		    if (events[i].events & EPOLLERR || /* error */
+			events[i].events & EPOLLHUP || /* connection closed */
+			events[i].events & EPOLLRDHUP) /* connection closed */
+			close(fd);
+		    else if (events[i].events & EPOLLIN)
+			handle_new_connection(fd, epfd);
+		    break;
+		    
 		case CLIENT_DISCONNECTED:
 		    /* When the client is disconnected, activity usually only
 		     * happens on the pipes: either the game process is
