@@ -493,7 +493,7 @@ static json_t *cmd_display_objects(json_t *params, int display_only)
     for (i = 0; i < icount; i++)
 	json_read_objitem(json_array_get(jarr, i), &items[i]);
     
-    pick_list = malloc(icount * sizeof(int));
+    pick_list = malloc(icount * sizeof(struct nh_objresult));
     ret = cur_wndprocs.win_display_objects(items, icount, title, how, pick_list);
     free(items);
     if (display_only) {

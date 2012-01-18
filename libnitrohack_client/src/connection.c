@@ -315,7 +315,7 @@ static int connect_server(const char *host, int port, int want_v4, char *errmsg,
 static int do_connect(const char *host, int port, const char *user, const char *pass,
 		      const char *email, int reg_user, int connid)
 {
-    int fd = -1, authresult;
+    int fd = -1, authresult, copylen;
     char ipv6_error[120], ipv4_error[120], errmsg[256];
     json_t *jmsg;
     
@@ -323,7 +323,11 @@ static int do_connect(const char *host, int port, const char *user, const char *
     /* try to connect to a local unix socket */
     struct sockaddr_un sun;
     sun.sun_family = AF_UNIX;
-    memcpy(sun.sun_path, host, sizeof(sun.sun_path) - 1);
+    
+    copylen = strlen(host) + 1;
+    if (copylen > sizeof(sun.sun_path) - 1)
+	copylen = sizeof(sun.sun_path) - 1;
+    memcpy(sun.sun_path, host, copylen);
     sun.sun_path[sizeof(sun.sun_path) - 1] = '\0';
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd >= 0) {
