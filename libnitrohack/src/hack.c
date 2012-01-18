@@ -810,7 +810,7 @@ void domove(schar dx, schar dy, schar dz)
 	
 	if (dz) {
 	    nomul(0, NULL);
-	    if (dz > 0)
+	    if (dz < 0)
 		doup();
 	    else
 		dodown();
