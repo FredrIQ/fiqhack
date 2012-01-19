@@ -824,7 +824,7 @@ void domove(schar dx, schar dy, schar dz)
 		findtravelpath(TRUE, &dx, &dy);
 	    iflags.travel1 = 0;
 	}
-
+	
 	if (((wtcap = near_capacity()) >= OVERLOADED
 	    || (wtcap > SLT_ENCUMBER &&
 		(Upolyd ? (u.mh < 5 && u.mh != u.mhmax)

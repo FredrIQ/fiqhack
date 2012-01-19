@@ -1533,7 +1533,14 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 		
 		case CMD_ARG_DIR:
 		    func_dir = cmdlist[command].func;
-		    if (argtype == CMD_ARG_DIR) {
+		    if (!firsttime) {
+			/* for multi-move commands such as dogo ('g') and
+			 * dogo2 ('G'), the last-used direction is kept in u.dx
+			 * and u.dy. lookaround() may change these values! */
+			dx = u.dx;
+			dy = u.dy;
+		    }
+		    else if (argtype == CMD_ARG_DIR) {
 			if (!dir_to_delta(arg->d, &dx, &dy, &dz))
 			    return COMMAND_BAD_ARG;
 			if (dx && dy && u.umonnum == PM_GRID_BUG)
@@ -1544,6 +1551,10 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 			dx = -2; dy = -2; dz = -2;
 		    }
 		    flags.move = TRUE;
+		    if (firsttime) {
+			u.dx = dx;
+			u.dy = dy;
+		    }
 		    res = func_dir(dx, dy, dz);
 		    break;
 		
