@@ -95,7 +95,7 @@ void draw_sidebar(void)
 	draw_objlist(invwin, inv_icount, inventory, NULL, PICK_NONE);
     }
     
-    wrefresh(sidebar);
+    wnoutrefresh(sidebar);
 }
 
 

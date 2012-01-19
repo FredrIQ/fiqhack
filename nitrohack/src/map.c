@@ -53,7 +53,7 @@ void draw_map(int frame, int cx, int cy)
     } else
 	curs_set(0);
 
-    wrefresh(mapwin);
+    wnoutrefresh(mapwin);
 }
 
 

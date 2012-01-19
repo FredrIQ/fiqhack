@@ -179,7 +179,7 @@ void curses_update_status(struct nh_player_info *pi)
     else
 	classic_status(&player);
     
-    wrefresh(statuswin);
+    wnoutrefresh(statuswin);
 }
 
 void curses_update_status_silent(struct nh_player_info *pi)

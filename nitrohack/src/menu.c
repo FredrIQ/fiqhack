@@ -536,7 +536,7 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 	if (settings.invweight && items[i].weight != -1 && width > pos + 3)
 	    wprintw(win, " {%d}", items[i].weight);
     }
-    wrefresh(win);
+    wnoutrefresh(win);
 }
 
 

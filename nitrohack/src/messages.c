@@ -133,7 +133,7 @@ void draw_msgwin(void)
 	wmove(msgwin, i, 0);
 	waddstr(msgwin, msglines[pos]);
     }
-    wrefresh(msgwin);
+    wnoutrefresh(msgwin);
 }
 
 

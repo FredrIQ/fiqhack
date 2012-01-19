@@ -63,6 +63,7 @@ void init_curses_ui(void)
     raw();
     nonl();
     meta(basewin, TRUE);
+    leaveok(basewin, TRUE);
     orig_cursor = curs_set(1);
     keypad(basewin, TRUE);
     set_escdelay(20);
@@ -209,6 +210,11 @@ void create_game_windows(void)
     
     keypad(mapwin, TRUE);
     keypad(msgwin, TRUE);
+    leaveok(mapwin, FALSE);
+    leaveok(msgwin, FALSE);
+    leaveok(statuswin, TRUE);
+    if (sidebar)
+	leaveok(sidebar, TRUE);
     
     ui_flags.ingame = TRUE;
     redraw_game_windows();
@@ -256,7 +262,12 @@ static void resize_game_windows(void)
 	    sidebar = derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
+    leaveok(statuswin, TRUE);
+    if (sidebar)
+	leaveok(sidebar, TRUE);
+    
     redraw_game_windows();
+    doupdate();
 }
 
 
@@ -310,8 +321,6 @@ void redraw_game_windows(void)
 	redrawwin(gw->win);
 	wnoutrefresh(gw->win);
     }
-    
-    doupdate();
 }
 
 
