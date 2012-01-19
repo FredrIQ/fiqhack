@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/time.h>
 
 #if defined(NETCLIENT)
 # define allow_timetest() (!nhnet_active())
@@ -56,6 +55,7 @@ static long clock_delta_ms(hp_time *t_start, hp_time *t_end)
 }
 
 #elif defined(UNIX)
+#include <sys/time.h>
 #define TIMETEST_OK
 
 typedef struct timeval hp_time;

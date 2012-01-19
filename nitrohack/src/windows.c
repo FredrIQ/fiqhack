@@ -408,8 +408,8 @@ int nh_wgetch(WINDOW *win)
 #if defined(PDCURSES)
     /* PDCurses provides exciting new names for the enter key.
      * Translate these here, instead of checking for them all over the place. */
-    if (key == PADENTER || key == '\r')
-	key = '\n';
+    if (key == PADENTER)
+	key = '\r';
 #endif
     
     return key;

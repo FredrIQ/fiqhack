@@ -1539,6 +1539,7 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 			 * and u.dy. lookaround() may change these values! */
 			dx = u.dx;
 			dy = u.dy;
+			dz = 0;
 		    }
 		    else if (argtype == CMD_ARG_DIR) {
 			if (!dir_to_delta(arg->d, &dx, &dy, &dz))
