@@ -11,8 +11,8 @@ struct coord {
 };
 
 static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
-static const int xdir[8] = { -1,-1, 0, 1, 1, 1, 0,-1 };
-static const int ydir[8] = {  0,-1,-1,-1, 0, 1, 1, 1 };
+static const int xdir[DIR_SELF+1] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0 };
+static const int ydir[DIR_SELF+1] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
 
 
 void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
