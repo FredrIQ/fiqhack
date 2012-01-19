@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <time.h>
+#include <sys/time.h>
 
 #if defined(NETCLIENT)
 # define allow_timetest() (!nhnet_active())
@@ -55,20 +55,20 @@ static long clock_delta_ms(hp_time *t_start, hp_time *t_end)
     return (*t_end - *t_start) * 1000 / freq;
 }
 
-#elif defined(UNIX) && defined(_POSIX_MONOTONIC_CLOCK)
+#elif defined(UNIX)
 #define TIMETEST_OK
 
-typedef struct timespec hp_time;
+typedef struct timeval hp_time;
 
 static void gettime(hp_time *t)
 {
-    clock_gettime(CLOCK_MONOTONIC, t);
+    gettimeofday(t, NULL);
 }
 
 static long clock_delta_ms(hp_time *t_start, hp_time *t_end)
 {
     return (t_end->tv_sec - t_start->tv_sec) * 1000 +
-           (t_end->tv_nsec - t_start->tv_nsec) / 1000000;
+           (t_end->tv_usec - t_start->tv_usec) / 1000;
 }
 
 #endif
@@ -98,12 +98,12 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
 	    wclrtoeol(basewin);
 	} /* else: make do without replay info */
     }
-    wrefresh(basewin);
+    wnoutrefresh(basewin);
     /* refresh on basewin erases the windows on top of it ... */
     touchwin(msgwin);
-    wrefresh(msgwin);
+    wnoutrefresh(msgwin);
     touchwin(mapwin);
-    wrefresh(mapwin);
+    wnoutrefresh(mapwin);
 }
 
 
@@ -124,7 +124,9 @@ static void timetest(int fd, struct nh_replay_info *rinfo)
 	nh_view_replay_step(rinfo, REPLAY_FORWARD, 1);
 	curses_update_status(NULL);
 	draw_replay_info(rinfo);
+	doupdate();
     }
+    draw_msgwin();
     gettime(&t_end);
     ms = clock_delta_ms(&t_start, &t_end);
     snprintf(buf, BUFSZ, "%d actions replayed with display in %ld ms. (%ld actions/sec)",
@@ -151,7 +153,9 @@ static void timetest(int fd, struct nh_replay_info *rinfo)
     while (rinfo->actions > 0 && revpos < rinfo->actions + 1000) {
 	nh_view_replay_step(rinfo, REPLAY_BACKWARD, 1);
 	curses_update_status(NULL);
+	draw_msgwin();
 	draw_replay_info(rinfo);
+	doupdate();
     }
     gettime(&t_end);
     ms = clock_delta_ms(&t_start, &t_end);
