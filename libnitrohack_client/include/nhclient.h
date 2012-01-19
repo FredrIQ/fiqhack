@@ -22,7 +22,6 @@
 #include <Ws2def.h>
 #include <Ws2tcpip.h>
 
-# define MSG_NOSIGNAL 0 /* windows doesn't have this flag as it doesn't have signals */
 # define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 # define close closesocket
 #endif

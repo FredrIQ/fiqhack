@@ -77,7 +77,7 @@ static int send_json_msg(json_t *jmsg)
     msglen = strlen(msgstr);
     datalen = 0;
     do {
-	ret = send(sockfd, &msgstr[datalen], msglen - datalen, MSG_NOSIGNAL);
+	ret = send(sockfd, &msgstr[datalen], msglen - datalen, 0);
 	if (ret == -1 && errno == EINTR)
 	    continue;
 	else if (ret == -1) {
