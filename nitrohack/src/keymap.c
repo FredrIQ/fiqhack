@@ -236,12 +236,11 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	if (key == '\033') /* filter out ESC */
 	    continue;
 	
+	new_action(); /* use a new message line for this action */
 	*count = multi;
 	cmd = keymap[key];
 	
 	if (cmd != NULL) {
-	    new_action(); /* use a new message line for this action */
-	    
 	    /* handle internal commands. The command handler may alter
 		* cmd, arg and count (redo does this) */
 	    if (cmd->flags & CMD_UI) {
@@ -267,7 +266,8 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	}
 	
 	if (!cmd) {
-	    curses_msgwin("Bad command.");
+	    sprintf(line, "Bad command: '%s'.", curses_keyname(key));
+	    curses_print_message(player.moves, line);
 	}
     } while (!cmd);
     
