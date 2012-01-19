@@ -124,10 +124,14 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 	
 	if (dx || dy) {
 	    /* truncate at map edge */
-	    if (cx + dx < 1 || cx + dx > COLNO-1)
-		dx = 0;
-	    if (cy + dy < 0 || cy + dy > ROWNO-1)
-		dy = 0;
+	    if (cx + dx < 1)
+		dx = 1 - cx;
+	    if (cx + dx > COLNO-1)
+		dx = COLNO - 1 - cx;
+	    if (cy + dy < 0)
+		dy = -cy;
+	    if (cy + dy > ROWNO-1)
+		dy = ROWNO - 1 - cy;
 	    cx += dx;
 	    cy += dy;
 	    goto nxtc;
