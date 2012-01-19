@@ -614,6 +614,7 @@ static void init_keymap(void)
     keymap[KEY_PPAGE] = find_command("north_east");
     keymap[KEY_END]   = find_command("south_west");
     keymap[KEY_NPAGE] = find_command("south_east");
+    keymap['\r'] = find_command("(nothing)");
     
     /* every command automatically gets its default key */
     for (i = 0; i < cmdcount; i++)

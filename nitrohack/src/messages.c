@@ -161,7 +161,7 @@ static void more(void)
     
     do {
 	key = nh_wgetch(msgwin);
-    } while (key != '\n' && key != ' ' && key != KEY_ESC);
+    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESC);
     
     if (getmaxy(msgwin) == 1)
 	newline();

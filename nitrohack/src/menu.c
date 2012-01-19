@@ -339,7 +339,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 		
 	    /* confirm */
 	    case KEY_ENTER:
-	    case '\n':
+	    case '\r':
 		done = TRUE;
 		break;
 		
@@ -745,7 +745,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 		
 	    /* confirm */
 	    case KEY_ENTER:
-	    case '\n':
+	    case '\r':
 		done = TRUE;
 		break;
 		

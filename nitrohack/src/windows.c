@@ -61,6 +61,7 @@ void init_curses_ui(void)
     
     noecho();
     raw();
+    nonl();
     meta(basewin, TRUE);
     orig_cursor = curs_set(1);
     keypad(basewin, TRUE);
