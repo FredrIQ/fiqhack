@@ -88,7 +88,6 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
 	wattron(basewin, COLOR_PAIR(4) | A_BOLD);
 	mvwaddstr(basewin, 2 + ui_flags.msgheight + ROWNO, 2, buf);
 	wattroff(basewin, COLOR_PAIR(4) | A_BOLD);
-	wrefresh(basewin);
     } else {
 	/* try to draw under the status */
 	int h = ui_flags.msgheight + ROWNO + (ui_flags.status3 ? 3 : 2);
@@ -99,6 +98,7 @@ static void draw_replay_info(struct nh_replay_info *rinfo)
 	    wclrtoeol(basewin);
 	} /* else: make do without replay info */
     }
+    wrefresh(basewin);
     /* refresh on basewin erases the windows on top of it ... */
     touchwin(msgwin);
     wrefresh(msgwin);
