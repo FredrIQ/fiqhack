@@ -607,6 +607,12 @@ static void init_keymap(void)
     keymap[KEY_DOWN] = find_command("south");
     keymap[KEY_LEFT] = find_command("west");
     keymap[KEY_RIGHT] = find_command("east");
+#if defined(PDCURSES)
+    keymap[KEY_A2] = find_command("north");
+    keymap[KEY_C2] = find_command("south");
+    keymap[KEY_B1] = find_command("west");
+    keymap[KEY_B3] = find_command("east");
+#endif
     keymap[KEY_A1] = find_command("north_west");
     keymap[KEY_A3] = find_command("north_east");
     keymap[KEY_C1] = find_command("south_west");
