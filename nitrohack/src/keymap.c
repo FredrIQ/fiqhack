@@ -240,6 +240,8 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	cmd = keymap[key];
 	
 	if (cmd != NULL) {
+	    new_action(); /* use a new message line for this action */
+	    
 	    /* handle internal commands. The command handler may alter
 		* cmd, arg and count (redo does this) */
 	    if (cmd->flags & CMD_UI) {

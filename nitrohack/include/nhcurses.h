@@ -322,6 +322,7 @@ extern void draw_msgwin(void);
 extern void pause_messages(void);
 extern void doprev_message(void);
 extern void cleanup_messages(void);
+extern void new_action(void);
 
 /* options.c */
 extern void display_options(nh_bool change_birth_opt);

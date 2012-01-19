@@ -18,7 +18,7 @@ static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
 static nh_bool stopprint;
-static int prevturn;
+static int prevturn, action, prevaction;
 
 static void newline(void);
 
@@ -172,6 +172,13 @@ static void more(void)
 }
 
 
+/* called from get_command */
+void new_action(void)
+{
+    action++;
+}
+
+
 static void curses_print_message_core(int turn, const char *inmsg, nh_bool canblock)
 {
     char msg[COLNO+1];
@@ -191,12 +198,13 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
     if (!*msg)
 	return; /* empty message. done. */
     
-    if (turn > prevturn) {
+    if (turn > prevturn || action > prevaction) {
 	/* re-enable output if it was stopped and start a new line */
 	stopprint = FALSE;
 	newline();
     }
     prevturn = turn;
+    prevaction = action;
 
     store_message(turn, inmsg);
     
