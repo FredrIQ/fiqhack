@@ -1666,7 +1666,7 @@ static int dotravel(int x, int y)
 		cc.y = u.uy;
 	    }
 	    pline("Where do you want to travel to?");
-	    if (getpos(&cc, TRUE, "the desired destination") < 0) {
+	    if (getpos(&cc, FALSE, "the desired destination") < 0) {
 		    /* user pressed ESC */
 		    return 0;
 	    }
