@@ -714,8 +714,9 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 		add_menu_item(items, size, icount, i, buf, 0, FALSE);
 	    }
 	}
-	
-	add_menu_item(items, size, icount, -1, "Add a new key", 0, FALSE);
+	if (icount > 0)
+	    add_menu_txt(items, size, icount, "", MI_NORMAL);
+	add_menu_item(items, size, icount, -1, "Add a new key", '+', FALSE);
 	if (!(cmd->flags & CMD_UI)) {
 	    if (cmd->flags & CMD_EXT)
 		add_menu_item(items, size, icount, -2,
@@ -737,10 +738,8 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	else if (selection[0] == -1) { /* add a key */
 	    sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
 	    i = curses_msgwin(buf);
-	    if (i == KEY_ESC) {
-		curses_msgwin("Sorry, ESC cannot be bound to any function.");
+	    if (i == KEY_ESC)
 		continue;
-	    }
 	    if (keymap[i]) {
 		sprintf(buf, "That key is already in use by \"%s\"! Replace?", keymap[i]->name);
 		if ('y' != curses_yn_function(buf, "yn", 'n'))
