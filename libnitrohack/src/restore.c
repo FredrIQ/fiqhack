@@ -663,6 +663,8 @@ static struct trap *restore_traps(struct memfile *mf)
 	    trap->tseen	= (tflags >> 10) & 1;
 	    trap->once	= (tflags >> 9) & 1;
 	    trap->madeby_u = (tflags >> 8) & 1;
+	    
+	    trap->vl.v_launch_otyp = mread16(mf);
 
 	    trap->ntrap = first;
 	    first = trap;
