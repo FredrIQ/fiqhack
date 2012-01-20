@@ -125,7 +125,7 @@ void mfmagic_check(struct memfile *mf, int32_t magic)
 	mfalign(mf, 4);
 	m2 = mread32(mf);
 	if (magic != m2)
-	    panic("damaged save!");
+	    terminate();
 }
 
 
