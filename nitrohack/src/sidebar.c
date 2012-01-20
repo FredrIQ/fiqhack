@@ -47,6 +47,16 @@ nh_bool curses_list_items_nonblocking(struct nh_objitem *items, int icount, nh_b
 }
 
 
+static int count_omitted_items(struct nh_objitem *inv, int inv_icount, int pos)
+{
+    int omitted = 0;
+    for (; pos < inv_icount; pos++)
+	if (inv[pos].role == MI_NORMAL)
+	    omitted++;
+    return omitted;
+}
+
+
 void draw_sidebar(void)
 {
     int flheight = 0, invheight = 0, invwh;
@@ -81,7 +91,7 @@ void draw_sidebar(void)
 	if (invwh < inv_icount) {
 	    invwh--;
 	    mvwprintw(sidebar, invheight - 1, 0, "(%d more omitted)",
-		      inv_icount - invwh);
+		      count_omitted_items(inventory, inv_icount, invwh));
 	}
 	invwin = derwin(sidebar, invwh, sbwidth, 1, 0);
 	draw_objlist(invwin, inv_icount, inventory, NULL, PICK_NONE);
