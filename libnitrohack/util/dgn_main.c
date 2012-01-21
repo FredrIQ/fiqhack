@@ -29,7 +29,7 @@ void init_yyout(FILE *);
 
 int main(int argc, char **argv)
 {
-	char	infile[1024], outfile[1024], basename[64];
+	char	infile[1024], outfile[1024], basename[1024];
 	FILE	*fin, *fout;
 	int	i, len;
 	boolean errors_encountered = FALSE;
