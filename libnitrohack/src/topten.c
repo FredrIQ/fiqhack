@@ -169,7 +169,8 @@ static void fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->ver_major = VERSION_MAJOR;
     newtt->ver_minor = VERSION_MINOR;
     newtt->patchlevel = PATCHLEVEL;
-    newtt->points = u.urexp;
+    newtt->points = u.urexp > -1 ? /* u.urexp stores score once invent is invalid */
+      u.urexp : calc_score(how, FALSE, money_cnt(invent) + hidden_gold());
     newtt->deathdnum = u.uz.dnum;
     newtt->deathlev = depth(&u.uz);
     newtt->maxlvl = deepest_lev_reached(TRUE);

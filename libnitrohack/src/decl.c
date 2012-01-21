@@ -51,7 +51,7 @@ const char ynchars[] = "yn";
 const char ynqchars[] = "ynq";
 const char ynaqchars[] = "ynaq";
 
-const char disclosure_options[] = "iavgc";
+const char disclosure_options[] = "iavgcs";
 
 #if defined(WIN32)
 char hackdir[PATHLEN];		/* where rumors, help, record are */

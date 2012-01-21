@@ -481,7 +481,7 @@ static struct trobj *copy_trobj_list(const struct trobj *list)
 
 static void knows_object(int obj)
 {
-	discover_object(obj,TRUE,FALSE);
+	discover_object(obj,TRUE,FALSE,FALSE);
 	objects[obj].oc_pre_discovered = 1;	/* not a "discovery" */
 }
 
@@ -531,6 +531,8 @@ void u_init(void)
 	u.uspellprot = 0;
 	adjabil(0,1);
 	u.ulevel = u.ulevelmax = 1;
+
+        u.urexp = -1; /* indicates that score is calculated not remembered */
 
 	init_uhunger();
 	for (i = 0; i <= MAXSPELL; i++) spl_book[i].sp_id = NO_SPELL;
@@ -940,9 +942,9 @@ static void ini_inv(const struct trobj *trop, short nocreate[4])
 
 		/* Make the type known if necessary */
 		if (OBJ_DESCR(objects[otyp]) && obj->known)
-			discover_object(otyp, TRUE, FALSE);
+			discover_object(otyp, TRUE, FALSE, FALSE);
 		if (otyp == OIL_LAMP)
-			discover_object(POT_OIL, TRUE, FALSE);
+			discover_object(POT_OIL, TRUE, FALSE, FALSE);
 
 		if (obj->oclass == ARMOR_CLASS){
 			if (is_shield(obj) && !uarms) {

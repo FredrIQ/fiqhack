@@ -23,6 +23,8 @@ struct objclass {
 	unsigned oc_unique:1;	/* special one-of-a-kind object */
 	unsigned oc_nowish:1;	/* cannot wish for this object */
 
+        unsigned oc_disclose_id:1; /* was identified by DYWYPI */
+
 	unsigned oc_big:1;
 #define oc_bimanual	oc_big	/* for weapons & tools used as weapons */
 #define oc_bulky	oc_big	/* for armor */

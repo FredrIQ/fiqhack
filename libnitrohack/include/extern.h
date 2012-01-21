@@ -449,6 +449,7 @@ extern void done_in_by(struct monst *);
 extern void done(int);
 extern int num_genocides(void);
 extern void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
+extern long calc_score(int, boolean, long);
 
 /* ### engrave.c ### */
 
@@ -1073,9 +1074,10 @@ extern void oinit(void);
 extern void freenames(void);
 extern void savenames(struct memfile *mf);
 extern void restnames(struct memfile *mf);
-extern void discover_object(int,boolean,boolean);
+extern void discover_object(int,boolean,boolean,boolean);
 extern void undiscover_object(int);
 extern int dodiscovered(void);
+extern void count_discovered_objects(int *, int *);
 
 /* ### objnam.c ### */
 

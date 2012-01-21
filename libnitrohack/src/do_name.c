@@ -330,7 +330,7 @@ void docall(struct obj *obj)
 	    }
 	} else {
 	    *str1 = strcpy(malloc((unsigned)strlen(buf)+1), buf);
-	    discover_object(obj->otyp, FALSE, TRUE); /* possibly add to disco[] */
+	    discover_object(obj->otyp, FALSE, TRUE, FALSE); /* possibly add to disco[] */
 	}
 }
 

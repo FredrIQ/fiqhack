@@ -42,7 +42,7 @@ endif ()
 
 link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
 add_executable (nitrohack_server ${NH_SERVER_SRC} )
-target_link_libraries(nitrohack_server nitrohack ${JANSSON_LIB} ${PQ_LIB})
+target_link_libraries(nitrohack_server nitrohack ${JANSSON_LIB} ${PQ_LIB} m)
 
 add_dependencies (nitrohack_server libnitrohack)
 

@@ -62,7 +62,7 @@ link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
 link_directories (${NitroHack_BINARY_DIR}/libnitrohack_client)
 add_executable (nitrohack_curses ${NH_CURSES_SRC} )
 set_target_properties(nitrohack_curses PROPERTIES OUTPUT_NAME nitrohack )
-target_link_libraries(nitrohack_curses nitrohack)
+target_link_libraries(nitrohack_curses nitrohack m)
 
 if (USE_PDCURSES)
     target_link_libraries (nitrohack_curses ${PDCURSES_LIBNAME})

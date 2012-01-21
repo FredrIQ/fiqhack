@@ -1,6 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NitroHack may be freely redistributed.  See license for details. */
 
+#include <math.h>
 #include "hack.h"
 #include "eshk.h"
 #include "dlb.h"
@@ -22,14 +23,13 @@ static const struct val_list { struct valuable_data *list; int size; } valuables
 	{ 0, 0 }
 };
 
-static void disclose(int,boolean);
+static void disclose(int,boolean,long);
 static void dump_disclose(int);
 static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *,int);
-static void artifact_score(struct obj *,boolean,struct menulist *);
+static int artifact_score(struct obj *,boolean,struct menulist *);
 static void savelife(int);
 static boolean check_survival(int how, char *kilbuf);
-static long calc_score(int how);
 static void list_vanquished(char,boolean);
 static void list_genocided(char,boolean);
 static boolean should_query_disclose_options(char *defquery);
@@ -195,7 +195,7 @@ static boolean should_query_disclose_options(char *defquery)
 }
 
 
-static void disclose(int how, boolean taken)
+static void disclose(int how, boolean taken, long umoney)
 {
 	char	c = 0, defquery;
 	char	qbuf[QBUFSZ];
@@ -214,7 +214,7 @@ static void disclose(int how, boolean taken)
 			struct obj *obj;
 
 			for (obj = invent; obj; obj = obj->nobj) {
-			    makeknown(obj->otyp);
+                            discover_object(obj->otyp, TRUE, FALSE, TRUE);
 			    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
 			}
 			display_inventory(NULL, TRUE);
@@ -245,8 +245,15 @@ static void disclose(int how, boolean taken)
 		show_conduct(how >= PANICKED ? 1 : 2);
 	    if (c == 'q') done_stopprint++;
 	}
-}
 
+        if (!done_stopprint) {
+	    c = ask ? yn_function("Do you want to see a breakdown of your score?",
+				  ynqchars, defquery) : defquery;
+	    if (c == 'y')
+		calc_score(how, TRUE, umoney);
+	    if (c == 'q') done_stopprint++;
+        }
+}
 
 /* like disclose, but don't ask any questions */
 static void dump_disclose(int how)
@@ -259,7 +266,7 @@ static void dump_disclose(int how)
 	/* re-"display" all the disclosure menus */
 	/* make sure the inventory is fully identified, even if DYWYPI = n */
 	for (obj = invent; obj; obj = obj->nobj) {
-	    makeknown(obj->otyp);
+            discover_object(obj->otyp, TRUE, FALSE, TRUE);
 	    obj->known = obj->bknown = obj->dknown = obj->rknown = 1;
 	}
 	display_inventory(NULL, TRUE);
@@ -272,6 +279,7 @@ static void dump_disclose(int how)
 	show_conduct(how >= PANICKED ? 1 : 2);
 	dooverview();
 	dohistory();
+        calc_score(how, TRUE, money_cnt(invent) + hidden_gold());
 	
 	/* make menus work normally again */
 	dump_catch_menus(FALSE);
@@ -359,14 +367,15 @@ static void sort_valuables(struct valuable_data list[],
 }
 
 /* called twice; first to calculate total, then to list relevant items */
-static void artifact_score(struct obj *list,
-			   boolean counting, /* true => add up points; false => display them */
-			   struct menulist *menu)
+static int artifact_score(struct obj *list,
+                          boolean counting, /* true => add up points; false => display them */
+                          struct menulist *menu)
 {
     char pbuf[BUFSZ];
     struct obj *otmp;
-    long value, points;
+    long value, total;
     short dummy;	/* object type returned by artifact_name() */
+    total = 0;
 
     for (otmp = list; otmp; otmp = otmp->nobj) {
 	if (otmp->oartifact ||
@@ -374,26 +383,170 @@ static void artifact_score(struct obj *list,
 			otmp->otyp == SPE_BOOK_OF_THE_DEAD ||
 			otmp->otyp == CANDELABRUM_OF_INVOCATION) {
 	    value = arti_cost(otmp);	/* zorkmid value */
-	    points = value * 5 / 2;	/* score value */
 	    if (counting) {
-		u.urexp += points;
+                total += value;
 	    } else {
 		makeknown(otmp->otyp);
 		otmp->known = otmp->dknown = otmp->bknown = otmp->rknown = 1;
 		/* assumes artifacts don't have quan > 1 */
-		sprintf(pbuf, "%s%s (worth %ld %s and %ld points)",
+		sprintf(pbuf, "%s%s (worth %ld %s)",
 			the_unique_obj(otmp) ? "The " : "",
 			otmp->oartifact ? artifact_name(xname(otmp), &dummy) :
 				OBJ_NAME(objects[otmp->otyp]),
-			value, currency(value), points);
+			value, currency(value));
 		add_menutext(menu, pbuf);
 	    }
 	}
 	if (Has_contents(otmp))
 	    artifact_score(otmp->cobj, counting, menu);
     }
+    return total;
 }
 
+/* Calculate the player's score, and return it (show = FALSE), or
+   show it to the user (show = TRUE). */
+long calc_score(int how, boolean show, long umoney)
+{
+  /* The principle here is that each category is worth up to 30000 points;
+     most categories are calculated via base-2 logarithm, to give massive
+     diminishing returns to farming in any particular category; categories
+     which have an intrinsic maximum anyway (such as the percentages)
+     instead are based on the square root of the percentage progress made. */
+  long total = 0;
+  long category_raw;
+  double category_ratio;
+  long category_points;
+  double elog2;
+  struct menulist menu;
+  char buf[BUFSZ];
+
+  elog2 = log(2) / 1000.0;
+  /* Initialise the explanation window, if show is true. */
+  if (show) {
+    init_menulist(&menu);
+  }
+  /* Gold. x gold scores log2(x+1)*1000 points (maxing at 30000 for MAXINT
+     gold; just in case gold can be 64-bit, we cap it at the 32-bit MAXINT
+     first). This counts profit from starting inventory, rather than the
+     amount, to avoid giving bonuses to early-game Healers. */
+  category_raw = umoney;
+  category_raw -= u.umoney0;
+  if (category_raw < 0) category_raw = 0;
+  category_points = log(category_raw+1) / elog2 + 0.5;
+  if (category_points > 30000) category_points = 30000;
+  total += category_points;
+  if (show) {
+    sprintf(buf, "Gold:            %10ld                    (%5ld points)",
+            category_raw, category_points);
+    add_menutext(&menu, buf);
+  }
+  /* Exploration. This is based on the ratio of the Sanctum depth to the
+     deepest level reached, and is based on the square root of the ratio. */
+  category_raw = deepest_lev_reached(FALSE);
+  category_ratio = category_raw * 100.0 / depth(&sanctum_level);
+  category_points = sqrt((category_raw - 1) /
+                         (double)(depth(&sanctum_level) - 1)) * 30000.0 + 0.5;
+  total += category_points;
+  if (show) {
+    sprintf(buf, "Exploration:     %10ld level%s   (%6.2f%%) (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s",
+            category_ratio, category_points);
+    add_menutext(&menu, buf);
+  }
+  /* Discoveries. Based on the ratio of the number of items discovered,
+     to the maximum possible number of items discovered. */
+  {
+    int curd, maxd;
+    count_discovered_objects(&curd, &maxd);
+    category_raw = curd;
+    category_ratio = curd * 100.0 / maxd;
+    category_points = sqrt(category_ratio) * 3000.0 + 0.5;
+  }
+  total += category_points;
+  if (show) {
+    sprintf(buf, "Discoveries:     %10ld item%s    (%6.2f%%) (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s",
+            category_ratio, category_points);
+    add_menutext(&menu, buf);
+  }
+  /* Valuables. Scored the same way as gold, based on their gp values.
+     Scores only on ascension or escape. */
+  category_raw = 0;
+  if (how == ESCAPED || how == ASCENDED)
+  {
+    const struct val_list *val;
+    int i;
+    for (val = valuables; val->list; val++)
+      for (i = 0; i < val->size; i++) {
+        val->list[i].count = 0L;
+      }
+    get_valuables(invent);
+    for (val = valuables; val->list; val++)
+      for (i = 0; i < val->size; i++)
+        if (val->list[i].count != 0L)
+          category_raw += val->list[i].count
+            * (long)objects[val->list[i].typ].oc_cost;
+    category_points = log(category_raw+1) / elog2 + 0.5;
+    total += category_points;
+    if (show) {
+      sprintf(buf, "Valuables value: %10ld                    (%5ld points)",
+              category_raw, category_points);
+      add_menutext(&menu, buf);
+    }
+  } else if (show) {
+    add_menutext(&menu, "Valuables value: (no points given unless you survive)");
+  }
+  /* Artifacts. Scores double what the same value in gold would score. */
+  category_raw = artifact_score(invent, TRUE, 0);
+  category_points = log(category_raw+1) / elog2 * 2.0 + 0.5;
+  total += category_points;
+  if (show) {
+    sprintf(buf, "Artifact value:  %10ld                    (%5ld points)",
+            category_raw, category_points);
+    add_menutext(&menu, buf);
+  }
+  /* Variety of monsters vanquished. (All that matters is whether or not a
+     monster was killed, so people can't farm this score up indefinitely; and
+     this counts vanquished not killed so that pacifists aren't penalised for
+     their conduct.) */
+  {
+    int i;
+    category_raw = 0;
+    for (i = LOW_PM; i < NUMMONS; i++) {
+      if (mvitals[i].died) category_raw++;
+    }
+  }
+  category_ratio = category_raw * 100.0 / (NUMMONS - LOW_PM);
+  category_points = sqrt(category_ratio) * 3000.0 + 0.5;
+  total += category_points;
+  if (show) {
+    sprintf(buf, "Variety of kills:%10ld monster%s (%6.2f%%) (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s",
+            category_ratio, category_points);
+    add_menutext(&menu, buf);
+  }
+  /* Survival. A multiplier. */
+  if (how == ASCENDED) category_raw = 200;
+  else if (how == ESCAPED) category_raw = 100;
+  else category_raw = 90;
+  total *= category_raw; total /= 100;
+  if (show) {
+    sprintf(buf, "Survival:        %10s  (score multiplied by %3ld%%)",
+            category_raw == 90 ? "died" :
+            category_raw == 200 ? "ascended" : "survived",
+            category_raw);
+    add_menutext(&menu, buf);
+    add_menutext(&menu, "");
+    sprintf(buf, "Total score:                               %10ld",total);
+    add_menutext(&menu, buf);
+  }
+  /* Finishing off. */
+  if (show) {
+    display_menu(menu.items, menu.icount, "Score breakdown:", PICK_NONE, NULL);
+    free(menu.items);
+  }
+  return total;
+}
 
 static boolean check_survival(int how, char *kilbuf)
 {
@@ -461,32 +614,6 @@ static boolean check_survival(int how, char *kilbuf)
 	return FALSE;
 }
 
-
-static long calc_score(int how)
-{
-	long umoney;
-	long tmp;
-	int deepest = deepest_lev_reached(FALSE);
-
-	umoney = money_cnt(invent);
-	tmp = u.umoney0;
-	umoney += hidden_gold();	/* accumulate gold from containers */
-	tmp = umoney - tmp;		/* net gain */
-
-	if (tmp < 0L)
-	    tmp = 0L;
-	if (how < PANICKED)
-	    tmp -= tmp / 10L;
-	u.urexp += tmp;
-	u.urexp += 50L * (long)(deepest - 1);
-	if (deepest > 20)
-	    u.urexp += 1000L * (long)((deepest > 30) ? 10 : deepest - 20);
-	if (how == ASCENDED) u.urexp *= 2L; 
-	
-	return umoney;
-}
-
-
 void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 {
 	char outrip_buf[BUFSZ];
@@ -550,22 +677,6 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	    const struct val_list *val;
 	    int i;
 
-	    for (val = valuables; val->list; val++)
-		for (i = 0; i < val->size; i++) {
-		    val->list[i].count = 0L;
-		}
-	    get_valuables(invent);
-
-	    /* add points for collected valuables */
-	    for (val = valuables; val->list; val++)
-		for (i = 0; i < val->size; i++)
-		    if (val->list[i].count != 0L)
-			u.urexp += val->list[i].count
-				  * (long)objects[val->list[i].typ].oc_cost;
-
-	    /* count the points for artifacts */
-	    artifact_score(invent, TRUE, &menu);
-
 	    keepdogs(TRUE);
 	    viz_array[0][0] |= IN_SIGHT; /* need visibility for naming */
 	    mtmp = mydogs;
@@ -574,8 +685,6 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 		while (mtmp) {
 		    if (!done_stopprint)
 			sprintf(eos(pbuf), " and %s", mon_nam(mtmp));
-		    if (mtmp->mtame)
-			u.urexp += mtmp->mhp;
 		    mtmp = mtmp->nmon;
 		}
 		if (!done_stopprint) add_menutext(&menu, pbuf);
@@ -763,16 +872,17 @@ void done(int how)
 	win_pause_output(P_MESSAGE);
 
 	if (flags.end_disclose != DISCLOSE_NO_WITHOUT_PROMPT)
-	    disclose(how, taken);
+            disclose(how, taken, money_cnt(invent) + hidden_gold());
+
+	/* calculate score, before creating bones [container gold] */
+        umoney = money_cnt(invent) + hidden_gold();
+	u.urexp = calc_score(how, FALSE, umoney);
     
 	begin_dump(how);
 	dump_disclose(how);
 	
 	/* finish_paybill should be called after disclosure but before bones */
 	if (bones_ok && taken) finish_paybill();
-
-	/* calculate score, before creating bones [container gold] */
-	umoney = calc_score(how);
 
 	if (bones_ok) {
 	    if (!wizard || yn("Save bones?") == 'y')

@@ -101,13 +101,8 @@ void max_rank_sz(void)
 
 static long botl_score(void)
 {
-    int deepest = deepest_lev_reached(FALSE);
     long umoney = money_cnt(invent) + hidden_gold();
-
-    if ((umoney -= u.umoney0) < 0L) umoney = 0L;
-    return umoney + u.urexp + (long)(50 * (deepest - 1))
-			  + (long)(deepest > 30 ? 10000 :
-				   deepest > 20 ? 1000*(deepest - 20) : 0);
+    return calc_score(DIED, FALSE, umoney);
 }
 
 

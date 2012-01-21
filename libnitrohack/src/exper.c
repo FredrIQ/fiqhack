@@ -83,9 +83,8 @@ int experience(struct monst *mtmp, int nk)
 void more_experienced(int exp, int rexp)
 {
 	u.uexp += exp;
-	u.urexp += 4*exp + rexp;
 	iflags.botl = 1;
-	if (u.urexp >= (Role_if (PM_WIZARD) ? 1000 : 2000))
+	if (u.uexp >= (Role_if (PM_WIZARD) ? 250 : 500))
 		flags.beginner = 0;
 }
 
