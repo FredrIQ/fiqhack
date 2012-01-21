@@ -9,7 +9,6 @@
 
 static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
-static void srv_display_buffer(const char *buf, nh_bool trymove);
 static void srv_update_status(struct nh_player_info *pi);
 static void srv_print_message(int turn, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
@@ -171,10 +170,10 @@ static void srv_pause(enum nh_pause_reason r)
 }
 
 
-static void srv_display_buffer(const char *buf, nh_bool trymove)
+void srv_display_buffer(const char *buf, nh_bool trymove)
 {
     json_t *jobj = json_pack("{ss,si}", "buf", buf, "trymove", trymove);
-    add_display_data("pause", jobj);
+    add_display_data("display_buffer", jobj);
 }
 
 

@@ -13,15 +13,16 @@ int termination_flag;
 
 
 static void print_usage(const char *progname);
-static int read_parameters(int argc, char *argv[], char **conffile, int *request_kill);
+static int read_parameters(int argc, char *argv[], char **conffile,
+			   int *request_kill, int *show_message);
 
 
 int main(int argc, char *argv[])
 {
     char *conffile = NULL;
-    int request_kill = 0;
+    int request_kill = 0, show_message = 0;
     
-    if (!read_parameters(argc, argv, &conffile, &request_kill)) {
+    if (!read_parameters(argc, argv, &conffile, &request_kill, &show_message)) {
 	print_usage(argv[0]);
 	return 1;
     }
@@ -33,6 +34,11 @@ int main(int argc, char *argv[])
     
     if (request_kill) {
 	kill_server();
+	return 0;
+    }
+    
+    if (show_message) {
+	signal_message();
 	return 0;
     }
     
@@ -88,6 +94,9 @@ static void print_usage(const char *progname)
     printf("                     The -p parameter and the config file will be\n");
     printf("                     used to find the pid file of the server to kill.\n");
     printf("  -l <file name>   Alternate log file name. Default: \"" DEFAULT_LOG_FILE "\"\n");
+    printf("  -m               Send a message to all connected clients.\n");
+    printf("                     All clients will display the content of the file\n");
+    printf("                     <workdir>/message.\n");
     printf("  -n               Don't detach from the terminal.\n");
     printf("                     If this parameter is set, no pidfile is created.\n");
     printf("  -P <number>      Port number. Default: %d\n", DEFAULT_PORT);
@@ -110,11 +119,12 @@ static void print_usage(const char *progname)
 }
 
 
-static int read_parameters(int argc, char *argv[], char **conffile, int *request_kill)
+static int read_parameters(int argc, char *argv[], char **conffile,
+			   int *request_kill, int *show_message)
 {
     int opt;
     
-    while ((opt = getopt(argc, argv, "4:6:a:c:D:d:H:hkl:no:P:p:s:t:u:w:")) != -1) {
+    while ((opt = getopt(argc, argv, "4:6:a:c:D:d:H:hkl:mno:P:p:s:t:u:w:")) != -1) {
 	switch (opt) {
 	    case '4': /* bind address */
 		if (!parse_ip_addr(optarg, (struct sockaddr*)&settings.bind_addr_4, TRUE)) {
@@ -163,6 +173,10 @@ static int read_parameters(int argc, char *argv[], char **conffile, int *request
 		
 	    case 'l': /* log file */
 		settings.logfile = strdup(optarg);
+		break;
+		
+	    case 'm':
+		*show_message = TRUE;
 		break;
 		
 	    case 'n': /* don't daemonize */

@@ -84,3 +84,20 @@ void kill_server(void)
     if (!err)
 	printf("Signal sent.\n");
 }
+
+
+void signal_message(void)
+{
+    int pid = read_pid();
+    
+    if (!pid) {
+	printf("There doesn't seem to be a running NH server.\n");
+	return;
+    }
+    
+    if (kill(-pid, SIGUSR2) == -1) {
+	fprintf(stderr, "Error sending SIGUSR2 to pgid %d: %s\n", pid, strerror(errno));
+    }
+    else
+	printf("Signal USR2 sent.\n");
+}
