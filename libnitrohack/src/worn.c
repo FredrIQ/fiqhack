@@ -5,7 +5,6 @@
 
 static void m_lose_armor(struct monst *,struct obj *);
 static void m_dowear_type(struct monst *,long, boolean, boolean);
-static int extra_pref(struct monst *, struct obj *);
 
 const struct worn {
 	long w_mask;
@@ -694,7 +693,7 @@ void mon_break_armor(struct monst *mon, boolean polyspot)
 /* bias a monster's preferences towards armor that has special benefits. */
 /* currently only does speed boots, but might be expanded if monsters get to
    use more armor abilities */
-static int extra_pref(struct monst *mon, struct obj *obj)
+int extra_pref(struct monst *mon, struct obj *obj)
 {
     if (obj) {
 	if (obj->otyp == SPEED_BOOTS && mon->permspeed != MFAST)

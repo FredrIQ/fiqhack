@@ -329,6 +329,7 @@ extern void wary_dog(struct monst *, boolean);
 extern int dog_nutrition(struct monst *,struct obj *);
 extern int dog_eat(struct monst *,struct obj *,int,int,boolean);
 extern int dog_move(struct monst *,int);
+extern boolean could_use_item(struct monst *, struct obj *);
 
 /* ### dokick.c ### */
 
@@ -758,6 +759,8 @@ extern void save_mon(struct memfile *mf, const struct monst *mon);
 
 extern int castmu(struct monst *, const struct attack *, boolean, boolean);
 extern int buzzmu(struct monst *, const struct attack *);
+extern int castmm(struct monst *, struct monst *, const struct attack *);
+extern int castum(struct monst *, const struct attack *);
 
 /* ### memfile.c ### */
 
@@ -966,6 +969,7 @@ extern void kill_genocided_monsters(void);
 extern void golemeffects(struct monst *,int,int);
 extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
+extern long mm_aggression(struct monst *,struct monst *);
 
 /* ### mondata.c ### */
 
@@ -1026,13 +1030,18 @@ extern void mplayer_talk(struct monst *);
 extern int thitu(int,int,struct obj *,const char *);
 extern int ohitmon(struct monst *,struct obj *,int,boolean);
 extern void thrwmu(struct monst *);
+extern void thrwmm(struct monst *, struct monst *);
 extern int spitmu(struct monst *, const struct attack *);
+extern int spitmm(struct monst *, struct monst *, const struct attack *);
 extern int breamu(struct monst *, const struct attack *);
+extern int breamm(struct monst *, struct monst *, const struct attack *);
+extern struct monst *mfind_target(struct monst *);
 extern boolean linedup(xchar,xchar,xchar,xchar);
 extern boolean lined_up(struct monst *);
+extern boolean mlined_up(struct monst *,struct monst *,boolean);
 extern struct obj *m_carrying(struct monst *,int);
 extern void m_useup(struct monst *,struct obj *);
-extern void m_throw(struct monst *,int,int,int,int,int,struct obj *);
+extern void m_throw(struct monst *,int,int,int,int,int,struct obj *,boolean);
 extern boolean hits_bars(struct obj **,int,int,int,int);
 
 /* ### mtrand.c ### */
@@ -1060,6 +1069,7 @@ extern boolean searches_for_item(struct monst *,struct obj *);
 extern boolean mon_reflects(struct monst *,const char *);
 extern boolean ureflects(const char *,const char *);
 extern boolean munstone(struct monst *,boolean);
+extern void you_aggravate(struct monst *);
 
 /* ### music.c ### */
 
@@ -1432,6 +1442,7 @@ extern int get_shop_item(int);
 extern void take_gold(void);
 extern int dosit(void);
 extern void rndcurse(void);
+extern void mrndcurse(struct monst *);
 extern void attrcurse(void);
 
 /* ### sounds.c ### */
@@ -1620,6 +1631,7 @@ extern int passive(struct monst *,boolean,int,uchar);
 extern void passive_obj(struct monst *,struct obj *, const struct attack *);
 extern void stumble_onto_mimic(struct monst *, schar, schar);
 extern int flash_hits_mon(struct monst *,struct obj *);
+extern void demonpet(void);
 
 /* ### vault.c ### */
 
@@ -1672,6 +1684,8 @@ extern int uwep_skill_type(void);
 extern int weapon_hit_bonus(struct obj *);
 extern int weapon_dam_bonus(struct obj *);
 extern void skill_init(const struct def_skill *);
+extern boolean would_prefer_hwep(struct monst *,struct obj *);
+extern boolean would_prefer_rwep(struct monst *,struct obj *);
 
 /* ### were.c ### */
 
@@ -1764,6 +1778,7 @@ extern void mon_break_armor(struct monst *,boolean);
 extern void bypass_obj(struct obj *);
 extern void clear_bypasses(void);
 extern int racial_exception(struct monst *, struct obj *);
+extern int extra_pref(struct monst *, struct obj *);
 
 /* ### write.c ### */
 

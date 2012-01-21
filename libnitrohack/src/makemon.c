@@ -31,6 +31,7 @@ extern const int monstr[];
 #define toostrong(monindx, lev) (monstr[monindx] > lev)
 #define tooweak(monindx, lev)	(monstr[monindx] < lev)
 
+struct monst zeromonst; /* only address matters, value is irrelevant */
 
 struct monst *newmonst(int extyp, int namelen)
 {

@@ -7,7 +7,6 @@
 #include <ctype.h>
 
 static boolean restrap(struct monst *);
-static long mm_aggression(struct monst *,struct monst *);
 static int pick_animal(void);
 static int select_newcham_form(struct monst *);
 static void kill_eggs(struct obj *);
@@ -1058,7 +1057,7 @@ impossible("A monster looked at a very strange trap of type %d.", ttmp->ttyp);
    in the absence of Conflict.  There is no provision for targetting
    other monsters; just hand to hand fighting when they happen to be
    next to each other. */
-static long mm_aggression(
+long mm_aggression(
     struct monst *magr,	/* monster that is currently deciding where to move */
     struct monst *mdef)	/* another monster which is next to it */
 {
@@ -1067,6 +1066,15 @@ static long mm_aggression(
 	if (magr->data == &mons[PM_PURPLE_WORM] &&
 		mdef->data == &mons[PM_SHRIEKER])
 	    return ALLOW_M|ALLOW_TM;
+
+        /* pets attack hostile monsters */
+	if (magr->mtame && !mdef->mpeaceful)
+	    return ALLOW_M|ALLOW_TM;
+	
+        /* and vice versa */
+	if (mdef->mtame && !magr->mpeaceful)
+	    return ALLOW_M|ALLOW_TM;
+
 	/* Various other combinations such as dog vs cat, cat vs rat, and
 	   elf vs orc have been suggested.  For the time being we don't
 	   support those. */

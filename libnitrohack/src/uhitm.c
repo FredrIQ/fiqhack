@@ -8,7 +8,6 @@ static void steal_it(struct monst *, const struct attack *);
 static boolean hitum(struct monst *, int, const struct attack *, schar, schar);
 static boolean hmon_hitmon(struct monst *,struct obj *,int);
 static int joust(struct monst *,struct obj *);
-static void demonpet(void);
 static boolean m_slips_free(struct monst *mtmp, const struct attack *mattk);
 static int explum(struct monst *, const struct attack *);
 static void start_engulf(struct monst *);
@@ -1133,14 +1132,15 @@ static int joust(struct monst *mon,	/* target */
  * (DR4 and DR4.5) screws up with an internal error 5 "Expression Too Complex."
  * Pulling it out makes it work.
  */
-static void demonpet(void)
+void demonpet(void)
 {
 	int i;
 	const struct permonst *pm;
 	struct monst *dtmp;
 
 	pline("Some hell-p has arrived!");
-	i = !rn2(6) ? ndemon(u.ualign.type) : NON_PM;
+	i = (!is_demon(youmonst.data) || !rn2(6)) 
+	     ? ndemon(u.ualign.type) : NON_PM;
 	pm = i != NON_PM ? &mons[i] : youmonst.data;
 	if ((dtmp = makemon(pm, level, u.ux, u.uy, NO_MM_FLAGS)) != 0)
 	    tamedog(dtmp, NULL);
@@ -2029,10 +2029,14 @@ use_weapon:
 			/* No check for uwep; if wielding nothing we want to
 			 * do the normal 1-2 points bare hand damage...
 			 */
+			/*
 			if (i==0 && (youmonst.data->mlet==S_KOBOLD
 				|| youmonst.data->mlet==S_ORC
 				|| youmonst.data->mlet==S_GNOME
 				)) goto use_weapon;
+			*/
+			sum[i] = castum(mon, mattk);
+			continue;
 
 		case AT_NONE:
 		case AT_BOOM:

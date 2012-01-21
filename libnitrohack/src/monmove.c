@@ -240,7 +240,7 @@ static int m_arrival(struct monst *mon)
 int dochug(struct monst *mtmp)
 {
 	const struct permonst *mdat;
-	int tmp=0;
+	int tmp = 0;
 	int inrange, nearby, scared;
         struct obj *ygold = 0, *lepgold = 0;
 
@@ -415,6 +415,24 @@ toofar:
 	    }
 	}
 
+/*      Look for other monsters to fight (at a distance) */
+	if (( attacktype(mtmp->data, AT_BREA) ||
+	      attacktype(mtmp->data, AT_GAZE) ||
+	      attacktype(mtmp->data, AT_SPIT) ||
+	     (attacktype(mtmp->data, AT_WEAP) &&
+	      select_rwep(mtmp) != 0)) &&
+	    mtmp->mlstmv != moves)
+	{
+	    register struct monst *mtmp2 = mfind_target(mtmp);
+	    if (mtmp2)
+	    {
+	        if (mattackm(mtmp, mtmp2) & MM_AGR_DIED)
+                    return 1; /* Oops. */
+
+		return 0; /* that was our move for the round */
+	    }
+	}
+
 /*	Now the actual movement phase	*/
 
         if (mdat->mlet == S_LEPRECHAUN) {
@@ -480,6 +498,8 @@ toofar:
 			return 1;
 		}
 	}
+
+	
 
 /*	Now, attack the player if possible - one attack set per monst	*/
 

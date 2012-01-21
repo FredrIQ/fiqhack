@@ -27,7 +27,6 @@ static int mbhitm(struct monst *,struct obj *);
 static void mbhit
 	(struct monst *,int,int (*)(struct monst*,struct obj*),
 	int (*)(struct obj*,struct obj*),struct obj *);
-static void you_aggravate(struct monst *);
 static void mon_consume_unstone(struct monst *,struct obj *,
 	boolean,boolean);
 
@@ -936,20 +935,32 @@ try_again:
 boolean find_offensive(struct monst *mtmp)
 {
 	struct obj *obj;
-	boolean ranged_stuff = lined_up(mtmp);
-	boolean reflection_skip = (Reflecting && rn2(2));
+	boolean ranged_stuff = FALSE;
+	boolean reflection_skip = FALSE;
 	struct obj *helmet = which_armor(mtmp, W_ARMH);
+
+        struct monst *target = mfind_target(mtmp);
+        if (target)
+        {
+            ranged_stuff = TRUE;
+            if (target == &youmonst)
+                reflection_skip = (Reflecting && rn2(2));
+        }
+        else
+            return FALSE; /* nothing to attack */
 
 	m.offensive = NULL;
 	m.has_offense = 0;
-	if (mtmp->mpeaceful || is_animal(mtmp->data) ||
-				mindless(mtmp->data) || nohands(mtmp->data))
+	if (is_animal(mtmp->data) ||
+            mindless(mtmp->data) || nohands(mtmp->data))
 		return FALSE;
-	if (u.uswallow) return FALSE;
-	if (in_your_sanctuary(mtmp, 0, 0)) return FALSE;
-	if (dmgtype(mtmp->data, AD_HEAL) && !uwep && !uarmu
-	    && !uarm && !uarmh && !uarms && !uarmg && !uarmc && !uarmf)
-		return FALSE;
+        if (target == &youmonst) {
+            if (u.uswallow) return FALSE;
+            if (in_your_sanctuary(mtmp, 0, 0)) return FALSE;
+            if (dmgtype(mtmp->data, AD_HEAL) && !uwep && !uarmu
+                && !uarm && !uarmh && !uarms && !uarmg && !uarmc && !uarmf)
+                return FALSE;
+        }
 
 	if (!ranged_stuff) return FALSE;
 #define nomore(x) if (m.has_offense==x) continue;
@@ -1136,8 +1147,8 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 
 	bhitpos.x = mon->mx;
 	bhitpos.y = mon->my;
-	ddx = sgn(mon->mux - mon->mx);
-	ddy = sgn(mon->muy - mon->my);
+	ddx = sgn(tbx);
+	ddy = sgn(tby);
 
 	while (range-- > 0) {
 		int x,y;
@@ -1237,7 +1248,7 @@ int use_offensive(struct monst *mtmp)
 		buzz((int)(-30 - (otmp->otyp - WAN_MAGIC_MISSILE)),
 			(otmp->otyp == WAN_MAGIC_MISSILE) ? 2 : 6,
 			mtmp->mx, mtmp->my,
-			sgn(mtmp->mux-mtmp->mx), sgn(mtmp->muy-mtmp->my));
+			sgn(tbx), sgn(tby));
 		m_using = FALSE;
 		return (mtmp->mhp <= 0) ? 1 : 2;
 	case MUSE_FIRE_HORN:
@@ -1251,7 +1262,7 @@ int use_offensive(struct monst *mtmp)
 		m_using = TRUE;
 		buzz(-30 - ((otmp->otyp==FROST_HORN) ? AD_COLD-1 : AD_FIRE-1),
 			rn1(6,6), mtmp->mx, mtmp->my,
-			sgn(mtmp->mux-mtmp->mx), sgn(mtmp->muy-mtmp->my));
+			sgn(tbx), sgn(tby));
 		m_using = FALSE;
 		return (mtmp->mhp <= 0) ? 1 : 2;
 	case MUSE_WAN_TELEPORTATION:
@@ -1406,9 +1417,9 @@ int use_offensive(struct monst *mtmp)
 			pline("%s hurls %s!", Monnam(mtmp),
 						singular(otmp, doname));
 		}
-		m_throw(mtmp, mtmp->mx, mtmp->my, sgn(mtmp->mux-mtmp->mx),
-			sgn(mtmp->muy-mtmp->my),
-			distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy), otmp);
+		m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
+			distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy), otmp,
+			TRUE);
 		return 2;
 	case 0: return 0; /* i.e. an exploded wand */
 	default: impossible("%s wanted to perform action %d?", Monnam(mtmp),
@@ -1460,6 +1471,7 @@ int rnd_offensive_item(struct monst *mtmp)
 #define MUSE_WAN_SPEED_MONSTER 7
 #define MUSE_BULLWHIP 8
 #define MUSE_POT_POLYMORPH 9
+#define MUSE_SCR_REMOVE_CURSE 10
 
 boolean find_misc(struct monst *mtmp)
 {
@@ -1564,6 +1576,22 @@ boolean find_misc(struct monst *mtmp)
 				&& monstr[monsndx(mdat)] < 6) {
 			m.misc = obj;
 			m.has_misc = MUSE_POT_POLYMORPH;
+		}
+		nomore(MUSE_SCR_REMOVE_CURSE);
+		if(obj->otyp == SCR_REMOVE_CURSE)
+		{
+                        register struct obj *otmp;
+			for (otmp = mtmp->minvent;
+			     otmp; otmp = otmp->nobj)
+			{
+			    if (otmp->cursed && 
+			        (otmp->otyp == LOADSTONE ||
+				 otmp->owornmask))
+			    {
+			        m.misc = obj;
+			        m.has_misc = MUSE_SCR_REMOVE_CURSE;
+			    } 
+			}
 		}
 	}
 	return (boolean)(!!m.has_misc);
@@ -1765,6 +1793,36 @@ skipmsg:
 		    return 1;
 		}
 		return 0;
+	case MUSE_SCR_REMOVE_CURSE:
+		mreadmsg(mtmp, otmp);
+		if (canseemon(mtmp))
+		{
+		    if (mtmp->mconf)
+		        pline("You feel as though %s needs some help.",
+			    mon_nam(mtmp));
+		    else
+		        pline("You feel like someone is helping %s.", mon_nam(mtmp));
+		    if(!objects[SCR_REMOVE_CURSE].oc_name_known
+		      && !objects[SCR_REMOVE_CURSE].oc_uname)
+		        docall(otmp);
+		}
+		{
+		    register struct obj *obj;
+		    for (obj = mtmp->minvent; obj; obj = obj->nobj)
+		    {
+#ifdef GOLDOBJ
+			/* gold isn't subject to cursing and blessing */
+			if (obj->oclass == COIN_CLASS) continue;
+#endif
+			if (otmp->blessed || otmp->owornmask ||
+			     obj->otyp == LOADSTONE) {
+			    if(mtmp->mconf) blessorcurse(obj, 2);
+			    else uncurse(obj);
+			}
+		    }
+		}
+		m_useup(mtmp, otmp);
+	        return 0;
 	case 0: return 0; /* i.e. an exploded wand */
 	default: impossible("%s wanted to perform action %d?", Monnam(mtmp),
 			m.has_misc);
@@ -1773,7 +1831,7 @@ skipmsg:
 	return 0;
 }
 
-static void you_aggravate(struct monst *mtmp)
+void you_aggravate(struct monst *mtmp)
 {
 	pline("For some reason, %s presence is known to you.",
 		s_suffix(noit_mon_nam(mtmp)));
@@ -1868,7 +1926,8 @@ boolean searches_for_item(struct monst *mon, struct obj *obj)
 	    break;
 	case SCROLL_CLASS:
 	    if (typ == SCR_TELEPORTATION || typ == SCR_CREATE_MONSTER
-		    || typ == SCR_EARTH)
+		    || typ == SCR_EARTH
+		    || typ == SCR_REMOVE_CURSE)
 		return TRUE;
 	    break;
 	case AMULET_CLASS:

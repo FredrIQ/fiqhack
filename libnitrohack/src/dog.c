@@ -650,6 +650,19 @@ int dogfood(struct monst *mon, struct obj *obj)
 		case BANANA:
 		    return ((mon->data->mlet == S_YETI) ? DOGFOOD :
 			    ((herbi || starving) ? ACCFOOD : MANFOOD));
+
+                case K_RATION:
+		case C_RATION:
+                case CRAM_RATION:
+		case LEMBAS_WAFER:
+		case FOOD_RATION:
+		    if (is_human(mon->data) ||
+		        is_elf(mon->data) ||
+			is_dwarf(mon->data) ||
+			is_gnome(mon->data) ||
+			is_orc(mon->data))
+		        return ACCFOOD; 
+
 		default:
 		    if (starving) return ACCFOOD;
 		    return (obj->otyp > SLIME_MOLD ?
