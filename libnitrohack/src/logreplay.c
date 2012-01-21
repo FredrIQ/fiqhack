@@ -708,7 +708,7 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 		    
 		break;
 		
-	    case '<': /* a command result: an error at this point */
+	    case '<': /* a command result */
 		if (!optonly)
 		    replay_check_cmdresult(token);
 		break;
