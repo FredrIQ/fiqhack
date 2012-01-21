@@ -1789,6 +1789,7 @@ extern struct obj *poly_obj(struct obj *, int);
 extern boolean obj_resists(struct obj *,int,int);
 extern int bhito(struct obj *,struct obj *);
 extern int bhitpile(struct obj *,int (*)(struct obj*,struct obj*),int,int);
+extern int wrestable(struct obj *wand);
 extern int zappable(struct obj *);
 extern void zapnodir(struct obj *);
 extern int dozap(struct obj *obj);
