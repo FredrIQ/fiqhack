@@ -226,14 +226,23 @@ static int find_accel(int accel, struct win_menu *mdat)
 	if (mdat->items[i].accel == accel)
 	    return i;
     
+    /* it's not a regular accelerator, maybe there is a group accel? */
+    for (i = mdat->offset; i < upper; i++)
+	if (mdat->items[i].group_accel == accel)
+	    return i;
     /*
      * extra effort: if the list is too long for one page search for the accel
-     * among those entries, too
+     * among those entries, too and scroll the changed item into view.
      */
     if (mdat->icount > mdat->innerheight)
 	for (i = 0; i < mdat->icount; i++)
-	    if (mdat->items[i].accel == accel)
+	    if (mdat->items[i].accel == accel) {
+		if (i > mdat->offset)
+		    mdat->offset = i - mdat->innerheight + 1;
+		else
+		    mdat->offset = i;
 		return i;
+	    }
     
     return -1;
 }
@@ -339,7 +348,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 		
 	    /* confirm */
 	    case KEY_ENTER:
-	    case '\n':
+	    case '\r':
 		done = TRUE;
 		break;
 		
@@ -536,7 +545,7 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 	if (settings.invweight && items[i].weight != -1 && width > pos + 3)
 	    wprintw(win, " {%d}", items[i].weight);
     }
-    wrefresh(win);
+    wnoutrefresh(win);
 }
 
 
@@ -745,7 +754,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 		
 	    /* confirm */
 	    case KEY_ENTER:
-	    case '\n':
+	    case '\r':
 		done = TRUE;
 		break;
 		

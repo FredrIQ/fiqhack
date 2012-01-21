@@ -61,7 +61,9 @@ void init_curses_ui(void)
     
     noecho();
     raw();
+    nonl();
     meta(basewin, TRUE);
+    leaveok(basewin, TRUE);
     orig_cursor = curs_set(1);
     keypad(basewin, TRUE);
     set_escdelay(20);
@@ -208,6 +210,11 @@ void create_game_windows(void)
     
     keypad(mapwin, TRUE);
     keypad(msgwin, TRUE);
+    leaveok(mapwin, FALSE);
+    leaveok(msgwin, FALSE);
+    leaveok(statuswin, TRUE);
+    if (sidebar)
+	leaveok(sidebar, TRUE);
     
     ui_flags.ingame = TRUE;
     redraw_game_windows();
@@ -255,7 +262,12 @@ static void resize_game_windows(void)
 	    sidebar = derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
     
+    leaveok(statuswin, TRUE);
+    if (sidebar)
+	leaveok(sidebar, TRUE);
+    
     redraw_game_windows();
+    doupdate();
 }
 
 
@@ -309,8 +321,6 @@ void redraw_game_windows(void)
 	redrawwin(gw->win);
 	wnoutrefresh(gw->win);
     }
-    
-    doupdate();
 }
 
 
@@ -398,8 +408,8 @@ int nh_wgetch(WINDOW *win)
 #if defined(PDCURSES)
     /* PDCurses provides exciting new names for the enter key.
      * Translate these here, instead of checking for them all over the place. */
-    if (key == PADENTER || key == '\r')
-	key = '\n';
+    if (key == PADENTER)
+	key = '\r';
 #endif
     
     return key;

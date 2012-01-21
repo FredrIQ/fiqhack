@@ -511,6 +511,7 @@ static void savetrapchn(struct memfile *mf, struct trap *trap)
 	    tflags = (trap->ttyp << 11) | (trap->tseen << 10) |
 			(trap->once << 9) | (trap->madeby_u << 8);
 	    mwrite16(mf, tflags);
+	    mwrite16(mf, trap->vl.v_launch_otyp);
 	}
 }
 

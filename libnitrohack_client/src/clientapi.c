@@ -10,11 +10,22 @@ struct nh_window_procs windowprocs, alt_windowprocs;
 int current_game;
 struct nh_option_desc *option_lists[OPTION_LIST_COUNT];
 
+#ifdef UNIX
+#include <signal.h>
+static struct sigaction oldaction;
+#endif
+
+
 void nhnet_lib_init(const struct nh_window_procs *winprocs)
 {
 #ifdef WIN32
     WSADATA wsa_data;
     WSAStartup(0x0202, &wsa_data);
+#else
+    /* ignore SIGPIPE */
+    struct sigaction ignoreaction;
+    ignoreaction.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &ignoreaction, &oldaction);
 #endif
 
     windowprocs = *winprocs;
@@ -32,6 +43,9 @@ void nhnet_lib_exit(void)
 
 #ifdef WIN32
     WSACleanup();
+#else
+    /* restore previous signale handler for SIGPIPE */
+    sigaction(SIGPIPE, &oldaction, NULL);
 #endif
 }
 

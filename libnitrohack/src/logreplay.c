@@ -650,11 +650,10 @@ static void replay_read_command(char *cmdtok, char **cmd, int *count,
 }
 
 
-static void replay_check_cmdresult(void)
+static void replay_check_cmdresult(char *token)
 {
     int n;
     unsigned int rngstate;
-    char *token = next_log_token();
     if (!token)
 	return;
     
@@ -698,7 +697,6 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 		    replay_read_command(token, &cmd, &count, &cmdarg);
 		    cmdidx = get_command_idx(cmd);
 		    command_input(cmdidx, count, &cmdarg);
-		    replay_check_cmdresult();
 		    did_action = TRUE;
 		}
 		
@@ -712,7 +710,7 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 		
 	    case '<': /* a command result: an error at this point */
 		if (!optonly)
-		    parse_error("found a command result when a command was expected");
+		    replay_check_cmdresult(token);
 		break;
 	}
 	

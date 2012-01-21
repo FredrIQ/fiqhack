@@ -11,8 +11,8 @@ struct coord {
 };
 
 static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
-static const int xdir[8] = { -1,-1, 0, 1, 1, 1, 0,-1 };
-static const int ydir[8] = {  0,-1,-1,-1, 0, 1, 1, 1 };
+static const int xdir[DIR_SELF+1] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0 };
+static const int ydir[DIR_SELF+1] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
 
 
 void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
@@ -53,7 +53,7 @@ void draw_map(int frame, int cx, int cy)
     } else
 	curs_set(0);
 
-    wrefresh(mapwin);
+    wnoutrefresh(mapwin);
 }
 
 
@@ -124,10 +124,14 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 	
 	if (dx || dy) {
 	    /* truncate at map edge */
-	    if (cx + dx < 1 || cx + dx > COLNO-1)
-		dx = 0;
-	    if (cy + dy < 0 || cy + dy > ROWNO-1)
-		dy = 0;
+	    if (cx + dx < 1)
+		dx = 1 - cx;
+	    if (cx + dx > COLNO-1)
+		dx = COLNO - 1 - cx;
+	    if (cy + dy < 0)
+		dy = -cy;
+	    if (cy + dy > ROWNO-1)
+		dy = ROWNO - 1 - cy;
 	    cx += dx;
 	    cy += dy;
 	    goto nxtc;

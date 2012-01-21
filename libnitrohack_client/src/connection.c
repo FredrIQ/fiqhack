@@ -12,6 +12,12 @@ static int connection_id;
 static int net_active;
 int conn_err;
 
+/* Prevent automatic retries during connection setup or teardown.
+ * When the connection is being set up, it is better to report a failure
+ * immediately; when the connection is being closed it doesn't matter if it
+ * already is */
+static int in_connect_disconnect;
+
 /* saved connection details */
 static char saved_hostname[256];
 static int saved_port;
@@ -71,7 +77,7 @@ static int send_json_msg(json_t *jmsg)
     msglen = strlen(msgstr);
     datalen = 0;
     do {
-	ret = send(sockfd, &msgstr[datalen], msglen - datalen, MSG_NOSIGNAL);
+	ret = send(sockfd, &msgstr[datalen], msglen - datalen, 0);
 	if (ret == -1 && errno == EINTR)
 	    continue;
 	else if (ret == -1) {
@@ -309,7 +315,7 @@ static int connect_server(const char *host, int port, int want_v4, char *errmsg,
 static int do_connect(const char *host, int port, const char *user, const char *pass,
 		      const char *email, int reg_user, int connid)
 {
-    int fd = -1, authresult;
+    int fd = -1, authresult, copylen;
     char ipv6_error[120], ipv4_error[120], errmsg[256];
     json_t *jmsg;
     
@@ -317,7 +323,11 @@ static int do_connect(const char *host, int port, const char *user, const char *
     /* try to connect to a local unix socket */
     struct sockaddr_un sun;
     sun.sun_family = AF_UNIX;
-    memcpy(sun.sun_path, host, sizeof(sun.sun_path) - 1);
+    
+    copylen = strlen(host) + 1;
+    if (copylen > sizeof(sun.sun_path) - 1)
+	copylen = sizeof(sun.sun_path) - 1;
+    memcpy(sun.sun_path, host, copylen);
     sun.sun_path[sizeof(sun.sun_path) - 1] = '\0';
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd >= 0) {
@@ -355,6 +365,7 @@ static int do_connect(const char *host, int port, const char *user, const char *
 	return NO_CONNECTION;
     }
     
+    in_connect_disconnect = TRUE;
     sockfd = fd;
     jmsg = json_pack("{ss,ss}", "username", user, "password", pass);
     if (reg_user) {
@@ -366,6 +377,7 @@ static int do_connect(const char *host, int port, const char *user, const char *
 	    json_object_set_new(jmsg, "reconnect", json_integer(connid));
 	jmsg = send_receive_msg("auth", jmsg);
     }
+    in_connect_disconnect = FALSE;
     
     if (!jmsg || json_unpack(jmsg, "{si,si!}", "return", &authresult,
 	"connection", &connection_id) == -1) {
@@ -401,7 +413,9 @@ void nhnet_disconnect(void)
 {
     json_t *msg;
     if (sockfd != -1) {
+	in_connect_disconnect = TRUE;
 	msg = send_receive_msg("shutdown", json_object());
+	in_connect_disconnect = FALSE;
 	if (msg)
 	    json_decref(msg);
 	close(sockfd);
@@ -440,6 +454,9 @@ int restart_connection(void)
     if (sockfd != -1)
 	close(sockfd);
     sockfd = -1;
+    
+    if (in_connect_disconnect)
+	return FALSE;
     
     ret = do_connect(saved_hostname, saved_port, saved_username, saved_password,
 		     NULL, 0, connection_id);

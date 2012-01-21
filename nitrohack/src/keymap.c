@@ -236,6 +236,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	if (key == '\033') /* filter out ESC */
 	    continue;
 	
+	new_action(); /* use a new message line for this action */
 	*count = multi;
 	cmd = keymap[key];
 	
@@ -265,7 +266,8 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	}
 	
 	if (!cmd) {
-	    curses_msgwin("Bad command.");
+	    sprintf(line, "Bad command: '%s'.", curses_keyname(key));
+	    curses_print_message(player.moves, line);
 	}
     } while (!cmd);
     
@@ -605,6 +607,12 @@ static void init_keymap(void)
     keymap[KEY_DOWN] = find_command("south");
     keymap[KEY_LEFT] = find_command("west");
     keymap[KEY_RIGHT] = find_command("east");
+#if defined(PDCURSES)
+    keymap[KEY_A2] = find_command("north");
+    keymap[KEY_C2] = find_command("south");
+    keymap[KEY_B1] = find_command("west");
+    keymap[KEY_B3] = find_command("east");
+#endif
     keymap[KEY_A1] = find_command("north_west");
     keymap[KEY_A3] = find_command("north_east");
     keymap[KEY_C1] = find_command("south_west");
@@ -614,6 +622,7 @@ static void init_keymap(void)
     keymap[KEY_PPAGE] = find_command("north_east");
     keymap[KEY_END]   = find_command("south_west");
     keymap[KEY_NPAGE] = find_command("south_east");
+    keymap['\r'] = find_command("(nothing)");
     
     /* every command automatically gets its default key */
     for (i = 0; i < cmdcount; i++)
@@ -705,8 +714,9 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 		add_menu_item(items, size, icount, i, buf, 0, FALSE);
 	    }
 	}
-	
-	add_menu_item(items, size, icount, -1, "Add a new key", 0, FALSE);
+	if (icount > 0)
+	    add_menu_txt(items, size, icount, "", MI_NORMAL);
+	add_menu_item(items, size, icount, -1, "Add a new key", '+', FALSE);
 	if (!(cmd->flags & CMD_UI)) {
 	    if (cmd->flags & CMD_EXT)
 		add_menu_item(items, size, icount, -2,
@@ -728,10 +738,8 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	else if (selection[0] == -1) { /* add a key */
 	    sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
 	    i = curses_msgwin(buf);
-	    if (i == KEY_ESC) {
-		curses_msgwin("Sorry, ESC cannot be bound to any function.");
+	    if (i == KEY_ESC)
 		continue;
-	    }
 	    if (keymap[i]) {
 		sprintf(buf, "That key is already in use by \"%s\"! Replace?", keymap[i]->name);
 		if ('y' != curses_yn_function(buf, "yn", 'n'))

@@ -118,7 +118,8 @@ static void hooked_curses_getlin(const char *query, char *buf,
 		done = TRUE;
 		break;
 		
-	    case '\n':
+	    case KEY_ENTER:
+	    case '\r':
 		done = TRUE;
 		break;
 

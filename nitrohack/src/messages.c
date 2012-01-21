@@ -18,7 +18,7 @@ static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
 static nh_bool stopprint;
-static int prevturn;
+static int prevturn, action, prevaction;
 
 static void newline(void);
 
@@ -133,7 +133,7 @@ void draw_msgwin(void)
 	wmove(msgwin, i, 0);
 	waddstr(msgwin, msglines[pos]);
     }
-    wrefresh(msgwin);
+    wnoutrefresh(msgwin);
 }
 
 
@@ -161,7 +161,7 @@ static void more(void)
     
     do {
 	key = nh_wgetch(msgwin);
-    } while (key != '\n' && key != ' ' && key != KEY_ESC);
+    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESC);
     
     if (getmaxy(msgwin) == 1)
 	newline();
@@ -169,6 +169,13 @@ static void more(void)
     
     if (key == KEY_ESC)
 	stopprint = TRUE;
+}
+
+
+/* called from get_command */
+void new_action(void)
+{
+    action++;
 }
 
 
@@ -191,12 +198,13 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
     if (!*msg)
 	return; /* empty message. done. */
     
-    if (turn > prevturn) {
+    if (turn > prevturn || action > prevaction) {
 	/* re-enable output if it was stopped and start a new line */
 	stopprint = FALSE;
 	newline();
     }
     prevturn = turn;
+    prevaction = action;
 
     store_message(turn, inmsg);
     

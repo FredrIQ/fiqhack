@@ -47,6 +47,16 @@ nh_bool curses_list_items_nonblocking(struct nh_objitem *items, int icount, nh_b
 }
 
 
+static int count_omitted_items(struct nh_objitem *inv, int inv_icount, int pos)
+{
+    int omitted = 0;
+    for (; pos < inv_icount; pos++)
+	if (inv[pos].role == MI_NORMAL)
+	    omitted++;
+    return omitted;
+}
+
+
 void draw_sidebar(void)
 {
     int flheight = 0, invheight = 0, invwh;
@@ -66,36 +76,36 @@ void draw_sidebar(void)
     if (flooritems && inventory) {
 	flheight = min(floor_icount+1, ui_flags.viewheight / 2);
 	invheight = ui_flags.viewheight - flheight - 1;
-	mvwhline(sidebar, flheight, 0, ACS_HLINE, sbwidth);
+	mvwhline(sidebar, invheight, 0, ACS_HLINE, sbwidth);
     } else if (flooritems)
 	flheight = ui_flags.viewheight;
     else
 	invheight = ui_flags.viewheight;
     
-    if (flheight) {
-	wattron(sidebar, A_UNDERLINE);
-	mvwaddstr(sidebar, 0, 0, "Things that are here:");
-	wattroff(sidebar, A_UNDERLINE);
-	objwin = derwin(sidebar, flheight-1, sbwidth-1, 1, 0);
-	draw_objlist(objwin, floor_icount, flooritems, NULL, PICK_NONE);
-    }
-    
     if (invheight) {
 	wattron(sidebar, A_UNDERLINE);
-	mvwaddstr(sidebar, flheight ? flheight + 1 : 0, 0, "Inventory:");
+	mvwaddstr(sidebar, 0, 0, "Inventory:");
 	wattroff(sidebar, A_UNDERLINE);
 	
 	invwh = invheight-1;
 	if (invwh < inv_icount) {
 	    invwh--;
-	    mvwprintw(sidebar, ui_flags.viewheight - 1, 0, "(%d more omitted)",
-		      inv_icount- invwh);
+	    mvwprintw(sidebar, invheight - 1, 0, "(%d more omitted)",
+		      count_omitted_items(inventory, inv_icount, invwh));
 	}
-	invwin = derwin(sidebar, invwh, sbwidth, flheight ? flheight + 2 : 1, 0);
+	invwin = derwin(sidebar, invwh, sbwidth, 1, 0);
 	draw_objlist(invwin, inv_icount, inventory, NULL, PICK_NONE);
     }
     
-    wrefresh(sidebar);
+    if (flheight) {
+	wattron(sidebar, A_UNDERLINE);
+	mvwaddstr(sidebar, invheight ? invheight + 1 : 0, 0, "Things that are here:");
+	wattroff(sidebar, A_UNDERLINE);
+	objwin = derwin(sidebar, flheight-1, sbwidth, invheight ? invheight + 2 : 1, 0);
+	draw_objlist(objwin, floor_icount, flooritems, NULL, PICK_NONE);
+    }
+    
+    wnoutrefresh(sidebar);
 }
 
 

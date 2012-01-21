@@ -62,7 +62,7 @@ struct sinfo program_state;
 
 const schar xdir[11] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0, 0 };
 const schar ydir[11] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0, 0 };
-const schar zdir[11] = {  0, 0, 0, 0, 0, 0, 0, 0, 1,-1, 0 };
+const schar zdir[11] = {  0, 0, 0, 0, 0, 0, 0, 0,-1, 1, 0 };
 
 schar tbx, tby;	/* mthrowu: target */
 

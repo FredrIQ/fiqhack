@@ -160,7 +160,7 @@ static void parse_command_token(char **tokens, long *tnum, long tcount)
 static void parse_command_list(char **tokens, long *tnum, long tcount)
 {
     int i;
-    int cmdcount = strtol(tokens[12], NULL, 16);
+    int cmdcount = strtol(tokens[13], NULL, 16);
     char decbuf[256], *token;
     
     cmdcount++;
@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
     FILE *fp;
     long size, tcount, nr_tokens, tnum, seed, mode, validlen;
     char *mem, *nexttoken, **tokens;
+    long *toff;
     char namebuf[256], datebuf[256];
     
     if (argc != 2) {
@@ -253,13 +254,16 @@ int main(int argc, char *argv[])
     tcount = 0;
     nr_tokens = 512;
     tokens = malloc(nr_tokens * sizeof(char*));
+    toff = malloc(nr_tokens * sizeof(long));
     nexttoken = strtok(mem, " \r\n");
     while (nexttoken) {
+	toff[tcount] = (long)nexttoken - (long)mem;
 	tokens[tcount++] = nexttoken;
 	nexttoken = strtok(NULL, " \r\n");
 	if (tcount >= nr_tokens) {
 	    nr_tokens *= 2;
 	    tokens = realloc(tokens, nr_tokens * sizeof(char*));
+	    toff = realloc(toff, nr_tokens * sizeof(long));
 	}
     }
     
@@ -285,22 +289,23 @@ int main(int argc, char *argv[])
     else
 	printf("There should be %ld bytes of data in this logfile.\n", validlen);
     
-    base64_decode(tokens[7], namebuf);
+    base64_decode(tokens[8], namebuf);
     seed = strtol(tokens[5], NULL, 16);
-    mode = strtol(tokens[6], NULL, 16);
+    mode = strtol(tokens[7], NULL, 16);
     
     strftime(datebuf, 256, "%A %F %H:%M", localtime(&seed));
     printf("On %s, %s the %s %s %s %s began %s adventure", datebuf,
-	namebuf, tokens[11], tokens[10], tokens[9], tokens[8], tokens[10][0] == 'f' ? "her" : "his");
+	namebuf, tokens[12], tokens[11], tokens[10], tokens[9], tokens[11][0] == 'f' ? "her" : "his");
     
     if (mode > 0)
 	printf(" in %s mode", mode == 1 ? "discover" : "wizard");
     printf("\n");
     
-    tnum = 13;
+    tnum = 14;
     parse_command_list(tokens, &tnum, tcount);
     
     for (; tnum < tcount && (!validlen || tokens[tnum] - mem < validlen); tnum++) {
+	printf("[%08lx] ", toff[tnum]);
 	switch (tokens[tnum][0]) {
 	    case '!': parse_option_token(tokens[tnum], tnum); break;
 	    case '>': parse_command_token(tokens, &tnum, tcount); break;

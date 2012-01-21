@@ -1537,7 +1537,15 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 		
 		case CMD_ARG_DIR:
 		    func_dir = cmdlist[command].func;
-		    if (argtype == CMD_ARG_DIR) {
+		    if (!firsttime) {
+			/* for multi-move commands such as dogo ('g') and
+			 * dogo2 ('G'), the last-used direction is kept in u.dx
+			 * and u.dy. lookaround() may change these values! */
+			dx = u.dx;
+			dy = u.dy;
+			dz = 0;
+		    }
+		    else if (argtype == CMD_ARG_DIR) {
 			if (!dir_to_delta(arg->d, &dx, &dy, &dz))
 			    return COMMAND_BAD_ARG;
 			if (dx && dy && u.umonnum == PM_GRID_BUG)
@@ -1548,6 +1556,10 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 			dx = -2; dy = -2; dz = -2;
 		    }
 		    flags.move = TRUE;
+		    if (firsttime) {
+			u.dx = dx;
+			u.dy = dy;
+		    }
 		    res = func_dir(dx, dy, dz);
 		    break;
 		
@@ -1670,7 +1682,7 @@ static int dotravel(int x, int y)
 		cc.y = u.uy;
 	    }
 	    pline("Where do you want to travel to?");
-	    if (getpos(&cc, TRUE, "the desired destination") < 0) {
+	    if (getpos(&cc, FALSE, "the desired destination") < 0) {
 		    /* user pressed ESC */
 		    return 0;
 	    }

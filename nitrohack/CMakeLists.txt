@@ -84,17 +84,12 @@ if (ENABLE_NETCLIENT)
     endif()
 endif ()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    # Linux has clock_gettime in librt. FreeBSD doesn't need extra libs: it has
-    # clock_gettime in libc. OS X doesn't have the function at all.
-    target_link_libraries (nitrohack_curses rt)
-endif ()
 
 add_dependencies (nitrohack_curses libnitrohack)
 
 if (UNIX)
     add_custom_command(OUTPUT nitrohack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${BINDIR} ${BINDIR}/nitrohack $@" >> nitrohack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${LIBDIR} ${BINDIR}/nitrohack $@" >> nitrohack.sh
                        VERBATIM)
     add_custom_target(nitrohack_curses_shell_script ALL
                       DEPENDS nitrohack.sh)

@@ -150,6 +150,7 @@ static char** init_game_paths(const char *argv0)
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
+    /* get the actual, localized path to the Documents folder */
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, docpath)))
 	pathlist[DUMPPREFIX] = docpath;
     else
@@ -372,16 +373,21 @@ static void process_args(int argc, char *argv[])
 */
 void append_slash(char *name)
 {
+#if defined(WIN32)
+    static const char dirsep = '\\';
+#else
+    static const char dirsep = '/';
+#endif
     char *ptr;
 
     if (!*name)
 	return;
     ptr = name + (strlen(name) - 1);
-    if (*ptr != '/') {
-	*++ptr = '/';
+    if (*ptr != dirsep) {
+	*++ptr = dirsep;
 	*++ptr = '\0';
     }
     return;
 }
 
-/*unixmain.c*/
+/* main.c */
