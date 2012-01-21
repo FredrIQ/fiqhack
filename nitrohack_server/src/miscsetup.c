@@ -17,9 +17,44 @@ static void signal_quit(int ignored)
 }
 
 
+static void signal_usr2(int ignored)
+{
+    char filename[1024], databuf[8192];
+    struct stat statbuf;
+    int ret, fd;
+    
+    sprintf(filename, "%s/message", settings.workdir);
+    ret = stat(filename, &statbuf);
+    if (ret == -1) {
+	if (!user_info.uid) /* only show the error once from the main process */
+	    log_msg("Failed to read the message file %s: %s", filename, strerror(errno));
+	return;
+    }
+    
+    if (!user_info.uid) {
+	log_msg("Message sent.");
+	return;
+    }
+    
+    fd = open(filename, O_RDONLY);
+    ret = read(fd, databuf, 8191);
+    close(fd);
+    if (ret <= 0) {
+	log_msg("No data read from %s. No message will be sent.");
+	return;
+    }
+    if (ret == 8191)
+	log_msg("Large message file found. Only the first 8kb will be sent.");
+    databuf[ret] = '\0';
+    
+    srv_display_buffer(databuf, FALSE);
+}
+
+
 void setup_signals(void)
 {
     struct sigaction quitaction;
+    struct sigaction usr2action;
     struct sigaction ignoreaction;
     sigset_t set;
     
@@ -28,11 +63,20 @@ void setup_signals(void)
     quitaction.sa_handler = signal_quit;
     quitaction.sa_mask = set;
     quitaction.sa_flags = 0;
+    usr2action.sa_handler = signal_usr2;
+    usr2action.sa_mask = set;
+    usr2action.sa_flags = 0;
     ignoreaction.sa_handler = SIG_IGN;
     
     /* terminate safely in response to SIGINT and SIGTERM */
     sigaction(SIGINT, &quitaction, NULL);
     sigaction(SIGTERM, &quitaction, NULL);
+    
+    /* SIGUSR2 sends a message to connected clients */
+    sigaction(SIGUSR2, &usr2action, NULL);
+    sigaction(SIGUSR1, &usr2action, NULL); /* extra */
+    
+    /* don't need SIGPIPE, all return values from read+write are checked */
     sigaction(SIGPIPE, &ignoreaction, NULL);
 }
 

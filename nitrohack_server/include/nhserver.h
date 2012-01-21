@@ -132,6 +132,7 @@ extern void db_add_topten_entry(int gid, int points, int hp, int maxhp, int deat
 extern int create_pidfile(void);
 extern void remove_pidfile(void);
 extern void kill_server(void);
+extern void signal_message(void);
 
 /* log.c */
 extern void log_msg(const char *fmt, ...);
@@ -151,5 +152,7 @@ extern int runserver(void);
 /* winprocs.c */
 extern json_t *get_display_data(void);
 extern void reset_cached_diplaydata(void);
+extern void srv_display_buffer(const char *buf, nh_bool trymove);
+
 
 #endif
