@@ -440,6 +440,15 @@ long calc_score(int how, boolean show, long umoney)
             category_raw, category_points);
     add_menutext(&menu, buf);
   }
+  /* Experience. Although this maxes at 30, the ratio isn't displayed. */
+  category_raw = u.ulevel;
+  category_points = sqrt((u.ulevel - 1.0) / 29.0) * 30000.0 + 0.5;
+  total += category_points;
+  if (show) {
+    sprintf(buf, "Experience:      %10ld level%s             (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", category_points);
+    add_menutext(&menu, buf);
+  }
   /* Exploration. This is based on the ratio of the Sanctum depth to the
      deepest level reached, and is based on the square root of the ratio. */
   category_raw = deepest_lev_reached(FALSE);
@@ -496,9 +505,9 @@ long calc_score(int how, boolean show, long umoney)
   } else if (show) {
     add_menutext(&menu, "Valuables value: (no points given unless you survive)");
   }
-  /* Artifacts. Scores double what the same value in gold would score. */
+  /* Artifacts. */
   category_raw = artifact_score(invent, TRUE, 0);
-  category_points = log(category_raw+1) / elog2 * 2.0 + 0.5;
+  category_points = log(category_raw+1) / elog2 + 0.5;
   total += category_points;
   if (show) {
     sprintf(buf, "Artifact value:  %10ld                    (%5ld points)",
@@ -523,6 +532,15 @@ long calc_score(int how, boolean show, long umoney)
     sprintf(buf, "Variety of kills:%10ld monster%s (%6.2f%%) (%5ld points)",
             category_raw, category_raw == 1 ? " " : "s",
             category_ratio, category_points);
+    add_menutext(&menu, buf);
+  }
+  /* Time penalty. */
+  category_raw = moves;
+  category_points = log(max(moves,2000) / 2000.0) / elog2;
+  total -= category_points;
+  if (show) {
+    sprintf(buf, "Time penalty:    %10ld turn%s              (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", -category_points);
     add_menutext(&menu, buf);
   }
   /* Survival. A multiplier. */
