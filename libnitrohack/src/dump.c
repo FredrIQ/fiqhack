@@ -13,6 +13,13 @@ static int dump_display_objects(struct nh_objitem*, int, const char*, int,
 static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
     const char *plname, int gold, const char *killbuf, int end_how, int year);
 
+#if !defined(WIN32)
+#define TIMESTAMP_FORMAT "%Y-%m-%d %H:%M"
+#else
+/* windows doesn't allow ':' in filenames */
+#define TIMESTAMP_FORMAT "%Y-%m-%d %H_%M"
+#endif
+
 void begin_dump(int how)
 {
     char dumpname[BUFSZ], timestamp[BUFSZ], *status;
@@ -26,7 +33,7 @@ void begin_dump(int how)
     /* make a timestamp like "2011-11-30 18:45" */
     t = time(NULL);
     tmp = localtime(&t);
-    if (!tmp || !strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M", tmp))
+    if (!tmp || !strftime(timestamp, sizeof(timestamp), TIMESTAMP_FORMAT, tmp))
 	strcpy(timestamp, "???");
 
     switch(how) {

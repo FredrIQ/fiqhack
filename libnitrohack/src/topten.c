@@ -81,16 +81,14 @@ static void writeentry(int fd, const struct toptenentry *tt)
 }
 
 
-static void write_topten(const struct toptenentry *ttlist)
+static void write_topten(int fd, const struct toptenentry *ttlist)
 {
-    int i, fd;
+    int i;
     
-    fd = open_datafile(RECORD, O_CREAT | O_TRUNC | O_WRONLY, SCOREPREFIX);
-    
+    lseek(fd, 0, SEEK_SET);
+    ftruncate(fd, 0);
     for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++)
 	writeentry(fd, &ttlist[i]);
-    
-    close(fd);
 }
 
 
@@ -100,8 +98,8 @@ static void update_log(const struct toptenentry *newtt)
     int fd = open_datafile(LOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
     if (lock_fd(fd, 10)) {
 	writeentry(fd, newtt);
-	close(fd);
 	unlock_fd(fd);
+	close(fd);
     }
 }
 
@@ -125,16 +123,14 @@ static boolean readentry(char *line, struct toptenentry *tt)
 }
 
 
-static struct toptenentry *read_topten(int limit)
+static struct toptenentry *read_topten(int fd, int limit)
 {
-    int i, fd, size;
+    int i, size;
     struct toptenentry *ttlist;
     char *data, *line;
     
-    fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
     lseek(fd, 0, SEEK_SET);
     data = loadfile(fd, &size);
-    close(fd);
     if (!data)
 	/* the only sensible reason for not getting any data is that the record
 	 * file doesn't exist or is empty. If it does have data but is unreadable
@@ -271,23 +267,17 @@ void update_topten(int how)
 	return;
 
     fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
-    if (!lock_fd(fd, 60)) {
+    if (!lock_fd(fd, 30)) {
 	close(fd);
 	return;
     }
     
-    toptenlist = read_topten(TTLISTLEN);
-    if (!toptenlist) {
-	raw_print("Cannot open record file!\n");
-	unlock_fd(fd);
-	close(fd);
-	return;
-    }
+    toptenlist = read_topten(fd, TTLISTLEN);
     
     /* possibly rearrange the score list to include the new entry */
     need_rewrite = toptenlist_insert(toptenlist, &newtt);
     if (need_rewrite)
-	write_topten(toptenlist);
+	write_topten(fd, toptenlist);
     
     unlock_fd(fd);
     close(fd);
@@ -321,13 +311,15 @@ static int classmon(char *plch, boolean fem)
  */
 struct obj *tt_oname(struct obj *otmp)
 {
-    int rank;
+    int rank, fd;
     struct toptenentry *toptenlist, *tt;
 
     if (!otmp)
 	return NULL;
-    
-    toptenlist = read_topten(100); /* load the top 100 scores */
+
+    fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
+    toptenlist = read_topten(fd, 100); /* load the top 100 scores */
+    close(fd);
     
     /* try to find a valid entry, reducing the value range for rank each time */
     rank = rn2(100);
@@ -490,7 +482,7 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
     boolean game_inited = (wiz1_level.dlevel != 0);
     boolean game_complete = game_inited && moves && program_state.gameover;
     int rank = -1; /* index of the completed game in the topten list */
-    int i, j, sel_count;
+    int fd, i, j, sel_count;
     boolean *selected, off_list = FALSE;
     
     statusbuf[0] = '\0';
@@ -513,7 +505,9 @@ struct nh_topten_entry *nh_get_topten(int *out_len, char *statusbuf,
 	    player = "";
     }
     
-    ttlist = read_topten(TTLISTLEN);
+    fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
+    ttlist = read_topten(fd, TTLISTLEN);
+    close(fd);
     if (!ttlist) {
 	strcpy(statusbuf, "Cannot open record file!");
 	api_exit();

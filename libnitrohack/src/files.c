@@ -136,6 +136,9 @@ FILE *fopen_datafile(const char *filename, const char *mode, int prefix)
 int open_datafile(const char *filename, int oflags, int prefix)
 {
 	int fd;
+#ifdef WIN32
+	oflags |= O_BINARY;
+#endif
 
 	filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
 	fd = open(filename, oflags, S_IRUSR | S_IWUSR);
