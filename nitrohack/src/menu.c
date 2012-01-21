@@ -255,7 +255,7 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 {
     struct gamewin *gw;
     struct win_menu *mdat;
-    int i, key, idx, rv, startx, starty, prevcurs;
+    int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     
@@ -324,9 +324,12 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 	    case KEY_NPAGE:
 	    case '>':
 	    case ' ':
+		prev_offset = mdat->offset;
 		mdat->offset += mdat->innerheight;
 		if (mdat->offset > mdat->icount - mdat->innerheight)
 		    mdat->offset = mdat->icount - mdat->innerheight;
+		if (key == ' ' && mdat->offset == prev_offset)
+		    done = TRUE;
 		break;
 		
 	    /* go to the top */
@@ -665,7 +668,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 {
     struct gamewin *gw;
     struct win_objmenu *mdat;
-    int i, key, idx, rv, startx, starty, prevcurs;
+    int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
@@ -730,9 +733,12 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 	    case KEY_NPAGE:
 	    case '>':
 	    case ' ':
+		prev_offset = mdat->offset;
 		mdat->offset += mdat->innerheight;
 		if (mdat->offset > mdat->icount - mdat->innerheight)
 		    mdat->offset = mdat->icount - mdat->innerheight;
+		if (key == ' ' && prev_offset == mdat->offset)
+		    done = TRUE;
 		break;
 		
 	    /* go to the top */
