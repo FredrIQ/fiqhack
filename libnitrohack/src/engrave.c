@@ -429,7 +429,7 @@ int doengrave(struct obj *otmp)
 			return 0;
 		} else if (is_whirly(u.ustuck->data)) {
 			pline("You can't reach the %s.", surface(u.ux,u.uy));
-			return 0;
+                        return 0;
 		} else
 			jello = TRUE;
 	} else if (is_lava(level, u.ux, u.uy)) {
@@ -480,7 +480,7 @@ int doengrave(struct obj *otmp)
 	}
 	if (otmp->oclass != WAND_CLASS && !can_reach_floor()) {
 		pline("You can't reach the %s!", surface(u.ux,u.uy));
-		return 0;
+                return 0;
 	}
 	if (IS_ALTAR(level->locations[u.ux][u.uy].typ)) {
 		pline("You make a motion towards the altar with your %s.", writer);
@@ -713,7 +713,12 @@ int doengrave(struct obj *otmp)
 		} else /* end if zappable */
 		    if (!can_reach_floor()) {
 			pline("You can't reach the %s!", surface(u.ux,u.uy));
-			return 0;
+			/* If it's a wrestable wand, the player wasted a
+			   turn trying. */
+			if (wrestable(otmp))
+			    return 1;
+			else
+			    return 0;
 		    }
 		break;
 
@@ -940,7 +945,10 @@ int doengrave(struct obj *otmp)
 		return 1;
 	    } else {
 		pline("Never mind.");
-		return 0;
+                if (otmp && otmp->oclass == WAND_CLASS && wrestable(otmp))
+                    return 1; /* disallow zero turn wrest */
+                else
+                    return 0;
 	    }
 	}
 

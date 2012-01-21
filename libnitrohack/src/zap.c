@@ -1668,6 +1668,16 @@ int bhitpile(struct obj *obj, int (*fhito)(struct obj*,struct obj*),
 
 
 /*
+ * wrestable - returns 1 if a wand can only be zapped
+ *             by wresting it.
+ * added by bcd@pvv.org 16/9/08
+ */
+int wrestable(struct obj *wand)
+{
+    return (wand->spe == 0);
+}
+
+/*
  * zappable - returns 1 if zap is available, 0 otherwise.
  *	      it removes a charge from the wand if zappable.
  * added by GAN 11/03/86
