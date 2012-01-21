@@ -795,7 +795,7 @@ found:
     return FALSE;
 }
 
-void domove(schar dx, schar dy, schar dz)
+int domove(schar dx, schar dy, schar dz)
 {
 	struct monst *mtmp;
 	struct rm *tmpr;
@@ -811,10 +811,9 @@ void domove(schar dx, schar dy, schar dz)
 	if (dz) {
 	    nomul(0, NULL);
 	    if (dz < 0)
-		doup();
+		return doup();
 	    else
-		dodown();
-	    return;
+		return dodown();
 	}
 
 	u_wipe_engr(rnd(5));
@@ -836,7 +835,7 @@ void domove(schar dx, schar dy, schar dz)
 	    } else
 		pline("You collapse under your load.");
 	    nomul(0, NULL);
-	    return;
+	    return 1;
 	}
 	if (u.uswallow) {
 		dx = dy = 0;
@@ -858,7 +857,7 @@ void domove(schar dx, schar dy, schar dz)
 			exercise(A_DEX, TRUE);
 			break;
 		    }
-		    return;
+		    return 1;
 		}
 
 		/* check slippery ice */
@@ -888,7 +887,7 @@ void domove(schar dx, schar dy, schar dz)
 			do {
 				if (tries++ > 50) {
 					nomul(0, NULL);
-					return;
+					return 1;
 				}
 				confdir(&dx, &dy);
 				x = u.ux + dx;
@@ -900,14 +899,14 @@ void domove(schar dx, schar dy, schar dz)
 			water_friction(&dx, &dy);
 			if (!dx && !dy) {
 				nomul(0, NULL);
-				return;
+				return 1;
 			}
 			x = u.ux + dx;
 			y = u.uy + dy;
 		}
 		if (!isok(x, y)) {
 			nomul(0, NULL);
-			return;
+			return 0;
 		}
 		if (((trap = t_at(level, x, y)) && trap->tseen) ||
 		    (Blind && !Levitation && !Flying &&
@@ -915,8 +914,7 @@ void domove(schar dx, schar dy, schar dz)
 		     (is_pool(level, x, y) || is_lava(level, x, y)) && level->locations[x][y].seenv)) {
 			if (flags.run >= 2) {
 				nomul(0, NULL);
-				flags.move = 0;
-				return;
+				return 0;
 			} else
 				nomul(0, NULL);
 		}
@@ -960,7 +958,7 @@ void domove(schar dx, schar dy, schar dz)
 				goto pull_free;
 			    pline("You cannot escape from %s!", mon_nam(u.ustuck));
 			    nomul(0, NULL);
-			    return;
+			    return 1;
 			}
 		    }
 		}
@@ -976,8 +974,7 @@ void domove(schar dx, schar dy, schar dz)
 			       Protection_from_shape_changers)) ||
 			     sensemon(mtmp))) {
 				nomul(0, NULL);
-				flags.move = 0;
-				return;
+				return 0;
 			}
 		}
 	}
@@ -1014,7 +1011,7 @@ void domove(schar dx, schar dy, schar dz)
 		    pline("Pardon me, %s.", m_monnam(mtmp));
 		else
 		    pline("You move right into %s.", mon_nam(mtmp));
-		return;
+		return 1;
 	    }
 	    if (flags.forcefight || !mtmp->mundetected || sensemon(mtmp) ||
 		    ((hides_under(mtmp->data) || mtmp->data->mlet == S_EEL) &&
@@ -1031,11 +1028,11 @@ void domove(schar dx, schar dy, schar dz)
 			fall_asleep(-10, FALSE);
 		    }
 		}
-		if (multi < 0) return;	/* we just fainted */
+		if (multi < 0) return 1;	/* we just fainted */
 
 		/* try to attack; note that it might evade */
 		/* also, we don't attack tame when _safepet_ */
-		if (attack(mtmp, dx, dy)) return;
+		if (attack(mtmp, dx, dy)) return 1;
 	    }
 	}
 
@@ -1057,7 +1054,7 @@ void domove(schar dx, schar dy, schar dz)
 		    u.mh = -1;		/* dead in the current form */
 		    rehumanize();
 		}
-		return;
+		return 1;
 	}
 	if (level->locations[x][y].mem_invis) {
 	    unmap_object(x, y);
@@ -1067,13 +1064,13 @@ void domove(schar dx, schar dy, schar dz)
 	if (u.usteed && !u.usteed->mcanmove && (dx || dy)) {
 		pline("%s won't move!", upstart(y_monnam(u.usteed)));
 		nomul(0, NULL);
-		return;
+		return 1;
 	} else if (!youmonst.data->mmove) {
 		pline("You are rooted %s.",
 		    Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ?
 		    "in place" : "to the ground");
 		nomul(0, NULL);
-		return;
+		return 1;
 	}
 	if (u.utrap) {
 		if (u.utraptype == TT_PIT) {
@@ -1122,7 +1119,7 @@ void domove(schar dx, schar dy, schar dz)
 		    if (uwep && uwep->oartifact == ART_STING) {
 			u.utrap = 0;
 			pline("Sting cuts through the web!");
-			return;
+			return 1;
 		    }
 		    if (--u.utrap) {
 			if (flags.verbose) {
@@ -1170,7 +1167,7 @@ void domove(schar dx, schar dy, schar dz)
 		    }
 		    if ((dx && dy) || !rn2(5)) u.utrap--;
 		}
-		return;
+		return 1;
 	}
 	
 	/* If moving into a door, open it. */
@@ -1179,25 +1176,26 @@ void domove(schar dx, schar dy, schar dz)
 	    if (!doopen(dx, dy, 0)) {
 		flags.move = 0;
 		nomul(0, NULL);
+		return 0;
 	    }
-	    return;
+	    return 1;
 	}
 
 	if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE)) {
 	    flags.move = 0;
 	    nomul(0, NULL);
-	    return;
+	    return 0;
 	}
 
 	/* Move ball and chain.  */
 	if (Punished)
 	    if (!drag_ball(x,y, &bc_control, &ballx, &bally, &chainx, &chainy,
 			&cause_delay, TRUE))
-		return;
+		return 1;
 
 	/* Check regions entering/leaving */
 	if (!in_out_region(level, x, y))
-	    return;
+	    return 1; /* unable to enter the region but trying took time */
 
  	/* now move the hero */
 	mtmp = m_at(level, x, y);
@@ -1355,6 +1353,7 @@ void domove(schar dx, schar dy, schar dz)
 		}
 	    }
 	}
+	return 1;
 }
 
 void invocation_message(void)
@@ -2169,6 +2168,8 @@ long money_cnt(struct obj *otmp)
 
 int dofight(int dx, int dy, int dz)
 {
+	int ret;
+
 	flags.travel = iflags.travel1 = 0;
 	flags.run = 0;
 	flags.forcefight = 1;
@@ -2176,10 +2177,10 @@ int dofight(int dx, int dy, int dz)
 	if (multi)
 	    flags.mv = TRUE;
 	
-	domove(dx, dy, dz);
+	ret = domove(dx, dy, dz);
 	flags.forcefight = 0;
 	
-	return 1;
+	return ret;
 }
 
 
@@ -2191,23 +2192,26 @@ int domovecmd(int dx, int dy, int dz)
 	if (multi)
 	    flags.mv = TRUE;
 	
-	domove(dx, dy, dz);
-	return 1;
+	return domove(dx, dy, dz);
 }
 
 
 int domovecmd_nopickup(int dx, int dy, int dz)
 {
+	int ret;
+
 	flags.nopick = 1;
-	domovecmd(dx, dy, dz);
+	ret = domovecmd(dx, dy, dz);
 	flags.nopick = 0;
 	
-	return 1;
+	return ret;
 }
 
 
 static int do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 {
+	int ret;
+
 	flags.travel = iflags.travel1 = 0;
 	flags.run = runmode;
 	
@@ -2216,10 +2220,10 @@ static int do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 	if (!multi)
 	    multi = max(COLNO,ROWNO);
 	
-	domove(dx, dy, dz);
+	ret = domove(dx, dy, dz);
 	
 	flags.nopick = 0;
-	return 1;
+	return ret;
 }
 
 

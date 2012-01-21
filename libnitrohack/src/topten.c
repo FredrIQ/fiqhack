@@ -38,10 +38,10 @@ struct toptenentry {
 #define validentry(x) ((x).points > 0 || (x).deathlev)
 
 static void writeentry(int fd, const struct toptenentry *tt);
-static void write_topten(const struct toptenentry *ttlist);
+static void write_topten(int fd, const struct toptenentry *ttlist);
 static void update_log(const struct toptenentry *newtt);
 static boolean readentry(char *line, struct toptenentry *tt);
-static struct toptenentry *read_topten(int limit);
+static struct toptenentry *read_topten(int fd, int limit);
 static void fill_topten_entry(struct toptenentry *newtt, int how);
 static boolean toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt);
 static int classmon(char *plch, boolean fem);

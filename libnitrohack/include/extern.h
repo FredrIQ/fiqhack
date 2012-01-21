@@ -526,7 +526,7 @@ extern boolean may_passwall(struct level *lev, xchar x, xchar y);
 extern boolean bad_rock(const struct permonst *,xchar,xchar);
 extern boolean invocation_pos(xchar,xchar);
 extern boolean test_move(int, int, int, int, int, int);
-extern void domove(schar dx, schar dy, schar dz);
+extern int domove(schar dx, schar dy, schar dz);
 extern void invocation_message(void);
 extern void spoteffects(boolean);
 extern char *in_rooms(struct level *lev, xchar, xchar, int);
