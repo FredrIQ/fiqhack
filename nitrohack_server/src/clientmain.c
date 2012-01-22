@@ -101,10 +101,10 @@ void exit_client(const char *err)
     const char *msg = err ? err : "";
     json_t *exit_obj;
     
+    if (err)
+	log_msg("Client error: %s. Exit.", err);
+    
     if (outfd != -1) {
-	if (err)
-	    log_msg("Client error: %s. Exit.", err);
-	
 	exit_obj = json_object();
 	
 	json_object_set_new(exit_obj, "error", err ? json_true() : json_false());
@@ -121,7 +121,8 @@ void exit_client(const char *err)
     }
     
     termination_flag = 3; /* make sure the command loop exits if nh_exit_game jumps there */
-    nh_exit_game(EXIT_FORCE_SAVE); /* might not return here */
+    if (!sigsegv_flag)
+	nh_exit_game(EXIT_FORCE_SAVE); /* might not return here */
     nh_lib_exit();
     close_database();
     if (user_info.username)

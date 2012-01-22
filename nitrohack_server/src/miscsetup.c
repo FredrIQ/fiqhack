@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 
+int sigsegv_flag;
 
 static void signal_quit(int ignored)
 {
@@ -53,6 +54,7 @@ static void signal_usr2(int ignored)
 
 static void signal_segv(int ignored)
 {
+    sigsegv_flag++;
     log_msg("BUG: caught SIGSEGV! Exit.");
     if (user_info.uid)
 	exit_client("Fatal: Programming error on the server. Sorry about that.");

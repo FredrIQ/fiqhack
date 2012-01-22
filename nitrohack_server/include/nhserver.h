@@ -84,7 +84,7 @@ struct gamefile_info {
 extern struct settings settings;
 extern struct user_info user_info;
 extern struct nh_window_procs server_windowprocs, server_alt_windowprocs;
-extern int termination_flag;
+extern int termination_flag, sigsegv_flag;
 extern int gamefd;
 extern long gameid;
 extern const struct client_command clientcmd[];
