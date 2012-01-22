@@ -126,7 +126,8 @@ void auth_send_result(int sockfd, enum authresult result, int is_reg, int connid
     if (is_reg)
 	key = "register";
     
-    jval = json_pack("{s:{si,si}}", key, "return", result, "connection", connid);
+    jval = json_pack("{s:{si,si,s:[i,i,i]}}", key, "return", result, "connection",
+		     connid, "version", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
     jstr = json_dumps(jval, JSON_COMPACT);
     len = strlen(jstr);
     written = 0;
