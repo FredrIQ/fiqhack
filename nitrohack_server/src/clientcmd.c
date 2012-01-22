@@ -253,7 +253,7 @@ static void ccmd_view_start(json_t *params)
     if (json_unpack(params, "{si}", "gameid", &gid) == -1)
 	exit_client("Bad set of parameters for view_start");
     
-    if (!db_get_game_filename(user_info.uid, gid, filename, 1024) ||
+    if (!db_get_game_filename(0, gid, filename, 1024) ||
 	(fd = open(filename, O_RDWR)) == -1) {
 	jmsg = json_pack("{si}", "return", FALSE);
 	client_msg("view_start", jmsg);
@@ -307,7 +307,7 @@ static void ccmd_view_finish(json_t *params)
 
 static void ccmd_list_games(json_t *params)
 {
-    int completed, limit, count, i, fd;
+    int completed, limit, show_all, count, i, fd;
     struct gamefile_info *files;
     enum nh_log_status status;
     struct nh_game_info gi;
@@ -315,9 +315,11 @@ static void ccmd_list_games(json_t *params)
     
     if (json_unpack(params, "{si,si}", "completed", &completed, "limit", &limit) == -1)
 	exit_client("Bad parameters for list_games");
+    if (json_unpack(params, "{si}", "show_all", &show_all) == -1)
+	show_all = 0;
     
     /* step 1: get a list of files from the db. */
-    files = db_list_games(completed, user_info.uid, limit, &count);
+    files = db_list_games(completed, show_all ? 0 : user_info.uid, limit, &count);
     
     jarr = json_array();
     /* step 2: get extra info for each file. */

@@ -19,7 +19,7 @@
 #include "nitrohack.h"
 #include "nitrohack_client.h" /* for enum authresult */
 
-#define DEFAULT_PORT 7114 /* chosen at random, not in use by anything else */
+#define DEFAULT_PORT 7115 /* chosen at random, not in use by anything else */
 
 #if !defined(DEFAULT_CONFIG_FILE)
 # define DEFAULT_CONFIG_FILE ""

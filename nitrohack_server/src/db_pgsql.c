@@ -116,7 +116,7 @@ static const char SQL_update_game[] =
 static const char SQL_get_game_filename[] =
     "SELECT filename "
     "FROM games "
-    "WHERE owner = $1::integer AND gid = $2::integer;";
+    "WHERE (owner = $1::integer OR $1::integer = 0) AND gid = $2::integer;";
 
 static const char SQL_set_game_done[] =
     "UPDATE games "

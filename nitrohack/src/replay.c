@@ -194,7 +194,8 @@ void replay_commandloop(int fd)
     struct nh_cmd_desc *cmd;
     
     create_game_windows();
-    nh_view_replay_start(fd, &curses_replay_windowprocs, &rinfo);
+    if (!nh_view_replay_start(fd, &curses_replay_windowprocs, &rinfo))
+	return;
     load_keymap();
     
     while (1) {

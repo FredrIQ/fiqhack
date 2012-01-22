@@ -48,7 +48,7 @@ extern EXPORT int nhnet_connect(const char *host, int port, const char *user,
 extern EXPORT void nhnet_disconnect(void);
 extern EXPORT int nhnet_connected(void);
 extern EXPORT int nhnet_active(void);
-extern EXPORT struct nhnet_game *nhnet_list_games(int done, int *count);
+extern EXPORT struct nhnet_game *nhnet_list_games(int done, int show_all, int *count);
 
 extern EXPORT void nhnet_lib_init(const struct nh_window_procs *);
 extern EXPORT void nhnet_lib_exit(void);
