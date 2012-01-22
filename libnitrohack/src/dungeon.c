@@ -1663,6 +1663,7 @@ static void overview_scan(const struct level *lev, struct overview_info *oi)
 		
 		switch (lev->locations[x][y].mem_bg) {
 		    case S_upstair: case S_dnstair: case S_upladder: case S_dnladder:
+                    case S_upsstair: case S_dnsstair:
 			if (lev->sstairs.sx == x && lev->sstairs.sy == y &&
 			    levels[ledger_no(&lev->sstairs.tolev)]) {
 			    oi->branch = TRUE;
