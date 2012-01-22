@@ -1425,7 +1425,10 @@ int back_to_cmap(struct level *lev, xchar x, xchar y)
 	case POOL:
 	case MOAT:		idx = S_pool;	  break;
 	case STAIRS:
-	    idx = (ptr->ladder & LA_DOWN) ? S_dnstair : S_upstair;
+            if (lev->sstairs.sx == x && lev->sstairs.sy == y)
+                idx = (ptr->ladder & LA_DOWN) ? S_dnsstair : S_upsstair;
+            else
+                idx = (ptr->ladder & LA_DOWN) ? S_dnstair : S_upstair;
 	    break;
 	case LADDER:
 	    idx = (ptr->ladder & LA_DOWN) ? S_dnladder : S_upladder;

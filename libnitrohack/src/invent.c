@@ -1513,11 +1513,13 @@ const char *dfeature_at(int x, int y, char *buf)
 	    sprintf(altbuf, "altar to %s (%s)", a_gname(),
 		    align_str(Amask2align(loc->altarmask & ~AM_SHRINE)));
 	    dfeature = altbuf;
-	} else if ((x == level->upstair.sx && y == level->upstair.sy) ||
-		 (x == level->sstairs.sx && y == level->sstairs.sy && level->sstairs.up))
+	} else if (x == level->sstairs.sx && y == level->sstairs.sy && level->sstairs.up)
+            cmap = S_upsstair;                          /* "long ladder up" */
+        else if (x == level->sstairs.sx && y == level->sstairs.sy)
+            cmap = S_dnsstair;                          /* "long ladder down" */
+        else if (x == level->upstair.sx && y == level->upstair.sy)
 	    cmap = S_upstair;				/* "staircase up" */
-	else if ((x == level->dnstair.sx && y == level->dnstair.sy) ||
-		 (x == level->sstairs.sx && y == level->sstairs.sy && !level->sstairs.up))
+	else if (x == level->dnstair.sx && y == level->dnstair.sy)
 	    cmap = S_dnstair;				/* "staircase down" */
 	else if (x == level->upladder.sx && y == level->upladder.sy)
 	    cmap = S_upladder;				/* "ladder up" */

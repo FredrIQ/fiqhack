@@ -76,9 +76,11 @@ const char * const defexplain[] = {
 	"staircase down",	/* dnstair */
 	"ladder up",		/* upladder */
 	"ladder down",		/* dnladder */
-	"altar",		/* altar */
+        "long ladder up",       /* upsstair */
+        "long ladder down",     /* dnsstair */
+/*30*/	"altar",		/* altar */
 	"grave",		/* grave */
-/*30*/	"opulent throne",	/* throne */
+	"opulent throne",	/* throne */
 	"sink",			/* sink */
 	"fountain",		/* fountain */
 	"water",		/* pool */
@@ -86,9 +88,9 @@ const char * const defexplain[] = {
 	"molten lava",		/* lava */
 	"lowered drawbridge",	/* vodbridge */
 	"lowered drawbridge",	/* hodbridge */
-	"raised drawbridge",	/* vcdbridge */
+/*40*/	"raised drawbridge",	/* vcdbridge */
 	"raised drawbridge",	/* hcdbridge */
-/*40*/	"air",			/* open air */
+	"air",			/* open air */
 	"cloud",		/* [part of] a cloud */
 	"water"			/* under water */
 };
@@ -151,9 +153,11 @@ const struct nh_symdef defsyms[] = {
 	{'>', "dnstair",	CLR_GRAY},
 	{'<', "upladder",	CLR_BROWN},
 	{'>', "dnladder",	CLR_BROWN},
-	{'_', "altar",		CLR_GRAY},
+	{'<', "upsstair",	CLR_YELLOW},
+	{'>', "dnsstair",	CLR_YELLOW},
+/*30*/	{'_', "altar",		CLR_GRAY},
 	{'|', "grave",		CLR_GRAY},
-/*30*/	{'\\',"throne",		HI_GOLD},
+	{'\\',"throne",		HI_GOLD},
 	{'#', "sink",		CLR_GRAY},
 	{'{', "fountain",	CLR_BLUE},
 	{'}', "pool",		CLR_BLUE},
@@ -161,9 +165,9 @@ const struct nh_symdef defsyms[] = {
 	{'}', "lava",		CLR_RED},
 	{'.', "vodbridge",	CLR_BROWN},
 	{'.', "hodbridge",	CLR_BROWN},
-	{'#', "vcdbridge",	CLR_BROWN},
+/*40*/	{'#', "vcdbridge",	CLR_BROWN},
 	{'#', "hcdbridge",	CLR_BROWN},
-/*40*/	{' ', "air",		CLR_CYAN},
+	{' ', "air",		CLR_CYAN},
 	{'#', "cloud",		CLR_GRAY},
 	{'}', "water",		CLR_BLUE}
 };

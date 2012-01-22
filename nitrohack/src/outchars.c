@@ -24,6 +24,8 @@ static struct curses_symdef rogue_graphics_ovr[] = {
     {"ndoor",	-1,	{0x002B, 0},	'+'},
     {"upstair",	-1,	{0x0025, 0},	'%'},
     {"dnstair",	-1,	{0x0025, 0},	'%'},
+    {"upsstair",-1,	{0x0025, 0},	'%'},
+    {"dnsstair",-1,	{0x0025, 0},	'%'},
     
     {"gold piece",-1,	{0x002A, 0},	'*'},
     
@@ -56,6 +58,8 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"litcorr",	-1,	{0x2592, 0},	0},	/* ▒ medium shading */
     {"upladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
     {"dnladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
+    {"upsstair",-1,     {0x227E, 0},    0},     /* ≾ precedes-or-equivalent-to */
+    {"dnsstair",-1,     {0x227F, 0},    0},     /* ≿ succeeds-or-equivalent-to */
     {"altar",	-1,	{0x03A9, 0},	0},	/* Ω GREEK CAPITAL LETTER OMEGA */
     {"grave",	-1,	{0x2020, 0},	0},	/* † DAGGER */
     {"ice",	-1,	{0x00B7, 0},	0},	/* · centered dot */
