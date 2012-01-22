@@ -82,9 +82,13 @@ static int Boots_on(void)
 	case LOW_BOOTS:
 	case IRON_SHOES:
 	case HIGH_BOOTS:
-	case JUMPING_BOOTS:
 	case KICKING_BOOTS:
 		break;
+	case JUMPING_BOOTS:
+        	/* jumping is obvious no matter what the situation */
+        	makeknown(uarmf->otyp);
+                pline("Your %s feel longer.", makeplural(body_part(LEG)));
+                break;
 	case WATER_WALKING_BOOTS:
 		if (u.uinwater) spoteffects(TRUE);
 		break;
@@ -161,10 +165,14 @@ int Boots_off(void)
 			makeknown(otyp);
 		}
 		break;
+	case JUMPING_BOOTS:
+        	/* jumping is obvious no matter what the situation */
+        	makeknown(otyp);
+                pline("Your %s feel shorter.", makeplural(body_part(LEG)));
+                break;
 	case LOW_BOOTS:
 	case IRON_SHOES:
 	case HIGH_BOOTS:
-	case JUMPING_BOOTS:
 	case KICKING_BOOTS:
 		break;
 	default: impossible(unknown_type, c_boots, otyp);
