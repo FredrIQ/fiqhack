@@ -51,7 +51,7 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"vodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
     {"hodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
     {"bars",	-1,	{0x2261, 0},	0},	/* ≡ equivalence symbol */
-    {"fountain",-1,	{0x00b6, 0},	0},	/* ¶ PILCROW SIGN */
+    {"fountain",-1,	{0x2320, 0},	0},	/* ⌠ top half of integral */
     {"room",	-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"darkroom",-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"corr",	-1,	{0x2591, 0},	0},	/* ░ light shading */
@@ -90,12 +90,9 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"lava",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"water",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"tree",	-1,	{0x03a8, 0},	0},	/* Ψ GREEK CAPITAL LETTER PSI */
-    
-    /* objects */
-    {"boulder", -1,	{0x25C6, 0},	0},	/* ◆ diamond */
-#else
-    {"boulder", -1,	{0x0030, 0},	0},	/* 0 zero */
 #endif
+    /* objects */
+    {"boulder", -1,	{0x0030, 0},	0},	/* 0 zero */
 };
 
 
