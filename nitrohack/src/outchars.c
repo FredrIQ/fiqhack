@@ -54,8 +54,8 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"darkroom",-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"corr",	-1,	{0x2591, 0},	0},	/* ░ light shading */
     {"litcorr",	-1,	{0x2592, 0},	0},	/* ▒ medium shading */
-    {"upladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
-    {"dnladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
+    {"upladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
+    {"dnladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
     {"altar",	-1,	{0x03A9, 0},	0},	/* Ω GREEK CAPITAL LETTER OMEGA */
     {"grave",	-1,	{0x2020, 0},	0},	/* † DAGGER */
     {"ice",	-1,	{0x00B7, 0},	0},	/* · centered dot */
