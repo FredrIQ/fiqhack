@@ -163,6 +163,7 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
     const char *sendkey;
     char key[BUFSZ];
     void *iter;
+    int retry_count = 3;
     
     if (conn_err && ex_jmp_buf_valid)
 	longjmp(ex_jmp_buf, 1);
@@ -175,12 +176,12 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	return NULL;
     
     sendkey = msgtype;
-    do {
+    while (1) {
 	/* send the message */
 	jobj = json_pack("{sO}", sendkey, jmsg); /* keep the reference to jmsg */
 	if (!send_json_msg(jobj)) {
 	    json_decref(jobj);
-	    if (restart_connection())
+	    if (retry_count-- > 0 && restart_connection())
 		continue;
 	    goto error;
 	}
@@ -192,7 +193,7 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	    /* If no data is received, there must have been a network error.
 	     * Presumably the send didn't succeed either and the sent data
 	     * vanished, so reconnect and retry both send and receive. */
-	    if (restart_connection())
+	    if (retry_count-- > 0 && restart_connection())
 		continue;
 	    goto error;
 	}
@@ -231,13 +232,13 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	    jmsg = handle_netcmd(key, jobj);
 	    json_decref(jobj);
 	    sendkey = key;
-	    if (!jmsg)
+	    if (!jmsg) /* this only happens after server errors */
 		return NULL;
 	    /* send the callback data to the server and get a new response */
 	    continue;
 	}
 	break; /* only loop via continue */
-    } while (1);
+    }
     
     return jobj;
     
@@ -388,9 +389,12 @@ static int do_connect(const char *host, int port, const char *user, const char *
     }
     json_decref(jmsg);
     
-    strncpy(saved_hostname, host, sizeof(saved_hostname));
-    strncpy(saved_username, user, sizeof(saved_username));
-    strncpy(saved_password, pass, sizeof(saved_password));
+    if (host != saved_hostname)
+	strncpy(saved_hostname, host, sizeof(saved_hostname));
+    if (user != saved_username)
+	strncpy(saved_username, user, sizeof(saved_username));
+    if (pass != saved_password)
+	strncpy(saved_password, pass, sizeof(saved_password));
     saved_port = port;
     conn_err = FALSE;
     net_active = TRUE;
