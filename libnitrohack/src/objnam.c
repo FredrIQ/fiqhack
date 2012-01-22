@@ -3,6 +3,65 @@
 
 #include "hack.h"
 
+/* Summary of all NetHack's object naming functions:
+   obj_typename(otyp): entry in discovery list, from player's point of view
+   "scroll of mail (KIRJE)"
+   simple_typename(otyp): object type's actual name or appearance, ignoring
+   user-assigned names
+   "scroll of mail" (identified); "scroll labeled KIRJE" (unidentified)
+   distant_name(obj,func): name object as per func, except as if it isn't
+   currently examinable by the user
+   "potion", "scroll", "sword", "orange potion" (if previously viewed)
+   fruitname(juice): name of material fruit is made from, or fruit juice
+   e.g. with "slice of pizza": "pizza" (juice==0), "pizza juice" (juice == 1)
+   xname(obj): general-use name as if player is viewing an object now
+   "potions of sickness", "potion" (blind), "corpse", "orange potion" (unIDed)
+   mshot_xname(obj): name of fired missile in a volley
+   "the 2nd dagger", "the 4th arrow"
+   doname(obj): fully detailed name of object or stack as seen in inventory
+   "the blessed Amulet of Yendor (being worn)", "a poisoned +4 dagger"
+   corpse_xname(obj, ignore_oquan): describe a corpse or pile of corpses
+   "horse corpse", "horse corpses"
+   cxname(obj): xname, but with specific corpse naming
+   "potion of sickness", "horse corpses"
+   killer_xname(obj): name from the game's view, minus info like BCU and greasedness
+   "scroll of mail" (even if un-IDed)
+   singular(obj,func): name one object of a stack as per func
+   an(str): prefix "a" or "an" to str, if necessary
+   An(str): prefix "A" or "An" to str, if necessary
+   the(str): prefix "the" or "The" to str, if necessary
+   The(str): prefix "the" or "The" to str, if necessary
+   aobjnam(obj, verb): general-purpose name with precise stack sizes, and
+   optional combined verb; otherwise like cxname
+   "4 horse corpses", "3 orange potions shatter!", "speed boots burn"
+   Tobjnam(obj, verb): general-purpose name with imprecise stack sizes,
+   prepended "The", and optional combined verb; otherwise like xname
+   "The corpses", "The orange potions shatter!", "The speed boots burn"
+   otense(obj, verb): Conjugate verb as if obj was verbing
+   "shatters" (stack size 1), "shatter" (stack size 2)
+   vtense(subj, verb): Conjgate verb as if subj was verbing
+   "they","shatter" -> "shatter"; "you","shatter" -> "shatters"
+   Doname2(obj): doname() with leading capital
+   "The blessed Amulet of Yendor (being worn)", "A poisoned +4 dagger"
+   yname(obj): like xname(), but incorporates ownership details
+   "your potions called Y", "Medusa's potion of oil", "the apple named X"
+   Yname2(obj): yname() with leading capital
+   "Your potions called Y", "Medusa's potion of oil", "The apple named X"
+   ysimple_name(obj): like simple_typename(), with ownership details
+   "your orange potions", "Medusa's potion of oil", "the apple"
+   Ysimple_name2(obj): ysimple_name() with leading capital
+   "Your orange potions", "Medusa's potion of oil", "The apple"
+   makeplural(str): returns plural version of str
+   "sheep" -> "sheep", "lump of sheep" -> "lumps of sheep", "mumak" -> "mumakil"
+   makesingular(str): opposite of makeplural
+   readobjname(str, default_obj, from_user): convert string to object
+   if "nothing" is given, default_obj is returned
+   cloak_simple_name(cloak): return vague description of given cloak
+   "robe", "wrapping", "apron", "smock", "cloak"
+   mimic_obj_name(monster): return object that mimic is mimicking
+   "gold", "orange", "whatcha-may-callit" (mimic is mimicking a ])
+ */
+
 /* "an uncursed greased partly eaten guardian naga hatchling [corpse]" */
 #define PREFIX	80	/* (56) */
 #define SCHAR_LIM 127
