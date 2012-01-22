@@ -78,7 +78,7 @@ static void ccmd_start_game(json_t *params)
     int role, race, gend, align, mode, fd, ret;
     long t;
     
-    if (json_unpack(params, "{ss,si,si,si,si,si!}", "name", &name, "role", &role,
+    if (json_unpack(params, "{ss,si,si,si,si,si}", "name", &name, "role", &role,
 	"race", &race, "gender", &gend, "alignment", &align, "mode", &mode) == -1)
 	exit_client("Bad set of parameters for start_game");
     
@@ -123,7 +123,7 @@ static void ccmd_restore_game(json_t *params)
     int gid, fd, status;
     char filename[1024];
     
-    if (json_unpack(params, "{si!}", "gameid", &gid) == -1)
+    if (json_unpack(params, "{si}", "gameid", &gid) == -1)
 	exit_client("Bad set of parameters for restore_game");
     
     if (!db_get_game_filename(user_info.uid, gid, filename, 1024) ||
@@ -152,7 +152,7 @@ static void ccmd_exit_game(json_t *params)
 {
     int etype, status;
     
-    if (json_unpack(params, "{si!}", "exit_type", &etype) == -1)
+    if (json_unpack(params, "{si}", "exit_type", &etype) == -1)
 	exit_client("Bad set of parameters for exit_game");
     
     status = nh_exit_game(etype);
@@ -250,10 +250,10 @@ static void ccmd_view_start(json_t *params)
     char filename[1024];
     json_t *jmsg;
     
-    if (json_unpack(params, "{si!}", "gameid", &gid) == -1)
+    if (json_unpack(params, "{si}", "gameid", &gid) == -1)
 	exit_client("Bad set of parameters for view_start");
     
-    if (!db_get_game_filename(user_info.uid, gid, filename, 1024) ||
+    if (!db_get_game_filename(0, gid, filename, 1024) ||
 	(fd = open(filename, O_RDWR)) == -1) {
 	jmsg = json_pack("{si}", "return", FALSE);
 	client_msg("view_start", jmsg);
@@ -276,7 +276,7 @@ static void ccmd_view_step(json_t *params)
     struct nh_replay_info info;
     json_t *jmsg;
     
-    if (json_unpack(params, "{si,si,s:{si,si,si,si}!}", "action", &action,
+    if (json_unpack(params, "{si,si,s:{si,si,si,si}}", "action", &action,
 		    "count", &count, "info", "actions", &info.actions,
 		    "max_actions", &info.max_actions, "moves", &info.moves,
 		    "max_moves", &info.max_moves) == -1)
@@ -307,17 +307,19 @@ static void ccmd_view_finish(json_t *params)
 
 static void ccmd_list_games(json_t *params)
 {
-    int completed, limit, count, i, fd;
+    int completed, limit, show_all, count, i, fd;
     struct gamefile_info *files;
     enum nh_log_status status;
     struct nh_game_info gi;
     json_t *jarr, *jobj;
     
-    if (json_unpack(params, "{si,si!}", "completed", &completed, "limit", &limit) == -1)
+    if (json_unpack(params, "{si,si}", "completed", &completed, "limit", &limit) == -1)
 	exit_client("Bad parameters for list_games");
+    if (json_unpack(params, "{si}", "show_all", &show_all) == -1)
+	show_all = 0;
     
     /* step 1: get a list of files from the db. */
-    files = db_list_games(completed, user_info.uid, limit, &count);
+    files = db_list_games(completed, show_all ? 0 : user_info.uid, limit, &count);
     
     jarr = json_array();
     /* step 2: get extra info for each file. */
@@ -489,7 +491,7 @@ static void ccmd_get_topten(json_t *params)
     int listlen, top, around, own, i;
     json_t *jmsg, *jarr, *jobj;
     
-    if (json_unpack(params, "{ss,si,si,si!}",
+    if (json_unpack(params, "{ss,si,si,si}",
 	"player", &player, "top", &top, "around", &around, "own", &own) == -1)
 	exit_client("Bad parameters for get_topten");
     
@@ -562,7 +564,7 @@ static void ccmd_get_obj_commands(json_t *params)
     json_t *jarr, *jobj;
     struct nh_cmd_desc *cmdlist;
 
-    if (json_unpack(params, "{si!}", "invlet", &invlet) == -1)
+    if (json_unpack(params, "{si}", "invlet", &invlet) == -1)
 	exit_client("Bad parameters for get_obj_commands");
     cmdlist = nh_get_object_commands(&cmdcount, invlet);
     
@@ -586,7 +588,7 @@ static void ccmd_describe_pos(json_t *params)
     int x, y;
     json_t *jmsg;
 
-    if (json_unpack(params, "{si,si!}", "x", &x, "y", &y) == -1)
+    if (json_unpack(params, "{si,si}", "x", &x, "y", &y) == -1)
 	exit_client("Bad parameters for describe_pos");
     
     nh_describe_pos(x, y, &db);
@@ -684,7 +686,7 @@ static void ccmd_set_option(json_t *params)
     struct nh_autopickup_rules ar = {NULL, 0};
     struct nh_autopickup_rule *r;
     
-    if (json_unpack(params, "{ss,so,si!}", "name", &optname, "value", &joval,
+    if (json_unpack(params, "{ss,so,si}", "name", &optname, "value", &joval,
 	"isstr", &isstr) == -1)
 	exit_client("Bad parameters for set_option");
     
@@ -759,7 +761,7 @@ static void ccmd_get_options(json_t *params)
     const struct nh_option_desc *options;
     json_t *jmsg, *jarr;
     
-    if (json_unpack(params, "{si!}", "list", &list) == -1)
+    if (json_unpack(params, "{si}", "list", &list) == -1)
 	exit_client("Bad parameters for get_options");
     
     jarr = json_array();
@@ -776,7 +778,7 @@ static void ccmd_get_pl_prompt(json_t *params)
     int rolenum, racenum, gendnum, alignnum;
     char buf[1024], *bp;
     
-    if (json_unpack(params, "{si,si,si,si!}", "role", &rolenum, "race",
+    if (json_unpack(params, "{si,si,si,si}", "role", &rolenum, "race",
 	&racenum, "gend", &gendnum, "align", &alignnum) == -1)
 	exit_client("Bad parameters for get_pl_prompt");
     
@@ -791,7 +793,7 @@ static void ccmd_get_root_pl_prompt(json_t *params)
     char buf[1024];
     const char *bp;
     
-    if (json_unpack(params, "{si,si,si,si!}", "role", &rolenum, "race",
+    if (json_unpack(params, "{si,si,si,si}", "role", &rolenum, "race",
 	&racenum, "gend", &gendnum, "align", &alignnum) == -1)
 	exit_client("Bad parameters for get_root_pl_prompt");
     

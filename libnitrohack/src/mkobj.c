@@ -1366,7 +1366,7 @@ void set_obj_level(struct level *lev, struct obj *obj)
     struct obj *cobj;
     
     obj->olev = lev;
-    for (cobj = obj->cobj; cobj; obj = obj->nobj)
+    for (cobj = obj->cobj; cobj; cobj = cobj->nobj)
 	set_obj_level(lev, cobj);
 }
 

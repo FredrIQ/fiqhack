@@ -644,10 +644,11 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 	    client->unsent_data = NULL;
 	    client->unsent_data_size = 0;
 		
-	    
+	
 	} else { /* it is possible to receive or send data */
 	    if (event_mask & EPOLLIN) {
 		do {
+		    write_ret = -2;
 		    read_ret = read(client->sock, buf, sizeof(buf));
 		    if (read_ret == -1 && errno == EINTR)
 			continue;
@@ -664,8 +665,10 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 			write_count += write_ret;
 		    } while (write_count < read_ret);
 		} while (read_ret == sizeof(buf) && write_ret != -1);
-		if (read_ret <= 0 || write_ret == -1)
+		if (read_ret <= 0 || write_ret == -1) {
+		    log_msg("data transfer error for game process %d (read = %d, write = %d): %s", client->pid, read_ret, write_ret, strerror(errno));
 		    cleanup_game_process(client, epfd);
+		}
 	    }
 	    if ((event_mask & EPOLLOUT) && client->unsent_data) {
 		write_count = send_to_client(client, NULL, 0);
