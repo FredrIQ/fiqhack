@@ -79,6 +79,7 @@ void setup_signals(void)
     segvaction.sa_handler = signal_segv;
     segvaction.sa_mask = set;
     segvaction.sa_flags = 0;
+    memset(&ignoreaction, 0, sizeof(struct sigaction));
     ignoreaction.sa_handler = SIG_IGN;
     
     /* terminate safely in response to SIGINT and SIGTERM */

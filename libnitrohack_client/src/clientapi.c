@@ -24,6 +24,7 @@ void nhnet_lib_init(const struct nh_window_procs *winprocs)
 #else
     /* ignore SIGPIPE */
     struct sigaction ignoreaction;
+    memset(&ignoreaction, 0, sizeof(struct sigaction));
     ignoreaction.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &ignoreaction, &oldaction);
 #endif
