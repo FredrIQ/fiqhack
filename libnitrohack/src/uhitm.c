@@ -403,8 +403,22 @@ static boolean known_hitum(struct monst *mon, int *mhit, const struct attack *ua
 	    if (flags.verbose) pline("Your bloodthirsty blade attacks!");
 	}
 
-	if (!*mhit) {
-	    missum(mon, uattk);
+        /* AceHack patch: trying to hit a floating eye screws up if
+           it can see, you can see it, and you don't have free
+           action; this is considerably less evil to the player than
+           the vanilla alternative. */
+        if (mon->data == &mons[PM_FLOATING_EYE] && canseemon(mon) &&
+            !Free_action && !Reflecting && mon->mcansee) {
+            *mhit = 0;
+            pline("%s glares at you.", Monnam(mon));
+            /* can't keep this short enough to be a oneliner, it seems;
+               so no need to try to keep this and the previous message
+               below 80 between them. (On 80x24, this also causes a
+               suitably scary --More-- after the first message.) */
+            pline("You manage to look away just in time; "
+                  "but that disturbs your aim, and you miss.");
+        } else if(!*mhit) {
+            missum(mon, uattk);
 	} else {
 	    int oldhp = mon->mhp;
 	    int x = u.ux + dx;
@@ -417,7 +431,7 @@ static boolean known_hitum(struct monst *mon, int *mhit, const struct attack *ua
 	    /* we hit the monster; be careful: it might die or
 	       be knocked into a different location */
 	    notonhead = (mon->mx != x || mon->my != y);
-	    malive = hmon(mon, uwep, 0);
+            malive = hmon(mon, uwep, 0);
 	    /* this assumes that Stormbringer was uwep not uswapwep */ 
 	    if (malive && u.twoweap && !override_confirmation &&
 		    m_at(level, x, y) == mon)
@@ -2205,9 +2219,9 @@ int passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 			    pline("You momentarily stiffen under %s gaze!",
 				    s_suffix(mon_nam(mon)));
 			else {
-			    pline("You are frozen by %s gaze!",
-				  s_suffix(mon_nam(mon)));
-			    nomul((ACURR(A_WIS) > 12 || rn2(4)) ? -tmp : -127, "frozen by a monster's gaze");
+                            /* In AceHack, this is now a forced miss rather than
+                               causing paralysis; thus no further passive
+                               effects are desired here */
 			}
 		    } else {
 			pline("%s cannot defend itself.",

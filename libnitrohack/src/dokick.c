@@ -56,6 +56,17 @@ static void kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
 	    return;
 	}
 
+        /* in AceHack, floating eyes are immune to kicks if their
+           passive would fire, just like they're immune to other
+           melee damage. "it" here because the floating eye has been
+           named already in the previous message. */
+        if (mon->data == &mons[PM_FLOATING_EYE] && canseemon(mon) &&
+            !Free_action && !Reflecting && mon->mcansee) {
+            pline("But it glares at you, making your kick go wild!");
+            return;
+        }
+
+
 	if (mon->m_ap_type) seemimic(mon);
 
 	check_caitiff(mon);
