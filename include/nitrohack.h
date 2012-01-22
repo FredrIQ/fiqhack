@@ -7,6 +7,11 @@
 #ifndef NITROHACK_H
 #define NITROHACK_H
 
+/* NitroHack 4.0.1 */
+#define VERSION_MAJOR	4
+#define VERSION_MINOR	0
+#define PATCHLEVEL	1
+
 #include "nitrohack_types.h"
 
 #if !defined(STATIC_BUILD)

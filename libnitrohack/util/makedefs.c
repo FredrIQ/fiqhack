@@ -25,6 +25,7 @@
 #include "dlb.h"
 
 /* version information */
+#include "nitrohack.h"
 #include "patchlevel.h"
 
 #define rewind(fp) fseek((fp),0L,SEEK_SET)	/* guarantee a return value */
