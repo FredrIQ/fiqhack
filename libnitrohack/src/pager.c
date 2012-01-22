@@ -373,7 +373,7 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
     describe_bg(x, y, level->locations[x][y].mem_bg, bufs->bgdesc);
     
     if (level->locations[x][y].mem_trap)
-	strcpy(bufs->trapdesc, trapexplain[level->locations[x][y].mem_trap]);
+	strcpy(bufs->trapdesc, trapexplain[level->locations[x][y].mem_trap - 1]);
     
     bufs->objcount = describe_object(x, y, level->locations[x][y].mem_obj - 1,
 				     bufs->objdesc);
