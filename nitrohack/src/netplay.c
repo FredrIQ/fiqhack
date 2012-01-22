@@ -50,7 +50,7 @@ void net_loadgame(void)
     struct nh_menuitem *items;
     int size, icount, id, i, n, ret, pick[1];
     
-    gamelist = nhnet_list_games(FALSE, &size);
+    gamelist = nhnet_list_games(FALSE, FALSE, &size);
     if (!size) {
 	curses_msgwin("No saved games found.");
 	return;
@@ -97,42 +97,37 @@ void net_replay(void)
     char buf[BUFSZ];
     struct nhnet_game *gamelist;
     struct nh_menuitem *items;
-    int pick[1], allow_type[2];
-    int i, n, icount, size, filecount, id, gameid, want_done;
+    int pick[1];
+    int i, n, icount, size, gamecount, gameid, want_done, show_all;
     
     want_done = TRUE;
-    allow_type[0] = allow_type[1] = 1;
+    show_all = FALSE;
     while (1) {
-	gamelist = nhnet_list_games(want_done, &filecount);
-	/* make sure there are some games to show */
-	if (!filecount) {
-	    if (!want_done) {
-		curses_msgwin("There are no saved games to replay.");
-		allow_type[0] = 0;
-	    } else {
-		curses_msgwin("There are no completed games to replay.");
-		allow_type[1] = 0;
-	    }
-	    want_done = !want_done;
-	    if (!allow_type[want_done]) return;
-	    continue;
-	}
+	gamelist = nhnet_list_games(want_done, show_all, &gamecount);
 	
 	icount = 0;
-	size = filecount + 2;
+	size = gamecount + 5;
 	items = malloc(size * sizeof(struct nh_menuitem));
 	
+	if (!gamecount)
+	    add_menu_txt(items, size, icount, "(No games in this list)", MI_NORMAL);
+	
 	/* add all the files to the menu */
-	for (i = 0; i < filecount; i++) {
+	for (i = 0; i < gamecount; i++) {
 	    describe_game(buf, gamelist[i].status, &gamelist[i].i);
-	    id = (gamelist[i].status == LS_IN_PROGRESS) ? 0 : gamelist[i].gameid;
-	    add_menu_item(items, size, icount, id, buf, 0, FALSE);
+	    add_menu_item(items, size, icount, gamelist[i].gameid, buf, 0, FALSE);
 	}
 	
-	if (want_done == 1 && allow_type[0])
-	    add_menu_item(items, size, icount, -1, "View saved games instead", 0, FALSE);
-	else if (want_done == 0 && allow_type[1])
-	    add_menu_item(items, size, icount, -1, "View saved games instead", 0, FALSE);
+	add_menu_txt(items, size, icount, "", MI_NORMAL);
+	if (want_done)
+	    add_menu_item(items, size, icount, -1, "View saved games instead", '!', FALSE);
+	else
+	    add_menu_item(items, size, icount, -1, "View completed games instead", '!', FALSE);
+	
+	if (show_all)
+	    add_menu_item(items, size, icount, -2, "View only your games", '#', FALSE);
+	else
+	    add_menu_item(items, size, icount, -2, "View games from all players", '#', FALSE);
 	
 	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, pick);
 	free(items);
@@ -141,6 +136,9 @@ void net_replay(void)
 	
 	if (pick[0] == -1) {
 	    want_done = !want_done;
+	    continue;
+	} else if (pick[0] == -2) {
+	    show_all = !show_all;
 	    continue;
 	} else
 	    gameid = pick[0];

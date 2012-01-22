@@ -24,6 +24,7 @@ void nhnet_lib_init(const struct nh_window_procs *winprocs)
 #else
     /* ignore SIGPIPE */
     struct sigaction ignoreaction;
+    memset(&ignoreaction, 0, sizeof(struct sigaction));
     ignoreaction.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &ignoreaction, &oldaction);
 #endif
@@ -78,7 +79,7 @@ nh_bool nhnet_exit_game(int exit_type)
 }
 
 
-struct nhnet_game *nhnet_list_games(int done, int *count)
+struct nhnet_game *nhnet_list_games(int done, int show_all, int *count)
 {
     int i, has_amulet;
     json_t *jmsg, *jarr, *jobj;
@@ -89,7 +90,7 @@ struct nhnet_game *nhnet_list_games(int done, int *count)
     if (!api_entry())
 	return NULL;
     
-    jmsg = json_pack("{si,si}", "limit", 0, "completed", done);
+    jmsg = json_pack("{si,si,si}", "limit", 0, "completed", done, "show_all", show_all);
     jmsg = send_receive_msg("list_games", jmsg);
     if (json_unpack(jmsg, "{so!}", "games", &jarr) == -1 || !json_is_array(jarr)) {
 	print_error("Incorrect return object in nhnet_list_games");
@@ -249,6 +250,7 @@ nh_bool nhnet_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 		    &info->max_actions, "moves", &info->moves, "max_moves",
 		    &info->max_moves) == -1) {
 	print_error("Incorrect return object in nhnet_view_replay_step");
+	ret = 0;
     } else
 	strncpy(info->nextcmd, nextcmd, sizeof(info->nextcmd) - 1);
     

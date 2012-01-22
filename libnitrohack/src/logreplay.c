@@ -831,14 +831,14 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 	return FALSE;
     
     memset(info, 0, sizeof(struct nh_replay_info));
-    if (nh_get_savegame_status(fd, &gi) == LS_INVALID) {
+    if (logfile != -1 || nh_get_savegame_status(fd, &gi) == LS_INVALID) {
 	api_exit();
 	return FALSE;
     }
     
     program_state.restoring = TRUE;
     iflags.disable_log = TRUE;
-    replay_set_logfile(fd);
+    logfile = fd;
     replay_begin();
     replay_read_newgame(&turntime, &playmode, namebuf);
     replay_setup_windowprocs(rwinprocs);
@@ -848,8 +848,6 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     program_state.restoring = FALSE;
     program_state.viewing = TRUE;
     replay_restore_windowprocs();
-    
-    unlock_fd(fd); /* we won't be writing to the file, and don't mind if anyone else does */
     
     /* the win_update_screen proc in the replay_windowprocs does nothing, so
      * flush (again) after switching back to regular window procs */

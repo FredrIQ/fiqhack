@@ -93,8 +93,8 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                                "monster. Finish with one of .,;:");
     wrefresh(statuswin);
     
-    cx = *x >= 1 ? *x : 1;
-    cy = *y >= 0 ? *y : 0;
+    cx = *x >= 1 ? *x : player.x;
+    cy = *y >= 0 ? *y : player.y;
     wmove(mapwin, cy, cx-1);
     
     while (1) {
