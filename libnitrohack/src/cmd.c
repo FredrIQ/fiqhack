@@ -843,84 +843,106 @@ void enlightenment(int final)
  */
 static boolean minimal_enlightenment(void)
 {
-	int genidx, n, i = 0;
+	int genidx, n;
 	char buf[BUFSZ], buf2[BUFSZ];
-	static const char fmtstr[] = "%s:\t%-12s";
-	static const char deity_fmtstr[] = "%s\t%s";
-	struct nh_menuitem items[18];
+	static const char fmtstr[] = "%-10s: %-12s (originally %s)";
+	static const char fmtstr_noorig[] = "%-10s: %s";
+	static const char deity_fmtstr[] = "%-17s%s";
+	struct menulist menu;
+
+        init_menulist(&menu);
 
 	buf[0] = buf2[0] = '\0';
-	set_menuitem(&items[i++], 0, MI_HEADING, "Starting", 0, FALSE);
+	add_menuheading(&menu, "Stats");
 
-	/* Starting name, race, role, gender */
-	sprintf(buf, fmtstr, "name", plname);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	sprintf(buf, fmtstr, "race", urace.noun);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	sprintf(buf, fmtstr, "role",
-		(u.initgend && urole.name.f) ? urole.name.f : urole.name.m);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	sprintf(buf, fmtstr, "gender", genders[u.initgend].adj);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-
-	/* Starting alignment */
-	sprintf(buf, fmtstr, "alignment", align_str(u.ualignbase[A_ORIGINAL]));
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-
-	/* Current name, race, role, gender */
-	set_menuitem(&items[i++], 0, MI_NORMAL, "", 0, FALSE);
-	set_menuitem(&items[i++], 0, MI_HEADING, "Current", 0, FALSE);
-	sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	if (Upolyd)
-	    sprintf(buf, fmtstr, "role (base)",
-		(u.mfemale && urole.name.f) ? urole.name.f : urole.name.m);
-	else
-	    sprintf(buf, fmtstr, "role",
-		(flags.female && urole.name.f) ? urole.name.f : urole.name.m);
-	
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	/* don't want poly_gender() here; it forces `2' for non-humanoids */
+	/* Starting and current name, race, role, gender, alignment */
+	sprintf(buf, fmtstr_noorig, "name", plname);
+	add_menutext(&menu, buf);
+	sprintf(buf, fmtstr, "race", urace.noun,
+                Upolyd ? youmonst.data->mname : urace.noun);
+	add_menutext(&menu, buf);
+	sprintf(buf, fmtstr_noorig, "role",
+		((Upolyd ? u.mfemale : flags.female) && urole.name.f) ?
+                urole.name.f : urole.name.m);
+	add_menutext(&menu, buf);
 	genidx = is_neuter(youmonst.data) ? 2 : flags.female;
-	sprintf(buf, fmtstr, "gender", genders[genidx].adj);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	if (Upolyd && (int)u.mfemale != genidx) {
-	    sprintf(buf, fmtstr, "gender (base)", genders[u.mfemale].adj);
-	    set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
-	}
-
-	/* Current alignment */
-	sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type));
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
+	sprintf(buf, fmtstr, "gender", genders[u.initgend].adj, genders[genidx].adj);
+	add_menutext(&menu, buf);
+	sprintf(buf, fmtstr, "alignment", align_str(u.ualignbase[A_ORIGINAL]),
+                align_str(u.ualign.type));
+	add_menutext(&menu, buf);
 
 	/* Deity list */
-	set_menuitem(&items[i++], 0, MI_NORMAL, "", 0, FALSE);
-	set_menuitem(&items[i++], 0, MI_HEADING, "Deities", 0, FALSE);
+        add_menutext(&menu, "");
+        add_menuheading(&menu, "Deities");
 	sprintf(buf2, deity_fmtstr, align_gname(A_CHAOTIC),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type
 		&& u.ualign.type == A_CHAOTIC) ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_CHAOTIC)       ? " (s)" :
 	    (u.ualign.type   == A_CHAOTIC)       ? " (c)" : "");
-	sprintf(buf, fmtstr, "Chaotic", buf2);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
+	sprintf(buf, fmtstr_noorig, "Chaotic", buf2);
+	add_menutext(&menu, buf);
 
 	sprintf(buf2, deity_fmtstr, align_gname(A_NEUTRAL),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type
 		&& u.ualign.type == A_NEUTRAL) ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_NEUTRAL)       ? " (s)" :
 	    (u.ualign.type   == A_NEUTRAL)       ? " (c)" : "");
-	sprintf(buf, fmtstr, "Neutral", buf2);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
+	sprintf(buf, fmtstr_noorig, "Neutral", buf2);
+	add_menutext(&menu, buf);
 
 	sprintf(buf2, deity_fmtstr, align_gname(A_LAWFUL),
 	    (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
 		u.ualign.type == A_LAWFUL)  ? " (s,c)" :
 	    (u.ualignbase[A_ORIGINAL] == A_LAWFUL)        ? " (s)" :
 	    (u.ualign.type   == A_LAWFUL)        ? " (c)" : "");
-	sprintf(buf, fmtstr, "Lawful", buf2);
-	set_menuitem(&items[i++], 0, MI_NORMAL, buf, 0, FALSE);
+	sprintf(buf, fmtstr_noorig, "Lawful", buf2);
+	add_menutext(&menu, buf);
 
-	n = display_menu(items, i, "Base Attributes", PICK_NONE, NULL);
+        /* Intrinsic list
+           This lists only intrinsics that produce messages when gained
+           and/or lost, to avoid giving away information not in vanilla
+           NetHack. */
+        add_menutext(&menu, "");
+        add_menuheading(&menu, "Pecularities");
+        n = menu.icount;
+
+        /* Resistances */
+        if (HFire_resistance) add_menutext(&menu, "You are fire resistant.");
+        if (HCold_resistance) add_menutext(&menu, "You are cold resistant.");
+        if (HSleep_resistance) add_menutext(&menu, "You are sleep resistant.");
+        if (HDisint_resistance) add_menutext(&menu, "You are disintegration-resistant.");
+        if (HShock_resistance) add_menutext(&menu, "You are shock resistant.");
+        if (HPoison_resistance) add_menutext(&menu, "You are poison resistant.");
+        if (HDrain_resistance) add_menutext(&menu, "You are level-drain resistant.");
+        if (HSick_resistance) add_menutext(&menu, "You are immune to sickness.");
+        /* Senses */
+        if (HSee_invisible) add_menutext(&menu, "You see invisible.");
+        if (HTelepat) add_menutext(&menu, "You are telepathic.");
+        if (HWarning) add_menutext(&menu, "You are warned.");
+        if (HSearching) add_menutext(&menu, "You have automatic searching.");
+        if (HInfravision) add_menutext(&menu, "You have infravision.");
+        /* Appearance, behaviour */
+        if (HInvis && Invisible) add_menutext(&menu, "You are invisible.");
+        if (HInvis && !Invisible) add_menutext(&menu, "You are invisible to others.");
+        if (HStealth) add_menutext(&menu, "You are stealthy.");
+        if (HAggravate_monster) add_menutext(&menu, "You aggravte monsters.");
+        if (HConflict) add_menutext(&menu, "You cause conflict.");
+        /* Movement */
+        if (HJumping) add_menutext(&menu, "You can jump.");
+        if (HTeleportation) add_menutext(&menu, "You can teleport.");
+        if (HTeleport_control) add_menutext(&menu, "You have teleport control.");
+        if (HSwimming) add_menutext(&menu, "You can swim.");
+        if (HMagical_breathing) add_menutext(&menu, "You can survive without air.");
+        if (HProtection) add_menutext(&menu, "You are protected.");
+        if (HPolymorph) add_menutext(&menu, "You are polymorhing.");
+        if (HPolymorph_control) add_menutext(&menu, "You have polymorph control.");
+        if (HFast) add_menutext(&menu, "You are fast.");
+        if (n == menu.icount) add_menutext(&menu, "You are rather mundane.");
+
+	n = display_menu(menu.items, menu.icount, "Your Intrinsic Statistics",
+                         PICK_NONE, NULL);
+        free(menu.items);
 	return n != -1;
 }
 
