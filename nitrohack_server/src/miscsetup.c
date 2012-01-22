@@ -51,10 +51,20 @@ static void signal_usr2(int ignored)
 }
 
 
+static void signal_segv(int ignored)
+{
+    log_msg("BUG: caught SIGSEGV! Exit.");
+    if (user_info.uid)
+	exit_client("Fatal: Programming error on the server. Sorry about that.");
+    exit(1);
+}
+
+
 void setup_signals(void)
 {
     struct sigaction quitaction;
     struct sigaction usr2action;
+    struct sigaction segvaction;
     struct sigaction ignoreaction;
     sigset_t set;
     
@@ -66,6 +76,9 @@ void setup_signals(void)
     usr2action.sa_handler = signal_usr2;
     usr2action.sa_mask = set;
     usr2action.sa_flags = 0;
+    segvaction.sa_handler = signal_segv;
+    segvaction.sa_mask = set;
+    segvaction.sa_flags = 0;
     ignoreaction.sa_handler = SIG_IGN;
     
     /* terminate safely in response to SIGINT and SIGTERM */
@@ -75,6 +88,9 @@ void setup_signals(void)
     /* SIGUSR2 sends a message to connected clients */
     sigaction(SIGUSR2, &usr2action, NULL);
     sigaction(SIGUSR1, &usr2action, NULL); /* extra */
+
+    /* catch SIGSEGV to log an error message before exiting */
+    sigaction(SIGSEGV, &segvaction, NULL);
     
     /* don't need SIGPIPE, all return values from read+write are checked */
     sigaction(SIGPIPE, &ignoreaction, NULL);
