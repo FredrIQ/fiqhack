@@ -64,7 +64,7 @@ extern const char * const killed_by_prefix[];	/* from topten.c */
 /* "#quit" command or keyboard interrupt */
 int done2(void)
 {
-	if (yn("Really quit?") == 'n') {
+	if (yn("Really abandon this game and delete its save file?") == 'n') {
 		flush_screen();
 		if (multi > 0) nomul(0, NULL);
 		if (multi == 0) {

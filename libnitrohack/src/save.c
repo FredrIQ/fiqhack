@@ -21,16 +21,30 @@ static void freefruitchn(void);
 
 int dosave(void)
 {
-	if (yn("Really save?") == 'n') {
-		if (multi > 0) nomul(0, NULL);
+	int n, selected[1];
+        struct menulist menu;
+
+        init_menulist(&menu);
+        add_menuitem(&menu, 1, "Quicksave and exit the game", 'y', FALSE);
+        add_menuitem(&menu, 2, "Abandon this game and delete its save file", '!', FALSE);
+        add_menuitem(&menu, 3, "Continue playing", 'n', FALSE);
+        n = display_menu(menu.items, menu.icount, "Do you want to stop playing?",
+                         PICK_ONE, selected);
+        free(menu.items);
+        if (n) n = selected[0]; else n = 3;
+
+	if (n == 3) {
+            if (multi > 0) nomul(0, NULL);
+	} else if (n == 1) {
+	    pline("Saving...");
+	    if (dosave0(FALSE)) {
+		program_state.something_worth_saving = 0;
+		u.uhp = -1;		/* universal game's over indicator */
+		terminate();
+	    } else doredraw();
 	} else {
-		pline("Saving...");
-		if (dosave0(FALSE)) {
-			program_state.something_worth_saving = 0;
-			u.uhp = -1;		/* universal game's over indicator */
-			terminate();
-		} else doredraw();
-	}
+            return done2();
+        }
 	return 0;
 }
 
