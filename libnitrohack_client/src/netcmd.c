@@ -89,8 +89,6 @@ json_t *handle_netcmd(const char *key, json_t *jmsg)
     
     if (!netcmd_list[i].name)
 	print_error("Unknown command received from server");
-    else if (!ret_msg)
-	print_error("Internal error: didn't generate a response where one was expected.");
     
     return ret_msg;
 }
