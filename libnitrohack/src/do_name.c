@@ -250,9 +250,9 @@ int do_naming(void)
 
 	init_menulist(&menu);
 
-	add_menuitem(&menu, 1, "Name a monster", 0, FALSE);
-	add_menuitem(&menu, 2, "Name an individual item", 0, FALSE);
-	add_menuitem(&menu, 3, "Name all items of a certain type", 0, FALSE);
+	add_menuitem(&menu, 1, "Name a monster", 'C', FALSE);
+	add_menuitem(&menu, 2, "Name an individual item", 'y', FALSE);
+	add_menuitem(&menu, 3, "Name all items of a certain type", 'n', FALSE);
 
 	n = display_menu(menu.items, menu.icount, "What do you wish to name?",
 			PICK_ONE, selected);
