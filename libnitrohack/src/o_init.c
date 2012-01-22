@@ -210,7 +210,8 @@ static void saveobjclass(struct memfile *mf, struct objclass *ocl)
 	oflags = (ocl->oc_name_known << 31) | (ocl->oc_merge << 30) | (ocl->oc_uses_known << 29) |
 	         (ocl->oc_pre_discovered << 28) | (ocl->oc_magic << 27) | (ocl->oc_charged << 26) |
 	         (ocl->oc_unique << 25) | (ocl->oc_nowish << 24) | (ocl->oc_big << 23) |
-	         (ocl->oc_tough << 22) | (ocl->oc_dir << 20) | (ocl->oc_material << 15);
+	         (ocl->oc_tough << 22) | (ocl->oc_dir << 20) | (ocl->oc_material << 15) |
+                 (ocl->oc_disclose_id << 14);
 	mwrite32(mf, oflags);
 	mwrite16(mf, ocl->oc_name_idx);
 	mwrite16(mf, ocl->oc_descr_idx);
@@ -284,6 +285,7 @@ static void restobjclass(struct memfile *mf, struct objclass *ocl)
 	ocl->oc_tough = (oflags >> 22) & 1;
 	ocl->oc_dir = (oflags >> 20) & 3;
 	ocl->oc_material = (oflags >> 15) & 31;
+        ocl->oc_disclose_id = (oflags >> 14) & 1;
 	
 	ocl->oc_name_idx = mread16(mf);
 	ocl->oc_descr_idx = mread16(mf);
