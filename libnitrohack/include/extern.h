@@ -483,6 +483,7 @@ extern void losexp(const char *);
 extern void newexplevel(void);
 extern void pluslvl(boolean);
 extern long rndexp(boolean);
+extern long newuexp(int);
 
 /* ### explode.c ### */
 

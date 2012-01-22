@@ -3,10 +3,9 @@
 
 #include "hack.h"
 
-static long newuexp(int);
 static int enermod(int);
 
-static long newuexp(int lev)
+long newuexp(int lev)
 {
 	if (lev < 10) return 10L * (1L << lev);
 	if (lev < 20) return 10000L * (1L << (lev - 10));

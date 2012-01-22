@@ -858,19 +858,26 @@ static boolean minimal_enlightenment(void)
 	/* Starting and current name, race, role, gender, alignment */
 	sprintf(buf, fmtstr_noorig, "name", plname);
 	add_menutext(&menu, buf);
-	sprintf(buf, fmtstr, "race", urace.noun,
-                Upolyd ? youmonst.data->mname : urace.noun);
+	sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun,
+                urace.noun);
 	add_menutext(&menu, buf);
 	sprintf(buf, fmtstr_noorig, "role",
 		((Upolyd ? u.mfemale : flags.female) && urole.name.f) ?
                 urole.name.f : urole.name.m);
 	add_menutext(&menu, buf);
 	genidx = is_neuter(youmonst.data) ? 2 : flags.female;
-	sprintf(buf, fmtstr, "gender", genders[u.initgend].adj, genders[genidx].adj);
+	sprintf(buf, fmtstr, "gender", genders[genidx].adj, genders[u.initgend].adj);
 	add_menutext(&menu, buf);
-	sprintf(buf, fmtstr, "alignment", align_str(u.ualignbase[A_ORIGINAL]),
-                align_str(u.ualign.type));
+	sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type),
+                align_str(u.ualignbase[A_ORIGINAL]));
 	add_menutext(&menu, buf);
+
+        if (u.ulevel < 30)
+          sprintf(buf, "%-10s: %d (exp: %d, %ld needed)", "level",
+                  u.ulevel, u.uexp, newuexp(u.ulevel));
+        else
+          sprintf(buf, "%-10s: %d (exp: %d)", "level", u.ulevel, u.uexp);
+        add_menutext(&menu, buf);
 
 	/* Deity list */
         add_menutext(&menu, "");
