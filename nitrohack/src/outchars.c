@@ -481,8 +481,10 @@ void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
     
     /* nitrohack color index -> curses color */
     attr = A_NORMAL | extra_attrs;
-    if (ui_flags.color)
-	attr |= curses_color_attr(sym->color);
+    if (ui_flags.color) {
+	attr |= curses_color_attr(sym->color & 0x1F);
+        if (sym->color & 0x20) attr |= A_UNDERLINE;
+    }
     
     /* print it; preferably as unicode */
     if (sym->unichar[0] && ui_flags.unicode) {

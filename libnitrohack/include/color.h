@@ -4,6 +4,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+/* a color code indicating underlining */
+#define HI_ULINE 0x20
 
 /* these can be configured */
 #define HI_OBJ		CLR_MAGENTA
