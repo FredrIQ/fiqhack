@@ -1,5 +1,5 @@
 Name "NitroHack"
-OutFile "NitroHack-4.0.0.exe"
+OutFile "NitroHack-4.0.1.exe"
 InstallDir "$PROGRAMFILES\NitroHack"
 
 ;--------------------------------
@@ -12,6 +12,14 @@ Page instfiles
 Section ""
   SetOutPath $INSTDIR
   File NitroHack\*
+  FileOpen $0 $INSTDIR\record "a"
+  FileClose $0
+  AccessControl::GrantOnFile \
+    "$INSTDIR\record" "(BU)" "GenericRead + GenericWrite"
+  FileOpen $0 $INSTDIR\logfile "a"
+  FileClose $0
+  AccessControl::GrantOnFile \
+    "$INSTDIR\logfile" "(BU)" "GenericRead + GenericWrite"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NitroHack" "DisplayName" "NitroHack"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\NitroHack" "UninstallString" '"$INSTDIR\uninstall.exe"'

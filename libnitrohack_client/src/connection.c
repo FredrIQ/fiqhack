@@ -380,7 +380,7 @@ static int do_connect(const char *host, int port, const char *user, const char *
     }
     in_connect_disconnect = FALSE;
     
-    if (!jmsg || json_unpack(jmsg, "{si,si!}", "return", &authresult,
+    if (!jmsg || json_unpack(jmsg, "{si,si*}", "return", &authresult,
 	"connection", &connection_id) == -1) {
 	if (jmsg)
 	    json_decref(jmsg);
