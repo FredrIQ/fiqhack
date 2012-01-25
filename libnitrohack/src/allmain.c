@@ -259,6 +259,8 @@ boolean nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     set_wear();
     pickup(1);
     
+    log_command_result();
+    
     program_state.game_running = TRUE;
     youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
     post_init_tasks();
