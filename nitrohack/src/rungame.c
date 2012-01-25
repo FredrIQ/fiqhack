@@ -424,7 +424,7 @@ nh_bool loadgame(void)
     if (nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
 	destroy_game_windows();
 	close(fd);
-	if (curses_yn_function("Failed to load the save. Do you wish to delete the file?", "yn", 'n'))
+	if (curses_yn_function("Failed to load the save. Do you wish to delete the file?", "yn", 'n') == 'y')
 	    unlink(filename);
 	return FALSE;
     }
