@@ -60,6 +60,7 @@ typedef wchar_t fnchar;
 # define fnncat(str1, str2, len) wcsncat(str1, str2, len)
 # define fopen(name, mode)  _wfopen(name, L ## mode)
 # define sys_open(name, flags, perm)  _wopen(name, flags | _O_BINARY, perm)
+# define unlink _wunlink
 # define FN(x) (L ## x)
 # define FN_FMT "%ls"
 #endif

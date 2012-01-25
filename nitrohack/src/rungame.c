@@ -203,6 +203,7 @@ void rungame(void)
     create_game_windows();
     if (!nh_start_game(fd, plname, role, race, gend, align, ui_flags.playmode)) {
 	destroy_game_windows();
+	close(fd);
 	return;
     }
     
@@ -421,8 +422,10 @@ nh_bool loadgame(void)
     fd = sys_open(filename, O_RDWR, FILE_OPEN_MASK);
     create_game_windows();
     if (nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
-	curses_msgwin("Failed to restore saved game.");
 	destroy_game_windows();
+	close(fd);
+	if (curses_yn_function("Failed to load the save. Do you wish to delete the file?", "yn", 'n'))
+	    unlink(filename);
 	return FALSE;
     }
     
