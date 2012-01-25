@@ -96,7 +96,7 @@ static struct curses_symdef unicode_graphics_ovr[] = {
 
 
 static nh_bool apply_override_list(struct curses_symdef *list, int len,
-				   const struct curses_symdef *ovr)
+				   const struct curses_symdef *ovr, nh_bool cust)
 {
     int i;
     for (i = 0; i < len; i++)
@@ -107,6 +107,7 @@ static nh_bool apply_override_list(struct curses_symdef *list, int len,
 		list[i].ch = ovr->ch;
 	    if (ovr->color != -1)
 		list[i].color = ovr->color;
+	    list[i].custom = cust;
 	    return TRUE;
 	}
     return FALSE;
@@ -114,7 +115,7 @@ static nh_bool apply_override_list(struct curses_symdef *list, int len,
 
 
 static void apply_override(struct curses_drawing_info *di,
-			   const struct curses_symdef *ovr, int olen)
+			   const struct curses_symdef *ovr, int olen, nh_bool cust)
 {
     int i;
     nh_bool ok;
@@ -122,18 +123,18 @@ static void apply_override(struct curses_drawing_info *di,
     for (i = 0; i < olen; i++) {
 	ok = FALSE;
 	/* the override will effect exactly one of the symbol lists */
-	ok |= apply_override_list(di->bgelements, di->num_bgelements, &ovr[i]);
-	ok |= apply_override_list(di->traps, di->num_traps, &ovr[i]);
-	ok |= apply_override_list(di->objects, di->num_objects, &ovr[i]);
-	ok |= apply_override_list(di->monsters, di->num_monsters, &ovr[i]);
-	ok |= apply_override_list(di->warnings, di->num_warnings, &ovr[i]);
-	ok |= apply_override_list(di->invis, 1, &ovr[i]);
-	ok |= apply_override_list(di->effects, di->num_effects, &ovr[i]);
-	ok |= apply_override_list(di->expltypes, di->num_expltypes, &ovr[i]);
-	ok |= apply_override_list(di->explsyms, NUMEXPCHARS, &ovr[i]);
-	ok |= apply_override_list(di->zaptypes, di->num_zaptypes, &ovr[i]);
-	ok |= apply_override_list(di->zapsyms, NUMZAPCHARS, &ovr[i]);
-	ok |= apply_override_list(di->swallowsyms, NUMSWALLOWCHARS, &ovr[i]);
+	ok |= apply_override_list(di->bgelements, di->num_bgelements, &ovr[i], cust);
+	ok |= apply_override_list(di->traps, di->num_traps, &ovr[i], cust);
+	ok |= apply_override_list(di->objects, di->num_objects, &ovr[i], cust);
+	ok |= apply_override_list(di->monsters, di->num_monsters, &ovr[i], cust);
+	ok |= apply_override_list(di->warnings, di->num_warnings, &ovr[i], cust);
+	ok |= apply_override_list(di->invis, 1, &ovr[i], cust);
+	ok |= apply_override_list(di->effects, di->num_effects, &ovr[i], cust);
+	ok |= apply_override_list(di->expltypes, di->num_expltypes, &ovr[i], cust);
+	ok |= apply_override_list(di->explsyms, NUMEXPCHARS, &ovr[i], cust);
+	ok |= apply_override_list(di->zaptypes, di->num_zaptypes, &ovr[i], cust);
+	ok |= apply_override_list(di->zapsyms, NUMZAPCHARS, &ovr[i], cust);
+	ok |= apply_override_list(di->swallowsyms, NUMSWALLOWCHARS, &ovr[i], cust);
 	
 	if (!ok)
 	    fprintf(stdout, "sym override %s could not be applied\n", ovr[i].symname);
@@ -196,9 +197,10 @@ static void read_sym_line(char *line)
     char symname[64];
     char *bp;
     
-    if (!strlen(line) || line[0] != '"')
+    if (!strlen(line) || line[0] != '!' || line[1] != '"')
 	return;
     
+    line++; /* skip the ! */
     memset(&ovr, 0, sizeof(struct curses_symdef));
     
     /* line format: "symbol name" color unicode [combining marks] */
@@ -215,7 +217,7 @@ static void read_sym_line(char *line)
     while (*bp && !isspace(*bp)) bp++; /* go past the previous value */
     sscanf(bp, "%x", &ovr.unichar[0]);
     
-    apply_override(unicode_drawing, &ovr, 1);
+    apply_override(unicode_drawing, &ovr, 1,  TRUE);
 }
 
 
@@ -259,12 +261,16 @@ static void write_symlist(int fd, const struct curses_symdef *list, int len)
     int i;
     
     for (i = 0; i < len; i++) {
-	sprintf(buf, "\"%s\"\t%d\t%04x\n", list[i].symname, list[i].color,
-		list[i].unichar[0]);
+	sprintf(buf, "%c\"%s\"\t%d\t%04x\n", list[i].custom ? '!' : '#',
+		list[i].symname, list[i].color, list[i].unichar[0]);
 	write(fd, buf, strlen(buf));
     }
 }
 
+static const char uniconf_header[] =
+"# Unicode symbol configuration for NitroHack\n"
+"# Lines that begin with '#' are commented out.\n"
+"# Change the '#' to an '!' to activate a line.\n";
 
 static void write_unisym_config(void)
 {
@@ -280,6 +286,7 @@ static void write_unisym_config(void)
     if (fd == -1)
 	return;
     
+    write(fd, uniconf_header, strlen(uniconf_header));
     write_symlist(fd, unicode_drawing->bgelements, unicode_drawing->num_bgelements);
     write_symlist(fd, unicode_drawing->traps, unicode_drawing->num_traps);
     write_symlist(fd, unicode_drawing->objects, unicode_drawing->num_objects);
@@ -307,8 +314,8 @@ void init_displaychars(void)
     rogue_drawing = load_nh_drawing_info(dinfo);
     
     apply_override(unicode_drawing, unicode_graphics_ovr,
-		   array_size(unicode_graphics_ovr));
-    apply_override(rogue_drawing, rogue_graphics_ovr, array_size(rogue_graphics_ovr));
+		   array_size(unicode_graphics_ovr), FALSE);
+    apply_override(rogue_drawing, rogue_graphics_ovr, array_size(rogue_graphics_ovr), FALSE);
     
     read_unisym_config();
     

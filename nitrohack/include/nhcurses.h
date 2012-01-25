@@ -163,6 +163,7 @@ struct curses_symdef {
     int color;
     wchar_t unichar[CCHARW_MAX+1];
     short ch; /* for non-unicode displays */
+    nh_bool custom; /* true if this is a custom value that was explicitly changed by the user */
 };
 
 
