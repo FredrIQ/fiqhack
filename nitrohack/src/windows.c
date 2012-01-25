@@ -454,6 +454,7 @@ void delete_gamewin(struct gamewin *gw)
 
 void curses_pause(enum nh_pause_reason reason)
 {
+    doupdate();
     if (reason == P_MESSAGE && msgwin != NULL)
 	pause_messages();
     else if (mapwin != NULL)
