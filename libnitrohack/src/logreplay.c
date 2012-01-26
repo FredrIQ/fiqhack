@@ -122,7 +122,7 @@ void replay_begin(void)
     int i, warned, nr_tokens;
     char *nexttoken;
     unsigned int endpos;
-    boolean truncated = FALSE;
+    boolean recovery = FALSE;
     
     if (loginfo.mem) {
 	free(loginfo.mem);
@@ -139,15 +139,21 @@ void replay_begin(void)
     
     if (!endpos) {
 	endpos = filesize;
-	truncated = TRUE;
+	recovery = TRUE;
     }
     
     warned = 0;
-    for (i = 0; i < endpos - 1; i++)
+    for (i = 0; i < endpos; i++)
 	if (iscntrl(loginfo.mem[i]) && loginfo.mem[i] != '\n') {
-	    loginfo.mem[i] = ' ';
-	    if (!warned++ && !truncated)
-		raw_print("Warning: found control characters in textual log section");
+	    if (recovery) {
+		endpos = i;
+		loginfo.mem[i] = '\0';
+		break;
+	    } else {
+		loginfo.mem[i] = ' ';
+		if (!warned++)
+		    raw_print("Warning: found control characters in textual log section");
+	    }
 	}
     
     /* split the logfile into tokens */
@@ -171,7 +177,7 @@ void replay_begin(void)
     loginfo.tokencount = loginfo.next;
     loginfo.next = 0;
     
-    if (truncated) {
+    if (recovery) {
 	/* the last token should always be a command status, eg "<rngstate" */
 	while (loginfo.tokencount > 0 &&
 	    loginfo.tokens[loginfo.tokencount-1][0] != '<' &&
