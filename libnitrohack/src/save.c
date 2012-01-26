@@ -203,8 +203,6 @@ static void save_spellbook(struct memfile *mf)
 
 static void savegamestate(struct memfile *mf)
 {
-	unsigned ustuck_id = (u.ustuck ? u.ustuck->m_id : 0);
-	unsigned usteed_id = (u.usteed ? u.usteed->m_id : 0);
 	unsigned book_id;
 
 	mfmagic_set(mf, STATE_MAGIC);
@@ -222,10 +220,6 @@ static void savegamestate(struct memfile *mf)
 	save_spellbook(mf);
 	save_artifacts(mf);
 	save_oracles(mf);
-	if (ustuck_id)
-	    mwrite32(mf, ustuck_id);
-	if (usteed_id)
-	    mwrite32(mf, usteed_id);
 	
 	mwrite(mf, pl_character, sizeof pl_character);
 	mwrite(mf, pl_fruit, sizeof pl_fruit);

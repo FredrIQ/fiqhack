@@ -490,7 +490,7 @@ static int gulpmm(struct monst *magr, struct monst *mdef, const struct attack *m
 	 *  but don't leave it on the screen.  Move the agressor to the def-
 	 *  ender's position.
 	 */
-	remove_monster(ax, ay);
+	remove_monster(level, ax, ay);
 	place_monster(magr, dx, dy);
 	newsym(ax,ay);			/* erase old position */
 	newsym(dx,dy);			/* update new position */
@@ -1085,7 +1085,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 
 	if ((mdef->mhp -= tmp) < 1) {
 	    if (m_at(level, mdef->mx, mdef->my) == magr) {  /* see gulpmm() */
-		remove_monster(mdef->mx, mdef->my);
+		remove_monster(level, mdef->mx, mdef->my);
 		mdef->mhp = 1;	/* otherwise place_monster will complain */
 		place_monster(mdef, mdef->mx, mdef->my);
 		mdef->mhp = 0;

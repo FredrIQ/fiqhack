@@ -1739,7 +1739,7 @@ boolean mnearto(struct monst *mtmp,
 		if (othermon->wormno)
 			remove_worm(othermon);
 		else
-			remove_monster(x, y);
+			remove_monster(level, x, y);
 	}
 
 	newx = x;

@@ -524,7 +524,7 @@ static void do_entity(struct entity *etmp)
 	}
 	if (relocates && !e_at(newx, newy)) {/* if e_at() entity = worm tail */
 		if (!is_u(etmp)) {
-			remove_monster(etmp->ex, etmp->ey);
+			remove_monster(level, etmp->ex, etmp->ey);
 			place_monster(etmp->emon, newx, newy);
 			update_monster_region(etmp->emon);
 		} else {

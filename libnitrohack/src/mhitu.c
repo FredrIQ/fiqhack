@@ -326,7 +326,7 @@ int mattacku(struct monst *mtmp)
 
 		    pline("You fall from the %s!", ceiling(u.ux,u.uy));
 		    if (enexto(&cc, level, u.ux, u.uy, youmonst.data)) {
-			remove_monster(mtmp->mx, mtmp->my);
+			remove_monster(level, mtmp->mx, mtmp->my);
 			newsym(mtmp->mx,mtmp->my);
 			place_monster(mtmp, u.ux, u.uy);
 			if (mtmp->wormno) worm_move(mtmp);
@@ -1576,7 +1576,7 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 			return 0;
 
 		if (Punished) unplacebc();	/* ball&chain go away */
-		remove_monster(mtmp->mx, mtmp->my);
+		remove_monster(level, mtmp->mx, mtmp->my);
 		mtmp->mtrapped = 0;		/* no longer on old trap */
 		place_monster(mtmp, u.ux, u.uy);
 		u.ustuck = mtmp;

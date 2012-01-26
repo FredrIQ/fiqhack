@@ -1080,6 +1080,10 @@ void restore_you(struct memfile *mf, struct you *y)
 	y->uconduct.wishes = mread32(mf);
 	y->uconduct.wisharti = mread32(mf);
 	
+	/* at this point, ustuck and usteed are mon ids rather than pointers */
+	y->ustuck = (void*)(long)mread32(mf);
+	y->usteed = (void*)(long)mread32(mf);
+	
 	y->ux = mread8(mf);
 	y->uy = mread8(mf);
 	y->dx = mread8(mf);
@@ -1220,6 +1224,9 @@ void save_you(struct memfile *mf, struct you *y)
 	mwrite32(mf, y->uconduct.polyselfs);
 	mwrite32(mf, y->uconduct.wishes);
 	mwrite32(mf, y->uconduct.wisharti);
+	
+	mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);
+	mwrite32(mf, y->usteed ? y->usteed->m_id : 0);
 	
 	mwrite8(mf, y->ux);
 	mwrite8(mf, y->uy);

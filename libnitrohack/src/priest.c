@@ -84,7 +84,7 @@ pick_move:
 	}
 
 	if (nix != omx || niy != omy) {
-		remove_monster(omx, omy);
+		remove_monster(level, omx, omy);
 		place_monster(mtmp, nix, niy);
 		newsym(nix,niy);
 		if (mtmp->isshk && !in_his_shop && inhishop(mtmp))

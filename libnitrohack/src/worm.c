@@ -355,7 +355,7 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
 	return;
     }
 
-    remove_monster(x, y);		/* clone_mon puts new head here */
+    remove_monster(level, x, y);		/* clone_mon puts new head here */
     if (!(new_worm = clone_mon(worm, x, y))) {
 	cutoff(worm, new_tail);
 	return;
@@ -539,7 +539,7 @@ void remove_worm(struct monst *worm)
 /*  if (!mtmp->wormno) return;  bullet proofing */
 
     while (curr) {
-	remove_monster(curr->wx, curr->wy);
+	remove_monster(level, curr->wx, curr->wy);
 	newsym(curr->wx, curr->wy);
 	curr = curr->nseg;
     }

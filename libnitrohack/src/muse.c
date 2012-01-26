@@ -724,7 +724,7 @@ mon_tele:
 		}
 
 		/*  don't use rloc_to() because worm tails must "move" */
-		remove_monster(mtmp->mx, mtmp->my);
+		remove_monster(level, mtmp->mx, mtmp->my);
 		newsym(mtmp->mx, mtmp->my);	/* update old location */
 		place_monster(mtmp, trapx, trapy);
 		if (mtmp->wormno) worm_move(mtmp);
@@ -813,7 +813,7 @@ mon_tele:
 			seetrap(t_at(level, trapx,trapy));
 		}
 		/*  don't use rloc_to() because worm tails must "move" */
-		remove_monster(mtmp->mx, mtmp->my);
+		remove_monster(level, mtmp->mx, mtmp->my);
 		newsym(mtmp->mx, mtmp->my);	/* update old location */
 		place_monster(mtmp, trapx, trapy);
 		if (mtmp->wormno) worm_move(mtmp);
@@ -1696,7 +1696,7 @@ skipmsg:
 		if (vis) seetrap(t_at(level, trapx,trapy));
 
 		/*  don't use rloc() due to worms */
-		remove_monster(mtmp->mx, mtmp->my);
+		remove_monster(level, mtmp->mx, mtmp->my);
 		newsym(mtmp->mx, mtmp->my);
 		place_monster(mtmp, trapx, trapy);
 		if (mtmp->wormno) worm_move(mtmp);

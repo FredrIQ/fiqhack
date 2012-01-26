@@ -324,7 +324,7 @@ boolean mount_steed(struct monst *mtmp,	/* The animal */
 	/* setuwep handles polearms differently when you're mounted */
 	if (uwep && is_pole(uwep)) unweapon = FALSE;
 	u.usteed = mtmp;
-	remove_monster(mtmp->mx, mtmp->my);
+	remove_monster(level, mtmp->mx, mtmp->my);
 	teleds(mtmp->mx, mtmp->my, TRUE);
 	return TRUE;
 }
