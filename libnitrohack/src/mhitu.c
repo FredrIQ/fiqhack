@@ -1061,8 +1061,7 @@ dopois:
 		}
 		/* adjattrib gives dunce cap message when appropriate */
 		adjattrib(A_INT, -rnd(2), FALSE);
-		forget_levels(25);	/* lose memory of 25% of levels */
-		forget_objects(25);	/* lose memory of 25% of objects */
+		forget_objects(50);	/* lose memory of 50% of objects */
 		exercise(A_WIS, FALSE);
 		break;
 	    case AD_PLYS:

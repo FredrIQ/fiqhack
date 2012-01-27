@@ -408,15 +408,24 @@ void recharge(struct obj *obj, int curse_bless)
 /* Forget known information about this object class. */
 static void forget_single_object(int obj_id)
 {
+	char *knownname;
+        char *new_uname;
+        if (!objects[obj_id].oc_name_known) return; /* nothing to do */
+        knownname = simple_typename(obj_id);
 	objects[obj_id].oc_name_known = 0;
-	objects[obj_id].oc_pre_discovered = 0;	/* a discovery when relearned */
 	if (objects[obj_id].oc_uname) {
 	    free(objects[obj_id].oc_uname);
 	    objects[obj_id].oc_uname = 0;
 	}
 	undiscover_object(obj_id);	/* after clearing oc_name_known */
 
-	/* clear & free object names from matching inventory items too? */
+        /* Record what the object was before we forgot it. Doing
+           anything else is an interface screw. (In other words, we're
+           formally-unIDing objects, but not forcing the player to
+           write down what they were. */
+        new_uname = strcpy(malloc((unsigned)strlen(knownname)+1), knownname);
+        objects[obj_id].oc_uname = new_uname;
+        discover_object(obj_id, FALSE, TRUE, FALSE);
 }
 
 
@@ -448,7 +457,7 @@ void forget_objects(int percent)
 
 	for (count = 0, i = 1; i < NUM_OBJECTS; i++)
 	    if (OBJ_DESCR(objects[i]) &&
-		    (objects[i].oc_name_known || objects[i].oc_uname))
+		    (objects[i].oc_name_known))
 		indices[count++] = i;
 
 	randomize(indices, count);
@@ -459,113 +468,23 @@ void forget_objects(int percent)
 	    forget_single_object(indices[i]);
 }
 
-
-/* Forget some or all of map (depends on parameters). */
-static void forget_map(struct level *lev, boolean forget_all)
-{
-	int zx, zy;
-
-	if (In_sokoban(&lev->z))
-	    return;
-
-	for (zx = 0; zx < COLNO; zx++) for(zy = 0; zy < ROWNO; zy++)
-	    if (forget_all || rn2(7)) {
-		/* Zonk all memory of this location. */
-		lev->locations[zx][zy].seenv = 0;
-		lev->locations[zx][zy].waslit = 0;
-		lev->locations[zx][zy].mem_bg = S_unexplored;
-		lev->locations[zx][zy].mem_trap = 0;
-		lev->locations[zx][zy].mem_obj = 0;
-		lev->locations[zx][zy].mem_obj_mn = 0;
-		lev->locations[zx][zy].mem_invis = 0;
-	    }
-}
-
-/* Forget all traps on the level. */
-static void forget_traps(struct level *lev)
-{
-	struct trap *trap;
-
-	/* forget all traps (except the one the hero is in :-) */
-	for (trap = lev->lev_traps; trap; trap = trap->ntrap)
-	    if ((trap->tx != u.ux || trap->ty != u.uy) && (trap->ttyp != HOLE))
-		trap->tseen = 0;
-}
-
-/*
- * Forget given % of all levels that the hero has visited and not forgotten,
- * except this one.
- */
-void forget_levels(int percent)
-{
-	int i, count;
-	xchar  maxl, this_lev;
-	int indices[MAXLINFO];
-
-	if (percent == 0) return;
-
-	if (percent <= 0 || percent > 100) {
-	    impossible("forget_levels: bad percent %d", percent);
-	    return;
-	}
-
-	this_lev = ledger_no(&u.uz);
-	maxl = maxledgerno();
-
-	/* count & save indices of non-forgotten visited levels */
-	/* Sokoban levels are pre-mapped for the player, and should stay
-	 * so, or they become nearly impossible to solve.  But try to
-	 * shift the forgetting elsewhere by fiddling with percent
-	 * instead of forgetting fewer levels.
-	 */
-	for (count = 0, i = 0; i <= maxl; i++)
-	    if ((levels[i] && !levels[i]->flags.forgotten) && i != this_lev) {
-		if (ledger_to_dnum(i) == sokoban_dnum)
-		    percent += 2;
-		else
-		    indices[count++] = i;
-	    }
-	
-	if (percent > 100) percent = 100;
-
-	randomize(indices, count);
-
-	/* forget first % of randomized indices */
-	count = ((count * percent) + 50) / 100;
-	for (i = 0; i < count; i++) {
-	    levels[indices[i]]->flags.forgotten = TRUE;
-	    forget_map(levels[indices[i]], TRUE);
-	    forget_traps(levels[indices[i]]);
-	    levels[indices[i]]->levname[0] = '\0';
-	}
-}
-
 /*
  * Forget some things (e.g. after reading a scroll of amnesia).  When called,
  * the following are always forgotten:
  *
  *	- felt ball & chain
- *	- traps
- *	- part (6 out of 7) of the map
  *
  * Other things are subject to flags:
  *
- *	howmuch & ALL_MAP	= forget whole map
  *	howmuch & ALL_SPELLS	= forget all spells
+ *      howmuch & ALL_MAP       = forget all objects (no more map amnesia)
  */
 static void forget(int howmuch)
 {
 
 	if (Punished) u.bc_felt = 0;	/* forget felt ball&chain */
 
-	forget_map(level, (howmuch & ALL_MAP));
-	forget_traps(level);
-
-	/* 1 in 3 chance of forgetting some levels */
-	if (!rn2(3)) forget_levels(rn2(25));
-
-	/* 1 in 3 chance of forgeting some objects */
-	if (!rn2(3)) forget_objects(rn2(25));
+	forget_objects(howmuch & ALL_MAP ? 100 : rn2(25)+25);
 
 	if (howmuch & ALL_SPELLS) losespells();
 	/*

@@ -1292,7 +1292,6 @@ extern int doread(struct obj *scroll);
 extern boolean is_chargeable(struct obj *);
 extern void recharge(struct obj *,int);
 extern void forget_objects(int);
-extern void forget_levels(int);
 extern int seffects(struct obj *scroll, boolean *known);
 extern void litroom(boolean,struct obj *);
 extern void do_genocide(int);
