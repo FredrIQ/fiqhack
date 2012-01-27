@@ -20,8 +20,6 @@ static boolean shade_aware(struct obj *);
 extern boolean notonhead;	/* for long worms */
 /* The below might become a parameter instead if we use it a lot */
 static int dieroll;
-/* Used to flag attacks caused by Stormbringer's maliciousness. */
-static boolean override_confirmation = FALSE;
 
 #define PROJECTILE(obj)	((obj) && is_ammo(obj))
 
@@ -182,11 +180,6 @@ boolean attack_checks(struct monst *mtmp,
 
 	if (flags.confirm && mtmp->mpeaceful
 	    && !Confusion && !Hallucination && !Stunned) {
-		/* Intelligent chaotic weapons (Stormbringer) want blood */
-		if (wep && wep->oartifact == ART_STORMBRINGER) {
-			override_confirmation = TRUE;
-			return FALSE;
-		}
 		if (canspotmon(mtmp)) {
 			sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
 			if (yn(qbuf) != 'y') {
@@ -327,7 +320,6 @@ boolean attack(struct monst *mtmp, schar dx, schar dy)
 
 	/* possibly set in attack_checks;
 	   examined in known_hitum, called via hitum or hmonas below */
-	override_confirmation = FALSE;
 	if (attack_checks(mtmp, uwep, dx, dy))
 	    return TRUE;
 
@@ -397,12 +389,6 @@ static boolean known_hitum(struct monst *mon, int *mhit, const struct attack *ua
 {
 	boolean malive = TRUE;
 
-	if (override_confirmation) {
-	    /* this may need to be generalized if weapons other than
-	       Stormbringer acquire similar anti-social behavior... */
-	    if (flags.verbose) pline("Your bloodthirsty blade attacks!");
-	}
-
         /* AceHack patch: trying to hit a floating eye screws up if
            it can see, you can see it, and you don't have free
            action; this is considerably less evil to the player than
@@ -433,8 +419,7 @@ static boolean known_hitum(struct monst *mon, int *mhit, const struct attack *ua
 	    notonhead = (mon->mx != x || mon->my != y);
             malive = hmon(mon, uwep, 0);
 	    /* this assumes that Stormbringer was uwep not uswapwep */ 
-	    if (malive && u.twoweap && !override_confirmation &&
-		    m_at(level, x, y) == mon)
+	    if (malive && u.twoweap && m_at(level, x, y) == mon)
 		malive = hmon(mon, uswapwep, 0);
 	    if (malive) {
 		/* monster still alive */
