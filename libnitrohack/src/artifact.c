@@ -1141,10 +1141,10 @@ static const char invoke_types[] = { ALL_CLASSES, 0 };
 
 int doinvoke(struct obj *obj)
 {
-    if (obj && !validate_object(obj, invoke_types, "invoke"))
+    if (obj && !validate_object(obj, invoke_types, "invoke, break, or rub"))
 	return 0;
     else if (!obj)
-	obj = getobj(invoke_types, "invoke");
+	obj = getobj(invoke_types, "invoke, break, or rub");
     if (!obj) return 0;
     
     if (obj->oartifact && !touch_artifact(obj, &youmonst))
@@ -1157,7 +1157,11 @@ static int arti_invoke(struct obj *obj)
     const struct artifact *oart = get_artifact(obj);
 
     if (!oart || !oart->inv_prop) {
-	if (obj->otyp == CRYSTAL_BALL)
+        if (obj->oclass == WAND_CLASS)
+            return do_break_wand(obj);
+        else if (obj->oclass == GEM_CLASS || obj->oclass == TOOL_CLASS)
+            return dorub(obj);
+	else if (obj->otyp == CRYSTAL_BALL)
 	    use_crystal_ball(obj);
 	else
 	    pline("Nothing happens.");

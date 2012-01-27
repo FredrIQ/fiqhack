@@ -34,6 +34,7 @@ extern boolean tinnable(struct obj *);
 extern void reset_trapset(void);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
+extern int do_break_wand(struct obj *);
 
 /* ### artifact.c ### */
 
