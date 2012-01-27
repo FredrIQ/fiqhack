@@ -698,7 +698,7 @@ extern int doforce(void);
 extern boolean boxlock(struct obj *,struct obj *);
 extern boolean doorlock(struct obj *,int,int);
 extern int doopen(int dx, int dy, int dz);
-extern int doclose(void);
+extern int doclose(int dx, int dy, int dz);
 
 /* ### log.c ### */
 
