@@ -31,7 +31,6 @@ static int use_whip(struct obj *);
 static int use_pole(struct obj *);
 static int use_cream_pie(struct obj *);
 static int use_grapple(struct obj *);
-static int do_break_wand(struct obj *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
 static boolean uhave_graystone(void);
 static void add_class(char *, char);
@@ -1089,7 +1088,9 @@ int dorub(struct obj *obj)
 	else if (!obj)
 	    obj = getobj(cuddly, "rub");
 
-	if (obj && obj->oclass == GEM_CLASS) {
+        if (!obj) return 0;
+
+	if (obj->oclass == GEM_CLASS) {
 	    if (is_graystone(obj)) {
 		use_stone(obj);
 		return 1;
@@ -1099,10 +1100,8 @@ int dorub(struct obj *obj)
 	    }
 	}
 
-	if (!obj || !wield_tool(obj, "rub")) return 0;
-
-	/* now uwep is obj */
-	if (uwep->otyp == MAGIC_LAMP) {
+	if (obj->otyp == MAGIC_LAMP) {
+            if (!wield_tool(obj, "rub")) return 0;
 	    if (uwep->spe > 0 && !rn2(3)) {
 		check_unpaid_usage(uwep, TRUE);		/* unusual item use */
 		djinni_from_bottle(uwep);
@@ -1116,9 +1115,13 @@ int dorub(struct obj *obj)
 		pline("You see a puff of smoke.");
 	    else pline("Nothing happens.");
 	} else if (obj->otyp == BRASS_LANTERN) {
+            if (!wield_tool(obj, "rub")) return 0;
 	    /* message from Adventure */
 	    pline("Rubbing the electric lamp is not particularly rewarding.");
 	    pline("Anyway, nothing exciting happens.");
+        } else if (obj->otyp == OIL_LAMP) {
+            if (!wield_tool(obj,"rub")) return 0;
+            pline("Nothing happens.");
 	} else pline("Nothing happens.");
 	return 1;
 }
@@ -2440,7 +2443,7 @@ static int use_grapple (struct obj *obj)
 #define BY_OBJECT	(NULL)
 
 /* return 1 if the wand is broken, hence some time elapsed */
-static int do_break_wand(struct obj *obj)
+int do_break_wand(struct obj *obj)
 {
     static const char nothing_else_happens[] = "But nothing else happens...";
     int i, x, y;
