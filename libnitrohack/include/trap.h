@@ -62,14 +62,15 @@ struct trap {
 #define SPIKED_PIT	12
 #define HOLE		13
 #define TRAPDOOR	14
-#define TELEP_TRAP	15
-#define LEVEL_TELEP	16
-#define MAGIC_PORTAL	17
-#define WEB		18
-#define STATUE_TRAP	19
-#define MAGIC_TRAP	20
-#define ANTI_MAGIC	21
-#define POLY_TRAP	22
-#define TRAPNUM 23
+#define VIBRATING_SQUARE        15
+#define TELEP_TRAP	16
+#define LEVEL_TELEP	17
+#define MAGIC_PORTAL	18
+#define WEB		19
+#define STATUE_TRAP	20
+#define MAGIC_TRAP	21
+#define ANTI_MAGIC	22
+#define POLY_TRAP	23
+#define TRAPNUM 24
 
 #endif /* TRAP_H */

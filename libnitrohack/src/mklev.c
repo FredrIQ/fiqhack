@@ -393,8 +393,8 @@ static const char * const trap_engravings[TRAPNUM] = {
 			NULL, NULL, NULL, NULL, NULL,
 			NULL, NULL, NULL, NULL, NULL,
 			NULL, NULL, NULL, NULL,
-			/* 14..16: trap door, teleport, level-teleport */
-			"Vlad was here", "ad aerarium", "ad aerarium",
+			/* 14..17: trap door, VS, teleport, level-teleport */
+			"Vlad was here", NULL, "ad aerarium", "ad aerarium",
 			NULL, NULL, NULL, NULL, NULL,
 			NULL,
 };
@@ -1044,6 +1044,7 @@ void mktrap(struct level *lev, int num, int mazeflag, struct mkroom *croom, coor
 		/* reject "too hard" traps */
 		switch (kind) {
 		    case MAGIC_PORTAL:
+                    case VIBRATING_SQUARE:
 			kind = NO_TRAP; break;
 		    case ROLLING_BOULDER_TRAP:
 		    case SLP_GAS_TRAP:

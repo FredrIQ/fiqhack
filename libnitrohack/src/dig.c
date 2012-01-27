@@ -173,7 +173,9 @@ boolean dig_check(struct monst *madeby, boolean verbose, int x, int y)
 	} else if ((IS_ROCK(level->locations[x][y].typ) && level->locations[x][y].typ != SDOOR &&
 		      (level->locations[x][y].wall_info & W_NONDIGGABLE) != 0)
 		|| (ttmp &&
-		      (ttmp->ttyp == MAGIC_PORTAL || !can_dig_down(level)))) {
+		      (ttmp->ttyp == MAGIC_PORTAL ||
+                       ttmp->ttyp == VIBRATING_SQUARE ||
+                       !can_dig_down(level)))) {
 	    if (verbose) pline("The %s here is too hard to %s.",
 				  surface(x,y), verb);
 	    return FALSE;
@@ -624,7 +626,8 @@ static boolean dighole(boolean pit_only)
 	schar typ;
 	boolean nohole = !can_dig_down(level);
 
-	if ((ttmp && (ttmp->ttyp == MAGIC_PORTAL || nohole)) ||
+	if ((ttmp && (ttmp->ttyp == MAGIC_PORTAL ||
+                      ttmp->ttyp == VIBRATING_SQUARE || nohole)) ||
 	   (IS_ROCK(loc->typ) && loc->typ != SDOOR &&
 	    (loc->wall_info & W_NONDIGGABLE) != 0)) {
 		pline("The %s here is too hard to dig in.", surface(u.ux,u.uy));

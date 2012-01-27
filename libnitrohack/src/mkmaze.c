@@ -275,7 +275,8 @@ static boolean put_lregion_here(struct level *lev,
 	       It might still fail if there's a dungeon feature here. */
 	    struct trap *t = t_at(lev, x, y);
 
-	    if (t && t->ttyp != MAGIC_PORTAL) deltrap(t);
+	    if (t && t->ttyp != MAGIC_PORTAL &&
+                t->ttyp != VIBRATING_SQUARE) deltrap(t);
 	    if (bad_location(lev, x, y, nlx, nly, nhx, nhy)) return FALSE;
 	}
     }
@@ -577,6 +578,7 @@ void makemaz(struct level *lev, const char *s)
 		     !SPACE_POS(lev->locations[x][y].typ) || occupied(lev, x, y));
 	    inv_pos.x = x;
 	    inv_pos.y = y;
+            maketrap(lev, inv_pos.x, inv_pos.y, VIBRATING_SQUARE);
 #undef INVPOS_X_MARGIN
 #undef INVPOS_Y_MARGIN
 #undef INVPOS_DISTANCE

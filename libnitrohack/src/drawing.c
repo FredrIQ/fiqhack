@@ -111,12 +111,13 @@ const char * const trapexplain[] = {
 	"spiked pit",
 	"hole",
 	"trap door",
+        "vibrating square",
 	"teleportation trap",
 	"level teleporter",
 	"magic portal",
 	"web",
-	"statue trap",
-/*60*/	"magic trap",
+/*60*/	"statue trap",
+	"magic trap",
 	"anti-magic field",
 	"polymorph trap"
 };
@@ -187,13 +188,14 @@ static const struct nh_symdef trapsyms[] = {
 	{'^', "spiked pit",		CLR_BLACK},
 	{'^', "hole",			CLR_BROWN},
 	{'^', "trap door",		CLR_BROWN},
+        {'^', "vibrating square",       CLR_YELLOW},
 	{'^', "teleportation trap",	CLR_MAGENTA},
 	{'^', "level teleporter",	CLR_MAGENTA},
 	{'^', "magic portal",		CLR_BRIGHT_MAGENTA},
-	{'"', "web",			CLR_GRAY},
+	{'^', "web",			CLR_GRAY},
 	{'^', "statue trap",		CLR_GRAY},
-	{'^', "magic trap",		HI_ZAP},
-/*20*/	{'^', "anti-magic field",	HI_ZAP},
+/*20*/	{'^', "magic trap",		HI_ZAP},
+	{'^', "anti-magic field",	HI_ZAP},
 	{'^', "polymorph trap",		CLR_BRIGHT_GREEN}
 };
 

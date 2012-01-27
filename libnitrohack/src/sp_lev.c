@@ -123,6 +123,7 @@ static int rndtrap(struct level *lev)
 	    rtrap = rnd(TRAPNUM-1);
 	    switch (rtrap) {
 	     case HOLE:		/* no random holes on special levels */
+             case VIBRATING_SQUARE:
 	     case MAGIC_PORTAL:	rtrap = NO_TRAP;
 				break;
 	     case TRAPDOOR:	if (!can_dig_down(lev)) rtrap = NO_TRAP;
