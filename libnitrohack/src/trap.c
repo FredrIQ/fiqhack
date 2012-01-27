@@ -212,6 +212,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 
 	if ((ttmp = t_at(lev, x,y)) != 0) {
 	    if (ttmp->ttyp == MAGIC_PORTAL) return NULL;
+            if (ttmp->ttyp == VIBRATING_SQUARE) return NULL;
 	    oldplace = TRUE;
 	    if (u.utrap && (x == u.ux) && (y == u.uy) &&
 	      ((u.utraptype == TT_BEARTRAP && typ != BEAR_TRAP) ||
@@ -576,6 +577,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 		return;
 	    }
 	    if (!Fumbling && ttype != MAGIC_PORTAL &&
+                ttype != VIBRATING_SQUARE &&
 		ttype != ANTI_MAGIC && !forcebungle &&
 		(!rn2(5) ||
 	    ((ttype == PIT || ttype == SPIKED_PIT) && is_clinger(youmonst.data)))) {
@@ -1099,6 +1101,12 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 		seetrap(trap);
 		domagicportal(trap);
 		break;
+
+            case VIBRATING_SQUARE:
+                seetrap(trap);
+                /* messages handled elsewhere; the trap symbol is merely
+                   to mark the square for future reference */
+                break;
 
 	    default:
 		seetrap(trap);
@@ -1961,6 +1969,18 @@ mfiretrap:
 			    newsym(mtmp->mx, mtmp->my);
 			}
 			break;
+
+                case VIBRATING_SQUARE:
+                        if (see_it && !Blind) {
+                            if (in_sight)
+                                pline("You see a strange vibration beneath %s %s.",
+                                      s_suffix(mon_nam(mtmp)),
+                                      makeplural(mbodypart(mtmp, FOOT)));
+                            else
+                                pline("You see the ground vibrate in the distance.");
+                            seetrap(trap);
+                        }
+                        break;
 
 		case STATUE_TRAP:
 			break;

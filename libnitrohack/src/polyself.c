@@ -821,6 +821,7 @@ int dospinweb(void)
 		case TELEP_TRAP:
 		case LEVEL_TELEP:
 		case MAGIC_PORTAL:
+                case VIBRATING_SQUARE:
 			pline("Your webbing vanishes!");
 			return 0;
 		case WEB: pline("You make the web thicker.");
