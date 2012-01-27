@@ -882,7 +882,7 @@ void movebubbles(void)
 			    if (mon->wormno)
 				remove_worm(mon);
 			    else
-				remove_monster(x, y);
+				remove_monster(level, x, y);
 
 			    newsym(x,y);	/* clean up old position */
 			    mon->mx = mon->my = 0;

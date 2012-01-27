@@ -364,7 +364,7 @@ static void restore_spellbook(struct memfile *mf)
 static void restgamestate(struct memfile *mf)
 {
 	struct obj *otmp;
-	unsigned int stuckid = 0, steedid = 0, bookid = 0;
+	unsigned int bookid = 0;
 	struct monst *mtmp;
 	struct level *lev;
 	
@@ -398,15 +398,14 @@ static void restgamestate(struct memfile *mf)
 	restore_spellbook(mf);
 	restore_artifacts(mf);
 	restore_oracles(mf);
-	if (u.ustuck)
-		stuckid = mread32(mf);
-	if (u.usteed)
-		steedid = mread32(mf);
 	mread(mf, pl_character, sizeof(pl_character));
 
 	mread(mf, pl_fruit, sizeof pl_fruit);
 	current_fruit = mread32(mf);
 	freefruitchn(ffruit);	/* clean up fruit(s) made by initoptions() */
+	/* set it to NULL before loadfruitchn, otherwise loading a faulty fruit
+	 * chain will crash in terminate -> freedynamicdata -> freefruitchn */
+	ffruit = NULL;
 	ffruit = loadfruitchn(mf);
 
 	restnames(mf);
@@ -428,18 +427,18 @@ static void restgamestate(struct memfile *mf)
 	relink_timers(FALSE, lev);
 	relink_light_sources(FALSE, lev);
 	
-	if (stuckid) {
+	if (u.ustuck) {
 		for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-			if (mtmp->m_id == stuckid) break;
+			if (mtmp->m_id == (long)u.ustuck) break;
 		if (!mtmp) panic("Cannot find the monster ustuck.");
 		u.ustuck = mtmp;
 	}
-	if (steedid) {
+	if (u.usteed) {
 		for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-			if (mtmp->m_id == steedid) break;
+			if (mtmp->m_id == (long)u.usteed) break;
 		if (!mtmp) panic("Cannot find the monster usteed.");
 		u.usteed = mtmp;
-		remove_monster(mtmp->mx, mtmp->my);
+		remove_monster(lev, mtmp->mx, mtmp->my);
 	}
 }
 

@@ -67,7 +67,7 @@ boolean grddead(struct monst *grd)
 
 	if (!dispose) {
 		/* see comment by newpos in gd_move() */
-		remove_monster(grd->mx, grd->my);
+		remove_monster(level, grd->mx, grd->my);
 		newsym(grd->mx, grd->my);
 		place_monster(grd, 0, 0);
 		EGD(grd)->ogx = grd->mx;
@@ -543,7 +543,7 @@ letknow:
 			verbalize("Out of my way, scum!");
 			rloc(m_at(level, m, n), FALSE);
 		    }
-		    remove_monster(grd->mx, grd->my);
+		    remove_monster(level, grd->mx, grd->my);
 		    newsym(grd->mx, grd->my);
 		    place_monster(grd, m, n);
 		    mpickgold(grd);	/* does a newsym */
@@ -552,7 +552,7 @@ letknow:
 		    pline("%s%s picks up the gold.", Monnam(grd),
 				grd->mpeaceful ? " calms down and" : "");
 		if (x != grd->mx || y != grd->my) {
-		    remove_monster(grd->mx, grd->my);
+		    remove_monster(level, grd->mx, grd->my);
 		    newsym(grd->mx, grd->my);
 		    place_monster(grd, x, y);
 		    newsym(x, y);
@@ -659,7 +659,7 @@ cleanup:
 
 		see_guard = canspotmon(grd);
 		wallify_vault(grd);
-		remove_monster(grd->mx, grd->my);
+		remove_monster(level, grd->mx, grd->my);
 		newsym(grd->mx,grd->my);
 		place_monster(grd, 0, 0);
 		egrd->ogx = grd->mx;
@@ -675,7 +675,7 @@ cleanup:
 	}
 	egrd->ogx = grd->mx;	/* update old positions */
 	egrd->ogy = grd->my;
-	remove_monster(grd->mx, grd->my);
+	remove_monster(level, grd->mx, grd->my);
 	place_monster(grd, nx, ny);
 	newsym(grd->mx,grd->my);
 	restfakecorr(grd);

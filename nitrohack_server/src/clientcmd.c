@@ -136,6 +136,14 @@ static void ccmd_restore_game(json_t *params)
     reset_cached_diplaydata();
     
     status = nh_restore_game(fd, NULL, FALSE);
+    if (status == ERR_REPLAY_FAILED) {
+	log_msg("Failed to restore saved game %s, file %s", gid, filename);
+	if (srv_yn_function("Restoring the game failed. Would you like to remove it from the list?", "yn", 'n') == 'y') {
+	    db_delete_game(user_info.uid, gid);
+	    log_msg("%s has chosen to remove game %d from the database",
+		    user_info.username, gid);
+	}
+    }
     
     client_msg("restore_game", json_pack("{si}", "return", status));
     

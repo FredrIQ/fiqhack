@@ -917,7 +917,7 @@ newdogpos:
 			return 0;
 		}
 		/* insert a worm_move() if worms ever begin to eat things */
-		remove_monster(omx, omy);
+		remove_monster(level, omx, omy);
 		place_monster(mtmp, nix, niy);
 		if (cursemsg[chi] && (cansee(omx,omy) || cansee(nix,niy)))
 			pline("%s moves only reluctantly.", Monnam(mtmp));
@@ -957,7 +957,7 @@ newdogpos:
 dognext:
 		if (!m_in_out_region(mtmp, nix, niy))
 		  return 1;
-		remove_monster(mtmp->mx, mtmp->my);
+		remove_monster(level, mtmp->mx, mtmp->my);
 		place_monster(mtmp, cc.x, cc.y);
 		newsym(cc.x,cc.y);
 		set_apparxy(mtmp);

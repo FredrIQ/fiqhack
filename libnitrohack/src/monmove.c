@@ -955,7 +955,7 @@ not_special:
 
 	    if (!m_in_out_region(mtmp,nix,niy))
 	        return 3;
-	    remove_monster(omx, omy);
+	    remove_monster(level, omx, omy);
 	    place_monster(mtmp, nix, niy);
 	    for (j = MTSZ-1; j > 0; j--)
 		mtmp->mtrack[j] = mtmp->mtrack[j-1];

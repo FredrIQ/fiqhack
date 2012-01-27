@@ -24,7 +24,6 @@ static nh_bool srv_list_items(struct nh_objitem *items, int icount, nh_bool inve
 static char srv_query_key(const char *query, int *count);
 static int srv_getpos(int *x, int *y, nh_bool force, const char *goal);
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
-static char srv_yn_function(const char *query, const char *rset, char defchoice);
 static void srv_getline(const char *query, char *buf);
 
 static void srv_alt_raw_print(const char *str);
@@ -559,7 +558,7 @@ static enum nh_direction srv_getdir(const char *query, nh_bool restricted)
 }
 
 
-static char srv_yn_function(const char *query, const char *set, char def)
+char srv_yn_function(const char *query, const char *set, char def)
 {
     int ret;
     json_t *jobj;

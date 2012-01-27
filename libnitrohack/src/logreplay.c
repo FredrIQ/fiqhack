@@ -4,6 +4,7 @@
 #include "hack.h"
 #include "dlb.h"
 #include "patchlevel.h"
+#include <ctype.h>
 
 extern int logfile;
 extern unsigned int last_cmd_pos;
@@ -117,36 +118,43 @@ void replay_set_logfile(int logfd)
 
 void replay_begin(void)
 {
-    long filesize;
-    int nr_tokens;
-    char *nexttoken, header[24];
+    int filesize;
+    int i, warned, nr_tokens;
+    char *nexttoken;
     unsigned int endpos;
-    boolean truncated = FALSE;
+    boolean recovery = FALSE;
     
     if (loginfo.mem) {
 	free(loginfo.mem);
 	free(loginfo.tokens);
     }
     
-    filesize = lseek(logfile, 0, SEEK_END);
-    if (filesize < 24)
-	terminate(); /* too short to contain anything usable */
-    
     lseek(logfile, 0, SEEK_SET);
-    read(logfile, header, 23);
-    header[23] = '\0';
-    if (!sscanf(header, "NHGAME %*s %x", &endpos) || endpos > filesize)
+    loginfo.mem = loadfile(logfile, &filesize);
+    if (filesize < 24 || !loginfo.mem ||
+	!sscanf(loginfo.mem, "NHGAME %*s %x", &endpos) || endpos > filesize) {
+	free(loginfo.mem);
 	terminate();
+    }
     
     if (!endpos) {
 	endpos = filesize;
-	truncated = TRUE;
+	recovery = TRUE;
     }
     
-    loginfo.mem = malloc(endpos+1);
-    lseek(logfile, 0, SEEK_SET);
-    read(logfile, loginfo.mem, endpos);
-    loginfo.mem[endpos] = '\0';
+    warned = 0;
+    for (i = 0; i < endpos; i++)
+	if (iscntrl(loginfo.mem[i]) && loginfo.mem[i] != '\n') {
+	    if (recovery) {
+		endpos = i;
+		loginfo.mem[i] = '\0';
+		break;
+	    } else {
+		loginfo.mem[i] = ' ';
+		if (!warned++)
+		    raw_print("Warning: found control characters in textual log section");
+	    }
+	}
     
     /* split the logfile into tokens */
     nr_tokens = 1024;
@@ -169,8 +177,8 @@ void replay_begin(void)
     loginfo.tokencount = loginfo.next;
     loginfo.next = 0;
     
-    if (truncated) {
-	/* the last token should always be a command status, eg "<rng:u.ux:u.uy:u.uz" */
+    if (recovery) {
+	/* the last token should always be a command status, eg "<rngstate" */
 	while (loginfo.tokencount > 0 &&
 	    loginfo.tokens[loginfo.tokencount-1][0] != '<' &&
 	    loginfo.tokens[loginfo.tokencount-1][0] != '!') {

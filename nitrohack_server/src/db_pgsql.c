@@ -104,7 +104,10 @@ static const char SQL_add_game[] =
                        "depth, owner, plname, level_desc, ts, start_ts) "
     "VALUES ($1::text, $2::text, $3::text, $4::text, $5::text, "
             "$6::integer, 1, 1, $7::integer, $8::text, $9::text, 'now', 'now')";
-    
+
+static const char SQL_delete_game[] =
+    "DELETE FROM games WHERE owner = $1::integer AND gid = $2::integer;";
+
 static const char SQL_last_game_id[] =
     "SELECT currval('games_gid_seq');";
 
@@ -454,6 +457,24 @@ void db_set_game_done(int gid, const char *filename)
     res = PQexecParams(conn, SQL_set_game_done, 2, NULL, params, NULL, paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	log_msg("set_game_done error: %s", PQerrorMessage(conn));
+    PQclear(res);
+}
+
+
+void db_delete_game(int uid, int gid)
+{
+    PGresult *res;
+    char uidstr[16], gidstr[16];
+    const char * const params[] = {uidstr, gidstr};
+    const int paramFormats[] = {0, 0};
+    
+    sprintf(uidstr, "%d", uid);
+    sprintf(gidstr, "%d", gid);
+    
+    res = PQexecParams(conn, SQL_delete_game, 2, NULL, params, NULL, paramFormats, 0);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	log_msg("db_delete_game error: %s", PQerrorMessage(conn));
+
     PQclear(res);
 }
 

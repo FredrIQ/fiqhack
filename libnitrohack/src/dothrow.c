@@ -549,7 +549,7 @@ static boolean mhurtle_step(void *arg, int x, int y)
 	 * rather than just stopping before.
 	 */
 	if (goodpos(level, x, y, mon, 0) && m_in_out_region(mon, x, y)) {
-	    remove_monster(mon->mx, mon->my);
+	    remove_monster(level, mon->mx, mon->my);
 	    newsym(mon->mx, mon->my);
 	    place_monster(mon, x, y);
 	    newsym(mon->mx, mon->my);

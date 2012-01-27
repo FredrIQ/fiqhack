@@ -60,6 +60,7 @@ typedef wchar_t fnchar;
 # define fnncat(str1, str2, len) wcsncat(str1, str2, len)
 # define fopen(name, mode)  _wfopen(name, L ## mode)
 # define sys_open(name, flags, perm)  _wopen(name, flags | _O_BINARY, perm)
+# define unlink _wunlink
 # define FN(x) (L ## x)
 # define FN_FMT "%ls"
 #endif
@@ -163,6 +164,7 @@ struct curses_symdef {
     int color;
     wchar_t unichar[CCHARW_MAX+1];
     short ch; /* for non-unicode displays */
+    nh_bool custom; /* true if this is a custom value that was explicitly changed by the user */
 };
 
 

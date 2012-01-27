@@ -321,6 +321,20 @@ static char *make_object_name(int otyp)
     return ret;
 }
 
+
+static const char *make_mon_name(int mnum)
+{
+    char *name;
+    
+    if (mons[mnum].mlet == S_HUMAN && !strncmp(mons[mnum].mname, "were", 4)) {
+	name = xmalloc(strlen(mons[mnum].mname) + strlen("human ") + 1);
+	sprintf(name, "human %s", mons[mnum].mname);
+	return name;
+    }
+    return mons[mnum].mname;
+}
+
+
 #include <stdio.h>
 struct nh_drawing_info *nh_get_drawing_info(void)
 {
@@ -353,7 +367,7 @@ struct nh_drawing_info *nh_get_drawing_info(void)
     tmp = xmalloc(sizeof(struct nh_symdef) * di->num_monsters);
     for (i = 0; i < di->num_monsters; i++) {
 	tmp[i].ch = def_monsyms[(int)mons[i].mlet];
-	tmp[i].symname = mons[i].mname;
+	tmp[i].symname = make_mon_name(i);
 	tmp[i].color = mons[i].mcolor;
     }
     di->monsters = tmp;

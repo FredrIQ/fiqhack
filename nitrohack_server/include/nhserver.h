@@ -122,6 +122,7 @@ extern long db_add_new_game(int uid, const char *filename, const char *role,
 extern void db_set_game_done(int gameid, const char *filename);
 extern void db_update_game(int gameid, int moves, int depth, const char *levdesc);
 extern int db_get_game_filename(int uid, int gid, char *namebuf, int buflen);
+extern void db_delete_game(int uid, int gid);
 extern struct gamefile_info *db_list_games(int completed, int uid, int limit, int *count);
 extern void db_set_option(int uid, const char *optname, int type, const char *optval);
 extern void db_restore_options(int uid);
@@ -153,6 +154,7 @@ extern int runserver(void);
 extern json_t *get_display_data(void);
 extern void reset_cached_diplaydata(void);
 extern void srv_display_buffer(const char *buf, nh_bool trymove);
+extern char srv_yn_function(const char *query, const char *rset, char defchoice);
 
 
 #endif

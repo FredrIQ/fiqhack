@@ -1255,7 +1255,7 @@ int domove(schar dx, schar dy, schar dz)
 		/* save its current description in case of polymorph */
 		strcpy(pnambuf, y_monnam(mtmp));
 		mtmp->mtrapped = 0;
-		remove_monster(x, y);
+		remove_monster(level, x, y);
 		place_monster(mtmp, u.ux0, u.uy0);
 
 		/* check for displacing it into pools and traps */

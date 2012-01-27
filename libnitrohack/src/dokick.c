@@ -103,7 +103,7 @@ static void kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
 		if (goodpos(level, mdx, mdy, mon, 0)) {
 			pline("%s reels from the blow.", Monnam(mon));
 			if (m_in_out_region(mon, mdx, mdy)) {
-			    remove_monster(mon->mx, mon->my);
+			    remove_monster(level, mon->mx, mon->my);
 			    newsym(mon->mx, mon->my);
 			    place_monster(mon, mdx, mdy);
 			    newsym(mon->mx, mon->my);

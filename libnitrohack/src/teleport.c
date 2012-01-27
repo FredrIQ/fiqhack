@@ -860,7 +860,7 @@ void rloc_to(struct monst *mtmp, int x, int y)
 	    if (mtmp->wormno)
 		remove_worm(mtmp);
 	    else {
-		remove_monster(oldx, oldy);
+		remove_monster(level, oldx, oldy);
 		newsym(oldx, oldy);		/* update old location */
 	    }
 	}

@@ -501,7 +501,7 @@ extern struct level *level;		/* pointer to an entry in levels */
 #define MON_BURIED_AT(x,y)	(level->monsters[x][y] != NULL && \
 				level->monsters[x][y]->mburied)
 #define place_worm_seg(m,x,y)	(m)->dlevel->monsters[x][y] = m
-#define remove_monster(x,y)	level->monsters[x][y] = NULL
+#define remove_monster(lev,x,y)	(lev)->monsters[x][y] = NULL
 #define m_at(lev,x,y)		(MON_AT(lev,x,y) ? (lev)->monsters[x][y] : \
 						NULL)
 #define m_buried_at(x,y)	(MON_BURIED_AT(x,y) ? level->monsters[x][y] : \
