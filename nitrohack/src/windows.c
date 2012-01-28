@@ -526,6 +526,7 @@ void curses_raw_print(const char *str)
 /* sleep for 50 ms */
 void curses_delay_output(void)
 {
+    doupdate();
 #if defined(WIN32)
     Sleep(45);
 #else
