@@ -18,6 +18,7 @@ static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
 static int start_of_turn_curline;
+static int last_redraw_curline;
 static nh_bool stopprint;
 static int prevturn, action, prevaction;
 
@@ -106,7 +107,7 @@ static void prune_messages(int maxturn)
 	if (!*msg)
 	    continue;
         if (msghistory[pos].turn > prevturn)
-            start_of_turn_curline = curline;
+            start_of_turn_curline = last_redraw_curline = curline;
 	prevturn = msghistory[pos].turn;
 	
 	if (strlen(msglines[curline]) + strlen(msg) + 1 < COLNO) {
@@ -128,14 +129,17 @@ void draw_msgwin(void)
     
     werase(msgwin);
     
-    for (i = 0; i < getmaxy(msgwin); i++) {
+    for (i = getmaxy(msgwin) - 1; i >= 0; i--) {
 	pos = curline - getmaxy(msgwin) + 1 + i;
 	if (pos < 0)
 	    pos += MAX_MSGLINES;
-	
+        if (pos == start_of_turn_curline)
+            wattron(msgwin, curses_color_attr(COLOR_BLACK));
+
 	wmove(msgwin, i, 0);
 	waddstr(msgwin, msglines[pos]);
     }
+    wattroff(msgwin, curses_color_attr(COLOR_BLACK));
     wnoutrefresh(msgwin);
 }
 
@@ -174,7 +178,7 @@ static void more(void)
 	stopprint = TRUE;
 
     /* we want to --more-- by screenfuls, not lines */
-    start_of_turn_curline = curline;
+    last_redraw_curline = curline;
 }
 
 
@@ -182,7 +186,8 @@ static void more(void)
 void new_action(void)
 {
     action++;
-    start_of_turn_curline = curline;
+    start_of_turn_curline = last_redraw_curline = curline;
+    draw_msgwin();
 }
 
 
@@ -200,7 +205,7 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
 	alloc_hist_array();
     
     if (turn != prevturn)
-        start_of_turn_curline = curline;
+        start_of_turn_curline = last_redraw_curline = curline;
 
     if (turn < prevturn) /* going back in time can happen during replay */
 	prune_messages(turn);
@@ -242,17 +247,17 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
 	if (strlen(msglines[curline]) > 0) {
             if (canblock) {
                 /* If we would scroll a message off the screen that
-                   the user hasn't had a chance to look at this turn,
-                   then run more(), else newline(). Because the
-                   --more-- takes up a line by itself, we need to
+                   the user hasn't had a chance to look at this
+                   redraw, then run more(), else newline(). Because
+                   the --more-- takes up a line by itself, we need to
                    offset that by one line. Thus, a message window of
                    height 2 requires us to always show a --more-- even
-                   if we're on the first message of the turn; with
+                   if we're on the first message of the redraw; with
                    height 3, we can safely newline after the first
                    line of messages but must --more-- after the
                    second, etc. getmaxy gives the height of the window
                    minus 1, which is why we only subtract 2 not 3. */
-                if ((curline + MAX_MSGLINES - start_of_turn_curline) %
+                if ((curline + MAX_MSGLINES - last_redraw_curline) %
                     MAX_MSGLINES > getmaxy(msgwin) - 2)
                   more();
                 else
@@ -325,7 +330,8 @@ void cleanup_messages(void)
     
     /* extra cleanup to prevent old messages from appearing in a new game */
     msghistory = NULL;
-    curline = start_of_turn_curline = histsize = histpos = 0;
+    curline = last_redraw_curline = start_of_turn_curline = 0;
+    histsize = histpos = 0;
     for (i = 0; i < MAX_MSGLINES; i++)
 	msglines[i][0] = '\0';
 }
