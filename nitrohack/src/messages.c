@@ -17,6 +17,7 @@ static struct message *msghistory;
 static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
+static int start_of_turn_curline;
 static nh_bool stopprint;
 static int prevturn, action, prevaction;
 
@@ -104,6 +105,8 @@ static void prune_messages(int maxturn)
 	msg = msghistory[pos].msg;
 	if (!*msg)
 	    continue;
+        if (msghistory[pos].turn > prevturn)
+            start_of_turn_curline = curline;
 	prevturn = msghistory[pos].turn;
 	
 	if (strlen(msglines[curline]) + strlen(msg) + 1 < COLNO) {
@@ -169,6 +172,9 @@ static void more(void)
     
     if (key == KEY_ESC)
 	stopprint = TRUE;
+
+    /* we want to --more-- by screenfuls, not lines */
+    start_of_turn_curline = curline;
 }
 
 
@@ -176,6 +182,7 @@ static void more(void)
 void new_action(void)
 {
     action++;
+    start_of_turn_curline = curline;
 }
 
 
@@ -192,6 +199,9 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
     if (!msghistory)
 	alloc_hist_array();
     
+    if (turn != prevturn)
+        start_of_turn_curline = curline;
+
     if (turn < prevturn) /* going back in time can happen during replay */
 	prune_messages(turn);
 
@@ -230,9 +240,24 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
 	strcat(msglines[curline], msg);
     } else {
 	if (strlen(msglines[curline]) > 0) {
-	    if (canblock)
-		more();
-	    else
+            if (canblock) {
+                /* If we would scroll a message off the screen that
+                   the user hasn't had a chance to look at this turn,
+                   then run more(), else newline(). Because the
+                   --more-- takes up a line by itself, we need to
+                   offset that by one line. Thus, a message window of
+                   height 2 requires us to always show a --more-- even
+                   if we're on the first message of the turn; with
+                   height 3, we can safely newline after the first
+                   line of messages but must --more-- after the
+                   second, etc. getmaxy gives the height of the window
+                   minus 1, which is why we only subtract 2 not 3. */
+                if ((curline + MAX_MSGLINES - start_of_turn_curline) %
+                    MAX_MSGLINES > getmaxy(msgwin) - 2)
+                  more();
+                else
+                  newline();
+	    } else
 		newline();
 	}
 	if (!stopprint) /* may get set in more() */
@@ -300,7 +325,7 @@ void cleanup_messages(void)
     
     /* extra cleanup to prevent old messages from appearing in a new game */
     msghistory = NULL;
-    curline = histsize = histpos = 0;
+    curline = start_of_turn_curline = histsize = histpos = 0;
     for (i = 0; i < MAX_MSGLINES; i++)
 	msglines[i][0] = '\0';
 }
