@@ -6,6 +6,7 @@
 
 #include "nhclient.h"
 
+struct nhnet_server_version nhnet_server_ver;
 
 static int sockfd = -1;
 static int connection_id;
@@ -318,7 +319,7 @@ static int do_connect(const char *host, int port, const char *user, const char *
 {
     int fd = -1, authresult, copylen;
     char ipv6_error[120], ipv4_error[120], errmsg[256];
-    json_t *jmsg;
+    json_t *jmsg, *jarr;
     
 #ifdef UNIX
     /* try to connect to a local unix socket */
@@ -387,6 +388,13 @@ static int do_connect(const char *host, int port, const char *user, const char *
 	close(fd);
 	return NO_CONNECTION;
     }
+    /* the "version" field in the response is optional */
+    if (json_unpack(jmsg, "{so*}", "version", &jarr) != -1 &&
+	json_is_array(jarr) && json_array_size(jarr) >= 3) {
+	nhnet_server_ver.major = json_integer_value(json_array_get(jarr, 0));
+	nhnet_server_ver.minor = json_integer_value(json_array_get(jarr, 1));
+	nhnet_server_ver.patchlevel = json_integer_value(json_array_get(jarr, 2));
+    }
     json_decref(jmsg);
     
     if (host != saved_hostname)
@@ -431,6 +439,7 @@ void nhnet_disconnect(void)
     net_active = FALSE;
     xmalloc_cleanup();
     free_option_lists();
+    memset(&nhnet_server_ver, 0, sizeof(nhnet_server_ver));
 }
 
 

@@ -391,6 +391,11 @@ static void netgame_mainmenu(struct server_info *server)
     char buf[BUFSZ];
     int n = 1, logoheight, i;
     const char **nhlogo;
+    char verstr[32], server_verstr[32];
+    
+    sprintf(verstr, "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+    sprintf(server_verstr, "Server version: %d.%d.%d", nhnet_server_ver.major,
+	    nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
 
     static struct nh_menuitem netmenu_items[] = {
 	{NEWGAME, MI_NORMAL, "new game", 'n'},
@@ -414,6 +419,10 @@ static void netgame_mainmenu(struct server_info *server)
 	    waddstr(basewin, nhlogo[i]);
 	}
 	wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+	
+	if (nhnet_server_ver.major > 0 || nhnet_server_ver.minor > 0)
+	    mvwaddstr(basewin, LINES-1, 0, server_verstr);
+	mvwaddstr(basewin, LINES-1, COLS - strlen(verstr), verstr);
 	wrefresh(basewin);
 
 	menuresult[0] = DISCONNECT; /* default action */

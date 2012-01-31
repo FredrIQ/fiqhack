@@ -43,6 +43,13 @@ struct nhnet_game {
 };
 
 
+struct nhnet_server_version {
+    int major, minor, patchlevel;
+};
+
+extern EXPORT struct nhnet_server_version nhnet_server_ver;
+
+
 extern EXPORT int nhnet_connect(const char *host, int port, const char *user,
 				const char *pass, const char *email, int reg_user);
 extern EXPORT void nhnet_disconnect(void);
