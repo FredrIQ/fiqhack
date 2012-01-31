@@ -46,6 +46,7 @@
 #ifdef _MSC_VER
 # pragma warning(disable:4761)	/* integral size mismatch in arg; conv supp*/
 # pragma warning(disable:4996)	/* POSIX name is deprecated*/
+# define inline __inline
 # ifdef YYPREFIX
 #  pragma warning(disable:4102)	/* unreferenced label */
 # endif

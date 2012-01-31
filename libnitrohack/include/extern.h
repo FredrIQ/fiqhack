@@ -1322,15 +1322,6 @@ extern void restore_flags(struct memfile *mf, struct flag *f);
 extern struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
 
-/* ### rnd.c ### */
-
-extern int rn2(int);
-extern int rnl(int);
-extern int rnd(int);
-extern int dice(int,int);
-extern int rne(int);
-extern int rnz(int);
-
 /* ### role.c ### */
 
 extern int str2role(char *);
