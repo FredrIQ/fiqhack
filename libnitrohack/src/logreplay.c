@@ -226,7 +226,7 @@ void replay_end(void)
 }
 
 
-static void parse_error(const char *str)
+static void NORETURN parse_error(const char *str)
 {
     raw_printf("Error at token %d (\"%s\"): %s\n", loginfo.next,
 	       loginfo.tokens[loginfo.next-1], str);
@@ -580,7 +580,7 @@ static void replay_read_option(char *token)
     switch (otype[0]) {
 	case 's':
 	    base64_decode(valstr, valbuf);
-	    value.s = strlen(valbuf) > 0 ? valbuf : NULL;
+	    value.s = (valbuf[0] != '\0') ? valbuf : NULL;
 	    break;
 	case 'e':
 	    sscanf(valstr, "%x", &value.e);

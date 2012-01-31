@@ -123,7 +123,7 @@ void done_in_by(struct monst *mtmp)
 	}
 
 	if (multi) {
-	    if (strlen(multi_txt) > 0)
+	    if (*multi_txt)
 		sprintf(eos(buf), ", while %s", multi_txt);
 	    else
 		strcat(buf, ", while helpless");
@@ -646,7 +646,7 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	}
 
 	if (!done_stopprint) {
-	    sprintf(pbuf, "and %ld piece%s of gold, after %d move%s.",
+	    sprintf(pbuf, "and %ld piece%s of gold, after %u move%s.",
 		    umoney, plur(umoney), moves, plur(moves));
 	    add_menutext(&menu, pbuf);
 	}

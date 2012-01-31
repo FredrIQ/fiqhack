@@ -1004,6 +1004,8 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 
 	if (!Is_waterlevel(&lev->z)) return;
 
+	bbubbles = NULL;
+	
 	set_wportal(lev);
 	n = mread32(mf);
 	xmin = mread32(mf);
@@ -1021,6 +1023,7 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 		b->dy = mread8(mf);
 		idx = mread8(mf);
 		b->bm = bmask[idx];
+		b->next = NULL;
 		
 		if (bbubbles) {
 			btmp->next = b;
@@ -1031,7 +1034,6 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 		}
 	}
 	ebubbles = b;
-	b->next = NULL;
 	was_waterlevel = TRUE;
 }
 

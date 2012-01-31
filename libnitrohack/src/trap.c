@@ -2844,7 +2844,7 @@ static int untrap_prob(struct trap *ttmp)
 	if (Stunned) chance += 2;
 	if (Fumbling) chance *= 2;
 	/* Your own traps are better known than others. */
-	if (ttmp && ttmp->madeby_u) chance--;
+	if (ttmp->madeby_u) chance--;
 	if (Role_if (PM_ROGUE)) {
 	    if (rn2(2 * MAXULEV) < u.ulevel) chance--;
 	    if (u.uhave.questart && chance > 1) chance--;

@@ -204,6 +204,10 @@ static int init_server_socket(struct sockaddr *sa)
 	case AF_UNIX:
 	    len = sizeof(struct sockaddr_un);
 	    break;
+	    
+	default: /* shouldn't ever happen */
+	    close(fd);
+	    return -1;
     }
     
     if (sa->sa_family != AF_UNIX) {

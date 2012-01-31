@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "nitrohack_types.h"
 

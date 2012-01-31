@@ -222,7 +222,7 @@ void log_command_result(void)
  * logging of commands marked as CMD_NOTIME */
 void log_revert_command(void)
 {
-    if (logfile == -1 || iflags.disable_log || logfile == -1)
+    if (logfile == -1 || iflags.disable_log)
 	return;
     
     lseek(logfile, last_cmd_pos, SEEK_SET);

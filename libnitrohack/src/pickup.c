@@ -1373,10 +1373,7 @@ static int in_container(struct obj *obj)
 	boolean was_unpaid = FALSE;
 	char buf[BUFSZ];
 
-	if (!current_container) {
-		impossible("<in> no current_container?");
-		return 0;
-	} else if (obj == uball || obj == uchain) {
+	if (obj == uball || obj == uchain) {
 		pline("You must be kidding.");
 		return 0;
 	} else if (obj == current_container) {

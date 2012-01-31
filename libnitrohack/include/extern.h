@@ -6,6 +6,12 @@
 
 #include "winprocs.h"
 
+#ifdef _MSC_VER
+#define NORETURN __declspec(noreturn)
+#else
+#define NORETURN __attribute__((noreturn))
+#endif
+
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
@@ -442,7 +448,7 @@ extern void reset_food(void);
 
 /* ### end.c ### */
 
-extern void terminate(void);
+extern void NORETURN terminate(void);
 extern void panic(const char *,...);
 extern int done2(void);
 extern void done_in_by(struct monst *);

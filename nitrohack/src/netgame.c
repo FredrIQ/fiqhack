@@ -90,7 +90,7 @@ static struct server_info *read_server_list(void)
     FILE *fp;
     
     scount = 0;
-    servlist = malloc(sizeof(struct server_info) * (scount+1));
+    servlist = malloc(sizeof(struct server_info));
     memset(&servlist[scount], 0, sizeof(struct server_info));
     
     filename[0] = '\0';

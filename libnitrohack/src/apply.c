@@ -1394,7 +1394,7 @@ void use_unicorn_horn(struct obj *obj)
 #define prop_trouble(X) trouble_list[trouble_count++] = prop2trbl(X)
 #define attr_trouble(Y) trouble_list[trouble_count++] = attr2trbl(Y)
 
-	trouble_count = unfixable_trbl = did_prop = did_attr = 0;
+	trouble_count = did_prop = did_attr = 0;
 
 	/* collect property troubles */
 	if (Sick) prop_trouble(SICK);
@@ -2849,7 +2849,7 @@ int doapply(struct obj *obj)
 		nomul(0, NULL);
 		return 0;
 	}
-	if (res && obj && obj->oartifact) arti_speak(obj);
+	if (res && obj->oartifact) arti_speak(obj);
 	nomul(0, NULL);
 	return res;
 }

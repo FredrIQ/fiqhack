@@ -170,16 +170,14 @@ int gold_detect(struct obj *sobj, boolean *scr_known)
     if (!*scr_known) {
 	/* no gold found on floor or monster's inventory.
 	   adjust message if you have gold in your inventory */
-	if (sobj) {
-	    char buf[BUFSZ];
-	    if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
-		    sprintf(buf, "You feel like a million %s!", currency(2L));
-	    } else if (hidden_gold() || money_cnt(invent))
-		    strcpy(buf, "You feel worried about your future financial situation.");
-	    else
-		    strcpy(buf, "You feel materially poor.");
-	    strange_feeling(sobj, buf);
-        }
+	char buf[BUFSZ];
+	if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
+		sprintf(buf, "You feel like a million %s!", currency(2L));
+	} else if (hidden_gold() || money_cnt(invent))
+		strcpy(buf, "You feel worried about your future financial situation.");
+	else
+		strcpy(buf, "You feel materially poor.");
+	strange_feeling(sobj, buf);
 	return 1;
     }
     /* only under me - no separate display required */

@@ -524,6 +524,8 @@ int use_defensive(struct monst *mtmp)
 #define m_flee(m)	if (fleetim && !m->iswiz) \
 			{ monflee(m, fleetim, FALSE, FALSE); }
 
+	assert(m.has_defense == 0 || otmp != NULL); /* has_defense implies valid otmp */
+	
 	switch(m.has_defense) {
 	case MUSE_UNICORN_HORN:
 		if (vismon) {
@@ -1160,7 +1162,7 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 			(*fhitm)(&youmonst, obj);
 			range -= 3;
 		} else if (MON_AT(level, bhitpos.x, bhitpos.y)){
-			mtmp = m_at(level, bhitpos.x,bhitpos.y);
+			mtmp = m_at(level, bhitpos.x, bhitpos.y);
 			if (cansee(bhitpos.x,bhitpos.y) && !canspotmon(mtmp))
 			    map_invisible(bhitpos.x, bhitpos.y);
 			(*fhitm)(mtmp, obj);
@@ -1221,7 +1223,7 @@ int use_offensive(struct monst *mtmp)
 	/* offensive potions are not drunk, they're thrown */
 	if (otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp)) != 0)
 		return i;
-	oseen = otmp && canseemon(mtmp);
+	oseen = canseemon(mtmp);
 
 	switch(m.has_offense) {
 	case MUSE_WAN_DEATH:
@@ -1596,6 +1598,8 @@ int use_misc(struct monst *mtmp)
 	vis = cansee(mtmp->mx, mtmp->my);
 	vismon = canseemon(mtmp);
 	oseen = otmp && vismon;
+	
+	assert(m.has_misc == 0 || otmp != NULL); /* has_misc implies valid otmp */
 
 	switch(m.has_misc) {
 	case MUSE_POT_GAIN_LEVEL:

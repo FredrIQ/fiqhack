@@ -636,7 +636,6 @@ static void edit_ap_rule(struct nh_autopick_option *desc,
 			ar->rules[i] = ar->rules[i-1];
 		}
 		ar->rules[newpos] = tmprule;
-		ruleno = newpos;
 		goto out;
 		
 	    /* edit the pattern */

@@ -411,6 +411,9 @@ static struct nh_cmd_desc* show_help(void)
     
     n = curses_display_menu(items, icount, "Help topics:", PICK_ONE, selected);
     free(items);
+    if (n <= 0)
+	return NULL;
+    
     switch(selected[0]) {
 	case 1:
 	    show_keymap_menu(TRUE);
@@ -779,7 +782,7 @@ static nh_bool set_command_keys(struct win_menu *mdat, int idx)
     
     if (id < 0)
 	cmd = &builtin_commands[-(id+1)];
-    else if (id > 0)
+    else
 	cmd = &commandlist[id-1];
     
     command_settings_menu(cmd);

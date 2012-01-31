@@ -541,8 +541,7 @@ void feel_location(xchar x, xchar y)
 		    loc->mem_bg = loc->waslit ? S_room : S_darkroom;
 		    dbuf_set_loc(x, y);
 		}
-	    } else if ((loc->mem_bg >= S_unexplored && loc->mem_bg < S_room) ||
-		       level->locations[x][y].mem_invis) {
+	    } else if (loc->mem_bg < S_room || loc->mem_invis) {
 		loc->mem_bg = loc->waslit ? S_room : S_darkroom;
 		dbuf_set_loc(x, y);
 	    }

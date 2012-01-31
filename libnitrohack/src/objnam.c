@@ -1181,7 +1181,7 @@ char *makeplural(const char *oldstr)
 	int len;
 
 	while (*oldstr==' ') oldstr++;
-	if (!oldstr || !*oldstr) {
+	if (!*oldstr) {
 		impossible("plural of null?");
 		strcpy(str, "s");
 		return str;
