@@ -341,6 +341,8 @@ void log_finish(enum nh_log_status status)
     if (!program_state.something_worth_saving || logfile == -1 || iflags.disable_log)
 	return;
     
+    lseek(logfile, last_cmd_pos++, SEEK_SET);
+    lprintf("\n");
     lseek(logfile, 0, SEEK_SET);
     lprintf("NHGAME %4s %08x", statuscodes[status], last_cmd_pos);
     lseek(logfile, last_cmd_pos, SEEK_SET);
