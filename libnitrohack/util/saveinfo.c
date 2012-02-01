@@ -227,6 +227,14 @@ static void parse_timezone(char *token, long tcount)
 }
 
 
+static void parse_result(char *token)
+{
+    unsigned int state;
+    sscanf(token, "<%04x", &state);
+    printf("(%04x)", state);
+}
+
+
 int main(int argc, char *argv[])
 {
     FILE *fp;
@@ -317,7 +325,7 @@ int main(int argc, char *argv[])
 	    case 'T': parse_timezone(tokens[tnum], tnum); break;
 	    case 'm': printf("menu "); break;
 	    case 'o': printf("objects "); break;
-	    case '<': printf("\n"); break;
+	    case '<': parse_result(tokens[tnum]); printf("\n"); break;
 	    default: printf("  [strange token]  "); break;
 	}
     }
