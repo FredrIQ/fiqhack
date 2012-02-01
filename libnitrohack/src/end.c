@@ -668,6 +668,7 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 /* Be careful not to call panic from here! */
 void done(int how)
 {
+	int fd;
 	boolean taken;
 	char pbuf[BUFSZ];
 	boolean bones_ok;
@@ -749,9 +750,10 @@ void done(int how)
 	if (how == ESCAPED)
 		killer_format = NO_KILLER_PREFIX;
 	
-	/* write_log_toptenentry needs killer_format */
-	write_log_toptenentry(logfile, how);
+	fd = logfile;
 	log_finish(LS_DONE);
+	/* write_log_toptenentry needs killer_format */
+	write_log_toptenentry(fd, how);
 	/* in case of a subsequent panic(), there's no point trying to save */
 	program_state.something_worth_saving = 0;
 
