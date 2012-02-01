@@ -1728,6 +1728,7 @@ struct monst *restore_mon(struct memfile *mf)
     mon->mtrapseen = mread32(mf);
     mon->mlstmv = mread32(mf);
     mon->mstrategy = mread32(mf);
+    mon->meating = mread32(mf);
     mread(mf, mon->mtrack, sizeof(mon->mtrack));
     mon->mnum = mread16(mf);
     mon->mx = mread8(mf);
@@ -1909,6 +1910,7 @@ void save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->mtrapseen);
     mwrite32(mf, mon->mlstmv);
     mwrite32(mf, mon->mstrategy);
+    mwrite32(mf, mon->meating);
     mwrite(mf, mon->mtrack, sizeof(mon->mtrack));
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);
