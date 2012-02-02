@@ -99,6 +99,16 @@ static const char SQL_update_user_ts[] =
     "SET ts = 'now' "
     "WHERE uid = $1::integer;";
 
+static const char SQL_set_user_email[] =
+    "UPDATE users "
+    "SET email = $2::text "
+    "WHERE uid = $1::integer;";
+
+static const char SQL_set_user_password[] =
+    "UPDATE users "
+    "SET pwhash = crypt($2::text, gen_salt('bf', 8)) "
+    "WHERE uid = $1::integer;";
+
 static const char SQL_add_game[] =
     "INSERT INTO games (filename, role, race, gender, alignment, mode, moves, "
                        "depth, owner, plname, level_desc, ts, start_ts) "
@@ -365,6 +375,48 @@ void db_update_user_ts(int uid)
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	log_msg("update_user_ts error: %s", PQerrorMessage(conn));
     PQclear(res);
+}
+
+
+int db_set_user_email(int uid, const char *email)
+{
+    PGresult *res;
+    char uidstr[16];
+    const char * const params[] = {uidstr, email};
+    const int paramFormats[] = {0, 0};
+    const char *numrows;
+    
+    sprintf(uidstr, "%d", uid);
+    
+    res = PQexecParams(conn, SQL_set_user_email, 2, NULL, params, NULL, paramFormats, 0);
+    numrows = PQcmdTuples(res);
+    if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
+	PQclear(res);
+	return TRUE;
+    }
+    PQclear(res);
+    return FALSE;
+}
+
+
+int db_set_user_password(int uid, const char *password)
+{
+    PGresult *res;
+    char uidstr[16];
+    const char * const params[] = {uidstr, password};
+    const int paramFormats[] = {0, 0};
+    const char *numrows;
+    
+    sprintf(uidstr, "%d", uid);
+    
+    res = PQexecParams(conn, SQL_set_user_password, 2, NULL, params, NULL, paramFormats, 0);
+    numrows = PQcmdTuples(res);
+    if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
+	PQclear(res);
+	return TRUE;
+    }
+    PQclear(res);
+    return FALSE;
 }
 
 

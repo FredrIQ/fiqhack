@@ -26,6 +26,8 @@ static void ccmd_set_option(json_t *params);
 static void ccmd_get_options(json_t *params);
 static void ccmd_get_pl_prompt(json_t *params);
 static void ccmd_get_root_pl_prompt(json_t *params);
+static void ccmd_set_email(json_t *params);
+static void ccmd_set_password(json_t *params);
 
 const struct client_command clientcmd[] = {
     {"shutdown",	ccmd_shutdown},
@@ -51,6 +53,9 @@ const struct client_command clientcmd[] = {
     
     {"get_pl_prompt",	ccmd_get_pl_prompt},
     {"get_root_pl_prompt",ccmd_get_root_pl_prompt},
+    
+    {"set_email",	ccmd_set_email},
+    {"set_password",	ccmd_set_password},
     
     {NULL, NULL}
 };
@@ -834,6 +839,30 @@ static void ccmd_get_root_pl_prompt(json_t *params)
     
     bp = nh_root_plselection_prompt(buf, 1024, rolenum, racenum, gendnum, alignnum);
     client_msg("get_root_pl_prompt", json_pack("{ss}", "prompt", bp));
+}
+
+
+void ccmd_set_email(json_t *params)
+{
+    const char *str;
+    int ret = FALSE;
+    
+    if (json_unpack(params, "{ss*}", "email", &str) != -1)
+	ret = db_set_user_email(user_info.uid, str);
+    
+    client_msg("set_email", json_pack("{si}", "return", ret));
+}
+
+
+void ccmd_set_password(json_t *params)
+{
+    const char *str;
+    int ret = FALSE;
+    
+    if (json_unpack(params, "{ss*}", "password", &str) != -1)
+	ret = db_set_user_password(user_info.uid, str);
+    
+    client_msg("set_password", json_pack("{si}", "return", ret));
 }
 
 /* clientcmd.c */

@@ -23,7 +23,7 @@ static int in_connect_disconnect;
 static char saved_hostname[256];
 static int saved_port;
 static char saved_username[200]; /* max 50 multibyte chars */
-static char saved_password[200];
+char saved_password[200];
 
 jmp_buf ex_jmp_buf;
 int ex_jmp_buf_valid;

@@ -10,6 +10,7 @@ enum menuids {
     REPLAY,
     OPTIONS,
     TOPTEN,
+    ACCOUNT,
     DISCONNECT
 };
 
@@ -77,6 +78,66 @@ static void base64_decode(const char* in, char *out)
     }
     
     out[pos] = 0;
+}
+
+
+static void account_menu(struct server_info *server)
+{
+    int menuresult[1];
+    int n = 1;
+    char buf1[BUFSZ], buf2[BUFSZ];
+    
+    static struct nh_menuitem netmenu_items[] = {
+	{1, MI_NORMAL, "change email address", 'e'},
+	{2, MI_NORMAL, "change password", 'p'},
+	{0, MI_NORMAL, "", 0},
+	{3, MI_NORMAL, "back to main menu", 'x'}
+    };
+    
+    while (n > 0) {
+	menuresult[0] = 3; /* default action */
+	n = curses_display_menu(netmenu_items, ARRAY_SIZE(netmenu_items),
+				     "Account settings:", PICK_ONE, menuresult);
+	
+	switch (menuresult[0]) {
+	    case 1:
+		curses_getline("What email address do you want to use?", buf1);
+		if (*buf1 != '\033' &&
+		    (*buf1 || curses_yn_function("Remove current email address?",
+						"yn", 'n') == 'y'))
+		    nhnet_change_email(buf1);
+		break;
+		
+	    case 2:
+		curses_getline("Current password:", buf1);
+		if (strcmp(server->password, buf1)) {
+		    curses_msgwin("Incorrect password.");
+		    break;
+		}   
+		
+		curses_getline("Change password: (Beware - it is transmitted in plain text)", buf1);
+		if (buf1[0] != '\033' && buf1[0] != '\0')
+		    curses_getline("Confirm password:", buf2);
+		
+		if (buf2[0] == '\033' || buf2[0] == '\0')
+		    curses_msgwin("Password change cancelled.");
+		else if (strcmp(buf1, buf2))
+		    curses_msgwin("The passwords didn't match. The password was not changed.");
+		else {
+		    nhnet_change_password(buf1);
+		    free((void*)server->password);
+		    server->password = strdup(buf1);
+		}
+		break;
+		
+	    case 3:
+		return;
+	}
+	
+	/* unrecoverable connection error? */
+	if (!nhnet_connected())
+	    break;
+    }
 }
 
 
@@ -403,6 +464,7 @@ static void netgame_mainmenu(struct server_info *server)
 	{REPLAY, MI_NORMAL, "view replay", 'v'},
 	{OPTIONS, MI_NORMAL, "set options", 'o'},
 	{TOPTEN, MI_NORMAL, "show score list", 's'},
+	{ACCOUNT, MI_NORMAL, "account settings", 'a'},
 	{DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x'}
     };
     
@@ -431,9 +493,6 @@ static void netgame_mainmenu(struct server_info *server)
 				     buf, PICK_ONE, menuresult, 0, logoheight,
 				     COLS, ROWNO+3, NULL);
 	
-	wclear(basewin);
-	wrefresh(basewin);
-	
 	switch (menuresult[0]) {
 	    case NEWGAME:
 		net_rungame();
@@ -453,6 +512,10 @@ static void netgame_mainmenu(struct server_info *server)
 		
 	    case TOPTEN:
 		show_topten(NULL, -1, FALSE, FALSE);
+		break;
+		
+	    case ACCOUNT:
+		account_menu(server);
 		break;
 		
 	    case DISCONNECT:
@@ -481,7 +544,7 @@ void netgame(void)
     init_displaychars(); /* load new display info from the server */
     
     netgame_mainmenu(server);
-    
+    write_server_list(servlist);
     nhnet_disconnect();
     
 finally:

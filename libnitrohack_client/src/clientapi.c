@@ -951,4 +951,33 @@ struct nh_topten_entry *nhnet_get_topten(int *out_len, char *statusbuf,
     return ttlist;
 }
 
+
+int nhnet_change_email(const char *email)
+{
+    int ret;
+    json_t *jmsg;
+    
+    jmsg = json_pack("{ss}", "email", email);
+    jmsg = send_receive_msg("set_email", jmsg);
+    if (json_unpack(jmsg, "{si}", "return", &ret) == -1)
+	return FALSE;
+    return ret;
+}
+
+
+int nhnet_change_password(const char *password)
+{
+    int ret;
+    json_t *jmsg;
+    
+    jmsg = json_pack("{ss}", "password", password);
+    jmsg = send_receive_msg("set_password", jmsg);
+    if (json_unpack(jmsg, "{si}", "return", &ret) == -1)
+	return FALSE;
+	
+    if (ret)
+	strncpy(saved_password, password, 199);
+    return ret;
+}
+
 /* clientapi.c */

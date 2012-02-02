@@ -34,6 +34,7 @@ extern int current_game;
 extern jmp_buf ex_jmp_buf;
 extern int ex_jmp_buf_valid;
 extern int conn_err;
+extern char saved_password[];
 
 /* clientapi.c */
 extern void free_option_lists(void);
