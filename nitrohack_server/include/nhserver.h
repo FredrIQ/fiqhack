@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -119,7 +120,6 @@ extern void db_update_user_ts(int uid);
 extern long db_add_new_game(int uid, const char *filename, const char *role,
 			    const char *race, const char *gend, const char *align,
 			    int mode, const char *plname, const char *levdesc);
-extern void db_set_game_done(int gameid, const char *filename);
 extern void db_update_game(int gameid, int moves, int depth, const char *levdesc);
 extern int db_get_game_filename(int uid, int gid, char *namebuf, int buflen);
 extern void db_delete_game(int uid, int gid);

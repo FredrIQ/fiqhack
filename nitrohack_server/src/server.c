@@ -54,7 +54,6 @@
 #include <netinet/tcp.h>
 #include <sys/epoll.h>
 #include <sys/time.h>
-#include <sys/stat.h>
 
 #if defined(OPEN_MAX)
 static int get_open_max(void) { return OPEN_MAX; }

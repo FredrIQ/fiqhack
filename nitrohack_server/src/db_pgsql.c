@@ -123,8 +123,8 @@ static const char SQL_get_game_filename[] =
 
 static const char SQL_set_game_done[] =
     "UPDATE games "
-    "SET filename = $1::text, done = TRUE "
-    "WHERE gid = $2::integer;";
+    "SET done = TRUE "
+    "WHERE gid = $1::integer;";
 
 static const char SQL_list_games[] =
     "SELECT g.gid, g.filename, u.name "
@@ -446,21 +446,6 @@ int db_get_game_filename(int uid, int gid, char *namebuf, int buflen)
 }
 
 
-void db_set_game_done(int gid, const char *filename)
-{
-    PGresult *res;
-    char gidstr[16];
-    const char * const params[] = {filename, gidstr};
-    const int paramFormats[] = {0, 0};
-    
-    sprintf(gidstr, "%d", gid);
-    res = PQexecParams(conn, SQL_set_game_done, 2, NULL, params, NULL, paramFormats, 0);
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("set_game_done error: %s", PQerrorMessage(conn));
-    PQclear(res);
-}
-
-
 void db_delete_game(int uid, int gid)
 {
     PGresult *res;
@@ -605,7 +590,12 @@ void db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,
     res = PQexecParams(conn, SQL_add_topten_entry, 8, NULL, params, NULL, paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	log_msg("add_topten_entry error: %s", PQerrorMessage(conn));
+    PQclear(res);
     
+    /* note: the params and paramFormats arrays are re-used, but only the 1. entry matters */
+    res = PQexecParams(conn, SQL_set_game_done, 1, NULL, params, NULL, paramFormats, 0);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	log_msg("set_game_done error: %s", PQerrorMessage(conn));
     PQclear(res);
     return;
 }
