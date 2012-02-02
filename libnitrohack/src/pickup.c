@@ -367,7 +367,8 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    
 	    /* don't unconditionally reveal weight, otherwise lodestones on the
 	     * floor could be identified by their weight in the pickup dialog */
-	    if (obj->where == OBJ_INVENT || (obj->known && obj->invlet))
+	    if (obj->where == OBJ_INVENT || obj->known ||
+		(obj->where == OBJ_CONTAINED && obj->ocontainer->where == OBJ_INVENT))
 		it->weight = obj->owt;
 	
 	    if (!obj->bknown)
