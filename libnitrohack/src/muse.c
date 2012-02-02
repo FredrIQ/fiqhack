@@ -523,8 +523,6 @@ int use_defensive(struct monst *mtmp)
 	fleetim = !mtmp->mflee ? (33 - (30 * mtmp->mhp / mtmp->mhpmax)) : 0;
 #define m_flee(m)	if (fleetim && !m->iswiz) \
 			{ monflee(m, fleetim, FALSE, FALSE); }
-
-	assert(m.has_defense == 0 || otmp != NULL); /* has_defense implies valid otmp */
 	
 	switch(m.has_defense) {
 	case MUSE_UNICORN_HORN:
@@ -1598,8 +1596,6 @@ int use_misc(struct monst *mtmp)
 	vis = cansee(mtmp->mx, mtmp->my);
 	vismon = canseemon(mtmp);
 	oseen = otmp && vismon;
-	
-	assert(m.has_misc == 0 || otmp != NULL); /* has_misc implies valid otmp */
 
 	switch(m.has_misc) {
 	case MUSE_POT_GAIN_LEVEL:
