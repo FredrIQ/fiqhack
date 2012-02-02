@@ -965,7 +965,7 @@ struct obj *mk_named_object(int objtype,	/* CORPSE or STATUE */
 	return otmp;
 }
 
-boolean is_flammable(struct obj *otmp)
+boolean is_flammable(const struct obj *otmp)
 {
 	int otyp = otmp->otyp;
 	int omat = objects[otyp].oc_material;
@@ -976,7 +976,7 @@ boolean is_flammable(struct obj *otmp)
 	return (boolean)((omat <= WOOD && omat != LIQUID) || omat == PLASTIC);
 }
 
-boolean is_rottable(struct obj *otmp)
+boolean is_rottable(const struct obj *otmp)
 {
 	int otyp = otmp->otyp;
 

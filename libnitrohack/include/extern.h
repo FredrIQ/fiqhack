@@ -628,7 +628,7 @@ extern boolean have_lizard(void);
 extern struct obj *o_on(unsigned int,struct obj *);
 extern boolean obj_here(struct obj *,int,int);
 extern boolean wearing_armor(void);
-extern boolean is_worn(struct obj *);
+extern boolean is_worn(const struct obj *);
 extern struct obj *gold_at(struct level *lev, int x, int y);
 extern struct obj *mkgoldobj(long);
 extern struct obj *getobj(const char *let, const char *word);
@@ -885,8 +885,8 @@ extern void unbless(struct obj *);
 extern void curse(struct obj *);
 extern void uncurse(struct obj *);
 extern void blessorcurse(struct obj *,int);
-extern boolean is_flammable(struct obj *);
-extern boolean is_rottable(struct obj *);
+extern boolean is_flammable(const struct obj *);
+extern boolean is_rottable(const struct obj *);
 extern void place_object(struct obj *otmp, struct level *lev, int x, int y);
 extern void remove_object(struct obj *);
 extern void discard_minvent(struct monst *);
@@ -1095,7 +1095,8 @@ extern char *xname(struct obj *);
 extern char *mshot_xname(struct obj *);
 extern boolean the_unique_obj(const struct obj *obj);
 extern char *doname(struct obj *);
-extern boolean not_fully_identified(struct obj *);
+extern boolean not_fully_identified_core(const struct obj *otmp, boolean ignore_bknown);
+extern boolean not_fully_identified(const struct obj *otmp);
 extern char *corpse_xname(const struct obj *, boolean);
 extern char *cxname(struct obj *);
 extern char *cxname2(struct obj *obj);
@@ -1144,16 +1145,16 @@ extern int doverhistory(void);
 /* ### pickup.c ### */
 
 extern void add_valid_menu_class(int);
-extern boolean allow_all(struct obj *);
-extern boolean allow_category(struct obj *);
-extern boolean is_worn_by_type(struct obj *);
+extern boolean allow_all(const struct obj *);
+extern boolean allow_category(const struct obj *);
+extern boolean is_worn_by_type(const struct obj *);
 extern int pickup(int);
 extern int pickup_object(struct obj *, long, boolean);
 extern int query_category(const char *, struct obj *, int,
 				int*, int);
 extern int obj_compare(const void *, const void *);
 extern int query_objlist(const char *, struct obj *, int,
-				struct object_pick **, int, boolean (*)(struct obj*));
+				struct object_pick **, int, boolean (*)(const struct obj*));
 extern void add_objitem(struct nh_objitem**, int*, enum nh_menuitem_role, int,
 			int, char*, struct obj*, boolean);
 extern struct obj *pick_obj(struct obj *);

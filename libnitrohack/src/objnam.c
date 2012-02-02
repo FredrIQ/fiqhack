@@ -806,13 +806,13 @@ ring:
 
 
 /* used from invent.c */
-boolean not_fully_identified(struct obj *otmp)
+boolean not_fully_identified_core(const struct obj *otmp, boolean ignore_bknown)
 {
     /* gold doesn't have any interesting attributes [yet?] */
     if (otmp->oclass == COIN_CLASS) return FALSE;	/* always fully ID'd */
 
     /* check fundamental ID hallmarks first */
-    if (!otmp->known || !otmp->dknown || !otmp->bknown ||
+    if (!otmp->known || !otmp->dknown || (!ignore_bknown && !otmp->bknown) ||
 	    !objects[otmp->otyp].oc_name_known)	/* ?redundant? */
 	return TRUE;
     if (otmp->oartifact && undiscovered_artifact(otmp->oartifact))
@@ -832,6 +832,12 @@ boolean not_fully_identified(struct obj *otmp)
 	return (boolean)(is_rustprone(otmp) ||
 			 is_corrodeable(otmp) ||
 			 is_flammable(otmp));
+}
+
+
+boolean not_fully_identified(const struct obj *otmp)
+{
+    return not_fully_identified_core(otmp, FALSE);
 }
 
 char *corpse_xname(const struct obj *otmp,
