@@ -1228,7 +1228,7 @@ gotit:
 		    add_to_container(coffers, goldob);
 		    coffers->owt = weight(coffers);
 		} else {
-		    struct monst *mon = makemon(courtmon(), level,
+		    struct monst *mon = makemon(courtmon(&u.uz), level,
 					    u.ux, u.uy, NO_MM_FLAGS);
 		    if (mon) {
 			add_to_minv(mon, goldob);

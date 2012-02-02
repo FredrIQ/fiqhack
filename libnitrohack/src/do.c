@@ -1149,7 +1149,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		pline("The heat and smoke are gone.");
 
 	/* the message from your quest leader */
-	if (!In_quest(&u.uz0) && at_dgn_entrance("The Quest") &&
+	if (!In_quest(&u.uz0) && at_dgn_entrance(&u.uz, "The Quest") &&
 		!(u.uevent.qexpelled || u.uevent.qcompleted || quest_status.leader_is_dead)) {
 
 		if (u.uevent.qcalled) {

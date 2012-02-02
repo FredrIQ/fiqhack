@@ -1140,7 +1140,7 @@ static void demonpet(void)
 	struct monst *dtmp;
 
 	pline("Some hell-p has arrived!");
-	i = !rn2(6) ? ndemon(u.ualign.type) : NON_PM;
+	i = !rn2(6) ? ndemon(&u.uz, u.ualign.type) : NON_PM;
 	pm = i != NON_PM ? &mons[i] : youmonst.data;
 	if ((dtmp = makemon(pm, level, u.ux, u.uy, NO_MM_FLAGS)) != 0)
 	    tamedog(dtmp, NULL);

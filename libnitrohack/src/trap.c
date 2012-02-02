@@ -235,7 +235,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 		struct obj *otmp, *statue;
 
 		statue = mkcorpstat(STATUE, NULL,
-					&mons[rndmonnum()], lev, x, y, FALSE);
+					&mons[rndmonnum(&lev->z)], lev, x, y, FALSE);
 		mtmp = makemon(&mons[statue->corpsenm], lev, 0, 0, NO_MM_FLAGS);
 		if (!mtmp) break; /* should never happen */
 		while (mtmp->minvent) {
@@ -2422,7 +2422,7 @@ static void domagictrap(void)
 			else
 			    pline("You suddenly yearn for %s.",
 				Hallucination ? "Cleveland" :
-			    (In_quest(&u.uz) || at_dgn_entrance("The Quest")) ?
+			    (In_quest(&u.uz) || at_dgn_entrance(&u.uz, "The Quest")) ?
 						"your nearby homeland" :
 						"your distant homeland");
 			break;
@@ -3329,7 +3329,7 @@ int untrap(boolean force)
 			    ch = ACURR(A_DEX) + u.ulevel;
 			    if (Role_if (PM_ROGUE)) ch *= 2;
 			    if (!force && (confused || Fumbling ||
-				rnd(75+level_difficulty()/2) > ch)) {
+				rnd(75 + level_difficulty(&u.uz) / 2) > ch)) {
 				chest_trap(otmp, FINGER, TRUE);
 			    } else {
 				pline("You disarm it!");
@@ -3389,7 +3389,7 @@ int untrap(boolean force)
 		    ch = 15 + (Role_if (PM_ROGUE) ? u.ulevel*3 : u.ulevel);
 		    exercise(A_DEX, TRUE);
 		    if (!force && (confused || Fumbling ||
-				     rnd(75+level_difficulty()/2) > ch)) {
+				     rnd(75 + level_difficulty(&u.uz) / 2) > ch)) {
 			pline("You set it off!");
 			b_trapped("door", FINGER);
 			level->locations[x][y].doormask = D_NODOOR;
@@ -3644,7 +3644,7 @@ boolean delfloortrap(struct trap *ttmp)
 /* used for doors (also tins).  can be used for anything else that opens. */
 void b_trapped(const char *item, int bodypart)
 {
-	int lvl = level_difficulty();
+	int lvl = level_difficulty(&u.uz);
 	int dmg = rnd(5 + (lvl < 5 ? lvl : 2+lvl/2));
 
 	pline("KABOOM!!  %s was booby-trapped!", The(item));

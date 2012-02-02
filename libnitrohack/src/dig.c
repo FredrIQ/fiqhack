@@ -342,7 +342,7 @@ static int dig(void)
 			}
 			digtxt = "You make an opening in the wall.";
 		} else if (loc->typ == SDOOR) {
-			cvt_sdoor_to_door(loc);	/* ->typ = DOOR */
+			cvt_sdoor_to_door(loc, &u.uz);	/* ->typ = DOOR */
 			digtxt = "You break through a secret door!";
 			if (!(loc->doormask & D_TRAPPED))
 				loc->doormask = D_BROKEN;
@@ -761,12 +761,12 @@ static void dig_up_grave(void)
 	case 2:
 	    if (!Blind) pline(Hallucination ? "Dude!  The living dead!" :
 			"The grave's owner is very upset!");
-	    makemon(mkclass(S_ZOMBIE,0), level, u.ux, u.uy, NO_MM_FLAGS);
+	    makemon(mkclass(&u.uz, S_ZOMBIE,0), level, u.ux, u.uy, NO_MM_FLAGS);
 	    break;
 	case 3:
 	    if (!Blind) pline(Hallucination ? "I want my mummy!" :
 			"You've disturbed a tomb!");
-	    makemon(mkclass(S_MUMMY,0), level, u.ux, u.uy, NO_MM_FLAGS);
+	    makemon(mkclass(&u.uz, S_MUMMY,0), level, u.ux, u.uy, NO_MM_FLAGS);
 	    break;
 	default:
 	    /* No corpse */
@@ -1016,7 +1016,7 @@ boolean mdig_tunnel(struct monst *mtmp)
 
 	here = &level->locations[mtmp->mx][mtmp->my];
 	if (here->typ == SDOOR)
-	    cvt_sdoor_to_door(here);	/* ->typ = DOOR */
+	    cvt_sdoor_to_door(here, &mtmp->dlevel->z);	/* ->typ = DOOR */
 
 	/* Eats away door if present & closed or locked */
 	if (closed_door(level, mtmp->mx, mtmp->my)) {

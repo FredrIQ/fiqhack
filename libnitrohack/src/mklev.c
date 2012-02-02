@@ -339,20 +339,20 @@ static void dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, i
 		    lev->locations[x][y].doormask = D_CLOSED;
 
 		if (lev->locations[x][y].doormask != D_ISOPEN && !shdoor &&
-		    level_difficulty() >= 5 && !rn2(25))
+		    level_difficulty(&lev->z) >= 5 && !rn2(25))
 		    lev->locations[x][y].doormask |= D_TRAPPED;
 	    } else
 		lev->locations[x][y].doormask = (shdoor ? D_ISOPEN : D_NODOOR);
 	    if (lev->locations[x][y].doormask & D_TRAPPED) {
 		struct monst *mtmp;
 
-		if (level_difficulty() >= 9 && !rn2(5) &&
+		if (level_difficulty(&lev->z) >= 9 && !rn2(5) &&
 		   !((mvitals[PM_SMALL_MIMIC].mvflags & G_GONE) &&
 		     (mvitals[PM_LARGE_MIMIC].mvflags & G_GONE) &&
 		     (mvitals[PM_GIANT_MIMIC].mvflags & G_GONE))) {
 		    /* make a mimic instead */
 		    lev->locations[x][y].doormask = D_NODOOR;
-		    mtmp = makemon(mkclass(S_MIMIC,0), lev, x, y, NO_MM_FLAGS);
+		    mtmp = makemon(mkclass(&lev->z, S_MIMIC,0), lev, x, y, NO_MM_FLAGS);
 		    if (mtmp)
 			set_mimic_sym(mtmp, lev);
 		}
@@ -362,7 +362,7 @@ static void dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, i
 		if (shdoor || !rn2(5))	lev->locations[x][y].doormask = D_LOCKED;
 		else			lev->locations[x][y].doormask = D_CLOSED;
 
-		if (!shdoor && level_difficulty() >= 4 && !rn2(20))
+		if (!shdoor && level_difficulty(&lev->z) >= 4 && !rn2(20))
 		    lev->locations[x][y].doormask |= D_TRAPPED;
 	}
 
@@ -450,7 +450,7 @@ static void makeniche(struct level *lev, int trap_type)
 
 static void make_niches(struct level *lev)
 {
-	int ct = rnd((lev->nroom>>1) + 1), dep = depth(&u.uz);
+	int ct = rnd((lev->nroom>>1) + 1), dep = depth(&lev->z);
 
 	boolean	ltptr = (!lev->flags.noteleport && dep > 15),
 		vamp = (dep > 5 && dep < 25);
@@ -508,7 +508,7 @@ static void makelevel(struct level *lev)
 	int room_threshold;
 
 	if (wiz1_level.dlevel == 0) init_dungeons();
-	oinit();	/* assign level dependent obj probabilities */
+	oinit(lev);	/* assign level dependent obj probabilities */
 
 	{
 	    s_level *slevnum = Is_special(&lev->z);
@@ -649,7 +649,7 @@ skip0:
 		}
 		/* put traps and mimics inside */
 		goldseen = FALSE;
-		x = 8 - (level_difficulty()/6);
+		x = 8 - (level_difficulty(&lev->z)/6);
 		if (x <= 1) x = 2;
 		while (!rn2(x))
 		    mktrap(lev, 0, 0, croom, NULL);
@@ -927,7 +927,7 @@ void place_branch(struct level *lev,
 	    br_room = pos_to_room(lev, x, y);
 	}
 
-	if (on_level(&br->end1, &u.uz)) {
+	if (on_level(&br->end1, &lev->z)) {
 	    /* we're on end1 */
 	    make_stairs = br->type != BR_NO_END1;
 	    dest = &br->end2;
@@ -942,7 +942,7 @@ void place_branch(struct level *lev,
 	} else if (make_stairs) {
 	    lev->sstairs.sx = x;
 	    lev->sstairs.sy = y;
-	    lev->sstairs.up = (char) on_level(&br->end1, &u.uz) ?
+	    lev->sstairs.up = (char) on_level(&br->end1, &lev->z) ?
 					    br->end1_up : !br->end1_up;
 	    assign_level(&lev->sstairs.tolev, dest);
 	    lev->sstairs_room = br_room;
@@ -1007,7 +1007,7 @@ boolean occupied(struct level *lev, xchar x, xchar y)
 		|| IS_FURNITURE(lev->locations[x][y].typ)
 		|| is_lava(lev, x, y)
 		|| is_pool(lev, x, y)
-		|| invocation_pos(x,y)
+		|| invocation_pos(&lev->z, x, y)
 		));
 }
 
@@ -1023,7 +1023,7 @@ void mktrap(struct level *lev, int num, int mazeflag, struct mkroom *croom, coor
 
 	if (num > 0 && num < TRAPNUM) {
 	    kind = num;
-	} else if (Is_rogue_level(&u.uz)) {
+	} else if (Is_rogue_level(&lev->z)) {
 	    switch (rn2(7)) {
 		default: kind = BEAR_TRAP; break; /* 0 */
 		case 1: kind = ARROW_TRAP; break;
@@ -1033,11 +1033,11 @@ void mktrap(struct level *lev, int num, int mazeflag, struct mkroom *croom, coor
 		case 5: kind = SLP_GAS_TRAP; break;
 		case 6: kind = RUST_TRAP; break;
 	    }
-	} else if (Inhell && !rn2(5)) {
+	} else if (In_hell(&lev->z) && !rn2(5)) {
 	    /* bias the frequency of fire traps in Gehennom */
 	    kind = FIRE_TRAP;
 	} else {
-	    unsigned lvl = level_difficulty();
+	    unsigned lvl = level_difficulty(&lev->z);
 
 	    do {
 		kind = rnd(TRAPNUM-1);
@@ -1062,7 +1062,7 @@ void mktrap(struct level *lev, int num, int mazeflag, struct mkroom *croom, coor
 		    case POLY_TRAP:
 			if (lvl < 8) kind = NO_TRAP; break;
 		    case FIRE_TRAP:
-			if (!Inhell) kind = NO_TRAP; break;
+			if (!In_hell(&lev->z)) kind = NO_TRAP; break;
 		    case TELEP_TRAP:
 			if (lev->flags.noteleport) kind = NO_TRAP; break;
 		    case HOLE:
@@ -1383,7 +1383,7 @@ static void mk_knox_portal(struct level *lev, xchar x, xchar y)
 	if (source->dnum < n_dgns || (rn2(3) && !wizard)) return;
 
 	if (! (lev->z.dnum == oracle_level.dnum	    /* in main dungeon */
-		&& !at_dgn_entrance("The Quest")    /* but not Quest's entry */
+		&& !at_dgn_entrance(&lev->z, "The Quest") /* but not Quest's entry */
 		&& (u_depth = depth(&lev->z)) > 10    /* beneath 10 */
 		&& u_depth < depth(&medusa_level))) /* and above Medusa */
 	    return;

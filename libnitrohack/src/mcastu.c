@@ -512,7 +512,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
       {
 	/* Try for insects, and if there are none
 	   left, go for (sticks to) snakes.  -3. */
-	const struct permonst *pm = mkclass(S_ANT,0);
+	const struct permonst *pm = mkclass(&u.uz, S_ANT,0);
 	struct monst *mtmp2 = NULL;
 	char let = (pm ? S_ANT : S_SNAKE);
 	boolean success;
@@ -526,7 +526,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	for (i = 0; i <= quan; i++) {
 	    if (!enexto(&bypos, level, mtmp->mux, mtmp->muy, mtmp->data))
 		break;
-	    if ((pm = mkclass(let,0)) != 0 &&
+	    if ((pm = mkclass(&u.uz, let,0)) != 0 &&
 		    (mtmp2 = makemon(pm, level, bypos.x, bypos.y, NO_MM_FLAGS)) != 0) {
 		success = TRUE;
 		mtmp2->msleeping = mtmp2->mpeaceful = mtmp2->mtame = 0;

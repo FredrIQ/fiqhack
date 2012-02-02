@@ -422,7 +422,7 @@ int polymon(int mntmp)
 	} else {
 		if (!mlvl) u.mhmax = rnd(4);
 		else u.mhmax = dice(mlvl, 8);
-		if (is_home_elemental(&mons[mntmp])) u.mhmax *= 3;
+		if (is_home_elemental(&u.uz, &mons[mntmp])) u.mhmax *= 3;
 	}
 	u.mh = u.mhmax;
 

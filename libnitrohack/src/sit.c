@@ -189,7 +189,7 @@ int dosit(void)
 			verbalize("Thy audience hath been summoned, %s!",
 				  flags.female ? "Dame" : "Sire");
 			while (cnt--)
-			    makemon(courtmon(), level, u.ux, u.uy, NO_MM_FLAGS);
+			    makemon(courtmon(&u.uz), level, u.ux, u.uy, NO_MM_FLAGS);
 			break;
 			}
 		    case 8:
