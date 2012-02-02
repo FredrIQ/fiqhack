@@ -134,6 +134,7 @@ void replay_begin(void)
     if (filesize < 24 || !loginfo.mem ||
 	!sscanf(loginfo.mem, "NHGAME %*s %x", &endpos) || endpos > filesize) {
 	free(loginfo.mem);
+	loginfo.mem = NULL;
 	terminate();
     }
     
