@@ -523,4 +523,23 @@ void relobj(struct monst *mtmp, int show,
 		newsym(omx, omy);
 }
 
+
+void reset_steal(void)
+{
+    stealoid = stealmid = 0;
+}
+
+void save_steal(struct memfile *mf)
+{
+    mwrite32(mf, stealoid);
+    mwrite32(mf, stealmid);
+}
+
+
+void restore_steal(struct memfile *mf)
+{
+    stealoid = mread32(mf);
+    stealmid = mread32(mf);
+}
+
 /*steal.c*/

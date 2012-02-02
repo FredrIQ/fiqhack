@@ -1476,6 +1476,9 @@ extern void stealamulet(struct monst *);
 extern void mdrop_special_objs(struct monst *);
 extern void relobj(struct monst *,int,boolean);
 extern struct obj *findgold(struct obj *);
+extern void save_steal(struct memfile *mf);
+extern void restore_steal(struct memfile *mf);
+extern void reset_steal(void);
 
 /* ### steed.c ### */
 
