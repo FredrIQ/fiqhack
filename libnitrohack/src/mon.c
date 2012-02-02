@@ -2222,7 +2222,7 @@ int newcham(struct monst *mtmp,
 	if (!mtmp->perminvis || pm_invisible(olddata))
 	    mtmp->perminvis = pm_invisible(mdat);
 	mtmp->minvis = mtmp->invis_blkd ? 0 : mtmp->perminvis;
-	if (!(hides_under(mdat) && OBJ_AT(mtmp->mx, mtmp->my)) &&
+	if (!(hides_under(mdat) && OBJ_AT_LEV(mtmp->dlevel, mtmp->mx, mtmp->my)) &&
 			!(mdat->mlet == S_EEL && is_pool(level, mtmp->mx, mtmp->my)))
 		mtmp->mundetected = 0;
 	if (u.ustuck == mtmp) {
