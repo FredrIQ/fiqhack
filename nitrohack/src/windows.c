@@ -189,6 +189,7 @@ void create_game_windows(void)
     layout_game_windows();
     statusheight = ui_flags.status3 ? 3 : 2;
     
+    werase(basewin);
     if (ui_flags.draw_frame) {
 	msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
 	mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight + 2, 1);

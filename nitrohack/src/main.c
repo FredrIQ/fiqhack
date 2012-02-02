@@ -202,9 +202,6 @@ static void mainmenu(void)
 				     NULL, PICK_ONE, menuresult, 0, logoheight,
 				     COLS, ROWNO+3, NULL);
 	
-	wclear(basewin);
-	wrefresh(basewin);
-	
 	switch (menuresult[0]) {
 	    case NEWGAME:
 		rungame();
