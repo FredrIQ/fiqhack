@@ -436,6 +436,9 @@ char *replay_bones(int *buflen)
     char *b64data, *token = next_log_token();
     char *buf = NULL;
     
+    if (!token) /* end of replay data reached */
+	return NULL;
+    
     if (strncmp(token, "b:", 2) != 0) {
 	loginfo.next--; /* no bones to load */
 	return NULL;
