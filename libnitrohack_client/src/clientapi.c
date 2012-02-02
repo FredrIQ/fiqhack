@@ -147,7 +147,7 @@ int nhnet_restore_game(int gid, struct nh_window_procs *rwinprocs)
     jmsg = send_receive_msg("restore_game", jmsg);
     if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
 	print_error("Incorrect return object in nhnet_restore_game");
-	ret = 0;
+	ret = ERR_NETWORK_ERROR; /* we don't know the error actually was, any error code will do */
     }
     json_decref(jmsg);
     
