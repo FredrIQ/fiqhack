@@ -1603,6 +1603,7 @@ extern void blow_up_landmine(struct trap *);
 /* ### u_init.c ### */
 
 extern void u_init(void);
+extern void u_init_inv_skills(void);
 extern void restore_you(struct memfile *mf, struct you *y);
 extern void save_you(struct memfile *mf, struct you *y);
 
