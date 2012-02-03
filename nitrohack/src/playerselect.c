@@ -260,7 +260,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		add_menu_item(items, size, icount, id, list[i].caption, thisch, 0);
 		lastch = thisch;
 	    }
-	    id = list[random() % listlen].id+1;
+	    pick_list[0] = id = list[random() % listlen].id+1;
 	    add_menu_item(items, size, icount, id, "Random", '*', 0);
 	    add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 	    
@@ -268,7 +268,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 	    n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
 
 	    /* Process the choice */
-	    if (n != 1 || pick_list[0] == -1)
+	    if (n == -1 || pick_list[0] == -1)
 		goto give_up;		/* Selected quit */
 
 	    initrole = pick_list[0] - 1;
@@ -295,14 +295,14 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		    add_menu_item(items, size, icount, id, list[i].caption,
 				  list[i].caption[0], 0);
 		}
-		id = list[random() % listlen].id+1;
+		pick_list[0] = id = list[random() % listlen].id+1;
 		add_menu_item(items, size, icount, id, "Random", '*', 0);
 		add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 
 		sprintf(pbuf, "Pick the race of your %s", plbuf);
 		n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
 		
-		if (n != 1 || pick_list[0] == -1)
+		if (n == -1 || pick_list[0] == -1)
 		    goto give_up;		/* Selected quit */
 
 		k = pick_list[0] - 1;
@@ -331,14 +331,14 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		    add_menu_item(items, size, icount, id, list[i].caption,
 				  list[i].caption[0], 0);
 		}
-		id = list[random() % listlen].id+1;
+		pick_list[0] = id = list[random() % listlen].id+1;
 		add_menu_item(items, size, icount, id, "Random", '*', 0);
 		add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 
 		sprintf(pbuf, "Pick the gender of your %s", plbuf);
 		n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
 		
-		if (n != 1 || pick_list[0] == -1)
+		if (n == -1 || pick_list[0] == -1)
 		    goto give_up;		/* Selected quit */
 
 		k = pick_list[0] - 1;
@@ -367,14 +367,14 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		    add_menu_item(items, size, icount, id, list[i].caption,
 				  list[i].caption[0], 0);
 		}
-		id = list[random() % listlen].id+1;
+		pick_list[0] = id = list[random() % listlen].id+1;
 		add_menu_item(items, size, icount, id, "Random", '*', 0);
 		add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 		
 		sprintf(pbuf, "Pick the alignment of your %s", plbuf);
 		n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
 		
-		if (n != 1 || pick_list[0] == -1)
+		if (n == -1 || pick_list[0] == -1)
 		    goto give_up;		/* Selected quit */
 
 		k = pick_list[0] - 1;
