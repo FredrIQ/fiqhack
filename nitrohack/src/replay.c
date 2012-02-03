@@ -323,9 +323,11 @@ void replay(void)
 	}
 	
 	if (dir == logdir && *savedir) {
-	    add_menu_item(items, size, icount, -1, "View saved games instead", 0, FALSE);
+	    add_menu_txt(items, size, icount, "", MI_NORMAL);
+	    add_menu_item(items, size, icount, -1, "View saved games instead", '!', FALSE);
 	} else if (dir == savedir && *logdir) {
-	    add_menu_item(items, size, icount, -1, "View saved games instead", 0, FALSE);
+	    add_menu_txt(items, size, icount, "", MI_NORMAL);
+	    add_menu_item(items, size, icount, -1, "View saved games instead", '!', FALSE);
 	}
 	
 	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, pick);
