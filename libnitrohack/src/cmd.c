@@ -995,7 +995,7 @@ void show_conduct(int final)
 	if (!u.uconduct.weaphit)
 	    you_have_never(&menu, "hit with a wielded weapon");
 	else if (wizard) {
-	    sprintf(buf, "used a wielded weapon %d time%s",
+	    sprintf(buf, "used a wielded weapon %u time%s",
 		    u.uconduct.weaphit, plur(u.uconduct.weaphit));
 	    you_have_X(&menu, buf);
 	}
@@ -1005,7 +1005,7 @@ void show_conduct(int final)
 	if (!u.uconduct.literate)
 	    you_have_been(&menu, "illiterate");
 	else if (wizard) {
-	    sprintf(buf, "read items or engraved %d time%s",
+	    sprintf(buf, "read items or engraved %u time%s",
 		    u.uconduct.literate, plur(u.uconduct.literate));
 	    you_have_X(&menu, buf);
 	}
@@ -1022,7 +1022,7 @@ void show_conduct(int final)
 	if (!u.uconduct.polypiles)
 	    you_have_never(&menu, "polymorphed an object");
 	else if (wizard) {
-	    sprintf(buf, "polymorphed %d item%s",
+	    sprintf(buf, "polymorphed %u item%s",
 		    u.uconduct.polypiles, plur(u.uconduct.polypiles));
 	    you_have_X(&menu, buf);
 	}
@@ -1030,7 +1030,7 @@ void show_conduct(int final)
 	if (!u.uconduct.polyselfs)
 	    you_have_never(&menu, "changed form");
 	else if (wizard) {
-	    sprintf(buf, "changed form %d time%s",
+	    sprintf(buf, "changed form %u time%s",
 		    u.uconduct.polyselfs, plur(u.uconduct.polyselfs));
 	    you_have_X(&menu, buf);
 	}
@@ -1038,7 +1038,7 @@ void show_conduct(int final)
 	if (!u.uconduct.wishes)
 	    you_have_X(&menu, "used no wishes");
 	else {
-	    sprintf(buf, "used %d wish%s",
+	    sprintf(buf, "used %u wish%s",
 		    u.uconduct.wishes, (u.uconduct.wishes > 1L) ? "es" : "");
 	    you_have_X(&menu, buf);
 
@@ -1520,13 +1520,13 @@ int do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *
 	    repcount = prev_repcount;
 	}
 	
-	prev_command = command;
-	prev_arg = *arg;
-	prev_repcount = repcount;
-	
 	/* NULL arg is synonymous to CMD_ARG_NONE */
 	if (!arg)
 	    arg = &noarg;
+	
+	prev_command = command;
+	prev_arg = *arg;
+	prev_repcount = repcount;
 	
 	flags.move = FALSE;
 	multi = 0;

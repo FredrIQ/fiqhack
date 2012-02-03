@@ -98,9 +98,11 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #include "engrave.h"
 #include "rect.h"
 #include "region.h"
+#include "monuse.h"
 #include "extern.h"
 #include "magic.h"
 #include "winprocs.h"
+#include "rnd.h"
 
 #define NO_SPELL	0
 
@@ -142,6 +144,7 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #define BUC_CURSED   0x100
 #define BUC_UNCURSED 0x200
 #define BUC_UNKNOWN  0x400
+#define UNIDENTIFIED 0x800
 #define BUC_ALLBKNOWN (BUC_BLESSED|BUC_CURSED|BUC_UNCURSED)
 #define ALL_TYPES_SELECTED -2
 

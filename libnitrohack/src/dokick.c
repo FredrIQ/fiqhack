@@ -762,7 +762,7 @@ int dokick(void)
 	if (!IS_DOOR(maploc->typ)) {
 		if (maploc->typ == SDOOR) {
 		    if (!Levitation && rn2(30) < avrg_attrib) {
-			cvt_sdoor_to_door(maploc);	/* ->typ = DOOR */
+			cvt_sdoor_to_door(maploc, &u.uz); /* ->typ = DOOR */
 			pline("Crash!  %s a secret door!",
 			      /* don't "kick open" when it's locked
 				 unless it also happens to be trapped */

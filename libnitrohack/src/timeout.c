@@ -1255,11 +1255,11 @@ static void print_queue(struct menulist *menu, timer_element *base)
 	add_menutext(menu, "timeout  id   kind   call");
 	for (curr = base; curr; curr = curr->next) {
 #ifdef VERBOSE_TIMER
-	    sprintf(buf, " %4d   %4d  %-6s %s(%p)",
+	    sprintf(buf, " %4u   %4u  %-6s %s(%p)",
 		curr->timeout, curr->tid, kind_name(curr->kind),
 		timeout_funcs[curr->func_index].name, curr->arg);
 #else
-	    sprintf(buf, " %4d   %4d  %-6s #%d(%p)",
+	    sprintf(buf, " %4u   %4u  %-6s #%d(%p)",
 		curr->timeout, curr->tid, kind_name(curr->kind),
 		curr->func_index, curr->arg);
 #endif
@@ -1275,7 +1275,7 @@ int wiz_timeout_queue(void)
 
     init_menulist(&menu);
 
-    sprintf(buf, "Current time = %d.", moves);
+    sprintf(buf, "Current time = %u.", moves);
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
     add_menutext(&menu, "Active timeout queue:");

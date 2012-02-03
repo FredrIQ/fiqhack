@@ -4,13 +4,13 @@
 #include "hack.h"
 #include "lev.h"	/* save & restore info */
 
-static void setgemprobs(d_level*);
+static void setgemprobs(const d_level *dlev);
 static void shuffle(int,int,boolean);
 static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
 
-static void setgemprobs(d_level *dlev)
+static void setgemprobs(const d_level *dlev)
 {
 	int j, first, lev;
 
@@ -196,9 +196,9 @@ int find_skates(void)
     return -1;	/* not 0, or caller would try again each move */
 }
 
-void oinit(void)	/* level dependent initialization */
+void oinit(const struct level *lev)	/* level dependent initialization */
 {
-	setgemprobs(&u.uz);
+	setgemprobs(&lev->z);
 }
 
 

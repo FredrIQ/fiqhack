@@ -43,6 +43,13 @@ struct nhnet_game {
 };
 
 
+struct nhnet_server_version {
+    int major, minor, patchlevel;
+};
+
+extern EXPORT struct nhnet_server_version nhnet_server_ver;
+
+
 extern EXPORT int nhnet_connect(const char *host, int port, const char *user,
 				const char *pass, const char *email, int reg_user);
 extern EXPORT void nhnet_disconnect(void);
@@ -75,6 +82,8 @@ extern EXPORT char *nhnet_build_plselection_prompt(char *, int, int, int, int, i
 extern EXPORT const char *nhnet_root_plselection_prompt(char *, int, int, int, int, int);
 extern EXPORT struct nh_topten_entry *nhnet_get_topten(int *out_len, char *statusbuf,
 				      const char *player, int top, int around, nh_bool own);
+extern EXPORT int nhnet_change_email(const char *email);
+extern EXPORT int nhnet_change_password(const char *password);
 
 #undef EXPORT
 

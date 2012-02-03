@@ -194,7 +194,7 @@ static boolean is_ok_location(struct level *lev, schar x, schar y, int humidity)
 {
 	int typ;
 
-	if (Is_waterlevel(&u.uz)) return TRUE;	/* accept any spot */
+	if (Is_waterlevel(&lev->z)) return TRUE;	/* accept any spot */
 
 	if (humidity & DRY) {
 	    typ = lev->locations[x][y].typ;
@@ -352,7 +352,7 @@ boolean create_room(struct level *lev, xchar x, xchar y, xchar w, xchar h,
 
 	/* is light state random ? */
 	if (rlit == -1)
-	    rlit = (rnd(1+abs(depth(&u.uz))) < 11 && rn2(77)) ? TRUE : FALSE;
+	    rlit = (rnd(1+abs(depth(&lev->z))) < 11 && rn2(77)) ? TRUE : FALSE;
 
 	/*
 	 * Here we will try to create a room. If some parameters are
@@ -523,7 +523,7 @@ static boolean create_subroom(struct level *lev, struct mkroom *proom, xchar x, 
 	if (rtype == -1)
 	    rtype = OROOM;
 	if (rlit == -1)
-	    rlit = (rnd(1+abs(depth(&u.uz))) < 11 && rn2(77)) ? TRUE : FALSE;
+	    rlit = (rnd(1+abs(depth(&lev->z))) < 11 && rn2(77)) ? TRUE : FALSE;
 	add_subroom(lev, proom, proom->lx + x, proom->ly + y,
 		    proom->lx + x + w - 1, proom->ly + y + h - 1,
 		    rlit, rtype, FALSE);
@@ -715,7 +715,7 @@ static void create_monster(struct level *lev, monster *m, struct mkroom *croom)
 			Align2amask(u.ualignbase[A_ORIGINAL]) :
 		(m->align == AM_SPLEV_NONCO) ?
 			Align2amask(noncoalignment(u.ualignbase[A_ORIGINAL])) :
-		(m->align <= -11) ? induced_align(80) :
+		(m->align <= -11) ? induced_align(&lev->z, 80) :
 		(m->align < 0 ? ralign[-m->align-1] : m->align);
 
 	if (!class)
@@ -728,11 +728,11 @@ static void create_monster(struct level *lev, monster *m, struct mkroom *croom)
 	    else if (g_mvflags & G_GONE)	/* genocided or extinct */
 		pm = NULL;	/* make random monster */
 	} else {
-	    pm = mkclass(class,G_NOGEN);
+	    pm = mkclass(&lev->z, class, G_NOGEN);
 	    /* if we can't get a specific monster type (pm == 0) then the
 	       class has been genocided, so settle for a random monster */
 	}
-	if (In_mines(&u.uz) && pm && your_race(pm) &&
+	if (In_mines(&lev->z) && pm && your_race(pm) &&
 			(Race_if (PM_DWARF) || Race_if(PM_GNOME)) && rn2(3))
 	    pm = NULL;
 
@@ -893,7 +893,7 @@ static void create_object(struct level *lev, object *o, struct mkroom *croom)
 	}
 
 	/*	corpsenm is "empty" if -1, random if -2, otherwise specific */
-	if (o->corpsenm == NON_PM - 1) otmp->corpsenm = rndmonnum();
+	if (o->corpsenm == NON_PM - 1) otmp->corpsenm = rndmonnum(&lev->z);
 	else if (o->corpsenm != NON_PM) otmp->corpsenm = o->corpsenm;
 
 	/* assume we wouldn't be given an egg corpsenm unless it was
@@ -935,7 +935,7 @@ static void create_object(struct level *lev, object *o, struct mkroom *croom)
 	 * are not stone-resistant and have monster inventory.  They also lack
 	 * other contents, but that can be specified as an empty container.
 	 */
-	if (o->id == STATUE && Is_medusa_level(&u.uz) &&
+	if (o->id == STATUE && Is_medusa_level(&lev->z) &&
 		    o->corpsenm == NON_PM) {
 	    struct monst *was;
 	    struct obj *obj;
@@ -945,7 +945,7 @@ static void create_object(struct level *lev, object *o, struct mkroom *croom)
 	     * resistant (if they were, we'd have to reset the name as well as
 	     * setting corpsenm).
 	     */
-	    for (wastyp = otmp->corpsenm; ; wastyp = rndmonnum()) {
+	    for (wastyp = otmp->corpsenm; ; wastyp = rndmonnum(&lev->z)) {
 		/* makemon without rndmonst() might create a group */
 		was = makemon(&mons[wastyp], lev, 0, 0, NO_MM_FLAGS);
 		if (!resists_ston(was)) break;
@@ -1042,7 +1042,7 @@ static void create_altar(struct level *lev, altar *a, struct mkroom *croom)
 			Align2amask(u.ualignbase[A_ORIGINAL]) :
 		(a->align == AM_SPLEV_NONCO) ?
 			Align2amask(noncoalignment(u.ualignbase[A_ORIGINAL])) :
-		(a->align == -11) ? induced_align(80) :
+		(a->align == -11) ? induced_align(&lev->z, 80) :
 		(a->align < 0 ? ralign[-a->align-1] : a->align);
 
 	lev->locations[x][y].typ = ALTAR;
@@ -1368,7 +1368,7 @@ void fill_room(struct level *lev, struct mkroom *croom, boolean prefilled)
 		case VAULT:
 		    for (x=croom->lx;x<=croom->hx;x++)
 			for (y=croom->ly;y<=croom->hy;y++)
-			    mkgold((long)rn1(abs(depth(&u.uz))*100, 51), lev, x, y);
+			    mkgold((long)rn1(abs(depth(&lev->z))*100, 51), lev, x, y);
 		    break;
 		case COURT:
 		case ZOO:
@@ -2159,7 +2159,7 @@ static boolean load_maze(struct level *lev, dlb *fd)
 		    prefilled = FALSE;
 
 		if (tmpregion.rlit < 0)
-		    tmpregion.rlit = (rnd(1+abs(depth(&u.uz))) < 11 && rn2(77))
+		    tmpregion.rlit = (rnd(1+abs(depth(&lev->z))) < 11 && rn2(77))
 			? TRUE : FALSE;
 
 		get_location(lev, &tmpregion.x1, &tmpregion.y1, DRY|WET);

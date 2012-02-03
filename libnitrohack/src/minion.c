@@ -26,15 +26,15 @@ void msummon(struct monst *mon)
 	    
 	if (is_dprince(ptr) || (ptr == &mons[PM_WIZARD_OF_YENDOR])) {
 	    dtype = (!rn2(20)) ? dprince(atyp) :
-				 (!rn2(4)) ? dlord(atyp) : ndemon(atyp);
+				 (!rn2(4)) ? dlord(atyp) : ndemon(&mon->dlevel->z, atyp);
 	    cnt = (!rn2(4) && is_ndemon(&mons[dtype])) ? 2 : 1;
 	} else if (is_dlord(ptr)) {
 	    dtype = (!rn2(50)) ? dprince(atyp) :
-				 (!rn2(20)) ? dlord(atyp) : ndemon(atyp);
+				 (!rn2(20)) ? dlord(atyp) : ndemon(&mon->dlevel->z, atyp);
 	    cnt = (!rn2(4) && is_ndemon(&mons[dtype])) ? 2 : 1;
 	} else if (is_ndemon(ptr)) {
 	    dtype = (!rn2(20)) ? dlord(atyp) :
-				 (!rn2(6)) ? ndemon(atyp) : monsndx(ptr);
+				 (!rn2(6)) ? ndemon(&mon->dlevel->z, atyp) : monsndx(ptr);
 	    cnt = 1;
 	} else if (is_lminion(mon)) {
 	    dtype = (is_lord(ptr) && !rn2(20)) ? llord() :
@@ -49,7 +49,7 @@ void msummon(struct monst *mon)
 		    break;
 		case A_CHAOTIC:
 		case A_NONE:
-		    dtype = ndemon(atyp);
+		    dtype = ndemon(&mon->dlevel->z, atyp);
 		    break;
 		}
 	    } else {
@@ -67,7 +67,7 @@ void msummon(struct monst *mon)
 	 * could get this far with an extinct dtype), try another.
 	 */
 	if (mvitals[dtype].mvflags & G_GONE) {
-	    dtype = ndemon(atyp);
+	    dtype = ndemon(&mon->dlevel->z, atyp);
 	    if (dtype == NON_PM) return;
 	}
 
@@ -95,11 +95,11 @@ void summon_minion(aligntyp alignment, boolean talk)
 	    break;
 	case A_CHAOTIC:
 	case A_NONE:
-	    mnum = ndemon(alignment);
+	    mnum = ndemon(&u.uz, alignment);
 	    break;
 	default:
 	    impossible("unaligned player?");
-	    mnum = ndemon(A_NONE);
+	    mnum = ndemon(&u.uz, A_NONE);
 	    break;
     }
     if (mnum == NON_PM) {
@@ -248,7 +248,7 @@ int dlord(aligntyp atyp)
 		    (atyp == A_NONE || sgn(mons[pm].maligntyp) == sgn(atyp)))
 		return pm;
 	}
-	return ndemon(atyp);	/* approximate */
+	return ndemon(&u.uz, atyp);	/* approximate */
 }
 
 /* create lawful (good) lord */
@@ -266,7 +266,7 @@ int lminion(void)
 	const struct permonst *ptr;
 
 	for (tryct = 0; tryct < 20; tryct++) {
-	    ptr = mkclass(S_ANGEL,0);
+	    ptr = mkclass(&u.uz, S_ANGEL,0);
 	    if (ptr && !is_lord(ptr))
 		return monsndx(ptr);
 	}
@@ -274,13 +274,13 @@ int lminion(void)
 	return NON_PM;
 }
 
-int ndemon(aligntyp atyp)
+int ndemon(const d_level *dlev, aligntyp atyp)
 {
 	int tryct;
 	const struct permonst *ptr;
 
 	for (tryct = 0; tryct < 20; tryct++) {
-	    ptr = mkclass(S_DEMON, 0);
+	    ptr = mkclass(dlev, S_DEMON, 0);
 	    if (ptr && is_ndemon(ptr) &&
 		    (atyp == A_NONE || sgn(ptr->maligntyp) == sgn(atyp)))
 		return monsndx(ptr);

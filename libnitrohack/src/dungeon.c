@@ -1231,12 +1231,12 @@ branch *dungeon_branch(const char *s)
  *
  * Assumes that end1 is always the "parent".
  */
-boolean at_dgn_entrance(const char *s)
+boolean at_dgn_entrance(const d_level *dlev, const char *s)
 {
     branch *br;
 
     br = dungeon_branch(s);
-    return (boolean)(on_level(&u.uz, &br->end1) ? TRUE : FALSE);
+    return (boolean)(on_level(dlev, &br->end1) ? TRUE : FALSE);
 }
 
 boolean In_V_tower(const d_level *lev) /* is `lev' part of Vlad's tower? */
@@ -1308,16 +1308,16 @@ void assign_rnd_level(d_level *dest, const d_level *src, int range)
 }
 
 
-int induced_align(int pct)
+int induced_align(const d_level *dlev, int pct)
 {
-	s_level	*lev = Is_special(&u.uz);
+	s_level	*lev = Is_special(dlev);
 	aligntyp al;
 
 	if (lev && lev->flags.align)
 		if (rn2(100) < pct) return lev->flags.align;
 
-	if (dungeons[u.uz.dnum].flags.align)
-		if (rn2(100) < pct) return dungeons[u.uz.dnum].flags.align;
+	if (dungeons[dlev->dnum].flags.align)
+		if (rn2(100) < pct) return dungeons[dlev->dnum].flags.align;
 
 	al = rn2(3) - 1;
 	return Align2amask(al);
@@ -1333,15 +1333,15 @@ boolean Invocation_lev(const d_level *lev)
 /* use instead of depth() wherever a degree of difficulty is made
  * dependent on the location in the dungeon (eg. monster creation).
  */
-xchar level_difficulty(void)
+xchar level_difficulty(const d_level *dlev)
 {
-	if (In_endgame(&u.uz))
+	if (In_endgame(dlev))
 		return (xchar)(depth(&sanctum_level) + u.ulevel/2);
 	else
 		if (u.uhave.amulet)
 			return deepest_lev_reached(FALSE);
 		else
-			return (xchar) depth(&u.uz);
+			return (xchar) depth(dlev);
 }
 
 /* Take one word and try to match it to a level.

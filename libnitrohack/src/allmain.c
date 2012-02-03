@@ -139,6 +139,7 @@ void startup_common(const char *name, int playmode)
     /* (re)init all global data */
     init_data();
     reset_food(); /* zero out victual and tin */
+    reset_steal();
     /* create mutable copies of object and artifact liss */
     init_objlist();
     init_artilist();
@@ -844,11 +845,13 @@ static void newgame(void)
 			 * creating odd monsters for any tins and eggs
 			 * in hero's initial inventory */
     init_artifacts();
-    u_init();
+    u_init();		/* struct you must have some basic data for mklev to work right */
 
     load_qtlist();	/* load up the quest text info */
 
     level = mklev(&u.uz);
+
+    u_init_inv_skills();/* level must be valid to create items */
     u_on_upstairs();
     vision_reset();	/* set up internals for level (after mklev) */
     check_special_room(FALSE);

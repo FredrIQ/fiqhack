@@ -207,11 +207,11 @@ static void mkshobj_at(const struct shclass *shp, struct level *lev, int sx, int
 	int atype;
 	const struct permonst *ptr;
 
-	if (rn2(100) < depth(&u.uz) &&
-		!MON_AT(lev, sx, sy) && (ptr = mkclass(S_MIMIC,0)) &&
+	if (rn2(100) < depth(&lev->z) &&
+		!MON_AT(lev, sx, sy) && (ptr = mkclass(&lev->z, S_MIMIC,0)) &&
 		(mtmp = makemon(ptr,lev,sx,sy,NO_MM_FLAGS)) != 0) {
 	    /* note: makemon will set the mimic symbol to a shop item */
-	    if (rn2(10) >= depth(&u.uz)) {
+	    if (rn2(10) >= depth(&lev->z)) {
 		mtmp->m_ap_type = M_AP_OBJECT;
 		mtmp->mappearance = STRANGE_OBJECT;
 	    }
@@ -233,8 +233,8 @@ static void nameshk(struct monst *shk, const char * const *nlp, struct level *le
 	int name_wanted;
 	s_level *sptr;
 
-	if (nlp == shklight && In_mines(&u.uz)
-		&& (sptr = Is_special(&u.uz)) != 0 && sptr->flags.town) {
+	if (nlp == shklight && In_mines(&lev->z)
+		&& (sptr = Is_special(&lev->z)) != 0 && sptr->flags.town) {
 	    /* special-case minetown lighting shk */
 	    shname = "Izchak";
 	    shk->female = FALSE;
@@ -245,7 +245,7 @@ static void nameshk(struct monst *shk, const char * const *nlp, struct level *le
 	       use ledger_no rather than depth to keep mine town distinct. */
 	    int nseed = (int)((long)u.ubirthday / 257L);
 
-	    name_wanted = ledger_no(&u.uz) + (nseed % 13) - (nseed % 5);
+	    name_wanted = ledger_no(&lev->z) + (nseed % 13) - (nseed % 5);
 	    if (name_wanted < 0) name_wanted += (13 + 5);
 	    shk->female = name_wanted & 1;
 
@@ -328,7 +328,7 @@ shk_failed:
 	ESHK(shk)->shoproom = (sroom - lev->rooms) + ROOMOFFSET;
 	sroom->resident = shk;
 	ESHK(shk)->shoptype = sroom->rtype;
-	assign_level(&(ESHK(shk)->shoplevel), &u.uz);
+	assign_level(&(ESHK(shk)->shoplevel), &lev->z);
 	ESHK(shk)->shd = lev->doors[sh];
 	ESHK(shk)->shk.x = sx;
 	ESHK(shk)->shk.y = sy;
@@ -375,7 +375,7 @@ void stock_room(int shp_indx, struct level *lev, struct mkroom *sroom)
 	    newsym(sx,sy);
     }
     if (lev->locations[sx][sy].typ == SDOOR) {
-	    cvt_sdoor_to_door(&lev->locations[sx][sy]);	/* .typ = DOOR */
+	    cvt_sdoor_to_door(&lev->locations[sx][sy], &lev->z); /* .typ = DOOR */
 	    newsym(sx,sy);
     }
     if (lev->locations[sx][sy].doormask & D_TRAPPED)

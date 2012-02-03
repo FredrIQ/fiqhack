@@ -742,7 +742,7 @@ int abon(void)
 	int sbon;
 	int str = ACURR(A_STR), dex = ACURR(A_DEX);
 
-	if (Upolyd) return adj_lev(&mons[u.umonnum]) - 3;
+	if (Upolyd) return adj_lev(&u.uz, &mons[u.umonnum]) - 3;
 	if (str < 6) sbon = -2;
 	else if (str < 8) sbon = -1;
 	else if (str < 17) sbon = 0;

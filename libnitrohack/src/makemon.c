@@ -16,9 +16,9 @@
 		(mptr->mlet == S_HUMAN && Role_if (role_pm) && \
 		  (mptr->msound == MS_LEADER || mptr->msound == MS_NEMESIS))
 
-static boolean uncommon(int);
-static int align_shift(const struct permonst *);
-static boolean wrong_elem_type(const struct permonst *);
+static boolean uncommon(const d_level *dlev, int mndx);
+static int align_shift(const d_level *dlev, const struct permonst *);
+static boolean wrong_elem_type(const struct d_level *dlev, const struct permonst *);
 static void m_initgrp(struct monst *, struct level *lev, int,int,int);
 static void m_initthrow(struct monst *,int,int);
 static void m_initweap(struct monst *);
@@ -57,14 +57,14 @@ struct monst *newmonst(int extyp, int namelen)
 }
 
 
-boolean is_home_elemental(const struct permonst *ptr)
+boolean is_home_elemental(const struct d_level *dlev, const struct permonst *ptr)
 {
 	if (ptr->mlet == S_ELEMENTAL)
 	    switch (monsndx(ptr)) {
-		case PM_AIR_ELEMENTAL: return Is_airlevel(&u.uz);
-		case PM_FIRE_ELEMENTAL: return Is_firelevel(&u.uz);
-		case PM_EARTH_ELEMENTAL: return Is_earthlevel(&u.uz);
-		case PM_WATER_ELEMENTAL: return Is_waterlevel(&u.uz);
+		case PM_AIR_ELEMENTAL: return Is_airlevel(dlev);
+		case PM_FIRE_ELEMENTAL: return Is_firelevel(dlev);
+		case PM_EARTH_ELEMENTAL: return Is_earthlevel(dlev);
+		case PM_WATER_ELEMENTAL: return Is_waterlevel(dlev);
 	    }
 	return FALSE;
 }
@@ -72,18 +72,18 @@ boolean is_home_elemental(const struct permonst *ptr)
 /*
  * Return true if the given monster cannot exist on this elemental level->
  */
-static boolean wrong_elem_type(const struct permonst *ptr)
+static boolean wrong_elem_type(const struct d_level *dlev, const struct permonst *ptr)
 {
 	if (ptr->mlet == S_ELEMENTAL) {
-	    return (boolean)(!is_home_elemental(ptr));
-	} else if (Is_earthlevel(&u.uz)) {
+	    return (boolean)(!is_home_elemental(dlev, ptr));
+	} else if (Is_earthlevel(dlev)) {
 	    /* no restrictions? */
-	} else if (Is_waterlevel(&u.uz)) {
+	} else if (Is_waterlevel(dlev)) {
 	    /* just monsters that can swim */
 	    if (!is_swimmer(ptr)) return TRUE;
-	} else if (Is_firelevel(&u.uz)) {
+	} else if (Is_firelevel(dlev)) {
 	    if (!pm_resistance(ptr,MR_FIRE)) return TRUE;
-	} else if (Is_airlevel(&u.uz)) {
+	} else if (Is_airlevel(dlev)) {
 	    if (!(is_flyer(ptr) && ptr->mlet != S_TRAPPER) && !is_floater(ptr)
 	    && !amorphous(ptr) && !noncorporeal(ptr) && !is_whirly(ptr))
 		return TRUE;
@@ -142,7 +142,7 @@ static void m_initweap(struct monst *mtmp)
 	int mm = monsndx(ptr);
 	struct obj *otmp;
 
-	if (Is_rogue_level(&u.uz))
+	if (Is_rogue_level(&mtmp->dlevel->z))
 	    return;
 /*
  *	first a few special cases:
@@ -454,7 +454,7 @@ static void m_initinv(struct monst *mtmp)
 	int cnt;
 	struct obj *otmp;
 	const struct permonst *ptr = mtmp->data;
-	if (Is_rogue_level(&u.uz)) return;
+	if (Is_rogue_level(&mtmp->dlevel->z)) return;
 /*
  *	Soldiers get armour & rations - armour approximates their ac.
  *	Nymphs may get mirror or potion of object detection.
@@ -547,7 +547,7 @@ static void m_initinv(struct monst *mtmp)
 		break;
 	    case S_GIANT:
 		if (ptr == &mons[PM_MINOTAUR]) {
-		    if (!rn2(3) || (in_mklev && Is_earthlevel(&u.uz)))
+		    if (!rn2(3) || (in_mklev && Is_earthlevel(&mtmp->dlevel->z)))
 			mongets(mtmp, WAN_DIGGING);
 		} else if (is_giant(ptr)) {
 		    for (cnt = rn2((int)(mtmp->m_lev / 2)); cnt; cnt--) {
@@ -589,7 +589,7 @@ static void m_initinv(struct monst *mtmp)
 		}
 		break;
 	    case S_LEPRECHAUN:
-		mkmonmoney(mtmp, (long) dice(level_difficulty(), 30));
+		mkmonmoney(mtmp, (long) dice(level_difficulty(&mtmp->dlevel->z), 30));
 		break;
 	    case S_DEMON:
 	    	/* moved here from m_initweap() because these don't
@@ -613,7 +613,8 @@ static void m_initinv(struct monst *mtmp)
 	if ((int) mtmp->m_lev > rn2(100))
 		mongets(mtmp, rnd_misc_item(mtmp));
 	if (likes_gold(ptr) && !findgold(mtmp->minvent) && !rn2(5))
-		mkmonmoney(mtmp, (long) dice(level_difficulty(), mtmp->minvent ? 5 : 10));
+		mkmonmoney(mtmp, (long) dice(level_difficulty(&mtmp->dlevel->z),
+					     mtmp->minvent ? 5 : 10));
 }
 
 /* Note: for long worms, always call cutworm (cutworm calls clone_mon) */
@@ -818,7 +819,7 @@ struct monst *makemon(const struct permonst *ptr,
 		int tryct = 0;	/* maybe there are no good choices */
 		struct monst fakemon;
 		do {
-			if (!(ptr = rndmonst())) {
+			if (!(ptr = rndmonst(&lev->z))) {
 			    return NULL;	/* no more monsters! */
 			}
 			fakemon.data = ptr;	/* set up for goodpos */
@@ -853,7 +854,7 @@ struct monst *makemon(const struct permonst *ptr,
 	    quest_status.leader_m_id = mtmp->m_id;
 	mtmp->mnum = mndx;
 
-	mtmp->m_lev = adj_lev(ptr);
+	mtmp->m_lev = adj_lev(&lev->z, ptr);
 	if (is_golem(ptr)) {
 	    mtmp->mhpmax = mtmp->mhp = golemhp(mndx);
 	} else if (is_rider(ptr)) {
@@ -868,13 +869,13 @@ struct monst *makemon(const struct permonst *ptr,
 	    mtmp->m_lev = mtmp->mhp / 4;	/* approximation */
 	} else if (ptr->mlet == S_DRAGON && mndx >= PM_GRAY_DRAGON) {
 	    /* adult dragons */
-	    mtmp->mhpmax = mtmp->mhp = (int) (In_endgame(&u.uz) ?
+	    mtmp->mhpmax = mtmp->mhp = (int) (In_endgame(&lev->z) ?
 		(8 * mtmp->m_lev) : (4 * mtmp->m_lev + dice((int)mtmp->m_lev, 4)));
 	} else if (!mtmp->m_lev) {
 	    mtmp->mhpmax = mtmp->mhp = rnd(4);
 	} else {
 	    mtmp->mhpmax = mtmp->mhp = dice((int)mtmp->m_lev, 8);
-	    if (is_home_elemental(ptr))
+	    if (is_home_elemental(&lev->z, ptr))
 		mtmp->mhpmax = (mtmp->mhp *= 3);
 	}
 
@@ -882,7 +883,7 @@ struct monst *makemon(const struct permonst *ptr,
 	else if (is_male(ptr)) mtmp->female = FALSE;
 	else mtmp->female = rn2(2);	/* ignored for neuters */
 
-	if (In_sokoban(&u.uz) && !mindless(ptr))  /* know about traps here */
+	if (In_sokoban(&lev->z) && !mindless(ptr))  /* know about traps here */
 	    mtmp->mtrapseen = (1L << (PIT - 1)) | (1L << (HOLE - 1));
 	if (ptr->msound == MS_LEADER)		/* leader knows about portal */
 	    mtmp->mtrapseen |= (1L << (MAGIC_PORTAL-1));
@@ -931,7 +932,7 @@ struct monst *makemon(const struct permonst *ptr,
 				mtmp->mpeaceful = TRUE;
 			break;
 		case S_BAT:
-			if (Inhell && is_bat(ptr))
+			if (In_hell(&lev->z) && is_bat(ptr))
 			    mon_adjust_speed(mtmp, 2, NULL);
 			break;
 	}
@@ -948,12 +949,12 @@ struct monst *makemon(const struct permonst *ptr,
 			mtmp->cham = CHAM_ORDINARY;
 		else {
 			mtmp->cham = mcham;
-			newcham(mtmp, rndmonst(), FALSE, FALSE);
+			newcham(mtmp, rndmonst(&lev->z), FALSE, FALSE);
 		}
 	} else if (mndx == PM_WIZARD_OF_YENDOR) {
 		mtmp->iswiz = TRUE;
 		flags.no_of_wizards++;
-		if (flags.no_of_wizards == 1 && Is_earthlevel(&u.uz))
+		if (flags.no_of_wizards == 1 && Is_earthlevel(&lev->z))
 			mitem = SPE_DIG;
 	} else if (mndx == PM_DJINNI) {
 		flags.djinni_count++;
@@ -1067,11 +1068,11 @@ boolean create_critters(int cnt,
 }
 
 
-static boolean uncommon(int mndx)
+static boolean uncommon(const d_level *dlev, int mndx)
 {
 	if (mons[mndx].geno & (G_NOGEN | G_UNIQ)) return TRUE;
 	if (mvitals[mndx].mvflags & G_GONE) return TRUE;
-	if (Inhell)
+	if (In_hell(dlev))
 		return mons[mndx].maligntyp > A_NEUTRAL;
 	else
 		return (mons[mndx].geno & G_HELL) != 0;
@@ -1082,12 +1083,12 @@ static boolean uncommon(int mndx)
  *	comparing the dungeon alignment and monster alignment.
  *	return an integer in the range of 0-5.
  */
-static int align_shift(const struct permonst *ptr)
+static int align_shift(const d_level *dlev, const struct permonst *ptr)
 {
-    s_level *lev = Is_special(&u.uz);
+    s_level *lev = Is_special(dlev);
     int alshift;
     
-    switch((lev) ? lev->flags.align : dungeons[u.uz.dnum].flags.align) {
+    switch((lev) ? lev->flags.align : dungeons[dlev->dnum].flags.align) {
     default:	/* just in case */
     case AM_NONE:	alshift = 0;
 			break;
@@ -1107,12 +1108,12 @@ static struct rndmonst_state {
 } rndmonst_state;
 
 /* select a random monster type */
-const struct permonst *rndmonst(void)
+const struct permonst *rndmonst(const d_level *dlev)
 {
 	const struct permonst *ptr;
 	int mndx, ct;
 
-	if (u.uz.dnum == quest_dnum && rn2(7) && (ptr = qt_montype()) != 0)
+	if (dlev->dnum == quest_dnum && rn2(7) && (ptr = qt_montype(dlev)) != 0)
 	    return ptr;
 
 	if (rndmonst_state.choice_count < 0) {	/* need to recalculate */
@@ -1123,20 +1124,20 @@ const struct permonst *rndmonst(void)
 	    rndmonst_state.choice_count = 0;
 	    /* look for first common monster */
 	    for (mndx = LOW_PM; mndx < SPECIAL_PM; mndx++) {
-		if (!uncommon(mndx)) break;
+		if (!uncommon(dlev, mndx)) break;
 		rndmonst_state.mchoices[mndx] = 0;
 	    }		
 	    if (mndx == SPECIAL_PM) {
 		/* evidently they've all been exterminated */
 		return NULL;
 	    } /* else `mndx' now ready for use below */
-	    zlevel = level_difficulty();
+	    zlevel = level_difficulty(dlev);
 	    /* determine the level of the weakest monster to make. */
 	    minmlev = zlevel / 6;
 	    /* determine the level of the strongest monster to make. */
 	    maxmlev = (zlevel + u.ulevel) / 2;
-	    upper = Is_rogue_level(&u.uz);
-	    elemlevel = In_endgame(&u.uz) && !Is_astralevel(&u.uz);
+	    upper = Is_rogue_level(dlev);
+	    elemlevel = In_endgame(dlev) && !Is_astralevel(dlev);
 
 /*
  *	Find out how many monsters exist in the range we have selected.
@@ -1148,10 +1149,10 @@ const struct permonst *rndmonst(void)
 		if (tooweak(mndx, minmlev) || toostrong(mndx, maxmlev))
 		    continue;
 		if (upper && !isupper(def_monsyms[(int)(ptr->mlet)])) continue;
-		if (elemlevel && wrong_elem_type(ptr)) continue;
-		if (uncommon(mndx)) continue;
-		if (Inhell && (ptr->geno & G_NOHELL)) continue;
-		ct = (int)(ptr->geno & G_FREQ) + align_shift(ptr);
+		if (elemlevel && wrong_elem_type(dlev, ptr)) continue;
+		if (uncommon(dlev, mndx)) continue;
+		if (In_hell(dlev) && (ptr->geno & G_NOHELL)) continue;
+		ct = (int)(ptr->geno & G_FREQ) + align_shift(dlev, ptr);
 		if (ct < 0 || ct > 127)
 		    panic("rndmonst: bad count [#%d: %d]", mndx, ct);
 		rndmonst_state.choice_count += ct;
@@ -1175,7 +1176,7 @@ const struct permonst *rndmonst(void)
 	for (mndx = LOW_PM; mndx < SPECIAL_PM; mndx++)
 	    if ((ct -= (int)rndmonst_state.mchoices[mndx]) <= 0) break;
 
-	if (mndx == SPECIAL_PM || uncommon(mndx)) {	/* shouldn't happen */
+	if (mndx == SPECIAL_PM || uncommon(dlev, mndx)) {	/* shouldn't happen */
 	    impossible("rndmonst: bad `mndx' [#%d]", mndx);
 	    return NULL;
 	}
@@ -1218,12 +1219,12 @@ void restore_rndmonst_state(struct memfile *mf)
  *	in that class can be made.
  */
 
-const struct permonst *mkclass(char class, int spc)
+const struct permonst *mkclass(const d_level *dlev, char class, int spc)
 {
 	int	first, last, num = 0;
 	int maxmlev, mask = (G_NOGEN | G_UNIQ) & ~spc;
 
-	maxmlev = level_difficulty() >> 1;
+	maxmlev = level_difficulty(dlev) >> 1;
 	if (class < 1 || class >= MAXMCLASSES) {
 	    impossible("mkclass called with bad class!");
 	    return NULL;
@@ -1255,7 +1256,7 @@ const struct permonst *mkclass(char class, int spc)
 					&& !is_placeholder(&mons[first])) {
 		/* skew towards lower value monsters at lower exp. levels */
 		num -= mons[first].geno & G_FREQ;
-		if (num && adj_lev(&mons[first]) > (u.ulevel*2)) {
+		if (num && adj_lev(dlev, &mons[first]) > (u.ulevel*2)) {
 		    /* but not when multiple monsters are same level */
 		    if (mons[first].mlevel != mons[first+1].mlevel)
 			num--;
@@ -1267,7 +1268,7 @@ const struct permonst *mkclass(char class, int spc)
 }
 
 /* adjust strength of monsters based on u.uz and u.ulevel */
-int adj_lev(const struct permonst *ptr)
+int adj_lev(const d_level *dlev, const struct permonst *ptr)
 {
 	int	tmp, tmp2;
 
@@ -1281,7 +1282,7 @@ int adj_lev(const struct permonst *ptr)
 	}
 
 	if ((tmp = ptr->mlevel) > 49) return 50; /* "special" demons/devils */
-	tmp2 = (level_difficulty() - tmp);
+	tmp2 = (level_difficulty(dlev) - tmp);
 	if (tmp2 < 0) tmp--;		/* if mlevel > u.uz decrement tmp */
 	else tmp += (tmp2 / 5);		/* else increment 1 per five diff */
 
@@ -1325,7 +1326,7 @@ const struct permonst *grow_up(struct monst *mtmp, /* `mtmp' might "grow up" int
 		hp_threshold = 4;
 	    else if (is_golem(ptr))	/* strange creatures */
 		hp_threshold = ((mtmp->mhpmax / 10) + 1) * 10 - 1;
-	    else if (is_home_elemental(ptr))
+	    else if (is_home_elemental(&mtmp->dlevel->z, ptr))
 		hp_threshold *= 3;
 	    lev_limit = 3 * (int)ptr->mlevel / 2;	/* same as adj_lev() */
 	    /* If they can grow up, be sure the level is high enough for that */
@@ -1641,7 +1642,7 @@ assign_sym:
 			if (s_sym == S_MIMIC_DEF) {
 				appear = STRANGE_OBJECT;
 			} else {
-				otmp = mkobj(level,  (char) s_sym, FALSE );
+				otmp = mkobj(lev,  (char) s_sym, FALSE );
 				appear = otmp->otyp;
 				/* make sure container contents are free'ed */
 				obfree(otmp, NULL);
@@ -1729,6 +1730,7 @@ struct monst *restore_mon(struct memfile *mf)
     mon->mtrapseen = mread32(mf);
     mon->mlstmv = mread32(mf);
     mon->mstrategy = mread32(mf);
+    mon->meating = mread32(mf);
     mread(mf, mon->mtrack, sizeof(mon->mtrack));
     mon->mnum = mread16(mf);
     mon->mx = mread8(mf);
@@ -1910,6 +1912,7 @@ void save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->mtrapseen);
     mwrite32(mf, mon->mlstmv);
     mwrite32(mf, mon->mstrategy);
+    mwrite32(mf, mon->meating);
     mwrite(mf, mon->mtrack, sizeof(mon->mtrack));
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);

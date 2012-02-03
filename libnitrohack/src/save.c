@@ -245,6 +245,7 @@ static void savegamestate(struct memfile *mf)
 	save_mt_state(mf);
 	save_track(mf);
 	save_food(mf);
+	save_steal(mf);
 	book_id = book ? book->o_id : 0;
 	mwrite32(mf, book_id);
 	mwrite32(mf, stetho_last_used_move);

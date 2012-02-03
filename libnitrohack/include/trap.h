@@ -13,9 +13,6 @@ union vlaunchinfo {
 
 struct trap {
 	struct trap *ntrap;
-	xchar tx,ty;
-	d_level dst;	/* destination for portals */
-	coord launch;
 	unsigned ttyp:5;
 	unsigned tseen:1;
 	unsigned once:1;
@@ -26,6 +23,9 @@ struct trap {
 				 when you untrap a monster.  It would be too
 				 easy to make a monster peaceful if you could
 				 set a trap for it and then untrap it. */
+	xchar tx,ty;
+	d_level dst;	/* destination for portals */
+	coord launch;
 	union vlaunchinfo vl;
 #define launch_otyp	vl.v_launch_otyp
 #define launch2		vl.v_launch2

@@ -374,7 +374,7 @@ static boolean option_value_ok(struct nh_option_desc *option,
 		if (strlen(value.s) > option->s.maxlen)
 		    break;
 		
-		if (strlen(value.s) == 0)
+		if (!*value.s)
 		    value.s = NULL;
 		
 		return TRUE;
@@ -417,7 +417,7 @@ static union nh_optvalue string_to_optvalue(struct nh_option_desc *option, char 
 		break;
 		
 	    case OPTTYPE_STRING:
-		if (strlen(str) > 0)
+		if (*str)
 		    value.s = str;
 		else
 		    value.s = NULL;

@@ -138,6 +138,7 @@ void draw_msgwin(void)
 
 	wmove(msgwin, i, 0);
 	waddstr(msgwin, msglines[pos]);
+	wclrtoeol(msgwin);
     }
     wattroff(msgwin, curses_color_attr(COLOR_BLACK));
     wnoutrefresh(msgwin);
@@ -147,6 +148,8 @@ void draw_msgwin(void)
 static void more(void)
 {
     int key, attr = A_NORMAL;
+    int cursx, cursy;
+    
     if (settings.standout)
 	attr = A_STANDOUT;
     
@@ -166,9 +169,15 @@ static void more(void)
 	wrefresh(msgwin);
     }
     
+    getyx(msgwin, cursy, cursx);
+    wtimeout(msgwin, 666); /* enable blinking */
     do {
 	key = nh_wgetch(msgwin);
+	draw_map(player.x, player.y);
+	wmove(msgwin, cursy, cursx);
+	doupdate();
     } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESC);
+    wtimeout(msgwin, -1);
     
     if (getmaxy(msgwin) == 1)
 	newline();

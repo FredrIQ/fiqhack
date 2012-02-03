@@ -671,7 +671,7 @@ static struct bill_x *onbill(struct obj *obj, struct monst *shkp, boolean silent
 			return bp;
 		    } else bp++;
 	}
-	if (obj->unpaid & !silent) pline("onbill: unpaid obj not on bill?");
+	if (obj->unpaid && !silent) pline("onbill: unpaid obj not on bill?");
 	return NULL;
 }
 

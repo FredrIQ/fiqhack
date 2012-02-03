@@ -9,13 +9,13 @@
 static void reorder_invent(void);
 static boolean mergable(struct obj *,struct obj *);
 static void invdisp_nothing(const char *,const char *);
-static boolean worn_wield_only(struct obj *);
-static boolean only_here(struct obj *);
+static boolean worn_wield_only(const struct obj *);
+static boolean only_here(const struct obj *);
 static void compactify(char *);
 static boolean taking_off(const char *);
 static boolean putting_on(const char *);
 static char display_pickinv(const char *,boolean, long *);
-static boolean this_type_only(struct obj *);
+static boolean this_type_only(const struct obj *);
 static void dounpaid(void);
 static struct obj *find_unpaid(struct obj *,struct obj **);
 static void menu_identify(int);
@@ -971,7 +971,7 @@ boolean wearing_armor(void)
 	return((boolean)(uarm || uarmc || uarmf || uarmg || uarmh || uarms || uarmu));
 }
 
-boolean is_worn(struct obj *otmp)
+boolean is_worn(const struct obj *otmp)
 {
     return((boolean)(!!(otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL |
 			W_SADDLE | W_WEP | W_SWAPWEP | W_QUIVER))));
@@ -1333,6 +1333,10 @@ int count_buc(struct obj *list, int type)
 		if (list->oclass != COIN_CLASS && !list->bknown)
 		    count++;
 		break;
+	    case UNIDENTIFIED:
+		if (not_fully_identified_core(list, TRUE))
+		    count++;
+		break;
 	    default:
 		impossible("need count of curse status %d?", type);
 		return 0;
@@ -1433,7 +1437,7 @@ static void dounpaid(void)
 /* query objlist callback: return TRUE if obj type matches "this_type" */
 static int this_type;
 
-static boolean this_type_only(struct obj *obj)
+static boolean this_type_only(const struct obj *obj)
 {
     return obj->oclass == this_type;
 }
@@ -2179,7 +2183,7 @@ static void invdisp_nothing(const char *hdr, const char *txt)
 }
 
 /* query_objlist callback: return things that could possibly be worn/wielded */
-static boolean worn_wield_only(struct obj *obj)
+static boolean worn_wield_only(const struct obj *obj)
 {
     return (obj->oclass == WEAPON_CLASS
 		|| obj->oclass == ARMOR_CLASS
@@ -2267,7 +2271,7 @@ struct obj *display_cinventory(struct obj *obj)
 /* query objlist callback: return TRUE if obj is at given location */
 static coord only;
 
-static boolean only_here(struct obj *obj)
+static boolean only_here(const struct obj *obj)
 {
     return obj->ox == only.x && obj->oy == only.y;
 }

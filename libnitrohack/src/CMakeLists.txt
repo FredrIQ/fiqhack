@@ -11,7 +11,7 @@ set (LIBNITROHACK_SRC
     mondata.c  monmove.c  monst.c    mplayer.c  mthrowu.c mtrand.c   muse.c     music.c
     objects.c  objnam.c   o_init.c   options.c  pager.c   pickup.c   pline.c
     polyself.c potion.c   pray.c     priest.c   quest.c   questpgr.c read.c
-    rect.c     region.c   restore.c  rnd.c      role.c    rumors.c   save.c
+    rect.c     region.c   restore.c  role.c     rumors.c  save.c
     shk.c      shknam.c   sit.c      sounds.c   spell.c   sp_lev.c   symclass.c
     steal.c    steed.c    teleport.c timeout.c  topten.c  track.c    trap.c
     uhitm.c    u_init.c   vault.c    version.c  vision.c  weapon.c   were.c

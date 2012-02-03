@@ -1512,9 +1512,9 @@ int dodip(struct obj *potion)
 			    return 1;
 			}
 		}
+		potion = getobj(beverages, "dip into");
 	}
 
-	if (!potion) potion = getobj(beverages, "dip into");
 	if (!potion) return 0;
 	if (potion == obj && potion->quan == 1L) {
 		pline("That is a potion bottle, not a Klein bottle!");

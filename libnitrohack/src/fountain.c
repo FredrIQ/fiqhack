@@ -48,7 +48,7 @@ static void dowaterdemon(void) /* Water demon */
 		pline("You feel the presence of evil.");
 
 	/* Give those on low levels a (slightly) better chance of survival */
-	    if (rnd(100) > (80 + level_difficulty())) {
+	    if (rnd(100) > (80 + level_difficulty(&u.uz))) {
 		pline("Grateful for %s release, %s grants you a wish!",
 		      mhis(mtmp), mhe(mtmp));
 		makewish();

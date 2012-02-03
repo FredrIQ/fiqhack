@@ -189,7 +189,7 @@ void priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
 
 		/* now his/her goodies... */
 		if (sanctum && EPRI(priest)->shralign == A_NONE &&
-		     on_level(&sanctum_level, &u.uz)) {
+		     on_level(&sanctum_level, &lev->z)) {
 			mongets(priest, AMULET_OF_YENDOR);
 		}
 		/* 2 to 4 spellbooks */

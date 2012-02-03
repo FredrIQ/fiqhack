@@ -272,6 +272,7 @@ int mattacku(struct monst *mtmp)
 	const struct attack *mattk;
 	struct attack alt_attk;
 	int	i, j, tmp, sum[NATTK];
+	struct musable musable;
 	
 	const struct permonst *mdat = mtmp->data;
 	boolean ranged = (distu(mtmp->mx, mtmp->my) > 3);
@@ -506,8 +507,9 @@ int mattacku(struct monst *mtmp)
 	}
 
 	/* Unlike defensive stuff, don't let them use item _and_ attack. */
-	if (find_offensive(mtmp)) {
-		int foo = use_offensive(mtmp);
+	memset(&musable, 0, sizeof(musable));
+	if (find_offensive(mtmp, &musable)) {
+		int foo = use_offensive(mtmp, &musable);
 
 		if (foo != 0) return foo==1;
 	}

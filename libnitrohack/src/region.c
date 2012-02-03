@@ -576,9 +576,7 @@ void rest_regions(struct memfile *mf, struct level *lev,
 	for (j = 0; j < r->n_monst; j++)
 	    r->monsters[j] = mread32(mf);
 	
-	len1 = r->enter_msg ? strlen(r->enter_msg) + 1 : 0;
 	len1 = mread16(mf);
-	len2 = r->leave_msg ? strlen(r->leave_msg) + 1 : 0;
 	len2 = mread16(mf);
 	
 	if (len1 > 0) {

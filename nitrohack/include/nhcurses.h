@@ -289,7 +289,6 @@ extern nh_bool curses_get_ext_cmd(char *cmd_out, const char **namelist,
 extern void curses_getline(const char *query, char *buffer);
 
 /* keymap.c */
-extern int get_cmdkey(void);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *count);
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);
 extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
@@ -299,9 +298,10 @@ extern void show_keymap_menu(nh_bool readonly);
 extern enum nh_direction key_to_dir(int key);
 
 /* map.c */
+extern int get_map_key(int place_cursor);
 extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
 extern int curses_getpos(int *x, int *y, nh_bool force, const char *goal);
-extern void draw_map(int frame, int cx, int cy);
+extern void draw_map(int cx, int cy);
 
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);

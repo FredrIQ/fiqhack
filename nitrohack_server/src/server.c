@@ -54,7 +54,6 @@
 #include <netinet/tcp.h>
 #include <sys/epoll.h>
 #include <sys/time.h>
-#include <sys/stat.h>
 
 #if defined(OPEN_MAX)
 static int get_open_max(void) { return OPEN_MAX; }
@@ -204,6 +203,10 @@ static int init_server_socket(struct sockaddr *sa)
 	case AF_UNIX:
 	    len = sizeof(struct sockaddr_un);
 	    break;
+	    
+	default: /* shouldn't ever happen */
+	    close(fd);
+	    return -1;
     }
     
     if (sa->sa_family != AF_UNIX) {

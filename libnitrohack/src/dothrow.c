@@ -718,7 +718,7 @@ static boolean toss_up(struct obj *obj, boolean hitsroof)
 
 	breakmsg(obj, !Blind);
 	breakobj(obj, u.ux, u.uy, TRUE, TRUE);
-	obj = 0;	/* it's now gone */
+	obj = NULL;	/* it's now gone */
 	switch (otyp) {
 	case EGG:
 		if (touch_petrifies(&mons[ocorpsenm]) &&

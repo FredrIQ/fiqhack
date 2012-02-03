@@ -96,7 +96,7 @@ struct obj *mkobj(struct level *lev, char oclass, boolean artif)
 		const struct icp *iprobs =
 				    (Is_rogue_level(&lev->z)) ?
 				    (const struct icp *)rogueprobs :
-				    Inhell ? (const struct icp *)hellprobs :
+				    In_hell(&lev->z) ? (const struct icp *)hellprobs :
 				    (const struct icp *)mkobjprobs;
 
 		for (tprob = rnd(100);
@@ -156,7 +156,7 @@ static void mkbox_cnts(struct obj *box)
 		/* handle a couple of special cases */
 		if (otmp->oclass == COIN_CLASS) {
 		    /* 2.5 x level's usual amount; weight adjusted below */
-		    otmp->quan = (long)(rnd(level_difficulty()+2) * rnd(75));
+		    otmp->quan = (long)(rnd(level_difficulty(&box->olev->z)+2) * rnd(75));
 		    otmp->owt = weight(otmp);
 		} else while (otmp->otyp == ROCK) {
 		    otmp->otyp = rnd_class(DILITHIUM_CRYSTAL, LOADSTONE);
@@ -177,20 +177,20 @@ static void mkbox_cnts(struct obj *box)
 }
 
 /* select a random, common monster type */
-int rndmonnum(void)
+int rndmonnum(const d_level *dlev)
 {
 	const struct permonst *ptr;
 	int i;
 
 	/* Plan A: get a level-appropriate common monster */
-	ptr = rndmonst();
+	ptr = rndmonst(dlev);
 	if (ptr) return monsndx(ptr);
 
 	/* Plan B: get any common monster */
 	do {
 	    i = rn1(SPECIAL_PM - LOW_PM, LOW_PM);
 	    ptr = &mons[i];
-	} while ((ptr->geno & G_NOGEN) || (!Inhell && (ptr->geno & G_HELL)));
+	} while ((ptr->geno & G_NOGEN) || (!In_hell(dlev) && (ptr->geno & G_HELL)));
 
 	return i;
 }
@@ -374,7 +374,7 @@ struct obj *mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 	    case CORPSE:
 		/* possibly overridden by mkcorpstat() */
 		tryct = 50;
-		do otmp->corpsenm = undead_to_corpse(rndmonnum());
+		do otmp->corpsenm = undead_to_corpse(rndmonnum(&lev->z));
 		while ((mvitals[otmp->corpsenm].mvflags & G_NOCORPSE) && (--tryct > 0));
 		if (tryct == 0) {
 		/* perhaps rndmonnum() only wants to make G_NOCORPSE monsters on
@@ -386,7 +386,7 @@ struct obj *mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 	    case EGG:
 		otmp->corpsenm = NON_PM;	/* generic egg */
 		if (!rn2(3)) for (tryct = 200; tryct > 0; --tryct) {
-		    mndx = can_be_hatched(rndmonnum());
+		    mndx = can_be_hatched(rndmonnum(&lev->z));
 		    if (mndx != NON_PM && !dead_species(mndx, TRUE)) {
 			otmp->corpsenm = mndx;		/* typed egg */
 			attach_egg_hatch_timeout(otmp);
@@ -399,7 +399,7 @@ struct obj *mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 		if (!rn2(6))
 		    otmp->spe = 1;		/* spinach */
 		else for (tryct = 200; tryct > 0; --tryct) {
-		    mndx = undead_to_corpse(rndmonnum());
+		    mndx = undead_to_corpse(rndmonnum(&lev->z));
 		    if (mons[mndx].cnutrit &&
 			    !(mvitals[mndx].mvflags & G_NOCORPSE)) {
 			otmp->corpsenm = mndx;
@@ -469,7 +469,7 @@ struct obj *mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 					break;
 		case FIGURINE:	{	int tryct2 = 0;
 					do
-					    otmp->corpsenm = rndmonnum();
+					    otmp->corpsenm = rndmonnum(&lev->z);
 					while (is_human(&mons[otmp->corpsenm])
 						&& tryct2++ < 30);
 					blessorcurse(otmp, 4);
@@ -557,11 +557,10 @@ struct obj *mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 		switch (otmp->otyp) {
 		    case STATUE:
 			/* possibly overridden by mkcorpstat() */
-			otmp->corpsenm = rndmonnum();
+			otmp->corpsenm = rndmonnum(&lev->z);
 			if (!verysmall(&mons[otmp->corpsenm]) &&
-				rn2(level_difficulty()/2 + 10) > 10)
-			    add_to_container(otmp,
-						    mkobj(level, SPBOOK_CLASS,FALSE));
+				rn2(level_difficulty(&lev->z)/2 + 10) > 10)
+			    add_to_container(otmp, mkobj(level, SPBOOK_CLASS,FALSE));
 		}
 		break;
 	case COIN_CLASS:
@@ -794,7 +793,7 @@ struct obj *mkgold(long amount, struct level *lev, int x, int y)
     struct obj *gold = gold_at(lev, x, y);
 
     if (amount <= 0L)
-	amount = (long)(1 + rnd(level_difficulty()+2) * rnd(30));
+	amount = (long)(1 + rnd(level_difficulty(&lev->z)+2) * rnd(30));
     if (gold) {
 	gold->quan += amount;
     } else {
@@ -965,7 +964,7 @@ struct obj *mk_named_object(int objtype,	/* CORPSE or STATUE */
 	return otmp;
 }
 
-boolean is_flammable(struct obj *otmp)
+boolean is_flammable(const struct obj *otmp)
 {
 	int otyp = otmp->otyp;
 	int omat = objects[otyp].oc_material;
@@ -976,7 +975,7 @@ boolean is_flammable(struct obj *otmp)
 	return (boolean)((omat <= WOOD && omat != LIQUID) || omat == PLASTIC);
 }
 
-boolean is_rottable(struct obj *otmp)
+boolean is_rottable(const struct obj *otmp)
 {
 	int otyp = otmp->otyp;
 

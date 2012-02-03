@@ -187,12 +187,6 @@
 /* end effects */
 
 
-struct symdef {
-    uchar sym;
-    const char	*explanation;
-    uchar color;
-};
-
 extern const struct nh_symdef defsyms[];	/* defaults */
 
 extern const char * const trapexplain[];

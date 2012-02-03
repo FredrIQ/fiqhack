@@ -173,34 +173,6 @@ void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *
 }
 
 
-int get_cmdkey(void)
-{
-    int key = ERR;
-    int frame = 0;
-    
-    if (settings.blink)
-	wtimeout(mapwin, 666); /* wait 2/3 of a second before switching */
-    
-    while (1) {
-	if (player.x) { /* x == 0 is not a valid coordinate */
-	    wmove(mapwin, player.y, player.x - 1);
-	    curs_set(1);
-	    wrefresh(mapwin);
-	}
-	
-	key = nh_wgetch(mapwin);
-	if (key != ERR)
-	    break;
-	
-	draw_map(++frame, player.x, player.y);
-    };
-    draw_map(0, player.x, player.y);
-    wtimeout(mapwin, -1);
-    
-    return key;
-}
-
-
 const char *get_command(int *count, struct nh_cmd_arg *arg)
 {
     int key, key2, multi;
@@ -220,7 +192,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	cmd = NULL;
 	arg->argtype = CMD_ARG_NONE;
 	
-	key = get_cmdkey();
+	key = get_map_key(TRUE);
 	while ((key >= '0' && key <= '9') || (multi > 0 && key == KEY_BACKDEL)) {
 	    if (key == KEY_BACKDEL)
 		multi /= 10;
@@ -252,7 +224,7 @@ const char *get_command(int *count, struct nh_cmd_arg *arg)
 	    /* if the command requres an arg AND the arg isn't set yet (by handle_internal_cmd) */
 	    if (!(cmd->flags & CMD_ARG_NONE) && cmd->flags & CMD_ARG_DIR &&
 		arg->argtype != CMD_ARG_DIR) {
-		key2 = get_cmdkey();
+		key2 = get_map_key(TRUE);
 		if (key2 == '\033') /* cancel silently */
 		    continue;
 		
@@ -411,6 +383,9 @@ static struct nh_cmd_desc* show_help(void)
     
     n = curses_display_menu(items, icount, "Help topics:", PICK_ONE, selected);
     free(items);
+    if (n <= 0)
+	return NULL;
+    
     switch(selected[0]) {
 	case 1:
 	    show_keymap_menu(TRUE);
@@ -779,7 +754,7 @@ static nh_bool set_command_keys(struct win_menu *mdat, int idx)
     
     if (id < 0)
 	cmd = &builtin_commands[-(id+1)];
-    else if (id > 0)
+    else
 	cmd = &commandlist[id-1];
     
     command_settings_menu(cmd);

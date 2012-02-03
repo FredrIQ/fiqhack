@@ -975,11 +975,12 @@ static void put_qt_hdrs(void)
 	fprintf(stderr, "%ld: header info.\n", ftell(ofp));
 #endif
 	count = fwrite(&(qt_hdr.n_hdr), sizeof(int), 1, ofp);
-	count = fwrite(&(qt_hdr.id[0][0]), sizeof(char)*LEN_HDR,
-							qt_hdr.n_hdr, ofp);
+	if (count != 1) goto err_out;
+	
+	count = fwrite(&(qt_hdr.id[0][0]), sizeof(char)*LEN_HDR, qt_hdr.n_hdr, ofp);
 	if (count != qt_hdr.n_hdr) goto err_out;
-	count = fwrite(&(qt_hdr.offset[0]), sizeof(long),
-							qt_hdr.n_hdr, ofp);
+	
+	count = fwrite(&(qt_hdr.offset[0]), sizeof(long), qt_hdr.n_hdr, ofp);
 	if (count != qt_hdr.n_hdr) goto err_out;
 #ifdef DEBUG
 	for (i = 0; i < qt_hdr.n_hdr; i++)
@@ -997,8 +998,8 @@ static void put_qt_hdrs(void)
 	    fprintf(stderr, "%ld: %c header info.\n", ftell(ofp),
 		    qt_hdr.id[i]);
 #endif
-	    count = fwrite(&(msg_hdr[i].n_msg), sizeof(int),
-							1, ofp);
+	    count = fwrite(&(msg_hdr[i].n_msg), sizeof(int), 1, ofp);
+	    if (count != 1) goto err_out;
 	    count = fwrite(&(msg_hdr[i].qt_msg[0]),
 			    sizeof(struct qtmsg), msg_hdr[i].n_msg, ofp);
 	    if (count != msg_hdr[i].n_msg) goto err_out;

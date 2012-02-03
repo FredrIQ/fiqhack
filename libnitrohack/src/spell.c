@@ -188,7 +188,7 @@ static void deadbook(struct obj *book2)
     makeknown(SPE_BOOK_OF_THE_DEAD);
     /* KMH -- Need ->known to avoid "_a_ Book of the Dead" */
     book2->known = 1;
-    if (invocation_pos(u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
+    if (invocation_pos(&u.uz, u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
 	struct obj *otmp;
 	boolean arti1_primed = FALSE, arti2_primed = FALSE,
 			 arti_cursed = FALSE;
@@ -257,7 +257,7 @@ raise_dead:
 	/* last place some monsters around you */
 	mm.x = u.ux;
 	mm.y = u.uy;
-	mkundead(&mm, TRUE, NO_MINVENT);
+	mkundead(level, &mm, TRUE, NO_MINVENT);
     } else if (book2->blessed) {
 	for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
 	    mtmp2 = mtmp->nmon;		/* tamedog() changes chain */
