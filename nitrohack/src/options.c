@@ -136,7 +136,7 @@ static nh_bool option_change_callback(struct nh_option_desc *option)
     }
     else if (!strcmp(option->name, "darkgray")) {
 	set_darkgray();
-	draw_map(0, player.x, player.y);
+	draw_map(player.x, player.y);
     }
     else if (!strcmp(option->name, "menu_headings")) {
 	settings.menu_headings = option->value.e;
@@ -145,7 +145,7 @@ static nh_bool option_change_callback(struct nh_option_desc *option)
 	settings.graphics = option->value.e;
 	switch_graphics(option->value.e);
 	if (ui_flags.ingame) {
-	    draw_map(0, player.x, player.y);
+	    draw_map(player.x, player.y);
 	    redraw_game_windows();
 	}
     }

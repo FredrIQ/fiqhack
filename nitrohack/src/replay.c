@@ -207,7 +207,7 @@ void replay_commandloop(int fd)
 	    show_replay_help();
 	firsttime = FALSE;
 
-	key = get_cmdkey();
+	key = get_map_key(TRUE);
 	switch (key) {
 	    /* step forward */
 	    case KEY_RIGHT:

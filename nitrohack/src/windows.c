@@ -333,7 +333,7 @@ void rebuild_ui(void)
 	
 	/* some windows are now empty because they were re-created */
 	draw_msgwin();
-	draw_map(0, player.x, player.y);
+	draw_map(player.x, player.y);
 	curses_update_status(&player);
 	draw_sidebar();
 	
@@ -460,7 +460,7 @@ void curses_pause(enum nh_pause_reason reason)
 	pause_messages();
     else if (mapwin != NULL)
 	/* P_MAP: pause to show the result of detection or similar */
-	nh_wgetch(mapwin);
+	get_map_key(FALSE);
 }
 
 

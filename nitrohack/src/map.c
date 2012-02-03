@@ -4,6 +4,12 @@
 #include "nhcurses.h"
 #include <ctype.h>
 
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
+
 #define sgn(x) ((x) >= 0 ? 1 : -1)
 
 struct coord {
@@ -14,21 +20,69 @@ static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
 static const int xdir[DIR_SELF+1] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0 };
 static const int ydir[DIR_SELF+1] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
 
+/* GetTickCount() returns milliseconds since the system was started, with a
+ * resolution of around 15ms. gettimeofday() returns a value since the start of
+ * the epoch.
+ * The difference doesn't matter here, since the value is only used to control
+ * blinking.
+ */
+#ifdef WIN32
+# define get_milliseconds GetTickCount()
+#else
+static int get_milliseconds(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+#endif
+
+
+
+int get_map_key(int place_cursor)
+{
+    int key = ERR;
+    
+    if (settings.blink)
+	wtimeout(mapwin, 666); /* wait 2/3 of a second before switching */
+    
+    if (player.x && place_cursor) { /* x == 0 is not a valid coordinate */
+	wmove(mapwin, player.y, player.x - 1);
+	curs_set(1);
+    }
+    
+    while (1) {
+	key = nh_wgetch(mapwin);
+	draw_map(player.x, player.y);
+	doupdate();
+	if (key != ERR)
+	    break;
+	
+    };
+    wtimeout(mapwin, -1);
+    
+    return key;
+}
+
 
 void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 {
     display_buffer = dbuf;
-    draw_map(0, ux, uy);
+    draw_map(ux, uy);
 }
 
 
-void draw_map(int frame, int cx, int cy)
+void draw_map(int cx, int cy)
 {
-    int x, y, symcount, attr;
+    int x, y, symcount, attr, frame;
     struct curses_symdef syms[4];
     
     if (!display_buffer || !mapwin)
 	return;
+    
+    frame = 0;
+    if (settings.blink)
+	frame = get_milliseconds() / 666;
        
     for (y = 0; y < ROWNO; y++) {
 	for (x = 1; x < COLNO; x++) {
@@ -99,7 +153,7 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     
     while (1) {
 	dx = dy = 0;
-	key = nh_wgetch(mapwin);
+	key = get_map_key(FALSE);
 	if (key == KEY_ESC) {
 	    cx = cy = -10;
 	    result = -1;
