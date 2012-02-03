@@ -281,7 +281,7 @@ static boolean autopickup_match(struct obj *obj)
 	if (!iflags.ap_rules)
 	    return FALSE;
 	
-	objdesc = makesingular(doname(obj));
+	objdesc = makesingular(doname_price(obj));
 	if (obj->bknown) {
 	    if (obj->blessed)
 		objbuc = B_BLESSED;

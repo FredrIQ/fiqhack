@@ -1604,6 +1604,30 @@ struct obj *find_oid(unsigned id)
 }
 
 
+int shop_item_cost(struct obj *obj)
+{
+	struct monst *shkp;
+	xchar x, y;
+	int cost=0;
+
+	if (get_obj_location(obj, &x, &y, 0) && (obj->unpaid ||
+	    (obj->where==OBJ_FLOOR && !obj->no_charge && costly_spot(x,y)))) {
+		if (!(shkp = shop_keeper(obj->olev, *in_rooms(obj->olev, x, y, SHOPBASE)))) return 0;
+		if (!inhishop(shkp)) return 0;
+		if (!costly_spot(x, y)) return 0;
+		if (!*u.ushops) return 0;
+
+		if (obj->oclass != COIN_CLASS) {
+			cost = (obj == uball || obj == uchain) ? 0L :
+				obj->quan * get_cost(obj, shkp);
+			if (Has_contents(obj))
+				cost += contained_cost(obj, shkp, 0L, FALSE, FALSE);
+		}
+	}
+	return cost;
+}
+
+
 /* calculate the value that the shk will charge for [one of] an object */
 static long get_cost(struct obj *obj,
 		     struct monst *shkp) /* if angry, impose a surcharge */
@@ -3239,6 +3263,7 @@ struct obj *shop_object(xchar x, xchar y)
 	    && shkp->mcanmove && !shkp->msleeping)
 		? otmp : NULL;
 }
+
 
 /* give price quotes for all objects linked to this one (ie, on this spot) */
 void price_quote(struct obj *first_obj)

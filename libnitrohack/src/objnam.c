@@ -20,6 +20,7 @@
    "the 2nd dagger", "the 4th arrow"
    doname(obj): fully detailed name of object or stack as seen in inventory
    "the blessed Amulet of Yendor (being worn)", "a poisoned +4 dagger"
+   doname_price(obj): like doname, but with price info for shop items
    corpse_xname(obj, ignore_oquan): describe a corpse or pile of corpses
    "horse corpse", "horse corpses"
    cxname(obj): xname, but with specific corpse naming
@@ -579,7 +580,8 @@ static void add_erosion_words(struct obj *obj, char *prefix)
 		       is_flammable(obj) ? "fireproof " : "");
 }
 
-char *doname(struct obj *obj)
+
+static char *doname_base(struct obj *obj, boolean with_price)
 {
 	boolean ispoisoned = FALSE;
 	char prefix[PREFIX];
@@ -790,6 +792,10 @@ ring:
 			quotedprice += contained_cost(obj, shkp, 0L, FALSE, TRUE);
 		sprintf(eos(bp), " (unpaid, %ld %s)",
 			quotedprice, currency(quotedprice));
+	} else if (with_price) {
+		int price = shop_item_cost(obj);
+		if (price > 0)
+		    sprintf(eos(bp), " (%d %s)", price, currency(price));
 	}
 	if (!strncmp(prefix, "a ", 2) &&
 			strchr(vowels, *(prefix+2) ? *(prefix+2) : *bp)
@@ -802,6 +808,18 @@ ring:
 	}
 	bp = strprepend(bp, prefix);
 	return bp;
+}
+
+
+char *doname(struct obj *obj)
+{
+    return doname_base(obj, FALSE);
+}
+
+
+char *doname_price(struct obj *obj)
+{
+    return doname_base(obj, TRUE);
 }
 
 
