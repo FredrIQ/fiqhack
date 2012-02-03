@@ -142,6 +142,7 @@ void replay_begin(void)
 	endpos = filesize;
 	recovery = TRUE;
     }
+    loginfo.mem[endpos] = '\0';
     
     warned = 0;
     for (i = 0; i < endpos; i++)
