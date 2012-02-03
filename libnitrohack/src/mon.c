@@ -2164,7 +2164,7 @@ int newcham(struct monst *mtmp,
 		if (!rn2(10)) mtmp->female = !mtmp->female;
 	}
 
-	if (In_endgame(&u.uz) && is_mplayer(olddata)) {
+	if (In_endgame(&mtmp->dlevel->z) && is_mplayer(olddata)) {
 		/* mplayers start out as "Foo the Bar", but some of the
 		 * titles are inappropriate when polymorphed, particularly
 		 * into the opposite sex.  players don't use ranks when
@@ -2189,7 +2189,7 @@ int newcham(struct monst *mtmp,
 	hpd = (mtmp->m_lev < 50) ? ((int)mtmp->m_lev)*8 : mdat->mlevel;
 	if (!hpd) hpd = 4;
 
-	mtmp->m_lev = adj_lev(mdat);		/* new monster level */
+	mtmp->m_lev = adj_lev(&mtmp->dlevel->z, mdat);	/* new monster level */
 
 	mhp = (mtmp->m_lev < 50) ? ((int)mtmp->m_lev)*8 : mdat->mlevel;
 	if (!mhp) mhp = 4;
@@ -2222,7 +2222,7 @@ int newcham(struct monst *mtmp,
 	if (!mtmp->perminvis || pm_invisible(olddata))
 	    mtmp->perminvis = pm_invisible(mdat);
 	mtmp->minvis = mtmp->invis_blkd ? 0 : mtmp->perminvis;
-	if (!(hides_under(mdat) && OBJ_AT(mtmp->mx, mtmp->my)) &&
+	if (!(hides_under(mdat) && OBJ_AT_LEV(mtmp->dlevel, mtmp->mx, mtmp->my)) &&
 			!(mdat->mlet == S_EEL && is_pool(level, mtmp->mx, mtmp->my)))
 		mtmp->mundetected = 0;
 	if (u.ustuck == mtmp) {

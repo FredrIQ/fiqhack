@@ -8,8 +8,8 @@
 #include "hack.h"
 
 static void check_here(boolean);
-static boolean n_or_more(struct obj *);
-static boolean all_but_uchain(struct obj *);
+static boolean n_or_more(const struct obj *);
+static boolean all_but_uchain(const struct obj *);
 static int autopick(struct obj*, int, struct object_pick **);
 static int count_categories(struct obj *,int);
 static long carry_count (struct obj *,struct obj *,long,boolean,int *,int *);
@@ -72,7 +72,7 @@ static void check_here(boolean picked_some)
 static long val_for_n_or_more;
 
 /* query_objlist callback: return TRUE if obj's count is >= reference value */
-static boolean n_or_more(struct obj *obj)
+static boolean n_or_more(const struct obj *obj)
 {
     if (obj == uchain) return FALSE;
     return obj->quan >= val_for_n_or_more;
@@ -93,35 +93,38 @@ void add_valid_menu_class(int c)
 }
 
 /* query_objlist callback: return TRUE if not uchain */
-static boolean all_but_uchain(struct obj *obj)
+static boolean all_but_uchain(const struct obj *obj)
 {
     return obj != uchain;
 }
 
 /* query_objlist callback: return TRUE */
 /*ARGSUSED*/
-boolean allow_all(struct obj *obj)
+boolean allow_all(const struct obj *obj)
 {
     return TRUE;
 }
 
-boolean allow_category(struct obj *obj)
+boolean allow_category(const struct obj *obj)
 {
-    if (Role_if (PM_PRIEST)) obj->bknown = TRUE;
+    boolean priest = Role_if(PM_PRIEST);
     if (((strchr(valid_menu_classes,'u') != NULL) && obj->unpaid) ||
 	(strchr(valid_menu_classes, obj->oclass) != NULL))
 	return TRUE;
     else if (((strchr(valid_menu_classes,'U') != NULL) &&
-	(obj->oclass != COIN_CLASS && obj->bknown && !obj->blessed && !obj->cursed)))
+	(obj->oclass != COIN_CLASS && (priest || obj->bknown) && !obj->blessed && !obj->cursed)))
 	return TRUE;
     else if (((strchr(valid_menu_classes,'B') != NULL) &&
-	(obj->oclass != COIN_CLASS && obj->bknown && obj->blessed)))
+	(obj->oclass != COIN_CLASS && (priest || obj->bknown) && obj->blessed)))
 	return TRUE;
     else if (((strchr(valid_menu_classes,'C') != NULL) &&
-	(obj->oclass != COIN_CLASS && obj->bknown && obj->cursed)))
+	(obj->oclass != COIN_CLASS && (priest || obj->bknown) && obj->cursed)))
 	return TRUE;
     else if (((strchr(valid_menu_classes,'X') != NULL) &&
-	(obj->oclass != COIN_CLASS && !obj->bknown)))
+	(obj->oclass != COIN_CLASS && !(priest || obj->bknown))))
+	return TRUE;
+    else if (((strchr(valid_menu_classes,'I') != NULL) &&
+	not_fully_identified_core(obj, TRUE)))
 	return TRUE;
     else
 	return FALSE;
@@ -129,7 +132,7 @@ boolean allow_category(struct obj *obj)
 
 
 /* query_objlist callback: return TRUE if valid class and worn */
-boolean is_worn_by_type(struct obj *otmp)
+boolean is_worn_by_type(const struct obj *otmp)
 {
 	return((boolean)(!!(otmp->owornmask &
 			(W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP | W_QUIVER)))
@@ -364,7 +367,8 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    
 	    /* don't unconditionally reveal weight, otherwise lodestones on the
 	     * floor could be identified by their weight in the pickup dialog */
-	    if (obj->where == OBJ_INVENT || (obj->known && obj->invlet))
+	    if (obj->where == OBJ_INVENT || obj->known ||
+		(obj->where == OBJ_CONTAINED && obj->ocontainer->where == OBJ_INVENT))
 		it->weight = obj->owt;
 	
 	    if (!obj->bknown)
@@ -455,7 +459,7 @@ int query_objlist(const char *qstr,	/* query string */
 		  int qflags,		/* options to control the query */
 		  struct object_pick **pick_list,/* return list of items picked */
 		  int how,		/* type of query */
-		  boolean (*allow)(struct obj*)) /* allow function */
+		  boolean (*allow)(const struct obj*)) /* allow function */
 {
 	int n = 0, i, prev_oclass, nr_objects;
 	struct obj *curr, *last;
@@ -565,7 +569,7 @@ int query_category(const char *qstr,	/* query string */
 	int ccount;
 	boolean do_unpaid = FALSE;
 	boolean do_blessed = FALSE, do_cursed = FALSE, do_uncursed = FALSE,
-	    do_buc_unknown = FALSE;
+	    do_buc_unknown = FALSE, do_unidentified = FALSE;
 	int num_buc_types = 0;
 	struct menulist menu;
 
@@ -589,6 +593,8 @@ int query_category(const char *qstr,	/* query string */
 	    do_buc_unknown = TRUE;
 	    num_buc_types++;
 	}
+	if ((qflags & UNIDENTIFIED) && count_buc(olist, UNIDENTIFIED))
+	    do_unidentified = TRUE;
 
 	ccount = count_categories(olist, qflags);
 	/* no point in actually showing a menu for a single category */
@@ -653,6 +659,9 @@ int query_category(const char *qstr,	/* query string */
 	    add_menuitem(&menu, 'A', (qflags & WORN_TYPES) ?
 		    "Auto-select every item being worn" :
 		    "Auto-select every item", 'A', FALSE);
+	
+	if (do_unidentified)
+	    add_menuitem(&menu, 'I', "Unidentified Items", 'I', FALSE);
 	
 	/* items with b/u/c/unknown if there are any */
 	if (do_blessed)
@@ -1219,7 +1228,7 @@ gotit:
 		    add_to_container(coffers, goldob);
 		    coffers->owt = weight(coffers);
 		} else {
-		    struct monst *mon = makemon(courtmon(), level,
+		    struct monst *mon = makemon(courtmon(&u.uz), level,
 					    u.ux, u.uy, NO_MM_FLAGS);
 		    if (mon) {
 			add_to_minv(mon, goldob);
@@ -1373,10 +1382,7 @@ static int in_container(struct obj *obj)
 	boolean was_unpaid = FALSE;
 	char buf[BUFSZ];
 
-	if (!current_container) {
-		impossible("<in> no current_container?");
-		return 0;
-	} else if (obj == uball || obj == uchain) {
+	if (obj == uball || obj == uchain) {
 		pline("You must be kidding.");
 		return 0;
 	} else if (obj == current_container) {
@@ -1801,8 +1807,8 @@ static int menu_loot(int retry, struct obj *container, boolean put_in)
     } else if (flags.menu_style == MENU_FULL) {
 	all_categories = FALSE;
 	sprintf(buf,"%s what type of objects?", put_in ? putin : takeout);
-	mflags = put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN :
-		          ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN;
+	mflags = put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED:
+		          ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED;
 	n = query_category(buf, put_in ? invent : container->cobj,
 			   mflags, pick_list, PICK_ANY);
 	if (!n) return 0;

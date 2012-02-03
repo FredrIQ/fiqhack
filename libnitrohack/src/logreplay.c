@@ -134,6 +134,7 @@ void replay_begin(void)
     if (filesize < 24 || !loginfo.mem ||
 	!sscanf(loginfo.mem, "NHGAME %*s %x", &endpos) || endpos > filesize) {
 	free(loginfo.mem);
+	loginfo.mem = NULL;
 	terminate();
     }
     
@@ -141,6 +142,7 @@ void replay_begin(void)
 	endpos = filesize;
 	recovery = TRUE;
     }
+    loginfo.mem[endpos] = '\0';
     
     warned = 0;
     for (i = 0; i < endpos; i++)
@@ -226,7 +228,7 @@ void replay_end(void)
 }
 
 
-static void parse_error(const char *str)
+static void NORETURN parse_error(const char *str)
 {
     raw_printf("Error at token %d (\"%s\"): %s\n", loginfo.next,
 	       loginfo.tokens[loginfo.next-1], str);
@@ -435,6 +437,9 @@ char *replay_bones(int *buflen)
     char *b64data, *token = next_log_token();
     char *buf = NULL;
     
+    if (!token) /* end of replay data reached */
+	return NULL;
+    
     if (strncmp(token, "b:", 2) != 0) {
 	loginfo.next--; /* no bones to load */
 	return NULL;
@@ -580,7 +585,7 @@ static void replay_read_option(char *token)
     switch (otype[0]) {
 	case 's':
 	    base64_decode(valstr, valbuf);
-	    value.s = strlen(valbuf) > 0 ? valbuf : NULL;
+	    value.s = (valbuf[0] != '\0') ? valbuf : NULL;
 	    break;
 	case 'e':
 	    sscanf(valstr, "%x", &value.e);

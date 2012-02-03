@@ -243,6 +243,7 @@ int dochug(struct monst *mtmp)
 	int tmp=0;
 	int inrange, nearby, scared;
         struct obj *ygold = 0, *lepgold = 0;
+	struct musable musable;
 
 /*	Pre-movement adjustments	*/
 
@@ -313,11 +314,11 @@ int dochug(struct monst *mtmp)
 	/* check distance and scariness of attacks */
 	distfleeck(mtmp,&inrange,&nearby,&scared);
 
-	if (find_defensive(mtmp)) {
-		if (use_defensive(mtmp) != 0)
+	if (find_defensive(mtmp, &musable)) {
+		if (use_defensive(mtmp, &musable) != 0)
 			return 1;
-	} else if (find_misc(mtmp)) {
-		if (use_misc(mtmp) != 0)
+	} else if (find_misc(mtmp, &musable)) {
+		if (use_misc(mtmp, &musable) != 0)
 			return 1;
 	}
 
@@ -465,7 +466,7 @@ toofar:
 			/* Maybe it stepped on a trap and fell asleep... */
 			if (mtmp->msleeping || !mtmp->mcanmove) return 0;
 			if (!nearby &&
-			  (ranged_attk(mdat) || find_offensive(mtmp)))
+			  (ranged_attk(mdat) || find_offensive(mtmp, &musable)))
 			    break;
  			else if (u.uswallow && mtmp == u.ustuck) {
 			    /* a monster that's digesting you can move at the

@@ -10,6 +10,7 @@ enum menuids {
     REPLAY,
     OPTIONS,
     TOPTEN,
+    ACCOUNT,
     DISCONNECT
 };
 
@@ -80,6 +81,66 @@ static void base64_decode(const char* in, char *out)
 }
 
 
+static void account_menu(struct server_info *server)
+{
+    int menuresult[1];
+    int n = 1;
+    char buf1[BUFSZ], buf2[BUFSZ];
+    
+    static struct nh_menuitem netmenu_items[] = {
+	{1, MI_NORMAL, "change email address", 'e'},
+	{2, MI_NORMAL, "change password", 'p'},
+	{0, MI_NORMAL, "", 0},
+	{3, MI_NORMAL, "back to main menu", 'x'}
+    };
+    
+    while (n > 0) {
+	menuresult[0] = 3; /* default action */
+	n = curses_display_menu(netmenu_items, ARRAY_SIZE(netmenu_items),
+				     "Account settings:", PICK_ONE, menuresult);
+	
+	switch (menuresult[0]) {
+	    case 1:
+		curses_getline("What email address do you want to use?", buf1);
+		if (*buf1 != '\033' &&
+		    (*buf1 || curses_yn_function("Remove current email address?",
+						"yn", 'n') == 'y'))
+		    nhnet_change_email(buf1);
+		break;
+		
+	    case 2:
+		curses_getline("Current password:", buf1);
+		if (strcmp(server->password, buf1)) {
+		    curses_msgwin("Incorrect password.");
+		    break;
+		}   
+		
+		curses_getline("Change password: (Beware - it is transmitted in plain text)", buf1);
+		if (buf1[0] != '\033' && buf1[0] != '\0')
+		    curses_getline("Confirm password:", buf2);
+		
+		if (buf2[0] == '\033' || buf2[0] == '\0')
+		    curses_msgwin("Password change cancelled.");
+		else if (strcmp(buf1, buf2))
+		    curses_msgwin("The passwords didn't match. The password was not changed.");
+		else {
+		    nhnet_change_password(buf1);
+		    free((void*)server->password);
+		    server->password = strdup(buf1);
+		}
+		break;
+		
+	    case 3:
+		return;
+	}
+	
+	/* unrecoverable connection error? */
+	if (!nhnet_connected())
+	    break;
+    }
+}
+
+
 static struct server_info *read_server_list(void)
 {
     fnchar filename[BUFSZ];
@@ -90,7 +151,7 @@ static struct server_info *read_server_list(void)
     FILE *fp;
     
     scount = 0;
-    servlist = malloc(sizeof(struct server_info) * (scount+1));
+    servlist = malloc(sizeof(struct server_info));
     memset(&servlist[scount], 0, sizeof(struct server_info));
     
     filename[0] = '\0';
@@ -391,6 +452,11 @@ static void netgame_mainmenu(struct server_info *server)
     char buf[BUFSZ];
     int n = 1, logoheight, i;
     const char **nhlogo;
+    char verstr[32], server_verstr[32];
+    
+    sprintf(verstr, "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+    sprintf(server_verstr, "Server version: %d.%d.%d", nhnet_server_ver.major,
+	    nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
 
     static struct nh_menuitem netmenu_items[] = {
 	{NEWGAME, MI_NORMAL, "new game", 'n'},
@@ -398,6 +464,7 @@ static void netgame_mainmenu(struct server_info *server)
 	{REPLAY, MI_NORMAL, "view replay", 'v'},
 	{OPTIONS, MI_NORMAL, "set options", 'o'},
 	{TOPTEN, MI_NORMAL, "show score list", 's'},
+	{ACCOUNT, MI_NORMAL, "account settings", 'a'},
 	{DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x'}
     };
     
@@ -414,6 +481,10 @@ static void netgame_mainmenu(struct server_info *server)
 	    waddstr(basewin, nhlogo[i]);
 	}
 	wattroff(basewin, A_BOLD | COLOR_PAIR(4));
+	
+	if (nhnet_server_ver.major > 0 || nhnet_server_ver.minor > 0)
+	    mvwaddstr(basewin, LINES-1, 0, server_verstr);
+	mvwaddstr(basewin, LINES-1, COLS - strlen(verstr), verstr);
 	wrefresh(basewin);
 
 	menuresult[0] = DISCONNECT; /* default action */
@@ -421,9 +492,6 @@ static void netgame_mainmenu(struct server_info *server)
 	n = curses_display_menu_core(netmenu_items, ARRAY_SIZE(netmenu_items),
 				     buf, PICK_ONE, menuresult, 0, logoheight,
 				     COLS, ROWNO+3, NULL);
-	
-	wclear(basewin);
-	wrefresh(basewin);
 	
 	switch (menuresult[0]) {
 	    case NEWGAME:
@@ -444,6 +512,10 @@ static void netgame_mainmenu(struct server_info *server)
 		
 	    case TOPTEN:
 		show_topten(NULL, -1, FALSE, FALSE);
+		break;
+		
+	    case ACCOUNT:
+		account_menu(server);
 		break;
 		
 	    case DISCONNECT:
@@ -472,7 +544,7 @@ void netgame(void)
     init_displaychars(); /* load new display info from the server */
     
     netgame_mainmenu(server);
-    
+    write_server_list(servlist);
     nhnet_disconnect();
     
 finally:

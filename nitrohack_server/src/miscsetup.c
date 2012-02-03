@@ -7,7 +7,6 @@
 #include "nhserver.h"
 
 #include <signal.h>
-#include <sys/stat.h>
 
 int sigsegv_flag;
 

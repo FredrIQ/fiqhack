@@ -82,9 +82,13 @@ static int Boots_on(void)
 	case LOW_BOOTS:
 	case IRON_SHOES:
 	case HIGH_BOOTS:
-	case JUMPING_BOOTS:
 	case KICKING_BOOTS:
 		break;
+	case JUMPING_BOOTS:
+        	/* jumping is obvious no matter what the situation */
+        	makeknown(uarmf->otyp);
+                pline("Your %s feel longer.", makeplural(body_part(LEG)));
+                break;
 	case WATER_WALKING_BOOTS:
 		if (u.uinwater) spoteffects(TRUE);
 		break;
@@ -161,10 +165,14 @@ int Boots_off(void)
 			makeknown(otyp);
 		}
 		break;
+	case JUMPING_BOOTS:
+        	/* jumping is obvious no matter what the situation */
+        	makeknown(otyp);
+                pline("Your %s feel shorter.", makeplural(body_part(LEG)));
+                break;
 	case LOW_BOOTS:
 	case IRON_SHOES:
 	case HIGH_BOOTS:
-	case JUMPING_BOOTS:
 	case KICKING_BOOTS:
 		break;
 	default: impossible(unknown_type, c_boots, otyp);
@@ -940,40 +948,31 @@ void cancel_don(void)
 
 static const char clothes[] = {ARMOR_CLASS, 0};
 static const char accessories[] = {RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS, 0};
+static const char clothes_and_accessories[] =
+    {ARMOR_CLASS, RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS, 0};
 
 /* the 'T' command */
 int dotakeoff(struct obj *otmp)
 {
-	boolean have_armor = FALSE;
-
-	if (uarmh || uarms || uarmg || uarmf || uarmc || uarm || uarmu)
-	    have_armor = TRUE;
-
-	if (!have_armor) {
-	     /* assert( GRAY_DRAGON_SCALES > YELLOW_DRAGON_SCALE_MAIL ); */
-		if (uskin)
-		    pline("The %s merged with your skin!",
-			      uskin->otyp >= GRAY_DRAGON_SCALES ?
-				"dragon scales are" : "dragon scale mail is");
-		else
-		    pline("Not wearing any armor.");
-		return 0;
-	}
-
 	if (otmp && !validate_object(otmp, clothes, "take off"))
 		return 0;
 	else if (!otmp)
-		otmp = getobj(clothes, "take off");
-	if (otmp == 0) return 0;
+		otmp = getobj(clothes_and_accessories, "take off");
+	if (!otmp) return 0;
+        if (otmp->oclass != ARMOR_CLASS) return doremring(otmp);
 	if (!(otmp->owornmask & W_ARMOR)) {
 		pline("You are not wearing that.");
 		return 0;
 	}
-	/* note: the `uskin' case shouldn't be able to happen here; dragons
-	   can't wear any armor so will end up with `!have_armor' above */
-	if (otmp == uskin || ((otmp == uarm) && uarmc)
-			  || ((otmp == uarmu) && (uarmc || uarm))) {
-	    pline("You can't take that off.");
+        if (otmp == uskin) {
+	        pline("The %s merged with your skin!",
+		      uskin->otyp >= GRAY_DRAGON_SCALES ?
+                      "dragon scales are" : "dragon scale mail is");
+        }
+	if (((otmp == uarm) && uarmc) ||
+            ((otmp == uarmu) && (uarmc || uarm))) {
+            /* TODO: replace this with a multistep remove */
+	    pline("The rest of your armor is in the way.");
 	    return 0;
 	}
 
@@ -989,21 +988,12 @@ int dotakeoff(struct obj *otmp)
 /* the 'R' command */
 int doremring(struct obj *otmp)
 {
-	boolean have_accessories = FALSE;
-
-	if (uleft || uright || uamul || ublindf)
-	    have_accessories = TRUE;
-
-	if (!have_accessories) {
-		pline("Not wearing any accessories.");
-		return 0;
-	}
-
-	if (otmp && !validate_object(otmp, accessories, "remove"))
+	if (otmp && !validate_object(otmp, clothes_and_accessories, "remove"))
 		return 0;
 	else if (!otmp)
-		otmp = getobj(accessories, "remove");
+		otmp = getobj(clothes_and_accessories, "remove");
 	if (!otmp) return 0;
+        if (otmp->oclass == ARMOR_CLASS) return dotakeoff(otmp);
 	if (!(otmp->owornmask & (W_RING | W_AMUL | W_TOOL))) {
 		pline("You are not wearing that.");
 		return 0;
@@ -1238,14 +1228,6 @@ int canwearobj(struct obj *otmp, long *mask, boolean noisy)
 	if (noisy) silly_thing("wear", otmp);
 	err++;
     }
-/* Unnecessary since now only weapons and special items like pick-axes get
- * welded to your hand, not armor
-    if (welded(otmp)) {
-	if (!err++) {
-	    if (noisy) weldmsg(otmp);
-	}
-    }
- */
     return !err;
 }
 
@@ -1255,18 +1237,19 @@ int dowear(struct obj *otmp)
 	int delay;
 	long mask = 0;
 
+	if (otmp && !validate_object(otmp, clothes_and_accessories, "wear"))
+		return 0;
+	else if (!otmp)
+		otmp = getobj(clothes_and_accessories, "wear");
+	if (!otmp) return 0;
+        if (otmp->oclass != ARMOR_CLASS) return doputon(otmp);
+
 	/* cantweararm checks for suits of armor */
 	/* verysmall or nohands checks for shields, gloves, etc... */
 	if ((verysmall(youmonst.data) || nohands(youmonst.data))) {
 		pline("Don't even bother.");
 		return 0;
 	}
-
-	if (otmp && !validate_object(otmp, clothes, "wear"))
-		return 0;
-	else if (!otmp)
-		otmp = getobj(clothes, "wear");
-	if (!otmp) return 0;
 
 	if (!canwearobj(otmp, &mask, TRUE)) return 0;
 
@@ -1315,19 +1298,12 @@ int doputon(struct obj *otmp)
 {
 	long mask = 0L;
 
-	if (uleft && uright && uamul && ublindf) {
-		pline("Your %s%s are full, and you're already wearing an amulet and %s.",
-			humanoid(youmonst.data) ? "ring-" : "",
-			makeplural(body_part(FINGER)),
-			ublindf->otyp==LENSES ? "some lenses" : "a blindfold");
-		return 0;
-	}
-
-	if (otmp && !validate_object(otmp, accessories, "put on"))
+	if (otmp && !validate_object(otmp, clothes_and_accessories, "put on"))
 		return 0;
 	else if (!otmp)
-		otmp = getobj(accessories, "put on");
+		otmp = getobj(clothes_and_accessories, "put on");
 	if (!otmp) return 0;
+        if (otmp->oclass == ARMOR_CLASS) return dowear(otmp);
 
 	if (otmp->owornmask & (W_RING | W_AMUL | W_TOOL)) {
 		already_wearing(c_that_);

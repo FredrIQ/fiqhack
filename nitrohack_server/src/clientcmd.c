@@ -26,6 +26,8 @@ static void ccmd_set_option(json_t *params);
 static void ccmd_get_options(json_t *params);
 static void ccmd_get_pl_prompt(json_t *params);
 static void ccmd_get_root_pl_prompt(json_t *params);
+static void ccmd_set_email(json_t *params);
+static void ccmd_set_password(json_t *params);
 
 const struct client_command clientcmd[] = {
     {"shutdown",	ccmd_shutdown},
@@ -52,6 +54,9 @@ const struct client_command clientcmd[] = {
     {"get_pl_prompt",	ccmd_get_pl_prompt},
     {"get_root_pl_prompt",ccmd_get_root_pl_prompt},
     
+    {"set_email",	ccmd_set_email},
+    {"set_password",	ccmd_set_password},
+    
     {NULL, NULL}
 };
 
@@ -72,7 +77,7 @@ static void ccmd_shutdown(json_t *ignored)
  */
 static void ccmd_start_game(json_t *params)
 {
-    char filename[1024];
+    char filename[1024], basename[1024], path[1024];
     json_t *j_msg;
     const char *name;
     int role, race, gend, align, mode, fd, ret;
@@ -89,8 +94,11 @@ static void ccmd_start_game(json_t *params)
 	mode = MODE_EXPLORE;
     
     t = (long)time(NULL);
-    snprintf(filename, 1024, "%s/save/%s/%ld_%s.nhgame", settings.workdir,
-	     user_info.username, t, name);
+    snprintf(path, 1024, "%s/save/%s/", settings.workdir, user_info.username);
+    snprintf(basename, 1024, "%ld_%s.nhgame", t, name);
+    snprintf(filename, 1024, "%s%s", path, basename);
+    
+    mkdir(path, 0755); /* should already exist unless something went wrong while upgrading */
     fd = open(filename, O_EXCL | O_CREAT | O_RDWR, 0600);
     if (fd == -1)
 	exit_client("Could not create the logfile");
@@ -101,7 +109,7 @@ static void ccmd_start_game(json_t *params)
 	const char *rolename = (gend && ri->rolenames_f[role]) ?
 			       ri->rolenames_f[role] : ri->rolenames_m[role];
 	gamefd = fd;
-	gameid = db_add_new_game(user_info.uid, filename, rolename,
+	gameid = db_add_new_game(user_info.uid, basename, rolename,
 				 ri->racenames[race], ri->gendnames[gend],
 				 ri->alignnames[align], mode, name,
 				 player_info.level_desc);
@@ -121,13 +129,19 @@ static void ccmd_start_game(json_t *params)
 static void ccmd_restore_game(json_t *params)
 {
     int gid, fd, status;
-    char filename[1024];
+    char filename[1024], basename[1024];
     
     if (json_unpack(params, "{si*}", "gameid", &gid) == -1)
 	exit_client("Bad set of parameters for restore_game");
     
-    if (!db_get_game_filename(user_info.uid, gid, filename, 1024) ||
-	(fd = open(filename, O_RDWR)) == -1) {
+    if (!db_get_game_filename(user_info.uid, gid, basename, 1024)) {
+	client_msg("restore_game", json_pack("{si}", "return", ERR_BAD_FILE));
+	return;
+    }
+    
+    snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir, user_info.username, basename);
+    fd = open(filename, O_RDWR);
+    if (fd == -1) {
 	client_msg("restore_game", json_pack("{si}", "return", ERR_BAD_FILE));
 	return;
     }
@@ -137,7 +151,7 @@ static void ccmd_restore_game(json_t *params)
     
     status = nh_restore_game(fd, NULL, FALSE);
     if (status == ERR_REPLAY_FAILED) {
-	log_msg("Failed to restore saved game %s, file %s", gid, filename);
+	log_msg("Failed to restore saved game %d, file %s", gid, filename);
 	if (srv_yn_function("Restoring the game failed. Would you like to remove it from the list?", "yn", 'n') == 'y') {
 	    db_delete_game(user_info.uid, gid);
 	    log_msg("%s has chosen to remove game %d from the database",
@@ -230,21 +244,19 @@ static void ccmd_game_command(json_t *params)
     
     /* move the finished game to its final resting place */
     if (result == GAME_OVER) {
-	char full_name[1024], final_name[1024], *filename;
+	char basename[1024], filename[1024], final_name[1024];
 	int len;
 	char buf[BUFSZ];
 	/* get the topten entry for the current game */
 	struct nh_topten_entry *tte = nh_get_topten(&len, buf, NULL, 0, 0, 0);
 	
-	if (!db_get_game_filename(user_info.uid, gid, full_name, 1024))
+	if (!db_get_game_filename(user_info.uid, gid, basename, 1024))
 	    return;
 
-	filename = strrchr(full_name, '/');
-	if (!filename)
-	    return;
-	snprintf(final_name, 1024, "%s/completed/%s", settings.workdir, filename+1);
-	rename(full_name, final_name);
-	db_set_game_done(gid, final_name);
+	snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
+		 user_info.username, basename);
+	snprintf(final_name, 1024, "%s/completed/%s", settings.workdir, basename);
+	rename(filename, final_name);
 	db_add_topten_entry(gid, tte->points, tte->hp, tte->maxhp, tte->deaths,
 			    tte->end_how, tte->death, tte->entrytxt);
     }
@@ -255,19 +267,33 @@ static void ccmd_view_start(json_t *params)
 {
     int ret, gid, fd;
     struct nh_replay_info info;
-    char filename[1024];
+    char basename[1024], filename[1024];
     json_t *jmsg;
     
     if (json_unpack(params, "{si*}", "gameid", &gid) == -1)
 	exit_client("Bad set of parameters for view_start");
     
-    if (!db_get_game_filename(0, gid, filename, 1024) ||
-	(fd = open(filename, O_RDWR)) == -1) {
+    if (!db_get_game_filename(0, gid, basename, 1024)) {
+	log_msg("Client requested nonexistent game %d for viewing", gid);
 	jmsg = json_pack("{si}", "return", FALSE);
 	client_msg("view_start", jmsg);
 	return;
     }
     
+    snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
+		 user_info.username, basename);
+    fd = open(filename, O_RDWR);
+    if (fd == -1) {
+	snprintf(filename, 1024, "%s/completed/%s", settings.workdir, basename);
+	fd = open(filename, O_RDWR);
+    }
+    if (fd == -1) {
+	log_msg("failed to open game %d (file %s) for viewing", gid, basename);
+	jmsg = json_pack("{si}", "return", FALSE);
+	client_msg("view_start", jmsg);
+	return;
+    }
+
     ret = nh_view_replay_start(fd, &server_alt_windowprocs, &info);
     
     jmsg = json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
@@ -315,6 +341,7 @@ static void ccmd_view_finish(json_t *params)
 
 static void ccmd_list_games(json_t *params)
 {
+    char filename[1024];
     int completed, limit, show_all, count, i, fd;
     struct gamefile_info *files;
     enum nh_log_status status;
@@ -332,7 +359,12 @@ static void ccmd_list_games(json_t *params)
     jarr = json_array();
     /* step 2: get extra info for each file. */
     for (i = 0; i < count; i++) {
-	fd = open(files[i].filename, O_RDWR);
+	if (completed)
+	    snprintf(filename, 1024, "%s/completed/%s", settings.workdir, files[i].filename);
+	else
+	    snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
+		     user_info.username, files[i].filename);
+	fd = open(filename, O_RDWR);
 	if (fd == -1) {
 	    log_msg("Game file %s could not be opened in ccmd_list_games.", files[i].filename);
 	    continue;
@@ -807,6 +839,30 @@ static void ccmd_get_root_pl_prompt(json_t *params)
     
     bp = nh_root_plselection_prompt(buf, 1024, rolenum, racenum, gendnum, alignnum);
     client_msg("get_root_pl_prompt", json_pack("{ss}", "prompt", bp));
+}
+
+
+void ccmd_set_email(json_t *params)
+{
+    const char *str;
+    int ret = FALSE;
+    
+    if (json_unpack(params, "{ss*}", "email", &str) != -1)
+	ret = db_set_user_email(user_info.uid, str);
+    
+    client_msg("set_email", json_pack("{si}", "return", ret));
+}
+
+
+void ccmd_set_password(json_t *params)
+{
+    const char *str;
+    int ret = FALSE;
+    
+    if (json_unpack(params, "{ss*}", "password", &str) != -1)
+	ret = db_set_user_password(user_info.uid, str);
+    
+    client_msg("set_password", json_pack("{si}", "return", ret));
 }
 
 /* clientcmd.c */

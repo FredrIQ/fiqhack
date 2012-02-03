@@ -147,7 +147,7 @@ int nhnet_restore_game(int gid, struct nh_window_procs *rwinprocs)
     jmsg = send_receive_msg("restore_game", jmsg);
     if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
 	print_error("Incorrect return object in nhnet_restore_game");
-	ret = 0;
+	ret = ERR_NETWORK_ERROR; /* we don't know the error actually was, any error code will do */
     }
     json_decref(jmsg);
     
@@ -949,6 +949,35 @@ struct nh_topten_entry *nhnet_get_topten(int *out_len, char *statusbuf,
     
     api_exit();
     return ttlist;
+}
+
+
+int nhnet_change_email(const char *email)
+{
+    int ret;
+    json_t *jmsg;
+    
+    jmsg = json_pack("{ss}", "email", email);
+    jmsg = send_receive_msg("set_email", jmsg);
+    if (json_unpack(jmsg, "{si}", "return", &ret) == -1)
+	return FALSE;
+    return ret;
+}
+
+
+int nhnet_change_password(const char *password)
+{
+    int ret;
+    json_t *jmsg;
+    
+    jmsg = json_pack("{ss}", "password", password);
+    jmsg = send_receive_msg("set_password", jmsg);
+    if (json_unpack(jmsg, "{si}", "return", &ret) == -1)
+	return FALSE;
+	
+    if (ret)
+	strncpy(saved_password, password, 199);
+    return ret;
 }
 
 /* clientapi.c */

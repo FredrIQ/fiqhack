@@ -234,7 +234,7 @@ void place_lregion(struct level *lev, xchar lx, xchar ly, xchar hx, xchar hy,
 	 * the branch location (to avoid putting branches in corridors).
 	 */
 	if (rtype == LR_BRANCH && lev->nroom) {
-	    place_branch(lev, Is_branchlev(&u.uz), 0, 0);
+	    place_branch(lev, Is_branchlev(&lev->z), 0, 0);
 	    return;
 	}
 
@@ -275,7 +275,8 @@ static boolean put_lregion_here(struct level *lev,
 	       It might still fail if there's a dungeon feature here. */
 	    struct trap *t = t_at(lev, x, y);
 
-	    if (t && t->ttyp != MAGIC_PORTAL) deltrap(t);
+	    if (t && t->ttyp != MAGIC_PORTAL &&
+                t->ttyp != VIBRATING_SQUARE) deltrap(t);
 	    if (bad_location(lev, x, y, nlx, nly, nhx, nhy)) return FALSE;
 	}
     }
@@ -299,7 +300,7 @@ static boolean put_lregion_here(struct level *lev,
 	mkstairs(lev, x, y, (char)rtype, NULL);
 	break;
     case LR_BRANCH:
-	place_branch(lev, Is_branchlev(&u.uz), x, y);
+	place_branch(lev, Is_branchlev(&lev->z), x, y);
 	break;
     }
     return TRUE;
@@ -320,7 +321,7 @@ static void fixup_special(struct level *lev)
 	was_waterlevel = FALSE;
 	u.uinwater = 0;
 	free_waterlevel();
-    } else if (Is_waterlevel(&u.uz)) {
+    } else if (Is_waterlevel(&lev->z)) {
 	lev->flags.hero_memory = 0;
 	was_waterlevel = TRUE;
 	/* water level is an odd beast - it has to be set up
@@ -336,7 +337,7 @@ static void fixup_special(struct level *lev)
 	case LR_PORTAL:
 	    if (*r->rname.str >= '0' && *r->rname.str <= '9') {
 		/* "chutes and ladders" */
-		lvl = u.uz;
+		lvl = lev->z;
 		lvl.dlevel = atoi(r->rname.str);
 	    } else {
 		s_level *sp = find_level(r->rname.str);
@@ -378,7 +379,7 @@ static void fixup_special(struct level *lev)
     }
 
     /* place dungeon branch if not placed above */
-    if (!added_branch && Is_branchlev(&u.uz)) {
+    if (!added_branch && Is_branchlev(&lev->z)) {
 	place_lregion(lev, 0,0,0,0,0,0,0,0,LR_BRANCH,NULL);
     }
 
@@ -387,7 +388,7 @@ static void fixup_special(struct level *lev)
 		sokoban_detect(lev);
 
     /* Still need to add some stuff to level file */
-    if (Is_medusa_level(&u.uz)) {
+    if (Is_medusa_level(&lev->z)) {
 	struct obj *otmp;
 	int tryct;
 
@@ -398,7 +399,7 @@ static void fixup_special(struct level *lev)
 		otmp = mk_tt_object(lev, STATUE, x, y);
 		while (otmp && (poly_when_stoned(&mons[otmp->corpsenm]) ||
 				pm_resistance(&mons[otmp->corpsenm],MR_STONE))) {
-		    otmp->corpsenm = rndmonnum();
+		    otmp->corpsenm = rndmonnum(&lev->z);
 		    otmp->owt = weight(otmp);
 		}
 	    }
@@ -412,15 +413,15 @@ static void fixup_special(struct level *lev)
 	if (otmp) {
 	    while (pm_resistance(&mons[otmp->corpsenm],MR_STONE)
 		   || poly_when_stoned(&mons[otmp->corpsenm])) {
-		otmp->corpsenm = rndmonnum();
+		otmp->corpsenm = rndmonnum(&lev->z);
 		otmp->owt = weight(otmp);
 	    }
 	}
-    } else if (Is_wiz1_level(&u.uz)) {
+    } else if (Is_wiz1_level(&lev->z)) {
 	croom = search_special(lev, MORGUE);
 
 	create_secret_door(lev, croom, W_SOUTH|W_EAST|W_WEST);
-    } else if (Is_knox(&u.uz)) {
+    } else if (Is_knox(&lev->z)) {
 	/* using an unfilled morgue for rm id */
 	croom = search_special(lev, MORGUE);
 	/* avoid inappropriate morgue-related messages */
@@ -433,16 +434,16 @@ static void fixup_special(struct level *lev)
 		if (!rn2(3) && !is_pool(lev, x,y))
 		    maketrap(lev, x, y, rn2(3) ? LANDMINE : SPIKED_PIT);
 	    }
-    } else if (Role_if (PM_PRIEST) && In_quest(&u.uz)) {
+    } else if (Role_if (PM_PRIEST) && In_quest(&lev->z)) {
 	/* less chance for undead corpses (lured from lower morgues) */
 	lev->flags.graveyard = 1;
-    } else if (Is_stronghold(&u.uz)) {
+    } else if (Is_stronghold(&lev->z)) {
 	lev->flags.graveyard = 1;
-    } else if (Is_sanctum(&u.uz)) {
+    } else if (Is_sanctum(&lev->z)) {
 	croom = search_special(lev, TEMPLE);
 
 	create_secret_door(lev, croom, W_ANY);
-    } else if (on_level(&u.uz, &orcus_level)) {
+    } else if (on_level(&lev->z, &orcus_level)) {
 	   struct monst *mtmp, *mtmp2;
 
 	   /* it's a ghost town, get rid of shopkeepers */
@@ -473,25 +474,25 @@ void makemaz(struct level *lev, const char *s)
 {
 	int x,y;
 	char protofile[20];
-	s_level	*sp = Is_special(&u.uz);
+	s_level	*sp = Is_special(&lev->z);
 	coord mm;
 
 	if (*s) {
 	    if (sp && sp->rndlevs) sprintf(protofile, "%s-%d", s,
 						rnd((int) sp->rndlevs));
 	    else		 strcpy(protofile, s);
-	} else if (*(dungeons[u.uz.dnum].proto)) {
-	    if (dunlevs_in_dungeon(&u.uz) > 1) {
+	} else if (*(dungeons[lev->z.dnum].proto)) {
+	    if (dunlevs_in_dungeon(&lev->z) > 1) {
 		if (sp && sp->rndlevs)
-		     sprintf(protofile, "%s%d-%d", dungeons[u.uz.dnum].proto,
-						dunlev(&u.uz),
+		     sprintf(protofile, "%s%d-%d", dungeons[lev->z.dnum].proto,
+						dunlev(&lev->z),
 						rnd((int) sp->rndlevs));
-		else sprintf(protofile, "%s%d", dungeons[u.uz.dnum].proto,
-						dunlev(&u.uz));
+		else sprintf(protofile, "%s%d", dungeons[lev->z.dnum].proto,
+						dunlev(&lev->z));
 	    } else if (sp && sp->rndlevs) {
-		     sprintf(protofile, "%s-%d", dungeons[u.uz.dnum].proto,
+		     sprintf(protofile, "%s-%d", dungeons[lev->z.dnum].proto,
 						rnd((int) sp->rndlevs));
-	    } else strcpy(protofile, dungeons[u.uz.dnum].proto);
+	    } else strcpy(protofile, dungeons[lev->z.dnum].proto);
 
 	} else strcpy(protofile, "");
 
@@ -543,7 +544,7 @@ void makemaz(struct level *lev, const char *s)
 	wallification(lev, 2, 2, x_maze_max, y_maze_max);
 	mazexy(lev, &mm);
 	mkstairs(lev, mm.x, mm.y, 1, NULL);		/* up */
-	if (!Invocation_lev(&u.uz)) {
+	if (!Invocation_lev(&lev->z)) {
 	    mazexy(lev, &mm);
 	    mkstairs(lev, mm.x, mm.y, 0, NULL);	/* down */
 	} else {	/* choose "vibrating square" location */
@@ -577,6 +578,7 @@ void makemaz(struct level *lev, const char *s)
 		     !SPACE_POS(lev->locations[x][y].typ) || occupied(lev, x, y));
 	    inv_pos.x = x;
 	    inv_pos.y = y;
+            maketrap(lev, inv_pos.x, inv_pos.y, VIBRATING_SQUARE);
 #undef INVPOS_X_MARGIN
 #undef INVPOS_Y_MARGIN
 #undef INVPOS_DISTANCE
@@ -585,7 +587,7 @@ void makemaz(struct level *lev, const char *s)
 	}
 
 	/* place branch stair or portal */
-	place_branch(lev, Is_branchlev(&u.uz), 0, 0);
+	place_branch(lev, Is_branchlev(&lev->z), 0, 0);
 
 	for (x = rn1(8,11); x; x--) {
 		mazexy(lev, &mm);
@@ -1004,6 +1006,8 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 
 	if (!Is_waterlevel(&lev->z)) return;
 
+	bbubbles = NULL;
+	
 	set_wportal(lev);
 	n = mread32(mf);
 	xmin = mread32(mf);
@@ -1021,6 +1025,7 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 		b->dy = mread8(mf);
 		idx = mread8(mf);
 		b->bm = bmask[idx];
+		b->next = NULL;
 		
 		if (bbubbles) {
 			btmp->next = b;
@@ -1031,7 +1036,6 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 		}
 	}
 	ebubbles = b;
-	b->next = NULL;
 	was_waterlevel = TRUE;
 }
 

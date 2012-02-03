@@ -90,6 +90,7 @@ static struct {
 	{ "spiked pit",	SPIKED_PIT },
 	{ "hole",	HOLE },
 	{ "trap door",	TRAPDOOR },
+        { "vibrating square",   VIBRATING_SQUARE },
 	{ "teleport",	TELEP_TRAP },
 	{ "level teleport", LEVEL_TELEP },
 	{ "magic portal",   MAGIC_PORTAL },

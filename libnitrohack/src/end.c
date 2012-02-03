@@ -123,7 +123,7 @@ void done_in_by(struct monst *mtmp)
 	}
 
 	if (multi) {
-	    if (strlen(multi_txt) > 0)
+	    if (*multi_txt)
 		sprintf(eos(buf), ", while %s", multi_txt);
 	    else
 		strcat(buf, ", while helpless");
@@ -646,7 +646,7 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 	}
 
 	if (!done_stopprint) {
-	    sprintf(pbuf, "and %ld piece%s of gold, after %d move%s.",
+	    sprintf(pbuf, "and %ld piece%s of gold, after %u move%s.",
 		    umoney, plur(umoney), moves, plur(moves));
 	    add_menutext(&menu, pbuf);
 	}
@@ -668,6 +668,7 @@ void display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 /* Be careful not to call panic from here! */
 void done(int how)
 {
+	int fd;
 	boolean taken;
 	char pbuf[BUFSZ];
 	boolean bones_ok;
@@ -749,9 +750,10 @@ void done(int how)
 	if (how == ESCAPED)
 		killer_format = NO_KILLER_PREFIX;
 	
-	/* write_log_toptenentry needs killer_format */
-	write_log_toptenentry(logfile, how);
+	fd = logfile;
 	log_finish(LS_DONE);
+	/* write_log_toptenentry needs killer_format */
+	write_log_toptenentry(fd, how);
 	/* in case of a subsequent panic(), there's no point trying to save */
 	program_state.something_worth_saving = 0;
 

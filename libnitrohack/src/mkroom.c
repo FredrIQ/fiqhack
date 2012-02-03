@@ -22,9 +22,9 @@ static void mkzoo(struct level *lev, int type);
 static void mkswamp(struct level *lev);
 static void mktemple(struct level *lev);
 static coord * shrine_pos(struct level *lev, int roomno);
-static const struct permonst * morguemon(void);
-static const struct permonst * antholemon(void);
-static const struct permonst * squadmon(void);
+static const struct permonst * morguemon(const d_level *dlev);
+static const struct permonst * antholemon(const d_level *dlev);
+static const struct permonst * squadmon(const d_level *dlev);
 static void save_room(struct memfile *mf, struct mkroom *);
 static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r);
 static boolean has_dnstairs(struct level *lev, struct mkroom *);
@@ -184,7 +184,7 @@ void fill_zoo(struct level *lev, struct mkroom *sroom)
 		break;
 	    case ZOO:
 	    case LEPREHALL:
-		goldlim = 500 * level_difficulty();
+		goldlim = 500 * level_difficulty(&lev->z);
 		break;
 	}
 	for (sx = sroom->lx; sx <= sroom->hx; sx++)
@@ -206,15 +206,15 @@ void fill_zoo(struct level *lev, struct mkroom *sroom)
 		if (type == COURT && IS_THRONE(lev->locations[sx][sy].typ))
 		    continue;
 		mon = makemon(
-		    (type == COURT) ? courtmon() :
-		    (type == BARRACKS) ? squadmon() :
-		    (type == MORGUE) ? morguemon() :
+		    (type == COURT) ? courtmon(&lev->z) :
+		    (type == BARRACKS) ? squadmon(&lev->z) :
+		    (type == MORGUE) ? morguemon(&lev->z) :
 		    (type == BEEHIVE) ?
 			(sx == tx && sy == ty ? &mons[PM_QUEEN_BEE] :
 			 &mons[PM_KILLER_BEE]) :
 		    (type == LEPREHALL) ? &mons[PM_LEPRECHAUN] :
 		    (type == COCKNEST) ? &mons[PM_COCKATRICE] :
-		    (type == ANTHOLE) ? antholemon() :
+		    (type == ANTHOLE) ? antholemon(&lev->z) :
 		    NULL,
 		   lev, sx, sy, NO_MM_FLAGS);
 		if (mon) {
@@ -234,7 +234,7 @@ void fill_zoo(struct level *lev, struct mkroom *sroom)
 			}
 			else
 			    i = goldlim;
-			if (i >= goldlim) i = 5*level_difficulty();
+			if (i >= goldlim) i = 5*level_difficulty(&lev->z);
 			goldlim -= i;
 			mkgold((long) rn1(i, 10), lev, sx, sy);
 			break;
@@ -281,7 +281,7 @@ void fill_zoo(struct level *lev, struct mkroom *sroom)
 		  struct obj *chest;
 		  lev->locations[tx][ty].typ = THRONE;
 		  somexy(lev, sroom, &mm);
-		  mkgold((long) rn1(50 * level_difficulty(),10), lev, mm.x, mm.y);
+		  mkgold((long) rn1(50 * level_difficulty(&lev->z),10), lev, mm.x, mm.y);
 		  /* the royal coffers */
 		  chest = mksobj_at(CHEST, lev, mm.x, mm.y, TRUE, FALSE);
 		  chest->spe = 2; /* so it can be found later */
@@ -307,44 +307,44 @@ void fill_zoo(struct level *lev, struct mkroom *sroom)
 }
 
 /* make a swarm of undead around mm */
-void mkundead(coord *mm, boolean revive_corpses, int mm_flags)
+void mkundead(struct level *lev, coord *mm, boolean revive_corpses, int mm_flags)
 {
-	int cnt = (level_difficulty() + 1)/10 + rnd(5);
+	int cnt = (level_difficulty(&lev->z) + 1)/10 + rnd(5);
 	const struct permonst *mdat;
 	struct obj *otmp;
 	coord cc;
 
 	while (cnt--) {
-	    mdat = morguemon();
-	    if (enexto(&cc, level, mm->x, mm->y, mdat) &&
+	    mdat = morguemon(&lev->z);
+	    if (enexto(&cc, lev, mm->x, mm->y, mdat) &&
 		    (!revive_corpses ||
-		     !(otmp = sobj_at(CORPSE, level, cc.x, cc.y)) ||
+		     !(otmp = sobj_at(CORPSE, lev, cc.x, cc.y)) ||
 		     !revive(otmp)))
-		makemon(mdat, level, cc.x, cc.y, mm_flags);
+		makemon(mdat, lev, cc.x, cc.y, mm_flags);
 	}
-	level->flags.graveyard = TRUE;	/* reduced chance for undead corpse */
+	lev->flags.graveyard = TRUE;	/* reduced chance for undead corpse */
 }
 
-static const struct permonst *morguemon(void)
+static const struct permonst *morguemon(const d_level *dlev)
 {
-	int i = rn2(100), hd = rn2(level_difficulty());
+	int i = rn2(100), hd = rn2(level_difficulty(dlev));
 
 	if (hd > 10 && i < 10)
-		return (Inhell || In_endgame(&u.uz)) ? mkclass(S_DEMON,0) :
-						       &mons[ndemon(A_NONE)];
+		return (In_hell(dlev) || In_endgame(dlev)) ? mkclass(dlev, S_DEMON,0) :
+						             &mons[ndemon(dlev, A_NONE)];
 	if (hd > 8 && i > 85)
-		return mkclass(S_VAMPIRE,0);
+		return mkclass(dlev, S_VAMPIRE,0);
 
 	return (i < 20) ? &mons[PM_GHOST]
-			: (i < 40) ? &mons[PM_WRAITH] : mkclass(S_ZOMBIE,0);
+			: (i < 40) ? &mons[PM_WRAITH] : mkclass(dlev, S_ZOMBIE,0);
 }
 
-static const struct permonst *antholemon(void)
+static const struct permonst *antholemon(const d_level *dlev)
 {
 	int mtyp;
 
 	/* Same monsters within a level, different ones between levels */
-	switch ((level_difficulty() + ((long)u.ubirthday)) % 3) {
+	switch ((level_difficulty(dlev) + ((long)u.ubirthday)) % 3) {
 	default:	mtyp = PM_GIANT_ANT; break;
 	case 0:		mtyp = PM_SOLDIER_ANT; break;
 	case 1:		mtyp = PM_FIRE_ANT; break;
@@ -381,7 +381,7 @@ static void mkswamp(struct level *lev)
 			}
 		    } else
 			if (!rn2(4))	/* swamps tend to be moldy */
-			    makemon(mkclass(S_FUNGUS,0), lev,
+			    makemon(mkclass(&lev->z, S_FUNGUS,0), lev,
 						sx, sy, NO_MM_FLAGS);
 		}
 		lev->flags.has_swamp = 1;
@@ -416,7 +416,7 @@ static void mktemple(struct level *lev)
 	shrine_spot = shrine_pos(lev, (sroom - lev->rooms) + ROOMOFFSET);
 	loc = &lev->locations[shrine_spot->x][shrine_spot->y];
 	loc->typ = ALTAR;
-	loc->altarmask = induced_align(80);
+	loc->altarmask = induced_align(&lev->z, 80);
 	priestini(lev, sroom, shrine_spot->x, shrine_spot->y, FALSE);
 	loc->altarmask |= AM_SHRINE;
 	lev->flags.has_temple = 1;
@@ -543,18 +543,18 @@ struct mkroom *search_special(struct level *lev, schar type)
 }
 
 
-const struct permonst *courtmon(void)
+const struct permonst *courtmon(const d_level *dlev)
 {
-	int     i = rn2(60) + rn2(3*level_difficulty());
-	if (i > 100)		return mkclass(S_DRAGON,0);
-	else if (i > 95)	return mkclass(S_GIANT,0);
-	else if (i > 85)	return mkclass(S_TROLL,0);
-	else if (i > 75)	return mkclass(S_CENTAUR,0);
-	else if (i > 60)	return mkclass(S_ORC,0);
+	int     i = rn2(60) + rn2(3*level_difficulty(dlev));
+	if (i > 100)		return mkclass(dlev, S_DRAGON,0);
+	else if (i > 95)	return mkclass(dlev, S_GIANT,0);
+	else if (i > 85)	return mkclass(dlev, S_TROLL,0);
+	else if (i > 75)	return mkclass(dlev, S_CENTAUR,0);
+	else if (i > 60)	return mkclass(dlev, S_ORC,0);
 	else if (i > 45)	return &mons[PM_BUGBEAR];
 	else if (i > 30)	return &mons[PM_HOBGOBLIN];
-	else if (i > 15)	return mkclass(S_GNOME,0);
-	else			return mkclass(S_KOBOLD,0);
+	else if (i > 15)	return mkclass(dlev, S_GNOME,0);
+	else			return mkclass(dlev, S_KOBOLD,0);
 }
 
 #define NSTYPES (PM_CAPTAIN - PM_SOLDIER + 1)
@@ -566,11 +566,11 @@ static const struct {
     {PM_SOLDIER, 80}, {PM_SERGEANT, 15}, {PM_LIEUTENANT, 4}, {PM_CAPTAIN, 1}
 };
 
-static const struct permonst *squadmon(void)	/* return soldier types. */
+static const struct permonst *squadmon(const d_level *dlev)	/* return soldier types. */
 {
 	int sel_prob, i, cpro, mndx;
 
-	sel_prob = rnd(80+level_difficulty());
+	sel_prob = rnd(80+level_difficulty(dlev));
 
 	cpro = 0;
 	for (i = 0; i < NSTYPES; i++) {

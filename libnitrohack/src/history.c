@@ -24,7 +24,7 @@ int dohistory(void)
     for (i = 0; i < histcount; i++) {
 	if (histevents[i].hidden && !showall)
 	    continue;
-	snprintf(buf, BUFSZ, "On T:%d you %s", histevents[i].when, histevents[i].what);
+	snprintf(buf, BUFSZ, "On T:%u you %s", histevents[i].when, histevents[i].what);
 	add_menutext(&menu, buf);
     }
     

@@ -367,7 +367,8 @@ char **list_gamefiles(char *dir, int *count)
     }
     closedir(dirp);
     
-    qsort(files, *count, sizeof(char*), compare_filetime);
+    if (files)
+	qsort(files, *count, sizeof(char*), compare_filetime);
     
     return files;
 }

@@ -131,23 +131,25 @@
 #define S_dnstair	25
 #define S_upladder	26
 #define S_dnladder	27
-#define S_altar		28
-#define S_grave		29
-#define S_throne	30
-#define S_sink		31
-#define S_fountain	32
-#define S_pool		33
-#define S_ice		34
-#define S_lava		35
-#define S_vodbridge	36
-#define S_hodbridge	37
-#define S_vcdbridge	38	/* closed drawbridge, vertical wall */
-#define S_hcdbridge	39	/* closed drawbridge, horizontal wall */
-#define S_air		40
-#define S_cloud		41
-#define S_water		42
+#define S_upsstair      28
+#define S_dnsstair      29
+#define S_altar		30
+#define S_grave		31
+#define S_throne	32
+#define S_sink		33
+#define S_fountain	34
+#define S_pool		35
+#define S_ice		36
+#define S_lava		37
+#define S_vodbridge	38
+#define S_hodbridge	39
+#define S_vcdbridge	40	/* closed drawbridge, vertical wall */
+#define S_hcdbridge	41	/* closed drawbridge, horizontal wall */
+#define S_air		42
+#define S_cloud		43
+#define S_water		44
 
-#define MAXPCHARS	43	/* maximum number of mapped characters */
+#define MAXPCHARS	45	/* maximum number of mapped characters */
 
 /* end dungeon characters, begin special effects */
 
@@ -184,12 +186,6 @@
 
 /* end effects */
 
-
-struct symdef {
-    uchar sym;
-    const char	*explanation;
-    uchar color;
-};
 
 extern const struct nh_symdef defsyms[];	/* defaults */
 

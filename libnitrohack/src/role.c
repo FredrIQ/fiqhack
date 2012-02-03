@@ -912,15 +912,9 @@ const char *nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenu
 
 	if (alignnum != ROLE_NONE && alignnum != ROLE_RANDOM) {
 		/* if race specified, and multiple choice of alignments for it */
-		if ((racenum >= 0) && (aligncount > 1)) {
-			if (donefirst) strcat(buf, " ");
-			strcat(buf, aligns[alignnum].adj);
-			donefirst = TRUE;
-		} else {
-			if (donefirst) strcat(buf, " ");
-			strcat(buf, aligns[alignnum].adj);
-			donefirst = TRUE;
-		}
+		if (donefirst) strcat(buf, " ");
+		strcat(buf, aligns[alignnum].adj);
+		donefirst = TRUE;
 	} else {
 		/* if alignment not specified, but race is specified
 			and only one choice of alignment for that race then

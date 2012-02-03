@@ -168,13 +168,15 @@ static char** init_game_paths(const char *argv0)
     return pathlist;
 }
 
-
+#define str_macro(val) #val
 static void mainmenu(void)
 {
     int menuresult[1];
     int n = 1, logoheight, i;
     const char * const *copybanner = nh_get_copyright_banner();
     const char **nhlogo;
+    char verstr[32];
+    sprintf(verstr, "Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
     
     while (n > 0) {
 	if (COLS >= 100)
@@ -192,15 +194,13 @@ static void mainmenu(void)
 	mvwaddstr(basewin, LINES-3, 0, copybanner[0]);
 	mvwaddstr(basewin, LINES-2, 0, copybanner[1]);
 	mvwaddstr(basewin, LINES-1, 0, copybanner[2]);
+	mvwaddstr(basewin, LINES-1, COLS - strlen(verstr), verstr);
 	wrefresh(basewin);
 
 	menuresult[0] = EXITGAME; /* default action */
 	n = curses_display_menu_core(mainmenu_items, ARRAY_SIZE(mainmenu_items),
 				     NULL, PICK_ONE, menuresult, 0, logoheight,
 				     COLS, ROWNO+3, NULL);
-	
-	wclear(basewin);
-	wrefresh(basewin);
 	
 	switch (menuresult[0]) {
 	    case NEWGAME:

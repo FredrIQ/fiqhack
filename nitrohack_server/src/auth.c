@@ -5,7 +5,6 @@
  */
 
 #include "nhserver.h"
-#include <sys/stat.h>
 #include <wctype.h>
 
 

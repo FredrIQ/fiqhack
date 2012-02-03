@@ -179,6 +179,9 @@ void curses_update_status(struct nh_player_info *pi)
     else
 	classic_status(&player);
     
+    /* prevent the cursor from flickering in the status line */
+    wmove(mapwin, player.y, player.x - 1);
+    
     wnoutrefresh(statuswin);
 }
 

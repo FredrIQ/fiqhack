@@ -1035,7 +1035,7 @@ int seffects(struct obj *sobj, boolean *known)
 		    for (x = 1; x < COLNO; x++)
 			for (y = 0; y < ROWNO; y++)
 			    if (level->locations[x][y].typ == SDOOR)
-				cvt_sdoor_to_door(&level->locations[x][y]);
+				cvt_sdoor_to_door(&level->locations[x][y], &u.uz);
 		    /* do_mapping() already reveals secret passages */
 		}
 		*known = TRUE;
@@ -1546,7 +1546,7 @@ void do_genocide(int how)
 		if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing")) {
 		    /* ... but no free pass if cursed */
 		    if (!(how & REALLY)) {
-			ptr = rndmonst();
+			ptr = rndmonst(&u.uz);
 			if (!ptr) return; /* no message, like normal case */
 			mndx = monsndx(ptr);
 			break;		/* remaining checks don't apply */
@@ -1778,7 +1778,7 @@ boolean create_particular(void)
 	    whichpm = &mons[which];
 	    for (i = 0; i <= multi; i++) {
 		if (monclass != MAXMCLASSES)
-		    whichpm = mkclass(monclass, 0);
+		    whichpm = mkclass(&u.uz, monclass, 0);
 		if (maketame) {
 		    mtmp = makemon(whichpm, level, u.ux, u.uy, MM_EDOG);
 		    if (mtmp) {

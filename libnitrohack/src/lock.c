@@ -478,7 +478,7 @@ int doopen(int dx, int dy, int dz)
 	schar unused;
 
 	if (nohands(youmonst.data)) {
-	    pline("You can't open anything -- you have no hands!");
+	    pline("You can't open, close, or unlock anything -- you have no hands!");
 	    return 0;
 	}
 
@@ -496,6 +496,12 @@ int doopen(int dx, int dy, int dz)
 
 	if (!got_dir && !get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &unused))
 	    return 0;
+
+        if (!got_dir) {
+            dx = cc.x-u.ux;
+            dy = cc.y-u.uy;
+            dz = 0;
+        }
 
 	if ((cc.x == u.ux) && (cc.y == u.uy))
 	    return 0;
@@ -521,6 +527,9 @@ int doopen(int dx, int dy, int dz)
 				Blind ? "feel" : "see");
 		return 0;
 	}
+
+        if (door->doormask == D_ISOPEN)
+            return doclose(dx, dy, dz);
 
 	if (!(door->doormask & D_CLOSED)) {
 	    const char *mesg;
@@ -583,12 +592,13 @@ objhere:	pline("Something's in the way.");
 }
 
 /* try to close a door */
-int doclose(void)
+int doclose(int dx, int dy, int dz)
 {
-	int x, y;
+        boolean got_dir = FALSE;
 	struct rm *door;
 	struct monst *mtmp;
-	schar dx, dy, dz;
+        coord cc;
+        schar unused;
 
 	if (nohands(youmonst.data)) {
 	    pline("You can't close anything -- you have no hands!");
@@ -600,17 +610,28 @@ int doclose(void)
 	    return 0;
 	}
 
-	if (!getdir(NULL, &dx, &dy, &dz))
+	if (dx != -2 && dy != -2 && dz != -2) { /* -2 signals no direction given  */
+	    cc.x = u.ux + dx;
+	    cc.y = u.uy + dy;
+	    if (isok(cc.x, cc.y))
+		got_dir = TRUE;
+	}
+
+	if (!got_dir && !get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &unused))
 	    return 0;
 
-	x = u.ux + dx;
-	y = u.uy + dy;
-	if ((x == u.ux) && (y == u.uy)) {
+        if (!got_dir) {
+          dx = cc.x-u.ux;
+          dy = cc.y-u.uy;
+          dz = 0;
+        }
+
+	if ((cc.x == u.ux) && (cc.y == u.uy)) {
 		pline("You are in the way!");
 		return 1;
 	}
 
-	if ((mtmp = m_at(level, x,y))				&&
+	if ((mtmp = m_at(level, cc.x, cc.y))		&&
 		mtmp->m_ap_type == M_AP_FURNITURE	&&
 		(mtmp->mappearance == S_hcdoor ||
 			mtmp->mappearance == S_vcdoor)	&&
@@ -620,7 +641,7 @@ int doclose(void)
 	    return 1;
 	}
 
-	door = &level->locations[x][y];
+	door = &level->locations[cc.x][cc.y];
 
 	if (!IS_DOOR(door->typ)) {
 		if (door->typ == DRAWBRIDGE_DOWN)
@@ -636,7 +657,7 @@ int doclose(void)
 	    return 0;
 	}
 
-	if (obstructed(x, y)) return 0;
+	if (obstructed(cc.x, cc.y)) return 0;
 
 	if (door->doormask == D_BROKEN) {
 	    pline("This door is broken.");
@@ -658,10 +679,10 @@ int doclose(void)
 		pline("The door closes.");
 		door->doormask = D_CLOSED;
 		if (Blind)
-		    feel_location(x,y);	/* the hero knows she closed it */
+		    feel_location(cc.x,cc.y);	/* the hero knows she closed it */
 		else
-		    newsym(x,y);
-		block_point(x,y);	/* vision:  no longer see there */
+		    newsym(cc.x,cc.y);
+		block_point(cc.x,cc.y);	/* vision:  no longer see there */
 	    }
 	    else {
 	        exercise(A_STR, TRUE);

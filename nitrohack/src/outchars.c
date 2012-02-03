@@ -24,6 +24,8 @@ static struct curses_symdef rogue_graphics_ovr[] = {
     {"ndoor",	-1,	{0x002B, 0},	'+'},
     {"upstair",	-1,	{0x0025, 0},	'%'},
     {"dnstair",	-1,	{0x0025, 0},	'%'},
+    {"upsstair",-1,	{0x0025, 0},	'%'},
+    {"dnsstair",-1,	{0x0025, 0},	'%'},
     
     {"gold piece",-1,	{0x002A, 0},	'*'},
     
@@ -49,13 +51,15 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"vodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
     {"hodoor",	-1,	{0x2588, 0},	0},	/* █ solid block */
     {"bars",	-1,	{0x2261, 0},	0},	/* ≡ equivalence symbol */
-    {"fountain",-1,	{0x00b6, 0},	0},	/* ¶ PILCROW SIGN */
+    {"fountain",-1,	{0x2320, 0},	0},	/* ⌠ top half of integral */
     {"room",	-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"darkroom",-1,	{0x00B7, 0},	0},	/* · centered dot */
     {"corr",	-1,	{0x2591, 0},	0},	/* ░ light shading */
     {"litcorr",	-1,	{0x2592, 0},	0},	/* ▒ medium shading */
     {"upladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
     {"dnladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
+    {"upsstair",-1,     {0x227E, 0},    0},     /* ≾ precedes-or-equivalent-to */
+    {"dnsstair",-1,     {0x227F, 0},    0},     /* ≿ succeeds-or-equivalent-to */
     {"altar",	-1,	{0x03A9, 0},	0},	/* Ω GREEK CAPITAL LETTER OMEGA */
     {"grave",	-1,	{0x2020, 0},	0},	/* † DAGGER */
     {"ice",	-1,	{0x00B7, 0},	0},	/* · centered dot */
@@ -86,12 +90,9 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"lava",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"water",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"tree",	-1,	{0x03a8, 0},	0},	/* Ψ GREEK CAPITAL LETTER PSI */
-    
-    /* objects */
-    {"boulder", -1,	{0x25C6, 0},	0},	/* ◆ diamond */
-#else
-    {"boulder", -1,	{0x0030, 0},	0},	/* 0 zero */
 #endif
+    /* objects */
+    {"boulder", -1,	{0x0030, 0},	0},	/* 0 zero */
 };
 
 

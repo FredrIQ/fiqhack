@@ -499,8 +499,6 @@ static void knows_class(char sym)
 void u_init(void)
 {
 	int i;
-	struct trobj *trobj_list = NULL;
-	short nclist[4] = {STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT};
 
 	flags.female = u.initgend;
 	flags.beginner = 1;
@@ -548,8 +546,15 @@ void u_init(void)
 	u.nv_range   =  1;
 	u.xray_range = -1;
 	u.next_attr_check = 600; /* arbitrary initial setting */
+}
 
 
+void u_init_inv_skills(void)
+{
+	int i;
+	struct trobj *trobj_list = NULL;
+	short nclist[4] = {STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT};
+	
 	/*** Role-specific initializations ***/
 	switch (Role_switch) {
 	/* rn2(100) > 50 necessary for some choices because some
@@ -940,9 +945,10 @@ static void ini_inv(const struct trobj *trop, short nocreate[4])
 
 		/* Make the type known if necessary */
 		if (OBJ_DESCR(objects[otyp]) && obj->known)
-			discover_object(otyp, TRUE, FALSE);
-		if (otyp == OIL_LAMP)
-			discover_object(POT_OIL, TRUE, FALSE);
+			knows_object(otyp);
+
+		/* pre-ID oil as it's easy to check anyway */
+		knows_object(POT_OIL);
 
 		if (obj->oclass == ARMOR_CLASS){
 			if (is_shield(obj) && !uarms) {

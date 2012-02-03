@@ -63,7 +63,7 @@ static void dump_status(void)
 {
     int hp;
     fprintf(dumpfp, "%s the %s\n", plname, rank_of(u.ulevel, Role_switch, flags.female));
-    fprintf(dumpfp, "  Experience level: %u\n", u.ulevel);
+    fprintf(dumpfp, "  Experience level: %d\n", u.ulevel);
     
     if (ACURR(A_STR) > 18) {
 	if (ACURR(A_STR) < 118)
@@ -85,7 +85,7 @@ static void dump_status(void)
     fprintf(dumpfp, "  Energy: %d(%d)\n", u.uen, u.uenmax);
     fprintf(dumpfp, "  AC: %d\n", u.uac);
     fprintf(dumpfp, "  Gold: %ld\n", money_cnt(invent));
-    fprintf(dumpfp, "  Moves: %d\n", moves);
+    fprintf(dumpfp, "  Moves: %u\n", moves);
     
     fprintf(dumpfp, "\n\n");
 }

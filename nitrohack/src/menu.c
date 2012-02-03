@@ -259,6 +259,8 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     
+    prevcurs = curs_set(0);
+    
     gw = alloc_gamewin(sizeof(struct win_menu));
     gw->draw = draw_menu;
     gw->resize = resize_menu;
@@ -282,8 +284,6 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     starty = (y2 - y1 - mdat->height) / 2 + y1;
     startx = (x2 - x1 - mdat->width) / 2 + x1;
     
-    prevcurs = curs_set(0);
-    
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
     wattron(gw->win, FRAME_ATTRS);
@@ -291,7 +291,8 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
     wattroff(gw->win, FRAME_ATTRS);
     mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
 			   mdat->frameheight-1, 2);
-    
+    leaveok(gw->win, TRUE);
+    leaveok(mdat->content, TRUE);
     done = FALSE;
     cancelled = FALSE;
     while (!done && !cancelled) {
@@ -412,11 +413,10 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 	}
     }
     
-    curs_set(prevcurs);
-    
     free(mdat->selected);
-    delete_gamewin(gw);
+    delete_gamewin(gw);    
     redraw_game_windows();
+    curs_set(prevcurs);
 	
     return rv;
 }
@@ -673,6 +673,8 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
     
+    prevcurs = curs_set(0);
+    
     gw = alloc_gamewin(sizeof(struct win_objmenu));
     gw->draw = draw_objmenu;
     gw->resize = resize_objmenu;
@@ -691,8 +693,6 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
     
-    prevcurs = curs_set(0);
-    
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
     wattron(gw->win, FRAME_ATTRS);
@@ -700,6 +700,8 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     wattroff(gw->win, FRAME_ATTRS);
     mdat->content = derwin(gw->win, mdat->innerheight, mdat->innerwidth,
 			   mdat->frameheight-1, 2);
+    leaveok(gw->win, TRUE);
+    leaveok(mdat->content, TRUE);
     
     done = FALSE;
     cancelled = FALSE;
@@ -902,11 +904,10 @@ int curses_display_objects(struct nh_objitem *items, int icount,
 	}
     }
     
-    curs_set(prevcurs);
-    
     free(mdat->selected);
     delete_gamewin(gw);
     redraw_game_windows();
+    curs_set(prevcurs);
 	
     return rv;
 }

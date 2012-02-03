@@ -515,6 +515,9 @@ boolean hurtle_step(void *arg, int x, int y)
     	if (ttmp->ttyp == MAGIC_PORTAL) {
     		dotrap(ttmp,0);
     		return FALSE;
+        } else if (ttmp->ttyp == VIBRATING_SQUARE) {
+                pline("The ground vibrates as you pass it.");
+                dotrap(ttmp,0); /* doesn't print messages */
 	} else if (ttmp->ttyp == FIRE_TRAP) {
     		dotrap(ttmp,0);
 	} else if ((ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
@@ -715,7 +718,7 @@ static boolean toss_up(struct obj *obj, boolean hitsroof)
 
 	breakmsg(obj, !Blind);
 	breakobj(obj, u.ux, u.uy, TRUE, TRUE);
-	obj = 0;	/* it's now gone */
+	obj = NULL;	/* it's now gone */
 	switch (otyp) {
 	case EGG:
 		if (touch_petrifies(&mons[ocorpsenm]) &&

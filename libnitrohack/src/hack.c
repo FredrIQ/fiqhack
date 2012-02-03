@@ -474,9 +474,9 @@ boolean bad_rock(const struct permonst *mdat, xchar x, xchar y)
 		    && !(passes_walls(mdat) && may_passwall(level, x,y))));
 }
 
-boolean invocation_pos(xchar x, xchar y)
+boolean invocation_pos(const d_level *dlev, xchar x, xchar y)
 {
-	return (boolean)(Invocation_lev(&u.uz) && x == inv_pos.x && y == inv_pos.y);
+	return (boolean)(Invocation_lev(dlev) && x == inv_pos.x && y == inv_pos.y);
 }
 
 
@@ -1359,7 +1359,7 @@ int domove(schar dx, schar dy, schar dz)
 void invocation_message(void)
 {
 	/* a special clue-msg when on the Invocation position */
-	if (invocation_pos(u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
+	if (invocation_pos(&u.uz, u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
 	    char buf[BUFSZ];
 	    struct obj *otmp = carrying(CANDELABRUM_OF_INVOCATION);
 

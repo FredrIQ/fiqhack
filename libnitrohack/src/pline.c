@@ -189,7 +189,7 @@ void mstatusline(struct monst *mtmp)
 	    if (wizard) {
 		sprintf(eos(info), " (%d", mtmp->mtame);
 		if (!mtmp->isminion)
-		    sprintf(eos(info), "; hungry %d; apport %d",
+		    sprintf(eos(info), "; hungry %u; apport %d",
 			EDOG(mtmp)->hungrytime, EDOG(mtmp)->apport);
 		strcat(info, ")");
 	    }

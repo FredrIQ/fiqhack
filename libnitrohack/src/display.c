@@ -541,8 +541,7 @@ void feel_location(xchar x, xchar y)
 		    loc->mem_bg = loc->waslit ? S_room : S_darkroom;
 		    dbuf_set_loc(x, y);
 		}
-	    } else if ((loc->mem_bg >= S_unexplored && loc->mem_bg < S_room) ||
-		       level->locations[x][y].mem_invis) {
+	    } else if (loc->mem_bg < S_room || loc->mem_invis) {
 		loc->mem_bg = loc->waslit ? S_room : S_darkroom;
 		dbuf_set_loc(x, y);
 	    }
@@ -1425,7 +1424,10 @@ int back_to_cmap(struct level *lev, xchar x, xchar y)
 	case POOL:
 	case MOAT:		idx = S_pool;	  break;
 	case STAIRS:
-	    idx = (ptr->ladder & LA_DOWN) ? S_dnstair : S_upstair;
+            if (lev->sstairs.sx == x && lev->sstairs.sy == y)
+                idx = (ptr->ladder & LA_DOWN) ? S_dnsstair : S_upsstair;
+            else
+                idx = (ptr->ladder & LA_DOWN) ? S_dnstair : S_upstair;
 	    break;
 	case LADDER:
 	    idx = (ptr->ladder & LA_DOWN) ? S_dnladder : S_upladder;

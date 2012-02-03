@@ -11,7 +11,7 @@ static const char *artifact_names[] = {
 /* in artifact.c, set up the actual artifact list structure */
 
 #define A(nam,typ,s1,s2,mt,atk,dfn,cry,inv,al,cl,rac,cost) \
- { typ, nam, s1, s2, mt, atk, dfn, cry, inv, al, cl, rac, cost }
+ { nam, cost, s1, s2, mt, atk, dfn, cry, al, inv, cl, rac, typ }
 
 #define     NO_ATTK	{0,0,0,0}		/* no attack */
 #define     NO_DFNS	{0,0,0,0}		/* no defense */

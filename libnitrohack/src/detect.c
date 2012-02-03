@@ -170,16 +170,14 @@ int gold_detect(struct obj *sobj, boolean *scr_known)
     if (!*scr_known) {
 	/* no gold found on floor or monster's inventory.
 	   adjust message if you have gold in your inventory */
-	if (sobj) {
-	    char buf[BUFSZ];
-	    if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
-		    sprintf(buf, "You feel like a million %s!", currency(2L));
-	    } else if (hidden_gold() || money_cnt(invent))
-		    strcpy(buf, "You feel worried about your future financial situation.");
-	    else
-		    strcpy(buf, "You feel materially poor.");
-	    strange_feeling(sobj, buf);
-        }
+	char buf[BUFSZ];
+	if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
+		sprintf(buf, "You feel like a million %s!", currency(2L));
+	} else if (hidden_gold() || money_cnt(invent))
+		strcpy(buf, "You feel worried about your future financial situation.");
+	else
+		strcpy(buf, "You feel materially poor.");
+	strange_feeling(sobj, buf);
 	return 1;
     }
     /* only under me - no separate display required */
@@ -886,11 +884,11 @@ void do_vicinity_map(void)
 }
 
 /* convert a secret door into a normal door */
-void cvt_sdoor_to_door(struct rm *loc)
+void cvt_sdoor_to_door(struct rm *loc, const d_level *dlev)
 {
 	int newmask = loc->doormask & ~WM_MASK;
 
-	if (Is_rogue_level(&u.uz))
+	if (Is_rogue_level(dlev))
 	    /* rogue didn't have doors, only doorways */
 	    newmask = D_NODOOR;
 	else
@@ -908,7 +906,7 @@ static void findone(int zx, int zy, void *num)
 	struct monst *mtmp;
 
 	if (level->locations[zx][zy].typ == SDOOR) {
-		cvt_sdoor_to_door(&level->locations[zx][zy]);	/* .typ = DOOR */
+		cvt_sdoor_to_door(&level->locations[zx][zy], &u.uz); /* .typ = DOOR */
 		magic_map_background(zx, zy, 0);
 		newsym(zx, zy);
 		(*(int*)num)++;
@@ -963,7 +961,7 @@ static void openone(int zx, int zy, void *num)
 	if (level->locations[zx][zy].typ == SDOOR || (level->locations[zx][zy].typ == DOOR &&
 		      (level->locations[zx][zy].doormask & (D_CLOSED|D_LOCKED)))) {
 		if (level->locations[zx][zy].typ == SDOOR)
-		    cvt_sdoor_to_door(&level->locations[zx][zy]);	/* .typ = DOOR */
+		    cvt_sdoor_to_door(&level->locations[zx][zy], &u.uz); /* .typ = DOOR */
 		if (level->locations[zx][zy].doormask & D_TRAPPED) {
 		    if (distu(zx, zy) < 3) b_trapped("door", 0);
 		    else Norep("You %s an explosion!",
@@ -1075,7 +1073,7 @@ int dosearch0(int aflag)
 		    if (Blind && !aflag) feel_location(x,y);
 		    if (level->locations[x][y].typ == SDOOR) {
 			if (rnl(7-fund)) continue;
-			cvt_sdoor_to_door(&level->locations[x][y]);	/* .typ = DOOR */
+			cvt_sdoor_to_door(&level->locations[x][y], &u.uz); /* .typ = DOOR */
 			exercise(A_WIS, TRUE);
 			nomul(0, NULL);
 			if (Blind && !aflag)

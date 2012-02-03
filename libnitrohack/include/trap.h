@@ -13,9 +13,6 @@ union vlaunchinfo {
 
 struct trap {
 	struct trap *ntrap;
-	xchar tx,ty;
-	d_level dst;	/* destination for portals */
-	coord launch;
 	unsigned ttyp:5;
 	unsigned tseen:1;
 	unsigned once:1;
@@ -26,6 +23,9 @@ struct trap {
 				 when you untrap a monster.  It would be too
 				 easy to make a monster peaceful if you could
 				 set a trap for it and then untrap it. */
+	xchar tx,ty;
+	d_level dst;	/* destination for portals */
+	coord launch;
 	union vlaunchinfo vl;
 #define launch_otyp	vl.v_launch_otyp
 #define launch2		vl.v_launch2
@@ -62,14 +62,15 @@ struct trap {
 #define SPIKED_PIT	12
 #define HOLE		13
 #define TRAPDOOR	14
-#define TELEP_TRAP	15
-#define LEVEL_TELEP	16
-#define MAGIC_PORTAL	17
-#define WEB		18
-#define STATUE_TRAP	19
-#define MAGIC_TRAP	20
-#define ANTI_MAGIC	21
-#define POLY_TRAP	22
-#define TRAPNUM 23
+#define VIBRATING_SQUARE        15
+#define TELEP_TRAP	16
+#define LEVEL_TELEP	17
+#define MAGIC_PORTAL	18
+#define WEB		19
+#define STATUE_TRAP	20
+#define MAGIC_TRAP	21
+#define ANTI_MAGIC	22
+#define POLY_TRAP	23
+#define TRAPNUM 24
 
 #endif /* TRAP_H */

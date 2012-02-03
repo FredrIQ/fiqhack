@@ -590,7 +590,7 @@ static int menu_drop(int retry)
 	all_categories = FALSE;
 	n = query_category("Drop what type of items?",
 			invent,
-			UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL |
+			UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL | UNIDENTIFIED |
 			BUC_BLESSED | BUC_CURSED | BUC_UNCURSED | BUC_UNKNOWN,
 			pick_list, PICK_ANY);
 	if (!n) goto drop_done;
@@ -1149,7 +1149,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		pline("The heat and smoke are gone.");
 
 	/* the message from your quest leader */
-	if (!In_quest(&u.uz0) && at_dgn_entrance("The Quest") &&
+	if (!In_quest(&u.uz0) && at_dgn_entrance(&u.uz, "The Quest") &&
 		!(u.uevent.qexpelled || u.uevent.qcompleted || quest_status.leader_is_dead)) {
 
 		if (u.uevent.qcalled) {

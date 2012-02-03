@@ -76,9 +76,11 @@ const char * const defexplain[] = {
 	"staircase down",	/* dnstair */
 	"ladder up",		/* upladder */
 	"ladder down",		/* dnladder */
-	"altar",		/* altar */
+        "long ladder up",       /* upsstair */
+        "long ladder down",     /* dnsstair */
+/*30*/	"altar",		/* altar */
 	"grave",		/* grave */
-/*30*/	"opulent throne",	/* throne */
+	"opulent throne",	/* throne */
 	"sink",			/* sink */
 	"fountain",		/* fountain */
 	"water",		/* pool */
@@ -86,9 +88,9 @@ const char * const defexplain[] = {
 	"molten lava",		/* lava */
 	"lowered drawbridge",	/* vodbridge */
 	"lowered drawbridge",	/* hodbridge */
-	"raised drawbridge",	/* vcdbridge */
+/*40*/	"raised drawbridge",	/* vcdbridge */
 	"raised drawbridge",	/* hcdbridge */
-/*40*/	"air",			/* open air */
+	"air",			/* open air */
 	"cloud",		/* [part of] a cloud */
 	"water"			/* under water */
 };
@@ -109,12 +111,13 @@ const char * const trapexplain[] = {
 	"spiked pit",
 	"hole",
 	"trap door",
+        "vibrating square",
 	"teleportation trap",
 	"level teleporter",
 	"magic portal",
 	"web",
-	"statue trap",
-/*60*/	"magic trap",
+/*60*/	"statue trap",
+	"magic trap",
 	"anti-magic field",
 	"polymorph trap"
 };
@@ -151,9 +154,11 @@ const struct nh_symdef defsyms[] = {
 	{'>', "dnstair",	CLR_GRAY},
 	{'<', "upladder",	CLR_BROWN},
 	{'>', "dnladder",	CLR_BROWN},
-	{'_', "altar",		CLR_GRAY},
+	{'<', "upsstair",	CLR_YELLOW},
+	{'>', "dnsstair",	CLR_YELLOW},
+/*30*/	{'_', "altar",		CLR_GRAY},
 	{'|', "grave",		CLR_GRAY},
-/*30*/	{'\\',"throne",		HI_GOLD},
+	{'\\',"throne",		HI_GOLD},
 	{'#', "sink",		CLR_GRAY},
 	{'{', "fountain",	CLR_BLUE},
 	{'}', "pool",		CLR_BLUE},
@@ -161,9 +166,9 @@ const struct nh_symdef defsyms[] = {
 	{'}', "lava",		CLR_RED},
 	{'.', "vodbridge",	CLR_BROWN},
 	{'.', "hodbridge",	CLR_BROWN},
-	{'#', "vcdbridge",	CLR_BROWN},
+/*40*/	{'#', "vcdbridge",	CLR_BROWN},
 	{'#', "hcdbridge",	CLR_BROWN},
-/*40*/	{' ', "air",		CLR_CYAN},
+	{' ', "air",		CLR_CYAN},
 	{'#', "cloud",		CLR_GRAY},
 	{'}', "water",		CLR_BLUE}
 };
@@ -183,13 +188,14 @@ static const struct nh_symdef trapsyms[] = {
 	{'^', "spiked pit",		CLR_BLACK},
 	{'^', "hole",			CLR_BROWN},
 	{'^', "trap door",		CLR_BROWN},
+        {'^', "vibrating square",       CLR_YELLOW},
 	{'^', "teleportation trap",	CLR_MAGENTA},
 	{'^', "level teleporter",	CLR_MAGENTA},
 	{'^', "magic portal",		CLR_BRIGHT_MAGENTA},
-	{'"', "web",			CLR_GRAY},
+	{'^', "web",			CLR_GRAY},
 	{'^', "statue trap",		CLR_GRAY},
-	{'^', "magic trap",		HI_ZAP},
-/*20*/	{'^', "anti-magic field",	HI_ZAP},
+/*20*/	{'^', "magic trap",		HI_ZAP},
+	{'^', "anti-magic field",	HI_ZAP},
 	{'^', "polymorph trap",		CLR_BRIGHT_GREEN}
 };
 

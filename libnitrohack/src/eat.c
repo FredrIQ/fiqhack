@@ -2352,7 +2352,6 @@ void restore_food(struct memfile *mf)
     victual.eating   = (vflags >> 29) & 1;
     victual.doreset  = (vflags >> 28) & 1;
     
-    oid = tin.tin ? tin.tin->o_id : 0;
     oid = mread32(mf);
     tin.tin = oid ? find_oid(oid) : NULL;
     tin.usedtime = mread32(mf);

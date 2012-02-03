@@ -422,7 +422,7 @@ int polymon(int mntmp)
 	} else {
 		if (!mlvl) u.mhmax = rnd(4);
 		else u.mhmax = dice(mlvl, 8);
-		if (is_home_elemental(&mons[mntmp])) u.mhmax *= 3;
+		if (is_home_elemental(&u.uz, &mons[mntmp])) u.mhmax *= 3;
 	}
 	u.mh = u.mhmax;
 
@@ -821,6 +821,7 @@ int dospinweb(void)
 		case TELEP_TRAP:
 		case LEVEL_TELEP:
 		case MAGIC_PORTAL:
+                case VIBRATING_SQUARE:
 			pline("Your webbing vanishes!");
 			return 0;
 		case WEB: pline("You make the web thicker.");

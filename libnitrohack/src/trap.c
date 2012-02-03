@@ -212,6 +212,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 
 	if ((ttmp = t_at(lev, x,y)) != 0) {
 	    if (ttmp->ttyp == MAGIC_PORTAL) return NULL;
+            if (ttmp->ttyp == VIBRATING_SQUARE) return NULL;
 	    oldplace = TRUE;
 	    if (u.utrap && (x == u.ux) && (y == u.uy) &&
 	      ((u.utraptype == TT_BEARTRAP && typ != BEAR_TRAP) ||
@@ -234,7 +235,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 		struct obj *otmp, *statue;
 
 		statue = mkcorpstat(STATUE, NULL,
-					&mons[rndmonnum()], lev, x, y, FALSE);
+					&mons[rndmonnum(&lev->z)], lev, x, y, FALSE);
 		mtmp = makemon(&mons[statue->corpsenm], lev, 0, 0, NO_MM_FLAGS);
 		if (!mtmp) break; /* should never happen */
 		while (mtmp->minvent) {
@@ -576,6 +577,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 		return;
 	    }
 	    if (!Fumbling && ttype != MAGIC_PORTAL &&
+                ttype != VIBRATING_SQUARE &&
 		ttype != ANTI_MAGIC && !forcebungle &&
 		(!rn2(5) ||
 	    ((ttype == PIT || ttype == SPIKED_PIT) && is_clinger(youmonst.data)))) {
@@ -1099,6 +1101,12 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 		seetrap(trap);
 		domagicportal(trap);
 		break;
+
+            case VIBRATING_SQUARE:
+                seetrap(trap);
+                /* messages handled elsewhere; the trap symbol is merely
+                   to mark the square for future reference */
+                break;
 
 	    default:
 		seetrap(trap);
@@ -1962,6 +1970,18 @@ mfiretrap:
 			}
 			break;
 
+                case VIBRATING_SQUARE:
+                        if (see_it && !Blind) {
+                            if (in_sight)
+                                pline("You see a strange vibration beneath %s %s.",
+                                      s_suffix(mon_nam(mtmp)),
+                                      makeplural(mbodypart(mtmp, FOOT)));
+                            else
+                                pline("You see the ground vibrate in the distance.");
+                            seetrap(trap);
+                        }
+                        break;
+
 		case STATUE_TRAP:
 			break;
 
@@ -2402,7 +2422,7 @@ static void domagictrap(void)
 			else
 			    pline("You suddenly yearn for %s.",
 				Hallucination ? "Cleveland" :
-			    (In_quest(&u.uz) || at_dgn_entrance("The Quest")) ?
+			    (In_quest(&u.uz) || at_dgn_entrance(&u.uz, "The Quest")) ?
 						"your nearby homeland" :
 						"your distant homeland");
 			break;
@@ -2844,7 +2864,7 @@ static int untrap_prob(struct trap *ttmp)
 	if (Stunned) chance += 2;
 	if (Fumbling) chance *= 2;
 	/* Your own traps are better known than others. */
-	if (ttmp && ttmp->madeby_u) chance--;
+	if (ttmp->madeby_u) chance--;
 	if (Role_if (PM_ROGUE)) {
 	    if (rn2(2 * MAXULEV) < u.ulevel) chance--;
 	    if (u.uhave.questart && chance > 1) chance--;
@@ -3309,7 +3329,7 @@ int untrap(boolean force)
 			    ch = ACURR(A_DEX) + u.ulevel;
 			    if (Role_if (PM_ROGUE)) ch *= 2;
 			    if (!force && (confused || Fumbling ||
-				rnd(75+level_difficulty()/2) > ch)) {
+				rnd(75 + level_difficulty(&u.uz) / 2) > ch)) {
 				chest_trap(otmp, FINGER, TRUE);
 			    } else {
 				pline("You disarm it!");
@@ -3369,7 +3389,7 @@ int untrap(boolean force)
 		    ch = 15 + (Role_if (PM_ROGUE) ? u.ulevel*3 : u.ulevel);
 		    exercise(A_DEX, TRUE);
 		    if (!force && (confused || Fumbling ||
-				     rnd(75+level_difficulty()/2) > ch)) {
+				     rnd(75 + level_difficulty(&u.uz) / 2) > ch)) {
 			pline("You set it off!");
 			b_trapped("door", FINGER);
 			level->locations[x][y].doormask = D_NODOOR;
@@ -3624,7 +3644,7 @@ boolean delfloortrap(struct trap *ttmp)
 /* used for doors (also tins).  can be used for anything else that opens. */
 void b_trapped(const char *item, int bodypart)
 {
-	int lvl = level_difficulty();
+	int lvl = level_difficulty(&u.uz);
 	int dmg = rnd(5 + (lvl < 5 ? lvl : 2+lvl/2));
 
 	pline("KABOOM!!  %s was booby-trapped!", The(item));

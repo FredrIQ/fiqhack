@@ -31,7 +31,6 @@ static int use_whip(struct obj *);
 static int use_pole(struct obj *);
 static int use_cream_pie(struct obj *);
 static int use_grapple(struct obj *);
-static int do_break_wand(struct obj *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
 static boolean uhave_graystone(void);
 static void add_class(char *, char);
@@ -269,7 +268,7 @@ static int use_stethoscope(struct obj *obj)
 	switch(loc->typ) {
 	case SDOOR:
 		You_hear(hollow_str, "door");
-		cvt_sdoor_to_door(loc);		/* ->typ = DOOR */
+		cvt_sdoor_to_door(loc, &u.uz);		/* ->typ = DOOR */
 		if (Blind) feel_location(rx,ry);
 		else newsym(rx,ry);
 		return res;
@@ -695,7 +694,7 @@ static void use_bell(struct obj **optr)
 	boolean wakem = FALSE, learno = FALSE,
 		ordinary = (obj->otyp != BELL_OF_OPENING || !obj->spe),
 		invoking = (obj->otyp == BELL_OF_OPENING &&
-			 invocation_pos(u.ux, u.uy) && !On_stairs(u.ux, u.uy));
+			 invocation_pos(&u.uz, u.ux, u.uy) && !On_stairs(u.ux, u.uy));
 
 	pline("You ring %s.", the(xname(obj)));
 
@@ -713,7 +712,7 @@ static void use_bell(struct obj **optr)
 		    !(mvitals[PM_WOOD_NYMPH].mvflags & G_GONE) &&
 		    !(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
 		    !(mvitals[PM_MOUNTAIN_NYMPH].mvflags & G_GONE) &&
-		    (mtmp = makemon(mkclass(S_NYMPH, 0), level,
+		    (mtmp = makemon(mkclass(&u.uz, S_NYMPH, 0), level,
 					u.ux, u.uy, NO_MINVENT)) != 0) {
 		pline("You summon %s!", a_monnam(mtmp));
 		if (!obj_resists(obj, 93, 100)) {
@@ -749,7 +748,7 @@ static void use_bell(struct obj **optr)
 
 		mm.x = u.ux;
 		mm.y = u.uy;
-		mkundead(&mm, FALSE, NO_MINVENT);
+		mkundead(level, &mm, FALSE, NO_MINVENT);
 		wakem = TRUE;
 
 	    } else  if (invoking) {
@@ -823,7 +822,7 @@ static void use_candelabrum(struct obj *obj)
 		pline("%s's %s burn%s", The(xname(obj)), s,
 			(Blind ? "." : " brightly!"));
 	}
-	if (!invocation_pos(u.ux, u.uy)) {
+	if (!invocation_pos(&u.uz, u.ux, u.uy)) {
 		pline("The %s %s being rapidly consumed!", s, vtense(s, "are"));
 		obj->age /= 2;
 	} else {
@@ -1089,7 +1088,9 @@ int dorub(struct obj *obj)
 	else if (!obj)
 	    obj = getobj(cuddly, "rub");
 
-	if (obj && obj->oclass == GEM_CLASS) {
+        if (!obj) return 0;
+
+	if (obj->oclass == GEM_CLASS) {
 	    if (is_graystone(obj)) {
 		use_stone(obj);
 		return 1;
@@ -1099,10 +1100,8 @@ int dorub(struct obj *obj)
 	    }
 	}
 
-	if (!obj || !wield_tool(obj, "rub")) return 0;
-
-	/* now uwep is obj */
-	if (uwep->otyp == MAGIC_LAMP) {
+	if (obj->otyp == MAGIC_LAMP) {
+            if (!wield_tool(obj, "rub")) return 0;
 	    if (uwep->spe > 0 && !rn2(3)) {
 		check_unpaid_usage(uwep, TRUE);		/* unusual item use */
 		djinni_from_bottle(uwep);
@@ -1116,9 +1115,13 @@ int dorub(struct obj *obj)
 		pline("You see a puff of smoke.");
 	    else pline("Nothing happens.");
 	} else if (obj->otyp == BRASS_LANTERN) {
+            if (!wield_tool(obj, "rub")) return 0;
 	    /* message from Adventure */
 	    pline("Rubbing the electric lamp is not particularly rewarding.");
 	    pline("Anyway, nothing exciting happens.");
+        } else if (obj->otyp == OIL_LAMP) {
+            if (!wield_tool(obj,"rub")) return 0;
+            pline("Nothing happens.");
 	} else pline("Nothing happens.");
 	return 1;
 }
@@ -1394,7 +1397,7 @@ void use_unicorn_horn(struct obj *obj)
 #define prop_trouble(X) trouble_list[trouble_count++] = prop2trbl(X)
 #define attr_trouble(Y) trouble_list[trouble_count++] = attr2trbl(Y)
 
-	trouble_count = unfixable_trbl = did_prop = did_attr = 0;
+	trouble_count = did_prop = did_attr = 0;
 
 	/* collect property troubles */
 	if (Sick) prop_trouble(SICK);
@@ -2440,7 +2443,7 @@ static int use_grapple (struct obj *obj)
 #define BY_OBJECT	(NULL)
 
 /* return 1 if the wand is broken, hence some time elapsed */
-static int do_break_wand(struct obj *obj)
+int do_break_wand(struct obj *obj)
 {
     static const char nothing_else_happens[] = "But nothing else happens...";
     int i, x, y;
@@ -2849,7 +2852,7 @@ int doapply(struct obj *obj)
 		nomul(0, NULL);
 		return 0;
 	}
-	if (res && obj && obj->oartifact) arti_speak(obj);
+	if (res && obj->oartifact) arti_speak(obj);
 	nomul(0, NULL);
 	return res;
 }
