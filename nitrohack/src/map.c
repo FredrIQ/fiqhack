@@ -69,17 +69,25 @@ void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int u
 {
     display_buffer = dbuf;
     draw_map(ux, uy);
+    
+    if (ux > 0) {
+	wmove(mapwin, uy, ux - 1);
+	curs_set(1);
+    } else
+	curs_set(0);
 }
 
 
 void draw_map(int cx, int cy)
 {
-    int x, y, symcount, attr, frame;
+    int x, y, symcount, attr, frame, cursx, cursy;
     struct curses_symdef syms[4];
     
     if (!display_buffer || !mapwin)
 	return;
     
+    getyx(mapwin, cursy, cursx);
+   
     frame = 0;
     if (settings.blink)
 	frame = get_milliseconds() / 666;
@@ -101,13 +109,8 @@ void draw_map(int cx, int cy)
 	}
     }
     
-    if (cx > 0) {
-	curs_set(1);
-	wmove(mapwin, cy, cx - 1);
-    } else
-	curs_set(0);
-
     wnoutrefresh(mapwin);
+    wmove(mapwin, cursy, cursx);
 }
 
 
