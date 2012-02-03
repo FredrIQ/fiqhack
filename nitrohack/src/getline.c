@@ -41,7 +41,6 @@ void draw_getline(struct gamewin *gw)
     int width, i, offset = 0;
     size_t len = strlen(glw->buf);
     
-    wclear(gw->win);
     wattron(gw->win, FRAME_ATTRS);
     box(gw->win, 0 , 0);
     wattroff(gw->win, FRAME_ATTRS);
