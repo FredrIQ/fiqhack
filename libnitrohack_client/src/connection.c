@@ -11,7 +11,7 @@ struct nhnet_server_version nhnet_server_ver;
 static int sockfd = -1;
 static int connection_id;
 static int net_active;
-int conn_err;
+int conn_err, error_retry_ok;
 
 /* Prevent automatic retries during connection setup or teardown.
  * When the connection is being set up, it is better to report a failure
@@ -199,7 +199,6 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	    goto error;
 	}
 	
-	json_decref(jmsg);
 	json_decref(jobj);
 	jdisplay = json_object_get(recv_msg, "display");
 	if (jdisplay) {
@@ -214,9 +213,12 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	if (!iter) {
 	    print_error("Empty return object.");
 	    json_decref(recv_msg);
+	    json_decref(jmsg);
 	    return json_object();
 	}
 	
+	/* The string returned by json_object_iter_key is only valid while recv_msg
+	 * exists. Since we still want the value afterwards, it must be copied */
 	strncpy(key, json_object_iter_key(iter), BUFSZ - 1);
 	jobj = json_object_iter_value(iter);
 	
@@ -230,14 +232,23 @@ json_t *send_receive_msg(const char *msgtype, json_t *jmsg)
 	/* if the response type doesn't match the request type this must be a
 	 * callback that needs to be handled first. */
 	if (strcmp(key, msgtype)) {
-	    jmsg = handle_netcmd(key, jobj);
-	    json_decref(jobj);
-	    sendkey = key;
-	    if (!jmsg) /* this only happens after server errors */
+	    jobj = handle_netcmd(key, jobj);
+	    if (!jobj) {/* this only happens after server errors */
+		if (error_retry_ok && retry_count-- > 0 && restart_connection())
+		    continue;
+		
+		json_decref(jmsg);
 		return NULL;
+	    }
+	    
+	    json_decref(jmsg);
+	    jmsg = jobj;
+	    sendkey = key;
+	    
 	    /* send the callback data to the server and get a new response */
 	    continue;
 	}
+	json_decref(jmsg);
 	break; /* only loop via continue */
     }
     

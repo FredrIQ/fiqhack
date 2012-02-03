@@ -86,6 +86,7 @@ json_t *handle_netcmd(const char *key, json_t *jmsg)
 	    break;
 	}
     }
+    json_decref(jmsg);
     
     if (!netcmd_list[i].name)
 	print_error("Unknown command received from server");
@@ -650,6 +651,13 @@ static json_t *cmd_server_error(json_t *params, int display_only)
     
     if (json_unpack(params, "{sb,ss!}", "error", &is_error, "message", &msg) == -1)
 	return NULL;
+    
+    /* the error field in the response indicates the server's view of the client
+     * communication state. If error == FALSE, the problem is internal to the
+     * server and the client presumably did nothing wrong.
+     * In that case retrying the last command is OK
+     */
+    error_retry_ok = !is_error;
     
     if (is_error) {
 	snprintf(errmsg, BUFSZ, "Server reports error: %s", msg);

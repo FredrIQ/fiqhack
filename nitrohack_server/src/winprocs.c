@@ -95,6 +95,9 @@ struct nh_window_procs server_alt_windowprocs = {
 static json_t *client_request(const char *funcname, json_t *request_msg)
 {
     json_t *jret, *jobj;
+    void *iter;
+    const char *key;
+    int i;
     
     client_msg(funcname, request_msg);
     
@@ -102,8 +105,25 @@ static json_t *client_request(const char *funcname, json_t *request_msg)
     jret = read_input();
 
     jobj = json_object_get(jret, funcname);
-    if (!jobj || !json_is_object(jobj))
-	exit_client("Incorrect response");
+    if (!jobj || !json_is_object(jobj)) {
+	iter = json_object_iter(jret);
+	key = json_object_iter_key(iter);
+	for (i = 0; clientcmd[i].name; i++)
+	    if (!strcmp(clientcmd[i].name, key))
+		break;
+	    
+	if (clientcmd[i].name)
+	    /* The received object contains a valid command in the toplevel
+	     * context, but there is nothing we can do with it while the game
+	     * is waiting for input.
+	     * What to do? Longjumping around is fugly and where would we jump to?
+	     * Alternative: exit without an error status and hope the client
+	     * retries the command...
+	     */
+	    exit_client(NULL);
+	else
+	    exit_client("Incorrect or damaged response");
+    }
     
     json_incref(jobj);
     json_decref(jret);
