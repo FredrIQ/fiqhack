@@ -75,6 +75,7 @@ void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int u
 	curs_set(1);
     } else
 	curs_set(0);
+    wnoutrefresh(mapwin);
 }
 
 
@@ -109,8 +110,8 @@ void draw_map(int cx, int cy)
 	}
     }
     
-    wnoutrefresh(mapwin);
     wmove(mapwin, cursy, cursx);
+    wnoutrefresh(mapwin);
 }
 
 
