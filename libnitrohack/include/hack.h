@@ -98,6 +98,7 @@ extern coord bhitpos;	/* place where throw or zap hits or stops */
 #include "engrave.h"
 #include "rect.h"
 #include "region.h"
+#include "monuse.h"
 #include "extern.h"
 #include "magic.h"
 #include "winprocs.h"

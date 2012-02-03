@@ -1053,15 +1053,15 @@ extern int display_rng(int);
 
 /* ### muse.c ### */
 
-extern boolean find_defensive(struct monst *);
-extern int use_defensive(struct monst *);
+extern boolean find_defensive(struct monst *mon, struct musable *m);
+extern int use_defensive(struct monst *mon, struct musable *m);
 extern int rnd_defensive_item(struct monst *);
-extern boolean find_offensive(struct monst *);
-extern int use_offensive(struct monst *);
+extern boolean find_offensive(struct monst *mon, struct musable *m);
+extern int use_offensive(struct monst *mon, struct musable *m);
 extern int rnd_offensive_item(struct monst *);
-extern boolean find_misc(struct monst *);
-extern int use_misc(struct monst *);
-extern int rnd_misc_item(struct monst *);
+extern boolean find_misc(struct monst *mon, struct musable *m);
+extern int use_misc(struct monst *mon, struct musable *m);
+extern int rnd_misc_item(struct monst *mon);
 extern boolean searches_for_item(struct monst *,struct obj *);
 extern boolean mon_reflects(struct monst *,const char *);
 extern boolean ureflects(const char *,const char *);
