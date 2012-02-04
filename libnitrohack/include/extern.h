@@ -182,6 +182,9 @@ extern void bury_objs(int,int);
 extern void unearth_objs(struct level *lev, int x, int y);
 extern void rot_organic(void *, long);
 extern void rot_corpse(void *, long);
+extern void save_dig_status(struct memfile *mf);
+extern void restore_dig_status(struct memfile *mf);
+extern void reset_dig_status(void);
 
 /* ### display.c ### */
 
