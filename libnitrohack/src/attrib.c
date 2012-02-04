@@ -627,4 +627,47 @@ void adjalign(int n)
 		}
 }
 
+	
+/* make sure u.abon is correct; it is dead-reckoned during the move,
+ * but this produces some incorrect edge cases. */
+void calc_attr_bonus(void)
+{
+	int i, spe;
+	struct obj *abon_items[] = { /* item slots that might affect abon */
+		uarmh /* helmet */,
+		uarmg /* gloves */,
+		uright/* right ring */,
+		uleft /* left ring */,
+		NULL
+	};
+	
+	memset(u.abon.a, 0, sizeof(u.abon.a));
+	
+	for (i = 0; abon_items[i]; i++) {
+		spe = abon_items[i]->spe;
+		switch (abon_items[i]->otyp) {
+			case RIN_GAIN_STRENGTH:
+			    ABON(A_STR) += spe;
+			    break;
+			    
+			case RIN_GAIN_CONSTITUTION:
+			    ABON(A_CON) += spe;
+			    break;
+			    
+			case RIN_ADORNMENT:
+			    ABON(A_CHA) += spe;
+			    break;
+			    
+			case GAUNTLETS_OF_DEXTERITY:
+			    ABON(A_DEX) += spe;
+			    break;
+			    
+			case HELM_OF_BRILLIANCE:
+			    ABON(A_INT) += spe;
+			    ABON(A_WIS) += spe;
+			    break;
+		}
+	}
+}
+
 /*attrib.c*/

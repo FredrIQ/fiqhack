@@ -92,6 +92,7 @@ extern int newhp(void);
 extern schar acurr(int);
 extern schar acurrstr(void);
 extern void adjalign(int);
+extern void calc_attr_bonus(void);
 
 /* ### ball.c ### */
 
