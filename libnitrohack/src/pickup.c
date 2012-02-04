@@ -346,6 +346,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 		 int idx, int id, char *caption, struct obj *obj, boolean use_invlet)
 {
 	struct nh_objitem *it;
+	struct objclass *ocl;
 	
 	if (idx >= *nr_items) {
 	    *nr_items = *nr_items * 2;
@@ -360,6 +361,8 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	strcpy(it->caption, caption);
 	
 	if (role == MI_NORMAL && obj) {
+	    ocl = &objects[obj->otyp];
+	    
 	    it->count = obj->quan;
 	    it->accel = use_invlet ? obj->invlet : 0;
 	    it->group_accel = def_oc_syms[(int)obj->oclass];
@@ -369,7 +372,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    
 	    /* don't unconditionally reveal weight, otherwise lodestones on the
 	     * floor could be identified by their weight in the pickup dialog */
-	    if (obj->where == OBJ_INVENT || obj->known ||
+	    if (obj->where == OBJ_INVENT || ocl->oc_name_known || obj->invlet ||
 		(obj->where == OBJ_CONTAINED && obj->ocontainer->where == OBJ_INVENT))
 		it->weight = obj->owt;
 	
