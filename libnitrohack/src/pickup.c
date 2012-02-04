@@ -321,10 +321,12 @@ static int autopick(struct obj *olist,	/* the object list */
 	int n;
 
 	/* first count the number of eligible items */
-	for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
+	for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow)) {
+	    examine_object(curr);
 	    if ((iflags.pickup_thrown && curr->was_thrown) ||
 		 autopickup_match(curr))
 		n++;
+	}
 
 	if (n) {
 	    *pick_list = pi = malloc(sizeof(struct object_pick) * n);
@@ -520,6 +522,7 @@ int query_objlist(const char *qstr,	/* query string */
 		add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
 		            let_to_name(curr->oclass, FALSE), curr, FALSE);
 	    /* add the object to the list */
+	    examine_object(curr);
 	    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, i+1,
 	                doname(curr), curr, (qflags & USE_INVLET) != 0);
 	    prev_oclass = curr->oclass;

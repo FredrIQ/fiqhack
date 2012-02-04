@@ -1411,7 +1411,7 @@ boolean artifact_has_invprop(struct obj *otmp, uchar inv_prop)
 }
 
 /* Return the price sold to the hero of a given artifact or unique item */
-long arti_cost(struct obj *otmp)
+long arti_cost(const struct obj *otmp)
 {
 	if (!otmp->oartifact)
 	    return (long)objects[otmp->otyp].oc_cost;

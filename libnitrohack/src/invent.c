@@ -272,6 +272,7 @@ struct obj *addinv(struct obj *obj)
 	obj->no_charge = 0;	/* not meaningful for invent */
 	obj->was_thrown = 0;
 
+	examine_object(obj);
 	addinv_core1(obj);
 
 	/* merge if possible; find end of chain in the process */
@@ -1178,6 +1179,7 @@ nextclass:
 				    let_to_name(*invlet, FALSE), otmp, FALSE);
 			classcount++;
 		    }
+		    examine_object(otmp);
 		    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, ilet,
 				doname(otmp), otmp, TRUE);
 		}
@@ -1594,6 +1596,7 @@ boolean update_location(boolean all_objects)
 	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
 	
 	for (ocount = 0; otmp; otmp = otmp->nexthere) {
+	    examine_object(otmp);
 	    if (!Blind || all_objects || ocount < 5)
 		add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname_price(otmp),
 			    otmp, FALSE);
