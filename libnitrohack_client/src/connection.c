@@ -103,6 +103,11 @@ static json_t *receive_json_msg(void)
     int datalen, ret, rbufsize;
     json_t *recv_msg;
     json_error_t err;
+    fd_set rfds;
+    struct timeval tv;
+    
+    FD_ZERO(&rfds);
+    FD_SET(sockfd, &rfds);
     
     rbufsize = 1024 * 1024; /* initial size: 1MB */
     rbuf = malloc(rbufsize);
@@ -110,6 +115,18 @@ static json_t *receive_json_msg(void)
     recv_msg = NULL;
     datalen = 0;
     while (!recv_msg) {
+	/* select before reading so that we get a timeout. Otherwise the
+	 * program might hang indefinitely in read if the connection has failed */
+	tv.tv_sec = 10; /* 10s * 3 retries results in a long wait on failed connections... */
+	tv.tv_usec = 0;
+	ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
+	if (ret <= 0) {
+	    /* we aren't expecting any signals, so it seems ok to abort even if
+	     * ret == -1 && errno == EINTR */
+	    free(rbuf);
+	    return NULL;
+	}
+	
 	/* leave the last byte in the buffer free for the '\0' */
 	ret = recv(sockfd, &rbuf[datalen], rbufsize - datalen - 1, 0);
 	if (ret == -1 && errno == EINTR)
