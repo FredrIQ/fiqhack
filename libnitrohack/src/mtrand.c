@@ -124,14 +124,24 @@ void restore_mt_state(struct memfile *mf)
 
 
 /* A special-purpose rng for random_monster(), random_object(), random_trap()
+ * and coyotename()
  * These functions are used for displaying hallucinated things.
  * Re-using "used up" random values is not a problem for that and is preferable
  * to messing with the system rng, while running a second mt with it's own state
  * seems like overkill. */
 int display_rng(int x)
 {
+    static unsigned lcg_val = 1073741827;
     unsigned int num = state[dpos];
     dpos = (dpos + 1) % N;
-    return num % x;
+    /* a simple lcg generator which modifies the outpur from the mersenn sequence
+     * this is pure paranoia, induced by ais523, in order to avoid leaking info
+     * about the main rng sequence during hallucination
+     * 4294967291 is the largest prime under 2^32; 65537 and 7 are also prime.
+     * This gives the lcg a full period according to Hull & Dobell.
+     */
+    lcg_val = ((lcg_val * 7 + 65537) % 4294967291) ^ num;
+    
+    return lcg_val % x;
 }
 

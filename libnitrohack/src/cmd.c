@@ -56,7 +56,7 @@ static char *enlght_combatinc(const char *,int,int,char *);
 
 const struct cmd_desc cmdlist[] = {
 	/* "str", "", defkey, altkey, wiz, buried, func, arg*/
-	{"adjust", "adjust inventory letters", M('a'), C('i'), TRUE, doorganize, CMD_ARG_NONE | CMD_EXT},
+	{"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize, CMD_ARG_NONE | CMD_EXT},
 	{"annotate", "name the current level", 0, C('f'), TRUE, donamelevel, CMD_ARG_NONE | CMD_EXT},
 	{"apply", "use a tool or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"attributes", "show your attributes", C('x'), 0, TRUE, doattributes, CMD_ARG_NONE},
@@ -95,7 +95,7 @@ const struct cmd_desc cmdlist[] = {
 	{"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview, CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
 	{"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE},
 	{"pickup", "take items from the floor", ',', 0, FALSE, dopickup, CMD_ARG_NONE},
-	{"pray", "pray to the gods for help", M('p'), C('w'), TRUE, dopray, CMD_ARG_NONE | CMD_EXT},
+	{"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_ARG_NONE | CMD_EXT},
 	{"put on", "put on jewellery or accessories", 'P', 0, FALSE, doputon, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"quit", "exit without saving current game", M('q'), 0, TRUE, done2, CMD_ARG_NONE | CMD_EXT},
 	{"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver, CMD_ARG_NONE | CMD_ARG_OBJ},
@@ -143,7 +143,7 @@ const struct cmd_desc cmdlist[] = {
 	
 	{"create monster", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis, CMD_ARG_NONE | CMD_DEBUG},
 	{"detect", "(DEBUG) detect monsters", C('e'), 0, TRUE, wiz_detect, CMD_ARG_NONE | CMD_DEBUG},
-	{"itentify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE, wiz_identify, CMD_ARG_NONE | CMD_DEBUG},
+	{"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE, wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE, wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
 	{"levelchange", "(DEBUG) change experience level", 0, 0, TRUE, wiz_level_change, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"lightsources", "(DEBUG) show mobile light sources", 0, 0, TRUE, wiz_light_sources, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
@@ -152,7 +152,7 @@ const struct cmd_desc cmdlist[] = {
 	{"polyself", "(DEBUG) polymorph self", 0, 0, TRUE, wiz_polyself, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where, CMD_ARG_NONE | CMD_DEBUG | CMD_NOTIME},
 	{"seenv", "(DEBUG) show seen vectors", 0, 0, TRUE, wiz_show_seenv, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
-	{"showmap", "(DEBUG) reveal the entire map", C('f'), 0, TRUE, wiz_map, CMD_ARG_NONE | CMD_DEBUG},
+	{"showmap", "(DEBUG) reveal the entire map", 0, 0, TRUE, wiz_map, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"stats", "(DEBUG) show memory statistics", 0, 0, TRUE, wiz_show_stats, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
 	{"timeout", "(DEBUG) look at timeout queue", 0, 0, TRUE, wiz_timeout_queue, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
 	{"vision", "(DEBUG) show vision array", 0, 0, TRUE, wiz_show_vision, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},

@@ -227,11 +227,11 @@ static int moverock(schar dx, schar dy)
 	    }
 	} else {
 nopushmsg:
-	  if (u.usteed)
-	    pline("%s tries to move %s, but cannot.",
-		  upstart(y_monnam(u.usteed)), the(xname(otmp)));
-	  else
-	    pline("You try to move %s, but in vain.", the(xname(otmp)));
+	    if (u.usteed)
+		pline("%s tries to move %s, but cannot.",
+		    upstart(y_monnam(u.usteed)), the(xname(otmp)));
+	    else
+		pline("You try to move %s, but in vain.", the(xname(otmp)));
 	    if (Blind) feel_location(sx, sy);
 	cannot_push:
 	    if (throws_rocks(youmonst.data)) {

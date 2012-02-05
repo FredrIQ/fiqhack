@@ -72,7 +72,7 @@ extern int doinvoke(struct obj *obj);
 extern void arti_speak(struct obj *);
 extern boolean artifact_light(struct obj *);
 extern boolean artifact_has_invprop(struct obj *, uchar);
-extern long arti_cost(struct obj *);
+extern long arti_cost(const struct obj *);
 
 /* ### attrib.c ### */
 
@@ -92,6 +92,7 @@ extern int newhp(void);
 extern schar acurr(int);
 extern schar acurrstr(void);
 extern void adjalign(int);
+extern void calc_attr_bonus(void);
 
 /* ### ball.c ### */
 
@@ -182,6 +183,9 @@ extern void bury_objs(int,int);
 extern void unearth_objs(struct level *lev, int x, int y);
 extern void rot_organic(void *, long);
 extern void rot_corpse(void *, long);
+extern void save_dig_status(struct memfile *mf);
+extern void restore_dig_status(struct memfile *mf);
+extern void reset_dig_status(void);
 
 /* ### display.c ### */
 
@@ -1089,37 +1093,39 @@ extern int dodiscovered(void);
 extern char *obj_typename(int);
 extern char *simple_typename(int);
 extern boolean obj_is_pname(const struct obj *);
-extern char *distant_name(struct obj *obj, char *(*func)(struct obj*));
+extern char *distant_name(const struct obj *obj, char *(*func)(const struct obj*));
 extern char *fruitname(boolean);
-extern char *xname(struct obj *);
-extern char *mshot_xname(struct obj *);
+extern void examine_object(struct obj *obj);
+extern char *xname(const struct obj *);
+extern char *mshot_xname(const struct obj *);
 extern boolean the_unique_obj(const struct obj *obj);
-extern char *doname(struct obj *);
+extern char *doname(const struct obj *obj);
+extern char *doname_price(const struct obj *obj);
 extern boolean not_fully_identified_core(const struct obj *otmp, boolean ignore_bknown);
 extern boolean not_fully_identified(const struct obj *otmp);
 extern char *corpse_xname(const struct obj *, boolean);
-extern char *cxname(struct obj *);
-extern char *cxname2(struct obj *obj);
-extern char *killer_xname(struct obj *);
-extern const char *singular(struct obj *,char *(*)(struct obj*));
+extern char *cxname(const struct obj *);
+extern char *cxname2(const struct obj *obj);
+extern char *killer_xname(const struct obj *obj_orig);
+extern const char *singular(struct obj *,char *(*)(const struct obj*));
 extern char *an(const char *);
 extern char *An(const char *);
 extern char *The(const char *);
 extern char *the(const char *);
-extern char *aobjnam(struct obj *,const char *);
-extern char *Tobjnam(struct obj *,const char *);
-extern char *otense(struct obj *,const char *);
+extern char *aobjnam(const struct obj *,const char *);
+extern char *Tobjnam(const struct obj *,const char *);
+extern char *otense(const struct obj *,const char *);
 extern char *vtense(const char *,const char *);
-extern char *Doname2(struct obj *);
-extern char *yname(struct obj *);
-extern char *Yname2(struct obj *);
-extern char *ysimple_name(struct obj *);
+extern char *Doname2(const struct obj *);
+extern char *yname(const struct obj *);
+extern char *Yname2(const struct obj *);
+extern char *ysimple_name(const struct obj *);
 extern char *makeplural(const char *);
 extern char *makesingular(const char *);
-extern struct obj *readobjnam(char *,struct obj *,boolean);
+extern struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user);
 extern int rnd_class(int,int);
-extern const char *cloak_simple_name(struct obj *);
-extern const char *mimic_obj_name(struct monst *);
+extern const char *cloak_simple_name(const struct obj *cloak);
+extern const char *mimic_obj_name(const struct monst *mimic);
 
 /* ### options.c ### */
 
@@ -1386,10 +1392,11 @@ extern int dopay(void);
 extern boolean paybill(int);
 extern void finish_paybill(void);
 extern struct obj *find_oid(unsigned id);
-extern long contained_cost(struct obj *,struct monst *,long,boolean, boolean);
+extern int shop_item_cost(const struct obj *obj);
+extern long contained_cost(const struct obj *,struct monst *,long,boolean, boolean);
 extern long contained_gold(struct obj *);
 extern void picked_container(struct obj *);
-extern long unpaid_cost(struct obj *);
+extern long unpaid_cost(const struct obj *);
 extern void addtobill(struct obj *,boolean,boolean,boolean);
 extern void splitbill(struct obj *,struct obj *);
 extern void subfrombill(struct obj *,struct monst *);
@@ -1415,8 +1422,8 @@ extern void check_unpaid(struct obj *);
 extern void costly_gold(xchar,xchar,long);
 extern boolean block_door(xchar,xchar);
 extern boolean block_entry(xchar,xchar);
-extern char *shk_your(char *,struct obj *);
-extern char *Shk_Your(char *,struct obj *);
+extern char *shk_your(char *, const struct obj *);
+extern char *Shk_Your(char *, const struct obj *);
 
 /* ### shknam.c ### */
 
@@ -1779,7 +1786,7 @@ extern void xmalloc_cleanup(void);
 
 extern int bhitm(struct monst *,struct obj *);
 extern void probe_monster(struct monst *);
-extern boolean get_obj_location(struct obj *,xchar *,xchar *,int);
+extern boolean get_obj_location(const struct obj *,xchar *,xchar *,int);
 extern boolean get_mon_location(struct monst *,xchar *,xchar *,int);
 extern struct monst *get_container_location(struct obj *obj, int *, int *);
 extern struct monst *montraits(struct obj *,coord *);

@@ -26,15 +26,15 @@ static long int followmsg;	/* last time of follow message */
 static void setpaid(struct monst *);
 static long addupbill(struct monst *);
 static void pacify_shk(struct monst *);
-static struct bill_x *onbill(struct obj *, struct monst *, boolean);
+static struct bill_x *onbill(const struct obj *, struct monst *, boolean);
 static struct monst *next_shkp(struct monst *, boolean);
 static long shop_debt(struct eshk *);
-static char *shk_owns(char *,struct obj *);
-static char *mon_owns(char *,struct obj *);
+static char *shk_owns(char *, const struct obj *);
+static char *mon_owns(char *, const struct obj *);
 static void clear_unpaid(struct obj *);
 static long check_credit(long, struct monst *);
 static void pay(long, struct monst *);
-static long get_cost(struct obj *, struct monst *);
+static long get_cost(const struct obj *, struct monst *);
 static long set_cost(struct obj *, struct monst *);
 static const char *shk_embellish(struct obj *, long);
 static long cost_per_charge(struct monst *,struct obj *,boolean);
@@ -42,7 +42,7 @@ static long cheapest_item(struct monst *);
 static int dopayobj(struct monst *, struct bill_x *,
 		    struct obj **, int, boolean);
 static long stolen_container(struct obj *, struct monst *, long, boolean);
-static long getprice(struct obj *,boolean);
+static long getprice(const struct obj *,boolean);
 static void shk_names_obj(struct monst *,struct obj *,
 			  const char *,long,const char *);
 static struct obj *bp_to_obj(struct bill_x *);
@@ -659,7 +659,7 @@ boolean tended_shop(struct mkroom *sroom)
 		return (boolean)(inhishop(mtmp));
 }
 
-static struct bill_x *onbill(struct obj *obj, struct monst *shkp, boolean silent)
+static struct bill_x *onbill(const struct obj *obj, struct monst *shkp, boolean silent)
 {
 	if (shkp) {
 		struct bill_x *bp = ESHK(shkp)->bill_p;
@@ -1604,8 +1604,32 @@ struct obj *find_oid(unsigned id)
 }
 
 
+int shop_item_cost(const struct obj *obj)
+{
+	struct monst *shkp;
+	xchar x, y;
+	int cost=0;
+
+	if (get_obj_location(obj, &x, &y, 0) && (obj->unpaid ||
+	    (obj->where==OBJ_FLOOR && !obj->no_charge && costly_spot(x,y)))) {
+		if (!(shkp = shop_keeper(obj->olev, *in_rooms(obj->olev, x, y, SHOPBASE)))) return 0;
+		if (!inhishop(shkp)) return 0;
+		if (!costly_spot(x, y)) return 0;
+		if (!*u.ushops) return 0;
+
+		if (obj->oclass != COIN_CLASS) {
+			cost = (obj == uball || obj == uchain) ? 0L :
+				obj->quan * get_cost(obj, shkp);
+			if (Has_contents(obj))
+				cost += contained_cost(obj, shkp, 0L, FALSE, FALSE);
+		}
+	}
+	return cost;
+}
+
+
 /* calculate the value that the shk will charge for [one of] an object */
-static long get_cost(struct obj *obj,
+static long get_cost(const struct obj *obj,
 		     struct monst *shkp) /* if angry, impose a surcharge */
 {
 	long tmp = getprice(obj, FALSE);
@@ -1683,7 +1707,7 @@ static long get_cost(struct obj *obj,
  * of the "top" container is added in the calling functions.
  * a different price quoted for selling as vs. buying.
  */
-long contained_cost(struct obj *obj, struct monst *shkp, long price,
+long contained_cost(const struct obj *obj, struct monst *shkp, long price,
 		    boolean usell, boolean unpaid_only)
 {
 	struct obj *otmp;
@@ -1791,7 +1815,7 @@ static long set_cost(struct obj *obj, struct monst *shkp)
 
 /* called from doinv(invent.c) for inventory of unpaid objects */
 /* unp_obj: known to be unpaid */
-long unpaid_cost(struct obj *unp_obj )
+long unpaid_cost(const struct obj *unp_obj)
 {
 	struct bill_x *bp = NULL;
 	struct monst *shkp;
@@ -2516,7 +2540,7 @@ int doinvbill(int mode)
 
 #define HUNGRY	2
 
-static long getprice(struct obj *obj, boolean shk_buying)
+static long getprice(const struct obj *obj, boolean shk_buying)
 {
 	long tmp = (long) objects[obj->otyp].oc_cost;
 
@@ -3240,6 +3264,7 @@ struct obj *shop_object(xchar x, xchar y)
 		? otmp : NULL;
 }
 
+
 /* give price quotes for all objects linked to this one (ie, on this spot) */
 void price_quote(struct obj *first_obj)
 {
@@ -3589,21 +3614,21 @@ boolean block_entry(xchar x, xchar y)
 	return FALSE;
 }
 
-char *shk_your(char *buf, struct obj *obj)
+char *shk_your(char *buf, const struct obj *obj)
 {
 	if (!shk_owns(buf, obj) && !mon_owns(buf, obj))
 	    strcpy(buf, carried(obj) ? "your" : "the");
 	return buf;
 }
 
-char *Shk_Your(char *buf, struct obj *obj)
+char *Shk_Your(char *buf, const struct obj *obj)
 {
 	shk_your(buf, obj);
 	*buf = highc(*buf);
 	return buf;
 }
 
-static char *shk_owns(char *buf, struct obj *obj)
+static char *shk_owns(char *buf, const struct obj *obj)
 {
 	struct monst *shkp;
 	xchar x, y;
@@ -3617,7 +3642,7 @@ static char *shk_owns(char *buf, struct obj *obj)
 	return NULL;
 }
 
-static char *mon_owns(char *buf, struct obj *obj)
+static char *mon_owns(char *buf, const struct obj *obj)
 {
 	if (obj->where == OBJ_MINVENT)
 	    return strcpy(buf, s_suffix(mon_nam(obj->ocarry)));

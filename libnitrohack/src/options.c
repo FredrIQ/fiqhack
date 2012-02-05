@@ -80,7 +80,7 @@ static const struct nh_listitem pettype_list[] = {
 static const struct nh_enum_option pettype_spec = {pettype_list, listlen(pettype_list)};
 
 static const struct nh_listitem ap_object_class_list[] = {
-	{'a',		"any"},
+	{OCLASS_ANY,	"any"},
 	{GOLD_SYM,	"gold"},
 	{AMULET_SYM,	"amulets"},
 	{WEAPON_SYM,	"weapons"},
@@ -100,13 +100,25 @@ static const struct nh_listitem ap_object_class_list[] = {
 static const struct nh_autopick_option autopickup_spec =
 			{ap_object_class_list, listlen(ap_object_class_list)};
 
+
+static struct nh_autopickup_rule def_ap_ruleset[] = {
+	{"*zorkmid*",	OCLASS_ANY,	B_DONT_CARE, AP_LEAVE},
+	{"", 		GOLD_SYM,	B_DONT_CARE, AP_GRAB},
+	{"",		SCROLL_SYM,	B_DONT_CARE, AP_GRAB},
+	{"",		RING_SYM,	B_DONT_CARE, AP_GRAB},
+	{"",		WAND_SYM,	B_DONT_CARE, AP_GRAB},
+	{"",		POTION_SYM,	B_DONT_CARE, AP_GRAB},
+};
+static const struct nh_autopickup_rules def_autopickup = {def_ap_ruleset, SIZE(def_ap_ruleset)};
+
+
 #define VTRUE (void*)TRUE
 #define VFALSE (void*)FALSE
 
 static const struct nh_option_desc const_options[] = {
     {"autodig",		"dig if moving and wielding digging tool",	OPTTYPE_BOOL, { VFALSE }},
     {"autopickup",	"automatically pick up objects you move over",	OPTTYPE_BOOL, { VTRUE }},
-    {"autopickup_rules", "rules to decide what to autopickup if autopickup is on", OPTTYPE_AUTOPICKUP_RULES, {0}},
+    {"autopickup_rules", "rules to decide what to autopickup if autopickup is on", OPTTYPE_AUTOPICKUP_RULES, {(void*)&def_autopickup}},
     {"autoquiver",	"when firing with an empty quiver, select something suitable",	OPTTYPE_BOOL, { VFALSE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"disclose",	"wether to disclose information at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},

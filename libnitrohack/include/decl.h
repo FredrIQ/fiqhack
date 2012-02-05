@@ -155,9 +155,9 @@ extern struct multishot { int n, i; short o; boolean s; } m_shot;
 
 extern struct dig_info {		/* apply.c, hack.c */
 	int	effort;
+	int	lastdigtime;
 	d_level level;
 	coord	pos;
-	long lastdigtime;
 	boolean down, chew, warned, quiet;
 } digging;
 

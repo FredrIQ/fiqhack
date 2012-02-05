@@ -272,6 +272,7 @@ struct obj *addinv(struct obj *obj)
 	obj->no_charge = 0;	/* not meaningful for invent */
 	obj->was_thrown = 0;
 
+	examine_object(obj);
 	addinv_core1(obj);
 
 	/* merge if possible; find end of chain in the process */
@@ -1178,6 +1179,7 @@ nextclass:
 				    let_to_name(*invlet, FALSE), otmp, FALSE);
 			classcount++;
 		    }
+		    examine_object(otmp);
 		    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, ilet,
 				doname(otmp), otmp, TRUE);
 		}
@@ -1594,8 +1596,9 @@ boolean update_location(boolean all_objects)
 	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
 	
 	for (ocount = 0; otmp; otmp = otmp->nexthere) {
+	    examine_object(otmp);
 	    if (!Blind || all_objects || ocount < 5)
-		add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname(otmp),
+		add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname_price(otmp),
 			    otmp, FALSE);
 	    ocount++;
 	}
@@ -1707,7 +1710,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 #ifdef INVISIBLE_OBJECTS
 	    if (otmp->oinvis && !See_invisible) verb = "feel";
 #endif
-	    pline("You %s here %s.", verb, doname(otmp));
+	    pline("You %s here %s.", verb, doname_price(otmp));
 	    if (otmp->otyp == CORPSE) feel_cockatrice(otmp, FALSE);
 	} else {
 	    items = malloc(size * sizeof(struct nh_objitem));
@@ -1720,7 +1723,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 		if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, FALSE)) {
 			char buf[BUFSZ];
 			felt_cockatrice = TRUE;
-			strcpy(buf, doname(otmp));
+			strcpy(buf, doname_price(otmp));
 			strcat(buf, "...");
 			add_objitem(&items, &size, MI_NORMAL, icount++, 0,
 				    fbuf, otmp, FALSE);

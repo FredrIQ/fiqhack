@@ -16,7 +16,7 @@ static int hitmu(struct monst *, const struct attack *);
 static int gulpmu(struct monst *, const struct attack *);
 static int explmu(struct monst *, const struct attack *,boolean);
 static void missmu(struct monst *,boolean, const struct attack *);
-static void mswings(struct monst *,struct obj *);
+static void mswings(struct monst *, struct obj *);
 static void wildmiss(struct monst *, const struct attack *);
 
 static void hurtarmor(int);

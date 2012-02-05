@@ -431,7 +431,7 @@ struct nh_drawing_info *nhnet_get_drawing_info(void)
     
     jmsg = send_receive_msg("get_drawing_info", json_object());
     di = xmalloc(sizeof(struct nh_drawing_info));
-    if (json_unpack(jmsg, "{si,si,si,si,si,si,si,si,so,so,so,so,so,so,so,so,so,so,so,so!}",
+    if (json_unpack(jmsg, "{si,si,si,si,si,si,si,si,si,so,so,so,so,so,so,so,so,so,so,so,so!}",
 		    "num_bgelements", &di->num_bgelements,
 		    "num_traps", &di->num_traps,
 		    "num_objects", &di->num_objects,
@@ -440,6 +440,7 @@ struct nh_drawing_info *nhnet_get_drawing_info(void)
 		    "num_expltypes", &di->num_expltypes,
 		    "num_zaptypes", &di->num_zaptypes,
 		    "num_effects", &di->num_effects,
+		    "feature_offset", &di->bg_feature_offset,
 		    "bgelements", &jbg,
 		    "traps", &jtraps,
 		    "objects", &jobjs,
