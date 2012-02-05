@@ -21,12 +21,14 @@ int can_send_msg;
 static char** init_game_paths(void)
 {
     char **pathlist = malloc(sizeof(char*) * PREFIX_COUNT);
-    char *dir, *tmp;
+    char *dir = NULL, *tmp;
     int i, len;
     
-    dir = getenv("NITROHACKDIR");
-    if (!dir)
-	dir = getenv("HACKDIR");
+    if (getgid() == getegid()) {
+	dir = getenv("NITROHACKDIR");
+	if (!dir)
+	    dir = getenv("HACKDIR");
+    }
     
     if (!dir)
 	dir = NITROHACKDIR;
