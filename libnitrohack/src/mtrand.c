@@ -131,7 +131,7 @@ void restore_mt_state(struct memfile *mf)
  * seems like overkill. */
 int display_rng(int x)
 {
-    static unsigned lcg_val = 1073741827;
+    static unsigned lcg_val = 1073741827u;
     unsigned int num = state[dpos];
     dpos = (dpos + 1) % N;
     /* a simple lcg generator which modifies the outpur from the mersenn sequence
@@ -140,7 +140,7 @@ int display_rng(int x)
      * 4294967291 is the largest prime under 2^32; 65537 and 7 are also prime.
      * This gives the lcg a full period according to Hull & Dobell.
      */
-    lcg_val = ((lcg_val * 7 + 65537) % 4294967291) ^ num;
+    lcg_val = ((lcg_val * 7 + 65537) % 4294967291u) ^ num;
     
     return lcg_val % x;
 }
