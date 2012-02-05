@@ -65,7 +65,7 @@ const char *addr2str(const void *sockaddr)
     const struct sockaddr_in *sa4 = sockaddr;
     const struct sockaddr_in6 *sa6 = sockaddr;
     
-    switch (((struct sockaddr*)sockaddr)->sa_family) {
+    switch (sa4->sin_family) {
 	case AF_UNIX:
 	    return settings.bind_addr_unix.sun_path;
 
