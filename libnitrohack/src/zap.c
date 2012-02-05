@@ -3251,6 +3251,11 @@ buzzmonst:
 			for (otmp = mon->minvent; otmp; otmp = otmp2) {
 			    otmp2 = otmp->nobj;
 			    if (!oresist_disintegration(otmp)) {
+				/* update the monsters intrinsics and saddle in
+				 * case it is lifesaved. */
+				if (otmp->owornmask && otmp->otyp == SADDLE)
+				    mon->misc_worn_check &= ~W_SADDLE;
+				update_mon_intrinsics(mon, otmp, FALSE, TRUE);
 				obj_extract_self(otmp);
 				obfree(otmp, NULL);
 			    }
