@@ -282,7 +282,12 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 {
     int playmode;
     char namebuf[PL_NSIZ];
-    enum nh_restore_status error = GAME_RESTORED;
+    
+    /* some compilers can't cope with the fact that all subsequent stores to error
+     * are not dead, but become important if the error handler longjumps back
+     * volatile is required to prevent invalid optimization based on that wrong
+     * assumption. */
+    volatile enum nh_restore_status error = GAME_RESTORED;
     
     if (fd == -1)
 	return ERR_BAD_ARGS;
