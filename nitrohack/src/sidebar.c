@@ -59,7 +59,7 @@ static int count_omitted_items(struct nh_objitem *inv, int inv_icount, int pos)
 
 void draw_sidebar(void)
 {
-    int flheight = 0, invheight = 0, invwh;
+    int flheight = 0, invheight = 0, invwh, flwh;
     int sbwidth = getmaxx(sidebar);
     
     if (!ui_flags.draw_sidebar)
@@ -73,8 +73,17 @@ void draw_sidebar(void)
     objwin = invwin = NULL;
     
     werase(sidebar);
+    /* Inventory and floor item list sizing: Each list "owns" half the sidebar,
+     * but will expand into unused space in the other half.
+     * If unused space remains, the inventory list is expanded to push the
+     * floor item list to the bottom of the screen. */
     if (flooritems && inventory) {
-	flheight = min(floor_icount+1, ui_flags.viewheight / 2);
+	invheight = min(inv_icount+1, ui_flags.viewheight / 2);
+	flheight = min(floor_icount+1, (ui_flags.viewheight-1) / 2);
+	/* if there is need and available space, expand the floor item list up */
+	if (floor_icount+1 > flheight && invheight < (ui_flags.viewheight+1) / 2)
+	    flheight = min(floor_icount+1, ui_flags.viewheight - invheight - 1);
+	/* assign all unused space to the inventory list whether it is needed or not */
 	invheight = ui_flags.viewheight - flheight - 1;
 	mvwhline(sidebar, invheight, 0, ACS_HLINE, sbwidth);
     } else if (flooritems)
@@ -101,7 +110,15 @@ void draw_sidebar(void)
 	wattron(sidebar, A_UNDERLINE);
 	mvwaddstr(sidebar, invheight ? invheight + 1 : 0, 0, "Things that are here:");
 	wattroff(sidebar, A_UNDERLINE);
-	objwin = derwin(sidebar, flheight-1, sbwidth, invheight ? invheight + 2 : 1, 0);
+	
+	flwh = flheight - 1;
+	if (flwh < floor_icount) {
+	    flwh--;
+	    mvwprintw(sidebar, ui_flags.viewheight - 1, 0, "(%d more omitted)",
+		      count_omitted_items(flooritems, floor_icount, flwh));
+	}
+	
+	objwin = derwin(sidebar, flwh, sbwidth, invheight ? invheight + 2 : 1, 0);
 	draw_objlist(objwin, floor_icount, flooritems, NULL, PICK_NONE);
     }
     
