@@ -747,7 +747,9 @@ static void costly_cancel(struct obj *obj)
 	case OBJ_FLOOR:
 		objroom = *in_rooms(level, obj->ox, obj->oy, SHOPBASE);
 		shkp = shop_keeper(level, objroom);
-		if (!shkp || !inhishop(shkp)) return;
+		if (!costly_spot(obj->ox, obj->oy)) return;
+		/* "if costly_spot(u.ux, u.uy)" is correct. It checks whether shk
+		 * can force the player to pay for the item by blocking the door. */
 		if (costly_spot(u.ux, u.uy) && objroom == *u.ushops) {
 		    Norep("You cancel it, you pay for it!");
 		    bill_dummy_object(obj);
