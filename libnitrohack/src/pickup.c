@@ -281,7 +281,7 @@ static boolean autopickup_match(struct obj *obj)
 	if (!iflags.ap_rules)
 	    return FALSE;
 	
-	objdesc = makesingular(doname(obj));
+	objdesc = makesingular(doname_price(obj));
 	if (obj->bknown) {
 	    if (obj->blessed)
 		objbuc = B_BLESSED;
@@ -321,10 +321,12 @@ static int autopick(struct obj *olist,	/* the object list */
 	int n;
 
 	/* first count the number of eligible items */
-	for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
+	for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow)) {
+	    examine_object(curr);
 	    if ((iflags.pickup_thrown && curr->was_thrown) ||
 		 autopickup_match(curr))
 		n++;
+	}
 
 	if (n) {
 	    *pick_list = pi = malloc(sizeof(struct object_pick) * n);
@@ -344,6 +346,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 		 int idx, int id, char *caption, struct obj *obj, boolean use_invlet)
 {
 	struct nh_objitem *it;
+	struct objclass *ocl;
 	
 	if (idx >= *nr_items) {
 	    *nr_items = *nr_items * 2;
@@ -358,6 +361,8 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	strcpy(it->caption, caption);
 	
 	if (role == MI_NORMAL && obj) {
+	    ocl = &objects[obj->otyp];
+	    
 	    it->count = obj->quan;
 	    it->accel = use_invlet ? obj->invlet : 0;
 	    it->group_accel = def_oc_syms[(int)obj->oclass];
@@ -367,7 +372,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    
 	    /* don't unconditionally reveal weight, otherwise lodestones on the
 	     * floor could be identified by their weight in the pickup dialog */
-	    if (obj->where == OBJ_INVENT || obj->known ||
+	    if (obj->where == OBJ_INVENT || ocl->oc_name_known || obj->invlet ||
 		(obj->where == OBJ_CONTAINED && obj->ocontainer->where == OBJ_INVENT))
 		it->weight = obj->owt;
 	
@@ -520,6 +525,7 @@ int query_objlist(const char *qstr,	/* query string */
 		add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
 		            let_to_name(curr->oclass, FALSE), curr, FALSE);
 	    /* add the object to the list */
+	    examine_object(curr);
 	    add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, i+1,
 	                doname(curr), curr, (qflags & USE_INVLET) != 0);
 	    prev_oclass = curr->oclass;

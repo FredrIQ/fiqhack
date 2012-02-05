@@ -18,5 +18,6 @@
 #define OCLASSES_MAGIC		0x4c4c434f /* "OCLL" */
 #define ENGRAVE_MAGIC		0x52474e45 /* "ENGR" */
 #define HISTORY_MAGIC		0x54534948 /* "HIST" */
+#define DIG_MAGIC		0x44494753 /* "DIGS" */
 
 #endif

@@ -483,6 +483,8 @@ int use_defensive(struct monst *mtmp, struct musable *m)
 	fleetim = !mtmp->mflee ? (33 - (30 * mtmp->mhp / mtmp->mhpmax)) : 0;
 #define m_flee(m)	if (fleetim && !m->iswiz) \
 			{ monflee(m, fleetim, FALSE, FALSE); }
+	if (oseen)
+	    examine_object(otmp);
 	
 	switch(m->has_defense) {
 	case MUSE_UNICORN_HORN:
@@ -1177,6 +1179,8 @@ int use_offensive(struct monst *mtmp, struct musable *m)
 	if (otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp, m)) != 0)
 		return i;
 	oseen = canseemon(mtmp);
+	if (oseen)
+	    examine_object(otmp);
 
 	switch(m->has_offense) {
 	case MUSE_WAN_DEATH:

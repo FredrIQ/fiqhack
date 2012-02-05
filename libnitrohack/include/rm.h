@@ -102,54 +102,58 @@
  */
 
 /* begin dungeon characters */
+enum dungeon_symbols {
+/* 0*/	S_unexplored,
+	S_stone,
+	S_vwall,
+	S_hwall,
+	S_tlcorn,
+	S_trcorn,
+	S_blcorn,
+	S_brcorn,
+	S_crwall,
+	S_tuwall,
+/*10*/	S_tdwall,
+	S_tlwall,
+	S_trwall,
+	S_corr,
+	S_litcorr,
+	S_room,
+	S_darkroom,
+	S_pool,
+	S_air,
+	S_cloud,
+/*20*/	S_water,
+	S_ice,
+	S_lava,
+	S_ndoor,
+	
+	S_vodoor,
+	S_hodoor,
+	S_vcdoor,	/* closed door, vertical wall */
+	S_hcdoor,	/* closed door, horizontal wall */
+	S_bars,		/* KMH -- iron bars */
+	S_tree,		/* KMH */
+	S_upstair,
+	S_dnstair,
+	S_upladder,
+	S_dnladder,
+	S_upsstair,
+	S_dnsstair,
+	S_altar,
+	S_grave,
+	S_throne,
+	S_sink,
+	S_fountain,
+	S_vodbridge,
+	S_hodbridge,
+	S_vcdbridge,	/* closed drawbridge, vertical wall */
+	S_hcdbridge,	/* closed drawbridge, horizontal wall */
 
-#define S_unexplored	0
-#define S_stone		1
-#define S_vwall		2
-#define S_hwall		3
-#define S_tlcorn	4
-#define S_trcorn	5
-#define S_blcorn	6
-#define S_brcorn	7
-#define S_crwall	8
-#define S_tuwall	9
-#define S_tdwall	10
-#define S_tlwall	11
-#define S_trwall	12
-#define S_ndoor		13
-#define S_vodoor	14
-#define S_hodoor	15
-#define S_vcdoor	16	/* closed door, vertical wall */
-#define S_hcdoor	17	/* closed door, horizontal wall */
-#define S_bars		18	/* KMH -- iron bars */
-#define S_tree		19	/* KMH */
-#define S_room		20
-#define S_darkroom	21
-#define S_corr		22
-#define S_litcorr	23
-#define S_upstair	24
-#define S_dnstair	25
-#define S_upladder	26
-#define S_dnladder	27
-#define S_upsstair      28
-#define S_dnsstair      29
-#define S_altar		30
-#define S_grave		31
-#define S_throne	32
-#define S_sink		33
-#define S_fountain	34
-#define S_pool		35
-#define S_ice		36
-#define S_lava		37
-#define S_vodbridge	38
-#define S_hodbridge	39
-#define S_vcdbridge	40	/* closed drawbridge, vertical wall */
-#define S_hcdbridge	41	/* closed drawbridge, horizontal wall */
-#define S_air		42
-#define S_cloud		43
-#define S_water		44
+	MAXPCHARS,	/* maximum number of mapped characters */
+};
 
-#define MAXPCHARS	45	/* maximum number of mapped characters */
+#define DUNGEON_FEATURE_OFFSET S_vodoor
 
 /* end dungeon characters, begin special effects */
 

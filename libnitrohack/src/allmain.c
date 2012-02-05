@@ -140,6 +140,8 @@ void startup_common(const char *name, int playmode)
     init_data();
     reset_food(); /* zero out victual and tin */
     reset_steal();
+    reset_dig_status();
+    
     /* create mutable copies of object and artifact liss */
     init_objlist();
     init_artilist();
@@ -376,6 +378,7 @@ static void you_moved(void)
 
     do { /* hero can't move this turn loop */
 	wtcap = encumber_msg();
+	calc_attr_bonus();
 
 	flags.mon_moving = TRUE;
 	do {
@@ -645,6 +648,8 @@ static void special_vision_handling(void)
 
 static void pre_move_tasks(boolean didmove)
 {
+    /* recalc attribute bonuses from items */
+    calc_attr_bonus();
     find_ac();
     if (!flags.mv || Blind)
 	special_vision_handling();

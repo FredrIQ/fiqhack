@@ -415,6 +415,7 @@ static void restgamestate(struct memfile *mf)
 	restore_track(mf);
 	restore_food(mf);
 	restore_steal(mf);
+	restore_dig_status(mf);
 	bookid = mread32(mf);
 	if (bookid)
 	    book = find_oid(bookid);

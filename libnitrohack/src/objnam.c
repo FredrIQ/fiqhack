@@ -20,6 +20,7 @@
    "the 2nd dagger", "the 4th arrow"
    doname(obj): fully detailed name of object or stack as seen in inventory
    "the blessed Amulet of Yendor (being worn)", "a poisoned +4 dagger"
+   doname_price(obj): like doname, but with price info for shop items
    corpse_xname(obj, ignore_oquan): describe a corpse or pile of corpses
    "horse corpse", "horse corpses"
    cxname(obj): xname, but with specific corpse naming
@@ -70,7 +71,8 @@
 static char *strprepend(char *,const char *);
 static boolean wishymatch(const char *,const char *,boolean);
 static char *nextobuf(void);
-static void add_erosion_words(struct obj *, char *);
+static void add_erosion_words(const struct obj *obj, char *);
+static char *xname2(const struct obj *obj, boolean ignore_oquan);
 
 struct Jitem {
 	int item;
@@ -104,7 +106,6 @@ static const struct Jitem Japanese_items[] = {
 
 
 static const char *Japanese_item_name(int i);
-static char *xname2(struct obj *obj, boolean ignore_oquan);
 
 static char *strprepend(char *s, const char *pref)
 {
@@ -232,7 +233,7 @@ boolean obj_is_pname(const struct obj *obj)
  * frequently used, it'd probably be better to pass a parameter to xname()
  * or doname() instead.
  */
-char *distant_name(struct obj *obj, char *(*func)(struct obj*))
+char *distant_name(const struct obj *obj, char *(*func)(const struct obj*))
 {
 	char *str;
 
@@ -261,13 +262,29 @@ char *fruitname(boolean juice)
 }
 
 
-char *xname(struct obj *obj)
+/* basic first look at the object; this used to be part of xname.
+ * examining an object this way happens automatically and does not involve
+ * touching (no stoning) */
+void examine_object(struct obj *obj)
+{
+	int typ = obj->otyp;
+	struct objclass *ocl = &objects[typ];
+	int nn = ocl->oc_name_known;
+	
+	/* clean up known when it's tied to oc_name_known, eg after AD_DRIN */
+	if (!nn && ocl->oc_uses_known && ocl->oc_unique) obj->known = 0;
+	if (!Blind) obj->dknown = TRUE;
+	if (Role_if (PM_PRIEST)) obj->bknown = TRUE;
+}
+
+
+char *xname(const struct obj *obj)
 {
     return xname2(obj, FALSE);
 }
 
 
-static char *xname2(struct obj *obj, boolean ignore_oquan)
+static char *xname2(const struct obj *obj, boolean ignore_oquan)
 {
 	char *buf;
 	int typ = obj->otyp;
@@ -276,31 +293,35 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 	const char *actualn = OBJ_NAME(*ocl);
 	const char *dn = OBJ_DESCR(*ocl);
 	const char *un = ocl->oc_uname;
+	boolean known = obj->known;
+	boolean dknown = obj->dknown;
+	boolean bknown = obj->bknown;
 
 	buf = nextobuf() + PREFIX;	/* leave room for "17 -3 " */
 	if (Role_if (PM_SAMURAI) && Japanese_item_name(typ))
 		actualn = Japanese_item_name(typ);
 
 	buf[0] = '\0';
+	
 	/*
 	 * clean up known when it's tied to oc_name_known, eg after AD_DRIN
 	 * This is only required for unique objects since the article
 	 * printed for the object is tied to the combination of the two
 	 * and printing the wrong article gives away information.
 	 */
-	if (!nn && ocl->oc_uses_known && ocl->oc_unique) obj->known = 0;
-	if (!Blind) obj->dknown = TRUE;
-	if (Role_if (PM_PRIEST)) obj->bknown = TRUE;
+	if (!nn && ocl->oc_uses_known && ocl->oc_unique) known = 0;
+	if (!Blind) dknown = TRUE;
+	if (Role_if (PM_PRIEST)) bknown = TRUE;
 	if (obj_is_pname(obj))
 	    goto nameit;
 	switch (obj->oclass) {
 	    case AMULET_CLASS:
-		if (!obj->dknown)
+		if (!dknown)
 			strcpy(buf, "amulet");
 		else if (typ == AMULET_OF_YENDOR ||
 			 typ == FAKE_AMULET_OF_YENDOR)
 			/* each must be identified individually */
-			strcpy(buf, obj->known ? actualn : dn);
+			strcpy(buf, known ? actualn : dn);
 		else if (nn)
 			strcpy(buf, actualn);
 		else if (un)
@@ -316,7 +337,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 		if (typ == LENSES)
 			strcpy(buf, "pair of ");
 
-		if (!obj->dknown)
+		if (!dknown)
 			strcat(buf, dn ? dn : actualn);
 		else if (nn)
 			strcat(buf, actualn);
@@ -342,11 +363,11 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 		if (is_boots(obj) || is_gloves(obj)) strcpy(buf,"pair of ");
 
 		if (obj->otyp >= ELVEN_SHIELD && obj->otyp <= ORCISH_SHIELD
-				&& !obj->dknown) {
+				&& !dknown) {
 			strcpy(buf, "shield");
 			break;
 		}
-		if (obj->otyp == SHIELD_OF_REFLECTION && !obj->dknown) {
+		if (obj->otyp == SHIELD_OF_REFLECTION && !dknown) {
 			strcpy(buf, "smooth shield");
 			break;
 		}
@@ -384,7 +405,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 		}
 
 		strcpy(buf, actualn);
-		if (typ == TIN && obj->known) {
+		if (typ == TIN && known) {
 		    if (obj->spe > 0)
 			strcat(buf, " of spinach");
 		    else if (obj->corpsenm == NON_PM)
@@ -416,15 +437,15 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 			(obj->owt > ocl->oc_weight) ? "very " : "");
 		break;
 	    case POTION_CLASS:
-		if (obj->dknown && obj->odiluted)
+		if (dknown && obj->odiluted)
 			strcpy(buf, "diluted ");
-		if (nn || un || !obj->dknown) {
+		if (nn || un || !dknown) {
 			strcat(buf, "potion");
-			if (!obj->dknown) break;
+			if (!dknown) break;
 			if (nn) {
 			    strcat(buf, " of ");
 			    if (typ == POT_WATER &&
-				obj->bknown && (obj->blessed || obj->cursed)) {
+				bknown && (obj->blessed || obj->cursed)) {
 				strcat(buf, obj->blessed ? "holy " : "unholy ");
 			    }
 			    strcat(buf, actualn);
@@ -439,7 +460,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 		break;
 	case SCROLL_CLASS:
 		strcpy(buf, "scroll");
-		if (!obj->dknown) break;
+		if (!dknown) break;
 		if (nn) {
 			strcat(buf, " of ");
 			strcat(buf, actualn);
@@ -455,7 +476,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 		}
 		break;
 	case WAND_CLASS:
-		if (!obj->dknown)
+		if (!dknown)
 			strcpy(buf, "wand");
 		else if (nn)
 			sprintf(buf, "wand of %s", actualn);
@@ -465,7 +486,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 			sprintf(buf, "%s wand", dn);
 		break;
 	case SPBOOK_CLASS:
-		if (!obj->dknown) {
+		if (!dknown) {
 			strcpy(buf, "spellbook");
 		} else if (nn) {
 			if (typ != SPE_BOOK_OF_THE_DEAD)
@@ -477,7 +498,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 			sprintf(buf, "%s spellbook", dn);
 		break;
 	case RING_CLASS:
-		if (!obj->dknown)
+		if (!dknown)
 			strcpy(buf, "ring");
 		else if (nn)
 			sprintf(buf, "ring of %s", actualn);
@@ -490,7 +511,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 	    {
 		const char *rock =
 			    (ocl->oc_material == MINERAL) ? "stone" : "gem";
-		if (!obj->dknown) {
+		if (!dknown) {
 		    strcpy(buf, rock);
 		} else if (!nn) {
 		    if (un) sprintf(buf,"%s called %s", rock, un);
@@ -506,7 +527,7 @@ static char *xname2(struct obj *obj, boolean ignore_oquan)
 	}
 	if (!ignore_oquan && obj->quan != 1L) strcpy(buf, makeplural(buf));
 
-	if (obj->onamelth && obj->dknown) {
+	if (obj->onamelth && dknown) {
 		strcat(buf, " named ");
 nameit:
 		strcat(buf, ONAME(obj));
@@ -517,7 +538,7 @@ nameit:
 }
 
 /* xname() output augmented for multishot missile feedback */
-char *mshot_xname(struct obj *obj)
+char *mshot_xname(const struct obj *obj)
 {
     char tmpbuf[BUFSZ];
     char *onm = xname(obj);
@@ -546,7 +567,7 @@ boolean the_unique_obj(const struct obj *obj)
 			 (obj->known || obj->otyp == AMULET_OF_YENDOR));
 }
 
-static void add_erosion_words(struct obj *obj, char *prefix)
+static void add_erosion_words(const struct obj *obj, char *prefix)
 {
 	boolean iscrys = (obj->otyp == CRYSKNIFE);
 
@@ -579,7 +600,8 @@ static void add_erosion_words(struct obj *obj, char *prefix)
 		       is_flammable(obj) ? "fireproof " : "");
 }
 
-char *doname(struct obj *obj)
+
+static char *doname_base(const struct obj *obj, boolean with_price)
 {
 	boolean ispoisoned = FALSE;
 	char prefix[PREFIX];
@@ -790,6 +812,10 @@ ring:
 			quotedprice += contained_cost(obj, shkp, 0L, FALSE, TRUE);
 		sprintf(eos(bp), " (unpaid, %ld %s)",
 			quotedprice, currency(quotedprice));
+	} else if (with_price) {
+		int price = shop_item_cost(obj);
+		if (price > 0)
+		    sprintf(eos(bp), " (%d %s)", price, currency(price));
 	}
 	if (!strncmp(prefix, "a ", 2) &&
 			strchr(vowels, *(prefix+2) ? *(prefix+2) : *bp)
@@ -802,6 +828,18 @@ ring:
 	}
 	bp = strprepend(bp, prefix);
 	return bp;
+}
+
+
+char *doname(const struct obj *obj)
+{
+    return doname_base(obj, FALSE);
+}
+
+
+char *doname_price(const struct obj *obj)
+{
+    return doname_base(obj, TRUE);
 }
 
 
@@ -855,7 +893,7 @@ char *corpse_xname(const struct obj *otmp,
 
 
 /* xname, unless it's a corpse, then corpse_xname(obj, FALSE) */
-char *cxname(struct obj *obj)
+char *cxname(const struct obj *obj)
 {
 	if (obj->otyp == CORPSE)
 	    return corpse_xname(obj, FALSE);
@@ -865,7 +903,7 @@ char *cxname(struct obj *obj)
 
 /* xname, unless it's a corpse, then corpse_xname(obj, TRUE)
  * but ignore the quantity in either case */
-char *cxname2(struct obj *obj)
+char *cxname2(const struct obj *obj)
 {
 	if (obj->otyp == CORPSE)
 	    return corpse_xname(obj, TRUE);
@@ -874,16 +912,18 @@ char *cxname2(struct obj *obj)
 
 
 /* treat an object as fully ID'd when it might be used as reason for death */
-char *killer_xname(struct obj *obj)
+char *killer_xname(const struct obj *obj_orig)
 {
-    struct obj saved_obj;
+    struct obj *obj;
     unsigned save_ocknown;
     char *buf, *save_ocuname;
+    int osize;
 
-    /* remember original settings for core of the object;
-       oname and oattached extensions don't matter here--since they
-       aren't modified they don't need to be saved and restored */
-    saved_obj = *obj;
+    /* copy the object. */
+    osize = sizeof(struct obj) + obj_orig->onamelth + obj_orig->oxlth;
+    obj = malloc(osize);
+    memcpy(obj, obj_orig, osize);
+    
     /* killer name should be more specific than general xname; however, exact
        info like blessed/cursed and rustproof makes things be too verbose */
     obj->known = obj->dknown = 1;
@@ -907,15 +947,15 @@ char *killer_xname(struct obj *obj)
 
     objects[obj->otyp].oc_name_known = save_ocknown;
     objects[obj->otyp].oc_uname = save_ocuname;
-    *obj = saved_obj;	/* restore object's core settings */
-
+    
+    free(obj);
     return buf;
 }
 
 /*
  * Used if only one of a collection of objects is named (e.g. in eat.c).
  */
-const char *singular(struct obj *otmp, char *(*func)(struct obj*))
+const char *singular(struct obj *otmp, char *(*func)(const struct obj*))
 {
 	long savequan;
 	char *nam;
@@ -1020,7 +1060,7 @@ char *The(const char *str)
 }
 
 /* returns "count cxname(otmp)" or just cxname(otmp) if count == 1 */
-char *aobjnam(struct obj *otmp, const char *verb)
+char *aobjnam(const struct obj *otmp, const char *verb)
 {
 	char *bp = cxname(otmp);
 	char prefix[PREFIX];
@@ -1038,7 +1078,7 @@ char *aobjnam(struct obj *otmp, const char *verb)
 }
 
 /* like aobjnam, but prepend "The", not count, and use xname */
-char *Tobjnam(struct obj *otmp, const char *verb)
+char *Tobjnam(const struct obj *otmp, const char *verb)
 {
 	char *bp = The(xname(otmp));
 
@@ -1050,7 +1090,7 @@ char *Tobjnam(struct obj *otmp, const char *verb)
 }
 
 /* return form of the verb (input plural) if xname(otmp) were the subject */
-char *otense(struct obj *otmp, const char *verb)
+char *otense(const struct obj *otmp, const char *verb)
 {
 	char *buf;
 
@@ -1173,7 +1213,7 @@ char *vtense(const char *subj, const char *verb)
 }
 
 /* capitalized variant of doname() */
-char *Doname2(struct obj *obj)
+char *Doname2(const struct obj *obj)
 {
 	char *s = doname(obj);
 
@@ -1182,7 +1222,7 @@ char *Doname2(struct obj *obj)
 }
 
 /* returns "your xname(obj)" or "Foobar's xname(obj)" or "the xname(obj)" */
-char *yname(struct obj *obj)
+char *yname(const struct obj *obj)
 {
 	char *outbuf = nextobuf();
 	char *s = shk_your(outbuf, obj);	/* assert( s == outbuf ); */
@@ -1192,7 +1232,7 @@ char *yname(struct obj *obj)
 }
 
 /* capitalized variant of yname() */
-char *Yname2(struct obj *obj)
+char *Yname2(const struct obj *obj)
 {
 	char *s = yname(obj);
 
@@ -1204,7 +1244,7 @@ char *Yname2(struct obj *obj)
  * or "Foobar's simple_typename(obj->otyp)"
  * or "the simple_typename(obj-otyp)"
  */
-char *ysimple_name(struct obj *obj)
+char *ysimple_name(const struct obj *obj)
 {
 	char *outbuf = nextobuf();
 	char *s = shk_your(outbuf, obj);	/* assert( s == outbuf ); */
@@ -2622,7 +2662,7 @@ static const char *Japanese_item_name(int i)
 	return NULL;
 }
 
-const char *cloak_simple_name(struct obj *cloak)
+const char *cloak_simple_name(const struct obj *cloak)
 {
     if (cloak) {
 	switch (cloak->otyp) {
@@ -2640,7 +2680,7 @@ const char *cloak_simple_name(struct obj *cloak)
     return "cloak";
 }
 
-const char *mimic_obj_name(struct monst *mtmp)
+const char *mimic_obj_name(const struct monst *mtmp)
 {
 	if (mtmp->m_ap_type == M_AP_OBJECT && mtmp->mappearance != STRANGE_OBJECT) {
 		int idx = objects[mtmp->mappearance].oc_descr_idx;

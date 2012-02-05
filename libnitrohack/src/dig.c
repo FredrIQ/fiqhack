@@ -1368,4 +1368,42 @@ void rot_corpse(void *arg, long timeout)
 	else if (in_invent) update_inventory();
 }
 
+
+void save_dig_status(struct memfile *mf)
+{
+    mfmagic_set(mf, DIG_MAGIC);
+    mwrite32(mf, digging.effort);
+    mwrite32(mf, digging.lastdigtime);
+    mwrite8(mf, digging.level.dnum);
+    mwrite8(mf, digging.level.dlevel);
+    mwrite8(mf, digging.pos.x);
+    mwrite8(mf, digging.pos.y);
+    mwrite8(mf, digging.down);
+    mwrite8(mf, digging.chew);
+    mwrite8(mf, digging.warned);
+    mwrite8(mf, digging.quiet);
+}
+
+
+void restore_dig_status(struct memfile *mf)
+{
+    mfmagic_check(mf, DIG_MAGIC);
+    digging.effort = mread32(mf);
+    digging.lastdigtime = mread32(mf);
+    digging.level.dnum = mread8(mf);
+    digging.level.dlevel = mread8(mf);
+    digging.pos.x = mread8(mf);
+    digging.pos.y = mread8(mf);
+    digging.down = mread8(mf);
+    digging.chew = mread8(mf);
+    digging.warned = mread8(mf);
+    digging.quiet = mread8(mf);
+}
+
+
+void reset_dig_status(void)
+{
+    memset(&digging, 0, sizeof(digging));
+}
+
 /*dig.c*/

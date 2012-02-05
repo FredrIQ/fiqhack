@@ -374,7 +374,7 @@ void probe_monster(struct monst *mtmp)
  * from turn to turn.  This function returns FALSE if the position
  * is not available or subject to the constraints above.
  */
-boolean get_obj_location(struct obj *obj, xchar *xp, xchar *yp, int locflags)
+boolean get_obj_location(const struct obj *obj, xchar *xp, xchar *yp, int locflags)
 {
 	switch (obj->where) {
 	    case OBJ_INVENT:
@@ -3937,6 +3937,7 @@ retry:
 	u.uconduct.wishes++;
 
 	if (otmp != &zeroobj) {
+	    examine_object(otmp);
 	    /* The(aobjnam()) is safe since otmp is unidentified -dlc */
 	    hold_another_object(otmp, u.uswallow ?
 				       "Oops!  %s out of your reach!" :

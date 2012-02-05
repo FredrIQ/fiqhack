@@ -197,6 +197,8 @@ struct curses_drawing_info {
     int num_expltypes;
     int num_zaptypes;
     int num_effects;
+    
+    int bg_feature_offset;
 };
 
 /*

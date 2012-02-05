@@ -423,7 +423,7 @@ static void ccmd_get_drawing_info(json_t *params)
 	exit_client("non-empty parameter list for get_drawing_info");
     
     di = nh_get_drawing_info();
-    jobj = json_pack("{si,si,si,si,si,si,si,si}",
+    jobj = json_pack("{si,si,si,si,si,si,si,si,si}",
 		     "num_bgelements", di->num_bgelements,
 		     "num_traps", di->num_traps,
 		     "num_objects", di->num_objects,
@@ -431,7 +431,8 @@ static void ccmd_get_drawing_info(json_t *params)
 		     "num_warnings", di->num_warnings,
 		     "num_expltypes", di->num_expltypes,
 		     "num_zaptypes", di->num_zaptypes,
-		     "num_effects", di->num_effects);
+		     "num_effects", di->num_effects,
+		     "feature_offset", di->bg_feature_offset);
     json_object_set_new(jobj, "bgelements", json_symarray(di->bgelements, di->num_bgelements));
     json_object_set_new(jobj, "traps", json_symarray(di->traps, di->num_traps));
     json_object_set_new(jobj, "objects", json_symarray(di->objects, di->num_objects));

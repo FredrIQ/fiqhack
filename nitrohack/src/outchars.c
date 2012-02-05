@@ -174,6 +174,7 @@ static struct curses_drawing_info *load_nh_drawing_info(const struct nh_drawing_
     copy->num_expltypes = orig->num_expltypes;
     copy->num_zaptypes = orig->num_zaptypes;
     copy->num_effects = orig->num_effects;
+    copy->bg_feature_offset = orig->bg_feature_offset;
     
     copy->bgelements = load_nh_symarray(orig->bgelements, orig->num_bgelements);
     copy->traps = load_nh_symarray(orig->traps, orig->num_traps);
@@ -436,8 +437,7 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms)
     
     /* omit the background symbol from the list if it is boring */
     if (count == 0 ||
-	default_drawing->bgelements[dbe->bg].ch == '<' ||
-	default_drawing->bgelements[dbe->bg].ch == '>')
+	dbe->bg >= cur_drawing->bg_feature_offset)
 	syms[count++] = cur_drawing->bgelements[dbe->bg];
 
     return count; /* count <= 4 */

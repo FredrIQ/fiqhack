@@ -505,6 +505,12 @@ struct nh_drawing_info {
     int num_expltypes;
     int num_zaptypes;
     int num_effects;
+    
+    /* bg contains boring elements (floor, walls, stone) and interesting ones
+     * (dungeon features like stairs, altars, etc). In some situations it is
+     * useful to know which is which: all elements with ids < bg_feature_offset
+     * are boring. */
+    int bg_feature_offset;
 };
 
 #define NUMEXPCHARS 9 /* explosions fill a 3x3 grid */
