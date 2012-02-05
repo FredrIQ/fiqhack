@@ -711,7 +711,7 @@ const char *rndmonnam(void)
 	int name;
 
 	do {
-	    name = rn1(SPECIAL_PM + SIZE(bogusmons) - LOW_PM, LOW_PM);
+	    name = display_rng(SPECIAL_PM + SIZE(bogusmons) - LOW_PM) + LOW_PM;
 	} while (name < SPECIAL_PM &&
 	    (type_is_pname(&mons[name]) || (mons[name].geno & G_NOGEN)));
 
@@ -752,7 +752,7 @@ static const char * const hcolors[] = {
 const char *hcolor(const char *colorpref)
 {
 	return (Hallucination || !colorpref) ?
-		hcolors[rn2(SIZE(hcolors))] : colorpref;
+		hcolors[display_rng(SIZE(hcolors))] : colorpref;
 }
 
 /* return a random real color unless hallucinating */
@@ -784,7 +784,7 @@ char *coyotename(const struct monst *mtmp, char *buf)
     if (mtmp && buf) {
 	sprintf(buf, "%s - %s",
 	    x_monnam(mtmp, ARTICLE_NONE, NULL, 0, TRUE),
-	    mtmp->mcan ? coynames[SIZE(coynames)-1] : coynames[rn2(SIZE(coynames)-1)]);
+	    mtmp->mcan ? coynames[SIZE(coynames)-1] : coynames[display_rng(SIZE(coynames)-1)]);
     }
     return buf;
 }

@@ -124,6 +124,7 @@ void restore_mt_state(struct memfile *mf)
 
 
 /* A special-purpose rng for random_monster(), random_object(), random_trap()
+ * and coyotename()
  * These functions are used for displaying hallucinated things.
  * Re-using "used up" random values is not a problem for that and is preferable
  * to messing with the system rng, while running a second mt with it's own state
