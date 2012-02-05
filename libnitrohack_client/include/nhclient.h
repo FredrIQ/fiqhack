@@ -27,7 +27,7 @@
 #endif
 #include <jansson.h>
 
-#define DEFAULT_PORT 7115 /* matches the definition in nhserver.h */
+#define DEFAULT_PORT 7116 /* matches the definition in nhserver.h */
 
 extern struct nh_window_procs windowprocs, alt_windowprocs;
 extern int current_game;

@@ -227,7 +227,8 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 	    int pass, lo_x, lo_y, hi_x, hi_y;
 	    matching = malloc(default_drawing->num_bgelements);
 	    memset(matching, 0, default_drawing->num_bgelements);
-	    for (sidx = 1; sidx < default_drawing->num_bgelements; sidx++)
+	    for (sidx = default_drawing->bg_feature_offset;
+		 sidx < default_drawing->num_bgelements; sidx++)
 		if (key == default_drawing->bgelements[sidx].ch)
 		    matching[sidx] = (char) ++k;
 	    if (k) {

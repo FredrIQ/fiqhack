@@ -61,38 +61,39 @@ const char * const defexplain[] = {
 /*10*/	"wall",			/* tdwall */
 	"wall",			/* tlwall */
 	"wall",			/* trwall */
+	"corridor",		/* dark corr */
+	"lit corridor",		/* lit corr */
+	"the floor of a room",	/* room */
+	"dark part of a room",	/* darkroom */
+	"water",		/* pool */
+	"air",			/* open air */
+	"cloud",		/* [part of] a cloud */
+/*20*/	"water",		/* under water */
+	"ice",			/* ice */
+	"molten lava",		/* lava */
 	"doorway",		/* ndoor */
+	/* "features" start here */
 	"open door",		/* vodoor */
 	"open door",		/* hodoor */
 	"closed door",		/* vcdoor */
 	"closed door",		/* hcdoor */
 	"iron bars",		/* bars */
 	"tree",			/* tree */
-/*20*/	"the floor of a room",	/* room */
-	"dark part of a room",	/* darkroom */
-	"corridor",		/* dark corr */
-	"lit corridor",		/* lit corr */
-	"staircase up",		/* upstair */
+/*30*/	"staircase up",		/* upstair */
 	"staircase down",	/* dnstair */
 	"ladder up",		/* upladder */
 	"ladder down",		/* dnladder */
         "long ladder up",       /* upsstair */
         "long ladder down",     /* dnsstair */
-/*30*/	"altar",		/* altar */
+	"altar",		/* altar */
 	"grave",		/* grave */
 	"opulent throne",	/* throne */
 	"sink",			/* sink */
-	"fountain",		/* fountain */
-	"water",		/* pool */
-	"ice",			/* ice */
-	"molten lava",		/* lava */
+/*40*/	"fountain",		/* fountain */
 	"lowered drawbridge",	/* vodbridge */
 	"lowered drawbridge",	/* hodbridge */
-/*40*/	"raised drawbridge",	/* vcdbridge */
+	"raised drawbridge",	/* vcdbridge */
 	"raised drawbridge",	/* hcdbridge */
-	"air",			/* open air */
-	"cloud",		/* [part of] a cloud */
-	"water"			/* under water */
 };
 
 
@@ -139,38 +140,39 @@ const struct nh_symdef defsyms[] = {
 /*10*/	{'-', "tdwall",		CLR_GRAY},
 	{'|', "tlwall",		CLR_GRAY},
 	{'|', "trwall",		CLR_GRAY},
+	{'#', "corr",		CLR_GRAY},
+	{'#', "litcorr",	CLR_WHITE},
+	{'.', "room",		CLR_GRAY},
+	{'.', "darkroom",	CLR_BLACK},
+	{'}', "pool",		CLR_BLUE},
+	{' ', "air",		CLR_CYAN},
+	{'#', "cloud",		CLR_GRAY},
+/*20*/	{'}', "water",		CLR_BLUE},
+	{'.', "ice",		CLR_CYAN},
+	{'}', "lava",		CLR_RED},
 	{'.', "ndoor",		CLR_GRAY},
+	
 	{'-', "vodoor",		CLR_BROWN},
 	{'|', "hodoor",		CLR_BROWN},
 	{'+', "vcdoor",		CLR_BROWN},
 	{'+', "hcdoor",		CLR_BROWN},
 	{'#', "bars",		HI_METAL},
 	{'#', "tree",		CLR_GREEN},
-/*20*/	{'.', "room",		CLR_GRAY},
-	{'.', "darkroom",	CLR_BLACK},
-	{'#', "corr",		CLR_GRAY},
-	{'#', "litcorr",	CLR_WHITE},
-	{'<', "upstair",	CLR_GRAY},
+/*30*/	{'<', "upstair",	CLR_GRAY},
 	{'>', "dnstair",	CLR_GRAY},
 	{'<', "upladder",	CLR_BROWN},
 	{'>', "dnladder",	CLR_BROWN},
 	{'<', "upsstair",	CLR_YELLOW},
 	{'>', "dnsstair",	CLR_YELLOW},
-/*30*/	{'_', "altar",		CLR_GRAY},
+	{'_', "altar",		CLR_GRAY},
 	{'|', "grave",		CLR_GRAY},
 	{'\\',"throne",		HI_GOLD},
 	{'#', "sink",		CLR_GRAY},
-	{'{', "fountain",	CLR_BLUE},
-	{'}', "pool",		CLR_BLUE},
-	{'.', "ice",		CLR_CYAN},
-	{'}', "lava",		CLR_RED},
+/*40*/	{'{', "fountain",	CLR_BLUE},
 	{'.', "vodbridge",	CLR_BROWN},
 	{'.', "hodbridge",	CLR_BROWN},
-/*40*/	{'#', "vcdbridge",	CLR_BROWN},
-	{'#', "hcdbridge",	CLR_BROWN},
-	{' ', "air",		CLR_CYAN},
-	{'#', "cloud",		CLR_GRAY},
-	{'}', "water",		CLR_BLUE}
+	{'#', "vcdbridge",	CLR_BROWN},
+	{'#', "hcdbridge",	CLR_BROWN}
 };
 
 static const struct nh_symdef trapsyms[] = {
@@ -387,6 +389,8 @@ struct nh_drawing_info *nh_get_drawing_info(void)
     di->effects = (struct nh_symdef *)effectsyms;
     
     di->swallowsyms = (struct nh_symdef *)swallowsyms;
+    
+    di->bg_feature_offset = DUNGEON_FEATURE_OFFSET;
     
     return di;
 }
