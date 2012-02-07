@@ -638,12 +638,14 @@ void calc_attr_bonus(void)
 		uarmg /* gloves */,
 		uright/* right ring */,
 		uleft /* left ring */,
-		NULL
 	};
 	
 	memset(u.abon.a, 0, sizeof(u.abon.a));
 	
-	for (i = 0; abon_items[i]; i++) {
+	for (i = 0; i < SIZE(abon_items); i++) {
+		if (!abon_items[i])
+		    continue;
+		
 		spe = abon_items[i]->spe;
 		switch (abon_items[i]->otyp) {
 			case RIN_GAIN_STRENGTH:

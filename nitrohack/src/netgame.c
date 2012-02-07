@@ -453,10 +453,6 @@ static void netgame_mainmenu(struct server_info *server)
     int n = 1, logoheight, i;
     const char **nhlogo;
     char verstr[32], server_verstr[32];
-    
-    sprintf(verstr, "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
-    sprintf(server_verstr, "Server version: %d.%d.%d", nhnet_server_ver.major,
-	    nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
 
     static struct nh_menuitem netmenu_items[] = {
 	{NEWGAME, MI_NORMAL, "new game", 'n'},
@@ -467,6 +463,10 @@ static void netgame_mainmenu(struct server_info *server)
 	{ACCOUNT, MI_NORMAL, "account settings", 'a'},
 	{DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x'}
     };
+    
+    sprintf(verstr, "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+    sprintf(server_verstr, "Server version: %d.%d.%d", nhnet_server_ver.major,
+	    nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
     
     while (n > 0) {
 	if (COLS >= 100)
