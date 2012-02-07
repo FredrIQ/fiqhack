@@ -251,8 +251,9 @@ int do_naming(void)
 	init_menulist(&menu);
 
 	add_menuitem(&menu, 1, "Name a monster", 'C', FALSE);
-	add_menuitem(&menu, 2, "Name an individual item", 'y', FALSE);
-	add_menuitem(&menu, 3, "Name all items of a certain type", 'n', FALSE);
+	add_menuitem(&menu, 2, "Name the current level", 'f', FALSE);
+	add_menuitem(&menu, 3, "Name an individual item", 'y', FALSE);
+	add_menuitem(&menu, 4, "Name all items of a certain type", 'n', FALSE);
 
 	n = display_menu(menu.items, menu.icount, "What do you wish to name?",
 			PICK_ONE, selected);
@@ -268,13 +269,17 @@ int do_naming(void)
 		do_mname();
 		break;
 		
-		/* cases 1 & 2 duplicated from ddocall() */
 	    case 1:
+		donamelevel();
+		break;
+
+		/* cases 2 & 3 duplicated from ddocall() */
+	    case 2:
 		obj = getobj(allowall, "name");
 		if(obj)
 		    do_oname(obj);
 		break;
-	    case 2:
+	    case 3:
 		obj = getobj(callable, "call");
 		if (obj) {
 		    /* behave as if examining it in inventory;
