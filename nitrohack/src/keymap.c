@@ -69,7 +69,7 @@ struct nh_cmd_desc builtin_commands[] = {
 
 struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
 static struct nh_cmd_desc *commandlist, *unknown_commands;
-static int cmdcount, unknown_count;
+static int cmdcount, unknown_count, unknown_size;
 static struct nh_cmd_desc *prev_cmd;
 static struct nh_cmd_arg prev_arg = {CMD_ARG_NONE}, next_command_arg;
 static nh_bool have_next_command = FALSE;
@@ -418,9 +418,11 @@ static nh_bool read_keymap(void)
 {
     fnchar filename[BUFSZ];
     char *data, *line, *endptr;
-    int fd, size, pos, key;
+    int fd, size, pos, key, i;
     struct nh_cmd_desc *cmd;
     nh_bool unknown;
+    struct nh_cmd_desc *unknown_commands_prev;
+    long ptrdiff;
     
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
@@ -460,11 +462,26 @@ static nh_bool read_keymap(void)
 	 */
 	if (!cmd && line[pos] != '-') {
 	    unknown = TRUE;
+	    if (unknown_count >= unknown_size) {
+		unknown_size = max(unknown_size * 2, 16);
+		unknown_commands_prev = unknown_commands;
+		unknown_commands = realloc(unknown_commands,
+					unknown_size * sizeof(struct nh_cmd_desc));
+		memset(&unknown_commands[unknown_count], 0,
+		       sizeof(struct nh_cmd_desc) * (unknown_size - unknown_count));
+		
+		/* since unknown_commands has been realloc'd, pointers must be
+		 * adjusted to point to the new list rather than free'd memory */
+		ptrdiff = (char*)unknown_commands - (char*)unknown_commands_prev;
+		for (i = 0; i < KEY_MAX; i++) {
+		    if (!unknown_keymap[i])
+			continue;
+		    
+		    unknown_keymap[i] = (void*)((char*)unknown_keymap[i] + ptrdiff);
+		}
+	    }
 	    unknown_count++;
-	    unknown_commands = realloc(unknown_commands,
-				       unknown_count * sizeof(struct nh_cmd_desc));
 	    cmd = &unknown_commands[unknown_count-1];
-	    memset(cmd, 0, sizeof(struct nh_cmd_desc));
 	    strncpy(cmd->name, &line[pos], sizeof(cmd->name));
 	    cmd->name[sizeof(cmd->name)-1] = '\0';
 	}
@@ -640,10 +657,12 @@ void free_keymap(void)
 {
     free(commandlist);
     commandlist = NULL;
+    cmdcount = 0;
     
     if (unknown_commands) {
 	free(unknown_commands);
 	unknown_commands = NULL;
+	unknown_size = unknown_count = 0;
     }
 }
 
@@ -664,7 +683,8 @@ static void add_keylist_command(struct nh_cmd_desc *cmd,
 		keys[kl++] = ' ';
 		keys[kl] = '\0';
 	    }
-	    strcat(keys, curses_keyname(i));
+	    strncat(keys, curses_keyname(i), BUFSZ - kl - 1);
+	    keys[BUFSZ-1] = '\0';
 	}
     }
     

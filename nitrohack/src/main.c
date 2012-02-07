@@ -119,11 +119,14 @@ static char** init_game_paths(const char *argv0)
     char *dir;
     int i;
     
-    dir = getenv("NITROHACKDIR");
-    if (!dir)
-	dir = getenv("HACKDIR");
-
 #if defined(UNIX)
+    if (getgid() == getegid()) {
+	dir = getenv("NITROHACKDIR");
+	if (!dir)
+	    dir = getenv("HACKDIR");
+    } else
+	dir = NULL;
+    
     if (!dir)
 	dir = NITROHACKDIR;
     

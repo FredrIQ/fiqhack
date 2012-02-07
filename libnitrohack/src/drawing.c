@@ -83,8 +83,8 @@ const char * const defexplain[] = {
 	"staircase down",	/* dnstair */
 	"ladder up",		/* upladder */
 	"ladder down",		/* dnladder */
-        "long ladder up",       /* upsstair */
-        "long ladder down",     /* dnsstair */
+        "long staircase up",	/* upsstair */
+        "long staircase down",	/* dnsstair */
 	"altar",		/* altar */
 	"grave",		/* grave */
 	"opulent throne",	/* throne */

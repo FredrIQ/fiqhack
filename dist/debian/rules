@@ -35,7 +35,7 @@ build-arch-stamp: #CONFIGURE_STAMP# #CONFIG_STATUS#
 	# build nitrohack
 	-mkdir build
 	cd build && \
-	cmake -DCMAKE_BUILD_TYPE=Release -DLIBDIR=/usr/lib -DDATADIR=/usr/lib/games/nitrohack -DBINDIR=/usr/bin .. && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DLIBDIR=/usr/lib -DDATADIR=/var/games/nitrohack -DBINDIR=/usr/bin .. && \
 	$(MAKE) all
 
 build-indep: build-indep-stamp
@@ -67,13 +67,17 @@ install-arch:
 	#INSTALL#
 
 	#install nitrohack
+	mkdir -p debian/nitrohack/var/games/nitrohack
+	chown root:games debian/nitrohack/var/games/nitrohack
+	chmod 0770 debian/nitrohack/var/games/nitrohack
+	
 	install -m 0644 -o root -g root libnitrohack/dat/license \
-	  debian/nitrohack/usr/lib/games/nitrohack/
+	  debian/nitrohack/var/games/nitrohack/
 
 	install -m 0644 -o root -g root build/libnitrohack/dat/nhdat \
-	  debian/nitrohack/usr/lib/games/nitrohack/
+	  debian/nitrohack/var/games/nitrohack/
 
-	install -m 0755 -o root -g root build/nitrohack/nitrohack \
+	install -m 2755 -o root -g games build/nitrohack/nitrohack \
 	  debian/nitrohack/usr/bin/
 
 	install -m 0755 -o root -g root build/libnitrohack/src/libnitrohack*.so \

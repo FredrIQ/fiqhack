@@ -27,7 +27,7 @@ static const int ydir[DIR_SELF+1] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
  * blinking.
  */
 #ifdef WIN32
-# define get_milliseconds GetTickCount()
+# define get_milliseconds GetTickCount
 #else
 static int get_milliseconds(void)
 {
