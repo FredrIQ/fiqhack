@@ -855,7 +855,7 @@ static boolean minimal_enlightenment(void)
 	buf[0] = buf2[0] = '\0';
 	add_menuheading(&menu, "Stats");
 
-	/* Starting and current name, race, role, gender, alignment */
+	/* Starting and current name, race, role, gender, alignment, abilities */
 	sprintf(buf, fmtstr_noorig, "name", plname);
 	add_menutext(&menu, buf);
 	sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun,
@@ -866,12 +866,23 @@ static boolean minimal_enlightenment(void)
                 urole.name.f : urole.name.m);
 	add_menutext(&menu, buf);
 	genidx = is_neuter(youmonst.data) ? 2 : flags.female;
-	sprintf(buf, fmtstr, "gender", genders[genidx].adj, genders[u.initgend].adj);
-	add_menutext(&menu, buf);
-	sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type),
+        sprintf(buf, fmtstr, "gender", genders[genidx].adj, genders[u.initgend].adj);
+        add_menutext(&menu, buf);
+        sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type),
                 align_str(u.ualignbase[A_ORIGINAL]));
-	add_menutext(&menu, buf);
-
+        add_menutext(&menu, buf);
+        if (ACURR(A_STR) > 18) {
+          if (ACURR(A_STR) > STR18(100))
+            sprintf(buf,"abilities : St:%2d ",ACURR(A_STR)-100);
+          else if (ACURR(A_STR) < STR18(100))
+            sprintf(buf, "abilities : St:18/%02d ",ACURR(A_STR)-18);
+          else
+            sprintf(buf,"abilities : St:18/** ");
+        } else
+          sprintf(buf, "abilities : St:%-1d ",ACURR(A_STR));
+        sprintf(eos(buf), "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+                ACURR(A_DEX), ACURR(A_CON), ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
+        add_menutext(&menu, buf);
         if (u.ulevel < 30)
           sprintf(buf, "%-10s: %d (exp: %d, %ld needed)", "level",
                   u.ulevel, u.uexp, newuexp(u.ulevel));
@@ -945,7 +956,7 @@ static boolean minimal_enlightenment(void)
         if (HPolymorph) add_menutext(&menu, "You are polymorhing.");
         if (HPolymorph_control) add_menutext(&menu, "You have polymorph control.");
         if (HFast) add_menutext(&menu, "You are fast.");
-        if (n == menu.icount) add_menutext(&menu, "You are rather mundane.");
+        if (n == menu.icount) add_menutext(&menu, "You have no intrinsic abilities.");
 
 	n = display_menu(menu.items, menu.icount, "Your Intrinsic Statistics",
                          PICK_NONE, NULL);
