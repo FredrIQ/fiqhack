@@ -58,8 +58,6 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"litcorr",	-1,	{0x2592, 0},	0},	/* ▒ medium shading */
     {"upladder",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
     {"dnladder",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
-    {"upsstair",-1,     {0x227E, 0},    0},     /* ≾ precedes-or-equivalent-to */
-    {"dnsstair",-1,     {0x227F, 0},    0},     /* ≿ succeeds-or-equivalent-to */
     {"altar",	-1,	{0x03A9, 0},	0},	/* Ω GREEK CAPITAL LETTER OMEGA */
     {"grave",	-1,	{0x2020, 0},	0},	/* † DAGGER */
     {"ice",	-1,	{0x00B7, 0},	0},	/* · centered dot */
@@ -90,6 +88,11 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"lava",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"water",	-1,	{0x224B, 0},	0},	/* ≋ triple tilde */
     {"tree",	-1,	{0x03a8, 0},	0},	/* Ψ GREEK CAPITAL LETTER PSI */
+    {"upsstair",-1,     {0x227E, 0},    0},     /* ≾ precedes-or-equivalent-to */
+    {"dnsstair",-1,     {0x227F, 0},    0},     /* ≿ succeeds-or-equivalent-to */
+#else
+    {"upsstair",-1,	{0x2264, 0},	0},	/* ≤ less-than-or-equals */
+    {"dnsstair",-1,	{0x2265, 0},	0},	/* ≥ greater-than-or-equals */
 #endif
     /* objects */
     {"boulder", -1,	{0x0030, 0},	0},	/* 0 zero */
