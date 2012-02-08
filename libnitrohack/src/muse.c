@@ -1536,8 +1536,8 @@ boolean find_misc(struct monst *mtmp, struct musable *m)
 			        (otmp->otyp == LOADSTONE ||
 				 otmp->owornmask))
 			    {
-			        m.misc = obj;
-			        m.has_misc = MUSE_SCR_REMOVE_CURSE;
+			        m->misc = obj;
+			        m->has_misc = MUSE_SCR_REMOVE_CURSE;
 			    } 
 			}
 		}

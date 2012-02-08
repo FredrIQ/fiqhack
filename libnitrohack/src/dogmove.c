@@ -628,6 +628,7 @@ int dog_move(struct monst *mtmp,
 	int chi = -1, nidist, ndist;
 	coord poss[9];
 	long info[9], allowflags;
+        struct musable m;
 #define GDIST(x,y) (dist2(x,y,gx,gy))
 
 	/*
@@ -711,21 +712,21 @@ int dog_move(struct monst *mtmp,
  * We haven't moved yet, so search for monsters to attack from a
  * distance and attack them if it's plausible.
  */
-	if (find_offensive(mtmp))
+	if (find_offensive(mtmp, &m))
 	{
-	    int ret = use_offensive(mtmp);
+          int ret = use_offensive(mtmp, &m);
 	    if (ret == 1) return 2; /* died */
 	    if (ret == 2) return 1; /* did something */
 	}
-	else if (find_defensive(mtmp))
+	else if (find_defensive(mtmp, &m))
 	{
-	    int ret = use_defensive(mtmp);
+            int ret = use_defensive(mtmp, &m);
 	    if (ret == 1) return 2; /* died */
 	    if (ret == 2) return 1; /* did something */
 	}
-	else if (find_misc(mtmp))
+	else if (find_misc(mtmp, &m))
 	{
-	    int ret = use_misc(mtmp);
+	    int ret = use_misc(mtmp, &m);
 	    if (ret == 1) return 2; /* died */
 	    if (ret == 2) return 1; /* did something */
 	}
