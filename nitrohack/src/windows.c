@@ -368,6 +368,7 @@ int nh_wgetch(WINDOW *win)
 {
     int key = 0;
     
+    doupdate(); /* required by pdcurses, noop for ncurses */
     do {
 	key = wgetch(win);
 #ifdef UNIX
