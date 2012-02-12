@@ -535,7 +535,8 @@ void savefruitchn(struct memfile *mf)
 	
 	mfmagic_set(mf, FRUITCHAIN_MAGIC);
 	for (f1 = ffruit; f1; f1 = f1->nextf)
-	    count++;
+	    if (f1->fid >= 0)
+		count++;
 	mwrite32(mf, count);
 
 	for (f1 = ffruit; f1; f1 = f1->nextf) {
