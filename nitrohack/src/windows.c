@@ -80,6 +80,11 @@ void init_curses_ui(void)
 #if defined(PDCURSES)
     PDC_set_title("NitroHack");
 #if defined(WIN32)
+    /* Force the console to use codepage 437. This seems to be the default
+     * on european windows, but not on asian systems. Aparrently there is no
+     * such thing as a Unicode console in windows (EPIC FAIL!) and all output
+     * characters are always transformed according to a code page. */
+    SetConsoleOutputCP(437);
     if (settings.win_height > 0 && settings.win_width > 0)
 	resize_term(settings.win_height, settings.win_width);
 #endif
