@@ -576,6 +576,7 @@ void freedynamicdata(void)
 
 	for (i = 0; i < MAXLINFO; i++) {
 	    lev = levels[i];
+	    levels[i] = NULL;
 	    if (!lev) continue;
 	    
 	    /* level-specific data */
