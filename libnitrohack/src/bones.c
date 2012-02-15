@@ -74,7 +74,6 @@ static void resetobjs(struct obj *ochain, boolean restore)
 					|| is_quest_artifact(otmp))))) {
 			otmp->oartifact = 0;
 			otmp->onamelth = 0;
-			*ONAME(otmp) = '\0';
 		} else if (otmp->oartifact && restore)
 			artifact_exists(otmp,ONAME(otmp),TRUE);
 		if (!restore) {
@@ -380,8 +379,7 @@ int getbones(d_level *levnum)
 			trickery(errbuf);
 		} else {
 			struct monst *mtmp;
-
-			struct level *lev = getlev(&mf, 0, TRUE);
+			struct level *lev = getlev(&mf, ledger_no(levnum), TRUE);
 
 			/* Note that getlev() now keeps tabs on unique
 			 * monsters such as demon lords, and tracks the

@@ -116,7 +116,7 @@ static char** init_game_paths(const char *argv0)
     char dirbuf[1024], docpath[MAX_PATH], *pos;
 #endif
     char **pathlist = malloc(sizeof(char*) * PREFIX_COUNT);
-    char *dir;
+    char *dir = NULL;
     int i;
     
 #if defined(UNIX)
@@ -137,6 +137,7 @@ static char** init_game_paths(const char *argv0)
 	pathlist[DUMPPREFIX] = "./";
     
 #elif defined(WIN32)
+    dir = getenv("NITROHACKDIR");
     if (!dir) {
 	strncpy(dirbuf, argv0, 1023);
 	pos = strrchr(dirbuf, '\\');
