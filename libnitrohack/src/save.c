@@ -549,7 +549,8 @@ void savefruitchn(struct memfile *mf)
 	
 	mfmagic_set(mf, FRUITCHAIN_MAGIC);
 	for (f1 = ffruit; f1; f1 = f1->nextf)
-	    count++;
+	    if (f1->fid >= 0)
+		count++;
 	mwrite32(mf, count);
 
 	for (f1 = ffruit; f1; f1 = f1->nextf) {
@@ -589,6 +590,7 @@ void freedynamicdata(void)
 
 	for (i = 0; i < MAXLINFO; i++) {
 	    lev = levels[i];
+	    levels[i] = NULL;
 	    if (!lev) continue;
 	    
 	    /* level-specific data */

@@ -931,7 +931,7 @@ static nh_bool do_item_actions(char invlet)
     i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE, selected);
     free(items);
     
-    if (!i)
+    if (i <= 0)
 	return FALSE;
     
     arg.argtype = CMD_ARG_OBJ;

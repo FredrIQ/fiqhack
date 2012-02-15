@@ -683,8 +683,6 @@ struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 	unsigned int lflags;
 	struct level *lev;
 	
-	mfmagic_check(mf, LEVEL_MAGIC);
-	
 	if (ghostly)
 	    clear_id_mapping();
 
@@ -693,6 +691,9 @@ struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 	 */
 	if (ghostly) oldfruit = loadfruitchn(mf);
 
+	/* for bones files, there is fruit chain data before the level data */
+	mfmagic_check(mf, LEVEL_MAGIC);
+	
 	if (levels[levnum])
 	    panic("Unsupported: trying to restore level %d which already exists.\n", levnum);
 	lev = levels[levnum] = alloc_level(NULL);
