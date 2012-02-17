@@ -22,7 +22,7 @@ static void use_candle(struct obj **);
 static void use_lamp(struct obj *);
 static void light_cocktail(struct obj *);
 static void use_tinning_kit(struct obj *);
-static void use_figurine(struct obj **);
+static boolean use_figurine(struct obj *obj);
 static void use_grease(struct obj *);
 static void use_trap(struct obj *);
 static void use_stone(struct obj *);
@@ -1616,9 +1616,8 @@ static boolean figurine_location_checks(struct obj *obj, coord *cc, boolean quie
 }
 
 
-static void use_figurine(struct obj **optr)
+static boolean use_figurine(struct obj *obj)
 {
-	struct obj *obj = *optr;
 	xchar x, y;
 	coord cc;
 	schar dx, dy, dz;
@@ -1626,11 +1625,11 @@ static void use_figurine(struct obj **optr)
 	if (u.uswallow) {
 		/* can't activate a figurine while swallowed */
 		if (!figurine_location_checks(obj, NULL, FALSE))
-			return;
+			return FALSE;
 	}
 	if (!getdir(NULL, &dx, &dy, &dz)) {
 		flags.move = multi = 0;
-		return;
+		return FALSE;
 	}
 	
 	x = u.ux + dx;
@@ -1640,7 +1639,7 @@ static void use_figurine(struct obj **optr)
 	
 	/* Passing FALSE arg here will result in messages displayed */
 	if (!figurine_location_checks(obj, &cc, FALSE))
-	    return;
+	    return FALSE;
 	pline("You %s and it transforms.",
 	    (dx || dy) ? "set the figurine beside you" :
 	    (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
@@ -1652,7 +1651,8 @@ static void use_figurine(struct obj **optr)
 	make_familiar(obj, cc.x, cc.y, FALSE);
 	stop_timer(obj->olev, FIG_TRANSFORM, obj);
 	useup(obj);
-	*optr = 0;
+	
+	return TRUE;
 }
 
 static const char lubricables[] = { ALL_CLASSES, ALLOW_NONE, 0 };
@@ -2775,7 +2775,8 @@ int doapply(struct obj *obj)
 		goto xit;
 
 	case FIGURINE:
-		use_figurine(&obj);
+		if (use_figurine(obj))
+		    obj = NULL; /* used up */
 		break;
 	case UNICORN_HORN:
 		use_unicorn_horn(obj);
@@ -2852,7 +2853,7 @@ int doapply(struct obj *obj)
 		nomul(0, NULL);
 		return 0;
 	}
-	if (res && obj->oartifact) arti_speak(obj);
+	if (res && obj && obj->oartifact) arti_speak(obj);
 	nomul(0, NULL);
 	return res;
 }
