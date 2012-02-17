@@ -1696,7 +1696,10 @@ static void overview_scan(const struct level *lev, struct overview_info *oi)
 			
 		    case S_room:
 			rnum = lev->locations[x][y].roomno;
-			rtyp = lev->rooms[rnum].rtype;
+			if (rnum < ROOMOFFSET)
+			    break;
+			
+			rtyp = lev->rooms[rnum - ROOMOFFSET].rtype;
 			if (rtyp >= SHOPBASE && !seen_shop[rnum]) {
 			    seen_shop[rnum] = TRUE;
 			    if (oi->shopcount == 0)
