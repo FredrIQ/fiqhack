@@ -49,11 +49,10 @@ static inline int dice(int n, int x)
 
 static inline int rne(int x)
 {
-	int tmp, utmp;
+	int tmp;
 
-	utmp = (u.ulevel < 15) ? 5 : u.ulevel/3;
 	tmp = 1;
-	while (tmp < utmp && !rn2(x))
+	while (tmp < 10 && !rn2(x))
 		tmp++;
 	return tmp;
 }

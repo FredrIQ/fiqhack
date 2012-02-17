@@ -1336,7 +1336,7 @@ boolean Invocation_lev(const d_level *lev)
 xchar level_difficulty(const d_level *dlev)
 {
 	if (In_endgame(dlev))
-		return (xchar)(depth(&sanctum_level) + u.ulevel/2);
+		return (xchar)(depth(&sanctum_level) + 15);
 	else
 		if (u.uhave.amulet)
 			return deepest_lev_reached(FALSE);
