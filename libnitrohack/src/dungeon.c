@@ -119,6 +119,8 @@ void save_dungeon(struct memfile *mf)
 {
     branch *curr;
     int    count, i;
+    
+    mfmagic_set(mf, DGN_MAGIC);
 
     mwrite(mf, &n_dgns, sizeof n_dgns);
     for (i = 0; i < n_dgns; i++)
@@ -187,6 +189,7 @@ void restore_dungeon(struct memfile *mf)
     branch *curr, *last;
     int    count, i;
 
+    mfmagic_check(mf, DGN_MAGIC);
     mread(mf, &n_dgns, sizeof(n_dgns));
     for (i = 0; i < n_dgns; i++)
 	restore_dungeon_struct(mf, &dungeons[i]);
