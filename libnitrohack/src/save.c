@@ -212,7 +212,6 @@ static void savegamestate(struct memfile *mf)
 	save_light_sources(mf, level, RANGE_GLOBAL);
 
 	saveobjchn(mf, invent);
-	saveobjchn(mf, migrating_objs);
 	savemonchn(mf, migrating_mons);
 	save_mvitals(mf);
 
@@ -597,7 +596,6 @@ void freedynamicdata(void)
 
 	/* game-state data */
 	free_objchn(invent);
-	free_objchn(migrating_objs);
 	free_monchn(migrating_mons);
 	free_monchn(mydogs);		/* ascension or dungeon escape */
 	free_animals();

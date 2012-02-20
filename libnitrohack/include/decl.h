@@ -194,7 +194,6 @@ extern int lastinvnr;
 
 extern struct obj *uchain;		/* defined only when punished */
 extern struct obj *uball;
-extern struct obj *migrating_objs;
 extern struct obj *book;
 extern struct obj zeroobj;		/* init'd and defined in decl.c */
 

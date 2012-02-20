@@ -347,9 +347,9 @@ extern boolean ghitm(struct monst *,struct obj *);
 extern void container_impact_dmg(struct obj *);
 extern int dokick(void);
 extern boolean ship_object(struct obj *,xchar,xchar,boolean);
-extern void obj_delivery(void);
 extern schar down_gate(xchar,xchar);
 extern void impact_drop(struct obj *,xchar,xchar,xchar);
+extern void deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where);
 
 /* ### dothrow.c ### */
 
@@ -898,7 +898,6 @@ extern void obj_extract_self(struct obj *);
 extern void extract_nobj(struct obj *, struct obj **);
 extern int add_to_minv(struct monst *, struct obj *);
 extern struct obj *add_to_container(struct obj *, struct obj *);
-extern void add_to_migration(struct obj *);
 extern void add_to_buried(struct obj *obj);
 extern void dealloc_obj(struct obj *);
 extern void obj_ice_effects(int, int, boolean);
