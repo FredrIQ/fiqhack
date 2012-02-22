@@ -15,19 +15,19 @@ static int is_valid_character(const struct nh_roles_info *ri, int rolenum,
     
     ok = 0;
     for (i = 0; i < ri->num_roles; i++) {
-	if (rolenum != ROLE_NONE && i != rolenum)
+	if (rolenum > ROLE_NONE && i != rolenum)
 	    continue;
 	
 	for (j = 0; j < ri->num_races; j++) {
-	    if (racenum != ROLE_NONE && j != racenum)
+	    if (racenum > ROLE_NONE && j != racenum)
 		continue;
 	    
 	    for (k = 0; k < ri->num_genders; k++) {
-		if (gendnum != ROLE_NONE && k != gendnum)
+		if (gendnum > ROLE_NONE && k != gendnum)
 		    continue;
 		
 		for (l = 0; l < ri->num_aligns; l++) {
-		    if (alignnum != ROLE_NONE && l != alignnum)
+		    if (alignnum > ROLE_NONE && l != alignnum)
 			continue;
 		    
 		    if (ri->matrix[nh_cm_idx((*ri), i, j, k, l)])
