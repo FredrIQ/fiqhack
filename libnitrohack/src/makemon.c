@@ -94,12 +94,14 @@ static boolean wrong_elem_type(const struct d_level *dlev, const struct permonst
 static void m_initgrp(struct monst *mtmp, struct level *lev, int x, int y, int n)
 {
 	coord mm;
-	int cnt = rnd(n);
+	int cnt = rnd(n), dl = level_difficulty(&lev->z);
 	struct monst *mon;
 	
-	/* Tuning: cut down on swarming at low character levels [mrs] */
-	cnt /= (u.ulevel < 3) ? 4 : (u.ulevel < 5) ? 2 : 1;
-	if (!cnt) cnt++;
+	/* Tuning: cut down on swarming at low depths */
+	if (dl > 0) {
+	    cnt /= (dl < 3) ? 4 : (dl < 5) ? 2 : 1;
+	    if (!cnt) cnt++;
+	}
 
 	mm.x = x;
 	mm.y = y;
@@ -1133,8 +1135,13 @@ const struct permonst *rndmonst(const d_level *dlev)
 	    zlevel = level_difficulty(dlev);
 	    /* determine the level of the weakest monster to make. */
 	    minmlev = zlevel / 6;
-	    /* determine the level of the strongest monster to make. */
-	    maxmlev = (zlevel + u.ulevel) / 2;
+	    /* determine the level of the strongest monster to make.
+	     * The strength of the initial inhabitants of the level does not
+	     * depend on the player level. */
+	    if (in_mklev)
+		maxmlev = zlevel;
+	    else
+		maxmlev = (zlevel + u.ulevel) / 2;
 	    upper = Is_rogue_level(dlev);
 	    elemlevel = In_endgame(dlev) && !Is_astralevel(dlev);
 
@@ -1255,7 +1262,7 @@ const struct permonst *mkclass(const d_level *dlev, char class, int spc)
 					&& !is_placeholder(&mons[first])) {
 		/* skew towards lower value monsters at lower exp. levels */
 		num -= mons[first].geno & G_FREQ;
-		if (num && adj_lev(dlev, &mons[first]) > (u.ulevel*2)) {
+		if (num && adj_lev(dlev, &mons[first]) > (level_difficulty(dlev)*2)) {
 		    /* but not when multiple monsters are same level */
 		    if (mons[first].mlevel != mons[first+1].mlevel)
 			num--;
@@ -1266,7 +1273,7 @@ const struct permonst *mkclass(const d_level *dlev, char class, int spc)
 	return &mons[first];
 }
 
-/* adjust strength of monsters based on u.uz and u.ulevel */
+/* adjust strength of monsters based on depth */
 int adj_lev(const d_level *dlev, const struct permonst *ptr)
 {
 	int	tmp, tmp2;
@@ -1280,15 +1287,15 @@ int adj_lev(const d_level *dlev, const struct permonst *ptr)
 		return tmp;
 	}
 
-	if ((tmp = ptr->mlevel) > 49) return 50; /* "special" demons/devils */
-	tmp2 = (level_difficulty(dlev) - tmp);
-	if (tmp2 < 0) tmp--;		/* if mlevel > u.uz decrement tmp */
-	else tmp += (tmp2 / 5);		/* else increment 1 per five diff */
+	tmp = ptr->mlevel;
+	if (ptr->mlevel > 49) return 50; /* "special" demons/devils */
+	tmp2 = (level_difficulty(dlev) - ptr->mlevel);
+	if (tmp2 < 0)
+	    tmp--;		/* if mlevel > u.uz decrement tmp */
+	else
+	    tmp += (tmp2 / 5);	/* else increment 1 per five diff */
 
-	tmp2 = (u.ulevel - ptr->mlevel);	/* adjust vs. the player */
-	if (tmp2 > 0) tmp += (tmp2 / 4);		/* level as well */
-
-	tmp2 = (3 * ((int) ptr->mlevel))/ 2;	/* crude upper limit */
+	tmp2 = (3 * ptr->mlevel)/ 2;	/* crude upper limit */
 	if (tmp2 > 49) tmp2 = 49;		/* hard upper limit */
 	return (tmp > tmp2) ? tmp2 : (tmp > 0 ? tmp : 0); /* 0 lower limit */
 }

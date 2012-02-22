@@ -74,7 +74,11 @@ typedef wchar_t fnchar;
 #endif
 
 #ifndef PDCURSES
-# include <ncursesw/curses.h>
+# ifndef HOMEBREW_CURSES
+#  include <ncursesw/curses.h>
+# else
+#  include <ncurses/curses.h>
+# endif
 #else
 # define PDC_WIDE
 # ifdef WIN32

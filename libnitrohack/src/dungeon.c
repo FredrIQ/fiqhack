@@ -119,6 +119,8 @@ void save_dungeon(struct memfile *mf)
 {
     branch *curr;
     int    count, i;
+    
+    mfmagic_set(mf, DGN_MAGIC);
 
     mwrite(mf, &n_dgns, sizeof n_dgns);
     for (i = 0; i < n_dgns; i++)
@@ -187,6 +189,7 @@ void restore_dungeon(struct memfile *mf)
     branch *curr, *last;
     int    count, i;
 
+    mfmagic_check(mf, DGN_MAGIC);
     mread(mf, &n_dgns, sizeof(n_dgns));
     for (i = 0; i < n_dgns; i++)
 	restore_dungeon_struct(mf, &dungeons[i]);
@@ -1336,7 +1339,7 @@ boolean Invocation_lev(const d_level *lev)
 xchar level_difficulty(const d_level *dlev)
 {
 	if (In_endgame(dlev))
-		return (xchar)(depth(&sanctum_level) + u.ulevel/2);
+		return (xchar)(depth(&sanctum_level) + 15);
 	else
 		if (u.uhave.amulet)
 			return deepest_lev_reached(FALSE);
@@ -1696,7 +1699,10 @@ static void overview_scan(const struct level *lev, struct overview_info *oi)
 			
 		    case S_room:
 			rnum = lev->locations[x][y].roomno;
-			rtyp = lev->rooms[rnum].rtype;
+			if (rnum < ROOMOFFSET)
+			    break;
+			
+			rtyp = lev->rooms[rnum - ROOMOFFSET].rtype;
 			if (rtyp >= SHOPBASE && !seen_shop[rnum]) {
 			    seen_shop[rnum] = TRUE;
 			    if (oi->shopcount == 0)
