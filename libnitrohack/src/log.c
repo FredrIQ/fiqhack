@@ -136,6 +136,18 @@ static void log_command_list(void)
 }
 
 
+long get_tz_offset(void)
+{
+#if !defined(__FreeBSD__)
+    tzset(); /* sets the extern "timezone" which has the offset from UTC in seconds */
+    return timezone;
+#else
+    time_t t = time(NULL);
+    return -localtime(&t)->tm_gmtoff;
+#endif
+}
+
+
 void log_newgame(int logfd, unsigned long long start_time,
 		 unsigned int seed, int playmode)
 {
@@ -165,8 +177,7 @@ void log_newgame(int logfd, unsigned long long start_time,
     log_command_list();
     log_game_opts();
     /* all the timestamps are UTC, so timezone info is required to interpret them */
-    tzset(); /* sets the extern "timezone" which has the offset from UTC in seconds */
-    log_timezone(timezone);
+    log_timezone(get_tz_offset());
 }
 
 

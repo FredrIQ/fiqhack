@@ -724,6 +724,7 @@ extern void log_objmenu(int n, struct nh_objresult *pick_list);
 extern void log_bones(const char *bonesbuf, int buflen);
 extern void log_finish(enum nh_log_status status);
 extern void log_truncate(void);
+extern long get_tz_offset(void);
 
 /* ### logreplay.c ### */
 

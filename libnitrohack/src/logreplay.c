@@ -202,6 +202,7 @@ void replay_begin(void)
 void replay_end(void)
 {
     int i;
+    long tz_off;
     if (!loginfo.mem)
 	return;
     
@@ -209,9 +210,9 @@ void replay_end(void)
     free(loginfo.tokens);
     memset(&loginfo, 0, sizeof(loginfo));
     
-    tzset(); /* sets the extern "timezone" which has the offset from UTC in seconds */
-    if (timezone != replay_timezone)
-	log_timezone(timezone);
+    tz_off = get_tz_offset();
+    if (tz_off != replay_timezone)
+	log_timezone(tz_off);
 
     /* restore saved options */
     for (i = 0; saved_options[i].name; i++)
