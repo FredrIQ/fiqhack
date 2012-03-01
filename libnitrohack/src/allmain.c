@@ -257,16 +257,6 @@ boolean nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     newgame();
     wd_message();
 
-    flags.move = 0;
-    set_wear();
-    pickup(1);
-    
-    log_command_result();
-    
-    program_state.game_running = TRUE;
-    youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
-    post_init_tasks();
-    
     api_exit();
     return TRUE;
     
@@ -279,7 +269,7 @@ err_out:
 enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
 				       boolean force_replay)
 {
-    int playmode;
+    int playmode, irole, irace, igend, ialign;
     char namebuf[PL_NSIZ];
     
     /* some compilers can't cope with the fact that all subsequent stores to error
@@ -309,15 +299,17 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     program_state.restoring = TRUE;
     iflags.disable_log = TRUE; /* don't log any of the commands, they're already in the log */
     
-    /* Read the log header for this game. This will set up u.inirole et al. */
-    replay_read_newgame(&turntime, &playmode, namebuf);
+    /* Read the log header for this game. */
+    replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend, &ialign);
        
     /* set special windowprocs which will autofill requests for user input
      * with data from the log file */
     replay_setup_windowprocs(rwinprocs);
     
+    startup_common(namebuf, playmode);
+    u.initrole = irole; u.initrace = irace;
+    u.initgend = igend; u.initalign = ialign;
     if (!force_replay) {
-	startup_common(namebuf, playmode);
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE, FALSE);
 	if (!dorecover_fd(fd))
@@ -326,8 +318,8 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	program_state.game_running = 1;
 	post_init_tasks();
     } else {
-	nh_start_game(fd, namebuf, u.initrole, u.initrace,
-		      u.initgend, u.initalign, playmode);
+	replay_run_cmdloop(TRUE, TRUE); /* option setup only */
+	newgame();
 	/* try replaying instead */
 	error = ERR_REPLAY_FAILED;
 	replay_run_cmdloop(FALSE, FALSE);
@@ -889,6 +881,18 @@ static void newgame(void)
 
     /* Success! */
     welcome(TRUE);
+    
+    /* prepare for the first move */
+    flags.move = 0;
+    set_wear();
+    pickup(1);
+    
+    log_command_result();
+    
+    program_state.game_running = TRUE;
+    youmonst.movement = NORMAL_SPEED;	/* give the hero some movement points */
+    post_init_tasks();
+    
     return;
 }
 
