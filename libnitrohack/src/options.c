@@ -777,7 +777,7 @@ int fruitadd(const char *str)
 	struct fruit *f;
 	struct fruit *lastf = 0;
 	int highest_fruit_id = 0;
-	char buf[PL_FSIZ];
+	char buf[PL_FSIZ], *c;
 	boolean user_specified = (str == pl_fruit);
 	/* if not user-specified, then it's a fruit name for a fruit on
 	 * a bones level...
@@ -795,18 +795,16 @@ int fruitadd(const char *str)
 
 		for (i = bases[FOOD_CLASS]; objects[i].oc_class == FOOD_CLASS;
 						i++) {
-			if (!strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
+			if (i != SLIME_MOLD && !strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
 				found = TRUE;
 				break;
 			}
 		}
-		{
-		    char *c;
-
-		    for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
-			;
-		    if (isspace(*c) || *c == 0) numeric = TRUE;
-		}
+		for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
+		    ;
+		if (isspace(*c) || *c == 0)
+		    numeric = TRUE;
+		
 		if (found || numeric ||
 		    !strncmp(str, "cursed ", 7) ||
 		    !strncmp(str, "uncursed ", 9) ||
