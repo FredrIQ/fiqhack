@@ -554,8 +554,11 @@ static void makelevel(struct level *lev)
 
 	/* construct stairs (up and down in different rooms if possible) */
 	croom = &lev->rooms[rn2(lev->nroom)];
-	if (!Is_botlevel(&lev->z))
-	     mkstairs(lev, somex(croom), somey(croom), 0, croom); /* down */
+	if (!Is_botlevel(&lev->z)) {
+	    y = somey(croom);
+	    x = somex(croom);
+	    mkstairs(lev, x, y, 0, croom); /* down */
+	}
 	if (lev->nroom > 1) {
 	    troom = croom;
 	    croom = &lev->rooms[rn2(lev->nroom-1)];
@@ -641,7 +644,8 @@ skip0:
 		   we have to check for monsters on the stairs anyway. */
 
 		if (u.uhave.amulet || !rn2(3)) {
-		    x = somex(croom); y = somey(croom);
+		    x = somex(croom);
+		    y = somey(croom);
 		    tmonst = makemon(NULL, lev, x, y, NO_MM_FLAGS);
 		    if (tmonst && tmonst->data == &mons[PM_GIANT_SPIDER] &&
 			    !occupied(lev, x, y))
@@ -653,8 +657,11 @@ skip0:
 		if (x <= 1) x = 2;
 		while (!rn2(x))
 		    mktrap(lev, 0, 0, croom, NULL);
-		if (!goldseen && !rn2(3))
-		    mkgold(0L, lev, somex(croom), somey(croom));
+		if (!goldseen && !rn2(3)) {
+		    y = somey(croom);
+		    x = somex(croom);
+		    mkgold(0L, lev, x, y);
+		}
 		if (Is_rogue_level(&lev->z)) goto skip_nonrogue;
 		if (!rn2(10)) mkfount(lev, 0, croom);
 		if (!rn2(60)) mksink(lev, croom);
@@ -664,17 +671,25 @@ skip0:
 		if (!rn2(x)) mkgrave(lev, croom);
 
 		/* put statues inside */
-		if (!rn2(20))
-		    mkcorpstat(STATUE, NULL, NULL, lev,
-				      somex(croom), somey(croom), TRUE);
+		if (!rn2(20)) {
+		    y = somey(croom);
+		    x = somex(croom);
+		    mkcorpstat(STATUE, NULL, NULL, lev, x, y, TRUE);
+		}
 		/* put box/chest inside;
 		 *  40% chance for at least 1 box, regardless of number
 		 *  of rooms; about 5 - 7.5% for 2 boxes, least likely
 		 *  when few rooms; chance for 3 or more is neglible.
 		 */
-		if (!rn2(lev->nroom * 5 / 2))
-		    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST, lev,
-				     somex(croom), somey(croom), TRUE, FALSE);
+		if (!rn2(lev->nroom * 5 / 2)) {
+		    /* Fix: somex and somey should not be called from the arg
+		     * list for mksobj_at(). Arg evaluation order is not
+		     * standardized and may differ between compilers and
+		     * optimization levels, which breaks replays. */
+		    y = somey(croom);
+		    x = somex(croom);
+		    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST, lev, x, y, TRUE, FALSE);
+		}
 
 		/* maybe make some graffiti */
 		if (!rn2(27 + 3 * abs(depth(&lev->z)))) {
@@ -682,7 +697,8 @@ skip0:
 		    const char *mesg = random_engraving(buf);
 		    if (mesg) {
 			do {
-			    x = somex(croom);  y = somey(croom);
+			    x = somex(croom);
+			    y = somey(croom);
 			} while (lev->locations[x][y].typ != ROOM && !rn2(40));
 			if (!(IS_POOL(lev->locations[x][y].typ) ||
 			      IS_FURNITURE(lev->locations[x][y].typ)))
@@ -692,14 +708,18 @@ skip0:
 
 	skip_nonrogue:
 		if (!rn2(3)) {
-		    mkobj_at(0, lev, somex(croom), somey(croom), TRUE);
+		    y = somey(croom);
+		    x = somex(croom);
+		    mkobj_at(0, lev, x, y, TRUE);
 		    tryct = 0;
 		    while (!rn2(5)) {
 			if (++tryct > 100) {
 			    impossible("tryct overflow4");
 			    break;
 			}
-			mkobj_at(0, lev, somex(croom), somey(croom), TRUE);
+			y = somey(croom);
+			x = somex(croom);
+			mkobj_at(0, lev, x, y, TRUE);
 		    }
 		}
 	}

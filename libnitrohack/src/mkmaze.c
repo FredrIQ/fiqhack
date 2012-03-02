@@ -394,7 +394,8 @@ static void fixup_special(struct level *lev)
 
 	croom = &lev->rooms[0]; /* only one room on the medusa level */
 	for (tryct = rnd(4); tryct; tryct--) {
-	    x = somex(croom); y = somey(croom);
+	    x = somex(croom);
+	    y = somey(croom);
 	    if (goodpos(lev, x, y, NULL, 0)) {
 		otmp = mk_tt_object(lev, STATUE, x, y);
 		while (otmp && (poly_when_stoned(&mons[otmp->corpsenm]) ||
@@ -405,11 +406,15 @@ static void fixup_special(struct level *lev)
 	    }
 	}
 
-	if (rn2(2))
-	    otmp = mk_tt_object(lev, STATUE, somex(croom), somey(croom));
-	else /* Medusa statues don't contain books */
-	    otmp = mkcorpstat(STATUE, NULL, NULL,
-			      lev, somex(croom), somey(croom), FALSE);
+	if (rn2(2)) {
+	    y = somey(croom);
+	    x = somex(croom);
+	    otmp = mk_tt_object(lev, STATUE, x, y);
+	} else {/* Medusa statues don't contain books */
+	    y = somey(croom);
+	    x = somex(croom);
+	    otmp = mkcorpstat(STATUE, NULL, NULL, lev, x, y, FALSE);
+	}
 	if (otmp) {
 	    while (pm_resistance(&mons[otmp->corpsenm],MR_STONE)
 		   || poly_when_stoned(&mons[otmp->corpsenm])) {
