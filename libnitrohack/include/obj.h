@@ -4,6 +4,18 @@
 #ifndef OBJ_H
 #define OBJ_H
 
+enum obj_where {
+	OBJ_FREE,	/* object not attached to anything */
+	OBJ_FLOOR,	/* object on floor */
+	OBJ_CONTAINED,	/* object in a container */
+	OBJ_INVENT,	/* object in the hero's inventory */
+	OBJ_MINVENT,	/* object in a monster inventory */
+	OBJ_BURIED,	/* object buried */
+	OBJ_ONBILL,	/* object on shk bill */
+	NOBJ_STATES
+};
+
+
 union vptrs {
 	    struct obj *v_nexthere;	/* floor location lists */
 	    struct obj *v_ocontainer;	/* point back to container */
@@ -40,15 +52,6 @@ struct obj {
 	char	oartifact;	/* artifact array index */
 
 	xchar where;		/* where the object thinks it is */
-#define OBJ_FREE	0		/* object not attached to anything */
-#define OBJ_FLOOR	1		/* object on floor */
-#define OBJ_CONTAINED	2		/* object in a container */
-#define OBJ_INVENT	3		/* object in the hero's inventory */
-#define OBJ_MINVENT	4		/* object in a monster inventory */
-#define OBJ_MIGRATING	5		/* object sent off to another level */
-#define OBJ_BURIED	6		/* object buried */
-#define OBJ_ONBILL	7		/* object on shk bill */
-#define NOBJ_STATES	8
 	xchar timed;		/* # of fuses (timers) attached to this obj */
 
 	unsigned cursed:1;

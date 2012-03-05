@@ -347,9 +347,9 @@ extern boolean ghitm(struct monst *,struct obj *);
 extern void container_impact_dmg(struct obj *);
 extern int dokick(void);
 extern boolean ship_object(struct obj *,xchar,xchar,boolean);
-extern void obj_delivery(void);
 extern schar down_gate(xchar,xchar);
 extern void impact_drop(struct obj *,xchar,xchar,xchar);
+extern void deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where);
 
 /* ### dothrow.c ### */
 
@@ -480,8 +480,8 @@ extern int doengrave(struct obj *otmp);
 extern void free_engravings(struct level *lev);
 extern void save_engravings(struct memfile *mf, struct level *lev);
 extern void rest_engravings(struct memfile *mf, struct level *lev);
-extern void del_engr(struct engr *);
-extern void rloc_engr(struct engr *);
+extern void del_engr(struct engr *ep, struct level *lev);
+extern void rloc_engr(struct engr *ep);
 extern void make_grave(struct level *lev, int x, int y, const char *str);
 
 /* ### exper.c ### */
@@ -724,6 +724,7 @@ extern void log_objmenu(int n, struct nh_objresult *pick_list);
 extern void log_bones(const char *bonesbuf, int buflen);
 extern void log_finish(enum nh_log_status status);
 extern void log_truncate(void);
+extern long get_tz_offset(void);
 
 /* ### logreplay.c ### */
 
@@ -733,7 +734,8 @@ extern void replay_end(void);
 extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
 extern void replay_restore_windowprocs(void);
-extern void replay_read_newgame(unsigned long long *time, int *playmode, char *name);
+extern void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
+			 int *initrole, int *initrace, int *initgend, int *initalign);
 extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep);
 
 
@@ -898,7 +900,6 @@ extern void obj_extract_self(struct obj *);
 extern void extract_nobj(struct obj *, struct obj **);
 extern int add_to_minv(struct monst *, struct obj *);
 extern struct obj *add_to_container(struct obj *, struct obj *);
-extern void add_to_migration(struct obj *);
 extern void add_to_buried(struct obj *obj);
 extern void dealloc_obj(struct obj *);
 extern void obj_ice_effects(int, int, boolean);
@@ -1136,7 +1137,7 @@ extern void initoptions(void);
 extern struct nh_option_desc *clone_optlist(const struct nh_option_desc *in);
 extern void free_optlist(struct nh_option_desc *opt);
 extern int dotogglepickup(void);
-extern int fruitadd(char *);
+extern int fruitadd(const char *str);
 extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);
 extern struct nh_autopickup_rules *parse_autopickup_rules(const char *str);
 

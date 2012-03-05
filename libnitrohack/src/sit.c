@@ -28,7 +28,7 @@ int dosit(void)
 	static const char sit_message[] = "You sit on the %s.";
 	struct trap *trap;
 	int typ = level->locations[u.ux][u.uy].typ;
-
+	int attrib;
 
 	if (u.usteed) {
 	    pline("You are already sitting on %s.", mon_nam(u.usteed));
@@ -146,7 +146,8 @@ int dosit(void)
 	    if (rnd(6) > 4)  {
 		switch (rnd(13))  {
 		    case 1:
-			adjattrib(rn2(A_MAX), -rn1(4,3), FALSE);
+			attrib = rn2(A_MAX);
+			adjattrib(attrib, -rn1(4,3), FALSE);
 			losehp(rnd(10), "cursed throne", KILLED_BY_AN);
 			break;
 		    case 2:

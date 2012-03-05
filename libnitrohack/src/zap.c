@@ -2325,13 +2325,13 @@ static boolean zap_updown(struct obj *obj, schar dz)
 		switch (obj->otyp) {
 		case WAN_POLYMORPH:
 		case SPE_POLYMORPH:
-		    del_engr(e);
+		    del_engr(e, level);
 		    make_engr_at(level, x, y, random_engraving(buf), moves, (xchar)0);
 		    break;
 		case WAN_CANCELLATION:
 		case SPE_CANCELLATION:
 		case WAN_MAKE_INVISIBLE:
-		    del_engr(e);
+		    del_engr(e, level);
 		    break;
 		case WAN_TELEPORTATION:
 		case SPE_TELEPORT_AWAY:

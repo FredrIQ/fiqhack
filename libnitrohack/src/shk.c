@@ -1587,7 +1587,6 @@ struct obj *find_oid(unsigned id)
 
 	/* first check various obj lists directly */
 	if ((obj = o_on(id, invent))) return obj;
-	if ((obj = o_on(id, migrating_objs))) return obj;
 
 	/* not found yet; check inventory for members of various monst lists */
 	for (mon = migrating_mons; mon; mon = mon->nmon)

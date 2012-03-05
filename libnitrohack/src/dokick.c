@@ -530,7 +530,7 @@ static int kick_object(xchar x, xchar y, schar dx, schar dy)
 	}
 
 	/* the object might have fallen down a hole */
-	if (kickobj->where == OBJ_MIGRATING) {
+	if (kickobj->olev != level) {
 	    if (costly) {
 		if (isgold)
 		    costly_gold(x, y, kickobj->quan);
@@ -1169,10 +1169,7 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 			obj->no_charge = 0;
 		}
 
-		add_to_migration(obj);
-		obj->ox = cc.x;
-		obj->oy = cc.y;
-		obj->owornmask = (long)toloc;
+		deliver_object(obj, cc.x, cc.y, toloc);
 
 		/* number of fallen objects */
 		dct += obj->quan;
@@ -1311,10 +1308,7 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 	    return TRUE;
 	}
 
-	add_to_migration(otmp);
-	otmp->ox = cc.x;
-	otmp->oy = cc.y;
-	otmp->owornmask = (long)toloc;
+	deliver_object(otmp, cc.x, cc.y, toloc);
 	/* boulder from rolling boulder trap, no longer part of the trap */
 	if (otmp->otyp == BOULDER) otmp->otrapped = 0;
 
@@ -1334,46 +1328,55 @@ boolean ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 	return TRUE;
 }
 
-void obj_delivery(void)
+
+void deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where)
 {
-	struct obj *otmp, *otmp2;
+	struct level *lev;
+	d_level levnum = {dnum, dlevel};
 	int nx, ny;
-	long where;
-
-	for (otmp = migrating_objs; otmp; otmp = otmp2) {
-	    otmp2 = otmp->nobj;
-	    if (otmp->ox != u.uz.dnum || otmp->oy != u.uz.dlevel) continue;
-
-	    obj_extract_self(otmp);
-	    where = otmp->owornmask;		/* destination code */
-	    otmp->owornmask = 0L;
-	    set_obj_level(level, otmp);
-
-	    switch ((int)where) {
-	     case MIGR_STAIRS_UP:   nx = level->upstair.sx,  ny = level->upstair.sy;
+	
+	lev = levels[ledger_no(&levnum)];
+	if (!lev) /* this can go away if we pre-generate all levels */
+	    lev = mklev(&levnum);
+	
+	obj_extract_self(obj);
+	
+	switch (where) {
+	    case MIGR_STAIRS_UP:   nx = lev->upstair.sx,  ny = lev->upstair.sy;
 				break;
-	     case MIGR_LADDER_UP:   nx = level->upladder.sx,  ny = level->upladder.sy;
+	    case MIGR_LADDER_UP:   nx = lev->upladder.sx,  ny = lev->upladder.sy;
 				break;
-	     case MIGR_SSTAIRS:	    nx = level->sstairs.sx,  ny = level->sstairs.sy;
+	    case MIGR_SSTAIRS:	    nx = lev->sstairs.sx,  ny = lev->sstairs.sy;
 				break;
-	     case MIGR_NEAR_PLAYER: nx = u.ux,  ny = u.uy;
-				break;
-	     default:
-	     case MIGR_RANDOM:	    nx = ny = 0;
-				break;
-	    }
-	    if (nx > 0) {
-		place_object(otmp, level, nx, ny);
-		stackobj(otmp);
-		scatter(nx, ny, rnd(2), 0, otmp);
-	    } else {		/* random location */
+	    case MIGR_NEAR_PLAYER:
+		/* the player has fallen through a trapdoor or hole and obj fell
+		 * through too [impact_drop in goto_level] */
+		if (level == lev) {
+		    nx = u.ux;
+		    ny = u.uy;
+		} else
+		    /* there is no other way for objects to be placed on
+		     * position (0,0), so it can serve a temporary position for
+		     * items that should be placed near the player later. */
+		    nx = ny = 0;
+		break;
+	    
+	    default:
+	    case MIGR_RANDOM:
 		/* set dummy coordinates because there's no
 		   current position for rloco() to update */
-		otmp->ox = otmp->oy = 0;
-		rloco(otmp);
-	    }
+		obj->ox = obj->oy = 0;
+		rloco(obj);
+		return;
+	}
+	
+	place_object(obj, lev, nx, ny);
+	if (nx > 0) {
+	    stackobj(obj);
+	    scatter(nx, ny, rnd(2), 0, obj);
 	}
 }
+
 
 static void otransit_msg(struct obj *otmp, boolean nodrop, long num)
 {

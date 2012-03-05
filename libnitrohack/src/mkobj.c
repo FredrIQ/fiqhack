@@ -1014,7 +1014,7 @@ void place_object(struct obj *otmp, struct level *lev, int x, int y)
     otmp->oy = y;
 
     otmp->where = OBJ_FLOOR;
-    otmp->olev = lev;
+    set_obj_level(lev, otmp); /* set the level recursively for containers */
 
     /* add to floor chain */
     otmp->nobj = lev->objlist;
@@ -1183,9 +1183,6 @@ void obj_extract_self(struct obj *obj)
 	case OBJ_MINVENT:
 	    extract_nobj(obj, &obj->ocarry->minvent);
 	    break;
-	case OBJ_MIGRATING:
-	    extract_nobj(obj, &migrating_objs);
-	    break;
 	case OBJ_BURIED:
 	    extract_nobj(obj, &obj->olev->buriedobjlist);
 	    break;
@@ -1290,17 +1287,6 @@ struct obj *add_to_container(struct obj *container, struct obj *obj)
     obj->nobj = container->cobj;
     container->cobj = obj;
     return obj;
-}
-
-
-void add_to_migration(struct obj *obj)
-{
-    if (obj->where != OBJ_FREE)
-	panic("add_to_migration: obj not free");
-
-    obj->where = OBJ_MIGRATING;
-    obj->nobj = migrating_objs;
-    migrating_objs = obj;
 }
 
 

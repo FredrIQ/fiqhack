@@ -125,9 +125,6 @@ struct spell spl_book[MAXSPELL + 1];
 unsigned int moves;
 long wailmsg;
 
-/* objects that are moving to another dungeon level */
-struct obj *migrating_objs;
-
 /* last/current book being read */
 struct obj *book;
 
@@ -257,7 +254,7 @@ void init_data(void)
     current_wand = invent = uwep = uarm = uswapwep = uquiver = uarmu = uskin =
 	uarmc = uarmh = uarms = uarmg = uarmf = uamul = uright = uleft =
 	ublindf = uchain = uball = NULL;
-    migrating_objs = book = NULL;
+    book = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;
