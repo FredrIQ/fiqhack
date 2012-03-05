@@ -331,7 +331,7 @@ static int connect_server(const char *host, int port, int want_v4, char *errmsg,
 	    return -1;
 	}
 	
-	if (connect(fd, (struct sockaddr*)&sa, sizeof(sa)) == -1) {
+	if (connect(fd, (struct sockaddr*)&sa, want_v4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)) == -1) {
 	    snprintf(errmsg, msglen, "could not connect: %s\n", strerror(errno));
 	    close(fd);
 	    return -1;

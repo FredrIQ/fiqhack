@@ -202,6 +202,7 @@ void replay_begin(void)
 void replay_end(void)
 {
     int i;
+    long tz_off;
     if (!loginfo.mem)
 	return;
     
@@ -209,9 +210,9 @@ void replay_end(void)
     free(loginfo.tokens);
     memset(&loginfo, 0, sizeof(loginfo));
     
-    tzset(); /* sets the extern "timezone" which has the offset from UTC in seconds */
-    if (timezone != replay_timezone)
-	log_timezone(timezone);
+    tz_off = get_tz_offset();
+    if (tz_off != replay_timezone)
+	log_timezone(tz_off);
 
     /* restore saved options */
     for (i = 0; saved_options[i].name; i++)
@@ -513,7 +514,8 @@ static void replay_read_commandlist(void)
 }
 
 
-void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
+void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
+			 int *initrole, int *initrace, int *initgend, int *initalign)
 {
     char *header, *verstr;
     int ver1, ver2, ver3, n;
@@ -540,13 +542,13 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
     sscanf(next_log_token(), "%x", &seed);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
-    u.initrole = str2role(next_log_token());
-    u.initrace = str2race(next_log_token());
-    u.initgend = str2gend(next_log_token());
-    u.initalign = str2align(next_log_token());
+    *initrole = str2role(next_log_token());
+    *initrace = str2race(next_log_token());
+    *initgend = str2gend(next_log_token());
+    *initalign = str2align(next_log_token());
     
-    if (u.initrole == ROLE_NONE || u.initrace == ROLE_NONE ||
-	u.initgend == ROLE_NONE || u.initalign == ROLE_NONE)
+    if (*initrole == ROLE_NONE || *initrace == ROLE_NONE ||
+	*initgend == ROLE_NONE || *initalign == ROLE_NONE)
 	terminate();
     
     mt_srand(seed);
@@ -765,7 +767,7 @@ static void make_checkpoint(int actions)
 
 static int load_checkpoint(int idx)
 {
-    int playmode, i;
+    int playmode, i, irole, irace, igend, ialign;
     char namebuf[BUFSZ];
     
     if (idx < 0 || idx >= cpcount)
@@ -775,7 +777,7 @@ static int load_checkpoint(int idx)
     freedynamicdata();
     
     replay_begin();/* tokens get mangled during replay, so a new token list is needed */
-    replay_read_newgame(&turntime, &playmode, namebuf);
+    replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend, &ialign);
     loginfo.next = checkpoints[idx].nexttoken;
     
     program_state.restoring = TRUE;
@@ -853,11 +855,13 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     iflags.disable_log = TRUE;
     logfile = fd;
     replay_begin();
-    replay_read_newgame(&turntime, &playmode, namebuf);
+    replay_read_newgame(&turntime, &playmode, namebuf, &u.initrole, &u.initrace,
+			&u.initgend, &u.initalign);
     replay_setup_windowprocs(rwinprocs);
     
-    nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign, playmode);
+    initoptions();
     replay_run_cmdloop(TRUE, TRUE); /* (re)set options */
+    nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign, playmode);
     program_state.restoring = FALSE;
     program_state.viewing = TRUE;
     replay_restore_windowprocs();

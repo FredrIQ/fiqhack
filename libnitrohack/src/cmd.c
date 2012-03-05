@@ -1394,7 +1394,6 @@ static void contained(struct menulist *menu, const char *src, long *total_count,
 	count_obj(invent, &count, &size, FALSE, TRUE);
 	count_obj(level->objlist, &count, &size, FALSE, TRUE);
 	count_obj(level->buriedobjlist, &count, &size, FALSE, TRUE);
-	count_obj(migrating_objs, &count, &size, FALSE, TRUE);
 	/* DEADMONSTER check not required in this loop since they have no inventory */
 	for (mon = level->monlist; mon; mon = mon->nmon)
 	    count_obj(mon->minvent, &count, &size, FALSE, TRUE);
@@ -1445,8 +1444,6 @@ static int wiz_show_stats(void)
 	obj_chain(&menu, "invent", invent, &total_obj_count, &total_obj_size);
 	obj_chain(&menu, "level->objlist", level->objlist, &total_obj_count, &total_obj_size);
 	obj_chain(&menu, "buried", level->buriedobjlist,
-				&total_obj_count, &total_obj_size);
-	obj_chain(&menu, "migrating obj", migrating_objs,
 				&total_obj_count, &total_obj_size);
 	mon_invent_chain(&menu, "minvent", level->monlist,
 				&total_obj_count,&total_obj_size);

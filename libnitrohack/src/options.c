@@ -337,23 +337,28 @@ void initoptions(void)
 	 * requires a preexisting order */
 	memcpy(flags.inv_order, def_inv_order, sizeof flags.inv_order);
 
-	/* since this is done before init_objects(), do partial init here */
-	objects[SLIME_MOLD].oc_name_idx = SLIME_MOLD;
-	strncpy(pl_fruit, OBJ_NAME(objects[SLIME_MOLD]), PL_FSIZ);
-	fruitadd(pl_fruit);
+	fruitadd(obj_descr[SLIME_MOLD].oc_name);
+	strncpy(pl_fruit, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
 	
 	/* init from option definitions */
 	for (i = 0; birth_options[i].name; i++)
-		nh_set_option(birth_options[i].name, birth_options[i].value, FALSE);
+	    nh_set_option(birth_options[i].name, birth_options[i].value, FALSE);
 	
 	for (i = 0; options[i].name; i++)
-		nh_set_option(options[i].name, options[i].value, FALSE);
+	    nh_set_option(options[i].name, options[i].value, FALSE);
 	
-	/* at this point the user may no longer change their birth options.
-	 * active_birth_options will recieve birth option changes made during
-	 * log replay, so that we can show the user what birth options the
-	 * loaded game was started with */
-	active_birth_options = clone_optlist(birth_options);
+	if (!active_birth_options)
+	    /* at this point the user may no longer change their birth options.
+	     * active_birth_options will recieve birth option changes made during
+	     * log replay, so that we can show the user what birth options the
+	     * loaded game was started with */
+	    active_birth_options = clone_optlist(birth_options);
+	else
+	    /* the switch to alternate birth options has already happened, so
+	     * make sure those settings are active instead. */
+	    for (i = 0; active_birth_options[i].name; i++)
+		nh_set_option(active_birth_options[i].name,
+			      active_birth_options[i].value, FALSE);
 }
 
 
@@ -766,13 +771,13 @@ void free_optlist(struct nh_option_desc *opt)
  * returns the fid of that one; if it does not exist, it adds a new fruit
  * type to the chain and returns the new one.
  */
-int fruitadd(char *str)
+int fruitadd(const char *str)
 {
 	int i;
 	struct fruit *f;
 	struct fruit *lastf = 0;
 	int highest_fruit_id = 0;
-	char buf[PL_FSIZ];
+	char buf[PL_FSIZ], *c;
 	boolean user_specified = (str == pl_fruit);
 	/* if not user-specified, then it's a fruit name for a fruit on
 	 * a bones level...
@@ -790,18 +795,16 @@ int fruitadd(char *str)
 
 		for (i = bases[FOOD_CLASS]; objects[i].oc_class == FOOD_CLASS;
 						i++) {
-			if (!strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
+			if (i != SLIME_MOLD && !strcmp(OBJ_NAME(objects[i]), pl_fruit)) {
 				found = TRUE;
 				break;
 			}
 		}
-		{
-		    char *c;
-
-		    for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
-			;
-		    if (isspace(*c) || *c == 0) numeric = TRUE;
-		}
+		for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
+		    ;
+		if (isspace(*c) || *c == 0)
+		    numeric = TRUE;
+		
 		if (found || numeric ||
 		    !strncmp(str, "cursed ", 7) ||
 		    !strncmp(str, "uncursed ", 9) ||
@@ -811,8 +814,8 @@ int fruitadd(char *str)
 		        (!strcmp(str+7, "spinach") ||
 			 name_to_mon(str+7) >= LOW_PM)) ||
 		    !strcmp(str, "empty tin") ||
-		    ((!strncmp(eos(str)-7," corpse",7) ||
-			    !strncmp(eos(str)-4, " egg",4)) &&
+		    ((!strncmp(str + strlen(str) - 7," corpse",7) ||
+			    !strncmp(str + strlen(str) - 4, " egg",4)) &&
 			name_to_mon(str) >= LOW_PM))
 			{
 			    strcpy(buf, pl_fruit);

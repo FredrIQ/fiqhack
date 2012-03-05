@@ -1043,7 +1043,11 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	}
 
 	if (Punished) placebc();
-	obj_delivery();		/* before killing geno'd monsters' eggs */
+	
+	/* only matters if falling; place objects that fell with the player nearby */
+	while (level->objects[0][0])
+	    deliver_object(level->objects[0][0], u.uz.dnum, u.uz.dlevel, MIGR_NEAR_PLAYER);
+	
 	for (otmp = invent; otmp; otmp = otmp->nobj)
 	    set_obj_level(level, otmp);
 	losedogs();

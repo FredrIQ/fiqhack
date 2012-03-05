@@ -1562,7 +1562,7 @@ const char *dfeature_at(int x, int y, char *buf)
  * checks. */
 boolean update_location(boolean all_objects)
 {
-	boolean ret;
+	boolean ret, minv = FALSE;
 	struct obj *otmp = level->objects[u.ux][u.uy];
 	struct trap *trap;
 	char buf[BUFSZ], fbuf[BUFSZ];
@@ -1575,27 +1575,29 @@ boolean update_location(boolean all_objects)
 	    return FALSE;
 	}
 	
-	if (u.uswallow && u.ustuck)
-	    otmp = u.ustuck->minvent;
-	
 	items = malloc(size * sizeof(struct nh_objitem));
-	if ((trap = t_at(level, u.ux, u.uy)) && trap->tseen) {
-	    sprintf(buf, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
-	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
-	}
+	if (u.uswallow && u.ustuck) {
+	    otmp = u.ustuck->minvent;
+	    minv = TRUE;
+	} else {
+	    if ((trap = t_at(level, u.ux, u.uy)) && trap->tseen) {
+		sprintf(buf, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
+		add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	    }
 
-	dfeature = dfeature_at(u.ux, u.uy, fbuf);
-	if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
-		dfeature = NULL;
-	if (dfeature) {
-	    sprintf(buf, "There is %s here.", an(dfeature));
-	    add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	    dfeature = dfeature_at(u.ux, u.uy, fbuf);
+	    if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
+		    dfeature = NULL;
+	    if (dfeature) {
+		sprintf(buf, "There is %s here.", an(dfeature));
+		add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+	    }
+	    
+	    if (icount && otmp)
+		add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
 	}
 	
-	if (icount && otmp)
-	    add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
-	
-	for (ocount = 0; otmp; otmp = otmp->nexthere) {
+	for (ocount = 0; otmp; otmp = minv ? otmp->nobj : otmp->nexthere) {
 	    examine_object(otmp);
 	    if (!Blind || all_objects || ocount < 5)
 		add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname_price(otmp),

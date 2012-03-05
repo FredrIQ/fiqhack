@@ -14,6 +14,7 @@
 #if defined UNIX
 #include <unistd.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netdb.h>
 #include <sys/un.h>

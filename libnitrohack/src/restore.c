@@ -376,7 +376,6 @@ static void restgamestate(struct memfile *mf)
 	restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
 	restore_light_sources(mf, lev);
 	invent = restobjchn(mf, lev, FALSE, FALSE);
-	migrating_objs = restobjchn(mf, lev, FALSE, FALSE);
 	migrating_mons = restmonchn(mf, lev, FALSE);
 	restore_mvitals(mf);
 

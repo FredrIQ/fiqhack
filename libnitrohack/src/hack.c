@@ -178,11 +178,9 @@ static int moverock(schar dx, schar dy)
 			if (newlev == depth(&u.uz) || In_endgame(&u.uz))
 			    continue;
 			obj_extract_self(otmp);
-			add_to_migration(otmp);
+			
 			get_level(&dest, newlev);
-			otmp->ox = dest.dnum;
-			otmp->oy = dest.dlevel;
-			otmp->owornmask = (long)MIGR_RANDOM;
+			deliver_object(otmp, dest.dnum, dest.dlevel, MIGR_RANDOM);
 		    }
 		    seetrap(ttmp);
 		    continue;

@@ -230,7 +230,9 @@ void makeroguerooms(struct level *lev) {
 		}
 		here.doortable = 0;
 	}
-	miniwalk(rn2(3), rn2(3));
+	x = rn2(3);
+	y = rn2(3);
+	miniwalk(x, y);
 	lev->nroom = 0;
 	for (y=0; y<3; y++) for(x=0; x<3; x++) {
 		if (here.real) { /* Make a room */
