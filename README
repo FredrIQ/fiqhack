@@ -6,7 +6,7 @@ NitroHack is a modernized, network-capable fork of NetHack.
 
 Back end features:
     - NitroHack network protocol
-      NitroHack supports netowrk play without telnet or ssh over its own
+      NitroHack supports network play without telnet or ssh over its own
       protocol. The protocol is based on JSON and should make it very easy to
       implement a browser-based NitroHack client (TODO!).
       
