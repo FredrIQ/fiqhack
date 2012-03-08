@@ -2562,7 +2562,7 @@ achieve the destiny which awaits you."
 "Ah, %p-sama.  You have wasted your efforts returning home.
 Now that you are in possession of the Amulet, you are honor-bound to
 finish the quest you have undertaken.  There will be plenty of time
-for saki and stories when you have finished.
+for sake and stories when you have finished.
 
 "Go now, and may our prayers be a wind at your back."
 %E
