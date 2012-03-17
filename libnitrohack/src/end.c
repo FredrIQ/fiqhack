@@ -30,8 +30,6 @@ static void sort_valuables(struct valuable_data *,int);
 static int artifact_score(struct obj *,boolean,struct menulist *);
 static void savelife(int);
 static boolean check_survival(int how, char *kilbuf);
-static void list_vanquished(char,boolean);
-static void list_genocided(char,boolean);
 static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *,boolean,boolean);
 
@@ -1007,7 +1005,7 @@ void terminate(void)
 	exit(1);
 }
 
-static void list_vanquished(char defquery, boolean ask)
+void list_vanquished(char defquery, boolean ask)
 {
     int i, lev;
     int ntypes = 0, max_lev = 0, nkilled;
@@ -1061,10 +1059,8 @@ static void list_vanquished(char defquery, boolean ask)
 		    }
 		    add_menutext(&menu,  buf);
 		}
-	    /*
-	     * if (Hallucination)
-	     *     add_menutext(menu, "and a partridge in a pear tree");
-	     */
+	    if (Hallucination)
+	        add_menutext(&menu, "and a partridge in a pear tree");
 	    if (ntypes > 1) {
 		add_menutext(&menu,  "");
 		sprintf(buf, "%ld creatures vanquished.", total_killed);
@@ -1086,8 +1082,31 @@ int num_genocides(void)
 
     return n;
 }
+/* number of monster species which have been extincted */
+int num_extinctions(void)
+{
+    int i, n = 0;
 
-static void list_genocided(char defquery, boolean ask)
+    for (i = LOW_PM; i < NUMMONS; ++i)
+	if ((mvitals[i].mvflags & G_GONE) && !(mons[i].geno & G_UNIQ))
+	    ++n;
+
+    return n;
+}
+
+/* number of monster species which have been vanquished */
+int num_vanquished(void)
+{
+    int i, n = 0;
+
+    for (i = LOW_PM; i < NUMMONS; ++i)
+	if (mvitals[i].died)
+	    ++n;
+
+    return n;
+}
+
+void list_genocided(char defquery, boolean ask)
 {
     int i;
     int ngenocided, nextincted;

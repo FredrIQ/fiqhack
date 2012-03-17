@@ -459,7 +459,11 @@ extern void panic(const char *,...);
 extern int done2(void);
 extern void done_in_by(struct monst *);
 extern void done(int);
+extern int num_vanquished(void);
 extern int num_genocides(void);
+extern int num_extinctions(void);
+extern void list_vanquished(char,boolean);
+extern void list_genocided(char,boolean);
 extern void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
 extern long calc_score(int, boolean, long);
 
