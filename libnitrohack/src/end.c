@@ -544,11 +544,13 @@ long calc_score(int how, boolean show, long umoney)
   /* Survival. A multiplier. */
   if (how == ASCENDED) category_raw = 200;
   else if (how == ESCAPED) category_raw = 100;
-  else category_raw = 90;
+  else if (how == QUIT) category_raw = 90;
+  else category_raw = 80;
   total *= category_raw; total /= 100;
   if (show) {
     sprintf(buf, "Survival:        %10s  (score multiplied by %3ld%%)",
-            category_raw == 90 ? "died" :
+            category_raw == 80 ? (how == -1 ? "unknown" : "died") :
+            category_raw == 90 ? "quit" :
             category_raw == 200 ? "ascended" : "survived",
             category_raw);
     add_menutext(&menu, buf);
