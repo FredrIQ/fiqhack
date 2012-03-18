@@ -587,15 +587,22 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
     /* Pick travel path that does not require crossing a trap.
      * Avoid water and lava using the usual running rules.
      * (but not u.ux/u.uy because findtravelpath walks toward u.ux/u.uy) */
-    if (flags.run == 8 && (mode != DO_MOVE) &&
-	(x != u.ux || y != u.uy)) {
+    if (flags.run == 8 && (x != u.ux || y != u.uy)) {
 	struct trap* t = t_at(level, x, y);
 
 	if ((t && t->tseen) ||
 	    (!Levitation && !Flying &&
 	     !is_clinger(youmonst.data) &&
-	     (is_pool(level, x, y) || is_lava(level, x, y)) && level->locations[x][y].seenv))
-	    return mode == TEST_TRAP;
+	     (is_pool(level, x, y) || is_lava(level, x, y)) &&
+             level->locations[x][y].seenv)) {
+            if (mode == DO_MOVE) {
+                if (t && t->tseen) autoexplore_msg("a trap", mode);
+                else if (is_pool(level, x, y)) autoexplore_msg("a body of water", mode);
+                else if (is_lava(level, x, y)) autoexplore_msg("a pool of lava", mode);
+                if (flags.travel) return FALSE;
+            }
+	    return mode == TEST_TRAP || mode == DO_MOVE;
+        }
     }
 
     if (mode == TEST_TRAP) return FALSE; /* not a move through a trap */
@@ -747,7 +754,7 @@ static boolean findtravelpath(boolean (*guess)(int, int), schar *dx, schar *dy)
 			test_move(x, y, nx-x, ny-y, 0, TEST_TRAP)) {
 			/* closed doors and boulders usually
 			 * cause a delay, so prefer another path */
-			if (travel[x][y] > radius-3) {
+			if ((int)travel[x][y] > radius-5) {
 			    if (!alreadyrepeated) {
 				travelstepx[1-set][nn] = x;
 				travelstepy[1-set][nn] = y;
@@ -758,26 +765,29 @@ static boolean findtravelpath(boolean (*guess)(int, int), schar *dx, schar *dy)
 			    continue;
 			}
 		    }
-		    if (test_move(x, y, nx-x, ny-y, 0, TEST_TRAV) &&
-			(level->locations[nx][ny].seenv || (!Blind && couldsee(nx, ny)))) {
-			if (nx == ux && ny == uy) {
-			    if (!guess) {
-				*dx = x-ux;
-				*dy = y-uy;
-				if (x == u.tx && y == u.ty) {
-				    nomul(0, NULL);
-				    /* reset run so domove run checks work */
-				    flags.run = 8;
-				    iflags.travelcc.x = iflags.travelcc.y = -1;
-				}
-				return TRUE;
-			    }
-			} else if (!travel[nx][ny]) {
-			    travelstepx[1-set][nn] = nx;
-			    travelstepy[1-set][nn] = ny;
-			    travel[nx][ny] = radius;
-			    nn++;
-			}
+                    if (test_move(x, y, nx-x, ny-y, 0, TEST_TRAP) ||
+                        test_move(x, y, nx-x, ny-y, 0, TEST_TRAV)) {
+                        if ((level->locations[nx][ny].seenv ||
+                             (!Blind && couldsee(nx, ny)))) {
+                            if (nx == ux && ny == uy) {
+                                if (!guess) {
+                                    *dx = x-ux;
+                                    *dy = y-uy;
+                                    if (x == u.tx && y == u.ty) {
+                                        nomul(0, NULL);
+                                        /* reset run so domove run checks work */
+                                        flags.run = 8;
+                                        iflags.travelcc.x = iflags.travelcc.y = -1;
+                                    }
+                                    return TRUE;
+                                }
+                            } else if (!travel[nx][ny]) {
+                                travelstepx[1-set][nn] = nx;
+                                travelstepy[1-set][nn] = ny;
+                                travel[nx][ny] = radius;
+                                nn++;
+                            }
+                        }
 		    }
 		}
 	    }
@@ -1280,6 +1290,7 @@ int domove(schar dx, schar dy, schar dz)
         if (!flags.nopick || flags.run) {
             if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
                 !Stunned && !Confusion &&
+                (!flags.travel || !iflags.autoexplore) &&
                 (is_lava(level, x, y) || !HSwimming) &&
                 (is_pool(level, x, y) || is_lava(level, x, y)) &&
                 level->locations[x][y].seenv &&
