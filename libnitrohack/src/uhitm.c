@@ -321,10 +321,12 @@ boolean attack(struct monst *mtmp, schar dx, schar dy)
 		    strcpy(buf, y_monnam(mtmp));
 		    buf[0] = highc(buf[0]);
 		    pline("You stop.  %s is in the way!", buf);
+                    nomul(0, NULL);
 		    return TRUE;
 		} else if ((mtmp->mfrozen || (! mtmp->mcanmove)
 				|| (mtmp->data->mmove == 0)) && rn2(6)) {
 		    pline("%s doesn't seem to move!", Monnam(mtmp));
+                    nomul(0, NULL);
 		    return TRUE;
 		} else return FALSE;
 	    }

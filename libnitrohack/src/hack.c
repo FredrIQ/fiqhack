@@ -644,8 +644,10 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 static boolean unexplored(int x, int y)
 {
   int i, j, k, l;
+  struct trap *ttmp = t_at(level, x, y);
   if (!isok(x, y)) return FALSE;
   if (level->locations[x][y].mem_stepped) return FALSE;
+  if (ttmp && ttmp->tseen) return FALSE;
   if (level->locations[x][y].mem_obj == what_obj(BOULDER)+1) return FALSE;
   if (level->locations[x][y].mem_obj) return TRUE;
   for (i = -1; i <= 1; i++)
@@ -686,7 +688,7 @@ static boolean findtravelpath(boolean (*guess)(int, int), schar *dx, schar *dy)
 	flags.run = 8;
     }
     if (u.tx != u.ux || u.ty != u.uy || guess == unexplored) {
-	xchar travel[COLNO][ROWNO];
+	unsigned travel[COLNO][ROWNO];
 	xchar travelstepx[2][COLNO*ROWNO];
 	xchar travelstepy[2][COLNO*ROWNO];
 	xchar tx, ty, ux, uy;
@@ -780,13 +782,14 @@ static boolean findtravelpath(boolean (*guess)(int, int), schar *dx, schar *dy)
 	    dist = distmin(ux, uy, tx, ty);
 	    d2 = dist2(ux, uy, tx, ty);
             if (guess == unexplored) {
-              dist = COLNO;
-              d2 = COLNO * COLNO + ROWNO * ROWNO;
+              dist = COLNO * ROWNO;
+              d2 = COLNO * COLNO * ROWNO * ROWNO;
             }
 	    for (tx = 1; tx < COLNO; ++tx)
 		for (ty = 0; ty < ROWNO; ++ty)
 		    if (travel[tx][ty]) {
 			nxtdist = distmin(ux, uy, tx, ty);
+                        if (guess == unexplored) nxtdist = travel[tx][ty];
 			if (nxtdist == dist && guess(tx, ty)) {
 			    nd2 = dist2(ux, uy, tx, ty);
 			    if (nd2 < d2) {
@@ -866,6 +869,21 @@ int domove(schar dx, schar dy, schar dz)
 
 	if (flags.travel) {
           if (iflags.autoexplore) {
+            if (Blind) {
+              pline("You can't see where you're going!");
+              nomul(0, NULL);
+              return 0;
+            }
+            if (In_sokoban(&u.uz)) {
+              pline("You somehow know the layout of this place without exploring.");
+              nomul(0, NULL);
+              return 0;
+            }
+            if (Stunned || Confusion) {
+              pline("Your head is spinning too badly to explore.");
+              nomul(0, NULL);
+              return 0;
+            }
             u.tx = u.ux;
             u.ty = u.uy;
             if (!findtravelpath(unexplored, &dx, &dy))
@@ -873,6 +891,10 @@ int domove(schar dx, schar dy, schar dz)
           } else if (!findtravelpath(NULL, &dx, &dy))
             findtravelpath(couldsee_func, &dx, &dy);
           iflags.travel1 = 0;
+          if (dx == 0 && dy == 0) {
+            nomul(0, NULL);
+            return 0;
+          }
 	}
 	
 	if (((wtcap = near_capacity()) >= OVERLOADED
@@ -1015,7 +1037,7 @@ int domove(schar dx, schar dy, schar dz)
 		}
 
 		mtmp = m_at(level, x,y);
-		if (mtmp) {
+		if (mtmp && !is_safepet(mtmp)) {
 			/* Don't attack if you're running, and can see it */
 			/* We should never get here if forcefight */
 			if (flags.run &&
@@ -1038,7 +1060,7 @@ int domove(schar dx, schar dy, schar dz)
 
 	/* attack monster */
 	if (mtmp) {
-	    nomul(0, NULL);
+            if (!is_safepet(mtmp) || flags.forcefight) nomul(0, NULL);
 	    /* only attack if we know it's there */
 	    /* or if we used the 'F' command to fight blindly */
 	    /* or if it hides_under, in which case we call attack() to print
@@ -1053,7 +1075,7 @@ int domove(schar dx, schar dy, schar dz)
 	     * invisible monster--then, we fall through to attack() and
 	     * attack_check(), which still wastes a turn, but prints a
 	     * different message and makes the player remember the monster.		     */
-	    if (flags.nopick &&
+	    if (flags.nopick && !flags.travel &&
 		  (canspotmon(mtmp) || level->locations[x][y].mem_invis)){
 		if (mtmp->m_ap_type && !Protection_from_shape_changers
 						    && !sensemon(mtmp))
@@ -1362,10 +1384,26 @@ int domove(schar dx, schar dy, schar dz)
 
 	reset_occupations();
 	if (flags.run) {
-	    if ( flags.run < 8 )
+	    if (flags.run < 8) {
 		if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
 			IS_FURNITURE(tmpr->typ))
 		    nomul(0, NULL);
+            } else if (flags.travel && iflags.autoexplore) {
+              int wallcount = 0;
+              if (isok(u.ux-1, u.uy  ))
+                wallcount += IS_ROCK(level->locations[u.ux-1][u.uy  ].typ) +
+                  !!sobj_at(BOULDER, level, u.ux-1, u.uy  ) * 3;
+              if (isok(u.ux+1, u.uy  ))
+                wallcount += IS_ROCK(level->locations[u.ux+1][u.uy  ].typ) +
+                  !!sobj_at(BOULDER, level, u.ux+1, u.uy  ) * 3;
+              if (isok(u.ux  , u.uy-1))
+                wallcount += IS_ROCK(level->locations[u.ux  ][u.uy-1].typ) +
+                  !!sobj_at(BOULDER, level, u.ux  , u.uy-1) * 3;
+              if (isok(u.ux  , u.uy+1))
+                wallcount += IS_ROCK(level->locations[u.ux  ][u.uy+1].typ) +
+                  !!sobj_at(BOULDER, level, u.ux  , u.uy+1) * 3;
+              if (wallcount >= 3) nomul(0, NULL);
+            }
 	}
 
 	if (hides_under(youmonst.data))
@@ -1899,6 +1937,17 @@ void lookaround(void)
 	return;
     }
 
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
+        if ((canseemon(mtmp) ||
+             (canspotmon(mtmp) &&
+              distmin(u.ux, u.uy, mtmp->mx, mtmp->my) <= 5)) &&
+            !mtmp->mpeaceful && !mtmp->mtame &&
+            mtmp->data->mmove && flags.run != 1) {
+            nomul(0, NULL);
+            return;
+        }
+    }
+
     if (Blind || flags.run == 0) return;
     for (x = u.ux-1; x <= u.ux+1; x++) for(y = u.uy-1; y <= u.uy+1; y++) {
 	if (!isok(x,y)) continue;
@@ -1912,7 +1961,7 @@ void lookaround(void)
 		    mtmp->m_ap_type != M_AP_OBJECT &&
 		    (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
 	    if ((flags.run != 1 && !mtmp->mtame)
-					|| (x == u.ux+u.dx && y == u.uy+u.dy))
+                || (x == u.ux+u.dx && y == u.uy+u.dy && !flags.travel))
 		goto stop;
 	}
 
@@ -2107,6 +2156,8 @@ void losehp(int n, const char *knam, boolean k_format)
 	u.uhp -= n;
 	if (u.uhp > u.uhpmax)
 		u.uhpmax = u.uhp;	/* perhaps n was negative */
+        else
+                nomul(0, NULL);         /* taking damage stops command repeat */
 	iflags.botl = 1;
 	if (u.uhp < 1) {
 		killer_format = k_format;
