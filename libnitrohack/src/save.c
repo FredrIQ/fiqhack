@@ -265,7 +265,8 @@ static void save_location(struct memfile *mf, struct rm *loc)
 	          (loc->mem_trap << 21) |
 	          (loc->mem_obj << 11) |
 	          (loc->mem_obj_mn << 2) |
-	          (loc->mem_invis << 1);
+	          (loc->mem_invis << 1) |
+                  (loc->mem_stepped << 0);
 	lflags2 = (loc->flags << 11) |
 	          (loc->horizontal << 10) |
 	          (loc->lit << 9) |

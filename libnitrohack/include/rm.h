@@ -298,6 +298,7 @@ struct rm {
 	unsigned mem_obj:10;	/* remembered object */
 	unsigned mem_obj_mn:9;	/* monnum of remembered corpses, statues, figurines */
 	unsigned mem_invis:1;	/* remembered invisible monster encounter */
+        unsigned mem_stepped:1; /* has this square been stepped on? */
 	
 	schar typ;		/* what is really there */
 	uchar seenv;		/* seen vector */

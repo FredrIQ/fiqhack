@@ -132,6 +132,7 @@ struct instance_flags {
 	int	 runmode;	/* update screen display during run moves */
 	boolean  disable_log;   /* don't append anything to the logfile */
 	boolean  botl;		/* redo status line */
+        boolean  autoexplore;   /* currently autoexploring */
 	struct nh_autopickup_rules *ap_rules;
 };
 

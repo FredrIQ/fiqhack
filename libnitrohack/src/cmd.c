@@ -17,6 +17,7 @@ static int (*timed_occ_fn)(void);
 static int timed_occupation(void);
 static int domonability(void);
 static int dotravel(int x,int y);
+static int doautoexplore(void);
 static int wiz_wish(void);
 static int wiz_identify(void);
 static int wiz_map(void);
@@ -60,6 +61,7 @@ const struct cmd_desc cmdlist[] = {
 	{"annotate", "name the current level", 0, C('f'), TRUE, donamelevel, CMD_ARG_NONE | CMD_EXT},
 	{"apply", "use a tool or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"attributes", "show your attributes", C('x'), 0, TRUE, doattributes, CMD_ARG_NONE},
+        {"autoexplore", "automatically explore until something happens", 'v', 0, FALSE, doautoexplore, CMD_ARG_NONE},
 	{"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
 	{"chat", "talk to someone", 'c', M('c'), TRUE, dotalk, CMD_ARG_DIR | CMD_EXT},	/* converse? */
 	{"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_DIR},
@@ -1741,6 +1743,23 @@ void confdir(schar *dx, schar *dy)
 	return;
 }
 
+static int doautoexplore(void)
+{
+        iflags.autoexplore = TRUE;
+	flags.travel = 1;
+	iflags.travel1 = 1;
+	flags.run = 8;
+	flags.nopick = FALSE;
+	if (!multi)
+	    multi = max(COLNO,ROWNO);
+	u.last_str_turn = 0;
+	flags.mv = TRUE;
+	
+	domove(0, 0, 0);
+	
+	return 1;
+}
+
 
 static int dotravel(int x, int y)
 {
@@ -1766,11 +1785,12 @@ static int dotravel(int x, int y)
 	}
 	iflags.travelcc.x = u.tx = cc.x;
 	iflags.travelcc.y = u.ty = cc.y;
+        iflags.autoexplore = FALSE;
 
 	flags.travel = 1;
 	iflags.travel1 = 1;
 	flags.run = 8;
-	flags.nopick = 1;
+	flags.nopick = TRUE;
 	if (!multi)
 	    multi = max(COLNO,ROWNO);
 	u.last_str_turn = 0;

@@ -7,7 +7,7 @@ static void maybe_wail(void);
 static int moverock(schar dx, schar dy);
 static int still_chewing(xchar,xchar);
 static void dosinkfall(void);
-static boolean findtravelpath(boolean, schar *, schar *);
+static boolean findtravelpath(boolean(*)(int, int), schar *, schar *);
 static boolean monstinroom(const struct permonst *,int);
 
 static void move_update(boolean);
@@ -634,13 +634,44 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
     return TRUE;
 }
 
+/* Returns whether a square might be interesting to autoexplore onto.
+   This is done purely in terms of the memory of the square, i.e.
+   information the player knows already, to avoid leaking
+   information. The algorithm is taken from TAEB: "step on any item we
+   haven't stepped on, or any square we haven't stepped on adjacent to
+   stone that isn't adjacent to a square that has been stepped on;
+   however, never step on a boulder this way". */
+static boolean unexplored(int x, int y)
+{
+  int i, j, k, l;
+  if (!isok(x, y)) return FALSE;
+  if (level->locations[x][y].mem_stepped) return FALSE;
+  if (level->locations[x][y].mem_obj == what_obj(BOULDER)+1) return FALSE;
+  if (level->locations[x][y].mem_obj) return TRUE;
+  for (i = -1; i <= 1; i++)
+    for (j = -1; j <= 1; j++) {
+      if (isok(x+i, y+j) &&
+          (level->locations[x+i][y+j].mem_bg == S_stone ||
+           level->locations[x+i][y+j].mem_bg == S_unexplored)) {
+        int flag = TRUE;
+        for (k = -1; k <= 1; k++)
+          for (l = -1; l <= 1; l++)
+            if (isok(x+i+k, y+j+l) && level->locations[x+i+k][y+j+l].mem_stepped)
+              flag = FALSE;
+        if (flag) return TRUE;
+      }
+    }
+  return FALSE;
+}
+
 /*
  * Find a path from the destination (u.tx,u.ty) back to (u.ux,u.uy).
- * A shortest path is returned.  If guess is TRUE, consider various
- * inaccessible locations as valid intermediate path points.
+ * A shortest path is returned.  If guess is non-NULL, instead travel
+ * as near to the target as you can, using guess as a function that
+ * specifies what is considered to be a valid target.
  * Returns TRUE if a path was found.
  */
-static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
+static boolean findtravelpath(boolean (*guess)(int, int), schar *dx, schar *dy)
 {
     /* if travel to adjacent, reachable location, use normal movement rules */
     if (!guess && iflags.travel1 && distmin(u.ux, u.uy, u.tx, u.ty) == 1) {
@@ -654,7 +685,7 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 	}
 	flags.run = 8;
     }
-    if (u.tx != u.ux || u.ty != u.uy) {
+    if (u.tx != u.ux || u.ty != u.uy || guess == unexplored) {
 	xchar travel[COLNO][ROWNO];
 	xchar travelstepx[2][COLNO*ROWNO];
 	xchar travelstepy[2][COLNO*ROWNO];
@@ -748,18 +779,22 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 
 	    dist = distmin(ux, uy, tx, ty);
 	    d2 = dist2(ux, uy, tx, ty);
+            if (guess == unexplored) {
+              dist = COLNO;
+              d2 = COLNO * COLNO + ROWNO * ROWNO;
+            }
 	    for (tx = 1; tx < COLNO; ++tx)
 		for (ty = 0; ty < ROWNO; ++ty)
 		    if (travel[tx][ty]) {
 			nxtdist = distmin(ux, uy, tx, ty);
-			if (nxtdist == dist && couldsee(tx, ty)) {
+			if (nxtdist == dist && guess(tx, ty)) {
 			    nd2 = dist2(ux, uy, tx, ty);
 			    if (nd2 < d2) {
 				/* prefer non-zigzag path */
 				px = tx; py = ty;
 				d2 = nd2;
 			    }
-			} else if (nxtdist < dist && couldsee(tx, ty)) {
+			} else if (nxtdist < dist && guess(tx, ty)) {
 			    px = tx; py = ty;
 			    dist = nxtdist;
 			    d2 = dist2(ux, uy, tx, ty);
@@ -770,6 +805,10 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 		/* no guesses, just go in the general direction */
 		*dx = sgn(u.tx - u.ux);
 		*dy = sgn(u.ty - u.uy);
+                if (*dx == 0 && *dy == 0) {
+                    nomul(0, "");
+                    return FALSE;
+                }
 		if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE))
 		    return TRUE;
 		goto found;
@@ -780,7 +819,7 @@ static boolean findtravelpath(boolean guess, schar *dx, schar *dy)
 	    uy = u.uy;
 	    set = 0;
 	    n = radius = 1;
-	    guess = FALSE;
+	    guess = NULL;
 	    goto noguess;
 	}
 	return FALSE;
@@ -792,6 +831,15 @@ found:
     nomul(0, NULL);
     return FALSE;
 }
+
+/* A function version of couldsee, so we can take a pointer to it. */
+static boolean
+couldsee_func(int x, int y)
+{
+  return couldsee(x, y);
+}
+
+
 
 int domove(schar dx, schar dy, schar dz)
 {
@@ -817,9 +865,14 @@ int domove(schar dx, schar dy, schar dz)
 	u_wipe_engr(rnd(5));
 
 	if (flags.travel) {
-	    if (!findtravelpath(FALSE, &dx, &dy))
-		findtravelpath(TRUE, &dx, &dy);
-	    iflags.travel1 = 0;
+          if (iflags.autoexplore) {
+            u.tx = u.ux;
+            u.ty = u.uy;
+            if (!findtravelpath(unexplored, &dx, &dy))
+              iflags.autoexplore = FALSE;
+          } else if (!findtravelpath(NULL, &dx, &dy))
+            findtravelpath(couldsee_func, &dx, &dy);
+          iflags.travel1 = 0;
 	}
 	
 	if (((wtcap = near_capacity()) >= OVERLOADED
@@ -1340,6 +1393,7 @@ int domove(schar dx, schar dy, schar dz)
 	    /* Since the hero has moved, adjust what can be seen/unseen. */
 	    vision_recalc(1);	/* Do the work now in the recover time. */
 	    invocation_message();
+            if (!Blind) level->locations[u.ux][u.uy].mem_stepped = 1;
 	}
 
 	if (Punished)				/* put back ball and chain */
