@@ -1185,6 +1185,23 @@ int domove(schar dx, schar dy, schar dz)
 	    return 0;
 	}
 
+        /* If no 'm' prefix, veto dangerous moves */
+        if (!flags.nopick || flags.run) {
+            if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
+                !Stunned && !Confusion &&
+                (is_lava(level, x, y) || !HSwimming) &&
+                (is_pool(level, x, y) || is_lava(level, x, y)) &&
+                level->locations[x][y].seenv &&
+                !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
+                pline(is_pool(level, x, y) ? "You never learned to swim!" :
+                      "That lava looks rather dangerous...");
+                pline("(Use m-direction to move there anyway.)");
+                flags.move = 0;
+                nomul(0, "");
+                return 0;
+            }
+        }
+
 	/* Move ball and chain.  */
 	if (Punished)
 	    if (!drag_ball(x,y, &bc_control, &ballx, &bally, &chainx, &chainy,
