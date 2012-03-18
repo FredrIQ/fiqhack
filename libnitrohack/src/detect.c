@@ -923,8 +923,8 @@ static void findone(int zx, int zy, void *num)
 			(*(int*)num)++;
 		}
 	} else if ((mtmp = m_at(level, zx, zy)) != 0) {
-		if (mtmp->m_ap_type) {
-			seemimic(mtmp);
+	        if(mtmp->m_ap_type && !level->locations[zx][zy].mem_invis) {
+                        map_invisible(zx, zy);
 			(*(int*)num)++;
 		}
 		if (mtmp->mundetected &&
@@ -1090,8 +1090,9 @@ int dosearch0(int aflag)
 		    } else {
 		/* Be careful not to find anything in an SCORR or SDOOR */
 			if ((mtmp = m_at(level, x, y)) && !aflag) {
-			    if (mtmp->m_ap_type) {
-				seemimic(mtmp);
+			    if (mtmp->m_ap_type &&
+                                !level->locations[x][y].mem_invis) {
+                                map_invisible(x,y);
 		find:		exercise(A_WIS, TRUE);
 				if (!canspotmon(mtmp)) {
 				    if (level->locations[x][y].mem_invis) {
