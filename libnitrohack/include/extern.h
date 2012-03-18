@@ -1464,7 +1464,7 @@ extern void growl(struct monst *);
 extern void yelp(struct monst *);
 extern void whimper(struct monst *);
 extern void beg(struct monst *);
-extern int dotalk(void);
+extern int dotalk(int, int, int);
 
 /* ### sp_lev.c ### */
 

@@ -2,6 +2,7 @@
 /* NitroHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "eshk.h"
 
 static boolean known_hitum(struct monst *,int *, const struct attack *, schar, schar);
 static void steal_it(struct monst *, const struct attack *);
@@ -178,15 +179,27 @@ boolean attack_checks(struct monst *mtmp,
 	    wakeup(mtmp);
 	}
 
-	if (flags.confirm && mtmp->mpeaceful
-	    && !Confusion && !Hallucination && !Stunned) {
-		if (canspotmon(mtmp)) {
-			sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
-			if (yn(qbuf) != 'y') {
-				flags.move = 0;
-				return TRUE;
-			}
-		}
+        /* The remaining cases only happen if the player knows what
+           the monster is and walked into it deliberately */
+	if (canspotmon(mtmp) && !Confusion && !Hallucination && !Stunned) {
+            if (mtmp->isshk && mtmp->mpeaceful &&
+                (ESHK(mtmp)->billct || ESHK(mtmp)->debit)) {
+                dopay();
+                return TRUE;
+            }
+            if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
+                if (mtmp->data->msound == MS_PRIEST)
+                    pline("The priest mutters a prayer.");
+                else dotalk(dx, dy, 0);
+                return TRUE;
+            }
+            if (flags.confirm && mtmp->mpeaceful) {
+                sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
+                if (yn(qbuf) != 'y') {
+                    flags.move = 0;
+                    return TRUE;
+                }
+            }
 	}
 
 	return FALSE;
@@ -280,9 +293,8 @@ boolean attack(struct monst *mtmp, schar dx, schar dy)
 	 * 07/92) then we assume that you're not trying to attack. Instead,
 	 * you'll usually just swap places if this is a movement command
 	 */
-	/* Intelligent chaotic weapons (Stormbringer) want blood */
 	if (is_safepet(mtmp) && !flags.forcefight) {
-	    if (!uwep || uwep->oartifact != ART_STORMBRINGER) {
+	    if (1 /* deleted Stormbringer check */) {
 		/* there are some additional considerations: this won't work
 		 * if in a shop or Punished or you miss a random roll or
 		 * if you can walk thru walls and your pet cannot (KAA) or

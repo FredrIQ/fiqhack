@@ -5,7 +5,7 @@
 #include "edog.h"
 
 static int domonnoise(struct monst *);
-static int dochat(void);
+static int dochat(int, int, int);
 static int mon_in_room(struct monst *,int);
 
 /* this easily could be a macro, but it might overtax dumb compilers */
@@ -770,22 +770,24 @@ static int domonnoise(struct monst *mtmp)
 }
 
 
-int dotalk(void)
+int dotalk(int dx, int dy, int dz)
 {
     int result;
     boolean save_soundok = flags.soundok;
     flags.soundok = 1;	/* always allow sounds while chatting */
-    result = dochat();
+    result = dochat(dx, dy, dz);
     flags.soundok = save_soundok;
     return result;
 }
 
-static int dochat(void)
+static int dochat(int idx, int idy, int idz)
 {
     struct monst *mtmp;
     int tx,ty;
     struct obj *otmp;
-    schar dx, dy, dz;
+    schar dx = idx;
+    schar dy = idy;
+    schar dz = idz;
 
     if (is_silent(youmonst.data)) {
 	pline("As %s, you cannot speak.", an(youmonst.data->mname));
@@ -816,9 +818,11 @@ static int dochat(void)
 	return 1;
     }
 
-    if (!getdir("Talk to whom? (in what direction)", &dx, &dy, &dz)) {
+    if (dx == -2 || dy == -2 || dz == -2) {
+      if (!getdir("Talk to whom? (in what direction)", &dx, &dy, &dz)) {
 	/* decided not to chat */
-	return 0;
+        return 0;
+      }
     }
 
     if (u.usteed && dz > 0) {
