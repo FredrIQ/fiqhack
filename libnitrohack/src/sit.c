@@ -45,6 +45,16 @@ int dosit(void)
 	    goto in_water;
 	}
 
+        if ((trap = t_at(level, u.ux, u.uy)) != 0 && !u.utrap &&
+            (trap->ttyp == HOLE || trap->ttyp == TRAPDOOR ||
+             trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) &&
+            trap->tseen) {
+            pline("You sit on the edge of the %s.",
+                  trap->ttyp == HOLE ? "hole" :
+                  trap->ttyp == TRAPDOOR ? "trapdoor" : "pit");
+            return 1;
+        }
+
 	if (OBJ_AT(u.ux, u.uy)) {
 	    struct obj *obj;
 
