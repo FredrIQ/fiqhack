@@ -963,6 +963,9 @@ int enhance_weapon_skill(void)
 		sprintf(buf, " %s%s\t[%s]",
 			prefix, P_NAME(i), sklnambuf);
 	    }
+            if (could_advance(i) || can_advance(i, speedy))
+              sprintf(eos(buf), " (%d to advance)",
+                      slots_required(i));
 	    id = can_advance(i, speedy) ? i+1 : 0;
 	    add_menuitem(&menu, id, buf, 0, FALSE);
 	}
