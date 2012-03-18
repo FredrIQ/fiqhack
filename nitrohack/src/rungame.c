@@ -51,6 +51,7 @@ nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
 	case CONFIG_DIR: subdir = ""; break;
 	case SAVE_DIR:   subdir = "save/"; break;
 	case LOG_DIR:    subdir = "log/"; break;
+        case DUMP_DIR:   subdir = "dumps/"; break;
     }
     
     /* look in regular location */

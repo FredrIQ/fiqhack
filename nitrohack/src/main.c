@@ -132,9 +132,13 @@ static char** init_game_paths(const char *argv0)
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
-    pathlist[DUMPPREFIX] = getenv("HOME");
-    if (!pathlist[DUMPPREFIX])
+    pathlist[DUMPPREFIX] = malloc(BUFSZ);
+    if (!get_gamedir(DUMP_DIR, pathlist[DUMPPREFIX])) {
+      free(pathlist[DUMPPREFIX]);
+      pathlist[DUMPPREFIX] = getenv("HOME");
+      if (!pathlist[DUMPPREFIX])
 	pathlist[DUMPPREFIX] = "./";
+    }
     
 #elif defined(WIN32)
     dir = getenv("NITROHACKDIR");
@@ -159,6 +163,9 @@ static char** init_game_paths(const char *argv0)
 	pathlist[DUMPPREFIX] = docpath;
     else
 	pathlist[DUMPPREFIX] = ".\\";
+#else
+    /* avoid a trap for people trying to port this */
+#error You must run NitroHack under Win32 or Linux.
 #endif
     
     /* alloc memory for the paths and append slashes as required */
