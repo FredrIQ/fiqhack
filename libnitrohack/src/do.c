@@ -981,8 +981,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		if (Punished && !Levitation) {
 			pline("With great effort you climb the %s.",
 				at_ladder ? "ladder" : "stairs");
-		} else if (at_ladder)
-		    pline("You climb up the ladder.");
+		}
 	    } else {	/* down */
 		if (at_ladder) {
 		    u_on_newpos(level->upladder.sx, level->upladder.sy);
@@ -1014,8 +1013,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 		    else
 			losehp(rnd(3), "falling downstairs", KILLED_BY);
 		    selftouch("Falling, you");
-		} else if (at_ladder)
-		    pline("You climb down the ladder.");
+		}
 	    }
 	} else {	/* trap door or level_tele or In_endgame */
 	    if (was_in_W_tower && On_W_tower_level(&u.uz))
