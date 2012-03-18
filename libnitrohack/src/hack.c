@@ -477,6 +477,14 @@ boolean invocation_pos(const d_level *dlev, xchar x, xchar y)
 	return (boolean)(Invocation_lev(dlev) && x == inv_pos.x && y == inv_pos.y);
 }
 
+static void autoexplore_msg(const char *text, int mode)
+{
+       if (iflags.autoexplore) {
+               char tmp[BUFSZ];
+               strcpy(tmp, text);
+               pline("%s blocks your way.", upstart(tmp));
+       }
+}
 
 /* return TRUE if (dx,dy) is an OK place to move
  * mode is one of DO_MOVE, TEST_MOVE, TEST_TRAV or TEST_TRAP
@@ -579,7 +587,7 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
     /* Pick travel path that does not require crossing a trap.
      * Avoid water and lava using the usual running rules.
      * (but not u.ux/u.uy because findtravelpath walks toward u.ux/u.uy) */
-    if (flags.run == 8 && (mode == TEST_MOVE || mode == TEST_TRAP) &&
+    if (flags.run == 8 && (mode != DO_MOVE) &&
 	(x != u.ux || y != u.uy)) {
 	struct trap* t = t_at(level, x, y);
 
@@ -601,12 +609,16 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 			     || block_entry(x, y))
 			 )) {
 	/* Can't move at a diagonal out of a doorway with door. */
+        if (mode == DO_MOVE) autoexplore_msg("the doorway", mode);
 	return FALSE;
     }
 
     if (sobj_at(BOULDER, level, x,y) && (In_sokoban(&u.uz) || !Passes_walls)) {
-	if (!(Blind || Hallucination) && (flags.run >= 2) && mode != TEST_TRAV)
+	if (!(Blind || Hallucination) && (flags.run >= 2) && mode != TEST_TRAV) {
+            if (sobj_at(BOULDER, level, x, y) && mode == DO_MOVE)
+                autoexplore_msg("a boulder", mode);
 	    return FALSE;
+        }
 	if (mode == DO_MOVE) {
 	    /* tunneling monsters will chew before pushing */
 	    if (tunnels(youmonst.data) && !needspick(youmonst.data) &&
@@ -649,6 +661,7 @@ static boolean unexplored(int x, int y)
   if (level->locations[x][y].mem_stepped) return FALSE;
   if (ttmp && ttmp->tseen) return FALSE;
   if (level->locations[x][y].mem_obj == what_obj(BOULDER)+1) return FALSE;
+  if (level->locations[x][y].mem_obj && inside_shop(level, x, y)) return FALSE;
   if (level->locations[x][y].mem_obj) return TRUE;
   for (i = -1; i <= 1; i++)
     for (j = -1; j <= 1; j++) {
@@ -886,8 +899,10 @@ int domove(schar dx, schar dy, schar dz)
             }
             u.tx = u.ux;
             u.ty = u.uy;
-            if (!findtravelpath(unexplored, &dx, &dy))
-              iflags.autoexplore = FALSE;
+            if (!findtravelpath(unexplored, &dx, &dy)) {
+                iflags.autoexplore = FALSE;
+                pline("Nowhere else around here can be automatically explored.");
+            }
           } else if (!findtravelpath(NULL, &dx, &dy))
             findtravelpath(couldsee_func, &dx, &dy);
           iflags.travel1 = 0;
@@ -1047,6 +1062,7 @@ int domove(schar dx, schar dy, schar dz)
 			       Protection_from_shape_changers)) ||
 			     sensemon(mtmp))) {
 				nomul(0, NULL);
+                                autoexplore_msg(Monnam(mtmp), DO_MOVE);
 				return 0;
 			}
 		}
