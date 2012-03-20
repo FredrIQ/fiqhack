@@ -197,6 +197,7 @@ static void init_oracles(dlb *fp)
 void save_oracles(struct memfile *mf)
 {
 	int i;
+        mtag(mf, 0, MTAG_ORACLES);
 	mwrite32(mf, oracle_cnt);
 	if (oracle_cnt)
 	    for (i = 0; i < oracle_cnt; i++)

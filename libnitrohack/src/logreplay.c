@@ -727,6 +727,11 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 		if (!optonly)
 		    replay_check_cmdresult(token);
 		break;
+
+            case '~': /* a diff */
+                if (!optonly)
+                    /*replay_check_diff(token)*/;
+                break;
 	}
 	
 	token = next_log_token();

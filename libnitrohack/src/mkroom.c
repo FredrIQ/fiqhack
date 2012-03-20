@@ -594,6 +594,8 @@ static void save_room(struct memfile *mf, struct mkroom *r)
 {
 	short i;
 	
+        /* no tag; we tag room saving once per level, because the
+           rooms don't change in number once the level is created */
 	mwrite8(mf, r->lx);
 	mwrite8(mf, r->hx);
 	mwrite8(mf, r->ly);
@@ -616,6 +618,7 @@ void save_rooms(struct memfile *mf, struct level *lev)
 {
 	short i;
 
+        mtag(mf, ledger_no(&lev->z), MTAG_ROOMS);
 	mfmagic_set(mf, ROOMS_MAGIC); /* "RDAT" */
 	/* First, write the number of rooms */
 	mwrite32(mf, lev->nroom);

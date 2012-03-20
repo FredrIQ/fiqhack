@@ -15,6 +15,40 @@ static unsigned short le16_to_host(unsigned short x) { return x; }
 static unsigned int   le32_to_host(unsigned int x)   { return x; }
 #endif
 
+/* Creating and freeing memory files */
+void mnew(struct memfile *mf, struct memfile *relativeto)
+{
+    int i;
+    mf->buf = mf->diffbuf = NULL;
+    mf->len = mf->pos = mf->difflen = mf->diffpos = mf->relativepos = 0;
+    mf->relativeto = relativeto;
+    mf->curcmd = MDIFF_INVALID; /* no command yet */
+    for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++)
+        mf->tags[i] = 0;
+}
+void mfree(struct memfile *mf)
+{
+    int i;
+    free(mf->buf);
+    free(mf->diffbuf);
+    for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++) {
+        struct memfile_tag *tag, *otag;
+        for ((tag = mf->tags[i]), (otag = NULL); tag; tag = tag->next) {
+            free(otag);
+            otag = tag;
+        }
+        free(otag);
+        mf->tags[i] = 0;
+    }
+}
+
+/* Functions for writing to a memory file.
+   There are two sorts of memory files: linear files, which work like
+   ordinary filesystem files, and diff files, which are recorded
+   relative to a parent file. As well as containing data, memfiles
+   also contain "tags" for the purpose of making diffing easier; these
+   aren't saved to disk as they can always be reconstructed and anyway
+   they improve efficiency rather than being required for correctness. */
 
 void mwrite(struct memfile *mf, const void *buf, unsigned int num)
 {
@@ -27,22 +61,48 @@ void mwrite(struct memfile *mf, const void *buf, unsigned int num)
 	if (do_realloc)
 	    mf->buf = realloc(mf->buf, mf->len);
 	memcpy(&mf->buf[mf->pos], buf, num);
-	mf->pos += num;
-}
 
+        if (!mf->relativeto) {
+            mf->pos += num;
+        } else {
+            /* calculate and record the diff as well */
+            while (num--) {
+                if (mf->relativepos < mf->relativeto->pos &&
+                    mf->buf[mf->pos] == mf->relativeto->buf[mf->relativepos]) {
+                    if (mf->curcmd != MDIFF_COPY || mf->curcount == 0x3fff) {
+                        mdiffflush(mf);
+                        mf->curcount = 0;
+                    }
+                    mf->curcmd = MDIFF_COPY;
+                    mf->curcount++;
+                } else {
+                    /* Note that mdiffflush is responsible for writing the
+                       actual data that was edited, once we have a complete
+                       run of it. So there's no need to record the data
+                       anywhere but in buf. */
+                    if (mf->curcmd != MDIFF_EDIT || mf->curcount == 0x3fff) {
+                        mdiffflush(mf);
+                        mf->curcount = 0;
+                    }
+                    mf->curcmd = MDIFF_EDIT;
+                    mf->curcount++;
+                }
+                mf->pos++;
+                mf->relativepos++;
+            }
+        }
+}
 
 void mwrite8(struct memfile *mf, int8_t value)
 {
 	mwrite(mf, &value, 1);
 }
 
-
 void mwrite16(struct memfile *mf, int16_t value)
 {
 	int16_t le_value = host_to_le16(value);
 	mwrite(mf, &le_value, 2);
 }
-
 
 void mwrite32(struct memfile *mf, int32_t value)
 {
@@ -64,12 +124,88 @@ void store_mf(int fd, struct memfile *mf)
 	}
 
 out:
-	free(mf->buf);
-	mf->buf = NULL;
-	mf->pos = mf->len = 0;
+        mfree(mf);
+        mnew(mf, NULL);
 }
 
+/* Writing to the diff portion of memfiles; more complicated than
+   regular writes, because it's RLEd. */
+static void mdiffwrite(struct memfile *mf, const void *buf, unsigned int num)
+{
+	boolean do_realloc = FALSE;
+	while (mf->difflen < mf->diffpos + num) {
+	    mf->difflen += 4096;
+	    do_realloc = TRUE;
+	}
+	
+	if (do_realloc)
+	    mf->diffbuf = realloc(mf->diffbuf, mf->difflen);
+	memcpy(&mf->diffbuf[mf->diffpos], buf, num);
+	mf->diffpos += num;
+}
 
+static void mdiffwrite14(struct memfile *mf, uint8_t command, int16_t value)
+{
+        uint16_t le_value = value;
+        le_value |= command << 14;
+        le_value = host_to_le16(le_value);
+	mdiffwrite(mf, &le_value, 2);
+}
+
+void mdiffflush(struct memfile *mf)
+{
+        if (mf->curcmd != MDIFF_INVALID)
+            mdiffwrite14(mf, mf->curcmd, mf->curcount);
+        if (mf->curcmd == MDIFF_EDIT) {
+            /* We need to record the actual data to edit with, too. */
+            if (mf->curcount > mf->pos || mf->curcount < 0)
+                panic("mdiffflush: trying to edit with too much data");
+            mdiffwrite(mf, mf->buf + mf->pos - mf->curcount, mf->curcount);
+        }
+        mf->curcmd = MDIFF_INVALID;
+}
+
+/* Tagging memfiles. This remembers the correspondence between the tag
+   and the file location. For a diff memfile, it also sets relativepos
+   to the pos of the tag in relativeto, if it exists, and adds a seek
+   command to the diff, unless it would be redundant. */
+void mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype)
+{
+        /* 619 is chosen here because it's a prime number, and it's
+           approximately in the golden ratio with MEMFILE_HASHTABLE_SIZE. */
+        int bucket = (tagdata * 619 + (int)tagtype) % MEMFILE_HASHTABLE_SIZE;
+        struct memfile_tag *tag = malloc(sizeof (struct memfile_tag));
+        tag->next = mf->tags[bucket];
+        tag->tagdata = tagdata;
+        tag->tagtype = tagtype;
+        tag->pos = mf->pos;
+        mf->tags[bucket] = tag;
+        if (mf->relativeto) {
+            for (tag = mf->relativeto->tags[bucket]; tag; tag = tag->next) {
+                if (tag->tagtype == tagtype && tag->tagdata == tagdata) break;
+            }
+            if (tag && mf->relativepos != tag->pos) {
+                int offset = mf->relativepos - tag->pos;
+                if (mf->curcmd != MDIFF_SEEK) {
+                    mdiffflush(mf);
+                    mf->curcount = 0;
+                }
+                while (offset+mf->curcount >= 1<<14 ||
+                       offset+mf->curcount <= -(1<<14)) {
+                    if (offset+mf->curcount < 0) {
+                        mdiffwrite14(mf, MDIFF_SEEK, -0x3fff);
+                        offset += 0x3fff;
+                    } else {
+                        mdiffwrite14(mf, MDIFF_SEEK, 0x3fff);
+                        offset -= 0x3fff;
+                    }
+                }
+                mf->curcount += offset;
+                mf->curcmd = (mf->curcount ? MDIFF_SEEK : MDIFF_INVALID);
+                mf->relativepos = tag->pos;
+            }
+        }
+}
 
 void mread(struct memfile *mf, void *buf, unsigned int len)
 {
@@ -115,7 +251,7 @@ static void mfalign(struct memfile *mf, int aln)
 	
 	alignbytes = aln - (mf->pos & alignmask);
 	for (i = 0; i < alignbytes; i++)
-	    mf->buf[mf->pos++] = 0;
+	    mwrite8(mf, 0); /* go via mwrite to set up diffing properly */
 }
 
 

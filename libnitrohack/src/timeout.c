@@ -1491,6 +1491,7 @@ static void write_timer(struct memfile *mf, timer_element *timer)
 	    break;
     }
     
+    mtag(mf, timer->tid, MTAG_TIMER);
     mwrite32(mf, timer->tid);
     mwrite32(mf, timer->timeout);
     mwrite32(mf, argval);
@@ -1624,6 +1625,7 @@ void save_timers(struct memfile *mf, struct level *lev, int range)
 {
     int count;
 
+    mtag(mf, 2*(int)ledger_no(&lev->z)+range, MTAG_TIMERS);
     if (range == RANGE_GLOBAL)
 	mwrite32(mf, timer_id);
 

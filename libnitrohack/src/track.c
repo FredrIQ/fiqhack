@@ -57,6 +57,7 @@ coord *gettrack(int x, int y)
 void save_track(struct memfile *mf)
 {
     int i;
+    mtag(mf, 0, MTAG_TRACK);
     for (i = 0; i < UTSZ; i++) {
 	mwrite8(mf, utrack[i].x);
 	mwrite8(mf, utrack[i].y);

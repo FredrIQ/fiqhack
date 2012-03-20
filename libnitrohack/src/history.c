@@ -56,9 +56,12 @@ void historic_event(boolean hidden, const char *fmt, ...)
 void save_history(struct memfile *mf)
 {
     int i, len;
-    
+
+    mtag(mf, 0, MTAG_HISTORY);
     mfmagic_set(mf, HISTORY_MAGIC);
     mwrite32(mf, histcount);
+    /* don't need tags for individual history events, because they're
+       always added at the end of the list */
     for (i = 0; i < histcount; i++) {
 	mwrite32(mf, histevents[i].when);
 	mwrite32(mf, histevents[i].hidden);

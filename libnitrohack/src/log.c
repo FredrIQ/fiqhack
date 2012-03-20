@@ -4,15 +4,21 @@
 #include "hack.h"
 #include "patchlevel.h"
 
+/* #define DEBUG */
+
 extern const struct cmd_desc cmdlist[];
 
 int logfile = -1;
 unsigned int last_cmd_pos;
+struct memfile recent_cmd_states[2];
+struct memfile *last_cmd_state = recent_cmd_states;
 static const char *const statuscodes[] = {"save", "done", "inpr"};
+
 
 static const unsigned char b64e[64] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+static void log_binary(const char *buf, int buflen, char prefix[3]);
 
 static void base64_encode_binary(const unsigned char* in, char *out, int len)
 {
@@ -29,7 +35,8 @@ static void base64_encode_binary(const unsigned char* in, char *out, int len)
     rem = len - i;
     if (rem > 0) {
 	out[pos] = b64e[in[i] >> 2];
-        out[pos+1] = b64e[(in[i  ] & 0x03) << 4 | (in[i+1] & 0xf0) >> 4];
+        out[pos+1] = b64e[(in[i  ] & 0x03) << 4 |
+                          (rem == 1 ? 0 : (in[i+1] & 0xf0)) >> 4];
 	out[pos+2] = (rem == 1) ? '=' : b64e[(in[i+1] & 0x0f) << 2];
 	out[pos+3] = '=';
 	pos += 4;
@@ -178,6 +185,11 @@ void log_newgame(int logfd, unsigned long long start_time,
     log_game_opts();
     /* all the timestamps are UTC, so timezone info is required to interpret them */
     log_timezone(get_tz_offset());
+
+    mfree(recent_cmd_states);
+    mfree(recent_cmd_states+1);
+    mnew(recent_cmd_states, NULL);
+    mnew(recent_cmd_states+1, NULL);
 }
 
 
@@ -221,6 +233,34 @@ void log_command_result(void)
 	return;
     
     lprintf("\n<%x", mt_nextstate() & 0xffff);
+
+    {
+        struct memfile *this_cmd_state = 
+            (last_cmd_state == recent_cmd_states ?
+             recent_cmd_states + 1 : recent_cmd_states);
+        mnew(this_cmd_state, last_cmd_state);
+        savegame(this_cmd_state); /* both records the state, and calcs a diff */
+        lprintf("\n~");
+        mdiffflush(this_cmd_state);
+        log_binary(this_cmd_state->diffbuf, this_cmd_state->diffpos, " f:");
+#ifdef DEBUG
+        /* some debug code for checking diff efficiency */
+        int edits = 0, editbytes = 0, copies = 0, copybytes = 0, seeks = 0, i;
+        for (i = 0; i < this_cmd_state->diffpos; i++) {
+            uint16_t j = *(uint16_t*)(this_cmd_state->diffbuf+i); i++;
+            switch (j >> 14) {
+            case MDIFF_SEEK: seeks++; break;
+            case MDIFF_COPY: copies++; copybytes += (j & 0x3fff); break;
+            case MDIFF_EDIT: edits++; editbytes += (j & 0x3fff);
+                i += (j & 0x3fff); break;
+            }
+        }
+        lprintf(" (%d edits (%d bytes), %d copies (%d bytes), %d seeks)",
+                edits, editbytes, copies, copybytes, seeks);
+#endif
+        mfree(last_cmd_state);
+        last_cmd_state = this_cmd_state;
+    }
     
     last_cmd_pos = lseek(logfile, 0, SEEK_CUR);
     lseek(logfile, 0, SEEK_SET);
@@ -327,9 +367,7 @@ void log_objmenu(int n, struct nh_objresult *pick_list)
     lprintf("]");
 }
 
-
-/* bones files must also be logged, since they are an input into the game state */
-void log_bones(const char *bonesbuf, int buflen)
+static void log_binary(const char *buf, int buflen, char prefix[3])
 {
     char *b64buf;
     
@@ -337,13 +375,19 @@ void log_bones(const char *bonesbuf, int buflen)
 	return;
     
     b64buf = malloc(buflen / 3 * 4 + 5);
-    base64_encode_binary((const unsigned char*)bonesbuf, b64buf, buflen);
+    base64_encode_binary((const unsigned char*)buf, b64buf, buflen);
     
     /* don't use lprintf, b64buf might be too big for the buffer used by lprintf */
-    write(logfile, " b:", 3);
+    write(logfile, prefix, 3);
     write(logfile, b64buf, strlen(b64buf));
     
     free(b64buf);
+}
+
+/* bones files must also be logged, since they are an input into the game state */
+void log_bones(const char *bonesbuf, int buflen)
+{
+    log_binary(bonesbuf, buflen, " b:");
 }
 
 

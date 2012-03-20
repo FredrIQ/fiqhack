@@ -1169,6 +1169,7 @@ void save_you(struct memfile *mf, struct you *y)
 		(y->uhave.book << 29) | (y->uhave.menorah << 28) |
 		(y->uhave.questart << 27);
 
+        mtag(mf, 0, MTAG_YOU);
 	mwrite32(mf, yflags);
 	mwrite32(mf, eflags);
 	mwrite32(mf, hflags);

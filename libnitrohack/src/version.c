@@ -87,6 +87,7 @@ boolean uptodate(struct memfile *mf, const char *name)
 
 void store_version(struct memfile *mf)
 {
+        mtag(mf, 0, MTAG_VERSION);
 	mwrite32(mf, VERSION_NUMBER);
 	mwrite32(mf, VERSION_FEATURES);
 	mwrite32(mf, VERSION_SANITY1);

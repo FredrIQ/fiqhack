@@ -2319,6 +2319,8 @@ boolean maybe_finished_meal(boolean stopping)
 void save_food(struct memfile *mf)
 {
     unsigned int oid, vflags;
+
+    /* no mtag useful; fixed distance after track */
     
     oid = victual.piece ? victual.piece->o_id : 0;
     mwrite32(mf, oid);

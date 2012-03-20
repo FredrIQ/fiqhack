@@ -1441,6 +1441,7 @@ void save_obj(struct memfile *mf, struct obj *obj)
 	     (obj->lamplit << 12) | (obj->greased << 11) | (obj->oattached << 9) |
 	     (obj->in_use << 8) | (obj->was_thrown << 7) | (obj->bypass << 6);
     
+    mtag(mf, obj->o_id, MTAG_OBJ);
     mfmagic_set(mf, OBJ_MAGIC);
     
     mwrite32(mf, obj->onamelth);    

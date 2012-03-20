@@ -1084,6 +1084,10 @@ void save_engravings(struct memfile *mf, struct level *lev)
 	
 	for (ep = lev->lev_engr; ep; ep = ep->nxt_engr) {
 	    if (ep->engr_lth && ep->engr_txt[0]) {
+                /* To distinguish engravingss from each other in tags,
+                   we use x/y/z coords */
+                mtag(mf, ledger_no(&lev->z) + ((int)ep->engr_x << 8) +
+                     ((int)ep->engr_y << 16), MTAG_ENGRAVING);
 		mwrite32(mf, ep->engr_lth);
 		mwrite8(mf, ep->engr_x);
 		mwrite8(mf, ep->engr_y);

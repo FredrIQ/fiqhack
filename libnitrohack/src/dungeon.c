@@ -92,6 +92,7 @@ void save_d_flags(struct memfile *mf, d_flags f)
 
 static void save_dungeon_struct(struct memfile *mf, const dungeon *dgn)
 {
+    mtag(mf, dgn->ledger_start, MTAG_DUNGEONSTRUCT);
     mwrite(mf, dgn->dname, sizeof(dgn->dname));
     mwrite(mf, dgn->proto, sizeof(dgn->proto));
     mwrite8(mf, dgn->boneid);
@@ -106,6 +107,7 @@ static void save_dungeon_struct(struct memfile *mf, const dungeon *dgn)
 
 static void save_branch(struct memfile *mf, const branch *b)
 {
+    mtag(mf, b->id, MTAG_BRANCH);
     mwrite32(mf, b->id);
     mwrite32(mf, b->type);
     mwrite(mf, &b->end1, sizeof(d_level));
@@ -120,6 +122,7 @@ void save_dungeon(struct memfile *mf)
     branch *curr;
     int    count, i;
     
+    mtag(mf, 0, MTAG_DUNGEON);
     mfmagic_set(mf, DGN_MAGIC);
 
     mwrite(mf, &n_dgns, sizeof n_dgns);

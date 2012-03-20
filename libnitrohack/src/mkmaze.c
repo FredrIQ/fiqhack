@@ -986,6 +986,11 @@ void save_waterlevel(struct memfile *mf)
 	n = 0;
 	for (b = bbubbles; b; b = b->next)
 	    ++n;
+        /* We're assuming that the number of bubbles stays constant,
+           as we can't reasonably tag it anyway. If they don't, we
+           just end up with a diff that's longer than it needs to
+           be. */
+        mtag(mf, 0, MTAG_WATERLEVEL);
 	mwrite32(mf, n);
 	mwrite32(mf, xmin);
 	mwrite32(mf, ymin);

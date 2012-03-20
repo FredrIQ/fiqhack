@@ -1207,6 +1207,7 @@ void reset_rndmonst(int mndx)
 
 void save_rndmonst_state(struct memfile *mf)
 {
+        mtag(mf, 0, MTAG_RNDMONST);
 	mwrite32(mf, rndmonst_state.choice_count);
 	mwrite(mf, rndmonst_state.mchoices, sizeof(rndmonst_state.mchoices));
 }
@@ -1871,6 +1872,7 @@ struct monst *restore_mon(struct memfile *mf)
 
 static void save_shkbill(struct memfile *mf, const struct bill_x *b)
 {
+    /* no mtag needed; saved as part of a particular shk's data */
     mwrite32(mf, b->bo_id);
     mwrite32(mf, b->price);
     mwrite32(mf, b->bquan);
@@ -1880,6 +1882,7 @@ static void save_shkbill(struct memfile *mf, const struct bill_x *b)
 
 static void save_fcorr(struct memfile *mf, const struct fakecorridor *f)
 {
+    /* no mtag needed; saved as part of a particular guard's data */
     mwrite8(mf, f->fx);
     mwrite8(mf, f->fy);
     mwrite8(mf, f->ftyp);
@@ -1892,6 +1895,7 @@ void save_mon(struct memfile *mf, const struct monst *mon)
     unsigned int mflags;
     struct eshk *shk;
     
+    mtag(mf, mon->m_id, MTAG_MON);
     mfmagic_set(mf, MON_MAGIC);
     
     mwrite16(mf, mon->mnamelth);

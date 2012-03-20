@@ -244,6 +244,7 @@ void save_light_sources(struct memfile *mf, struct level *lev, int range)
 {
     int count, actual;
 
+    mtag(mf, 2*(int)ledger_no(&lev->z) + range, MTAG_LIGHTS);
     count = maybe_write_ls(mf, lev, range, FALSE);
     mwrite32(mf, count);
     
@@ -369,24 +370,26 @@ static void write_ls(struct memfile *mf, light_source *ls)
 {
     struct obj *otmp;
     struct monst *mtmp;
+    long id;
 
+    if ((ls->flags & LSF_NEEDS_FIXUP)) {
+        id = *(int32_t*)ls->id;
+    } else if (ls->type == LS_OBJECT) {
+	otmp = (struct obj *)ls->id;
+	id = otmp->o_id;
+    } else if (ls->type == LS_MONSTER) {
+	mtmp = (struct monst *)ls->id;
+	id = mtmp->m_id;
+    } else
+	impossible("write_ls: bad type (%d)", ls->type);
+
+
+    mtag(mf, id * 2 + ls->type, MTAG_LIGHT);
     mwrite32(mf, ls->type);
     mwrite16(mf, ls->range);
     
-    if ((ls->flags & LSF_NEEDS_FIXUP)) {
-	mwrite16(mf, ls->flags);
-	mwrite32(mf, (*(int32_t*)ls->id));
-    } else if (ls->type == LS_OBJECT) {
-	mwrite16(mf, ls->flags | LSF_NEEDS_FIXUP);
-	otmp = (struct obj *)ls->id;
-	mwrite32(mf, otmp->o_id);
-    } else if (ls->type == LS_MONSTER) {
-	mwrite16(mf, ls->flags | LSF_NEEDS_FIXUP);
-	mtmp = (struct monst *)ls->id;
-	mwrite32(mf, mtmp->m_id);
-    } else
-	impossible("write_ls: bad type (%d)", ls->type);
-    
+    mwrite16(mf, ls->flags | LSF_NEEDS_FIXUP);
+    mwrite32(mf, id);    
     mwrite8(mf, ls->x);
     mwrite8(mf, ls->y);
 }

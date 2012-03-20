@@ -1371,6 +1371,7 @@ void rot_corpse(void *arg, long timeout)
 
 void save_dig_status(struct memfile *mf)
 {
+    /* no mtag useful; fixed distance after steal status */
     mfmagic_set(mf, DIG_MAGIC);
     mwrite32(mf, digging.effort);
     mwrite32(mf, digging.lastdigtime);

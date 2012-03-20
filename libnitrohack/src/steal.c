@@ -549,6 +549,7 @@ void reset_steal(void)
 
 void save_steal(struct memfile *mf)
 {
+    mtag(mf, 0, MTAG_STEAL);
     mwrite32(mf, stealoid);
     mwrite32(mf, stealmid);
 }

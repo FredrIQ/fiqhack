@@ -782,12 +782,16 @@ extern int castum(struct monst *, const struct attack *);
 
 /* ### memfile.c ### */
 
+extern void mnew(struct memfile *mf, struct memfile *relativeto);
+extern void mfree(struct memfile *mf);
 extern void mwrite(struct memfile *mf, const void *buf, unsigned int num);
 extern void mwrite8(struct memfile *mf, int8_t value);
 extern void mwrite16(struct memfile *mf, int16_t value);
 extern void mwrite32(struct memfile *mf, int32_t value);
 extern void store_mf(int fd, struct memfile *mf);
-extern void mread(struct memfile *mf,void *,unsigned int);
+extern void mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype);
+extern void mdiffflush(struct memfile *mf);
+extern void mread(struct memfile *mf, void *, unsigned int);
 extern int8_t mread8(struct memfile *mf);
 extern int16_t mread16(struct memfile *mf);
 extern int32_t mread32(struct memfile *mf);

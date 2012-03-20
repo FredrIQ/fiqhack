@@ -105,6 +105,7 @@ void save_mt_state(struct memfile *mf)
 {
     unsigned int i, pos = next - state;
     
+    mtag(mf, 0, MTAG_RNGSTATE);
     for (i = 0; i < N+1; i++)
 	mwrite32(mf, state[i]);
     mwrite32(mf, pos);

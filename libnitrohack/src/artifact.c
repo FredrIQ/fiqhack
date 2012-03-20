@@ -85,6 +85,7 @@ void save_artifacts(struct memfile *mf)
 {
 	/* artiexist and artidisco are arrays of bytes, so writing them in one
 	 * go is safe and portable */
+        mtag(mf, 0, MTAG_ARTIFACT);
 	mwrite(mf, artiexist, sizeof artiexist);
 	mwrite(mf, artidisco, sizeof artidisco);
 }

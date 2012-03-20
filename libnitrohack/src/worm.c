@@ -443,6 +443,7 @@ void save_worm(struct memfile *mf, struct level *lev)
 
     for (i = 1; i < MAX_NUM_WORMS; i++) {
 	for (count = 0, curr = lev->wtails[i]; curr; curr = curr->nseg) count++;
+        mtag(mf, (int)ledger_no(&lev->z) * MAX_NUM_WORMS + i, MTAG_WORMS);
 	/* Save number of segments */
 	mwrite(mf, &count, sizeof(int));
 	/* Save segment locations of the monster. */

@@ -184,7 +184,9 @@ void savebones(struct obj *corpse)
 	const struct permonst *mptr;
 	struct fruit *f;
 	char c, whynot[BUFSZ], bonesid[10];
-	struct memfile mf = {NULL, 0, 0};
+	struct memfile mf;
+
+        mnew(&mf, NULL);
 
 	/* caller has already checked `can_make_bones()' */
 
@@ -308,13 +310,15 @@ make_bones:
 	c = (char) (strlen(bonesid) + 1);
 
 	store_version(&mf);
+        /* no tagging is useful here, as the tags in bones memfiles
+           aren't used for anything anyway */
 	mwrite(&mf, &c, sizeof c);
 	mwrite(&mf, bonesid, (unsigned) c);	/* DD.nnn */
 	savefruitchn(&mf);
 	update_mlstmv();	/* update monsters for eventual restoration */
 	savelev(&mf, ledger_no(&u.uz));
 	
-	store_mf(fd, &mf);
+	store_mf(fd, &mf); /* also frees mf */
 	
 	close(fd);
 	commit_bonesfile(bonesid);
@@ -325,7 +329,9 @@ int getbones(d_level *levnum)
 {
 	int ok;
 	char c, bonesid[10], oldbonesid[10];
-	struct memfile mf = {NULL, 0, 0};
+	struct memfile mf;
+
+        mnew(&mf, NULL);
 
 	if (discover || !flags.bones_enabled) /* save bones files for real games */
 		return 0;
@@ -358,7 +364,7 @@ int getbones(d_level *levnum)
 
 		if (wizard)  {
 			if (yn("Get bones?") == 'n') {
-				free(mf.buf);
+				mfree(&mf);
 				return 0;
 			}
 		}
@@ -399,7 +405,7 @@ int getbones(d_level *levnum)
 			resetobjs(lev->buriedobjlist,TRUE);
 		}
 	}
-	free(mf.buf);
+	mfree(&mf);
 
 	if (wizard) {
 		if (yn("Unlink bones?") == 'n') {

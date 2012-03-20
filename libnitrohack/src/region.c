@@ -478,10 +478,15 @@ void save_regions(struct memfile *mf, struct level *lev)
     unsigned len1, len2;
     struct region *r;
 
+    mtag(mf, ledger_no(&lev->z), MTAG_REGION);
     mfmagic_set(mf, REGION_MAGIC);
     mwrite32(mf, moves);	/* timestamp */
     mwrite32(mf, lev->n_regions);
-    
+
+    /* Note: level regions don't have ID numbers, so we can't tag
+       individual regions; instead, diff efficiency depends on the
+       fact that regions tend to stay in the order and are typically
+       inserted or deleted near the end of the list */
     for (i = 0; i < lev->n_regions; i++) {
 	r = lev->regions[i];
 	
