@@ -1062,6 +1062,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		    if (obj->blessed) {
 			pline("%s %s in pain!", Monnam(mon),
 			      is_silent(mon->data) ? "writhes" : "shrieks");
+			if (!is_silent(mon->data)) aggravate();
 			mon->mhp -= dice(2,6);
 			/* should only be by you */
 			if (mon->mhp < 1) killed(mon);
@@ -1096,6 +1097,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		if (!resists_acid(mon) && !resist(mon, POTION_CLASS, 0, NOTELL)) {
 		    pline("%s %s in pain!", Monnam(mon),
 			  is_silent(mon->data) ? "writhes" : "shrieks");
+                    if (!is_silent(mon->data)) aggravate();
 		    mon->mhp -= dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8);
 		    if (mon->mhp < 1) {
 			if (your_fault)
