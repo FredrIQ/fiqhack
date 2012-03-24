@@ -168,12 +168,13 @@ void replay_begin(void)
     /* split the logfile into tokens */
     nr_tokens = 1024;
     loginfo.tokens = malloc(nr_tokens * sizeof(char*));
-    loginfo.next = loginfo.cmdcount = 0;
+    loginfo.next = 0;
+    loginfo.cmdcount = -1; /* we record one ~ just after new-gaming */
     
     nexttoken = strtok(loginfo.mem, " \r\n");
     while (nexttoken) {
 	loginfo.tokens[loginfo.next++] = nexttoken;
-	if (nexttoken[0] == '>')
+	if (nexttoken[0] == '~')
 	    loginfo.cmdcount++;
 	
 	nexttoken = strtok(NULL, " \r\n");
@@ -187,11 +188,9 @@ void replay_begin(void)
     loginfo.next = 0;
     
     if (recovery) {
-	/* the last token should always be a command status, eg "<rngstate"
-           skip '~' because we don't know if we saved in a stable state */
+	/* the last token should always be a command diff */
 	while (loginfo.tokencount > 0 &&
-	    loginfo.tokens[loginfo.tokencount-1][0] != '<' &&
-	    loginfo.tokens[loginfo.tokencount-1][0] != '!') {
+	    loginfo.tokens[loginfo.tokencount-1][0] != '~') {
 	    endpos = (long)loginfo.tokens[loginfo.tokencount-1] - (long)loginfo.mem;
 	    loginfo.tokencount--;
 	}
@@ -217,9 +216,9 @@ void replay_end(void)
     if (!loginfo.mem)
 	return;
     
-    free(loginfo.mem);
-    free(loginfo.tokens);
-    memset(&loginfo, 0, sizeof(loginfo));
+    free(loginfo.mem); loginfo.mem = 0;
+    free(loginfo.tokens); loginfo.tokens = 0;
+    loginfo.tokencount = 0; loginfo.next = 0; loginfo.cmdcount = 0;
     
     tz_off = get_tz_offset();
     if (tz_off != replay_timezone)
@@ -659,7 +658,7 @@ static boolean replay_parse_arg(char *argstr, struct nh_cmd_arg *arg)
 	    return n == 1;
 	    
 	default:
-	    raw_printf("Error: unrecognized arg type %c\n", argstr[0]);
+	    parse_error("unrecognized arg type");
 	    return FALSE;
     }
 }
@@ -972,11 +971,15 @@ static void make_checkpoint(int actions)
 static int load_checkpoint(int idx)
 {
     int playmode, i, irole, irace, igend, ialign;
+    boolean cmd_invalid, diff_invalid;
     char namebuf[BUFSZ];
     
     if (idx < 0 || idx >= cpcount)
 	return -1;
     
+    cmd_invalid = loginfo.cmds_are_invalid;
+    diff_invalid = loginfo.diffs_are_invalid;
+
     replay_end();
     freedynamicdata();
     
@@ -984,6 +987,9 @@ static int load_checkpoint(int idx)
     replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend, &ialign);
     loginfo.next = checkpoints[idx].nexttoken;
     
+    loginfo.cmds_are_invalid = cmd_invalid;
+    loginfo.diffs_are_invalid = diff_invalid;
+
     program_state.restoring = TRUE;
     startup_common(namebuf, playmode);
     dorecover(&checkpoints[idx].cpdata);
@@ -1096,13 +1102,30 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 {
     boolean did_action;
     int i, prev_actions, target;
+    int moves_this_step = moves;
     
-    if (!program_state.viewing || !api_entry_checkpoint()) {
+    if (!program_state.viewing) {
 	info->actions++;
 	did_action = TRUE;
 	goto out2;
     }
-    
+
+    if (!api_entry_checkpoint()) {
+        /* Something went wrong replaying the turn; however, we have
+           two different method of replaying, so the other one might
+           work. Replay back up to the current turn. */
+        if (moves_this_step == -1) {
+            raw_printf("Could not restore state after replay failed!");
+            did_action = TRUE;
+            goto out2;
+        }
+        count = moves_this_step;
+        action = REPLAY_GOTO;
+        moves = 0;
+        moves_this_step = -1; /* avoid recursion */
+        replay_restore_windowprocs();
+    }
+
     program_state.restoring = TRUE;
     replay_setup_windowprocs(&replay_windowprocs);
     info->moves = moves;
@@ -1154,7 +1177,7 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 		    make_checkpoint(info->actions);
 		}
 	    }
-	    did_action = moves == count;
+	    did_action = (moves_this_step == -1 ? TRUE : moves == count);
 	    break;
     }
     
@@ -1165,6 +1188,7 @@ out2:
     info->moves = moves;
     find_next_command(info->nextcmd, sizeof(info->nextcmd));
     replay_restore_windowprocs();
+    if (loginfo.cmds_are_invalid) doredraw();
     flush_screen(); /* must happen after replay_restore_windowprocs to ensure output */
     update_inventory();
     
