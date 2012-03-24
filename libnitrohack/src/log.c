@@ -234,10 +234,12 @@ void log_command_result(void)
     
     lprintf("\n<%x", mt_nextstate() & 0xffff);
 
+    if (!multi && !occupation)
     {
         struct memfile *this_cmd_state = 
             (last_cmd_state == recent_cmd_states ?
              recent_cmd_states + 1 : recent_cmd_states);
+
         mnew(this_cmd_state, last_cmd_state);
         savegame(this_cmd_state); /* both records the state, and calcs a diff */
         lprintf("\n~");

@@ -29,8 +29,8 @@ void mnew(struct memfile *mf, struct memfile *relativeto)
 void mfree(struct memfile *mf)
 {
     int i;
-    free(mf->buf);
-    free(mf->diffbuf);
+    free(mf->buf); mf->buf = 0;
+    free(mf->diffbuf); mf->diffbuf = 0;
     for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++) {
         struct memfile_tag *tag, *otag;
         for ((tag = mf->tags[i]), (otag = NULL); tag; tag = tag->next) {
@@ -147,6 +147,7 @@ static void mdiffwrite(struct memfile *mf, const void *buf, unsigned int num)
 static void mdiffwrite14(struct memfile *mf, uint8_t command, int16_t value)
 {
         uint16_t le_value = value;
+        le_value &= 0x3fff; /* in case it's negative */
         le_value |= command << 14;
         le_value = host_to_le16(le_value);
 	mdiffwrite(mf, &le_value, 2);
@@ -180,7 +181,7 @@ void mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype)
         tag->tagtype = tagtype;
         tag->pos = mf->pos;
         mf->tags[bucket] = tag;
-        if (mf->relativeto) {
+        if (mf->relativeto && 0) {
             for (tag = mf->relativeto->tags[bucket]; tag; tag = tag->next) {
                 if (tag->tagtype == tagtype && tag->tagdata == tagdata) break;
             }
@@ -190,14 +191,14 @@ void mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype)
                     mdiffflush(mf);
                     mf->curcount = 0;
                 }
-                while (offset+mf->curcount >= 1<<14 ||
-                       offset+mf->curcount <= -(1<<14)) {
+                while (offset+mf->curcount >= 1<<13 ||
+                       offset+mf->curcount <= -(1<<13)) {
                     if (offset+mf->curcount < 0) {
-                        mdiffwrite14(mf, MDIFF_SEEK, -0x3fff);
-                        offset += 0x3fff;
+                        mdiffwrite14(mf, MDIFF_SEEK, -0x1fff);
+                        offset += 0x1fff;
                     } else {
-                        mdiffwrite14(mf, MDIFF_SEEK, 0x3fff);
-                        offset -= 0x3fff;
+                        mdiffwrite14(mf, MDIFF_SEEK, 0x1fff);
+                        offset -= 0x1fff;
                     }
                 }
                 mf->curcount += offset;

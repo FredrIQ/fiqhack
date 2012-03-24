@@ -329,37 +329,37 @@ extern int curline;
 #define MDIFF_INVALID 255
 
 enum memfile_tagtype {
-    MTAG_START,
+    MTAG_START,         /* 0 */
     MTAG_WATERLEVEL,
     MTAG_DUNGEONSTRUCT,
     MTAG_BRANCH,
     MTAG_DUNGEON,
-    MTAG_REGION,
+    MTAG_REGION,        /* 5 */
     MTAG_YOU,
     MTAG_VERSION,
     MTAG_WORMS,
     MTAG_ROOMS,
-    MTAG_HISTORY,
+    MTAG_HISTORY,       /* 10 */
     MTAG_ORACLES,
     MTAG_TIMER,
     MTAG_TIMERS,
     MTAG_LIGHT,
-    MTAG_LIGHTS,
+    MTAG_LIGHTS,        /* 15 */
     MTAG_OBJ,
     MTAG_TRACK,
     MTAG_OCLASSES,
     MTAG_RNDMONST,
-    MTAG_MON,
+    MTAG_MON,           /* 20 */
     MTAG_STEAL,
     MTAG_ARTIFACT,
     MTAG_RNGSTATE,
     MTAG_LEVELS,
-    MTAG_LEVEL,
+    MTAG_LEVEL,         /* 25 */
     MTAG_MVITALS,
     MTAG_GAMESTATE,
     MTAG_DAMAGE,
     MTAG_DAMAGEVALUE,
-    MTAG_TRAP,
+    MTAG_TRAP,          /* 30 */
     MTAG_FRUIT,
     MTAG_ENGRAVING,
 };

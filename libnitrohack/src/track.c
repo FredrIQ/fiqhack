@@ -13,6 +13,7 @@ static coord utrack[UTSZ];
 void initrack(void)
 {
 	utcnt = utpnt = 0;
+        memset(utrack, 0, sizeof utrack);
 }
 
 

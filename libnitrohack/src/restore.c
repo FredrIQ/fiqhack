@@ -510,11 +510,18 @@ int dorecover(struct memfile *mf)
 	xchar ltmp;
 	struct obj *otmp;
 	struct monst *mtmp;
-	
-	level = NULL; /* level restore must not use this pointer */
-	
-	if (!uptodate(mf, NULL))
+
+        int temp_pos; /* in case we're both reading and writing the file */
+
+        temp_pos = mf->pos;
+        mf->pos = 0;
+		
+	if (!uptodate(mf, NULL)) {
+            mf->pos = temp_pos;
 	    return 0;
+        }
+
+	level = NULL; /* level restore must not use this pointer */
 	
 	restore_flags(mf, &flags);
 	flags.bypasses = 0;	/* never use a saved value of bypasses */
@@ -576,6 +583,7 @@ int dorecover(struct memfile *mf)
 	flags.move = 0;
 
 	/* Success! */
+        mf->pos = temp_pos;
 	return 1;
 }
 
