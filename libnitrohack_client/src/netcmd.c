@@ -16,6 +16,7 @@ static json_t *cmd_pause(json_t *params, int display_only);
 static json_t *cmd_display_buffer(json_t *params, int display_only);
 static json_t *cmd_update_status(json_t *params, int display_only);
 static json_t *cmd_print_message(json_t *params, int display_only);
+static json_t *cmd_print_message_nonblocking(json_t *params, int display_only);
 static json_t *cmd_update_screen(json_t *params, int display_only);
 static json_t *cmd_delay_output(json_t *params, int display_only);
 static json_t *cmd_level_changed(json_t *params, int display_only);
@@ -52,6 +53,7 @@ struct netcmd netcmd_list[] = {
     {"getdir", cmd_getdir},
     {"yn", cmd_yn_function},
     {"getline", cmd_getline},
+    {"print_message_nonblocking", cmd_print_message_nonblocking},
     
     {"server_error", cmd_server_error},
     {NULL, NULL}
@@ -267,6 +269,18 @@ static json_t *cmd_print_message(json_t *params, int display_only)
     return NULL;
 }
 
+static json_t *cmd_print_message_nonblocking(json_t *params, int display_only)
+{
+    int turn;
+    const char *msg;
+    if (json_unpack(params, "{si,ss!}", "turn", &turn, "msg", &msg) == -1) {
+	print_error("Incorrect parameters in cmd_print_message_nonblocking");
+	return NULL;
+    }
+    
+    cur_wndprocs.win_print_message_nonblocking(turn, msg);
+    return NULL;
+}
 
 static json_t *cmd_update_screen(json_t *params, int display_only)
 {

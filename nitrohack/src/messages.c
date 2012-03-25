@@ -278,8 +278,7 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
 	    strcpy(msglines[curline], msg);
     }
     
-    if (canblock)
-	draw_msgwin();
+    draw_msgwin();
 }
 
 

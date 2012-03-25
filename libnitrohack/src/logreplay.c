@@ -89,6 +89,7 @@ static const struct nh_window_procs def_replay_windowprocs = {
     replay_delay_output,
     replay_level_changed,
     replay_outrip,
+    replay_print_message,
 };
 
 
@@ -267,7 +268,7 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
 				const char *title, int how, int *results)
 {
     int i, j, val;
-    char *token, *tab;
+    char *token;
     char *resultbuf;
     boolean id_ok;
     
@@ -295,19 +296,7 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
 	results[i++] = val;
 	resultbuf = strchr(resultbuf, ':') + 1;
     }
-    
-    if (program_state.viewing && how != PICK_NONE) {
-	char buf[BUFSZ] = "(none selected)";
-	if (i == 1) {
-	    for (j = 0; j < icount && items[j].id != results[0]; j++);
-	    strcpy(buf, items[j].caption);
-	    if ( (tab = strchr(buf, '\t')) )
-		*tab = '\0';
-	} else
-	    sprintf(buf, "(%d selected)", i);
-	pline("<%s: %s>", title ? title : "List of items", buf);
-    }
-    
+        
     return i;
 }
 
@@ -349,16 +338,6 @@ static int replay_display_objects(struct nh_objitem *items, int icount, const ch
 	count = -1;
     }
     
-    if (program_state.viewing && how != PICK_NONE) {
-	char buf[BUFSZ] = "(none selected)";
-	if (i == 1) {
-	    for (j = 0; j < icount && items[j].id != pick_list[0].id; j++);
-	    strcpy(buf, items[j].caption);
-	} else
-	    sprintf(buf, "(%d selected)", i);
-	pline("<%s: %s>", title ? title : "List of items", buf);
-    }
-    
     return i;
 }
 
@@ -376,11 +355,6 @@ static char replay_query_key(const char *query, int *count)
     if (count)
 	*count = cnt;
     
-    if (program_state.viewing) {
-	char buf[BUFSZ] = "";
-	if (count && cnt != -1) sprintf(buf, "%d ", cnt);
-	pline("<%s: %s%c>", query, buf, key);
-    }
     return key;
 }
 
@@ -394,25 +368,18 @@ static int replay_getpos(int *x, int *y, boolean force, const char *goal)
     if (n != 3)
 	parse_error("Bad getpos data");
     
-    if (program_state.viewing)
-	pline("<get pos: (%d, %d)>", *x, *y);
     return ret;
 }
 
 
 static enum nh_direction replay_getdir(const char *query, boolean restricted)
 {
-    const char *const dirnames[] = {"no direction", "west", "nortwest", "north", "northeast",
-	"east", "southeast", "south", "southwest", "up", "down", "self"};
     enum nh_direction dir;
     char *token = next_log_token();
     
     int n = sscanf(token, "d:%d", &dir);
     if (n != 1)
 	parse_error("Bad getdir data");
-    
-    if (program_state.viewing)
-	pline("<%s: %s>", query ? query : "What direction?", dirnames[dir+1]);
     
     return dir;
 }
@@ -427,8 +394,6 @@ static char replay_yn_function(const char *query, const char *rset, char defchoi
     if (n != 1)
 	parse_error("Bad yn_function data");
 
-    if (program_state.viewing)
-	pline("<%s [%s]: %c>", query, rset, key);
     return key;
 }
 
@@ -445,8 +410,6 @@ static void replay_getlin(const char *query, char *buf)
 	parse_error("Encoded getlin string is too long to decode into the target buffer.");
     
     base64_decode(encdata+1, buf);
-    if (program_state.viewing)
-	pline("<%s: %s>", query, buf[0] == '\033' ? "ESC" : buf);
 }
 
 

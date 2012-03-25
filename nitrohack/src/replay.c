@@ -33,6 +33,7 @@ static struct nh_window_procs curses_replay_windowprocs = {
     dummy_delay_output,
     curses_notify_level_changed,
     curses_outrip,
+    curses_print_message_nonblocking,
 };
 
 

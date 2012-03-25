@@ -11,6 +11,7 @@ static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
 static void srv_update_status(struct nh_player_info *pi);
 static void srv_print_message(int turn, const char *msg);
+static void srv_print_message_nonblocking(int turn, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
 static void srv_delay_output(void);
 static void srv_level_changed(int displaymode);
@@ -66,6 +67,7 @@ struct nh_window_procs server_windowprocs = {
     srv_delay_output,
     srv_level_changed,
     srv_outrip,
+    srv_print_message_nonblocking,
 };
 
 
@@ -88,6 +90,7 @@ struct nh_window_procs server_alt_windowprocs = {
     srv_alt_delay_output,
     srv_alt_level_changed,
     srv_alt_outrip,
+    srv_alt_print_message,
 };
 
 /*---------------------------------------------------------------------------*/
@@ -286,6 +289,11 @@ static void srv_print_message(int turn, const char *msg)
     add_display_data("print_message", jobj);
 }
 
+static void srv_print_message_nonblocking(int turn, const char *msg)
+{
+    json_t *jobj = json_pack("{si,ss}", "turn", turn, "msg", msg);
+    add_display_data("print_message_nonblocking", jobj);
+}
 
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 {

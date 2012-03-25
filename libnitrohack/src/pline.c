@@ -44,7 +44,16 @@ static void vpline(const char *line, va_list the_args)
 	
 	strcpy(toplines[curline++], line);
 	curline %= MSGCOUNT;
-	print_message(moves, line);
+        if (iflags.next_msg_nonblocking)
+            (*windowprocs.win_print_message_nonblocking)(moves, line);
+        else
+            print_message(moves, line);
+        iflags.next_msg_nonblocking = 0;
+}
+
+void suppress_more(void)
+{
+        iflags.next_msg_nonblocking = 1;
 }
 
 /*VARARGS1*/

@@ -574,6 +574,7 @@ struct nh_window_procs {
     void (*win_level_changed)(int displaymode);
     void (*win_outrip)(struct nh_menuitem *items,int icount, nh_bool tombstone,
 		       const char *name, int gold, const char *killbuf, int end_how, int year);
+    void (*win_print_message_nonblocking)(int turn, const char *msg);
 };
 
 #endif

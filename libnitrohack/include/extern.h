@@ -1196,6 +1196,7 @@ extern const char *safe_qbuf(const char *,unsigned,
 /* ### pline.c ### */
 
 extern void pline(const char *,...);
+extern void suppress_more(void);
 extern void impossible(const char *,...);
 extern void Norep(const char *,...);
 extern void free_youbuf(void);

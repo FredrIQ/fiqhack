@@ -125,6 +125,7 @@ struct instance_flags {
 	boolean  travel1;	/* first travel step */
 	coord    travelcc;	/* coordinates for travel_cache */
 	boolean  mon_polycontrol;	/* debug: control monster polymorphs */
+        boolean  next_msg_nonblocking;  /* suppress a --More-- after this message */
 
 	/* Items which belong in flags, but are here to allow save compatibility */
 	boolean  show_uncursed;	/* always show uncursed items as such */

@@ -41,6 +41,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_delay_output,
     curses_notify_level_changed,
     curses_outrip,
+    curses_print_message_nonblocking,
 };
 
 /*----------------------------------------------------------------------------*/
