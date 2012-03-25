@@ -1708,14 +1708,14 @@ struct monst *restore_mon(struct memfile *mf)
     int idx, i, billid;
     unsigned int mflags;
     struct eshk *shk;
-    
-    mfmagic_check(mf, MON_MAGIC);
-    
-    namelen = mread16(mf);
-    xtyp = mread16(mf);
+
+    mfmagic_check(mf, MON_MAGIC);                         /* 4 */
+
+    namelen = mread16(mf);                                /* 6 */
+    xtyp = mread16(mf);                                   /* 8 */
     mon = newmonst(xtyp, namelen);
-    
-    idx = mread32(mf);
+
+    idx = mread32(mf);                                    /* 12 */
     switch (idx) {
 	case -1000: mon->data = &pm_leader; break;
 	case -2000: mon->data = &pm_guardian; break;
@@ -1730,44 +1730,44 @@ struct monst *restore_mon(struct memfile *mf)
 		panic("Restoring bad monster data.");
 	    break;
     }
-    
-    mon->m_id = mread32(mf);
-    mon->mhp = mread32(mf);
-    mon->mhpmax = mread32(mf);
-    mon->mspec_used = mread32(mf);
-    mon->mtrapseen = mread32(mf);
-    mon->mlstmv = mread32(mf);
-    mon->mstrategy = mread32(mf);
-    mon->meating = mread32(mf);
-    mread(mf, mon->mtrack, sizeof(mon->mtrack));
-    mon->mnum = mread16(mf);
-    mon->mx = mread8(mf);
-    mon->my = mread8(mf);
-    mon->mux = mread8(mf);
-    mon->muy = mread8(mf);
-    mon->m_lev = mread8(mf);
-    mon->malign = mread8(mf);
-    mon->movement = mread16(mf);
-    mon->mintrinsics = mread16(mf);
-    mon->mtame = mread8(mf);
-    mon->m_ap_type = mread8(mf);
-    mon->mfrozen = mread8(mf);
-    mon->mblinded = mread8(mf);
-    mon->mappearance = mread32(mf);
-    mflags = mread32(mf);
-    
-    mon->mfleetim = mread8(mf);
-    mon->weapon_check = mread8(mf);
-    mon->misc_worn_check = mread32(mf);
-    mon->wormno = mread8(mf);
-    
+
+    mon->m_id = mread32(mf);                              /* 16 */
+    mon->mhp = mread32(mf);                               /* 20 */
+    mon->mhpmax = mread32(mf);                            /* 24 */
+    mon->mspec_used = mread32(mf);                        /* 28 */
+    mon->mtrapseen = mread32(mf);                         /* 32 */
+    mon->mlstmv = mread32(mf);                            /* 36 */
+    mon->mstrategy = mread32(mf);                         /* 40 */
+    mon->meating = mread32(mf);                           /* 44 */
+    mread(mf, mon->mtrack, sizeof(mon->mtrack));          /* 52 */
+    mon->mnum = mread16(mf);                              /* 54 */
+    mon->mx = mread8(mf);                                 /* 55 */
+    mon->my = mread8(mf);                                 /* 56 */
+    mon->mux = mread8(mf);                                /* 57 */
+    mon->muy = mread8(mf);                                /* 58 */
+    mon->m_lev = mread8(mf);                              /* 59 */
+    mon->malign = mread8(mf);                             /* 60 */
+    mon->movement = mread16(mf);                          /* 62 */
+    mon->mintrinsics = mread16(mf);                       /* 64 */
+    mon->mtame = mread8(mf);                              /* 65 */
+    mon->m_ap_type = mread8(mf);                          /* 66 */
+    mon->mfrozen = mread8(mf);                            /* 67 */
+    mon->mblinded = mread8(mf);                           /* 68 */
+    mon->mappearance = mread32(mf);                       /* 72 */
+    mflags = mread32(mf);                                 /* 76 */
+
+    mon->mfleetim = mread8(mf);                           /* 77 */
+    mon->weapon_check = mread8(mf);                       /* 78 */
+    mon->misc_worn_check = mread32(mf);                   /* 82 */
+    mon->wormno = mread8(mf);                             /* 83 */
+
     /* just mark the pointers for later restoration */
-    mon->minvent = mread8(mf) ? (void*)1 : NULL;
-    mon->mw = mread8(mf) ? (void*)1 : NULL;
-    
+    mon->minvent = mread8(mf) ? (void*)1 : NULL;          /* 84 */
+    mon->mw = mread8(mf) ? (void*)1 : NULL;               /* 85 */
+
     if (mon->mnamelth)
 	mread(mf, NAME(mon), mon->mnamelth);
-    
+
     switch (mon->mxtyp) {
 	case MX_EPRI:
 	    EPRI(mon)->shralign = mread8(mf);
@@ -1795,11 +1795,12 @@ struct monst *restore_mon(struct memfile *mf)
 	    EDOG(mon)->ogoal.y = mread8(mf);
 	    EDOG(mon)->killed_by_u = mread8(mf);
 	    break;
-	    
+
 	case MX_ESHK:
 	    shk = ESHK(mon);
 	    billid = mread32(mf);
-	    shk->bill_p = (billid == -1000) ? (struct bill_x*)-1000 : &shk->bill[billid];
+	    shk->bill_p = (billid == -1000) ? (struct bill_x*)-1000 :
+                          (billid == -2000) ? NULL : &shk->bill[billid];
 	    shk->shk.x = mread8(mf);
 	    shk->shk.y = mread8(mf);
 	    shk->shd.x = mread8(mf);
@@ -1990,10 +1991,12 @@ void save_mon(struct memfile *mf, const struct monst *mon)
 	    mwrite8(mf, EDOG(mon)->ogoal.y);
 	    mwrite8(mf, EDOG(mon)->killed_by_u);
 	    break;
-	    
+
 	case MX_ESHK:
 	    shk = ESHK(mon);
-	    mwrite32(mf, (shk->bill_p == (struct bill_x*)-1000) ? -1000 : (shk->bill_p - shk->bill));
+	    mwrite32(mf, (shk->bill_p == (struct bill_x*)-1000) ? -1000 :
+                          !shk->bill_p ? -2000 :
+                          (shk->bill_p - shk->bill));
 	    mwrite8(mf, shk->shk.x);
 	    mwrite8(mf, shk->shk.y);
 	    mwrite8(mf, shk->shd.x);
