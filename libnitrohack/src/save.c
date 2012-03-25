@@ -267,25 +267,51 @@ static void savegamestate(struct memfile *mf)
 
 static void save_location(struct memfile *mf, struct rm *loc)
 {
-	unsigned int lflags1;
-	unsigned short lflags2;
+	unsigned int memflags;
+	unsigned short rflags;
+
+        unsigned char bg = loc->mem_bg;
+
+        /* pack mem_door_l, mem_door_t into mem_bg */
+        switch (bg) {
+        case S_vodoor:
+            if (loc->mem_door_l && loc->mem_door_t) bg = S_vodoor_memlt;
+            else if (loc->mem_door_l) bg = S_vodoor_meml;
+            else if (loc->mem_door_t) bg = S_vodoor_memt;
+            break;
+        case S_hodoor:
+            if (loc->mem_door_l && loc->mem_door_t) bg = S_hodoor_memlt;
+            else if (loc->mem_door_l) bg = S_hodoor_meml;
+            else if (loc->mem_door_t) bg = S_hodoor_memt;
+            break;
+        case S_vcdoor:
+            if (loc->mem_door_l && loc->mem_door_t) bg = S_vcdoor_memlt;
+            else if (loc->mem_door_l) bg = S_vcdoor_meml;
+            else if (loc->mem_door_t) bg = S_vcdoor_memt;
+            break;
+        case S_hcdoor:
+            if (loc->mem_door_l && loc->mem_door_t) bg = S_hcdoor_memlt;
+            else if (loc->mem_door_l) bg = S_hcdoor_meml;
+            else if (loc->mem_door_t) bg = S_hcdoor_memt;
+            break;
+        }
 	
-	lflags1 = (loc->mem_bg << 26) |
-	          (loc->mem_trap << 21) |
-	          (loc->mem_obj << 11) |
-	          (loc->mem_obj_mn << 2) |
-	          (loc->mem_invis << 1) |
-                  (loc->mem_stepped << 0);
-	lflags2 = (loc->flags << 11) |
-	          (loc->horizontal << 10) |
-	          (loc->lit << 9) |
-	          (loc->waslit << 8) |
-	          (loc->roomno << 2) |
-	          (loc->edge << 1);
-	mwrite32(mf, lflags1);
+	memflags = (bg << 26) |
+	           (loc->mem_trap << 21) |
+	           (loc->mem_obj << 11) |
+	           (loc->mem_obj_mn << 2) |
+	           (loc->mem_invis << 1) |
+                   (loc->mem_stepped << 0);
+	rflags   = (loc->flags << 11) |
+	           (loc->horizontal << 10) |
+	           (loc->lit << 9) |
+	           (loc->waslit << 8) |
+	           (loc->roomno << 2) |
+	           (loc->edge << 1);
+	mwrite32(mf, memflags);
 	mwrite8(mf, loc->typ);
 	mwrite8(mf, loc->seenv);
-	mwrite16(mf, lflags2);
+	mwrite16(mf, rflags);
 }
 
 

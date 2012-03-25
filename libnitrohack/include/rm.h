@@ -134,7 +134,7 @@ enum dungeon_symbols {
 	S_hcdoor,	/* closed door, horizontal wall */
 	S_bars,		/* KMH -- iron bars */
 	S_tree,		/* KMH */
-	S_upstair,
+/*30*/	S_upstair,
 	S_dnstair,
 	S_upladder,
 	S_dnladder,
@@ -144,11 +144,26 @@ enum dungeon_symbols {
 	S_grave,
 	S_throne,
 	S_sink,
-	S_fountain,
+/*40*/	S_fountain,
 	S_vodbridge,
 	S_hodbridge,
 	S_vcdbridge,	/* closed drawbridge, vertical wall */
 	S_hcdbridge,	/* closed drawbridge, horizontal wall */
+
+        /* values used only in saving, to squeeze a bit more info into
+           the memflags dword */
+        S_vodoor_meml,
+        S_vodoor_memt,
+        S_vodoor_memlt,
+        S_hodoor_meml,
+        S_hodoor_memt,
+/*50*/  S_hodoor_memlt,
+        S_vcdoor_meml,
+        S_vcdoor_memt,
+        S_vcdoor_memlt,
+        S_hcdoor_meml,
+        S_hcdoor_memt,
+        S_hcdoor_memlt,
 
 	MAXPCHARS,	/* maximum number of mapped characters */
 };
@@ -303,11 +318,18 @@ struct rm {
 	schar typ;		/* what is really there */
 	uchar seenv;		/* seen vector */
 	unsigned flags:5;	/* extra information for typ */
-	unsigned horizontal:1; /* wall/door/etc is horiz. (more typ info) */
-	unsigned lit:1;	/* speed hack for lit rooms */
+	unsigned horizontal:1;  /* wall/door/etc is horiz. (more typ info) */
+	unsigned lit:1;	        /* speed hack for lit rooms */
 	unsigned waslit:1;	/* remember if a location was lit */
 	unsigned roomno:6;	/* room # for special rooms */
 	unsigned edge:1;	/* marks boundaries for special rooms*/
+
+        /* these values only have meaning if mem_bg is some sort of
+           door, and are saved in mem_bg not in their own bits; they
+           record what the player knows about a door's locked/trapped
+           status, not whether they think it /is/ locked/trapped */
+        unsigned mem_door_l:1;  /* player knows whether door is locked */
+        unsigned mem_door_t:1;  /* player knows whether door is trapped */
 };
 
 /*

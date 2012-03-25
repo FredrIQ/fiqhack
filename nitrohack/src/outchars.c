@@ -13,7 +13,7 @@
 #define array_size(x) (sizeof(x)/sizeof(x[0]))
 
 
-static int corpse_id;
+static int corpse_id, vcdoor_id, hcdoor_id;
 struct curses_drawing_info *default_drawing, *cur_drawing;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
@@ -331,6 +331,12 @@ void init_displaychars(void)
 	if (!strcmp("corpse", cur_drawing->objects[i].symname))
 	    corpse_id = i;
     }
+    for (i = 0; i < cur_drawing->num_bgelements; i++) {
+	if (!strcmp("vcdoor", cur_drawing->bgelements[i].symname))
+	    vcdoor_id = i;
+	if (!strcmp("hcdoor", cur_drawing->bgelements[i].symname))
+	    hcdoor_id = i;
+    }
     
     /* options are parsed before display is initialized, so redo switch */
     switch_graphics(settings.graphics);
@@ -440,8 +446,20 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms)
     
     /* omit the background symbol from the list if it is boring */
     if (count == 0 ||
-	dbe->bg >= cur_drawing->bg_feature_offset)
+	dbe->bg >= cur_drawing->bg_feature_offset) {
 	syms[count++] = cur_drawing->bgelements[dbe->bg];
+        /* overrides for branding; note that although we're told
+           whether open doors are locked/unlocked, it doesn't make
+           much sense to display that */
+        if (dbe->bg == vcdoor_id || dbe->bg == hcdoor_id) {
+          if (dbe->branding & NH_BRANDING_TRAPPED)
+            syms[count-1].color = CLR_CYAN;
+          else if (dbe->branding & NH_BRANDING_LOCKED)
+            syms[count-1].color = CLR_RED;
+          else if (dbe->branding & NH_BRANDING_UNLOCKED)
+            syms[count-1].color = CLR_GREEN;
+        }
+    }
 
     return count; /* count <= 4 */
 }

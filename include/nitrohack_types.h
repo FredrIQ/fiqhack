@@ -64,6 +64,7 @@
 #define MON_RIDDEN   (1 << 1)
 #define MON_DETECTED (1 << 2)
 #define MON_WARNING  (1 << 3) /* this "monster" is actually a warning */
+#define MON_PEACEFUL (1 << 4)
 
 /* 
  * level display modes
@@ -449,6 +450,15 @@ struct nh_cmd_arg {
     };
 };
 
+/* various extra information that the character knows, and the 
+   windowport might want to display */
+#define NH_BRANDING_STEPPED   0x0001
+#define NH_BRANDING_LOCKED    0x0002
+#define NH_BRANDING_UNLOCKED  0x0004
+#define NH_BRANDING_TRAPPED   0x0008 /* for door traps and the like */
+#define NH_BRANDING_UNTRAPPED 0x0010 /* probably not worth drawing */
+/* monster attitude could go here, but is in monflags instead as
+   that's a more appropriate place */
 
 /* a single position in the display buffer passed by win_update_screen */
 struct nh_dbuf_entry {
@@ -459,6 +469,7 @@ struct nh_dbuf_entry {
     short obj_mn;
     short mon;
     short monflags;
+    short branding;
     nh_bool invis;
     nh_bool visible; /* can the hero see this location? */
 };

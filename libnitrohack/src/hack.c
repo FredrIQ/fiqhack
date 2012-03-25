@@ -666,6 +666,12 @@ static boolean unexplored(int x, int y)
   struct trap *ttmp = t_at(level, x, y);
   if (!isok(x, y)) return FALSE;
   if (level->locations[x][y].mem_stepped) return FALSE;
+  if (level->locations[x][y].mem_bg == S_vcdoor ||
+      level->locations[x][y].mem_bg == S_hcdoor) {
+    if (level->locations[x][y].mem_door_l &&
+        (level->locations[x][y].flags & D_LOCKED))
+      return FALSE; /* player knows of a locked door there */
+  }
   if (ttmp && ttmp->tseen) return FALSE;
   if (level->locations[x][y].mem_obj == what_obj(BOULDER)+1) return FALSE;
   if (level->locations[x][y].mem_obj && inside_shop(level, x, y)) return FALSE;

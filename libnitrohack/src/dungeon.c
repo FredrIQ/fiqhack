@@ -1914,7 +1914,8 @@ int dooverview(void)
 		dbuf_set(x, y, lev->locations[x][y].mem_bg,
 			 lev->locations[x][y].mem_trap, lev->locations[x][y].mem_obj,
 			 lev->locations[x][y].mem_obj_mn,
-			 lev->locations[x][y].mem_invis, 0, 0, 0);
+			 lev->locations[x][y].mem_invis, 0, 0, 0,
+                         dbuf_branding(&lev->locations[x][y]));
 	
 	overview_print_lev(buf, lev);
 	pline("Now viewing %s%s.  Press any key to return.",

@@ -1784,7 +1784,8 @@ void you_aggravate(struct monst *mtmp)
 	pline("For some reason, %s presence is known to you.",
 		s_suffix(noit_mon_nam(mtmp)));
 	cls();
-	dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0, dbuf_monid(mtmp), 0, 0);
+	dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0,
+                 dbuf_monid(mtmp), 0, 0, 0);
 	display_self();
 	pline("You feel aggravated at %s.", noit_mon_nam(mtmp));
 	win_pause_output(P_MAP);

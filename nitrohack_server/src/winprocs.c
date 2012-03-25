@@ -325,7 +325,7 @@ static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, i
 	    if (!is_same && !is_zero) {
 		/* It pains me to make this an array rather than a struct, but
 		 * it does cause much less data to be sent. */
-		dbufent = json_pack("[i,i,i,i,i,i,i,i,i]",
+		dbufent = json_pack("[i,i,i,i,i,i,i,i,i,i]",
 				    dbuf[y][x].effect,
 				    dbuf[y][x].bg,
 				    dbuf[y][x].trap,
@@ -333,6 +333,7 @@ static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, i
 				    dbuf[y][x].obj_mn,
 				    dbuf[y][x].mon,
 				    dbuf[y][x].monflags,
+                                    dbuf[y][x].branding,
 				    dbuf[y][x].invis,
 				    dbuf[y][x].visible);
 		json_array_append_new(dbufcol, dbufent);

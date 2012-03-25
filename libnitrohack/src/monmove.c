@@ -56,7 +56,10 @@ static void watch_on_duty(struct monst *mtmp)
 			angry_guards(!(flags.soundok));
 		  } else {
 			verbalize("Hey, stop picking that lock!");
-			level->locations[x][y].looted |=  D_WARNED;
+			level->locations[x][y].looted |= D_WARNED;
+                        /* know locked status, know trapped status, know
+                           there's a door there -> safe to magic map */
+                        magic_map_background(x, y, 1);
 		  }
 		  stop_occupation();
 		}

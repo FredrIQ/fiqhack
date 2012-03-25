@@ -286,7 +286,7 @@ static json_t *cmd_update_screen(json_t *params, int display_only)
 {
     static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
     int ux, uy;
-    int x, y, effect, bg, trap, obj, obj_mn, mon, monflags, invis, visible;
+    int x, y, effect, bg, trap, obj, obj_mn, mon, monflags, branding, invis, visible;
     json_t *jdbuf, *col, *elem;
     
     if (json_unpack(params, "{si,si,so!}", "ux", &ux, "uy", &uy, "dbuf", &jdbuf) == -1) {
@@ -337,9 +337,9 @@ static json_t *cmd_update_screen(json_t *params, int display_only)
 		continue;
 	    }
 	    
-	    if (json_unpack(elem, "[i,i,i,i,i,i,i,i,i!]",
+	    if (json_unpack(elem, "[i,i,i,i,i,i,i,i,i,i!]",
 			    &effect, &bg, &trap, &obj, &obj_mn, &mon,
-			    &monflags, &invis, &visible) == -1)
+			    &monflags, &branding, &invis, &visible) == -1)
 		print_error("Strange element data in cmd_update_screen");
 	    dbuf[y][x].effect = effect;
 	    dbuf[y][x].bg = bg;
@@ -348,6 +348,7 @@ static json_t *cmd_update_screen(json_t *params, int display_only)
 	    dbuf[y][x].obj_mn = obj_mn;
 	    dbuf[y][x].mon = mon;
 	    dbuf[y][x].monflags = monflags;
+            dbuf[y][x].branding = branding;
 	    dbuf[y][x].invis = invis;
 	    dbuf[y][x].visible = visible;
 	}

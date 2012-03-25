@@ -66,6 +66,7 @@ static const char *lock_action(void)
 /* try to open/close a lock */
 static int picklock(void)
 {
+        xchar x, y;
 	if (xlock.box) {
 	    if ((xlock.box->ox != u.ux) || (xlock.box->oy != u.uy)) {
 		return (xlock.usedtime = 0);		/* you or it moved */
@@ -107,6 +108,14 @@ static int picklock(void)
 	    } else if (xlock.door->doormask & D_LOCKED)
 		xlock.door->doormask = D_CLOSED;
 	    else xlock.door->doormask = D_LOCKED;
+            /* player now knows the door's open/closed status, and its
+               locked/unlocked status, and also that it isn't trapped
+               (it would have exploded otherwise); we haven't recorded
+               the location of the door being picked, so scan for it */
+            for (x = 1; x < COLNO; x++)
+                for (y = 0; y < ROWNO; y++)
+                    if (picking_at(x, y))
+                        magic_map_background(x, y, TRUE);
 	} else {
 	    xlock.box->olocked = !xlock.box->olocked;
 	    if (xlock.box->otrapped)	
@@ -377,6 +386,15 @@ int pick_lock(struct obj *pick)
 			return 0;
 		    }
 
+                    /* At this point, the player knows that the door
+                       is a door, and whether it's locked, but not
+                       whether it's trapped; to do this, we set the
+                       mem_door_l flag and call map_background, which
+                       will clear it if necessary (i.e. not a door
+                       after all). */
+                    level->locations[cc.x][cc.y].mem_door_l = 1;
+                    map_background(cc.x, cc.y, TRUE);
+
 		    sprintf(qbuf,"%sock it?",
 			(door->doormask & D_LOCKED) ? "Unl" : "L" );
 
@@ -538,7 +556,10 @@ int doopen(int dx, int dy, int dz)
 	    case D_BROKEN: mesg = " is broken"; break;
 	    case D_NODOOR: mesg = "way has no door"; break;
 	    case D_ISOPEN: mesg = " is already open"; break;
-	    default:	   mesg = " is locked"; break;
+	    default:
+                door->mem_door_l = 1;
+                map_background(cc.x, cc.y, TRUE);
+                mesg = " is locked"; break;
 	    }
 	    pline("This door%s.", mesg);
 	    if (Blind) feel_location(cc.x,cc.y);
@@ -566,6 +587,8 @@ int doopen(int dx, int dy, int dz)
 	    unblock_point(cc.x,cc.y);		/* vision: new see through there */
 	} else {
 	    exercise(A_STR, TRUE);
+            door->mem_door_l = 1;
+            map_background(cc.x, cc.y, TRUE);
 	    pline("The door resists!");
 	}
 
@@ -678,6 +701,15 @@ int doclose(int dx, int dy, int dz)
 		rn2(25) < (ACURRSTR+ACURR(A_DEX)+ACURR(A_CON))/3) {
 		pline("The door closes.");
 		door->doormask = D_CLOSED;
+                door->mem_door_l = 1;
+                /* map_background here sets the mem_door flags correctly;
+                   and it's redundant to both feel_location and newsym with
+                   a door. Exception: if we remember an invisible monster on
+                   the door square, but in this case, we want to set the
+                   memory of a door there anyway because we know there's a
+                   door there because we just closed it, and in Nitro this
+                   doesn't clash with keeping the I there. */
+                map_background(cc.x, cc.y, TRUE);
 		if (Blind)
 		    feel_location(cc.x,cc.y);	/* the hero knows she closed it */
 		else
@@ -854,7 +886,12 @@ boolean doorlock(struct obj *otmp, int x, int y)
 	default: impossible("magic (%d) attempted on door.", otmp->otyp);
 	    break;
 	}
-	if (msg && cansee(x,y)) pline(msg);
+	if (msg && cansee(x,y)) {
+            pline(msg);
+            /* we know whether it's locked now */
+            level->locations[x][y].mem_door_l = 1;
+            map_background(x, y, TRUE);
+        }
 	if (loudness > 0) {
 	    /* door was destroyed */
 	    wake_nearto(x, y, loudness);

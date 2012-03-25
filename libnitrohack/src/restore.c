@@ -631,6 +631,7 @@ static void restore_location(struct memfile *mf, struct rm *loc)
 {
 	unsigned int lflags1;
 	unsigned short lflags2;
+        int l = 0, t = 0;
 	
 	lflags1 = mread32(mf);
 	loc->typ = mread8(mf);
@@ -648,6 +649,24 @@ static void restore_location(struct memfile *mf, struct rm *loc)
 	loc->waslit	= (lflags2 >> 8) & 1;
 	loc->roomno	= (lflags2 >> 2) & 63;
 	loc->edge	= (lflags2 >> 1) & 1;
+       
+        /* unpack mem_door_l, mem_door_t from mem_bg */
+        switch (loc->mem_bg) {
+        case S_vodoor_memlt: loc->mem_bg = S_vodoor; l = t = 1; break;
+        case S_vodoor_meml:  loc->mem_bg = S_vodoor; l = 1; break;
+        case S_vodoor_memt:  loc->mem_bg = S_vodoor; t = 1; break;
+        case S_hodoor_memlt: loc->mem_bg = S_hodoor; l = t = 1; break;
+        case S_hodoor_meml:  loc->mem_bg = S_hodoor; l = 1; break;
+        case S_hodoor_memt:  loc->mem_bg = S_hodoor; t = 1; break;
+        case S_vcdoor_memlt: loc->mem_bg = S_vcdoor; l = t = 1; break;
+        case S_vcdoor_meml:  loc->mem_bg = S_vcdoor; l = 1; break;
+        case S_vcdoor_memt:  loc->mem_bg = S_vcdoor; t = 1; break;
+        case S_hcdoor_memlt: loc->mem_bg = S_hcdoor; l = t = 1; break;
+        case S_hcdoor_meml:  loc->mem_bg = S_hcdoor; l = 1; break;
+        case S_hcdoor_memt:  loc->mem_bg = S_hcdoor; t = 1; break;
+        }
+        loc->mem_door_l = l;
+        loc->mem_door_t = t;
 }
 
 

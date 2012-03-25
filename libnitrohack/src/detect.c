@@ -539,7 +539,7 @@ int monster_detect(struct obj *otmp,	/* detecting object (if any) */
 		(mtmp->data == &mons[PM_LONG_WORM] && mclass == S_WORM_TAIL))
 		    if (mtmp->mx > 0) {
 		    	dbuf_set(mtmp->mx,mtmp->my, S_unexplored, 0, 0, 0, 0,
-				 dbuf_monid(mtmp), 0, 0);
+				 dbuf_monid(mtmp), 0, 0, 0);
 			/* don't be stingy - display entire worm */
 			if (mtmp->data == &mons[PM_LONG_WORM])
 			    detect_wsegs(mtmp,0);
@@ -618,6 +618,12 @@ int trap_detect(struct obj *sobj)
     }
     for (door = 0; door < level->doorindex; door++) {
 	cc = level->doors[door];
+        /* make the door, and its trapped status, show up on the player's
+           memory */
+        if (!sobj || !sobj->cursed) {
+            level->locations[cc.x][cc.y].mem_door_t = 1;
+            map_background(cc.x, cc.y, FALSE);
+        }
 	if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
 	    if (cc.x != u.ux || cc.y != u.uy)
 		goto outtrapmap;
@@ -1166,9 +1172,19 @@ void sokoban_detect(struct level *lev)
 	/* Map the background and boulders */
 	for (x = 1; x < COLNO; x++)
 	    for (y = 0; y < ROWNO; y++) {
+                int cmap = back_to_cmap(lev, x, y);
 		lev->locations[x][y].seenv = SVALL;
 		lev->locations[x][y].waslit = TRUE;
-		lev->locations[x][y].mem_bg = back_to_cmap(lev, x, y);
+		lev->locations[x][y].mem_bg = cmap;
+                if (cmap == S_vodoor || cmap == S_hodoor ||
+                    cmap == S_vcdoor || cmap == S_hcdoor) {
+                    lev->locations[x][y].mem_door_l = 1;
+                    lev->locations[x][y].mem_door_t = 1;
+                } else {
+                    /* mem_door_l, mem_door_t must be 0 for non-doors */
+                    lev->locations[x][y].mem_door_l = 0;
+                    lev->locations[x][y].mem_door_t = 0;
+                }
 		for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
 		    if (obj->otyp == BOULDER)
 			lev->locations[x][y].mem_obj = what_obj(BOULDER) + 1;

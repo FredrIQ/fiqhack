@@ -166,10 +166,20 @@ void magic_map_background(xchar x, xchar y, int show)
 	else if (loc->typ == CORR && cmap == S_litcorr)
 	    cmap = S_corr;
     }
-    if (level->flags.hero_memory)
+    if (level->flags.hero_memory) {
 	loc->mem_bg = cmap;
+        if (cmap == S_vodoor || cmap == S_hodoor ||
+            cmap == S_vcdoor || cmap == S_hcdoor) {
+            loc->mem_door_l = 1;
+            loc->mem_door_t = 1;
+        } else {
+            /* mem_door_l, mem_door_t must be 0 for non-doors */
+            loc->mem_door_l = 0;
+            loc->mem_door_t = 0;
+        }
+    }
     if (show)
-	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0);
+	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(loc));
 }
 
 /* FIXME: some of these use xchars for x and y, and some use ints.  Make
@@ -186,10 +196,23 @@ void map_background(xchar x, xchar y, int show)
 {
     int cmap = back_to_cmap(level, x, y);
 
-    if (level->flags.hero_memory)
+    if (level->flags.hero_memory) {
 	level->locations[x][y].mem_bg = cmap;
+        if (cmap == S_vodoor || cmap == S_hodoor ||
+            cmap == S_vcdoor || cmap == S_hcdoor) {
+            /* leave memory alone, it'll be 0 if this wasn't
+               remembered as a door */
+        } else {
+            /* mem_door_l, mem_door_t must be 0 for non-doors */
+            level->locations[x][y].mem_door_l = 0;
+            level->locations[x][y].mem_door_t = 0;
+        }
+
+    }
     if (show)
-	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0);
+	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0,
+                 dbuf_branding(&level->locations[x][y]));
+
 }
 
 /*
@@ -207,7 +230,8 @@ void map_trap(struct trap *trap, int show)
 	level->locations[x][y].mem_trap = trapid;
     if (show)
 	dbuf_set(x, y, level->locations[x][y].mem_bg,
-		 level->locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0);
+		 level->locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0,
+                 dbuf_branding(&level->locations[x][y]));
 }
 
 /*
@@ -236,7 +260,8 @@ void map_object(struct obj *obj, int show)
     if (show)
 	dbuf_set(x, y, level->locations[x][y].mem_bg,
 		 level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
-		 level->locations[x][y].mem_obj_mn, 0, 0, 0, 0);
+		 level->locations[x][y].mem_obj_mn, 0, 0, 0, 0,
+                 dbuf_branding(&level->locations[x][y]));
 }
 
 /*
@@ -255,7 +280,8 @@ void map_invisible(xchar x, xchar y)
 	    level->locations[x][y].mem_invis = 1;
 	dbuf_set(x, y, level->locations[x][y].mem_bg,
 		 level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
-		 level->locations[x][y].mem_obj_mn, 1, 0, 0, 0);
+		 level->locations[x][y].mem_obj_mn, 1, 0, 0, 0,
+                 dbuf_branding(&level->locations[x][y]));
     }
 }
 
@@ -318,6 +344,9 @@ void clear_memory_glyph(schar x, schar y, int to)
     level->locations[x][y].mem_obj = 0;
     level->locations[x][y].mem_obj_mn = 0;
     level->locations[x][y].mem_invis = 0;
+    level->locations[x][y].mem_stepped = 0;
+    level->locations[x][y].mem_door_l = 0;
+    level->locations[x][y].mem_door_t = 0;
 }
 
 
@@ -366,6 +395,9 @@ static void display_monster(
 		 * makemon.c.
 		 */
 		level->locations[x][y].mem_bg = mon->mappearance;
+                /* cannot correctly remember a mimic's locked/trapped status */
+                level->locations[x][y].mem_door_l = 0;
+                level->locations[x][y].mem_door_t = 0;
 		if (!sensed)
 		    dbuf_set_loc(x, y);
 		break;
@@ -387,7 +419,10 @@ static void display_monster(
 		         level->locations[x][y].mem_trap,
 		         level->locations[x][y].mem_obj,
 		         level->locations[x][y].mem_obj_mn,
-		         0, what_mon((int)mon->mappearance) + 1, mon->mtame ? MON_TAME : 0, 0);
+		         0, what_mon((int)mon->mappearance) + 1,
+                         mon->mtame ? MON_TAME :
+                         mon->mpeaceful ? MON_PEACEFUL : 0, 0,
+                         dbuf_branding(&level->locations[x][y]));
 		break;
 	}
 	
@@ -408,12 +443,15 @@ static void display_monster(
 	
 	if (mon->mtame && !Hallucination)
 	    mflag |= MON_TAME;
+	else if (mon->mpeaceful && !Hallucination)
+	    mflag |= MON_PEACEFUL;
 
 	dbuf_set(x, y, level->locations[x][y].mem_bg,
 	         level->locations[x][y].mem_trap,
 	         level->locations[x][y].mem_obj,
 	         level->locations[x][y].mem_obj_mn,
-	         0, what_mon(monnum) + 1, mflag, 0);
+	         0, what_mon(monnum) + 1, mflag, 0,
+                 dbuf_branding(&level->locations[x][y]));
     }
 }
 
@@ -449,10 +487,10 @@ static void display_warning(struct monst *mon)
     }
     
     dbuf_set(x, y, level->locations[x][y].mem_bg,
-		level->locations[x][y].mem_trap,
-		level->locations[x][y].mem_obj,
-		level->locations[x][y].mem_obj_mn,
-		0, monnum, mflag, 0);
+             level->locations[x][y].mem_trap,
+             level->locations[x][y].mem_obj,
+             level->locations[x][y].mem_obj_mn,
+             0, monnum, mflag, 0, dbuf_branding(&level->locations[x][y]));
 }
 
 /*
@@ -539,10 +577,14 @@ void feel_location(xchar x, xchar y)
 		    map_background(x, y, 1);
 		} else {
 		    loc->mem_bg = loc->waslit ? S_room : S_darkroom;
+                    loc->mem_door_l = 0;
+                    loc->mem_door_t = 0;
 		    dbuf_set_loc(x, y);
 		}
 	    } else if (loc->mem_bg < S_room || loc->mem_invis) {
 		loc->mem_bg = loc->waslit ? S_room : S_darkroom;
+                loc->mem_door_l = 0;
+                loc->mem_door_t = 0;
 		dbuf_set_loc(x, y);
 	    }
 	} else {
@@ -552,6 +594,8 @@ void feel_location(xchar x, xchar y)
 	    /* (lit_corridor only).					    */
 	    if (loc->typ == CORR && loc->mem_bg == S_litcorr && !loc->waslit) {
 		loc->mem_bg = S_corr;
+                loc->mem_door_l = 0;
+                loc->mem_door_t = 0;
 		dbuf_set_loc(x, y);
 	    }
 	}
@@ -583,10 +627,14 @@ void feel_location(xchar x, xchar y)
 	/* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
 	if (loc->typ == ROOM && loc->mem_bg == S_room && !loc->waslit) {
 	    loc->mem_bg = S_darkroom;
+            loc->mem_door_l = 0;
+            loc->mem_door_t = 0;
 	    dbuf_set_loc(x, y);
 	} else if (loc->typ == CORR &&
 		    loc->mem_bg == S_litcorr && !loc->waslit) {
 	    loc->mem_bg = S_corr;
+            loc->mem_door_l = 0;
+            loc->mem_door_t = 0;
 	    dbuf_set_loc(x, y);
 	}
     }
@@ -730,9 +778,13 @@ void newsym(int x, int y)
 	else if (!loc->waslit) {
 	    if (loc->mem_bg == S_litcorr && loc->typ == CORR) {
 		loc->mem_bg = S_corr;
+                loc->mem_door_l = 0;
+                loc->mem_door_t = 0;
 		dbuf_set_loc(x, y);
 	    } else if (loc->mem_bg == S_room && loc->typ == ROOM) {
 		loc->mem_bg = S_darkroom;
+                loc->mem_door_l = 0;
+                loc->mem_door_t = 0;
 		dbuf_set_loc(x, y);
 	    }
 	    else
@@ -917,7 +969,7 @@ void swallowed(int first)
 	for (y = lasty-1; y <= lasty+1; y++)
 	    for (x = lastx-1; x <= lastx+1; x++)
 		dbuf_set_effect(x,y,0);
-	dbuf_set(lastx, lasty, 0,0,0,0,0,0,0,0); /* remove hero symbol */
+	dbuf_set(lastx, lasty, 0,0,0,0,0,0,0,0,0); /* remove hero symbol */
     }
 
     swallower = monsndx(u.ustuck->data);
@@ -985,13 +1037,13 @@ void under_water(int mode)
 	for (y = lasty-1; y <= lasty+1; y++)
 	    for (x = lastx-1; x <= lastx+1; x++)
 		if (isok(x,y))
-		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0);
+		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0, 0);
     }
     for (x = u.ux-1; x <= u.ux+1; x++)
 	for (y = u.uy-1; y <= u.uy+1; y++)
 	    if (isok(x,y) && is_pool(level, x,y)) {
 		if (Blind && !(x == u.ux && y == u.uy))
-		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0);
+		    dbuf_set(x, y, S_unexplored, 0, 0, 0, 0, 0, 0, 0, 0);
 		else	
 		    newsym(x,y);
 	    }
@@ -1117,32 +1169,35 @@ void display_self(void)
     
     if (u.usteed && mon_visible(u.usteed)) {
 	dbuf_set(x, y, level->locations[x][y].mem_bg, 
-		         level->locations[x][y].mem_trap,
-		         level->locations[x][y].mem_obj,
-		         level->locations[x][y].mem_obj_mn,
-		         0, what_mon(u.usteed->mnum) + 1, MON_RIDDEN, 0);
+                 level->locations[x][y].mem_trap,
+                 level->locations[x][y].mem_obj,
+                 level->locations[x][y].mem_obj_mn,
+                 0, what_mon(u.usteed->mnum) + 1,
+                 MON_RIDDEN, 0, dbuf_branding(&level->locations[x][y]));
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
 	int monnum = (Upolyd || !iflags.showrace) ? u.umonnum :
 	              (flags.female && urace.femalenum != NON_PM) ? urace.femalenum :
 	               urace.malenum;
 	dbuf_set(x, y, level->locations[x][y].mem_bg, 
-		         level->locations[x][y].mem_trap,
-		         level->locations[x][y].mem_obj,
-		         level->locations[x][y].mem_obj_mn,
-		         0, monnum + 1, 0, 0);
+                 level->locations[x][y].mem_trap,
+                 level->locations[x][y].mem_obj,
+                 level->locations[x][y].mem_obj_mn,
+                 0, monnum + 1, 0, 0, dbuf_branding(&level->locations[x][y]));
     } else if (youmonst.m_ap_type == M_AP_FURNITURE) {
-	dbuf_set(x, y, youmonst.mappearance, 0, 0, 0, 0, 0, 0, 0);
+	dbuf_set(x, y, youmonst.mappearance, 0, 0, 0, 0, 0, 0, 0,
+                 dbuf_branding(&level->locations[x][y]));
     } else if (youmonst.m_ap_type == M_AP_OBJECT) {
 	dbuf_set(x, y, level->locations[x][y].mem_bg, 
-		         level->locations[x][y].mem_trap,
-		         youmonst.mappearance + 1,
-		         0, 0, 0, 0, 0);
+                 level->locations[x][y].mem_trap,
+                 youmonst.mappearance + 1,
+                 0, 0, 0, 0, 0, dbuf_branding(&level->locations[x][y]));
     } else /* M_AP_MONSTER */
 	dbuf_set(x, y, level->locations[x][y].mem_bg, 
-		         level->locations[x][y].mem_trap,
-		         level->locations[x][y].mem_obj,
-		         level->locations[x][y].mem_obj_mn,
-		         0, youmonst.mappearance + 1, 0, 0);
+                 level->locations[x][y].mem_trap,
+                 level->locations[x][y].mem_obj,
+                 level->locations[x][y].mem_obj_mn,
+                 0, youmonst.mappearance + 1, 0, 0,
+                 dbuf_branding(&level->locations[x][y]));
 }
 
 
@@ -1277,15 +1332,30 @@ static void dbuf_set_loc(int x, int y)
 	     level->locations[x][y].mem_obj,
 	     level->locations[x][y].mem_obj_mn,
 	     level->locations[x][y].mem_invis,
-	     0, 0, 0);
+	     0, 0, 0, dbuf_branding(&level->locations[x][y]));
 }
 
+
+/*
+ * Calculate the branding information for a location.
+ */
+short dbuf_branding(struct rm *loc)
+{
+    short b = 0;
+    if (loc->mem_stepped) b |= NH_BRANDING_STEPPED;
+    if (loc->mem_door_l && (loc->flags & D_LOCKED)) b |= NH_BRANDING_LOCKED;
+    else if (loc->mem_door_l) b |= NH_BRANDING_UNLOCKED;
+    if (loc->mem_door_t && (loc->flags & D_LOCKED)) b |= NH_BRANDING_TRAPPED;
+    else if (loc->mem_door_t) b |= NH_BRANDING_UNTRAPPED;
+    return b;
+}
 
 /*
  * Store display information for later flushing.
  */
 void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
-		   boolean invis, int mon, int monflags, int effect)
+              boolean invis, int mon, int monflags, int effect,
+              int branding)
 {
     if (!isok(x, y))
 	return;
@@ -1299,6 +1369,7 @@ void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
     dbuf[y][x].monflags = monflags;
     dbuf[y][x].effect = effect;
     dbuf[y][x].visible = cansee(x, y);
+    dbuf[y][x].branding = branding;
 }
 
 

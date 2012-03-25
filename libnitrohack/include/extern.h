@@ -215,8 +215,10 @@ extern void display_self(void);
 extern int doredraw(void);
 extern int obfuscate_object(int otyp);
 extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
-		   boolean invis, int mon, int monflags, int effect);
+                     boolean invis, int mon, int monflags, int effect,
+                     int branding);
 extern void dbuf_set_effect(int x, int y, int eglyph);
+extern short dbuf_branding(struct rm *loc);
 extern int dbuf_get_mon(int x, int y);
 extern boolean warning_at(int x, int y);
 extern void clear_display_buffer(void);

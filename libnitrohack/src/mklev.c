@@ -1343,6 +1343,7 @@ static void mkinvpos(xchar x, xchar y, int dist)
     if (dist < 6) loc->lit = TRUE;
     loc->waslit = TRUE;
     loc->horizontal = FALSE;
+    clear_memory_glyph(x, y, S_unexplored);
     viz_array[y][x] = (dist < 6 ) ?
 	(IN_SIGHT|COULD_SEE) : /* short-circuit vision recalc */
 	COULD_SEE;
