@@ -37,7 +37,7 @@ struct monst *newmonst(int extyp, int namelen)
 {
 	struct monst *mon;
 	int xlen;
-	
+
 	switch (extyp) {
 	    case MX_EMIN: xlen = sizeof(struct emin); break;
 	    case MX_EPRI: xlen = sizeof(struct epri); break;
@@ -46,13 +46,13 @@ struct monst *newmonst(int extyp, int namelen)
 	    case MX_EDOG: xlen = sizeof(struct edog); break;
 	    default:      xlen = 0; break;
 	}
-	
+
 	mon = malloc(sizeof(struct monst) + namelen + xlen);
 	memset(mon, 0, sizeof(struct monst) + namelen + xlen);
 	mon->mxtyp = extyp;
 	mon->mxlth = xlen;
 	mon->mnamelth = namelen;
-	
+
 	return mon;
 }
 
@@ -97,7 +97,7 @@ static void m_initgrp(struct monst *mtmp, struct level *lev, int x, int y, int n
 	coord mm;
 	int cnt = rnd(n), dl = level_difficulty(&lev->z);
 	struct monst *mon;
-	
+
 	/* Tuning: cut down on swarming at low depths */
 	if (dl > 0) {
 	    cnt /= (dl < 3) ? 4 : (dl < 5) ? 2 : 1;
@@ -496,17 +496,17 @@ static void m_initinv(struct monst *mtmp)
 			mac += 1 + mongets(mtmp, HELMET);
 		    else if (mac < 10 && rn2(2))
 			mac += 1 + mongets(mtmp, DENTED_POT);
-		    
+
 		    if (mac < 10 && rn2(3))
 			mac += 1 + mongets(mtmp, SMALL_SHIELD);
 		    else if (mac < 10 && rn2(2))
 			mac += 2 + mongets(mtmp, LARGE_SHIELD);
-		    
+
 		    if (mac < 10 && rn2(3))
 			mac += 1 + mongets(mtmp, LOW_BOOTS);
 		    else if (mac < 10 && rn2(2))
 			mac += 2 + mongets(mtmp, HIGH_BOOTS);
-		    
+
 		    if (mac < 10 && rn2(3))
 			mongets(mtmp, LEATHER_GLOVES);
 		    else if (mac < 10 && rn2(2))
@@ -802,7 +802,7 @@ struct monst *makemon(const struct permonst *ptr,
 				y = bypos.y;
 			} else
 				return NULL;
-		} else 
+		} else
 			return NULL;
 	}
 
@@ -828,14 +828,14 @@ struct monst *makemon(const struct permonst *ptr,
 		} while (!goodpos(lev, x, y, &fakemon, gpflags) && tryct++ < 50);
 		mndx = monsndx(ptr);
 	}
-	
+
 	if (mndx == quest_info(MS_LEADER))
 	    ptr = &pm_leader;
 	else if (mndx == quest_info(MS_GUARDIAN))
 	    ptr = &pm_guardian;
 	else if (mndx == quest_info(MS_NEMESIS))
 	    ptr = &pm_nemesis;
-	
+
 	propagate(mndx, countbirth, FALSE);
 
 	xtyp = ptr->pxtyp;
@@ -843,7 +843,7 @@ struct monst *makemon(const struct permonst *ptr,
 	    xtyp = MX_EDOG;
 	else if (mmflags & MM_EMIN)
 	    xtyp = MX_EMIN;
-	
+
 	mtmp = newmonst(xtyp, 0);
 	mtmp->nmon = lev->monlist;
 	lev->monlist = mtmp;
@@ -851,7 +851,7 @@ struct monst *makemon(const struct permonst *ptr,
 	if (!mtmp->m_id)
 	    mtmp->m_id = flags.ident++;	/* ident overflowed */
 	set_mon_data(mtmp, ptr, 0);
-	
+
 	if (mtmp->data->msound == MS_LEADER)
 	    quest_status.leader_m_id = mtmp->m_id;
 	mtmp->mnum = mndx;
@@ -1035,7 +1035,7 @@ struct monst *makemon(const struct permonst *ptr,
 int mbirth_limit(int mndx)
 {
 	/* assert(MAXMONNO < 255); */
-	return mndx == PM_NAZGUL ? 9 : mndx == PM_ERINYS ? 3 : MAXMONNO; 
+	return mndx == PM_NAZGUL ? 9 : mndx == PM_ERINYS ? 3 : MAXMONNO;
 }
 
 /* used for wand/scroll/spell of create monster */
@@ -1089,7 +1089,7 @@ static int align_shift(const d_level *dlev, const struct permonst *ptr)
 {
     s_level *lev = Is_special(dlev);
     int alshift;
-    
+
     switch((lev) ? lev->flags.align : dungeons[dlev->dnum].flags.align) {
     default:	/* just in case */
     case AM_NONE:	alshift = 0;
@@ -1128,7 +1128,7 @@ const struct permonst *rndmonst(const d_level *dlev)
 	    for (mndx = LOW_PM; mndx < SPECIAL_PM; mndx++) {
 		if (!uncommon(dlev, mndx)) break;
 		rndmonst_state.mchoices[mndx] = 0;
-	    }		
+	    }
 	    if (mndx == SPECIAL_PM) {
 		/* evidently they've all been exterminated */
 		return NULL;
@@ -1777,11 +1777,11 @@ struct monst *restore_mon(struct memfile *mf)
 	    EPRI(mon)->shrlevel.dnum = mread8(mf);
 	    EPRI(mon)->shrlevel.dlevel = mread8(mf);
 	    break;
-	    
+
 	case MX_EMIN:
 	    EMIN(mon)->min_align = mread8(mf);
 	    break;
-	    
+
 	case MX_EDOG:
 	    EDOG(mon)->droptime = mread32(mf);
 	    EDOG(mon)->dropdist = mread32(mf);
@@ -1821,7 +1821,7 @@ struct monst *restore_mon(struct memfile *mf)
 	    for (i = 0; i < BILLSZ; i++)
 		restore_shkbill(mf, &shk->bill[i]);
 	    break;
-	    
+
 	case MX_EGD:
 	    EGD(mon)->fcbeg = mread32(mf);
 	    EGD(mon)->fcend = mread32(mf);
@@ -1838,7 +1838,7 @@ struct monst *restore_mon(struct memfile *mf)
 		restore_fcorr(mf, &EGD(mon)->fakecorr[i]);
 	    break;
     }
-    
+
     mon->female		= (mflags >> 31) & 1;
     mon->minvis		= (mflags >> 30) & 1;
     mon->invis_blkd	= (mflags >> 29) & 1;
@@ -1894,10 +1894,10 @@ void save_mon(struct memfile *mf, const struct monst *mon)
     int idx, i;
     unsigned int mflags;
     struct eshk *shk;
-    
+
     mtag(mf, mon->m_id, MTAG_MON);
     mfmagic_set(mf, MON_MAGIC);
-    
+
     mwrite16(mf, mon->mnamelth);
     mwrite16(mf, mon->mxtyp);
 
@@ -1939,7 +1939,7 @@ void save_mon(struct memfile *mf, const struct monst *mon)
     mwrite8(mf, mon->mfrozen);
     mwrite8(mf, mon->mblinded);
     mwrite32(mf, mon->mappearance);
-    
+
     mflags = (mon->female << 31) | (mon->minvis << 30) | (mon->invis_blkd << 29) |
              (mon->perminvis << 28) | (mon->cham << 25) | (mon->mundetected << 24) |
              (mon->mcan << 23) | (mon->mburied << 22) | (mon->mspeed << 20) |
@@ -1950,19 +1950,19 @@ void save_mon(struct memfile *mf, const struct monst *mon)
              (mon->isshk << 6) | (mon->isminion << 5) | (mon->isgd << 4) |
              (mon->ispriest << 3) | (mon->iswiz << 2);
     mwrite32(mf, mflags);
-    
+
     mwrite8(mf, mon->mfleetim);
     mwrite8(mf, mon->weapon_check);
     mwrite32(mf, mon->misc_worn_check);
     mwrite8(mf, mon->wormno);
-    
+
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);
     mwrite8(mf, mon->mw ? 1 : 0);
-    
+
     if (mon->mnamelth)
 	mwrite(mf, NAME(mon), mon->mnamelth);
-    
+
     switch (mon->mxtyp) {
 	case MX_EPRI:
 	    mwrite8(mf, EPRI(mon)->shralign);
@@ -1972,11 +1972,11 @@ void save_mon(struct memfile *mf, const struct monst *mon)
 	    mwrite8(mf, EPRI(mon)->shrlevel.dnum);
 	    mwrite8(mf, EPRI(mon)->shrlevel.dlevel);
 	    break;
-	    
+
 	case MX_EMIN:
 	    mwrite8(mf, EMIN(mon)->min_align);
 	    break;
-	    
+
 	case MX_EDOG:
 	    mwrite32(mf, EDOG(mon)->droptime);
 	    mwrite32(mf, EDOG(mon)->dropdist);
@@ -2015,7 +2015,7 @@ void save_mon(struct memfile *mf, const struct monst *mon)
 	    for (i = 0; i < BILLSZ; i++)
 		save_shkbill(mf, &shk->bill[i]);
 	    break;
-	    
+
 	case MX_EGD:
 	    mwrite32(mf, EGD(mon)->fcbeg);
 	    mwrite32(mf, EGD(mon)->fcend);
