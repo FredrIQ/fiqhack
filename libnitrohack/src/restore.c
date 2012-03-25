@@ -654,7 +654,7 @@ static void restore_location(struct memfile *mf, struct rm *loc)
 
 static struct trap *restore_traps(struct memfile *mf)
 {
-	struct trap *trap, *first = NULL;
+        struct trap *trap, *first = NULL, *prev = NULL;
 	unsigned int count, tflags;
 	
 	mfmagic_check(mf, TRAPCHAIN_MAGIC);
@@ -678,8 +678,10 @@ static struct trap *restore_traps(struct memfile *mf)
 	    
 	    trap->vl.v_launch_otyp = mread16(mf);
 
-	    trap->ntrap = first;
-	    first = trap;
+	    trap->ntrap = NULL;
+	    if (!first) first = trap;
+            else prev->ntrap = trap;
+            prev = trap;
 	}
 	
 	return first;
