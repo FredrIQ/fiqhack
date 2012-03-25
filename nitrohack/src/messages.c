@@ -110,7 +110,7 @@ static void prune_messages(int maxturn)
             start_of_turn_curline = last_redraw_curline = curline;
 	prevturn = msghistory[pos].turn;
 	
-	if (strlen(msglines[curline]) + strlen(msg) + 1 < COLNO) {
+	if (strlen(msglines[curline]) + strlen(msg) + 2 < COLNO) {
 	    if (msglines[curline][0])
 		strcat(msglines[curline], "  ");
 	    strcat(msglines[curline], msg);
@@ -243,7 +243,7 @@ static void curses_print_message_core(int turn, const char *inmsg, nh_bool canbl
      * If the message area is only one line high, space for "--More--" must be
      * reserved at the end of the line, otherwise  --More-- is shown on a new line.
      */
-    maxlen = COLNO;
+    maxlen = COLNO - 1;
     if (getmaxy(msgwin) == 1)
 	maxlen -= 8; /* for "--More--" */
     
