@@ -41,7 +41,7 @@
    otense(obj, verb): Conjugate verb as if obj was verbing
    "shatters" (stack size 1), "shatter" (stack size 2)
    vtense(subj, verb): Conjgate verb as if subj was verbing
-   "they","shatter" -> "shatter"; "you","shatter" -> "shatters"
+   "they","shatter" -> "shatter"; "it","shatter" -> "shatters"
    Doname2(obj): doname() with leading capital
    "The blessed Amulet of Yendor (being worn)", "A poisoned +4 dagger"
    yname(obj): like xname(), but incorporates ownership details
@@ -609,7 +609,33 @@ static char *doname_base(const struct obj *obj, boolean with_price)
 	/* when we have to add something at the start of prefix instead of the
 	 * end (strcat is used on the end)
 	 */
-	char *bp = xname(obj);
+	char *bp;
+
+        if (with_price && (obj->unpaid || shop_item_cost(obj) > 0)) {
+          /* If this item has a unique /base/ price for items within
+             its class, and isn't a gem (shks lie about those) or a
+             weapon or armour (and thus possibly enchanted), we
+             automatically ID it. This takes weight into account too
+             (as it's shown in inventory listings), which conveniently
+             happens to distinguish between different description
+             groups when we need it to. */
+          if (obj->oclass != ARMOR_CLASS && obj->oclass != WEAPON_CLASS &&
+              obj->oclass != GEM_CLASS) {
+            int i;
+            boolean id = TRUE;
+            for (i = 0; i < NUM_OBJECTS; i++) {
+              if (i == obj->otyp) continue;
+              if (objects[i].oc_cost   == objects[obj->otyp].oc_cost &&
+                  objects[i].oc_class  == objects[obj->otyp].oc_class &&
+                  objects[i].oc_weight == objects[obj->otyp].oc_weight)
+                id = FALSE;
+            }
+            if (id) makeknown(obj->otyp);
+          }
+        }
+
+        bp = xname(obj);
+
 
 	/* When using xname, we want "poisoned arrow", and when using
 	 * doname, we want "poisoned +0 arrow".  This kludge is about the only
