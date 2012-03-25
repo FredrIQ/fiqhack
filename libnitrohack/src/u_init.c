@@ -469,13 +469,13 @@ static struct trobj *copy_trobj_list(const struct trobj *list)
 {
 	struct trobj *copy;
 	int len = 0;
-	
+
 	while (list[len].trotyp || list[len].trclass)
 	    len++;
 	len++; /* list is terminated by an entry of zeros */
 	copy = malloc(len * sizeof(struct trobj));
 	memcpy(copy, list, len * sizeof(struct trobj));
-	
+
 	return copy;
 }
 
@@ -502,7 +502,7 @@ void u_init(void)
 
 	flags.female = u.initgend;
 	flags.beginner = 1;
-	
+
 	u.ustuck = NULL;
 
 	u.uz.dlevel = 1;
@@ -556,7 +556,7 @@ void u_init_inv_skills(void)
 	int i;
 	struct trobj *trobj_list = NULL;
 	short nclist[4] = {STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT, STRANGE_OBJECT};
-	
+
 	/*** Role-specific initializations ***/
 	switch (Role_switch) {
 	/* rn2(100) > 50 necessary for some choices because some
@@ -994,11 +994,11 @@ void restore_you(struct memfile *mf, struct you *y)
 	unsigned int yflags, eflags, hflags;
 
 	memset(y, 0, sizeof(struct you));
-	
+
 	yflags = mread32(mf);
 	eflags = mread32(mf);
 	hflags = mread32(mf);
-	
+
 	y->uswallow	= (yflags >> 31) & 1;
 	y->uinwater	= (yflags >> 30) & 1;
 	y->uundetected	= (yflags >> 29) & 1;
@@ -1007,7 +1007,7 @@ void restore_you(struct memfile *mf, struct you *y)
 	y->uburied	= (yflags >> 26) & 1;
 	y->uedibility	= (yflags >> 25) & 1;
 	y->usick_type	= (yflags >> 23) & 3;
-	
+
 	y->uevent.minor_oracle		= (eflags >> 31) & 1;
 	y->uevent.major_oracle		= (eflags >> 30) & 1;
 	y->uevent.qcalled		= (eflags >> 29) & 1;
@@ -1020,13 +1020,13 @@ void restore_you(struct memfile *mf, struct you *y)
 	y->uevent.uhand_of_elbereth	= (eflags >> 20) & 3;
 	y->uevent.udemigod		= (eflags >> 19) & 1;
 	y->uevent.ascended		= (eflags >> 18) & 1;
-	
+
 	y->uhave.amulet		= (hflags >> 31) & 1;
 	y->uhave.bell		= (hflags >> 30) & 1;
 	y->uhave.book		= (hflags >> 29) & 1;
 	y->uhave.menorah	= (hflags >> 28) & 1;
 	y->uhave.questart	= (hflags >> 27) & 1;
-	
+
 	y->uhp = mread32(mf);
 	y->uhpmax = mread32(mf);
 	y->uen = mread32(mf);
@@ -1087,11 +1087,11 @@ void restore_you(struct memfile *mf, struct you *y)
 	y->uconduct.polyselfs = mread32(mf);
 	y->uconduct.wishes = mread32(mf);
 	y->uconduct.wisharti = mread32(mf);
-	
+
 	/* at this point, ustuck and usteed are mon ids rather than pointers */
 	y->ustuck = (void*)(long)mread32(mf);
 	y->usteed = (void*)(long)mread32(mf);
-	
+
 	y->ux = mread8(mf);
 	y->uy = mread8(mf);
 	y->dx = mread8(mf);
@@ -1138,7 +1138,7 @@ void restore_you(struct memfile *mf, struct you *y)
 	mread(mf, y->atemp.a, sizeof(y->atemp.a));
 	mread(mf, y->atime.a, sizeof(y->atime.a));
 	mread(mf, y->skill_record, sizeof(y->skill_record));
-    
+
 	for (i = 0; i <= LAST_PROP; i++) {
 	    y->uprops[i].extrinsic = mread32(mf);
 	    y->uprops[i].blocked = mread32(mf);
@@ -1169,121 +1169,121 @@ void save_you(struct memfile *mf, struct you *y)
 		(y->uhave.book << 29) | (y->uhave.menorah << 28) |
 		(y->uhave.questart << 27);
 
-        mtag(mf, 0, MTAG_YOU);
-	mwrite32(mf, yflags);
-	mwrite32(mf, eflags);
-	mwrite32(mf, hflags);
-	mwrite32(mf, y->uhp);
-	mwrite32(mf, y->uhpmax);
-	mwrite32(mf, y->uen);
-	mwrite32(mf, y->uenmax);
-	mwrite32(mf, y->ulevel);
-	mwrite32(mf, y->umoney0);
-	mwrite32(mf, y->uexp);
-	mwrite32(mf, y->urexp);
-	mwrite32(mf, y->ulevelmax);
-	mwrite32(mf, y->umonster);
-	mwrite32(mf, y->umonnum);
-	mwrite32(mf, y->mh);
-	mwrite32(mf, y->mhmax);
-	mwrite32(mf, y->mtimedone);
-	mwrite32(mf, y->ulycn);
-	mwrite32(mf, y->last_str_turn);
-	mwrite32(mf, y->utrap);
-	mwrite32(mf, y->utraptype);
-	mwrite32(mf, y->uhunger);
-	mwrite32(mf, y->uhs);
-	mwrite32(mf, y->umconf);
-	mwrite32(mf, y->nv_range);
-	mwrite32(mf, y->xray_range);
-	mwrite32(mf, y->bglyph);
-	mwrite32(mf, y->cglyph);
-	mwrite32(mf, y->bc_order);
-	mwrite32(mf, y->bc_felt);
-	mwrite32(mf, y->ucreamed);
-	mwrite32(mf, y->uswldtim);
-	mwrite32(mf, y->udg_cnt);
-	mwrite32(mf, y->next_attr_check);
-	mwrite32(mf, y->ualign.record);
-	mwrite32(mf, y->ugangr);
-	mwrite32(mf, y->ugifts);
-	mwrite32(mf, y->ublessed);
-	mwrite32(mf, y->ublesscnt);
-	mwrite32(mf, y->ucleansed);
-	mwrite32(mf, y->usleep);
-	mwrite32(mf, y->uinvault);
-	mwrite32(mf, y->ugallop);
-	mwrite32(mf, y->urideturns);
-	mwrite32(mf, y->umortality);
-	mwrite32(mf, y->ugrave_arise);
-	mwrite32(mf, y->weapon_slots);
-	mwrite32(mf, y->skills_advanced);
-	mwrite32(mf, y->initrole);
-	mwrite32(mf, y->initrace);
-	mwrite32(mf, y->initgend);
-	mwrite32(mf, y->initalign);
-	mwrite32(mf, y->uconduct.unvegetarian);
-	mwrite32(mf, y->uconduct.unvegan);
-	mwrite32(mf, y->uconduct.food);
-	mwrite32(mf, y->uconduct.gnostic);
-	mwrite32(mf, y->uconduct.weaphit);
-	mwrite32(mf, y->uconduct.killer);
-	mwrite32(mf, y->uconduct.literate);
-	mwrite32(mf, y->uconduct.polypiles);
-	mwrite32(mf, y->uconduct.polyselfs);
-	mwrite32(mf, y->uconduct.wishes);
-	mwrite32(mf, y->uconduct.wisharti);
-	
-	mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);
-	mwrite32(mf, y->usteed ? y->usteed->m_id : 0);
-	
-	mwrite8(mf, y->ux);
-	mwrite8(mf, y->uy);
-	mwrite8(mf, y->dx);
-	mwrite8(mf, y->dy);
-	mwrite8(mf, y->tx);
-	mwrite8(mf, y->ty);
-	mwrite8(mf, y->ux0);
-	mwrite8(mf, y->uy0);
-	mwrite8(mf, y->uz.dnum);
-	mwrite8(mf, y->uz.dlevel);
-	mwrite8(mf, y->uz0.dnum);
-	mwrite8(mf, y->uz0.dlevel);
-	mwrite8(mf, y->utolev.dnum);
-	mwrite8(mf, y->utolev.dlevel);
-	mwrite8(mf, y->utotype);
-	mwrite8(mf, y->umoved);
-	mwrite8(mf, y->ualign.type);
-	mwrite8(mf, y->ualignbase[0]);
-	mwrite8(mf, y->ualignbase[1]);
-	mwrite8(mf, y->uluck);
-	mwrite8(mf, y->moreluck);
-	mwrite8(mf, y->uhitinc);
-	mwrite8(mf, y->udaminc);
-	mwrite8(mf, y->uac);
-	mwrite8(mf, y->uspellprot);
-	mwrite8(mf, y->usptime);
-	mwrite8(mf, y->uspmtime);
-	mwrite8(mf, y->twoweap);
+        mtag(mf, 0, MTAG_YOU);                                    /* 0 */
+	mwrite32(mf, yflags);                                     /* 4 */
+	mwrite32(mf, eflags);                                     /* 8 */
+	mwrite32(mf, hflags);                                     /* 12 */
+	mwrite32(mf, y->uhp);                                     /* 16 */
+	mwrite32(mf, y->uhpmax);                                  /* 20 */
+	mwrite32(mf, y->uen);                                     /* 24 */
+	mwrite32(mf, y->uenmax);                                  /* 28 */
+	mwrite32(mf, y->ulevel);                                  /* 32 */
+	mwrite32(mf, y->umoney0);                                 /* 36 */
+	mwrite32(mf, y->uexp);                                    /* 40 */
+	mwrite32(mf, y->urexp);                                   /* 44 */
+	mwrite32(mf, y->ulevelmax);                               /* 48 */
+	mwrite32(mf, y->umonster);                                /* 52 */
+	mwrite32(mf, y->umonnum);                                 /* 56 */
+	mwrite32(mf, y->mh);                                      /* 60 */
+	mwrite32(mf, y->mhmax);                                   /* 64 */
+	mwrite32(mf, y->mtimedone);                               /* 68 */
+	mwrite32(mf, y->ulycn);                                   /* 72 */
+	mwrite32(mf, y->last_str_turn);                           /* 76 */
+	mwrite32(mf, y->utrap);                                   /* 80 */
+	mwrite32(mf, y->utraptype);                               /* 84 */
+	mwrite32(mf, y->uhunger);                                 /* 88 */
+	mwrite32(mf, y->uhs);                                     /* 92 */
+	mwrite32(mf, y->umconf);                                  /* 96 */
+	mwrite32(mf, y->nv_range);                                /* 100 */
+	mwrite32(mf, y->xray_range);                              /* 104 */
+	mwrite32(mf, y->bglyph);                                  /* 108 */
+	mwrite32(mf, y->cglyph);                                  /* 112 */
+	mwrite32(mf, y->bc_order);                                /* 116 */
+	mwrite32(mf, y->bc_felt);                                 /* 120 */
+	mwrite32(mf, y->ucreamed);                                /* 124 */
+	mwrite32(mf, y->uswldtim);                                /* 128 */
+	mwrite32(mf, y->udg_cnt);                                 /* 132 */
+	mwrite32(mf, y->next_attr_check);                         /* 136 */
+	mwrite32(mf, y->ualign.record);                           /* 140 */
+	mwrite32(mf, y->ugangr);                                  /* 144 */
+	mwrite32(mf, y->ugifts);                                  /* 148 */
+	mwrite32(mf, y->ublessed);                                /* 152 */
+	mwrite32(mf, y->ublesscnt);                               /* 156 */
+	mwrite32(mf, y->ucleansed);                               /* 160 */
+	mwrite32(mf, y->usleep);                                  /* 164 */
+	mwrite32(mf, y->uinvault);                                /* 168 */
+	mwrite32(mf, y->ugallop);                                 /* 172 */
+	mwrite32(mf, y->urideturns);                              /* 176 */
+	mwrite32(mf, y->umortality);                              /* 180 */
+	mwrite32(mf, y->ugrave_arise);                            /* 184 */
+	mwrite32(mf, y->weapon_slots);                            /* 188 */
+	mwrite32(mf, y->skills_advanced);                         /* 192 */
+	mwrite32(mf, y->initrole);                                /* 196 */
+	mwrite32(mf, y->initrace);                                /* 200 */
+	mwrite32(mf, y->initgend);                                /* 204 */
+	mwrite32(mf, y->initalign);                               /* 208 */
+	mwrite32(mf, y->uconduct.unvegetarian);                   /* 212 */
+	mwrite32(mf, y->uconduct.unvegan);                        /* 216 */
+	mwrite32(mf, y->uconduct.food);                           /* 220 */
+	mwrite32(mf, y->uconduct.gnostic);                        /* 224 */
+	mwrite32(mf, y->uconduct.weaphit);                        /* 228 */
+	mwrite32(mf, y->uconduct.killer);                         /* 232 */
+	mwrite32(mf, y->uconduct.literate);                       /* 236 */
+	mwrite32(mf, y->uconduct.polypiles);                      /* 240 */
+	mwrite32(mf, y->uconduct.polyselfs);                      /* 244 */
+	mwrite32(mf, y->uconduct.wishes);                         /* 248 */
+	mwrite32(mf, y->uconduct.wisharti);                       /* 252 */
 
-	mwrite(mf, y->usick_cause, sizeof(y->usick_cause));
-	mwrite(mf, y->urooms, sizeof(y->urooms));
-	mwrite(mf, y->urooms0, sizeof(y->urooms0));
-	mwrite(mf, y->uentered, sizeof(y->uentered));
-	mwrite(mf, y->ushops, sizeof(y->ushops));
-	mwrite(mf, y->ushops0, sizeof(y->ushops0));
-	mwrite(mf, y->ushops_entered, sizeof(y->ushops_entered));
-	mwrite(mf, y->ushops_left, sizeof(y->ushops_left));
-	mwrite(mf, y->macurr.a, sizeof(y->macurr.a));
-	mwrite(mf, y->mamax.a, sizeof(y->mamax.a));
-	mwrite(mf, y->acurr.a, sizeof(y->acurr.a));
-	mwrite(mf, y->aexe.a, sizeof(y->aexe.a));
-	mwrite(mf, y->abon.a, sizeof(y->abon.a));
-	mwrite(mf, y->amax.a, sizeof(y->amax.a));
-	mwrite(mf, y->atemp.a, sizeof(y->atemp.a));
-	mwrite(mf, y->atime.a, sizeof(y->atime.a));
-	mwrite(mf, y->skill_record, sizeof(y->skill_record));
-    
+	mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);            /* 256 */
+	mwrite32(mf, y->usteed ? y->usteed->m_id : 0);            /* 260 */
+
+	mwrite8(mf, y->ux);                                       /* 261 */
+	mwrite8(mf, y->uy);                                       /* 262 */
+	mwrite8(mf, y->dx);                                       /* 263 */
+	mwrite8(mf, y->dy);                                       /* 264 */
+	mwrite8(mf, y->tx);                                       /* 265 */
+	mwrite8(mf, y->ty);                                       /* 266 */
+	mwrite8(mf, y->ux0);                                      /* 267 */
+	mwrite8(mf, y->uy0);                                      /* 268 */
+	mwrite8(mf, y->uz.dnum);                                  /* 269 */
+	mwrite8(mf, y->uz.dlevel);                                /* 270 */
+	mwrite8(mf, y->uz0.dnum);                                 /* 271 */
+	mwrite8(mf, y->uz0.dlevel);                               /* 272 */
+	mwrite8(mf, y->utolev.dnum);                              /* 273 */
+	mwrite8(mf, y->utolev.dlevel);                            /* 274 */
+	mwrite8(mf, y->utotype);                                  /* 275 */
+	mwrite8(mf, y->umoved);                                   /* 276 */
+	mwrite8(mf, y->ualign.type);                              /* 277 */
+	mwrite8(mf, y->ualignbase[0]);                            /* 278 */
+	mwrite8(mf, y->ualignbase[1]);                            /* 279 */
+	mwrite8(mf, y->uluck);                                    /* 280 */
+	mwrite8(mf, y->moreluck);                                 /* 281 */
+	mwrite8(mf, y->uhitinc);                                  /* 282 */
+	mwrite8(mf, y->udaminc);                                  /* 283 */
+	mwrite8(mf, y->uac);                                      /* 284 */
+	mwrite8(mf, y->uspellprot);                               /* 285 */
+	mwrite8(mf, y->usptime);                                  /* 286 */
+	mwrite8(mf, y->uspmtime);                                 /* 287 */
+	mwrite8(mf, y->twoweap);                                  /* 288 */
+
+	mwrite(mf, y->usick_cause, sizeof(y->usick_cause));       /* 371 */
+	mwrite(mf, y->urooms, sizeof(y->urooms));                 /* 376 */
+	mwrite(mf, y->urooms0, sizeof(y->urooms0));               /* 381 */
+	mwrite(mf, y->uentered, sizeof(y->uentered));             /* 386 */
+	mwrite(mf, y->ushops, sizeof(y->ushops));                 /* 391 */
+	mwrite(mf, y->ushops0, sizeof(y->ushops0));               /* 396 */
+	mwrite(mf, y->ushops_entered, sizeof(y->ushops_entered)); /* 401 */
+	mwrite(mf, y->ushops_left, sizeof(y->ushops_left));       /* 406 */
+	mwrite(mf, y->macurr.a, sizeof(y->macurr.a));             /* 412 */
+	mwrite(mf, y->mamax.a, sizeof(y->mamax.a));               /* 418 */
+	mwrite(mf, y->acurr.a, sizeof(y->acurr.a));               /* 424 */
+	mwrite(mf, y->aexe.a, sizeof(y->aexe.a));                 /* 430 */
+	mwrite(mf, y->abon.a, sizeof(y->abon.a));                 /* 436 */
+	mwrite(mf, y->amax.a, sizeof(y->amax.a));                 /* 442 */
+	mwrite(mf, y->atemp.a, sizeof(y->atemp.a));               /* 448 */
+	mwrite(mf, y->atime.a, sizeof(y->atime.a));               /* 452 */
+	mwrite(mf, y->skill_record, sizeof(y->skill_record));     /* 514 */
+
 	for (i = 0; i <= LAST_PROP; i++) {
 	    mwrite32(mf, y->uprops[i].extrinsic);
 	    mwrite32(mf, y->uprops[i].blocked);
