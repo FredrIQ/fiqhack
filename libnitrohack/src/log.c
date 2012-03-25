@@ -10,10 +10,10 @@ extern const struct cmd_desc cmdlist[];
 
 int logfile = -1;
 unsigned int last_cmd_pos;
-struct memfile recent_cmd_states[2];
-struct memfile *last_cmd_state = recent_cmd_states;
+static struct memfile recent_cmd_states[2];
+static struct memfile *last_cmd_state = recent_cmd_states;
 static const char *const statuscodes[] = {"save", "done", "inpr"};
-
+static int last_curline;
 
 static const unsigned char b64e[64] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -185,11 +185,6 @@ void log_newgame(int logfd, unsigned long long start_time,
     log_game_opts();
     /* all the timestamps are UTC, so timezone info is required to interpret them */
     log_timezone(get_tz_offset());
-
-    mfree(recent_cmd_states);
-    mfree(recent_cmd_states+1);
-    mnew(recent_cmd_states, NULL);
-    mnew(recent_cmd_states+1, NULL);
 }
 
 
@@ -232,6 +227,19 @@ void log_command_result(void)
     if (iflags.disable_log || !program_state.something_worth_saving || logfile == -1)
 	return;
     
+    if (!multi && !occupation)
+    {
+        /* We want to log all the messages produced since the last command,
+           especially nonblocking ones, so we can let the user know what
+           happened if we're replaying from diffs. */
+        while (last_curline != curline) {
+            log_binary(toplines[last_curline],
+                       strlen(toplines[last_curline]), "\n--");
+            last_curline++;
+            last_curline %= MSGCOUNT;
+        }
+    }
+
     lprintf("\n<%x", mt_nextstate() & 0xffff);
 
     if (!multi && !occupation)
@@ -412,4 +420,13 @@ void log_finish(enum nh_log_status status)
 void log_truncate(void)
 {
     ftruncate(logfile, last_cmd_pos);
+}
+
+void log_init(void)
+{
+    mfree(recent_cmd_states);
+    mfree(recent_cmd_states+1);
+    mnew(recent_cmd_states, NULL);
+    mnew(recent_cmd_states+1, NULL);
+    last_curline = curline;
 }

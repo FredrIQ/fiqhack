@@ -252,6 +252,7 @@ boolean nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     u.initgend = igend; u.initalign = ialign;
     
     /* write out a new logfile header "NHGAME ..." with all the initial details */
+    log_init();
     log_newgame(fd, turntime, seed, playmode);
     
     newgame();
@@ -333,6 +334,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     /* clean up data used for replay */
     replay_end();
     log_truncate();
+    log_init(); /* must be called before we start writing to the log */
     
     /* info might not have reached the ui while alternate window procs were set */
     doredraw();
@@ -729,6 +731,7 @@ int command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
     /* once-per-player-input things go here */
     /****************************************/
     xmalloc_cleanup();
+    iflags.next_msg_nonblocking = 0;
     
     /* prepare for the next move */
     flags.move = 1;

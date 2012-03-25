@@ -181,7 +181,7 @@ void mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype)
         tag->tagtype = tagtype;
         tag->pos = mf->pos;
         mf->tags[bucket] = tag;
-        if (mf->relativeto && 0) {
+        if (mf->relativeto) {
             for (tag = mf->relativeto->tags[bucket]; tag; tag = tag->next) {
                 if (tag->tagtype == tagtype && tag->tagdata == tagdata) break;
             }

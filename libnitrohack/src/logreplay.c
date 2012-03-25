@@ -666,6 +666,28 @@ static void replay_check_cmdresult(char *token)
     }
 }
 
+static void replay_check_msg(char *token)
+{
+    char *b64data, *buf;
+    int buflen;
+
+    if (!token)
+        return;
+
+    if (*token != '-' || token[1] != '-')
+        parse_error("Error: incorrect message format");
+
+    b64data = token + 2;
+    buflen = strlen(b64data);
+
+    buf = malloc(buflen + 2);
+    memset(buf, 0, buflen + 2);
+    base64_decode(b64data, buf);
+
+    pline("%s", buf);
+    free(buf);
+}
+
 static void replay_check_diff(char *token, boolean optonly)
 {
     char *b64data, *buf, *bufp;
@@ -763,8 +785,8 @@ static void replay_check_diff(char *token, boolean optonly)
         savegame(&diff_base);
         if (diff_base.pos != mf.pos ||
             memcmp(diff_base.buf, mf.buf, mf.pos)) {
-#if DEBUG /*desync location debugging */
-            if (mf.pos == diff_base.pos) {
+#ifdef DEBUG /*desync location debugging */
+            if (mf.pos == diff_base.pos && !loginfo.cmds_are_invalid) {
                 int i;
                 struct memfile_tag origtag;
                 origtag.next = 0;
@@ -787,7 +809,7 @@ static void replay_check_diff(char *token, boolean optonly)
                         break; /* comment this out to see all desyncs */
                     }
                 }
-            } else {
+            } else if (!loginfo.cmds_are_invalid) {
                 raw_printf("desync between recording (length %d) and "
                            "recorded save (length %d)", diff_base.pos, mf.pos);
             }
@@ -892,6 +914,14 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 		if (singlestep) {
 		    goto out;
 		}
+                break;
+
+            case '-':
+                /* We want to display the welcome messages in the
+                   new-game sequence even if recovering from diffs. */
+                if (program_state.viewing && loginfo.cmds_are_invalid) {
+                    replay_check_msg(token);
+                }
                 break;
 	}
 	
