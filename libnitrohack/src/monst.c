@@ -8,7 +8,7 @@
 #include "eshk.h"
 #include "vault.h"
 #include "epri.h"
-#include "hack.h"       /* for MG_ULINE */
+#include "color.h"      /* for HI_ULINE */
 
 #define NO_ATTK {0,0,0,0}
 
