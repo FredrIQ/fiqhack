@@ -221,29 +221,37 @@ static void make_player_info(struct nh_player_info *pi)
 	}
 	pi->can_enhance = advskills > 0;
 	
-	/* add status items for various problems */
-	if (strcmp(hu_stat[u.uhs], "        "))
+	/* add status items for various problems
+           there can be at most 12 items here at any one time or we overflow
+           the buffer */
+	if (strcmp(hu_stat[u.uhs], "        ")) /* 1 */
 	    strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
 	
-	if (Confusion)
+	if (Confusion) /* 2 */
 	    strncpy(pi->statusitems[pi->nr_items++], "Conf", ITEMLEN);
 	
-	if (Sick) {
+	if (Sick) { /* 3 */
 	    if (u.usick_type & SICK_VOMITABLE)
 		strncpy(pi->statusitems[pi->nr_items++], "FoodPois", ITEMLEN);
 	    if (u.usick_type & SICK_NONVOMITABLE)
 		strncpy(pi->statusitems[pi->nr_items++], "Ill", ITEMLEN);
 	}
-	if (Blind)
+	if (Blind) /* 4 */
 	    strncpy(pi->statusitems[pi->nr_items++], "Blind", ITEMLEN);
-	if (Stunned)
+	if (Stunned) /* 5 */
 	    strncpy(pi->statusitems[pi->nr_items++], "Stun", ITEMLEN);
-	if (Hallucination)
+	if (Hallucination) /* 6 */
 	    strncpy(pi->statusitems[pi->nr_items++], "Hallu", ITEMLEN);
-	if (Slimed)
+	if (Slimed) /* 7 */
 	    strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
-	if (cap > UNENCUMBERED)
+	if (cap > UNENCUMBERED) /* 8 */
 	    strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
+        if (Levitation) /* 9 */
+	    strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
+        if (unweapon) /* 10 */
+	    strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
+        if (u.utrap) /* 11 */
+	    strncpy(pi->statusitems[pi->nr_items++], "Trap", ITEMLEN);
 	
 	api_exit();
 }
