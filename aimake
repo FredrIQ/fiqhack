@@ -102,7 +102,7 @@ if($options{'d'}) {
 }
 
 defined($options{'v'}) or $options{'v'} = 3;
-!defined $options{'v'} or $options{'v'} =~ /^\d+$/
+!defined $options{'v'} or $options{'v'} =~ /^-?\d+$/
   or die "Argument to -v must be a number";
 
 if (scalar @ARGV == 1) {
@@ -902,6 +902,19 @@ sub relative_distance {
       for keys %$keyrels;
 
   # We prefer:
+  # - avoiding standalone dirs unless we're already inside them
+  for my $dir (keys %{$config->{'directories'}}) {
+    next unless $config->{'directories'}->{$dir} eq 'standalone';
+    my (undef, $rdiff, undef) = File::Spec->splitpath(
+      File::Spec->abs2rel($relpath,$dir));
+    my (undef, $kdiff, undef) = File::Spec->splitpath(
+      File::Spec->abs2rel($keypath,$dir));
+    my @rdiff = grep {$_ ne ''} File::Spec->splitdir($rdiff);
+    my @kdiff = grep {$_ ne ''} File::Spec->splitdir($kdiff);
+    my $rinside = scalar @rdiff == scalar File::Spec->no_upwards(@rdiff);
+    my $kinside = scalar @kdiff == scalar File::Spec->no_upwards(@kdiff);
+    $rinside && !$kinside || $kinside && !$rinside and $score -= 1000000;
+  }
   # - local objects to system objects
   if (!File::Spec->file_name_is_absolute($relpath) &&
       !File::Spec->file_name_is_absolute($keypath)) {
@@ -956,15 +969,16 @@ sub obj_state {
   }
   if ($rel) {
     my $t = undef;
-    my $tk = undef;
     my $dsep = '+inf';
+    my $kcount = keys %{defined_or($s->{'relative'},{})};
     for my $key (keys %{defined_or($s->{'relative'},{})}) {
       next unless $s->{'relative'}->{$key}->{'relstate_valid'};
       $key =~ /^b?path:(.*)$/;
       my $dist = relative_distance($key, $rel);
+      $kcount > 1 and progress_report -1,
+        "Score for using '$key' to build '$rel': ".(-$dist);
       if ($dist < $dsep) {
         $t = $s->{'relative'}->{$key};
-        $tk = $key;
         $dsep = $dist;
       }
     }
