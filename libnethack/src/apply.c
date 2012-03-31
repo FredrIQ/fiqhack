@@ -4,7 +4,7 @@
 #include "hack.h"
 #include "edog.h"
 
-static const char tools[] = { TOOL_CLASS, WEAPON_CLASS, WAND_CLASS, 0 };
+static const char tools[] = { ALL_CLASSES, TOOL_CLASS, WEAPON_CLASS, 0 };
 static const char tools_too[] = { ALL_CLASSES, TOOL_CLASS, POTION_CLASS,
 				  WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0 };
 
@@ -2642,8 +2642,10 @@ int doapply(struct obj *obj)
 	    return 1;	/* evading your grasp costs a turn; just be
 			   grateful that you don't drop it as well */
 
-	if (obj->oclass == WAND_CLASS)
-	    return do_break_wand(obj);
+	if (obj->oclass == WAND_CLASS) {
+            pline("To break wands, use the 'invoke' command (typically on 'V').");
+            return 0;
+        }
 
 	switch(obj->otyp){
 	case BLINDFOLD:
