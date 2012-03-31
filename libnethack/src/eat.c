@@ -52,6 +52,7 @@ char msgbuf[BUFSZ];
 static const char comestibles[] = { FOOD_CLASS, 0 };
 
 static const char allobj[] = {
+        ALLOW_NONE, NONE_ON_COMMA,
 	COIN_CLASS, WEAPON_CLASS, ARMOR_CLASS, POTION_CLASS, SCROLL_CLASS,
 	WAND_CLASS, RING_CLASS, AMULET_CLASS, FOOD_CLASS, TOOL_CLASS,
 	GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, SPBOOK_CLASS, 0 };
@@ -1665,7 +1666,7 @@ int doeat(struct obj *otmp)	/* generic "eat" command funtion (see cmd.c) */
 		pline("If you can't breathe air, how can you consume solids?");
 		return 0;
 	}
-	if (otmp && !validate_object(otmp, allobj, "eat"))
+	if (otmp && !validate_object(otmp, allobj + 2, "eat"))
 		return 0;
 	else if (!otmp)
 		otmp = floorfood("eat", 0);
@@ -2153,6 +2154,8 @@ struct obj *floorfood(/* get food from floor or pack */
 	char qbuf[QBUFSZ];
 	char c;
 	boolean feeding = (!strcmp(verb, "eat"));
+        int can_floorfood = 0;
+        boolean checking_can_floorfood = TRUE;
 
 	/* if we can't touch floor objects then use invent food only */
 	if (!can_reach_floor() ||
@@ -2162,64 +2165,76 @@ struct obj *floorfood(/* get food from floor or pack */
 			(Flying && !Breathless))))
 	    goto skipfloor;
 
+    eat_floorfood:
 	if (feeding && metallivorous(youmonst.data)) {
 	    struct obj *gold;
 	    struct trap *ttmp = t_at(level, u.ux, u.uy);
 
 	    if (ttmp && ttmp->tseen && ttmp->ttyp == BEAR_TRAP) {
-		/* If not already stuck in the trap, perhaps there should
-		   be a chance to becoming trapped?  Probably not, because
-		   then the trap would just get eaten on the _next_ turn... */
-		sprintf(qbuf, "There is a bear trap here (%s); eat it?",
-			(u.utrap && u.utraptype == TT_BEARTRAP) ?
-				"holding you" : "armed");
-		if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
-		    u.utrap = u.utraptype = 0;
-		    deltrap(ttmp);
-		    return mksobj(level, BEARTRAP, TRUE, FALSE);
-		} else if (c == 'q') {
-		    return NULL;
-		}
+                if (!checking_can_floorfood) {
+                    /* If not already stuck in the trap, perhaps there should
+                       be a chance to becoming trapped?  Probably not, because
+                       then the trap would just get eaten on the _next_ turn... */
+                    sprintf(qbuf, "There is a bear trap here (%s); eat it?",
+                            (u.utrap && u.utraptype == TT_BEARTRAP) ?
+                            "holding you" : "armed");
+                    if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
+                        u.utrap = u.utraptype = 0;
+                        deltrap(ttmp);
+                        return mksobj(level, BEARTRAP, TRUE, FALSE);
+                    } else if (c == 'q') {
+                        return NULL;
+                    }
+                } else can_floorfood++;
 	    }
 
 	    if (youmonst.data != &mons[PM_RUST_MONSTER] &&
 		(gold = gold_at(level, u.ux, u.uy)) != 0) {
-		if (gold->quan == 1L)
-		    sprintf(qbuf, "There is 1 gold piece here; eat it?");
-		else
-		    sprintf(qbuf, "There are %d gold pieces here; eat them?",
-			    gold->quan);
-		if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
-		    return gold;
-		} else if (c == 'q') {
-		    return NULL;
-		}
+                if (!checking_can_floorfood) {
+                    if (gold->quan == 1L)
+                        sprintf(qbuf, "There is 1 gold piece here; eat it?");
+                    else
+                        sprintf(qbuf, "There are %d gold pieces here; eat them?",
+                                gold->quan);
+                    if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
+                        return gold;
+                    } else if (c == 'q') {
+                        return NULL;
+                    }
+                } else can_floorfood++;
 	    }
 	}
 
 	/* Is there some food (probably a heavy corpse) here on the ground? */
 	for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
-		if (corpsecheck ?
+            if (corpsecheck ?
 		(otmp->otyp==CORPSE && (corpsecheck == 1 || tinnable(otmp))) :
-		    feeding ? (otmp->oclass != COIN_CLASS && is_edible(otmp)) :
-						otmp->oclass==FOOD_CLASS) {
-			sprintf(qbuf, "There %s %s here; %s %s?",
-				otense(otmp, "are"),
-				doname(otmp), verb,
-				(otmp->quan == 1L) ? "it" : "one");
-			if ((c = yn_function(qbuf,ynqchars,'n')) == 'y')
-				return otmp;
-			else if (c == 'q')
-				return NULL;
-		}
-	}
+                feeding ? (otmp->oclass != COIN_CLASS && is_edible(otmp)) :
+                otmp->oclass==FOOD_CLASS) {
+                if (!checking_can_floorfood) {
+                    sprintf(qbuf, "There %s %s here; %s %s?",
+                            otense(otmp, "are"),
+                            doname(otmp), verb,
+                            (otmp->quan == 1L) ? "it" : "one");
+                    if (can_floorfood == 1 ||
+                        (c = yn_function(qbuf,ynqchars,'n')) == 'y')
+                        return otmp;
+                    else if (c == 'q')
+                        return NULL;
+                } else can_floorfood++;
+            }
+        }
 
- skipfloor:
+    skipfloor:
 	/* We cannot use ALL_CLASSES since that causes getobj() to skip its
 	 * "ugly checks" and we need to check for inedible items.
 	 */
-	otmp = getobj(feeding ? (const char *)allobj :
+	otmp = getobj(feeding ? (const char *)(allobj + (can_floorfood ? 0 : 2)) :
 				(const char *)comestibles, verb);
+        if (otmp == &zeroobj) {
+            checking_can_floorfood = FALSE;
+            goto eat_floorfood;
+        }
 	if (corpsecheck && otmp)
 	    if (otmp->otyp != CORPSE || (corpsecheck == 2 && !tinnable(otmp))) {
 		pline("You can't %s that!", verb);
