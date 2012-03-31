@@ -1,0 +1,2185 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+aimake - build and/or install C programs with minimal configuration
+
+=head1 SYNOPSYS
+
+B<aimake> F<srcdir>
+
+B<aimake>
+
+B<aimake> B<-i> F<installdir>
+
+=head1 DESCRIPTION
+
+B<aimake> is a build system for C programs that attempts to deduce as
+much as possible itself, rather than requiring a separate file along
+the lines of C<Makefile>, C<config.ac>, or C<CMakeLists.txt>. In the
+most common cases, no configuration file is required at all, although
+a rudimentary configuration file can be used to specify more
+complicated things that cannot be automatically deduced (such as which
+files contain the entry points to libraries, or what commands to use
+to generate generated source files).
+
+To compile a project with aimake for the first time, create an empty
+directory, then call aimake in that directory, giving the path to the
+root of the distribution as an argument. To rebuild the project, call
+aimake with no arguments in your build directory. To install it, call
+aimake with the B<-i> switch, and specify where you want to install it
+(you can use just B<-i> by itself to install in the same place as last
+time).
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-v> I<number>
+
+Set how quiet the build should be. The default level is 3; higher
+values produce fewer messages, lower values produce more messages.
+Values of 7 or higher will suppress even the most serious error
+messages.
+
+=item B<-i> F<directory>
+
+After building (if necessary), install the project into the given
+directory.
+
+=item B<-d>
+
+Instead of compiling, dump the internal statefile to stdout in a
+human-readable format.
+
+=item B<-B> I<regexp>
+
+Consider all files matching the regexp to have changed, even if
+they actually haven't. (Don't include the // around the regexp.)
+
+=back
+
+=cut
+
+use warnings;
+use strict;
+use feature qw/switch say/;
+use Storable qw/nstore retrieve/;
+use Data::Dumper qw/Dumper/;
+use File::Spec ();
+use Cwd ();
+use Safe;
+use IPC::Cmd ();
+use Digest::SHA qw/sha1_hex/;
+use Getopt::Std qw/getopts/;
+
+use constant statefile => './aimake.state';
+use constant configfilename => 'aimake.config';
+
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+
+my $state = {};
+
+# Check for a statefile in the current directory.
+if (-e statefile) {
+  # throws exception if there are serious errors
+  $! = 0;
+  $state = retrieve(statefile);
+  # but minor errors return undef
+  defined $state or die "Error reading statefile: $!";
+}
+
+# Parse arguments.
+our $VERSION = 0.3;
+$Getopt::Std::STANDARD_HELP_VERSION = 1;
+my %options;
+getopts('dv:i:B:', \%options);
+
+if($options{'d'}) {
+  print Dumper($state);
+  exit 0
+}
+
+defined($options{'v'}) or $options{'v'} = 3;
+!defined $options{'v'} or $options{'v'} =~ /^\d+$/
+  or die "Argument to -v must be a number";
+
+if (scalar @ARGV == 1) {
+  defined $state->{'srcdir'} and
+  $state->{'srcdir'} ne $ARGV[0] and
+  die "This build directory is already being used to build '".
+  $state->{'srcdir'}."'";
+  if (!defined $state->{'srcdir'}) {
+    # Start a new build. We first want to verify that the
+    # directory is empty.
+    opendir my $dh, '.' or die "Cannot open '.': $!";
+    my @offending_files = File::Spec->no_upwards(readdir($dh));
+    closedir $dh;
+    @offending_files and die
+    "Please use an empty directory for starting new builds.";
+    # Should be OK to start, then.
+    $state->{'srcdir'} = $ARGV[0];
+  }
+} elsif (scalar @ARGV > 1) {
+  die "Don't know what to do with multiple non-option arguments.";
+}
+defined $state->{'srcdir'}
+  or die "Please specify a source directory,".
+         "or run in an existing build directory.";
+
+# Save the statefile upon exit, interruption (so we can continue from
+# where we were), or error.
+sub sighandler {
+  progress_report(4, "Exiting, writing statefile...");
+  nstore($state, statefile)
+    or die "Couldn't store state file: $!";
+  $@ and die $@;
+  exit $?;
+}
+#$SIG{__DIE__} = \&sighandler;
+$SIG{"INT"} = \&sighandler;
+
+# Work out the config rules we're using for this build. That's the
+# global config rules (that we find parallel to this script), and
+# project-specific rules (if any).
+
+sub merge_config {
+  my $config1 = shift; # array or hash ref
+  my $config2 = shift; # likewise, and the same
+  ref $config1 ne ref $config2 and die "Incorrect type in config file";
+  given (ref $config2) {
+    when ("ARRAY") {
+      # Append the contents of config2 to config1.
+      # We do it that way, so that project-specific options can
+      # override global ones.
+      push @$config1, @$config2;
+    }
+    when ("HASH") {
+      # For each key in hash2, overwrite the corresponding value in
+      # hash1 with it, except merge if they're both array refs or
+      # both hash refs.
+      for my $k (keys %$config2) {
+        if ((ref $$config2{$k} eq 'ARRAY' || ref $$config2{$k} eq 'HASH') &&
+            ref $$config1{$k} eq ref $$config2{$k}) {
+          merge_config($$config1{$k}, $$config2{$k});
+        } else { $$config1{$k} = $$config2{$k}; }
+      }
+    }
+  }
+}
+
+# We use Perl notation (Data::Dumper-style) for the config file, which
+# leads to a bit of a problem reading it. The solution: use Perl's
+# parser, and the Safe module to allow only specification of constants.
+# (rv2sv is there so that variables can be used to avoid repetition.)
+my $configsafe = new Safe;
+$configsafe->permit_only(qw/null stub scalar pushmark const undef
+                            list qr negate lineseq leaveeval anonlist
+                            anonhash rv2sv sassign nextstate padany/);
+$! = 0;
+my $config;
+my $configdata;
+{
+  local $/;
+  $configdata = <DATA>;
+}
+$config = $configsafe->reval($configdata, 0);
+$@ or ($! and $@ = $!);
+$@ or $@ = "bad configuration file format";
+defined $config or
+  die "Could not load global config file: $@";
+undef $@;
+ref $config eq 'HASH' or die "Invalid type in global config file";
+
+my $configfile = File::Spec->catfile($state->{'srcdir'}, configfilename);
+
+if (-e $configfile) {
+  my $localconfig = $configsafe->rdo($configfile, 1);
+  $@ or ($! and $@ = $!);
+  $@ or $@ = "bad configuration file format";
+  defined $localconfig or
+    die "Could not load project-specific config file: $@";
+  undef $@;
+  ref $localconfig eq 'HASH'
+    or die "Invalid type in project-specific config file";
+  merge_config($config, $localconfig);
+}
+
+my $config_sha1 = sha1_hex(Dumper(\$config));
+my $config_changed = $config_sha1 ne defined_or($state->{'config_sha1'},'');
+$config_changed and progress_report(2, "Looks like our configuration changed...");
+$state->{'config_sha1'} = $config_sha1;
+
+# Install calculations.
+defined($options{'i'}) and $state->{'installdir'} = $options{'i'};
+!defined $state->{'installdir'}
+  and $state->{'installdir'} = $config->{'default_installdir'};
+# If we haven't been given a package name, take the name of the
+# directory the package is in. (This fails if it's the root dir, but
+# who cares.)
+if (!defined $config->{'options'}->{'packagename'}) {
+  my (undef, $dirs, undef) = File::Spec->splitpath($state->{'srcdir'}, 1);
+  my @dirs = grep {$_ ne ''} File::Spec->splitdir($dirs);
+  $config->{'options'}->{'packagename'} = $dirs[$#dirs];
+}
+
+# OS independence: force everything to lowercase if we're getting
+# inconsistent case back from the OS (but not if it's case-sensitive.)
+# In theory this could vary by filesystem, but File::Spec doesn't know
+# about that.
+sub case_canonicalise {
+  my $rfn = shift;
+  File::Spec->case_tolerant and $$rfn = lc $$rfn;
+}
+
+sub ensure_directory_exists {
+  my $dir = shift;
+  my ($volume, $dirs, undef) = File::Spec->splitpath($dir, 1);
+  my @components = File::Spec->splitdir($dirs);
+  my @newpath = ();
+  while (@components) {
+    push @newpath, (shift @components);
+    my $newdirs = File::Spec->catdir(@newpath);
+    my $newdir = File::Spec->catpath($volume, $newdirs, '');
+    -d $newdir or mkdir $newdir or
+      die "Could not create directory '$newdir'";
+  }
+}
+
+{
+  my $last_report_msg= '';
+  sub progress_report {
+    my $level = shift;
+    my $str = shift;
+    my $ldiff = (length $str) - length $last_report_msg;
+    $ldiff < 0 and $str .= ' ' x -$ldiff;
+    if ($level == $options{v} - 1) {
+      print STDERR "$str\r";
+      $str =~ s/ +$//;
+      $last_report_msg = $str;
+    } elsif ($level >= $options{v}) {
+      print STDERR "$str\n";
+      $last_report_msg = '';
+    }
+  }
+}
+
+# Runs a command list. Eventually this will have a set of commands
+# that it runs itself, without going via the OS, to give a portable
+# base upon which to work. Assumes that command lists are idempotent;
+# that is, trying to run the same command list twice produces the
+# same result and doesn't affect the filesystem further.
+{
+  my $last_command = '';
+  my $last_command_result;
+  sub aimake_run_command {
+    my $cmd = shift;
+    my $capture_stdout = shift;
+    my $obj = shift;
+    my $rv = '';
+    my @cmd = (ref $cmd eq 'ARRAY' ? @$cmd : ($cmd));
+    join $;, @cmd eq $last_command and return $last_command_result;
+    my $objstate = obj_state($obj);
+    delete $objstate->{'stderrreason'};
+    for my $c (@cmd) {
+      my $worry_about_errors = 1;
+      $c =~ s/ \|\| true$// and $worry_about_errors = 0;
+      progress_report 2, ($capture_stdout ? "? " : "! ") . $c;
+      my ($ok, $err, undef, $stdout, $stderr) =
+        IPC::Cmd::run(command => $c, verbose => 0);
+      $stdout = join '', @$stdout;
+      $stderr = join '', @$stderr;
+      chomp $stderr;
+      $stderr =~ s/^/  /m;
+      if (!$ok && $worry_about_errors) {
+        if ($capture_stdout) {
+          $objstate->{'stderrreason'} =
+            "Failed to calculate dependencies of '$obj': $err\n$stderr";
+        } else {
+          $objstate->{'stderrreason'} =
+            "Failed to compile '$obj': $err\n$stderr";
+        }
+        progress_report 3, $objstate->{'stderrreason'};
+        $state->{'stderrobjects'}->{$obj} = 1;
+        $? == 2 and sighandler() and exit 2;
+        return;
+      }
+      if ($err && !$capture_stdout) {
+        progress_report 3, "'$obj' compiled with warnings:\n$c\n$stdout";
+        $state->{'stderrobjects'}->{$obj} = 1;
+      } # if we are capturing stdout, ignore stderr
+      $rv .= $stdout;
+    }
+    $last_command = join $;, @cmd;
+    $last_command_result = $rv;
+    return $rv;
+  }
+}
+
+# Perl version independence: define defined_or separately for
+# versions that don't understand //. (TODO: Also switch.)
+sub defined_or {
+  my $a = shift;
+  return (defined($a) ? $a : shift);
+}
+
+# We distinguish between two different sorts of dependencies:
+# - build dependencies, e.g. "foo.c" is needed to build "foo.o"
+# - use dependencies, e.g. "run_bar" is needed to use "foo.o",
+#   and "foo.h" is needed to use "foo.c"
+# We also care about:
+# - productions, e.g. "foo.o" can be produced from "foo.c"
+# - providing, e.g. "run_foo" is provided by "foo.o"
+# The difference is that providing something doesn't require an extra
+# command to be run, producing it does. They're also used differently;
+# if something is produced it isn't mentioned specifically if something
+# depends on it, if something is provided it specifies a command-line
+# argument that's used when producing things from it. However, they're
+# similar enough that they're merged in the code, as "provices".
+#
+# The basic rules:
+#   If an object X exists in the source directory, calculate its build
+#   and use dependencies using the rules provided (if any), and
+#   recursively. Also calculate what it provices.
+#   Everything is a build dependency and use dependency of itself.
+#
+#   If an object X doesn't exist in the source directory, it's only
+#   needed if it's a build or use dependency of something that we
+#   want, in which case, we need something that produces or provides
+#   it, and all that thing's build and use dependencies. The thing
+#   that provices it is considered a build dependency of it.
+#
+# Note that files that exist in the source can't have build
+# dependencies because they can't need building; files that don't
+# exist in the source /can/ have use dependencies, but we may need to
+# build them first to calculate what they are. Also, build dependencies
+# can't be specified explicitly, they're always calculated from the use
+# dependencies of things that provice an object.
+
+
+# It wouldn't be a build system without at least a /bit/ of testing
+# facts about the system...
+sub prereq_met {
+  my $prereq = shift;
+  my $subs = shift;
+  if (ref $prereq eq "ARRAY") {
+    prereq_met($_, $subs) or return 0 for @$prereq;
+    return 1;
+  }
+  $prereq =~ s/\$([a-zA-Z0-9_]+)/$subs->{$1}/ge;
+  # Negated prereqs.
+  $prereq =~ /^!(.*)$/ and return !prereq_met($1, $subs);
+  # File location prereqs.
+  $prereq eq 'location:system' and
+    return File::Spec->file_name_is_absolute($subs->{'buildpathname'});
+  # Command prereqs.
+  $prereq =~ /^command:(.*)$/ and return IPC::Cmd::can_run($1);
+  # Install location prereqs.
+  $prereq =~ /^installing_inside:(.*)$/ and do {
+    my $testdir = $1;
+    my $installdir = $state->{'installdir'};
+    my (undef, $dirs, undef) = File::Spec->splitpath(
+      File::Spec->abs2rel($installdir, $testdir));
+    my @dirs = File::Spec->splitdir($dirs);
+    return @dirs == File::Spec->no_upwards(@dirs);
+  };
+  $prereq =~ /^installtype:(.*)$/ and return $1 eq
+    $config->{'options'}->{'installtype'};
+  # Build OS prereqs. (TODO: When we get cross-compiling implemented,
+  # we'll need some way to get the target OS.)
+  $prereq =~ /^buildos:(.*)$/ and return $1 eq $^O;
+  return 1; # TODO
+}
+
+# Most of the logic is stored in config files, which are a bit of a
+# programming language of their own (as you could guess, and is
+# probably necessary for this sort of program.)
+# This is designed to be called in array context.
+sub eval_config_element {
+  my $el = shift;
+  my $subs = shift;
+  my $dont_escape = shift;
+  die "eval_config_element must be called in array context"
+    unless wantarray;
+
+  given (ref $el) {
+    when ("ARRAY") {
+      # An array reference contains a list of elements, separated into
+      # groups. Each element is in a group by itself unless otherwise
+      # stated. We ignore list elements with unmet prerequisites, then
+      # take the highest-scoring element in each group (elements with
+      # no score listed are preferred, and later no-score elements
+      # over earlier ones). Then we evaluate each element, and flatten
+      # array refs and discard undefs.
+      my @filteredarray1;
+      my @filteredarray2;
+      my %groupscores;
+      for my $e (@$el) {
+        if (ref $e eq 'HASH') {
+          $e->{'prereqs'} and prereq_met($e->{'prereqs'}, $subs) || next;
+          my $score = defined_or($e->{'score'}, '+inf');
+          $e->{'group'} and (defined_or ($groupscores{$e->{'group'}}, '-inf')) < $score
+            and $groupscores{$e->{'group'}} = $score;
+        }
+        unshift @filteredarray1, $e; # reverse the list
+      }
+      for my $e (@filteredarray1) {
+        if (ref $e eq 'HASH') {
+          my $score = defined_or($e->{'score'}, '+inf');
+          if ($e->{'group'}) {
+            if ($groupscores{$e->{'group'}} == $score) {
+              $groupscores{$e} = '-inf'; # no more in this group
+            } else {
+              next;
+            }
+          }
+        }
+        # reverse the list again
+        unshift @filteredarray2, reverse
+          eval_config_element($e, $subs, $dont_escape);
+      }
+      return @filteredarray2;
+    }
+    when ("HASH") {
+      # Hashes are used for more complex command lists.
+      # We can ignore prereqs because the array handling code wouldn't
+      # call this far if they weren't met. Likewise, group/score are only
+      # used by that.
+      # Other potential fields:
+      #   determine_command: Called to determine the value (can return
+      #                      multiple results)
+      #   determine_parse:   Parses determine_command's output, each
+      #                      match is counted as a result
+      #   value:             If value is specified and there are no
+      #                      unrecognised fields, it's returned not
+      #                      the hash
+      # "Unrecognised" fields include "option" and "command", used
+      # by providing and producing respectively; and
+      # "provicion_score", used to determine which of several options
+      # is used to provice something.
+      my %e = %$el;
+      delete $e{'prereqs'};
+      delete $e{'group'};
+      delete $e{'score'};
+      if ($e{'determine_command'}) {
+        my $obj = $subs->{'objname'};
+        $e{'determine_parse'} or die "determine_command without determine_parse";
+        if ($state->{'brokenobjects'}->{$obj}) {
+          # No point trying to determine from this.
+          return ();
+        }
+        maybe_force_provicions($obj, $obj);
+        if ($state->{'failedobjects'}->{$obj}) {
+          # It's unlikely to get sensible results in this case. Besides,
+          # we shouldn't be here on a failed object anyway, but we are
+          # because we only just found out it was failed.
+          return ();
+        }
+        my $command = eval_config_element_scalar(
+          $e{'determine_command'}, $subs, $dont_escape);
+        my $output = aimake_run_command($command, 1, $obj);
+        unless (defined $output) {
+          progress_report 5, "Error determining dependencies of '".
+            $subs->{'objname'}."'. This object will not be used.";
+          $state->{'brokenobjects'}->{$obj} = 1;
+          return ();
+        }
+        my $re = $e{'determine_parse'};
+        delete $e{'determine_command'};
+        delete $e{'determine_parse'};
+        my @outputs;
+        # We match against the lines of output individually, to avoid
+        # a performance problem in the regex engine.
+        for my $l (split '\n', $output) {
+          while($l =~ m/$re/g) {
+            $subs->{$_} = eval "\$$_" for 1..9;
+            # simplest to recurse here...
+            push @outputs, eval_config_element(\%e, $subs, $dont_escape);
+          }
+        }
+        return @outputs;
+      }
+      my $value_only = 1;
+      for my $key(keys %e) {
+        $key eq 'value' or $value_only = 0;
+        $e{$key} = eval_config_element_scalar(($e{$key}), $subs, $dont_escape);
+      }
+      $value_only and defined $e{'value'} and return $e{'value'};
+      $value_only and exists $e{'value'} and return;
+      return \%e;
+    }
+    default {
+      # Should be a scalar or regex.
+      defined $el or return ();
+      # Special case: we can substitute in undef from a regex match.
+      if ($el =~ /^\$(\d)$/ && !defined $subs->{$1}) {
+        return ();
+      }
+      # We may want to do substitutions on the value, which is where
+      # $subs comes in.
+      $el =~ s/\$([a-zA-Z0-9_]+)/defined $subs->{$1} ?
+        quote_into_shell($subs->{$1}, 0, $1 eq 'provicions' || $dont_escape) :
+          die "Unrecognised or out-of-context token '\$$1'"/ge;
+      # Source-dir-isation is a hack to get around build scripts not knowing
+      # where the source is.
+      $el =~ s/\$SOURCEPATH\(([^)]+)\)/
+         File::Spec->catfile($state->{'srcdir'}, $1)/ge;
+      return ($el);
+    }
+  }
+}
+
+sub eval_config_element_scalar {
+  my @a = eval_config_element(@_);
+  return \@a if @a > 1;
+  return undef unless @a;
+  return $a[0];
+}
+
+# Now merge install paths into the options twice (to resolve $datarootdir
+# in the data.
+my $installtype = eval_config_element_scalar(
+  $config->{'installtype'}, $config->{'options'}, 1);
+for my $k (keys %{$config->{'installpaths'}->{$installtype}}) {
+  File::Spec->file_name_is_absolute(
+    $config->{'installpaths'}->{$installtype}->{$k}) or
+    ($config->{'installpaths'}->{$installtype}->{$k} =~ /^\$/ &&
+     $config->{'installpaths'}->{$installtype}->{$k} !~ /^\$packagename/) or
+    $config->{'installpaths'}->{$installtype}->{$k} =
+      File::Spec->catfile($state->{'installdir'},
+                          $config->{'installpaths'}->{$installtype}->{$k});
+}
+$config->{'options'} = {%{$config->{'options'}},
+                        %{$config->{'installpaths'}->{$installtype}}};
+$config->{'options'} = eval_config_element_scalar(
+  $config->{'options'}, $config->{'options'}, 1);
+$config->{'options'} = eval_config_element_scalar(
+  $config->{'options'}, $config->{'options'}, 1);
+$config->{'options'}->{'installtype'} = $installtype;
+$config->{'options'}->{'srcdir'} = $state->{'srcdir'};
+$config->{'options'}->{$_} = File::Spec->rel2abs($config->{'options'}->{$_})
+  for keys %{$config->{'installpaths'}->{$installtype}};
+
+# We write this out to a file so the config file can see it.
+open my $config_fh, '>', 'last-config.txt'
+  or die "Could not open config record: $?";
+ref $config->{'options'}->{$_}
+  or print $config_fh "$_: ".$config->{'options'}->{$_}."\n"
+    for sort keys %{$config->{'options'}};
+close $config_fh;
+if (!defined $state->{'objects'}->{'bpath:last-config.txt'}) {
+  # This needs special care, as it's on the bpath but acts as a source
+  # file.
+  $state->{'pathobjects'}->{'bpath:last-config.txt'} = 1;
+  $state->{'changedobjects'}->{'bpath:last-config.txt'} = 1;
+}
+
+sub quote_into_shell {
+  my $r = shift;
+  my $del_absolute = shift;
+  my $dont_escape = shift;
+  my @r = $r;
+  ref $r eq 'ARRAY' and @r = @$r;
+
+  $del_absolute and @r = grep {
+    !File::Spec->file_name_is_absolute(shell_unescape($_))
+  } @r;
+
+  # Flatten @r into an arg list. Each argument is quoted separately,
+  # to handle, say, filenames with spaces in, using the quoting style
+  # IPC::Cmd wants. Any occurrences of the quote character itself are
+  # replaced as the quote character, a backslash, and two more quote
+  # characters, which works on UNIX and may also work on Win32.
+  my $q = IPC::Cmd::QUOTE;
+  return join ' ', @r if $dont_escape;
+  return join ' ', map { s/\Q$q\E/$q\\$q$q/g; $_ ne '' ? "$q$_$q" : $_ } @r;
+}
+
+# It's possible to request various information about an object when
+# calculating its properties.
+sub substitutions_for_object {
+  my $obj = shift;
+  my %subs = %{$config->{'options'}};
+
+  # Most of the substitutions are for pathable objects.
+  # bpath and path both take an actual filesystem path relative to
+  # the build directory and the source directory respectively.
+  if ($obj =~ /^b?path:(.*?)((?:\.[^.]+)?)$/) {
+    my $relpathname = "$1$2";
+    my $reldirbasename = $1; # directory + base name
+    my $extension = $2;
+    my $buildrelpathname = $relpathname;
+    $obj =~ /^p/ and !File::Spec->file_name_is_absolute($relpathname)
+      and $buildrelpathname = File::Spec->canonpath(
+        File::Spec->catfile($state->{'srcdir'}, $relpathname));
+    my $buildreldirbasename = $buildrelpathname;
+    $buildreldirbasename =~ s/.[^.]+?$//;
+    $subs{'pathname'} = $buildrelpathname;
+    $subs{'abspathname'} = File::Spec->rel2abs($relpathname,
+      ($obj =~ /^p/ ? $state->{'srcdir'} : undef));
+    $subs{'dirbasename'} = $buildreldirbasename;
+    $subs{'builddirbasename'} = $reldirbasename;
+    $subs{'buildpathname'} = $relpathname;
+    my ($volume, $buildreldirname, $filename) =
+      File::Spec->splitpath($buildrelpathname);
+    $subs{'dirname'} = File::Spec->catpath($volume, $buildreldirname, '');
+    $subs{'filename'} = $filename;
+    my $basename = $filename;
+    $basename =~ s/.[^.]+?$//;
+    $subs{'basename'} = $basename;
+    my ($relvolume, $reldirname, undef) = File::Spec->splitpath($relpathname);
+    $subs{'builddirname'} = File::Spec->catpath($relvolume, $reldirname, '');
+
+    # We also have an "isolation directory", a temporary directory
+    # specific to the actual path or bpath object. This is useful for
+    # various purposes involving badly designed APIs. The directory
+    # persists, but provicion commands are responsible for making it
+    # if it's actually needed.
+    my $isodirname = File::Spec->catdir(
+        'aimake_isolation-' . ($obj =~ /^p/ ? 'src' : 'build'),
+        $relpathname);
+    my $isopathname = File::Spec->catfile($isodirname, $filename);
+    my $isodirbasename = $isopathname;
+    $isodirbasename =~ s/.[^.]+?$//;
+    $subs{'isodirname'} = $isodirname;
+    $subs{'isopathname'} = $isopathname;
+    $subs{'isodirbasename'} = $isodirbasename;
+  }
+
+  $subs{'objname'} = $obj;
+
+  # $provisions is a marker that has to be substituted later.
+  $subs{'provicions'} = '$provicions';
+  # There's also $1..$9 for match results, but those are added in by
+  # eval_config_element.
+
+  return \%subs;
+}
+
+sub shell_unescape {
+  my $x = shift;
+  my $q = IPC::Cmd::QUOTE;
+  $x =~ /^$q(.*)$q$/ and $x = $1 and $x =~ s/$q\\$q$q/$q/;
+  return $x;
+}
+
+sub canonicalise_object_name {
+  my $obj = shift;
+  ref $obj and die "canonicalise_object_name expects a scalar";
+  if (!defined $obj) {
+    die "canonicalise_object_name doesn't expect undef";
+  }
+  # Object names generated by the config script can have several
+  # possible problems:
+  # - Parts of object names might be escaped. Assuming people don't use
+  #   a leading ' or " on a filename that's specified explicitly in the
+  #   config file (it's unlikely enough anyway, and if they /do/ need
+  #   to do that they can double-escape it), we can look for an
+  #   unexpected leading QUOTE and unescape.
+  my $q = IPC::Cmd::QUOTE;
+  if ($obj =~ /^$q.*$q$/) {
+    $obj = shell_unescape($obj);
+  }
+  if ($obj =~ /^([a-zA-Z0-9_]++:.*?)($q[^{]*$q)\{(.*?)($q.*$q)(.*?)\}$/) {
+    $obj = $1 . shell_unescape($2) . "{$3" . shell_unescape($4) . "$5}";
+  }
+  if ($obj =~ /^([a-zA-Z0-9_]++:)(.*)\{(.*?)($q.*$q)(.*?)\}$/) {
+    $obj = $1 . $2 . "{$3" . shell_unescape($4) . "$5}";
+  }
+  if ($obj =~ /^([a-zA-Z0-9_]++:.*?)($q.*$q)(.*?)$/) {
+    $obj = $1 . shell_unescape($2) . $3;
+  }
+
+  # - Some commands don't distinguish missing files from non-missing
+  #   files (I'm looking at you, gcc -MG). We can hack around this by
+  #   passing it absolute paths and seeing if we get relative paths
+  #   back (a sure sign that it doesn't actually know where the file
+  #   is), so we have the file_or_path object class that gets resolved
+  #   into a file or a path here.
+  if ($obj =~ /^file_or_path:(.*)$/) {
+    my $path = $1;
+    $obj = (File::Spec->file_name_is_absolute($path) ?
+            "path:$1" : "file:$1");
+  }
+  # - Commands that work with paths generally, rather than source and
+  #   build paths, may return a "path:" in the build directory.
+  #   Complicating this is that the build directory may be inside the
+  #   source directory (but not vice versa).
+  if ($obj =~ /^path:(.*)$/) {
+    my $path = $1;
+    if (File::Spec->file_name_is_absolute($path)) {
+      my ($volume, $dirs, undef) =
+        File::Spec->splitpath(File::Spec->abs2rel($path));
+      my @dirs = File::Spec->splitdir($dirs);
+      # If path is outside build (i.e. .), then either it's on a
+      # different volume (and $volume is nonempty), or it's in a higher
+      # directory (and so @dirs contains upwards components).
+      if ((!defined $volume || $volume eq '') &&
+          @dirs == File::Spec->no_upwards(@dirs)) {
+        $obj = "bpath:".File::Spec->abs2rel($path);
+      }
+    }
+  }
+  # - Paths can also be returned in the source directory, but absolute
+  #   rather than relative. Or outside source and build, but relative
+  #   rather than absolute.
+  if ($obj =~ /^path:(.*)$/) {
+    my $path = $1;
+    my $abspath = File::Spec->file_name_is_absolute($path) ?
+      $path : File::Spec->rel2abs($path, $state->{'srcdir'});
+    my ($volume, $dirs, undef) =
+      File::Spec->splitpath(File::Spec->abs2rel($abspath, $state->{'srcdir'}));
+    my @dirs = File::Spec->splitdir($dirs);
+    # If path is outside build (i.e. .), then either it's on a
+    # different volume (and $volume is nonempty), or it's in a higher
+    # directory (and so @dirs contains upwards components).
+    if ((!defined $volume || $volume eq '') &&
+        @dirs == File::Spec->no_upwards(@dirs)) {
+      $obj = "path:".File::Spec->abs2rel($abspath, $state->{'srcdir'});
+    } else {
+      $obj = "path:".File::Spec->rel2abs($path, $state->{'srcdir'});
+    }
+  }
+
+  return $obj;
+}
+
+sub canonicalise_property_return {
+  my $r = shift;
+  ref $r eq 'ARRAY' and return map {canonicalise_property_return $_} @$r;
+  ref $r eq 'HASH' or return ((canonicalise_object_name $r), 1);
+  my %r = %$r;
+  exists $r{$_} and !ref $r{$_} and $r{$_} = canonicalise_object_name($r{$_})
+    for qw/value extra_build_deps/;
+  exists $r{$_} and ref $r{$_} eq 'ARRAY' and
+    $r{$_} = [map {canonicalise_object_name $_} @{$r{$_}}]
+    for qw/value extra_build_deps/;
+  my $v = $r{'value'};
+  delete $r{'value'};
+  # Escape a command if the /whole thing/ has been escaped.
+  # The problem is, this is different from the first and last characters
+  # being escaped. We assume the whole thing is escaped if it starts and
+  # ends with ' and contains no internal ' that aren't part of '\''.
+  my $q = IPC::Cmd->QUOTE;
+  if($r{'command'}) {
+    my $c = $r{'command'};
+    ($c =~ /^$q/ && $c =~ /$q$/ && $c =~ /^$q([^$q]|$q\\$q$q)*$q$/)
+      and $r{'command'} = shell_unescape($c);
+  }
+  ref $v eq 'ARRAY' and return map {($_, \%r)} @$v;
+  return ($v, \%r);
+}
+
+sub calculate_object_property {
+  # We use the object's suffix, and its object class, to look up its
+  # properties.
+  my $obj = shift;
+  my $property = shift;
+  $obj =~ m/^([^:]+:)/ or die "object name $obj invalid";
+  my $oclass = $1;
+  my $properties = defined_or($config->{'objectclasses'}->{$oclass}, {});
+  # Suffix rule is a bit complex here to allow for Linux shared objects.
+  if ($properties->{'suffixable'} && $obj =~ m/(\.[^.]+)(?:\.\d+)*$/) {
+    $properties = {%$properties};
+    my $suffix_properties = defined_or($config->{'filetypes'}->{$1}, {});
+    merge_config $properties, $suffix_properties;
+  }
+  if (exists $config->{'objectrules'}->{$obj}) {
+    merge_config $properties, $config->{'objectrules'}->{$obj};
+  }
+  my $rules = defined_or($properties->{$property}, []);
+  return map {(canonicalise_property_return $_)}
+    (eval_config_element $rules, substitutions_for_object($obj));
+}
+
+# Sometimes we can't build an object. This reports why, assuming that
+# the object was left in an "outdated" state. (The other states have
+# much simpler explanations: changed and unchecked should be
+# impossible, and failed and broken have one cause each. Pending and
+# checked are success states.) The report can be multiple lines long,
+# and ends with no final newline.
+my %fail_explanation = (
+  'failed' => 'build commands errored out',
+  'broken' => 'dependency-checking commands errored out',
+  'outdated' => 'all potential source files could not be built',
+  'nonexistent' => 'no source object found to build from',
+  'changed' => 'internal error: file changed and was not processed',
+  'unchecked' => 'internal error: file was not read from disk',
+);
+sub stringise_fail_reason {
+  my $obj = shift;
+  my $recursiondepth = shift || 0;
+  !exists $state->{'objects'}->{$obj}
+    and return "'$obj' has no remaining method of building";
+  my @failreason = @{obj_state($obj)->{'failreason'}};
+  my $x = "'$obj' could not be built:";
+  @failreason == 0 and return "$x no source object found to build from";
+  $recursiondepth > 4 and return "$x (etc...)";
+  $x .= "\n";
+  for my $r (sort {$a->{'dep'} cmp $b->{'dep'}} @failreason) {
+    # Possible problems: bad dep, bad udeps, dependency loop
+    my $dep = $r->{'dep'};
+    if ($r->{'bad_dep'}) {
+      if ($r->{'bad_dep'} ne 'outdated') {
+        $x .= "  Source object '$dep' could not be built: ".
+          $fail_explanation{$r->{'bad_dep'}} . "\n";
+      } else {
+        my $y = "Source object ".
+          stringise_fail_reason($dep, $recursiondepth+1) . "\n";
+        $y =~ s/^/  /mg;
+        $x .= $y;
+      }
+    } elsif ($r->{'loop'}) {
+      $x .= "  Source object '$dep' was unusable due to a dependency loop\n";
+    } else {
+      # udep problem
+      $x .= "  Building from source object '$dep' had dependency problems:\n";
+      my $udep_count = 0;
+      for my $udep (sort keys %{$r->{'bad_udep'}}) {
+        if ($udep_count < 3) {
+          my $udfr = $r->{'bad_udep'}->{$udep};
+          if ($udfr ne 'outdated') {
+            $x .= "    Dependency '$udep' could not be built: ".
+              $fail_explanation{$udfr} . "\n";
+          } else {
+            my $y = "Dependency ".
+              stringise_fail_reason($udep, $recursiondepth+2) . "\n";
+            $y =~ s/^/    /mg;
+            $x .= $y;
+          }
+        }
+        $udep_count++;
+      }
+      # We don't keep an accurate count beyond 4, to save time
+      # calculating dependencies we don't even show.
+      if ($udep_count >= 4) {
+        $x .= "    (etc.)\n";
+      }
+    }
+  }
+  chomp $x;
+  return $x;
+}
+sub no_method_of_building {
+  my $obj = shift;
+  return 0 unless exists $state->{'outdatedobjects'}->{$obj};
+  return @{obj_state($obj)->{'failreason'}} == 0;
+}
+
+# Objects can have multiple sets of state with respect to their
+# build information (build_deps, command, lastcommand, lasthash,
+# option, provicion_pending). That's because, say, "file:foo.h"
+# might be provided by two different foo.hs in different directories,
+# so we'd want a different build process for each.
+my %rdcache;
+sub relative_distance {
+  my $key = shift; # object the relative builds from
+  my $rel = shift; # object the relative wants to be near
+  exists $rdcache{$key}->{$rel} and return $rdcache{$key}->{$rel};
+  $rel =~ /^b?path:(.*)$/ or die
+    "Trying to get an object relative to a nonpathable object";
+  my $relpath = $1;
+  $key =~ /^b?path:(.*)$/ or die
+    "Object was built relative to a nonpathable object";
+  my $keypath = $1;
+  my ($rv, $rdirs, $rfn) = File::Spec->splitpath($relpath);
+  my ($kv, $kdirs, $kfn) = File::Spec->splitpath($keypath);
+  my @rd = ($rv, File::Spec->splitdir($rdirs), $rfn, $;);
+  my @kd = ($rv, File::Spec->splitdir($kdirs), $kfn, $;);
+  $rd[1] =~ /^aimake_isolation-/ and splice @rd, 1, 1;
+  $kd[1] =~ /^aimake_isolation-/ and splice @kd, 1, 1;
+  @rd = grep {$_ ne ''} @rd;
+  @kd = grep {$_ ne ''} @kd;
+  my $score = 0;
+  # Special case: never build someting in terms of itself
+  # This happens if $key was built from $rel. To avoid an infinite
+  # regress, we veto it if /any/ relative of $key was built from
+  # $rel.
+  return 'inf' if $key eq $rel;
+  my $keyrels = obj_state($key)->{'relatives'};
+  exists $keyrels->{$_}->{'built_with'}->{$rel} and return '-inf'
+      for keys %$keyrels;
+
+  # We prefer:
+  # - local objects to system objects
+  if (!File::Spec->file_name_is_absolute($relpath) &&
+      !File::Spec->file_name_is_absolute($keypath)) {
+    $score += 100000;
+    # - objects in a smaller subtree in the directory tree
+    for my $i (0 .. $#kd) {
+      # - the trees to have more letters the same at the start of
+      #   their names (to match foo_y with foo_main.c, etc.)
+      if($rd[$i] ne $kd[$i]) {
+        my $x = $rd[$i].$;.$kd[$i];
+        $x =~ /^(.*).*?$;\1/ and $score += (length $1) * 10000;
+        last;
+      }
+      $score += 100000;
+    }
+    # - objects closer to the root of that tree
+    $score -= $#kd * 1000;
+  }
+  # - shared libraries to static libraries to objects
+  if ($kfn =~ /(\.[^.]+)(?:\.\d+)*$/) {
+    $score += defined_or($config->{'filetypes'}->{$1}->{'preference'}, 0);
+  }
+  # - newer library versions to older library versions
+  #   (but shorter names to longer names)
+  my @vcomponents = grep { $_ ne ''} split /\D+/, $kfn;
+  while (@vcomponents < 4) {push @vcomponents, 99;}
+  $score += $vcomponents[0];
+  $score += $vcomponents[1]/100;
+  $score += $vcomponents[2]/10000;
+  $score += $vcomponents[3]/1000000;
+  $rdcache{$key}->{$rel} = -$score;
+  return -$score; # higher scores are better -> lower distance
+}
+
+sub obj_state {
+  my $obj = shift;
+  my $rel = shift; # undef or a pathable object name
+  my $is_new = !exists $state->{'objects'}->{$obj};
+  my $s = $state->{'objects'}->{$obj};
+  if ($is_new) {
+    # Newly created objects are typically marked as outdated.
+    # Unless they're already marked as something else.
+    # Exception: absolute path objects.
+    if (!$state->{'changedobjects'}->{$obj} &&
+        !$state->{'uncheckedobjects'}->{$obj} &&
+        !$state->{'failedobjects'}->{$obj} &&
+        !$state->{'brokenobjects'}->{$obj} &&
+        (!($obj =~ /^path:(.*)/) ||
+         !File::Spec->file_name_is_absolute($1))) {
+      $state->{'outdatedobjects'}->{$obj} = 1;
+    }
+  }
+  if ($rel) {
+    my $t = undef;
+    my $tk = undef;
+    my $dsep = '+inf';
+    for my $key (keys %{defined_or($s->{'relative'},{})}) {
+      next unless $s->{'relative'}->{$key}->{'relstate_valid'};
+      $key =~ /^b?path:(.*)$/;
+      my $dist = relative_distance($key, $rel);
+      if ($dist < $dsep) {
+        $t = $s->{'relative'}->{$key};
+        $tk = $key;
+        $dsep = $dist;
+      }
+    }
+    # A bit of a chicken-and-egg problem here; if an object has no
+    # relative details, we need its relative details to determine
+    # that it doesn't need them. Return an empty hash in this case.
+    defined $t or $t = {};
+    $s = $t;
+  }
+  if (!$s) {
+    $s = {};
+    $state->{'objects'}->{$obj} = $s;
+  }
+  return $s;
+}
+
+# Note that this outputs a hash. This was as the result of profiling,
+# which showed that the only caller of this function was spending
+# far too long interpreting its results.
+sub use_deps {
+  my $obj = shift;
+  my $rel = shift;
+  $obj =~ /^path:(.*)$/ && File::Spec->file_name_is_absolute($obj)
+    and return ();
+  return %{defined_or(obj_state($obj)->{'use_deps'}, {})},
+         %{defined_or(obj_state($obj,$rel)->{'use_deps'}, {})};
+}
+
+# We look for:
+# - newly added files, which need everything calculated;
+# - changed files, which need their build reverse dependencies recompiled,
+#   and their use dependencies recalculated. (A deletion counts as a change
+#   for this purpose.)
+sub file_sha1 {
+  my $fn = shift; 
+  local $/ = undef;
+  my $old_hash = defined_or($state->{'sha1_cache'}->{$fn}, '');
+  my $old_date = defined_or($state->{'sha1_cache_dates'}->{$fn}, 0);
+  my $new_date = (stat($fn))[9];
+  # No point reading the file if its last modified date is more than
+  # 48 hours before we last calculated its hash.
+  $old_date and $new_date < $old_date - 3600 * 48 and return $old_hash;
+  open my $fh, '<', $fn or die "Couldn't open '$fn': $!";
+  my $hash = sha1_hex(<$fh>);
+  close $fh;
+  $state->{'sha1_cache'}->{$fn} = $hash;
+  $state->{'sha1_cache_dates'}->{$fn} = time;
+  return $hash;
+}
+
+sub check_new_files {
+  my $dirname = shift; # source-relative
+  my $lib_pattern = shift;
+  my $lib_f_pattern = shift;
+  my $buildreldirname = File::Spec->catdir($state->{'srcdir'},$dirname);
+  $lib_pattern and $buildreldirname = $dirname; # it's absolute
+  my $what = $lib_f_pattern ? "libraries" :
+             $lib_pattern ? "includes" : "new files";
+  progress_report 0, "Checking for $what in '$dirname'...";
+  opendir my $dh, $buildreldirname
+    or (progress_report 5, "Warning: Cannot open '$buildreldirname': $!"), return;
+  FILE_IN_DIR: for my $filename (File::Spec->no_upwards(readdir $dh)) {
+    my $pathname = File::Spec->catfile($dirname, $filename);
+    my $buildrelpathname = File::Spec->catfile($buildreldirname, $filename);
+    case_canonicalise(\$pathname);
+    case_canonicalise(\$buildrelpathname);
+    # ignore VCSes and the like, also files we've been told to stay away from
+    for my $re (@{$config->{"ignorepaths"}}) {
+      $pathname =~ /$re/ and next FILE_IN_DIR;
+    }
+    if (-l $buildrelpathname && !$lib_pattern) {
+      # do nothing!
+    } elsif (-d $buildrelpathname) {
+      # don't recurse into the build directory; nor while finding libs
+      check_new_files($pathname, $lib_pattern, $lib_f_pattern)
+        unless $lib_f_pattern || -l $buildrelpathname ||
+        Cwd::abs_path eq Cwd::abs_path($buildrelpathname);
+    } elsif (-f _ && -r _) {
+      if ($lib_pattern) {
+        my (undef, undef, $fn) = File::Spec->splitpath($pathname);
+        for my $pattern (@{defined_or($lib_f_pattern,['$x'])}) {
+          my $re = "^\Q$pattern\E(?:\$|\.)";
+          $re =~ s/\\\$x/(?:$lib_pattern)/;
+          $fn =~ $re and goto FILE_FOUND;
+        }
+      } else {
+        # Look at the file suffix to get an idea of what sort of file it
+        # is. Sadly, there's no way to make this completely portable,
+        # because some OSes don't have the concept. The ones that do,
+        # though, typically use a . as the separator.
+        if ($pathname =~ /(\.[^.]+)$/) {
+          my $suffix = $1;
+          # The file is potentially interesting to aimake if its suffix
+          # is recognised.
+          if ($config->{'filetypes'}->{$suffix}) {
+            FILE_FOUND: ;
+            # Do we know about the file already?
+            my $obj = canonicalise_object_name("path:$pathname");
+            # Can't use obj_state here, it'd autovifify the object.
+            if (!$state->{'objects'}->{$obj}) {
+              # If not, record it as being interesting.
+              $state->{'changedobjects'}->{$obj} = 1;
+              # Optimization: there's an index of which objects are
+              # path objects.
+              $state->{'pathobjects'}->{$obj} = 1;
+              obj_state($obj)->{"sha1"} = 
+                file_sha1($buildrelpathname);
+              progress_report 1, "Found new file '$pathname'";
+            }
+          }
+        }
+      }
+    }
+  }
+  closedir $dh;
+}
+
+$state->{'outdatedobjects'} = {%{defined_or($state->{'failedobjects'}, {})},
+                               %{defined_or($state->{'outdatedobjects'}, {})},
+                               'sys:rebuild_late' => 1};
+$state->{'changedobjects'} = {%{defined_or($state->{'brokenobjects'}, {})},
+                              %{defined_or($state->{'changedobjects'}, {})},
+                              'sys:always_rebuild' => 1};
+$state->{'uncheckedobjects'} = {%{defined_or($state->{'pathobjects'}, {})},
+                                %{defined_or($state->{'uncheckedobjects'}, {})}};
+progress_report 1, "Checking for new files...";
+check_new_files('.');
+# Scanning lib and include dirs can be expensive, so do so only when
+# our configuration was changed and we might reasonably have something
+# new to find.
+if ($config_changed) {
+  progress_report 1, "Checking for libraries...";
+  my $lib_pattern = join "|", map {"\Q$_\E"} @{$config->{'libraries'}};
+  check_new_files($_, $lib_pattern, $config->{'library_file_patterns'})
+    for @{$config->{'library_paths'}};
+  progress_report 1, "Checking for includes...";
+  my $inc_pattern = join "|", map {"\Q$_\E"} @{$config->{'includes'}};
+  check_new_files($_, $inc_pattern) for @{$config->{'include_paths'}};
+}
+
+
+# We continuously handle objects until we're finished:
+# - If any path: objects are unchecked, we choose one whose
+#   build dependencies are all checked, and see if it's still the same
+#   on disk, marking it as changed or checked accordingly. (This only
+#   needs doing once, as objects can't /become/ unchecked except by
+#   rerunning aimake; we assume files aren't edited wihle we're
+#   building.)
+# - If any objects are changed, we calculate their dependencies and
+#   provicions, then mark them as checked (i.e. not outdated, changed,
+#   or unchecked), then mark their checked/unchecked reverse /build/
+#   dependencies and provicions as outdated;
+# - Otherwise, we look for outdated objects that can be proviced
+#   entirely from checked objects with checked use dependencies; if we
+#   find one, we recalculate the commands for provicing them, then
+#   mark them as changed, and actually run the commands (if any) if
+#   and when it becomes necessary;
+# There's a hierarchy here:
+# failed > outdated > broken > changed > unchecked > pending > checked
+# We deal with changed first to avoid build failures due to new
+# files; pending might not be dealt with at all, depending on if the
+# object turns out to be needed. If something goes wrong calculating
+# dependencies, the object is marked as broken and not used until the
+# next aimake run, when it goes back to being marked as changed. If
+# something goes wrong running the commands for a pending object, it
+# is marked as failed, as is anything pending on it that gets forced.
+# (It changes to being outdated at the next run.)
+
+# Provicions of a file are forced when:
+# - a determine_command is run with respect to the file;
+# - or the file is a build dependency of something whose provicions
+#   are themselves being forced;
+# - or the file is a top-level output.
+# This returns the command-line option needed to use the file, if any.
+sub maybe_force_provicions {
+  my $obj = shift;
+  my $rel = shift;
+  $rel or die "maybe_force_provicions needs two arguments";
+  my $objstate = obj_state($obj);
+  my $relstate = obj_state($obj, $rel);
+  $relstate->{'provicion_pending'}
+    or return defined_or($relstate->{'lastoptions'},
+                         ($relstate->{'option'} ?
+                         [$relstate->{'option'}] : []));
+  $state->{'failedobjects'}->{$obj} and return;
+  # Mark the object as failed while we're building it, to get what needs
+  # rebuilding correct if something goes wrong.
+  $state->{'failedobjects'}->{$obj} = 1;
+  delete $relstate->{'provicion_pending'};
+  # Sanity.
+  $obj =~ /^path:/ and die "trying to provice into the source directory";
+  # We don't need to run the command if it's the same command
+  # (verbatim) as last time, and all actual build dependencies are
+  # the same. (This check might trigger if a file were built and then
+  # ended up byte-to-byte identical to the original; or if an extra
+  # reverse provicion were added that turned out to be irrelevant.)
+  # Should the provicion command be the null string, we ignore that
+  # optimisation because it wouldn't save anything and could take a
+  # while to calculate.
+  my $cmd = defined_or($relstate->{'command'}, '');
+  my $deps = $relstate->{'build_deps'};
+  my $lastcmd = defined_or($relstate->{'lastcommand'}, '');
+  my $lasthash = defined_or($relstate->{'lasthash'}, '');
+  my $hash = '';
+ CHANGEDCHECK: {
+    # We don't want to check for $cmd the same as last time yet,
+    # because we need to record the hash for next time.
+    if ($cmd ne '') {
+      $hash = 'x';
+      for my $dep (@$deps) {
+        if (obj_state($dep)->{'sha1'}) {
+          $hash .= " $dep ".obj_state($dep)->{'sha1'};
+        } elsif (scalar @{defined_or(obj_state($dep,$rel)->
+                                     {'build_deps'}, [])} == 1) {
+          # Non-files don't have content, and thus no hash, but they
+          # must be proviced by something. So they should have exactly
+          # one dependency, in which case we can use its hash. If
+          # somehow it isn't a file either, or there isn't exactly one
+          # dependency, bail because this optimisation can't work.
+          # It's also possible we get here due to an external library
+          # (i.e. outside the build directory); we don't rebuild even
+          # if those change. We can check for that by looking for an
+          # absolute path object.
+          unless ($dep =~ /^path:(.*)$/ &&
+                  File::Spec->file_name_is_absolute($1)) {
+            my $idep = obj_state($dep,$rel)->{'build_deps'}->[0];
+            if (obj_state($idep)->{'sha1'}) {
+              $hash .= " $idep ".obj_state($idep)->{'sha1'};
+            } else { $hash = ''; last CHANGEDCHECK; }
+          }
+        } else { $hash = ''; last CHANGEDCHECK; }
+      }
+      $hash eq $lasthash and $cmd eq $lastcmd and
+        return $relstate->{'lastoptions'};
+    }
+  }
+  $obj =~ /^b?path:/ and progress_report 3, "Building '$obj'...";
+  # Looks like we need to actually generate the file after all.
+  # We need to generate its dependencies first, though.
+  my @options = ();
+  for my $dep (@$deps) {
+    my $o = maybe_force_provicions($dep,
+      ($obj =~ /^b?path:/ ? $obj : $rel));
+    if ($state->{'failedobjects'}->{$dep} || !defined $o) {
+      progress_report 5, "Cannot rebuild '$obj': could not build '$dep'"; 
+      return; # leave it broken
+    }
+    push @options, @$o;
+  }
+  my @rv = $relstate->{'option'};
+  defined $rv[0] or @rv = ();
+  # Get rid of duplicate provicion options, removing the earlier
+  # occurence of each.
+  my %optionseen = ();
+  for (my $n = $#options; $n >= 0; $n--) {
+    $optionseen{$options[$n]} ?
+      (splice @options, $n, 1) :
+      ($optionseen{$options[$n]} = 1);
+  }
+  my $optstring = quote_into_shell(
+    \@options, $relstate->{'delete_absolute_options'}, 1);
+  my $psubst = 0;
+  if (ref $cmd eq 'ARRAY') {
+    $cmd = [@$cmd];
+    s/\$provicions/$optstring/ and $psubst = 1 for @$cmd;
+  } else {
+    $cmd =~ s/\$provicions/$optstring/ and $psubst = 1;
+  }
+  # If we're not using the provicion options from the build here,
+  # we need to pass them on, so they get used by whatever uses
+  # this.
+  $psubst or push @rv, @options;
+
+  # Before we can create a file in the bpath, we have to create
+  # any relevant parent directories.
+  if ($obj =~ /^bpath:(.*)$/) {
+    my ($volume, $dirs, undef) = File::Spec->splitpath($1);
+    ensure_directory_exists(File::Spec->catpath($volume,$dirs,''));
+  }
+  unless ($cmd eq '' || defined aimake_run_command($cmd, 0, $obj)) {
+    progress_report 5, "Error building '$obj': command failed"; 
+    delete $relstate->{'no_change_since_build'};
+    return; # leave it failed
+  }
+  # Remember our dependency hash. Also, the new hash of the file
+  # itself, so other steps can check whether it actually changed.
+  $relstate->{'lasthash'} = $hash;
+  $obj =~ /^bpath:(.*)$/ and $objstate->{'sha1'} = file_sha1($1);
+  $relstate->{'lastcommand'} = $cmd;
+  $relstate->{'lastoptions'} = \@rv;
+  # Note that obj can't be outside the bpath if it's a file, or we'd
+  # be violating the readonliness of the source.
+  delete $state->{'failedobjects'}->{$obj};
+  $obj =~ /^b?path:/ and progress_report 2, "'$obj' built.";
+  return \@rv;
+}
+
+# Unchecked files, we check to see if they changed and mark them as
+# changed if they have. No knock-on effects here, so it's nice and
+# simple. Only sourcepaths can be marked as unchecked, too.
+%{$state->{'uncheckedobjects'}} and
+progress_report 1, "Looking for changed files...";
+for my $unchecked (sort keys %{$state->{'uncheckedobjects'}}) {
+  $unchecked =~ /^b?path:(.*)$/ or
+    die "Unchecked object is not a path object";
+  my $pn = $1;
+  if (!File::Spec->file_name_is_absolute($pn) && $unchecked !~ /^b/) {
+    $pn = File::Spec->catfile($state->{'srcdir'}, $pn);
+  }
+  progress_report(0, "  Checking in '$pn'");
+  if (-e $pn) {
+    my $sha1 = file_sha1($pn);
+    ($sha1 ne obj_state($unchecked)->{'sha1'}) ||
+      (defined $options{'B'} && $pn =~ $options{'B'})and
+      $state->{'changedobjects'}->{$unchecked} = 1;
+    obj_state($unchecked)->{'sha1'} = $sha1;
+  } else {
+    # This is not a mistake; changed is checked first, so this will
+    # invalidate all the file's dependencies, then the file itself
+    $state->{'changedobjects'}->{$unchecked} = 1;
+    $state->{'outdatedobjects'}->{$unchecked} = 1;
+  }
+  delete $state->{'uncheckedobjects'}->{$unchecked};
+}
+
+my $objects_changed = 1;
+while ($objects_changed) {
+  $objects_changed = 0;
+  # From changed, check hashes, mark outdated.
+  progress_report 1, "Calculating dependencies...";
+  for my $changed (sort keys %{$state->{'changedobjects'}}) {
+    progress_report 0, "  Calculating dependencies of '$changed'";
+    $objects_changed++;
+    # Give the object a chance to unbreak, if it's marked broken.
+    delete $state->{'brokenobjects'}->{$changed};
+
+    my $objstate = obj_state($changed);
+
+    # Unmark reverse provices, we're about to change the provices list.
+    for my $rdep (keys %{defined_or($objstate->{'provices'}, {})}) {
+      delete $objstate->{'provices'}->{$rdep};
+      delete obj_state($rdep)->{'rprovices'}->{$changed};
+    }
+
+    # In order for the tup-style optimization of checking reverse
+    # dependencies rather than forward dependencies to work, we need
+    # to calculate provicion before we invalidate reverse dependencies.
+    # We also calculate dependencies right now too, for consistency and
+    # because there's no reason not to.
+    if (!$state->{'outdatedobjects'}->{$changed}) {
+      $objstate->{'provices'} = {calculate_object_property($changed, 'provices')};
+      $objstate->{'use_deps'} = {calculate_object_property($changed, 'use_deps')};
+      $objstate->{'use_deps'}->{$changed} = 1;
+    }
+
+    for my $udep (keys %{$objstate->{'use_deps'}}) {
+      $udep =~ /^symbol/ and obj_state($udep)->{'potentially_interesting'} = 1;
+    }
+
+    # Broken objects can't provice anything (i.e. can't be used), so their
+    # provicions and use dependencies are irrelevant. Likewise, for failed
+    # and deleted objects.
+    if ($state->{'brokenobjects'}->{$changed} ||
+        $state->{'failedobjects'}->{$changed} ||
+        $state->{'outdatedobjects'}->{$changed}) {
+      $objstate->{'provices'} = {};
+      $objstate->{'use_deps'} = {};
+    }
+
+    for my $rdep (keys %{$objstate->{'r_built_with'}},
+                  keys %{$objstate->{'provices'}}) {
+      next if $rdep eq $changed;
+      delete $state->{'uncheckedobjects'}->{$rdep};
+      delete $state->{'changedobjects'}->{$rdep};
+      $state->{'outdatedobjects'}->{$rdep} = 1;
+    }
+    for my $rdep (keys %{$objstate->{'provices'}}) {
+      obj_state($rdep)->{'rprovices'}->{$changed} = 1;
+    }
+    for my $rdep (keys %{$objstate->{'r_built_with'}}) {
+      delete obj_state($rdep)->{'relative'}->{$_}->{'no_change_since_build'}
+        for keys %{$objstate->{'r_built_with'}->{$rdep}};
+      %{$objstate->{'r_built_with'}->{$rdep}}
+        or delete $objstate->{'r_built_with'}->{$rdep};
+    }
+
+    delete $state->{'changedobjects'}->{$changed};
+  }
+  # Find outdated objects we can build, if any. (We don't actually
+  # build them immediately, both because we might not need them at
+  # all, and because we might find a better way to build them and end
+  # up back here later.)
+  progress_report 1, "Calculating buildable objects...";
+  for my $outdated (sort keys %{$state->{'outdatedobjects'}}) {
+    # Quick optimisation: if nothing cares about a symbol, don't try
+    # to forward-chain from it. symbol:main is special; we always
+    # care about that.
+    my $objstate = obj_state($outdated);
+    $outdated =~ /^symbol/ and $outdated !~ '^symbol_in_object:main' and
+      $objstate->{'potentially_interesting'} || next;
+    progress_report 0, "  Checking whether '$outdated' is buildable yet";
+    # Look through the list of things that provice this object for
+    # any that we can actually build from. This requires both the
+    # object that provices this one, and all its use dependencies,
+    # to be checked.
+    if ($objstate->{'relative'}) {
+      # Remember previous values of relative state, but mark them
+      # as not existing.
+      delete $objstate->{'relative'}->{$_}->{'relstate_valid'}
+         for keys %{$objstate->{'relative'}};
+    }
+    $objstate->{'failreason'} = [];
+    DEPCHECK: for my $dep (sort keys %{defined_or($objstate->{'rprovices'}, {})}) {
+      my $failreason = {'dep' => $dep};
+      push @{$objstate->{'failreason'}}, $failreason;
+
+      my $relbase = $dep;
+      $relbase = $outdated if $outdated =~ /^b?path:/;
+
+      # Objects need to actually exist on the filesystem to provice
+      # things.
+      $dep =~ /^b?path:(.*)$/ or
+        die "Non-pathable object $dep is trying to provice";
+
+      # We can't safely build from a failed, broken, unchecked, outdated,
+      # or changed object. We can build from a pending or checked object.
+      for my $problem (qw/failed broken unchecked outdated changed/) {
+        $state->{"${problem}objects"}->{$dep} and
+          $failreason->{'bad_dep'} = $problem and next DEPCHECK;
+      }
+
+      # We also need all the use dependencies of the object in
+      # question to be in place. (Unless copy_use_deps is set,
+      # which is appropriate for virtual symbols; in that case,
+      # we copy the use dependencies rather than respecting them.)
+      my %build_deps = ();
+      my @extra_deps = obj_state($dep)->{'provices'}->{$outdated}->{'extra_build_deps'};
+      ref $extra_deps[0] eq 'ARRAY' and @extra_deps = @{$extra_deps[0]};
+      defined $extra_deps[0] or @extra_deps = ();
+      my %ubuild_deps = ($dep => 1);
+      %ubuild_deps = ()
+        if obj_state($dep)->{'provices'}->{$outdated}->{'ignore_use_deps'};
+      for my $extra_dep (@extra_deps) {
+        $ubuild_deps{$extra_dep} = 1;
+        # If the extra dep is referring to a file we don't know
+        # about, learn about it.
+        if ($extra_dep =~ /^path:(.*)/) {
+          my $p = $1;
+          if(!File::Spec->file_name_is_absolute($p) &&
+             -f File::Spec->catfile($state->{'srcdir'}, $p)) {
+            # Path objects can't be outdated unless they don't exist,
+            # so this is safe. Likewise, marking it changed means
+            # it's safe to reset the hash.
+            if ($state->{'outdatedobjects'}->{$extra_dep}) {
+              delete $state->{'outdatedobjects'}->{$extra_dep};
+              $state->{'changedobjects'}->{$extra_dep} = 1;
+              obj_state($extra_dep)->{'sha1'} = file_sha1(
+                File::Spec->catfile($state->{'srcdir'}, $p));
+            }
+            $state->{'pathobjects'}->{$extra_dep} = 1;
+          }
+        }
+      }
+      obj_state($_) for @extra_deps; # make sure the extra deps exist
+
+      my $failcount = 0;
+
+      # Extra deps are checked first, and fail-fast, to avoid wasting
+      # time calculating how to build something that will never be
+      # wanted (executable for a file without a main, etc.).
+      for my $extra_dep (@extra_deps) {
+        if ($extra_dep =~ /^symbol:/ &&
+          !obj_state($extra_dep)->{'potentially_interesting'}) {
+          obj_state($extra_dep)->{'potentially_interesting'} = 1;
+        }
+        for my $problem (qw/failed broken unchecked outdated changed/) {
+          $state->{"${problem}objects"}->{$extra_dep} and
+          $failreason->{'bad_udep'}->{$extra_dep} = $problem and
+          ++$failcount and last;
+        }
+      }
+      $failcount and next;
+
+      # We check all of them to set potentially_interesting all at
+      # once rather than a bit at a time.
+      my $respect_use_deps = !obj_state($dep)->{'provices'}->
+                                  {$outdated}->{'copy_use_deps'};
+      my @keys_cache = ();
+      my %udep_cache = (); # remember what depends on what
+      UDEPCHECK: while (%ubuild_deps) {
+        @keys_cache or @keys_cache = keys %ubuild_deps;
+        my $udep = pop @keys_cache;
+        delete $ubuild_deps{$udep};
+        $build_deps{$udep} and next;
+        if ($respect_use_deps) {
+          exists $state->{'objects'}->{$udep} or
+            $udep =~ /^path:(.*)$/ && File::Spec->file_name_is_absolute($1) or
+            ($failreason->{'bad_udep'}->{$udep} = "nonexistent"),
+            ++$failcount, next UDEPCHECK;
+          for my $problem (qw/failed broken unchecked outdated changed/) {
+            $state->{"${problem}objects"}->{$udep} and
+              $failreason->{'bad_udep'}->{$udep} = $problem and
+              ++$failcount and next UDEPCHECK;
+          }
+        }
+        $build_deps{$udep} = 1;
+        $udep_cache{$udep} = {use_deps($udep, $relbase)};
+        delete $udep_cache{$udep}->{$udep};
+        $ubuild_deps{$_} = 1 for keys %{$udep_cache{$udep}};
+        # Use deps get recursed on eventually anyway. Let's not do
+        # it now if we're going to leave them as use deps; it's not
+        # wrong, but it's very inefficient.
+        if (!$respect_use_deps) {
+          $build_deps{$_} = 1 for keys %ubuild_deps;
+          %ubuild_deps = ();
+        }
+        $failcount >= 4 and last;
+      }
+      next if $failcount;
+      my @build_deps = ();
+      if ($respect_use_deps) {
+        # We need to topological-sort our input for ld.
+        # To do this, we take an arbitrary element, then continue to an
+        # arbitrary dependency of it, and repeat until we reach a cycle
+        # or something with no dependencies. For a cycle, we remove the
+        # interdependencies and union the extradependencies, then try
+        # again.
+        delete $udep_cache{$_}->{$_} for keys %udep_cache;
+        my %cycle_with;
+        my %cycle_elements;
+        while (%build_deps) {
+          @keys_cache or @keys_cache = keys (%build_deps);
+          my $cur = shift @keys_cache;
+          next unless exists $build_deps{$cur};
+          my @seen = ($cur);
+          my %seen = ($cur => 0);
+          TSORT_DEP_FOUND: {
+            for my $k (keys %{$udep_cache{$cur}}) {
+              if (exists $build_deps{$k}) {
+                $cur = $k;
+                if ($seen{$cur}) {
+                  # Found a cycle: $seen[$seen{$cur} .. $#seen]
+                  my $cn = undef;
+                  my @new_cycle_elements;
+                  for my $i ($seen{$cur} .. $#seen) {
+                    if($cycle_with{$seen[$i]}) {
+                      if(!$cn) {
+                        $cn = $cycle_with{$seen[$i]};
+                      } elsif($cn ne $cycle_with{$seen[$i]}) {
+                        # We have to merge two cycles.
+                        my $othercycle = $cycle_elements{$cycle_with{$seen[$i]}};
+                        push @new_cycle_elements, $_ for keys %$othercycle;
+                      }
+                    } else {
+                      push @new_cycle_elements, $seen[$i];
+                    }
+                  }
+                  $cn ||= $cur;
+                  my $cycledeps = $udep_cache{$cur};
+                  for my $e (@new_cycle_elements) {
+                    $cycle_with{$e} = $cn;
+                    $cycle_elements{$cn}->{$e} = 1;
+                    $cycledeps->{$_} = 1 for keys %{$udep_cache{$e}};
+                  }
+                  for my $e (keys %{$cycle_elements{$cn}}) {
+                    delete $cycledeps->{$e};
+                  }
+                  for my $e (@new_cycle_elements) {
+                    # share the caches
+                    $udep_cache{$e} = $cycledeps;
+                  }
+                  last TSORT_DEP_FOUND;
+                }
+                push @seen, $cur;
+                $seen{$cur} = $#seen;
+                redo TSORT_DEP_FOUND;
+              }
+              delete $udep_cache{$cur}->{$k};
+            }
+            # Found something not depended on anything.
+            delete $build_deps{$cur};
+            unshift @build_deps, $cur;
+          }
+        }
+      }
+      unshift @build_deps, $dep
+        if obj_state($dep)->{'provices'}->{$outdated}->{'ignore_use_deps'};
+      # Fill in the relative object state.
+      my $relstate = defined_or($objstate->{'relative'}->{$dep}, {});
+      delete obj_state($_)->{'r_built_with'}->{$outdated}->{$dep}
+        for keys %{$relstate->{'built_with'}};
+      $relstate->{'built_with'} = {};
+      # Remember what was used for this build, to avoid attempting to
+      # build two objects with each other.
+      for my $bdep (@build_deps) {
+        $relstate->{'built_with'}->{$bdep} = 1
+          if $bdep =~ /^(?:b?path|sys):/;
+        $relstate->{'built_with'}->{$_} = 1
+          for keys %{obj_state($bdep, $relbase)->{'built_with'}};
+      }
+      if ($relstate->{'built_with'}->{$outdated}) {
+        # Oops!
+        $failreason->{'loop'} = 1;
+        delete $objstate->{'relative'}->{$dep};
+        next;
+      }
+      $objstate->{'relative'}->{$dep} = $relstate;
+      $relstate->{'provicion_pending'} = 1;
+      $relstate->{'provicion_pending'} = 0
+        if $relstate->{'no_change_since_build'};
+      $relstate->{'parent'} = $dep;
+      $relstate->{'command'} = 
+        defined_or(obj_state($dep)->{'provices'}->{$outdated}->{'command'},'');
+      $relstate->{'option'} = 
+        obj_state($dep)->{'provices'}->{$outdated}->{'option'};
+      $relstate->{'delete_absolute_options'} = 
+        obj_state($dep)->{'provices'}->{$outdated}->{'delete_absolute_options'};
+      $relstate->{'build_deps'} = \@build_deps;
+      $relstate->{'use_deps'} = \%build_deps; # not a typo
+      $relstate->{'relstate_valid'} = 1;
+      obj_state($_)->{'r_built_with'}->{$outdated}->{$dep} = 1
+        for keys %{$relstate->{'built_with'}};
+      # Always rebuild an object if it failed before.
+      exists $state->{'failedobjects'}->{$outdated}
+        and $relstate->{'lasthash'} = '';
+      delete $state->{'failedobjects'}->{$outdated};
+      # Mark as changed, rather than outdated. (It hasn't changed
+      # /yet/, but we make it change just before its value would
+      # matter.) Don't mark as changed if all that changed were
+      # the sources for a method that's not being used anyway.
+      $state->{'changedobjects'}->{$outdated} = 1
+        unless $relstate->{'no_change_since_build'};
+      $relstate->{'no_change_since_build'} = 1;
+      delete $state->{'outdatedobjects'}->{$outdated};
+      $objects_changed++;
+      obj_state($dep)->{'provices'}->{$outdated}->{'defaultly_targets'}
+        and $outdated =~ /^b?path:/
+        and maybe_force_provicions($outdated, $outdated);
+    }
+  }
+  # Some things (things that wildcard a directory, etc.) have to be
+  # left until last.
+  if (!$objects_changed &&
+      exists $state->{'outdatedobjects'}->{'sys:rebuild_late'}) {
+    delete $state->{'outdatedobjects'}->{'sys:rebuild_late'};
+    $state->{'changedobjects'}->{'sys:rebuild_late'} = 1;
+    $objects_changed = 1;
+  }
+}
+
+# If files didn't build, that's bad. We look for unchecked objects
+# (i.e. didn't build) with a fail reason (i.e. something cared about
+# them enough for the build system to try).
+my $last_unbuilt = '';
+my @dead_objects = ();
+UNBUILT: for my $unbuilt (sort keys %{$state->{'outdatedobjects'}}) {
+  # Uninteresting cases.
+  # If symbols are interesting, they'll be mentioned in other
+  # messages.
+  next if $unbuilt =~ /^symbol/;
+  my $fr = obj_state($unbuilt)->{'failreason'};
+  # We wouldn't necessarily expect arbitrary files to have a main,
+  # but the config script looks anyway.
+  if (scalar @$fr == 1 && $fr->[0]->{'bad_udep'}) {
+    for my $key (keys %{$fr->[0]->{'bad_udep'}}) {
+      if ($key =~ /^symbol_in_object:main/ &&
+          $fr->[0]->{'bad_udep'}->{$key} eq 'outdated') {
+        @{obj_state($key)->{'failreason'}} == 0 and next UNBUILT;
+      } else {
+        my $fr2 = obj_state($key)->{'failreason'};
+        # install_targets can end up two levels away from a
+        # junk symbol_in_object:main
+        if (scalar @$fr2 == 1 && $fr2->[0]->{'bad_udep'}) {
+          for my $key2 (keys %{$fr2->[0]->{'bad_udep'}}) {
+            if ($key2 =~ /^symbol_in_object:main/ &&
+              $fr2->[0]->{'bad_udep'}->{$key2} eq 'outdated') {
+              @{obj_state($key2)->{'failreason'}} == 0 and next UNBUILT;
+            }
+          }
+        }
+      }
+    }
+  }
+  # Don't complain about .rlo files that failed for the same reason
+  # as the matching .o (and probably weren't wanted anyway).
+  $last_unbuilt =~ s/\.rlo$/.o/ and $last_unbuilt eq $unbuilt and next;
+  $fr and progress_report(7, stringise_fail_reason($unbuilt));
+  $last_unbuilt = $unbuilt;
+  # If an object has no objects to build from, or can be built only
+  # from objects with no objects to build from; we can delete it.
+  no_method_of_building($unbuilt) and push @dead_objects, $unbuilt;
+}
+# If requested, install.
+if ($options{'i'}) {
+  for my $obj (keys %{$state->{'objects'}}) {
+    $obj =~ /^install_target:([a-zA-Z0-9_]++)\/(b?path):([^>]*+)(?:>(.*))?$/ or next;
+    # can't be broken, failed, changed, or unchecked, but can be outdated
+    $state->{'outdatedobjects'}->{$obj} and next;
+    # looks like we can install!
+    my $insdir = $config->{'options'}->{$1};
+    $insdir or die "Invalid install location '$1'";
+    my $path = $3;
+    my $path_is_relative = $2 eq 'path';
+    my $instarget = $4;
+    my (undef, undef, $fn) = File::Spec->splitpath($3);
+    my $install_loc = File::Spec->catfile($insdir,defined_or($instarget, $fn));
+    if ($path_is_relative && !File::Spec->file_name_is_absolute($path)) {
+      $path = File::Spec->catfile($state->{'srcdir'}, $path);
+    }
+    progress_report(3, "Installing '$path' in '$install_loc'");
+    my ($vol, $dirs, $fn2) = File::Spec->splitpath($install_loc);
+    ensure_directory_exists(File::Spec->catpath($vol,$dirs,''));
+    if ($fn2 ne 'sys:touch_only') {
+      open(my $infh, '<', $path)
+        or die "Could not open '$path' for reading: $?";
+      open(my $outfh, '>', $install_loc)
+        or die "Could not open '$install_loc' for reading: $?";
+      local $/ = undef;
+      print $outfh (<$infh>);
+      close $infh;
+      close $outfh;
+      chmod 0755, $install_loc if -x $path;
+      # TODO: possible owner change, setuid, etc.?
+      # TODO: allow just the install bit to be done as root?
+    }
+  }
+}
+
+# Report messages to stderr.
+for my $object (sort keys %{$state->{'stderrobjects'}}) {
+  progress_report(7, obj_state($object)->{'stderrreason'});
+  delete $state->{'stderrobjects'}->{$object};
+}
+for my $object (@dead_objects) {
+  my $objstate = obj_state($object);
+  delete obj_state($_)->{'rprovices'}->{$object}
+    for keys %{$objstate->{'provices'}};
+  for my $dep (keys %{$objstate->{'relative'}}) {
+    delete obj_state($_)->{'r_built_with'}->{$object}
+      for keys %{$objstate->{'relative'}->{$dep}->{'built_with'}};
+  }
+  for my $obj (keys %{$state->{'objects'}}) {
+    delete $state->{'objects'}->{$obj}->{'relative'}->{$object};
+  }
+  delete $state->{'outdatedobjects'}->{$object};
+  delete $state->{'objects'}->{$object};
+}
+
+# Save statefile on exit.
+$? = 0;
+sighandler();
+
+__DATA__
+# aimake config file. This is written in a very limited dialect of
+# Perl (which only allows scalar, regex, array, and hash constants,
+# and assigning to and using scalar variables), and determines the
+# behaviour on different sorts of files.
+#
+# This file is the global file that specifies default behaviour for
+# aimake, and is designed to work on a wide range of projects (and
+# hopefully, eventually, operating systems). Projects can use their
+# own specific aimake.config file to override the config in this
+# file.
+
+# Some common rules.
+
+# Rules for .o files, and other similar things (.a, .so).
+# Note that the '|| true' bit is parsed by aimake itself, if spelled
+# exactly as written here.
+$nm_determine_command = [
+    'nm -fp $pathname',
+    'nm -fp -D $pathname || true'
+];
+$object_deps = {
+        # We can use nm to determine what symbols are needed.
+        # Exception: Standard libraries should have their use deps
+        # automatically found by ld.
+        # TODO: portability
+        prereqs => ['command:nm','!location:system'],
+        determine_command => $nm_determine_command,
+        determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) U',
+        value => 'symbol:$1',
+        group => 'symbols',
+        score => 100,
+};
+$object_provices = {
+        # We can use nm to determine what symbols are
+        # provided. TODO: portability
+        prereqs => ['command:nm'],
+        determine_command => $nm_determine_command,
+        determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVW]',
+        value => ['symbol:$1','symbol_in_object:$1{$objname}'],
+        # Not only can't we include just one function from
+        # an object file, we also probably shouldn't.
+        option => '$pathname',
+        copy_use_deps => 1, # resolve cyclic references
+        group => 'symbols',
+        score => 100,
+};
+# Rules for using the preprocessor to calculate dependencies.
+# Also, for preprocessible files, to substitute in options.
+$preprocess_dependencies = [
+    {
+        # How to calculate dependencies with gcc.
+        # -MG gives us a relative path if the file is missing,
+        # and (if we give an absolute path on the command line)
+        # an absolute path otherwise, so we can calculate both
+        # path: and file: dependencies.
+        # TODO: This fails to handle filenames with spaces
+        # in, and possibly other special characters too.
+        prereqs => ['command:gcc'],
+        determine_command => 'gcc -M -MG -MT : $IFLAGS $abspathname',
+        determine_parse => qr' ([^ \\\n]+)',
+        value => 'file_or_path:$1',
+        group => 'includes',
+        score => 50,
+    },
+    {
+        # TODO: We can definitely do this in perl, without needing
+        # a grepping program.
+        prereqs => ['command:fgrep'],
+        determine_command => 'fgrep AIMAKE_OPTION_ $pathname || true',
+        determine_parse => qr'AIMAKE_OPTION_([a-zA-Z0-9_]+)',
+        value => 'config_option:$1',
+        group => 'config_options',
+        score => 100,
+    },
+];
+
+# And the config itself.
+{
+    ignorepaths => [
+        # Stay out of VCS directories.
+        qr=(?:^|/)\.svn(?:$|/)=,
+        qr=(?:^|/)\.git(?:$|/)=,
+        qr=(?:^|/)\.hg(?:$|/)=,
+        qr=(?:^|/)\.bzr(?:$|/)=,
+        qr=(?:^|/)_darcs(?:$|/)=,
+    ],
+    libraries => [
+        # Packages may well have their own suggestions for these.
+        # Here are some particularly likely ones...
+        "c",
+        "crypt",
+        "dl",
+        "m",
+        "ncurses",
+        "ncursesw",
+        "pthread",
+        "rt",
+    ],
+    library_paths => [
+        # I would get these from ld, but apparently it has no way
+        # of asking for them, which is a little ridiculous. So here
+        # are some hardcoded paths appropriate for Linux.
+        # Note that we need not mention paths inside the source
+        # directory; .o, .a, and .so files will be found by the
+        # tree scan.
+        '/usr/lib',
+        '/lib',
+        '/usr/local/lib',
+    ],
+    includes => [],
+    include_paths => [
+        '/usr/include',
+        '/usr/local/include',
+    ],
+    library_file_patterns => [
+        'lib$x.a',
+        'lib$x.so',
+    ],
+    # TODO: Condition by OS!
+    default_installdir => '/usr/local',
+    # With some install dirs, we want to install outside for things
+    # like lockfiles (belonging to /var/run) and data-dependent info
+    # (belonging to /var/packagename), to avoid writing unwritable
+    # directories. This is a "sprawling" install.
+    # With other install dirs (say, /home), we want to install inside
+    # for everything, again to avoid writing unwritable directories
+    # (with different permissions). This is a "confined" install.
+    # There are other layouts that exist too, e.g. one for games,
+    # which is used only on request.
+    # TODO: Condition by OS!
+    installtype => [
+      { prereqs => ['installing_inside:/home'], value => 'confined',
+        score => 10, group => 'installtypes' },
+      { prereqs => ['installing_inside:/root'], value => 'confined',
+        score => 10, group => 'installtypes' },
+      { prereqs => ['installing_inside:/opt'], value => 'packagy',
+        score => 10, group => 'installtypes' },
+      { prereqs => ['installing_inside:/usr/local'], value => 'unmanaged',
+        score => 3, group => 'installtypes' },
+      { value => 'sprawling', score => 0, group => 'installtypes' },
+    ],
+    # The various types of install path we have.
+    # There are at least two ways to condition this by OS; neither
+    # has been done here.
+    installpaths => {
+        confined => {
+            bindir => 'bin',
+            libdir => 'lib',
+            specificlibdir => 'lib', # libraries only useful to this program
+            includedir => 'include',
+            specificincdir => 'include',
+            datarootdir => 'share',
+            datadir => 'share',
+            configdir => 'etc',
+            mandir => 'man',
+            infodir => 'info',
+            docdir => 'doc',
+            statedir => 'var', # writable
+            lockdir => 'run', # writable, transient
+            specificlockdir => 'run',
+        },
+        sprawling => {
+            bindir => 'bin',
+            libdir => 'lib',
+            specificlibdir => 'lib/$packagename',
+            includedir => 'include',
+            specificincdir => 'include/$packagename',
+            datarootdir => 'share',
+            datadir => '$datarootdir/$packagename',
+            configdir => '/etc',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc/$packagename',
+            # Anyone got any better ideas for this one?
+            statedir => '/var/$packagename', # writable
+            lockdir => '/var/run', # writable, transient
+            specificlockdir => '/var/run/$packagename',
+        },
+        unmanaged => {
+            bindir => 'bin',
+            libdir => 'lib',
+            specificlibdir => 'lib/$packagename',
+            includedir => 'include',
+            specificincdir => 'include/$packagename',
+            datarootdir => 'share',
+            datadir => 'share/$packagename',
+            configdir => '/etc',
+            mandir => 'man',
+            infodir => 'info',
+            docdir => 'doc/$packagename',
+            statedir => '/var/local/$packagename', # writable
+            lockdir => '/var/run', # writable, transient
+            specificlockdir => '/var/run/$packagename',
+        },
+        games => {
+            bindir => 'games',
+            libdir => 'lib',
+            specificlibdir => 'lib/$packagename',
+            includedir => 'include',
+            specificincdir => 'include/$packagename',
+            datarootdir => 'share',
+            datadir => '$datarootdir/games/$packagename',
+            configdir => '/etc',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc/$packagename',
+            statedir => '/var/games/$packagename', # writable
+            lockdir => '/var/run', # writable, transient
+            specificlockdir => '/var/run/$packagename',
+        },
+        packagy => {
+            bindir => '',
+            libdir => 'lib',
+            specificlibdir => 'lib',
+            includedir => 'include',
+            specificincdir => 'include/$packagename',
+            datarootdir => 'data',
+            datadir => 'data',
+            configdir => 'config',
+            mandir => 'man',
+            infodir => 'info',
+            docdir => 'doc',
+            statedir => '/var/opt/$packagename', # writable
+            lockdir => '/var/run/', # writable, transient
+            specificlockdir => '/var/run/$packagename',
+        },
+    },
+    options => {
+        IFLAGS => "",
+        CFLAGS => [
+            '-O2',
+            {
+                # If using gcc with gdb, produce appropriate
+                # debug output.
+                prereqs => ['command:gcc', 'command:gdb'],
+                value => '-ggdb3',
+                group => 'debug',
+                score => 100,
+            },
+            {
+                # Otherwise just use a generic debugging flag.
+                value => '-g',
+                group => 'debug',
+                score => 50,
+            }
+        ],
+        CC => ["cc"],
+        LD => ["cc"], # typically acts as an ld driver
+        LFLAGS => "",
+    },
+    # Rules that apply to the whole of an object class.
+    objectclasses => {
+        # Paths and build paths have meaningful suffices.
+        # So do as-yet-unlocated files, but they don't have meaningful
+        # /content/, so we don't want to run the same rules for those.
+        'path:' => { suffixable => 1 },
+        'bpath:' => { suffixable => 1 },
+    },
+    # Rules for specific objects.
+    objectrules => {
+        'bpath:last-config.txt' => {
+            provices => [
+                {
+                    # TODO: OS independence
+                    determine_command => 'cat $pathname',
+                    determine_parse => qr'([a-zA-Z0-9_]+): (.*)',
+                    value => 'config_option:$1',
+                    option => '-DAIMAKE_OPTION_$1=$2',
+                }
+            ],
+        },
+    },
+    # Specific rules for specific suffices.
+    filetypes => {
+        '.c' => {
+            use_deps => $preprocess_dependencies,
+            provices => [
+                {
+                    # This should work with most UNIXy CCs.
+                    prereqs => ['command:$CC'],
+                    value => 'bpath:$builddirbasename.o',
+                    command => '$CC $IFLAGS $CFLAGS $provicions -c -o $builddirbasename.o $pathname',
+                    group => 'c-compilers',
+                    score => 100,
+                },
+                # {
+                #     # Code for producing shared libraries. Compiling code for a
+                #     # shared library requires producing a special sort of
+                #     # object file.
+                #     prereqs => ['command:gcc'],
+                #     value => 'bpath:$builddirbasename.rlo',
+                #     command => '$CC $IFLAGS -fpic $CFLAGS $provicions -c -o $builddirbasename.rlo $pathname',
+                #     group => 'shared-library',
+                #     score => 100,
+                # },
+            ],
+        },
+        '.l' => {
+            # TODO: Support for flex specifically, that avoids the
+            # isolation dir.
+            provices => [
+                {
+                    prereqs => ['command:lex'],
+                    value => 'bpath:$isodirbasename.c',
+                    command => [
+                        'ln -sf $abspathname $isopathname',
+                        '(cd $isodirname; lex $filename)',
+                        'ln -sf lex.yy.c $isodirbasename.c',
+                    ],
+                },
+            ],
+        },
+        '.y' => {
+            # TODO: Support for bison specifically, that avoids the
+            # isolation dir.
+            provices => [
+                {
+                    prereqs => ['command:lex'],
+                    value => [
+                        'bpath:$isodirbasename.c',
+                        'bpath:$isodirbasename.h',
+                    ],
+                    command => [
+                        'ln -sf $abspathname $isopathname',
+                        '(cd $isodirname; yacc -d $filename)',
+                        'ln -sf y.tab.c $isodirbasename.c',
+                        'ln -sf y.tab.h $isodirbasename.h',
+                    ],
+                },
+            ],
+        },
+        '.h' => {
+            # A concrete .h file provices a .h file with its basename
+            # (e.g. /usr/include/stdio.h provices <stdio.h>).
+            provices => [
+                {
+                    value => 'file:$filename',
+                    option => '-I $dirname',
+                },
+            ],
+            # We can use the preprocessor to calculate dependencies.
+            use_deps => $preprocess_dependencies,
+        },
+        '.o' => {
+            use_deps => [$object_deps],
+            provices => [
+                $object_provices,
+                # An object can produce a binary, using its own main
+                # method (if it has one).
+                {
+                    value => 'bpath:$builddirbasename',
+                    prereqs => ['command:$LD'],
+                    extra_build_deps => 'symbol_in_object:main{$objname}',
+                    defaultly_targets => 1,
+                    command => '$LD $LFLAGS -o $builddirbasename $provicions',
+                },
+                {
+                    value => 'install_target:bindir/bpath:$builddirbasename',
+                    extra_build_deps => 'bpath:$builddirbasename',
+                    ignore_use_deps => 1,
+                    defaultly_targets => 1,
+                    group => 'default_install_targets',
+                    score => 1,
+                },
+                # We use the information in a .o file to figure out which
+                # symbols are in the corresponding .rlo file.
+                # This does not work!
+                # {
+                #     prereqs => ['command:nm'],
+                #     determine_command => $nm_determine_command,
+                #     determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVW]',
+                #     value => ['symbol_rl:$1',
+                #               'symbol_rl_in_object:$1{bpath:$builddirbasename.rlo}'],
+                #     option => '$builddirbasename.rlo',
+                #     extra_build_deps => 'bpath:$builddirbasename.rlo',
+                #     group => 'rl-symbols',
+                #     score => 100,
+                # },
+            ],
+            preference => 0,
+        },
+        '.a' => {
+            use_deps => [$object_deps],
+            provices => [$object_provices],
+            preference => 250,
+        },
+        '.so' => {
+            use_deps => [$object_deps],
+            provices => [$object_provices],
+            preference => 500,
+        },
+        '.aimk' => {
+            # Lets users specify their own rules.
+            # The format is simple (dependency lists separated with spaces):
+            # target: dependencies > command
+            # Up to seven dependencies can be listed.
+            # These all use aimake object format, so you use
+            # 'path:source/relative/path' or 'bpath:build/relative/path';
+            # and although there are no obvious applications, you can
+            # mention other sorts of object too as dependencies.
+            # (Generated objects have to be bpaths, for obvious
+            # reasons.) To generate multiple objects from different
+            # dependencies, use a different fragment each time.
+            provices => [
+                {
+                    determine_command => 'cat $pathname',
+                    determine_parse => qr'^([^ ]+): (?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+> (.*+)$',
+                    extra_build_deps => ['$2','$3','$4','$5','$6','$7','$8'],
+                    value => '$1',
+                    command => '$9',
+                    # If the user wants us to build the file, we
+                    # should probably consider it important.
+                    defaultly_targets => 1,
+                },
+                {
+                    determine_command => 'cat $pathname',
+                    determine_parse => qr'^install_target:([a-zA-Z0-9_]++/([^>]*+)>?.*)?$',
+                    extra_build_deps => ['$2'],
+                    value => 'install_target:$1',
+                    ignore_use_deps => 1,
+                    defaultly_targets => 1,
+                },
+            ],
+        },
+        '.api' => {
+            # APIs specify objects to be made into a library.
+            # The format is simple, with one object on each line.
+            # The only objects allowed are symbol or symbol_in_object;
+            # this both prevents the addition of junk dependencies,
+            # and gives us the options needed to provice the .a file.
+            use_deps => [
+                {
+                    # TODO: built-in cat equivalent
+                    determine_command => 'cat $pathname',
+                    determine_parse => '^(symbol[^#]+?)\s*(?:#|$)',
+                    value => '$1',
+                },
+            ],
+            provices => [
+                {
+                    # Building a static library.
+                    prereqs => ['command:ar','command:ranlib'],
+                    value => 'bpath:$builddirbasename.a',
+                    command => [
+                        'rm -f $builddirbasename.a',
+                        'ar cr $builddirbasename.a $provicions',
+                        'ranlib $builddirbasename.a',
+                    ],
+                    # We leave system libraries out of our .a file;
+                    # rather, we let that be a dependency (which
+                    # aimake figues out using nm).
+                    delete_absolute_options => 1,
+                },
+                {
+                    value => 'install_target:bindir/bpath:$builddirbasename.a',
+                    extra_build_deps => 'bpath:$builddirbasename.a',
+                    ignore_use_deps => 1,
+                    defaultly_targets => 1,
+                    group => 'default_install_targets',
+                    score => 1,
+                },
+            ],
+        },
+    },
+}
