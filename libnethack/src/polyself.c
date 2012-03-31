@@ -474,7 +474,7 @@ int polymon(int mntmp)
 	    static const char use_thec[] = "Use the command #%s to %s.";
 	    static const char monsterc[] = "monster";
 	    if (attacktype(youmonst.data, AT_MAGC))
-		pline(use_thec,monsterc,"cast monster spells");
+		pline(use_thec,monsterc,"cast monster spells outside combat");
 	    if (can_breathe(youmonst.data))
 		pline(use_thec,monsterc,"use your breath weapon");
 	    if (attacktype(youmonst.data, AT_SPIT))

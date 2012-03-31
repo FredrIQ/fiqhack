@@ -1513,7 +1513,7 @@ static void ucast_cleric_spell(
 	    if (!success)
 	        pline("You cast at a clump of sticks, but nothing happens.");
 	    else if (let == S_SNAKE)
-	        pline("You transforms a clump of sticks into snakes!");
+	        pline("You transform a clump of sticks into snakes!");
 	    else
 	        pline("You summon insects!");
         } else if (canseemon(mtmp)) {
