@@ -96,18 +96,33 @@ void draw_map(int cx, int cy)
        
     for (y = 0; y < ROWNO; y++) {
 	for (x = 1; x < COLNO; x++) {
+            int bg_color = 0;
+
 	    /* set the position for each character to prevent incorrect
 	     * positioning due to charset issues (IBM chars on a unicode term
 	     * or vice versa) */
 	    wmove(mapwin, y, x-1);
 	    
-	    symcount = mapglyph(&display_buffer[y][x], syms);
+	    symcount = mapglyph(&display_buffer[y][x], syms, &bg_color);
 	    attr = A_NORMAL;
-	    if (((display_buffer[y][x].monflags & MON_TAME) && settings.hilite_pet) ||
-		((display_buffer[y][x].monflags & MON_DETECTED) && settings.use_inverse))
+            if (!(COLOR_PAIRS >= 113 || (COLORS < 16 && COLOR_PAIRS >= 57))) {
+              /* we don't have background colors available */
+              bg_color = 0;
+              if (((display_buffer[y][x].monflags & MON_TAME) &&
+                   settings.hilite_pet) ||
+                  ((display_buffer[y][x].monflags & MON_DETECTED) &&
+                   settings.use_inverse))
 		attr |= A_REVERSE;
-
-	    print_sym(mapwin, &syms[frame % symcount], attr);
+            } else if (bg_color == 0) {
+              /* we do have background colors available */
+              if ((display_buffer[y][x].monflags & MON_DETECTED) &&
+                  settings.use_inverse) bg_color = CLR_MAGENTA;
+              if ((display_buffer[y][x].monflags & MON_PEACEFUL) &&
+                  settings.hilite_pet) bg_color = CLR_BROWN;
+              if ((display_buffer[y][x].monflags & MON_TAME) &&
+                  settings.hilite_pet) bg_color = CLR_BLUE;
+            }
+	    print_sym(mapwin, &syms[frame % symcount], attr, bg_color);
 	}
     }
     

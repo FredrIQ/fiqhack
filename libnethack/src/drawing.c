@@ -158,10 +158,10 @@ const struct nh_symdef defsyms[] = {
 	{'+', "hcdoor",		CLR_BROWN},
 	{'#', "bars",		HI_METAL},
 	{'#', "tree",		CLR_GREEN},
-/*30*/	{'<', "upstair",	CLR_GRAY},
-	{'>', "dnstair",	CLR_GRAY},
-	{'<', "upladder",	CLR_BROWN},
-	{'>', "dnladder",	CLR_BROWN},
+/*30*/	{'<', "upstair",	CLR_WHITE},
+	{'>', "dnstair",	CLR_WHITE},
+	{'<', "upladder",	CLR_YELLOW},
+	{'>', "dnladder",	CLR_YELLOW},
 	{'<', "upsstair",	CLR_YELLOW},
 	{'>', "dnsstair",	CLR_YELLOW},
 	{'_', "altar",		CLR_GRAY},
@@ -169,10 +169,10 @@ const struct nh_symdef defsyms[] = {
 	{'\\',"throne",		HI_GOLD},
 	{'#', "sink",		CLR_GRAY},
 /*40*/	{'{', "fountain",	CLR_BLUE},
-	{'.', "vodbridge",	CLR_BROWN},
-	{'.', "hodbridge",	CLR_BROWN},
-	{'#', "vcdbridge",	CLR_BROWN},
-	{'#', "hcdbridge",	CLR_BROWN}
+	{'#', "vodbridge",	CLR_BROWN},
+	{'#', "hodbridge",	CLR_BROWN},
+	{'+', "vcdbridge",	CLR_YELLOW},
+	{'+', "hcdbridge",	CLR_YELLOW}
 };
 
 static const struct nh_symdef trapsyms[] = {

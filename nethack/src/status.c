@@ -85,7 +85,7 @@ static void draw_bar(int barlen, int val_cur, int val_max, const char *prefix)
 	color = CLR_GREEN;
     else
 	color = CLR_GRAY; /* inverted this is white, with better text contrast */
-    colorattr = curses_color_attr(color);
+    colorattr = curses_color_attr(color, 0);
     
     sprintf(str, "%s%d(%d)", prefix, val_cur, val_max);
     sprintf(bar, "%-*s", bl, str);
@@ -158,10 +158,10 @@ static void status3(struct nh_player_info *pi)
     draw_bar(18 + pi->max_rank_sz, pi->en, pi->enmax, "Pw:");
     wprintw(statuswin, "  Dex:%2d Cha:%2d ", pi->dx, pi->ch);
     
-    wattron(statuswin, curses_color_attr(CLR_YELLOW));
+    wattron(statuswin, curses_color_attr(CLR_YELLOW, 0));
     for (i = 0; i < pi->nr_items; i++)
 	wprintw(statuswin, " %s", pi->statusitems[i]);
-    wattroff(statuswin, curses_color_attr(CLR_YELLOW));
+    wattroff(statuswin, curses_color_attr(CLR_YELLOW, 0));
     wclrtoeol(statuswin);
 }
 

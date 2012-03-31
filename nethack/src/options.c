@@ -78,7 +78,7 @@ struct nh_option_desc curses_options[] = {
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, { VTRUE }},    
     {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)UNICODE_GRAPHICS}},
-    {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { TRUE }},
+    {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { VTRUE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
     {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {0}},
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)A_REVERSE}},

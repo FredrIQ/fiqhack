@@ -134,13 +134,13 @@ void draw_msgwin(void)
 	if (pos < 0)
 	    pos += MAX_MSGLINES;
         if (pos == start_of_turn_curline)
-            wattron(msgwin, curses_color_attr(COLOR_BLACK));
+            wattron(msgwin, curses_color_attr(COLOR_BLACK, 0));
 
 	wmove(msgwin, i, 0);
 	waddstr(msgwin, msglines[pos]);
 	wclrtoeol(msgwin);
     }
-    wattroff(msgwin, curses_color_attr(COLOR_BLACK));
+    wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
     wnoutrefresh(msgwin);
 }
 

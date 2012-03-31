@@ -14,6 +14,9 @@
 
 
 static int corpse_id, vcdoor_id, hcdoor_id;
+static int upstair_id, upladder_id, upsstair_id;
+static int dnstair_id, dnladder_id, dnsstair_id;
+static int mportal_id, vibsquare_id;
 struct curses_drawing_info *default_drawing, *cur_drawing;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
@@ -336,6 +339,24 @@ void init_displaychars(void)
 	    vcdoor_id = i;
 	if (!strcmp("hcdoor", cur_drawing->bgelements[i].symname))
 	    hcdoor_id = i;
+	if (!strcmp("upstair", cur_drawing->bgelements[i].symname))
+	    upstair_id = i;
+	if (!strcmp("upladder", cur_drawing->bgelements[i].symname))
+	    upladder_id = i;
+	if (!strcmp("upsstair", cur_drawing->bgelements[i].symname))
+	    upsstair_id = i;
+	if (!strcmp("dnstair", cur_drawing->bgelements[i].symname))
+	    dnstair_id = i;
+	if (!strcmp("dnladder", cur_drawing->bgelements[i].symname))
+	    dnladder_id = i;
+	if (!strcmp("dnsstair", cur_drawing->bgelements[i].symname))
+	    dnsstair_id = i;
+    }
+    for (i = 0; i < cur_drawing->num_traps; i++) {
+	if (!strcmp("magic portal", cur_drawing->traps[i].symname))
+	    mportal_id = i;
+	if (!strcmp("vibrating square", cur_drawing->traps[i].symname))
+	    vibsquare_id = i;
     }
     
     /* options are parsed before display is initialized, so redo switch */
@@ -384,7 +405,8 @@ void free_displaychars(void)
 }
 
 
-int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms)
+int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
+             int *bg_color)
 {
     int id, count = 0;
 
@@ -442,6 +464,10 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms)
     if (dbe->trap) {
 	id = dbe->trap - 1;
 	syms[count++] = cur_drawing->traps[id];
+        if (dbe->trap == mportal_id || dbe->trap == vibsquare_id)
+          *bg_color = CLR_RED;
+        else
+          *bg_color = CLR_CYAN;
     } 
     
     /* omit the background symbol from the list if it is boring */
@@ -458,6 +484,11 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms)
             syms[count-1].color = CLR_RED;
           else if (dbe->branding & NH_BRANDING_UNLOCKED)
             syms[count-1].color = CLR_GREEN;
+        }
+        if (dbe->bg == upstair_id || dbe->bg == dnstair_id ||
+            dbe->bg == upladder_id || dbe->bg == dnladder_id ||
+            dbe->bg == upsstair_id || dbe->bg == dnsstair_id) {
+          *bg_color = CLR_RED;
         }
     }
 
@@ -499,7 +530,8 @@ void switch_graphics(enum nh_text_mode mode)
 }
 
 
-void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
+void print_sym(WINDOW *win, struct curses_symdef *sym,
+               int extra_attrs, int bgcolor)
 {
     int attr;
     cchar_t uni_out;
@@ -507,7 +539,7 @@ void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
     /* nethack color index -> curses color */
     attr = A_NORMAL | extra_attrs;
     if (ui_flags.color) {
-	attr |= curses_color_attr(sym->color & 0x1F);
+        attr |= curses_color_attr(sym->color & 0x1F, bgcolor);
         if (sym->color & 0x20) attr |= A_UNDERLINE;
     }
     

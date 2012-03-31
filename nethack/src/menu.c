@@ -529,7 +529,7 @@ void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 	    pos = 0; /* no accel after all */
 	
 	if (items[i].otype) {
-	    print_sym(win, &cur_drawing->objects[items[i].otype-1], A_NORMAL);
+            print_sym(win, &cur_drawing->objects[items[i].otype-1], A_NORMAL, 0);
 	    waddch(win, ' ');
 	    pos += 2;
 	}
