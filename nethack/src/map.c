@@ -145,6 +145,15 @@ static int compare_coord_dist(const void *p1, const void *p2)
     return dist1 - dist2;
 }
 
+static void place_desc_message(WINDOW* win, int* x, int* y, char* b) {
+    if (*b) {
+        b[78] = 0;
+        if (strlen(b) >= 40 && *x >= 40) { (*y)++; *x = 0; }
+        if (*y <= 1) mvwaddstr(statuswin, *y, *x, b);
+        (*x) += (strlen(b) >= 38 ? 80 : 40);
+        if (*x > 40) { (*y)++; *x = 0; }
+    }
+}
 
 int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 {
@@ -159,6 +168,7 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     enum nh_direction dir;
     struct coord *monpos = NULL;
     int moncount, monidx;
+    int firstmove = 1;
     
     werase(statuswin);
     mvwaddstr(statuswin, 0, 0, "Move the cursor with the direction keys. Press "
@@ -172,6 +182,23 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     wmove(mapwin, cy, cx-1);
     
     while (1) {
+        if (!firstmove) {
+            struct nh_desc_buf descbuf;
+            int mx = 0, my = 0;
+            nh_describe_pos(cx, cy, &descbuf);
+
+            werase(statuswin);
+            place_desc_message(statuswin, &mx, &my, descbuf.effectdesc);
+            place_desc_message(statuswin, &mx, &my, descbuf.invisdesc);
+            place_desc_message(statuswin, &mx, &my, descbuf.mondesc);
+            place_desc_message(statuswin, &mx, &my, descbuf.objdesc);
+            place_desc_message(statuswin, &mx, &my, descbuf.trapdesc);
+            place_desc_message(statuswin, &mx, &my, descbuf.bgdesc);
+            wrefresh(statuswin);
+
+            wmove(mapwin, cy, cx-1);
+        }
+        firstmove = 0;
 	dx = dy = 0;
 	key = get_map_key(FALSE);
 	if (key == KEY_ESC) {
