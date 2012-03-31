@@ -1088,6 +1088,37 @@ void lose_weapon_skill(int n)
     }
 }
 
+/* n: number of skills to drain*/
+void drain_weapon_skill(int n)
+{
+    int skill;
+    int i;
+    while (--n >= 0) {
+        if (u.skills_advanced) {
+          /* Pick a random skill, deleting it from the list. */
+            i = rn2(u.skills_advanced);
+            skill = u.skill_record[i];
+            for (; i < u.skills_advanced-1; i++) {
+                u.skill_record[i] = u.skill_record[i+1];
+            }
+            u.skills_advanced--;
+            if (P_SKILL(skill) <= P_UNSKILLED)
+                panic("drain_weapon_skill (%d)", skill);
+            P_SKILL(skill)--;   /* drop skill one level */
+            /* refund slots used for skill */
+            u.weapon_slots += slots_required(skill);
+            /* drain a random proportion of skill training */
+            if (P_ADVANCE(skill))
+                P_ADVANCE(skill) = rn2(P_ADVANCE(skill));
+            pline("You forget %syour training in %s.",
+                P_SKILL(skill) >= P_BASIC ? "some of " : "",
+                P_NAME(skill));
+        }
+    }
+}
+
+
+
 int weapon_type(struct obj *obj)
 {
 	/* KMH -- now uses the object table */

@@ -473,6 +473,7 @@ void forget_objects(int percent)
  * the following are always forgotten:
  *
  *	- felt ball & chain
+ *      - skill training
  *
  * Other things are subject to flags:
  *
@@ -484,9 +485,15 @@ static void forget(int howmuch)
 
 	if (Punished) u.bc_felt = 0;	/* forget felt ball&chain */
 
-	forget_objects(howmuch & ALL_MAP ? 100 : rn2(25)+25);
+        /* People complain that this is silly and it doesn't work
+           anyway, so it's disabled for now */
+	/* forget_objects(howmuch & ALL_MAP ? 100 : rn2(25)+25); */
 
 	if (howmuch & ALL_SPELLS) losespells();
+
+        /* Forget some skills. */
+        drain_weapon_skill(rnd(howmuch ? 5 : 3));
+
 	/*
 	 * Make sure that what was seen is restored correctly.  To do this,
 	 * we need to go blind for an instant --- turn off the display,

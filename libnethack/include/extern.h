@@ -1702,6 +1702,7 @@ extern void unrestrict_weapon_skill(int);
 extern void use_skill(int,int);
 extern void add_weapon_skill(int);
 extern void lose_weapon_skill(int);
+extern void drain_weapon_skill(int n);
 extern int weapon_type(struct obj *);
 extern int uwep_skill_type(void);
 extern int weapon_hit_bonus(struct obj *);
