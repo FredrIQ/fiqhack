@@ -132,6 +132,7 @@ static void save_flags(struct memfile *mf)
 	mwrite32(mf, flags.djinni_count);
 	mwrite32(mf, flags.ghost_count);
 	mwrite32(mf, flags.pickup_burden);
+        mwrite32(mf, flags.recently_broken_otyp);
 	
 	mwrite8(mf, flags.autodig);
 	mwrite8(mf, flags.autoquiver);

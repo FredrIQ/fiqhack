@@ -60,6 +60,7 @@ struct flag {
 	int	 warnlevel;
 	int	 djinni_count, ghost_count;	/* potion effect tuning */
 	int	 pickup_burden;		/* maximum burden before prompt */
+        int      recently_broken_otyp;  /* object that broke recently */
 	char	 inv_order[MAXOCLASSES];
 #define DISCLOSE_PROMPT_DEFAULT_YES	'y'
 #define DISCLOSE_PROMPT_DEFAULT_NO	'n'

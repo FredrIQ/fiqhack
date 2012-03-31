@@ -463,6 +463,7 @@ void restore_flags(struct memfile *mf, struct flag *f)
 	f->djinni_count = mread32(mf);
 	f->ghost_count = mread32(mf);
 	f->pickup_burden = mread32(mf);
+        f->recently_broken_otyp = mread32(mf);
 	
 	f->autodig = mread8(mf);
 	f->autoquiver = mread8(mf);

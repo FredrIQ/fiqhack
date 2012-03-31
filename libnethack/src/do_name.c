@@ -241,11 +241,45 @@ static const char callable[] = {
 	SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS, AMULET_CLASS,
 	GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS, 0 };
 
+static void docall_inner(int otyp)
+{
+    char buf[BUFSZ], qbuf[QBUFSZ];
+    char **str1;
+    char* ot = obj_typename(otyp);
+    strcpy(qbuf, "Call ");
+    if (strstr(ot, " boots") || strstr(ot, " gloves"))
+        strncpy(qbuf+5, ot, QBUFSZ-7);
+    else strncpy(qbuf+5, an(ot), QBUFSZ-7);
+    qbuf[QBUFSZ-2] = '\0';
+    strcpy(eos(qbuf), ":");
+    getlin(qbuf, buf);
+    if(!*buf || *buf == '\033') return;
+
+    /* clear old name */
+    str1 = &(objects[otyp].oc_uname);
+    if(*str1) free(*str1);
+
+    /* strip leading and trailing spaces; uncalls item if all spaces */
+    (void)mungspaces(buf);
+    if (!*buf) {
+        if (*str1) {       /* had name, so possibly remove from disco[] */
+            /* strip name first, for the update_inventory() call
+               from undiscover_object() */
+            *str1 = (char *)0;
+            undiscover_object(otyp);
+        }
+    } else {
+        *str1 = strcpy((char *) malloc((unsigned)strlen(buf)+1), buf);
+        discover_object(otyp, FALSE, TRUE, TRUE); /* possibly add to disco[] */
+    }
+}
+
 int do_naming(void)
 {
-	int n, selected[1];
+        int n, selected[1];
 	struct obj *obj;
 	static const char allowall[] = {ALL_CLASSES, 0};
+        char classes[20], *s;
 	struct menulist menu;
 
 	init_menulist(&menu);
@@ -254,6 +288,13 @@ int do_naming(void)
 	add_menuitem(&menu, 2, "Name the current level", 'f', FALSE);
 	add_menuitem(&menu, 3, "Name an individual item", 'y', FALSE);
 	add_menuitem(&menu, 4, "Name all items of a certain type", 'n', FALSE);
+        add_menuitem(&menu, 5, "Name an item type by appearance", 'A', FALSE);
+        if (flags.recently_broken_otyp != STRANGE_OBJECT) {
+            char buf[BUFSZ];
+            sprintf(buf, "Name %s (recently broken)",
+                    an(obj_typename(flags.recently_broken_otyp)));
+            add_menuitem(&menu, 6, buf, 'V', FALSE);
+        }
 
 	n = display_menu(menu.items, menu.icount, "What do you wish to name?",
 			PICK_ONE, selected);
@@ -291,9 +332,69 @@ int do_naming(void)
 			pline("You would never recognize another one.");
 			return 0;
 		    }
-		    docall(obj);
+		    docall_inner(obj->otyp);
 		}
 		break;
+
+            case 4:
+                strcpy(classes, flags.inv_order);
+                init_menulist(&menu);
+                /* This leaks information unless we put things in a
+                   consistent order. It's probably simplest to
+                   alphabetise. */
+                for (s = classes; *s; s++) {
+                    int alphaorder[NUM_OBJECTS];
+                    int aop = 0;
+                    int i;
+                    if (*s != RING_CLASS &&
+                        *s != AMULET_CLASS &&
+                        *s != SCROLL_CLASS &&
+                        *s != POTION_CLASS &&
+                        *s != WAND_CLASS &&
+                        *s != SPBOOK_CLASS &&
+                        *s != ARMOR_CLASS) continue;
+                    for (n = bases[(int)*s];
+                         n < NUM_OBJECTS && objects[n].oc_class == *s;
+                         n++) {
+                        if (!objects[n].oc_name_known &&
+                            !objects[n].oc_unique &&
+                            n != FAKE_AMULET_OF_YENDOR) {
+                            if (*s != ARMOR_CLASS ||
+                                (n >= HELMET && n <= HELM_OF_TELEPATHY) ||
+                                (n >= LEATHER_GLOVES &&
+                                 n <= GAUNTLETS_OF_DEXTERITY) ||
+                                (n >= CLOAK_OF_PROTECTION &&
+                                 n <= CLOAK_OF_DISPLACEMENT) ||
+                                (n >= SPEED_BOOTS &&
+                                 n <= LEVITATION_BOOTS))
+                                alphaorder[aop++] = n;
+                        }
+                    }
+                    for (n = 0; n < aop; n++) {
+                        for (i = n+1; i < aop; i++) {
+                            if(strcmp(OBJ_DESCR(objects[alphaorder[i]]),
+                                      OBJ_DESCR(objects[alphaorder[n]])) < 0) {
+                                int t = alphaorder[i];
+                                alphaorder[i] = alphaorder[n];
+                                alphaorder[n] = t;
+                            }
+                        }
+                    }
+                    for (i = 0; i < aop; i++) {
+                        add_menuitem(&menu, alphaorder[i],
+                                     obj_typename(alphaorder[i]), 0, FALSE);
+                    }
+                }
+                n = display_menu(menu.items, menu.icount,
+                                 "Name items with which appearance?",
+                                 PICK_ONE, selected);
+                free(menu.items);
+                if (n == 1) docall_inner(selected[0]);
+                break;
+
+            case 5:
+                docall_inner(flags.recently_broken_otyp);
+                break;
 	}
 	return 0;
 }
@@ -301,9 +402,8 @@ int do_naming(void)
 
 void docall(struct obj *obj)
 {
-	char buf[BUFSZ], qbuf[QBUFSZ];
+        char buf[BUFSZ];
 	struct obj otemp;
-	char **str1;
 
 	if (!obj->dknown) return; /* probably blind */
 	otemp = *obj;
@@ -312,31 +412,13 @@ void docall(struct obj *obj)
 	otemp.oxlth = 0;
 	if (objects[otemp.otyp].oc_class == POTION_CLASS && otemp.fromsink)
 	    /* kludge, meaning it's sink water */
-	    sprintf(qbuf,"Call a stream of %s fluid:",
+	    sprintf(buf,"(You can name a stream of %s fluid from the item naming menu.)",
 		    OBJ_DESCR(objects[otemp.otyp]));
 	else
-	    sprintf(qbuf, "Call %s:", an(xname(&otemp)));
-	getlin(qbuf, buf);
-	if (!*buf || *buf == '\033')
-		return;
-
-	/* clear old name */
-	str1 = &(objects[obj->otyp].oc_uname);
-	if (*str1) free(*str1);
-
-	/* strip leading and trailing spaces; uncalls item if all spaces */
-	mungspaces(buf);
-	if (!*buf) {
-	    if (*str1) {	/* had name, so possibly remove from disco[] */
-		/* strip name first, for the update_inventory() call
-		   from undiscover_object() */
-		*str1 = NULL;
-		undiscover_object(obj->otyp);
-	    }
-	} else {
-	    *str1 = strcpy(malloc((unsigned)strlen(buf)+1), buf);
-	    discover_object(obj->otyp, FALSE, TRUE, FALSE); /* possibly add to disco[] */
-	}
+	    sprintf(buf, "(You can name %s from the item naming menu.)",
+                    an(xname(&otemp)));
+        pline("%s", buf);
+        flags.recently_broken_otyp = otemp.otyp;
 }
 
 
