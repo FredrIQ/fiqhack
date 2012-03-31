@@ -17,6 +17,7 @@ static int corpse_id, vcdoor_id, hcdoor_id;
 static int upstair_id, upladder_id, upsstair_id;
 static int dnstair_id, dnladder_id, dnsstair_id;
 static int mportal_id, vibsquare_id;
+static int room_id, darkroom_id, corr_id, litcorr_id;
 struct curses_drawing_info *default_drawing, *cur_drawing;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
@@ -351,6 +352,14 @@ void init_displaychars(void)
 	    dnladder_id = i;
 	if (!strcmp("dnsstair", cur_drawing->bgelements[i].symname))
 	    dnsstair_id = i;
+	if (!strcmp("room", cur_drawing->bgelements[i].symname))
+	    room_id = i;
+	if (!strcmp("corr", cur_drawing->bgelements[i].symname))
+	    corr_id = i;
+	if (!strcmp("darkroom", cur_drawing->bgelements[i].symname))
+	    darkroom_id = i;
+	if (!strcmp("litcorr", cur_drawing->bgelements[i].symname))
+	    litcorr_id = i;
     }
     for (i = 0; i < cur_drawing->num_traps; i++) {
 	if (!strcmp("magic portal", cur_drawing->traps[i].symname))
@@ -484,6 +493,14 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
             syms[count-1].color = CLR_RED;
           else if (dbe->branding & NH_BRANDING_UNLOCKED)
             syms[count-1].color = CLR_GREEN;
+        }
+        /* Override darkroom for stepped-on squares, so the player can see
+           where they stepped. */
+        if (dbe->bg == darkroom_id && dbe->branding & NH_BRANDING_STEPPED)
+          syms[count-1].color = CLR_BLUE;
+        if ((dbe->bg == room_id || dbe->bg == corr_id || dbe->bg == litcorr_id)
+            && dbe->branding & NH_BRANDING_STEPPED) {
+          syms[count-1].color = CLR_BROWN;
         }
         if (dbe->bg == upstair_id || dbe->bg == dnstair_id ||
             dbe->bg == upladder_id || dbe->bg == dnladder_id ||
