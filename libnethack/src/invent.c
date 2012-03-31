@@ -733,6 +733,7 @@ struct obj *getobj(const char *let, const char *word)
 	xchar allowcnt = 0;	/* 0, 1 or 2 */
 	boolean allowall = FALSE;
 	boolean allownone = FALSE;
+        char nonechar = '-';
 	boolean useboulder = FALSE;
 	xchar foox = 0;
 	int cnt;
@@ -741,6 +742,7 @@ struct obj *getobj(const char *let, const char *word)
 	if (*let == ALLOW_COUNT) let++, allowcnt = 1;
 	if (*let == ALL_CLASSES) let++, allowall = TRUE;
 	if (*let == ALLOW_NONE) let++, allownone = TRUE;
+	if (*let == NONE_ON_COMMA) let++, nonechar = ',';
 	/* "ugly check" for reading fortune cookies, part 1 */
 	/* The normal 'ugly check' keeps the object on the inventory list.
 	 * We don't want to do that for shirts/cookies, so the check for
@@ -754,8 +756,8 @@ struct obj *getobj(const char *let, const char *word)
 	   !strcmp(word, "throw") && throws_rocks(youmonst.data))
 	    useboulder = TRUE;
 
-	if (allownone) *bp++ = '-';
-	if (bp > buf && bp[-1] == '-') *bp++ = ' ';
+	if (allownone) *bp++ = nonechar;
+	if (bp > buf && bp[-1] == nonechar) *bp++ = ' ';
 	ap = altlets;
 
 	ilet = 'a';
@@ -829,7 +831,7 @@ struct obj *getobj(const char *let, const char *word)
 			pline("Never mind.");
 		    return NULL;
 		}
-		if (ilet == '-') {
+		if (ilet == nonechar) {
 			return allownone ? &zeroobj : NULL;
 		}
 		if (ilet == def_oc_syms[COIN_CLASS]) {

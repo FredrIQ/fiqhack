@@ -147,6 +147,7 @@ extern void init_objlist(void);
 #define ALLOW_COUNT	(MAXOCLASSES+1) /* Can be used in the object class */
 #define ALL_CLASSES	(MAXOCLASSES+2) /* input to getobj().		   */
 #define ALLOW_NONE	(MAXOCLASSES+3) /*				   */
+#define NONE_ON_COMMA	(MAXOCLASSES+4) /* Render ALLOW_NONE as , not -.   */
 
 #define BURNING_OIL	(MAXOCLASSES+1) /* Can be used as input to explode. */
 #define MON_EXPLODE	(MAXOCLASSES+2) /* Exploding monster (e.g. gas spore) */
