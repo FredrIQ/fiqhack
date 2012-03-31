@@ -59,7 +59,7 @@ const struct cmd_desc cmdlist[] = {
 	/* "str", "", defkey, altkey, wiz, buried, func, arg*/
 	{"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize, CMD_ARG_NONE | CMD_EXT},
 	{"annotate", "name the current level", 0, C('f'), TRUE, donamelevel, CMD_ARG_NONE | CMD_EXT},
-	{"apply", "use a tool or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
+	{"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE, doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"attributes", "show your attributes", C('x'), 0, TRUE, doattributes, CMD_ARG_NONE},
         {"autoexplore", "automatically explore until something happens", 'v', 0, FALSE, doautoexplore, CMD_ARG_NONE},
 	{"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
@@ -93,7 +93,7 @@ const struct cmd_desc cmdlist[] = {
 	{"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
 	{"name", "name a monster, item or type of object", M('n'), 'C', TRUE, do_naming, CMD_ARG_NONE | CMD_EXT},
 	{"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
-	{"open", "open a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE | CMD_ARG_DIR},
+	{"open", "open, close or unlock a door", 'o', 0, FALSE, doopen, CMD_ARG_NONE | CMD_ARG_DIR},
 	{"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview, CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
 	{"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE},
 	{"pickup", "take items from the floor", ',', 0, FALSE, dopickup, CMD_ARG_NONE},

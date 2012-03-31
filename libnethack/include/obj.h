@@ -95,9 +95,10 @@ struct obj {
 	/* 5 free bits */
 
 	int	corpsenm;	/* type of corpse is mons[corpsenm] */
-#define leashmon  corpsenm	/* gets m_id of attached pet */
+#define leashmon   corpsenm	/* gets m_id of attached pet */
 #define spestudied corpsenm	/* # of times a spellbook has been studied */
-#define fromsink  corpsenm	/* a potion from a sink */
+#define fromsink   corpsenm	/* a potion from a sink */
+#define lastused   corpsenm     /* last time an unlocking tool was used */
 	unsigned oeaten;	/* nutrition left in food, if partly eaten */
 
 	uchar onamelth;		/* length of name (following oxlth) */

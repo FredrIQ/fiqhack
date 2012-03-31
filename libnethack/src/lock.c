@@ -215,16 +215,16 @@ void reset_pick(void)
 }
 
 /* pick a lock with a given object */
-int pick_lock(struct obj *pick)
+int pick_lock(struct obj *pick, schar dx, schar dy, schar dz)
 {
-	int picktyp, c, ch;
+        int picktyp, c, ch, got_dir;
 	coord cc;
 	struct rm	*door;
 	struct obj	*otmp;
 	char qbuf[QBUFSZ];
-	schar dx, dy, dz;
 
 	picktyp = pick->otyp;
+        pick->lastused = moves;
 
 	/* check whether we're resuming an interrupted previous attempt */
 	if (xlock.usedtime && picktyp == xlock.picktyp) {
@@ -261,11 +261,22 @@ int pick_lock(struct obj *pick)
 	}
 	ch = 0;		/* lint suppression */
 
-	if (!get_adjacent_loc(NULL, "Invalid location!", u.ux, u.uy, &cc, &dz))
+	if (dx != -2 && dy != -2 && dz != -2) { /* -2 signals no direction given  */
+	    cc.x = u.ux + dx;
+	    cc.y = u.uy + dy;
+	    if (isok(cc.x, cc.y))
+		got_dir = TRUE;
+	}
+
+	if (!got_dir &&
+            !get_adjacent_loc(NULL, "Invalid location!", u.ux, u.uy, &cc, &dz))
 	    return 0;
 	
-	dx = cc.x - u.ux;
-	dy = cc.y - u.uy;
+        if (!got_dir) {
+            dx = cc.x - u.ux;
+            dy = cc.y - u.uy;
+            dz = 0;
+        }
 	
 	if (cc.x == u.ux && cc.y == u.uy) {	/* pick lock on a container */
 	    const char *verb;
@@ -394,12 +405,6 @@ int pick_lock(struct obj *pick)
                        after all). */
                     level->locations[cc.x][cc.y].mem_door_l = 1;
                     map_background(cc.x, cc.y, TRUE);
-
-		    sprintf(qbuf,"%sock it?",
-			(door->doormask & D_LOCKED) ? "Unl" : "L" );
-
-		    c = yn(qbuf);
-		    if (c == 'n') return 0;
 
 		    switch(picktyp) {
 			case CREDIT_CARD:
@@ -557,6 +562,28 @@ int doopen(int dx, int dy, int dz)
 	    case D_NODOOR: mesg = "way has no door"; break;
 	    case D_ISOPEN: mesg = " is already open"; break;
 	    default:
+                if (!got_dir && door->mem_door_l) {
+                    /* With a direction given explicitly, we try to
+                       unlock the door too, if we knew it was locked. */
+                    struct obj *bestpick = 0;
+                    struct obj *otmp;
+                    for (otmp = invent; otmp; otmp = otmp->nobj) {
+                        if (otmp->otyp == LOCK_PICK ||
+                            otmp->otyp == CREDIT_CARD ||
+                            otmp->otyp == SKELETON_KEY) {
+                            if (!bestpick ||
+                                otmp->lastused > bestpick->lastused)
+                                bestpick = otmp;
+                        }
+                    }
+                    if (!bestpick)
+                        pline("You have nothing to unlock that with.");
+                    else if (!bestpick->lastused)
+                        pline("Use an unlocking tool manually so I know "
+                              "which one you want to use.");
+                    else
+                        return pick_lock(bestpick, dx, dy, dz);
+                }
                 door->mem_door_l = 1;
                 map_background(cc.x, cc.y, TRUE);
                 mesg = " is locked"; break;

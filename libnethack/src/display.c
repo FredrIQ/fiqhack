@@ -1345,7 +1345,7 @@ short dbuf_branding(struct rm *loc)
     if (loc->mem_stepped) b |= NH_BRANDING_STEPPED;
     if (loc->mem_door_l && (loc->flags & D_LOCKED)) b |= NH_BRANDING_LOCKED;
     else if (loc->mem_door_l) b |= NH_BRANDING_UNLOCKED;
-    if (loc->mem_door_t && (loc->flags & D_LOCKED)) b |= NH_BRANDING_TRAPPED;
+    if (loc->mem_door_t && (loc->flags & D_TRAPPED)) b |= NH_BRANDING_TRAPPED;
     else if (loc->mem_door_t) b |= NH_BRANDING_UNTRAPPED;
     return b;
 }

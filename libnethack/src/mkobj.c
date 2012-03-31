@@ -344,6 +344,7 @@ struct obj *mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 	otmp->where = OBJ_FREE;
 	otmp->olev = lev;
 	otmp->dknown = strchr(dknowns, let) ? 0 : 1;
+        otmp->lastused = 0;
 	if ((otmp->otyp >= ELVEN_SHIELD && otmp->otyp <= ORCISH_SHIELD) ||
 			otmp->otyp == SHIELD_OF_REFLECTION)
 		otmp->dknown = 0;

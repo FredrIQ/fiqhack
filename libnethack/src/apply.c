@@ -2692,7 +2692,7 @@ int doapply(struct obj *obj)
 	case LOCK_PICK:
 	case CREDIT_CARD:
 	case SKELETON_KEY:
-		pick_lock(obj);
+		pick_lock(obj, -2, -2, -2);
 		break;
 	case PICK_AXE:
 	case DWARVISH_MATTOCK:
