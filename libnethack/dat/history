@@ -1,6 +1,6 @@
-NitroHack History file for release 4.0
+NetHack History file for release 4.2.0
 
-Behold, mortal, the origins of NitroHack...
+Behold, mortal, the origins of NetHack...
 
 Jay Fenlason wrote the original Hack with help from Kenny Woodland,
 Mike Thome, and Jon Payne.
@@ -20,7 +20,7 @@ Mike Stephenson merged these various versions back together, incorporating
 many of the added features, and produced NetHack version 1.4.  He then
 coordinated a cast of thousands in enhancing and debugging NetHack 1.4 and
 released NetHack versions 2.2 and 2.3.
- 
+
 Later, Mike coordinated a major rewrite of the game, heading a team which
 included Ken Arromdee, Jean-Christophe Collet, Steve Creps, Eric Hendrickson,
 Izchak Miller, Eric S. Raymond, John Rupley, Mike Threepoint, and Janet Walz,
@@ -37,7 +37,7 @@ Spackman and Pierre Martineau designed overlay code for PC NetHack 3.0.
 Johnny Lee ported NetHack 3.0 to the Macintosh.  Along with various other
 Dungeoneers, they continued to enhance the PC, Macintosh, and Amiga ports
 through the later revisions of 3.0.
- 
+
 Headed by Mike Stephenson and coordinated by Izchak Miller and Janet Walz,
 the development team which now included Ken Arromdee, David Cohrs,
 Jean-Christophe Collet, Kevin Darcy, Matt Day, Timo Hakulinen, Steve Linhart,
@@ -56,7 +56,7 @@ Spackman, Steve VanDevender, and Paul Winner, ported NetHack 3.1 to the PC.
 Jon W{tte and Hao-yang Wang, with help from Ross Brown, Mike Engber, David
 Hairston, Michael Hamel, Jonathan Handler, Johnny Lee, Tim Lennan, Rob Menke,
 and Andy Swanson developed NetHack 3.1 for the Macintosh, porting it for
-MPW.  Building on their development, Barton House added a Think C port.  
+MPW.  Building on their development, Barton House added a Think C port.
 
 Timo Hakulinen ported NetHack 3.1 to OS/2.  Eric Smith ported NetHack 3.1
 to the Atari.  Pat Rankin, with help from Joshua Delahunty, is responsible
@@ -103,17 +103,17 @@ DevTeam and incorporated the best of these ideas in NetHack 3.3.
 The final update to 3.2 was the bug fix release 3.2.3, which was released
 simultaneously with 3.3.0 in December 1999 just in time for the Year 2000.
 
-The 3.3 development team, consisting of Michael Allison, Ken Arromdee, 
-David Cohrs, Jessie Collet, Steve Creps, Kevin Darcy, Timo Hakulinen, 
-Kevin Hugo, Steve Linhart, Ken Lorber, Dean Luick, Pat Rankin, Eric Smith, 
-Mike Stephenson, Janet Walz, and Paul Winner, released 3.3.0 in 
+The 3.3 development team, consisting of Michael Allison, Ken Arromdee,
+David Cohrs, Jessie Collet, Steve Creps, Kevin Darcy, Timo Hakulinen,
+Kevin Hugo, Steve Linhart, Ken Lorber, Dean Luick, Pat Rankin, Eric Smith,
+Mike Stephenson, Janet Walz, and Paul Winner, released 3.3.0 in
 December 1999 and 3.3.1 in August of 2000.
 
-Version 3.3 offered many firsts. It was the first version to separate race 
-and profession. The Elf class was removed in preference to an elf race, 
-and the races of dwarves, gnomes, and orcs made their first appearance in 
-the game alongside the familiar human race.  Monk and Ranger roles joined 
-Archeologists, Barbarians, Cavemen, Healers, Knights, Priests, Rogues, 
+Version 3.3 offered many firsts. It was the first version to separate race
+and profession. The Elf class was removed in preference to an elf race,
+and the races of dwarves, gnomes, and orcs made their first appearance in
+the game alongside the familiar human race.  Monk and Ranger roles joined
+Archeologists, Barbarians, Cavemen, Healers, Knights, Priests, Rogues,
 Samurai, Tourists, Valkyries and of course, Wizards.  It was also the first
 version to allow you to ride a steed, and was the first version to have a
 publicly available web-site listing all the bugs that had been discovered.
@@ -131,29 +131,56 @@ well as supporting ports on the different platforms that NetHack runs on:
 
 Pat Rankin maintained 3.4 for VMS.
 
-Michael Allison maintained NetHack 3.4 for the MS-DOS platform.  
+Michael Allison maintained NetHack 3.4 for the MS-DOS platform.
 Paul Winner and Yitzhak Sapir provided encouragement.
 
 Dean Luick, Mark Modrall, and Kevin Hugo maintained and enhanced the
 Macintosh port of 3.4.
 
-Michael Allison, David Cohrs, Alex Kompel, Dion Nicolaas, and Yitzhak Sapir 
-maintained and enhanced 3.4 for the Microsoft Windows platform. Alex Kompel 
+Michael Allison, David Cohrs, Alex Kompel, Dion Nicolaas, and Yitzhak Sapir
+maintained and enhanced 3.4 for the Microsoft Windows platform. Alex Kompel
 contributed a new graphical interface for the Windows port. Alex Kompel also
 contributed a Windows CE port for 3.4.1.
 
 Ron Van Iwaarden maintained 3.4 for OS/2.
 
-Janne Salmijarvi and Teemu Suikki maintained and enhanced the 
+Janne Salmijarvi and Teemu Suikki maintained and enhanced the
 Amiga port of 3.4 after Janne Salmijarvi resurrected it for 3.3.1.
 
 Christian `Marvin' Bressler maintained 3.4 for the Atari after he
 resurrected it for 3.3.1.
 
-There is a NetHack web site maintained by Ken Lorber at http://www.nethack.org/.
 
-In 2011, Daniel Thaler began work on a fork of NetHack, which became known as
-NitroHack.
+After several years, no further NetHack releases had come out, but various
+forks of NetHack had sprung up in the meantime.  The two leading "variant"
+forks were SporkHack by Derek Ray, and UnNetHack by Patric Mueller; also of
+note was the public server nethack.alt.org maintained by Pasi Kallinen, which
+had many minor patches, and which was popular enough to effectively establish
+an official variant of NetHack in its own right.  A large ecosystem of
+separate patches also grew up over this time period, to try to compensate for
+the lack of official releases.  All these variants freely shared code and
+ideas, as the development processes, or at least code snapshots, were publicly
+available.
+
+AceHack 3.6.0 was the first AceHack release, skipping a version number to
+avoid clashes with official versions of NetHack (as at the rate at which
+official releases weren't arriving, it seemed unlikely that there would ever
+be a NetHack 3.6.0; even a NetHack 3.5.0 was looking dubious).  Mostly written
+by Alex Smith, it made major changes to NetHack's interface, in an attempt to
+make it more usable, as well as minor changes to other parts of the game.
+Many of the changes came from UnNetHack in particular, which had similar
+interface goals (although a different approach to difficulty and balance).
+
+Later, Daniel Thaler wrote his own fork, NitroHack, using lessons learnt from
+his previous work on Vulture (a graphical user interface to the original
+NetHack, and more recently UnNetHack).  It was a major code cleanup, making
+the code more properly abstracted and network-capable, as well as replacing
+the interface with a more fully-featured curses-based one.
+
+It quickly became clear that AceHack and NitroHack had similar goals, and had
+implemented different parts of the work first, so it made sense to try to
+merge them.  NetHack 4 is the result, a combination of AceHack and NitroHack.
+We hope you have fun playing it!
 
 			   - - - - - - - - - -
 
@@ -197,6 +224,15 @@ in this, the list of Dungeoneers:
     Greg Olson                Michael Hamel             Warren Cheung
     Gregg Wonderly            Michael Sokolov           Warwick Allison
     Hao-yang Wang             Mike Engber               Yitzhak Sapir
-    Helge Hafting             Mike Gallop               
-    Irina Rempt-Drijfhout     Mike Passaretti           
+    Helge Hafting             Mike Gallop
+    Irina Rempt-Drijfhout     Mike Passaretti
 
+NetHack 4 contributors
+
+    Aardvark Joe              Grunt                     Patric Mueller
+    Alex Smith                Hojita Discordia          rawrmage
+    Brent Dalager             Jeroen Demeyer            Roderick Schertler
+    Christian Stegen          Jukka Lahtinen            Sgeo
+    Clive Crous               Marco Bonetti             Stanislav Traykov
+    Derek Ray                 Michael Deutschmann       Trevor Cook
+    Edoardo Spadolini         Pasi Kallinnen

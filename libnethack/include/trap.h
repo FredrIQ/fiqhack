@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 /* note for 3.1.0 and later: no longer manipulated by 'makedefs' */
 

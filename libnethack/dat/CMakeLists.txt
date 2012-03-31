@@ -109,7 +109,7 @@ add_custom_command (OUTPUT nhdat
                     DEPENDS lev_comp dungeon quest.dat rumors oracles data ${LEVEL_DESCRIPTIONS})
 
 # pseudo-target: depend on all other generated data
-add_custom_target (nitrohack_data_files ALL
+add_custom_target (nethack_data_files ALL
                    DEPENDS nhdat)
 
 install(FILES ${LNH_DAT_GEN}/nhdat

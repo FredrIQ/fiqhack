@@ -1,5 +1,5 @@
 /*	Copyright 1991, M. Stephenson		  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "dlb.h"

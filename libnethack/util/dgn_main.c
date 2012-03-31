@@ -1,6 +1,6 @@
 /*	Copyright (c) 1989 by Jean-Christophe Collet	*/
 /*	Copyright (c) 1990 by M. Stephenson		*/
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 /*
  * This file contains the main function for the parser

@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 /*
  *	This module contains code for calculation of "to hit" and damage

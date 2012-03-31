@@ -1,5 +1,5 @@
 /* Copyright (c) 1989 by Jean-Christophe Collet			  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef SP_LEV_H
 #define SP_LEV_H

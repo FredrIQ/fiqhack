@@ -1,5 +1,5 @@
 /* Copyright (c) Izchak Miller, 1989.				  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef EPRI_H
 #define EPRI_H

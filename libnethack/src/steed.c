@@ -1,5 +1,5 @@
 /* Copyright (c) Kevin Hugo, 1998-1999. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 

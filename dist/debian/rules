@@ -32,10 +32,10 @@ build: build-arch build-indep
 build-arch: build-arch-stamp
 build-arch-stamp: #CONFIGURE_STAMP# #CONFIG_STATUS#
 
-	# build nitrohack
+	# build nethack4
 	-mkdir build
 	cd build && \
-	cmake -DCMAKE_BUILD_TYPE=Release -DLIBDIR=/usr/lib -DDATADIR=/var/games/nitrohack -DBINDIR=/usr/bin .. && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DLIBDIR=/usr/lib -DDATADIR=/var/games/nethack4 -DBINDIR=/usr/bin .. && \
 	$(MAKE) all
 
 build-indep: build-indep-stamp
@@ -66,29 +66,29 @@ install-arch:
 	# debian/tmp.
 	#INSTALL#
 
-	#install nitrohack
-	mkdir -p debian/nitrohack/var/games/nitrohack
-	chown root:games debian/nitrohack/var/games/nitrohack
-	chmod 0770 debian/nitrohack/var/games/nitrohack
+	#install nethack4
+	mkdir -p debian/nethack4/var/games/nethack4
+	chown root:games debian/nethack4/var/games/nethack4
+	chmod 0770 debian/nethack4/var/games/nethack4
 	
-	install -m 0644 -o root -g root libnitrohack/dat/license \
-	  debian/nitrohack/var/games/nitrohack/
+	install -m 0644 -o root -g root libnethack4/dat/license \
+	  debian/nethack4/var/games/nethack4/
 
-	install -m 0644 -o root -g root build/libnitrohack/dat/nhdat \
-	  debian/nitrohack/var/games/nitrohack/
+	install -m 0644 -o root -g root build/libnethack4/dat/nhdat \
+	  debian/nethack4/var/games/nethack4/
 
-	install -m 2755 -o root -g games build/nitrohack/nitrohack \
-	  debian/nitrohack/usr/bin/
+	install -m 2755 -o root -g games build/nethack4/nethack4 \
+	  debian/nethack4/usr/bin/
 
-	install -m 0755 -o root -g root build/libnitrohack/src/libnitrohack*.so \
-	  debian/nitrohack/usr/lib/
+	install -m 0755 -o root -g root build/libnethack4/src/libnethack4*.so \
+	  debian/nethack4/usr/lib/
 
-	install -m 0755 -o root -g root build/libnitrohack_client/libnitrohack_client*.so \
-	  debian/nitrohack/usr/lib/
+	install -m 0755 -o root -g root build/libnethack4_client/libnethack4_client*.so \
+	  debian/nethack4/usr/lib/
 
-	#install nitrohack_server
-	install -m 0755 -o root -g root build/nitrohack_server/nitrohack_server \
-	  debian/nitrohack-server/usr/bin/
+	#install nethack4_server
+	install -m 0755 -o root -g root build/nethack4_server/nethack4_server \
+	  debian/nethack4-server/usr/bin/
 
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-multi

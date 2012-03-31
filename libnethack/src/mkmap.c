@@ -1,5 +1,5 @@
 /* Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992   */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "sp_lev.h"

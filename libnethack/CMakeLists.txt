@@ -1,16 +1,16 @@
 # libnethack toplevel
 
 #convenient names for inout directories
-set (LNH_SRC  ${NitroHack_SOURCE_DIR}/libnitrohack/src)
-set (LNH_DAT  ${NitroHack_SOURCE_DIR}/libnitrohack/dat)
-set (LNH_UTIL ${NitroHack_SOURCE_DIR}/libnitrohack/util)
-set (LNH_INC ${NitroHack_SOURCE_DIR}/libnitrohack/include)
+set (LNH_SRC  ${NetHack4_SOURCE_DIR}/libnethack/src)
+set (LNH_DAT  ${NetHack4_SOURCE_DIR}/libnethack/dat)
+set (LNH_UTIL ${NetHack4_SOURCE_DIR}/libnethack/util)
+set (LNH_INC ${NetHack4_SOURCE_DIR}/libnethack/include)
 
 # various generated files live here
-set (LNH_SRC_GEN  ${NitroHack_BINARY_DIR}/libnitrohack/src)
-set (LNH_DAT_GEN  ${NitroHack_BINARY_DIR}/libnitrohack/dat)
-set (LNH_UTIL_GEN ${NitroHack_BINARY_DIR}/libnitrohack/util)
-set (LNH_INC_GEN ${NitroHack_BINARY_DIR}/libnitrohack/include)
+set (LNH_SRC_GEN  ${NetHack4_BINARY_DIR}/libnethack/src)
+set (LNH_DAT_GEN  ${NetHack4_BINARY_DIR}/libnethack/dat)
+set (LNH_UTIL_GEN ${NetHack4_BINARY_DIR}/libnethack/util)
+set (LNH_INC_GEN ${NetHack4_BINARY_DIR}/libnethack/include)
 
 # actual target definitions etc.
 add_subdirectory (util)

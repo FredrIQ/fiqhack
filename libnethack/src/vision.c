@@ -1,5 +1,5 @@
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990.	*/
-/* NitroHack may be freely redistributed.  See license for details.	*/
+/* NetHack may be freely redistributed.  See license for details.	*/
 
 #include "hack.h"
 
@@ -1339,7 +1339,7 @@ static void right_side(
 		 * the odds are that we can actually see part of the wall
 		 * beyond the mark on this row.  If so, then see one beyond
 		 * the mark.  Otherwise don't.  This is a kludge so corners
-		 * with an adjacent doorway show up in nitrohack.
+		 * with an adjacent doorway show up in nethack.
 		 */
 		right_edge = is_clear(row-step,right_mark) ?
 						    right_mark+1 : right_mark;

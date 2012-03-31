@@ -1,5 +1,5 @@
 /* Copyright 1994, Dean Luick					  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef TIMEOUT_H
 #define TIMEOUT_H

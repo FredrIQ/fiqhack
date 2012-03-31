@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011 */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 /* NOTE: This file is utf-8 encoded; saving with a non utf-8 aware editor WILL
  * damage some symbols */
@@ -273,7 +273,7 @@ static void write_symlist(int fd, const struct curses_symdef *list, int len)
 }
 
 static const char uniconf_header[] =
-"# Unicode symbol configuration for NitroHack\n"
+"# Unicode symbol configuration for NetHack\n"
 "# Lines that begin with '#' are commented out.\n"
 "# Change the '#' to an '!' to activate a line.\n";
 
@@ -504,7 +504,7 @@ void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs)
     int attr;
     cchar_t uni_out;
     
-    /* nitrohack color index -> curses color */
+    /* nethack color index -> curses color */
     attr = A_NORMAL | extra_attrs;
     if (ui_flags.color) {
 	attr |= curses_color_attr(sym->color & 0x1F);

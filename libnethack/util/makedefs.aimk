@@ -1,7 +1,7 @@
 # Use 'makedefs' to generate header files. date.h is rebuilt every compile; the others only on change.
-bpath:libnitrohack/include/date.h: bpath:libnitrohack/util/makedefs sys:always_rebuild > libnitrohack/util/makedefs -v libnitrohack/include/date.h
-bpath:libnitrohack/include/verinfo.h: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -w libnitrohack/include/verinfo.h
-bpath:libnitrohack/include/onames.h: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -o libnitrohack/include/onames.h
-bpath:libnitrohack/include/pm.h: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -p libnitrohack/include/pm.h
+bpath:libnethack/include/date.h: bpath:libnethack/util/makedefs sys:always_rebuild > libnethack/util/makedefs -v libnethack/include/date.h
+bpath:libnethack/include/verinfo.h: bpath:libnethack/util/makedefs > libnethack/util/makedefs -w libnethack/include/verinfo.h
+bpath:libnethack/include/onames.h: bpath:libnethack/util/makedefs > libnethack/util/makedefs -o libnethack/include/onames.h
+bpath:libnethack/include/pm.h: bpath:libnethack/util/makedefs > libnethack/util/makedefs -p libnethack/include/pm.h
 # Use 'makedefs' to generate source files.
-bpath:libnitrohack/src/monstr.c: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -m libnitrohack/src/monstr.c
+bpath:libnethack/src/monstr.c: bpath:libnethack/util/makedefs > libnethack/util/makedefs -m libnethack/src/monstr.c

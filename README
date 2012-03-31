@@ -1,26 +1,33 @@
-NitroHack
+NetHack 4
 =========
 
-NitroHack is a modernized, network-capable fork of NetHack.
+NetHack 4 is a modernized, network-capable fork of NetHack, with an improved
+interface. It was produced by merging two forks: Alex Smith's AceHack, and
+Daniel Thaler's NitroHack.
 
 
 Back end features:
-    - NitroHack network protocol
-      NitroHack supports network play without telnet or ssh over its own
+    - NetHack network protocol
+      NetHack 4 supports network play without telnet or ssh over its own
       protocol. The protocol is based on JSON and should make it very easy to
       implement a browser-based NitroHack client (TODO!).
       
     - New save game format
       The old format was mostly just a dump of the data structures from memory
       onto disk.
-      The new format has 2 sections:
+      The new format has 3 sections:
       1) A log of the initial random seed and every game action performed
          afterwards. This allows a perfect reconstruction of the game.
-      2) A binary save appended after the log. It uses a fixed-width,
-         fixed-endian architecture and compiler independent format, but is
-         otherwise a direct descendant of the old save format. This format was
-         kept mostly so that bones files could be created in it, but it is also
-         used in the savegames for slightly improved loading speed.
+      2) A binary save after every move (stored as diffs to keep file sizes
+         reasonable). It uses a fixed-width, fixed-endian architecture and
+         compiler independent format, but is otherwise a direct descendant of
+         the old format. This also allows a perfect reconstruction of the
+         game; and also allows games to be replayed after changes are made
+         that would affect sync. It is stored interleaved with the log.
+      3) For speed, a binary save as binary, that enables games to be loaded
+         without replaying them from the start. If something goes wrong with
+         loading this section, one of the others can be used instead.
+
       The log file is written continuously, so the "INSURANCE" option and the
       recover utility are gone - a crashed game can always be restored by
       replaying the log. After the game ends, the log marked as closed and kept.
@@ -29,7 +36,7 @@ Back end features:
       The reason for keeping logs of finished games. Once there was a way to
       reconstruct the state of the game at any point it would have been silly
       not to use it for game viewing.
-      Since the replay mode is based on abstract game commands rather than
+      Since the replay mode is based on abstract game state rather than
       directly recorded screen output, it is completely feasible to replay a
       that was played on a unix tty in a windows tile port or vice versa.
       A viewer for games is built into the new nethack UI. You can perform
@@ -37,11 +44,12 @@ Back end features:
       viewing a game replay.
       
     - New options code
-      Options changed ingame are written back to the options file, which you are
-      not supposed to edit by hand any more. The options have moved from
-      ~/.nethackrc to ~/.config/NitroHack/NitroHack.conf (for game options) and
-      ~/.config/NitroHack/curses.conf for the options of the curses UI.
-      Logs of active and completed games are also under ~/.config/NitroHack/
+      Options changed ingame are written back to the options file, which you
+      are not supposed to edit by hand any more. The options have moved from
+      ~/.nethackrc to ~/.config/NetHack4/NetHack.conf (for game options) and
+      ~/.config/NetHack4/curses.conf for the options of the curses UI.
+      Logs of active and completed games are also under ~/.config/NetHack4/,
+      along with dump files that summarize what happened in a game.
       
     - Birth options
       Want to play without Elbereth? It is now possible to do so without
@@ -50,11 +58,12 @@ Back end features:
       character is created.
       
     - Full separation of user interface code from game code.
-      The core game code has moved into a library (libnitrohack.so or
-      nitrohack.dll). The game library exposes an API of exactly 23 functions
-      and is largely OS independent. The display code is part of the OS/platform
-      dependent executable and must provide a list of callbacks (windowprocs)
-      to the game. There is no shared global state between the two.
+      The core game code is now independent of the rest of the game, and in
+      fact can be placed in a library (libnethack.so or nethack.dll). The game
+      library exposes an API of exactly 23 functions and is largely OS
+      independent. The display code is part of the OS/platform dependent
+      executable and must provide a list of callbacks (windowprocs) to the
+      game. There is no shared global state between the two.
       This was a prerequisite for the network protocol, which encodes the api
       calls and callbacks almost literally.
       With this change, the days of multiple window port binaries are over. It
@@ -64,7 +73,7 @@ Back end features:
       mechanisms.
       
     - rewritten input system
-      The came core never, ever requests a key from the UI. All interactions
+      The game core never, ever requests a key from the UI. All interactions
       happen on an abstract level: The ui sends commands to the core as a string
       ("wait", "move", etc.), the game my request a direction or a position
       (etc).
@@ -79,7 +88,7 @@ Back end features:
        * unicode display, with customizable display chars
        * configurable keymap, with a configuration dialog
        * full arrow key and function key use
-       * multiple visible message lines
+       * multiple visible message lines and automore (if your terminal is high)
        * improved status
        * permanent inventory display (if your terminal is wide)
        * Inventory menu with item actions
@@ -88,9 +97,7 @@ Back end features:
     - Layered drawing
       The game core provides a set of display items for each location to the UI,
       rather than a single display char. For example a monster on an item on a
-      trap can be represented logically.
-      The curses UI displays the alternatives by blinking between them (unless
-      you disable blinking in the options).
+      trap can be represented logically, and drawn in the UI.
       
     - Mersenne twister random number generator
       An OS independent RNG with known state was required in order to make game
@@ -103,8 +110,8 @@ Back end features:
       top ten or changing options.
       Previously this was not possible, as the altered global state from one
       game would have affected a second, so quitting was the only option.
-      NitroHack now uses an exception mechanism based on setjmp/longjmp to
-      escape from deep callchains when the game ends or panics
+      NetHack now uses an exception mechanism based on setjmp/longjmp to
+      escape from deep callchains when the game ends or panics.
       
     - No more level files and no more lock files.
       All levels are now kept in memory at all times. This makes a lot of
@@ -112,24 +119,15 @@ Back end features:
       currently on.
       The only remaining locking is of active game logs via OS mechanisms which
       are not based on files: fcntl on UNIX and LockFile on Windows.
-      (For a game where all levels have been visited, this change could result
-      in up to 5 Mb of extra memory use! The horror!!)
-      
-    - No more support for antique systems and compilers
-      Support for everything that belongs in a computer history museum has been
-      removed: BE, DOS, Classic Mac, Atari, VMS, Ultrix, etc ...
-      The list of supported compilers has likewise been reduced to gcc, clang
-      and msvc (and probably Intel's compiler, too).
-      This allowed the removal of lots and lots of crufty code and compat macros.
-      All current compilers support "void" and "static", so wrapping them in
-      #defines not necessary any more.
       
     - Code cleanups
       The number of "#ifdef FOO" has been cut down from 1938 to just 51. That
       makes the code much more readable, because the indentation isn't being
       interrupted every couple of lines. To this end almost all compile options
       that didn't becom birth options were enabled unconditionally or removed
-      due to being obsolete.
+      due to being obsolete. Code for compatibility with very old systems has
+      been removed, at least partly because it's very hard to tell if it still
+      works.
       All functions have been converted to use standard prototypes rather than
       K&R declarations. Ugly things like prototype widening and the follow-on
       <FOO>_P #defines went away. Tools like git diff can now correctly show
@@ -138,12 +136,13 @@ Back end features:
       compilers handle this for us. Likewise NEARDATA; that only made sense on
       16-bit computers.
       
-    - New build system: Cmake
-      This replaces some of the ugliest Makefiles known to man (I kid).
-      On Linux you get safe parallel builds with pretty colorized output, on
-      Windows the generated Visual Studio 2010 project builds without problems
+    - New build systems
+      Rather than using the old MakeFiles which required manual configuration,
+      NetHack 4 supports the more modern build systems CMake and aimake.
+      Hopefully, either should work out of the box; CMake requires a little
+      more manual configuration to act sanely, whereas aimake is currently
+      rather new and unpolished.
 
-      
 Game features:
     - Autopickup rules
       Real rule sets that control what gets picked up replace the pickup list +
@@ -158,7 +157,7 @@ Game features:
       matches, the item is left behind by default.
       
     - Character history tracking
-      NitroHack will automatically track the following items (with a turn
+      NetHack will automatically track the following items (with a turn
       timestamp) for use in your ascension posts:
        * new depth reached
        * new experience level reached
@@ -172,11 +171,12 @@ Game features:
        * performed the invocation
        * gained/lost the amulet of yendor (only shown if the amulet is
          identified)
-      You can view your heroic deeds with #history
+      You can view your heroic deeds with #history.
     
     - Dungeon overview + dungeon annotations
       This change was inspired by the "Dungeon Map Overview 3" patch (by Hojita
-      Discordia) as found in UnNetHack.
+      Discordia), as found in several variants (apart from AceHack and
+      NitroHack, notably UnNetHack).
       You can now #annotate a level to name/describe it.
       #overview / Ctrl+O will show a menu of all the levels you remember
       including your annotations and significant features (shops, altars, ...)
@@ -312,24 +312,26 @@ Game features:
 
 
 What didn't change:
-    - The game mechanics, monsters items etc are exactly as in NetHack 3.4.3.
+    - The game mechanics, monsters, items etc. are pretty similar to those in
+      NetHack 3.4.3.
       I am not opposed to changing these things and in fact I think several
       things should be changed.
     - There is a lot of code in the core that remains very obscure, because the
       cleanups only improved it superficially.
 
+Build Instructions
+==================
+From the top source directory, run:
 
-Plans:
-    - QT4 based tile UI
-    - Browser based network client
-    - Maybe: port Vulture?
-
-
-Build instructions:
-From the top source dir run
+CMake:
     mkdir build
     cd build
     cmake ..
     ccmake . # only necessary if you want to edit the install target paths
     make
-    make install # into $HOME/nitrohack if you didn't change the paths in ccmake
+    make install # into $HOME/nethack4 if you didn't change the paths in ccmake
+
+aimake:
+    mkdir build
+    cd build
+    ../aimake -i /home/nethack4 .. # or wherever you want

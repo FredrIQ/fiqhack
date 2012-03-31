@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
     }
     
     if (tcount < 13 || strcmp(tokens[0], "NHGAME") != 0) {
-	printf("This does not look like a NitroHack logfile.\n");
+	printf("This does not look like a NetHack logfile.\n");
 	return 3;
     }
     

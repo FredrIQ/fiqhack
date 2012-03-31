@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2012. */
-/* The NitroHack client lib may be freely redistributed under the terms of either:
+/* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
  *  - the GNU General Public license v2 or later
  */

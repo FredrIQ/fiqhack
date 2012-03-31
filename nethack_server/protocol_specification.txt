@@ -1,4 +1,4 @@
-NitroHack Network Protocol v1
+NetHack 4 Network Protocol v1
 =============================
 
 0) Basics

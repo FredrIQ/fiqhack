@@ -1,4 +1,4 @@
-# util/CMakeLists.txt : build nitrohack utilities
+# util/CMakeLists.txt : build nethack utilities
 
 find_program(FLEX_EXECUTABLE NAMES flex flex.exe )
 find_program(BISON_EXECUTABLE NAMES bison bison.exe )
@@ -40,8 +40,8 @@ set ( DLB_SRC
 file(MAKE_DIRECTORY ${LNH_INC_GEN})
 file(MAKE_DIRECTORY ${LNH_DAT_GEN})
 
-include_directories (${NitroHack_SOURCE_DIR}/include
-                     ${NitroHack_SOURCE_DIR}/libnitrohack/include
+include_directories (${NetHack4_SOURCE_DIR}/include
+                     ${NetHack4_SOURCE_DIR}/libnethack/include
                      ${LNH_INC_GEN}
                      ${LNH_UTIL_GEN} )
 

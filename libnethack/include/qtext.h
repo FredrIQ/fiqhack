@@ -1,5 +1,5 @@
 /* Copyright (c) Mike Stephenson 1991.				  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef QTEXT_H
 #define QTEXT_H

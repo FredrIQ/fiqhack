@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "dlb.h"
@@ -115,7 +115,7 @@ void replay_set_logfile(int logfd)
 	log_finish(LS_IN_PROGRESS);
     
     if (!lock_fd(logfd, 1)) {
-	raw_printf("The game log is locked by another NitroHack process. Aborting.");
+	raw_printf("The game log is locked by another NetHack process. Aborting.");
 	terminate();
     }
     logfile = logfd;
@@ -503,7 +503,7 @@ void replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
     
     header = next_log_token();
     if (!header || strcmp(header, "NHGAME"))
-	parse_error("This file does not look like a NitroHack logfile.");
+	parse_error("This file does not look like a NetHack logfile.");
     
     next_log_token(); /* marker */
     next_log_token(); /* end pos, see replay_begin() */
@@ -1223,7 +1223,7 @@ enum nh_log_status nh_get_savegame_status(int fd, struct nh_game_info *gi)
     lseek(fd, 0, SEEK_SET);
     read(fd, header, 127);
     header[127] = '\0';
-    n = sscanf(header, "NHGAME %4s %x NitroHack %d.%d.%d\n%llx %x %x %s %s %s %s %s",
+    n = sscanf(header, "NHGAME %4s %x NetHack4 %d.%d.%d\n%llx %x %x %s %s %s %s %s",
 	       status, &savepos, &v1, &v2, &v3, &starttime, &seed, &playmode, encplname,
 	       role, race, gend, algn);
     if (n != 13) return LS_INVALID;

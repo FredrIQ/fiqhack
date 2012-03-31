@@ -17,8 +17,8 @@
 
 #include <jansson.h>
 
-#include "nitrohack.h"
-#include "nitrohack_client.h" /* for enum authresult */
+#include "nethack.h"
+#include "nethack_client.h" /* for enum authresult */
 
 #define DEFAULT_PORT 7116 /* chosen at random, not in use by anything else */
 
@@ -35,7 +35,7 @@
 #endif
 
 #if !defined(DEFAULT_WORK_DIR)
-# define DEFAULT_WORK_DIR "/var/lib/NitroHack/"
+# define DEFAULT_WORK_DIR "/var/lib/NetHack4/"
 #endif
 
 #if !defined(DEFAULT_CLIENT_TIMEOUT)

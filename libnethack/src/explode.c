@@ -1,5 +1,5 @@
 /*	Copyright (C) 1990 by Ken Arromdee */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 

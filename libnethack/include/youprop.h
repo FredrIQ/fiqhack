@@ -1,5 +1,5 @@
 /* Copyright (c) 1989 Mike Threepoint				  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef YOUPROP_H
 #define YOUPROP_H

@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011 */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 
@@ -11,7 +11,7 @@ static struct color oyellow, owhite, ohired, ohigreen, ohiyellow, ohiblue,
                     ohimagenta, ohicyan, ohiwhite;
 
 /*
- * Initialize curses colors to colors used by NitroHack
+ * Initialize curses colors to colors used by NetHack
  * (from Karl Garrison's curses UI for Nethack 3.4.3)
  */
 void init_nhcolors(void)
@@ -50,7 +50,7 @@ void init_nhcolors(void)
     color_content(COLOR_YELLOW, &oyellow.r, &oyellow.g, &oyellow.b);
     color_content(COLOR_WHITE, &owhite.r, &owhite.g, &owhite.b);
     
-    /* Set colors to appear as NitroHack expects */
+    /* Set colors to appear as NetHack expects */
     init_color(COLOR_YELLOW, 500, 300, 0);
     init_color(COLOR_WHITE, 600, 600, 600);
     
@@ -64,7 +64,7 @@ void init_nhcolors(void)
 	color_content(COLOR_CYAN + 8, &ohicyan.r, &ohicyan.g, &ohicyan.b);
 	color_content(COLOR_WHITE + 8, &ohiwhite.r, &ohiwhite.g, &ohiwhite.b);
     
-	/* Set colors to appear as NitroHack expects */
+	/* Set colors to appear as NetHack expects */
 	init_color(COLOR_RED + 8, 1000, 500, 0);
 	init_color(COLOR_GREEN + 8, 0, 1000, 0);
 	init_color(COLOR_YELLOW + 8, 1000, 1000, 0);

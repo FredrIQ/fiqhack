@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <fcntl.h>
@@ -44,35 +44,35 @@ struct nh_menuitem mainmenu_items[] = {
 };
 
 
-const char *nhlogo_small[12] = { /* this _beautiful_ logo was created by exporting an
-                            160x24 image from gimp using aalib */
-"_aa/    aa/ ]QQ                         _aa     aa/                   ]QQ       ",
-"]QQQ.   QQf ]QQ  ]QQ                    ]QQ     QQf                   ]QQ       ",
-"]QQQL   QQf      ]QQ                    ]QQ     QQf                   ]QQ       ",
-"]QQQQ,  QQf _aa ajQQaaa aa/ sa/ .saa,.  ]QQ     QQf ._aaa,.     _aa,. ]QQ   aaa,",
-"]QQ4WL  QQf ]QQ QQQQQQQ QQLmQWfjWQWWQm, ]QQ     QQf QQQQWQQ,  _mQQQQm ]QQ .yQW( ",
-"]QQ-QQ, QQf ]QQ ?4QQ??? QQQ@?9mWWD?9WQm ]QQQQQQQQQf @T??TQWk  mQQT?9Q ]QQ.yQW(  ",
-"]QQ ]Qk QQf ]QQ  ]QQ    QQ@   dQE   )WQ(]QQQQQQQQQf  _aaajQQ )QQ(   - ]QQmQW'   ",
-"]QQ  QQ/QQf ]QQ  ]QQ    QQf   QQf    QQ[]QQ     QQf yQQWWQQQ ]QQ      ]QQQQ[    ",
-"]QQ  ]QkQQf ]QQ  ]QQ    QQf   QQL   .QQ[]QQ     QQf]QQ^  jQQ ]QQ,     ]QQ$QQc   ",
-"]QQ   $QQQf ]QQ  ]QQ,   QQf   4QQ, .jQQ`]QQ     QQf]WQ,._QWQ -QQg, _j ]QQ-$QQc  ",
-"]QQ   )QQQf ]QQ  )QQQQf QQf   -QWQQQQQf ]QQ     QQf-QQQQQ$QQ  3WQQQQQ ]QQ -$QQc ",
-"]QQ    $QQf ]QQ   ?QQQf QQf    -9$QWV\"  ]QQ     QQf )$Q@!]QQ   \"9QWD^ ]QQ  -$QQc"
+const char *nhlogo_small[12] = { /* created using pbmtoascii */
+"                                                       oo               _d#,   ",
+"MMM,   MM            oo    MM     MM                   MM             ,HMMP'   ",
+"MMMM   MM            MM    MM     MM                   MM           ,HMMMM     ",
+"MMMM|  MM    ,oo,   oMMoo  MM     MM   ,ooo      ,ooo  MM   oo,   .dMM*MMM     ",
+"MM`MH  MM   dMMMMb  #MM##  MM     MM  |MMMMM,   dMM#M| MM  dMP   ,MMH' MMM     ",
+"MM TM, MM  |MM' 9Mb  MM    MM#####MM  `'  `Mb  |MH' `' MM dMP  ,HMM?   ]MM##HMH",
+"MM `Mb MM  MMboodMM  MM    MM\"\"\"\"\"MM    ,ooMM  MM'     MMMMP  ?MMMH##MMMMMH*\"'\"",
+"MM  HM.MM  MMH#####  MM    MM     MM  .HMH#MM  MM      MMMMb  *###\"\"\"\"\"9MM|    ",
+"MM  |MMMM  9Mb       MM    MM     MM  HM' .MM  9M?     MM 9Mb          |MM|    ",
+"MM   MMMM  `MMbood|  MMoo  MM     MM  HMbdMMM  `MMb_d| MM `MMb          MMb    ",
+"MM   `MMM   `9MMMP'  `MMM  MM     MM  `*MM'MM   `9MMM' MM  `MMb         ?MH    ",
 };
 
-const char *nhlogo_large[12] = {
-"_aaa    aaa    QQQ                                 aaa     aaa                         QQQ       ",
-"]QQQc   QQQ    QQQ    QQQ                          QQQ     QQQ                         QQQ       ",
-"]QQQQ   QQQ           QQQ                          QQQ     QQQ                         QQQ       ",
-"]QQQQc  QQQ    QQQ  QQQQQQQQ  QQQ_yQQ  .wmQQg,     QQQ     QQQ   _ymQQmw.     _yQQmw   QQQ  jWQf ",
-"]QQPQQ  QQQ    QQQ  QQQQQQQQ  QQQmQQQ .mQWQQWQc    QQQ     QQQ   ]QQQQQWm    jQQQQQQ   QQQ <QWf  ",
-"]QQf4Q[ QQQ    QQQ    QQQ     QQQP` ' jQQF \"QWQ,   QQQQQQQQQQQ   \"~  -4QQ(  .QWQ( -4   QQQ<QQF   ",
-"]QQf+QQ QQQ    QQQ    QQQ     QQQ'    QQQ`  jQQ[   QQQQQQQQQQQ    _aaajQQf  ]QQF       QQQQWF    ",
-"]QQf 4Q[QQQ    QQQ    QQQ     QQQ     QWQ   ]QQ[   QQQ     QQQ   yQQWQQQQf  ]QQf       QQQQQc    ",
-"]QQf )QQQQQ    QQQ    QQQ     QQQ     WQQ.  jQQ[   QQQ     QQQ  ]QQP  jQQf  ]QQL       QQQ4QQ/   ",
-"]QQf  4QQQQ    QQQ    QQQ     QQQ     3WQL _QQQ`   QQQ     QQQ  ]QQk _mQQf  -QQQc .j   QQQ-$QQ,  ",
-"]QQf  +QQQQ    QQQ    QQQQQ   QQQ     -$QQQQQQ[    QQQ     QQQ  +WQQQQWQQf   ]QQWQQQ   QQQ -QWQ, ",
-"]QQf   4QQQ    QQQ    ?$QQQ   QQQ      -9$QWV\"     QQQ     QQQ   )$W@!]QQf    \"9WQ@T   QQQ  -QQm,"
+const char *nhlogo_large[14] = {
+"                                                                     ooo                   .##.    ",
+"####     ##b                      ###     ###                        MMM                 dMMMM'    ",
+"MMMMb    MMM              MMM     MMM     MMM                        MMM              .dHMMMM'     ",
+"MMMMM.   MMM              MMM     MMM     MMM                        MMM             oHMMMMMT      ",
+"MMMMM|   MMM     ooo,    oMMMoo,  MMM     MMM    ,oooo        oooo,  MMM   ooo,    .dMMH*MMM|      ",
+"MMM\"MH|  MMM   JMMMMMM.  MMMMMM|  MMM     MMM   dMMMMMM_    _MMMMMM  MMM  JMM|    JMMMH  MMM|      ",
+"MMM 9M|  MMM  |MMM\"\"MMH   MMM     MMMoooooMMM  |MP\"\"\"TMM   |MMP' \"9  MMM |MMT   oHMMP\"   9MMbooo##b",
+"MMM |MM  MMM  dMM'  |MMM  MMM     MMMMMMMMMMM         MMH  MMH'      MMMdMM\"  .dMMMR:_,ooHMMMMMMM##",
+"MMM `MM| MMM  MMM###HMMM  MMM     MMM\"\"\"\"\"MMM    .o###MMM  MM|       MMMMMT  ,dMMMMMMMMMMMMMH*'\"\"  ",
+"MMM  HML MMM  MMM#######  MMM     MMM     MMM   ,MMM##MMM  MM|       MMMMMb  `*###*\"\"\"'  9MMM      ",
+"MMM  |MMMMMM  HMM.        MMM     MMM     MMM  ,MM*'  MMM  MMH       MMM|HMM.            |MMM|     ",
+"MMM   |MMMMM  |MMH    ?b  MMM     MMM     MMM  |MM\\ ,dMMM  TMMb,  d  MMM |MMH            `MMM|     ",
+"MMM   `MMMMM   9MMMMMMMH  `MMMM|  MMM     MMM  `9MMMMPMMM   \"MMM#MM  MMM  9MMb,           #MMM     ",
+"###    ?####   `\"#####'    ?###|  ###     ###    `##' ###    \"####?  ###  `###b            *#*     ",
 };
 #ifdef UNIX
 
@@ -121,14 +121,14 @@ static char** init_game_paths(const char *argv0)
     
 #if defined(UNIX)
     if (getgid() == getegid()) {
-	dir = getenv("NITROHACKDIR");
+	dir = getenv("NETHACKDIR");
 	if (!dir)
 	    dir = getenv("HACKDIR");
     } else
 	dir = NULL;
     
     if (!dir)
-	dir = NITROHACKDIR;
+	dir = NETHACKDIR;
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
@@ -156,7 +156,7 @@ static char** init_game_paths(const char *argv0)
     }
     
 #elif defined(WIN32)
-    dir = getenv("NITROHACKDIR");
+    dir = getenv("NETHACKDIR");
     if (!dir) {
 	strncpy(dirbuf, argv0, 1023);
 	pos = strrchr(dirbuf, '\\');
@@ -180,7 +180,7 @@ static char** init_game_paths(const char *argv0)
 	pathlist[DUMPPREFIX] = ".\\";
 #else
     /* avoid a trap for people trying to port this */
-#error You must run NitroHack under Win32 or Linux.
+#error You must run NetHack 4 under Win32 or Linux.
 #endif
     
     /* alloc memory for the paths and append slashes as required */
@@ -205,11 +205,13 @@ static void mainmenu(void)
     sprintf(verstr, "Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
     
     while (n > 0) {
-	if (COLS >= 100)
+	if (COLS >= 100) {
 	    nhlogo = nhlogo_large;
-	else
+	    logoheight = sizeof(nhlogo_large) / sizeof(nhlogo_large[0]);
+	} else {
 	    nhlogo = nhlogo_small;
-	logoheight = sizeof(nhlogo_small) / sizeof(nhlogo_small[0]);
+	    logoheight = sizeof(nhlogo_small) / sizeof(nhlogo_small[0]);
+        }
 	wclear(basewin);
 	wattron(basewin, A_BOLD | COLOR_PAIR(4));
 	for (i = 0; i < logoheight; i++) {

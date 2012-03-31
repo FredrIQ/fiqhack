@@ -1,7 +1,7 @@
 %{
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /*	Copyright (c) 1990 by M. Stephenson				  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 /*
  * This file contains the Dungeon Compiler code
@@ -595,7 +595,7 @@ int check_branch(void)
  *
  *	The file will have the following format:
  *
- *	[ nitrohack version ID ]
+ *	[ nethack version ID ]
  *	[ number of dungeons ]
  *	[ first dungeon struct ]
  *	[ levels for the first dungeon ]

@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011				  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NHCURSES_H
 #define NHCURSES_H
@@ -66,11 +66,11 @@ typedef wchar_t fnchar;
 #endif
 
 
-#include "nitrohack.h"
+#include "nethack.h"
 
 #ifdef NETCLIENT
 # define NHNET_TRANSPARENT
-# include "nitrohack_client.h"
+# include "nethack_client.h"
 #endif
 
 #ifndef PDCURSES
@@ -100,8 +100,8 @@ typedef wchar_t fnchar;
 #endif
 
 #ifdef AIMAKE_OPTION_datadir
-# ifndef NITROHACKDIR
-#  define NITROHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_datadir)
+# ifndef NETHACKDIR
+#  define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_datadir)
 #  ifndef STRINGIFY_OPTION
 #   define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
 #   define STRINGIFY_OPTION_1(x) #x
@@ -109,8 +109,8 @@ typedef wchar_t fnchar;
 # endif
 #endif
 
-#ifndef NITROHACKDIR
-#define NITROHACKDIR "/usr/share/NitroHack/"
+#ifndef NETHACKDIR
+#define NETHACKDIR "/usr/share/NetHack4/"
 #endif
 
 #define KEY_ESC 27
@@ -278,7 +278,7 @@ extern struct nh_player_info player;
 extern int initrole, initrace, initgend, initalign;
 extern nh_bool random_player;
 extern struct nh_cmd_desc *keymap[KEY_MAX];
-extern const char *nhlogo_small[12], *nhlogo_large[12];
+extern const char *nhlogo_small[12], *nhlogo_large[14];
 
 /*----------------------------------------------------------------------------*/
 

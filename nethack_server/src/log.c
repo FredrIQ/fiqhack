@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011. */
-/* The NitroHack server may be freely redistributed under the terms of either:
+/* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
  *  - the GNU General Public license v2 or later
  */

@@ -1,18 +1,18 @@
 # Data generated with 'makedefs'
-bpath:libnitrohack/dat/data: bpath:libnitrohack/util/makedefs path:libnitrohack/dat/data.base > libnitrohack/util/makedefs -d $SOURCEPATH(libnitrohack/dat/data.base) libnitrohack/dat/data
-bpath:libnitrohack/dat/dungeon.pdf: bpath:libnitrohack/util/makedefs path:libnitrohack/dat/dungeon.def > libnitrohack/util/makedefs -e $SOURCEPATH(libnitrohack/dat/dungeon.def) libnitrohack/dat/dungeon.pdf
-bpath:libnitrohack/dat/quest.dat: bpath:libnitrohack/util/makedefs path:libnitrohack/dat/quest.txt > libnitrohack/util/makedefs -q $SOURCEPATH(libnitrohack/dat/quest.txt) libnitrohack/dat/quest.dat
-bpath:libnitrohack/dat/rumors: bpath:libnitrohack/util/makedefs path:libnitrohack/dat/data.base > libnitrohack/util/makedefs -r $SOURCEPATH(libnitrohack/dat/rumors.tru) $SOURCEPATH(libnitrohack/dat/rumors.tru) libnitrohack/dat/rumors
-bpath:libnitrohack/dat/oracles: bpath:libnitrohack/util/makedefs path:libnitrohack/dat/oracles.txt > libnitrohack/util/makedefs -d $SOURCEPATH(libnitrohack/dat/oracles.txt) libnitrohack/dat/oracles
+bpath:libnethack/dat/data: bpath:libnethack/util/makedefs path:libnethack/dat/data.base > libnethack/util/makedefs -d $SOURCEPATH(libnethack/dat/data.base) libnethack/dat/data
+bpath:libnethack/dat/dungeon.pdf: bpath:libnethack/util/makedefs path:libnethack/dat/dungeon.def > libnethack/util/makedefs -e $SOURCEPATH(libnethack/dat/dungeon.def) libnethack/dat/dungeon.pdf
+bpath:libnethack/dat/quest.dat: bpath:libnethack/util/makedefs path:libnethack/dat/quest.txt > libnethack/util/makedefs -q $SOURCEPATH(libnethack/dat/quest.txt) libnethack/dat/quest.dat
+bpath:libnethack/dat/rumors: bpath:libnethack/util/makedefs path:libnethack/dat/data.base > libnethack/util/makedefs -r $SOURCEPATH(libnethack/dat/rumors.tru) $SOURCEPATH(libnethack/dat/rumors.tru) libnethack/dat/rumors
+bpath:libnethack/dat/oracles: bpath:libnethack/util/makedefs path:libnethack/dat/oracles.txt > libnethack/util/makedefs -d $SOURCEPATH(libnethack/dat/oracles.txt) libnethack/dat/oracles
 # Data generated with dungeon compiler
-bpath:libnitrohack/dat/dungeon: bpath:libnitrohack/util/dgn_main bpath:libnitrohack/dat/dungeon.pdf > libnitrohack/util/dgn_main libnitrohack/dat/dungeon.pdf
+bpath:libnethack/dat/dungeon: bpath:libnethack/util/dgn_main bpath:libnethack/dat/dungeon.pdf > libnethack/util/dgn_main libnethack/dat/dungeon.pdf
 # Data generated with level compiler is done in aimake.config, as it's a complex rule
 # nhdat has to be rebuild_late no matter what, so...
-bpath:libnitrohack/dat/nhdat: sys:rebuild_late bpath:libnitrohack/util/dlb_main > (cd libnitrohack/dat; ../util/dlb_main cf nhdat *.lev data dungeon oracles quest.dat rumors)
+bpath:libnethack/dat/nhdat: sys:rebuild_late bpath:libnethack/util/dlb_main > (cd libnethack/dat; ../util/dlb_main cf nhdat *.lev data dungeon oracles quest.dat rumors)
 
 # Install rules
-install_target:datadir/bpath:libnitrohack/dat/nhdat
-install_target:datadir/path:libnitrohack/dat/license
+install_target:datadir/bpath:libnethack/dat/nhdat
+install_target:datadir/path:libnethack/dat/license
 # TODO: When aimake supports it, we want sys:empty_file here instead
 install_target:statedir/path:/dev/null>logfile
 install_target:statedir/path:/dev/null>record

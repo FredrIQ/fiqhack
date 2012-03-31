@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "patchlevel.h"
@@ -175,7 +175,7 @@ void log_newgame(int logfd, unsigned long long start_time,
     else
 	role = roles[u.initrole].name.m;
 
-    lprintf("NHGAME inpr %08x NitroHack %d.%d.%d\n", 0, VERSION_MAJOR,
+    lprintf("NHGAME inpr %08x NetHack4 %d.%d.%d\n", 0, VERSION_MAJOR,
 	    VERSION_MINOR, PATCHLEVEL);
     
     base64_encode(plname, encbuf);

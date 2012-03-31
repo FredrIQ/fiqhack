@@ -1,5 +1,5 @@
 /* Copyright (c) David Cohrs, 1990.				  */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef EMIN_H
 #define EMIN_H

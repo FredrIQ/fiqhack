@@ -1,5 +1,5 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef HACK_H
 #define HACK_H
@@ -7,7 +7,7 @@
 #ifndef CONFIG_H
 #include "config.h"
 #endif
-#include "nitrohack.h"
+#include "nethack.h"
 
 /*	For debugging beta code.	*/
 #ifdef BETA

@@ -1,6 +1,6 @@
 %{
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 /*
  * This file contains the Level Compiler code
@@ -12,7 +12,7 @@
 
 #define MAX_REGISTERS	10
 #define ERR		(-1)
-/* many types of things are put in chars for transference to NitroHack.
+/* many types of things are put in chars for transference to NetHack.
  * since some systems will use signed chars, limit everybody to the
  * same number for portability.
  */

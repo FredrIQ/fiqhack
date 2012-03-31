@@ -1,4 +1,4 @@
-# build the curses window port for libnitrohack
+# build the curses window port for libnethack
 
 
 if (NOT WIN32)
@@ -50,57 +50,57 @@ if (WIN32)
     set (NH_CURSES_SRC ${NH_CURSES_SRC} rc/nh_ico.rc)
 endif ()
 
-include_directories (${NitroHack_SOURCE_DIR}/include
+include_directories (${NetHack4_SOURCE_DIR}/include
                      include)
 
-add_definitions(-DNITROHACKDIR="${DATADIR}")
+add_definitions(-DNETHACKDIR="${DATADIR}")
 if (ENABLE_NETCLIENT)
     add_definitions(-DNETCLIENT)
 endif ()
 
-link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
-link_directories (${NitroHack_BINARY_DIR}/libnitrohack_client)
-add_executable (nitrohack_curses ${NH_CURSES_SRC} )
-set_target_properties(nitrohack_curses PROPERTIES OUTPUT_NAME nitrohack )
-target_link_libraries(nitrohack_curses nitrohack m)
+link_directories (${NetHack4_BINARY_DIR}/libnethack/src)
+link_directories (${NetHack4_BINARY_DIR}/libnethack_client)
+add_executable (nethack_curses ${NH_CURSES_SRC} )
+set_target_properties(nethack_curses PROPERTIES OUTPUT_NAME nethack )
+target_link_libraries(nethack_curses nethack m)
 
 if (USE_PDCURSES)
-    target_link_libraries (nitrohack_curses ${PDCURSES_LIBNAME})
+    target_link_libraries (nethack_curses ${PDCURSES_LIBNAME})
 else ()
     if (APPLE)
-        target_link_libraries (nitrohack_curses ncurses)
+        target_link_libraries (nethack_curses ncurses)
         add_definitions (-DHOMEBREW_CURSES)
     else ()
-        target_link_libraries (nitrohack_curses ncursesw)
+        target_link_libraries (nethack_curses ncursesw)
     endif ()
 endif ()
 
 if (ENABLE_NETCLIENT)
-    add_dependencies (nitrohack_curses libnitrohack_client)
-    target_link_libraries (nitrohack_curses nitrohack_client)
-    # this is a kludge; these libraries are required by libnitrohack_client, but
+    add_dependencies (nethack_curses libnethack_client)
+    target_link_libraries (nethack_curses nethack_client)
+    # this is a kludge; these libraries are required by libnethack_client, but
     # for static linking they must be specified here. I couldn't figure out how
-    # to set the dependencies from the libnitrohack_client CMakeLists.txt
+    # to set the dependencies from the libnethack_client CMakeLists.txt
     if (ALL_STATIC)
-	target_link_libraries(nitrohack_curses jansson)
+	target_link_libraries(nethack_curses jansson)
 	if (WIN32)
-	    target_link_libraries(nitrohack_curses Ws2_32)
+	    target_link_libraries(nethack_curses Ws2_32)
 	endif ()
     endif()
 endif ()
 
 
-add_dependencies (nitrohack_curses libnitrohack)
+add_dependencies (nethack_curses libnethack)
 
 if (UNIX)
-    add_custom_command(OUTPUT nitrohack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${LIBDIR} ${BINDIR}/nitrohack $@" >> nitrohack.sh
+    add_custom_command(OUTPUT nethack.sh
+                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${LIBDIR} ${BINDIR}/nethack $@" >> nethack.sh
                        VERBATIM)
-    add_custom_target(nitrohack_curses_shell_script ALL
-                      DEPENDS nitrohack.sh)
-    install(PROGRAMS ${NitroHack_BINARY_DIR}/nitrohack/nitrohack.sh
-            DESTINATION ${SHELLDIR} RENAME nitrohack)
+    add_custom_target(nethack_curses_shell_script ALL
+                      DEPENDS nethack.sh)
+    install(PROGRAMS ${NetHack4_BINARY_DIR}/nethack/nethack.sh
+            DESTINATION ${SHELLDIR} RENAME nethack)
 endif()
 
-install(TARGETS nitrohack_curses
+install(TARGETS nethack_curses
         DESTINATION ${BINDIR})

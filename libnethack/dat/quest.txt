@@ -1,7 +1,7 @@
 #	Copyright (c) 1991 by M. Stephenson
-# NitroHack may be freely redistributed.  See license for details.
+# NetHack may be freely redistributed.  See license for details.
 #
-#	The quest text file for NitroHack 3.4
+#	The quest text file for NetHack 3.4
 #
 #	These are the "standard" message numbers from qtext.h.  All class
 #	dialogue must have at least these entries.

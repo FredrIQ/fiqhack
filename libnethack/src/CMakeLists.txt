@@ -1,6 +1,6 @@
-# src/CMakeLists.txt : build libnitrohack
+# src/CMakeLists.txt : build libnethack
 
-set (LIBNITROHACK_SRC
+set (LIBNETHACK_SRC
     allmain.c  apply.c    artifact.c attrib.c   ball.c    bones.c
     botl.c     cmd.c      dbridge.c  decl.c     detect.c  dig.c      display.c
     dlb.c      do.c       dog.c      dogmove.c  dokick.c  do_name.c  dothrow.c
@@ -17,11 +17,11 @@ set (LIBNITROHACK_SRC
     uhitm.c    u_init.c   vault.c    version.c  vision.c  weapon.c   were.c
     wield.c    windows.c  wizard.c   worm.c     worn.c    write.c    xmalloc.c zap.c
     )
-set (LIBNITROHACK_GENERATED_SRC
+set (LIBNETHACK_GENERATED_SRC
     ${LNH_SRC_GEN}/monstr.c
     )
 
-set_source_files_properties(${LIBNITROHACK_GENERATED_SRC} GENERATED)
+set_source_files_properties(${LIBNETHACK_GENERATED_SRC} GENERATED)
 
 get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 
@@ -32,14 +32,14 @@ add_custom_command (OUTPUT ${LNH_SRC_GEN}/monstr.c
                     DEPENDS makedefs)
 
 include_directories (
-    ${NitroHack_SOURCE_DIR}/libnitrohack/include
-    ${NitroHack_SOURCE_DIR}/include
-    ${NitroHack_BINARY_DIR}/libnitrohack/include )
+    ${NetHack4_SOURCE_DIR}/libnethack/include
+    ${NetHack4_SOURCE_DIR}/include
+    ${NetHack4_BINARY_DIR}/libnethack/include )
 
-add_library(libnitrohack ${LIB_TYPE} ${LIBNITROHACK_SRC} ${LIBNITROHACK_GENERATED_SRC})
-set_target_properties(libnitrohack PROPERTIES OUTPUT_NAME nitrohack )
+add_library(libnethack ${LIB_TYPE} ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
+set_target_properties(libnethack PROPERTIES OUTPUT_NAME nethack )
 
-add_dependencies (libnitrohack makedefs_headers)
+add_dependencies (libnethack makedefs_headers)
 
-install(TARGETS libnitrohack
+install(TARGETS libnethack
         DESTINATION ${LIBDIR})

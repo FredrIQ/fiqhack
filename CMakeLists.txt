@@ -1,7 +1,7 @@
-# CMakeLists.txt for NitroHack 4.0.0
+# CMakeLists.txt for NetHack4 4.2.0
 
 cmake_minimum_required (VERSION 2.6)
-project (NitroHack)
+project (NetHack4)
 
 if (WIN32)
     set(INSTALL_BASE "$ENV{USERPROFILE}")
@@ -9,24 +9,24 @@ else ()
     set(INSTALL_BASE "$ENV{HOME}")
 endif ()
 
-# default installation paths in $HOME/nitrohack
+# default installation paths in $HOME/nethack4
 if (NOT BINDIR)
-    set (BINDIR "${INSTALL_BASE}/nitrohack/nitrohack-data"
+    set (BINDIR "${INSTALL_BASE}/nethack4/nethack4-data"
          CACHE PATH "binary location" )
 endif()
 
 if (NOT LIBDIR)
-    set (LIBDIR "${INSTALL_BASE}/nitrohack/nitrohack-data"
+    set (LIBDIR "${INSTALL_BASE}/nethack4/nethack4-data"
          CACHE PATH "library location" )
 endif()
 
 if (NOT DATADIR)
-    set (DATADIR "${INSTALL_BASE}/nitrohack/nitrohack-data"
+    set (DATADIR "${INSTALL_BASE}/nethack4/nethack4-data"
          CACHE PATH "data location" )
 endif()
 
 if (NOT SHELLDIR)
-    set (SHELLDIR "${INSTALL_BASE}/nitrohack"
+    set (SHELLDIR "${INSTALL_BASE}/nethack4"
          CACHE PATH "launch script location" )
 endif()
 
@@ -38,11 +38,11 @@ else ()
     set (LIB_TYPE STATIC)
 endif ()
 
-# NitroHack server currently uses several Linux-specific apis.
+# NetHack4 server currently uses several Linux-specific apis.
 # Generalizing the code to the point where it will work on other systems
 # is not impossible, but the work has not been done.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set (ENABLE_SERVER TRUE CACHE BOOL "Build the NitroHack network server")
+    set (ENABLE_SERVER TRUE CACHE BOOL "Build the NetHack4 network server")
 else ()
     set (ENABLE_SERVER FALSE)
 endif ()
@@ -56,15 +56,15 @@ if (CMAKE_COMPILER_IS_GNUCC)
     endif ()
 endif ()
 
-# nitrohack core
-add_subdirectory (libnitrohack)
+# nethack4 core
+add_subdirectory (libnethack)
 
-# nitrohack network client
-add_subdirectory (libnitrohack_client)
+# nethack4 network client
+add_subdirectory (libnethack_client)
 
-# nitrohack text ui
-add_subdirectory (nitrohack)
+# nethack4 text ui
+add_subdirectory (nethack)
 
 if (ENABLE_SERVER)
-    add_subdirectory (nitrohack_server)
+    add_subdirectory (nethack_server)
 endif ()

@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011. */
-/* The NitroHack server may be freely redistributed under the terms of either:
+/* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
  *  - the GNU General Public license v2 or later
  */
@@ -12,8 +12,8 @@
 
 /* copied from nhcurses.h */
 #ifdef AIMAKE_OPTION_datadir
-# ifndef NITROHACKDIR
-#  define NITROHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_datadir)
+# ifndef NETHACKDIR
+#  define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_datadir)
 # endif
 #endif
 #ifndef STRINGIFY_OPTION
@@ -22,8 +22,8 @@
 #endif
 
 
-#ifndef NITROHACKDIR
-#define NITROHACKDIR "/usr/share/NitroHack/"
+#ifndef NETHACKDIR
+#define NETHACKDIR "/usr/share/NetHack4/"
 #endif
 
 static int infd, outfd;
@@ -40,13 +40,13 @@ static char** init_game_paths(void)
     int i, len;
     
     if (getgid() == getegid()) {
-	dir = getenv("NITROHACKDIR");
+	dir = getenv("NETHACKDIR");
 	if (!dir)
 	    dir = getenv("HACKDIR");
     }
     
     if (!dir)
-	dir = NITROHACKDIR;
+	dir = NETHACKDIR;
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
@@ -266,7 +266,7 @@ static void client_main_loop(void)
  * The server process has accepted a connection and authenticated it. Data from
  * the client will arrive here via infd and data that should be sent back goes
  * through outfd.
- * An instance of NitroHack will run in this process under the control of the
+ * An instance of NetHack will run in this process under the control of the
  * remote player. 
  */
 void client_main(int userid, int _infd, int _outfd)

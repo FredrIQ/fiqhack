@@ -1,8 +1,8 @@
 #ifndef NHCLIENT_H
 #define NHCLIENT_H
 
-#include "nitrohack.h"
-#include "nitrohack_client.h"
+#include "nethack.h"
+#include "nethack_client.h"
 
 #include <stdio.h>
 #include <stdlib.h>

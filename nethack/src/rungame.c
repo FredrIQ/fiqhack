@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <fcntl.h>
@@ -31,7 +31,7 @@ nh_bool get_gamedir(enum game_dirs dirtype, wchar_t *buf)
 	case LOG_DIR:    subdir = L"\\log\\"; break;
     }
     
-    snwprintf(nhPath, MAX_PATH, L"%s\\NitroHack", appPath);
+    snwprintf(nhPath, MAX_PATH, L"%s\\NetHack4", appPath);
     _wmkdir(nhPath);
     
     snwprintf(buf, BUFSZ, L"%s%s", nhPath, subdir);
@@ -57,12 +57,12 @@ nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
     /* look in regular location */
     envval = getenv("XDG_CONFIG_HOME");
     if (envval)
-	snprintf(buf, BUFSZ, "%s/NitroHack/%s", envval, subdir);
+	snprintf(buf, BUFSZ, "%s/NetHack4/%s", envval, subdir);
     else {
 	envval = getenv("HOME");
 	if (!envval) /* HOME not set? just give up... */
 	    return FALSE;
-	snprintf(buf, BUFSZ, "%s/.config/NitroHack/%s", envval, subdir);
+	snprintf(buf, BUFSZ, "%s/.config/NetHack4/%s", envval, subdir);
     }
     
     mask = umask(0);

@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <signal.h>
@@ -55,7 +55,7 @@ void init_curses_ui(void)
     set_term(curses_scr);
     
     if (LINES < 24 || COLS < COLNO) {
-	fprintf(stderr, "Sorry, your terminal is too small for NitroHack. Current: (%x, %x)\n", COLS, LINES);
+	fprintf(stderr, "Sorry, your terminal is too small for NetHack 4. Current: (%x, %x)\n", COLS, LINES);
 	endwin();
 	exit(0);
     }
@@ -79,7 +79,7 @@ void init_curses_ui(void)
     basewin = stdscr;
 
 #if defined(PDCURSES)
-    PDC_set_title("NitroHack");
+    PDC_set_title("NetHack 4");
 #if defined(WIN32)
     /* Force the console to use codepage 437. This seems to be the default
      * on european windows, but not on asian systems. Aparrently there is no

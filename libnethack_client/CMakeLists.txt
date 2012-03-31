@@ -1,4 +1,4 @@
-# network client library for nitrohack
+# network client library for nethack
 
 if (WIN32)
     set (JANSSON_INC_DIR "" CACHE PATH "Location of the jansson JSON headers")
@@ -8,28 +8,28 @@ if (WIN32)
 endif ()
 
 
-set (LIBNITROHACK_CLIENT_SRC
+set (LIBNETHACK_CLIENT_SRC
     src/clientapi.c
     src/connection.c
     src/netcmd.c
-    ${NitroHack_SOURCE_DIR}/libnitrohack/src/xmalloc.c
+    ${NetHack4_SOURCE_DIR}/libnethack/src/xmalloc.c
     )
 
-include_directories (${NitroHack_SOURCE_DIR}/include
+include_directories (${NetHack4_SOURCE_DIR}/include
                      include)
 
-link_directories (${NitroHack_BINARY_DIR}/libnitrohack/src)
-add_library(libnitrohack_client ${LIB_TYPE} ${LIBNITROHACK_CLIENT_SRC})
-set_target_properties(libnitrohack_client PROPERTIES OUTPUT_NAME nitrohack_client)
+link_directories (${NetHack4_BINARY_DIR}/libnethack/src)
+add_library(libnethack_client ${LIB_TYPE} ${LIBNETHACK_CLIENT_SRC})
+set_target_properties(libnethack_client PROPERTIES OUTPUT_NAME nethack_client)
 
 if (NOT ALL_STATIC)
-    target_link_libraries(libnitrohack_client nitrohack jansson)
+    target_link_libraries(libnethack_client nethack jansson)
     if (WIN32)
-	target_link_libraries(libnitrohack_client Ws2_32)
+	target_link_libraries(libnethack_client Ws2_32)
     endif ()
 endif ()
 
-add_dependencies (libnitrohack_client libnitrohack)
+add_dependencies (libnethack_client libnethack)
 
-install(TARGETS libnitrohack_client
+install(TARGETS libnethack_client
         DESTINATION ${BINDIR})

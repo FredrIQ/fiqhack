@@ -1,7 +1,7 @@
 /* Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
-#include "nitrohack_types.h"
+#include "nethack_types.h"
 #include "config.h"
 #include "dlb.h"
 
@@ -9,7 +9,7 @@
 extern FILE *fopen_datafile(const char *,const char *,int);
 
 /*
- * Data librarian.  Present a STDIO-like interface to NitroHack while
+ * Data librarian.  Present a STDIO-like interface to NetHack while
  * multiplexing on one or more "data libraries".  If a file is not found
  * in a given library, look for it outside the libraries.
  */
@@ -39,7 +39,7 @@ typedef struct dlb_procs {
  *
  * The ability to open more than one library is supported but used
  * only in the Amiga port (the second library holds the sound files).
- * For Unix, the idea would be to split the NitroHack library
+ * For Unix, the idea would be to split the NetHack library
  * into text and binary parts, where the text version could be shared.
  */
 

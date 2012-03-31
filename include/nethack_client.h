@@ -1,12 +1,12 @@
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
-#ifndef NITROHACK_CLIENT_H
-#define NITROHACK_CLIENT_H
+#ifndef NETHACK_CLIENT_H
+#define NETHACK_CLIENT_H
 
-#include "nitrohack_types.h"
+#include "nethack_types.h"
 
 #if !defined(STATIC_BUILD)
-#if defined (libnitrohack_client_EXPORTS)/* defined by cmake */
+#if defined (libnethack_client_EXPORTS)/* defined by cmake */
 # if defined (_MSC_VER)
 #  define EXPORT __declspec(dllexport)
 # else /* gcc & clang with -fvisibility=hidden need this for exported syms */
@@ -87,7 +87,7 @@ extern EXPORT int nhnet_change_password(const char *password);
 
 #undef EXPORT
 
-#if defined(NHNET_TRANSPARENT) && !defined(libnitrohack_client_EXPORTS)
+#if defined(NHNET_TRANSPARENT) && !defined(libnethack_client_EXPORTS)
 # define nh_command		nhnet_command
 # define nh_exit_game		nhnet_exit_game
 # define nh_view_replay_start	nhnet_view_replay_start

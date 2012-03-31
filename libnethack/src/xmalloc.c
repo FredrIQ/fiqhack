@@ -1,5 +1,5 @@
 /* Copyright (c) Daniel Thaler, 2011. */
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
 #include <stdlib.h>
 
@@ -9,7 +9,7 @@ void xmalloc_cleanup(void);
 /* malloc wrapper functions for "external" memory allocations
  * 
  * The idea is to avoid a transfer of responsibility for freeing memory to to
- * callers of libnitrohack api functions. This would require clearly stating
+ * callers of libnethack api functions. This would require clearly stating
  * which pointers refer to heap-allocated memory (requiring free) and which are
  * statically allocated. This seems undesirable.
  * 

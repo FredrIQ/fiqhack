@@ -1,21 +1,21 @@
-/* NitroHack may be freely redistributed.  See license for details. */
+/* NetHack may be freely redistributed.  See license for details. */
 
-/* this header defines the interface between libnitrohack and window ports
+/* this header defines the interface between libnethack and window ports
  * it should never include any private headers, as those are not on the
  * search path for window ports. */
 
-#ifndef NITROHACK_H
-#define NITROHACK_H
+#ifndef NETHACK_H
+#define NETHACK_H
 
-/* NitroHack 4.0.2 */
+/* NetHack 4.2.0. Keep this consistent with patchlevel.h. */
 #define VERSION_MAJOR	4
-#define VERSION_MINOR	0
-#define PATCHLEVEL	2
+#define VERSION_MINOR	2
+#define PATCHLEVEL	0
 
-#include "nitrohack_types.h"
+#include "nethack_types.h"
 
 #if !defined(STATIC_BUILD)
-# if defined (libnitrohack_EXPORTS)/* defined by cmake while building libnitrohack */
+# if defined (libnethack_EXPORTS)/* defined by cmake while building libnethack */
 #  if defined (_MSC_VER)
 #   define EXPORT __declspec(dllexport)
 #  else /* gcc & clang with -fvisibility=hidden need this for exported syms */
@@ -32,8 +32,6 @@
 #else
 # define EXPORT
 #endif
-
-/* Also change libnitrohack.api-shared if you update this list! */
 
 /* allmain.c */
 extern EXPORT void nh_lib_init(const struct nh_window_procs *, char **paths);
