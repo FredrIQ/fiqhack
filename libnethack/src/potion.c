@@ -6,6 +6,8 @@
 boolean notonhead = FALSE;
 
 static int nothing, unkn;
+static const char beverages_and_fountains[] =
+    { ALLOW_NONE, NONE_ON_COMMA, POTION_CLASS, 0 };
 static const char beverages[] = { POTION_CLASS, 0 };
 
 static long itimeout(long);
@@ -298,6 +300,7 @@ static void ghost_from_bottle(void)
 int dodrink(struct obj *potion)
 {
 	const char *potion_descr;
+        void (*terrain)(void) = 0;
 
 	if (Strangled) {
 		pline("If you can't breathe air, how can you drink liquid?");
@@ -305,32 +308,35 @@ int dodrink(struct obj *potion)
 	}
 	/* Is there a fountain to drink from here? */
 	if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !Levitation) {
-		if (yn("Drink from the fountain?") == 'y') {
-			drinkfountain();
-			return 1;
-		}
+            terrain = drinkfountain;
 	}
 	/* Or a kitchen sink? */
 	if (IS_SINK(level->locations[u.ux][u.uy].typ)) {
-		if (yn("Drink from the sink?") == 'y') {
-			drinksink();
-			return 1;
-		}
+            terrain = drinksink;
 	}
 
 	/* Or are you surrounded by water? */
 	if (Underwater) {
 		if (yn("Drink the water around you?") == 'y') {
-		    pline("Do you know what lives in this water!");
+		    pline("Do you know what lives in this water?!");
 			return 1;
 		}
 	}
 
-	if (potion && !validate_object(potion, beverages, "drink"))
-		return 0;
+	if (potion && !validate_object(
+                potion, terrain ? beverages_and_fountains : beverages, "drink"))
+            return 0;
 	else if (!potion)
-		potion = getobj(beverages, "drink");
+            potion = getobj(terrain ? beverages_and_fountains : beverages,
+                            "drink");
 	if (!potion) return 0;
+
+        if (potion == &zeroobj) {
+            if (!terrain) return 0; /* sanity; should be impossible */
+            terrain();
+            return 1;
+        }
+
 	potion->in_use = TRUE;		/* you've opened the stopper */
 
 #define POTION_OCCUPANT_CHANCE(n) (13 + 2*(n))	/* also in muse.c */
