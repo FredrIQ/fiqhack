@@ -630,7 +630,9 @@ static char *doname_base(const struct obj *obj, boolean with_price)
                   objects[i].oc_weight == objects[obj->otyp].oc_weight)
                 id = FALSE;
             }
-            if (id) makeknown(obj->otyp);
+            /* tallow candles are unique by this check, wax ones
+               aren't; special-case wax candles to make it consistent */
+            if (id || obj->otyp == WAX_CANDLE) makeknown(obj->otyp);
           }
         }
 

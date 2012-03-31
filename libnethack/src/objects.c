@@ -439,7 +439,7 @@ GLOVES("leather gloves", "old gloves",
 GLOVES("gauntlets of fumbling", "padded gloves",
 		0, 1,  FUMBLING,   8, 1, 10, 50,  9, 0, LEATHER, HI_LEATHER),
 GLOVES("gauntlets of power", "riding gloves",
-		0, 1,  0,	   8, 1, 30, 50,  9, 0, IRON, CLR_BROWN),
+		0, 1,  0,	   8, 1, 10, 50,  9, 0, IRON, CLR_BROWN),
 GLOVES("gauntlets of dexterity", "fencing gloves",
 		0, 1,  0,	   8, 1, 10, 50,  9, 0, LEATHER, HI_LEATHER),
 
