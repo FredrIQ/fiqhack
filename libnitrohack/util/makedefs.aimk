@@ -1,0 +1,7 @@
+# Use 'makedefs' to generate header files. date.h is rebuilt every compile; the others only on change.
+bpath:libnitrohack/include/date.h: bpath:libnitrohack/util/makedefs sys:always_rebuild > libnitrohack/util/makedefs -v libnitrohack/include/date.h
+bpath:libnitrohack/include/verinfo.h: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -w libnitrohack/include/verinfo.h
+bpath:libnitrohack/include/onames.h: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -o libnitrohack/include/onames.h
+bpath:libnitrohack/include/pm.h: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -p libnitrohack/include/pm.h
+# Use 'makedefs' to generate source files.
+bpath:libnitrohack/src/monstr.c: bpath:libnitrohack/util/makedefs > libnitrohack/util/makedefs -m libnitrohack/src/monstr.c

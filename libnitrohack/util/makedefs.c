@@ -53,7 +53,7 @@ int main(int,char **);
 void do_objs(const char *);
 void do_data(const char *,const char *);
 void do_dungeon(const char *,const char *);
-void do_date(const char *);
+void do_date(const char *,int);
 void do_monstr(const char *);
 void do_permonst(const char *);
 void do_questtxt(const char *,const char *);
@@ -98,6 +98,7 @@ static const char *usage_info[] = {
     "       %s -e [IN (dungeon.def)] [OUT (dungeon.pdf)]\n",
     "       %s -m [OUT (monstr.c)]\n",
     "       %s -v [OUT (date.h)] [OUT (options)]\n",
+    "       %s -w [OUT (verinfo.h)] [OUT (options)]\n",
     "       %s -p [OUT (permonst.h)]\n",
     "       %s -q [IN (quest.txt)] [OUT (quest.dat)]\n",
     "       %s -r [IN (rumors.tru)] [IN (rumors.fal)] [OUT (rumors)]\n",
@@ -155,7 +156,13 @@ int main(int argc, char	*argv[])
 	    case 'v':
 	    case 'V':
 		if (argc != 3) usage(argv[0], argv[1][1], 3);
-		do_date(argv[2]);
+		do_date(argv[2], 1);
+		    break;
+
+	    case 'w':
+	    case 'W':
+		if (argc != 3) usage(argv[0], argv[1][1], 3);
+		do_date(argv[2], 0);
 		    break;
 		    
 	    case 'p':
@@ -324,7 +331,7 @@ static char *version_id_string(char *outbuf, const char *build_date)
 }
 
 
-void do_date(const char *outfile)
+void do_date(const char *outfile, int printdates)
 {
 	time_t clocktim = 0;
 	char *c, cbuf[60], buf[BUFSZ];
@@ -339,9 +346,11 @@ void do_date(const char *outfile)
 	strcpy(cbuf, ctime((time_t *)&clocktim));
 	for (c = cbuf; *c; c++) if (*c == '\n') break;
 	*c = '\0';	/* strip off the '\n' */
-	fprintf(ofp,"#define BUILD_DATE \"%s\"\n", cbuf);
-	fprintf(ofp,"#define BUILD_TIME (%ldL)\n", clocktim);
-	fprintf(ofp,"\n");
+        if (printdates) {
+          fprintf(ofp,"#define BUILD_DATE \"%s\"\n", cbuf);
+          fprintf(ofp,"#define BUILD_TIME (%ldL)\n", clocktim);
+          fprintf(ofp,"\n");
+        }
 	
 	fprintf(ofp,"#define VERSION_NUMBER 0x%08xU\n",
 		version.incarnation);

@@ -9,7 +9,7 @@
 /* although, why don't we move those special defines here.. and in dgn_main? */
 
 #include "hack.h"
-#include "date.h"
+#include "verinfo.h"
 #include "sp_lev.h"
 #ifdef STRICT_REF_DEF
 #include "tcap.h"

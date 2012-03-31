@@ -10,6 +10,21 @@
 
 #define COMMBUF_SIZE (1024 * 1024)
 
+/* copied from nhcurses.h */
+#ifdef AIMAKE_OPTION_datadir
+# ifndef NITROHACKDIR
+#  define NITROHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_datadir)
+# endif
+#endif
+#ifndef STRINGIFY_OPTION
+# define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+# define STRINGIFY_OPTION_1(x) #x
+#endif
+
+
+#ifndef NITROHACKDIR
+#define NITROHACKDIR "/usr/share/NitroHack/"
+#endif
 
 static int infd, outfd;
 int gamefd;
@@ -35,6 +50,17 @@ static char** init_game_paths(void)
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
+
+#ifdef AIMAKE_OPTION_statedir
+    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[DUMPPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+#endif
+#ifdef AIMAKE_OPTION_specificlockdir
+    pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
+#endif
+    /* and leave HACKDIR to provide the data */
     
     /* alloc memory for the paths and append slashes as required */
     for (i = 0; i < PREFIX_COUNT; i++) {

@@ -4,6 +4,8 @@
 #ifndef NTCONF_H
 #define NTCONF_H
 
+#ifdef WIN32
+
 /*
  * -----------------------------------------------------------------
  *  The remaining code shouldn't need modification.
@@ -53,5 +55,7 @@
 # define YY_NO_UNISTD_H
 # define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 #endif
+
+#endif /* WIN32 */
 
 #endif /* NTCONF_H */

@@ -3,12 +3,17 @@
 
 /*
  * System autodetection: greatly simplified, as we only care about
- * Unix (in all its variations) and Windows */
-#define UNIX
-#ifdef WIN32
-# undef UNIX
-# define STRNCMPI
-# define STRCMPI
+ * Unix (in all its variations) and Windows
+ * aimake sets UNIX/WIN32; CMake just sets UNIX, and only
+ * sometimes :)
+ */
+#ifndef UNIX
+# define UNIX
+# ifdef WIN32
+#  undef UNIX
+#  define STRNCMPI
+#  define STRCMPI
+# endif
 #endif
 
 #ifndef TRUE	/* defined in some systems' native include files */

@@ -99,6 +99,16 @@ typedef wchar_t fnchar;
 # define min(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
+#ifdef AIMAKE_OPTION_datadir
+# ifndef NITROHACKDIR
+#  define NITROHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_datadir)
+#  ifndef STRINGIFY_OPTION
+#   define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+#   define STRINGIFY_OPTION_1(x) #x
+#  endif
+# endif
+#endif
+
 #ifndef NITROHACKDIR
 #define NITROHACKDIR "/usr/share/NitroHack/"
 #endif

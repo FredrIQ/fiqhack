@@ -33,6 +33,8 @@
 # define EXPORT
 #endif
 
+/* Also change libnitrohack.api-shared if you update this list! */
+
 /* allmain.c */
 extern EXPORT void nh_lib_init(const struct nh_window_procs *, char **paths);
 extern EXPORT void nh_lib_exit(void);

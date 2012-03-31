@@ -132,6 +132,21 @@ static char** init_game_paths(const char *argv0)
     
     for (i = 0; i < PREFIX_COUNT; i++)
 	pathlist[i] = dir;
+
+#ifndef STRINGIFY_OPTION
+#define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+#define STRINGIFY_OPTION_1(x) #x
+#endif
+#ifdef AIMAKE_OPTION_statedir
+    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+#endif
+#ifdef AIMAKE_OPTION_specificlockdir
+    pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
+#endif
+    /* and leave HACKDIR to provide the data */
+
     pathlist[DUMPPREFIX] = malloc(BUFSZ);
     if (!get_gamedir(DUMP_DIR, pathlist[DUMPPREFIX])) {
       free(pathlist[DUMPPREFIX]);

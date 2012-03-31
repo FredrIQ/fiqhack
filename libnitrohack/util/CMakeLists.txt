@@ -30,6 +30,7 @@ set ( MAKEDEFS_HEADERS
     ${LNH_INC_GEN}/date.h
     ${LNH_INC_GEN}/onames.h
     ${LNH_INC_GEN}/pm.h
+    ${LNH_INC_GEN}/verinfo.h
     )
 set ( DLB_SRC
     dlb_main.c
@@ -58,7 +59,12 @@ add_custom_command (OUTPUT ${LNH_INC_GEN}/date.h
                     COMMAND ${MAKEDEFS_BIN}
                     ARGS -v ${LNH_INC_GEN}/date.h
                     DEPENDS makedefs)
-                    
+
+add_custom_command (OUTPUT ${LNH_INC_GEN}/verinfo.h
+                    COMMAND ${MAKEDEFS_BIN}
+                    ARGS -w ${LNH_INC_GEN}/verinfo.h
+                    DEPENDS makedefs)
+
 add_custom_command (OUTPUT ${LNH_INC_GEN}/onames.h
                     COMMAND ${MAKEDEFS_BIN}
                     ARGS -o ${LNH_INC_GEN}/onames.h

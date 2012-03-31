@@ -1,0 +1,4 @@
+# We install only two executables.
+install_target:bindir/bpath:nitrohack/src/main>nitrohack
+install_target:bindir/bpath:nitrohack_server/src/srvmain>nitrohack-server
+
