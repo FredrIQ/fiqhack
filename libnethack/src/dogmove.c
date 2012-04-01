@@ -207,7 +207,7 @@ static boolean cursed_object_at(int x, int y)
 	return FALSE;
 }
 
-int dog_nutrition(struct monst *mtmp, struct obj *obj)
+static int dog_nutrition_value(struct monst *mtmp, struct obj *obj, boolean set_meating)
 {
 	int nutrit;
 
@@ -217,10 +217,10 @@ int dog_nutrition(struct monst *mtmp, struct obj *obj)
 	 */
 	if (obj->oclass == FOOD_CLASS) {
 	    if (obj->otyp == CORPSE) {
-		mtmp->meating = 3 + (mons[obj->corpsenm].cwt >> 6);
+                if (set_meating) mtmp->meating = 3 + (mons[obj->corpsenm].cwt >> 6);
 		nutrit = mons[obj->corpsenm].cnutrit;
 	    } else {
-		mtmp->meating = objects[obj->otyp].oc_delay;
+		if (set_meating) mtmp->meating = objects[obj->otyp].oc_delay;
 		nutrit = objects[obj->otyp].oc_nutrition;
 	    }
 	    switch(mtmp->data->msize) {
@@ -237,8 +237,8 @@ int dog_nutrition(struct monst *mtmp, struct obj *obj)
 		nutrit = eaten_stat(nutrit, obj);
 	    }
 	} else if (obj->oclass == COIN_CLASS) {
-	    mtmp->meating = (int)(obj->quan/2000) + 1;
-	    if (mtmp->meating < 0) mtmp->meating = 1;
+	    if (set_meating) mtmp->meating = (int)(obj->quan/2000) + 1;
+	    if (set_meating && mtmp->meating < 0) mtmp->meating = 1;
 	    nutrit = (int)(obj->quan/20);
 	    if (nutrit < 0) nutrit = 0;
 	} else {
@@ -247,10 +247,15 @@ int dog_nutrition(struct monst *mtmp, struct obj *obj)
 	     * nutrit made consistent with polymorphed player nutrit in
 	     * eat.c.  (This also applies to pets eating gold.)
 	     */
-	    mtmp->meating = obj->owt/20 + 1;
+	    if (set_meating) mtmp->meating = obj->owt/20 + 1;
 	    nutrit = 5*objects[obj->otyp].oc_nutrition;
 	}
 	return nutrit;
+}
+
+int dog_nutrition(struct monst *mtmp, struct obj *obj)
+{
+    return dog_nutrition_value(mtmp, obj, TRUE);
 }
 
 /* returns 2 if pet dies, otherwise 1 */
@@ -262,7 +267,7 @@ int dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 
 	if (edog->hungrytime < moves)
 	    edog->hungrytime = moves;
-	nutrit = dog_nutrition(mtmp, obj);
+	nutrit = dog_nutrition_value(mtmp, obj, FALSE);
 	poly = polyfodder(obj);
 	grow = mlevelgain(obj);
 	heal = mhealup(obj);
