@@ -1531,6 +1531,13 @@ static void fpostfx(struct obj *otmp)
  * return 0 if the food was not dangerous.
  * return 1 if the food was dangerous and you chose to stop.
  * return 2 if the food was dangerous and you chose to eat it anyway.
+ *
+ * Now triggers on all eating, but gives only vague information and is
+ * overly cautious without edibility turned on. The general rule is that
+ * edibility can magically check things that would require knowledge of
+ * user-invisible information, without it it has to go on public info.
+ * (An exception's made for age, where it's overly cautious rather than
+ * leaving it out altogether to help avoid instadeath accidents.)
  */
 static int edibility_prompts(struct obj *otmp)
 {
@@ -1551,7 +1558,10 @@ static int edibility_prompts(struct obj *otmp)
 	sprintf(eat_it_anyway, "Eat %s anyway?",
 		(otmp->quan == 1L) ? "it" : "one");
 
-	if (cadaver || otmp->otyp == EGG || otmp->otyp == TIN) {
+        /* edibility's needed to ID the contents of eggs and tins */
+        if (cadaver ||
+            (otmp->otyp == EGG && u.uedibility) ||
+            (otmp->otyp == TIN && u.uedibility)) {
 		/* These checks must match those in eatcorpse() */
 		stoneorslime = (touch_petrifies(&mons[mnum]) &&
 				!Stone_resistance &&
@@ -1566,8 +1576,8 @@ static int edibility_prompts(struct obj *otmp)
 			/* worst case rather than random
 			   in this calculation to force prompt */
 			rotted = (moves - age)/(10L + 0 /* was rn2(20) */);
-			if (otmp->cursed) rotted += 2L;
-			else if (otmp->blessed) rotted -= 2L;
+			if (otmp->cursed && u.uedibility) rotted += 2L;
+			else if (otmp->blessed && u.uedibility) rotted -= 2L;
 		}
 	}
 
@@ -1576,7 +1586,11 @@ static int edibility_prompts(struct obj *otmp)
 	 * order from most detrimental to least detrimental.
 	 */
 
-	if (cadaver && mnum != PM_ACID_BLOB && rotted > 5L && !Sick_resistance) {
+        /* without edibility, you don't know BCU, so deduct 2 in case
+           it's cursed */
+	if (cadaver && mnum != PM_ACID_BLOB &&
+            rotted > (u.uedibility ? 5L : 3L) &&
+            !Sick_resistance) {
 		/* Tainted meat */
 		sprintf(buf, "%s like %s could be tainted! %s",
 			foodsmell, it_or_they, eat_it_anyway);
@@ -1589,7 +1603,7 @@ static int edibility_prompts(struct obj *otmp)
 		if (yn_function(buf,ynchars,'n')=='n') return 1;
 		else return 2;
 	}
-	if (otmp->orotten || (cadaver && rotted > 3L)) {
+	if (u.uedibility && (otmp->orotten || (cadaver && rotted > 3L))) {
 		/* Rotten */
 		sprintf(buf, "%s like %s could be rotten! %s",
 			foodsmell, it_or_they, eat_it_anyway);
@@ -1605,49 +1619,64 @@ static int edibility_prompts(struct obj *otmp)
 	}
 	if (cadaver && !vegetarian(&mons[mnum]) &&
 	    !u.uconduct.unvegetarian && Role_if (PM_MONK)) {
-		sprintf(buf, "%s unhealthy. %s",
+		sprintf(buf, "%s unsuitable for a vegetarian monk. %s",
 			foodsmell, eat_it_anyway);
 		if (yn_function(buf,ynchars,'n')=='n') return 1;
 		else return 2;
 	}
-	if (cadaver && acidic(&mons[mnum]) && !Acid_resistance) {
-		sprintf(buf, "%s rather acidic. %s",
+        /* HP check is needed to stop this being annoying */
+	if (cadaver && acidic(&mons[mnum]) && !Acid_resistance &&
+            u.uhp <- 20) {
+		sprintf(buf, "%s rather acidic, and you're low on health. %s",
 			foodsmell, eat_it_anyway);
 		if (yn_function(buf,ynchars,'n')=='n') return 1;
 		else return 2;
 	}
 	if (Upolyd && u.umonnum == PM_RUST_MONSTER &&
-	    is_metallic(otmp) && otmp->oerodeproof) {
+	    is_metallic(otmp) && otmp->oerodeproof && u.uedibility) {
 		sprintf(buf, "%s disgusting to you right now. %s",
 			foodsmell, eat_it_anyway);
 		if (yn_function(buf,ynchars,'n')=='n') return 1;
 		else return 2;
 	}
 
+        /*
+         * Potentially fatal for other reasons.
+         */
+        if (u.uhs == SATIATED) {
+               sprintf(buf, "You are not really in the mood to eat. %s",
+                        eat_it_anyway);
+               if (yn_function(buf,ynchars,'n')=='n') return 1;
+               else return 2;
+        }
+
+
 	/*
 	 * Breaks conduct, but otherwise safe.
 	 */
 	 
-	if (!u.uconduct.unvegan &&
-	    ((material == LEATHER || material == BONE ||
-	      material == DRAGON_HIDE || material == WAX) ||
-	     (cadaver && !vegan(&mons[mnum])))) {
-		sprintf(buf, "%s foul and unfamiliar to you. %s",
-			foodsmell, eat_it_anyway);
-		if (yn_function(buf,ynchars,'n')=='n') return 1;
-		else return 2;
-	}
-	if (!u.uconduct.unvegetarian &&
+	if (!u.uconduct.unvegetarian && moves > 1800 &&
 	    ((material == LEATHER || material == BONE ||
 	      material == DRAGON_HIDE) ||
 	     (cadaver && !vegetarian(&mons[mnum])))) {
-		sprintf(buf, "%s unfamiliar to you. %s",
+		sprintf(buf, "%s of meat. %s",
 			foodsmell, eat_it_anyway);
 		if (yn_function(buf,ynchars,'n')=='n') return 1;
 		else return 2;
 	}
 
-	if (cadaver && mnum != PM_ACID_BLOB && rotted > 5L && Sick_resistance) {
+	if (!u.uconduct.unvegan && moves > 1800 &&
+	    ((material == LEATHER || material == BONE ||
+	      material == DRAGON_HIDE || material == WAX) ||
+	     (cadaver && !vegan(&mons[mnum])))) {
+		sprintf(buf, "%s like an animal byproduct. %s",
+			foodsmell, eat_it_anyway);
+		if (yn_function(buf,ynchars,'n')=='n') return 1;
+		else return 2;
+	}
+
+	if (cadaver && mnum != PM_ACID_BLOB && rotted > 5L &&
+            Sick_resistance && u.uedibility) {
 		/* Tainted meat with Sick_resistance */
 		sprintf(buf, "%s like %s could be tainted! %s",
 			foodsmell, it_or_they, eat_it_anyway);
@@ -1673,14 +1702,14 @@ int doeat(struct obj *otmp)	/* generic "eat" command funtion (see cmd.c) */
 	if (!otmp) return 0;
 	if (check_capacity(NULL)) return 0;
 
-	if (u.uedibility) {
+	{
 		int res = edibility_prompts(otmp);
-		if (res) {
+		if (res && u.uedibility) {
 		    pline("Your %s stops tingling and your sense of smell returns to normal.",
 			body_part(NOSE));
 		    u.uedibility = 0;
-		    if (res == 1) return 0;
 		}
+                if (res == 1) return 0;
 	}
 
 	/* We have to make non-foods take 1 move to eat, unless we want to
