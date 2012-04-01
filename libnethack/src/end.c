@@ -904,7 +904,7 @@ void done(int how)
 	/* finish_paybill should be called after disclosure but before bones */
 	if (bones_ok && taken) finish_paybill();
 
-	if (bones_ok) {
+	if (bones_ok && !discover) {
 	    if (!wizard || yn("Save bones?") == 'y')
 		savebones(corpse);
 	    /* corpse may be invalid pointer now so
