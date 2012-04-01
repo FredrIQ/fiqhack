@@ -1000,6 +1000,27 @@ static void use_lamp(struct obj *obj)
 		else
 		    pline("You snuff out %s.", yname(obj));
 		end_burn(obj, TRUE);
+                /* For monsters using light sources, the player is
+                   going to want to turn them off, and that can cause
+                   a whole load of items stacking up if we don't stack
+                   them here. */
+                if (obj->where == OBJ_INVENT) {
+                    struct obj *otmp;
+                    /* This code is based on the code from doorganise. */
+                    extract_nobj(obj, &invent);
+                    for (otmp = invent; otmp;) {
+                        if (merged(&otmp, &obj)) {
+                            obj = otmp;
+                            otmp = otmp->nobj;
+                            extract_nobj(obj, &invent);
+                        } else otmp = otmp->nobj;
+                    }
+                    obj->nobj = invent;
+                    obj->where = OBJ_INVENT;
+                    invent = obj;
+                    reorder_invent();
+                    update_inventory();
+                }
 		return;
 	}
 	/* magic lamps with an spe == 0 (wished for) cannot be lit */

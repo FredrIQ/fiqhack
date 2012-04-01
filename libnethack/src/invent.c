@@ -6,7 +6,6 @@
 #define NOINVSYM	'#'
 #define CONTAINED_SYM	'>'	/* designator for inside a container */
 
-static void reorder_invent(void);
 static boolean mergable(struct obj *,struct obj *);
 static void invdisp_nothing(const char *,const char *);
 static boolean worn_wield_only(const struct obj *);
@@ -78,7 +77,7 @@ void assigninvlet(struct obj *otmp)
 #define inv_rank(o) ((o)->invlet ^ 040)
 
 /* sort the inventory; used by addinv() and doorganize() */
-static void reorder_invent(void)
+extern void reorder_invent(void)
 {
 	struct obj *otmp, *prev, *next;
 	boolean need_more_sorting;
@@ -1797,7 +1796,7 @@ static boolean mergable(struct obj *otmp, struct obj *obj)
 {
 	if (obj->otyp != otmp->otyp) return FALSE;
 
-	/* coins of the same kind will always merge */
+	/* coins of the same kind will always merge, even in containers */
 	if (obj->oclass == COIN_CLASS)
 	    return TRUE;
 
@@ -1850,9 +1849,7 @@ static boolean mergable(struct obj *otmp, struct obj *obj)
 	    return FALSE;
 
 	/* if they have names, make sure they're the same */
-	if ( (obj->onamelth != otmp->onamelth &&
-		((obj->onamelth && otmp->onamelth) || obj->otyp == CORPSE)
-	     ) ||
+	if ((obj->onamelth != otmp->onamelth) ||
 	    (obj->onamelth && otmp->onamelth &&
 		    strncmp(ONAME(obj), ONAME(otmp), (int)obj->onamelth)))
 		return FALSE;
