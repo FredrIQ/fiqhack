@@ -133,13 +133,14 @@ int display_menu(struct nh_menuitem *items, int icount, const char *title,
 int display_objects(struct nh_objitem *items, int icount, const char *title,
 		    int how, struct nh_objresult *pick_list)
 {
-        int n;
+        int n, j;
 	n = (*windowprocs.win_display_objects)(items, icount, title, how, pick_list);
 	if (how != PICK_NONE) {
             char buf[BUFSZ] = "(none selected)";
 	    log_objmenu(n, pick_list);
             if (n == 1) {
-                sprintf(buf, "%c", pick_list[0].id);
+                for (j = 0; j < icount && items[j].id != pick_list[0].id; j++) {}
+                sprintf(buf, "%c", items[j].accel);
             } else if (n > 1)
                 sprintf(buf, "(%d selected)", n);
             pline("<%s: %s>", title ? title : "List of objects", buf);
