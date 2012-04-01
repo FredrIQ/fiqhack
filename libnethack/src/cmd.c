@@ -896,7 +896,8 @@ static void unspoilered_intrinsics(void)
  */
 static boolean minimal_enlightenment(void)
 {
-        int genidx, n, selected[1];
+        int genidx, n, wcu, selected[1];
+        long wc;
 	char buf[BUFSZ], buf2[BUFSZ];
 	static const char fmtstr[] = "%-10s: %-12s (originally %s)";
 	static const char fmtstr_noorig[] = "%-10s: %s";
@@ -925,22 +926,35 @@ static boolean minimal_enlightenment(void)
                 align_str(u.ualignbase[A_ORIGINAL]));
         add_menutext(&menu, buf);
         if (ACURR(A_STR) > 18) {
-          if (ACURR(A_STR) > STR18(100))
-            sprintf(buf,"abilities : St:%2d ",ACURR(A_STR)-100);
-          else if (ACURR(A_STR) < STR18(100))
-            sprintf(buf, "abilities : St:18/%02d ",ACURR(A_STR)-18);
-          else
-            sprintf(buf,"abilities : St:18/** ");
+            if (ACURR(A_STR) > STR18(100))
+                sprintf(buf,"abilities : St:%2d ",ACURR(A_STR)-100);
+            else if (ACURR(A_STR) < STR18(100))
+                sprintf(buf, "abilities : St:18/%02d ",ACURR(A_STR)-18);
+            else
+                sprintf(buf,"abilities : St:18/** ");
         } else
-          sprintf(buf, "abilities : St:%-1d ",ACURR(A_STR));
+            sprintf(buf, "abilities : St:%-1d ",ACURR(A_STR));
         sprintf(eos(buf), "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
                 ACURR(A_DEX), ACURR(A_CON), ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
         add_menutext(&menu, buf);
         if (u.ulevel < 30)
-          sprintf(buf, "%-10s: %d (exp: %d, %ld needed)", "level",
-                  u.ulevel, u.uexp, newuexp(u.ulevel));
+            sprintf(buf, "%-10s: %d (exp: %d, %ld needed)", "level",
+                    u.ulevel, u.uexp, newuexp(u.ulevel));
         else
-          sprintf(buf, "%-10s: %d (exp: %d)", "level", u.ulevel, u.uexp);
+            sprintf(buf, "%-10s: %d (exp: %d)", "level", u.ulevel, u.uexp);
+        add_menutext(&menu, buf);
+
+        wc = weight_cap();
+        sprintf(buf, "%-10s: %ld (", "burden", wc + inv_weight());
+        switch(calc_capacity(wc/4)) {
+        case UNENCUMBERED:
+        case SLT_ENCUMBER: sprintf(eos(buf), "burdened at "); wcu = 2; break;
+        case MOD_ENCUMBER: sprintf(eos(buf), "stressed at "); wcu = 3; break;
+        case HVY_ENCUMBER: sprintf(eos(buf), "strained at "); wcu = 4; break;
+        case EXT_ENCUMBER: sprintf(eos(buf), "overtaxed at "); wcu = 5; break;
+        default:           sprintf(eos(buf), "overloaded at "); wcu = 6; break;
+        }
+        sprintf(eos(buf), "%ld)", wc * wcu / 2 + 1);
         add_menutext(&menu, buf);
 
 	/* Deity list */
@@ -975,28 +989,28 @@ static boolean minimal_enlightenment(void)
         add_menuitem(&menu, 'i', "Inventory", 'i', FALSE);
         add_menuitem(&menu, 'a', "Intrinsic abilities", 'a', FALSE);
         if (num_vanquished() > 0)
-          add_menuitem(&menu, 'v', "Vanquished creatures", 'v', FALSE);
+            add_menuitem(&menu, 'v', "Vanquished creatures", 'v', FALSE);
         if (num_genocides() > 0 || num_extinctions() > 0)
-          add_menuitem(&menu, 'g', "Genocided/extinct creatures", 'g', FALSE);
+            add_menuitem(&menu, 'g', "Genocided/extinct creatures", 'g', FALSE);
         add_menuitem(&menu, 'c', "Conducts followed", 'c', FALSE);
         add_menuitem(&menu, 's', "Score breakdown", 's', FALSE);
         if (wizard || discover)
-          add_menuitem(&menu, 'w', "Debug/explore mode spoilers", 'w', FALSE);
+            add_menuitem(&menu, 'w', "Debug/explore mode spoilers", 'w', FALSE);
 
 	n = display_menu(menu.items, menu.icount, "Your Statistics",
                          PICK_ONE, selected);
 
         if (n == 1) {
-          n = 0;
-          switch(*selected) {
-          case 'i': n = ddoinv(); break;
-          case 'a': unspoilered_intrinsics(); break;
-          case 'v': list_vanquished('y', FALSE); break;
-          case 'g': list_genocided('y', FALSE); break;
-          case 'c': n = doconduct(); break;
-          case 's': calc_score(-1, TRUE, money_cnt(invent) + hidden_gold()); break;
-          case 'w': if (wizard || discover) enlightenment(0); break;
-          }
+            n = 0;
+            switch(*selected) {
+            case 'i': n = ddoinv(); break;
+            case 'a': unspoilered_intrinsics(); break;
+            case 'v': list_vanquished('y', FALSE); break;
+            case 'g': list_genocided('y', FALSE); break;
+            case 'c': n = doconduct(); break;
+            case 's': calc_score(-1, TRUE, money_cnt(invent) + hidden_gold()); break;
+            case 'w': if (wizard || discover) enlightenment(0); break;
+            }
         }
 
         free(menu.items);
