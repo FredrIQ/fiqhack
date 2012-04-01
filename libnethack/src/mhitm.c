@@ -201,6 +201,11 @@ int mattackm(struct monst *magr, struct monst *mdef)
 
     /* Calculate the armour class differential. */
     tmp = find_mac(mdef) + magr->m_lev;
+    /* Intelligent pet patch balance: tame monsters act more
+       defensively when injured */
+    if (magr->mtame) {
+        tmp -= (21 * (magr->mhpmax - magr->mhp)) / magr->mhpmax;
+    }
     if (mdef->mconf || !mdef->mcanmove || mdef->msleeping) {
 	tmp += 4;
 	mdef->msleeping = 0;

@@ -317,6 +317,16 @@ int find_mac(struct monst *mon)
 		base -= ARM_BONUS(obj);
 		/* since ARM_BONUS is positive, subtracting it increases AC */
 	}
+
+        if (mon->mtame) {
+            /* intelligent pet balance fix: tame monsters take a lot
+               more attacks than in vanilla, so make them better at
+               defending when wounded (in vanilla, they don't get
+               attacked when wounded, letting them dodge comes to
+               much the same thing but makes more sense) */
+            base -= (21 * (mon->mhpmax - mon->mhp)) / mon->mhpmax;
+        }
+
 	return base;
 }
 
