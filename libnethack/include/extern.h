@@ -70,7 +70,7 @@ extern int disp_artifact_discoveries(struct menulist *);
 extern boolean artifact_hit(struct monst *,struct monst *,struct obj *,int *,int);
 extern int doinvoke(struct obj *obj);
 extern void arti_speak(struct obj *);
-extern boolean artifact_light(struct obj *);
+extern boolean artifact_light(const struct obj *);
 extern boolean artifact_has_invprop(struct obj *, uchar);
 extern long arti_cost(const struct obj *);
 
@@ -1570,6 +1570,7 @@ extern void do_storms(void);
 extern boolean start_timer(struct level *lev, long when, short kind,
 			   short func_index, void *arg);
 extern long stop_timer(struct level *lev, short func_index, void *arg);
+extern long report_timer(struct level *lev, short func_index, void *arg);
 extern void run_timers(void);
 extern void obj_move_timers(struct obj *, struct obj *);
 extern void obj_split_timers(struct obj *, struct obj *);

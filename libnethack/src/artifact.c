@@ -1379,7 +1379,7 @@ nothing_special:
 
 
 /* WAC return TRUE if artifact is always lit */
-boolean artifact_light(struct obj *obj)
+boolean artifact_light(const struct obj *obj)
 {
     return get_artifact(obj) && obj->oartifact == ART_SUNSWORD;
 }
