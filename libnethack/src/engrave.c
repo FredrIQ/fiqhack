@@ -581,12 +581,14 @@ int doengrave(struct obj *otmp)
 			strcpy(post_engr_text,
 			"The wand unsuccessfully fights your attempt to write!"
 			);
+                        doknown = TRUE;
 			break;
 		    case WAN_SLOW_MONSTER:
 			if (!Blind) {
 			   sprintf(post_engr_text,
 				   "The bugs on the %s slow down!",
 				   surface(u.ux, u.uy));
+                           doknown = TRUE;
 			}
 			break;
 		    case WAN_SPEED_MONSTER:
@@ -594,6 +596,7 @@ int doengrave(struct obj *otmp)
 			   sprintf(post_engr_text,
 				   "The bugs on the %s speed up!",
 				   surface(u.ux, u.uy));
+                           doknown = TRUE;
 			}
 			break;
 		    case WAN_POLYMORPH:
@@ -601,6 +604,7 @@ int doengrave(struct obj *otmp)
 			    if (!Blind) {
 				type = (xchar)0;	/* random */
 				random_engraving(buf);
+                                doknown = TRUE;
 			    }
 			    dengr = TRUE;
 			}
@@ -619,6 +623,7 @@ int doengrave(struct obj *otmp)
 			   sprintf(post_engr_text,
 				   "The %s is riddled by bullet holes!",
 				   surface(u.ux, u.uy));
+                           doknown = TRUE;
 			}
 			break;
 
@@ -633,9 +638,11 @@ int doengrave(struct obj *otmp)
 			break;
 
 		    case WAN_COLD:
-			if (!Blind)
+			if (!Blind) {
 			    strcpy(post_engr_text,
 				"A few ice cubes drop from the wand.");
+                            doknown = TRUE;
+                        }
 			if (!oep || (oep->engr_type != BURN))
 			    break;
 		    case WAN_CANCELLATION:
