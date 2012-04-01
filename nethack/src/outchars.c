@@ -474,7 +474,7 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
 	id = dbe->trap - 1;
 	syms[count++] = cur_drawing->traps[id];
         if (settings.bgbranding) {
-          if (dbe->trap == mportal_id || dbe->trap == vibsquare_id)
+          if (dbe->trap == mportal_id+1 || dbe->trap == vibsquare_id+1)
             *bg_color = CLR_RED;
           else
             *bg_color = CLR_CYAN;
