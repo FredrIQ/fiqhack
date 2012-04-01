@@ -665,9 +665,9 @@ int spelleffects(int spell, boolean atme)
 	    pline("It invokes nightmarish images in your mind...");
 	    spell_backfire(spell);
 	    return 0;
-	} else if (spellknow(spell) <= 100) {
+	} else if (spellknow(spell) <= 200) { /* 1% */
 	    pline("You strain to recall the spell.");
-	} else if (spellknow(spell) <= 1000) {
+	} else if (spellknow(spell) <= 1000) { /* 5% */
 	    pline("Your knowledge of this spell is growing faint.");
 	}
 	energy = (spellev(spell) * 5);    /* 5 <= energy <= 35 */
@@ -994,14 +994,15 @@ static boolean dospellmenu(const char *prompt,
 	struct nh_menuitem items[MAXSPELL+1];
 	int selected[MAXSPELL+1];
 
-	sprintf(buf, "Name\tLevel\tCategory\tFail");
+	sprintf(buf, "Name\tLevel\tCategory\tFail\tMemory");
 	set_menuitem(&items[count++], 0, MI_HEADING, buf, 0, FALSE);
 	for (i = 0; i < MAXSPELL && spellid(i) != NO_SPELL; i++) {
-		sprintf(buf, "%s\t%-d%s\t%s\t%-d%%",
+		sprintf(buf, "%s\t%-d%s\t%s\t%-d%%\t%-d%%",
 			spellname(i), spellev(i),
 			spellknow(i) ? " " : "*",
 			spelltypemnemonic(spell_skilltype(spellid(i))),
-			100 - percent_success(i));
+			100 - percent_success(i),
+                        (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
 
 		set_menuitem(&items[count++], i+1, MI_NORMAL, buf, 0,
 			     (i == splaction) ? TRUE : FALSE);
