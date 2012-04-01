@@ -26,6 +26,12 @@ static const char *const breathwep[] = {
 				"strange breath #9"
 };
 
+static int ai_use_at_range(int n)
+{
+    if (n <= 0) return 1;
+    return !rn2(n);
+}
+
 /* hero is hit by something other than a monster */
 int thitu(int tlev, int dam, struct obj *obj,
 	  const char *name)	/* if null, then format `obj' */
@@ -510,7 +516,7 @@ void thrwmu(struct monst *mtmp)
 	 */
 	if (!lined_up(mtmp) ||
 		(URETREATING(x,y) &&
-			rn2(BOLT_LIM - distmin(x,y,mtmp->mux,mtmp->muy))))
+			!ai_use_at_range(BOLT_LIM - distmin(x,y,mtmp->mux,mtmp->muy))))
 	    return;
 
 	skill = objects[otmp->otyp].oc_skill;
@@ -819,7 +825,7 @@ int spitmu(struct monst *mtmp, const struct attack *mattk)
 			otmp = mksobj(level, ACID_VENOM, TRUE, FALSE);
 			break;
 		}
-		if (!rn2(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {
+		if (ai_use_at_range(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {
 		    if (canseemon(mtmp))
 			pline("%s spits venom!", Monnam(mtmp));
 		    m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
@@ -856,7 +862,7 @@ spitmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
 			otmp = mksobj(level, ACID_VENOM, TRUE, FALSE);
 			break;
 		}
-		if(!rn2(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {
+		if(ai_use_at_range(BOLT_LIM-distmin(mtmp->mx,mtmp->my,mtmp->mux,mtmp->muy))) {
 		    if (canseemon(mtmp)) {
 			pline("%s spits venom!", Monnam(mtmp));
                         nomul(0, NULL);
