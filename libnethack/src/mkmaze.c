@@ -826,8 +826,9 @@ void movebubbles(void)
 	struct bubble *b;
 	int x, y, i, j;
 	struct trap *btrap;
-	static const struct rm water_pos = { S_water, 0, 0, 0, 0, WATER /* typ */,
-	    0, 0, 0, 0, 0, 0, 0 };
+	static const struct rm water_pos = {
+          S_water, 0, 0, 0, 0, 0, WATER /* typ */,
+          0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	/* set up the portal the first time bubbles are moved */
 	if (!wportal) set_wportal(level);
