@@ -485,6 +485,7 @@ extern void make_engr_at(struct level *lev, int,int,const char *,long,xchar);
 extern void del_engr_at(struct level *lev, int,int);
 extern int freehand(void);
 extern int doengrave(struct obj *otmp);
+extern int doelbereth(void);
 extern void free_engravings(struct level *lev);
 extern void save_engravings(struct memfile *mf, struct level *lev);
 extern void rest_engravings(struct memfile *mf, struct level *lev);

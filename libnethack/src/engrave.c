@@ -387,7 +387,7 @@ static const char styluses[] =
  */
 
 /* return 1 if action took 1 (or more) moves, 0 if error or aborted */
-int doengrave(struct obj *otmp)
+static int doengrave_core(struct obj *otmp, int auto_elbereth)
 {
 	boolean dengr = FALSE;	/* TRUE if we wipe out the current engraving */
 	boolean doblind = FALSE;/* TRUE if engraving blinds the player */
@@ -457,9 +457,11 @@ int doengrave(struct obj *otmp)
 	 */
 
 	if (otmp && !validate_object(otmp, styluses, "write with"))
-		return 0;
-	else if (!otmp)
-		otmp = getobj(styluses, "write with");
+            return 0;
+	else if (!otmp && !auto_elbereth)
+            otmp = getobj(styluses, "write with");
+        else if (!otmp)
+            otmp = &zeroobj; /* TODO: search for athames */
 	if (!otmp) return 0;		/* otmp == zeroobj if fingers */
 
 	if (otmp == &zeroobj) writer = makeplural(body_part(FINGER));
@@ -855,8 +857,10 @@ int doengrave(struct obj *otmp)
 		c = 'y';
 	    } else if ( (type == oep->engr_type) && (!Blind ||
 		 (oep->engr_type == BURN) || (oep->engr_type == ENGRAVE)) ) {
-		c = yn_function("Do you want to add to the current engraving?",
-				ynqchars, 'y');
+                if (auto_elbereth) c = 'y';
+		else c = yn_function(
+                    "Do you want to add to the current engraving?",
+                    ynqchars, 'y');
 		if (c == 'q') {
 		    pline("Never mind.");
 		    return 0;
@@ -938,7 +942,8 @@ int doengrave(struct obj *otmp)
 
 	/* Prompt for engraving! */
 	sprintf(qbuf,"What do you want to %s the %s here?", everb, eloc);
-	getlin(qbuf, ebuf);
+        if (auto_elbereth) strcpy(ebuf, "Elbereth");
+	else getlin(qbuf, ebuf);
 
 	/* Count the actual # of chars engraved not including spaces */
 	len = strlen(ebuf);
@@ -1080,6 +1085,15 @@ int doengrave(struct obj *otmp)
 	}
 
 	return 1;
+}
+int doengrave(struct obj *o)
+{
+    doengrave_core(o, 0);
+}
+int doelbereth(void)
+{
+    /* TODO: Athame? */
+    doengrave_core(&zeroobj, 1);
 }
 
 void save_engravings(struct memfile *mf, struct level *lev)

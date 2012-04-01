@@ -72,7 +72,8 @@ const struct cmd_desc cmdlist[] = {
 	{"drink", "quaff a potion", 'q', 0, FALSE, dodrink, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"drop", "drop one item", 'd', 0, FALSE, dodrop, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"eat", "eat an item from inventory or the floor", 'e', 0, FALSE, doeat, CMD_ARG_NONE | CMD_ARG_OBJ},
-	{"enhance", "advance or check weapons skills", M('e'), C('e'), TRUE, enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
+	{"elbereth", "write an Elbereth in the dust", C('e'), 0, FALSE, doelbereth, CMD_ARG_NONE },
+	{"enhance", "advance or check weapons skills", M('e'), 0, TRUE, enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
 	{"engrave", "write on the floor", 'E', 0, FALSE, doengrave, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis, CMD_ARG_NONE | CMD_NOTIME},
 	{"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE, dofight, CMD_ARG_DIR},
@@ -143,7 +144,7 @@ const struct cmd_desc cmdlist[] = {
 	{"go2", "like go, but branching corridors are boring", 'G', 0, FALSE, dogo2, CMD_ARG_DIR | CMD_MOVE},
 	
 	{"create monster", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis, CMD_ARG_NONE | CMD_DEBUG},
-	{"detect", "(DEBUG) detect monsters", C('e'), 0, TRUE, wiz_detect, CMD_ARG_NONE | CMD_DEBUG},
+	{"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE, wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE, wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
 	{"levelchange", "(DEBUG) change experience level", 0, 0, TRUE, wiz_level_change, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
