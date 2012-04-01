@@ -74,7 +74,6 @@ const struct cmd_desc cmdlist[] = {
 	{"eat", "eat an item from inventory or the floor", 'e', 0, FALSE, doeat, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"enhance", "advance or check weapons skills", M('e'), C('e'), TRUE, enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
 	{"engrave", "write on the floor", 'E', 0, FALSE, doengrave, CMD_ARG_NONE | CMD_ARG_OBJ},
-	{"exploremode", "switch to non-scoring explore mode", 0, 0, TRUE, enter_explore_mode, CMD_ARG_NONE | CMD_EXT},
 	{"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis, CMD_ARG_NONE | CMD_NOTIME},
 	{"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE, dofight, CMD_ARG_DIR},
 	{"fire", "throw your quivered item", 'f', 0, FALSE, dofire, CMD_ARG_NONE},
