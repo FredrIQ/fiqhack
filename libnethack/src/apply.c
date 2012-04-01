@@ -811,6 +811,7 @@ static void use_candelabrum(struct obj *obj)
 		if (!Blind)
 		    pline("The %s %s for a moment, then %s.",
 			      s, vtense(s, "flicker"), vtense(s, "die"));
+                obj->bknown = TRUE;
 		return;
 	}
 	if (obj->spe < 7) {
@@ -1012,6 +1013,7 @@ static void use_lamp(struct obj *obj)
 	if (obj->cursed && !rn2(2)) {
 		pline("%s for a moment, then %s.",
 		      Tobjnam(obj, "flicker"), otense(obj, "die"));
+                obj->bknown = TRUE;
 	} else {
 		if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
 				obj->otyp == BRASS_LANTERN) {
