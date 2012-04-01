@@ -992,6 +992,7 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 		if (clone_mon(mon, 0, 0)) {
 			pline("%s divides as you hit it!", Monnam(mon));
 			hittxt = TRUE;
+                        u.uconduct.puddings++;
 		}
 	}
 

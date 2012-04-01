@@ -1058,7 +1058,7 @@ void show_conduct(int final)
 
 	if (!u.uconduct.weaphit)
 	    you_have_never(&menu, "hit with a wielded weapon");
-	else if (wizard) {
+	else {
 	    sprintf(buf, "used a wielded weapon %u time%s",
 		    u.uconduct.weaphit, plur(u.uconduct.weaphit));
 	    you_have_X(&menu, buf);
@@ -1068,7 +1068,7 @@ void show_conduct(int final)
 
 	if (!u.uconduct.literate)
 	    you_have_been(&menu, "illiterate");
-	else if (wizard) {
+	else {
 	    sprintf(buf, "read items or engraved %u time%s",
 		    u.uconduct.literate, plur(u.uconduct.literate));
 	    you_have_X(&menu, buf);
@@ -1085,7 +1085,7 @@ void show_conduct(int final)
 
 	if (!u.uconduct.polypiles)
 	    you_have_never(&menu, "polymorphed an object");
-	else if (wizard) {
+	else {
 	    sprintf(buf, "polymorphed %u item%s",
 		    u.uconduct.polypiles, plur(u.uconduct.polypiles));
 	    you_have_X(&menu, buf);
@@ -1093,7 +1093,7 @@ void show_conduct(int final)
 
 	if (!u.uconduct.polyselfs)
 	    you_have_never(&menu, "changed form");
-	else if (wizard) {
+	else {
 	    sprintf(buf, "changed form %u time%s",
 		    u.uconduct.polyselfs, plur(u.uconduct.polyselfs));
 	    you_have_X(&menu, buf);
@@ -1111,6 +1111,32 @@ void show_conduct(int final)
 			" for any artifacts");
 	}
 
+	if (!u.uconduct.puddings)
+	    you_have_never(&menu, "split a pudding");
+	else {
+	    sprintf(buf, "split %u pudding%s",
+		    u.uconduct.puddings, plur(u.uconduct.puddings));
+	    you_have_X(&menu, buf);
+	}
+
+	if (!u.uconduct.elbereths)
+	    you_have_never(&menu, "written Elbereth's name");
+	else {
+	    sprintf(buf, " Elbereth's name %u time%s",
+		    u.uconduct.elbereths, plur(u.uconduct.elbereths));
+	    enl_msg(&menu, You_, "have written", "wrote", buf);
+	}
+
+        /* birth options */
+        if (!flags.bones_enabled)
+            you_have_X(&menu, "disabled loading bones files");
+        if (!flags.elbereth_enabled) /* not the same as not /writing/ E */
+            you_have_X(&menu, "abstained from Elbereth's help");
+        if (flags.permahallu)
+            enl_msg(&menu, You_, "are ", "were" , "permanently hallucinating");
+        if (flags.permablind)
+            enl_msg(&menu, You_, "are ", "were ", "permanently blind");
+        
 	/* Pop up the window and wait for a key */
 	display_menu(menu.items, menu.icount, "Voluntary challenges:", PICK_NONE, NULL);
 	free(menu.items);

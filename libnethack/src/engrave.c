@@ -1076,6 +1076,10 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 
 	make_engr_at(level, u.ux, u.uy, buf, (moves - multi), type);
 
+        if (strstri(buf, "Elbereth")) {
+            u.uconduct.elbereths++;
+        }
+
 	if (post_engr_text[0]) pline(post_engr_text);
 
 	if (doblind && !resists_blnd(&youmonst)) {

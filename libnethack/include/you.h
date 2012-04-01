@@ -55,6 +55,8 @@ struct u_conduct {		/* number of times... */
 	unsigned int wishes;	/* used a wish */
 	unsigned int wisharti;	/* wished for an artifact */
 				/* genocides already listed at end of game */
+        unsigned int elbereths; /* wrote an elbereth */
+        unsigned int puddings;  /* split a pudding */
 };
 
 
