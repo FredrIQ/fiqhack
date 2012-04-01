@@ -473,10 +473,12 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
     if (dbe->trap) {
 	id = dbe->trap - 1;
 	syms[count++] = cur_drawing->traps[id];
-        if (dbe->trap == mportal_id || dbe->trap == vibsquare_id)
-          *bg_color = CLR_RED;
-        else
-          *bg_color = CLR_CYAN;
+        if (settings.bgbranding) {
+          if (dbe->trap == mportal_id || dbe->trap == vibsquare_id)
+            *bg_color = CLR_RED;
+          else
+            *bg_color = CLR_CYAN;
+        }
     } 
     
     /* omit the background symbol from the list if it is boring */
@@ -496,16 +498,18 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
         }
         /* Override darkroom for stepped-on squares, so the player can see
            where they stepped. */
-        if (dbe->bg == darkroom_id && dbe->branding & NH_BRANDING_STEPPED)
-          syms[count-1].color = CLR_BLUE;
-        if ((dbe->bg == room_id || dbe->bg == corr_id || dbe->bg == litcorr_id)
-            && dbe->branding & NH_BRANDING_STEPPED) {
-          syms[count-1].color = CLR_BROWN;
+        if (settings.floorcolor) {
+          if (dbe->bg == darkroom_id && dbe->branding & NH_BRANDING_STEPPED)
+            syms[count-1].color = CLR_BLUE;
+          if ((dbe->bg == room_id || dbe->bg == corr_id || dbe->bg == litcorr_id)
+              && dbe->branding & NH_BRANDING_STEPPED) {
+            syms[count-1].color = CLR_BROWN;
+          }
         }
         if (dbe->bg == upstair_id || dbe->bg == dnstair_id ||
             dbe->bg == upladder_id || dbe->bg == dnladder_id ||
             dbe->bg == upsstair_id || dbe->bg == dnsstair_id) {
-          *bg_color = CLR_RED;
+          if (settings.bgbranding) *bg_color = CLR_RED;
         }
     }
 

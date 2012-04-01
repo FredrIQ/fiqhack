@@ -73,12 +73,14 @@ static const char *const bucnames[] = {"unknown", "blessed", "uncursed", "cursed
 
 struct nh_option_desc curses_options[] = {
     {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {NULL}},
+    {"bgbranding", "use background colors to show hidden stairs and traps", OPTTYPE_BOOL, { VTRUE }},
     {"blink", "show multiple symbols for each location by switching between them", OPTTYPE_BOOL, { FALSE }},
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", OPTTYPE_BOOL, {FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL, {FALSE}},
+    {"floorcolor", "change the color of the floor to show where you walked", OPTTYPE_BOOL, { VTRUE }},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, { VTRUE }},    
     {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)UNICODE_GRAPHICS}},
-    {"hilite_pet", "highlight your pet", OPTTYPE_BOOL, { VTRUE }},
+    {"hilite_pet", "use background colors to show monster attitude", OPTTYPE_BOOL, { VTRUE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
     {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {0}},
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)A_REVERSE}},
@@ -103,9 +105,11 @@ struct nh_option_desc curses_options[] = {
 };
 
 struct nh_boolopt_map boolopt_map[] = {
+    {"bgbranding", &settings.bgbranding},
     {"blink", &settings.blink},
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
+    {"floorcolor", &settings.floorcolor},
     {"frame", &settings.frame},
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
