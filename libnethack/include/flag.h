@@ -111,6 +111,8 @@ struct flag {
 	boolean  rogue_enabled;    /* create a rogue level */
 	boolean  seduce_enabled;   /* succubus sduction */
 	boolean  bones_enabled;    /* allow loading bones levels */
+        boolean  permablind;       /* stay permanently blind */
+        boolean  permahallu;       /* stay permanently hallucinating */
 };
 
 

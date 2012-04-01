@@ -144,19 +144,21 @@ static const struct nh_option_desc const_options[] = {
 
 
 static const struct nh_option_desc const_birth_options[] = {
-    { "elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL, { VTRUE }},
+    { "elbereth",      "difficulty: the E-word repels monsters", OPTTYPE_BOOL, { VTRUE }},
     { "reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, { VTRUE }},
-    { "seduction", "certain monsters may seduce you", OPTTYPE_BOOL, { VTRUE }},
-    { "bones", "allow bones levels", OPTTYPE_BOOL, { VTRUE }},
-    { "legacy",   "print introductory message", OPTTYPE_BOOL, { VTRUE }},
-    { "align",    "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
-    { "gender",   "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
-    { "race",     "your starting race", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
-    { "role",     "your starting role", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
-    { "catname",  "the name of your (first) cat", OPTTYPE_STRING, {NULL}},
-    { "dogname",  "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
-    { "horsename", "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
-    { "pettype",  "your preferred initial pet type", OPTTYPE_ENUM, {0}},
+    { "seduction",     "certain monsters may seduce you", OPTTYPE_BOOL, { VTRUE }},
+    { "bones",         "allow bones levels", OPTTYPE_BOOL, { VTRUE }},
+    { "permablind",    "spend the whole game blind", OPTTYPE_BOOL, { FALSE }},
+    { "permahallu",    "spend the whole game hallucinating", OPTTYPE_BOOL, { FALSE }},
+    { "legacy",        "print introductory message", OPTTYPE_BOOL, { VTRUE }},
+    { "align",         "your starting alignment", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "gender",        "your starting gender", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "race",          "your starting race", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "role",          "your starting role", OPTTYPE_ENUM, {(void*)ROLE_NONE}},
+    { "catname",       "the name of your (first) cat", OPTTYPE_STRING, {NULL}},
+    { "dogname",       "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
+    { "horsename",     "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
+    { "pettype",       "your preferred initial pet type", OPTTYPE_ENUM, {0}},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
 };
@@ -187,6 +189,8 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"reincarnation", &flags.rogue_enabled},
 	{"seduction", &flags.seduce_enabled},
 	{"bones", &flags.bones_enabled},
+	{"permablind", &flags.permablind},
+	{"permahallu", &flags.permahallu},
 	{NULL, NULL}
 };
 

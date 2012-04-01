@@ -95,10 +95,12 @@
 #define Blinded			u.uprops[BLINDED].intrinsic
 #define Blindfolded		(ublindf && ublindf->otyp != LENSES)
 		/* ...means blind because of a cover */
-#define Blind	((Blinded || Blindfolded || !haseyes(youmonst.data)) && \
-		 !(ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD))
+#define Blind	(((Blinded || Blindfolded || !haseyes(youmonst.data)) && \
+		 !(ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)) || \
+                 flags.permablind)
 		/* ...the Eyes operate even when you really are blind
-		    or don't have any eyes */
+		    or don't have any eyes, but get beaten by game
+                    options */
 
 #define Sick			u.uprops[SICK].intrinsic
 #define Stoned			u.uprops[STONED].intrinsic
@@ -112,7 +114,8 @@
 #define EHalluc_resistance	u.uprops[HALLUC_RES].extrinsic
 #define Halluc_resistance	(EHalluc_resistance || \
 				 (Upolyd && dmgtype(youmonst.data, AD_HALU)))
-#define Hallucination		(HHallucination && !Halluc_resistance)
+#define Hallucination		((HHallucination && !Halluc_resistance) || \
+                                 flags.permahallu)
 
 /* Timeout, plus a worn mask */
 #define HFumbling		u.uprops[FUMBLING].intrinsic
