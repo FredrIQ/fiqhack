@@ -705,6 +705,13 @@ static boolean spell_would_be_useless(struct monst *mtmp, unsigned int adtyp,
 	if ((!mtmp->iswiz || flags.no_of_wizards > 1)
 						&& spellnum == MGC_CLONE_WIZ)
 	    return TRUE;
+        /* spells that harm master while tame and not conflicted */
+        if (mtmp->mtame && !Conflict &&
+            (spellnum == MGC_CURSE_ITEMS ||
+             spellnum == MGC_DISAPPEAR ||
+             spellnum == MGC_DESTRY_ARMR))
+            return TRUE;
+
     } else if (adtyp == AD_CLRC) {
 	/* summon insects/sticks to snakes won't be cast by peaceful monsters */
 	if (mtmp->mpeaceful && spellnum == CLC_INSECTS)
@@ -718,6 +725,9 @@ static boolean spell_would_be_useless(struct monst *mtmp, unsigned int adtyp,
 	/* blindness spell on blinded player */
 	if (Blinded && spellnum == CLC_BLIND_YOU)
 	    return TRUE;
+        /* spells that harm master while tame and not conflicted */
+        if (mtmp->mtame && !Conflict && spellnum == CLC_CURSE_ITEMS)
+            return TRUE;
     }
     return FALSE;
 }
@@ -772,10 +782,17 @@ static boolean uspell_would_be_useless(unsigned int adtyp, int spellnum)
         /* balance */
         if (spellnum == MGC_SUMMON_MONS)
 	    return TRUE;
+        /* spells that you rather wouldn't cast */
+        if (spellnum == MGC_CURSE_ITEMS ||
+            spellnum == MGC_DESTRY_ARMR)
+            return TRUE;
     } else if (adtyp == AD_CLRC) {
 	/* healing when already healed */
-	if (u.mh == u.mhmax && spellnum == MGC_CURE_SELF)
+	if (u.mh == u.mhmax && spellnum == CLC_CURE_SELF)
 	    return TRUE;
+        /* spells that you rather wouldn't cast */
+        if (spellnum == CLC_CURSE_ITEMS)
+            return TRUE;
     }
     return FALSE;
 }

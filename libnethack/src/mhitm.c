@@ -187,6 +187,8 @@ int mattackm(struct monst *magr, struct monst *mdef)
     struct attack alt_attk;
     const struct permonst *pa, *pd;
 
+    if (mdef == &youmonst) return mattacku(magr) ? MM_AGR_DIED : 0;
+
     if (!magr || !mdef) return MM_MISS;		/* mike@genat */
     if (!magr->mcanmove || magr->msleeping) return MM_MISS;
     pa = magr->data;
