@@ -428,7 +428,7 @@ toofar:
 	    mtmp->mlstmv != moves)
 	{
 	    register struct monst *mtmp2 = mfind_target(mtmp);
-	    if (mtmp2)
+	    if (mtmp2 && mtmp2 != &youmonst)
 	    {
 	        if (mattackm(mtmp, mtmp2) & MM_AGR_DIED)
                     return 1; /* Oops. */
