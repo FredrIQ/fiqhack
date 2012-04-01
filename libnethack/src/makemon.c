@@ -603,6 +603,17 @@ static void m_initinv(struct monst *mtmp)
 			mongets(mtmp, WAN_FIRE);
 		}
 		break;
+            case S_GNOME:
+                /* In AceHack, these have a chance of generating with
+                   candles, especially on dark Mines levels. This
+                   tradition was stolen by UnNetHack, and continued
+                   onwards into NetHack 4. But in a much simpler way,
+                   to avoid littering inventory with junk candles of
+                   different lengths. */
+                if (!rn2(4)) {
+                    mongets(mtmp, rn2(4) ? TALLOW_CANDLE : WAX_CANDLE);
+                }
+
 	    default:
 		break;
 	}
