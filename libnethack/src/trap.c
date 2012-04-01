@@ -1488,7 +1488,8 @@ static int mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
 		cc.x = x; cc.y = y;
 		/* Prevent boulder from being placed on water */
 		if (ttmp->ttyp == ROLLING_BOULDER_TRAP
-				&& is_pool(lev, x+distance*dx,y+distance*dy))
+                    && (is_pool(lev, x+distance*dx,y+distance*dy) ||
+                        is_lava(lev, x+distance*dx,y+distance*dy)))
 			success = FALSE;
 		else success = isclearpath(lev, &cc, distance, dx, dy);
 		if (ttmp->ttyp == ROLLING_BOULDER_TRAP) {
