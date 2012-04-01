@@ -32,7 +32,9 @@ struct q_score {			/* Quest "scorecard" */
 };
 
 #define MAX_QUEST_TRIES  7	/* exceed this and you "fail" */
-#define MIN_QUEST_ALIGN 20	/* at least this align.record to start */
+
+/* at least this align.record to start */
+#define MIN_QUEST_ALIGN ((ALIGNLIM) > 20 ? 20 : (ALIGNLIM))
   /* note: align 20 matches "pious" as reported by enlightenment (cmd.c) */
 #define MIN_QUEST_LEVEL 14	/* at least this u.ulevel to start */
   /* note: exp.lev. 14 is threshold level for 5th rank (class title, role.c) */
