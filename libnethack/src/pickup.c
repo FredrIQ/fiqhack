@@ -14,7 +14,7 @@ static int autopick(struct obj*, int, struct object_pick **);
 static int count_categories(struct obj *,int);
 static long carry_count (struct obj *,struct obj *,long,boolean,int *,int *);
 static int lift_object(struct obj *,struct obj *,long *,boolean);
-static boolean mbag_explodes(struct obj *,int);
+static int mbag_explodes(struct obj *,int);
 static int in_container(struct obj *);
 static int out_container(struct obj *);
 static long mbag_item_gone(int,struct obj *);
@@ -278,10 +278,10 @@ static boolean autopickup_match(struct obj *obj)
 	struct nh_autopickup_rule *r;
 	char *objdesc;
 	enum nh_bucstatus objbuc;
-	
+
 	if (!iflags.ap_rules)
 	    return FALSE;
-	
+
 	objdesc = makesingular(doname_price(obj));
 	if (obj->bknown) {
 	    if (obj->blessed)
@@ -292,7 +292,7 @@ static boolean autopickup_match(struct obj *obj)
 		objbuc = B_UNCURSED;
 	} else
 	    objbuc = B_UNKNOWN;
-	
+
 	/* test the aotupickup rules in order. If any of the rules matches this
 	 * object, return the result */
 	r = &iflags.ap_rules->rules[0];
@@ -348,35 +348,35 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 {
 	struct nh_objitem *it;
 	struct objclass *ocl;
-	
+
 	if (idx >= *nr_items) {
 	    *nr_items = *nr_items * 2;
 	    *items = realloc(*items, *nr_items * sizeof(struct nh_objitem));
 	}
-	
+
 	it = &((*items)[idx]);
 	memset(it, 0, sizeof(struct nh_objitem));
 	it->id = id;
 	it->weight = -1;
 	it->role = role;
 	strcpy(it->caption, caption);
-	
+
 	if (role == MI_NORMAL && obj) {
 	    ocl = &objects[obj->otyp];
-	    
+
 	    it->count = obj->quan;
 	    it->accel = use_invlet ? obj->invlet : 0;
 	    it->group_accel = def_oc_syms[(int)obj->oclass];
 	    it->otype = obfuscate_object(obj->otyp + 1);
 	    it->oclass = obj->oclass;
 	    it->worn = !!obj->owornmask;
-	    
+
 	    /* don't unconditionally reveal weight, otherwise lodestones on the
 	     * floor could be identified by their weight in the pickup dialog */
 	    if (obj->where == OBJ_INVENT || ocl->oc_name_known || obj->invlet ||
 		(obj->where == OBJ_CONTAINED && obj->ocontainer->where == OBJ_INVENT))
 		it->weight = obj->owt;
-	
+
 	    if (!obj->bknown)
 		it->buc = B_UNKNOWN;
 	    else if (obj->blessed)
@@ -390,7 +390,7 @@ void add_objitem(struct nh_objitem **items, int *nr_items, enum nh_menuitem_role
 	    it->group_accel = obj ? def_oc_syms[(int)obj->oclass] : 0;
 	    it->otype = it->oclass = -1;
 	}
-	    
+
 }
 
 
@@ -400,48 +400,48 @@ int obj_compare(const void *o1, const void *o2)
 	int cmp, val1, val2;
 	struct obj *obj1 = *(struct obj**)o1;
 	struct obj *obj2 = *(struct obj**)o2;
-	
+
 	/* compare positions in inv_order */
 	char *pos1 = strchr(flags.inv_order, obj1->oclass);
 	char *pos2 = strchr(flags.inv_order, obj2->oclass);
 	if (pos1 != pos2)
 	    return pos1 - pos2;
-	
+
 	/* compare names */
 	cmp = strcmp(cxname2(obj1), cxname2(obj2));
 	if (cmp)
 	    return cmp;
-	
+
 	/* Sort by enchantment.
 	 * Map unknown to -1000, which is comfortably below the range of ->spe. */
 	val1 = obj1->known ? obj1->spe : -1000;
 	val2 = obj2->known ? obj2->spe : -1000;
 	if (val1 != val2)
 	    return val2 - val1; /* Because bigger is better. */
-	
+
 	/* BUC state -> int (sort order: blessed, uncursed, cursed, unknown)
 	 * blessed = 3, uncursed = 2, cursed = 1, unknown = 0 */
 	val1 = obj1->bknown ? (obj1->blessed + !obj1->cursed + 1) : 0;
 	val2 = obj2->bknown ? (obj2->blessed + !obj2->cursed + 1) : 0;
 	if (val1 != val2)
 	    return val2 - val1;
-	
+
 	/* Sort by erodeproofing. Map known-invulnerable to 1, and both
 	 * known-vulnerable and unknown-vulnerability to 0. */
 	val1 = obj1->rknown && obj1->oerodeproof;
 	val2 = obj2->rknown && obj2->oerodeproof;
 	if (val1 != val2)
 	    return val2 - val1; /* Because bigger is better. */
-	
+
 	/* Sort by erosion. The effective amount is what matters. */
 	val1 = greatest_erosion(obj1);
 	val2 = greatest_erosion(obj2);
 	if (val1 != val2)
 	    return val1 - val2; /* Because bigger is WORSE. */
-	
+
 	if (obj1->greased != obj2->greased)
 	    return obj2->greased - obj1->greased;
-	
+
 	return 0;
 }
 
@@ -509,11 +509,11 @@ int query_objlist(const char *qstr,	/* query string */
 		&& (*allow)(curr))
 		objlist[nr_objects++] = curr;
 	}
-	
+
 	/* sort the list in place according to (1)inv_order and (2)object name */
 	if (qflags & INVORDER_SORT)
 	    qsort(objlist, nr_objects, sizeof(struct obj*), obj_compare);
-	
+
 	/* nr_items will be greater than nr_objects, because it counts headers, too */
 	nr_items = nr_objects;
 	items = malloc(nr_items * sizeof(struct nh_objitem));
@@ -531,15 +531,15 @@ int query_objlist(const char *qstr,	/* query string */
 	                doname(curr), curr, (qflags & USE_INVLET) != 0);
 	    prev_oclass = curr->oclass;
 	}
-	
+
 	if (cur_entry > 0) {
 	    selection = malloc(cur_entry * sizeof(struct nh_objresult));
 	    n = display_objects(items, cur_entry, qstr, how, selection);
 	}
-	
+
 	if (n > 0) {
 	    *pick_list = malloc(n * sizeof(struct object_pick));
-	    
+
 	    for (i = 0; i < n; i++) {
 		curr = objlist[selection[i].id - 1];
 		(*pick_list)[i].obj = curr;
@@ -554,7 +554,7 @@ int query_objlist(const char *qstr,	/* query string */
 	free(selection);
 	free(objlist);
 	free(items);
-	
+
 	return n;
 }
 
@@ -619,7 +619,7 @@ int query_category(const char *qstr,	/* query string */
 	    }
 	    return 0;
 	}
-	
+
 	init_menulist(&menu);
 
 	pack = flags.inv_order;
@@ -629,7 +629,7 @@ int query_category(const char *qstr,	/* query string */
 		             "All worn types" : "All types", invlet, FALSE);
 		invlet = 'b';
 	}
-	
+
 	do {
 	    collected_type_name = FALSE;
 	    for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
@@ -657,37 +657,37 @@ int query_category(const char *qstr,	/* query string */
 	/* unpaid items if there are any */
 	if (do_unpaid)
 	    add_menuitem(&menu, 'u', "Unpaid items", 'u', FALSE);
-	
+
 	/* billed items: checked by caller, so always include if BILLED_TYPES */
 	if (qflags & BILLED_TYPES)
 	    add_menuitem(&menu, 'x', "Unpaid items already used up", 'x', FALSE);
-	
+
 	if (qflags & CHOOSE_ALL)
 	    add_menuitem(&menu, 'A', (qflags & WORN_TYPES) ?
 		    "Auto-select every item being worn" :
 		    "Auto-select every item", 'A', FALSE);
-	
+
 	if (do_unidentified)
 	    add_menuitem(&menu, 'I', "Unidentified Items", 'I', FALSE);
-	
+
 	/* items with b/u/c/unknown if there are any */
 	if (do_blessed)
 	    add_menuitem(&menu, 'B', "Items known to be Blessed", 'B', FALSE);
-	
+
 	if (do_cursed)
 	    add_menuitem(&menu, 'C', "Items known to be Cursed", 'C', FALSE);
-	
+
 	if (do_uncursed)
 	    add_menuitem(&menu, 'U', "Items known to be Uncursed", 'U', FALSE);
-	
+
 	if (do_buc_unknown)
 	    add_menuitem(&menu, 'X', "Items of unknown B/C/U status", 'X', FALSE);
-	
+
 	n = display_menu(menu.items, menu.icount, qstr, how, pick_list);
 	free(menu.items);
 	if (n < 0)
 	    n = 0;	/* callers don't expect -1 */
-	
+
 	return n;
 }
 
@@ -1096,7 +1096,7 @@ static int container_at(int x, int y, boolean countem)
 {
 	struct obj *cobj, *nobj;
 	int container_count = 0;
-	
+
 	for (cobj = level->objects[x][y]; cobj; cobj = nobj) {
 		nobj = cobj->nexthere;
 		if (Is_container(cobj)) {
@@ -1327,7 +1327,7 @@ int loot_mon(struct monst *mtmp, int *passed_info, boolean *prev_loot)
 		    pline("You can't. The saddle seems to be stuck to %s.",
 			x_monnam(mtmp, ARTICLE_THE, NULL,
 				SUPPRESS_SADDLE, FALSE));
-			    
+
 		    /* the attempt costs you time */
 			return 1;
 		}
@@ -1356,13 +1356,35 @@ int loot_mon(struct monst *mtmp, int *passed_info, boolean *prev_loot)
 /*
  * Decide whether an object being placed into a magic bag will cause
  * it to explode.  If the object is a bag itself, check recursively.
+ * Return value: 0 = no explosion, 1 = explosion, 2 = disallow one item
  */
-static boolean mbag_explodes(struct obj *obj, int depthin)
+static int mbag_explodes(struct obj *obj, int depthin)
 {
     /* these won't cause an explosion when they're empty */
     if ((obj->otyp == WAN_CANCELLATION || obj->otyp == BAG_OF_TRICKS) &&
 	    obj->spe <= 0)
-	return FALSE;
+	return 0;
+    else if (obj->otyp == WAN_CANCELLATION || obj->otyp == BAG_OF_TRICKS) {
+        if (obj->where == OBJ_CONTAINED)
+            pline("As you nest the bags, you see a crazily bright glow.");
+        else
+            pline("As you put %s inside, it glows crazily bright for a while.",
+                  doname(obj));
+        pline("Then you feel a strange absence of magical power...");
+        obj->spe = 0; /* charge a lot for the free identify, as this would have
+                         destroyed the item and the bag in vanila */
+        obj->known = TRUE; /* mark the absence of charges, so players know
+                              what happened */
+        makeknown(obj->otyp);
+        return 0;
+    } else if (Is_mbag(obj) && depthin < 2) {
+        /* There's a legitimate use to try nesting BoHes, but we don't
+           want it to happen by mistake. You always get an explosion
+           unless there are at least two layers of sacks in between. */
+        pline("You feel too much resistance trying to nest the bags.");
+        pline("Perhaps you need more padding? But that could be risky...");
+        return 2;
+    }
 
     /* odds: 1/1, 2/2, 3/4, 4/8, 5/16, 6/32, 7/64, 8/128, 9/128, 10/128,... */
     if ((Is_mbag(obj) || obj->otyp == WAN_CANCELLATION) &&
@@ -1371,8 +1393,10 @@ static boolean mbag_explodes(struct obj *obj, int depthin)
     else if (Has_contents(obj)) {
 	struct obj *otmp;
 
-	for (otmp = obj->cobj; otmp; otmp = otmp->nobj)
-	    if (mbag_explodes(otmp, depthin+1)) return TRUE;
+	for (otmp = obj->cobj; otmp; otmp = otmp->nobj) {
+	    int i = mbag_explodes(otmp, depthin+1);
+            if (i) return i;
+        }
     }
     return FALSE;
 }
@@ -1387,6 +1411,7 @@ static int in_container(struct obj *obj)
 {
 	boolean floor_container = !carried(current_container);
 	boolean was_unpaid = FALSE;
+        int mbag_explodes_reason = 0;
 	char buf[BUFSZ];
 
 	if (obj == uball || obj == uchain) {
@@ -1395,11 +1420,17 @@ static int in_container(struct obj *obj)
 	} else if (obj == current_container) {
 		pline("That would be an interesting topological exercise.");
 		return 0;
-	} else if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) {
+        }
+        /* must check for obj == current_container before doing this */
+        if (Is_mbag(current_container))
+            mbag_explodes_reason = mbag_explodes(obj, 0);
+        if (mbag_explodes_reason == 2) return 0;
+
+        if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) {
 		Norep("You cannot %s something you are wearing.",
 			Icebox ? "refrigerate" : "stash");
 		return 0;
-	} else if ((obj->otyp == LOADSTONE) && obj->cursed) {
+        } else if ((obj->otyp == LOADSTONE) && obj->cursed) {
 		obj->bknown = 1;
 	      pline("The stone%s won't leave your person.", plur(obj->quan));
 		return 0;
@@ -1489,7 +1520,7 @@ static int in_container(struct obj *obj)
 			/* mark a non-reviving corpse as such */
 			if (rot_alarm) obj->norevive = 1;
 		}
-	} else if (Is_mbag(current_container) && mbag_explodes(obj, 0)) {
+	} else if (mbag_explodes_reason == 1) {
 		/* explicitly mention what item is triggering the explosion */
 		pline(
 	      "As you put %s inside, you are blasted by a magical explosion!",
@@ -1599,7 +1630,7 @@ static int out_container(struct obj *obj)
 
 	if (is_gold)
 		bot();	/* update character's gold piece count immediately */
-		
+
 	return 1;
 }
 
@@ -1750,12 +1781,12 @@ int use_container(struct obj *obj, int held)
 	    } else {	/* MENU_PARTIAL */
 		loot_out = (yn_function(qbuf, ynqchars, 'n') == 'y');
 	    }
-	    
+
 	    if (loot_out) {
 		add_valid_menu_class(0);	/* reset */
 		used |= menu_loot(0, current_container, FALSE) > 0;
 	    }
-	    
+
 	} else {
 	    pline("%s", emptymsg);		/* <whatever> is empty. */
 	}
@@ -1878,19 +1909,19 @@ static int in_or_out_menu(const char *prompt, struct obj *obj,
 	sprintf(buf,"Take something out of %s", the(xname(obj)));
 	set_menuitem(&items[nr++], 1, MI_NORMAL, buf, 'o', FALSE);
     }
-    
+
     if (inokay) {
 	sprintf(buf,"Put something into %s", the(xname(obj)));
 	set_menuitem(&items[nr++], 2, MI_NORMAL, buf, 'i', FALSE);
     }
-    
+
     if (outokay && inokay)
 	set_menuitem(&items[nr++], 3, MI_NORMAL, "Both of the above", 'b', FALSE);
-    
+
     n = display_menu(items, nr, prompt, PICK_ONE, selection);
     if (n > 0)
 	n = selection[0];
-    
+
     return n;
 }
 
