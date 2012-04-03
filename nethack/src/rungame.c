@@ -20,10 +20,14 @@ nh_bool get_gamedir(enum game_dirs dirtype, wchar_t *buf)
     wchar_t *subdir;
     wchar_t appPath[MAX_PATH], nhPath[MAX_PATH];
     
-    /* Get the location of "AppData\Roaming" (Vista, 7) or "Application Data" (XP).
-     * The returned Path does not include a trailing backslash. */
-    if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
-	return FALSE;
+    if (override_userdir) {
+        sprintf(nhPath, override_userdir);
+    } else {
+        /* Get the location of "AppData\Roaming" (Vista, 7) or "Application Data" (XP).
+         * The returned Path does not include a trailing backslash. */
+        if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
+            return FALSE;
+    }
     
     switch (dirtype) {
 	case CONFIG_DIR: subdir = L"\\"; break;
@@ -31,7 +35,7 @@ nh_bool get_gamedir(enum game_dirs dirtype, wchar_t *buf)
 	case LOG_DIR:    subdir = L"\\log\\"; break;
     }
     
-    snwprintf(nhPath, MAX_PATH, L"%s\\NetHack4", appPath);
+    if (!override_userdir) snwprintf(nhPath, MAX_PATH, L"%s\\NetHack4", appPath);
     _wmkdir(nhPath);
     
     snwprintf(buf, BUFSZ, L"%s%s", nhPath, subdir);
@@ -54,17 +58,21 @@ nh_bool get_gamedir(enum game_dirs dirtype, char *buf)
         case DUMP_DIR:   subdir = "dumps/"; break;
     }
     
-    /* look in regular location */
-    envval = getenv("XDG_CONFIG_HOME");
-    if (envval)
-	snprintf(buf, BUFSZ, "%s/NetHack4/%s", envval, subdir);
-    else {
-	envval = getenv("HOME");
-	if (!envval) /* HOME not set? just give up... */
-	    return FALSE;
-	snprintf(buf, BUFSZ, "%s/.config/NetHack4/%s", envval, subdir);
+    if (override_userdir && getgid() == getegid()) {
+        snprintf(buf, BUFSZ, "%s/%s", override_userdir, subdir);
+    } else {
+        /* look in regular location */
+        envval = getenv("XDG_CONFIG_HOME");
+        if (envval)
+            snprintf(buf, BUFSZ, "%s/NetHack4/%s", envval, subdir);
+        else {
+            envval = getenv("HOME");
+            if (!envval) /* HOME not set? just give up... */
+                return FALSE;
+            snprintf(buf, BUFSZ, "%s/.config/NetHack4/%s", envval, subdir);
+        }
     }
-    
+
     mask = umask(0);
     if (mkdir(buf, 0755) == -1 && errno != EEXIST) {
 	/* try to create the parent directory too. This ist the only problem we

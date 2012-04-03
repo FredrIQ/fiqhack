@@ -21,6 +21,8 @@ int initrole = ROLE_NONE, initrace = ROLE_NONE;
 int initgend = ROLE_NONE, initalign = ROLE_NONE;
 nh_bool random_player = FALSE;
 
+char *override_hackdir, *override_userdir;
+
 enum menuitems {
     NEWGAME = 1,
     LOAD,
@@ -182,6 +184,30 @@ static char** init_game_paths(const char *argv0)
     /* avoid a trap for people trying to port this */
 #error You must run NetHack 4 under Win32 or Linux.
 #endif
+
+    /* if given an override directory, use it (unless we're running
+       setgid */
+#ifdef UNIX
+    if (getgid() == getegid()) {
+#endif
+        if (override_hackdir) {
+            /* player-nonspecific */
+            pathlist[BONESPREFIX] = override_hackdir;
+            pathlist[DATAPREFIX] = override_hackdir;
+            pathlist[SCOREPREFIX] = override_hackdir;
+            pathlist[LOCKPREFIX] = override_hackdir;
+            pathlist[TROUBLEPREFIX] = override_hackdir;
+        }
+        if (override_userdir) {
+            /* player-specific */
+            pathlist[DUMPPREFIX] = override_userdir;
+            /* config and save are also player-specific, but we don't
+               pass those as filenames to the engine; rather,
+               get_gamedir looks at them */
+        }
+#ifdef UNIX
+    }
+#endif
     
     /* alloc memory for the paths and append slashes as required */
     for (i = 0; i < PREFIX_COUNT; i++) {
@@ -270,6 +296,8 @@ int main(int argc, char *argv[])
     int i;
     
     umask(0777 & ~FCMASK);
+
+    process_args(argc, argv);	/* grab -U, -H early */
     
     init_options();
     
@@ -283,7 +311,7 @@ int main(int argc, char *argv[])
     init_curses_ui();
     read_nh_config();
 
-    process_args(argc, argv);	/* command line options */
+    process_args(argc, argv);	/* other command line options */
     init_displaychars();
     
     mainmenu();
@@ -385,6 +413,26 @@ static void process_args(int argc, char *argv[])
 	case '@':
 	    random_player = TRUE;
 	    break;
+
+        case 'H':
+            if (argv[0][2]) {
+                override_hackdir = argv[0] + 2;
+            } else if (argc > 1) {
+                argc--;
+                argv++;
+                override_hackdir = argv[0];
+            }
+            break;
+
+        case 'U':
+            if (argv[0][2]) {
+                override_userdir = argv[0] + 2;
+            } else if (argc > 1) {
+                argc--;
+                argv++;
+                override_userdir = argv[0];
+            }
+            break;
 	    
 	default:
 	    i = str2role(ri, argv[0]);
