@@ -63,7 +63,6 @@ they actually haven't. (Don't include the // around the regexp.)
 
 use warnings;
 use strict;
-use feature qw/switch say/;
 use Storable qw/nstore retrieve/;
 use Data::Dumper qw/Dumper/;
 use File::Spec ();
@@ -148,14 +147,12 @@ sub merge_config {
   my $config1 = shift; # array or hash ref
   my $config2 = shift; # likewise, and the same
   ref $config1 ne ref $config2 and die "Incorrect type in config file";
-  given (ref $config2) {
-    when ("ARRAY") {
+    if (ref $config2 eq "ARRAY") {
       # Append the contents of config2 to config1.
       # We do it that way, so that project-specific options can
       # override global ones.
       push @$config1, @$config2;
-    }
-    when ("HASH") {
+    } elsif (ref $config2 eq "HASH") {
       # For each key in hash2, overwrite the corresponding value in
       # hash1 with it, except merge if they're both array refs or
       # both hash refs.
@@ -166,7 +163,6 @@ sub merge_config {
         } else { $$config1{$k} = $$config2{$k}; }
       }
     }
-  }
 }
 
 # We use Perl notation (Data::Dumper-style) for the config file, which
@@ -403,8 +399,7 @@ sub eval_config_element {
   die "eval_config_element must be called in array context"
     unless wantarray;
 
-  given (ref $el) {
-    when ("ARRAY") {
+    if (ref $el eq "ARRAY") {
       # An array reference contains a list of elements, separated into
       # groups. Each element is in a group by itself unless otherwise
       # stated. We ignore list elements with unmet prerequisites, then
@@ -440,8 +435,7 @@ sub eval_config_element {
           eval_config_element($e, $subs, $dont_escape);
       }
       return @filteredarray2;
-    }
-    when ("HASH") {
+    } elsif (ref $el eq "HASH") {
       # Hashes are used for more complex command lists.
       # We can ignore prereqs because the array handling code wouldn't
       # call this far if they weren't met. Likewise, group/score are only
@@ -508,8 +502,7 @@ sub eval_config_element {
       $value_only and defined $e{'value'} and return $e{'value'};
       $value_only and exists $e{'value'} and return;
       return \%e;
-    }
-    default {
+    } else {
       # Should be a scalar or regex.
       defined $el or return ();
       # Special case: we can substitute in undef from a regex match.
@@ -527,7 +520,6 @@ sub eval_config_element {
          File::Spec->catfile($state->{'srcdir'}, $1)/ge;
       return ($el);
     }
-  }
 }
 
 sub eval_config_element_scalar {
