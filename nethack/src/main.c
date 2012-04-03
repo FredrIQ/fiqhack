@@ -33,7 +33,7 @@ enum menuitems {
     EXITGAME
 };
 
-struct nh_menuitem mainmenu_items[] = {
+static struct nh_menuitem mainmenu_items[] = {
     {NEWGAME, MI_NORMAL, "new game", 'n'},
     {LOAD, MI_NORMAL, "load game", 'l'},
     {REPLAY, MI_NORMAL, "view replay", 'v'},
@@ -45,6 +45,14 @@ struct nh_menuitem mainmenu_items[] = {
     {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
+static struct nh_menuitem mainmenu_items_noclient[] = {
+    {NEWGAME, MI_NORMAL, "new game", 'n'},
+    {LOAD, MI_NORMAL, "load game", 'l'},
+    {REPLAY, MI_NORMAL, "view replay", 'v'},
+    {OPTIONS, MI_NORMAL, "set options", 'o'},
+    {TOPTEN, MI_NORMAL, "show score list", 's'},
+    {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
+};
 
 const char *nhlogo_small[12] = { /* created using pbmtoascii */
 "                                                       oo               _d#,   ",
@@ -252,9 +260,16 @@ static void mainmenu(void)
 	wrefresh(basewin);
 
 	menuresult[0] = EXITGAME; /* default action */
-	n = curses_display_menu_core(mainmenu_items, ARRAY_SIZE(mainmenu_items),
-				     NULL, PICK_ONE, menuresult, 0, logoheight,
-				     COLS, ROWNO+3, NULL);
+        if (!override_hackdir)
+            n = curses_display_menu_core(mainmenu_items, ARRAY_SIZE(mainmenu_items),
+                                         NULL, PICK_ONE, menuresult, 0, logoheight,
+                                         COLS, ROWNO+3, NULL);
+        else
+            n = curses_display_menu_core(mainmenu_items_noclient,
+                                         ARRAY_SIZE(mainmenu_items_noclient),
+                                         NULL, PICK_ONE, menuresult, 0, logoheight,
+                                         COLS, ROWNO+3, NULL);
+
 	
 	switch (menuresult[0]) {
 	    case NEWGAME:
