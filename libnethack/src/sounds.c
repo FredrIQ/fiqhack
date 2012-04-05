@@ -819,7 +819,7 @@ static int dochat(int idx, int idy, int idz)
     }
 
     if (dx == -2 || dy == -2 || dz == -2) {
-      if (!getdir("Talk to whom? (in what direction)", &dx, &dy, &dz)) {
+      if (!getdir(NULL, &dx, &dy, &dz)) {
 	/* decided not to chat */
         return 0;
       }
@@ -856,9 +856,10 @@ static int dochat(int idx, int idy, int idz)
     mtmp = m_at(level, tx, ty);
 
     if (!mtmp || mtmp->mundetected ||
-		mtmp->m_ap_type == M_AP_FURNITURE ||
-		mtmp->m_ap_type == M_AP_OBJECT)
-	return 0;
+        mtmp->m_ap_type == M_AP_FURNITURE ||
+        mtmp->m_ap_type == M_AP_OBJECT) {
+        return doclose(dx, dy, 0);
+    }
 
     /* sleeping monsters won't talk, except priests (who wake up) */
     if ((!mtmp->mcanmove || mtmp->msleeping) && !mtmp->ispriest) {

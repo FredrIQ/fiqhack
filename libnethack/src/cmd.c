@@ -63,8 +63,8 @@ const struct cmd_desc cmdlist[] = {
 	{"attributes", "show your attributes", C('x'), 0, TRUE, doattributes, CMD_ARG_NONE},
         {"autoexplore", "automatically explore until something happens", 'v', 0, FALSE, doautoexplore, CMD_ARG_NONE},
 	{"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
-	{"chat", "talk to someone", 'c', M('c'), TRUE, dotalk, CMD_ARG_DIR | CMD_EXT},	/* converse? */
-	{"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_DIR},
+	{"chat", "talk to someone", 'c', M('c'), TRUE, dotalk, CMD_ARG_NONE | CMD_ARG_DIR | CMD_EXT},	/* converse? */
+	{"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_NONE | CMD_ARG_DIR},
 	{"conduct", "list which challenges you have adhered to", 0, 0, TRUE, doconduct, CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
 	{"countgold", "show gold, debt, credit, and unpaid items", '$', 0, TRUE, doprgold, CMD_ARG_NONE | CMD_NOTIME},
 	{"dip", "dip an object into something", M('d'), 0, FALSE, dodip, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
