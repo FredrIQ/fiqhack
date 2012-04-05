@@ -217,7 +217,7 @@ void reset_pick(void)
 /* pick a lock with a given object */
 int pick_lock(struct obj *pick, schar dx, schar dy, schar dz)
 {
-        int picktyp, c, ch, got_dir;
+        int picktyp, c, ch, got_dir = FALSE;
 	coord cc;
 	struct rm	*door;
 	struct obj	*otmp;
