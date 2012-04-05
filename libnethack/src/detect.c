@@ -1172,9 +1172,14 @@ void sokoban_detect(struct level *lev)
 	/* Map the background and boulders */
 	for (x = 1; x < COLNO; x++)
 	    for (y = 0; y < ROWNO; y++) {
-                int cmap = back_to_cmap(lev, x, y);
+                int cmap;
 		lev->locations[x][y].seenv = SVALL;
 		lev->locations[x][y].waslit = TRUE;
+                /* seenv, waslit must be set before back_to_cmap is
+                   called, or it'll give us a view as seen from the
+                   wrong side (e.g. wall looks like rock if seen from
+                   an adjoining corridor) */
+                cmap = back_to_cmap(lev, x, y);
 		lev->locations[x][y].mem_bg = cmap;
                 if (cmap == S_vodoor || cmap == S_hodoor ||
                     cmap == S_vcdoor || cmap == S_hcdoor) {
