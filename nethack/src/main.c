@@ -262,13 +262,13 @@ static void mainmenu(void)
 	menuresult[0] = EXITGAME; /* default action */
         if (!override_hackdir)
             n = curses_display_menu_core(mainmenu_items, ARRAY_SIZE(mainmenu_items),
-                                         NULL, PICK_ONE, menuresult, 0, logoheight,
-                                         COLS, ROWNO+3, NULL);
+                                         NULL, PICK_ONE, menuresult, 0, logoheight-1,
+                                         COLS, LINES-3, NULL);
         else
             n = curses_display_menu_core(mainmenu_items_noclient,
                                          ARRAY_SIZE(mainmenu_items_noclient),
-                                         NULL, PICK_ONE, menuresult, 0, logoheight,
-                                         COLS, ROWNO+3, NULL);
+                                         NULL, PICK_ONE, menuresult, 0, logoheight-1,
+                                         COLS, LINES-3, NULL);
 
 	
 	switch (menuresult[0]) {
