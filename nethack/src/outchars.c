@@ -13,7 +13,7 @@
 #define array_size(x) (sizeof(x)/sizeof(x[0]))
 
 
-static int corpse_id, vcdoor_id, hcdoor_id;
+static int corpse_id, vcdoor_id, hcdoor_id, ndoor_id;
 static int upstair_id, upladder_id, upsstair_id;
 static int dnstair_id, dnladder_id, dnsstair_id;
 static int mportal_id, vibsquare_id;
@@ -340,6 +340,8 @@ void init_displaychars(void)
 	    vcdoor_id = i;
 	if (!strcmp("hcdoor", cur_drawing->bgelements[i].symname))
 	    hcdoor_id = i;
+	if (!strcmp("ndoor", cur_drawing->bgelements[i].symname))
+	    ndoor_id = i;
 	if (!strcmp("upstair", cur_drawing->bgelements[i].symname))
 	    upstair_id = i;
 	if (!strcmp("upladder", cur_drawing->bgelements[i].symname))
@@ -501,7 +503,8 @@ int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
         if (settings.floorcolor) {
           if (dbe->bg == darkroom_id && dbe->branding & NH_BRANDING_STEPPED)
             syms[count-1].color = CLR_BLUE;
-          if ((dbe->bg == room_id || dbe->bg == corr_id || dbe->bg == litcorr_id)
+          if ((dbe->bg == room_id || dbe->bg == ndoor_id ||
+               dbe->bg == corr_id || dbe->bg == litcorr_id)
               && dbe->branding & NH_BRANDING_STEPPED) {
             syms[count-1].color = CLR_BROWN;
           }
