@@ -371,7 +371,15 @@ int pick_lock(struct obj *pick, schar dx, schar dy, schar dz)
 		    pline("I don't think %s would appreciate that.", mon_nam(mtmp));
 		return 0;
 	    }
-	    if (!IS_DOOR(door->typ)) {
+	    if (mtmp                                    &&
+	        (mtmp->m_ap_type == M_AP_FURNITURE)     &&
+		(mtmp->mappearance == S_hcdoor ||
+			mtmp->mappearance == S_vcdoor)	&&
+		!Protection_from_shape_changers)	 {
+                stumble_onto_mimic(mtmp, dx, dy);
+	        return(1);
+	    }
+	    if(!IS_DOOR(door->typ)) {
 		if (is_drawbridge_wall(cc.x,cc.y) >= 0)
 		    pline("You %s no lock on the drawbridge.",
 				Blind ? "feel" : "see");
