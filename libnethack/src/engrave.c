@@ -1092,12 +1092,12 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 }
 int doengrave(struct obj *o)
 {
-    doengrave_core(o, 0);
+    return doengrave_core(o, 0);
 }
 int doelbereth(void)
 {
     /* TODO: Athame? */
-    doengrave_core(&zeroobj, 1);
+    return doengrave_core(&zeroobj, 1);
 }
 
 void save_engravings(struct memfile *mf, struct level *lev)
