@@ -361,6 +361,11 @@ void m_dowear(struct monst *mon, boolean creation)
 		return;
 
 	m_dowear_type(mon, W_AMUL, creation, FALSE);
+
+	if (mon->data == &mons[PM_KI_RIN] ||
+	    mon->data == &mons[PM_COUATL])
+	    return;
+
 	/* can't put on shirt if already wearing suit */
 	if (!cantweararm(mon->data) || (mon->misc_worn_check & W_ARM))
 	    m_dowear_type(mon, W_ARMU, creation, FALSE);

@@ -200,13 +200,17 @@ static void do_earthquake(int force)
 		if (mtmp->mundetected && is_hider(mtmp->data)) {
 		    mtmp->mundetected = 0;
 		    if (cansee(x,y))
-			pline("%s is shaken loose from the ceiling!",
-							    Amonnam(mtmp));
+			pline("%s is shaken loose from %s!",
+				Amonnam(mtmp),
+				mtmp->data == &mons[PM_TRAPPER] ?
+				"its hiding place" :
+				the(ceiling(u.ux, u.uy)));
 		    else
 			You_hear("a thumping sound.");
-		    if (x==u.ux && y==u.uy)
+		    if (x==u.ux && y==u.uy &&
+		        mtmp->data != &mons[PM_TRAPPER])
 			pline("You easily dodge the falling %s.",
-							    mon_nam(mtmp));
+                              mon_nam(mtmp));
 		    newsym(x,y);
 		}
 	    }

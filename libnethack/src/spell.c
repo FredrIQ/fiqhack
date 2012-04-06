@@ -933,7 +933,10 @@ static int throwspell(schar *dx, schar *dy)
 	    *dx = 0;
 	    *dy = 0;
 	    return 1;
-	} else if (!cansee(cc.x, cc.y) || IS_STWALL(level->locations[cc.x][cc.y].typ)) {
+	} else if ((!cansee(cc.x, cc.y) &&
+	            (!MON_AT(level, cc.x, cc.y) ||
+		     !canspotmon(m_at(level, cc.x, cc.y)))) ||
+		     IS_STWALL(level->locations[cc.x][cc.y].typ)) {
 	    pline("Your mind fails to lock onto that location!");
 	    return 0;
 	} else {

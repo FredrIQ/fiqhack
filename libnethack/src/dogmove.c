@@ -31,6 +31,9 @@ static boolean is_better_armor(struct monst *mtmp, struct obj *otmp)
 
     if (otmp->oclass != ARMOR_CLASS) return FALSE;
 
+    if (mtmp->data == &mons[PM_KI_RIN] ||
+        mtmp->data == &mons[PM_COUATL]) return FALSE;
+
     if (cantweararm(mtmp->data) &&
         !(is_cloak(otmp) && mtmp->data->msize == MZ_SMALL))
 	return FALSE;

@@ -578,7 +578,6 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			silverobj = TRUE;
 			tmp += rnd(20);
 		    }
-
 		    if (!thrown && obj == uwep && obj->otyp == BOOMERANG &&
 			    rnl(4) == 4-1) {
 			boolean more_than_1 = (obj->quan > 1L);
