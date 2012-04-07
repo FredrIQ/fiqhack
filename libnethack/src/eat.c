@@ -2184,7 +2184,7 @@ struct obj *floorfood(/* get food from floor or pack */
 	char c;
 	boolean feeding = (!strcmp(verb, "eat"));
         int can_floorfood = 0;
-        boolean checking_can_floorfood = True;
+        boolean checking_can_floorfood = TRUE;
 
 	/* if we can't touch floor objects then use invent food only */
 	if (!can_reach_floor() ||
