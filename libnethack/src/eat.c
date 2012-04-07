@@ -49,7 +49,7 @@ char msgbuf[BUFSZ];
 /* also used to see if you're allowed to eat cats and dogs */
 #define CANNIBAL_ALLOWED() (Role_if (PM_CAVEMAN) || Race_if(PM_ORC))
 
-static const char comestibles[] = { FOOD_CLASS, 0 };
+static const char comestibles[] = { ALLOW_NONE, NONE_ON_COMMA, FOOD_CLASS, 0 };
 
 static const char allobj[] = {
         ALLOW_NONE, NONE_ON_COMMA,
@@ -2184,7 +2184,7 @@ struct obj *floorfood(/* get food from floor or pack */
 	char c;
 	boolean feeding = (!strcmp(verb, "eat"));
         int can_floorfood = 0;
-        boolean checking_can_floorfood = feeding;
+        boolean checking_can_floorfood = True;
 
 	/* if we can't touch floor objects then use invent food only */
 	if (!can_reach_floor() ||
@@ -2259,7 +2259,7 @@ struct obj *floorfood(/* get food from floor or pack */
 	 * "ugly checks" and we need to check for inedible items.
 	 */
 	otmp = getobj(feeding ? (const char *)(allobj + (can_floorfood ? 0 : 2)) :
-				(const char *)comestibles, verb);
+				(const char *)(comestibles + (can_floorfood ? 0 : 2)), verb);
         if (otmp == &zeroobj) {
             checking_can_floorfood = FALSE;
             goto eat_floorfood;
