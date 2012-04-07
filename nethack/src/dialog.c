@@ -37,7 +37,7 @@ enum nh_direction curses_getdir(const char *query, nh_bool restricted)
 	    return DIR_SELF;
     
     dir = key_to_dir(key);
-    if (dir == DIR_NONE)
+    if (dir == DIR_NONE && key != KEY_ESC)
 	curses_msgwin("What a strange direction!");
     
     return dir;
