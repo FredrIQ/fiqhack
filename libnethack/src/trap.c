@@ -2804,12 +2804,20 @@ boolean drown(void)
 	u.uinwater = 1;
 	pline("You drown.");
 	killer_format = KILLED_BY_AN;
-	killer = (level->locations[u.ux][u.uy].typ == POOL || Is_medusa_level(&u.uz)) ?
-	    "pool of water" : "moat";
+	killer_format = Is_waterlevel(&u.uz) ? KILLED_BY
+			                     : KILLED_BY_AN;
+	killer = Is_waterlevel(&u.uz) ? "the Plane of Water"
+	                              : waterbody_name(u.ux, u.uy);
 	done(DROWNING);
 	/* oops, we're still alive.  better get out of the water. */
 	while (!safe_teleds(TRUE)) {
 		pline("You're still drowning.");
+		killer_format = KILLED_BY_AN;
+	        killer = waterbody_name(u.ux, u.uy);
+	        killer_format = Is_waterlevel(&u.uz) ? KILLED_BY
+			                     	     : KILLED_BY_AN;
+	        killer = Is_waterlevel(&u.uz) ? "the Plane of Water"
+	                                      : waterbody_name(u.ux, u.uy);
 		done(DROWNING);
 	}
 	if (u.uinwater) {

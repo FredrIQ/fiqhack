@@ -3450,12 +3450,9 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 		    dryup(x, y, type > 0);
 	    }
 	}
-	else if (abstype == ZT_COLD && (is_pool(level, x,y) || is_lava(level, x,y))) {
-		boolean lava = is_lava(level, x,y);
-		boolean moat = (!lava && (loc->typ != POOL) &&
-				(loc->typ != WATER) &&
-				!Is_medusa_level(&u.uz) &&
-				!Is_waterlevel(&u.uz));
+        else if(abstype == ZT_COLD && (is_pool(level, x, y) || is_lava(level, x, y))) {
+                boolean lava = is_lava(level, x, y);
+		boolean moat = !strcmp(waterbody_name(x, y), "moat"); 
 
 		if (loc->typ == WATER) {
 		    /* For now, don't let WATER freeze. */

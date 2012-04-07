@@ -572,11 +572,13 @@ static void do_entity(struct entity *etmp)
 			if (Hallucination)
 			    pline("%s the %s and disappears.",
 				  E_phrase(etmp, "drink"),
-				  lava ? "lava" : "moat");
+				  lava ? "lava"
+				       : waterbody_name(etmp->ex, etmp->ey));
 			else
 			    pline("%s into the %s.",
 				  E_phrase(etmp, "fall"),
-				  lava ? "lava" : "moat");
+				  lava ? "lava"
+				       : waterbody_name(etmp->ex, etmp->ey));
 		    }
 		killer_format = NO_KILLER_PREFIX;
 		killer = "fell from a drawbridge";
@@ -696,13 +698,15 @@ void destroy_drawbridge(int x, int y)
 		if (loc1->typ == DRAWBRIDGE_UP) {
 			if (cansee(x2,y2))
 			    pline("The portcullis of the drawbridge falls into the %s!",
-				  lava ? "lava" : "moat");
+				  lava ? "lava"
+				       : waterbody_name(x2, y2));
 			else if (flags.soundok)
 				You_hear("a loud *SPLASH*!");
 		} else {
 			if (cansee(x,y))
 			    pline("The drawbridge collapses into the %s!",
-				  lava ? "lava" : "moat");
+				  lava ? "lava"
+				       : waterbody_name(x, y));
 			else if (flags.soundok)
 				You_hear("a loud *SPLASH*!");
 		}
