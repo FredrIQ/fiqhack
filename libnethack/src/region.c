@@ -376,7 +376,7 @@ boolean in_out_region(struct level *lev, xchar x, xchar y)
 }
 
 /*
- * check wether a monster enters/leaves one or more region.
+ * check whether a monster enters/leaves one or more region.
 */
 boolean m_in_out_region(struct monst *mon, xchar x, xchar y)
 {

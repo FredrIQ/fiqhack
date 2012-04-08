@@ -628,7 +628,7 @@ static boolean putting_on(const char *action)
 
 
 /* ugly checks that were pulled out of getobj. The intent is to determine
- * wether object otmp should be displayed for the query descibed by word.
+ * whether object otmp should be displayed for the query descibed by word.
  * This function assumes that otmp->oclass is known to be allowed. */
 static enum obj_use_status object_selection_checks(struct obj *otmp,
 						   const char *word)

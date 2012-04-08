@@ -121,7 +121,7 @@ static const struct nh_option_desc const_options[] = {
     {"autopickup_rules", "rules to decide what to autopickup if autopickup is on", OPTTYPE_AUTOPICKUP_RULES, {(void*)&def_autopickup}},
     {"autoquiver",	"when firing with an empty quiver, select something suitable",	OPTTYPE_BOOL, { VFALSE }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
-    {"disclose",	"wether to disclose information at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
+    {"disclose",	"whether to disclose information at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit",		"the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
     {"lit_corridor",	"show a dark corridor as lit if in sight",	OPTTYPE_BOOL, { VFALSE }},
     {"menustyle",	"user interface for object selection", OPTTYPE_ENUM, {(void*)MENU_FULL}},
