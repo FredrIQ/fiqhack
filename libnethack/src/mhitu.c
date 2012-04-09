@@ -1192,7 +1192,7 @@ dopois:
 			    killer_format =
 			        Is_waterlevel(&u.uz) ? KILLED_BY
 			                             : KILLED_BY_AN;
-			    Sprintf(buf, "%s by %s",
+			    sprintf(buf, "%s by %s",
 			            Is_waterlevel(&u.uz)
 				    ? "the Plane of Water"
 			            : waterbody_name(mtmp->mx, mtmp->my),
