@@ -173,10 +173,11 @@ void rungame(void)
 {
     int ret, role = initrole, race = initrace, gend = initgend, align = initalign;
     int fd = -1;
-    char plname[BUFSZ];
+    char plname[BUFSZ], prompt[BUFSZ] = "You are a ";
     fnchar filename[1024];
     fnchar savedir[BUFSZ];
     long t;
+    struct nh_roles_info *info;
     
     if (!get_gamedir(SAVE_DIR, savedir)) {
 	curses_raw_print("Could not find where to put the logfile for a new game.");
@@ -185,6 +186,26 @@ void rungame(void)
     
     if (!player_selection(&role, &race, &gend, &align, random_player))
 	return;
+
+    /*
+     * Describe the player character for naming; see welcome() in allmain.c in
+     * libnethack.
+     */
+    info = nh_get_roles();
+    sprintf(prompt + strlen(prompt), "%s", info->alignnames[align]);
+
+    /*
+     * assert(info->num_gend == 2) or else we lose a bunch of assumptions here,
+     * like that 0 and 1 are the correct gender identifiers.
+     */
+    if (!info->rolenames_f[role] && nh_cm_idx(*info, role, race, 0, align) && 
+	nh_cm_idx(*info, role, race, 1, align))
+        sprintf(prompt + strlen(prompt), " %s", info->gendnames[gend]);
+
+    sprintf(prompt + strlen(prompt), " %s %s. What is your name?",
+	    info->racenames[race],
+	    (gend && info->rolenames_f[role] ? info->rolenames_f :
+	                                       info->rolenames_m)[role]);
     
     strncpy(plname, settings.plname, PL_NSIZ);
     /* The player name is set to "wizard" (again) in nh_start_game, so setting
@@ -193,7 +214,7 @@ void rungame(void)
 	strcpy(plname, "wizard");
     
     while (!plname[0])
-	curses_getline("what is your name?", plname);
+	curses_getline(prompt, plname);
     if (plname[0] == '\033') /* canceled */
 	return;
 
