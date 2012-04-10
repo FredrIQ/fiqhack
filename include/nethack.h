@@ -87,7 +87,9 @@ do {\
     struct nh_menuitem *_item_ = it;\
     (_item_)->id = i; (_item_)->role = r; (_item_)->accel = acc;\
     (_item_)->group_accel = 0; (_item_)->selected = sel;\
-    strcpy((_item_)->caption, cap); \
+    strncpy((_item_)->caption, cap, BUFSZ - 1); \
+    /* This should never do anything, but safety first! */ \
+    (_item_)->caption[BUFSZ - 1] = '\0'; \
 } while(0)
 
 #define add_menu_item(items, size, icount, id, caption, accel, selected) \
