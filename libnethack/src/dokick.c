@@ -126,6 +126,8 @@ static void kick_monster(xchar x, xchar y, schar dx, schar dy)
 	boolean clumsy = FALSE;
 	struct monst *mon = m_at(level, x, y);
 	int i, j;
+	coord bypos;
+	boolean canmove = TRUE;
 
 	bhitpos.x = x;
 	bhitpos.y = y;
@@ -201,25 +203,32 @@ static void kick_monster(xchar x, xchar y, schar dx, schar dy)
 		clumsy = TRUE;
 doit:
 	pline("You kick %s.", mon_nam(mon));
-	if (!rn2(clumsy ? 3 : 4) && (clumsy || !bigmonst(mon->data)) &&
+	if (!enexto(&bypos, level, u.ux, u.uy, mon->data) ||
+	    !((can_teleport(mon->data) && !level->flags.noteleport) ||
+	      ((abs(bypos.x - u.ux) <= 1) &&
+	       (abs(bypos.y - u.uy) <= 1))))
+	    canmove = FALSE;
+	if(!rn2(clumsy ? 3 : 4) && (clumsy || !bigmonst(mon->data)) &&
 	   mon->mcansee && !mon->mtrapped && !thick_skinned(mon->data) &&
 	   mon->data->mlet != S_EEL && haseyes(mon->data) && mon->mcanmove &&
 	   !mon->mstun && !mon->mconf && !mon->msleeping &&
 	   mon->data->mmove >= 12) {
-		if (!nohands(mon->data) && !rn2(martial() ? 5 : 3)) {
+		if (!canmove ||
+		    (!nohands(mon->data) && !rn2(martial() ? 5 : 3))) {
 		    pline("%s blocks your %skick.", Monnam(mon),
 				clumsy ? "clumsy " : "");
 		    passive(mon, FALSE, 1, AT_KICK);
 		    return;
 		} else {
-		    mnexto(mon);
+		    rloc_to(mon, bypos.x, bypos.y);
 		    if (mon->mx != x || mon->my != y) {
 			if (level->locations[x][y].mem_invis) {
 			    unmap_object(x, y);
 			    newsym(x, y);
 			}
 			pline("%s %s, %s evading your %skick.", Monnam(mon),
-				(can_teleport(mon->data) ? "teleports" :
+				(can_teleport(mon->data) &&
+				 !level->flags.noteleport ? "teleports" :
 				 is_floater(mon->data) ? "floats" :
 				 is_flyer(mon->data) ? "swoops" :
 				 (nolimbs(mon->data) || slithy(mon->data)) ?
