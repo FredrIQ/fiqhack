@@ -1748,9 +1748,19 @@ void zapnodir(struct obj *obj)
 static void backfire(struct obj *otmp)
 {
 	otmp->in_use = TRUE;	/* in case losehp() is fatal */
-	pline("%s suddenly explodes!", The(xname(otmp)));
-	losehp(dice(otmp->spe+2,6), "exploding wand", KILLED_BY_AN);
-	useup(otmp);
+	if (otmp->oartifact) {
+	    /*
+	     * Artifacts aren't destroyed by a backfire, but the
+	     * explosion is more violent.
+	     */
+	    pline("%s suddently produces a violent outburst of energy!",
+		    The(xname(otmp)));
+	    losehp(dice(otmp->spe+4,8), "oubursting wand", KILLED_BY_AN);
+	} else {
+	    pline("%s suddenly explodes!", The(xname(otmp)));
+	    losehp(dice(otmp->spe+2,6), "exploding wand", KILLED_BY_AN);
+	    useup(otmp);
+	}
 }
 
 static const char zap_syms[] = { WAND_CLASS, 0 };
@@ -1769,6 +1779,9 @@ int dozap(struct obj *obj)
 	if (!obj) return 0;
 
 	check_unpaid(obj);
+
+	if (obj->oartifact && !touch_artifact(obj, &youmonst))
+	    return 1;
 
 	/* zappable addition done by GAN 11/03/86 */
 	if (!zappable(obj)) { /* zappable prints the message itself */ }

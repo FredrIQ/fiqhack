@@ -2488,7 +2488,7 @@ int do_break_wand(struct obj *obj)
     if (nohands(youmonst.data)) {
 	pline("You can't break %s without hands!", the_wand);
 	return 0;
-    } else if (ACURR(A_STR) < 10) {
+    } else if (ACURR(A_STR) < 10 || obj->oartifact) {
 	pline("You don't have the strength to break %s!", the_wand);
 	return 0;
     }
