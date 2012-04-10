@@ -52,7 +52,7 @@ boolean burnarmor(struct monst *victim)
 	    item = (victim == &youmonst) ? uarmh : which_armor(victim, W_ARMH);
 	    if (item) {
 		mat_idx = objects[item->otyp].oc_material;
-	    	sprintf(buf,"%s helmet", materialnm[mat_idx] );
+	    	sprintf(buf,"%s %s", materialnm[mat_idx], helmet_name(item) );
 	    }
 	    if (!burn_dmg(item, item ? buf : "helmet")) continue;
 	    break;
@@ -665,7 +665,8 @@ void dotrap(struct trap *trap, unsigned trflags)
 
 		    if (uarmh) {
 			if (is_metallic(uarmh)) {
-			    pline("Fortunately, you are wearing a hard helmet.");
+			    pline("Fortunately, you are wearing a hard %s.",
+			          helmet_name(uarmh));
 			    dmg = 2;
 			} else if (flags.verbose) {
 			    pline("Your %s does not protect you.", xname(uarmh));
@@ -764,7 +765,7 @@ void dotrap(struct trap *trap, unsigned trflags)
 		    case 0:
 			pline("%s you on the %s!", A_gush_of_water_hits,
 				    body_part(HEAD));
-			rust_dmg(uarmh, "helmet", 1, TRUE, &youmonst);
+			rust_dmg(uarmh, helmet_name(uarmh), 1, TRUE, &youmonst);
 			break;
 		    case 1:
 			pline("%s your left %s!", A_gush_of_water_hits,
@@ -1730,7 +1731,7 @@ int mintrap(struct monst *mtmp)
 				pline("%s %s on the %s!", A_gush_of_water_hits,
 				    mon_nam(mtmp), mbodypart(mtmp, HEAD));
 			    target = which_armor(mtmp, W_ARMH);
-			    rust_dmg(target, "helmet", 1, TRUE, mtmp);
+			    rust_dmg(target, helmet_name(target), 1, TRUE, mtmp);
 			    break;
 			case 1:
 			    if (in_sight)

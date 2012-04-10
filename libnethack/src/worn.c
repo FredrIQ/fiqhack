@@ -662,9 +662,10 @@ void mon_break_armor(struct monst *mon, boolean polyspot)
 		    /* flimsy test for horns matches polyself handling */
 		    (handless_or_tiny || !is_flimsy(otmp))) {
 		if (vis)
-		    pline("%s helmet falls to the %s!",
-			  s_suffix(Monnam(mon)), surface(mon->mx, mon->my));
-		else
+		    pline("%s %s falls to the %s!",
+			  s_suffix(Monnam(mon)), helmet_name(otmp),
+			  surface(mon->mx, mon->my));
+		else if (is_metallic(otmp)) /* soft hats don't make a sound */
 		    You_hear("a clank.");
 		if (polyspot) bypass_obj(otmp);
 		m_lose_armor(mon, otmp);

@@ -1133,13 +1133,13 @@ int canwearobj(struct obj *otmp, long *mask, boolean noisy)
 
     if (is_helmet(otmp)) {
 	if (uarmh) {
-	    if (noisy) already_wearing(an(c_helmet));
+	    if (noisy) already_wearing(an(helmet_name(uarmh)));
 	    err++;
 	} else if (Upolyd && has_horns(youmonst.data) && !is_flimsy(otmp)) {
 	    /* (flimsy exception matches polyself handling) */
 	    if (noisy)
 		pline("The %s won't fit over your horn%s.",
-			  c_helmet, plur(num_horns(youmonst.data)));
+			  helmet_name(otmp), plur(num_horns(youmonst.data)));
 	    err++;
 	} else
 	    *mask = W_ARMH;

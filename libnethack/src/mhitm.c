@@ -1087,8 +1087,10 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		if ((mdef->misc_worn_check & W_ARMH) && rn2(8)) {
 		    if (vis) {
 			strcpy(buf, s_suffix(Monnam(mdef)));
-			pline("%s helmet blocks %s attack to %s head.",
-				buf, s_suffix(mon_nam(magr)),
+			pline("%s %s blocks %s attack to %s head.",
+				buf,
+				helmet_name(which_armor(mdef, W_ARMH)),
+				s_suffix(mon_nam(magr)),
 				mhis(mdef));
 		    }
 		    break;

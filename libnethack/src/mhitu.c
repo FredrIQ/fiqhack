@@ -356,8 +356,9 @@ int mattacku(struct monst *mtmp)
 
 		    obj = which_armor(mtmp, WORN_HELMET);
 		    if (obj && is_metallic(obj)) {
-			pline("Your blow glances off %s helmet.",
-			               s_suffix(mon_nam(mtmp)));
+			pline("Your blow glances off %s %s.",
+			               s_suffix(mon_nam(mtmp)),
+				       helmet_name(obj));
 		    } else {
 			if (3 + find_mac(mtmp) <= rnd(20)) {
 			    pline("%s is hit by a falling piercer (you)!",
@@ -1030,7 +1031,8 @@ dopois:
 
 		if (uarmh && rn2(8)) {
 		    /* not body_part(HEAD) */
-		    pline("Your helmet blocks the attack to your head.");
+		    pline("Your %s blocks the attack to your head.",
+		         helmet_name(uarmh));
 		    break;
 		}
 		if (Half_physical_damage) dmg = (dmg+1) / 2;
@@ -2173,8 +2175,8 @@ int doseduce(struct monst *mon)
 	if (!uwep || !welded(uwep))
 		mayberem(uarmg, "gloves");
 	mayberem(uarms, "shield");
-	mayberem(uarmh, "helmet");
-	if (!uarmc && !uarm)
+	mayberem(uarmh, uarmh ? helmet_name(uarmh) : "helmet");
+	if(!uarmc && !uarm)
 		mayberem(uarmu, "shirt");
 
 	if (uarm || uarmc) {

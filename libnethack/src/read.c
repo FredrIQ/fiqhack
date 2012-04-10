@@ -1090,7 +1090,9 @@ int seffects(struct obj *sobj, boolean *known)
 				if (helmet) {
 				    if (is_metallic(helmet)) {
 					if (canspotmon(mtmp))
-					    pline("Fortunately, %s is wearing a hard helmet.", mon_nam(mtmp));
+					    pline("Fortunately, %s is wearing a hard %s.",
+					          mon_nam(mtmp),
+					          helmet_name(helmet));
 					else if (flags.soundok)
 					    You_hear("a clanging sound.");
 					if (mdmg > 2) mdmg = 2;
@@ -1133,7 +1135,8 @@ int seffects(struct obj *sobj, boolean *known)
 			dmg = dmgval(otmp2, &youmonst) * otmp2->quan;
 			if (uarmh && !sobj->cursed) {
 			    if (is_metallic(uarmh)) {
-				pline("Fortunately, you are wearing a hard helmet.");
+				pline("Fortunately, you are wearing a hard %s.",
+					helmet_name(uarmh));
 				if (dmg > 2) dmg = 2;
 			    } else if (flags.verbose) {
 				pline("Your %s does not protect you.",

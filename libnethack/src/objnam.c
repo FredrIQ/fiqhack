@@ -381,7 +381,7 @@ static char *xname2(const struct obj *obj, boolean ignore_oquan)
 			else if (is_cloak(obj))
 				strcpy(buf,"cloak");
 			else if (is_helmet(obj))
-				strcpy(buf,"helmet");
+				strcpy(buf,helmet_name(obj));
 			else if (is_shield(obj))
 				strcpy(buf,"shield");
 			else
