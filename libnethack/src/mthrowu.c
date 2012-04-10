@@ -490,7 +490,7 @@ void thrwmu(struct monst *mtmp)
 		return;	/* Out of range, or intervening wall */
 
 	    if (canseemon(mtmp)) {
-		onm = xname(otmp);
+		onm = singular(otmp, xname);
 		pline("%s thrusts %s.", Monnam(mtmp),
 		      obj_is_pname(otmp) ? the(onm) : an(onm));
 	    }
