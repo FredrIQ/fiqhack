@@ -72,7 +72,7 @@ void show_topten(char *player, int top, int around, nh_bool own)
     char buf[BUFSZ];
     int i, listlen = 0;
     struct nh_menuitem *items;
-    int icount, size, maxwidth;
+    int icount, size;
     
     scores = nh_get_topten(&listlen, buf, player, top, around, own);
     
@@ -99,9 +99,8 @@ void show_topten(char *player, int top, int around, nh_bool own)
     makeheader(buf);
     add_menu_txt(items, size, icount, buf, MI_HEADING);
     
-    maxwidth = min(COLS, BUFSZ) - 4;
     for (i = 0; i < listlen; i++)
-	topten_add_score(&scores[i], &items, &size, &icount, maxwidth);
+	topten_add_score(&scores[i], &items, &size, &icount, min(COLS, BUFSZ) - 4);
     add_menu_txt(items, size, icount, "", MI_TEXT);
     
     curses_display_menu(items, icount, "Top scores:", PICK_NONE, NULL);
