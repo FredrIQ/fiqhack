@@ -1592,12 +1592,14 @@ void set_mimic_sym(struct monst *mtmp, struct level *lev)
 	} else if (IS_DOOR(typ) || IS_WALL(typ) ||
 		   typ == SDOOR || typ == SCORR) {
 		ap_type = M_AP_FURNITURE;
+		if (Is_rogue_level(&lev->z))
+		    appear = S_ndoor;
 		/*
 		 *  If there is a wall to the left that connects to this
 		 *  location, then the mimic mimics a horizontal closed door.
 		 *  This does not allow doors to be in corners of rooms.
 		 */
-		if (mx != 0 &&
+		else if (mx != 0 &&
 			(lev->locations[mx-1][my].typ == HWALL    ||
 			 lev->locations[mx-1][my].typ == TLCORNER ||
 			 lev->locations[mx-1][my].typ == TRWALL   ||
