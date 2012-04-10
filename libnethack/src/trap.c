@@ -3159,6 +3159,11 @@ static int help_monster_out(struct monst *mtmp, struct trap *ttmp)
 	/* Do you have the necessary capacity to lift anything? */
 	if (check_capacity(NULL)) return 1;
 
+	if (Levitation) {
+		pline("You cannot reach %s.", mon_nam(mtmp));
+		return 0;
+	}
+
 	/* Will our hero succeed? */
 	if ((uprob = untrap_prob(ttmp)) && !mtmp->msleeping && mtmp->mcanmove) {
 		pline("You try to reach out your %s, but %s backs away skeptically.",
