@@ -2377,8 +2377,25 @@ static void dofiretrap(struct obj *box)
 	}
 	if (!box && burn_floor_paper(u.ux, u.uy, see_it, TRUE) && !see_it)
 	    pline("You smell paper burning.");
-	if (is_ice(level, u.ux, u.uy))
+	if (is_ice(level, u.ux, u.uy)) {
+	    struct trap *tt = NULL;
+	    int xbak = 0, ybak = 0;
+	    if (!box) {
+	        tt = t_at(level, u.ux, u.uy);
+		if (tt) {
+		    xbak = tt->tx;
+		    ybak = tt->ty;
+		    tt->tx = tt->ty = 0; 
+		} else {
+		    impossible("dofiretrap: no tt and no box?");
+		}
+	    }
 	    melt_ice(u.ux, u.uy);
+	    if (tt) {
+	        tt->tx = xbak;
+		tt->ty = ybak;
+	    }
+	}
 }
 
 static void domagictrap(void)
