@@ -2133,6 +2133,8 @@ void nomul(int nval, const char *txt)
 /* called when a non-movement, multi-turn action has completed */
 void unmul(const char *msg_override)
 {
+        boolean previously_unconscious = unconscious();
+
 	multi = 0;	/* caller will usually have done this already */
 	memset(multi_txt, 0, BUFSZ);
 	if (msg_override) nomovemsg = msg_override;
@@ -2142,6 +2144,12 @@ void unmul(const char *msg_override)
 	u.usleep = 0;
 	if (afternmv) (*afternmv)();
 	afternmv = 0;
+
+	if (previously_unconscious ^ unconscious()) {
+	    see_monsters();
+	    see_objects();
+	    vision_full_recalc = 1;
+	}
 }
 
 

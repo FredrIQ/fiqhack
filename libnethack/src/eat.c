@@ -1052,6 +1052,9 @@ static int rottenfood(struct obj *obj)
 		nomul(-rnd(10), "unconscious from rotten food");
 		nomovemsg = "You are conscious again.";
 		afternmv = Hear_again;
+		see_monsters();
+		see_objects();
+		vision_full_recalc = 1;
 		return 1;
 	}
 	return 0;

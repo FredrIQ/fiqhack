@@ -491,8 +491,11 @@ int peffects(struct obj *otmp)
 		exercise(A_WIS, FALSE);
 		if (otmp->cursed) {
 			pline("You pass out.");
-			multi = -rnd(15);
+			nomul(-rnd(15), "drunk");
 			nomovemsg = "You awake with a headache.";
+			see_monsters();
+			see_objects();
+			vision_full_recalc = 1;
 		}
 		break;
 	case POT_ENLIGHTENMENT:

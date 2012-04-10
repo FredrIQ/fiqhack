@@ -97,10 +97,10 @@
 		/* ...means blind because of a cover */
 #define Blind	(((Blinded || Blindfolded || !haseyes(youmonst.data)) && \
 		 !(ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)) || \
-                 flags.permablind)
+                 flags.permablind || unconscious())
 		/* ...the Eyes operate even when you really are blind
 		    or don't have any eyes, but get beaten by game
-                    options */
+                    options or unconsciousness */
 
 #define Sick			u.uprops[SICK].intrinsic
 #define Stoned			u.uprops[STONED].intrinsic

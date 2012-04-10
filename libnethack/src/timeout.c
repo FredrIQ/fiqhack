@@ -360,6 +360,9 @@ void fall_asleep(int how_long, boolean wakeup_msg)
 	/* early wakeup from combat won't be possible until next monster turn */
 	u.usleep = moves;
 	nomovemsg = wakeup_msg ? "You wake up." : "You can move again.";
+	see_monsters();
+	see_objects();
+	vision_full_recalc = 1;
 }
 
 /* Attach an egg hatch timeout to the given egg. */
