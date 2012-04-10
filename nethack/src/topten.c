@@ -59,7 +59,8 @@ static void makeheader(char *linebuf)
     size_t i;
 
     strcpy(linebuf, " No     Points   Name");
-    for (i = strlen(linebuf); i < COLS - strlen(" Hp [max] ") - 4; i++)
+    for (i = strlen(linebuf); i < min(BUFSZ, COLS) - strlen(" Hp [max] ") - 4;
+         i++)
 	linebuf[i] = ' ';
     strcpy(&linebuf[i], " Hp [max] ");
 }
@@ -71,7 +72,7 @@ void show_topten(char *player, int top, int around, nh_bool own)
     char buf[BUFSZ];
     int i, listlen = 0;
     struct nh_menuitem *items;
-    int icount, size;
+    int icount, size, maxwidth;
     
     scores = nh_get_topten(&listlen, buf, player, top, around, own);
     
@@ -98,8 +99,9 @@ void show_topten(char *player, int top, int around, nh_bool own)
     makeheader(buf);
     add_menu_txt(items, size, icount, buf, MI_HEADING);
     
+    maxwidth = min(COLS, BUFSZ) - 4;
     for (i = 0; i < listlen; i++)
-	topten_add_score(&scores[i], &items, &size, &icount, COLS - 4);
+	topten_add_score(&scores[i], &items, &size, &icount, maxwidth);
     add_menu_txt(items, size, icount, "", MI_TEXT);
     
     curses_display_menu(items, icount, "Top scores:", PICK_NONE, NULL);
