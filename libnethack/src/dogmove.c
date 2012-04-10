@@ -761,7 +761,8 @@ int dog_move(struct monst *mtmp,
 		if (m_carrying(mtmp, SKELETON_KEY)) allowflags |= BUSTDOOR;
 	}
 	if (is_giant(mtmp->data)) allowflags |= BUSTDOOR;
-	if (tunnels(mtmp->data)) allowflags |= ALLOW_DIG;
+	if (!Is_rogue_level(&u.uz) && tunnels(mtmp->data))
+	    allowflags |= ALLOW_DIG;
 	cnt = mfndpos(mtmp, poss, info, allowflags);
 
 	/* Normally dogs don't step on cursed items, but if they have no
