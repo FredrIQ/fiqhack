@@ -1393,10 +1393,7 @@ static void otransit_msg(struct obj *otmp, boolean nodrop, long num)
 {
 	char obuf[BUFSZ];
 
-	sprintf(obuf, "%s%s",
-		 (otmp->otyp == CORPSE &&
-			type_is_pname(&mons[otmp->corpsenm])) ? "" : "The ",
-		 xname(otmp));
+	sprintf(obuf, "The %s", xname(otmp));
 
 	if (num) { /* means: other objects are impacted */
 	    sprintf(eos(obuf), " %s %s object%s",
