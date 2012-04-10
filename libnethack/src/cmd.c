@@ -152,7 +152,7 @@ const struct cmd_desc cmdlist[] = {
 	{"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE, wiz_mon_polycontrol, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"panic", "(DEBUG) test panic routine (fatal to game)", 0, 0, TRUE, wiz_panic, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"polyself", "(DEBUG) polymorph self", 0, 0, TRUE, wiz_polyself, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
-	{"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where, CMD_ARG_NONE | CMD_DEBUG | CMD_NOTIME},
+	{"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where, CMD_ARG_NONE | CMD_DEBUG | CMD_NOTIME | CMD_EXT},
 	{"seenv", "(DEBUG) show seen vectors", 0, 0, TRUE, wiz_show_seenv, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
 	{"showmap", "(DEBUG) reveal the entire map", 0, 0, TRUE, wiz_map, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
 	{"stats", "(DEBUG) show memory statistics", 0, 0, TRUE, wiz_show_stats, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
