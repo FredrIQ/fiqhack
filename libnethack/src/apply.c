@@ -809,6 +809,9 @@ static void use_candelabrum(struct obj *obj)
 	}
 	if (u.uswallow || obj->cursed) {
 		if (!Blind)
+		    pline("The %s %s seem to have lit.",
+			    obj->spe > 1L ? "don't" : "doesn't");
+		else
 		    pline("The %s %s for a moment, then %s.",
 			      s, vtense(s, "flicker"), vtense(s, "die"));
                 obj->bknown = TRUE;
@@ -1032,8 +1035,13 @@ static void use_lamp(struct obj *obj)
 		return;
 	}
 	if (obj->cursed && !rn2(2)) {
-		pline("%s for a moment, then %s.",
-		      Tobjnam(obj, "flicker"), otense(obj, "die"));
+		if (Blind)
+			pline("%s %s seem to have lit.",
+				Yname2(obj),
+			        obj->quan > 1L ? "don't" : "doesn't");
+		else
+			pline("%s for a moment, then %s.",
+		      		Tobjnam(obj, "flicker"), otense(obj, "die"));
                 obj->bknown = TRUE;
 	} else {
 		if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
