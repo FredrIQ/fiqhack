@@ -960,9 +960,9 @@ static void create_object(struct level *lev, object *o, struct mkroom *croom)
 		obj_extract_self(obj);
 		add_to_container(otmp, obj);
 	    }
-	    otmp->owt = weight(otmp);
 	    mongone(was);
-	}
+	} else if (otmp->otyp == STATUE || otmp->otyp == CORPSE)
+	    otmp->owt = weight(otmp);
 
 	stackobj(otmp);
 
