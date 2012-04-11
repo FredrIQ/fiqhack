@@ -92,6 +92,8 @@ static void polyman(const char *fmt, const char *arg)
 		spoteffects(TRUE);
 
 	see_monsters();
+	
+	if (!uarmg) selftouch("No longer petrify-resistant, you");
 }
 
 void change_sex(void)
@@ -706,7 +708,6 @@ void rehumanize(void)
 	    killer = kbuf;
 	    done(DIED);
 	}
-	if (!uarmg) selftouch("No longer petrify-resistant, you");
 	nomul(0, NULL);
 
 	iflags.botl = 1;
