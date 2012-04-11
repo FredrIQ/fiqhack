@@ -2822,19 +2822,18 @@ boolean drown(void)
 	}
 	u.uinwater = 1;
 	pline("You drown.");
-	killer_format = KILLED_BY_AN;
-	killer_format = Is_waterlevel(&u.uz) ? KILLED_BY
-			                     : KILLED_BY_AN;
+	killer_format = waterbody_prefix(u.ux, u.uy);
 	killer = Is_waterlevel(&u.uz) ? "the Plane of Water"
 	                              : waterbody_name(u.ux, u.uy);
 	done(DROWNING);
 	/* oops, we're still alive.  better get out of the water. */
 	while (!safe_teleds(TRUE)) {
 		pline("You're still drowning.");
-		killer_format = KILLED_BY_AN;
 	        killer = waterbody_name(u.ux, u.uy);
-	        killer_format = Is_waterlevel(&u.uz) ? KILLED_BY
-			                     	     : KILLED_BY_AN;
+		killer_format = Is_waterlevel(&u.uz) ||
+	        	        !strcmp(waterbody_name(u.ux, u.uy),
+				        "water")     ? KILLED_BY
+			        	             : KILLED_BY_AN;
 	        killer = Is_waterlevel(&u.uz) ? "the Plane of Water"
 	                                      : waterbody_name(u.ux, u.uy);
 		done(DROWNING);

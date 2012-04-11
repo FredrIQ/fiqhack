@@ -1191,9 +1191,7 @@ dopois:
 			if (is_pool(level, mtmp->mx,mtmp->my) && !Swimming
 			    && !Amphibious) {
 			    pline("%s drowns you...", Monnam(mtmp));
-			    killer_format =
-			        Is_waterlevel(&u.uz) ? KILLED_BY
-			                             : KILLED_BY_AN;
+			    killer_format = waterbody_prefix(mtmp->mx, mtmp->my);
 			    sprintf(buf, "%s by %s",
 			            Is_waterlevel(&u.uz)
 				    ? "the Plane of Water"

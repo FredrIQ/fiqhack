@@ -1050,6 +1050,15 @@ void restore_waterlevel(struct memfile *mf, struct level *lev)
 	was_waterlevel = TRUE;
 }
 
+int waterbody_prefix(xchar x, xchar y)
+{
+	return (Is_waterlevel(&u.uz) ||
+		is_lava(level, x, y) ||
+	        !strcmp(waterbody_name(x, y), "water"))
+		? KILLED_BY
+		: KILLED_BY_AN;
+}
+
 const char *waterbody_name(xchar x, xchar y)
 {
 	struct rm *loc;
