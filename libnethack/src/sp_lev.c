@@ -196,6 +196,8 @@ static boolean is_ok_location(struct level *lev, schar x, schar y, int humidity)
 
 	if (Is_waterlevel(&lev->z)) return TRUE;	/* accept any spot */
 
+	if (t_at(level, x, y)) return FALSE; /* don't spawn monsters on traps */
+
 	if (humidity & DRY) {
 	    typ = lev->locations[x][y].typ;
 	    if (typ == ROOM || typ == AIR ||
@@ -2001,14 +2003,14 @@ static boolean load_maze(struct level *lev, dlb *fd)
 	Fread(&ysize, 1, sizeof(ysize), fd);
 					/* size in Y */
 	switch((int) halign) {
-	    case LEFT:	    xstart = 3;					break;
+	    case LEFT:	    xstart = 1;					break;
 	    case H_LEFT:    xstart = 2+((x_maze_max-2-xsize)/4);	break;
 	    case CENTER:    xstart = 2+((x_maze_max-2-xsize)/2);	break;
 	    case H_RIGHT:   xstart = 2+((x_maze_max-2-xsize)*3/4);	break;
 	    case RIGHT:     xstart = x_maze_max-xsize-1;		break;
 	}
 	switch((int) valign) {
-	    case TOP:	    ystart = 3;					break;
+	    case TOP:	    ystart = 1;					break;
 	    case CENTER:    ystart = 2+((y_maze_max-2-ysize)/2);	break;
 	    case BOTTOM:    ystart = y_maze_max-ysize-1;		break;
 	}

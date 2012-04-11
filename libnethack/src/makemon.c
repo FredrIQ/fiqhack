@@ -1575,11 +1575,17 @@ void set_mimic_sym(struct monst *mtmp, struct level *lev)
 	unsigned appear, ap_type;
 	int s_sym;
 	struct obj *otmp;
+	struct trap *tt;
 	int mx, my;
+	boolean above_pit = FALSE;
 
 	if (!mtmp) return;
 	mx = mtmp->mx; my = mtmp->my;
-	typ = lev->locations[mx][my].typ;
+	tt = t_at(level, mx, my);
+	above_pit = !(!tt ||
+	             ((tt->ttyp == PIT)  || (tt->ttyp == SPIKED_PIT) ||
+		      (tt->ttyp == HOLE) || (tt->ttyp == TRAPDOOR)));
+	typ = level->locations[mx][my].typ;
 					/* only valid for INSIDE of room */
 	roomno = lev->locations[mx][my].roomno - ROOMOFFSET;
 	if (roomno >= 0)
@@ -1613,10 +1619,10 @@ void set_mimic_sym(struct monst *mtmp, struct level *lev)
 
 		if (!mtmp->minvis || See_invisible)
 		    block_point(mx,my);	/* vision */
-	} else if (lev->flags.is_maze_lev && rn2(2)) {
+	} else if (lev->flags.is_maze_lev && !above_pit && rn2(2)) {
 		ap_type = M_AP_OBJECT;
 		appear = STATUE;
-	} else if (roomno < 0) {
+	} else if ((roomno < 0) && !above_pit) {
 		ap_type = M_AP_OBJECT;
 		appear = BOULDER;
 		if (!mtmp->minvis || See_invisible)
@@ -1624,7 +1630,7 @@ void set_mimic_sym(struct monst *mtmp, struct level *lev)
 	} else if (rt == ZOO || rt == VAULT) {
 		ap_type = M_AP_OBJECT;
 		appear = GOLD_PIECE;
-	} else if (rt == DELPHI) {
+	} else if ((rt == DELPHI) && !above_pit) {
 		if (rn2(2)) {
 			ap_type = M_AP_OBJECT;
 			appear = STATUE;
@@ -1649,16 +1655,18 @@ void set_mimic_sym(struct monst *mtmp, struct level *lev)
 				s_sym = syms[rn2((int)sizeof(syms)-2) + 2];
 			goto assign_sym;
 		}
-	} else {
+	} else while(1) {
 		s_sym = syms[rn2((int)sizeof(syms))];
 assign_sym:
-		if (s_sym >= MAXOCLASSES) {
+		if ((s_sym >= MAXOCLASSES) && !above_pit) {
 			ap_type = M_AP_FURNITURE;
 			appear = s_sym == MAXOCLASSES ? S_upstair : S_dnstair;
+			break;
 		} else if (s_sym == COIN_CLASS) {
 			ap_type = M_AP_OBJECT;
 			appear = GOLD_PIECE;
-		} else {
+			break;
+		} else if (s_sym < MAXOCLASSES) {
 			ap_type = M_AP_OBJECT;
 			if (s_sym == S_MIMIC_DEF) {
 				appear = STRANGE_OBJECT;
@@ -1668,6 +1676,7 @@ assign_sym:
 				/* make sure container contents are free'ed */
 				obfree(otmp, NULL);
 			}
+			break;
 		}
 	}
 	mtmp->m_ap_type = ap_type;
