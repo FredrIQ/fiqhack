@@ -577,6 +577,7 @@ static int use_mirror(struct obj *obj)
 				"Yow!  The mirror stares back!" :
 				"Yikes!  You've frozen yourself!");
 			    nomul(-rnd((MAXULEV+6) - u.ulevel), "gazing into a mirror");
+			    nomovemsg = 0; /* default: "You can move again." */
 			} else pline("You stiffen momentarily under your gaze.");
 		    } else if (youmonst.data->mlet == S_VAMPIRE)
 			pline("You don't have a reflection.");

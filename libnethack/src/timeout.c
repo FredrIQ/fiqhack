@@ -1160,6 +1160,7 @@ void do_storms(void)
 	pline("Kaboom!!!  Boom!!  Boom!!");
 	if (!u.uinvulnerable) {
 	    stop_occupation();
+	    nomovemsg = 0; /* default: "You can move again." */
 	    nomul(-3, "hiding from a thunderstorm");
 	}
     } else

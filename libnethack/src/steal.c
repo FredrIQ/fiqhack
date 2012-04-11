@@ -317,6 +317,7 @@ gotobj:
 			named++;
 			/* the following is to set multi for later on */
 			nomul(-armordelay, "taking off clothes");
+			nomovemsg = "You finish disrobing.";
 			remove_worn_item(otmp, TRUE);
 			otmp->cursed = curssv;
 			if (multi < 0){

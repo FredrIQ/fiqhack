@@ -597,6 +597,7 @@ void hurtle(int dx, int dy, int range, boolean verbose)
 
     if (!range || (!dx && !dy) || u.ustuck) return; /* paranoia */
 
+    nomovemsg = "";
     nomul(-range, "moving through the air");
     if (verbose)
 	pline("You %s in the opposite direction.", range > 1 ? "hurtle" : "float");

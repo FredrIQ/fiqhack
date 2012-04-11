@@ -589,6 +589,7 @@ static int domonnoise(struct monst *mtmp)
 	    pline("%s rattles noisily.", Monnam(mtmp));
 	    pline("You freeze for a moment.");
 	    nomul(-2, "scared by rattling");
+	    nomovemsg = 0; /* default: "You can move again." */
 	    break;
 	case MS_LAUGH:
 	    {

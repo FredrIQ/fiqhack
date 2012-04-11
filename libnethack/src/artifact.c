@@ -793,7 +793,7 @@ static boolean magicbane_hit(
 		resisted = TRUE;
 	    } else {
 		nomul(-3, "being scared stiff");
-		nomovemsg = "";
+		nomovemsg = "You regain your composure";
 		if (magr && magr == u.ustuck && sticks(youmonst.data)) {
 		    u.ustuck = NULL;
 		    pline("You release %s!", mon_nam(magr));

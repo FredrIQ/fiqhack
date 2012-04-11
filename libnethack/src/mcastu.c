@@ -581,12 +581,14 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	    if (multi >= 0)
 		pline("You stiffen briefly.");
 	    nomul(-1, "paralyzed by a monster");
+	    nomovemsg = NULL;
 	} else {
 	    if (multi >= 0)
 		pline("You are frozen in place!");
 	    dmg = 4 + (int)mtmp->m_lev;
 	    if (Half_spell_damage) dmg = (dmg + 1) / 2;
 	    nomul(-dmg, "paralyzed by a monster");
+	    nomovemsg = NULL;
 	}
 	dmg = 0;
 	break;

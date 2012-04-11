@@ -3600,10 +3600,11 @@ boolean chest_trap(struct obj *obj, int bodypart, boolean disarm)
 		case 4:
 		case 3:
 			if (!Free_action) {                        
-			pline("Suddenly you are frozen in place!");
-			nomul(-dice(5, 6), "frozen by a trap");
-			exercise(A_DEX, FALSE);
-			nomovemsg = "You can move again.";
+			    pline("Suddenly you are frozen in place!");
+			    nomovemsg = 0; /* default: "You can move again." */
+			    nomul(-dice(5, 6), "frozen by a trap");
+			    exercise(A_DEX, FALSE);
+			    nomovemsg = "You can move again.";
 			} else pline("You momentarily stiffen.");
 			break;
 		case 2:
