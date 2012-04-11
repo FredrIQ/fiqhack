@@ -109,7 +109,7 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()	IS_ALTAR(level->locations[u.ux][u.uy].typ)
+#define on_altar()	(IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow)
 #define on_shrine()	((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
 #define a_align(x,y)	((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
 

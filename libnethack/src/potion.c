@@ -307,16 +307,17 @@ int dodrink(struct obj *potion)
 		return 0;
 	}
 	/* Is there a fountain to drink from here? */
-	if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !Levitation) {
+	if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !u.uswallow &&
+		!Levitation) {
             terrain = drinkfountain;
 	}
 	/* Or a kitchen sink? */
-	if (IS_SINK(level->locations[u.ux][u.uy].typ)) {
+	if (IS_SINK(level->locations[u.ux][u.uy].typ) && !u.uswallow) {
             terrain = drinksink;
 	}
 
 	/* Or are you surrounded by water? */
-	if (Underwater) {
+	if (Underwater && !u.uswallow) {
 		if (yn("Drink the water around you?") == 'y') {
 		    pline("Do you know what lives in this water?!");
 			return 1;
