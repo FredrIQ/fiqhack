@@ -106,7 +106,8 @@ static void mon_vision_summary(const struct monst *mtmp, char *outbuf)
 
     xraydist = (u.xray_range<0) ? -1 : u.xray_range * u.xray_range;
     /* normal vision */
-    if ((mtmp->wormno ? worm_known(mtmp) : cansee(mtmp->mx, mtmp->my)) &&
+    if ((mtmp->wormno ? worm_known(mtmp) :
+		couldsee(mtmp->mx, mtmp->my) && cansee(mtmp->mx, mtmp->my)) &&
 	    mon_visible(mtmp) && !mtmp->minvis) {
 	ways_seen++;
 	normal++;
