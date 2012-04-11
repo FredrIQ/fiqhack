@@ -460,7 +460,7 @@ void keepdogs(boolean pets_only)
 		/* monster won't follow if it hasn't noticed you yet */
 		&& !(mtmp->mstrategy & STRAT_WAITFORU)) {
 		stay_behind = FALSE;
-		if (mtmp->mtame && mtmp->meating) {
+		if (!pets_only && mtmp->mtame && mtmp->meating) {
 			if (canseemon(mtmp))
 			    pline("%s is still eating.", Monnam(mtmp));
 			stay_behind = TRUE;
@@ -469,7 +469,7 @@ void keepdogs(boolean pets_only)
 			    pline("%s seems very disoriented for a moment.",
 				Monnam(mtmp));
 			stay_behind = TRUE;
-		} else if (mtmp->mtame && mtmp->mtrapped) {
+		} else if (!pets_only && mtmp->mtame && mtmp->mtrapped) {
 			if (canseemon(mtmp))
 			    pline("%s is still trapped.", Monnam(mtmp));
 			stay_behind = TRUE;
