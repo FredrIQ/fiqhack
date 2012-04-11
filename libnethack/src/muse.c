@@ -1113,16 +1113,6 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 			case WAN_STRIKING:
 			    destroy_drawbridge(x,y);
 		    }
-		if (bhitpos.x==u.ux && bhitpos.y==u.uy) {
-			(*fhitm)(&youmonst, obj);
-			range -= 3;
-		} else if (MON_AT(level, bhitpos.x, bhitpos.y)){
-			mtmp = m_at(level, bhitpos.x, bhitpos.y);
-			if (cansee(bhitpos.x,bhitpos.y) && !canspotmon(mtmp))
-			    map_invisible(bhitpos.x, bhitpos.y);
-			(*fhitm)(mtmp, obj);
-			range -= 3;
-		}
 		/* modified by GAN to hit all objects */
 		if (fhito){
 		    int hitanything = 0;
@@ -1135,6 +1125,16 @@ static void mbhit(struct monst *mon,	/* monster shooting the wand */
 			hitanything += (*fhito)(otmp, obj);
 		    }
 		    if (hitanything)	range--;
+		}
+		if (bhitpos.x==u.ux && bhitpos.y==u.uy) {
+			(*fhitm)(&youmonst, obj);
+			range -= 3;
+		} else if (MON_AT(level, bhitpos.x, bhitpos.y)){
+			mtmp = m_at(level, bhitpos.x, bhitpos.y);
+			if (cansee(bhitpos.x,bhitpos.y) && !canspotmon(mtmp))
+			    map_invisible(bhitpos.x, bhitpos.y);
+			(*fhitm)(mtmp, obj);
+			range -= 3;
 		}
 		typ = level->locations[bhitpos.x][bhitpos.y].typ;
 		if (IS_DOOR(typ) || typ == SDOOR) {
