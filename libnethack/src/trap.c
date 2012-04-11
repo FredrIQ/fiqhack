@@ -1241,6 +1241,7 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 	int dist;
 	int tmp;
 	int delaycnt = 0;
+	int damage = 0;
 
 	otmp = sobj_at(otyp, level, x1, y1);
 	/* Try the other side too, for rolling boulder traps */
@@ -1339,9 +1340,10 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 		} else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
 			if (multi) nomul(0, NULL);
 			if (thitu(9 + singleobj->spe,
-				  dmgval(singleobj, &youmonst),
-				  singleobj, NULL))
+				  0, singleobj, NULL)) {
+			    damage = dmgval(singleobj, &youmonst);
 			    stop_occupation();
+			}
 		}
 		if (style == ROLL) {
 		    if (down_gate(bhitpos.x, bhitpos.y) != -1) {
@@ -1453,6 +1455,15 @@ int launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 		singleobj->otrapped = 0;
 		place_object(singleobj, level, x2,y2);
 		newsym(x2,y2);
+	}
+
+	if (damage) {
+	    char *knm, knmbuf[BUFSZ];
+	    knm = strcpy(knmbuf, killer_xname(singleobj));
+	    losehp(damage, knm, KILLED_BY);
+	}
+
+	if (!used_up) {
 		return 1;
 	} else
 		return 2;
