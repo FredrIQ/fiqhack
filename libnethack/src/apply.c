@@ -847,7 +847,7 @@ static void use_candle(struct obj **optr)
 {
 	struct obj *obj = *optr;
 	struct obj *otmp;
-	const char *s = (obj->quan != 1) ? "candles" : "candle";
+	const char *s;
 	char qbuf[QBUFSZ];
 
 	if (u.uswallow) {
@@ -882,6 +882,7 @@ static void use_candle(struct obj **optr)
 		if ((long)otmp->spe + obj->quan > 7L)
 		    obj = splitobj(obj, 7L - (long)otmp->spe);
 		else *optr = 0;
+		s = (obj->quan != 1) ? "candles" : "candle";
 		pline("You attach %ld%s %s to %s.",
 		    obj->quan, !otmp->spe ? "" : " more",
 		    s, the(xname(otmp)));
