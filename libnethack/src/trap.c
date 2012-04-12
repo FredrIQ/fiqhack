@@ -2523,6 +2523,8 @@ int fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y
     for (obj = chain; obj; obj = nobj) {
 	nobj = here ? obj->nexthere : obj->nobj;
 
+	if (obj->oerodeproof) continue;
+
 	/* object might light in a controlled manner */
 	if (catch_lit(obj))
 	    continue;
