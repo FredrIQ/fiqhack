@@ -3829,7 +3829,7 @@ boolean lava_effects(void)
 	return TRUE;
     }
 
-    if (!Wwalking) {
+    if (!Wwalking && (!u.utrap || u.utraptype != TT_LAVA)) {
 	u.utrap = rn1(4, 4) + (rn1(4, 12) << 8);
 	u.utraptype = TT_LAVA;
 	pline("You sink into the lava, but it only burns slightly!");
