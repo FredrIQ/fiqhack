@@ -81,7 +81,8 @@ static int throw_obj(struct obj *obj, int shotlimit)
 		    touch_petrifies(&mons[obj->corpsenm]))) {
 		pline("You throw the %s corpse with your bare %s.",
 		    mons[obj->corpsenm].mname, body_part(HAND));
-		sprintf(killer_buf, "%s corpse", an(mons[obj->corpsenm].mname));
+		sprintf(killer_buf, "throwing %s corpse without gloves",
+		        an(mons[obj->corpsenm].mname));
 		instapetrify(killer_buf);
 	}
 	if (welded(obj)) {

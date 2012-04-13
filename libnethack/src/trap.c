@@ -874,7 +874,8 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 			ballfall();
 			placebc();
 		    }
-		    selftouch("Falling, you");
+		    selftouch("Falling, you",
+		              "falling into a pit while wielding");
 		    vision_full_recalc = 1;	/* vision limits change */
 		    exercise(A_STR, FALSE);
 		    exercise(A_DEX, FALSE);
@@ -2114,7 +2115,7 @@ void minstapetrify(struct monst *mon, boolean byplayer)
 	} else monstone(mon);
 }
 
-void selftouch(const char *arg)
+void selftouch(const char *arg, const char *deathtype)
 {
 	char kbuf[BUFSZ];
 
@@ -2122,7 +2123,8 @@ void selftouch(const char *arg)
 			&& !Stone_resistance) {
 		pline("%s touch the %s corpse.", arg,
 		        mons[uwep->corpsenm].mname);
-		sprintf(kbuf, "%s corpse", an(mons[uwep->corpsenm].mname));
+		sprintf(kbuf, "%s %s corpse", deathtype,
+			an(mons[uwep->corpsenm].mname));
 		instapetrify(kbuf);
 		if (!Stone_resistance)
 		    uwepgone();
@@ -2132,7 +2134,8 @@ void selftouch(const char *arg)
 			touch_petrifies(&mons[uswapwep->corpsenm]) && !Stone_resistance){
 		pline("%s touch the %s corpse.", arg,
 		        mons[uswapwep->corpsenm].mname);
-		sprintf(kbuf, "%s corpse", an(mons[uswapwep->corpsenm].mname));
+		sprintf(kbuf, "%s %s corpse", deathtype,
+			an(mons[uswapwep->corpsenm].mname));
 		instapetrify(kbuf);
 		if (!Stone_resistance)
 		    uswapwepgone();
@@ -2304,7 +2307,8 @@ int float_down(long hmask, long emask)     /* might cancel timeout */
 			    pline("You fall over.");
 			    losehp(rnd(2), "dangerous winds", KILLED_BY);
 			    if (u.usteed) dismount_steed(DISMOUNT_FELL);
-			    selftouch("As you fall, you");
+			    selftouch("As you fall, you",
+			              "being blown into");
 			}
 		    }
 		}

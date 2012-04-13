@@ -93,7 +93,12 @@ static void polyman(const char *fmt, const char *arg)
 
 	see_monsters();
 	
-	if (!uarmg) selftouch("No longer petrify-resistant, you");
+	if (!uarmg) {
+	    char kbuf[BUFSZ];
+	    sprintf(kbuf, "returning to %s form while wielding",
+	            urace.adj);
+	    selftouch("No longer petrify-resistant, you", kbuf);
+	}
 }
 
 void change_sex(void)
@@ -296,7 +301,17 @@ void polyself(boolean forcecontrol)
 		newman();
 	else if (!polymon(mntmp)) return;
 
-	if (!uarmg) selftouch("No longer petrify-resistant, you");
+	if (!uarmg) {
+	    char kbuf[BUFSZ];
+	    if (Upolyd) {
+	        sprintf(kbuf, "polymorphing into %s while wielding",
+		        an(mons[u.umonnum].mname));
+	    } else {
+	        sprintf(kbuf, "returning to %s form while wielding",
+		        urace.adj);
+	    }
+	    selftouch("No longer petrify-resistant, you", kbuf);
+	}
 
  made_change:
 	new_light = Upolyd ? emits_light(youmonst.data) : 0;

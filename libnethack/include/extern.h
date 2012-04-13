@@ -1617,7 +1617,7 @@ extern void seetrap(struct trap *);
 extern int mintrap(struct monst *);
 extern void instapetrify(const char *);
 extern void minstapetrify(struct monst *,boolean);
-extern void selftouch(const char *);
+extern void selftouch(const char *, const char *);
 extern void mselftouch(struct monst *,const char *,boolean);
 extern void float_up(void);
 extern void fill_pit(struct level *lev, int x, int y);

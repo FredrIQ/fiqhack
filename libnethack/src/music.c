@@ -293,7 +293,8 @@ do_pit:		    chasm = maketrap(level, x,y,PIT);
 				    u.utraptype = TT_PIT;
 				    losehp(rnd(6),"fell into a chasm",
 					NO_KILLER_PREFIX);
-				    selftouch("Falling, you");
+				    selftouch("Falling, you",
+				              "falling into a chasm while wielding");
 			    }
 		    } else newsym(x,y);
 		    break;

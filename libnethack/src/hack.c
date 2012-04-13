@@ -418,7 +418,8 @@ static void dosinkfall(void)
 	    losehp(rn1(8, 25 - (int)ACURR(A_CON)),
 		   fell_on_sink, NO_KILLER_PREFIX);
 	    exercise(A_DEX, FALSE);
-	    selftouch("Falling, you");
+	    selftouch("Falling, you",
+	              "crashing to the floor while wielding");
 	    for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere)
 		if (obj->oclass == WEAPON_CLASS || is_weptool(obj)) {
 		    pline("You fell on %s.", doname(obj));

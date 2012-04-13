@@ -429,7 +429,8 @@ int Gloves_off(void)
 
 	pline("You wield the %s in your bare %s.",
 	    corpse_xname(uwep, TRUE), makeplural(body_part(HAND)));
-	strcpy(kbuf, an(corpse_xname(uwep, TRUE)));
+	sprintf(kbuf, "removing %s gloves while wielding %s",
+	        uhis(), an(corpse_xname(uwep, TRUE)));
 	instapetrify(kbuf);
 	uwepgone();  /* life-saved still doesn't allow touching cockatrice */
     }
@@ -441,8 +442,8 @@ int Gloves_off(void)
 
 	pline("You wield the %s in your bare %s.",
 	    corpse_xname(uswapwep, TRUE), body_part(HAND));
-
-	strcpy(kbuf, an(corpse_xname(uswapwep, TRUE)));
+	sprintf(kbuf, "removing %s gloves while wielding %s",
+	        uhis(), an(corpse_xname(uwep, TRUE)));
 	instapetrify(kbuf);
 	uswapwepgone();	/* lifesaved still doesn't allow touching cockatrice */
     }
@@ -1911,11 +1912,14 @@ int destroy_arm(struct obj *atmp)
 		Helmet_off();
 		useup(otmp);
 	} else if (DESTROY_ARM(uarmg)) {
+		char kbuf[BUFSZ];
+		sprintf(kbuf, "losing %s gloves while wielding",
+		        uhis());
 		if (donning(otmp)) cancel_don();
 		pline("Your gloves vanish!");
 		Gloves_off();
 		useup(otmp);
-		selftouch("You");
+		selftouch("You", kbuf);
 	} else if (DESTROY_ARM(uarmf)) {
 		if (donning(otmp)) cancel_don();
 		pline("Your boots disintegrate!");

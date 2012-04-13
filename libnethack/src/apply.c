@@ -2210,9 +2210,10 @@ static int use_whip(struct obj *obj)
 				polymon(PM_STONE_GOLEM))) {
 			char kbuf[BUFSZ];
 
-			sprintf(kbuf, "%s corpse",
+			sprintf(kbuf, "snatching %s corpse",
 				an(mons[otmp->corpsenm].mname));
-			pline("Snatching %s is a fatal mistake.", kbuf);
+			pline("Snatching %s corpse is a fatal mistake.",
+			      an(mons[otmp->corpsenm].mname));
 			instapetrify(kbuf);
 		    }
 		    hold_another_object(otmp, "You drop %s!",

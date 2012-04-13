@@ -840,6 +840,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	struct monst *mtmp, *mtmp2;
 	struct obj *otmp;
 	struct level *origlev;
+	boolean at_trapdoor = ((t_at(level, u.ux, u.uy)) &&
+	                       (t_at(level, u.ux, u.uy))->ttyp == TRAPDOOR);
 
 	if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
 		newlevel->dlevel = dunlevs_in_dungeon(newlevel);
@@ -1034,7 +1036,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 			dismount_steed(DISMOUNT_FELL);
 		    else
 			losehp(rnd(3), "falling downstairs", KILLED_BY);
-		    selftouch("Falling, you");
+		    selftouch("Falling, you",
+		              "falling downstairs while wielding");
 		}
 	    }
 	} else {	/* trap door or level_tele or In_endgame */
@@ -1057,8 +1060,13 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 				level->dndest.nhx, level->dndest.nhy,
 				LR_DOWNTELE, NULL);
 	    if (falling) {
+	        struct trap *ttrap;
+		char kbuf[BUFSZ];
+		ttrap = t_at(level, u.ux, u.uy);
+		sprintf(kbuf, "falling through a %s while wielding",
+		        at_trapdoor ? "trap door" : "hole");
 		if (Punished) ballfall();
-		selftouch("Falling, you");
+		selftouch("Falling, you", kbuf);
 	    }
 	}
 
