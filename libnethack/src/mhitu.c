@@ -1620,6 +1620,10 @@ static int gulpmu(struct monst *mtmp, const struct attack *mattk)
 		}
 
 		if (touch_petrifies(youmonst.data) && !resists_ston(mtmp)) {
+			expels(mtmp, mtmp->data, FALSE);
+			remove_monster(level, mtmp->mx, mtmp->my);
+			place_monster(mtmp, u.ux, u.uy);
+			if (Punished) placebc();
 			minstapetrify(mtmp, TRUE);
 			if (mtmp->mhp > 0) return 0;
 			else return 2;
