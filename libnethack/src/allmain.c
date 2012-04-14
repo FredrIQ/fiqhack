@@ -576,6 +576,14 @@ static void you_moved(void)
 	    /* vision while buried done here */
 	    else if (u.uburied) under_ground(0);
 
+	    if (!u.umoved &&
+		(Is_waterlevel(&u.uz) || !(Flying || Levitation))) {
+		if (Underwater)
+		    drown();
+		else if (is_lava(level, u.ux, u.uy))
+		    lava_effects();
+	    }
+
 	    /* when immobile, count is in turns */
 	    if (multi < 0) {
 		if (++multi == 0) {	/* finished yet? */

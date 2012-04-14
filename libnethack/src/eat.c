@@ -440,6 +440,7 @@ static void cprefx(int pm)
 		}
 	    case PM_GREEN_SLIME:
 		if (!Slimed && !Unchanging && !flaming(youmonst.data) &&
+		        level->locations[u.ux][u.uy].typ != LAVAPOOL &&
 			youmonst.data != &mons[PM_GREEN_SLIME]) {
 		    pline("You don't feel very well.");
 		    Slimed = 10L;

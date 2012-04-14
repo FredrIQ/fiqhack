@@ -1484,7 +1484,8 @@ int damageum(struct monst *mdef, const struct attack *mattk)
 		    pline("%s doesn't seem harmed.", Monnam(mdef));
 		    tmp = 0;
 		    if (!Unchanging && mdef->data == &mons[PM_GREEN_SLIME]) {
-			if (!Slimed) {
+			if (!Slimed &&
+			    level->locations[u.ux][u.uy].typ != LAVAPOOL) {
 			    pline("You suck in some slime and don't feel very well.");
 			    Slimed = 10L;
 			}
@@ -1781,7 +1782,8 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 			    if (mdef->data == &mons[PM_GREEN_SLIME]) {
 				sprintf(msgbuf, "%s isn't sitting well with you.",
 					The(mdef->data->mname));
-				if (!Unchanging) {
+				if (!Unchanging &&
+				    level->locations[u.ux][u.uy].typ != LAVAPOOL) {
 					Slimed = 5L;
 					iflags.botl = 1;
 				}

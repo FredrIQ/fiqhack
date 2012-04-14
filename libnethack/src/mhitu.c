@@ -1477,7 +1477,8 @@ dopois:
 	    case AD_SLIM:    
 		hitmsg(mtmp, mattk);
 		if (!uncancelled) break;
-		if (flaming(youmonst.data)) {
+		if (flaming(youmonst.data) ||
+		    level->locations[u.ux][u.uy].typ == LAVAPOOL) {
 		    pline("The slime burns away!");
 		    dmg = 0;
 		} else if (Unchanging ||
