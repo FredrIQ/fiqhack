@@ -1083,8 +1083,10 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 		newsym(u.ux,u.uy);		/* update trap symbol */
 		losehp(rnd(16), "land mine", KILLED_BY_AN);
 		/* fall recursively into the pit... */
-		if ((trap = t_at(level, u.ux, u.uy)) != 0) dotrap(trap, RECURSIVETRAP);
-		fill_pit(level, u.ux, u.uy);
+		if ((trap = t_at(level, u.ux, u.uy)) != 0) {
+		    dotrap(trap, RECURSIVETRAP);
+		    fill_pit(level, u.ux, u.uy);
+		} else spoteffects(FALSE);
 		break;
 	    }
 	    case ROLLING_BOULDER_TRAP: {
@@ -1209,18 +1211,24 @@ static int steedintrap(struct trap *trap, struct obj *otmp)
 /* some actions common to both player and monsters for triggered landmine */
 void blow_up_landmine(struct trap *trap)
 {
-	scatter(trap->tx, trap->ty, 4,
-		MAY_DESTROY | MAY_HIT | MAY_FRACTURE | VIS_EFFECTS,
+	int x = trap->tx;
+        int y = trap->ty;
+	scatter(x, y, 4, MAY_DESTROY | MAY_HIT | MAY_FRACTURE | VIS_EFFECTS,
 		NULL);
 	del_engr_at(level, trap->tx, trap->ty);
 	wake_nearto(trap->tx, trap->ty, 400);
 	if (IS_DOOR(level->locations[trap->tx][trap->ty].typ))
 	    level->locations[trap->tx][trap->ty].doormask = D_BROKEN;
-	/* TODO: destroy drawbridge if present */
-	/* caller may subsequently fill pit, e.g. with a boulder */
-	trap->ttyp = PIT;		/* explosion creates a pit */
-	trap->madeby_u = FALSE;		/* resulting pit isn't yours */
-	seetrap(trap);			/* and it isn't concealed */
+	if (!IS_DRAWBRIDGE(level->locations[trap->tx][trap->ty].typ)) {
+	    trap->ttyp = PIT;		/* explosion creates a pit */
+	    trap->madeby_u = FALSE;	/* resulting pit isn't yours */
+	    seetrap(trap);		/* and it isn't concealed */
+	} else {
+	    deltrap(trap);
+	}
+	if (find_drawbridge(&x, &y)) {
+	    destroy_drawbridge(x, y);
+	}
 }
 
 
@@ -2007,6 +2015,7 @@ mfiretrap:
 			break;
 
 		case LANDMINE:
+		{
 			if (rn2(3))
 				break; /* monsters usually don't set it off */
 			if (is_flyer(mptr)) {
@@ -2029,21 +2038,26 @@ mfiretrap:
 			if (!in_sight)
 				pline("Kaablamm!  You hear an explosion in the distance!");
 			blow_up_landmine(trap);
-			if (thitm(0, mtmp, NULL, rnd(16), FALSE))
+			if (DEADMONSTER(mtmp))
+			    trapkilled = TRUE;
+			else if (thitm(0, mtmp, NULL, rnd(16), FALSE))
 				trapkilled = TRUE;
 			else {
 				/* monsters recursively fall into new pit */
 				if (mintrap(mtmp) == 2) trapkilled=TRUE;
 			}
 			/* a boulder may fill the new pit, crushing monster */
-			fill_pit(level, trap->tx, trap->ty);
+			if(t_at(level, mtmp->mx, mtmp->my))
+			    fill_pit(level, mtmp->mx, mtmp->my);
+			else if (!DEADMONSTER(mtmp))
+			    minliquid(mtmp);
 			if (mtmp->mhp <= 0) trapkilled = TRUE;
 			if (unconscious()) {
 				multi = -1;
 				nomovemsg="The explosion awakens you!";
 			}
 			break;
-
+                }
 		case POLY_TRAP:
 		    if (resists_magm(mtmp)) {
 			shieldeff(mtmp->mx, mtmp->my);
