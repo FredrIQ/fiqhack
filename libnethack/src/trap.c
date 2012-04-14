@@ -856,9 +856,10 @@ glovecheck:		rust_dmg(uarmg, "gauntlets", 1, TRUE, &youmonst);
 		    } else
 		    pline("You land %s!", predicament);
 		}
-		if (!Passes_walls)
+		if (!Passes_walls) {
 		    u.utrap = rn1(6,2);
-		u.utraptype = TT_PIT;
+		    u.utraptype = TT_PIT;
+		}
 		if (!steedintrap(trap, NULL)) {
 		    if (ttype == SPIKED_PIT) {
 			losehp(rnd(10),"fell into a pit of iron spikes",

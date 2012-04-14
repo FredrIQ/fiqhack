@@ -2182,6 +2182,7 @@ struct obj *floorfood(/* get food from floor or pack */
 	struct obj *otmp;
 	char qbuf[QBUFSZ];
 	char c;
+	struct trap *ttmp = t_at(level, u.ux, u.uy);
 	boolean feeding = (!strcmp(verb, "eat"));
         int can_floorfood = 0;
         boolean checking_can_floorfood = TRUE;
@@ -2191,13 +2192,16 @@ struct obj *floorfood(/* get food from floor or pack */
 		(feeding && u.usteed) || /* can't eat off floor while riding */
 		((is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) &&
 		    (Wwalking || is_clinger(youmonst.data) ||
-			(Flying && !Breathless))))
+			(Flying && !Breathless))) ||
+			(ttmp && ttmp->tseen && 
+			 (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT) &&
+			 (!u.utrap || (u.utrap && u.utraptype != TT_PIT)) &&
+			 !Passes_walls))
 	    goto skipfloor;
 
     eat_floorfood:
 	if (feeding && metallivorous(youmonst.data)) {
 	    struct obj *gold;
-	    struct trap *ttmp = t_at(level, u.ux, u.uy);
 
 	    if (ttmp && ttmp->tseen && ttmp->ttyp == BEAR_TRAP) {
                 if (!checking_can_floorfood) {
