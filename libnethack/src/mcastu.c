@@ -859,7 +859,7 @@ int castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
 	    if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my))
 	    {
                 char buf[BUFSZ];
-		sprintf("%s", buf, Monnam(mtmp));
+		sprintf(buf, "%s", Monnam(mtmp));
 
 		if (is_undirected_spell(mattk->adtyp, spellnum))
 	            pline("%s points all around, then curses.", buf);
