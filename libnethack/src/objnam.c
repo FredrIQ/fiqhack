@@ -981,7 +981,7 @@ char *killer_xname(const struct obj *obj_orig)
     save_ocuname = objects[obj->otyp].oc_uname;
     objects[obj->otyp].oc_uname = 0;	/* avoid "foo called bar" */
 
-    buf = xname(obj);
+    buf = cxname(obj);
     if (obj->quan == 1L) buf = obj_is_pname(obj) ? the(buf) : an(buf);
 
     objects[obj->otyp].oc_name_known = save_ocknown;
