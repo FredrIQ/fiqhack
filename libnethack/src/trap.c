@@ -3811,7 +3811,7 @@ boolean lava_effects(void)
 	    obj2 = obj->nobj;
 	    if (is_organic(obj) && !obj->oerodeproof) {
 		if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-		    if (!Blind)
+		    if (!Blind && usurvive)
 		        pline("%s glows a strange %s, but remains intact.",
 			    The(xname(obj)), hcolor("dark red"));
 		    continue;
