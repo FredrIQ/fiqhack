@@ -1336,10 +1336,18 @@ void rot_corpse(void *arg, long timeout)
 	struct obj *obj = (struct obj *) arg;
 	boolean on_floor = obj->where == OBJ_FLOOR,
 		in_invent = obj->where == OBJ_INVENT;
+	struct monst *mtmp;
 
 	if (on_floor) {
 	    x = obj->ox;
 	    y = obj->oy;
+            if ((mtmp = m_at(level, x, y)) && mtmp->mundetected &&
+                 hides_under(mtmp->data)) {
+                 mtmp->mundetected = 0;
+            } else if (Upolyd && x == u.ux && y == u.uy &&
+                       u.uundetected && hides_under(youmonst.data)) {
+                  u.uundetected = 0;
+            }
 	} else if (in_invent) {
 	    if (flags.verbose) {
 		char *cname = corpse_xname(obj, FALSE);
