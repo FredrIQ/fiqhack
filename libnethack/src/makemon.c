@@ -1581,11 +1581,11 @@ void set_mimic_sym(struct monst *mtmp, struct level *lev)
 
 	if (!mtmp) return;
 	mx = mtmp->mx; my = mtmp->my;
-	tt = t_at(level, mx, my);
+	tt = t_at(lev, mx, my);
 	above_pit = !(!tt ||
 	             ((tt->ttyp == PIT)  || (tt->ttyp == SPIKED_PIT) ||
 		      (tt->ttyp == HOLE) || (tt->ttyp == TRAPDOOR)));
-	typ = level->locations[mx][my].typ;
+	typ = lev->locations[mx][my].typ;
 					/* only valid for INSIDE of room */
 	roomno = lev->locations[mx][my].roomno - ROOMOFFSET;
 	if (roomno >= 0)
