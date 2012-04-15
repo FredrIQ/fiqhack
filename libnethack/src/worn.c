@@ -453,11 +453,9 @@ outer_break:
 
 	/* If wearing body armour, account for time spent removing
 	 * and wearing it when putting on a shirt. */
-#ifdef TOURIST
 	if ((flag == W_ARMU) && (mon->misc_worn_check & W_ARM))
 	    m_delay += 2*
 	        objects[which_armor(mon, W_ARM)->otyp].oc_delay;
-#endif
 	/* if wearing a cloak, account for the time spent removing
 	   and re-wearing it when putting on a suit or shirt */
 	if ((flag == W_ARM || flag == W_ARMU) && (mon->misc_worn_check & W_ARMC))
