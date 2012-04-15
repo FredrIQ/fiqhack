@@ -565,6 +565,10 @@ void print_sym(WINDOW *win, struct curses_symdef *sym,
     if (ui_flags.color) {
         attr |= curses_color_attr(sym->color & 0x1F, bgcolor);
         if (sym->color & 0x20) attr |= A_UNDERLINE;
+	if (sym->color & 0x40 && settings.use_inverse && !bgcolor) {
+	    attr |= A_REVERSE;
+	    attr &= ~A_BOLD;
+	}
     }
     
     /* print it; preferably as unicode */

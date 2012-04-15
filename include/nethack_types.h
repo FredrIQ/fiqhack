@@ -63,6 +63,12 @@
 #define CLR_WHITE		15
 #define CLR_MAX			16
 
+/*
+ * Additional effects.
+ */
+#define HI_ULINE        0x20
+#define HI_HILITE       0x40
+
 /* flags for displayed monsters */
 #define MON_NORMAL   0
 #define MON_TAME     (1 << 0)
