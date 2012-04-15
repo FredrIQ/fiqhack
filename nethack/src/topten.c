@@ -66,7 +66,7 @@ static void makeheader(char *linebuf)
 }
 
 
-void show_topten(char *player, int top, int around, nh_bool own)
+void show_topten(char *you, int top, int around, nh_bool own)
 {
     struct nh_topten_entry *scores;
     char buf[BUFSZ];
@@ -74,7 +74,7 @@ void show_topten(char *player, int top, int around, nh_bool own)
     struct nh_menuitem *items;
     int icount, size;
     
-    scores = nh_get_topten(&listlen, buf, player, top, around, own);
+    scores = nh_get_topten(&listlen, buf, you, top, around, own);
     
     if (listlen == 0) {
 	curses_msgwin("There are no scores to show.");

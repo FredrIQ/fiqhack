@@ -107,7 +107,7 @@
 #define CMD_DEBUG      (1 << 14) /* a wizmode command */
 
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
-#define CMD_UI         (1 << 31) 
+#define CMD_UI         (1U << 31) 
 
 #define NH_ARG_NONE	(1<<0)
 #define NH_ARG_DIR	(1<<1)

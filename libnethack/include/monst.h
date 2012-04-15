@@ -137,7 +137,7 @@ struct monst {
 	uchar mxtyp;	/* type of the following data (MX_* flags in permonst.h) */
 	short mxlth;	/* length of following data */
 	int meating;	/* monster is eating timeout */
-	int mextra[0]; /* monster dependent info */
+	void *mextra[]; /* monster dependent info */
 };
 
 /*

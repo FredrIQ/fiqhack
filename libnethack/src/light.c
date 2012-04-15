@@ -380,8 +380,10 @@ static void write_ls(struct memfile *mf, light_source *ls)
     } else if (ls->type == LS_MONSTER) {
 	mtmp = (struct monst *)ls->id;
 	id = mtmp->m_id;
-    } else
+    } else {
 	impossible("write_ls: bad type (%d)", ls->type);
+	id = 0;
+    }
 
 
     mtag(mf, id * 2 + ls->type, MTAG_LIGHT);

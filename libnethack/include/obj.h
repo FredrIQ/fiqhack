@@ -105,7 +105,7 @@ struct obj {
 	short oxlth;		/* length of following data */
 	int age;		/* creation date */
 	int owornmask;
-	int oextra[1];		/* used for name of ordinary objects - length
+	void *oextra[];		/* used for name of ordinary objects - length
 				   is flexible; amount for tmp gold objects */
 };
 

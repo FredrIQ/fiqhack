@@ -235,7 +235,7 @@ struct gamewin {
     void (*resize)(struct gamewin *gw);
     WINDOW *win;
     struct gamewin *next, *prev;
-    void *extra[0];
+    void *extra[];
 };
 
 

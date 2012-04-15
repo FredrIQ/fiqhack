@@ -47,10 +47,10 @@ nh_bool curses_list_items_nonblocking(struct nh_objitem *items, int icount, nh_b
 }
 
 
-static int count_omitted_items(struct nh_objitem *inv, int inv_icount, int pos)
+static int count_omitted_items(struct nh_objitem *inv, int icount, int pos)
 {
     int omitted = 0;
-    for (; pos < inv_icount; pos++)
+    for (; pos < icount; pos++)
 	if (inv[pos].role == MI_NORMAL)
 	    omitted++;
     return omitted;

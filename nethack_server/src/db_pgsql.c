@@ -457,14 +457,14 @@ long db_add_new_game(int uid, const char *filename, const char *role,
 }
 
 
-void db_update_game(int gameid, int moves, int depth, const char *levdesc)
+void db_update_game(int game, int moves, int depth, const char *levdesc)
 {
     PGresult *res;
     char gidstr[16], movesstr[16], depthstr[16];
     const char * const params[] = {gidstr, movesstr, depthstr, levdesc};
     const int paramFormats[] = {0,0,0,0};
     
-    sprintf(gidstr, "%d", gameid);
+    sprintf(gidstr, "%d", game);
     sprintf(movesstr, "%d", moves);
     sprintf(depthstr, "%d", depth);
     

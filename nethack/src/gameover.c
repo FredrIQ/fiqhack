@@ -72,7 +72,7 @@ void curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
 	strcpy(buf, killbuf);
 	/* Put death type on stone */
 	for (line=DEATH_LINE, dpx = buf; line<YEAR_LINE; line++) {
-	    int i,i0;
+	    int i0;
 	    char tmpchar;
 	    
 	    /* break up long text */

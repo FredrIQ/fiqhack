@@ -32,7 +32,7 @@ static void srv_alt_pause(enum nh_pause_reason r);
 static void srv_alt_display_buffer(const char *buf, nh_bool trymove);
 static void srv_alt_update_status(struct nh_player_info *pi);
 static void srv_alt_print_message(int turn, const char *msg);
-static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy) {};
+static void srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy) {}
 static void srv_alt_delay_output(void);
 static void srv_alt_level_changed(int displaymode);
 static void srv_alt_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,

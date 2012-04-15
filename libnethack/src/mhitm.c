@@ -326,6 +326,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
 		else res[i] = MM_MISS;
 		if (mdef->mhp < 1) res[i] = MM_DEF_DIED;
 		if (magr->mhp < 1) res[i] = MM_AGR_DIED;
+		strike = 0; /* waking up handled by m_throw() */
 		break;
 
 	    case AT_SPIT:
@@ -334,6 +335,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
 		else res[i] = MM_MISS;
 		if (mdef->mhp < 1) res[i] = MM_DEF_DIED;
 		if (magr->mhp < 1) res[i] = MM_AGR_DIED;
+		strike = 0; /* waking up handled by m_throw() */
 		break;
 
 	    case AT_GAZE:
@@ -377,6 +379,7 @@ int mattackm(struct monst *magr, struct monst *mdef)
 		if (res[i] & MM_DEF_DIED)
 			return (MM_DEF_DIED |
 				(grow_up(magr,mdef) ? 0 : MM_AGR_DIED));
+		strike = 0; /* waking up handled by spell code */
 		break;
 
 	    default:		/* no attack */
