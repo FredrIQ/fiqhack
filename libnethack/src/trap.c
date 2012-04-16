@@ -3793,15 +3793,25 @@ boolean lava_effects(void)
     if (likes_lava(youmonst.data)) return FALSE;
 
     if (!Fire_resistance) {
-	if (Wwalking) {
+        /* assumption: water walking only comes from boots */
+	if(Wwalking && uarmf && (!is_organic(uarmf) || uarmf->oerodeproof)) {
 	    dmg = dice(6,6);
 	    pline("The lava here burns you!");
 	    if (dmg < u.uhp) {
 		losehp(dmg, lava_killer, KILLED_BY);
 		goto burn_stuff;
 	    }
-	} else
+	} else {
+	    if (uarmf && is_organic(uarmf)) {
+	        obj = uarmf;
+	        /* always display this, as it explains why you're falling
+		 * into the lava */
+		pline("Your %s into flame!", aobjnam(obj, "burst"));
+		(void) Boots_off();
+		useupall(obj);
+	    }
 	    pline("You fall into the lava!");
+        }
 
 	usurvive = Lifesaved || discover;
 	if (wizard)
