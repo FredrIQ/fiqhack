@@ -504,6 +504,15 @@ int mattacku(struct monst *mtmp)
 
 	if (u.uinvulnerable) {
 	    /* monsters won't attack you */
+
+	    /* only print messages for monsters that actually can attack */
+	    for (i = 0; i < NATTK; i++) {
+	        if (mtmp->data->mattk[i].aatyp != AT_NONE &&
+		    mtmp->data->mattk[i].aatyp != AT_BOOM)
+		    break;
+	    }
+	    if (i == NATTK) return 0;
+
 	    if (mtmp == u.ustuck)
 		pline("%s loosens its grip slightly.", Monnam(mtmp));
 	    else if (!range2) {
