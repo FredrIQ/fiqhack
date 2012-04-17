@@ -272,7 +272,7 @@ sub ensure_directory_exists {
   sub aimake_run_command {
     my $cmd = shift;
     my $capture_stdout = shift;
-    my $obj = shift;
+    my $obj = shift || 'sys:dummy_object';
     my $rv = '';
     my @cmd = (ref $cmd eq 'ARRAY' ? @$cmd : ($cmd));
     join $;, @cmd eq $last_command and return $last_command_result;
@@ -459,25 +459,32 @@ sub eval_config_element {
       if ($e{'determine_command'}) {
         my $obj = $subs->{'objname'};
         $e{'determine_parse'} or die "determine_command without determine_parse";
-        if ($state->{'brokenobjects'}->{$obj}) {
-          # No point trying to determine from this.
-          return ();
-        }
-        maybe_force_provicions($obj, $obj);
-        if ($state->{'failedobjects'}->{$obj}) {
-          # It's unlikely to get sensible results in this case. Besides,
-          # we shouldn't be here on a failed object anyway, but we are
-          # because we only just found out it was failed.
-          return ();
+        if ($obj) {
+            if ($state->{'brokenobjects'}->{$obj}) {
+                # No point trying to determine from this.
+                return ();
+            }
+            maybe_force_provicions($obj, $obj);
+            if ($state->{'failedobjects'}->{$obj}) {
+                # It's unlikely to get sensible results in this case. Besides,
+                # we shouldn't be here on a failed object anyway, but we are
+                # because we only just found out it was failed.
+                return ();
+            }
         }
         my $command = eval_config_element_scalar(
-          $e{'determine_command'}, $subs, $dont_escape);
+            $e{'determine_command'}, $subs, $dont_escape);
         my $output = aimake_run_command($command, 1, $obj);
         unless (defined $output) {
-          progress_report 5, "Error determining dependencies of '".
-            $subs->{'objname'}."'. This object will not be used.";
-          $state->{'brokenobjects'}->{$obj} = 1;
-          return ();
+            if (defined $obj) {
+                progress_report 5, "Error determining dependencies of '".
+                    $obj."'. This object will not be used.";
+                $state->{'brokenobjects'}->{$obj} = 1;
+                return ();
+            } else {
+                progress_report 5, "Error determining configuration.";
+                return ();
+            }
         }
         my $re = $e{'determine_parse'};
         delete $e{'determine_command'};
@@ -518,6 +525,7 @@ sub eval_config_element {
       # where the source is.
       $el =~ s/\$SOURCEPATH\(([^)]+)\)/
          File::Spec->catfile($state->{'srcdir'}, $1)/ge;
+      # // # (fix indentation for editors that are confused)
       return ($el);
     }
 }
@@ -530,7 +538,7 @@ sub eval_config_element_scalar {
 }
 
 # Now merge install paths into the options twice (to resolve $datarootdir
-# in the data.
+# in the data).
 my $installtype = eval_config_element_scalar(
   $config->{'installtype'}, $config->{'options'}, 1);
 for my $k (keys %{$config->{'installpaths'}->{$installtype}}) {
@@ -553,10 +561,15 @@ $config->{'options'}->{'srcdir'} = $state->{'srcdir'};
 $config->{'options'}->{$_} = File::Spec->rel2abs($config->{'options'}->{$_})
   for keys %{$config->{'installpaths'}->{$installtype}};
 
+# Library paths have a determine_command, so we need to evaluate
+# that.
+$config->{'library_paths'} =
+    [eval_config_element($config->{'library_paths'}, $config->{'options'}, 1)];
+
 # We write this out to a file so the config file can see it.
 open my $config_fh, '>', 'last-config.txt'
   or die "Could not open config record: $?";
-ref $config->{'options'}->{$_}
+ref $config->{'options'}->{$_} or /^\d$/
   or print $config_fh "$_: ".$config->{'options'}->{$_}."\n"
     for sort keys %{$config->{'options'}};
 close $config_fh;
@@ -1643,7 +1656,7 @@ UNBUILT: for my $unbuilt (sort keys %{$state->{'outdatedobjects'}}) {
         my $fr2 = obj_state($key)->{'failreason'};
         # install_targets can end up two levels away from a
         # junk symbol_in_object:main
-        if (scalar @$fr2 == 1 && $fr2->[0]->{'bad_udep'}) {
+        if ($fr2 && scalar @$fr2 == 1 && $fr2->[0]->{'bad_udep'}) {
           for my $key2 (keys %{$fr2->[0]->{'bad_udep'}}) {
             if ($key2 =~ /^symbol_in_object:main/ &&
               $fr2->[0]->{'bad_udep'}->{$key2} eq 'outdated') {
@@ -1761,7 +1774,7 @@ $object_provices = {
         # provided. TODO: portability
         prereqs => ['command:nm'],
         determine_command => $nm_determine_command,
-        determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVW]',
+        determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
         value => ['symbol:$1','symbol_in_object:$1{$objname}'],
         # Not only can't we include just one function from
         # an object file, we also probably shouldn't.
@@ -1821,20 +1834,28 @@ $preprocess_dependencies = [
         "ncursesw",
         "pthread",
         "rt",
+        "tinfo",
     ],
     library_paths => [
-        # I would get these from ld, but apparently it has no way
-        # of asking for them, which is a little ridiculous. So here
-        # are some hardcoded paths appropriate for Linux.
-        # Note that we need not mention paths inside the source
-        # directory; .o, .a, and .so files will be found by the
-        # tree scan.
-        '/usr/lib',
-        '/lib',
+        {
+            # These are many, varied, and often make no sense (e.g.
+            # having i386 in the name on an i686 system). So we get
+            # them from gcc, which is configured to know where they
+            # are, if that's available.
+            prereqs => ['command:gcc', 'command:grep'],
+            determine_command => 'gcc -print-search-dirs | grep -F libraries',
+            determine_parse => qr/[:=]([^:=]+?)(?::|$)/,
+            value => '$1',
+            group => 'library_locators',
+            score => 100,
+        },
+        # gcc doesn't know about packaging directories, but we can tell
+        # aimake to look there too. TODO: OS independence
         '/usr/local/lib',
     ],
     includes => [],
     include_paths => [
+        # These are for Linux. We need other OSes too.
         '/usr/include',
         '/usr/local/include',
     ],
