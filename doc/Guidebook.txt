@@ -876,8 +876,8 @@
                Talk to someone.
 
           #conduct
-               List which challenges you have adhered to.  See the  section
-               below entitled ``Conduct'' for details.
+               List status of voluntary challenges.  See the section below
+               entitled ``Conduct'' for details.
 
           #dip Dip an object into something.
 
