@@ -1625,7 +1625,7 @@ static boolean figurine_location_checks(struct obj *obj, coord *cc, boolean quie
 {
 	xchar x,y;
 
-	if (carried(obj) && u.uswallow) {
+	if (u.uswallow) {
 		if (!quietly)
 			pline("You don't have enough room in here.");
 		return FALSE;

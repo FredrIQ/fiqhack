@@ -1155,6 +1155,11 @@ int doinvoke(struct obj *obj)
 
 static int arti_invoke(struct obj *obj)
 {
+    if (!obj) {
+	impossible("invoking nothing?");
+	return 0;
+    }
+
     const struct artifact *oart = get_artifact(obj);
 
     if (!oart || !oart->inv_prop) {
