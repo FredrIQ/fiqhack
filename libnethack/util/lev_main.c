@@ -141,6 +141,7 @@ int fatal_error = 0;
 int want_warnings = 0;
 
 extern char tmpmessage[];
+extern char tmphallumsg[];
 extern altar *tmpaltar[];
 extern lad *tmplad[];
 extern stair *tmpstair[];
@@ -876,6 +877,10 @@ static boolean write_common_data(int fd, int typ, lev_init *init, long flgs)
 	Write(fd, &len, sizeof len);
 	if (len) Write(fd, tmpmessage, (int) len);
 	tmpmessage[0] = '\0';
+	len = (uchar) strlen(tmphallumsg);
+	Write(fd, &len, sizeof len);
+	if (len) Write(fd, tmphallumsg, (int) len);
+	tmphallumsg[0] = '\0';
 	return TRUE;
 }
 

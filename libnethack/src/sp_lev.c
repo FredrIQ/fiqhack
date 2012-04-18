@@ -1626,6 +1626,18 @@ static void load_common_data(struct level *lev, dlb *fd, int typ)
 	    lev_message[n] = 0;
 	}
 	
+	/* Read hallumsg */
+	Fread(&n, 1, sizeof(n), fd);
+	if (n) {
+	    if (Hallucination) {
+		lev_message = realloc(lev_message, n + 1);
+		Fread(lev_message, 1, (int) n, fd);
+		lev_message[n] = 0;
+	    } else {
+		dlb_fseek(fd, n, SEEK_CUR);
+	    }
+	}
+	
 	return;
 err_out:
 	fprintf(stderr, "read error in load_common_data\n");

@@ -61,6 +61,7 @@ static struct size {
 }		current_size;
 
 char tmpmessage[256];
+char tmphallumsg[256];
 digpos *tmppass[32];
 char *tmpmap[ROWNO];
 
@@ -127,7 +128,8 @@ extern const char *fname;
 
 
 %token	<i> CHAR INTEGER BOOLEAN PERCENT
-%token	<i> MESSAGE_ID MAZE_ID LEVEL_ID LEV_INIT_ID GEOMETRY_ID NOMAP_ID
+%token	<i> MESSAGE_ID HALLUMSG_ID MAZE_ID LEVEL_ID LEV_INIT_ID GEOMETRY_ID
+%token  <i> NOMAP_ID
 %token	<i> OBJECT_ID COBJECT_ID MONSTER_ID TRAP_ID DOOR_ID DRAWBRIDGE_ID
 %token	<i> MAZEWALK_ID WALLIFY_ID REGION_ID FILLING
 %token	<i> RANDOM_OBJECTS_ID RANDOM_MONSTERS_ID RANDOM_PLACES_ID
@@ -164,7 +166,7 @@ level		: maze_level
 		| room_level
 		;
 
-maze_level	: maze_def flags lev_init messages regions
+maze_level	: maze_def flags lev_init messages hallumsgs regions
 		  {
 			unsigned i;
 
@@ -314,6 +316,28 @@ message		: MESSAGE_ID ':' STRING
 			Free($3);
 		  }
 		;
+
+hallumsgs	: /* nothing */
+		| hallumsg hallumsgs
+		;
+
+hallumsg	: HALLUMSG_ID ':' STRING
+		  {
+			int i, j;
+
+			i = (int) strlen($3) + 1;
+			j = (int) strlen(tmphallumsg);
+			if (i + j > 255) {
+			   yyerror("Message string too long (>256 characters)");
+			} else {
+			    if (j) tmphallumsg[j++] = '\n';
+			    (void) strncpy(tmphallumsg+j, $3, i - 1);
+			    tmphallumsg[j + i - 1] = 0;
+			}
+			Free($3);
+		  }
+		;
+
 
 rreg_init	: /* nothing */
 		| rreg_init init_rreg
