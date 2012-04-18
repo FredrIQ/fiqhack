@@ -196,7 +196,7 @@ static boolean is_ok_location(struct level *lev, schar x, schar y, int humidity)
 
 	if (Is_waterlevel(&lev->z)) return TRUE;	/* accept any spot */
 
-	if (t_at(level, x, y)) return FALSE; /* don't spawn monsters on traps */
+	if (t_at(lev, x, y)) return FALSE; /* don't spawn monsters on traps */
 
 	if (humidity & DRY) {
 	    typ = lev->locations[x][y].typ;
