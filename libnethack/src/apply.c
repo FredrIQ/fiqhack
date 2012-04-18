@@ -1625,10 +1625,14 @@ static boolean figurine_location_checks(struct obj *obj, coord *cc, boolean quie
 {
 	xchar x,y;
 
-	if (u.uswallow) {
+	if (carried(obj) && u.uswallow) {
 		if (!quietly)
 			pline("You don't have enough room in here.");
 		return FALSE;
+	}
+	if (!cc) {
+	    impossible("figurine not on coordinate?");
+	    return FALSE;
 	}
 	x = cc->x; y = cc->y;
 	if (!isok(x,y)) {
