@@ -855,7 +855,7 @@ extern int doseduce(struct monst *);
 
 /* ### minion.c ### */
 
-extern void msummon(struct monst *);
+extern void msummon(struct monst *, const d_level *);
 extern void summon_minion(aligntyp, boolean);
 extern int demon_talk(struct monst *);
 extern long bribe(struct monst *);

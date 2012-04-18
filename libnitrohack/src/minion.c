@@ -8,7 +8,7 @@
 
 /* mon summons a monster */
 void
-msummon(struct monst *mon)
+msummon(struct monst *mon, const d_level *dlev)
 {
     const struct permonst *ptr;
     int dtype = NON_PM, cnt = 0;
