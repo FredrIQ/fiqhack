@@ -452,6 +452,8 @@ static void mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
 	}
 	obj->owornmask = 0L;
     }
+    if (!DEADMONSTER(mon) && obj->otyp == LOADSTONE && !obj->cursed)
+        curse(obj);
     if (verbosely && cansee(omx, omy))
 	pline("%s drops %s.", Monnam(mon), distant_name(obj, doname));
     if (!flooreffects(obj, omx, omy, "fall")) {

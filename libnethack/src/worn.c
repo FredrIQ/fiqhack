@@ -482,6 +482,16 @@ outer_break:
 	    mon->mfrozen = m_delay;
 	    if (mon->mfrozen) mon->mcanmove = 0;
 	}
+	/* TODO: more general check for autocursing? */
+        if ((best->otyp == DUNCE_CAP ||
+	     best->otyp == HELM_OF_OPPOSITE_ALIGNMENT) &&
+	     !best->cursed) {
+	    if (!creation && canseemon(mon)) {
+	        pline("%s %s for a moment.",
+                      Tobjnam(best, "glow"), hcolor("black"));
+	    }
+	    curse(best);
+        }
 	if (old)
 	    update_mon_intrinsics(mon, old, FALSE, creation);
 	mon->misc_worn_check |= flag;
