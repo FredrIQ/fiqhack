@@ -2055,7 +2055,7 @@ static int use_whip(struct obj *obj)
 	confdir(&dx, &dy);
     rx = u.ux + dx;
     ry = u.uy + dy;
-    mtmp = m_at(level, rx, ry);
+    mtmp = (isok(rx, ry)) ? m_at(level, rx, ry) : NULL;
 
     /* fake some proficiency checks */
     proficient = 0;
@@ -2132,6 +2132,13 @@ static int use_whip(struct obj *obj)
 	 *
 	 */
 	const char *wrapped_what = NULL;
+
+	if (!isok(rx, ry)) {
+	    pline("%s", 
+	          Is_airlevel(&u.uz) ? "You snap your whip through thin air."
+		                     : msg_snap);
+	    return 1;
+	}
 
 	if (mtmp) {
 	    if (bigmonst(mtmp->data)) {
