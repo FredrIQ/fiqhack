@@ -692,8 +692,9 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			break;
 		    case MIRROR:
 			if (breaktest(obj)) {
-			    pline("You break %s mirror.  That's bad luck!",
-				shk_your(yourbuf, obj));
+			    pline("You break %s %s.  That's bad luck!",
+				shk_your(yourbuf, obj),
+                                simple_typename(obj->otyp));
 			    change_luck(-2);
 			    useup(obj);
 			    obj = NULL;

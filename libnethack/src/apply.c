@@ -566,16 +566,19 @@ static int use_mirror(struct obj *obj)
 	
 	if (obj->cursed && !rn2(2)) {
 		if (!Blind)
-			pline("The mirror fogs up and doesn't reflect!");
+			pline("The %s fogs up and doesn't reflect!",
+                                simple_typename(obj->otyp));
 		return 1;
 	}
 	if (!dx && !dy && !dz) {
 		if (!Blind && !Invisible) {
 		    if (u.umonnum == PM_FLOATING_EYE) {
 			if (!Free_action) {
-			    pline(Hallucination ?
-				"Yow!  The mirror stares back!" :
-				"Yikes!  You've frozen yourself!");
+                            if (Hallucination)
+                                pline("Yow!  The %s stares back!",
+                                        simple_typename(obj->otyp));
+                            else
+                                pline("Yikes!  You've frozen yourself!");
 			    nomul(-rnd((MAXULEV+6) - u.ulevel), "gazing into a mirror");
 			    nomovemsg = 0; /* default: "You can move again." */
 			} else pline("You stiffen momentarily under your gaze.");
@@ -628,8 +631,8 @@ static int use_mirror(struct obj *obj)
 	mlet = mtmp->data->mlet;
 	if (mtmp->msleeping) {
 		if (vis)
-		    pline ("%s is too tired to look at your mirror.",
-			    Monnam(mtmp));
+		    pline ("%s is too tired to look at your %s.",
+			    Monnam(mtmp), simple_typename(obj->otyp));
 	} else if (!mtmp->mcansee) {
 	    if (vis)
 		pline("%s can't see anything right now.", Monnam(mtmp));
@@ -664,9 +667,10 @@ static int use_mirror(struct obj *obj)
 	} else if (!mtmp->mcan && !mtmp->minvis && (mlet == S_NYMPH
 				     || mtmp->data==&mons[PM_SUCCUBUS])) {
 		if (vis) {
-		    pline ("%s admires herself in your mirror.", Monnam(mtmp));
+		    pline ("%s admires herself in your %s.", Monnam(mtmp),
+		           simple_typename(obj->otyp));
 		    pline ("She takes it!");
-		} else pline ("It steals your mirror!");
+		} else pline ("It steals your %s!", simple_typename(obj->otyp));
 		setnotworn(obj); /* in case mirror was wielded */
 		freeinv(obj);
 		mpickobj(mtmp,obj);
