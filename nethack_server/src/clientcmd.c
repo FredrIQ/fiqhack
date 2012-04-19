@@ -626,21 +626,23 @@ static void ccmd_get_obj_commands(json_t *params)
 static void ccmd_describe_pos(json_t *params)
 {
     struct nh_desc_buf db;
-    int x, y;
+    int x, y, is_in;
     json_t *jmsg;
 
-    if (json_unpack(params, "{si,si*}", "x", &x, "y", &y) == -1)
+    if (json_unpack(params, "{si,si,si*}", "x", &x, "y", &y,
+                    "is_in", &is_in) == -1)
 	exit_client("Bad parameters for describe_pos");
     
-    nh_describe_pos(x, y, &db);
-    jmsg = json_pack("{ss,ss,ss,ss,ss,ss,si}",
+    nh_describe_pos(x, y, &db, is_in ? &is_in : NULL);
+    jmsg = json_pack("{ss,ss,ss,ss,ss,ss,si,si}",
 		     "bgdesc", db.bgdesc,
 		     "trapdesc", db.trapdesc,
 		     "objdesc", db.objdesc,
 		     "mondesc", db.mondesc,
 		     "invisdesc", db.invisdesc,
 		     "effectdesc", db.effectdesc,
-		     "objcount", db.objcount);
+		     "objcount", db.objcount,
+                     "in", is_in);
     client_msg("describe_pos", jmsg);
 }
 

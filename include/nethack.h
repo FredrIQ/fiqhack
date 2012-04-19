@@ -71,7 +71,7 @@ extern EXPORT void nh_setup_ui_options(struct nh_option_desc *options,
 extern EXPORT const char *nh_get_option_string(const struct nh_option_desc *opt);
 
 /* pager.c */
-extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs);
+extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in);
 
 /* role.c */
 extern EXPORT struct nh_roles_info *nh_get_roles(void);

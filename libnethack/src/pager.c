@@ -7,11 +7,11 @@
 #include "hack.h"
 #include "dlb.h"
 
-static int append_str(char *buf, const char *new_str, int is_plur);
+static int append_str(char *buf, const char *new_str, int is_plur, int is_in);
 static void mon_vision_summary(const struct monst *mtmp, char *outbuf);
 static void describe_bg(int x, int y, int bg, char *buf);
-static int describe_object(int x, int y, int votyp, char *buf);
-static void describe_mon(int x, int y, int monnum, char *buf);
+static int describe_object(int x, int y, int votyp, char *buf, int known_embed);
+static void describe_mon(int x, int y, int monnum, char *buf, int is_in);
 static void checkfile(const char *inp, struct permonst *, boolean, boolean);
 static int do_look(boolean);
 
@@ -75,7 +75,7 @@ const char * const objexplain[] = {	/* these match def_oc_syms */
  * a substring of buf.  Return 1 if the string was appended, 0 otherwise.
  * It is expected that buf is of size BUFSZ.
  */
-static int append_str(char *buf, const char *new_str, int is_plur)
+static int append_str(char *buf, const char *new_str, int is_plur, int is_in)
 {
     int space_left;	/* space remaining in buf */
 
@@ -84,8 +84,13 @@ static int append_str(char *buf, const char *new_str, int is_plur)
     
     space_left = BUFSZ - strlen(buf) - 1;
     if (buf[0]) {
-	strncat(buf, " on ", space_left);
-	space_left -= 4;
+        if (is_in) {
+            strncat(buf, " ", space_left);
+            space_left--;
+        } else {
+            strncat(buf, " on ", space_left);
+            space_left -= 4;
+        }
     }
     
     if (is_plur)
@@ -208,10 +213,12 @@ static void describe_bg(int x, int y, int bg, char *buf)
 }
 
 
-static int describe_object(int x, int y, int votyp, char *buf)
+static int describe_object(int x, int y, int votyp, char *buf,
+                           int known_embed)
 {
     int num_objs = 0;
     struct obj *otmp;
+    int typ;
     if (votyp == -1)
 	return -1;
     
@@ -231,9 +238,14 @@ static int describe_object(int x, int y, int votyp, char *buf)
     } else
 	strcpy(buf, distant_name(otmp, xname));
     
-    if (level->locations[x][y].typ == STONE || level->locations[x][y].typ == SCORR)
+    typ = level->locations[x][y].typ;
+    if (known_embed && (IS_ROCK(typ) || closed_door(level, x, y))) {
+        strcat(buf, " embedded in");
+    } else if (IS_TREE(typ))
+        strcat(buf, " embedded in a tree");
+    else if (typ == STONE || typ == SCORR)
 	strcat(buf, " embedded in stone");
-    else if (IS_WALL(level->locations[x][y].typ) || level->locations[x][y].typ == SDOOR)
+    else if (IS_WALL(typ) || typ == SDOOR)
 	strcat(buf, " embedded in a wall");
     else if (closed_door(level, x,y))
 	strcat(buf, " embedded in a door");
@@ -260,7 +272,7 @@ static int describe_object(int x, int y, int votyp, char *buf)
 }
 
 
-static void describe_mon(int x, int y, int monnum, char *buf)
+static void describe_mon(int x, int y, int monnum, char *buf, int is_in)
 {
     char race[QBUFSZ];
     char *name, monnambuf[BUFSZ];
@@ -353,13 +365,18 @@ static void describe_mon(int x, int y, int monnum, char *buf)
 	    sprintf(temp_buf, " [seen: %s]", visionbuf);
 	    strncat(buf, temp_buf, BUFSZ-strlen(buf)-1);
 	}
+
+        if (is_in)
+            strncat(buf, " in", BUFSZ-strlen(buf)-1);
     }
 }
 
 
-void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
+void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs,
+                     int *is_in)
 {
     int monid = dbuf_get_mon(x, y);
+    int mem_bg = level->locations[x][y].mem_bg;
     
     bufs->bgdesc[0] = '\0';
     bufs->trapdesc[0] = '\0';
@@ -368,19 +385,26 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs)
     bufs->invisdesc[0] = '\0';
     bufs->effectdesc[0] = '\0';
     bufs->objcount = -1;
+
+    if (is_in) {
+        if (IS_ROCK(level->locations[x][y].typ) || closed_door(level, x, y))
+            *is_in = 1;
+        else
+            *is_in = 0;
+    }
     
     if (!program_state.game_running || !api_entry_checkpoint())
 	return;
     
-    describe_bg(x, y, level->locations[x][y].mem_bg, bufs->bgdesc);
+    describe_bg(x, y, mem_bg, bufs->bgdesc);
     
     if (level->locations[x][y].mem_trap)
 	strcpy(bufs->trapdesc, trapexplain[level->locations[x][y].mem_trap - 1]);
     
     bufs->objcount = describe_object(x, y, level->locations[x][y].mem_obj - 1,
-				     bufs->objdesc);
+				     bufs->objdesc, mem_bg && is_in);
     
-    describe_mon(x, y, monid - 1, bufs->mondesc);
+    describe_mon(x, y, monid - 1, bufs->mondesc, mem_bg && is_in);
     
     if (level->locations[x][y].mem_invis)
 	strcpy(bufs->invisdesc, invisexplain);
@@ -567,7 +591,7 @@ static int do_look(boolean quick)
 {
     char out_str[BUFSZ];
     char firstmatch[BUFSZ];
-    int i, ans = 0, objplur = 0;
+    int i, ans = 0, objplur = 0, is_in;
     int found;		/* count of matching syms found */
     coord cc;		/* screen pos of unknown glyph */
     boolean save_verbose;	/* saved value of flags.verbose */
@@ -625,34 +649,34 @@ static int do_look(boolean quick)
 	}
 	flags.verbose = FALSE;	/* only print long question once */
 
-	nh_describe_pos(cc.x, cc.y, &descbuf);
+	nh_describe_pos(cc.x, cc.y, &descbuf, &is_in);
 	
 	otmp = vobj_at(cc.x, cc.y);
 	if (otmp && is_plural(otmp))
 	    objplur = 1;
 	
 	out_str[0] = '\0';
-	if (append_str(out_str, descbuf.effectdesc, 0))
+	if (append_str(out_str, descbuf.effectdesc, 0, 0))
 	    if (++found == 1)
 		strcpy (firstmatch, descbuf.effectdesc);
 	
-	if (append_str(out_str, descbuf.invisdesc, 0))
+	if (append_str(out_str, descbuf.invisdesc, 0, 0))
 	    if (++found == 1)
 		strcpy (firstmatch, descbuf.invisdesc);
 	
-	if (append_str(out_str, descbuf.mondesc, 0))
+	if (append_str(out_str, descbuf.mondesc, 0, 0))
 	    if (++found == 1)
 		strcpy (firstmatch, descbuf.mondesc);
 	
-	if (append_str(out_str, descbuf.objdesc, objplur))
+	if (append_str(out_str, descbuf.objdesc, objplur, 0))
 	    if (++found == 1)
 		strcpy (firstmatch, descbuf.objdesc);
 	
-	if (append_str(out_str, descbuf.trapdesc, 0))
+	if (append_str(out_str, descbuf.trapdesc, 0, 0))
 	    if (++found == 1)
 		strcpy (firstmatch, descbuf.trapdesc);
 	
-	if (append_str(out_str, descbuf.bgdesc, 0))
+	if (append_str(out_str, descbuf.bgdesc, 0, is_in))
 	    if (!found) {
 		found++; /* only increment found if nothing else was seen,
 		so that checkfile can be called below */

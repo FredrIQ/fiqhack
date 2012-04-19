@@ -82,7 +82,7 @@ struct nh_option_desc curses_options[] = {
     {"graphics", "enhanced line drawing style", OPTTYPE_ENUM, {(void*)UNICODE_GRAPHICS}},
     {"hilite_pet", "use background colors to show monster attitude", OPTTYPE_BOOL, { VTRUE }},
     {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, { VTRUE }},
-    {"keymap", "alter the key to command mapping", OPTTYPE_KEYMAP, {0}},
+    {"keymap", "alter the key to command mapping", (enum nh_opttype) OPTTYPE_KEYMAP, {0}},
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM, {(void*)A_REVERSE}},
     {"msgheight", "message window height", OPTTYPE_INT, {(void*)8}},
     {"msghistory", "number of messages saved for prevmsg", OPTTYPE_INT, {(void*)256}},

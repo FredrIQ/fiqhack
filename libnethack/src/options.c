@@ -963,6 +963,7 @@ struct nh_autopickup_rules *parse_autopickup_rules(const char *str)
     char *copy, *semi;
     const char *start;
     int i, rcount = 0;
+    unsigned int action, buc;
     
     if (!str || !*str)
 	return NULL;
@@ -985,10 +986,12 @@ struct nh_autopickup_rules *parse_autopickup_rules(const char *str)
     while ( (semi = strchr(start, ';')) && i < rcount ) {
 	*semi++ = '\0';
 	sscanf(start, "(\"%39[^,],%d,%u,%u);", out->rules[i].pattern,
-	       &out->rules[i].oclass, &out->rules[i].buc, &out->rules[i].action);
+	       &out->rules[i].oclass, &buc, &action);
 	/* since %[ in sscanf requires a nonempty match, we allowed it to match
 	 * the closing '"' of the rule. Remove that now. */
 	out->rules[i].pattern[strlen(out->rules[i].pattern) - 1] = '\0';
+        out->rules[i].buc = (enum nh_bucstatus) buc;
+        out->rules[i].action = (enum autopickup_action) action;
 	i++;
 	start = semi;
     }

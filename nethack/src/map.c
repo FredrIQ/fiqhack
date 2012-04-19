@@ -185,7 +185,7 @@ int curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         if (!firstmove) {
             struct nh_desc_buf descbuf;
             int mx = 0, my = 0;
-            nh_describe_pos(cx, cy, &descbuf);
+            nh_describe_pos(cx, cy, &descbuf, NULL);
 
             werase(statuswin);
             place_desc_message(statuswin, &mx, &my, descbuf.effectdesc);
