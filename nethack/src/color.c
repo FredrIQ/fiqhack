@@ -3,17 +3,142 @@
 
 #include "nhcurses.h"
 
-struct color {
-    short r, g, b;
-};
-
-static struct color oyellow, owhite, ohired, ohigreen, ohiyellow, ohiblue,
-                    ohimagenta, ohicyan, ohiwhite;
+#define array_size(x) (sizeof(x)/sizeof(x[0]))
 
 short colorlist[] = {COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
                      COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, -1,
                      COLOR_WHITE, COLOR_RED+8, COLOR_GREEN+8, COLOR_YELLOW+8,
                      COLOR_BLUE+8, COLOR_MAGENTA+8, COLOR_CYAN+8, COLOR_WHITE+8};
+
+const char *colorNames[] = { "black", "red", "green", "yellow", "blue", 
+                             "magenta", "cyan", "gray", "white",
+                             "hired", "higreen", "hiyellow", "hiblue",
+                             "himagenta", "hicyan", "hiwhite" };
+struct ColorMap {
+  short fgColors[16];
+  short bgColors[16];
+};
+
+static struct ColorMap color_map;
+
+/* Load color map from colormap.conf config file. */
+static void read_colormap( struct ColorMap *map )
+{
+    fnchar filename[BUFSZ];
+    FILE *fp;
+
+    char line[BUFSZ];
+
+    int pos, idx;
+    char *colorname;
+
+    int defType, colorIndex, colorValue;
+
+    /* Initialize the map to default values. */
+    for(idx = 0; idx < 16; idx++) {
+        map->fgColors[idx] = colorlist[idx];
+        map->bgColors[idx] = colorlist[idx];
+    }
+
+    filename[0] = '\0';
+    if(!get_gamedir(CONFIG_DIR, filename))
+        return;
+    fnncat(filename, FN("colormap.conf"), BUFSZ);
+
+    fp = fopen(filename, "r");
+    if(!fp)
+        return;
+
+    while(fgets(line, BUFSZ, fp)) {
+        if(sscanf(line, " %n%*s %i", &pos, &colorValue) != 1) continue;
+
+        colorname = &line[pos];
+
+        /* Skip comments. */
+        if(colorname[0] == '#') continue;
+
+        /* If the color name starts with "fg." or "bg.", then it only
+         * applies to the foreground or background color definition.
+         * Otherwise it applies to both. */
+        if(!strncmp(colorname, "fg.", 3)) {
+            defType = 1;
+            colorname += 3;
+        } else if(!strncmp(colorname, "bg.", 3)) {
+            defType = 2;
+            colorname += 3;
+        } else {
+            defType = 0;
+        }
+
+        for(idx = 0, colorIndex = -1; idx < array_size(colorNames); idx++) {
+            if(colorNames[idx] && !strncmp(colorname, colorNames[idx], 
+                                           strlen(colorNames[idx]))) {
+                colorIndex = idx;
+                break;
+            }
+        }
+
+        /* If color couldn't be matched, then skip the line. */
+        if(colorIndex == -1) continue;
+
+        if(colorValue < COLORS && colorValue >= 0) {
+            if(defType == 0 || defType == 1) {
+                map->fgColors[colorIndex] = colorValue;
+            }
+            if(defType == 0 || defType == 2) {
+                map->bgColors[colorIndex] = colorValue;
+            }
+        }
+    }
+
+    fclose(fp);
+
+    return;
+}
+
+/* Initialize curses color pairs based on the color map provided. */
+static void apply_colormap( struct ColorMap *map )
+{
+    int bg, fg;
+    short bgColor, fgColor;
+
+    /* Set up all color pairs.
+     * If using bold, then set up color pairs for foreground colors
+     *   0-7; if not, then set up color pairs for foreground colors
+     *   0-15.
+     * If there are sufficient color pairs, then set them up for 6
+     * possible non-default background colors (don't use white, there 
+     * are terminals that hate it).  So there are 112 pairs required
+     * for 16 colors, or 56 required for 8 colors. */
+    for (bg = 0; bg <= 6; bg++) {
+
+        /* Do not set up background colors if there are not enough
+         * color pairs. */
+        if(bg == 1 &&
+           ((COLOR_PAIRS < 57) ||
+            (COLORS >= 16 && COLOR_PAIRS < 113)))
+            break;
+        
+        /* For no background, use the default background color;
+         * otherwise use the color from the color map. */
+        bgColor = bg ? map->bgColors[bg] : -1;
+
+        for (fg = 0; fg <= (COLORS >= 16 ? 16 : 8); fg++) {
+
+            /* Replace black with blue if darkgray is not set. */
+            fgColor = map->fgColors[fg];
+            if(fgColor == COLOR_BLACK && !settings.darkgray)
+                fgColor = COLOR_BLUE;
+            if(fgColor == bgColor && fgColor != -1)
+                fgColor = COLOR_BLACK;
+
+            init_pair(bg * (COLORS >= 16 ? 16 : 8) + fg + 1,
+                      fgColor, bgColor);
+        }
+    }
+
+    return;
+}
 
 /*
  * Initialize curses colors to colors used by NetHack
@@ -23,77 +148,13 @@ void init_nhcolors(void)
 {
     if (!has_colors())
 	return;
-    
+
     ui_flags.color = TRUE;
-    
+
     start_color();
     use_default_colors();
-    set_darkgray(); /* this will init pair 1 (black), and other
-                       color+darkgray combos */
-    init_pair(2, COLOR_RED, -1);
-    init_pair(3, COLOR_GREEN, -1);
-    init_pair(4, COLOR_YELLOW, -1);
-    init_pair(5, COLOR_BLUE, -1);
-    init_pair(6, COLOR_MAGENTA, -1);
-    init_pair(7, COLOR_CYAN, -1);
-    init_pair(8, -1, -1);
-
-    if (COLORS >= 16) {
-	init_pair(9, COLOR_WHITE, -1);
-	init_pair(10, COLOR_RED + 8, -1);
-	init_pair(11, COLOR_GREEN + 8, -1);
-	init_pair(12, COLOR_YELLOW + 8, -1);
-	init_pair(13, COLOR_BLUE + 8, -1);
-	init_pair(14, COLOR_MAGENTA + 8, -1);
-	init_pair(15, COLOR_CYAN + 8, -1);
-	init_pair(16, COLOR_WHITE + 8, -1);
-    }
-
-    /* Set up background colors too. We have 6 possible non-default
-       background colors (don't use white, there are terminals that
-       hate it), combined with 16 possible foregrounds for each,
-       equals 96 more pairs. Or 48 more if we're using bold. */
-    if (COLOR_PAIRS >= 113 || (COLORS < 16 && COLOR_PAIRS >= 57)) {
-        int bg, fg;
-        for (bg = 1; bg <= 6; bg++) {
-            /* skip darkgray, use_darkgray does that */
-            for (fg = 1; fg <= (COLORS >= 16 ? 16 : 8); fg++) {
-                init_pair(bg * (COLORS >= 16 ? 16 : 8) + fg + 1,
-                          fg == bg ? COLOR_BLACK : fg, bg);
-            }
-        }
-    }
-
-    if (!can_change_color())
-	return;
-    
-    /* Preserve initial terminal colors */
-    color_content(COLOR_YELLOW, &oyellow.r, &oyellow.g, &oyellow.b);
-    color_content(COLOR_WHITE, &owhite.r, &owhite.g, &owhite.b);
-    
-    /* Set colors to appear as NetHack expects */
-    init_color(COLOR_YELLOW, 500, 300, 0);
-    init_color(COLOR_WHITE, 600, 600, 600);
-    
-    if (COLORS >= 16) {
-	/* Preserve initial terminal colors */
-	color_content(COLOR_RED + 8, &ohired.r, &ohired.g, &ohired.b);
-	color_content(COLOR_GREEN + 8, &ohigreen.r, &ohigreen.g, &ohigreen.b);
-	color_content(COLOR_YELLOW + 8, &ohiyellow.r, &ohiyellow.g, &ohiyellow.b);
-	color_content(COLOR_BLUE + 8, &ohiblue.r, &ohiblue.g, &ohiblue.b);
-	color_content(COLOR_MAGENTA + 8, &ohimagenta.r, &ohimagenta.g, &ohimagenta.b);
-	color_content(COLOR_CYAN + 8, &ohicyan.r, &ohicyan.g, &ohicyan.b);
-	color_content(COLOR_WHITE + 8, &ohiwhite.r, &ohiwhite.g, &ohiwhite.b);
-    
-	/* Set colors to appear as NetHack expects */
-	init_color(COLOR_RED + 8, 1000, 500, 0);
-	init_color(COLOR_GREEN + 8, 0, 1000, 0);
-	init_color(COLOR_YELLOW + 8, 1000, 1000, 0);
-	init_color(COLOR_BLUE + 8, 0, 0, 1000);
-	init_color(COLOR_MAGENTA + 8, 1000, 0, 1000);
-	init_color(COLOR_CYAN + 8, 0, 1000, 1000);
-	init_color(COLOR_WHITE + 8, 1000, 1000, 1000);
-    }
+    read_colormap(&color_map);
+    apply_colormap(&color_map);
 }
 
 
@@ -101,7 +162,10 @@ int curses_color_attr(int nh_color, int bg_color)
 {
     int color = nh_color + 1;
     int cattr = A_NORMAL;
-    
+
+    if(color_map.fgColors[nh_color] == COLOR_BLACK && settings.darkgray)
+        cattr |= A_BOLD;
+
     if (COLORS < 16 && color > 8) {
 	color -= 8;
 	cattr = A_BOLD;
@@ -110,28 +174,14 @@ int curses_color_attr(int nh_color, int bg_color)
         color += bg_color * (COLORS >= 16 ? 16 : 8);
     }
     cattr |= COLOR_PAIR(color);
-    
-    if (color == 1 && settings.darkgray)
-	cattr |= A_BOLD;
-	
+
     return cattr;
 }
 
 
 void set_darkgray(void)
 {
-    if (settings.darkgray)
-	init_pair(1, COLOR_BLACK, -1);
-    else
-	init_pair(1, COLOR_BLUE, -1);
-
-    if (COLOR_PAIRS >= 113 || (COLORS < 16 && COLOR_PAIRS >= 57)) {
-        int bg;
-        for (bg = 1; bg <= 6; bg++) {
-            init_pair(bg * (COLORS >= 16 ? 16 : 8) + 1,
-                      settings.darkgray ? COLOR_BLACK : COLOR_BLUE, bg);
-        }
-    }
+    apply_colormap(&color_map);
 }
 
 /* color.c */
