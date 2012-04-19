@@ -20,7 +20,7 @@
 #include "nethack.h"
 #include "nethack_client.h" /* for enum authresult */
 
-#define DEFAULT_PORT 7116 /* chosen at random, not in use by anything else */
+#define DEFAULT_PORT 53421 /* different from NitroHack */
 
 /* If using aimake, take directory options from there */
 #ifndef STRINGIFY_OPTION
