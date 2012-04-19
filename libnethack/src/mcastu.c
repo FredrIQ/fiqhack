@@ -1520,8 +1520,8 @@ static void ucast_cleric_spell(
 		if (yours || mattk->mtame)
 		    (void) tamedog(mtmp2, (struct obj *)0);
 		else if (mattk->mpeaceful)
-		    mattk->mpeaceful = 1;
-		else mattk->mpeaceful = 0;
+		    mtmp2->mpeaceful = 1;
+		else mtmp2->mpeaceful = 0;
 
 		set_malign(mtmp2);
 	    }
