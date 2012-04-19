@@ -2327,6 +2327,8 @@ int float_down(long hmask, long emask)     /* might cancel timeout */
 		    }
 		}
 	    }
+	    stop_occupation();
+	    if (multi > 0) nomul(0, NULL);
 	}
 
 	/* can't rely on u.uz0 for detecting trap door-induced level change;
