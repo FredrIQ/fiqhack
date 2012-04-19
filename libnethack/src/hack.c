@@ -58,6 +58,11 @@ static int moverock(schar dx, schar dy)
     sx = u.ux + dx;
     sy = u.uy + dy;	/* boulder starting position */
     while ((otmp = sobj_at(BOULDER, level, sx, sy)) != 0) {
+        /* There's a boulder at (sx, sy), so make sure the point
+	 * stays blocked. This should only happen where there's
+	 * multiple boulders on a tile. */
+        block_point(sx, sy);
+
 	/* make sure that this boulder is visible as the top object */
 	if (otmp != level->objects[sx][sy]) movobj(otmp, sx, sy);
 
