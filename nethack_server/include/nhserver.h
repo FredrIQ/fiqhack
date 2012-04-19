@@ -20,7 +20,26 @@
 #include "nethack.h"
 #include "nethack_client.h" /* for enum authresult */
 
-#define DEFAULT_PORT 7116 /* chosen at random, not in use by anything else */
+#define DEFAULT_PORT 53421 /* different from NitroHack */
+
+/* If using aimake, take directory options from there */
+#ifndef STRINGIFY_OPTION
+# define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+# define STRINGIFY_OPTION_1(x) #x
+#endif
+
+#ifdef AIMAKE_OPTION_configdir
+# define DEFAULT_CONFIG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_configdir) "/nethack4.conf"
+#endif
+#ifdef AIMAKE_OPTION_logdir
+# define DEFAULT_LOG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_logdir) "/nethack4.log"
+#endif
+#ifdef AIMAKE_OPTION_lockdir
+# define DEFAULT_PID_FILE STRINGIFY_OPTION(AIMAKE_OPTION_lockdir) "/nethack4.pid"
+#endif
+#ifdef AIMAKE_OPTION_statedir
+# define DEFAULT_WORK_DIR STRINGIFY_OPTION(AIMAKE_OPTION_statedir)
+#endif
 
 #if !defined(DEFAULT_CONFIG_FILE)
 # define DEFAULT_CONFIG_FILE ""

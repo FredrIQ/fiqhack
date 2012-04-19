@@ -8,9 +8,11 @@
 #define NETHACK_H
 
 /* NetHack 4.2.0. Keep this consistent with patchlevel.h. */
+/* (Note that the number in patchlevel.h may be older than the number
+   here, if save/bones compatibility is not broken between versions.) */
 #define VERSION_MAJOR	4
 #define VERSION_MINOR	2
-#define PATCHLEVEL	0
+#define PATCHLEVEL	1
 
 #include "nethack_types.h"
 

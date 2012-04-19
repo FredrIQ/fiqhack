@@ -94,7 +94,7 @@ add_dependencies (nethack_curses libnethack)
 
 if (UNIX)
     add_custom_command(OUTPUT nethack.sh
-                       COMMAND echo -e "#!/bin/sh\\nLD_LIBRARY_PATH=${LIBDIR} ${BINDIR}/nethack $@" >> nethack.sh
+                       COMMAND printf "#!/bin/sh\\nLD_LIBRARY_PATH=${LIBDIR} ${BINDIR}/nethack $@" >> nethack.sh
                        VERBATIM)
     add_custom_target(nethack_curses_shell_script ALL
                       DEPENDS nethack.sh)
