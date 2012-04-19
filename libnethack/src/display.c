@@ -1292,7 +1292,7 @@ int obfuscate_object(int otyp)
 		    case CLR_BROWN: otyp = WORTHLESS_PIECE_OF_YELLOWISH_BROWN_GLASS; break;
 		    case CLR_ORANGE: otyp = WORTHLESS_PIECE_OF_ORANGE_GLASS; break;
 		    case CLR_YELLOW: otyp = WORTHLESS_PIECE_OF_YELLOW_GLASS; break;
-		    case CLR_BLACK: otyp = WORTHLESS_PIECE_OF_YELLOW_GLASS; break;
+		    case CLR_BLACK: otyp = WORTHLESS_PIECE_OF_BLACK_GLASS; break;
 		    case CLR_GREEN: otyp = WORTHLESS_PIECE_OF_GREEN_GLASS; break;
 		    case CLR_MAGENTA: otyp = WORTHLESS_PIECE_OF_VIOLET_GLASS; break;
 		}
