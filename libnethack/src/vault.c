@@ -412,9 +412,12 @@ static void wallify_vault(struct monst *grd)
 	    }
 
 	if (movedgold || fixed) {
-	    if (in_fcorridor(grd, grd->mx, grd->my) || cansee(grd->mx, grd->my))
-		pline("%s whispers an incantation.", noit_Monnam(grd));
-	    else You_hear("a distant chant.");
+            if (canseemon(grd))
+		pline("%s whispers an incantation.", Monnam(grd));
+	    else if (flags.soundok)
+                You_hear("a %s chant.",
+                         in_fcorridor(grd, grd->mx, grd->my)
+                         ? "nearby" : "distant");
 	    if (movedgold)
 		pline("A mysterious force moves the gold into the vault.");
 	    if (fixed)
@@ -521,8 +524,10 @@ letknow:
 		  !egrd->gddone && !in_fcorridor(grd, u.ux, u.uy) &&
 		  level->locations[egrd->fakecorr[0].fx][egrd->fakecorr[0].fy].typ
 				 == egrd->fakecorr[0].ftyp) {
-		pline("%s, confused, disappears.", noit_Monnam(grd));
-		disappear_msg_seen = TRUE;
+                if (canseemon(grd)) {
+                    pline("%s, confused, disappears.", Monnam(grd));
+                    disappear_msg_seen = TRUE;
+                }
 		goto cleanup;
 	    }
 	    if (u_carry_gold &&
