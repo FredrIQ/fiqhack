@@ -257,7 +257,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 	    case TRAPDOOR:
 		loc = &lev->locations[x][y];
 		if (*in_rooms(lev, x, y, SHOPBASE) &&
-			((typ == HOLE || typ == TRAPDOOR) ||
+			(typ == HOLE || typ == TRAPDOOR || typ == PIT ||
 			 IS_DOOR(loc->typ) || IS_WALL(loc->typ)))
 		    add_damage(x, y,		/* schedule repair */
 			       ((IS_DOOR(loc->typ) || IS_WALL(loc->typ))

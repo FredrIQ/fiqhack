@@ -2764,6 +2764,7 @@ int repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
 		return 0;
 	}
 	if ((ttmp = t_at(lev, x, y)) != 0) {
+	    boolean floordamage = FALSE;
 	    if (x == u.ux && y == u.uy)
 		if (!Passes_walls)
 		    return 0;
@@ -2774,7 +2775,9 @@ int repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
 		otmp->quan= 1;
 		otmp->owt = weight(otmp);
 		mpickobj(shkp, otmp);
-	    }
+	    } else if (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
+	               ttmp->ttyp == HOLE)
+		floordamage = TRUE;
 	    deltrap(ttmp);
 	    if (IS_DOOR(tmp_dam->typ)) {
 		lev->locations[x][y].doormask = D_CLOSED; /* arbitrary */
@@ -2784,7 +2787,7 @@ int repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
 		block_point(x, y);
 	    }
 	    newsym(x, y);
-	    return 3;
+	    return floordamage ? 2 : 3;
 	}
 	if (IS_ROOM(tmp_dam->typ)) {
 	    /* No messages, because player already filled trap door */
