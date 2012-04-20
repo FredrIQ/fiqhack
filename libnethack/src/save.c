@@ -324,7 +324,8 @@ void savelev(struct memfile *mf, xchar levnum)
 	unsigned int lflags;
 	struct level *lev = levels[levnum];
 	
-	if (iflags.purge_monsters) {
+        /* The purge_monsters count refers to monsters on the current level. */
+	if (iflags.purge_monsters && levnum == ledger_no(&u.uz)) {
 		/* purge any dead monsters (necessary if we're starting
 		 * a panic save rather than a normal one, or sometimes
 		 * when changing levels without taking time -- e.g.
