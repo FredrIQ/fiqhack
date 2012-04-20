@@ -89,6 +89,7 @@ struct user_info {
 struct client_command {
     const char *name;
     void (*func)(json_t *val);
+    int can_run_async;
 };
 
 

@@ -108,24 +108,36 @@ static json_t *client_request(const char *funcname, json_t *request_msg)
     jret = read_input();
 
     jobj = json_object_get(jret, funcname);
-    if (!jobj || !json_is_object(jobj)) {
+    while (!jobj || !json_is_object(jobj)) {
 	iter = json_object_iter(jret);
 	key = json_object_iter_key(iter);
 	for (i = 0; clientcmd[i].name; i++)
 	    if (!strcmp(clientcmd[i].name, key))
 		break;
 	    
-	if (clientcmd[i].name)
+	if (clientcmd[i].name) {
 	    /* The received object contains a valid command in the toplevel
-	     * context, but there is nothing we can do with it while the game
-	     * is waiting for input.
+	     * context.
+             * For some commands, we can and should process them even with
+             * the game waiting for input. We have a problem, though, if
+             * we can't.
 	     * What to do? Longjumping around is fugly and where would we jump to?
 	     * Alternative: exit without an error status and hope the client
 	     * retries the command...
 	     */
-	    exit_client(NULL);
-	else
+            if (clientcmd[i].can_run_async)
+                clientcmd[i].func(json_object_iter_value(iter));
+            else {
+                exit_client(NULL);
+                break;
+            }
+	} else {
 	    exit_client("Incorrect or damaged response");
+            break;
+        }
+        json_decref(jret);
+        jret = read_input();
+        jobj = json_object_get(jret, funcname);
     }
     
     json_incref(jobj);

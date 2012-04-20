@@ -30,32 +30,32 @@ static void ccmd_set_email(json_t *params);
 static void ccmd_set_password(json_t *params);
 
 const struct client_command clientcmd[] = {
-    {"shutdown",	ccmd_shutdown},
+    {"shutdown",	ccmd_shutdown,             0},
     
-    {"start_game",	ccmd_start_game},
-    {"restore_game",	ccmd_restore_game},
-    {"exit_game",	ccmd_exit_game},
-    {"game_command",	ccmd_game_command},
-    {"view_start",	ccmd_view_start},
-    {"view_step",	ccmd_view_step},
-    {"view_finish",	ccmd_view_finish},
-    {"list_games",	ccmd_list_games},
+    {"start_game",	ccmd_start_game,           0},
+    {"restore_game",	ccmd_restore_game,         0},
+    {"exit_game",	ccmd_exit_game,            0},
+    {"game_command",	ccmd_game_command,         0},
+    {"view_start",	ccmd_view_start,           0},
+    {"view_step",	ccmd_view_step,            0},
+    {"view_finish",	ccmd_view_finish,          0},
+    {"list_games",	ccmd_list_games,           0},
     
-    {"get_drawing_info",ccmd_get_drawing_info},
-    {"get_roles",	ccmd_get_roles},
-    {"get_topten",	ccmd_get_topten},
-    {"get_commands",	ccmd_get_commands},
-    {"get_obj_commands",ccmd_get_obj_commands},
-    {"describe_pos",	ccmd_describe_pos},
+    {"get_drawing_info",ccmd_get_drawing_info,     1},
+    {"get_roles",	ccmd_get_roles,            1},
+    {"get_topten",	ccmd_get_topten,           1},
+    {"get_commands",	ccmd_get_commands,         1},
+    {"get_obj_commands",ccmd_get_obj_commands,     1},
+    {"describe_pos",	ccmd_describe_pos,         1},
     
-    {"set_option",	ccmd_set_option},
-    {"get_options",	ccmd_get_options},
+    {"set_option",	ccmd_set_option,           0},
+    {"get_options",	ccmd_get_options,          1},
     
-    {"get_pl_prompt",	ccmd_get_pl_prompt},
-    {"get_root_pl_prompt",ccmd_get_root_pl_prompt},
+    {"get_pl_prompt",	ccmd_get_pl_prompt,        0},
+    {"get_root_pl_prompt",ccmd_get_root_pl_prompt, 0},
     
-    {"set_email",	ccmd_set_email},
-    {"set_password",	ccmd_set_password},
+    {"set_email",	ccmd_set_email,            1},
+    {"set_password",	ccmd_set_password,         1},
     
     {NULL, NULL}
 };
