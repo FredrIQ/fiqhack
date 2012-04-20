@@ -14,8 +14,8 @@ static int use_camera(struct obj *);
 static int use_towel(struct obj *);
 static boolean its_dead(int,int,int *);
 static int use_stethoscope(struct obj *);
-static void use_whistle(struct obj *);
-static void use_magic_whistle(struct obj *);
+static int use_whistle(struct obj *);
+static int use_magic_whistle(struct obj *);
 static void use_leash(struct obj *);
 static int use_mirror(struct obj *);
 static void use_bell(struct obj **);
@@ -290,15 +290,25 @@ static int use_stethoscope(struct obj *obj)
 
 static const char whistle_str[] = "You produce a %s whistling sound.";
 
-static void use_whistle(struct obj *obj)
+static int use_whistle(struct obj *obj)
 {
+	if (Upolyd && !can_blow_instrument(youmonst.data)) {
+	    pline("You are incapable of blowing the whistle!");
+	    return 0;
+	}
 	pline(whistle_str, obj->cursed ? "shrill" : "high");
 	wake_nearby();
+	return 1;
 }
 
-static void use_magic_whistle(struct obj *obj)
+static int use_magic_whistle(struct obj *obj)
 {
 	struct monst *mtmp, *nextmon;
+	
+	if (Upolyd && !can_blow_instrument(youmonst.data)) {
+	    pline("You are incapable of blowing the whistle!");
+	    return 0;
+	}
 
 	if (obj->cursed && !rn2(2)) {
 		pline("You produce a high-pitched humming noise.");
@@ -322,6 +332,7 @@ static void use_magic_whistle(struct obj *obj)
 		}
 		if (pet_cnt > 0) makeknown(obj->otyp);
 	}
+	return 1;
 }
 
 boolean um_dist(xchar x, xchar y, xchar n)
@@ -2759,10 +2770,10 @@ int doapply(struct obj *obj)
 		res = use_saddle(obj);
 		break;
 	case MAGIC_WHISTLE:
-		use_magic_whistle(obj);
+		res = use_magic_whistle(obj);
 		break;
 	case TIN_WHISTLE:
-		use_whistle(obj);
+		res = use_whistle(obj);
 		break;
 	case EUCALYPTUS_LEAF:
 		/* MRKR: Every Australian knows that a gum leaf makes an */

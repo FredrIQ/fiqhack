@@ -426,6 +426,17 @@ int do_play_instrument(struct obj *instr)
 	pline("You can't play music underwater!");
 	return 0;
     }
+    if (Upolyd && !can_blow_instrument(youmonst.data) && 
+		(instr->otyp == BUGLE ||
+		 instr->otyp == WOODEN_FLUTE ||
+		 instr->otyp == MAGIC_FLUTE ||
+		 instr->otyp == TOOLED_HORN ||
+		 instr->otyp == FIRE_HORN ||
+		 instr->otyp == FROST_HORN)) {
+	pline("You are incapable of playing %s in your current form!",
+	    the(xname(instr)));
+	return 0;
+    }
     if (instr->otyp != LEATHER_DRUM && instr->otyp != DRUM_OF_EARTHQUAKE) {
 	c = yn("Improvise?");
     }

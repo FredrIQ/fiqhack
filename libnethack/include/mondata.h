@@ -28,6 +28,10 @@
 #define is_clinger(ptr)		(((ptr)->mflags1 & M1_CLING) != 0L)
 #define is_swimmer(ptr)		(((ptr)->mflags1 & M1_SWIM) != 0L)
 #define breathless(ptr)		(((ptr)->mflags1 & M1_BREATHLESS) != 0L)
+#define can_blow_instrument(ptr) \
+				(!(breathless(ptr) && \
+				   (ptr->msound == MS_SILENT || \
+				    ptr->msound == MS_BONES)))
 #define amphibious(ptr)		(((ptr)->mflags1 & (M1_AMPHIBIOUS | M1_BREATHLESS)) != 0L)
 #define passes_walls(ptr)	(((ptr)->mflags1 & M1_WALLWALK) != 0L)
 #define amorphous(ptr)		(((ptr)->mflags1 & M1_AMORPHOUS) != 0L)
