@@ -3,6 +3,7 @@
 
 #include "hack.h"
 #include "patchlevel.h"
+#include <zlib.h>
 
 /* #define DEBUG */
 
@@ -20,11 +21,28 @@ static const unsigned char b64e[64] =
 
 static void log_binary(const char *buf, int buflen, char prefix[3]);
 
+static int base64size(int n)
+{
+    return compressBound(n) * 4 / 3 + 4 + 12; /* 12 for $4294967296$ */
+}
+
 static void base64_encode_binary(const unsigned char* in, char *out, int len)
 {
-    int i, pos = 0, rem;
+    int i, pos, rem;
+    unsigned long olen = compressBound(len);
+    unsigned char *o = malloc(olen);
+    if (compress(o, &olen, in, len) != Z_OK) {
+        panic("Could not compress input data!");
+    }
+
+    pos = sprintf(out, "$%d$", len);
+
+    if (pos + olen >= len) {
+        pos = 0;
+        olen = len;
+    } else in = o;
     
-    for (i = 0; i < (len / 3) * 3; i += 3) {
+    for (i = 0; i < (olen / 3) * 3; i += 3) {
 	out[pos  ] = b64e[ in[i  ]         >> 2];
 	out[pos+1] = b64e[(in[i  ] & 0x03) << 4 | (in[i+1] & 0xf0) >> 4];
 	out[pos+2] = b64e[(in[i+1] & 0x0f) << 2 | (in[i+2] & 0xc0) >> 6];
@@ -32,15 +50,19 @@ static void base64_encode_binary(const unsigned char* in, char *out, int len)
 	pos += 4;
     }
     
-    rem = len - i;
+    rem = olen - i;
     if (rem > 0) {
-	out[pos] = b64e[in[i] >> 2];
+	out[pos]   = b64e[ in[i  ]         >> 2];
         out[pos+1] = b64e[(in[i  ] & 0x03) << 4 |
-                          (rem == 1 ? 0 : (in[i+1] & 0xf0)) >> 4];
-	out[pos+2] = (rem == 1) ? '=' : b64e[(in[i+1] & 0x0f) << 2];
+                         (rem == 1 ? 0 :
+                          (in[i+1] & 0xf0) >> 4)];
+	out[pos+2] = (rem == 1) ? '=' :
+                     b64e[(in[i+1] & 0x0f) << 2];
 	out[pos+3] = '=';
 	pos += 4;
     }
+
+    free(o);
     
     out[pos] = '\0';
 }
@@ -102,7 +124,7 @@ void log_option(struct nh_option_desc *opt)
 	case OPTTYPE_AUTOPICKUP_RULES:
 	    str = autopickup_to_string(opt->value.ar);
 	    lprintf("a:");
-	    encbuf2 = malloc(strlen(str) * 4 / 3 + 4);
+	    encbuf2 = malloc(base64size(strlen(str)));
 	    base64_encode(str, encbuf2);
 	    /* write directly, large numbers of rules might overflow outbuf in lprintf */
 	    write(logfile, encbuf2, strlen(encbuf2));
@@ -384,7 +406,7 @@ static void log_binary(const char *buf, int buflen, char prefix[3])
     if (logfile == -1 || iflags.disable_log)
 	return;
     
-    b64buf = malloc(buflen / 3 * 4 + 5);
+    b64buf = malloc(base64size(buflen));
     base64_encode_binary((const unsigned char*)buf, b64buf, buflen);
     
     /* don't use lprintf, b64buf might be too big for the buffer used by lprintf */

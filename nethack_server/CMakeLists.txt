@@ -42,7 +42,7 @@ endif ()
 
 link_directories (${NetHack4_BINARY_DIR}/libnethack/src)
 add_executable (nethack_server ${NH_SERVER_SRC} )
-target_link_libraries(nethack_server nethack ${JANSSON_LIB} ${PQ_LIB} m)
+target_link_libraries(nethack_server nethack ${JANSSON_LIB} ${PQ_LIB} m z)
 
 add_dependencies (nethack_server libnethack)
 

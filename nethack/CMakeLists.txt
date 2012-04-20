@@ -62,7 +62,7 @@ link_directories (${NetHack4_BINARY_DIR}/libnethack/src)
 link_directories (${NetHack4_BINARY_DIR}/libnethack_client)
 add_executable (nethack_curses ${NH_CURSES_SRC} )
 set_target_properties(nethack_curses PROPERTIES OUTPUT_NAME nethack )
-target_link_libraries(nethack_curses nethack m)
+target_link_libraries(nethack_curses nethack m z)
 
 if (USE_PDCURSES)
     target_link_libraries (nethack_curses ${PDCURSES_LIBNAME})
@@ -77,7 +77,7 @@ endif ()
 
 if (ENABLE_NETCLIENT)
     add_dependencies (nethack_curses libnethack_client)
-    target_link_libraries (nethack_curses nethack_client)
+    target_link_libraries (nethack_curses nethack_client m z)
     # this is a kludge; these libraries are required by libnethack_client, but
     # for static linking they must be specified here. I couldn't figure out how
     # to set the dependencies from the libnethack_client CMakeLists.txt

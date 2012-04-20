@@ -5,8 +5,9 @@
 #include "dlb.h"
 #include "patchlevel.h"
 #include <ctype.h>
+#include <zlib.h>
 
-/* #define DEBUG */
+#define DEBUG
 
 extern int logfile;
 extern unsigned int last_cmd_pos;
@@ -92,20 +93,51 @@ static const struct nh_window_procs def_replay_windowprocs = {
     replay_print_message,
 };
 
+static int base64_strlen(const char* in)
+{
+    /* If the input is uncompressed, just return its size.
+       If it's compressed, read the size from the header. */
+    if (*in != '$') return strlen(in);
+    return atoi(in+1);
+}
 
 static void base64_decode(const char* in, char *out)
 {
     int i, len = strlen(in), pos = 0;
+    char* o = out;
+
+    if (*in == '$') o = malloc(len);
     
     for (i = 0; i < len; i += 4) {
+        /* skip data between $ signs, it's used for the header for compressed
+           binary data */
+        if (in[i] == '$') for (i+=2; in[i-1] != '$' && in[i]; i++) {}
 	/* decode blocks; padding '=' are converted to 0 in the decoding table */
-	out[pos  ] =   b64d[(int)in[i  ]] << 2          | b64d[(int)in[i+1]] >> 4;
-	out[pos+1] =   b64d[(int)in[i+1]] << 4          | b64d[(int)in[i+2]] >> 2;
-	out[pos+2] = ((b64d[(int)in[i+2]] << 6) & 0xc0) | b64d[(int)in[i+3]];
+	o[pos  ] =   b64d[(int)in[i  ]] << 2          | b64d[(int)in[i+1]] >> 4;
+	o[pos+1] =   b64d[(int)in[i+1]] << 4          | b64d[(int)in[i+2]] >> 2;
+	o[pos+2] = ((b64d[(int)in[i+2]] << 6) & 0xc0) | b64d[(int)in[i+3]];
 	pos += 3;
     }
+    i -= 4;
+    if ((in[i+2] == '=' || !in[i+2]) && (in[i+3] == '=' || !in[i+3])) pos--;
+    if ((in[i+1] == '=' || !in[i+2]) && (in[i+2] == '=' || !in[i+3])) pos--;
     
-    out[pos] = 0;
+    o[pos] = 0;
+
+    if (*in == '$') {
+        unsigned long blen = base64_strlen(in);
+        int errcode = uncompress((unsigned char *)out, &blen,
+                                 (unsigned char *)o, pos);
+        free(o);
+        if (errcode != Z_OK) {
+            raw_printf("Decompressing save file failed: %s",
+                       errcode == Z_MEM_ERROR ? "Out of memory" :
+                       errcode == Z_BUF_ERROR ? "Invalid size" :
+                       errcode == Z_DATA_ERROR ? "Corrupted file" :
+                       "(unknown error)");
+            terminate();
+        }
+    }
 }
 
 
@@ -406,7 +438,7 @@ static void replay_getlin(const char *query, char *buf)
     if (token[0] != 'l' || !encdata)
 	parse_error("Bad getlin data");
     
-    if (strlen(encdata) > EQBUFSZ)
+    if (base64_strlen(encdata) > EQBUFSZ)
 	parse_error("Encoded getlin string is too long to decode into the target buffer.");
     
     base64_decode(encdata+1, buf);
@@ -427,7 +459,7 @@ char *replay_bones(int *buflen)
     }
     
     b64data = token+2;
-    *buflen = strlen(b64data);
+    *buflen = base64_strlen(b64data);
     buf = malloc(*buflen);
     memset(buf, 0, *buflen);
     
@@ -486,7 +518,7 @@ static void replay_read_commandlist(void)
     
     for (i = 1; i < cmdcount; i++) {
 	token = next_log_token();
-	if (strlen(token) > ENCBUFSZ)
+	if (base64_strlen(token) > ENCBUFSZ)
 	    parse_error("Encoded command name is too long for the decode buffer");
 	base64_decode(token, decbuf);
 	commands[i] = strdup(decbuf);
@@ -579,7 +611,7 @@ static void replay_read_option(char *token)
 	    value.b = atoi(valstr);
 	    break;
 	case 'a':
-	    arbuf = malloc(strlen(valstr) + 1);
+	    arbuf = calloc(base64_strlen(valstr) + 1, 1);
 	    base64_decode(valstr, arbuf);
 	    value.ar = parse_autopickup_rules(arbuf);
 	    free(arbuf);
@@ -678,7 +710,7 @@ static void replay_check_msg(char *token)
         parse_error("Error: incorrect message format");
 
     b64data = token + 2;
-    buflen = strlen(b64data);
+    buflen = base64_strlen(b64data);
 
     buf = malloc(buflen + 2);
     memset(buf, 0, buflen + 2);
@@ -704,7 +736,7 @@ static void replay_check_diff(char *token, boolean optonly)
         parse_error("Error: incorrect binary diff format.\n");
     
     b64data = token + 2;
-    buflen = strlen(b64data);
+    buflen = base64_strlen(b64data);
 
     buf = malloc(buflen + 2);
     memset(buf, 0, buflen + 2);
