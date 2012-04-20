@@ -670,9 +670,9 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 	    } else if (obj->oclass == POTION_CLASS) {
 		if (obj->quan > 1L)
 		    obj = splitobj(obj, 1L);
-		else
+		else if (obj == uwep)
 		    setuwep(NULL);
-		freeinv(obj);
+		obj_extract_self(obj);
 		potionhit(mon, obj, TRUE);
 		if (mon->mhp <= 0) return FALSE;	/* killed */
 		hittxt = TRUE;
