@@ -256,7 +256,7 @@ static void mainmenu(void)
 	mvwaddstr(basewin, LINES-3, 0, copybanner[0]);
 	mvwaddstr(basewin, LINES-2, 0, copybanner[1]);
 	mvwaddstr(basewin, LINES-1, 0, copybanner[2]);
-	mvwaddstr(basewin, LINES-1, COLS - strlen(verstr), verstr);
+	mvwaddstr(basewin, LINES-4, COLS - strlen(verstr), verstr);
 	wrefresh(basewin);
 
 	menuresult[0] = EXITGAME; /* default action */

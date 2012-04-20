@@ -453,6 +453,7 @@ static void netgame_mainmenu(struct server_info *server)
     int n = 1, logoheight, i;
     const char **nhlogo;
     char verstr[32], server_verstr[32];
+    const char * const *copybanner = nh_get_copyright_banner();
 
     static struct nh_menuitem netmenu_items[] = {
 	{NEWGAME, MI_NORMAL, "new game", 'n'},
@@ -469,11 +470,13 @@ static void netgame_mainmenu(struct server_info *server)
 	    nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
     
     while (n > 0) {
-	if (COLS >= 100)
+        if (COLS >= 100) {
 	    nhlogo = nhlogo_large;
-	else
+            logoheight = sizeof(nhlogo_large) / sizeof(nhlogo_large[0]);
+	} else {
 	    nhlogo = nhlogo_small;
-	logoheight = sizeof(nhlogo_small) / sizeof(nhlogo_small[0]);
+            logoheight = sizeof(nhlogo_small) / sizeof(nhlogo_small[0]);
+        }
 	wclear(basewin);
 	wattron(basewin, A_BOLD | COLOR_PAIR(4));
 	for (i = 0; i < logoheight; i++) {
@@ -481,17 +484,19 @@ static void netgame_mainmenu(struct server_info *server)
 	    waddstr(basewin, nhlogo[i]);
 	}
 	wattroff(basewin, A_BOLD | COLOR_PAIR(4));
-	
-	if (nhnet_server_ver.major > 0 || nhnet_server_ver.minor > 0)
-	    mvwaddstr(basewin, LINES-1, 0, server_verstr);
-	mvwaddstr(basewin, LINES-1, COLS - strlen(verstr), verstr);
+	mvwaddstr(basewin, LINES-3, 0, copybanner[0]);
+	mvwaddstr(basewin, LINES-2, 0, copybanner[1]);
+	mvwaddstr(basewin, LINES-1, 0, copybanner[2]);
+	mvwaddstr(basewin, LINES-5, COLS - strlen(verstr), verstr);
+	mvwaddstr(basewin, LINES-4, COLS - strlen(verstr), server_verstr);
 	wrefresh(basewin);
+
 
 	menuresult[0] = DISCONNECT; /* default action */
 	snprintf(buf, BUFSZ, "%s on %s:", server->username, server->hostname);
 	n = curses_display_menu_core(netmenu_items, ARRAY_SIZE(netmenu_items),
 				     buf, PICK_ONE, menuresult, 0, logoheight,
-				     COLS, ROWNO+3, NULL);
+				     COLS, LINES-3, NULL);
 	
 	switch (menuresult[0]) {
 	    case NEWGAME:
