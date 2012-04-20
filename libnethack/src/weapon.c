@@ -1291,6 +1291,8 @@ void skill_init(const struct def_skill *class_skill)
 
 	/* Set skill for all weapons in inventory to be basic */
 	for (obj = invent; obj; obj = obj->nobj) {
+	    if (obj->otyp == TOUCHSTONE ||
+	        obj->otyp == LUCKSTONE) continue;
 	    skill = weapon_type(obj);
 	    if (skill != P_NONE)
 		P_SKILL(skill) = P_BASIC;
