@@ -1309,6 +1309,7 @@ static void mkinvpos(xchar x, xchar y, int dist)
 {
     struct trap *ttmp;
     struct obj *otmp;
+    struct monst *mtmp;
     boolean make_rocks;
     struct rm *loc = &level->locations[x][y];
 
@@ -1364,6 +1365,9 @@ static void mkinvpos(xchar x, xchar y, int dist)
     case 4: /* pools (aka a wide moat) */
     case 5:
 	loc->typ = MOAT;
+        mtmp = m_at(level, x, y);
+        if (mtmp)
+            minliquid(mtmp);
 	/* No kelp! */
 	break;
     default:
