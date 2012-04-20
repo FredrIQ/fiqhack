@@ -1722,6 +1722,15 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 	    for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
 		snuff_lit(otmp);
 
+	    /* KMH, conduct */
+	    if (mattk->adtyp == AD_DGST) {
+		u.uconduct.food++;
+		if (!vegan(mdef->data))
+		     u.uconduct.unvegan++;
+		if (!vegetarian(mdef->data))
+		     violated_vegetarian();
+	    }
+
 	    if (!touch_petrifies(mdef->data) || Stone_resistance) {
 		static char msgbuf[BUFSZ];
 		start_engulf(mdef);
@@ -1743,13 +1752,6 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 			    dam = 0;
 			    break;
 			}
-
-			/* KMH, conduct */
-			u.uconduct.food++;
-			if (!vegan(mdef->data))
-			     u.uconduct.unvegan++;
-			if (!vegetarian(mdef->data))
-			     violated_vegetarian();
 
 			/* Use up amulet of life saving */
 			if (!!(otmp = mlifesaver(mdef))) m_useup(mdef, otmp);
