@@ -154,6 +154,12 @@ void magic_map_background(xchar x, xchar y, int show)
 {
     int cmap = back_to_cmap(level, x, y);	/* assumes hero can see x,y */
     struct rm *loc = &level->locations[x][y];
+    struct rm tmp_location;
+
+    if(!level->flags.hero_memory) {
+        tmp_location = *loc;
+        loc = &tmp_location;
+    }
 
     /*
      * Correct for out of sight lit corridors and rooms that the hero
@@ -166,18 +172,17 @@ void magic_map_background(xchar x, xchar y, int show)
 	else if (loc->typ == CORR && cmap == S_litcorr)
 	    cmap = S_corr;
     }
-    if (level->flags.hero_memory) {
-	loc->mem_bg = cmap;
-        if (cmap == S_vodoor || cmap == S_hodoor ||
-            cmap == S_vcdoor || cmap == S_hcdoor) {
-            loc->mem_door_l = 1;
-            loc->mem_door_t = 1;
-        } else {
-            /* mem_door_l, mem_door_t must be 0 for non-doors */
-            loc->mem_door_l = 0;
-            loc->mem_door_t = 0;
-        }
+    loc->mem_bg = cmap;
+    if (cmap == S_vodoor || cmap == S_hodoor ||
+        cmap == S_vcdoor || cmap == S_hcdoor) {
+        loc->mem_door_l = 1;
+        loc->mem_door_t = 1;
+    } else {
+        /* mem_door_l, mem_door_t must be 0 for non-doors */
+        loc->mem_door_l = 0;
+        loc->mem_door_t = 0;
     }
+
     if (show)
 	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(loc));
 }
@@ -195,23 +200,27 @@ void magic_map_background(xchar x, xchar y, int show)
 void map_background(xchar x, xchar y, int show)
 {
     int cmap = back_to_cmap(level, x, y);
+    struct rm *loc = &level->locations[x][y];
+    struct rm tmp_location;
 
-    if (level->flags.hero_memory) {
-	level->locations[x][y].mem_bg = cmap;
-        if (cmap == S_vodoor || cmap == S_hodoor ||
-            cmap == S_vcdoor || cmap == S_hcdoor) {
-            /* leave memory alone, it'll be 0 if this wasn't
-               remembered as a door */
-        } else {
-            /* mem_door_l, mem_door_t must be 0 for non-doors */
-            level->locations[x][y].mem_door_l = 0;
-            level->locations[x][y].mem_door_t = 0;
-        }
-
+    if(!level->flags.hero_memory) {
+        tmp_location = *loc;
+        loc = &tmp_location;
     }
+
+    loc->mem_bg = cmap;
+    if (cmap == S_vodoor || cmap == S_hodoor ||
+        cmap == S_vcdoor || cmap == S_hcdoor) {
+        /* leave memory alone, it'll be 0 if this wasn't
+           remembered as a door */
+    } else {
+        /* mem_door_l, mem_door_t must be 0 for non-doors */
+        loc->mem_door_l = 0;
+        loc->mem_door_t = 0;
+    }
+
     if (show)
-	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0,
-                 dbuf_branding(&level->locations[x][y]));
+	dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(loc));
 
 }
 
@@ -225,13 +234,18 @@ void map_trap(struct trap *trap, int show)
 {
     int x = trap->tx, y = trap->ty;
     int trapid = what_trap(trap->ttyp);
+    struct rm *loc = &level->locations[x][y];
+    struct rm tmp_location;
 
-    if (level->flags.hero_memory)
-	level->locations[x][y].mem_trap = trapid;
+    if(!level->flags.hero_memory) {
+        tmp_location = *loc;
+        loc = &tmp_location;
+    }
+
+    loc->mem_trap = trapid;
     if (show)
-	dbuf_set(x, y, level->locations[x][y].mem_bg,
-		 level->locations[x][y].mem_trap, 0, 0, 0, 0, 0, 0,
-                 dbuf_branding(&level->locations[x][y]));
+	dbuf_set(x, y, loc->mem_bg, loc->mem_trap, 0, 0, 0, 0, 0, 0,
+                 dbuf_branding(loc));
 }
 
 /*
@@ -245,23 +259,28 @@ void map_object(struct obj *obj, int show)
     int x = obj->ox, y = obj->oy;
     int objtyp = what_obj(obj->otyp);
     int monnum = 0;
-    
-    if (level->flags.hero_memory) {
-	if (objtyp == CORPSE || objtyp == STATUE || objtyp == FIGURINE) {
-	    if (Hallucination)
-		monnum = random_monster();
-	    else
-		monnum = obj->corpsenm;
-	}
-	
-	level->locations[x][y].mem_obj = objtyp + 1;
-	level->locations[x][y].mem_obj_mn = monnum + 1;
+    struct rm *loc = &level->locations[x][y];
+    struct rm tmp_location;
+
+    if(!level->flags.hero_memory) {
+        tmp_location = *loc;
+        loc = &tmp_location;
     }
+
+    if (objtyp == CORPSE || objtyp == STATUE || objtyp == FIGURINE) {
+        if (Hallucination)
+            monnum = random_monster();
+        else
+            monnum = obj->corpsenm;
+    }
+    
+    loc->mem_obj = objtyp + 1;
+    loc->mem_obj_mn = monnum + 1;
+    
     if (show)
-	dbuf_set(x, y, level->locations[x][y].mem_bg,
-		 level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
-		 level->locations[x][y].mem_obj_mn, 0, 0, 0, 0,
-                 dbuf_branding(&level->locations[x][y]));
+	dbuf_set(x, y, loc->mem_bg, loc->mem_trap, loc->mem_obj,
+		 loc->mem_obj_mn, 0, 0, 0, 0,
+                 dbuf_branding(loc));
 }
 
 /*
