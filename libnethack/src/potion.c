@@ -1929,6 +1929,8 @@ void djinni_from_bottle(struct obj *obj)
 		mongone(mtmp);
 		break;
 	default: verbalize("You disturbed me, fool!");
+	        mtmp->mpeaceful = FALSE;
+		set_malign(mtmp);
 		break;
 	}
 }
