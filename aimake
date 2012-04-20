@@ -1632,6 +1632,9 @@ while ($objects_changed) {
     $state->{'changedobjects'}->{'sys:rebuild_late'} = 1;
     $objects_changed = 1;
   }
+  # sys:dummy_object shouldn't be marked as outdated. (Or as anything
+  # else, for that matter.)
+  delete $state->{'outdatedobjects'}->{'sys:dummy_object'};
 }
 
 # If files didn't build, that's bad. We look for unchecked objects
@@ -1844,7 +1847,7 @@ $preprocess_dependencies = [
             # are, if that's available.
             prereqs => ['command:gcc', 'command:grep'],
             determine_command => 'gcc -print-search-dirs | grep -F libraries',
-            determine_parse => qr/[:=]([^:=]+?)(?::|$)/,
+            determine_parse => qr/[:=]([^:=]+?)(?=:|$)/,
             value => '$1',
             group => 'library_locators',
             score => 100,
