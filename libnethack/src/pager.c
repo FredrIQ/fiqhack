@@ -11,7 +11,7 @@ static int append_str(char *buf, const char *new_str, int is_plur, int is_in);
 static void mon_vision_summary(const struct monst *mtmp, char *outbuf);
 static void describe_bg(int x, int y, int bg, char *buf);
 static int describe_object(int x, int y, int votyp, char *buf, int known_embed);
-static void describe_mon(int x, int y, int monnum, char *buf, int is_in);
+static void describe_mon(int x, int y, int monnum, char *buf);
 static void checkfile(const char *inp, struct permonst *, boolean, boolean);
 static int do_look(boolean);
 
@@ -84,13 +84,8 @@ static int append_str(char *buf, const char *new_str, int is_plur, int is_in)
     
     space_left = BUFSZ - strlen(buf) - 1;
     if (buf[0]) {
-        if (is_in) {
-            strncat(buf, " ", space_left);
-            space_left--;
-        } else {
-            strncat(buf, " on ", space_left);
-            space_left -= 4;
-        }
+        strncat(buf, is_in ? " in " : " on ", space_left);
+        space_left -= 4;
     }
     
     if (is_plur)
@@ -239,10 +234,12 @@ static int describe_object(int x, int y, int votyp, char *buf,
 	strcpy(buf, distant_name(otmp, xname));
     
     typ = level->locations[x][y].typ;
-    if (known_embed && (IS_ROCK(typ) || closed_door(level, x, y))) {
-        strcat(buf, " embedded in");
-    } else if (IS_TREE(typ))
-        strcat(buf, " embedded in a tree");
+    if (known_embed && IS_TREE(typ))
+        strcat(buf, " stuck");
+    else if (known_embed && (IS_ROCK(typ) || closed_door(level, x, y)))
+        strcat(buf, " embedded");
+    else if (IS_TREE(typ))
+        strcat(buf, " stuck in a tree");
     else if (typ == STONE || typ == SCORR)
 	strcat(buf, " embedded in stone");
     else if (IS_WALL(typ) || typ == SDOOR)
@@ -272,7 +269,7 @@ static int describe_object(int x, int y, int votyp, char *buf,
 }
 
 
-static void describe_mon(int x, int y, int monnum, char *buf, int is_in)
+static void describe_mon(int x, int y, int monnum, char *buf)
 {
     char race[QBUFSZ];
     char *name, monnambuf[BUFSZ];
@@ -365,9 +362,6 @@ static void describe_mon(int x, int y, int monnum, char *buf, int is_in)
 	    sprintf(temp_buf, " [seen: %s]", visionbuf);
 	    strncat(buf, temp_buf, BUFSZ-strlen(buf)-1);
 	}
-
-        if (is_in)
-            strncat(buf, " in", BUFSZ-strlen(buf)-1);
     }
 }
 
@@ -398,13 +392,17 @@ void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs,
     
     describe_bg(x, y, mem_bg, bufs->bgdesc);
     
-    if (level->locations[x][y].mem_trap)
+    int tt = level->locations[x][y].mem_trap;
+    if (tt) {
 	strcpy(bufs->trapdesc, trapexplain[level->locations[x][y].mem_trap - 1]);
+        if (tt != BEAR_TRAP && tt != WEB && tt != STATUE_TRAP && mem_bg && is_in)
+            *is_in = 1;
+    }
     
     bufs->objcount = describe_object(x, y, level->locations[x][y].mem_obj - 1,
 				     bufs->objdesc, mem_bg && is_in);
     
-    describe_mon(x, y, monid - 1, bufs->mondesc, mem_bg && is_in);
+    describe_mon(x, y, monid - 1, bufs->mondesc);
     
     if (level->locations[x][y].mem_invis)
 	strcpy(bufs->invisdesc, invisexplain);
