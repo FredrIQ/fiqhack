@@ -2103,7 +2103,7 @@ int doseduce(struct monst *mon)
 		return 0;
 	}
 
-	if (unconscious()) {
+	if (multi < 0) {
 		pline("%s seems dismayed at your lack of response.",
 		      Monnam(mon));
 		return 0;

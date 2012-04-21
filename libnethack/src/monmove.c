@@ -328,7 +328,7 @@ int dochug(struct monst *mtmp)
 	/* Demonic Blackmail! */
 	if (nearby && mdat->msound == MS_BRIBE &&
 	   mtmp->mpeaceful && !mtmp->mtame && !u.uswallow) {
-	   	if (unconscious()) return(0); /* wait for you to wake up */
+	   	if (multi < 0) return(0); /* wait for you to be able to respond */
 		if (mtmp->mux != u.ux || mtmp->muy != u.uy) {
 			pline("%s whispers at thin air.",
 			    cansee(mtmp->mux, mtmp->muy) ? Monnam(mtmp) : "It");

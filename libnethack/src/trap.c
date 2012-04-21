@@ -3776,11 +3776,12 @@ static boolean thitm(int tlev, struct monst *mon, struct obj *obj,
 
 boolean unconscious(void)
 {
-	return (boolean)(multi < 0 && (!nomovemsg ||
+	if (multi >= 0 || !nomovemsg) return FALSE;
+	return (boolean)(
 		u.usleep ||
 		!strncmp(nomovemsg,"You regain con", 14) ||
 		!strncmp(nomovemsg,"You awake with a headache", 25) ||
-		!strncmp(nomovemsg,"You are consci", 14)));
+		!strncmp(nomovemsg,"You are consci", 14));
 }
 
 static const char lava_killer[] = "molten lava";
