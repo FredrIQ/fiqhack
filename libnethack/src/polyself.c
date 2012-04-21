@@ -239,6 +239,10 @@ void polyself(boolean forcecontrol)
 		do {
 			getlin("Become what kind of monster? [type the name]",
 				buf);
+                        if (forcecontrol && !strncmp("new ", buf, 4)) {
+                            newman();
+                            goto made_change;
+                        }
 			mntmp = name_to_mon(buf);
 			if (mntmp < LOW_PM)
 				pline("I've never heard of such monsters.");
@@ -297,7 +301,8 @@ void polyself(boolean forcecontrol)
 	/* The below polyok() fails either if everything is genocided, or if
 	 * we deliberately chose something illegal to force newman().
 	 */
-	if (!polyok(&mons[mntmp]) || !rn2(5) || your_race(&mons[mntmp]))
+	if (!polyok(&mons[mntmp]) || (!forcecontrol && !rn2(5)) ||
+                your_race(&mons[mntmp]))
 		newman();
 	else if (!polymon(mntmp)) return;
 
