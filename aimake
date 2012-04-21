@@ -243,14 +243,17 @@ sub ensure_directory_exists {
   }
 }
 
+my $screencols = 80;
+
 {
-  my $last_report_msg= '';
+  my $last_report_msg = '';
   sub progress_report {
     my $level = shift;
     my $str = shift;
-    my $ldiff = (length $str) - length $last_report_msg;
+    my $ldiff = (length $str) - length defined_or($last_report_msg,"");
     $ldiff < 0 and $str .= ' ' x -$ldiff;
     if ($level == $options{v} - 1) {
+      $str = substr $str, 0, defined_or($screencols,80) - 1;
       print STDERR "$str\r";
       $str =~ s/ +$//;
       $last_report_msg = $str;
@@ -312,6 +315,10 @@ sub ensure_directory_exists {
     return $rv;
   }
 }
+
+# Adapt to the screen width, if we're on a platform with a "tput"
+# command that can check the width for us.
+IPC::Cmd::can_run('tput') and $screencols = `tput cols`;
 
 # Perl version independence: define defined_or separately for
 # versions that don't understand //. (TODO: Also switch.)
@@ -1054,7 +1061,9 @@ sub check_new_files {
     for my $re (@{$config->{"ignorepaths"}}) {
       $pathname =~ /$re/ and next FILE_IN_DIR;
     }
-    if (-l $buildrelpathname && !$lib_pattern) {
+    if ($lib_f_pattern && -f $buildrelpathname && -T $buildrelpathname) {
+      # do nothing: text files need to be skipped
+    } elsif (-l $buildrelpathname && !$lib_pattern) {
       # do nothing!
     } elsif (-d $buildrelpathname) {
       # don't recurse into the build directory; nor while finding libs
@@ -1117,7 +1126,9 @@ check_new_files('.');
 if ($config_changed) {
   progress_report 1, "Checking for libraries...";
   my $lib_pattern = join "|", map {"\Q$_\E"} @{$config->{'libraries'}};
-  check_new_files($_, $lib_pattern, $config->{'library_file_patterns'})
+  Cwd::abs_path($_) and
+    check_new_files(Cwd::abs_path($_),
+                    $lib_pattern, $config->{'library_file_patterns'})
     for @{$config->{'library_paths'}};
   progress_report 1, "Checking for includes...";
   my $inc_pattern = join "|", map {"\Q$_\E"} @{$config->{'includes'}};
@@ -1296,7 +1307,7 @@ for my $unchecked (sort keys %{$state->{'uncheckedobjects'}}) {
   progress_report(0, "  Checking in '$pn'");
   if (-e $pn) {
     my $sha1 = file_sha1($pn);
-    ($sha1 ne obj_state($unchecked)->{'sha1'}) ||
+    ($sha1 ne defined_or(obj_state($unchecked)->{'sha1'},"")) ||
       (defined $options{'B'} && $pn =~ $options{'B'})and
       $state->{'changedobjects'}->{$unchecked} = 1;
     obj_state($unchecked)->{'sha1'} = $sha1;
