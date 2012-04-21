@@ -1521,10 +1521,11 @@ void set_malign(struct monst *mtmp)
 
 	if (mtmp->ispriest || mtmp->isminion) {
 		/* some monsters have individual alignments; check them */
-		if (mtmp->ispriest)
-			mal = EPRI(mtmp)->shralign;
+		if (mtmp->ispriest ||
+                        (mtmp->isminion && roamer_type(mtmp->data)))
+                    mal = EPRI(mtmp)->shralign;
 		else if (mtmp->isminion)
-			mal = EMIN(mtmp)->min_align;
+                    mal = EMIN(mtmp)->min_align;
 		/* unless alignment is none, set mal to -5,0,5 */
 		/* (see align.h for valid aligntyp values)     */
 		if (mal != A_NONE)

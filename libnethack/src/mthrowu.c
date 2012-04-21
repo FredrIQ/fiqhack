@@ -322,7 +322,8 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 
 		    if (singleobj->oclass == GEM_CLASS &&
 			    singleobj->otyp <= LAST_GEM+9 /* 9 glass colors */
-			    && is_unicorn(youmonst.data)) {
+			    && is_unicorn(youmonst.data)
+			    && multi >= 0) {
 			if (singleobj->otyp > LAST_GEM) {
 			    pline("You catch the %s.", xname(singleobj));
 			    pline("You are not interested in %s junk.",

@@ -18,8 +18,7 @@ void msummon(struct monst *mon)
 	    ptr = mon->data;
             dlev = &mon->dlevel->z;
 	    atyp = (ptr->maligntyp==A_NONE) ? A_NONE : sgn(ptr->maligntyp);
-	    if (mon->ispriest || mon->data == &mons[PM_ALIGNED_PRIEST]
-		|| mon->data == &mons[PM_ANGEL])
+	    if (mon->ispriest || roamer_type(mon->data)) 
 		atyp = EPRI(mon)->shralign;
 	} else {
 	    ptr = &mons[PM_WIZARD_OF_YENDOR];
@@ -76,7 +75,7 @@ void msummon(struct monst *mon)
 
 	while (cnt > 0) {
 	    mtmp = makemon(&mons[dtype], level, u.ux, u.uy, NO_MM_FLAGS);
-	    if (mtmp && (dtype == PM_ANGEL)) {
+	    if (mtmp && roamer_type(&mons[dtype])) {
 		/* alignment should match the summoner */
 		EPRI(mtmp)->shralign = atyp;
 	    }
@@ -114,11 +113,11 @@ void summon_minion(aligntyp alignment, boolean talk)
 	    mon->isminion = TRUE;
 	    EMIN(mon)->min_align = alignment;
 	}
-    } else if (mnum == PM_ANGEL) {
+    } else if (roamer_type(&mons[mnum])) {
 	mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);
 	if (mon) {
 	    mon->isminion = TRUE;
-	    EPRI(mon)->shralign = alignment;	/* always A_LAWFUL here */
+	    EPRI(mon)->shralign = alignment;
 	}
     } else
 	mon = makemon(&mons[mnum], level, u.ux, u.uy, NO_MM_FLAGS);

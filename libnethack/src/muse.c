@@ -928,7 +928,8 @@ boolean find_offensive(struct monst *mtmp, struct musable *m)
 			m->has_offense = MUSE_WAN_FIRE;
 		    }
 		    nomore(MUSE_FIRE_HORN);
-		    if (obj->otyp == FIRE_HORN && obj->spe > 0) {
+		    if (obj->otyp == FIRE_HORN && obj->spe > 0 &&
+                            can_blow_instrument(mtmp->data)) {
 			m->offensive = obj;
 			m->has_offense = MUSE_FIRE_HORN;
 		    }
@@ -938,7 +939,8 @@ boolean find_offensive(struct monst *mtmp, struct musable *m)
 			m->has_offense = MUSE_WAN_COLD;
 		    }
 		    nomore(MUSE_FROST_HORN);
-		    if (obj->otyp == FROST_HORN && obj->spe > 0) {
+		    if (obj->otyp == FROST_HORN && obj->spe > 0 &&
+                            can_blow_instrument(mtmp->data)) {
 			m->offensive = obj;
 			m->has_offense = MUSE_FROST_HORN;
 		    }
@@ -1893,7 +1895,7 @@ boolean searches_for_item(struct monst *mon, struct obj *obj)
 	    if (typ == UNICORN_HORN)
 		return (boolean)(!obj->cursed && !is_unicorn(mon->data));
 	    if (typ == FROST_HORN || typ == FIRE_HORN)
-		return obj->spe > 0;
+		return (obj->spe > 0) && can_blow_instrument(mon->data);
 	    break;
 	case FOOD_CLASS:
 	    if (typ == CORPSE)

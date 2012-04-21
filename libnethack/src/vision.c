@@ -134,7 +134,6 @@ void vision_init(void)
  */
 int does_block(struct level *lev, int x, int y)
 {
-    struct obj   *obj;
     struct monst *mon;
     struct rm *loc = &lev->locations[x][y];
 
@@ -148,8 +147,8 @@ int does_block(struct level *lev, int x, int y)
 	return 1;
 
     /* Boulders block light. */
-    for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
-	if (obj->otyp == BOULDER) return 1;
+    if (sobj_at(BOULDER, level, x, y))
+        return 1;
 
     /* Mimics mimicing a door or boulder block light. */
     if ((mon = m_at(lev, x,y)) && (!mon->minvis || See_invisible) &&

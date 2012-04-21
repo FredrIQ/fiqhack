@@ -302,6 +302,12 @@ gotobj:
 			/* can't charm you without first waking you */
 			if (multi < 0 && is_fainted()) unmul(NULL);
 			slowly = (armordelay >= 1 || multi < 0);
+			if (multi < 0) {
+			    pline("%s tries to %s you, but is dismayed by your lack of response.",
+			          !seen ? "She" : Monnam(mtmp),
+				  flags.female ? "charm" : "seduce");
+			    return(0);
+			}
 			if (flags.female)
 			    pline("%s charms you.  You gladly %s your %s.",
 				  !seen ? "She" : Monnam(mtmp),
@@ -452,6 +458,8 @@ static void mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
 	}
 	obj->owornmask = 0L;
     }
+    if (!DEADMONSTER(mon) && obj->otyp == LOADSTONE && !obj->cursed)
+        curse(obj);
     if (verbosely && cansee(omx, omy))
 	pline("%s drops %s.", Monnam(mon), distant_name(obj, doname));
     if (!flooreffects(obj, omx, omy, "fall")) {

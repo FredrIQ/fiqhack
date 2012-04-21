@@ -670,9 +670,9 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 	    } else if (obj->oclass == POTION_CLASS) {
 		if (obj->quan > 1L)
 		    obj = splitobj(obj, 1L);
-		else
+		else if (obj == uwep)
 		    setuwep(NULL);
-		freeinv(obj);
+		obj_extract_self(obj);
 		potionhit(mon, obj, TRUE);
 		if (mon->mhp <= 0) return FALSE;	/* killed */
 		hittxt = TRUE;
@@ -692,8 +692,9 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			break;
 		    case MIRROR:
 			if (breaktest(obj)) {
-			    pline("You break %s mirror.  That's bad luck!",
-				shk_your(yourbuf, obj));
+			    pline("You break %s %s.  That's bad luck!",
+				shk_your(yourbuf, obj),
+                                simple_typename(obj->otyp));
 			    change_luck(-2);
 			    useup(obj);
 			    obj = NULL;
@@ -1721,6 +1722,15 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 	    for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
 		snuff_lit(otmp);
 
+	    /* KMH, conduct */
+	    if (mattk->adtyp == AD_DGST) {
+		u.uconduct.food++;
+		if (!vegan(mdef->data))
+		     u.uconduct.unvegan++;
+		if (!vegetarian(mdef->data))
+		     violated_vegetarian();
+	    }
+
 	    if (!touch_petrifies(mdef->data) || Stone_resistance) {
 		static char msgbuf[BUFSZ];
 		start_engulf(mdef);
@@ -1742,13 +1752,6 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 			    dam = 0;
 			    break;
 			}
-
-			/* KMH, conduct */
-			u.uconduct.food++;
-			if (!vegan(mdef->data))
-			     u.uconduct.unvegan++;
-			if (!vegetarian(mdef->data))
-			     violated_vegetarian();
 
 			/* Use up amulet of life saving */
 			if (!!(otmp = mlifesaver(mdef))) m_useup(mdef, otmp);

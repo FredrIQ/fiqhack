@@ -872,6 +872,8 @@ boolean drain_item(struct obj *obj)
 			obj->oclass != ARMOR_CLASS && !is_weptool(obj)) ||
 			obj->spe <= 0)
 	    return FALSE;
+	if (obj->oartifact && defends(AD_DRLI, obj))
+	    return FALSE;
 	if (obj_resists(obj, 10, 90))
 	    return FALSE;
 

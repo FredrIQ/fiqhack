@@ -91,6 +91,8 @@ boolean enexto(coord *cc, struct level *lev, xchar xx, xchar yy,
 	return enexto_core(cc, lev, xx, yy, mdat, 0);
 }
 
+extern struct monst zeromonst;
+
 boolean enexto_core(coord *cc, struct level *lev, xchar xx, xchar yy,
 		    const struct permonst *mdat, unsigned entflags)
 {
@@ -98,7 +100,7 @@ boolean enexto_core(coord *cc, struct level *lev, xchar xx, xchar yy,
     coord good[MAX_GOOD], *good_ptr;
     int x, y, range, i;
     int xmin, xmax, ymin, ymax;
-    struct monst fakemon;	/* dummy monster */
+    struct monst fakemon = zeromonst;	/* dummy monster */
 
     if (!mdat) {
 	/* default to player's original monster type */

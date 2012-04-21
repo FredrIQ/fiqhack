@@ -766,8 +766,11 @@ void destroy_drawbridge(int x, int y)
 			killer_format = KILLED_BY_AN;
 			killer = "collapsing drawbridge";
 			e_died(etmp1, e_inview? 3 : 2, CRUSHING); /*no corpse*/
-			if (loc1->typ == MOAT) do_entity(etmp1);
+			/* if (loc1->typ == MOAT) do_entity(etmp1); */
 		}
+		if (is_u(etmp1)) spoteffects(FALSE);
+		else if (!DEADMONSTER(etmp1->emon))
+		    minliquid(etmp1->emon);
 	}
 }
 

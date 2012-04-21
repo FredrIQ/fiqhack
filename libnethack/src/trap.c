@@ -257,7 +257,7 @@ struct trap *maketrap(struct level *lev, int x, int y, int typ)
 	    case TRAPDOOR:
 		loc = &lev->locations[x][y];
 		if (*in_rooms(lev, x, y, SHOPBASE) &&
-			((typ == HOLE || typ == TRAPDOOR) ||
+			(typ == HOLE || typ == TRAPDOOR || typ == PIT ||
 			 IS_DOOR(loc->typ) || IS_WALL(loc->typ)))
 		    add_damage(x, y,		/* schedule repair */
 			       ((IS_DOOR(loc->typ) || IS_WALL(loc->typ))
@@ -2327,6 +2327,8 @@ int float_down(long hmask, long emask)     /* might cancel timeout */
 		    }
 		}
 	    }
+	    stop_occupation();
+	    if (multi > 0) nomul(0, NULL);
 	}
 
 	/* can't rely on u.uz0 for detecting trap door-induced level change;
@@ -3774,11 +3776,12 @@ static boolean thitm(int tlev, struct monst *mon, struct obj *obj,
 
 boolean unconscious(void)
 {
-	return (boolean)(multi < 0 && (!nomovemsg ||
+	if (multi >= 0 || !nomovemsg) return FALSE;
+	return (boolean)(
 		u.usleep ||
 		!strncmp(nomovemsg,"You regain con", 14) ||
 		!strncmp(nomovemsg,"You awake with a headache", 25) ||
-		!strncmp(nomovemsg,"You are consci", 14)));
+		!strncmp(nomovemsg,"You are consci", 14));
 }
 
 static const char lava_killer[] = "molten lava";

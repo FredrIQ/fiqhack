@@ -28,6 +28,10 @@
 #define is_clinger(ptr)		(((ptr)->mflags1 & M1_CLING) != 0L)
 #define is_swimmer(ptr)		(((ptr)->mflags1 & M1_SWIM) != 0L)
 #define breathless(ptr)		(((ptr)->mflags1 & M1_BREATHLESS) != 0L)
+#define can_blow_instrument(ptr) \
+				(!(breathless(ptr) && \
+				   (ptr->msound == MS_SILENT || \
+				    ptr->msound == MS_BONES)))
 #define amphibious(ptr)		(((ptr)->mflags1 & (M1_AMPHIBIOUS | M1_BREATHLESS)) != 0L)
 #define passes_walls(ptr)	(((ptr)->mflags1 & M1_WALLWALK) != 0L)
 #define amorphous(ptr)		(((ptr)->mflags1 & M1_AMORPHOUS) != 0L)
@@ -167,6 +171,10 @@
 #define nonliving(ptr)		(is_golem(ptr) || is_undead(ptr) || \
 				 (ptr)->mlet == S_VORTEX || \
 				 (ptr) == &mons[PM_MANES])
+
+/* What types of monsters can be Astral Plane minions? */
+#define roamer_type(ptr)	((ptr) == &mons[PM_ALIGNED_PRIEST] || \
+				 (ptr) == &mons[PM_ANGEL])
 
 /* Used for conduct with corpses, tins, and digestion attacks */
 /* G_NOCORPSE monsters might still be swallowed as a purple worm */

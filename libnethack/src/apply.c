@@ -14,8 +14,8 @@ static int use_camera(struct obj *);
 static int use_towel(struct obj *);
 static boolean its_dead(int,int,int *);
 static int use_stethoscope(struct obj *);
-static void use_whistle(struct obj *);
-static void use_magic_whistle(struct obj *);
+static int use_whistle(struct obj *);
+static int use_magic_whistle(struct obj *);
 static void use_leash(struct obj *);
 static int use_mirror(struct obj *);
 static void use_bell(struct obj **);
@@ -290,15 +290,25 @@ static int use_stethoscope(struct obj *obj)
 
 static const char whistle_str[] = "You produce a %s whistling sound.";
 
-static void use_whistle(struct obj *obj)
+static int use_whistle(struct obj *obj)
 {
+	if (Upolyd && !can_blow_instrument(youmonst.data)) {
+	    pline("You are incapable of blowing the whistle!");
+	    return 0;
+	}
 	pline(whistle_str, obj->cursed ? "shrill" : "high");
 	wake_nearby();
+	return 1;
 }
 
-static void use_magic_whistle(struct obj *obj)
+static int use_magic_whistle(struct obj *obj)
 {
 	struct monst *mtmp, *nextmon;
+	
+	if (Upolyd && !can_blow_instrument(youmonst.data)) {
+	    pline("You are incapable of blowing the whistle!");
+	    return 0;
+	}
 
 	if (obj->cursed && !rn2(2)) {
 		pline("You produce a high-pitched humming noise.");
@@ -322,6 +332,7 @@ static void use_magic_whistle(struct obj *obj)
 		}
 		if (pet_cnt > 0) makeknown(obj->otyp);
 	}
+	return 1;
 }
 
 boolean um_dist(xchar x, xchar y, xchar n)
@@ -566,16 +577,19 @@ static int use_mirror(struct obj *obj)
 	
 	if (obj->cursed && !rn2(2)) {
 		if (!Blind)
-			pline("The mirror fogs up and doesn't reflect!");
+			pline("The %s fogs up and doesn't reflect!",
+                                simple_typename(obj->otyp));
 		return 1;
 	}
 	if (!dx && !dy && !dz) {
 		if (!Blind && !Invisible) {
 		    if (u.umonnum == PM_FLOATING_EYE) {
 			if (!Free_action) {
-			    pline(Hallucination ?
-				"Yow!  The mirror stares back!" :
-				"Yikes!  You've frozen yourself!");
+                            if (Hallucination)
+                                pline("Yow!  The %s stares back!",
+                                        simple_typename(obj->otyp));
+                            else
+                                pline("Yikes!  You've frozen yourself!");
 			    nomul(-rnd((MAXULEV+6) - u.ulevel), "gazing into a mirror");
 			    nomovemsg = 0; /* default: "You can move again." */
 			} else pline("You stiffen momentarily under your gaze.");
@@ -628,8 +642,8 @@ static int use_mirror(struct obj *obj)
 	mlet = mtmp->data->mlet;
 	if (mtmp->msleeping) {
 		if (vis)
-		    pline ("%s is too tired to look at your mirror.",
-			    Monnam(mtmp));
+		    pline ("%s is too tired to look at your %s.",
+			    Monnam(mtmp), simple_typename(obj->otyp));
 	} else if (!mtmp->mcansee) {
 	    if (vis)
 		pline("%s can't see anything right now.", Monnam(mtmp));
@@ -664,9 +678,10 @@ static int use_mirror(struct obj *obj)
 	} else if (!mtmp->mcan && !mtmp->minvis && (mlet == S_NYMPH
 				     || mtmp->data==&mons[PM_SUCCUBUS])) {
 		if (vis) {
-		    pline ("%s admires herself in your mirror.", Monnam(mtmp));
+		    pline ("%s admires herself in your %s.", Monnam(mtmp),
+		           simple_typename(obj->otyp));
 		    pline ("She takes it!");
-		} else pline ("It steals your mirror!");
+		} else pline ("It steals your %s!", simple_typename(obj->otyp));
 		setnotworn(obj); /* in case mirror was wielded */
 		freeinv(obj);
 		mpickobj(mtmp,obj);
@@ -2051,7 +2066,7 @@ static int use_whip(struct obj *obj)
 	confdir(&dx, &dy);
     rx = u.ux + dx;
     ry = u.uy + dy;
-    mtmp = m_at(level, rx, ry);
+    mtmp = (isok(rx, ry)) ? m_at(level, rx, ry) : NULL;
 
     /* fake some proficiency checks */
     proficient = 0;
@@ -2128,6 +2143,13 @@ static int use_whip(struct obj *obj)
 	 *
 	 */
 	const char *wrapped_what = NULL;
+
+	if (!isok(rx, ry)) {
+	    pline("%s", 
+	          Is_airlevel(&u.uz) ? "You snap your whip through thin air."
+		                     : msg_snap);
+	    return 1;
+	}
 
 	if (mtmp) {
 	    if (bigmonst(mtmp->data)) {
@@ -2291,7 +2313,7 @@ static int use_pole (struct obj *obj)
 	cc.x = u.ux;
 	cc.y = u.uy;
 	if (getpos(&cc, TRUE, "the spot to hit") < 0)
-	    return 0;	/* user pressed ESC */
+	    return res;	/* user pressed ESC */
 
 	/* Calculate range */
 	typ = uwep_skill_type();
@@ -2317,6 +2339,8 @@ static int use_pole (struct obj *obj)
 	/* Attack the monster there */
 	if ((mtmp = m_at(level, cc.x, cc.y)) != NULL) {
 	    int oldhp = mtmp->mhp;
+	    
+	    if (attack_checks(mtmp, obj, cc.x, cc.y)) return res;
 
 	    bhitpos = cc;
 	    check_caitiff(mtmp);
@@ -2748,10 +2772,10 @@ int doapply(struct obj *obj)
 		res = use_saddle(obj);
 		break;
 	case MAGIC_WHISTLE:
-		use_magic_whistle(obj);
+		res = use_magic_whistle(obj);
 		break;
 	case TIN_WHISTLE:
-		use_whistle(obj);
+		res = use_whistle(obj);
 		break;
 	case EUCALYPTUS_LEAF:
 		/* MRKR: Every Australian knows that a gum leaf makes an */
