@@ -41,6 +41,7 @@ static struct loginfo {
     unsigned int actioncount;
     boolean diffs_are_invalid;
     boolean cmds_are_invalid;
+    boolean out_of_sync;
 } loginfo;
 
 static struct memfile diff_base;
@@ -164,6 +165,7 @@ void replay_begin(void)
 
     loginfo.diffs_are_invalid = FALSE;
     loginfo.cmds_are_invalid = FALSE;
+    loginfo.out_of_sync = FALSE;
     lseek(logfile, 0, SEEK_SET);
     dupped_fd = dup(logfile);
     if (dupped_fd < 0) panic("Could not duplicate file descriptor");
@@ -745,7 +747,62 @@ static void replay_check_msg(char *token)
     free(buf);
 }
 
-static void replay_check_diff(char *token, boolean optonly)
+void replay_sync_save(void)
+{
+    if (!loginfo.out_of_sync) return;
+
+    volatile struct sinfo ps;
+    jmp_buf old_exit_jmp_buf;
+    /* Use the version in the diff, not the one reached by playing
+       through the game */
+
+    ps = program_state;
+
+    /* we want to catch exceptions during the load, which means
+       storing the old jmp_buf somewhere */
+    memcpy(&old_exit_jmp_buf, &exit_jmp_buf, sizeof (jmp_buf));
+    api_exit();
+
+    if (!api_entry_checkpoint()) {
+        raw_printf("The diffs in recording seem to be invalid. "
+                   "Replay will use recorded commands instead.");
+        loginfo.diffs_are_invalid = TRUE;
+        freedynamicdata();
+        program_state.restoring = TRUE;
+        startup_common(0, wizard ? MODE_WIZARD :
+                       discover ? MODE_EXPLORE : MODE_NORMAL);
+        dorecover(&diff_base);
+    } else {
+        freedynamicdata();
+        program_state.restoring = TRUE;
+        startup_common(0, wizard ? MODE_WIZARD :
+                       discover ? MODE_EXPLORE : MODE_NORMAL);
+        dorecover(&diff_base);
+    }
+    iflags.disable_log = TRUE;
+    program_state = ps;
+
+    memcpy(&exit_jmp_buf, &old_exit_jmp_buf, sizeof (jmp_buf));
+    exit_jmp_buf_valid = 1;
+}
+
+static long true_moves(void)
+{
+    long pos = diff_base.pos;
+    struct you sg_you;
+    struct flag sg_flags;
+    long rv;
+    if (!loginfo.out_of_sync) return moves;
+    diff_base.pos = 0;
+    uptodate(&diff_base, NULL);
+    restore_flags(&diff_base, &sg_flags);
+    restore_you(&diff_base, &sg_you);
+    rv = mread32(&diff_base);
+    diff_base.pos = pos;
+    return rv;
+}
+
+static void replay_check_diff(char *token, boolean optonly, boolean fast)
 {
     char *b64data, *buf, *bufp;
     int buflen, dbpos = 0;
@@ -837,13 +894,15 @@ static void replay_check_diff(char *token, boolean optonly)
         diff_base = mf;
         /* then we let mf go out of scope */
     } else {
-        mfree(&diff_base);
-        mnew(&diff_base, NULL);
-        savegame(&diff_base);
-        if (diff_base.pos != mf.pos ||
+        if (!fast) {
+            mfree(&diff_base);
+            mnew(&diff_base, NULL);
+        }
+        if (!loginfo.cmds_are_invalid && !fast) savegame(&diff_base);
+        if (fast || diff_base.pos != mf.pos ||
             memcmp(diff_base.buf, mf.buf, mf.pos)) {
 #ifdef DEBUG /*desync location debugging */
-            if (mf.pos == diff_base.pos && !loginfo.cmds_are_invalid) {
+            if (mf.pos == diff_base.pos && !loginfo.cmds_are_invalid && !fast) {
                 int i;
                 struct memfile_tag origtag;
                 origtag.next = 0;
@@ -866,39 +925,17 @@ static void replay_check_diff(char *token, boolean optonly)
                         break; /* comment this out to see all desyncs */
                     }
                 }
-            } else if (!loginfo.cmds_are_invalid) {
+            } else if (!loginfo.cmds_are_invalid && !fast) {
                 raw_printf("desync between recording (length %d) and "
                            "recorded save (length %d)", diff_base.pos, mf.pos);
             }
 #endif
-            {
-                volatile struct sinfo ps;
-                jmp_buf old_exit_jmp_buf;
-                /* Use the version in the diff, not the one reached by playing
-                   through the game */
-
-                ps = program_state;
-
-                /* we want to catch exceptions during the load, which means
-                   storing the old jmp_buf somewhere */
-                memcpy(&old_exit_jmp_buf, &exit_jmp_buf, sizeof (jmp_buf));
-                api_exit();
-
-                if (!api_entry_checkpoint()) {
-                    raw_printf("The diffs in recording seem to be invalid. "
-                               "Replay will use recorded commands instead.");
-                    loginfo.diffs_are_invalid = TRUE;
-                    freedynamicdata();
-                    program_state.restoring = TRUE;
-                    startup_common(0, wizard ? MODE_WIZARD :
-                                   discover ? MODE_EXPLORE : MODE_NORMAL);
-                    dorecover(&diff_base);
-                } else {
-                    freedynamicdata();
-                    program_state.restoring = TRUE;
-                    startup_common(0, wizard ? MODE_WIZARD :
-                                   discover ? MODE_EXPLORE : MODE_NORMAL);
-                    dorecover(&mf);
+            loginfo.out_of_sync = TRUE;
+            mfree(&diff_base);
+            diff_base = mf;
+            if (!fast) {
+                replay_sync_save();
+                if (!loginfo.diffs_are_invalid) {
                     /* it loaded fine, but is different from the recorded
                        version. Most likely cause: the recorded version is
                        out of date. */
@@ -908,14 +945,6 @@ static void replay_check_diff(char *token, boolean optonly)
                                    "to be invalid. Replay will use diffs instead.");
                     }
                 }
-                iflags.disable_log = TRUE;
-                program_state = ps;
-
-                memcpy(&exit_jmp_buf, &old_exit_jmp_buf, sizeof (jmp_buf));
-                exit_jmp_buf_valid = 1;
-
-                mfree(&diff_base);
-                diff_base = mf;
             }
         } else mfree(&mf);
     }
@@ -931,10 +960,12 @@ static char *strdupnull(char *s)
 
 /* optonly: look only for options
    singlestep: run one line at a time
+   fast: it's OK to not update save data
+         (replay_sync_save() must be called afterwards if this is true)
    Note: in the special case of TRUE, FALSE, the log may not be used
    for anything other than options (i.e. replay_end must be called as
    the next replay-related command, other than replay_restore_windowprocs). */
-boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
+boolean replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
 {
     char *cmd, *token;
     int count, cmdidx;
@@ -977,7 +1008,7 @@ boolean replay_run_cmdloop(boolean optonly, boolean singlestep)
 
             case '~': /* a diff */
                 if (!optonly || singlestep)
-                    replay_check_diff(next_log_token(), optonly);
+                    replay_check_diff(next_log_token(), optonly, fast);
 
 		if (singlestep) {
 		    goto out;
@@ -1013,10 +1044,12 @@ static void make_checkpoint(int actions)
     /* only make a checkpoint if enough actions have happened since the last
      * one and creating a checkpoint is safe */
     if ((cpcount > 0 && (actions <= checkpoints[cpcount-1].actions + 1000 ||
-	                   moves <= checkpoints[cpcount-1].moves)) ||
+	                 true_moves() <= checkpoints[cpcount-1].moves)) ||
 	multi || occupation) /* checkpointing while something is in progress doesn't work */
 	return;
-    
+
+    replay_sync_save();
+
     cpcount++;
     checkpoints = realloc(checkpoints, sizeof(struct replay_checkpoint) * cpcount);
     checkpoints[cpcount-1].actions = actions;
@@ -1042,6 +1075,7 @@ static int load_checkpoint(int idx)
     
     cmd_invalid = loginfo.cmds_are_invalid;
     diff_invalid = loginfo.diffs_are_invalid;
+    loginfo.out_of_sync = FALSE; /* we're destroying saved state anyway */
 
     replay_end();
     freedynamicdata();
@@ -1137,7 +1171,7 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
     replay_setup_windowprocs(rwinprocs);
     
     initoptions();
-    replay_run_cmdloop(TRUE, TRUE); /* (re)set options */
+    replay_run_cmdloop(TRUE, TRUE, FALSE); /* (re)set options */
     nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign, playmode);
     program_state.restoring = FALSE;
     program_state.viewing = TRUE;
@@ -1160,11 +1194,11 @@ boolean nh_view_replay_start(int fd, struct nh_window_procs *rwinprocs,
 
 
 boolean nh_view_replay_step(struct nh_replay_info *info,
-					  enum replay_control action, int count)
+                            enum replay_control action, int count)
 {
     boolean did_action;
     int i, prev_actions, target;
-    int moves_this_step = moves;
+    int moves_this_step = true_moves();
     
     if (!program_state.viewing) {
 	info->actions++;
@@ -1190,7 +1224,7 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 
     program_state.restoring = TRUE;
     replay_setup_windowprocs(&replay_windowprocs);
-    info->moves = moves;
+    info->moves = true_moves();
     switch (action) {
 	case REPLAY_BACKWARD:
 	    prev_actions = info->actions;
@@ -1213,7 +1247,7 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 	    i = 0;
 	    while (i < count && did_action) {
 		i++;
-		did_action = replay_run_cmdloop(FALSE, TRUE);
+		did_action = replay_run_cmdloop(FALSE, TRUE, i != count);
 		if (did_action) {
 		    info->actions++;
 		    make_checkpoint(info->actions);
@@ -1223,7 +1257,7 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 	    
 	case REPLAY_GOTO:
 	    target = count;
-	    if (target < moves) {
+	    if (target < true_moves()) {
 		for (i = 0; i < cpcount-1; i++)
 		    if (checkpoints[i+1].moves >= target)
 			break;
@@ -1232,14 +1266,15 @@ boolean nh_view_replay_step(struct nh_replay_info *info,
 	    }
 	    
 	    did_action = info->actions < info->max_actions;
-	    while (moves < count && did_action) {
-		did_action = replay_run_cmdloop(FALSE, TRUE);
+	    while (true_moves() < count && did_action) {
+		did_action = replay_run_cmdloop(FALSE, TRUE, TRUE);
 		if (did_action) {
 		    info->actions++;
 		    make_checkpoint(info->actions);
 		}
 	    }
-	    did_action = (moves_this_step == -1 ? TRUE : moves == count);
+            replay_sync_save();
+	    did_action = (moves_this_step == -1 ? TRUE : true_moves() == count);
 	    break;
     }
     
@@ -1247,7 +1282,7 @@ out:
     api_exit();
 out2:
     program_state.restoring = FALSE;
-    info->moves = moves;
+    info->moves = true_moves();
     find_next_command(info->nextcmd, sizeof(info->nextcmd));
     replay_restore_windowprocs();
     if (loginfo.cmds_are_invalid) doredraw();
@@ -1256,7 +1291,7 @@ out2:
     
     /* if we're going backwards, the timestamp on this message
      * will let the ui know it should erase messages in the future */
-    print_message(moves, "");
+    print_message(true_moves(), "");
     
     return did_action;
 }

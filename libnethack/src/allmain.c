@@ -312,7 +312,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     u.initgend = igend; u.initalign = ialign;
     if (!force_replay) {
 	error = ERR_RESTORE_FAILED;
-	replay_run_cmdloop(TRUE, FALSE);
+	replay_run_cmdloop(TRUE, FALSE, TRUE);
         replay_jump_to_endpos();
 	if (!dorecover_fd(fd)) {
             replay_undo_jump_to_endpos();
@@ -323,11 +323,12 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 	program_state.game_running = 1;
 	post_init_tasks();
     } else {
-	replay_run_cmdloop(TRUE, TRUE); /* option setup only */
+	replay_run_cmdloop(TRUE, TRUE, FALSE); /* option setup only */
 	newgame();
 	/* try replaying instead */
 	error = ERR_REPLAY_FAILED;
-	replay_run_cmdloop(FALSE, FALSE);
+	replay_run_cmdloop(FALSE, FALSE, TRUE);
+        replay_sync_save();
     }
     
     /* restore standard window procs */
