@@ -737,6 +737,8 @@ extern long get_tz_offset(void);
 extern void replay_set_logfile(int logfd);
 extern void replay_begin(void);
 extern void replay_end(void);
+extern void replay_jump_to_endpos(void);
+extern void replay_undo_jump_to_endpos(void);
 extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
 extern void replay_restore_windowprocs(void);

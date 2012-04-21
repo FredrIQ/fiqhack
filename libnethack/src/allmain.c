@@ -295,7 +295,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     
     error = ERR_BAD_FILE;
     replay_set_logfile(fd); /* store the fd and try to get a lock or exit */
-    replay_begin(); /* read and tokenize the entire log */
+    replay_begin();
     
     program_state.restoring = TRUE;
     iflags.disable_log = TRUE; /* don't log any of the commands, they're already in the log */
@@ -313,8 +313,12 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     if (!force_replay) {
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE, FALSE);
-	if (!dorecover_fd(fd))
+        replay_jump_to_endpos();
+	if (!dorecover_fd(fd)) {
+            replay_undo_jump_to_endpos();
 	    goto error_out2;
+        }
+        replay_undo_jump_to_endpos();
 	wd_message();
 	program_state.game_running = 1;
 	post_init_tasks();
