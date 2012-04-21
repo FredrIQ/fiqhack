@@ -76,7 +76,7 @@ extern EXPORT struct nh_drawing_info *nhnet_get_drawing_info(void);
 extern EXPORT nh_bool nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr);
 extern EXPORT struct nh_option_desc *nhnet_get_options(enum nh_option_list list);
 extern EXPORT const char *nhnet_get_option_string(const struct nh_option_desc *opt);
-extern EXPORT void nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs);
+extern EXPORT void nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in);
 extern EXPORT struct nh_roles_info *nhnet_get_roles(void);
 extern EXPORT char *nhnet_build_plselection_prompt(char *, int, int, int, int, int);
 extern EXPORT const char *nhnet_root_plselection_prompt(char *, int, int, int, int, int);

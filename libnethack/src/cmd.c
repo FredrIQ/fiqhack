@@ -65,7 +65,7 @@ const struct cmd_desc cmdlist[] = {
 	{"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
 	{"chat", "talk to someone", 'c', M('c'), TRUE, dotalk, CMD_ARG_NONE | CMD_ARG_DIR | CMD_EXT},	/* converse? */
 	{"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_NONE | CMD_ARG_DIR},
-	{"conduct", "list which challenges you have adhered to", 0, 0, TRUE, doconduct, CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
+	{"conduct", "list status of voluntary challenges", 0, 0, TRUE, doconduct, CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
 	{"countgold", "show gold, debt, credit, and unpaid items", '$', 0, TRUE, doprgold, CMD_ARG_NONE | CMD_NOTIME},
 	{"dip", "dip an object into something", M('d'), 0, FALSE, dodip, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
 	{"discoveries", "show your knowledge about items", '\\', 0, TRUE, dodiscovered, CMD_ARG_NONE | CMD_NOTIME},
@@ -73,7 +73,7 @@ const struct cmd_desc cmdlist[] = {
 	{"drop", "drop one item", 'd', 0, FALSE, dodrop, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"eat", "eat an item from inventory or the floor", 'e', 0, FALSE, doeat, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"elbereth", "write an Elbereth in the dust", C('e'), 0, FALSE, doelbereth, CMD_ARG_NONE },
-	{"enhance", "advance or check weapons skills", M('e'), 0, TRUE, enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
+	{"enhance", "advance or check weapon and spell skills", M('e'), 0, TRUE, enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
 	{"engrave", "write on the floor", 'E', 0, FALSE, doengrave, CMD_ARG_NONE | CMD_ARG_OBJ},
 	{"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis, CMD_ARG_NONE | CMD_NOTIME},
 	{"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE, dofight, CMD_ARG_DIR},

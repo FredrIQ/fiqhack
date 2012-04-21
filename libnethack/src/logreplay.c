@@ -430,14 +430,14 @@ static int replay_getpos(int *x, int *y, boolean force, const char *goal)
 
 static enum nh_direction replay_getdir(const char *query, boolean restricted)
 {
-    enum nh_direction dir;
+    int dir;
     char *token = next_log_token();
     
     int n = sscanf(token, "d:%d", &dir);
     if (n != 1)
 	parse_error("Bad getdir data");
     
-    return dir;
+    return (enum nh_direction) dir;
 }
 
 
@@ -654,7 +654,7 @@ static void replay_read_option(char *token)
 
 static boolean replay_parse_arg(char *argstr, struct nh_cmd_arg *arg)
 {
-    int n;
+    int n, dir;
     
     if (!argstr || !arg)
 	return FALSE;
@@ -666,7 +666,8 @@ static boolean replay_parse_arg(char *argstr, struct nh_cmd_arg *arg)
 	    
 	case 'd':
 	    arg->argtype = CMD_ARG_DIR;
-	    n = sscanf(argstr, "d:%d", &arg->d);
+	    n = sscanf(argstr, "d:%d", &dir);
+            arg->d = (enum nh_direction) dir;
 	    return n == 1;
 	    
 	case 'p':

@@ -713,23 +713,27 @@ void free_option_lists(void)
 }
 
 
-void nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs)
+void nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs,
+                        int *is_in)
 {
     const char *bgdesc, *trapdesc, *objdesc, *mondesc, *invisdesc, *effectdesc;
     json_t *jmsg;
+    int in;
     
     if (!nhnet_active())
-	return nh_describe_pos(x, y, bufs);
+	return nh_describe_pos(x, y, bufs, is_in);
     
     if (!api_entry())
 	return;
     
-    jmsg = send_receive_msg("describe_pos", json_pack("{si,si}", "x", x, "y", y));
-    json_unpack(jmsg, "{ss,ss,ss,ss,ss,ss,si!}",
+    jmsg = send_receive_msg("describe_pos",
+                            json_pack("{si,si, si}", "x", x, "y", y,
+                                      "is_in", is_in != NULL));
+    json_unpack(jmsg, "{ss,ss,ss,ss,ss,ss,si,si!}",
 		"bgdesc", &bgdesc,	"trapdesc", &trapdesc,
 		"objdesc", &objdesc,	"mondesc", &mondesc,
 		"invisdesc", &invisdesc,"effectdesc", &effectdesc,
-		"objcount", &bufs->objcount);
+		"objcount", &bufs->objcount, "in", &in);
     
     strncpy(bufs->bgdesc, bgdesc, BUFSZ-1);
     strncpy(bufs->trapdesc, trapdesc, BUFSZ-1);
@@ -738,6 +742,8 @@ void nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs)
     strncpy(bufs->invisdesc, invisdesc, BUFSZ-1);
     strncpy(bufs->effectdesc, effectdesc, BUFSZ-1);
     json_decref(jmsg);
+    if (is_in)
+        *is_in = in;
     
     api_exit();
 }

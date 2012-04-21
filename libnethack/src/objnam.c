@@ -1019,7 +1019,8 @@ char *an(const char *str)
 	if (strncmpi(str, "the ", 4) &&
 	    strcmp(str, "molten lava") &&
 	    strcmp(str, "iron bars") &&
-	    strcmp(str, "ice")) {
+	    strcmp(str, "ice") &&
+            strcmp(str, "solid rock")) {
 		if (strchr(vowels, *str) &&
 		    strncmp(str, "one-", 4) &&
 		    strncmp(str, "useful", 6) &&

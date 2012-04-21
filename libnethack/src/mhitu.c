@@ -504,6 +504,15 @@ int mattacku(struct monst *mtmp)
 
 	if (u.uinvulnerable) {
 	    /* monsters won't attack you */
+
+	    /* only print messages for monsters that actually can attack */
+	    for (i = 0; i < NATTK; i++) {
+	        if (mtmp->data->mattk[i].aatyp != AT_NONE &&
+		    mtmp->data->mattk[i].aatyp != AT_BOOM)
+		    break;
+	    }
+	    if (i == NATTK) return 0;
+
 	    if (mtmp == u.ustuck)
 		pline("%s loosens its grip slightly.", Monnam(mtmp));
 	    else if (!range2) {
@@ -1774,6 +1783,8 @@ static int explmu(struct monst *mtmp, const struct attack *mattk, boolean ufound
 	boolean not_affected = defends((int)mattk->adtyp, uwep);
 
 	hitmsg(mtmp, mattk);
+	remove_monster(level, mtmp->mx, mtmp->my);
+	newsym(mtmp->mx, mtmp->my);
 
 	switch (mattk->adtyp) {
 	    case AD_COLD:
@@ -1834,6 +1845,7 @@ common:
 	    ugolemeffects((int)mattk->adtyp, tmp);
 	}
     }
+    place_monster(mtmp, mtmp->mx, mtmp->my);
     mondead(mtmp);
     wake_nearto(mtmp->mx, mtmp->my, 7*7);
     if (mtmp->mhp > 0) return 0;
