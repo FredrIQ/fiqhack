@@ -1210,10 +1210,11 @@ void impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
 			obj->no_charge = 0;
 		}
 
-		deliver_object(obj, cc.x, cc.y, toloc);
-
-		/* number of fallen objects */
+		/* number of fallen objects.  Note that deliver_object may
+                 * change obj->quan. */
 		dct += obj->quan;
+
+		deliver_object(obj, cc.x, cc.y, toloc);
 	}
 
 	if (dct && cansee(x,y)) {	/* at least one object fell */
