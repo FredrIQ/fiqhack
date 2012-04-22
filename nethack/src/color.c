@@ -41,7 +41,7 @@ static void read_colormap( struct ColorMap *map )
     }
 
     filename[0] = '\0';
-    if(!get_gamedir(CONFIG_DIR, filename))
+    if(ui_flags.connection_only || !get_gamedir(CONFIG_DIR, filename))
         return;
     fnncat(filename, FN("colormap.conf"), BUFSZ);
 

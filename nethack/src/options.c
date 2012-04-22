@@ -28,7 +28,6 @@ enum extra_opttypes {
     OPTTYPE_KEYMAP = 1000
 };
 
-static void read_ui_config(void);
 static void show_autopickup_menu(struct nh_option_desc *opt);
 
 
@@ -885,9 +884,14 @@ static void read_config_file(const fnchar *filename)
 
 
 /* determine the correct filename for the config file */
-static void get_config_name(fnchar *buf, nh_bool ui)
+static int get_config_name(fnchar *buf, nh_bool ui)
 {
     buf[0] = '\0';
+
+    /* If running in connection-only mode, we can't get the options
+       until we're already logged into the server. */
+    if (ui_flags.connection_only &&
+        !*ui_flags.username) return 0;
 
 #if defined(UNIX)
     char *envval;
@@ -896,31 +900,40 @@ static void get_config_name(fnchar *buf, nh_bool ui)
 	envval = getenv("NETHACK4OPTIONS");
 	if (envval) {
 	    strncpy(buf, envval, BUFSZ);
-	    return;
+	    return 1;
 	}
     }
 #endif
     
     /* look in regular location */
     if (!get_gamedir(CONFIG_DIR, buf))
-	return;
+	return 0;
 
-    fnncat(buf, ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+    fnncat(buf, ui_flags.connection_only ? ui_flags.username :
+                ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+    if (ui_flags.connection_only) fnncat(buf, FN(".rc"), BUFSZ);
+
+    return 1;
 }
 
 
 void read_nh_config(void)
 {
     fnchar filename[BUFSZ];
-    get_config_name(filename, FALSE);
-    read_config_file(filename);
+    if (!ui_flags.connection_only) {
+        get_config_name(filename, FALSE);
+        read_config_file(filename);
+    }
 }
 
 void read_ui_config(void)
 {
     fnchar uiconfname[BUFSZ];
-    get_config_name(uiconfname, TRUE);
-    read_config_file(uiconfname);    
+    /* If running in connection-only mode, we won't know the file to
+       look at the first time we call get_config_name. So instead, we
+       put this off until after we're already logged in. */
+    if (get_config_name(uiconfname, TRUE))
+        read_config_file(uiconfname);
 }
 
 
@@ -965,15 +978,19 @@ void write_config(void)
     FILE *fp;
     fnchar filename[BUFSZ];
     fnchar uiconfname[BUFSZ];
-    
-    get_config_name(filename, FALSE);
-    get_config_name(uiconfname, TRUE);
-    
-    fp = open_config_file(filename);
-    if (fp && should_write_config()) {
-	write_config_options(fp, nh_get_options(GAME_OPTIONS));
-	write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
-	fclose(fp);
+
+    if (!ui_flags.connection_only)
+        get_config_name(filename, FALSE);
+    if (!get_config_name(uiconfname, TRUE))
+        return;
+
+    if (!ui_flags.connection_only) {
+        fp = open_config_file(filename);
+        if (fp && should_write_config()) {
+            write_config_options(fp, nh_get_options(GAME_OPTIONS));
+            write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
+            fclose(fp);
+        }
     }
     
     fp = open_config_file(uiconfname);

@@ -142,6 +142,8 @@ struct interface_flags {
     int playmode;
     int viewheight;
     int msgheight; /* actual height */
+    int connection_only; /* connect to localhost, don't play normally */
+    char username[BUFSZ]; /* username being used in connection-only mode */
 };
 
 struct settings {
@@ -351,6 +353,7 @@ extern void display_options(nh_bool change_birth_opt);
 extern void print_options(void);
 extern void init_options(void);
 extern void read_nh_config(void);
+extern void read_ui_config(void);
 extern void write_config(void);
 
 /* outchars.c */

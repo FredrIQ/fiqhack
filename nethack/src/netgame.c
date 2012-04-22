@@ -88,10 +88,10 @@ static void account_menu(struct server_info *server)
     char buf1[BUFSZ], buf2[BUFSZ];
     
     static struct nh_menuitem netmenu_items[] = {
-	{1, MI_NORMAL, "change email address", 'e'},
-	{2, MI_NORMAL, "change password", 'p'},
-	{0, MI_NORMAL, "", 0},
-	{3, MI_NORMAL, "back to main menu", 'x'}
+	{1, MI_NORMAL, "change email address", 'e', 0, 0},
+	{2, MI_NORMAL, "change password", 'p', 0, 0},
+	{0, MI_NORMAL, "", 0, 0, 0},
+	{3, MI_NORMAL, "back to main menu", 'x', 0, 0}
     };
     
     while (n > 0) {
@@ -234,11 +234,55 @@ static void free_server_list(struct server_info *list)
     free(list);
 }
 
+static int get_username_password(const char *hostbuf, int port,
+                                 char *userbuf, char *passbuf)
+{
+    int passok, accountok, ret;
+    char passbuf2[BUFSZ];
+
+    do {
+	curses_getline("Username (new or existing account):", userbuf);
+	if (userbuf[0] == '\033' || userbuf[0] == '\0')
+	    return 0;
+	
+	do {
+	    curses_getline("Password: (beware - it is transmitted in plain text)", passbuf);
+	    if (passbuf[0] == '\033' || passbuf[0] == '\0')
+		return 0;
+
+            /* Don't re-ask password unless the account is new */
+            ret = nhnet_connect(hostbuf, port, userbuf, passbuf, NULL, 0);
+            nhnet_disconnect();
+	    passok = TRUE;
+
+            if (ret == AUTH_FAILED_UNKNOWN_USER) {
+                curses_getline("Confirm password:", passbuf2);
+                if (passbuf2[0] == '\033' || passbuf2[0] == '\0')
+                    return 0;
+	    
+                if (strcmp(passbuf, passbuf2)) {
+                    passok = FALSE;
+                    curses_msgwin("The passwords didn't match.");
+                }
+            }
+	} while (!passok);
+	
+	ret = nhnet_connect(hostbuf, port, userbuf, passbuf, NULL, 0);
+	if (ret == AUTH_FAILED_BAD_PASSWORD) {
+	    accountok = FALSE;
+	    curses_msgwin("The account exists but this is the wrong password.");
+	} else
+	    accountok = TRUE;
+	nhnet_disconnect();
+
+    } while (!accountok);
+    return 1;
+}
 
 static struct server_info *add_server_menu(struct server_info **servlist)
 {
-    int i, ret, port, hostok, passok, accountok;
-    char hostbuf[BUFSZ], portbuf[BUFSZ], userbuf[BUFSZ], passbuf[BUFSZ], passbuf2[BUFSZ];
+    int i, port, hostok;
+    char hostbuf[BUFSZ], portbuf[BUFSZ], userbuf[BUFSZ], passbuf[BUFSZ];
     
     do {
 	curses_getline("Hostname or IP address:", hostbuf);
@@ -257,41 +301,13 @@ static struct server_info *add_server_menu(struct server_info **servlist)
 	} else
 	    curses_msgwin("Connection test failed");
     } while (!hostok);
-
-    do {
-	curses_getline("Account name (It will be created if necessary):", userbuf);
-	if (userbuf[0] == '\033' || userbuf[0] == '\0')
-	    return NULL;
-	
-	do {
-	    curses_getline("New password: (Beware - it is transmitted in plain text)", passbuf);
-	    if (passbuf[0] == '\033' || passbuf[0] == '\0')
-		return NULL;
-	    curses_getline("Confirm password:", passbuf2);
-	    if (passbuf2[0] == '\033' || passbuf2[0] == '\0')
-		return NULL;
-	    
-	    passok = TRUE;
-	    if (strcmp(passbuf, passbuf2)) {
-		passok = FALSE;
-		curses_msgwin("The passwords didn't match.");
-	    }
-	} while (!passok);
-	
-	ret = nhnet_connect(hostbuf, port, userbuf, passbuf, NULL, 0);
-	if (ret == AUTH_FAILED_BAD_PASSWORD) {
-	    accountok = FALSE;
-	    curses_msgwin("The account exists but this is the wrong password.");
-	} else
-	    accountok = TRUE;
-	nhnet_disconnect();
-
-    } while (!accountok);
-
     
     for (i = 0; (*servlist)[i].hostname; i++);
     *servlist = realloc(*servlist, sizeof(struct server_info) * (i+2));
     memmove(&(*servlist)[1], &(*servlist)[0], sizeof(struct server_info) * (i+1));
+
+    if (!get_username_password(hostbuf, port, userbuf, passbuf))
+        return NULL;
     
     (*servlist)[0].hostname = strdup(hostbuf);
     (*servlist)[0].port = port;
@@ -396,18 +412,21 @@ static int connect_server(struct server_info *server)
     while (1) {
 	ret = nhnet_connect(server->hostname, server->port, server->username,
 			    server->password, NULL, 0);
-	if (ret == AUTH_SUCCESS_NEW)
+	if (ret == AUTH_SUCCESS_NEW) {
+            /* only copy into ui_flags.username once the connection
+               has been accepted */
+            strcpy(ui_flags.username, server->username);
 	    return TRUE;
-	else if (ret == AUTH_SUCCESS_RECONNECT) {
+	} else if (ret == AUTH_SUCCESS_RECONNECT) {
 	    nhnet_exit_game(EXIT_FORCE_SAVE);
 	    if (!nhnet_connected()) /* disconnect due to an error while reconnecting */
 		return FALSE;
+            strcpy(ui_flags.username, server->username);
 	    return TRUE;
 	} else if (ret == NO_CONNECTION) {
 	    curses_msgwin("Connection attempt failed");
 	    return FALSE;
-	}
-	else if (ret == AUTH_FAILED_BAD_PASSWORD) {
+	} else if (ret == AUTH_FAILED_BAD_PASSWORD) {
 	    curses_msgwin("Authentication failed: Wrong password.");
 	    curses_getline("Password:", buf);
 	    if (buf[0] == '\033' || buf[0] == '\0')
@@ -415,7 +434,7 @@ static int connect_server(struct server_info *server)
 	    free((void*)server->password);
 	    server->password = strdup(buf);
 	    continue;
-	} else {/* AUTH_FAILED_UNKNOWN_USER */
+	} else { /* AUTH_FAILED_UNKNOWN_USER */
 	    nhnet_lib_exit(); /* need to acces the local options */
 	    game_opts = nh_get_options(GAME_OPTIONS);
 	    birth_opts = nh_get_options(CURRENT_BIRTH_OPTIONS);
@@ -432,7 +451,8 @@ static int connect_server(struct server_info *server)
 	    }
 	    
 	    /* upload current options */
-	    if (curses_yn_function("Do you want to copy your current game "
+	    if (!ui_flags.connection_only &&
+                curses_yn_function("Do you want to copy your current game "
 		                   "options to the server?", "yn", 'y') == 'y') {
 		for (i = 0; game_opts[i].name; i++)
 		    nh_set_option(game_opts[i].name, game_opts[i].value, 0);
@@ -456,18 +476,23 @@ static void netgame_mainmenu(struct server_info *server)
     const char * const *copybanner = nh_get_copyright_banner();
 
     static struct nh_menuitem netmenu_items[] = {
-	{NEWGAME, MI_NORMAL, "new game", 'n'},
-	{LOAD, MI_NORMAL, "load game", 'l'},
-	{REPLAY, MI_NORMAL, "view replay", 'v'},
-	{OPTIONS, MI_NORMAL, "set options", 'o'},
-	{TOPTEN, MI_NORMAL, "show score list", 's'},
-	{ACCOUNT, MI_NORMAL, "account settings", 'a'},
-	{DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x'}
+	{NEWGAME, MI_NORMAL, "new game", 'n', 0, 0},
+	{LOAD, MI_NORMAL, "load game", 'l', 0, 0},
+	{REPLAY, MI_NORMAL, "view replay", 'v', 0, 0},
+	{OPTIONS, MI_NORMAL, "set options", 'o', 0, 0},
+	{TOPTEN, MI_NORMAL, "show score list", 's', 0},
+	{ACCOUNT, MI_NORMAL, "account settings", 'a', 0},
+	{DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x', 0}
     };
     
     sprintf(verstr, "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
     sprintf(server_verstr, "Server version: %d.%d.%d", nhnet_server_ver.major,
 	    nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
+
+    /* In connection-only mode, we can't read the config file until
+       we're already logged into the server. So do it now. */
+    if (ui_flags.connection_only)
+        read_ui_config();
     
     while (n > 0) {
         if (COLS >= 100) {
@@ -494,6 +519,8 @@ static void netgame_mainmenu(struct server_info *server)
 
 	menuresult[0] = DISCONNECT; /* default action */
 	snprintf(buf, BUFSZ, "%s on %s:", server->username, server->hostname);
+        if (ui_flags.connection_only) snprintf(buf, BUFSZ, "Logged in as %s:",
+                                               server->username);
 	n = curses_display_menu_core(netmenu_items, ARRAY_SIZE(netmenu_items),
 				     buf, PICK_ONE, menuresult, 0, logoheight,
 				     COLS, LINES-3, NULL);
@@ -537,11 +564,23 @@ static void netgame_mainmenu(struct server_info *server)
 void netgame(void)
 {
     struct server_info *servlist, *server;
+    struct server_info localserver = {0,0,0,0};
     
     nhnet_lib_init(&curses_windowprocs);
-    servlist = read_server_list();
-    
-    server = connect_server_menu(&servlist);
+
+    if (ui_flags.connection_only) {
+        servlist = NULL;
+        server = &localserver;
+        localserver.hostname = strdup("::1");
+        localserver.username = malloc(BUFSZ);
+        localserver.password = malloc(BUFSZ);
+        if (!get_username_password(localserver.hostname, 0,
+                                   localserver.username,
+                                   localserver.password)) goto finally;
+    } else {
+        servlist = read_server_list();
+        server = connect_server_menu(&servlist);
+    }
     if (!server || !connect_server(server))
 	goto finally;
     
@@ -549,11 +588,16 @@ void netgame(void)
     init_displaychars(); /* load new display info from the server */
     
     netgame_mainmenu(server);
-    write_server_list(servlist);
+    if (!ui_flags.connection_only) write_server_list(servlist);
     nhnet_disconnect();
     
 finally:
-    free_server_list(servlist);
+    if (servlist) free_server_list(servlist);
+    if (ui_flags.connection_only) {
+        free(localserver.hostname);
+        free(localserver.username);
+        free(localserver.password);
+    }
     nhnet_lib_exit();
     free_displaychars(); /* remove server display info */
     init_displaychars(); /* go back to local object/monster/... lists */

@@ -237,6 +237,11 @@ static void mainmenu(void)
     const char **nhlogo;
     char verstr[32];
     sprintf(verstr, "Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+
+    if (ui_flags.connection_only) {
+        netgame();
+        return;
+    }
     
     while (n > 0) {
 	if (COLS >= 100) {
@@ -312,7 +317,7 @@ int main(int argc, char *argv[])
     
     umask(0777 & ~FCMASK);
 
-    process_args(argc, argv);	/* grab -U, -H early */
+    process_args(argc, argv);	/* grab -U, -H, -k early */
     
     init_options();
     
@@ -378,6 +383,10 @@ static void process_args(int argc, char *argv[])
 	argv++;
 	argc--;
 	switch(argv[0][1]){
+        case 'k':
+            ui_flags.connection_only = 1;
+            break;
+
 	case 'D':
 	    ui_flags.playmode = MODE_WIZARD;
 	    break;

@@ -237,7 +237,7 @@ static void read_unisym_config(void)
     int fd, size;
     
     filename[0] = '\0';
-    if (!get_gamedir(CONFIG_DIR, filename))
+    if (ui_flags.connection_only || !get_gamedir(CONFIG_DIR, filename))
 	return;
     fnncat(filename, FN("unicode.conf"), BUFSZ);
     
@@ -287,7 +287,7 @@ static void write_unisym_config(void)
     int fd;
     
     filename[0] = '\0';
-    if (!get_gamedir(CONFIG_DIR, filename))
+    if (ui_flags.connection_only || !get_gamedir(CONFIG_DIR, filename))
 	return;
     fnncat(filename, FN("unicode.conf"), BUFSZ);
     
