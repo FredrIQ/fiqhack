@@ -1057,33 +1057,45 @@ int mlevel_tele_trap(struct monst *mtmp, struct trap *trap,
 	return 0;
 }
 
+void rloco_pos( struct level *lev, struct obj *obj, int *nx, int *ny )
+{
+    xchar tx, ty, otx, oty;
+    boolean restricted_fall;
+    int try_limit = 4000;
+
+    otx = obj->ox;
+    oty = obj->oy;
+    restricted_fall = (otx == 0 && lev->dndest.lx);
+    do {
+        tx = rn1(COLNO-3,2);
+        ty = rn2(ROWNO);
+        if (!--try_limit) break;
+    } while (!goodpos(lev, tx, ty, NULL, 0) ||
+            /* bug: this lacks provision for handling the Wizard's tower */
+             (restricted_fall &&
+              (!within_bounded_area(tx, ty, lev->dndest.lx, lev->dndest.ly,
+                                            lev->dndest.hx, lev->dndest.hy) ||
+               (level->dndest.nlx &&
+                within_bounded_area(tx, ty, lev->dndest.nlx, lev->dndest.nly,
+                                            lev->dndest.nhx, lev->dndest.nhy)))));
+
+    *nx = tx;
+    *ny = ty;
+}
 
 void rloco(struct obj *obj)
 {
-	xchar tx, ty, otx, oty;
-	boolean restricted_fall;
-	int try_limit = 4000;
+	int tx, ty, otx, oty;
+
+        otx = obj->ox;
+        oty = obj->oy;
 
 	if (obj->otyp == CORPSE && is_rider(&mons[obj->corpsenm])) {
 	    if (revive_corpse(obj)) return;
 	}
 
 	obj_extract_self(obj);
-	otx = obj->ox;
-	oty = obj->oy;
-	restricted_fall = (otx == 0 && level->dndest.lx);
-	do {
-	    tx = rn1(COLNO-3,2);
-	    ty = rn2(ROWNO);
-	    if (!--try_limit) break;
-	} while (!goodpos(level, tx, ty, NULL, 0) ||
-		/* bug: this lacks provision for handling the Wizard's tower */
-		 (restricted_fall &&
-		  (!within_bounded_area(tx, ty, level->dndest.lx, level->dndest.ly,
-						level->dndest.hx, level->dndest.hy) ||
-		   (level->dndest.nlx &&
-		    within_bounded_area(tx, ty, level->dndest.nlx, level->dndest.nly,
-						level->dndest.nhx, level->dndest.nhy)))));
+        rloco_pos(level, obj, &tx, &ty);
 
 	if (flooreffects(obj, tx, ty, "fall")) {
 	    return;

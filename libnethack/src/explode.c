@@ -397,6 +397,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
              struct obj *obj)	/* only scatter this obj        */
 {
 	struct obj *otmp;
+        struct level *lev = obj ? obj->olev : level;
 	int tmp;
 	int farthest = 0;
 	uchar typ;
@@ -407,8 +408,9 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 	struct scatter_chain *stmp, *stmp2 = 0;
 	struct scatter_chain *schain = NULL;
 	long total = 0L;
+        boolean visible = (lev == level && cansee(sx, sy));
 
-	while ((otmp = individual_object ? obj : level->objects[sx][sy]) != 0) {
+	while ((otmp = individual_object ? obj : lev->objects[sx][sy]) != 0) {
 	    if (otmp->quan > 1L) {
 		qtmp = otmp->quan - 1;
 		if (qtmp > LARGEST_INT) qtmp = LARGEST_INT;
@@ -425,22 +427,24 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 			&& ((otmp->otyp == BOULDER) || (otmp->otyp == STATUE))
 			&& rn2(10)) {
 		if (otmp->otyp == BOULDER) {
-		    pline("%s apart.", Tobjnam(otmp, "break"));
+                    if(visible) 
+                        pline("%s apart.", Tobjnam(otmp, "break"));
 		    fracture_rock(otmp);
-		    place_object(otmp, level, sx, sy);
-		    if ((otmp = sobj_at(BOULDER, level, sx, sy)) != 0) {
+		    place_object(otmp, lev, sx, sy);
+		    if ((otmp = sobj_at(BOULDER, lev, sx, sy)) != 0) {
 			/* another boulder here, restack it to the top */
 			obj_extract_self(otmp);
-			place_object(otmp, level, sx, sy);
+			place_object(otmp, lev, sx, sy);
 		    }
 		} else {
 		    struct trap *trap;
 
-		    if ((trap = t_at(level, sx, sy)) && trap->ttyp == STATUE_TRAP)
+		    if ((trap = t_at(lev, sx, sy)) && trap->ttyp == STATUE_TRAP)
 			    deltrap(trap);
-		    pline("%s.", Tobjnam(otmp, "crumble"));
+                    if(visible)
+                        pline("%s.", Tobjnam(otmp, "crumble"));
 		    break_statue(otmp);
-		    place_object(otmp, level, sx, sy);	/* put fragments on floor */
+		    place_object(otmp, lev, sx, sy);	/* put fragments on floor */
 		}
 		used_up = TRUE;
 
@@ -478,17 +482,17 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 		   if ((stmp->range-- > 0) && (!stmp->stopped)) {
 			bhitpos.x = stmp->ox + stmp->dx;
 			bhitpos.y = stmp->oy + stmp->dy;
-			typ = level->locations[bhitpos.x][bhitpos.y].typ;
+			typ = lev->locations[bhitpos.x][bhitpos.y].typ;
 			if (!isok(bhitpos.x, bhitpos.y)) {
 				bhitpos.x -= stmp->dx;
 				bhitpos.y -= stmp->dy;
 				stmp->stopped = TRUE;
 			} else if (!ZAP_POS(typ) ||
-					closed_door(level, bhitpos.x, bhitpos.y)) {
+					closed_door(lev, bhitpos.x, bhitpos.y)) {
 				bhitpos.x -= stmp->dx;
 				bhitpos.y -= stmp->dy;
 				stmp->stopped = TRUE;
-			} else if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
+			} else if ((mtmp = m_at(lev, bhitpos.x, bhitpos.y)) != 0) {
 				if (scflags & MAY_HITMON) {
 				    stmp->range--;
 				    if (ohitmon(mtmp, stmp->obj, 1, FALSE)) {
@@ -530,7 +534,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 		if (stmp->obj) {
 			if ( x!=sx || y!=sy )
 			    total += stmp->obj->quan;
-			place_object(stmp->obj, level, x, y);
+			place_object(stmp->obj, lev, x, y);
 			stackobj(stmp->obj);
 		}
 		free(stmp);

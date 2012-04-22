@@ -1412,8 +1412,8 @@ void deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where)
 		/* set dummy coordinates because there's no
 		   current position for rloco() to update */
 		obj->ox = obj->oy = 0;
-		rloco(obj);
-		return;
+                rloco_pos(lev, obj, &nx, &ny);
+		break;
 	}
 	
 	place_object(obj, lev, nx, ny);
