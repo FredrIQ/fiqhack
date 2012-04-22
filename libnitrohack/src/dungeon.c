@@ -1859,8 +1859,7 @@ overview_scan(const struct level *lev, struct overview_info *oi)
 
     /* find the magic portal, if it exists */
     for (trap = lev->lev_traps; trap; trap = trap->ntrap)
-        if (trap->tseen && trap->ttyp == MAGIC_PORTAL &&
-            trap->dst.dnum != lev->z.dnum) {
+        if (trap->tseen && trap->ttyp == MAGIC_PORTAL) {
             oi->portal = TRUE;
             if (levels[ledger_no(&trap->dst)]) {
                 oi->portal_dst_known = TRUE;
@@ -1869,7 +1868,6 @@ overview_scan(const struct level *lev, struct overview_info *oi)
                 oi->portal_dst_known = FALSE;
             }
         }
-}
 }
 
 
