@@ -309,6 +309,7 @@ extern void draw_getline(struct gamewin *gw);
 extern nh_bool curses_get_ext_cmd(char *cmd_out, const char **namelist,
 			   const char **desclist, int listlen);
 extern void curses_getline(const char *query, char *buffer);
+extern void curses_getline_pw(const char *query, char *buffer);
 
 /* keymap.c */
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *count);

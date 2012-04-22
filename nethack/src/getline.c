@@ -35,7 +35,7 @@ static void buf_delete(char *buf, int pos)
 }
 
 
-void draw_getline(struct gamewin *gw)
+static void draw_getline_inner(struct gamewin *gw, int echo)
 {
     struct win_getline *glw = (struct win_getline *)gw->extra;
     int width, i, offset = 0;
@@ -52,7 +52,11 @@ void draw_getline(struct gamewin *gw)
     
     wmove(gw->win, 2, 2);
     wattron(gw->win, A_UNDERLINE);
-    waddnstr(gw->win, &glw->buf[offset], width - 4);
+    if (echo)
+        waddnstr(gw->win, &glw->buf[offset], width - 4);
+    else
+        for (i = 0; i < (int)len; i++)
+            wprintw(gw->win, "*");
     for (i = len; i < width - 4; i++)
 	wprintw(gw->win, "%c", (A_UNDERLINE != A_NORMAL) ? ' ' : '_');
     wattroff(gw->win, A_UNDERLINE);
@@ -60,6 +64,14 @@ void draw_getline(struct gamewin *gw)
     wrefresh(gw->win);
 }
 
+void draw_getline(struct gamewin *gw)
+{
+    draw_getline_inner(gw, 1);
+}
+static void draw_getline_noecho(struct gamewin *gw)
+{
+    draw_getline_inner(gw, 0);
+}
 
 static void resize_getline(struct gamewin *gw)
 {
@@ -83,8 +95,9 @@ static void resize_getline(struct gamewin *gw)
  * Reading can be interrupted by an escape ('\033') - now the
  * resulting string is "\033".
  */
-static void hooked_curses_getlin(const char *query, char *buf,
-		       getlin_hook_proc hook, void *hook_proc_arg)
+static void hooked_curses_getlin(
+  const char *query, char *buf, getlin_hook_proc hook,
+  void *hook_proc_arg, int echo)
 {
     struct gamewin *gw;
     struct win_getline *gldat;
@@ -99,7 +112,7 @@ static void hooked_curses_getlin(const char *query, char *buf,
     width = COLS - 2;
     gw = alloc_gamewin(sizeof(struct win_getline));
     gw->win = newdialog(height, width);
-    gw->draw = draw_getline;
+    gw->draw = echo ? draw_getline : draw_getline_noecho;
     gw->resize = resize_getline;
     gldat = (struct win_getline *)gw->extra;
     gldat->buf = buf;
@@ -107,7 +120,7 @@ static void hooked_curses_getlin(const char *query, char *buf,
     
     buf[0] = 0;
     while (!done) {
-	draw_getline(gw);
+	draw_getline_inner(gw, echo);
 	key = nh_wgetch(gw->win);
 	
 	switch (key) {
@@ -181,10 +194,13 @@ static void hooked_curses_getlin(const char *query, char *buf,
     redraw_game_windows();
 }
 
-
 void curses_getline(const char *query, char *buffer)
 {
-    hooked_curses_getlin(query, buffer, NULL, NULL);
+    hooked_curses_getlin(query, buffer, NULL, NULL, 1);
+}
+void curses_getline_pw(const char *query, char *buffer)
+{
+    hooked_curses_getlin(query, buffer, NULL, NULL, 0);
 }
 
 
@@ -339,6 +355,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
     
     free(choices);
     free(items);
+
     return ret;
 }
 
@@ -363,7 +380,7 @@ nh_bool curses_get_ext_cmd(char *cmd_out, const char **namelist,
 
 	/* maybe a runtime option? */
 	hooked_curses_getlin("extended command: (? for help)", cmd_out,
-			     ext_cmd_getlin_hook, &hpa);
+			     ext_cmd_getlin_hook, &hpa, 1);
 	mungspaces(cmd_out);
 	if (cmd_out[0] == 0 || cmd_out[0] == '\033')
 	    return FALSE;

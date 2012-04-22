@@ -109,15 +109,15 @@ static void account_menu(struct server_info *server)
 		break;
 		
 	    case 2:
-		curses_getline("Current password:", buf1);
+		curses_getline_pw("Current password:", buf1);
 		if (strcmp(server->password, buf1)) {
 		    curses_msgwin("Incorrect password.");
 		    break;
 		}   
 		
-		curses_getline("Change password: (Beware - it is transmitted in plain text)", buf1);
+		curses_getline_pw("Change password: (Beware - it is transmitted in plain text)", buf1);
 		if (buf1[0] != '\033' && buf1[0] != '\0')
-		    curses_getline("Confirm password:", buf2);
+		    curses_getline_pw("Confirm password:", buf2);
 		
 		if (buf2[0] == '\033' || buf2[0] == '\0')
 		    curses_msgwin("Password change cancelled.");
@@ -246,7 +246,7 @@ static int get_username_password(const char *hostbuf, int port,
 	    return 0;
 	
 	do {
-	    curses_getline("Password: (beware - it is transmitted in plain text)", passbuf);
+	    curses_getline_pw("Password: (beware - it is transmitted in plain text)", passbuf);
 	    if (passbuf[0] == '\033' || passbuf[0] == '\0')
 		return 0;
 
@@ -256,7 +256,7 @@ static int get_username_password(const char *hostbuf, int port,
 	    passok = TRUE;
 
             if (ret == AUTH_FAILED_UNKNOWN_USER) {
-                curses_getline("Confirm password:", passbuf2);
+                curses_getline_pw("Confirm password:", passbuf2);
                 if (passbuf2[0] == '\033' || passbuf2[0] == '\0')
                     return 0;
 	    
