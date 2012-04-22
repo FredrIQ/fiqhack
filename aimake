@@ -1713,8 +1713,10 @@ if ($options{'i'}) {
     if ($fn2 ne 'sys:touch_only') {
       open(my $infh, '<', $path)
         or die "Could not open '$path' for reading: $?";
+      # Avoid ETXTBUSY issues
+      -e $install_loc and unlink $install_loc;
       open(my $outfh, '>', $install_loc)
-        or die "Could not open '$install_loc' for reading: $?";
+        or die "Could not open '$install_loc' for writing: $?";
       local $/ = undef;
       print $outfh (<$infh>);
       close $infh;
