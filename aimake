@@ -47,6 +47,16 @@ messages.
 After building (if necessary), install the project into the given
 directory.
 
+=item B<-p> F<directory>
+
+When installing, treat the given directory as the root directory,
+rather than using the actual root directory. (For instance, giving
+B<-i> F</usr> B<-p> F</home/user> would install into
+F</home/user/usr>, but the installed program would look for paths
+as if it had been installed into F</usr>.) This is intended for use
+in packaging programs, and when installing into a chroot from
+outside the chroot.
+
 =item B<-d>
 
 Instead of compiling, dump the internal statefile to stdout in a
@@ -93,7 +103,7 @@ if (-e statefile) {
 our $VERSION = 0.3;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 my %options;
-getopts('dv:i:B:', \%options);
+getopts('dv:i:p:B:', \%options);
 
 if($options{'d'}) {
   print Dumper($state);
@@ -1703,6 +1713,19 @@ if ($options{'i'}) {
     my $path_is_relative = $2 eq 'path';
     my $instarget = $4;
     my (undef, undef, $fn) = File::Spec->splitpath($3);
+
+    # adapt installation dir for chrooting
+    if ($options{'p'}) {
+        my ($chrootvol, $chrootdirs, undef) =
+            File::Spec->splitpath($options{'p'},1);
+        my (undef, $insdirs, undef) =
+            File::Spec->splitpath($insdir,1);
+        my @newinsdirs = (File::Spec->splitdir($chrootdirs),
+                          File::Spec->splitdir($insdirs));
+        my $newinsdir = File::Spec->catdir(@newinsdirs);
+        $insdir = File::Spec->catpath($chrootvol, $newinsdir, '');
+    }
+
     my $install_loc = File::Spec->catfile($insdir,defined_or($instarget, $fn));
     if ($path_is_relative && !File::Spec->file_name_is_absolute($path)) {
       $path = File::Spec->catfile($state->{'srcdir'}, $path);
