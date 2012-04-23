@@ -147,7 +147,7 @@ int does_block(struct level *lev, int x, int y)
 	return 1;
 
     /* Boulders block light. */
-    if (sobj_at(BOULDER, level, x, y))
+    if (sobj_at(BOULDER, lev, x, y))
         return 1;
 
     /* Mimics mimicing a door or boulder block light. */
