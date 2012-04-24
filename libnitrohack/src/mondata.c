@@ -434,45 +434,40 @@ name_to_mon(const char *in_str)
             short pm_val;
         } names[] = {
             /* Alternate spellings */
-            {
-            "grey dragon", PM_GRAY_DRAGON}, {
-            "baby grey dragon", PM_BABY_GRAY_DRAGON}, {
-            "grey unicorn", PM_GRAY_UNICORN}, {
-            "grey ooze", PM_GRAY_OOZE}, {
-            "gray-elf", PM_GREY_ELF}, {
-            "mindflayer", PM_MIND_FLAYER}, {
-            "master mindflayer", PM_MASTER_MIND_FLAYER},
-                /* Hyphenated names */
-            {
-            "ki rin", PM_KI_RIN}, {
-            "uruk hai", PM_URUK_HAI}, {
-            "orc captain", PM_ORC_CAPTAIN}, {
-            "woodland elf", PM_WOODLAND_ELF}, {
-            "green elf", PM_GREEN_ELF}, {
-            "grey elf", PM_GREY_ELF}, {
-            "gray elf", PM_GREY_ELF}, {
-            "elf lord", PM_ELF_LORD}, {
-            "olog hai", PM_OLOG_HAI}, {
-            "arch lich", PM_ARCH_LICH},
-                /* Some irregular plurals */
-            {
-            "incubi", PM_INCUBUS}, {
-            "succubi", PM_SUCCUBUS}, {
-            "violet fungi", PM_VIOLET_FUNGUS}, {
-            "homunculi", PM_HOMUNCULUS}, {
-            "baluchitheria", PM_BALUCHITHERIUM}, {
-            "lurkers above", PM_LURKER_ABOVE}, {
-            "cavemen", PM_CAVEMAN}, {
-            "cavewomen", PM_CAVEWOMAN}, {
-            "djinn", PM_DJINNI}, {
-            "mumakil", PM_MUMAK}, {
-            "erinyes", PM_ERINYS},
-                /* falsely caught by -ves check above */
-            {
-            "master of thief", PM_MASTER_OF_THIEVES},
-                /* end of list */
-            {
-            0, 0}
+            { "grey dragon", PM_GRAY_DRAGON },
+            { "baby grey dragon", PM_BABY_GRAY_DRAGON },
+            { "grey unicorn", PM_GRAY_UNICORN },
+            { "grey ooze", PM_GRAY_OOZE },
+            { "gray-elf", PM_GREY_ELF },
+            { "mindflayer", PM_MIND_FLAYER },
+            { "master mindflayer", PM_MASTER_MIND_FLAYER },
+            /* Hyphenated names */
+            { "ki rin", PM_KI_RIN },
+            { "uruk hai", PM_URUK_HAI },
+            { "orc captain", PM_ORC_CAPTAIN },
+            { "woodland elf", PM_WOODLAND_ELF },
+            { "green elf", PM_GREEN_ELF },
+            { "grey elf", PM_GREY_ELF },
+            { "gray elf", PM_GREY_ELF },
+            { "elf lord", PM_ELF_LORD },
+            { "olog hai", PM_OLOG_HAI },
+            { "arch lich", PM_ARCH_LICH },
+            /* Some irregular plurals */
+            { "incubi", PM_INCUBUS },
+            { "succubi", PM_SUCCUBUS },
+            { "violet fungi", PM_VIOLET_FUNGUS },
+            { "homunculi", PM_HOMUNCULUS },
+            { "baluchitheria", PM_BALUCHITHERIUM },
+            { "lurkers above", PM_LURKER_ABOVE },
+            { "cavemen", PM_CAVEMAN },
+            { "cavewomen", PM_CAVEWOMAN },
+            { "djinn", PM_DJINNI },
+            { "mumakil", PM_MUMAK },
+            { "erinyes", PM_ERINYS },
+            /* falsely caught by -ves check above */
+            { "master of thief", PM_MASTER_OF_THIEVES },
+            /* end of list */
+            {0, 0}
         };
         const struct alt_spl *namep;
 
