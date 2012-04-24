@@ -204,8 +204,9 @@ struct obj {
 
 #define helmet_name(otmp) (is_metallic(otmp) && \
 			   (otmp)->otyp != DWARVISH_IRON_HELM ? "helmet" : "hat")
+#define maybe_helmet_name(otmp) ((otmp) ? helmet_name((otmp)) : "helmet")
 
-				
+
 /* Eggs and other food */
 #define MAX_EGG_HATCH_TIME 200	/* longest an egg can remain unhatched */
 #define stale_egg(egg)	((moves - (egg)->age) > (2*MAX_EGG_HATCH_TIME))

@@ -1605,7 +1605,7 @@ stillinwater:
 			      Amonnam(mtmp), ceiling(u.ux,u.uy));
 			if (mtmp->mtame) /* jumps to greet you, not attack */
 			    ;
-			else if(uarmh && is_metallic(uarmh))
+			else if (uarmh && is_metallic(uarmh))
 			    pline("Its blow glances off your %s.",
 			          helmet_name(uarmh));
 			else if (u.uac + 3 <= rnd(20))

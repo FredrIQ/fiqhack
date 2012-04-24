@@ -765,7 +765,8 @@ void dotrap(struct trap *trap, unsigned trflags)
 		    case 0:
 			pline("%s you on the %s!", A_gush_of_water_hits,
 				    body_part(HEAD));
-			rust_dmg(uarmh, helmet_name(uarmh), 1, TRUE, &youmonst);
+			rust_dmg(uarmh, maybe_helmet_name(uarmh), 1, TRUE,
+                                 &youmonst);
 			break;
 		    case 1:
 			pline("%s your left %s!", A_gush_of_water_hits,
@@ -1751,8 +1752,7 @@ int mintrap(struct monst *mtmp)
 				pline("%s %s on the %s!", A_gush_of_water_hits,
 				    mon_nam(mtmp), mbodypart(mtmp, HEAD));
 			    target = which_armor(mtmp, W_ARMH);
-			    rust_dmg(target, target ? helmet_name(target)
-				                    : "helmet",
+			    rust_dmg(target, maybe_helmet_name(target),
 				     1, TRUE, mtmp);
 			    break;
 			case 1:
