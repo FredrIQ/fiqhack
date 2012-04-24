@@ -569,14 +569,17 @@ void netgame(void)
     nhnet_lib_init(&curses_windowprocs);
 
     if (ui_flags.connection_only) {
+        char *username, *password;
         servlist = NULL;
         server = &localserver;
         localserver.hostname = strdup("::1");
-        localserver.username = malloc(BUFSZ);
-        localserver.password = malloc(BUFSZ);
+        localserver.username = 0;
+        localserver.password = 0;
         if (!get_username_password(localserver.hostname, 0,
-                                   localserver.username,
-                                   localserver.password)) goto finally;
+                                   username,
+                                   password)) goto finally;
+        localserver.username = username;
+        localserver.password = password;
     } else {
         servlist = read_server_list();
         server = connect_server_menu(&servlist);

@@ -533,7 +533,7 @@ static void write_keymap(void)
 
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
-	return FALSE;
+	return;
     if (ui_flags.connection_only) {
       fnncat(filename, ui_flags.username, BUFSZ);
       fnncat(filename, FN(".keymap"), BUFSZ);
