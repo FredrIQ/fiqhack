@@ -1286,7 +1286,8 @@ int use_offensive(struct monst *mtmp, struct musable *m)
 				if (helmet) {
 				    if (is_metallic(helmet)) {
 					if (canspotmon(mtmp2))
-					    pline("Fortunately, %s is wearing a hard %s.", mon_nam(mtmp2),
+                                            pline("Fortunately, %s is wearing "
+                                                  "a hard %s.", mon_nam(mtmp2),
 					          helmet_name(helmet));
 					else if (flags.soundok)
 					    You_hear("a clanging sound.");

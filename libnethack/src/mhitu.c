@@ -2190,7 +2190,7 @@ int doseduce(struct monst *mon)
 	if (!uwep || !welded(uwep))
 		mayberem(uarmg, "gloves");
 	mayberem(uarms, "shield");
-	mayberem(uarmh, uarmh ? helmet_name(uarmh) : "helmet");
+	mayberem(uarmh, maybe_helmet_name(uarmh));
 	if(!uarmc && !uarm)
 		mayberem(uarmu, "shirt");
 

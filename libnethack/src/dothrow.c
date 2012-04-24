@@ -1655,7 +1655,7 @@ static int throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 	pline("The gold hits the %s, then falls back on top of your %s.",
 		    ceiling(u.ux, u.uy), body_part(HEAD));
 		    /* some self damage? */
-		    if(uarmh)
+		    if (uarmh)
 		        pline("Fortunately, you are wearing a %s!",
 			      helmet_name(uarmh));
 		}
