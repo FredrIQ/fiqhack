@@ -573,13 +573,13 @@ void netgame(void)
         servlist = NULL;
         server = &localserver;
         localserver.hostname = strdup("::1");
-        localserver.username = 0;
-        localserver.password = 0;
+        username = malloc(BUFSZ);
+        password = malloc(BUFSZ);
+        localserver.username = username;
+        localserver.password = password;
         if (!get_username_password(localserver.hostname, 0,
                                    username,
                                    password)) goto finally;
-        localserver.username = username;
-        localserver.password = password;
     } else {
         servlist = read_server_list();
         server = connect_server_menu(&servlist);
