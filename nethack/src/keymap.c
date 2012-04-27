@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <signal.h>
 
 enum internal_commands {
     /* implicitly include enum nh_direction */
@@ -12,6 +13,7 @@ enum internal_commands {
     UICMD_EXTCMD,
     UICMD_HELP,
     UICMD_REDO,
+    UICMD_STOP,
     UICMD_PREVMSG,
     UICMD_WHATDOES,
     UICMD_NOTHING
@@ -62,6 +64,7 @@ struct nh_cmd_desc builtin_commands[] = {
     {"options",	   "show option settings, possibly change them", 'O', 0, CMD_UI | UICMD_OPTIONS},
     {"prevmsg",	   "list previously displayed messages", Ctrl('p'), 0, CMD_UI | UICMD_PREVMSG},
     {"redo",	   "redo the previous command", '\001', 0, CMD_UI | UICMD_REDO},
+    {"stop",       "suspend to shell", Ctrl('z'), 0, CMD_UI | UICMD_STOP},
     {"whatdoes",   "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
     {"(nothing)",  "bind keys to this command to suppress \"Bad command\".", 0, 0, CMD_UI | UICMD_NOTHING},
 };
@@ -80,6 +83,7 @@ static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
 static void init_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
+static void dostop(void);
 
 
 static const char *curses_keyname(int key)
@@ -155,7 +159,12 @@ void handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg, int *
 	    *arg = prev_arg;
 	    *count = prev_count;
 	    break;
-	    
+
+        case UICMD_STOP:
+            dostop();
+            *cmd = NULL;
+            break;
+
 	case UICMD_PREVMSG:
 	    doprev_message();
 	    *cmd = NULL;
@@ -407,6 +416,13 @@ static struct nh_cmd_desc* show_help(void)
     }
     
     return NULL;
+}
+
+static void dostop(void)
+{
+    endwin();
+    kill(getpid(), SIGSTOP);
+    doupdate();
 }
 
 /*----------------------------------------------------------------------------*/
