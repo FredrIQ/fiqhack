@@ -464,6 +464,10 @@ static void display_monster(
 	    mflag |= MON_TAME;
 	else if (mon->mpeaceful && !Hallucination)
 	    mflag |= MON_PEACEFUL;
+        
+        /* If the hero can see a monster at this location, then no longer
+         * remember the 'invisible' state. */
+        level->locations[x][y].mem_invis = 0;
 
 	dbuf_set(x, y, level->locations[x][y].mem_bg,
 	         level->locations[x][y].mem_trap,
