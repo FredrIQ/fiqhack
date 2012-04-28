@@ -1399,9 +1399,12 @@ int damageum(struct monst *mdef, const struct attack *mattk)
 					(u.uswallow && u.ustuck == mdef);
 		    /* record the name before losing sight of monster */
 		    strcpy(nambuf, Monnam(mdef));
-		    if (u_teleport_mon(mdef, FALSE) &&
-			    u_saw_mon && !canseemon(mdef))
-			pline("%s suddenly disappears!", nambuf);
+                    if(u_teleport_mon(mdef, FALSE) && u_saw_mon) {
+                        boolean can_see_mon = canseemon(mdef) ||
+                                              (u.uswallow && u.ustuck == mdef);
+                        if(!can_see_mon)
+                            pline("%s suddenly disappears!", nambuf);
+                    }
 		}
 		break;
 	    case AD_BLND:
