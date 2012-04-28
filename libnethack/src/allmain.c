@@ -531,6 +531,7 @@ static void you_moved(void)
 			if (!next_to_u()) {
 			    check_leash(old_ux, old_uy);
 			}
+                        iflags.botl = 1;
 		    }
 		}
 		/* delayed change may not be valid anymore */
