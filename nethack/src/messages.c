@@ -138,7 +138,8 @@ void draw_msgwin(void)
 
 	wmove(msgwin, i, 0);
 	waddstr(msgwin, msglines[pos]);
-	wclrtoeol(msgwin);
+        /* Only clear the remainder of the line if the cursor did not wrap. */
+	if(getcurx(msgwin)) wclrtoeol(msgwin);
     }
     wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
     wnoutrefresh(msgwin);
