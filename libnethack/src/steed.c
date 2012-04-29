@@ -62,14 +62,14 @@ int use_saddle(struct obj *otmp)
 			!(mtmp = m_at(level, u.ux+dx, u.uy+dy)) ||
 			!canspotmon(mtmp)) {
 	    pline("I see nobody there.");
-	    return 1;
+	    return 0;
 	}
 
 	/* Is this a valid monster? */
 	if (mtmp->misc_worn_check & W_SADDLE ||
 			which_armor(mtmp, W_SADDLE)) {
 	    pline("%s doesn't need another one.", Monnam(mtmp));
-	    return 1;
+	    return 0;
 	}
 	ptr = mtmp->data;
 	if (touch_petrifies(ptr) && !uarmg && !Stone_resistance) {
@@ -89,11 +89,11 @@ int use_saddle(struct obj *otmp)
 	if (mtmp->isminion || mtmp->isshk || mtmp->ispriest ||
 			mtmp->isgd || mtmp->iswiz) {
 	    pline("I think %s would mind.", mon_nam(mtmp));
-	    return 1;
+	    return 0;
 	}
 	if (!can_saddle(mtmp)) {
 		pline("You can't saddle such a creature.");
-		return 1;
+		return 0;
 	}
 
 	/* Calculate your chance */

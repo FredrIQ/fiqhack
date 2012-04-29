@@ -16,18 +16,18 @@ static boolean its_dead(int,int,int *);
 static int use_stethoscope(struct obj *);
 static int use_whistle(struct obj *);
 static int use_magic_whistle(struct obj *);
-static void use_leash(struct obj *);
+static int use_leash(struct obj *);
 static int use_mirror(struct obj *);
 static void use_bell(struct obj **);
-static void use_candelabrum(struct obj *);
-static void use_candle(struct obj **);
-static void use_lamp(struct obj *);
-static void light_cocktail(struct obj *);
-static void use_tinning_kit(struct obj *);
+static int use_candelabrum(struct obj *);
+static int use_candle(struct obj **);
+static int use_lamp(struct obj *);
+static int light_cocktail(struct obj *);
+static int use_tinning_kit(struct obj *);
 static boolean use_figurine(struct obj *obj);
-static void use_grease(struct obj *);
-static void use_trap(struct obj *);
-static void use_stone(struct obj *);
+static int use_grease(struct obj *);
+static int use_trap(struct obj *);
+static int use_stone(struct obj *);
 static int set_trap(void);		/* occupation callback */
 static int use_whip(struct obj *);
 static int use_pole(struct obj *);
@@ -391,7 +391,7 @@ void unleash_all(void)		/* player is about to die (for bones) */
 #define MAXLEASHED	2
 
 /* ARGSUSED */
-static void use_leash(struct obj *obj)
+static int use_leash(struct obj *obj)
 {
 	coord cc;
 	struct monst *mtmp;
@@ -400,10 +400,10 @@ static void use_leash(struct obj *obj)
 
 	if (!obj->leashmon && number_leashed() >= MAXLEASHED) {
 		pline("You cannot leash any more pets.");
-		return;
+		return 0;
 	}
 
-	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz)) return;
+	if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz)) return 0;
 
 	if ((cc.x == u.ux) && (cc.y == u.uy)) {
 		if (u.usteed && dz > 0) {
@@ -412,12 +412,12 @@ static void use_leash(struct obj *obj)
 		    goto got_target;
 		}
 		pline("Leash yourself?  Very funny...");
-		return;
+		return 0;
 	}
 
 	if (!(mtmp = m_at(level, cc.x, cc.y))) {
 		pline("There is no creature there.");
-		return;
+		return 0;
 	}
 
 	spotmon = canspotmon(mtmp);
@@ -429,36 +429,36 @@ got_target:
 	    else
 		pline("%s %s leashed!", Monnam(mtmp), (!obj->leashmon) ?
 				"cannot be" : "is not");
-	    return;
+	    return 0;
 	}
 	if (!obj->leashmon) {
 		if (mtmp->mleashed) {
 			pline("This %s is already leashed.",
 			      spotmon ? l_monnam(mtmp) : "monster");
-			return;
+			return 0;
 		}
 		pline("You slip the leash around %s%s.",
 		    spotmon ? "your " : "", l_monnam(mtmp));
 		mtmp->mleashed = 1;
 		obj->leashmon = (int)mtmp->m_id;
 		mtmp->msleeping = 0;
-		return;
+		return 1;
 	}
 	if (obj->leashmon != (int)mtmp->m_id) {
 		pline("This leash is not attached to that creature.");
-		return;
+		return 0;
 	} else {
 		if (obj->cursed) {
 			pline("The leash would not come off!");
 			obj->bknown = TRUE;
-			return;
+			return 1;
 		}
 		mtmp->mleashed = 0;
 		obj->leashmon = 0;
 		pline("You remove the leash from %s%s.",
 		    spotmon ? "your " : "", l_monnam(mtmp));
 	}
-	return;
+	return 1;
 }
 
 struct obj *get_mleash(struct monst *mtmp)	/* assuming mtmp->mleashed has been checked */
@@ -806,22 +806,22 @@ static void use_bell(struct obj **optr)
 	if (wakem) wake_nearby();
 }
 
-static void use_candelabrum(struct obj *obj)
+static int use_candelabrum(struct obj *obj)
 {
 	const char *s = (obj->spe != 1) ? "candles" : "candle";
 
 	if (Underwater) {
 		pline("You cannot make fire under water.");
-		return;
+		return 0;
 	}
 	if (obj->lamplit) {
 		pline("You snuff the %s.", s);
 		end_burn(obj, TRUE);
-		return;
+		return 1;
 	}
 	if (obj->spe <= 0) {
 		pline("This %s has no %s.", xname(obj), s);
-		return;
+		return 1;
 	}
 	if (u.uswallow || obj->cursed) {
 		if (!Blind)
@@ -831,7 +831,7 @@ static void use_candelabrum(struct obj *obj)
 		    pline("The %s %s for a moment, then %s.",
 			      s, vtense(s, "flicker"), vtense(s, "die"));
                 obj->bknown = TRUE;
-		return;
+		return 1;
 	}
 	if (obj->spe < 7) {
 		pline("There %s only %d %s in %s.",
@@ -857,9 +857,10 @@ static void use_candelabrum(struct obj *obj)
 		obj->known = 1;
 	}
 	begin_burn(obj, FALSE);
+        return 1;
 }
 
-static void use_candle(struct obj **optr)
+static int use_candle(struct obj **optr)
 {
 	struct obj *obj = *optr;
 	struct obj *otmp;
@@ -868,17 +869,16 @@ static void use_candle(struct obj **optr)
 
 	if (u.uswallow) {
 		pline(no_elbow_room);
-		return;
+		return 0;
 	}
 	
 	otmp = carrying(CANDELABRUM_OF_INVOCATION);
 	if (!otmp || otmp->spe == 7) {
 		if (Underwater) {
 		    pline("Sorry, fire and water don't mix.");
-		    return;
+		    return 0;
 		}
-		use_lamp(obj);
-		return;
+		return use_lamp(obj);
 	}
 
 	sprintf(qbuf, "Attach %s", the(xname(obj)));
@@ -888,12 +888,11 @@ static void use_candle(struct obj **optr)
 	if (yn(qbuf) == 'n') {
 		if (Underwater) {
 		    pline("Sorry, fire and water don't mix.");
-		    return;
+		    return 0;
 		}
 		if (!obj->lamplit)
 		    pline("You try to light %s...", the(xname(obj)));
-		use_lamp(obj);
-		return;
+		return use_lamp(obj);
 	} else {
 		if ((long)otmp->spe + obj->quan > 7L)
 		    obj = splitobj(obj, 7L - (long)otmp->spe);
@@ -926,6 +925,7 @@ static void use_candle(struct obj **optr)
 		otmp->owt = weight(otmp);
 		/* no encumber_msg: weight on player didn't change */
 	}
+        return 1;
 }
 
 boolean snuff_candle(struct obj *otmp)  /* call in drop, throw, and put in box, etc. */
@@ -1007,13 +1007,13 @@ boolean catch_lit(struct obj *obj)
 	return FALSE;
 }
 
-static void use_lamp(struct obj *obj)
+static int use_lamp(struct obj *obj)
 {
 	char buf[BUFSZ];
 
 	if (Underwater) {
 		pline("This is not a diving lamp.");
-		return;
+		return 0;
 	}
 	if (obj->lamplit) {
 		if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
@@ -1043,7 +1043,7 @@ static void use_lamp(struct obj *obj)
                     reorder_invent();
                     update_inventory();
                 }
-		return;
+		return 1;
 	}
 	/* magic lamps with an spe == 0 (wished for) cannot be lit */
 	if ((!Is_candle(obj) && obj->age == 0)
@@ -1051,7 +1051,7 @@ static void use_lamp(struct obj *obj)
 		if (obj->otyp == BRASS_LANTERN)
 			pline("Your lamp has run out of power.");
 		else pline("This %s has no oil.", xname(obj));
-		return;
+		return 1;
 	}
 	if (obj->cursed && !rn2(2)) {
 		if (Blind)
@@ -1081,15 +1081,16 @@ static void use_lamp(struct obj *obj)
 		}
 		begin_burn(obj, FALSE);
 	}
+        return 1;
 }
 
-static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
+static int light_cocktail(struct obj *obj) /* obj is a potion of oil */
 {
 	char buf[BUFSZ];
 
 	if (u.uswallow) {
 	    pline(no_elbow_room);
-	    return;
+	    return 0;
 	}
 
 	if (obj->lamplit) {
@@ -1102,10 +1103,10 @@ static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
 	     */
 	    freeinv(obj);
 	    addinv(obj);
-	    return;
+	    return 1;
 	} else if (Underwater) {
 	    pline("There is not enough oxygen to sustain a fire.");
-	    return;
+	    return 0;
 	}
 
 	pline("You light %s potion.%s", shk_your(buf, obj),
@@ -1129,6 +1130,8 @@ static void light_cocktail(struct obj *obj) /* obj is a potion of oil */
 	    hold_another_object(obj, "You drop %s!", doname(obj), NULL);
 	} else
 	    begin_burn(obj, FALSE);
+        
+        return 1;
 }
 
 static const char cuddly[] = { TOOL_CLASS, GEM_CLASS, 0 };
@@ -1144,8 +1147,7 @@ int dorub(struct obj *obj)
 
 	if (obj->oclass == GEM_CLASS) {
 	    if (is_graystone(obj)) {
-		use_stone(obj);
-		return 1;
+		return use_stone(obj);
 	    } else {
 		pline("Sorry, I don't know how to use that.");
 		return 0;
@@ -1344,7 +1346,7 @@ boolean tinnable(struct obj *corpse)
 	return 1;
 }
 
-static void use_tinning_kit(struct obj *obj)
+static int use_tinning_kit(struct obj *obj)
 {
 	struct obj *corpse, *can;
 
@@ -1353,12 +1355,12 @@ static void use_tinning_kit(struct obj *obj)
 	 */
 	if (obj->spe <= 0) {
 		pline("You seem to be out of tins.");
-		return;
+		return 1;
 	}
-	if (!(corpse = floorfood("tin", 2))) return;
+	if (!(corpse = floorfood("tin", 2))) return 0;
 	if (corpse->oeaten) {
 		pline("You cannot tin something which is partly eaten.");
-		return;
+		return 0;
 	}
 	if (touch_petrifies(&mons[corpse->corpsenm])
 		&& !Stone_resistance && !uarmg) {
@@ -1378,11 +1380,11 @@ static void use_tinning_kit(struct obj *obj)
 	if (is_rider(&mons[corpse->corpsenm])) {
 		revive_corpse(corpse);
 		verbalize("Yes...  But War does not preserve its enemies...");
-		return;
+		return 1;
 	}
 	if (mons[corpse->corpsenm].cnutrit == 0) {
 		pline("That's too insubstantial to tin.");
-		return;
+		return 0;
 	}
 	consume_obj_charge(obj, TRUE);
 
@@ -1407,6 +1409,7 @@ static void use_tinning_kit(struct obj *obj)
 	    hold_another_object(can, "You make, but cannot pick up, %s.",
 				doname(can), NULL);
 	} else impossible("Tinning failed.");
+        return 1;
 }
 
 void use_unicorn_horn(struct obj *obj)
@@ -1715,16 +1718,17 @@ static const char lubricables[] = { ALL_CLASSES, ALLOW_NONE, 0 };
 static const char need_to_remove_outer_armor[] =
 			"You need to remove your %s to grease your %s.";
 
-static void use_grease(struct obj *obj)
+static int use_grease(struct obj *obj)
 {
 	struct obj *otmp;
 	char buf[BUFSZ];
+        int res = 0;
 
 	if (Glib) {
 	    pline("%s from your %s.", Tobjnam(obj, "slip"),
 		  makeplural(body_part(FINGER)));
 	    dropx(obj);
-	    return;
+	    return 1;
 	}
 
 	if (obj->spe > 0) {
@@ -1734,23 +1738,24 @@ static void use_grease(struct obj *obj)
 			pline("%s from your %s.", Tobjnam(obj, "slip"),
 			      makeplural(body_part(FINGER)));
 			dropx(obj);
-			return;
+			return 1;
 		}
 		otmp = getobj(lubricables, "grease");
-		if (!otmp) return;
+		if (!otmp) return 0;
 		if ((otmp->owornmask & WORN_ARMOR) && uarmc) {
 			strcpy(buf, xname(uarmc));
 			pline(need_to_remove_outer_armor, buf, xname(otmp));
-			return;
+			return 0;
 		}
 		if ((otmp->owornmask & WORN_SHIRT) && (uarmc || uarm)) {
 			strcpy(buf, uarmc ? xname(uarmc) : "");
 			if (uarmc && uarm) strcat(buf, " and ");
 			strcat(buf, uarm ? xname(uarm) : "");
 			pline(need_to_remove_outer_armor, buf, xname(otmp));
-			return;
+			return 0;
 		}
 		consume_obj_charge(obj, TRUE);
+                res = 1;
 
 		if (otmp != &zeroobj) {
 			pline("You cover %s with a thick layer of grease.",
@@ -1773,6 +1778,7 @@ static void use_grease(struct obj *obj)
 		pline("%s to be empty.", Tobjnam(obj, "seem"));
 	}
 	update_inventory();
+        return res;
 }
 
 static struct trapinfo {
@@ -1789,7 +1795,7 @@ void reset_trapset(void)
 }
 
 /* touchstones - by Ken Arnold */
-static void use_stone(struct obj *tstone)
+static int use_stone(struct obj *tstone)
 {
     struct obj *obj;
     boolean do_scratch;
@@ -1807,11 +1813,11 @@ static void use_stone(struct obj *tstone)
 		objects[TOUCHSTONE].oc_name_known) ? justgems : allowall;
     sprintf(stonebuf, "rub on the stone%s", plur(tstone->quan));
     if ((obj = getobj(choices, stonebuf)) == 0)
-	return;
+	return 0;
 
     if (obj == tstone && obj->quan == 1) {
 	pline("You can't rub %s on itself.", the(xname(obj)));
-	return;
+	return 0;
     }
 
     if (tstone->otyp == TOUCHSTONE && tstone->cursed &&
@@ -1825,15 +1831,15 @@ static void use_stone(struct obj *tstone)
 	    pline("A sharp crack shatters %s%s.",
 		  (obj->quan > 1) ? "one of " : "", the(xname(obj)));
 	useup(obj);
-	return;
+	return 1;
     }
 
     if (Blind) {
 	pline(scritch);
-	return;
+	return 1;
     } else if (Hallucination) {
 	pline("Oh wow, man: Fractals!");
-	return;
+	return 1;
     }
 
     do_scratch = FALSE;
@@ -1850,7 +1856,7 @@ static void use_stone(struct obj *tstone)
 	    makeknown(TOUCHSTONE);
 	    makeknown(obj->otyp);
 	    prinv(NULL, obj, 0L);
-	    return;
+	    return 1;
 	} else {
 	    /* either a ring or the touchstone was not effective */
 	    if (objects[obj->otyp].oc_material == GLASS) {
@@ -1865,13 +1871,13 @@ static void use_stone(struct obj *tstone)
 	switch (objects[obj->otyp].oc_material) {
 	case CLOTH:
 	    pline("%s a little more polished now.", Tobjnam(tstone, "look"));
-	    return;
+	    return 1;
 	case LIQUID:
 	    if (!obj->known)		/* note: not "whetstone" */
 		pline("You must think this is a wetstone, do you?");
 	    else
 		pline("%s a little wetter now.", Tobjnam(tstone, "are"));
-	    return;
+	    return 1;
 	case WAX:
 	    streak_color = "waxy";
 	    break;		/* okay even if not touchstone */
@@ -1908,11 +1914,11 @@ static void use_stone(struct obj *tstone)
 	pline("You see %s streaks on the %s.", streak_color, stonebuf);
     else
 	pline(scritch);
-    return;
+    return 1;
 }
 
 /* Place a landmine/bear trap.  Helge Hafting */
-static void use_trap(struct obj *otmp)
+static int use_trap(struct obj *otmp)
 {
 	int ttyp, tmp;
 	const char *what = NULL;
@@ -1944,7 +1950,7 @@ static void use_trap(struct obj *otmp)
 	if (what) {
 	    pline("You can't set a trap %s!",what);
 	    reset_trapset();
-	    return;
+	    return 0;
 	}
 	ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
 	if (otmp == trapinfo.tobj &&
@@ -1953,7 +1959,7 @@ static void use_trap(struct obj *otmp)
 		shk_your(buf, otmp),
 		trapexplain[what_trap(ttyp)-1]);
 	    set_occupation(set_trap, occutext, 0);
-	    return;
+	    return 1;
 	}
 	trapinfo.tobj = otmp;
 	trapinfo.tx = u.ux,  trapinfo.ty = u.uy;
@@ -1987,12 +1993,12 @@ static void use_trap(struct obj *otmp)
 				pline("You drop %s!",
 			  the(trapexplain[what_trap(ttyp)-1]));
 				dropx(otmp);
-				return;
+				return 1;
 			}
 		}
 	    } else {
 	    	reset_trapset();
-		return;
+		return 0;
 	    }
 	}
 	
@@ -2000,7 +2006,7 @@ static void use_trap(struct obj *otmp)
 	    shk_your(buf, otmp),
 	    trapexplain[what_trap(ttyp)-1]);
 	set_occupation(set_trap, occutext, 0);
-	return;
+	return 1;
 }
 
 
@@ -2392,7 +2398,7 @@ static int use_cream_pie(struct obj *obj)
 	}
 	obj_extract_self(obj);
 	delobj(obj);
-	return 0;
+	return 1;
 }
 
 
@@ -2419,7 +2425,7 @@ static int use_grapple (struct obj *obj)
 	cc.x = u.ux;
 	cc.y = u.uy;
 	if (getpos(&cc, TRUE, "the spot to hit") < 0)
-	    return 0;	/* user pressed ESC */
+	    return res;	/* user pressed ESC */
 
 	/* Calculate range */
 	typ = uwep_skill_type();
@@ -2723,12 +2729,15 @@ int doapply(struct obj *obj)
 	case LENSES:
 		if (obj == ublindf) {
 		    if (!cursed(obj)) Blindf_off(obj);
-		} else if (!ublindf)
+		} else if (!ublindf) {
 		    Blindf_on(obj);
-		else pline("You are already %s.",
+		} else {
+                    pline("You are already %s.",
 			ublindf->otyp == TOWEL ?     "covered by a towel" :
 			ublindf->otyp == BLINDFOLD ? "wearing a blindfold" :
 						     "wearing lenses");
+                    res = 0;
+                }
 		break;
 	case CREAM_PIE:
 		res = use_cream_pie(obj);
@@ -2751,22 +2760,22 @@ int doapply(struct obj *obj)
 		bagotricks(obj);
 		break;
 	case CAN_OF_GREASE:
-		use_grease(obj);
+		res = use_grease(obj);
 		break;
 	case LOCK_PICK:
 	case CREDIT_CARD:
 	case SKELETON_KEY:
-		pick_lock(obj, -2, -2, -2);
+		res = pick_lock(obj, -2, -2, -2);
 		break;
 	case PICK_AXE:
 	case DWARVISH_MATTOCK:
 		res = use_pick_axe(obj);
 		break;
 	case TINNING_KIT:
-		use_tinning_kit(obj);
+		res = use_tinning_kit(obj);
 		break;
 	case LEASH:
-		use_leash(obj);
+		res = use_leash(obj);
 		break;
 	case SADDLE:
 		res = use_saddle(obj);
@@ -2809,19 +2818,19 @@ int doapply(struct obj *obj)
 		use_bell(&obj);
 		break;
 	case CANDELABRUM_OF_INVOCATION:
-		use_candelabrum(obj);
+		res = use_candelabrum(obj);
 		break;
 	case WAX_CANDLE:
 	case TALLOW_CANDLE:
-		use_candle(&obj);
+		res = use_candle(&obj);
 		break;
 	case OIL_LAMP:
 	case MAGIC_LAMP:
 	case BRASS_LANTERN:
-		use_lamp(obj);
+		res = use_lamp(obj);
 		break;
 	case POT_OIL:
-		light_cocktail(obj);
+		res = light_cocktail(obj);
 		break;
 	case EXPENSIVE_CAMERA:
 		res = use_camera(obj);
@@ -2850,6 +2859,8 @@ int doapply(struct obj *obj)
 	case FIGURINE:
 		if (use_figurine(obj))
 		    obj = NULL; /* used up */
+                else
+                    res = 0;
 		break;
 	case UNICORN_HORN:
 		use_unicorn_horn(obj);
@@ -2904,13 +2915,13 @@ int doapply(struct obj *obj)
 		break;
 	case LAND_MINE:
 	case BEARTRAP:
-		use_trap(obj);
+		res = use_trap(obj);
 		break;
 	case FLINT:
 	case LUCKSTONE:
 	case LOADSTONE:
 	case TOUCHSTONE:
-		use_stone(obj);
+		res = use_stone(obj);
 		break;
 	default:
 		/* Pole-weapons can strike at a distance */
