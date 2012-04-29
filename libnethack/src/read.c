@@ -940,6 +940,7 @@ int seffects(struct obj *sobj, boolean *known)
 		    identify_pack(cval);
 		}
 		return 1;
+
 	case SCR_CHARGING:
 		if (confused) {
 		    pline("You feel charged up!");
@@ -950,12 +951,18 @@ int seffects(struct obj *sobj, boolean *known)
 		    iflags.botl = 1;
 		    break;
 		}
-		*known = TRUE;
 		pline("This is a charging scroll.");
+
+                cval = sobj->cursed ? -1 : (sobj->blessed ? 1 : 0);
+		if (!objects[sobj->otyp].oc_name_known) more_experienced(0,10);
+		useup(sobj);
+		makeknown(SCR_CHARGING);
+
 		otmp = getobj(all_count, "charge");
-		if (!otmp) break;
-		recharge(otmp, sobj->cursed ? -1 : (sobj->blessed ? 1 : 0));
-		break;
+		if (!otmp) return 1;
+		recharge(otmp, cval);
+		return 1;
+
 	case SCR_MAGIC_MAPPING:
 		if (level->flags.nommap) {
 		    pline("Your mind is filled with crazy lines!");
