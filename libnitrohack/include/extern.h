@@ -89,6 +89,7 @@ extern schar acurr(int);
 extern schar acurrstr(void);
 extern void adjalign(int);
 extern void calc_attr_bonus(void);
+extern const char *beautiful(void);
 
 /* ### ball.c ### */
 

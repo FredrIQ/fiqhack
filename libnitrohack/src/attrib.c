@@ -723,6 +723,15 @@ adjalign(int n)
     }
 }
 
+/* Return "beautiful", "handsome" or "ugly"
+ * according to gender and charisma.
+ */
+const char *beautiful(void)
+{
+	return ACURR(A_CHA) > 14 ?
+	       (poly_gender() == 1 ? "beautiful" : "handsome") :
+	       "ugly";
+}
 
 /* make sure u.abon is correct; it is dead-reckoned during the move,
  * but this produces some incorrect edge cases. */
