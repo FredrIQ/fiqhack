@@ -69,8 +69,9 @@ static void resetobjs(struct obj *ochain, boolean restore)
 
 		if (((otmp->otyp != CORPSE || otmp->corpsenm < SPECIAL_PM)
 			&& otmp->otyp != STATUE)
-			&& (!otmp->oartifact ||
-			   (restore && (exist_artifact(otmp->otyp, ONAME(otmp))
+			&& ((!restore && !otmp->oartifact) ||
+			   (restore && otmp->oartifact &&
+                            (exist_artifact(otmp->otyp, ONAME(otmp))
 					|| is_quest_artifact(otmp))))) {
 			otmp->oartifact = 0;
 			otmp->onamelth = 0;
@@ -189,6 +190,8 @@ void savebones(struct obj *corpse)
 	struct fruit *f;
 	char c, whynot[BUFSZ], bonesid[10];
 	struct memfile mf;
+        struct obj *statue = 0;
+        uchar cnamelth = 0, snamelth = 0;
 
         mnew(&mf, NULL);
 
@@ -232,14 +235,12 @@ make_bones:
 
 	/* dispose of your possessions, usually cursed */
 	if (u.ugrave_arise == (NON_PM - 1)) {
-		struct obj *otmp;
-
 		/* embed your possessions in your statue */
-		otmp = mk_named_object(STATUE, &mons[u.umonnum],
-				       u.ux, u.uy, plname);
+		statue = mk_named_object(STATUE, &mons[u.umonnum],
+                                         u.ux, u.uy, plname);
 
-		drop_upon_death(NULL, otmp);
-		if (!otmp) return;	/* couldn't make statue */
+		drop_upon_death(NULL, statue);
+		if (!statue) return; /* couldn't make statue */
 		mtmp = NULL;
 	} else if (u.ugrave_arise < LOW_PM) {
 		/* drop everything */
@@ -253,7 +254,7 @@ make_bones:
 		if (!mtmp) return;
 		mtmp = christen_monst(mtmp, plname);
 		if (corpse)
-			obj_attach_mid(corpse, mtmp->m_id); 
+                   corpse = obj_attach_mid(corpse, mtmp->m_id);
 	} else {
 		/* give your possessions to the monster you become */
 		in_mklev = TRUE;
@@ -287,8 +288,18 @@ make_bones:
 		ttmp->madeby_u = 0;
 		ttmp->tseen = (ttmp->ttyp == HOLE);
 	}
+        /* This will reset names; put them back for the corpse and/or
+         * statue. */
+        if (corpse)
+            cnamelth = corpse->onamelth;
+        if (statue)
+            snamelth = statue->onamelth;
 	resetobjs(level->objlist,FALSE);
 	resetobjs(level->buriedobjlist, FALSE);
+        if (corpse)
+            corpse->onamelth = cnamelth;
+        if (statue)
+            statue->onamelth = snamelth;
 
 	/* Hero is no longer on the map. */
 	u.ux = u.uy = 0;
