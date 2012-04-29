@@ -350,7 +350,7 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
      */
 
     /* Sometimes the tail end dies. */
-    if (rn2(3) || !(new_wnum = get_wormno(level))) {
+    if (rn2(3) || !(new_wnum = get_wormno(level)) || !worm->m_lev) {
 	cutoff(worm, new_tail);
 	return;
     }
