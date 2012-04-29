@@ -457,6 +457,10 @@ static void process_args(int argc, char *argv[])
                 override_userdir = argv[0];
             }
             break;
+
+        case 'Z':
+            ui_flags.no_stop = true;
+            break;
 	    
 	default:
 	    i = str2role(ri, argv[0]);

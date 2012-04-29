@@ -420,6 +420,11 @@ static struct nh_cmd_desc* show_help(void)
 
 static void dostop(void)
 {
+    if (ui_flags.no_stop) {
+        curses_msgwin("Process suspension is disabled on this instance.");
+        return;
+    }
+        
     endwin();
     kill(getpid(), SIGSTOP);
     doupdate();

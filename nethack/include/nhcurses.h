@@ -143,6 +143,7 @@ struct interface_flags {
     int viewheight;
     int msgheight; /* actual height */
     int connection_only; /* connect to localhost, don't play normally */
+    int no_stop; /* do not allow the process to stop itself (as in SIGSTOP) */
     char username[BUFSZ]; /* username being used in connection-only mode */
 };
 
