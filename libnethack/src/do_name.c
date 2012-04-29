@@ -121,7 +121,7 @@ static void do_oname(struct obj *obj)
 		char c1, c2;
 
 		c1 = lowc(buf[n]);
-		do c2 = 'a' + rn2('z'-'a'); while (c1 == c2);
+		do c2 = 'a' + rn2('z' - 'a' + 1); while (c1 == c2);
 		buf[n] = (buf[n] == c1) ? c2 : highc(c2);  /* keep same case */
 		pline("While engraving your %s slips.", body_part(HAND));
 		win_pause_output(P_MESSAGE);
