@@ -1508,13 +1508,19 @@ static void breakobj(struct obj *obj,
 		     boolean hero_caused, /* is this the hero's fault? */
 		     boolean from_invent)
 {
+        boolean lamplit;
+
+        /* Remove any timers attached to the object (lit potion of oil). */
+        lamplit = (obj->otyp == POT_OIL && obj->lamplit);
+        if(obj->timed) obj_stop_timers(obj);
+
 	switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
 		case MIRROR:
 			if (hero_caused)
 			    change_luck(-2);
 			break;
 		case POT_WATER:		/* really, all potions */
-			if (obj->otyp == POT_OIL && obj->lamplit) {
+			if (obj->otyp == POT_OIL && lamplit) {
 			    splatter_burning_oil(x,y);
 			} else if (distu(x,y) <= 2) {
 			    if (!breathless(youmonst.data) || haseyes(youmonst.data)) {

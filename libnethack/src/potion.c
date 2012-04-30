@@ -935,6 +935,11 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 	const char *botlnam = bottlename();
 	boolean isyou = (mon == &youmonst);
 	int distance;
+        boolean lamplit;
+
+        /* Remove any timers attached to the object (lit potion of oil). */
+        lamplit = (obj->otyp == POT_OIL && obj->lamplit);
+        if(obj->timed) obj_stop_timers(obj);
 
 	if (isyou) {
 		distance = 0;
@@ -969,8 +974,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
     if (isyou) {
 	switch (obj->otyp) {
 	case POT_OIL:
-		if (obj->lamplit)
-		    splatter_burning_oil(u.ux, u.uy);
+		if (lamplit) splatter_burning_oil(u.ux, u.uy);
 		break;
 	case POT_POLYMORPH:
 		pline("You feel a little %s.", Hallucination ? "normal" : "strange");
@@ -1094,8 +1098,7 @@ void potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
 		}
 		break;
 	case POT_OIL:
-		if (obj->lamplit)
-			splatter_burning_oil(mon->mx, mon->my);
+		if (lamplit) splatter_burning_oil(mon->mx, mon->my);
 		break;
 	case POT_ACID:
 		if (!resists_acid(mon) && !resist(mon, POTION_CLASS, 0, NOTELL)) {
