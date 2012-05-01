@@ -440,9 +440,11 @@ void mcalcdistress(void)
     }
 }
 
+static struct monst *nmtmp = (struct monst *)0;
+
 int movemon(void)
 {
-    struct monst *mtmp, *nmtmp;
+    struct monst *mtmp;
     boolean somebody_can_move = FALSE;
 
     /*
@@ -1145,6 +1147,9 @@ void replmon(struct monst *mtmp, struct monst *mtmp2)
     if (u.ustuck == mtmp) u.ustuck = mtmp2;
     if (u.usteed == mtmp) u.usteed = mtmp2;
     if (mtmp2->isshk) replshk(mtmp,mtmp2);
+
+    if (nmtmp == mtmp)
+        nmtmp = mtmp2;
 
     /* discard the old monster */
     dealloc_monst(mtmp);
