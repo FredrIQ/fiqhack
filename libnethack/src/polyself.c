@@ -1221,7 +1221,8 @@ const char *mbodypart(struct monst *mon, int part)
 	if (mptr->mlet == S_JELLY || mptr->mlet == S_PUDDING ||
 		mptr->mlet == S_BLOB || mptr == &mons[PM_JELLYFISH])
 	    return jelly_parts[part];
-	if (mptr->mlet == S_VORTEX || mptr->mlet == S_ELEMENTAL)
+	if (mptr->mlet == S_VORTEX ||
+	    (mptr->mlet == S_ELEMENTAL && mptr != &mons[PM_STALKER]))
 	    return vortex_parts[part];
 	if (mptr->mlet == S_FUNGUS)
 	    return fungus_parts[part];
