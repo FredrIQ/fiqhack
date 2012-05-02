@@ -1612,36 +1612,36 @@ void xkilled(struct monst *mtmp, int dest)
 	if ((dest & 2) || LEVEL_SPECIFIC_NOCORPSE(mdat))
 		goto cleanup;
 
-	if ((!accessible(x, y) && !is_pool(level, x, y)) ||
-	   (x == u.ux && y == u.uy)) {
-	    /* might be mimic in wall or corpse in lava or on player's spot */
+	/* might be here after swallowed */
+        if (((x != u.ux) || (y != u.uy)) &&
+            !rn2(6) && !(mvitals[mndx].mvflags & G_NOCORPSE) &&
+            mdat->mlet != S_KOP) {
+		int typ;
+
+		otmp = mkobj_at(RANDOM_CLASS, level, x, y, TRUE);
+		/* Don't create large objects from small monsters */
+		typ = otmp->otyp;
+		if (mdat->msize < MZ_HUMAN && typ != FOOD_RATION
+		    && typ != LEASH
+		    && typ != FIGURINE
+		    && (otmp->owt > 3 ||
+			objects[typ].oc_big /*oc_bimanual/oc_bulky*/ ||
+			is_spear(otmp) || is_pole(otmp) ||
+			typ == MORNING_STAR)) {
+		    delobj(otmp);
+		} else redisp = TRUE;
+	}
+	/* Whether or not it always makes a corpse is, in theory,
+	 * different from whether or not the corpse is "special";
+	 * if we want both, we have to specify it explicitly.
+	 */
+	if (corpse_chance(mtmp, NULL, FALSE))
+		make_corpse(mtmp);
+
+	if (!accessible(x, y) && !is_pool(level, x, y)) {
+	    /* might be mimic in wall or corpse in lava */
 	    redisp = TRUE;
 	    if (wasinside) spoteffects(TRUE);
-	} else if (x != u.ux || y != u.uy) {
-		/* might be here after swallowed */
-		if (!rn2(6) && !(mvitals[mndx].mvflags & G_NOCORPSE)
-					&& mdat->mlet != S_KOP) {
-			int typ;
-
-			otmp = mkobj_at(RANDOM_CLASS, level, x, y, TRUE);
-			/* Don't create large objects from small monsters */
-			typ = otmp->otyp;
-			if (mdat->msize < MZ_HUMAN && typ != FOOD_RATION
-			    && typ != LEASH
-			    && typ != FIGURINE
-			    && (otmp->owt > 3 ||
-				objects[typ].oc_big /*oc_bimanual/oc_bulky*/ ||
-				is_spear(otmp) || is_pole(otmp) ||
-				typ == MORNING_STAR)) {
-			    delobj(otmp);
-			} else redisp = TRUE;
-		}
-		/* Whether or not it always makes a corpse is, in theory,
-		 * different from whether or not the corpse is "special";
-		 * if we want both, we have to specify it explicitly.
-		 */
-		if (corpse_chance(mtmp, NULL, FALSE))
-			make_corpse(mtmp);
 	}
 	if (redisp) newsym(x,y);
 cleanup:
