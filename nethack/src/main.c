@@ -238,10 +238,12 @@ static void mainmenu(void)
     char verstr[32];
     sprintf(verstr, "Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 
+#if defined(NETCLIENT)
     if (ui_flags.connection_only) {
         netgame();
         return;
     }
+#endif
     
     while (n > 0) {
 	if (COLS >= 100) {
