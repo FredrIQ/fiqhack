@@ -62,7 +62,8 @@ set (COMPILED_LEVELS
 
 set (NHDAT_SRC dungeon quest.dat rumors oracles ${COMPILED_LEVELS} history data)
 
-configure_file(${LNH_DAT}/history history COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/history 
+               ${CMAKE_CURRENT_BINARY_DIR}/history COPYONLY)
 
 get_property(MAKEDEFS_BIN TARGET makedefs PROPERTY LOCATION)
 get_property(DGN_COMP_BIN TARGET dgn_comp PROPERTY LOCATION)

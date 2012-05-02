@@ -60,7 +60,9 @@ endif ()
 add_subdirectory (libnethack)
 
 # nethack4 network client
-add_subdirectory (libnethack_client)
+if (ENABLE_NETCLIENT)
+    add_subdirectory (libnethack_client)
+endif ()
 
 # nethack4 text ui
 add_subdirectory (nethack)
