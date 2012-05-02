@@ -695,8 +695,20 @@ int dodown(void)
 		if (float_down(I_SPECIAL|TIMEOUT, W_ARTI))
 		    return 1;   /* came down, so moved */
 	    }
-	    floating_above(stairs_down ? "stairs" : ladder_down ?
-			   "ladder" : surface(u.ux, u.uy));
+	    if (level->locations[u.ux][u.uy].seenv &&
+	        level->locations[u.ux][u.uy].typ != S_stone) {
+	        boolean known_stairs =
+		    stairs_down &&
+		    level->locations[u.ux][u.uy].typ == S_dnstair;
+		boolean known_ladder =
+		    ladder_down &&
+		    level->locations[u.ux][u.uy].typ == S_dnladder;
+	        floating_above(known_stairs ? "stairs" :
+		               known_ladder ?  "ladder" :
+			       surface(u.ux, u.uy));
+	    } else {
+	        pline("You are floating high in the air.");
+            }
 	    return 0;   /* didn't move */
 	}
 	if (!stairs_down && !ladder_down) {
