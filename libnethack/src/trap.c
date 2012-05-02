@@ -160,6 +160,8 @@ boolean rust_dmg(struct obj *otmp, const char *ostr, int type,
                 otmp->oeroded++;
             else
                 otmp->oeroded2++;
+            if (otmp->unpaid)
+                costly_damage_obj(otmp);
             update_inventory();
         } else {
             if (flags.verbose) {
@@ -172,6 +174,8 @@ boolean rust_dmg(struct obj *otmp, const char *ostr, int type,
                           Monnam(victim), ostr,
                           vtense(ostr, "look"), msg[type]);
             }
+            if (otmp->unpaid)
+                costly_damage_obj(otmp);
         }
         return TRUE;
 }

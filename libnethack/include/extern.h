@@ -1451,6 +1451,8 @@ extern boolean block_door(xchar,xchar);
 extern boolean block_entry(xchar,xchar);
 extern char *shk_your(char *, const struct obj *);
 extern char *Shk_Your(char *, const struct obj *);
+extern void adjust_bill_val(struct obj *);
+extern void costly_damage_obj(struct obj *);
 
 /* ### shknam.c ### */
 

@@ -130,7 +130,7 @@ void money2u(struct monst *mon, long amount)
     } else {
 	addinv(mongold);
 	iflags.botl = 1;
-    }
+    } 
 }
 
 
@@ -3651,5 +3651,48 @@ static char *mon_owns(char *buf, const struct obj *obj)
 	return NULL;
 }
 
+void
+adjust_bill_val(struct obj *obj)
+{
+	struct bill_x *bp = NULL;
+	struct monst *shkp;
+
+	if (!obj->unpaid) {
+            impossible("adjust_bill_val: object wasn't unpaid!");
+            return;
+        }
+
+	for(shkp = next_shkp(level->monlist, TRUE); shkp;
+	    shkp = next_shkp(shkp->nmon, TRUE))
+	    if ((bp = onbill(obj, shkp, TRUE)) != 0) break;
+
+	/* onbill() gave no message if unexpected problem occurred */
+	if(!bp) {
+	    impossible("adjust_bill_val: object wasn't on any bill!");
+	    return;
+	}
+
+	bp->price = get_cost(obj, shkp);
+}
+	
+void
+costly_damage_obj(struct obj *obj)
+{
+        if (!obj->unpaid) {
+            impossible("costly_damage_obj: object wasn't unpaid!");
+            return;
+        }
+	if (flags.mon_moving) {
+	    adjust_bill_val(obj);
+	    return;
+	}
+	if (obj->unpaid) {
+	    struct monst *shkp = shop_keeper(level, *u.ushops);
+	    if (shkp) {
+	        pline("You damage it, you pay for it!");
+		bill_dummy_object(obj);
+	    }
+	}
+}
 
 /*shk.c*/

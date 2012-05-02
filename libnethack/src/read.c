@@ -618,6 +618,8 @@ int seffects(struct obj *sobj, boolean *known)
 		s = sobj->cursed ? -1 :
 		    otmp->spe >= 9 ? (rn2(otmp->spe) == 0) :
 		    sobj->blessed ? rnd(3-otmp->spe/3) : 1;
+                if (s < 0 && otmp->unpaid)
+                    costly_damage_obj(otmp);
 		if (s >= 0 && otmp->otyp >= GRAY_DRAGON_SCALES &&
 					otmp->otyp <= YELLOW_DRAGON_SCALES) {
 			/* dragon scales get turned into dragon scale mail */
@@ -633,6 +635,8 @@ int seffects(struct obj *sobj, boolean *known)
 			}
 			otmp->known = 1;
 			setworn(otmp, W_ARM);
+                        if (otmp->unpaid && s > 0)
+                            adjust_bill_val(otmp);
 			break;
 		}
 		pline("Your %s %s%s%s%s for a %s.",
@@ -656,6 +660,8 @@ int seffects(struct obj *sobj, boolean *known)
 			pline("Your %s suddenly %s %s.",
 				xname(otmp), otense(otmp, "vibrate"),
 				Blind ? "again" : "unexpectedly");
+                if (otmp->unpaid && s > 0) 
+                    adjust_bill_val(otmp);
 		break;
 	    }
 	case SCR_DESTROY_ARMOR:
