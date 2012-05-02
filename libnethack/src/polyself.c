@@ -1142,7 +1142,7 @@ const char *mbodypart(struct monst *mon, int part)
 		"light headed", "neck", "spine", "toe",
 		"feathers", "blood", "lung", "bill", "stomach" },
 	*const horse_parts[] = { "foreleg", "eye", "face", "forehoof", "hoof tip",
-		"rear hoof", "foreclaw", "hooved", "head", "rear leg",
+		"rear hoof", "forehoof", "hooved", "head", "rear leg",
 		"light headed", "neck", "backbone", "rear hoof tip",
 		"mane", "blood", "lung", "nose", "stomach"},
 	*const sphere_parts[] = { "appendage", "optic nerve", "body", "tentacle",
