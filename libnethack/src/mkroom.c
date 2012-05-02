@@ -23,7 +23,6 @@ static void mkswamp(struct level *lev);
 static void mktemple(struct level *lev);
 static coord * shrine_pos(struct level *lev, int roomno);
 static const struct permonst * morguemon(const d_level *dlev);
-static const struct permonst * antholemon(const d_level *dlev);
 static const struct permonst * squadmon(const d_level *dlev);
 static void save_room(struct memfile *mf, struct mkroom *);
 static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r);
@@ -339,7 +338,7 @@ static const struct permonst *morguemon(const d_level *dlev)
 			: (i < 40) ? &mons[PM_WRAITH] : mkclass(dlev, S_ZOMBIE,0);
 }
 
-static const struct permonst *antholemon(const d_level *dlev)
+const struct permonst *antholemon(const d_level *dlev)
 {
 	int mtyp;
 

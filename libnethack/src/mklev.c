@@ -621,7 +621,8 @@ static void makelevel(struct level *lev)
 	else if (u_depth > 9 && !rn2(5) &&
 	   !(mvitals[PM_KILLER_BEE].mvflags & G_GONE)) mkroom(lev, BEEHIVE);
 	else if (u_depth > 11 && !rn2(6)) mkroom(lev, MORGUE);
-	else if (u_depth > 12 && !rn2(8)) mkroom(lev, ANTHOLE);
+	else if (u_depth > 12 && !rn2(8) && antholemon(&lev->z)) 
+            mkroom(lev, ANTHOLE);
 	else if (u_depth > 14 && !rn2(4) &&
 	   !(mvitals[PM_SOLDIER].mvflags & G_GONE)) mkroom(lev, BARRACKS);
 	else if (u_depth > 15 && !rn2(6)) mkroom(lev, SWAMP);

@@ -928,6 +928,7 @@ extern void save_obj(struct memfile *mf, struct obj *obj);
 
 extern void mkroom(struct level *lev, int roomtype);
 extern void fill_zoo(struct level *lev, struct mkroom *sroom);
+extern const struct permonst *antholemon(const d_level *dlev);
 extern boolean nexttodoor(struct level *lev, int sx, int sy);
 extern int somex(struct mkroom *);
 extern int somey(struct mkroom *);
