@@ -537,6 +537,7 @@ void relobj(struct monst *mtmp, int show,
 				continue;
 			}
 		}
+	        if (otmp == wep) setmnotwielded(mtmp, otmp);
 		mdrop_obj(mtmp, otmp, is_pet && flags.verbose);
 	}
 
