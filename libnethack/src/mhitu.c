@@ -1488,7 +1488,7 @@ dopois:
 		    level->locations[u.ux][u.uy].typ == LAVAPOOL) {
 		    pline("The slime burns away!");
 		    dmg = 0;
-		} else if (Unchanging ||
+		} else if (Unchanging || unsolid(youmonst.data) ||
 				youmonst.data == &mons[PM_GREEN_SLIME]) {
 		    pline("You are unaffected.");
 		    dmg = 0;

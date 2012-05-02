@@ -1172,7 +1172,7 @@ static int mdamagem(struct monst *magr, struct monst *mdef, const struct attack 
 		break;
 	    case AD_SLIM:
 		if (cancelled) break;	/* physical damage only */
-		if (!rn2(4) && !flaming(mdef->data) &&
+		if (!rn2(4) && !flaming(mdef->data) && !unsolid(mdef->data) &&
 				mdef->data != &mons[PM_GREEN_SLIME]) {
 		    newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, vis);
 		    mdef->mstrategy &= ~STRAT_WAITFORU;

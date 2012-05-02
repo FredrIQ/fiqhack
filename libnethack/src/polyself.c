@@ -424,7 +424,7 @@ int polymon(int mntmp)
 		pline("The slime burns away!");
 		Slimed = 0L;
 		iflags.botl = 1;
-	    } else if (mntmp == PM_GREEN_SLIME) {
+	    } else if (mntmp == PM_GREEN_SLIME || unsolid(youmonst.data)) {
 		/* do it silently */
 		Slimed = 0L;
 		iflags.botl = 1;

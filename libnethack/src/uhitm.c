@@ -1487,7 +1487,8 @@ int damageum(struct monst *mdef, const struct attack *mattk)
 		if (notonhead || !has_head(mdef->data)) {
 		    pline("%s doesn't seem harmed.", Monnam(mdef));
 		    tmp = 0;
-		    if (!Unchanging && mdef->data == &mons[PM_GREEN_SLIME]) {
+		    if (!Unchanging && !unsolid(youmonst.data) &&
+		        mdef->data == &mons[PM_GREEN_SLIME]) {
 			if (!Slimed &&
 			    level->locations[u.ux][u.uy].typ != LAVAPOOL) {
 			    pline("You suck in some slime and don't feel very well.");
@@ -1579,7 +1580,7 @@ int damageum(struct monst *mdef, const struct attack *mattk)
 		break;
 	    case AD_SLIM:
 		if (negated) break;	/* physical damage only */
-		if (!rn2(4) && !flaming(mdef->data) &&
+		if (!rn2(4) && !flaming(mdef->data) && !unsolid(mdef->data) &&
 				mdef->data != &mons[PM_GREEN_SLIME]) {
 		    pline("You turn %s into slime.", mon_nam(mdef));
 		    newcham(mdef, &mons[PM_GREEN_SLIME], FALSE, FALSE);
@@ -1789,6 +1790,7 @@ static int gulpum(struct monst *mdef, const struct attack *mattk)
 				sprintf(msgbuf, "%s isn't sitting well with you.",
 					The(mdef->data->mname));
 				if (!Unchanging &&
+                                    !unsolid(youmonst.data) &&
 				    level->locations[u.ux][u.uy].typ != LAVAPOOL) {
 					Slimed = 5L;
 					iflags.botl = 1;
