@@ -2013,7 +2013,7 @@ static void mon_consume_unstone(struct monst *mon, struct obj *obj,
 
     /* give a "<mon> is slowing down" message and also remove
        intrinsic speed (comparable to similar effect on the hero) */
-    mon_adjust_speed(mon, -3, NULL);
+    if(stoning) mon_adjust_speed(mon, -3, NULL);
 
     if (canseemon(mon)) {
 	long save_quan = obj->quan;
