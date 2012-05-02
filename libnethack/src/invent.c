@@ -497,6 +497,7 @@ void delallobj(int x, int y)
 void delobj(struct obj *obj)
 {
 	boolean update_map;
+        struct monst *mtmp;
 
 	if (obj->otyp == AMULET_OF_YENDOR ||
 			obj->otyp == CANDELABRUM_OF_INVOCATION ||
@@ -511,6 +512,12 @@ void delobj(struct obj *obj)
 	}
 	update_map = (obj->where == OBJ_FLOOR);
 	obj_extract_self(obj);
+        if( !OBJ_AT_LEV(obj->olev, obj->ox, obj->oy) &&
+            (mtmp = m_at(obj->olev, obj->ox, obj->oy)) &&
+            mtmp->mundetected &&
+            hides_under(mtmp->data) ) {
+            mtmp->mundetected = 0;
+        }
 	if (update_map) newsym(obj->ox, obj->oy);
 	obfree(obj, NULL);	/* frees contents also */
 }
