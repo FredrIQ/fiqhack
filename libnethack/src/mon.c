@@ -690,6 +690,23 @@ int meatobj(struct monst *mtmp)
 		    return !ptr ? 2 : 1;
 	    } else if (otmp->oclass != ROCK_CLASS &&
 				    otmp != uball && otmp != uchain) {
+		if ((otmp->otyp == CORPSE) &&
+		    is_rider(&mons[otmp->corpsenm])) {
+		    strcpy(buf, "");
+		    if (cansee(mtmp->mx, mtmp->my)) {
+		        pline("%s attempts to engulf %s.",
+			      Monnam(mtmp), distant_name(otmp,doname));
+			pline("%s dies!", Monnam(mtmp));
+		    } else if (flags.soundok && flags.verbose) {
+		        You_hear("a slurping sound abruptly stop.");
+			if(mtmp->mtame) {
+			    pline("You have a queasy feeling for a moment, then it passes.");
+			}
+		    }
+		    mondied(mtmp);
+		    (void) revive_corpse(otmp);
+		    return 2;
+		}
 		++ecount;
 		if (ecount == 1) {
 			sprintf(buf, "%s engulfs %s.", Monnam(mtmp),
