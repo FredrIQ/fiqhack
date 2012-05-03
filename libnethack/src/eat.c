@@ -1763,6 +1763,13 @@ int doeat(struct obj *otmp)	/* generic "eat" command funtion (see cmd.c) */
 	}
 	if (otmp->oclass != FOOD_CLASS) {
 	    int material;
+
+	    if (!touch_artifact(otmp,&youmonst)) return 1;
+	    if (!is_edible(otmp)) {
+	        pline("You can no longer eat %s.", doname(otmp));
+		return 1;
+	    }
+
 	    victual.reqtime = 1;
 	    victual.piece = otmp;
 		/* Don't split it, we don't need to if it's 1 move */
