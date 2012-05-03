@@ -137,6 +137,7 @@ static const struct nh_option_desc const_options[] = {
     {"sortpack",	"group similar kinds of objects in inventory",	OPTTYPE_BOOL, { VTRUE }},
     {"sparkle",		"display sparkly effect for resisted magical attacks",	OPTTYPE_BOOL, { VTRUE }},
     {"tombstone",	"print tombstone when you die",	OPTTYPE_BOOL, { VTRUE }},
+    {"travel_interrupt","interrupt travel (_) when a hostile is in sight", OPTTYPE_BOOL, { VTRUE }},
     {"verbose",		"print more commentary during the game",	OPTTYPE_BOOL, { VTRUE }},
     
     {NULL, NULL, OPTTYPE_BOOL, { NULL }}
@@ -181,6 +182,7 @@ static const struct nh_boolopt_map boolopt_map[] = {
 	{"showrace", &iflags.showrace},
 	{"sortpack", &flags.sortpack},
 	{"sparkle", &flags.sparkle},
+        {"travel_interrupt", &iflags.travel_interrupt},
 	{"tombstone",&flags.tombstone},
 	{"verbose", &flags.verbose},
 

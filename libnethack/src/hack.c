@@ -9,6 +9,7 @@ static int still_chewing(xchar,xchar);
 static void dosinkfall(void);
 static boolean findtravelpath(boolean(*)(int, int), schar *, schar *);
 static boolean monstinroom(const struct permonst *,int);
+static boolean check_interrupt( struct monst *mtmp );
 
 static void move_update(boolean);
 
@@ -1982,15 +1983,17 @@ void lookaround(void)
 	return;
     }
 
+    /* If travel_interrupt is set, then stop if there is a hostile
+     * nearby. */
+    if(flags.run != 1 && iflags.travel_interrupt) {
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if ((canseemon(mtmp) ||
-             (canspotmon(mtmp) &&
-              distmin(u.ux, u.uy, mtmp->mx, mtmp->my) <= 5)) &&
-            !mtmp->mpeaceful && !mtmp->mtame &&
-            mtmp->data->mmove && flags.run != 1) {
+            if(distmin(u.ux, u.uy, mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) &&
+               couldsee(mtmp->mx, mtmp->my) &&
+               check_interrupt(mtmp)) {
             nomul(0, NULL);
             return;
         }
+    }
     }
 
     if (Blind || flags.run == 0) return;
@@ -2005,8 +2008,8 @@ void lookaround(void)
 		    mtmp->m_ap_type != M_AP_FURNITURE &&
 		    mtmp->m_ap_type != M_AP_OBJECT &&
 		    (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
-	    if ((flags.run != 1 && !mtmp->mtame)
-                || (x == u.ux+u.dx && y == u.uy+u.dy && !flags.travel))
+	    if ((flags.run != 1 && check_interrupt(mtmp)) ||
+                (x == u.ux+u.dx && y == u.uy+u.dy && !flags.travel))
 		goto stop;
 	}
 
@@ -2101,6 +2104,23 @@ stop:
     }
 }
 
+/* Check whether the monster should be considered a threat and interrupt
+ * the current action. */
+/* Also see the similar check in dochugw() in monmove.c */
+static boolean check_interrupt( struct monst *mtmp )
+{
+    return (mtmp->m_ap_type != M_AP_FURNITURE &&
+            mtmp->m_ap_type != M_AP_OBJECT &&
+            (!is_hider(mtmp->data) || !mtmp->mundetected) &&
+            (!mtmp->mpeaceful || Hallucination) &&
+            !noattacks(mtmp->data) && !mtmp->msleeping &&
+            mtmp->data->mmove && mtmp->mcanmove && 
+            !onscary(u.ux, u.uy, mtmp) &&
+            canspotmon(mtmp));
+}
+
+
+
 /* something like lookaround, but we are not running */
 /* react only to monsters that might hit us */
 int monster_nearby(void)
@@ -2108,20 +2128,11 @@ int monster_nearby(void)
 	int x,y;
 	struct monst *mtmp;
 
-	/* Also see the similar check in dochugw() in monmove.c */
 	for (x = u.ux-1; x <= u.ux+1; x++)
 	    for (y = u.uy-1; y <= u.uy+1; y++) {
 		if (!isok(x,y)) continue;
 		if (x == u.ux && y == u.uy) continue;
-		if ((mtmp = m_at(level, x,y)) &&
-		   mtmp->m_ap_type != M_AP_FURNITURE &&
-		   mtmp->m_ap_type != M_AP_OBJECT &&
-		   (!mtmp->mpeaceful || Hallucination) &&
-		   (!is_hider(mtmp->data) || !mtmp->mundetected) &&
-		   !noattacks(mtmp->data) &&
-		   mtmp->mcanmove && !mtmp->msleeping &&  /* aplvax!jcn */
-		   !onscary(u.ux, u.uy, mtmp) &&
-		   canspotmon(mtmp))
+		if ((mtmp = m_at(level, x,y)) && check_interrupt(mtmp))
 			return 1;
 	}
 	return 0;

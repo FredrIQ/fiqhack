@@ -137,6 +137,8 @@ struct instance_flags {
 	boolean  disable_log;   /* don't append anything to the logfile */
 	boolean  botl;		/* redo status line */
         boolean  autoexplore;   /* currently autoexploring */
+        boolean  travel_interrupt; /* Interrupt travel if there is a hostile
+                                 * monster in sight. */
 	struct nh_autopickup_rules *ap_rules;
 };
 
