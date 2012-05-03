@@ -1081,12 +1081,13 @@ sub check_new_files {
         unless $lib_f_pattern || -l $buildrelpathname ||
         Cwd::abs_path eq Cwd::abs_path($buildrelpathname);
     } elsif (-f _ && -r _) {
+      my $file_found = 0;
       if ($lib_pattern) {
         my (undef, undef, $fn) = File::Spec->splitpath($pathname);
         for my $pattern (@{defined_or($lib_f_pattern,['$x'])}) {
           my $re = "^\Q$pattern\E(?:\$|\.)";
           $re =~ s/\\\$x/(?:$lib_pattern)/;
-          $fn =~ $re and goto FILE_FOUND;
+          $fn =~ $re and $file_found = 1;
         }
       } else {
         # Look at the file suffix to get an idea of what sort of file it
@@ -1098,21 +1099,22 @@ sub check_new_files {
           # The file is potentially interesting to aimake if its suffix
           # is recognised.
           if ($config->{'filetypes'}->{$suffix}) {
-            FILE_FOUND: ;
-            # Do we know about the file already?
-            my $obj = canonicalise_object_name("path:$pathname");
-            # Can't use obj_state here, it'd autovifify the object.
-            if (!$state->{'objects'}->{$obj}) {
-              # If not, record it as being interesting.
-              $state->{'changedobjects'}->{$obj} = 1;
-              # Optimization: there's an index of which objects are
-              # path objects.
-              $state->{'pathobjects'}->{$obj} = 1;
-              obj_state($obj)->{"sha1"} = 
-                file_sha1($buildrelpathname);
-              progress_report 1, "Found new file '$pathname'";
-            }
+            $file_found = 1;
           }
+        }
+      }
+      if ($file_found) {
+        # Do we know about the file already?
+        my $obj = canonicalise_object_name("path:$pathname");
+        # Can't use obj_state here, it'd autovifify the object.
+        if (!$state->{'objects'}->{$obj}) {
+          # If not, record it as being interesting.
+          $state->{'changedobjects'}->{$obj} = 1;
+          # Optimization: there's an index of which objects are
+          # path objects.
+          $state->{'pathobjects'}->{$obj} = 1;
+          obj_state($obj)->{"sha1"} = file_sha1($buildrelpathname);
+          progress_report 1, "Found new file '$pathname'";
         }
       }
     }
