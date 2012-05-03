@@ -186,7 +186,7 @@ int dothrow(struct obj *obj)
 	shotlimit = multi;
 	multi = 0;		/* reset; it's been used up */
 
-	if (notake(youmonst.data)) {
+	if (notake(youmonst.data) || nohands(youmonst.data)) {
 	    pline("You are physically incapable of throwing anything.");
 	    return 0;
 	}
