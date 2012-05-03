@@ -1136,7 +1136,7 @@ check_new_files('.');
 if ($config_changed) {
   progress_report 1, "Checking for libraries...";
   my $lib_pattern = join "|", map {"\Q$_\E"} @{$config->{'libraries'}};
-  Cwd::abs_path($_) and
+  -e $_ and Cwd::abs_path($_) and
     check_new_files(Cwd::abs_path($_),
                     $lib_pattern, $config->{'library_file_patterns'})
     for @{$config->{'library_paths'}};
@@ -1883,7 +1883,7 @@ $preprocess_dependencies = [
             # are, if that's available.
             prereqs => ['command:gcc', 'command:grep'],
             determine_command => 'gcc -print-search-dirs | grep -F libraries',
-            determine_parse => qr/[:=]([^:=]+?)(?=:|$)/,
+            determine_parse => qr/[:;=]((?:[^\\:;=]([^:=]|:\\))*)(?=[:;]|$)/,
             value => '$1',
             group => 'library_locators',
             score => 100,
@@ -1913,7 +1913,10 @@ $preprocess_dependencies = [
     # (with different permissions). This is a "confined" install.
     # There are other layouts that exist too, e.g. one for games,
     # which is used only on request.
-    # TODO: Condition by OS!
+    # TODO: Condition by OS! Probably it's simplest to use different
+    # names for install types on different platforms. (And probably
+    # only Linux/UNIX has so many; the others could probably make do
+    # with one per platform.)
     installtype => [
       { prereqs => ['installing_inside:/home'], value => 'confined',
         score => 10, group => 'installtypes' },
