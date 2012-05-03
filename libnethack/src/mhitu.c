@@ -1375,6 +1375,7 @@ dopois:
 			return 3;
 		    }
 		    dmg = 0;
+		    passiveum(olduasmon, mtmp, mattk);
 		} else {
 		    if (Role_if (PM_HEALER)) {
 			if (flags.soundok && !(moves % 5))
