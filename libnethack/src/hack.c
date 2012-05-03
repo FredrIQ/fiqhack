@@ -584,7 +584,7 @@ boolean test_move(int ux, int uy, int dx, int dy, int dz, int mode)
 		pline("You cannot pass that way.");
 	    return FALSE;
 	}
-	if (bigmonst(youmonst.data)) {
+	if (bigmonst(youmonst.data) && !can_ooze(&youmonst)) {
 	    if (mode == DO_MOVE)
 		pline("Your body is too large to fit through.");
 	    return FALSE;

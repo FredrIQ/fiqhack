@@ -998,7 +998,8 @@ nexttry:	/* eels prefer the water, but if there is no water nearby,
 		}
 		if (nx != x && ny != y && bad_rock(mdat, x, ny)
 			    && bad_rock(mdat, nx, y)
-			    && (bigmonst(mdat) || (curr_mon_load(mon) > 600)))
+			    && ((bigmonst(mdat) && !can_ooze(mon)) ||
+                                (curr_mon_load(mon) > 600)))
 			continue;
 		/* The monster avoids a particular type of trap if it's familiar
 		 * with the trap type.  Pets get ALLOW_TRAPS and checking is
