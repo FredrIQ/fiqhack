@@ -15,9 +15,9 @@ enum menuids {
 };
 
 struct server_info {
-    const char *hostname;
-    const char *username;
-    const char *password;
+    char *hostname;
+    char *username;
+    char *password;
     int port;
 };
 
