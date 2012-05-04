@@ -120,6 +120,7 @@ static const struct nh_option_desc const_options[] = {
     {"autopickup",	"automatically pick up objects you move over",	OPTTYPE_BOOL, { VTRUE }},
     {"autopickup_rules", "rules to decide what to autopickup if autopickup is on", OPTTYPE_AUTOPICKUP_RULES, {(void*)&def_autopickup}},
     {"autoquiver",	"when firing with an empty quiver, select something suitable",	OPTTYPE_BOOL, { VFALSE }},
+    {"comment",         "has no effect" ,OPTTYPE_STRING, { "" }},
     {"confirm",		"ask before hitting tame or peaceful monsters",	OPTTYPE_BOOL, { VTRUE }},
     {"disclose",	"whether to disclose information at end of game", OPTTYPE_ENUM, {(void*)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit",		"the name of a fruit you enjoy eating", OPTTYPE_STRING, {"slime mold"}},
@@ -294,6 +295,7 @@ void init_opt_struct(void)
 	build_race_spec();
 	
 	/* initialize option definitions */
+	find_option(options, "comment")->s.maxlen = BUFSZ;
 	find_option(options, "disclose")->e = disclose_spec;
 	find_option(options, "fruit")->s.maxlen = PL_FSIZ;
 	find_option(options, "menustyle")->e = menustyle_spec;
@@ -588,6 +590,9 @@ static boolean set_option(const char *name, union nh_optvalue value, boolean iss
 	else if (is_ui)
 	    return ui_option_callback(option);
 	/* regular non-boolean options */
+        else if (!strcmp("comment", option->name)) {
+                /* do nothing */
+        }
 	else if (!strcmp("disclose", option->name)) {
 		flags.end_disclose = option->value.e;
 	}
