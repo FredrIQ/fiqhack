@@ -121,6 +121,7 @@ extern int get_command_idx(const char *cmd);
 extern int do_command(int cmd, int, boolean, struct nh_cmd_arg*);
 extern void enlightenment(int);
 extern void show_conduct(int);
+extern unsigned long encode_conduct(void);
 extern boolean dir_to_delta(enum nh_direction dir, schar *dx, schar *dy, schar *dz);
 extern int xytod(schar, schar);
 extern void dtoxy(coord *,int);

@@ -23,6 +23,7 @@
 #define RECORD	      "record"	/* file containing list of topscorers */
 #define LOGFILE       "logfile" /* records all game endings regardless of score
                                  * for debugging purposes */
+#define XLOGFILE      "xlogfile"/* records game endings in detail */
 #define RUMORFILE     "rumors"	/* file with fortune cookies */
 #define ORACLEFILE    "oracles" /* file with oracular information */
 #define DATAFILE      "data"	/* file giving the meaning of symbols used */

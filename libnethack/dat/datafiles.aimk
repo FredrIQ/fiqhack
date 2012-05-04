@@ -16,5 +16,6 @@ install_target:datadir/path:libnethack/dat/license
 # TODO: When aimake supports it, we want sys:empty_file here instead
 install_target:statedir/path:/dev/null>logfile
 install_target:statedir/path:/dev/null>record
+install_target:statedir/path:/dev/null>xlogfile
 install_target:specificlockdir/path:/dev/null>sys:touch_only
 install_target:logdir/path:/dev/null>sys:touch_only
