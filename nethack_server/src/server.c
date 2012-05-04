@@ -304,7 +304,10 @@ static int fork_client(struct client_data *client, int epfd)
     client->pid = fork();
     if (client->pid > 0) { /* parent */
     } else if (client->pid == 0) { /* child */
+        struct user_info info;
 	userid = client->userid;
+        db_get_user_info(userid, &info);
+        setenv("NH4SERVERUSER", info.username, 1);
 	post_fork_cleanup();
 	client_main(userid, pipe_out_fd[0], pipe_in_fd[1]);
 	exit(0); /* shouldn't get here... client is done. */

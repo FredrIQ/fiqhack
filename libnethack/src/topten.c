@@ -134,6 +134,7 @@ static unsigned long encode_carried(void)
 static void write_xlentry(FILE *rfile, const struct toptenentry *tt)
 {
     char buf[DTHSZ+1];
+    char *uname;
 
     /* regular logfile data */
     fprintf(rfile,
@@ -161,8 +162,14 @@ static void write_xlentry(FILE *rfile, const struct toptenentry *tt)
             SEP "align=%s",
             tt->plrole, tt->plrace, tt->plgend, tt->plalign);
    
-    munge_xlstring(buf, plname, DTHSZ + 1);
+    uname = nh_getenv("NH4SERVERUSER");
+    if (!uname) uname = nh_getenv("USER");
+    if (!uname) uname = "";
+    munge_xlstring(buf, uname, DTHSZ + 1);
     fprintf(rfile, SEP "name=%s", buf);
+
+    munge_xlstring(buf, plname, DTHSZ + 1);
+    fprintf(rfile, SEP "charname=%s", buf);
 
     munge_xlstring(buf, tt->death, DTHSZ + 1);
     fprintf(rfile, SEP "death=%s", buf);
