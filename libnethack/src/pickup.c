@@ -18,7 +18,6 @@ static int mbag_explodes(struct obj *,int);
 static int in_container(struct obj *);
 static int out_container(struct obj *);
 static long mbag_item_gone(int,struct obj *);
-static void observe_quantum_cat(struct obj *);
 static int menu_loot(int, struct obj *, boolean);
 static int in_or_out_menu(const char *,struct obj *, boolean, boolean);
 static int container_at(int, int, boolean);
@@ -1656,7 +1655,7 @@ static long mbag_item_gone(int held, struct obj *item)
     return loss;
 }
 
-static void observe_quantum_cat(struct obj *box)
+void observe_quantum_cat(struct obj *box)
 {
     static const char sc[] = "Schroedinger's Cat";
     struct obj *deadcat;

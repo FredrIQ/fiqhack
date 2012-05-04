@@ -1195,6 +1195,7 @@ extern void add_objitem(struct nh_objitem**, int*, enum nh_menuitem_role, int,
 extern struct obj *pick_obj(struct obj *);
 extern int encumber_msg(void);
 extern int doloot(void);
+extern void observe_quantum_cat(struct obj *);
 extern int use_container(struct obj *,int);
 extern int loot_mon(struct monst *,int *,boolean *);
 extern const char *safe_qbuf(const char *,unsigned,
