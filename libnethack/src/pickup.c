@@ -1688,8 +1688,18 @@ static void observe_quantum_cat(struct obj *box)
 	    obj_extract_self(deadcat);
 	    add_to_container(box, deadcat);
 	}
-	pline("The %s inside the box is dead!",
-	    Hallucination ? rndmonnam() : "housecat");
+        if (Hallucination) {
+            int idx = rndmonidx();
+            boolean pname = monnam_is_pname(idx);
+            pline("%s%s inside the box%s is dead!",
+                  pname ? monnam_for_index(idx)
+                        : The(monnam_for_index(idx)),
+                  pname ? ",": "",
+                  pname ? ",": "");
+        } else {
+            pline("The housecat inside the box is dead!");
+        }
+
     }
     box->owt = weight(box);
     return;

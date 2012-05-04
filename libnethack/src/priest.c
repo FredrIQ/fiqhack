@@ -221,9 +221,18 @@ void priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
 char *priestname(const struct monst *mon,
 		 char *pname)	/* caller-supplied output buffer */
 {
-	const char *what = Hallucination ? rndmonnam() : mon->data->mname;
+	const char *what;
+	boolean do_the = TRUE;
+	if (Hallucination) {
+	    int idx = rndmonidx();
+	    what = monnam_for_index(idx);
+	    do_the = !monnam_is_pname(idx);
+	} else {
+	    what = mon->data->mname;
+	}
 
-	strcpy(pname, "the ");
+	if (do_the)
+          strcpy(pname, "the ");
 	if (mon->minvis) strcat(pname, "invisible ");
 	if (mon->ispriest || mon->data == &mons[PM_ALIGNED_PRIEST] ||
 					mon->data == &mons[PM_ANGEL]) {

@@ -24,7 +24,8 @@ static void dowatersnakes(void) /* Fountain of snakes! */
     if (!(mvitals[PM_WATER_MOCCASIN].mvflags & G_GONE)) {
 	if (!Blind)
 	    pline("An endless stream of %s pours forth!",
-		  Hallucination ? makeplural(rndmonnam()) : "snakes");
+		  Hallucination
+		  ? makeplural(monnam_for_index(rndmonidx())) : "snakes");
 	else
 	    You_hear("something hissing!");
 	while (num-- > 0)

@@ -60,19 +60,32 @@ static int precheck(struct monst *mon, struct obj *obj, struct musable *m)
 	    if (potion_descr && !strcmp(potion_descr, "milky")) {
 	        if ( flags.ghost_count < MAXMONNO &&
 		    !rn2(POTION_OCCUPANT_CHANCE(flags.ghost_count))) {
-		    if (!enexto(&cc, level, mon->mx, mon->my, &mons[PM_GHOST])) return 0;
+		    if (!enexto(&cc, level, mon->mx, mon->my, &mons[PM_GHOST]))
+                        return 0;
 		    mquaffmsg(mon, obj);
 		    m_useup(mon, obj);
-		    mtmp = makemon(&mons[PM_GHOST], level, cc.x, cc.y, NO_MM_FLAGS);
+		    mtmp = makemon(&mons[PM_GHOST], level, cc.x, cc.y,
+                                   NO_MM_FLAGS);
 		    if (!mtmp) {
 			if (vis) pline(empty);
 		    } else {
 			if (vis) {
-			    pline("As %s opens the bottle, an enormous %s emerges!",
-			       mon_nam(mon),
-			       Hallucination ? rndmonnam() : (const char *)"ghost");
-			    pline("%s is frightened to death, and unable to move.",
-				    Monnam(mon));
+                            if (Hallucination) {
+                                int idx = rndmonidx();
+                                pline("As %s opens the bottle, %s emerges!",
+                                        mon_nam(mon),
+                                        monnam_is_pname(idx)
+                                          ? monnam_for_index(idx)
+                                          : (idx < SPECIAL_PM &&
+                                            (mons[idx].geno & G_UNIQ))
+                                            ? the(monnam_for_index(idx))
+                                            : an(monnam_for_index(idx)));
+                            } else {
+                                pline("As %s opens the bottle, an enormous"
+                                      " ghost emerges!", mon_nam(mon));
+                            }
+			    pline("%s is frightened to death, and unable to"
+                                  " move.", Monnam(mon));
 			}
 			mon->mcanmove = 0;
 			mon->mfrozen = 3;

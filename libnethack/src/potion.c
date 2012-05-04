@@ -286,8 +286,17 @@ static void ghost_from_bottle(void)
 		pline("As you open the bottle, something emerges.");
 		return;
 	}
-	pline("As you open the bottle, an enormous %s emerges!",
-		Hallucination ? rndmonnam() : "ghost");
+        if (Hallucination) {
+            int idx = rndmonidx();
+            pline("As you open the bottle, %s emerges!",
+                    monnam_is_pname(idx)
+                      ? monnam_for_index(idx)
+                      : (idx < SPECIAL_PM && (mons[idx].geno & G_UNIQ))
+                        ? the(monnam_for_index(idx))
+                        : an(monnam_for_index(idx)));
+        } else {
+            pline("As you open the bottle, an enormous ghost emerges!");
+        }
 	if (flags.verbose)
 	    pline("You are frightened to death, and unable to move.");
 	nomul(-3, "being frightened to death");
