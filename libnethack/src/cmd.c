@@ -39,7 +39,6 @@ static void mon_invent_chain(struct menulist *, const char *, struct monst *,
 static void mon_chain(struct menulist *, const char *, struct monst *, long *, long *);
 static void contained(struct menulist *, const char *, long *, long *);
 static int wiz_show_stats(void);
-static int enter_explore_mode(void);
 static int doattributes(void);
 static int doconduct(void); /**/
 static boolean minimal_enlightenment(void);
@@ -244,22 +243,6 @@ static int domonability(void)
 	else pline("You don't have a special ability in your normal form!");
 	return 0;
 }
-
-static int enter_explore_mode(void)
-{
-	if (!discover && !wizard) {
-		pline("Beware!  From explore mode there will be no return to normal game.");
-		if (yn("Do you want to enter explore mode?") == 'y') {
-			pline("You are now in non-scoring explore mode.");
-			discover = TRUE;
-		}
-		else {
-			pline("Resuming normal game.");
-		}
-	}
-	return 0;
-}
-
 
 /* ^W command - wish for something */
 static int wiz_wish(void)	/* Unlimited wishes for debug mode by Paul Polderman */

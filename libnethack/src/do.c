@@ -1065,9 +1065,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 				level->dndest.nhx, level->dndest.nhy,
 				LR_DOWNTELE, NULL);
 	    if (falling) {
-	        struct trap *ttrap;
 		char kbuf[BUFSZ];
-		ttrap = t_at(level, u.ux, u.uy);
 		sprintf(kbuf, "falling through a %s while wielding",
 		        at_trapdoor ? "trap door" : "hole");
 		if (Punished) ballfall();

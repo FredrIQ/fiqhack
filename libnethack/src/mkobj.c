@@ -875,12 +875,13 @@ struct obj *obj_attach_mid(struct obj *obj, unsigned mid)
     struct obj *otmp;
     int namelth;
 
+    if (!mid || !obj) return NULL;
+
     if (obj->oxlth) {
         impossible("xlth set when attaching mid");
-        return otmp;
+        return NULL;
     }
 
-    if (!mid || !obj) return NULL;
     namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
     otmp = realloc_obj(obj, sizeof mid, &mid, namelth, ONAME(obj));
     if (otmp && otmp->oxlth) otmp->oattached = OATTACHED_M_ID;	/* mark it */
@@ -1362,7 +1363,7 @@ void set_obj_level(struct level *lev, struct obj *obj)
 struct obj *restore_obj(struct memfile *mf)
 {
     unsigned int oflags;
-    char namelen, oattached;
+    char namelen;
     struct obj *otmp;
     
     mfmagic_check(mf, OBJ_MAGIC);

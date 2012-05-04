@@ -1059,12 +1059,11 @@ int mlevel_tele_trap(struct monst *mtmp, struct trap *trap,
 
 void rloco_pos( struct level *lev, struct obj *obj, int *nx, int *ny )
 {
-    xchar tx, ty, otx, oty;
+    xchar tx, ty, otx;
     boolean restricted_fall;
     int try_limit = 4000;
 
     otx = obj->ox;
-    oty = obj->oy;
     restricted_fall = (otx == 0 && lev->dndest.lx);
     do {
         tx = rn1(COLNO-3,2);
