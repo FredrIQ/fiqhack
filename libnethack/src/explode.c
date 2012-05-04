@@ -29,6 +29,8 @@ void explode(int x, int y,
 	boolean visible, any_shield;
 	int uhurt = 0; /* 0=unhurt, 1=items damaged, 2=you and items damaged */
 	const char *str;
+	char dispbuf[BUFSZ];
+	boolean expl_needs_the = TRUE;
 	int idamres, idamnonres;
 	struct monst *mtmp;
 	uchar adtyp;
@@ -53,33 +55,52 @@ void explode(int x, int y,
 	    str = killer;
 	    killer = 0;		/* set again later as needed */
 	    adtyp = AD_PHYS;
-	} else
-	switch (abs(type) % 10) {
+	    if (Hallucination) {
+                int name = rndmonidx();	        
+		sprintf(dispbuf, "%s explosion",
+		        s_suffix(monnam_for_index(name)));
+		expl_needs_the = !monnam_is_pname(name);
+	    } else {
+	        strcpy(dispbuf, str);
+	    }
+	} else {
+	    int whattype = abs(type) % 10;
+	    adtyp = whattype + 1;
+	    boolean done = FALSE, hallu = Hallucination;
+	    if (hallu) {
+	        do {
+		    whattype = rn2(8);
+		} while (whattype == 3); 
+	    }
+tryagain:
+	    switch (whattype) {
 		case 0: str = "magical blast";
-			adtyp = AD_MAGM;
 			break;
 		case 1: str =   olet == BURNING_OIL ?	"burning oil" :
 				olet == SCROLL_CLASS ?	"tower of flame" :
 							"fireball";
-			adtyp = AD_FIRE;
 			break;
 		case 2: str = "ball of cold";
-			adtyp = AD_COLD;
 			break;
 		case 4: str =  (olet == WAND_CLASS) ? "death field" :
 							"disintegration field";
-			adtyp = AD_DISN;
 			break;
 		case 5: str = "ball of lightning";
-			adtyp = AD_ELEC;
 			break;
 		case 6: str = "poison gas cloud";
-			adtyp = AD_DRST;
 			break;
 		case 7: str = "splash of acid";
-			adtyp = AD_ACID;
 			break;
 		default: impossible("explosion base type %d?", type); return;
+	    }
+	    if (!done) {
+	        strcpy(dispbuf, str);
+		done = TRUE;
+		if (hallu) {
+		    whattype = adtyp - 1;
+		    goto tryagain;
+		}
+            }
 	}
 
 	any_shield = visible = FALSE;
@@ -257,7 +278,8 @@ void explode(int x, int y,
 				       "fried");
 		} else if (cansee(i+x-1, j+y-1)) {
 		    if (mtmp->m_ap_type) seemimic(mtmp);
-		    pline("%s is caught in the %s!", Monnam(mtmp), str);
+		    pline("%s is caught in %s%s!", Monnam(mtmp),
+                            expl_needs_the ? "the " : "", dispbuf);
 		}
 
 		idamres += destroy_mitem(mtmp, SCROLL_CLASS, (int) adtyp);
@@ -278,7 +300,8 @@ void explode(int x, int y,
 
 			if (resist(mtmp, olet, 0, FALSE)) {
 			    if (cansee(i+x-1,j+y-1))
-				pline("%s resists the %s!", Monnam(mtmp), str);
+				pline("%s resists %s%s!", Monnam(mtmp),
+				      expl_needs_the ? "the " : "", dispbuf);
 			    mdam = dam/2;
 			}
 			if (mtmp == u.ustuck)
@@ -301,7 +324,8 @@ void explode(int x, int y,
 	if (uhurt) {
 		if ((type >= 0 || adtyp == AD_PHYS) &&	/* gas spores */
 				flags.verbose && olet != SCROLL_CLASS)
-			pline("You are caught in the %s!", str);
+			pline("You are caught in %s%s!",
+                              expl_needs_the ? "the " : "", dispbuf);
 		/* do property damage first, in case we end up leaving bones */
 		if (adtyp == AD_FIRE) burn_away_slime();
 		if (Invulnerable) {
