@@ -676,6 +676,7 @@ boolean inside_gas_cloud(void * p1, void * p2)
 	    return FALSE;
 	if (!Blind)
 	    make_blinded(1L, FALSE);
+        if (u.uinvulnerable) return FALSE;
 	if (!Poison_resistance) {
 	    pline("Something is burning your %s!", makeplural(body_part(LUNG)));
 	    pline("You cough and spit blood!");
