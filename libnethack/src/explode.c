@@ -440,7 +440,7 @@ long scatter(int sx, int sy,	/* location of objects to scatter */
 		    struct trap *trap;
 
 		    if ((trap = t_at(lev, sx, sy)) && trap->ttyp == STATUE_TRAP)
-			    deltrap(trap);
+			    deltrap(lev, trap);
                     if(visible)
                         pline("%s.", Tobjnam(otmp, "crumble"));
 		    break_statue(otmp);

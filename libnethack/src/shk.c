@@ -2778,7 +2778,7 @@ int repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
 	    } else if (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
 	               ttmp->ttyp == HOLE)
 		floordamage = TRUE;
-	    deltrap(ttmp);
+	    deltrap(lev, ttmp);
 	    if (IS_DOOR(tmp_dam->typ)) {
 		lev->locations[x][y].doormask = D_CLOSED; /* arbitrary */
 		block_point(x, y);

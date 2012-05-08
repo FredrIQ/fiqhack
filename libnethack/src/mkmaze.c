@@ -276,7 +276,7 @@ static boolean put_lregion_here(struct level *lev,
 	    struct trap *t = t_at(lev, x, y);
 
 	    if (t && t->ttyp != MAGIC_PORTAL &&
-                t->ttyp != VIBRATING_SQUARE) deltrap(t);
+                t->ttyp != VIBRATING_SQUARE) deltrap(lev, t);
 	    if (bad_location(lev, x, y, nlx, nly, nhx, nhy)) return FALSE;
 	}
     }

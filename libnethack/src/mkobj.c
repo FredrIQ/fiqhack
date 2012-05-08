@@ -1030,15 +1030,15 @@ void place_object(struct obj *otmp, struct level *lev, int x, int y)
 /* If ice was affecting any objects correct that now
  * Also used for starting ice effects too. [zap.c]
  */
-void obj_ice_effects(int x, int y, boolean do_buried)
+void obj_ice_effects( struct level *lev, int x, int y, boolean do_buried )
 {
 	struct obj *otmp;
 
-	for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere) {
+	for (otmp = lev->objects[x][y]; otmp; otmp = otmp->nexthere) {
 		if (otmp->timed) obj_timer_checks(otmp, x, y, 0);
 	}
 	if (do_buried) {
-	    for (otmp = level->buriedobjlist; otmp; otmp = otmp->nobj) {
+	    for (otmp = lev->buriedobjlist; otmp; otmp = otmp->nobj) {
  		if (otmp->ox == x && otmp->oy == y) {
 			if (otmp->timed) obj_timer_checks(otmp, x, y, 0);
 		}

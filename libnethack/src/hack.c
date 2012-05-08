@@ -166,9 +166,9 @@ static int moverock(schar dx, schar dy)
 			  otense(otmp, "plug"),
 			  (ttmp->ttyp == TRAPDOOR) ? "trap door" : "hole",
 			  surface(rx, ry));
-		    deltrap(ttmp);
+		    deltrap(level, ttmp);
 		    delobj(otmp);
-		    bury_objs(rx, ry);
+		    bury_objs(level, rx, ry);
 		    if (cansee(rx,ry)) newsym(rx,ry);
 		    continue;
 		case LEVEL_TELEP:

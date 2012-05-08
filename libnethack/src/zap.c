@@ -2319,7 +2319,7 @@ static boolean zap_updown(struct obj *obj, schar dz)
 		} else {
 			You_hear("a twang followed by a thud.");
 		}
-		deltrap(ttmp);
+		deltrap(level, ttmp);
 		ttmp = NULL;
 		newsym(x, y);
 	    }
@@ -3094,16 +3094,16 @@ static void zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
  * burn scrolls and spellbooks on floor at position x,y
  * return the number of scrolls and spellbooks burned
  */
-int burn_floor_paper(int x, int y,
+int burn_floor_paper( struct level *lev, int x, int y,
 		     boolean give_feedback, /* caller needs to decide about visibility checks */
-		     boolean u_caused)
+		     boolean u_caused )
 {
 	struct obj *obj, *obj2;
 	long i, scrquan, delquan;
 	char buf1[BUFSZ], buf2[BUFSZ];
 	int cnt = 0;
 
-	for (obj = level->objects[x][y]; obj; obj = obj2) {
+	for (obj = lev->objects[x][y]; obj; obj = obj2) {
 	    obj2 = obj->nexthere;
 	    if (obj->oclass == SCROLL_CLASS || obj->oclass == SPBOOK_CLASS) {
 		if (obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL ||
@@ -3407,10 +3407,11 @@ buzzmonst:
 }
 
 
-void melt_ice(xchar x, xchar y)
+void melt_ice( struct level *lev, xchar x, xchar y )
 {
-	struct rm *loc = &level->locations[x][y];
+	struct rm *loc = &lev->locations[x][y];
 	struct obj *otmp;
+        boolean visible = (lev == level && cansee(x, y));
 
 	if (loc->typ == DRAWBRIDGE_UP)
 	    loc->drawbridgemask &= ~DB_ICE;	/* revert to DB_MOAT */
@@ -3418,13 +3419,13 @@ void melt_ice(xchar x, xchar y)
 	    loc->typ = (loc->icedpool == ICED_POOL ? POOL : MOAT);
 	    loc->icedpool = 0;
 	}
-	obj_ice_effects(x, y, FALSE);
-	unearth_objs(level, x, y);
+	obj_ice_effects(lev, x, y, FALSE);
+	unearth_objs(lev, x, y);
 	if (Underwater) vision_recalc(1);
 	newsym(x,y);
-	if (cansee(x,y)) Norep("The ice crackles and melts.");
+	if (visible) Norep("The ice crackles and melts.");
 	if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
-	    if (cansee(x,y)) pline("%s settles...", An(xname(otmp)));
+	    if (visible) pline("%s settles...", An(xname(otmp)));
 	    do {
 		obj_extract_self(otmp);	/* boulder isn't being pushed */
 		if (!boulder_hits_pool(otmp, x, y, FALSE))
@@ -3455,11 +3456,11 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 	    if (t && t->ttyp == WEB) {
 		/* a burning web is too flimsy to notice if you can't see it */
 		if (cansee(x,y)) Norep("A web bursts into flames!");
-		delfloortrap(t);
+		delfloortrap(level, t);
 		if (cansee(x,y)) newsym(x,y);
 	    }
 	    if (is_ice(level, x, y)) {
-		melt_ice(x, y);
+		melt_ice(level, x, y);
 	    } else if (is_pool(level, x,y)) {
 		const char *msgtxt = "You hear hissing gas.";
 		if (loc->typ != POOL) {	/* MOAT or DRAWBRIDGE_UP */
@@ -3504,7 +3505,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 				    (loc->typ == POOL ? ICED_POOL : ICED_MOAT);
 			loc->typ = (lava ? ROOM : ICE);
 		    }
-		    bury_objs(x,y);
+		    bury_objs(level, x,y);
 		    if (cansee(x,y)) {
 			if (moat)
 				Norep("The moat is bridged with ice!");
@@ -3542,7 +3543,7 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 			}
 		    }
 		}
-		obj_ice_effects(x,y,TRUE);
+		obj_ice_effects(level, x, y, TRUE);
 	}
 	if (closed_door(level, x, y)) {
 		int new_doormask = -1;
@@ -3609,7 +3610,8 @@ int zap_over_floor(xchar x, xchar y, int type, boolean *shopdamage)
 	}
 
 	if (OBJ_AT(x, y) && abstype == ZT_FIRE)
-		if (burn_floor_paper(x, y, FALSE, type > 0) && couldsee(x, y)) {
+		if (burn_floor_paper(level, x, y, FALSE, type > 0) &&
+                    couldsee(x, y)) {
 		    newsym(x,y);
 		    pline("You %s of smoke.",
 			!Blind ? "see a puff" : "smell a whiff");

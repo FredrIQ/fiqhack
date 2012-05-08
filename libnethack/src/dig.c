@@ -664,7 +664,7 @@ static boolean dighole(boolean pit_only)
 			 * fills it.  Final outcome:  no hole, no boulder.
 			 */
 			pline("KADOOM! The boulder falls in!");
-			delfloortrap(ttmp);
+			delfloortrap(level, ttmp);
 		}
 		delobj(boulder_here);
 		return TRUE;
@@ -693,7 +693,7 @@ static boolean dighole(boolean pit_only)
 
 liquid_flow:
 		if (ttmp)
-		    delfloortrap(ttmp);
+		    delfloortrap(level, ttmp);
 		/* if any objects were frozen here, they're released now */
 		unearth_objs(level, u.ux, u.uy);
 
@@ -1279,15 +1279,15 @@ static struct obj *bury_an_obj(struct obj *otmp)
 	return otmp2;
 }
 
-void bury_objs(int x, int y)
+void bury_objs( struct level *lev, int x, int y )
 {
 	struct obj *otmp, *otmp2;
 
-	for (otmp = level->objects[x][y]; otmp; otmp = otmp2)
+	for (otmp = lev->objects[x][y]; otmp; otmp = otmp2)
 		otmp2 = bury_an_obj(otmp);
 
 	/* don't expect any engravings here, but just in case */
-	del_engr_at(level, x, y);
+	del_engr_at(lev, x, y);
 	newsym(x, y);
 }
 

@@ -579,6 +579,7 @@ struct obj *select_hwep(struct monst *mtmp)
  */
 void possibly_unwield(struct monst *mon, boolean polyspot)
 {
+        struct level *lev = mon->dlevel;
 	struct obj *obj, *mw_tmp;
 
 	if (!(mw_tmp = MON_WEP(mon)))
@@ -595,15 +596,15 @@ void possibly_unwield(struct monst *mon, boolean polyspot)
 		MON_NOWEP(mon);
 		mon->weapon_check = NO_WEAPON_WANTED;
 		obj_extract_self(obj);
-		if (cansee(mon->mx, mon->my)) {
+		if (lev == level && cansee(mon->mx, mon->my)) {
 		    pline("%s drops %s.", Monnam(mon),
 			  distant_name(obj, doname));
 		    newsym(mon->mx, mon->my);
 		}
 		/* might be dropping object into water or lava */
-		if (!flooreffects(obj, mon->mx, mon->my, "drop")) {
+		if (!flooreffects(obj, mon->mx, mon->my, "drop")) { /* FIXME - JMM */
 		    if (polyspot) bypass_obj(obj);
-		    place_object(obj, level, mon->mx, mon->my);
+		    place_object(obj, lev, mon->mx, mon->my);
 		    stackobj(obj);
 		}
 		return;

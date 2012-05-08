@@ -105,7 +105,7 @@ static void gush(int x, int y, void *poolcnt)
 	    (sobj_at(BOULDER, level, x, y)) || nexttodoor(level, x, y))
 		return;
 
-	if ((ttmp = t_at(level, x, y)) != 0 && !delfloortrap(ttmp))
+	if ((ttmp = t_at(level, x, y)) != 0 && !delfloortrap(level, ttmp))
 		return;
 
 	if (!((*(int *)poolcnt)++))

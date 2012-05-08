@@ -26,15 +26,18 @@
  * monsters that are hiding or mimicing other monsters.
  */
 #define tp_sensemon(mon) (	/* The hero can always sense a monster IF:  */\
-    (!mindless(mon->data)) &&	/* 1. the monster has a brain to sense AND  */\
-      ((Blind && Blind_telepat) ||	/* 2a. hero is blind and telepathic OR	    */\
-				/* 2b. hero is using a telepathy inducing   */\
+    (mon->dlevel == level) &&   /* 1. the monster is on the same level      */\
+    (!mindless(mon->data)) &&	/* 2. the monster has a brain to sense AND  */\
+      ((Blind && Blind_telepat) || /* 3a. hero is blind and telepathic OR   */\
+				/* 3b. hero is using a telepathy inducing   */\
 				/*	 object and in range		    */\
       (Unblind_telepat &&					      \
 	(distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM))))		      \
 )
 
-#define sensemon(mon) (tp_sensemon(mon) || Detect_monsters || MATCH_WARN_OF_MON(mon))
+#define sensemon(mon) (mon->dlevel == level && \
+                       (tp_sensemon(mon) || Detect_monsters || \
+                        MATCH_WARN_OF_MON(mon)))
 
 /*
  * mon_warning() is used to warn of any dangerous monsters in your
@@ -78,9 +81,11 @@
  * routines.  Like mon_visible(), but it checks to see if the hero sees the
  * location instead of assuming it.  (And also considers worms.)
  */
-#define canseemon(mon) ((mon->wormno ? worm_known(mon) : \
+#define canseemon(mon) \
+    (mon->dlevel == level && \
+     (mon->wormno ? worm_known(mon) : \
 	    (cansee(mon->mx, mon->my) || see_with_infrared(mon))) \
-	&& mon_visible(mon))
+     && mon_visible(mon))
 
 
 /*

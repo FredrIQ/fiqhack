@@ -842,12 +842,12 @@ int dospinweb(void)
 	if (ttmp) switch (ttmp->ttyp) {
 		case PIT:
 		case SPIKED_PIT: pline("You spin a web, covering up the pit.");
-			deltrap(ttmp);
-			bury_objs(u.ux, u.uy);
+			deltrap(level, ttmp);
+			bury_objs(level, u.ux, u.uy);
 			newsym(u.ux, u.uy);
 			return 1;
 		case SQKY_BOARD: pline("The squeaky board is muffled.");
-			deltrap(ttmp);
+			deltrap(level, ttmp);
 			newsym(u.ux, u.uy);
 			return 1;
 		case TELEP_TRAP:
@@ -862,12 +862,12 @@ int dospinweb(void)
 		case TRAPDOOR:
 			pline("You web over the %s.",
 			    (ttmp->ttyp == TRAPDOOR) ? "trap door" : "hole");
-			deltrap(ttmp);
+			deltrap(level, ttmp);
 			newsym(u.ux, u.uy);
 			return 1;
 		case ROLLING_BOULDER_TRAP:
 			pline("You spin a web, jamming the trigger.");
-			deltrap(ttmp);
+			deltrap(level, ttmp);
 			newsym(u.ux, u.uy);
 			return 1;
 		case ARROW_TRAP:

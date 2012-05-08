@@ -2217,7 +2217,7 @@ struct obj *floorfood(/* get food from floor or pack */
                             "holding you" : "armed");
                     if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
                         u.utrap = u.utraptype = 0;
-                        deltrap(ttmp);
+                        deltrap(level, ttmp);
                         return mksobj(level, BEARTRAP, TRUE, FALSE);
                     } else if (c == 'q') {
                         return NULL;
