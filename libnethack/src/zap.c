@@ -425,6 +425,17 @@ boolean get_mon_location(struct monst *mon, xchar *xp, xchar *yp, int locflags)
 	}
 }
 
+static struct level *object_dlevel(struct obj *obj) {
+    switch(obj->where) {
+    case OBJ_FLOOR: case OBJ_BURIED: return obj->olev;
+    case OBJ_CONTAINED: return object_dlevel(obj->ocontainer);
+    case OBJ_INVENT: return level;
+    case OBJ_MINVENT: return obj->ocarry->dlevel;
+    case OBJ_ONBILL: panic("Object on bill in object_dlevel");
+    case OBJ_FREE: default: panic("Object is nowhere in object_dlevel");
+    }
+}
+
 /* used by revive() and animate_statue() */
 struct monst *montraits(struct obj *obj, coord *cc)
 {
@@ -485,6 +496,9 @@ struct monst *montraits(struct obj *obj, coord *cc)
 		mtmp2->mblinded = 0;
 		mtmp2->mstun = 0;
 		mtmp2->mconf = 0;
+                /* the corpse may have been moved, set the monster's
+                   location from the corpse's location */
+                mtmp2->dlevel = object_dlevel(obj);
 		replmon(mtmp,mtmp2);
 	}
 	return mtmp2;
