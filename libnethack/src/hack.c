@@ -8,7 +8,7 @@ static int moverock(schar dx, schar dy);
 static int still_chewing(xchar,xchar);
 static void dosinkfall(void);
 static boolean findtravelpath(boolean(*)(int, int), schar *, schar *);
-static boolean monstinroom(const struct permonst *,int);
+static struct monst *monstinroom(const struct permonst *,int);
 static boolean check_interrupt( struct monst *mtmp );
 
 static void move_update(boolean);
@@ -1639,15 +1639,15 @@ stillinwater:
 	}
 }
 
-static boolean monstinroom(const struct permonst *mdat, int roomno)
+static struct monst *monstinroom(const struct permonst *mdat, int roomno)
 {
 	struct monst *mtmp;
 
 	for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
 		if (!DEADMONSTER(mtmp) && mtmp->data == mdat &&
 		   strchr(in_rooms(level, mtmp->mx, mtmp->my, 0), roomno + ROOMOFFSET))
-			return TRUE;
-	return FALSE;
+			return mtmp;
+	return NULL;
 }
 
 char * in_rooms(struct level *lev, xchar x, xchar y, int typewanted)
@@ -1844,9 +1844,11 @@ void check_special_room(boolean newlev)
 			pline("You enter an abandoned barracks.");
 		    break;
 		case DELPHI:
-		    if (monstinroom(&mons[PM_ORACLE], roomno))
-			verbalize("%s, %s, welcome to Delphi!",
-					Hello(NULL), plname);
+		    if ((mtmp = monstinroom(&mons[PM_ORACLE], roomno)) &&
+                        mtmp->mpeaceful) {
+                        verbalize("%s, %s, welcome to Delphi!", 
+                                  Hello(NULL), plname);
+                    }
 		    break;
 		case TEMPLE:
 		    intemple(roomno + ROOMOFFSET);
