@@ -64,11 +64,13 @@ static void init_rumors(dlb *fp)
  */
 char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 	       char *rumor_buf,
-	       boolean exclude_cookie)
+	       boolean exclude_cookie,
+               int *truth_out)
 {
 	dlb	*rumors;
 	int tidbit, beginning;
 	char	*endp, line[BUFSZ], xbuf[BUFSZ];
+        int     ltruth = 0;
 
 	rumor_buf[0] = '\0';
 	if (true_rumor_size < 0L)	/* we couldn't open RUMORFILE */
@@ -123,11 +125,13 @@ char *getrumor(int truth, /* 1=true, -1=false, 0=either */
 	    if (count >= 50)
 		impossible("Can't find non-cookie rumor?");
 	    else
-		exercise(A_WIS, (adjtruth > 0));
+                ltruth = (adjtruth > 0) ? 1 : -1;
 	} else {
 		pline("Can't open rumors file!");
 		true_rumor_size = -1;	/* don't try to open it again */
+                if(truth_out) *truth_out = 0;
 	}
+        if(truth_out) *truth_out = ltruth;
 	return rumor_buf;
 }
 
@@ -140,6 +144,7 @@ void outrumor(int truth, /* 1=true, -1=false, 0=either */
 	char buf[BUFSZ];
 	boolean reading = (mechanism == BY_COOKIE ||
 			   mechanism == BY_PAPER);
+        int truth_out;
 
 	if (reading) {
 	    /* deal with various things that prevent reading */
@@ -152,7 +157,8 @@ void outrumor(int truth, /* 1=true, -1=false, 0=either */
 	    	return;
 	    }
 	}
-	line = getrumor(truth, buf, reading ? FALSE : TRUE);
+	line = getrumor(truth, buf, reading ? FALSE : TRUE, &truth_out);
+        if(truth_out) exercise(A_WIS, truth_out == 1);
 	if (!*line)
 		line = "NetHack rumors file closed for renovation.";
 	switch (mechanism) {
@@ -162,7 +168,6 @@ void outrumor(int truth, /* 1=true, -1=false, 0=either */
 		  (!rn2(4) ? "offhandedly " : (!rn2(3) ? "casually " :
 		  (rn2(2) ? "nonchalantly " : ""))));
 		verbalize("%s", line);
-		exercise(A_WIS, TRUE);
 		return;
 	    case BY_COOKIE:
 		pline(fortune_msg);

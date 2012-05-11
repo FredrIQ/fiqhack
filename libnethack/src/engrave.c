@@ -34,7 +34,7 @@ char *random_engraving(char *outbuf)
 
 	/* a random engraving may come from the "rumors" file,
 	   or from the list above */
-	if (!rn2(4) || !(rumor = getrumor(0, outbuf, TRUE)) || !*rumor)
+	if (!rn2(4) || !(rumor = getrumor(0, outbuf, TRUE, NULL)) || !*rumor)
 	    strcpy(outbuf, random_mesg[rn2(SIZE(random_mesg))]);
 
 	wipeout_text(outbuf, (int)(strlen(outbuf) / 4), 0);

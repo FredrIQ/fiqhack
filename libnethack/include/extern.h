@@ -1374,7 +1374,7 @@ extern const char *Goodbye(void);
 
 /* ### rumors.c ### */
 
-extern char *getrumor(int,char *, boolean);
+extern char *getrumor(int,char *, boolean, int *);
 extern void outrumor(int,int);
 extern void save_oracles(struct memfile *mf);
 extern void free_oracles(void);
