@@ -1636,6 +1636,9 @@ extern void b_trapped(const char *,int);
 extern boolean unconscious(void);
 extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
+extern void cnv_trap_obj( struct level *lev, int otyp, int cnt, 
+                          struct trap *ttmp );
+
 
 /* ### u_init.c ### */
 
