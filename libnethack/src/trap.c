@@ -9,7 +9,6 @@ static void dofiretrap(struct obj *);
 static void domagictrap(void);
 static boolean emergency_disrobe(boolean *);
 static int untrap_prob(struct trap *ttmp);
-static void cnv_trap_obj(struct level *, int, int, struct trap *);
 static void move_into_trap(struct trap *);
 static int try_disarm(struct trap *, boolean, schar, schar);
 static void reward_untrap(struct trap *, struct monst *);
@@ -2943,8 +2942,7 @@ static int untrap_prob(struct trap *ttmp)
 }
 
 /* Replace trap with object(s).  Helge Hafting */
-static void cnv_trap_obj( struct level *lev, int otyp, int cnt,
-                          struct trap *ttmp )
+void cnv_trap_obj( struct level *lev, int otyp, int cnt, struct trap *ttmp )
 {
 	struct obj *otmp = mksobj(lev, otyp, TRUE, FALSE);
 	otmp->quan = cnt;

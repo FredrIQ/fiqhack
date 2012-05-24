@@ -1374,7 +1374,7 @@ extern const char *Goodbye(void);
 
 /* ### rumors.c ### */
 
-extern char *getrumor(int,char *, boolean);
+extern char *getrumor(int,char *, boolean, int *);
 extern void outrumor(int,int);
 extern void save_oracles(struct memfile *mf);
 extern void free_oracles(void);
@@ -1636,6 +1636,9 @@ extern void b_trapped(const char *,int);
 extern boolean unconscious(void);
 extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
+extern void cnv_trap_obj( struct level *lev, int otyp, int cnt, 
+                          struct trap *ttmp );
+
 
 /* ### u_init.c ### */
 
