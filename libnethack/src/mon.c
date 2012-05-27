@@ -1553,7 +1553,7 @@ void xkilled(struct monst *mtmp, int dest)
 	if (dest & 1) {
 	    const char *verb = nonliving(mtmp->data) ? "destroy" : "kill";
 
-	    if (!wasinside && !canspotmon(mtmp))
+	    if (!wasinside && mtmp!= u.usteed && !canspotmon(mtmp))
 		pline("You %s it!", verb);
 	    else {
 		pline("You %s %s!", verb,
