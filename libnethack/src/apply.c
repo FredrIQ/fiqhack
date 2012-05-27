@@ -1803,7 +1803,7 @@ static int use_stone(struct obj *tstone)
     char stonebuf[QBUFSZ];
     static const char scritch[] = "\"scritch, scritch\"";
     static const char allowall[3] = { ALL_CLASSES, 0 };
-    static const char justgems[3] = { ALLOW_NONE, GEM_CLASS, 0 };
+    static const char justgems[3] = { ALL_CLASSES, GEM_CLASS, 0 };
 
     /* in case it was acquired while blinded */
     if (!Blind) tstone->dknown = 1;

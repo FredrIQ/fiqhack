@@ -810,6 +810,11 @@ struct obj *getobj(const char *let, const char *word)
 		compactify(bp);
 	*ap = '\0';
 
+        /*if (!strncmp(word, "rub on the stone", 16)) {
+            allowall = TRUE;
+            usegold = TRUE;
+        }*/
+
 	if (!foo && !allowall && !allownone) {
 		pline("You don't have anything %sto %s.",
 			foox ? "else " : "", word);
