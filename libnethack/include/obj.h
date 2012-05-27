@@ -124,7 +124,8 @@ struct obj {
  *	#define is_multigen(otyp) (otyp <= SHURIKEN)
  *	#define is_poisonable(otyp) (otyp <= BEC_DE_CORBIN)
  */
-#define is_blade(otmp)	(otmp->oclass == WEAPON_CLASS && \
+#define is_blade(otmp)	((otmp->oclass == WEAPON_CLASS || \
+                          otmp->oclass == TOOL_CLASS) &&\
 			 objects[otmp->otyp].oc_skill >= P_DAGGER && \
 			 objects[otmp->otyp].oc_skill <= P_SABER)
 #define is_axe(otmp)	((otmp->oclass == WEAPON_CLASS || \
