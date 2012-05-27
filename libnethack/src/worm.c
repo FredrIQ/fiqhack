@@ -313,8 +313,9 @@ void cutworm(struct monst *worm, xchar x, xchar y, struct obj *weap)
     cut_chance = rnd(20);	/* Normally  1-16 does not cut */
 				/* Normally 17-20 does */
 
-    if (weap && is_blade(weap))	/* With a blade 1- 6 does not cut */
-	cut_chance += 10;	/*		7-20 does */
+    if (weap && objects[weap->otyp].oc_dir & SLASH)
+        cut_chance += 10;       /* With a slashing weapon 1- 6 does not cut */
+	                        /*                        7-20 does */
 
     if (cut_chance < 17) return;	/* not good enough */
 
