@@ -865,11 +865,12 @@ static int lift_object(struct obj *obj, struct obj *container,
 			body_part(HAND), xname(obj));
 	return -1;
     }
-    if (obj->otyp == LOADSTONE ||
-	    (obj->otyp == BOULDER && throws_rocks(youmonst.data)))
+    if (obj->otyp == LOADSTONE)
 	return 1;		/* lift regardless of current situation */
 
-    *cnt_p = carry_count(obj, container, *cnt_p, telekinesis, &old_wt, &new_wt);
+    *cnt_p = (obj->otyp == BOULDER && throws_rocks(youmonst.data))
+           ? 1
+           : carry_count(obj, container, *cnt_p, telekinesis, &old_wt, &new_wt);
     if (*cnt_p < 1L) {
 	result = -1;	/* nothing lifted */
     } else if (inv_cnt() >= 52 && !merge_choice(invent, obj)) {
