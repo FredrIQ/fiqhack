@@ -925,7 +925,7 @@ const char *monnam_for_index(int idx)
     return mons[idx].mname;
 }
 
-boolean monname_is_pname(int idx)
+boolean monnam_is_pname(int idx)
 {
     if (idx >= SPECIAL_PM) return (bogusmons[idx - SPECIAL_PM].pname);
     return type_is_pname(&mons[idx]);
