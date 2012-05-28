@@ -47,6 +47,9 @@ static char *trim(char *str)
     /* remove the spaces around the string */
     while (isspace(*str))
 	str++;
+    if (*str == '\0')
+        return str;
+
     end = &str[strlen(str)-1];
     while (isspace(*end))
 	*end-- = '\0';

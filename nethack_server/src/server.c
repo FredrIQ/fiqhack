@@ -519,6 +519,9 @@ static void cleanup_game_process(struct client_data *client, int epfd)
 	fd_to_client[client->pipe_in] = NULL;
     }
     
+    if (client->unsent_data)
+        free(client->unsent_data);
+
     client->pipe_in = client->pipe_out = client->sock = -1;
     unlink_client_data(client);
     free(client);
@@ -637,20 +640,19 @@ static void handle_communication(int fd, int epfd, unsigned int event_mask)
 		client->state = CLIENT_DISCONNECTED;
 		unlink_client_data(client);
 		link_client_data(client, &disconnected_list_head);
+
+                /* Maybe the destination vanished before sending completed...
+                 * unsent_data is likely to be an incomplete JSON object; deleting
+                 * it is the only sane option. */
+                if (client->unsent_data)
+                    free(client->unsent_data);
+                client->unsent_data = NULL;
+                client->unsent_data_size = 0;
 	    } else {
 		log_msg("Shutdown completed for game at pid %d", client->pid);
 		client->pid = 0;
 		cleanup_game_process(client, epfd);
 	    }
-	    /* Maybe the destination vanished before sending completed...
-	     * unsent_data is likely to be an incomplete JSON object; deleting
-	     * it is the only sane option. */
-	    if (client->unsent_data)
-		free(client->unsent_data);
-	    client->unsent_data = NULL;
-	    client->unsent_data_size = 0;
-		
-	
 	} else { /* it is possible to receive or send data */
 	    if (event_mask & EPOLLIN) {
 		do {
