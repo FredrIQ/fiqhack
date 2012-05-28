@@ -1731,18 +1731,21 @@ static void overview_print_dun(char *buf, const struct level *lev)
 {
 	int dnum = lev->z.dnum;
 	int depthstart = dungeons[dnum].depth_start;
+        int entry_depth, reached_depth;
 	if (dnum == quest_dnum || dnum == knox_level.dnum)
 	    /* The quest and knox should appear to be level 1 to match other text. */
 	    depthstart = 1;
 	
-	/* Sokoban lies about dunlev_ureached and we should suppress
-	 * the negative numbers in the endgame. */
-	if (dungeons[dnum].dunlev_ureached == 1 ||
-	    dnum == sokoban_dnum || In_endgame(&lev->z))
+        entry_depth = depthstart + dungeons[dnum].entry_lev - 1;
+        reached_depth = depthstart + dungeons[dnum].dunlev_ureached - 1;
+	if (entry_depth == reached_depth || In_endgame(&lev->z))
+            /* Suppress the negative numbers in the endgame. */
 	    sprintf(buf, "%s:", dungeons[dnum].dname);
-	else
+	else {
 	    sprintf(buf, "%s: levels %d to %d", dungeons[dnum].dname,
-		    depthstart, depthstart + dungeons[dnum].dunlev_ureached - 1);
+		    entry_depth < reached_depth ? entry_depth : reached_depth, 
+                    entry_depth < reached_depth ? reached_depth : entry_depth);
+        }
 }
 
 

@@ -152,7 +152,7 @@ static void expulsion(boolean seal)
 	   yet will now miss out on a chance to wander through it... */
 	for (t = level->lev_traps; t; t = t->ntrap)
 	    if (t->ttyp == MAGIC_PORTAL) break;
-	if (t) deltrap(t);	/* (display might be briefly out of sync) */
+	if (t) deltrap(level, t); /* (display might be briefly out of sync) */
 	else if (!reexpelled) impossible("quest portal already gone?");
     }
 }

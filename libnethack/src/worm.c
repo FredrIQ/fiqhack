@@ -693,7 +693,9 @@ static struct wseg *create_worm_tail(int num_segs)
  */
 boolean worm_known(const struct monst *worm)
 {
-    struct wseg *curr = level->wtails[worm->wormno];
+    struct wseg *curr = worm->dlevel->wtails[worm->wormno];
+
+    if(worm->dlevel != level) return FALSE;
 
     while (curr) {
 	if (cansee(curr->wx,curr->wy)) return TRUE;

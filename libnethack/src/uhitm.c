@@ -622,9 +622,8 @@ static boolean hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 			setmnotwielded(mon,monwep);
 			MON_NOWEP(mon);
 			mon->weapon_check = NEED_WEAPON;
-			pline("%s %s %s from the force of your blow!",
-			      s_suffix(Monnam(mon)), xname(monwep),
-			      otense(monwep, "shatter"));
+			pline("%s %s shatters from the force of your blow!",
+			      s_suffix(Monnam(mon)), cxname2(monwep));
 			m_useup(mon, monwep);
 			/* If someone just shattered MY weapon, I'd flee! */
 			if (rn2(4)) {

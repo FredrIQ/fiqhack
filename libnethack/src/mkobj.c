@@ -750,8 +750,8 @@ int weight(struct obj *obj)
 		 *	Bag status	Weight of contents
 		 *	----------	------------------
 		 *	cursed			2x
-		 *	blessed			x/4 + 1
-		 *	otherwise		x/2 + 1
+		 *	blessed			x/4 (rounded up)
+		 *	otherwise		x/2 (rounded up)
 		 *
 		 *  The macro DELTA_CWT in pickup.c also implements these
 		 *  weight equations.
@@ -763,8 +763,8 @@ int weight(struct obj *obj)
 		 */
 		if (obj->otyp == BAG_OF_HOLDING)
 		    cwt = obj->cursed ? (cwt * 2) :
-					(1 + (cwt / (obj->blessed ? 4 : 2)));
-
+                                        (obj->blessed ? (cwt + 3) / 4 :
+                                                        (cwt + 1) / 2);
 		return wt + cwt;
 	}
 	if (obj->otyp == CORPSE && obj->corpsenm >= LOW_PM) {
@@ -875,12 +875,13 @@ struct obj *obj_attach_mid(struct obj *obj, unsigned mid)
     struct obj *otmp;
     int namelth;
 
+    if (!mid || !obj) return NULL;
+
     if (obj->oxlth) {
         impossible("xlth set when attaching mid");
-        return otmp;
+        return NULL;
     }
 
-    if (!mid || !obj) return NULL;
     namelth = obj->onamelth ? strlen(ONAME(obj)) + 1 : 0;
     otmp = realloc_obj(obj, sizeof mid, &mid, namelth, ONAME(obj));
     if (otmp && otmp->oxlth) otmp->oattached = OATTACHED_M_ID;	/* mark it */
@@ -1029,15 +1030,15 @@ void place_object(struct obj *otmp, struct level *lev, int x, int y)
 /* If ice was affecting any objects correct that now
  * Also used for starting ice effects too. [zap.c]
  */
-void obj_ice_effects(int x, int y, boolean do_buried)
+void obj_ice_effects( struct level *lev, int x, int y, boolean do_buried )
 {
 	struct obj *otmp;
 
-	for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere) {
+	for (otmp = lev->objects[x][y]; otmp; otmp = otmp->nexthere) {
 		if (otmp->timed) obj_timer_checks(otmp, x, y, 0);
 	}
 	if (do_buried) {
-	    for (otmp = level->buriedobjlist; otmp; otmp = otmp->nobj) {
+	    for (otmp = lev->buriedobjlist; otmp; otmp = otmp->nobj) {
  		if (otmp->ox == x && otmp->oy == y) {
 			if (otmp->timed) obj_timer_checks(otmp, x, y, 0);
 		}
@@ -1362,7 +1363,7 @@ void set_obj_level(struct level *lev, struct obj *obj)
 struct obj *restore_obj(struct memfile *mf)
 {
     unsigned int oflags;
-    char namelen, oattached;
+    char namelen;
     struct obj *otmp;
     
     mfmagic_check(mf, OBJ_MAGIC);

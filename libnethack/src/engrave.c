@@ -34,7 +34,7 @@ char *random_engraving(char *outbuf)
 
 	/* a random engraving may come from the "rumors" file,
 	   or from the list above */
-	if (!rn2(4) || !(rumor = getrumor(0, outbuf, TRUE)) || !*rumor)
+	if (!rn2(4) || !(rumor = getrumor(0, outbuf, TRUE, NULL)) || !*rumor)
 	    strcpy(outbuf, random_mesg[rn2(SIZE(random_mesg))]);
 
 	wipeout_text(outbuf, (int)(strlen(outbuf) / 4), 0);
@@ -392,6 +392,8 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 	boolean dengr = FALSE;	/* TRUE if we wipe out the current engraving */
 	boolean doblind = FALSE;/* TRUE if engraving blinds the player */
 	boolean doknown = FALSE;/* TRUE if we identify the stylus */
+	boolean doknown_after = FALSE;/* TRUE if we identify the stylus after
+                                 * successfully engraving. */
 	boolean eow = FALSE;	/* TRUE if we are overwriting oep */
 	boolean jello = FALSE;	/* TRUE if we are engraving in slime */
 	boolean ptext = TRUE;	/* TRUE if we must prompt for engrave text */
@@ -583,14 +585,14 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 			strcpy(post_engr_text,
 			"The wand unsuccessfully fights your attempt to write!"
 			);
-                        doknown = TRUE;
+                        doknown_after = TRUE;
 			break;
 		    case WAN_SLOW_MONSTER:
 			if (!Blind) {
 			   sprintf(post_engr_text,
 				   "The bugs on the %s slow down!",
 				   surface(u.ux, u.uy));
-                           doknown = TRUE;
+                           doknown_after = TRUE;
 			}
 			break;
 		    case WAN_SPEED_MONSTER:
@@ -598,7 +600,7 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 			   sprintf(post_engr_text,
 				   "The bugs on the %s speed up!",
 				   surface(u.ux, u.uy));
-                           doknown = TRUE;
+                           doknown_after = TRUE;
 			}
 			break;
 		    case WAN_POLYMORPH:
@@ -625,7 +627,7 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 			   sprintf(post_engr_text,
 				   "The %s is riddled by bullet holes!",
 				   surface(u.ux, u.uy));
-                           doknown = TRUE;
+                           doknown_after = TRUE;
 			}
 			break;
 
@@ -643,7 +645,7 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
 			if (!Blind) {
 			    strcpy(post_engr_text,
 				"A few ice cubes drop from the wand.");
-                            doknown = TRUE;
+                            doknown_after = TRUE;
                         }
 			if (!oep || (oep->engr_type != BURN))
 			    break;
@@ -1081,6 +1083,11 @@ static int doengrave_core(struct obj *otmp, int auto_elbereth)
         }
 
 	if (post_engr_text[0]) pline(post_engr_text);
+
+        if (doknown_after) {
+	    makeknown(otmp->otyp);
+	    more_experienced(0,10);
+	}
 
 	if (doblind && !resists_blnd(&youmonst)) {
 	    pline("You are blinded by the flash!");

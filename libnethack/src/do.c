@@ -57,8 +57,8 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
 		} else
 		    level->locations[rx][ry].typ = ROOM;
 
-		if (ttmp) delfloortrap(ttmp);
-		bury_objs(rx, ry);
+		if (ttmp) delfloortrap(level, ttmp);
+		bury_objs(level, rx, ry);
 		
 		newsym(rx,ry);
 		if (pushing) {
@@ -115,6 +115,7 @@ boolean boulder_hits_pool(struct obj *otmp, int rx, int ry, boolean pushing)
  */
 boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 {
+        struct level *lev = level;
 	struct trap *t;
 	struct monst *mtmp;
 
@@ -126,10 +127,10 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 
 	if (obj->otyp == BOULDER && boulder_hits_pool(obj, x, y, FALSE))
 		return TRUE;
-	else if (obj->otyp == BOULDER && (t = t_at(level, x,y)) != 0 &&
+	else if (obj->otyp == BOULDER && (t = t_at(lev, x,y)) != 0 &&
 		 (t->ttyp==PIT || t->ttyp==SPIKED_PIT
 			|| t->ttyp==TRAPDOOR || t->ttyp==HOLE)) {
-		if (((mtmp = m_at(level, x, y)) && mtmp->mtrapped) ||
+		if (((mtmp = m_at(lev, x, y)) && mtmp->mtrapped) ||
 			(u.utrap && u.ux == x && u.uy == y)) {
 		    if (*verb)
 			pline("The boulder %s into the pit%s.",
@@ -168,14 +169,14 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 				You_hear("a distant CRASH!");
 			}
 		}
-		deltrap(t);
+		deltrap(lev, t);
 		obfree(obj, NULL);
-		bury_objs(x, y);
+		bury_objs(lev, x, y);
 		newsym(x,y);
 		return TRUE;
-	} else if (is_lava(level, x, y)) {
+	} else if (is_lava(lev, x, y)) {
 		return fire_damage(obj, FALSE, FALSE, x, y);
-	} else if (is_pool(level, x, y)) {
+	} else if (is_pool(lev, x, y)) {
 		/* Reasonably bulky objects (arbitrary) splash when dropped.
 		 * If you're floating above the water even small things make noise.
 		 * Stuff dropped near fountains always misses */
@@ -194,7 +195,7 @@ boolean flooreffects(struct obj *obj, int x, int y, const char *verb)
 		return water_damage(obj, FALSE, FALSE);
 	} else if (u.ux == x && u.uy == y &&
 		(!u.utrap || u.utraptype != TT_PIT) &&
-		(t = t_at(level, x,y)) != 0 && t->tseen &&
+		(t = t_at(lev, x,y)) != 0 && t->tseen &&
 			(t->ttyp==PIT || t->ttyp==SPIKED_PIT)) {
 		/* you escaped a pit and are standing on the precipice */
 		if (Blind && flags.soundok)
@@ -951,10 +952,17 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	assign_level(&u.uz, newlevel);
 	assign_level(&u.utolev, newlevel);
 	u.utotype = 0;
-	if (dunlev_reached(&u.uz) < dunlev(&u.uz)) {
+        
+        /* If the entry level is the top level, then the dungeon goes down.
+         * Otherwise it goes up. */
+        if (dungeons[u.uz.dnum].entry_lev == 1) {
+            if(dunlev_reached(&u.uz) < dunlev(&u.uz))
+                dunlev_reached(&u.uz) = dunlev(&u.uz);
+        } else {
+            if(dunlev_reached(&u.uz) > dunlev(&u.uz) || !dunlev_reached(&u.uz))
 		dunlev_reached(&u.uz) = dunlev(&u.uz);
-		historic_event(FALSE, "reached %s.", hist_lev_name(&u.uz, FALSE));
 	}
+
 	reset_rndmonst(NON_PM);   /* u.uz change affects monster generation */
 
 	origlev = level;
@@ -962,6 +970,8 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 	
 	if (!levels[new_ledger]) {
 		/* entering this level for first time; make it now */
+		historic_event(FALSE, "reached %s.", 
+                               hist_lev_name(&u.uz, FALSE));
 		level = mklev(&u.uz);
 		new = TRUE;	/* made the level */
 	} else {
@@ -1077,9 +1087,7 @@ void goto_level(d_level *newlevel, boolean at_stairs, boolean falling, boolean p
 				level->dndest.nhx, level->dndest.nhy,
 				LR_DOWNTELE, NULL);
 	    if (falling) {
-	        struct trap *ttrap;
 		char kbuf[BUFSZ];
-		ttrap = t_at(level, u.ux, u.uy);
 		sprintf(kbuf, "falling through a %s while wielding",
 		        at_trapdoor ? "trap door" : "hole");
 		if (Punished) ballfall();
@@ -1333,7 +1341,7 @@ void deferred_goto(void)
 		struct trap *t = t_at(level, u.ux, u.uy);
 
 		if (t) {
-		    deltrap(t);
+		    deltrap(level, t);
 		    newsym(u.ux, u.uy);
 		}
 	    }

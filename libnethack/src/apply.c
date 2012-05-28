@@ -1297,7 +1297,7 @@ int jump(
 		    break;
 		case TT_WEB:
 		    pline("You tear the web apart as you pull yourself free!");
-		    deltrap(t_at(level, u.ux,u.uy));
+		    deltrap(level, t_at(level, u.ux,u.uy));
 		    break;
 		case TT_LAVA:
 		    pline("You pull yourself above the lava!");

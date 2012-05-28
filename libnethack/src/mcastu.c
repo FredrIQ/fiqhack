@@ -487,7 +487,7 @@ static void cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
 	destroy_item(SCROLL_CLASS, AD_FIRE);
 	destroy_item(POTION_CLASS, AD_FIRE);
 	destroy_item(SPBOOK_CLASS, AD_FIRE);
-	burn_floor_paper(u.ux, u.uy, TRUE, FALSE);
+	burn_floor_paper(level, u.ux, u.uy, TRUE, FALSE);
 	break;
     case CLC_LIGHTNING:
     {
@@ -1454,7 +1454,7 @@ static void ucast_cleric_spell(
 	destroy_mitem(mtmp, SCROLL_CLASS, AD_FIRE);
 	destroy_mitem(mtmp, POTION_CLASS, AD_FIRE);
 	destroy_mitem(mtmp, SPBOOK_CLASS, AD_FIRE);
-	(void) burn_floor_paper(mtmp->mx, mtmp->my, TRUE, FALSE);
+	(void) burn_floor_paper(mtmp->dlevel, mtmp->mx, mtmp->my, TRUE, FALSE);
 	break;
     case CLC_LIGHTNING:
     {

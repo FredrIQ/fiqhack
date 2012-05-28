@@ -691,7 +691,6 @@ struct monst * mfind_target(struct monst *mtmp)
 void thrwmm(struct monst *mtmp, struct monst *mdef)
 {
 	struct obj *otmp, *mwep;
-	xchar x, y;
 	schar skill;
 	int multishot;
 	const char *onm;
@@ -720,9 +719,6 @@ void thrwmm(struct monst *mtmp, struct monst *mdef)
 	    (void) ohitmon(mdef, otmp, 0, FALSE);
 	    return;
 	}
-
-	x = mtmp->mx;
-	y = mtmp->my;
 
 	/*
 	 * Check for being lined up and for friendlies in the line

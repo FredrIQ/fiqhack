@@ -871,7 +871,7 @@ struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 		struct trap *ttmp;
 		for (ttmp = lev->lev_traps; ttmp; ttmp = ttmp->ntrap)
 		    if (ttmp->ttyp == MAGIC_PORTAL) {
-			deltrap(ttmp);
+			deltrap(lev, ttmp);
 			break; /* max of 1 portal/level */
 		    }
 	    }

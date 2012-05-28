@@ -1395,13 +1395,15 @@ void arti_speak(struct obj *obj)
 	const struct artifact *oart = get_artifact(obj);
 	const char *line;
 	char buf[BUFSZ];
+        int truth;
 
 
 	/* Is this a speaking artifact? */
 	if (!oart || !(oart->spfx & SPFX_SPEAK))
 		return;
 
-	line = getrumor(bcsign(obj), buf, TRUE);
+	line = getrumor(bcsign(obj), buf, TRUE, &truth);
+        if(truth) exercise(A_WIS, truth == 1);
 	if (!*line)
 		line = "NetHack rumors file closed for renovation.";
 	pline("%s:", Tobjnam(obj, "whisper"));

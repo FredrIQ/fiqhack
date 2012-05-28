@@ -353,7 +353,7 @@ static boolean dog_hunger(struct monst *mtmp, struct edog *edog)
 	    int cur_food = APPORT, best_food = APPORT;
 	    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
 	    {
-	        cur_nutrit = dog_nutrition(mtmp, otmp);
+	        cur_nutrit = dog_nutrition_value(mtmp, otmp, FALSE);
 		cur_food = dogfood(mtmp, otmp);
 	        if (cur_food < best_food &&
 		    cur_nutrit > best_nutrit)

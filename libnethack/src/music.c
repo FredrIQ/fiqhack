@@ -183,7 +183,7 @@ static void do_earthquake(int force)
 	int x,y;
 	struct monst *mtmp;
 	struct obj *otmp;
-	struct trap *chasm;
+	struct trap *chasm, *oldtrap;
 	int start_x, start_y, end_x, end_y;
 
 	start_x = u.ux - (force * 2);
@@ -239,6 +239,25 @@ static void do_earthquake(int force)
 			/* Falls into next case */
 		  case ROOM :
 		  case CORR : /* Try to make a pit */
+                    /* Pits, spiked pits, holes, trapdoors, vibrating
+                     * squares, magic portals are immune.  A bear trap will
+                     * leave the trap in the pit.  It would be kind of cool
+                     * to make landmines detonate, but that's more trouble
+                     * than it's worth. */
+                    if((oldtrap = t_at(level, x, y))) {
+                        if(oldtrap->ttyp == PIT || 
+                           oldtrap->ttyp == SPIKED_PIT ||
+                           oldtrap->ttyp == HOLE || 
+                           oldtrap->ttyp == TRAPDOOR ||
+                           oldtrap->ttyp == VIBRATING_SQUARE || 
+                           oldtrap->ttyp == MAGIC_PORTAL) break;
+
+                        if(oldtrap->ttyp == BEAR_TRAP) {
+                            if(mtmp) mtmp->mtrapped = 0;
+                            cnv_trap_obj(level, BEARTRAP, 1, oldtrap);
+                        }
+                    }
+
 do_pit:		    chasm = maketrap(level, x,y,PIT);
 		    if (!chasm) break;	/* no pit if portal at that location */
 		    chasm->tseen = 1;

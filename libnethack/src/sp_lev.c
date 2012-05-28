@@ -2335,7 +2335,7 @@ static boolean load_maze(struct level *lev, dlb *fd)
 		    get_location(lev, &x, &y, DRY);
 		} while (prevstair.x && xi++ < 100 &&
 			distmin(x,y,prevstair.x,prevstair.y) <= 8);
-		if ((badtrap = t_at(lev, x, y)) != 0) deltrap(badtrap);
+		if ((badtrap = t_at(lev, x, y)) != 0) deltrap(lev, badtrap);
 		mkstairs(lev, x, y, (char)tmpstair.up, NULL);
 		prevstair.x = x;
 		prevstair.y = y;

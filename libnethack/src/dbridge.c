@@ -632,8 +632,8 @@ void close_drawbridge(int x, int y)
 	revive_nasty(x2,y2,NULL);
 	delallobj(x, y);
 	delallobj(x2, y2);
-	if ((t = t_at(level, x, y)) != 0) deltrap(t);
-	if ((t = t_at(level, x2, y2)) != 0) deltrap(t);
+	if ((t = t_at(level, x, y)) != 0) deltrap(level, t);
+	if ((t = t_at(level, x2, y2)) != 0) deltrap(level, t);
 	newsym(x, y);
 	newsym(x2, y2);
 	block_point(x2,y2);	/* vision */
@@ -666,8 +666,8 @@ void open_drawbridge(int x, int y)
 	do_entity(&(occupants[1]));
 	revive_nasty(x,y,NULL);
 	delallobj(x, y);
-	if ((t = t_at(level, x, y)) != 0) deltrap(t);
-	if ((t = t_at(level, x2, y2)) != 0) deltrap(t);
+	if ((t = t_at(level, x, y)) != 0) deltrap(level, t);
+	if ((t = t_at(level, x2, y2)) != 0) deltrap(level, t);
 	newsym(x, y);
 	newsym(x2, y2);
 	unblock_point(x2,y2);	/* vision */
@@ -729,8 +729,8 @@ void destroy_drawbridge(int x, int y)
 	wake_nearto(x, y, 500);
 	loc2->typ = DOOR;
 	loc2->doormask = D_NODOOR;
-	if ((t = t_at(level, x, y)) != 0) deltrap(t);
-	if ((t = t_at(level, x2, y2)) != 0) deltrap(t);
+	if ((t = t_at(level, x, y)) != 0) deltrap(level, t);
+	if ((t = t_at(level, x2, y2)) != 0) deltrap(level, t);
 	newsym(x,y);
 	newsym(x2,y2);
 	if (!does_block(level,x2,y2)) unblock_point(x2,y2);	/* vision */

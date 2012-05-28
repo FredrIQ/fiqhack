@@ -421,7 +421,7 @@ int dotele(void)
 			if (yn("Jump in?") == 'n')
 				trap = 0;
 			else {
-				deltrap(trap);
+				deltrap(level, trap);
 				newsym(u.ux, u.uy);
 			}
 		}
@@ -771,7 +771,7 @@ void tele_trap(struct trap *trap)
 	} else if (!next_to_u()) {
 		pline("You shudder for a moment.");
 	} else if (trap->once) {
-		deltrap(trap);
+		deltrap(level, trap);
 		newsym(u.ux,u.uy);	/* get rid of trap symbol */
 		vault_tele();
 	} else
@@ -794,7 +794,7 @@ void level_tele_trap(struct trap *trap)
 	    pline("You are momentarily blinded by a flash of light.");
 	else
 	    pline("You are momentarily disoriented.");
-	deltrap(trap);
+	deltrap(level, trap);
 	newsym(u.ux,u.uy);	/* get rid of trap symbol */
 	level_tele();
 }
@@ -1059,12 +1059,11 @@ int mlevel_tele_trap(struct monst *mtmp, struct trap *trap,
 
 void rloco_pos( struct level *lev, struct obj *obj, int *nx, int *ny )
 {
-    xchar tx, ty, otx, oty;
+    xchar tx, ty, otx;
     boolean restricted_fall;
     int try_limit = 4000;
 
     otx = obj->ox;
-    oty = obj->oy;
     restricted_fall = (otx == 0 && lev->dndest.lx);
     do {
         tx = rn1(COLNO-3,2);

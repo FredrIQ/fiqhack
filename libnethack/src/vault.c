@@ -50,7 +50,7 @@ static boolean clear_fcorr(struct monst *grd, boolean forceshow)
 		   ACCESSIBLE(oldtyp)) {
 		    struct trap *t = t_at(level, fcx, fcy);
 		    if (couldsee(fcx, fcy)) showmsg = TRUE;
-		    if (t) deltrap(t);
+		    if (t) deltrap(level, t);
 		    level->locations[fcx][fcy].lit = FALSE;
 		    block_point(fcx,fcy);
                 }
@@ -391,7 +391,7 @@ static void wallify_vault(struct monst *grd)
 			movedgold = TRUE;
 		    }
 		    if ((trap = t_at(level, x, y)) != 0)
-			deltrap(trap);
+			deltrap(level, trap);
 		    if (x == lox)
 			typ = (y == loy) ? TLCORNER :
 			      (y == hiy) ? BLCORNER : VWALL;

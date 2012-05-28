@@ -543,6 +543,10 @@ void feel_location(xchar x, xchar y)
     if (Underwater && !Is_waterlevel(&u.uz) && ! is_pool(level, x,y))
 	return;
 
+    /* If it passed the above check, then there should not be an invisible
+     * monster marker at this location, so clear it now. */
+    level->locations[x][y].mem_invis = 0;
+
     /* Set the seen vector as if the hero had seen it.  It doesn't matter */
     /* if the hero is levitating or not.				  */
     set_seenv(loc, u.ux, u.uy, x, y);

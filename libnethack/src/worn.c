@@ -519,15 +519,16 @@ struct obj *which_armor(struct monst *mon, long flag)
 /* remove an item of armor and then drop it */
 static void m_lose_armor(struct monst *mon, struct obj *obj)
 {
+        struct level *lev = mon->dlevel;
 	mon->misc_worn_check &= ~obj->owornmask;
 	if (obj->owornmask)
 	    update_mon_intrinsics(mon, obj, FALSE, FALSE);
 	obj->owornmask = 0L;
 
 	obj_extract_self(obj);
-	place_object(obj, level, mon->mx, mon->my);
+	place_object(obj, lev, mon->mx, mon->my);
 	/* call stackobj() if we ever drop anything that can merge */
-	newsym(mon->mx, mon->my);
+	if(lev == level) newsym(mon->mx, mon->my);
 }
 
 /* all objects with their bypass bit set should now be reset to normal */
@@ -567,9 +568,11 @@ void bypass_obj(struct obj *obj)
 
 void mon_break_armor(struct monst *mon, boolean polyspot)
 {
+        struct level *lev = mon->dlevel;
 	struct obj *otmp;
 	const struct permonst *mdat = mon->data;
-	boolean vis = cansee(mon->mx, mon->my);
+        boolean show_msg = (lev == level);
+	boolean vis = (lev == level && cansee(mon->mx, mon->my));
 	boolean handless_or_tiny = (nohands(mdat) || verysmall(mdat));
 	const char *pronoun = mhim(mon),
 			*ppronoun = mhis(mon);
@@ -582,10 +585,13 @@ void mon_break_armor(struct monst *mon, boolean polyspot)
 		    ;	/* no message here;
 			   "the dragon merges with his scaly armor" is odd
 			   and the monster's previous form is already gone */
-		else if (vis)
-		    pline("%s breaks out of %s armor!", Monnam(mon), ppronoun);
-		else
-		    You_hear("a cracking sound.");
+		else if (show_msg) {
+                    if (vis)
+                        pline("%s breaks out of %s armor!", 
+                              Monnam(mon), ppronoun);
+                    else
+                        You_hear("a cracking sound.");
+                }
 		m_useup(mon, otmp);
 	    }
 	    if ((otmp = which_armor(mon, W_ARMC)) != 0) {
@@ -596,28 +602,35 @@ void mon_break_armor(struct monst *mon, boolean polyspot)
 		    if (polyspot) bypass_obj(otmp);
 		    m_lose_armor(mon, otmp);
 		} else {
-		    if (vis)
-			pline("%s %s tears apart!", s_suffix(Monnam(mon)),
-				cloak_simple_name(otmp));
-		    else
-			You_hear("a ripping sound.");
+                    if(show_msg) {
+                        if (vis)
+                            pline("%s %s tears apart!", s_suffix(Monnam(mon)),
+                                    cloak_simple_name(otmp));
+                        else
+                            You_hear("a ripping sound.");
+                    }
 		    m_useup(mon, otmp);
 		}
 	    }
 	    if ((otmp = which_armor(mon, W_ARMU)) != 0) {
-		if (vis)
-		    pline("%s shirt rips to shreds!", s_suffix(Monnam(mon)));
-		else
-		    You_hear("a ripping sound.");
+                if(show_msg) {
+                    if (vis)
+                        pline("%s shirt rips to shreds!", 
+                              s_suffix(Monnam(mon)));
+                    else
+                        You_hear("a ripping sound.");
+                }
 		m_useup(mon, otmp);
 	    }
 	} else if (sliparm(mdat)) {
 	    if ((otmp = which_armor(mon, W_ARM)) != 0) {
-		if (vis)
-		    pline("%s armor falls around %s!",
-				 s_suffix(Monnam(mon)), pronoun);
-		else
-		    You_hear("a thud.");
+                if(show_msg) {
+                    if (vis)
+                        pline("%s armor falls around %s!",
+                                     s_suffix(Monnam(mon)), pronoun);
+                    else
+                        You_hear("a thud.");
+                }
 		if (polyspot) bypass_obj(otmp);
 		m_lose_armor(mon, otmp);
 	    }
@@ -656,11 +669,13 @@ void mon_break_armor(struct monst *mon, boolean polyspot)
 		m_lose_armor(mon, otmp);
 	    }
 	    if ((otmp = which_armor(mon, W_ARMS)) != 0) {
-		if (vis)
-		    pline("%s can no longer hold %s shield!", Monnam(mon),
-								ppronoun);
-		else
-		    You_hear("a clank.");
+                if(show_msg) {
+                    if (vis)
+                        pline("%s can no longer hold %s shield!", 
+                              Monnam(mon), ppronoun);
+                    else
+                        You_hear("a clank.");
+                }
 		if (polyspot) bypass_obj(otmp);
 		m_lose_armor(mon, otmp);
 	    }
@@ -669,12 +684,14 @@ void mon_break_armor(struct monst *mon, boolean polyspot)
 	    if ((otmp = which_armor(mon, W_ARMH)) != 0 &&
 		    /* flimsy test for horns matches polyself handling */
 		    (handless_or_tiny || !is_flimsy(otmp))) {
-		if (vis)
-		    pline("%s %s falls to the %s!",
-			  s_suffix(Monnam(mon)), helmet_name(otmp),
-			  surface(mon->mx, mon->my));
-		else if (is_metallic(otmp)) /* soft hats don't make a sound */
-		    You_hear("a clank.");
+                if(show_msg) {
+                    if (vis)
+                        pline("%s %s falls to the %s!",
+                              s_suffix(Monnam(mon)), helmet_name(otmp),
+                              surface(mon->mx, mon->my));
+                    else if (is_metallic(otmp)) /* soft hats don't make a sound */
+                        You_hear("a clank.");
+                }
 		if (polyspot) bypass_obj(otmp);
 		m_lose_armor(mon, otmp);
 	    }

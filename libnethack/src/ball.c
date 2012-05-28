@@ -643,7 +643,7 @@ void drop_ball(xchar x, xchar y, schar dx, schar dy)
 	    case TT_WEB:
 		pline(pullmsg, "web");
 		pline("The web is destroyed!");
-		deltrap(t_at(level, u.ux,u.uy));
+		deltrap(level, t_at(level, u.ux,u.uy));
 		break;
 	    case TT_LAVA:
 		pline(pullmsg, "lava");

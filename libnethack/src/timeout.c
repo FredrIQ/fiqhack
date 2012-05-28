@@ -1523,9 +1523,9 @@ static timer_element *remove_timer(timer_element **base, short func_index,
 static timer_element *peek_timer(timer_element **base, short func_index,
                                  void * arg)
 {
-    timer_element *prev, *curr;
+    timer_element *curr;
 
-    for (prev = 0, curr = *base; curr; prev = curr, curr = curr->next)
+    for (curr = *base; curr; curr = curr->next)
 	if (curr->func_index == func_index && curr->arg == arg) break;
 
     return curr;
