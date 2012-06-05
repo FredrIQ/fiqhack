@@ -310,6 +310,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     startup_common(namebuf, playmode);
     u.initrole = irole; u.initrace = irace;
     u.initgend = igend; u.initalign = ialign;
+    u.ubirthday = turntime;
     if (!force_replay) {
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE, FALSE, TRUE);
