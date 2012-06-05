@@ -271,6 +271,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
 				       boolean force_replay)
 {
     int playmode, irole, irace, igend, ialign;
+    unsigned long long temp_turntime;
     char namebuf[PL_NSIZ];
     
     /* some compilers can't cope with the fact that all subsequent stores to error
@@ -302,6 +303,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     
     /* Read the log header for this game. */
     replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend, &ialign);
+    temp_turntime = turntime;
        
     /* set special windowprocs which will autofill requests for user input
      * with data from the log file */
@@ -310,6 +312,7 @@ enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs *rwinprocs
     startup_common(namebuf, playmode);
     u.initrole = irole; u.initrace = irace;
     u.initgend = igend; u.initalign = ialign;
+    u.ubirthday = turntime = temp_turntime;
     if (!force_replay) {
 	error = ERR_RESTORE_FAILED;
 	replay_run_cmdloop(TRUE, FALSE, TRUE);

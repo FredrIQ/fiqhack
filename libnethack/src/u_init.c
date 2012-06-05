@@ -992,8 +992,11 @@ void restore_you(struct memfile *mf, struct you *y)
 {
 	int i;
 	unsigned int yflags, eflags, hflags;
+        unsigned long long temp_ubirthday;
 
+        temp_ubirthday = u.ubirthday;
 	memset(y, 0, sizeof(struct you));
+        u.ubirthday = temp_ubirthday;
 
 	yflags = mread32(mf);
 	eflags = mread32(mf);
