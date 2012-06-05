@@ -131,7 +131,8 @@ static void base64_decode(const char* in, char *out)
                                  (unsigned char *)o, pos);
         free(o);
         if (errcode != Z_OK) {
-            raw_printf("Decompressing save file failed: %s",
+            raw_printf("Decompressing save file failed at %ld: %s",
+                       (long)ftell(loginfo.flog),
                        errcode == Z_MEM_ERROR ? "Out of memory" :
                        errcode == Z_BUF_ERROR ? "Invalid size" :
                        errcode == Z_DATA_ERROR ? "Corrupted file" :
