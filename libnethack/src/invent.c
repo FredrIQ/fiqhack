@@ -473,6 +473,10 @@ void freeinv_core(struct obj *obj)
 void freeinv(struct obj *obj)
 {
 	extract_nobj(obj, &invent);
+        if (uwep == obj)
+            setuwep(NULL);
+        if (uswapwep == obj)
+            setuswapwep(NULL);
 	freeinv_core(obj);
 	update_inventory();
 }
