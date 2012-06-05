@@ -900,8 +900,11 @@ static struct {
     /* Movie */
     {"Predator", FALSE},
 
-    /* common pest*/
+    /* common pest */
     {"mother-in-law", FALSE},
+
+    /* Battlestar Galactica */
+    {"cylon", FALSE},
 };
 
 
