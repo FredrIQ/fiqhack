@@ -249,7 +249,7 @@ mainmenu(void)
     }
 #endif
 
-    while (n > 0) {
+    while (n >= 0) {
         if (COLS >= 100) {
             nhlogo = nhlogo_large;
             logoheight = sizeof (nhlogo_large) / sizeof (nhlogo_large[0]);
@@ -282,6 +282,8 @@ mainmenu(void)
                                          NULL, PICK_ONE, menuresult, 0,
                                          logoheight - 1, COLS, LINES - 3, NULL);
 
+        if (n < 1)
+            continue;
 
         switch (menuresult[0]) {
         case NEWGAME:
@@ -311,6 +313,7 @@ mainmenu(void)
             break;
 
         case EXITGAME:
+		n = -1; /* simulate menu cancel */
             return;
         }
     }
