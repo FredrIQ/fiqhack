@@ -1228,6 +1228,7 @@ doloot(void)
     char qbuf[BUFSZ];
     int prev_inquiry = 0;
     boolean prev_loot = FALSE;
+    int container_count = 0;
 
     if (check_capacity(NULL)) {
         /* "Can't do that while carrying so much stuff." */
@@ -1242,7 +1243,7 @@ doloot(void)
 
 lootcont:
 
-    if (container_at(cc.x, cc.y, FALSE)) {
+    if ((container_count = container_at(cc.x, cc.y, TRUE))) {
         boolean any = FALSE;
 
         if (!able_to_loot(cc.x, cc.y))
@@ -1251,17 +1252,19 @@ lootcont:
             nobj = cobj->nexthere;
 
             if (Is_container(cobj)) {
-                sprintf(qbuf, "There is %s here, loot it?",
-                        safe_qbuf("", sizeof ("There is  here, loot it?"),
-                                  doname(cobj), an(simple_typename(cobj->otyp)),
-                                  "a container"));
-                c = ynq(qbuf);
-                if (c == 'q')
-                    return timepassed;
-                if (c == 'n')
-                    continue;
+		/* Don't ask if there's only one lootable object. */
+		if (container_count != 1) {
+                    sprintf(qbuf, "There is %s here, loot it?",
+                            safe_qbuf("", sizeof ("There is  here, loot it?"),
+                                      doname(cobj),
+                                      an(simple_typename(cobj->otyp)),
+                                      "a container"));
+                    c = ynq(qbuf);
+                    if (c == 'q') return timepassed;
+                    if (c == 'n') continue;
+                }
                 any = TRUE;
-
+                
                 if (cobj->olocked) {
                     pline("Hmmm, it seems to be locked.");
                     continue;
