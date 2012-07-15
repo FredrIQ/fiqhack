@@ -419,7 +419,7 @@ static int wiz_show_seenv(void)
 
 	    add_menutext(&menu, row);
 	}
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 	return 0;
 }
@@ -455,7 +455,7 @@ static int wiz_show_vision(void)
 
 	    add_menutext(&menu, &row[1]);
 	}
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 	return 0;
 }
@@ -486,7 +486,7 @@ static int wiz_show_wmodes(void)
 	    row[COLNO] = '\0';
 	    add_menutext(&menu, row);
 	}
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 	return 0;
 }
@@ -816,7 +816,7 @@ void enlightenment(int final)
 	if (p) enl_msg(&menu, You_, "have been killed ", p, buf);
     }
 
-	display_menu(menu.items, menu.icount, title, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, title, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 	return;
 }
@@ -894,7 +894,7 @@ static void unspoilered_intrinsics(void)
         if (n == menu.icount) add_menutext(&menu, "You have no intrinsic abilities.");
 
 	display_menu(menu.items, menu.icount, "Your Intrinsic Statistics",
-                     PICK_NONE, NULL);
+                     PICK_NONE, PLHINT_ANYWHERE, NULL);
         free(menu.items);
 }
 
@@ -1007,7 +1007,7 @@ static boolean minimal_enlightenment(void)
             add_menuitem(&menu, 'w', "Debug/explore mode spoilers", 'w', FALSE);
 
 	n = display_menu(menu.items, menu.icount, "Your Statistics",
-                         PICK_ONE, selected);
+                         PICK_ONE, PLHINT_ANYWHERE, selected);
 
         if (n == 1) {
             n = 0;
@@ -1147,7 +1147,7 @@ void show_conduct(int final)
             enl_msg(&menu, You_, "are ", "were ", "permanently blind");
         
 	/* Pop up the window and wait for a key */
-	display_menu(menu.items, menu.icount, "Voluntary challenges:", PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, "Voluntary challenges:", PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 }
 
@@ -1560,7 +1560,7 @@ static int wiz_show_stats(void)
 	sprintf(buf, template, "Total", total_mon_count, total_mon_size);
 	add_menutext(&menu, buf);
 
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 	return 0;
 }

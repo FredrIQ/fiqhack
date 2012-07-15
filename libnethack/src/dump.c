@@ -7,9 +7,9 @@ static FILE *dumpfp;
 static struct nh_window_procs winprocs_original;
 
 static void dump_status(void);
-static int dump_display_menu(struct nh_menuitem*, int, const char*, int, int*);
+static int dump_display_menu(struct nh_menuitem*, int, const char*, int, int, int*);
 static int dump_display_objects(struct nh_objitem*, int, const char*, int,
-				struct nh_objresult*);
+				int, struct nh_objresult*);
 static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
     const char *plname, int gold, const char *killbuf, int end_how, int year);
 
@@ -132,7 +132,7 @@ void dump_catch_menus(boolean intercept)
 
 
 static int dump_display_menu(struct nh_menuitem *items, int icount,
-			     const char *title, int how, int *result)
+			     const char *title, int how, int placement_hint, int *result)
 {
     int i, col, extra;
     int colwidth[10];
@@ -141,7 +141,7 @@ static int dump_display_menu(struct nh_menuitem *items, int icount,
     if (!dumpfp)
 	return 0;
     
-    /* menus may have multiple cokumns separated by tabs */
+    /* menus may have multiple columns separated by tabs */
     memset(colwidth, 0, sizeof(colwidth));
     for (i = 0; i < icount; i++) {
 	tab = strchr(items[i].caption, '\t');
@@ -192,7 +192,7 @@ static int dump_display_menu(struct nh_menuitem *items, int icount,
 
 
 static int dump_display_objects(struct nh_objitem *items, int icount,
-			const char *title, int how, struct nh_objresult *result)
+			const char *title, int how, int placement_hint, struct nh_objresult *result)
 {
     int i;
     if (!dumpfp)
@@ -217,5 +217,5 @@ static int dump_display_objects(struct nh_objitem *items, int icount,
 static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
 	const char *name, int gold, const char *killbuf, int end_how, int year)
 {
-    dump_display_menu(items, icount, "Final status:", PICK_NONE, NULL);
+    dump_display_menu(items, icount, "Final status:", PICK_NONE, PLHINT_ANYWHERE, NULL);
 }

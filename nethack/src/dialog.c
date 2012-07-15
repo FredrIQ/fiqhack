@@ -12,9 +12,17 @@ WINDOW *newdialog(int height, int width)
 
     if (height > LINES) height = LINES;
     if (width > COLS) width = COLS;
-    
-    starty = (LINES - height) / 2;
-    startx = (COLS - width) / 2;
+
+    if(game_is_running) {
+	/* push in-game dialogs up to the message area */
+	startx = 0;
+	//starty = max(0, (getmaxy(msgwin) - height) / 2);
+	starty = 0;
+    } else {
+	/* out of game, keep dialogs centred */
+	starty = (LINES - height) / 2;
+	startx = (COLS - width) / 2;
+    }
     
     win = newwin(height, width, starty, startx);
     keypad(win, TRUE);

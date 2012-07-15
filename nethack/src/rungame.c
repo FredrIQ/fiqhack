@@ -438,7 +438,7 @@ nh_bool loadgame(void)
 			buf, 0, FALSE);
     }
 
-    n = curses_display_menu(items, icount, "saved games", PICK_ONE, pick);    
+    n = curses_display_menu(items, icount, "saved games", PICK_ONE, PLHINT_ANYWHERE, pick);    
     free(items);
     filename[0] = '\0';
     if (n > 0)

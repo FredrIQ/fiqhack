@@ -332,7 +332,7 @@ static void deliver_by_window(struct qtmsg *qt_msg)
 	    convert_line();
 	    add_menutext(&menu, out_line);
 	}
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	free(menu.items);
 }
 

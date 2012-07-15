@@ -2457,7 +2457,7 @@ static int use_grapple (struct obj *obj)
 	    sprintf(items[2].caption, "the %s", surface(cc.x, cc.y));
 	    set_menuitem(&items[2], 3, MI_NORMAL, "a monster", 0, FALSE);
 	    
-	    if (display_menu(items, 3, "Aim for what?", PICK_ONE, selected)&&
+	    if (display_menu(items, 3, "Aim for what?", PICK_ONE, PLHINT_ANYWHERE, selected)&&
 			rn2(P_SKILL(typ) > P_SKILLED ? 20 : 2))
 		tohit = selected[0] - 1;
 	}

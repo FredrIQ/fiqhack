@@ -97,7 +97,7 @@ static void account_menu(struct server_info *server)
     while (n > 0) {
 	menuresult[0] = 3; /* default action */
 	n = curses_display_menu(netmenu_items, ARRAY_SIZE(netmenu_items),
-				     "Account settings:", PICK_ONE, menuresult);
+				     "Account settings:", PICK_ONE, PLHINT_ANYWHERE, menuresult);
 	
 	switch (menuresult[0]) {
 	    case 1:
@@ -353,7 +353,7 @@ static void delete_server_menu(struct server_info *servlist)
     
     list_servers(servlist, &items, &size, &icount);
     
-    n = curses_display_menu(items, icount, "Delete which server?", PICK_ONE, selected);
+    n = curses_display_menu(items, icount, "Delete which server?", PICK_ONE, PLHINT_ANYWHERE, selected);
     free(items);
     
     if (n <= 0)
@@ -384,7 +384,7 @@ static struct server_info *connect_server_menu(struct server_info **servlist)
 	add_menu_item(items, size, icount, -2, "Delete server", '#', 0);
 	
 	n = curses_display_menu(items, icount, "Connect to which server?",
-				PICK_ONE, selected);
+				PICK_ONE, PLHINT_ANYWHERE, selected);
 	free(items);
 	if (n <= 0)
 	    break;

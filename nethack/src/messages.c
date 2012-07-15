@@ -350,7 +350,7 @@ void doprev_message(void)
 	add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
     
-    curses_display_menu(items, icount, "Message history:", PICK_NONE, NULL);
+    curses_display_menu(items, icount, "Message history:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(items);
 }
 

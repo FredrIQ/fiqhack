@@ -560,7 +560,7 @@ long calc_score(int how, boolean show, long umoney)
   }
   /* Finishing off. */
   if (show) {
-    display_menu(menu.items, menu.icount, "Score breakdown:", PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, "Score breakdown:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(menu.items);
   }
   return total;
@@ -966,7 +966,7 @@ static void container_contents(struct obj *list,
 		    
 		    free(objlist);
 		    sprintf(buf, "Contents of %s:", the(xname(box)));
-		    display_objects(items, icount, buf, PICK_NONE, NULL);
+		    display_objects(items, icount, buf, PICK_NONE, PLHINT_CONTAINER, NULL);
 		    if (all_containers)
 			container_contents(box->cobj, identified, TRUE);
 		} else {
@@ -1068,7 +1068,7 @@ void list_vanquished(char defquery, boolean ask)
 		sprintf(buf, "%ld creatures vanquished.", total_killed);
 		add_menutext(&menu,  buf);
 	    }
-	    display_menu(menu.items, menu.icount, "Vanquished creatures:", PICK_NONE, NULL);
+	    display_menu(menu.items, menu.icount, "Vanquished creatures:", PICK_NONE, PLHINT_ANYWHERE, NULL);
 	    free(menu.items);
 	}
     }
@@ -1157,7 +1157,7 @@ void list_genocided(char defquery, boolean ask)
 
 	    title = nextincted ? "Genocided or extinct species:" :
 	                         "Genocided species:";
-	    display_menu(menu.items, menu.icount, title, PICK_NONE, NULL);
+	    display_menu(menu.items, menu.icount, title, PICK_NONE, PLHINT_ANYWHERE, NULL);
 	    free(menu.items);
 	}
     }

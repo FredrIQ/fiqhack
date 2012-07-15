@@ -29,7 +29,7 @@ int dosave(void)
         add_menuitem(&menu, 2, "Abandon this game and delete its save file", '!', FALSE);
         add_menuitem(&menu, 3, "Continue playing", 'n', FALSE);
         n = display_menu(menu.items, menu.icount, "Do you want to stop playing?",
-                         PICK_ONE, selected);
+                         PICK_ONE, PLHINT_URGENT, selected);
         free(menu.items);
         if (n) n = selected[0]; else n = 3;
 

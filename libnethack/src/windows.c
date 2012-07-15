@@ -111,10 +111,10 @@ char yn_function(const char *query,const char *resp, char def)
 
 
 int display_menu(struct nh_menuitem *items, int icount, const char *title,
-		 int how, int *results)
+		 int how, int placement_hint, int *results)
 {
         int n, j;
-	n = (*windowprocs.win_display_menu)(items, icount, title, how, results);
+	n = (*windowprocs.win_display_menu)(items, icount, title, how, placement_hint, results);
 	if (how != PICK_NONE) {
             char buf[BUFSZ] = "(none selected)";
 	    log_menu(n, results);
@@ -131,10 +131,10 @@ int display_menu(struct nh_menuitem *items, int icount, const char *title,
 
 
 int display_objects(struct nh_objitem *items, int icount, const char *title,
-		    int how, struct nh_objresult *pick_list)
+		    int how, int placement_hint, struct nh_objresult *pick_list)
 {
         int n, j;
-	n = (*windowprocs.win_display_objects)(items, icount, title, how, pick_list);
+	n = (*windowprocs.win_display_objects)(items, icount, title, how, placement_hint, pick_list);
 	if (how != PICK_NONE) {
             char buf[BUFSZ] = "(none selected)";
 	    log_objmenu(n, pick_list);

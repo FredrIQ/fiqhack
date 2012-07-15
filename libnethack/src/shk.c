@@ -2531,7 +2531,7 @@ int doinvbill(int mode)
 	add_menutext(&menu, "");
 	add_menutext(&menu, buf_p);
 	
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_CONTAINER, NULL);
     quit:
 	free(menu.items);
 	return 0;
@@ -3297,7 +3297,7 @@ void price_quote(struct obj *first_obj)
 	cnt++;
     }
     if (cnt > 1) {
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_CONTAINER, NULL);
     } else if (cnt == 1) {
 	if (first_obj->no_charge || first_obj == uball || first_obj == uchain){
 	    pline("%s!", buf);	/* buf still contains the string */
