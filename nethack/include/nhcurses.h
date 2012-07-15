@@ -77,7 +77,11 @@ typedef wchar_t fnchar;
 # ifndef HOMEBREW_CURSES
 #  include <ncursesw/curses.h>
 # else
-#  include <ncurses/curses.h>
+#  ifdef __APPLE__
+#   include <ncurses.h>
+#  else
+#   include <ncurses/curses.h>
+#  endif
 # endif
 #else
 # define PDC_WIDE
