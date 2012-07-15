@@ -109,24 +109,28 @@ static long botl_score(void)
 /* provide the name of the current level for display by various ports */
 static int describe_level(char *buf)
 {
-	int ret = 1;
-
-	/* TODO:	Add in dungeon name */
-	if (Is_knox(&u.uz))
-		sprintf(buf, "%s", dungeons[u.uz.dnum].dname);
-	else if (In_quest(&u.uz))
-		sprintf(buf, "Home %d", dunlev(&u.uz));
-	else if (In_endgame(&u.uz))
-		sprintf(buf,
-			Is_astralevel(&u.uz) ? "Astral Plane" : "End Game");
-	else {
-		/* ports with more room may expand this one */
-		sprintf(buf, "Dlvl:%-2d", depth(&u.uz));
-		ret = 0;
-	}
-	return ret;
+    int ret = 1;
+    
+    if (Is_knox(&u.uz))
+        sprintf(buf, "%s", dungeons[u.uz.dnum].dname);
+    else if (In_quest(&u.uz))
+        sprintf(buf, "Home:%d", dunlev(&u.uz));
+    else if (In_endgame(&u.uz))
+        sprintf(buf, Is_astralevel(&u.uz) ? "Astral Plane" : "End Game");
+    else if (In_mines(&u.uz))
+        sprintf(buf, "Mines:%d", depth(&u.uz));
+    else if (In_sokoban(&u.uz))
+        sprintf(buf, "Sokoban:%d", depth(&u.uz));
+    else if (Is_valley(&u.uz))
+        sprintf(buf, "Valley:%d", depth(&u.uz));
+    else if (In_hell(&u.uz))
+        sprintf(buf, "Gehennom:%d", depth(&u.uz));
+    else if (In_V_tower(&u.uz))
+        sprintf(buf, "Tower:%d", depth(&u.uz));
+    else
+        sprintf(buf, "Dungeons:%d", depth(&u.uz)), (ret=0);
+    return ret;
 }
-
 
 static void make_player_info(struct nh_player_info *pi)
 {
