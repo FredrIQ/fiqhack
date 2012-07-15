@@ -272,6 +272,7 @@ void m_throw(struct monst *mon, int x, int y, int dx, int dy,
 	}
 
 	singleobj->owornmask = 0; /* threw one of multiple weapons in hand? */
+        singleobj->olev = level; /* object is on the same level as monster */
 
 	if ((singleobj->cursed || singleobj->greased) && (dx || dy) &&
 		!rn2(7)) {
