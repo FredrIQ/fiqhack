@@ -18,8 +18,8 @@ int getpos(coord *cc, boolean force, const char *goal)
 	    rv = (*windowprocs.win_getpos)(&x, &y, force, goal);
 	} while (force && (rv == -1 || x < 1 || y < 1 || x > COLNO || y > ROWNO));
 	log_getpos(rv, x, y);
-        pline("<position: (%d, %d)>", cc->x, cc->y);
         suppress_more();
+        pline("<position: (%d, %d)>", cc->x, cc->y);
 	
 	cc->x = x;
 	cc->y = y;
@@ -37,8 +37,8 @@ int getdir(const char *s, schar *dx, schar *dy, schar *dz)
 	boolean restricted = u.umonnum == PM_GRID_BUG;
 	enum nh_direction dir = (*windowprocs.win_getdir)(query, restricted);
 	log_getdir(dir);
-        pline("<%s: %s>", query, dirnames[dir+1]);
         suppress_more();
+        pline("<%s: %s>", query, dirnames[dir+1]);
 	
 	*dz = 0;
 	if (!dir_to_delta(dir, dx, dy, dz))
@@ -61,11 +61,11 @@ char query_key(const char *query, int *count)
 	char key;
 	key = (*windowprocs.win_query_key)(query, count);
 	log_query_key(key, count);
+        suppress_more();
         if (count && *count != -1)
             pline("<%s: %d %c>", query, *count, key);
         else
             pline("<%s: %c>", query, key);
-        suppress_more();
 	return key;
 }
 
@@ -74,8 +74,8 @@ void getlin(const char *query, char *bufp)
 {
 	(*windowprocs.win_getlin)(query, bufp);
 	log_getlin(bufp);
-        pline("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
         suppress_more();
+        pline("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
 }
 
 
@@ -104,8 +104,8 @@ char yn_function(const char *query,const char *resp, char def)
 	
 	key = (*windowprocs.win_yn_function)(qbuf, resp, def);
 	log_yn_function(key);
-        pline("<%s [%s]: %c>", qbuf, resp, key);
         suppress_more();
+        pline("<%s [%s]: %c>", qbuf, resp, key);
 	return key;
 }
 
@@ -123,8 +123,8 @@ int display_menu(struct nh_menuitem *items, int icount, const char *title,
                 strcpy(buf, items[j].caption);
             } else if (n > 1)
                 sprintf(buf, "(%d selected)", n);
-            pline("<%s: %s>", title ? title : "Untitled menu", buf);
             suppress_more();
+            pline("<%s: %s>", title ? title : "Untitled menu", buf);
         }
 	return n;
 }
@@ -143,8 +143,8 @@ int display_objects(struct nh_objitem *items, int icount, const char *title,
                 sprintf(buf, "%c", items[j].accel);
             } else if (n > 1)
                 sprintf(buf, "(%d selected)", n);
-            pline("<%s: %s>", title ? title : "List of objects", buf);
             suppress_more();
+            pline("<%s: %s>", title ? title : "List of objects", buf);
         }
 	return n;
 }

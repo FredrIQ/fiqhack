@@ -13,11 +13,22 @@ WINDOW *newdialog(int height, int width)
     if (height > LINES) height = LINES;
     if (width > COLS) width = COLS;
 
-    if(game_is_running) {
+    if (game_is_running) {
 	/* push in-game dialogs up to the message area */
-	startx = 0;
-	//starty = max(0, (getmaxy(msgwin) - height) / 2);
-	starty = 0;
+        if (height == 3) {
+            /* instead of covering up messages, draw the dialog as
+               if it were a message */
+            fresh_message_line(FALSE);
+            draw_msgwin();
+            height = 1;
+            width = getmaxx(msgwin)-(ui_flags.draw_frame ? 2 : 0);
+            startx = ui_flags.draw_frame ? 1 : 0;
+            starty = getmaxy(msgwin)-(ui_flags.draw_frame ? 0 : 1);
+        } else {
+            startx = 0;
+            starty = 0;
+            width = getmaxx(msgwin)+(ui_flags.draw_frame ? 2 : 0);
+        }
     } else {
 	/* out of game, keep dialogs centred */
 	starty = (LINES - height) / 2;
@@ -28,9 +39,10 @@ WINDOW *newdialog(int height, int width)
     keypad(win, TRUE);
     meta(win, TRUE);
     wattron(win, FRAME_ATTRS);
-    box(win, 0 , 0);
-    wattroff(win, FRAME_ATTRS);
-    
+    if (height > 1) {
+        box(win, 0, 0);
+        wattroff(win, FRAME_ATTRS);
+    } /* otherwise use frame colors for the message */
     return win;
 }
 
@@ -70,7 +82,7 @@ char curses_yn_function(const char *query, const char *resp, char def)
     height = 3;
     width = strlen(prompt) + 5;
     win = newdialog(height, width);
-    mvwprintw(win, 1, 2, prompt);
+    mvwprintw(win, game_is_running ? 0 : 1, game_is_running ? 0 : 2, prompt);
     wrefresh(win);
     
     do {
@@ -110,7 +122,7 @@ char curses_query_key(const char *query, int *count)
     height = 3;
     width = strlen(query) + 4;
     win = newdialog(height, width);
-    mvwprintw(win, 1, 2, query);
+    mvwprintw(win, game_is_running ? 0 : 1, game_is_running ? 0 : 2, query);
     wrefresh(win);
     
     key = nh_wgetch(win);
@@ -143,7 +155,7 @@ int curses_msgwin(const char *msg)
     while (isspace(msg[len-1]))
 	len--;
     
-    mvwaddnstr(win, 1, 2, msg, len);
+    mvwaddnstr(win, game_is_running ? 0 : 1, game_is_running ? 0 : 2, msg, len);
     wrefresh(win);
     key = nh_wgetch(win); /* wait for any key */
     
