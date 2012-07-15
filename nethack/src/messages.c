@@ -256,7 +256,7 @@ static void curses_print_message_core(int turn, const char *msg, nh_bool canbloc
     if (!*msg)
 	return; /* empty message. done. */
     
-    if (turn > prevturn || action > prevaction) {
+    if (action > prevaction) {
 	/* re-enable output if it was stopped and start a new line */
 	stopprint = FALSE;
 	newline();
