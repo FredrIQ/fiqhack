@@ -1129,7 +1129,7 @@ void show_conduct(int final)
 	}
 
 	if (!u.uconduct.elbereths)
-	    you_have_never(&menu, "written Elbereth's name");
+          enl_msg(&menu, You_, "have never written", "never wrote", " Elbereth's name");
 	else {
 	    sprintf(buf, " Elbereth's name %u time%s",
 		    u.uconduct.elbereths, plur(u.uconduct.elbereths));
