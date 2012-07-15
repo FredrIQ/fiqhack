@@ -8,7 +8,7 @@ struct nh_player_info player;
 
 /*
  * longest practical second status line at the moment is
- *	Astral Plane $:12345 HP:700(700) Pw:111(111) AC:-127 Xp:30/123456789
+ *	Astral Plane $:12345 HP:700(700) Pw:111(111) Def:137 Xp:30/123456789
  *	T:123456 Satiated Conf FoodPois Ill Blind Stun Hallu Overloaded
  * -- or somewhat over 130 characters
  */
@@ -44,8 +44,8 @@ static void classic_status(struct nh_player_info *pi)
 
     /* line 2 */
     mvwaddstr(statuswin, 1, 0, pi->level_desc);
-    wprintw(statuswin, " %c:%-2ld HP:%d(%d) Pw:%d(%d) AC:%-2d", pi->coinsym,
-	    pi->gold, pi->hp, pi->hpmax, pi->en, pi->enmax, pi->ac);
+    wprintw(statuswin, " %c:%-2ld HP:%d(%d) Pw:%d(%d) Def:%-2d", pi->coinsym,
+	    pi->gold, pi->hp, pi->hpmax, pi->en, pi->enmax, 10-pi->ac);
 
     if (pi->monnum != pi->cur_monnum)
 	wprintw(statuswin, " HD:%d", pi->level);
@@ -135,8 +135,8 @@ static void status3(struct nh_player_info *pi)
     /* line 2 */
     wmove(statuswin, 1, 0);
     draw_bar(18 + pi->max_rank_sz, pi->hp, pi->hpmax, "HP:");
-    wprintw(statuswin, "  Int:%2d Wis:%2d  %c:%-2ld  AC:%-2d  ", pi->in, pi->wi,
-	    pi->coinsym, pi->gold, pi->ac);
+    wprintw(statuswin, "  Int:%2d Wis:%2d  %c:%-2ld  Def:%-2d  ", pi->in, pi->wi,
+	    pi->coinsym, pi->gold, 10-pi->ac);
     
     if (pi->monnum != pi->cur_monnum)
 	wprintw(statuswin, "HD:%d", pi->level);
