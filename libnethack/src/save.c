@@ -42,7 +42,7 @@ int dosave(void)
 		u.uhp = -1;		/* universal game's over indicator */
 		terminate();
 	    } else doredraw();
-	} else {
+	} else if (n == 2) {
             return done2();
         }
 	return 0;
