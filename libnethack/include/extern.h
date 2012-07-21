@@ -1761,8 +1761,8 @@ extern char yn_function(const char *query, const char *resp, char def);
 extern int getdir(const char *, schar *dx, schar *dy, schar *dz);
 extern char query_key(const char *query, int *count);
 extern void getlin(const char *query, char *bufp);
-extern int display_menu(struct nh_menuitem*, int, const char*, int, int*);
-extern int display_objects(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
+extern int display_menu(struct nh_menuitem*, int, const char*, int, int, int*);
+extern int display_objects(struct nh_objitem*, int, const char*, int, int, struct nh_objresult*);
 extern boolean win_list_items(struct nh_objitem *items, int icount, boolean invent);
 
 /* ### wizard.c ### */

@@ -292,7 +292,7 @@ static int doextlist(const char **namelist, const char **desclist, int listlen)
 	    sprintf(buf, " %s\t- %s.", namelist[i], desclist[i]);
 	    add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
-    curses_display_menu(items, icount, "Extended Commands List", PICK_NONE, NULL);
+    curses_display_menu(items, icount, "Extended Commands List", PICK_NONE, PLHINT_ANYWHERE, NULL);
 
     return 0;
 }
@@ -390,7 +390,7 @@ static struct nh_cmd_desc* show_help(void)
 	if (commandlist[i].flags & CMD_HELP)
 	    add_menu_item(items, size, icount, 100+i, commandlist[i].desc, 0, FALSE);
     
-    n = curses_display_menu(items, icount, "Help topics:", PICK_ONE, selected);
+    n = curses_display_menu(items, icount, "Help topics:", PICK_ONE, PLHINT_RIGHT, selected);
     free(items);
     if (n <= 0)
 	return NULL;
@@ -749,7 +749,7 @@ static void command_settings_menu(struct nh_cmd_desc *cmd)
 	}
 	
 	sprintf(buf, "Key bindings for %s", cmd->name);
-	n = curses_display_menu(items, icount, buf, PICK_ONE, selection);
+	n = curses_display_menu(items, icount, buf, PICK_ONE, PLHINT_ANYWHERE, selection);
 	if (n < 1)
 	    break;
 	

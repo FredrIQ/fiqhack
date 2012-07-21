@@ -977,7 +977,7 @@ int enhance_weapon_skill(void)
 	    sprintf(eos(buf), "  (%d slot%s available)",
 		    u.weapon_slots, plur(u.weapon_slots));
 	n = display_menu(menu.items, menu.icount, buf,
-			    to_advance ? PICK_ONE : PICK_NONE, selected);
+			    to_advance ? PICK_ONE : PICK_NONE, PLHINT_ANYWHERE, selected);
 	if (n == 1) {
 	    n = selected[0] - 1;	/* get item selected */
 	    skill_advance(n);
@@ -1019,7 +1019,7 @@ int dump_skills(void)
 	    sprintf(buf, " %s\t[%s]", P_NAME(i), sklnambuf);
 	    add_menuitem(&menu, 0, buf, 0, FALSE);
 	}
-    display_menu(menu.items, menu.icount, "Your skills at the end:", PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, "Your skills at the end:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     
     free(menu.items);
     return 0;

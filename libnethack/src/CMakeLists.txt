@@ -38,6 +38,7 @@ include_directories (
 
 add_library(libnethack ${LIB_TYPE} ${LIBNETHACK_SRC} ${LIBNETHACK_GENERATED_SRC})
 set_target_properties(libnethack PROPERTIES OUTPUT_NAME nethack )
+target_link_libraries(libnethack z)
 
 add_dependencies (libnethack makedefs_headers)
 

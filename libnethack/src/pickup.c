@@ -535,7 +535,7 @@ int query_objlist(const char *qstr,	/* query string */
 
 	if (cur_entry > 0) {
 	    selection = malloc(cur_entry * sizeof(struct nh_objresult));
-	    n = display_objects(items, cur_entry, qstr, how, selection);
+	    n = display_objects(items, cur_entry, qstr, how, PLHINT_INVENTORY, selection);
 	}
 
 	if (n > 0) {
@@ -684,7 +684,7 @@ int query_category(const char *qstr,	/* query string */
 	if (do_buc_unknown)
 	    add_menuitem(&menu, 'X', "Items of unknown B/C/U status", 'X', FALSE);
 
-	n = display_menu(menu.items, menu.icount, qstr, how, pick_list);
+	n = display_menu(menu.items, menu.icount, qstr, how, PLHINT_INVENTORY, pick_list);
 	free(menu.items);
 	if (n < 0)
 	    n = 0;	/* callers don't expect -1 */
@@ -1930,7 +1930,7 @@ static int in_or_out_menu(const char *prompt, struct obj *obj,
     if (outokay && inokay)
 	set_menuitem(&items[nr++], 3, MI_NORMAL, "Both of the above", 'b', FALSE);
 
-    n = display_menu(items, nr, prompt, PICK_ONE, selection);
+    n = display_menu(items, nr, prompt, PICK_ONE, PLHINT_CONTAINER, selection);
     if (n > 0)
 	n = selection[0];
 

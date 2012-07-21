@@ -241,13 +241,13 @@ void mstatusline(struct monst *mtmp)
 	strcpy(monnambuf, x_monnam(mtmp, ARTICLE_THE, NULL,
 	    (SUPPRESS_IT|SUPPRESS_INVISIBLE), FALSE));
 
-	pline("Status of %s (%s):  Level %d  HP %d(%d)  AC %d%s.",
+	pline("Status of %s (%s):  Level %d  HP %d(%d)  Def %d%s.",
 		monnambuf,
 		align_str(alignment),
 		mtmp->m_lev,
 		mtmp->mhp,
 		mtmp->mhpmax,
-		find_mac(mtmp),
+		10-find_mac(mtmp),
 		info);
 }
 
@@ -302,7 +302,7 @@ void ustatusline(void)
 	    strcat(info, mon_nam(u.ustuck));
 	}
 
-	pline("Status of %s (%s%s):  Level %d  HP %d(%d)  AC %d%s.",
+	pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.",
 		plname,
 		    (u.ualign.record >= 20) ? "piously " :
 		    (u.ualign.record > 13) ? "devoutly " :
@@ -316,7 +316,7 @@ void ustatusline(void)
 		Upolyd ? mons[u.umonnum].mlevel : u.ulevel,
 		Upolyd ? u.mh : u.uhp,
 		Upolyd ? u.mhmax : u.uhpmax,
-		u.uac,
+		10-u.uac,
 		info);
 }
 

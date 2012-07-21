@@ -273,6 +273,17 @@ enum replay_control {
     REPLAY_GOTO
 };
 
+enum placement_hint {
+  PLHINT_ANYWHERE,
+  PLHINT_LEFT,
+  PLHINT_RIGHT,
+  PLHINT_URGENT,
+  PLHINT_INFO,
+  PLHINT_ONELINER,
+  PLHINT_CONTAINER,
+  PLHINT_INVENTORY
+};
+
 /* the name "boolean" is too common to use here */
 typedef signed char	nh_bool;		/* 0 or 1 */
 
@@ -582,8 +593,8 @@ struct nh_window_procs {
     void (*win_display_buffer)(const char *buf, nh_bool trymove);
     void (*win_update_status)(struct nh_player_info *pi);
     void (*win_print_message)(int turn, const char *msg);
-    int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int*);
-    int (*win_display_objects)(struct nh_objitem*, int, const char*, int, struct nh_objresult*);
+    int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int, int*);
+    int (*win_display_objects)(struct nh_objitem*, int, const char*, int, int, struct nh_objresult*);
     nh_bool (*win_list_items)(struct nh_objitem *items, int icount, nh_bool invent);
     void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
     void (*win_raw_print)(const char *str);

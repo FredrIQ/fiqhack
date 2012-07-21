@@ -578,7 +578,7 @@ int wiz_light_sources(void)
 	add_menutext(&menu, "<none>");
 
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(menu.items);
 
     return 0;

@@ -77,7 +77,11 @@ typedef wchar_t fnchar;
 # ifndef HOMEBREW_CURSES
 #  include <ncursesw/curses.h>
 # else
-#  include <ncurses/curses.h>
+#  ifdef __APPLE__
+#   include <ncurses.h>
+#  else
+#   include <ncurses/curses.h>
+#  endif
 # endif
 #else
 # define PDC_WIDE
@@ -248,7 +252,7 @@ struct win_menu {
     struct nh_menuitem *items;
     char *selected;
     const char *title;
-    int icount, how, offset;
+    int icount, how, offset, placement_hint;
     int height, frameheight, innerheight;
     int width, innerwidth, colpos[MAXCOLS], maxcol;
     int x1, y1, x2, y2;
@@ -259,7 +263,7 @@ struct win_objmenu {
     struct nh_objitem *items;
     int *selected;
     const char *title;
-    int icount, how, offset, selcount;
+    int icount, how, offset, selcount, placement_hint;
     int height, frameheight, innerheight;
     int width, innerwidth;
 };
@@ -330,13 +334,13 @@ extern void draw_map(int cx, int cy);
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);
 extern int curses_display_menu(struct nh_menuitem *items, int icount,
-			       const char *title, int how, int *results);
+			       const char *title, int how, int placement_hint, int *results);
 extern int curses_display_menu_core(struct nh_menuitem *items, int icount,
 			     const char *title, int how, int *results,
 			     int x1, int y1, int x2, int y2,
 			     nh_bool (*changefn)(struct win_menu*, int));
 extern int curses_display_objects(struct nh_objitem *items, int icount,
-		  const char *title, int how, struct nh_objresult *pick_list);
+		  const char *title, int how, int placement_hint, struct nh_objresult *pick_list);
 extern void draw_objlist(WINDOW *win, int icount, struct nh_objitem *items,
 		  int *selected, int how);
 
@@ -345,6 +349,7 @@ extern void alloc_hist_array(void);
 extern void curses_print_message(int turn, const char *msg);
 extern void curses_print_message_nonblocking(int turn, const char *inmsg);
 extern void draw_msgwin(void);
+extern void fresh_message_line(nh_bool blocking);
 extern void pause_messages(void);
 extern void doprev_message(void);
 extern void cleanup_messages(void);

@@ -23,9 +23,9 @@ static void replay_level_changed(int displaymode) {}
 static void replay_outrip(struct nh_menuitem *items,int icount, boolean tombstone,
 	const char *name, int gold, const char *killbuf, int end_how, int year) {}
 static int replay_display_menu(struct nh_menuitem *items, int icount,
-				const char *title, int how, int *results);
+				const char *title, int how, int placement_hint, int *results);
 static int replay_display_objects(struct nh_objitem *items, int icount, const char *title,
-			int how, struct nh_objresult *pick_list);
+			int how, int placement_hint, struct nh_objresult *pick_list);
 static char replay_query_key(const char *query, int *count);
 static int replay_getpos(int *x, int *y, boolean force, const char *goal);
 static enum nh_direction replay_getdir(const char *query, boolean restricted);
@@ -322,7 +322,7 @@ static char *next_log_token(void)
 
 
 static int replay_display_menu(struct nh_menuitem *items, int icount,
-				const char *title, int how, int *results)
+				const char *title, int how, int placement_hint, int *results)
 {
     int i, j, val;
     char *token;
@@ -359,7 +359,7 @@ static int replay_display_menu(struct nh_menuitem *items, int icount,
 
 
 static int replay_display_objects(struct nh_objitem *items, int icount, const char *title,
-			int how, struct nh_objresult *pick_list)
+			int how, int placement_hint, struct nh_objresult *pick_list)
 {
     int i, j, id, count;
     char *token;

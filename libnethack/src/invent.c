@@ -1266,7 +1266,7 @@ static char display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 	if (icount) {
 	    selected = malloc(icount * sizeof(struct nh_objresult));
 	    n = display_objects(items, icount, want_reply ? NULL : "Inventory:",
-				want_reply ? PICK_ONE : PICK_NONE, selected);
+				want_reply ? PICK_ONE : PICK_NONE, PLHINT_INVENTORY, selected);
 	}
 	if (n > 0) {
 	    ret = (char)selected[0].id;
@@ -1450,7 +1450,7 @@ static void dounpaid(void)
     add_menutext(&menu, "");
     add_menutext(&menu, xprname(NULL, "Total:", '*', FALSE, totcost, 0L));
     
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
     free(menu.items);
 }
 
@@ -1755,7 +1755,7 @@ int look_here(int obj_cnt, /* obj_cnt > 0 implies that autopickup is in progess 
 	    }
 	    
 	    if (!skip_win || felt_cockatrice)
-		display_objects(items, icount, title, PICK_NONE, NULL);
+		display_objects(items, icount, title, PICK_NONE, PLHINT_CONTAINER, NULL);
 	    free(items);
 	    
 	    if (felt_cockatrice)
@@ -2215,7 +2215,7 @@ static void invdisp_nothing(const char *hdr, const char *txt)
 	set_menuitem(&items[1], 0, MI_NORMAL, "", 0, FALSE);
 	set_menuitem(&items[2], 0, MI_NORMAL, txt, 0, FALSE);
 	
-	display_menu(items, 3, NULL, PICK_NONE, NULL);
+	display_menu(items, 3, NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
 	
 	return;
 }

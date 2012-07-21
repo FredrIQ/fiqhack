@@ -66,7 +66,7 @@ void net_loadgame(void)
 	add_menu_item(items, size, icount, id, buf, 0, FALSE);
     }
 
-    n = curses_display_menu(items, icount, "saved games", PICK_ONE, pick);    
+    n = curses_display_menu(items, icount, "saved games", PICK_ONE, PLHINT_ANYWHERE, pick);    
     free(items);
     if (n <= 0)
 	return;
@@ -129,7 +129,7 @@ void net_replay(void)
 	else
 	    add_menu_item(items, size, icount, -2, "View games from all players", '#', FALSE);
 	
-	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, pick);
+	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, PLHINT_ANYWHERE, pick);
 	free(items);
 	if (n <= 0)
 	    return;

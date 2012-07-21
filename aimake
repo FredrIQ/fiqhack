@@ -62,6 +62,11 @@ outside the chroot.
 Instead of compiling, dump the internal statefile to stdout in a
 human-readable format.
 
+=item B<-r>
+
+Don't use carriage returns to provide progress information (mostly
+only useful if stdout is not a terminal).
+
 =item B<-B> I<regexp>
 
 Consider all files matching the regexp to have changed, even if
@@ -103,7 +108,7 @@ if (-e statefile) {
 our $VERSION = 0.3;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 my %options;
-getopts('dv:i:p:B:', \%options);
+getopts('drv:i:p:B:', \%options);
 
 if($options{'d'}) {
   print Dumper($state);
@@ -262,7 +267,7 @@ my $screencols = 80;
     my $str = shift;
     my $ldiff = (length $str) - length defined_or($last_report_msg,"");
     $ldiff < 0 and $str .= ' ' x -$ldiff;
-    if ($level == $options{v} - 1) {
+    if ($level == $options{v} - 1 && !$options{r}) {
       $str = substr $str, 0, defined_or($screencols,80) - 1;
       print STDERR "$str\r";
       $str =~ s/ +$//;

@@ -7,6 +7,7 @@ static int enermod(int);
 
 long newuexp(int lev)
 {
+        /* keep this synced with the status-drawing code in the clients */
 	if (lev < 10) return 10L * (1L << lev);
 	if (lev < 20) return 10000L * (1L << (lev - 10));
 	return 10000000L * ((long)(lev - 19));

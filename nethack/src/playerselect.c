@@ -265,7 +265,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 	    add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 	    
 	    sprintf(pbuf, "Pick a role for your %s", plbuf);
-	    n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
+	    n = curses_display_menu(items, icount, pbuf, PICK_ONE, PLHINT_ANYWHERE, pick_list);
 
 	    /* Process the choice */
 	    if (n == -1 || pick_list[0] == -1)
@@ -300,7 +300,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 
 		sprintf(pbuf, "Pick the race of your %s", plbuf);
-		n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
+		n = curses_display_menu(items, icount, pbuf, PICK_ONE, PLHINT_ANYWHERE, pick_list);
 		
 		if (n == -1 || pick_list[0] == -1)
 		    goto give_up;		/* Selected quit */
@@ -336,7 +336,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 
 		sprintf(pbuf, "Pick the gender of your %s", plbuf);
-		n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
+		n = curses_display_menu(items, icount, pbuf, PICK_ONE, PLHINT_ANYWHERE, pick_list);
 		
 		if (n == -1 || pick_list[0] == -1)
 		    goto give_up;		/* Selected quit */
@@ -372,7 +372,7 @@ nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 		add_menu_item(items, size, icount, -1, "Quit", 'q', 0);
 		
 		sprintf(pbuf, "Pick the alignment of your %s", plbuf);
-		n = curses_display_menu(items, icount, pbuf, PICK_ONE, pick_list);
+		n = curses_display_menu(items, icount, pbuf, PICK_ONE, PLHINT_ANYWHERE, pick_list);
 		
 		if (n == -1 || pick_list[0] == -1)
 		    goto give_up;		/* Selected quit */

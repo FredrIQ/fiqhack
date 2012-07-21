@@ -448,7 +448,7 @@ int dodiscovered(void)
     if (ct == 0) {
 	pline("You haven't discovered anything yet...");
     } else
-	display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+	display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(menu.items);
 
     return 0;

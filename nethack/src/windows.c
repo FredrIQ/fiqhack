@@ -515,7 +515,7 @@ void curses_display_buffer(const char *inbuf, nh_bool trymove)
 	line = strtok(NULL, "\n");
     } while (line);
     
-    curses_display_menu(items, icount, NULL, PICK_NONE, NULL);
+    curses_display_menu(items, icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(items);
     free(buf);
 }

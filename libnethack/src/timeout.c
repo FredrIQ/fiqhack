@@ -1323,7 +1323,7 @@ int wiz_timeout_queue(void)
     add_menutext(&menu, "");
     print_queue(&menu, level->lev_timers);
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(menu.items);
 
     return 0;

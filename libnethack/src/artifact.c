@@ -1276,7 +1276,7 @@ static int arti_invoke(struct obj *obj)
 		int n;
 		int selected[1];
 
-		n = display_menu(items, num_ok_dungeons, "Open a portal to which dungeon?", PICK_ONE, selected);
+		n = display_menu(items, num_ok_dungeons, "Open a portal to which dungeon?", PICK_ONE, PLHINT_ANYWHERE, selected);
 		free(items);
 		if (n <= 0)
 		    goto nothing_special;

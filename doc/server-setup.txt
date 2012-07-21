@@ -1,0 +1,36 @@
+Here's how to get NetHack4 up and running on your machine!
+
+Install libjansson if you don't have it already
+Install libncursesw (if you're a roguelike player you probably have it)
+Install postgresql (plus pgcrypto, which is probably in a separate package)
+
+use the createdb command to make a new database:
+	su postgres
+	createdb NetHack4
+	createuser -DPRS nh4server
+	echo 'CREATE EXTENSION pgcrypto' | psql -d NetHack4
+You'll be prompted for a password for the functional user.
+
+
+Now.  The cmake build doesn't seem to work with the default configuration, so we'll use aimake to make our lives easier.  From the project root, do the following (assuming you want to install into the given directory):
+	NH4_HOME=/home/greyknight/nethack4
+	mkdir build
+	cd build
+	../aimake -i ${NH4_HOME} ..
+
+Build okay?  Great!  Now we must create a configuration file so that nethack knows how to start up the server.  Create ${NH4_HOME}/etc/nethack4.conf with the following contents:
+	dbhost=127.0.0.1
+	dbport=5432
+	dbuser=nh4server
+	dbpass=(** the password you specified earlier **)
+	dbname=NetHack4
+The password's in plaintext in this file, so you may want to make the file unreadable to others if using this for real.
+
+
+Let's have a try!  Start up the server (it will daemonize itself):
+	${NH4_HOME}/bin/nethack4-server
+
+and start the client:
+	${NH4_HOME}/bin/nethack4
+
+Now you should be able to connect to the server running on localhost with the menu option.
