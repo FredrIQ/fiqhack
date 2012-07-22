@@ -323,6 +323,33 @@ menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
 }
 
 
+/* display a selecton menu for boolean options */
+static void select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
+{
+    struct nh_menuitem *items;
+    int icount, size;
+    char titlebuf[BUFSZ];
+    int n, pick_list[2];
+
+    icount = 0; size = 2;
+    items = malloc(sizeof(struct nh_menuitem) * size);
+
+    add_menu_item(items, size, icount, 1,
+		  option->value.b ? "true (set)" : "true", 't', 0);
+    add_menu_item(items, size, icount, 2,
+		  option->value.b ? "false" : "false (set)", 'f', 0);
+
+    snprintf(titlebuf, BUFSZ, "%s - %s", option->name, option->helptxt);
+
+    n = curses_display_menu(items, icount, titlebuf, PICK_ONE, pick_list);
+    free(items);
+
+    value->b = option->value.b; /* in case of ESC */
+    if (n == 1)
+	value->b = pick_list[0] == 1;
+}
+
+
 /* display a selection menu for enum options */
 static void
 select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
@@ -389,7 +416,7 @@ get_option_value(struct win_menu *mdat, int idx)
 
     switch ((int)option->type) {
     case OPTTYPE_BOOL:
-        value.b = !option->value.b;
+	    select_boolean_value(&value, option);
         break;
 
     case OPTTYPE_INT:
