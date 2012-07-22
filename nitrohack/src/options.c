@@ -292,8 +292,8 @@ print_option_string(struct nh_option_desc *option, char *buf)
 
     default:
     case OPTSTYLE_FULL:
-        sprintf(fmt, "%%s\t%%.%ds\t[%%s]", COLS - 42);
-        snprintf(buf, BUFSZ, fmt, option->name, option->helptxt, valstr);
+	    sprintf(fmt, "%%s\t[%%s]\t%%.%ds", COLS - 42);
+	    snprintf(buf, BUFSZ, fmt, option->name, valstr, option->helptxt);
         break;
     }
 }
