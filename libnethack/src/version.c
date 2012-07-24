@@ -1,3 +1,4 @@
+/* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,69 +10,73 @@
  */
 #include "patchlevel.h"
 
-/* #define BETA_INFO "" */	/* "[ beta n]" */
+/* #define BETA_INFO "" *//* "[ beta n]" */
 
 static char *getversionstring(char *);
 
 
 /* fill buffer with short version (so caller can avoid including date.h) */
-char *version_string(char *buf)
+char *
+version_string(char *buf)
 {
-	return strcpy(buf, VERSION_STRING);
+    return strcpy(buf, VERSION_STRING);
 }
 
 /* fill and return the given buffer with the long nethack version string */
-char *getversionstring(char *buf)
+char *
+getversionstring(char *buf)
 {
-	strcpy(buf, VERSION_ID);
+    strcpy(buf, VERSION_ID);
 #if defined(BETA) && defined(BETA_INFO)
-	sprintf(eos(buf), " %s", BETA_INFO);
+    sprintf(eos(buf), " %s", BETA_INFO);
 #endif
-	return buf;
+    return buf;
 }
 
-int doversion(void)
+int
+doversion(void)
 {
-	char buf[BUFSZ];
+    char buf[BUFSZ];
 
-	pline("%s", getversionstring(buf));
-	return 0;
+    pline("%s", getversionstring(buf));
+    return 0;
 }
 
 
-boolean check_version(struct version_info *version_data, const char *filename,
-		      boolean complain)
+boolean
+check_version(struct version_info * version_data, const char *filename,
+              boolean complain)
 {
-	if (
+    if (
 #ifdef VERSION_COMPATIBILITY
-	    version_data->incarnation < VERSION_COMPATIBILITY ||
-	    version_data->incarnation > VERSION_NUMBER
+           version_data->incarnation < VERSION_COMPATIBILITY ||
+           version_data->incarnation > VERSION_NUMBER
 #else
-	    version_data->incarnation != VERSION_NUMBER
+           version_data->incarnation != VERSION_NUMBER
 #endif
-	  ) {
-	    if (complain)
-		pline("Version mismatch for file \"%s\".", filename);
-	    return FALSE;
-	} else if (
+        ) {
+        if (complain)
+            pline("Version mismatch for file \"%s\".", filename);
+        return FALSE;
+    } else if (
 #ifndef IGNORED_FEATURES
-		   version_data->feature_set != VERSION_FEATURES ||
+                  version_data->feature_set != VERSION_FEATURES ||
 #else
-		   (version_data->feature_set & ~IGNORED_FEATURES) !=
-			  (VERSION_FEATURES & ~IGNORED_FEATURES) ||
+                  (version_data->feature_set & ~IGNORED_FEATURES) !=
+                  (VERSION_FEATURES & ~IGNORED_FEATURES) ||
 #endif
-		   version_data->entity_count != VERSION_SANITY1) {
-	    if (complain)
-		pline("Configuration incompatibility for file \"%s\".",
-		      filename);
-	    return FALSE;
-	}
-	return TRUE;
+                  version_data->entity_count != VERSION_SANITY1) {
+        if (complain)
+            pline("Configuration incompatibility for file \"%s\".", filename);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /* this used to be based on file date and somewhat OS-dependant,
    but now examines the initial part of the file's contents */
-boolean uptodate(struct memfile *mf, const char *name)
+boolean
+uptodate(struct memfile * mf, const char *name)
 {
     struct version_info vers_info;
     boolean verbose = name ? TRUE : FALSE;
@@ -80,18 +85,19 @@ boolean uptodate(struct memfile *mf, const char *name)
     vers_info.feature_set = mread32(mf);
     vers_info.entity_count = mread32(mf);
     if (!check_version(&vers_info, name, verbose))
-	return FALSE;
-    
+        return FALSE;
+
     return TRUE;
 }
 
-void store_version(struct memfile *mf)
+void
+store_version(struct memfile *mf)
 {
-        mtag(mf, 0, MTAG_VERSION);
-	mwrite32(mf, VERSION_NUMBER);
-	mwrite32(mf, VERSION_FEATURES);
-	mwrite32(mf, VERSION_SANITY1);
-	return;
+    mtag(mf, 0, MTAG_VERSION);
+    mwrite32(mf, VERSION_NUMBER);
+    mwrite32(mf, VERSION_FEATURES);
+    mwrite32(mf, VERSION_SANITY1);
+    return;
 }
 
 

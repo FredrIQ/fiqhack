@@ -1,18 +1,19 @@
+/* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.	*/
 
 #ifndef VISION_H
-#define VISION_H
+# define VISION_H
 
-#define COULD_SEE 0x1		/* location could be seen, if it were lit */
-#define IN_SIGHT  0x2		/* location can be seen */
-#define TEMP_LIT  0x4		/* location is temporarily lit */
+# define COULD_SEE 0x1  /* location could be seen, if it were lit */
+# define IN_SIGHT  0x2  /* location can be seen */
+# define TEMP_LIT  0x4  /* location is temporarily lit */
 
 /*
  * Light source sources
  */
-#define LS_OBJECT 0
-#define LS_MONSTER 1
+# define LS_OBJECT 0
+# define LS_MONSTER 1
 
 /*
  *  cansee()	- Returns true if the hero can see the location.
@@ -20,9 +21,9 @@
  *  couldsee()	- Returns true if the hero has a clear line of sight to
  *		  the location.
  */
-#define cansee(x,y)	(viz_array[y][x] & IN_SIGHT)
-#define couldsee(x,y)	(viz_array[y][x] & COULD_SEE)
-#define templit(x,y)	(viz_array[y][x] & TEMP_LIT)
+# define cansee(x,y)	(viz_array[y][x] & IN_SIGHT)
+# define couldsee(x,y)	(viz_array[y][x] & COULD_SEE)
+# define templit(x,y)	(viz_array[y][x] & TEMP_LIT)
 
 /*
  *  The following assume the monster is not blind.
@@ -34,18 +35,18 @@
  *		  location and the hero is visible, then monster can see the
  *		  hero.
  */
-#define m_cansee(mtmp,x2,y2)	clear_path((mtmp)->mx,(mtmp)->my,(x2),(y2))
+# define m_cansee(mtmp,x2,y2)	clear_path((mtmp)->mx,(mtmp)->my,(x2),(y2))
 
-#define m_canseeu(m)	((!Invis || perceives((m)->data)) && \
+# define m_canseeu(m)	((!Invis || perceives((m)->data)) && \
 			  !(Underwater || u.uburied || (m)->mburied) ? \
 			     couldsee((m)->mx,(m)->my) : 0)
 
 /*
  *  Circle information
  */
-#define MAX_RADIUS 15	/* this is in points from the source */
+# define MAX_RADIUS 15  /* this is in points from the source */
 
 /* Use this macro to get a list of distances of the edges (see vision.c). */
-#define circle_ptr(z) (&circle_data[(int)circle_start[z]])
+# define circle_ptr(z) (&circle_data[(int)circle_start[z]])
 
 #endif /* VISION_H */

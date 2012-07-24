@@ -1,3 +1,4 @@
+/* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -18,59 +19,36 @@
 
 /* SQL statements used */
 static const char SQL_init_user_table[] =
-    "CREATE TABLE users("
-       "uid SERIAL PRIMARY KEY, "
-       "name varchar(50) UNIQUE NOT NULL, "
-       "pwhash text NOT NULL, "
-       "email text NOT NULL default '', "
-       "can_debug BOOLEAN NOT NULL DEFAULT FALSE, "
-       "ts timestamp NOT NULL, "
-       "reg_ts timestamp NOT NULL"
-    ");";
+    "CREATE TABLE users(" "uid SERIAL PRIMARY KEY, "
+    "name varchar(50) UNIQUE NOT NULL, " "pwhash text NOT NULL, "
+    "email text NOT NULL default '', "
+    "can_debug BOOLEAN NOT NULL DEFAULT FALSE, " "ts timestamp NOT NULL, "
+    "reg_ts timestamp NOT NULL" ");";
 
 static const char SQL_init_games_table[] =
-    "CREATE TABLE games("
-       "gid SERIAL PRIMARY KEY, "
-       "filename text NOT NULL, "
-       "plname text NOT NULL, "
-       "role text NOT NULL, "
-       "race text NOT NULL, "
-       "gender text NOT NULL, "
-       "alignment text NOT NULL, "
-       "mode integer NOT NULL, "
-       "moves integer NOT NULL, "
-       "depth integer NOT NULL, "
-       "level_desc text NOT NULL, "
-       "done boolean NOT NULL DEFAULT FALSE, "
-       "owner integer NOT NULL REFERENCES users (uid), "
-       "ts timestamp NOT NULL, "
-       "start_ts timestamp NOT NULL"
-    ");";
+    "CREATE TABLE games(" "gid SERIAL PRIMARY KEY, " "filename text NOT NULL, "
+    "plname text NOT NULL, " "role text NOT NULL, " "race text NOT NULL, "
+    "gender text NOT NULL, " "alignment text NOT NULL, "
+    "mode integer NOT NULL, " "moves integer NOT NULL, "
+    "depth integer NOT NULL, " "level_desc text NOT NULL, "
+    "done boolean NOT NULL DEFAULT FALSE, "
+    "owner integer NOT NULL REFERENCES users (uid), " "ts timestamp NOT NULL, "
+    "start_ts timestamp NOT NULL" ");";
 
 static const char SQL_init_options_table[] =
-    "CREATE TABLE options("
-	"uid integer NOT NULL REFERENCES users (uid), "
-	"optname text NOT NULL, "
-	"opttype integer NOT NULL, "
-	"optvalue text NOT NULL, "
-	"PRIMARY KEY(uid, optname)"
-    ");";
+    "CREATE TABLE options(" "uid integer NOT NULL REFERENCES users (uid), "
+    "optname text NOT NULL, " "opttype integer NOT NULL, "
+    "optvalue text NOT NULL, " "PRIMARY KEY(uid, optname)" ");";
 
 static const char SQL_init_topten_table[] =
-    "CREATE TABLE topten("
-	"gid integer PRIMARY KEY REFERENCES games (gid), "
-	"points integer NOT NULL, "
-	"hp integer NOT NULL, "
-	"maxhp integer NOT NULL, "
-	"deaths integer NOT NULL, "
-	"end_how integer NOT NULL, "
-	"death text NOT NULL, "
-	"entrytxt text NOT NULL"
-    ");";
+    "CREATE TABLE topten(" "gid integer PRIMARY KEY REFERENCES games (gid), "
+    "points integer NOT NULL, " "hp integer NOT NULL, "
+    "maxhp integer NOT NULL, " "deaths integer NOT NULL, "
+    "end_how integer NOT NULL, " "death text NOT NULL, "
+    "entrytxt text NOT NULL" ");";
 
 static const char SQL_check_table[] =
-    "SELECT 1::integer "
-    "FROM   pg_tables "
+    "SELECT 1::integer " "FROM   pg_tables "
     "WHERE  schemaname = 'public' AND tablename = $1::text;";
 
 /* Note: the regprocedure type check only succeeds it the function exists. */
@@ -80,46 +58,36 @@ static const char SQL_check_pgcrypto[] =
 static const char SQL_register_user[] =
     "INSERT INTO users (name, pwhash, email, ts, reg_ts) "
     "VALUES ($1::varchar(50), crypt($2::text, gen_salt('bf', 8)), $3::text, 'now', 'now');";
-    
-static const char SQL_last_reg_id[] =
-    "SELECT currval('users_uid_seq');";
+
+static const char SQL_last_reg_id[] = "SELECT currval('users_uid_seq');";
 
 static const char SQL_auth_user[] =
-    "SELECT uid, pwhash = crypt($2::text, pwhash) AS auth_ok "
-    "FROM   users "
+    "SELECT uid, pwhash = crypt($2::text, pwhash) AS auth_ok " "FROM   users "
     "WHERE  name = $1::varchar(50);";
 
 static const char SQL_get_user_info[] =
-    "SELECT name, can_debug "
-    "FROM   users "
-    "WHERE  uid = $1::bigint";
+    "SELECT name, can_debug " "FROM   users " "WHERE  uid = $1::bigint";
 
 static const char SQL_update_user_ts[] =
-    "UPDATE users "
-    "SET ts = 'now' "
-    "WHERE uid = $1::integer;";
+    "UPDATE users " "SET ts = 'now' " "WHERE uid = $1::integer;";
 
 static const char SQL_set_user_email[] =
-    "UPDATE users "
-    "SET email = $2::text "
-    "WHERE uid = $1::integer;";
+    "UPDATE users " "SET email = $2::text " "WHERE uid = $1::integer;";
 
 static const char SQL_set_user_password[] =
-    "UPDATE users "
-    "SET pwhash = crypt($2::text, gen_salt('bf', 8)) "
+    "UPDATE users " "SET pwhash = crypt($2::text, gen_salt('bf', 8)) "
     "WHERE uid = $1::integer;";
 
 static const char SQL_add_game[] =
     "INSERT INTO games (filename, role, race, gender, alignment, mode, moves, "
-                       "depth, owner, plname, level_desc, ts, start_ts) "
+    "depth, owner, plname, level_desc, ts, start_ts) "
     "VALUES ($1::text, $2::text, $3::text, $4::text, $5::text, "
-            "$6::integer, 1, 1, $7::integer, $8::text, $9::text, 'now', 'now')";
+    "$6::integer, 1, 1, $7::integer, $8::text, $9::text, 'now', 'now')";
 
 static const char SQL_delete_game[] =
     "DELETE FROM games WHERE owner = $1::integer AND gid = $2::integer;";
 
-static const char SQL_last_game_id[] =
-    "SELECT currval('games_gid_seq');";
+static const char SQL_last_game_id[] = "SELECT currval('games_gid_seq');";
 
 static const char SQL_update_game[] =
     "UPDATE games "
@@ -127,25 +95,20 @@ static const char SQL_update_game[] =
     "WHERE gid = $1::integer;";
 
 static const char SQL_get_game_filename[] =
-    "SELECT filename "
-    "FROM games "
+    "SELECT filename " "FROM games "
     "WHERE (owner = $1::integer OR $1::integer = 0) AND gid = $2::integer;";
 
 static const char SQL_set_game_done[] =
-    "UPDATE games "
-    "SET done = TRUE "
-    "WHERE gid = $1::integer;";
+    "UPDATE games " "SET done = TRUE " "WHERE gid = $1::integer;";
 
 static const char SQL_list_games[] =
     "SELECT g.gid, g.filename, u.name "
     "FROM games AS g JOIN users AS u ON g.owner = u.uid "
     "WHERE (u.uid = $1::integer OR $1::integer = 0) AND g.done = $2::boolean "
-    "ORDER BY g.ts DESC "
-    "LIMIT $3::integer;";
+    "ORDER BY g.ts DESC " "LIMIT $3::integer;";
 
 static const char SQL_update_option[] =
-    "UPDATE options "
-    "SET optvalue = $1::text "
+    "UPDATE options " "SET optvalue = $1::text "
     "WHERE uid = $2::integer AND optname = $3::text;";
 
 static const char SQL_insert_option[] =
@@ -153,14 +116,12 @@ static const char SQL_insert_option[] =
     "VALUES ($1::text, $2::integer, $3::text, $4::integer);";
 
 static const char SQL_get_options[] =
-    "SELECT optname, optvalue "
-    "FROM options "
-    "WHERE uid = $1::integer;";
+    "SELECT optname, optvalue " "FROM options " "WHERE uid = $1::integer;";
 
 static const char SQL_add_topten_entry[] =
     "INSERT INTO topten (gid, points, hp, maxhp, deaths, end_how, death, entrytxt) "
     "VALUES ($1::integer, $2::integer, $3::integer, $4::integer, "
-            "$5::integer, $6::integer, $7::text, $8::text);";
+    "$5::integer, $6::integer, $7::text, $8::text);";
 
 
 static PGconn *conn;
@@ -169,49 +130,55 @@ static PGconn *conn;
 /*
  * init the database connection.
  */
-int init_database(void)
+int
+init_database(void)
 {
     if (conn)
-	close_database();
+        close_database();
 
-    conn = PQsetdbLogin(settings.dbhost, settings.dbport, NULL, NULL,
-			settings.dbname, settings.dbuser, settings.dbpass);
+    conn =
+        PQsetdbLogin(settings.dbhost, settings.dbport, NULL, NULL,
+                     settings.dbname, settings.dbuser, settings.dbpass);
     if (PQstatus(conn) == CONNECTION_BAD) {
-	fprintf(stderr, "Database connection failed. Check your settings.\n");
-	goto err;
+        fprintf(stderr, "Database connection failed. Check your settings.\n");
+        goto err;
     }
-    
+
     return TRUE;
-    
+
 err:
     PQfinish(conn);
     return FALSE;
 }
 
 
-static int check_create_table(const char *tablename, const char *create_stmt)
+static int
+check_create_table(const char *tablename, const char *create_stmt)
 {
     PGresult *res, *res2;
     const char *params[1];
-    int paramFormats[1] = {0};
-    
+    int paramFormats[1] = { 0 };
+
     params[0] = tablename;
-    res2 = PQexecParams(conn, SQL_check_table, 1, NULL, params, NULL, paramFormats, 0);
+    res2 =
+        PQexecParams(conn, SQL_check_table, 1, NULL, params, NULL, paramFormats,
+                     0);
     if (PQresultStatus(res2) != PGRES_TUPLES_OK || PQntuples(res2) == 0) {
-	fprintf(stderr, "Table '%s' was not found. It will be created now.\n", tablename);
-	PQclear(res2);
-	
-	res = PQexec(conn, create_stmt);
-	if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-	    fprintf(stderr, "Failed to create table %s: %s",
-		    tablename, PQerrorMessage(conn));
-	    PQclear(res);
-	    return FALSE;
-	}
-	PQclear(res);
+        fprintf(stderr, "Table '%s' was not found. It will be created now.\n",
+                tablename);
+        PQclear(res2);
+
+        res = PQexec(conn, create_stmt);
+        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+            fprintf(stderr, "Failed to create table %s: %s", tablename,
+                    PQerrorMessage(conn));
+            PQclear(res);
+            return FALSE;
+        }
+        PQclear(res);
     } else
-	PQclear(res2);
-    
+        PQclear(res2);
+
     return TRUE;
 }
 
@@ -220,434 +187,485 @@ static int check_create_table(const char *tablename, const char *create_stmt)
  * check the database tables and create them if necessary. Also check for the
  * existence of the crypt function
  */
-int check_database(void)
+int
+check_database(void)
 {
     PGresult *res;
-    
-    /*
+
+    /* 
      * Perform a quick check for the presence of the pgcrypto extension:
      * A function crypt(text, text) must exist.
      */
     res = PQexec(conn, SQL_check_pgcrypto);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "PostgreSQL pgcrypto check failed: %s", PQerrorMessage(conn));
+        fprintf(stderr, "PostgreSQL pgcrypto check failed: %s",
+                PQerrorMessage(conn));
         PQclear(res);
         goto err;
     }
     PQclear(res);
-    
-    /*
+
+    /* 
      * Create the required set of tables if they don't exist
      */
     if (!check_create_table("users", SQL_init_user_table) ||
-	!check_create_table("games", SQL_init_games_table) ||
-	!check_create_table("topten", SQL_init_topten_table) ||
-	!check_create_table("options", SQL_init_options_table))
-	goto err;
-    
-    /*
+        !check_create_table("games", SQL_init_games_table) ||
+        !check_create_table("topten", SQL_init_topten_table) ||
+        !check_create_table("options", SQL_init_options_table))
+        goto err;
+
+    /* 
      * Create prepared statements
      */
     res = PQprepare(conn, PREP_REGISTER, SQL_register_user, 0, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
         fprintf(stderr, "prepare statement failed: %s", PQerrorMessage(conn));
         PQclear(res);
-	goto err;
+        goto err;
     }
     PQclear(res);
-    
+
     res = PQprepare(conn, PREP_AUTH, SQL_auth_user, 0, NULL);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
         fprintf(stderr, "prepare statement failed: %s", PQerrorMessage(conn));
         PQclear(res);
-	goto err;
+        goto err;
     }
     PQclear(res);
-    
+
     return TRUE;
-    
+
 err:
     PQfinish(conn);
     return FALSE;
 }
 
 
-void close_database(void)
+void
+close_database(void)
 {
     PQfinish(conn);
     conn = NULL;
 }
 
 
-int db_auth_user(const char *name, const char *pass)
+int
+db_auth_user(const char *name, const char *pass)
 {
     PGresult *res;
-    const char * const params[] = {name, pass};
+    const char *const params[] = { name, pass };
     int uid, auth_ok, col;
     const char *uidstr;
-    
+
     res = PQexecPrepared(conn, PREP_AUTH, 2, params, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
-	return 0;
+        return 0;
     }
-    
+
     col = PQfnumber(res, "uid");
     uidstr = PQgetvalue(res, 0, col);
     uid = atoi(uidstr);
-    
+
     col = PQfnumber(res, "auth_ok");
     auth_ok = (PQgetvalue(res, 0, col)[0] == 't');
     PQclear(res);
-    
+
     return auth_ok ? uid : -uid;
 }
 
 
-int db_register_user(const char *name, const char *pass, const char *email)
+int
+db_register_user(const char *name, const char *pass, const char *email)
 {
     PGresult *res;
-    const char * const params[] = {name, pass, email};
+    const char *const params[] = { name, pass, email };
     int uid;
     const char *uidstr;
-    
+
     res = PQexecPrepared(conn, PREP_REGISTER, 3, params, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-	log_msg("db_register_user failed: %s", PQerrorMessage(conn));
+        log_msg("db_register_user failed: %s", PQerrorMessage(conn));
         PQclear(res);
-	return 0;
+        return 0;
     }
     PQclear(res);
-    
+
     res = PQexec(conn, SQL_last_reg_id);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-	log_msg("db_register_user get last id failed: %s", PQerrorMessage(conn));
+        log_msg("db_register_user get last id failed: %s",
+                PQerrorMessage(conn));
         PQclear(res);
-	return 0;
+        return 0;
     }
     uidstr = PQgetvalue(res, 0, 0);
     uid = atoi(uidstr);
     PQclear(res);
-    
+
     return uid;
 }
 
 
-int db_get_user_info(int uid, struct user_info *info)
+int
+db_get_user_info(int uid, struct user_info *info)
 {
     PGresult *res;
     char uidstr[16];
-    const char * const params[] = {uidstr};
-    const int paramFormats[] = {0}; /* text format */
+    const char *const params[] = { uidstr };
+    const int paramFormats[] = { 0 };   /* text format */
     int col;
-    
+
     sprintf(uidstr, "%d", uid);
-    
-    res = PQexecParams(conn, SQL_get_user_info, 1, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_get_user_info, 1, NULL, params, NULL,
+                     paramFormats, 0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-	log_msg("db_get_user_info error: %s", PQerrorMessage(conn));
+        log_msg("db_get_user_info error: %s", PQerrorMessage(conn));
         PQclear(res);
-	return FALSE;
+        return FALSE;
     }
-    
+
     col = PQfnumber(res, "can_debug");
     info->can_debug = (PQgetvalue(res, 0, col)[0] == 't');
 
     col = PQfnumber(res, "name");
     info->username = strdup(PQgetvalue(res, 0, col));
-    
+
     info->uid = uid;
-    
+
     PQclear(res);
     return TRUE;
 }
 
 
-void db_update_user_ts(int uid)
+void
+db_update_user_ts(int uid)
 {
     PGresult *res;
     char uidstr[16];
-    const char * const params[] = {uidstr};
-    const int paramFormats[] = {0}; /* text format */
-    
+    const char *const params[] = { uidstr };
+    const int paramFormats[] = { 0 };   /* text format */
+
     sprintf(uidstr, "%d", uid);
-    res = PQexecParams(conn, SQL_update_user_ts, 1, NULL, params, NULL, paramFormats, 0);
+    res =
+        PQexecParams(conn, SQL_update_user_ts, 1, NULL, params, NULL,
+                     paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("update_user_ts error: %s", PQerrorMessage(conn));
+        log_msg("update_user_ts error: %s", PQerrorMessage(conn));
     PQclear(res);
 }
 
 
-int db_set_user_email(int uid, const char *email)
+int
+db_set_user_email(int uid, const char *email)
 {
     PGresult *res;
     char uidstr[16];
-    const char * const params[] = {uidstr, email};
-    const int paramFormats[] = {0, 0};
+    const char *const params[] = { uidstr, email };
+    const int paramFormats[] = { 0, 0 };
     const char *numrows;
-    
+
     sprintf(uidstr, "%d", uid);
-    
-    res = PQexecParams(conn, SQL_set_user_email, 2, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_set_user_email, 2, NULL, params, NULL,
+                     paramFormats, 0);
     numrows = PQcmdTuples(res);
     if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
-	PQclear(res);
-	return TRUE;
+        PQclear(res);
+        return TRUE;
     }
     PQclear(res);
     return FALSE;
 }
 
 
-int db_set_user_password(int uid, const char *password)
+int
+db_set_user_password(int uid, const char *password)
 {
     PGresult *res;
     char uidstr[16];
-    const char * const params[] = {uidstr, password};
-    const int paramFormats[] = {0, 0};
+    const char *const params[] = { uidstr, password };
+    const int paramFormats[] = { 0, 0 };
     const char *numrows;
-    
+
     sprintf(uidstr, "%d", uid);
-    
-    res = PQexecParams(conn, SQL_set_user_password, 2, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_set_user_password, 2, NULL, params, NULL,
+                     paramFormats, 0);
     numrows = PQcmdTuples(res);
     if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
-	PQclear(res);
-	return TRUE;
+        PQclear(res);
+        return TRUE;
     }
     PQclear(res);
     return FALSE;
 }
 
 
-long db_add_new_game(int uid, const char *filename, const char *role,
-		     const char *race, const char *gend, const char *align,
-		     int mode, const char *plname, const char *levdesc)
+long
+db_add_new_game(int uid, const char *filename, const char *role,
+                const char *race, const char *gend, const char *align, int mode,
+                const char *plname, const char *levdesc)
 {
     PGresult *res;
     char uidstr[16], modestr[16];
-    const char *const params[] = {filename, role, race, gend,
-                                  align, modestr, uidstr, plname, levdesc};
-    const int paramFormats[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    const char *const params[] = { filename, role, race, gend,
+        align, modestr, uidstr, plname, levdesc
+    };
+    const int paramFormats[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     const char *gameid_str;
     int gid;
-    
+
     sprintf(uidstr, "%d", uid);
     sprintf(modestr, "%d", mode);
-    
-    res = PQexecParams(conn, SQL_add_game, 9, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_add_game, 9, NULL, params, NULL, paramFormats,
+                     0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-	log_msg("db_add_new_game error while adding (%s - %s): %s",
-		plname, filename, PQerrorMessage(conn));
+        log_msg("db_add_new_game error while adding (%s - %s): %s", plname,
+                filename, PQerrorMessage(conn));
         PQclear(res);
-	return 0;
+        return 0;
     }
-    
+
     res = PQexec(conn, SQL_last_game_id);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
-	return 0;
+        return 0;
     }
-    
+
     gameid_str = PQgetvalue(res, 0, 0);
     gid = atoi(gameid_str);
     PQclear(res);
-    
+
     return gid;
 }
 
 
-void db_update_game(int game, int moves, int depth, const char *levdesc)
+void
+db_update_game(int game, int moves, int depth, const char *levdesc)
 {
     PGresult *res;
     char gidstr[16], movesstr[16], depthstr[16];
-    const char * const params[] = {gidstr, movesstr, depthstr, levdesc};
-    const int paramFormats[] = {0,0,0,0};
-    
+    const char *const params[] = { gidstr, movesstr, depthstr, levdesc };
+    const int paramFormats[] = { 0, 0, 0, 0 };
+
     sprintf(gidstr, "%d", game);
     sprintf(movesstr, "%d", moves);
     sprintf(depthstr, "%d", depth);
-    
-    res = PQexecParams(conn, SQL_update_game, 4, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_update_game, 4, NULL, params, NULL, paramFormats,
+                     0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("update_game_ts error: %s", PQerrorMessage(conn));
+        log_msg("update_game_ts error: %s", PQerrorMessage(conn));
     PQclear(res);
 }
 
 
-int db_get_game_filename(int uid, int gid, char *namebuf, int buflen)
+int
+db_get_game_filename(int uid, int gid, char *namebuf, int buflen)
 {
     PGresult *res;
     char uidstr[16], gidstr[16];
-    const char * const params[] = {uidstr, gidstr};
-    const int paramFormats[] = {0, 0};
-    
+    const char *const params[] = { uidstr, gidstr };
+    const int paramFormats[] = { 0, 0 };
+
     sprintf(uidstr, "%d", uid);
     sprintf(gidstr, "%d", gid);
-    
-    res = PQexecParams(conn, SQL_get_game_filename, 2, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_get_game_filename, 2, NULL, params, NULL,
+                     paramFormats, 0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-	log_msg("get_game_filename error: %s", PQerrorMessage(conn));
-	PQclear(res);
-	return FALSE;
+        log_msg("get_game_filename error: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return FALSE;
     }
-    
+
     strncpy(namebuf, PQgetvalue(res, 0, 0), buflen);
     PQclear(res);
     return TRUE;
 }
 
 
-void db_delete_game(int uid, int gid)
+void
+db_delete_game(int uid, int gid)
 {
     PGresult *res;
     char uidstr[16], gidstr[16];
-    const char * const params[] = {uidstr, gidstr};
-    const int paramFormats[] = {0, 0};
-    
+    const char *const params[] = { uidstr, gidstr };
+    const int paramFormats[] = { 0, 0 };
+
     sprintf(uidstr, "%d", uid);
     sprintf(gidstr, "%d", gid);
-    
-    res = PQexecParams(conn, SQL_delete_game, 2, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_delete_game, 2, NULL, params, NULL, paramFormats,
+                     0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("db_delete_game error: %s", PQerrorMessage(conn));
+        log_msg("db_delete_game error: %s", PQerrorMessage(conn));
 
     PQclear(res);
 }
 
 
-struct gamefile_info *db_list_games(int completed, int uid, int limit, int *count)
+struct gamefile_info *
+db_list_games(int completed, int uid, int limit, int *count)
 {
     PGresult *res;
     int i, gidcol, fncol, ucol;
     struct gamefile_info *files;
     char uidstr[16], complstr[16], limitstr[16];
-    const char * const params[] = {uidstr, complstr, limitstr};
-    const int paramFormats[] = {0, 0, 0};
-    
+    const char *const params[] = { uidstr, complstr, limitstr };
+    const int paramFormats[] = { 0, 0, 0 };
+
     if (limit <= 0 || limit > 100)
-	limit = 100;
-    
+        limit = 100;
+
     sprintf(uidstr, "%d", uid);
-    sprintf(complstr, "%d", !!completed);
+    sprintf(complstr, "%d", ! !completed);
     sprintf(limitstr, "%d", limit);
-    
-    res = PQexecParams(conn, SQL_list_games, 3, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_list_games, 3, NULL, params, NULL, paramFormats,
+                     0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-	log_msg("list_games error: %s", PQerrorMessage(conn));
-	PQclear(res);
-	*count = 0;
-	return NULL;
+        log_msg("list_games error: %s", PQerrorMessage(conn));
+        PQclear(res);
+        *count = 0;
+        return NULL;
     }
-    
+
     *count = PQntuples(res);
     gidcol = PQfnumber(res, "gid");
     fncol = PQfnumber(res, "filename");
     ucol = PQfnumber(res, "name");
-    
-    files = malloc(sizeof(struct gamefile_info) * (*count));
+
+    files = malloc(sizeof (struct gamefile_info) * (*count));
     for (i = 0; i < *count; i++) {
-	files[i].gid = atoi(PQgetvalue(res, i, gidcol));
-	files[i].filename = strdup(PQgetvalue(res, i, fncol));
-	files[i].username = strdup(PQgetvalue(res, i, ucol));
+        files[i].gid = atoi(PQgetvalue(res, i, gidcol));
+        files[i].filename = strdup(PQgetvalue(res, i, fncol));
+        files[i].username = strdup(PQgetvalue(res, i, ucol));
     }
-    
+
     PQclear(res);
     return files;
 }
 
 
-void db_set_option(int uid, const char *optname, int type, const char *optval)
+void
+db_set_option(int uid, const char *optname, int type, const char *optval)
 {
     PGresult *res;
     char uidstr[16], typestr[16];
-    const char * const params[] = {optval, uidstr, optname, typestr};
-    const int paramFormats[] = {0, 0, 0, 0};
+    const char *const params[] = { optval, uidstr, optname, typestr };
+    const int paramFormats[] = { 0, 0, 0, 0 };
     const char *numrows;
-    
+
     sprintf(uidstr, "%d", uid);
     sprintf(typestr, "%d", type);
-    
+
     /* try to update first */
-    res = PQexecParams(conn, SQL_update_option, 3, NULL, params, NULL, paramFormats, 0);
+    res =
+        PQexecParams(conn, SQL_update_option, 3, NULL, params, NULL,
+                     paramFormats, 0);
     numrows = PQcmdTuples(res);
     if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
-	PQclear(res);
-	return;
+        PQclear(res);
+        return;
     }
     PQclear(res);
-    
+
     /* update failed, try to insert */
-    res = PQexecParams(conn, SQL_insert_option, 4, NULL, params, NULL, paramFormats, 0);
+    res =
+        PQexecParams(conn, SQL_insert_option, 4, NULL, params, NULL,
+                     paramFormats, 0);
     numrows = PQcmdTuples(res);
     if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
-	PQclear(res);
-	return;
+        PQclear(res);
+        return;
     }
     PQclear(res);
-    
+
     /* insert failed too */
     log_msg("Failed to store an option. '%s = %s': %s", optname, optval,
-	    PQerrorMessage(conn));
+            PQerrorMessage(conn));
 }
 
 
-void db_restore_options(int uid)
+void
+db_restore_options(int uid)
 {
     PGresult *res;
     char uidstr[16];
-    const char * const params[] = {uidstr};
+    const char *const params[] = { uidstr };
     const char *optname;
-    const int paramFormats[] = {0};
+    const int paramFormats[] = { 0 };
     int i, count, ncol, vcol;
     union nh_optvalue value;
 
     sprintf(uidstr, "%d", uid);
-    
-    res = PQexecParams(conn, SQL_get_options, 1, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_get_options, 1, NULL, params, NULL, paramFormats,
+                     0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-	log_msg("get_options error: %s", PQerrorMessage(conn));
-	PQclear(res);
-	return;
+        log_msg("get_options error: %s", PQerrorMessage(conn));
+        PQclear(res);
+        return;
     }
-    
+
     count = PQntuples(res);
     ncol = PQfnumber(res, "optname");
     vcol = PQfnumber(res, "optvalue");
     for (i = 0; i < count; i++) {
-	optname = PQgetvalue(res, i, ncol);
-	value.s = PQgetvalue(res, i, vcol);
-	nh_set_option(optname, value, 1);
+        optname = PQgetvalue(res, i, ncol);
+        value.s = PQgetvalue(res, i, vcol);
+        nh_set_option(optname, value, 1);
     }
     PQclear(res);
 }
 
 
-void db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,
-			 int end_how, const char *death, const char *entrytxt)
+void
+db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,
+                    int end_how, const char *death, const char *entrytxt)
 {
     PGresult *res;
-    char gidstr[16], pointstr[16], hpstr[16], maxhpstr[16], dcountstr[16], endstr[16];
-    const char * const params[] = {gidstr, pointstr, hpstr, maxhpstr,
-                                   dcountstr, endstr, death, entrytxt};
-    const int paramFormats[] = {0, 0, 0, 0, 0, 0, 0, 0};
-    
+    char gidstr[16], pointstr[16], hpstr[16], maxhpstr[16], dcountstr[16],
+        endstr[16];
+    const char *const params[] = { gidstr, pointstr, hpstr, maxhpstr,
+        dcountstr, endstr, death, entrytxt
+    };
+    const int paramFormats[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
     sprintf(gidstr, "%d", gid);
     sprintf(pointstr, "%d", points);
     sprintf(hpstr, "%d", hp);
     sprintf(maxhpstr, "%d", maxhp);
     sprintf(dcountstr, "%d", deaths);
     sprintf(endstr, "%d", end_how);
-    
-    res = PQexecParams(conn, SQL_add_topten_entry, 8, NULL, params, NULL, paramFormats, 0);
+
+    res =
+        PQexecParams(conn, SQL_add_topten_entry, 8, NULL, params, NULL,
+                     paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("add_topten_entry error: %s", PQerrorMessage(conn));
+        log_msg("add_topten_entry error: %s", PQerrorMessage(conn));
     PQclear(res);
-    
-    /* note: the params and paramFormats arrays are re-used, but only the 1. entry matters */
-    res = PQexecParams(conn, SQL_set_game_done, 1, NULL, params, NULL, paramFormats, 0);
+
+    /* note: the params and paramFormats arrays are re-used, but only the 1.
+       entry matters */
+    res =
+        PQexecParams(conn, SQL_set_game_done, 1, NULL, params, NULL,
+                     paramFormats, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	log_msg("set_game_done error: %s", PQerrorMessage(conn));
+        log_msg("set_game_done error: %s", PQerrorMessage(conn));
     PQclear(res);
     return;
 }

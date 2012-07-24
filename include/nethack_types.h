@@ -1,5 +1,6 @@
+/* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 #ifndef NETHACK_TYPES_H
-#define NETHACK_TYPES_H
+# define NETHACK_TYPES_H
 
 /*
  * System autodetection: greatly simplified, as we only care about
@@ -7,37 +8,38 @@
  * aimake sets UNIX/WIN32; CMake just sets UNIX, and only
  * sometimes :)
  */
-#ifndef UNIX
-# define UNIX
-# ifdef WIN32
-#  undef UNIX
-#  define STRNCMPI
-#  define STRCMPI
+# ifndef UNIX
+#  define UNIX
+#  ifdef WIN32
+#   undef UNIX
+#   define STRNCMPI
+#   define STRCMPI
+#  endif
 # endif
-#endif
 
-#ifndef TRUE	/* defined in some systems' native include files */
-#define FALSE	((nh_bool)0)
-#define TRUE	((nh_bool)!0)
-#endif
+# ifndef TRUE   /* defined in some systems' native include files */
+#  define FALSE	((nh_bool)0)
+#  define TRUE	((nh_bool)!0)
+# endif
 
 /* size of terminal screen is (at least) (ROWNO+3) by COLNO */
-#define COLNO		80
-#define ROWNO		21
+# define COLNO		80
+# define ROWNO		21
 
-#define BUFSZ		256	/* for getlin buffers */
-#define QBUFSZ		128	/* for building question text */
-#define PL_NSIZ		32	/* name of player, ghost, shopkeeper */
-#define PLRBUFSZ	16	/* player race/role names */
+# define BUFSZ		256     /* for getlin buffers */
+# define QBUFSZ		128     /* for building question text */
+# define PL_NSIZ		32
+                                /* name of player, ghost, shopkeeper */
+# define PLRBUFSZ	16      /* player race/role names */
 
-#define FCMASK		0660	/* file creation mask */
+# define FCMASK		0660    /* file creation mask */
 
-#define ROLE_NONE	(-1)
-#define ROLE_RANDOM	(-2)
+# define ROLE_NONE	(-1)
+# define ROLE_RANDOM	(-2)
 
-#define A_CHAOTIC	(-1)
-#define A_NEUTRAL	 0
-#define A_LAWFUL	 1
+# define A_CHAOTIC	(-1)
+# define A_NEUTRAL	 0
+# define A_LAWFUL	 1
 
 /*
  * The color scheme used is tailored for an IBM PC.  It consists of the
@@ -45,37 +47,38 @@
  * exceptions, these are listed below.	Bright black doesn't mean very
  * much, so it is used as the "default" foreground color of the screen.
  */
-#define CLR_BLACK		0
-#define CLR_RED			1
-#define CLR_GREEN		2
-#define CLR_BROWN		3 /* on IBM, low-intensity yellow is brown */
-#define CLR_BLUE		4
-#define CLR_MAGENTA		5
-#define CLR_CYAN		6
-#define CLR_GRAY		7 /* low-intensity white */
-#define NO_COLOR		8
-#define CLR_ORANGE		9
-#define CLR_BRIGHT_GREEN	10
-#define CLR_YELLOW		11
-#define CLR_BRIGHT_BLUE		12
-#define CLR_BRIGHT_MAGENTA	13
-#define CLR_BRIGHT_CYAN		14
-#define CLR_WHITE		15
-#define CLR_MAX			16
+# define CLR_BLACK		0
+# define CLR_RED			1
+# define CLR_GREEN		2
+# define CLR_BROWN		3       /* on IBM, low-intensity yellow is
+                                           brown */
+# define CLR_BLUE		4
+# define CLR_MAGENTA		5
+# define CLR_CYAN		6
+# define CLR_GRAY		7       /* low-intensity white */
+# define NO_COLOR		8
+# define CLR_ORANGE		9
+# define CLR_BRIGHT_GREEN	10
+# define CLR_YELLOW		11
+# define CLR_BRIGHT_BLUE		12
+# define CLR_BRIGHT_MAGENTA	13
+# define CLR_BRIGHT_CYAN		14
+# define CLR_WHITE		15
+# define CLR_MAX			16
 
 /*
  * Additional effects.
  */
-#define HI_ULINE        0x20
-#define HI_HILITE       0x40
+# define HI_ULINE        0x20
+# define HI_HILITE       0x40
 
 /* flags for displayed monsters */
-#define MON_NORMAL   0
-#define MON_TAME     (1 << 0)
-#define MON_RIDDEN   (1 << 1)
-#define MON_DETECTED (1 << 2)
-#define MON_WARNING  (1 << 3) /* this "monster" is actually a warning */
-#define MON_PEACEFUL (1 << 4)
+# define MON_NORMAL   0
+# define MON_TAME     (1 << 0)
+# define MON_RIDDEN   (1 << 1)
+# define MON_DETECTED (1 << 2)
+# define MON_WARNING  (1 << 3)  /* this "monster" is actually a warning */
+# define MON_PEACEFUL (1 << 4)
 
 /* 
  * level display modes
@@ -84,38 +87,41 @@
  * in some nonstandard way (eg the rogue level in tty nethack, or alternate
  * tiles for mines/hell in tiles versions)
  */
-#define LDM_DEFAULT	0
-#define LDM_HELL	1
-#define LDM_QUEST	2
-#define LDM_MINES	3
-#define LDM_SOKOBAN	4
-#define LDM_ROGUE	5
+# define LDM_DEFAULT	0
+# define LDM_HELL	1
+# define LDM_QUEST	2
+# define LDM_MINES	3
+# define LDM_SOKOBAN	4
+# define LDM_ROGUE	5
 
 /* command param type specification */
-#define CMD_ARG_NONE (1 << 1)  /* param can be empty */
-#define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
-#define CMD_ARG_POS  (1 << 3)  /* param can be a position */
-#define CMD_ARG_OBJ  (1 << 4)  /* param can be an object (==inventory letter) */
-#define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS | CMD_ARG_OBJ)
+# define CMD_ARG_NONE (1 << 1)  /* param can be empty */
+# define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
+# define CMD_ARG_POS  (1 << 3)  /* param can be a position */
+# define CMD_ARG_OBJ  (1 << 4)  /* param can be an object (==inventory letter) */
+# define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS | CMD_ARG_OBJ)
 
 /* command usage hints */
-#define CMD_EXT        (1 << 10) /* an 'extended' command */
-#define CMD_MOVE       (1 << 11) /* this is a move command */
-#define CMD_HELP       (1 << 12) /* this command should be listed on the help menu */
-#define CMD_NOTIME     (1 << 13) /* command does not use any time or alter the game
-                                    state in any way. Marked commands will not be logged */
-#define CMD_DEBUG      (1 << 14) /* a wizmode command */
+# define CMD_EXT        (1 << 10)       /* an 'extended' command */
+# define CMD_MOVE       (1 << 11)       /* this is a move command */
+# define CMD_HELP       (1 << 12)       /* this command should be listed on the 
+                                           help menu */
+# define CMD_NOTIME     (1 << 13)       /* command does not use any time or
+                                           alter the game state in any way.
+                                           Marked commands will not be logged */
+# define CMD_DEBUG      (1 << 14)       /* a wizmode command */
 
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
-#define CMD_UI         (1U << 31) 
+# define CMD_UI         (1U << 31)
 
-#define NH_ARG_NONE	(1<<0)
-#define NH_ARG_DIR	(1<<1)
+# define NH_ARG_NONE	(1<<0)
+# define NH_ARG_DIR	(1<<1)
 
-#define AUTOPICKUP_MAX_RULES 1000 /* this is intended as a rough sanity check to
-                                   * detect pointers to autopickup rule structs
-                                   * that instead point at random memory */
-#define OCLASS_ANY 'a' /* for autopickup */
+# define AUTOPICKUP_MAX_RULES 1000      /* this is intended as a rough sanity
+                                           check to detect pointers to
+                                           autopickup rule structs that instead 
+                                           point at random memory */
+# define OCLASS_ANY 'a' /* for autopickup */
 
 enum nh_direction {
     DIR_NONE = -1,
@@ -134,9 +140,9 @@ enum nh_direction {
 
 /* select_menu() "how" argument types */
 enum nh_pick_type {
-    PICK_NONE,	/* user picks nothing (display only) */
-    PICK_ONE,	/* only pick one */
-    PICK_ANY,	/* can pick any amount */
+    PICK_NONE,  /* user picks nothing (display only) */
+    PICK_ONE,   /* only pick one */
+    PICK_ANY,   /* can pick any amount */
 };
 
 /* Always use full pathnames for file names,
@@ -170,16 +176,16 @@ enum nh_opttype {
     OPTTYPE_INT,
     OPTTYPE_ENUM,
     OPTTYPE_STRING,
-    OPTTYPE_AUTOPICKUP_RULES /* so this is a special case... I considered creating
-                                a general purpose mechanism, but I came to the
-                                conclusion that YAGNI applies */
+    OPTTYPE_AUTOPICKUP_RULES    /* so this is a special case... I considered
+                                   creating a general purpose mechanism, but I
+                                   came to the conclusion that YAGNI applies */
 };
 
 enum nh_option_list {
     CURRENT_BIRTH_OPTIONS,
     ACTIVE_BIRTH_OPTIONS,
     GAME_OPTIONS,
-    
+
     OPTION_LIST_COUNT
 };
 
@@ -211,21 +217,22 @@ enum nh_input_status {
     OCCUPATION_IN_PROGRESS,
     POST_ACTION_DELAY,
     ERR_NO_INPUT_ALLOWED,
-    ERR_COMMAND_FORBIDDEN, /* tried to alter the game state while viewing a replay */
-    
+    ERR_COMMAND_FORBIDDEN,      /* tried to alter the game state while viewing
+                                   a replay */
+
     /* for a status >= GAME_OVER exit the command loop */
-    GAME_OVER, /* i.e. player died */
+    GAME_OVER,  /* i.e. player died */
     GAME_SAVED,
-    GAME_PANICKED, /* something went wrong in libnethack and panic() was called */
-    ERR_FORCED_EXIT, /* exit from the command loop was forced by a call to nh_exit_game */
-    ERR_GAME_NOT_RUNNING /* possibilities: the init sequence was incorrect and
-                                           the game is not running YET
-                                        or some api call other than nh_do_move    
-                                           caused a panic, which killed the game
-                                        or an attempt was made to call nh_do_move
-                                           after some other final status (>= GAME_OVER)
-                                           was returned
-                          */
+    GAME_PANICKED,      /* something went wrong in libnethack and panic() was
+                           called */
+    ERR_FORCED_EXIT,    /* exit from the command loop was forced by a call to
+                           nh_exit_game */
+    ERR_GAME_NOT_RUNNING        /* possibilities: the init sequence was
+                                   incorrect and the game is not running YET or 
+                                   some api call other than nh_do_move caused a 
+                                   panic, which killed the game or an attempt
+                                   was made to call nh_do_move after some other 
+                                   final status (>= GAME_OVER) was returned */
 };
 
 enum nh_effect_types {
@@ -246,20 +253,21 @@ enum nh_exit_types {
 enum nh_restore_status {
     GAME_RESTORED,
     ERR_BAD_ARGS,
-    ERR_BAD_FILE,	/* file isn't a saved game */
-    ERR_GAME_OVER,	/* this is the log of a completed game, play cannot be resumed */
-    ERR_IN_PROGRESS,	/* this game is active in a different process */
-    ERR_RESTORE_FAILED,	/* restoring the saved game state did not succeed
-                         * (try replaying the log instead) */
-    ERR_REPLAY_FAILED	/* replaying the action log did not succeed */
+    ERR_BAD_FILE,       /* file isn't a saved game */
+    ERR_GAME_OVER,      /* this is the log of a completed game, play cannot be
+                           resumed */
+    ERR_IN_PROGRESS,    /* this game is active in a different process */
+    ERR_RESTORE_FAILED, /* restoring the saved game state did not succeed (try
+                           replaying the log instead) */
+    ERR_REPLAY_FAILED   /* replaying the action log did not succeed */
 };
 
 enum nh_log_status {
-    LS_CRASHED = -2,	/* the game crashed (or was "kill -9"ed) */
-    LS_INVALID = -1,	/* not a nethack log/savegame */
-    LS_SAVED,		/* an ordinary save */
-    LS_DONE, 		/* quit, died, ascended, etc */
-    LS_IN_PROGRESS	/* this game is active in a different process */
+    LS_CRASHED = -2,    /* the game crashed (or was "kill -9"ed) */
+    LS_INVALID = -1,    /* not a nethack log/savegame */
+    LS_SAVED,   /* an ordinary save */
+    LS_DONE,    /* quit, died, ascended, etc */
+    LS_IN_PROGRESS      /* this game is active in a different process */
 };
 
 enum autopickup_action {
@@ -274,18 +282,18 @@ enum replay_control {
 };
 
 enum placement_hint {
-  PLHINT_ANYWHERE,
-  PLHINT_LEFT,
-  PLHINT_RIGHT,
-  PLHINT_URGENT,
-  PLHINT_INFO,
-  PLHINT_ONELINER,
-  PLHINT_CONTAINER,
-  PLHINT_INVENTORY
+    PLHINT_ANYWHERE,
+    PLHINT_LEFT,
+    PLHINT_RIGHT,
+    PLHINT_URGENT,
+    PLHINT_INFO,
+    PLHINT_ONELINER,
+    PLHINT_CONTAINER,
+    PLHINT_INVENTORY
 };
 
 /* the name "boolean" is too common to use here */
-typedef signed char	nh_bool;		/* 0 or 1 */
+typedef signed char nh_bool;    /* 0 or 1 */
 
 
 struct nh_listitem {
@@ -327,11 +335,11 @@ struct nh_autopickup_rule {
 
 struct nh_autopickup_rules {
     struct nh_autopickup_rule *rules;
-    int num_rules; /* < AUTOPICKUP_MAX_RULES */
+    int num_rules;      /* < AUTOPICKUP_MAX_RULES */
 };
 
 union nh_optvalue {
-    char *s; /* largest element first for static initialisation */
+    char *s;    /* largest element first for static initialisation */
     nh_bool b;
     int i;
     int e;
@@ -344,12 +352,13 @@ struct nh_option_desc {
     enum nh_opttype type;
     union nh_optvalue value;
     union {
-	/* only the first element of a union can be initialized at compile
-	 * time (without C99), so boolean args go first, there are more of those ...*/
-	struct nh_int_option i;
-	struct nh_enum_option e;
-	struct nh_string_option s;
-	struct nh_autopick_option a;
+        /* only the first element of a union can be initialized at compile time 
+           (without C99), so boolean args go first, there are more of those ... 
+         */
+        struct nh_int_option i;
+        struct nh_enum_option e;
+        struct nh_string_option s;
+        struct nh_autopick_option a;
     };
 };
 
@@ -369,7 +378,7 @@ struct nh_objitem {
     int count;
     int otype;
     int oclass;
-    int weight; /* w < 0  == weight unknown */
+    int weight; /* w < 0 == weight unknown */
     enum nh_bucstatus buc;
     char accel;
     char group_accel;
@@ -381,7 +390,7 @@ struct nh_objresult {
     int count;
 };
 
-#define ITEMLEN 12
+# define ITEMLEN 12
 struct nh_player_info {
     char plname[PL_NSIZ];
     int x, y, z;
@@ -407,19 +416,16 @@ struct nh_game_info {
     char plrace[PLRBUFSZ];
     char plgend[PLRBUFSZ];
     char plalign[PLRBUFSZ];
-    /* the following fields are only valid if the status is LS_SAVED
-     * retrieving the values for LS_IN_PROGRESS would require reconstructing
-     * the full game. You can force that by doing:
-     *   if (nh_restore_game(fd, NULL, TRUE) != GAME_RESTORED)
-     *       handle_error(...)
-     *   nh_exit(EXIT_FORCE_SAVE);
-     * Now a call to nh_get_savegame_status will return LS_SAVED.
-     */
+    /* the following fields are only valid if the status is LS_SAVED retrieving 
+       the values for LS_IN_PROGRESS would require reconstructing the full
+       game. You can force that by doing: if (nh_restore_game(fd, NULL, TRUE)
+       != GAME_RESTORED) handle_error(...) nh_exit(EXIT_FORCE_SAVE); Now a call 
+       to nh_get_savegame_status will return LS_SAVED. */
     char level_desc[COLNO];
     int moves, depth;
     nh_bool has_amulet;
     /* most of nh_player_info is possible, but what makes sense? */
-    
+
     /* if the status is LS_DONE */
     char death[BUFSZ];
 };
@@ -433,14 +439,14 @@ struct nh_roles_info {
     const char *const *racenames;
     const char *const *gendnames;
     const char *const *alignnames;
-    
-    /* race/role/gend/align compatibility matrix
-     * size = num_role * num_races * num_genders * num_aligns */
+
+    /* race/role/gend/align compatibility matrix size = num_role * num_races *
+       num_genders * num_aligns */
     const nh_bool *matrix;
 };
 
 /* generate an index in the compat matrix */
-#define nh_cm_idx(_ri, _rolenum, _racenum, _gendnum, _alignnum) \
+# define nh_cm_idx(_ri, _rolenum, _racenum, _gendnum, _alignnum) \
     ((((_rolenum) * (_ri).num_races + (_racenum)) * \
     (_ri).num_genders + (_gendnum)) * (_ri).num_aligns + (_alignnum))
 
@@ -466,19 +472,19 @@ struct nh_cmdarg_pos {
 struct nh_cmd_arg {
     unsigned argtype;
     union {
-	enum nh_direction d;
-	struct nh_cmdarg_pos pos;
-	char invlet;
+        enum nh_direction d;
+        struct nh_cmdarg_pos pos;
+        char invlet;
     };
 };
 
 /* various extra information that the character knows, and the 
    windowport might want to display */
-#define NH_BRANDING_STEPPED   0x0001
-#define NH_BRANDING_LOCKED    0x0002
-#define NH_BRANDING_UNLOCKED  0x0004
-#define NH_BRANDING_TRAPPED   0x0008 /* for door traps and the like */
-#define NH_BRANDING_UNTRAPPED 0x0010 /* probably not worth drawing */
+# define NH_BRANDING_STEPPED   0x0001
+# define NH_BRANDING_LOCKED    0x0002
+# define NH_BRANDING_UNLOCKED  0x0004
+# define NH_BRANDING_TRAPPED   0x0008   /* for door traps and the like */
+# define NH_BRANDING_UNTRAPPED 0x0010   /* probably not worth drawing */
 /* monster attitude could go here, but is in monflags instead as
    that's a more appropriate place */
 
@@ -493,11 +499,11 @@ struct nh_dbuf_entry {
     short monflags;
     short branding;
     nh_bool invis;
-    nh_bool visible; /* can the hero see this location? */
+    nh_bool visible;    /* can the hero see this location? */
 };
 
-#define NH_EFFECT_TYPE(e) ((enum nh_effect_types)((e) >> 16))
-#define NH_EFFECT_ID(e) (((e) - 1) & 0xffff)
+# define NH_EFFECT_TYPE(e) ((enum nh_effect_types)((e) >> 16))
+# define NH_EFFECT_ID(e) (((e) - 1) & 0xffff)
 
 
 struct nh_symdef {
@@ -518,18 +524,19 @@ struct nh_drawing_info {
     struct nh_symdef *objects;
     /* invisible monster symbol: show this if nh_dbuf_entry.invis is true */
     struct nh_symdef *invis;
-    /* monster layer symbols: nh_dbuf_entry.mon
-     * symbols with id <= num_monsters are actual monsters, followed by warnings */
+    /* monster layer symbols: nh_dbuf_entry.mon symbols with id <= num_monsters 
+       are actual monsters, followed by warnings */
     struct nh_symdef *monsters;
     struct nh_symdef *warnings;
-    /* effect layer symbols: nh_dbuf_entry.effect
-     * NH_EFFECT_TYPE */
+    /* effect layer symbols: nh_dbuf_entry.effect NH_EFFECT_TYPE */
     struct nh_symdef *explsyms;
     struct nh_symdef *expltypes;
-    struct nh_symdef *zapsyms; /* default zap symbols; no color info */
+    struct nh_symdef *zapsyms;  /* default zap symbols; no color info */
     struct nh_symdef *zaptypes; /* zap beam types + colors. no symbols */
-    struct nh_symdef *effects; /* shield, boomerang, digbeam, flashbeam, gascloud */
-    struct nh_symdef *swallowsyms; /* no color info: use the color of the swallower */
+    struct nh_symdef *effects;  /* shield, boomerang, digbeam, flashbeam,
+                                   gascloud */
+    struct nh_symdef *swallowsyms;      /* no color info: use the color of the
+                                           swallower */
     int num_bgelements;
     int num_traps;
     int num_objects;
@@ -538,17 +545,18 @@ struct nh_drawing_info {
     int num_expltypes;
     int num_zaptypes;
     int num_effects;
-    
+
     /* bg contains boring elements (floor, walls, stone) and interesting ones
-     * (dungeon features like stairs, altars, etc). In some situations it is
-     * useful to know which is which: all elements with ids < bg_feature_offset
-     * are boring. */
+       (dungeon features like stairs, altars, etc). In some situations it is
+       useful to know which is which: all elements with ids < bg_feature_offset
+       are boring. */
     int bg_feature_offset;
 };
 
-#define NUMEXPCHARS 9 /* explosions fill a 3x3 grid */
-#define NUMZAPCHARS 4 /* beam directions: vert., horiz., left diag., right diag */
-#define NUMSWALLOWCHARS 8 /* like explosions, but without the center */
+# define NUMEXPCHARS 9  /* explosions fill a 3x3 grid */
+# define NUMZAPCHARS 4  /* beam directions: vert., horiz., left diag., right
+                           diag */
+# define NUMSWALLOWCHARS 8      /* like explosions, but without the center */
 
 
 /* 
@@ -561,8 +569,9 @@ struct nh_desc_buf {
     char objdesc[BUFSZ];
     char mondesc[BUFSZ];
     char invisdesc[BUFSZ];
-    char effectdesc[BUFSZ]; /* can only describe the swallow effect */
-    int objcount; /* number of (visible) objects or -1 if the location is not visible */
+    char effectdesc[BUFSZ];     /* can only describe the swallow effect */
+    int objcount;       /* number of (visible) objects or -1 if the location is 
+                           not visible */
 };
 
 
@@ -576,7 +585,8 @@ struct nh_topten_entry {
     int hp, maxhp;
     int deaths;
     int ver_major, ver_minor, patchlevel;
-    int deathdate, birthdate; /* decimal representation, ex: 20101231 for 31 Dec 2010 */
+    int deathdate, birthdate;   /* decimal representation, ex: 20101231 for 31
+                                   Dec 2010 */
     int moves, end_how;
     char plrole[PLRBUFSZ];
     char plrace[PLRBUFSZ];
@@ -589,25 +599,31 @@ struct nh_topten_entry {
 };
 
 struct nh_window_procs {
-    void (*win_pause)(enum nh_pause_reason reason);
-    void (*win_display_buffer)(const char *buf, nh_bool trymove);
-    void (*win_update_status)(struct nh_player_info *pi);
-    void (*win_print_message)(int turn, const char *msg);
-    int (*win_display_menu)(struct nh_menuitem*, int, const char*, int, int, int*);
-    int (*win_display_objects)(struct nh_objitem*, int, const char*, int, int, struct nh_objresult*);
-    nh_bool (*win_list_items)(struct nh_objitem *items, int icount, nh_bool invent);
-    void (*win_update_screen)(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy);
-    void (*win_raw_print)(const char *str);
-    char (*win_query_key)(const char *query, int *count);
-    int (*win_getpos)(int *, int *, nh_bool, const char*);
-    enum nh_direction (*win_getdir)(const char *, nh_bool);
-    char (*win_yn_function)(const char *query, const char *rset, char defchoice);
-    void (*win_getlin)(const char *,char *);
-    void (*win_delay)(void);
-    void (*win_level_changed)(int displaymode);
-    void (*win_outrip)(struct nh_menuitem *items,int icount, nh_bool tombstone,
-		       const char *name, int gold, const char *killbuf, int end_how, int year);
-    void (*win_print_message_nonblocking)(int turn, const char *msg);
+    void (*win_pause) (enum nh_pause_reason reason);
+    void (*win_display_buffer) (const char *buf, nh_bool trymove);
+    void (*win_update_status) (struct nh_player_info * pi);
+    void (*win_print_message) (int turn, const char *msg);
+    int (*win_display_menu) (struct nh_menuitem *, int, const char *, int, int,
+                             int *);
+    int (*win_display_objects) (struct nh_objitem *, int, const char *, int,
+                                int, struct nh_objresult *);
+        nh_bool(*win_list_items) (struct nh_objitem * items, int icount,
+                                  nh_bool invent);
+    void (*win_update_screen) (struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
+                               int uy);
+    void (*win_raw_print) (const char *str);
+    char (*win_query_key) (const char *query, int *count);
+    int (*win_getpos) (int *, int *, nh_bool, const char *);
+    enum nh_direction (*win_getdir) (const char *, nh_bool);
+    char (*win_yn_function) (const char *query, const char *rset,
+                             char defchoice);
+    void (*win_getlin) (const char *, char *);
+    void (*win_delay) (void);
+    void (*win_level_changed) (int displaymode);
+    void (*win_outrip) (struct nh_menuitem * items, int icount,
+                        nh_bool tombstone, const char *name, int gold,
+                        const char *killbuf, int end_how, int year);
+    void (*win_print_message_nonblocking) (int turn, const char *msg);
 };
 
 #endif

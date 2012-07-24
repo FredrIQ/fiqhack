@@ -1,3 +1,4 @@
+/* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,37 +25,40 @@ struct xmalloc_block {
 
 struct xmalloc_block *xm_blocklist = NULL;
 
-void *xmalloc(int size)
+void *
+xmalloc(int size)
 {
     void *mem;
     struct xmalloc_block *b;
-    
+
     mem = malloc(size);
     if (!mem)
-	return NULL;
-    
-    b = malloc(sizeof(struct xmalloc_block));
+        return NULL;
+
+    b = malloc(sizeof (struct xmalloc_block));
     if (!b) {
-	free(mem);
-	return NULL;
+        free(mem);
+        return NULL;
     }
-       
+
     b->mem = mem;
     b->next = xm_blocklist;
     xm_blocklist = b;
-    
+
     return mem;
 }
 
 
-void xmalloc_cleanup(void)
+void
+xmalloc_cleanup(void)
 {
     struct xmalloc_block *b;
+
     while (xm_blocklist) {
-	b = xm_blocklist;
-	xm_blocklist = xm_blocklist->next;
-	
-	free(b->mem);
-	free(b);
+        b = xm_blocklist;
+        xm_blocklist = xm_blocklist->next;
+
+        free(b->mem);
+        free(b);
     }
 }
