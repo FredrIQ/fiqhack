@@ -744,9 +744,10 @@ dodown(void)
         trap = t_at(level, u.ux, u.uy);
         can_fall = trap && (trap->ttyp == TRAPDOOR || trap->ttyp == HOLE);
         if (!trap ||
-            (trap->ttyp != TRAPDOOR && trap->ttyp != HOLE && trap->ttyp != PIT)
+            (trap->ttyp != TRAPDOOR && trap->ttyp != HOLE &&
+             trap->ttyp != PIT && trap->ttyp != SPIKED_PIT)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
-
+            
             if (flags.autodig && !flags.nopick && uwep && is_pick(uwep)) {
                 return use_pick_axe2(uwep, 0, 0, 1);
             } else {
@@ -777,7 +778,7 @@ dodown(void)
     }
 
     if (trap) {
-        if (trap->ttyp == PIT) {
+		if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
                 if (flags.autodig && !flags.nopick && uwep && is_pick(uwep)) {
                     return use_pick_axe2(uwep, 0, 0, 1);
