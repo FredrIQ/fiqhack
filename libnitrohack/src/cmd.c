@@ -790,6 +790,9 @@ enlightenment(int final)
     else
         you_have(&menu, "transgressed");
     if (wizard) {
+		sprintf(buf, " %d", u.uhunger);
+		enl_msg(&menu, "Hunger level ", "is", "was", buf);
+
 		sprintf(buf, " %d / %ld", u.ualign.record, ALIGNLIM);
         enl_msg(&menu, "Your alignment ", "is", "was", buf);
     }
