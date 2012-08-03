@@ -278,7 +278,7 @@ void outoracle(boolean special, boolean delphi)
 			if ((endp = strchr(line, '\n')) != 0) *endp = 0;
 			add_menutext(&menu, xcrypt(line, xbuf));
 		}
-		display_menu(menu.items, menu.icount, NULL, PICK_NONE, NULL);
+		display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
 		free(menu.items);
 		dlb_fclose(oracles);
 	} else {

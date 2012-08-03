@@ -321,7 +321,7 @@ static void select_enum_value(union nh_optvalue *value, struct nh_option_desc *o
 	add_menu_item(items, size, icount, i+1, option->e.choices[i].caption, 0, 0);
     }
     pick_list = malloc(sizeof(int) * icount);
-    n = curses_display_menu(items, icount, option->name, PICK_ONE, pick_list);
+    n = curses_display_menu(items, icount, option->name, PICK_ONE, PLHINT_RIGHT, pick_list);
     free(items);
     
     value->e = option->value.e; /* in case of ESC */
@@ -496,7 +496,7 @@ void print_options(void)
 	add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
 
-    curses_display_menu(items, icount, "Available options:", PICK_NONE, NULL);
+    curses_display_menu(items, icount, "Available options:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(items);
 }
 
@@ -531,7 +531,7 @@ static void autopickup_rules_help(void)
 	{0, MI_TEXT, "You may select any existing rule to edit it, change its position"},
 	{0, MI_TEXT, "in the list, or delete it."},
     };
-    curses_display_menu(items, listlen(items), "Autopickup rules help:", PICK_NONE, NULL);
+    curses_display_menu(items, listlen(items), "Autopickup rules help:", PICK_NONE, PLHINT_LEFT, NULL);
 }
 
 
@@ -545,7 +545,7 @@ static enum nh_bucstatus get_autopickup_buc(enum nh_bucstatus cur)
 	{B_UNKNOWN + 1,	MI_NORMAL, "unknown", 'U'}
     };
     int n, selected[1];
-    n = curses_display_menu(items, 5, "Beatitude match:", PICK_ONE, selected);
+    n = curses_display_menu(items, 5, "Beatitude match:", PICK_ONE, PLHINT_RIGHT, selected);
     if (n <= 0)
 	return cur;
     return selected[0]-1;
@@ -565,7 +565,7 @@ static int get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
 	add_menu_item(items, size, icount, desc->classes[i].id,
 		      desc->classes[i].caption, (char)desc->classes[i].id, 0);
 	
-    n = curses_display_menu(items, icount, "Object class match:", PICK_ONE, selected);
+    n = curses_display_menu(items, icount, "Object class match:", PICK_ONE, PLHINT_RIGHT, selected);
     free(items);
     if (n <= 0)
 	return cur;
@@ -607,7 +607,7 @@ static void edit_ap_rule(struct nh_autopick_option *desc,
 	add_menu_txt(items, size, icount, "", MI_TEXT);
 	add_menu_item(items, size, icount, 6, "delete this rule", 'x', 0);
 	
-	n = curses_display_menu(items, icount, "Edit rule:", PICK_ONE, selected);
+	n = curses_display_menu(items, icount, "Edit rule:", PICK_ONE, PLHINT_RIGHT, selected);
 	if (n <= 0)
 	    break;
 	
@@ -756,7 +756,7 @@ static void show_autopickup_menu(struct nh_option_desc *opt)
 	add_menu_item(items, menusize, icount, -2, "help", '?', 0);
 	
 	/* TODO */
-	n = curses_display_menu(items, icount, "Autopickup rules:", PICK_ONE, selected);
+	n = curses_display_menu(items, icount, "Autopickup rules:", PICK_ONE, PLHINT_RIGHT, selected);
 	if (n <= 0)
 	    break;
 	

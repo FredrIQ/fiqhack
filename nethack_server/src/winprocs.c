@@ -18,9 +18,9 @@ static void srv_level_changed(int displaymode);
 static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
 	const char *name, int gold, const char *killbuf, int end_how, int year);
 static int srv_display_menu(struct nh_menuitem *items, int icount,
-				const char *title, int how, int *results);
+				const char *title, int how, int placement_hint, int *results);
 static int srv_display_objects(struct nh_objitem *items, int icount, const char *title,
-			int how, struct nh_objresult *pick_list);
+			int how, int placement_hint, struct nh_objresult *pick_list);
 static nh_bool srv_list_items(struct nh_objitem *items, int icount, nh_bool invent);
 static char srv_query_key(const char *query, int *count);
 static int srv_getpos(int *x, int *y, nh_bool force, const char *goal);
@@ -428,7 +428,7 @@ static void srv_outrip(struct nh_menuitem *items,int icount, nh_bool tombstone,
  */
 
 static int srv_display_menu(struct nh_menuitem *items, int icount,
-				const char *title, int how, int *results)
+				const char *title, int how, int placement_hint, int *results)
 {
     int i, ret;
     json_t *jobj, *jarr;
@@ -436,8 +436,8 @@ static int srv_display_menu(struct nh_menuitem *items, int icount,
     jarr = json_array();
     for (i = 0; i < icount; i++)
 	json_array_append_new(jarr, json_menuitem(&items[i]));
-    jobj = json_pack("{so,si,si,ss}", "items", jarr, "icount", icount,
-		     "how", how, "title", title ? title : "");
+    jobj = json_pack("{so,si,si,ss,si}", "items", jarr, "icount", icount,
+		     "how", how, "title", title ? title : "", "plhint", placement_hint);
     
     if (how == PICK_NONE) {
 	add_display_data("display_menu", jobj);
@@ -469,7 +469,7 @@ static json_t *json_objitem(struct nh_objitem *oi)
 
 
 static int srv_display_objects(struct nh_objitem *items, int icount, const char *title,
-			int how, struct nh_objresult *pick_list)
+			int how, int placement_hint, struct nh_objresult *pick_list)
 {
     int i, ret;
     json_t *jobj, *jarr, *jobj2;
@@ -477,8 +477,8 @@ static int srv_display_objects(struct nh_objitem *items, int icount, const char 
     jarr = json_array();
     for (i = 0; i < icount; i++)
 	json_array_append_new(jarr, json_objitem(&items[i]));
-    jobj = json_pack("{so,si,si,ss}", "items", jarr, "icount", icount,
-		     "how", how, "title", title ? title : "");
+    jobj = json_pack("{so,si,si,ss,si}", "items", jarr, "icount", icount,
+		     "how", how, "title", title ? title : "", "plhint", placement_hint);
     
     if (how == PICK_NONE) {
 	add_display_data("display_objects", jobj);

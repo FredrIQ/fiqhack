@@ -423,12 +423,24 @@ int curses_display_menu_core(struct nh_menuitem *items, int icount,
 
 
 int curses_display_menu(struct nh_menuitem *items, int icount,
-			       const char *title, int how, int *results)
+			const char *title, int how, int placement_hint,
+			int *results)
 {
     int n;
+    int x1=0, y1=0, x2=-1, y2=-1;
+
+    if(placement_hint==PLHINT_INVENTORY || placement_hint==PLHINT_CONTAINER) {
+      if(ui_flags.draw_sidebar) x1=COLS-getmaxx(sidebar);
+      else x1 = COLS-64;
+    } else if(placement_hint==PLHINT_ONELINER && game_is_running) {
+      x1=0;
+      if(ui_flags.draw_sidebar) x2=getmaxx(sidebar);
+      y1=0;
+      y2=getmaxy(msgwin);
+    }
     
-    n = curses_display_menu_core(items, icount, title, how, results, 0, 0,
-				 -1, -1, NULL);
+    n = curses_display_menu_core(items, icount, title, how, results,
+				 x1, y1, x2, y2, NULL);
     return n;
 }
 
@@ -664,7 +676,8 @@ static int find_objaccel(int accel, struct win_objmenu *mdat)
 
 
 int curses_display_objects(struct nh_objitem *items, int icount,
-		  const char *title, int how, struct nh_objresult *results)
+		  const char *title, int how, int placement_hint,
+		  struct nh_objresult *results)
 {
     struct gamewin *gw;
     struct win_objmenu *mdat;
@@ -672,6 +685,7 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") && how == PICK_NONE;
+    if(inventory_special) placement_hint = PLHINT_INVENTORY;
     
     prevcurs = curs_set(0);
     
@@ -692,6 +706,15 @@ int curses_display_objects(struct nh_objitem *items, int icount,
     
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
+
+    if(placement_hint==PLHINT_INVENTORY || placement_hint==PLHINT_CONTAINER) {
+      if(ui_flags.draw_sidebar) mdat->width = max(mdat->width, 2 + getmaxx(sidebar));
+      starty = 0;
+      startx = COLS - mdat->width;
+    } else if(placement_hint==PLHINT_ONELINER && game_is_running) {
+	starty = 0;
+	startx = 0;
+    }
     
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
@@ -928,7 +951,7 @@ static nh_bool do_item_actions(char invlet)
     for (i = 0; i < ccount; i++)
 	set_menuitem(&items[i], i+1, MI_NORMAL, obj_cmd[i].desc, 0, FALSE);
     
-    i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE, selected);
+    i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE, PLHINT_INVENTORY, selected);
     free(items);
     
     if (i <= 0)

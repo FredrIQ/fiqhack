@@ -426,12 +426,12 @@ static json_t *cmd_outrip(json_t *params, int display_only)
 static json_t *cmd_display_menu(json_t *params, int display_only)
 {
     struct nh_menuitem *items;
-    int icount, i, how, ret, *selected;
+    int icount, i, how, ret, *selected, placement_hint;
     const char *title;
     json_t *jarr;
     
-    if (json_unpack(params, "{so,si,si,ss!}", "items", &jarr, "icount", &icount,
-		     "how", &how, "title", &title) == -1) {
+    if (json_unpack(params, "{so,si,si,ss,si!}", "items", &jarr, "icount", &icount,
+		    "how", &how, "title", &title, "plhint", &placement_hint) == -1) {
 	print_error("Incorrect parameter type in cmd_display_menu");
 	return NULL;
     }
@@ -449,7 +449,7 @@ static json_t *cmd_display_menu(json_t *params, int display_only)
 	json_read_menuitem(json_array_get(jarr, i), &items[i]);
     
     selected = malloc(icount * sizeof(int));
-    ret = cur_wndprocs.win_display_menu(items, icount, title, how, selected);
+    ret = cur_wndprocs.win_display_menu(items, icount, title, how, placement_hint, selected);
     free(items);
     if (display_only) {
 	free(selected);
@@ -485,12 +485,12 @@ static json_t *cmd_display_objects(json_t *params, int display_only)
 {
     struct nh_objitem *items;
     struct nh_objresult *pick_list;
-    int icount, i, how, ret;
+    int icount, i, how, ret, placement_hint;
     const char *title;
     json_t *jarr, *jobj;
     
-    if (json_unpack(params, "{so,si,si,ss!}", "items", &jarr, "icount", &icount,
-		     "how", &how, "title", &title) == -1) {
+    if (json_unpack(params, "{so,si,si,ss,si!}", "items", &jarr, "icount", &icount,
+		     "how", &how, "title", &title, "plhint", &placement_hint) == -1) {
 	print_error("Incorrect parameter type in cmd_display_menu");
 	return NULL;
     }
@@ -508,7 +508,7 @@ static json_t *cmd_display_objects(json_t *params, int display_only)
 	json_read_objitem(json_array_get(jarr, i), &items[i]);
     
     pick_list = malloc(icount * sizeof(struct nh_objresult));
-    ret = cur_wndprocs.win_display_objects(items, icount, title, how, pick_list);
+    ret = cur_wndprocs.win_display_objects(items, icount, title, how, placement_hint, pick_list);
     free(items);
     if (display_only) {
 	free(pick_list);

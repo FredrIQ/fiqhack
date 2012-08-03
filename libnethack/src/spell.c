@@ -1017,7 +1017,7 @@ static boolean dospellmenu(const char *prompt,
 	how = PICK_ONE;
 	if (splaction == SPELLMENU_VIEW && spellid(1) == NO_SPELL)
 	    how = PICK_NONE;	/* only one spell => nothing to swap with */
-	n = display_menu(items, count, prompt, how, selected);
+	n = display_menu(items, count, prompt, how, PLHINT_ANYWHERE, selected);
 	if (n > 0) {
 		*spell_no = selected[0] - 1;
 		/* menu selection for `PICK_ONE' does not

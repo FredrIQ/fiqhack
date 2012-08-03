@@ -103,7 +103,7 @@ void show_topten(char *you, int top, int around, nh_bool own)
 	topten_add_score(&scores[i], &items, &size, &icount, min(COLS, BUFSZ) - 4);
     add_menu_txt(items, size, icount, "", MI_TEXT);
     
-    curses_display_menu(items, icount, "Top scores:", PICK_NONE, NULL);
+    curses_display_menu(items, icount, "Top scores:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(items);
 }
 

@@ -21,7 +21,7 @@ static char msglines[MAX_MSGLINES][COLNO+1];
 static int curline;
 static int start_of_turn_curline;
 static int last_redraw_curline;
-static nh_bool stopprint;
+static nh_bool stopprint, blockafter = TRUE;
 static int prevturn, action, prevaction;
 
 static void newline(void);
@@ -217,6 +217,27 @@ void new_action(void)
     draw_msgwin();
 }
 
+/* Make sure the bottom message line is empty; if this would scroll something
+   off the screen, do a --More-- first if necessary */
+void fresh_message_line(nh_bool canblock)
+{
+    /* If we would scroll a message off the screen that the user
+       hasn't had a chance to look at this redraw, then run more(),
+       else newline(). Because the --more-- takes up a line by itself,
+       we need to offset that by one line. Thus, a message window of
+       height 2 requires us to always show a --more-- even if we're on
+       the first message of the redraw; with height 3, we can safely
+       newline after the first line of messages but must --more--
+       after the second, etc. getmaxy gives the height of the window
+       minus 1, which is why we only subtract 2 not 3. */
+    if (!blockafter || action > prevaction) newline();
+    else if ((curline + MAX_MSGLINES - last_redraw_curline) %
+             MAX_MSGLINES > getmaxy(msgwin) - 2)
+        more();
+    else
+        newline();
+    blockafter = canblock;
+}
 
 static void curses_print_message_core(int turn, const char *msg, nh_bool canblock)
 {
@@ -235,7 +256,7 @@ static void curses_print_message_core(int turn, const char *msg, nh_bool canbloc
     if (!*msg)
 	return; /* empty message. done. */
     
-    if (turn > prevturn || action > prevaction) {
+    if (action > prevaction) {
 	/* re-enable output if it was stopped and start a new line */
 	stopprint = FALSE;
 	newline();
@@ -274,27 +295,7 @@ static void curses_print_message_core(int turn, const char *msg, nh_bool canbloc
         wrap_text(maxlen, msg, &output_count, &output);
 
         for(idx = 0; idx < output_count; idx++) {
-	if (strlen(msglines[curline]) > 0) {
-            if (canblock) {
-                /* If we would scroll a message off the screen that
-                   the user hasn't had a chance to look at this
-                   redraw, then run more(), else newline(). Because
-                   the --more-- takes up a line by itself, we need to
-                   offset that by one line. Thus, a message window of
-                   height 2 requires us to always show a --more-- even
-                   if we're on the first message of the redraw; with
-                   height 3, we can safely newline after the first
-                   line of messages but must --more-- after the
-                   second, etc. getmaxy gives the height of the window
-                   minus 1, which is why we only subtract 2 not 3. */
-                if ((curline + MAX_MSGLINES - last_redraw_curline) %
-                    MAX_MSGLINES > getmaxy(msgwin) - 2)
-                  more();
-                else
-                  newline();
-	    } else
-		newline();
-	}
+            if (strlen(msglines[curline]) > 0) fresh_message_line(canblock);
             if (stopprint) break; /* may get set in more() */
             strcpy(msglines[curline], output[idx]);
 	}
@@ -306,17 +307,16 @@ static void curses_print_message_core(int turn, const char *msg, nh_bool canbloc
 }
 
 
+/* The meaning of nonblocking has changed from AceHack. A nonblocking message
+   is now one we don't block /after/. */
 void curses_print_message(int turn, const char *inmsg)
 {
     curses_print_message_core(turn, inmsg, TRUE);
 }
-
-
 void curses_print_message_nonblocking(int turn, const char *inmsg)
 {
     curses_print_message_core(turn, inmsg, FALSE);
 }
-
 
 
 void pause_messages(void)
@@ -350,7 +350,7 @@ void doprev_message(void)
 	add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
     
-    curses_display_menu(items, icount, "Message history:", PICK_NONE, NULL);
+    curses_display_menu(items, icount, "Message history:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(items);
 }
 

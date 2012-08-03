@@ -1559,7 +1559,7 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 	int idx;
 	
 	n = display_menu(menu.items, menu.icount, "Level teleport to where:",
-			 PICK_ONE, selected);
+			 PICK_ONE, PLHINT_ANYWHERE, selected);
 	free(menu.items);
 	if (n > 0) {
 		idx = selected[0] - 1;
@@ -1600,7 +1600,7 @@ schar print_dungeon(boolean bymenu, schar *rlev, xchar *rdgn)
 	add_menutext(&menu, buf);
     }
     
-    display_menu(menu.items, menu.icount, "Level teleport to where:", PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, "Level teleport to where:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(menu.items);
     return 0;
 }
@@ -1901,7 +1901,7 @@ int dooverview(void)
 	    }
 	}
 	
-	n = display_menu(menu.items, menu.icount, "Dungeon overview:", PICK_ONE, selected);
+	n = display_menu(menu.items, menu.icount, "Dungeon overview:", PICK_ONE, PLHINT_ANYWHERE, selected);
 	free(menu.items);
 	if (n <= 0)
 	    return 0;

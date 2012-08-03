@@ -28,7 +28,7 @@ int dohistory(void)
 	add_menutext(&menu, buf);
     }
     
-    display_menu(menu.items, menu.icount, "History has recorded:", PICK_NONE, NULL);
+    display_menu(menu.items, menu.icount, "History has recorded:", PICK_NONE, PLHINT_ANYWHERE, NULL);
     free(menu.items);
     
     return 0;

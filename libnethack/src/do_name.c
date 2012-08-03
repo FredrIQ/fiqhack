@@ -297,7 +297,7 @@ int do_naming(void)
         }
 
 	n = display_menu(menu.items, menu.icount, "What do you wish to name?",
-			PICK_ONE, selected);
+			PICK_ONE, PLHINT_ANYWHERE, selected);
 	free(menu.items);
 	if (n)
 	    n = selected[0] - 1;
@@ -387,7 +387,7 @@ int do_naming(void)
                 }
                 n = display_menu(menu.items, menu.icount,
                                  "Name items with which appearance?",
-                                 PICK_ONE, selected);
+                                 PICK_ONE, PLHINT_INVENTORY, selected);
                 free(menu.items);
                 if (n == 1) docall_inner(selected[0]);
                 break;

@@ -181,7 +181,7 @@ static void show_replay_help(void)
 	{0, MI_TEXT, ""},
 	{0, MI_TEXT, "Informational game commands like \"inventory\" or \"discoveries\" will also work"}
     };
-    curses_display_menu(items, 6, "Replay help:", PICK_NONE, NULL);
+    curses_display_menu(items, 6, "Replay help:", PICK_NONE, PLHINT_INFO, NULL);
 }
 
 
@@ -331,7 +331,7 @@ void replay(void)
 	    add_menu_item(items, size, icount, -1, "View saved games instead", '!', FALSE);
 	}
 	
-	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, pick);
+	n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE, PLHINT_ANYWHERE, pick);
 	free(items);
 	filename[0] = '\0';
 	if (n > 0 && pick[0] != -1)

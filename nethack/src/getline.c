@@ -80,9 +80,19 @@ static void resize_getline(struct gamewin *gw)
     getmaxyx(gw->win, height, width);
     if (height > LINES) height = LINES;
     if (width > COLS) width = COLS;
-    
-    starty = (LINES - height) / 2;
-    startx = (COLS - width) / 2;
+
+    /* TODO: this does pretty much the same thing as newdialog()
+     *   in terms of planning the window size.  Maybe merge?
+     */
+
+    if(game_is_running) {    
+      startx = 0;
+      //starty = max(0, (getmaxy(msgwin) - height) / 2);
+      starty = 0;
+    } else {
+      starty = (LINES - height) / 2;
+      startx = (COLS - width) / 2;
+    }
     
     mvwin(gw->win, starty, startx);
     wresize(gw->win, height, width);
@@ -334,7 +344,7 @@ static int extcmd_via_menu(const char **namelist, const char **desclist, int lis
 	}
 	pick_list = malloc(sizeof(int) * icount);
 	sprintf(prompt, "Extended Command: %s", cbuf);
-	n = curses_display_menu(items, icount, prompt, PICK_ONE, pick_list);
+	n = curses_display_menu(items, icount, prompt, PICK_ONE, PLHINT_ANYWHERE, pick_list);
 	
 	if (n==1) {
 	    if (matchlevel > (QBUFSZ - 2)) {

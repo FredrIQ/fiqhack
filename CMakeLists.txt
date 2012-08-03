@@ -38,6 +38,8 @@ else ()
     set (LIB_TYPE STATIC)
 endif ()
 
+set (ENABLE_NETCLIENT TRUE CACHE BOOL "Enable network client mode")
+
 # NetHack4 server currently uses several Linux-specific apis.
 # Generalizing the code to the point where it will work on other systems
 # is not impossible, but the work has not been done.
