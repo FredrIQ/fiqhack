@@ -422,7 +422,7 @@ unleash_all(void)
         mtmp->mleashed = 0;
 }
 
-#define MAXLEASHED	2
+#define MAXLEASHED      2
 
 /* ARGSUSED */
 static int
@@ -614,7 +614,7 @@ check_leash(xchar x, xchar y)
 }
 
 
-#define WEAK	3       /* from eat.c */
+#define WEAK    3       /* from eat.c */
 
 static const char look_str[] = "You look %s.";
 
@@ -1547,8 +1547,8 @@ use_unicorn_horn(struct obj *obj)
 /*
  * Entries in the trouble list use a very simple encoding scheme.
  */
-#define prop2trbl(X)	((X) + A_MAX)
-#define attr2trbl(Y)	(Y)
+#define prop2trbl(X)    ((X) + A_MAX)
+#define attr2trbl(Y)    (Y)
 #define prop_trouble(X) trouble_list[trouble_count++] = prop2trbl(X)
 #define attr_trouble(Y) trouble_list[trouble_count++] = attr2trbl(Y)
 
@@ -2658,7 +2658,7 @@ use_grapple(struct obj *obj)
 }
 
 
-#define BY_OBJECT	(NULL)
+#define BY_OBJECT       (NULL)
 
 /* return 1 if the wand is broken, hence some time elapsed */
 int

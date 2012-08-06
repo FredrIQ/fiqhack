@@ -109,21 +109,21 @@ extern EXPORT int nhnet_change_password(const char *password);
 # undef EXPORT
 
 # if defined(NHNET_TRANSPARENT) && !defined(libnethack_client_EXPORTS)
-#  define nh_command		nhnet_command
-#  define nh_exit_game		nhnet_exit_game
-#  define nh_view_replay_start	nhnet_view_replay_start
-#  define nh_view_replay_step	nhnet_view_replay_step
-#  define nh_view_replay_finish	nhnet_view_replay_finish
-#  define nh_get_commands	nhnet_get_commands
-#  define nh_get_object_commands	nhnet_get_object_commands
-#  define nh_get_drawing_info	nhnet_get_drawing_info
-#  define nh_set_option		nhnet_set_option
-#  define nh_get_options		nhnet_get_options
-#  define nh_describe_pos	nhnet_describe_pos
-#  define nh_get_roles		nhnet_get_roles
-#  define nh_build_plselection_prompt	nhnet_build_plselection_prompt
-#  define nh_root_plselection_prompt	nhnet_root_plselection_prompt
-#  define nh_get_topten		nhnet_get_topten
+#  define nh_command                  nhnet_command
+#  define nh_exit_game                nhnet_exit_game
+#  define nh_view_replay_start        nhnet_view_replay_start
+#  define nh_view_replay_step         nhnet_view_replay_step
+#  define nh_view_replay_finish       nhnet_view_replay_finish
+#  define nh_get_commands             nhnet_get_commands
+#  define nh_get_object_commands      nhnet_get_object_commands
+#  define nh_get_drawing_info         nhnet_get_drawing_info
+#  define nh_set_option               nhnet_set_option
+#  define nh_get_options              nhnet_get_options
+#  define nh_describe_pos             nhnet_describe_pos
+#  define nh_get_roles                nhnet_get_roles
+#  define nh_build_plselection_prompt nhnet_build_plselection_prompt
+#  define nh_root_plselection_prompt  nhnet_root_plselection_prompt
+#  define nh_get_topten               nhnet_get_topten
 # endif
 
 #endif

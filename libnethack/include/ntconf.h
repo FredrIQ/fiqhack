@@ -23,16 +23,15 @@
 #  include <sys/types.h>
 #  include <stdlib.h>
 
-#  define PATHLEN		BUFSZ
-                                /* maximum pathlength */
-#  define FILENAME	BUFSZ   /* maximum filename length (conservative) */
+#  define PATHLEN       BUFSZ /* maximum pathlength */
+#  define FILENAME      BUFSZ /* maximum filename length (conservative) */
 
 #  if defined(_MAX_PATH) && defined(_MAX_FNAME)
 #   if (_MAX_PATH < BUFSZ) && (_MAX_FNAME < BUFSZ)
 #    undef PATHLEN
 #    undef FILENAME
-#    define PATHLEN		_MAX_PATH
-#    define FILENAME	_MAX_FNAME
+#    define PATHLEN     _MAX_PATH
+#    define FILENAME    _MAX_FNAME
 #   endif
 #  endif
 

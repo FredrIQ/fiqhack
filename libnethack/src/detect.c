@@ -267,8 +267,8 @@ outgoldmap:
     return 0;
 }
 
-/* returns 1 if nothing was detected		*/
-/* returns 0 if something was detected		*/
+/* returns 1 if nothing was detected            */
+/* returns 0 if something was detected          */
 int
 food_detect(struct obj *sobj, boolean * scr_known)
 {
@@ -383,8 +383,8 @@ food_detect(struct obj *sobj, boolean * scr_known)
 /*
  * Used for scrolls, potions, spells, and crystal balls.  Returns:
  *
- *	1 - nothing was detected
- *	0 - something was detected
+ *      1 - nothing was detected
+ *      0 - something was detected
  */
 int
 object_detect(struct obj *detector,     /* object doing the detecting */
@@ -469,7 +469,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
 
     u.uinwater = 0;
 /*
- *	Map all buried objects first.
+ * Map all buried objects first.
  */
     for (obj = level->buriedobjlist; obj; obj = obj->nobj)
         if (!class || (otmp = o_in(obj, class))) {
@@ -651,10 +651,10 @@ sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
 
 }
 
-/* the detections are pulled out so they can	*/
-/* also be used in the crystal ball routine	*/
-/* returns 1 if nothing was detected		*/
-/* returns 0 if something was detected		*/
+/* the detections are pulled out so they can    */
+/* also be used in the crystal ball routine     */
+/* returns 1 if nothing was detected            */
+/* returns 0 if something was detected          */
 int
 trap_detect(struct obj *sobj)
 /* sobj is null if crystal ball, *scroll if gold detection scroll */

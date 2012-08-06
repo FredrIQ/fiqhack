@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright (C) 1990 by Ken Arromdee			   */
+/* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
 /*
@@ -514,8 +514,8 @@ use_defensive(struct monst *mtmp, struct musable *m)
     /* when using defensive choice to run away, we want monster to avoid
        rushing right straight back; don't override if already scared */
     fleetim = !mtmp->mflee ? (33 - (30 * mtmp->mhp / mtmp->mhpmax)) : 0;
-#define m_flee(m)	if (fleetim && !m->iswiz) \
-			{ monflee(m, fleetim, FALSE, FALSE); }
+#define m_flee(m)       if (fleetim && !m->iswiz) \
+                        { monflee(m, fleetim, FALSE, FALSE); }
     if (oseen)
         examine_object(otmp);
 

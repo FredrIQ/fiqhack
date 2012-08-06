@@ -7,15 +7,15 @@
 #include "artilist.h"
 /*
  * Note:  both artilist[] and artiexist[] have a dummy element #0,
- *	  so loops over them should normally start at #1.  The primary
- *	  exception is the save & restore code, which doesn't care about
- *	  the contents, just the total size.
+ *        so loops over them should normally start at #1.  The primary
+ *        exception is the save & restore code, which doesn't care about
+ *        the contents, just the total size.
  */
 
 extern boolean notonhead;       /* for long worms */
 
 #define get_artifact(o) \
-		(((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
+                (((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
 
 static int spec_applies(const struct artifact *, struct monst *);
 static int arti_invoke(struct obj *);
@@ -750,16 +750,16 @@ disp_artifact_discoveries(struct menulist *menu /* supplied by dodiscover() */
          * stun attack.  As of 3.4.1, those effects can occur but
          * will be slightly less likely than they were in 3.3.x.]
          */
-#define MB_MAX_DIEROLL		8       /* rolls above this aren't magical */
+#define MB_MAX_DIEROLL          8       /* rolls above this aren't magical */
 static const char *const mb_verb[2][4] = {
     {"probe", "stun", "scare", "cancel"},
     {"prod", "amaze", "tickle", "purge"},
 };
 
-#define MB_INDEX_PROBE		0
-#define MB_INDEX_STUN		1
-#define MB_INDEX_SCARE		2
-#define MB_INDEX_CANCEL		3
+#define MB_INDEX_PROBE          0
+#define MB_INDEX_STUN           1
+#define MB_INDEX_SCARE          2
+#define MB_INDEX_CANCEL         3
 
 /* called when someone is being hit by Magicbane */
 static boolean

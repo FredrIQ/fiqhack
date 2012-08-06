@@ -13,8 +13,8 @@ static int select_newcham_form(struct monst *);
 static void kill_eggs(struct obj *);
 
 #define LEVEL_SPECIFIC_NOCORPSE(mdat) \
-	 (Is_rogue_level(&u.uz) || \
-	   (level->flags.graveyard && is_undead(mdat) && rn2(3)))
+         (Is_rogue_level(&u.uz) || \
+           (level->flags.graveyard && is_undead(mdat) && rn2(3)))
 
 
 static struct obj *make_corpse(struct monst *);
@@ -168,15 +168,15 @@ static const short cham_to_pm[] = {
 };
 
 /* for deciding whether corpse or statue will carry along full monster data */
-#define KEEPTRAITS(mon)	((mon)->isshk || (mon)->mtame ||		\
-			 ((mon)->data->geno & G_UNIQ) ||		\
-			 is_reviver((mon)->data) ||			\
-			 /* normally leader the will be unique, */	\
-			 /* but he might have been polymorphed  */	\
-			 (mon)->m_id == quest_status.leader_m_id ||	\
-			 /* special cancellation handling for these */	\
-			 (dmgtype((mon)->data, AD_SEDU) ||		\
-			  dmgtype((mon)->data, AD_SSEX)))
+#define KEEPTRAITS(mon) ((mon)->isshk || (mon)->mtame ||                \
+                         ((mon)->data->geno & G_UNIQ) ||                \
+                         is_reviver((mon)->data) ||                     \
+                         /* normally leader the will be unique, */      \
+                         /* but he might have been polymorphed  */      \
+                         (mon)->m_id == quest_status.leader_m_id ||     \
+                         /* special cancellation handling for these */  \
+                         (dmgtype((mon)->data, AD_SEDU) ||              \
+                          dmgtype((mon)->data, AD_SSEX)))
 
 /* Creates a monster corpse, a "special" corpse, or nothing if it doesn't
  * leave corpses.  Monsters which leave "special" corpses should have
@@ -592,9 +592,9 @@ movemon(void)
 }
 
 
-#define mstoning(obj)	(ofood(obj) && \
-					(touch_petrifies(&mons[(obj)->corpsenm]) || \
-					(obj)->corpsenm == PM_MEDUSA))
+#define mstoning(obj) (ofood(obj) && \
+                       (touch_petrifies(&mons[(obj)->corpsenm]) || \
+                        (obj)->corpsenm == PM_MEDUSA))
 
 /*
  * Maybe eat a metallic object (not just gold).
@@ -826,13 +826,13 @@ mpickstuff(struct monst *mtmp, const char *str)
 {
     struct obj *otmp, *otmp2;
 
-/*	prevent shopkeepers from leaving the door of their shop */
+/* prevent shopkeepers from leaving the door of their shop */
     if (mtmp->isshk && inhishop(mtmp))
         return FALSE;
 
     for (otmp = level->objects[mtmp->mx][mtmp->my]; otmp; otmp = otmp2) {
         otmp2 = otmp->nexthere;
-/*	Nymphs take everything.  Most monsters don't pick up corpses. */
+/* Nymphs take everything.  Most monsters don't pick up corpses. */
         if (!str ? searches_for_item(mtmp, otmp) :
             ! !(strchr(str, otmp->oclass))) {
             if (otmp->otyp == CORPSE && mtmp->data->mlet != S_NYMPH &&
@@ -1888,8 +1888,8 @@ mnexto(struct monst *mtmp)
 /* mnearto()
  * Put monster near (or at) location if possible.
  * Returns:
- *	1 - if a monster was moved from x, y to put mtmp at x, y.
- *	0 - in most cases.
+ *      1 - if a monster was moved from x, y to put mtmp at x, y.
+ *      0 - in most cases.
  */
 boolean
 mnearto(struct monst * mtmp, xchar x, xchar y, boolean move_other)

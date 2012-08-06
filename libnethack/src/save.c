@@ -667,7 +667,7 @@ freedynamicdata(void)
     free_invbuf();      /* let_to_name (invent.c) */
     free_youbuf();      /* You_buf,&c (pline.c) */
     tmp_at(DISP_FREEMEM, 0);    /* temporary display effects */
-#define free_animals()	 mon_animal_list(FALSE)
+#define free_animals()   mon_animal_list(FALSE)
 
     for (i = 0; i < MAXLINFO; i++) {
         lev = levels[i];

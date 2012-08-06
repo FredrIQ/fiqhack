@@ -7,11 +7,11 @@
 #include "dlb.h"
 
 
-#define DUNGEON_FILE	"dungeon"
+#define DUNGEON_FILE    "dungeon"
 
-#define X_START		"x-strt"
-#define X_LOCATE	"x-loca"
-#define X_GOAL		"x-goal"
+#define X_START         "x-strt"
+#define X_LOCATE        "x-loca"
+#define X_GOAL          "x-goal"
 
 struct proto_dungeon {
     struct tmpdungeon tmpdungeon[MAXDUNGEON];
@@ -327,10 +327,10 @@ parent_dnum(const char *s,      /* dungeon name */
  * or dungeon entrance can occupy.
  *
  * Note: This follows the acouple (instead of the rcouple) rules for a
- *	 negative random component (rand < 0).  These rules are found
- *	 in dgn_comp.y.  The acouple [absolute couple] section says that
- *	 a negative random component means from the (adjusted) base to the
- *	 end of the dungeon.
+ *       negative random component (rand < 0).  These rules are found
+ *       in dgn_comp.y.  The acouple [absolute couple] section says that
+ *       a negative random component means from the (adjusted) base to the
+ *       end of the dungeon.
  */
 static int
 level_range(xchar dgn, int base, int rrand, int chain, struct proto_dungeon *pd,
@@ -436,9 +436,9 @@ insert_branch(branch * new_branch, boolean extract_first)
 
 /* Convert the branch into a unique number so we can sort them. */
 #define branch_val(bp) \
-	((((long)(bp)->end1.dnum * (MAXLEVEL+1) + \
-	  (long)(bp)->end1.dlevel) * (MAXDUNGEON+1) * (MAXLEVEL+1)) + \
-	 ((long)(bp)->end2.dnum * (MAXLEVEL+1) + (long)(bp)->end2.dlevel))
+        ((((long)(bp)->end1.dnum * (MAXLEVEL+1) + \
+          (long)(bp)->end1.dlevel) * (MAXDUNGEON+1) * (MAXLEVEL+1)) + \
+         ((long)(bp)->end2.dnum * (MAXLEVEL+1) + (long)(bp)->end2.dlevel))
 
     /* 
      * Insert the new branch into the correct place in the branch list.
@@ -909,7 +909,7 @@ init_dungeons(void)
     }
 
 /*
- *	I hate hardwiring these names. :-(
+ * I hate hardwiring these names. :-(
  */
     quest_dnum = dname_to_dnum("The Quest");
     sokoban_dnum = dname_to_dnum("Sokoban");
@@ -1026,8 +1026,8 @@ ledger_to_dlev(xchar ledgerno)
 }
 
 
-/* returns the depth of a level, in floors below the surface	*/
-/* (note levels in different dungeons can have the same depth).	*/
+/* returns the depth of a level, in floors below the surface    */
+/* (note levels in different dungeons can have the same depth). */
 schar
 depth(const d_level * lev)
 {
@@ -1301,9 +1301,9 @@ In_mines(const d_level * lev)
  * Return the branch for the given dungeon.
  *
  * This function assumes:
- *	+ This is not called with "Dungeons of Doom".
- *	+ There is only _one_ branch to a given dungeon.
- *	+ Field end2 is the "child" dungeon.
+ *      + This is not called with "Dungeons of Doom".
+ *      + There is only _one_ branch to a given dungeon.
+ *      + Field end2 is the "child" dungeon.
  */
 branch *
 dungeon_branch(const char *s)
@@ -1942,7 +1942,7 @@ seen_string(xchar x, const char *obj)
 
 #define COMMA (i++ > 0 ? ", " : "      ")
 #define ADDNTOBUF(nam, var) do { if (var) \
-	sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
+        sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
         ((var) != 1 ? "s" : "")); } while(0)
 
 #if MAXRTYPE != CANDLESHOP

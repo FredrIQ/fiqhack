@@ -96,8 +96,8 @@ missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
  *  fightm()  -- fight some other monster
  *
  *  Returns:
- *	0 - Monster did nothing.
- *	1 - If the monster made an attack.  The monster might have died.
+ *      0 - Monster did nothing.
+ *      1 - If the monster made an attack.  The monster might have died.
  *
  *  There is an exception to the above.  If mtmp has the hero swallowed,
  *  then we report that the monster did nothing so it will continue to
@@ -173,16 +173,16 @@ fightm(struct monst *mtmp)
  *
  * This function returns a result bitfield:
  *
- *	    --------- aggressor died
- *	   /  ------- defender died
- *	  /  /  ----- defender was hit
- *	 /  /  /
- *	x  x  x
+ *          --------- aggressor died
+ *         /  ------- defender died
+ *        /  /  ----- defender was hit
+ *       /  /  /
+ *      x  x  x
  *
- *	0x4	MM_AGR_DIED
- *	0x2	MM_DEF_DIED
- *	0x1	MM_HIT
- *	0x0	MM_MISS
+ *      0x4     MM_AGR_DIED
+ *      0x2     MM_DEF_DIED
+ *      0x1     MM_HIT
+ *      0x0     MM_MISS
  *
  * Each successive attack has a lower probability of hitting.  Some rely on the
  * success of previous attacks.  ** this doen't seem to be implemented -dl **

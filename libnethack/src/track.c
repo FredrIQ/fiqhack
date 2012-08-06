@@ -5,7 +5,7 @@
 
 #include "hack.h"
 
-#define UTSZ	50
+#define UTSZ    50
 
 static int utcnt, utpnt;
 static coord utrack[UTSZ];

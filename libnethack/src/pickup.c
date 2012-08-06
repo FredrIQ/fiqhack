@@ -3,7 +3,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *	Contains code for picking objects up, and container use.
+ * Contains code for picking objects up, and container use.
  */
 
 #include "hack.h"
@@ -35,13 +35,13 @@ static boolean mon_beside(int, int);
  *  object is removed from it.  This calculation must match the one used
  *  by weight() in mkobj.c.
  */
-#define DELTA_CWT(cont,obj)		\
-    ((cont)->cursed ? (obj)->owt * 2 :	\
+#define DELTA_CWT(cont,obj)             \
+    ((cont)->cursed ? (obj)->owt * 2 :  \
                       ((cont)->blessed ? ((obj)->owt + 3) / 4 : \
                                          ((obj)->owt + 1) / 2))
-#define GOLD_WT(n)		(((n) + 50L) / 100L)
+#define GOLD_WT(n)         (((n) + 50L) / 100L)
 /* if you can figure this out, give yourself a hearty pat on the back... */
-#define GOLD_CAPACITY(w,n)	(((w) * -100L) - ((n) + 50L) - 1L)
+#define GOLD_CAPACITY(w,n) (((w) * -100L) - ((n) + 50L) - 1L)
 
 static const char moderateloadmsg[] = "You have a little trouble lifting";
 static const char nearloadmsg[] = "You have much trouble lifting";
@@ -160,9 +160,9 @@ is_worn_by_type(const struct obj * otmp)
  * or a monster's inventory if swallowed.
  *
  * Arg what:
- *	>0  autopickup
- *	=0  interactive
- *	<0  pickup count of something
+ *      >0  autopickup
+ *      =0  interactive
+ *      <0  pickup count of something
  *
  * Returns 1 if tried to pick something up, whether
  * or not it succeeded.
@@ -486,12 +486,12 @@ obj_compare(const void *o1, const void *o2)
  * returned counts are guaranteed to be in bounds and non-zero.
  *
  * Query flags:
- *	BY_NEXTHERE	  - Follow object list via nexthere instead of nobj.
- *	AUTOSELECT_SINGLE - Don't ask if only 1 object qualifies - just
- *			    use it.
- *	USE_INVLET	  - Use object's invlet.
- *	INVORDER_SORT	  - Use hero's pack order.
- *	SIGNAL_NOMENU	  - Return -1 rather than 0 if nothing passes "allow".
+ *      BY_NEXTHERE       - Follow object list via nexthere instead of nobj.
+ *      AUTOSELECT_SINGLE - Don't ask if only 1 object qualifies - just
+ *                          use it.
+ *      USE_INVLET        - Use object's invlet.
+ *      INVORDER_SORT     - Use hero's pack order.
+ *      SIGNAL_NOMENU     - Return -1 rather than 0 if nothing passes "allow".
  */
 int
 query_objlist(const char *qstr, /* query string */

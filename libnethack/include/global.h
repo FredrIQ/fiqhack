@@ -21,7 +21,7 @@
  * Files expected to exist in the playground directory.
  */
 
-# define RECORD	      "record"  /* file containing list of topscorers */
+# define RECORD        "record"  /* file containing list of topscorers */
 # define LOGFILE       "logfile"/* records all game endings regardless of score
                                    for debugging purposes */
 # define XLOGFILE      "xlogfile"       /* records game endings in detail */
@@ -61,7 +61,7 @@ typedef schar xchar;
  * particular machine, although it is set to the minimum required maximum
  * signed integer for C (2^15 -1).
  */
-# define LARGEST_INT	32767
+# define LARGEST_INT    32767
 
 
 # include "coord.h"
@@ -81,12 +81,12 @@ typedef schar xchar;
 /* Displayable name of this port; don't redefine if defined in *conf.h */
 # ifndef PORT_ID
 #  ifdef UNIX
-#   define PORT_ID	"Unix"
+#   define PORT_ID      "Unix"
 #  endif
 #  ifdef WIN32
-#   define PORT_ID	"Windows"
+#   define PORT_ID      "Windows"
 #   ifndef PORT_SUB_ID
-#    define PORT_SUB_ID	"tty"
+#    define PORT_SUB_ID "tty"
 #   endif
 #  endif
 # endif
@@ -115,28 +115,23 @@ struct version_info {
  */
 
 
-# define MAXNROFROOMS	40      /* max number of rooms per level */
-# define MAX_SUBROOMS	24      /* max # of subrooms in a given room */
-# define DOORMAX		120
-                                /* max number of doors per level */
+# define MAXNROFROOMS   40      /* max number of rooms per level */
+# define MAX_SUBROOMS   24      /* max # of subrooms in a given room */
+# define DOORMAX        120     /* max number of doors per level */
 
-# define PL_CSIZ		32
-                                /* sizeof pl_character */
-# define PL_FSIZ		32
-                                /* fruit name */
-# define PL_PSIZ		63
-                                /* player-given names for pets, other monsters, 
-                                   objects */
+# define PL_CSIZ        32      /* sizeof pl_character */
+# define PL_FSIZ        32      /* fruit name */
+# define PL_PSIZ        63      /* player-given names for pets, other monsters, 
+                                           objects */
 
-# define MAXDUNGEON	16      /* current maximum number of dungeons */
-# define MAXLEVEL	32      /* max number of levels in one dungeon */
-# define MAXSTAIRS	1       /* max # of special stairways in a dungeon */
-# define ALIGNWEIGHT	4       /* generation weight of alignment */
+# define MAXDUNGEON     16      /* current maximum number of dungeons */
+# define MAXLEVEL       32      /* max number of levels in one dungeon */
+# define MAXSTAIRS      1       /* max # of special stairways in a dungeon */
+# define ALIGNWEIGHT    4       /* generation weight of alignment */
 
-# define MAXULEV		30
-                                /* max character experience level */
+# define MAXULEV        30      /* max character experience level */
 
-# define MAXMONNO	120     /* extinct monst after this number created */
-# define MHPMAX		500     /* maximum monster hp */
+# define MAXMONNO       120     /* extinct monst after this number created */
+# define MHPMAX         500     /* maximum monster hp */
 
 #endif /* GLOBAL_H */

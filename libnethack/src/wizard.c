@@ -3,9 +3,9 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
-/*	       - heavily modified to give the wiz balls.  (genat!mike)   */
-/*	       - dewimped and given some maledictions. -3. */
-/*	       - generalized for 3.1 (mike@bullns.on01.bull.ca) */
+/*             - heavily modified to give the wiz balls.  (genat!mike)   */
+/*             - dewimped and given some maledictions. -3. */
+/*             - generalized for 3.1 (mike@bullns.on01.bull.ca) */
 
 #include "hack.h"
 #include "qtext.h"
@@ -112,15 +112,15 @@ mon_has_special(struct monst *mtmp)
 }
 
 /*
- *	New for 3.1  Strategy / Tactics for the wiz, as well as other
- *	monsters that are "after" something (defined via mflag3).
+ * New for 3.1  Strategy / Tactics for the wiz, as well as other
+ * monsters that are "after" something (defined via mflag3).
  *
- *	The strategy section decides *what* the monster is going
- *	to attempt, the tactics section implements the decision.
+ * The strategy section decides *what* the monster is going
+ * to attempt, the tactics section implements the decision.
  */
 #define STRAT(w, x, y, typ) (w | ((long)(x)<<16) | ((long)(y)<<8) | (long)typ)
 
-#define M_Wants(mask)	(mtmp->data->mflags3 & (mask))
+#define M_Wants(mask)   (mtmp->data->mflags3 & (mask))
 
 static short
 which_arti(int mask)
@@ -141,9 +141,9 @@ which_arti(int mask)
 }
 
 /*
- *	If "otyp" is zero, it triggers a check for the quest_artifact,
- *	since bell, book, candle, and amulet are all objects, not really
- *	artifacts right now.	[MRS]
+ * If "otyp" is zero, it triggers a check for the quest_artifact,
+ * since bell, book, candle, and amulet are all objects, not really
+ * artifacts right now.    [MRS]
  */
 static boolean
 mon_has_arti(struct monst *mtmp, short otyp)
@@ -466,7 +466,7 @@ nasty(struct monst *mcast)
     return count;
 }
 
-/*	Let's resurrect the wizard, for some unexpected fun.	*/
+/* Let's resurrect the wizard, for some unexpected fun.    */
 void
 resurrect(void)
 {
@@ -516,8 +516,8 @@ resurrect(void)
 
 }
 
-/*	Here, we make trouble for the poor shmuck who actually	*/
-/*	managed to do in the Wizard.				*/
+/* Here, we make trouble for the poor shmuck who actually  */
+/* managed to do in the Wizard.                            */
 void
 intervene(void)
 {

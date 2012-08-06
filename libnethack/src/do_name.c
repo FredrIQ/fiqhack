@@ -464,17 +464,17 @@ rndghostname(void)
 
 /* Monster naming functions:
  * x_monnam is the generic monster-naming function.
- *		  seen	      unseen	   detected		  named
- * mon_nam:	the newt	it	the invisible orc	Fido
- * noit_mon_nam:the newt (as if detected) the invisible orc	Fido
- * l_monnam:	newt		it	invisible orc		dog called fido
- * Monnam:	The newt	It	The invisible orc	Fido
- * noit_Monnam: The newt (as if detected) The invisible orc	Fido
- * Adjmonnam:	The poor newt	It	The poor invisible orc	The poor Fido
- * Amonnam:	A newt		It	An invisible orc	Fido
- * a_monnam:	a newt		it	an invisible orc	Fido
- * m_monnam:	newt		xan	orc			Fido
- * y_monnam:	your newt     your xan	your invisible orc	Fido
+ *                seen        unseen       detected               named
+ * mon_nam:     the newt        it      the invisible orc       Fido
+ * noit_mon_nam:the newt (as if detected) the invisible orc     Fido
+ * l_monnam:    newt            it      invisible orc           dog called fido
+ * Monnam:      The newt        It      The invisible orc       Fido
+ * noit_Monnam: The newt (as if detected) The invisible orc     Fido
+ * Adjmonnam:   The poor newt   It      The poor invisible orc  The poor Fido
+ * Amonnam:     A newt          It      An invisible orc        Fido
+ * a_monnam:    a newt          it      an invisible orc        Fido
+ * m_monnam:    newt            xan     orc                     Fido
+ * y_monnam:    your newt     your xan  your invisible orc      Fido
  */
 
 /* Bug: if the monster is a priest or shopkeeper, not every one of these

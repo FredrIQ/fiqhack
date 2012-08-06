@@ -24,33 +24,33 @@ cost(struct obj *otmp)
     case SCR_FIRE:
     case SCR_EARTH:
         return 8;
-/*		break; */
+/*       break; */
     case SCR_DESTROY_ARMOR:
     case SCR_CREATE_MONSTER:
     case SCR_PUNISHMENT:
         return 10;
-/*		break; */
+/*      break; */
     case SCR_CONFUSE_MONSTER:
         return 12;
-/*		break; */
+/*      break; */
     case SCR_IDENTIFY:
         return 14;
-/*		break; */
+/*      break; */
     case SCR_ENCHANT_ARMOR:
     case SCR_REMOVE_CURSE:
     case SCR_ENCHANT_WEAPON:
     case SCR_CHARGING:
         return 16;
-/*		break; */
+/*      break; */
     case SCR_SCARE_MONSTER:
     case SCR_STINKING_CLOUD:
     case SCR_TAMING:
     case SCR_TELEPORTATION:
         return 20;
-/*		break; */
+/*      break; */
     case SCR_GENOCIDE:
         return 30;
-/*		break; */
+/*      break; */
     case SCR_BLANK_PAPER:
     default:
         impossible("You can't write such a weird scroll!");

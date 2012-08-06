@@ -1,7 +1,7 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* Copyright (c) M. Stephenson, 1990, 1991.			  */
-/* Copyright (c) Dean Luick, 1990.				  */
+/* Copyright (c) M. Stephenson, 1990, 1991.                       */
+/* Copyright (c) Dean Luick, 1990.                                */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #define MAKEDEFS_C      /* use to conditionally include file sections */
@@ -783,22 +783,22 @@ mstrength(const struct permonst *ptr)
     if (tmp > 49)       /* special fixed hp monster */
         tmp = 2 * (tmp - 6) / 4;
 
-/*	For creation in groups */
+/* For creation in groups */
     n = (! !(ptr->geno & G_SGROUP));
     n += (! !(ptr->geno & G_LGROUP)) << 1;
 
-/*	For ranged attacks */
+/* For ranged attacks */
     if (ranged_attk(ptr))
         n++;
 
-/*	For higher ac values */
+/* For higher ac values */
     n += (ptr->ac < 4);
     n += (ptr->ac < 0);
 
-/*	For very fast monsters */
+/* For very fast monsters */
     n += (ptr->mmove >= 18);
 
-/*	For each attack and "special" attack */
+/* For each attack and "special" attack */
     for (i = 0; i < NATTK; i++) {
 
         tmp2 = ptr->mattk[i].aatyp;
@@ -807,7 +807,7 @@ mstrength(const struct permonst *ptr)
         n += (tmp2 == AT_WEAP && (ptr->mflags2 & M2_STRONG));
     }
 
-/*	For each "special" damage type */
+/* For each "special" damage type */
     for (i = 0; i < NATTK; i++) {
 
         tmp2 = ptr->mattk[i].adtyp;
@@ -819,12 +819,12 @@ mstrength(const struct permonst *ptr)
         n += ((int)(ptr->mattk[i].damd * ptr->mattk[i].damn) > 23);
     }
 
-/*	Leprechauns are special cases.  They have many hit dice so they
-	can hit and are hard to kill, but they don't really do much damage. */
+/* Leprechauns are special cases.  They have many hit dice so they
+   can hit and are hard to kill, but they don't really do much damage. */
     if (!strcmp(ptr->mname, "leprechaun"))
         n -= 2;
 
-/*	Finally, adjust the monster level  0 <= n <= 24 (approx.) */
+/* Finally, adjust the monster level  0 <= n <= 24 (approx.) */
     if (n == 0)
         tmp--;
     else if (n >= 6)
@@ -900,7 +900,7 @@ do_permonst(const char *outfile)
 }
 
 
-/*	Start of Quest text file processing. */
+/* Start of Quest text file processing. */
 #include "qtext.h"
 
 static struct qthdr qt_hdr;
@@ -911,7 +911,7 @@ static int qt_line;
 
 static boolean in_msg;
 
-#define NO_MSG	1       /* strlen of a null line returned by fgets() */
+#define NO_MSG  1       /* strlen of a null line returned by fgets() */
 
 static boolean
 qt_comment(char *s)

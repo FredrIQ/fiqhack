@@ -432,12 +432,12 @@ walk_path(coord * src_cc, coord * dest_cc,
  * your movements at the time.
  *
  * Possible additions/changes:
- *	o really attack monster if we hit one
- *	o set stunned if we hit a wall or door
- *	o reset nomul when we stop
- *	o creepy feeling if pass through monster (if ever implemented...)
- *	o bounce off walls
- *	o let jumps go over boulders
+ *      o really attack monster if we hit one
+ *      o set stunned if we hit a wall or door
+ *      o reset nomul when we stop
+ *      o creepy feeling if pass through monster (if ever implemented...)
+ *      o bounce off walls
+ *      o let jumps go over boulders
  */
 boolean
 hurtle_step(void *arg, int x, int y)
@@ -1174,7 +1174,7 @@ tmiss(struct obj *obj, struct monst *mon)
     return;
 }
 
-#define quest_arti_hits_leader(obj,mon)	\
+#define quest_arti_hits_leader(obj,mon) \
   (obj->oartifact && is_quest_artifact(obj) && (mon->data->msound == MS_LEADER))
 
 /*

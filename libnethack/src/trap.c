@@ -392,9 +392,9 @@ fall_through(boolean td)
  *
  * The cause of animation is:
  *
- *	ANIMATE_NORMAL  - hero "finds" the monster
- *	ANIMATE_SHATTER - hero tries to destroy the statue
- *	ANIMATE_SPELL   - stone to flesh spell hits the statue
+ *     ANIMATE_NORMAL  - hero "finds" the monster
+ *     ANIMATE_SHATTER - hero tries to destroy the statue
+ *      ANIMATE_SPELL   - stone to flesh spell hits the statue
  *
  * Perhaps x, y is not needed if we can use get_obj_location() to find
  * the statue's location... ???
@@ -2464,7 +2464,7 @@ float_down(long hmask, long emask)
 }
 
 
-/* box:	null for floor trap */
+/* box: null for floor trap */
 static void
 dofiretrap(struct obj *box)
 {

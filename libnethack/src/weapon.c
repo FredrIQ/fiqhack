@@ -3,28 +3,28 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *	This module contains code for calculation of "to hit" and damage
- *	bonuses for any given weapon used, as well as weapons selection
- *	code for monsters.
+ * This module contains code for calculation of "to hit" and damage
+ * bonuses for any given weapon used, as well as weapons selection
+ * code for monsters.
  */
 #include "hack.h"
 
 /* Categories whose names don't come from OBJ_NAME(objects[type])
  */
-#define PN_BARE_HANDED			(-1)    /* includes martial arts */
-#define PN_TWO_WEAPONS			(-2)
-#define PN_RIDING			(-3)
-#define PN_POLEARMS			(-4)
-#define PN_SABER			(-5)
-#define PN_HAMMER			(-6)
-#define PN_WHIP				(-7)
-#define PN_ATTACK_SPELL			(-8)
-#define PN_HEALING_SPELL		(-9)
-#define PN_DIVINATION_SPELL		(-10)
-#define PN_ENCHANTMENT_SPELL		(-11)
-#define PN_CLERIC_SPELL			(-12)
-#define PN_ESCAPE_SPELL			(-13)
-#define PN_MATTER_SPELL			(-14)
+#define PN_BARE_HANDED       (-1)    /* includes martial arts */
+#define PN_TWO_WEAPONS       (-2)
+#define PN_RIDING            (-3)
+#define PN_POLEARMS          (-4)
+#define PN_SABER             (-5)
+#define PN_HAMMER            (-6)
+#define PN_WHIP              (-7)
+#define PN_ATTACK_SPELL      (-8)
+#define PN_HEALING_SPELL     (-9)
+#define PN_DIVINATION_SPELL  (-10)
+#define PN_ENCHANTMENT_SPELL (-11)
+#define PN_CLERIC_SPELL      (-12)
+#define PN_ESCAPE_SPELL      (-13)
+#define PN_MATTER_SPELL      (-14)
 
 static void give_may_advance_msg(int);
 
@@ -87,18 +87,18 @@ static char *skill_level_name(int, char *);
 static void skill_advance(int);
 
 #define P_NAME(type) ((skill_names_indices[type] > 0) ? \
-		      OBJ_NAME(objects[skill_names_indices[type]]) : \
-		      (type == P_BARE_HANDED_COMBAT) ? \
-			barehands_or_martial[martial_bonus()] : \
-			odd_skill_names[-skill_names_indices[type]])
+                      OBJ_NAME(objects[skill_names_indices[type]]) : \
+                      (type == P_BARE_HANDED_COMBAT) ? \
+                        barehands_or_martial[martial_bonus()] : \
+                        odd_skill_names[-skill_names_indices[type]])
 
 static const char kebabable[] = {
     S_XORN, S_DRAGON, S_JABBERWOCK, S_NAGA, S_GIANT, '\0'
 };
 
 /*
- *	hitval returns an integer representing the "to hit" bonuses
- *	of "otmp" against the monster.
+ * hitval returns an integer representing the "to hit" bonuses
+ * of "otmp" against the monster.
  */
 int
 hitval(struct obj *otmp, struct monst *mon)
@@ -110,10 +110,10 @@ hitval(struct obj *otmp, struct monst *mon)
     if (Is_weapon)
         tmp += otmp->spe;
 
-/*	Put weapon specific "to hit" bonuses in below:		*/
+/* Put weapon specific "to hit" bonuses in below:          */
     tmp += objects[otmp->otyp].oc_hitbon;
 
-/*	Put weapon vs. monster type "to hit" bonuses in below:	*/
+/* Put weapon vs. monster type "to hit" bonuses in below:  */
 
     /* Blessed weapons used against undead or demons */
     if (Is_weapon && otmp->blessed && (is_demon(ptr) || is_undead(ptr)))
@@ -170,8 +170,8 @@ hitval(struct obj *otmp, struct monst *mon)
  */
 
 /*
- *	dmgval returns an integer representing the damage bonuses
- *	of "otmp" against the monster.
+ * dmgval returns an integer representing the damage bonuses
+ * of "otmp" against the monster.
  */
 int
 dmgval(struct obj *otmp, struct monst *mon)
@@ -282,7 +282,7 @@ dmgval(struct obj *otmp, struct monst *mon)
         }
     }
 
-/*	Put weapon vs. monster type damage bonuses in below:	*/
+/* Put weapon vs. monster type damage bonuses in below:    */
     if (Is_weapon || otmp->oclass == GEM_CLASS || otmp->oclass == BALL_CLASS ||
         otmp->oclass == CHAIN_CLASS) {
         int bonus = 0;
@@ -318,7 +318,7 @@ dmgval(struct obj *otmp, struct monst *mon)
 
 static struct obj *oselect(struct monst *, int);
 
-#define Oselect(x)	if ((otmp = oselect(mtmp, x)) != 0) return otmp;
+#define Oselect(x) if ((otmp = oselect(mtmp, x)) != 0) return otmp;
 
 static struct obj *
 oselect(struct monst *mtmp, int x)

@@ -13,36 +13,36 @@
 
 #define NO_ATTK {0,0,0,0}
 
-#define WT_ELF	   800
+#define WT_ELF     800
 #define WT_DRAGON 4500
 
 #include "color.h"
 
-#define HI_LORD		CLR_MAGENTA
+#define HI_LORD         CLR_MAGENTA
 #define HI_QUEST        CLR_BRIGHT_MAGENTA      /* quest leaders and nemeses */
 #define HI_GUARDIAN     CLR_GRAY|HI_ULINE       /* quest friendlies */
 #define HI_DOMESTIC1    CLR_GRAY        /* weak friendlies */
-#define HI_DOMESTIC2	CLR_WHITE       /* medium friendlies */
+#define HI_DOMESTIC2    CLR_WHITE       /* medium friendlies */
 #define HI_DOMESTIC3    CLR_WHITE|HI_ULINE      /* strong friendlies */
 #define HI_DOMESTIC     HI_DOMESTIC2    /* use for player */
 
 void monst_init(void);
 
 /*
- *	Entry Format:		(from permonst.h)
+ * Entry Format:           (from permonst.h)
  *
- *	name, symbol (S_* defines),
- *	difficulty level, move rate, armor class, magic resistance,
- *	alignment, creation/geno flags (G_* defines),
- *	6 * attack structs ( type , damage-type, # dice, # sides ),
- *	weight (WT_* defines), nutritional value, extension length,
- *	sounds made (MS_* defines), physical size (MZ_* defines),
- *	3 * flag bitmaps (M1_*, M2_*, and M3_* defines respectively)
- *	resistances, resistances conferred (both MR_* defines),
- *	symbol color
+ * name, symbol (S_* defines),
+ * difficulty level, move rate, armor class, magic resistance,
+ * alignment, creation/geno flags (G_* defines),
+ * 6 * attack structs ( type , damage-type, # dice, # sides ),
+ * weight (WT_* defines), nutritional value, extension length,
+ * sounds made (MS_* defines), physical size (MZ_* defines),
+ * 3 * flag bitmaps (M1_*, M2_*, and M3_* defines respectively)
+ * resistances, resistances conferred (both MR_* defines),
+ * symbol color
  */
 #define MON(nam,sym,lvl,gen,atk,siz,mr1,mr2,flg1,flg2,flg3,col) \
-	   {nam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mr1,mr2,col}
+           {nam,sym,lvl,gen,atk,siz,flg1,flg2,flg3,mr1,mr2,col}
 /* LVL() and SIZ() collect several fields to cut down on # of args for MON() */
 #define LVL(lvl,mov,ac,mr,aln) lvl,mov,ac,mr,aln
 #define SIZ(wt,nut,pxl,snd,siz) wt,nut,pxl,snd,siz
@@ -52,37 +52,37 @@ void monst_init(void);
 
 
 /*
- *	Rule #1:	monsters of a given class are contiguous in the
- *			mons[] array.
+ * Rule #1:  monsters of a given class are contiguous in the
+ *           mons[] array.
  *
- *	Rule #2:	monsters of a given class are presented in ascending
- *			order of strength.
+ * Rule #2:  monsters of a given class are presented in ascending
+ *           order of strength.
  *
- *	Rule #3:	monster frequency is included in the geno mask;
- *			the frequency can be from 0 to 7.  0's will also
- *			be skipped during generation.
- *
- *	Rule #4:	monster subclasses (e.g. giants) should be kept
- *			together, unless it violates Rule 2.  NOGEN monsters
- *			won't violate Rule 2.
+ * Rule #3:  monster frequency is included in the geno mask;
+ *           the frequency can be from 0 to 7.  0's will also
+ *           be skipped during generation.
+ 
+ * Rule #4:  monster subclasses (e.g. giants) should be kept
+ *           together, unless it violates Rule 2.  NOGEN monsters
+ *           won't violate Rule 2.
  *
  * Guidelines for color assignment:
  *
- *	* Use the same color for all `growth stages' of a monster (ex.
- *	  little dog/big dog, baby naga/full-grown naga.
+ * * Use the same color for all `growth stages' of a monster (ex.
+ *   little dog/big dog, baby naga/full-grown naga.
  *
- *	* Use colors given in names wherever possible. If the class has `real'
- *	  members with strong color associations, use those.
+ * * Use colors given in names wherever possible. If the class has `real'
+ *   members with strong color associations, use those.
  *
- *	* Favor `cool' colors for cold-resistent monsters, `warm' ones for
- *	  fire-resistent ones.
+ * * Favor `cool' colors for cold-resistent monsters, `warm' ones for
+ *   fire-resistent ones.
  *
- *	* Try to reserve purple (magenta) for powerful `ruler' monsters (queen
- *	  bee, kobold lord, &c.).
+ * * Try to reserve purple (magenta) for powerful `ruler' monsters (queen
+ *   bee, kobold lord, &c.).
  *
- *	* Subject to all these constraints, try to use color to make as many
- *	  distinctions as the / command (that is, within a monster letter
- *	  distinct names should map to distinct colors).
+ * * Subject to all these constraints, try to use color to make as many
+ *   distinctions as the / command (that is, within a monster letter
+ *   distinct names should map to distinct colors).
  *
  * The aim in assigning colors is to be consistent enough so a player can
  * become `intuitive' about them, deducing some or all of these rules
@@ -2561,8 +2561,8 @@ const struct permonst mons[] = {
         M3_INFRAVISIBLE | M3_INFRAVISION,
         CLR_BROWN),
 #define SEDUCTION_ATTACKS \
-	A(ATTK(AT_BITE, AD_SSEX, 2, 6), ATTK(AT_CLAW, AD_PHYS, 1, 3), \
-	  ATTK(AT_CLAW, AD_PHYS, 1, 3), NO_ATTK, NO_ATTK, NO_ATTK)
+        A(ATTK(AT_BITE, AD_SSEX, 2, 6), ATTK(AT_CLAW, AD_PHYS, 1, 3), \
+          ATTK(AT_CLAW, AD_PHYS, 1, 3), NO_ATTK, NO_ATTK, NO_ATTK)
     MON("succubus", S_DEMON,
         LVL(6, 12, 0, 70, -9), (G_NOCORPSE | 1),
         SEDUCTION_ATTACKS,

@@ -5,16 +5,16 @@
 #ifndef EDOG_H
 # define EDOG_H
 
-/*	various types of food, the lower, the better liked.	*/
+/*      various types of food, the lower, the better liked.     */
 
 # define DOGFOOD 0
 # define CADAVER 1
 # define ACCFOOD 2
 # define MANFOOD 3
-# define APPORT	4
-# define POISON	5
-# define UNDEF	6
-# define TABU	7
+# define APPORT  4
+# define POISON  5
+# define UNDEF   6
+# define TABU    7
 
 struct edog {
     unsigned int droptime;      /* moment dog dropped object */
@@ -29,6 +29,6 @@ struct edog {
     unsigned killed_by_u:1;     /* you attempted to kill him */
 };
 
-# define EDOG(mon)	((struct edog *)&(mon)->mextra[0])
+# define EDOG(mon)      ((struct edog *)&(mon)->mextra[0])
 
 #endif /* EDOG_H */

@@ -16,9 +16,9 @@
 /* maximum number of highscore entries per player */
 #define PLAYERMAX 1000
 
-#define ROLESZ	3
-#define NAMSZ	15
-#define DTHSZ	99
+#define ROLESZ  3
+#define NAMSZ   15
+#define DTHSZ   99
 
 struct toptenentry {
     int points;

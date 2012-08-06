@@ -1,10 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
-/* and Dave Cohrs, 1990.					  */
+/* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *			THE DISPLAY CODE
+ *                      THE DISPLAY CODE
  *
  * The old display code has been broken up into three parts: vision, display,
  * and drawing.  Vision decides what locations can and cannot be physically
@@ -86,22 +86,22 @@
  *
  * Parts of the rm structure that are used:
  *
- *	typ	- What (dungeon feature) is really there.
- *	mem_*	- What the hero remembers.
- *	lit	- True if the position is lit.  An optimization for
- *		  lit/unlit rooms.
- *	waslit	- True if the position was *remembered* as lit.
- *	seenv	- A vector of bits representing the directions from which the
- *		  hero has seen this position.  The vector's primary use is
- *		  determining how walls are seen.  E.g. a wall sometimes looks
- *		  like stone on one side, but is seen as a wall from the other.
- *		  Other uses are for unmapping detected objects and felt
- *		  locations, where we need to know if the hero has ever
- *		  seen the location.
- *	flags   - Additional information for the typ field.  Different for
- *		  each typ.
- *	horizontal - Indicates whether the wall or door is horizontal or
- *		     vertical.
+ *      typ     - What (dungeon feature) is really there.
+ *      mem_*   - What the hero remembers.
+ *      lit     - True if the position is lit.  An optimization for
+ *                lit/unlit rooms.
+ *      waslit  - True if the position was *remembered* as lit.
+ *      seenv   - A vector of bits representing the directions from which the
+ *                hero has seen this position.  The vector's primary use is
+ *                determining how walls are seen.  E.g. a wall sometimes looks
+ *                like stone on one side, but is seen as a wall from the other.
+ *                Other uses are for unmapping detected objects and felt
+ *                locations, where we need to know if the hero has ever
+ *                seen the location.
+ *      flags   - Additional information for the typ field.  Different for
+ *                each typ.
+ *      horizontal - Indicates whether the wall or door is horizontal or
+ *                   vertical.
  */
 #include "hack.h"
 #include "region.h"
@@ -383,9 +383,9 @@ clear_memory_glyph(schar x, schar y, int to)
 }
 
 
-#define DETECTED 	2
-#define PHYSICALLY_SEEN 1
-#define is_worm_tail(mon)	((mon) && ((x != (mon)->mx)  || (y != (mon)->my)))
+#define DETECTED          2
+#define PHYSICALLY_SEEN   1
+#define is_worm_tail(mon) ((mon) && ((x != (mon)->mx)  || (y != (mon)->my)))
 
 /*
  * display_monster()
@@ -880,21 +880,21 @@ shieldeff(xchar x, xchar y)
  * but explode() wants to delay].
  *
  * Call:
- *	(DISP_BEAM,   sym)	open, initialize sym
- *	(DISP_FLASH,  sym)	open, initialize sym
- *	(DISP_ALWAYS, sym)	open, initialize sym
- *	(DISP_OBJECT, sym)	open, initialize sym
- *	(DISP_CHANGE, sym)	change sym
- *	(DISP_END,    0)	close & clean up (second argument doesn't
- *				matter)
- *	(DISP_FREEMEM, 0)	only used to prevent memory leak during
- *				exit)
- *	(x, y)			display the sym at the location
+ *      (DISP_BEAM,   sym)      open, initialize sym
+ *      (DISP_FLASH,  sym)      open, initialize sym
+ *      (DISP_ALWAYS, sym)      open, initialize sym
+ *      (DISP_OBJECT, sym)      open, initialize sym
+ *      (DISP_CHANGE, sym)      change sym
+ *      (DISP_END,    0)        close & clean up (second argument doesn't
+ *                              matter)
+ *      (DISP_FREEMEM, 0)       only used to prevent memory leak during
+ *                              exit)
+ *      (x, y)                  display the sym at the location
  *
  * DISP_BEAM  - Display the given sym at each location, but do not erase
- *		any until the close call.
+ *              any until the close call.
  * DISP_FLASH - Display the given sym at each location, but erase the
- *		previous location's sym.
+ *              previous location's sym.
  * DISP_ALWAYS- Like DISP_FLASH, but vision is not taken into account.
  * DISP_OBJECT- Like flash, but shows an object instead of an effect symbol
  */
@@ -1112,9 +1112,9 @@ under_water(int mode)
 }
 
 /*
- *	under_ground()
+ * under_ground()
  *
- *	Very restricted display.  You can only see yourself.
+ * Very restricted display.  You can only see yourself.
  */
 void
 under_ground(int mode)
@@ -1145,17 +1145,17 @@ under_ground(int mode)
 
 /*
  * Loop through all of the monsters and update them.  Called when:
- *	+ going blind & telepathic
- *	+ regaining sight & telepathic
+ *      + going blind & telepathic
+ *      + regaining sight & telepathic
  *      + getting and losing infravision 
- *	+ hallucinating
- *	+ doing a full screen redraw
- *	+ see invisible times out or a ring of see invisible is taken off
- *	+ when a potion of see invisible is quaffed or a ring of see
- *	  invisible is put on
- *	+ gaining telepathy when blind [givit() in eat.c, pleased() in pray.c]
- *	+ losing telepathy while blind [xkilled() in mon.c, attrcurse() in
- *	  sit.c]
+ *      + hallucinating
+ *      + doing a full screen redraw
+ *      + see invisible times out or a ring of see invisible is taken off
+ *      + when a potion of see invisible is quaffed or a ring of see
+ *        invisible is put on
+ *      + gaining telepathy when blind [givit() in eat.c, pleased() in pray.c]
+ *      + losing telepathy while blind [xkilled() in mon.c, attrcurse() in
+ *        sit.c]
  */
 void
 see_monsters(void)
@@ -1204,7 +1204,7 @@ set_mimic_blocking(void)
 
 /*
  * Loop through all of the object *locations* and update them.  Called when
- *	+ hallucinating.
+ *      + hallucinating.
  */
 void
 see_objects(void)
@@ -1738,10 +1738,10 @@ swallow_to_effect(int mnum, int loc)
  * type has four glyphs, one for each of the symbols below.  The order of
  * the zap symbols [0-3] as defined in rm.h are:
  *
- *	|  S_vbeam	( 0, 1) or ( 0,-1) -> dx = 0
- *	-  S_hbeam	( 1, 0) or (-1,	0) -> dx = 1
- *	\  S_lslant	( 1, 1) or (-1,-1) -> dx = 2
- *	/  S_rslant	(-1, 1) or ( 1,-1) -> dx = 3
+ *      |  S_vbeam      ( 0, 1) or ( 0,-1) -> dx = 0
+ *      -  S_hbeam      ( 1, 0) or (-1, 0) -> dx = 1
+ *      \  S_lslant     ( 1, 1) or (-1,-1) -> dx = 2
+ *      /  S_rslant     (-1, 1) or ( 1,-1) -> dx = 3
  */
 int
 zapdir_to_effect(int dx, int dy, int beam_type)
@@ -2105,7 +2105,7 @@ wall_angle(struct rm *loc)
     const int *row;
     int col, idx;
 
-#define only(sv, bits)	(((sv) & (bits)) && ! ((sv) & ~(bits)))
+#define only(sv, bits)  (((sv) & (bits)) && ! ((sv) & ~(bits)))
     switch (loc->typ) {
     case TUWALL:
         row = wall_matrix[T_u];
@@ -2228,16 +2228,16 @@ wall_angle(struct rm *loc)
         }
         break;
 
-#define set_corner(idx, loc, which, outer, inner, name)	\
-    switch ((loc)->wall_info & WM_MASK) {				    \
-	case 0:		 idx = which; break;				    \
-	case WM_C_OUTER: idx = seenv &  (outer) ? which : S_stone; break;   \
-	case WM_C_INNER: idx = seenv & ~(inner) ? which : S_stone; break;   \
-	default:							    \
-	    impossible("wall_angle: unknown %s mode %d", name,		    \
-		(loc)->wall_info & WM_MASK);				    \
-	    idx = S_stone;						    \
-	    break;							    \
+#define set_corner(idx, loc, which, outer, inner, name) \
+    switch ((loc)->wall_info & WM_MASK) {                                   \
+        case 0:          idx = which; break;                                \
+        case WM_C_OUTER: idx = seenv &  (outer) ? which : S_stone; break;   \
+        case WM_C_INNER: idx = seenv & ~(inner) ? which : S_stone; break;   \
+        default:                                                            \
+            impossible("wall_angle: unknown %s mode %d", name,              \
+                (loc)->wall_info & WM_MASK);                                \
+            idx = S_stone;                                                  \
+            break;                                                          \
     }
 
     case TLCORNER:

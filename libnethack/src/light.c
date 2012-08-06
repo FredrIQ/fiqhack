@@ -1,6 +1,6 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Copyright (c) Dean Luick, 1994					*/
-/* NetHack may be freely redistributed.  See license for details.	*/
+/* Copyright (c) Dean Luick, 1994                                       */
+/* NetHack may be freely redistributed.  See license for details.       */
 
 #include "hack.h"
 #include "lev.h"
@@ -39,8 +39,8 @@
  */
 
 /* flags */
-#define LSF_SHOW	0x1     /* display the light source */
-#define LSF_NEEDS_FIXUP	0x2     /* need oid fixup */
+#define LSF_SHOW        0x1     /* display the light source */
+#define LSF_NEEDS_FIXUP 0x2     /* need oid fixup */
 
 static void write_ls(struct memfile *mf, light_source *);
 static int maybe_write_ls(struct memfile *mf, struct level *lev, int range,
@@ -203,7 +203,7 @@ do_light_sources(char **cs_rows)
 }
 
 /* (mon->mx == 0) implies migrating */
-#define mon_is_local(mon)	((mon)->mx > 0)
+#define mon_is_local(mon) ((mon)->mx > 0)
 
 struct monst *
 find_mid(struct level *lev, unsigned nid, unsigned fmflags)

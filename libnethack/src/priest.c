@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Copyright (c) Izchak Miller, Steve Linhart, 1989.		  */
+/* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -9,7 +9,7 @@
 #include "emin.h"
 
 /* this matches the categorizations shown by enlightenment */
-#define ALGN_SINNED	(-4)    /* worse than strayed */
+#define ALGN_SINNED     (-4)    /* worse than strayed */
 
 static boolean histemple_at(struct monst *, xchar, xchar);
 static boolean has_shrine(const struct monst *);
@@ -65,7 +65,7 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
                 goto pick_move;
         avoid = FALSE;
     }
-#define GDIST(x,y)	(dist2(x,y,gx,gy))
+#define GDIST(x,y)      (dist2(x,y,gx,gy))
 pick_move:
     chcnt = 0;
     for (i = 0; i < cnt; i++) {
@@ -221,15 +221,15 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
 
 /*
  * Specially aligned monsters are named specially.
- *	- aligned priests with ispriest and high priests have shrines
- *		they retain ispriest and epri when polymorphed
- *	- aligned priests without ispriest and Angels are roamers
- *		they retain isminion and access epri as emin when polymorphed
- *		(coaligned Angels are also created as minions, but they
- *		use the same naming convention)
- *	- minions do not have ispriest but have isminion and emin
- *	- caller needs to inhibit Hallucination if it wants to force
- *		the true name even when under that influence
+ *      - aligned priests with ispriest and high priests have shrines
+ *          they retain ispriest and epri when polymorphed
+ *      - aligned priests without ispriest and Angels are roamers
+ *          they retain isminion and access epri as emin when polymorphed
+ *          (coaligned Angels are also created as minions, but they
+ *          use the same naming convention)
+ *      - minions do not have ispriest but have isminion and emin
+ *      - caller needs to inhibit Hallucination if it wants to force
+ *          the true name even when under that influence
  */
 char *
 priestname(const struct monst *mon, char *pname)

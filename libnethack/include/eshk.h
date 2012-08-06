@@ -5,9 +5,9 @@
 #ifndef ESHK_H
 # define ESHK_H
 
-# define REPAIR_DELAY	5       /* minimum delay between shop damage & repair */
+# define REPAIR_DELAY   5       /* minimum delay between shop damage & repair */
 
-# define BILLSZ	200
+# define BILLSZ         200
 
 struct bill_x {
     unsigned bo_id;
@@ -36,9 +36,9 @@ struct eshk {
     char shknam[PL_NSIZ];
 };
 
-# define ESHK(mon)	((struct eshk *)&(mon)->mextra[0])
+# define ESHK(mon)      ((struct eshk *)&(mon)->mextra[0])
 
-# define NOTANGRY(mon)	((mon)->mpeaceful)
-# define ANGRY(mon)	(!NOTANGRY(mon))
+# define NOTANGRY(mon)  ((mon)->mpeaceful)
+# define ANGRY(mon)     (!NOTANGRY(mon))
 
 #endif /* ESHK_H */

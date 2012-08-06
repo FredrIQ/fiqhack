@@ -4,8 +4,8 @@
 
 #include "hack.h"
 
-#define NOINVSYM	'#'
-#define CONTAINED_SYM	'>'     /* designator for inside a container */
+#define NOINVSYM        '#'
+#define CONTAINED_SYM   '>'     /* designator for inside a container */
 
 static boolean mergable(struct obj *, struct obj *);
 static void invdisp_nothing(const char *, const char *);
@@ -790,9 +790,9 @@ object_selection_checks(struct obj *otmp, const char *word)
 
 /*
  * getobj returns:
- *	struct obj *xxx:	object to do something with.
- *	NULL	error return: no object.
- *	&zeroobj		explicitly no object (as in w-).
+ *      struct obj *xxx:  object to do something with.
+ *      NULL              error return: no object.
+ *      &zeroobj          explicitly no object (as in w-).
 !!!! test if gold can be used in unusual ways (eaten etc.)
  */
 struct obj *
@@ -1079,7 +1079,7 @@ is_worn(const struct obj * otmp)
 
 
 /*
- *	Object identification routines:
+ * Object identification routines:
  */
 
 /* make an object actually be identified; no display updating */
@@ -2415,8 +2415,8 @@ worn_wield_only(const struct obj *obj)
  * By default, only worn and wielded items are displayed.  The caller
  * can pick one.  Modifier flags are:
  *
- *	MINV_NOLET	- nothing selectable
- *	MINV_ALL	- display all inventory
+ *      MINV_NOLET      - nothing selectable
+ *      MINV_ALL        - display all inventory
  */
 struct obj *
 display_minventory(struct monst *mon, int dflags, char *title)

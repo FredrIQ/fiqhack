@@ -5,9 +5,9 @@
 #include "hack.h"
 #include "eshk.h"
 
-#define is_bigfoot(x)	((x) == &mons[PM_SASQUATCH])
-#define martial()	(martial_bonus() || is_bigfoot(youmonst.data) || \
-		(uarmf && uarmf->otyp == KICKING_BOOTS))
+#define is_bigfoot(x)   ((x) == &mons[PM_SASQUATCH])
+#define martial()       (martial_bonus() || is_bigfoot(youmonst.data) || \
+                         (uarmf && uarmf->otyp == KICKING_BOOTS))
 
 static struct rm *maploc;
 static const char *gate_str;

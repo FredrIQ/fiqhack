@@ -46,10 +46,10 @@ ballfall(void)
  *  To make this work, we have to mess with the hero's mind.  The rules for
  *  ball&chain are:
  *
- *	1. If the hero can see them, fine.
- *	2. If the hero can't see either, it isn't seen.
- *	3. If either is felt it is seen.
- *	4. If either is felt and moved, it disappears.
+ *      1. If the hero can see them, fine.
+ *      2. If the hero can't see either, it isn't seen.
+ *      3. If either is felt it is seen.
+ *      4. If either is felt and moved, it disappears.
  *
  *  If the hero can see, then when a move is done, the ball and chain are
  *  first picked up, the positions under them are corrected, then they
@@ -67,12 +67,12 @@ ballfall(void)
 
 /*
  * from you.h
- *	int u.bglyph		glyph under the ball
- *	int u.cglyph		glyph under the chain
- *	int u.bc_felt		mask for ball/chain being felt
- *	#define BC_BALL  0x01	bit mask in u.bc_felt for ball
- *	#define BC_CHAIN 0x02	bit mask in u.bc_felt for chain
- *	int u.bc_order		ball & chain order
+ *      int u.bglyph            glyph under the ball
+ *      int u.cglyph            glyph under the chain
+ *      int u.bc_felt           mask for ball/chain being felt
+ *      #define BC_BALL  0x01   bit mask in u.bc_felt for ball
+ *      #define BC_CHAIN 0x02   bit mask in u.bc_felt for chain
+ *      int u.bc_order          ball & chain order
  *
  * u.bc_felt is also manipulated in display.c and read.c, the others only
  * in this file.  None of these variables are valid unless the player is
@@ -80,9 +80,9 @@ ballfall(void)
  */
 
 /* values for u.bc_order */
-#define BCPOS_DIFFER	0       /* ball & chain at different positions */
-#define BCPOS_CHAIN	1       /* chain on top of ball */
-#define BCPOS_BALL	2       /* ball on top of chain */
+#define BCPOS_DIFFER    0       /* ball & chain at different positions */
+#define BCPOS_CHAIN     1       /* chain on top of ball */
+#define BCPOS_BALL      2       /* ball on top of chain */
 
 
 

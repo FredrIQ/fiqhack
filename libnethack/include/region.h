@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Copyright (c) 1996 by Jean-Christophe Collet			  */
+/* Copyright (c) 1996 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef REGION_H
@@ -9,14 +9,14 @@
 
 typedef boolean(*callback_proc) (void *, void *);
 
-# define REG_HERO_INSIDE	1
-# define REG_NOT_HEROS	2
-# define hero_inside(r)	((unsigned)(r)->player_flags & REG_HERO_INSIDE)
-# define heros_fault(r)	(!((unsigned)(r)->player_flags & REG_NOT_HEROS))
-# define set_hero_inside(r)	((r)->player_flags |= REG_HERO_INSIDE)
-# define clear_hero_inside(r)	((r)->player_flags &= ~REG_HERO_INSIDE)
-# define set_heros_fault(r)	((r)->player_flags &= ~REG_NOT_HEROS)
-# define clear_heros_fault(r)	((r)->player_flags |= REG_NOT_HEROS)
+# define REG_HERO_INSIDE      1
+# define REG_NOT_HEROS        2
+# define hero_inside(r)       ((unsigned)(r)->player_flags & REG_HERO_INSIDE)
+# define heros_fault(r)       (!((unsigned)(r)->player_flags & REG_NOT_HEROS))
+# define set_hero_inside(r)   ((r)->player_flags |= REG_HERO_INSIDE)
+# define clear_hero_inside(r) ((r)->player_flags &= ~REG_HERO_INSIDE)
+# define set_heros_fault(r)   ((r)->player_flags &= ~REG_NOT_HEROS)
+# define clear_heros_fault(r) ((r)->player_flags |= REG_NOT_HEROS)
 
 struct region {
     struct level *lev;  /* the level this region is on */
@@ -42,7 +42,7 @@ struct region {
     short n_monst;      /* Number of monsters inside this region */
     short max_monst;    /* Maximum number of monsters that can be listed
                            without having to grow the array */
-# define MONST_INC	5
+# define MONST_INC      5
 
     /* Should probably do the same thing about objects */
 

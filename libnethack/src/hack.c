@@ -14,7 +14,7 @@ static boolean check_interrupt(struct monst *mtmp);
 
 static void move_update(boolean);
 
-#define IS_SHOP(x)	(level->rooms[x].rtype >= SHOPBASE)
+#define IS_SHOP(x) (level->rooms[x].rtype >= SHOPBASE)
 
 
 boolean
@@ -1735,8 +1735,8 @@ in_rooms(struct level *lev, xchar x, xchar y, int typewanted)
     struct rm *loc;
 
 #define goodtype(rno) (!typewanted || \
-	     ((typefound = lev->rooms[rno - ROOMOFFSET].rtype) == typewanted) || \
-	     ((typewanted == SHOPBASE) && (typefound > SHOPBASE)))
+            ((typefound = lev->rooms[rno - ROOMOFFSET].rtype) == typewanted) || \
+            ((typewanted == SHOPBASE) && (typefound > SHOPBASE)))
 
     switch (rno = lev->locations[x][y].roomno) {
     case NO_ROOM:

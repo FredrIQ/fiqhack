@@ -26,11 +26,11 @@ typedef struct dlb_library {
 
 /* library definitions */
 # ifndef DLBFILE
-#  define DLBFILE	"nhdat"
+#  define DLBFILE       "nhdat"
                         /* name of library */
 # endif
 # ifndef FILENAME_CMP
-#  define FILENAME_CMP	strcmp  /* case sensitive */
+#  define FILENAME_CMP  strcmp  /* case sensitive */
 # endif
 
 

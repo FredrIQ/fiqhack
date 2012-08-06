@@ -5,7 +5,7 @@
 #ifndef VAULT_H
 # define VAULT_H
 
-# define FCSIZ	(ROWNO+COLNO)
+# define FCSIZ (ROWNO+COLNO)
 struct fakecorridor {
     xchar fx, fy, ftyp;
 };
@@ -21,6 +21,6 @@ struct egd {
     struct fakecorridor fakecorr[FCSIZ];
 };
 
-# define EGD(mon)	((struct egd *)&(mon)->mextra[0])
+# define EGD(mon) ((struct egd *)&(mon)->mextra[0])
 
 #endif /* VAULT_H */

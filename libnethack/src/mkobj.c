@@ -801,8 +801,8 @@ bcsign(struct obj *otmp)
  *  and calculate the weight of any containers.
  *
  *  Note:  It is possible to end up with an incorrect weight if some part
- *	   of the code messes with a contained object and doesn't update the
- *	   container's weight.
+ *         of the code messes with a contained object and doesn't update the
+ *         container's weight.
  */
 int
 weight(struct obj *obj)
@@ -892,17 +892,17 @@ mkgold(long amount, struct level *lev, int x, int y)
 
 
 /* return TRUE if the corpse has special timing */
-#define special_corpse(num)  (((num) == PM_LIZARD)		\
-				|| ((num) == PM_LICHEN)		\
-				|| (is_rider(&mons[num]))	\
-				|| (mons[num].mlet == S_TROLL))
+#define special_corpse(num)  (((num) == PM_LIZARD)              \
+                                || ((num) == PM_LICHEN)         \
+                                || (is_rider(&mons[num]))       \
+                                || (mons[num].mlet == S_TROLL))
 
 /*
  * OEXTRA note: Passing mtmp causes mtraits to be saved
  * even if ptr passed as well, but ptr is always used for
  * the corpse type (corpsenm). That allows the corpse type
  * to be different from the original monster,
- *	i.e.  vampire -> human corpse
+ *      i.e.  vampire -> human corpse
  * yet still allow restoration of the original monster upon
  * resurrection.
  */
@@ -1267,14 +1267,14 @@ discard_minvent(struct monst *mtmp)
  * inventory and confers heat resistance, the hero will lose it.
  *
  * Object positions:
- *	OBJ_FREE	not on any list
- *	OBJ_FLOOR	level->objlist, level->locations[][] chains (use remove_object)
- *	OBJ_CONTAINED	cobj chain of container object
- *	OBJ_INVENT	hero's invent chain (use freeinv)
- *	OBJ_MINVENT	monster's invent chain
- *	OBJ_MIGRATING	migrating chain
- *	OBJ_BURIED	level->buriedobjs chain
- *	OBJ_ONBILL	on billobjs chain
+ *      OBJ_FREE        not on any list
+ *      OBJ_FLOOR       level->objlist, level->locations[][] chains (use remove_object)
+ *      OBJ_CONTAINED   cobj chain of container object
+ *      OBJ_INVENT      hero's invent chain (use freeinv)
+ *      OBJ_MINVENT     monster's invent chain
+ *      OBJ_MIGRATING   migrating chain
+ *      OBJ_BURIED      level->buriedobjs chain
+ *      OBJ_ONBILL      on billobjs chain
  */
 void
 obj_extract_self(struct obj *obj)
@@ -1430,7 +1430,7 @@ container_weight(struct obj *container)
         container_weight(container->ocontainer);
 /*
     else if (container->where == OBJ_INVENT)
-	recalculate load delay here ???
+        recalculate load delay here ???
 */
 }
 

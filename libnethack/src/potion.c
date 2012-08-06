@@ -1195,12 +1195,12 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
             bhitm(mon, obj);
             break;
 /*
-	case POT_GAIN_LEVEL:
-	case POT_LEVITATION:
-	case POT_FRUIT_JUICE:
-	case POT_MONSTER_DETECTION:
-	case POT_OBJECT_DETECTION:
-		break;
+        case POT_GAIN_LEVEL:
+        case POT_LEVITATION:
+        case POT_FRUIT_JUICE:
+        case POT_MONSTER_DETECTION:
+        case POT_OBJECT_DETECTION:
+            break;
 */
         }
         if (angermon)
@@ -1371,13 +1371,13 @@ potionbreathe(struct obj *obj)
         exercise(A_CON, FALSE);
         break;
 /*
-	case POT_GAIN_LEVEL:
-	case POT_LEVITATION:
-	case POT_FRUIT_JUICE:
-	case POT_MONSTER_DETECTION:
-	case POT_OBJECT_DETECTION:
-	case POT_OIL:
-		break;
+    case POT_GAIN_LEVEL:
+    case POT_LEVITATION:
+    case POT_FRUIT_JUICE:
+    case POT_MONSTER_DETECTION:
+    case POT_OBJECT_DETECTION:
+    case POT_OIL:
+        break;
 */
     }
     /* note: no obfree() */

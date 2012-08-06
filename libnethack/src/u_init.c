@@ -17,12 +17,12 @@ static void knows_object(int);
 static void knows_class(char);
 static boolean restricted_spell_discipline(int);
 
-#define UNDEF_TYP	0
-#define UNDEF_SPE	'\177'
-#define UNDEF_BLESS	2
+#define UNDEF_TYP       0
+#define UNDEF_SPE       '\177'
+#define UNDEF_BLESS     2
 
 /*
- *	Initial inventory for the various roles.
+ * Initial inventory for the various roles.
  */
 
 static const struct trobj Archeologist[] = {
@@ -39,8 +39,8 @@ static const struct trobj Archeologist[] = {
 };
 
 static const struct trobj Barbarian[] = {
-#define B_MAJOR	0       /* two-handed sword or battle-axe */
-#define B_MINOR	1       /* matched with axe or short sword */
+#define B_MAJOR 0       /* two-handed sword or battle-axe */
+#define B_MINOR 1       /* matched with axe or short sword */
     {TWO_HANDED_SWORD, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
     {AXE, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
     {RING_MAIL, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
@@ -49,7 +49,7 @@ static const struct trobj Barbarian[] = {
 };
 
 static const struct trobj Cave_man[] = {
-#define C_AMMO	2
+#define C_AMMO  2
     {CLUB, 1, WEAPON_CLASS, 1, UNDEF_BLESS},
     {SLING, 2, WEAPON_CLASS, 1, UNDEF_BLESS},
     {FLINT, 0, GEM_CLASS, 15, UNDEF_BLESS},     /* quan is variable */
@@ -86,7 +86,7 @@ static const struct trobj Knight[] = {
 };
 
 static const struct trobj Monk[] = {
-#define M_BOOK		2
+#define M_BOOK          2
     {LEATHER_GLOVES, 2, ARMOR_CLASS, 1, UNDEF_BLESS},
     {ROBE, 1, ARMOR_CLASS, 1, UNDEF_BLESS},
     {UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, 1},
@@ -113,9 +113,9 @@ static const struct trobj Priest[] = {
 };
 
 static const struct trobj Ranger[] = {
-#define RAN_BOW			1
-#define RAN_TWO_ARROWS	2
-#define RAN_ZERO_ARROWS	3
+#define RAN_BOW         1
+#define RAN_TWO_ARROWS  2
+#define RAN_ZERO_ARROWS 3
     {DAGGER, 1, WEAPON_CLASS, 1, UNDEF_BLESS},
     {BOW, 1, WEAPON_CLASS, 1, UNDEF_BLESS},
     {ARROW, 2, WEAPON_CLASS, 50, UNDEF_BLESS},
@@ -126,7 +126,7 @@ static const struct trobj Ranger[] = {
 };
 
 static const struct trobj Rogue[] = {
-#define R_DAGGERS	1
+#define R_DAGGERS       1
     {SHORT_SWORD, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
     {DAGGER, 0, WEAPON_CLASS, 10, 0},   /* quan is variable */
     {LEATHER_ARMOR, 1, ARMOR_CLASS, 1, UNDEF_BLESS},
@@ -137,7 +137,7 @@ static const struct trobj Rogue[] = {
 };
 
 static const struct trobj Samurai[] = {
-#define S_ARROWS	3
+#define S_ARROWS        3
     {KATANA, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
     {SHORT_SWORD, 0, WEAPON_CLASS, 1, UNDEF_BLESS},     /* wakizashi */
     {YUMI, 0, WEAPON_CLASS, 1, UNDEF_BLESS},
@@ -147,7 +147,7 @@ static const struct trobj Samurai[] = {
 };
 
 static const struct trobj Tourist[] = {
-#define T_DARTS		0
+#define T_DARTS         0
     {DART, 2, WEAPON_CLASS, 25, UNDEF_BLESS},   /* quan is variable */
     {UNDEF_TYP, UNDEF_SPE, FOOD_CLASS, 10, 0},
     {POT_EXTRA_HEALING, 0, POTION_CLASS, 2, UNDEF_BLESS},
@@ -167,8 +167,8 @@ static const struct trobj Valkyrie[] = {
 };
 
 static const struct trobj Wizard[] = {
-#define W_MULTSTART	2
-#define W_MULTEND	6
+#define W_MULTSTART     2
+#define W_MULTEND       6
     {QUARTERSTAFF, 1, WEAPON_CLASS, 1, 1},
     {CLOAK_OF_MAGIC_RESISTANCE, 0, ARMOR_CLASS, 1, UNDEF_BLESS},
     {UNDEF_TYP, UNDEF_SPE, WAND_CLASS, 1, UNDEF_BLESS},
@@ -181,7 +181,7 @@ static const struct trobj Wizard[] = {
 };
 
 /*
- *	Optional extra inventory items.
+ * Optional extra inventory items.
  */
 
 static const struct trobj Tinopener[] = {
@@ -831,7 +831,7 @@ u_init_inv_skills(void)
     init_attr(75);      /* init attribute values */
     max_rank_sz();      /* set max str size for class ranks */
 /*
- *	Do we really need this?
+ * Do we really need this?
  */
     for (i = 0; i < A_MAX; i++)
         if (!rn2(20)) {

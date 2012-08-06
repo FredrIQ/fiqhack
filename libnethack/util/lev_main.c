@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright (c) 1989 by Jean-Christophe Collet */
+/* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
@@ -32,13 +32,13 @@
 # define OMASK 0644
 #endif
 
-#define ERR		(-1)
+#define ERR                   (-1)
 
-#define NewTab(type, size)	malloc(sizeof(type *) * size)
-#define Free(ptr)		if (ptr) free((ptr))
-#define Write(fd, item, size)	if (write(fd, (item), size) != size) return FALSE;
+#define NewTab(type, size)    malloc(sizeof(type *) * size)
+#define Free(ptr)             if (ptr) free((ptr))
+#define Write(fd, item, size) if (write(fd, (item), size) != size) return FALSE;
 
-#define MAX_ERRORS	25
+#define MAX_ERRORS            25
 
 extern int yyparse(void);
 extern void init_yyin(FILE *);
@@ -522,8 +522,8 @@ scan_map(char *map)
 }
 
 /*
- *	If we have drawn a map without walls, this allows us to
- *	auto-magically wallify it.
+ * If we have drawn a map without walls, this allows us to
+ * auto-magically wallify it.
  */
 #define Map_point(x,y) *(tmppart[npart]->map[y] + x)
 
@@ -586,10 +586,10 @@ check_subrooms(void)
             n_subrooms = 0;
             for (j = i; j < nrooms; j++) {
 /*
- *	This is by no means perfect, but should cut down the duplicate error
- *	messages by over 90%.  The only problem will be when either subrooms
- *	are mixed in the level definition (not likely but possible) or rooms
- *	have subrooms that have subrooms.
+ * This is by no means perfect, but should cut down the duplicate error
+ * messages by over 90%.  The only problem will be when either subrooms
+ * are mixed in the level definition (not likely but possible) or rooms
+ * have subrooms that have subrooms.
  */
                 if (!strcmp(tmproom[i]->parent, last_parent))
                     continue;

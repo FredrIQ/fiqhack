@@ -14,17 +14,17 @@ static const char *artifact_names[] = {
 # define A(nam,typ,s1,s2,mt,atk,dfn,cry,inv,al,cl,rac,cost) \
  { nam, cost, s1, s2, mt, atk, dfn, cry, al, inv, cl, rac, typ }
 
-# define     NO_ATTK	{0,0,0,0}       /* no attack */
-# define     NO_DFNS	{0,0,0,0}       /* no defense */
-# define     NO_CARY	{0,0,0,0}       /* no carry effects */
-# define     DFNS(c)	{0,c,0,0}
-# define     CARY(c)	{0,c,0,0}
-# define     PHYS(a,b)	{0,AD_PHYS,a,b} /* physical */
-# define     DRLI(a,b)	{0,AD_DRLI,a,b} /* life drain */
-# define     COLD(a,b)	{0,AD_COLD,a,b}
-# define     FIRE(a,b)	{0,AD_FIRE,a,b}
-# define     ELEC(a,b)	{0,AD_ELEC,a,b} /* electrical shock */
-# define     STUN(a,b)	{0,AD_STUN,a,b} /* magical attack */
+# define     NO_ATTK    {0,0,0,0}       /* no attack */
+# define     NO_DFNS    {0,0,0,0}       /* no defense */
+# define     NO_CARY    {0,0,0,0}       /* no carry effects */
+# define     DFNS(c)    {0,c,0,0}
+# define     CARY(c)    {0,c,0,0}
+# define     PHYS(a,b)  {0,AD_PHYS,a,b} /* physical */
+# define     DRLI(a,b)  {0,AD_DRLI,a,b} /* life drain */
+# define     COLD(a,b)  {0,AD_COLD,a,b}
+# define     FIRE(a,b)  {0,AD_FIRE,a,b}
+# define     ELEC(a,b)  {0,AD_ELEC,a,b} /* electrical shock */
+# define     STUN(a,b)  {0,AD_STUN,a,b} /* magical attack */
 
 static const struct artifact const_artilist[] = {
 #endif /* MAKEDEFS_C */
@@ -45,15 +45,15 @@ static const struct artifact const_artilist[] = {
        SPFX_SEARCH), 0, 0,
       PHYS(5, 10), DRLI(0, 0), NO_CARY, 0, A_LAWFUL, PM_KNIGHT, NON_PM, 4000L),
 /*
- *	Stormbringer only has a 2 because it can drain a level,
- *	providing 8 more.
+ *      Stormbringer only has a 2 because it can drain a level,
+ *      providing 8 more.
  */
     A("Stormbringer", RUNESWORD,
       (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN | SPFX_INTEL | SPFX_DRLI), 0, 0,
       DRLI(5, 2), DRLI(0, 0), NO_CARY, 0, A_CHAOTIC, NON_PM, NON_PM, 8000L),
 /*
- *	Mjollnir will return to the hand of the wielder when thrown
- *	if the wielder is a Valkyrie wearing Gauntlets of Power.
+ *      Mjollnir will return to the hand of the wielder when thrown
+ *      if the wielder is a Valkyrie wearing Gauntlets of Power.
  */
     A("Mjollnir", WAR_HAMMER,   /* Mjo:llnir */
       (SPFX_RESTR | SPFX_ATTK), 0, 0,
@@ -67,24 +67,24 @@ static const struct artifact const_artilist[] = {
       SPFX_RESTR, 0, 0,
       PHYS(2, 6), NO_DFNS, NO_CARY, 0, A_CHAOTIC, NON_PM, PM_ORC, 300L),
 /*
- *	Orcrist and Sting have same alignment as elves.
+ *      Orcrist and Sting have same alignment as elves.
  */
     A("Orcrist", ELVEN_BROADSWORD,
       SPFX_DFLAG2, 0, M2_ORC,
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_CHAOTIC, NON_PM, PM_ELF, 2000L),
 
 /*
- *	The combination of SPFX_WARN and M2_something on an artifact
- *	will trigger EWarn_of_mon for all monsters that have the appropriate
- *	M2_something flags.  In Sting's case it will trigger EWarn_of_mon
- *	for M2_ORC monsters.
+ *      The combination of SPFX_WARN and M2_something on an artifact
+ *      will trigger EWarn_of_mon for all monsters that have the appropriate
+ *      M2_something flags.  In Sting's case it will trigger EWarn_of_mon
+ *      for M2_ORC monsters.
  */
     A("Sting", ELVEN_DAGGER,
       (SPFX_WARN | SPFX_DFLAG2), 0, M2_ORC,
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_CHAOTIC, NON_PM, PM_ELF, 800L),
 /*
- *	Magicbane is a bit different!  Its magic fanfare
- *	unbalances victims in addition to doing some damage.
+ *      Magicbane is a bit different!  Its magic fanfare
+ *      unbalances victims in addition to doing some damage.
  */
     A("Magicbane", ATHAME,
       (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
@@ -127,20 +127,20 @@ static const struct artifact const_artilist[] = {
       (SPFX_RESTR | SPFX_DCLAS), 0, S_TROLL,
       PHYS(5, 0), NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 200L),
 /*
- *	Two problems:  1) doesn't let trolls regenerate heads,
- *	2) doesn't give unusual message for 2-headed monsters (but
- *	allowing those at all causes more problems than worth the effort).
+ *      Two problems:  1) doesn't let trolls regenerate heads,
+ *      2) doesn't give unusual message for 2-headed monsters (but
+ *      allowing those at all causes more problems than worth the effort).
  */
     A("Vorpal Blade", LONG_SWORD,
       (SPFX_RESTR | SPFX_BEHEAD), 0, 0,
       PHYS(5, 1), NO_DFNS, NO_CARY, 0, A_NEUTRAL, NON_PM, NON_PM, 4000L),
 /*
- *	Ah, never shall I forget the cry,
- *		or the shriek that shrieked he,
- *	As I gnashed my teeth, and from my sheath
- *		I drew my Snickersnee!
- *			--Koko, Lord high executioner of Titipu
- *			  (From Sir W.S. Gilbert's "The Mikado")
+ *      Ah, never shall I forget the cry,
+ *              or the shriek that shrieked he,
+ *      As I gnashed my teeth, and from my sheath
+ *              I drew my Snickersnee!
+ *                      --Koko, Lord high executioner of Titipu
+ *                        (From Sir W.S. Gilbert's "The Mikado")
  */
     A("Snickersnee", KATANA,
       SPFX_RESTR, 0, 0,
@@ -151,7 +151,7 @@ static const struct artifact const_artilist[] = {
       PHYS(5, 0), DFNS(AD_BLND), NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM, 1500L),
 
 /*
- *	The artifacts for the quest dungeon, all self-willed.
+ *      The artifacts for the quest dungeon, all self-willed.
  */
 
     A("The Orb of Detection", CRYSTAL_BALL,
@@ -231,18 +231,18 @@ static const struct artifact const_artilist[] = {
 
 };      /* artilist[] (or artifact_names[]) */
 
-#undef	A
+#undef  A
 
 #ifndef MAKEDEFS_C
-# undef	NO_ATTK
-# undef	NO_DFNS
-# undef	DFNS
-# undef	PHYS
-# undef	DRLI
-# undef	COLD
-# undef	FIRE
-# undef	ELEC
-# undef	STUN
+# undef NO_ATTK
+# undef NO_DFNS
+# undef DFNS
+# undef PHYS
+# undef DRLI
+# undef COLD
+# undef FIRE
+# undef ELEC
+# undef STUN
 #endif
 
 /*artilist.h*/

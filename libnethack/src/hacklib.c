@@ -1,6 +1,6 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* Copyright (c) Robert Patrick Rankin, 1991		  */
+/* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* We could include only config.h, except for the overlay definitions... */
@@ -10,43 +10,43 @@
 #endif
 
 /*=
-    Assorted 'small' utility routines.	They're virtually independent of
+    Assorted 'small' utility routines.  They're virtually independent of
 NetHack, except that rounddiv may call panic().
 
       return type     routine name    argument type(s)
-	boolean		digit		(char)
-	boolean		letter		(char)
-	char		highc		(char)
-	char		lowc		(char)
-	char *		lcase		(char *)
-	char *		upstart		(char *)
-	char *		mungspaces	(char *)
-	char *		eos		(char *)
-	char *		strkitten	(char *,char)
-	char *		s_suffix	(const char *)
-	char *		xcrypt		(const char *, char *)
-	boolean		onlyspace	(const char *)
-	char *		tabexpand	(char *)
-	char *		visctrl		(char)
-	const char *	ordin		(int)
-	char *		sitoa		(int)
-	int		sgn		(int)
-	int		rounddiv	(long, int)
-	int		distmin		(int, int, int, int)
-	int		dist2		(int, int, int, int)
-	boolean		online2		(int, int)
-	boolean		pmatch		(const char *, const char *)
-	int		strncmpi	(const char *, const char *, int)
-	char *		strstri		(const char *, const char *)
-	boolean		fuzzymatch	(const char *,const char *,const char *,boolean)
-	void		setrandom	(void)
-	int		getyear		(void)
-	char *		yymmdd		(time_t)
-	long		yyyymmdd	(time_t)
-	int		phase_of_the_moon	(void)
-	boolean		friday_13th	(void)
-	int		night		(void)
-	int		midnight	(void)
+        boolean         digit           (char)
+        boolean         letter          (char)
+        char            highc           (char)
+        char            lowc            (char)
+        char *          lcase           (char *)
+        char *          upstart         (char *)
+        char *          mungspaces      (char *)
+        char *          eos             (char *)
+        char *          strkitten       (char *,char)
+        char *          s_suffix        (const char *)
+        char *          xcrypt          (const char *, char *)
+        boolean         onlyspace       (const char *)
+        char *          tabexpand       (char *)
+        char *          visctrl         (char)
+        const char *    ordin           (int)
+        char *          sitoa           (int)
+        int             sgn             (int)
+        int             rounddiv        (long, int)
+        int             distmin         (int, int, int, int)
+        int             dist2           (int, int, int, int)
+        boolean         online2         (int, int)
+        boolean         pmatch          (const char *, const char *)
+        int             strncmpi        (const char *, const char *, int)
+        char *          strstri         (const char *, const char *)
+        boolean         fuzzymatch      (const char *,const char *,const char *,boolean)
+        void            setrandom       (void)
+        int             getyear         (void)
+        char *          yymmdd          (time_t)
+        long            yyyymmdd        (time_t)
+        int             phase_of_the_moon       (void)
+        boolean         friday_13th     (void)
+        int             night           (void)
+        int             midnight        (void)
 =*/
 
 
@@ -388,11 +388,11 @@ fuzzymatch(const char *s1, const char *s2, const char *ignore_chars,
  * Time routines
  *
  * The time is used for:
- *	- seed for rand()
- *	- year on tombstone and yyyymmdd in record file
- *	- phase of the moon (various monsters react to NEW_MOON or FULL_MOON)
- *	- night and midnight (the undead are dangerous at midnight)
- *	- determination of what files are "very old"
+ *      - seed for rand()
+ *      - year on tombstone and yyyymmdd in record file
+ *      - phase of the moon (various monsters react to NEW_MOON or FULL_MOON)
+ *      - night and midnight (the undead are dangerous at midnight)
+ *      - determination of what files are "very old"
  */
 
 static struct tm *getlt(void);
@@ -446,11 +446,11 @@ yyyymmdd(time_t date)
 /*
  * moon period = 29.53058 days ~= 30, year = 365.2422 days
  * days moon phase advances on first day of year compared to preceding year
- *	= 365.2422 - 12*29.53058 ~= 11
+ *      = 365.2422 - 12*29.53058 ~= 11
  * years in Metonic cycle (time until same phases fall on the same days of
- *	the month) = 18.6 ~= 19
+ *      the month) = 18.6 ~= 19
  * moon phase on first day of year (epact) ~= (11*(year%19) + 29) % 30
- *	(29 as initial condition)
+ *      (29 as initial condition)
  * current phase in days = first day phase + days elapsed in year
  * 6 moons ~= 177 days
  * 177 ~= 8 reported phases * 22

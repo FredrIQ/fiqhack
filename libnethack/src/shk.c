@@ -17,7 +17,7 @@ static void makekops(coord *);
 static void call_kops(struct monst *, boolean);
 static void kops_gone(boolean);
 
-#define IS_SHOP(lev, x)	((lev)->rooms[x].rtype >= SHOPBASE)
+#define IS_SHOP(lev, x) ((lev)->rooms[x].rtype >= SHOPBASE)
 
 extern const struct shclass shtypes[];  /* defined in shknam.c */
 extern struct obj *thrownobj;   /* defined in dothrow.c */
@@ -62,8 +62,8 @@ static boolean rob_shop(struct monst *);
 static struct obj *find_oid_lev(struct level *lev, unsigned id);
 
 /*
-	invariants: obj->unpaid iff onbill(obj) [unless bp->useup]
-		obj->quan <= bp->bquan
+    invariants: obj->unpaid iff onbill(obj) [unless bp->useup]
+        obj->quan <= bp->bquan
  */
 
 
@@ -1353,10 +1353,10 @@ proceed:
 
 
 /* return 2 if used-up portion paid */
-/*	  1 if paid successfully    */
-/*	  0 if not enough money     */
-/*	 -1 if skip this object     */
-/*	 -2 if no money/credit left */
+/*        1 if paid successfully    */
+/*        0 if not enough money     */
+/*       -1 if skip this object     */
+/*       -2 if no money/credit left */
 static int
 dopayobj(struct monst *shkp, struct bill_x *bp, struct obj **obj_p,
          int which,  /* 0 => used-up item, 1 => other (unpaid or lost) */
@@ -2722,7 +2722,7 @@ quit:
     return 0;
 }
 
-#define HUNGRY	2
+#define HUNGRY  2
 
 static long
 getprice(const struct obj *obj, boolean shk_buying)
@@ -2998,10 +2998,10 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
     if ((otmp = lev->objects[x][y]) != 0) {
         /* Scatter objects haphazardly into the shop */
 #define NEED_UPDATE 1
-#define OPEN	    2
-#define INSHOP	    4
-#define horiz(i) ((i%3)-1)
-#define vert(i)  ((i/3)-1)
+#define OPEN        2
+#define INSHOP      4
+#define horiz(i)    ((i%3)-1)
+#define vert(i)     ((i/3)-1)
         for (i = 0; i < 9; i++) {
             if ((i == 4) ||
                 (!ZAP_POS(lev->locations[x + horiz(i)][y + vert(i)].typ)))
@@ -3137,7 +3137,7 @@ shk_move(struct monst *shkp)
         }
         avoid = FALSE;
     } else {
-#define	GDIST(x,y)	(dist2(x,y,gx,gy))
+#define GDIST(x,y)  (dist2(x,y,gx,gy))
         if (Invis || u.usteed) {
             avoid = FALSE;
         } else {

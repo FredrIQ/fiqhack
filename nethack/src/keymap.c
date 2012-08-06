@@ -23,12 +23,12 @@ enum internal_commands {
 #define RESET_BINDINGS_ID (-10000)
 
 #ifndef Ctrl
-# define Ctrl(c)		(0x1f & (c))
+# define Ctrl(c)        (0x1f & (c))
 #endif
 
-#define DIRCMD		(1U << 29)
-#define DIRCMD_SHIFT	(1U << 30)
-#define DIRCMD_CTRL	(1U << 31)
+#define DIRCMD          (1U << 29)
+#define DIRCMD_SHIFT    (1U << 30)
+#define DIRCMD_CTRL     (1U << 31)
 
 struct nh_cmd_desc builtin_commands[] = {
     {"east", "move, fight or interact to the east", 'l', 0,

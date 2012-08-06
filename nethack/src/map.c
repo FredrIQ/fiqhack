@@ -235,7 +235,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 
         if ((cp = strchr(pick_chars, (char)key)) != 0) {
             /* '.' => 0, ',' => 1, ';' => 2, ':' => 3 */
-	    result = pick_vals[cp - pick_chars];
+            result = pick_vals[cp - pick_chars];
             break;
         }
 
@@ -294,7 +294,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                 cy = monpos[monidx].y;
                 monidx = (monidx + 1) % moncount;
             }
-	} else {
+        } else {
             int k = 0, tx, ty;
             int pass, lo_x, lo_y, hi_x, hi_y;
 
@@ -328,7 +328,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                 curses_msgwin(printbuf);
             } else {
                 sprintf(printbuf, "Unknown direction%s.",
-			!force ? " (ESC to abort)" : "");
+                        !force ? " (ESC to abort)" : "");
                 curses_msgwin(printbuf);
             }
         }

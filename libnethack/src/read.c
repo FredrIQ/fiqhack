@@ -9,11 +9,11 @@
 #define STRIDENT 4
 
 #define Your_Own_Role(mndx) \
-	((mndx) == urole.malenum || \
-	 (urole.femalenum != NON_PM && (mndx) == urole.femalenum))
+        ((mndx) == urole.malenum || \
+         (urole.femalenum != NON_PM && (mndx) == urole.femalenum))
 #define Your_Own_Race(mndx) \
-	((mndx) == urace.malenum || \
-	 (urace.femalenum != NON_PM && (mndx) == urace.femalenum))
+        ((mndx) == urace.malenum || \
+         (urace.femalenum != NON_PM && (mndx) == urace.femalenum))
 
 static const char readable[] = { ALL_CLASSES, SCROLL_CLASS, SPBOOK_CLASS, 0 };
 static const char all_count[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
@@ -522,12 +522,12 @@ forget_objects(int percent)
  * Forget some things (e.g. after reading a scroll of amnesia).  When called,
  * the following are always forgotten:
  *
- *	- felt ball & chain
+ *      - felt ball & chain
  *      - skill training
  *
  * Other things are subject to flags:
  *
- *	howmuch & ALL_SPELLS	= forget all spells
+ *      howmuch & ALL_SPELLS    = forget all spells
  *      howmuch & ALL_MAP       = forget all objects (no more map amnesia)
  */
 static void

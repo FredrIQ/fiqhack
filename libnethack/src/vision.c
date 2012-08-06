@@ -1,6 +1,6 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990.	*/
-/* NetHack may be freely redistributed.  See license for details.	*/
+/* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
+/* NetHack may be freely redistributed.  See license for details.       */
 
 #include "hack.h"
 
@@ -15,11 +15,11 @@
  * offset on the same row as the source *is* included so we don't have to
  * make an extra check.  For example, a circle of radius 4 has offsets:
  *
- *				XXX	+2
- *				...X	+3
- *				....X	+4
- *				....X	+4
- *				@...X   +4
+ *          XXX     +2
+ *          ...X    +3
+ *          ....X   +4
+ *          ....X   +4
+ *          @...X   +4
  *
  */
 const char circle_data[] = {
@@ -270,8 +270,8 @@ get_unused_cs(char ***rows, char **rmin, char **rmax)
  * Set the "could see" and in sight bits so vision acts just like the old
  * rogue game:
  *
- *	+ If in a room, the hero can see to the room boundaries.
- *	+ The hero can always see adjacent squares.
+ *     + If in a room, the hero can see to the room boundaries.
+ *     + The hero can always see adjacent squares.
  *
  * We set the in_sight bit here as well to escape a bug that shows up
  * due to the one-sided lit wall hack.
@@ -351,17 +351,17 @@ static int new_angle(struct rm *, unsigned char *, int, int);
  * see, then we want to extend a spine of the T to connect with the wall
  * that is beyond.  Example:
  *
- *	 Correct, but ugly			   Extend T spine
+ *              Correct, but ugly                       Extend T spine
  *
- *		| ...					| ...
- *		| ...	<-- wall beyond & floor -->	| ...
- *		| ...					| ...
- * Unseen   -->   ...					| ...
- * spine	+-...	<-- trwall & doorway	-->	+-...
- *		| ...					| ...
+ *              | ...                                   | ...
+ *              | ...   <-- wall beyond & floor -->     | ...
+ *              | ...                                   | ...
+ * Unseen   -->   ...                                   | ...
+ * spine        +-...   <-- trwall & doorway    -->     +-...
+ *              | ...                                   | ...
  *
  *
- *		   @	<-- hero		-->	   @
+ *                 @    <-- hero                -->        @
  *
  *
  * We fake the above check by only checking if the horizontal &
@@ -369,17 +369,17 @@ static int new_angle(struct rm *, unsigned char *, int, int);
  * unblocked.  Then, _in general_ we can see beyond.  Generally,
  * this is good enough.
  *
- *	+ When this function is called we don't have all of the seen
- *	  information (we're doing a top down scan in vision_recalc).
- *	  We would need to scan once to set all IN_SIGHT and COULD_SEE
- *	  bits, then again to correctly set the seenv bits.
- *	+ I'm trying to make this as cheap as possible.  The display &
- *	  vision eat up too much CPU time.
- *	
+ *     + When this function is called we don't have all of the seen
+ *       information (we're doing a top down scan in vision_recalc).
+ *       We would need to scan once to set all IN_SIGHT and COULD_SEE
+ *       bits, then again to correctly set the seenv bits.
+ *     + I'm trying to make this as cheap as possible.  The display &
+ *       vision eat up too much CPU time.
+ *
  *
  * Note:  Even as I write this, I'm still not convinced.  There are too
- *	  many exceptions.  I may have to bite the bullet and do more
- *	  checks.	- Dean 2/11/93
+ *        many exceptions.  I may have to bite the bullet and do more
+ *        checks.       - Dean 2/11/93
  */
 static int
 new_angle(struct rm *loc, unsigned char *sv, int row, int col)
@@ -453,30 +453,30 @@ new_angle(struct rm *loc, unsigned char *sv, int row, int col)
  * can see.  (1) and (2) call this routine for synchronization purposes, (3)
  * calls this routine so it can operate correctly.
  *
- *	+ After the monster move, before input from the player. [moveloop()]
- *	+ At end of moveloop. [moveloop() ??? not sure why this is here]
- *	+ Right before something is printed. [pline()]
- *	+ Right before we do a vision based operation. [do_clear_area()]
- *	+ screen redraw, so we can renew all positions in sight. [doredraw()]
+ *     + After the monster move, before input from the player. [moveloop()]
+ *     + At end of moveloop. [moveloop() ??? not sure why this is here]
+ *     + Right before something is printed. [pline()]
+ *     + Right before we do a vision based operation. [do_clear_area()]
+ *     + screen redraw, so we can renew all positions in sight. [doredraw()]
  *
  * Control flag = 1.  An adjacent vision recalculation.  The hero has moved
  * one square.  Knowing this, it might be possible to optimize the vision
  * recalculation using the current knowledge.  This is presently unimplemented
  * and is treated as a control = 0 call.
  *
- *	+ Right after the hero moves. [domove()]
+ *     + Right after the hero moves. [domove()]
  *
  * Control flag = 2.  Turn off the vision system.  Nothing new will be
  * displayed, since nothing is seen.  This is usually done when you need
  * a newsym() run on all locations in sight, or on some locations but you
  * don't know which ones.
  *
- *	+ Before a screen redraw, so all positions are renewed. [doredraw()]
- *	+ Right before the hero arrives on a new level. [goto_level()]
- *	+ Right after a scroll of light is read. [litroom()]
- *	+ After an option has changed that affects vision [parseoptions()]
- *	+ Right after the hero is swallowed. [gulpmu()]
- *	+ Just before bubbles are moved. [movebubbles()]
+ *     + Before a screen redraw, so all positions are renewed. [doredraw()]
+ *     + Right before the hero arrives on a new level. [goto_level()]
+ *     + Right after a scroll of light is read. [litroom()]
+ *     + After an option has changed that affects vision [parseoptions()]
+ *     + Right after the hero is swallowed. [gulpmu()]
+ *     + Just before bubbles are moved. [movebubbles()]
  */
 void
 vision_recalc(int control)
@@ -851,20 +851,20 @@ unblock_point(int x, int y)
 
 
 /*===========================================================================*\
- |									     |
- |	Everything below this line uses (y,x) instead of (x,y) --- the	     |
- |	algorithms are faster if they are less recursive and can scan	     |
- |	on a row longer.						     |
- |									     |
+ |                                                                           |
+ |      Everything below this line uses (y,x) instead of (x,y) --- the       |
+ |      algorithms are faster if they are less recursive and can scan        |
+ |      on a row longer.                                                     |
+ |                                                                           |
 \*===========================================================================*/
 
 
 /* ========================================================================= *\
-			Left and Right Pointer Updates
+                        Left and Right Pointer Updates
 \* ========================================================================= */
 
 /*
- *			LEFT and RIGHT pointer rules
+ *                      LEFT and RIGHT pointer rules
  *
  *
  * **NOTE**  The rules changed on 4/4/90.  This comment reflects the
@@ -1085,12 +1085,12 @@ static void *varg;
 /*
  * Both Algorithms C and D use the following macros.
  *
- *      good_row(z)	  - Return TRUE if the argument is a legal row.
+ *      good_row(z)       - Return TRUE if the argument is a legal row.
  *      set_cs(rowp,col)  - Set the local could see array.
- *      set_min(z)	  - Save the min value of the argument and the current
- *			      row minimum.
- *      set_max(z)	  - Save the max value of the argument and the current
- *			      row maximum.
+ *      set_min(z)        - Save the min value of the argument and the current
+ *                          row minimum.
+ *      set_max(z)        - Save the max value of the argument and the current
+ *                          row maximum.
  *
  * The last three macros depend on having local pointers row_min, row_max,
  * and rowp being set correctly.
@@ -1102,12 +1102,12 @@ static void *varg;
 #define is_clear(row,col) viz_clear_rows[row][col]
 
 /*
- * clear_path()		expanded into 4 functions:
+ * clear_path() expanded into 4 functions:
  *
- *	q1_path()
- *	q2_path()
- *	q3_path()
- *	q4_path()
+ *     q1_path()
+ *     q2_path()
+ *     q3_path()
+ *     q4_path()
  *
  * "Draw" a line from the start to the given location.  Stop if we hit
  * something that blocks light.  The start and finish points themselves are
@@ -1317,9 +1317,9 @@ q3_path(int srow, int scol, int y2, int x2)
 /*
  * Use vision tables to determine if there is a clear path from
  * (col1,row1) to (col2,row2).  This is used by:
- *		m_cansee()
- *		m_canseeu()
- *		do_light_sources()
+ *     m_cansee()
+ *     m_canseeu()
+ *     do_light_sources()
  */
 boolean
 clear_path(int col1, int row1, int col2, int row2)
@@ -1346,8 +1346,8 @@ clear_path(int col1, int row1, int col2, int row2)
 
 
 /*===========================================================================*\
-			    GENERAL LINE OF SIGHT
-				Algorithm C
+                            GENERAL LINE OF SIGHT
+                                Algorithm C
 \*===========================================================================*/
 
 /*

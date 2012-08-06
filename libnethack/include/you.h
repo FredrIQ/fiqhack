@@ -73,15 +73,15 @@ struct you {
     boolean umoved;     /* changed map location (post-move) */
     int last_str_turn;  /* 0: none, 1: half turn, 2: full turn */
     /* +: turn right, -: turn left */
-    int ulevel; /* 1 to MAXULEV */
+    int ulevel;         /* 1 to MAXULEV */
     int ulevelmax;
     unsigned utrap;     /* trap timeout */
     unsigned utraptype; /* defined if utrap nonzero */
-# define TT_BEARTRAP	0
-# define TT_PIT		1
-# define TT_WEB		2
-# define TT_LAVA		3
-# define TT_INFLOOR	4
+# define TT_BEARTRAP    0
+# define TT_PIT         1
+# define TT_WEB         2
+# define TT_LAVA        3
+# define TT_INFLOOR     4
     char urooms[5];     /* rooms (roomno + 3) occupied now */
     char urooms0[5];    /* ditto, for previous position */
     char uentered[5];   /* rooms (roomno + 3) entered this turn */
@@ -122,7 +122,7 @@ struct you {
     int mh, mhmax, mtimedone;   /* for polymorph-self */
     struct attribs macurr,      /* for monster attribs */
             mamax;      /* for monster attribs */
-    int ulycn;  /* lycanthrope type */
+    int ulycn;          /* lycanthrope type */
 
     unsigned ucreamed;
     unsigned uswldtim;  /* time you have been swallowed */
@@ -149,17 +149,17 @@ struct you {
             atime;      /* used for loss/gain countdown */
     int next_attr_check;        /* number of turns until exerchk can run again */
     align ualign;       /* character alignment */
-# define CONVERT		2
-# define A_ORIGINAL	1
-# define A_CURRENT	0
+# define CONVERT        2
+# define A_ORIGINAL     1
+# define A_CURRENT      0
     aligntyp ualignbase[CONVERT];       /* for ualign conversion record */
     schar uluck, moreluck;      /* luck and luck bonus */
-# define Luck	(u.uluck + u.moreluck)
-# define LUCKADD		3
+# define Luck   (u.uluck + u.moreluck)
+# define LUCKADD        3
     /* added value when carrying luck stone */
-# define LUCKMAX		10
+# define LUCKMAX        10
     /* on moonlit nights 11 */
-# define LUCKMIN		(-10)
+# define LUCKMIN        (-10)
     schar uhitinc;
     schar udaminc;
     schar uac;

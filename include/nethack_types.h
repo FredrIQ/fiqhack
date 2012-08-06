@@ -18,53 +18,53 @@
 # endif
 
 # ifndef TRUE   /* defined in some systems' native include files */
-#  define FALSE	((nh_bool)0)
-#  define TRUE	((nh_bool)!0)
+#  define FALSE ((nh_bool)0)
+#  define TRUE  ((nh_bool)!0)
 # endif
 
 /* size of terminal screen is (at least) (ROWNO+3) by COLNO */
-# define COLNO		80
-# define ROWNO		21
+# define COLNO          80
+# define ROWNO          21
 
-# define BUFSZ		256     /* for getlin buffers */
-# define QBUFSZ		128     /* for building question text */
-# define PL_NSIZ		32
+# define BUFSZ          256     /* for getlin buffers */
+# define QBUFSZ         128     /* for building question text */
+# define PL_NSIZ        32
                                 /* name of player, ghost, shopkeeper */
-# define PLRBUFSZ	16      /* player race/role names */
+# define PLRBUFSZ       16      /* player race/role names */
 
-# define FCMASK		0660    /* file creation mask */
+# define FCMASK         0660    /* file creation mask */
 
-# define ROLE_NONE	(-1)
-# define ROLE_RANDOM	(-2)
+# define ROLE_NONE      (-1)
+# define ROLE_RANDOM    (-2)
 
-# define A_CHAOTIC	(-1)
-# define A_NEUTRAL	 0
-# define A_LAWFUL	 1
+# define A_CHAOTIC      (-1)
+# define A_NEUTRAL       0
+# define A_LAWFUL        1
 
 /*
  * The color scheme used is tailored for an IBM PC.  It consists of the
  * standard 8 colors, folowed by their bright counterparts.  There are
- * exceptions, these are listed below.	Bright black doesn't mean very
+ * exceptions, these are listed below.  Bright black doesn't mean very
  * much, so it is used as the "default" foreground color of the screen.
  */
-# define CLR_BLACK		0
-# define CLR_RED			1
-# define CLR_GREEN		2
-# define CLR_BROWN		3       /* on IBM, low-intensity yellow is
+# define CLR_BLACK              0
+# define CLR_RED                1
+# define CLR_GREEN              2
+# define CLR_BROWN              3       /* on IBM, low-intensity yellow is
                                            brown */
-# define CLR_BLUE		4
-# define CLR_MAGENTA		5
-# define CLR_CYAN		6
-# define CLR_GRAY		7       /* low-intensity white */
-# define NO_COLOR		8
-# define CLR_ORANGE		9
-# define CLR_BRIGHT_GREEN	10
-# define CLR_YELLOW		11
-# define CLR_BRIGHT_BLUE		12
-# define CLR_BRIGHT_MAGENTA	13
-# define CLR_BRIGHT_CYAN		14
-# define CLR_WHITE		15
-# define CLR_MAX			16
+# define CLR_BLUE               4
+# define CLR_MAGENTA            5
+# define CLR_CYAN               6
+# define CLR_GRAY               7       /* low-intensity white */
+# define NO_COLOR               8
+# define CLR_ORANGE             9
+# define CLR_BRIGHT_GREEN       10
+# define CLR_YELLOW             11
+# define CLR_BRIGHT_BLUE        12
+# define CLR_BRIGHT_MAGENTA     13
+# define CLR_BRIGHT_CYAN        14
+# define CLR_WHITE              15
+# define CLR_MAX                16
 
 /*
  * Additional effects.
@@ -87,12 +87,12 @@
  * in some nonstandard way (eg the rogue level in tty nethack, or alternate
  * tiles for mines/hell in tiles versions)
  */
-# define LDM_DEFAULT	0
-# define LDM_HELL	1
-# define LDM_QUEST	2
-# define LDM_MINES	3
-# define LDM_SOKOBAN	4
-# define LDM_ROGUE	5
+# define LDM_DEFAULT    0
+# define LDM_HELL       1
+# define LDM_QUEST      2
+# define LDM_MINES      3
+# define LDM_SOKOBAN    4
+# define LDM_ROGUE      5
 
 /* command param type specification */
 # define CMD_ARG_NONE (1 << 1)  /* param can be empty */
@@ -114,8 +114,8 @@
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
 # define CMD_UI         (1U << 31)
 
-# define NH_ARG_NONE	(1<<0)
-# define NH_ARG_DIR	(1<<1)
+# define NH_ARG_NONE    (1<<0)
+# define NH_ARG_DIR     (1<<1)
 
 # define AUTOPICKUP_MAX_RULES 1000      /* this is intended as a rough sanity
                                            check to detect pointers to

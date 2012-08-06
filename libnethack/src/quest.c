@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright 1991, M. Stephenson		  */
+/* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -9,8 +9,8 @@
 #include "quest.h"
 #include "qtext.h"
 
-#define Not_firsttime	(on_level(&u.uz0, &u.uz))
-#define Qstat(x)	(quest_status.x)
+#define Not_firsttime   (on_level(&u.uz0, &u.uz))
+#define Qstat(x)        (quest_status.x)
 
 static void on_start(void);
 static void on_locate(void);
@@ -219,24 +219,24 @@ finish_quest(struct obj *obj)
 static void
 chat_with_leader(void)
 {
-/*	Rule 0:	Cheater checks.					*/
+/* Rule 0: Cheater checks.                                 */
     if (u.uhave.questart && !Qstat(met_nemesis))
         Qstat(cheater) = TRUE;
 
-/*	It is possible for you to get the amulet without completing
- *	the quest.  If so, try to induce the player to quest.
+/* It is possible for you to get the amulet without completing
+ * the quest.  If so, try to induce the player to quest.
  */
     if (Qstat(got_thanks)) {
-/*	Rule 1:	You've gone back with/without the amulet.	*/
+/* Rule 1: You've gone back with/without the amulet.       */
         if (u.uhave.amulet)
             finish_quest(NULL);
 
-/*	Rule 2:	You've gone back before going for the amulet.	*/
+/* Rule 2: You've gone back before going for the amulet.   */
         else
             qt_pager(QT_POSTHANKS);
     }
 
-/*	Rule 3: You've got the artifact and are back to return it. */
+/* Rule 3: You've got the artifact and are back to return it. */
     else if (u.uhave.questart) {
         struct obj *otmp;
 
@@ -246,11 +246,11 @@ chat_with_leader(void)
 
         finish_quest(otmp);
 
-/*	Rule 4: You haven't got the artifact yet.	*/
+/* Rule 4: You haven't got the artifact yet.       */
     } else if (Qstat(got_quest)) {
         qt_pager(rn1(10, QT_ENCOURAGE));
 
-/*	Rule 5: You aren't yet acceptable - or are you? */
+/* Rule 5: You aren't yet acceptable - or are you? */
     } else {
         if (!Qstat(met_leader)) {
             qt_pager(QT_FIRSTLEADER);
@@ -312,7 +312,7 @@ leader_speaks(struct monst *mtmp)
 static void
 chat_with_nemesis(void)
 {
-/*	The nemesis will do most of the talking, but... */
+/* The nemesis will do most of the talking, but... */
     qt_pager(rn1(10, QT_DISCOURAGE));
     if (!Qstat(met_nemesis))
         Qstat(met_nemesis++);
@@ -342,7 +342,7 @@ nemesis_speaks(void)
 static void
 chat_with_guardian(void)
 {
-/*	These guys/gals really don't have much to say... */
+/* These guys/gals really don't have much to say... */
     if (u.uhave.questart && Qstat(killed_nemesis))
         qt_pager(rn1(5, QT_GUARDTALK2));
     else

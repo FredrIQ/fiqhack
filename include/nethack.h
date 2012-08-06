@@ -11,9 +11,9 @@
 /* NetHack 4.2.0. Keep this consistent with patchlevel.h. */
 /* (Note that the number in patchlevel.h may be older than the number
    here, if save/bones compatibility is not broken between versions.) */
-# define VERSION_MAJOR	4
-# define VERSION_MINOR	2
-# define PATCHLEVEL	1
+# define VERSION_MAJOR  4
+# define VERSION_MINOR  2
+# define PATCHLEVEL     1
 
 # include "nethack_types.h"
 
@@ -114,7 +114,7 @@ do {\
 # define add_menu_item(items, size, icount, id, caption, accel, selected) \
 do {\
     if (icount >= size) \
-	{size *= 2; (items) = realloc((items), size * sizeof(struct nh_menuitem)); } \
+        {size *= 2; (items) = realloc((items), size * sizeof(struct nh_menuitem)); } \
     set_menuitem(&(items)[icount], id, MI_NORMAL, caption, accel, selected); \
     (icount)++;\
 } while(0)
@@ -122,7 +122,7 @@ do {\
 # define add_menu_txt(items, size, icount, caption, role) \
 do {\
     if (icount >= size) \
-	{size *= 2; (items) = realloc((items), size * sizeof(struct nh_menuitem)); } \
+        {size *= 2; (items) = realloc((items), size * sizeof(struct nh_menuitem)); } \
     set_menuitem(&(items)[icount], 0, role, caption, 0, FALSE); \
     (icount)++;\
 } while(0)

@@ -26,9 +26,9 @@ union vptrs {
 struct obj {
     struct obj *nobj;
     union vptrs v;
-# define nexthere	v.v_nexthere
-# define ocontainer	v.v_ocontainer
-# define ocarry		v.v_ocarry
+# define nexthere       v.v_nexthere
+# define ocontainer     v.v_ocontainer
+# define ocarry         v.v_ocarry
 
     struct obj *cobj;   /* contents list for containers */
     unsigned int o_id;
@@ -108,199 +108,200 @@ struct obj {
                            flexible; amount for tmp gold objects */
 };
 
-# define newobj(xl)	malloc((unsigned)(xl) + sizeof(struct obj))
-# define ONAME(otmp)	(((char *)(otmp)->oextra) + (otmp)->oxlth)
+# define newobj(xl)     malloc((unsigned)(xl) + sizeof(struct obj))
+# define ONAME(otmp)    (((char *)(otmp)->oextra) + (otmp)->oxlth)
 
 /* Weapons and weapon-tools */
 /* KMH -- now based on skill categories.  Formerly:
- *	#define is_sword(otmp)	(otmp->oclass == WEAPON_CLASS && \
- *			 objects[otmp->otyp].oc_wepcat == WEP_SWORD)
- *	#define is_blade(otmp)	(otmp->oclass == WEAPON_CLASS && \
- *			 (objects[otmp->otyp].oc_wepcat == WEP_BLADE || \
- *			  objects[otmp->otyp].oc_wepcat == WEP_SWORD))
- *	#define is_weptool(o)	((o)->oclass == TOOL_CLASS && \
- *			 objects[(o)->otyp].oc_weptool)
- *	#define is_multigen(otyp) (otyp <= SHURIKEN)
- *	#define is_poisonable(otyp) (otyp <= BEC_DE_CORBIN)
+ *      #define is_sword(otmp)  (otmp->oclass == WEAPON_CLASS && \
+ *                       objects[otmp->otyp].oc_wepcat == WEP_SWORD)
+ *      #define is_blade(otmp)  (otmp->oclass == WEAPON_CLASS && \
+ *                       (objects[otmp->otyp].oc_wepcat == WEP_BLADE || \
+ *                        objects[otmp->otyp].oc_wepcat == WEP_SWORD))
+ *      #define is_weptool(o)   ((o)->oclass == TOOL_CLASS && \
+ *                       objects[(o)->otyp].oc_weptool)
+ *      #define is_multigen(otyp) (otyp <= SHURIKEN)
+ *      #define is_poisonable(otyp) (otyp <= BEC_DE_CORBIN)
  */
-# define is_blade(otmp)	((otmp->oclass == WEAPON_CLASS || \
-                          otmp->oclass == TOOL_CLASS) &&\
-			 objects[otmp->otyp].oc_skill >= P_DAGGER && \
-			 objects[otmp->otyp].oc_skill <= P_SABER)
-# define is_axe(otmp)	((otmp->oclass == WEAPON_CLASS || \
-			 otmp->oclass == TOOL_CLASS) && \
-			 objects[otmp->otyp].oc_skill == P_AXE)
-# define is_pick(otmp)	((otmp->oclass == WEAPON_CLASS || \
-			 otmp->oclass == TOOL_CLASS) && \
-			 objects[otmp->otyp].oc_skill == P_PICK_AXE)
-# define is_sword(otmp)	(otmp->oclass == WEAPON_CLASS && \
-			 objects[otmp->otyp].oc_skill >= P_SHORT_SWORD && \
-			 objects[otmp->otyp].oc_skill <= P_SABER)
-# define is_pole(otmp)	((otmp->oclass == WEAPON_CLASS || \
-			otmp->oclass == TOOL_CLASS) && \
-			 (objects[otmp->otyp].oc_skill == P_POLEARMS || \
-			 objects[otmp->otyp].oc_skill == P_LANCE))
-# define is_spear(otmp)	(otmp->oclass == WEAPON_CLASS && \
-			 objects[otmp->otyp].oc_skill >= P_SPEAR && \
-			 objects[otmp->otyp].oc_skill <= P_JAVELIN)
-# define is_launcher(otmp)	(otmp->oclass == WEAPON_CLASS && \
-			 objects[otmp->otyp].oc_skill >= P_BOW && \
-			 objects[otmp->otyp].oc_skill <= P_CROSSBOW)
-# define is_ammo(otmp)	((otmp->oclass == WEAPON_CLASS || \
-			 otmp->oclass == GEM_CLASS) && \
-			 objects[otmp->otyp].oc_skill >= -P_CROSSBOW && \
-			 objects[otmp->otyp].oc_skill <= -P_BOW)
+# define is_blade(otmp)      ((otmp->oclass == WEAPON_CLASS || \
+                             otmp->oclass == TOOL_CLASS) &&\
+                              objects[otmp->otyp].oc_skill >= P_DAGGER && \
+                              objects[otmp->otyp].oc_skill <= P_SABER)
+# define is_axe(otmp)        ((otmp->oclass == WEAPON_CLASS || \
+                              otmp->oclass == TOOL_CLASS) && \
+                              objects[otmp->otyp].oc_skill == P_AXE)
+# define is_pick(otmp)       ((otmp->oclass == WEAPON_CLASS || \
+                              otmp->oclass == TOOL_CLASS) && \
+                              objects[otmp->otyp].oc_skill == P_PICK_AXE)
+# define is_sword(otmp)      (otmp->oclass == WEAPON_CLASS && \
+                              objects[otmp->otyp].oc_skill >= P_SHORT_SWORD && \
+                              objects[otmp->otyp].oc_skill <= P_SABER)
+# define is_pole(otmp)       ((otmp->oclass == WEAPON_CLASS || \
+                             otmp->oclass == TOOL_CLASS) && \
+                              (objects[otmp->otyp].oc_skill == P_POLEARMS || \
+                              objects[otmp->otyp].oc_skill == P_LANCE))
+# define is_spear(otmp)      (otmp->oclass == WEAPON_CLASS && \
+                              objects[otmp->otyp].oc_skill >= P_SPEAR && \
+                              objects[otmp->otyp].oc_skill <= P_JAVELIN)
+# define is_launcher(otmp)   (otmp->oclass == WEAPON_CLASS && \
+                              objects[otmp->otyp].oc_skill >= P_BOW && \
+                              objects[otmp->otyp].oc_skill <= P_CROSSBOW)
+# define is_ammo(otmp)       ((otmp->oclass == WEAPON_CLASS || \
+                              otmp->oclass == GEM_CLASS) && \
+                              objects[otmp->otyp].oc_skill >= -P_CROSSBOW && \
+                              objects[otmp->otyp].oc_skill <= -P_BOW)
 # define ammo_and_launcher(otmp,ltmp) \
-			 (is_ammo(otmp) && (ltmp) && \
-			 objects[(otmp)->otyp].oc_skill == -objects[(ltmp)->otyp].oc_skill)
-# define is_missile(otmp)	((otmp->oclass == WEAPON_CLASS || \
-			 otmp->oclass == TOOL_CLASS) && \
-			 objects[otmp->otyp].oc_skill >= -P_BOOMERANG && \
-			 objects[otmp->otyp].oc_skill <= -P_DART)
-# define is_weptool(o)	((o)->oclass == TOOL_CLASS && \
-			 objects[(o)->otyp].oc_skill != P_NONE)
-# define bimanual(otmp)	((otmp->oclass == WEAPON_CLASS || \
-			 otmp->oclass == TOOL_CLASS) && \
-			 objects[otmp->otyp].oc_bimanual)
-# define is_multigen(otmp)	(otmp->oclass == WEAPON_CLASS && \
-			 objects[otmp->otyp].oc_skill >= -P_SHURIKEN && \
-			 objects[otmp->otyp].oc_skill <= -P_BOW)
-# define is_poisonable(otmp)	(otmp->oclass == WEAPON_CLASS && \
-			 objects[otmp->otyp].oc_skill >= -P_SHURIKEN && \
-			 objects[otmp->otyp].oc_skill <= -P_BOW)
-# define uslinging()	(uwep && objects[uwep->otyp].oc_skill == P_SLING)
+                              (is_ammo(otmp) && (ltmp) && \
+                              objects[(otmp)->otyp].oc_skill == \
+                                -objects[(ltmp)->otyp].oc_skill)
+# define is_missile(otmp)    ((otmp->oclass == WEAPON_CLASS || \
+                              otmp->oclass == TOOL_CLASS) && \
+                              objects[otmp->otyp].oc_skill >= -P_BOOMERANG && \
+                              objects[otmp->otyp].oc_skill <= -P_DART)
+# define is_weptool(o)       ((o)->oclass == TOOL_CLASS && \
+                              objects[(o)->otyp].oc_skill != P_NONE)
+# define bimanual(otmp)      ((otmp->oclass == WEAPON_CLASS || \
+                              otmp->oclass == TOOL_CLASS) && \
+                              objects[otmp->otyp].oc_bimanual)
+# define is_multigen(otmp)   (otmp->oclass == WEAPON_CLASS && \
+                              objects[otmp->otyp].oc_skill >= -P_SHURIKEN && \
+                              objects[otmp->otyp].oc_skill <= -P_BOW)
+# define is_poisonable(otmp) (otmp->oclass == WEAPON_CLASS && \
+                              objects[otmp->otyp].oc_skill >= -P_SHURIKEN && \
+                              objects[otmp->otyp].oc_skill <= -P_BOW)
+# define uslinging()         (uwep && objects[uwep->otyp].oc_skill == P_SLING)
 
 /* Armor */
-# define is_shield(otmp) (otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_SHIELD)
-# define is_helmet(otmp) (otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_HELM)
-# define is_boots(otmp)	(otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_BOOTS)
-# define is_gloves(otmp) (otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_GLOVES)
-# define is_cloak(otmp)	(otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_CLOAK)
-# define is_shirt(otmp)	(otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_SHIRT)
-# define is_suit(otmp)	(otmp->oclass == ARMOR_CLASS && \
-			 objects[otmp->otyp].oc_armcat == ARM_SUIT)
-# define is_elven_armor(otmp)	((otmp)->otyp == ELVEN_LEATHER_HELM\
-				|| (otmp)->otyp == ELVEN_MITHRIL_COAT\
-				|| (otmp)->otyp == ELVEN_CLOAK\
-				|| (otmp)->otyp == ELVEN_SHIELD\
-				|| (otmp)->otyp == ELVEN_BOOTS)
-# define is_orcish_armor(otmp)	((otmp)->otyp == ORCISH_HELM\
-				|| (otmp)->otyp == ORCISH_CHAIN_MAIL\
-				|| (otmp)->otyp == ORCISH_RING_MAIL\
-				|| (otmp)->otyp == ORCISH_CLOAK\
-				|| (otmp)->otyp == URUK_HAI_SHIELD\
-				|| (otmp)->otyp == ORCISH_SHIELD)
-# define is_dwarvish_armor(otmp)	((otmp)->otyp == DWARVISH_IRON_HELM\
-				|| (otmp)->otyp == DWARVISH_MITHRIL_COAT\
-				|| (otmp)->otyp == DWARVISH_CLOAK\
-				|| (otmp)->otyp == DWARVISH_ROUNDSHIELD)
-# define is_gnomish_armor(otmp)	(FALSE)
+# define is_shield(otmp)     (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_SHIELD)
+# define is_helmet(otmp)     (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_HELM)
+# define is_boots(otmp)      (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_BOOTS)
+# define is_gloves(otmp)     (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_GLOVES)
+# define is_cloak(otmp)      (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_CLOAK)
+# define is_shirt(otmp)      (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_SHIRT)
+# define is_suit(otmp)       (otmp->oclass == ARMOR_CLASS && \
+                              objects[otmp->otyp].oc_armcat == ARM_SUIT)
+# define is_elven_armor(otmp)    ((otmp)->otyp == ELVEN_LEATHER_HELM\
+                                 || (otmp)->otyp == ELVEN_MITHRIL_COAT\
+                                 || (otmp)->otyp == ELVEN_CLOAK\
+                                 || (otmp)->otyp == ELVEN_SHIELD\
+                                 || (otmp)->otyp == ELVEN_BOOTS)
+# define is_orcish_armor(otmp)   ((otmp)->otyp == ORCISH_HELM\
+                                 || (otmp)->otyp == ORCISH_CHAIN_MAIL\
+                                 || (otmp)->otyp == ORCISH_RING_MAIL\
+                                 || (otmp)->otyp == ORCISH_CLOAK\
+                                 || (otmp)->otyp == URUK_HAI_SHIELD\
+                                 || (otmp)->otyp == ORCISH_SHIELD)
+# define is_dwarvish_armor(otmp) ((otmp)->otyp == DWARVISH_IRON_HELM\
+                                 || (otmp)->otyp == DWARVISH_MITHRIL_COAT\
+                                 || (otmp)->otyp == DWARVISH_CLOAK\
+                                 || (otmp)->otyp == DWARVISH_ROUNDSHIELD)
+# define is_gnomish_armor(otmp)  (FALSE)
 
 # define helmet_name(otmp) (is_metallic(otmp) && \
-			   (otmp)->otyp != DWARVISH_IRON_HELM ? "helmet" : "hat")
+                           (otmp)->otyp != DWARVISH_IRON_HELM ? "helmet" : "hat")
 # define maybe_helmet_name(otmp) ((otmp) ? helmet_name((otmp)) : "helmet")
 
 
 /* Eggs and other food */
 # define MAX_EGG_HATCH_TIME 200 /* longest an egg can remain unhatched */
-# define stale_egg(egg)	((moves - (egg)->age) > (2*MAX_EGG_HATCH_TIME))
+# define stale_egg(egg) ((moves - (egg)->age) > (2*MAX_EGG_HATCH_TIME))
 # define ofood(o) ((o)->otyp == CORPSE || (o)->otyp == EGG || (o)->otyp == TIN)
 # define polyfodder(obj) (ofood(obj) && \
-			 pm_to_cham((obj)->corpsenm) != CHAM_ORDINARY)
+                         pm_to_cham((obj)->corpsenm) != CHAM_ORDINARY)
 # define mlevelgain(obj) (ofood(obj) && (obj)->corpsenm == PM_WRAITH)
-# define mhealup(obj)	(ofood(obj) && (obj)->corpsenm == PM_NURSE)
+# define mhealup(obj)   (ofood(obj) && (obj)->corpsenm == PM_NURSE)
 
 /* Containers */
-# define carried(o)	((o)->where == OBJ_INVENT)
-# define mcarried(o)	((o)->where == OBJ_MINVENT)
+# define carried(o)     ((o)->where == OBJ_INVENT)
+# define mcarried(o)    ((o)->where == OBJ_MINVENT)
 # define Has_contents(o) (/* (Is_container(o) || (o)->otyp == STATUE) && */ \
-			 (o)->cobj != NULL)
+                         (o)->cobj != NULL)
 # define Is_container(o) ((o)->otyp >= LARGE_BOX && (o)->otyp <= BAG_OF_TRICKS)
-# define Is_box(otmp)	(otmp->otyp == LARGE_BOX || otmp->otyp == CHEST)
-# define Is_mbag(otmp)	(otmp->otyp == BAG_OF_HOLDING || \
-			 otmp->otyp == BAG_OF_TRICKS)
+# define Is_box(otmp)   (otmp->otyp == LARGE_BOX || otmp->otyp == CHEST)
+# define Is_mbag(otmp)  (otmp->otyp == BAG_OF_HOLDING || \
+                         otmp->otyp == BAG_OF_TRICKS)
 
 /* dragon gear */
-# define Is_dragon_scales(obj)	((obj)->otyp >= GRAY_DRAGON_SCALES && \
-				 (obj)->otyp <= YELLOW_DRAGON_SCALES)
-# define Is_dragon_mail(obj)	((obj)->otyp >= GRAY_DRAGON_SCALE_MAIL && \
-				 (obj)->otyp <= YELLOW_DRAGON_SCALE_MAIL)
-# define Is_dragon_armor(obj)	(Is_dragon_scales(obj) || Is_dragon_mail(obj))
+# define Is_dragon_scales(obj)  ((obj)->otyp >= GRAY_DRAGON_SCALES && \
+                                 (obj)->otyp <= YELLOW_DRAGON_SCALES)
+# define Is_dragon_mail(obj)    ((obj)->otyp >= GRAY_DRAGON_SCALE_MAIL && \
+                                 (obj)->otyp <= YELLOW_DRAGON_SCALE_MAIL)
+# define Is_dragon_armor(obj)   (Is_dragon_scales(obj) || Is_dragon_mail(obj))
 # define Dragon_scales_to_pm(obj) &mons[PM_GRAY_DRAGON + (obj)->otyp \
-				       - GRAY_DRAGON_SCALES]
-# define Dragon_mail_to_pm(obj)	&mons[PM_GRAY_DRAGON + (obj)->otyp \
-				      - GRAY_DRAGON_SCALE_MAIL]
-# define Dragon_to_scales(pm)	(GRAY_DRAGON_SCALES + (pm - mons))
+                                       - GRAY_DRAGON_SCALES]
+# define Dragon_mail_to_pm(obj) &mons[PM_GRAY_DRAGON + (obj)->otyp \
+                                      - GRAY_DRAGON_SCALE_MAIL]
+# define Dragon_to_scales(pm)   (GRAY_DRAGON_SCALES + (pm - mons))
 
 /* Elven gear */
-# define is_elven_weapon(otmp)	((otmp)->otyp == ELVEN_ARROW\
-				|| (otmp)->otyp == ELVEN_SPEAR\
-				|| (otmp)->otyp == ELVEN_DAGGER\
-				|| (otmp)->otyp == ELVEN_SHORT_SWORD\
-				|| (otmp)->otyp == ELVEN_BROADSWORD\
-				|| (otmp)->otyp == ELVEN_BOW)
-# define is_elven_obj(otmp)	(is_elven_armor(otmp) || is_elven_weapon(otmp))
+# define is_elven_weapon(otmp)  ((otmp)->otyp == ELVEN_ARROW\
+                                || (otmp)->otyp == ELVEN_SPEAR\
+                                || (otmp)->otyp == ELVEN_DAGGER\
+                                || (otmp)->otyp == ELVEN_SHORT_SWORD\
+                                || (otmp)->otyp == ELVEN_BROADSWORD\
+                                || (otmp)->otyp == ELVEN_BOW)
+# define is_elven_obj(otmp)     (is_elven_armor(otmp) || is_elven_weapon(otmp))
 
 /* Orcish gear */
-# define is_orcish_obj(otmp)	(is_orcish_armor(otmp)\
-				|| (otmp)->otyp == ORCISH_ARROW\
-				|| (otmp)->otyp == ORCISH_SPEAR\
-				|| (otmp)->otyp == ORCISH_DAGGER\
-				|| (otmp)->otyp == ORCISH_SHORT_SWORD\
-				|| (otmp)->otyp == ORCISH_BOW)
+# define is_orcish_obj(otmp)    (is_orcish_armor(otmp)\
+                                || (otmp)->otyp == ORCISH_ARROW\
+                                || (otmp)->otyp == ORCISH_SPEAR\
+                                || (otmp)->otyp == ORCISH_DAGGER\
+                                || (otmp)->otyp == ORCISH_SHORT_SWORD\
+                                || (otmp)->otyp == ORCISH_BOW)
 
 /* Dwarvish gear */
-# define is_dwarvish_obj(otmp)	(is_dwarvish_armor(otmp)\
-				|| (otmp)->otyp == DWARVISH_SPEAR\
-				|| (otmp)->otyp == DWARVISH_SHORT_SWORD\
-				|| (otmp)->otyp == DWARVISH_MATTOCK)
+# define is_dwarvish_obj(otmp)  (is_dwarvish_armor(otmp)\
+                                || (otmp)->otyp == DWARVISH_SPEAR\
+                                || (otmp)->otyp == DWARVISH_SHORT_SWORD\
+                                || (otmp)->otyp == DWARVISH_MATTOCK)
 
 /* Gnomish gear */
-# define is_gnomish_obj(otmp)	(is_gnomish_armor(otmp))
+# define is_gnomish_obj(otmp)   (is_gnomish_armor(otmp))
 
 /* Light sources */
 # define Is_candle(otmp) (otmp->otyp == TALLOW_CANDLE || \
-			 otmp->otyp == WAX_CANDLE)
+                         otmp->otyp == WAX_CANDLE)
 # define MAX_OIL_IN_FLASK 400   /* maximum amount of oil in a potion of oil */
 
 /* MAGIC_LAMP intentionally excluded below */
 /* age field of this is relative age rather than absolute */
-# define age_is_relative(otmp)	((otmp)->otyp == BRASS_LANTERN\
-				|| (otmp)->otyp == OIL_LAMP\
-				|| (otmp)->otyp == CANDELABRUM_OF_INVOCATION\
-				|| (otmp)->otyp == TALLOW_CANDLE\
-				|| (otmp)->otyp == WAX_CANDLE\
-				|| (otmp)->otyp == POT_OIL)
+# define age_is_relative(otmp)  ((otmp)->otyp == BRASS_LANTERN\
+                                || (otmp)->otyp == OIL_LAMP\
+                                || (otmp)->otyp == CANDELABRUM_OF_INVOCATION\
+                                || (otmp)->otyp == TALLOW_CANDLE\
+                                || (otmp)->otyp == WAX_CANDLE\
+                                || (otmp)->otyp == POT_OIL)
 /* object can be ignited */
-# define ignitable(otmp)	((otmp)->otyp == BRASS_LANTERN\
-				|| (otmp)->otyp == OIL_LAMP\
-				|| (otmp)->otyp == CANDELABRUM_OF_INVOCATION\
-				|| (otmp)->otyp == TALLOW_CANDLE\
-				|| (otmp)->otyp == WAX_CANDLE\
-				|| (otmp)->otyp == POT_OIL)
+# define ignitable(otmp)        ((otmp)->otyp == BRASS_LANTERN\
+                                || (otmp)->otyp == OIL_LAMP\
+                                || (otmp)->otyp == CANDELABRUM_OF_INVOCATION\
+                                || (otmp)->otyp == TALLOW_CANDLE\
+                                || (otmp)->otyp == WAX_CANDLE\
+                                || (otmp)->otyp == POT_OIL)
 
 /* special stones */
-# define is_graystone(obj)	((obj)->otyp == LUCKSTONE || \
-				 (obj)->otyp == LOADSTONE || \
-				 (obj)->otyp == FLINT     || \
-				 (obj)->otyp == TOUCHSTONE)
+# define is_graystone(obj)      ((obj)->otyp == LUCKSTONE || \
+                                 (obj)->otyp == LOADSTONE || \
+                                 (obj)->otyp == FLINT     || \
+                                 (obj)->otyp == TOUCHSTONE)
 
 /* misc */
-# define is_flimsy(otmp)		(objects[(otmp)->otyp].oc_material <= LEATHER || \
-				 (otmp)->otyp == RUBBER_HOSE)
+# define is_flimsy(otmp)      (objects[(otmp)->otyp].oc_material <= LEATHER || \
+                               (otmp)->otyp == RUBBER_HOSE)
 
 /* helpers, simple enough to be macros */
-# define is_plural(o)	((o)->quan > 1 || \
-			 (o)->oartifact == ART_EYES_OF_THE_OVERWORLD)
+# define is_plural(o)   ((o)->quan > 1 || \
+                         (o)->oartifact == ART_EYES_OF_THE_OVERWORLD)
 
 /* Flags for get_obj_location(). */
-# define CONTAINED_TOO	0x1
-# define BURIED_TOO	0x2
+# define CONTAINED_TOO  0x1
+# define BURIED_TOO     0x2
 
 #endif /* OBJ_H */

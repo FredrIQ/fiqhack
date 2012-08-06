@@ -5,14 +5,14 @@
 # include "attrib.h"
 
 /* Flags to control pick_[race,role,gend,align] routines in role.c */
-# define PICK_RANDOM	0
-# define PICK_RIGID	1
+# define PICK_RANDOM    0
+# define PICK_RIGID     1
 
 /* used during initialization for race, gender, and alignment
    as well as for character class */
-# define ROLE_GENDERS	2       /* number of permitted player genders */
+# define ROLE_GENDERS   2       /* number of permitted player genders */
                                 /* increment to 3 if you allow neuter roles */
-# define ROLE_ALIGNS	3       /* number of permitted player alignments */
+# define ROLE_ALIGNS    3       /* number of permitted player alignments */
 
 
 struct RoleName {
@@ -52,15 +52,15 @@ struct Role {
 
         /*** Bitmasks ***/
     short allow;        /* bit mask of allowed variations */
-# define ROLE_RACEMASK	0x0ff8  /* allowable races */
-# define ROLE_GENDMASK	0xf000  /* allowable genders */
-# define ROLE_MALE	0x1000
-# define ROLE_FEMALE	0x2000
-# define ROLE_NEUTER	0x4000
-# define ROLE_ALIGNMASK	AM_MASK /* allowable alignments */
-# define ROLE_LAWFUL	AM_LAWFUL
-# define ROLE_NEUTRAL	AM_NEUTRAL
-# define ROLE_CHAOTIC	AM_CHAOTIC
+# define ROLE_RACEMASK  0x0ff8  /* allowable races */
+# define ROLE_GENDMASK  0xf000  /* allowable genders */
+# define ROLE_MALE      0x1000
+# define ROLE_FEMALE    0x2000
+# define ROLE_NEUTER    0x4000
+# define ROLE_ALIGNMASK AM_MASK /* allowable alignments */
+# define ROLE_LAWFUL    AM_LAWFUL
+# define ROLE_NEUTRAL   AM_NEUTRAL
+# define ROLE_CHAOTIC   AM_CHAOTIC
 
         /*** Attributes (from attrib.c and exper.c) ***/
     xchar attrbase[A_MAX];      /* lowest initial attributes */
@@ -95,8 +95,8 @@ struct Role {
 extern const struct Role roles[];       /* table of available roles */
 extern struct Role urole;
 
-# define Role_if(X)	(urole.malenum == (X))
-# define Role_switch	(urole.malenum)
+# define Role_if(X)     (urole.malenum == (X))
+# define Role_switch    (urole.malenum)
 
 /*** Unified structure specifying race information ***/
 
@@ -139,8 +139,8 @@ struct Race {
 extern const struct Race races[];       /* Table of available races */
 extern struct Race urace;
 
-# define Race_if(X)	(urace.malenum == (X))
-# define Race_switch	(urace.malenum)
+# define Race_if(X)     (urace.malenum == (X))
+# define Race_switch    (urace.malenum)
 
 /*** Unified structure specifying gender information ***/
 struct Gender {
@@ -154,12 +154,12 @@ struct Gender {
 
 extern const struct Gender genders[];   /* table of available genders */
 
-# define uhe()	(genders[flags.female ? 1 : 0].he)
-# define uhim()	(genders[flags.female ? 1 : 0].him)
-# define uhis()	(genders[flags.female ? 1 : 0].his)
-# define mhe(mtmp)	(genders[pronoun_gender(mtmp)].he)
-# define mhim(mtmp)	(genders[pronoun_gender(mtmp)].him)
-# define mhis(mtmp)	(genders[pronoun_gender(mtmp)].his)
+# define uhe()          (genders[flags.female ? 1 : 0].he)
+# define uhim()         (genders[flags.female ? 1 : 0].him)
+# define uhis()         (genders[flags.female ? 1 : 0].his)
+# define mhe(mtmp)      (genders[pronoun_gender(mtmp)].he)
+# define mhim(mtmp)     (genders[pronoun_gender(mtmp)].him)
+# define mhis(mtmp)     (genders[pronoun_gender(mtmp)].his)
 
 
 /*** Unified structure specifying alignment information ***/

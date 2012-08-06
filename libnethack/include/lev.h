@@ -2,7 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/*	Common include file for save and restore routines */
+/*      Common include file for save and restore routines */
 
 #ifndef LEV_H
 # define LEV_H
