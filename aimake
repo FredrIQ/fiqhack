@@ -265,6 +265,11 @@ my $screencols = 80;
   sub progress_report {
     my $level = shift;
     my $str = shift;
+    if ($str =~ /\n/ && $level >= $options{v} - 1 && !$options{r}) {
+      # We may have to clear the line the old-fashioned way.
+      print STDERR ' ' x (length defined_or($last_report_msg,"")), "\r";
+      $last_report_msg = '';
+    }
     my $ldiff = (length $str) - length defined_or($last_report_msg,"");
     $ldiff < 0 and $str .= ' ' x -$ldiff;
     if ($level == $options{v} - 1 && !$options{r}) {
@@ -295,9 +300,10 @@ my $screencols = 80;
     my @cmd = (ref $cmd eq 'ARRAY' ? @$cmd : ($cmd));
     join $;, @cmd eq $last_command and return $last_command_result;
     my $objstate = obj_state($obj);
-    delete $objstate->{'stderrreason'};
+    $capture_stdout or $objstate->{'stderrreason'} = '';
     for my $c (@cmd) {
       my $worry_about_errors = 1;
+      my $stderr_was_empty = 0;
       $c =~ s/ \|\| true$// and $worry_about_errors = 0;
       progress_report 2, ($capture_stdout ? "? " : "! ") . $c;
       my ($ok, $err, undef, $stdout, $stderr) =
@@ -305,25 +311,40 @@ my $screencols = 80;
       $stdout = join '', @$stdout;
       $stderr = join '', @$stderr;
       chomp $stderr;
-      $stderr =~ s/^/  /m;
+      $stderr_was_empty = $stderr eq '';
+      $stderr =~ s/^/  /mg;
       if (!$ok && $worry_about_errors) {
         if ($capture_stdout) {
           $objstate->{'stderrreason'} =
-            "Failed to calculate dependencies of '$obj': $err\n$stderr";
+            "Failed to calculate dependencies of '$obj': $err\n$c\n$stderr";
         } else {
           $objstate->{'stderrreason'} =
-            "Failed to compile '$obj': $err\n$stderr";
+            "Failed to compile '$obj': $err\n$c\n$stderr";
         }
-        progress_report 3, $objstate->{'stderrreason'};
+        $objstate->{'stderrreason'} =~ /^(.*)\n/;
+        progress_report 3, $1;
         $state->{'stderrobjects'}->{$obj} = 1;
         $? == 2 and sighandler() and exit 2;
         return;
       }
-      if ($err && !$capture_stdout) {
-        progress_report 3, "'$obj' compiled with warnings:\n$c\n$stdout";
+      if (!$stderr_was_empty && !$capture_stdout) {
+        # if we are capturing stdout, ignore stderr; otherwise,
+        # record the warnings
         $state->{'stderrobjects'}->{$obj} = 1;
-      } # if we are capturing stdout, ignore stderr
+        $objstate->{'stderrreason'} .=
+            "'$obj' compiled with warnings:\n$c\n$stderr\n";
+      }
       $rv .= $stdout;
+    }
+    if (!$capture_stdout) {
+      if ($objstate->{'stderrreason'} eq '') {
+        # compiled without warnings, delete remembered warnings
+        progress_report 3, "   Built '$obj'.";
+        delete $state->{'stderrobjects'}->{$obj};
+      } else {
+        progress_report 3, "   Built '$obj' (with warnings).";
+        # the actual warnings will be printed later
+      }
     }
     $last_command = join $;, @cmd;
     $last_command_result = $rv;
@@ -841,10 +862,13 @@ sub stringise_fail_reason {
     and return "'$obj' has no remaining method of building";
   my @failreason = @{obj_state($obj)->{'failreason'}};
   my $x = "'$obj' could not be built:";
+  my $issuecount = 0;
+  my $baddep = undef;
   @failreason == 0 and return "$x no source object found to build from";
   $recursiondepth > 4 and return "$x (etc...)";
   $x .= "\n";
   for my $r (sort {$a->{'dep'} cmp $b->{'dep'}} @failreason) {
+    $issuecount++;
     # Possible problems: bad dep, bad udeps, dependency loop
     my $dep = $r->{'dep'};
     if ($r->{'bad_dep'}) {
@@ -857,6 +881,7 @@ sub stringise_fail_reason {
         $y =~ s/^/  /mg;
         $x .= $y;
       }
+      $baddep = $dep;
     } elsif ($r->{'loop'}) {
       $x .= "  Source object '$dep' was unusable due to a dependency loop\n";
     } else {
@@ -869,11 +894,13 @@ sub stringise_fail_reason {
           if ($udfr ne 'outdated') {
             $x .= "    Dependency '$udep' could not be built: ".
               $fail_explanation{$udfr} . "\n";
+            $baddep = $udep;
           } else {
             my $y = "Dependency ".
               stringise_fail_reason($udep, $recursiondepth+2) . "\n";
             $y =~ s/^/    /mg;
             $x .= $y;
+            $baddep = $udep;
           }
         }
         $udep_count++;
@@ -886,12 +913,150 @@ sub stringise_fail_reason {
     }
   }
   chomp $x;
-  return $x;
+  return $x unless wantarray;
+  $issuecount != 1 and $baddep = undef;
+  return ($x, $baddep);
 }
 sub no_method_of_building {
   my $obj = shift;
   return 0 unless exists $state->{'outdatedobjects'}->{$obj};
   return @{obj_state($obj)->{'failreason'}} == 0;
+}
+sub condense_working {
+  # Condenses a working array some number of steps, and returns how
+  # many. (This is the inner loop of condense_array.) Will condense at
+  # least 1 step if it can.
+  my $ar = shift;
+  my $changes = 0;
+  for (my $i = 0; $i < @$ar; $i++) {
+    # Rules for working inside "inner":
+    # {a,b,...} becomes a,b,...    
+    # a{b}c becomes abc
+    # all rules applied recursively
+    $changes += condense_working($ar->[$i]->{'inner'});
+    if ($ar->[$i]->{'lead'} eq '' && $ar->[$i]->{'trail'} eq '') {
+      splice @$ar, $i, 1, @{$ar->[$i]->{'inner'}};
+      $changes++;
+    }
+    if (@{$ar->[$i]->{'inner'}} == 1) {
+      my ($l, $t) = ($ar->[$i]->{'lead'}, $ar->[$i]->{'trail'});
+      splice @$ar, $i, 1, @{$ar->[$i]->{'inner'}};
+      $ar->[$i]->{'lead'} = $l . $ar->[$i]->{'lead'};
+      $ar->[$i]->{'trail'} = $ar->[$i]->{'trail'} . $t;
+      $changes++;
+    }
+  }
+  map { @{$_->{'inner'}} > 0 or
+            ($_->{'lead'}, $_->{'trail'}) =
+            ('', $_->{'lead'} . $_->{'trail'})} @$ar;
+  @$ar = sort {(reverse $a->{'trail'}) cmp (reverse $b->{'trail'})} @$ar;
+  for (my $i = 0; $i < @$ar - 1; $i++) {
+    # Rule for condensing from the end:
+    # ac,bc becomes {a,b}c
+    my $sublen = -1;
+    my $sublen2 = -2;
+    if ($ar->[$i]->{'trail'} ne '') {
+      $ar->[$i]->{'trail'} =~ /([a-zA-Z]++|[0-9]++|.)$/;
+      $sublen = length $1;
+    }
+    if ($ar->[$i+1]->{'trail'} ne '') {
+      $ar->[$i+1]->{'trail'} =~ /([a-zA-Z]++|[0-9]++|.)$/;
+      $sublen2 = length $1;
+    }
+    if ($sublen == $sublen2 &&
+        (substr $ar->[$i]->{'trail'}, -$sublen) eq
+        (substr $ar->[$i+1]->{'trail'}, -$sublen)) {
+      my @new_inner = ();
+      my @ij = splice @$ar, $i, 2, {trail => (substr $ar->[$i]->{'trail'},
+                                              -$sublen),
+                                    lead => '',
+                                    inner => \@new_inner};
+      @new_inner = @ij;
+      (substr $new_inner[0]->{'trail'}, -$sublen) = "";
+      (substr $new_inner[1]->{'trail'}, -$sublen) = "";
+      $changes++;
+    }
+  }
+  map { @{$_->{'inner'}} > 0 or
+            ($_->{'lead'}, $_->{'trail'}) =
+            ($_->{'lead'} . $_->{'trail'}, '')} @$ar;
+  @$ar = sort {$a->{'lead'} cmp $b->{'lead'}} @$ar;
+  for (my $i = 0; $i < @$ar - 1; $i++) {
+    # Rule for condensing from the start:
+    # ab,ac becomes a{b,c}
+    my $sublen = -1;
+    my $sublen2 = -2;
+    if ($ar->[$i]->{'lead'} ne '') {
+      $ar->[$i]->{'lead'} =~ /^([a-zA-Z]++|[0-9]++|.)/;
+      $sublen = length $1;
+    }
+    if ($ar->[$i+1]->{'lead'} ne '') {
+      $ar->[$i+1]->{'lead'} =~ /^([a-zA-Z]++|[0-9]++|.)/;
+      $sublen2 = length $1;
+    }
+    if ($sublen == $sublen2 &&
+        (substr $ar->[$i]->{'lead'}, 0, $sublen) eq
+        (substr $ar->[$i+1]->{'lead'}, 0, $sublen)) {
+      my @new_inner = ();
+      my @ij = splice @$ar, $i, 2, {lead => (substr $ar->[$i]->{'lead'},
+                                             0, $sublen),
+                                    trail => '',
+                                    inner => \@new_inner};
+      @new_inner = @ij;
+      (substr $new_inner[0]->{'lead'}, 0, $sublen) = "";
+      (substr $new_inner[1]->{'lead'}, 0, $sublen) = "";
+      $changes++;
+    }
+  }
+  return $changes;
+}
+sub collapse_working;
+sub collapse_working_element {
+  my $el = shift;
+  return $el->{'lead'} . collapse_working($el->{'inner'}) . $el->{'trail'};
+}
+sub collapse_working {
+  my $ar = shift;
+  return '' unless @$ar;
+  return '{' . (join ",", map { collapse_working_element $_ } @$ar) . '}'
+      unless shift;
+  return join ", ", map { collapse_working_element $_ } @$ar;
+}
+sub condense_array {
+  # We convert "abc","abd","aeg","afg" into "a{b{c,d},{e,f}g}", etc.
+  # Input may be re-ordered.
+  my @array = sort @_;
+  my $outstring = "";
+  @array == 0 and return "";
+  @array == 1 and return $array[0];
+
+  # This badly needs a functional language, or at least something good
+  # with ADTs. Here in Perl, I'm faking them using hashes.
+  my @working = map {+{lead => $_, trail => '', inner => []}} @array;
+  0 while condense_working \@working;
+  return collapse_working \@working, 1;
+}
+sub bad_deps_report {
+  my %depstate = %{+shift};
+  my $alldepstates = shift;
+  my @depmsg_simple = ();
+  my @depmsg_complex = ();
+  delete $depstate{'printed'};
+  delete $depstate{'bad_dep'};
+  delete $depstate{'fr_string'};
+  return unless %depstate;
+  for my $dep (keys %depstate) {
+    my $inner_report = bad_deps_report($alldepstates->{$dep}, $alldepstates);
+    if ($inner_report) {
+      push @depmsg_complex, "$dep (and thus $inner_report)";
+    } else {
+      push @depmsg_simple, "$dep";
+    }
+  }
+  my $depmsg_simple = condense_array(@depmsg_simple);
+  @depmsg_complex = sort @depmsg_complex;
+  @depmsg_simple and unshift @depmsg_complex, $depmsg_simple;
+  return (join ', ', @depmsg_complex);
 }
 
 # Objects can have multiple sets of state with respect to their
@@ -1670,6 +1835,7 @@ while ($objects_changed) {
 # them enough for the build system to try).
 my $last_unbuilt = '';
 my @dead_objects = ();
+my %failreasons = ();
 UNBUILT: for my $unbuilt (sort keys %{$state->{'outdatedobjects'}}) {
   # Uninteresting cases.
   # If symbols are interesting, they'll be mentioned in other
@@ -1701,12 +1867,25 @@ UNBUILT: for my $unbuilt (sort keys %{$state->{'outdatedobjects'}}) {
   # Don't complain about .rlo files that failed for the same reason
   # as the matching .o (and probably weren't wanted anyway).
   $last_unbuilt =~ s/\.rlo$/.o/ and $last_unbuilt eq $unbuilt and next;
-  $fr and progress_report(7, stringise_fail_reason($unbuilt));
+  if ($fr) {
+    my ($fr_string, $bad_dep) = stringise_fail_reason($unbuilt);
+    $failreasons{$unbuilt} ||= {};
+    $failreasons{$unbuilt}->{'fr_string'} = $fr_string;
+    $failreasons{$unbuilt}->{'printed'} = 1;
+    # If a file failed to build because of another file failing to
+    # build, we abbreviate the message.
+    if ($bad_dep) {
+      $failreasons{$unbuilt}->{'bad_dep'} = $bad_dep;
+      $failreasons{$bad_dep} ||= {};
+      $failreasons{$bad_dep}->{$unbuilt} = 1;
+    }
+  }
   $last_unbuilt = $unbuilt;
   # If an object has no objects to build from, or can be built only
-  # from objects with no objects to build from; we can delete it.
+  # from objects with no objects to build from, we can delete it.
   no_method_of_building($unbuilt) and push @dead_objects, $unbuilt;
 }
+
 # If requested, install.
 if ($options{'i'}) {
   for my $obj (keys %{$state->{'objects'}}) {
@@ -1758,10 +1937,24 @@ if ($options{'i'}) {
   }
 }
 
+for my $unbuilt (sort keys %failreasons) {
+  # For each object that couldn't built and needs a message printed
+  # for it, this is where we print the message. If we can abbreviate
+  # it, we print the message at the same time as the parent (possibly
+  # recursively).
+  if ($failreasons{$unbuilt}->{'printed'} &&
+      (!$failreasons{$unbuilt}->{'bad_dep'} ||
+       !$failreasons{$failreasons{$unbuilt}->{'bad_dep'}}->{'printed'})) {
+    progress_report(7, $failreasons{$unbuilt}->{'fr_string'});
+    my $deps = bad_deps_report($failreasons{$unbuilt}, \%failreasons);
+    $deps and progress_report(
+      7, "Other objects that failed to build as a result: $deps");
+  }
+}
+
 # Report messages to stderr.
 for my $object (sort keys %{$state->{'stderrobjects'}}) {
   progress_report(7, obj_state($object)->{'stderrreason'});
-  delete $state->{'stderrobjects'}->{$object};
 }
 for my $object (@dead_objects) {
   my $objstate = obj_state($object);
