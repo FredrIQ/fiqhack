@@ -2289,11 +2289,20 @@ $preprocess_dependencies = [
             ],
         },
         '.l' => {
-            # TODO: Support for flex specifically, that avoids the
-            # isolation dir.
             provices => [
                 {
+                    prereqs => ['command:flex'],
+                    group => 'lexes',
+                    score => 100,
+                    # Double extension: in case the .l and .y files have the
+                    # same basename
+                    value => 'bpath:$builddirbasename.l.c',
+                    command => 'flex -o $builddirbasename.l.c $pathname',
+                },
+                {
                     prereqs => ['command:lex'],
+                    group => 'lexes',
+                    score => 50,
                     value => 'bpath:$isodirbasename.c',
                     command => [
                         'ln -sf $abspathname $isopathname',
@@ -2304,11 +2313,21 @@ $preprocess_dependencies = [
             ],
         },
         '.y' => {
-            # TODO: Support for bison specifically, that avoids the
-            # isolation dir.
             provices => [
                 {
-                    prereqs => ['command:lex'],
+                    prereqs => ['command:bison'],
+                    group => 'yaccs',
+                    score => 100,
+                    value => [
+                        'bpath:$builddirbasename.y.c',
+                        'bpath:$builddirbasename.h',
+                    ],
+                    command => 'bison -o $builddirbasename.y.c --defines=$builddirbasename.h $pathname',
+                },
+                {
+                    prereqs => ['command:yacc'],
+                    group => 'yaccs',
+                    score => 50,
                     value => [
                         'bpath:$isodirbasename.c',
                         'bpath:$isodirbasename.h',
