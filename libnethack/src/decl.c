@@ -17,8 +17,8 @@ int x_maze_max, y_maze_max;     /* initialized in main, used in mkmaze.c */
 int otg_temp;   /* used by object_to_glyph() [otg] */
 
 /*
- *	The following structure will be initialized at startup time with
- *	the level numbers of some "important" things in the game.
+ * The following structure will be initialized at startup time with
+ * the level numbers of some "important" things in the game.
  */
 struct dgn_topology dungeon_topology;
 

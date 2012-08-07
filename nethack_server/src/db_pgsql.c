@@ -14,8 +14,8 @@
 #endif
 
 /* prepared statement names */
-#define PREP_AUTH	"auth_user"
-#define PREP_REGISTER	"register_user"
+#define PREP_AUTH       "auth_user"
+#define PREP_REGISTER   "register_user"
 
 /* SQL statements used */
 static const char SQL_init_user_table[] =

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright (c) 1989 by Jean-Christophe Collet */
+/* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
@@ -8,22 +8,22 @@
  *
  * Actually the list of instruments / effects is :
  *
- * (wooden) flute	may calm snakes if player has enough dexterity
- * magic flute		may put monsters to sleep:  area of effect depends
- *			on player level.
- * (tooled) horn	Will awaken monsters:  area of effect depends on player
- *			level.  May also scare monsters.
- * fire horn		Acts like a wand of fire.
- * frost horn		Acts like a wand of cold.
- * bugle		Will awaken soldiers (if any):  area of effect depends
- *			on player level.
- * (wooden) harp	May calm nymph if player has enough dexterity.
- * magic harp		Charm monsters:  area of effect depends on player
- *			level.
- * (leather) drum	Will awaken monsters like the horn.
- * drum of earthquake	Will initiate an earthquake whose intensity depends
- *			on player level.  That is, it creates random pits
- *			called here chasms.
+ * (wooden) flute       may calm snakes if player has enough dexterity
+ * magic flute          may put monsters to sleep:  area of effect depends
+ *                      on player level.
+ * (tooled) horn        Will awaken monsters:  area of effect depends on player
+ *                      level.  May also scare monsters.
+ * fire horn            Acts like a wand of fire.
+ * frost horn           Acts like a wand of cold.
+ * bugle                Will awaken soldiers (if any):  area of effect depends
+ *                      on player level.
+ * (wooden) harp        May calm nymph if player has enough dexterity.
+ * magic harp           Charm monsters:  area of effect depends on player
+ *                      level.
+ * (leather) drum       Will awaken monsters like the horn.
+ * drum of earthquake   Will initiate an earthquake whose intensity depends
+ *                      on player level.  That is, it creates random pits
+ *                      called here chasms.
  */
 
 #include "hack.h"

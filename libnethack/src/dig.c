@@ -168,8 +168,8 @@ is_digging(void)
     return FALSE;
 }
 
-#define BY_YOU		(&youmonst)
-#define BY_OBJECT	(NULL)
+#define BY_YOU          (&youmonst)
+#define BY_OBJECT       (NULL)
 
 boolean
 dig_check(struct monst * madeby, boolean verbose, int x, int y)

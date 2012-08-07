@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright 1988, 1989, 1990, 1992, M. Stephenson		  */
+/* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*  attribute modification routines. */
@@ -244,7 +244,7 @@ restore_attrib(void)
 }
 
 
-#define AVAL	50      /* tune value for exercise gains */
+#define AVAL    50      /* tune value for exercise gains */
 
 void
 exercise(int i, boolean inc_or_dec)
@@ -273,13 +273,13 @@ exercise(int i, boolean inc_or_dec)
 }
 
 /* hunger values - from eat.c */
-#define SATIATED	0
-#define NOT_HUNGRY	1
-#define HUNGRY		2
-#define WEAK		3
-#define FAINTING	4
-#define FAINTED		5
-#define STARVED		6
+#define SATIATED        0
+#define NOT_HUNGRY      1
+#define HUNGRY          2
+#define WEAK            3
+#define FAINTING        4
+#define FAINTED         5
+#define STARVED         6
 
 static void
 exerper(void)

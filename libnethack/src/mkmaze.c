@@ -73,13 +73,13 @@ is_solid(struct level *lev, int x, int y)
  * a wall, '.' a room, 'a' anything (we don't care), and our direction is
  * (0,1) - South or down - then:
  *
- *		a a a
- *		W x W		This would not extend a spine from x down
- *		W W W		(a corridor of walls is formed).
+ *      a a a
+ *      W x W           This would not extend a spine from x down
+ *      W W W           (a corridor of walls is formed).
  *
- *		a a a
- *		W x W		This would extend a spine from x down.
- *		. W W
+ *      a a a
+ *      W x W           This would extend a spine from x down.
+ *      . W W
  */
 static int
 extend_spine(int locale[3][3], int wall_there, int dx, int dy)
@@ -215,9 +215,9 @@ maze0xy(coord * cc)
 
 /*
  * Bad if:
- *	pos is occupied OR
- *	pos is inside restricted region (lx,ly,hx,hy) OR
- *	NOT (pos is corridor and a maze level OR pos is a room OR pos is air)
+ *      pos is occupied OR
+ *      pos is inside restricted region (lx,ly,hx,hy) OR
+ *      NOT (pos is corridor and a maze level OR pos is a room OR pos is air)
  */
 boolean
 bad_location(struct level * lev, xchar x, xchar y, xchar lx, xchar ly, xchar hx,

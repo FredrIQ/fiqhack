@@ -14,7 +14,7 @@ static struct wseg *create_worm_tail(int);
 /*  Description of long worm implementation.
  *
  *  Each monst struct of the head of a tailed worm has a wormno set to
- *			1 <= wormno < MAX_NUM_WORMS
+ *      1 <= wormno < MAX_NUM_WORMS
  *  If wormno == 0 this does not mean that the monster is not a worm,
  *  it just means that the monster does not have a long worm tail.
  *
@@ -27,24 +27,24 @@ static struct wseg *create_worm_tail(int);
  *  singly threaded linked lists.  The wormno variable is used as an index
  *  for these segment arrays.
  *
- *  wtails:	The first (starting struct) of a linked list.  This points
- *		to the tail (last) segment of the worm.
+ *  wtails:     The first (starting struct) of a linked list.  This points
+ *              to the tail (last) segment of the worm.
  *
- *  wheads:	The last (end) of a linked list of segments.  This points to
- *		the segment that is at the same position as the real monster
- *		(the head).  Note that the segment that wheads[wormno] points
- *		to, is not displayed.  It is simply there to keep track of
- *		where the head came from, so that worm movement and display are
- *		simplified later.
- *		Keeping the head segment of the worm at the end of the list
- *		of tail segments is an endless source of confusion, but it is
- *		necessary.
- *		From now on, we will use "start" and "end" to refer to the
- *		linked list and "head" and "tail" to refer to the worm.
+ *  wheads:     The last (end) of a linked list of segments.  This points to
+ *              the segment that is at the same position as the real monster
+ *              (the head).  Note that the segment that wheads[wormno] points
+ *              to, is not displayed.  It is simply there to keep track of
+ *              where the head came from, so that worm movement and display are
+ *              simplified later.
+ *              Keeping the head segment of the worm at the end of the list
+ *              of tail segments is an endless source of confusion, but it is
+ *              necessary.
+ *              From now on, we will use "start" and "end" to refer to the
+ *              linked list and "head" and "tail" to refer to the worm.
  *
  *  One final worm array is:
  *
- *  wgrowtime:	This tells us when to add another segment to the worm.
+ *  wgrowtime:  This tells us when to add another segment to the worm.
  *
  *  When a worm is moved, we add a new segment at the head, and delete the
  *  segment at the tail (unless we want it to grow).  This new head segment is

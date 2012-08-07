@@ -81,23 +81,23 @@ extern char *eos(char *);
  * Library file structure:
  *
  * HEADER:
- * %3ld	library FORMAT revision (currently rev 1)
- * %1c	space
- * %8ld	# of files in archive (includes 1 for directory)
- * %1c	space
- * %8ld	size of allocation for string space for directory names
- * %1c	space
- * %8ld	library offset - sanity check - lseek target for start of first file
- * %1c	space
- * %8ld	size - sanity check - byte size of complete archive file
+ * %3ld library FORMAT revision (currently rev 1)
+ * %1c  space
+ * %8ld # of files in archive (includes 1 for directory)
+ * %1c  space
+ * %8ld size of allocation for string space for directory names
+ * %1c  space
+ * %8ld library offset - sanity check - lseek target for start of first file
+ * %1c  space
+ * %8ld size - sanity check - byte size of complete archive file
  *
  * followed by one DIRECTORY entry for each file in the archive, including
  *  the directory itself:
- * %1c	handling information (compression, etc.)  Always ' ' in rev 1.
- * %s	file name
- * %1c	space
- * %8ld	offset in archive file of start of this file
- * %c	newline
+ * %1c  handling information (compression, etc.)  Always ' ' in rev 1.
+ * %s   file name
+ * %1c  space
+ * %8ld offset in archive file of start of this file
+ * %c   newline
  *
  * followed by the contents of the files
  */

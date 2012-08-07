@@ -140,7 +140,7 @@ summon_minion(aligntyp alignment, boolean talk)
     }
 }
 
-#define Athome	(Inhell && !mtmp->cham)
+#define Athome (Inhell && !mtmp->cham)
 
 /* returns 1 if it won't attack. */
 int

@@ -4,13 +4,13 @@
 
 /*
  * Entry points:
- *	mkroom() -- make and stock a room of a given type
- *	nexttodoor() -- return TRUE if adjacent to a door
- *	has_dnstairs() -- return TRUE if given room has a down staircase
- *	has_upstairs() -- return TRUE if given room has an up staircase
- *	courtmon() -- generate a court monster
- *	save_rooms() -- save level->rooms into file fd
- *	rest_rooms() -- restore level->rooms from file fd
+ *      mkroom() -- make and stock a room of a given type
+ *      nexttodoor() -- return TRUE if adjacent to a door
+ *      has_dnstairs() -- return TRUE if given room has a down staircase
+ *      has_upstairs() -- return TRUE if given room has an up staircase
+ *      courtmon() -- generate a court monster
+ *      save_rooms() -- save level->rooms into file fd
+ *      rest_rooms() -- restore level->rooms from file fd
  */
 
 #include "hack.h"
@@ -578,9 +578,9 @@ somexy(struct level * lev, struct mkroom * croom, coord * c)
 
 /*
  * Search for a special room given its type (zoo, court, etc...)
- *	Special values :
- *		- ANY_SHOP
- *		- ANY_TYPE
+ * Special values :
+ *     - ANY_SHOP
+ *     - ANY_TYPE
  */
 
 struct mkroom *

@@ -4,7 +4,7 @@
 #ifndef RND_H
 # define RND_H
 
-# define RND(x)	(int)(mt_random() % (long)(x))
+# define RND(x) (int)(mt_random() % (long)(x))
 
 /* 0 <= rn2(x) < x */
 static inline int

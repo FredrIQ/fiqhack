@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright (C) 1990 by Ken Arromdee */
+/* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -440,12 +440,12 @@ struct scatter_chain {
 
 /*
  * scflags:
- *	VIS_EFFECTS	Add visual effects to display
- *	MAY_HITMON	Objects may hit monsters
- *	MAY_HITYOU	Objects may hit hero
- *	MAY_HIT		Objects may hit you or monsters
- *	MAY_DESTROY	Objects may be destroyed at random
- *	MAY_FRACTURE	Stone objects can be fractured (statues, boulders)
+ *      VIS_EFFECTS     Add visual effects to display
+ *      MAY_HITMON      Objects may hit monsters
+ *      MAY_HITYOU      Objects may hit hero
+ *      MAY_HIT         Objects may hit you or monsters
+ *      MAY_DESTROY     Objects may be destroyed at random
+ *      MAY_FRACTURE    Stone objects can be fractured (statues, boulders)
  */
 
 /* returns number of scattered objects */

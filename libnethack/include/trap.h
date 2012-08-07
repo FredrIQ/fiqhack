@@ -28,50 +28,50 @@ struct trap {
     d_level dst;        /* destination for portals */
     coord launch;
     union vlaunchinfo vl;
-# define launch_otyp	vl.v_launch_otyp
-# define launch2		vl.v_launch2
+# define launch_otyp      vl.v_launch_otyp
+# define launch2          vl.v_launch2
 };
 
-# define newtrap()	malloc(sizeof(struct trap))
+# define newtrap()        malloc(sizeof(struct trap))
 # define dealloc_trap(trap) free(trap)
 
 /* reasons for statue animation */
-# define ANIMATE_NORMAL	0
+# define ANIMATE_NORMAL   0
 # define ANIMATE_SHATTER 1
-# define ANIMATE_SPELL	2
+# define ANIMATE_SPELL    2
 
 /* reasons for animate_statue's failure */
-# define AS_OK		 0      /* didn't fail */
-# define AS_NO_MON	 1      /* makemon failed */
+# define AS_OK            0      /* didn't fail */
+# define AS_NO_MON        1      /* makemon failed */
 # define AS_MON_IS_UNIQUE 2     /* statue monster is unique */
 
 /* Note: if adding/removing a trap, adjust trap_engravings[] in mklev.c */
 
 /* unconditional traps */
-# define NO_TRAP		0
-# define ARROW_TRAP	1
-# define DART_TRAP	2
-# define ROCKTRAP	3
-# define SQKY_BOARD	4
-# define BEAR_TRAP	5
-# define LANDMINE	6
-# define ROLLING_BOULDER_TRAP	7
-# define SLP_GAS_TRAP	8
-# define RUST_TRAP	9
-# define FIRE_TRAP	10
-# define PIT		11
-# define SPIKED_PIT	12
-# define HOLE		13
-# define TRAPDOOR	14
-# define VIBRATING_SQUARE        15
-# define TELEP_TRAP	16
-# define LEVEL_TELEP	17
-# define MAGIC_PORTAL	18
-# define WEB		19
-# define STATUE_TRAP	20
-# define MAGIC_TRAP	21
-# define ANTI_MAGIC	22
-# define POLY_TRAP	23
+# define NO_TRAP              0
+# define ARROW_TRAP           1
+# define DART_TRAP            2
+# define ROCKTRAP             3
+# define SQKY_BOARD           4
+# define BEAR_TRAP            5
+# define LANDMINE             6
+# define ROLLING_BOULDER_TRAP 7
+# define SLP_GAS_TRAP         8
+# define RUST_TRAP            9
+# define FIRE_TRAP            10
+# define PIT                  11
+# define SPIKED_PIT           12
+# define HOLE                 13
+# define TRAPDOOR             14
+# define VIBRATING_SQUARE     15
+# define TELEP_TRAP           16
+# define LEVEL_TELEP          17
+# define MAGIC_PORTAL         18
+# define WEB                  19
+# define STATUE_TRAP          20
+# define MAGIC_TRAP           21
+# define ANTI_MAGIC           22
+# define POLY_TRAP            23
 # define TRAPNUM 24
 
 #endif /* TRAP_H */

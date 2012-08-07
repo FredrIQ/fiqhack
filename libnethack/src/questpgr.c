@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright 1991, M. Stephenson		  */
+/*      Copyright 1991, M. Stephenson             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -9,7 +9,7 @@
 
 #include "qtext.h"
 
-#define QTEXT_FILE	"quest.dat"
+#define QTEXT_FILE      "quest.dat"
 /* #define DEBUG *//* uncomment for debugging */
 
 static void Fread(void *, int, int, dlb *);

@@ -981,17 +981,17 @@ burn_object(void *arg, long timeout)
  * a timer.
  *
  * Burn rules:
- *	potions of oil, lamps & candles:
- *		age = # of turns of fuel left
- *		spe = <unused>
+ *      potions of oil, lamps & candles:
+ *         age = # of turns of fuel left
+ *         spe = <unused>
  *
- *	magic lamps:
- *		age = <unused>
- *		spe = 0 not lightable, 1 lightable forever
+ *      magic lamps:
+ *         age = <unused>
+ *         spe = 0 not lightable, 1 lightable forever
  *
- *	candelabrum:
- *		age = # of turns of fuel left
- *		spe = # of candles
+ *      candelabrum:
+ *         age = # of turns of fuel left
+ *         spe = # of candles
  *
  * Once the burn begins, the age will be set to the amount of fuel
  * remaining _once_the_burn_finishes_.  If the burn is terminated
@@ -1189,55 +1189,55 @@ do_storms(void)
  * Interface:
  *
  * General:
- *	boolean start_timer(struct level *lev, long timeout, short kind,
+ *      boolean start_timer(struct level *lev, long timeout, short kind,
  *                          short func_index, void * arg)
- *		Start a timer of kind 'kind' that will expire at time
- *		moves+'timeout'.  Call the function at 'func_index'
- *		in the timeout table using argument 'arg'.  Return TRUE if
- *		a timer was started.  This places the timer on a list ordered
- *		"sooner" to "later".  If an object, increment the object's
- *		timer count.
+ *         Start a timer of kind 'kind' that will expire at time
+ *         moves+'timeout'.  Call the function at 'func_index'
+ *         in the timeout table using argument 'arg'.  Return TRUE if
+ *         a timer was started.  This places the timer on a list ordered
+ *         "sooner" to "later".  If an object, increment the object's
+ *         timer count.
  *
- *	long stop_timer(struct level *lev, short func_index, void * arg)
- *		Stop a timer specified by the (func_index, arg) pair.  This
- *		assumes that such a pair is unique.  Return the time the
- *		timer would have gone off.  If no timer is found, return 0.
- *		If an object, decrement the object's timer count.
+ *      long stop_timer(struct level *lev, short func_index, void * arg)
+ *         Stop a timer specified by the (func_index, arg) pair.  This
+ *         assumes that such a pair is unique.  Return the time the
+ *         timer would have gone off.  If no timer is found, return 0.
+ *         If an object, decrement the object's timer count.
  *
- *	long report_timer(struct level *lev, short func_index, void * arg)
- *		Look at a timer specified by the (func_index, arg) pair.  This
- *		assumes that such a pair is unique.  Return the time the
- *		timer is scheduled to go off.  If no timer is found, return 0.
+ *      long report_timer(struct level *lev, short func_index, void * arg)
+ *         Look at a timer specified by the (func_index, arg) pair.  This
+ *         assumes that such a pair is unique.  Return the time the
+ *         timer is scheduled to go off.  If no timer is found, return 0.
  *
- *	void run_timers(void)
- *		Call timers that have timed out.
+ *      void run_timers(void)
+ *         Call timers that have timed out.
  *
  *
  * Save/Restore:
- *	void save_timers(struct memfile *mf, int mode, int range)
- *		Save all timers of range 'range'.  Range is either global
- *		or local.  Global timers follow game play, local timers
- *		are saved with a level.  Object and monster timers are
- *		saved using their respective id's instead of pointers.
+ *      void save_timers(struct memfile *mf, int mode, int range)
+ *         Save all timers of range 'range'.  Range is either global
+ *         or local.  Global timers follow game play, local timers
+ *         are saved with a level.  Object and monster timers are
+ *         saved using their respective id's instead of pointers.
  *
- *	void restore_timers(struct memfile *mf, int range, boolean ghostly, long adjust)
- *		Restore timers of range 'range'.  If from a ghost pile,
- *		adjust the timeout by 'adjust'.  The object and monster
- *		ids are not restored until later.
+ *      void restore_timers(struct memfile *mf, int range, boolean ghostly, long adjust)
+ *         Restore timers of range 'range'.  If from a ghost pile,
+ *         adjust the timeout by 'adjust'.  The object and monster
+ *         ids are not restored until later.
  *
- *	void relink_timers(boolean ghostly)
- *		Relink all object and monster timers that had been saved
- *		using their object's or monster's id number.
+ *      void relink_timers(boolean ghostly)
+ *         Relink all object and monster timers that had been saved
+ *         using their object's or monster's id number.
  *
  * Object Specific:
- *	void obj_move_timers(struct obj *src, struct obj *dest)
- *		Reassign all timers from src to dest.
+ *      void obj_move_timers(struct obj *src, struct obj *dest)
+ *         Reassign all timers from src to dest.
  *
- *	void obj_split_timers(struct obj *src, struct obj *dest)
- *		Duplicate all timers assigned to src and attach them to dest.
+ *      void obj_split_timers(struct obj *src, struct obj *dest)
+ *         Duplicate all timers assigned to src and attach them to dest.
  *
- *	void obj_stop_timers(struct obj *obj)
- *		Stop all timers attached to obj.
+ *      void obj_stop_timers(struct obj *obj)
+ *         Stop all timers attached to obj.
  */
 
 static const char *kind_name(short);
@@ -1724,12 +1724,12 @@ transfer_timers(struct level *oldlev, struct level *newlev)
  * timers.
  *
  * Global range:
- *		+ timeouts that follow the hero (global)
- *		+ timeouts that follow obj & monst that are migrating
+ *    + timeouts that follow the hero (global)
+ *    + timeouts that follow obj & monst that are migrating
  *
  * Level range:
- *		+ timeouts that are level specific (e.g. storms)
- *		+ timeouts that stay with the level (obj & monst)
+ *    + timeouts that are level specific (e.g. storms)
+ *    + timeouts that stay with the level (obj & monst)
  */
 void
 save_timers(struct memfile *mf, struct level *lev, int range)

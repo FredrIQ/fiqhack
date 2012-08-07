@@ -33,8 +33,8 @@ static void finddpos(struct level *lev, coord *, xchar, xchar, xchar, xchar);
 static void mkinvpos(xchar, xchar, int);
 static void mk_knox_portal(struct level *lev, xchar, xchar);
 
-#define create_vault(lev)	create_room(lev, -1, -1, 2, 2, -1, -1, VAULT, TRUE)
-#define do_vault()	(vault_x != -1)
+#define create_vault(lev) create_room(lev, -1, -1, 2, 2, -1, -1, VAULT, TRUE)
+#define do_vault()        (vault_x != -1)
 static xchar vault_x, vault_y;
 boolean goldseen;
 static boolean made_branch;     /* used only during level creation */
@@ -788,9 +788,9 @@ skip0:
 }
 
 /*
- *	Place deposits of minerals (gold and misc gems) in the stone
- *	surrounding the rooms on the map.
- *	Also place kelp in water.
+ * Place deposits of minerals (gold and misc gems) in the stone
+ * surrounding the rooms on the map.
+ * Also place kelp in water.
  */
 static void
 mineralize(struct level *lev)

@@ -14,8 +14,8 @@
    of the corresponding role; that isn't so for some roles (tourist
    for instance) but is for the priests and monks we use it for... */
 #define quest_mon_represents_role(mptr,role_pm) \
-		(mptr->mlet == S_HUMAN && Role_if (role_pm) && \
-		  (mptr->msound == MS_LEADER || mptr->msound == MS_NEMESIS))
+                (mptr->mlet == S_HUMAN && Role_if (role_pm) && \
+                  (mptr->msound == MS_LEADER || mptr->msound == MS_NEMESIS))
 
 static boolean uncommon(const d_level * dlev, int mndx);
 static int align_shift(const d_level * dlev, const struct permonst *);
@@ -28,10 +28,10 @@ static void m_initinv(struct monst *);
 
 extern const int monstr[];
 
-#define m_initsgrp(mtmp, lev, x, y)	m_initgrp(mtmp, lev, x, y, 3)
-#define m_initlgrp(mtmp, lev, x, y)	m_initgrp(mtmp, lev, x, y, 10)
-#define toostrong(monindx, lev) (monstr[monindx] > lev)
-#define tooweak(monindx, lev)	(monstr[monindx] < lev)
+#define m_initsgrp(mtmp, lev, x, y) m_initgrp(mtmp, lev, x, y, 3)
+#define m_initlgrp(mtmp, lev, x, y) m_initgrp(mtmp, lev, x, y, 10)
+#define toostrong(monindx, lev)     (monstr[monindx] > lev)
+#define tooweak(monindx, lev)       (monstr[monindx] < lev)
 
 struct monst zeromonst; /* only address matters, value is irrelevant */
 
@@ -173,14 +173,14 @@ m_initweap(struct monst *mtmp)
     if (Is_rogue_level(&mtmp->dlevel->z))
         return;
 /*
- *	first a few special cases:
+ * first a few special cases:
  *
- *		giants get a boulder to throw sometimes.
- *		ettins get clubs
- *		kobolds get darts to throw
- *		centaurs get some sort of bow & arrows or bolts
- *		soldiers get all sorts of things.
- *		kops get clubs & cream pies.
+ *      giants get a boulder to throw sometimes.
+ *      ettins get clubs
+ *      kobolds get darts to throw
+ *      centaurs get some sort of bow & arrows or bolts
+ *      soldiers get all sorts of things.
+ *      kops get clubs & cream pies.
  */
     switch (ptr->mlet) {
     case S_GIANT:
@@ -459,9 +459,9 @@ m_initweap(struct monst *mtmp)
             break;
         /* fall thru */
 /*
- *	Now the general case, Some chance of getting some type
- *	of weapon for "normal" monsters.  Certain special types
- *	of monsters will get a bonus chance or different selections.
+ * Now the general case, Some chance of getting some type
+ * of weapon for "normal" monsters.  Certain special types
+ * of monsters will get a bonus chance or different selections.
  */
     default:
         {
@@ -534,8 +534,8 @@ m_initinv(struct monst *mtmp)
     if (Is_rogue_level(&mtmp->dlevel->z))
         return;
 /*
- *	Soldiers get armour & rations - armour approximates their ac.
- *	Nymphs may get mirror or potion of object detection.
+ * Soldiers get armour & rations - armour approximates their ac.
+ * Nymphs may get mirror or potion of object detection.
  */
     switch (ptr->mlet) {
 
@@ -876,10 +876,10 @@ propagate(int mndx, boolean tally, boolean ghostly)
 
 /*
  * called with [x,y] = coordinates;
- *	[0,0] means anyplace
- *	[u.ux,u.uy] means: near player (if !in_mklev)
+ *      [0,0] means anyplace
+ *      [u.ux,u.uy] means: near player (if !in_mklev)
  *
- *	In case we make a monster group, only return the one at [x,y].
+ *      In case we make a monster group, only return the one at [x,y].
  */
 struct monst *
 makemon(const struct permonst *ptr, struct level *lev, int x, int y,
@@ -1212,9 +1212,9 @@ uncommon(const d_level * dlev, int mndx)
 }
 
 /*
- *	shift the probability of a monster's generation by
- *	comparing the dungeon alignment and monster alignment.
- *	return an integer in the range of 0-5.
+ * shift the probability of a monster's generation by
+ * comparing the dungeon alignment and monster alignment.
+ * return an integer in the range of 0-5.
  */
 static int
 align_shift(const d_level * dlev, const struct permonst *ptr)
@@ -1285,7 +1285,7 @@ rndmonst(const d_level * dlev)
         elemlevel = In_endgame(dlev) && !Is_astralevel(dlev);
 
 /*
- *	Find out how many monsters exist in the range we have selected.
+ * Find out how many monsters exist in the range we have selected.
  */
         /* (`mndx' initialized above) */
         for (; mndx < SPECIAL_PM; mndx++) {
@@ -1308,8 +1308,8 @@ rndmonst(const d_level * dlev)
             rndmonst_state.mchoices[mndx] = (char)ct;
         }
 /*
- *	    Possible modification:  if choice_count is "too low",
- *	    expand minmlev..maxmlev range and try again.
+ * Possible modification:  if choice_count is "too low",
+ * expand minmlev..maxmlev range and try again.
  */
     }
     /* choice_count+mchoices[] recalc */
@@ -1319,7 +1319,7 @@ rndmonst(const d_level * dlev)
     }
 
 /*
- *	Now, select a monster at random.
+ * Now, select a monster at random.
  */
     ct = rnd(rndmonst_state.choice_count);
     for (mndx = LOW_PM; mndx < SPECIAL_PM; mndx++)
@@ -1366,11 +1366,11 @@ restore_rndmonst_state(struct memfile *mf)
 }
 
 
-/*	The routine below is used to make one of the multiple types
- *	of a given monster class.  The second parameter specifies a
- *	special casing bit mask to allow the normal genesis
- *	masks to be deactivated.  Returns 0 if no monsters
- *	in that class can be made.
+/* The routine below is used to make one of the multiple types
+ * of a given monster class.  The second parameter specifies a
+ * special casing bit mask to allow the normal genesis
+ * masks to be deactivated.  Returns 0 if no monsters
+ * in that class can be made.
  */
 
 const struct permonst *
@@ -1384,8 +1384,8 @@ mkclass(const d_level * dlev, char class, int spc)
         impossible("mkclass called with bad class!");
         return NULL;
     }
-/*	Assumption #1:	monsters of a given class are contiguous in the
- *			mons[] array.
+/* Assumption #1:  monsters of a given class are contiguous in the
+ *                 mons[] array.
  */
     for (first = LOW_PM; first < SPECIAL_PM; first++)
         if (mons[first].mlet == class)
@@ -1406,8 +1406,8 @@ mkclass(const d_level * dlev, char class, int spc)
     if (!num)
         return NULL;
 
-/*	Assumption #2:	monsters of a given class are presented in ascending
- *			order of strength.
+/* Assumption #2:  monsters of a given class are presented in ascending
+ *                 order of strength.
  */
     for (num = rnd(num); num > 0; first++)
         if (!(mvitals[first].mvflags & G_GONE) && !(mons[first].geno & mask)
@@ -1639,8 +1639,8 @@ golemhp(int type)
 
 
 /*
- *	Alignment vs. yours determines monster's attitude to you.
- *	( some "animal" types are co-aligned, but also hungry )
+ * Alignment vs. yours determines monster's attitude to you.
+ * ( some "animal" types are co-aligned, but also hungry )
  */
 boolean
 peace_minded(const struct permonst * ptr)
@@ -1688,7 +1688,7 @@ peace_minded(const struct permonst * ptr)
  * greater than the bonus for killing a hostile monster to maintain balance.
  * Rules:
  *   it's bad to kill peaceful monsters, potentially worse to kill always-
- *	peaceful monsters
+ *      peaceful monsters
  *   it's never bad to kill a hostile monster, although it may not be good
  */
 void

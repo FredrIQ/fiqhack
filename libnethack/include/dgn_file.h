@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Copyright (c) 1989 by M. Stephenson				  */
+/* Copyright (c) 1989 by M. Stephenson                            */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef DGN_FILE_H
@@ -41,7 +41,7 @@ struct tmpbranch {
 };
 
 /*
- *	Values for type for tmpbranch structure.
+ *      Values for type for tmpbranch structure.
  */
 # define TBR_STAIR   0  /* connection with both ends having a staircase */
 # define TBR_NO_UP   1  /* connection with no up staircase */
@@ -49,24 +49,24 @@ struct tmpbranch {
 # define TBR_PORTAL  3  /* portal connection */
 
 /*
- *	Flags that map into the dungeon flags bitfields.
+ *      Flags that map into the dungeon flags bitfields.
  */
-# define TOWN	    1   /* levels only */
+# define TOWN        1   /* levels only */
 # define HELLISH     2
 # define MAZELIKE    4
 # define ROGUELIKE   8
 
-# define D_ALIGN_NONE	0
-# define D_ALIGN_CHAOTIC	(AM_CHAOTIC << 4)
-# define D_ALIGN_NEUTRAL	(AM_NEUTRAL << 4)
-# define D_ALIGN_LAWFUL	(AM_LAWFUL << 4)
+# define D_ALIGN_NONE    0
+# define D_ALIGN_CHAOTIC (AM_CHAOTIC << 4)
+# define D_ALIGN_NEUTRAL (AM_NEUTRAL << 4)
+# define D_ALIGN_LAWFUL  (AM_LAWFUL << 4)
 
-# define D_ALIGN_MASK	0x70
+# define D_ALIGN_MASK    0x70
 
 /*
- *	Max number of prototype levels and branches.
+ *      Max number of prototype levels and branches.
  */
-# define LEV_LIMIT	50
-# define BRANCH_LIMIT	32
+# define LEV_LIMIT       50
+# define BRANCH_LIMIT    32
 
 #endif /* DGN_FILE_H */

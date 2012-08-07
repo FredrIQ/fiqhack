@@ -12,10 +12,10 @@ struct engr {
     long engr_time;     /* moment engraving was (will be) finished */
     xchar engr_x, engr_y;
     xchar engr_type;
-# define DUST	   1
+# define DUST       1
 # define ENGRAVE    2
-# define BURN	   3
-# define MARK	   4
+# define BURN       3
+# define MARK       4
 # define ENGR_BLOOD 5
 # define HEADSTONE  6
 # define N_ENGRAVE  6

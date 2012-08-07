@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/*	Copyright (c) 1989 by Jean-Christophe Collet */
+/*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
@@ -34,25 +34,25 @@ static void create_corridor(struct level *lev, corridor *);
 static boolean create_subroom(struct level *lev, struct mkroom *, xchar, xchar,
                               xchar, xchar, xchar, xchar);
 
-#define LEFT	1
-#define H_LEFT	2
-#define CENTER	3
-#define H_RIGHT	4
-#define RIGHT	5
+#define LEFT    1
+#define H_LEFT  2
+#define CENTER  3
+#define H_RIGHT 4
+#define RIGHT   5
 
-#define TOP	1
-#define BOTTOM	5
+#define TOP     1
+#define BOTTOM  5
 
-#define sq(x) ((x)*(x))
+#define sq(x)   ((x)*(x))
 
-#define XLIM	4
-#define YLIM	3
+#define XLIM    4
+#define YLIM    3
 
 #define Fread(ptr, size, count, stream)  if (dlb_fread(ptr,size,count,stream) != count) goto err_out;
-#define Fgetc	(schar)dlb_fgetc
-#define New(type)		malloc(sizeof(type))
-#define NewTab(type, size)	malloc(sizeof(type *) * (unsigned)size)
-#define Free(ptr)		if (ptr) free((ptr))
+#define Fgetc                            (schar)dlb_fgetc
+#define New(type)                        malloc(sizeof(type))
+#define NewTab(type, size)               malloc(sizeof(type *) * (unsigned)size)
+#define Free(ptr)                        if (ptr) free((ptr))
 
 static walk walklist[50];
 extern int min_rx, max_rx, min_ry, max_ry;      /* from mkmap.c */
@@ -155,16 +155,16 @@ rndtrap(struct level *lev)
 /*
  * Coordinates in special level files are handled specially:
  *
- *	if x or y is -11, we generate a random coordinate.
- *	if x or y is between -1 and -10, we read one from the corresponding
- *	register (x0, x1, ... x9).
- *	if x or y is nonnegative, we convert it from relative to the local map
- *	to global coordinates.
- *	The "humidity" flag is used to insure that engravings aren't
- *	created underwater, or eels on dry land.
+ *      if x or y is -11, we generate a random coordinate.
+ *      if x or y is between -1 and -10, we read one from the corresponding
+ *      register (x0, x1, ... x9).
+ *      if x or y is nonnegative, we convert it from relative to the local map
+ *      to global coordinates.
+ *      The "humidity" flag is used to insure that engravings aren't
+ *      created underwater, or eels on dry land.
  */
-#define DRY	0x1
-#define WET	0x2
+#define DRY     0x1
+#define WET     0x2
 
 
 static void

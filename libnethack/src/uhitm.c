@@ -25,7 +25,7 @@ extern boolean notonhead;       /* for long worms */
 /* The below might become a parameter instead if we use it a lot */
 static int dieroll;
 
-#define PROJECTILE(obj)	((obj) && is_ammo(obj))
+#define PROJECTILE(obj) ((obj) && is_ammo(obj))
 
 /* modified from hurtarmor() in mhitu.c */
 /* This is not static because it is also used for monsters rusting monsters */
@@ -234,13 +234,13 @@ find_roll_to_hit(struct monst *mtmp)
 
     check_caitiff(mtmp);
 
-/*	attacking peaceful creatures is bad for the samurai's giri */
+/* attacking peaceful creatures is bad for the samurai's giri */
     if (Role_if(PM_SAMURAI) && mtmp->mpeaceful && u.ualign.record > -10) {
         pline("You dishonorably attack the innocent!");
         adjalign(-1);
     }
 
-/*	Adjust vs. (and possibly modify) monster state.		*/
+/* Adjust vs. (and possibly modify) monster state.         */
 
     if (mtmp->mstun)
         tmp += 2;
@@ -270,14 +270,14 @@ find_roll_to_hit(struct monst *mtmp)
         }
     }
 
-/*	with a lot of luggage, your agility diminishes */
+/* with a lot of luggage, your agility diminishes */
     if ((tmp2 = near_capacity()) != 0)
         tmp -= (tmp2 * 2) - 1;
     if (u.utrap)
         tmp -= 3;
-/*	Some monsters have a combination of weapon attacks and non-weapon
- *	attacks.  It is therefore wrong to add hitval to tmp; we must add
- *	it only for the specific attack (in hmonas()).
+/* Some monsters have a combination of weapon attacks and non-weapon
+ * attacks.  It is therefore wrong to add hitval to tmp; we must add
+ * it only for the specific attack (in hmonas()).
  */
     if (uwep && !Upolyd) {
         tmp += hitval(uwep, mtmp);
@@ -746,9 +746,9 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                     break;
                 case EGG:
                     {
-#define useup_eggs(o)	{ if (thrown) obfree(o,NULL); \
-			  else useupall(o); \
-			  o = NULL; }   /* now gone */
+#define useup_eggs(o) { if (thrown) obfree(o,NULL); \
+                        else useupall(o); \
+                        o = NULL; }   /* now gone */
                         long cnt = obj->quan;
 
                         tmp = 1;        /* nominal physical damage */
@@ -903,7 +903,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     }
 
         /****** NOTE: perhaps obj is undefined!! (if !thrown && BOOMERANG)
-	 *      *OR* if attacking bare-handed!! */
+         *      *OR* if attacking bare-handed!! */
 
     if (get_dmg_bonus && tmp > 0) {
         tmp += u.udaminc;
@@ -2160,7 +2160,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
 }
 
 
-/*	Special (passive) attacks on you by monsters done here.		*/
+/* Special (passive) attacks on you by monsters done here.         */
 int
 passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
 {
@@ -2181,7 +2181,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
     else
         tmp = 0;
 
-/*	These affect you even if they just died */
+/* These affect you even if they just died */
 
     switch (ptr->mattk[i].adtyp) {
 
@@ -2280,7 +2280,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         break;
     }
 
-/*	These only affect you if they still live */
+/* These only affect you if they still live */
 
     if (malive && !mon->mcan && rn2(3)) {
 

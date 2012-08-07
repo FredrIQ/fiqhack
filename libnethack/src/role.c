@@ -857,11 +857,11 @@ nh_get_roles(void)
 }
 
 
-#define BP_ALIGN	0
-#define BP_GEND		1
-#define BP_RACE		2
-#define BP_ROLE		3
-#define NUM_BP		4
+#define BP_ALIGN        0
+#define BP_GEND         1
+#define BP_RACE         2
+#define BP_ROLE         3
+#define NUM_BP          4
 
 static char pa[NUM_BP], post_attribs;
 
@@ -1104,18 +1104,18 @@ nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 
 
 /*
- *	Special setup modifications here:
+ * Special setup modifications here:
  *
- *	Unfortunately, this is going to have to be done
- *	on each newgame or restore, because you lose the permonst mods
- *	across a save/restore.  :-)
+ * Unfortunately, this is going to have to be done
+ * on each newgame or restore, because you lose the permonst mods
+ * across a save/restore.  :-)
  *
- *	1 - The Rogue Leader is the Tourist Nemesis.
- *	2 - Priests start with a random alignment - convert the leader and
- *	    guardians here.
- *	3 - Elves can have one of two different leaders, but can't work it
- *	    out here because it requires hacking the level file data (see
- *	    sp_lev.c).
+ *      1 - The Rogue Leader is the Tourist Nemesis.
+ *      2 - Priests start with a random alignment - convert the leader and
+ *          guardians here.
+ *      3 - Elves can have one of two different leaders, but can't work it
+ *          out here because it requires hacking the level file data (see
+ *          sp_lev.c).
  *
  * This code also replaces quest_init().
  */

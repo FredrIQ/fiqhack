@@ -6,7 +6,7 @@
 #include "lev.h"
 #include "dlb.h"
 
-/*	[note: this comment is fairly old, but still accurate for 3.1]
+/*  [note: this comment is fairly old, but still accurate for 3.1]
  * Rumors have been entirely rewritten to speed up the access.  This is
  * essential when working from floppies.  Using fseek() the way that's done
  * here means rumors following longer rumors are output more often than those
@@ -15,7 +15,7 @@
  * this also happens with real fortune cookies.  -dgk
  */
 
-/*	3.1
+/*  3.1
  * The rumors file consists of a "do not edit" line, a hexadecimal number
  * giving the number of bytes of useful/true rumors, followed by those
  * true rumors (one per line), followed by the useless/false/misleading/cute

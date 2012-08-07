@@ -35,21 +35,21 @@ static int zap_hit_check(int, int);
 static void backfire(struct obj *);
 static int spell_hit_bonus(int);
 
-#define ZT_MAGIC_MISSILE	(AD_MAGM-1)
-#define ZT_FIRE			(AD_FIRE-1)
-#define ZT_COLD			(AD_COLD-1)
-#define ZT_SLEEP		(AD_SLEE-1)
-#define ZT_DEATH		(AD_DISN-1)     /* or disintegration */
-#define ZT_LIGHTNING		(AD_ELEC-1)
-#define ZT_POISON_GAS		(AD_DRST-1)
-#define ZT_ACID			(AD_ACID-1)
+#define ZT_MAGIC_MISSILE        (AD_MAGM-1)
+#define ZT_FIRE                 (AD_FIRE-1)
+#define ZT_COLD                 (AD_COLD-1)
+#define ZT_SLEEP                (AD_SLEE-1)
+#define ZT_DEATH                (AD_DISN-1)     /* or disintegration */
+#define ZT_LIGHTNING            (AD_ELEC-1)
+#define ZT_POISON_GAS           (AD_DRST-1)
+#define ZT_ACID                 (AD_ACID-1)
 /* 8 and 9 are currently unassigned */
 
-#define ZT_WAND(x)		(x)
-#define ZT_SPELL(x)		(10+(x))
-#define ZT_BREATH(x)		(20+(x))
+#define ZT_WAND(x)              (x)
+#define ZT_SPELL(x)             (10+(x))
+#define ZT_BREATH(x)            (20+(x))
 
-#define is_hero_spell(type)	((type) >= 10 && (type) < 20)
+#define is_hero_spell(type)     ((type) >= 10 && (type) < 20)
 
 static const char blinded_by_the_flash[] = "You are blinded by the flash!";
 
@@ -532,10 +532,10 @@ montraits(struct obj *obj, coord * cc)
  * get_container_location() returns the following information
  * about the outermost container:
  * loc argument gets set to: 
- *	OBJ_INVENT	if in hero's inventory; return 0.
- *	OBJ_FLOOR	if on the floor; return 0.
- *	OBJ_BURIED	if buried; return 0.
- *	OBJ_MINVENT	if in monster's inventory; return monster.
+ *   OBJ_INVENT   if in hero's inventory; return 0.
+ *   OBJ_FLOOR    if on the floor; return 0.
+ *   OBJ_BURIED   if buried; return 0.
+ *   OBJ_MINVENT  if in monster's inventory; return monster.
  * container_nesting is updated with the nesting depth of the containers
  * if applicable.
  */
@@ -1763,7 +1763,7 @@ wrestable(struct obj *wand)
 
 /*
  * zappable - returns 1 if zap is available, 0 otherwise.
- *	      it removes a charge from the wand if zappable.
+ *            it removes a charge from the wand if zappable.
  * added by GAN 11/03/86
  */
 int
@@ -2623,11 +2623,11 @@ miss(const char *str, struct monst *mtmp)
 
 /*
  *  Called for the following distance effects:
- *	when a weapon is thrown (weapon == THROWN_WEAPON)
- *	when an object is kicked (KICKED_WEAPON)
- *	when an IMMEDIATE wand is zapped (ZAPPED_WAND)
- *	when a light beam is flashed (FLASHED_LIGHT)
- *	when a mirror is applied (INVIS_BEAM)
+ *      when a weapon is thrown (weapon == THROWN_WEAPON)
+ *      when an object is kicked (KICKED_WEAPON)
+ *      when an IMMEDIATE wand is zapped (ZAPPED_WAND)
+ *      when a light beam is flashed (FLASHED_LIGHT)
+ *      when a mirror is applied (INVIS_BEAM)
  *  A thrown/kicked object falls down at the end of its range or when a monster
  *  is hit.  The variable 'bhitpos' is set to the final position of the weapon
  *  thrown/zapped.  The ray of a wand may affect (by calling a provided
@@ -3425,9 +3425,9 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
 
 /* note: worn amulet of life saving must be preserved in order to operate */
 #define oresist_disintegration(obj) \
-		(objects[obj->otyp].oc_oprop == DISINT_RES || \
-		 obj_resists(obj, 5, 50) || is_quest_artifact(obj) || \
-		 obj == m_amulet)
+            (objects[obj->otyp].oc_oprop == DISINT_RES || \
+             obj_resists(obj, 5, 50) || is_quest_artifact(obj) || \
+             obj == m_amulet)
 
                         for (otmp = mon->minvent; otmp; otmp = otmp2) {
                             otmp2 = otmp->nobj;

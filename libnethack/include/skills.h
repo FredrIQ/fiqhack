@@ -11,7 +11,7 @@
 
 
 /* Code to denote that no skill is applicable */
-# define P_NONE				0
+# define P_NONE                 0
 
 /* Weapon Skills -- Stephen White
  * Order matters and are used in macros.
@@ -54,27 +54,27 @@
 
 /* Spell Skills added by Larry Stewart-Zerba */
 # define P_ATTACK_SPELL      30
-# define P_HEALING_SPELL     31
-# define P_DIVINATION_SPELL  32
-# define P_ENCHANTMENT_SPELL 33
-# define P_CLERIC_SPELL      34
-# define P_ESCAPE_SPELL      35
-# define P_MATTER_SPELL      36
-# define P_FIRST_SPELL		P_ATTACK_SPELL
-# define P_LAST_SPELL		P_MATTER_SPELL
+# define P_HEALING_SPELL        31
+# define P_DIVINATION_SPELL     32
+# define P_ENCHANTMENT_SPELL    33
+# define P_CLERIC_SPELL         34
+# define P_ESCAPE_SPELL         35
+# define P_MATTER_SPELL         36
+# define P_FIRST_SPELL          P_ATTACK_SPELL
+# define P_LAST_SPELL           P_MATTER_SPELL
 
 /* Other types of combat */
-# define P_BARE_HANDED_COMBAT	37
-# define P_MARTIAL_ARTS		P_BARE_HANDED_COMBAT    /* Role distinguishes */
-# define P_TWO_WEAPON_COMBAT	38      /* Finally implemented */
-# define P_RIDING		39      /* How well you control your steed */
-# define P_LAST_H_TO_H		P_RIDING
-# define P_FIRST_H_TO_H		P_BARE_HANDED_COMBAT
+# define P_BARE_HANDED_COMBAT   37
+# define P_MARTIAL_ARTS         P_BARE_HANDED_COMBAT    /* Role distinguishes */
+# define P_TWO_WEAPON_COMBAT    38      /* Finally implemented */
+# define P_RIDING               39      /* How well you control your steed */
+# define P_LAST_H_TO_H          P_RIDING
+# define P_FIRST_H_TO_H         P_BARE_HANDED_COMBAT
 
-# define P_NUM_SKILLS		(P_LAST_H_TO_H+1)
+# define P_NUM_SKILLS           (P_LAST_H_TO_H+1)
 
 /* These roles qualify for a martial arts bonus */
-# define martial_bonus()	(Role_if(PM_SAMURAI) || Role_if(PM_MONK))
+# define martial_bonus()        (Role_if(PM_SAMURAI) || Role_if(PM_MONK))
 
 
 /*
@@ -84,13 +84,13 @@
  * with the current skill-1.  To work out for the UNSKILLED case,
  * a value of 0 needed.
  */
-# define P_ISRESTRICTED	0
-# define P_UNSKILLED		1
-# define P_BASIC			2
-# define P_SKILLED		3
-# define P_EXPERT		4
-# define P_MASTER		5       /* Unarmed combat/martial arts only */
-# define P_GRAND_MASTER	6       /* Unarmed combat/martial arts only */
+# define P_ISRESTRICTED         0
+# define P_UNSKILLED            1
+# define P_BASIC                2
+# define P_SKILLED              3
+# define P_EXPERT               4
+# define P_MASTER               5       /* Unarmed combat/martial arts only */
+# define P_GRAND_MASTER         6       /* Unarmed combat/martial arts only */
 
 # define practice_needed_to_advance(level) ((level)*(level)*20)
 
@@ -101,10 +101,10 @@ struct skills {
     unsigned short advance;
 };
 
-# define P_SKILL(type)		(u.weapon_skills[type].skill)
-# define P_MAX_SKILL(type)	(u.weapon_skills[type].max_skill)
-# define P_ADVANCE(type)		(u.weapon_skills[type].advance)
-# define P_RESTRICTED(type)	(u.weapon_skills[type].skill == P_ISRESTRICTED)
+# define P_SKILL(type)          (u.weapon_skills[type].skill)
+# define P_MAX_SKILL(type)      (u.weapon_skills[type].max_skill)
+# define P_ADVANCE(type)        (u.weapon_skills[type].advance)
+# define P_RESTRICTED(type)     (u.weapon_skills[type].skill == P_ISRESTRICTED)
 
 # define P_SKILL_LIMIT 60       /* Max number of skill advancements */
 

@@ -27,67 +27,67 @@ struct objclass {
     unsigned oc_disclose_id:1;  /* was identified by DYWYPI */
 
     unsigned oc_big:1;
-# define oc_bimanual	oc_big  /* for weapons & tools used as weapons */
-# define oc_bulky	oc_big  /* for armor */
+# define oc_bimanual    oc_big  /* for weapons & tools used as weapons */
+# define oc_bulky       oc_big  /* for armor */
     unsigned oc_tough:1;        /* hard gems/rings */
 
     unsigned oc_dir:2;
-# define NODIR		1       /* for wands/spells: non-directional */
-# define IMMEDIATE	2       /* directional */
-# define RAY		3       /* zap beams */
+# define NODIR          1       /* for wands/spells: non-directional */
+# define IMMEDIATE      2       /* directional */
+# define RAY            3       /* zap beams */
 
-# define PIERCE		1       /* for weapons & tools used as weapons */
-# define SLASH		2       /* (latter includes iron ball & chain) */
-# define WHACK		0
+# define PIERCE         1       /* for weapons & tools used as weapons */
+# define SLASH          2       /* (latter includes iron ball & chain) */
+# define WHACK          0
 
     unsigned oc_material:5;
-# define LIQUID		1       /* currently only for venom */
-# define WAX		2
-# define VEGGY		3       /* foodstuffs */
-# define FLESH		4       /* ditto */
-# define PAPER		5
-# define CLOTH		6
-# define LEATHER		7
-# define WOOD		8
-# define BONE		9
-# define DRAGON_HIDE	10      /* not leather! */
-# define IRON		11      /* Fe - includes steel */
-# define METAL		12      /* Sn, &c. */
-# define COPPER		13      /* Cu - includes brass */
-# define SILVER		14      /* Ag */
-# define GOLD		15      /* Au */
-# define PLATINUM	16      /* Pt */
-# define MITHRIL		17
-# define PLASTIC		18
-# define GLASS		19
-# define GEMSTONE	20
-# define MINERAL		21
+# define LIQUID         1       /* currently only for venom */
+# define WAX            2
+# define VEGGY          3       /* foodstuffs */
+# define FLESH          4       /* ditto */
+# define PAPER          5
+# define CLOTH          6
+# define LEATHER        7
+# define WOOD           8
+# define BONE           9
+# define DRAGON_HIDE    10      /* not leather! */
+# define IRON           11      /* Fe - includes steel */
+# define METAL          12      /* Sn, &c. */
+# define COPPER         13      /* Cu - includes brass */
+# define SILVER         14      /* Ag */
+# define GOLD           15      /* Au */
+# define PLATINUM       16      /* Pt */
+# define MITHRIL        17
+# define PLASTIC        18
+# define GLASS          19
+# define GEMSTONE       20
+# define MINERAL        21
 
-# define is_organic(otmp)	(objects[otmp->otyp].oc_material <= WOOD)
-# define is_metallic(otmp)	(objects[otmp->otyp].oc_material >= IRON && \
-				 objects[otmp->otyp].oc_material <= MITHRIL)
+# define is_organic(otmp)       (objects[otmp->otyp].oc_material <= WOOD)
+# define is_metallic(otmp)      (objects[otmp->otyp].oc_material >= IRON && \
+                                 objects[otmp->otyp].oc_material <= MITHRIL)
 
 /* primary damage: fire/rust/--- */
 /* is_flammable(otmp), is_rottable(otmp) in mkobj.c */
-# define is_rustprone(otmp)	(objects[otmp->otyp].oc_material == IRON)
+# define is_rustprone(otmp)     (objects[otmp->otyp].oc_material == IRON)
 
 /* secondary damage: rot/acid/acid */
-# define is_corrodeable(otmp)	(objects[otmp->otyp].oc_material == COPPER || objects[otmp->otyp].oc_material == IRON)
+# define is_corrodeable(otmp)   (objects[otmp->otyp].oc_material == COPPER || objects[otmp->otyp].oc_material == IRON)
 
 # define is_damageable(otmp) (is_rustprone(otmp) || is_flammable(otmp) || \
-				is_rottable(otmp) || is_corrodeable(otmp))
+                                is_rottable(otmp) || is_corrodeable(otmp))
 
     schar oc_subtyp;
-# define oc_skill	oc_subtyp       /* Skills of weapons, spellbooks,
+# define oc_skill       oc_subtyp       /* Skills of weapons, spellbooks,
                                            tools, gems */
-# define oc_armcat	oc_subtyp       /* for armor */
-# define ARM_SHIELD	1       /* needed for special wear function */
-# define ARM_HELM	2
-# define ARM_GLOVES	3
-# define ARM_BOOTS	4
-# define ARM_CLOAK	5
-# define ARM_SHIRT	6
-# define ARM_SUIT	0
+# define oc_armcat      oc_subtyp       /* for armor */
+# define ARM_SHIELD     1       /* needed for special wear function */
+# define ARM_HELM       2
+# define ARM_GLOVES     3
+# define ARM_BOOTS      4
+# define ARM_CLOAK      5
+# define ARM_SHIRT      6
+# define ARM_SUIT       0
 
     uchar oc_oprop;     /* property (invis, &c.) conveyed */
     char oc_class;      /* object class */
@@ -101,11 +101,11 @@ struct objclass {
 /* for weapons, and tools, rocks, and gems useful as weapons */
     schar oc_wsdam, oc_wldam;   /* max small/large monster damage */
     schar oc_oc1, oc_oc2;
-# define oc_hitbon	oc_oc1  /* weapons: "to hit" bonus */
+# define oc_hitbon      oc_oc1  /* weapons: "to hit" bonus */
 
-# define a_ac		oc_oc1  /* armor class, used in ARM_BONUS in do.c */
-# define a_can		oc_oc2  /* armor: used in mhitu.c */
-# define oc_level	oc_oc2  /* books: spell level */
+# define a_ac           oc_oc1  /* armor class, used in ARM_BONUS in do.c */
+# define a_can          oc_oc2  /* armor: used in mhitu.c */
+# define oc_level       oc_oc2  /* books: spell level */
 
     unsigned short oc_nutrition;        /* food value */
 };
@@ -126,53 +126,53 @@ extern void init_objlist(void);
  * All objects have a class. Make sure that all classes have a corresponding
  * symbol below.
  */
-# define RANDOM_CLASS	 0      /* used for generating random objects */
-# define ILLOBJ_CLASS	 1
-# define WEAPON_CLASS	 2
-# define ARMOR_CLASS	 3
-# define RING_CLASS	 4
-# define AMULET_CLASS	 5
-# define TOOL_CLASS	 6
-# define FOOD_CLASS	 7
-# define POTION_CLASS	 8
-# define SCROLL_CLASS	 9
-# define SPBOOK_CLASS	10      /* actually SPELL-book */
-# define WAND_CLASS	11
-# define COIN_CLASS	12
-# define GEM_CLASS	13
-# define ROCK_CLASS	14
-# define BALL_CLASS	15
-# define CHAIN_CLASS	16
-# define VENOM_CLASS	17
-# define MAXOCLASSES	18
+# define RANDOM_CLASS    0      /* used for generating random objects */
+# define ILLOBJ_CLASS    1
+# define WEAPON_CLASS    2
+# define ARMOR_CLASS     3
+# define RING_CLASS      4
+# define AMULET_CLASS    5
+# define TOOL_CLASS      6
+# define FOOD_CLASS      7
+# define POTION_CLASS    8
+# define SCROLL_CLASS    9
+# define SPBOOK_CLASS   10      /* actually SPELL-book */
+# define WAND_CLASS     11
+# define COIN_CLASS     12
+# define GEM_CLASS      13
+# define ROCK_CLASS     14
+# define BALL_CLASS     15
+# define CHAIN_CLASS    16
+# define VENOM_CLASS    17
+# define MAXOCLASSES    18
 
-# define ALLOW_COUNT	(MAXOCLASSES+1) /* Can be used in the object class */
-# define ALL_CLASSES	(MAXOCLASSES+2) /* input to getobj().  */
-# define ALLOW_NONE	(MAXOCLASSES+3) /* */
-# define NONE_ON_COMMA	(MAXOCLASSES+4) /* Render ALLOW_NONE as , not -.  */
+# define ALLOW_COUNT    (MAXOCLASSES+1) /* Can be used in the object class */
+# define ALL_CLASSES    (MAXOCLASSES+2) /* input to getobj().  */
+# define ALLOW_NONE     (MAXOCLASSES+3) /* */
+# define NONE_ON_COMMA  (MAXOCLASSES+4) /* Render ALLOW_NONE as , not -.  */
 
-# define BURNING_OIL	(MAXOCLASSES+1) /* Can be used as input to explode. */
-# define MON_EXPLODE	(MAXOCLASSES+2) /* Exploding monster (e.g. gas spore) */
+# define BURNING_OIL    (MAXOCLASSES+1) /* Can be used as input to explode. */
+# define MON_EXPLODE    (MAXOCLASSES+2) /* Exploding monster (e.g. gas spore) */
 
 /* Default definitions of all object-symbols (must match classes above). */
 
-# define ILLOBJ_SYM	']'     /* also used for mimics */
-# define WEAPON_SYM	')'
-# define ARMOR_SYM	'['
-# define RING_SYM	'='
-# define AMULET_SYM	'"'
-# define TOOL_SYM	'('
-# define FOOD_SYM	'%'
-# define POTION_SYM	'!'
-# define SCROLL_SYM	'?'
-# define SPBOOK_SYM	'+'
-# define WAND_SYM	'/'
-# define GOLD_SYM	'$'
-# define GEM_SYM		'*'
-# define ROCK_SYM	'`'
-# define BALL_SYM	'0'
-# define CHAIN_SYM	'_'
-# define VENOM_SYM	'.'
+# define ILLOBJ_SYM     ']'     /* also used for mimics */
+# define WEAPON_SYM     ')'
+# define ARMOR_SYM      '['
+# define RING_SYM       '='
+# define AMULET_SYM     '"'
+# define TOOL_SYM       '('
+# define FOOD_SYM       '%'
+# define POTION_SYM     '!'
+# define SCROLL_SYM     '?'
+# define SPBOOK_SYM     '+'
+# define WAND_SYM       '/'
+# define GOLD_SYM       '$'
+# define GEM_SYM        '*'
+# define ROCK_SYM       '`'
+# define BALL_SYM       '0'
+# define CHAIN_SYM      '_'
+# define VENOM_SYM      '.'
 
 struct fruit {
     char fname[PL_FSIZ];

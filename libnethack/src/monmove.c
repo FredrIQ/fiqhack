@@ -259,7 +259,7 @@ dochug(struct monst *mtmp)
     struct obj *ygold = 0, *lepgold = 0;
     struct musable musable;
 
-/*	Pre-movement adjustments	*/
+/* Pre-movement adjustments        */
 
     mdat = mtmp->data;
 
@@ -459,7 +459,7 @@ toofar:
         }
     }
 
-/*	Now the actual movement phase	*/
+/* Now the actual movement phase   */
 
     if (mdat->mlet == S_LEPRECHAUN) {
         ygold = findgold(invent);
@@ -528,7 +528,7 @@ toofar:
 
 
 
-/*	Now, attack the player if possible - one attack set per monst	*/
+/* Now, attack the player if possible - one attack set per monst   */
 
     if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
         if (inrange && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3)
@@ -764,7 +764,7 @@ not_special:
             setlikes = TRUE;
         }
     }
-#define SQSRCHRADIUS	5
+#define SQSRCHRADIUS    5
 
     {
         int minr = SQSRCHRADIUS;        /* not too far away */

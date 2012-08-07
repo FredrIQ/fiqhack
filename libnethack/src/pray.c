@@ -38,9 +38,9 @@ static boolean blocked_boulder(int, int);
  */
 
 /*
- *	Moloch, who dwells in Gehennom, is the "renegade" cruel god
- *	responsible for the theft of the Amulet from Marduk, the Creator.
- *	Moloch is unaligned.
+ * Moloch, who dwells in Gehennom, is the "renegade" cruel god
+ * responsible for the theft of the Amulet from Marduk, the Creator.
+ * Moloch is unaligned.
  */
 static const char *const Moloch = "Moloch";
 
@@ -68,31 +68,31 @@ static int p_type;      /* (-1)-3: (-1)=really naughty, 3=really good */
  * order to have the values be meaningful.
  */
 
-#define TROUBLE_STONED			13
-#define TROUBLE_SLIMED			12
-#define TROUBLE_STRANGLED		11
-#define TROUBLE_LAVA			10
-#define TROUBLE_SICK			 9
-#define TROUBLE_STARVING		 8
-#define TROUBLE_HIT			 7
-#define TROUBLE_LYCANTHROPE		 6
-#define TROUBLE_COLLAPSING		 5
-#define TROUBLE_STUCK_IN_WALL		 4
-#define TROUBLE_CURSED_LEVITATION	 3
-#define TROUBLE_UNUSEABLE_HANDS		 2
-#define TROUBLE_CURSED_BLINDFOLD	 1
+#define TROUBLE_STONED                  13
+#define TROUBLE_SLIMED                  12
+#define TROUBLE_STRANGLED               11
+#define TROUBLE_LAVA                    10
+#define TROUBLE_SICK                     9
+#define TROUBLE_STARVING                 8
+#define TROUBLE_HIT                      7
+#define TROUBLE_LYCANTHROPE              6
+#define TROUBLE_COLLAPSING               5
+#define TROUBLE_STUCK_IN_WALL            4
+#define TROUBLE_CURSED_LEVITATION        3
+#define TROUBLE_UNUSEABLE_HANDS          2
+#define TROUBLE_CURSED_BLINDFOLD         1
 
-#define TROUBLE_PUNISHED	       (-1)
-#define TROUBLE_FUMBLING	       (-2)
-#define TROUBLE_CURSED_ITEMS	       (-3)
-#define TROUBLE_SADDLE		       (-4)
-#define TROUBLE_BLIND		       (-5)
-#define TROUBLE_POISONED	       (-6)
-#define TROUBLE_WOUNDED_LEGS	       (-7)
-#define TROUBLE_HUNGRY		       (-8)
-#define TROUBLE_STUNNED		       (-9)
-#define TROUBLE_CONFUSED	      (-10)
-#define TROUBLE_HALLUCINATION	      (-11)
+#define TROUBLE_PUNISHED               (-1)
+#define TROUBLE_FUMBLING               (-2)
+#define TROUBLE_CURSED_ITEMS           (-3)
+#define TROUBLE_SADDLE                 (-4)
+#define TROUBLE_BLIND                  (-5)
+#define TROUBLE_POISONED               (-6)
+#define TROUBLE_WOUNDED_LEGS           (-7)
+#define TROUBLE_HUNGRY                 (-8)
+#define TROUBLE_STUNNED                (-9)
+#define TROUBLE_CONFUSED              (-10)
+#define TROUBLE_HALLUCINATION         (-11)
 
 /* We could force rehumanize of polyselfed people, but we can't tell
    unintentional shape changes from the other kind. Oh well.
@@ -110,19 +110,19 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()	(IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow)
-#define on_shrine()	((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
-#define a_align(x,y)	((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
+#define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow)
+#define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
+#define a_align(x,y)    ((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
 
 /* Borrowed from eat.c */
 
-#define SATIATED	0
-#define NOT_HUNGRY	1
-#define HUNGRY		2
-#define WEAK		3
-#define FAINTING	4
-#define FAINTED		5
-#define STARVED		6
+#define SATIATED        0
+#define NOT_HUNGRY      1
+#define HUNGRY          2
+#define WEAK            3
+#define FAINTING        4
+#define FAINTED         5
+#define STARVED         6
 
 
 static int

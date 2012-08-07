@@ -3,8 +3,8 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /*
- *	This code was adapted from the code in end.c to run in a standalone
- *	mode for the makedefs / drg code.
+ *      This code was adapted from the code in end.c to run in a standalone
+ *      mode for the makedefs / drg code.
  */
 
 #include "config.h"

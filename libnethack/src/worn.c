@@ -33,9 +33,9 @@ const struct worn {
 
 /* This only allows for one blocking item per property */
 #define w_blocks(o,m) \
-		((o->otyp == MUMMY_WRAPPING && ((m) & W_ARMC)) ? INVIS : \
-		 (o->otyp == CORNUTHAUM && ((m) & W_ARMH) && \
-			!Role_if (PM_WIZARD)) ? CLAIRVOYANT : 0)
+            ((o->otyp == MUMMY_WRAPPING && ((m) & W_ARMC)) ? INVIS : \
+             (o->otyp == CORNUTHAUM && ((m) & W_ARMH) && \
+                !Role_if (PM_WIZARD)) ? CLAIRVOYANT : 0)
                 /* note: monsters don't have clairvoyance, so your role has no
                    significant effect on their use of w_blocks() */
 
@@ -799,9 +799,9 @@ extra_pref(struct monst *mon, struct obj *obj)
 /*
  * Exceptions to things based on race. Correctly checks polymorphed player race.
  * Returns:
- *	 0 No exception, normal rules apply.
- * 	 1 If the race/object combination is acceptable.
- *	-1 If the race/object combination is unacceptable.
+ *     0  No exception, normal rules apply.
+ *     1  If the race/object combination is acceptable.
+ *     -1 If the race/object combination is unacceptable.
  */
 int
 racial_exception(struct monst *mon, struct obj *obj)

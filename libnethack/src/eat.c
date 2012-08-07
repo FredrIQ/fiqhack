@@ -39,13 +39,13 @@ char msgbuf[BUFSZ];
 
 
 /* hunger texts used on bottom line (each 8 chars long) */
-#define SATIATED	0
-#define NOT_HUNGRY	1
-#define HUNGRY		2
-#define WEAK		3
-#define FAINTING	4
-#define FAINTED		5
-#define STARVED		6
+#define SATIATED        0
+#define NOT_HUNGRY      1
+#define HUNGRY          2
+#define WEAK            3
+#define FAINTING        4
+#define FAINTED         5
+#define STARVED         6
 
 /* also used to see if you're allowed to eat cats and dogs */
 #define CANNIBAL_ALLOWED() (Role_if (PM_CAVEMAN) || Race_if(PM_ORC))
@@ -139,7 +139,7 @@ static const struct {
     "", 0}
 };
 
-#define TTSZ	SIZE(tintxts)
+#define TTSZ    SIZE(tintxts)
 
 static struct tin {
     struct obj *tin;

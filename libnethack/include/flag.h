@@ -3,8 +3,8 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* If you change the flag structure make sure you increment EDITLEVEL in   */
-/* patchlevel.h if needed.  Changing the instance_flags structure does	   */
-/* not require incrementing EDITLEVEL.					   */
+/* patchlevel.h if needed.  Changing the instance_flags structure does     */
+/* not require incrementing EDITLEVEL.                                     */
 
 #ifndef FLAG_H
 # define FLAG_H
@@ -15,60 +15,61 @@
  */
 
 struct flag {
-    boolean autodig;    /* MRKR: Automatically dig */
-    boolean autoquiver; /* Automatically fill quiver */
+    boolean autodig;        /* MRKR: Automatically dig */
+    boolean autoquiver;     /* Automatically fill quiver */
     boolean beginner;
-    boolean confirm;    /* confirm before hitting tame monsters */
-    boolean debug;      /* in debugging mode */
-# define wizard	 flags.debug
-    boolean explore;    /* in exploration mode */
+    boolean confirm;        /* confirm before hitting tame monsters */
+    boolean debug;          /* in debugging mode */
+# define wizard  flags.debug
+    boolean explore;        /* in exploration mode */
 # define discover flags.explore
     boolean female;
     boolean forcefight;
-    boolean friday13;   /* it's Friday the 13th */
-    boolean legacy;     /* print game entry "story" */
-    boolean lit_corridor;       /* show a dark corr as lit if it is in sight */
+    boolean friday13;       /* it's Friday the 13th */
+    boolean legacy;         /* print game entry "story" */
+    boolean lit_corridor;   /* show a dark corr as lit if it is in sight */
     boolean made_amulet;
-    boolean mon_moving; /* monsters' turn to move */
-    boolean move;       /* normally 1, unless an action during your turn did
-                           NOT use up the move */
+    boolean mon_moving;     /* monsters' turn to move */
+    boolean move;           /* normally 1, unless an action during your turn did
+                               NOT use up the move */
     boolean mv;
-    boolean bypasses;   /* bypass flag is set on at least one fobj */
-    boolean nopick;     /* do not pickup objects (as when running) */
-    boolean null;       /* OK to send nulls to the terminal */
-    boolean pickup;     /* whether you pickup or move and look */
+    boolean bypasses;       /* bypass flag is set on at least one fobj */
+    boolean nopick;         /* do not pickup objects (as when running) */
+    boolean null;           /* OK to send nulls to the terminal */
+    boolean pickup;         /* whether you pickup or move and look */
 
-    boolean pushweapon; /* When wielding, push old weapon into second slot */
-    boolean rest_on_space;      /* space means rest */
-    boolean safe_dog;   /* give complete protection to the dog */
-    boolean silent;     /* whether the bell rings or not */
-    boolean sortpack;   /* sorted inventory */
-    boolean soundok;    /* ok to tell about sounds heard */
-    boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
-    boolean tombstone;  /* print tombstone */
-    boolean verbose;    /* max battle info */
-    boolean prayconfirm;        /* confirm before praying */
-    unsigned ident;     /* social security number for each monster */
+    boolean pushweapon;     /* When wielding, push old weapon into second
+                               slot */
+    boolean rest_on_space;  /* space means rest */
+    boolean safe_dog;       /* give complete protection to the dog */
+    boolean silent;         /* whether the bell rings or not */
+    boolean sortpack;       /* sorted inventory */
+    boolean soundok;        /* ok to tell about sounds heard */
+    boolean sparkle;        /* show "resisting" special FX (Scott Bigham) */
+    boolean tombstone;      /* print tombstone */
+    boolean verbose;        /* max battle info */
+    boolean prayconfirm;    /* confirm before praying */
+    unsigned ident;         /* social security number for each monster */
     unsigned moonphase;
-# define NEW_MOON	0
-# define FULL_MOON	4
-    unsigned no_of_wizards;     /* 0, 1 or 2 (wizard and his shadow) */
-    boolean travel;     /* find way automatically to u.tx,u.ty */
-    unsigned run;       /* 0: h (etc), 1: H (etc), 2: fh (etc) */
-    /* 3: FH, 4: ff+, 5: ff-, 6: FF+, 7: FF- */
-    /* 8: travel */
-    unsigned int warntype;      /* warn_of_mon monster type M2 */
+# define NEW_MOON       0
+# define FULL_MOON      4
+    unsigned no_of_wizards; /* 0, 1 or 2 (wizard and his shadow) */
+    boolean travel;         /* find way automatically to u.tx,u.ty */
+    unsigned run;           /* 0: h (etc), 1: H (etc), 2: fh (etc)
+                               3: FH, 4: ff+, 5: ff-, 6: FF+, 7: FF-
+                               8: travel */
+    unsigned int warntype;  /* warn_of_mon monster type M2 */
     int warnlevel;
-    int djinni_count, ghost_count;      /* potion effect tuning */
-    int pickup_burden;  /* maximum burden before prompt */
-    int recently_broken_otyp;   /* object that broke recently */
+    int djinni_count, ghost_count; /* potion effect tuning */
+    int pickup_burden;      /* maximum burden before prompt */
+    int recently_broken_otyp; /* object that broke recently */
     char inv_order[MAXOCLASSES];
-# define DISCLOSE_PROMPT_DEFAULT_YES	'y'
-# define DISCLOSE_PROMPT_DEFAULT_NO	'n'
-# define DISCLOSE_YES_WITHOUT_PROMPT	'+'
-# define DISCLOSE_NO_WITHOUT_PROMPT	'-'
-    char end_disclose;  /* disclose various info upon exit */
-    char menu_style;    /* User interface style setting */
+# define DISCLOSE_PROMPT_DEFAULT_YES    'y'
+# define DISCLOSE_PROMPT_DEFAULT_NO     'n'
+# define DISCLOSE_YES_WITHOUT_PROMPT    '+'
+# define DISCLOSE_NO_WITHOUT_PROMPT     '-'
+    char end_disclose;      /* disclose various info upon exit */
+    char menu_style;        /* User interface style setting */
 
     /* KMH, role patch -- Variables used during startup. If the user wishes to
        select a role, race, gender, and/or alignment during startup, the
@@ -139,9 +140,9 @@ extern struct flag flags;
 extern struct instance_flags iflags;
 
 /* runmode options */
-# define RUN_TPORT	0       /* don't update display until movement stops */
-# define RUN_LEAP	1       /* update display every 7 steps */
-# define RUN_STEP	2       /* update display every single step */
-# define RUN_CRAWL	3       /* walk w/ extra delay after each update */
+# define RUN_TPORT      0       /* don't update display until movement stops */
+# define RUN_LEAP       1       /* update display every 7 steps */
+# define RUN_STEP       2       /* update display every single step */
+# define RUN_CRAWL      3       /* walk w/ extra delay after each update */
 
 #endif /* FLAG_H */

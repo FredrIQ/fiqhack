@@ -1,31 +1,31 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Copyright (c) 1989 by Jean-Christophe Collet			  */
+/* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef SP_LEV_H
 # define SP_LEV_H
 
     /* wall directions */
-# define W_NORTH		1
-# define W_SOUTH		2
-# define W_EAST		4
-# define W_WEST		8
-# define W_ANY		(W_NORTH|W_SOUTH|W_EAST|W_WEST)
+# define W_NORTH        1
+# define W_SOUTH        2
+# define W_EAST         4
+# define W_WEST         8
+# define W_ANY          (W_NORTH|W_SOUTH|W_EAST|W_WEST)
 
     /* MAP limits */
-# define MAP_X_LIM	76
-# define MAP_Y_LIM	21
+# define MAP_X_LIM      76
+# define MAP_Y_LIM      21
 
     /* Per level flags */
-# define NOTELEPORT	1
-# define HARDFLOOR	2
-# define NOMMAP		4
-# define SHORTSIGHTED	8
-# define ARBOREAL	16
+# define NOTELEPORT     1
+# define HARDFLOOR      2
+# define NOMMAP         4
+# define SHORTSIGHTED   8
+# define ARBOREAL       16
 
     /* special level types */
-# define SP_LEV_ROOMS	1
-# define SP_LEV_MAZE	2
+# define SP_LEV_ROOMS   1
+# define SP_LEV_MAZE    2
 
 /*
  * Structures manipulated by the special levels loader & compiler

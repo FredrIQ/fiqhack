@@ -5,8 +5,8 @@
 #include "hack.h"
 #include "sp_lev.h"
 
-#define HEIGHT	(ROWNO - 1)
-#define WIDTH	(COLNO - 2)
+#define HEIGHT  (ROWNO - 1)
+#define WIDTH   (COLNO - 2)
 
 static void init_map(struct level *lev, schar bg_typ);
 static void init_fill(struct level *lev, schar bg_typ, schar fg_typ);
@@ -97,7 +97,7 @@ pass_one(struct level *lev, schar bg_typ, schar fg_typ)
         }
 }
 
-#define new_loc(i,j)	*(new_locations+ ((j)*(WIDTH+1)) + (i))
+#define new_loc(i,j) *(new_locations+ ((j)*(WIDTH+1)) + (i))
 
 static void
 pass_two(struct level *lev, schar bg_typ, schar fg_typ)
@@ -242,8 +242,8 @@ flood_fill_rm(struct level *lev, int sx, int sy, int rmno, boolean lit,
 }
 
 /*
- *	If we have drawn a map without walls, this allows us to
- *	auto-magically wallify it.  Taken from lev_main.c.
+ * If we have drawn a map without walls, this allows us to
+ * auto-magically wallify it.  Taken from lev_main.c.
  */
 static void
 wallify_map(struct level *lev)
@@ -431,9 +431,9 @@ remove_room(struct level *lev, unsigned roomno)
     maxroom->hx = -1;   /* just like add_room */
 }
 
-#define N_P1_ITER	1       /* tune map generation via this value */
-#define N_P2_ITER	1       /* tune map generation via this value */
-#define N_P3_ITER	2       /* tune map smoothing via this value */
+#define N_P1_ITER 1       /* tune map generation via this value */
+#define N_P2_ITER 1       /* tune map generation via this value */
+#define N_P3_ITER 2       /* tune map smoothing via this value */
 
 void
 mkmap(struct level *lev, lev_init * init_lev)

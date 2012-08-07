@@ -9,7 +9,7 @@
 static const struct attack *dmgtype_fromattack(const struct permonst *, int,
                                                int);
 
-/*	These routines provide basic data for any type of monster. */
+/* These routines provide basic data for any type of monster. */
 
 void
 set_mon_data(struct monst *mon, const struct permonst *ptr, int flag)

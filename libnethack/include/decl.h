@@ -48,46 +48,46 @@ extern struct dgn_topology {    /* special dungeon levels for speed */
 } dungeon_topology;
 
 /* macros for accesing the dungeon levels by their old names */
-# define oracle_level		(dungeon_topology.d_oracle_level)
-# define bigroom_level		(dungeon_topology.d_bigroom_level)
-# define rogue_level		(dungeon_topology.d_rogue_level)
-# define medusa_level		(dungeon_topology.d_medusa_level)
-# define stronghold_level	(dungeon_topology.d_stronghold_level)
-# define valley_level		(dungeon_topology.d_valley_level)
-# define wiz1_level		(dungeon_topology.d_wiz1_level)
-# define wiz2_level		(dungeon_topology.d_wiz2_level)
-# define wiz3_level		(dungeon_topology.d_wiz3_level)
-# define juiblex_level		(dungeon_topology.d_juiblex_level)
-# define orcus_level		(dungeon_topology.d_orcus_level)
-# define baalzebub_level		(dungeon_topology.d_baalzebub_level)
-# define asmodeus_level		(dungeon_topology.d_asmodeus_level)
-# define portal_level		(dungeon_topology.d_portal_level)
-# define sanctum_level		(dungeon_topology.d_sanctum_level)
-# define earth_level		(dungeon_topology.d_earth_level)
-# define water_level		(dungeon_topology.d_water_level)
-# define fire_level		(dungeon_topology.d_fire_level)
-# define air_level		(dungeon_topology.d_air_level)
-# define astral_level		(dungeon_topology.d_astral_level)
-# define tower_dnum		(dungeon_topology.d_tower_dnum)
-# define sokoban_dnum		(dungeon_topology.d_sokoban_dnum)
-# define mines_dnum		(dungeon_topology.d_mines_dnum)
-# define quest_dnum		(dungeon_topology.d_quest_dnum)
-# define qstart_level		(dungeon_topology.d_qstart_level)
-# define qlocate_level		(dungeon_topology.d_qlocate_level)
-# define nemesis_level		(dungeon_topology.d_nemesis_level)
-# define knox_level		(dungeon_topology.d_knox_level)
+# define oracle_level           (dungeon_topology.d_oracle_level)
+# define bigroom_level          (dungeon_topology.d_bigroom_level)
+# define rogue_level            (dungeon_topology.d_rogue_level)
+# define medusa_level           (dungeon_topology.d_medusa_level)
+# define stronghold_level       (dungeon_topology.d_stronghold_level)
+# define valley_level           (dungeon_topology.d_valley_level)
+# define wiz1_level             (dungeon_topology.d_wiz1_level)
+# define wiz2_level             (dungeon_topology.d_wiz2_level)
+# define wiz3_level             (dungeon_topology.d_wiz3_level)
+# define juiblex_level          (dungeon_topology.d_juiblex_level)
+# define orcus_level            (dungeon_topology.d_orcus_level)
+# define baalzebub_level        (dungeon_topology.d_baalzebub_level)
+# define asmodeus_level         (dungeon_topology.d_asmodeus_level)
+# define portal_level           (dungeon_topology.d_portal_level)
+# define sanctum_level          (dungeon_topology.d_sanctum_level)
+# define earth_level            (dungeon_topology.d_earth_level)
+# define water_level            (dungeon_topology.d_water_level)
+# define fire_level             (dungeon_topology.d_fire_level)
+# define air_level              (dungeon_topology.d_air_level)
+# define astral_level           (dungeon_topology.d_astral_level)
+# define tower_dnum             (dungeon_topology.d_tower_dnum)
+# define sokoban_dnum           (dungeon_topology.d_sokoban_dnum)
+# define mines_dnum             (dungeon_topology.d_mines_dnum)
+# define quest_dnum             (dungeon_topology.d_quest_dnum)
+# define qstart_level           (dungeon_topology.d_qstart_level)
+# define qlocate_level          (dungeon_topology.d_qlocate_level)
+# define nemesis_level          (dungeon_topology.d_nemesis_level)
+# define knox_level             (dungeon_topology.d_knox_level)
 
-# define xdnstair	(dnstair.sx)
-# define ydnstair	(dnstair.sy)
-# define xupstair	(upstair.sx)
-# define yupstair	(upstair.sy)
+# define xdnstair               (dnstair.sx)
+# define ydnstair               (dnstair.sy)
+# define xupstair               (upstair.sx)
+# define yupstair               (upstair.sy)
 
 extern int branch_id;
 extern coord inv_pos;
 extern dungeon dungeons[];
 extern s_level *sp_levchn;
 
-# define dunlev_reached(x)	(dungeons[(x)->dnum].dunlev_ureached)
+# define dunlev_reached(x)      (dungeons[(x)->dnum].dunlev_ureached)
 
 # include "quest.h"
 extern struct q_score quest_status;
@@ -134,8 +134,8 @@ extern const char disclosure_options[];
 extern int smeq[];
 extern int saved_cmd;
 
-# define KILLED_BY_AN	 0
-# define KILLED_BY	 1
+# define KILLED_BY_AN    0
+# define KILLED_BY       1
 # define NO_KILLER_PREFIX 2
 extern int killer_format;
 extern const char *killer;
@@ -231,17 +231,17 @@ extern const char *const the_your[];
 extern const char *const materialnm[];
 
 /* Monster name articles */
-# define ARTICLE_NONE	0
-# define ARTICLE_THE	1
-# define ARTICLE_A	2
-# define ARTICLE_YOUR	3
+# define ARTICLE_NONE   0
+# define ARTICLE_THE    1
+# define ARTICLE_A      2
+# define ARTICLE_YOUR   3
 
 /* Monster name suppress masks */
-# define SUPPRESS_IT		0x01
-# define SUPPRESS_INVISIBLE	0x02
-# define SUPPRESS_HALLUCINATION  0x04
-# define SUPPRESS_SADDLE		0x08
-# define EXACT_NAME		0x0F
+# define SUPPRESS_IT            0x01
+# define SUPPRESS_INVISIBLE     0x02
+# define SUPPRESS_HALLUCINATION 0x04
+# define SUPPRESS_SADDLE        0x08
+# define EXACT_NAME             0x0F
 
 /* Vision */
 extern boolean vision_full_recalc;      /* TRUE if need vision recalc */

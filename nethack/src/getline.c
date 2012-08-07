@@ -240,8 +240,8 @@ curses_getline_pw(const char *query, char *buffer)
  * Return TRUE if we've extended the string at base.  Otherwise return FALSE.
  * Assumptions:
  *
- *	+ we don't change the characters that are already in base
- *	+ base has enough room to hold our string
+ *      + we don't change the characters that are already in base
+ *      + base has enough room to hold our string
  */
 static nh_bool
 ext_cmd_getlin_hook(char *base, void *hook_arg)

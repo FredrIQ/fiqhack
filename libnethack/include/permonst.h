@@ -14,16 +14,16 @@ enum mon_extypes {
     MX_EGD
 };
 
-/*	This structure covers all attack forms.
- *	aatyp is the gross attack type (eg. claw, bite, breath, ...)
- *	adtyp is the damage type (eg. physical, fire, cold, spell, ...)
- *	damn is the number of hit dice of damage from the attack.
- *	damd is the number of sides on each die.
+/* This structure covers all attack forms.
+ * aatyp is the gross attack type (eg. claw, bite, breath, ...)
+ * adtyp is the damage type (eg. physical, fire, cold, spell, ...)
+ * damn is the number of hit dice of damage from the attack.
+ * damd is the number of sides on each die.
  *
- *	Some attacks can do no points of damage.  Additionally, some can
- *	have special effects *and* do damage as well.  If damn and damd
- *	are set, they may have a special meaning.  For example, if set
- *	for a blinding attack, they determine the amount of time blinded.
+ * Some attacks can do no points of damage.  Additionally, some can
+ * have special effects *and* do damage as well.  If damn and damd
+ * are set, they may have a special meaning.  For example, if set
+ * for a blinding attack, they determine the amount of time blinded.
  */
 
 struct attack {
@@ -31,15 +31,15 @@ struct attack {
     uchar adtyp, damn, damd;
 };
 
-/*	Max # of attacks for any given monster.
+/* Max # of attacks for any given monster.
  */
 
-# define NATTK		6
+# define NATTK    6
 
-/*	Weight of a human body
+/* Weight of a human body
  */
 
-# define WT_HUMAN	1450
+# define WT_HUMAN 1450
 
 # ifndef ALIGN_H
 #  include "align.h"
@@ -78,9 +78,9 @@ extern const struct permonst mons[];    /* the master list of monster types */
 # define FAST_SPEED 15
 # define VERY_FAST 24
 
-# define NON_PM		PM_PLAYERMON    /* "not a monster" */
-# define LOW_PM		(NON_PM+1)      /* first monster in mons[] */
-# define SPECIAL_PM	PM_LONG_WORM_TAIL       /* [normal] < ~ < [special] */
+# define NON_PM     PM_PLAYERMON      /* "not a monster" */
+# define LOW_PM     (NON_PM+1)        /* first monster in mons[] */
+# define SPECIAL_PM PM_LONG_WORM_TAIL /* [normal] < ~ < [special] */
         /* mons[SPECIAL_PM] through mons[NUMMONS-1], inclusive, are never
            generated randomly and cannot be polymorphed into */
 

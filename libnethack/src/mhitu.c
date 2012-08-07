@@ -268,12 +268,12 @@ getmattk(const struct permonst *mptr, int indx, int prev_result[],
 
 /*
  * mattacku: monster attacks you
- *	returns 1 if monster dies (e.g. "yellow light"), 0 otherwise
- *	Note: if you're displaced or invisible the monster might attack the
- *		wrong position...
- *	Assumption: it's attacking you or an empty square; if there's another
- *		monster which it attacks by mistake, the caller had better
- *		take care of it...
+ *      returns 1 if monster dies (e.g. "yellow light"), 0 otherwise
+ *      Note: if you're displaced or invisible the monster might attack the
+ *          wrong position...
+ *      Assumption: it's attacking you or an empty square; if there's another
+ *          monster which it attacks by mistake, the caller had better
+ *          take care of it...
  */
 int
 mattacku(struct monst *mtmp)
@@ -458,7 +458,7 @@ mattacku(struct monst *mtmp)
         return 0;
     }
 
-/*	Work out the armor class differential	*/
+/* Work out the armor class differential   */
     tmp = AC_VALUE(u.uac) + 10; /* tmp ~= 0 - 20 */
     tmp += mtmp->m_lev;
     if (multi < 0)
@@ -476,7 +476,7 @@ mattacku(struct monst *mtmp)
         newsym(mtmp->mx, mtmp->my);
     }
 
-/*	Special demon handling code */
+/* Special demon handling code */
     if (!mtmp->cham && is_demon(mdat) && !range2 &&
         mtmp->data != &mons[PM_BALROG]
         && mtmp->data != &mons[PM_SUCCUBUS]
@@ -484,7 +484,7 @@ mattacku(struct monst *mtmp)
         if (!mtmp->mcan && !rn2(13))
             msummon(mtmp);
 
-/*	Special lycanthrope handling code */
+/* Special lycanthrope handling code */
     if (!mtmp->cham && is_were(mdat) && !range2) {
 
         if (is_human(mdat)) {
@@ -867,9 +867,9 @@ magic_negation(struct monst *mon)
 
 /*
  * hitmu: monster hits you
- *	  returns 2 if monster dies (e.g. "yellow light"), 1 otherwise
- *	  3 if the monster lives but teleported/paralyzed, so it can't keep
- *	       attacking you
+ *        returns 2 if monster dies (e.g. "yellow light"), 1 otherwise
+ *        3 if the monster lives but teleported/paralyzed, so it can't keep
+ *            attacking you
  */
 static int
 hitmu(struct monst *mtmp, const struct attack *mattk)
@@ -891,8 +891,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     if (!canspotmon(mtmp))
         map_invisible(mtmp->mx, mtmp->my);
 
-/*	If the monster is undetected & hits you, you should know where
- *	the attack came from.
+/* If the monster is undetected & hits you, you should know where
+ * the attack came from.
  */
     if (mtmp->mundetected && (hides_under(mdat) || mdat->mlet == S_EEL)) {
         mtmp->mundetected = 0;
@@ -914,20 +914,20 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
     }
 
-/*	First determine the base damage done */
+/* First determine the base damage done */
     dmg = dice((int)mattk->damn, (int)mattk->damd);
     if (is_undead(mdat) && midnight())
         dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
 
-/*	Next a cancellation factor	*/
-/*	Use uncancelled when the cancellation factor takes into account certain
- *	armor's special magic protection.  Otherwise just use !mtmp->mcan.
+/* Next a cancellation factor
+ * Use uncancelled when the cancellation factor takes into account certain
+ * armor's special magic protection.  Otherwise just use !mtmp->mcan.
  */
     armpro = magic_negation(&youmonst);
     uncancelled = !mtmp->mcan && ((rn2(3) >= armpro) || !rn2(50));
 
     permdmg = 0;
-/*	Now, adjust damages via resistances or specific attacks */
+/* Now, adjust damages via resistances or specific attacks */
     switch (mattk->adtyp) {
     case AD_PHYS:
         if (mattk->aatyp == AT_HUGS && !sticks(youmonst.data)) {
@@ -1492,7 +1492,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 pline("You're covered in acid, but it seems harmless.");
                 dmg = 0;
             } else {
-                pline("You're covered in acid!	It burns!");
+                pline("You're covered in acid! It burns!");
                 exercise(A_STR, FALSE);
         } else
             dmg = 0;
@@ -1605,8 +1605,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     if (u.uhp < 1)
         done_in_by(mtmp);
 
-/*	Negative armor class reduces damage done instead of fully protecting
- *	against hits.
+/* Negative armor class reduces damage done instead of fully protecting
+ * against hits.
  */
     if (dmg && u.uac < 0) {
         dmg -= rnd(-u.uac);
@@ -2181,8 +2181,8 @@ urustm(struct monst *mon, struct obj *obj)
 int
 could_seduce(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 /* returns 0 if seduction impossible,
- *	   1 if fine,
- *	   2 if wrong gender for nymph */
+ *     1 if fine,
+ *     2 if wrong gender for nymph */
 {
     const struct permonst *pagr;
     boolean agrinvis, defperc;

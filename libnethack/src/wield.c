@@ -54,15 +54,15 @@ static int ready_weapon(struct obj *);
 
 /* used by will_weld() */
 /* probably should be renamed */
-#define erodeable_wep(optr)	((optr)->oclass == WEAPON_CLASS \
-				|| is_weptool(optr) \
-				|| (optr)->otyp == HEAVY_IRON_BALL \
-				|| (optr)->otyp == IRON_CHAIN)
+#define erodeable_wep(optr) ((optr)->oclass == WEAPON_CLASS \
+                                || is_weptool(optr) \
+                                || (optr)->otyp == HEAVY_IRON_BALL \
+                                || (optr)->otyp == IRON_CHAIN)
 
 /* used by welded(), and also while wielding */
-#define will_weld(optr)		((optr)->cursed \
-				&& (erodeable_wep(optr) \
-				   || (optr)->otyp == TIN_OPENER))
+#define will_weld(optr)     ((optr)->cursed \
+                                && (erodeable_wep(optr) \
+                                   || (optr)->otyp == TIN_OPENER))
 
 
 /*** Functions that place a given item in a slot ***/

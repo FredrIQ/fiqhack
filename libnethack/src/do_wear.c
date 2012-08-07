@@ -2048,8 +2048,8 @@ destroy_arm(struct obj *atmp)
     struct obj *otmp;
 
 #define DESTROY_ARM(o) ((otmp = (o)) != 0 && \
-			(!atmp || atmp == otmp) && \
-			(!obj_resists(otmp, 0, 90)))
+                        (!atmp || atmp == otmp) && \
+                        (!obj_resists(otmp, 0, 90)))
 
     if (DESTROY_ARM(uarmc)) {
         if (donning(otmp))

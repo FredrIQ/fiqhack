@@ -44,15 +44,15 @@ experience(struct monst *mtmp, int nk)
 
     tmp = 1 + mtmp->m_lev * mtmp->m_lev;
 
-/*	For higher ac values, give extra experience */
+/* For higher ac values, give extra experience */
     if ((i = find_mac(mtmp)) < 3)
         tmp += (7 - i) * ((i < 0) ? 2 : 1);
 
-/*	For very fast monsters, give extra experience */
+/* For very fast monsters, give extra experience */
     if (ptr->mmove > NORMAL_SPEED)
         tmp += (ptr->mmove > (3 * NORMAL_SPEED / 2)) ? 5 : 3;
 
-/*	For each "special" attack type give extra experience */
+/* For each "special" attack type give extra experience */
     for (i = 0; i < NATTK; i++) {
 
         tmp2 = ptr->mattk[i].aatyp;
@@ -67,7 +67,7 @@ experience(struct monst *mtmp, int nk)
         }
     }
 
-/*	For each "special" damage type give extra experience */
+/* For each "special" damage type give extra experience */
     for (i = 0; i < NATTK; i++) {
         tmp2 = ptr->mattk[i].adtyp;
         if (tmp2 > AD_PHYS && tmp2 < AD_BLND)
@@ -83,11 +83,11 @@ experience(struct monst *mtmp, int nk)
             tmp += 1000;
     }
 
-/*	For certain "extra nasty" monsters, give even more */
+/* For certain "extra nasty" monsters, give even more */
     if (extra_nasty(ptr))
         tmp += (7 * mtmp->m_lev);
 
-/*	For higher level monsters, an additional bonus is given */
+/* For higher level monsters, an additional bonus is given */
     if (mtmp->m_lev > 8)
         tmp += 50;
 

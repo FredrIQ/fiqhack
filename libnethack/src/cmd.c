@@ -9,7 +9,7 @@
  * Some systems may have getchar() return EOF for various reasons, and
  * we should not quit before seeing at least NR_OF_EOFS consecutive EOFs.
  */
-#define NR_OF_EOFS	20
+#define NR_OF_EOFS      20
 
 #define CMD_TRAVEL (char)0x90
 
@@ -52,10 +52,10 @@ static char *enlght_combatinc(const char *, int, int, char *);
 
 
 #ifndef M
-# define M(c)		((c) - 128)
+# define M(c)           ((c) - 128)
 #endif
 #ifndef C
-# define C(c)		(0x1f & (c))
+# define C(c)           (0x1f & (c))
 #endif
 
 const struct cmd_desc cmdlist[] = {
@@ -279,9 +279,9 @@ timed_occupation(void)
  * The exception to this is taking off items, since they can be taken
  * off in a number of ways in the intervening time, screwing up ordering.
  *
- *	Currently:	Take off all armor.
- *			Picking Locks / Forcing Chests.
- *			Setting traps.
+ *      Currently:  Take off all armor.
+ *                  Picking Locks / Forcing Chests.
+ *                  Setting traps.
  */
 void
 reset_occupations(void)
@@ -644,13 +644,15 @@ static const char
     "never ";
 
 #define enl_msg(menu,prefix,present,past,suffix) \
-			enlght_line(menu,prefix, final ? past : present, suffix)
-#define you_are(menu,attr)	enl_msg(menu,You_,are,were,attr)
-#define you_have(menu,attr)	enl_msg(menu,You_,have,had,attr)
-#define you_can(menu,attr)	enl_msg(menu,You_,can,could,attr)
+            enlght_line(menu,prefix, final ? past : present, suffix)
+#define you_are(menu,attr)            enl_msg(menu,You_,are,were,attr)
+#define you_have(menu,attr)           enl_msg(menu,You_,have,had,attr)
+#define you_can(menu,attr)            enl_msg(menu,You_,can,could,attr)
 #define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were,goodthing)
-#define you_have_never(menu,badthing) enl_msg(menu,You_,have_never,never,badthing)
-#define you_have_X(menu,something)	enl_msg(menu,You_,have,(const char *)"", something)
+#define you_have_never(menu,badthing) \
+            enl_msg(menu,You_,have_never,never,badthing)
+#define you_have_X(menu,something) \
+            enl_msg(menu,You_,have,(const char *)"", something)
 
 static void
 enlght_line(struct menulist *menu, const char *start, const char *middle,
