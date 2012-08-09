@@ -186,6 +186,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
 
     case UICMD_OPTIONS:
         display_options(FALSE);
+        draw_map(player.x, player.y);
         *cmd = NULL;
         break;
 
