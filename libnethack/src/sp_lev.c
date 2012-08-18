@@ -988,6 +988,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
             }
             remove_object(otmp);
             add_to_container(container, otmp);
+            container->owt = weight(container);
             goto o_done;        /* don't stack, but do other cleanup */
             /* container */
         case 2:
@@ -1028,6 +1029,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
                 obj_extract_self(obj);
                 add_to_container(otmp, obj);
             }
+            otmp->owt = weight(otmp);
             mongone(was);
         } else if (otmp->otyp == STATUE || otmp->otyp == CORPSE)
             otmp->owt = weight(otmp);
