@@ -413,7 +413,7 @@ dosinkring(struct obj *obj)
 boolean
 canletgo(struct obj *obj, const char *word)
 {
-    if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) {
+    if (obj->owornmask & W_WORN) {
         if (*word)
             Norep("You cannot %s something you are wearing.", word);
         return FALSE;

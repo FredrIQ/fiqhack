@@ -104,6 +104,7 @@ struct prop {
 #       define W_SADDLE     0x00100000U /* KMH -- For riding monsters */
 #       define W_BALL       0x00200000U /* Punishment ball */
 #       define W_CHAIN      0x00400000U /* Punishment chain */
+#       define W_WORN       (W_ARMOR | W_AMUL | W_RING | W_TOOL)
 
         /*** Property is blocked by an object ***/
     unsigned int blocked;       /* Same assignments as extrinsic */
