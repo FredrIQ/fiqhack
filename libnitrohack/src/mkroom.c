@@ -93,8 +93,80 @@ mkshop(struct level *lev)
 {
     struct mkroom *sroom;
     int styp, j;
+    char *ep = NULL;
 
     /* first determine shoptype */
+    styp = -1;
+    if (wizard) {
+        ep = nh_getenv("SHOPTYPE");
+        if (ep) {
+            int i;
+            for (i = 0; shtypes[i].name; i++) {
+                if (!strcmp(shtypes[i].name, ep) ||
+                    ep[0] == def_oc_syms[(int)shtypes[i].symb]) {
+                    styp = i;
+                    goto gottype;
+                }
+            }
+            if (ep[0] == 'z' || ep[0] == 'Z') {
+                mkzoo(lev, ZOO);
+                return;
+            }
+            if (ep[0] == 'm' || ep[0] == 'M') {
+                mkzoo(lev, MORGUE);
+                return;
+            }
+            if (ep[0] == 'b' || ep[0] == 'B') {
+                mkzoo(lev, BEEHIVE);
+                return;
+            }
+            if (ep[0] == 'p' || ep[0] == 'P') {
+                mkzoo(lev, LEMUREPIT);
+                return;
+            }
+            if (ep[0] == 't' || ep[0] == 'T') {
+                mkzoo(lev, COURT);
+                return;
+            }
+            if (ep[0] == 's' || ep[0] == 'S') {
+                mkzoo(lev, BARRACKS);
+                return;
+            }
+            if (ep[0] == 'a' || ep[0] == 'A') {
+                mkzoo(lev, ANTHOLE);
+                return;
+            }
+            if (ep[0] == 'c' || ep[0] == 'C') {
+                mkzoo(lev, COCKNEST);
+                return;
+            }
+            if (ep[0] == 'r' || ep[0] == 'R') {
+                mkzoo(lev, ARMORY);
+                return;
+            }
+            if (ep[0] == 'l' || ep[0] == 'L') {
+                mkzoo(lev, LEPREHALL);
+                return;
+            }
+            if (ep[0] == '_') {
+                mktemple(lev);
+                return;
+            }
+            if (ep[0] == 'n') {
+                mkgarden(lev, NULL);
+                return;
+            }
+            if (ep[0] == '}') {
+                mkswamp(lev);
+                return;
+            }
+            if (ep[0] == 'g' || ep[0] == 'G')
+                styp = 0;
+            else
+                styp = -1;
+        }
+    }
+gottype:
     for (sroom = &lev->rooms[0];; sroom++) {
         if (sroom->hx < 0)
             return;
@@ -106,7 +178,7 @@ mkshop(struct level *lev)
             continue;
         if (has_dnstairs(lev, sroom) || has_upstairs(lev, sroom))
             continue;
-        if (sroom->doorct == 1)
+        if ((wizard && ep && sroom->doorct != 0) || sroom->doorct == 1)
             break;
     }
     if (!sroom->rlit) {
@@ -118,22 +190,25 @@ mkshop(struct level *lev)
         sroom->rlit = 1;
     }
 
-    /* pick a shop type at random */
-    j = rnd(100);
-    for (styp = 0; (j -= shtypes[styp].prob) > 0; styp++)
-        continue;
+    if (styp < 0) {
+        /* pick a shop type at random */
+        j = rnd(100);
+        for (styp = 0; (j -= shtypes[styp].prob) > 0; styp++)
+            continue;
 
-    /* big rooms cannot be wand or book shops, * - so make them general stores */
-    if (isbig(sroom) &&
-        (shtypes[styp].symb == WAND_CLASS ||
-         shtypes[styp].symb == SPBOOK_CLASS))
-        styp = 0;
+        /* big rooms cannot be wand or book shops,
+           so make them general stores */
+        if (isbig(sroom) &&
+            (shtypes[styp].symb == WAND_CLASS ||
+             shtypes[styp].symb == SPBOOK_CLASS))
+            styp = 0;
+    }
 
     sroom->rtype = SHOPBASE + styp;
-
+    
     /* set room bits before stocking the shop */
     topologize(lev, sroom);
-
+    
     /* stock the room with a shopkeeper and artifacts */
     stock_room(styp, lev, sroom);
 }
