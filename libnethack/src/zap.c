@@ -456,6 +456,8 @@ object_dlevel(struct obj *obj)
     default:
         panic("Object is nowhere in object_dlevel");
     }
+    /* This should not occur, but silence warnings */
+    return 0;
 }
 
 /* used by revive() and animate_statue() */
