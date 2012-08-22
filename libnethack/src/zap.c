@@ -2082,6 +2082,9 @@ zapyourself(struct obj *obj, boolean ordinary)
     case WAN_TELEPORTATION:
     case SPE_TELEPORT_AWAY:
         tele();
+        if (Teleport_control || !couldsee(u.ux0, u.uy0) ||
+            (distu(u.ux0, u.uy0) >= 16))
+            makeknown(obj->otyp);
         break;
 
     case WAN_DEATH:
