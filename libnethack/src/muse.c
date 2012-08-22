@@ -340,8 +340,8 @@ find_defensive(struct monst *mtmp, struct musable *m)
             for (yy = y - 1; yy <= y + 1; yy++)
                 if (isok(xx, yy))
                     if (xx != u.ux && yy != u.uy)
-                        if (mtmp->data != &mons[PM_GRID_BUG] ||
-                            xx == x || yy == y)
+                        if (mtmp->data != &mons[PM_GRID_BUG] || xx == x ||
+                            yy == y)
                             if ((xx == x && yy == y) || !lev->monsters[xx][yy])
                                 if ((t = t_at(lev, xx, yy)) != 0)
                                     if ((verysmall(mtmp->data) ||
@@ -382,8 +382,8 @@ find_defensive(struct monst *mtmp, struct musable *m)
             for (yy = y - 3; yy <= y + 3; yy++)
                 if (isok(xx, yy))
                     if ((mon = m_at(lev, xx, yy)) && is_mercenary(mon->data) &&
-                        mon->data != &mons[PM_GUARD] &&
-                        (mon->msleeping || (!mon->mcanmove))) {
+                        mon->data != &mons[PM_GUARD] && (mon->msleeping ||
+                                                         (!mon->mcanmove))) {
                         m->defensive = obj;
                         m->has_defense = MUSE_BUGLE;
                     }
@@ -662,8 +662,10 @@ use_defensive(struct monst *mtmp, struct musable *m)
 
             /* pm: 0 => random, eel => aquatic, croc => amphibious */
             const struct permonst *pm =
-                !is_pool(level, mtmp->mx, mtmp->my) ? 0 :
-                &mons[u.uinwater ? PM_GIANT_EEL : PM_CROCODILE];
+                !is_pool(level, mtmp->mx,
+                         mtmp->my) ? 0 : &mons[u.
+                                               uinwater ? PM_GIANT_EEL :
+                                               PM_CROCODILE];
             struct monst *mon;
 
             if (!enexto(&cc, level, mtmp->mx, mtmp->my, pm))
@@ -1158,12 +1160,12 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
  */
 static void
 mbhit(struct monst *mon,        /* monster shooting the wand */
-      int range,                /* direction and range */
+      int range,        /* direction and range */
       /* fns called when mon/obj hit */
-      int (*fhitm) (struct monst *, struct obj *),
-      int (*fhito) (struct obj *, struct obj *),
-      struct obj *obj)          /* 2nd arg to fhitm/fhito */
-{
+      int (*fhitm) (struct monst *, struct obj *), int (*fhito) (struct obj *,
+                                                                 struct obj *),
+      struct obj *obj)
+{       /* 2nd arg to fhitm/fhito */
     struct monst *mtmp;
     struct obj *otmp;
     uchar typ;
@@ -1238,8 +1240,8 @@ mbhit(struct monst *mon,        /* monster shooting the wand */
         }
         if (!ZAP_POS(typ) ||
             (IS_DOOR(typ) &&
-             (level->locations[bhitpos.x][bhitpos.y].
-              doormask & (D_LOCKED | D_CLOSED)))
+             (level->
+              locations[bhitpos.x][bhitpos.y].doormask & (D_LOCKED | D_CLOSED)))
             ) {
             bhitpos.x -= ddx;
             bhitpos.y -= ddy;
@@ -1723,12 +1725,16 @@ use_misc(struct monst *mtmp, struct musable *m)
         } else
             mquaffmsg(mtmp, otmp);
         /* format monster's name before altering its visibility */
-        strcpy(nambuf, See_invisible ? Monnam(mtmp) : mon_nam(mtmp));
+        strcpy(nambuf, See_invisible ||
+               tp_sensemon(mtmp) ? Monnam(mtmp) : mon_nam(mtmp));
         mon_set_minvis(mtmp);
         if (vismon && mtmp->minvis) {   /* was seen, now invisible */
             if (See_invisible)
                 pline("%s body takes on a %s transparency.", s_suffix(nambuf),
                       Hallucination ? "normal" : "strange");
+            else if (tp_sensemon(mtmp))
+                pline("%s disappears, but you can still %s.", nambuf,
+                      Hallucination ? "see its aura" : "sense its thoughts");
             else
                 pline("Suddenly you cannot see %s.", nambuf);
             if (oseen)
@@ -1945,8 +1951,11 @@ searches_for_item(struct monst * mon, struct obj * obj)
 {
     int typ = obj->otyp;
 
-    if (is_animal(mon->data) || mindless(mon->data) ||
-        mon->data == &mons[PM_GHOST])    /* don't loot bones piles */
+    if (is_animal(mon->data) || mindless(mon->data) || mon->data == &mons[PM_GHOST])    /* don't 
+                                                                                           loot 
+                                                                                           bones 
+                                                                                           piles 
+                                                                                         */
         return FALSE;
 
     if (typ == WAN_MAKE_INVISIBLE || typ == POT_INVISIBILITY)
@@ -2129,8 +2138,8 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
 
         obj->quan = 1L;
         pline("%s %ss %s.", Monnam(mon),
-              (obj->otyp == POT_ACID) ? "quaff" : "eat",
-              distant_name(obj, doname));
+              (obj->otyp == POT_ACID) ? "quaff" : "eat", distant_name(obj,
+                                                                      doname));
         obj->quan = save_quan;
     } else if (flags.soundok)
         You_hear("%s.", (obj->otyp == POT_ACID) ? "drinking" : "chewing");
