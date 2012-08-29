@@ -322,6 +322,7 @@ extern struct nh_option_desc *options;
 #define MSGCOUNT 30
 
 extern char toplines[MSGCOUNT][BUFSZ];
+extern int toplines_count[MSGCOUNT];
 extern int curline;
 
 # define add_menuitem(m, i, cap, acc, sel)\

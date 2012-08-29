@@ -118,8 +118,14 @@ end_dump(int how, char *killbuf, char *pbuf, long umoney)
     fprintf(dumpfp, "Latest messages:\n");
     for (i = 0; i < MSGCOUNT; i++) {
         line = (curline + i) % MSGCOUNT;
-        if (toplines[line][0])
+	if (toplines[line][0]) {
+	    if (toplines_count[line] == 1) {
             fprintf(dumpfp, "  %s\n", toplines[line]);
+	    } else {
+		fprintf(dumpfp, "  %s (%dx)\n", toplines[line],
+			toplines_count[line]);
+	    }
+	}
     }
     fprintf(dumpfp, "\n");
 

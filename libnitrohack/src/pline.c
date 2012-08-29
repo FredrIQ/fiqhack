@@ -33,6 +33,12 @@ static void
 vpline(const char *line, va_list the_args)
 {
     char pbuf[BUFSZ];
+    boolean repeated;
+    int lastline;
+
+    lastline = curline - 1;
+    if (lastline < 0)
+        lastline += MSGCOUNT;
 
     if (!line || !*line)
         return;
@@ -40,15 +46,22 @@ vpline(const char *line, va_list the_args)
         vsprintf(pbuf, line, the_args);
         line = pbuf;
     }
-    if (no_repeat && !strcmp(line, toplines[curline]))
+    repeated = !strcmp(line, toplines[lastline]);
+    if (no_repeat && repeated)
         return;
     if (vision_full_recalc)
         vision_recalc(0);
     if (u.ux)
         flush_screen();
 
-    strcpy(toplines[curline++], line);
-    curline %= MSGCOUNT;
+    if (repeated) {
+        toplines_count[lastline]++;
+    } else {
+        strcpy(toplines[curline], line);
+        toplines_count[curline] = 1;
+        curline++;
+        curline %= MSGCOUNT;
+    }
     if (iflags.next_msg_nonblocking)
         (*windowprocs.win_print_message_nonblocking) (moves, line);
     else

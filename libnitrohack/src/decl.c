@@ -207,6 +207,7 @@ struct nh_option_desc *birth_options;
 struct nh_option_desc *options;
 
 char toplines[MSGCOUNT][BUFSZ];
+int toplines_count[MSGCOUNT];
 int curline;
 
 
