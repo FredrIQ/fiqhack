@@ -1987,7 +1987,7 @@ doeat(struct obj *otmp)
         victual.reqtime = objects[otmp->otyp].oc_delay;
         if (otmp->otyp != FORTUNE_COOKIE &&
             (otmp->cursed ||
-             (((moves - otmp->age) > (int)otmp->blessed ? 50 : 30) &&
+		 (((moves - otmp->age) > (otmp->blessed ? 50 : 30)) &&
               (otmp->orotten || !rn2(7))))) {
 
             if (rottenfood(otmp)) {
