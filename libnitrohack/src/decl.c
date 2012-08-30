@@ -242,6 +242,8 @@ init_data(void)
     memset(&digging, 0, sizeof (digging));
     memset(&inv_pos, 0, sizeof (inv_pos));
     memset(multi_txt, 0, sizeof (multi_txt));
+    memset(toplines, 0, sizeof(toplines));
+    memset(toplines_count, 0, sizeof(toplines_count));
 
     level = NULL;
     multi = occtime = killer_format = 0;
@@ -270,6 +272,7 @@ init_data(void)
     histevents = NULL;
     histcount = 0;
     timer_id = 1;
+    curline = 0;
 
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;
