@@ -1012,9 +1012,17 @@ domove(schar dx, schar dy, schar dz)
         }
     }
 
-    if (((wtcap = near_capacity()) >= OVERLOADED ||
-         (wtcap > SLT_ENCUMBER && (Upolyd ? (u.mh < 5 && u.mh != u.mhmax)
-                                   : (u.uhp < 10 && u.uhp != u.uhpmax))))
+    /* Travel hit an obstacle, or domove() was called with
+     * dx, dy and dz all zero, which they shouldn't do. */
+    if (dx == 0 && dy == 0) {	/* dz is always zero here from above */
+        nomul(0, NULL);
+        return 0;
+    }
+
+    if (((wtcap = near_capacity()) >= OVERLOADED
+         || (wtcap > SLT_ENCUMBER &&
+             (Upolyd ? (u.mh < 5 && u.mh != u.mhmax)
+              : (u.uhp < 10 && u.uhp != u.uhpmax))))
         && !Is_airlevel(&u.uz)) {
         if (wtcap < OVERLOADED) {
             pline("You don't have enough stamina to move.");
@@ -1357,7 +1365,6 @@ domove(schar dx, schar dy, schar dz)
     if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
         tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN) {
         if (!doopen(dx, dy, 0)) {
-            flags.move = 0;
             nomul(0, NULL);
             return 0;
         }
@@ -1365,7 +1372,6 @@ domove(schar dx, schar dy, schar dz)
     }
 
     if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE)) {
-        flags.move = 0;
         nomul(0, NULL);
         return 0;
     }

@@ -2263,9 +2263,7 @@ dotravel(int x, int y)
     u.last_str_turn = 0;
     flags.mv = TRUE;
 
-    domove(0, 0, 0);
-
-    return 1;
+	return domove(0, 0, 0);
 }
 
 /*cmd.c*/
