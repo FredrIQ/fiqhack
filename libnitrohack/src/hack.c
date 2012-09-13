@@ -2,6 +2,8 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#include <limits.h>
+
 #include "hack.h"
 
 static void maybe_wail(void);
@@ -761,6 +763,18 @@ unexplored(int x, int y)
     return FALSE;
 }
 
+/* Returns a distance modified by a constant factor.
+ * The lower the value the better.*/
+static int autotravel_weighting(int x, int y, unsigned distance)
+{
+	if (level->locations[x][y].mem_obj) {
+	    /* greedy for items */
+	    return distance;
+	}
+	/* by default return distance multiplied by a large constant factor */
+	return distance * 10;
+}
+
 /*
  * Find a path from the destination (u.tx,u.ty) back to (u.ux,u.uy).
  * A shortest path is returned.  If guess is non-NULL, instead travel
@@ -885,19 +899,20 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
         if (guess) {
             int px = tx, py = ty;       /* pick location */
             int dist, nxtdist, d2, nd2;
+	    boolean autoexploring = (guess == unexplored);
 
             dist = distmin(ux, uy, tx, ty);
             d2 = dist2(ux, uy, tx, ty);
-            if (guess == unexplored) {
-                dist = COLNO * ROWNO;
-                d2 = COLNO * COLNO * ROWNO * ROWNO;
+	    if (autoexploring) {
+		dist = INT_MAX;
+		d2 = INT_MAX;
             }
-            for (tx = 1; tx < COLNO; ++tx)
-                for (ty = 0; ty < ROWNO; ++ty)
+	    for (tx = 1; tx < COLNO; ++tx) {
+		for (ty = 0; ty < ROWNO; ++ty) {
                     if (travel[tx][ty]) {
                         nxtdist = distmin(ux, uy, tx, ty);
-                        if (guess == unexplored)
-                            nxtdist = travel[tx][ty];
+			if (autoexploring)
+			    nxtdist = autotravel_weighting(tx, ty, travel[tx][ty]);
                         if (nxtdist == dist && guess(tx, ty)) {
                             nd2 = dist2(ux, uy, tx, ty);
                             if (nd2 < d2) {
@@ -913,6 +928,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                             d2 = dist2(ux, uy, tx, ty);
                         }
                     }
+		}
+	    }
 
             if (px == u.ux && py == u.uy) {
                 /* no guesses, just go in the general direction */
