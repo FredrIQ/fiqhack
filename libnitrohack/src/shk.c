@@ -32,7 +32,7 @@ static struct monst *next_shkp(struct monst *, boolean);
 static long shop_debt(struct eshk *);
 static char *shk_owns(char *, const struct obj *);
 static char *mon_owns(char *, const struct obj *);
-static void clear_unpaid(struct obj *);
+static void clear_unpaid(struct monst *, struct obj *);
 static long check_credit(long, struct monst *);
 static void pay(long, struct monst *);
 static long get_cost(const struct obj *, struct monst *);
@@ -245,7 +245,8 @@ clear_unpaid(struct obj *list)
     while (list) {
         if (Has_contents(list))
             clear_unpaid(list->cobj);
-        list->unpaid = 0;
+        if (onbill(list, shkp, TRUE))
+            list->unpaid = 0;
         list = list->nobj;
     }
 }
@@ -258,30 +259,25 @@ setpaid(struct monst *shkp)
     struct obj *obj;
     struct monst *mtmp;
 
-    /* FIXME: object handling should be limited to items which are on this
-       particular shk's bill */
-
-    clear_unpaid(invent);
-    clear_unpaid(level->objlist);
-    clear_unpaid(level->buriedobjlist);
-    if (thrownobj)
+    clear_unpaid(shkp, invent);
+    clear_unpaid(shkp, level->objlist);
+    clear_unpaid(shkp, level->buriedobjlist);
+    if (thrownobj && onbill(thrownobj, shkp, TRUE))
         thrownobj->unpaid = 0;
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-        clear_unpaid(mtmp->minvent);
+		clear_unpaid(shkp, mtmp->minvent);
     for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)
-        clear_unpaid(mtmp->minvent);
+		clear_unpaid(shkp, mtmp->minvent);
 
     while ((obj = level->billobjs) != 0) {
         obj_extract_self(obj);
         dealloc_obj(obj);
     }
-    if (shkp) {
         ESHK(shkp)->billct = 0;
         ESHK(shkp)->credit = 0L;
         ESHK(shkp)->debit = 0L;
         ESHK(shkp)->loan = 0L;
     }
-}
 
 static long
 addupbill(struct monst *shkp)
