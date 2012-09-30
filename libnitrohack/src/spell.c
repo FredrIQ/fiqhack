@@ -653,11 +653,11 @@ cast_protection(void)
                 pline("The %s haze around you becomes more dense.", hgolden);
             else
                 pline("The %s around you begins to shimmer with %s haze.",
-                      (Underwater ||
-                       Is_waterlevel(&u.uz)) ? "water" : u.
-                      uswallow ? mbodypart(u.ustuck, STOMACH)
-                      : IS_STWALL(level->locations[u.dx][u.dy].
-                                  typ) ? "stone" : "air", an(hgolden));
+                      (Underwater || Is_waterlevel(&u.uz)) ? "water" :
+                      u.uswallow ? mbodypart(u.ustuck, STOMACH) :
+                      IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
+                      "air",
+                      an(hgolden));
         }
         u.uspellprot += gain;
         u.uspmtime =
