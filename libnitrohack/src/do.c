@@ -748,7 +748,8 @@ dodown(void)
              trap->ttyp != PIT && trap->ttyp != SPIKED_PIT)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
             
-            if (flags.autodig && !flags.nopick && uwep && is_pick(uwep)) {
+            if (flags.autodig && !flags.nopick &&
+                iflags.autodigdown && uwep && is_pick(uwep)) {
                 return use_pick_axe2(uwep, 0, 0, 1);
             } else {
                 pline("You can't go down here.");
@@ -780,7 +781,8 @@ dodown(void)
     if (trap) {
 		if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
-                if (flags.autodig && !flags.nopick && uwep && is_pick(uwep)) {
+                if (flags.autodig && !flags.nopick &&
+                    iflags.autodigdown && uwep && is_pick(uwep)) {
                     return use_pick_axe2(uwep, 0, 0, 1);
                 } else {
                     pline("You are already in the pit.");       /* YAFM needed */

@@ -124,6 +124,8 @@ struct instance_flags {
     boolean mon_generation;     /* debug: control monster generaion */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
+    boolean autodigdown;        /* autodigging works downwadrds */
+
 
     /* Items which belong in flags, but are here to allow save compatibility */
     boolean show_uncursed;      /* always show uncursed items as such */
