@@ -1046,7 +1046,7 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                                 NULL);
                 if (all_containers)
                     container_contents(box->cobj, identified, TRUE);
-            } else {
+            } else if (!done_stopprint) {
                 pline("%s empty.", Tobjnam(box, "are"));
                 win_pause_output(P_MESSAGE);
             }
