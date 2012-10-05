@@ -1009,7 +1009,8 @@ do_item_actions(char invlet)
     items = malloc(sizeof (struct nh_menuitem) * ccount);
 
     for (i = 0; i < ccount; i++)
-        set_menuitem(&items[i], i + 1, MI_NORMAL, obj_cmd[i].desc, 0, FALSE);
+	set_menuitem(&items[i], i+1, MI_NORMAL, obj_cmd[i].desc,
+		     obj_cmd[i].defkey, FALSE);
 
     i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE,
                             PLHINT_INVENTORY, selected);
