@@ -5,7 +5,7 @@
 #include "nhcurses.h"
 
 
-static nh_bool do_item_actions(char invlet);
+static nh_bool do_item_actions(char invlet, const char *objdesc);
 
 static int
 calc_colwidths(char *menustr, int *colwidth)
@@ -944,7 +944,8 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
 
                 /* inventory special case: show item actions menu */
                 else if (inventory_special)
-                    if (do_item_actions(mdat->items[idx].accel))
+			if (do_item_actions(mdat->items[idx].accel,
+					    mdat->items[idx].caption))
                         done = TRUE;
 
             } else if (mdat->how == PICK_ANY) { /* maybe it's a group accel? */
@@ -996,10 +997,11 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
 
 
 static nh_bool
-do_item_actions(char invlet)
+do_item_actions(char invlet, const char *objdesc)
 {
     int ccount = 0, i, selected[1];
     struct nh_cmd_desc *obj_cmd = nh_get_object_commands(&ccount, invlet);
+    char title[BUFSZ];
     struct nh_menuitem *items;
     struct nh_cmd_arg arg;
 
@@ -1012,8 +1014,9 @@ do_item_actions(char invlet)
 	set_menuitem(&items[i], i+1, MI_NORMAL, obj_cmd[i].desc,
 		     obj_cmd[i].defkey, FALSE);
 
-    i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE,
-                            PLHINT_INVENTORY, selected);
+    snprintf(title, BUFSZ, "%c - %s", invlet, objdesc);
+    i = curses_display_menu(items, ccount, title, PICK_ONE,
+                            PLHINT_INVENTORY,selected);
     free(items);
 
     if (i <= 0)
