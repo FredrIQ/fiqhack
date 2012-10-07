@@ -1456,7 +1456,7 @@ extern void home_shk(struct monst *, boolean);
 extern void make_happy_shk(struct monst *, boolean);
 extern void hot_pursuit(struct monst *);
 extern void make_angry_shk(struct monst *, xchar, xchar);
-extern int dopay(void);
+extern int dopay(struct obj *);
 extern boolean paybill(int);
 extern void finish_paybill(void);
 extern struct obj *find_oid(unsigned id);

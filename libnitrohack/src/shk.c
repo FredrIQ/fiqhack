@@ -1025,7 +1025,7 @@ cheapest_item(struct monst *shkp)
 
 
 int
-dopay(void)
+dopay(struct obj *oneitem)
 {
     struct eshk *eshkp;
     struct monst *shkp;
@@ -1266,7 +1266,7 @@ proceed:
     /* now check items on bill */
     if (eshkp->billct) {
         boolean itemize;
-
+        boolean oneitem_found = FALSE;
         umoney = money_cnt(invent);
         if (!umoney && !eshkp->credit) {
             pline("You %shave no money or credit%s.",
@@ -1283,10 +1283,15 @@ proceed:
 
         /* this isn't quite right; it itemizes without asking if the single
            item on the bill is partly used up and partly unpaid */
-        iprompt = (eshkp->billct > 1 ? ynq("Itemized billing?") : 'y');
-        itemize = iprompt == 'y';
-        if (iprompt == 'q')
-            goto thanks;
+        if (!oneitem) {
+            iprompt = (eshkp->billct > 1 ? ynq("Itemized billing?") : 'y');
+            itemize = iprompt == 'y';
+            if (iprompt == 'q')
+                goto thanks;
+        } else {
+            /* Paying for an item can't be undone, so put up a prompt. */
+            itemize = TRUE;
+        }
 
         for (pass = 0; pass <= 1; pass++) {
             tmp = 0;
@@ -1312,7 +1317,9 @@ proceed:
                        things which are partly used up are processed on both
                        passes */
                     tmp++;
-                } else {
+                } else if (oneitem == NULL || otmp == oneitem) {
+                    if (oneitem && !oneitem_found)
+                        oneitem_found = TRUE;
                     switch (dopayobj(shkp, bp, &otmp, pass, itemize)) {
                     case PAY_CANT:
                         return 1;       /* break */
@@ -1334,9 +1341,15 @@ proceed:
                     if (itemize)
                         bot();
                     *bp = eshkp->bill_p[--eshkp->billct];
+                } else {
+                    /* Paying for one item, but this otmp isn't it. */
+                    tmp++;
                 }
             }
         }
+        if (oneitem && !oneitem_found)
+            pline("%s does not own %s.", shkname(shkp),
+                  oneitem->quan == 1L ? "that" : "those");
     thanks:
         if (!itemize)
             update_inventory(); /* Done in dopayobj() if itemize. */
