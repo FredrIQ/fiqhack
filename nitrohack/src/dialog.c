@@ -6,6 +6,8 @@
 #include <ctype.h>
 
 
+static enum nh_direction last_dir;
+
 WINDOW *
 newdialog(int height, int width)
 {
@@ -43,19 +45,45 @@ newdialog(int height, int width)
 }
 
 
+void reset_last_dir(void)
+{
+    last_dir = DIR_NONE;
+}
+
+
 enum nh_direction
 curses_getdir(const char *query, nh_bool restricted)
 {
     int key;
     enum nh_direction dir;
+    char qbuf[QBUFSZ];
+    nh_bool repeat_hint = check_prev_cmd_same();
+    int curr_key = get_current_cmd_key();
 
-    key = curses_msgwin(query ? query : "In what direction?");
-    if (key == '.' || key == 's')
+    snprintf(qbuf, QBUFSZ, "%s%s%s%s",
+	     query ? query : "In what direction?",
+	     repeat_hint ? " (" : "",
+	     repeat_hint ? curses_keyname(curr_key): "",
+	     repeat_hint ? " to repeat)" : "");
+    key = curses_msgwin(qbuf);
+    if (key == '.' || key == 's') {
+	last_dir = DIR_SELF;
         return DIR_SELF;
+    } else if (key == KEY_ESCAPE) {
+        return DIR_NONE;
+    }
 
     dir = key_to_dir(key);
-    if (dir == DIR_NONE && key != KEY_ESCAPE)
-        curses_msgwin("What a strange direction!");
+    if (dir == DIR_NONE) {
+	/* Repeat last direction if the command key for this action is used in
+	   this direction prompt. */
+	if (curr_key == key && last_dir != DIR_NONE)
+	    dir = last_dir;
+	else
+            curses_msgwin("What a strange direction!");
+    } else {
+	last_dir = dir;
+    }
 
     return dir;
 }
