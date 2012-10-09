@@ -425,11 +425,10 @@ add_objitem(struct nh_objitem **items, int *nr_items,
 }
 
 
-/* object comparison function for qsort */
-int
-obj_compare(const void *o1, const void *o2)
+/* inv_order-only object comparison function for qsort */
+static int
+invo_obj_compare(const void *o1, const void *o2)
 {
-    int cmp, val1, val2;
     struct obj *obj1 = *(struct obj **)o1;
     struct obj *obj2 = *(struct obj **)o2;
 
@@ -439,6 +438,22 @@ obj_compare(const void *o1, const void *o2)
 
     if (pos1 != pos2)
         return pos1 - pos2;
+
+	return 0;
+}
+
+/* object comparison function for qsort */
+int
+obj_compare(const void *o1, const void *o2)
+{
+    int cmp, val1, val2;
+    struct obj *obj1 = *(struct obj**)o1;
+    struct obj *obj2 = *(struct obj**)o2;
+
+    /* compare positions in inv_order */
+    int inv_order_cmp = invo_obj_compare(o1, o2);
+    if (inv_order_cmp)
+        return inv_order_cmp;
 
     /* compare names */
     cmp = strcmp(cxname2(obj1), cxname2(obj2));
@@ -544,9 +559,13 @@ query_objlist(const char *qstr, /* query string */
             objlist[nr_objects++] = curr;
     }
 
-    /* sort the list in place according to (1)inv_order and (2)object name */
-    if (qflags & INVORDER_SORT)
+	/* sort the list in place according to (1) inv_order and... */
+	if (qflags & INVORDER_SORT) {
+	    if (qflags & USE_INVLET)	/* ... (2) only inv_order. */
+		qsort(objlist, nr_objects, sizeof(struct obj*), invo_obj_compare);
+	    else			/* ... (2) object name. */
         qsort(objlist, nr_objects, sizeof (struct obj *), obj_compare);
+	}
 
     /* nr_items will be greater than nr_objects, because it counts headers, too 
      */
