@@ -2269,6 +2269,8 @@ newuhs(boolean incr)
             if (incr && occupation &&
                 (occupation != eatfood && occupation != opentin))
                 stop_occupation();
+			if (incr && flags.run)
+			    nomul(0, NULL);
             break;
         case WEAK:
             if (Hallucination)
@@ -2286,6 +2288,8 @@ newuhs(boolean incr)
             if (incr && occupation &&
                 (occupation != eatfood && occupation != opentin))
                 stop_occupation();
+			if (incr && flags.run)
+			    nomul(0, NULL);
             break;
         }
         u.uhs = newhs;
