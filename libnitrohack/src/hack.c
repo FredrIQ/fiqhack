@@ -694,6 +694,9 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
         } else if (mode == TEST_TRAV) {
             struct obj *obj;
 
+	    /* never travel through boulders in Sokoban */
+	    if (In_sokoban(&u.uz)) return FALSE;
+
             /* don't pick two boulders in a row, unless there's a way thru */
             if (sobj_at(BOULDER, level, ux, uy) && !In_sokoban(&u.uz)) {
                 if (!Passes_walls &&

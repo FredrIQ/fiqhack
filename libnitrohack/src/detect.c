@@ -1316,6 +1316,7 @@ sokoban_detect(struct level *lev)
                 lev->locations[x][y].mem_door_l = 0;
                 lev->locations[x][y].mem_door_t = 0;
             }
+
             for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
                 if (obj->otyp == BOULDER)
                     lev->locations[x][y].mem_obj = what_obj(BOULDER) + 1;
