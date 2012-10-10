@@ -450,6 +450,8 @@ display_monster(xchar x, xchar y,       /* display position */
             }
 
         case M_AP_MONSTER:
+		/* Visible monsters always clear 'I' symbols. */
+		level->locations[x][y].mem_invis = 0;
             dbuf_set(x, y, level->locations[x][y].mem_bg,
                      level->locations[x][y].mem_trap,
                      level->locations[x][y].mem_obj,
@@ -483,6 +485,9 @@ display_monster(xchar x, xchar y,       /* display position */
         /* If the hero can see a monster at this location, then no longer
            remember the 'invisible' state. */
         level->locations[x][y].mem_invis = 0;
+
+	/* Visible monsters always clear 'I' symbols. */
+	level->locations[x][y].mem_invis = 0;
 
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap,
