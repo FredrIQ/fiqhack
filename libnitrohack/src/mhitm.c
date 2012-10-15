@@ -1447,6 +1447,26 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
         } else
             tmp = 0;
         goto assess_dmg;
+	    case AD_MAGM:
+		/* wrath of gods for attacking Oracle */
+		if (resists_magm(magr)) {
+		    if (canseemon(level, magr)) {
+			shieldeff(magr->mx, magr->my);
+			pline("A hail of magic missiles narrowly misses %s!",
+			      mon_nam(magr));
+		    }
+		} else {
+		    if (canseemon(level, magr)) {
+			if (magr->data == &mons[PM_WOODCHUCK]) {
+			    pline("ZOT!");
+			} else {
+			    pline("%s is caught in a hail of magic missiles!",
+				  Monnam(magr));
+			}
+		    }
+		    goto assess_dmg;
+		}
+		break;
     case AD_ENCH:      /* KMH -- remove enchantment (disenchanter) */
         if (mhit && !mdef->mcan && otmp) {
             drain_item(otmp);

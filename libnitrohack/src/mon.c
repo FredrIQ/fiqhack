@@ -1176,10 +1176,10 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
    other monsters; just hand to hand fighting when they happen to be
    next to each other. */
 long
-mm_aggression(struct monst *magr,       /* monster that is currently deciding
-                                           where to move */
-              struct monst *mdef)
-{       /* another monster which is next to it */
+mm_aggression(struct monst *magr,     /* monster that is currently deciding
+                                         where to move */
+              struct monst *mdef)     /* another monster which is next to it */
+{
     /* supposedly purple worms are attracted to shrieking because they like to
        eat shriekers, so attack the latter when feasible */
     if (magr->data == &mons[PM_PURPLE_WORM] && mdef->data == &mons[PM_SHRIEKER])
@@ -1193,8 +1193,36 @@ mm_aggression(struct monst *magr,       /* monster that is currently deciding
     if (mdef->mtame && !magr->mpeaceful)
         return ALLOW_M | ALLOW_TM;
 
-    /* Various other combinations such as dog vs cat, cat vs rat, and elf vs
-       orc have been suggested.  For the time being we don't support those. */
+    /* Since the quest guardians are under siege, it makes sense to have
+       them fight hostiles.  (But don't put the quest leader in danger.) */
+    if (ma->msound == MS_GUARDIAN && mdef->mpeaceful == FALSE)
+        return ALLOW_M|ALLOW_TM;
+    /* ... and vice versa */
+    if (md->msound == MS_GUARDIAN && magr->mpeaceful == FALSE)
+        return ALLOW_M|ALLOW_TM;
+
+    /* elves vs. orcs */
+    if (is_elf(ma) && is_orc(md))
+        return ALLOW_M|ALLOW_TM;
+    /* ... and vice versa */
+    if (is_elf(md) && is_orc(ma))
+        return ALLOW_M|ALLOW_TM;
+
+    /* angels vs. demons */
+    if (ma->mlet == S_ANGEL && is_demon(md))
+        return ALLOW_M|ALLOW_TM;
+    /* ... and vice versa */
+    if (md->mlet == S_ANGEL && is_demon(ma))
+        return ALLOW_M|ALLOW_TM;
+
+    /* woodchucks vs. The Oracle */
+    if (ma == &mons[PM_WOODCHUCK] && md == &mons[PM_ORACLE])
+        return ALLOW_M|ALLOW_TM;
+
+    /* ravens like eyes */
+    if (ma == &mons[PM_RAVEN] && md == &mons[PM_FLOATING_EYE])
+        return ALLOW_M|ALLOW_TM;
+
     return 0L;
 }
 
