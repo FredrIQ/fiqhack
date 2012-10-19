@@ -113,8 +113,7 @@ resists_blnd(struct monst * mon)
         return TRUE;
     o = is_you ? invent : mon->minvent;
     for (; o; o = o->nobj)
-        if ((o->owornmask && objects[o->otyp].oc_oprop == BLINDED) ||
-            (o->oartifact && protects(AD_BLND, o)))
+	    if (o->oartifact && protects(AD_BLND, o))
             return TRUE;
     return FALSE;
 }
