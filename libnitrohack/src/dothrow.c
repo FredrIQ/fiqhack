@@ -1117,6 +1117,12 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
             newsym(bhitpos.x, bhitpos.y);
         if (obj_sheds_light(obj))
             vision_full_recalc = 1;
+
+		/* Lead autoexplore back over thrown object if it's seen again.
+		 * Technically the player may not see where it lands, but they
+		 * could probably guess it anyway. */
+		level->locations[bhitpos.x][bhitpos.y].mem_stepped = 0;
+
         if (!IS_SOFT(level->locations[bhitpos.x][bhitpos.y].typ))
             container_impact_dmg(obj);
     }
