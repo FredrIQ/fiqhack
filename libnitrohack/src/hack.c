@@ -768,10 +768,16 @@ unexplored(int x, int y)
  * The lower the value the better.*/
 static int autotravel_weighting(int x, int y, unsigned distance)
 {
-	if (level->locations[x][y].mem_obj) {
+	const struct rm *loc = &level->locations[x][y];
+
 	    /* greedy for items */
+	if (loc->mem_obj)
 	    return distance;
-	}
+
+	/* favor rooms */
+	if (loc->roomno)
+	    return distance * 2;
+
 	/* by default return distance multiplied by a large constant factor */
 	return distance * 10;
 }
