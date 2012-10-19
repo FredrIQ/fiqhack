@@ -960,7 +960,7 @@ newgame(void)
     doredraw();
 
     /* help the window port get it's display charset/tiles sorted out */
-    notify_levelchange();
+    notify_levelchange(NULL);
 
     if (flags.legacy) {
         flush_screen();

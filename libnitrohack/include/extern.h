@@ -252,7 +252,7 @@ extern void obj_no_longer_held(struct obj *);
 extern int doddrop(void);
 extern int dodown(void);
 extern int doup(void);
-extern void notify_levelchange(void);
+extern void notify_levelchange(const d_level *);
 extern void goto_level(d_level *, boolean, boolean, boolean);
 extern void schedule_goto(d_level *, boolean, boolean, int, const char *,
                           const char *);

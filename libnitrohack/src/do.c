@@ -857,19 +857,20 @@ doup(void)
 
 
 void
-notify_levelchange(void)
+notify_levelchange(const d_level *dlev)
 {
     int mode;
+	const d_level *z = dlev ? dlev : &u.uz;
 
-    if (In_hell(&u.uz))
+	if (In_hell(z))
         mode = LDM_HELL;
-    else if (In_quest(&u.uz))
+	else if (In_quest(z))
         mode = LDM_QUEST;
-    else if (In_mines(&u.uz))
+	else if (In_mines(z))
         mode = LDM_MINES;
-    else if (In_sokoban(&u.uz))
+	else if (In_sokoban(z))
         mode = LDM_SOKOBAN;
-    else if (Is_rogue_level(&u.uz))
+	else if (Is_rogue_level(z))
         mode = LDM_ROGUE;
     else
         mode = LDM_DEFAULT;
@@ -1178,8 +1179,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         level->flags.forgotten = FALSE;
     }
 
-    notify_levelchange();       /* inform the window code about the level
-                                   change */
+    notify_levelchange(NULL); /* inform window code of the level change */
 
     /* Reset the screen. */
     vision_reset();     /* reset the blockages */
