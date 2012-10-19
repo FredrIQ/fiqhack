@@ -1427,6 +1427,14 @@ mondead(struct monst *mtmp)
     if (mtmp == u.usteed)
         dismount_steed(DISMOUNT_GENERIC);
 
+    /* monster should no longer block vision */
+    if ((!mtmp->minvis || See_invisible) &&
+        ((mtmp->m_ap_type == M_AP_FURNITURE &&
+          (mtmp->mappearance == S_vcdoor || mtmp->mappearance == S_hcdoor)) ||
+         (mtmp->m_ap_type == M_AP_OBJECT &&
+          mtmp->mappearance == BOULDER)))
+        unblock_point(mtmp->mx, mtmp->my);
+
     mptr = mtmp->data;  /* save this for m_detach() */
     /* restore chameleon, lycanthropes to true form at death */
     if (mtmp->cham)
@@ -1571,6 +1579,14 @@ mongone(struct monst *mdef)
     /* Player is thrown from his steed when it disappears */
     if (mdef == u.usteed)
         dismount_steed(DISMOUNT_GENERIC);
+
+	/* monster should no longer block vision */
+	if ((!mdef->minvis || See_invisible) &&
+	    ((mdef->m_ap_type == M_AP_FURNITURE &&
+	      (mdef->mappearance == S_vcdoor || mdef->mappearance == S_hcdoor)) ||
+	     (mdef->m_ap_type == M_AP_OBJECT &&
+	      mdef->mappearance == BOULDER)))
+	    unblock_point(mdef->mx, mdef->my);
 
     /* drop special items like the Amulet so that a dismissed Kop or nurse
        can't remove them from the game */
