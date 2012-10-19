@@ -725,7 +725,12 @@ static boolean
 unexplored(int x, int y)
 {
     int i, j, k, l;
-    struct trap *ttmp = t_at(level, x, y);
+    const struct trap *ttmp;
+    int mem_bg;
+
+    if (!isok(x, y)) return FALSE;
+    ttmp = t_at(level, x, y);
+    mem_bg = level->locations[x][y].mem_bg;
 
     if (!isok(x, y))
         return FALSE;
@@ -737,14 +742,24 @@ unexplored(int x, int y)
             (level->locations[x][y].flags & D_LOCKED))
             return FALSE;       /* player knows of a locked door there */
     }
+
     if (ttmp && ttmp->tseen)
         return FALSE;
     if (level->locations[x][y].mem_obj == what_obj(BOULDER) + 1)
         return FALSE;
     if (level->locations[x][y].mem_obj && inside_shop(level, x, y))
         return FALSE;
+
+    if (mem_bg == S_altar    || mem_bg == S_throne   ||
+        mem_bg == S_sink     || mem_bg == S_fountain ||
+        mem_bg == S_dnstair  || mem_bg == S_upstair  ||
+        mem_bg == S_dnsstair || mem_bg == S_upsstair ||
+        mem_bg == S_dnladder || mem_bg == S_upladder)
+        return TRUE;
+
     if (level->locations[x][y].mem_obj)
         return TRUE;
+
     for (i = -1; i <= 1; i++)
         for (j = -1; j <= 1; j++) {
             if (isok(x + i, y + j) &&
@@ -769,9 +784,21 @@ unexplored(int x, int y)
 static int autotravel_weighting(int x, int y, unsigned distance)
 {
 	const struct rm *loc = &level->locations[x][y];
+	int mem_bg = loc->mem_bg;
 
 	    /* greedy for items */
 	if (loc->mem_obj)
+	    return distance;
+
+	/* some dungeon features */
+	if (mem_bg == S_altar || mem_bg == S_throne ||
+	    mem_bg == S_sink  || mem_bg == S_fountain)
+	    return distance;
+
+	/* stairs and ladders */
+	if (mem_bg == S_dnstair  || mem_bg == S_upstair  ||
+	    mem_bg == S_dnsstair || mem_bg == S_upsstair ||
+	    mem_bg == S_dnladder || mem_bg == S_upladder)
 	    return distance;
 
 	/* favor rooms */
@@ -1531,8 +1558,20 @@ domove(schar dx, schar dy, schar dz)
                 IS_FURNITURE(tmpr->typ))
                 nomul(0, NULL);
         } else if (flags.travel && iflags.autoexplore) {
+<<<<<<< HEAD
             int wallcount = 0;
 
+=======
+		int wallcount, mem_bg;
+		/* autoexplore stoppers: being orthogonally
+		 * adjacent to a boulder, being orthogonally adjacent
+		 * to 3 or more walls; this logic could be incorrect
+		 * when blind, but we check for that earlier; while
+		 * not blind, we'll assume the hero knows about adjacent
+		 * walls and boulders due to being able to see them
+		 */
+		wallcount = 0;
+>>>>>>> 59e3420... Autoexplore to and stop on stairs/dungeon features
             if (isok(u.ux - 1, u.uy))
                 wallcount +=
                     IS_ROCK(level->locations[u.ux - 1][u.uy].typ) +
@@ -1549,7 +1588,22 @@ domove(schar dx, schar dy, schar dz)
                 wallcount +=
                     IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
                     ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
+<<<<<<< HEAD
             if (wallcount >= 3)
+=======
+		if (wallcount >= 3) nomul(0, NULL);
+		/*
+		 * More autoexplore stoppers: interesting dungeon features
+		 * that haven't been stepped on yet.
+		 */
+		mem_bg = tmpr->mem_bg;
+		if (tmpr->mem_stepped == 0 &&
+		    (mem_bg == S_altar    || mem_bg == S_throne   ||
+		     mem_bg == S_sink     || mem_bg == S_fountain ||
+		     mem_bg == S_dnstair  || mem_bg == S_upstair  ||
+		     mem_bg == S_dnsstair || mem_bg == S_upsstair ||
+		     mem_bg == S_dnladder || mem_bg == S_upladder))
+>>>>>>> 59e3420... Autoexplore to and stop on stairs/dungeon features
                 nomul(0, NULL);
         }
     }
