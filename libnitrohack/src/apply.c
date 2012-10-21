@@ -2528,6 +2528,8 @@ use_cream_pie(struct obj **objp)
         else    /* Blind && !wasblind */
             pline("You can't see through all the sticky goop on your %s.",
                   body_part(FACE));
+		if (flags.verbose)
+		    pline("Use the command #wipe to clean your %s.", body_part(FACE));
     }
     if (obj->unpaid) {
         verbalize("You used it, you bought it!");

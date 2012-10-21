@@ -769,6 +769,9 @@ toss_up(struct obj *obj, boolean hitsroof)
                 make_blinded(Blinded + (long)blindinc, FALSE);
                 if (!Blind)
                     pline("Your vision quickly clears.");
+                else if (flags.verbose)
+                    pline("Use the command #wipe to clean your %s.",
+                          body_part(FACE));
             }
             break;
         default:
