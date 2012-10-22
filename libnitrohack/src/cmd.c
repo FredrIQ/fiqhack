@@ -1694,7 +1694,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD('a', "apply", "Strike at a distance with %s", 0);
 
     /* drop item, works on almost everything */
-    if (!(obj->owornmask & (W_WORN | W_SADDLE)))
+    if (canletgo(obj, ""))
         SET_OBJ_CMD('d', "drop", "Drop %s", 0);
 
     /* dip */
