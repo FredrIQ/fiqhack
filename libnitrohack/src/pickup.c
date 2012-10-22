@@ -47,6 +47,8 @@ static const char moderateloadmsg[] = "You have a little trouble lifting";
 static const char nearloadmsg[] = "You have much trouble lifting";
 static const char overloadmsg[] = "You have extreme difficulty lifting";
 
+static int oldcap;
+
 
 /* look at the objects at our location, unless there are too many of them */
 static void
@@ -1126,13 +1128,20 @@ pick_obj(struct obj *otmp)
 }
 
 /*
+ * Reset state for encumber_msg() so it doesn't bleed between games.
+ */
+void reset_encumber_msg(void)
+{
+    oldcap = UNENCUMBERED;
+}
+
+/*
  * prints a message if encumbrance changed since the last check and
  * returns the new encumbrance value (from near_capacity()).
  */
 int
 encumber_msg(void)
 {
-    static int oldcap = UNENCUMBERED;
     int newcap = near_capacity();
 
     if (oldcap < newcap) {

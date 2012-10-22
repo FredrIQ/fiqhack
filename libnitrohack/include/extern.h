@@ -1227,6 +1227,7 @@ extern int query_objlist(const char *, struct obj *, int, struct object_pick **,
 extern void add_objitem(struct nh_objitem **, int *, enum nh_menuitem_role, int,
                         int, char *, struct obj *, boolean);
 extern struct obj *pick_obj(struct obj *);
+extern void reset_encumber_msg(void);
 extern int encumber_msg(void);
 extern int doloot(void);
 extern void observe_quantum_cat(struct obj *);

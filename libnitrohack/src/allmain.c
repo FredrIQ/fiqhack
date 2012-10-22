@@ -150,6 +150,7 @@ startup_common(const char *name, int playmode)
     reset_food();       /* zero out victual and tin */
     reset_steal();
     reset_dig_status();
+    reset_encumber_msg();
 
     /* create mutable copies of object and artifact liss */
     init_objlist();
