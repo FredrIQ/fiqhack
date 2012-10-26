@@ -200,8 +200,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     mvwaddstr(statuswin, 0, 0,
               "Move the cursor with the direction keys. Press "
               "the letter of a dungeon symbol");
-    mvwaddstr(statuswin, 1, 0,
-              "to select it or use m to move to a nearby "
+    mvwaddstr(statuswin, 1, 0, "to select it or use m/M to move to a nearby "
               "monster. Finish with one of .,;:");
     wrefresh(statuswin);
 
@@ -268,7 +267,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
             goto nxtc;
         }
 
-        if (key == 'm') {
+	if (key == 'm' || key == 'M') {
             if (!monpos) {
                 int i, j;
 
@@ -288,15 +287,21 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                             monpos[monidx].y = i;
                             monidx++;
                         }
-                monidx = 0;
                 qsort(monpos, moncount, sizeof (struct coord),
                       compare_coord_dist);
+		/* ready this for first increment/decrement to change to zero */
+		monidx = (key == 'm') ? -1 : 1;
             }
 
             if (moncount) {     /* there is at least one monster to move to */
+		if (key == 'm') {
+		    monidx = (monidx + 1) % moncount;
+		} else {
+		    monidx--;
+		    if (monidx < 0) monidx += moncount;
+		}
                 cx = monpos[monidx].x;
                 cy = monpos[monidx].y;
-                monidx = (monidx + 1) % moncount;
             }
         } else {
             int k = 0, tx, ty;
