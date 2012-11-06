@@ -377,6 +377,11 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     /* info might not have reached the ui while alternate window procs were set 
      */
     doredraw();
+
+    /* nh_start_game() does this via newgame(), but since this function doesn't
+     * call newgame(), we have to do it here instead. */
+    notify_levelchange(NULL);
+
     bot();
     flush_screen();
 
