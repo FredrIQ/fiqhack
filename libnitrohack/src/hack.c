@@ -800,8 +800,8 @@ static int autotravel_weighting(int x, int y, unsigned distance)
 	    mem_bg == S_dnladder || mem_bg == S_upladder)
 	    return distance;
 
-	/* favor rooms */
-	if (loc->roomno)
+	/* favor rooms, but not closed doors */
+	if (loc->roomno && !(mem_bg == S_hcdoor || mem_bg == S_vcdoor))
 	    return distance * 2;
 
 	/* by default return distance multiplied by a large constant factor */
