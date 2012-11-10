@@ -879,8 +879,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                     if (!isok(nx, ny))
                         continue;
                     if ((!Passes_walls && !can_ooze(&youmonst) &&
-                         closed_door(level, x, y)) ||
-                        sobj_at(BOULDER, level, x, y) ||
+                         closed_door(level, nx, ny)) ||
+                        sobj_at(BOULDER, level, nx, ny) ||
                         test_move(x, y, nx - x, ny - y, 0, TEST_TRAP)) {
                         /* closed doors and boulders usually cause a delay, so
                            prefer another path */
@@ -1557,20 +1557,14 @@ domove(schar dx, schar dy, schar dz)
                 IS_FURNITURE(tmpr->typ))
                 nomul(0, NULL);
         } else if (flags.travel && iflags.autoexplore) {
-<<<<<<< HEAD
-            int wallcount = 0;
-
-=======
-		int wallcount, mem_bg;
-		/* autoexplore stoppers: being orthogonally
-		 * adjacent to a boulder, being orthogonally adjacent
-		 * to 3 or more walls; this logic could be incorrect
-		 * when blind, but we check for that earlier; while
-		 * not blind, we'll assume the hero knows about adjacent
-		 * walls and boulders due to being able to see them
-		 */
-		wallcount = 0;
->>>>>>> 59e3420... Autoexplore to and stop on stairs/dungeon features
+            int wallcount, mem_bg;
+            /* autoexplore stoppers: being orthogonally adjacent to a boulder,
+             * being orthogonally adjacent to 3 or more walls; this logic could
+             * be incorrect when blind, but we check for that earlier; while not
+             * blind, we'll assume the hero knows about adjacent walls and
+             * boulders due to being able to see them
+             */
+            wallcount = 0;
             if (isok(u.ux - 1, u.uy))
                 wallcount +=
                     IS_ROCK(level->locations[u.ux - 1][u.uy].typ) +
@@ -1587,22 +1581,18 @@ domove(schar dx, schar dy, schar dz)
                 wallcount +=
                     IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
                     ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
-<<<<<<< HEAD
-            if (wallcount >= 3)
-=======
-		if (wallcount >= 3) nomul(0, NULL);
-		/*
-		 * More autoexplore stoppers: interesting dungeon features
-		 * that haven't been stepped on yet.
-		 */
-		mem_bg = tmpr->mem_bg;
-		if (tmpr->mem_stepped == 0 &&
-		    (mem_bg == S_altar    || mem_bg == S_throne   ||
-		     mem_bg == S_sink     || mem_bg == S_fountain ||
-		     mem_bg == S_dnstair  || mem_bg == S_upstair  ||
-		     mem_bg == S_dnsstair || mem_bg == S_upsstair ||
-		     mem_bg == S_dnladder || mem_bg == S_upladder))
->>>>>>> 59e3420... Autoexplore to and stop on stairs/dungeon features
+            if (wallcount >= 3) nomul(0, NULL);
+            /*
+             * More autoexplore stoppers: interesting dungeon features
+             * that haven't been stepped on yet.
+             */
+            mem_bg = tmpr->mem_bg;
+            if (tmpr->mem_stepped == 0 &&
+                (mem_bg == S_altar    || mem_bg == S_throne   ||
+                 mem_bg == S_sink     || mem_bg == S_fountain ||
+                 mem_bg == S_dnstair  || mem_bg == S_upstair  ||
+                 mem_bg == S_dnsstair || mem_bg == S_upsstair ||
+                 mem_bg == S_dnladder || mem_bg == S_upladder))
                 nomul(0, NULL);
         }
     }
