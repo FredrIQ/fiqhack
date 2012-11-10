@@ -763,8 +763,7 @@ unexplored(int x, int y)
     for (i = -1; i <= 1; i++)
         for (j = -1; j <= 1; j++) {
             if (isok(x + i, y + j) &&
-                (level->locations[x + i][y + j].mem_bg == S_stone ||
-                 level->locations[x + i][y + j].mem_bg == S_unexplored)) {
+		    level->locations[x+i][y+j].mem_bg == S_unexplored) {
                 int flag = TRUE;
 
                 for (k = -1; k <= 1; k++)
