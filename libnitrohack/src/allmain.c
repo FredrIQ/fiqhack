@@ -973,6 +973,9 @@ newgame(void)
         com_pager(1);
     }
 
+    /* Stop autoexplore revisiting the entrance stairs (or position). */
+    level->locations[u.ux][u.uy].mem_stepped = 1;
+
     program_state.something_worth_saving++;     /* useful data now exists */
 
     historic_event(FALSE,
