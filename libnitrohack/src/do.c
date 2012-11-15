@@ -7,7 +7,6 @@
 #include "hack.h"
 #include "lev.h"
 
-static void trycall(struct obj *);
 static void dosinkring(struct obj *);
 static int drop(struct obj *);
 static int wipeoff(void);
@@ -258,19 +257,11 @@ doaltarobj(struct obj *obj)
                   the(xname(obj)));
         }
     }
-
 }
 
 static void
-trycall(struct obj *obj)
+dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
 {
-    if (!objects[obj->otyp].oc_name_known && !objects[obj->otyp].oc_uname)
-        docall(obj);
-}
-
-static void
-dosinkring(struct obj *obj)
-{       /* obj is a ring being dropped over a kitchen sink */
     struct obj *otmp, *otmp2;
     boolean ideed = TRUE;
 
@@ -286,7 +277,7 @@ dosinkring(struct obj *obj)
     giveback:
         obj->in_use = FALSE;
         dropx(obj);
-        trycall(obj);
+		makeknown(obj->otyp);
         return;
     case RIN_LEVITATION:
         pline("The sink quivers upward for a moment.");
@@ -397,7 +388,7 @@ dosinkring(struct obj *obj)
         }
     }
     if (ideed)
-        trycall(obj);
+	    makeknown(obj->otyp);
     else
         You_hear("the ring bouncing down the drainpipe.");
     if (!rn2(20)) {
