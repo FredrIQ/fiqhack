@@ -13,6 +13,7 @@ static void dosinkfall(void);
 static boolean findtravelpath(boolean(*)(int, int), schar *, schar *);
 static struct monst *monstinroom(const struct permonst *, int);
 static boolean check_interrupt(struct monst *mtmp);
+static boolean couldsee_func(int, int);
 
 static void move_update(boolean);
 
@@ -875,9 +876,58 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                 for (dir = 0; dir < dirmax; ++dir) {
                     int nx = x + xdir[ordered[dir]];
                     int ny = y + ydir[ordered[dir]];
-
-                    if (!isok(nx, ny))
+		    /*
+                     * When guessing and trying to travel as close as possible
+                     * to an unreachable target space, don't include spaces
+                     * that would never be picked as a guessed target in the
+                     * travel matrix describing player-reachable spaces.
+                     * This stops travel from getting confused and moving the
+                     * player back and forth in certain degenerate configurations
+                     * of sight-blocking obstacles, e.g.
+                     *
+                     *    T         1. Dig this out and carry enough to not be
+                     *      ####       able to squeeze through diagonal gaps.
+                     *      #--.---    Stand at @ and target travel at space T.
+                     *       @.....
+                     *       |.....
+                     *
+                     *    T         2. couldsee() marks spaces marked a and x as
+                     *      ####       eligible guess spaces to move the player
+                     *      a--.---    towards.  Space a is closest to T, so it gets
+                     *       @xxxxx    chosen.  Travel system moves @ right to travel
+                     *       |xxxxx    to space a.
+                     *
+                     *    T         3. couldsee() marks spaces marked b, c and x
+                     *      ####       as eligible guess spaces to move the player
+                     *      a--c---    towards.  Since findtravelpath() is called
+                     *       b@xxxx    repeatedly during travel, it doesn't remember
+                     *       |xxxxx    that it wanted to go to space a, so in
+                     *                 comparing spaces b and c, b is chosen, since
+                     *                 it seems like the closest eligible space to T.
+                     *                 Travel system moves @ left to go to space b.
+                     *
+                     *              4. Go to 2.
+                     *
+                     * By limiting the travel matrix here, space a in the example
+                     * above is never included in it, preventing the cycle.
+                     */
+                    if (!isok(nx, ny) || (guess == couldsee_func && !guess(nx, ny)))
                         continue;
+
+		    /* Walk around monsters that just get in the way. */
+		    mtmp = m_at(level, nx, ny);
+		    divert_mon = (mtmp &&
+				  /* can be seen or spotted */
+				  canspotmon(level, mtmp) &&
+				  mtmp->m_ap_type != M_AP_FURNITURE &&
+				  mtmp->m_ap_type != M_AP_OBJECT &&
+				  !(is_hider(mtmp->data) || mtmp->mundetected) &&
+				  /* peaceful monsters */
+				  ((mtmp->mpeaceful && !Hallucination) ||
+				   /* monsters with no attacks */
+				   noattacks(mtmp->data)));
+
+>>>>>>> 02da53e... Fix travel moving player back and forth repeatedly
                     if ((!Passes_walls && !can_ooze(&youmonst) &&
                          closed_door(level, nx, ny)) ||
                         sobj_at(BOULDER, level, nx, ny) ||
