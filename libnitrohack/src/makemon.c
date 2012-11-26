@@ -23,7 +23,7 @@ static boolean wrong_elem_type(const struct d_level *dlev,
                                const struct permonst *);
 static void m_initgrp(struct monst *, struct level *lev, int, int, int);
 static void m_initthrow(struct monst *, int, int);
-static void m_initweap(struct monst *);
+static void m_initweap(struct level *lev, struct monst *);
 static void m_initinv(struct monst *);
 
 extern const int monstr[];
@@ -162,15 +162,14 @@ m_initthrow(struct monst *mtmp, int otyp, int oquan)
     mpickobj(mtmp, otmp);
 }
 
-
 static void
-m_initweap(struct monst *mtmp)
+m_initweap(struct level *lev, struct monst *mtmp)
 {
     const struct permonst *ptr = mtmp->data;
     int mm = monsndx(ptr);
     struct obj *otmp;
 
-    if (Is_rogue_level(&mtmp->dlevel->z))
+    if (Is_rogue_level(&lev->z))
         return;
 /*
  * first a few special cases:
@@ -200,7 +199,7 @@ m_initweap(struct monst *mtmp)
                     w2 = rn2(2) ? DAGGER : KNIFE;
                 } else
                     w1 = rn2(2) ? SPEAR : SHORT_SWORD;
-                break;
+                        break;
             case PM_SERGEANT:
                 w1 = rn2(2) ? FLAIL : MACE;
                 break;
@@ -262,7 +261,7 @@ m_initweap(struct monst *mtmp)
             }
         } else if (ptr->msound == MS_PRIEST ||
                    quest_mon_represents_role(ptr, PM_PRIEST)) {
-            otmp = mksobj(level, MACE, FALSE, FALSE);
+            otmp = mksobj(lev, MACE, FALSE, FALSE);
             if (otmp) {
                 otmp->spe = rnd(3);
                 if (!rn2(2))
@@ -273,32 +272,31 @@ m_initweap(struct monst *mtmp)
         break;
 
     case S_ANGEL:
-        {
-            int spe2;
+    {
+        int spe2;
 
-            /* create minion stuff; can't use mongets */
-            otmp = mksobj(level, LONG_SWORD, FALSE, FALSE);
+        /* create minion stuff; can't use mongets */
+        otmp = mksobj(lev, LONG_SWORD, FALSE, FALSE);
 
-            /* maybe make it special */
-            if (!rn2(20) || is_lord(ptr))
-                otmp =
-                    oname(otmp,
-                          artiname(rn2(2) ? ART_DEMONBANE : ART_SUNSWORD));
-            bless(otmp);
-            otmp->oerodeproof = TRUE;
-            spe2 = rn2(4);
-            otmp->spe = max(otmp->spe, spe2);
-            mpickobj(mtmp, otmp);
+        /* maybe make it special */
+        if (!rn2(20) || is_lord(ptr))
+            otmp = oname(otmp,
+                         artiname(rn2(2) ? ART_DEMONBANE : ART_SUNSWORD));
+        bless(otmp);
+        otmp->oerodeproof = TRUE;
+        spe2 = rn2(4);
+        otmp->spe = max(otmp->spe, spe2);
+        mpickobj(mtmp, otmp);
 
-            otmp = mksobj(level, !rn2(4) ||
-                          is_lord(ptr) ? SHIELD_OF_REFLECTION : LARGE_SHIELD,
-                          FALSE, FALSE);
-            otmp->cursed = FALSE;
-            otmp->oerodeproof = TRUE;
-            otmp->spe = 0;
-            mpickobj(mtmp, otmp);
-        }
-        break;
+        otmp = mksobj(lev, !rn2(4) || is_lord(ptr) ?
+                      SHIELD_OF_REFLECTION : LARGE_SHIELD,
+                      FALSE, FALSE);
+        otmp->cursed = FALSE;
+        otmp->oerodeproof = TRUE;
+        otmp->spe = 0;
+        mpickobj(mtmp, otmp);
+    }
+    break;
 
     case S_HUMANOID:
         if (mm == PM_HOBBIT) {
@@ -340,7 +338,7 @@ m_initweap(struct monst *mtmp)
         }
         break;
     case S_KOP:        /* create Keystone Kops with cream pies to throw. As
-                           suggested by KAA.  [MRS] */
+                          suggested by KAA.  [MRS] */
         if (!rn2(4))
             m_initthrow(mtmp, CREAM_PIE, 2);
         if (!rn2(3))
@@ -464,46 +462,46 @@ m_initweap(struct monst *mtmp)
  * of monsters will get a bonus chance or different selections.
  */
     default:
-        {
-            int bias;
+    {
+        int bias;
 
-            bias = is_lord(ptr) + is_prince(ptr) * 2 + extra_nasty(ptr);
-            switch (rnd(14 - (2 * bias))) {
-            case 1:
-                if (strongmonst(ptr))
-                    mongets(mtmp, BATTLE_AXE);
-                else
-                    m_initthrow(mtmp, DART, 12);
-                break;
-            case 2:
-                if (strongmonst(ptr))
-                    mongets(mtmp, TWO_HANDED_SWORD);
-                else {
-                    mongets(mtmp, CROSSBOW);
-                    m_initthrow(mtmp, CROSSBOW_BOLT, 12);
-                }
-                break;
-            case 3:
-                mongets(mtmp, BOW);
-                m_initthrow(mtmp, ARROW, 12);
-                break;
-            case 4:
-                if (strongmonst(ptr))
-                    mongets(mtmp, LONG_SWORD);
-                else
-                    m_initthrow(mtmp, DAGGER, 3);
-                break;
-            case 5:
-                if (strongmonst(ptr))
-                    mongets(mtmp, LUCERN_HAMMER);
-                else
-                    mongets(mtmp, AKLYS);
-                break;
-            default:
-                break;
+        bias = is_lord(ptr) + is_prince(ptr) * 2 + extra_nasty(ptr);
+        switch (rnd(14 - (2 * bias))) {
+        case 1:
+            if (strongmonst(ptr))
+                mongets(mtmp, BATTLE_AXE);
+            else
+                m_initthrow(mtmp, DART, 12);
+            break;
+        case 2:
+            if (strongmonst(ptr))
+                mongets(mtmp, TWO_HANDED_SWORD);
+            else {
+                mongets(mtmp, CROSSBOW);
+                m_initthrow(mtmp, CROSSBOW_BOLT, 12);
             }
+            break;
+        case 3:
+            mongets(mtmp, BOW);
+            m_initthrow(mtmp, ARROW, 12);
+            break;
+        case 4:
+            if (strongmonst(ptr))
+                mongets(mtmp, LONG_SWORD);
+            else
+                m_initthrow(mtmp, DAGGER, 3);
+            break;
+        case 5:
+            if (strongmonst(ptr))
+                mongets(mtmp, LUCERN_HAMMER);
+            else
+                mongets(mtmp, AKLYS);
+            break;
+        default:
+            break;
         }
-        break;
+    }
+    break;
     }
     if ((int)mtmp->m_lev > rn2(75))
         mongets(mtmp, rnd_offensive_item(mtmp));
@@ -1136,7 +1134,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     if (allow_minvent) {
         if (is_armed(ptr))
-            m_initweap(mtmp);   /* equip with weapons / armor */
+		m_initweap(lev, mtmp);	/* equip with weapons / armor */
         m_initinv(mtmp);        /* add on a few special items incl. more armor */
         m_dowear(mtmp, TRUE);
     } else {
