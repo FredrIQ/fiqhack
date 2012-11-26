@@ -227,6 +227,9 @@ bribe(struct monst *mtmp)
     } else if (offer == 0L) {
         pline("You refuse.");
         return 0L;
+	} else if (umoney == 0L) {
+		pline("You open your purse, but realize you have no gold.");
+		return 0L;
     } else if (offer >= umoney) {
         pline("You give %s all your gold.", mon_nam(mtmp));
         offer = umoney;
