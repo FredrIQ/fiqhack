@@ -1026,6 +1026,9 @@ welcome(boolean new_game)
           "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL), plname,
           buf, urace.adj, (currentgend &&
                            urole.name.f) ? urole.name.f : urole.name.m);
+
+    if (*level->levname)
+	pline("You named this level: %s.", level->levname);
 }
 
 /*allmain.c*/
