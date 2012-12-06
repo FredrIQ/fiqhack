@@ -2696,6 +2696,7 @@ cloneu(void)
         return NULL;
 
     mon = makemon(youmonst.data, level, u.ux, u.uy, NO_MINVENT | MM_EDOG);
+	if (mon) {
     mon = christen_monst(mon, plname);
     initedog(mon);
     mon->m_lev = youmonst.data->mlevel;
@@ -2703,6 +2704,7 @@ cloneu(void)
     mon->mhp = u.mh / 2;
     u.mh -= mon->mhp;
     iflags.botl = 1;
+	}
     return mon;
 }
 
