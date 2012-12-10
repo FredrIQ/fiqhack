@@ -763,6 +763,9 @@ unexplored(int x, int y)
 
     for (i = -1; i <= 1; i++)
         for (j = -1; j <= 1; j++) {
+		/* corridors with only unexplored diagonals aren't interesting */
+		if ((mem_bg == S_corr || mem_bg == S_litcorr) && i && j)
+		    continue;
             if (isok(x + i, y + j) &&
 		    level->locations[x+i][y+j].mem_bg == S_unexplored) {
                 int flag = TRUE;
