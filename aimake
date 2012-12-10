@@ -60,7 +60,13 @@ outside the chroot.
 =item B<-d>
 
 Instead of compiling, dump the internal statefile to stdout in a
-human-readable format.
+human-readable format. This is mostly only useful for debugging.
+
+=item B<-W> I<regexp>
+
+Instead of compiling, output all error and warning messages that
+were obtained during the last compile, for files matching the
+given regexp. (Don't include the // around the regexp.)
 
 =item B<-r>
 
@@ -108,7 +114,7 @@ if (-e statefile) {
 our $VERSION = 0.3;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 my %options;
-getopts('drv:i:p:B:', \%options);
+getopts('drv:i:p:B:W:', \%options);
 
 if($options{'d'}) {
   print Dumper($state);
@@ -118,6 +124,14 @@ if($options{'d'}) {
 defined($options{'v'}) or $options{'v'} = 3;
 !defined $options{'v'} or $options{'v'} =~ /^-?\d+$/
   or die "Argument to -v must be a number";
+
+if($options{'W'}) {
+  for my $object (sort keys %{$state->{'stderrobjects'}}) {
+    next unless $object =~ /$options{'W'}/;
+    progress_report(7, obj_state($object)->{'stderrreason'});
+  }  
+  exit 0
+}
 
 if (scalar @ARGV == 1) {
   defined $state->{'srcdir'} and
