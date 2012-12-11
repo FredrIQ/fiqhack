@@ -276,6 +276,10 @@ map_object(struct obj *obj, int show)
         loc = &tmp_location;
     }
 
+    struct rm *loc = &level->locations[x][y];
+    int old_obj = loc->mem_obj;
+    int old_obj_mn = loc->mem_obj_mn;
+
     if (objtyp == CORPSE || objtyp == STATUE || objtyp == FIGURINE) {
         if (Hallucination)
             monnum = random_monster();
@@ -285,6 +289,12 @@ map_object(struct obj *obj, int show)
 
     loc->mem_obj = objtyp + 1;
     loc->mem_obj_mn = monnum + 1;
+
+    /* If object memory differs here, it's worth autoexploring again. */
+    if (loc->mem_stepped &&
+        (loc->mem_obj != old_obj ||
+         loc->mem_obj_mn != old_obj_mn))
+        loc->mem_stepped = 0;
 
     if (show)
         dbuf_set(x, y, loc->mem_bg, loc->mem_trap, loc->mem_obj,

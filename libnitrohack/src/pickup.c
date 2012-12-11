@@ -56,6 +56,8 @@ check_here(boolean picked_some)
 {
     struct obj *obj;
     int ct = 0;
+	boolean autoexploring = (flags.run == 8 &&
+				 flags.travel && iflags.autoexplore);
 
     /* count the objects here */
     for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere) {
@@ -63,10 +65,10 @@ check_here(boolean picked_some)
             ct++;
     }
 
-    /* If there are objects here, take a look. */
-    if (ct) {
-        if (flags.run)
-            nomul(0, NULL);
+    /* If there are objects here, take a look unless autoexploring a previously
+       explored space. */
+    if (ct && !(autoexploring && level->locations[u.ux][u.uy].mem_stepped)) {
+        if (flags.run) nomul(0, NULL);
         flush_screen();
         look_here(ct, picked_some);
     } else {
@@ -228,9 +230,12 @@ pickup(int what)
             return 0;
         }
 
-        /* if there's anything here, stop running and travel */
-        if (OBJ_AT(u.ux, u.uy) && flags.run && (flags.run != 8 || flags.travel)
-            && !flags.nopick)
+        /* If there's anything here, stop running and travel, but not
+           autoexplore unless it picks something up, which is handled later.
+        */
+        if (OBJ_AT(u.ux, u.uy) && flags.run &&
+            (flags.run != 8 || (flags.travel && !iflags.autoexplore)) &&
+            !flags.nopick)
             nomul(0, NULL);
     }
 
@@ -252,7 +257,6 @@ pickup(int what)
         n = autopick(objchain, traverse_how, &pick_list);
         goto menu_pickup;
     }
-
 
     if (count) {        /* looking for N of something */
         char buf[QBUFSZ];
@@ -282,7 +286,6 @@ menu_pickup:
     if (pick_list)
         free(pick_list);
 
-
     if (!u.uswallow) {
         if (!OBJ_AT(u.ux, u.uy))
             u.uundetected = 0;
@@ -295,6 +298,13 @@ menu_pickup:
         if (autopickup)
             check_here(n_picked > 0);
     }
+
+    /* Stop autoexplore if this pile hasn't been explored or
+     * auto-pickup (tried to) pick up anything. */
+    if (flags.run == 8 && flags.travel && iflags.autoexplore &&
+        (!level->locations[u.ux][u.uy].mem_stepped || (autopickup && n_tried > 0)))
+        nomul(0, NULL);
+
     return n_tried > 0;
 }
 
