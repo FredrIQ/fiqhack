@@ -1256,10 +1256,10 @@ dmonsfree(struct level *lev)
             mtmp = &(*mtmp)->nmon;
     }
 
-    if (count != iflags.purge_monsters)
-        impossible("dmonsfree: %d removed doesn't match %d pending", count,
-                   iflags.purge_monsters);
-    iflags.purge_monsters = 0;
+    if (count != lev->flags.purge_monsters)
+	impossible("dmonsfree: %d removed doesn't match %d pending",
+		   count, lev->flags.purge_monsters);
+    lev->flags.purge_monsters = 0;
 }
 
 
@@ -1346,11 +1346,17 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     unstuck(mtmp);
     fill_pit(mtmp->dlevel, mtmp->mx, mtmp->my);
 
+<<<<<<< HEAD
     if (mtmp->isshk)
         shkgone(mtmp);
     if (mtmp->wormno)
         wormgone(mtmp);
     iflags.purge_monsters++;
+=======
+	if (mtmp->isshk) shkgone(mtmp);
+	if (mtmp->wormno) wormgone(mtmp);
+	mtmp->dlevel->flags.purge_monsters++;
+>>>>>>> 378f5c3... Fix spurious dmonsfree impossible errors
 }
 
 /* find the worn amulet of life saving which will save a monster */

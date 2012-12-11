@@ -437,6 +437,8 @@ struct damage {
 struct levelflags {
     uchar nfountains;   /* number of fountains on level */
     uchar nsinks;       /* number of sinks on the level */
+	int	purge_monsters;	/* number of dead monsters still on level->monlist */
+
     /* Several flags that give hints about what's on the level */
     unsigned has_shop:1;
     unsigned has_vault:1;
