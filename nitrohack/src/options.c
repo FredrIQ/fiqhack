@@ -328,7 +328,7 @@ static void select_boolean_value(union nh_optvalue *value, struct nh_option_desc
 {
     struct nh_menuitem *items;
     int icount, size;
-    char titlebuf[BUFSZ];
+    char titlebuf[QBUFSZ];
     int n, pick_list[2];
 
     icount = 0; size = 2;
@@ -339,7 +339,7 @@ static void select_boolean_value(union nh_optvalue *value, struct nh_option_desc
     add_menu_item(items, size, icount, 2,
 		  option->value.b ? "false" : "false (set)", 'f', 0);
 
-    snprintf(titlebuf, BUFSZ, "%s - %s", option->name, option->helptxt);
+    snprintf(titlebuf, QBUFSZ, "%s - %s", option->name, option->helptxt);
 
     n = curses_display_menu(items, icount, titlebuf, PICK_ONE, pick_list);
     free(items);
