@@ -356,6 +356,7 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
     struct nh_menuitem *items;
     int icount, size;
+    char titlebuf[QBUFSZ];
     int i, n, selectidx, *pick_list;
 
     icount = 0;
@@ -367,9 +368,12 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
         add_menu_item(items, size, icount, i + 1, option->e.choices[i].caption,
                       0, 0);
     }
+
+    snprintf(titlebuf, QBUFSZ, "%s - %s", option->name, option->helptxt);
+
     pick_list = malloc(sizeof (int) * icount);
-    n = curses_display_menu(items, icount, option->name, PICK_ONE, PLHINT_RIGHT,
-                            pick_list);
+    n = curses_display_menu(items, icount, titlebuf, PICK_ONE,
+                            PLHINT_RIGHT, pick_list);
     free(items);
 
     value->e = option->value.e; /* in case of ESC */
