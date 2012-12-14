@@ -364,9 +364,16 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
     items = malloc(sizeof (struct nh_menuitem) * size);
 
     for (i = 0; i < option->e.numchoices; i++) {
+	char capbuf[QBUFSZ];
+	char *cap;
+	if (option->value.e == option->e.choices[i].id) {
+	    snprintf(capbuf, QBUFSZ, "%s (set)", option->e.choices[i].caption);
+	    cap = capbuf;
+	} else {
+	    cap = option->e.choices[i].caption;
+	}
         /* don't use the choice ids directly, 0 is a valid value for those */
-        add_menu_item(items, size, icount, i + 1, option->e.choices[i].caption,
-                      0, 0);
+	add_menu_item(items, size, icount, i+1, cap, 0, 0);
     }
 
     snprintf(titlebuf, QBUFSZ, "%s - %s", option->name, option->helptxt);
