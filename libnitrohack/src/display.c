@@ -290,8 +290,11 @@ map_object(struct obj *obj, int show)
     loc->mem_obj = objtyp + 1;
     loc->mem_obj_mn = monnum + 1;
 
-    /* If object memory differs here, it's worth autoexploring again. */
-    if (loc->mem_stepped &&
+	/*
+	 * If object memory differs here, it's worth autoexploring again,
+	 * unless it's attached to you.
+	 */
+	if (loc->mem_stepped && obj != uball && obj != uchain &&
         (loc->mem_obj != old_obj ||
          loc->mem_obj_mn != old_obj_mn))
         loc->mem_stepped = 0;
