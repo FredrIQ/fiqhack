@@ -200,35 +200,59 @@ startup_common(const char *name, int playmode)
 
 
 static void
+realtime_messages(boolean moon, boolean fri13)
+{
+    if (moon) {
+        switch (flags.moonphase) {
+        case FULL_MOON:
+            pline("You are lucky!  Full moon tonight.");
+            break;
+        case NEW_MOON:
+            pline("Be careful!  New moon tonight.");
+            break;
+        }
+    }
+
+    if (fri13 && flags.friday13)
+        pline("Watch out!  Bad things can happen on Friday the 13th.");
+}
+
+
+static void
 realtime_tasks(void)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
+    boolean msg_moonphase = TRUE;
+    boolean msg_friday13 = TRUE;
 
     flags.moonphase = phase_of_the_moon();
     if (flags.moonphase == FULL_MOON && prev_moonphase != FULL_MOON) {
-        pline("You are lucky!  Full moon tonight.");
         change_luck(1);
     } else if (flags.moonphase != FULL_MOON && prev_moonphase == FULL_MOON) {
         change_luck(-1);
     } else if (flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) {
-        pline("Be careful!  New moon tonight.");
+        /* Do nothing, but show message. */
+    } else {
+        msg_moonphase = FALSE;
     }
 
     flags.friday13 = friday_13th();
     if (flags.friday13 && !prev_friday13) {
-        pline("Watch out!  Bad things can happen on Friday the 13th.");
         change_luck(-1);
     } else if (!flags.friday13 && prev_friday13) {
         change_luck(1);
+    } else {
+        msg_friday13 = FALSE;
     }
+
+    realtime_messages(msg_moonphase, msg_friday13);
 }
 
 
 static void
 post_init_tasks(void)
 {
-    realtime_tasks();
     encumber_msg();     /* in case they auto-picked up something */
 
     u.uz0.dlevel = u.uz.dlevel;
@@ -275,6 +299,17 @@ nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     newgame();
     wd_message();
 
+    flags.move = 0;
+    set_wear();
+    pickup(1);
+    
+    log_command_result();
+    
+    program_state.game_running = TRUE;
+    youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
+    realtime_tasks();
+    post_init_tasks();
+    
     api_exit();
     return TRUE;
 
@@ -386,6 +421,7 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     flush_screen();
 
     welcome(FALSE);
+    realtime_messages(TRUE, TRUE);
     update_inventory();
 
     api_exit();
@@ -741,8 +777,10 @@ pre_move_tasks(void)
     if (iflags.botl)
         bot();
 
-    if ((u.uhave.amulet || Clairvoyant) && !In_endgame(&u.uz) && !BClairvoyant
-        && !(moves % 15) && !rn2(2))
+    if (didmove &&
+        (u.uhave.amulet || Clairvoyant) &&
+        !In_endgame(&u.uz) && !BClairvoyant &&
+        !(moves % 15) && !rn2(2))
         do_vicinity_map();
 
     u.umoved = FALSE;
@@ -756,18 +794,18 @@ pre_move_tasks(void)
         }
     }
 
-    if (moves % 100 == 0)
+    if (didmove && moves % 100 == 0)
         realtime_tasks();
 
     update_inventory();
     update_location(FALSE);
 
     if (didmove) {
-	/* Mark the current square as stepped on unless blind,
-	 * since that would imply that we had properly explored it. */
-	struct rm *loc = &level->locations[u.ux][u.uy];
-	if (!Blind && !loc->mem_stepped)
-	    loc->mem_stepped = 1;
+        /* Mark the current square as stepped on unless blind,
+         * since that would imply that we had properly explored it. */
+        struct rm *loc = &level->locations[u.ux][u.uy];
+        if (!Blind && !loc->mem_stepped)
+            loc->mem_stepped = 1;
     }
 }
 
@@ -794,12 +832,12 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
         if (flags.mv) {
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-	    if (!domove(u.dx, u.dy, 0)) {
-		/* Don't use a move when travelling into an obstacle.
-		 * Handle this the same way as do_command(). */
-		flags.move = FALSE;
-		multi = 0;
-	    }
+            if (!domove(u.dx, u.dy, 0)) {
+                /* Don't use a move when travelling into an obstacle.
+                 * Handle this the same way as do_command(). */
+                flags.move = FALSE;
+                multi = 0;
+            }
         } else
             do_command(saved_cmd, multi, FALSE, arg);
     }
@@ -1036,7 +1074,7 @@ welcome(boolean new_game)
                            urole.name.f) ? urole.name.f : urole.name.m);
 
     if (*level->levname)
-	pline("You named this level: %s.", level->levname);
+        pline("You named this level: %s.", level->levname);
 }
 
 /*allmain.c*/
