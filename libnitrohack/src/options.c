@@ -140,6 +140,8 @@ static const struct nh_option_desc const_options[] = {
     {"comment", "has no effect", OPTTYPE_STRING, {""}},
     {"confirm", "ask before hitting tame or peaceful monsters", OPTTYPE_BOOL,
      {VTRUE}},
+    {"delay_msg", "minimum turns to show message of turns spent (0 to disable)",
+     OPTTYPE_INT, {(void*)2}},
     {"disclose", "whether to disclose information at end of game", OPTTYPE_ENUM,
      {(void *)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING,
@@ -337,6 +339,8 @@ init_opt_struct(void)
 
     /* initialize option definitions */
     find_option(options, "comment")->s.maxlen = BUFSZ;
+    find_option(options, "delay_msg")->i.min = 0;
+    find_option(options, "delay_msg")->i.max = 9999;
     find_option(options, "disclose")->e = disclose_spec;
     find_option(options, "fruit")->s.maxlen = PL_FSIZ;
     find_option(options, "menustyle")->e = menustyle_spec;
@@ -643,6 +647,8 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     /* regular non-boolean options */
     else if (!strcmp("comment", option->name)) {
         /* do nothing */
+    } else if (!strcmp("delay_msg", option->name)) {
+        iflags.delay_msg = option->value.i;
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
     } else if (!strcmp("fruit", option->name)) {
