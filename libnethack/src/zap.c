@@ -1842,9 +1842,9 @@ backfire(struct obj *otmp)
          * Artifacts aren't destroyed by a backfire, but the
          * explosion is more violent.
          */
-        pline("%s suddently produces a violent outburst of energy!",
+        pline("%s suddenly produces a violent outburst of energy!",
               The(xname(otmp)));
-        losehp(dice(otmp->spe + 4, 8), "oubursting wand", KILLED_BY_AN);
+        losehp(dice(otmp->spe + 4, 8), "outbursting wand", KILLED_BY_AN);
     } else {
         pline("%s suddenly explodes!", The(xname(otmp)));
         losehp(dice(otmp->spe + 2, 6), "exploding wand", KILLED_BY_AN);
