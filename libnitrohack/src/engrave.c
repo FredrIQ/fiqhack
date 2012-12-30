@@ -287,7 +287,9 @@ read_engr_at(int x, int y)
 
     /* Sensing an engraving does not require sight, nor does it necessarily
        imply comprehension (literacy). */
-    if (ep && ep->engr_txt[0]) {
+    if (ep && ep->engr_txt[0] &&
+        /* Don't stop if travelling or autoexploring. */
+        !(flags.run == 8 && level->locations[x][y].mem_stepped)) {
         switch (ep->engr_type) {
         case DUST:
             if (!Blind) {
