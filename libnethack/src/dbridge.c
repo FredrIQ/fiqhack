@@ -34,10 +34,7 @@ is_pool(struct level *lev, int x, int y)
     if (!isok(x, y))
         return FALSE;
     ltyp = lev->locations[x][y].typ;
-    if (ltyp == POOL || ltyp == MOAT || ltyp == WATER)
-        return TRUE;
-    if (ltyp == DRAWBRIDGE_UP &&
-        (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT)
+    if (ltyp == POOL || ltyp == WATER || is_moat(lev, x, y))
         return TRUE;
     return FALSE;
 }
@@ -72,6 +69,20 @@ is_ice(struct level * lev, int x, int y)
     return FALSE;
 }
 
+boolean
+is_moat(struct level * lev, int x, int y)
+{
+    schar ltyp;
+
+    if (!isok(x, y))
+        return FALSE;
+    ltyp = lev->locations[x][y].typ;
+    if (!Is_juiblex_level(&lev->z) &&
+        (ltyp == MOAT || (ltyp == DRAWBRIDGE_UP &&
+         (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT)))
+        return TRUE;
+    return FALSE;
+}
 
 /*
  * We want to know whether a wall (or a door) is the portcullis (passageway)

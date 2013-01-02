@@ -3658,7 +3658,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
     } else if (abstype == ZT_COLD &&
                (is_pool(level, x, y) || is_lava(level, x, y))) {
         boolean lava = is_lava(level, x, y);
-        boolean moat = !strcmp(waterbody_name(x, y), "moat");
+        boolean moat = is_moat(level, x, y);
 
         if (loc->typ == WATER) {
             /* For now, don't let WATER freeze. */

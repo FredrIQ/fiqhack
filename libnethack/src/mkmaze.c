@@ -1151,14 +1151,9 @@ waterbody_name(xchar x, xchar y)
 
     if (is_lava(level, x, y))
         return "lava";
-    else if (ltyp == ICE ||
-             (ltyp == DRAWBRIDGE_UP &&
-              (level->locations[x][y].drawbridgemask & DB_UNDER) == DB_ICE))
+    else if (is_ice(level, x, y))
         return "ice";
-    else if (((ltyp != POOL) && (ltyp != WATER) && !Is_medusa_level(&u.uz) &&
-              !Is_waterlevel(&u.uz) && !Is_juiblex_level(&u.uz)) ||
-             (ltyp == DRAWBRIDGE_UP &&
-              (level->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT))
+    else if (is_moat(level, x, y))
         return "moat";
     else if ((ltyp != POOL) && (ltyp != WATER) && Is_juiblex_level(&u.uz))
         return "swamp";

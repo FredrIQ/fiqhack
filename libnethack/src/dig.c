@@ -470,17 +470,13 @@ fillholetyp(int x, int y)
 
     for (x1 = lo_x; x1 <= hi_x; x1++)
         for (y1 = lo_y; y1 <= hi_y; y1++)
-            if (level->locations[x1][y1].typ == POOL)
-                pool_cnt++;
-            else if (level->locations[x1][y1].typ == MOAT ||
-                     (level->locations[x1][y1].typ == DRAWBRIDGE_UP &&
-                      (level->locations[x1][y1].drawbridgemask & DB_UNDER) ==
-                      DB_MOAT))
+            if (is_moat(level, x1, y1))
                 moat_cnt++;
-            else if (level->locations[x1][y1].typ == LAVAPOOL ||
-                     (level->locations[x1][y1].typ == DRAWBRIDGE_UP &&
-                      (level->locations[x1][y1].drawbridgemask & DB_UNDER) ==
-                      DB_LAVA))
+            else if (is_pool(level, x1, y1))
+                /* This must come after is_moat since moats are pools but
+                 * not vice-versa. */
+                pool_cnt++;
+            else if (is_lava(level, x1, y1))
                 lava_cnt++;
     pool_cnt /= 3;      /* not as much liquid as the others */
 
@@ -686,7 +682,7 @@ dighole(boolean pit_only)
 
     } else if (loc->typ == DRAWBRIDGE_DOWN ||
                (is_drawbridge_wall(u.ux, u.uy) >= 0)) {
-        /* drawbridge_down is the platform crossing the moat when the bridge is 
+        /* drawbridge_down is the platform crossing the moat when the bridge is
            extended; drawbridge_wall is the open "doorway" or closed "door"
            where the portcullis/mechanism is located */
         if (pit_only) {
