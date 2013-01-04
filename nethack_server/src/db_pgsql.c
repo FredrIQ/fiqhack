@@ -259,6 +259,7 @@ db_auth_user(const char *name, const char *pass)
 
     res = PQexecPrepared(conn, PREP_AUTH, 2, params, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+        log_msg("db_auth_user failed: %s\n", PQerrorMessage(conn));
         PQclear(res);
         return 0;
     }
