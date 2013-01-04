@@ -4,6 +4,9 @@
 
 #include "nhcurses.h"
 
+#include <stdio.h>
+#include <errno.h>
+
 struct extcmd_hook_args {
     const char **namelist;
     const char **desclist;
@@ -140,6 +143,7 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
     buf[0] = 0;
     while (!done) {
         draw_getline_inner(gw, echo);
+        errno = 0;
         key = nh_wgetch(gw->win);
 
         switch (key) {
@@ -187,6 +191,14 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
         case KEY_END:
             gldat->pos = len;
             break;
+
+        case ERR:
+            if (errno != 0) {
+                perror("wgetch");
+            } else {
+                fprintf(stderr, "wgetch: Unspecified Error\n");
+            }
+            exit(EXIT_FAILURE);
 
         default:
             if (' ' > (unsigned)key || (unsigned)key >= 128 ||
