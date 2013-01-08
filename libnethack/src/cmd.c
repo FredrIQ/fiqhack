@@ -1634,8 +1634,6 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD("apply", "Chop a tree with %s", 0);
     else if (is_pole(obj))
         SET_OBJ_CMD("apply", "Strike at a distance with %s", 0);
-    else if (obj->oclass == WAND_CLASS)
-        SET_OBJ_CMD("apply", "Break %s", 0);
 
     /* drop item, works on almost everything */
     if (!(obj->owornmask & ~W_WEP))
@@ -1712,6 +1710,8 @@ nh_get_object_commands(int *count, char invlet)
         obj->otyp == MIRROR)   /* deception, according to
                                   object_selection_checks */
         SET_OBJ_CMD("invoke", "Try to invoke a unique power of %s", 0);
+    else if (obj->oclass == WAND_CLASS)
+        SET_OBJ_CMD("invoke", "Break %s", 0);
 
     /* wield: hold in hands, works on everything but with different advice
        text; not mentioned for things that are already wielded */
