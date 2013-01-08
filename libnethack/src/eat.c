@@ -64,17 +64,6 @@ static unsigned newuhs_save_hs;
 static boolean newuhs_saved_hs = FALSE;
 
 
-const char *const hu_stat[] = {
-    "Satiated",
-    "        ",
-    "Hungry  ",
-    "Weak    ",
-    "Fainting",
-    "Fainted ",
-    "Starved "
-};
-
-
 /*
  * Decide whether a particular object can be eaten by the possibly
  * polymorphed character.  Not used for monster checks.

@@ -4,10 +4,18 @@
 
 #include "hack.h"
 
-extern const char *const hu_stat[];     /* defined in eat.c */
+static const char *const hu_stat[] = {
+    "Satiated",
+    NULL,
+    "Hungry",
+    "Weak",
+    "Fainting",
+    "Fainted",
+    "Starved"
+};
 
-const char *const enc_stat[] = {
-    "",
+static const char *const enc_stat[] = {
+    NULL,
     "Burdened",
     "Stressed",
     "Strained",
@@ -250,7 +258,7 @@ make_player_info(struct nh_player_info *pi)
 
     /* add status items for various problems there can be at most 12 items here 
        at any one time or we overflow the buffer */
-    if (strcmp(hu_stat[u.uhs], "        "))     /* 1 */
+    if (hu_stat[u.uhs]) /* 1 */
         strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
 
     if (Confusion)      /* 2 */
@@ -270,7 +278,7 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Hallu", ITEMLEN);
     if (Slimed) /* 7 */
         strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
-    if (cap > UNENCUMBERED)     /* 8 */
+    if (enc_stat[cap])  /* 8 */
         strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
     if (Levitation)     /* 9 */
         strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
