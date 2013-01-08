@@ -1607,7 +1607,7 @@ nh_get_object_commands(int *count, char invlet)
     else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
              obj->otyp == BRASS_LANTERN)
         SET_OBJ_CMD("apply", "Light or extinguish %s", 0);
-    else if (obj->otyp == POT_OIL && objects[obj->otyp].oc_name_known)
+    else if (obj->otyp == POT_OIL)
         SET_OBJ_CMD("apply", "Light or extinguish %s", 0);
     else if (obj->otyp == EXPENSIVE_CAMERA)
         SET_OBJ_CMD2("apply", "Take a photograph");
