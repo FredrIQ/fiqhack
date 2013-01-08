@@ -2249,6 +2249,14 @@ free_invbuf(void)
 }
 
 
+/* all but coins */
+static const char organizable[] = {
+    ALLOW_COUNT, SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS,
+    AMULET_CLASS, GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS,
+    WEAPON_CLASS, ROCK_CLASS, CHAIN_CLASS, BALL_CLASS, VENOM_CLASS,
+    0
+};
+
 int
 doorganize(void)
 {       /* inventory organizer by Del Lamb */
@@ -2257,11 +2265,10 @@ doorganize(void)
     char let;
     char alphabet[52 + 1], buf[52 + 1];
     char qbuf[QBUFSZ];
-    char allowallcnt[3] = { ALLOW_COUNT, ALL_CLASSES, 0 };
     const char *adj_type;
 
     /* get a pointer to the object the user wants to organize */
-    if (!(obj = getobj(allowallcnt, "adjust")))
+    if (!(obj = getobj(organizable, "adjust")))
         return 0;
 
     /* initialize the list with all upper and lower case letters */
