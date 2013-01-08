@@ -1645,7 +1645,8 @@ edibility_prompts(struct obj *otmp)
 
     strcpy(foodsmell, Tobjnam(otmp, "smell"));
     strcpy(it_or_they, (otmp->quan == 1L) ? "it" : "they");
-    sprintf(eat_it_anyway, "Eat %s anyway?", (otmp->quan == 1L) ? "it" : "one");
+    sprintf(eat_it_anyway, "Eat %s anyway?",
+            (otmp->quan == 1L || otmp->oclass == COIN_CLASS) ? "it" : "one");
 
     /* edibility's needed to ID the contents of eggs and tins */
     if (cadaver || (otmp->otyp == EGG && u.uedibility) ||
