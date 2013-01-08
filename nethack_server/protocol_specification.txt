@@ -894,7 +894,6 @@ Value:
     * max_rank_sz:  integer
     * monnum:  integer
     * moves:  integer
-    * nr_items:  integer
     * plname:  string
     * rank:  string
     * score:  integer

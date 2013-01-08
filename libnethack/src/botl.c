@@ -263,7 +263,7 @@ make_player_info(struct nh_player_info *pi)
     }
     pi->can_enhance = advskills > 0;
 
-    /* add status items for various problems there can be at most 12 items here 
+    /* add status items for various problems there can be at most 24 items here 
        at any one time or we overflow the buffer */
     if (hu_stat[u.uhs]) /* 1 */
         strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);

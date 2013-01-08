@@ -231,8 +231,6 @@ cmd_update_status(json_t * params, int display_only)
         player.ch = json_integer_value(p);
     if ((p = json_object_get(params, "align")))
         player.align = json_integer_value(p);
-    if ((p = json_object_get(params, "nr_items")))
-        player.nr_items = json_integer_value(p);
     if ((p = json_object_get(params, "hp")))
         player.hp = json_integer_value(p);
     if ((p = json_object_get(params, "hpmax")))
@@ -254,10 +252,13 @@ cmd_update_status(json_t * params, int display_only)
     if ((p = json_object_get(params, "can_enhance")))
         player.can_enhance = json_integer_value(p);
     if ((p = json_object_get(params, "statusitems"))) {
-        count = json_array_size(p);
-        for (i = 0; i < count; i++)
-            strcpy(player.statusitems[i],
-                   json_string_value(json_array_get(p, i)));
+        player.nr_items = json_array_size(p);
+        if (player.nr_items > STATUSITEMS_MAX)
+            player.nr_items = STATUSITEMS_MAX;
+        for (i = 0; i < player.nr_items; i++)
+            strncpy(player.statusitems[i],
+                   json_string_value(json_array_get(p, i)),
+                   ITEMLEN-1);
     }
 
     cur_wndprocs.win_update_status(&player);

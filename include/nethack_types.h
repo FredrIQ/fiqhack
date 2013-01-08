@@ -391,12 +391,13 @@ struct nh_objresult {
 };
 
 # define ITEMLEN 12
+# define STATUSITEMS_MAX 24
 struct nh_player_info {
     char plname[PL_NSIZ];
     int x, y, z;
     char rank[PL_NSIZ];
     char level_desc[COLNO];
-    char statusitems[12][ITEMLEN];
+    char statusitems[STATUSITEMS_MAX][ITEMLEN];
     int score, xp, gold, moves;
     int max_rank_sz;
     int st, st_extra, dx, co, in, wi, ch;

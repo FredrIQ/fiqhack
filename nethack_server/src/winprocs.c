@@ -284,8 +284,6 @@ srv_update_status(struct nh_player_info *pi)
         json_object_set_new(jobj, "ch", json_integer(pi->ch));
     if (all || pi->align != oi->align)
         json_object_set_new(jobj, "align", json_integer(pi->align));
-    if (all || pi->nr_items != oi->nr_items)
-        json_object_set_new(jobj, "nr_items", json_integer(pi->nr_items));
     if (all || pi->hp != oi->hp)
         json_object_set_new(jobj, "hp", json_integer(pi->hp));
     if (all || pi->hpmax != oi->hpmax)
