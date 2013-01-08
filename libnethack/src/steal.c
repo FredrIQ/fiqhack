@@ -207,7 +207,7 @@ steal(struct monst *mtmp, char *objnambuf)
     if (occupation)
         maybe_finished_meal(FALSE);
 
-    if (!invent || (inv_cnt() == 1 && uskin)) {
+    if (!invent || (inv_cnt(FALSE) == 1 && uskin)) {
     nothing_to_steal:
         /* Not even a thousand men in armor can strip a naked man. */
         if (Blind)
@@ -293,7 +293,7 @@ gotobj:
                   (otmp->owornmask & W_ARMOR) ? equipname(otmp) : cxname(otmp));
             /* the fewer items you have, the less likely the thief is going to
                stick around to try again (0) instead of running away (1) */
-            return !rn2(inv_cnt() / 5 + 2);
+            return !rn2(inv_cnt(FALSE) / 5 + 2);
         }
     }
 

@@ -1436,7 +1436,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
 
             if (mongold) {
                 obj_extract_self(mongold);
-                if (merge_choice(invent, mongold) || inv_cnt() < 52) {
+                if (can_hold(mongold)) {
                     addinv(mongold);
                     pline("Your purse feels heavier.");
                 } else {

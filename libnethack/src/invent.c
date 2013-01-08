@@ -348,6 +348,18 @@ carry_obj_effects(struct obj *obj)
 }
 
 
+boolean
+can_hold(struct obj *obj)
+{
+    if (obj->oclass == COIN_CLASS)
+        return TRUE;
+    if (merge_choice(invent, obj))
+        return TRUE;
+    if (inv_cnt(TRUE) < 52)
+        return TRUE;
+    return FALSE;
+}
+
 /* Add an item to the inventory unless we're fumbling or it refuses to be
  * held (via touch_artifact), and give a message.
  * If there aren't any free inventory slots, we'll drop it instead.
@@ -408,7 +420,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
             drop_arg = strcpy(buf, drop_arg);
 
         obj = addinv(obj);
-        if (inv_cnt() > 52 || ((obj->otyp != LOADSTONE || !obj->cursed)
+        if (obj->invlet == NOINVSYM || ((obj->otyp != LOADSTONE || !obj->cursed)
                                && near_capacity() > prev_encumbr)) {
             if (drop_fmt)
                 pline(drop_fmt, drop_arg);

@@ -2829,7 +2829,7 @@ water_damage(struct obj * obj, boolean force, boolean here)
 static boolean
 emergency_disrobe(boolean * lostsome)
 {
-    int invc = inv_cnt();
+    int invc = inv_cnt(FALSE);
 
     while (near_capacity() > (Punished ? UNENCUMBERED : SLT_ENCUMBER)) {
         struct obj *obj, *otmp = NULL;

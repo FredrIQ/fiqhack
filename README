@@ -294,6 +294,7 @@ Game features:
       C343-318 Opening or closing the castle drawbridge using music takes no
                time. (Alex Smith)
       C343-324 Bisecting a long worm with 1hp crashes the game. (Patric Müller)
+      C343-334 Defining GOLDOBJ drops a slot from the inventory.
       C343-356 Wearing an amulet of restful sleep confuses internal sleep state
                bookkeeping. (L's "Gremlin's Curse")
       C343-386 Pearl rings can rust. (Alex Smith)

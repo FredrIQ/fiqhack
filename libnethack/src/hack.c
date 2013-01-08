@@ -2445,13 +2445,14 @@ check_capacity(const char *str)
 
 
 int
-inv_cnt(void)
+inv_cnt(boolean letter_only)
 {
     struct obj *otmp = invent;
     int ct = 0;
 
     while (otmp) {
-        ct++;
+        if (letter(otmp->invlet) || !letter_only)
+            ct++;
         otmp = otmp->nobj;
     }
     return ct;

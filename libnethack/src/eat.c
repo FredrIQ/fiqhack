@@ -295,15 +295,15 @@ touchfood(struct obj *otmp)
 
     if (carried(otmp)) {
         freeinv(otmp);
-        if (inv_cnt() >= 52) {
+        otmp->oxlth++;      /* hack to prevent merge */
+        if (!can_hold(otmp)) {
             sellobj_state(SELL_DONTSELL);
             dropy(otmp);
             sellobj_state(SELL_NORMAL);
         } else {
-            otmp->oxlth++;      /* hack to prevent merge */
             otmp = addinv(otmp);
-            otmp->oxlth--;
         }
+        otmp->oxlth--;
     }
     return otmp;
 }
