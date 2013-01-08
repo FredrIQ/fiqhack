@@ -662,7 +662,7 @@ gold_at(struct level *lev, int x, int y)
 static void
 compactify(char *buf)
 {
-    int i1 = 1, i2 = 1;
+    int i1 = 0, i2 = 0;
     char ilet, ilet1, ilet2;
 
     ilet2 = buf[0];
