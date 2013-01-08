@@ -1636,7 +1636,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD("apply", "Strike at a distance with %s", 0);
 
     /* drop item, works on almost everything */
-    if (!(obj->owornmask & ~W_WEP))
+    if (!(obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)))
         SET_OBJ_CMD("drop", "Drop %s", 0);
 
     /* dip */
@@ -1686,7 +1686,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD("rub", "Rub something on %s", 0);
 
     /* throw item, works on almost everything */
-    if (!(obj->owornmask & ~W_WEP)) {
+    if (!(obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))) {
         /* you automatically throw only 1 item - except for gold */
         if (obj->oclass == COIN_CLASS)
             SET_OBJ_CMD("throw", "Throw %s", 0);
