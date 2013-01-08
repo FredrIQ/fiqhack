@@ -243,7 +243,7 @@ create_game_windows(void)
 static void
 resize_game_windows(void)
 {
-    int statusheight = ui_flags.status3 ? 3 : 2;
+    int statusheight;
 
     layout_game_windows();
 
@@ -264,6 +264,7 @@ resize_game_windows(void)
     wresize(msgwin, ui_flags.msgheight, COLNO);
     wresize(mapwin, ROWNO, COLNO);
 
+    statusheight = ui_flags.status3 ? 3 : 2;
     if (ui_flags.draw_frame) {
         mvwin(msgwin, 1, 1);
         mvwin(mapwin, ui_flags.msgheight + 2, 1);
