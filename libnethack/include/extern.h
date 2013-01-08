@@ -260,6 +260,8 @@ extern void heal_legs(void);
 /* ### do_name.c ### */
 
 extern struct monst *christen_monst(struct monst *, const char *);
+extern int do_oname(struct obj *);
+extern int do_tname(struct obj *);
 extern int do_mname(void);
 extern struct obj *oname(struct obj *, const char *);
 extern int do_naming(void);

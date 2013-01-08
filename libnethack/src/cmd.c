@@ -127,6 +127,10 @@ const struct cmd_desc cmdlist[] = {
     {"name", "name a monster, item or type of object", M('n'), 'C', TRUE,
      do_naming, CMD_ARG_NONE | CMD_EXT},
     {"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
+    {"name item", "name an item", 0, 0, TRUE, do_oname,
+     CMD_ARG_NONE | CMD_ARG_OBJ},
+    {"name type", "name a type of objects", 0, 0, TRUE, do_tname,
+     CMD_ARG_NONE | CMD_ARG_OBJ},
     {"open", "open, close or unlock a door", 'o', 0, FALSE, doopen,
      CMD_ARG_NONE | CMD_ARG_DIR},
     {"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview,
@@ -1745,6 +1749,16 @@ nh_get_object_commands(int *count, char invlet)
         else if (obj->otyp == CORPSE)
             SET_OBJ_CMD("sacrifice", "Sacrifice %s at this altar", 1);
     }
+
+    /* name object */
+    if (obj->oclass != COIN_CLASS)
+        SET_OBJ_CMD("name item", "Name %s", 0);
+
+    /* name type */
+    if (obj->oclass != COIN_CLASS && obj->oclass != WEAPON_CLASS &&
+        obj->oclass != ROCK_CLASS && obj->oclass != CHAIN_CLASS &&
+        obj->oclass != BALL_CLASS && obj->oclass != VENOM_CLASS)
+        SET_OBJ_CMD("name type", "Name all objects of this type", 0);
 
     *count = i;
     return obj_cmd;
