@@ -1628,8 +1628,12 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD("apply", "Blow into %s", 0);
     else if (obj->otyp == LAND_MINE || obj->otyp == BEARTRAP)
         SET_OBJ_CMD("apply", "Arm %s", 0);
-    else if (obj->otyp == PICK_AXE || obj->otyp == DWARVISH_MATTOCK)
+    else if (is_pick(obj))
         SET_OBJ_CMD("apply", "Dig with %s", 0);
+    else if (is_axe(obj))
+        SET_OBJ_CMD("apply", "Chop a tree with %s", 0);
+    else if (is_pole(obj))
+        SET_OBJ_CMD("apply", "Strike at a distance with %s", 0);
     else if (obj->oclass == WAND_CLASS)
         SET_OBJ_CMD("apply", "Break %s", 0);
 
