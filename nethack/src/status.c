@@ -65,11 +65,55 @@ Leaving the "gnomish" out for now because that information is awkward to get at
 (it's given in a format the client doesn't understand).
 */
 
+static const struct {
+    const char *name;
+    int color;
+} statuscolors[] = {
+    /* encumberance */
+    { "Burdened", CLR_BROWN },
+    { "Stressed", CLR_RED },
+    { "Strained", CLR_ORANGE },
+    { "Overtaxed", CLR_ORANGE },
+    { "Overloaded", CLR_ORANGE },
+    /* hunger */
+    { "Satiated", CLR_RED },
+    { "Hungry", CLR_RED },
+    { "Weak", CLR_ORANGE },
+    { "Fainting", CLR_BRIGHT_MAGENTA },
+    { "Fainted", CLR_BRIGHT_MAGENTA },
+    { "Starved", CLR_BRIGHT_MAGENTA },
+    /* misc */
+    { "Unarmed", CLR_MAGENTA },
+    { "Lev", CLR_BROWN },
+    { "Fly", CLR_GREEN },
+    /* trapped */
+    { "Held", CLR_RED },
+    { "Pit", CLR_RED },
+    { "Bear", CLR_RED },
+    { "Web", CLR_RED },
+    { "Infloor", CLR_RED },
+    { "Lava", CLR_BRIGHT_MAGENTA },
+    /* misc bad */
+    { "Greasy", CLR_BRIGHT_BLUE },
+    { "Blind", CLR_BRIGHT_BLUE },
+    { "Conf", CLR_BRIGHT_BLUE },
+    { "Lame", CLR_BRIGHT_BLUE },
+    { "Stun", CLR_BRIGHT_BLUE },
+    { "Hallu", CLR_BRIGHT_BLUE },
+    /* misc fatal */
+    { "FoodPois", CLR_BRIGHT_MAGENTA },
+    { "Ill", CLR_BRIGHT_MAGENTA },
+    { "Strangle", CLR_BRIGHT_MAGENTA },
+    { "Slime", CLR_BRIGHT_MAGENTA },
+    { "Petrify", CLR_BRIGHT_MAGENTA },
+    { NULL, 0 }
+};
+
 static void
 draw_status(struct nh_player_info *pi, nh_bool threeline)
 {
     char buf[COLNO];
-    int i, j;
+    int i, j, k;
 
     /* penultimate line */
     wmove(statuswin, (threeline ? 1 : 0), 0);
@@ -99,9 +143,19 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
     /* status */
     j = getmaxx(statuswin) + 1;
     for (i = 0; i < pi->nr_items; i++) {
+        int color = CLR_WHITE, colorattr;
         j -= strlen(pi->statusitems[i]) + 1;
+        for (k = 0; statuscolors[k].name; k++) {
+            if (!strcmp(pi->statusitems[i], statuscolors[k].name)) {
+                color = statuscolors[k].color;
+                break;
+            }
+        }
+        colorattr = curses_color_attr(color, 0);
         wmove(statuswin, (threeline ? 2 : 1), j);
+        wattron(statuswin, colorattr);
         wprintw(statuswin, "%s", pi->statusitems[i]);
+        wattroff(statuswin, colorattr);
     }
 
     /* name */
