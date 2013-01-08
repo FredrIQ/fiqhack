@@ -1241,7 +1241,8 @@ arti_invoke(struct obj *obj)
     if (!oart || !oart->inv_prop) {
         if (obj->oclass == WAND_CLASS)
             return do_break_wand(obj);
-        else if (obj->oclass == GEM_CLASS || obj->oclass == TOOL_CLASS)
+        else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
+                 obj->otyp == BRASS_LANTERN)
             return dorub(obj);
         else if (obj->otyp == CRYSTAL_BALL)
             use_crystal_ball(obj);
