@@ -1695,13 +1695,7 @@ nh_get_object_commands(int *count, char invlet)
     }
 
     /* unequip armor */
-    if (obj->oclass == ARMOR_CLASS && (obj->owornmask & W_ARMOR))
-        SET_OBJ_CMD("takeoff", "Take %s off", 0);
-    else if (obj->oclass == RING_CLASS && (obj->owornmask & W_RING))
-        SET_OBJ_CMD("remove", "Take %s off", 0);
-    else if (obj->oclass == AMULET_CLASS && (obj->owornmask & W_AMUL))
-        SET_OBJ_CMD("remove", "Take %s off", 0);
-    else if (obj->oclass == TOOL_CLASS && (obj->owornmask & W_TOOL))
+    if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))
         SET_OBJ_CMD("remove", "Take %s off", 0);
 
     /* invoke */
