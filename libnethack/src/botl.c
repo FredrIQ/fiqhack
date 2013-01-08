@@ -23,6 +23,13 @@ static const char *const enc_stat[] = {
     "Overloaded"
 };
 
+static const char *const trap_stat[] = {
+    "Beartrap",
+    "Pit",
+    "Web",
+    "Lava",
+    "Infloor",
+};
 
 
 static int mrank_sz = 0;        /* loaded by max_rank_sz (from u_init) */
@@ -285,7 +292,8 @@ make_player_info(struct nh_player_info *pi)
     if (unweapon)       /* 10 */
         strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
     if (u.utrap)        /* 11 */
-        strncpy(pi->statusitems[pi->nr_items++], "Trap", ITEMLEN);
+        strncpy(pi->statusitems[pi->nr_items++], trap_stat[u.utraptype],
+                ITEMLEN);
 
     api_exit();
 }
