@@ -44,12 +44,8 @@ throw_obj(struct obj *obj, int shotlimit)
     schar dx, dy, dz;
 
     /* ask "in what direction?" */
-    if (!getdir(NULL, &dx, &dy, &dz)) {
-        /* obj might need to be merged back into the singular gold object */
-        freeinv(obj);
-        addinv(obj);
+    if (!getdir(NULL, &dx, &dy, &dz))
         return 0;
-    }
 
     /* 
        Throwing money is usually for getting rid of it when a leprechaun
