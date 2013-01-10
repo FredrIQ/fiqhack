@@ -1850,11 +1850,9 @@ use_misc(struct monst *mtmp, struct musable *m)
             register struct obj *obj;
 
             for (obj = mtmp->minvent; obj; obj = obj->nobj) {
-#ifdef GOLDOBJ
                 /* gold isn't subject to cursing and blessing */
                 if (obj->oclass == COIN_CLASS)
                     continue;
-#endif
                 if (otmp->blessed || otmp->owornmask || obj->otyp == LOADSTONE) {
                     if (mtmp->mconf)
                         blessorcurse(obj, 2);

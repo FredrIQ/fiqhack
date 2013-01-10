@@ -774,10 +774,8 @@ mspell_would_be_useless(struct monst *mtmp, struct monst *mdef,
         if ((!mtmp->iswiz || flags.no_of_wizards > 1)
             && spellnum == MGC_CLONE_WIZ)
             return TRUE;
-#ifndef TAME_SUMMONING
         if (spellnum == MGC_SUMMON_MONS)
             return TRUE;
-#endif
     } else if (adtyp == AD_CLRC) {
         /* healing when already healed */
         if (mtmp->mhp == mtmp->mhpmax && spellnum == CLC_CURE_SELF)
