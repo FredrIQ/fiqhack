@@ -1512,17 +1512,6 @@ rnd_offensive_item(struct monst *mtmp)
      /*NOTREACHED*/ return 0;
 }
 
-#define MUSE_POT_GAIN_LEVEL 1
-#define MUSE_WAN_MAKE_INVISIBLE 2
-#define MUSE_POT_INVISIBILITY 3
-#define MUSE_POLY_TRAP 4
-#define MUSE_WAN_POLYMORPH 5
-#define MUSE_POT_SPEED 6
-#define MUSE_WAN_SPEED_MONSTER 7
-#define MUSE_BULLWHIP 8
-#define MUSE_POT_POLYMORPH 9
-#define MUSE_SCR_REMOVE_CURSE 10
-
 boolean
 find_misc(struct monst * mtmp, struct musable * m)
 {
