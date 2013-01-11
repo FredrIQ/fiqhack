@@ -342,8 +342,8 @@ unmap_object(int x, int y)
 void
 map_location(int x, int y, int show)
 {
-    register struct obj *obj;
-    register struct trap *trap;
+    struct obj *obj;
+    struct trap *trap;
 
     if (level->flags.hero_memory) {
         if ((obj = vobj_at(x, y)) && !covers_objects(level, x, y))

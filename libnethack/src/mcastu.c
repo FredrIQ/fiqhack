@@ -1207,7 +1207,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
     case MGC_SUMMON_MONS:
         {
             int count = 0;
-            register struct monst *mpet;
+            struct monst *mpet;
 
             if (!rn2(10) && Inhell) {
                 if (yours)
@@ -1215,7 +1215,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                 else
                     msummon(mattk);
             } else {
-                register int i, j;
+                int i, j;
                 int makeindex, tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1;
                 coord bypos;
 
@@ -1306,7 +1306,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             if (yours || canseemon(mtmp))
                 pline("A field of force surrounds %s!", mon_nam(mtmp));
         } else {
-            register struct obj *otmp = some_armor(mtmp);
+            struct obj *otmp = some_armor(mtmp);
 
 #define oresist_disintegration(obj) \
             (objects[obj->otyp].oc_oprop == DISINT_RES || \

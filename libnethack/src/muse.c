@@ -1616,7 +1616,7 @@ find_misc(struct monst * mtmp, struct musable * m)
         }
         nomore(MUSE_SCR_REMOVE_CURSE);
         if (obj->otyp == SCR_REMOVE_CURSE) {
-            register struct obj *otmp;
+            struct obj *otmp;
 
             for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
                 if (otmp->cursed &&
@@ -1847,7 +1847,7 @@ use_misc(struct monst *mtmp, struct musable *m)
                 docall(otmp);
         }
         {
-            register struct obj *obj;
+            struct obj *obj;
 
             for (obj = mtmp->minvent; obj; obj = obj->nobj) {
                 /* gold isn't subject to cursing and blessing */
