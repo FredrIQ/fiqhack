@@ -9,14 +9,12 @@
 #include "eshk.h"
 #include "vault.h"
 #include "epri.h"
-#include "color.h"      /* for HI_ULINE */
+#include "color.h"
 
 #define NO_ATTK {0,0,0,0}
 
 #define WT_ELF     800
 #define WT_DRAGON 4500
-
-#include "color.h"
 
 #define HI_LORD         CLR_MAGENTA
 #define HI_QUEST        CLR_BRIGHT_MAGENTA      /* quest leaders and nemeses */
@@ -25,8 +23,6 @@
 #define HI_DOMESTIC2    CLR_WHITE       /* medium friendlies */
 #define HI_DOMESTIC3    CLR_WHITE|HI_ULINE      /* strong friendlies */
 #define HI_DOMESTIC     HI_DOMESTIC2    /* use for player */
-
-void monst_init(void);
 
 /*
  * Entry Format:           (from permonst.h)
