@@ -190,7 +190,7 @@ static json_t *
 cmd_update_status(json_t * params, int display_only)
 {
     static struct nh_player_info player;
-    int i, count;
+    int i;
     json_t *p;
 
     if ((p = json_object_get(params, "plname")))

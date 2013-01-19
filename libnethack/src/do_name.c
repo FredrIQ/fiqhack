@@ -331,7 +331,6 @@ int
 do_naming(void)
 {
     int n, selected[1];
-    struct obj *obj;
     char classes[20], *s;
     struct menulist menu;
 
