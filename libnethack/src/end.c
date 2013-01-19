@@ -42,7 +42,7 @@ static void savelife(int);
 static boolean check_survival(int how, char *kilbuf);
 static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *, boolean, boolean);
-__attribute__((noreturn)) static void done_noreturn(int how);
+static void NORETURN done_noreturn(int how);
 
 #define done_stopprint program_state.stopprint
 
@@ -872,8 +872,7 @@ done(int how)
 }
 
 /* Be careful not to call panic from here! */
-__attribute__((noreturn))
-static void
+static void NORETURN
 done_noreturn(int how)
 {
     int fd;
