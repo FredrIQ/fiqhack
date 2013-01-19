@@ -108,7 +108,7 @@ static const char *usage_info[] = {
 static noreturn void
 usage(char *argv0, char mode, int expected)
 {
-    int i;
+    size_t i;
 
     if (expected)
         fprintf(stderr,

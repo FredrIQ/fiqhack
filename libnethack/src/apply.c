@@ -1519,7 +1519,7 @@ use_unicorn_horn(struct obj *obj)
 
         switch (rn2(6)) {
         case 0:
-            make_sick(Sick ? Sick / 3L + 1L : (long)rn1(ACURR(A_CON), 20),
+            make_sick(Sick ? Sick / 3L + 1L : (unsigned long)rn1(ACURR(A_CON), 20),
                       xname(obj), TRUE, SICK_NONVOMITABLE);
             break;
         case 1:
@@ -1557,7 +1557,7 @@ use_unicorn_horn(struct obj *obj)
     /* collect property troubles */
     if (Sick)
         prop_trouble(SICK);
-    if (Blinded > (long)u.ucreamed)
+    if (Blinded > (unsigned long)u.ucreamed)
         prop_trouble(BLINDED);
     if (HHallucination)
         prop_trouble(HALLUC);
@@ -1681,7 +1681,11 @@ fig_transform(void *arg, long timeout)
     if (!figurine)
         return;
 
-    silent = (timeout != moves);        /* happened while away */
+    if (timeout < 0)
+        silent = TRUE;
+    else
+        silent = ((unsigned long)timeout != moves);        /* happened while away */
+
     okay_spot = get_obj_location(figurine, &cc.x, &cc.y, 0);
     if (figurine->where == OBJ_INVENT || figurine->where == OBJ_MINVENT)
         okay_spot = enexto(&cc, level, cc.x, cc.y, &mons[figurine->corpsenm]);

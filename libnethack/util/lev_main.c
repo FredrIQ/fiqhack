@@ -32,11 +32,13 @@
 # define OMASK 0644
 #endif
 
+#include <inttypes.h>
+
 #define ERR                   (-1)
 
 #define NewTab(type, size)    malloc(sizeof(type *) * size)
 #define Free(ptr)             if (ptr) free((ptr))
-#define Write(fd, item, size) if (write(fd, (item), size) != size) return FALSE;
+#define Write(fd, item, size) if (write(fd, (item), size) != (intmax_t) size) return FALSE;
 
 #define MAX_ERRORS            25
 

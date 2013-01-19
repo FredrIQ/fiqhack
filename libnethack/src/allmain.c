@@ -18,7 +18,7 @@ static const char *const copyright_banner[] =
     { COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL };
 
 static void wd_message(void);
-static void pre_move_tasks(boolean didmove);
+static void pre_move_tasks();
 
 static void newgame(void);
 static void welcome(boolean);
@@ -233,7 +233,7 @@ post_init_tasks(void)
     u.uz0.dlevel = u.uz.dlevel;
 
     /* prepare for the first move */
-    pre_move_tasks(FALSE);
+    pre_move_tasks();
 }
 
 
@@ -722,7 +722,7 @@ special_vision_handling(void)
 
 
 static void
-pre_move_tasks(boolean didmove)
+pre_move_tasks()
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
@@ -816,7 +816,7 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 
     /* prepare for the next move */
     flags.move = 1;
-    pre_move_tasks(didmove);
+    pre_move_tasks();
     if (multi == 0 && !occupation)
         flush_screen(); /* Flush screen buffer */
 
@@ -830,8 +830,8 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 int
 nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
 {
-    int cmdidx, cmdresult, pre_moves;
-    unsigned int pre_rngstate;
+    int cmdidx, cmdresult;
+    unsigned int pre_rngstate, pre_moves;
 
     if (!program_state.game_running)
         return ERR_GAME_NOT_RUNNING;

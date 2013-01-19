@@ -140,7 +140,7 @@ typedef struct {
 
 typedef struct {
     char halign, valign;
-    char xsize, ysize;
+    signed char xsize, ysize;
     char **map;
     char nrobjects;
     char *robjects;
