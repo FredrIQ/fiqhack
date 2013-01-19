@@ -695,7 +695,7 @@ nhnet_get_options(enum nh_option_list list)
     if (!nhnet_active())
         return nh_get_options(list);
 
-    if (list >= 0 && list < OPTION_LIST_COUNT && option_lists[list])
+    if (list < OPTION_LIST_COUNT && option_lists[list])
         return option_lists[list];
 
     if (!api_entry()) {

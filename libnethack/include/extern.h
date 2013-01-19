@@ -464,7 +464,7 @@ extern void reset_food(void);
 /* ### end.c ### */
 
 extern void NORETURN terminate(void);
-extern void panic(const char *, ...);
+extern void NORETURN panic(const char *, ...);
 extern int done2(void);
 extern void done_in_by(struct monst *);
 extern void done(int);

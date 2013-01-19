@@ -42,6 +42,7 @@ static void savelife(int);
 static boolean check_survival(int how, char *kilbuf);
 static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *, boolean, boolean);
+__attribute__((noreturn)) static void done_noreturn(int how);
 
 #define done_stopprint program_state.stopprint
 
@@ -189,7 +190,7 @@ panic(const char *str, ...)
     paniclog("panic", buf);
 
     va_end(the_args);
-    done(PANICKED);
+    done_noreturn(PANICKED);
 }
 
 static boolean
@@ -859,10 +860,21 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney)
     free(menu.items);
 }
 
-
 /* Be careful not to call panic from here! */
 void
 done(int how)
+{
+
+    if (check_survival(how, killbuf))
+        return;
+
+    done_noreturn(how);
+}
+
+/* Be careful not to call panic from here! */
+__attribute__((noreturn))
+static void
+done_noreturn(int how)
 {
     int fd;
     boolean taken;
@@ -870,9 +882,6 @@ done(int how)
     boolean bones_ok;
     struct obj *corpse = NULL;
     long umoney;
-
-    if (check_survival(how, killbuf))
-        return;
 
     /* replays are done here: no dumping or high-score calculation required */
     if (program_state.viewing)

@@ -5,6 +5,8 @@
 #include "hack.h"
 /* #define DEBUG *//* uncomment for debugging */
 
+#include <stdbool.h>
+
 /*
  * Some systems may have getchar() return EOF for various reasons, and
  * we should not quit before seeing at least NR_OF_EOFS consecutive EOFs.
@@ -1515,18 +1517,19 @@ nh_get_commands(int *count)
 
 
 /* for better readability below */
+static void set_obj_cmd( struct nh_cmd_desc *obj_cmd, struct obj *obj, size_t i, const char *cname, const char *cdesc, bool singular ) {
+    int _o_c_idx = get_command_idx(cname);
+    char dbuf[80], nbuf[80];
+    strncpy(obj_cmd[i].name, cname, sizeof(obj_cmd[i].name));
+    snprintf(nbuf, 80, "%s %s", obj->quan > 1 ?
+                  (singular ? "one of these" : "these") : "this", cxname(obj));
+    snprintf(dbuf, 80, cdesc, nbuf);
+    strncpy(obj_cmd[i].desc, dbuf, sizeof(obj_cmd[i].desc));
+    obj_cmd[i].flags = cmdlist[_o_c_idx].flags;
+}
+
 #define SET_OBJ_CMD(cname, cdesc, singular) \
-do {\
-    int _o_c_idx = get_command_idx(cname);\
-    char dbuf[80], nbuf[80];\
-    strncpy(obj_cmd[i].name, cname, sizeof(obj_cmd[i].name));\
-    snprintf(nbuf, 80, "%s %s", obj->quan > 1 ? \
-                  (singular ? "one of these" : "these") : "this", cxname(obj));\
-    snprintf(dbuf, 80, cdesc, nbuf);\
-    strncpy(obj_cmd[i].desc, dbuf, sizeof(obj_cmd[i].desc));\
-    obj_cmd[i].flags = cmdlist[_o_c_idx].flags;\
-    i++;\
-} while (0)
+    set_obj_cmd(obj_cmd, obj, i++, cname, cdesc, singular)
 
 #define SET_OBJ_CMD2(cname, cdesc) \
 do {\
@@ -1758,6 +1761,7 @@ nh_get_object_commands(int *count, char invlet)
     if (obj->oclass != COIN_CLASS && obj->oclass != WEAPON_CLASS &&
         obj->oclass != ROCK_CLASS && obj->oclass != CHAIN_CLASS &&
         obj->oclass != BALL_CLASS && obj->oclass != VENOM_CLASS)
+        set_obj_cmd(obj_cmd, obj, i++, "name type", "Name all objects of this type", false);
         SET_OBJ_CMD("name type", "Name all objects of this type", 0);
 
     *count = i;
