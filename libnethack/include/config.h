@@ -14,10 +14,6 @@
 
 /* #define IS_BIG_ENDIAN */
 
-# ifndef WIZARD /* allow for compile-time or Makefile changes */
-#  define WIZARD  "daniel"      /* the person allowed to use the -D option */
-# endif
-
 # define PANICLOG "paniclog"    /* log of panic and impossible events */
 
 # include "global.h"    /* Define everything else according to choices above */

@@ -38,6 +38,9 @@ else ()
     set (LIB_TYPE STATIC)
 endif ()
 
+set (WIZARD "wizard" CACHE STRING "The person allowed to use the -D option")
+add_definitions (-DWIZARD="${WIZARD}")
+
 set (ENABLE_NETCLIENT TRUE CACHE BOOL "Enable network client mode")
 
 # NetHack4 server currently uses several Linux-specific apis.
