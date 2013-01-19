@@ -4,3 +4,9 @@ build/*
 *~
 .emacs.desktop
 .emacs.desktop.lock
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cscope.*
+cmake_install.cmake
+install_manifest.txt
