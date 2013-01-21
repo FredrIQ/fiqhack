@@ -4,10 +4,18 @@
 
 #include "hack.h"
 
-extern const char *const hu_stat[];     /* defined in eat.c */
+static const char *const hu_stat[] = {
+    "Satiated",
+    NULL,
+    "Hungry",
+    "Weak",
+    "Fainting",
+    "Fainted",
+    "Starved"
+};
 
-const char *const enc_stat[] = {
-    "",
+static const char *const enc_stat[] = {
+    NULL,
     "Burdened",
     "Stressed",
     "Strained",
@@ -15,6 +23,13 @@ const char *const enc_stat[] = {
     "Overloaded"
 };
 
+static const char *const trap_stat[] = {
+    "Beartrap",
+    "Pit",
+    "Web",
+    "Lava",
+    "Infloor",
+};
 
 
 static int mrank_sz = 0;        /* loaded by max_rank_sz (from u_init) */
@@ -248,9 +263,9 @@ make_player_info(struct nh_player_info *pi)
     }
     pi->can_enhance = advskills > 0;
 
-    /* add status items for various problems there can be at most 12 items here 
+    /* add status items for various problems there can be at most 24 items here 
        at any one time or we overflow the buffer */
-    if (strcmp(hu_stat[u.uhs], "        "))     /* 1 */
+    if (hu_stat[u.uhs]) /* 1 */
         strncpy(pi->statusitems[pi->nr_items++], hu_stat[u.uhs], ITEMLEN);
 
     if (Confusion)      /* 2 */
@@ -264,20 +279,33 @@ make_player_info(struct nh_player_info *pi)
     }
     if (Blind)  /* 4 */
         strncpy(pi->statusitems[pi->nr_items++], "Blind", ITEMLEN);
-    if (Stunned)        /* 5 */
+    if (Glib)   /* 5 */
+        strncpy(pi->statusitems[pi->nr_items++], "Greasy", ITEMLEN);
+    if (Wounded_legs)   /* 6 */
+        strncpy(pi->statusitems[pi->nr_items++], "Lame", ITEMLEN);
+    if (Stunned)        /* 7 */
         strncpy(pi->statusitems[pi->nr_items++], "Stun", ITEMLEN);
-    if (Hallucination)  /* 6 */
+    if (Hallucination)  /* 8 */
         strncpy(pi->statusitems[pi->nr_items++], "Hallu", ITEMLEN);
-    if (Slimed) /* 7 */
+    if (Strangled)      /* 9 */
+        strncpy(pi->statusitems[pi->nr_items++], "Strangle", ITEMLEN);
+    if (Slimed) /* 10 */
         strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
-    if (cap > UNENCUMBERED)     /* 8 */
+    if (Stoned) /* 11 */
+        strncpy(pi->statusitems[pi->nr_items++], "Petrify", ITEMLEN);
+    if (u.ustuck && !u.uswallow && !sticks(youmonst.data))  /* 12 */
+        strncpy(pi->statusitems[pi->nr_items++], "Held", ITEMLEN);
+    if (enc_stat[cap])  /* 13 */
         strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);
-    if (Levitation)     /* 9 */
+    if (Levitation)     /* 14 */
         strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
-    if (unweapon)       /* 10 */
+    else if (Flying)
+        strncpy(pi->statusitems[pi->nr_items++], "Fly", ITEMLEN);
+    if (unweapon)       /* 15 */
         strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
-    if (u.utrap)        /* 11 */
-        strncpy(pi->statusitems[pi->nr_items++], "Trap", ITEMLEN);
+    if (u.utrap)        /* 16 */
+        strncpy(pi->statusitems[pi->nr_items++], trap_stat[u.utraptype],
+                ITEMLEN);
 
     api_exit();
 }

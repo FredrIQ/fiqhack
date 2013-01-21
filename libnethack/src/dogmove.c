@@ -133,7 +133,7 @@ could_use_item(struct monst *mtmp, struct obj *otmp)
             return FALSE;       /* used charges or was cancelled? */
         else {
             /* Check if you've got one. If you don't, don't hoard it. */
-            register struct obj *otmp2;
+            struct obj *otmp2;
 
             for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)
                 if (otmp->otyp == otmp2->otyp)
@@ -364,7 +364,7 @@ dog_hunger(struct monst *mtmp, struct edog *edog)
     if (moves > edog->hungrytime) {
         /* We're hungry; check if we're carrying anything we can eat
            Intelligent pets should be able to carry such food */
-        register struct obj *otmp, *obest = (struct obj *)0;
+        struct obj *otmp, *obest = NULL;
         int cur_nutrit = -1, best_nutrit = -1;
         int cur_food = APPORT, best_food = APPORT;
 

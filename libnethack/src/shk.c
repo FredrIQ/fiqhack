@@ -129,7 +129,7 @@ money2u(struct monst *mon, long amount)
         mongold = splitobj(mongold, amount);
     obj_extract_self(mongold);
 
-    if (!merge_choice(invent, mongold) && inv_cnt() >= 52) {
+    if (!can_hold(mongold)) {
         pline("You have no room for the money!");
         dropy(mongold);
     } else {

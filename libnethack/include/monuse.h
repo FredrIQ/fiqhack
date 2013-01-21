@@ -67,6 +67,7 @@ enum monuse {
     MUSE_WAN_SPEED_MONSTER,
     MUSE_BULLWHIP,
     MUSE_POT_POLYMORPH,
+    MUSE_SCR_REMOVE_CURSE,
 };
 
 

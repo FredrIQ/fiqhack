@@ -61,8 +61,6 @@ void do_questtxt(const char *, const char *);
 void do_rumors(const char *, const char *, const char *);
 void do_oracles(const char *, const char *);
 
-extern void objects_init(void); /* objects.c */
-
 static void make_version(void);
 static char *version_string(char *);
 static char *version_id_string(char *, const char *);
@@ -305,16 +303,7 @@ make_version(void)
      * The actual values have no special meaning, and the category
      * groupings are just for convenience.
      */
-    version.feature_set = (unsigned long)(0L
-                                          /* levels and/or topology (0..4) */
-                                          /* monsters (5..9) */
-#ifdef KOPS
-                                          | (1L << 6)
-#endif
-                                          /* objects (10..14) */
-                                          /* flag bits and/or other global
-                                             variables (15..26) */
-        );
+    version.feature_set = (unsigned long)(0L);
     /* 
      * Value used for object & monster sanity check.
      *    (NROFARTIFACTS<<24) | (NUM_OBJECTS<<12) | (NUMMONS<<0)
@@ -372,7 +361,7 @@ do_date(const char *outfile, int printdates)
     fprintf(ofp, "%s", Dont_Edit_Code);
 
     time(&clocktim);
-    strcpy(cbuf, ctime((time_t *) & clocktim));
+    strcpy(cbuf, ctime(&clocktim));
     for (c = cbuf; *c; c++)
         if (*c == '\n')
             break;
@@ -385,10 +374,6 @@ do_date(const char *outfile, int printdates)
 
     fprintf(ofp, "#define VERSION_NUMBER 0x%08xU\n", version.incarnation);
     fprintf(ofp, "#define VERSION_FEATURES 0x%08xU\n", version.feature_set);
-#ifdef IGNORED_FEATURES
-    fprintf(ofp, "#define IGNORED_FEATURES 0x%08xU\n",
-            (unsigned int)IGNORED_FEATURES);
-#endif
     fprintf(ofp, "#define VERSION_SANITY1 0x%08xU\n", version.entity_count);
     fprintf(ofp, "\n");
     fprintf(ofp, "#define VERSION_STRING \"%s\"\n", version_string(buf));

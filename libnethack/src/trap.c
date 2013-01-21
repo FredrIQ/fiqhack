@@ -2829,7 +2829,7 @@ water_damage(struct obj * obj, boolean force, boolean here)
 static boolean
 emergency_disrobe(boolean * lostsome)
 {
-    int invc = inv_cnt();
+    int invc = inv_cnt(FALSE);
 
     while (near_capacity() > (Punished ? UNENCUMBERED : SLT_ENCUMBER)) {
         struct obj *obj, *otmp = NULL;
@@ -3272,6 +3272,7 @@ disarm_holdingtrap(struct trap *ttmp, schar dx, schar dy)
             deltrap(level, ttmp);
         }
     }
+    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
     newsym(u.ux + dx, u.uy + dy);
     return 1;
 }
@@ -3284,6 +3285,7 @@ disarm_landmine(struct trap *ttmp, schar dx, schar dy)
     if (fails < 2)
         return fails;
     pline("You disarm %s land mine.", the_your[ttmp->madeby_u]);
+    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
     cnv_trap_obj(level, LAND_MINE, 1, ttmp);
     return 1;
 }
@@ -3319,6 +3321,7 @@ disarm_squeaky_board(struct trap *ttmp, schar dx, schar dy)
         makeknown(POT_OIL);
     }
     pline("You repair the squeaky board.");     /* no madeby_u */
+    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
     deltrap(level, ttmp);
     newsym(u.ux + dx, u.uy + dy);
     more_experienced(1, 5);
@@ -3335,6 +3338,7 @@ disarm_shooting_trap(struct trap *ttmp, int otyp, schar dx, schar dy)
     if (fails < 2)
         return fails;
     pline("You disarm %s trap.", the_your[ttmp->madeby_u]);
+    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
     cnv_trap_obj(level, otyp, 50 - rnl(50), ttmp);
     return 1;
 }

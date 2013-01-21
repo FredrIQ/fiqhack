@@ -1514,17 +1514,6 @@ rnd_offensive_item(struct monst *mtmp)
      /*NOTREACHED*/ return 0;
 }
 
-#define MUSE_POT_GAIN_LEVEL 1
-#define MUSE_WAN_MAKE_INVISIBLE 2
-#define MUSE_POT_INVISIBILITY 3
-#define MUSE_POLY_TRAP 4
-#define MUSE_WAN_POLYMORPH 5
-#define MUSE_POT_SPEED 6
-#define MUSE_WAN_SPEED_MONSTER 7
-#define MUSE_BULLWHIP 8
-#define MUSE_POT_POLYMORPH 9
-#define MUSE_SCR_REMOVE_CURSE 10
-
 boolean
 find_misc(struct monst * mtmp, struct musable * m)
 {
@@ -1629,7 +1618,7 @@ find_misc(struct monst * mtmp, struct musable * m)
         }
         nomore(MUSE_SCR_REMOVE_CURSE);
         if (obj->otyp == SCR_REMOVE_CURSE) {
-            register struct obj *otmp;
+            struct obj *otmp;
 
             for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
                 if (otmp->cursed &&
@@ -1864,14 +1853,12 @@ use_misc(struct monst *mtmp, struct musable *m)
                 docall(otmp);
         }
         {
-            register struct obj *obj;
+            struct obj *obj;
 
             for (obj = mtmp->minvent; obj; obj = obj->nobj) {
-#ifdef GOLDOBJ
                 /* gold isn't subject to cursing and blessing */
                 if (obj->oclass == COIN_CLASS)
                     continue;
-#endif
                 if (otmp->blessed || otmp->owornmask || obj->otyp == LOADSTONE) {
                     if (mtmp->mconf)
                         blessorcurse(obj, 2);

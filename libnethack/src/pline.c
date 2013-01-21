@@ -185,6 +185,8 @@ impossible(const char *s, ...)
         vsprintf(pbuf, s, the_args);
         paniclog("impossible", pbuf);
     }
+    va_end(the_args);
+    va_start(the_args, s);
     vpline(s, the_args);
     pline("Program in disorder - perhaps you'd better save.");
     program_state.in_impossible = 0;

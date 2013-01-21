@@ -920,7 +920,7 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
                           &new_wt);
     if (*cnt_p < 1L) {
         result = -1;    /* nothing lifted */
-    } else if (inv_cnt() >= 52 && !merge_choice(invent, obj)) {
+    } else if (!can_hold(obj)) {
         pline("Your knapsack cannot accommodate any more items.");
         result = -1;    /* nothing lifted */
     } else {

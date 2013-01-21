@@ -26,8 +26,6 @@ int yywrap(void);
 void init_yyin(FILE *);
 void init_yyout(FILE *);
 
-#define Fprintf fprintf
-
 int
 main(int argc, char **argv)
 {
@@ -60,7 +58,7 @@ main(int argc, char **argv)
             /* the input file had better be a .pdf file */
             len = strlen(fname) - 4;    /* length excluding suffix */
             if (len < 0 || strncmp(".pdf", fname + len, 4)) {
-                Fprintf(stderr, "Error - file name \"%s\" in wrong format.\n",
+                fprintf(stderr, "Error - file name \"%s\" in wrong format.\n",
                         fname);
                 errors_encountered = TRUE;
                 continue;
@@ -77,14 +75,14 @@ main(int argc, char **argv)
 
             fin = freopen(infile, "r", stdin);
             if (!fin) {
-                Fprintf(stderr, "Can't open %s for input.\n", infile);
+                fprintf(stderr, "Can't open %s for input.\n", infile);
                 perror(infile);
                 errors_encountered = TRUE;
                 continue;
             }
             fout = freopen(outfile, WRBMODE, stdout);
             if (!fout) {
-                Fprintf(stderr, "Can't open %s for output.\n", outfile);
+                fprintf(stderr, "Can't open %s for output.\n", outfile);
                 perror(outfile);
                 errors_encountered = TRUE;
                 continue;
@@ -100,7 +98,7 @@ main(int argc, char **argv)
         }
     }
     if (fout && fclose(fout) < 0) {
-        Fprintf(stderr, "Can't finish output file.");
+        fprintf(stderr, "Can't finish output file.");
         perror(outfile);
         errors_encountered = TRUE;
     }

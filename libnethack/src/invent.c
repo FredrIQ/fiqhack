@@ -348,6 +348,18 @@ carry_obj_effects(struct obj *obj)
 }
 
 
+boolean
+can_hold(struct obj *obj)
+{
+    if (obj->oclass == COIN_CLASS)
+        return TRUE;
+    if (merge_choice(invent, obj))
+        return TRUE;
+    if (inv_cnt(TRUE) < 52)
+        return TRUE;
+    return FALSE;
+}
+
 /* Add an item to the inventory unless we're fumbling or it refuses to be
  * held (via touch_artifact), and give a message.
  * If there aren't any free inventory slots, we'll drop it instead.
@@ -408,7 +420,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
             drop_arg = strcpy(buf, drop_arg);
 
         obj = addinv(obj);
-        if (inv_cnt() > 52 || ((obj->otyp != LOADSTONE || !obj->cursed)
+        if (obj->invlet == NOINVSYM || ((obj->otyp != LOADSTONE || !obj->cursed)
                                && near_capacity() > prev_encumbr)) {
             if (drop_fmt)
                 pline(drop_fmt, drop_arg);
@@ -662,7 +674,7 @@ gold_at(struct level *lev, int x, int y)
 static void
 compactify(char *buf)
 {
-    int i1 = 1, i2 = 1;
+    int i1 = 0, i2 = 0;
     char ilet, ilet1, ilet2;
 
     ilet2 = buf[0];
@@ -2249,6 +2261,14 @@ free_invbuf(void)
 }
 
 
+/* all but coins */
+static const char organizable[] = {
+    ALLOW_COUNT, SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS,
+    AMULET_CLASS, GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS,
+    WEAPON_CLASS, ROCK_CLASS, CHAIN_CLASS, BALL_CLASS, VENOM_CLASS,
+    FOOD_CLASS, 0
+};
+
 int
 doorganize(void)
 {       /* inventory organizer by Del Lamb */
@@ -2257,11 +2277,10 @@ doorganize(void)
     char let;
     char alphabet[52 + 1], buf[52 + 1];
     char qbuf[QBUFSZ];
-    char allowallcnt[3] = { ALLOW_COUNT, ALL_CLASSES, 0 };
     const char *adj_type;
 
     /* get a pointer to the object the user wants to organize */
-    if (!(obj = getobj(allowallcnt, "adjust")))
+    if (!(obj = getobj(organizable, "adjust")))
         return 0;
 
     /* initialize the list with all upper and lower case letters */

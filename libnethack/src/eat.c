@@ -64,17 +64,6 @@ static unsigned newuhs_save_hs;
 static boolean newuhs_saved_hs = FALSE;
 
 
-const char *const hu_stat[] = {
-    "Satiated",
-    "        ",
-    "Hungry  ",
-    "Weak    ",
-    "Fainting",
-    "Fainted ",
-    "Starved "
-};
-
-
 /*
  * Decide whether a particular object can be eaten by the possibly
  * polymorphed character.  Not used for monster checks.
@@ -306,15 +295,15 @@ touchfood(struct obj *otmp)
 
     if (carried(otmp)) {
         freeinv(otmp);
-        if (inv_cnt() >= 52) {
+        otmp->oxlth++;      /* hack to prevent merge */
+        if (!can_hold(otmp)) {
             sellobj_state(SELL_DONTSELL);
             dropy(otmp);
             sellobj_state(SELL_NORMAL);
         } else {
-            otmp->oxlth++;      /* hack to prevent merge */
             otmp = addinv(otmp);
-            otmp->oxlth--;
         }
+        otmp->oxlth--;
     }
     return otmp;
 }
@@ -1656,7 +1645,8 @@ edibility_prompts(struct obj *otmp)
 
     strcpy(foodsmell, Tobjnam(otmp, "smell"));
     strcpy(it_or_they, (otmp->quan == 1L) ? "it" : "they");
-    sprintf(eat_it_anyway, "Eat %s anyway?", (otmp->quan == 1L) ? "it" : "one");
+    sprintf(eat_it_anyway, "Eat %s anyway?",
+            (otmp->quan == 1L || otmp->oclass == COIN_CLASS) ? "it" : "one");
 
     /* edibility's needed to ID the contents of eggs and tins */
     if (cadaver || (otmp->otyp == EGG && u.uedibility) ||

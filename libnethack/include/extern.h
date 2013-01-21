@@ -261,6 +261,8 @@ extern void heal_legs(void);
 /* ### do_name.c ### */
 
 extern struct monst *christen_monst(struct monst *, const char *);
+extern int do_oname(struct obj *);
+extern int do_tname(struct obj *);
 extern int do_mname(void);
 extern struct obj *oname(struct obj *, const char *);
 extern int do_naming(void);
@@ -571,7 +573,7 @@ extern int near_capacity(void);
 extern int calc_capacity(int);
 extern int max_capacity(void);
 extern boolean check_capacity(const char *);
-extern int inv_cnt(void);
+extern int inv_cnt(boolean);
 extern long money_cnt(struct obj *);
 extern int domovecmd(int, int, int);
 extern int domovecmd_nopickup(int, int, int);
@@ -634,6 +636,7 @@ extern int merged(struct obj **, struct obj **);
 extern void addinv_core1(struct obj *);
 extern void addinv_core2(struct obj *);
 extern struct obj *addinv(struct obj *);
+extern boolean can_hold(struct obj *);
 extern struct obj *hold_another_object(struct obj *, const char *, const char *,
                                        const char *);
 extern void useupall(struct obj *);
