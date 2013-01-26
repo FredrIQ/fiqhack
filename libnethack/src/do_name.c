@@ -352,7 +352,7 @@ do_naming(void)
     n = display_menu(menu.items, menu.icount, "What do you wish to name?",
                      PICK_ONE, PLHINT_ANYWHERE, selected);
     free(menu.items);
-    if (n)
+    if (n > 0)
         n = selected[0] - 1;
     else
         return 0;
