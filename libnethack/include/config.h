@@ -6,6 +6,13 @@
                            twice */
 # define CONFIG_H
 
+/* The WIZARD option is now set via the build system. */
+# ifndef WIZARD
+#  ifdef AIMAKE_OPTION_WIZARD
+#   define WIZARD AIMAKE_OPTION_WIZARD
+#  endif
+# endif
+
 /* swap byte order while reading and writing saves and bones files. This should
  * enable portability between architectures.
  * If you do not intend to import or export saves or bones files, this option
