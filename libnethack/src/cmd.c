@@ -1076,7 +1076,7 @@ enlightenment(int final)
 }
 
 unsigned long
-encode_conduct()
+encode_conduct(void)
 {
     unsigned long c = 0UL;
 

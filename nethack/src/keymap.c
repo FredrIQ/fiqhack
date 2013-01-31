@@ -511,10 +511,10 @@ read_keymap(void)
     if (!get_gamedir(CONFIG_DIR, filename))
         return FALSE;
     if (ui_flags.connection_only) {
-        fnncat(filename, ui_flags.username, BUFSZ);
-        fnncat(filename, FN(".keymap"), BUFSZ);
+        fnncat(filename, ui_flags.username, BUFSZ-1);
+        fnncat(filename, FN(".keymap"), BUFSZ-1);
     } else
-        fnncat(filename, FN("keymap.conf"), BUFSZ);
+        fnncat(filename, FN("keymap.conf"), BUFSZ-1);
 
     fd = sys_open(filename, O_RDONLY, 0);
     if (fd == -1)
@@ -625,10 +625,10 @@ write_keymap(void)
     if (!get_gamedir(CONFIG_DIR, filename))
         return;
     if (ui_flags.connection_only) {
-        fnncat(filename, ui_flags.username, BUFSZ);
-        fnncat(filename, FN(".keymap"), BUFSZ);
+        fnncat(filename, ui_flags.username, BUFSZ-1);
+        fnncat(filename, FN(".keymap"), BUFSZ-1);
     } else
-        fnncat(filename, FN("keymap.conf"), BUFSZ);
+        fnncat(filename, FN("keymap.conf"), BUFSZ-1);
 
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)

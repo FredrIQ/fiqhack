@@ -190,7 +190,10 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     char *matching = NULL;
     enum nh_direction dir;
     struct coord *monpos = NULL;
-    int moncount, monidx;
+    /* Actually, the initial valus for moncount and monidx are irrelevant
+       because they're never used while monpos == NULL. But a typical compiler
+       can't figure that out, because the control flow is too complex. */
+    int moncount = 0, monidx = 0;
     int firstmove = 1;
 
     werase(statuswin);

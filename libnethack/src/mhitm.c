@@ -279,6 +279,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                     res[i] = MM_DEF_DIED;
                 if (magr->mhp < 1)
                     res[i] = MM_AGR_DIED;
+                strike = 0;
                 break;
             }
             if (magr->weapon_check == NEED_WEAPON || !MON_WEP(magr)) {
@@ -304,6 +305,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         case AT_TENT:
             /* Nymph that teleported away on first attack? */
             if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
+                strike = 0;
                 break;  /* might have more ranged attacks */
             }
             /* Monsters won't attack cockatrices physically if they have a
@@ -378,8 +380,10 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_EXPL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1)
+            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1) {
+                strike = 0;
                 break;
+            }
             res[i] = explmm(magr, mdef, mattk);
             if (res[i] == MM_MISS) {    /* cancelled--no attack */
                 strike = 0;
@@ -389,9 +393,8 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_ENGL:
-            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1)
-                break;
-            if (u.usteed && (mdef == u.usteed)) {
+            if (distmin(magr->mx, magr->my, mdef->mx, mdef->my) > 1 ||
+                (u.usteed && (mdef == u.usteed))) {
                 strike = 0;
                 break;
             }
@@ -407,8 +410,10 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_MAGC:
-            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2)
+            if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
+                strike = 0;
                 break;
+            }
 
             res[i] = castmm(magr, mdef, mattk);
             if (res[i] & MM_DEF_DIED)

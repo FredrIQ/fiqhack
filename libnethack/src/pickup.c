@@ -915,9 +915,10 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
     if (obj->otyp == LOADSTONE)
         return 1;       /* lift regardless of current situation */
 
-    *cnt_p = (obj->otyp == BOULDER && throws_rocks(youmonst.data))
-        ? 1 : carry_count(obj, container, *cnt_p, telekinesis, &old_wt,
-                          &new_wt);
+    *cnt_p = carry_count(obj, container, *cnt_p, telekinesis, &old_wt,
+                         &new_wt);
+    if (obj->otyp == BOULDER && throws_rocks(youmonst.data)) *cnt_p = 1;
+
     if (*cnt_p < 1L) {
         result = -1;    /* nothing lifted */
     } else if (!can_hold(obj)) {

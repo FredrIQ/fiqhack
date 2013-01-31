@@ -217,7 +217,7 @@ expels(struct monst *mtmp,
             for (i = 0; i < NATTK; i++)
                 if (mdat->mattk[i].aatyp == AT_ENGL)
                     break;
-            if (mdat->mattk[i].aatyp != AT_ENGL)
+            if (i >= NATTK || mdat->mattk[i].aatyp != AT_ENGL)
                 impossible("Swallower has no engulfing attack?");
             else {
                 if (is_whirly(mdat)) {
@@ -1653,8 +1653,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 *hpmax_p -= permdmg;
             else if (*hpmax_p > lowerlimit)
                 *hpmax_p = lowerlimit;
-            else        /* unlikely... */
-                ;       /* already at or below minimum threshold; do nothing */
+            /* else already at or below minimum threshold; do nothing */
             iflags.botl = 1;
         }
 

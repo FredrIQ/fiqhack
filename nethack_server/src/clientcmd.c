@@ -755,6 +755,11 @@ json_option(const struct nh_option_desc *option)
             json_array_append_new(joptval, jobj);
         }
         break;
+
+    default:
+        joptdesc = json_string("<error: no description for option>");
+        joptval = json_string("<error>");
+        break;
     }
 
     jopt =

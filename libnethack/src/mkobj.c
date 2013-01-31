@@ -1606,8 +1606,13 @@ save_obj(struct memfile *mf, struct obj *obj)
 
     if (obj->oattached == OATTACHED_MONST)
         save_mon(mf, (struct monst *)obj->oextra);
-    else if (obj->oattached == OATTACHED_M_ID)
-        mwrite32(mf, *(unsigned int *)obj->oextra);
+    else if (obj->oattached == OATTACHED_M_ID) {
+        unsigned m_id;
+
+        memcpy(&m_id, obj->oextra, sizeof m_id);
+
+        mwrite32(mf, m_id);
+    }
 }
 
 /*mkobj.c*/

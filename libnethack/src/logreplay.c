@@ -1324,11 +1324,11 @@ nh_view_replay_start(int fd, struct nh_window_procs * rwinprocs,
 
 boolean
 nh_view_replay_step(struct nh_replay_info * info, enum replay_control action,
-                    int count)
+                    volatile int count)
 {
-    boolean did_action;
+    boolean did_action = FALSE;
     int i, prev_actions, target;
-    int moves_this_step = true_moves();
+    volatile int moves_this_step = true_moves();
 
     if (!program_state.viewing) {
         info->actions++;
@@ -1451,7 +1451,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
     int n, v1, v2, v3;
     unsigned int savepos, endpos, seed, playmode;
     struct memfile mf;
-    enum nh_log_status ret;
+    volatile enum nh_log_status ret;
     boolean game_inited = (wiz1_level.dlevel != 0);
     struct you sg_you;
     struct flag sg_flags;

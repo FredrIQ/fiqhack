@@ -1953,6 +1953,7 @@ for my $unbuilt (sort keys %failreasons) {
 }
 
 # Report messages to stderr.
+progress_report(7, "");
 for my $object (sort keys %{$state->{'stderrobjects'}}) {
   progress_report(7, obj_state($object)->{'stderrreason'});
 }
