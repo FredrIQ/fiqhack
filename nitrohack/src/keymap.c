@@ -352,7 +352,12 @@ set_next_command(const char *cmd, struct nh_cmd_arg *arg)
 enum nh_direction
 key_to_dir(int key)
 {
-    struct nh_cmd_desc *cmd = keymap[key];
+    struct nh_cmd_desc *cmd;
+
+    if (key <= 0)
+	return DIR_NONE;
+
+    cmd = keymap[key];
 
     if (!cmd || !(cmd->flags & DIRCMD))
         return DIR_NONE;
