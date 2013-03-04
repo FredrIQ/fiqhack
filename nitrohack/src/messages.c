@@ -145,6 +145,7 @@ void
 draw_msgwin(void)
 {
     int i, pos;
+    nh_bool drew_older = FALSE;
 
     werase(msgwin);
 
@@ -152,16 +153,24 @@ draw_msgwin(void)
         pos = curline - getmaxy(msgwin) + 1 + i;
         if (pos < 0)
             pos += MAX_MSGLINES;
-        if (pos == start_of_turn_curline)
-            wattron(msgwin, curses_color_attr(COLOR_BLACK, 0));
-
+	if (pos == start_of_turn_curline) {
+	    wattron(msgwin, curses_color_attr(COLOR_BLACK, 0));
+	    drew_older = TRUE;
+	}
         wmove(msgwin, i, 0);
         waddstr(msgwin, msglines[pos]);
         /* Only clear the remainder of the line if the cursor did not wrap. */
         if (getcurx(msgwin))
             wclrtoeol(msgwin);
     }
-    wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
+
+    if (drew_older) {
+	wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
+    } else {
+	/* Don't dim out messages if the message buffer wraps. */
+	start_of_turn_curline = -1;
+    }
+
     wnoutrefresh(msgwin);
 }
 
@@ -255,13 +264,6 @@ curses_print_message_core(int turn, const char *msg, nh_bool canblock)
 
     if (!msghistory)
         alloc_hist_array();
-
-    if (turn != prevturn)
-        /* If the current line is empty, we won't advance past it until
-         * something is written there, so go to the previous line in that
-         * case. */
-        start_of_turn_curline = last_redraw_curline =
-            strlen(msglines[curline]) ? curline : curline - 1;
 
     if (turn < prevturn)        /* going back in time can happen during replay */
         prune_messages(turn);
