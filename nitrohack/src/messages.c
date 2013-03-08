@@ -20,7 +20,7 @@ static struct message *msghistory;
 static int histsize, histpos;
 static char msglines[MAX_MSGLINES][COLNO + 1];
 static int curline;
-static int start_of_turn_curline;
+static int start_of_turn_curline = -1;
 static int last_redraw_curline;
 static nh_bool stopprint, blockafter = TRUE;
 static int prevturn, action, prevaction;
@@ -392,7 +392,8 @@ cleanup_messages(void)
 
     /* extra cleanup to prevent old messages from appearing in a new game */
     msghistory = NULL;
-    curline = last_redraw_curline = start_of_turn_curline = 0;
+    curline = last_redraw_curline = 0;
+    start_of_turn_curline = -1;
     histsize = histpos = 0;
     for (i = 0; i < MAX_MSGLINES; i++)
         msglines[i][0] = '\0';
