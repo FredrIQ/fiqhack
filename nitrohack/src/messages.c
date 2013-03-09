@@ -195,6 +195,8 @@ more(void)
     } else {
         newline();
         draw_msgwin();
+	wmove(msgwin, getmaxy(msgwin)-1, 0);
+	wclrtoeol(msgwin);
         wmove(msgwin, getmaxy(msgwin) - 1, COLNO / 2 - 4);
         wattron(msgwin, attr);
         waddstr(msgwin, "--More--");
@@ -212,8 +214,13 @@ more(void)
     } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESCAPE);
     wtimeout(msgwin, -1);
 
-    if (getmaxy(msgwin) == 1)
+    /* Clean up after the --More--. */
+    if (getmaxy(msgwin) == 1) {
         newline();
+    } else {
+	wmove(msgwin, getmaxy(msgwin)-1, 0);
+	wclrtoeol(msgwin);
+    }
     draw_msgwin();
 
     if (key == KEY_ESCAPE)
