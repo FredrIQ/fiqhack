@@ -1039,10 +1039,9 @@ enhance_weapon_skill(void)
                 add_menuitem(&menu, id, buf, 0, FALSE);
             }
 
-        strcpy(buf,
-               (to_advance >
-                0) ? "Pick a skill to advance:" : "Current skills:");
-        if (wizard && !speedy)
+        strcpy(buf, (to_advance > 0) ?
+               "Pick a skill to advance:" : "Current skills:");
+        if (!(wizard && speedy))
             sprintf(eos(buf), "  (%d slot%s available)", u.weapon_slots,
                     plur(u.weapon_slots));
         n = display_menu(menu.items, menu.icount, buf,
