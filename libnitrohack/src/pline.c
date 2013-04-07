@@ -32,7 +32,7 @@ pline(const char *line, ...)
 static void
 vpline(const char *line, va_list the_args)
 {
-    char pbuf[BUFSZ];
+    char pbuf[BUFSZ], *c;
     boolean repeated;
     int lastline;
 
@@ -42,10 +42,19 @@ vpline(const char *line, va_list the_args)
 
     if (!line || !*line)
         return;
-    if (strchr(line, '%')) {
-        vsprintf(pbuf, line, the_args);
-        line = pbuf;
+
+
+    vsprintf(pbuf, line, the_args);
+    
+    /* Sanitize, otherwise the line can mess up
+     * the message window and message history. */
+    for (c = pbuf; *c && c < pbuf + BUFSZ; c++) {
+        if (*c == '\n' || *c == '\t')
+            *c = ' ';
     }
+
+    line = pbuf;
+
     repeated = !strcmp(line, toplines[lastline]);
     if (no_repeat && repeated)
         return;
