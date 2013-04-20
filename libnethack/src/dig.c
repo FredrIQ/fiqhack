@@ -1152,6 +1152,7 @@ zap_dig(schar dx, schar dy, schar dz)
     struct rm *room;
     struct monst *mtmp;
     struct obj *otmp;
+    struct tmp_sym *tsym;
     int zx, zy, digdepth;
     boolean shopdoor, shopwall, maze_dig;
 
@@ -1201,12 +1202,12 @@ zap_dig(schar dx, schar dy, schar dz)
     zx = u.ux + dx;
     zy = u.uy + dy;
     digdepth = rn1(18, 8);
-    tmp_at(DISP_BEAM, dbuf_effect(E_MISC, E_digbeam));
+    tsym = tmpsym_init(DISP_BEAM, dbuf_effect(E_MISC, E_digbeam));
     while (--digdepth >= 0) {
         if (!isok(zx, zy))
             break;
         room = &level->locations[zx][zy];
-        tmp_at(zx, zy);
+        tmpsym_at(tsym, zx, zy);
         win_delay_output();     /* wait a little bit */
         if (closed_door(level, zx, zy) || room->typ == SDOOR) {
             if (*in_rooms(level, zx, zy, SHOPBASE)) {
@@ -1279,7 +1280,7 @@ zap_dig(schar dx, schar dy, schar dz)
         zy += dy;
     }   /* while */
 
-    tmp_at(DISP_END, 0);        /* closing call */
+    tmpsym_end(tsym);
     if (shopdoor || shopwall)
         pay_for_damage(shopdoor ? "destroy" : "dig into", FALSE);
     return;

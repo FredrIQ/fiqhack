@@ -24,7 +24,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
         int dam, char olet, int expltype)
 {
     int i, j, k, damu = dam;
-    boolean starting = 1;
     boolean visible, any_shield;
     int uhurt = 0;      /* 0=unhurt, 1=items damaged, 2=you and items damaged */
     const char *str;
@@ -212,15 +211,14 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
 
     if (visible) {
+        struct tmp_sym *tsym = tmpsym_init(DISP_BEAM, 0);
         /* Start the explosion */
         for (i = 0; i < 3; i++)
             for (j = 0; j < 3; j++) {
                 if (explmask[i][j] == 2)
                     continue;
-                tmp_at(starting ? DISP_BEAM : DISP_CHANGE,
-                       dbuf_explosion(expltype, explosion[i][j]));
-                tmp_at(i + x - 1, j + y - 1);
-                starting = 0;
+                tmpsym_change(tsym, dbuf_explosion(expltype, explosion[i][j]));
+                tmpsym_at(tsym, i + x - 1, j + y - 1);
             }
         flush_screen(); /* will flush screen and output */
 
@@ -230,8 +228,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                     for (j = 0; j < 3; j++) {
                         if (explmask[i][j] == 1)
                             /* 
-                             * Bypass tmp_at() and send the shield glyphs
-                             * directly to the buffered screen.  tmp_at()
+                             * Bypass tmpsym_at() and send the shield glyphs
+                             * directly to the buffered screen.  tmpsym_at()
                              * will clean up the location for us later.
                              */
                             dbuf_set_effect(
@@ -256,7 +254,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             win_delay_output();
         }
 
-        tmp_at(DISP_END, 0);    /* clear the explosion */
+        tmpsym_end(tsym);    /* clear the explosion */
     } else {
         if (olet == MON_EXPLODE) {
             str = "explosion";
@@ -581,7 +579,7 @@ scatter(int sx, int sy, /* location of objects to scatter */
                     }
                 } else {
                     if (scflags & VIS_EFFECTS) {
-                        /* tmp_at(bhitpos.x, bhitpos.y); */
+                        /* tmpsym_at(bhitpos.x, bhitpos.y); */
                         /* delay_output(); */
                     }
                 }

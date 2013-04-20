@@ -77,7 +77,10 @@
  * For monsters, there are hallucination and changing from/to blindness, etc.
  *
  *
- * tmp_at
+ * tmpsym_init
+ * tmpsym_change
+ * tmpsym_at
+ * tmpsym_end
  *
  * This is a useful interface for displaying temporary items on the screen.
  * Its interface is different than previously, so look at it carefully.
@@ -118,7 +121,7 @@ static int set_crosswall(struct level *lev, int, int);
 static void set_seenv(struct rm *, int, int, int, int);
 static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
-static void dbuf_set_object(int x, int y, int oid);
+static void dbuf_set_object(int x, int y, int oid, int omn);
 static void dbuf_set_loc(int x, int y);
 
 static boolean delay_flushing;
@@ -872,24 +875,45 @@ shieldeff(xchar x, xchar y)
 }
 
 
+struct tmp_sym {
+    coord saved[COLNO]; /* previously updated positions */
+    int sidx;   /* index of next unused slot in saved[] */
+    int style;  /* DISP_BEAM, DISP_FLASH, DISP_ALWAYS or DISP_OBJECT */
+    int sym;    /* symbol to use when printing */
+    int extra;  /* extra data (used for obj_mn for objects) */
+    /* Doubly linked list to allow freeing at end of game. */
+    struct tmp_sym *prev;
+    struct tmp_sym *next;
+};
+static struct tmp_sym *tsym_head;
+
+static struct tmp_sym *
+tmpsym_initimpl(int style, int sym, int extra)
+{
+    /* FIXME: Figure out how to deallocate this when the game ends. */
+    struct tmp_sym *tsym = malloc(sizeof (struct tmp_sym));
+
+    tsym->sidx = 0;
+    tsym->style = style;
+    tsym->sym = sym;
+    tsym->extra = extra;
+    flush_screen(); /* flush buffered glyphs */
+    
+    if (tsym_head) {
+        tsym_head->prev = tsym;
+        tsym->next = tsym_head;
+    }
+    tsym_head = tsym;
+    return tsym;
+}
+
 /*
- * tmp_at()
+ * tmpsym_init()
  *
- * Temporarily place glyphs on the screen.  Do not call delay_output().  It
- * is up to the caller to decide if it wants to wait [presently, everyone
- * but explode() wants to delay].
+ * Set up structure for temporarily placing glyphs on the screen. Do not
+ * call delay_output(); it is up to the caller to decide if it wants to wait. 
  *
- * Call:
- *      (DISP_BEAM,   sym)      open, initialize sym
- *      (DISP_FLASH,  sym)      open, initialize sym
- *      (DISP_ALWAYS, sym)      open, initialize sym
- *      (DISP_OBJECT, sym)      open, initialize sym
- *      (DISP_CHANGE, sym)      change sym
- *      (DISP_END,    0)        close & clean up (second argument doesn't
- *                              matter)
- *      (DISP_FREEMEM, 0)       only used to prevent memory leak during
- *                              exit)
- *      (x, y)                  display the sym at the location
+ * The display styles are as follows:
  *
  * DISP_BEAM  - Display the given sym at each location, but do not erase
  *              any until the close call.
@@ -897,108 +921,126 @@ shieldeff(xchar x, xchar y)
  *              previous location's sym.
  * DISP_ALWAYS- Like DISP_FLASH, but vision is not taken into account.
  * DISP_OBJECT- Like flash, but shows an object instead of an effect symbol
+ *
+ * Use tmpsym_initobj for DISP_OBJECT.
  */
-
-static struct tmp_sym {
-    coord saved[COLNO]; /* previously updated positions */
-    int sidx;   /* index of next unused slot in saved[] */
-    int style;  /* DISP_BEAM, DISP_FLASH, DISP_ALWAYS or DISP_OBJECT */
-    int sym;    /* symbol to use when printing */
-    struct tmp_sym *prev;
-} tsfirst;
-
-void
-tmp_at(int x, int y)
+struct tmp_sym *
+tmpsym_init(int style, int sym)
 {
-    static struct tmp_sym *tsym = NULL;
-    struct tmp_sym *tmp;
+    if (style == DISP_OBJECT)
+        panic("Use tmpsym_initobj for DISP_OBJECT!");
 
-    switch (x) {
-    case DISP_BEAM:
-    case DISP_FLASH:
-    case DISP_ALWAYS:
-    case DISP_OBJECT:
-        if (!tsym)
-            tmp = &tsfirst;
-        else    /* nested effect; we need dynamic memory */
-            tmp = malloc(sizeof (struct tmp_sym));
-
-        tmp->prev = tsym;
-        tsym = tmp;
-        tsym->sidx = 0;
-        tsym->style = x;
-        tsym->sym = y;
-        flush_screen(); /* flush buffered glyphs */
-        return;
-
-    case DISP_FREEMEM: /* in case game ends with tmp_at() in progress */
-        while (tsym) {
-            tmp = tsym->prev;
-            if (tsym != &tsfirst)
-                free(tsym);
-            tsym = tmp;
-        }
-        return;
-
-    default:
-        break;
-    }
-
-    if (!tsym)
-        panic("tmp_at: tsym not initialized");
-
-    switch (x) {
-    case DISP_CHANGE:
-        tsym->sym = y;
-        break;
-
-    case DISP_END:
-        if (tsym->style == DISP_BEAM) {
-            int i;
-
-            /* Erase (reset) from source to end */
-            for (i = 0; i < tsym->sidx; i++)
-                newsym(tsym->saved[i].x, tsym->saved[i].y);
-        } else {        /* DISP_FLASH or DISP_ALWAYS */
-            if (tsym->sidx)     /* been called at least once */
-                newsym(tsym->saved[0].x, tsym->saved[0].y);
-        }
-        /* tsym->sidx = 0; -- about to be freed, so not necessary */
-        tmp = tsym->prev;
-        if (tsym != &tsfirst)
-            free(tsym);
-        tsym = tmp;
-        break;
-
-    default:   /* do it */
-        if (tsym->style == DISP_BEAM) {
-            if (!cansee(x, y))
-                break;
-            /* save pos for later erasing */
-            tsym->saved[tsym->sidx].x = x;
-            tsym->saved[tsym->sidx].y = y;
-            tsym->sidx += 1;
-        } else {        /* DISP_FLASH/ALWAYS */
-            if (tsym->sidx) {   /* not first call, so reset previous pos */
-                newsym(tsym->saved[0].x, tsym->saved[0].y);
-                tsym->sidx = 0; /* display is presently up to date */
-            }
-            if (!cansee(x, y) && tsym->style != DISP_ALWAYS)
-                break;
-            tsym->saved[0].x = x;
-            tsym->saved[0].y = y;
-            tsym->sidx = 1;
-        }
-
-        if (tsym->style == DISP_OBJECT)
-            dbuf_set_object(x, y, tsym->sym);
-        else
-            dbuf_set_effect(x, y, tsym->sym);   /* show it */
-        flush_screen(); /* make sure it shows up */
-        break;
-    }   /* end case */
+    return tmpsym_initimpl(style, sym, 0);
 }
 
+/*
+ * tmpsym_init()
+ *
+ * Used for initializing a temporary object symbol.
+ */
+struct tmp_sym *
+tmpsym_initobj(struct obj *obj)
+{
+    return tmpsym_initimpl(DISP_OBJECT, dbuf_objid(obj),
+                           what_mon(obj->corpsenm) + 1);
+}
+
+
+/*
+ * tmpsym_change()
+ *
+ * Change the symbol used for a tmpsym structure.
+ */
+void
+tmpsym_change(struct tmp_sym *tsym, int sym)
+{
+    /* Since we won't necessarily update extra correctly. */
+    if (tsym->style == DISP_OBJECT)
+        panic("Can't change symbol of DISP_OBJECT tmpsym!");
+
+    tsym->sym = sym;
+}
+
+/*
+ * tmpsym_end()
+ *
+ * Clean up a tmpsym struct: remove its glyphs and free it. It becomes invalid
+ * after this.
+ */
+void
+tmpsym_end(struct tmp_sym *tsym)
+{
+    if (tsym->style == DISP_BEAM) {
+        int i;
+
+        /* Erase (reset) from source to end */
+        for (i = 0; i < tsym->sidx; i++)
+            newsym(tsym->saved[i].x, tsym->saved[i].y);
+    } else {        /* DISP_FLASH or DISP_ALWAYS */
+        if (tsym->sidx)     /* been called at least once */
+            newsym(tsym->saved[0].x, tsym->saved[0].y);
+    }
+    /* tsym->sidx = 0; -- about to be freed, so not necessary */
+
+    if (tsym->prev)
+        tsym->prev->next = tsym->next;
+    if (tsym->next)
+        tsym->next->prev = tsym->prev;
+    if (tsym == tsym_head)
+        tsym_head = tsym->next;
+
+    free(tsym);
+}
+
+/*
+ * tmpsym_at()
+ *
+ * Display a temporary symbol at a given location.
+ */
+void
+tmpsym_at(struct tmp_sym *tsym, int x, int y)
+{
+    if (tsym->style == DISP_BEAM) {
+        if (!cansee(x, y))
+            return;
+        /* save pos for later erasing */
+        tsym->saved[tsym->sidx].x = x;
+        tsym->saved[tsym->sidx].y = y;
+        tsym->sidx += 1;
+    } else {        /* DISP_FLASH/ALWAYS */
+        if (tsym->sidx) {   /* not first call, so reset previous pos */
+            newsym(tsym->saved[0].x, tsym->saved[0].y);
+            tsym->sidx = 0; /* display is presently up to date */
+        }
+        if (!cansee(x, y) && tsym->style != DISP_ALWAYS)
+            return;
+        tsym->saved[0].x = x;
+        tsym->saved[0].y = y;
+        tsym->sidx = 1;
+    }
+
+    if (tsym->style == DISP_OBJECT)
+        dbuf_set_object(x, y, tsym->sym, tsym->extra);
+    else
+        dbuf_set_effect(x, y, tsym->sym);   /* show it */
+    flush_screen(); /* make sure it shows up */
+}
+
+/*
+ * tmpsym_freeall()
+ *
+ * Free all still-extant tmp_sym data structures. Used for when the game ends
+ * while temporary symbols are still active.
+ */
+void tmpsym_freeall()
+{
+    struct tmp_sym *tsym;
+    while (tsym_head) {
+        tsym = tsym_head->next;
+        free(tsym_head);
+        tsym_head = tsym;
+    }
+}
 
 /*
  * swallowed()
@@ -1435,12 +1477,13 @@ dbuf_set_effect(int x, int y, int eglyph)
 }
 
 static void
-dbuf_set_object(int x, int y, int oid)
+dbuf_set_object(int x, int y, int oid, int omn)
 {
     if (!isok(x, y))
         return;
 
     dbuf[y][x].obj = obfuscate_object(oid);
+    dbuf[y][x].obj_mn = omn;
 }
 
 /*

@@ -1313,6 +1313,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
 {
     struct monst *mtmp;
     struct obj *otmp, *otmp2;
+    struct tmp_sym *tsym;
     int dx, dy;
     struct obj *singleobj;
     boolean used_up = FALSE;
@@ -1378,22 +1379,21 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
     roll:
     case ROLL:
         delaycnt = 2;
-        /* fall through */
-    default:
-        if (!delaycnt)
-            delaycnt = 1;
-        if (!cansee(bhitpos.x, bhitpos.y))
-            flush_screen();
-
-        tmp_at(DISP_OBJECT, dbuf_objid(singleobj));
-        tmp_at(bhitpos.x, bhitpos.y);
     }
+
+    if (!delaycnt)
+        delaycnt = 1;
+    if (!cansee(bhitpos.x, bhitpos.y))
+        flush_screen();
+
+    tsym = tmpsym_initobj(singleobj);
+    tmpsym_at(tsym, bhitpos.x, bhitpos.y);
 
     /* Set the object in motion */
     while (dist-- > 0 && !used_up) {
         struct trap *t;
 
-        tmp_at(bhitpos.x, bhitpos.y);
+        tmpsym_at(tsym, bhitpos.x, bhitpos.y);
         tmp = delaycnt;
 
         /* dstage@u.washington.edu -- Delay only if hero sees it */
@@ -1538,7 +1538,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
             }
         }
     }
-    tmp_at(DISP_END, 0);
+    tmpsym_end(tsym);
     if (!used_up) {
         singleobj->otrapped = 0;
         place_object(singleobj, level, x2, y2);
