@@ -899,10 +899,12 @@ tmpsym_initimpl(int style, int sym, int extra)
     tsym->extra = extra;
     flush_screen(); /* flush buffered glyphs */
     
+    tsym->prev = 0;
     if (tsym_head) {
         tsym_head->prev = tsym;
         tsym->next = tsym_head;
-    }
+    } else
+        tsym->next = 0;
     tsym_head = tsym;
     return tsym;
 }
