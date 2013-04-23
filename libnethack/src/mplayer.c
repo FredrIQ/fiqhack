@@ -50,7 +50,7 @@ dev_name(void)
         match = FALSE;
         i = rn2(n);
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-            if (!is_mplayer(mtmp->data))
+            if (!is_mplayer(mtmp->data) || !mtmp->mnamelth)
                 continue;
             if (!strncmp(developers[i], NAME(mtmp), strlen(developers[i]))) {
                 match = TRUE;

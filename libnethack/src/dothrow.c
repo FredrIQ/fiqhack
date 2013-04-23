@@ -838,14 +838,14 @@ sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
         int x = bhitpos.x - dx;
         int y = bhitpos.y - dy;
 
-        tmp_at(DISP_OBJECT, dbuf_objid(obj));
+        struct tmp_sym *tsym = tmpsym_initobj(obj);
         while (x != u.ux || y != u.uy) {
-            tmp_at(x, y);
+            tmpsym_at(tsym, x, y);
             win_delay_output();
             x -= dx;
             y -= dy;
         }
-        tmp_at(DISP_END, 0);
+        tmpsym_end(tsym);
     }
 }
 
@@ -1068,10 +1068,10 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
 
         if (!IS_SOFT(level->locations[bhitpos.x][bhitpos.y].typ) &&
             breaktest(obj)) {
-            tmp_at(DISP_OBJECT, dbuf_objid(obj));
-            tmp_at(bhitpos.x, bhitpos.y);
+            struct tmp_sym *tsym = tmpsym_initobj(obj);
+            tmpsym_at(tsym, bhitpos.x, bhitpos.y);
             win_delay_output();
-            tmp_at(DISP_END, 0);
+            tmpsym_end(tsym);
             breakmsg(obj, cansee(bhitpos.x, bhitpos.y));
             breakobj(obj, bhitpos.x, bhitpos.y, TRUE, TRUE);
             return;

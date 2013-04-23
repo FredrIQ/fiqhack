@@ -273,6 +273,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
 {
     struct monst *mtmp;
     struct obj *singleobj;
+    struct tmp_sym *tsym = 0;
     char sym = obj->oclass;
     int hitu, blindinc = 0;
 
@@ -339,8 +340,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
     /* Note: drop_throw may destroy singleobj.  Since obj must be destroyed
        early to avoid the dagger bug, anyone who modifies this code should be
        careful not to use either one after it's been freed. */
-    if (sym)
-        tmp_at(DISP_OBJECT, dbuf_objid(singleobj));
+    tsym = tmpsym_initobj(singleobj);
 
     while (range-- > 0) {       /* Actually the loop is always exited by break */
         bhitpos.x += dx;
@@ -475,12 +475,12 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 drop_throw(singleobj, 0, bhitpos.x, bhitpos.y);
             break;
         }
-        tmp_at(bhitpos.x, bhitpos.y);
+        tmpsym_at(tsym, bhitpos.x, bhitpos.y);
         win_delay_output();
     }
-    tmp_at(bhitpos.x, bhitpos.y);
+    tmpsym_at(tsym, bhitpos.x, bhitpos.y);
     win_delay_output();
-    tmp_at(DISP_END, 0);
+    tmpsym_end(tsym);
 
     if (blindinc) {
         u.ucreamed += blindinc;
