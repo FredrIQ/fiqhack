@@ -1042,10 +1042,11 @@ boolean
 write_level_file(char *filename, splev * room_level, specialmaze * maze_level)
 {
     int fout;
-    char lbuf[60];
+    char lbuf[1024];
 
     lbuf[0] = '\0';
     strcat(lbuf, outprefix);
+    if (eos(lbuf)[-1] == ' ') eos(lbuf)[-1] = '\0';
     strcat(lbuf, filename);
     strcat(lbuf, LEV_EXT);
 
@@ -1063,6 +1064,7 @@ write_level_file(char *filename, splev * room_level, specialmaze * maze_level)
         panic("write_level_file");
 
     close(fout);
+    fprintf(stdout, "Wrote '%s'.\n", lbuf);
     return TRUE;
 }
 

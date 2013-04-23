@@ -9,7 +9,9 @@
 /* The WIZARD option is now set via the build system. */
 # ifndef WIZARD
 #  ifdef AIMAKE_OPTION_WIZARD
-#   define WIZARD AIMAKE_OPTION_WIZARD
+#   define STRINGIFY_EXPAND(x) STRINGIFY(x)
+#   define STRINGIFY(x) #x
+#   define WIZARD STRINGIFY_EXPAND(AIMAKE_OPTION_WIZARD)
 #  endif
 # endif
 

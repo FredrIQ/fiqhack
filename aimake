@@ -659,6 +659,12 @@ sub eval_config_element_scalar {
   return $a[0];
 }
 
+# A test file is needed to give to gcc and cpp.
+open my $testfile_fh, '>', 'aimake_1.c';
+print $testfile_fh "int main(void) {return 0;}\n";
+close $testfile_fh;
+
+
 # Now merge install paths into the options twice (to resolve $datarootdir
 # in the data).
 my $installtype = eval_config_element_scalar(
@@ -2193,39 +2199,42 @@ $preprocess_dependencies = [
     library_paths => [
         {
             # These are many, varied, and often make no sense (e.g.
-            # having i386 in the name on an i686 system). So we get
-            # them from gcc, which is configured to know where they
-            # are, if that's available.
-            prereqs => ['command:gcc'],
-            determine_command => 'sys:grep libraries gcc -print-search-dirs',
-            determine_parse => qr/[:;=]((?:[^\\\/:;=](?:[^:;=]|:\\|:\/)*))(?=[:;]|$)/,
+            # having i386 in the name on an i686 system). It's
+            # tempting to get them via gcc -print-search-dirs, but
+            # this doesn't work; not only is its output format
+            # dubious, but it lists only the paths in which libgcc.a
+            # could potentially be, it ignores other libraries.
+            #
+            # So instead, we use GNU ld to link a test file,
+            # specifying a nonexistent library, and tell ld to comment
+            # on the places it's looking for it, and determine the
+            # possible library paths via looking at the error messages.
+            prereqs => ['command:gcc', 'command:ld'],
+            determine_command => 'gcc -Wl,--verbose aimake_1.c -laimake_nonexistent || true',
+            determine_parse => qr/^attempt to open (.*?)\/libaimake_nonexistent\.(so|a|dll) failed$/,
             value => '$1',
             group => 'library_locators',
             score => 100,
         },
-        # gcc doesn't know about packaging directories, but we can tell
-        # aimake to look there too.
-        {
-	    prereqs => ['!buildos:MSWin32'],
-	    value => '/usr/local/lib',
-	},
     ],
     includes => [],
     include_paths => [
-	# TODO: Figure out how to find the .h files on Windows. gcc knows, but
-	# for whatever reason, it isn't telling.
         {
-	    prereqs => ['!buildos:MSWin32'],
-	    value => '/usr/include',
-	},
-        {
-	    prereqs => ['!buildos:MSWin32'],
-	    value => '/usr/local/include',
+            # With -v, GNU cpp prints a nicely formatted list of the
+            # directories it's searching, with a leading space. It
+            # also prints the command line it's using for cc1 with a
+            # leading space, so we filter that out by disallowing the
+            # string "cc1" immediately before an embedded space.
+	    prereqs => ['command:cpp'],
+            determine_command => 'cpp -v -E aimake_1.c 2>&1 > /dev/null',
+            determine_parse => qr/^ ((?:[^ ]|(?<!cc1) )+)$/,
+	    value => '$1',
 	},
     ],
     library_file_patterns => [
         'lib$x.a',
         'lib$x.so',
+        'lib$x.dll',
     ],
     # TODO: Condition by OS!
     default_installdir => '/usr/local',
