@@ -1824,7 +1824,7 @@ use_figurine(struct obj **objp)
     make_familiar(obj, cc.x, cc.y, FALSE);
     stop_timer(obj->olev, FIG_TRANSFORM, obj);
     useup(obj);
-    *objp = 0;
+    *objp = NULL;
     return 1;
 }
 
@@ -2541,7 +2541,7 @@ use_cream_pie(struct obj **objp)
     }
     obj_extract_self(obj);
     delobj(obj);
-    *objp = 0;
+    *objp = NULL;
     return 1;
 }
 
