@@ -240,6 +240,9 @@ $state->{'config_sha1'} = $config_sha1;
 defined($options{'i'}) and $state->{'installdir'} = $options{'i'};
 !defined $state->{'installdir'}
   and $state->{'installdir'} = $config->{'default_installdir'};
+# So that the /home or whatever shows up as part of the install path.
+$state->{'installdir'} = File::Spec->rel2abs($state->{'installdir'});
+
 # If we haven't been given a package name, take the name of the
 # directory the package is in. (This fails if it's the root dir, but
 # who cares.)
@@ -320,8 +323,69 @@ my $screencols = 80;
       my $stderr_was_empty = 0;
       $c =~ s/ \|\| true$// and $worry_about_errors = 0;
       progress_report 2, ($capture_stdout ? "? " : "! ") . $c;
-      my ($ok, $err, undef, $stdout, $stderr) =
-        IPC::Cmd::run(command => $c, verbose => 0);
+      my ($ok, $err, $stdout, $stderr);
+      if ($c =~ /^([^ ]+?\/[^ ]+) (.*)$/) {
+	  # The first word of the command line - the command itself - may
+	  # be a generated file specified with a UNIX-style path. We need
+	  # to convert this to a local-OS-style path. If it contains
+	  # quoting, we don't, because it was us who generated it not the
+	  # user.
+	  my $cmd = $1;
+	  my $arg = $2;
+	  my $q = IPC::Cmd::QUOTE;
+	  if ($cmd !~ /\Q$q\E/) {
+	      my ($vol,$dirs,$file) = File::Spec->splitpath($cmd);
+	      my @dirsf = split '/', $file; # '/' is UNIXy path separator
+	      my @dirsd = File::Spec->splitdir($dirs);
+	      my $bfile = pop @dirsf;
+	      $dirs = File::Spec->catdir(@dirsf, @dirsd);
+	      $c = File::Spec->catpath($vol,$dirs,$file)." $arg";
+	  }
+      }
+      if ($c =~ /^sys:([a-z]+?) (.*)$/) {
+	  $err = "Success";
+	  $stderr = [""];
+	  my $cmd = $1;
+	  my $arg = $2;
+	  my $q = IPC::Cmd::QUOTE;
+	  $cmd ne 'grep' and $arg =~ s/($q\\$q)?$q/$1 ? $q : ""/eg;
+	  if ($cmd eq 'cat') {
+	      $ok = 1;
+	      {
+		  local $/;
+		  if (open my $fh, "<", $arg) {
+		      $stdout = [<$fh>];
+		      close $fh;
+		  } else {
+		      $ok = 0;
+		      $err = "$arg: $!";
+		      $stdout = [""];
+		  }
+	      }
+	  } elsif ($cmd eq 'nocmderror') {
+	      $ok = 0;
+	      $err = $arg;
+	      $stdout = [""];
+	  } elsif ($cmd eq 'grep') {
+	      # Look for certain lines in the command output.
+	      $arg =~ /^([^ ]+?) (.*)$/;
+	      my $sstr = $1;
+	      my $carg = $2;
+	      ($ok, $err, undef, $stdout, $stderr) =
+		  IPC::Cmd::run(command => $carg, verbose => 0);
+	      $stdout = join '', @$stdout;
+	      $stdout = [split '\n', $stdout];
+	      $stdout = [grep /\Q$sstr\E/, @$stdout];
+	      $stdout = [map "$_\n", @$stdout];
+	  } else {
+	      $ok = 0; 
+	      $err = "No such internal command";
+	      $stdout = [""];
+	  }
+      } else {
+	  ($ok, $err, undef, $stdout, $stderr) =
+	      IPC::Cmd::run(command => $c, verbose => 0);
+      }
       $stdout = join '', @$stdout;
       $stderr = join '', @$stderr;
       chomp $stderr;
@@ -431,7 +495,7 @@ sub prereq_met {
   # Install location prereqs.
   $prereq =~ /^installing_inside:(.*)$/ and do {
     my $testdir = $1;
-    my $installdir = $state->{'installdir'};
+    my $installdir = File::Spec->rel2abs($state->{'installdir'});
     my (undef, $dirs, undef) = File::Spec->splitpath(
       File::Spec->abs2rel($installdir, $testdir));
     my @dirs = File::Spec->splitdir($dirs);
@@ -552,6 +616,7 @@ sub eval_config_element {
         for my $l (split '\n', $output) {
           while($l =~ m/$re/g) {
             $subs->{$_} = eval "\$$_" for 1..9;
+
             # simplest to recurse here...
             push @outputs, eval_config_element(\%e, $subs, $dont_escape);
           }
@@ -604,7 +669,7 @@ for my $k (keys %{$config->{'installpaths'}->{$installtype}}) {
     ($config->{'installpaths'}->{$installtype}->{$k} =~ /^\$/ &&
      $config->{'installpaths'}->{$installtype}->{$k} !~ /^\$packagename/) or
     $config->{'installpaths'}->{$installtype}->{$k} =
-      File::Spec->catfile($state->{'installdir'},
+      File::Spec->catfile(File::Spec->rel2abs($state->{'installdir'}),
                           $config->{'installpaths'}->{$installtype}->{$k});
 }
 $config->{'options'} = {%{$config->{'options'}},
@@ -652,10 +717,18 @@ sub quote_into_shell {
   # to handle, say, filenames with spaces in, using the quoting style
   # IPC::Cmd wants. Any occurrences of the quote character itself are
   # replaced as the quote character, a backslash, and two more quote
-  # characters, which works on UNIX and may also work on Win32.
+  # characters, which works on UNIX at least (let's hope for no double-
+  # quotes in filenames on Windows). Windows, which uses backslashes in
+  # directory names, gets confused if there's a backslash at the end of
+  # a quoted argument; in this case, assume it's a directory and delete
+  # the backslash.
   my $q = IPC::Cmd::QUOTE;
   return join ' ', @r if $dont_escape;
-  return join ' ', map { s/\Q$q\E/$q\\$q$q/g; $_ ne '' ? "$q$_$q" : $_ } @r;
+  return join ' ', map {
+      s/\Q$q\E/$q\\$q$q/g;
+      s/\\$//;
+      $_ ne '' ? "$q$_$q" : $_
+  } @r;
 }
 
 # It's possible to request various information about an object when
@@ -692,6 +765,7 @@ sub substitutions_for_object {
     $subs{'basename'} = $basename;
     my ($relvolume, $reldirname, undef) = File::Spec->splitpath($relpathname);
     $subs{'builddirname'} = File::Spec->catpath($relvolume, $reldirname, '');
+    $subs{'absbuilddirname'} = File::Spec->rel2abs($subs{'builddirname'});
 
     # We also have an "isolation directory", a temporary directory
     # specific to the actual path or bpath object. This is useful for
@@ -753,6 +827,21 @@ sub canonicalise_object_name {
     $obj = $1 . shell_unescape($2) . $3;
   }
 
+  # - The user might have specified UNIX-style paths, when the OS uses
+  #   a different style of path. So we treat any / in the filename as
+  #   a directory separator. We also standardise the directory
+  #   separators used in the directory part, because some systems
+  #   support more than one.
+  if ($obj =~ /^(file|path|file_or_path|bpath):(.*)$/) {
+      my $prefix = $1;
+      my ($vol,$dirs,$file) = File::Spec->splitpath($2);
+      my @dirsf = split '/', $file; # '/' is UNIXy path separator
+      my @dirsd = File::Spec->splitdir($dirs);
+      my $bfile = pop @dirsf;
+      $dirs = File::Spec->catdir(@dirsf, @dirsd);
+      $obj = "$prefix:" . File::Spec->catpath($vol,$dirs,$file);
+  }
+
   # - Some commands don't distinguish missing files from non-missing
   #   files (I'm looking at you, gcc -MG). We can hack around this by
   #   passing it absolute paths and seeing if we get relative paths
@@ -762,7 +851,7 @@ sub canonicalise_object_name {
   if ($obj =~ /^file_or_path:(.*)$/) {
     my $path = $1;
     $obj = (File::Spec->file_name_is_absolute($path) ?
-            "path:$1" : "file:$1");
+            "path:$path" : "file:$path");
   }
   # - Commands that work with paths generally, rather than source and
   #   build paths, may return a "path:" in the build directory.
@@ -1227,7 +1316,12 @@ sub file_sha1 {
   # No point reading the file if its last modified date is more than
   # 48 hours before we last calculated its hash.
   $old_date and $new_date < $old_date - 3600 * 48 and return $old_hash;
-  open my $fh, '<', $fn or die "Couldn't open '$fn': $!";
+  # On Windows, we can have an arbitrary .exe added to files to mark them
+  # executable.
+  my $fh;
+  open $fh, '<', $fn or
+      ($^O eq 'MSWin32' and open $fh, '<', "$fn.exe") or
+      die "Couldn't open '$fn': $!";
   my $hash = sha1_hex(<$fh>);
   close $fh;
   $state->{'sha1_cache'}->{$fn} = $hash;
@@ -1934,12 +2028,15 @@ if ($options{'i'}) {
     my ($vol, $dirs, $fn2) = File::Spec->splitpath($install_loc);
     ensure_directory_exists(File::Spec->catpath($vol,$dirs,''));
     if ($fn2 ne 'sys:touch_only') {
-      open(my $infh, '<', $path)
-        or die "Could not open '$path' for reading: $?";
+      my $infh;
+      my $ext = "";
+      open($infh, '<', $path) or
+	($^O eq 'Win32' and open $infh, '<', "$path.exe" and $ext = ".exe") or
+        die "Could not open '$path' for reading: $?";
       # Avoid ETXTBUSY issues
       -e $install_loc and unlink $install_loc;
-      open(my $outfh, '>', $install_loc)
-        or die "Could not open '$install_loc' for writing: $?";
+      open(my $outfh, '>', "$install_loc$ext")
+        or die "Could not open '$install_loc$ext' for writing: $?";
       local $/ = undef;
       print $outfh (<$infh>);
       close $infh;
@@ -2012,30 +2109,30 @@ $nm_determine_command = [
     'nm -fp -D $pathname || true'
 ];
 $object_deps = {
-        # We can use nm to determine what symbols are needed.
-        # Exception: Standard libraries should have their use deps
-        # automatically found by ld.
-        # TODO: portability
-        prereqs => ['command:nm','!location:system'],
-        determine_command => $nm_determine_command,
-        determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) U',
-        value => 'symbol:$1',
-        group => 'symbols',
-        score => 100,
+    # We can use nm to determine what symbols are needed.
+    # Exception: Standard libraries should have their use deps
+    # automatically found by ld. We should ignore any deps that
+    # start with a double underscore (because they may be
+    # handled specially by the system, and are on Windows).
+    prereqs => ['command:nm','!location:system'],
+    determine_command => $nm_determine_command,
+    determine_parse => qr'^((?>_?[a-zA-Z0-9$][a-zA-Z0-9_$]*)) U',
+    value => 'symbol:$1',
+    group => 'symbols',
+    score => 100,
 };
 $object_provices = {
-        # We can use nm to determine what symbols are
-        # provided. TODO: portability
-        prereqs => ['command:nm'],
-        determine_command => $nm_determine_command,
-        determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
-        value => ['symbol:$1','symbol_in_object:$1{$objname}'],
-        # Not only can't we include just one function from
-        # an object file, we also probably shouldn't.
-        option => '$pathname',
-        copy_use_deps => 1, # resolve cyclic references
-        group => 'symbols',
-        score => 100,
+    # We can use nm to determine what symbols are provided.
+    prereqs => ['command:nm'],
+    determine_command => $nm_determine_command,
+    determine_parse => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
+    value => ['symbol:$1','symbol_in_object:$1{$objname}'],
+    # Not only can't we include just one function from
+    # an object file, we also probably shouldn't.
+    option => '$pathname',
+    copy_use_deps => 1, # resolve cyclic references
+    group => 'symbols',
+    score => 100,
 };
 # Rules for using the preprocessor to calculate dependencies.
 # Also, for preprocessible files, to substitute in options.
@@ -2050,16 +2147,18 @@ $preprocess_dependencies = [
         # in, and possibly other special characters too.
         prereqs => ['command:gcc'],
         determine_command => 'gcc -M -MG -MT : $IFLAGS $abspathname',
-        determine_parse => qr' ([^ \\\n]+)',
+	# gcc outputs space-separated values, also single backslashes.
+	# Backslash is potentially going to appear in the path on
+	# Windows, so we allow it if it's followed by something other
+	# than a space or newline.
+        determine_parse => qr' ((?:[^ \\\n\r]|\\[^ \n\r])+)',
         value => 'file_or_path:$1',
         group => 'includes',
         score => 50,
     },
     {
-        # TODO: We can definitely do this in perl, without needing
-        # a grepping program.
         prereqs => ['command:fgrep'],
-        determine_command => 'fgrep AIMAKE_OPTION_ $pathname || true',
+        determine_command => 'sys:grep AIMAKE_OPTION_ $pathname',
         determine_parse => qr'AIMAKE_OPTION_([a-zA-Z0-9_]+)',
         value => 'config_option:$1',
         group => 'config_options',
@@ -2084,6 +2183,7 @@ $preprocess_dependencies = [
         "crypt",
         "dl",
         "m",
+	"msvcrt", # libc equivalent on Windows
         "ncurses",
         "ncursesw",
         "pthread",
@@ -2096,22 +2196,32 @@ $preprocess_dependencies = [
             # having i386 in the name on an i686 system). So we get
             # them from gcc, which is configured to know where they
             # are, if that's available.
-            prereqs => ['command:gcc', 'command:grep'],
-            determine_command => 'gcc -print-search-dirs | grep -F libraries',
-            determine_parse => qr/[:;=]((?:[^\\:;=]([^:=]|:\\))*)(?=[:;]|$)/,
+            prereqs => ['command:gcc'],
+            determine_command => 'sys:grep libraries gcc -print-search-dirs',
+            determine_parse => qr/[:;=]((?:[^\\\/:;=](?:[^:;=]|:\\|:\/)*))(?=[:;]|$)/,
             value => '$1',
             group => 'library_locators',
             score => 100,
         },
         # gcc doesn't know about packaging directories, but we can tell
-        # aimake to look there too. TODO: OS independence
-        '/usr/local/lib',
+        # aimake to look there too.
+        {
+	    prereqs => ['!buildos:MSWin32'],
+	    value => '/usr/local/lib',
+	},
     ],
     includes => [],
     include_paths => [
-        # These are for Linux. We need other OSes too.
-        '/usr/include',
-        '/usr/local/include',
+	# TODO: Figure out how to find the .h files on Windows. gcc knows, but
+	# for whatever reason, it isn't telling.
+        {
+	    prereqs => ['!buildos:MSWin32'],
+	    value => '/usr/include',
+	},
+        {
+	    prereqs => ['!buildos:MSWin32'],
+	    value => '/usr/local/include',
+	},
     ],
     library_file_patterns => [
         'lib$x.a',
@@ -2128,14 +2238,17 @@ $preprocess_dependencies = [
     # (with different permissions). This is a "confined" install.
     # There are other layouts that exist too, e.g. one for games,
     # which is used only on request.
-    # TODO: Condition by OS! Probably it's simplest to use different
-    # names for install types on different platforms. (And probably
-    # only Linux/UNIX has so many; the others could probably make do
-    # with one per platform.)
+    # TODO: Condition better by OS. "confined" works fine on any OS
+    # (it gives us a UNIXy directory layout, but we're OK with that).
+    # The others will need to be conditioned by OS, though.
     installtype => [
       { prereqs => ['installing_inside:/home'], value => 'confined',
         score => 10, group => 'installtypes' },
       { prereqs => ['installing_inside:/root'], value => 'confined',
+        score => 10, group => 'installtypes' },
+      { prereqs => ['installing_inside:/Users', 'buildos:MSWin32'],
+	value => 'confined', score => '10', group => 'installtypes' },
+      { prereqs => ['installing_inside:/home'], value => 'confined',
         score => 10, group => 'installtypes' },
       { prereqs => ['installing_inside:/opt'], value => 'packagy',
         score => 10, group => 'installtypes' },
@@ -2250,10 +2363,36 @@ $preprocess_dependencies = [
                 value => '-g',
                 group => 'debug',
                 score => 50,
-            }
+            },
         ],
-        CC => ["cc"],
-        LD => ["cc"], # typically acts as an ld driver
+        CC => [
+	    {
+		# Use the favoured C compiler, if it's available.
+		prereqs => ['command:cc'],
+		value => "cc",
+		score => 100,
+	    },
+	    {
+		# Otherwise use gcc, if that's available.
+		prereqs => ['command:gcc'],
+		value => "gcc",
+		score => 50,
+	    },
+	],
+        LD => [ # We use the same logic as for CC.
+	    {
+		# Use the favoured C compiler, if it's available.
+		prereqs => ['command:cc'],
+		value => "cc",
+		score => 100,
+	    },
+	    {
+		# Otherwise use gcc, if that's available.
+		prereqs => ['command:gcc'],
+		value => "gcc",
+		score => 50,
+	    },
+	],
         LFLAGS => "",
     },
     # Rules that apply to the whole of an object class.
@@ -2269,8 +2408,7 @@ $preprocess_dependencies = [
         'bpath:last-config.txt' => {
             provices => [
                 {
-                    # TODO: OS independence
-                    determine_command => 'cat $pathname',
+                    determine_command => 'sys:cat $pathname',
                     determine_parse => qr'([a-zA-Z0-9_]+): (.*)',
                     value => 'config_option:$1',
                     option => '-DAIMAKE_OPTION_$1=$2',
@@ -2291,6 +2429,12 @@ $preprocess_dependencies = [
                     group => 'c-compilers',
                     score => 100,
                 },
+		{
+                    value => 'bpath:$builddirbasename.o',
+		    command => 'sys:nocmderror No C compiler is available.',
+		    group => 'c-compilers',
+		    score => 1,
+		},
                 # {
                 #     # Code for producing shared libraries. Compiling code for a
                 #     # shared library requires producing a special sort of
@@ -2312,7 +2456,7 @@ $preprocess_dependencies = [
                     # Double extension: in case the .l and .y files have the
                     # same basename
                     value => 'bpath:$builddirbasename.l.c',
-                    command => 'flex -o $builddirbasename.l.c $pathname',
+                    command => 'flex -o$builddirbasename.l.c $pathname',
                 },
                 {
                     prereqs => ['command:lex'],
@@ -2325,6 +2469,12 @@ $preprocess_dependencies = [
                         'ln -sf lex.yy.c $isodirbasename.c',
                     ],
                 },
+		{
+		    command => 'sys:nocmderror No "lex" equivalent is available.',
+                    value => 'bpath:$builddirbasename.l.c',
+		    group => 'lexes',
+		    score => 1,
+		},
             ],
         },
         '.y' => {
@@ -2354,6 +2504,15 @@ $preprocess_dependencies = [
                         'ln -sf y.tab.h $isodirbasename.h',
                     ],
                 },
+		{
+		    command => 'sys:nocmderror No "yacc" equivalent is available.',
+                    value => [
+                        'bpath:$builddirbasename.y.c',
+                        'bpath:$builddirbasename.h',
+                    ],
+		    group => 'yaccs',
+		    score => 1,
+		},
             ],
         },
         '.h' => {
@@ -2430,7 +2589,7 @@ $preprocess_dependencies = [
             # dependencies, use a different fragment each time.
             provices => [
                 {
-                    determine_command => 'cat $pathname',
+                    determine_command => 'sys:cat $pathname',
                     determine_parse => qr'^([^ ]+): (?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+(?:([^ >]++) )?+> (.*+)$',
                     extra_build_deps => ['$2','$3','$4','$5','$6','$7','$8'],
                     value => '$1',
@@ -2440,7 +2599,7 @@ $preprocess_dependencies = [
                     defaultly_targets => 1,
                 },
                 {
-                    determine_command => 'cat $pathname',
+                    determine_command => 'sys:cat $pathname',
                     determine_parse => qr'^install_target:([a-zA-Z0-9_]++/([^>]*+)>?.*)?$',
                     extra_build_deps => ['$2'],
                     value => 'install_target:$1',
@@ -2457,8 +2616,7 @@ $preprocess_dependencies = [
             # and gives us the options needed to provice the .a file.
             use_deps => [
                 {
-                    # TODO: built-in cat equivalent
-                    determine_command => 'cat $pathname',
+                    determine_command => 'sys:cat $pathname',
                     determine_parse => '^(symbol[^#]+?)\s*(?:#|$)',
                     value => '$1',
                 },

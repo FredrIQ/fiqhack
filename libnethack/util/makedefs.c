@@ -250,7 +250,7 @@ do_rumors(const char *in_tru, const char *in_false, const char *outfile)
     if (!(ifp = fopen(in_tru, RDTMODE))) {
         perror(in_tru);
         fclose(ofp);
-        unlink(outfile);        /* kill empty output file */
+        remove(outfile);        /* kill empty output file */
         exit(EXIT_FAILURE);
     }
 
@@ -269,7 +269,7 @@ do_rumors(const char *in_tru, const char *in_false, const char *outfile)
     if (!(ifp = fopen(in_false, RDTMODE))) {
         perror(in_false);
         fclose(ofp);
-        unlink(outfile);        /* kill incomplete output file */
+        remove(outfile);        /* kill incomplete output file */
         exit(EXIT_FAILURE);
     }
 
@@ -439,7 +439,7 @@ do_data(const char *infile, const char *outfile)
         perror(tempfile);
         fclose(ifp);
         fclose(ofp);
-        unlink(outfile);
+        remove(outfile);
         exit(EXIT_FAILURE);
     }
 
@@ -484,7 +484,7 @@ do_data(const char *infile, const char *outfile)
 
     /* finished with scratch file */
     fclose(tfp);
-    unlink(tempfile);   /* remove it */
+    remove(tempfile);   /* remove it */
 
     /* update the first record of the output file; prepare error msg 1st */
     sprintf(in_line, "rewind of \"%s\"", outfile);
@@ -497,7 +497,7 @@ do_data(const char *infile, const char *outfile)
     dead_data:perror(in_line); /* report the problem */
         /* close and kill the aborted output file, then give up */
         fclose(ofp);
-        unlink(outfile);
+        remove(outfile);
         exit(EXIT_FAILURE);
     }
 
@@ -568,7 +568,7 @@ do_oracles(const char *infile, const char *outfile)
         perror(tempfile);
         fclose(ifp);
         fclose(ofp);
-        unlink(outfile);
+        remove(outfile);
         exit(EXIT_FAILURE);
     }
 
@@ -626,7 +626,7 @@ do_oracles(const char *infile, const char *outfile)
 
     /* finished with scratch file */
     fclose(tfp);
-    unlink(tempfile);   /* remove it */
+    remove(tempfile);   /* remove it */
 
     /* update the first record of the output file; prepare error msg 1st */
     sprintf(in_line, "rewind of \"%s\"", outfile);
@@ -654,7 +654,7 @@ do_oracles(const char *infile, const char *outfile)
     dead_data:perror(in_line); /* report the problem */
         /* close and kill the aborted output file, then give up */
         fclose(ofp);
-        unlink(outfile);
+        remove(outfile);
         exit(EXIT_FAILURE);
     }
 
