@@ -1034,7 +1034,7 @@ tmpsym_at(struct tmp_sym *tsym, int x, int y)
  * Free all still-extant tmp_sym data structures. Used for when the game ends
  * while temporary symbols are still active.
  */
-void tmpsym_freeall()
+void tmpsym_freeall(void)
 {
     struct tmp_sym *tsym;
     while (tsym_head) {
