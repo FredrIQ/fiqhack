@@ -29,6 +29,7 @@ static int wiz_where(void);
 static int wiz_detect(void);
 static int wiz_panic(void);
 static int wiz_polyself(void);
+static int wiz_teleport(void);
 static int wiz_level_tele(void);
 static int wiz_level_change(void);
 static int wiz_show_seenv(void);
@@ -232,6 +233,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+    {"wizard teleport", "(DEBUG) teleport without fail", C('r'), 0, TRUE,
+     wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
     {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
      wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
@@ -441,12 +444,23 @@ wiz_detect(void)
     return 0;
 }
 
+/* ^Y command - teleport without fail */
+static int
+wiz_teleport(void)
+{
+    if (wizard)
+        tele_impl(TRUE);
+    else
+        pline("Unavailable command '^Y'.");
+    return 0;
+}
+
 /* ^V command - level teleport */
 static int
 wiz_level_tele(void)
 {
     if (wizard)
-        level_tele();
+        level_tele_impl(TRUE);
     else
         pline("Unavailable command '^V'.");
     return 0;
