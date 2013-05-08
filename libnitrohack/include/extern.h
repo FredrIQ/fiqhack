@@ -44,7 +44,7 @@ extern void init_artifacts(void);
 extern void save_artifacts(struct memfile *mf);
 extern void restore_artifacts(struct memfile *mf);
 extern const char *artiname(int);
-extern struct obj *mk_artifact(struct obj *, aligntyp);
+extern struct obj *mk_artifact(struct level *lev, struct obj *, aligntyp);
 extern const char *artifact_name(const char *, short *);
 extern boolean exist_artifact(int, const char *);
 extern void artifact_exists(struct obj *, const char *, boolean);
