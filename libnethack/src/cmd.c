@@ -65,7 +65,7 @@ const struct cmd_desc cmdlist[] = {
     /* "str", "", defkey, altkey, wiz, buried, func, arg */
     {"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize,
      CMD_ARG_NONE | CMD_EXT},
-    {"annotate", "name the current level", 0, C('f'), TRUE, donamelevel,
+    {"annotate", "name the current level", 0, 0, TRUE, donamelevel,
      CMD_ARG_NONE | CMD_EXT},
     {"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE,
      doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
@@ -233,7 +233,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
-    {"wizard teleport", "(DEBUG) teleport without fail", C('r'), 0, TRUE,
+    {"wizard teleport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
      wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
     {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
      wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
