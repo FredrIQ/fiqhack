@@ -1904,6 +1904,22 @@ align_gname(aligntyp alignment)
     return gnam;
 }
 
+static const char* hallu_gods[] = {
+    "the Flying Spaghetti Monster", /* Church of the FSM */
+    "Eris", /* Discordianism */
+    "the Martians", /* every science fiction ever */
+    "Xom", /* Crawl */
+    "AnDoR dRaKoN", /* ADOM */
+    "the Central Bank of Yendor", /* economics */
+    "Tooth Fairy", /* real world(?) */
+    "Om", /* Discworld */
+    "Yawgmoth", /* Magic: the Gathering */
+    "Morgoth", /* LoTR */
+    "Cthulhu", /* Lovecraft */
+    "the Ori", /* Stargate */
+    "destiny", /* why not? */
+};
+
 /* hallucination handling for priest/minion names: select a random god
    iff character is hallucinating */
 const char *
@@ -1916,22 +1932,29 @@ halu_gname(aligntyp alignment)
         return align_gname(alignment);
 
     which = randrole();
-    switch (rn2(3)) {
-    case 0:
+    switch (rn2(9)) {
+    case 0: case 1:
         gnam = roles[which].lgod;
         break;
-    case 1:
+    case 2: case 3:
         gnam = roles[which].ngod;
         break;
-    case 2:
+    case 4: case 5:
         gnam = roles[which].cgod;
         break;
-    default:
-        gnam = 0;
-        break;  /* lint suppression */
-    }
-    if (!gnam)
+    case 6: case 7:
+        gnam = hallu_gods[rn2(sizeof hallu_gods/sizeof *hallu_gods)];
+        break;
+    case 8:
         gnam = Moloch;
+        break;
+    default:
+        impossible("rn2 broken in halu_gname?!?");
+    }
+    if (!gnam) {
+        impossible("No random god name?");
+        gnam = Moloch;
+    }
     if (*gnam == '_')
         ++gnam;
     return gnam;

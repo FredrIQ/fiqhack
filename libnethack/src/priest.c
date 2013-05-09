@@ -219,6 +219,13 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
     }
 }
 
+static const char *hallu_priest_types[] = {
+    "priestess",
+    "poohbah", /* The Mikado */
+    "priest",
+    "prior" /* Stargate */
+};
+
 /*
  * Specially aligned monsters are named specially.
  *      - aligned priests with ispriest and high priests have shrines
@@ -265,10 +272,12 @@ priestname(const struct monst *mon, char *pname)
                 strcat(pname, "renegade ");
             if (mon->data == &mons[PM_HIGH_PRIEST])
                 strcat(pname, "high ");
-            if (Hallucination)
-                strcat(pname, "poohbah ");
-            else if (mon->female)
-                strcat(pname, "priestess ");
+            if (Hallucination) {
+                strcat(pname,
+                       hallu_priest_types[rn2(sizeof hallu_priest_types /
+                                              sizeof *hallu_priest_types)]);
+                strcat(pname, " ");
+            } else if (mon->female) strcat(pname, "priestess ");
             else
                 strcat(pname, "priest ");
         }
