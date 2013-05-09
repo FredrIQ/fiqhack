@@ -1620,7 +1620,7 @@ mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
         cc.x = bcc.x = x;
         cc.y = bcc.y = y;
     } else {
-        otmp = mksobj(level, otyp, TRUE, FALSE);
+		otmp = mksobj(lev, otyp, TRUE, FALSE);
         otmp->quan = ocount;
         otmp->owt = weight(otmp);
         place_object(otmp, lev, cc.x, cc.y);

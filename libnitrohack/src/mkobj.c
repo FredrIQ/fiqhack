@@ -916,7 +916,7 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
     if (objtype != CORPSE && objtype != STATUE)
         impossible("making corpstat type %d", objtype);
     if (x == 0 && y == 0) {     /* special case - random placement */
-        otmp = mksobj(level, objtype, init, FALSE);
+        otmp = mksobj(lev, objtype, init, FALSE);
         if (otmp)
             rloco(otmp);
     } else
@@ -932,8 +932,9 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
             if (otmp2)
                 otmp = otmp2;
         }
-        /* use the corpse or statue produced by mksobj(level, ) as-is unless
-           `ptr' is non-null */
+
+        /* use the corpse or statue produced by mksobj() as-is unless `ptr' is
+           non-null */
         if (ptr) {
             int old_corpsenm = otmp->corpsenm;
 

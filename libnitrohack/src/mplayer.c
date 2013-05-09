@@ -92,17 +92,13 @@ mk_mplayer_armor(struct monst *mon, short typ)
 {
     struct obj *obj;
 
-    if (typ == STRANGE_OBJECT)
-        return;
-    obj = mksobj(level, typ, FALSE, FALSE);
-    if (!rn2(3))
-        obj->oerodeproof = 1;
-    if (!rn2(3))
-        curse(obj);
-    if (!rn2(3))
-        bless(obj);
+    if (typ == STRANGE_OBJECT) return;
+    obj = mksobj(mon->dlevel, typ, FALSE, FALSE);
+    if (!rn2(3)) obj->oerodeproof = 1;
+    if (!rn2(3)) curse(obj);
+    if (!rn2(3)) bless(obj);
     /* Most players who get to the endgame who have cursed equipment have it
-       because the wizard or other monsters cursed it, so its chances of having 
+       because the wizard or other monsters cursed it, so its chances of having
        plusses is the same as usual.... */
     obj->spe = rn2(10) ? (rn2(3) ? rn2(5) : rn1(4, 4)) : -rnd(3);
     mpickobj(mon, obj);
