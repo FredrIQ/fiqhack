@@ -1450,18 +1450,9 @@ do_class_genocide(void)
             else if (immunecnt || (buf[0] == DEF_INVISIBLE && buf[1] == '\0'))
                 pline("You aren't permitted to genocide such monsters.");
             else if (wizard && buf[0] == '*') {
-                /* to aid in topology testing; remove pesky monsters */
-                struct monst *mtmp, *mtmp2;
-
-                gonecnt = 0;
-                for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
-                    mtmp2 = mtmp->nmon;
-                    if (DEADMONSTER(mtmp))
-                        continue;
-                    mongone(mtmp);
-                    gonecnt++;
-                }
-                pline("Eliminated %d monster%s.", gonecnt, plur(gonecnt));
+                pline("Blessed genocide of '*' is deprecated. Use #levelcide "
+                      "for the same result.\n");
+                do_level_genocide();
                 return;
             } else
                 pline("That symbol does not represent any monster.");
@@ -1548,6 +1539,23 @@ do_class_genocide(void)
         }
         return;
     }
+}
+
+void
+do_level_genocide()
+{
+    /* to aid in topology testing; remove pesky monsters */
+    struct monst *mtmp, *mtmp2;
+
+    int gonecnt = 0;
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
+        mtmp2 = mtmp->nmon;
+        if (DEADMONSTER(mtmp))
+            continue;
+        mongone(mtmp);
+        gonecnt++;
+    }
+    pline("Eliminated %d monster%s.", gonecnt, plur(gonecnt));
 }
 
 #define REALLY 1
@@ -1842,7 +1850,6 @@ create_particular(void)
     } else {
         cant_create(&which, FALSE);
         whichpm = &mons[which];
-        pline("Generating %d times!\n", quan);
         for (i = 0; i < quan; i++) {
             if (monclass != MAXMCLASSES)
                 whichpm = mkclass(&u.uz, monclass, 0);

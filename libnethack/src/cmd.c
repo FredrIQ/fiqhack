@@ -25,6 +25,7 @@ static int wiz_wish(void);
 static int wiz_identify(void);
 static int wiz_map(void);
 static int wiz_genesis(void);
+static int wiz_levelcide(void);
 static int wiz_where(void);
 static int wiz_detect(void);
 static int wiz_panic(void);
@@ -235,6 +236,8 @@ const struct cmd_desc cmdlist[] = {
      wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
      wiz_level_change, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+    {"levelcide", "(DEBUG) kill all other monsters on the level", 0, 0, TRUE,
+     wiz_levelcide, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"lightsources", "(DEBUG) show mobile light sources", 0, 0, TRUE,
      wiz_light_sources, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
@@ -419,6 +422,17 @@ wiz_genesis(void)
         create_particular();
     else
         pline("Unavailable command '^G'.");
+    return 0;
+}
+
+/* #levelcide - kill all other monsters on the level */
+static int
+wiz_levelcide(void)
+{
+    if (wizard)
+        do_level_genocide();
+    else
+        pline("Unavailable command 'levelcide'.");
     return 0;
 }
 
