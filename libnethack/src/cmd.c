@@ -151,7 +151,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread,
      CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"redraw", "redraw the screen", C('r'), C('l'), TRUE, doredraw,
+    {"redraw", "redraw the screen", C('r'), 0, TRUE, doredraw,
      CMD_ARG_NONE | CMD_NOTIME},
     {"remove", "remove jewellery or accessories", 'R', 0, FALSE, doremring,
      CMD_ARG_NONE | CMD_ARG_OBJ},
