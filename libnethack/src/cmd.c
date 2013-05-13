@@ -36,6 +36,7 @@ static int wiz_level_change(void);
 static int wiz_show_seenv(void);
 static int wiz_show_vision(void);
 static int wiz_mon_polycontrol(void);
+static int wiz_togglegen(void);
 static int wiz_show_wmodes(void);
 static void count_obj(struct obj *, long *, long *, boolean, boolean);
 static void obj_chain(struct menulist *, const char *, struct obj *, long *,
@@ -258,6 +259,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"timeout", "(DEBUG) look at timeout queue", 0, 0, TRUE, wiz_timeout_queue,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+    {"togglegen", "(DEBUG) toggle monster generation", 0, 0, TRUE,
+     wiz_togglegen, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"vision", "(DEBUG) show vision array", 0, 0, TRUE, wiz_show_vision,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, wiz_wish,
@@ -487,6 +490,16 @@ wiz_mon_polycontrol(void)
     iflags.mon_polycontrol = !iflags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
           iflags.mon_polycontrol ? "on" : "off");
+    return 0;
+}
+
+/* #togglegen command - toggle monster generation on/off */
+static int
+wiz_togglegen(void)
+{
+    iflags.mon_generation = !iflags.mon_generation;
+    pline("Monster generation is %s.",
+          iflags.mon_generation ? "on" : "off");
     return 0;
 }
 

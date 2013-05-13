@@ -377,6 +377,8 @@ initoptions(void)
 {
     int i;
 
+    iflags.mon_generation = TRUE;
+
     iflags.travelcc.x = iflags.travelcc.y = -1;
     flags.warnlevel = 1;
     flags.warntype = 0L;
