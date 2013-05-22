@@ -1359,7 +1359,7 @@ extern void recharge(struct obj *, int);
 extern void forget_objects(int);
 extern int seffects(struct obj *scroll, boolean * known);
 extern void litroom(boolean, struct obj *);
-extern void do_level_genocide();
+extern void do_level_genocide(void);
 extern void do_genocide(int);
 extern void punish(struct obj *);
 extern void unpunish(void);
