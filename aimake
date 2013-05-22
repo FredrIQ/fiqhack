@@ -575,9 +575,9 @@ sub eval_config_element {
       }
       # We may want to do substitutions on the value, which is where
       # $subs comes in.
-      $el =~ s/\$([a-zA-Z0-9_]+)/defined $subs->{$1} ?
+      $el =~ s{\$([a-zA-Z0-9_]+)}{defined $subs->{$1} ?
         quote_into_shell($subs->{$1}, 0, $1 eq 'provicions' || $dont_escape) :
-          die "Unrecognised or out-of-context token '\$$1'"/ge;
+          die "Unrecognised or out-of-context token '\$$1'"}ge;
       # Source-dir-isation is a hack to get around build scripts not knowing
       # where the source is.
       $el =~ s/\$SOURCEPATH\(([^)]+)\)/
@@ -1966,9 +1966,11 @@ for my $unbuilt (sort keys %failreasons) {
   }
 }
 
+my $failed = 0;
 # Report messages to stderr.
 progress_report(7, "");
 for my $object (sort keys %{$state->{'stderrobjects'}}) {
+  $failed = 1 if obj_state($object)->{'stderrreason'} =~ /^Failed /;
   progress_report(7, obj_state($object)->{'stderrreason'});
 }
 for my $object (@dead_objects) {
@@ -1987,7 +1989,7 @@ for my $object (@dead_objects) {
 }
 
 # Save statefile on exit.
-$? = 0;
+$? = $failed;
 sighandler();
 
 __DATA__
