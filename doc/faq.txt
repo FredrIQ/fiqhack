@@ -223,7 +223,7 @@ method for installing (at the moment, AIMake is still in beta, and
 although it appears to work, in some places that appears to be mostly
 due to coincidence rather than because the code is actually correct).
 
-Before you start, you'll need to install the [libjannson library][7];
+Before you start, you'll need to install the [libjansson library][7];
 it might be in your package manager. You'll also need a Unicode-aware
 `curses` library or equivalent; `libncursesw` is the most commonly
 available such library on Linux.  The server code also requires
