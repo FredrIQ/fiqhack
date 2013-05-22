@@ -1174,16 +1174,8 @@ create_critters(int cnt, const struct permonst * mptr)
     int x, y;
     struct monst *mon;
     boolean known = FALSE;
-    boolean ask = wizard;
 
     while (cnt--) {
-        if (ask) {
-            if (create_particular()) {
-                known = TRUE;
-                continue;
-            } else
-                ask = FALSE;    /* ESC will shut off prompting */
-        }
         x = u.ux, y = u.uy;
         /* if in water, try to encourage an aquatic monster by finding and then 
            specifying another wet location */

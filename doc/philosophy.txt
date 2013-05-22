@@ -4,7 +4,7 @@ NetHack and NetHack 4.
 
 
 Flexibility
------------
+===========
 
 In most roguelikes, this is a minor or irrelevant design goal.
 (Brogue, for instance, is an awesome roguelike, but is intentionally
@@ -71,7 +71,9 @@ choice at that point), and there's probably *someone* who will try the
 run and have fun doing so; and nerfing them will make the game more
 difficult and usually not solve the underlying problem (players will
 just move to the next-best choice instead, then you'll nerf that one
-too, etc etc).
+too, etc etc). It is important, however, to cut down on newbie traps;
+if a choice is usually wrong, either it should be obviously usually
+wrong, or the game should warn people who try to take it.
 
 Finally, to allow this flexibility, the player needs to be able to
 have a meaningful influence over the development of their character.
@@ -84,13 +86,12 @@ notably different loot; players who want something in particular
 should be able to take steps to increase their chance of getting it.
 Failing to do this is quite commonly observed in roguelikes; it leads
 to a game where the player has no incentive to go in any direction but
-the one with the easiest enemies at that point in the game, and this
-is why, say, Crawl ends up with a fixed branch order that's used in
-almost all games.
+the one with the easiest enemies at that point in the game, and as
+such, the choice is mostly a false one.
 
 
 Interface
----------
+=========
 
 There are definitely games whose interest comes from the difficulty of
 instructing your character precisely in real-time (imagine bullet-hell
@@ -121,21 +122,22 @@ of traps and stairs, and the attitude of monsters.  As such, the need
 to farlook things should be very low for someone experienced at the
 game.
 
-There are also interface niceties like travel and autoexplore; unlike
-Crawl, though, I don't want to compromise the basic gameplay in order
-to make automated play work better.  It's better to make something
-like exploration interesting (with nontrivial decisions about which
-order to clear rooms in, and trade-offs between waiting to heal and
-pushing on immediately), than eliminate it from the game altogether
-and tell people to simply tap a key in order to skip past it.  The
-skill in something like exploration isn't currently working as well as
-it could be, but it's more interesting to try to improve it than just
-to give up and abandon it to just another task that can be ignored and
-left to the AI.
+There are also interface niceties like travel and autoexplore;
+however, these are implemented without compromising the corresponding
+gameplay, so it may often be the case that manual play is better than
+using the automated commands.  It's better to make something like
+exploration interesting (with nontrivial decisions about which order
+to clear rooms in, and trade-offs between waiting to heal and pushing
+on immediately), than eliminate it from the game altogether and tell
+people to simply tap a key in order to skip past it.  The skill in
+something like exploration isn't currently working as well as it could
+be, but it's more interesting to try to improve it than just to give
+up and abandon it to just another task that can be ignored and left to
+the AI.
 
 
 Balance
--------
+=======
 
 I've already covered why NetHack has to be somewhat easy for
 experienced players.  This isn't a balance issue in its own right;
@@ -155,19 +157,19 @@ cost of resources so that the game still retains tension, and also to
 avoid eliminating strategy from the game (you still have to be
 prepared, in order to be able to back out, and you're still only going
 to be able to try a difficult section every now and again).  One
-possibility would be to make it very easy to run away, as in Crawl,
-but having a standard solution to everything difficult is not
-particularly fun (and additionally, being able to easily run away from
-a problem often means that you end up never having to face it at all,
-so you miss the fun of coming back and solving it later).  Instead,
-NetHack has a range of viable escapes, ranging from full-heals to
-teleports to levports to branchports to digging through the floor to
-life-saving to Elbereth (which is fine in concept, but which currently
-tends to lead to tedium because it's simply far too powerful and
-spammable).  As such, a player exploring an area they've never been to
-before can have multiple tries until they finally figure it out, and
-yet are never completely out of danger, because they're still losing
-resources unless they press onwards.
+possibility would be to make it very easy to run away, but having a
+standard solution to everything difficult is not particularly fun (and
+additionally, being able to easily run away from a problem often means
+that you end up never having to face it at all, so you miss the fun of
+coming back and solving it later).  Instead, NetHack has a range of
+viable escapes, ranging from full-heals to teleports to levports to
+branchports to digging through the floor to life-saving to Elbereth
+(which is fine in concept, but which currently tends to lead to tedium
+because it's simply far too powerful and spammable).  As such, a
+player exploring an area they've never been to before can have
+multiple tries until they finally figure it out, and yet are never
+completely out of danger, because they're still losing resources
+unless they press onwards.
 
 This also means that it's OK if the player can somehow become
 invincible or effectively invincible; it's a fun goal for some
@@ -226,7 +228,7 @@ striking example of why this philosophy is important.
 
 
 Need (or lack of need) for spoilers
------------------------------------
+===================================
 
 There's a lot to discover in NetHack; even after playing it for years,
 and reading all the spoilers you can find, there's *still* going to be
@@ -265,7 +267,7 @@ there'd be a vague guess and a disappointing death.)
 
 
 Consistency
------------
+===========
 
 NetHack is a very large game, and there's a huge amount to remember.
 As such, consistency in the way things behave in the game helps make

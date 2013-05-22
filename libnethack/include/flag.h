@@ -121,6 +121,7 @@ struct instance_flags {
     boolean travel1;    /* first travel step */
     coord travelcc;     /* coordinates for travel_cache */
     boolean mon_polycontrol;    /* debug: control monster polymorphs */
+    boolean mon_generation;     /* debug: control monster generaion */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
 
