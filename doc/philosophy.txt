@@ -4,7 +4,7 @@ NetHack and NetHack 4.
 
 
 Flexibility
------------
+===========
 
 In most roguelikes, this is a minor or irrelevant design goal.
 (Brogue, for instance, is an awesome roguelike, but is intentionally
@@ -91,7 +91,7 @@ such, the choice is mostly a false one.
 
 
 Interface
----------
+=========
 
 There are definitely games whose interest comes from the difficulty of
 instructing your character precisely in real-time (imagine bullet-hell
@@ -137,7 +137,7 @@ the AI.
 
 
 Balance
--------
+=======
 
 I've already covered why NetHack has to be somewhat easy for
 experienced players.  This isn't a balance issue in its own right;
@@ -228,7 +228,7 @@ striking example of why this philosophy is important.
 
 
 Need (or lack of need) for spoilers
------------------------------------
+===================================
 
 There's a lot to discover in NetHack; even after playing it for years,
 and reading all the spoilers you can find, there's *still* going to be
@@ -267,7 +267,7 @@ there'd be a vague guess and a disappointing death.)
 
 
 Consistency
------------
+===========
 
 NetHack is a very large game, and there's a huge amount to remember.
 As such, consistency in the way things behave in the game helps make
