@@ -342,7 +342,7 @@ tactical game about dungeon exploration.  (Probably a minigame
 collection would work better.)
 
 
-What do all the commands do / How do I do <action>?
+What do all the commands do / How do I do *action*?
 ---------------------------------------------------
 
 Press `?` while playing for a list of commands.  As is common with
