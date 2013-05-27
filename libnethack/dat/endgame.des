@@ -129,6 +129,11 @@ FLAGS: noteleport,hardfloor,shortsighted
 # equally meaningful if the player can see or not.
 MESSAGE: "What a strange feeling!"
 MESSAGE: "You notice that there is no gravity here."
+# An air plane, get it?
+HALLUMSG: "You hear a voice say:"
+HALLUMSG: "'We have now reached our cruising altitude of 30,000 ft."
+HALLUMSG: "Please remain in your seat with your seatbelt fastened when the seatbelt sign is illuminated."
+HALLUMSG: "Thank you for flying Yendorian Airlines.'"
 GEOMETRY:center,center
 # The player lands, upon arrival, in the
 # lower-left area.  The location of the
