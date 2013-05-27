@@ -25,6 +25,7 @@ static int wiz_wish(void);
 static int wiz_identify(void);
 static int wiz_map(void);
 static int wiz_genesis(void);
+static int wiz_levelcide(void);
 static int wiz_where(void);
 static int wiz_detect(void);
 static int wiz_panic(void);
@@ -35,6 +36,7 @@ static int wiz_level_change(void);
 static int wiz_show_seenv(void);
 static int wiz_show_vision(void);
 static int wiz_mon_polycontrol(void);
+static int wiz_togglegen(void);
 static int wiz_show_wmodes(void);
 static void count_obj(struct obj *, long *, long *, boolean, boolean);
 static void obj_chain(struct menulist *, const char *, struct obj *, long *,
@@ -151,7 +153,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread,
      CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"redraw", "redraw the screen", C('r'), C('l'), TRUE, doredraw,
+    {"redraw", "redraw the screen", C('r'), 0, TRUE, doredraw,
      CMD_ARG_NONE | CMD_NOTIME},
     {"remove", "remove jewellery or accessories", 'R', 0, FALSE, doremring,
      CMD_ARG_NONE | CMD_ARG_OBJ},
@@ -233,14 +235,14 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
-    {"wizard teleport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
-     wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
-    {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
-     wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
      wiz_level_change, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+    {"levelcide", "(DEBUG) kill all other monsters on the level", 0, 0, TRUE,
+     wiz_levelcide, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"lightsources", "(DEBUG) show mobile light sources", 0, 0, TRUE,
      wiz_light_sources, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+    {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
+     wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
     {"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE,
      wiz_mon_polycontrol, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"panic", "(DEBUG) test panic routine (fatal to game)", 0, 0, TRUE,
@@ -257,10 +259,14 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"timeout", "(DEBUG) look at timeout queue", 0, 0, TRUE, wiz_timeout_queue,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+    {"togglegen", "(DEBUG) toggle monster generation", 0, 0, TRUE,
+     wiz_togglegen, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"vision", "(DEBUG) show vision array", 0, 0, TRUE, wiz_show_vision,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, wiz_wish,
      CMD_ARG_NONE | CMD_DEBUG},
+    {"wizard teleport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
+     wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, wiz_show_wmodes,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
 
@@ -422,6 +428,17 @@ wiz_genesis(void)
     return 0;
 }
 
+/* #levelcide - kill all other monsters on the level */
+static int
+wiz_levelcide(void)
+{
+    if (wizard)
+        do_level_genocide();
+    else
+        pline("Unavailable command 'levelcide'.");
+    return 0;
+}
+
 /* ^O command - display dungeon layout */
 static int
 wiz_where(void)
@@ -473,6 +490,16 @@ wiz_mon_polycontrol(void)
     iflags.mon_polycontrol = !iflags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
           iflags.mon_polycontrol ? "on" : "off");
+    return 0;
+}
+
+/* #togglegen command - toggle monster generation on/off */
+static int
+wiz_togglegen(void)
+{
+    iflags.mon_generation = !iflags.mon_generation;
+    pline("Monster generation is %s.",
+          iflags.mon_generation ? "on" : "off");
     return 0;
 }
 
