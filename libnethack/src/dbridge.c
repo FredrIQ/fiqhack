@@ -34,7 +34,10 @@ is_pool(struct level *lev, int x, int y)
     if (!isok(x, y))
         return FALSE;
     ltyp = lev->locations[x][y].typ;
-    if (ltyp == POOL || ltyp == WATER || is_moat(lev, x, y))
+    /* The ltyp == MOAT is not redundant to is_moat due to drawbridges and the
+     * Juiblex level. There is probably a better way to express this.
+     */
+    if (ltyp == POOL || ltyp == WATER || ltyp == MOAT || is_moat(lev, x, y))
         return TRUE;
     return FALSE;
 }
