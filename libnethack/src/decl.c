@@ -196,6 +196,7 @@ struct histevent *histevents;
 
 unsigned long long turntime;
 int current_timezone, replay_timezone;
+unsigned int timer_id = 1;
 
 /* If one game (A) is started and then saved, followed by game B with different
  * birth_options, after which game A is restored, then A must run with it's
@@ -267,6 +268,7 @@ init_data(void)
     branch_id = 0;
     histevents = NULL;
     histcount = 0;
+    timer_id = 1;
 
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;
