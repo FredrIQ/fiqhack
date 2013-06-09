@@ -4178,7 +4178,7 @@ resist(struct monst *mtmp, char oclass, int damage, int domsg)
 void
 makewish(void)
 {
-    char buf[BUFSZ];
+    char buf[BUFSZ], origbuf[BUFSZ];
     struct obj *otmp, nothing;
     int tries = 0;
 
@@ -4187,8 +4187,11 @@ makewish(void)
         pline("You may wish for an object.");
 retry:
     getlin("For what do you wish?", buf);
+
     if (buf[0] == '\033')
         buf[0] = 0;
+    strcpy(origbuf, buf);
+
     /* 
      *  Note: if they wished for and got a non-object successfully,
      *  otmp == &zeroobj.  That includes gold, or an artifact that
@@ -4210,7 +4213,7 @@ retry:
            wishless conduct */
         return;
     } else
-        historic_event(FALSE, "wished for \"%s\".", buf);
+        historic_event(FALSE, "wished for \"%s\".", origbuf);
 
     /* KMH, conduct */
     u.uconduct.wishes++;
