@@ -1,0 +1,18 @@
+NetHack 4 is licensed under the the NetHack General Public License
+(see libnethack/dat/license for the license terms). The license is
+similar to old versions of the GPL (both the GPL and the NHGPL were
+based on the same license, the BISON general public license).
+
+Additionally, some of the newer files in the repository offer a choice
+of license; they can be distributed under the terms of the NHGPL, but
+additionally, can also be distributed under the terms of the GNU
+General Public License (or GPL), version 2 or later. If a file offers
+this choice of license, that fact will be specified in a comment in
+the file itself. If you plan to redistribute or modify these
+dual-licensed files, you can follow the terms of either or both
+licenses, at your option. You can find a copy of version 2 of the GPL
+as libnethack/dat/gpl.
+
+Please note:
+
+NetHack 4 DOES NOT COME WITH ANY SORT OF WARRANTY.
