@@ -826,7 +826,7 @@ void
 cancel_item(struct obj *obj)
 {
     boolean u_ring = (obj == uleft) || (obj == uright);
-    boolean holy = (obj->otyp == POT_WATER && obj->blessed);
+    boolean holy = (obj->otyp == POT_WATER && (obj->blessed || obj->cursed));
 
     switch (obj->otyp) {
     case RIN_GAIN_STRENGTH:
