@@ -323,6 +323,7 @@ replay_end(void)
     for (i = 0; saved_options[i].name; i++)
         nh_set_option(saved_options[i].name, saved_options[i].value, FALSE);
     free_optlist(saved_options);
+    saved_options = NULL;
 
     mfree(&diff_base);
 
@@ -1298,7 +1299,6 @@ nh_view_replay_start(int fd, struct nh_window_procs * rwinprocs,
                         &u.initgend, &u.initalign);
     replay_setup_windowprocs(rwinprocs);
 
-    initoptions();
     replay_run_cmdloop(TRUE, TRUE, FALSE);      /* (re)set options */
     nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign,
                   playmode);
@@ -1433,9 +1433,9 @@ void
 nh_view_replay_finish(void)
 {
     replay_restore_windowprocs();
-    replay_end();
     program_state.viewing = FALSE;
     program_state.game_running = FALSE;
+    replay_end();
     freedynamicdata();
     free_checkpoints();
     logfile = -1;

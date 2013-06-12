@@ -1251,9 +1251,6 @@ static boolean timer_is_local(timer_element *);
 static int maybe_write_timer(struct memfile *mf, struct level *lev, int range,
                              boolean write_it);
 
-/* ordered timer list */
-static unsigned int timer_id = 1;
-
 /* If defined, then include names when printing out the timer queue */
 #define VERBOSE_TIMER
 

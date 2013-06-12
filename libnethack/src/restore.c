@@ -293,16 +293,24 @@ loadfruitchn(struct memfile *mf)
 {
     struct fruit *flist = NULL, *fnext;
     unsigned int count;
+    boolean first = TRUE;
 
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
+    /* We must take care to load front-to-back as that's the save order. */
     while (count--) {
-        fnext = newfruit();
-        mread(mf, fnext->fname, sizeof (fnext->fname));
+        if (first) {
+          flist = newfruit();
+          fnext = flist;
+        } else {
+          fnext->nextf = newfruit();
+          fnext = fnext->nextf;
+        }
+
+        mread(mf, fnext->fname, sizeof(fnext->fname));
         fnext->fid = mread32(mf);
-        fnext->nextf = flist;
-        flist = fnext;
     }
+    fnext->nextf = 0;
     return flist;
 }
 
