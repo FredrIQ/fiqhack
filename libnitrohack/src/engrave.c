@@ -353,17 +353,27 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
              xchar e_type)
 {
     struct engr *ep;
+    size_t engr_len;
+
+    if (!s || !*s)
+        return;
+
+    engr_len = strlen(s);
+    if (engr_len > BUFSZ - 1)
+        engr_len = BUFSZ - 1;
 
     if ((ep = engr_at(lev, x, y)) != 0)
         del_engr(ep, lev);
-    ep = newengr(strlen(s) + 1);
-    memset(ep, 0, sizeof (struct engr) + strlen(s) + 1);
+    ep = newengr(engr_len + 1);
+    memset(ep, 0, sizeof(struct engr) + engr_len + 1);
+
     ep->nxt_engr = lev->lev_engr;
     lev->lev_engr = ep;
     ep->engr_x = x;
     ep->engr_y = y;
     ep->engr_txt = (char *)(ep + 1);
-    strcpy(ep->engr_txt, s);
+    strncpy(ep->engr_txt, s, engr_len);
+    ep->engr_txt[engr_len] = '\0';
     while (ep->engr_txt[0] == ' ')
         ep->engr_txt++;
     /* engraving Elbereth shows wisdom */
@@ -371,7 +381,7 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
         exercise(A_WIS, TRUE);
     ep->engr_time = e_time;
     ep->engr_type = e_type > 0 ? e_type : rnd(N_ENGRAVE - 1);
-    ep->engr_lth = strlen(s) + 1;
+    ep->engr_lth = engr_len + 1;
 }
 
 /* delete any engraving at location <x,y> */
@@ -1211,6 +1221,8 @@ rest_engravings(struct memfile *mf, struct level *lev)
         lth = mread32(mf);
         if (!lth)       /* no more engravings */
             return;
+		if (lth > BUFSZ)
+		    panic("rest_engravings: engraving length too long! (%d)", lth);
 
         ep = newengr(lth);
         ep->engr_lth = lth;
