@@ -1212,7 +1212,7 @@ free_engravings(struct level *lev)
 void
 rest_engravings(struct memfile *mf, struct level *lev)
 {
-    struct engr *ep;
+	struct engr *ep, *eprev, *enext;
     unsigned lth;
 
     mfmagic_check(mf, ENGRAVE_MAGIC);
@@ -1220,7 +1220,7 @@ rest_engravings(struct memfile *mf, struct level *lev)
     while (1) {
         lth = mread32(mf);
         if (!lth)       /* no more engravings */
-            return;
+		    break;
 		if (lth > BUFSZ)
 		    panic("rest_engravings: engraving length too long! (%d)", lth);
 
@@ -1240,6 +1240,17 @@ rest_engravings(struct memfile *mf, struct level *lev)
            the player must have finished engraving to be able to move again */
         ep->engr_time = moves;
     }
+
+	/* engravings loaded above are reversed, so put it back in the right order */
+	ep = lev->lev_engr;
+	eprev = NULL;
+	while (ep) {
+		enext = ep->nxt_engr;
+		ep->nxt_engr = eprev;
+		eprev = ep;
+		ep = enext;
+	}
+	lev->lev_engr = eprev;
 }
 
 void
