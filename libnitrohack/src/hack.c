@@ -1081,6 +1081,24 @@ domove(schar dx, schar dy, schar dz)
 
     u_wipe_engr(rnd(5));
 
+	/* Don't allow running, travel or autoexplore when stunned or confused. */
+	if (Stunned || Confusion) {
+	    const char *stop_which = NULL;
+	    if (flags.travel) {
+		if (iflags.autoexplore)
+		    stop_which = "explore";
+		else
+		    stop_which = "travel";
+	    } else if (flags.run) {
+		stop_which = "run";
+	    }
+	    if (stop_which) {
+		pline("Your head is spinning too badly to %s.", stop_which);
+		nomul(0, NULL);
+		return 0;
+	    }
+	}
+
     if (flags.travel) {
         if (iflags.autoexplore) {
             if (Blind) {
@@ -1091,11 +1109,6 @@ domove(schar dx, schar dy, schar dz)
             if (In_sokoban(&u.uz)) {
                 pline
                     ("You somehow know the layout of this place without exploring.");
-                nomul(0, NULL);
-                return 0;
-            }
-            if (Stunned || Confusion) {
-                pline("Your head is spinning too badly to explore.");
                 nomul(0, NULL);
                 return 0;
             }
@@ -2385,8 +2398,7 @@ unmul(const char *msg_override)
 {
     boolean previously_unconscious = unconscious();
 
-    multi = 0;  /* caller will usually have done this already */
-    memset(multi_txt, 0, BUFSZ);
+    nomul(0);
     if (msg_override)
         nomovemsg = msg_override;
     else if (!nomovemsg)
@@ -2394,7 +2406,6 @@ unmul(const char *msg_override)
     if (*nomovemsg)
         pline(nomovemsg);
     nomovemsg = 0;
-    u.usleep = 0;
     if (afternmv)
         (*afternmv) ();
     afternmv = 0;

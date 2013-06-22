@@ -860,10 +860,9 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
             if (!domove(u.dx, u.dy, 0)) {
-                /* Don't use a move when travelling into an obstacle.
-                 * Handle this the same way as do_command(). */
+		/* Don't use a move when travelling into an obstacle. */
                 flags.move = FALSE;
-                multi = 0;
+		nomul(0, NULL);
             }
         } else
             do_command(saved_cmd, multi, FALSE, arg);
