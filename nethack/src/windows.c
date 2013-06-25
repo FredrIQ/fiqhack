@@ -14,7 +14,6 @@
  */
 extern int _nc_unicode_locale(void);
 #else
-# define set_escdelay(x)
 # define _nc_unicode_locale() (1)       /* ... as a macro, for example ... */
 #endif
 
@@ -22,7 +21,6 @@ WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 struct gamewin *firstgw, *lastgw;
 int orig_cursor;
 const char quit_chars[] = " \r\n\033";
-static SCREEN *curses_scr;
 
 struct nh_window_procs curses_windowprocs = {
     curses_pause,
@@ -53,15 +51,22 @@ init_curses_ui(void)
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");
 
-    curses_scr = newterm(NULL, stdout, stdin);
-    set_term(curses_scr);
+    /* set the ESCDELAY via the environment before initscr is called; this
+       means that it will be ignored by curses implementations that don't
+       support it */
+    setenv("ESCDELAY", "20", 0);
+    if (!initscr()) {
+        fprintf(stderr, "Could not initialise the UI, exiting...\n");
+        endwin();
+        exit(1);
+    }
 
     if (LINES < 24 || COLS < COLNO) {
         fprintf(stderr,
                 "Sorry, your terminal is too small for NetHack 4. Current: (%x, %x)\n",
                 COLS, LINES);
         endwin();
-        exit(0);
+        exit(1);
     }
 
     noecho();
@@ -71,13 +76,12 @@ init_curses_ui(void)
     leaveok(basewin, TRUE);
     orig_cursor = curs_set(1);
     keypad(basewin, TRUE);
-    set_escdelay(20);
 
     init_nhcolors();
     ui_flags.playmode = MODE_NORMAL;
     ui_flags.unicode = _nc_unicode_locale();
 
-    /* with PDCurses/Win32 stdscr is not NULL before newterm runs, which caused
+    /* with PDCurses/Win32 stdscr is not NULL before initscr runs, which caused
        crashes. So basewin is a copy of stdscr which is known to be NULL before
        curses is inited. */
     basewin = stdscr;
@@ -103,7 +107,6 @@ exit_curses_ui(void)
     cleanup_sidebar(TRUE);
     curs_set(orig_cursor);
     endwin();
-    delscreen(curses_scr);
     basewin = NULL;
 }
 
@@ -258,7 +261,7 @@ resize_game_windows(void)
         sidebar = NULL;
     }
 
-    /* ncurses might have automatically changed the window sizes in resizeterm
+    /* ncurses might have automatically changed the window sizes in resize_term
        while trying to do the right thing. Of course no size other than COLNO x 
        ROWNO is ever right for the map... */
     wresize(msgwin, ui_flags.msgheight, COLNO);
