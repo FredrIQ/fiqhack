@@ -1564,13 +1564,12 @@ print_branch(struct menulist *menu, int dnum, int lower_bound, int upper_bound,
                 lchoices->lev[lchoices->idx] = br->end1.dlevel;
                 lchoices->dgn[lchoices->idx] = br->end1.dnum;
                 lchoices->playerlev[lchoices->idx] = depth(&br->end1);
-
-                add_menuitem(menu, lchoices->idx + 1, buf, lchoices->menuletter,
-                             FALSE);
-                if (lchoices->menuletter == 'z')
-                    lchoices->menuletter = 'A';
-                else
-                    lchoices->menuletter++;
+                
+                add_menuitem(menu, lchoices->idx + 1, buf,
+                             lchoices->menuletter, FALSE);
+                if (lchoices->menuletter == 'z') lchoices->menuletter = 'A';
+                else if (lchoices->menuletter == 'Z') lchoices->menuletter = 'a';
+                else lchoices->menuletter++;
                 lchoices->idx++;
             } else
                 add_menutext(menu, buf);
@@ -1646,12 +1645,19 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
                 }
                 lchoices.playerlev[lchoices.idx] = depth(&slev->dlevel);
 
+<<<<<<< HEAD
                 add_menuitem(&menu, lchoices.idx + 1, buf, lchoices.menuletter,
                              FALSE);
                 if (lchoices.menuletter == 'z')
                     lchoices.menuletter = 'A';
                 else
                     lchoices.menuletter++;
+=======
+		add_menuitem(&menu, lchoices.idx + 1, buf, lchoices.menuletter, FALSE);
+		if (lchoices.menuletter == 'z') lchoices.menuletter = 'A';
+		else if (lchoices.menuletter == 'Z') lchoices.menuletter = 'a';
+		else lchoices.menuletter++;
+>>>>>>> a429cad... CS1182: Wrap from Z to a in level teleport menu
                 lchoices.idx++;
             } else
                 add_menutext(&menu, buf);
