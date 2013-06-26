@@ -260,11 +260,11 @@ Alternatively, for AIMake:
 
     mkdir build
     cd build
-    ../aimake -i /home/nethack4 .. # or wherever you want
+    ../aimake -i /home/username/nethack4 .. # or wherever you want
 
 These install procedures will install into your home directory, and as
 such, you don't need root for any part of the process.  (Look in
-`/home/nethack4` for the resulting compiled binary.)
+`/home/username/nethack4` for the resulting compiled binary.)
 
 
 Is there a graphical/tiles version?
