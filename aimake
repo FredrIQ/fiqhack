@@ -198,10 +198,13 @@ sub merge_config {
 # leads to a bit of a problem reading it. The solution: use Perl's
 # parser, and the Safe module to allow only specification of constants.
 # (rv2sv is there so that variables can be used to avoid repetition.)
+# TODO: rv2gv is required on Perl 5.18 but it's not obvious why. Find
+# out why.
 my $configsafe = new Safe;
 $configsafe->permit_only(qw/null stub scalar pushmark const undef
                             list qr negate lineseq leaveeval anonlist
-                            anonhash rv2sv sassign nextstate padany/);
+                            anonhash rv2sv sassign nextstate padany
+                            rv2gv/);
 $! = 0;
 my $config;
 my $configdata;
