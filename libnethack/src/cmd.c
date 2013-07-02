@@ -136,6 +136,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"name type", "name a type of objects", 0, 0, TRUE, do_tname,
      CMD_ARG_NONE | CMD_ARG_OBJ},
+    {"offer", "offer a sacrifice to the gods", 0, 0, FALSE,
+     dosacrifice, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
     {"open", "open, close or unlock a door", 'o', 0, FALSE, doopen,
      CMD_ARG_NONE | CMD_ARG_DIR},
     {"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview,
