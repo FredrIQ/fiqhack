@@ -117,25 +117,6 @@ static void init_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
 static void dostop(void);
 
-
-static const char *
-curses_keyname(int key)
-{
-    static char knbuf[16];
-    const char *kname;
-
-    if (key == ' ')
-        return "SPACE";
-
-    /* if uncursed doesn't know a key, keyname() returns NULL.  */
-    kname = keyname(key);
-    if (kname && strcmp(kname, "UNKNOWN KEY"))
-        return kname;
-    snprintf(knbuf, sizeof (knbuf), "KEY_#%d", key);
-    return knbuf;
-}
-
-
 static struct nh_cmd_desc *
 find_command(const char *cmdname)
 {
@@ -292,7 +273,7 @@ get_command(int *count, struct nh_cmd_arg *arg)
         }
 
         if (!cmd) {
-            sprintf(line, "Bad command: '%s'.", curses_keyname(key));
+            sprintf(line, "Bad command: '%s'.", friendly_keyname(key));
             curses_print_message(player.moves, line);
         }
     } while (!cmd);
@@ -418,9 +399,9 @@ show_whatdoes(void)
 
     if (!keymap[key])
         snprintf(buf, BUFSZ, "'%s' is not bound to any command.",
-                 curses_keyname(key));
+                 friendly_keyname(key));
     else
-        snprintf(buf, BUFSZ, "'%s': %s - %s", curses_keyname(key),
+        snprintf(buf, BUFSZ, "'%s': %s - %s", friendly_keyname(key),
                  keymap[key]->name, keymap[key]->desc);
     curses_msgwin(buf);
 }
@@ -776,7 +757,7 @@ add_keylist_command(struct nh_cmd_desc *cmd, struct nh_menuitem *item, int id)
                 keys[kl++] = ' ';
                 keys[kl] = '\0';
             }
-            strncat(keys, curses_keyname(i), BUFSZ - kl - 1);
+            strncat(keys, friendly_keyname(i), BUFSZ - kl - 1);
             keys[BUFSZ - 1] = '\0';
         }
     }
@@ -799,7 +780,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         icount = 0;
         for (i = 0; i < KEY_MAX; i++) {
             if (keymap[i] == cmd) {
-                sprintf(buf, "delete key %s", curses_keyname(i));
+                sprintf(buf, "delete key %s", friendly_keyname(i));
                 add_menu_item(items, size, icount, i, buf, 0, FALSE);
             }
         }

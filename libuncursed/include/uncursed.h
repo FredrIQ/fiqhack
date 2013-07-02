@@ -297,6 +297,9 @@ extern char *key_name(wchar_t); /* not wchar_t* :( */
 extern int delay_output(int);
 /* unimplemented: getwin, putwin, use_env, filter, nofilter, flushinp */
 
+/* and something extra of our own */
+extern char *friendly_keyname(int);
+
 #define KEY_SHIFT     2048
 #define KEY_ALT       4096
 #define KEY_CTRL      8192

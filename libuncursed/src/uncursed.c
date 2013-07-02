@@ -771,6 +771,7 @@ char *keyname(int c) {
         KEYCHECK(BACKSPACE); KEYCHECK(ESCAPE); KEYCHECK(ENTER);
         KEYCHECK(MOUSE); KEYCHECK(RESIZE); KEYCHECK(PRINT); KEYCHECK(INVALID);
         KEYCHECK(HANGUP);
+#undef KEYCHECK
     default:
         /* It might be an alt-combination */
         if (c < 256) {
@@ -798,6 +799,58 @@ char *key_name(wchar_t c) {
     if (c < 256) return 0; /* according to documentation */
     return keyname(c);
 }
+
+char *friendly_keyname(int c) {
+    /* Output the name of a key in the way that will be most familiar to the
+       user. Assumes ASCII (although a lot more would break otherwise...) */
+    static char keybuf[80];
+    *keybuf = 0;
+    if (c & KEY_ALT)          {c &= ~KEY_ALT;   strcat(keybuf, "Alt-");   }
+    if (c >= 128 && c <= 256) {c -= 128;        strcat(keybuf, "Meta-");  }
+    if (c & KEY_SHIFT)        {c &= ~KEY_SHIFT; strcat(keybuf, "Shift-"); }
+    if (c >= 'A' && c <= 'Z') {c += 'a' - 'A';  strcat(keybuf, "Shift-"); }
+    if (c & KEY_CTRL)         {c &= ~KEY_CTRL;  strcat(keybuf, "Ctrl-");  }
+    if (c < 32)               {c += 'A' - 1;    strcat(keybuf, "Ctrl-");  }
+    if (c >= 33 && c <= 126)  { /* printable and visible */
+        sprintf(keybuf + strlen(keybuf), "%c", c);
+        return keybuf;
+    }
+    switch (c) {
+#define KEYNAME(k,n) case KEY_##k: strcat(keybuf, #n); break;
+        KEYNAME(HOME,Home); KEYNAME(IC,Ins); KEYNAME(DC,Del);
+        KEYNAME(END,End); KEYNAME(PPAGE,PgUp); KEYNAME(NPAGE,PgDn);
+        KEYNAME(UP,Up); KEYNAME(DOWN,Down); KEYNAME(RIGHT,Right);
+        KEYNAME(LEFT,Left); KEYNAME(BREAK,Break); KEYNAME(BTAB,Shift-Tab);
+        KEYNAME(F1,F1); KEYNAME(F2,F2); KEYNAME(F3,F3); KEYNAME(F4,F4);
+        KEYNAME(F5,F5); KEYNAME(F6,F6); KEYNAME(F7,F7); KEYNAME(F8,F8);
+        KEYNAME(F9,F9); KEYNAME(F10,F10); KEYNAME(F11,F11); KEYNAME(F12,F12);
+        KEYNAME(F13,F13); KEYNAME(F14,F14); KEYNAME(F15,F15); KEYNAME(F16,F16);
+        KEYNAME(F17,F17); KEYNAME(F18,F18); KEYNAME(F19,F19); KEYNAME(F20,F20);
+        KEYNAME(ENTER,Enter); KEYNAME(PF1,F1/NumLock); KEYNAME(PF2,F2/NumPlus);
+        KEYNAME(PF3,F3/NumTimes); KEYNAME(PF4,F4/NumDivide);
+        KEYNAME(A1,NumHome); KEYNAME(A2,NumUp); KEYNAME(A3,NumPgUp);
+        KEYNAME(B1,NumLeft); KEYNAME(B2,Num5); KEYNAME(B3,NumRight);
+        KEYNAME(C1,NumEnd); KEYNAME(C2,NumDown); KEYNAME(C3,NumPgDn);
+        KEYNAME(D1,NumIns); KEYNAME(D3,NumDel);
+        KEYNAME(NUMPLUS,NumPlus); KEYNAME(NUMMINUS,NumMinus);
+        KEYNAME(NUMTIMES,NumTimes); KEYNAME(NUMDIVIDE,NumDivide);
+        KEYNAME(BACKSPACE,BkSp); KEYNAME(ESCAPE,Escape);
+        KEYNAME(MOUSE,Mouse); KEYNAME(RESIZE,Resize);
+        KEYNAME(PRINT,PrtSc); KEYNAME(INVALID,Invalid);
+        KEYNAME(HANGUP,Hangup);
+    case ' ': strcat(keybuf, "Space"); break;
+    default:
+        /* We can synthesize a key name out of the codes we were actually
+           sent. */
+        if ((c & KEY_KEYPAD) == KEY_KEYPAD) {
+            sprintf(keybuf + strlen(keybuf), "Unknown%c", (c & 255)+256);
+        } else {
+            sprintf(keybuf + strlen(keybuf), "Unknown%d", c & 255);
+        }
+    }
+    return keybuf;
+}
+
 int delay_output(int ms) { uncursed_hook_delay(ms); return OK; }
 
 /* manual page 3ncurses delch */
