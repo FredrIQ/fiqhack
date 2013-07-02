@@ -146,7 +146,7 @@ draw_menu(struct gamewin *gw)
             for (j = 0; j <= col; j++) {
                 wprintw(mdat->content, "%-*s",
                         mdat->colpos[j + 1] - mdat->colpos[j] - 1, colstrs[j]);
-                wmove(mdat->content, i, mdat->colpos[j + 1]);
+                if (j < col) wmove(mdat->content, i, mdat->colpos[j + 1]);
         } else
             waddstr(mdat->content, caption);
 
@@ -367,7 +367,7 @@ curses_display_menu_core(struct nh_menuitem *items, int icount,
             break;
 
             /* cancel */
-        case KEY_ESC:
+        case KEY_ESCAPE:
             cancelled = TRUE;
             break;
 
@@ -834,7 +834,7 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
             break;
 
             /* cancel */
-        case KEY_ESC:
+        case KEY_ESCAPE:
             cancelled = TRUE;
             break;
 
@@ -910,7 +910,7 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
             break;
 
             /* edit selection count */
-        case KEY_BACKDEL:
+        case KEY_BACKSPACE:
             mdat->selcount /= 10;
             if (mdat->selcount == 0)
                 mdat->selcount = -1;    /* -1: select all */

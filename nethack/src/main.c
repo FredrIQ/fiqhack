@@ -268,7 +268,7 @@ mainmenu(void)
         wattron(basewin, A_BOLD | COLOR_PAIR(4));
         for (i = 0; i < logoheight; i++) {
             wmove(basewin, i, (COLS - strlen(nhlogo[0])) / 2);
-            waddstr(basewin, nhlogo[i]);
+            if (nhlogo[i]) waddstr(basewin, nhlogo[i]);
         }
         wattroff(basewin, A_BOLD | COLOR_PAIR(4));
         mvwaddstr(basewin, LINES - 3, 0, copybanner[0]);
@@ -478,7 +478,7 @@ process_args(int argc, char *argv[])
             break;
 
         case 'Z':
-            ui_flags.no_stop = true;
+            ui_flags.no_stop = 1;
             break;
 
         default:

@@ -138,7 +138,7 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
     draw_bar(15, pi->en, pi->enmax, FALSE);
     wprintw(statuswin, " %c%ld S:%ld T:%ld", pi->coinsym, pi->gold, pi->score,
             pi->moves);
-    wclrtoeol(statuswin);
+    if (getcurx(statuswin) > 0) wclrtoeol(statuswin);
 
     /* status */
     j = getmaxx(statuswin) + 1;
@@ -170,7 +170,7 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         wmove(statuswin, 0, getmaxx(statuswin) - strlen(buf));
     }
     wprintw(statuswin, "%s", buf);
-    wclrtoeol(statuswin);
+    if (getcurx(statuswin) > 0) wclrtoeol(statuswin);
 
     /* abilities (in threeline mode) "In:18 Wi:18 Ch:18" = 17 chars */
     if (threeline) {
