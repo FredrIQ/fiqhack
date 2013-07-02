@@ -57,8 +57,9 @@ typedef unsigned int wint_t;
     }                                                           \
     t w##f(WINDOW *win)
     
-#define ERR (-1)
-#define OK    0
+#define ERR        (-1)
+#define OK           0
+#define KEY_CODE_YES 2
 typedef int uncursed_bool;
 
 typedef unsigned long attr_t;
@@ -179,7 +180,7 @@ UNCURSED_ANDWINDOW(int, echochar, const chtype);
 #define ACS_DEGREE   0xf8
 #define ACS_DIAMOND  0xf9
 #define ACS_GEQUAL   0xf2
-#define ACS_HLINE    0xf3
+#define ACS_HLINE    0xc4
 #define ACS_LANTERN  0xe9
 #define ACS_LARROW   0xdd
 #define ACS_LEQUAL   0xf3
@@ -322,7 +323,7 @@ extern int delay_output(int);
    home) are all translated to other codes for terminal compatibility. */
 
 #define KEY_BREAK     (KEY_NONDEC | 'P') /* Pause/Break */
-#define KEY_BTAB      (KEY_NONDEC | 'Z') /* Backtab */
+#define KEY_BTAB      (KEY_KEYPAD | 'Z') /* Backtab */
 
 /* Next problem: The VT100 has no function keys F1-F5 (at least, that are
    accessible via a program), but it does have keys PF1-PF4, just above the
@@ -354,6 +355,8 @@ extern int delay_output(int);
 #define KEY_F20       (KEY_FUNCTION | 34)
 
 /* Numeric keypad keys */
+#define KEY_ENTER     (KEY_KEYPAD | 'M')  /* Numeric keypad Enter, not return */
+
 /* These may well be F1-F4 (say, on xterm) rather than PF1-PF4
    (NumLock, Num+, Num*, Num/). */
 #define KEY_PF1       (KEY_KEYPAD | 'P')
@@ -376,8 +379,10 @@ extern int delay_output(int);
 #define KEY_C3        (KEY_KEYPAD | 's')  /* Num PgDn */
 #define KEY_D1        (KEY_KEYPAD | 'p')  /* Num Ins */
 #define KEY_D3        (KEY_KEYPAD | 'n')  /* Num Del */
-#define KEY_A4        (KEY_KEYPAD | 'l')  /* Num + */
-/* TODO: Numpad Enter (there isn't one on my laptop to test with */
+#define KEY_NUMPLUS   (KEY_KEYPAD | 'l')  /* Num + */
+#define KEY_NUMMINUS  (KEY_KEYPAD | 'm')  /* Num - */
+#define KEY_NUMTIMES  (KEY_KEYPAD | 'j')  /* Num * */
+#define KEY_NUMDIVIDE (KEY_KEYPAD | 'o')  /* Num / */
 
 /* There isn't a KEY_TAB or KEY_RETURN, probably because terminals send them as
    control-I and control-M. We do have two special keys that are aliases to
@@ -396,8 +401,12 @@ extern int delay_output(int);
    be equivalent to control-\.) */
 #define KEY_PRINT     (KEY_NONDEC | 3)
 /* Returned by uncursed_hook_getkeyorcodepoint if the user presses no keys
-   before timeout. */
+   before timeout. (As such, it's always used as KEY_SILENCE + KEY_BIAS.) */
 #define KEY_SILENCE   (KEY_NONDEC | 4)
+/* What we get if the terminal sends us a malformed key code. */
+#define KEY_INVALID   (KEY_NONDEC | 5)
+/* We're being asked to exit in a hurry (SIGHUP, SIGTERM). */
+#define KEY_HANGUP    (KEY_NONDEC | 6)
 
 #define KEY_MAX       (KEY_NONDEC | KEY_CTRL | KEY_ALT | KEY_SHIFT | 255)
 
@@ -414,7 +423,7 @@ extern WINDOW *initscr(void);
 extern int endwin(void);
 extern uncursed_bool isendwin(void);
 extern int LINES;
-extern int COLUMNS;
+extern int COLS;
 
 /* manual page 3ncurses window */
 extern WINDOW *newwin(int, int, int, int);
@@ -441,16 +450,16 @@ UNCURSED_ANDMVWINDOW(int, get_wch, wint_t *);
 int unget_wch(wchar_t);
 
 /* manual page 3ncurses getyx, legacy; these are all macros */
-#define getyx(win, yy, xx) do {(yy) = (win)->y; (xx) = (win)->x} while(0)
+#define getyx(win, yy, xx) do {(yy) = (win)->y; (xx) = (win)->x;} while(0)
 #define getcury(win) ((win)->y)
 #define getcurx(win) ((win)->x)
 /* getparyx unimplemented */
-#define getbegyx(win, yy, xx) do {(yy) = (win)->scry; (xx) = (win)->scrx} while(0)
+#define getbegyx(win, yy, xx) do {(yy) = (win)->scry; (xx) = (win)->scrx;} while(0)
 #define getbegy(win) ((win)->scry)
 #define getbegx(win) ((win)->scrx)
-#define getmaxyx(win, yy, xx) do {(yy) = (win)->maxy; (xx) = (win)->maxy} while(0)
-#define getmaxy(win) ((win)->maxy)
-#define getmaxx(win) ((win)->maxx)
+#define getmaxyx(win, yy, xx) do {(yy) = (win)->maxy+1; (xx) = (win)->maxx+1;} while(0)
+#define getmaxy(win) ((win)->maxy+1)
+#define getmaxx(win) ((win)->maxx+1)
 
 /* manual page 3ncurses getcchar */
 extern int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);

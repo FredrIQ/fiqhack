@@ -78,8 +78,10 @@ int init_pair(uncursed_color pairnum,
             default_b = pair_content_list[0][1];
         }
         while (pair_content_alloc_count < pairnum) {
-            pair_content_list[pair_content_alloc_count][0] = default_f;
-            pair_content_list[pair_content_alloc_count][1] = default_b;
+            if (pair_content_alloc_count >= 0) {
+                pair_content_list[pair_content_alloc_count][0] = default_f;
+                pair_content_list[pair_content_alloc_count][1] = default_b;
+            }
             pair_content_alloc_count++;
         }
     }
@@ -471,7 +473,7 @@ UNCURSED_ANDWINDOWDEF(int, border, chtype ls; chtype rs; chtype ts; chtype bs;
         mvwaddch(win, 0, i, ts);
         mvwaddch(win, win->maxy, i, bs);
     }
-    for (i = 1; i < win->maxx; i++) {
+    for (i = 1; i < win->maxy; i++) {
         mvwaddch(win, i, 0, ls);
         mvwaddch(win, i, win->maxx, rs);
     }
@@ -506,10 +508,11 @@ UNCURSED_ANDMVWINDOWDEF(int, vline, chtype ch; int n, ch, n) {
     int sx = win->x;
     int sy = win->y;
     while (n > 0) {
-        if (win->x == win->maxx) n = 1;
+        if (win->y == win->maxy) n = 1;
+        int ny = win->y + 1;
         waddch(win, ch);
-        wmove(win, win->x-1, win->y+1);
         n--;
+        if (n > 0) wmove(win, ny, sx);
     }
     win->x = sx;
     win->y = sy;
@@ -536,7 +539,7 @@ UNCURSED_ANDWINDOWDEF(int, border_set, const cchar_t * ls; const cchar_t * rs;
         mvwadd_wch(win, 0, i, ts);
         mvwadd_wch(win, win->maxy, i, bs);
     }
-    for (i = 1; i < win->maxx; i++) {
+    for (i = 1; i < win->maxy; i++) {
         mvwadd_wch(win, i, 0, ls);
         mvwadd_wch(win, i, win->maxx, rs);
     }
@@ -613,14 +616,14 @@ int overwrite(const WINDOW *from, const WINDOW *to) {
                    min(from->maxx, to->maxx), 0);
 }
 int copywin(const WINDOW *from, const WINDOW *to,
-            int from_minx, int from_miny, int to_minx, int to_miny,
-            int to_maxx, int to_maxy, int skip_blanks) {
+            int from_miny, int from_minx, int to_miny, int to_minx,
+            int to_maxy, int to_maxx, int skip_blanks) {
     int i, j;
-    for (i = to_minx; i <= to_maxx; i++) {
-        for (j = to_miny; j <= to_maxy; j++) {
-            cchar_t *f = from->chararray + i + j * from->stride;
-            cchar_t *t = to->chararray + i - to_minx + from_minx +
-                (j - to_miny + from_miny) * to->stride;
+    for (j = to_miny; j <= to_maxy; j++) {
+        for (i = to_minx; i <= to_maxx; i++) {
+            cchar_t *f = from->chararray + i - to_minx + from_minx +
+                (j - to_miny + from_miny) * from->stride;
+            cchar_t *t = to->chararray + i + j * to->stride;
             if (skip_blanks && f->chars[0] == 32) continue;
             *t = *f;
         }
@@ -641,8 +644,8 @@ UNCURSED_ANDWINDOWVDEF(int, clear) {
 UNCURSED_ANDWINDOWVDEF(int, clrtobot) {
     wclrtoeol(win);
     int j, i;
-    for (j = win->y+1; j < win->maxy; j++) {
-        for (i = 0; i < win->maxx; i++) {
+    for (j = win->y+1; j <= win->maxy; j++) {
+        for (i = 0; i <= win->maxx; i++) {
             win->chararray[i + j*win->stride].attr = win->current_attr;
             win->chararray[i + j*win->stride].chars[0] = 32;
             win->chararray[i + j*win->stride].chars[1] = 0;
@@ -653,13 +656,21 @@ UNCURSED_ANDWINDOWVDEF(int, clrtobot) {
 UNCURSED_ANDWINDOWVDEF(int, clrtoeol) {
     int maxpos = win->maxx + win->y * win->stride;
     int curpos = win->x + win->y * win->stride;
-    while (curpos < maxpos) {
+    while (curpos <= maxpos) {
         win->chararray[curpos].attr = win->current_attr;
         win->chararray[curpos].chars[0] = 32;
         win->chararray[curpos].chars[1] = 0;
         curpos++;
     }
     return OK;
+}
+static void wunclear(WINDOW *win) {
+    int j, i;
+    for (j = 0; j <= win->maxy; j++) {
+        for (i = 0; i <= win->maxx; i++) {
+            win->chararray[i + j*win->stride].attr = -1;
+        }
+    }
 }
 
 /* manual page 3ncurses outopts */
@@ -692,7 +703,7 @@ char *unctrl(char d) {
 wchar_t *wunctrl(wchar_t c) {
     static wchar_t s[5] = {(wchar_t)'M', (wchar_t)'-'};
     wchar_t *r = s+2;
-    if (c > 127 && c < 160) { c -= 128; r = s; }
+    if (c >= 128 && c <= 255) { c -= 128; r = s; }
     if (c == 127) { c = '?'; r = s; }
     if (c < 32) { s[2] = '^'; s[3] = c+64; s[4] = 0; }
     else {s[2] = c; s[3] = 0;}
@@ -734,7 +745,8 @@ char *keyname(int c) {
        key that's pressed. Unlike curses keyname, it will construct a name for
        any keypress.
     */
-    static char keybuf[80] = "KEY_";
+    static char keybuf[80];
+    strcpy(keybuf, "KEY_");
     if (c & KEY_CTRL)  strcat(keybuf, "CTRL_");
     if (c & KEY_ALT)   strcat(keybuf, "ALT_");
     if (c & KEY_SHIFT) strcat(keybuf, "SHIFT_");
@@ -751,13 +763,29 @@ char *keyname(int c) {
         KEYCHECK(F15); KEYCHECK(F16); KEYCHECK(F17); KEYCHECK(F18);
         KEYCHECK(F19); KEYCHECK(F20);
         KEYCHECK(PF1); KEYCHECK(PF2); KEYCHECK(PF3); KEYCHECK(PF4);
-        KEYCHECK(A1); KEYCHECK(A2); KEYCHECK(A3); KEYCHECK(A4);
+        KEYCHECK(A1); KEYCHECK(A2); KEYCHECK(A3);
         KEYCHECK(B1); KEYCHECK(B2); KEYCHECK(B3);
         KEYCHECK(C1); KEYCHECK(C2); KEYCHECK(C3);
-        KEYCHECK(D1); KEYCHECK(D3);
-        KEYCHECK(BACKSPACE); KEYCHECK(ESCAPE);
-        KEYCHECK(MOUSE); KEYCHECK(RESIZE); KEYCHECK(PRINT);
-    default: return NULL;
+        KEYCHECK(D1); KEYCHECK(D3); KEYCHECK(NUMDIVIDE);
+        KEYCHECK(NUMPLUS); KEYCHECK(NUMMINUS); KEYCHECK(NUMTIMES);
+        KEYCHECK(BACKSPACE); KEYCHECK(ESCAPE); KEYCHECK(ENTER);
+        KEYCHECK(MOUSE); KEYCHECK(RESIZE); KEYCHECK(PRINT); KEYCHECK(INVALID);
+        KEYCHECK(HANGUP);
+    default:
+        /* It might be an alt-combination */
+        if (c < 256) {
+            if (c >= 32 && c <= 126 && !strcmp(keybuf, "KEY_ALT_")) 
+                sprintf(keybuf+strlen(keybuf)-1, "|'%c'", c & 255);
+            else
+                sprintf(keybuf+strlen(keybuf)-1, "|%d", c & 255);
+        } else
+        /* We can synthesize a key name out of the codes we were actually
+           sent. */
+        if ((c & KEY_KEYPAD) == KEY_KEYPAD) {
+            sprintf(keybuf + strlen(keybuf), "KEYPAD|'%c'", c & 255);
+        } else {
+            sprintf(keybuf + strlen(keybuf), "FUNCTION|%d", c & 255);
+        }
     }
     return keybuf;
 }
@@ -765,11 +793,10 @@ char *key_name(wchar_t c) {
     /* For some reason, this returns a narrow string not a wide string, and as
        such, we can't return wide characters at all, so we just return NULL.
        (TODO: add a wide string version for uncursed). Wide character key codes
-       are like narrow character key codes, but 0x10ff00 higher to allow for
-       the hugely greater number of codepoints. */
-    if (c >= 0x110000) return keyname(c - 0x10ff00);
-    if (c < 256) return unctrl(c);
-    return 0;
+       are the same as narrow character key codes. */
+    if (c < 128) return unctrl(c);
+    if (c < 256) return 0; /* according to documentation */
+    return keyname(c);
 }
 int delay_output(int ms) { uncursed_hook_delay(ms); return OK; }
 
@@ -817,11 +844,11 @@ UNCURSED_ANDWINDOWDEF(int, insdelln, int n, n) {
 WINDOW *stdscr = 0;
 static WINDOW *save_stdscr = 0;
 static WINDOW *disp_win = 0; /* WINDOW drawn onto by doupdate */
-int LINES, COLUMNS;
+int LINES, COLS;
 
 WINDOW *initscr(void) {
     if (save_stdscr || stdscr) return 0;
-    uncursed_hook_init(&LINES, &COLUMNS);
+    uncursed_hook_init(&LINES, &COLS);
     nout_win = newwin(0, 0, 0, 0);
     if (!nout_win) return 0;
     disp_win = newwin(0, 0, 0, 0);
@@ -840,12 +867,21 @@ uncursed_bool isendwin(void) {
     return !stdscr;
 }
 
+/* should only be called immediately prior to returning KEY_RESIZE
+   TODO: actually expand the screen */
+void uncursed_rhook_setsize(int h, int w) {
+    LINES = h;
+    COLS = w;
+}
+
 /* manual page 3ncurses window */
 WINDOW *newwin(int h, int w, int t, int r) {
     WINDOW *win = malloc(sizeof (WINDOW));
     if (!win) return 0;
+    if (h == 0) h = LINES;
+    if (w == 0) w = COLS;
     win->chararray = malloc(w*h * sizeof *(win->chararray));
-    if (!win->chararray) return 0;
+    if (!win->chararray) { free(win); return 0; }
     win->current_attr = 0;
     win->y = win->x = 0;
     win->maxx = w-1;
@@ -875,6 +911,7 @@ WINDOW *subwin(WINDOW *parent, int h, int w, int t, int r) {
     win->scrx = r;
     win->timeout = -1;
     win->clear_on_refresh = 0;
+    win->childcount = 0;
     return win;
 }
 WINDOW *derwin(WINDOW *parent, int h, int w, int t, int r) {
@@ -894,7 +931,7 @@ int delwin(WINDOW *win) {
 
 int mvwin(WINDOW *win, int y, int x) {
     if (win->maxy + y >= LINES || y < 0) return ERR;
-    if (win->maxx + x >= COLUMNS || x < 0) return ERR;
+    if (win->maxx + x >= COLS || x < 0) return ERR;
     win->scry = y;
     win->scrx = x;
     return OK;
@@ -935,20 +972,20 @@ int wnoutrefresh(WINDOW *win) {
     if (win->clear_on_refresh) nout_win->clear_on_refresh = 1;
     win->clear_on_refresh = 0;
     copywin(win, nout_win, 0, 0, win->scry, win->scrx,
-            win->maxy, win->maxx, 0);
+            win->scry+win->maxy, win->scrx+win->maxx, 0);
     return wmove(nout_win, win->scry+win->y, win->scrx+win->x);
 }
 int doupdate(void) {
     int i, j;
     if (nout_win->clear_on_refresh) {
-        werase(disp_win);
+        wunclear(disp_win);
         uncursed_hook_fullredraw();
     }
     nout_win->clear_on_refresh = 0;
     cchar_t *p = nout_win->chararray;
     cchar_t *q = disp_win->chararray;
-    for (i = 0; i <= nout_win->maxx; i++) {
-        for (j = 0; j <= nout_win->maxy; j++) {
+    for (j = 0; j <= nout_win->maxy; j++) {
+        for (i = 0; i <= nout_win->maxx; i++) {
             if (p->attr != q->attr)
                 uncursed_hook_update(j, i);
             int k;
@@ -961,15 +998,27 @@ int doupdate(void) {
         }
     }
     uncursed_hook_positioncursor(nout_win->y, nout_win->x);
+    uncursed_hook_flush();
     return OK;
 }
 void uncursed_rhook_updated(int y, int x) {
     disp_win->chararray[x + y * disp_win->stride] =
         nout_win->chararray[x + y * nout_win->stride];
 }
+int uncursed_rhook_needsupdate(int y, int x) {
+    cchar_t *p = nout_win->chararray + x + y * nout_win->stride;
+    cchar_t *q = disp_win->chararray + x + y * disp_win->stride;
+    if (p->attr != q->attr) return 1;
+    int k;
+    for (k = 0; k < CCHARW_MAX; k++) {
+        if (p->chars[k] != q->chars[k]) return 1;
+        if (p->chars[k] == 0) return 0;
+    }
+    return 0;
+}
 
 int uncursed_rhook_color_at(int y, int x) {
-    attr_t a = disp_win->chararray[x + y * disp_win->stride].attr;
+    attr_t a = nout_win->chararray[x + y * nout_win->stride].attr;
     int p = PAIR_NUMBER(a);
     uncursed_color f, b;
     pair_content(p, &f, &b);
@@ -986,14 +1035,14 @@ int uncursed_rhook_color_at(int y, int x) {
     return f | (b << 5) | (!!(a & A_UNDERLINE) << 10);
 }
 char uncursed_rhook_cp437_at(int y, int x) {
-    wchar_t wc = disp_win->chararray[x + y * disp_win->stride].chars[0];
+    wchar_t wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
     int i;
     for (i = 0; i < 256; i++)
         if (cp437[i] == wc) return i;
     return 0xa8; /* an upside-down question mark */
 }
 char *uncursed_rhook_utf8_at(int y, int x) {
-    wchar_t *c = disp_win->chararray[x + y * disp_win->stride].chars;
+    wchar_t *c = nout_win->chararray[x + y * nout_win->stride].chars;
     /* The maximum number of UTF-8 bytes for one codepoint is 4. */
     static char utf8[CCHARW_MAX * 4 + 1];
     char *r = utf8;
@@ -1008,7 +1057,7 @@ char *uncursed_rhook_utf8_at(int y, int x) {
             *r++ = 0x80 | ((*c >> 6) & 0x3f);
             *r++ = 0x80 | ((*c >> 0) & 0x3f);
         } else if (*c < 0x110000) {
-            *r++ = 0xe0 | ((*c >> 18) & 0x3f);
+            *r++ = 0xf0 | ((*c >> 18) & 0x3f);
             *r++ = 0x80 | ((*c >> 12) & 0x3f);
             *r++ = 0x80 | ((*c >> 6) & 0x3f);
             *r++ = 0x80 | ((*c >> 0) & 0x3f);
@@ -1017,6 +1066,7 @@ char *uncursed_rhook_utf8_at(int y, int x) {
             *r++ = 0xef; *r++ = 0xbf; *r++ = 0xbd;
         }
         itercount++;
+        c++;
         if (itercount == CCHARW_MAX) break;
     }
     *r = 0;
@@ -1040,16 +1090,22 @@ UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
     /* When we have multiple possible key codes for certain keys, pick one
        and merge them together. */
     if (*rv >= 0x110000) {
-        *rv -= 0x10ff00;
+        *rv -= KEY_BIAS;
+        if (*rv == KEY_SILENCE) return ERR;
         int mods = *rv & (KEY_SHIFT | KEY_ALT | KEY_CTRL);
         *rv &= ~mods;
+        /* We can actually distinguish numpad Home from main keyboard Home
+           in some terminals that don't distinguish numpad PgUp from main
+           keyboard PgUp. This is, however, not particularly useful, so we
+           just merge them. */
         if (*rv == (KEY_KEYPAD | 'H')) *rv = KEY_HOME;
         if (*rv == (KEY_KEYPAD | 'F')) *rv = KEY_END;
         if (*rv == (KEY_FUNCTION | 15)) *rv = KEY_F5;
         if (*rv == (KEY_KEYPAD | 'E')) *rv = KEY_B2;
         if (*rv == (KEY_KEYPAD | 'G')) *rv = KEY_B2;
+        if (*rv == (KEY_KEYPAD | 'k')) *rv = KEY_NUMPLUS;
         *rv |= mods;
-        *rv += 0x10ff00;
+        return KEY_CODE_YES;
     }
     return OK;
 }
@@ -1071,8 +1127,10 @@ int setcchar(cchar_t *c, const wchar_t *s, attr_t attr,
              short pairnum, void *unused) {
     (void) unused;
     int ccount = 0;
-    while (s[ccount] != 0 && ccount != CCHARW_MAX)
-        c->chars[ccount] = s[ccount];
+    while (s[ccount] != 0 && ccount != CCHARW_MAX) {
+        c->chars[ccount] = s[ccount]; ccount++;
+    }
+    if (ccount < CCHARW_MAX) c->chars[ccount] = 0;
     c->attr = attr & ~(COLOR_PAIR(PAIR_NUMBER(attr)));
     c->attr |= COLOR_PAIR(pairnum);
     return OK;
@@ -1082,18 +1140,24 @@ int setcchar(cchar_t *c, const wchar_t *s, attr_t attr,
 UNCURSED_ANDMVWINDOWVDEF(int, getch) {
     wint_t w;
     wrefresh(win);
-    if (wget_wch(win, &w) == ERR) return ERR;
-    if (w >= 0x110000) return w - 0x10ff00; /* keypress */
-    if (w < 128) return w;
-    int i;
-    for (i = 128; i < 256; i++) {
-        if ((wint_t)cp437[i] == w) return i;
-    }
-    return 0xa8; /* an upside-down question mark */
+    int r = wget_wch(win, &w);
+    if (r == ERR) return ERR;
+    if (r == KEY_CODE_YES) return (int)w; /* keypress */
+    /* Interpret the input as Latin-1, not CP437. This is to handle the well
+       known "meta = add 128 to the character code" rule. (This works both with
+       terminals that add 128 in Latin-1/CP437, and terminals that add 128 in
+       Unicode for some reason, because the platform-specific code assumes
+       Latin-1 on input if it gets unexpected input with the high bit set.) */
+    if (w < 256) return w;
+    return 0x94; /* CANCEL CHARACTER */
 }
 
 /* manual page 3ncurses move */
 UNCURSED_ANDWINDOWDEF(int, move, int y; int x, y, x) {
+    if (y > win->maxy || x > win->maxx || y < 0 || x < 0) {
+        abort();
+        return ERR;
+    }
     win->y = y;
     win->x = x;
     return OK;
@@ -1142,7 +1206,7 @@ int vw_printw(WINDOW *win, const char *fmt, va_list vl) {
     int ccount = vsnprintf(bf, 5, fmt, vl);
     bf = realloc(bf, ccount+1);
     if (!bf) return ERR;
-    vsnprintf(bf, 5, fmt, vl2);
+    vsnprintf(bf, ccount+1, fmt, vl2);
     char *r = bf;
     while (*r) waddch(win, *r++);
     free(bf);

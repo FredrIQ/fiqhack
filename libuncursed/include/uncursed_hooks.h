@@ -9,18 +9,24 @@
  */
 
 #include <stddef.h>
-typedef unsigned int wint_t;
+typedef unsigned int wint_t; /* TODO: fails on 16-bit systems, perhaps we should
+                                include limits.h to be able to get the correct
+                                semantics of "wchar_t or int, whichever is
+                                larger" */
 
 /* Calls from uncursed.c into an implementation library */
 extern void uncursed_hook_beep(void);
 extern void uncursed_hook_delay(int); /* milliseconds */
 
+#define KEY_BIAS (0x10ff00) /* add this to a key to show it isn't a codepoint */
 extern void uncursed_hook_rawsignals(int);          /* 0 or 1 */
 extern wint_t uncursed_hook_getkeyorcodepoint(int); /* timeout in ms */
 
 extern void uncursed_hook_setcursorsize(int);       /* 0 to 2 */
 extern void uncursed_hook_positioncursor(int, int); /* y, x */
 
+/* Note: _init can be called multiple times, with _exit in between; also
+   _init is allowed to exit the program in case of disaster */
 extern void uncursed_hook_init(int *, int *); /* rows, columns */
 extern void uncursed_hook_exit(void);
 
@@ -32,6 +38,7 @@ extern void uncursed_hook_exit(void);
    the entire screen, the information it needs is available.) */
 extern void uncursed_hook_update(int, int);  /* y, x to update */
 extern void uncursed_hook_fullredraw(void);  /* redraw from scratch */
+extern void uncursed_hook_flush(void);       /* called at the end of updates */
 
 /* Calls from implementation libraries into uncursed.c */
 extern char uncursed_rhook_cp437_at(int, int); /* y, x */
@@ -39,4 +46,7 @@ extern char *uncursed_rhook_utf8_at(int, int); /* y, x; static buffer */
 /* This returns fg|bg<<5|ul<<10; i.e. color and underlining information.
    Default color is given as 16, not as -1. */
 extern int uncursed_rhook_color_at(int, int);  /* y, x */
+extern int uncursed_rhook_needsupdate(int, int); /* y, x */
+
 extern void uncursed_rhook_updated(int, int);  /* y, x */
+extern void uncursed_rhook_setsize(int, int);  /* rows, columns */
