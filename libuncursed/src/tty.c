@@ -557,8 +557,7 @@ void uncursed_hook_update(int y, int x) {
         /* In addition to resending color, resend the other font information
            too. */
         set_charset(y, x);
-    }
-    if (!uncursed_rhook_needsupdate(y, x)) return;
+    } else if (!uncursed_rhook_needsupdate(y, x)) return;
     if (last_y != y || last_x == -1) {
         fprintf(ofile, CSI "%d;%dH", y+1, x+1);
     } else if (last_x > x) {
