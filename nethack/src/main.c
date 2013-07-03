@@ -55,7 +55,7 @@ static struct nh_menuitem mainmenu_items_noclient[] = {
     {EXITGAME, MI_NORMAL, "quit", 'q', 'x'}
 };
 
-const char *nhlogo_small[12] = {        /* created using pbmtoascii */
+const char *nhlogo_small[11] = {        /* created using pbmtoascii */
     "                                                       oo               _d#,   ",
     "MMM,   MM            oo    MM     MM                   MM             ,HMMP'   ",
     "MMMM   MM            MM    MM     MM                   MM           ,HMMMM     ",
