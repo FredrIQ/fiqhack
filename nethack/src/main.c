@@ -88,16 +88,6 @@ const char *nhlogo_large[14] = {
 
 #ifdef UNIX
 
-/* the terminal went away - do not pass go, etc. */
-static void
-sighup_handler(int signum)
-{
-    if (!ui_flags.done_hup++)
-        nh_exit_game(EXIT_FORCE_SAVE);
-    nh_lib_exit();
-    exit(0);
-}
-
 static void
 sigint_handler(int signum)
 {
@@ -110,14 +100,7 @@ sigint_handler(int signum)
 static void
 setup_signals(void)
 {
-    signal(SIGHUP, sighup_handler);
-    signal(SIGTERM, sighup_handler);
-# ifdef SIGXCPU
-    signal(SIGXCPU, sighup_handler);
-# endif
     signal(SIGQUIT, SIG_IGN);
-
-
     signal(SIGINT, sigint_handler);
 }
 

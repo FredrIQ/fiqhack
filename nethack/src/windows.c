@@ -75,11 +75,7 @@ init_curses_ui(void)
 
     init_nhcolors();
     ui_flags.playmode = MODE_NORMAL;
-    ui_flags.unicode = _nc_unicode_locale();
-
-    /* with PDCurses/Win32 stdscr is not NULL before initscr runs, which caused
-       crashes. So basewin is a copy of stdscr which is known to be NULL before
-       curses is inited. */
+    ui_flags.unicode = 1; /* uncursed will back-translate if needed */
     basewin = stdscr;
 }
 
@@ -373,7 +369,6 @@ handle_resize(void)
 }
 
 
-#define META(c)  ((c)|0x80)     /* bit 8 */
 int
 nh_wgetch(WINDOW * win)
 {
@@ -382,46 +377,25 @@ nh_wgetch(WINDOW * win)
     doupdate(); /* required by pdcurses, noop for ncurses */
     do {
         key = wgetch(win);
-#ifdef UNIX
+        if (key == KEY_HANGUP) {
+            nh_exit_game(EXIT_FORCE_SAVE);
+            nh_lib_exit();
+            exit(0);
+        }
+
         if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {
             /* we're running in raw mode, so ctrl+c doesn't work. for wizard we 
                emulate this to allow breaking into gdb. */
-            kill(0, SIGINT);
+            raise(SIGINT);
             key = 0;
         }
-#endif
 
         if (key == KEY_RESIZE) {
             key = 0;
-#ifdef PDCURSES
-            resize_term(0, 0);
-#endif
             handle_resize();
         }
-#if !defined(WIN32)
-        /* "hackaround": some terminals / shells / whatever don't directly pass
-           on any combinations with the alt key. Instead these become ESC,<key>
-           Try to reverse that here... */
-        if (key == KEY_ESCAPE) {
-            int key2;
-
-            nodelay(win, TRUE);
-            key2 = wgetch(win); /* check for a following letter */
-            nodelay(win, FALSE);
-
-            if ('a' <= key2 && key2 <= 'z')
-                key = META(key2);
-        }
-#endif
 
     } while (!key);
-
-#if defined(PDCURSES)
-    /* PDCurses provides exciting new names for the enter key. Translate these
-       here, instead of checking for them all over the place. */
-    if (key == PADENTER)
-        key = '\r';
-#endif
 
     return key;
 }
