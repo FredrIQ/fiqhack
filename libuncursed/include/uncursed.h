@@ -76,8 +76,9 @@ typedef struct WINDOW {
     int maxy, maxx; /* maximum legal coordinate, e.g. maxy = 1 means height 2 */
     int stride;     /* (y,x) is at chararray[x+y*stride] */
     int scry, scrx; /* top, right on screen */
-    int childcount;
-    struct WINDOW *parent; /* so parents aren't freed while children exist */
+    struct WINDOW *parent;  /* so parents aren't freed while children exist */
+    struct WINDOW *child;   /* for resizing */
+    struct WINDOW *sibling; /* ditto */
     cchar_t *chararray;
     int timeout;
     uncursed_bool clear_on_refresh;

@@ -222,7 +222,10 @@ static void platform_specific_exit(void) {
     tcsetattr(fileno(ofile), TCSADRAIN, &to_orig);
 }
 
-static char *KEYSTRING_HANGUP, *KEYSTRING_RESIZE, *KEYSTRING_INVALID;
+static char keystrings[3]; /* used to create unique pointers as sentinels */
+static char *KEYSTRING_HANGUP = keystrings+0,
+            *KEYSTRING_RESIZE = keystrings+1,
+            *KEYSTRING_INVALID = keystrings+2;
 static int inited_when_stopped = 0;
 
 static char* platform_specific_getkeystring(int timeout_ms) {
@@ -478,7 +481,12 @@ wint_t uncursed_hook_getkeyorcodepoint(int timeout_ms) {
     last_color = -1; /* send a new SGR on the next redraw */
     char *ks = platform_specific_getkeystring(timeout_ms);
     if (ks == KEYSTRING_HANGUP) return KEY_HANGUP + KEY_BIAS;
-    if (ks == KEYSTRING_RESIZE) return KEY_RESIZE + KEY_BIAS;
+    if (ks == KEYSTRING_RESIZE) {
+        int h, w;
+        record_and_measure_terminal_size(&h, &w);
+        uncursed_rhook_setsize(h, w);
+        return KEY_RESIZE + KEY_BIAS;
+    }
     if (ks == KEYSTRING_INVALID) return KEY_INVALID + KEY_BIAS;
     if (!ks) return KEY_SILENCE + KEY_BIAS;
     if (!*ks) return KEY_SILENCE + KEY_BIAS; /* should never happen */

@@ -620,7 +620,11 @@ int copywin(const WINDOW *from, const WINDOW *to,
             int to_maxy, int to_maxx, int skip_blanks) {
     int i, j;
     for (j = to_miny; j <= to_maxy; j++) {
+        if (j < 0 || j - to_miny + from_miny < 0) continue;
+        if (j > to->maxy || j - to_miny + from_miny > from->maxy) continue;
         for (i = to_minx; i <= to_maxx; i++) {
+            if (i < 0 || i - to_minx + from_minx < 0) continue;
+            if (i > to->maxx || i - to_minx + from_minx > from->maxx) continue;
             cchar_t *f = from->chararray + i - to_minx + from_minx +
                 (j - to_miny + from_miny) * from->stride;
             cchar_t *t = to->chararray + i + j * to->stride;
@@ -914,17 +918,20 @@ int endwin(void) {
     save_stdscr = stdscr;
     stdscr = 0;
     uncursed_hook_exit();
-    return touchwin(stdscr);
+    return touchwin(save_stdscr);
 }
 uncursed_bool isendwin(void) {
     return !stdscr;
 }
 
-/* should only be called immediately prior to returning KEY_RESIZE
-   TODO: actually expand the screen */
+/* should only be called immediately prior to returning KEY_RESIZE */
 void uncursed_rhook_setsize(int h, int w) {
     LINES = h;
     COLS = w;
+    wresize(stdscr, h, w);
+    wresize(nout_win, h, w);
+    wresize(disp_win, h, w);
+    wunclear(disp_win); /* we need to touch every character */
 }
 
 /* manual page 3ncurses window */
@@ -943,7 +950,8 @@ WINDOW *newwin(int h, int w, int t, int r) {
     win->scry = t;
     win->scrx = r;
     win->parent = 0;
-    win->childcount = 0;
+    win->child = 0;
+    win->sibling = 0;
     win->timeout = -1; /* input in this WINDOW is initially blocking */
     win->clear_on_refresh = 0;
     werase(win);
@@ -952,8 +960,10 @@ WINDOW *newwin(int h, int w, int t, int r) {
 WINDOW *subwin(WINDOW *parent, int h, int w, int t, int r) {
     WINDOW *win = malloc(sizeof (WINDOW));
     if (!win) return 0;
-    parent->childcount++;
     win->parent = parent;
+    win->child = 0;
+    win->sibling = win->parent->child;
+    win->parent->child = win;
     win->chararray = parent->chararray;
     win->current_attr = 0;
     win->y = win->x = 0;
@@ -964,7 +974,6 @@ WINDOW *subwin(WINDOW *parent, int h, int w, int t, int r) {
     win->scrx = r;
     win->timeout = -1;
     win->clear_on_refresh = 0;
-    win->childcount = 0;
     return win;
 }
 WINDOW *derwin(WINDOW *parent, int h, int w, int t, int r) {
@@ -975,9 +984,17 @@ WINDOW *derwin(WINDOW *parent, int h, int w, int t, int r) {
 
 int delwin(WINDOW *win) {
     if (!win) return ERR;
-    if (win->childcount) return ERR;
-    if (win->parent) win->parent->childcount--;
-    else free(win->chararray);
+    if (win->child) return ERR;
+    if (win->parent) {
+        /* Remove this window from its family of children. */
+        WINDOW *prevsibling = win->parent->child;
+        while (prevsibling->sibling != win && prevsibling != win) {
+            prevsibling = prevsibling->sibling;
+        }
+        if (prevsibling != win)
+            prevsibling->sibling = win->sibling;
+        if (win->parent->child == win) win->parent->child = win->sibling;
+    } else free(win->chararray);
     free(win);
     return OK;
 }
@@ -1022,6 +1039,14 @@ int wredrawln(WINDOW *win, int first, int num) {
     return wrefresh(win);
 }
 int wnoutrefresh(WINDOW *win) {
+    if (!win) {
+        if (stdscr || !save_stdscr) return ERR;
+        win = stdscr = save_stdscr; save_stdscr = 0;
+        wunclear(disp_win);
+        win->clear_on_refresh = 1;
+        uncursed_hook_init(&LINES, &COLS);
+        uncursed_rhook_setsize(LINES, COLS);
+    }
     if (win->clear_on_refresh) nout_win->clear_on_refresh = 1;
     win->clear_on_refresh = 0;
     copywin(win, nout_win, 0, 0, win->scry, win->scrx,
@@ -1208,7 +1233,6 @@ UNCURSED_ANDMVWINDOWVDEF(int, getch) {
 /* manual page 3ncurses move */
 UNCURSED_ANDWINDOWDEF(int, move, int y; int x, y, x) {
     if (y > win->maxy || x > win->maxx || y < 0 || x < 0) {
-        abort();
         return ERR;
     }
     win->y = y;
@@ -1278,13 +1302,34 @@ UNCURSED_ANDWINDOWDEF(int, scrl, int n, n) {
 
 /* manual page 3ncurses wresize */
 int wresize(WINDOW *win, int newh, int neww) {
-    if (win->childcount) return ERR; /* should we try to implement this? */
-    if (win->parent)     return ERR; /* or this? this one's easier */
+    /* TODO: When dealing with subwindows, we currently don't take the case
+       into account where the subwindows don't fit inside the parent window.
+       It's not clear what we should do if they're resized outside the
+       parent, or the parent is resized to not enclose the child. */
+    if (win->parent) {
+        win->maxy = newh-1;
+        win->maxx = neww-1;
+        return 0;
+    }
     WINDOW *temp = newwin(newh, neww, win->scry, win->scrx);
     if (!temp) return ERR;
     overwrite(win, temp);
-    free(win->chararray);
+    cchar_t *old_chararray = win->chararray;
+    WINDOW *oldchild = win->child;
     *win = *temp;
+    win->child = oldchild;
     free(temp);
+    if (win->child) {
+        WINDOW *w;
+        /* Make the shared memory inside the derived windows point at the main
+           window. */
+        for (w = win->child; w; w = w->sibling) {
+            int offset = w->chararray - old_chararray;
+            offset = (offset % w->stride) + (offset / w->stride) * win->stride;
+            w->chararray = win->chararray + offset;
+            w->stride = win->stride;
+        }
+    }
+    free(old_chararray);
     return OK;
 }
