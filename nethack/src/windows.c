@@ -14,7 +14,6 @@
  */
 extern int _nc_unicode_locale(void);
 #else
-# define set_escdelay(x)
 # define _nc_unicode_locale() (1)       /* ... as a macro, for example ... */
 #endif
 
@@ -22,7 +21,6 @@ WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 struct gamewin *firstgw, *lastgw;
 int orig_cursor;
 const char quit_chars[] = " \r\n\033";
-static SCREEN *curses_scr;
 
 struct nh_window_procs curses_windowprocs = {
     curses_pause,
@@ -53,15 +51,18 @@ init_curses_ui(void)
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");
 
-    curses_scr = newterm(NULL, stdout, stdin);
-    set_term(curses_scr);
+    if (!initscr()) {
+        fprintf(stderr, "Could not initialise the UI, exiting...\n");
+        endwin();
+        exit(1);
+    }
 
     if (LINES < 24 || COLS < COLNO) {
         fprintf(stderr,
                 "Sorry, your terminal is too small for NetHack 4. Current: (%x, %x)\n",
                 COLS, LINES);
         endwin();
-        exit(0);
+        exit(1);
     }
 
     noecho();
@@ -71,29 +72,11 @@ init_curses_ui(void)
     leaveok(basewin, TRUE);
     orig_cursor = curs_set(1);
     keypad(basewin, TRUE);
-    set_escdelay(20);
 
     init_nhcolors();
     ui_flags.playmode = MODE_NORMAL;
-    ui_flags.unicode = _nc_unicode_locale();
-
-    /* with PDCurses/Win32 stdscr is not NULL before newterm runs, which caused
-       crashes. So basewin is a copy of stdscr which is known to be NULL before
-       curses is inited. */
+    ui_flags.unicode = 1; /* uncursed will back-translate if needed */
     basewin = stdscr;
-
-#if defined(PDCURSES)
-    PDC_set_title("NetHack 4");
-# if defined(WIN32)
-    /* Force the console to use codepage 437. This seems to be the default on
-       european windows, but not on asian systems. Aparrently there is no such
-       thing as a Unicode console in windows (EPIC FAIL!) and all output
-       characters are always transformed according to a code page. */
-    SetConsoleOutputCP(437);
-    if (settings.win_height > 0 && settings.win_width > 0)
-        resize_term(settings.win_height, settings.win_width);
-# endif
-#endif
 }
 
 
@@ -103,7 +86,6 @@ exit_curses_ui(void)
     cleanup_sidebar(TRUE);
     curs_set(orig_cursor);
     endwin();
-    delscreen(curses_scr);
     basewin = NULL;
 }
 
@@ -258,12 +240,6 @@ resize_game_windows(void)
         sidebar = NULL;
     }
 
-    /* ncurses might have automatically changed the window sizes in resizeterm
-       while trying to do the right thing. Of course no size other than COLNO x 
-       ROWNO is ever right for the map... */
-    wresize(msgwin, ui_flags.msgheight, COLNO);
-    wresize(mapwin, ROWNO, COLNO);
-
     statusheight = ui_flags.status3 ? 3 : 2;
     if (ui_flags.draw_frame) {
         mvwin(msgwin, 1, 1);
@@ -393,7 +369,6 @@ handle_resize(void)
 }
 
 
-#define META(c)  ((c)|0x80)     /* bit 8 */
 int
 nh_wgetch(WINDOW * win)
 {
@@ -402,46 +377,25 @@ nh_wgetch(WINDOW * win)
     doupdate(); /* required by pdcurses, noop for ncurses */
     do {
         key = wgetch(win);
-#ifdef UNIX
+        if (key == KEY_HANGUP) {
+            nh_exit_game(EXIT_FORCE_SAVE);
+            nh_lib_exit();
+            exit(0);
+        }
+
         if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {
             /* we're running in raw mode, so ctrl+c doesn't work. for wizard we 
                emulate this to allow breaking into gdb. */
-            kill(0, SIGINT);
+            raise(SIGINT);
             key = 0;
         }
-#endif
 
         if (key == KEY_RESIZE) {
             key = 0;
-#ifdef PDCURSES
-            resize_term(0, 0);
-#endif
             handle_resize();
         }
-#if !defined(WIN32)
-        /* "hackaround": some terminals / shells / whatever don't directly pass
-           on any combinations with the alt key. Instead these become ESC,<key>
-           Try to reverse that here... */
-        if (key == KEY_ESC) {
-            int key2;
-
-            nodelay(win, TRUE);
-            key2 = wgetch(win); /* check for a following letter */
-            nodelay(win, FALSE);
-
-            if ('a' <= key2 && key2 <= 'z')
-                key = META(key2);
-        }
-#endif
 
     } while (!key);
-
-#if defined(PDCURSES)
-    /* PDCurses provides exciting new names for the enter key. Translate these
-       here, instead of checking for them all over the place. */
-    if (key == PADENTER)
-        key = '\r';
-#endif
 
     return key;
 }

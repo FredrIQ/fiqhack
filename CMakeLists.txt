@@ -70,6 +70,7 @@ if (ENABLE_NETCLIENT)
 endif ()
 
 # nethack4 text ui
+add_subdirectory (libuncursed)
 add_subdirectory (nethack)
 
 if (ENABLE_SERVER)

@@ -204,14 +204,14 @@ more(void)
         draw_map(player.x, player.y);
         wmove(msgwin, cursy, cursx);
         doupdate();
-    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESC);
+    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESCAPE);
     wtimeout(msgwin, -1);
 
     if (getmaxy(msgwin) == 1)
         newline();
     draw_msgwin();
 
-    if (key == KEY_ESC)
+    if (key == KEY_ESCAPE)
         stopprint = TRUE;
 
     /* we want to --more-- by screenfuls, not lines */

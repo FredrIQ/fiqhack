@@ -7,13 +7,13 @@
 #define array_size(x) (sizeof(x)/sizeof(x[0]))
 
 short colorlist[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
-    COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, -1,
-    COLOR_WHITE, COLOR_RED + 8, COLOR_GREEN + 8, COLOR_YELLOW + 8,
+    COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE,
+    COLOR_BLACK + 8, COLOR_RED + 8, COLOR_GREEN + 8, COLOR_YELLOW + 8,
     COLOR_BLUE + 8, COLOR_MAGENTA + 8, COLOR_CYAN + 8, COLOR_WHITE + 8
 };
 
 const char *colorNames[] = { "black", "red", "green", "yellow", "blue",
-    "magenta", "cyan", "gray", "white",
+    "magenta", "cyan", "white", "darkgray",
     "hired", "higreen", "hiyellow", "hiblue",
     "himagenta", "hicyan", "hiwhite"
 };
@@ -125,9 +125,9 @@ apply_colormap(struct ColorMap *map)
             ((COLOR_PAIRS < 57) || (COLORS >= 16 && COLOR_PAIRS < 113)))
             break;
 
-        /* For no background, use the default background color; otherwise use
-           the color from the color map. */
-        bgColor = bg ? map->bgColors[bg] : -1;
+        /* For no background, use black; otherwise use the color from the color
+           map. */
+        bgColor = bg ? map->bgColors[bg] : COLOR_BLACK;
 
         for (fg = 0; fg <= (COLORS >= 16 ? 16 : 8); fg++) {
 
@@ -146,19 +146,13 @@ apply_colormap(struct ColorMap *map)
 }
 
 /*
- * Initialize curses colors to colors used by NetHack
- * (from Karl Garrison's curses UI for Nethack 3.4.3)
+ * Initialize uncursed color pairs to colors used by NetHack
  */
 void
 init_nhcolors(void)
 {
-    if (!has_colors())
-        return;
-
     ui_flags.color = TRUE;
-
     start_color();
-    use_default_colors();
     read_colormap(&color_map);
     apply_colormap(&color_map);
 }

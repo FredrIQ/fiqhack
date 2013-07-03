@@ -1,24 +1,6 @@
-# build the curses window port for libnethack
-
-
-if (NOT WIN32)
-    set (USE_PDCURSES FALSE CACHE BOOL "Use PDCurses?")
-    set (PDCURSES_LIBNAME "XCurses")
-else ()
-    set (USE_PDCURSES TRUE)
-    set (PDCURSES_LIBNAME "pdcurses")
-endif ()
-
-if (USE_PDCURSES)
-    set (PDCURSES_LIB_DIR "" CACHE PATH "Location of the pdcurses library")
-    set (PDCURSES_INC_DIR "" CACHE PATH "Location of the pdcurses header")
-    link_directories (${PDCURSES_LIB_DIR})
-    include_directories (${PDCURSES_INC_DIR})
-    add_definitions (-DPDCURSES)
-endif ()
+# build the curses/uncursed window port for libnethack
 
 set (ENABLE_NETCLIENT TRUE CACHE BOOL "Enable network client mode")
-
 
 set (NH_CURSES_SRC
     src/main.c
@@ -51,6 +33,7 @@ if (WIN32)
 endif ()
 
 include_directories (${NetHack4_SOURCE_DIR}/include
+                     ${NetHack4_SOURCE_DIR}/libuncursed/include
                      include)
 
 add_definitions(-DNETHACKDIR="${DATADIR}")
@@ -59,21 +42,11 @@ if (ENABLE_NETCLIENT)
 endif ()
 
 link_directories (${NetHack4_BINARY_DIR}/libnethack/src)
+link_directories (${NetHack4_BINARY_DIR}/libuncursed)
 link_directories (${NetHack4_BINARY_DIR}/libnethack_client)
 add_executable (nethack_curses ${NH_CURSES_SRC} )
 set_target_properties(nethack_curses PROPERTIES OUTPUT_NAME nethack )
-target_link_libraries(nethack_curses nethack m z)
-
-if (USE_PDCURSES)
-    target_link_libraries (nethack_curses ${PDCURSES_LIBNAME})
-else ()
-    if (APPLE)
-        target_link_libraries (nethack_curses ncurses)
-        add_definitions (-DHOMEBREW_CURSES)
-    else ()
-        target_link_libraries (nethack_curses ncursesw)
-    endif ()
-endif ()
+target_link_libraries(nethack_curses nethack uncursed m z)
 
 if (ENABLE_NETCLIENT)
     add_dependencies (nethack_curses libnethack_client)
@@ -89,7 +62,7 @@ if (ENABLE_NETCLIENT)
     endif()
 endif ()
 
-
+add_dependencies (nethack_curses libuncursed)
 add_dependencies (nethack_curses libnethack)
 
 if (UNIX)

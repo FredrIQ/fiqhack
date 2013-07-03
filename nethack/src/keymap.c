@@ -117,28 +117,6 @@ static void init_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
 static void dostop(void);
 
-
-static const char *
-curses_keyname(int key)
-{
-    static char knbuf[16];
-    const char *kname;
-
-    if (key == ' ')
-        return "SPACE";
-    else if (key == '\033')
-        return "ESC";
-
-    /* if ncurses doesn't know a key, keyname() returns NULL. This can happen
-       if you create a keymap with pdcurses, and then read it with ncurses */
-    kname = keyname(key);
-    if (kname && strcmp(kname, "UNKNOWN KEY"))
-        return kname;
-    snprintf(knbuf, sizeof (knbuf), "KEY_#%d", key);
-    return knbuf;
-}
-
-
 static struct nh_cmd_desc *
 find_command(const char *cmdname)
 {
@@ -248,8 +226,8 @@ get_command(int *count, struct nh_cmd_arg *arg)
         arg->argtype = CMD_ARG_NONE;
 
         key = get_map_key(TRUE);
-        while ((key >= '0' && key <= '9') || (multi > 0 && key == KEY_BACKDEL)) {
-            if (key == KEY_BACKDEL)
+        while ((key >= '0' && key <= '9') || (multi > 0 && key == KEY_BACKSPACE)) {
+            if (key == KEY_BACKSPACE)
                 multi /= 10;
             else {
                 multi = 10 * multi + key - '0';
@@ -260,7 +238,7 @@ get_command(int *count, struct nh_cmd_arg *arg)
             key = curses_msgwin(line);
         };
 
-        if (key == '\033')      /* filter out ESC */
+        if (key == '\033' || key == KEY_ESCAPE)
             continue;
 
         new_action();   /* use a new message line for this action */
@@ -274,6 +252,14 @@ get_command(int *count, struct nh_cmd_arg *arg)
                 handle_internal_cmd(&cmd, arg, count);
                 if (!cmd)       /* command was fully handled internally */
                     continue;
+            }
+
+            if (cmd == find_command("redraw")) {
+                /* This needs special handling locally in addition to sending
+                   it to the server */
+                clear();
+                rebuild_ui();
+                doupdate();
             }
 
             /* if the command requres an arg AND the arg isn't set yet (by
@@ -295,7 +281,7 @@ get_command(int *count, struct nh_cmd_arg *arg)
         }
 
         if (!cmd) {
-            sprintf(line, "Bad command: '%s'.", curses_keyname(key));
+            sprintf(line, "Bad command: '%s'.", friendly_keyname(key));
             curses_print_message(player.moves, line);
         }
     } while (!cmd);
@@ -421,9 +407,9 @@ show_whatdoes(void)
 
     if (!keymap[key])
         snprintf(buf, BUFSZ, "'%s' is not bound to any command.",
-                 curses_keyname(key));
+                 friendly_keyname(key));
     else
-        snprintf(buf, BUFSZ, "'%s': %s - %s", curses_keyname(key),
+        snprintf(buf, BUFSZ, "'%s': %s - %s", friendly_keyname(key),
                  keymap[key]->name, keymap[key]->desc);
     curses_msgwin(buf);
 }
@@ -543,6 +529,13 @@ read_keymap(void)
 
         unknown = FALSE;
         cmd = find_command(&line[pos]);
+        if (line[pos] == '-') {
+            /* old version of the keymap, with dangerously wrong keybindings */
+            curses_msgwin("keymap.conf has changed format. Your keybindings have "
+                          "reverted to defaults.");
+            init_keymap();
+            return FALSE;
+        }
         /* record unknown commands in the keymap: these may simply be valid,
            but unavailable in the current game. For example, the file might
            contain mappings for wizard mode commands. */
@@ -639,7 +632,7 @@ write_keymap(void)
             keymap[key] ? keymap[key]->
             name : (unknown_keymap[key] ? unknown_keymap[key]->name : "-");
         sprintf(buf, "%x %s\n", key, name);
-        write(fd, buf, strlen(buf));
+        if (strcmp(name, "-")) write(fd, buf, strlen(buf));
     }
 
     for (i = 0; i < cmdcount; i++) {
@@ -665,26 +658,6 @@ write_keymap(void)
     close(fd);
 }
 
-
-#if defined(WIN32) && defined (PDCURSES)
-/* PDCurses for WIN32 has special keycodes for alt-combinations */
-static unsigned int
-keytrans(unsigned int key)
-{
-    unsigned int unmeta = key & (~0x0080);
-
-    if (key != unmeta && 'a' <= unmeta && unmeta <= 'z')
-        return unmeta - 'a' + ALT_A;
-    if (key != unmeta && '0' <= unmeta && unmeta <= '9')
-        return unmeta - '0' + ALT_0;
-
-    return key;
-}
-#else
-# define keytrans(x) ((unsigned int)(x))
-#endif
-
-
 /* initialize the keymap with the default keys suggested by NetHack */
 static void
 init_keymap(void)
@@ -699,44 +672,51 @@ init_keymap(void)
     keymap[KEY_DOWN] = find_command("south");
     keymap[KEY_LEFT] = find_command("west");
     keymap[KEY_RIGHT] = find_command("east");
-#if defined(PDCURSES)
+    /* if the terminal gives us sufficient control over the numpad,
+       we can do this */
     keymap[KEY_A2] = find_command("north");
     keymap[KEY_C2] = find_command("south");
     keymap[KEY_B1] = find_command("west");
     keymap[KEY_B3] = find_command("east");
-#endif
     keymap[KEY_A1] = find_command("north_west");
     keymap[KEY_A3] = find_command("north_east");
     keymap[KEY_C1] = find_command("south_west");
     keymap[KEY_C3] = find_command("south_east");
-    /* diagonal keypad keys are not necessarily reported as A1, A3, C1, C3 */
+    keymap[KEY_B2] = find_command("go");
+    keymap[KEY_D1] = find_command("inventory");
+    /* otherwise we have to do it like this */
     keymap[KEY_HOME] = find_command("north_west");
     keymap[KEY_PPAGE] = find_command("north_east");
     keymap[KEY_END] = find_command("south_west");
     keymap[KEY_NPAGE] = find_command("south_east");
     keymap['\r'] = find_command("(nothing)");
+    keymap[' '] = find_command("(nothing)");
 
     /* every command automatically gets its default key */
     for (i = 0; i < cmdcount; i++)
         if (commandlist[i].defkey)
-            keymap[keytrans(commandlist[i].defkey)] = &commandlist[i];
+            keymap[commandlist[i].defkey] = &commandlist[i];
 
     for (i = 0; i < count; i++)
         if (builtin_commands[i].defkey)
-            keymap[keytrans(builtin_commands[i].defkey)] = &builtin_commands[i];
+            keymap[builtin_commands[i].defkey] = &builtin_commands[i];
 
     /* alt keys are assigned if the key is not in use */
     for (i = 0; i < cmdcount; i++) {
-        if (commandlist[i].altkey && !keymap[keytrans(commandlist[i].altkey)])
-            keymap[keytrans(commandlist[i].altkey)] = &commandlist[i];
+        if (commandlist[i].altkey && !keymap[commandlist[i].altkey])
+            keymap[commandlist[i].altkey] = &commandlist[i];
     }
 
     for (i = 0; i < count; i++) {
         if (builtin_commands[i].altkey &&
-            !keymap[keytrans(commandlist[i].altkey)])
-            keymap[keytrans(builtin_commands[i].altkey)] = &builtin_commands[i];
+            !keymap[commandlist[i].altkey])
+            keymap[builtin_commands[i].altkey] = &builtin_commands[i];
     }
 
+    /* if we have meta+key combinations assigned, assign alt+key too */
+    for (i = 128; i < 256; i++) {
+        keymap[KEY_ALT | (i - 128)] = keymap[i];
+    }
 }
 
 
@@ -785,7 +765,7 @@ add_keylist_command(struct nh_cmd_desc *cmd, struct nh_menuitem *item, int id)
                 keys[kl++] = ' ';
                 keys[kl] = '\0';
             }
-            strncat(keys, curses_keyname(i), BUFSZ - kl - 1);
+            strncat(keys, friendly_keyname(i), BUFSZ - kl - 1);
             keys[BUFSZ - 1] = '\0';
         }
     }
@@ -808,7 +788,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         icount = 0;
         for (i = 0; i < KEY_MAX; i++) {
             if (keymap[i] == cmd) {
-                sprintf(buf, "delete key %s", curses_keyname(i));
+                sprintf(buf, "delete key %s", friendly_keyname(i));
                 add_menu_item(items, size, icount, i, buf, 0, FALSE);
             }
         }
@@ -837,7 +817,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         else if (selection[0] == -1) {  /* add a key */
             sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
             i = curses_msgwin(buf);
-            if (i == KEY_ESC)
+            if (i == KEY_ESCAPE)
                 continue;
             if (keymap[i]) {
                 sprintf(buf, "That key is already in use by \"%s\"! Replace?",

@@ -88,16 +88,6 @@ const char *nhlogo_large[14] = {
 
 #ifdef UNIX
 
-/* the terminal went away - do not pass go, etc. */
-static void
-sighup_handler(int signum)
-{
-    if (!ui_flags.done_hup++)
-        nh_exit_game(EXIT_FORCE_SAVE);
-    nh_lib_exit();
-    exit(0);
-}
-
 static void
 sigint_handler(int signum)
 {
@@ -110,14 +100,7 @@ sigint_handler(int signum)
 static void
 setup_signals(void)
 {
-    signal(SIGHUP, sighup_handler);
-    signal(SIGTERM, sighup_handler);
-# ifdef SIGXCPU
-    signal(SIGXCPU, sighup_handler);
-# endif
     signal(SIGQUIT, SIG_IGN);
-
-
     signal(SIGINT, sigint_handler);
 }
 
@@ -268,7 +251,7 @@ mainmenu(void)
         wattron(basewin, A_BOLD | COLOR_PAIR(4));
         for (i = 0; i < logoheight; i++) {
             wmove(basewin, i, (COLS - strlen(nhlogo[0])) / 2);
-            waddstr(basewin, nhlogo[i]);
+            if (nhlogo[i]) waddstr(basewin, nhlogo[i]);
         }
         wattroff(basewin, A_BOLD | COLOR_PAIR(4));
         mvwaddstr(basewin, LINES - 3, 0, copybanner[0]);
@@ -478,7 +461,7 @@ process_args(int argc, char *argv[])
             break;
 
         case 'Z':
-            ui_flags.no_stop = true;
+            ui_flags.no_stop = 1;
             break;
 
         default:
