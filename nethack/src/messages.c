@@ -204,14 +204,14 @@ more(void)
         draw_map(player.x, player.y);
         wmove(msgwin, cursy, cursx);
         doupdate();
-    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESC);
+    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESCAPE);
     wtimeout(msgwin, -1);
 
     if (getmaxy(msgwin) == 1)
         newline();
     draw_msgwin();
 
-    if (key == KEY_ESC)
+    if (key == KEY_ESCAPE)
         stopprint = TRUE;
 
     /* we want to --more-- by screenfuls, not lines */
@@ -261,7 +261,11 @@ curses_print_message_core(int turn, const char *msg, nh_bool canblock)
         alloc_hist_array();
 
     if (turn != prevturn)
-        start_of_turn_curline = last_redraw_curline = curline;
+        /* If the current line is empty, we won't advance past it until
+         * something is written there, so go to the previous line in that
+         * case. */
+        start_of_turn_curline = last_redraw_curline =
+            strlen(msglines[curline]) ? curline : curline - 1;
 
     if (turn < prevturn)        /* going back in time can happen during replay */
         prune_messages(turn);

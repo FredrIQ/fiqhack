@@ -246,7 +246,7 @@ replay_commandloop(int fd)
                 key =
                     curses_msgwin("You have reached the end of this game. "
                                   "Go back or press ESC to exit.");
-                if (key == KEY_ESC)
+                if (key == KEY_ESCAPE)
                     goto out;
             }
             break;
@@ -257,7 +257,7 @@ replay_commandloop(int fd)
             draw_replay_info(&rinfo);
             break;
 
-        case KEY_ESC:
+        case KEY_ESCAPE:
             goto out;
 
         case 'g':
@@ -271,7 +271,7 @@ replay_commandloop(int fd)
             nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
             break;
 
-        case KEY_F(12):        /* timetest! */
+        case KEY_F12:        /* timetest! */
             if (allow_timetest())
                 timetest(fd, &rinfo);
             break;

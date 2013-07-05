@@ -147,7 +147,7 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
         key = nh_wgetch(gw->win);
 
         switch (key) {
-        case KEY_ESC:
+        case KEY_ESCAPE:
             buf[0] = (char)key;
             buf[1] = 0;
             done = TRUE;
@@ -158,11 +158,8 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
             done = TRUE;
             break;
 
-        case KEY_BACKSPACE:    /* different terminals send different codes... */
-        case KEY_BACKDEL:
-#if defined(PDCURSES)
-        case 8:        /* ^H */
-#endif
+        case KEY_BACKSPACE:
+        case 8:
             if (gldat->pos == 0)
                 continue;
             gldat->pos--;
@@ -202,7 +199,7 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
 
         default:
             if (' ' > (unsigned)key || (unsigned)key >= 128 ||
-                key == KEY_BACKDEL || gldat->pos >= BUFSZ - 2)
+                key == KEY_BACKSPACE || gldat->pos >= BUFSZ - 2)
                 continue;
             buf_insert(buf, gldat->pos, key);
             gldat->pos++;

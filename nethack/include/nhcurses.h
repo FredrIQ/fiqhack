@@ -78,28 +78,7 @@ typedef wchar_t fnchar;
 #  include "nethack_client.h"
 # endif
 
-# ifndef PDCURSES
-#  ifndef HOMEBREW_CURSES
-#   include <ncursesw/curses.h>
-#  else
-#   ifdef __APPLE__
-#    include <ncurses.h>
-#   else
-#    include <ncurses/curses.h>
-#   endif
-#  endif
-# else
-#  define PDC_WIDE
-#  ifdef WIN32
-#   include <curses.h>
-/* Windows support for Underline is a joke: it simply switches to color 1 (dark blue!) */
-#   undef A_UNDERLINE
-#   define A_UNDERLINE A_NORMAL
-#  else
-#   include <xcurses.h>
-#  endif
-#  define CCHARW_MAX 1  /* not set by pdcurses */
-# endif
+# include "uncursed.h"
 
 # ifndef max
 #  define max(a,b) ((a) > (b) ? (a) : (b))
@@ -121,9 +100,6 @@ typedef wchar_t fnchar;
 # ifndef NETHACKDIR
 #  define NETHACKDIR "/usr/share/NetHack4/"
 # endif
-
-# define KEY_ESC 27
-# define KEY_BACKDEL 127
 
 /* attributes for dialog frames */
 # define FRAME_ATTRS  (COLOR_PAIR(6))   /* magenta frames for better visibility 
@@ -298,7 +274,7 @@ extern struct nh_player_info player;
 extern int initrole, initrace, initgend, initalign;
 extern nh_bool random_player;
 extern struct nh_cmd_desc *keymap[KEY_MAX];
-extern const char *nhlogo_small[12], *nhlogo_large[14];
+extern const char *nhlogo_small[11], *nhlogo_large[14];
 extern char *override_hackdir, *override_userdir;
 
 /*----------------------------------------------------------------------------*/

@@ -313,6 +313,7 @@ extern struct histevent *histevents;
 extern unsigned long long turntime;
 extern int current_timezone,
     replay_timezone;   /* difference from UTC in seconds */
+extern unsigned int timer_id;
 
 extern struct nh_option_desc *active_birth_options;
 extern struct nh_option_desc *birth_options;

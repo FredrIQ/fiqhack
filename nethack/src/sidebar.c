@@ -69,10 +69,11 @@ void
 draw_sidebar(void)
 {
     int flheight = 0, invheight = 0, invwh, flwh;
-    int sbwidth = getmaxx(sidebar);
 
     if (!ui_flags.draw_sidebar)
         return;
+
+    int sbwidth = getmaxx(sidebar);
 
     /* re-create the subwindows every time; they only exist for use by
        draw_objlist */

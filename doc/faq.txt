@@ -156,6 +156,18 @@ allowing competition on the various forks and variants (as well as
 the tournament site for more details.
 
 
+What license is the code under?
+-------------------------------
+
+Just like previous versions of NetHack, NetHack 4 is licensed under
+the NetHack General Public License (which is similar to old versions
+of the GNU General Public License.  Some of the newer files are
+dual-licensed and also allow other licensing options in addition to
+the NHPL.
+
+Please note that there is no warranty for NetHack 4.
+
+
 Getting the game running
 ========================
 
@@ -223,7 +235,7 @@ method for installing (at the moment, AIMake is still in beta, and
 although it appears to work, in some places that appears to be mostly
 due to coincidence rather than because the code is actually correct).
 
-Before you start, you'll need to install the [libjannson library][7];
+Before you start, you'll need to install the [libjansson library][7];
 it might be in your package manager. You'll also need a Unicode-aware
 `curses` library or equivalent; `libncursesw` is the most commonly
 available such library on Linux.  The server code also requires
@@ -248,11 +260,11 @@ Alternatively, for AIMake:
 
     mkdir build
     cd build
-    ../aimake -i /home/nethack4 .. # or wherever you want
+    ../aimake -i /home/username/nethack4 .. # or wherever you want
 
 These install procedures will install into your home directory, and as
 such, you don't need root for any part of the process.  (Look in
-`/home/nethack4` for the resulting compiled binary.)
+`/home/username/nethack4` for the resulting compiled binary.)
 
 
 Is there a graphical/tiles version?
@@ -342,7 +354,7 @@ tactical game about dungeon exploration.  (Probably a minigame
 collection would work better.)
 
 
-What do all the commands do / How do I do <action>?
+What do all the commands do / How do I do *action*?
 ---------------------------------------------------
 
 Press `?` while playing for a list of commands.  As is common with
