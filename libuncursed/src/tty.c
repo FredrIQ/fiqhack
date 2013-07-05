@@ -78,6 +78,8 @@
 #define ifile stdin
 
 #define CSI "\x1b["
+#define OSC "\x1b]"
+#define ST  "\x1b\\"
 
 static int is_inited = 0;
 
@@ -383,6 +385,31 @@ static void set_charset(int y, int x) {
     last_y = last_x = -1;
 }
 
+/* Spouts a bunch of garbage to the screen. Use this only immediately before
+   clearing the screen. */
+int palette[][3] = {
+    {0x00,0x00,0x00}, {0xaf,0x00,0x00}, {0x00,0x87,0x00}, {0xaf,0x5f,0x00},
+    {0x00,0x00,0xaf}, {0x87,0x00,0x87}, {0x00,0xaf,0x87}, {0xaf,0xaf,0xaf},
+    {0x5f,0x5f,0x5f}, {0xff,0x5f,0x00}, {0x00,0xff,0x00}, {0xff,0xff,0x00},
+    {0x87,0x5f,0xff}, {0xff,0x5f,0xaf}, {0x00,0xd7,0xff}, {0xff,0xff,0xff}
+};
+static void setup_palette(void) {
+    int i;
+    for (i = 0; i < 16; i++) {
+        /* Setup for xterm, gnome-terminal */
+        fprintf(ofile, "\r" OSC "4;%d;rgb:%02x/%02x/%02x" ST,
+                i, palette[i][0], palette[i][1], palette[i][2]);
+        /* Setup for Linux console; I think PuTTY parses this too
+           Linux console doesn't need the ST on the end, but without it, other
+           terminals may end up waiting forever for the ST */
+        fprintf(ofile, "\r" OSC "P%01x%02x%02x%02x" ST,
+                i, palette[i][0], palette[i][1], palette[i][2]);
+    }
+}
+static void reset_palette(void) {
+    fprintf(ofile, "\r" OSC "104" ST "\r" OSC "R" ST);
+}
+
 void uncursed_hook_beep(void) {
     fputs("\x07", ofile);
     fflush(ofile);
@@ -449,6 +476,8 @@ void uncursed_hook_init(int *h, int *w) {
        for DECgraphics, defining both G0 and G1 as DECgraphics; then switch
        back to G0 for normal text, defining just G0 as normal text. */
 
+    setup_palette();
+
     /* Clear the terminal. */
     fputs(CSI "2J", ofile);
     terminal_contents_unknown = 1;
@@ -463,6 +492,7 @@ void uncursed_hook_exit(void) {
        that's not very many, due to problems with the protocol. */
     fputs("\x1b>", ofile); /* turn off keypad special-casing */
     fputs(CSI "?25h", ofile); /* turn the cursor back on */
+    reset_palette();
     fputs(CSI "2J", ofile); /* and we can at least wipe the screen */
     /* Switch back to the main screen. */
     fputs(CSI "?1049l", ofile);
@@ -603,6 +633,7 @@ void uncursed_hook_update(int y, int x) {
 
 void uncursed_hook_fullredraw(void) {
     terminal_contents_unknown = 1;
+    setup_palette();
     fputs(CSI "2J", ofile);
     uncursed_hook_update(0,0);
 }
