@@ -300,11 +300,17 @@ parse_ip_addr(const char *host, int port, int want_v4,
     int res;
     char portstr[16];
     struct addrinfo *gai_res = NULL;
+#ifndef WIN32
     struct addrinfo *next;
+#endif
     struct addrinfo gai_hints;
 
     memset(&gai_hints, 0, sizeof (gai_hints));
+#ifdef WIN32
+    gai_hints.ai_flags = 0;
+#else
     gai_hints.ai_flags = AI_NUMERICSERV;
+#endif
     gai_hints.ai_family = want_v4 ? AF_INET : AF_INET6;
     gai_hints.ai_socktype = SOCK_STREAM;
 
