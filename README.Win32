@@ -1,0 +1,54 @@
+On Windows, NetHack 4 can only be compiled using AIMake 2 (which is
+very slow, but does eventually work). Additionally, some user
+intervention is required in the build process. Here are full
+instructions:
+
+1. You will need to install various prerequisite programs in order to
+   compile NetHack 4. The build system is written in Perl, and as
+   such, the simplest way to get a working toolchain is to install
+   Strawberry Perl (http://strawberryperl.com), which comes with a
+   working C toolchain. You will also need to install Flex and Bison,
+   scanner and parser generators; the versions at GnuWin32
+   (http://gnuwin32.sourceforge.net/) work (although they don't have a
+   very Windows-like idea of directory structure). Strawberry Perl's
+   and GnuWin32's executables will all need to be on your PATH (search
+   for "PATH" in Control Panel, on recent versions of Windows).
+
+2. Unpack the NetHack 4 distribution into a folder of its own,
+   "nethack4". This folder should contain a number of subfolders
+   ("libnethack", "libuncursed", etc.), as well as the "aimake2.pl"
+   program usable to compile NetHack 4 with.
+
+3. Create a folder "build", parallel to that folder.
+
+4. Download the source of libjannson (http://www.digip.org/jansson/).
+   Unlike the typical method of building on Linux/UNIX, don't try to
+   compile it as a library separately; instead, copy the entire "src"
+   directory of libjannson's source into your "nethack4" directory
+   (as a directory parallel to "libnethack", "libuncursed", etc.).
+   You will probably want to rename it to something more meaningful
+   (e.g. "libjannson".)
+
+5. Open a command prompt, and change directory to the "build"
+   directory.
+
+6. Run the following command:
+
+       perl ../nethack4/aimake2.pl ../nethack4
+
+   This is likely to take a very long time, due to known performance
+   problems with aimake2.
+
+7. Create another new directory (its location and name don't matter,
+   but parallel to "build" and "nethack4" makes sense). Then copy
+   the following files into it:
+
+       build/aimake_install/share/nethack4/nhdat
+       build/aimake_install/share/nethack4/license
+       build/aimake_install/bin/nethack4.exe
+
+8. You should now be able to run NetHack 4 via double-clicking on
+   nethack4.exe in your new directory. Happy hacking!
+
+Note that at present, screen updates are pretty slow on Windows.
+Hopefully it doesn't make the game too unplayable.
