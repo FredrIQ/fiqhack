@@ -112,7 +112,7 @@ apply_override_list(struct curses_symdef *list, int len,
         if (!strcmp(list[i].symname, ovr->symname)) {
             if (ovr->unichar[0])
                 memcpy(list[i].unichar, ovr->unichar,
-                       sizeof (wchar_t) * CCHARW_MAX);
+                       sizeof (int) * CCHARW_MAX);
             if (ovr->ch)
                 list[i].ch = ovr->ch;
             if (ovr->color != -1)
@@ -177,7 +177,7 @@ load_nh_symarray(const struct nh_symdef *src, int len)
         copy[i].color = src[i].color;
 
         /* this works because ASCII 0x?? (for ?? < 128) == Unicode U+00?? */
-        copy[i].unichar[0] = (wchar_t) src[i].ch;
+        copy[i].unichar[0] = src[i].ch;
     }
 
     return copy;

@@ -18,7 +18,6 @@
    Terminals built into operating systems:
    Linux console (fbcon)
    DOSBOx emulation of the DOS console
-   Windows console (Vista and higher)
 
    Terminal emulation software:
    xterm
@@ -49,11 +48,21 @@
    to configure rxvt to work with uncursed, but save yourself some trouble and
    use urxvt instead :)
 
-   This file is written to be platform-agnostic, but contains platform-specific
-   code on occasion (e.g. signals, delays). Where there's a choice of platform-
+   Because the Windows console does not parse escape codes, this file is
+   intended for use on POSIXy systems only. Where there's a choice of platform-
    specific function, the most portable is used (e.g. select() rather than
    usleep() for delays, because it's in older versions of POSIX).
 */
+
+/* Detect OS. */
+#ifdef AIMAKE_BUILDOS_MSWin32
+# undef WIN32
+# define WIN32
+#endif
+
+#ifdef WIN32
+#error tty.c is not intended for Windows systems. Use wincon.c instead.
+#endif
 
 /* UNIX-specific headers */
 #define _POSIX_SOURCE 1
@@ -93,7 +102,7 @@ static long parse_utf8(char *s) {
     if (*t < 0x80) return *s;
     if (*t < 0xc0) return -2;
     int charcount; 
-    wchar_t r;
+    int r;
     if      (*t < 0xe0) {charcount = 2; r = *t & 0x1f;}
     else if (*t < 0xf0) {charcount = 3; r = *t & 0x0f;}
     else if (*t < 0xf8) {charcount = 4; r = *t & 0x07;}
@@ -108,6 +117,12 @@ static long parse_utf8(char *s) {
     if (r >= 0x110000) return -2;
     return r;
 }
+
+static char keystrings[3]; /* used to create unique pointers as sentinels */
+static char *KEYSTRING_HANGUP = keystrings+0,
+            *KEYSTRING_RESIZE = keystrings+1,
+            *KEYSTRING_INVALID = keystrings+2;
+static int inited_when_stopped = 0;
 
 /* Linux-specific functions */
 static void measure_terminal_size(int *h, int *w) {
@@ -223,12 +238,6 @@ static void platform_specific_exit(void) {
     tcsetattr(fileno(ifile), TCSANOW, &ti_orig);
     tcsetattr(fileno(ofile), TCSADRAIN, &to_orig);
 }
-
-static char keystrings[3]; /* used to create unique pointers as sentinels */
-static char *KEYSTRING_HANGUP = keystrings+0,
-            *KEYSTRING_RESIZE = keystrings+1,
-            *KEYSTRING_INVALID = keystrings+2;
-static int inited_when_stopped = 0;
 
 static char* platform_specific_getkeystring(int timeout_ms) {
     /* We want to wait for a character from the terminal (i.e. a keypress or
@@ -455,7 +464,7 @@ void uncursed_hook_init(int *h, int *w) {
        (column 3 = unicode = KEY_PF3 | (KEY_SHIFT*2), column 5 = not unicode =
        KEY_PF3 | (KEY_SHIFT*4)). VT100 is weird! */
     supports_utf8 = 0;
-    wint_t kp = 0;
+    int kp = 0;
     while (kp != (KEY_PF3 | (KEY_SHIFT*2)) &&
            kp != (KEY_PF3 | (KEY_SHIFT*4)) && kp != KEY_SILENCE) {
         kp = uncursed_hook_getkeyorcodepoint(2000);
@@ -507,7 +516,7 @@ void uncursed_hook_delay(int ms) {
     platform_specific_delay(ms);
 }
 void uncursed_hook_rawsignals(int raw) { platform_specific_rawsignals(raw); }
-wint_t uncursed_hook_getkeyorcodepoint(int timeout_ms) {
+int uncursed_hook_getkeyorcodepoint(int timeout_ms) {
     last_color = -1; /* send a new SGR on the next redraw */
     char *ks = platform_specific_getkeystring(timeout_ms);
     if (ks == KEYSTRING_HANGUP) return KEY_HANGUP + KEY_BIAS;

@@ -322,7 +322,7 @@ UNCURSED_ANDMVWINDOWDEF(int, add_wchnstr, const cchar_t *charray; int n,
 }
 
 /* manual page 3ncurses addch */
-static wchar_t cp437[] = { /* codepage 437 character table */
+static int cp437[] = { /* codepage 437 character table */
 /* First 128 chars are the same as ASCII */
 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
 0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
@@ -397,14 +397,14 @@ UNCURSED_ANDMVWINDOWDEF(int, addnstr, const char *s; int n, s, n) {
 }
 
 /* manual page 3ncurses addwstr */
-UNCURSED_ANDMVWINDOWDEF(int, addwstr, const wchar_t *s, s) {
+UNCURSED_ANDMVWINDOWDEF(int, addwstr, const int *s, s) {
     while (*s) {
         cchar_t c = {0, {*s++, 0}};
         if (wadd_wch(win, &c) == ERR) return ERR;
     }
     return OK;
 }
-UNCURSED_ANDMVWINDOWDEF(int, addwnstr, const wchar_t *s; int n, s, n) {
+UNCURSED_ANDMVWINDOWDEF(int, addwnstr, const int *s; int n, s, n) {
     while (*s && n-- != 0) {
         cchar_t c = {0, {*s++, 0}};
         if (wadd_wch(win, &c) == ERR) return ERR;
@@ -704,9 +704,9 @@ char *unctrl(char d) {
     else {s[2] = c; s[3] = 0;}
     return r;
 }
-wchar_t *wunctrl(wchar_t c) {
-    static wchar_t s[5] = {(wchar_t)'M', (wchar_t)'-'};
-    wchar_t *r = s+2;
+int *wunctrl(int c) {
+    static int s[5] = {(int)'M', (int)'-'};
+    int *r = s+2;
     if (c >= 128 && c <= 255) { c -= 128; r = s; }
     if (c == 127) { c = '?'; r = s; }
     if (c < 32) { s[2] = '^'; s[3] = c+64; s[4] = 0; }
@@ -794,7 +794,7 @@ char *keyname(int c) {
     }
     return keybuf;
 }
-char *key_name(wchar_t c) {
+char *key_name(int c) {
     /* For some reason, this returns a narrow string not a wide string, and as
        such, we can't return wide characters at all, so we just return NULL.
        (TODO: add a wide string version for uncursed). Wide character key codes
@@ -1112,15 +1112,20 @@ int uncursed_rhook_color_at(int y, int x) {
 
     return f | (b << 5) | (!!(a & A_UNDERLINE) << 10);
 }
+int uncursed_rhook_ucs2_at(int y, int x) {
+    int wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
+    if (wc < 0x10000) return wc;
+    return 0xfffd; /* REPLACEMENT CHARACTER */
+}
 char uncursed_rhook_cp437_at(int y, int x) {
-    wchar_t wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
+    int wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
     int i;
     for (i = 0; i < 256; i++)
         if (cp437[i] == wc) return i;
     return 0xa8; /* an upside-down question mark */
 }
 char *uncursed_rhook_utf8_at(int y, int x) {
-    wchar_t *c = nout_win->chararray[x + y * nout_win->stride].chars;
+    int *c = nout_win->chararray[x + y * nout_win->stride].chars;
     /* The maximum number of UTF-8 bytes for one codepoint is 4. */
     static char utf8[CCHARW_MAX * 4 + 1];
     char *r = utf8;
@@ -1152,13 +1157,13 @@ char *uncursed_rhook_utf8_at(int y, int x) {
 }
 
 /* manual page 3ncurses get_wch */
-static wchar_t pushback_w = 0x110000;
-int unget_wch(wchar_t c) {
+static int pushback_w = 0x110000;
+int unget_wch(int c) {
     if (pushback_w < 0x110000) return ERR;
     pushback_w = c;
     return OK;
 }
-UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
+UNCURSED_ANDMVWINDOWDEF(int, get_wch, int *rv, rv) {
     if (pushback_w < 0x110000) {
         *rv = pushback_w;
         pushback_w = 0x110000;
@@ -1189,7 +1194,7 @@ UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
 }
 
 /* manual page 3ncurses getcchar */
-int getcchar(const cchar_t *c, wchar_t *s, attr_t *attr,
+int getcchar(const cchar_t *c, int *s, attr_t *attr,
              short *pairnum, void *unused) {
     (void) unused;
     int ccount = 0;
@@ -1201,7 +1206,7 @@ int getcchar(const cchar_t *c, wchar_t *s, attr_t *attr,
     *pairnum = PAIR_NUMBER(c->attr);
     return OK;
 }
-int setcchar(cchar_t *c, const wchar_t *s, attr_t attr,
+int setcchar(cchar_t *c, const int *s, attr_t attr,
              short pairnum, void *unused) {
     (void) unused;
     int ccount = 0;
@@ -1216,7 +1221,7 @@ int setcchar(cchar_t *c, const wchar_t *s, attr_t attr,
 
 /* manual page 3ncurses getch */
 UNCURSED_ANDMVWINDOWVDEF(int, getch) {
-    wint_t w;
+    int w;
     wrefresh(win);
     int r = wget_wch(win, &w);
     if (r == ERR) return ERR;

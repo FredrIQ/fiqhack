@@ -8,9 +8,7 @@
  * the files libnethack/dat/license and libnethack/dat/gpl respectively.
  */
 
-#include <stddef.h> /* for wchar_t */
 #include <stdarg.h>
-typedef unsigned int wint_t;
 
 #define UNCURSED_ANDWINDOW(t, f, ...)                    \
     extern t f(__VA_ARGS__);                             \
@@ -67,7 +65,7 @@ typedef unsigned long chtype; /* attr_t | char */
 #define CCHARW_MAX 5
 typedef struct { /* same shape as ncurses's cchar_t */
     attr_t attr;
-    wchar_t chars[CCHARW_MAX];
+    int chars[CCHARW_MAX];
 } cchar_t;
 
 typedef struct WINDOW {
@@ -214,8 +212,8 @@ UNCURSED_ANDMVWINDOW(int, addstr, const char *);
 UNCURSED_ANDMVWINDOW(int, addnstr, const char *, int n);
 
 /* manual page 3ncurses addwstr */
-UNCURSED_ANDMVWINDOW(int, addwstr, const wchar_t *);
-UNCURSED_ANDMVWINDOW(int, addwnstr, const wchar_t *, int);
+UNCURSED_ANDMVWINDOW(int, addwstr, const int *);
+UNCURSED_ANDMVWINDOW(int, addwnstr, const int *, int);
 
 /* manual page 3ncurses default_colors */
 extern int use_default_colors(void);
@@ -292,9 +290,9 @@ extern int curs_set(int visibility);
 
 /* manual page 3ncurses util */
 extern char *unctrl(char);
-extern wchar_t *wunctrl(wchar_t);
+extern int *wunctrl(int);
 extern char *keyname(int);
-extern char *key_name(wchar_t); /* not wchar_t* :( */
+extern char *key_name(int); /* not int* :( */
 extern int delay_output(int);
 /* unimplemented: getwin, putwin, use_env, filter, nofilter, flushinp */
 
@@ -450,8 +448,8 @@ int redrawwin(WINDOW *win);
 int wredrawln(WINDOW *win, int, int);
 
 /* manual page 3ncurses get_wch */
-UNCURSED_ANDMVWINDOW(int, get_wch, wint_t *);
-int unget_wch(wchar_t);
+UNCURSED_ANDMVWINDOW(int, get_wch, int *);
+int unget_wch(int);
 
 /* manual page 3ncurses getyx, legacy; these are all macros */
 #define getyx(win, yy, xx) do {(yy) = (win)->y; (xx) = (win)->x;} while(0)
@@ -466,8 +464,8 @@ int unget_wch(wchar_t);
 #define getmaxx(win) ((win)->maxx+1)
 
 /* manual page 3ncurses getcchar */
-extern int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);
-extern int setcchar(cchar_t *, const wchar_t *, attr_t, short, void *);
+extern int getcchar(const cchar_t *, int *, attr_t *, short *, void *);
+extern int setcchar(cchar_t *, const int *, attr_t, short, void *);
 
 /* manual page 3ncurses getch */
 UNCURSED_ANDMVWINDOWV(int, getch);
