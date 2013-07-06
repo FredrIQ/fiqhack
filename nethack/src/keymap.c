@@ -467,6 +467,9 @@ show_help(void)
 static void
 dostop(void)
 {
+#ifdef WIN32
+    curses_msgwin("The process cannot be suspended on Windows.");
+#else
     if (ui_flags.no_stop) {
         curses_msgwin("Process suspension is disabled on this instance.");
         return;
@@ -475,6 +478,7 @@ dostop(void)
     endwin();
     kill(getpid(), SIGSTOP);
     doupdate();
+#endif
 }
 
 /*----------------------------------------------------------------------------*/
@@ -496,10 +500,12 @@ read_keymap(void)
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
         return FALSE;
+#ifndef WIN32
     if (ui_flags.connection_only) {
         fnncat(filename, ui_flags.username, BUFSZ-1);
         fnncat(filename, FN(".keymap"), BUFSZ-1);
     } else
+#endif
         fnncat(filename, FN("keymap.conf"), BUFSZ-1);
 
     fd = sys_open(filename, O_RDONLY, 0);
@@ -617,10 +623,12 @@ write_keymap(void)
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
         return;
+#ifndef WIN32
     if (ui_flags.connection_only) {
         fnncat(filename, ui_flags.username, BUFSZ-1);
         fnncat(filename, FN(".keymap"), BUFSZ-1);
     } else
+#endif
         fnncat(filename, FN("keymap.conf"), BUFSZ-1);
 
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);

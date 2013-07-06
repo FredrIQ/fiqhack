@@ -400,6 +400,15 @@ cleanup_messages(void)
         msglines[i][0] = '\0';
 }
 
+static char *mystrndup(const char *from, int len) {
+    char *rv = malloc(len+1);
+    const char *r;
+    char *s;
+    for (r = from, s = rv; *r && len; r++, s++, len--) *s = *r;
+    *s = 0;
+    return rv;
+}
+
 /* Given the string "input", generate a series of strings of the given
  * maximum width, wrapping lines at spaces in the text.  The number of
  * lines will be stored into *output_count, and an array of the output
@@ -435,7 +444,7 @@ wrap_text(int width, const char *input, int *output_count, char ***output)
             input_lidx = input_idx + width;
 
         (*output)[outcount] =
-            strndup(input + input_idx, input_lidx - input_idx);
+            mystrndup(input + input_idx, input_lidx - input_idx);
         outcount++;
 
         for (input_idx = input_lidx; isspace(input[input_idx]); input_idx++) {

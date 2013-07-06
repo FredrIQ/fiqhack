@@ -5,10 +5,13 @@
 #ifndef NHCURSES_H
 # define NHCURSES_H
 
-/* _GNU_SOURCE activates lots of stuff in the in glibc headers.
- * _XOPEN_SOURCE_EXTENDED is needed for ncurses to activate widechars */
+# ifdef AIMAKE_BUILDOS_MSWin32
+#  undef  WIN32
+#  define WIN32 1
+# endif
+
+/* _GNU_SOURCE activates lots of stuff in the in glibc headers. */
 # define _GNU_SOURCE
-# define _XOPEN_SOURCE_EXTENDED
 # define UNICODE
 # define _CRT_SECURE_NO_WARNINGS/* huge warning spew from MS CRT otherwise */
 
@@ -19,25 +22,12 @@
 # if !defined(WIN32)    /* UNIX + APPLE */
 #  include <unistd.h>
 #  define FILE_OPEN_MASK 0660
-# else/* WINDOWS */
+
+# else  /* WINDOWS */
 
 #  include <windows.h>
 #  include <shlobj.h>
-#  undef MOUSE_MOVED    /* this definition from windows.h conflicts with a
-                           definition from curses */
 #  define random rand
-
-#  if defined (_MSC_VER)
-#   include <io.h>
-#   pragma warning(disable:4996)/* disable warnings about deprecated posix
-                                   function names */
-/* If we're using the Microsoft compiler, we also get the Microsoft C lib which
- * doesn't have plain snprintf.  Note that this macro is an MSVC-style variadic
- * macro, which is not understood by gcc (it uses a different notation). */
-#   define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
-#   define snwprintf _snwprintf
-#   define strncasecmp _strnicmp
-#  endif
 #  define FILE_OPEN_MASK (_S_IREAD | _S_IWRITE)
 # endif
 

@@ -22,15 +22,11 @@ get_gamedir(enum game_dirs dirtype, wchar_t * buf)
     wchar_t *subdir;
     wchar_t appPath[MAX_PATH], nhPath[MAX_PATH];
 
-    if (override_userdir) {
-        sprintf(nhPath, override_userdir);
-    } else {
-        /* Get the location of "AppData\Roaming" (Vista, 7) or "Application
-           Data" (XP). The returned Path does not include a trailing backslash. 
-         */
-        if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
-            return FALSE;
-    }
+    /* Get the location of "AppData\Roaming" (Vista, 7) or "Application
+       Data" (XP). The returned Path does not include a trailing backslash. 
+    */
+    if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
+        return FALSE;
 
     switch (dirtype) {
     case CONFIG_DIR:
@@ -42,6 +38,11 @@ get_gamedir(enum game_dirs dirtype, wchar_t * buf)
     case LOG_DIR:
         subdir = L"\\log\\";
         break;
+    case DUMP_DIR:
+        subdir = L"\\dumps\\";
+        break;
+    default:
+        return FALSE;
     }
 
     if (!override_userdir)
@@ -148,7 +149,10 @@ commandloop(void)
 static void
 game_ended(int status, fnchar * filename)
 {
-    fnchar fncopy[1024], logname[1024], savedir[BUFSZ], *bp, *fname;
+    fnchar logname[1024], savedir[BUFSZ], *bp;
+#ifndef WIN32
+    fnchar fncopy[1024], *fname;
+#endif
 
     if (status != GAME_OVER)
         return;

@@ -972,10 +972,14 @@ get_config_name(fnchar * buf, nh_bool ui)
         return 0;
 
     fnncat(buf,
-           ui_flags.connection_only ? ui_flags.
-           username : ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+#ifndef WIN32
+           ui_flags.connection_only ? ui_flags.username :
+#endif
+           ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+#ifndef WIN32
     if (ui_flags.connection_only)
         fnncat(buf, FN(".rc"), BUFSZ);
+#endif
 
     return 1;
 }

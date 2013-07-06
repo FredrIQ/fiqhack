@@ -33,6 +33,7 @@
 #endif
 
 #include <inttypes.h>
+#include <stdio.h>
 
 #define ERR                   (-1)
 
@@ -272,6 +273,15 @@ yywrap(void)
 {
     return 1;
 }
+
+/* This would normally be provided by src/files.c or by util/dlb_main.c,
+   but both of those cause problems. So just provide it here. */
+FILE *
+fopen_datafile(const char *filename, const char *mode, int prefix)
+{
+    return fopen(filename, mode);
+}
+
 
 /*
  * Find the type of floor, knowing its char representation.
@@ -1034,6 +1044,12 @@ write_engravings(int fd, char *nengraving_p, engraving *** engravings_p)
     return TRUE;
 }
 
+/* To avoid having to find another file to link this from */
+static char *eos_local(char *x) {
+    while (*x) x++;
+    return x;
+}
+
 /*
  * Open and write maze or rooms file, based on which pointer is non-null.
  * Return TRUE on success, FALSE on failure.
@@ -1046,7 +1062,7 @@ write_level_file(char *filename, splev * room_level, specialmaze * maze_level)
 
     lbuf[0] = '\0';
     strcat(lbuf, outprefix);
-    if (eos(lbuf)[-1] == ' ') eos(lbuf)[-1] = '\0';
+    if (eos_local(lbuf)[-1] == ' ') eos_local(lbuf)[-1] = '\0';
     strcat(lbuf, filename);
     strcat(lbuf, LEV_EXT);
 

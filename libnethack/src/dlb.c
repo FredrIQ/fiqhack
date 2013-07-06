@@ -64,8 +64,12 @@ static long lib_dlb_ftell(dlb *);
 boolean open_library(const char *lib_name, library * lp);
 void close_library(library * lp);
 
-/* without extern.h via hack.h, these haven't been declared for us */
-extern char *eos(char *);
+/* This file is linked from multiple places, and we may not have a definition
+   of eos available, so define it again here */
+static char *eos(char *x) {
+    while (*x) x++;
+    return x;
+}
 
 
 
