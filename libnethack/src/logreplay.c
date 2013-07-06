@@ -667,7 +667,8 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
         raw_printf("Warning: Version mismatch; expected %d.%d, got %d.%d\n",
                    VERSION_MAJOR, VERSION_MINOR, ver1, ver2);
 
-    sscanf(next_log_token(), "%llx", init);
+    /* Windows' sscanf doesn't understand long longs. */
+    *init = strtoll(next_log_token(), NULL, 10);
     sscanf(next_log_token(), "%x", &seed);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
@@ -789,7 +790,11 @@ replay_read_command(char *cmdtok, char **cmd, int *count,
     if (!cmdtok)
         return;
 
-    n = sscanf(cmdtok, ">%llx:%x:%d", &turntime, &cmdidx, count);
+    /* TODO: Do we need the complete 64-bit range for turntime? If so, we
+       need a custom parser. */
+    long turntime_32bit; /* Windows sscanf can't handle long longs */
+    n = sscanf(cmdtok, ">%lx:%x:%d", &turntime_32bit, &cmdidx, count);
+    turntime = turntime_32bit;
     if (n != 3 || cmdidx > cmdcount)
         parse_error("Error: Incorrect command spec\n");
 
@@ -1456,13 +1461,13 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
     struct you sg_you;
     struct flag sg_flags;
     long sg_moves;
-    long long starttime;
+    long starttime; /* TODO: Should this be 64-bit? */
 
     lseek(fd, 0, SEEK_SET);
     if (read(fd, header, 127) <= 0)
         return LS_INVALID;
     header[127] = '\0';
-    n = sscanf(header, "NHGAME %4s %x %*8s %d.%d.%d\n%llx %x %x %s %s %s %s %s",
+    n = sscanf(header, "NHGAME %4s %x %*8s %d.%d.%d\n%lx %x %x %s %s %s %s %s",
                status, &savepos, &v1, &v2, &v3, &starttime, &seed, &playmode,
                encplname, role, race, gend, algn);
     if (n != 13)
