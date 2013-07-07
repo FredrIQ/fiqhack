@@ -361,26 +361,78 @@ pause_messages(void)
 void
 doprev_message(void)
 {
+    /* 80 chars - 2 (borders) - 2 (gutters) - "T:" - 1 (divider) */
+    const int hist_msg_width = 73;
+
+    int prevturn;
+    int pos;
+    int maxturn, maxturn_width;
+
     struct nh_menuitem *items;
     char buf[MSGLEN + 1];
     int icount, size, i;
+
+    /* keep the previous messages window within 80 characters */
+    maxturn = 0;
+    for (i = 0; i < histsize; i++) {
+	pos = (histpos + i + 1) % histsize;
+	if (msghistory[pos].turn > maxturn)
+	    maxturn = msghistory[pos].turn;
+    }
+    maxturn_width = 0;
+    while (maxturn) {
+	maxturn_width++;
+	maxturn /= 10;
+    }
+    if (maxturn_width < 1)
+	maxturn_width = 1;
+
+    /* Prevent duplicate turn stamps. */
+    prevturn = 0;
 
     icount = 0;
     size = 10;
     items = malloc(size * sizeof (struct nh_menuitem));
 
     for (i = 0; i < histsize; i++) {
-        int pos = histpos + i + 1;
+	int turn;
+	const char *msg;
 
-        if (pos >= histsize)    /* wrap around eventually */
-            pos -= histsize;
+	pos = (histpos + i + 1) % histsize;
 
         if (!msghistory[pos].turn)
             continue;
 
-        snprintf(buf, MSGLEN + 1, "T:%d\t%s", msghistory[pos].turn,
-                 msghistory[pos].msg);
-        add_menu_txt(items, size, icount, buf, MI_TEXT);
+	turn = msghistory[pos].turn;
+	msg = msghistory[pos].msg;
+
+	if (strlen(msg) <= hist_msg_width - maxturn_width) {
+	    if (turn != prevturn)
+		snprintf(buf, MSGLEN+1, "T:%*d\t%s", maxturn_width, turn, msg);
+	    else
+		snprintf(buf, MSGLEN+1, "\t%s", msg);
+            add_menu_txt(items, size, icount, buf, MI_TEXT);
+	} else {
+	    int output_count, j;
+	    char **output;
+
+	    wrap_text(hist_msg_width - maxturn_width, msg, &output_count, &output);
+
+	    if (turn != prevturn)
+		snprintf(buf, MSGLEN+1, "T:%*d\t%s", maxturn_width, turn, output[0]);
+	    else
+		snprintf(buf, MSGLEN+1, "\t%s", output[0]);
+	    add_menu_txt(items, size, icount, buf, MI_TEXT);
+
+	    for (j = 1; j < output_count; j++) {
+		snprintf(buf, MSGLEN+1, "\t%s", output[j]);
+		add_menu_txt(items, size, icount, buf, MI_TEXT);
+	    }
+
+	    free_wrap(output);
+	}
+
+	prevturn = turn;
     }
 
     curses_display_menu(items, icount, "Message history:", PICK_NONE,
