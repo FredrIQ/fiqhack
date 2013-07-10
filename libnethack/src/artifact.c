@@ -1246,6 +1246,8 @@ arti_invoke(struct obj *obj)
             return dorub(obj);
         else if (obj->otyp == CRYSTAL_BALL)
             use_crystal_ball(obj);
+        else if (obj->otyp == SPE_BOOK_OF_THE_DEAD)
+            deadbook(obj, TRUE); /* deadbook() handles nothing happening */
         else
             pline("Nothing happens.");
         return 1;

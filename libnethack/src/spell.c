@@ -21,7 +21,6 @@ static schar delay;     /* moves left for this spell */
 
 static boolean cursed_book(struct obj *bp);
 static boolean confused_book(struct obj *);
-static void deadbook(struct obj *);
 static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
@@ -182,13 +181,14 @@ confused_book(struct obj *spellbook)
 }
 
 /* special effects for The Book of the Dead */
-static void
-deadbook(struct obj *book2)
+void
+deadbook(struct obj *book2, boolean invoked)
 {
     struct monst *mtmp, *mtmp2;
     coord mm;
 
-    pline("You turn the pages of the Book of the Dead...");
+    if (!invoked)
+        pline("You turn the pages of the Book of the Dead...");
     makeknown(SPE_BOOK_OF_THE_DEAD);
     /* KMH -- Need ->known to avoid "_a_ Book of the Dead" */
     book2->known = 1;
@@ -196,17 +196,38 @@ deadbook(struct obj *book2)
         struct obj *otmp;
         boolean arti1_primed = FALSE, arti2_primed = FALSE, arti_cursed = FALSE;
 
+        if (invoked) {
+            if (Blind)
+                You_hear("a crisp flicker...");
+            else
+                pline("The Book of the Dead opens of its own accord...");
+        }
+
         if (book2->cursed) {
-            pline("The runes appear scrambled.  You can't read them!");
+            if (invoked) {
+                if (Hallucination)
+                    You_hear("gratuitous bleeping.");
+                else
+                    You_hear("a mumbled curse.");
+            } else
+                pline("The runes appear scrambled.  You can't read them!");
             return;
         }
 
         if (!u.uhave.bell || !u.uhave.menorah) {
             pline("A chill runs down your %s.", body_part(SPINE));
-            if (!u.uhave.bell)
-                You_hear("a faint chime...");
-            if (!u.uhave.menorah)
-                pline("Vlad's doppelganger is amused.");
+            if (!u.uhave.bell) {
+                if (Hallucination)
+                    pline("You feel like a tuning fork!");
+                else
+                    You_hear("a faint chime...");
+            }
+            if (!u.uhave.menorah) {
+                if (Hallucination)
+                    pline("Nosferatu giggles.");
+                else
+                    pline("Vlad's doppelganger is amused.");
+            }
             return;
         }
 
@@ -229,7 +250,10 @@ deadbook(struct obj *book2)
 
         if (arti_cursed) {
             pline("The invocation fails!");
-            pline("At least one of your artifacts is cursed...");
+            if (Hallucination)
+                pline("At least one of your heirlooms is in a tizzy!");
+            else
+                pline("At least one of your artifacts is cursed...");
         } else if (arti1_primed && arti2_primed) {
             unsigned soon = (unsigned)dice(2, 6); /* time til next intervene */
 
@@ -250,10 +274,18 @@ deadbook(struct obj *book2)
     }
 
     /* when not an invocation situation */
+    if (invoked) {
+        pline("Nothing happens.");
+        return;
+    }
+
     if (book2->cursed) {
     raise_dead:
 
-        pline("You raised the dead!");
+        if (Hallucination)
+            You_hear("Michael Jackson dancing!");
+        else
+            pline("You raised the dead!");
         /* first maybe place a dangerous adversary */
         if (!rn2(3) &&
             ((mtmp =
@@ -331,7 +363,7 @@ learn(void)
     exercise(A_WIS, TRUE);      /* you're studying. */
     booktype = book->otyp;
     if (booktype == SPE_BOOK_OF_THE_DEAD) {
-        deadbook(book);
+        deadbook(book, FALSE);
         return 0;
     }
 

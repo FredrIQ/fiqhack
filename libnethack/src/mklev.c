@@ -1393,9 +1393,7 @@ mkgrave(struct level *lev, struct mkroom *croom)
  * Major level transmutation: add a set of stairs (to the Sanctum) after
  * an earthquake that leaves behind a a new topology, centered at inv_pos.
  * Assumes there are no rooms within the invocation area and that inv_pos
- * is not too close to the edge of the map.  Also assume the hero can see,
- * which is guaranteed for normal play due to the fact that sight is needed
- * to read the Book of the Dead.
+ * is not too close to the edge of the map.
  */
 void
 mkinvokearea(void)
@@ -1406,7 +1404,10 @@ mkinvokearea(void)
     xchar i;
 
     pline("The floor shakes violently under you!");
-    pline("The walls around you begin to bend and crumble!");
+    if (Blind)
+        pline("The entire dungeon seems to be tearing apart!");
+    else
+        pline("The walls around you begin to bend and crumble!");
     win_pause_output(P_MESSAGE);
 
     mkinvpos(xmin, ymin, 0);    /* middle, before placing stairs */
@@ -1435,7 +1436,10 @@ mkinvokearea(void)
         win_delay_output();
     }
 
-    pline("You are standing at the top of a stairwell leading down!");
+    if (Blind)
+        pline("You feel the stones reassemble below you!");
+    else
+        pline("You are standing at the top of a stairwell leading down!");
     mkstairs(level, u.ux, u.uy, 0, NULL);       /* down */
     newsym(u.ux, u.uy);
     vision_full_recalc = 1;     /* everything changed */
@@ -1479,19 +1483,23 @@ mkinvpos(xchar x, xchar y, int dist)
             obfree(otmp, NULL);
         }
     }
-    unblock_point(x, y);     /* make sure vision knows this location is open */
 
-    /* fake out saved state */
-    loc->seenv = 0;
-    loc->doormask = 0;
-    if (dist < 6)
-        loc->lit = TRUE;
-    loc->waslit = TRUE;
-    loc->horizontal = FALSE;
-    clear_memory_glyph(x, y, S_unexplored);
-    viz_array[y][x] = (dist < 6) ?
-        (IN_SIGHT | COULD_SEE) :     /* short-circuit vision recalc */
-        COULD_SEE;
+    if (!Blind) {
+        /* make sure vision knows this location is open */
+        unblock_point(x, y);
+
+        /* fake out saved state */
+        loc->seenv = 0;
+        loc->doormask = 0;
+        if (dist < 6)
+            loc->lit = TRUE;
+        loc->waslit = TRUE;
+        loc->horizontal = FALSE;
+        clear_memory_glyph(x, y, S_unexplored);
+        viz_array[y][x] = (dist < 6) ?
+            (IN_SIGHT | COULD_SEE) :     /* short-circuit vision recalc */
+            COULD_SEE;
+    }
 
     switch (dist) {
     case 1:    /* fire traps */

@@ -1534,6 +1534,7 @@ extern boolean load_special(struct level *lev, const char *);
 
 /* ### spell.c ### */
 
+extern void deadbook(struct obj *book2, boolean invoked);
 extern int study_book(struct obj *);
 extern void book_disappears(struct obj *);
 extern void book_substitution(struct obj *, struct obj *);
