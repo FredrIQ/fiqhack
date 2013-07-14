@@ -63,7 +63,7 @@ curses_getdir(const char *query, nh_bool restricted)
 char
 curses_yn_function(const char *query, const char *resp, char def)
 {
-    int width, height, key, output_count;
+    int width, height, key, output_count, idx;
     WINDOW *win;
     char prompt[QBUFSZ];
     char *rb, respbuf[QBUFSZ];
@@ -82,7 +82,7 @@ curses_yn_function(const char *query, const char *resp, char def)
     width = COLNO - 1;
     height = output_count + 2;
     win = newdialog(height, width);
-    for (int idx = 0; idx < output_count; idx++)
+    for (idx = 0; idx < output_count; idx++)
         mvwprintw(win, idx + 1, 2, output[idx]);
     wrefresh(win);
 

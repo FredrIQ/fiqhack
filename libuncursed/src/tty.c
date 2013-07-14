@@ -460,7 +460,7 @@ void uncursed_hook_init(int *h, int *w) {
        shutdown. */
     supports_utf8 = 0;
     wint_t kp = 0;
-    while (kp != (KEY_PF3 | (KEY_SHIFT*2)) && kp != KEY_HANGUP
+    while (kp != (KEY_PF3 | (KEY_SHIFT*2)) && kp != KEY_HANGUP &&
            kp != (KEY_PF3 | (KEY_SHIFT*4)) && kp != KEY_SILENCE) {
         kp = uncursed_hook_getkeyorcodepoint(2000);
         if (kp < 0x110000) kp = 0;
