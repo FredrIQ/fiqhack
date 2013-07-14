@@ -348,9 +348,6 @@ extern void pause_messages(void);
 extern void doprev_message(void);
 extern void cleanup_messages(void);
 extern void new_action(void);
-extern void wrap_text(int width, const char *input, int *output_count,
-                      char ***output);
-extern void free_wrap(char **wrap_output);
 
 /* options.c */
 extern void display_options(nh_bool change_birth_opt);

@@ -12,21 +12,27 @@ newdialog(int height, int width)
     int starty, startx;
     WINDOW *win;
 
-    if (height < 3)
-        height = 3;
     if (height > LINES)
         height = LINES;
     if (width > COLS)
         width = COLS;
 
     if (game_is_running) {
-        /* instead of covering up messages, draw the dialog as if it were a 
-           message */
-        fresh_message_line(FALSE);
-        draw_msgwin();
-        width = getmaxx(msgwin) + (ui_flags.draw_frame ? 2 : 0);
-        startx = 0;
-        starty = getmaxy(msgwin) - (ui_flags.draw_frame ? 0 : 1);
+        /* push in-game dialogs up to the message area */
+        if (height == 3) {
+            /* instead of covering up messages, draw the dialog as if it were a 
+               message */
+            fresh_message_line(FALSE);
+            draw_msgwin();
+            height = 1;
+            width = getmaxx(msgwin) - (ui_flags.draw_frame ? 2 : 0);
+            startx = ui_flags.draw_frame ? 1 : 0;
+            starty = getmaxy(msgwin) - (ui_flags.draw_frame ? 0 : 1);
+        } else {
+            startx = 0;
+            starty = 0;
+            width = getmaxx(msgwin) + (ui_flags.draw_frame ? 2 : 0);
+        }
     } else {
         /* out of game, keep dialogs centred */
         starty = (LINES - height) / 2;
@@ -37,8 +43,10 @@ newdialog(int height, int width)
     keypad(win, TRUE);
     meta(win, TRUE);
     wattron(win, FRAME_ATTRS);
-    box(win, 0, 0);
-    wattroff(win, FRAME_ATTRS);
+    if (height > 1) {
+        box(win, 0, 0);
+        wattroff(win, FRAME_ATTRS);
+    }   /* otherwise use frame colors for the message */
     return win;
 }
 
@@ -60,14 +68,14 @@ curses_getdir(const char *query, nh_bool restricted)
     return dir;
 }
 
+
 char
 curses_yn_function(const char *query, const char *resp, char def)
 {
-    int width, height, key, output_count, idx;
+    int width, height, key;
     WINDOW *win;
     char prompt[QBUFSZ];
     char *rb, respbuf[QBUFSZ];
-    char **output;
 
     strcpy(respbuf, resp);
     /* any acceptable responses that follow <esc> aren't displayed */
@@ -77,13 +85,10 @@ curses_yn_function(const char *query, const char *resp, char def)
     if (def)
         sprintf(prompt + strlen(prompt), "(%c) ", def);
 
-    wrap_text(COLNO - 5, prompt, &output_count, &output);
-
-    width = COLNO - 1;
-    height = output_count + 2;
+    height = 3;
+    width = strlen(prompt) + 5;
     win = newdialog(height, width);
-    for (idx = 0; idx < output_count; idx++)
-        mvwprintw(win, idx + 1, 2, output[idx]);
+    mvwprintw(win, game_is_running ? 0 : 1, game_is_running ? 0 : 2, prompt);
     wrefresh(win);
 
     do {
@@ -108,7 +113,6 @@ curses_yn_function(const char *query, const char *resp, char def)
     } while (!key);
 
     delwin(win);
-    free_wrap(output);
     redraw_game_windows();
     return key;
 }
@@ -123,8 +127,9 @@ curses_query_key(const char *query, int *count)
     nh_bool hascount = FALSE;
 
     height = 3;
+    width = strlen(query) + 4;
     win = newdialog(height, width);
-    mvwprintw(win, 1, 2, query);
+    mvwprintw(win, game_is_running ? 0 : 1, game_is_running ? 0 : 2, query);
     wrefresh(win);
 
     key = nh_wgetch(win);
@@ -158,7 +163,7 @@ curses_msgwin(const char *msg)
     while (isspace(msg[len - 1]))
         len--;
 
-    mvwaddnstr(win, 1, 2, msg, len);
+    mvwaddnstr(win, game_is_running ? 0 : 1, game_is_running ? 0 : 2, msg, len);
     wrefresh(win);
     key = nh_wgetch(win);       /* wait for any key */
 
