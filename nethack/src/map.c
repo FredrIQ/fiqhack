@@ -229,6 +229,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         }
         firstmove = 0;
         dx = dy = 0;
+        curs_set(1);
         key = get_map_key(FALSE);
         if (key == KEY_ESCAPE) {
             cx = cy = -10;
