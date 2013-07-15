@@ -243,7 +243,9 @@ resize_game_windows(void)
     statusheight = ui_flags.status3 ? 3 : 2;
     if (ui_flags.draw_frame) {
         mvwin(msgwin, 1, 1);
+        wresize(msgwin, ui_flags.msgheight, COLNO);
         mvwin(mapwin, ui_flags.msgheight + 2, 1);
+        wresize(mapwin, ROWNO, COLNO);
         statuswin =
             derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO + 3,
                    1);
@@ -255,7 +257,9 @@ resize_game_windows(void)
         draw_frame();
     } else {
         mvwin(msgwin, 0, 0);
+        wresize(msgwin, ui_flags.msgheight, COLNO);
         mvwin(mapwin, ui_flags.msgheight, 0);
+        wresize(mapwin, ROWNO, COLNO);
         statuswin =
             derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
 
