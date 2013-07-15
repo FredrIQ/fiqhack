@@ -123,6 +123,7 @@ curses_query_key(const char *query, int *count)
     nh_bool hascount = FALSE;
 
     height = 3;
+    width = strlen(query) + 4;
     win = newdialog(height, width);
     mvwprintw(win, 1, 2, query);
     wrefresh(win);
