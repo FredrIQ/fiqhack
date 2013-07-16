@@ -20,8 +20,11 @@ getpos(coord * cc, boolean force, const char *goal)
         rv = (*windowprocs.win_getpos) (&x, &y, force, goal);
     } while (force && (rv == -1 || x < 1 || y < 1 || x > COLNO || y > ROWNO));
     log_getpos(rv, x, y);
+    if (rv == -1)
+        pline("<position: (cancelled)>");
+    else
+        pline("<position: (%d, %d)>", cc->x, cc->y);
     suppress_more();
-    pline("<position: (%d, %d)>", cc->x, cc->y);
 
     cc->x = x;
     cc->y = y;
