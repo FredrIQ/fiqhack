@@ -369,7 +369,7 @@ nh_get_drawing_info(void)
 
     tmp = xmalloc(sizeof (struct nh_symdef));
     tmp->ch = DEF_INVISIBLE;
-    tmp->color = NO_COLOR;
+    tmp->color = CLR_BRIGHT_BLUE;
     tmp->symname = "invisible monster";
     di->invis = tmp;
 
