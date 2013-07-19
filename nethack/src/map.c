@@ -336,12 +336,8 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                 curses_msgwin(printbuf);
             }
         }
-        if (force)
-            goto nxtc;
-        cx = -1;
-        cy = 0;
-        result = 0;     /* not -1 */
-        break;
+        /* fall through; an invalid command at the direction screen
+           shouldn't cause us to abort (that's what ESC is for) */
 
     nxtc:
         wmove(mapwin, cy, cx - 1);
