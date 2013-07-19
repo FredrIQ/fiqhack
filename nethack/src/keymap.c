@@ -114,6 +114,7 @@ static int prev_count;
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
 static void init_keymap(void);
+static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
 static void dostop(void);
 
@@ -534,6 +535,7 @@ read_keymap(void)
             curses_msgwin("keymap.conf has changed format. Your keybindings have "
                           "reverted to defaults.");
             init_keymap();
+            write_keymap();
             return FALSE;
         }
         /* record unknown commands in the keymap: these may simply be valid,
