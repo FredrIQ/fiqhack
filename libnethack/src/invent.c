@@ -1027,6 +1027,8 @@ validate_object(struct obj * obj, const char *lets, const char *word)
     switch (object_selection_checks(obj, word)) {
     default:
     case ALREADY_IN_USE:
+        pline("That item is already equipped.");
+        return FALSE;
     case UNSUITABLE_USE:
         silly_thing(word, obj);
         return FALSE;
@@ -1041,34 +1043,7 @@ validate_object(struct obj * obj, const char *lets, const char *word)
 void
 silly_thing(const char *word, struct obj *otmp)
 {
-    const char *s1, *s2, *s3, *what;
-    int ocls = otmp->oclass, otyp = otmp->otyp;
-
-    s1 = s2 = s3 = 0;
-    /* check for attempted use of accessory commands ('P','R') on armor and for 
-       corresponding armor commands ('W','T') on accessories */
-    if (ocls == ARMOR_CLASS) {
-        if (!strcmp(word, "put on"))
-            s1 = "W", s2 = "wear", s3 = "";
-        else if (!strcmp(word, "remove"))
-            s1 = "T", s2 = "take", s3 = " off";
-    } else if ((ocls == RING_CLASS || otyp == MEAT_RING) || ocls == AMULET_CLASS
-               || (otyp == BLINDFOLD || otyp == TOWEL || otyp == LENSES)) {
-        if (!strcmp(word, "wear"))
-            s1 = "P", s2 = "put", s3 = " on";
-        else if (!strcmp(word, "take off"))
-            s1 = "R", s2 = "remove", s3 = "";
-    }
-    if (s1) {
-        what = "that";
-        /* quantity for armor and accessory objects is always 1, but some
-           things should be referred to as plural */
-        if (otyp == LENSES || is_gloves(otmp) || is_boots(otmp))
-            what = "those";
-        pline("Use the '%s' command to %s %s%s.", s1, s2, what, s3);
-    } else {
-        pline("That is a silly thing to %s.", word);
-    }
+    pline("That is a silly thing to %s.", word);
 }
 
 
