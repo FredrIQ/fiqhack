@@ -140,22 +140,22 @@ struct monst *migrating_mons;
 struct mvitals mvitals[NUMMONS];
 
 const char *const c_obj_colors[] = {
-    "black",    /* CLR_BLACK */
-    "red",      /* CLR_RED */
-    "green",    /* CLR_GREEN */
-    "brown",    /* CLR_BROWN */
-    "blue",     /* CLR_BLUE */
-    "magenta",  /* CLR_MAGENTA */
-    "cyan",     /* CLR_CYAN */
-    "gray",     /* CLR_GRAY */
-    "transparent",      /* no_color */
-    "orange",   /* CLR_ORANGE */
-    "bright green",     /* CLR_BRIGHT_GREEN */
-    "yellow",   /* CLR_YELLOW */
-    "bright blue",      /* CLR_BRIGHT_BLUE */
-    "bright magenta",   /* CLR_BRIGHT_MAGENTA */
-    "bright cyan",      /* CLR_BRIGHT_CYAN */
-    "white",    /* CLR_WHITE */
+    "black",          /* CLR_BLACK */
+    "red",            /* CLR_RED */
+    "green",          /* CLR_GREEN */
+    "brown",          /* CLR_BROWN */
+    "blue",           /* CLR_BLUE */
+    "magenta",        /* CLR_MAGENTA */
+    "cyan",           /* CLR_CYAN */
+    "gray",           /* CLR_GRAY */
+    "dark gray",      /* CLR_DARK_GRAY */
+    "orange",         /* CLR_ORANGE */
+    "bright green",   /* CLR_BRIGHT_GREEN */
+    "yellow",         /* CLR_YELLOW */
+    "bright blue",    /* CLR_BRIGHT_BLUE */
+    "bright magenta", /* CLR_BRIGHT_MAGENTA */
+    "bright cyan",    /* CLR_BRIGHT_CYAN */
+    "white",          /* CLR_WHITE */
 };
 
 const char *const the_your[] = { "the", "your" };

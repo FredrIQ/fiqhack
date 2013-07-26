@@ -129,7 +129,7 @@ apply_colormap(struct ColorMap *map)
            map. */
         bgColor = bg ? map->bgColors[bg] : COLOR_BLACK;
 
-        for (fg = 0; fg <= (COLORS >= 16 ? 16 : 8); fg++) {
+        for (fg = 0; fg < (COLORS >= 16 ? 16 : 8); fg++) {
 
             /* Replace black with blue if darkgray is not set. */
             fgColor = map->fgColors[fg];

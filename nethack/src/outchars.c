@@ -23,6 +23,10 @@ struct curses_drawing_info *default_drawing, *cur_drawing;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
 
+static struct curses_symdef default_ovr[] = {
+    {"boulder", -1, {0x0030, 0}, '0'}   /* backtick is the worst for boulders */
+};
+
 static struct curses_symdef rogue_graphics_ovr[] = {
     {"vodoor", -1, {0x002B, 0}, '+'},
     {"hodoor", -1, {0x002B, 0}, '+'},
@@ -349,6 +353,8 @@ init_displaychars(void)
     unicode_drawing = load_nh_drawing_info(dinfo);
     rogue_drawing = load_nh_drawing_info(dinfo);
 
+    apply_override(default_drawing, default_ovr,
+                   array_size(default_ovr), FALSE);
     apply_override(unicode_drawing, unicode_graphics_ovr,
                    array_size(unicode_graphics_ovr), FALSE);
     apply_override(rogue_drawing, rogue_graphics_ovr,

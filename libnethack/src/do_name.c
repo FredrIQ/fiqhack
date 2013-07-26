@@ -96,9 +96,9 @@ do_mname(void)
 
 /* all but coins */
 static const char nameable[] = {
-    SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS, AMULET_CLASS,
-    GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS, WEAPON_CLASS,
-    ROCK_CLASS, CHAIN_CLASS, BALL_CLASS, 0
+    WEAPON_CLASS, ARMOR_CLASS, RING_CLASS, AMULET_CLASS, TOOL_CLASS,
+    FOOD_CLASS, POTION_CLASS, SCROLL_CLASS, SPBOOK_CLASS, WAND_CLASS,
+    GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, 0
 };
 
 /*
@@ -1042,9 +1042,7 @@ rndcolor(void)
 {
     int k = rn2(CLR_MAX);
 
-    return Hallucination ? hcolor(NULL) : (k ==
-                                           NO_COLOR) ? "colorless" :
-        c_obj_colors[k];
+    return Hallucination ? hcolor(NULL) : c_obj_colors[k];
 }
 
 /* Aliases for road-runner nemesis

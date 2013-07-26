@@ -56,7 +56,7 @@
 # define CLR_MAGENTA            5
 # define CLR_CYAN               6
 # define CLR_GRAY               7       /* low-intensity white */
-# define NO_COLOR               8
+# define CLR_DARK_GRAY          8
 # define CLR_ORANGE             9
 # define CLR_BRIGHT_GREEN       10
 # define CLR_YELLOW             11

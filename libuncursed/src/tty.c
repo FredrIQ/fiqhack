@@ -453,10 +453,14 @@ void uncursed_hook_init(int *h, int *w) {
        for a reply before moving on. The reply is written as a PF3 with
        modifiers; the row is eaten, and the column is returned in the modifiers
        (column 3 = unicode = KEY_PF3 | (KEY_SHIFT*2), column 5 = not unicode =
-       KEY_PF3 | (KEY_SHIFT*4)). VT100 is weird! */
+       KEY_PF3 | (KEY_SHIFT*4)). VT100 is weird!
+
+       If we get a hangup at this prompt, we continue anyway to avoid an
+       infinite loop; we don't exit so that the process can do a safe
+       shutdown. */
     supports_utf8 = 0;
     wint_t kp = 0;
-    while (kp != (KEY_PF3 | (KEY_SHIFT*2)) &&
+    while (kp != (KEY_PF3 | (KEY_SHIFT*2)) && kp != KEY_HANGUP &&
            kp != (KEY_PF3 | (KEY_SHIFT*4)) && kp != KEY_SILENCE) {
         kp = uncursed_hook_getkeyorcodepoint(2000);
         if (kp < 0x110000) kp = 0;

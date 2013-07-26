@@ -107,9 +107,14 @@ doread(struct obj *scroll)
         }
     }
 
-    /* Actions required to win the game aren't counted towards conduct */
-    if (scroll->otyp != SPE_BOOK_OF_THE_DEAD && scroll->otyp != SPE_BLANK_PAPER
-        && scroll->otyp != SCR_BLANK_PAPER)
+    /* TODO: When we add a conduct assistance option, add a condition here.
+     *   Or better yet, check for all reading of things. */
+    if (scroll->otyp == SPE_BOOK_OF_THE_DEAD && !u.uconduct.literate &&
+        yn("You are currently illiterate and could invoke the Book "
+           "instead. Read it nonetheless?") != 'y')
+        return 0;
+
+    if (scroll->otyp != SPE_BLANK_PAPER && scroll->otyp != SCR_BLANK_PAPER)
         u.uconduct.literate++;
 
     confused = (Confusion != 0);
