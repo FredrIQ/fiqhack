@@ -411,7 +411,7 @@ add_objitem(struct nh_objitem **items, int *nr_items,
         it->group_accel = def_oc_syms[(int)obj->oclass];
         it->otype = obfuscate_object(obj->otyp + 1);
         it->oclass = obj->oclass;
-        it->worn = ! !obj->owornmask;
+        it->worn = !!(obj->owornmask & ~(u.twoweap ? 0 : W_SWAPWEP));
 
         /* don't unconditionally reveal weight, otherwise lodestones on the
            floor could be identified by their weight in the pickup dialog */
