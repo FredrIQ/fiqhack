@@ -373,6 +373,7 @@ extern int dofire(void);
 extern void hitfloor(struct obj *);
 extern void hurtle(int, int, int, boolean);
 extern void mhurtle(struct monst *, int, int, int);
+extern boolean throwing_weapon(const struct obj *);
 extern void throwit(struct obj *, long, boolean, schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
 extern int thitmonst(struct monst *, struct obj *);

@@ -833,7 +833,7 @@ toss_up(struct obj *obj, boolean hitsroof)
 }
 
 /* return true for weapon meant to be thrown; excludes ammo */
-static boolean
+boolean
 throwing_weapon(struct obj *obj)
 {
     return (is_missile(obj) || is_spear(obj) ||

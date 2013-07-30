@@ -327,7 +327,8 @@ addinv(struct obj *obj)
     obj->where = OBJ_INVENT;
 
 	/* fill empty quiver if obj was thrown */
-	if (iflags.pickup_thrown && !uquiver && obj_was_thrown)
+	if (iflags.pickup_thrown && !uquiver && obj_was_thrown &&
+	    (throwing_weapon(obj) || is_ammo(obj)))
 	    setuqwep(obj);
 
 added:
