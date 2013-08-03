@@ -45,19 +45,26 @@ static void
 draw_getline_inner(struct gamewin *gw, int echo)
 {
     struct win_getline *glw = (struct win_getline *)gw->extra;
-    int width, i, offset = 0;
+    int width, height, i, offset = 0;
     size_t len = strlen(glw->buf);
+    int output_count;
+    char **output;
 
     wattron(gw->win, FRAME_ATTRS);
     box(gw->win, 0, 0);
     wattroff(gw->win, FRAME_ATTRS);
 
     width = getmaxx(gw->win);
-    mvwaddnstr(gw->win, 1, 2, glw->query, width - 4);
+    height = getmaxy(gw->win);
+
+    wrap_text(COLNO - 4, glw->query, &output_count, &output);
+    for (i = 0; i < output_count; i++)
+	mvwaddstr(gw->win, i + 1, 2, output[i]);
+    free_wrap(output);
+
     if (glw->pos > width - 4)
         offset = glw->pos - (width - 4);
-
-    wmove(gw->win, 2, 2);
+    wmove(gw->win, height - 2, 2);
     wattron(gw->win, A_UNDERLINE);
     if (echo)
         waddnstr(gw->win, &glw->buf[offset], width - 4);
@@ -67,7 +74,7 @@ draw_getline_inner(struct gamewin *gw, int echo)
     for (i = len; i < width - 4; i++)
         wprintw(gw->win, "%c", (A_UNDERLINE != A_NORMAL) ? ' ' : '_');
     wattroff(gw->win, A_UNDERLINE);
-    wmove(gw->win, 2, glw->pos - offset + 2);
+    wmove(gw->win, height - 2, glw->pos - offset + 2);
     wrefresh(gw->win);
 }
 
@@ -127,11 +134,17 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
     size_t len = 0;
     nh_bool done = FALSE;
     nh_bool autocomplete = FALSE;
+    char **output;
+    int output_count;
 
     prev_curs = curs_set(1);
 
-    height = 4;
-    width = COLS - 2;
+    /* wrap text just for determining dimensions */
+    wrap_text(COLNO - 4, query, &output_count, &output);
+    free_wrap(output);
+    height = output_count + 3;
+    width = COLNO;
+
     gw = alloc_gamewin(sizeof (struct win_getline));
     gw->win = newdialog(height, width);
     gw->draw = echo ? draw_getline : draw_getline_noecho;
