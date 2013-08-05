@@ -10,7 +10,7 @@
 
 #include <stddef.h> /* for wchar_t */
 #include <stdarg.h>
-typedef unsigned int wint_t;
+#include <wchar.h>
 
 #define UNCURSED_ANDWINDOW(t, f, ...)                    \
     extern t f(__VA_ARGS__);                             \

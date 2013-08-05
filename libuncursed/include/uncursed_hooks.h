@@ -9,10 +9,7 @@
  */
 
 #include <stddef.h>
-typedef unsigned int wint_t; /* TODO: fails on 16-bit systems, perhaps we should
-                                include limits.h to be able to get the correct
-                                semantics of "wchar_t or int, whichever is
-                                larger" */
+#include <wchar.h>
 
 /* Calls from uncursed.c into an implementation library */
 extern void uncursed_hook_beep(void);
