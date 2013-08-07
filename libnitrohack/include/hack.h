@@ -133,7 +133,8 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define USE_INVLET       0x4   /* use object's invlet */
 # define INVORDER_SORT    0x8   /* sort objects by packorder */
 # define SIGNAL_NOMENU    0x10  /* return -1 rather than 0 if none allowed */
-# define FEEL_COCKATRICE  0x20 /* engage cockatrice checks and react */
+#define SIGNAL_ESCAPE	  0x20	/* return -2 rather than 0 if menu escaped */
+#define FEEL_COCKATRICE	  0x40	/* engage cockatrice checks and react */
 
 /* Flags to control query_category() */
 /* BY_NEXTHERE used by query_category() too, so skip 0x01 */

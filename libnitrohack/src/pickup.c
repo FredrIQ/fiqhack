@@ -519,6 +519,7 @@ obj_compare(const void *o1, const void *o2)
  *      USE_INVLET        - Use object's invlet.
  *      INVORDER_SORT     - Use hero's pack order.
  *      SIGNAL_NOMENU     - Return -1 rather than 0 if nothing passes "allow".
+ *	SIGNAL_ESCAPE	  - Return -2 rather than 0 if menu is escaped.
  */
 int
 query_objlist(const char *qstr, /* query string */
@@ -616,7 +617,8 @@ query_objlist(const char *qstr, /* query string */
                 (*pick_list)[i].count = selection[i].count;
         }
     } else if (n < 0) {
-        n = 0;  /* callers don't expect -1 */
+	    /* callers don't expect -1 by this point */
+	    n = (qflags & SIGNAL_ESCAPE) ? -2 : 0;
     }
     free(selection);
     free(objlist);
@@ -1252,18 +1254,22 @@ mon_beside(int x, int y)
     return FALSE;
 }
 
+static boolean Is_container_func(const struct obj *otmp)
+{
+	return Is_container(otmp);
+}
+
 /* loot a container on the floor or loot saddle from mon. */
 int
 doloot(void)
 {
-    struct obj *cobj, *nobj;
+    struct obj *cobj, *pobj;
     int c = -1;
     int timepassed = 0;
     coord cc;
     boolean underfoot = TRUE;
     const char *dont_find_anything = "don't find anything";
     struct monst *mtmp;
-    char qbuf[BUFSZ];
     int prev_inquiry = 0;
     boolean prev_loot = FALSE;
     int container_count = 0;
@@ -1282,27 +1288,23 @@ doloot(void)
 lootcont:
 
     if ((container_count = container_at(cc.x, cc.y, TRUE))) {
-        boolean any = FALSE;
+	struct object_pick *lootlist;
+	int i, n;
 
-        if (!able_to_loot(cc.x, cc.y))
-            return 0;
-        for (cobj = level->objects[cc.x][cc.y]; cobj; cobj = nobj) {
-            nobj = cobj->nexthere;
+	if (!able_to_loot(cc.x, cc.y, "loot")) return 0;
 
-            if (Is_container(cobj)) {
-		/* Don't ask if there's only one lootable object. */
-		if (container_count != 1) {
-                    sprintf(qbuf, "There is %s here, loot it?",
-                            safe_qbuf("", sizeof ("There is  here, loot it?"),
-                                      doname(cobj),
-                                      an(simple_typename(cobj->otyp)),
-                                      "a container"));
-                    c = ynq(qbuf);
-                    if (c == 'q') return timepassed;
-                    if (c == 'n') continue;
-                }
-                any = TRUE;
+	n = query_objlist("Loot which containers?", level->objects[cc.x][cc.y],
+			  BY_NEXTHERE | SIGNAL_ESCAPE | AUTOSELECT_SINGLE),
+			  &lootlist, PICK_ANY, Is_container_func);
                 
+	if (n < 0) {
+	    return 0;
+	} else if (n == 0) {
+	    c = 'n';
+	} else if (n > 0) {
+	    c = 'y';
+	    for (i = 0; i < n; i++) {
+		cobj = lootlist[i].obj;
                 if (cobj->olocked) {
                     pline("Hmmm, it seems to be locked.");
                     continue;
@@ -1317,18 +1319,19 @@ lootcont:
                         tmp = (tmp + 1) / 2;
                     losehp(tmp, "carnivorous bag", KILLED_BY_AN);
                     makeknown(BAG_OF_TRICKS);
-                    timepassed = 1;
-                    continue;
+		    free(lootlist);
+		    return 1;
                 }
 
                 pline("You carefully open %s...", the(xname(cobj)));
                 timepassed |= use_container(cobj, 0);
-                if (multi < 0)
-                    return 1;   /* chest trap */
+		if (multi < 0) { /* e.g. a chest trap */
+		    free(lootlist);
+		    return 1;
+		}
             }
+	    free(lootlist);
         }
-        if (any)
-            c = 'y';
     } else if (Confusion) {
         struct obj *goldob;
 
@@ -1686,7 +1689,13 @@ in_container(struct obj *obj)
             panic("in_container:  bag not found.");
 
         losehp(dice(6, 6), "magical explosion", KILLED_BY_AN);
-        current_container = 0;  /* baggone = TRUE; */
+        current_container = NULL;	/* baggone = TRUE; */
+
+        /* stop multi-looting; other containers might be destroyed */
+        if (multi >= 0) {
+            nomul(-1, "blowing up a magical bag");
+            nomovemsg = "";
+        }
     }
 
     if (current_container) {
