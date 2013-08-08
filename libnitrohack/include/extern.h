@@ -31,7 +31,7 @@ extern boolean snuff_candle(struct obj *);
 extern boolean snuff_lit(struct obj *);
 extern boolean catch_lit(struct obj *);
 extern void use_unicorn_horn(struct obj *);
-extern boolean tinnable(struct obj *);
+extern boolean tinnable(const struct obj *);
 extern void reset_trapset(void);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
@@ -445,7 +445,7 @@ extern int dooverview(void);
 
 /* ### eat.c ### */
 
-extern boolean is_edible(struct obj *);
+extern boolean is_edible(const struct obj *);
 extern void init_uhunger(void);
 extern int Hear_again(void);
 extern void reset_eat(void);
@@ -456,7 +456,7 @@ extern boolean is_fainted(void);
 extern void reset_faint(void);
 extern void violated_vegetarian(void);
 extern void newuhs(boolean);
-extern struct obj *floorfood(const char *, int);
+extern struct obj *floorfood(const char *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
 extern void food_disappears(struct obj *);

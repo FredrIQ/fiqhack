@@ -69,7 +69,7 @@ static boolean newuhs_saved_hs = FALSE;
  * polymorphed character.  Not used for monster checks.
  */
 boolean
-is_edible(struct obj *obj)
+is_edible(const struct obj *obj)
 {
     /* protect invocation tools but not Rider corpses (handled elsewhere) */
     /* if (obj->oclass != FOOD_CLASS && obj_resists(obj, 0, 0)) */
@@ -1806,7 +1806,7 @@ doeat(struct obj *otmp)
     if (otmp && !validate_object(otmp, allobj + 2, "eat"))
         return 0;
     else if (!otmp)
-        otmp = floorfood("eat", 0);
+        otmp = floorfood("eat");
     if (!otmp)
         return 0;
     if (check_capacity(NULL))
@@ -2305,22 +2305,41 @@ newuhs(boolean incr)
     }
 }
 
+static boolean can_sacrifice(const struct obj *otmp)
+{
+	return (otmp->otyp == CORPSE ||
+		otmp->otyp == AMULET_OF_YENDOR ||
+		otmp->otyp == FAKE_AMULET_OF_YENDOR);
+}
 
-/* Returns an object representing food.  Object may be either on floor or
- * in inventory.
- */
+static boolean other_floorfood(const struct obj *otmp)
+{
+	return otmp->oclass == FOOD_CLASS;
+}
+
+/* Returns an object representing food.  Object may be either on floor or in
+   inventory. */
 struct obj *
-floorfood(      /* get food from floor or pack */
-             const char *verb, int corpsecheck)
-{       /* 0, no check, 1, corpses, 2, tinnable corpses */
+floorfood(const char *verb)
+{
     struct obj *otmp;
     char qbuf[QBUFSZ];
     char c;
     struct trap *ttmp = t_at(level, u.ux, u.uy);
     boolean feeding = (!strcmp(verb, "eat"));
-    int can_floorfood = 0;
+    boolean sacrificing = (!strcmp(verb, "sacrifice"));
+    boolean tinning = (!strcmp(verb, "tin"));
+    boolean can_floorfood = FALSE;
     boolean checking_can_floorfood = TRUE;
-
+    boolean (*floorfood_check)(const struct obj *);
+    
+    if (!verb || !*verb)
+        impossible("floorfood: no verb given");
+    
+    floorfood_check = (sacrificing ? can_sacrifice :
+                       tinning ? tinnable :
+                       feeding ? is_edible : other_floorfood);
+    
     /* if we can't touch floor objects then use invent food only */
     if (!can_reach_floor() ||
         (feeding && u.usteed) ||  /* can't eat off floor while riding */
@@ -2329,10 +2348,18 @@ floorfood(      /* get food from floor or pack */
         (ttmp && ttmp->tseen && (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT)
          && (!u.utrap || (u.utrap && u.utraptype != TT_PIT)) && !Passes_walls))
         goto skipfloor;
-
+    
 eat_floorfood:
     if (feeding && metallivorous(youmonst.data)) {
-        struct obj *gold;
+	/* Two passes:
+	 *
+	 * 1) Check if anything on the floor can be chosen and make it available
+	 *    from the object picking prompt.
+	 * 2) If the floor was chosen (,) from that prompt, go through again,
+	 *    this time asking for the specific floor option.
+	 */
+
+        struct trap *ttmp = t_at(level, u.ux, u.uy);
 
         if (ttmp && ttmp->tseen && ttmp->ttyp == BEAR_TRAP) {
             if (!checking_can_floorfood) {
@@ -2352,43 +2379,28 @@ eat_floorfood:
             } else
                 can_floorfood++;
         }
-
-        if (youmonst.data != &mons[PM_RUST_MONSTER] &&
-            (gold = gold_at(level, u.ux, u.uy)) != 0) {
-            if (!checking_can_floorfood) {
-                if (gold->quan == 1L)
-                    sprintf(qbuf, "There is 1 gold piece here; eat it?");
-                else
-                    sprintf(qbuf, "There are %d gold pieces here; eat them?",
-                            gold->quan);
-                if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
-                    return gold;
-                } else if (c == 'q') {
-                    return NULL;
-                }
-            } else
-                can_floorfood++;
-        }
     }
-
-    /* Is there some food (probably a heavy corpse) here on the ground? */
-    for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
-        if (corpsecheck
-            ? (otmp->otyp == CORPSE &&
-               (corpsecheck == 1 ||
-                tinnable(otmp))) : feeding ? (otmp->oclass != COIN_CLASS &&
-                                              is_edible(otmp)) : otmp->oclass ==
-            FOOD_CLASS) {
-            if (!checking_can_floorfood) {
-                sprintf(qbuf, "There %s %s here; %s %s?", otense(otmp, "are"),
-                        doname(otmp), verb, (otmp->quan == 1L) ? "it" : "one");
-                if (can_floorfood == 1 ||
-                    (c = yn_function(qbuf, ynqchars, 'n')) == 'y')
-                    return otmp;
-                else if (c == 'q')
-                    return NULL;
-            } else
-                can_floorfood++;
+        
+    if (checking_can_floorfood) {
+        for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+            if ((*floorfood_check)(otmp)) {
+                can_floorfood = TRUE;
+                break;
+            }
+        }
+    } else {
+        struct object_pick *floorfood_list;
+        char qbuf[QBUFSZ];
+        int n;
+        sprintf(qbuf, "%c%s what?", highc(*verb), verb + 1);
+        n = query_objlist(qbuf, level->objects[u.ux][u.uy],
+                          BY_NEXTHERE|INVORDER_SORT, &floorfood_list,
+                          PICK_ONE, floorfood_check);
+        if (n) {
+            otmp = floorfood_list[0].obj;
+            free(floorfood_list);
+        } else {
+            otmp = NULL;
         }
     }
 
@@ -2402,11 +2414,11 @@ skipfloor:
         checking_can_floorfood = FALSE;
         goto eat_floorfood;
     }
-    if (corpsecheck && otmp)
-        if (otmp->otyp != CORPSE || (corpsecheck == 2 && !tinnable(otmp))) {
-            pline("You can't %s that!", verb);
-            return NULL;
-        }
+
+    if (otmp && !(*floorfood_check)(otmp)) {
+        pline("You can't %s that!", verb);
+        return NULL;
+    }
     return otmp;
 }
 

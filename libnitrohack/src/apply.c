@@ -1423,7 +1423,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
 }
 
 boolean
-tinnable(struct obj * corpse)
+tinnable(const struct obj * corpse)
 {
     if (corpse->oeaten)
         return 0;
@@ -1443,7 +1443,8 @@ use_tinning_kit(struct obj *obj)
         pline("You seem to be out of tins.");
         return 1;
     }
-    if (!(corpse = floorfood("tin", 2)))
+
+    if (!(corpse = floorfood("tin")))
         return 0;
     if (corpse->oeaten) {
         pline("You cannot tin something which is partly eaten.");
