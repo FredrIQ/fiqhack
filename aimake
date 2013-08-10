@@ -658,6 +658,12 @@ An object that conceptually represents a file that is deleted immediately
 after being installed.  It can be installed in a directory to force the
 directory to be created at install time.
 
+=item C<sys:create_subdir>
+
+An object that conceptually represents a subdirectory.  It can be installed in
+a directory, with a specific name, to force a subdirectory with that name to
+be created at install time (if it doesn't already exist).
+
 =item C<sys:empty_file>
 
 An object that conceptually represents a zero-length file.  Its only use is to
@@ -4352,6 +4358,8 @@ MAINLOOP: while (1) {
             -x $ospathfrom and chmod 0755, $ospathto;
         } elsif ($objname eq 'sys:touch_only') {
             # nothing to do; we already created the directory
+        } elsif ($objname eq 'sys:create_subdir') {
+            ensure_directory $output_target->[0], 0, 1;
         } elsif ($objname eq 'sys:empty_file') {
             my $ospathto = aipath2ospath $output_target->[0];
             open my $fhto, ">$binary_layers", $ospathto
