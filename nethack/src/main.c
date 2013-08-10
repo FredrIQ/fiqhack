@@ -180,8 +180,15 @@ init_game_paths(const char *argv0)
     else
         pathlist[DUMPPREFIX] = ".\\";
 #else
-    /* avoid a trap for people trying to port this */
-# error You must run NetHack 4 under Win32 or Linux.
+    /* WIN32 / UNIX is set by the header files, /but/ those aren't included
+       during dependency calculation. We want to error out if neither is set,
+       but not in a way that will confuse dependencies. Thus, we want something
+       here that the preprocessor is OK with but the compiler will reject.
+       A negative-size array is the standard "portable" way to do a static
+       assert, like is needed here (it works in practice, albeit possibly not in
+       theory). */
+
+    int please_define_UNIX_or_WIN32[-1];
 #endif
 
     /* if given an override directory, use it (unless we're running setgid */

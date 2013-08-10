@@ -5,9 +5,13 @@
 /*
  * System autodetection: greatly simplified, as we only care about
  * Unix (in all its variations) and Windows
- * aimake sets UNIX/WIN32; CMake just sets UNIX, and only
- * sometimes :)
+ * CMake just sets UNIX, and only sometimes :)
+ * AIMake doesn't set either directly, but does set AIMAKE_BUILDOS_MSWin32
+ * on Windows, so we can just use that
  */
+# ifdef AIMAKE_BUILDOS_MSWin32
+#  define WIN32
+# endif
 # ifndef UNIX
 #  define UNIX
 #  ifdef WIN32

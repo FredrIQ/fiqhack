@@ -19,7 +19,9 @@ static void xexit(int);
 extern boolean open_library(const char *, library *);
 extern void close_library(library *);
 
-char *eos(char *);      /* also used by dlb.c */
+/* from hacklib.c */
+extern char *eos(char *);
+
 FILE *fopen_datafile(const char *, const char *);
 
 static void Write(int, char *, long);
@@ -108,15 +110,6 @@ Write(int out, char *buf, long len)
         printf("Write Error in '%s'\n", library_file);
         xexit(EXIT_FAILURE);
     }
-}
-
-
-char *
-eos(char *s)
-{
-    while (*s)
-        s++;
-    return s;
 }
 
 /* open_library(dlb.c) needs this (which normally comes from src/files.c) */

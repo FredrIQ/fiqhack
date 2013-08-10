@@ -12,7 +12,10 @@
 # include <ctype.h>
 # include <setjmp.h>
 # include <sys/types.h>
-# if defined UNIX
+
+/* We don't have nethack_types to help us out with OS detection when
+   calculating dependencies, so redo the calculation here. */
+# if defined(UNIX) || (!defined(WIN32) && !defined(AIMAKE_BUILDOS_MSWin32))
 #  include <unistd.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
