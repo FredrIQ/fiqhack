@@ -68,16 +68,18 @@ init_game_paths(void)
     for (i = 0; i < PREFIX_COUNT; i++) {
         tmp = pathlist[i];
         len = strlen(tmp);
-        pathlist[i] = malloc(len + 2);
+        pathlist[i] = malloc(len + (i == DUMPPREFIX ? 8 : 2));
 
         strcpy(pathlist[i], tmp);
         if (pathlist[i][len - 1] != '/') {
             pathlist[i][len] = '/';
             pathlist[i][len + 1] = '\0';
+            len++;
+        }
+        if (i == DUMPPREFIX) {
+            sprintf(pathlist[i] + len, "dumps/");
         }
     }
-
-    strcpy(pathlist[DUMPPREFIX], "./");
 
     return pathlist;
 }
