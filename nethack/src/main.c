@@ -111,6 +111,12 @@ setup_signals(void)
 }
 #endif
 
+#ifndef STRINGIFY_OPTION
+# define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+# define STRINGIFY_OPTION_1(x) #x
+#endif
+
+
 static char **
 init_game_paths(const char *argv0)
 {
@@ -134,20 +140,6 @@ init_game_paths(const char *argv0)
 
     for (i = 0; i < PREFIX_COUNT; i++)
         pathlist[i] = dir;
-
-# ifndef STRINGIFY_OPTION
-#  define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
-#  define STRINGIFY_OPTION_1(x) #x
-# endif
-# ifdef AIMAKE_OPTION_statedir
-    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
-    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
-    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
-# endif
-# ifdef AIMAKE_OPTION_specificlockdir
-    pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
-# endif
-    /* and leave HACKDIR to provide the data */
 
     pathlist[DUMPPREFIX] = malloc(BUFSZ);
     if (!get_gamedir(DUMP_DIR, pathlist[DUMPPREFIX])) {
@@ -191,7 +183,18 @@ init_game_paths(const char *argv0)
     int please_define_UNIX_or_WIN32[-1];
 #endif
 
-    /* if given an override directory, use it (unless we're running setgid */
+    /* If the build system gave us more specific directories, use them. */
+#ifdef AIMAKE_OPTION_statedir
+    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+#endif
+#ifdef AIMAKE_OPTION_specificlockdir
+    pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
+#endif
+    /* and leave NETHACKDIR to provide the data */
+
+    /* if given an override directory, use it (unless we're running setgid) */
 #ifdef UNIX
     if (getgid() == getegid()) {
 #endif

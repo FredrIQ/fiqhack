@@ -145,5 +145,23 @@
             in_subdir => "bpath:libnethack/dat",
             output => "bpath:libnethack/dat/nhdat",
         },
+        _install_main => {
+            object => "bpath:nethack/src/main$exeext",
+            install_dir => "bindir",
+            install_name => "nethack4",
+        },
+        _install_server => {
+            object => "bpath:nethack_server/src/srvmain$exeext",
+            install_dir => "bindir",
+            install_name => "nethack4-server",
+        },
+        _install_nhdat => {
+            object => "bpath:libnethack/dat/nhdat",
+            install_dir => "datadir",
+        },
+        _install_license => {
+            object => "path:libnethack/dat/license",
+            install_dir => "datadir",
+        },
     },
 }
