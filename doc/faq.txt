@@ -163,7 +163,10 @@ Just like previous versions of NetHack, NetHack 4 is licensed under
 the NetHack General Public License (which is similar to old versions
 of the GNU General Public License.  Some of the newer files are
 dual-licensed and also allow other licensing options in addition to
-the NHPL.
+the NHGPL.  (The build system, aimake version 3, is licensed under
+version 3 of the GNU GPL, rather than under the NHGPL; however, its
+license does not extend onto the license of the code it compiles,
+leaving the resulting executables as purely NHGPL.)
 
 Please note that there is no warranty for NetHack 4.
 

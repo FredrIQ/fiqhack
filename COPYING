@@ -13,6 +13,14 @@ dual-licensed files, you can follow the terms of either or both
 licenses, at your option. You can find a copy of version 2 of the GPL
 as libnethack/dat/gpl.
 
+The build system, version 3 of aimake, is licensed under version 3 of
+the GPL and is *not* licensed under the NHGPL. However, the license of
+the build system does not transfer onto the files that it is used to
+build, leaving the resulting executables as purely NHGPL. There is a
+copy of version 3 of the GPL inside aimake's source code; it can most
+conveniently be viewed via "./aimake --license", or else you can read
+it via opening the source code of aimake in a text editor.
+
 Please note:
 
 NetHack 4 DOES NOT COME WITH ANY SORT OF WARRANTY.
