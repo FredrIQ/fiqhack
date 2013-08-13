@@ -138,11 +138,15 @@ Instead of compiling, output all error and warning messages that were obtained
 during the last compile, for files matching the given regexp.  (Don't include
 the // around the regexp.)
 
+This option is currently unimplemented.
+
 =item B<-B> I<regexp>, B<--rebuild=>I<regexp>
 
 Consider all files matching the regexp to have changed, even if they actually
 haven't.  (Don't include the // around the regexp.)  This option can be given
 multiple times.
+
+This option is currently unimplemented.
 
 =item B<--directory-layout>=I<layout>
 
@@ -1215,7 +1219,7 @@ architecture-independent files.
 
 =item specificincdir
 
-A directory used for installing architecture-indepenent include files that are
+A directory used for installing architecture-independent include files that are
 specific to the program being installed (although they will still be visible
 to system tools if an appropriate path is given).
 
@@ -1424,6 +1428,26 @@ C<depends> will be considered to be the empty set.  Setting C<fail_silently>
 to 2 causes failures to be treated as successes (e.g. if you're running a
 command you suspect will fail to glean information from what it outputs before
 it errors out.)  It should be set to 1, 2 or omitted.
+
+With a provicion rule, C<fail_silently> at 1 only affects messages, because an
+empty C<output> has the same affect as the rule failing. However, with a
+dependency rule, C<fail_silently> at 1 changes the course of the build; if a
+dependency rule errors out, it prevents any building from the C<object>
+(because building is not safe if the dependencies are unknown), but if it
+fails silently, it permits building from the C<object> without specifying any
+dependencies. This means that C<fail_silently> plus a hardcoded dependency
+list can be used to add dependencies conditionally.
+
+You can alternatively cause fail_silently to be conditionally set to 1 for a
+single execution of a rule via arranging for the string
+C<!AIMAKE_FAIL_SILENTLY!> to be produced on the command's stderr in the
+situations where you want a silent failure.  The intended purpose of this is
+to make it easy to specify that files are completely ignored under certain
+conditions, like this example C code:
+
+    #ifndef AIMAKE_BUILDOS_MSWin32
+    # error !AIMAKE_FAIL_SILENTLY! This file only works on Windows systems.
+    #endif
 
 =item ignore_warnings
 
@@ -3970,9 +3994,9 @@ $opt_install = undef;
 $opt_prefix = undef;
 $opt_dump = 0;
 $opt_ignore_builtin_config = 0;
-@opt_warnings = ();
+@opt_warnings = (); # TODO: unimplemented
 $opt_nocr = 0;
-@opt_rebuild = ();
+@opt_rebuild = ();  # TODO: unimplemented
 $opt_documentation = 0;
 $opt_dlayout = undef;
 $opt_license = 0;
@@ -4389,7 +4413,7 @@ MAINLOOP: while (1) {
                             # question as changed (and thus the object itself as
                             # unsure).
                             mark_pair_changed $_ for
-                                keys ${$state->{hash_by_object}->{$obj}};
+                                keys %{$state->{hash_by_object}->{$obj}};
                             # And we can't continue, due to having an unsure
                             # ancestor.
                             $runnable = 0;
@@ -4455,6 +4479,7 @@ MAINLOOP: while (1) {
     # Work out where we're outputting to.
     my $output_target = defined_or($rule->{output},
                                    "dependencies:$rulename:$objname");
+    my $installed_into = undef;
     if ($rule->{install_dir}) {
         my ($objtype, undef) = parse_objname $objname;
         my @components = $objtype eq 'sys' ? $objname : parse_aipath $objname;
@@ -4535,6 +4560,7 @@ MAINLOOP: while (1) {
             die "System object '$objname' cannot be installed";
         }
         # Make the rule into a production rule that produces nothing.
+        $installed_into = $output_target;
         $output_target = [];
     }
 
@@ -4550,6 +4576,7 @@ MAINLOOP: while (1) {
 
     my @output = ();
     my @depends = ();
+    my $failing_silently = 0;
 
     defined_or($rule->{fail_silently},0) == 2 and $failreason = undef;
 
@@ -4567,9 +4594,14 @@ MAINLOOP: while (1) {
         # dependencies, but also no errors. (This is why the check for 1 is
         # inside the if, and the check for 2 is outside the if; failing
         # silently at 2 just ignores the failure code and treats the command
-        # as having succeeded.)
-        defined_or($rule->{fail_silently}, 0) == 1
-            and ($failreason, $stderr) = (undef, '');
+        # as having succeeded.) A dependencies: object is still generated, in
+        # the silent failure case.
+        if (defined_or($rule->{fail_silently}, 0) == 1 ||
+            $stderr =~ /\!AIMAKE_FAIL_SILENTLY\!/) {
+            ($failreason, $stderr) = (undef, '');
+            $rule->{depends} and @output = @$output_target;
+            $failing_silently = 1;
+        }
     } else {
         # Yes.
         progress_report 4, "Parsing output...";
@@ -4714,7 +4746,13 @@ MAINLOOP: while (1) {
         if (scalar @shortened == 0) {
             $msg = "Succeeded but $verb no objects";
             # Install rules output no objects, but still do something.
-            $rule->{install_dir} and $msg = "Install successful";
+            # We can look at $installed_into to find the actual installed
+            # object.
+            $rule->{install_dir} and $msg = "Installed into " .
+                friendly_objname($installed_into->[0]);
+            # Silently failing rules can give us a better message here.
+            $failing_silently and $msg =
+                "The rule was skipped because it was inapplicable";
         } elsif (scalar @shortened <= 4) {
             $msg = ucfirst $verb . " " . join ', ', @shortened;
         } else {
