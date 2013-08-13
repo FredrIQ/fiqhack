@@ -269,8 +269,110 @@ Build Instructions
 UNIX/Linux
 ----------
 
-From the top source directory, run:
+You will need to install NetHack 4's dependencies: libjansson (available at
+http://www.digip.org/jansson/), and (if you want a working server binary)
+postgresql and pgcrypto. You also need development headers for those
+libraries. If you don't care about the server working, you can do without
+postgresql; you'll get compile errors as it tries to compile the server, but
+the programs that do install (including the game itself, which can run locally
+without needing to connect to a server) will work fine.
+
+Assuming you just want to run NetHack 4 from your home directory, from the top
+source directory, run:
 
     mkdir build
     cd build
     ../aimake -i ~/nethack4 .. # or wherever you want
+
+Currently, system-wide installing (one installation for all users with shared
+high scores and bones, how NetHack is traditionally installed) is currently
+slightly nontrivial due to problems with permissions, and thus is not
+recommended.  If you want to try it, I recommend reading aimake's
+documentation:
+
+    aimake --documentation
+
+If you want to run your own server (which is only necessary/useful if you want
+people to be able to connect to your NetHack 4 server from other computers,
+rather than running locally), you'll also need to set up the postgresql
+database:
+
+    su postgres             # or any other way to elevate your permissions
+    createuser -DPRS nh4server
+    # You'll be prompted for a password at this point.
+    createdb -O nh4server nethack4
+    echo 'CREATE EXTENSION pgcrypto' | psql -d nethack4
+    exit                    # go back to your normal permissions
+
+Next you need to create the configuration file. If you installed into
+`~/nethack4`, it should be named `~/nethack4/config/nethack4.conf`; other
+forms of install may have other locations. (You can run nethack4-server with
+no arguments to discover where the configuration file should be; if it can't
+find its configuration file, it'll complain and tell you where it's looking
+for it.)
+
+The configuration file looks something like this:
+
+    dbhost=127.0.0.1
+    dbport=5432
+    dbuser=nh4server
+    dbpass=**password**
+    dbname=nethack4
+
+Note that the port number has been known to vary based on the way that your
+copy of postgresql is packaged; you may want to verify it by looking at
+postgresql's configuration, `/etc/postgresql/.../postgresql.conf`. Also be
+aware that the configuration file necessarily has to store the password in
+plaintext (a hashed password is no good for actually logging into the
+database); you may want to change the permissions on the configuration file to
+help protect it. (I recommend using a long random password, because it's only
+used by computers; there's no need for humans to memorize it.)
+
+Now you can just run the `nethack4-server` binary to start the server; it will
+daemonize itself. To test your server setup, you can use the `nethack4`
+client; there's a menu option to connect to a server with it.
+
+The easiest way to stop the `nethack4-server` binary is to run
+`nethack4-server -k`, which will automatically work out which process is the
+server from its pidfile, and tell it to stop.
+
+Windows
+-------
+
+You will need to install various prerequisite programs in order to compile
+NetHack 4. The build system is written in Perl, and as such, the simplest way
+to get a working toolchain is to install Strawberry Perl, available at
+http://strawberryperl.com, which comes with a working C toolchain. You will
+also need to install Flex and Bison, scanner and parser generators; the
+versions at GnuWin32 (http://gnuwin32.sourceforge.net/) work (although they
+don't have a very Windows-like idea of directory structure). Strawberry Perl's
+and GnuWin32's executables will all need to be on your PATH (search for "PATH"
+in Control Panel, on recent versions of Windows).
+
+The NetHack 4 server doesn't work on Windows, so there's no need to mess about
+with postgresql. However, you will need libjansson. It would work if you
+compiled and installed libjansson, but doing so on Windows is rather
+difficult.  Instead, a much easier method is to download the source to
+libjansson (from http://www.digip.org/jansson/), and then copy the entire
+`src` directory from the libjansson distribution to inside the NetHack 4
+distribution (create a new folder parallel to `libuncursed` called
+`libjansson`, and copy the contents of the `src` directory into `libjannson`).
+
+You will also need to create two more folders, `build` and `install`; I
+recommend that both are parallel to the `nethack4` folder that contains the
+entire NetHack 4 distribution.
+
+Once you've done all this, open a command prompt, change to the build
+directory, and type:
+
+    perl ../nethack4/aimake -i ../install --directory-layout=single_directory
+
+aimake should compile and install the entirety of NetHack 4 for you into the
+install directory. In order to run it, change directory to the install
+directory, and type `nethack4`.
+
+Note that at present, the game is very slow to render on recent versions of
+Windows; this is because the Windows console is massively slow. (For a
+comparison, you can try running a command that produces a lot of text, such as
+`perl ../nethack4/aimake --documentation`, and observing how long it takes to
+scroll the screen when you press the spacebar.)
