@@ -227,6 +227,7 @@ read_sym_line(char *line)
     struct curses_symdef ovr;
     char symname[64];
     char *bp;
+    int unichar;
 
     if (!strlen(line) || line[0] != '!' || line[1] != '"')
         return;
@@ -249,7 +250,8 @@ read_sym_line(char *line)
 
     while (*bp && !isspace(*bp))
         bp++;   /* go past the previous value */
-    sscanf(bp, "%x", &ovr.unichar[0]);
+    sscanf(bp, "%x", &unichar);
+    ovr.unichar[0] = (wchar_t) unichar;
 
     apply_override(unicode_drawing, &ovr, 1, TRUE);
 }
@@ -298,7 +300,7 @@ write_symlist(int fd, const struct curses_symdef *list, int len)
 
     for (i = 0; i < len; i++) {
         sprintf(buf, "%c\"%s\"\t%d\t%04x\n", list[i].custom ? '!' : '#',
-                list[i].symname, list[i].color, list[i].unichar[0]);
+                list[i].symname, list[i].color, (int)list[i].unichar[0]);
         write(fd, buf, strlen(buf));
     }
 }
