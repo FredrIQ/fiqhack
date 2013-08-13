@@ -1,7 +1,0 @@
-# Use 'makedefs' to generate header files. date.h is rebuilt every compile; the others only on change.
-bpath:libnethack/include/date.h: bpath:libnethack/util/makedefs sys:always_rebuild > libnethack/util/makedefs -v libnethack/include/date.h
-bpath:libnethack/include/verinfo.h: bpath:libnethack/util/makedefs > libnethack/util/makedefs -w libnethack/include/verinfo.h
-bpath:libnethack/include/onames.h: bpath:libnethack/util/makedefs > libnethack/util/makedefs -o libnethack/include/onames.h
-bpath:libnethack/include/pm.h: bpath:libnethack/util/makedefs > libnethack/util/makedefs -p libnethack/include/pm.h
-# Use 'makedefs' to generate source files.
-bpath:libnethack/src/monstr.c: bpath:libnethack/util/makedefs > libnethack/util/makedefs -m libnethack/src/monstr.c

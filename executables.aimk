@@ -1,3 +1,0 @@
-# We install only two executables.
-install_target:bindir/bpath:nethack/src/main>nethack4
-install_target:bindir/bpath:nethack_server/src/srvmain>nethack4-server
