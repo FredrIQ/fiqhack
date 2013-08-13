@@ -2502,6 +2502,8 @@ sub friendly_objname {
     $objtype eq 'symbol'           and return $objvalue;
     $objtype eq 'symbol_in_object' and return $objvalue;
 
+    $objtype eq 'dependencies'     and return friendly_objname $objinner;
+
     defined $objinner and return "$objtype:$objvalue:$objinner";
     return "$objtype:$objvalue";
 }
@@ -2586,8 +2588,12 @@ sub ospath2aipath {
     my $required_by = shift;
     my $force_spath = shift;
 
-    !defined $required_by || File::Spec->file_name_is_absolute($ospath)
-        and $ospath = realpath($ospath);
+    # If we're trying to convert a nonexistent path, we won't be able to
+    # realpath it successfully. So we need an eval to trap errors.
+    eval {
+        !defined $required_by || File::Spec->file_name_is_absolute($ospath)
+            and $ospath = realpath($ospath);
+    };
 
     if (File::Spec->case_tolerant) {
         $ospath = defined_or(
@@ -3189,7 +3195,8 @@ sub run_command {
     sub write_statefile {
         # We want to avoid dying to a signal while the statefile is being
         # written, so turn off signals temporarily. The FD is already held
-        # open, so we write to the file, truncate it, and rewind it.
+        # open, so we write to the file, truncate it, and rewind it. On some
+        # OSes, we can't turn off signals, so that's guarded via an eval.
         #
         # The truncate isn't completely critical; Storable will happily stop
         # reading early. So on systems without a working truncate, we don't
@@ -3198,13 +3205,19 @@ sub run_command {
         # outside the signals-disabled section.
         defined $write_on_crash or return;
 
-        my $allsigs = POSIX::SigSet->new;
-        $allsigs->fillset;
-        my $oldsigs = POSIX::SigSet->new;
-        sigprocmask(SIG_SETMASK, $allsigs, $oldsigs);
+        my ($allsigs, $oldsigs);
+
+        eval {
+            $allsigs = POSIX::SigSet->new;
+            $allsigs->fillset;
+            $oldsigs = POSIX::SigSet->new;
+            sigprocmask(SIG_SETMASK, $allsigs, $oldsigs);
+        };
         store_fd($$write_on_crash, $state_fh);
         eval { truncate $state_fh, tell $state_fh; };
-        sigprocmask(SIG_SETMASK, $oldsigs);
+        defined $oldsigs and eval {
+            sigprocmask(SIG_SETMASK, $oldsigs);
+        };
         seek $state_fh, 0, SEEK_SET;
     }
 }
@@ -3319,7 +3332,9 @@ sub objects_for_rule {
 # Each pair knows the objects in its expanded use dependencies, and vice versa
 # (->{xuse_by_pair} (an array, not a hash), ->{xuse_by_object}). If the pair
 # is changed or blocked, then xuse_by_pair can be undef; in such a case,
-# xuse_by_object doesn't contain that pair.
+# xuse_by_object doesn't contain that pair. The innermost keys of
+# xuse_by_object list the objects originally responsible for including that
+# xuse; this gives better error messages.
 #
 # There is a list of changed pairs, ->{changed_pairs}. The values of that hash
 # list the reason the pair has not been marked as unchanged yet.
@@ -3719,13 +3734,13 @@ sub recalculate_pair_xuse {
     reset_pair_xuse($pair);
     my $r = $config->{rules}->{$rule};
     # Add the pair's rule to the list.
-    my %xuse = ("config_rule:$rule" => 1);
+    my %xuse = ("config_rule:$rule" => $obj);
     my @xuse = ("config_rule:$rule");
     if (!$r) {
         # The rule's meant to specify the dependencies, but the rule isn't
         # there, so we specify the rule itself and sys:clean as the xuse.
         $xuse{'sys:clean'} or push @xuse, 'sys:clean';
-        $xuse{'sys:clean'} = 1;
+        $xuse{'sys:clean'} = "config_rule:$rule";
     } else {
         # Add the pair's command to the list.
         my @command = (defined_or($r->{command}, 'intcmd:nop'));
@@ -3736,6 +3751,7 @@ sub recalculate_pair_xuse {
             push @command, '';
         # For install rules, add sys:installing to the list.
         $r->{install_dir} and push @command, 'sys:installing';
+        my %xuse_reason = ();
         while (@command) {
             # Convert the object name from a partially specified name into a
             # complete name.
@@ -3743,7 +3759,7 @@ sub recalculate_pair_xuse {
             complete_objname \$o, $obj;
             $o = resolve_extend $o;
             next if $xuse{$o};
-            $xuse{$o} = 1;
+            $xuse{$o} = defined_or($xuse_reason{$o}, $obj);
             push @xuse, $o;
 
             # Push all the use dependencies of this object onto @command.
@@ -3754,10 +3770,11 @@ sub recalculate_pair_xuse {
                 if ($provider) {
                     my @udeps = @{$state->{hash_by_pair}->{$provider}->{$o}};
                     push @command, sort @udeps;
+                    $xuse_reason{$_} = $o for @udeps;
                 } else {
                     # Nothing provides the object; add sys:clean to the list.
                     $xuse{'sys:clean'} or push @xuse, 'sys:clean';
-                    $xuse{'sys:clean'} = 1; # nothing provides it
+                    $xuse{'sys:clean'} = $o; # nothing provides it
                 }
             }
             # Add dependencies: objects to the list.
@@ -3765,15 +3782,16 @@ sub recalculate_pair_xuse {
             my @drules = rules_that_apply_to($o);
             @drules = grep $config->{rules}->{$_}->{depends}, sort @drules;
             push @command, map "dependencies:$_:$o", @drules;
+            $xuse_reason{"dependencies:$_:$o"} = "config_rule:$_" for @drules;
         }
     }
     unless ($xuse{$obj}) {
-        $xuse{$obj} = 1;
+        $xuse{$obj} = "config_rule:$rule";
         push @xuse, $obj;
     }
     $state->{xuse_by_pair}->{$pair} = \@xuse;
     for my $xuse (keys %xuse) {
-        $state->{xuse_by_object}->{$xuse}->{$pair} = 1;
+        $state->{xuse_by_object}->{$xuse}->{$pair} = $xuse{$xuse};
     }
 
     %sure_pair_cache = ();
@@ -4577,6 +4595,7 @@ MAINLOOP: while (1) {
     my @output = ();
     my @depends = ();
     my $failing_silently = 0;
+    my $shortfailreason = $failreason;
 
     defined_or($rule->{fail_silently},0) == 2 and $failreason = undef;
 
@@ -4680,8 +4699,8 @@ MAINLOOP: while (1) {
                 }
             }
             if ($rule->{require_match} and !@$rxreplace) {
-                $failreason = "Regular expression $$rx failed to " .
-                    "match [@outlines]";
+                $shortfailreason = $failreason =
+                    "Regular expression $$rx failed to match [@outlines]";
             }
             $$rx = $rxreplace;
         }
@@ -4764,9 +4783,9 @@ MAINLOOP: while (1) {
                  " (with warnings)." : ".");
     } else {
         if ($objname eq 'sys:no_objname') {
-            $msg = "Couldn't run rule $rulename: $failreason";
+            $msg = "Couldn't run rule $rulename: $shortfailreason";
         } else {
-            $msg = "Couldn't run rule $rulename on $objname: $failreason";
+            $msg = "Couldn't run rule $rulename on $objname: $shortfailreason";
         }
     }
     progress_report +($failreason ? -1 : $level), $msg;
@@ -4877,7 +4896,9 @@ atomically {
                 "\nThe following rules did not run due to missing dependencies:\n";
         }
 
-        $_ = friendly_objname $_ for @missing_deps;
+        $_ = friendly_objname $_ . '(' .
+            friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) . ')'
+            for @missing_deps;
 
         if ((scalar @missing_deps) > 4) {
             $missing_deps[3] = 'and ' . ((scalar @missing_deps) - 3) .
@@ -5564,6 +5585,7 @@ __DATA__
                         "optpath:-o :extend:$objext:"],
             output => "extend:$objext:",
             verb => 'compiled',
+            in_subdir => 'bpath:', # shorter error/warning messages
         },
 
         # Linking.
@@ -5577,17 +5599,21 @@ __DATA__
             object => qr/^bpath:.*(?:\Q$objext\E|\Q$libext\E)$/,
             command => ['cmd:nm', 'optstring:-fp', 'optpath::'],
             depends => 'symbol:',
-            # To make things work on Windows, omit symbols that start
-            # with a double underscore. TODO: This may be a hack, and
-            # there may be a better way.
-            dependsarg => qr'^((?>_?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*)) U',
-            # dependsarg => qr'^((?>[a-zA-Z0-9_\$]*)) U',
+            # To make things work on Windows, omit symbols that start with a
+            # double underscore, and translate DLL import hooks (__imp_.*) to
+            # the function being imported.
+            dependsarg => qr'^(?:__imp_)?((?>_?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*)) U',
         },
         o_file_provisions => {
             object => qr/^b?path:(?!aimake\/).*\Q$objext\E\z/,
             command => ['cmd:nm','optstring:-fp','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
+            # [ABCDGRSTVWiI] are all the externally visible symbols. (Capital I
+            # is used on Windows for DLL exports; normally there's a __imp_ with
+            # an I and a non-prefixed version of a function with a T, but for
+            # variables, only the I exists, so we need to remove the __imp_
+            # ourself.
+            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
             # inner => '' is implied, as with the next few rules
             outdepends => ['', 'optpath::'],
             verb => 'found',
@@ -5597,7 +5623,7 @@ __DATA__
             object => qr/^spath:.*\Q$libext\E\z/s,
             command => ['cmd:nm','optstring:-fp','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
+            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
             ignore_warnings => 1,
             outdepends => '',
             verb => 'found',
@@ -5609,7 +5635,7 @@ __DATA__
             object => qr/^spath:.*\.(?:so|dll)(?:\z|\.)/s,
             command => ['cmd:nm','optstring:-fp','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
+            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
             ignore_warnings => 1,
             propagate_usedeps => 1,
             outdepends => '',
@@ -5621,7 +5647,7 @@ __DATA__
             object => qr/^spath:.*\.(?:so|dll)(?:\z|\.)/s,
             command => ['cmd:nm','optstring:-fp -D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWi]',
+            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
             ignore_failure => 1,
             ignore_warnings => 1,
             propagate_usedeps => 1,
@@ -5659,10 +5685,10 @@ __DATA__
         },
         compile_lex => {
             object => qr/^b?path:.*\.l$/,
-            # Double-extend the filename to avoid potential clashes.
-            # Also note the use of -o (with no space) here; GnuWin32
-            # flex does not support the --outfile= syntax, so that's
-            # the most portable option.
+            # Double-extend the filename to avoid potential clashes. Also note
+            # the use of -o (with no space) here; GnuWin32 flex does not
+            # support the --outfile= syntax, so that's the most portable
+            # option.
             command => ['tool:lex', 'optpath::', 'optpath:-o:extend:_l.c:'],
             output => 'extend:_l.c:',
             verb => 'generated',
@@ -5676,18 +5702,18 @@ __DATA__
         compile_yacc => {
             object => qr/^b?path:.*\.y$/,
             # Again, the C file needs extension, in case the project has files
-            # file.y and file.l. The header file mustn't have an extension,
-            # because it's probably referred to by name.
+            # file.y and file.l. The header file mustn't have an internal
+            # extension, because it's probably referred to by name.
             command => ['tool:yacc', 'optpath::', 'optpath:-o :extend:_y.c:',
                         'optpath:--defines=:extend:.h:'],
             output => ['extend:_y.c:', 'extend:.h:'],
             verb => 'generated',
         },
 
-        # Creating static libraries. We do this by looking at .api
-        # files that specify what symbols should be in them. (It'd be
-        # nice to somehow mark all the other symbols as nonpublic,
-        # but there's no obvious way to do that.)
+        # Creating static libraries. We do this by looking at .api files that
+        # specify what symbols should be in them. (It'd be nice to somehow
+        # mark all the other symbols as nonpublic, but there's no obvious way
+        # to do that.)
         ar_tool => {
             output => 'tool:ar',
             outdepends => ['cmd:ar', 'optstring:rcs'],
