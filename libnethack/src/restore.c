@@ -297,6 +297,9 @@ loadfruitchn(struct memfile *mf)
 
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
+
+    if (!count) return flist;
+
     /* We must take care to load front-to-back as that's the save order. */
     while (count--) {
         if (first) {

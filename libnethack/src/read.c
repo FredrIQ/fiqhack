@@ -1547,7 +1547,7 @@ do_class_genocide(void)
 }
 
 void
-do_level_genocide()
+do_level_genocide(void)
 {
     /* to aid in topology testing; remove pesky monsters */
     struct monst *mtmp, *mtmp2;

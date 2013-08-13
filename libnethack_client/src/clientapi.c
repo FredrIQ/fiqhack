@@ -863,8 +863,8 @@ nhnet_get_roles(void)
 
 
 char *
-nhnet_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
-                               int gendnum, int alignnum)
+nhnet_build_plselection_prompt(char * const buf, int buflen, int rolenum,
+                               int racenum, int gendnum, int alignnum)
 {
     json_t *jmsg;
     char *str, *ret;
@@ -897,8 +897,8 @@ nhnet_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 
 
 const char *
-nhnet_root_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
-                              int gendnum, int alignnum)
+nhnet_root_plselection_prompt(char * const buf, int buflen, int rolenum,
+                              int racenum, int gendnum, int alignnum)
 {
     json_t *jmsg;
     char *str, *ret;

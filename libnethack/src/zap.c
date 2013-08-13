@@ -2676,6 +2676,13 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
         tsym = tmpsym_init(DISP_BEAM, dbuf_effect(E_MISC, E_flashbeam));
     else if (weapon != ZAPPED_WAND && weapon != INVIS_BEAM)
         tsym = tmpsym_initobj(obj);
+    else
+        /* technically there's no problem with tsym being uninitialized in this
+           case because it's never used, but the control flow is complex enough
+           that gcc can't determine that. We initialize to NULL so that if the
+           control flow is ever change to cause a problem, we get a reliable
+           crash. */
+        tsym = 0;
 
     while (range-- > 0) {
         int x, y;

@@ -274,7 +274,6 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
     struct monst *mtmp;
     struct obj *singleobj;
     struct tmp_sym *tsym = 0;
-    char sym = obj->oclass;
     int hitu, blindinc = 0;
 
     bhitpos.x = x;
