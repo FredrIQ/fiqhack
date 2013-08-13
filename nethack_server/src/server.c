@@ -50,10 +50,6 @@
 #include "nhserver.h"
 
 #include <ctype.h>
-#include <sys/wait.h>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
-#include <sys/epoll.h>
 #include <sys/time.h>
 
 #if defined(OPEN_MAX)

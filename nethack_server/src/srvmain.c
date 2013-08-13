@@ -7,8 +7,6 @@
 
 #include "nhserver.h"
 
-#include <arpa/inet.h>
-
 struct settings settings;
 int termination_flag;
 

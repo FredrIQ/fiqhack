@@ -33,7 +33,8 @@
         _libraries => {
             object => 'optionset:libraries',
             depends => ['optstring:-ljansson',
-                        'optstring:-lpq'],
+                        'optstring:-lpq',
+                        'optstring:-lws2_32'],
             verb => 'determined',
         },
         _build_desfile => {
@@ -164,12 +165,12 @@
         _install_main => {
             object => "bpath:nethack/src/main$exeext",
             install_dir => "gamesbindir",
-            install_name => "nethack4",
+            install_name => "nethack4$exeext",
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain$exeext",
             install_dir => "gamesbindir",
-            install_name => "nethack4-server",
+            install_name => "nethack4-server$exeext",
         },
         _install_nhdat => {
             object => "bpath:libnethack/dat/nhdat",
@@ -224,8 +225,6 @@
         },
         _install_saves_note => {
             object => "bpath:readme-saves",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "README",            
         },

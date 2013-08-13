@@ -8,7 +8,6 @@
 #include "nhserver.h"
 
 #include <ctype.h>
-#include <netdb.h>
 
 
 /* convert a string into either an ipv4 or an ipv6 address */

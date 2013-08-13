@@ -2,6 +2,8 @@
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* The code in this file is yours to do whatever you want with.   */
 
+#error !AIMAKE_FAIL_SILENTLY! This file hasn't been tested for a while, produces lots of warnings, and likely doesn't work. Use at your peril.
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

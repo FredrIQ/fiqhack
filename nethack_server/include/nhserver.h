@@ -2,6 +2,18 @@
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
+/* The server code simply doesn't work on Windows; too many Linux/UNIX-specific
+   constructs are used. So mark it as inapplicable. */
+# ifdef AIMAKE_BUILDOS_MSWin32
+#  undef WIN32
+#  define WIN32
+# endif
+
+# ifdef WIN32
+#  error !AIMAKE_FAIL_SILENTLY! The server code does not currently work on Windows.
+# endif
+
+
 # define _GNU_SOURCE
 
 # include <stdio.h>
@@ -11,7 +23,13 @@
 # include <sys/socket.h>
 # include <sys/un.h>
 # include <sys/stat.h>
+# include <sys/wait.h>
+# include <arpa/inet.h>
+# include <netinet/tcp.h>
+# include <sys/epoll.h>
 # include <netinet/in.h>
+# include <netdb.h>
+# include <poll.h>
 # include <fcntl.h>
 # include <unistd.h>
 # include <errno.h>

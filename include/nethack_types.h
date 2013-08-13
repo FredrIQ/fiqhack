@@ -10,6 +10,7 @@
  * on Windows, so we can just use that
  */
 # ifdef AIMAKE_BUILDOS_MSWin32
+#  undef WIN32
 #  define WIN32
 # endif
 # ifndef UNIX

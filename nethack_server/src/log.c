@@ -9,7 +9,6 @@
 
 #include <time.h>
 #include <ctype.h>
-#include <arpa/inet.h>
 #include <sys/time.h>
 
 static FILE *logfile;

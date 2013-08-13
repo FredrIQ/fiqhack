@@ -6,7 +6,6 @@
  */
 
 #include "nhserver.h"
-#include <poll.h>
 #include <ctype.h>
 
 #define COMMBUF_SIZE (1024 * 1024)
