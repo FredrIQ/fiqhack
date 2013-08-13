@@ -368,7 +368,7 @@ do_date(const char *outfile, int printdates)
     *c = '\0';  /* strip off the '\n' */
     if (printdates) {
         fprintf(ofp, "#define BUILD_DATE \"%s\"\n", cbuf);
-        fprintf(ofp, "#define BUILD_TIME (%ldL)\n", clocktim);
+        fprintf(ofp, "#define BUILD_TIME (%ldL)\n", (long)clocktim);
         fprintf(ofp, "\n");
     }
 

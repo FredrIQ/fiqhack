@@ -5,6 +5,10 @@
 #include "hack.h"
 #include "patchlevel.h"
 #include <zlib.h>
+/* stdint.h, inttypes.h let us printf long longs portably */
+#define __STDC_FORMAT_MACROS
+#include <stdint.h>
+#include <inttypes.h>
 
 /* #define DEBUG */
 
@@ -197,6 +201,7 @@ log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
 {
     char encbuf[ENCBUFSZ];
     const char *role;
+    uint_least64_t start_time_l64 = (uint_least64_t) start_time;
 
     if (program_state.restoring || iflags.disable_log)
         return;
@@ -216,9 +221,9 @@ log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
             VERSION_MINOR, PATCHLEVEL);
 
     base64_encode(plname, encbuf);
-    lprintf("%llx %x %d %s %s %s %s %s\n", start_time, seed, playmode, encbuf,
-            role, races[u.initrace].noun, genders[u.initgend].adj,
-            aligns[u.initalign].adj);
+    lprintf("%" PRIxLEAST64 " %x %d %s %s %s %s %s\n", start_time_l64, seed,
+            playmode, encbuf, role, races[u.initrace].noun,
+            genders[u.initgend].adj, aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();
     /* all the timestamps are UTC, so timezone info is required to interpret
@@ -241,12 +246,13 @@ log_timezone(int tz_offset)
 void
 log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 {
+    uint_least64_t turntime_l64 = (uint_least64_t) turntime;
     if (iflags.disable_log || logfile == -1)
         return;
 
     /* command numbers are shifted by 1, so that they can be array indices
        during replay */
-    lprintf("\n>%llx:%x:%d ", turntime, cmd + 1, rep);
+    lprintf("\n>%" PRIxLEAST64 ":%x:%d ", turntime_l64, cmd + 1, rep);
     switch (arg->argtype) {
     case CMD_ARG_NONE:
         lprintf("n");

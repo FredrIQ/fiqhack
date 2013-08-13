@@ -7,6 +7,10 @@
 #include "patchlevel.h"
 #include <ctype.h>
 #include <zlib.h>
+/* stdint.h, inttypes.h let us scanf long longs portably */
+#define __STDC_FORMAT_MACROS
+#include <stdint.h>
+#include <inttypes.h>
 
 #define DEBUG
 
@@ -647,6 +651,7 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
     char *header, *verstr;
     int ver1, ver2, ver3, n;
     unsigned int seed;
+    uint_least64_t init_l64;
 
     header = next_log_token();
     if (!header || strcmp(header, "NHGAME"))
@@ -667,7 +672,10 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
         raw_printf("Warning: Version mismatch; expected %d.%d, got %d.%d\n",
                    VERSION_MAJOR, VERSION_MINOR, ver1, ver2);
 
-    sscanf(next_log_token(), "%llx", init);
+    /* Windows doesn't support the %ll syntax. So we use this C99 trick. */
+
+    sscanf(next_log_token(), "%" SCNxLEAST64, &init_l64);
+    *init = (unsigned long long)init_l64;
     sscanf(next_log_token(), "%x", &seed);
     *playmode = atoi(next_log_token());
     base64_decode(next_log_token(), namebuf);
@@ -785,13 +793,15 @@ replay_read_command(char *cmdtok, char **cmd, int *count,
                     struct nh_cmd_arg *arg)
 {
     int cmdidx, n;
+    uint_least64_t turntime_l64;
 
     if (!cmdtok)
         return;
 
-    n = sscanf(cmdtok, ">%llx:%x:%d", &turntime, &cmdidx, count);
+    n = sscanf(cmdtok, ">%" SCNxLEAST64 ":%x:%d", &turntime_l64, &cmdidx, count);
     if (n != 3 || cmdidx > cmdcount)
         parse_error("Error: Incorrect command spec\n");
+    turntime = (unsigned long long) turntime_l64;
 
     *cmd = commands[cmdidx];
 
@@ -1456,13 +1466,14 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
     struct you sg_you;
     struct flag sg_flags;
     long sg_moves;
-    long long starttime;
+    uint_least64_t starttime;
 
     lseek(fd, 0, SEEK_SET);
     if (read(fd, header, 127) <= 0)
         return LS_INVALID;
     header[127] = '\0';
-    n = sscanf(header, "NHGAME %4s %x %*8s %d.%d.%d\n%llx %x %x %s %s %s %s %s",
+    n = sscanf(header, "NHGAME %4s %x %*8s %d.%d.%d\n%"
+               SCNxLEAST64 " %x %x %s %s %s %s %s",
                status, &savepos, &v1, &v2, &v3, &starttime, &seed, &playmode,
                encplname, role, race, gend, algn);
     if (n != 13)

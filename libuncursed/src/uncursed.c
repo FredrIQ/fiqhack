@@ -1276,14 +1276,27 @@ int mvwprintw(WINDOW *win, int y, int x, const char *fmt, ...) {
     va_end(vl); return rv;
 }
 int vw_printw(WINDOW *win, const char *fmt, va_list vl) {
-    va_list vl2; va_copy(vl2, vl);
-    char *bf = malloc(5);
+    va_list vl2;
+    char *bf = malloc(1);
     if (!bf) return ERR;
-    /* Count the length of the string */
-    int ccount = vsnprintf(bf, 5, fmt, vl);
-    bf = realloc(bf, ccount+1);
-    if (!bf) return ERR;
-    vsnprintf(bf, ccount+1, fmt, vl2);
+    /* Count the length of the string. vsnprintf is supposed to return the length
+       if it doesn't fit in the buffer, but on some OSes/libcs, it doesn't.
+       This loop allows for a vsnprintf that returns negative/0 on an overlong
+       string, or one that returns the buffer size on an overlong string. */
+    int ccount = 1;
+    int oldccount = 0;
+    while (ccount != oldccount) {
+        va_copy(vl2, vl);
+        oldccount = ccount;
+        *bf = 1;
+        ccount = vsnprintf(bf, ccount, fmt, vl2);
+        va_end(vl2);
+        if (ccount < 0 || (ccount == 0 && *bf)) ccount = oldccount * 2 + 1;
+        else ccount = ccount * 2 + 1;
+        if (ccount > LINES*COLS) return ERR; /* sanity */
+        bf = realloc(bf, ccount+1);
+        if (!bf) return ERR;
+    }
     char *r = bf;
     while (*r) waddch(win, *r++);
     free(bf);
