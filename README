@@ -270,12 +270,14 @@ UNIX/Linux
 ----------
 
 You will need to install NetHack 4's dependencies: libjansson (available at
-http://www.digip.org/jansson/), and (if you want a working server binary)
-postgresql and pgcrypto. You also need development headers for those
-libraries. If you don't care about the server working, you can do without
-postgresql; you'll get compile errors as it tries to compile the server, but
-the programs that do install (including the game itself, which can run locally
-without needing to connect to a server) will work fine.
+http://www.digip.org/jansson/), zlib (which is probably installed already, but
+you may need to get its development headers from your package manager), and
+(if you want a working server binary) postgresql and pgcrypto. You also need
+development headers for those libraries. If you don't care about the server
+working, you can do without postgresql; you'll get compile errors as it tries
+to compile the server, but the programs that do install (including the game
+itself, which can run locally without needing to connect to a server) will
+work fine.
 
 Assuming you just want to run NetHack 4 from your home directory, from the top
 source directory, run:

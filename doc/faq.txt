@@ -15,24 +15,24 @@ A long time ago, back before the use of graphics for computer games
 played on actual computers (rather than games consoles) caught on,
 there was a game called Rogue.  Previous games were mostly text
 adventures (think Zork or Colossal Cave Adventure); the game would
-describe a situation using text, and the player would respond to
-that.  Instead of describing the game world, Rogue visualised it,
-placing letters on the screen in order to show where the player was
-relative to enemies.  It was also notable for having a randomly
-generated map, and deleting the save file upon the character's death;
-there was no way to go back and try again.
+describe a situation using text, and the player would respond to that.
+Instead of describing the game world, Rogue visualised it, placing
+letters on the screen in order to show where the player was relative
+to enemies.  It was also notable for having a randomly generated map,
+and deleting the save file upon the character's death; there was no
+way to go back and try again.
 
 NetHack is a "roguelike" game following in the same tradition; the
 player controls an adventurer delving into a randomly generated
-dungeon to retrieve the Amulet of Yendor from its depths.  The earliest
-versions were based quite heavily on Dungeons & Dragons, although it
-has diverged somewhat since (although there are still many obvious
-ties between them, such as the presence of surprisingly many types of
-polearm).  As such, it allows unusual levels of flexibility in its
-gameplay; if it seems like you should be able to do something, you
-probably can, and unlike many roguelikes, the emphasis is on allowing
-you to build the character you want to play, rather than on trying to
-make do with a limited number of tools.
+dungeon to retrieve the Amulet of Yendor from its depths.  The
+earliest versions were based quite heavily on Dungeons & Dragons,
+although it has diverged somewhat since (although there are still many
+obvious ties between them, such as the presence of surprisingly many
+types of polearm).  As such, it allows unusual levels of flexibility
+in its gameplay; if it seems like you should be able to do something,
+you probably can, and unlike many roguelikes, the emphasis is on
+allowing you to build the character you want to play, rather than on
+trying to make do with a limited number of tools.
 
 
 What is NetHack 4?
@@ -115,7 +115,7 @@ that have problems, meaning that it doesn't get noticeably closer to
 release over time (and may even be drifting further away).  Because
 the DevTeam keeps the development process secretive (there's no public
 source for any interim version since 3.4.3, for instance), it's
-impossible fo the NetHack patching community to help them out, and we
+impossible for the NetHack patching community to help them out, and we
 don't even know what they're having trouble with.
 
 This is very annoying, because it forces us to duplicate their work
@@ -187,6 +187,7 @@ also much easier to prove that you aren't cheating.  Local play works
 even without an Internet connection, and allows you to experiment with
 patches to the code and otherwise modify the game as you like.
 
+
 How can I play on a public server?
 ----------------------------------
 
@@ -221,53 +222,56 @@ issues in considerably older versions of NetHack, and may well be more
 harmful than useful, so try with it turned off first.
 
 
-How can I install the game for local play?
+How can I compile the game for local play?
 ------------------------------------------
 
-First of all, if you're on Windows, you're out of luck; nobody has
-managed to compile NetHack 4 on Windows in a way that can be
-reproduced on other people's machines, yet.  (If you're willing to try
-to work it out, come talk to us on IRC and we'll try to help.)
+NetHack 4 can be compiled on most commonly used systems; we've tested
+Linux, OS X, and Windows.  Linux works out of the box.  Mac OS X
+*almost* works (there's currently an OS X-specific bug that can be
+worked around by deleting the line `#define _POSIX_SOURCE 1` from
+`libnethack/src/tty.c`; we're hoping to get a proper fix in place
+soon).  Windows is a little harder but still not impossible to compile
+on. (However, the performance of the Windows console is very bad,
+making the game close to unplayably slow; at present there is no tiles
+version, nor a tty version with an alternative rendering method, so if
+you're on Windows it's probably best to stick to online play for the
+time being.)
 
-Apart from that, first get a copy of the source from the repository,
-and then you have a choice of build systems to use.  If you have CMake
-installed (or are willing to install it; try your package manager),
-you can use that.  Alternatively, a copy of the AIMake build system is
-included in the repository, and will eventually be the preferred
-method for installing (at the moment, AIMake is still in beta, and
-although it appears to work, in some places that appears to be mostly
-due to coincidence rather than because the code is actually correct).
+In order to compile NetHack 4 locally, you can get a copy of the
+source from the repository, and follow the instructions in the README
+file (if you're on Mac OS X, follow the instructions for UNIX/Linux,
+because OS X is a UNIX derivative).  You'll need some dependencies in
+addition to NetHack 4 itself: a working C toolchain, zlib, and the
+[libjansson library][7].  (You'll also need postgresql if you're
+planning to run your own server, but you probably aren't; for local
+play, the game works just fine without a server to connect to.)
 
-Before you start, you'll need to install the [libjansson library][7];
-it might be in your package manager. You'll also need a Unicode-aware
-`curses` library or equivalent; `libncursesw` is the most commonly
-available such library on Linux.  The server code also requires
-PostgreSQL to work; you need to either disable the server when
-configuring the build system, or install the PostgreSQL development
-libraries.  Finally, you'll need a working C toolchain; many Linux
-distributions come with this anyway, but on Debian and derivatives
-(such as Ubuntu), you need the `build-essential` package, and on Mac
-OS X, you need Xcode.
+You'll additionally need a copy of Perl in order to run the build
+system: this will likely come with your system on Linux and Mac OS X.
+If you're on Windows, get [Strawberry Perl][8]; it comes with a
+working C toolchain and all the libraries required (apart from
+libjansson), meaning that you can avoid the usual problems of trying
+to set up a C toolchain on Windows.  On Mac OS X, the usual C
+toolchain is Xcode, which is available from Apple; most Linux systems
+come with a C toolchain, but if you're on Debian or a derivative (such
+as Ubuntu or Linux Mint), you'll need to install the `build-essential`
+package.
 
-NetHack 4 is designed to be built out-of-tree.  For a CMake build, use
-the following commands to accomplish this:
 
-    mkdir build
-    cd build
-    cmake ..
-    ccmake . # only necessary if you want to edit the install target paths
-    make
-    make install # into $HOME/nethack4 if you didn't change the paths in ccmake
+Are precompiled binaries available?
+-----------------------------------
 
-Alternatively, for AIMake:
+Not currently; we're planning to offer these eventually, but the code
+isn't in a stable enough state for it to be worthwhile yet.  They'd be
+most useful on Windows, which currently suffers from performance
+issues, and there doesn't seem to be much point in offering a really
+slow game.
 
-    mkdir build
-    cd build
-    ../aimake -i /home/username/nethack4 .. # or wherever you want
 
-These install procedures will install into your home directory, and as
-such, you don't need root for any part of the process.  (Look in
-`/home/username/nethack4` for the resulting compiled binary.)
+Does NetHack 4 depend on curses/ncurses?
+----------------------------------------
+
+Not any more; it used to, but that dependency has since been removed.
 
 
 Is there a graphical/tiles version?
@@ -302,7 +306,7 @@ all over the world, and it still works today.
 
 If you're interested in reading spoilers, good resources include IRC
 (#acehack and #nethack on irc.freenode.net), and the
-[NetHack wiki][8].  NetHack 4 has some deviations from 3.4.3, but the
+[NetHack wiki][9].  NetHack 4 has some deviations from 3.4.3, but the
 changes are relatively conservative, so spoilers for 3.4.3 will still
 be mostly applicable.
 
@@ -345,7 +349,7 @@ of sense to give the player less information than the character would
 have.  In real life, nobody (well, hardly anybody over the age of 3)
 eats something by mistake when they were merely trying to hold it in
 their hands; dungeoneers shouldn't become more likely to just because
-`e` and `w` are next to each other in the keyboard.  Likewise, it can
+`e` and `w` are next to each other on the keyboard.  Likewise, it can
 be assumed that an adventurer who wasn't blind or otherwise impaired
 would notice a sea of lava right next to them, and not accidentally
 walk into it because they'd pressed a key on a keyboard too many
@@ -470,14 +474,16 @@ has not been security audited yet).  The server/client code is used
 internally on nethack4.org; connecting to it via telnet or ssh spawns
 a client, which connects to the separate server daemon internally.
 
-There are four separate directories in the distribution, which handle
+There are five separate directories in the distribution, which handle
 the separate codebases: `libnethack` for the game logic,
 `libnethack_client` to allow clients to connect to the server,
-`nethack` for the interface code, and `nethack_server` for the
-server-specific logic (creating accounts, keeping separate save games
-for separate user accounts, that sort of thing).  Various executables
-are built out of code from various directories (but not with a 1:1
-correspondence; most of them use code from multiple directories).
+`nethack` for the interface code (that calculates what to draw on
+screen), `libuncursed` for the rendering code (that actually draws
+it), and `nethack_server` for the server-specific logic (creating
+accounts, keeping separate save games for separate user accounts, that
+sort of thing).  Various executables are built out of code from
+various directories (but not with a 1:1 correspondence; most of them
+use code from multiple directories).
 
 
 What is grammartree?
@@ -502,4 +508,5 @@ we've got.
 [5]: http://junethack.de
 [6]: http://www.chiark.greenend.org.uk/~sgtatham/putty/
 [7]: http://www.digip.org/jansson
-[8]: http://nethackwiki.com
+[8]: http://strawberryperl.com
+[9]: http://nethackwiki.com
