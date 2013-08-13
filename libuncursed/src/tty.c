@@ -2,8 +2,8 @@
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
- *  - the NetHack general public license
- *  - the GNU General Public license v2 or later
+ *  - the NetHack General Public License
+ *  - the GNU General Public License v2 or later
  * If you obtained uncursed as part of NetHack 4, you can find these licenses in
  * the files libnethack/dat/license and libnethack/dat/gpl respectively.
  */
@@ -54,6 +54,16 @@
    specific function, the most portable is used (e.g. select() rather than
    usleep() for delays, because it's in older versions of POSIX).
 */
+
+/* Detect OS. */
+#ifdef AIMAKE_BUILDOS_MSWin32
+# undef WIN32
+# define WIN32
+#endif
+
+#ifdef WIN32
+#error !AIMAKE_FAIL_SILENTLY! tty.c does not work on Windows. Use wincon.c instead.
+#endif
 
 /* UNIX-specific headers */
 #define _POSIX_SOURCE 1
