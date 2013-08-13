@@ -17,7 +17,7 @@ extern void uncursed_hook_delay(int); /* milliseconds */
 
 #define KEY_BIAS (0x10ff00) /* add this to a key to show it isn't a codepoint */
 extern void uncursed_hook_rawsignals(int);          /* 0 or 1 */
-extern wint_t uncursed_hook_getkeyorcodepoint(int); /* timeout in ms */
+extern int uncursed_hook_getkeyorcodepoint(int);    /* timeout in ms */
 
 extern void uncursed_hook_setcursorsize(int);       /* 0 to 2 */
 extern void uncursed_hook_positioncursor(int, int); /* y, x */
@@ -40,6 +40,7 @@ extern void uncursed_hook_flush(void);       /* called at the end of updates */
 /* Calls from implementation libraries into uncursed.c */
 extern char uncursed_rhook_cp437_at(int, int); /* y, x */
 extern char *uncursed_rhook_utf8_at(int, int); /* y, x; static buffer */
+extern unsigned short uncursed_rhook_ucs2_at(int, int); /* y, x */
 /* This returns fg|bg<<5|ul<<10; i.e. color and underlining information.
    Default color is given as 16, not as -1. */
 extern int uncursed_rhook_color_at(int, int);  /* y, x */

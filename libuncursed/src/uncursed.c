@@ -29,8 +29,8 @@
    way macros interpret commas and semicolons. So tell gcc not to warn about
    them in this file in particular. We do require a previous prototype,
    though. */
-#pragma GCC diagnostic ignored "-Wold-style-definition"
-#pragma GCC diagnostic warning "-Wstrict-prototypes"
+# pragma GCC diagnostic ignored "-Wold-style-definition"
+# pragma GCC diagnostic warning "-Wstrict-prototypes"
 #endif
 
 #define _ISOC99_SOURCE
@@ -1119,6 +1119,21 @@ char uncursed_rhook_cp437_at(int y, int x) {
         if (cp437[i] == wc) return i;
     return 0xa8; /* an upside-down question mark */
 }
+
+#ifdef __GNUC__
+/* We want to check for Unicode characters outside the UCS-2 range. If the
+   system's using UCS-2 for wchar_t, then the compiler will complain that
+   we're checking for something impossible. In general, the check is very
+   useful, so we disable it just for the next two functions. */
+# pragma GCC diagnostic push "-Wtype-limits"
+# pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+
+unsigned short uncursed_rhook_ucs2_at(int y, int x) {
+    wchar_t wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
+    if (wc < 65536) return (unsigned short) wc;
+    return 0xfffdu; /* REPLACEMENT CHARACTER */
+}
 char *uncursed_rhook_utf8_at(int y, int x) {
     wchar_t *c = nout_win->chararray[x + y * nout_win->stride].chars;
     /* The maximum number of UTF-8 bytes for one codepoint is 4. */
@@ -1151,40 +1166,47 @@ char *uncursed_rhook_utf8_at(int y, int x) {
     return utf8;
 }
 
+#ifdef __GNUC__
+# pragma GCC diagnostic pop "-Wtype-limits"
+#endif
+
 /* manual page 3ncurses get_wch */
-static wchar_t pushback_w = 0x110000;
+static int pushback_w = 0x110000;
 int unget_wch(wchar_t c) {
     if (pushback_w < 0x110000) return ERR;
     pushback_w = c;
     return OK;
 }
 UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
+    int r;
     if (pushback_w < 0x110000) {
         *rv = pushback_w;
         pushback_w = 0x110000;
         return OK;
     }
-    *rv = uncursed_hook_getkeyorcodepoint(win->timeout);
+    r = uncursed_hook_getkeyorcodepoint(win->timeout);
     /* When we have multiple possible key codes for certain keys, pick one
        and merge them together. */
-    if (*rv >= 0x110000) {
-        *rv -= KEY_BIAS;
-        if (*rv == KEY_SILENCE) return ERR;
-        int mods = *rv & (KEY_SHIFT | KEY_ALT | KEY_CTRL);
-        *rv &= ~mods;
+    if (r >= 0x110000) {
+        r -= KEY_BIAS;
+        if (r == KEY_SILENCE) return ERR;
+        int mods = r & (KEY_SHIFT | KEY_ALT | KEY_CTRL);
+        r &= ~mods;
         /* We can actually distinguish numpad Home from main keyboard Home
            in some terminals that don't distinguish numpad PgUp from main
            keyboard PgUp. This is, however, not particularly useful, so we
            just merge them. */
-        if (*rv == (KEY_KEYPAD | 'H')) *rv = KEY_HOME;
-        if (*rv == (KEY_KEYPAD | 'F')) *rv = KEY_END;
-        if (*rv == (KEY_FUNCTION | 15)) *rv = KEY_F5;
-        if (*rv == (KEY_KEYPAD | 'E')) *rv = KEY_B2;
-        if (*rv == (KEY_KEYPAD | 'G')) *rv = KEY_B2;
-        if (*rv == (KEY_KEYPAD | 'k')) *rv = KEY_NUMPLUS;
-        *rv |= mods;
+        if (r == (KEY_KEYPAD | 'H')) r = KEY_HOME;
+        if (r == (KEY_KEYPAD | 'F')) r = KEY_END;
+        if (r == (KEY_FUNCTION | 15)) r = KEY_F5;
+        if (r == (KEY_KEYPAD | 'E')) r = KEY_B2;
+        if (r == (KEY_KEYPAD | 'G')) r = KEY_B2;
+        if (r == (KEY_KEYPAD | 'k')) r = KEY_NUMPLUS;
+        r |= mods;
+        *rv = r;
         return KEY_CODE_YES;
     }
+    *rv = r;
     return OK;
 }
 

@@ -469,7 +469,7 @@ void uncursed_hook_init(int *h, int *w) {
        infinite loop; we don't exit so that the process can do a safe
        shutdown. */
     supports_utf8 = 0;
-    wint_t kp = 0;
+    int kp = 0;
     while (kp != (KEY_PF3 | (KEY_SHIFT*2)) && kp != KEY_HANGUP &&
            kp != (KEY_PF3 | (KEY_SHIFT*4)) && kp != KEY_SILENCE) {
         kp = uncursed_hook_getkeyorcodepoint(2000);
@@ -521,7 +521,7 @@ void uncursed_hook_delay(int ms) {
     platform_specific_delay(ms);
 }
 void uncursed_hook_rawsignals(int raw) { platform_specific_rawsignals(raw); }
-wint_t uncursed_hook_getkeyorcodepoint(int timeout_ms) {
+int uncursed_hook_getkeyorcodepoint(int timeout_ms) {
     last_color = -1; /* send a new SGR on the next redraw */
     char *ks = platform_specific_getkeystring(timeout_ms);
     if (ks == KEYSTRING_HANGUP) return KEY_HANGUP + KEY_BIAS;
