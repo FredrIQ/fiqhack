@@ -38,8 +38,8 @@
 # ifdef AIMAKE_OPTION_lockdir
 #  define DEFAULT_PID_FILE STRINGIFY_OPTION(AIMAKE_OPTION_lockdir) "/nethack4.pid"
 # endif
-# ifdef AIMAKE_OPTION_statedir
-#  define DEFAULT_WORK_DIR STRINGIFY_OPTION(AIMAKE_OPTION_statedir)
+# ifdef AIMAKE_OPTION_gamesstatedir
+#  define DEFAULT_WORK_DIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir)
 # endif
 
 # if !defined(DEFAULT_CONFIG_FILE)

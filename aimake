@@ -124,6 +124,14 @@ After building (if necessary), install the project into the given directory.
 The directory can be omitted, in which case it will use the same install
 directory as last time.
 
+The specific directories to install in are deduced from the directory given.
+For instance, if on a UNIX/Linux system you gave F</usr/local> as the
+directory to install into, aimake would put the application's read-write data
+files under F</var/local>, whereas installing into F</usr> would put them
+under F</var/lib>, and installing into F</home/user/package> would put them
+inside the install directory.  You can control the details of the install with
+the B<--directory-layout> option or "directory_layout" configuration option.
+
 =item B<-W> I<regexp>, B<--show-warnings>=I<regexp>
 
 Instead of compiling, output all error and warning messages that were obtained
@@ -136,6 +144,60 @@ Consider all files matching the regexp to have changed, even if they actually
 haven't.  (Don't include the // around the regexp.)  This option can be given
 multiple times.
 
+=item B<--directory-layout>=I<layout>
+
+Change how the specific install directories are chosen.  The possible values
+with the default configuration are:
+
+=over 4
+
+=item fhs
+
+Install into the appropriate system directories that are intended to be
+managed by the package manager on a UNIX/Linux system; the install directory
+should be F</usr> or F</>.  This is automatically chosen as the layout when
+installing into F</usr> or F</>.  This option would mostly be used by package
+managers; B<--destdir> would also be used for package managers that operated
+using binary packages (as oppose to directly from source).  ("FHS" stands for
+"File Hierarchy Standard", the standard that specifies which files should be
+placed in which directories on a UNIX or Linux system.)
+
+=item fhs_unmanaged
+
+Install into the appropriate system directories on a UNIX/Linux system,
+avoiding directories that are normally maintained by package managers.  This
+is automatically chosen as the layout when installing into F</usr/local>, the
+only reasonable choice for directory, and so there should rarely be a need to
+specify it explicitly.  (Most build systems have F</usr/local> as the default
+install directory on UNIX/Linux; however, aimake will not install into system
+directories unless the user explicitly requests it to.)
+
+=item fhs_package
+
+Install into system directories specific to the package being installed; every
+file will be placed into the install directory (by default,
+F</opt/packagename>), into F</etc/opt/packagename>, or into
+F</var/opt/packagename>.  This install layout is often used to make it easy to
+install and uninstall packages by hand.
+
+=item single_user
+
+Place all the installed files in appropriate subdirectories of the given
+directory.  This works on any operating system, and is the default when the
+install directory given is unrecognised, or recognised as a user's home or
+documents directory.  (Note that this sort of install makes the program
+available only to one user, rather than system-wide.)
+
+=item single_directory
+
+Place everything into the same directory, no subdirectories involved (unless
+the configuration for the specific project requests that empty subdirectories
+are created).  This is also special-cased to cause the program being installed
+to look for its data in the current directory, rather than memorizing the path
+it was installed to, even if it instructs aimake to tell it the install path.
+
+=back
+
 =item B<--destdir=>F<directory>
 
 When installing, treat the given directory as the root directory, rather than
@@ -143,7 +205,9 @@ using the actual root directory.  (For instance, giving B<-i> F</usr> B<-p>
 F</home/user> would install into F</home/user/usr>, but the installed program
 would look for paths as if it had been installed into F</usr>.)  This is
 intended for use in packaging programs, and when installing into a chroot from
-outside the chroot.
+outside the chroot.  This option may only be given if the install directory is
+outside the source directory and outside the build directory (otherwise, it's
+not quite clear what it would mean).
 
 =item B<--documentation>
 
@@ -168,7 +232,9 @@ human-readable format.  This is mostly only useful for debugging aimake.
 Ignore all the built-in rules and options, reading configuration only from the
 project-specific configuration file.  This is mostly only useful for testing
 aimake, or if you want to use aimake's engine for something radically
-different from compiling C.
+different from compiling C.  (The built-in directory layouts are not ignored,
+but they will not be used for anything if directory_layout is set to something
+other than a built-in directory layout.)
 
 =item B<--version>
 
@@ -296,11 +362,12 @@ to make mistakes.  I initially wrote the first version of aimake because cmake
 was unexpectedly rebuilding the entire project I was working on from scratch
 every time I made even a small change; it eventually turned out that I'd
 accidentally introduced a dependency loop in the project, with a program that
-generated files being built from the files it generated. aimake can warn about
-this sort of problem if it's introduced into a project later than the initial
-build.  (It's impossible in general to warn about it on the first build
-because none of the files that depend on each other can be generated in the
-first place, making it impossible to determine what files they'd generate.)
+generated files being built from the files it generated.  aimake can warn
+about this sort of problem if it's introduced into a project later than the
+initial build.  (It's impossible in general to warn about it on the first
+build because none of the files that depend on each other can be generated in
+the first place, making it impossible to determine what files they'd
+generate.)
 
 =back
 
@@ -685,8 +752,8 @@ existing file at that location.
 Represents a command shipped with the system, like C<gcc>.  This is only
 meaningful in the part of a configuration file that specifies what command to
 run to accomplish something.  (C<bpath:>, C<tool:> and C<intcmd:> objects can
-also be used in the same context.)  This is just a filename, no directories are
-involved.
+also be used in the same context.)  This is just a filename, no directories
+are involved.
 
 =item C<tool:>
 
@@ -752,8 +819,8 @@ aimake.
 
 An internal command that takes config options as its arguments
 (e.g. C<optpath::config_option:packagename>), and outputs their values in
-"name=value" form. Any values that are aimake objects that represent files will
-be converted to pathnames as the operating system understands them.
+"name=value" form.  Any values that are aimake objects that represent files
+will be converted to pathnames as the operating system understands them.
 
 =item C<intcmd:filetest>
 
@@ -783,9 +850,10 @@ The filename refers to a symbolic link.
 
 =item C<-x>
 
-The filename refers to an executable. (Depending on the operating system, this
-might check whether the filename has permissions that allow the current user
-to execute it, or it might check the filename for extensions like C<.exe>.)
+The filename refers to an executable.  (Depending on the operating system,
+this might check whether the filename has permissions that allow the current
+user to execute it, or it might check the filename for extensions like
+C<.exe>.)
 
 =item C<-z>
 
@@ -797,11 +865,11 @@ The filename refers to a nonempty file.
 
 =item C<-T>
 
-The filename refers to a text file. (This cannot be checked 100% reliably.)
+The filename refers to a text file.  (This cannot be checked 100% reliably.)
 
 =item C<-B>
 
-The filename refers to a binary file. (This cannot be checked 100% reliably,
+The filename refers to a binary file.  (This cannot be checked 100% reliably,
 either.)
 
 =back
@@ -1136,7 +1204,20 @@ architecture-dependent files.
 =item specificlibdir
 
 A directory used for installing libraries that are only used by the program
-being run.  Like libdir, this should be used for architecture-dependent files.
+being installed.  Like libdir, this should be used for architecture-dependent
+files.
+
+=item includedir
+
+A directory used for installing include files that are used by tools provided
+with the system (e.g. C header files).  This should be used for
+architecture-independent files.
+
+=item specificincdir
+
+A directory used for installing architecture-indepenent include files that are
+specific to the program being installed (although they will still be visible
+to system tools if an appropriate path is given).
 
 =item configdir
 
@@ -1161,6 +1242,29 @@ A directory used for documentation in GNU Info format.
 
 A directory used for general architecture-independent data files that are both
 read and written by the program (and that are shared between all users).
+
+=item rootbindir
+
+Like C<bindir>, but for executables designed to be run with elevated
+permissions.  (This doesn't actually do anything to elevate the permissions,
+nor to prevent users without elevated permissions running the executables;
+however, on many systems, users who don't have elevated permissions will be
+prevented from running the program by accident, even though they can still do
+so intentionally.)
+
+=item gamesbindir
+
+Like C<bindir>, but for executables which are games.  (Some sites may have
+policy that handles game executables specially.)
+
+=item gamesdatadir
+
+Like C<datadir>, but for read-only data files for games.
+
+=item gamesstatedir
+
+Like C<statedir>, but for read-write shared data files for games (such as high
+score tables).
 
 =item logdir
 
@@ -1187,7 +1291,9 @@ is used.
 =item install_name
 
 The basename to install a file under, if it isn't the same as the basename of
-the C<object>.
+the C<object>. This can include forward slashes to install into a subdirectory
+(regardless of what the path separator happens to be on the system in
+question).
 
 =item inner
 
@@ -2132,11 +2238,11 @@ $| = 1;
 select STDOUT;
 
 my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
-    $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license,
-    $opt_ignore_builtin_config, $opt_version); # options
+    $opt_ignore_builtin_config, $opt_version, $opt_dlayout,
+    $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license);  # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
-my ($path, $bpath, $ipath, $cwd); # important paths
+my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
 my $installing;                   # mode of operation
 my %config_hashes = ();           # configuration
 my ($state, $state_fh, $config);  # state and configuration handling
@@ -2824,7 +2930,8 @@ sub run_command {
                 } elsif (defined $config->{options}->{$1}) {
                     my $k = $1;
                     my $o = $config->{options}->{$k};
-                    $o =~ /^[bs]?path:/ and $o = aipath2ospath($o);
+                    $o =~ /^[bs]?path:/ and $o =
+                        ($singledir ? File::Spec->curdir : aipath2ospath($o));
                     push @stdout, "$k=$o";
                 } else {
                     $failreason = "Missing config options";
@@ -3867,6 +3974,7 @@ $opt_ignore_builtin_config = 0;
 $opt_nocr = 0;
 @opt_rebuild = ();
 $opt_documentation = 0;
+$opt_dlayout = undef;
 $opt_license = 0;
 $opt_version = 0;
 GetOptions('verbose|v:+' => \$opt_verbose,
@@ -3876,6 +3984,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'show-warnings|W' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
            'documentation' => \$opt_documentation,
+           'directory-layout=s' => \$opt_dlayout,
            'ignore-builtin-config' => \$opt_ignore_builtin_config,
            'license' => \$opt_license,
            'version' => \$opt_version,
@@ -3979,7 +4088,6 @@ my $configdata;
     local $/;
     $configdata = <DATA>;
 }
-$opt_ignore_builtin_config and $configdata = '{}';
 $config = $configsafe->reval($configdata, 0);
 $@ or ($! and $@ = $!);
 $@ or $@ = "bad configuration file format";
@@ -3987,6 +4095,11 @@ defined $config or
     die "Could not load global config file: $@";
 undef $@;
 ref $config eq 'HASH' or die "Invalid type in global config file";
+
+if ($opt_ignore_builtin_config) {
+    delete $config->{options};
+    delete $config->{rules};
+}
 
 # Parse the local config file, from path:aimake.rules
 my $localconfigfile = aipath2ospath(configfilename);
@@ -4004,7 +4117,7 @@ defined $localconfig or
 undef $@;
 ref $localconfig eq 'HASH'
     or die "Invalid type in project-specific config file";
-for my $t (qw/rules options/) {
+for my $t (qw/rules options directories/) {
     if (exists $localconfig->{$t}) {
         $config->{$t}->{$_} = $localconfig->{$t}->{$_}
             for keys %{$localconfig->{$t}};
@@ -4021,9 +4134,36 @@ defined($config->{options}->{packagename}) or
 $installing = defined $opt_install;
 $ipath = undef;
 $opt_install and $ipath = ospath2aipath($opt_install);
+$singledir = 0;
 atomically {
     $ipath ||= $state->{_installdir};
-    $ipath ||= 'bpath:aimake_install';
+
+    # Work out the install directory layout.
+    my $dlayout = $opt_dlayout || $config->{options}->{directory_layout};
+    if ($dlayout eq 'autodetect') {
+        $dlayout = $config->{options}->{directory_layout_fallback};
+        if (defined $ipath) {
+            for my $layout (sort keys %{$config->{directories}}) {
+                $ipath =~ $config->{directories}->{$layout}->{autodetect} and
+                    $dlayout = $layout;
+            }
+        }
+    }
+    defined $config->{directories}->{$dlayout} or
+        die "Nonexistent directory layout '$dlayout'";
+    $config->{options}->{directory_layout} = $dlayout;
+    $ipath ||= $config->{directories}->{$dlayout}->{preferred_installdir};
+
+    # single_directory is special-cased.
+    $dlayout eq 'single_directory' and $singledir = 1;
+
+    # Fill in any directory options that weren't overriden.
+    for my $dir (keys %{$config->{directories}->{$dlayout}}) {
+        next unless $dir =~ /dir$/;
+        $config->{options}->{$dir} ||=
+            $config->{directories}->{$dlayout}->{$dir};
+    }
+
     $config->{options}->{installdir} = $ipath;
     $state->{_installdir} = $ipath;
 };
@@ -4035,6 +4175,8 @@ for my $option (keys $config->{options}) {
             s/\$([a-z]++)/$config->{options}->{$1}/g;
     }
 }
+
+progress_report 4, Dumper($config->{options});
 
 ####### Main program
 
@@ -4318,6 +4460,23 @@ MAINLOOP: while (1) {
         my @components = $objtype eq 'sys' ? $objname : parse_aipath $objname;
         $output_target = $config->{options}->{$rule->{install_dir}} . "/" .
             defined_or($rule->{install_name}, $components[-1]);
+        if ($opt_prefix) {
+            my $aiprefix = ospath2aipath $opt_prefix;
+            my @components1 = parse_aipath $aiprefix;
+            my @components2 = parse_aipath $output_target;
+            $components2[0] eq 'spath' or die
+                "Bad --destdir option: --install is inside source " .
+                "or build directory";
+            # Meanwhile, $components1[0] not being on the spath is meaningful,
+            # albeit probably not useful.
+
+            # Remove the "spath" and drive from the output_target; we're
+            # changing the root directory, which means that the drive just
+            # vanishes altogether.
+            shift @components2; shift @components2;
+
+            $output_target = deparse_aipath @components1, @components2;
+        }
     }
     # $output_target's content gets modified, so we need to clone it if
     # it's an array ref.
@@ -4826,26 +4985,237 @@ __DATA__
             'config.status',  # autoconf
             'CMakeCache.txt', # CMake
         ],
-        # Directories.
-        # Relative to -i on the command line.
-        bindir => '$installdir/bin',
-        libdir => '$installdir/lib',
-        specificlibdir => '$installdir/lib/$packagename',
-        includedir => '$installdir/include',
-        specificincdir => '$installdir/include/$packagename',
-        datarootdir => '$installdir/share',
-        configdir => '$installdir/etc',    # can plausibly be spath:etc
-        staterootdir => '$installdir/var', # can plausibly be spath:var
-        # Relative to datarootdir.
-        datadir => '$datarootdir/$packagename',
-        mandir => '$datarootdir/man',
-        infodir => '$datarootdir/info',
-        docdir => '$datarootdir/doc/$packagename',
-        # Relative to staterootdir.
-        statedir => '$staterootdir/lib/$packagename',
-        logdir => '$staterootdir/log',
-        lockdir => '$staterootdir/run',
-        specificlockdir => '$staterootdir/run/$packagename',
+        directory_layout => 'autodetect',
+        directory_layout_fallback => 'single_user',
+    },
+    # Directories. One of these directory sets is used for the install,
+    # based on the command line options or the install directory; they
+    # become normal options early in the compile process.
+    directories => {
+
+        # FHS layout: used for installed programs on UNIX/Linux systems. This
+        # layout uses a wide variety of directories, and typically has
+        # $installdir = spath:/usr. (In fact, the only other directory it
+        # really makes sense with is the root directory, which is why it
+        # specifies /usr explicitly sometimes. It'll only be used in /usr,
+        # the root directory, or if the user specifically requests it.)
+        fhs => {
+            autodetect => qr=^spath:/(?:usr)?$=,
+            preferred_installdir => 'spath:/usr',
+
+            # Relative to the root directory.
+            configdir => 'spath:/etc',
+            staterootdir => 'spath:/var',
+
+            # Relative to -i on the command line, or to /usr, depending on
+            # whether there are one or two copies of the directory.
+            bindir => '$installdir/bin',
+            rootbindir => '$installdir/sbin',
+            gamesbindir => 'spath:/usr/games',
+            libdir => '$installdir/lib',
+            specificlibdir => '$installdir/lib/$packagename',
+            includedir => 'spath:/usr/include',
+            specificincdir => 'spath:/usr/include/$packagename',
+            datarootdir => 'spath:/usr/share',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir/$packagename',
+            gamesdatadir => '$datarootdir/games/$packagename',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc/$packagename',
+
+            # Relative to staterootdir.
+            # Note that these have to be outside $installdir, because
+            # spath:/usr is a read-only tree (except during install).
+            statedir => '$staterootdir/lib/$packagename',
+            gamesstatedir => '$staterootdir/games/$packagename',
+            logdir => '$staterootdir/log',
+            lockdir => '$staterootdir/run',
+            specificlockdir => '$staterootdir/run/$packagename',
+        },
+
+        # FHS layout, non-package-manager version. There's a set of
+        # directories set aside for package manager use; this avoids them as
+        # far as possible, using a set of directories that the package manager
+        # has been told not to touch.
+        fhs_unmanaged => {
+            autodetect => qr=^spath:/usr/local$=,
+            preferred_installdir => 'spath:/usr/local',
+
+            # Relative to the root directory.
+            # Package managers can mess with /etc, but they're not allowed to
+            # mess with files there that they don't recognise, so just using
+            # /etc would be theoretically OK. However, the FHS suggests using
+            # /usr/local/etc in install programs (the user can make that a
+            # symlink to /etc/local if they'd prefer things in the /etc
+            # hierarchy).
+            configdir => '$installdir/etc',
+            staterootdir => 'spath:/var',
+
+            # Relative to -i on the command line.
+            bindir => '$installdir/bin',
+            rootbindir => '$installir/sbin',
+            gamesbindir => '$installdir/games',
+            libdir => '$installdir/lib',
+            specificlibdir => '$installdir/lib/$packagename',
+            includedir => '$installdir/include',
+            specificincdir => '$installdir/include/$packagename',
+            datarootdir => '$installdir/share',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir/$packagename',
+            gamesdatadir => '$datarootdir/games/$packagename',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc/$packagename',
+
+            # Relative to staterootdir.
+            # Note that these have to be outside $installdir, because
+            # spath:/usr is a read-only tree (except during install).
+            statedir => '$staterootdir/local/$packagename',
+            # The FHS is silent on the correct name for gamesstatedir
+            # for an unpackaged directory. This seems like a decent
+            # guess though...
+            gamesstatedir => '$staterootdir/local/games/$packagename',
+            # Logs likely need rotation. I'm not 100% sure this is correct.
+            logdir => '$staterootdir/log',
+            # lockdir needs to be /var/run because it's probably a symlink
+            # to /run (and being a transient directory anyway, a package
+            # manager can't meaningfully manage it).
+            lockdir => '$staterootdir/run',
+            specificlockdir => '$staterootdir/run/$packagename',
+        },
+
+        # Add-on package layout on FHS systems. This puts most things in an
+        # entirely separate hierarchy of their own; it can be seen as the
+        # system-wide version of installing in /home. Note that we could
+        # actually use any layout we like here for the files in /opt; the
+        # only requirement is the /var/opt, /etc/opt, /opt split. However,
+        # we try to keep things in an FHS-like order because that's what the
+        # program may be expecting.
+        fhs_package => {
+            autodetect => qr=^spath:/opt/=,
+            preferred_installdir => 'spath:/opt/$packagename',
+
+            # Relative to the root directory.
+            configdir => 'spath:/etc/opt/$packagename',
+            staterootdir => 'spath:/var/opt/$packagename',
+
+            # Relative to -i on the command line.
+            bindir => '$installdir/bin',
+            rootbindir => '$installdir/bin',
+            gamesbindir => '$installdir/bin',
+            libdir => '$installdir/lib',
+            # Because we're already in a package-specific directory, the
+            # libdir and specificlibdir are the same.
+            specificlibdir => '$installdir/lib',
+            includedir => '$installdir/include',
+            specificincdir => '$installdir/include',
+            datarootdir => '$installdir/share',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir',
+            gamesdatadir => '$datarootdir',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc',
+
+            # Relative to staterootdir.
+            # Note that these have to be outside $installdir, because
+            # spath:/opt is a read-only tree (except during install).
+            statedir => '$staterootdir',
+            gamesstatedir => '$staterootdir',
+            logdir => '$staterootdir/log',
+
+            # Relative to /var/run. (On many systems, it's /run nowadays, but
+            # the /var name has a longer history and is likely to be a symlink
+            # for the forseeable future.)
+            lockdir => 'spath:/var/run',
+            specificlockdir => 'spath:/var/run/$packagename',
+        },
+
+        # Installing for just one user. Unlike the FHS installs, this one
+        # works on Windows too, so there's an autodetect for the most common
+        # instance of that (Windows Vista+ with a noncustomized English
+        # document path). As such, care must be taken to avoid any
+        # FHS-specific paths. We still use a vaguely FHS-like layout to keep
+        # things neat, but with more generic names, and all the directories
+        # are arbitrary. (One big difference is the use of $installdir, not
+        # $installdir/bin, for binaries; this makes them easier to find.)
+        single_user => {
+            # The [^/]+ is not a typo: / is not legal in filenames on Windows,
+            # so we don't have to worry about an escaped /.
+            autodetect => qr=^spath:(?:/home|(?i:c/users/[^/]+/documents))/=,
+            preferred_installdir => 'bpath:aimake_install',
+
+            # Everything is relative to -i on the command line.
+            configdir => '$installdir/config',
+            staterootdir => '$installdir',
+            bindir => '$installdir',
+            rootbindir => '$installdir',
+            gamesbindir => '$installdir',
+            libdir => '$installdir/lib',
+            # Because we're already in a package-specific directory, the
+            # libdir and specificlibdir are the same.
+            specificlibdir => '$installdir/lib',
+            includedir => '$installdir/include',
+            specificincdir => '$installdir/include',
+            datarootdir => '$installdir',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir/data',
+            gamesdatadir => '$datarootdir/data',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc',
+
+            # Relative to staterootdir.
+            statedir => '$staterootdir/data-rw',
+            gamesstatedir => '$staterootdir/save',
+            logdir => '$staterootdir/log',
+            lockdir => '$staterootdir/lock',
+            specificlockdir => '$staterootdir/lock',
+        },
+
+        # An install that just dumps everything in the same directory; useful
+        # for home directory installs if there aren't many files being
+        # installed. We never autodetect this, and it works better if the
+        # application ignores $statedir and instead finds a user-specific
+        # place to store its state (dotfiles, etc.). intcmd:optionvalues is
+        # special-cased to return all directory options as relative paths
+        # when this is used.
+        single_directory => {
+            autodetect => qr=(?!)=, # more version-portable (*FAIL)
+            preferred_installdir => 'bpath:aimake_install',
+
+            configdir => '$installdir',
+            staterootdir => '$installdir',
+            bindir => '$installdir',
+            rootbindir => '$installdir',
+            gamesbindir => '$installdir',
+            libdir => '$installdir',
+            specificlibdir => '$installdir',
+            includedir => '$installdir',
+            specificincdir => '$installdir',
+            datarootdir => '$installdir',
+            datadir => '$datarootdir',
+            gamesdatadir => '$datarootdir',
+            mandir => '$datarootdir',
+            infodir => '$datarootdir',
+            docdir => '$datarootdir',
+            statedir => '$staterootdir',
+            gamesstatedir => '$staterootdir',
+            logdir => '$staterootdir',
+            lockdir => '$staterootdir',
+            specificlockdir => '$staterootdir',
+        },
+
+        # TODO: An FHS-like layout for Windows rather than FHS standards.
+        # Part of the problem is that on Windows, you're meant to use syscalls
+        # to get at the paths rather than just hardcoding them (they vary by
+        # language and configuration), making it hard to implement this from a
+        # portable program.
     },
     rules => {
         # Option sets.

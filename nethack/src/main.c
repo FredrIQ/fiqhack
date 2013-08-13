@@ -184,10 +184,10 @@ init_game_paths(const char *argv0)
 #endif
 
     /* If the build system gave us more specific directories, use them. */
-#ifdef AIMAKE_OPTION_statedir
-    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
-    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
-    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_statedir);
+#ifdef AIMAKE_OPTION_gamesstatedir
+    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
+    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
+    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
 #endif
 #ifdef AIMAKE_OPTION_specificlockdir
     pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
