@@ -29,6 +29,10 @@
 
 #  define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 #  define close closesocket
+
+/* TODO: Find the header file this is defined in, and include it. */
+extern int _snprintf_s(char *, size_t, size_t, const char *, ...);
+
 # endif
 # include <jansson.h>
 

@@ -971,9 +971,23 @@ get_config_name(fnchar * buf, nh_bool ui)
     if (!get_gamedir(CONFIG_DIR, buf))
         return 0;
 
-    fnncat(buf,
-           ui_flags.connection_only ? ui_flags.
-           username : ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+#ifdef WIN32
+    wchar_t usernamew[BUFSZ];
+    int i = 0;
+    while (i < BUFSZ-2 && ui_flags.username[i]) {
+        usernamew[i] = ui_flags.username[i];
+        i++;
+    }
+    usernamew[i] = 0;
+#endif
+
+    fnncat(buf, ui_flags.connection_only ?
+#ifdef WIN32
+                usernamew :
+#else
+                ui_flags.username :
+#endif
+                ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
     if (ui_flags.connection_only)
         fnncat(buf, FN(".rc"), BUFSZ);
 

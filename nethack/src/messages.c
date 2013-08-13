@@ -430,8 +430,9 @@ wrap_text(int width, const char *input, int *output_count, char ***output)
         if (!isspace(input[input_lidx]))
             input_lidx = input_idx + width;
 
-        (*output)[outcount] =
-            strndup(input + input_idx, input_lidx - input_idx);
+        (*output)[outcount] = malloc(input_lidx - input_idx + 1);
+        strncpy((*output)[outcount], input + input_idx, input_lidx - input_idx);
+        (*output)[outcount][input_lidx - input_idx] = '\0';
         outcount++;
 
         for (input_idx = input_lidx; isspace(input[input_idx]); input_idx++) {

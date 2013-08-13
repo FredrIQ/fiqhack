@@ -468,14 +468,18 @@ show_help(void)
 static void
 dostop(void)
 {
+#ifndef WIN32
     if (ui_flags.no_stop) {
+#endif
         curses_msgwin("Process suspension is disabled on this instance.");
+#ifndef WIN32
         return;
     }
 
     endwin();
     kill(getpid(), SIGSTOP);
     doupdate();
+#endif
 }
 
 /*----------------------------------------------------------------------------*/
@@ -498,7 +502,18 @@ read_keymap(void)
     if (!get_gamedir(CONFIG_DIR, filename))
         return FALSE;
     if (ui_flags.connection_only) {
+#ifdef WIN32
+        wchar_t usernamew[BUFSZ];
+        int i = 0;
+        while (i < BUFSZ-2 && ui_flags.username[i]) {
+            usernamew[i] = ui_flags.username[i];
+            i++;
+        }
+        usernamew[i] = 0;
+        fnncat(filename, usernamew, BUFSZ-1);
+#else
         fnncat(filename, ui_flags.username, BUFSZ-1);
+#endif
         fnncat(filename, FN(".keymap"), BUFSZ-1);
     } else
         fnncat(filename, FN("keymap.conf"), BUFSZ-1);
@@ -620,7 +635,18 @@ write_keymap(void)
     if (!get_gamedir(CONFIG_DIR, filename))
         return;
     if (ui_flags.connection_only) {
+#ifdef WIN32
+        wchar_t usernamew[BUFSZ];
+        int i = 0;
+        while (i < BUFSZ-2 && ui_flags.username[i]) {
+            usernamew[i] = ui_flags.username[i];
+            i++;
+        }
+        usernamew[i] = 0;
+        fnncat(filename, usernamew, BUFSZ-1);
+#else
         fnncat(filename, ui_flags.username, BUFSZ-1);
+#endif
         fnncat(filename, FN(".keymap"), BUFSZ-1);
     } else
         fnncat(filename, FN("keymap.conf"), BUFSZ-1);

@@ -371,11 +371,13 @@ static int
 do_connect(const char *host, int port, const char *user, const char *pass,
            const char *email, int reg_user, int connid)
 {
-    int fd = -1, authresult, copylen;
+    int fd = -1, authresult;
     char ipv6_error[120], ipv4_error[120], errmsg[256];
     json_t *jmsg, *jarr;
 
 #ifdef UNIX
+    int copylen;
+
     /* try to connect to a local unix socket */
     struct sockaddr_un sun;
 
