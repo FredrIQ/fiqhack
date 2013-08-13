@@ -4,6 +4,7 @@
 
 #include "hack.h"
 #include "lev.h"
+#include <stdint.h>
 
 static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
@@ -471,7 +472,7 @@ restgamestate(struct memfile *mf)
 
     if (u.ustuck) {
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-            if (mtmp->m_id == (long)u.ustuck)
+            if (mtmp->m_id == (intptr_t)u.ustuck)
                 break;
         if (!mtmp)
             panic("Cannot find the monster ustuck.");
@@ -479,7 +480,7 @@ restgamestate(struct memfile *mf)
     }
     if (u.usteed) {
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-            if (mtmp->m_id == (long)u.usteed)
+            if (mtmp->m_id == (intptr_t)u.usteed)
                 break;
         if (!mtmp)
             panic("Cannot find the monster usteed.");

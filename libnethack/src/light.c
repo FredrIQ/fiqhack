@@ -4,6 +4,7 @@
 
 #include "hack.h"
 #include "lev.h"
+#include <stdint.h>
 
 /*
  * Mobile light sources.
@@ -85,7 +86,7 @@ void
 del_light_source(struct level *lev, int type, void *id)
 {
     light_source *curr, *prev;
-    long tmp_id;
+    intptr_t tmp_id;
 
     /* need to be prepared for dealing a with light source which has only been
        partially restored during a level change (in particular: chameleon vs
@@ -116,7 +117,7 @@ del_light_source(struct level *lev, int type, void *id)
             return;
         }
     }
-    impossible("del_light_source: not found type=%d, id=0x%lx", type, (long)id);
+    impossible("del_light_source: not found type=%d, id=%p", type, id);
 }
 
 /* Mark locations that are temporarily lit via mobile light sources. */
@@ -296,7 +297,7 @@ void
 restore_light_sources(struct memfile *mf, struct level *lev)
 {
     int count;
-    long id;
+    intptr_t id;
     light_source *ls;
 
     /* restore elements */
@@ -307,8 +308,7 @@ restore_light_sources(struct memfile *mf, struct level *lev)
         ls->type = mread32(mf);
         ls->range = mread16(mf);
         ls->flags = mread16(mf);
-        id = mread32(mf);       /* prevent: "cast to pointer from integer of
-                                   different size" */
+        id = mread32(mf);
         ls->id = (void *)id;
         ls->x = mread8(mf);
         ls->y = mread8(mf);
@@ -330,10 +330,10 @@ relink_light_sources(boolean ghostly, struct level *lev)
         if (ls->flags & LSF_NEEDS_FIXUP) {
             if (ls->type == LS_OBJECT || ls->type == LS_MONSTER) {
                 if (ghostly) {
-                    if (!lookup_id_mapping((long)ls->id, &nid))
+                    if (!lookup_id_mapping((intptr_t)ls->id, &nid))
                         impossible("relink_light_sources: no id mapping");
                 } else
-                    nid = (long)ls->id;
+                    nid = (intptr_t)ls->id;
                 if (ls->type == LS_OBJECT) {
                     which = 'o';
                     ls->id = find_oid(nid);

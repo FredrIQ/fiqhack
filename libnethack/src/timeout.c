@@ -4,6 +4,7 @@
 
 #include "hack.h"
 #include "lev.h"        /* for checking save modes */
+#include <stdint.h>
 
 static void stoned_dialogue(void);
 static void vomiting_dialogue(void);
@@ -1556,19 +1557,19 @@ peek_timer(timer_element ** base, short func_index, void *arg)
 static void
 write_timer(struct memfile *mf, timer_element * timer)
 {
-    long argval;
+    intptr_t argval;
     boolean needs_fixup = FALSE;
 
     switch (timer->kind) {
     case TIMER_GLOBAL:
     case TIMER_LEVEL:
         /* assume no pointers in arg */
-        argval = (long)timer->arg;
+        argval = (intptr_t)timer->arg;
         break;
 
     case TIMER_OBJECT:
         if (timer->needs_fixup)
-            argval = (long)timer->arg;
+            argval = (intptr_t)timer->arg;
         else {
             /* replace object pointer with id */
             argval = ((struct obj *)timer->arg)->o_id;
@@ -1767,7 +1768,7 @@ restore_timers(struct memfile *mf, struct level *lev, int range,
 {
     int count;
     timer_element *curr;
-    long argval;
+    intptr_t argval;
 
     if (range == RANGE_GLOBAL)
         timer_id = mread32(mf);
@@ -1803,10 +1804,10 @@ relink_timers(boolean ghostly, struct level *lev)
         if (curr->needs_fixup) {
             if (curr->kind == TIMER_OBJECT) {
                 if (ghostly) {
-                    if (!lookup_id_mapping((long)curr->arg, &nid))
+                    if (!lookup_id_mapping((intptr_t)curr->arg, &nid))
                         panic("relink_timers 1");
                 } else
-                    nid = (long)curr->arg;
+                    nid = (intptr_t)curr->arg;
                 curr->arg = find_oid(nid);
                 if (!curr->arg)
                     panic("cant find o_id %d", nid);

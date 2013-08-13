@@ -3,6 +3,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include <stdint.h>
 
 struct trobj {
     short trotyp;
@@ -1179,8 +1180,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->uconduct.puddings = mread32(mf);
 
     /* at this point, ustuck and usteed are mon ids rather than pointers */
-    y->ustuck = (void *)(long)mread32(mf);
-    y->usteed = (void *)(long)mread32(mf);
+    y->ustuck = (void *)(intptr_t)mread32(mf);
+    y->usteed = (void *)(intptr_t)mread32(mf);
 
     y->ux = mread8(mf);
     y->uy = mread8(mf);
