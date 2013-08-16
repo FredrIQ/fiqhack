@@ -1030,10 +1030,11 @@ dependencies have an C<object> and a C<depends> (or an C<install_dir> if they
 are actually install rules), and perhaps also a C<command> if commands need to
 be run to determine the dependencies, and/or a C<dependsarg>.  Either can have
 a C<inner>, C<prereq>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
-C<filter>, C<filter_absolute>, C<filter_text_files>, C<output_as_searchfile>,
-C<filter_spath>, C<require_match> and/or C<low_message_priority>, and can
-specify C<force_locale>, C<fail_silently>, C<also_match_stderr>,
-C<ignore_warnings>, and/or C<ignore_spath> if they have a C<command>.
+C<filter>, C<filter_absolute>, C<filter_text_files>,
+C<filter_nonexistent_files>, C<output_as_searchfile>, C<filter_spath>,
+C<require_match> and/or C<low_message_priority>, and can specify
+C<force_locale>, C<fail_silently>, C<also_match_stderr>, C<ignore_warnings>,
+and/or C<ignore_spath> if they have a C<command>.
 
 A rule itself is a dictionary with a number of keys:
 
@@ -1479,6 +1480,13 @@ C<searchfile:> objects instead.  This is mostly useful in dependency rules.
 Causes any C<spath:> objects that would be generated via a regular expression
 match to be ignored if set to 1 (this is most common/useful in dependency
 rules).  It should be set to 1 or omitted.
+
+=item filter_nonexistent_files
+
+If set to 1, causes any objects that would be generated via a regular
+expression match to be ignored if they don't appear to be the filename of an
+existing file (that's either a regular file or a symbolic link).  It should be
+set to 1 or omitted.
 
 =item filter_text_files
 
@@ -4694,6 +4702,9 @@ MAINLOOP: while (1) {
                         ($n =~ /^spath:/ && $rule->{filter_spath}) ||
                         ($n !~ /^(search)?file:/ &&
                          $rule->{filter_absolute}) ||
+                        ($rule->{filter_nonexistent_files} &&
+                         $n =~ /^[bs]?path:/ &&
+                         (!-e aipath2ospath($n) || (!-f _ && !-l _))) ||
                         ($rule->{filter_text_files} &&
                          $n =~ /^[bs]?path:/ && -T aipath2ospath($n));
                 }
@@ -5497,15 +5508,15 @@ __DATA__
             command => ['tool:c_linker', 'optpath::', '',
                         'optionset:libraries', 'optionset:LFLAGS',
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
-                        'optstring:-Wl,--verbose'],
-            # We're looking at the linker's debug messages to locate
-            # libraries. GNU ld (ld.bfd) gives us a locale-dependent message,
-            # e.g. "attempt to open <file> succeeded" in the C locale. GNU
-            # gold (ld.gold) gives us a non-locale- dependent message,
-            # "<filename>: Attempt to open file succeeded". The output isn't
-            # escaped in either case.
-            output => qr/(?:^|: )[Aa]ttempt to open (.*) succeeded$/s,
+                        'optstring:-Wl,-t'],
+            # We're looking at the linker's trace output to locate
+            # libraries. -t prints each found object file on its own
+            # line on stderr. We recognise the object files via the
+            # extension, and the fact that they're existing, binary
+            # files.
+            output => qr/^(.*\.(?:a|o|so|dll)(?:\.[0-9]+)?)$/s,
             filter_text_files => 1,
+            filter_nonexistent_files => 1,
             force_locale => 'C',
             verb => 'found',
             fail_silently => 2,
