@@ -4211,7 +4211,7 @@ atomically {
 };
 
 # Directory options need substitutions.
-for my $option (keys $config->{options}) {
+for my $option (keys %{$config->{options}}) {
     if ($option =~ /dir$/) {
         1 while $config->{options}->{$option} =~
             s/\$([a-z]++)/$config->{options}->{$1}/g;
@@ -4984,8 +4984,8 @@ atomically {
             my $ir = "";
             my $mr = "is output by";
             while (@$unsure_list > 1) {
-                my $x = shift $unsure_list;
-                my $p = shift $unsure_list;
+                my $x = shift @$unsure_list;
+                my $p = shift @$unsure_list;
                 my ($rule, $pobj) = parse_pairname $p;
                 my $fx = friendly_objname $x;
                 my $fo = friendly_objname $pobj;
