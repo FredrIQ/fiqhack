@@ -67,6 +67,7 @@
 
 /* UNIX-specific headers */
 #define _POSIX_SOURCE 1
+#define _DARWIN_C_SOURCE 1 /* needed for SIGWINCH on OS X; no effect on Linux */
 #include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
