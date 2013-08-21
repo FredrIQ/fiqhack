@@ -282,7 +282,7 @@ curses_display_menu_core(struct nh_menuitem *items, int icount,
     mdat->icount = icount;
     mdat->title = title;
     mdat->how = how;
-    mdat->selected = calloc(icount, sizeof (nh_bool));
+    mdat->selected = calloc(icount, sizeof (char));
     mdat->x1 = x1;
     mdat->y1 = y1;
     mdat->x2 = x2;

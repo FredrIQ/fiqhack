@@ -695,7 +695,7 @@ int curs_set(int vis) { uncursed_hook_setcursorsize(vis); return OK; }
 /* manual page 3ncurses util */
 char *unctrl(char d) {
     int c = d;
-    if (d < 0) d += 256;
+    if (c < c) c += 256;
     static char s[5] = {'M', '-'};
     char *r = s+2;
     if (c > 127) { c -= 128; r = s; }
