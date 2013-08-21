@@ -345,6 +345,16 @@ replay(void)
         size = filecount + 2;
         items = malloc(size * sizeof (struct nh_menuitem));
 
+	if (dir == logdir && *savedir) {
+	    add_menu_item(items, size, icount, -1,
+			  "View saved games instead", '!', FALSE);
+	    add_menu_txt(items, size, icount, "", MI_NORMAL);
+	} else if (dir == savedir && *logdir) {
+	    add_menu_item(items, size, icount, -1,
+			  "View completed games instead", '!', FALSE);
+	    add_menu_txt(items, size, icount, "", MI_NORMAL);
+	}
+
         /* add all the files to the menu */
         for (i = 0; i < filecount; i++) {
             fd = sys_open(files[i], O_RDWR, 0660);
@@ -357,18 +367,11 @@ replay(void)
                           FALSE);
         }
 
-        if (dir == logdir && *savedir) {
-            add_menu_txt(items, size, icount, "", MI_NORMAL);
-            add_menu_item(items, size, icount, -1, "View saved games instead",
-                          '!', FALSE);
-        } else if (dir == savedir && *logdir) {
-            add_menu_txt(items, size, icount, "", MI_NORMAL);
-            add_menu_item(items, size, icount, -1, "View saved games instead",
-                          '!', FALSE);
-        }
-
-        n = curses_display_menu(items, icount, "Pick a game to view", PICK_ONE,
-                                PLHINT_ANYWHERE, pick);
+	n = curses_display_menu(items, icount,
+				(dir == savedir ?
+				 "Pick a saved game to view" :
+				 "Pick a completed game to view"),
+				PICK_ONE, PLHINT_ANYWHERE, pick);
         free(items);
         filename[0] = '\0';
         if (n > 0 && pick[0] != -1)
