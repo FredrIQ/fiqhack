@@ -2562,13 +2562,15 @@ $cwd = 'bpath:';
 
 # Given an aimake path, splits it into components, unescaping them.
 # The first component will be path/bpath/spath.
-use constant aipath_element => qr/(?:[^\\\/:]|\\.)*/s;
+my $aipath_element = qr//s;
 sub parse_aipath;
 sub parse_aipath {
     my $aipath = shift;
     my ($objtype, $objvalue, $objinner) = parse_objname $aipath;
     $objtype =~ /^[bs]?path$/ or croak "Invalid path type $objtype";
-    my @aipath = split m=(?<!\\)(?:\\\\)*\K/=, $objvalue;
+    my @aipath = ();
+    push @aipath, $1 while $objvalue =~ m=((?:[^\\\/:]|\\.)*)( / | $ )=gsx;
+    pop @aipath; # remove a null string at the end
     s/\\(.)/$1/gs for @aipath;
     return ($objtype, @aipath);
 }
@@ -4117,7 +4119,11 @@ atomically {
 # We use Perl notation (Data::Dumper-style) for the config file, which leads
 # to a bit of a problem reading it. The solution: use Perl's parser, and the
 # Safe module to allow only specification of constants. (rv2sv is there so
-# that variables can be used to avoid repetition.)
+# that variables can be used to avoid repetition. rv2gv seems to be needed on
+# recent Perl versions. Probably it's to do with different optimizers.)
+#
+# Perl 5.8 gets very confused (to the extent of needing "require", which
+# would allow anything), so we just evaluate the config file directly.
 my $configsafe = new Safe;
 $configsafe->permit_only(qw/null stub scalar pushmark const undef list qr
                             negate lineseq leaveeval anonlist anonhash rv2sv
@@ -4138,7 +4144,11 @@ my $configdata;
     local $/;
     $configdata = <DATA>;
 }
-$config = $configsafe->reval($configdata, 0);
+if ($] >= 5.009) {
+    $config = $configsafe->reval($configdata, 0);
+} else {
+    $config = eval $configdata;
+}
 $@ or ($! and $@ = $!);
 $@ or $@ = "bad configuration file format";
 defined $config or
@@ -4159,7 +4169,12 @@ if (-f $localconfigfile) {
         or die "Could not open config file $localconfigfile: $!";
     $configdata = <$fh>;
 } else { $configdata = '{}'; }
-my $localconfig = $configsafe->reval($configdata, 0);
+my $localconfig;
+if ($] >= 5.009) {
+    $localconfig = $configsafe->reval($configdata, 0);
+} else {
+    $localconfig = eval $configdata;
+}
 $@ or ($! and $@ = $!);
 $@ or $@ = "bad configuration file format";
 defined $localconfig or
@@ -4222,7 +4237,7 @@ atomically {
 for my $option (keys %{$config->{options}}) {
     if ($option =~ /dir$/) {
         1 while $config->{options}->{$option} =~
-            s/\$([a-z]++)/$config->{options}->{$1}/g;
+            s/\$([a-z]+)/$config->{options}->{$1}/g;
     }
 }
 
@@ -4662,22 +4677,28 @@ MAINLOOP: while (1) {
                 chomp $stdout;
                 # $stdout needs a split and perhaps an unescape.
                 my $linesep = defined_or($rule->{linesep}, "\n");
-                (ref $linesep) =~ /\bRegexp$/
-                    and $linesep = quotemeta $linesep;
+                (ref $linesep) !~ /\bRegexp$/
+                    and $linesep = qr/\Q$linesep\E/;
                 if (defined $rule->{unescape}) {
-                    $linesep = qr/(?<!\\)(?:\\\\)*\K$linesep/;
-                }
-                $stdout = [split /$linesep/, $stdout];
+		    my @stdout = ();
+		    push @stdout, $1 while
+			$stdout =~ m/((?:[^\\]|\\.)*?)(?:$linesep | $ )/gsx;
+		    $stdout = \@stdout;
+                } else {
+		    $stdout = [split /$linesep/, $stdout];
+		}
                 if (defined $rule->{unescape} &&
                     $rule->{unescape} eq 'backslash') {
                     s/\\\n//g for @$stdout;
                     s{\\(.)}{do{my $x = $1;
                                 $x =~ y/abfnrt/\a\b\f\n\r\t/; $x}}ge
                         for @$stdout;
+		    @$stdout = grep $_ ne '', @$stdout;
                 } elsif (defined $rule->{unescape} &&
                          $rule->{unescape} eq 'backslash_whitespace') {
                     s/\\\n//g for @$stdout;
                     s/\\([\s\\])/$1/ge for @$stdout;
+		    @$stdout = grep $_ ne '', @$stdout;
                 }
             } else {
                 # If an intcmd is giving us out-of-band end-of-lines, it's
@@ -5548,14 +5569,14 @@ __DATA__
             linesep => ' ',
             lineskip => 2, # output file, input file
             unescape => 'backslash_whitespace',
-            depends => qr/^(.++)$/s,
+            depends => qr/^(.+)$/s,
             filter_spath => 1,
         },
         ch_file_searchfiles => {
             object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
             command => ['tool:c_dependencies', 'optpath::'],
             linesep => ' ', lineskip => 2, unescape => 'backslash_whitespace',
-            output => qr/^(.++)$/s,
+            output => qr/^(.+)$/s,
             outdepends => [],
             propagate_usedeps => 2,
             filter_absolute => 1,
