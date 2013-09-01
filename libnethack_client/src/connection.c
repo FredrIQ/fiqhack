@@ -306,7 +306,7 @@ parse_ip_addr(const char *host, int port, int want_v4,
     struct addrinfo gai_hints;
 
     memset(&gai_hints, 0, sizeof (gai_hints));
-#ifdef WIN32
+#if defined(WIN32) || defined(AIMAKE_BUILDOS_darwin)
     gai_hints.ai_flags = 0;
 #else
     gai_hints.ai_flags = AI_NUMERICSERV;
