@@ -2915,7 +2915,8 @@ sub run_command {
             scalar @opts == 1 and $opts[0] =~ /^optpath::(.*)$/s
                 or return ("Invalid arguments", '', '');
             my $fn = aipath2ospath($1);
-            open my $fh, "<$text_layers", $fn or
+            # TODO: User-customizable encoding?
+            open my $fh, "<$utf8_layers", $fn or
                 return ("Could not open 'fn' for reading: $!", '', '');
             local $/ = undef;
             my $stdout = <$fh>;
@@ -3110,9 +3111,10 @@ sub run_command {
     # error.
     local $PerlIO::encoding::fallback = FB_CROAK; # report errors with die()
 
-    local $ENV{LC_ALL} = defined_or($intopts{locale}, $ENV{LC_ALL});
+    local $ENV{LC_ALL} = defined_or($intopts{locale},
+        defined_or($ENV{LC_ALL}, defined_or($ENV{LANG}, 'C')));
     my $layers = $text_layers;
-    defined $intopts{locale} && $intopts{locale} eq 'C' and
+    $ENV{LC_ALL} eq 'C' and
         $layers = $ascii_layers; # locale 'C' probably implies ASCII
 
     # We capture stdout and stderr via redirecting files, which is the most
