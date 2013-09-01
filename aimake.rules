@@ -20,7 +20,7 @@
                 # but have too many false positives to be able to show
                 # them right now
                 'optstring:-Wno-unused-parameter',
-                'optstring:-Wno-unused-result',
+                # 'optstring:-Wno-unused-result', # doesn't exist on old gcc
                 'optstring:-Wno-sign-compare',
                 'optstring:-Wold-style-definition',
                 'optstring:-Wstrict-prototypes',
@@ -31,10 +31,10 @@
             verb => 'determined',
         },
         _libraries => {
-            object => 'optionset:libraries',
-            depends => ['optstring:-ljansson',
-                        'optstring:-lpq',
-                        'optstring:-lws2_32'],
+            output => ['searchlib:jansson',
+                       'searchlib:pq',
+                       'searchlib:ws2_32'],
+            outdepends => [],
             verb => 'determined',
         },
         _build_desfile => {

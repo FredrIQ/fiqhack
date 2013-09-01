@@ -635,6 +635,12 @@ provide the same list of dependencies for it (the built-in rules create
 searchfiles with the empty set of dependencies); aimake assumes requests to
 search for files with a particular name to be interchangeable.
 
+=item C<searchlib:>
+
+A library that is being searched for (not including naming conventions of the
+platform, e.g. 'libfoo.a' on Linux would become 'searchlib:foo'). aimake
+assumes that these are interchangeable the same way C<searchfile:>s are.
+
 =item C<extend:>
 
 A filename that's produced from another filename.  This is formed out of an
@@ -779,7 +785,9 @@ to provide files that already exist.
 
 =item C<intcmd:cat>
 
-An internal command that just outputs the file given as its argument.
+An internal command that just outputs the file given as its argument. (The
+file will be assumed to be encoded in UTF-8, regardless of the encoding of
+the operating system.)
 
 =item C<intcmd:echo>
 
@@ -2400,17 +2408,17 @@ my %objtype_nested = (
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
     symbol_in_object => 1, config_option => 0, config_rule => 0, cmd => 0,
     tool => 0, intcmd => 0, optstring => 0, optpath => 1, optionset => 0, sys
-    => 0, searchpath => 0, searchfile => 0, dependencies => 1);
+    => 0, searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 1);
 my %objtype_provided = (
     path => 0, bpath => 0, spath => 0, extend => 0, file => 1, symbol => 1,
     symbol_in_object => 1, config_option => 0, config_rule => 0, cmd => 0,
     tool => 1, intcmd => 0, optstring => 0, optpath => 0, optionset => 1, sys
-    => 0, searchpath => 1, searchfile => 1, dependencies => 1);
+    => 0, searchpath => 1, searchfile => 1, searchlib => 1, dependencies => 1);
 my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
     symbol_in_object => 0, config_option => 0, config_rule => 0, cmd => 1,
     tool => 0, intcmd => 1, optstring => 1, optpath => 1, optionset => 0, sys
-    => 1, searchpath => 0, searchfile => 0, dependencies => 0);
+    => 1, searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 0);
 
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
@@ -3073,9 +3081,9 @@ sub run_command {
         do {
             my (undef, $objvalue, $objinner) = parse_objname $_;
             $objinner = resolve_extend $objinner;
-            $objvalue =~ /^(.*) $/s ?
-                ($1, aipath2ospath($objinner, $rel)) :
-                $objvalue . aipath2ospath($objinner, $rel)
+            my $ospath = $objinner =~ /^searchlib:(.*)$/s ? $1 :
+                aipath2ospath($objinner, $rel);
+            $objvalue =~ /^(.*) $/s ? ($1, $ospath) : "$objvalue$ospath";
         }
     } @opts;
 
@@ -3859,8 +3867,8 @@ sub ensure_pair_has_xuse {
 #
 # A pair is sure if all its xuses, recursing back forever, are sure. This goes
 # via appropriate_pair_for_object in most cases. As an exception, for
-# searchfile objects (which have no useful outdepends), the pair is sure if
-# any of its ancestors are sure.
+# searchfile and searchlib objects (which have no useful outdepends), the pair
+# is sure if any of its ancestors are sure.
 my %pair_is_sure_seen = ();
 sub pair_is_sure;
 sub pair_is_sure {
@@ -3884,7 +3892,7 @@ sub pair_is_sure {
     my @xuses = @{$state->{xuse_by_pair}->{$pair}};
     for my $xuse (@xuses) {
         my ($xobjtype, undef) = parse_objname $xuse;
-        if ($xobjtype ne 'searchfile') {
+        if ($xobjtype !~ /^search(?:file|lib)/) {
             if ($state->{unsure_count_by_object}->{$xuse}) {
                 exists $state->{changed_pairs}->{$pair} and
                     $state->{changed_pairs}->{$pair} = "xuse $xuse is unsure";
@@ -4680,25 +4688,25 @@ MAINLOOP: while (1) {
                 (ref $linesep) !~ /\bRegexp$/
                     and $linesep = qr/\Q$linesep\E/;
                 if (defined $rule->{unescape}) {
-		    my @stdout = ();
-		    push @stdout, $1 while
-			$stdout =~ m/((?:[^\\]|\\.)*?)(?:$linesep | $ )/gsx;
-		    $stdout = \@stdout;
+                    my @stdout = ();
+                    push @stdout, $1 while
+                        $stdout =~ m/((?:[^\\]|\\.)*?)(?:$linesep | $ )/gsx;
+                    $stdout = \@stdout;
                 } else {
-		    $stdout = [split /$linesep/, $stdout];
-		}
+                    $stdout = [split /$linesep/, $stdout];
+                }
                 if (defined $rule->{unescape} &&
                     $rule->{unescape} eq 'backslash') {
                     s/\\\n//g for @$stdout;
                     s{\\(.)}{do{my $x = $1;
                                 $x =~ y/abfnrt/\a\b\f\n\r\t/; $x}}ge
                         for @$stdout;
-		    @$stdout = grep $_ ne '', @$stdout;
+                    @$stdout = grep $_ ne '', @$stdout;
                 } elsif (defined $rule->{unescape} &&
                          $rule->{unescape} eq 'backslash_whitespace') {
                     s/\\\n//g for @$stdout;
                     s/\\([\s\\])/$1/ge for @$stdout;
-		    @$stdout = grep $_ ne '', @$stdout;
+                    @$stdout = grep $_ ne '', @$stdout;
                 }
             } else {
                 # If an intcmd is giving us out-of-band end-of-lines, it's
@@ -4733,6 +4741,8 @@ MAINLOOP: while (1) {
             if ($rule->{require_match} and !@$rxreplace) {
                 $shortfailreason = $failreason =
                     "Regular expression $$rx failed to match [@outlines]";
+                $failreason .= "\nThe command line was:\n";
+                $failreason .= run_command(@rcargs, \ "cmdline");
             }
             $$rx = $rxreplace;
         }
@@ -5336,16 +5346,16 @@ __DATA__
         },
 
         default_libraries => {
-            output => 'optionset:libraries',
             # some likely guesses, not including the system libc
-            outdepends => ['optstring:-lcrypt',
-                           'optstring:-ldl',
-                           'optstring:-lm',
-                           'optstring:-lncurses',
-                           'optstring:-lncursesw',
-                           'optstring:-lpthread',
-                           'optstring:-lrt',
-                           'optstring:-lz'],
+            output => ['searchlib:crypt',
+                       'searchlib:dl',
+                       'searchlib:m',
+                       'searchlib:ncurses',
+                       'searchlib:ncursesw',
+                       'searchlib:pthread',
+                       'searchlib:rt',
+                       'searchlib:z'],
+            outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
         },
@@ -5525,24 +5535,27 @@ __DATA__
             low_message_priority => 1,
         },
         find_libraries => {
-            object => "bpath:aimake/aimake_1$objext",
-            command => ['tool:c_linker', 'optpath::', '',
-                        'optionset:libraries', 'optionset:LFLAGS',
+            object => qr/^searchlib:/,
+            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+                        "optpath::bpath:aimake/aimake_1$objext",
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
+                        'optpath:-l:',
                         'optstring:-Wl,-t'],
             # We're looking at the linker's trace output to locate
             # libraries. -t prints each found object file on its own
             # line on stderr. We recognise the object files via the
             # extension, and the fact that they're existing, binary
             # files.
-            output => qr/^(.*\.(?:a|o|so|dll)(?:\.[0-9]+)?)$/s,
+            output => qr/^(.*(?<!aimake_1)(?:\.a|$objext|\.so|\.dll|\.dylib)(?:\.[0-9]+)?)$/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
             verb => 'found',
             fail_silently => 2,
             also_match_stderr => 1,
-            require_match => 1,
+            # can't require_match; if the library doesn't exist on OS X, we
+            # get an error output with no matches, and require_match overrides
+            # fail_silently (not that it would be useful even if it didn't)
             information_only => 1,
             low_message_priority => 1,
         },
@@ -5629,23 +5642,23 @@ __DATA__
         oa_file_dependencies => {
             # Note that this only matches the bpath, not the spath.
             object => qr/^bpath:.*(?:\Q$objext\E|\Q$libext\E)$/,
-            command => ['cmd:nm', 'optstring:-fp', 'optpath::'],
+            command => ['cmd:nm', 'optpath::'],
             depends => 'symbol:',
             # To make things work on Windows, omit symbols that start with a
             # double underscore, and translate DLL import hooks (__imp_.*) to
             # the function being imported.
-            dependsarg => qr'^(?:__imp_)?((?>_?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*)) U',
+            dependsarg => qr'^[[:xdigit:]]*\s+U (?:__imp_)?((?>_?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
         },
         o_file_provisions => {
             object => qr/^b?path:(?!aimake\/).*\Q$objext\E\z/,
-            command => ['cmd:nm','optstring:-fp','optpath::'],
+            command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            # [ABCDGRSTVWiI] are all the externally visible symbols. (Capital I
-            # is used on Windows for DLL exports; normally there's a __imp_ with
-            # an I and a non-prefixed version of a function with a T, but for
-            # variables, only the I exists, so we need to remove the __imp_
-            # ourself.
-            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
+            # [ABCDGRSTVWiI] are all the externally visible symbols. (Capital
+            # I is used on Windows for DLL exports; normally there's a __imp_
+            # with an I and a non-prefixed version of a function with a T, but
+            # for variables, only the I exists, so we need to remove the
+            # __imp_ ourself.)
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
             # inner => '' is implied, as with the next few rules
             outdepends => ['', 'optpath::'],
             verb => 'found',
@@ -5653,9 +5666,9 @@ __DATA__
         },
         a_file_provisions => {
             object => qr/^spath:.*\Q$libext\E\z/s,
-            command => ['cmd:nm','optstring:-fp','optpath::'],
+            command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
             ignore_warnings => 1,
             outdepends => '',
             verb => 'found',
@@ -5664,10 +5677,10 @@ __DATA__
         },
         shared_object_provisions_nondynamic => {
             # TODO: condition by platform
-            object => qr/^spath:.*\.(?:so|dll)(?:\z|\.)/s,
-            command => ['cmd:nm','optstring:-fp','optpath::'],
+            object => qr/^spath:.*\.(?:so|dll|dylib)(?:\z|\.)/s,
+            command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
             ignore_warnings => 1,
             propagate_usedeps => 1,
             outdepends => '',
@@ -5676,11 +5689,11 @@ __DATA__
         },
         shared_object_provisions_dynamic => {
             # TODO: condition by platform
-            object => qr/^spath:.*\.(?:so|dll)(?:\z|\.)/s,
-            command => ['cmd:nm','optstring:-fp -D','optpath::'],
+            object => qr/^spath:.*\.(?:so|dll|dylib)(?:\z|\.)/s,
+            command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^(?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+)) [ABCDGRSTVWiI]',
-            ignore_failure => 1,
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            fail_silently => 1, # not everything is dynamic
             ignore_warnings => 1,
             propagate_usedeps => 1,
             outdepends => '',
@@ -5688,7 +5701,7 @@ __DATA__
             low_message_priority => 1,
         },
         spath_library_option => {
-            object => qr/^spath:.*(?:\.so|\.dll|\Q$libext\E)(?:\z|\.)/,
+            object => qr/^spath:.*(?:\.so|\.dll|\.dylib|\Q$libext\E)(?:\z|\.)/,
             command => ['intcmd:echo', 'optpath::'],
             depends => 'optstring: -l',
             # Libraries on the spath which are not lib* get no option; they
@@ -5696,11 +5709,23 @@ __DATA__
             # the dynamic loader, which shouldn't be mentioned anyway)
             dependsarg => qr/^[bs]?path:
                 (?:(?:[^\\]|\\.)+\/)?lib((?:[^\\\/]|\\.)+?)
-                (?:\.so|\.dll|\Q$libext\E)(\z|\.)/x,
+                (?:\.so|\.dll|\.dylib|\Q$libext\E)(\z|\.)/x,
         },
         link_c => {
             object => qr/^b?path:.*\Q$objext\E/,
             command => ['symbol_in_object:main:', 'tool:c_linker',
+                        'optpath::', "optpath:-o :extend:$exeext:"],
+            output => "extend:$exeext:",
+            verb => 'linked',
+            in_subdir => 'bpath:',
+        },
+        # Some compilers add an extra underscore to everything. No
+        # problem, we'll just link files with a _main too. (This
+        # causes issues if a file has both a _main and a main, but
+        # in such a case, we're in trouble anyway.)
+        link_mangled_c => {
+            object => qr/^b?path:.*\Q$objext\E/,
+            command => ['symbol_in_object:_main:', 'tool:c_linker',
                         'optpath::', "optpath:-o :extend:$exeext:"],
             output => "extend:$exeext:",
             verb => 'linked',
