@@ -797,9 +797,9 @@ paths in the arguments will be output in aimake format.
 =item C<intcmd:writefile>
 
 An internal command that takes a filename (as an C<optpath:> and a set of
-contents for that file (as an C<optstring:>.)  Any underscores in the contents
-will be replaced with spaces, and any spaces with newlines, and then the
-resulting string will be written to that file (which should be in the
+contents for that file (as any number of C<optstring:>s.)  Any underscores in
+the contents will be replaced with spaces, and any spaces with newlines, and
+then the resulting string will be written to that file (which should be in the
 C<bpath:>).  This is used to generate things like input files for compiler
 tests.
 
@@ -3594,14 +3594,24 @@ sub set_proviced_hash {
     # may have changed, meaning that the xuses are different). Marking the
     # rules as changed will be a no-op in most cases, but it will matter if
     # the pair is brand new.
+    #
+    # Additionally, if a dependency rule changes, we need to recalculate
+    # xuses of anything that depended on its object.
     if ($objtype eq 'config_rule') {
         progress_report 4, "Adding pairs from rule $objvalue";
         my @objects = objects_for_rule $objvalue;
+        my $r = $config->{rules}->{$objvalue};
         for my $o (@objects) {
             my $cpair = "$objvalue $o";
             mark_pair_xuse_unknown $cpair;
             mark_pair_unchanged $cpair; # unblock it
             mark_pair_changed $cpair;
+            if (defined $r && exists $r->{depends}) {
+                for my $dpair (keys %{$state->{xuse_by_object}->{$o}}) {
+                    mark_pair_xuse_unknown $dpair;
+                    mark_pair_changed $dpair; # needed to allow an undef xuse
+                }
+            }
         }
     }
 
@@ -4801,7 +4811,7 @@ MAINLOOP: while (1) {
 
     my @shortened = map {friendly_objname($_)} @output;
     my $msg;
-    if (@shortened && $shortened[0] =~ /^dependencies:/) {
+    if ($rule->{depends}) {
         @shortened = map {friendly_objname($_)} @depends;
         $verb = "found";
     }
@@ -5329,6 +5339,12 @@ __DATA__
             verb => 'determined',
             low_message_priority => 1,
         },
+        default_cxxflags => {
+            output => 'optionset:CXXFLAGS',
+            outdepends => 'optstring:-g -O2 -Wall',
+            verb => 'determined',
+            low_message_priority => 1,
+        },
         default_iflags => {
             output => 'optionset:IFLAGS',
             outdepends => [],
@@ -5562,20 +5578,25 @@ __DATA__
             low_message_priority => 1,
         },
 
-        # Compiling c.
+        # Compiling C and C++.
         c_compiler_tool => {
             output => 'tool:c_compiler',
             outdepends => ['cmd:gcc', 'optionset:CFLAGS', 'optstring:-c'],
             verb => 'found',
         },
-        c_dependencies_tool => {
+        cxx_compiler_tool => {
+            output => 'tool:cxx_compiler',
+            outdepends => ['cmd:gcc', 'optionset:CXXFLAGS', 'optstring:-c'],
+            verb => 'found',
+        },
+        c_cxx_dependencies_tool => {
             output => 'tool:c_dependencies',
             outdepends => ['cmd:gcc', 'optstring:-M -MG',
                            'optionset:IFLAGS'],
             verb => 'found',
         },
         ch_file_dependencies => {
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_dependencies', 'optpath::'],
             # A little aimake magic here: this outputs relative paths for
             # non-found files, and those become file: objects, whereas
@@ -5588,7 +5609,7 @@ __DATA__
             filter_spath => 1,
         },
         ch_file_searchfiles => {
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_dependencies', 'optpath::'],
             linesep => ' ', lineskip => 2, unescape => 'backslash_whitespace',
             output => qr/^(.+)$/s,
@@ -5598,7 +5619,7 @@ __DATA__
             output_as_searchfile => 1,
         },
         ch_embedded_aimake_option => {
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['intcmd:cat', 'optpath::'],
             depends => 'config_option:',
             dependsarg => qr'AIMAKE_OPTION_([a-zA-Z0-9_]+)',
@@ -5612,13 +5633,13 @@ __DATA__
         ch_embedded_aimake_buildos => {
             # Define AIMAKE_BUILDOS_$^O if it's mentioned by a file.
             # (That is, AIMAKE_BUILDOS_MSWin32 is defined on Windows, etc.)
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['intcmd:cat', 'optpath::'],
             depends => "optstring:-DAIMAKE_BUILDOS_",
             dependsarg => qr"AIMAKE_BUILDOS_($^O)",
         },
         header_files_are_files => {
-            object => qr/^[bs]?path:.*\.h/,
+            object => qr/^[bs]?path:.*\.h(?:xx)?/,
             command => ['intcmd:echo', 'optpath::'],
             output => 'file:',
             outputarg => qr/^[bs]?path:
@@ -5628,9 +5649,21 @@ __DATA__
         },
         compile_c => {
             object => qr/^b?path:(?!aimake\/).*\.c$/s,
+            # Double-extend the filename, in case we have a C and C++ source
+            # file with the same basename.
             command => ['tool:c_compiler', 'optpath::',
-                        "optpath:-o :extend:$objext:"],
-            output => "extend:$objext:",
+                        "optpath:-o :extend:_c$objext:"],
+            output => "extend:_c$objext:",
+            verb => 'compiled',
+            in_subdir => 'bpath:', # shorter error/warning messages
+        },
+        compile_cxx => {
+            object => qr/^b?path:(?!aimake\/).*\.cxx$/s,
+            # Double-extend the filename, in case we have a C and C++ source
+            # file with the same basename.
+            command => ['tool:cxx_compiler', 'optpath::',
+                        "optpath:-o :extend:_cxx$objext:"],
+            output => "extend:_cxx$objext:",
             verb => 'compiled',
             in_subdir => 'bpath:', # shorter error/warning messages
         },
