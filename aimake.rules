@@ -37,6 +37,18 @@
             outdepends => [],
             verb => 'determined',
         },
+        _statically_link_uncursed_plugins => {
+            # If we can generate a plugin plugins/foo_c.o, for a static link, we
+            # should link in its wrapper plugins/foo_cxx.o. (Thus the rather
+            # hacky "extend:" in the depends.)
+            object => "bpath:libuncursed/src/uncursed_c$objext",
+            command => ["sys:rebuild_late", "intcmd:listtree",
+                        "optstring:0",
+                        "optpath::bpath:libuncursed/src/plugins"],
+            depends => ["extend:xx$objext:", "optpath::extend:xx$objext:"],
+            dependsarg => qr=^(bpath:.*_c)\Q$objext\E$=s,
+            verb => 'found',
+        },
         _build_desfile => {
             object => qr/^path:.*\.des$/s,
             command => ["bpath:libnethack/util/lev_main$exeext",

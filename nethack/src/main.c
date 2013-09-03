@@ -325,6 +325,9 @@ main(int argc, char *argv[])
 
     umask(0777 & ~FCMASK);
 
+    /* this can change argc and *argv, so must come first */
+    initialize_uncursed(&argc, argv);
+
     process_args(argc, argv);   /* grab -U, -H, -k early */
 
     init_options();

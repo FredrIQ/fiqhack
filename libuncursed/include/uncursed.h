@@ -86,6 +86,9 @@ typedef struct WINDOW {
 
 extern WINDOW *stdscr;
 
+/* uncursed-specific */
+extern void initialize_uncursed(int*, char**);
+
 /* manual page 3ncurses color */
 extern int COLORS;
 extern int COLOR_PAIRS;

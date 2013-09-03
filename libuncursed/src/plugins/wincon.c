@@ -24,6 +24,7 @@
 
 #include "uncursed.h"
 #include "uncursed_hooks.h"
+#include "uncursed_wincon.h"
 
 static DWORD raw_mode = 0;
 static HANDLE inhandle;
@@ -37,24 +38,24 @@ static int cur_h, set_h;
 static int cur_w, set_w;
 static int follow_window_size = 1;
 
-void uncursed_hook_beep(void) {
+void wincon_hook_beep(void) {
     /* TODO */
 }
 
-void uncursed_hook_setcursorsize(int size) {
+void wincon_hook_setcursorsize(int size) {
     CONSOLE_CURSOR_INFO new_cursor;
     new_cursor.bVisible = size != 0;
     new_cursor.dwSize = (size == 2 ? 100 : 6);
     SetConsoleCursorInfo(outhandle, &new_cursor);
 }
-void uncursed_hook_positioncursor(int y, int x) {
+void wincon_hook_positioncursor(int y, int x) {
     COORD c;
     c.X = x;
     c.Y = y;
     SetConsoleCursorPosition(outhandle, c);
 }
 
-void uncursed_hook_init(int *h, int *w) {
+void wincon_hook_init(int *h, int *w) {
     COORD c;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     inhandle = GetStdHandle(STD_INPUT_HANDLE);
@@ -82,7 +83,7 @@ void uncursed_hook_init(int *h, int *w) {
     set_w = csbi.dwSize.X;
     set_h = csbi.dwSize.Y;
 }
-void uncursed_hook_exit(void) {
+void wincon_hook_exit(void) {
     /* Restore all the settings we can. */
     SetConsoleMode(inhandle, orig_mode);
     SetConsoleCursorInfo(outhandle, &orig_cursor);
@@ -90,18 +91,18 @@ void uncursed_hook_exit(void) {
     SetConsoleCursorPosition(outhandle, orig_csbi.dwCursorPosition);
 }
 
-void uncursed_hook_rawsignals(int raw) {
+void wincon_hook_rawsignals(int raw) {
     SetConsoleMode(inhandle, (ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS) |
                    (raw_mode ? 0 : ENABLE_PROCESSED_INPUT));
 }
 
-void uncursed_hook_delay(int ms) {
+void wincon_hook_delay(int ms) {
     /* TODO */
 }
 
 static int lastkeyorcodepoint = 0;
 static int remainingrepeats = 0;
-int uncursed_hook_getkeyorcodepoint(int timeout_ms) {
+int wincon_hook_getkeyorcodepoint(int timeout_ms) {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     PKEY_EVENT_RECORD kp;
     INPUT_RECORD inrecords[1];
@@ -212,7 +213,7 @@ recheck:
     return lastkeyorcodepoint;
 }
 
-void uncursed_hook_update(int y, int x) {
+void wincon_hook_update(int y, int x) {
     WCHAR ch = uncursed_rhook_ucs2_at(y, x);
     int a = uncursed_rhook_color_at(y, x);
     WORD attr = 0;
@@ -236,14 +237,14 @@ void uncursed_hook_update(int y, int x) {
     uncursed_rhook_updated(y, x);
 }
 
-void uncursed_hook_fullredraw(void) {
+void wincon_hook_fullredraw(void) {
     int i, j;
 
     for (j = 0; j < cur_h; j++)
         for (i = 0; i < cur_w; i++)
-            uncursed_hook_update(j, i);
+            wincon_hook_update(j, i);
 }
 
-void uncursed_hook_flush(void) {
+void wincon_hook_flush(void) {
     /* nothing to do */
 }

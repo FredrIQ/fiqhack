@@ -11,33 +11,70 @@
 #include <stddef.h>
 #include <wchar.h>
 
-/* Calls from uncursed.c into an implementation library */
-extern void uncursed_hook_beep(void);
-extern void uncursed_hook_delay(int); /* milliseconds */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+enum uncursed_hook_type {
+    uncursed_hook_type_input,     /* sends input, receives output */
+    uncursed_hook_type_broadcast, /* receives output and input */
+    uncursed_hook_type_recording, /* like broadcast, but only on request */
+};
+
+struct uncursed_hooks;
+struct uncursed_hooks {
+    /***** Calls from uncursed.c into an implementation library *****/
+    /*** Output: called on all hooks (should be ignored by recording hooks when
+         not recording) */
+
+    /* Note: init can be called multiple times, with exit in between; also init
+       is allowed to exit the program in case of disaster */
+    void (*init)(int *, int *);       /* rows, columns */
+    void (*exit)(void);
+
+    void (*beep)(void);
+
+    void (*setcursorsize)(int);       /* 0 to 2 */
+    void (*positioncursor)(int, int); /* y, x */
+
+    /* The way updates work is that uncursed.c calls update on some changed
+       character, then the implementation library requests state using the
+       uncursed_rhook_..._at functions in order to update at least that (and
+       possibly other) characters, then calls uncursed_rhook_updated on each
+       character it actually updated. (So for instance, if it decides to redraw
+       the entire screen, the information it needs is available.) */
+    void (*update)(int, int);  /* y, x to update */
+    void (*fullredraw)(void);  /* redraw from scratch */
+    void (*flush)(void);       /* called at the end of updates */
+
+    /*** Receiving input: called on input hooks only ***/
+    void (*delay)(int);               /* milliseconds */
+    void (*rawsignals)(int);          /* 0 or 1 */
 #define KEY_BIAS (0x10ff00) /* add this to a key to show it isn't a codepoint */
-extern void uncursed_hook_rawsignals(int);          /* 0 or 1 */
-extern int uncursed_hook_getkeyorcodepoint(int);    /* timeout in ms */
+    int  (*getkeyorcodepoint)(int);   /* timeout in ms */
 
-extern void uncursed_hook_setcursorsize(int);       /* 0 to 2 */
-extern void uncursed_hook_positioncursor(int, int); /* y, x */
+    /*** Input notification: called on broadcast and recording hooks (should
+         be ignored by recording hooks when not recording) ***/
+    void (*recordkeyorcodepoint)(int);
+    void (*resized)(int, int);
 
-/* Note: _init can be called multiple times, with _exit in between; also
-   _init is allowed to exit the program in case of disaster */
-extern void uncursed_hook_init(int *, int *); /* rows, columns */
-extern void uncursed_hook_exit(void);
+    /*** Recording notification: called on recording hooks ***/
+    void (*startrecording)(char *);   /* filename, no extension */
+    void (*stoprecording)(void);
 
-/* The way updates work is that uncursed.c calls uncursed_hook_update on some
-   changed character, then the implementation library requests state using
-   the uncursed_rhook_..._at functions in order to update at least that (and
-   possibly other) characters, then calls uncursed_rhook_updated on each
-   character it actually updated. (So for instance, if it decides to redraw
-   the entire screen, the information it needs is available.) */
-extern void uncursed_hook_update(int, int);  /* y, x to update */
-extern void uncursed_hook_fullredraw(void);  /* redraw from scratch */
-extern void uncursed_hook_flush(void);       /* called at the end of updates */
+    /***** Information about the hook *****/
+    struct uncursed_hooks *next_hook;
+    enum uncursed_hook_type hook_type;
+    const char *hook_name;
+    int hook_priority;
+    int used;
+};
 
-/* Calls from implementation libraries into uncursed.c */
+#ifndef UNCURSED_MAIN_PROGRAM
+extern struct uncursed_hooks *uncursed_hook_list;
+#endif
+
+/***** Calls from implementation libraries into uncursed.c *****/
 extern char uncursed_rhook_cp437_at(int, int); /* y, x */
 extern char *uncursed_rhook_utf8_at(int, int); /* y, x; static buffer */
 extern unsigned short uncursed_rhook_ucs2_at(int, int); /* y, x */
@@ -48,3 +85,12 @@ extern int uncursed_rhook_needsupdate(int, int); /* y, x */
 
 extern void uncursed_rhook_updated(int, int);  /* y, x */
 extern void uncursed_rhook_setsize(int, int);  /* rows, columns */
+
+/***** Calls from uncursed.c into plugins.c *****/
+extern int uncursed_load_plugin(const char *); /* plugin name; 1 on success */
+extern void uncursed_load_plugin_or_error(const char *); /* fatal version */
+extern void uncursed_load_default_plugin_or_error(void);
+
+#ifdef __cplusplus
+}
+#endif

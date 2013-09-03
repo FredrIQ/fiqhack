@@ -39,10 +39,197 @@
 #include <string.h>
 #include <stdio.h> /* for vsnprintf, this file does no I/O */
 
+#define UNCURSED_MAIN_PROGRAM
 #include "uncursed.h"
 #include "uncursed_hooks.h"
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
+
+/* uncursed hook handling */
+struct uncursed_hooks *uncursed_hook_list = NULL;
+static int uncursed_hooks_inited = 0;
+void initialize_uncursed(int *p_argc, char **argv) {
+    if (uncursed_hooks_inited) return;
+
+    /* We need to change the uncursed_hook_list to contain exactly one input set
+       of hooks, and any number of broadcast and recording hooks. (A set of
+       hooks is provided by an uncursed plugin.)
+
+       When initialize_uncursed is called, we may have a number of hooks in the
+       list already: specifically, any hooks that were statically linked into
+       the program, and any hooks in dynamically linked libraries that are
+       specified as dependencies of the program. We can also add additional
+       hooks via loading dynamically linked libraries in a platform-specific way
+       (e.g. dlopen on POSIXy OSes). Merely loading the libraries will add
+       entries to uncursed_hook_list (which is a reverse export). This mechanism
+       allows the set of available plugins to be changed without changing the
+       executable; thus, an executable and a set of plugins can be in separate
+       packages in a package manager. (The platform-specific plugin loading code
+       is in plugins.c.)
+
+       We first check the argument list for requested hooks:
+
+       - If there is an explicit --interface option, we load any plugins
+         specified there (if they aren't alreay loaded), and error out if we
+         can't, or if more than one input plugin is specified.
+       - If there is no explicit --interface option, or if it didn't specify an
+         input plugin, we check the executable's filename; if it ends -foo for
+         any foo, we attempt to load a plugin named foo, and error out if we
+         can't. (This leads to weirdness if a non-input plugin is specified as
+         part of the filename, but we can't do much sensible with that anyway.)
+       - If there still isn't an input plugin, we check the list of hooks for an
+         input plugin that came prelinked; if we find any, we include the plugin
+         with the highest priority.
+       - If even that fails to find an input plugin (most likely because there
+         are no plugins linked into the executable and the user didn't specify
+         one), we attempt to load the "tty" or "wincon" plugin, depending on
+         platform, and error out if we can't find it.
+
+       When we decide to use a set of hooks, we record the fact using the "used"
+       field of the hookset, which always initializes at 0.
+    */
+    char **p = argv;
+    if (*p) p++; /* don't read the filename */
+    int input_plugins;
+    while (*p) {
+        char *plugin_name = NULL;
+        /* Look for --interface=tty or --interface tty. If we find it, load
+           the specified plugin, then remove the options from argc/argv. */
+        if (strncmp(*p, "--interface=", 12) == 0) {
+            plugin_name = *p + 12;
+            char **q;
+            for (q = p; *q; q++) q[0] = q[1];
+            (*p_argc)--;
+        }
+        if (p[1] && strcmp(*p, "--interface") == 0) {
+            plugin_name = p[1];
+            char **q;
+            /* Setting q[1] here avoids reading beyond the end of argv. */
+            for (q = p; *q; q++) q[0] = q[1] = q[2];
+            *p_argc -= 2;
+        }
+        if (plugin_name) uncursed_load_plugin_or_error(plugin_name);
+        else p++;
+    }
+    input_plugins = 0;
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            input_plugins++;
+    if (input_plugins > 1) {
+        fprintf(stderr, "Error initializing rendering library: "
+                "more than one input plugin specified\n");
+        exit(5);
+    }
+    if (!input_plugins && *argv) {
+        char *argv_hyphen = strrchr(*argv, '-');
+        if (argv_hyphen) uncursed_load_plugin_or_error(argv_hyphen+1);
+    }
+    input_plugins = 0;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            input_plugins++;
+    if (!input_plugins) {
+        const char *highest_prio_plugin = NULL;
+        int highest_prio = -1;
+        for (h = uncursed_hook_list; h; h = h->next_hook)
+            if (h->hook_type == uncursed_hook_type_input &&
+                h->hook_priority > highest_prio) {
+                highest_prio_plugin = h->hook_name;
+                highest_prio = h->hook_priority;
+            }
+        if (highest_prio_plugin) {
+            uncursed_load_plugin_or_error(highest_prio_plugin);
+            input_plugins++;
+        } else {
+            uncursed_load_default_plugin_or_error();
+            input_plugins++;
+        }
+    }
+    uncursed_hooks_inited = 1;
+}
+static void uncursed_hook_init(int *r, int *c) {
+    struct uncursed_hooks *h;
+    /* We call this on the input plugin first, so that other plugins can see
+       the returned values for the window size. */
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input) h->init(r, c);
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type != uncursed_hook_type_input) h->init(r, c);
+}
+static void uncursed_hook_exit(void) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->exit();
+}
+static void uncursed_hook_beep(void) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->beep();
+}
+static void uncursed_hook_setcursorsize(int size) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->setcursorsize(size);
+}
+static void uncursed_hook_positioncursor(int y, int x) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->positioncursor(y, x);
+}
+static void uncursed_hook_update(int y, int x) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->update(y, x);
+}
+static void uncursed_hook_fullredraw(void) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->fullredraw();
+}
+static void uncursed_hook_flush(void) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used) h->flush();
+}
+
+static void uncursed_hook_delay(int ms) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input) h->delay(ms);
+}
+static void uncursed_hook_rawsignals(int raw) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            h->rawsignals(raw);
+}
+static int uncursed_hook_getkeyorcodepoint(int ms) {
+    struct uncursed_hooks *h;
+    /* We initialize kc to a hangup so that we have vaguely sensible behaviour
+       in the case that uncursed is incorrectly initialized and there are no
+       input hooks. Not that that should be happening anyway. */
+    int kc = KEY_HANGUP + KEY_BIAS;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            kc = h->getkeyorcodepoint(ms);
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type != uncursed_hook_type_input)
+            h->recordkeyorcodepoint(kc);
+    return kc;
+}
+static void uncursed_hook_startrecording(char *fn) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->hook_type == uncursed_hook_type_recording)
+            h->startrecording(fn);
+}
+static void uncursed_hook_stoprecording(void) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_recording)
+            h->stoprecording();
+}
 
 /* manual page 3ncurses color */
 /* Color pairs are kind-of pointless for rendering purposes on modern terminals,
@@ -904,6 +1091,13 @@ static WINDOW *disp_win = 0; /* WINDOW drawn onto by doupdate */
 int LINES, COLS;
 
 WINDOW *initscr(void) {
+    if (!uncursed_hooks_inited) {
+        /* UB, and very bad UB at that. Take the opportunity to crash the
+           program. */
+        fprintf(stderr, "Do not call initscr() without first calling "
+                "initialize_uncursed.\n");
+        abort();
+    }
     if (save_stdscr || stdscr) return 0;
     uncursed_hook_init(&LINES, &COLS);
     nout_win = newwin(0, 0, 0, 0);
@@ -932,6 +1126,10 @@ void uncursed_rhook_setsize(int h, int w) {
     wresize(nout_win, h, w);
     wresize(disp_win, h, w);
     wunclear(disp_win); /* we need to touch every character */
+    struct uncursed_hooks *hook;
+    for (hook = uncursed_hook_list; hook; hook = hook->next_hook)
+        if (hook->used && hook->hook_type != uncursed_hook_type_input)
+            hook->resized(h, w);
 }
 
 /* manual page 3ncurses window */

@@ -11,7 +11,8 @@
 
 #include "uncursed.h"
 
-int main(void) {
+int main(int argc, char **argv) {
+    initialize_uncursed(&argc, argv);
     initscr();
     /* Testing input */
     clear();

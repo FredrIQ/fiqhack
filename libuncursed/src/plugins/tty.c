@@ -82,6 +82,7 @@
 
 #include "uncursed_hooks.h"
 #include "uncursed.h"
+#include "uncursed_tty.h"
 
 /* Note: ifile only uses platform-specific read functions like read();
    ofile only uses stdio for output (e.g. fputs). Try not to muddle these! */
@@ -296,7 +297,7 @@ static char* platform_specific_getkeystring(int timeout_ms) {
                 return KEYSTRING_HANGUP;
             case 's': /* SIGTSTP */
                 if (is_inited) {
-                    uncursed_hook_exit();
+                    tty_hook_exit();
                     inited_when_stopped = 1;
                 }
                 raise(SIGSTOP);
@@ -305,14 +306,14 @@ static char* platform_specific_getkeystring(int timeout_ms) {
                 if (is_inited) {
                     /* We were stopped unexpectedly; completely reset the
                        terminal */
-                    uncursed_hook_exit();
+                    tty_hook_exit();
                     inited_when_stopped = 1;
                 }
                 if (inited_when_stopped) {
                     int h, w;
-                    uncursed_hook_init(&h, &w);
+                    tty_hook_init(&h, &w);
                     inited_when_stopped = 0;
-                    uncursed_hook_fullredraw();
+                    tty_hook_fullredraw();
                 }
                 break;
             }
@@ -421,12 +422,12 @@ static void reset_palette(void) {
     fprintf(ofile, "\r" OSC "104" ST "\r" OSC "R" ST);
 }
 
-void uncursed_hook_beep(void) {
+void tty_hook_beep(void) {
     fputs("\x07", ofile);
     fflush(ofile);
 }
 
-void uncursed_hook_setcursorsize(int size) {
+void tty_hook_setcursorsize(int size) {
     /* TODO: Shield fom DOS */
     if (size == 0) fputs(CSI "?25l", ofile);
     else fputs(CSI "?25h", ofile);
@@ -434,13 +435,13 @@ void uncursed_hook_setcursorsize(int size) {
        it leads to garbage on many terminals. */
     fflush(ofile);
 }
-void uncursed_hook_positioncursor(int y, int x) {
+void tty_hook_positioncursor(int y, int x) {
     fprintf(ofile, CSI "%d;%dH", y+1, x+1);
     fflush(ofile);
     last_y = y; last_x = x;
 }
 
-void uncursed_hook_init(int *h, int *w) {
+void tty_hook_init(int *h, int *w) {
     platform_specific_init();
     /* Save the character sets. */
     fputs("\x1b""7", ofile);
@@ -473,7 +474,7 @@ void uncursed_hook_init(int *h, int *w) {
     int kp = 0;
     while (kp != (KEY_PF3 | (KEY_SHIFT*2)) && kp != KEY_HANGUP &&
            kp != (KEY_PF3 | (KEY_SHIFT*4)) && kp != KEY_SILENCE) {
-        kp = uncursed_hook_getkeyorcodepoint(2000);
+        kp = tty_hook_getkeyorcodepoint(2000);
         if (kp < 0x110000) kp = 0;
         else kp -= KEY_BIAS;
     }
@@ -501,7 +502,7 @@ void uncursed_hook_init(int *h, int *w) {
     is_inited = 1;
 }
 
-void uncursed_hook_exit(void) {
+void tty_hook_exit(void) {
     /* It'd be great to reset the terminal right now, but that wipes out
        scrollback. We can try to undo as many of our settings as we can, but
        that's not very many, due to problems with the protocol. */
@@ -517,12 +518,12 @@ void uncursed_hook_exit(void) {
     is_inited = 0;
 }
 
-void uncursed_hook_delay(int ms) {
+void tty_hook_delay(int ms) {
     last_color = -1; /* send a new SGR on the next redraw */
     platform_specific_delay(ms);
 }
-void uncursed_hook_rawsignals(int raw) { platform_specific_rawsignals(raw); }
-int uncursed_hook_getkeyorcodepoint(int timeout_ms) {
+void tty_hook_rawsignals(int raw) { platform_specific_rawsignals(raw); }
+int tty_hook_getkeyorcodepoint(int timeout_ms) {
     last_color = -1; /* send a new SGR on the next redraw */
     char *ks = platform_specific_getkeystring(timeout_ms);
     if (ks == KEYSTRING_HANGUP) return KEY_HANGUP + KEY_BIAS;
@@ -587,7 +588,7 @@ int uncursed_hook_getkeyorcodepoint(int timeout_ms) {
     return KEY_BIAS + KEY_INVALID;
 }
 
-void uncursed_hook_update(int y, int x) {
+void tty_hook_update(int y, int x) {
     /* If we need to do a full redraw, do so. */
     if (terminal_contents_unknown) {
         terminal_contents_unknown = 0;
@@ -595,7 +596,7 @@ void uncursed_hook_update(int y, int x) {
         int j, i;
         for (j = 0; j < last_h; j++)
             for (i = 0; i < last_w; i++)
-                uncursed_hook_update(j, i);
+                tty_hook_update(j, i);
         return;
     }
     if (last_color == -1) {
@@ -646,13 +647,13 @@ void uncursed_hook_update(int y, int x) {
     last_y = y;
 }
 
-void uncursed_hook_fullredraw(void) {
+void tty_hook_fullredraw(void) {
     terminal_contents_unknown = 1;
     setup_palette();
     fputs(CSI "2J", ofile);
-    uncursed_hook_update(0,0);
+    tty_hook_update(0,0);
 }
 
-void uncursed_hook_flush(void) {
+void tty_hook_flush(void) {
     fflush(stdout);
 }
