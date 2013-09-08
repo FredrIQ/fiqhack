@@ -1060,8 +1060,11 @@ write_level_file(char *filename, splev * room_level, specialmaze * maze_level)
     } else if (maze_level) {
         if (!write_maze(fout, maze_level))
             return FALSE;
-    } else
-        panic("write_level_file");
+    } else {
+        fputs("Error: cannot write level file", stderr);
+        fflush(stderr);
+        exit(EXIT_FAILURE);
+    }
 
     close(fout);
     fprintf(stdout, "Wrote '%s'.\n", lbuf);

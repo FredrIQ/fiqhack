@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-struct nh_window_procs windowprocs;
+extern struct nh_window_procs windowprocs;
 
 int
 getpos(coord * cc, boolean force, const char *goal)
@@ -168,6 +168,13 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
     return n;
 }
 
+void
+init_menulist(struct menulist *m)
+{
+    m->size = 10;
+    m->icount = 0;
+    m->items = malloc(m->size * sizeof (struct nh_menuitem));
+}
 
 boolean
 win_list_items(struct nh_objitem * items, int icount, boolean is_invent)
@@ -177,6 +184,5 @@ win_list_items(struct nh_objitem * items, int icount, boolean is_invent)
 
     return (*windowprocs.win_list_items) (items, icount, is_invent);
 }
-
 
 /*windows.c*/

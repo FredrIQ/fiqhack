@@ -6,6 +6,7 @@
 # define EXTERN_H
 
 # include "winprocs.h"
+# include "hacklib.h"
 
 /* ### allmain.c ### */
 
@@ -588,42 +589,6 @@ extern int dogo(int, int, int);
 extern int dogo2(int, int, int);
 extern int dofight(int, int, int);
 
-/* ### hacklib.c ### */
-
-extern char *tabexpand(char *);
-extern void init_menulist(struct menulist *m);
-extern boolean letter(char);
-extern boolean digit(char);
-extern char *eos(char *);
-extern char lowc(char);
-extern char highc(char);
-extern char *lcase(char *);
-extern char *upstart(char *);
-extern char *mungspaces(char *);
-extern char *s_suffix(const char *);
-extern char *xcrypt(const char *, char *);
-extern boolean onlyspace(const char *);
-extern const char *ordin(int);
-extern char *sitoa(int);
-extern int sgn(int);
-extern int rounddiv(long, int);
-extern int dist2(int, int, int, int);
-extern int distmin(int, int, int, int);
-extern boolean online2(int, int, int, int);
-extern boolean pmatch(const char *, const char *);
-
-# ifndef STRSTRI
-extern char *strstri(const char *, const char *);
-# endif
-extern boolean fuzzymatch(const char *, const char *, const char *, boolean);
-extern int getyear(void);
-extern long yyyymmdd(time_t);
-extern int phase_of_the_moon(void);
-extern boolean friday_13th(void);
-extern int night(void);
-extern int midnight(void);
-extern unsigned int get_seedval(void);
-
 /* ### history.c ### */
 
 extern int dohistory(void);
@@ -721,6 +686,15 @@ extern void obj_split_light_source(struct obj *, struct obj *);
 extern void obj_merge_light_sources(struct obj *, struct obj *);
 extern int candle_light_range(struct obj *);
 extern int wiz_light_sources(void);
+
+/* ### localtime.c ### */
+
+extern int getyear(void);
+extern long yyyymmdd(time_t);
+extern int phase_of_the_moon(void);
+extern boolean friday_13th(void);
+extern int night(void);
+extern int midnight(void);
 
 /* ### lock.c ### */
 
@@ -1810,6 +1784,7 @@ extern int display_menu(struct nh_menuitem *, int, const char *, int, int,
                         int *);
 extern int display_objects(struct nh_objitem *, int, const char *, int, int,
                            struct nh_objresult *);
+extern void init_menulist(struct menulist *m);
 extern boolean win_list_items(struct nh_objitem *items, int icount,
                               boolean invent);
 
