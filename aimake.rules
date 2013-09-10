@@ -184,6 +184,8 @@
                         "optpath::bpath:readme-saves"],
             output => "bpath:readme-saves",
         },
+        install_executables => undef, # we don't want to install most of them
+        # but we don't override install_libraries
         _install_main => {
             object => "bpath:nethack/src/main_c$exeext",
             install_dir => "gamesbindir",

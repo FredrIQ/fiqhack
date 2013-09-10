@@ -554,13 +554,16 @@ previous versions had trouble with this case.  There's another minor exception
 to do with C<searchfile:> objects, in case a generated source file wants to
 search for the same header file that the source of the generator wanted to
 search for; the situation is obviously benign, as it'll find it in the same
-place, but would potentially cause a dependency loop without special casing.)
-When the pair is run, it becomes unchanged, and the hashes of anything it
-previously output, and anything it now outputs, are updated.  Such objects
-also become sure (with a slight exception in the dubious case where the same
-object is output by multiple pairs).  An object no longer being produced by a
-pair counts as a hash change (the hash of a nonexistent object is treated as
-different from the hash of an object that exists).
+place, but would potentially cause a dependency loop without special
+casing.  The same special case applies to C<searchlib:> and C<symbolset:>
+objects; C<searchlib:> objects for the same reason, C<symbolset:> objects
+because their dependencies are encoded in their name.)  When the pair is run,
+it becomes unchanged, and the hashes of anything it previously output, and
+anything it now outputs, are updated.  Such objects also become sure (with a
+slight exception in the dubious case where the same object is output by
+multiple pairs).  An object no longer being produced by a pair counts as a
+hash change (the hash of a nonexistent object is treated as different from the
+hash of an object that exists).
 
 Any warnings produced running the pair are recorded with the pair.  If the
 pair produced an I<error>, then any objects it previously produced are marked
@@ -672,10 +675,36 @@ I<depend on> a C<file:> object to let aimake know to use it once it's found.
 A reference to a symbol (as would be used by a linker); this is used the same
 way as C<file:>, but for linking rather than compiling.
 
+=item C<shared_symbol:>
+
+A symbol that is exported by the file that provides it, and is intended to be
+compiled as part of the API of a library.  aimake's standard rules will
+attempt to create a C<symbolset:> containing each shared_symbol that is
+defined.
+
 =item C<symbol_in_object:>
 
 A reference to a symbol produced by a specific object.  This is used
 internally to determine which C files contain a C<main> function.
+
+=item C<symbolset:>
+
+A set of symbols and the object files that define them, ready to be made into
+a library.  Symbol sets have two names: an internal name, and a filename,
+looking like C<symbolset:d41d8cd98f00b204e9800998ecf8427e:bpath:libfoo.so>.
+When aimake creates a symbol set, the internal name is a hash of the symbols
+and object files that make up the symbol set, and the filename is based on the
+common prefix of the object files (not counting header files).  Symbol sets
+are provided objects; they don't represent a file on disk (thus, the filename
+is a I<suggested> filename that will most likely be used to represent the
+resulting library).  If a C<symbolset:> object is used in an C<optpath:> or
+C<extend:> object, it will be treated as if it were just its filename portion;
+this does not happen for other uses of C<symbolset:> objects.
+
+Because the internal name of a symbolset encodes its dependencies, these are
+subject to the same special cases that C<searchfile:> objects are; if two or
+more rules generate the same C<searchfile:> object, they must give it the same
+dependencies.
 
 =item C<config_option:>
 
@@ -918,6 +947,41 @@ itself, 1 will also list its subdirectories, and so on.
 If given an optpath that's a C<searchfile:> rather than a directory, the
 output will be limited to files with that filename.
 
+=item C<intcmd:xuse_statistics>
+
+An internal command that outputs some information about the rule that caused
+it to run (specifically, the expanded set of use dependencies of the rule's
+commands, i.e. the build dependencies of its output).  Any number of
+C<optstring:> arguments can be given; if any are given, then objects are only
+considered for calculating the C<hash> if they have at least one of the given
+C<optstring:>s as a suffix.  The output is a number of lines in key=value
+form, and may be expanded with extra information in future. At present, the
+currently output keys are:
+
+=over 4
+
+=item hash
+
+The MD5 hash (in hexadecimal) of the string constructed by sorting then
+concatenating the names of all the C<path:> and C<bpath:> objects (that have
+appropriate suffixes) in the expanded use dependencies, separated by colons.
+The main purpose of this is to be able to easily compare sets of dependencies.
+
+=item stem
+
+The longest common prefix of the C<namehint:>s in the expanded use
+dependencies of the rule; any final slash will be removed, and the resulting
+object name will be on the C<bpath:>.  The intended purpose of this is to find
+a sensible filename and location for objects that would not otherwise have an
+obvious filename.
+
+=item dependency
+
+A use dependency of the rule's commands, including non-file-like objects,
+objects on the C<spath:>, or objects that do not match the suffixes given.
+
+=back
+
 =back
 
 =item C<optstring:>
@@ -951,6 +1015,17 @@ colon) if they should be left as two consecutive command-line options.
 
 A set of options commonly used together, such as the C<CFLAGS> commonly used
 by B<make> programs (which would be C<optionset:CFLAGS>).
+
+=item C<namehint:>
+
+A clue as to what would make a sensible name for an object.  Objects that
+particularly strongly hint at a name depend on their own names; e.g. a file
+C<bpath:main_c.o> that contained the main routines for a file might well
+depend on C<namehint::bpath:main_c.o>.  C<namehint:> objects always exist
+(thus depending on them doesn't cause problems, unless someone adds
+dependencies to them using dependency rules; don't do that), and are added by
+the default configuration according to some heuristics.  Therefore, you should
+never need to deal with them yourself.
 
 =item C<dependencies:>
 
@@ -994,9 +1069,12 @@ The configuration file allows defining one or more variables (either to
 abbreviate what would otherwise be repeated code, or to avoid "magic numbers"
 in tthe code).  There are also some predefined variables, which hold
 platform-specific extensions: $exeext (executables), $objext (object files),
-$libext (static libraries), $dllext (dynamic libraries).  These are followed
-by a single dictionary with two keys, C<options> and C<rules>.  Here's a
-simple example C<aimake2.config>:
+$libext (static libraries), $dllext (dynamic libraries).  (In order to catch
+mistakes due to omitting $exeext, it will never be set to the null string, but
+rather to an arbitrary string on platforms that do not normally use a special
+extension for executables.  This extension will be removed when installing the
+executable.)  These are followed by a single dictionary with two keys,
+C<options> and C<rules>.  Here's a simple example C<aimake2.config>:
 
     $version = "1.2.3";        # variable definition
 
@@ -1055,7 +1133,7 @@ dependencies have an C<object> and a C<depends> (or an C<install_dir> if they
 are actually install rules), and perhaps also a C<command> if commands need to
 be run to determine the dependencies, and/or a C<dependsarg>.  Either can have
 a C<inner>, C<prereq>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
-C<filter>, C<filter_absolute>, C<filter_text_files>,
+C<avoid_rules>, C<filter>, C<filter_absolute>, C<filter_text_files>,
 C<filter_nonexistent_files>, C<output_as_searchfile>, C<filter_spath>,
 C<require_match> and/or C<low_message_priority>, and can specify
 C<force_locale>, C<fail_silently>, C<also_match_stderr>, C<ignore_warnings>,
@@ -1374,6 +1452,15 @@ you know they should match at least once.)
 Causes aimake not to print messages about the rule being run unless the
 verbosity level is increased to at least 1.  (This is used for production
 rules that make aimake aware of objects on the C<spath:>, mostly.)
+
+=item avoid_rules
+
+Can be set to a regular expression that matches the names of rules.  Provided
+objects created by rules whose names match the regular expression will not be
+considered to satisfy dependencies of this rule.  (You would use this, for
+instance, to avoid an infinite regress when creating a dynamic library; you
+would want the symbols to come from object files, not from the dynamic library
+that the rule itself had created.)
 
 =item filter
 
@@ -2359,6 +2446,7 @@ sub run_command;
             print_stderr_tl "$str\n";
             $last_report_msg = '';
         }
+        return 1;
     }
 }
 
@@ -2423,19 +2511,22 @@ sub sv_hash {
 # and some are provided (and some are just virtual).
 my %objtype_nested = (
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
-    symbol_in_object => 1, config_option => 0, config_rule => 0, cmd => 0,
-    tool => 0, intcmd => 0, optstring => 0, optpath => 1, optionset => 0, sys
-    => 0, searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 1);
+    shared_symbol => 0, symbolset => 1, symbol_in_object => 1, namehint => 1,
+    config_option => 0, config_rule => 0, cmd => 0, tool => 0, intcmd => 0,
+    optstring => 0, optpath => 1, optionset => 0, sys => 0, searchpath => 0,
+    searchfile => 0, searchlib => 0, dependencies => 1);
 my %objtype_provided = (
     path => 0, bpath => 0, spath => 0, extend => 0, file => 1, symbol => 1,
-    symbol_in_object => 1, config_option => 0, config_rule => 0, cmd => 0,
-    tool => 1, intcmd => 0, optstring => 0, optpath => 0, optionset => 1, sys
-    => 0, searchpath => 1, searchfile => 1, searchlib => 1, dependencies => 1);
+    shared_symbol => 1, symbolset => 1, symbol_in_object => 1, namehint => 0,
+    config_option => 0, config_rule => 0, cmd => 0, tool => 1, intcmd => 0,
+    optstring => 0, optpath => 0, optionset => 1, sys => 0, searchpath => 1,
+    searchfile => 1, searchlib => 1, dependencies => 1);
 my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
-    symbol_in_object => 0, config_option => 0, config_rule => 0, cmd => 1,
-    tool => 0, intcmd => 1, optstring => 1, optpath => 1, optionset => 0, sys
-    => 1, searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 0);
+    shared_symbol => 0, symbolset => 0, symbol_in_object => 0, namehint => 1,
+    config_option => 0, config_rule => 0, cmd => 1, tool => 0, intcmd => 1,
+    optstring => 1, optpath => 1, optionset => 0, sys => 1, searchpath => 0,
+    searchfile => 0, searchlib => 0, dependencies => 0);
 
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
@@ -2455,6 +2546,7 @@ sub parse_objname {
     }
     return ($objtype, $objvalue);
 }
+# don't memoize; it's very slightly slower (40 microseconds, not 32)
 
 # Splits a pair name into components. A pair name is "$rule $object".
 sub parse_pairname {
@@ -2477,6 +2569,9 @@ sub resolve_extend {
     $objtype eq 'extend' or return $objname;
 
     $objvalue eq '..' and return aipath_parent $objinner;
+
+    (undef, undef, $objinner) = parse_objname $objinner
+        while $objinner =~ /^symbolset:/;
 
     my @aipath = parse_aipath $objinner;
     # Remove any existing extension. It's OK if this doesn't match.
@@ -3017,7 +3112,45 @@ sub run_command {
                     $stderr .= "'$1' is not a config option";
                 }
             }
-            return ($failreason, \@stdout, $stderr);
+            # TODO: Because we're outputting OS paths, we need to use in-band
+            # newlines to signal that fact. Of course, this fails for dirnames
+            # with newlines in.
+            return ($failreason, (join "\n", @stdout), $stderr);
+        } elsif ($cmd eq 'intcmd:xuse_statistics') {
+            my @stdout = [];
+            my @flxuse = grep /^b?path:/, @xuse;
+            if (scalar @opts) {
+                my %filtered_flxuse = ();
+                for my $filter (@opts) {
+                    if ($filter =~ /^optstring:(.*)$/) {
+                        my $match = $1;
+                        /\Q$match\E$/ and $filtered_flxuse{$_} = 1
+                            for @flxuse;
+                    }
+                }
+                @flxuse = sort keys %filtered_flxuse;
+            } else {
+                @flxuse = sort @flxuse;
+            }
+            push @stdout, 'hash=' . md5_hex(join ':'. @flxuse);
+            my @namehints = grep /^namehint:/, @xuse;
+            @namehints and @flxuse = sort @namehints;
+            my $stem = 'anonymous';
+            if (@flxuse) {
+                $stem = $flxuse[0];
+                $stem =~ s/^[^:]+://;
+                for my $flxuse (@flxuse) {
+                    "${stem}::$flxuse" =~ /^(.*).*?::[^:]+:\1/;
+                    $stem = $1;
+                }
+            }
+            $stem =~ s/\/$//;
+            # It's common to use "src" as an intermediate folder name, but we
+            # don't want to go around creating libraries src.so.
+            $stem =~ s/\/src$//;
+            push @stdout, "stem=bpath:$stem";
+            push @stdout, "dependency=$_" for @xuse;
+            return (undef, \@stdout, '');
         } elsif ($cmd eq 'intcmd:listtree') {
             my %results = ();
             my $starttime = time;
@@ -3113,7 +3246,9 @@ sub run_command {
             my (undef, $objvalue, $objinner) = parse_objname $_;
             $objinner = resolve_extend $objinner;
             my $ospath = $objinner =~ /^searchlib:(.*)$/s ? $1 :
-                aipath2ospath($objinner, $rel);
+                $objinner =~ /^config_option:/ ? $objinner :
+                $objinner =~ /^symbolset:[^:]+:(.*)$/s ?
+                aipath2ospath($1, $rel) : aipath2ospath($objinner, $rel);
             $objvalue =~ /^(.*) $/s ? ($1, $ospath) : "$objvalue$ospath";
         }
     } @opts;
@@ -3205,6 +3340,8 @@ sub run_command {
         $failreason = "Command reported failure status " .
             ($sysreturn >> 8);
     } elsif ($sysreturn != 0) {
+        signal_name($sysreturn & 127) eq 'SIGINT' and
+            die "Interrupted."; # make control-C work as expected
         $failreason = "Command crashed with signal " .
             signal_name($sysreturn & 127);
     }
@@ -3384,7 +3521,12 @@ sub objects_for_rule {
 # is changed or blocked, then xuse_by_pair can be undef; in such a case,
 # xuse_by_object doesn't contain that pair. The innermost keys of
 # xuse_by_object list the objects originally responsible for including that
-# xuse; this gives better error messages.
+# xuse; this gives better error messages. There is also a hash
+# ->{xuse_prevpair} that, for each pair and each object in its expanded use
+# dependencies, specifies the object that created that object (if any); this
+# is only meaningful when xuse_by_pair is not undef, and is used by unsureness
+# checks to determine whether an unsure object would have an effect on a pair
+# or not.
 #
 # There is a list of changed pairs, ->{changed_pairs}. The values of that hash
 # list the reason the pair has not been marked as unchanged yet.
@@ -3532,6 +3674,7 @@ sub mark_pair_unchanged {
         delete $state->{blocked_by_pair}->{$pair};
     }
 }
+sub inappropriate_prevpair;
 sub set_proviced_hash {
     my $pair = shift;
     my $obj = shift;
@@ -3593,10 +3736,14 @@ sub set_proviced_hash {
     # respect to other objects). This must be done after hash_by_object is
     # set, so that mark_pair_changed won't defer the changed setting until
     # this object comes into existence (falsely believing it not to exist).
+    # However, we can (and should, for efficiency reasons) skip any pairs that
+    # cannot possibly look at the object via $pair.
     #
     # Iterating over xuse-by_object may miss out some pairs, but only changed
     # pairs with unknown xuses (on which operating would be pointless anyway).
     for my $cpair (keys %{$state->{xuse_by_object}->{$obj}}) {
+        next if inappropriate_prevpair $cpair, $pair;
+
         # We need to mark the xuse unknown before marking the pair as changed,
         # in case the old xuse had a dependency on a nonexistent object (which
         # could cause mark_pair_changed to be a no-op) but the new xuse only
@@ -3726,9 +3873,10 @@ sub appropriate_pair_for_object {
     # It's OK for multiple rules to find objects on the path or spath.
     $prvtype eq 'spath' and return $providers[0];
     $prvtype eq 'path' and return $providers[0];
-    # It's OK to have multiple providers for a searchfile or searchlib.
+    # It's OK to have multiple providers for a searchfile/lib/symbolset.
     $prvtype eq 'searchfile' and return $providers[0];
     $prvtype eq 'searchlib' and return $providers[0];
+    $prvtype eq 'symbolset' and return $providers[0];
 
     $objtype_provided{$prvtype} or
         croak "Object $provided is produced by multiple rules: @providers";
@@ -3748,6 +3896,14 @@ sub appropriate_pair_for_object {
             # provider, though.
             $score = 1;
             my @aipath = parse_aipath $obj;
+            # We add some bonuses based on the name. In particular, we prefer
+            # to use libraries following the lib... naming convention, to
+            # avoid linking against the dynamic loader explicitly for free()
+            # or something silly like that, and libc is the best option when
+            # available.
+            $aipath[-1] =~ /^lib/ and $score += 0.1;
+            $aipath[-1] =~ /^libc\b/ and $score += 0.4;
+            $aipath[-1] =~ /^libmingw\b/ and $score += 0.4;
         } elsif ($objtype =~ /^b?path/s) {
             # The score depends on how many characters match at the
             # start of the objvalue.
@@ -3758,7 +3914,7 @@ sub appropriate_pair_for_object {
                 $score++;
             }
         }
-        # Add a small bonus based on the rule that produce the object.
+        # Add a small bonus based on the rule that produced the object.
         if (defined $config->{rules}->{$prule}) {
             $score += defined_or($config->{rules}->{$prule}->{preference}, 0)
                 / 100000;
@@ -3788,10 +3944,7 @@ sub appropriate_pair_for_object {
 # is used for produced bpath:,path:,spath: objects to determine whether the
 # file has changed on disk. (For a produced object, it would give its
 # outdepends, but this method should not be used for this purpose because it
-# has tiebreak issues. There is no need to calculate the appropriate
-# outdepends of a produced object in the current codebase except in
-# recalculate_pair_xuse, which uses other information calculated during that
-# run of recalculate_pair_xuse to determine which set of outdepends to use.)
+# has tiebreak issues. Go via xuse_prevpair instead.)
 sub xuse_hash {
     my $pair = shift;
     my $obj = shift;
@@ -3800,7 +3953,26 @@ sub xuse_hash {
 }
 
 ### Dependency calculations
-#
+
+# We want to avoid allowing an object to be created in terms of itself. Rules
+# cannot use their own output as a dependency, nor any output from rules that
+# are marked as avoided for it.
+sub inappropriate_prevpair {
+    my $pair = shift;
+    my $pair2 = shift;
+    my ($rule, $obj) = parse_pairname $pair;
+    my ($rule2, $obj2) = parse_pairname $pair2;
+    my $avoid_rules = $config->{rules}->{$rule}->{avoid_rules};
+    $avoid_rules and $rule2 =~ $avoid_rules and
+        progress_report 5, "($pair,$pair2) inappropriate: avoid_rules"
+        and return 1;
+    return unless $state->{hash_by_object}->{$obj};
+    $state->{hash_by_object}->{$obj}->{$pair} and
+        progress_report 5, "($pair,$pair2 inappropriate: output"
+        and return 1;
+    return;
+}
+
 # We calculate the xuse for a pair via looping over its command, adding in the
 # following dependencies recursively:
 #
@@ -3824,7 +3996,8 @@ sub xuse_hash {
 # off on choosing an ancestor immediately, and then try again once the set of
 # xuses is complete, preferring to choose one that's already in the set. We
 # report a tie if there's still multiple ancestors with the same degree of
-# reasonability.
+# reasonability. We also never choose any of the rule's outputs as an ancestor
+# for the rule itself.
 #
 # We also preserve order in xuse_by_pair, because the order is sometimes
 # sigificant. (xuse_by_object is unordered.)
@@ -3879,6 +4052,8 @@ sub recalculate_pair_xuse {
                 my @ancestors = sort keys %{$state->{hash_by_object}->{$o}};
                 delete $state->{hash_by_object}->{$o} unless
                     keys %{$state->{hash_by_object}->{$o}};
+                @ancestors = grep !inappropriate_prevpair($pair, $_),
+                    @ancestors;
                 if ($pass == 2) {
                     # It would be slighlty more accurate to check the use
                     # dependencies of the pairs we add to see if they're
@@ -3887,13 +4062,25 @@ sub recalculate_pair_xuse {
                     # all cases.
                     @ancestors = grep $pass1_xuse_pairs{$_}, @ancestors;
                     if (scalar @ancestors != 1) {
-                        my ($provider, $tie) = 
+                        my ($provider, $tie) =
                             appropriate_pair_for_object $o, $obj, $ties_ok;
-                        if ($provider ne 'tie sys:tie') {
-                            @ancestors = ($provider);
+                        if (!defined $provider) {
+                            @ancestors = ();
+                        } elsif ($provider ne 'tie sys:tie') {
+                            @ancestors = grep
+                                !inappropriate_prevpair($pair, $_), $provider;
                         } else {
                             @ancestors = grep $pass1_xuse_pairs{$_}, @$tie;
-                            @ancestors or @ancestors = @$tie;
+                            @ancestors = grep
+                                !inappropriate_prevpair($pair, $_), @ancestors;
+                            @ancestors or @ancestors = grep
+                                !inappropriate_prevpair($pair, $_), @$tie;
+                        }
+                        if (!@ancestors) {
+                            @ancestors = grep !inappropriate_prevpair($pair, $_),
+                                sort keys %{$state->{hash_by_object}->{$o}};
+                            delete $state->{hash_by_object}->{$o} unless
+                                keys %{$state->{hash_by_object}->{$o}};
                         }
                     }
                 }
@@ -3906,11 +4093,14 @@ sub recalculate_pair_xuse {
                     return (0, $o, $obj, \@ancestors);
                 } elsif (@ancestors == 1) {
                     $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
+                    $state->{xuse_prevpair}->{$pair}->{$o} = $ancestors[0];
                     my @udeps = @{$state->{hash_by_pair}->{$ancestors[0]}->{$o}};
                     push @command, sort @udeps;
                     $xuse_reason{$_} = $o for @udeps;
                 } else {
                     # Nothing provides the object; add sys:clean to the list.
+                    $state->{xuse_prevpair}->{$pair}->{$o} =
+                        'nonexistent sys:clean';
                     $xuse{'sys:clean'} or push @xuse, 'sys:clean';
                     $xuse{'sys:clean'} = $o; # nothing provides it
                 }
@@ -3957,7 +4147,7 @@ sub reset_pair_xuse {
 
     mark_pair_xuse_unknown $pair;
     delete $state->{xuse_by_pair}->{$pair};
-
+    delete $state->{xuse_prevpair}->{$pair};
     %sure_pair_cache = ();
     %unsure_pair_cache = ();
 }
@@ -3972,7 +4162,7 @@ sub mark_pair_xuse_unknown {
         }
     }
     $state->{xuse_by_pair}->{$pair} = undef;
-
+    delete $state->{xuse_prevpair}->{$pair};
     %sure_pair_cache = ();
     %unsure_pair_cache = ();
 }
@@ -3987,31 +4177,42 @@ sub ensure_pair_has_xuse {
 }
 
 ### Sureness calculations
-#
+
+sub pair_is_definitely_deletable {
+    my ($prule, $pobj) = parse_pairname shift;
+    rule_applies_to_object $prule, $pobj or return 1;
+    object_exists "config_rule:$prule" or return 1;
+    return;
+}
+memoize('pair_is_definitely_deletable');
+
 # A pair is sure if all its xuses, recursing back forever, are sure. This goes
-# via all possible ancestors for the object in most cases. As an exception,
-# for searchfile and searchlib objects (which have no useful outdepends), the
-# pair is sure if any of its ancestors are sure.
+# via xuse_prevpair in most cases. As an exception, for searchfile, searchlib
+# and symbolset objects (which have an outdepends depending only on their
+# name), the pair is sure if any of its ancestors are sure.
 my %pair_is_sure_seen = ();
 sub pair_is_sure;
 sub pair_is_sure {
     my $pair = shift;
-    my $recursion_ok = shift;
-    # Caches.
+
+    # Caches. Check these even before completing argument passing, because
+    # this function is called a /lot/ and bailing out early is helpful.
+    # (Thanks, profiler!)
     $sure_pair_cache{$pair} and return 1;
     $unsure_pair_cache{$pair} and return 0 unless wantarray;
     $unsure_pair_cache{$pair} and return (0, [@{$unsure_pair_cache{$pair}}]);
+
+    my $recursion_ok = shift;
     if ($pair_is_sure_seen{$pair}) {
         $recursion_ok and return 0 unless wantarray;
         $recursion_ok and return (0, []);
         croak "Pair $pair seems to have been built in terms of itself";
     }
+
     # The pair is definitely deletable (i.e. we're sure what to do with it) if
     # the rule doesn't exist, or the rule doesn't apply to the object; both of
     # those cases cannot be resolved during the run.
-    my ($prule, $pobj) = parse_pairname $pair;
-    rule_applies_to_object $prule, $pobj or return 1;
-    object_exists "config_rule:$prule" or return 1;
+    pair_is_definitely_deletable $pair and return 1;
 
     # Base case.
     $pair eq 'parse_configuration sys:no_object' and return 1;
@@ -4021,48 +4222,60 @@ sub pair_is_sure {
         my $unsure_list = ['tie'];
         $unsure_pair_cache{$pair} = [@$unsure_list];
         delete $pair_is_sure_seen{$pair};
-        progress_report 5, "pair_is_sure: unsure due to tie";
+        progress_report 4, "pair_is_sure: $pair is unsure due to tie";
         return 0 unless wantarray;
         return (0, $unsure_list);
     }
     $pair_is_sure_seen{$pair} = 1; # avoid an infinite regress
     my @xuses = @{$state->{xuse_by_pair}->{$pair}};
     for my $xuse (@xuses) {
-        my ($xobjtype, undef) = parse_objname $xuse;
-        if ($xobjtype !~ /^search(?:file|lib)/) {
-            if ($state->{unsure_count_by_object}->{$xuse}) {
+        # Parsing $xuse is actually pretty timeconsuming. We regex it instead
+        # for efficiency, because we only care about the object type. (This
+        # line is actually the inner loop of the program; it runs more often
+        # than any other line anywhere in aimake. Thus, the need for extreme
+        # efficiency.)
+        if ($xuse !~ /^(?>s(?:earch(?:file|lib)|ymbolset|path)|path):/) {
+            # Make sure that the object's prevpair is sure, and that the
+            # object is sure via its prevpair.
+            my $prevpair = $state->{xuse_prevpair}->{$pair}->{$xuse};
+            if (!defined $prevpair) { # nonexistent or produced object
+                next unless $state->{hash_by_object}->{$xuse};
+                croak "No xuse_prevpair from $pair for an object $xuse " .
+                    "with multiple prevpairs " . (join ', ',
+                    keys %{$state->{hash_by_object}->{$xuse}})
+                    unless keys %{$state->{hash_by_object}->{$xuse}} == 1;
+                $prevpair = (keys %{$state->{hash_by_object}->{$xuse}})[0];
+            }
+            next if $prevpair eq 'nonexistent sys:clean';
+            if ($state->{unsure_by_pair}->{$prevpair} &&
+                $state->{unsure_by_pair}->{$prevpair}->{$xuse}) {
                 exists $state->{changed_pairs}->{$pair} and
                     $state->{changed_pairs}->{$pair} = "xuse $xuse is unsure";
                 my $unsure_list = [$xuse];
                 $unsure_pair_cache{$pair} = [@$unsure_list];
                 delete $pair_is_sure_seen{$pair};
-                progress_report 5, "pair_is_sure: unsure due to unsure $xuse";
+                progress_report 4,
+                    "pair_is_sure: $pair is unsure due to " .
+                        "unsure $xuse via $prevpair";
                 return 0 unless wantarray;
                 return (0, $unsure_list);
             }
-            progress_report 5,
-                "pair_is_sure: Checking appropriate pair $xuse $pobj";
-            # If any of the prevpairs are unsure, we're unsure. The reason
-            # for this is that while they're unsure, we don't know whether we
-            # apply or not; also, because it allows a tie between two pairs to
-            # be resoved by deleting one of them.
+            # If the chosen prevpair is unsure, we're unsure.
             if ($state->{hash_by_object}->{$xuse}) {
-                my @providers = sort keys %{$state->{hash_by_object}->{$xuse}};
-                for my $prevpair (@providers) {
-                    my ($sure, $unsure_list) =
-                        pair_is_sure $prevpair, $recursion_ok;
-                    if (!$sure) {
-                        exists $state->{changed_pairs}->{$pair} and
-                            $state->{changed_pairs}->{$pair} =
-                            "xuse ${xuse}'s pair $prevpair is unsure";
-                        unshift @$unsure_list, $xuse, $prevpair;
-                        $unsure_pair_cache{$pair} = [@$unsure_list];
-                        delete $pair_is_sure_seen{$pair};
-                        progress_report 5,
-                            "pair_is_sure: unsure due to $xuse, $prevpair";
-                        return 0 unless wantarray;
-                        return (0, $unsure_list);
-                    }
+                my ($sure, $unsure_list) =
+                    pair_is_sure $prevpair, $recursion_ok;
+                if (!$sure) {
+                    exists $state->{changed_pairs}->{$pair} and
+                        $state->{changed_pairs}->{$pair} =
+                        "xuse ${xuse}'s pair $prevpair is unsure";
+                    unshift @$unsure_list, $xuse, $prevpair;
+                    $unsure_pair_cache{$pair} = [@$unsure_list];
+                    delete $pair_is_sure_seen{$pair};
+                    progress_report 4,
+                        "pair_is_sure: $pair is unsure due to ".
+                            "unsure $prevpair needed for $xuse";
+                    return 0 unless wantarray;
+                    return (0, $unsure_list);
                 }
             }
         } elsif ($state->{hash_by_object}->{$xuse}) {
@@ -4083,13 +4296,14 @@ sub pair_is_sure {
                     $state->{changed_pairs}->{$pair} = "no sure ancestors";
                 $unsure_pair_cache{$pair} = ['?'];
                 delete $pair_is_sure_seen{$pair};
-                        progress_report 5, "pair_is_sure: unsure due to no xuse";
+                progress_report 4, "pair_is_sure: $pair is unsure ".
+                    "because no sure pair generates $xuse";
                 return 0 unless wantarray;
                 return (0, ['?']);
             }
         }
     }
-    progress_report 5, "pair_is_sure: sure";
+    progress_report 5, "pair_is_sure: $pair is sure";
     $sure_pair_cache{$pair} = 1;
     delete $pair_is_sure_seen{$pair};
     return 1;
@@ -4292,6 +4506,7 @@ $configsafe->permit_only(qw/null stub scalar pushmark const undef list qr
 our $libext = $Config{_a};
 our $objext = $Config{_o};
 our $exeext = $Config{_exe};
+$exeext eq '' and $exeext = '.exe';
 # a UUID generated for the purpose of avoiding clashes with other things
 our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
 our $dllext = {MSWin32 => '.dll',
@@ -4434,6 +4649,7 @@ progress_report 4, "Starting main program.";
 # "output").
 for my $rulename (keys %{$config->{rules}}) {
     my $rule = $config->{rules}->{$rulename};
+    defined $rule or delete $config->{rules}->{$rulename}, next;
     # Check the rule for sanity.
     croak "Rule $rulename has no output, depends, or install directory"
         unless exists $rule->{output} || exists $rule->{depends} ||
@@ -4482,6 +4698,7 @@ MAINLOOP: while (1) {
     my $find_another;
     my $no_changes_since = undef;
     my $no_rules_since_timestamp = time;
+    my $lastbuild;
     my @xuse;
     atomically {
       FIND_ANOTHER_RULE:
@@ -4691,8 +4908,10 @@ MAINLOOP: while (1) {
     if ($rule->{install_dir}) {
         my ($objtype, undef) = parse_objname $objname;
         my @components = $objtype eq 'sys' ? $objname : parse_aipath $objname;
+        my $install_name = defined_or($rule->{install_name}, $components[-1]);
+        $install_name =~ s/\Q$exeext\E$/$Config{_exe}/es;
         $output_target = $config->{options}->{$rule->{install_dir}} . "/" .
-            defined_or($rule->{install_name}, $components[-1]);
+            $install_name;
         if ($opt_prefix) {
             my $aiprefix = ospath2aipath $opt_prefix;
             my @components1 = parse_aipath $aiprefix;
@@ -4772,12 +4991,14 @@ MAINLOOP: while (1) {
         $output_target = [];
     }
 
-    # Run the command.
+    # Calculate the command line.
     my @rcargs = @xuse;
     defined $rule->{in_subdir} and push @rcargs,
         \ ("cwd:" . $rule->{in_subdir}), \ "relpaths";
     defined $rule->{force_locale} and push @rcargs,
         \ ("locale:" . $rule->{force_locale});
+
+    # Run the command.
     my ($failreason, $stdout, $stderr) = run_command(@rcargs);
 
     $rule->{also_match_stderr} and ($stdout, $stderr) = ($stdout.$stderr, '');
@@ -4876,11 +5097,17 @@ MAINLOOP: while (1) {
             my @outlines = $filter ? grep /$filter/, @$out : @$out;
             my $lineskip = $rule->{lineskip};
             my $linemax = $rule->{linemax};
+            # move the deref outside the loop, that match is one of the most
+            # run lines in the program (according to the profiler) so any
+            # small gain is helpful; don't bother precompiling the regex
+            # because it's already in a qr// and putting it in another qr//
+            # won't help
+            my $regex_licm = $$r;
             for my $line (@outlines) {
                 $lineskip--, next if $lineskip;
                 next if defined $linemax && $linemax == 0;
                 $linemax-- if defined $linemax;
-                while ($line =~ m/$$r/g) {
+                while ($line =~ m/$regex_licm/g) {
                     my $n = $1;
                     $aify and $n = ospath2aipath($n, $inner);
                     $n =~ /^file:/ and $rule->{output_as_searchfile}
@@ -4953,6 +5180,9 @@ MAINLOOP: while (1) {
         } elsif (!exists $rule->{information_only}) {
             croak "Rule $rulename output unprovicable object $o";
         }
+    }
+    for my $o (@depends) {
+        parse_objname $o; # check it's a well-formed object name
     }
 
     my @shortened = map {friendly_objname($_)} @output;
@@ -5174,7 +5404,7 @@ atomically {
         $state->{changed_pairs}->{$pair} or next;
         for my $obj (keys %{$state->{unsure_by_pair}->{$pair}}) {
             my $fobj1 = friendly_objname $obj;
-            my ($sure, $unsure_list) = pair_is_sure $pair;
+            my ($sure, $unsure_list) = pair_is_sure $pair, 0;
             $sure and croak "Pair $pair is changed yet sure at program end";
 
             $unsure_list->[0] eq 'tie' and next;
@@ -5870,6 +6100,138 @@ __DATA__
             in_subdir => 'bpath:', # shorter error/warning messages
         },
 
+        # Shared objects.
+        #
+        # We detect that a library is wanted using flags in the source code:
+        #
+        # AIMAKE_EXPORT  This symbol is in a library and should be exported.
+        # AIMAKE_IMPORT  This symbol should be imported from a library.
+        # AIMAKE_REVERSE_EXPORT  This symbol should be made available to
+        #                        libraries that use this code.
+        # AIMAKE_REVERSE_IMPORT  This symbol should be imported from users of
+        #                        this library into the library itself.
+        #
+        # Both _EXPORTs become __attribute__((visibility("default"))) on
+        # Linux, and __declspec(dllexport) on Windows. The _IMPORTs are no-ops
+        # on Linux, and become __declspec(dllimport) on Windows. Mac OS X
+        # apparently works the same way as Linux in this respect (it supports
+        # "hidden" and "default" visibility the same way Linux does).
+        #
+        # The syntax in the source file is AIMAKE_EXPORT(symbol), etc.. The
+        # reason for this is so that we can identify symbol names that need
+        # exporting using the preprocessor (using token pasting and
+        # $longrandomstring). Once we find these, we create a symbolset for
+        # each based on the stem of the namehints of the symbol. (That way, we
+        # don't end up creating duplicate libraries.)
+
+        ch_embedded_aimake_export => {
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
+            command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
+                        "optstring:-DAIMAKE_EXPORT(x)=$longrandomstring##x"],
+            output => 'shared_symbol:',
+            outputarg => qr/$longrandomstring(\w+)/,
+            outdepends => 'symbol:',
+            dependsarg => qr/$longrandomstring(\w+)/,
+            verb => 'found',
+        },
+        create_symbolset => {
+            object => qr/^shared_symbol:/,
+            command => ['intcmd:xuse_statistics', 'optstring:.o'],
+            output => 'symbolset:',
+            outputarg => qr/^hash=(.*)$/,
+            inner => qr/^stem=(.*)$/,
+            outdepends => qr/^dependency=shared_(symbol:.*)$/,
+            avoid_rules => qr/^bpath_shared_object_provisions/,
+            verb => 'named',
+        },
+        link_shared_library => {
+            object => qr/^symbolset:/,
+            command => ['tool:c_linker', 'optstring:-shared',
+                        "optpath:-o :extend:$dllext:"],
+            output => "extend:$dllext:",
+            avoid_rules => qr/^bpath_shared_object_provisions/,
+            verb => 'linked',
+        },
+        linux_cflags => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            object => qr/^optionset:C(?:XX)?FLAGS$/,
+            depends => 'optstring:-fvisibility=hidden',
+        },
+        linux_lflags => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            object => 'optionset:LFLAGS',
+            depends => 'optstring:-rdynamic',
+        },
+        linux_headerlines => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            object => 'optionset:aimake_header_lines',
+            depends => 'optstring:' .
+                '#_define_AIMAKE\\_IMPORT(x)_x ' .
+                '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
+                '#_define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x '.
+                '#_define_AIMAKE\\_REVERSE_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x'
+        },
+        osx_cflags => {
+            command => ['intcmd:assert_equal',
+                        'optstring:darwin', "optstring:$^O"],
+            fail_silently => 1,
+            object => qr/^optionset:C(?:XX)?FLAGS$/,
+            depends => 'optstring:-fvisibility=hidden',
+        },
+        osx_lflags => {
+            command => ['intcmd:assert_equal',
+                        'optstring:darwin', "optstring:$^O"],
+            fail_silently => 1,
+            object => 'optionset:LFLAGS',
+            depends => 'optstring:-rdynamic',
+        },
+        osx_headerlines => {
+            command => ['intcmd:assert_equal',
+                        'optstring:darwin', "optstring:$^O"],
+            fail_silently => 1,
+            object => 'optionset:aimake_header_lines',
+            depends => 'optstring:' .
+                '#_define_AIMAKE\\_IMPORT(x)_x ' .
+                '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
+                '#_define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x '.
+                '#_define_AIMAKE\\_REVERSE_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x'
+        },
+
+        # Selecting sensible names.
+        #
+        # This is used for shared objects and for executables. When selecting
+        # a sensible name for an object, we base it on the bpath objects that
+        # contain initialized read/write data, as a crude heuristic to
+        # distinguish programs from library functions. (Library functions
+        # rarely work on a single, centralized copy of data because that
+        # causes a lack of re-entrancy. Read-only data doesn't count for this
+        # purpose; and uninitialized data is possibly a static buffer, which
+        # is a much more common way to lack re-entrancy than initialized
+        # data.) Additionally, a symbol "main" or "_main" automatically gets
+        # your name hinted, and exported symbols get their names hinted when
+        # creating shared libraries.
+        choose_namehint => {
+            object => qr/^bpath:.*\Q$objext\E$/,
+            depends => 'namehint:',
+            command => ['cmd:nm', 'optpath::'],
+            # In order to conditionally include the namehint, we use a regex
+            # match that captures nothing. If it doesn't match, there'll be no
+            # capture and thus no hint. (The hint itself is provided by the
+            # implicit inner => ''.)
+            dependsarg => qr'^()[[:xdigit:]]*\s+(?:[tT] _?main|[dDgG])',
+            verb => 'chose',
+        },
+
         # Linking.
         c_link_tool => {
             output => 'tool:c_linker',
@@ -5897,7 +6259,8 @@ __DATA__
             # __imp_ ourself.)
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
             # inner => '' is implied, as with the next few rules
-            outdepends => ['', 'optpath::'],
+            # outdepends => '' is implied by propagate_usedeps
+            outdepends => 'optpath::',
             verb => 'found',
             propagate_usedeps => 1,
             preference => 80,
@@ -5927,7 +6290,7 @@ __DATA__
             preference => 50,
         },
         shared_object_provisions_dynamic => {
-            object => qr/^spath:.*\Q$dllext\E(?:\z|\.)/s,
+            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
@@ -5939,6 +6302,31 @@ __DATA__
             low_message_priority => 1,
             preference => 50,
         },
+        bpath_shared_object_provisions_nondynamic => {
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)/s,
+            command => ['cmd:nm', 'optpath::'],
+            output => ['symbol:', 'symbol_in_object:'],
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            ignore_warnings => 1,
+            propagate_usedeps => 1,
+            outdepends => [],
+            verb => 'found',
+            low_message_priority => 1,
+            preference => 90,
+        },
+        bpath_shared_object_provisions_dynamic => {
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)/s,
+            command => ['cmd:nm','optstring:-D','optpath::'],
+            output => ['symbol:', 'symbol_in_object:'],
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            fail_silently => 1, # not everything is dynamic
+            ignore_warnings => 1,
+            propagate_usedeps => 1,
+            outdepends => [],
+            verb => 'found',
+            low_message_priority => 1,
+            preference => 90,
+        },
         spath_library_option => {
             object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)/,
             command => ['intcmd:echo', 'optpath::'],
@@ -5949,6 +6337,28 @@ __DATA__
             dependsarg => qr/^[bs]?path:
                 (?:(?:[^\\]|\\.)+\/)?lib((?:[^\\\/]|\\.)+?)
                 (?:\Q$dllext\E|\Q$libext\E)(\z|\.)/x,
+        },
+        bpath_library_option => {
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)/,
+            depends => ['optpath::', 'optionset:rpath']
+        },
+        linux_rpath => {
+            # We set the rpath to the installed location for the shared
+            # objects. We can't know if it'll be libdir or specificlibdir,
+            # so we do both.
+            output => 'optionset:linux_rpath',
+            command => ['intcmd:optionvalues',
+                        'optpath::config_option:libdir',
+                        'optpath::config_option:specificlibdir'],
+            outdepends => 'optpath:-Wl,-rpath=:',
+            inner => qr/=(.*)$/,
+        },
+        linux_bpath_library_option => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            output => 'optionset:rpath',
+            outdepends => 'optionset:linux_rpath',
         },
         link_c => {
             object => qr/^b?path:.*\Q$objext\E/,
@@ -6006,31 +6416,14 @@ __DATA__
             verb => 'generated',
         },
 
-        # Creating static libraries. We do this by looking at .api files that
-        # specify what symbols should be in them. (It'd be nice to somehow
-        # mark all the other symbols as nonpublic, but there's no obvious way
-        # to do that.)
-        ar_tool => {
-            output => 'tool:ar',
-            outdepends => ['cmd:ar', 'optstring:rcs'],
-            verb => 'found',
+        # Installing. Some projects may wish to modify or undef out these rules.
+        install_libraries => {
+            object => qr/^bpath:.*\Q$dllext\E$/s,
+            install_dir => "libdir",
         },
-        api_dependencies => {
-            # bpath is allowed here in case people want to generate .api files
-            # at runtime and have them work correctly
-            object => qr/^b?path:.*\.api$/,
-            command => ['intcmd:cat'],
-            filter => qr/^symbol:/,
-            depends => 'symbol:',
-            dependsarg => qr/^symbol:([^#]+?)\s*(?:#|$)/,
-        },
-        create_library => {
-            object => qr/^b?path:.*\.api$/,
-            command => ['tool:ar', "optpath::extend:$libext:"],
-            output => "extend:$libext",
-            ignore_spath => 1,
-            verb => 'created',
-            in_subdir => 'bpath:',
+        install_executables => {
+            object => qr/^bpath:.*\Q$exeext\E$/s,
+            install_dir => "bindir",
         },
     },
 }

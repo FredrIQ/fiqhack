@@ -12,22 +12,28 @@
 #include <stdarg.h>
 #include <wchar.h>
 
+#ifdef UNCURSED_MAIN_PROGRAM
+# define EI(x) AIMAKE_EXPORT(x)
+#else
+# define EI(x) AIMAKE_IMPORT(x)
+#endif
+
 #define UNCURSED_ANDWINDOW(t, f, ...)                    \
-    extern t f(__VA_ARGS__);                             \
-    extern t w##f(WINDOW *, __VA_ARGS__)
+    extern t EI(f)(__VA_ARGS__);                         \
+    extern t EI(w##f)(WINDOW *, __VA_ARGS__)
 #define UNCURSED_ANDWINDOWV(t, f)               \
-    extern t f(void);                           \
-    extern t w##f(WINDOW *)
-#define UNCURSED_ANDMVWINDOW(t, f, ...)                  \
-    extern t f(__VA_ARGS__);                             \
-    extern t w##f(WINDOW *, __VA_ARGS__);                \
-    extern t mv##f(int, int, __VA_ARGS__);               \
-    extern t mvw##f(WINDOW *, int, int, __VA_ARGS__)
-#define UNCURSED_ANDMVWINDOWV(t, f)                      \
-    extern t f(void);                                    \
-    extern t w##f(WINDOW *);                             \
-    extern t mv##f(int, int);                            \
-    extern t mvw##f(WINDOW *, int, int)
+    extern t EI(f)(void);                       \
+    extern t EI(w##f)(WINDOW *)
+#define UNCURSED_ANDMVWINDOW(t, f, ...)                      \
+    extern t EI(f)(__VA_ARGS__);                             \
+    extern t EI(w##f)(WINDOW *, __VA_ARGS__);                \
+    extern t EI(mv##f)(int, int, __VA_ARGS__);               \
+    extern t EI(mvw##f)(WINDOW *, int, int, __VA_ARGS__)
+#define UNCURSED_ANDMVWINDOWV(t, f)                          \
+    extern t EI(f)(void);                                    \
+    extern t EI(w##f)(WINDOW *);                             \
+    extern t EI(mv##f)(int, int);                            \
+    extern t EI(mvw##f)(WINDOW *, int, int)
 
 #define UNCURSED_ANDWINDOWDEF(t, f, ty, ...)                    \
     t f(__VA_ARGS__) ty; {return w##f(stdscr, __VA_ARGS__);}    \
@@ -82,28 +88,31 @@ typedef struct WINDOW {
     cchar_t *chararray;
     int timeout;
     uncursed_bool clear_on_refresh;
-} WINDOW;
+} WINDOW, *uncursed_WINDOW_p;
+typedef char *uncursed_char_p;
+typedef int *uncursed_int_p;
+typedef wchar_t *uncursed_wchar_tp;
 
-extern WINDOW *stdscr;
+extern uncursed_WINDOW_p EI(stdscr);
 
 /* uncursed-specific */
-extern void initialize_uncursed(int*, char**);
+extern void EI(initialize_uncursed)(int*, char**);
 
 /* manual page 3ncurses color */
-extern int COLORS;
-extern int COLOR_PAIRS;
+extern int EI(COLORS);
+extern int EI(COLOR_PAIRS);
 
 /* This must be a signed type; and for compatibility with curses, must be short.
    Keep it synched with COLOR_PAIRS in uncursed.c. */
 typedef short uncursed_color;
 
-extern int start_color(void);
-extern int init_pair(uncursed_color, uncursed_color, uncursed_color);
-extern int init_color(uncursed_color, short, short, short);
-extern uncursed_bool has_colors(void);
-extern uncursed_bool can_change_color(void);
-extern int color_content(uncursed_color, short*, short*, short*);
-extern int pair_content(uncursed_color, uncursed_color*, uncursed_color*);
+extern int EI(start_color)(void);
+extern int EI(init_pair)(uncursed_color, uncursed_color, uncursed_color);
+extern int EI(init_color)(uncursed_color, short, short, short);
+extern uncursed_bool EI(has_colors)(void);
+extern uncursed_bool EI(can_change_color)(void);
+extern int EI(color_content)(uncursed_color, short*, short*, short*);
+extern int EI(pair_content)(uncursed_color, uncursed_color*, uncursed_color*);
 
 #define COLOR_BLACK   0
 #define COLOR_RED     1
@@ -151,21 +160,23 @@ UNCURSED_ANDMVWINDOW(int, chgat, int, attr_t, short, const void*);
 UNCURSED_ANDMVWINDOW(int, add_wch, const cchar_t *);
 UNCURSED_ANDWINDOW(int, echo_wchar, const cchar_t *);
 
-extern int TABSIZE;
+extern int EI(TABSIZE);
 
-extern const cchar_t *WACS_BLOCK, *WACS_BOARD, *WACS_BTEE, *WACS_BULLET,
-    *WACS_CKBOARD, *WACS_DARROW, *WACS_DEGREE, *WACS_DIAMOND, *WACS_GEQUAL,
-    *WACS_HLINE, *WACS_LANTERN, *WACS_LARROW, *WACS_LEQUAL, *WACS_LLCORNER,
-    *WACS_LRCORNER, *WACS_LTE, *WACS_NEQUAL, *WACS_PI, *WACS_PLMINUS,
-    *WACS_PLUS, *WACS_RARROW, *WACS_RTEE, *WACS_S1, *WACS_S3, *WACS_S7,
-    *WACS_S9, *WACS_STERLING, *WACS_TTEE, *WACS_UARROW, *WACS_ULCORNER,
-    *WACS_URCORNER, *WACS_VLINE,
-    *WACS_T_ULCORNER, *WACS_T_LLCORNER, *WACS_T_URCORNER, *WACS_T_LRCORNER,
-    *WACS_T_LTEE, *WACS_T_RTEE, *WACS_T_BTEE, *WACS_T_TTEE, *WACS_T_HLINE,
-    *WACS_T_VLINE, *WACS_T_PLUS,
-    *WACS_D_ULCORNER, *WACS_D_LLCORNER, *WACS_D_URCORNER, *WACS_D_LRCORNER,
-    *WACS_D_LTEE, *WACS_D_RTEE, *WACS_D_BTEE, *WACS_D_TTEE, *WACS_D_HLINE,
-    *WACS_D_VLINE, *WACS_D_PLUS;
+typedef const cchar_t *uncursed_cchar_tp;
+extern const uncursed_cchar_tp EI(WACS_BLOCK), EI(WACS_BOARD), EI(WACS_BTEE),
+    EI(WACS_BULLET), EI(WACS_CKBOARD), EI(WACS_DARROW), EI(WACS_DEGREE),
+    EI(WACS_DIAMOND), EI(WACS_GEQUAL), EI(WACS_HLINE), EI(WACS_LANTERN),
+    EI(WACS_LARROW), EI(WACS_LEQUAL), EI(WACS_LLCORNER), EI(WACS_LRCORNER),
+    EI(WACS_LTEE), EI(WACS_NEQUAL), EI(WACS_PI), EI(WACS_PLMINUS),
+    EI(WACS_PLUS), EI(WACS_RARROW), EI(WACS_RTEE), EI(WACS_S1), EI(WACS_S3),
+    EI(WACS_S7), EI(WACS_S9), EI(WACS_STERLING), EI(WACS_TTEE),
+    EI(WACS_UARROW), EI(WACS_ULCORNER), EI(WACS_URCORNER), EI(WACS_VLINE),
+    EI(WACS_T_ULCORNER), EI(WACS_T_LLCORNER), EI(WACS_T_URCORNER),
+    EI(WACS_T_LRCORNER), EI(WACS_T_LTEE), EI(WACS_T_RTEE), EI(WACS_T_BTEE),
+    EI(WACS_T_TTEE), EI(WACS_T_HLINE), EI(WACS_T_VLINE), EI(WACS_T_PLUS),
+    EI(WACS_D_ULCORNER), EI(WACS_D_LLCORNER), EI(WACS_D_URCORNER),
+    EI(WACS_D_LRCORNER), EI(WACS_D_LTEE), EI(WACS_D_RTEE), EI(WACS_D_BTEE),
+    EI(WACS_D_TTEE), EI(WACS_D_HLINE), EI(WACS_D_VLINE), EI(WACS_D_PLUS);
 
 /* manual page 3ncurses add_wchstr */
 UNCURSED_ANDMVWINDOW(int, add_wchstr, const cchar_t *);
@@ -221,17 +232,17 @@ UNCURSED_ANDMVWINDOW(int, addwstr, const wchar_t *);
 UNCURSED_ANDMVWINDOW(int, addwnstr, const wchar_t *, int);
 
 /* manual page 3ncurses default_colors */
-extern int use_default_colors(void);
-extern int assume_default_colors(int, int);
+extern int EI(use_default_colors)(void);
+extern int EI(assume_default_colors)(int, int);
 
 /* manual page 3ncurses beep */
-extern int beep(void);
-extern int flash(void);
+extern int EI(beep)(void);
+extern int EI(flash)(void);
 
 /* manual page 3ncurses border */
 UNCURSED_ANDWINDOW(int, border, chtype, chtype, chtype, chtype,
                    chtype, chtype, chtype, chtype);
-extern int box(WINDOW *win, chtype, chtype);
+extern int EI(box)(WINDOW *win, chtype, chtype);
 UNCURSED_ANDMVWINDOW(int, hline, chtype, int);
 UNCURSED_ANDMVWINDOW(int, vline, chtype, int);
 
@@ -239,7 +250,7 @@ UNCURSED_ANDMVWINDOW(int, vline, chtype, int);
 UNCURSED_ANDWINDOW(int, border_set, const cchar_t *, const cchar_t *,
                    const cchar_t *, const cchar_t *, const cchar_t *,
                    const cchar_t *, const cchar_t *, const cchar_t *);
-extern int box_set(WINDOW *win, const cchar_t *, const cchar_t *);
+extern int EI(box_set)(WINDOW *win, const cchar_t *, const cchar_t *);
 UNCURSED_ANDMVWINDOW(int, hline_set, const cchar_t *, int);
 UNCURSED_ANDMVWINDOW(int, vline_set, const cchar_t *, int);
 
@@ -248,36 +259,36 @@ UNCURSED_ANDMVWINDOW(int, vline_set, const cchar_t *, int);
    at-a-time input, and most of these just change how long we wait for input
    before returning ERR. The exception is raw, whose purpose is to change the
    meaning of control-C from "send SIGINT" to "return 3". */
-extern int cbreak(void);   /* calls noraw, otherwise ignored */
-extern int nocbreak(void); /* cancels halfdelay, otherwise ignored */
+extern int EI(cbreak)(void);   /* calls noraw, otherwise ignored */
+extern int EI(nocbreak)(void); /* cancels halfdelay, otherwise ignored */
 /* echo intentionally unimplemented */
-extern int noecho(void); /* ignored */
-extern int halfdelay(int);
-extern int intrflush(WINDOW*, uncursed_bool); /* ignored, always false */
-extern int keypad(WINDOW*, uncursed_bool); /* ignored, always true */
-extern int meta(WINDOW*, uncursed_bool); /* ignored, always false */
-extern int nodelay(WINDOW*, uncursed_bool);
-extern int raw(void);
-extern int noraw(void);
-extern int qiflush(void); /* ignored */
-extern int noqiflush(void); /* ignored */
+extern int EI(noecho)(void); /* ignored */
+extern int EI(halfdelay)(int);
+extern int EI(intrflush)(WINDOW*, uncursed_bool); /* ignored, always false */
+extern int EI(keypad)(WINDOW*, uncursed_bool); /* ignored, always true */
+extern int EI(meta)(WINDOW*, uncursed_bool); /* ignored, always false */
+extern int EI(nodelay)(WINDOW*, uncursed_bool);
+extern int EI(raw)(void);
+extern int EI(noraw)(void);
+extern int EI(qiflush)(void); /* ignored */
+extern int EI(noqiflush)(void); /* ignored */
 /* Note that notimeout and timeout have nothing to do with each other...
    notimeout mode turns off the use of a timer to distinguish between
    ESC [ A and the up arrow; timeout changes how long reads wait for
    input. */
-extern int notimeout(WINDOW*, uncursed_bool); /* ignored */
-extern void timeout(int); /* can't use ANDWINDOW, it returns void */
-extern void wtimeout(WINDOW*, int);
-extern int typeahead(int); /* ignored */
+extern int EI(notimeout)(WINDOW*, uncursed_bool); /* ignored */
+extern void EI(timeout)(int); /* can't use ANDWINDOW, it returns void */
+extern void EI(wtimeout)(WINDOW*, int);
+extern int EI(typeahead)(int); /* ignored */
 
 /* manual page 3ncurses outopts */
 /* TODO */
 
 /* manual page 3ncurses overlay */
-extern int overlay(const WINDOW *, const WINDOW *);
-extern int overwrite(const WINDOW *, const WINDOW *);
-extern int copywin(const WINDOW *, const WINDOW *,
-                   int, int, int, int, int, int, int);
+extern int EI(overlay)(const WINDOW *, const WINDOW *);
+extern int EI(overwrite)(const WINDOW *, const WINDOW *);
+extern int EI(copywin)(const WINDOW *, const WINDOW *,
+                       int, int, int, int, int, int, int);
 
 /* manual page 3ncurses clear */
 UNCURSED_ANDWINDOWV(int, erase);
@@ -286,23 +297,23 @@ UNCURSED_ANDWINDOWV(int, clrtobot);
 UNCURSED_ANDWINDOWV(int, clrtoeol);
 
 /* manual page 3ncurses outopts: only clearok implemented */
-extern int clearok(WINDOW *, uncursed_bool);
-extern int nonl(void); /* ignored */
-extern int leaveok(WINDOW *, uncursed_bool); /* ignored */
+extern int EI(clearok)(WINDOW *, uncursed_bool);
+extern int EI(nonl)(void); /* ignored */
+extern int EI(leaveok)(WINDOW *, uncursed_bool); /* ignored */
 
 /* manual page 3ncurses kernel: only curs_set is implemented */
-extern int curs_set(int visibility);
+extern int EI(curs_set)(int visibility);
 
 /* manual page 3ncurses util */
-extern char *unctrl(char);
-extern wchar_t *wunctrl(wchar_t);
-extern char *keyname(int);
-extern char *key_name(wchar_t); /* not wchar_t* :( */
-extern int delay_output(int);
+extern uncursed_char_p EI(unctrl)(char);
+extern uncursed_wchar_tp EI(wunctrl)(wchar_t);
+extern uncursed_char_p EI(keyname)(int);
+extern uncursed_char_p EI(key_name)(wchar_t); /* not wchar_t* :( */
+extern int EI(delay_output)(int);
 /* unimplemented: getwin, putwin, use_env, filter, nofilter, flushinp */
 
 /* and something extra of our own */
-extern char *friendly_keyname(int);
+extern uncursed_char_p EI(friendly_keyname)(int);
 
 #define KEY_SHIFT     2048
 #define KEY_ALT       4096
@@ -426,35 +437,35 @@ UNCURSED_ANDWINDOWV(int, insertln);
 UNCURSED_ANDWINDOW(int, insdelln, int);
 
 /* manual page 3ncurses initscr */
-extern WINDOW *initscr(void);
-extern int endwin(void);
-extern uncursed_bool isendwin(void);
-extern int LINES;
-extern int COLS;
+extern uncursed_WINDOW_p EI(initscr)(void);
+extern int EI(endwin)(void);
+extern uncursed_bool EI(isendwin)(void);
+extern int EI(LINES);
+extern int EI(COLS);
 
 /* manual page 3ncurses window */
-extern WINDOW *newwin(int, int, int, int);
-extern WINDOW *subwin(WINDOW*, int, int, int, int);
-extern WINDOW *derwin(WINDOW*, int, int, int, int);
+extern uncursed_WINDOW_p EI(newwin)(int, int, int, int);
+extern uncursed_WINDOW_p EI(subwin)(WINDOW*, int, int, int, int);
+extern uncursed_WINDOW_p EI(derwin)(WINDOW*, int, int, int, int);
 /* TODO: dupwin not implemented for now */
-extern int delwin(WINDOW *);
-extern int mvwin(WINDOW *, int, int);
-extern int mvderwin(WINDOW *, int, int);
-extern void wsyncup(WINDOW *);
-extern int syncok(WINDOW *, uncursed_bool);
-extern void wcursyncup(WINDOW *);
-extern void wsyncdown(WINDOW *);
+extern int EI(delwin)(WINDOW *);
+extern int EI(mvwin)(WINDOW *, int, int);
+extern int EI(mvderwin)(WINDOW *, int, int);
+extern void EI(wsyncup)(WINDOW *);
+extern int EI(syncok)(WINDOW *, uncursed_bool);
+extern void EI(wcursyncup)(WINDOW *);
+extern void EI(wsyncdown)(WINDOW *);
 
 /* manual page 3ncurses refresh */
 UNCURSED_ANDWINDOWV(int, refresh);
-int wnoutrefresh(WINDOW *win);
-int doupdate(void);
-int redrawwin(WINDOW *win);
-int wredrawln(WINDOW *win, int, int);
+extern int EI(wnoutrefresh)(WINDOW *win);
+extern int EI(doupdate)(void);
+extern int EI(redrawwin)(WINDOW *win);
+extern int EI(wredrawln)(WINDOW *win, int, int);
 
 /* manual page 3ncurses get_wch */
 UNCURSED_ANDMVWINDOW(int, get_wch, wint_t *);
-int unget_wch(wchar_t);
+extern int EI(unget_wch)(wchar_t);
 
 /* manual page 3ncurses getyx, legacy; these are all macros */
 #define getyx(win, yy, xx) do {(yy) = (win)->y; (xx) = (win)->x;} while(0)
@@ -469,12 +480,12 @@ int unget_wch(wchar_t);
 #define getmaxx(win) ((win)->maxx+1)
 
 /* manual page 3ncurses getcchar */
-extern int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);
-extern int setcchar(cchar_t *, const wchar_t *, attr_t, short, void *);
+extern int EI(getcchar)(const cchar_t *, wchar_t *, attr_t *, short *, void *);
+extern int EI(setcchar)(cchar_t *, const wchar_t *, attr_t, short, void *);
 
 /* manual page 3ncurses getch */
 UNCURSED_ANDMVWINDOWV(int, getch);
-extern int ungetch(int);
+extern int EI(ungetch)(int);
 /* has_key not implemented, for multiple reasons */
 
 /* manual page 3ncurses move */
@@ -483,26 +494,28 @@ UNCURSED_ANDWINDOW(int, move, int, int);
 /* manual page 3ncurses touch */
 /* These are all no-ops for now, and probably forever unless we turn out to
    have insurmountable performance proble,s. */
-extern int touchwin(WINDOW *);
-extern int touchline(WINDOW *, int, int);
-extern int untouchwin(WINDOW *);
-extern int wtouchln(WINDOW *, int, int, int);
+extern int EI(touchwin)(WINDOW *);
+extern int EI(touchline)(WINDOW *, int, int);
+extern int EI(untouchwin)(WINDOW *);
+extern int EI(wtouchln)(WINDOW *, int, int, int);
 /* is_linetouched, is_wintouched unimplemented */
 
 /* manual page 3ncurses printw */
 /* We can't use the helper macros because this is varargs. */
-extern int printw(const char *, ...);
-extern int wprintw(WINDOW *, const char *, ...);
-extern int mvprintw(int, int, const char *, ...);
-extern int mvwprintw(WINDOW *, int, int, const char *, ...);
-extern int vw_printw(WINDOW *, const char *, va_list);
+extern int EI(printw)(const char *, ...);
+extern int EI(wprintw)(WINDOW *, const char *, ...);
+extern int EI(mvprintw)(int, int, const char *, ...);
+extern int EI(mvwprintw)(WINDOW *, int, int, const char *, ...);
+extern int EI(vw_printw)(WINDOW *, const char *, va_list);
 
 /* manual page 3ncurses scroll */
-extern int scroll(WINDOW *);
+extern int EI(scroll)(WINDOW *);
 UNCURSED_ANDWINDOW(int, scrl, int);
 
 /* manual page 3ncurses wresize */
-extern int wresize(WINDOW *, int, int);
+extern int EI(wresize)(WINDOW *, int, int);
+
+#undef EI
 
 /* manual pages 3ncurses bkgd, bkgrnd, define_key, extensions, get_wstr, getstr,
    in{,_w}{ch,str}, legacy_coding, pad, scanw, scr_dump, slk, termattrs,

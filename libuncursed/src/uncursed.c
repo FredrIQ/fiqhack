@@ -429,70 +429,70 @@ static const cchar_t WACS[] = {
     {0, {0x2192, 0}}, {0, {0x261c, 0}}, {0, {0x23ba, 0}}, {0, {0x23bb, 0}},
     {0, {0x23bc, 0}}, {0, {0x23bd, 0}}, {0, {0x00a3, 0}}, {0, {0x252c, 0}},
     {0, {0x2192, 0}}, {0, {0x250c, 0}}, {0, {0x2510, 0}}, {0, {0x2502, 0}}};
-const cchar_t* WACS_BLOCK    = WACS+0;
-const cchar_t* WACS_BOARD    = WACS+1;
-const cchar_t* WACS_BTEE     = WACS+2;
-const cchar_t* WACS_BULLET   = WACS+3;
-const cchar_t* WACS_CKBOARD  = WACS+4;
-const cchar_t* WACS_DARROW   = WACS+5;
-const cchar_t* WACS_DEGREE   = WACS+6;
-const cchar_t* WACS_DIAMOND  = WACS+7;
-const cchar_t* WACS_GEQUAL   = WACS+8;
-const cchar_t* WACS_HLINE    = WACS+9;
-const cchar_t* WACS_LANTERN  = WACS+10;
-const cchar_t* WACS_LARROW   = WACS+11;
-const cchar_t* WACS_LEQUAL   = WACS+12;
-const cchar_t* WACS_LLCORNER = WACS+13;
-const cchar_t* WACS_LRCORNER = WACS+14;
-const cchar_t* WACS_LTEE     = WACS+15;
-const cchar_t* WACS_NEQUAL   = WACS+16;
-const cchar_t* WACS_PI       = WACS+17;
-const cchar_t* WACS_PLMINUS  = WACS+18;
-const cchar_t* WACS_PLUS     = WACS+19;
-const cchar_t* WACS_RARROW   = WACS+20;
-const cchar_t* WACS_RTEE     = WACS+21;
-const cchar_t* WACS_S1       = WACS+22;
-const cchar_t* WACS_S3       = WACS+23;
-const cchar_t* WACS_S7       = WACS+24;
-const cchar_t* WACS_S9       = WACS+25;
-const cchar_t* WACS_STERLING = WACS+26;
-const cchar_t* WACS_TTEE     = WACS+27;
-const cchar_t* WACS_UARROW   = WACS+28;
-const cchar_t* WACS_ULCORNER = WACS+29;
-const cchar_t* WACS_URCORNER = WACS+30;
-const cchar_t* WACS_VLINE    = WACS+31;
+const uncursed_cchar_tp WACS_BLOCK    = WACS+0;
+const uncursed_cchar_tp WACS_BOARD    = WACS+1;
+const uncursed_cchar_tp WACS_BTEE     = WACS+2;
+const uncursed_cchar_tp WACS_BULLET   = WACS+3;
+const uncursed_cchar_tp WACS_CKBOARD  = WACS+4;
+const uncursed_cchar_tp WACS_DARROW   = WACS+5;
+const uncursed_cchar_tp WACS_DEGREE   = WACS+6;
+const uncursed_cchar_tp WACS_DIAMOND  = WACS+7;
+const uncursed_cchar_tp WACS_GEQUAL   = WACS+8;
+const uncursed_cchar_tp WACS_HLINE    = WACS+9;
+const uncursed_cchar_tp WACS_LANTERN  = WACS+10;
+const uncursed_cchar_tp WACS_LARROW   = WACS+11;
+const uncursed_cchar_tp WACS_LEQUAL   = WACS+12;
+const uncursed_cchar_tp WACS_LLCORNER = WACS+13;
+const uncursed_cchar_tp WACS_LRCORNER = WACS+14;
+const uncursed_cchar_tp WACS_LTEE     = WACS+15;
+const uncursed_cchar_tp WACS_NEQUAL   = WACS+16;
+const uncursed_cchar_tp WACS_PI       = WACS+17;
+const uncursed_cchar_tp WACS_PLMINUS  = WACS+18;
+const uncursed_cchar_tp WACS_PLUS     = WACS+19;
+const uncursed_cchar_tp WACS_RARROW   = WACS+20;
+const uncursed_cchar_tp WACS_RTEE     = WACS+21;
+const uncursed_cchar_tp WACS_S1       = WACS+22;
+const uncursed_cchar_tp WACS_S3       = WACS+23;
+const uncursed_cchar_tp WACS_S7       = WACS+24;
+const uncursed_cchar_tp WACS_S9       = WACS+25;
+const uncursed_cchar_tp WACS_STERLING = WACS+26;
+const uncursed_cchar_tp WACS_TTEE     = WACS+27;
+const uncursed_cchar_tp WACS_UARROW   = WACS+28;
+const uncursed_cchar_tp WACS_ULCORNER = WACS+29;
+const uncursed_cchar_tp WACS_URCORNER = WACS+30;
+const uncursed_cchar_tp WACS_VLINE    = WACS+31;
 
 static const cchar_t WACS_T[] = {
     {0, {0x250f, 0}}, {0, {0x2517, 0}}, {0, {0x2513, 0}}, {0, {0x251b, 0}},
     {0, {0x252b, 0}}, {0, {0x2523, 0}}, {0, {0x253b, 0}}, {0, {0x2533, 0}},
     {0, {0x2501, 0}}, {0, {0x2503, 0}}, {0, {0x254b, 0}}};
-const cchar_t* WACS_T_ULCORNER = WACS_T+0;
-const cchar_t* WACS_T_LLCORNER = WACS_T+1;
-const cchar_t* WACS_T_URCORNER = WACS_T+2;
-const cchar_t* WACS_T_LRCORNER = WACS_T+3;
-const cchar_t* WACS_T_LTEE     = WACS_T+4;
-const cchar_t* WACS_T_RTEE     = WACS_T+5;
-const cchar_t* WACS_T_BTEE     = WACS_T+6;
-const cchar_t* WACS_T_TTEE     = WACS_T+7;
-const cchar_t* WACS_T_HLINE    = WACS_T+8;
-const cchar_t* WACS_T_VLINE    = WACS_T+9;
-const cchar_t* WACS_T_PLUS     = WACS_T+10;
+const uncursed_cchar_tp WACS_T_ULCORNER = WACS_T+0;
+const uncursed_cchar_tp WACS_T_LLCORNER = WACS_T+1;
+const uncursed_cchar_tp WACS_T_URCORNER = WACS_T+2;
+const uncursed_cchar_tp WACS_T_LRCORNER = WACS_T+3;
+const uncursed_cchar_tp WACS_T_LTEE     = WACS_T+4;
+const uncursed_cchar_tp WACS_T_RTEE     = WACS_T+5;
+const uncursed_cchar_tp WACS_T_BTEE     = WACS_T+6;
+const uncursed_cchar_tp WACS_T_TTEE     = WACS_T+7;
+const uncursed_cchar_tp WACS_T_HLINE    = WACS_T+8;
+const uncursed_cchar_tp WACS_T_VLINE    = WACS_T+9;
+const uncursed_cchar_tp WACS_T_PLUS     = WACS_T+10;
 
 static const cchar_t WACS_D[] = {
     {0, {0x2554, 0}}, {0, {0x255a, 0}}, {0, {0x2557, 0}}, {0, {0x255d, 0}},
     {0, {0x2563, 0}}, {0, {0x2560, 0}}, {0, {0x2569, 0}}, {0, {0x2566, 0}},
     {0, {0x2550, 0}}, {0, {0x2551, 0}}, {0, {0x256c, 0}}};
-const cchar_t* WACS_D_ULCORNER = WACS_D+0;
-const cchar_t* WACS_D_LLCORNER = WACS_D+1;
-const cchar_t* WACS_D_URCORNER = WACS_D+2;
-const cchar_t* WACS_D_LRCORNER = WACS_D+3;
-const cchar_t* WACS_D_LTEE     = WACS_D+4;
-const cchar_t* WACS_D_RTEE     = WACS_D+5;
-const cchar_t* WACS_D_BTEE     = WACS_D+6;
-const cchar_t* WACS_D_TTEE     = WACS_D+7;
-const cchar_t* WACS_D_HLINE    = WACS_D+8;
-const cchar_t* WACS_D_VLINE    = WACS_D+9;
-const cchar_t* WACS_D_PLUS     = WACS_D+10;
+const uncursed_cchar_tp WACS_D_ULCORNER = WACS_D+0;
+const uncursed_cchar_tp WACS_D_LLCORNER = WACS_D+1;
+const uncursed_cchar_tp WACS_D_URCORNER = WACS_D+2;
+const uncursed_cchar_tp WACS_D_LRCORNER = WACS_D+3;
+const uncursed_cchar_tp WACS_D_LTEE     = WACS_D+4;
+const uncursed_cchar_tp WACS_D_RTEE     = WACS_D+5;
+const uncursed_cchar_tp WACS_D_BTEE     = WACS_D+6;
+const uncursed_cchar_tp WACS_D_TTEE     = WACS_D+7;
+const uncursed_cchar_tp WACS_D_HLINE    = WACS_D+8;
+const uncursed_cchar_tp WACS_D_VLINE    = WACS_D+9;
+const uncursed_cchar_tp WACS_D_PLUS     = WACS_D+10;
 
 /* manual page 3ncurses add_wchstr */
 UNCURSED_ANDMVWINDOWDEF(int, add_wchstr, const cchar_t *charray, charray) {
@@ -1449,6 +1449,10 @@ UNCURSED_ANDMVWINDOWVDEF(int, getch) {
     if (w < 256) return w;
     return 0x94; /* CANCEL CHARACTER */
 }
+int ungetch(int k) {
+    return unget_wch(k);
+}
+
 
 /* manual page 3ncurses move */
 UNCURSED_ANDWINDOWDEF(int, move, int y; int x, y, x) {
