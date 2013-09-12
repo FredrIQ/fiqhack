@@ -4734,8 +4734,9 @@ MAINLOOP: while (1) {
                         ($n !~ /^(search)?file:/ &&
                          $rule->{filter_absolute}) ||
                         ($rule->{filter_nonexistent_files} &&
-                         $n =~ /^[bs]?path:/ &&
-                         (!-e aipath2ospath($n) || (!-f _ && !-l _))) ||
+                         ($n !~ /^[bs]?path:/ ||
+                          !-e aipath2ospath($n) ||
+                          (!-f _ && !-l _))) ||
                         ($rule->{filter_text_files} &&
                          $n =~ /^[bs]?path:/ && -T aipath2ospath($n));
                 }
@@ -5548,7 +5549,10 @@ __DATA__
             # line on stderr. We recognise the object files via the
             # extension, and the fact that they're existing, binary
             # files.
-            output => qr/^(.*(?<!aimake_1)(?:\.a|$objext|\.so|\.dll|\.dylib)(?:\.[0-9]+)?)$/s,
+            #
+            # Some versions of ld will write this as -llib (pathname);
+            # recognise that pattern too.
+            output => qr/^(?:-l[^ ]+ \()?(.*(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\.so|\.dll|\.dylib)(?:\.[0-9]+)?)\)?$/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
