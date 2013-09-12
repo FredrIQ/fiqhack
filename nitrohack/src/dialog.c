@@ -4,6 +4,7 @@
 
 #include "nhcurses.h"
 #include <ctype.h>
+#include <limits.h>
 
 
 static enum nh_direction last_dir;
@@ -158,7 +159,18 @@ curses_query_key(const char *query, int *count)
 
     key = nh_wgetch(win);
     while ((isdigit(key) || key == KEY_BACKSPACE) && count != NULL) {
-        cnt = 10 * cnt + (key - '0');
+	if (isdigit(key)) {
+	    hascount = TRUE;
+	    /* prevent int overflow */
+	    if (cnt < INT_MAX / 10 || (cnt == INT_MAX / 10 &&
+				       (key - '0') <= INT_MAX % 10))
+		cnt = 10 * cnt + (key - '0');
+	    else
+		cnt = INT_MAX;
+	} else {
+	    hascount = (cnt > 0);
+	    cnt /= 10;
+	}
         key = nh_wgetch(win);
         hascount = TRUE;
     }
