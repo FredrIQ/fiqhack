@@ -17,87 +17,78 @@
 
 # include "nethack_types.h"
 
-# if !defined(STATIC_BUILD)
-#  if defined (libnethack_EXPORTS)      /* defined by cmake while building
-                                           libnethack */
-#   if defined (_MSC_VER)
-#    define EXPORT __declspec(dllexport)
-#   else
-      /* gcc & clang with -fvisibility=hidden need this for exported syms */
-#    define EXPORT __attribute__((__visibility__("default")))
-#   endif
-
-#  else
-      /* building a window port */
-#   if defined (_MSC_VER)
-#    define EXPORT __declspec(dllimport)
-#   else
-#    define EXPORT
-#   endif
-#  endif
+/* We want to export these symbols if in libnethack, import them otherwise.
+   This is so much simpler than the code that was here before. Thanks,
+   aimake! */
+# ifdef NETHACK_H_IN_LIBNETHACK
+#  define EXPORT(x) AIMAKE_EXPORT(x)
 # else
-#  define EXPORT
+#  define EXPORT(x) AIMAKE_IMPORT(x)
 # endif
 
-/* allmain.c */
-extern EXPORT void nh_lib_init(const struct nh_window_procs *, char **paths);
-extern EXPORT void nh_lib_exit(void);
-extern EXPORT nh_bool nh_exit_game(int exit_type);
-extern EXPORT enum nh_restore_status nh_restore_game(int fd, struct nh_window_procs
-                                                     *rwinprocs,
-                                                     nh_bool force_replay);
+typedef const char *const_char_p;
+typedef char *char_p;
 
-extern EXPORT nh_bool nh_start_game(int fd, const char *name, int role,
-                                    int race, int gend, int align,
-                                    enum nh_game_modes playmode);
-extern EXPORT int nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg);
-extern EXPORT const char *const *nh_get_copyright_banner(void);
+/* allmain.c */
+extern void EXPORT(nh_lib_init) (const struct nh_window_procs *, char **paths);
+extern void EXPORT(nh_lib_exit) (void);
+extern nh_bool EXPORT(nh_exit_game) (int exit_type);
+extern enum nh_restore_status EXPORT (nh_restore_game) (
+    int fd, struct nh_window_procs *rwinprocs, nh_bool force_replay);
+
+extern nh_bool EXPORT(nh_start_game) (
+    int fd, const char *name, int role, int race, int gend, int align,
+    enum nh_game_modes playmode);
+extern int EXPORT(nh_command) (const char *cmd, int rep, struct nh_cmd_arg *arg);
+typedef const char *const *const_char_p_const_p;
+extern const_char_p_const_p EXPORT(nh_get_copyright_banner) (void);
 
 /* logreplay.c */
-extern EXPORT nh_bool nh_view_replay_start(int fd,
-                                           struct nh_window_procs *rwinprocs,
-                                           struct nh_replay_info *info);
-extern EXPORT nh_bool nh_view_replay_step(struct nh_replay_info *info,
-                                          enum replay_control action,
-                                          int count);
-extern EXPORT void nh_view_replay_finish(void);
-extern EXPORT enum nh_log_status nh_get_savegame_status(
-  int fd, struct nh_game_info *si);
+extern nh_bool EXPORT(nh_view_replay_start) (
+    int fd, struct nh_window_procs *rwinprocs, struct nh_replay_info *info);
+extern nh_bool EXPORT(nh_view_replay_step) (
+    struct nh_replay_info *info, enum replay_control action, int count);
+extern void EXPORT(nh_view_replay_finish) (void);
+extern enum nh_log_status EXPORT(nh_get_savegame_status) (
+    int fd, struct nh_game_info *si);
 
 /* cmd.c */
-extern EXPORT struct nh_cmd_desc *nh_get_commands(int *count);
-extern EXPORT struct nh_cmd_desc *nh_get_object_commands(int *count,
-                                                         char invlet);
+typedef struct nh_cmd_desc *nh_cmd_desc_p;
+extern nh_cmd_desc_p EXPORT(nh_get_commands) (int *count);
+extern nh_cmd_desc_p EXPORT(nh_get_object_commands) (int *count, char invlet);
 
 /* drawing.c */
-extern EXPORT struct nh_drawing_info *nh_get_drawing_info(void);
+typedef struct nh_drawing_info *nh_drawing_info_p;
+extern nh_drawing_info_p EXPORT(nh_get_drawing_info) (void);
 
 /* options.c */
-extern EXPORT nh_bool nh_set_option(const char *name, union nh_optvalue value,
-                                    nh_bool isstr);
-extern EXPORT struct nh_option_desc *nh_get_options(enum nh_option_list list);
-extern EXPORT void nh_setup_ui_options(
-  struct nh_option_desc *options, struct nh_boolopt_map *boolmap,
-  nh_bool(*callback) (struct nh_option_desc *));
-extern EXPORT const char *nh_get_option_string(
-  const struct nh_option_desc *opt);
+typedef struct nh_option_desc *nh_option_desc_p;
+extern nh_bool EXPORT(nh_set_option) (
+    const char *name, union nh_optvalue value, nh_bool isstr);
+extern nh_option_desc_p EXPORT(nh_get_options) (enum nh_option_list list);
+extern void EXPORT(nh_setup_ui_options) (
+    struct nh_option_desc *options, struct nh_boolopt_map *boolmap,
+    nh_bool(*callback) (struct nh_option_desc *));
+extern const_char_p EXPORT(nh_get_option_string) (
+    const struct nh_option_desc *opt);
 
 /* pager.c */
-extern EXPORT void nh_describe_pos(int x, int y, struct nh_desc_buf *bufs,
-                                   int *is_in);
+extern void EXPORT(nh_describe_pos) (
+    int x, int y, struct nh_desc_buf *bufs, int *is_in);
 
 /* role.c */
-extern EXPORT struct nh_roles_info *nh_get_roles(void);
-extern EXPORT char *nh_build_plselection_prompt(char *, int, int, int, int,
-                                                int);
-extern EXPORT const char *nh_root_plselection_prompt(char *, int, int, int, int,
-                                                     int);
+typedef struct nh_roles_info *nh_roles_info_p;
+extern nh_roles_info_p EXPORT(nh_get_roles) (void);
+extern char_p EXPORT(nh_build_plselection_prompt) (
+    char *, int, int, int, int, int);
+extern const_char_p EXPORT(nh_root_plselection_prompt) (
+    char *, int, int, int, int, int);
 
 /* topten.c */
-extern EXPORT struct nh_topten_entry *nh_get_topten(int *out_len,
-                                                    char *statusbuf,
-                                                    const char *player, int top,
-                                                    int around, nh_bool own);
+typedef struct nh_topten_entry *nh_topten_entry_p;
+extern nh_topten_entry_p EXPORT(nh_get_topten) (
+    int *out_len, char *statusbuf, const char *player, int top,
+    int around, nh_bool own);
 
 # undef EXPORT
 

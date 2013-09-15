@@ -232,9 +232,13 @@ Don't use carriage returns to provide progress information.  (This is mostly
 only useful if stdout is not a terminal).
 
 =item B<--dump-status>
+=item B<--dump-status=subset>
 
 Instead of compiling, dump the internal statefile to stdout in a
 human-readable format.  This is mostly only useful for debugging aimake.
+
+It is possible to specify a subset of the status file to dump as a
+comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
 
 =item B<--ignore-builtin-config>
 
@@ -682,6 +686,10 @@ compiled as part of the API of a library.  aimake's standard rules will
 attempt to create a C<symbolset:> containing each shared_symbol that is
 defined.
 
+A C<shared_symbol:> is subject to the same special rules that a C<symbolset:>
+is: if two or more pairs generate the same C<shared_symbol:> object, they must
+give it the same dependencies.
+
 =item C<symbol_in_object:>
 
 A reference to a symbol produced by a specific object.  This is used
@@ -703,7 +711,7 @@ this does not happen for other uses of C<symbolset:> objects.
 
 Because the internal name of a symbolset encodes its dependencies, these are
 subject to the same special cases that C<searchfile:> objects are; if two or
-more rules generate the same C<searchfile:> object, they must give it the same
+more pairs generate the same C<searchfile:> object, they must give it the same
 dependencies.
 
 =item C<config_option:>
@@ -2528,6 +2536,12 @@ my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     optstring => 1, optpath => 1, optionset => 0, sys => 1, searchpath => 0,
     searchfile => 0, searchlib => 0, dependencies => 0);
 
+# Some object types allow multiple interchangeable providers, requiring the
+# same outdepends from each provider. This is done via a regex, rather than
+# via parsing + a hash, because it's part of the inner loop.
+use constant multiple_providers_ok_regex =>
+    qr/^(?>s(?:earch(?:file|lib)|ymbolset|hared_symbol|path)|path):/;
+
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
 sub parse_objname {
@@ -3869,14 +3883,18 @@ sub appropriate_pair_for_object {
 
     scalar @providers == 1 and return $providers[0];
 
+    $provided =~ multiple_providers_ok_regex and return $providers[0];
+
     my ($prvtype, undef) = parse_objname $provided;
     # It's OK for multiple rules to find objects on the path or spath.
     $prvtype eq 'spath' and return $providers[0];
     $prvtype eq 'path' and return $providers[0];
-    # It's OK to have multiple providers for a searchfile/lib/symbolset.
+    # It's OK to have multiple providers for a searchfile/lib, symbolset, or
+    # shared_symbol.
     $prvtype eq 'searchfile' and return $providers[0];
     $prvtype eq 'searchlib' and return $providers[0];
     $prvtype eq 'symbolset' and return $providers[0];
+    $prvtype eq 'shared_symbol' and return $providers[0];
 
     $objtype_provided{$prvtype} or
         croak "Object $provided is produced by multiple rules: @providers";
@@ -4054,8 +4072,8 @@ sub recalculate_pair_xuse {
                     keys %{$state->{hash_by_object}->{$o}};
                 @ancestors = grep !inappropriate_prevpair($pair, $_),
                     @ancestors;
-                if ($pass == 2) {
-                    # It would be slighlty more accurate to check the use
+                if ($pass == 2 || $o =~ multiple_providers_ok_regex) {
+                    # It would be slightly more accurate to check the use
                     # dependencies of the pairs we add to see if they're
                     # already there. But this method is faster and easier to
                     # read, and will produce the same results in pretty much
@@ -4234,7 +4252,7 @@ sub pair_is_sure {
         # line is actually the inner loop of the program; it runs more often
         # than any other line anywhere in aimake. Thus, the need for extreme
         # efficiency.)
-        if ($xuse !~ /^(?>s(?:earch(?:file|lib)|ymbolset|path)|path):/) {
+        if ($xuse !~ multiple_providers_ok_regex) {
             # Make sure that the object's prevpair is sure, and that the
             # object is sure via its prevpair.
             my $prevpair = $state->{xuse_prevpair}->{$pair}->{$xuse};
@@ -4392,7 +4410,7 @@ Getopt::Long::Configure('bundling', 'permute', 'auto_help');
 $opt_verbose = 0;
 $opt_install = undef;
 $opt_prefix = undef;
-$opt_dump = 0;
+$opt_dump = undef;
 $opt_ignore_builtin_config = 0;
 @opt_warnings = (); # TODO: unimplemented
 $opt_nocr = 0;
@@ -4404,7 +4422,7 @@ $opt_version = 0;
 GetOptions('verbose|v:+' => \$opt_verbose,
            'install|i:s' => \$opt_install,
            'destdir=s' => \$opt_prefix,
-           'dump-status' => \$opt_dump,
+           'dump-status:s' => \$opt_dump,
            'show-warnings|W' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
            'documentation' => \$opt_documentation,
@@ -4431,13 +4449,28 @@ EOF
     exit 0;
 }
 $opt_verbose = defined_or($opt_verbose, 0);
-if ($opt_dump) {
+if (defined $opt_dump) {
     atomic_read {
         $Data::Dumper::Indent = 1;   # to help keep it on the screen
         $Data::Dumper::Sortkeys = 1; # make it easier to find things in it
         $Data::Dumper::Useqq = 1;    # make it more readable
         $Data::Dumper::Deepcopy = 1; # don't use cross-references
-        print Dumper($state);
+        $Data::Dumper::Terse = 1;    # don't prefix '$VAR1 = '
+        my @path = split /,/, $opt_dump;
+        my $subset = $state;
+        for my $key (@path) {
+            if (defined_or(ref $subset, 'undef') eq 'HASH') {
+                if (exists $subset->{$key}) {
+                    $subset = $subset->{$key};
+                } else {
+                    $subset = '!exists';
+                }
+            } else {
+                defined_or($subset, 'undef') ne '!exists' and
+                    $subset = 'not a HASH ref';
+            }
+        }
+        print ref $subset || !defined $subset ? Dumper($subset) : "$subset\n";
     };
     exit 0;
 }

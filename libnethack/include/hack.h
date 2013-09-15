@@ -8,6 +8,7 @@
 # ifndef CONFIG_H
 #  include "config.h"
 # endif
+# define NETHACK_H_IN_LIBNETHACK
 # include "nethack.h"
 
 /*      For debugging beta code.        */
