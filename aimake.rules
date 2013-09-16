@@ -74,10 +74,23 @@
             object => qr/^bpath:.*\.lev$/,
             depends => 'optpath::',
         },
+        _specific_version => {
+            output => 'optionset:specific_version',
+            outdepends => [],
+        },
+        _git_hash => {
+            object => 'optionset:specific_version',
+            command => ["cmd:git", "optstring:log --pretty=format:%h%n -1"],
+            fail_silently => 1,
+            in_subdir => 'path:',
+            depends => 'optstring: ',
+            dependsarg => qr/^([0-9a-f]+)$/,
+        },
         _makedefs_date => {
             command => ["bpath:libnethack/util/makedefs_c$exeext",
                         "optpath:-v :bpath:libnethack/include/date.h",
-                        "sys:always_rebuild"],
+                        "sys:always_rebuild",
+                        "optionset:specific_version"],
             output => 'bpath:libnethack/include/date.h',
         },
         _makedefs_verinfo => {

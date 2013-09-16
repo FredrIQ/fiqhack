@@ -54,7 +54,7 @@ int main(int, char **);
 void do_objs(const char *);
 void do_data(const char *, const char *);
 void do_dungeon(const char *, const char *);
-void do_date(const char *, int);
+void do_date(const char *, int, const char *);
 void do_monstr(const char *);
 void do_permonst(const char *);
 void do_questtxt(const char *, const char *);
@@ -63,7 +63,7 @@ void do_oracles(const char *, const char *);
 
 static void make_version(void);
 static char *version_string(char *);
-static char *version_id_string(char *, const char *);
+static char *version_id_string(char *, const char *, const char *);
 static char *xcrypt(const char *);
 static int check_control(char *);
 static char *without_control(char *);
@@ -97,8 +97,8 @@ static const char *usage_info[] = {
     "       %s -d [IN (data.base)] [OUT (data)]\n",
     "       %s -e [IN (dungeon.def)] [OUT (dungeon.pdf)]\n",
     "       %s -m [OUT (monstr.c)]\n",
-    "       %s -v [OUT (date.h)] [OUT (options)]\n",
-    "       %s -w [OUT (verinfo.h)] [OUT (options)]\n",
+    "       %s -v [OUT (date.h)]\n",
+    "       %s -w [OUT (verinfo.h)] [OPTIONAL-STR (version string)]\n",
     "       %s -p [OUT (permonst.h)]\n",
     "       %s -q [IN (quest.txt)] [OUT (quest.dat)]\n",
     "       %s -r [IN (rumors.tru)] [IN (rumors.fal)] [OUT (rumors)]\n",
@@ -164,16 +164,16 @@ main(int argc, char *argv[])
 
     case 'v':
     case 'V':
-        if (argc != 3)
+        if (argc != 3 && argc != 4)
             usage(argv[0], argv[1][1], 3);
-        do_date(argv[2], 1);
+        do_date(argv[2], 1, argv[3]);
         break;
 
     case 'w':
     case 'W':
         if (argc != 3)
             usage(argv[0], argv[1][1], 3);
-        do_date(argv[2], 0);
+        do_date(argv[2], 0, 0);
         break;
 
     case 'p':
@@ -329,7 +329,8 @@ version_string(char *outbuf)
 }
 
 static char *
-version_id_string(char *outbuf, const char *build_date)
+version_id_string(char *outbuf, const char *build_date,
+                  const char *specific_version)
 {
     char subbuf[64], versbuf[64];
 
@@ -338,18 +339,16 @@ version_id_string(char *outbuf, const char *build_date)
     subbuf[0] = ' ';
     strcpy(&subbuf[1], PORT_SUB_ID);
 #endif
-#ifdef BETA
-    strcat(subbuf, " Beta");
-#endif
 
-    sprintf(outbuf, "%s NetHack%s Version %s - last build %s.", PORT_ID, subbuf,
-            version_string(versbuf), build_date);
+    sprintf(outbuf, "%s NetHack%s version %s (%s) - last build %s.",
+            PORT_ID, subbuf, version_string(versbuf),
+            specific_version, build_date);
     return outbuf;
 }
 
 
 void
-do_date(const char *outfile, int printdates)
+do_date(const char *outfile, int printdates, const char *specific_version)
 {
     time_t clocktim = 0;
     char *c, cbuf[60], buf[BUFSZ];
@@ -370,16 +369,16 @@ do_date(const char *outfile, int printdates)
         fprintf(ofp, "#define BUILD_DATE \"%s\"\n", cbuf);
         fprintf(ofp, "#define BUILD_TIME (%ldL)\n", (long)clocktim);
         fprintf(ofp, "\n");
+        fprintf(ofp, "#define VERSION_ID \\\n \"%s\"\n",
+                version_id_string(buf, cbuf, specific_version ?
+                                  specific_version : "tarball"));
     }
 
+    fprintf(ofp, "#define VERSION_STRING \"%s\"\n", version_string(buf));
+    fprintf(ofp, "\n");
     fprintf(ofp, "#define VERSION_NUMBER 0x%08xU\n", version.incarnation);
     fprintf(ofp, "#define VERSION_FEATURES 0x%08xU\n", version.feature_set);
     fprintf(ofp, "#define VERSION_SANITY1 0x%08xU\n", version.entity_count);
-    fprintf(ofp, "\n");
-    fprintf(ofp, "#define VERSION_STRING \"%s\"\n", version_string(buf));
-    fprintf(ofp, "#define VERSION_ID \\\n \"%s\"\n",
-            version_id_string(buf, cbuf));
-    fprintf(ofp, "\n");
     fclose(ofp);
     return;
 }
