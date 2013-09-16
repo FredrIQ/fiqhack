@@ -38,7 +38,8 @@ extern int _snprintf_s(char *, size_t, size_t, const char *, ...);
 
 # define DEFAULT_PORT 53421     /* matches the definition in nhserver.h */
 
-extern struct nh_window_procs windowprocs, alt_windowprocs;
+extern struct nh_window_procs AIMAKE_REVERSE_EXPORT(windowprocs);
+extern struct nh_window_procs alt_windowprocs;
 extern int current_game;
 extern jmp_buf ex_jmp_buf;
 extern int ex_jmp_buf_valid;

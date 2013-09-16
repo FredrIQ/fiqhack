@@ -1493,9 +1493,6 @@ char *hilites[CLR_MAX];
 /* trap.c */
 const char *traps[TRAPNUM];
 
-/* window.c */
-struct window_procs windowprocs;
-
 /* xxxtty.c */
 # ifdef DEFINE_OSPEED
 short ospeed;

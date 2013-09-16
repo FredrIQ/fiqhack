@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-extern struct nh_window_procs windowprocs;
+extern struct nh_window_procs AIMAKE_REVERSE_IMPORT(windowprocs);
 
 int
 getpos(coord * cc, boolean force, const char *goal)

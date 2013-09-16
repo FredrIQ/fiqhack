@@ -85,38 +85,38 @@ get at each verbosity level are:
 
 =over 4
 
-=item -2
+=item -v-2
 
 No messages at all.  Even important ones.
 
-=item -1
+=item -v-1
 
 Messages about warnings, errors, and failures to compile.  No messages will be
 printed if everything works correctly.
 
-=item 0
+=item -v0
 
 Level -1 messages, plus messages about operations that aimake is performing
 that actually contribute to compiling the code (e.g. running compilers,
 linkers, and so on).  At level 0 and above, aimake also displays the details
 of what it is thinking temporarily, using one line that repeatedly changes.
 
-=item 1
+=item -v1
 
 Level 0 messages, plus messages about other operations that aimake performs
 (such as determining dependencies).
 
-=item 2
+=item -v2
 
 Level 1 messages, plus a record of all the actual commands that are run.
 Additionally, the temporary messages about what aimake is doing are left on
 the screen, rather than removed.
 
-=item 4
+=item -v4
 
 Level 2 messages, plus information useful mostly for debugging aimake itself.
 
-=item 5
+=item -v5
 
 Level 4 messages, plus particularly verbose information useful mostly for
 debugging aimake itself.
@@ -210,13 +210,13 @@ it was installed to, even if it instructs aimake to tell it the install path.
 =item B<--destdir=>F<directory>
 
 When installing, treat the given directory as the root directory, rather than
-using the actual root directory.  (For instance, giving B<-i> F</usr> B<-p>
-F</home/user> would install into F</home/user/usr>, but the installed program
-would look for paths as if it had been installed into F</usr>.)  This is
-intended for use in packaging programs, and when installing into a chroot from
-outside the chroot.  This option may only be given if the install directory is
-outside the source directory and outside the build directory (otherwise, it's
-not quite clear what it would mean).
+using the actual root directory.  (For instance, giving B<-i> F</usr>
+B<--destdir> F</home/user> would install into F</home/user/usr>, but the
+installed program would look for paths as if it had been installed into
+F</usr>.)  This is intended for use in packaging programs, and when installing
+into a chroot from outside the chroot.  This option may only be given if the
+install directory is outside the source directory and outside the build
+directory (otherwise, it's not quite clear what it would mean).
 
 =item B<--documentation>
 
@@ -232,21 +232,27 @@ Don't use carriage returns to provide progress information.  (This is mostly
 only useful if stdout is not a terminal).
 
 =item B<--dump-status>
+
 =item B<--dump-status=subset>
 
 Instead of compiling, dump the internal statefile to stdout in a
 human-readable format.  This is mostly only useful for debugging aimake.
 
-It is possible to specify a subset of the status file to dump as a
+It is possible to specify a subset of the statefile to dump as a
 comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
+On large projects, this is considerably faster than dumping the entire
+statefile if you are only interested in a small portion of it.
 
 =item B<--ignore-builtin-config>
 
 Ignore all the built-in rules and options, reading configuration only from the
-project-specific configuration file.  This is mostly only useful for testing
+project-specific configuration file.  aimake only has minimal functionality
+with no rules (for instance, it will not even check for changes to files in
+the source directory), and as such, this is mostly only useful for testing
 aimake, or if you want to use aimake's engine for something radically
-different from compiling C.  (The built-in directory layouts are not ignored,
-but they will not be used for anything if directory_layout is set to something
+different from compiling C and have a complex configuration file handy for
+that alternative use.  (The built-in directory layouts are not ignored, but
+they will not be used for anything if directory_layout is set to something
 other than a built-in directory layout.)
 
 =item B<--version>
@@ -303,7 +309,7 @@ aimake works around this via mandating a standard filename format in its
 configuration files (that it translates to an appropriate format for the
 operating system), and emulating many commands itself (although it necessarily
 has to use the C toolchain from the system; an entire C compiler and linker
-would be outside the scope of a single Perl script a few hundred kilobyes
+would be outside the scope of a single Perl script a few hundred kilobytes
 long).
 
 =item *
@@ -334,8 +340,9 @@ and the clocks on the computers are not perfectly in sync.)  Likewise, it
 rebuilds a file if any of its dependencies changed modification time, even if
 the file itself did not change.  aimake works around these problems via using
 the hash of a file in addition to its modification timestamp; if the timestamp
-changes at all (forwards or backwards), the file's hash is recomputed to see
-if its contents also changed.
+changes at all (forwards or backwards), or in cases where the file might
+plausibly have changed multiple times within the resolution of its timestamp,
+the file's hash is recomputed to see if its contents also changed.
 
 =item *
 
@@ -348,7 +355,7 @@ B<make>'s behaviour on warnings is even worse: it will display them once, but
 on subsequent compiles, the warnings will no longer be visible because the
 compiler will not be re-run, and the warnings were not saved anywhere.  aimake
 remembers warning and error messages, meaning that warnings will not be lost
-upon recompiling, and programs won't run unless their inputs have changed,
+upon recompilation, and programs won't run unless their inputs have changed,
 even if they errored out or produced no output.
 
 =item *
@@ -387,6 +394,128 @@ generate.)
 Many other build tools are available that try to fix one or more of these
 problems, but as far as I know, aimake is the only program which tries to fix
 them all at once.
+
+=head1 ADAPTING A SOURCE TREE FOR USE WITH AIMAKE
+
+aimake is designed to be as easy as possible to use with new projects, and as
+such it often works with unmodified source and no project-specific
+configuration file.  However, there are some steps you can take to get the
+best possible result.
+
+First, make sure that the directory layout of your source tree reflects the
+dependencies between files; this is to help it resolve ambiguities.  It mostly
+doesn't matter if all your symbols have different name, but if you declare the
+same function or variable in multiple files, aimake will need to know which to
+link against.  It will favour linking against files that it has to link to
+anyway, but when all else fails, it will fall back to linking to files in the
+same directory (and with as many matching characters as possible at the start
+of the filename, as a second tiebreak).  Also make sure that files have
+appropriate extensions (F<.c> for C files, F<.cxx> for C++ files, F<.h> for
+headers, etc.).
+
+Next, you can use some aimake-specific macros in your C and C++ source and
+header files.  One reason to do this would be if you have code specific to one
+operating system; you can use C<AIMAKE_BUILDOS_> macros to conditionalize your
+code to one operating system, for instance C<AIMAKE_BUILDOS_linux>,
+C<AIMAKE_BUILDOS_MSWin32>, or C<AIMAKE_BUILDOS_darwin> (typically indicating
+Mac OS X).  (The possibilities for the build OS are taken from Perl's C<$^O>
+operating system identification variable.)  Another is to make your code
+depend on aimake configuration options; you can write
+C<AIMAKE_OPTION_packagename> to discover the package name, for instance.  (You
+can use any configuration option or install directory this way; aimake will
+recompile the file in question whenever the the relevant option or directory
+is changed.)  Note that the option value will be used as-is; if you want it as
+a C string, stringify it as follows:
+
+    #define STRINGIFY_EXPAND(x) STRINGIFY(x)
+    #define STRINGIFY(x) #x
+    #define PACKAGENAME_AS_STRING STRINGIFY_EXPAND(AIMAKE_OPTION_packagename)
+
+Although aimake will identify which executables it should produce as output
+(via looking for functions called C<main>), it will not produce shared
+libraries without an indication of which symbols form the API of the shared
+library.  In order to create shared libraries correctly on all operating
+systems, aimake will need to know which symbols are imported from shared
+libraries (that you create; the system header files will contain this
+information for system libraries), and which symbols are exported from shared
+libraries, via wrapping their names in macros, e.g.:
+
+    int AIMAKE_EXPORT(library_function)(void); /* exported function */
+    int AIMAKE_IMPORT(library_function)(void); /* imported function */
+
+The names only need to be wrapped this way in the declaration, not the
+definition (which can be left unchanged). C<AIMAKE_IMPORT> and
+C<AIMAKE_EXPORT> only work correctly when the type of a variable, or return
+type of a function, is a single identifier (not some complex chain of arrays
+and pointers, etc.), so for complicated return types you will need to use a
+typedef:
+
+    char *function_returning_a_string(void) /* not imported or exported */
+
+    typedef char *char_p;
+    char_p AIMAKE_EXPORT(function_returning_a_string)(void) /* exported */
+
+In addition to C<AIMAKE_IMPORT> and C<AIMAKE_EXPORT>, there are also
+C<AIMAKE_REVERSE_IMPORT> and C<AIMAKE_REVERSE_EXPORT>, which mark symbols that
+exist in the file using the library, and are used by the library (rather than
+the other way round, a much more common scenario).
+
+If aimake sees any symbols tagged as C<AIMAKE_EXPORT>, it will place them in a
+shared library (and, if appropriate, link executables it creates against that
+shared library).  The name of the library will be based on the common prefix
+of the object files that are used to build the library (so, e.g., if they have
+wildly varying filenames but are all in the same directory, it will be named
+after the directory).  As an exception, directories called F<src> are ignored
+for naming purposes, because that name is very commonly used to hold source
+files.
+
+Finally, you can request that a file not be compiled in certain configurations
+via making it conditionally error out:
+
+    #ifdef AIMAKE_BUILDOS_MSWin32
+    # error !AIMAKE_FAIL_SILENTLY! This file should not be built on Windows.
+    #endif
+
+The C<#error !AIMAKE_FAIL_SILENTLY!> will cause the compilation to error out
+silently, without the user being informed of an error in the file.  (Note that
+this can happen while aimake is locating header files necessary to be able to
+use the file; as such, you should ensure that the error happens based only on
+the individual file being compiled, and does not depend on anything that might
+be included from a header file.)
+
+In addition to changing the source and headers that make up your project, it
+is also possible to add a project-specific configuration file, that contains
+configuration options or rules overrides.  This should be a file named
+F<aimake.rules> in the source directory.  Here's a sample configuration:
+
+    {
+        options => {
+            packagename => 'example',
+        },
+        rules => {
+            _libraries => {
+                output => ['searchlib:some_unusual_library'],
+            },
+            _cflags => {
+                object => 'optionset:CFLAGS',
+                depends => ['optstring:-Wall', 'optstring:-Wextra'],
+            },
+        },
+    }
+
+The format of the configuration file is explained in much more detail later in
+this document, but this example should serve as an overview of some of the
+most common tasks: setting an option (in this case, C<packagename>, which is
+probably the most important option to set); telling aimake to search for a
+particular library so that it can be linked into the project; and changing the
+flags that will be passed to the C compiler.  (All the libraries used by a
+project can be listed as C<searchlib:> objects in a rule output, even if some
+are only used in some configurations or on some operating systems; aimake will
+not complain if it fails to find a library, or if it finds it but does not
+find a reason to use it.)  There are some libraries searched for by default
+(rule C<default_libraries> in the default configuration; additionally, any
+libraries used by default on the build system (such as F<libc.so> on Linux)
+will be automatically incuded.
 
 =head1 INTERNALS
 
@@ -1058,7 +1187,7 @@ used as part of the build process).
 Much of the workings of aimake are driven by a configuration file that's
 embedded into the B<aimake> script itself, in order that only a single file
 need be shipped.  Any part of this script can be overriden by a configuration
-file C<aimake2.config> in the root of the package source directory, via
+file C<aimake.rules> in the root of the package source directory, via
 specifying an option or a rule with the same name.
 
 The format of the configuration file itself is Perl object notation; this
@@ -1066,12 +1195,12 @@ allows for comments, dictionaries, lists, numbers, strings, and regular
 expressions:
 
     # this is a comment, from the # to the end of line
-    4                          # a number
-    'abcde'                    # a literal string
-    "x\n\t$var"                # a string containing escapes, variables
-    qr/foo.*bar/i              # a regular expression
-    [1, 2, 3, 4,]              # a list, trailing comma optional
-    {foo => 1, bar => 2,}      # a dictionary, trailing comma optional
+    4                       # a number
+    'abcde'                 # a literal string
+    "x\n\t$var"             # a string containing escapes, variables
+    qr/foo.*bar/i           # a regular expression (qr//; the i is a modifier)
+    [1, 2, 3, 4,]           # a list, trailing comma optional
+    {foo => 1, bar => 2,}   # a dictionary, trailing comma optional
 
 The configuration file allows defining one or more variables (either to
 abbreviate what would otherwise be repeated code, or to avoid "magic numbers"
@@ -1082,7 +1211,7 @@ mistakes due to omitting $exeext, it will never be set to the null string, but
 rather to an arbitrary string on platforms that do not normally use a special
 extension for executables.  This extension will be removed when installing the
 executable.)  These are followed by a single dictionary with two keys,
-C<options> and C<rules>.  Here's a simple example C<aimake2.config>:
+C<options> and C<rules>.  Here's a simple example C<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
@@ -1100,7 +1229,10 @@ C<options> and C<rules>.  Here's a simple example C<aimake2.config>:
     }
 
 The options dictionary is very simple: keys of the dictionary are options, and
-the corresponding values their values.  The following options are recognised:
+the corresponding values their values.  The following options are recognised
+(unrecognised options are also legal, but will be ignored except for
+C<config_option:> dependencies, which e.g. are used to define the
+C<AIMAKE_OPTION_> macros):
 
 =over 4
 
@@ -1133,19 +1265,19 @@ rules with an underscore.
 There are two sorts of rules, from the point of view of an install: rules
 which specify dependencies of objects or install them, and rules which provice
 objects.  Rules that produce an object have a C<command> and C<output>, and
-perhaps also a C<object> if they need to be able to generate filenames or the
-like, a C<verb> and/or a C<outputarg>, and may specify C<information_only>
-and/or C<propagate_usedeps>.  Rules that provide an object work like
-production rules, but also need an C<outdepends>.  Rules that specify
-dependencies have an C<object> and a C<depends> (or an C<install_dir> if they
-are actually install rules), and perhaps also a C<command> if commands need to
-be run to determine the dependencies, and/or a C<dependsarg>.  Either can have
-a C<inner>, C<prereq>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
-C<avoid_rules>, C<filter>, C<filter_absolute>, C<filter_text_files>,
+perhaps also a C<object> if they need to apply to multiple files or the like,
+a C<verb> and/or an C<outputarg>, and may specify C<information_only> and/or
+C<propagate_usedeps>.  Rules that provide an object work like production
+rules, but also need an C<outdepends>.  Rules that specify dependencies have
+an C<object> and a C<depends> (or an C<install_dir> if they are actually
+install rules), and perhaps also a C<command> if commands need to be run to
+determine the dependencies, and/or a C<dependsarg>.  Either can have a
+C<inner>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>, C<avoid_rules>,
+C<filter>, C<filter_absolute>, C<filter_text_files>,
 C<filter_nonexistent_files>, C<output_as_searchfile>, C<filter_spath>,
 C<require_match> and/or C<low_message_priority>, and can specify
-C<force_locale>, C<fail_silently>, C<also_match_stderr>, C<ignore_warnings>,
-and/or C<ignore_spath> if they have a C<command>.
+C<force_locale>, C<fail_silently>, C<also_match_stderr>, and/or
+C<ignore_warnings> if they have a C<command>.
 
 A rule itself is a dictionary with a number of keys:
 
@@ -1160,21 +1292,23 @@ provicion rule).  Once this has been done, all executable-like and option-like
 objects will be used to form a command (either an internal command or one that
 exists on the system, depending on which executable-like objects are
 involved), and executed.  (Alternatively, you get an error if you try to use
-multiple different executables, or provide none.)  The list of objects is also
-considered a list of dependencies, to know when to rebuild.
+multiple different executables, or provide none; C<bpath:> objects are only
+treated as executable-like if there are no other executable-like objects
+provided.)  The list of objects is also considered a list of dependencies, to
+know when to rebuild.
 
-If the command produces output on stdout, it is discarded unless C<output> is
-a regexp.  If it produces output on stderr, the user will be informed of it
-(and there will be an indication of warnings in the progress report), but the
-output will otherwise be ignored.  If the command returns a failure status or
-crashes with a signal, it will be reported as an error unless the
-C<fail_silently> key is set; when failing silently, it will be considered to
-produce an empty C<output> or C<depends> (depending on the type of rule),
-whereas when an error is reported, it will leave all its descendants in limbo
-until the error is resolved.
+If the command produces output on stdout, it is discarded unless one of the
+other options (most commonly C<output>) is a regexp.  If it produces output on
+stderr, the user will be informed of it (and there will be an indication of
+warnings in the progress report), but the output will otherwise be ignored.
+If the command returns a failure status or crashes with a signal, it will be
+reported as an error unless the C<fail_silently> key is set; when failing
+silently, it will be considered to produce an empty C<output> or C<depends>
+(depending on the type of rule), whereas when an error is reported, it will
+leave all its descendants in limbo until the error is resolved.
 
-For dependency rules, rather than provicion rules, C<command> is provided to
-determine which command to use to determine the dependencies.  It can be
+For dependency rules, rather than provicion rules, a C<command> can be given
+if a command needs to be used to determine the dependencies.  It can be
 omitted if it would just be C<intcmd:nop>.  (It can also be omitted in
 provicion rules if no command need be run for the rule; this happens in
 provision rules quite a bit, and could also happen in rules that "generate"
@@ -1192,8 +1326,8 @@ because the C<object> is automatically included in the dependency lists, this
 doesn't necessarily mean it will be mentioned on the command line; use
 C<optpath::> for that.  (The command line arguments to the executable being
 run are produced entirely out of C<optstring:> and C<optpath:> objects; no
-other objects have an influence on it, although the executable itself is part
-of the command line.)
+other objects have an influence on it, unless you consider the name of the
+executable itself to be part of the command line.)
 
 =item output
 
@@ -1201,22 +1335,24 @@ Just like the C<command>, a list of objects or a single object.  You can use a
 regular expression instead of an object name; that will cause the output of
 the command to be parsed for lines matching the regular expression, and the
 first parenthesized group matched by the regular expression will be treated as
-a filename (for non-internal commands and C<intcmd:cat>), or an object name
-(for C<intcmd:listtree>).  (It's OK for the regular expression to match
-multiple times on the same line, which will produce multiple output objects.)
-The output will be interpreted as if it were encoded in the current locale for
-your platform (because this is the encoding most likely to be output by
-programs), if it comes from an external program.  The list of output objects
-is considered to be the objects that the rule is responsible for providing or
-producing, and (mostly for the purpose of catching errors in the configuration
-files; aimake itself could handle this case just fine) they must exist after
-the rule is executed.  (It's OK if they existed beforehand; in fact, there are
-standard rules that "generate" C<spath:> objects, with the purpose of the rule
-being to inform aimake of the object's existence, and get it to monitor for
-changes in it, rather than to create it.)  If an object is listed as providing
-or producing itself, that will be silently ignored (because it's meaningless,
-and the config file is easier to write without having to handle that case).
-Null strings, as usual, refer to the C<object>, including nested inside other
+a filename (for non-internal commands and internal commands that operate on
+text, such as C<intcmd:cat>), or an object name (for internal commands that
+operate on objects, such as C<intcmd:listtree>).  (It's OK for the regular
+expression to match multiple times on the same line, which will produce
+multiple output objects.)  The output will be interpreted assuming that it is
+encoded in the current locale for your platform (because this is the encoding
+most likely to be output by programs), if it comes from an external program.
+The list of output objects is considered to be the objects that the rule is
+responsible for providing or producing, and (mostly for the purpose of
+catching errors in the configuration files; aimake itself could handle this
+case just fine) if they are files, they must exist after the rule is executed.
+(It's OK if they existed beforehand; in fact, there are standard rules that
+"generate" C<spath:> objects, with the purpose of the rule being to inform
+aimake of the object's existence, and get it to monitor for changes in it,
+rather than to create it.)  If an object is listed as providing or producing
+itself, that will be silently ignored (because it's meaningless, and the
+config file is easier to write without having to handle that case).  Null
+strings, as usual, refer to the C<object>, including nested inside other
 objects (if there's no C<inner>).
 
 =item outdepends
@@ -1232,8 +1368,8 @@ production rules, and for dependency rules.
 
 Normally, outputting something in the C<path:> or C<spath:> is a mistake.  If
 you do it intentionally (e.g. to make aimake aware of files in the C<spath:>),
-set information_only so that aimake will know that you're merely talking about
-the files, not changing them, and so not error out.
+set C<information_only> so that aimake will know that you're merely talking
+about the files, not changing them, and so not error out.
 
 =item propagate_usedeps
 
@@ -1389,7 +1525,7 @@ A directory used for log files that are written by the program.
 =item lockdir
 
 A directory used for files, shared between all users, that are transient in
-nature.  (The directory is likely, but not guarantee, to be one where files
+nature.  (The directory is likely, but not guaranteed, to be one where files
 are deleted on reboot.)  It is probably a bad idea to install anything into
 this directory, but aimake tracks it so that compiled programs can refer to
 it.
@@ -1451,15 +1587,20 @@ they're less prone to being misinterpreted).
 
 =item require_match
 
-Consider the command to have errored out if any regexes in it fail to match
-any lines of output.  (This helps detect typos in regexes in the case where
-you know they should match at least once.)
+Consider the command to have errored out if any regexes in the rule fail to
+match any lines of output.  (This helps detect typos in regexes in the case
+where you know they should match at least once.)  This option overrides
+C<fail_silently> in the situation where both are given (otherwise, the
+combination of C<require_match> and C<fail_silently> would be completely
+pointless.)
 
 =item low_message_priority
 
-Causes aimake not to print messages about the rule being run unless the
+Causes aimake not to print messages about this rule being run unless the
 verbosity level is increased to at least 1.  (This is used for production
-rules that make aimake aware of objects on the C<spath:>, mostly.)
+rules that make aimake aware of objects on the C<spath:>, mostly.)  There is
+no point in specifying this for dependency rules, because those messages
+require a verbosity level of 1 or more to be printed anyway.
 
 =item avoid_rules
 
@@ -1576,13 +1717,6 @@ This is similar to C<fail_silently>, but for successes; if the command
 succeeds, the user will not be informed of any warnings produced running it.
 It should be set to 1 or omitted.
 
-=item ignore_spath
-
-When a rule has a C<command>, C<ignore_spath> will cause any dependencies that
-were only included due to C<spath:> objects to be ignored when working out the
-command's arguments.  The main purpose of this is to avoid statically linking
-system libraries into libraries being built by B<aimake>.
-
 =item filter_absolute
 
 Causes any objects other than C<file:> objects (i.e. any objecs that
@@ -1593,7 +1727,7 @@ dependency rules).  It should be set to 1 or omitted.
 =item output_as_searchfile
 
 Causes any C<file:> objects that would be output to be output as
-C<searchfile:> objects instead.  This is mostly useful in dependency rules.
+C<searchfile:> objects instead.
 
 =item filter_spath
 
@@ -1606,7 +1740,8 @@ rules).  It should be set to 1 or omitted.
 If set to 1, causes any objects that would be generated via a regular
 expression match to be ignored if they don't appear to be the filename of an
 existing file (that's either a regular file or a symbolic link).  It should be
-set to 1 or omitted.
+set to 1 or omitted, and is mostly useful for avoiding false positives when
+parsing output that mixes filenames with other information.
 
 =item filter_text_files
 
@@ -6209,7 +6344,7 @@ __DATA__
                 '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
                 '#_define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
                 'visibility("default")))_x '.
-                '#_define_AIMAKE\\_REVERSE_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                '#_define_AIMAKE\\_REVERSE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
                 'visibility("default")))_x'
         },
         osx_cflags => {
