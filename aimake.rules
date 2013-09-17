@@ -80,11 +80,11 @@
         },
         _git_hash => {
             object => 'optionset:specific_version',
-            command => ["cmd:git", "optstring:log --pretty=format:%h%n -1"],
+            command => ["cmd:git", "optstring:rev-parse HEAD"],
             fail_silently => 1,
             in_subdir => 'path:',
             depends => 'optstring: ',
-            dependsarg => qr/^([0-9a-f]+)$/,
+            dependsarg => qr/^([0-9a-f]{8})/,
         },
         _makedefs_date => {
             command => ["bpath:libnethack/util/makedefs_c$exeext",
