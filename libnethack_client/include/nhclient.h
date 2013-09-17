@@ -2,6 +2,7 @@
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
+# define NETHACK_CLIENT_H_IN_LIBNETHACK_CLIENT
 # include "nethack.h"
 # include "nethack_client.h"
 

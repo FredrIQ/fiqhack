@@ -687,16 +687,16 @@ previous versions had trouble with this case.  There's another minor exception
 to do with C<searchfile:> objects, in case a generated source file wants to
 search for the same header file that the source of the generator wanted to
 search for; the situation is obviously benign, as it'll find it in the same
-place, but would potentially cause a dependency loop without special
-casing.  The same special case applies to C<searchlib:> and C<symbolset:>
-objects; C<searchlib:> objects for the same reason, C<symbolset:> objects
-because their dependencies are encoded in their name.)  When the pair is run,
-it becomes unchanged, and the hashes of anything it previously output, and
-anything it now outputs, are updated.  Such objects also become sure (with a
-slight exception in the dubious case where the same object is output by
-multiple pairs).  An object no longer being produced by a pair counts as a
-hash change (the hash of a nonexistent object is treated as different from the
-hash of an object that exists).
+place, but would potentially cause a dependency loop without special casing.
+The same special case applies in some other situations too; the general rule
+is that if an object is provided by multiple rules with the same outdepends,
+only one of them has to be sure.)  When the pair is run, it becomes unchanged,
+and the hashes of anything it previously output, and anything it now outputs,
+are updated.  Such objects also become sure (with a slight exception in the
+dubious case where the same object is output by multiple pairs).  An object no
+longer being produced by a pair counts as a hash change (the hash of a
+nonexistent object is treated as different from the hash of an object that
+exists).
 
 Any warnings produced running the pair are recorded with the pair.  If the
 pair produced an I<error>, then any objects it previously produced are marked
@@ -815,9 +815,8 @@ compiled as part of the API of a library.  aimake's standard rules will
 attempt to create a C<symbolset:> containing each shared_symbol that is
 defined.
 
-A C<shared_symbol:> is subject to the same special rules that a C<symbolset:>
-is: if two or more pairs generate the same C<shared_symbol:> object, they must
-give it the same dependencies.
+C<shared_symbol:> objects have their dependencies built cumulatively; if
+multiple pairs try to generate one, their C<outdepends> will be combined.
 
 =item C<symbol_in_object:>
 
@@ -838,10 +837,8 @@ resulting library).  If a C<symbolset:> object is used in an C<optpath:> or
 C<extend:> object, it will be treated as if it were just its filename portion;
 this does not happen for other uses of C<symbolset:> objects.
 
-Because the internal name of a symbolset encodes its dependencies, these are
-subject to the same special cases that C<searchfile:> objects are; if two or
-more pairs generate the same C<searchfile:> object, they must give it the same
-dependencies.
+The dependencies of a C<symbolset:> object are built cumulatively, the same
+way that the dependencies of a C<shared_symbol:> object are.
 
 =item C<config_option:>
 
@@ -1152,6 +1149,10 @@ colon) if they should be left as two consecutive command-line options.
 
 A set of options commonly used together, such as the C<CFLAGS> commonly used
 by B<make> programs (which would be C<optionset:CFLAGS>).
+
+The dependencies of an C<optionset:> object are built cumulatively, the same
+way that the dependencies of a C<shared_symbol:> object are.  This is useful
+if you want to combine all files output via a certain rule into an archive.
 
 =item C<namehint:>
 
@@ -2671,11 +2672,12 @@ my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     optstring => 1, optpath => 1, optionset => 0, sys => 1, searchpath => 0,
     searchfile => 0, searchlib => 0, dependencies => 0);
 
-# Some object types allow multiple interchangeable providers, requiring the
-# same outdepends from each provider. This is done via a regex, rather than
-# via parsing + a hash, because it's part of the inner loop.
+# Some object types allow multiple interchangeable providers, in which
+# case we merge the outdepends of each provider. This is done via a
+# regex, rather than via parsing + a hash, because it's part of the
+# inner loop.
 use constant multiple_providers_ok_regex =>
-    qr/^(?>s(?:earch(?:file|lib)|ymbolset|hared_symbol|path)|path):/;
+    qr/^(?>s(?:earch(?:file|lib)|ymbolset|hared_symbol|path)|path|optionset):/;
 
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
@@ -3218,7 +3220,7 @@ sub run_command {
             my $fn = aipath2ospath($1);
             open my $fh, ">$text_layers", $fn or
                 return ("Could not open 'fn' for writing: $!", '', '');
-            s/^optstring:// for @strings;
+            s/^optstring: ?// for @strings;
             s{(\\.|_| )}{$1 eq '_' ? ' ' :
                          $1 eq ' ' ? "\n" :
                          substr $1, 1, 1}ge for @strings;
@@ -3266,7 +3268,7 @@ sub run_command {
             # with newlines in.
             return ($failreason, (join "\n", @stdout), $stderr);
         } elsif ($cmd eq 'intcmd:xuse_statistics') {
-            my @stdout = [];
+            my @stdout = ();
             my @flxuse = grep /^b?path:/, @xuse;
             if (scalar @opts) {
                 my %filtered_flxuse = ();
@@ -3281,15 +3283,15 @@ sub run_command {
             } else {
                 @flxuse = sort @flxuse;
             }
-            push @stdout, 'hash=' . md5_hex(join ':'. @flxuse);
+            push @stdout, 'hash=' . md5_hex(join ':', @flxuse);
             my @namehints = grep /^namehint:/, @xuse;
             @namehints and @flxuse = sort @namehints;
             my $stem = 'anonymous';
             if (@flxuse) {
                 $stem = $flxuse[0];
-                $stem =~ s/^[^:]+://;
+                $stem =~ s/^namehint::[^:]+://;
                 for my $flxuse (@flxuse) {
-                    "${stem}::$flxuse" =~ /^(.*).*?::[^:]+:\1/;
+                    "${stem}::$flxuse" =~ /^(.*).*?::namehint::[^:]+:\1/;
                     $stem = $1;
                 }
             }
@@ -3888,7 +3890,7 @@ sub set_proviced_hash {
     # However, we can (and should, for efficiency reasons) skip any pairs that
     # cannot possibly look at the object via $pair.
     #
-    # Iterating over xuse-by_object may miss out some pairs, but only changed
+    # Iterating over xuse_by_object may miss out some pairs, but only changed
     # pairs with unknown xuses (on which operating would be pointless anyway).
     for my $cpair (keys %{$state->{xuse_by_object}->{$obj}}) {
         next if inappropriate_prevpair $cpair, $pair;
@@ -4023,7 +4025,7 @@ sub appropriate_pairs_for_object {
     scalar @providers == 0 and return ();
     scalar @providers == 1 and return ($providers[0]);
 
-    $provided =~ multiple_providers_ok_regex and return ($providers[0]);
+    $provided =~ multiple_providers_ok_regex and return ('sys:fuse');
 
     my ($prvtype, undef) = parse_objname $provided;
     $objtype_provided{$prvtype} or
@@ -4115,9 +4117,9 @@ sub inappropriate_prevpair {
     $avoid_rules and $rule2 =~ $avoid_rules and
         progress_report 5, "($pair,$pair2) inappropriate: avoid_rules"
         and return 1;
-    return unless $state->{hash_by_object}->{$obj};
-    $state->{hash_by_object}->{$obj}->{$pair} and
-        progress_report 5, "($pair,$pair2 inappropriate: output"
+    return unless $state->{hash_by_object}->{$obj2};
+    $state->{hash_by_object}->{$obj2}->{$pair} and
+        progress_report 5, "($pair,$pair2) inappropriate: output"
         and return 1;
     return;
 }
@@ -4203,7 +4205,7 @@ sub recalculate_pair_xuse {
                     keys %{$state->{hash_by_object}->{$o}};
                 @ancestors = grep !inappropriate_prevpair($pair, $_),
                     @ancestors;
-                if ($pass == 2 || $o =~ multiple_providers_ok_regex) {
+                if ($pass == 2 && $o !~ multiple_providers_ok_regex) {
                     # It would be slightly more accurate to check the use
                     # dependencies of the pairs we add to see if they're
                     # already there. But this method is faster and easier to
@@ -4215,7 +4217,18 @@ sub recalculate_pair_xuse {
                     @ancestors = appropriate_pairs_for_object $o, $obj,
                         $ties_ok, @ancestors;
                 }
-                if (@ancestors > 1 && $pass == 1) {
+                if (@ancestors > 1 && $o =~ multiple_providers_ok_regex) {
+                    # Fuse the output from the various providers.
+                    $state->{xuse_prevpair}->{$pair}->{$o} =
+                        'nonexistent sys:fuse';
+                    my %udeps = ();
+                    for my $ancestor (@ancestors) {
+                        $udeps{$_} = 1 for @{$state->{hash_by_pair}->
+                                             {$ancestor}->{$o}};
+                    }
+                    push @command, sort keys %udeps;
+                    $xuse_reason{$_} = $o for keys %udeps;
+                } elsif (@ancestors > 1 && $pass == 1) {
                     push @postponed, $o;
                     next;
                 } elsif (@ancestors > 1 && $pass == 2) {
@@ -4411,26 +4424,42 @@ sub pair_is_sure {
             }
         } elsif ($state->{hash_by_object}->{$xuse}) {
             my @providers = sort keys %{$state->{hash_by_object}->{$xuse}};
-            my $some_sure = 0;
-            # We check unsureness one provider at a time.
+            # For each provider, we require that either:
+            # - that provider is sure; or
+            # - that provider's outdepends are identical to another provider's
+            #   outdepends.
+            my %outdepends_seen = ();
+            my %outdepends_because = ();
+            my %outdepends_unsurelist = ();
             for my $provider (@providers) {
-                if ((pair_is_sure $provider, 1) &&
-                    (!$state->{unsure_by_pair}->{$provider} ||
-                     !$state->{unsure_by_pair}->{$provider}->{$xuse})) {
-                    $some_sure = 1;
-                    last;
-                }
+                my ($sure, $unsure_list) = (pair_is_sure $provider, 1);
+                $sure = ($sure &&
+                         (!$state->{unsure_by_pair}->{$provider} ||
+                          !$state->{unsure_by_pair}->{$provider}->{$xuse}));
+                my $outdepends = $state->{hash_by_object}->{$xuse}->{$provider};
+                $outdepends = serialize_sv($outdepends);
+                next if $outdepends_seen{$outdepends};
+                $outdepends_seen{$outdepends} = $sure;
+                $outdepends_because{$outdepends} = $provider;
+                $outdepends_unsurelist{$outdepends} = $unsure_list;
             }
-            if (!$some_sure) {
-                # TODO: Pick an arbitrary choice to demonstrate the loop.
+            $outdepends_seen{$_} and delete $outdepends_seen{$_} for
+                keys %outdepends_seen;
+            if (keys %outdepends_seen) {
+                my ($outdepends, undef) = keys %outdepends_seen;
+                my $problem = $outdepends_because{$outdepends};
+                my $unsure_list = $outdepends_unsurelist{$outdepends};
+                unshift @$unsure_list, $xuse, $problem;
                 exists $state->{changed_pairs}->{$pair} and
-                    $state->{changed_pairs}->{$pair} = "no sure ancestors";
-                $unsure_pair_cache{$pair} = ['?'];
+                    $state->{changed_pairs}->{$pair} =
+                    "outdepends of unsure pair $problem is not provided by a sure pair";
+                $unsure_pair_cache{$pair} = [@$unsure_list];
                 delete $pair_is_sure_seen{$pair};
-                progress_report 4, "pair_is_sure: $pair is unsure ".
-                    "because no sure pair generates $xuse";
+                progress_report 4, "pair_is_sure: $pair is unsure " .
+                    "because unsure pair ${problem}'s outdepends are not " .
+                    "generated surely for $xuse";
                 return 0 unless wantarray;
-                return (0, ['?']);
+                return (0, $unsure_list);
             }
         }
     }
@@ -5469,7 +5498,8 @@ atomically {
             @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
                 @{$state->{xuse_by_pair}->{$pair}};
 
-            $_ = friendly_objname($_) . '(' .
+            $objname ne $state->{xuse_by_object}->{$_}->{$pair} and
+                $_ = friendly_objname($_) . '(' .
                 friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) . ')'
                 for @missing_deps;
         } else {
@@ -5555,9 +5585,9 @@ atomically {
 
             $unsure_list->[0] eq 'tie' and next;
 
-            # It's theoretically possible that we get a false positive due
-            # to two erroring rules that depend on each other in exactly the
-            # right way. Make sure that's not happening.
+            # If a rule errored out, we can get a changed, unsure rule that
+            # isn't involve in a dependency loop. Discover if it's in a loop
+            # via actually looking for the object that's in the loop.
             my $last_obj = $unsure_list->[$#$unsure_list];
             $loop_objects{$last_obj} or next;
 
@@ -6276,9 +6306,19 @@ __DATA__
                         "optstring:-DAIMAKE_EXPORT(x)=$longrandomstring##x"],
             output => 'shared_symbol:',
             outputarg => qr/$longrandomstring(\w+)/,
-            outdepends => 'symbol:',
-            dependsarg => qr/$longrandomstring(\w+)/,
+            # We want the name of the library to be based on the name of the
+            # source files and headers that exported the symbol. (A previous
+            # version of this code based it on the object files that were
+            # dependencies of the symbol, but that caused problems with
+            # transitive depenencies.)
+            outdepends => 'namehint::',
             verb => 'found',
+        },
+        shared_symbol_dependencies => {
+            object => qr/^shared_symbol:/,
+            command => ['intcmd:echo', 'optstring::'],
+            depends => 'symbol:',
+            dependsarg => qr/^shared_symbol:(.*)/
         },
         ch_embedded_aimake_reverse_import => {
             # If a symbol is being reverse-imported, that symbol isn't needed
@@ -6295,7 +6335,8 @@ __DATA__
         },
         create_symbolset => {
             object => qr/^shared_symbol:/,
-            command => ['intcmd:xuse_statistics', 'optstring:.o'],
+            command => ['intcmd:xuse_statistics', 'optstring:.h',
+                        'optstring:.c', 'optstring:.cxx'],
             output => 'symbolset:',
             outputarg => qr/^hash=(.*)$/,
             inner => qr/^stem=(.*)$/,
@@ -6308,7 +6349,6 @@ __DATA__
             command => ['tool:c_linker', 'optstring:-shared',
                         "optpath:-o :extend:$dllext:"],
             output => "extend:$dllext:",
-            avoid_rules => qr/^bpath_shared_object_provisions/,
             verb => 'linked',
         },
         linux_cflags => {

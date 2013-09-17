@@ -632,4 +632,16 @@ struct nh_window_procs {
     void (*win_print_message_nonblocking) (int turn, const char *msg);
 };
 
+/* typedefs for import/export */
+typedef char *char_p;
+typedef const char *const_char_p;
+typedef const char *const *const_char_p_const_p;
+typedef struct nh_cmd_desc *nh_cmd_desc_p;
+typedef struct nh_drawing_info *nh_drawing_info_p;
+typedef struct nh_option_desc *nh_option_desc_p;
+typedef struct nh_roles_info *nh_roles_info_p;
+typedef struct nh_topten_entry *nh_topten_entry_p;
+
+typedef struct nhnet_game *nhnet_game_p;
+
 #endif

@@ -26,9 +26,6 @@
 #  define EXPORT(x) AIMAKE_IMPORT(x)
 # endif
 
-typedef const char *const_char_p;
-typedef char *char_p;
-
 /* allmain.c */
 extern void EXPORT(nh_lib_init) (const struct nh_window_procs *, char **paths);
 extern void EXPORT(nh_lib_exit) (void);
@@ -40,7 +37,6 @@ extern nh_bool EXPORT(nh_start_game) (
     int fd, const char *name, int role, int race, int gend, int align,
     enum nh_game_modes playmode);
 extern int EXPORT(nh_command) (const char *cmd, int rep, struct nh_cmd_arg *arg);
-typedef const char *const *const_char_p_const_p;
 extern const_char_p_const_p EXPORT(nh_get_copyright_banner) (void);
 
 /* logreplay.c */
@@ -53,16 +49,13 @@ extern enum nh_log_status EXPORT(nh_get_savegame_status) (
     int fd, struct nh_game_info *si);
 
 /* cmd.c */
-typedef struct nh_cmd_desc *nh_cmd_desc_p;
 extern nh_cmd_desc_p EXPORT(nh_get_commands) (int *count);
 extern nh_cmd_desc_p EXPORT(nh_get_object_commands) (int *count, char invlet);
 
 /* drawing.c */
-typedef struct nh_drawing_info *nh_drawing_info_p;
 extern nh_drawing_info_p EXPORT(nh_get_drawing_info) (void);
 
 /* options.c */
-typedef struct nh_option_desc *nh_option_desc_p;
 extern nh_bool EXPORT(nh_set_option) (
     const char *name, union nh_optvalue value, nh_bool isstr);
 extern nh_option_desc_p EXPORT(nh_get_options) (enum nh_option_list list);
@@ -77,7 +70,6 @@ extern void EXPORT(nh_describe_pos) (
     int x, int y, struct nh_desc_buf *bufs, int *is_in);
 
 /* role.c */
-typedef struct nh_roles_info *nh_roles_info_p;
 extern nh_roles_info_p EXPORT(nh_get_roles) (void);
 extern char_p EXPORT(nh_build_plselection_prompt) (
     char *, int, int, int, int, int);
@@ -85,7 +77,6 @@ extern const_char_p EXPORT(nh_root_plselection_prompt) (
     char *, int, int, int, int, int);
 
 /* topten.c */
-typedef struct nh_topten_entry *nh_topten_entry_p;
 extern nh_topten_entry_p EXPORT(nh_get_topten) (
     int *out_len, char *statusbuf, const char *player, int top,
     int around, nh_bool own);
