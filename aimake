@@ -4006,31 +4006,26 @@ sub record_pair_error {
 # objects, too). For produced objects, this is an error (they'd overwrite each
 # other on the filesystem), but for provided objects, we work out which to use
 # based on filename similarity. This takes two object names as arguments (the
-# provided object, and the object that wants to use it), and returns the
-# appropriate pair to use.
-sub appropriate_pair_for_object {
+# provided object, and the object that wants to use it), a flag indicating
+# whether it's OK to have a tie in score, and the list of possible pairs, and
+# returns a list of top-scoring pairs to use. (This will be empty if there are
+# no usable pairs, a single element unless there is a tie, and all tied
+# elements otherwise.)
+#
+# This routine is only called from recalculate_pair_xuse, but is place in a
+# separate subroutine for clarity.
+sub appropriate_pairs_for_object {
     my $provided = shift;
     my $user = shift;
     my $ties_ok = shift;
+    my @providers = @_;
 
-    return unless $state->{hash_by_object}->{$provided};
-    my @providers = sort keys %{$state->{hash_by_object}->{$provided}};
+    scalar @providers == 0 and return ();
+    scalar @providers == 1 and return ($providers[0]);
 
-    scalar @providers == 1 and return $providers[0];
-
-    $provided =~ multiple_providers_ok_regex and return $providers[0];
+    $provided =~ multiple_providers_ok_regex and return ($providers[0]);
 
     my ($prvtype, undef) = parse_objname $provided;
-    # It's OK for multiple rules to find objects on the path or spath.
-    $prvtype eq 'spath' and return $providers[0];
-    $prvtype eq 'path' and return $providers[0];
-    # It's OK to have multiple providers for a searchfile/lib, symbolset, or
-    # shared_symbol.
-    $prvtype eq 'searchfile' and return $providers[0];
-    $prvtype eq 'searchlib' and return $providers[0];
-    $prvtype eq 'symbolset' and return $providers[0];
-    $prvtype eq 'shared_symbol' and return $providers[0];
-
     $objtype_provided{$prvtype} or
         croak "Object $provided is produced by multiple rules: @providers";
 
@@ -4038,7 +4033,7 @@ sub appropriate_pair_for_object {
 
     my $best = undef;
     my $bestscore = -1;
-    my @tie;
+    my @tie = ();
     # We error out if we have two equally good providers.
     for my $provider (@providers) {
         my ($prule, $obj) = parse_pairname $provider;
@@ -4085,24 +4080,25 @@ sub appropriate_pair_for_object {
     }
     if (@tie) {
         unshift @tie, $best;
-        $ties_ok and !wantarray and return 'tie sys:tie';
-        $ties_ok and return ('tie sys:tie', \@tie);
+        $ties_ok and return @tie;
         croak "Multiple equally good pairs are available to build ".
-        "$provided (user $user): [@tie]";
+            "$provided (user $user): [@tie]";
     }
-    return $best;
+    return $best if defined $best;
+    return ();
 }
 
 # Determines which hash of an object we're supposed to be building from. This
 # is used for produced bpath:,path:,spath: objects to determine whether the
-# file has changed on disk. (For a produced object, it would give its
-# outdepends, but this method should not be used for this purpose because it
-# has tiebreak issues. Go via xuse_prevpair instead.)
+# file has changed on disk.
 sub xuse_hash {
     my $pair = shift;
     my $obj = shift;
-    return $state->{hash_by_object}->{$obj}->{
-        appropriate_pair_for_object $obj, $pair};
+    return unless $state->{hash_by_object}->{$obj};
+    die "Produced object $obj produced by more than one rule"
+        unless 1 == keys $state->{hash_by_object}->{$obj} ||
+        $obj =~ multiple_providers_ok_regex;
+    return (values $state->{hash_by_object}->{$obj})[0];
 }
 
 ### Dependency calculations
@@ -4213,29 +4209,11 @@ sub recalculate_pair_xuse {
                     # already there. But this method is faster and easier to
                     # read, and will produce the same results in pretty much
                     # all cases.
-                    @ancestors = grep $pass1_xuse_pairs{$_}, @ancestors;
-                    if (scalar @ancestors != 1) {
-                        my ($provider, $tie) =
-                            appropriate_pair_for_object $o, $obj, $ties_ok;
-                        if (!defined $provider) {
-                            @ancestors = ();
-                        } elsif ($provider ne 'tie sys:tie') {
-                            @ancestors = grep
-                                !inappropriate_prevpair($pair, $_), $provider;
-                        } else {
-                            @ancestors = grep $pass1_xuse_pairs{$_}, @$tie;
-                            @ancestors = grep
-                                !inappropriate_prevpair($pair, $_), @ancestors;
-                            @ancestors or @ancestors = grep
-                                !inappropriate_prevpair($pair, $_), @$tie;
-                        }
-                        if (!@ancestors) {
-                            @ancestors = grep !inappropriate_prevpair($pair, $_),
-                                sort keys %{$state->{hash_by_object}->{$o}};
-                            delete $state->{hash_by_object}->{$o} unless
-                                keys %{$state->{hash_by_object}->{$o}};
-                        }
-                    }
+                    my @filtered_ancestors =
+                        grep $pass1_xuse_pairs{$_}, @ancestors;
+                    @filtered_ancestors and @ancestors = @filtered_ancestors;
+                    @ancestors = appropriate_pairs_for_object $o, $obj,
+                        $ties_ok, @ancestors;
                 }
                 if (@ancestors > 1 && $pass == 1) {
                     push @postponed, $o;
@@ -6145,7 +6123,7 @@ __DATA__
             # line on stderr. We recognise the object files via the
             # extension, and the fact that they're existing, binary
             # files.
-            output => qr/^(.*(?<!aimake_1)(?:\.a|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)$/s,
+            output => qr/^(?:(?:-l|lib)[^ ]+ \()?(.*(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)\)?$/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
@@ -6302,6 +6280,19 @@ __DATA__
             dependsarg => qr/$longrandomstring(\w+)/,
             verb => 'found',
         },
+        ch_embedded_aimake_reverse_import => {
+            # If a symbol is being reverse-imported, that symbol isn't needed
+            # to be able to link a shared library. (link_c has an avoid set
+            # for this rule, and thus needs to get the symbol from somewhere.)
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
+            command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
+                        "optstring:-DAIMAKE_REVERSE_IMPORT(x)=$longrandomstring##x"],
+            output => 'symbol:',
+            outputarg => qr/$longrandomstring(\w+)/,
+            outdepends => [],
+            verb => 'found',
+            preference => 100,
+        },
         create_symbolset => {
             object => qr/^shared_symbol:/,
             command => ['intcmd:xuse_statistics', 'optstring:.o'],
@@ -6406,9 +6397,9 @@ __DATA__
             outdepends => ['cmd:gcc', 'optionset:LFLAGS'],
             verb => 'found',
         },
-        oa_file_dependencies => {
+        object_dependencies => {
             # Note that this only matches the bpath, not the spath.
-            object => qr/^bpath:.*(?:\Q$objext\E|\Q$libext\E)$/,
+            object => qr/^bpath:.*(?:\Q$objext\E|\Q$libext\E|\Q$dllext\E)$/,
             command => ['cmd:nm', 'optpath::'],
             depends => 'symbol:',
             # To make things work on Windows, omit symbols that start with a
@@ -6535,6 +6526,7 @@ __DATA__
             output => "extend:$exeext:",
             verb => 'linked',
             in_subdir => 'bpath:',
+            avoid_rules => qr/^ch_embedded_aimake_reverse_import$/,
         },
         # Some compilers add an extra underscore to everything. No problem,
         # we'll just link files with a _main too. (This causes issues if a
@@ -6547,6 +6539,7 @@ __DATA__
             output => "extend:$exeext:",
             verb => 'linked',
             in_subdir => 'bpath:',
+            avoid_rules => qr/^ch_embedded_aimake_reverse_import$/,
         },
 
         # lex, yacc
