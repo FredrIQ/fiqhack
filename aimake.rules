@@ -51,7 +51,7 @@
             # If we can generate a plugin plugins/foo_c.o, for a static link, we
             # should link in its wrapper plugins/foo_cxx.o. (Thus the rather
             # hacky "extend:" in the depends.)
-            object => "bpath:libuncursed/src/uncursed_c$objext",
+            object => "bpath:libuncursed/src/libuncursed_c$objext",
             command => ["sys:rebuild_late", "intcmd:listtree",
                         "optstring:0",
                         "optpath::bpath:libuncursed/src/plugins"],

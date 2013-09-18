@@ -5245,8 +5245,9 @@ MAINLOOP: while (1) {
                 # the same target.
                 my $ltarget = readlink $ospathfrom or die
                     "Could not read symlink '$ospathfrom': $!";
+                -e $ospathto || -l $ospathto and unlink $ospathto;
                 symlink $ltarget, $ospathto or die
-                    "Could not symlink '$ospathto' to '$ltarget'";
+                    "Could not symlink '$ospathto' to '$ltarget': $!";
             } else {
                 open my $fhfrom, "<$binary_layers", $ospathfrom
                     or die "Could not open '$ospathfrom' for read: $!";
