@@ -43,6 +43,13 @@
 #include "uncursed.h"
 #include "uncursed_hooks.h"
 
+/* ABI version: upon release, change the first number whenever the ABI or API
+   changes in a backwards-incompatible way, the second number whenever the
+   functionality changes in a backwards-compatible way, and the third number
+   when there is no functionality change (e.g. bugfixes), resetting all numbers
+   beyond the number you change to 0. */
+AIMAKE_ABI_VERSION(1.0.1)
+
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
 /* uncursed hook handling */

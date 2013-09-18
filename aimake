@@ -444,7 +444,7 @@ libraries, via wrapping their names in macros, e.g.:
     int AIMAKE_IMPORT(library_function)(void); /* imported function */
 
 The names only need to be wrapped this way in the declaration, not the
-definition (which can be left unchanged). C<AIMAKE_IMPORT> and
+definition (which can be left unchanged).  C<AIMAKE_IMPORT> and
 C<AIMAKE_EXPORT> only work correctly when the type of a variable, or return
 type of a function, is a single identifier (not some complex chain of arrays
 and pointers, etc.), so for complicated return types you will need to use a
@@ -463,11 +463,22 @@ the other way round, a much more common scenario).
 If aimake sees any symbols tagged as C<AIMAKE_EXPORT>, it will place them in a
 shared library (and, if appropriate, link executables it creates against that
 shared library).  The name of the library will be based on the common prefix
-of the object files that are used to build the library (so, e.g., if they have
+of the source files that export symbols in the library (so, e.g., if they have
 wildly varying filenames but are all in the same directory, it will be named
 after the directory).  As an exception, directories called F<src> are ignored
 for naming purposes, because that name is very commonly used to hold source
 files.
+
+Shared libraries often have an OS-specific versioning system.  When exporting
+symbols, you can specify a version number for the shared library they create,
+as follows:
+
+    AIMAKE_ABI_VERSION(1.2.3)
+
+The first component of the version number should be increased whenever a
+change is made to the library's ABI or API that would invalidate existing
+programs that used that library.  The other components of the version number
+are arbitrary (and need not exist).
 
 Finally, you can request that a file not be compiled in certain configurations
 via making it conditionally error out:
@@ -789,10 +800,12 @@ extension and a file-like object, and is just an alias for something in the
 C<bpath:>, not an object in its own right.  For instance,
 C<extend:.s:path:src/foo.c> might be an alias for C<bpath:src/foo.s>.  (This
 is mostly used to tell compilers and similar tools where to place their
-output.)   As a special case, an extension of ".." causes the filename to be
+output.)  As a special case, an extension of ".." causes the filename to be
 deleted too, producing the directory of the object:
 C<extend:..:path:src/foo.c> is C<path:src>.  This construction might produce
-an C<spath:>, C<path:> or C<bpath:>.
+an C<spath:>, C<path:> or C<bpath:>.  As another special case, an extension of
+"..." produces the filename by itself, removing the directories, and producing
+an output in the root of the C<bpath:>.
 
 =item C<file:>
 
@@ -825,17 +838,18 @@ internally to determine which C files contain a C<main> function.
 
 =item C<symbolset:>
 
-A set of symbols and the object files that define them, ready to be made into
-a library.  Symbol sets have two names: an internal name, and a filename,
-looking like C<symbolset:d41d8cd98f00b204e9800998ecf8427e:bpath:libfoo.so>.
-When aimake creates a symbol set, the internal name is a hash of the symbols
-and object files that make up the symbol set, and the filename is based on the
-common prefix of the object files (not counting header files).  Symbol sets
-are provided objects; they don't represent a file on disk (thus, the filename
-is a I<suggested> filename that will most likely be used to represent the
-resulting library).  If a C<symbolset:> object is used in an C<optpath:> or
-C<extend:> object, it will be treated as if it were just its filename portion;
-this does not happen for other uses of C<symbolset:> objects.
+A set of exported symbols, ready to be made into a library.  Symbol sets are
+defined with reference to a filename and version suffix, as in
+C<symbolset:.1.2.3:bpath:libfoo>.  When aimake creates a symbol set, the
+filename is based on the common prefix of the source files that define those
+symbols, and the version number on C<AIMAKE_ABI_VERSION> macros in the source
+files that define those symbols.  Symbol sets are provided objects; they don't
+represent a file on disk (thus, the filename is a I<suggested> filename that
+will most likely be used to represent the resulting library, most likely with
+the extension changed to something platform-specific like F<.so> or F<.dll>.).
+If a C<symbolset:> object is used in an C<optpath:> or C<extend:> object, it
+will be treated as if it were just its filename portion; this does not happen
+for other uses of C<symbolset:> objects.
 
 The dependencies of a C<symbolset:> object are built cumulatively, the same
 way that the dependencies of a C<shared_symbol:> object are.
@@ -973,8 +987,9 @@ is used to generate things like input files for compiler tests.
 
 =item C<intcmd:symlink>
 
-An internal command that causes its second argument to become an alias for its
-first argument.  This will be done via a symbolic link if possible, but on
+An internal command that causes each of its output arguments
+(C<optpath:-o:...>) to become an alias for its input argument
+(C<optpath::...>).  This will be done via a symbolic link if possible, but on
 some platforms it may need to copy the file; thus, there is no guarantee that
 the two arguments will have the same meaning forever.  This will overwrite its
 second argument if necessary.  (On POSIXy systems, this is similar to B<ln
@@ -1109,6 +1124,12 @@ object name will be on the C<bpath:>.  The intended purpose of this is to find
 a sensible filename and location for objects that would not otherwise have an
 obvious filename.
 
+=item version
+
+The numerically largest observed version number among the C<namehint:>s in the
+expaned use dependencies of the rule, with a leading dot (this makes regexes
+that manipulate version numbers easier to write).
+
 =item dependency
 
 A use dependency of the rule's commands, including non-file-like objects,
@@ -1156,14 +1177,16 @@ if you want to combine all files output via a certain rule into an archive.
 
 =item C<namehint:>
 
-A clue as to what would make a sensible name for an object.  Objects that
-particularly strongly hint at a name depend on their own names; e.g. a file
-C<bpath:main_c.o> that contained the main routines for a file might well
-depend on C<namehint::bpath:main_c.o>.  C<namehint:> objects always exist
-(thus depending on them doesn't cause problems, unless someone adds
-dependencies to them using dependency rules; don't do that), and are added by
-the default configuration according to some heuristics.  Therefore, you should
-never need to deal with them yourself.
+A clue as to what would make a sensible name and version number for an object.
+Objects that particularly strongly hint at a name depend on their own names;
+e.g. a file C<bpath:main_c.o> that contained the main routines for a file
+might well depend on C<namehint::bpath:main_c.o>.  For objects that hint at
+creating libraries, a version number is needed too:
+C<namehint:1.2.3:bpath:library.c>.  C<namehint:> objects always exist (thus
+depending on them doesn't cause problems, unless someone adds dependencies to
+them using dependency rules; don't do that), and are added by the default
+configuration according to some heuristics.  Therefore, you should never need
+to deal with them yourself.
 
 =item C<dependencies:>
 
@@ -1172,9 +1195,11 @@ e.g. C<dependencies:ch_file_dependencies:path:header.h> would represent the
 dependencies of C<header.h> that were found via the rule
 C<ch_file_dependencies>.  Dependency objects generated by dependency rules are
 automatically added as dependencies of the objects they are dependencies for.
-These can be generated manually too, but do not have special handling in that
-case; you might want to do this if, for instance, you only want the object to
-respect certain set of dependencies for the purpose of specific other rules.
+These can be generated manually too, in which case they behave like
+C<optionset:> objects; you might want to do this if, for instance, you only
+want the object to respect certain set of dependencies for the purpose of
+specific other rules, or if you want something that works like an
+C<optionset:> but which is parameterized on an object name.
 
 =back
 
@@ -1265,16 +1290,16 @@ rules with an underscore.
 
 There are two sorts of rules, from the point of view of an install: rules
 which specify dependencies of objects or install them, and rules which provice
-objects.  Rules that produce an object have a C<command> and C<output>, and
-perhaps also a C<object> if they need to apply to multiple files or the like,
-a C<verb> and/or an C<outputarg>, and may specify C<information_only> and/or
-C<propagate_usedeps>.  Rules that provide an object work like production
-rules, but also need an C<outdepends>.  Rules that specify dependencies have
-an C<object> and a C<depends> (or an C<install_dir> if they are actually
-install rules), and perhaps also a C<command> if commands need to be run to
-determine the dependencies, and/or a C<dependsarg>.  Either can have a
-C<inner>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>, C<avoid_rules>,
-C<filter>, C<filter_absolute>, C<filter_text_files>,
+objects.  Rules that produce an object have a C<command> and C<output> (or
+C<output_from_optpath>), and perhaps also a C<object> if they need to apply to
+multiple files or the like, a C<verb> and/or an C<outputarg>, and may specify
+C<information_only> and/or C<propagate_usedeps>.  Rules that provide an object
+work like production rules, but also need an C<outdepends>.  Rules that
+specify dependencies have an C<object> and a C<depends> (or an C<install_dir>
+if they are actually install rules), and perhaps also a C<command> if commands
+need to be run to determine the dependencies, and/or a C<dependsarg>.  Either
+can have a C<inner>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
+C<avoid_rules>, C<filter>, C<filter_absolute>, C<filter_text_files>,
 C<filter_nonexistent_files>, C<output_as_searchfile>, C<filter_spath>,
 C<require_match> and/or C<low_message_priority>, and can specify
 C<force_locale>, C<fail_silently>, C<also_match_stderr>, and/or
@@ -1356,6 +1381,18 @@ config file is easier to write without having to handle that case).  Null
 strings, as usual, refer to the C<object>, including nested inside other
 objects (if there's no C<inner>).
 
+=item output_from_optpath
+
+On occasion, the location where a command outputs is produced via a complex
+calculation, rather than hardcoded in the command (for which you would use a
+literal C<output>) or dependent on the messages produced by the command (for
+which you would use a regexp for C<output>).  In such cases, there is
+typically an option (e.g. C<optpath:-o :file.out>) telling the command where
+to place its output.  Using C<optpath_from_output> lets aimake know that the
+command is told to place its output via an option (in this case, C<<
+optpath_from_output => '-o ' >>); aimake will set the C<output> according to
+that option.
+
 =item outdepends
 
 Provision rules don't generate files on disk; they just say "objects X can be
@@ -1374,16 +1411,17 @@ about the files, not changing them, and so not error out.
 
 =item propagate_usedeps
 
-Sometimes, a provision rule will not need the normal use dependencies of an
-object to be in place.  (For instance, when looking at a file to see which
-symbols it provides, you don't need access to the symbols that that file
-uses.)  Setting propagate_usedeps to 1 will cause the object itself to become
-a use dependency of the objects it produces/provides, but not require those
-dependencies to be satisfied to run the rule.  (This is always the case for
-dependency rules, so there's no point in specifying it.)  The first of these
-effects is equivalent to adding C<''> to the C<outdepends>, but the second
-effect cannot be achieved otherwise (which is why C<propagate_usedeps>
-exists).
+Sometimes, a provision (or in extreme circumstances where a file does not need
+to exist in order to produce objects from it, a production rule) rule will not
+need the normal use dependencies of an object to be in place.  (For instance,
+when looking at a file to see which symbols it provides, you don't need access
+to the symbols that that file uses.)  Setting propagate_usedeps to 1 will
+cause the object itself to become a use dependency of the objects it
+produces/provides, but not require those dependencies to be satisfied to run
+the rule.  (This is always the case for dependency rules, so there's no point
+in specifying it.)  The first of these effects is equivalent to adding C<''>
+to the C<outdepends>, but the second effect cannot be achieved otherwise
+(which is why C<propagate_usedeps> exists).
 
 You can set propagate_usedeps to 2 to get the second effect on its own,
 causing the objects provided by the C<object> to completely ignore the
@@ -1607,10 +1645,12 @@ require a verbosity level of 1 or more to be printed anyway.
 
 Can be set to a regular expression that matches the names of rules.  Provided
 objects created by rules whose names match the regular expression will not be
-considered to satisfy dependencies of this rule.  (You would use this, for
-instance, to avoid an infinite regress when creating a dynamic library; you
-would want the symbols to come from object files, not from the dynamic library
-that the rule itself had created.)
+considered to satisfy dependencies of this rule; produced objects created by
+rules whose name match the regular expression will not be considered as an
+C<object> of the rule.  (You would use this, for instance, to avoid an
+infinite regress when creating a dynamic library; you would want the symbols
+to come from object files, not from the dynamic library that the rule itself
+had created.)
 
 =item filter
 
@@ -2677,7 +2717,13 @@ my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
 # regex, rather than via parsing + a hash, because it's part of the
 # inner loop.
 use constant multiple_providers_ok_regex =>
-    qr/^(?>s(?:earch(?:file|lib)|ymbolset|hared_symbol|path)|path|optionset):/;
+    qr/^(?> s(?:earch(?:file|lib) |
+             ymbolset |
+             hared_symbol |
+             path) |
+            path |
+            optionset |
+            dependencies) : /x;
 
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
@@ -2713,16 +2759,23 @@ sub parse_pairname {
 sub aipath_parent;
 sub parse_aipath;
 sub deparse_aipath;
+sub resolve_extend;
 sub resolve_extend {
     my $objname = shift;
     my ($objtype, $objvalue, $objinner) = parse_objname $objname;
 
     $objtype eq 'extend' or return $objname;
+    $objinner = resolve_extend $objinner;
 
     $objvalue eq '..' and return aipath_parent $objinner;
 
     (undef, undef, $objinner) = parse_objname $objinner
         while $objinner =~ /^symbolset:/;
+
+    if ($objvalue eq '...') {
+        my @components = parse_aipath $objinner;
+        return deparse_aipath 'bpath', $components[-1];
+    }
 
     my @aipath = parse_aipath $objinner;
     # Remove any existing extension. It's OK if this doesn't match.
@@ -2871,10 +2924,10 @@ sub ospath2aipath {
 
     # If we're trying to convert a nonexistent path, we won't be able to
     # realpath it successfully. So we need an eval to trap errors.
-    eval {
+    $ospath = eval {
         !defined $required_by || File::Spec->file_name_is_absolute($ospath)
-            and $ospath = realpath($ospath);
-    };
+            and realpath($ospath);
+    } || $ospath;
 
     if (File::Spec->case_tolerant) {
         $ospath = defined_or(
@@ -3287,12 +3340,21 @@ sub run_command {
             my @namehints = grep /^namehint:/, @xuse;
             @namehints and @flxuse = sort @namehints;
             my $stem = 'anonymous';
+            my @version_max = ();
             if (@flxuse) {
                 $stem = $flxuse[0];
-                $stem =~ s/^namehint::[^:]+://;
+                $stem =~ s/^namehint:[^:]*:[^:]+://;
                 for my $flxuse (@flxuse) {
-                    "${stem}::$flxuse" =~ /^(.*).*?::namehint::[^:]+:\1/;
+                    "${stem}::$flxuse" =~ /^(.*).*?::namehint:([^:]*):[^:]+:\1/;
                     $stem = $1;
+                    my $version = $2;
+                    $version =~ s/\s//g;
+                    my @version = split /\./, $version;
+                    for my $i (0..$#version) {
+                        $#version_max < $i || $version[$i] > $version_max[$i]
+                            and (@version_max = @version), last;
+                        $version[$i] < $version_max[$i] and last;
+                    }
                 }
             }
             $stem =~ s/\/$//;
@@ -3300,6 +3362,7 @@ sub run_command {
             # don't want to go around creating libraries src.so.
             $stem =~ s/\/src$//;
             push @stdout, "stem=bpath:$stem";
+            push @stdout, "version=" . (join '.', '', @version_max);
             push @stdout, "dependency=$_" for @xuse;
             return (undef, \@stdout, '');
         } elsif ($cmd eq 'intcmd:listtree') {
@@ -3370,7 +3433,27 @@ sub run_command {
             }
             return (undef, [sort keys %results], '');
         } elsif ($cmd eq 'intcmd:symlink') {
-            return ('TODO: intcmd:symlink unimplemented', '', '');
+            my @targets;
+            my @sources;
+            /^optpath::(.*)$/s and push @targets, $1 for @opts;
+            /^optpath:-o:(.*)$/s and push @sources, $1 for @opts;
+            @targets == 1 or return ("Wrong number of targets", '', '');
+            for my $source (@sources) {
+                my $ostarget = aipath2ospath($targets[0]);
+                my $ossource = aipath2ospath($source);
+                my ($ossourcevol, $ossourcedir, undef) =
+                    File::Spec->splitpath($ossource);
+                $ossourcedir = File::Spec->catpath(
+                    $ossourcevol, $ossourcedir, '');
+                $ostarget = File::Spec->abs2rel($ostarget, $ossourcedir);
+                # -e returns false on broken symlinks
+                -e $ossource || -l $ossource and unlink $ossource;
+                $! = 0;
+                symlink $ostarget, $ossource or return
+                    ("Could not create link", '',
+                     "Linking '$ossource' to '$ostarget': $!");
+            }
+            return (undef, '', '');
         }
         return ("No such internal command $cmd", '', '');
     } elsif ($cmd =~ /^bpath:/) {
@@ -4175,8 +4258,24 @@ sub recalculate_pair_xuse {
         scalar @command == 1 && ref $command[0] eq 'ARRAY'
             and @command = (@{$command[0]});
         # Add the pair's object to the list.
-        $r->{output} and !$r->{propagate_usedeps} and
+        if (($r->{output}||$r->{output_from_optpath}) &&
+            !$r->{propagate_usedeps}) {
             push @command, '';
+        }
+        # We can't run the rule if the object was produced by a rule it
+        # avoids.
+        my ($objtype, undef, undef) = parse_objname $obj;
+        if ($r->{avoid_rules} && !$objtype_provided{$obj} &&
+            $state->{hash_by_object}->{$obj}) {
+            my ($producer, undef) = keys %{
+                $state->{hash_by_object}->{$obj}};
+            my ($prodrule, undef) = parse_pairname $producer;
+            if ($prodrule =~ $r->{avoid_rules}) {
+                $xuse{'sys:clean'} or push @xuse, 'sys:clean';
+                $xuse{'sys:clean'} = "config_rule:$rule";
+            }
+        }
+
         # For install rules, add sys:installing to the list.
         $r->{install_dir} and push @command, 'sys:installing';
         my %xuse_reason = ();
@@ -4827,10 +4926,11 @@ for my $rulename (keys %{$config->{rules}}) {
     defined $rule or delete $config->{rules}->{$rulename}, next;
     # Check the rule for sanity.
     croak "Rule $rulename has no output, depends, or install directory"
-        unless exists $rule->{output} || exists $rule->{depends} ||
-        exists $rule->{install_dir};
+        unless exists $rule->{output} || exists $rule->{output_from_optpath}
+        || exists $rule->{depends} || exists $rule->{install_dir};
     croak "Rule $rulename has both output and depends"
-        if exists $rule->{output} && exists $rule->{depends};
+        if (exists $rule->{output} || exists $rule->{output_from_optpath})
+        && exists $rule->{depends};
 }
 $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}->{$_}
     for keys %{$config->{rules}};
@@ -5079,6 +5179,13 @@ MAINLOOP: while (1) {
     # Work out where we're outputting to.
     my $output_target = defined_or($rule->{output},
                                    "dependencies:$rulename:$objname");
+
+    if ($rule->{output_from_optpath}) {
+        $output_target = [];
+        my $match = $rule->{output_from_optpath};
+        /^optpath:\Q$match\E:(.*)$/s and push @$output_target, $1 for @xuse;
+    }
+
     my $installed_into = undef;
     if ($rule->{install_dir}) {
         my ($objtype, undef) = parse_objname $objname;
@@ -5133,15 +5240,24 @@ MAINLOOP: while (1) {
         if ($objtype ne 'sys') {
             my $ospathfrom = aipath2ospath $objname;
             my $ospathto = aipath2ospath $output_target->[0];
-            open my $fhfrom, "<$binary_layers", $ospathfrom
-                or die "Could not open '$ospathfrom' for read";
-            open my $fhto, ">$binary_layers", $ospathto
-                or die "Could not open '$ospathto' for write";
-            print $fhto $_ for <$fhfrom>;
-            close $fhfrom; close $fhto;
-            # If we're installing an executable, the target should also be
-            # executable.
-            -x $ospathfrom and chmod 0755, $ospathto;
+            if (-l $ospathfrom) {
+                # To install a symlink, we need to create a new symlink with
+                # the same target.
+                my $ltarget = readlink $ospathfrom or die
+                    "Could not read symlink '$ospathfrom': $!";
+                symlink $ltarget, $ospathto or die
+                    "Could not symlink '$ospathto' to '$ltarget'";
+            } else {
+                open my $fhfrom, "<$binary_layers", $ospathfrom
+                    or die "Could not open '$ospathfrom' for read: $!";
+                open my $fhto, ">$binary_layers", $ospathto
+                    or die "Could not open '$ospathto' for write: $!";
+                print $fhto $_ for <$fhfrom>;
+                close $fhfrom; close $fhto;
+                # If we're installing an executable, the target should also be
+                # executable.
+                -x $ospathfrom and chmod 0755, $ospathto;
+            }
         } elsif ($objname eq 'sys:touch_only') {
             # nothing to do; we already created the directory
         } elsif ($objname eq 'sys:create_subdir') {
@@ -5149,13 +5265,13 @@ MAINLOOP: while (1) {
         } elsif ($objname eq 'sys:empty_file') {
             my $ospathto = aipath2ospath $output_target->[0];
             open my $fhto, ">$binary_layers", $ospathto
-                or die "Could not open '$ospathto' for write";
+                or die "Could not open '$ospathto' for write: $!";
             close $fhto;
         } elsif ($objname eq 'sys:ensure_exists') {
             my $ospathto = aipath2ospath $output_target->[0];
             if (!-e $ospathto) {
                 open my $fhto, ">$binary_layers", $ospathto
-                    or die "Could not open '$ospathto' for write";
+                    or die "Could not open '$ospathto' for write: $!";
                 close $fhto;
             }
         } else {
@@ -5284,7 +5400,13 @@ MAINLOOP: while (1) {
                 $linemax-- if defined $linemax;
                 while ($line =~ m/$regex_licm/g) {
                     my $n = $1;
-                    $aify and $n = ospath2aipath($n, $inner);
+                    if ($aify) {
+                        my $old_n = $n;
+                        $n = ospath2aipath($n, $inner);
+                        $n eq 'file:' and
+                            die "ospath2aipath could not parse '$old_n' ".
+                            "(pair $curpair)";
+                    }
                     $n =~ /^file:/ and $rule->{output_as_searchfile}
                         and $n = "search$n";
                     push @$rxreplace, $n unless
@@ -5350,14 +5472,25 @@ MAINLOOP: while (1) {
         } elsif ($otype eq 'bpath') {
             croak "Provision rule $rulename output produced object $o"
                 if exists $rule->{outdepends};
-            croak "Provision rule $rulename output produced object $o"
-                if exists $rule->{propagate_usedeps};
         } elsif (!exists $rule->{information_only}) {
             croak "Rule $rulename output unprovicable object $o";
         }
     }
     for my $o (@depends) {
         parse_objname $o; # check it's a well-formed object name
+    }
+
+    # Some rules may produce lots of duplicate output dependencies.
+    # This has the same meaning as non-duplicate dependencies, so we can
+    # just remove the copies. Make sure to keep them in the same order.
+    my @depends_duplicates = @depends;
+    @depends = ();
+    my %depends_seen = ();
+    for my $dependency (@depends_duplicates) {
+        if (!$depends_seen{$dependency}) {
+            $depends_seen{$dependency} = 1;
+            push @depends, $dependency;
+        }
     }
 
     my @shortened = map {friendly_objname($_)} @output;
@@ -6276,6 +6409,32 @@ __DATA__
             in_subdir => 'bpath:', # shorter error/warning messages
         },
 
+        # OS detection
+        #
+        # Necessary to link shared libraries correctly.
+
+        os_detect_linux => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            output => ['optionset:os_linux', 'optionset:os_osx_linux'],
+            outdepends => [],
+        },
+        os_detect_windows => {
+            command => ['intcmd:assert_equal',
+                        'optstring:MSWin32', "optstring:$^O"],
+            fail_silently => 1,
+            output => 'optionset:os_windows',
+            outdepends => [],
+        },
+        os_detect_osx => {
+            command => ['intcmd:assert_equal',
+                        'optstring:darwin', "optstring:$^O"],
+            fail_silently => 1,
+            output => ['optionset:os_osx', 'optionset:os_osx_linux'],
+            outdepends => [],
+        },
+
         # Shared objects.
         #
         # We detect that a library is wanted using flags in the source code:
@@ -6303,22 +6462,21 @@ __DATA__
         ch_embedded_aimake_export => {
             object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
-                        "optstring:-DAIMAKE_EXPORT(x)=$longrandomstring##x"],
+                        "optstring:-DAIMAKE_EXPORT(x)=${longrandomstring}##x[]",
+                        "optstring:-DAIMAKE_ABI_VERSION(x)=${longrandomstring}[x]",],
             output => 'shared_symbol:',
-            outputarg => qr/$longrandomstring(\w+)/,
+            outputarg => qr/${longrandomstring}(\w+)/,
             # We want the name of the library to be based on the name of the
             # source files and headers that exported the symbol. (A previous
             # version of this code based it on the object files that were
             # dependencies of the symbol, but that caused problems with
-            # transitive depenencies.)
-            outdepends => 'namehint::',
+            # transitive dependencies.) An AIMAKE_ABI_VERSION argument gives
+            # us hints about what version number to use, if present. If not,
+            # we produce unversioned namehints, because this regexp matches
+            # AIMAKE_EXPORTs as well.
+            outdepends => 'namehint:',
+            dependsarg => qr/${longrandomstring}\w*\s*\[([^][]*)\]/,
             verb => 'found',
-        },
-        shared_symbol_dependencies => {
-            object => qr/^shared_symbol:/,
-            command => ['intcmd:echo', 'optstring::'],
-            depends => 'symbol:',
-            dependsarg => qr/^shared_symbol:(.*)/
         },
         ch_embedded_aimake_reverse_import => {
             # If a symbol is being reverse-imported, that symbol isn't needed
@@ -6335,42 +6493,43 @@ __DATA__
         },
         create_symbolset => {
             object => qr/^shared_symbol:/,
-            command => ['intcmd:xuse_statistics', 'optstring:.h',
-                        'optstring:.c', 'optstring:.cxx'],
+            command => ['intcmd:xuse_statistics', "optstring:$objext"],
             output => 'symbolset:',
-            outputarg => qr/^hash=(.*)$/,
-            inner => qr/^stem=(.*)$/,
+            outputarg => qr/^version=(.*)$/,
+            inner => qr/^stem=(.+)$/,
             outdepends => qr/^dependency=shared_(symbol:.*)$/,
-            avoid_rules => qr/^bpath_shared_object_provisions/,
+            avoid_rules => qr/^(?:bpath_shared_object_provisions |,
+                                  linux_library_finding_link)/x,
             verb => 'named',
+        },
+        symbolset_dependencies => {
+            object => qr/^symbolset:/,
+            depends => 'dependencies:symbolset:'
         },
         link_shared_library => {
             object => qr/^symbolset:/,
-            command => ['tool:c_linker', 'optstring:-shared',
-                        "optpath:-o :extend:$dllext:"],
-            output => "extend:$dllext:",
+            command => ['tool:c_linker', 'optstring:-shared'],
+            output_from_optpath => '-o ',
+            in_subdir => 'bpath:',
             verb => 'linked',
+            avoid_rules => qr/^linux_library_finding_link$/,
         },
-        linux_cflags => {
-            command => ['intcmd:assert_equal',
-                        'optstring:linux', "optstring:$^O"],
-            fail_silently => 1,
-            object => qr/^optionset:C(?:XX)?FLAGS$/,
-            depends => 'optstring:-fvisibility=hidden',
+
+        osx_linux_cflags => {
+            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+            output => ['optionset:CFLAGS', 'optionset:CXXFLAGS'],
+            outdepends => 'optstring:-fvisibility=hidden',
         },
-        linux_lflags => {
-            command => ['intcmd:assert_equal',
-                        'optstring:linux', "optstring:$^O"],
-            fail_silently => 1,
-            object => 'optionset:LFLAGS',
-            depends => 'optstring:-rdynamic',
+        osx_linux_lflags => {
+            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+            output => 'optionset:LFLAGS',
+            outdepends => 'optstring:-rdynamic',
         },
-        linux_headerlines => {
-            command => ['intcmd:assert_equal',
-                        'optstring:linux', "optstring:$^O"],
-            fail_silently => 1,
-            object => 'optionset:aimake_header_lines',
-            depends => 'optstring:' .
+        osx_linux_headerlines => {
+            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+            output => 'optionset:aimake_header_lines',
+            outdepends => 'optstring:' .
+                '#_define_AIMAKE\\_ABI\\_VERSION(x) ' .
                 '#_define_AIMAKE\\_IMPORT(x)_x ' .
                 '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
                 '#_define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
@@ -6378,58 +6537,82 @@ __DATA__
                 '#_define_AIMAKE\\_REVERSE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
                 'visibility("default")))_x'
         },
-        osx_cflags => {
-            command => ['intcmd:assert_equal',
-                        'optstring:darwin', "optstring:$^O"],
-            fail_silently => 1,
-            object => qr/^optionset:C(?:XX)?FLAGS$/,
-            depends => 'optstring:-fvisibility=hidden',
+
+        symbolset_soname_linux => {
+            object => qr/^symbolset:/,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            propagate_usedeps => 2,
+            output => 'dependencies:symbolset:',
+            outdepends => "optpath:-Wl,-soname,:extend:...:extend:$dllext",
+            dependsarg => qr/^symbolset:(\.?[^.:]*)/,
         },
-        osx_lflags => {
-            command => ['intcmd:assert_equal',
-                        'optstring:darwin', "optstring:$^O"],
-            fail_silently => 1,
-            object => 'optionset:LFLAGS',
-            depends => 'optstring:-rdynamic',
+        symbolset_output_linux => {
+            object => qr/^symbolset:/,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            propagate_usedeps => 2,
+            output => 'dependencies:symbolset:',
+            outdepends => "optpath:-o :extend:$dllext",
+            dependsarg => qr/^symbolset:([^:]*)/,
         },
-        osx_headerlines => {
-            command => ['intcmd:assert_equal',
-                        'optstring:darwin', "optstring:$^O"],
-            fail_silently => 1,
-            object => 'optionset:aimake_header_lines',
-            depends => 'optstring:' .
-                '#_define_AIMAKE\\_IMPORT(x)_x ' .
-                '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
-                '#_define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
-                'visibility("default")))_x '.
-                '#_define_AIMAKE\\_REVERSE_EXPORT(x)_\\_\\_attribute\\_\\_(('.
-                'visibility("default")))_x'
+
+        # The setup for versioned shared libraries on Debian/Ubuntu, also used
+        # by aimake for Linux, places the library at libXXX.so.1.2.3, then
+        # places a symlink from its soname (libXXX.so.1) so that ld.so can
+        # find it, and a symlink from its unadorned name (libXXX.so) so that
+        # ld can find it.
+        linux_ld_so_finding_link => {
+            object => qr/^bpath:.*\Q$dllext\E\.[\d]*\.[\d.]*\z/s,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            output => 'dependencies:linux_library_finding_link:',
+            outdepends => "optpath:-o:",
+            propagate_usedeps => 2,
+            dependsarg => qr/^(.*\Q$dllext\E\.?[^.]*)[\d.]*$/s,
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+        linux_ld_finding_link => {
+            object => qr/^bpath:.*\Q$dllext\E\.[\d.]*\z/s,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            output => 'dependencies:linux_library_finding_link:',
+            outdepends => "optpath:-o:",
+            propagate_usedeps => 2,
+            dependsarg => qr/^(.*\Q$dllext\E)[\d.]*$/s,
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+        linux_library_finding_link => {
+            object => qr/^bpath:.*\Q$dllext\E\.[\d.]*\z/s,
+            command => ['dependencies:linux_library_finding_link:',
+                        'optpath::', 'intcmd:symlink'],
+            output_from_optpath => '-o',
+            propagate_usedeps => 2,
+            verb => 'symlinked',
+            avoid_rules => qr/^linux_library_finding_link$/,
         },
 
         # Selecting sensible names.
         #
-        # This is used for shared objects and for executables. When selecting
-        # a sensible name for an object, we base it on the bpath objects that
-        # contain initialized read/write data, as a crude heuristic to
-        # distinguish programs from library functions. (Library functions
-        # rarely work on a single, centralized copy of data because that
-        # causes a lack of re-entrancy. Read-only data doesn't count for this
-        # purpose; and uninitialized data is possibly a static buffer, which
-        # is a much more common way to lack re-entrancy than initialized
-        # data.) Additionally, a symbol "main" or "_main" automatically gets
-        # your name hinted, and exported symbols get their names hinted when
-        # creating shared libraries.
-        choose_namehint => {
-            object => qr/^bpath:.*\Q$objext\E$/,
-            depends => 'namehint:',
-            command => ['cmd:nm', 'optpath::'],
-            # In order to conditionally include the namehint, we use a regex
-            # match that captures nothing. If it doesn't match, there'll be no
-            # capture and thus no hint. (The hint itself is provided by the
-            # implicit inner => ''.)
-            dependsarg => qr'^()[[:xdigit:]]*\s+(?:[tT] _?main|[dDgG])',
-            verb => 'chose',
-        },
+        # This is used for executables (the names of shared objects are based
+        # on the names of the filenames which declare the objects they
+        # export). When selecting a sensible name for an executable, we base
+        # it on the bpath objects that contain initialized read/write data, as
+        # a crude heuristic to distinguish programs from library functions.
+        # (Library functions rarely work on a single, centralized copy of data
+        # because that causes a lack of re-entrancy. Read-only data doesn't
+        # count for this purpose; and uninitialized data is possibly a static
+        # buffer, which is a much more common way to lack re-entrancy than
+        # initialized data.) Additionally, a symbol "main" or "_main"
+        # automatically gets your name hinted, and exported symbols get their
+        # names hinted when creating shared libraries.
+        # choose_namehint => {
+        #     object => qr/^bpath:.*\Q$objext\E$/,
+        #     depends => 'namehint:',
+        #     command => ['cmd:nm', 'optpath::'],
+        #     # In order to conditionally include the namehint, we use a regex
+        #     # match that captures nothing. If it doesn't match, there'll be no
+        #     # capture and thus no hint. (The hint itself is provided by the
+        #     # implicit inner => ''.)
+        #     dependsarg => qr'^()[[:xdigit:]]*\s+(?:[tT] _?main|[dDgG])',
+        #     verb => 'chose',
+        # },
 
         # Linking.
         c_link_tool => {
@@ -6477,7 +6660,7 @@ __DATA__
             preference => 30,
         },
         shared_object_provisions_nondynamic => {
-            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)/s,
+            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
@@ -6489,7 +6672,7 @@ __DATA__
             preference => 50,
         },
         shared_object_provisions_dynamic => {
-            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)/s,
+            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
@@ -6502,7 +6685,7 @@ __DATA__
             preference => 50,
         },
         bpath_shared_object_provisions_nondynamic => {
-            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)/s,
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
@@ -6512,9 +6695,10 @@ __DATA__
             verb => 'found',
             low_message_priority => 1,
             preference => 90,
+            avoid_rules => qr/^linux_library_finding_link$/,
         },
         bpath_shared_object_provisions_dynamic => {
-            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)/s,
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
@@ -6525,9 +6709,10 @@ __DATA__
             verb => 'found',
             low_message_priority => 1,
             preference => 90,
+            avoid_rules => qr/^linux_library_finding_link$/,
         },
         spath_library_option => {
-            object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)/,
+            object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/,
             command => ['intcmd:echo', 'optpath::'],
             depends => 'optstring: -l',
             # Libraries on the spath which are not lib* get no option; they
@@ -6535,10 +6720,10 @@ __DATA__
             # the dynamic loader, which shouldn't be mentioned anyway)
             dependsarg => qr/^[bs]?path:
                 (?:(?:[^\\]|\\.)+\/)?lib((?:[^\\\/]|\\.)+?)
-                (?:\Q$dllext\E|\Q$libext\E)(\z|\.)/x,
+                (?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/x,
         },
         bpath_library_option => {
-            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)/,
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/,
             depends => ['optpath::', 'optionset:rpath']
         },
         linux_rpath => {
@@ -6550,7 +6735,7 @@ __DATA__
                         'optpath::config_option:libdir',
                         'optpath::config_option:specificlibdir'],
             outdepends => 'optpath:-Wl,-rpath=:',
-            inner => qr/=(.*)$/,
+            inner => qr/^(?:specific)?libdir=(.*)$/,
         },
         linux_bpath_library_option => {
             command => ['intcmd:assert_equal',
@@ -6566,7 +6751,7 @@ __DATA__
             output => "extend:$exeext:",
             verb => 'linked',
             in_subdir => 'bpath:',
-            avoid_rules => qr/^ch_embedded_aimake_reverse_import$/,
+            avoid_rules => qr/^ch_embedded_aimake_reverse_import$/x,
         },
         # Some compilers add an extra underscore to everything. No problem,
         # we'll just link files with a _main too. (This causes issues if a
@@ -6579,7 +6764,7 @@ __DATA__
             output => "extend:$exeext:",
             verb => 'linked',
             in_subdir => 'bpath:',
-            avoid_rules => qr/^ch_embedded_aimake_reverse_import$/,
+            avoid_rules => qr/^ch_embedded_aimake_reverse_import$/x,
         },
 
         # lex, yacc
@@ -6619,7 +6804,7 @@ __DATA__
 
         # Installing. Some projects may wish to modify or undef out these rules.
         install_libraries => {
-            object => qr/^bpath:.*\Q$dllext\E$/s,
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z$/s,
             install_dir => "libdir",
         },
         install_executables => {
