@@ -228,10 +228,11 @@
             install_name => "xlogfile",
         },
         _install_server_config => {
-            object => "sys:touch_only",
+            object => "sys:ensure_exists",
             command => ["intcmd:nop",
                         "bpath:nethack_server/src/srvmain_c$exeext"],
             install_dir => "configdir",
+            install_name => "nethack4.conf",
         },
         _install_server_logfile => {
             object => "sys:ensure_exists",
