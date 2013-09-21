@@ -9,7 +9,7 @@
 #define EDITLEVEL 0
 
 #define COPYRIGHT_BANNER_A \
-"NetHack 4, Copyright (C) 2009-2012; based on NetHack, Copyright (C) 1985-2003"
+"NetHack 4, Copyright (C) 2009-2013; based on NetHack, Copyright (C) 1985-2003"
 
 #define COPYRIGHT_BANNER_B \
 "  NetHack 4 by Alex Smith, Daniel Thaler and many other contributors."
