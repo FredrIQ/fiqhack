@@ -21,6 +21,11 @@ copy of version 3 of the GPL inside aimake's source code; it can most
 conveniently be viewed via "./aimake --license", or else you can read
 it via opening the source code of aimake in a text editor.
 
+libjansson is not part of NetHack 4, although it is compiled into it
+during a static build (and used as a shared library during a dynamic
+build), and is distributed under the Expat license. (See the
+"copyright" file for details.)
+
 For full, machine-readable detail on the licenses of all the files
 that make up NetHack 4, see the "copyright" file.
 

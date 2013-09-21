@@ -269,15 +269,14 @@ Build Instructions
 UNIX/Linux
 ----------
 
-You will need to install NetHack 4's dependencies: libjansson (available at
-http://www.digip.org/jansson/), zlib (which is probably installed already, but
-you may need to get its development headers from your package manager), and
-(if you want a working server binary) postgresql and pgcrypto. You also need
-development headers for those libraries. If you don't care about the server
-working, you can do without postgresql; you'll get compile errors as it tries
-to compile the server, but the programs that do install (including the game
-itself, which can run locally without needing to connect to a server) will
-work fine.
+You will need to install NetHack 4's dependencies: zlib (which is probably
+installed already, but you may need to get its development headers from your
+package manager), and (if you want a working server binary) postgresql and
+pgcrypto. You also need development headers for those libraries. If you don't
+care about the server working, you can do without postgresql; you'll get
+compile errors as it tries to compile the server, but the programs that do
+install (including the game itself, which can run locally without needing to
+connect to a server) will work fine.
 
 Assuming you just want to run NetHack 4 from your home directory, from the top
 source directory, run:
@@ -306,12 +305,13 @@ database:
     echo 'CREATE EXTENSION pgcrypto' | psql -d nethack4
     exit                    # go back to your normal permissions
 
-Next you need to create the configuration file. If you installed into
-`~/nethack4`, it should be named `~/nethack4/config/nethack4.conf`; other
-forms of install may have other locations. (You can run nethack4-server with
-no arguments to discover where the configuration file should be; if it can't
-find its configuration file, it'll complain and tell you where it's looking
-for it.)
+Next you need to edit the configuration file (a blank configuration file will
+have been installed in the appropriate place for you to edit). If you
+installed into `~/nethack4`, it should be named
+`~/nethack4/config/nethack4.conf`; other forms of install may have other
+locations. (You can run nethack4-server with no arguments to discover where
+the configuration file should be; if it can't find its configuration file,
+it'll complain and tell you where it's looking for it.)
 
 The configuration file looks something like this:
 
@@ -351,21 +351,12 @@ don't have a very Windows-like idea of directory structure). Strawberry Perl's
 and GnuWin32's executables will all need to be on your PATH (search for "PATH"
 in Control Panel, on recent versions of Windows).
 
-The NetHack 4 server doesn't work on Windows, so there's no need to mess about
-with postgresql. However, you will need libjansson. It would work if you
-compiled and installed libjansson, but doing so on Windows is rather
-difficult.  Instead, a much easier method is to download the source to
-libjansson (from http://www.digip.org/jansson/), and then copy the entire
-`src` directory from the libjansson distribution to inside the NetHack 4
-distribution (create a new folder parallel to `libuncursed` called
-`libjansson`, and copy the contents of the `src` directory into `libjannson`).
-
 You will also need to create two more folders, `build` and `install`; I
 recommend that both are parallel to the `nethack4` folder that contains the
 entire NetHack 4 distribution.
 
-Once you've done all this, open a command prompt, change to the build
-directory, and type:
+Once you've done this, open a command prompt, change to the build directory,
+and type:
 
     perl ../nethack4/aimake -i ../install --directory-layout=single_directory
 

@@ -226,12 +226,10 @@ How can I compile the game for local play?
 ------------------------------------------
 
 NetHack 4 can be compiled on most commonly used systems; we've tested
-Linux, OS X, and Windows.  Linux works out of the box.  Mac OS X
-*almost* works (there's currently an OS X-specific bug that can be
-worked around by deleting the line `#define _POSIX_SOURCE 1` from
-`libnethack/src/tty.c`; we're hoping to get a proper fix in place
-soon).  Windows is a little harder but still not impossible to compile
-on. (However, the performance of the Windows console is very bad,
+Linux, OS X, and Windows.  Linux and Mac OS X work out of the box.
+Windows is a little harder but still relatively easy to compile on, if
+you don't mind downloading several extra tools to do the compilation
+with. (However, the performance of the Windows console is very bad,
 making the game close to unplayably slow; at present there is no tiles
 version, nor a tty version with an alternative rendering method, so if
 you're on Windows it's probably best to stick to online play for the
@@ -241,21 +239,26 @@ In order to compile NetHack 4 locally, you can get a copy of the
 source from the repository, and follow the instructions in the README
 file (if you're on Mac OS X, follow the instructions for UNIX/Linux,
 because OS X is a UNIX derivative).  You'll need some dependencies in
-addition to NetHack 4 itself: a working C toolchain, zlib, and the
-[libjansson library][7].  (You'll also need postgresql if you're
-planning to run your own server, but you probably aren't; for local
-play, the game works just fine without a server to connect to.)
+addition to NetHack 4 itself: a working C toolchain and zlib.  (You'll
+also need postgresql if you're planning to run your own server, but
+you probably aren't; for local play, the game works just fine without
+a server to connect to.)  Previous versions of NetHack 4 depended on
+the [libjansson library][7], but the source to this library is now
+shipped with NetHack 4 in order to avoid library dependency problems;
+previous versions also depended on libncursesw, but that dependency no
+longer exists (NetHack 4 now uses its own rendering library, named
+libuncursed).
 
 You'll additionally need a copy of Perl in order to run the build
 system: this will likely come with your system on Linux and Mac OS X.
 If you're on Windows, get [Strawberry Perl][8]; it comes with a
-working C toolchain and all the libraries required (apart from
-libjansson), meaning that you can avoid the usual problems of trying
-to set up a C toolchain on Windows.  On Mac OS X, the usual C
-toolchain is Xcode, which is available from Apple; most Linux systems
-come with a C toolchain, but if you're on Debian or a derivative (such
-as Ubuntu or Linux Mint), you'll need to install the `build-essential`
-package.
+working C toolchain and all the libraries required, meaning that you
+can avoid the usual problems of trying to set up a C toolchain on
+Windows.  On Mac OS X, the usual C toolchain is Xcode, which is
+available from Apple; most Linux systems come with a C toolchain, but
+if you're on Debian or a derivative (such as Ubuntu or Linux Mint),
+you'll need to install the `build-essential` package (and also `bison`
+and `flex`).
 
 
 Are precompiled binaries available?

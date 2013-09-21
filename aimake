@@ -3977,8 +3977,6 @@ sub set_proviced_hash {
     # Iterating over xuse_by_object may miss out some pairs, but only changed
     # pairs with unknown xuses (on which operating would be pointless anyway).
     for my $cpair (keys %{$state->{xuse_by_object}->{$obj}}) {
-        next if inappropriate_prevpair $cpair, $pair;
-
         # We need to mark the xuse unknown before marking the pair as changed,
         # in case the old xuse had a dependency on a nonexistent object (which
         # could cause mark_pair_changed to be a no-op) but the new xuse only
@@ -4142,6 +4140,8 @@ sub appropriate_pairs_for_object {
             # The score depends on how many characters match at the
             # start of the objvalue.
             my ($utype, $uvalue, $uinner) = parse_objname $user;
+            ($utype, $uvalue, $uinner) = parse_objname $uinner
+                while $utype eq 'symbolset';
             $score = 2;
             while ($uvalue ne '' && $objvalue ne '' &&
                    substr($uvalue, 0, 1, '') eq substr($objvalue, 0, 1, '')) {
@@ -4387,9 +4387,9 @@ sub recalculate_pair_xuse {
 sub reset_pair_xuse {
     my $pair = shift;
 
+    mark_pair_xuse_unknown $pair;
     progress_report 4, "Resetting xuse of $pair.";
 
-    mark_pair_xuse_unknown $pair;
     delete $state->{xuse_by_pair}->{$pair};
     delete $state->{xuse_prevpair}->{$pair};
     %sure_pair_cache = ();
@@ -4398,6 +4398,9 @@ sub reset_pair_xuse {
 
 sub mark_pair_xuse_unknown {
     my $pair = shift;
+
+    progress_report 4, "Marking xuse of $pair as unknown.";
+
     if (defined $state->{xuse_by_pair}->{$pair}) {
         for my $obj (@{$state->{xuse_by_pair}->{$pair}}) {
             delete $state->{xuse_by_object}->{$obj}->{$pair};
