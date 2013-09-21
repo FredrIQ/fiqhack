@@ -191,16 +191,6 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define LAUNCH_UNSEEN    0x40    /* hero neither caused nor saw it */
 # define LAUNCH_KNOWN     0x80    /* the hero caused this by explicit action */
 
-/* Macros for explosion types */
-# define EXPL_DARK        0
-# define EXPL_NOXIOUS     1
-# define EXPL_MUDDY       2
-# define EXPL_WET         3
-# define EXPL_MAGICAL     4
-# define EXPL_FIERY       5
-# define EXPL_FROSTY      6
-# define EXPL_MAX         7
-
 /* Macros for messages referring to hands, eyes, feet, etc... */
 # define ARM              0
 # define EYE              1

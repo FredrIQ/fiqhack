@@ -1,0 +1,308 @@
+__ = (0, 0, 0)
+_A = (128, 96, 0)
+_B = (128, 255, 128)
+_C = (0, 0, 192)
+_D = (168, 224, 224)
+_E = (96, 48, 48)
+_F = (128, 64, 0)
+_G = (32, 64, 64)
+_H = (0, 112, 224)
+_I = (192, 96, 96)
+_J = (48, 96, 0)
+_K = (117, 105, 88)
+_L = (224, 192, 160)
+_M = (168, 168, 224)
+_N = (128, 32, 0)
+_O = (96, 0, 48)
+_P = (64, 128, 128)
+_Q = (255, 128, 128)
+_R = (128, 0, 255)
+_S = (0, 64, 32)
+_T = (128, 0, 0)
+_U = (96, 192, 0)
+_V = (48, 36, 0)
+_W = (96, 192, 192)
+_X = (0, 32, 32)
+_Y = (48, 24, 0)
+_Z = (48, 12, 0)
+_a = (128, 112, 32)
+_b = (64, 64, 128)
+_c = (192, 0, 96)
+_d = (48, 0, 0)
+_e = (0, 0, 224)
+_f = (224, 224, 0)
+_g = (0, 128, 64)
+_h = (0, 255, 255)
+_i = (64, 0, 128)
+_j = (96, 96, 0)
+_k = (0, 255, 0)
+_l = (255, 0, 128)
+_m = (96, 96, 192)
+_n = (96, 72, 0)
+_o = (104, 84, 31)
+_p = (224, 168, 0)
+_q = (0, 64, 64)
+_r = (96, 48, 0)
+_s = (248, 224, 96)
+_t = (224, 224, 112)
+_u = (202, 143, 114)
+_v = (24, 48, 48)
+_w = (144, 192, 192)
+_x = (0, 192, 96)
+_y = (0, 32, 64)
+_z = (96, 24, 0)
+_0 = (128, 128, 64)
+_1 = (24, 24, 48)
+_2 = (224, 112, 0)
+_3 = (240, 240, 240)
+_4 = (128, 255, 255)
+_5 = (96, 0, 0)
+_6 = (128, 255, 0)
+_7 = (0, 0, 64)
+_8 = (96, 0, 192)
+_9 = (0, 145, 0)
+_$ = (108, 255, 0)
+A_ = (144, 144, 192)
+AA = (255, 192, 255)
+AB = (0, 24, 24)
+AC = (255, 192, 0)
+AD = (255, 192, 192)
+AE = (224, 224, 224)
+AF = (16, 16, 0)
+AG = (128, 64, 64)
+AH = (224, 56, 0)
+AI = (170, 136, 52)
+AJ = (16, 0, 0)
+AK = (224, 112, 112)
+AL = (0, 96, 96)
+AM = (208, 208, 208)
+AN = (64, 128, 0)
+AO = (255, 128, 255)
+AP = (255, 128, 0)
+AQ = (224, 168, 224)
+AR = (224, 0, 0)
+AS = (128, 0, 64)
+AT = (255, 108, 0)
+AU = (192, 192, 255)
+AV = (192, 192, 0)
+AW = (0, 48, 96)
+AX = (255, 255, 128)
+AY = (192, 192, 192)
+AZ = (168, 224, 168)
+Aa = (128, 128, 96)
+Ab = (112, 224, 0)
+Ac = (64, 64, 0)
+Ad = (127, 90, 72)
+Ae = (224, 112, 224)
+Af = (48, 48, 24)
+Ag = (255, 64, 0)
+Ah = (64, 48, 0)
+Ai = (192, 144, 0)
+Aj = (176, 176, 176)
+Ak = (0, 0, 96)
+Al = (128, 96, 96)
+Am = (192, 144, 192)
+An = (48, 24, 24)
+Ao = (64, 32, 0)
+Ap = (224, 0, 112)
+Aq = (0, 128, 128)
+Ar = (64, 16, 0)
+As = (144, 192, 144)
+At = (160, 160, 160)
+Au = (64, 0, 0)
+Av = (192, 96, 0)
+Aw = (255, 0, 255)
+Ax = (24, 24, 0)
+Ay = (255, 0, 0)
+Az = (192, 96, 192)
+A0 = (112, 224, 112)
+A1 = (48, 96, 96)
+A2 = (145, 71, 0)
+A3 = (0, 16, 16)
+A4 = (120, 160, 160)
+A5 = (24, 0, 0)
+A6 = (0, 0, 16)
+A7 = (182, 71, 0)
+A8 = (160, 160, 120)
+A9 = (160, 120, 160)
+A$ = (144, 144, 144)
+B_ = (0, 64, 128)
+BA = (192, 48, 0)
+BB = (80, 160, 160)
+BC = (224, 0, 224)
+BD = (48, 48, 96)
+BE = (120, 160, 120)
+BF = (120, 120, 160)
+BG = (96, 192, 96)
+BH = (160, 160, 80)
+BI = (160, 120, 120)
+BJ = (160, 80, 160)
+BK = (128, 128, 128)
+BL = (0, 96, 48)
+BM = (64, 64, 32)
+BN = (112, 224, 224)
+BO = (192, 0, 0)
+BP = (192, 0, 192)
+BQ = (0, 160, 160)
+BR = (0, 0, 128)
+BS = (71, 108, 108)
+BT = (128, 96, 128)
+BU = (112, 112, 112)
+BV = (64, 32, 32)
+BW = (80, 160, 80)
+BX = (80, 80, 160)
+BY = (96, 128, 96)
+BZ = (0, 48, 48)
+Ba = (192, 192, 144)
+Bb = (32, 64, 0)
+Bc = (128, 64, 128)
+Bd = (160, 160, 0)
+Be = (160, 80, 80)
+Bf = (64, 0, 32)
+Bg = (160, 0, 160)
+Bh = (96, 96, 96)
+Bi = (252, 252, 153)
+Bj = (32, 32, 0)
+Bk = (0, 160, 80)
+Bl = (64, 128, 64)
+Bm = (160, 120, 0)
+Bn = (0, 0, 48)
+Bo = (0, 80, 160)
+Bp = (192, 144, 144)
+Bq = (0, 224, 0)
+Br = (80, 160, 0)
+Bs = (112, 112, 224)
+Bt = (80, 80, 80)
+Bu = (32, 0, 0)
+Bv = (128, 0, 128)
+Bw = (80, 0, 160)
+Bx = (255, 255, 255)
+By = (96, 48, 96)
+Bz = (242, 196, 77)
+B0 = (208, 168, 80)
+B1 = (255, 255, 0)
+B2 = (255, 255, 192)
+B3 = (0, 192, 0)
+B4 = (160, 80, 0)
+B5 = (0, 182, 255)
+B6 = (160, 0, 80)
+B7 = (0, 192, 192)
+B8 = (165, 118, 94)
+B9 = (48, 96, 48)
+B$ = (64, 64, 64)
+C_ = (192, 160, 64)
+CA = (218, 218, 182)
+CB = (224, 224, 168)
+CC = (0, 160, 0)
+CD = (96, 0, 96)
+CE = (160, 40, 0)
+CF = (0, 0, 160)
+CG = (0, 224, 112)
+CH = (64, 32, 64)
+CI = (0, 128, 255)
+CJ = (0, 128, 0)
+CK = (96, 128, 128)
+CL = (48, 48, 48)
+CM = (229, 162, 130)
+CN = (32, 64, 32)
+CO = (192, 255, 255)
+CP = (171, 154, 129)
+CQ = (160, 0, 0)
+CR = (224, 168, 168)
+CS = (145, 135, 110)
+CT = (64, 0, 64)
+CU = (192, 255, 192)
+CV = (112, 0, 224)
+CW = (0, 96, 0)
+CX = (96, 96, 128)
+CY = (0, 255, 128)
+CZ = (0, 96, 192)
+Ca = (255, 211, 175)
+Cb = (32, 32, 32)
+Cc = (48, 0, 48)
+Cd = (0, 64, 0)
+Ce = (0, 224, 224)
+Cf = (32, 0, 32)
+Cg = (0, 48, 0)
+Ch = (192, 192, 96)
+Ci = (16, 16, 16)
+Cj = (128, 128, 255)
+Ck = (0, 32, 0)
+Cl = (128, 128, 0)
+Cm = (255, 182, 145)
+Cn = (16, 0, 16)
+Co = (0, 24, 0)
+Cp = (96, 96, 48)
+Cq = (108, 145, 182)
+Cr = (0, 16, 0)
+Cs = (0, 0, 255)
+# tile 730 (velvet / drain life)
+{
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAw_cBgB6AwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwB6BJ_cB6Bg_cAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAw_cBgB6_cBJ_cBeBg_cAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAw_cBJB6_cBg_cBg_c_cBc_cBvAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAw_cBv_c_cBcB6BJ_cBeBg_cBc_cBg_cAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAw_cBJ_cBc_cBg_c_cBg_c_cBcAp_cBc_cBvAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAw_cBgB6Bg_cBcB6BgBeBg_cBc_cBg_cBvApBeBg_cAwAwAw
+  AwAwAwAwAwAwAwAwB6BJ_c_cBc_c_c_cBcApB6Bc_cBg_I_cBc_cBg_cBc_cAwAw
+  AwAwAwAwAwAwAwB6Bg_c_cBc_c_cBJ_cBg_cBvApBv_c_cBv_c_cBJB6ApBvASAw
+  AwAwAwAwAwAw_cBJB6Bc_cBg_cBv_cBgBe_cBc_cBJ_cBcApBgB6_cBgBe_cBcAw
+  AwAwAwAwAwBc_cBg_c_cBv_cBJ_cBc_c_cBg_cBg_c_cBvB6BJ_cBc_cB6BvAS__
+  AwAwAwAwB6_cBg_IBg_cBJ_cB6Bg_cBc_cBJ_cB6BJ_c_cBc_c_cBv_cByB6ByAJ
+  AwAwAwBg_cBc_cApBc_cB6_cBgBeB6Bg_c_cBgB6_cBcBg_c_cBvBmBcB6CDAS__
+  AwAw_c_cBJ_cBgB6_cBgBc_c_cBg_cBc_cBc_cBc_c_c_cBJB6_cBy_FASBy____
+  Aw_cBJBgB6_cBc_cBJ_c_c_cBJ_cBcB6ApBv_c_cBc_cBv_cBcBvB6_AAS____Aw
+  B6BgB6_cBc_c_cBgB6BvBJ_c_cBv_cBgBe_cBg_cBg_cBc_cB6ASBy_rA6__AwAw
+  Bg_cBeBg_cB6Bg_cBJ_c_c_cBc_cBc_c_cBJ_cBc_cBcB6B6ByBvAS____AwAwAw
+  Aw_cBg_cBJ_cBc_c_cBg_cBc_cBg_cBvApBg_c_cBv_cBvAGB6_OA3__AwAwAwAw
+  AwA$As_c_cBv_c_cBJ_cBc_cBg_c_cBc_cBc_cBc_cAGBvASCD____AwAwAwAwAw
+  AwAtAtA$A$_cBc_c_cBv_c_cBc_cBJ_c_cBg_cBvB6BvASBy____AwAwAwAwAwAw
+  AwAjAjAtAtA$A$_cBc_cBc_cBg_cB6Bg_cBc_cAGB6ByAS____AwAwAwAwAwAwAw
+  B6AjAtAjAjAtAtA$A$_cBg_cBc_cBJ_c_cBgASBvASASCr__AwAwAwAwAwAwAwAw
+  A3_cBvAjAjAtAjA$AtA$A$Bc_c_c_cBc_cByB6AGCDCr__AwAwAwAwAwAwAwAwAw
+  AwCrCrB6BvAjAjAjAjA$AtA$A$Bv_cBvB6B6ByAS____AwAwAwAwAwAwAwAwAwAw
+  AwAwAw__AxBvB6AtAjAjAjA$AtA$BcB6BcASCD____AwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAFA3_cBvAjAjAjAjAt_cASASCDAF__AwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwCrA3B6B6AjAtAtBvASBy____AwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwA3__B6_cA4ASByAJ__AwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwA3A3ASAS____AwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwCrA6__AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+}
+# tile 786 (gold piece)
+{
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwB1B1BiAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwB1B1BiAwACACACAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwACACACB1B1BiB1B1BiAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwB1B1Bi_p_pACACACACACB1____AwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwACACACB1B1B2_pB1B1B2B1Bi____AwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwB1B1Bi__B1B1B2ACAC_pACAC_fACAC_pA6__B1B1BiAwAwAwAw
+  AwAwAwAwAwAwAwACACACA6AC_fACB1B1B2B1B1BiB1B1B2____ACACAC__AwAwAw
+  AwAwAwAwAwAwAwAwCrCrB1B1Bi_pACACACACACB1ACACACCr____AwCr__AwAwAw
+  AwAwAwAwAwAwAwAwAwAwACACACA6B1B1B2B1B1B2____Cr__AwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwCrCr__ACACACACACACCr____B1B1BiAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwCrCrCrCrCr__AwAwAC_fAC__AwAwAwAwAw
+  AwAwAwAwAwAwAwB1B1Bi__AwAwAwAwAwAwAwAwAwAwAwAwAwAJ____AwAwAwAwAw
+  AwAwAwAwAwAwAwACACAC__AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwCrCr__AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+  AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
+}

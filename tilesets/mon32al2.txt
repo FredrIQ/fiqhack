@@ -1,0 +1,311 @@
+__ = (0, 0, 0)
+_A = (128, 96, 0)
+_B = (128, 255, 128)
+_C = (0, 0, 192)
+_D = (168, 224, 224)
+_E = (96, 48, 48)
+_F = (128, 64, 0)
+_G = (32, 64, 64)
+_H = (0, 112, 224)
+_I = (192, 96, 96)
+_J = (48, 96, 0)
+_K = (117, 105, 88)
+_L = (224, 192, 160)
+_M = (168, 168, 224)
+_N = (128, 32, 0)
+_O = (96, 0, 48)
+_P = (64, 128, 128)
+_Q = (255, 128, 128)
+_R = (128, 0, 255)
+_S = (0, 64, 32)
+_T = (128, 0, 0)
+_U = (48, 48, 0)
+_V = (96, 192, 0)
+_W = (48, 36, 0)
+_X = (96, 192, 192)
+_Y = (0, 32, 32)
+_Z = (48, 24, 0)
+_a = (48, 12, 0)
+_b = (128, 112, 32)
+_c = (64, 64, 128)
+_d = (192, 0, 96)
+_e = (48, 0, 0)
+_f = (0, 0, 224)
+_g = (224, 224, 0)
+_h = (0, 128, 64)
+_i = (0, 255, 255)
+_j = (64, 0, 128)
+_k = (96, 96, 0)
+_l = (0, 255, 0)
+_m = (255, 0, 128)
+_n = (96, 96, 192)
+_o = (96, 72, 0)
+_p = (104, 84, 31)
+_q = (224, 168, 0)
+_r = (0, 64, 64)
+_s = (96, 48, 0)
+_t = (248, 224, 96)
+_u = (224, 224, 112)
+_v = (202, 143, 114)
+_w = (24, 48, 48)
+_x = (144, 192, 192)
+_y = (0, 192, 96)
+_z = (0, 32, 64)
+_0 = (96, 24, 0)
+_1 = (128, 128, 64)
+_2 = (24, 24, 48)
+_3 = (224, 112, 0)
+_4 = (240, 240, 240)
+_5 = (0, 48, 24)
+_6 = (128, 255, 255)
+_7 = (96, 0, 0)
+_8 = (128, 255, 0)
+_9 = (0, 0, 64)
+_$ = (96, 0, 192)
+A_ = (0, 145, 0)
+AA = (108, 255, 0)
+AB = (144, 144, 192)
+AC = (255, 192, 255)
+AD = (0, 24, 24)
+AE = (255, 192, 0)
+AF = (255, 192, 192)
+AG = (224, 224, 224)
+AH = (16, 16, 0)
+AI = (128, 64, 64)
+AJ = (224, 56, 0)
+AK = (170, 136, 52)
+AL = (16, 0, 0)
+AM = (224, 112, 112)
+AN = (0, 96, 96)
+AO = (208, 208, 208)
+AP = (64, 128, 0)
+AQ = (255, 128, 255)
+AR = (255, 128, 0)
+AS = (224, 168, 224)
+AT = (224, 0, 0)
+AU = (128, 0, 64)
+AV = (255, 108, 0)
+AW = (192, 192, 255)
+AX = (192, 192, 0)
+AY = (0, 48, 96)
+AZ = (255, 255, 128)
+Aa = (192, 192, 192)
+Ab = (168, 224, 168)
+Ac = (128, 128, 96)
+Ad = (112, 224, 0)
+Ae = (64, 64, 0)
+Af = (127, 90, 72)
+Ag = (224, 112, 224)
+Ah = (48, 48, 24)
+Ai = (255, 64, 0)
+Aj = (64, 48, 0)
+Ak = (192, 144, 0)
+Al = (176, 176, 176)
+Am = (0, 0, 96)
+An = (128, 96, 96)
+Ao = (192, 144, 192)
+Ap = (48, 24, 24)
+Aq = (64, 32, 0)
+Ar = (224, 0, 112)
+As = (24, 48, 0)
+At = (0, 128, 128)
+Au = (64, 16, 0)
+Av = (144, 192, 144)
+Aw = (160, 160, 160)
+Ax = (64, 0, 0)
+Ay = (192, 96, 0)
+Az = (255, 0, 255)
+A0 = (24, 24, 0)
+A1 = (255, 0, 0)
+A2 = (192, 96, 192)
+A3 = (112, 224, 112)
+A4 = (48, 96, 96)
+A5 = (145, 71, 0)
+A6 = (0, 16, 16)
+A7 = (120, 160, 160)
+A8 = (24, 0, 0)
+A9 = (0, 0, 16)
+A$ = (182, 71, 0)
+B_ = (160, 160, 120)
+BA = (160, 120, 160)
+BB = (144, 144, 144)
+BC = (0, 64, 128)
+BD = (192, 48, 0)
+BE = (80, 160, 160)
+BF = (224, 0, 224)
+BG = (48, 48, 96)
+BH = (120, 160, 120)
+BI = (120, 120, 160)
+BJ = (96, 192, 96)
+BK = (160, 160, 80)
+BL = (160, 120, 120)
+BM = (160, 80, 160)
+BN = (128, 128, 128)
+BO = (0, 96, 48)
+BP = (64, 64, 32)
+BQ = (112, 224, 224)
+BR = (192, 0, 0)
+BS = (192, 0, 192)
+BT = (0, 160, 160)
+BU = (0, 0, 128)
+BV = (71, 108, 108)
+BW = (128, 96, 128)
+BX = (112, 112, 112)
+BY = (64, 32, 32)
+BZ = (80, 160, 80)
+Ba = (80, 80, 160)
+Bb = (96, 128, 96)
+Bc = (0, 48, 48)
+Bd = (192, 192, 144)
+Be = (32, 64, 0)
+Bf = (128, 64, 128)
+Bg = (160, 160, 0)
+Bh = (160, 80, 80)
+Bi = (64, 0, 32)
+Bj = (160, 0, 160)
+Bk = (96, 96, 96)
+Bl = (252, 252, 153)
+Bm = (32, 32, 0)
+Bn = (0, 160, 80)
+Bo = (64, 128, 64)
+Bp = (160, 120, 0)
+Bq = (0, 0, 48)
+Br = (0, 80, 160)
+Bs = (192, 144, 144)
+Bt = (0, 224, 0)
+Bu = (80, 160, 0)
+Bv = (112, 112, 224)
+Bw = (80, 80, 80)
+Bx = (32, 0, 0)
+By = (128, 0, 128)
+Bz = (80, 0, 160)
+B0 = (255, 255, 255)
+B1 = (96, 48, 96)
+B2 = (242, 196, 77)
+B3 = (208, 168, 80)
+B4 = (255, 255, 0)
+B5 = (255, 255, 192)
+B6 = (0, 192, 0)
+B7 = (160, 80, 0)
+B8 = (0, 182, 255)
+B9 = (160, 0, 80)
+B$ = (0, 192, 192)
+C_ = (165, 118, 94)
+CA = (48, 96, 48)
+CB = (64, 64, 64)
+CC = (192, 160, 64)
+CD = (218, 218, 182)
+CE = (224, 224, 168)
+CF = (0, 160, 0)
+CG = (96, 0, 96)
+CH = (160, 40, 0)
+CI = (0, 0, 160)
+CJ = (0, 224, 112)
+CK = (64, 32, 64)
+CL = (0, 128, 255)
+CM = (0, 128, 0)
+CN = (96, 128, 128)
+CO = (48, 48, 48)
+CP = (229, 162, 130)
+CQ = (32, 64, 32)
+CR = (192, 255, 255)
+CS = (171, 154, 129)
+CT = (160, 0, 0)
+CU = (224, 168, 168)
+CV = (145, 135, 110)
+CW = (64, 0, 64)
+CX = (192, 255, 192)
+CY = (112, 0, 224)
+CZ = (0, 96, 0)
+Ca = (96, 96, 128)
+Cb = (0, 255, 128)
+Cc = (0, 96, 192)
+Cd = (24, 48, 24)
+Ce = (255, 211, 175)
+Cf = (32, 32, 32)
+Cg = (0, 64, 0)
+Ch = (0, 224, 224)
+Ci = (32, 0, 32)
+Cj = (0, 48, 0)
+Ck = (192, 192, 96)
+Cl = (16, 16, 16)
+Cm = (128, 128, 255)
+Cn = (0, 32, 0)
+Co = (128, 128, 0)
+Cp = (255, 182, 145)
+Cq = (16, 0, 16)
+Cr = (0, 24, 0)
+Cs = (96, 96, 48)
+Ct = (108, 145, 182)
+Cu = (0, 16, 0)
+Cv = (0, 0, 255)
+# tile 343 (priest)
+{
+  AzAzAzAzAzAzAzAzAzAzAzAzAzAzB0B4B4AzAzAzAzAzAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzAzAXCHA5CHAXAzAzAzAzAzAzAzB0CCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzAzCHAVAiB7CHAXAzAzAzAzAzAzB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzAzAVAiAVAiB7CHAzAzAzAzAzAzAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzAzAiAVAiAVCHCHBwAzAzAzAzB0B4B4CCAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzCBAVB4B4AVCHA5BwBwAzB4AXB0AXB4AXAXCCAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzCBB4B0B4B4AXAXBwCBAzCCCCB4B4AXCCCCCCAzAz
+  AzAzAzAzAzAzAzAzAzAzAzCOCBCp___v__Cp_vBwBwBwAzAzAzAXCCCCAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzCOCBCeCeCpCpCp_vCBBwCBAzAzAzAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzCOCBCpCpCpCp_vCOCBBwBwAzAzAzB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzCOCBBwCpCpCpCOCBBwCBCHCHAzAzAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAz_FAzAzAzCOBwCBBwCOCBCBBwB7CHB7CHAzB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzB7AG_FAzCOAiCOBwCOCBBwBwCHCHB7CHBkBwCeCeCpAzAzAzAz
+  AzAzAzAzAzAzB7B0_F_FCOAiB7CHCOCOBwBwBwCHAVCHBkBkBwCpCeCpAzAzAzAz
+  AzAzAzAzAzB7B0B7B7_FCOA5CHCOCOCBBwBwB7AiAVCHBkBwBw_vCp_vAzAzAzAz
+  AzAzAzAzAzAzB7B7B7COAiA$CHCOCBBwBwBwAiAVCHBkBkBkBwAX_vAzAzAzAzAz
+  AzAzAzAzAzAzAzB7B7COA5CHCOCOCBBwBwBwAVAiCHBkBwBwBkAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzCeB7COA$CHCOCBBwBwBwBwAiAVA5BkBkBwBwB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzCe_vCOCHA5COCBBwBwCBBwAiAVCHBkBwBwBNB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzCOCHCHCOCBBwCBBwBwAiAVCHBwBwBkBNB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzCOA5CHCOCBBwBwBwCBAVAiB7BwBkBwBNB4CCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzCOA$CHCOCBBwCBBwBwAiAVCHBwBwBNBNAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzCOAXAXCOCBBwBwCBBwB4B4AXBkBwBNBNAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzCOCBCBCOCBCBBwBwBwBwBkBwBwBwBNAzAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzCOCBCBCOCBBwBwBwCBBwBwBwBkBwAzAzAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzCBCBCBCBBwBwCBBwBwBwBkBwBwAzAzAXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzCBCBCBCHBwBwBwBwCBBwBwBwBk____AXCCAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzCBCBB7CHBwBwBwBwCBBkBwBw____CCCC__AzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAzCBAiB7CHBwCBBwBwBwBwBk____AXCC______AzAz
+  AzAzAzAzAzAzAzAzAzAzAz____AVCHCHA5CHBwCBBkBw______B4CC__AzAzAzAz
+  AzAzAzAzAzAzAzAzAzAz____CHCHB7CHA$CHA5CHCHB7________AzAzAzAzAzAz
+  AzAzAzAzAzAzAzAzAzAzAzAz________________________AzAzAzAzAzAzAzAz
+}
+# tile 344 (priestess)
+{
+  AzAzAzAzAzAzAzAzAzAzAzAzAzBwCOCOCBBwA$CH_FAzAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzB0CCAzAzAzAzBwCOCOCOCOCBBkA$CH_NAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAzCBCOCOCOCOCBBwA$A$_NAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAzAzCBCOCOCOCOCBBkA$CH_FAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzB0B4B4CCAzAzAzAzCBC_C__ABwBDCH_F_NAzAzAzAzAzAzAzAzAzAz
+  AzAzAzB4AXB0AXB4AXAXCCAzAz_oCeCpCPC__o_A_o_NAzAzAzAzAzAzAzAzAzAz
+  AzAzAzCCCCB4B4AXCCCCCCAzAzCeCOCpCOCPC__A_AAzAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCCCAzAzAzAzCeCpCpCpCP_v_AAK_oAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAzAzAz_ACp_FCPCPC__oAK_AAzAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAzAz_o_ACPCPC__o_o_AAK_oAzAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAzAzAzAzBwCBCBBwBk_A_AAK_A_oAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAzAzBwCBCOCBCBBwBkAiA$_A_o_oAzAzAzAzAzAzAz
+  AzAzAzAzAzCpCpCPAzAzAzCOAiBwCOCOCOCBBwAVA$COBw_A_oAzAzAzAzAzAzAz
+  AzAzAzAzAzCpCpCPAiA$COCOA$AVBwCOCBCBA$BDCOCOCBBw_A_oAzAzAzAzAzAz
+  AzAzAzAzAzCpCP_vAVBDCOCBCBBDAiAVAiA$BDA$COCOCBBw_A_oAzAzAzAzAzAz
+  AzAzAzAzAzAzAXA$A$CHCBBwBwA$A$A$A$BDA5CHBwCBBwBk_A_oAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCCHB7CHBwBwAuBDA$AJA5CH_ABkA$CH_N_A_oAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAz_o_oCBCOCOCBB7CH_AAVA$CH_o_aAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAz_oA$BDAVAiA$CHCHCHAVCH_F_a_aAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAzBDA$CBCOCOCBA$A$A5AiA$CH_aAzAzAzAzAzAzAz
+  AzAzAzAzAzAzB4CCAzAzAzAzAVBDCOCOCOCOCHA$CHAVBD_FAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAzA$AiA$COCOCOCBCHA$CHCpCP_vAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAzAVAiAVCOCOCOCBA$CHB7CpCpCPAzAzAzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAzAiAVAiCOCOCOCBCHA5CH_NCP_N____AzAzAzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAVAiAVAiCOCBCOBwCHCHB7_N_F_N_F______AzAzAzAz
+  AzAzAzAzAzAzAXCCAzAzAiAVAiA$COCBCOBwCHB7BDA5_N_N_N__________AzAz
+  AzAzAzAzAzAzAXCCAzA$A$AiAVA$COCBCOBwCHCHA$BDA$_N_F_N________AzAz
+  AzAzAzAzAzAzCCCCAzB4BDA$A$BDCOBwCOBwA5A$A$A$CH_F_NAX________AzAz
+  AzAzAzAzAzAzAXCCAzCHB4B4BDA$COBwCOCBCHCHA$AJA5_gAX_N______AzAzAz
+  AzAzAzAzAzAzB4CC____A5CHB4B4COCBCOBwAXB4B4B4_gCH_N________AzAzAz
+  AzAzAzAzAzAzAz__________CHA5COBwCOBwCHA5CHCHA5CHCu____AzAzAzAzAz
+  AzAzAzAzAzAzAzAzAz________________________________AzAzAzAzAzAzAz
+}

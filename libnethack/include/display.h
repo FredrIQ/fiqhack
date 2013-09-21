@@ -187,6 +187,17 @@
 # define DISP_OBJECT  (-4)      /* Like flash, but shows an object instead of
                                    an effect symbol */
 
+/* Macros for explosion types */
+/* Moved from hack.h, because the tileset code needs access to it */
+# define EXPL_DARK        0
+# define EXPL_NOXIOUS     1
+# define EXPL_MUDDY       2
+# define EXPL_WET         3
+# define EXPL_MAGICAL     4
+# define EXPL_FIERY       5
+# define EXPL_FROSTY      6
+# define EXPL_MAX         7
+
 /* Total number of cmap indices in the shield_static[] array. */
 # define SHIELD_COUNT 21
 # define NUM_ZAP 8      /* number of zap beam types */

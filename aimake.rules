@@ -1,4 +1,6 @@
 # Last modified by Alex Smith, 2013-09-21
+# Copyright (c) Alex Smith, 2013.
+# NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
 {
     options => {
@@ -42,7 +44,7 @@
             verb => 'determined',
         },
         _libraries => {
-            output => ['searchlib:jansson',
+            output => ['searchlib:png',
                        'searchlib:pq',
                        'searchlib:ws2_32'],
             outdepends => [],
@@ -181,6 +183,15 @@
                         "optpath::bpath:libnethack/dat/rumors"],
             in_subdir => "bpath:libnethack/dat",
             output => "bpath:libnethack/dat/nhdat",
+        },
+        _tileset_tilemap => {
+            command => ["bpath:tilesets/tilemap_c$exeext",
+                        "path:tilesets/tile_h.in",
+                        "optpath::path:tilesets/tile_h.in",
+                        "optpath::bpath:tilesets/tile.c",
+                        "optpath::bpath:tilesets/tile.h"],
+            output => ["bpath:tilesets/tile.c",
+                       "bpath:tilesets/tile.h"],
         },
         _readme_dumps => {
             command => ["intcmd:writefile",

@@ -205,6 +205,8 @@ enum dungeon_symbols {
 # define E_explode8     7 /* explosion bottom center */
 # define E_explode9     8 /* explosion bottom right */
 
+# define E_explodecount 9
+
 /* end effects */
 
 
