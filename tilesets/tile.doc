@@ -107,6 +107,26 @@ superimposed on the background, and monster brandings are superimposed on the
 monster.  Warning symbols are encoded as monsters (with a specific branding to
 show that they're warnings rather than monsters).
 
+
+Provided tile manipulation utilities:
+
+bigtile          Creates 64x64 "3D effect" tiles from 16x16 tiles
+magtile          Creates 32x32 tiles from 16x16 tiles
+tilemap          A tiles "makedefs": creates tile.{c,h}, nethack4.map
+import_tileset   Creates a .txt tileset from a PNG image and a map
+convert_tileset  Reorders and/or combines .txt tilesets based on a map
+export_tileset   Creates PNG images from .txt tilesets
+
+To create a tileset image from the .txt files and a map, you would use
+convert_tileset to produce a single combined .txt file that contained all the
+tiles in the map (in the same order), and then export_tileset to convert it to
+an image.  To do the reverse, you woul use import_tileset.  In order to use a
+tileset from another version or variant with this version of NetHack 4, you
+would use import_tileset with that version's map, convert_tileset with this
+version's map (and possibly some extra tilesets to provide tiles that would
+otherwise be missing), and then export_tileset to convert it back to an image.
+
+
 Shared code provided for conversion utilities:
 
 tile.h contains shared declarations (and is generated from tile_h.in by the

@@ -415,13 +415,13 @@ Copyright:
  The files originated in vanilla NetHack (where they also have no explicit
  copyright notice), but the Slash'EM versions were modified somewhat.
 
-Files: tilesets/tile2png.c
+Files: tilesets/export_tileset.c
 License: NHGPL
 Copyright:
  Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
                Slash'EM Development Team 2003
 
-Files: tilesets/txtmerge.c
+Files: tilesets/convert_tileset.c
 License: NHGPL
 Copyright: Copyright (C) J. Ali Harlow 2000
 
