@@ -491,8 +491,8 @@ set_tile_size(FILE *txtfile)
             while (ch == ' ' || ch == '\t')
                 ch = getc(txtfile);
             if (ch == '_' || (ch >= 'A' && ch <= 'Z') ||
-                ch >= ('a' && ch <= 'z') ||
-                ch >= ('0' && ch <= '9') || ch == '$')
+                (ch >= 'a' && ch <= 'z') ||
+                (ch >= '0' && ch <= '9') || ch == '$')
                 ch = getc(txtfile);
             else
                 break;
@@ -500,7 +500,7 @@ set_tile_size(FILE *txtfile)
         if (!i && ch == '}')
             break;
         if (ch != '\n' && ch != '\r') {
-            Fprintf(stderr, "unexpected character %c\n", ch);
+            Fprintf(stderr, "unexpected character %c (%d)\n", ch, ch);
             return FALSE;
         } else
             ch = getc(txtfile);

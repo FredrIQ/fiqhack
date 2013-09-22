@@ -193,6 +193,16 @@
             output => ["bpath:tilesets/tile.c",
                        "bpath:tilesets/tile.h"],
         },
+        _build_fonts => {
+            object => qr=^path:tilesets/fonts/.*\.txt=s,
+            command => ["bpath:tilesets/tile2png_c$exeext",
+                        "optpath:-o :extend:.png:",
+                        "optstring:-f",
+                        "optpath::"],
+            output_from_optpath => '-o ',
+             # this produces some informational output on stderr
+            ignore_warnings => 1,
+        },
         _readme_dumps => {
             command => ["intcmd:writefile",
 "optstring:This_directory_stores_dumplogs_produced_during_server_play.",
