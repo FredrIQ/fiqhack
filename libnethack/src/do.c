@@ -869,6 +869,8 @@ notify_levelchange(void)
         mode = LDM_SOKOBAN;
     else if (Is_rogue_level(&u.uz))
         mode = LDM_ROGUE;
+    else if (Is_knox(&u.uz))
+        mode = LDM_KNOX;
     else
         mode = LDM_DEFAULT;
 

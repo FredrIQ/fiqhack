@@ -99,6 +99,9 @@
 # define LDM_MINES      3
 # define LDM_SOKOBAN    4
 # define LDM_ROGUE      5
+# define LDM_KNOX       6
+
+# define LDM_COUNT      7       /* number of level display modes */
 
 /* command param type specification */
 # define CMD_ARG_NONE (1 << 1)  /* param can be empty */
