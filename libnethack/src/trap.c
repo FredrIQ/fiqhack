@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3266,6 +3266,7 @@ disarm_holdingtrap(struct trap *ttmp, schar dx, schar dy)
     } else {
         if (ttmp->ttyp == BEAR_TRAP) {
             pline("You disarm %s bear trap.", the_your[ttmp->madeby_u]);
+            makeknown(BEARTRAP);
             cnv_trap_obj(level, BEARTRAP, 1, ttmp);
         } else {        /* if (ttmp->ttyp == WEB) */
 
@@ -3287,6 +3288,7 @@ disarm_landmine(struct trap *ttmp, schar dx, schar dy)
         return fails;
     pline("You disarm %s land mine.", the_your[ttmp->madeby_u]);
     level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
+    makeknown(LAND_MINE);
     cnv_trap_obj(level, LAND_MINE, 1, ttmp);
     return 1;
 }

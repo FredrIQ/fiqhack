@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -618,8 +618,8 @@ const struct objclass const_objects[] = {
     TOOL("figurine", NULL, 1, 0, 1, 0, 25, 50, 80, MINERAL, HI_MINERAL),
     TOOL("magic marker", NULL, 1, 0, 1, 1, 15, 2, 50, PLASTIC, CLR_RED),
 /* traps */
-    TOOL("land mine", NULL, 1, 0, 0, 0, 0, 300, 180, IRON, CLR_RED),
-    TOOL("beartrap", NULL, 1, 0, 0, 0, 0, 200, 60, IRON, HI_METAL),
+    TOOL("land mine", "explosive trap", 0, 0, 0, 0, 0, 300, 180, IRON, CLR_RED),
+    TOOL("beartrap", "toothed trap", 0, 0, 0, 0, 0, 200, 60, IRON, HI_METAL),
 /* instruments */
     TOOL("tin whistle", "whistle", 0, 0, 0, 0, 100, 3, 10, METAL, HI_METAL),
     TOOL("magic whistle", "whistle", 0, 0, 1, 0, 30, 3, 10, METAL, HI_METAL),
