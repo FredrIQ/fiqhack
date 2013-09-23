@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,63 +275,91 @@ static const struct nh_symdef swallowsyms[] = {
     {'/', "swallow_bot_r", CLR_ORANGE}, /* swallow bottom right */
 };
 
-static int unnamed_cnt[MAXOCLASSES];
 
-/*
- * make unique, non-null names for all objects
- */
-static char *
-make_object_name(int otyp)
+/* Make unique, non-null names for all objects. */
+#define UNIQUE_OBJECT_NAME_LENGTH 80
+/* We cache the names to ease allocation issues; there are only a finite number
+   of them anyway. */
+static char unique_object_names[NUM_OBJECTS][UNIQUE_OBJECT_NAME_LENGTH+1];
+static boolean unique_object_names_initialized = FALSE;
+
+static void
+initialize_unique_object_names(void)
 {
-    char buffer[41], buf2[41];
     const char *nameptr;
-    char *ret;
-    int class = (int)const_objects[otyp].oc_class;
+    char *target;
+    int otyp, otyp2;
+    int class;
+    int object_matches_descr_of[NUM_OBJECTS];
 
+    /* We do two passes over the list: first we name the objects, then we
+       disambiguate names that would otherwise be the same. */
+    for (otyp = 0; otyp < NUM_OBJECTS; otyp++) {
+        class = (int)const_objects[otyp].oc_class;
+        
+        /* Name objects by their unidentified description, if we can, because
+           that's what determines what colour they'll be in ASCII, and what tile
+           will be used in tiles mode. */
+        nameptr = obj_descr[otyp].oc_descr;
+        if (!nameptr) nameptr = obj_descr[otyp].oc_name;
+        target = unique_object_names[otyp];
 
-    buffer[0] = buf2[0] = '\0';
-    buffer[40] = buf2[0] = '\0';
-
-    nameptr = obj_descr[otyp].oc_name;
-
-    /* catch dummy objects (scrolls, wands, ...) without names */
-    if (!nameptr) {
-        unnamed_cnt[(int)const_objects[otyp].oc_class]++;
-        snprintf(buf2, 40, "unnamed %d", unnamed_cnt[class]);
+        /* Add a suffix to some object types to disambiguate orange from orange
+           potion from orange spellbook, etc.. */
+        if (class == AMULET_CLASS && *nameptr != 'A')
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s amulet", nameptr);
+        else if (class == WAND_CLASS)
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s wand", nameptr);
+        else if (class == RING_CLASS)
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s ring", nameptr);
+        else if (class == POTION_CLASS)
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s potion", nameptr);
+        else if (class == SPBOOK_CLASS)
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s spellbook", nameptr);
+        else if (class == GEM_CLASS)
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s gem", nameptr);
+        else
+            snprintf(target, UNIQUE_OBJECT_NAME_LENGTH, "%s", nameptr);
+        target[UNIQUE_OBJECT_NAME_LENGTH] = '\0'; /* cut off, don't overflow */
     }
-
-    if (class == AMULET_CLASS && const_objects[otyp].oc_material == PLASTIC) {
-        snprintf(buf2, 40, "fake amulet of yendor");
-    } else if (class == GEM_CLASS && const_objects[otyp].oc_material == GLASS) {
-        snprintf(buf2, 40, "%s glass gem", obj_descr[otyp].oc_descr);
+    for (otyp = 0; otyp < NUM_OBJECTS; otyp++) {
+        object_matches_descr_of[otyp] = 0;
+        target = unique_object_names[otyp];
+        for (otyp2 = 0; otyp2 < NUM_OBJECTS; otyp2++) {
+            if (otyp == otyp2) continue;
+            if (strcmp(target, unique_object_names[otyp2]) == 0) {
+                object_matches_descr_of[otyp] = (otyp < otyp2 ? otyp : otyp2);
+                break;
+            }
+        }
     }
-
-    if (buf2[0])
-        nameptr = buf2;
-
-    /* add a prefix to some object types to disambiguate (wand of) fire from
-       (scroll of) fire */
-    if (class == WAND_CLASS)
-        snprintf(buffer, 40, "wand of %s", nameptr);
-    else if (class == RING_CLASS)
-        snprintf(buffer, 40, "ring of %s", nameptr);
-    else if (class == POTION_CLASS)
-        snprintf(buffer, 40, "potion of %s", nameptr);
-    else if (class == SPBOOK_CLASS)
-        snprintf(buffer, 40, "spellbook of %s", nameptr);
-    else if (class == SCROLL_CLASS)
-        snprintf(buffer, 40, "scroll of %s", nameptr);
-    else
-        snprintf(buffer, 40, "%s", nameptr);
-
-    ret = xmalloc(strlen(buffer) + 1);
-    strcpy(ret, buffer);
-
-    return ret;
+    for (otyp = 0; otyp < NUM_OBJECTS; otyp++) {
+        if (!object_matches_descr_of[otyp]) continue;
+        target = unique_object_names[otyp];    
+        /* Append 's ' and a number, just as is done to disambiguate tiles.
+           This leads to some weird constructions sometimes (probably just
+           "Amulet of Yendors 0"), but maximizes the compatibility with
+           foreign tilesets. */
+        int nth = 0;
+        for (otyp2 = 0; otyp2 < otyp; otyp2++) {
+            if (object_matches_descr_of[otyp] ==
+                object_matches_descr_of[otyp2]) nth++;
+        }
+        snprintf(eos(target), UNIQUE_OBJECT_NAME_LENGTH - strlen(target),
+                 "s %d", nth);
+    }
 }
 
+char *
+make_object_name(int otyp)
+{
+    if (!unique_object_names_initialized)
+        initialize_unique_object_names();
+    unique_object_names_initialized = TRUE;
+    return unique_object_names[otyp];
+}
 
-static const char *
+const char *
 make_mon_name(int mnum)
 {
     char *name;
