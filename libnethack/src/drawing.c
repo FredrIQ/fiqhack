@@ -99,7 +99,7 @@ const char *const defexplain[] = {
              "water",               /* pool */
              "air",                 /* open air */
              "cloud",               /* [part of] a cloud */
-    /* 20 */ "water",               /* under water */
+    /* 20 */ "underwater",          /* under water */
              "ice",                 /* ice */
              "molten lava",         /* lava */
              "doorway",             /* ndoor */
