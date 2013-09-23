@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -91,7 +91,8 @@
  * These defines are used by notify_levelchange() to inform the window port 
  * about some characteristic of the new level that might be worth displaying
  * in some nonstandard way (eg the rogue level in tty nethack, or alternate
- * tiles for mines/hell in tiles versions)
+ * tiles for mines/hell in tiles versions). When you change this list, update
+ * nethack/brandings.c.
  */
 # define LDM_DEFAULT    0
 # define LDM_HELL       1

@@ -5,7 +5,31 @@
 
 #include "hack.h"
 
-/* Relevent header information in rm.h and objclass.h. */
+/* Be very, very careful about what functions you call from this file. It's
+   linked into the tiles ports, and other things that aren't part of libnethack;
+   the basic rule is that this file serves the purpose of explaining to other
+   parts of NetHack 4 (libnethack, nethack clients, tilesequence.c):
+
+   * What exists in the game;
+   * What the things that exist in the game are for.
+
+   The current list of dependencies is:
+
+   xmalloc.c
+   objects.c
+   symclass.c
+   monst.c
+   hacklib.c
+
+   Apart from xmalloc.c, which is basically just memory allocation functions,
+   these are basically just files like this one that declare arrays of strings
+   and accessor functions. Please keep it that way; there should be no game
+   logic reachable via this file at all. (In particular, avoid anything that
+   has any sort of state; xmalloc.c is just about acceptable because its state
+   is only used to remember memory allocations.)
+ */
+
+/* Relevant header information in rm.h and objclass.h. */
 
 /* Object class names.  Used in object_detect(). */
 const char *const oclass_names[] = {
@@ -39,6 +63,7 @@ const char *const warnexplain[] = {
     "unknown creature causing you dread"
 };
 
+const char *const invismonexplain = "invisible monster";
 
 const struct nh_symdef warnsyms[WARNCOUNT] = {
     {'0', "warn1", CLR_WHITE},  /* white warning */
@@ -399,7 +424,7 @@ nh_get_drawing_info(void)
     tmp = xmalloc(sizeof (struct nh_symdef));
     tmp->ch = DEF_INVISIBLE;
     tmp->color = CLR_BRIGHT_BLUE;
-    tmp->symname = "invisible monster";
+    tmp->symname = invismonexplain;
     di->invis = tmp;
 
     di->num_monsters = NUMMONS;

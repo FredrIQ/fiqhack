@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2013-09-21
+Last-Modified: Last modified by Alex Smith, 2013-09-23
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -56,6 +56,12 @@ Copyright: Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy
 Files: libnethack/include/dlb.h
 License: NHGPL
 Copyright: Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993
+
+Files: libnethack/include/drawing.h
+License: NHGPL
+Copyright:
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+ Copyright (c) 2013 Alex Smith
 
 Files: libnethack/include/emin.h
 License: NHGPL
@@ -337,6 +343,10 @@ Copyright: Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 Files: nethack/src/main.c
 License: NHGPL
 Copyright: Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+
+Files: nethack/*/brandings.*
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
 
 Files: nethack_server/*
 License: NHGPL or GPL-2+

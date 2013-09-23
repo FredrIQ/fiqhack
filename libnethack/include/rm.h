@@ -1,10 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef RM_H
 # define RM_H
+
+# include "drawing.h"
 
 /*
  * The dungeon presentation graphics code and data structures were rewritten
@@ -104,6 +106,7 @@
  */
 
 /* begin dungeon characters */
+/* note: when changing these, also update brandings.c */
 enum dungeon_symbols {
 /* 0*/ S_unexplored,
     S_stone,
@@ -152,9 +155,11 @@ enum dungeon_symbols {
     S_vcdbridge,        /* closed drawbridge, vertical wall */
     S_hcdbridge,        /* closed drawbridge, horizontal wall */
 
+    S_cmap_COUNT,
+
     /* values used only in saving, to squeeze a bit more info into the memflags 
        dword */
-    S_vodoor_meml,
+    S_vodoor_meml = S_cmap_COUNT,
     S_vodoor_memt,
     S_vodoor_memlt,
     S_hodoor_meml,
@@ -173,6 +178,7 @@ enum dungeon_symbols {
 # define DUNGEON_FEATURE_OFFSET S_vodoor
 
 /* end dungeon characters, begin special effects */
+/* when changing these, also update brandings.c */
 
 # define E_digbeam      0 /* dig beam symbol */
 # define E_flashbeam    1 /* camera flash symbol */
@@ -183,6 +189,8 @@ enum dungeon_symbols {
 # define E_ss3          6
 # define E_ss4          7
 # define E_gascloud     8
+
+# define E_COUNT        9
 
 /* The 8 swallow symbols.  Do NOT separate.  To change order or add, see */
 /* the function swallow_to_effect() in display.c.                        */
@@ -205,16 +213,7 @@ enum dungeon_symbols {
 # define E_explode8     7 /* explosion bottom center */
 # define E_explode9     8 /* explosion bottom right */
 
-# define E_explodecount 9
-
 /* end effects */
-
-
-extern const struct nh_symdef defsyms[];        /* defaults */
-
-extern const char *const trapexplain[];
-extern const char *const defexplain[];
-extern const char *const warnexplain[];
 
 /*
  * The 5 possible states of doors
