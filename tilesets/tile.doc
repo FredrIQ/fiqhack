@@ -31,11 +31,16 @@ compatibility with Slash'EM and older versions of NetHack.  The comment (and
 the slash preceding it) is optional, and also ignored; in older versions of
 the code, it was used to specify the unrandomized appearance of items, but it
 is obviously a bad idea for two items with the same randomized appearance to
-be able to look different.  The name is what is used to identify the tile.
-(Note that the tile names are not necessarily consistent with previous version
-of NetHack.)  Tiles with unrecognised names are permitted, but ignored (thus,
-tile images that are currently not used for anything can be stored with images
-that are).
+be able to look different.  (As a backwards compatibility special case, if the
+name is "cmap", the comment is used as the name instead.)  The name is what is
+used to identify the tile.  Tiles with unrecognised names are permitted, but
+ignored (thus, tile images that are currently not used for anything can be
+stored with images that are).  In order to allow for compatibility with older
+versions of NetHack, if multiple consecutive tiles in a .txt file have the
+same name the same name, they're disambiguated by adding an "s" and a number
+starting at 0. (For instance, if two consecutive tiles are called "open door"
+in a tiles file, they're interpreted as though they were called "open doors 0"
+and "open doors 1".)
 
 These text-based tile files are converted into image-based tile files for use
 by the tiles code, via placing all the tile in the same image in a standard
@@ -56,9 +61,11 @@ to play with your tileset.
 A tilemap file is just a sequence of tile names, one per line.  (This format
 is intentionally incompatible with that used by previous versions, because the
 tile names in the maps of previous versions are different from the tile names
-in the tile files, making them not particularly useful.)  The old format had
-lines starting with "tile" and a number, and double-quoted the names; this
-format should be detected and rejected by tilemap manipulation code.
+in the tile files, making them not particularly useful.)  Unlike with the
+text-based format, no name repetition is allowed; all the names must be
+unique. The old format had lines starting with "tile" and a number, and
+double-quoted the names; this format should be detected and rejected by
+tilemap manipulation code.
 
 The palette.txt file contains a standard palette of 256 colors. Currently all
 the tiles, after final merging, only use colors in this palette, even though
@@ -92,8 +99,8 @@ memory of invisibility
 monsters
 warning symbols
 explosions
-beams (i.e. visual effects associated with magic)
-other visual effects
+beams (i.e. directional visual effects associated with wands, breath, etc.)
+other visual effects (sparkle, boomerangs, MR, etc.)
 engulfing monsters
 brandings (must always be transparent, even in 16x16)
 
@@ -112,7 +119,7 @@ Provided tile manipulation utilities:
 
 bigtile          Creates 64x64 "3D effect" tiles from 16x16 tiles
 magtile          Creates 32x32 tiles from 16x16 tiles
-tilemap          A tiles "makedefs": creates tile.{c,h}, nethack4.map
+tilemap          A tiles "makedefs": creates tile.h, nethack4.map
 import_tileset   Creates a .txt tileset from a PNG image and a map
 convert_tileset  Reorders and/or combines .txt tilesets based on a map
 export_tileset   Creates PNG images from .txt tilesets
@@ -131,11 +138,16 @@ Shared code provided for conversion utilities:
 
 tile.h contains shared declarations (and is generated from tile_h.in by the
 tilemap utility).  The tilemap utility also generates the default tilemap
-(nethack4.map), and a version of the tilemap that can be compiled into
-windowing interfaces (tile.c).
+(nethack4.map).
 
 tiletext.c defines the external variables from tile.h and supplies
 the external routines for reading and writing the defined text format.
+
+tilesequence.{c,h} define the order in which the tiles appear; tilesequence.c
+uses information from libnethack (drawing.c) and about tile names used only by
+the window ports (brandings.c), and converts between the three formats used
+for tile names ("API names" used by the JSON interface, tile names, and tile
+numbers in the NetHack 4 tilemap for the current version).
 
 Each conversion utility is expected to use tiletext.c and provide code of its
 own for reading and/or writing another format.  The important global variables
@@ -188,15 +200,31 @@ conversion programs should be prepared to accept up to MAXCOLORMAPSIZE
 colors and map them to a smaller number if their port requires it.
 The preferred set of 256 colors can be found in include/tilepal.h.
 
-tile.c provides the following two functions:
+tilesequence.c provides the following three functions:
 
-int tileno_from_name(const char* name)
+int tileno_from_name(const char *name, int offset)
   Given the name of a tile, returns its index within an image file using the
   NetHack 4 tilemap.
 
+int tileno_from_api_name(const char *name, const char *type, int offset)
+  Given the name of an nh_symdef (which might not be the same as the name of
+  the corresponding tile; it tends to be a lot shorter), returns its index
+  within an image file using the NetHack 4 tilemap. Zaps and explosions have
+  a type as well as a name; both are needed to find the correct tile.
+
 const char *name_from_tileno(int tileno)
   Given the index of a tile within an image file (using the NetHack 4 tilemap),
-  returns the name of that tile.
+  returns the name of that tile. (The return value needs no deallocation; it
+  might be a string literal, or might point to a static buffer that is
+  overwritten with each call, or might point to a buffer that is specific to
+  the input you give. Basically, don't assume it to stay valid beyond the
+  next call.)
+
+The "offset" parameter is a value that represents a logically connected range
+of tiles (TILESET_*_OFF), to make the lookup more efficient, and can be
+TILESEQ_INVALID_OFF if it is not known in which range the tile resides. The
+return value on error is NULL for a pointer, or TILESEQ_INVALID_OFF for an
+integer.
 
 If you add monsters/objects/other things to NetHack and need to add tiles to
 go with them, you now need only to add an appropriate entry to a .txt file

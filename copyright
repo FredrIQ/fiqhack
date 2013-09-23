@@ -441,6 +441,10 @@ Copyright:
  Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy and Dave Cohrs 1990
  Copyright (c) 2013 Alex Smith
 
+Files: tilesets/tilesequence.c
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
 Files: aimake.rules
 License: NHGPL
 Copyright: Copyright (c) Alex Smith, 2013

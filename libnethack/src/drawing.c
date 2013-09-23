@@ -74,58 +74,57 @@ const struct nh_symdef warnsyms[WARNCOUNT] = {
     {'5', "warn6", CLR_BRIGHT_MAGENTA}  /* black warning */
 };
 
+/* Note: these descriptions are used to name tiles, so should not be changed
+   without a good reason. If two descriptions are the same, they must be
+   consecutive in the list; and the list itself must be in the same order as
+   the S_ symbols in rm.h. */
 const char *const defexplain[] = {
-    /* 0 */ "unexplored area",
-    /* unexplored */
-    "solid rock",       /* stone */
-    "wall",     /* vwall */
-    "wall",     /* hwall */
-    "wall",     /* tlcorn */
-    "wall",     /* trcorn */
-    "wall",     /* blcorn */
-    "wall",     /* brcorn */
-    "wall",     /* crwall */
-    "wall",     /* tuwall */
-    /* 10 */ "wall",
-    /* tdwall */
-    "wall",     /* tlwall */
-    "wall",     /* trwall */
-    "corridor", /* dark corr */
-    "lit corridor",     /* lit corr */
-    "the floor of a room",      /* room */
-    "dark part of a room",      /* darkroom */
-    "water",    /* pool */
-    "air",      /* open air */
-    "cloud",    /* [part of] a cloud */
-    /* 20 */ "water",
-    /* under water */
-    "ice",      /* ice */
-    "molten lava",      /* lava */
-    "doorway",  /* ndoor */
-    /* "features" start here */
-    "open door",        /* vodoor */
-    "open door",        /* hodoor */
-    "closed door",      /* vcdoor */
-    "closed door",      /* hcdoor */
-    "iron bars",        /* bars */
-    "tree",     /* tree */
-    /* 30 */ "staircase up",
-    /* upstair */
-    "staircase down",   /* dnstair */
-    "ladder up",        /* upladder */
-    "ladder down",      /* dnladder */
-    "long staircase up",        /* upsstair */
-    "long staircase down",      /* dnsstair */
-    "altar",    /* altar */
-    "grave",    /* grave */
-    "opulent throne",   /* throne */
-    "sink",     /* sink */
-    /* 40 */ "fountain",
-    /* fountain */
-    "lowered drawbridge",       /* vodbridge */
-    "lowered drawbridge",       /* hodbridge */
-    "raised drawbridge",        /* vcdbridge */
-    "raised drawbridge",        /* hcdbridge */
+     /* 0 */ "unexplored area",     /* unexplored */
+             "solid rock",          /* stone */
+             "wall",                /* vwall */
+             "wall",                /* hwall */
+             "wall",                /* tlcorn */
+             "wall",                /* trcorn */
+             "wall",                /* blcorn */
+             "wall",                /* brcorn */
+             "wall",                /* crwall */
+             "wall",                /* tuwall */
+    /* 10 */ "wall"                 /* tdwall */,
+             "wall",                /* tlwall */
+             "wall",                /* trwall */
+             "corridor",            /* dark corr */
+             "lit corridor",        /* lit corr */
+             "the floor of a room", /* room */
+             "dark part of a room", /* darkroom */
+             "water",               /* pool */
+             "air",                 /* open air */
+             "cloud",               /* [part of] a cloud */
+    /* 20 */ "water",               /* under water */
+             "ice",                 /* ice */
+             "molten lava",         /* lava */
+             "doorway",             /* ndoor */
+             /* "features" start here */
+             "open door",           /* vodoor */
+             "open door",           /* hodoor */
+             "closed door",         /* vcdoor */
+             "closed door",         /* hcdoor */
+             "iron bars",           /* bars */
+             "tree",                /* tree */
+    /* 30 */ "staircase up",        /* upstair */
+             "staircase down",      /* dnstair */
+             "ladder up",           /* upladder */
+             "ladder down",         /* dnladder */
+             "long staircase up",   /* upsstair */
+             "long staircase down", /* dnsstair */
+             "altar",               /* altar */
+             "grave",               /* grave */
+             "opulent throne",      /* throne */
+             "sink",                /* sink */
+    /* 40 */ "fountain",            /* fountain */
+             "lowered drawbridge",  /* vodbridge */
+             "lowered drawbridge",  /* hodbridge */
+             "raised drawbridge",   /* vcdbridge */
+             "raised drawbridge",   /* hcdbridge */
 };
 
 

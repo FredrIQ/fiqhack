@@ -7,6 +7,15 @@
 # define BRANDINGS_H
 
 # include "nethack_types.h"
+# include "global.h"
+# include "align.h"
+# include "timeout.h"
+# include "monsym.h"
+# include "objclass.h"
+# include "dungeon.h"
+# include "decl.h"
+# include "mkroom.h"
+# include "rm.h"
 
 /* Brandings are extra images shown on tiles to give specific information that
    the player might care about, e.g. "this monster is peaceful" or "this square
@@ -60,5 +69,11 @@ extern const char *nhcurses_branding_names[(int)nhcurses_branding_count];
    tiles. These also have names, which need to be accessible to the tiles
    port. */
 extern const char *nhcurses_ldm_names[LDM_COUNT];
+
+/* Effect symbols don't have names in libnethack (because they can't be
+   farlooked), but tilesequence needs names for them. Likewise, engulfing
+   uses the name of the monster, but the tiles look different. */
+extern const char *nhcurses_effect_names[E_COUNT];
+extern const char *nhcurses_swallow_names[NUMSWALLOWCHARS];
 
 #endif

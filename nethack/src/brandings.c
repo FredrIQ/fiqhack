@@ -42,3 +42,27 @@ const char *nhcurses_ldm_names[LDM_COUNT] = {
     [LDM_ROGUE] = "rogue",
     [LDM_KNOX] = "knox",
 };
+
+/* Some things can't be farlooked, or give the name of something else when
+   farlooked, and so aren't named in drawing.c. Give them names here. */
+const char *nhcurses_effect_names[E_COUNT] = {
+    "dig beam",
+    "flash beam",
+    "thrown boomerang, open left",
+    "thrown boomerang, open right",
+    "magic shield 1",
+    "magic shield 2",
+    "magic shield 3",
+    "magic shield 4",
+    "gas cloud",
+};
+const char *nhcurses_swallow_names[NUMSWALLOWCHARS] = {
+    "swallow top left",
+    "swallow top center",
+    "swallow top right",
+    "swallow middle left",
+    "swallow middle right",
+    "swallow bottom left",
+    "swallow bottom center",
+    "swallow bottom right"
+};

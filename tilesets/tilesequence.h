@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* Copyright (c) 2013 Alex Smith. */
@@ -20,27 +20,46 @@
 # include "pm.h"
 # include "onames.h"
 # include "objclass.h"
+# include "trap.h"
 # include "permonst.h"
 # include "decl.h"
 # include "mkroom.h"
 # include "rm.h"
 # include "display.h"
+# include "brandings.h"
 
-# define NUM_ZAP 8                   /* number of zap beam types */
-# define MAXEXPCHARS E_explodecount  /* nuumber of characters in an explosion */
+/* In stacking order: */
+# define TILESEQ_CMAP_SIZE       S_cmap_COUNT                /* backgrounds */
+# define TILESEQ_GENBRAND_SIZE   NHCURSES_GENBRANDING_COUNT  /* gen brandings */
+# define TILESEQ_TRAP_SIZE       (TRAPNUM-1)                 /* traps */
+# define TILESEQ_OBJ_SIZE        NUM_OBJECTS                 /* objects */
+# define TILESEQ_INVIS_SIZE      1                           /* mem invisible */
+# define TILESEQ_MON_SIZE        NUMMONS                     /* monsters */
+# define TILESEQ_MONBRAND_SIZE   NHCURSES_MONBRANDING_COUNT  /* mon brandings */
+# define TILESEQ_WARN_SIZE       WARNCOUNT                   /* warnings */
+# define TILESEQ_EXPLODE_SIZE    (NUMEXPCHARS * EXPL_MAX)    /* explosions */
+# define TILESEQ_ZAP_SIZE        (NUMZAPCHARS * NUM_ZAP)     /* beams */
+# define TILESEQ_SWALLOW_SIZE    NUMSWALLOWCHARS             /* engulfed */
+# define TILESEQ_EFFECT_SIZE     E_COUNT                     /* effects */
 
-# define GLYPH_MON_OFF           0
-# define GLYPH_PET_OFF           (NUMMONS        + GLYPH_MON_OFF)
-# define GLYPH_INVIS_OFF         (NUMMONS        + GLYPH_PET_OFF)
-# define GLYPH_DETECT_OFF        (1              + GLYPH_INVIS_OFF)
-# define GLYPH_BODY_OFF          (NUMMONS        + GLYPH_DETECT_OFF)
-# define GLYPH_RIDDEN_OFF        (NUMMONS        + GLYPH_BODY_OFF)
-# define GLYPH_OBJ_OFF           (NUMMONS        + GLYPH_RIDDEN_OFF)
-# define GLYPH_CMAP_OFF          (NUM_OBJECTS    + GLYPH_OBJ_OFF)
-# define GLYPH_EXPLODE_OFF       ((MAXPCHARS - MAXEXPCHARS) + GLYPH_CMAP_OFF)
-# define GLYPH_ZAP_OFF           ((MAXEXPCHARS * EXPL_MAX) + GLYPH_EXPLODE_OFF)
-# define GLYPH_SWALLOW_OFF       ((NUM_ZAP << 2) + GLYPH_ZAP_OFF)
-# define GLYPH_WARNING_OFF       ((NUMMONS << 3) + GLYPH_SWALLOW_OFF)
-# define MAX_GLYPH               (WARNCOUNT      + GLYPH_WARNING_OFF)
+# define TILESEQ_CMAP_OFF        0
+# define TILESEQ_GENBRAND_OFF    (TILESEQ_CMAP_OFF + TILESEQ_CMAP_SIZE)
+# define TILESEQ_TRAP_OFF        (TILESEQ_GENBRAND_OFF + TILESEQ_GENBRAND_SIZE)
+# define TILESEQ_OBJ_OFF         (TILESEQ_TRAP_OFF + TILESEQ_TRAP_SIZE)
+# define TILESEQ_INVIS_OFF       (TILESEQ_OBJ_OFF + TILESEQ_OBJ_SIZE)
+# define TILESEQ_MON_OFF         (TILESEQ_INVIS_OFF + TILESEQ_INVIS_SIZE)
+# define TILESEQ_MONBRAND_OFF    (TILESEQ_MON_OFF + TILESEQ_MON_SIZE)
+# define TILESEQ_WARN_OFF        (TILESEQ_MONBRAND_OFF + TILESEQ_MONBRAND_SIZE)
+# define TILESEQ_EXPLODE_OFF     (TILESEQ_WARN_OFF + TILESEQ_WARN_SIZE)
+# define TILESEQ_ZAP_OFF         (TILESEQ_EXPLODE_OFF + TILESEQ_EXPLODE_SIZE)
+# define TILESEQ_SWALLOW_OFF     (TILESEQ_ZAP_OFF + TILESEQ_ZAP_SIZE)
+# define TILESEQ_EFFECT_OFF      (TILESEQ_SWALLOW_OFF + TILESEQ_SWALLOW_SIZE)
+
+# define TILESEQ_COUNT           (TILESEQ_EFFECT_OFF + TILESEQ_EFFECT_SIZE)
+# define TILESEQ_INVALID_OFF     (-1)
+
+extern int tileno_from_name(const char *, int);
+extern int tileno_from_api_name(const char *, const char *, int);
+extern const char *name_from_tileno(int);
 
 #endif

@@ -17,6 +17,7 @@ extern const struct nh_symdef defsyms[];
 extern const struct nh_symdef warnsyms[];
 extern const struct nh_symdef trapsyms[];
 extern const struct nh_symdef explsyms[];
+extern const struct nh_symdef zapsyms[];
 extern const struct nh_symdef effectsyms[];
 extern const struct nh_symdef swallowsyms[];
 
