@@ -63,17 +63,17 @@ enum nhcurses_brandings {
 # define NHCURSES_MONBRANDING_COUNT \
     ((int)nhcurses_monbranding_last - (int)nhcurses_monbranding_first + 1)
 
-extern const char *nhcurses_branding_names[(int)nhcurses_branding_count];
+extern const char *const nhcurses_branding_names[(int)nhcurses_branding_count];
 
 /* Tiles ports also care about the level display modes, which substitute some
    tiles. These also have names, which need to be accessible to the tiles
    port. */
-extern const char *nhcurses_ldm_names[LDM_COUNT];
+extern const char *const nhcurses_ldm_names[LDM_COUNT];
 
 /* Effect symbols don't have names in libnethack (because they can't be
    farlooked), but tilesequence needs names for them. Likewise, engulfing
    uses the name of the monster, but the tiles look different. */
-extern const char *nhcurses_effect_names[E_COUNT];
-extern const char *nhcurses_swallow_names[NUMSWALLOWCHARS];
+extern const char *const nhcurses_effect_names[E_COUNT];
+extern const char *const nhcurses_swallow_names[NUMSWALLOWCHARS];
 
 #endif

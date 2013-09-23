@@ -17,7 +17,7 @@
 /* NetHack 4 is a modern variant, so I'm going to use C99 if it's clearer.
    Which it is. It's 2013, compilers should be able to handle a 14-year-old
    language by now. */
-const char *nhcurses_branding_names[(int)nhcurses_branding_count] = {
+const char *const nhcurses_branding_names[(int)nhcurses_branding_count] = {
     [nhcurses_genbranding_stepped] = "remembered as stepped on",
     [nhcurses_genbranding_locked] = "remembered as locked",
     [nhcurses_genbranding_unlocked] = "remembered as unlocked",
@@ -33,7 +33,7 @@ const char *nhcurses_branding_names[(int)nhcurses_branding_count] = {
    are arbitrary, but most of them are taken from substitutions in existing
    tilesets for NetHack 3 or Slash'EM. Changing these names will break tilemap
    compatibility; please don't do that. Adding new names is OK, though. */
-const char *nhcurses_ldm_names[LDM_COUNT] = {
+const char *const nhcurses_ldm_names[LDM_COUNT] = {
     [LDM_DEFAULT] = "default",
     [LDM_HELL] = "gehennom",
     [LDM_QUEST] = "quest",
@@ -45,7 +45,7 @@ const char *nhcurses_ldm_names[LDM_COUNT] = {
 
 /* Some things can't be farlooked, or give the name of something else when
    farlooked, and so aren't named in drawing.c. Give them names here. */
-const char *nhcurses_effect_names[E_COUNT] = {
+const char *const nhcurses_effect_names[E_COUNT] = {
     "dig beam",
     "flash beam",
     "thrown boomerang, open left",
@@ -56,7 +56,7 @@ const char *nhcurses_effect_names[E_COUNT] = {
     "magic shield 4",
     "gas cloud",
 };
-const char *nhcurses_swallow_names[NUMSWALLOWCHARS] = {
+const char *const nhcurses_swallow_names[NUMSWALLOWCHARS] = {
     "swallow top left",
     "swallow top center",
     "swallow top right",
