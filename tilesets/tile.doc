@@ -8,8 +8,9 @@ converting them to a system's preferred format and using them there.  For
 information on the authorship of the tiles, see the "copyright" file in the
 root of the NetHack 4 distribution.
 
-The tile distribution format for tile images starts with a palette, which
-looks like this:
+The tile distribution format for tile images starts with any number of header
+comment lines (each of which starts with an exclamation mark, to indicate it
+as a header comment line), followed by a palette, which looks like this:
 
 A = (0, 0, 0)
 ...
@@ -181,6 +182,11 @@ boolean write_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
 	writes tile with supplied type, number and name
 boolean write_text_tile(pixel[TILE_Y][TILE_X]);
 	writes tile
+boolean set_tile_map(const char *filename);
+        sets the map that will be used to supply names for tiles (on output)
+        or to check that the tiles have the correct names (on input); setting
+        this to NULL will disable checking
+        returns FALSE on error, TRUE on success
 
 There are two additional shared routines provided for writers:
 

@@ -394,11 +394,12 @@ Copyright: These tiles were copied from an NHGPL Slash'EM release that was
 Files: tilesets/fonts/*.txt
 License: NHGPL
 Copyright: Copyright (C) 2002 Andrew Apted <ajapted@users.sourceforge.net>
-Comment: The format of these files makes it impossible for them to contain
- an explicit copyright notice. However, they are definitively NHGPL (due to
- being distributed with the NHGPL'd Slash'EM), and are very likely to have
- the copyright conditions shown above, because all other files added at the
- same time had that copyright notice.
+Comment: The format of these files in the original source makes it
+ impossible for them to contain an explicit copyright notice. However,
+ they are definitively NHGPL (due to being distributed with the
+ NHGPL'd Slash'EM), and are very likely to have the copyright
+ conditions shown above, because all other files added at the same
+ time had that copyright notice.
 
 Files: tilesets/bigtile.c
 License: NHGPL

@@ -57,6 +57,8 @@ extern boolean write_text_tile_info(pixel (*)[MAX_TILE_X],
 extern boolean write_text_tile(pixel (*)[MAX_TILE_X]);
 extern boolean fclose_text_file(void);
 
+extern boolean set_tile_map(const char *);
+
 extern void init_colormap(void);
 extern void merge_colormap(void);
 

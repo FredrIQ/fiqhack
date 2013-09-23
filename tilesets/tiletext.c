@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-09-23 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "config.h"
@@ -35,26 +35,9 @@ static char charcolors[MAXCOLORMAPSIZE][3];
 
 static int placeholder_init = 0;
 static pixel placeholder[MAX_TILE_Y][MAX_TILE_X];
-static FILE *in_file, *out_file;
-static int tile_set, tile_set_indx;
+static FILE *in_file, *out_file, *map_file;
+static int tile_map_indx;
 
-static const char *thin_text_sets[] = {
-    "monthin.txt", "objthin.txt", "oththin.txt", "comthin.txt"
-};
-
-static const char *big_text_sets[] = {
-    "mon32.txt", "obj32.txt", "oth32.txt", "com32.txt"
-};
-
-static const char *std_text_sets[] = {
-    "monsters.txt", "objects.txt", "other.txt", "combined.txt"
-};
-
-#define TEXT_SETS(i)	( tile_x == 8 ? thin_text_sets[i] : \
-			tile_x == 32 && tile_y == 32 ? big_text_sets[i] : \
-			std_text_sets[i] )
-
-extern const char *tilename(int, int);
 static void read_text_colormap(FILE *);
 static boolean write_text_colormap(FILE *);
 static boolean peek_txttile_info(FILE *, char *, int *, char *);
@@ -147,6 +130,16 @@ read_text_colormap(FILE *txtfile)
     for (i = 0; i < TEXTCOLORMAPSPACE; i++)
         color_index[i] = -1;
 
+    /* Skip comments at the start of the file. Comment lines start with
+       an exclamation mark. */
+    for (;;) {
+        i = getc(txtfile);
+        if (i == EOF) return;
+        ungetc(i, txtfile);
+        if (i != '!') break;
+        while (i != '\n' && i != EOF) i = getc(txtfile);
+    }
+
     num_colors = 0;
     while (fscanf(txtfile, FORMAT_STRING, c, &r, &g, &b) == 4) {
         if (c[1])
@@ -203,6 +196,8 @@ peek_txttile_info(FILE *txtfile, char ttype[BUFSZ],
 
     offset = ftell(txtfile);
     retval = fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) == 3;
+    if (retval == 3 && !strncmp(name, "cmap / ", 7)) name += 7;
+    if (retval == 3 && strstr(name, " / ")) *(strstr(name, " / ")) = 0;
     (void)fseek(txtfile, offset, SEEK_SET);
     return retval;
 }
@@ -215,9 +210,11 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
     const char *fmt_string;
     char c[3];
 
-    if (fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) <= 0) {
+    if (fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) < 3) {
         return FALSE;
     }
+    if (!strncmp(name, "cmap / ", 7)) name += 7;
+    if (strstr(name, " / ")) *(strstr(name, " / ")) = 0;
 
     /* look for non-whitespace at each stage */
     if (fscanf(txtfile, "%1s", c) < 0) {
@@ -273,9 +270,8 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
 static boolean
 read_txttile(FILE *txtfile, pixel (*pixels)[MAX_TILE_X])
 {
-    int ph, i;
-    const char *p;
-    char buf[BUFSZ], ttype[BUFSZ];
+    int ph, i, ok;
+    char buf[BUFSZ], ttype[BUFSZ], expected[BUFSZ];
 
     if (!read_txttile_info(txtfile, pixels, ttype, &i, buf))
         return FALSE;
@@ -285,17 +281,21 @@ read_txttile(FILE *txtfile, pixel (*pixels)[MAX_TILE_X])
     if (!ph && strcmp(ttype, "tile") != 0)
         Fprintf(stderr, "Keyword \"%s\" unexpected for entry %d\n", ttype, i);
 
-    if (tile_set != 0) {
-        /* check tile name, but not relative number, which will change when
-           tiles are added */
-        p = tilename(tile_set, tile_set_indx);
-        if (p && strcmp(p, buf)) {
-            Fprintf(stderr, "warning: for tile %d (numbered %d) of %s,\n",
-                    tile_set_indx, i, TEXT_SETS(tile_set - 1));
-            Fprintf(stderr, "\tfound '%s' while expecting '%s'\n", buf, p);
+    if (map_file) {
+        /* check tile name; the number is ignored (although these routines
+           number consecutively, that is not required) */
+        ok = !!fgets(expected, BUFSZ-1, map_file);
+        expected[BUFSZ-1] = 0;
+        if (!ok) strcpy(expected, "<eof>");
+        else if (strrchr(expected, '\n')) *(strrchr(expected, '\n')) = 0;
+        if (strcmp(expected, buf) != 0) {
+            Fprintf(stderr, "warning: for tile %d (numbered %d),\n",
+                    tile_map_indx, i);
+            Fprintf(stderr, "\tfound '%s' while expecting '%s'\n",
+                    buf, expected);
         }
     }
-    tile_set_indx++;
+    tile_map_indx++;
 
     if (ph) {
         /* remember it for later */
@@ -337,21 +337,26 @@ write_txttile_info(FILE *txtfile, pixel(*pixels)[MAX_TILE_X],
 static void
 write_txttile(FILE *txtfile, pixel(*pixels)[MAX_TILE_X])
 {
-    const char *p;
+    char tilename[BUFSZ];
     const char *type;
+    int ok;
 
     if (memcmp(placeholder, pixels, sizeof (placeholder)) == 0)
         type = "placeholder";
     else
         type = "tile";
 
-    if (tile_set == 0)
-        p = "unknown";
-    else
-        p = tilename(tile_set, tile_set_indx);
+    if (!map_file) {
+        strcpy(tilename, "unknown");
+    } else {
+        ok = !!fgets(tilename, BUFSZ-1, map_file);
+        tilename[BUFSZ-1] = 0;
+        if (!ok) strcpy(tilename, "<eof>");
+        else if (strrchr(tilename, '\n')) *(strrchr(tilename, '\n')) = 0;
+    }
 
-    write_txttile_info(txtfile, pixels, type, tile_set_indx, p);
-    tile_set_indx++;
+    write_txttile_info(txtfile, pixels, type, tile_map_indx, tilename);
+    tile_map_indx++;
 }
 
 /* initialize main colormap from globally accessed ColorMap */
@@ -546,7 +551,6 @@ read_text_file_colormap(const char *filename)
 boolean
 fopen_text_file(const char *filename, const char *type)
 {
-    const char *p;
     int i;
     int write_mode;
     FILE *fp;
@@ -556,7 +560,7 @@ fopen_text_file(const char *filename, const char *type)
     else if (!strcmp(type, WRTMODE)) {
         /* Seems like Mingw32's fscanf is confused by the CR/LF issue */
         /* Force text output in this case only */
-#ifdef WIN32
+#ifdef AIMAKE_BUILDOS_MSWin32
         type = "w+";
 #endif
         write_mode = TRUE;
@@ -576,12 +580,6 @@ fopen_text_file(const char *filename, const char *type)
         Fprintf(stderr, "cannot open text file %s\n", filename);
         return FALSE;
     }
-
-    p = rindex(filename, '/');
-    if (p)
-        p++;
-    else
-        p = filename;
 
     if (!write_mode) {
         in_file = fp;
@@ -613,13 +611,25 @@ fopen_text_file(const char *filename, const char *type)
             return FALSE;
     }
 
-    tile_set = 0;
-    for (i = 0; i < SIZE(std_text_sets); i++) {
-        if (!strcmp(p, TEXT_SETS(i)))
-            tile_set = i + 1;
-    }
-    tile_set_indx = 0;
+    tile_map_indx = 0;
 
+    return TRUE;
+}
+
+boolean
+set_tile_map(const char *filename)
+{
+    tile_map_indx = 0;
+    if (map_file) {
+        fclose(map_file);
+        map_file = NULL;
+    }
+    if (!filename) return TRUE;
+    map_file = fopen(filename, "r");
+    if (!map_file) {
+        Fprintf(stderr, "cannot open map file %s\n", filename);
+        return FALSE;
+    }
     return TRUE;
 }
 
@@ -669,6 +679,10 @@ fclose_text_file(void)
     if (out_file) {
         ret |= ! !fclose(out_file);
         out_file = (FILE *) 0;
+    }
+    if (map_file) {
+        ret |= ! !fclose(map_file);
+        map_file = (FILE *) 0;
     }
     return ret;
 }
