@@ -3,15 +3,18 @@
 /*   Copyright (c) J. Ali Harlow 2000                               */
 /*   NetHack may be freely redistributed.  See license for details. */
 
-/*
- * Merge multiple txt tile files into one. Where a tile is present in more
- * than one file the last tile read is used.
- * The first tile file read must contain the required tile mapping. The
- * output file will contain this same mapping; tiles which do not match
- * any of the tiles found in the first file will be ignored.
- */
+/* Given a map file and one or more .txt tile files, produces a .txt tile file
+   containing only those tiles in the map file, in the same order. If one of the
+   required tiles is found in multiple tilesets, the last one listed on the
+   command line will be used. If one of the required tiles is not found at all,
+   a warning will be given and a solid white tile used as a substitute.
 
-/*#include "config.h"*/
+   This routine is intended to be able to convert tiles from other formats, so
+   it has more leniency about the tile format than normal. In particular, it
+   allows for unusual background colors for tiles (which will be converted to
+   the default background), and multiple tiles with the same name in the same
+   file (which will be disambiguated using "s" and a number). */
+
 #include "tile.h"
 
 struct tile {

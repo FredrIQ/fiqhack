@@ -1,3 +1,4 @@
+About this document:
 Last modified by Alex Smith, 2013-09-23
 
 The tiles code in this directory was originally taken from Slash'EM, and has
@@ -8,43 +9,148 @@ converting them to a system's preferred format and using them there.  For
 information on the authorship of the tiles, see the "copyright" file in the
 root of the NetHack 4 distribution.
 
+
+The Tiles System in NetHack 4
+=============================
+
+NetHack 4 uses two formats for tile files; a text format (described below),
+and an image format.  (There are also "map files" that record the order of
+tiles within an image, necessary to be able to convert the image files back to
+text format; and a "catalogue file" `CATALOG.txt` that records which tile
+files make up which tilesets.)  The "source code" for tiles is stored in a
+number of separate files in text format; during the build, these are converted
+into combined text files (still in the text format, but which act like object
+code) that contain all the tiles in the tileset in the order in which the
+windowport wants them, and then to images for use by the windowports.
+
+As such, it will necessarily lose information to edit the generated output
+images; if you want to edit the tilesets, use the tile manipulation utilities
+provided.
+
+
+Tile Manipulation Utilities
+---------------------------
+
+    import_tileset    Creates a .txt tileset from a PNG image and a map
+    convert_tileset   Reorders and/or combines .txt tilesets based on a map
+    export_tileset    Creates PNG images from .txt tilesets
+    map_from_tileset  Creates a map file based on a .txt tileset
+    build_tilesets    Runs {convert,export}_tileset based on CATALOG.txt
+
+The build system will automatically build the final tileset images, but the
+tileset manipulation routines (apart from tilemap) are installed along with
+NetHack 4 to allow tile editing even if no build system is available.
+
+To import a tileset image designed for an old version or another variant, use
+`import_tileset` with the appropriate map for that version/variant.  (Maps
+appropriate for Slash'EM 0.0.7E7F3 and NetHack 3.4.3 ship with the NetHack 4
+source and binaries, and a map appropriate for the current version will be
+generated when you build NetHack 4 and ships with the binaries.)  If you have
+a .txt tileset for another version or variant, you may be able to use it
+directly, but most likely some of the tiles will have to be renamed (because
+older versions have a lot of naming clashes in their tiles, and there is only
+so much that the tile handling tools can do to resolve them).  Probably the
+biggest change in tile names is on tiles for objects; randomized-appearance
+objects will need their tiles renamed to contain the object class,
+e.g. "orange potion", "orange spellbook", "orange gem"; there are five tiles
+named "orange" in Slash'EM's objects.txt, for instance (counting both gems
+with the "orange" appearance and the fruit), and automatically disambiguating
+would be very difficult (or even impossible) because of the risk that other
+variants add other orange objects (orange rings? orange wands?).  Once you've
+imported your tileset, you can either make it into a tileset image suitable
+for NetHack 4 by hand using `convert_tileset` and `export_tileset`, or more
+conveniently, you can add it to CATALOG.txt an use `build_tilesets` to create
+the tileset image.
+
+To edit .txt tile files, you can edit them directly in the .txt file, but if
+you want to use an image editor, extract a map from them using
+`map_from_tileset`, then export the tileset with `export_tileset`, edit the
+resulting .png file, and import it again using the map you extracted from it.
+This will keep the tiles in the same order, with the same names.
+
+To add new tiles to the game (because the game was changed in a way that
+causes it to display new tiles), you can either edit an existing .txt file, or
+add a new one.  (The .txt files are organized by provenance, i.e. which
+variant they were imported from, and/or who wrote them.  Adding a new file is
+thus reasonable if you haven't created tiles for NetHack 4 before.)  The new
+tiles will also need to be added to the catalog (unless you edited a file that
+was in the catalog already).  Three sizes are needed for each tile (one fore
+each of the the three standard tilesets; however, the big and 3D-effect tiles
+can be automatically generated from the 16x16 tiles, so it's possible to
+create just the 16x16 tile, and add the .txt file it's in to all three
+tilesets (with appropriate scaling options).
+
+
+The .txt Tile Format
+--------------------
+
 The tile distribution format for tile images starts with any number of header
 comment lines (each of which starts with an exclamation mark, to indicate it
 as a header comment line), followed by a palette, which looks like this:
 
-A = (0, 0, 0)
-...
-P = (254, 254, 254)
+    A = (0, 0, 0)
+    ...
+    P = (254, 254, 254)
 
 and then each tile has an entry like:
 
-# tile 0 (name / comment)
-{
-  AAAAGHPAAAAACDAA
-  AAAFGDEMLOCNAAAA
-...
-}
+    # tile 0 (name / comment)
+    {
+      AAAAGHPAAAAACDAA
+      AAAFGDEMLOCNAAAA
+    ...
+    }
 
 Tile sets which require more than 62 colors can use two character color keys,
 giving up to 4096 colors.  All keys in any one file must be the same size.
 The number after "tile" is arbitrary and ignored; it exists only for
-compatibility with Slash'EM and older versions of NetHack.  The comment (and
-the slash preceding it) is optional, and also ignored; in older versions of
-the code, it was used to specify the unrandomized appearance of items, but it
-is obviously a bad idea for two items with the same randomized appearance to
-be able to look different.  (As a backwards compatibility special case, if the
-name is "cmap", the comment is used as the name instead.)  The name is what is
-used to identify the tile.  Tiles with unrecognised names are permitted, but
-ignored (thus, tile images that are currently not used for anything can be
-stored with images that are).  In order to allow for compatibility with older
-versions of NetHack, if multiple consecutive tiles in a .txt file have the
-same name the same name, they're disambiguated by adding an "s" and a number
-starting at 0. (For instance, if two consecutive tiles are called "open door"
-in a tiles file, they're interpreted as though they were called "open doors 0"
-and "open doors 1".)
+compatibility with ohther variants and older versions of NetHack.  (When
+writing .txt tile files, the tile handling code will use consecutive numbers
+starting at 0, for ease of reference.)  The comment (and the slash preceding
+it) is optional, and also ignored (although the spaces around the slash are
+required); in older versions of the code, it was used to specify the
+unrandomized appearance of items, but it is obviously a bad idea for two items
+with the same randomized appearance to be able to look different.  (As a
+backwards compatibility special case, if the name is "cmap", the comment is
+used as the name instead.)  The name is what is used to identify the tile.
+Tiles with unrecognised names are permitted, but ignored (thus, tile images
+that are currently not used for anything can be stored with images that are).
 
-These text-based tile files are converted into image-based tile files for use
-by the tiles code, via placing all the tile in the same image in a standard
+In order to allow for compatibility with older versions of NetHack, when
+running `convert_tileset`, a .txt file that contains multiple tiles with the
+same name will have those tiles disambiguated by adding an "s" and a number
+starting at 0.  (For instance, if two tiles are called "open door" in a tiles
+file, they're interpreted as though they were called "open doors 0" and "open
+doors 1".)  The tile-handling code is aware of this convention, and this is
+the reason that some tiles have vaguely nondescriptive official names ("walls
+4") or ungrammatical names ("Amulet of Yendors 0").  The idea is to reduce, as
+much as possible, the amount of editing required to use .txt tile files from
+other variants or older versions.
+
+Transparency is handled using (71, 108, 108) to represent the see-through
+parts of tiles, defined in `tilesets/tile_h.in` as `DEFAULT_BACKGROUND`.  This
+color was originally chosen so that window interfaces that do not handle
+transparency would still look OK.  (This is less of a problem in NetHack 4,
+where the vast majority of window interfaces are based on libuncursed, but
+could potentially still be relevant in the case of custom interfaces.)
+
+The color (72, 108, 108) should be used instead of (71, 108, 108) when an
+opaque color is required, for example in the standard 32x32 floor tiles.
+Tools that handle tilesets should know the difference and not merge these two
+colors together, or indeed, should not remap any other color to (71, 108,
+108).
+
+Note that the 16x16 tileset is supposed to be completely opaque, except for
+brandings (which by their nature must always use transparency).  Tools that
+handle 16x16 tiles should treat (71, 108, 108) as transparent (i.e. as they
+normally would), but windowing interfaces should treat it as opaque.
+
+
+Other Files Used With Tilesets
+------------------------------
+
+The text-based tile files are converted into image-based tile files for use by
+the tiles code, via placing all the tiles in the same image in a standard
 order.  Unlike in older versions of NetHack (in which the drawing code dealt
 with tiles directly, and thus knew the sequence they were in), a tile image is
 only meaningful in combination with a "map" file that specifies which parts of
@@ -54,10 +160,10 @@ versions, such as NetHack 3.4.3 and Slash'EM, are provided so that tilesets
 from those variants and versions can be imported.  If you want to make your
 own NetHack 4 tileset, probably the simplest method is to distribute your
 tileset as an image, together with the corresponding map file.  That way, the
-import_tileset utility can be used to convert your tileset back to text format
-(thus, no information is lost), but users with the same version of NetHack 4
-as you will not need to be able to use the tileset handling tools to be able
-to play with your tileset.
+`import_tileset` utility can be used to convert your tileset back to text
+format (thus, no information is lost), but users with the same version of
+NetHack 4 as you will not need to be able to use the tileset handling tools to
+be able to play with your tileset.
 
 A tilemap file is just a sequence of tile names, one per line.  (This format
 is intentionally incompatible with that used by previous versions, because the
@@ -68,176 +174,160 @@ unique. The old format had lines starting with "tile" and a number, and
 double-quoted the names; this format should be detected and rejected by
 tilemap manipulation code.
 
-The palette.txt file contains a standard palette of 256 colors. Currently all
-the tiles, after final merging, only use colors in this palette, even though
-the total number of unique colors mentioned in .txt files exceeds 350 (most
-are unused, and some are merely off-by-one versions of an existing color).
+There is also a catalogue file, `CATALOG.txt`, which specifies which .txt
+files make up which tilesets.  This catalogue file is used by the build system
+to actually produce the tilesets required.  The `build_tilesets` utility is
+used to build the tilesets listed in the catalogue file.
 
-Transparency is handled using (71, 108, 108) to represent the see-through
-parts of tiles.  It is defined in tilesets/tile_h.in as DEFAULT_BACKGROUND.
-This color was originally chosen so that window interfaces that do not handle
-transparency would still look OK.  (This is less of a problem in NetHack 4,
-where the vast majority of window interfaces are based on libuncursed, but
-could potentially still be relevant in the case of custom interfaces.)
+The format of the catalogue file consists of lines that specify which tilesets
+to create (as a line with no preceding whitespace and ending with a colon),
+and lines whch specify which tile files to make them from (as lines with
+preceding whitespace and no colon).  This latter set of lines can also take
+command-line options, that are passed to `convert_tileset` (and thus, a
+tileset with an unusual background color, or that has tiles of the wrong size,
+etc., can be used).  Tiles from files specified later will take precedence
+over tiles from files specified earlier.
 
-The color (72, 108, 108) should be used instead of (71, 108, 108) when an
-opaque color is required, for example: in the standard 32x32 floor tiles.
-Tools that handle tilesets should know the difference and not merge these two
-colors together, or indeed, should not remap any other color to (71, 108,
-108).
+The `palette.txt` file contains a standard palette of 256 colors (in the same
+format as a tileset palette, but without any actual tiles).  Currently all the
+tiles, after final merging, only use colors in this palette, even though the
+total number of unique colors mentioned in .txt files exceeds 350 (most are
+unused, and some are merely off-by-one versions of an existing color).
 
-Note that the 16x16 tileset is supposed to be completely opaque, except for
-brandings.  Tools that handle 16x16 tiles should treat (71, 108, 108) as
-transparent (i.e. as they normally would), but windowing interfaces should
-treat it as opaque.
+
+Tile Rendering
+--------------
 
 The various sorts of objects that can have tiles are:
 
-backgrounds (should be completely opaque in every port)
-traps
-objects
-memory of invisibility
-monsters
-warning symbols
-explosions
-beams (i.e. directional visual effects associated with wands, breath, etc.)
-other visual effects (sparkle, boomerangs, MR, etc.)
-engulfing monsters
-brandings (must always be transparent, even in 16x16)
+* backgrounds (should be completely opaque in every port)
+* traps
+* objects
+* memory of invisibility
+* monsters
+* warning symbols
+* explosions
+* beams (i.e. directional visual effects associated with wands, breath, etc.)
+* other visual effects (sparkle, boomerangs, MR, etc.)
+* engulfing monsters
+* brandings (must always be transparent, even in 16x16)
 
 Every square will always have exactly one background, and can have up to one
 of each of the following: traps, objects, object associated monster (e.g. for
-statues and corpses), monsters, effects; and any number of monster brandings
-(e.g. to show that a monster is peaceful) and general brandings (e.g. to show
-that a door is known to be unlocked).  When not using a tiles port, brandings
-are shown using background colors; in tiles ports, general brandings are
-superimposed on the background, and monster brandings are superimposed on the
-monster.  Warning symbols are encoded as monsters (with a specific branding to
-show that they're warnings rather than monsters).
+statues and corpses); up to one monster or warning symbol; up to one
+explosion, beam, or effect; and any number of monster brandings (e.g. to show
+that a monster is peaceful) and general brandings (e.g. to show that a door is
+known to be unlocked).  When not using a tiles port, brandings are shown using
+background or foreground colors (depending on the branding); in tiles ports,
+general brandings are superimposed on the background, and monster brandings
+are superimposed on the monster.  Warning symbols are encoded as monsters
+(with a specific branding to show that they're warnings rather than monsters).
 
 
-Provided tile manipulation utilities:
+Tile utilities API
+------------------
 
-bigtile          Creates 64x64 "3D effect" tiles from 16x16 tiles
-magtile          Creates 32x32 tiles from 16x16 tiles
-tilemap          A tiles "makedefs": creates tile.h, nethack4.map
-import_tileset   Creates a .txt tileset from a PNG image and a map
-convert_tileset  Reorders and/or combines .txt tilesets based on a map
-export_tileset   Creates PNG images from .txt tilesets
+`tile.h` contains shared declarations (and is generated from `tile_h.in` by
+the tilemap utility, `tilemap.c`, which is basically a `makedefs` for tiles).
+The tilemap utility also generates the default tilemap (`nethack4.map`).
 
-To create a tileset image from the .txt files and a map, you would use
-convert_tileset to produce a single combined .txt file that contained all the
-tiles in the map (in the same order), and then export_tileset to convert it to
-an image.  To do the reverse, you woul use import_tileset.  In order to use a
-tileset from another version or variant with this version of NetHack 4, you
-would use import_tileset with that version's map, convert_tileset with this
-version's map (and possibly some extra tilesets to provide tiles that would
-otherwise be missing), and then export_tileset to convert it back to an image.
-
-
-Shared code provided for conversion utilities:
-
-tile.h contains shared declarations (and is generated from tile_h.in by the
-tilemap utility).  The tilemap utility also generates the default tilemap
-(nethack4.map).
-
-tiletext.c defines the external variables from tile.h and supplies
+`tiletext.c` defines the external variables from `tile.h` and supplies
 the external routines for reading and writing the defined text format.
 
-tilesequence.{c,h} define the order in which the tiles appear; tilesequence.c
-uses information from libnethack (drawing.c) and about tile names used only by
-the window ports (brandings.c), and converts between the three formats used
-for tile names ("API names" used by the JSON interface, tile names, and tile
-numbers in the NetHack 4 tilemap for the current version).
+`tilesequence.{c,h}` calculates which tiles appear in `nethack4.map` and in
+which order; `tilesequence.c` uses information from `libnethack` (`drawing.c`)
+and about tile names used only by the window ports (`brandings.c`), and
+converts between the three formats used for tile names ("API names" used by
+the JSON interface, tile names, and tile numbers in the NetHack 4 tilemap for
+the current version).  It is not needed by the tile manipulation utilities
+(except for `tilemap.c`), because all the information they care about is in
+`nethack4.map` already.  However, it is greatly useful to tiles windowports,
+because it allows them to determine where on the tiles image the tiles they
+need to render are, given the information sent via the API.
 
-Each conversion utility is expected to use tiletext.c and provide code of its
-own for reading and/or writing another format.  The important global variables
-implement a colormap shared between tiletext.c and the other half of
-utilities.  Various conversion utilities (strangely, none of which round-trip;
-each format can either only be read, or only be written) exist in Slash'EM's
-codebase; NetHack 4 deals only with PNG, though (which can be converted to and
-from other image formats using standard image conversion tools).
+NetHack and Slash'EM used to use an array of tiles conversion utilities that
+converted between the .txt format and various image formats.  (However, these
+are mostly pointless nowadays, unless you want to create a windowport that for
+some reason cannot use a .png image for the tiles, in which case you will need
+a new export utility.)  If you want to implement one of these, use tiletext.c
+and provide code for reading and/or writing another format.  The important
+global variables implement a colormap shared between tiletext.c and the other
+half of the utilities.  If you want examples, various conversion utilities
+(strangely, none of which round-trip; each format can either only be read, or
+only be written) exist in the `win/share` folder in Slash'EM's codebase;
+NetHack 4 only provides conversion utilities for reading and writing PNG.
 
 The text I/O routines are:
 
-boolean fopen_text_file(const char *filename, const char *type);
-	select file for subsequent tile I/O
-	"type" a la fopen
-	returns FALSE if file not opened, otherwise reads/writes header
-	(including colormap) and sets up to decode/encode tiles
-int fclose_text_file();
-	close file
-boolean peek_text_tile_info(ttype, number, name);
-	returns FALSE if no next tile in current file
-	otherwise fills in the type, number and name of the next tile
-boolean read_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
-	returns FALSE if no next tile in current file
-	otherwise TRUE and insert the tile in the provided array.
-	The tile type, number and name are also filled in.
-	The application program is responsible for checking these
-boolean read_text_tile(pixel[TILE_Y][TILE_X]);
-	returns FALSE if no next tile in current file
-	otherwise TRUE and insert the tile in the provided array.
-boolean write_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
-	writes tile with supplied type, number and name
-boolean write_text_tile(pixel[TILE_Y][TILE_X]);
-	writes tile
-boolean set_tile_map(const char *filename);
-        sets the map that will be used to supply names for tiles (on output)
-        or to check that the tiles have the correct names (on input); setting
-        this to NULL will disable checking
-        returns FALSE on error, TRUE on success
+     boolean fopen_text_file(const char *filename, const char *type);
+         select file for subsequent tile I/O
+         "type" a la fopen
+         returns FALSE if file not opened, otherwise reads/writes header
+         (including colormap) and sets up to decode/encode tiles
+     int fclose_text_file();
+         close file
+     boolean peek_text_tile_info(ttype, number, name);
+         returns FALSE if no next tile in current file
+         otherwise fills in the type, number and name of the next tile
+     boolean read_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
+         returns FALSE if no next tile in current file
+         otherwise TRUE and insert the tile in the provided array.
+         The tile type, number and name are also filled in.
+         The application program is responsible for checking these
+     boolean read_text_tile(pixel[TILE_Y][TILE_X]);
+         returns FALSE if no next tile in current file
+         otherwise TRUE and insert the tile in the provided array.
+     boolean write_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
+         writes tile with supplied type, number and name
+     boolean write_text_tile(pixel[TILE_Y][TILE_X]);
+         writes tile
+     boolean set_tile_map(const char *filename);
+         sets the map that will be used to supply names for tiles (on output)
+         or to check that the tiles have the correct names (on input); setting
+         this to NULL will disable checking
+         returns FALSE on error, TRUE on success
 
 There are two additional shared routines provided for writers:
 
-void init_colormap();
-	initialize the output colormap from the input one
-	must be called before opening output file as colormap is part of header
-void merge_colormap();
-	merge the current input colormap into the output one
+    void init_colormap();
+        initialize the output colormap from the input one
+        must be called before opening output file as colormap is part of header
+    void merge_colormap();
+        merge the current input colormap into the output one
 
-Due to the amount of state being kept, only one text or gif file can be
-open at a time.  If you are combining multiple files into one other-format
-file with a single common colormap, you may need to open each source file
-and merge their colormaps into a common colormap before processing any tiles.
+Due to the amount of state being kept, only one text file can be open at a
+time.  If you are combining multiple files into one other-format file with a
+single common colormap, you may need to open each source file and merge their
+colormaps into a common colormap before processing any tiles.
 
 Although there are expected to be only 256 colors in the distribution tiles,
-conversion programs should be prepared to accept up to MAXCOLORMAPSIZE
-colors and map them to a smaller number if their port requires it.
-The preferred set of 256 colors can be found in include/tilepal.h.
+conversion programs should be prepared to accept up to `MAXCOLORMAPSIZE`
+colors and map them to a smaller number if their port requires it.  The
+preferred set of 256 colors can be found in `palette.txt`.
 
-tilesequence.c provides the following three functions:
+`tilesequence.c` provides the following three functions:
 
-int tileno_from_name(const char *name, int offset)
-  Given the name of a tile, returns its index within an image file using the
-  NetHack 4 tilemap.
+    int tileno_from_name(const char *name, int offset)
+      Given the name of a tile, returns its index within an image file using
+      the NetHack 4 tilemap.
 
-int tileno_from_api_name(const char *name, const char *type, int offset)
-  Given the name of an nh_symdef (which might not be the same as the name of
-  the corresponding tile; it tends to be a lot shorter), returns its index
-  within an image file using the NetHack 4 tilemap. Zaps and explosions have
-  a type as well as a name; both are needed to find the correct tile.
+    int tileno_from_api_name(const char *name, const char *type, int offset)
+      Given the name of an nh_symdef (which might not be the same as the name
+      of the corresponding tile; it tends to be a lot shorter), returns its
+      index within an image file using the NetHack 4 tilemap. Zaps and
+      explosions have a type as well as a name; both are needed to find the
+      correct tile.
 
-const char *name_from_tileno(int tileno)
-  Given the index of a tile within an image file (using the NetHack 4 tilemap),
-  returns the name of that tile. (The return value needs no deallocation; it
-  might be a string literal, or might point to a static buffer that is
-  overwritten with each call, or might point to a buffer that is specific to
-  the input you give. Basically, don't assume it to stay valid beyond the
-  next call.)
+    const char *name_from_tileno(int tileno)
+      Given the index of a tile within an image file (using the NetHack 4
+      tilemap), returns the name of that tile. (The return value needs no
+      deallocation; it might be a string literal, or might point to a static
+      buffer that is overwritten with each call, or might point to a buffer
+      that is specific to the input you give. Basically, don't assume it to
+      stay valid beyond the next call.)
 
 The "offset" parameter is a value that represents a logically connected range
-of tiles (TILESET_*_OFF), to make the lookup more efficient, and can be
-TILESEQ_INVALID_OFF if it is not known in which range the tile resides. The
-return value on error is NULL for a pointer, or TILESEQ_INVALID_OFF for an
+of tiles (`TILESET_*_OFF`), to make the lookup more efficient, and can be
+`TILESEQ_INVALID_OFF` if it is not known in which range the tile resides. The
+return value on error is NULL for a pointer, or `TILESEQ_INVALID_OFF` for an
 integer.
-
-If you add monsters/objects/other things to NetHack and need to add tiles to
-go with them, you now need only to add an appropriate entry to a .txt file
-(there must be a size 16 image, because the larger sizes can automatically be
-converted; size 32 and 64 images are helpful as well, because they will look
-nicer than upscaled images).  The .txt files are organized by provenance
-(i.e. which variant they came from or who wrote them); as such, if there is no
-appropriate file to add to, you can create your own.  The build system will
-automatically merge together all the tilesets it finds in the tilesets/
-directory in order to produce one large, merged tileset.
