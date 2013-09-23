@@ -159,7 +159,7 @@ tileno_from_name(const char *name, int offset)
         if (sscanf(name, "explosion %79s %d", buf, &j) == 2 &&
             j >= 0 && j < NUMEXPCHARS) {
             for (i = 0; i < EXPL_MAX; i++) {
-                if (!strcmp(expltypes[i].symname, name))
+                if (!strcmp(expltypes[i].symname, buf))
                     return TILESEQ_EXPLODE_OFF + i * NUMEXPCHARS + j;
             }
         }

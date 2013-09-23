@@ -195,7 +195,7 @@
         },
         _build_fonts => {
             object => qr=^path:tilesets/fonts/.*\.txt=s,
-            command => ["bpath:tilesets/tile2png_c$exeext",
+            command => ["bpath:tilesets/export_tileset_c$exeext",
                         "optpath:-o :extend:.png:",
                         "optstring:-f",
                         "optpath::"],

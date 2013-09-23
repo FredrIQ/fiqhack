@@ -1,3 +1,7 @@
+! Last modified by Alex Smith, 2013-09-23
+! NetHack may be freely redistributed.  See license for details.
+! This font was probably originally written by Andrew Apted, and is
+! Copyright (C) its original author.
 o = (0, 0, 0)
 M = (255, 255, 255)
 # tile 0 (char 0)
