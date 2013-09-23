@@ -352,7 +352,7 @@ Files: nethack_server/*
 License: NHGPL or GPL-2+
 Copyright: Copyright (c) Daniel Thaler, 2011
 
-Files: tilesets/*.txt
+Files: tilesets/dat/tiles/s-*.txt tilesets/dat/palette.txt
 License: NHGPL
 Copyright: These tiles were copied from an NHGPL Slash'EM release that was
  Copyright (C) J. Ali Harlow 2000-2006, which gives the following
@@ -391,29 +391,25 @@ Copyright: These tiles were copied from an NHGPL Slash'EM release that was
  and oth32se.txt. These override those found in other tilesets.
  Tiles which are not present in any other set are created from the 16x16 tiles.
 
-Files: tilesets/fonts/*.txt
+Files: tilesets/dat/fonts/*.txt
 License: NHGPL
 Copyright: Copyright (C) 2002 Andrew Apted <ajapted@users.sourceforge.net>
-Comment: The format of these files in the original source makes it
+Comment: The format of these files in the original source made it
  impossible for them to contain an explicit copyright notice. However,
  they are definitively NHGPL (due to being distributed with the
  NHGPL'd Slash'EM), and are very likely to have the copyright
- conditions shown above, because all other files added at the same
- time had that copyright notice.
+ conditions shown above, because all the other files in the directory
+ had that copyright notice.
 
-Files: tilesets/bigtile.c
+Files: tilesets/util/bigtile.c
 License: NHGPL
 Copyright: Copyright (c) NetHack Development Team 1995
 
-Files: tilesets/magtile.c
+Files: tilesets/util/magtile.c
 License: NHGPL
 Copyright: Copyright (c) NetHack Development Team 1995
 
-Files: tilesets/mapmerge.c
-License: NHGPL
-Copyright: Copyright (c) Slash'EM Development Team 2002
-
-Files: tilesets/tile*
+Files: tilesets/include/tile_h.in tilesets/src/tiletext.c tilesets/util/tilemap.c
 License: NHGPL
 Copyright:
  There is no explicit copyright notice on these files. These versions were
@@ -426,23 +422,23 @@ Copyright:
  The files originated in vanilla NetHack (where they also have no explicit
  copyright notice), but the Slash'EM versions were modified somewhat.
 
-Files: tilesets/export_tileset.c
+Files: tilesets/util/export_tileset.c
 License: NHGPL
 Copyright:
  Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
                Slash'EM Development Team 2003
 
-Files: tilesets/convert_tileset.c
+Files: tilesets/util/convert_tileset.c
 License: NHGPL
 Copyright: Copyright (C) J. Ali Harlow 2000
 
-Files: tilesets/tilesequence.h
+Files: tilesets/include/tilesequence.h
 License: NHGPL
 Copyright:
  Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy and Dave Cohrs 1990
  Copyright (c) 2013 Alex Smith
 
-Files: tilesets/tilesequence.c
+Files: tilesets/src/tilesequence.c
 License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
 

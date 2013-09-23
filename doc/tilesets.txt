@@ -37,30 +37,25 @@ Tile Manipulation Utilities
     map_from_tileset  Creates a map file based on a .txt tileset
     build_tilesets    Runs {convert,export}_tileset based on CATALOG.txt
 
-The build system will automatically build the final tileset images, but the
-tileset manipulation routines (apart from tilemap) are installed along with
-NetHack 4 to allow tile editing even if no build system is available.
-
 To import a tileset image designed for an old version or another variant, use
 `import_tileset` with the appropriate map for that version/variant.  (Maps
 appropriate for Slash'EM 0.0.7E7F3 and NetHack 3.4.3 ship with the NetHack 4
-source and binaries, and a map appropriate for the current version will be
-generated when you build NetHack 4 and ships with the binaries.)  If you have
-a .txt tileset for another version or variant, you may be able to use it
-directly, but most likely some of the tiles will have to be renamed (because
-older versions have a lot of naming clashes in their tiles, and there is only
-so much that the tile handling tools can do to resolve them).  Probably the
-biggest change in tile names is on tiles for objects; randomized-appearance
-objects will need their tiles renamed to contain the object class,
-e.g. "orange potion", "orange spellbook", "orange gem"; there are five tiles
-named "orange" in Slash'EM's objects.txt, for instance (counting both gems
-with the "orange" appearance and the fruit), and automatically disambiguating
-would be very difficult (or even impossible) because of the risk that other
-variants add other orange objects (orange rings? orange wands?).  Once you've
-imported your tileset, you can either make it into a tileset image suitable
-for NetHack 4 by hand using `convert_tileset` and `export_tileset`, or more
-conveniently, you can add it to CATALOG.txt an use `build_tilesets` to create
-the tileset image.
+source, and a map appropriate for the current version will be generated when
+you build NetHack 4.)  If you have a .txt tileset for another version or
+variant, you may be able to use it directly, but most likely some of the tiles
+will have to be renamed (because older versions have a lot of naming clashes
+in their tiles, and there is only so much that the tile handling tools can do
+to resolve them).  Probably the biggest change in tile names is on tiles for
+objects; randomized-appearance objects will need their tiles renamed to
+contain the object class, e.g. "orange potion", "orange spellbook", "orange
+gem"; there are five tiles named "orange" in Slash'EM's objects.txt, for
+instance (counting both gems with the "orange" appearance and the fruit), and
+automatically disambiguating would be very difficult (or even impossible)
+because of the risk that other variants add other orange objects (orange
+rings? orange wands?).  Once you've imported your tileset, you can either make
+it into a tileset image suitable for NetHack 4 by hand using `convert_tileset`
+and `export_tileset`, or more conveniently, you can add it to CATALOG.txt an
+use `build_tilesets` to create the tileset image.
 
 To edit .txt tile files, you can edit them directly in the .txt file, but if
 you want to use an image editor, extract a map from them using
