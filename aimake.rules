@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Alex Smith, 2013-09-23
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -188,10 +188,10 @@
             command => ["bpath:tilesets/tilemap_c$exeext",
                         "path:tilesets/tile_h.in",
                         "optpath::path:tilesets/tile_h.in",
-                        "optpath::bpath:tilesets/tile.c",
-                        "optpath::bpath:tilesets/tile.h"],
-            output => ["bpath:tilesets/tile.c",
-                       "bpath:tilesets/tile.h"],
+                        "optpath::bpath:tilesets/tile.h",
+                        "optpath::bpath:tilesets/nethack4.map"],
+            output => ["bpath:tilesets/tile.h",
+                       "bpath:tilesets/nethack4.map"],
         },
         _build_fonts => {
             object => qr=^path:tilesets/fonts/.*\.txt=s,
