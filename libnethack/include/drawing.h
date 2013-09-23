@@ -13,11 +13,21 @@
 extern const char *make_mon_name(int);
 extern char *make_object_name(int);
 
-extern const struct nh_symdef defsyms[];        /* defaults */
+extern const struct nh_symdef defsyms[];
+extern const struct nh_symdef warnsyms[];
+extern const struct nh_symdef trapsyms[];
+extern const struct nh_symdef explsyms[];
+extern const struct nh_symdef effectsyms[];
+extern const struct nh_symdef swallowsyms[];
 
-extern const char *const trapexplain[];
+extern const struct nh_symdef expltypes[];
+extern const struct nh_symdef zaptypes[];
+
 extern const char *const defexplain[];
 extern const char *const warnexplain[];
+extern const char *const trapexplain[];
 extern const char *const invismonexplain;
+
+
 
 #endif

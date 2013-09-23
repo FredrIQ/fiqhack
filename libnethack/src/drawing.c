@@ -207,7 +207,7 @@ const struct nh_symdef defsyms[] = {
     {'+', "hcdbridge", CLR_YELLOW}
 };
 
-static const struct nh_symdef trapsyms[] = {
+const struct nh_symdef trapsyms[] = {
 /* 0*/ {'^', "arrow trap", HI_METAL},
     {'^', "dart trap", HI_METAL},
     {'^', "falling rock trap", CLR_GRAY},
@@ -234,7 +234,7 @@ static const struct nh_symdef trapsyms[] = {
 };
 
 
-static const struct nh_symdef explsyms[] = {
+const struct nh_symdef explsyms[] = {
     {'/', "exp_top_l", CLR_ORANGE},     /* explosion top left */
     {'-', "exp_top_c", CLR_ORANGE},     /* explosion top center */
     {'\\', "exp_top_r", CLR_ORANGE},    /* explosion top right */
@@ -246,7 +246,7 @@ static const struct nh_symdef explsyms[] = {
     {'/', "exp_bot_r", CLR_ORANGE},     /* explosion bottom right */
 };
 
-static const struct nh_symdef expltypes[] = {
+const struct nh_symdef expltypes[] = {
     {0, "dark", CLR_BLACK},
     {0, "noxious", CLR_GREEN},
     {0, "muddy", CLR_BROWN},
@@ -256,7 +256,7 @@ static const struct nh_symdef expltypes[] = {
     {0, "frosty", CLR_WHITE}
 };
 
-static const struct nh_symdef zapsyms[NUM_ZAP] = {
+const struct nh_symdef zapsyms[NUM_ZAP] = {
     {'|', "zap_v", HI_ZAP},
     {'-', "zap_h", HI_ZAP},
     {'\\', "zap_ld", HI_ZAP},
@@ -266,7 +266,7 @@ static const struct nh_symdef zapsyms[NUM_ZAP] = {
 /*
  *  This must be the same order as used for buzz() in zap.c.
  */
-static const struct nh_symdef zaptypes[NUM_ZAP] = {
+const struct nh_symdef zaptypes[NUM_ZAP] = {
     {0, "missile", HI_ZAP},
     {0, "fire", CLR_ORANGE},
     {0, "frost", CLR_WHITE},
@@ -277,7 +277,7 @@ static const struct nh_symdef zaptypes[NUM_ZAP] = {
     {0, "acid", CLR_GREEN}
 };
 
-static const struct nh_symdef effectsyms[] = {
+const struct nh_symdef effectsyms[] = {
     {'*', "digbeam", CLR_WHITE},        /* dig beam */
     {'!', "flashbeam", CLR_WHITE},      /* camera flash beam */
     {')', "boomleft", HI_WOOD}, /* boomerang open left */
@@ -289,7 +289,7 @@ static const struct nh_symdef effectsyms[] = {
     {'#', "gascloud", CLR_GRAY}
 };
 
-static const struct nh_symdef swallowsyms[] = {
+const struct nh_symdef swallowsyms[] = {
     {'/', "swallow_top_l", CLR_ORANGE}, /* swallow top left */
     {'-', "swallow_top_c", CLR_ORANGE}, /* swallow top center */
     {'\\', "swallow_top_r", CLR_ORANGE},        /* swallow top right */
