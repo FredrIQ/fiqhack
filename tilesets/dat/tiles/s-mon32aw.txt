@@ -1,6 +1,6 @@
 ! Last modified by Alex Smith, 2013-09-24
 ! NetHack may be freely redistributed.  See license for details.
-__ = (255, 0, 255)
+__ = (71, 108, 108)
 _A = (0, 0, 0)
 _B = (242, 242, 242)
 _C = (242, 0, 0)
