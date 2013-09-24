@@ -391,6 +391,17 @@ Copyright: These tiles were copied from an NHGPL Slash'EM release that was
  and oth32se.txt. These override those found in other tilesets.
  Tiles which are not present in any other set are created from the 16x16 tiles.
 
+Files: tilesets/dat/tiles/n-343.txt
+License: NHGPL
+Copyright: These tiles were taken from the NetHack 3.4.3 source tarball, and
+ have no copyright notice for the individual tiles that were taken (although
+ the files they were taken from were originally provided by Warwick Allison,
+ the specific tiles taken were added later, and it is unclear who added them).
+ .
+ The tarball as a whole has this copyright:
+ .
+ Copyright 1985-2003 Stichting Mathematisch Centrum and M. Stephenson
+
 Files: tilesets/dat/fonts/*.txt
 License: NHGPL
 Copyright: Copyright (C) 2002 Andrew Apted <ajapted@users.sourceforge.net>
