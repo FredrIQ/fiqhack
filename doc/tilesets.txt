@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-09-23
+Last modified by Alex Smith, 2013-09-24
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -135,10 +135,12 @@ Tools that handle tilesets should know the difference and not merge these two
 colors together, or indeed, should not remap any other color to (71, 108,
 108).
 
-Note that the 16x16 tileset is supposed to be completely opaque, except for
-brandings (which by their nature must always use transparency).  Tools that
-handle 16x16 tiles should treat (71, 108, 108) as transparent (i.e. as they
-normally would), but windowing interfaces should treat it as opaque.
+The 16x16 tilesets in older versions of NetHack (and other variants, such as
+Slash'EM) did not respect this transparency rule, and used (71, 108, 108) as a
+solid color, with the windowports special-casing this size of tile.  NetHack 4
+avoids this problem via editing the 16x16 tiles to use (72, 108, 108) instead;
+you may need to perform the same edit when importing 16x16 tiles from other
+variants.
 
 
 Other Files Used With Tilesets
