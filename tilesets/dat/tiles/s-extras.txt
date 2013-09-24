@@ -1,5 +1,14 @@
-# These tiles are no longer used in Slash'EM, but are kept here
-# in case we ever need them.
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
+!
+! This file contains tiles formerly used by Slash'EM, which were subsequently
+! removed from it.  (Slash'EM uses the order of tiles in monsters.txt,
+! objects.txt, other.txt as its map files; NetHack 4 uses separate map files,
+! so including this file by default is not a problem, like it is in Slash'EM.)
+!
+! Tiles in other files take priority over tiles in this file, which are used
+! only if absolutely necessary.
+!
 A = (0, 0, 0)
 B = (0, 182, 255)
 C = (255, 108, 0)
@@ -73,7 +82,7 @@ P = (108, 145, 182)
   MMMBPPPPPPPEMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 3 (cmap / magical explosion top left)
+# tile 3 (cmap / magical explosion 0)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMKMMMMM
@@ -92,7 +101,7 @@ P = (108, 145, 182)
   MMMKIIFFFFFGGGDD
   MMMKIIIFGGGGGGGD
 }
-# tile 4 (cmap / magical explosion top center)
+# tile 4 (cmap / magical explosion 1)
 {
   MMKMMMMMMMKMMMMM
   MMKKKMMMMKIKKMMM
@@ -111,7 +120,7 @@ P = (108, 145, 182)
   GDCDGDDGDCDGDDGG
   DCCCDCCDCCCDCDGG
 }
-# tile 5 (cmap / magical explosion top right)
+# tile 5 (cmap / magical explosion 2)
 {
   MMKMMMMMMMMMMMMM
   KKKMMMMMMMMMMMMM
@@ -130,7 +139,7 @@ P = (108, 145, 182)
   GDGGGFGGFIIIKIIK
   DGGGGGGFIIIIIIKM
 }
-# tile 6 (cmap / magical explosion middle left)
+# tile 6 (cmap / magical explosion 3)
 {
   MMMMKIIIFGGDDGGG
   MMKKIIIIFGGGDDDD
@@ -149,7 +158,7 @@ P = (108, 145, 182)
   MCIIIIIIFGGGDDGG
   MKIKIIIIIFGDGGGD
 }
-# tile 7 (cmap / magical explosion middle center)
+# tile 7 (cmap / magical explosion 4)
 {
   DCCCCCCCCCCCCCDD
   CCCCCCCCCCCCCCCC
@@ -168,7 +177,7 @@ P = (108, 145, 182)
   DCCCCCCCCCCCCCCC
   CCCCCCCCCCCCCCCD
 }
-# tile 8 (cmap / magical explosion middle right)
+# tile 8 (cmap / magical explosion 5)
 {
   DGGDDGGFIIIIIIKM
   CDDDGGFIIIIIIKMM
@@ -187,7 +196,7 @@ P = (108, 145, 182)
   DGGGDDGGFIIKMMMM
   DDGGGGGGGFIIKKMM
 }
-# tile 9 (cmap / magical explosion bottom left)
+# tile 9 (cmap / magical explosion 6)
 {
   KKKMKIIIFGGGGGDD
   MMMMKIIIFGGGGGDG
@@ -206,7 +215,7 @@ P = (108, 145, 182)
   MMMMMMMMMMCMMMKC
   MMMMMMMMMMMMMMKM
 }
-# tile 10 (cmap / magical explosion bottom center)
+# tile 10 (cmap / magical explosion 7)
 {
   DCCCCCCCCCCCCCDG
   DDCCCCCCCCCDCCDD
@@ -225,7 +234,7 @@ P = (108, 145, 182)
   KMMKIKMMKIIKMMKK
   MMMMCMMMMKCMMMMM
 }
-# tile 11 (cmap / magical explosion bottom right)
+# tile 11 (cmap / magical explosion 8)
 {
   GDDGGGGFFFIIIIKM
   GGGDGGFIIIIIICKK
@@ -244,7 +253,7 @@ P = (108, 145, 182)
   IKMMMMMMMKMMMMMM
   CKMMMMMMMMMMMMMM
 }
-# tile 12 (cmap / cold explosion top left)
+# tile 12 (cmap / cold explosion 0)
 {
   MMMMMMMMMMMMMMMM
   MMMMPPMMMMMMMMMM
@@ -263,7 +272,7 @@ P = (108, 145, 182)
   MMPNNPNNPPNNPPPP
   MMPNNPNNPPNNNNPP
 }
-# tile 13 (cmap / cold explosion top center)
+# tile 13 (cmap / cold explosion 1)
 {
   MMMMMMMMMMMMNNMM
   MNNPNNPNNPPPNNPN
@@ -282,7 +291,7 @@ P = (108, 145, 182)
   NNPPPNNPNNPPPPPP
   NNPPPNNPNNNNNNPP
 }
-# tile 14 (cmap / cold explosion top right)
+# tile 14 (cmap / cold explosion 2)
 {
   MMMMMMMMMMMMPPMM
   NMMMMMPMMMMMMPMM
@@ -301,7 +310,7 @@ P = (108, 145, 182)
   PPPNNPPPPPNNPMMM
   NNPNNPPPPPNNPMMM
 }
-# tile 15 (cmap / cold explosion middle left)
+# tile 15 (cmap / cold explosion 3)
 {
   MMPPPPPPPPPPNNPN
   MMPNNPNNNPPNNPPN
@@ -320,7 +329,7 @@ P = (108, 145, 182)
   MPPNNNNNNNPPPPPP
   MPPNNNNPPPPNNPPP
 }
-# tile 16 (cmap / cold explosion middle center)
+# tile 16 (cmap / cold explosion 4)
 {
   NPNNPPPPPPNNNNPP
   NPNNPNNPPPPPPPPP
@@ -339,7 +348,7 @@ P = (108, 145, 182)
   PNNNNPNNPNNPPNNN
   PNNNNPPPPPPPPNNP
 }
-# tile 17 (cmap / cold explosion middle right)
+# tile 17 (cmap / cold explosion 5)
 {
   NNPPPPNNPNNPNNMM
   PPPNNPNNPNNPNNMM
@@ -358,7 +367,7 @@ P = (108, 145, 182)
   NPPPPPPPPPNNPNNM
   PPPPPPPPPPPPPNNM
 }
-# tile 18 (cmap / cold explosion bottom left)
+# tile 18 (cmap / cold explosion 6)
 {
   MNNPNNNNPPPNNPPP
   MNNPNNNNPPPPPNNP
@@ -377,7 +386,7 @@ P = (108, 145, 182)
   PPMMMPPPPPMMMNNP
   MMPPMMMMMMMMMMMM
 }
-# tile 19 (cmap / cold explosion bottom center)
+# tile 19 (cmap / cold explosion 7)
 {
   PPPPPNNPNNPNNNPN
   PNNPPNNPNNPNNNPN
@@ -396,7 +405,7 @@ P = (108, 145, 182)
   PNNPNNPPNNPPPNNM
   MNNMMMMMMMMMMNNM
 }
-# tile 20 (cmap / cold explosion bottom right)
+# tile 20 (cmap / cold explosion 8)
 {
   NPNNPPNNPNNPPPPM
   NPNNPPNNPNNPNNMM
@@ -415,7 +424,7 @@ P = (108, 145, 182)
   MMMMMMMMPPPMMMMP
   MMMMMMPPPMMMMMPM
 }
-# tile 21 (cmap / death explosion top left)
+# tile 21 (cmap / death explosion 0)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -434,7 +443,7 @@ P = (108, 145, 182)
   MMMKAJAKADAKAJAK
   MMMAJACADACAJACA
 }
-# tile 22 (cmap / death explosion top center)
+# tile 22 (cmap / death explosion 1)
 {
   MMMMMMMMMMMMMMMM
   MMMAKAAAAAAKAMMM
@@ -453,7 +462,7 @@ P = (108, 145, 182)
   ADAKAJJJJJJAKADA
   DAKAJAAAAAAKAKAD
 }
-# tile 23 (cmap / death explosion top right)
+# tile 23 (cmap / death explosion 2)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -472,7 +481,7 @@ P = (108, 145, 182)
   CAJAKADAKAJACMMM
   AKAJAKADAKAJAMMM
 }
-# tile 24 (cmap / death explosion middle left)
+# tile 24 (cmap / death explosion 3)
 {
   MMAJAKADAKAJAKAD
   MMJAKADAKAJAKADA
@@ -491,7 +500,7 @@ P = (108, 145, 182)
   MMJACADAKAJAKADA
   MMAKADACAJAKADAC
 }
-# tile 25 (cmap / death explosion middle center)
+# tile 25 (cmap / death explosion 4)
 {
   AKAJANNNNNNAJAKA
   KAJANNNNNNNNAJAK
@@ -510,7 +519,7 @@ P = (108, 145, 182)
   KAJANNNAANNNAJAK
   AJANNNAJJANNNAJA
 }
-# tile 26 (cmap / death explosion middle right)
+# tile 26 (cmap / death explosion 5)
 {
   DAKAJAKADAKAJAMM
   ADAKAJAKADAKAJMM
@@ -529,7 +538,7 @@ P = (108, 145, 182)
   ADAKAJAKADACAJMM
   KADAKAJAKADAKAMM
 }
-# tile 27 (cmap / death explosion bottom left)
+# tile 27 (cmap / death explosion 6)
 {
   MMMAKADAKAJAKADA
   MMMJAKADAKAJAKAD
@@ -548,7 +557,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 28 (cmap / death explosion bottom center)
+# tile 28 (cmap / death explosion 7)
 {
   KAJAAAJAAJAAAJAK
   AKAJJJAKKAJJJAKA
@@ -567,7 +576,7 @@ P = (108, 145, 182)
   MMMAAAKAAKAAAMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 29 (cmap / death explosion bottom right)
+# tile 29 (cmap / death explosion 8)
 {
   ADAKAJAKADAKAMMM
   DAKAJAKADAKAJMMM
@@ -586,7 +595,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 30 (cmap / lightning explosion top left)
+# tile 30 (cmap / lightning explosion 0)
 {
   MMMMMMEPEMMMMMMM
   MMMMMEPBPEMEEMMM
@@ -605,7 +614,7 @@ P = (108, 145, 182)
   MMMMEPBNBPBNBBPP
   MMMMEPBNBPBNBPEE
 }
-# tile 31 (cmap / lightning explosion top center)
+# tile 31 (cmap / lightning explosion 1)
 {
   MMMMMMMEEPPEMMMM
   MMMMMMEPPBBPEMMM
@@ -624,7 +633,7 @@ P = (108, 145, 182)
   PBPNNBBBNNNNBNBP
   EPEBBPPBNBBBPBPE
 }
-# tile 32 (cmap / lightning explosion top right)
+# tile 32 (cmap / lightning explosion 2)
 {
   MMMMMEMMMMMMMMMM
   MMMMEPEMMMMMMMMM
@@ -643,7 +652,7 @@ P = (108, 145, 182)
   BNNBBNBPBNBPEMMM
   PBBBNBPBNBPEMMMM
 }
-# tile 33 (cmap / lightning explosion middle left)
+# tile 33 (cmap / lightning explosion 3)
 {
   MMMMEPBNBPBNBBPE
   MMMEPBNBBBNBBNBP
@@ -662,7 +671,7 @@ P = (108, 145, 182)
   MMMMEPBNBPBNBBNB
   MMMMMEPBNBPBNBBP
 }
-# tile 34 (cmap / lightning explosion middle center)
+# tile 34 (cmap / lightning explosion 4)
 {
   EPEEPBPBNBPBPBPE
   PBPPBNBNBPBNBNBP
@@ -681,7 +690,7 @@ P = (108, 145, 182)
   PBNBBNBNBNBNBPBP
   EPBPPBPBNBPBPEPE
 }
-# tile 35 (cmap / lightning explosion middle right)
+# tile 35 (cmap / lightning explosion 5)
 {
   PBPPBBBBNBPEMMMM
   BNBBNNNBBNBPEMMM
@@ -700,7 +709,7 @@ P = (108, 145, 182)
   PBPNBNNBBNBPEMMM
   EPBNBBBBNBPEMMMM
 }
-# tile 36 (cmap / lightning explosion bottom left)
+# tile 36 (cmap / lightning explosion 6)
 {
   MMMMEPBNBBPBBNBP
   MMMMMEPBNNBNNBNB
@@ -719,7 +728,7 @@ P = (108, 145, 182)
   MMMMMMMEPEMMMMMM
   MMMMMMMMEMMMMMMM
 }
-# tile 37 (cmap / lightning explosion bottom center)
+# tile 37 (cmap / lightning explosion 7)
 {
   PBPEEPBBNBBPPBPE
   BNBPPBNNBBNBBNBP
@@ -738,7 +747,7 @@ P = (108, 145, 182)
   MMMMMMMMMEPPEMMM
   MMMMMMMMMMEEMMMM
 }
-# tile 38 (cmap / lightning explosion bottom right)
+# tile 38 (cmap / lightning explosion 8)
 {
   PBBNBBBNBEMMMMMM
   BNNBNNBBNBEMMMMM
@@ -757,7 +766,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 39 (cmap / poison explosion top left)
+# tile 39 (cmap / poison explosion 0)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -776,7 +785,7 @@ P = (108, 145, 182)
   MMMJKJJJFFGGFPBP
   MMMJCJJFGGFFFBPP
 }
-# tile 40 (cmap / poison explosion top center)
+# tile 40 (cmap / poison explosion 1)
 {
   MMMMMMMMMMMMMMMM
   MMMJKKKKKKJMMJKK
@@ -795,7 +804,7 @@ P = (108, 145, 182)
   PJKKKKKCKJPPPPPB
   JKKJKJJJKKJPPPPB
 }
-# tile 41 (cmap / poison explosion top right)
+# tile 41 (cmap / poison explosion 2)
 {
   MMMMMMMMMMMMMMMM
   JMMMMMMMMMMMMMMM
@@ -814,7 +823,7 @@ P = (108, 145, 182)
   FFFFFFGFJJJJCMMM
   FFFFFFGFJJJJKMMM
 }
-# tile 42 (cmap / poison explosion middle left)
+# tile 42 (cmap / poison explosion 3)
 {
   MMMJKKJFGFFFFBPP
   MMJKCJJFGFFFFBPP
@@ -833,7 +842,7 @@ P = (108, 145, 182)
   MMKJFGGFFFFFFFBP
   MMKJJFFGFFFFFFBP
 }
-# tile 43 (cmap / poison explosion middle center)
+# tile 43 (cmap / poison explosion 4)
 {
   JKKJJJJJJJKKJPPB
   KKJJJJJJJJKKJJJJ
@@ -852,7 +861,7 @@ P = (108, 145, 182)
   PJCJJJKCJJJJJJCP
   PJKJJJKJKJJJJKKP
 }
-# tile 44 (cmap / poison explosion middle right)
+# tile 44 (cmap / poison explosion 5)
 {
   FFFFFFGFJJJKKMMM
   FFFFFFGFJJJJKMMM
@@ -871,7 +880,7 @@ P = (108, 145, 182)
   PPPBFFFFFGGKKJMM
   PPPBFFFFFFGJJKMM
 }
-# tile 45 (cmap / poison explosion bottom left)
+# tile 45 (cmap / poison explosion 6)
 {
   MMKKJJJFGGFFFFBP
   MMKJKJJFGFFFFFBP
@@ -890,7 +899,7 @@ P = (108, 145, 182)
   MMMMMMMJKKKKKCJM
   MMMMMMMMMMMMMMMM
 }
-# tile 46 (cmap / poison explosion bottom center)
+# tile 46 (cmap / poison explosion 7)
 {
   PJKJJJKKJKKCKKKP
   PKKCKCKJPPPBBBPP
@@ -909,7 +918,7 @@ P = (108, 145, 182)
   MJKKKCKKCJMMJKKK
   MMMMMMMMMMMMMMMM
 }
-# tile 47 (cmap / poison explosion bottom right)
+# tile 47 (cmap / poison explosion 8)
 {
   PPPBFFFFFGGMJKMM
   PPPBFFFFFGFMKKMM
@@ -928,7 +937,7 @@ P = (108, 145, 182)
   KKKKKMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 48 (cmap / acid explosion top left)
+# tile 48 (cmap / acid explosion 0)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMGGGMMMMMG
@@ -947,7 +956,7 @@ P = (108, 145, 182)
   MMMMMMMFGMMMMMMG
   MMMMMMMMMMGFMMFG
 }
-# tile 49 (cmap / acid explosion top center)
+# tile 49 (cmap / acid explosion 1)
 {
   MMMMMMMMMMFGFMMM
   GGFMMMMMMMGGGGMM
@@ -966,7 +975,7 @@ P = (108, 145, 182)
   FHGFGGFGGFGGGHFH
   HFGGGGHFGGGGHFHG
 }
-# tile 50 (cmap / acid explosion top right)
+# tile 50 (cmap / acid explosion 2)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -985,7 +994,7 @@ P = (108, 145, 182)
   GMMMMFGGGGGGGFMM
   GMMMMGGGGFMMMMMM
 }
-# tile 51 (cmap / acid explosion middle left)
+# tile 51 (cmap / acid explosion 3)
 {
   MMMMMMMMMMGGGFGG
   MFGGGGFMMMFGGGGG
@@ -1004,7 +1013,7 @@ P = (108, 145, 182)
   MMMMFGGFMMMMMFGG
   MFGGGGGGMMMMFGGF
 }
-# tile 52 (cmap / acid explosion middle center)
+# tile 52 (cmap / acid explosion 4)
 {
   FHFHGHGHFHGHFHGG
   HFHFHFHFHFHFHFHG
@@ -1023,7 +1032,7 @@ P = (108, 145, 182)
   FHFHGHFHGHFHFHGG
   HFHGHFHGHGHFHGGF
 }
-# tile 53 (cmap / acid explosion middle right)
+# tile 53 (cmap / acid explosion 5)
 {
   GMMMMMMMMMMMMMMM
   FMMMMMMMMMMMMMMM
@@ -1042,7 +1051,7 @@ P = (108, 145, 182)
   GHGHGGMMMMMMMMMM
   FGGGGFMMMMMMMMMM
 }
-# tile 54 (cmap / acid explosion bottom left)
+# tile 54 (cmap / acid explosion 6)
 {
   MGFHFHGFMMMFGGGH
   MGHFHGGMMMMGGGHG
@@ -1061,7 +1070,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMFGG
   MMMMMMMMMMMMMMMM
 }
-# tile 55 (cmap / acid explosion bottom center)
+# tile 55 (cmap / acid explosion 7)
 {
   GHGHGHFGGGGHFHGM
   GGGGGGGFMMFGHGGM
@@ -1080,7 +1089,7 @@ P = (108, 145, 182)
   FMMMMMMMMMFGFGGM
   MMMMMMMMMMMFGGFM
 }
-# tile 56 (cmap / acid explosion bottom right)
+# tile 56 (cmap / acid explosion 8)
 {
   MMMMMMGGGGFMMMMM
   MMMMMMMMFGGGGFMM

@@ -1,3 +1,5 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
 __ = (0, 0, 0)
 _A = (128, 96, 0)
 _B = (128, 255, 128)
@@ -267,7 +269,7 @@ Co = (0, 0, 255)
   _GA2_Y_w_w_Y_Y_Y_Y_YA2A2A2_G_w_Y_G_Y_G_G_Y_YABA2A2A2A2_Y_w_YA2A2
   _GA2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2
 }
-# tile 17 (floor of a room)
+# tile 17 (the floor of a room)
 {
   _G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_G_w
   _G_w_w_w_w_w_w_w_Y_Y_Y_w_w_w_w_w_w_w_w_w_w_w_w_w_Y_Y_w_w_w_w_w_Y

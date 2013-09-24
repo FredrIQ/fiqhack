@@ -1,3 +1,5 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
 __ = (0, 0, 0)
 _A = (128, 96, 0)
 _B = (128, 255, 128)
@@ -236,7 +238,7 @@ Cp = (96, 96, 48)
 Cq = (108, 145, 182)
 Cr = (0, 16, 0)
 Cs = (0, 0, 255)
-# tile 730 (velvet / drain life)
+# tile 730 (velvet spellbook)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAw_cBgB6AwAwAwAwAwAwAwAwAwAwAwAwAwAw

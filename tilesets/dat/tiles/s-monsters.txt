@@ -1,3 +1,5 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
 A = (0, 0, 0)
 B = (0, 182, 255)
 C = (255, 108, 0)
@@ -7614,7 +7616,7 @@ P = (108, 145, 182)
   MCJJJKACKKJKAMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 400 (zruty)
+# tile 400 (zruty spare tile)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMFFGFMMMMMM
@@ -8279,7 +8281,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 435 (wererat)
+# tile 435 (human wererat)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8298,7 +8300,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 436 (werejackal)
+# tile 436 (human werejackal)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8317,7 +8319,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 437 (werewolf)
+# tile 437 (human werewolf)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8336,7 +8338,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 438 (werepanther)
+# tile 438 (human werepanther)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8355,7 +8357,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 439 (weretiger)
+# tile 439 (human weretiger)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8374,7 +8376,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 440 (weresnake)
+# tile 440 (human weresnake)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -8393,7 +8395,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 441 (werespider)
+# tile 441 (human werespider)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM

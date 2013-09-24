@@ -1,3 +1,5 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
 __ = (0, 0, 0)
 _A = (128, 96, 0)
 _B = (128, 255, 128)
@@ -761,7 +763,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 431 (runed broadsword / elven broadsword)
+# tile 431 (runed broadswords 0 / elven broadsword)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAPB4__
@@ -1146,7 +1148,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwCTAnCfCfCfCcCf_1CcCfCfCfCfCfCfAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwCfCfCfCfCfCfCfCfCfCfCfAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 549 (clay / increase accuracy)
+# tile 549 (clay ring / increase accuracy)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
@@ -1181,7 +1183,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 565 (twisted / free action)
+# tile 565 (twisted ring / free action)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
@@ -1216,7 +1218,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 566 (steel / slow digestion)
+# tile 566 (steel ring / slow digestion)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
@@ -1251,7 +1253,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 580 (concave / amulet of unchanging)
+# tile 580 (concave amulet / amulet of unchanging)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwC_C_C_C_C_C_AwAwAwAwAwAwAwAwAwAw
@@ -1496,7 +1498,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 679 (smoky / object detection)
+# tile 679 (smoky potion / object detection)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
@@ -1531,7 +1533,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAw______________AwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 759 (glass / light)
+# tile 759 (glass wand / light)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
@@ -1566,7 +1568,7 @@ Cs = (0, 0, 255)
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
 }
-# tile 761 (crystal / enlightenment)
+# tile 761 (crystal wand / enlightenment)
 {
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw
   AwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAwAw

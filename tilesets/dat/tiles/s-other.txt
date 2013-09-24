@@ -1,3 +1,5 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
 A = (0, 0, 0)
 B = (0, 182, 255)
 C = (255, 108, 0)
@@ -14,7 +16,7 @@ M = (71, 108, 108)
 N = (255, 255, 255)
 O = (218, 218, 182)
 P = (108, 145, 182)
-# tile 0 (dark part of a room)
+# tile 0 (solid rock)
 {
   AAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAA
@@ -375,7 +377,7 @@ P = (108, 145, 182)
   MMMJJJJMJMJJJAMM
   MMMMMMMMMMMMMMMM
 }
-# tile 19 (floor of a room)
+# tile 19 (the floor of a room)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -793,7 +795,7 @@ P = (108, 145, 182)
   BBBBBBOOOOBBBBBB
   BBBBBBBBBBBBBBBB
 }
-# tile 41 (water)
+# tile 41 (underwater)
 {
   EEEEEEEEEEEEEEEE
   EEEEEEEEEEEEEEEE
@@ -1230,7 +1232,7 @@ P = (108, 145, 182)
   MMMMMMAAAAAMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 64 (wall)
+# tile 64 (jagged wall)
 {
   MMMMMMMNNMMMMMMM
   MMMMMMNNMMMMMMMM
@@ -1249,7 +1251,7 @@ P = (108, 145, 182)
   MMMMMMMMMNNMMMMM
   MMMMMMMMNNMMMMMM
 }
-# tile 65 (wall)
+# tile 65 (jagged wall)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -1268,7 +1270,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 66 (wall)
+# tile 66 (jagged wall)
 {
   NNNNNMMMMMMMMMMM
   MMMMNMMMMMMMMMMM
@@ -1287,7 +1289,7 @@ P = (108, 145, 182)
   MMMMMMMMMMMMNMMM
   MMMMMMMMMMMMNNNN
 }
-# tile 67 (wall)
+# tile 67 (jagged wall)
 {
   MMMMMMMMMMMMNNNN
   MMMMMMMMMMMMNMMM

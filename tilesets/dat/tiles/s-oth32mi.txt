@@ -1,3 +1,5 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
 __ = (71, 108, 108)
 _A = (0, 0, 0)
 _B = (0, 0, 16)
@@ -779,7 +781,7 @@ C$ = (255, 255, 255)
   _A_ABsBsCFBsBsCFBsBsCFBsBsCFBsBsCFBsBsBsCFBsBsCFBsBsBsBsCFBs_A_A
   _A_ABsBsCFBsBsCFBsBsCFBsBsCFBsBsCFBsBsBsCFBsBsCFBsBsBsBsCFBs_A_A
 }
-# tile 18 (floor of a room)
+# tile 18 (the floor of a room)
 {
   AEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAEAE
   AE_VAO_VAO_VABAE_R_R_RAO_VAO_VAO_VAO_VAO_VAO_VAO_R_R_VAO_VAO_V_O
@@ -1269,7 +1271,7 @@ C$ = (255, 255, 255)
   CuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCFCFCuCuCuCuCuCuCuCu
   CuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCuCFCFCuCuCuCuCuCuCuCu
 }
-# tile 39 (water)
+# tile 39 (underwater)
 {
   _K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K
   _K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K_K
@@ -1619,7 +1621,7 @@ C$ = (255, 255, 255)
   ________________________________________________________________
   ________________________________________________________________
 }
-# tile 62 (wall)
+# tile 62 (jagged wall)
 {
   ____________________________C$C$C$C$____________________________
   ____________________________C$C$C$C$____________________________
@@ -1654,7 +1656,7 @@ C$ = (255, 255, 255)
   ________________________________C$C$C$C$________________________
   ________________________________C$C$C$C$________________________
 }
-# tile 63 (wall)
+# tile 63 (jagged wall)
 {
   ____________________________C$C$C$C$____________________________
   ____________________________C$C$C$C$____________________________
@@ -1689,7 +1691,7 @@ C$ = (255, 255, 255)
   ________________________________C$C$C$C$________________________
   ________________________________C$C$C$C$________________________
 }
-# tile 64 (wall)
+# tile 64 (jagged wall)
 {
   C$C$C$C$C$C$C$C$C$C$____________________________________________
   C$C$C$C$C$C$C$C$C$C$____________________________________________
@@ -1724,7 +1726,7 @@ C$ = (255, 255, 255)
   ________________________________________________C$C$C$C$C$C$C$C$
   ________________________________________________C$C$C$C$C$C$C$C$
 }
-# tile 65 (wall)
+# tile 65 (jagged wall)
 {
   ________________________________________________C$C$C$C$C$C$C$C$
   ________________________________________________C$C$C$C$C$C$C$C$
