@@ -197,7 +197,7 @@ Tile Rendering
 
 The various sorts of objects that can have tiles are:
 
-* backgrounds (should be completely opaque in every port)
+* backgrounds
 * traps
 * objects
 * memory of invisibility
@@ -216,10 +216,16 @@ explosion, beam, or effect; and any number of monster brandings (e.g. to show
 that a monster is peaceful) and general brandings (e.g. to show that a door is
 known to be unlocked).  When not using a tiles port, brandings are shown using
 background or foreground colors (depending on the branding); in tiles ports,
-general brandings are superimposed on the background, and monster brandings
-are superimposed on the monster.  Warning symbols are encoded as monsters
-(with a specific branding to show that they're warnings rather than monsters).
+general brandings are superimposed on the background (except for the trap
+branding, which appears on top of everything because it's so important), and
+monster brandings are superimposed on the monster.  Warning symbols are
+encoded as monsters (with a specific branding to show that they're warnings
+rather than monsters).
 
+Some tilesets have backgrounds that are not completely opaque.  As such, when
+rendering views in tiles, two backgrounds have to be drawn; the underlying
+floor, and the background itself (on top of the floor).  The standard lower
+background for this purpose is "floor of a room".
 
 Tile utilities API
 ------------------
