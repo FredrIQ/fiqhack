@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2013-09-24 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "config.h"
@@ -9,19 +9,18 @@
  * TEXTCOLORMAPSPACE
  *
  * This is the maximum number of possible unique colours in a .TXT file
- * file. MAXCOLORMAPSIZE may be set (in tile.h) to be smaller than this
- * in which case only that many unique colours may be present in a .TXT
- * file (and in all merged .TXT files). MAXCOLORMAPSIZE may be larger
- * than this without penalty. A value of n*TEXTCOLORMAPSPACE where n is
- * the number of .TXT files that are going to be merged (currently three;
- * monsters, objects & others) produces maximum generality. Increasing
- * MAXCOLORMAPSIZE has performance issues for the game (TEXTCOLORMAPSPACE
- * does not). Windowing systems are required to cope with MAXCOLORMAPSIZE
- * colours and map them onto their possible palette (see tile.doc) so this
- * also introduces an additional burden.
+ * file. MAXCOLORMAPSIZE may be set (in tile.h) to be smaller than this in which
+ * case only that many unique colours may be present in a .TXT file (and in all
+ * merged .TXT files). MAXCOLORMAPSIZE may be larger than this without
+ * penalty. A value of n*TEXTCOLORMAPSPACE where n is the number of .TXT files
+ * that are going to be merged produces maximum generality. Increasing
+ * MAXCOLORMAPSIZE has performance issues for the game (TEXTCOLORMAPSPACE does
+ * not). Windowing systems are required to cope with MAXCOLORMAPSIZE colours and
+ * map them onto their possible palette (see tile.doc) so this also introduces
+ * an additional burden.
  */
 
-#define TEXTCOLORMAPSPACE	4096
+#define TEXTCOLORMAPSPACE       4096
 
 pixval ColorMap[3][MAXCOLORMAPSIZE];
 int colorsinmap;
@@ -52,7 +51,7 @@ static void write_txttile(FILE *, pixel(*)[MAX_TILE_X]);
 
 #define ABS(x) ((x) > 0 ? (x) : (-(x)))
 #define MAX3(x, y, z)  ((x) > (y) ?  ((x) > (z) ? (x) : (z)) : \
-				     ((y) > (z) ? (y) : (z)))
+                                     ((y) > (z) ? (y) : (z)))
 
 /*
  * ALI
@@ -60,16 +59,16 @@ static void write_txttile(FILE *, pixel(*)[MAX_TILE_X]);
  * Support for 4096 colours.
  *
  * Issues:
- *	- NetHack 3.2/3.3 .TXT readers have a bug which causes them
- *	  to overflow the "c" array in read_text_colormap if more than
- *	  one character is encountered in the set A-Za-z0-9 where it
- *	  is expecting a colour key. This is because no maximum field
- *	  width has been specified for the %[...] scan format.
+ *      - NetHack 3.2/3.3 .TXT readers have a bug which causes them
+ *        to overflow the "c" array in read_text_colormap if more than
+ *        one character is encountered in the set A-Za-z0-9 where it
+ *        is expecting a colour key. This is because no maximum field
+ *        width has been specified for the %[...] scan format.
  *
  * Design goals:
- *	- Capable of reading and writing 62/4096 colour files
- *	- Writes 62 files which NetHack 3.2/3.3 can read.
- *	- Writes 4096 files which NetHack 3.2/3.3 fails gracefully on.
+ *      - Capable of reading and writing 62/4096 colour files
+ *      - Writes 62 files which NetHack 3.2/3.3 can read.
+ *      - Writes 4096 files which NetHack 3.2/3.3 fails gracefully on.
  *
  * We achieve this by introducing two new legal characters "_" and "$".
  * This brings the number of legal characters to 64 which is a nice round
@@ -170,7 +169,7 @@ write_text_colormap(FILE *txtfile)
 
     num_colors = colorsinmainmap;
     if (num_colors > MAXCOLORMAPSIZE) {
-        Fprintf(stderr, "too many colors (%d)\n", num_colors);
+        Fprintf(stderr, "error: too many colors (%d)\n", num_colors);
         return FALSE;
     }
     for (i = 0; i < num_colors; i++) {
@@ -196,8 +195,9 @@ peek_txttile_info(FILE *txtfile, char ttype[BUFSZ],
 
     offset = ftell(txtfile);
     retval = fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) == 3;
-    if (retval == 3 && !strncmp(name, "cmap / ", 7)) name += 7;
-    if (retval == 3 && strstr(name, " / ")) *(strstr(name, " / ")) = 0;
+    if (retval && !strncmp(name, "cmap / ", 7))
+        memmove(name, name+7, strlen(name)-6);
+    if (retval && strstr(name, " / ")) *(strstr(name, " / ")) = 0;
     (void)fseek(txtfile, offset, SEEK_SET);
     return retval;
 }
@@ -213,23 +213,23 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
     if (fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) < 3) {
         return FALSE;
     }
-    if (!strncmp(name, "cmap / ", 7)) name += 7;
+    if (!strncmp(name, "cmap / ", 7)) memmove(name, name+7, strlen(name)-6);
     if (strstr(name, " / ")) *(strstr(name, " / ")) = 0;
 
     /* look for non-whitespace at each stage */
     if (fscanf(txtfile, "%1s", c) < 0) {
-        Fprintf(stderr, "unexpected EOF\n");
+        Fprintf(stderr, "error: unexpected EOF\n");
         return FALSE;
     }
     if (c[0] != '{') {
-        Fprintf(stderr, "didn't find expected '{'\n");
+        Fprintf(stderr, "error: didn't find expected '{'\n");
         return FALSE;
     }
     fmt_string = colorsinmap > 64 ? "%2s" : "%1s";
     for (j = 0; j < tile_y; j++) {
         for (i = 0; i < tile_x; i++) {
             if (fscanf(txtfile, fmt_string, c) < 0) {
-                Fprintf(stderr, "unexpected EOF\n");
+                Fprintf(stderr, "error: unexpected EOF\n");
                 return FALSE;
             }
             if (c[1])
@@ -241,7 +241,7 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
             else
                 k = -1;
             if (k == -1)
-                Fprintf(stderr, "%s %d (%s): color %s not in colormap!\n",
+                Fprintf(stderr, "warning: %s %d (%s): color %s not in colormap!\n",
                         ttype, *number, name, c);
             else {
                 pixels[j][i].r = ColorMap[CM_RED][k];
@@ -251,11 +251,11 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
         }
     }
     if (fscanf(txtfile, "%1s ", c) < 0) {
-        Fprintf(stderr, "unexpected EOF\n");
+        Fprintf(stderr, "error: unexpected EOF\n");
         return FALSE;
     }
     if (c[0] != '}') {
-        Fprintf(stderr, "didn't find expected '}'\n");
+        Fprintf(stderr, "error: didn't find expected '}'\n");
         return FALSE;
     }
 #ifdef _DCC
@@ -279,7 +279,8 @@ read_txttile(FILE *txtfile, pixel (*pixels)[MAX_TILE_X])
     ph = strcmp(ttype, "placeholder") == 0;
 
     if (!ph && strcmp(ttype, "tile") != 0)
-        Fprintf(stderr, "Keyword \"%s\" unexpected for entry %d\n", ttype, i);
+        Fprintf(stderr, 
+                "warning: Keyword \"%s\" unexpected for entry %d\n", ttype, i);
 
     if (map_file) {
         /* check tile name; the number is ignored (although these routines
@@ -326,7 +327,7 @@ write_txttile_info(FILE *txtfile, pixel(*pixels)[MAX_TILE_X],
                     break;
             }
             if (k >= colorsinmainmap)
-                Fprintf(stderr, "color not in colormap!\n");
+                Fprintf(stderr, "warning: color not in colormap!\n");
             (void)fputs(charcolors[k], txtfile);
         }
         Fprintf(txtfile, "\n");
@@ -425,8 +426,9 @@ merge_colormap(void)
         if (j >= colorsinmainmap) {     /* new color */
 #ifdef FUZZ
             if (colorsinmainmap >= MAXCOLORMAPSIZE) {
-                Fprintf(stderr,
-                        "Changing %i,%i,%i => %i,%i,%i (fuzz max(%i), total(%i)).\n",
+                Fprintf(stdout,
+                        "info: Changing %i,%i,%i => %i,%i,%i "
+                        "(fuzz max(%i), total(%i)).\n",
                         ColorMap[CM_RED][i], ColorMap[CM_GREEN][i],
                         ColorMap[CM_BLUE][i], best_r, best_g, best_b, fuzz,
                         totalfuzz);
@@ -442,8 +444,8 @@ merge_colormap(void)
             }
 #else
             if (colorsinmainmap >= MAXCOLORMAPSIZE) {
-                Fprintf(stderr,
-                        "Too many colors to merge -- excess ignored.\n");
+                Fprintf(stderr, "warning: Too many colors to merge -- "
+                        "excess ignored.\n");
             }
             j = colorsinmainmap;
             MainColorMap[CM_RED][j] = ColorMap[CM_RED][i];
@@ -476,16 +478,16 @@ set_tile_size(FILE *txtfile)
     pos = ftell(txtfile);
 
     if (fscanf(txtfile, "# %*s %*d (%*[^)]%c", c) <= 0 || c[0] != ')') {
-        Fprintf(stderr, "no tiles in file\n");
+        Fprintf(stderr, "error: no tiles in file\n");
         return FALSE;
     }
 
     if (fscanf(txtfile, "%1s", c) < 0) {
-        Fprintf(stderr, "unexpected EOF\n");
+        Fprintf(stderr, "error: unexpected EOF\n");
         return FALSE;
     }
     if (c[0] != '{') {
-        Fprintf(stderr, "didn't find expected '{'\n");
+        Fprintf(stderr, "error: didn't find expected '{'\n");
         return FALSE;
     }
     do
@@ -505,13 +507,13 @@ set_tile_size(FILE *txtfile)
         if (!i && ch == '}')
             break;
         if (ch != '\n' && ch != '\r') {
-            Fprintf(stderr, "unexpected character %c (%d)\n", ch, ch);
+            Fprintf(stderr, "error: unexpected character %c (%d)\n", ch, ch);
             return FALSE;
         } else
             ch = getc(txtfile);
         if (colorsinmap > 64) {
             if (i & 1) {
-                Fprintf(stderr, "half a pixel?\n");
+                Fprintf(stderr, "error: half a pixel?\n");
                 return FALSE;
             }
             i /= 2;
@@ -519,14 +521,14 @@ set_tile_size(FILE *txtfile)
         if (tile_x < 0)
             tile_x = i;
         else if (tile_x != i) {
-            Fprintf(stderr, "tile width mismatch %d != %d\n", tile_x, i);
+            Fprintf(stderr, "error: tile width mismatch %d != %d\n", tile_x, i);
             return FALSE;
         }
     }
     if (tile_y < 0)
         tile_y = j;
     else if (tile_y != j) {
-        Fprintf(stderr, "tile height mismatch %d != %d\n", tile_y, j);
+        Fprintf(stderr, "error: tile height mismatch %d != %d\n", tile_y, j);
         return FALSE;
     }
     fseek(txtfile, pos, SEEK_SET);
@@ -540,7 +542,7 @@ read_text_file_colormap(const char *filename)
 
     fp = fopen(filename, RDTMODE);
     if (fp == (FILE *) 0) {
-        Fprintf(stderr, "cannot open text file %s\n", filename);
+        Fprintf(stderr, "error: cannot open text file %s\n", filename);
         return FALSE;
     }
     read_text_colormap(fp);
@@ -566,18 +568,18 @@ fopen_text_file(const char *filename, const char *type)
         write_mode = TRUE;
 
     } else {
-        Fprintf(stderr, "bad mode (%s) for fopen_text_file\n", type);
+        Fprintf(stderr, "error: bad mode (%s) for fopen_text_file\n", type);
         return FALSE;
     }
 
     if ((write_mode ? out_file : in_file) != (FILE *) 0) {
-        Fprintf(stderr, "can only open one text file at at time\n");
+        Fprintf(stderr, "error: can only open one text file at at time\n");
         return FALSE;
     }
 
     fp = fopen(filename, type);
     if (fp == (FILE *) 0) {
-        Fprintf(stderr, "cannot open text file %s\n", filename);
+        Fprintf(stderr, "error: cannot open text file '%s'\n", filename);
         return FALSE;
     }
 
@@ -600,11 +602,11 @@ fopen_text_file(const char *filename, const char *type)
     } else {
         out_file = fp;
         if (!colorsinmainmap) {
-            Fprintf(stderr, "no colormap set yet\n");
+            Fprintf(stderr, "error: no colormap set yet\n");
             return FALSE;
         }
         if (tile_x < 0 || tile_y < 0) {
-            Fprintf(stderr, "no tile size set yet\n");
+            Fprintf(stderr, "error: no tile size set yet\n");
             return FALSE;
         }
         if (!write_text_colormap(out_file))
@@ -627,7 +629,7 @@ set_tile_map(const char *filename)
     if (!filename) return TRUE;
     map_file = fopen(filename, "r");
     if (!map_file) {
-        Fprintf(stderr, "cannot open map file %s\n", filename);
+        Fprintf(stderr, "error: cannot open map file '%s'\n", filename);
         return FALSE;
     }
     return TRUE;

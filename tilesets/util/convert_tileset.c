@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2013-09-24 */
 /*   Copyright (c) J. Ali Harlow 2000                               */
 /*   NetHack may be freely redistributed.  See license for details. */
 
@@ -7,13 +7,14 @@
    containing only those tiles in the map file, in the same order. If one of the
    required tiles is found in multiple tilesets, the last one listed on the
    command line will be used. If one of the required tiles is not found at all,
-   a warning will be given and a solid white tile used as a substitute.
+   a warning will be given and a placeholder tile used as a substitute.
 
    This routine is intended to be able to convert tiles from other formats, so
    it has more leniency about the tile format than normal. In particular, it
    allows for unusual background colors for tiles (which will be converted to
-   the default background), and multiple tiles with the same name in the same
-   file (which will be disambiguated using "s" and a number). */
+   the default background), multiple tiles with the same name in the same
+   file (which will be disambiguated using "s" and a number), and upscaling
+   tiles from smaller resolutions. */
 
 #include "tile.h"
 
@@ -23,10 +24,22 @@ struct tile {
     unsigned char ph, source;
 };
 
+struct tilename {
+    char *name;
+    int nth; /* -1 = not duplicated, 0+ = duplicated */
+};
+
 static struct tile *tiles = NULL;
 static int no_tiles = 0;
 static int alloc_tiles = 0;
+
+static struct tilename *tilenames = NULL;
+static int no_tilenames = 0;
+static int alloc_tilenames = 0;
+
 static pixel file_bg = DEFAULT_BACKGROUND;
+static int target_tile_x = 0;
+static int target_tile_y = 0;
 
 static void
 set_background(pixel (*bitmap)[MAX_TILE_X])
@@ -47,85 +60,123 @@ set_background(pixel (*bitmap)[MAX_TILE_X])
 }
 
 static void
-read_tiles(void)
+read_tilenames(void)
 {
     char ttype[BUFSZ];
-    int i, j, number;
+    int number;
     char name[BUFSZ];
-    pixel pixels[MAX_TILE_Y][MAX_TILE_X], *p;
+    pixel tile[MAX_TILE_Y][MAX_TILE_X];
+    int i, nth;
 
-    while (read_text_tile_info(pixels, ttype, &number, name)) {
+    while (no_tilenames--)
+        free(tilenames[no_tilenames].name);
+    no_tilenames = 0;
+
+    while (read_text_tile_info(tile, ttype, &number, name)) {
+        if (no_tilenames == alloc_tilenames) {
+            if (alloc_tilenames)
+                alloc_tilenames *= 2;
+            else
+                alloc_tilenames = 1024;
+            if (!tilenames)
+                tilenames = malloc(alloc_tiles * sizeof (*tilenames));
+            else
+                tilenames = realloc(tilenames, alloc_tiles * sizeof (*tilenames));
+            if (!tilenames) {
+                Fprintf(stderr, "Not enough memory\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        tilenames[no_tilenames].nth = -1;
+        tilenames[no_tilenames].name = strdup(name);
+        if (!tiles[no_tilenames].name) {
+            Fprintf(stderr, "Not enough memory\n");
+            exit(EXIT_FAILURE);
+        }
+        nth = 0;
+        /* check for duplicates, and record nth appropriately */
+        for (i = 0; i < no_tilenames; i++) {
+            if (!strcmp(tilenames[i].name, name)) {
+                tilenames[i].nth = nth++;
+            }
+        }
+        if (nth > 0) tilenames[i].nth = nth;
+        no_tilenames++;
+    }
+}
+
+static void
+read_mapfile(char *mapfile)
+{
+    FILE *mapfp = fopen(mapfile, "r");
+    if (!mapfp) {
+        perror(mapfile);
+        exit(EXIT_FAILURE);
+    }
+
+    char name[BUFSZ];
+    for (;;) {
+        int c, i = 0;
+        unsigned j;
+        c = getc(mapfp);
+        while (c != EOF && c != '\n' && i < BUFSZ-1) {
+            name[i++] = c;
+            c = getc(mapfp);
+        }
+        if (c == EOF && !i) break;
+        if (!i) {
+            Fprintf(stderr, "Unexpected blank line in map file\n");
+            exit(EXIT_FAILURE);
+        }
+        name[i] = 0;
+
         if (no_tiles == alloc_tiles) {
             if (alloc_tiles)
                 alloc_tiles *= 2;
             else
                 alloc_tiles = 1024;
             if (!tiles)
-                tiles = (struct tile *)malloc(alloc_tiles * sizeof (*tiles));
+                tiles = malloc(alloc_tiles * sizeof (*tiles));
             else
-                tiles =
-                    (struct tile *)realloc(tiles,
-                                           alloc_tiles * sizeof (*tiles));
+                tiles = realloc(tiles, alloc_tiles * sizeof (*tiles));
             if (!tiles) {
                 Fprintf(stderr, "Not enough memory\n");
                 exit(EXIT_FAILURE);
             }
             for (i = no_tiles; i < alloc_tiles; i++) {
-                tiles[i].bitmap = (pixel *)
-                    malloc(tile_x * tile_y * sizeof (pixel));
+                tiles[i].bitmap = malloc(target_tile_x * target_tile_y *
+                                         sizeof (pixel));
                 if (!tiles[i].bitmap) {
                     Fprintf(stderr, "Not enough memory\n");
                     exit(EXIT_FAILURE);
                 }
+                for (j = 0; j < target_tile_x * target_tile_y; j++) {
+                    /* draw a placeholder image */
+                    tiles[i].bitmap[j].r = 255;
+                    tiles[i].bitmap[j].g = 255;
+                    tiles[i].bitmap[j].b = 255;
+                }
             }
         }
-        set_background(pixels);
-        p = tiles[no_tiles].bitmap;
-        for (j = 0; j < tile_y; j++) {
-            memcpy(p, &pixels[j], tile_x * sizeof (pixel));
-            p += tile_x;
+        tiles[no_tiles].ph = 1;
+        tiles[no_tiles].source = 0;
+        tiles[no_tiles].name = strdup(name);
+        if (!tiles[no_tiles].name) {
+            Fprintf(stderr, "Not enough memory\n");
+            exit(EXIT_FAILURE);
         }
-        tiles[no_tiles].ph = strcmp(ttype, "placeholder") == 0;
-        tiles[no_tiles].source = 1;
-        if (!strcmp(name, "null"))
-            tiles[no_tiles].name = NULL;
-        else {
-            tiles[no_tiles].name = strdup(name);
-            if (!tiles[no_tiles].name) {
-                Fprintf(stderr, "Not enough memory\n");
+        for (i = 0; i < no_tiles; i++) {
+            if (!strcmp(tiles[i].name, name)) {
+                Fprintf(stderr,
+                        "Duplicate name '%s' in tilemap: lines %d, %d\n",
+                        name, i+1, no_tiles+1);
                 exit(EXIT_FAILURE);
             }
         }
         no_tiles++;
     }
-}
 
-static boolean
-match(const char *name1, const char *name2)
-{
-    int n;
-    char *s1, *s2;
-
-    if (!strcmp(name1, "unknown") || !strcmp(name2, "unknown"))
-        return FALSE;
-    if (!strcmp(name1, name2))
-        return TRUE;
-    s1 = strchr(name1, '/');
-    s2 = strchr(name2, '/');
-    if (s1 && !s2) {
-        n = s1 - name1 - 1;
-        if (strlen(name2) == n && !strncmp(name1, name2, n))
-            return TRUE;
-        else
-            return !strcmp(s1 + 2, name2);
-    } else if (s2 && !s1) {
-        n = s2 - name2 - 1;
-        if (strlen(name1) == n && !strncmp(name1, name2, n))
-            return TRUE;
-        else
-            return !strcmp(name1, s2 + 2);
-    } else
-        return FALSE;
+    fclose(mapfp);
 }
 
 static void
@@ -135,31 +186,47 @@ merge_tiles(int source)
     int number;
     char name[BUFSZ];
     pixel tile[MAX_TILE_Y][MAX_TILE_X], *p;
-    int i, j;
+    int i, j, tile_in_file;
+
+    tile_in_file = 0;
 
     while (read_text_tile_info(tile, ttype, &number, name)) {
+        if (strcmp(name, tilenames[tile_in_file].name) != 0) {
+            Fprintf(stderr,
+                    "error: tile file changed while converting tilesets\n");
+            exit(EXIT_FAILURE);
+        }
+        if (tilenames[tile_in_file].nth >= 0) {
+            /* add the disambiguator */
+            snprintf(name + strlen(name), BUFSZ - strlen(name) - 1,
+                     "s %d", tilenames[tile_in_file].nth);
+        }
+        tile_in_file++;
+
+        /* So that the build system can distinguish between informational and
+           warning output, we send the informational output to stdout and the
+           warnings to stderr. */
         for (i = 0; i < no_tiles; i++)
             if (tiles[i].source != source && tiles[i].name &&
                 !strcmp(tiles[i].name, name))
                 break;
-        if (i == no_tiles)
-            for (i = 0; i < no_tiles; i++)
-                if (tiles[i].source != source && tiles[i].name &&
-                    match(tiles[i].name, name)) {
-                    Fprintf(stderr, "warning: replacing tile %s with %s\n",
-                            tiles[i].name, name);
-                    break;
-                }
         if (i != no_tiles) {
             tiles[i].source = source;
+            tiles[i].ph = 0;
             set_background(tile);
+            /* TODO: scale the tile */
+            if (tile_x != target_tile_x || tile_y != target_tile_y) {
+                Fprintf(stderr, "error: tile '%s' is the wrong size (%d,%d)\n",
+                        name, tile_x, tile_y);
+                exit(EXIT_FAILURE);
+            }
             p = tiles[i].bitmap;
             for (j = 0; j < tile_y; j++) {
                 memcpy(p, &tile[j], tile_x * sizeof (pixel));
                 p += tile_x;
             }
         } else
-            Fprintf(stderr, "info: tile %s ignored\n", name);
+            Fprintf(stdout, "info: tile '%s' ignored\n", name);
     }
 }
 
@@ -171,9 +238,11 @@ write_tiles(void)
     int i, j;
 
     for (i = 0; i < no_tiles; i++) {
-        if (tiles[i].ph)
+        if (tiles[i].ph) {
             type = "placeholder";
-        else
+            Fprintf(stderr, "warning: no tile found for name '%s'\n",
+                    tiles[i].name);
+        } else
             type = "tile";
 
         p = tiles[i].bitmap;
@@ -189,22 +258,50 @@ int
 main(int argc, char **argv)
 {
     int argn = 1, fn;
-    char *outfile;
+    char *outfile = NULL;
+    char *mapfile = NULL;
 
-    if (argc > 2 && !strcmp(argv[1], "-p")) {
-        if (!read_text_file_colormap(argv[2])) {
-            perror(argv[2]);
-            exit(EXIT_FAILURE);
+    for (;;) {
+        if (!strcmp(argv[argn], "-p")) {
+            if (argn+1 >= argc) {outfile = 0; break;} /* force an error */
+            if (!read_text_file_colormap(argv[argn+1])) {
+                perror(argv[argn+1]);
+                exit(EXIT_FAILURE);
+            }
+            init_colormap();
+            argn += 2;
+            continue;
         }
-        init_colormap();
-        argn += 2;
+        if (!strcmp(argv[argn], "-o")) {
+            if (argn+1 >= argc) {outfile = 0; break;}
+            outfile = argv[argn+1];
+            argn += 2;
+            continue;
+        }
+        if (!strcmp(argv[argn], "-m")) {
+            if (argn+1 >= argc) {outfile = 0; break;}
+            mapfile = argv[argn+1];
+            argn += 2;
+            continue;
+        }
+        if (!strcmp(argv[argn], "-z")) {
+            if (argn+2 >= argc) {outfile = 0; break;}
+            target_tile_x = strtol(argv[argn+1], NULL, 10);
+            target_tile_y = strtol(argv[argn+2], NULL, 10);
+            argn += 3;
+            continue;
+        }
+        break;
     }
-    if (argc - argn < 1) {
+    if (argc - argn < 1 || !outfile || !mapfile ||
+        target_tile_x <= 0 || target_tile_y <= 0) {
         Fprintf(stderr,
-                "usage: txtmerge [-p palette-file] outfile [[-b<bg>] infile] ...\n");
+                "usage: convert_tileset [-p palette-file] -o outfile -m mapfile "
+                "-z width height [[-b<bg>] infile] ...\n");
         exit(EXIT_FAILURE);
     }
-    outfile = argv[argn++];
+
+    read_mapfile(mapfile);
 
     for (fn = 1; argn < argc; argn++) {
         if (argv[argn][0] == '-' && argv[argn][1] == 'b') {
@@ -213,7 +310,7 @@ main(int argc, char **argv)
 
             if (argv[argn][2]) {
                 if (sscanf(argv[argn] + 2, "%02X%02X%02X", &r, &g, &b) != 3) {
-                    Fprintf(stderr, "Background %s not understood.\n",
+                    Fprintf(stderr, "Background '%s' not understood.\n",
                             argv[argn] + 2);
                 } else {
                     bg.r = (unsigned char)r;
@@ -225,18 +322,22 @@ main(int argc, char **argv)
             file_bg.g = bg.g;
             file_bg.b = bg.b;
         } else {
+            /* We run through the file twice. The first time, we're
+               discovering which names are used for tiles in the file.
+               The second time, we do the actual merging. */
             if (!fopen_text_file(argv[argn], RDTMODE))
                 exit(EXIT_FAILURE);
-            if (fn == 1)
-                read_tiles();
-            else
-                merge_tiles(fn);
+            read_tilenames();
+            fclose_text_file();
+            if (!fopen_text_file(argv[argn], RDTMODE))
+                exit(EXIT_FAILURE);
+            merge_tiles(fn);
             fn++;
             fclose_text_file();
         }
     }
 
-    if (fn > 1) {
+    if (fn) {
         if (!fopen_text_file(outfile, WRTMODE))
             exit(EXIT_FAILURE);
         write_tiles();
