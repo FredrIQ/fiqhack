@@ -16,12 +16,13 @@ The Tiles System in NetHack 4
 NetHack 4 uses two formats for tile files; a text format (described below),
 and an image format.  (There are also "map files" that record the order of
 tiles within an image, necessary to be able to convert the image files back to
-text format; and a "catalogue file" `CATALOG.txt` that records which tile
-files make up which tilesets.)  The "source code" for tiles is stored in a
-number of separate files in text format; during the build, these are converted
-into combined text files (still in the text format, but which act like object
-code) that contain all the tiles in the tileset in the order in which the
-windowport wants them, and then to images for use by the windowports.
+text format; and "catalogue files" that record which tile files make up which
+tilesets, and are used by the build system.)  The "source code" for tiles is
+stored in a number of separate files in text format; during the build, these
+are converted into combined text files (still in the text format, but which
+act like object code) that contain all the tiles in the tileset in the order
+in which the windowport wants them, and then to images for use by the
+windowports.
 
 As such, it will necessarily lose information to edit the generated output
 images; if you want to edit the tilesets, use the tile manipulation utilities
@@ -35,7 +36,6 @@ Tile Manipulation Utilities
     convert_tileset   Reorders and/or combines .txt tilesets based on a map
     export_tileset    Creates PNG images from .txt tilesets
     map_from_tileset  Creates a map file based on a .txt tileset
-    build_tilesets    Runs {convert,export}_tileset based on CATALOG.txt
 
 To import a tileset image designed for an old version or another variant, use
 `import_tileset` with the appropriate map for that version/variant.  (Maps
@@ -54,8 +54,8 @@ automatically disambiguating would be very difficult (or even impossible)
 because of the risk that other variants add other orange objects (orange
 rings? orange wands?).  Once you've imported your tileset, you can either make
 it into a tileset image suitable for NetHack 4 by hand using `convert_tileset`
-and `export_tileset`, or more conveniently, you can add it to CATALOG.txt an
-use `build_tilesets` to create the tileset image.
+and `export_tileset`, or else you can create a catalogue file for it and use
+the build system to create the tileset image.
 
 To edit .txt tile files, you can edit them directly in the .txt file, but if
 you want to use an image editor, extract a map from them using
@@ -68,12 +68,12 @@ causes it to display new tiles), you can either edit an existing .txt file, or
 add a new one.  (The .txt files are organized by provenance, i.e. which
 variant they were imported from, and/or who wrote them.  Adding a new file is
 thus reasonable if you haven't created tiles for NetHack 4 before.)  The new
-tiles will also need to be added to the catalog (unless you edited a file that
-was in the catalog already).  Three sizes are needed for each tile (one fore
-each of the the three standard tilesets; however, the big and 3D-effect tiles
-can be automatically generated from the 16x16 tiles, so it's possible to
-create just the 16x16 tile, and add the .txt file it's in to all three
-tilesets (with appropriate scaling options).
+tiles will also need to be added to the catalogue files (unless you edited a
+file that was in the catalogue files already).  Three sizes are needed for
+each tile (one fore each of the the three standard tilesets; however, the big
+and 3D-effect tiles can be automatically generated from the 16x16 tiles, so
+it's possible to create just the 16x16 tile, and add the .txt file it's in to
+all three tilesets (with appropriate scaling options).
 
 
 The .txt Tile Format
@@ -171,19 +171,15 @@ unique. The old format had lines starting with "tile" and a number, and
 double-quoted the names; this format should be detected and rejected by
 tilemap manipulation code.
 
-There is also a catalogue file, `CATALOG.txt`, which specifies which .txt
-files make up which tilesets.  This catalogue file is used by the build system
-to actually produce the tilesets required.  The `build_tilesets` utility is
-used to build the tilesets listed in the catalogue file.
+There are also "catalogue files", stored in `tilesets/dat/catalogues`, which
+specify which .txt files make up which tilesets.  These catalogue files are
+used by the build system to actually produce the tilesets required, and are
+parsed by the rules in `aimake.rules`.
 
-The format of the catalogue file consists of lines that specify which tilesets
-to create (as a line with no preceding whitespace and ending with a colon),
-and lines whch specify which tile files to make them from (as lines with
-preceding whitespace and no colon).  This latter set of lines can also take
-command-line options, that are passed to `convert_tileset` (and thus, a
-tileset with an unusual background color, or that has tiles of the wrong size,
-etc., can be used).  Tiles from files specified later will take precedence
-over tiles from files specified earlier.
+A catalogue file consists of a sequence of lines; the first specifies the size
+of the tileset (as width then height separated by a space), and the rest
+specify the individual tiles that make up the tileset (as paths inside
+`tilesets/dat/tiles`).
 
 The `palette.txt` file contains a standard palette of 256 colors (in the same
 format as a tileset palette, but without any actual tiles).  Currently all the
