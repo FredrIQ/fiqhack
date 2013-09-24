@@ -402,6 +402,12 @@ Copyright: These tiles were taken from the NetHack 3.4.3 source tarball, and
  .
  Copyright 1985-2003 Stichting Mathematisch Centrum and M. Stephenson
 
+Files: tilesets/dat/tiles/n-4-*.txt
+License: NHGPL
+Copyright:
+ Copyright (C) 2013 Alex Smith, in addition to the copyright on the tiles from
+ Slash'EM on which these files are based (see tilesets/dat/tiles/s-*.txt).
+
 Files: tilesets/dat/fonts/*.txt
 License: NHGPL
 Copyright: Copyright (C) 2002 Andrew Apted <ajapted@users.sourceforge.net>
