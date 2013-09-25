@@ -21,7 +21,7 @@
 struct tile {
     char *name;
     pixel *bitmap;
-    unsigned char ph, source;
+    unsigned char ph, scaled;
 };
 
 struct tilename {
@@ -159,7 +159,7 @@ read_mapfile(char *mapfile)
             }
         }
         tiles[no_tiles].ph = 1;
-        tiles[no_tiles].source = 0;
+        tiles[no_tiles].scaled = 0;
         tiles[no_tiles].name = strdup(name);
         if (!tiles[no_tiles].name) {
             Fprintf(stderr, "Not enough memory\n");
@@ -180,7 +180,7 @@ read_mapfile(char *mapfile)
 }
 
 static void
-merge_tiles(int source)
+merge_tiles(void)
 {
     char ttype[BUFSZ];
     int number;
@@ -207,23 +207,46 @@ merge_tiles(int source)
            warning output, we send the informational output to stdout and the
            warnings to stderr. */
         for (i = 0; i < no_tiles; i++)
-            if (tiles[i].source != source && tiles[i].name &&
-                !strcmp(tiles[i].name, name))
+            if (tiles[i].name && !strcmp(tiles[i].name, name))
                 break;
         if (i != no_tiles) {
-            tiles[i].source = source;
+            int cur_tile_x = tile_x;
+            int cur_tile_y = tile_y;
             tiles[i].ph = 0;
+            tiles[i].scaled = 0;
             set_background(tile);
-            /* TODO: scale the tile */
-            if (tile_x != target_tile_x || tile_y != target_tile_y) {
-                Fprintf(stderr, "error: tile '%s' is the wrong size (%d,%d)\n",
-                        name, tile_x, tile_y);
+
+            /* We may have to scale the tile.  We have two scaling operations
+               available: magnifying, doubling the size of the tile (which works
+               on any size of tile); and embiggening, which slants and raises
+               tiles as appropriate in order to change them from 32x32 flat to
+               48x64 3D-effect. */
+            while (cur_tile_x < target_tile_x &&
+                   cur_tile_y < target_tile_y) {
+                if (target_tile_x == 48 && target_tile_y == 64 &&
+                    cur_tile_x == 32 && cur_tile_y == 32)
+                    embiggen_tile_in_place(tile, name,
+                                           &cur_tile_x, &cur_tile_y);
+                else if (cur_tile_x * 2 <= target_tile_x &&
+                         cur_tile_y * 2 <= target_tile_y)
+                    magnify_tile_in_place(tile, name,
+                                          &cur_tile_x, &cur_tile_y);
+                else break;
+            }
+
+            if (cur_tile_x != tile_x || cur_tile_y != tile_y)
+                tiles[i].scaled = 1;
+
+            if (cur_tile_x != target_tile_x || cur_tile_y != target_tile_y) {
+                Fprintf(stderr, "error: tile '%s' is the wrong size (%d,%d)"
+                        " and cannot be scaled\n", name, tile_x, tile_y);
                 exit(EXIT_FAILURE);
             }
+
             p = tiles[i].bitmap;
-            for (j = 0; j < tile_y; j++) {
-                memcpy(p, &tile[j], tile_x * sizeof (pixel));
-                p += tile_x;
+            for (j = 0; j < cur_tile_y; j++) {
+                memcpy(p, &tile[j], cur_tile_x * sizeof (pixel));
+                p += cur_tile_x;
             }
         } else
             Fprintf(stdout, "info: tile '%s' ignored\n", name);
@@ -237,6 +260,8 @@ write_tiles(void)
     pixel tile[MAX_TILE_Y][MAX_TILE_X], *p;
     int i, j;
 
+    tile_x = target_tile_x;
+    tile_y = target_tile_y;
     for (i = 0; i < no_tiles; i++) {
         if (tiles[i].ph) {
             type = "placeholder";
@@ -244,6 +269,9 @@ write_tiles(void)
                     tiles[i].name);
         } else
             type = "tile";
+
+        if (tiles[i].scaled)
+            Fprintf(stdout, "info: tile '%s' was scaled up\n", tiles[i].name);
 
         p = tiles[i].bitmap;
         for (j = 0; j < tile_y; j++) {
@@ -257,7 +285,7 @@ write_tiles(void)
 int
 main(int argc, char **argv)
 {
-    int argn = 1, fn;
+    int argn = 1;
     char *outfile = NULL;
     char *mapfile = NULL;
 
@@ -303,7 +331,7 @@ main(int argc, char **argv)
 
     read_mapfile(mapfile);
 
-    for (fn = 1; argn < argc; argn++) {
+    for (; argn < argc; argn++) {
         if (argv[argn][0] == '-' && argv[argn][1] == 'b') {
             int r, g, b;
             pixel bg = DEFAULT_BACKGROUND;
@@ -322,6 +350,10 @@ main(int argc, char **argv)
             file_bg.g = bg.g;
             file_bg.b = bg.b;
         } else {
+            /* tiletext complains if we handle multiple tilesets of different
+               sizes unless we explicitly tell it that's OK. */
+            tile_x = -1; tile_y = -1;
+
             /* We run through the file twice. The first time, we're
                discovering which names are used for tiles in the file.
                The second time, we do the actual merging. */
@@ -331,18 +363,15 @@ main(int argc, char **argv)
             fclose_text_file();
             if (!fopen_text_file(argv[argn], RDTMODE))
                 exit(EXIT_FAILURE);
-            merge_tiles(fn);
-            fn++;
+            merge_tiles();
             fclose_text_file();
         }
     }
 
-    if (fn) {
-        if (!fopen_text_file(outfile, WRTMODE))
-            exit(EXIT_FAILURE);
-        write_tiles();
-        fclose_text_file();
-    }
+    if (!fopen_text_file(outfile, WRTMODE))
+        exit(EXIT_FAILURE);
+    write_tiles();
+    fclose_text_file();
 
     exit(EXIT_SUCCESS);
      /*NOTREACHED*/ return 0;
