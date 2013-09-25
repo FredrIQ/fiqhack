@@ -46,7 +46,7 @@ static char *override_no_slant[] = {
     "ladder up",
     "ladder down",
     "long staircase up",
-    "long ladder down",
+    "long staircase down",
     "altar",
     "opulent throne",
     "sink",
@@ -134,13 +134,13 @@ embiggen_tile_in_place(pixel(*pixels)[MAX_TILE_X], const char *name,
             for (i = 0; i < *max_x; i++)
                 bigpixels[j + *max_y / 2][i + *max_x / 4] = pixels[j][i];
     } else {
-        for (j = 0; j < 2 * tile_y; j++)
-            for (i = 0; i < 3 * tile_x / 2; i++)
+        for (j = 0; j < 2 * *max_y; j++)
+            for (i = 0; i < 3 * *max_x / 2; i++)
                 bigpixels[j][i] = default_background;
-        for (j = 0; j < tile_y; j++)
-            for (i = 0; i < tile_x; i++)
-                bigpixels[j + tile_y - (raised ? 14 : 0)]
-                    [i + tile_x / 2 - j / 2] = pixels[j][i];
+        for (j = 0; j < *max_y; j++)
+            for (i = 0; i < *max_x; i++)
+                bigpixels[j + *max_y - (raised ? 14 : 0)]
+                    [i + *max_x / 2 - j / 2] = pixels[j][i];
     }
 
     *max_x = *max_x * 3 / 2;
