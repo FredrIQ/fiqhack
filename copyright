@@ -422,11 +422,7 @@ Comment: The format of these files in the original source made it
  conditions shown above, because all the other files in the directory
  had that copyright notice.
 
-Files: tilesets/util/bigtile.c
-License: NHGPL
-Copyright: Copyright (c) NetHack Development Team 1995
-
-Files: tilesets/util/magtile.c
+Files: tilesets/src/bigtile.c tilesets/src/magtile.c
 License: NHGPL
 Copyright: Copyright (c) NetHack Development Team 1995
 

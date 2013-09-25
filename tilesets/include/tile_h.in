@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2013-09-25 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "tilesequence.h"
@@ -61,5 +61,10 @@ extern boolean set_tile_map(const char *);
 
 extern void init_colormap(void);
 extern void merge_colormap(void);
+
+extern void magnify_tile_in_place(
+    pixel (*)[MAX_TILE_X], const char *, int *, int *);
+extern void embiggen_tile_in_place(
+    pixel (*)[MAX_TILE_X], const char *, int *, int *);
 
 /*tile_t.h*/
