@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2013-09-25 */
 /*
  * Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
  *		 Slash'EM Development Team 2003
@@ -20,16 +20,6 @@
 #include <assert.h>
 
 #include "tile.h"
-
-/* N.H uses compress/uncompress, conflicting with ZLIB headers */
-#undef compress
-#undef uncompress
-
-/* certain N.H #defines conflict with the SDL header files */
-#undef red
-#undef green
-#undef blue
-
 
 /* [AJA] Use this value instead of MAX_GLYPH, as MAX_GLYPH is much
  *       greater than what we need (mainly due to the swallows), and
@@ -79,27 +69,27 @@ save_png(const char *filename, int width, int height)
     /* open the file */
     fp = fopen(filename, "wb");
     if (fp == NULL) {
-        fprintf(stderr, "tile2png: Can't open output file: %s\n", filename);
+        fprintf(stderr, "error: Can't open output file: %s\n", filename);
         goto failed;
     }
 
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
     if (png_ptr == NULL) {
-        fprintf(stderr, "tile2png: PNG error (out of memory ?)\n");
+        fprintf(stderr, "error: PNG error (out of memory ?)\n");
         goto failed;
     }
 
     info_ptr = png_create_info_struct(png_ptr);
     if (info_ptr == NULL) {
-        fprintf(stderr, "tile2png: PNG error (out of memory ?)\n");
+        fprintf(stderr, "error: PNG error (out of memory ?)\n");
         goto failed;
     }
 
     /* set error handling since we are using the setjmp/longjmp method (this is 
        the normal method of doing things with libpng). */
     if (setjmp(png_ptr->jmpbuf)) {
-        fprintf(stderr, "tile2png: Unknown problem while writing PNG.\n");
+        fprintf(stderr, "error: Unknown problem while writing PNG.\n");
         goto failed;
     }
 
@@ -126,7 +116,7 @@ save_png(const char *filename, int width, int height)
 
     row_pointers = (png_bytep *) malloc(height * sizeof (png_bytep));
     if (!row_pointers) {
-        fprintf(stderr, "tile2png: Out of memory.\n");
+        fprintf(stderr, "error: Out of memory.\n");
         goto failed;
     }
 
@@ -236,7 +226,7 @@ convert_tiles(void)
         ntiles++;
 
         if (ntiles >= MAX_TILE_NUM) {
-            fprintf(stderr, "tile2png: Too many tiles !!\n");
+            fprintf(stderr, "error: Too many tiles !!\n");
             exit(1);
         }
     }
@@ -253,7 +243,7 @@ process_file(const char *fname)
     int count;
 
     if (!fopen_text_file(fname, RDTMODE)) {
-        Fprintf(stderr, "tile2png: Can't open file \"%s\"\n", fname);
+        Fprintf(stderr, "error: Can't open file \"%s\"\n", fname);
         exit(1);
     }
 
@@ -270,7 +260,7 @@ process_file(const char *fname)
 
         tile_bytes_rgba = calloc(size, 1);
         if (!tile_bytes_rgba) {
-            Fprintf(stderr, "tile2png: Not enough memory (%d KB).\n",
+            Fprintf(stderr, "error: Not enough memory (%d KB).\n",
                     size / 1024);
             exit(1);
         }
@@ -287,7 +277,7 @@ process_file(const char *fname)
 
         tile_bytes_i = calloc(size, 1);
         if (!tile_bytes_i) {
-            Fprintf(stderr, "tile2png: Not enough memory (%d KB).\n",
+            Fprintf(stderr, "error: Not enough memory (%d KB).\n",
                     size / 1024);
             exit(1);
         }
@@ -298,7 +288,7 @@ process_file(const char *fname)
     if (!tile_palette) {
         tile_palette = malloc(256 * sizeof (*tile_palette));
         if (!tile_palette) {
-            Fprintf(stderr, "tile2png: Not enough memory (%d bytes).\n",
+            Fprintf(stderr, "error: Not enough memory (%d bytes).\n",
                     sizeof (*tile_palette));
             exit(1);
         }
@@ -314,7 +304,8 @@ process_file(const char *fname)
         }
     }
     count = convert_tiles();
-    Fprintf(stderr, "%s: %d tiles (%dx%d)\n", fname, count, tile_x, tile_y);
+    Fprintf(stdout, "info: %s: %d tiles (%dx%d)\n",
+            fname, count, tile_x, tile_y);
     fclose_text_file();
 }
 
@@ -323,7 +314,7 @@ static void
 usage(void)
 {
     Fprintf(stderr,
-            "Usage: tile2png [-o out_file] [-t] [-f] [-a##] [-b######] "
+            "Usage: export_tileset [-o out_file] [-t] [-f] [-a##] [-b######] "
             "txt_file1 [txt_file2 ...]\n");
     fprintf(stderr, "Where: -t enables transparency\n");
     fprintf(stderr, "       -f is used for fonts\n");
@@ -354,7 +345,7 @@ main(int argc, const char **argv)
             else if (argn + 1 < argc)
                 outname = argv[++argn];
             else {
-                Fprintf(stderr, "tile2png: -o option needs an argument\n");
+                Fprintf(stderr, "error: -o option needs an argument\n");
                 exit(EXIT_FAILURE);
             }
             argn++;
@@ -367,11 +358,11 @@ main(int argc, const char **argv)
             else if (argn + 1 < argc)
                 num_across = atoi(argv[++argn]);
             else {
-                Fprintf(stderr, "tile2png: -a option needs an argument\n");
+                Fprintf(stderr, "error: -a option needs an argument\n");
                 exit(EXIT_FAILURE);
             }
             if (num_across < 1) {
-                Fprintf(stderr, "tile2png: bad value for -a option\n");
+                Fprintf(stderr, "error: bad value for -a option\n");
                 exit(EXIT_FAILURE);
             }
             argn++;
@@ -401,12 +392,12 @@ main(int argc, const char **argv)
             else if (argn + 1 < argc)
                 val = argv[++argn];
             else {
-                Fprintf(stderr, "tile2png: -b option needs an argument\n");
+                Fprintf(stderr, "error: -b option needs an argument\n");
                 exit(EXIT_FAILURE);
             }
 
             if (sscanf(val, "%02X%02X%02X", &r, &g, &b) != 3) {
-                Fprintf(stderr, "tile2png: Background not understood: %s\n",
+                Fprintf(stderr, "error: Background not understood: %s\n",
                         val);
                 exit(EXIT_FAILURE);
             }
@@ -430,7 +421,7 @@ main(int argc, const char **argv)
         process_file(argv[i]);
     }
 
-    Fprintf(stderr, "Total tiles: %d\n", ntiles);
+    Fprintf(stdout, "info: Total tiles: %d\n", ntiles);
 
     num_down = (ntiles + num_across - 1) / num_across;
 

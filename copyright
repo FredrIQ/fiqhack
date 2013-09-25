@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2013-09-23
+Last-Modified: Last modified by Alex Smith, 2013-09-25
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -407,6 +407,10 @@ License: NHGPL
 Copyright:
  Copyright (C) 2013 Alex Smith, in addition to the copyright on the tiles from
  Slash'EM on which these files are based (see tilesets/dat/tiles/s-*.txt).
+
+Files: tileset/dat/catalogues/*.txt
+License: NHGPL
+Copyright: Copyright (C) 2013 Alex Smith
 
 Files: tilesets/dat/fonts/*.txt
 License: NHGPL

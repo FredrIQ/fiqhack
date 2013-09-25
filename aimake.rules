@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-23
+# Last modified by Alex Smith, 2013-09-25
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -193,6 +193,45 @@
             output => ["bpath:tilesets/include/tile.h",
                        "bpath:tilesets/dat/maps/nethack4.map"],
         },
+        _merged_tileset_output_location => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:echo", "optpath::"],
+            depends => "optpath:-o :bpath:tilesets/dat/merged/",
+            dependsarg => qr=^path:tilesets/dat/catalogues/(.*\.txt)$=s,
+            require_match => 1,
+        },
+        _catalogue_file_size => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            linemax => 1,
+            depends => "optstring:-z ",
+            dependsarg => qr=^(\d+ \d+)$=s,
+            require_match => 1,
+        },
+        _catalogue_file_dependencies => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            lineskip => 1,
+            depends => "optpath::path:tilesets/dat/tiles/",
+            dependsarg => qr=^(.+)$=s,
+            require_match => 1,
+        },
+        _merge_tilesets => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["bpath:tilesets/util/convert_tileset_c$exeext",
+                        "optpath:-p :path:tilesets/dat/palette.txt",
+                        "optpath:-m :bpath:tilesets/dat/maps/nethack4.map"],
+            output_from_optpath => '-o ',
+            verb => 'merged',
+        },
+        _build_tileset_images => {
+            object => qr=^bpath:tilesets/dat/merged/.*\.txt$=s,
+            command => ["bpath:tilesets/util/export_tileset_c$exeext",
+                        "optpath:-o :extend:.png:",
+                        "optstring:-t",
+                        "optpath::"],
+            output_from_optpath => '-o ',
+        },
         _build_fonts => {
             object => qr=^path:tilesets/dat/fonts/.*\.txt=s,
             command => ["bpath:tilesets/util/export_tileset_c$exeext",
@@ -200,8 +239,6 @@
                         "optstring:-f",
                         "optpath::"],
             output_from_optpath => '-o ',
-             # this produces some informational output on stderr
-            ignore_warnings => 1,
         },
         _readme_dumps => {
             command => ["intcmd:writefile",

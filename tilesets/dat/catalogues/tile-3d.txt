@@ -1,0 +1,5 @@
+48 64
+s-mon3dmi.txt
+s-oth3dmi.txt
+s-oth-2kmi.txt
+s-oth3dse.txt
