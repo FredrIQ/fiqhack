@@ -6,7 +6,7 @@
 #ifndef WINPROCS_H
 # define WINPROCS_H
 
-extern struct nh_window_procs windowprocs;
+extern struct nh_window_procs AIMAKE_REVERSE_IMPORT(windowprocs);
 
 # define win_pause_output (*windowprocs.win_pause)
 # define display_buffer (*windowprocs.win_display_buffer)
