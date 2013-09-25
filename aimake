@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Alex Smith, 2013-09-25
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -4323,10 +4323,12 @@ sub recalculate_pair_xuse {
                         'nonexistent sys:fuse';
                     my %udeps = ();
                     for my $ancestor (@ancestors) {
-                        $udeps{$_} = 1 for @{$state->{hash_by_pair}->
-                                             {$ancestor}->{$o}};
+                        for my $udep (@{$state->{hash_by_pair}->
+                                        {$ancestor}->{$o}}) {
+                            push @command, $udep unless $udeps{$udep};
+                            $udeps{$udep} = 1;
+                        }
                     }
-                    push @command, sort keys %udeps;
                     $xuse_reason{$_} = $o for keys %udeps;
                 } elsif (@ancestors > 1 && $pass == 1) {
                     push @postponed, $o;
@@ -4339,7 +4341,7 @@ sub recalculate_pair_xuse {
                     $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
                     $state->{xuse_prevpair}->{$pair}->{$o} = $ancestors[0];
                     my @udeps = @{$state->{hash_by_pair}->{$ancestors[0]}->{$o}};
-                    push @command, sort @udeps;
+                    push @command, @udeps;
                     $xuse_reason{$_} = $o for @udeps;
                 } else {
                     # Nothing provides the object; add sys:clean to the list.
