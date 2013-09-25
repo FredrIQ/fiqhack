@@ -506,7 +506,7 @@ F<aimake.rules> in the source directory.  Here's a sample configuration:
         },
         rules => {
             _libraries => {
-                output => ['searchlib:some_unusual_library'],
+                output => ['searchlib:some_unusual_library:symbol:foo'],
             },
             _cflags => {
                 object => 'optionset:CFLAGS',
@@ -519,15 +519,16 @@ The format of the configuration file is explained in much more detail later in
 this document, but this example should serve as an overview of some of the
 most common tasks: setting an option (in this case, C<packagename>, which is
 probably the most important option to set); telling aimake to search for a
-particular library so that it can be linked into the project; and changing the
-flags that will be passed to the C compiler.  (All the libraries used by a
-project can be listed as C<searchlib:> objects in a rule output, even if some
-are only used in some configurations or on some operating systems; aimake will
-not complain if it fails to find a library, or if it finds it but does not
-find a reason to use it.)  There are some libraries searched for by default
-(rule C<default_libraries> in the default configuration; additionally, any
-libraries used by default on the build system (such as F<libc.so> on Linux)
-will be automatically incuded.
+particular library so that it can be linked into the project (specifying the
+name of the library, and a symbol in that library); and changing the flags
+that will be passed to the C compiler.  (All the libraries used by a project
+can be listed as C<searchlib:> objects in a rule output, even if some are only
+used in some configurations or on some operating systems; aimake will not
+complain if it fails to find a library, or if it finds it but does not find a
+reason to use it.)  There are some libraries searched for by default (rule
+C<default_libraries> in the default configuration; additionally, any libraries
+used by default on the build system (such as F<libc.so> on Linux) will be
+automatically incuded.
 
 =head1 INTERNALS
 
@@ -791,8 +792,12 @@ search for files with a particular name to be interchangeable.
 =item C<searchlib:>
 
 A library that is being searched for (not including naming conventions of the
-platform, e.g. 'libfoo.a' on Linux would become 'searchlib:foo'). aimake
-assumes that these are interchangeable the same way C<searchfile:>s are.
+platform, e.g. 'libfoo.a' on Linux would become 'searchlib:foo:' and a
+symbol), followed by a C<symbol:> object that exists within that library.
+(The symbol has two purposes: ensuring that the correct library is found, and
+persuading linkers to actually try to link the library while it's being
+searched for.)  aimake assumes that these are interchangeable the same way
+C<searchfile:>s are.
 
 =item C<extend:>
 
@@ -1233,12 +1238,15 @@ The configuration file allows defining one or more variables (either to
 abbreviate what would otherwise be repeated code, or to avoid "magic numbers"
 in tthe code).  There are also some predefined variables, which hold
 platform-specific extensions: $exeext (executables), $objext (object files),
-$libext (static libraries), $dllext (dynamic libraries).  (In order to catch
-mistakes due to omitting $exeext, it will never be set to the null string, but
-rather to an arbitrary string on platforms that do not normally use a special
-extension for executables.  This extension will be removed when installing the
-executable.)  These are followed by a single dictionary with two keys,
-C<options> and C<rules>.  Here's a simple example C<aimake.rules>:
+$libext (static libraries), $dllext (dynamic libraries), $impext (import
+libraries; on many systems, this is the same as $dllext because the dynamic
+libraries are their own import libraries, but on some systems it differs).
+(In order to catch mistakes due to omitting $exeext, it will never be set to
+the null string, but rather to an arbitrary string on platforms that do not
+normally use a special extension for executables.  This extension will be
+removed when installing the executable.)  These are followed by a single
+dictionary with two keys, C<options> and C<rules>.  Here's a simple example
+C<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
@@ -1392,7 +1400,9 @@ typically an option (e.g. C<optpath:-o :file.out>) telling the command where
 to place its output.  Using C<optpath_from_output> lets aimake know that the
 command is told to place its output via an option (in this case, C<<
 optpath_from_output => '-o ' >>); aimake will set the C<output> according to
-that option.
+that option.  (You can give an array here too, e.g. C<< optpath_from_output =>
+['-o ', '--header='] >>, for if the command has more than one option that
+controls output locations.)
 
 =item outdepends
 
@@ -2699,7 +2709,7 @@ my %objtype_nested = (
     shared_symbol => 0, symbolset => 1, symbol_in_object => 1, namehint => 1,
     config_option => 0, config_rule => 0, cmd => 0, tool => 0, intcmd => 0,
     optstring => 0, optpath => 1, optionset => 0, sys => 0, searchpath => 0,
-    searchfile => 0, searchlib => 0, dependencies => 1);
+    searchfile => 0, searchlib => 1, dependencies => 1);
 my %objtype_provided = (
     path => 0, bpath => 0, spath => 0, extend => 0, file => 1, symbol => 1,
     shared_symbol => 1, symbolset => 1, symbol_in_object => 1, namehint => 0,
@@ -3480,7 +3490,7 @@ sub run_command {
         do {
             my (undef, $objvalue, $objinner) = parse_objname $_;
             $objinner = resolve_extend $objinner;
-            my $ospath = $objinner =~ /^searchlib:(.*)$/s ? $1 :
+            my $ospath = $objinner =~ /^searchlib:([^:]*):/s ? $1 :
                 $objinner =~ /^config_option:/ ? $objinner :
                 $objinner =~ /^symbolset:[^:]+:(.*)$/s ?
                 aipath2ospath($1, $rel) : aipath2ospath($objinner, $rel);
@@ -4084,7 +4094,14 @@ sub record_pair_error {
 }
 
 ### Resolving object contents
-#
+
+# Helper routine
+sub not_empty_array {
+    my $a = shift;
+    return 1 unless ref $a eq 'ARRAY';
+    return scalar @$a;
+}
+
 # Sometimes we'll have multiple possible versions of a provided object (this
 # happens most often with symbol:main, but can happen for other provided
 # objects, too). For produced objects, this is an error (they'd overwrite each
@@ -4096,7 +4113,7 @@ sub record_pair_error {
 # no usable pairs, a single element unless there is a tie, and all tied
 # elements otherwise.)
 #
-# This routine is only called from recalculate_pair_xuse, but is place in a
+# This routine is only called from recalculate_pair_xuse, but is placed in a
 # separate subroutine for clarity.
 sub appropriate_pairs_for_object {
     my $provided = shift;
@@ -4136,6 +4153,7 @@ sub appropriate_pairs_for_object {
             $aipath[-1] =~ /^lib/ and $score += 0.1;
             $aipath[-1] =~ /^libc\b/ and $score += 0.4;
             $aipath[-1] =~ /^libmingw\b/ and $score += 0.4;
+            $aipath[-1] =~ /^libmsvcrt\b/ and $score += 0.4;
         } elsif ($objtype =~ /^b?path/s) {
             # The score depends on how many characters match at the
             # start of the objvalue.
@@ -4155,8 +4173,12 @@ sub appropriate_pairs_for_object {
         }
 
         # A tie is benign if we have two rules with the same object, and it
-        # isn't sys:no_object. Otherwise, it's a problem.
-        if ($score == $bestscore && (parse_pairname $best)[1] ne $obj) {
+        # isn't sys:no_object; it's also benign if both rules have an empty
+        # outdepends (this is to make the placeholder symbols for reverse
+        # imports work correctly). Otherwise, it's a problem.
+        if ($score == $bestscore && (parse_pairname $best)[1] ne $obj &&
+            (not_empty_array($state->{hash_by_object}->{$provided}->{$provider}) ||
+             not_empty_array($state->{hash_by_object}->{$provided}->{$best}))) {
             push @tie, $provider;
         } elsif ($score > $bestscore) {
             @tie = ();
@@ -4792,7 +4814,10 @@ our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
 our $dllext = {MSWin32 => '.dll',
                linux   => '.so',
                darwin  => '.dylib'}->{$^O};
-$configsafe->share('$libext', '$objext', '$exeext', '$dllext',
+our $impext = {MSWin32 => '.dll.a', # MinGW uses this
+               linux   => '.so',
+               darwin  => '.dylib'}->{$^O};
+$configsafe->share('$libext', '$objext', '$exeext', '$dllext', '$impext',
                    '$longrandomstring');
 
 # Parse the global config file, from our <DATA>
@@ -5188,8 +5213,11 @@ MAINLOOP: while (1) {
 
     if ($rule->{output_from_optpath}) {
         $output_target = [];
-        my $match = $rule->{output_from_optpath};
-        /^optpath:\Q$match\E:(.*)$/s and push @$output_target, $1 for @xuse;
+        my $ofo = $rule->{output_from_optpath};
+        ref $ofo eq 'ARRAY' or $ofo = [$ofo];
+        for my $match (@$ofo) {
+            /^optpath:\Q$match\E:(.*)$/s and push @$output_target, $1 for @xuse;
+        }
     }
 
     my $installed_into = undef;
@@ -5638,9 +5666,11 @@ atomically {
             @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
                 @{$state->{xuse_by_pair}->{$pair}};
 
-            $objname ne $state->{xuse_by_object}->{$_}->{$pair} and
-                $_ = friendly_objname($_) . '(' .
-                friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) . ')'
+            $_ = (friendly_objname($objname) ne
+                  friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) ?
+                  friendly_objname($_) . '(' .
+                  friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) . ')' :
+                  friendly_objname($_))
                 for @missing_deps;
         } else {
             @missing_deps = @$tied;
@@ -5678,7 +5708,7 @@ atomically {
         if (0 == scalar @objs) {
             progress_report -1, $msg;
         } elsif (1 == scalar @objs) {
-            $msg =~ s/#OBJECT#/'object '.$objs[0]/e;
+            $msg =~ s/#OBJECT#/'object '.friendly_objname($objs[0])/e;
             progress_report -1, $msg;
         } else {
             $msg =~ s/#OBJECT#/(scalar @objs).' objects'/e;
@@ -6086,14 +6116,7 @@ __DATA__
 
         default_libraries => {
             # some likely guesses, not including the system libc
-            output => ['searchlib:crypt',
-                       'searchlib:dl',
-                       'searchlib:m',
-                       'searchlib:ncurses',
-                       'searchlib:ncursesw',
-                       'searchlib:pthread',
-                       'searchlib:rt',
-                       'searchlib:z'],
+            output => ['searchlib:m:symbol:sin'],
             outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
@@ -6281,19 +6304,37 @@ __DATA__
             verb => 'built',
             low_message_priority => 1,
         },
-        find_libraries => {
+        find_library_symbol_check => {
+            # Tell the linker to link in the specified symbol.  (This won't
+            # work on a library that has reverse imports, but that's a dubious
+            # situation in the first place.)
             object => qr/^searchlib:/,
+            command => ['intcmd:echo', 'optpath::'],
+            depends => 'optstring:-Wl,-u,',
+            dependsarg => qr/^searchlib:[^:]+:symbol:(.*)$/s,
+            require_match => 1,
+        },
+        find_default_static_libraries => {
+            # On systems with a static libc, the linker may report only on
+            # archive components that are actually linked in.  As such, we
+            # have to force the whole thing to be linked, which is kind-of
+            # slow, but there's no other real option.  fail_silently is at 2
+            # for this because a) it assumes the GNU linker (and other linkers
+            # will error out on these options; fail_silently makes this
+            # harmless except if those systems also have a static libc), b)
+            # some libcs don't actually link correctly under --whole-archive.
+            # Incidentally, this actually crashes mingw ld, but the crash
+            # comes after the information we need is already available; it
+            # happens during the link proper, rather than during the trace.
             command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
                         "optpath::bpath:aimake/aimake_1$objext",
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
-                        'optpath:-l:',
-                        'optstring:-Wl,-t'],
-            # We're looking at the linker's trace output to locate
-            # libraries. -t prints each found object file on its own
-            # line on stderr. We recognise the object files via the
-            # extension, and the fact that they're existing, binary
-            # files.
-            output => qr/^(?:(?:-l|lib)[^ ]+ \()?(.*(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)\)?$/s,
+                        'optstring:-Wl,-t,--whole-archive,--allow-multiple-definition'],
+            # We're looking at the linker's trace output to locate libraries.
+            # -t prints each found object file on its own line on stderr. We
+            # recognise the object files via the extension, and the fact that
+            # they're existing, binary files.
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\z)/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
@@ -6303,6 +6344,22 @@ __DATA__
             # can't require_match; if the library doesn't exist on OS X, we
             # get an error output with no matches, and require_match overrides
             # fail_silently (not that it would be useful even if it didn't)
+            information_only => 1,
+            low_message_priority => 1,
+        },
+        find_libraries => {
+            object => qr/^searchlib:/,
+            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+                        "optpath::bpath:aimake/aimake_1$objext",
+                        "optpath:-o :bpath:aimake/aimake_1$exeext",
+                        'optpath:-l:',
+                        'optstring:-Wl,-t'],
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\z)/s,
+            filter_text_files => 1,
+            filter_nonexistent_files => 1,
+            force_locale => 'C',
+            verb => 'found',
+            fail_silently => 1,
             information_only => 1,
             low_message_priority => 1,
         },
@@ -6492,7 +6549,11 @@ __DATA__
             object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
                         "optstring:-DAIMAKE_REVERSE_IMPORT(x)=$longrandomstring##x"],
-            output => 'symbol:',
+            # We exclude the requirement on the symbol itself, and also a
+            # requirement on the DLL-imported version Windows uses, so as to
+            # work cross-platform.  (This could meaningfully be conditioned by
+            # platform; but there isn't currently a need.)
+            output => ['symbol:', 'symbol:__imp_'],
             outputarg => qr/$longrandomstring(\w+)/,
             outdepends => [],
             verb => 'found',
@@ -6516,7 +6577,7 @@ __DATA__
         link_shared_library => {
             object => qr/^symbolset:/,
             command => ['tool:c_linker', 'optstring:-shared'],
-            output_from_optpath => '-o ',
+            output_from_optpath => ['-o ', '-Wl,--out-implib,'],
             in_subdir => 'bpath:',
             verb => 'linked',
             avoid_rules => qr/^linux_library_finding_link$/,
@@ -6545,6 +6606,19 @@ __DATA__
                 'visibility("default")))_x'
         },
 
+        windows_headerlines => {
+            command => ['intcmd:nop', 'optionset:os_windows'],
+            output => 'optionset:aimake_header_lines',
+            outdepends => 'optstring:' .
+                '#_define_AIMAKE\\_ABI\\_VERSION(x) ' .
+                '#_define_AIMAKE\\_IMPORT(x)_\\_\\_declspec(dllimport)_x ' .
+                '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_' .
+                '\\_\\_declspec(dllimport)_x ' .
+                '#_define_AIMAKE\\_EXPORT(x)_\\_\\_declspec(dllexport)_x ' .
+                '#_define_AIMAKE\\_REVERSE\\_EXPORT(x)_' .
+                '\\_\\_declspec(dllexport)_x'
+        },
+
         symbolset_soname_linux => {
             object => qr/^symbolset:/,
             command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
@@ -6560,6 +6634,16 @@ __DATA__
             output => 'dependencies:symbolset:',
             outdepends => "optpath:-o :extend:$dllext",
             dependsarg => qr/^symbolset:([^:]*)/,
+        },
+
+        symbolset_output_windows => {
+            object => qr/^symbolset:/,
+            command => ['intcmd:nop', 'optionset:os_windows'],
+            propagate_usedeps => 2,
+            output => 'dependencies:symbolset:',
+            outdepends => ["optpath:-o :extend:$dllext:",
+                           "optstring:-Wl,--unresolved-symbols=ignore-in-object-files",
+                           "optpath:-Wl,--out-implib,:extend:$impext:"]
         },
 
         # The setup for versioned shared libraries on Debian/Ubuntu, also used
@@ -6633,20 +6717,15 @@ __DATA__
             command => ['cmd:nm', 'optpath::'],
             depends => 'symbol:',
             # To make things work on Windows, omit symbols that start with a
-            # double underscore, and translate DLL import hooks (__imp_.*) to
-            # the function being imported.
-            dependsarg => qr'^[[:xdigit:]]*\s+U (?:__imp_)?((?>_?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
+            # double underscore, apart from DLL import hooks (__imp_.*).
+            dependsarg => qr'^[[:xdigit:]]*\s+U ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
         },
         o_file_provisions => {
             object => qr/^b?path:(?!aimake\/).*\Q$objext\E\z/,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            # [ABCDGRSTVWiI] are all the externally visible symbols. (Capital
-            # I is used on Windows for DLL exports; normally there's a __imp_
-            # with an I and a non-prefixed version of a function with a T, but
-            # for variables, only the I exists, so we need to remove the
-            # __imp_ ourself.)
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            # [ABCDGRSTVWiI] are all the externally visible symbols.
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             # inner => '' is implied, as with the next few rules
             # outdepends => '' is implied by propagate_usedeps
             outdepends => 'optpath::',
@@ -6658,7 +6737,7 @@ __DATA__
             object => qr/^spath:.*\Q$libext\E\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             ignore_warnings => 1,
             outdepends => [],
             verb => 'found',
@@ -6670,7 +6749,7 @@ __DATA__
             object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             ignore_warnings => 1,
             propagate_usedeps => 1,
             outdepends => [],
@@ -6682,7 +6761,7 @@ __DATA__
             object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             fail_silently => 1, # not everything is dynamic
             ignore_warnings => 1,
             propagate_usedeps => 1,
@@ -6692,10 +6771,13 @@ __DATA__
             preference => 50,
         },
         bpath_shared_object_provisions_nondynamic => {
-            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
+            # For Windows, we need to find the provisions of the import library
+            # (.dll.a).  On other platforms, $impext is $dllext, so this matches
+            # the shared object as required.
+            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             ignore_warnings => 1,
             propagate_usedeps => 1,
             outdepends => [],
@@ -6705,10 +6787,10 @@ __DATA__
             avoid_rules => qr/^linux_library_finding_link$/,
         },
         bpath_shared_object_provisions_dynamic => {
-            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
+            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             fail_silently => 1, # not everything is dynamic
             ignore_warnings => 1,
             propagate_usedeps => 1,
@@ -6718,21 +6800,27 @@ __DATA__
             preference => 90,
             avoid_rules => qr/^linux_library_finding_link$/,
         },
+
         spath_library_option => {
             object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/,
             command => ['intcmd:echo', 'optpath::'],
             depends => 'optstring: -l',
             # Libraries on the spath which are not lib* get no option; they
             # probably don't get generated in the first place (apart from
-            # the dynamic loader, which shouldn't be mentioned anyway)
+            # the dynamic loader, which shouldn't be mentioned anyway).
             dependsarg => qr/^[bs]?path:
                 (?:(?:[^\\]|\\.)+\/)?lib((?:[^\\\/]|\\.)+?)
                 (?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/x,
         },
         bpath_library_option => {
-            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/,
+            # If we generated the library ourself, we need to link against the
+            # import library, not the library proper (unless the library is its
+            # own import library, as on Linux).  Also set an appropriate runtime
+            # path for the platform.
+            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/,
             depends => ['optpath::', 'optionset:rpath']
         },
+
         linux_rpath => {
             # We set the rpath to the installed location for the shared
             # objects. We can't know if it'll be libdir or specificlibdir,
@@ -6751,6 +6839,16 @@ __DATA__
             output => 'optionset:rpath',
             outdepends => 'optionset:linux_rpath',
         },
+
+        windows_rpath => {
+            # TODO: Figure out how runtime paths work on Windows.
+            command => ['intcmd:assert_equal',
+                        'optstring:MSWin32', "optstring:$^O"],
+            fail_silently => 1,
+            output => 'optionset:rpath',
+            outdepends => [],
+        },
+
         link_c => {
             object => qr/^b?path:.*\Q$objext\E/,
             command => ['symbol_in_object:main:', 'tool:c_linker',

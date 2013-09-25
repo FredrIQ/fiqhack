@@ -44,9 +44,10 @@
             verb => 'determined',
         },
         _libraries => {
-            output => ['searchlib:png',
-                       'searchlib:pq',
-                       'searchlib:ws2_32'],
+            output => ['searchlib:z:symbol:compress',
+                       'searchlib:png:symbol:png_create_write_struct',
+                       'searchlib:pq:symbol:PQsetdbLogin',
+                       'searchlib:ws2_32:symbol:connect'],
             outdepends => [],
             verb => 'determined',
         },
