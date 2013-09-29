@@ -38,6 +38,8 @@ static CONSOLE_SCREEN_BUFFER_INFO orig_csbi;
 static int cur_h, set_h;
 static int cur_w, set_w;
 static int follow_window_size = 1;
+static int save_cursor_x = 1, save_cursor_y = 1;
+static unsigned char* drawn;
 
 void wincon_hook_beep(void) {
     /* TODO */
@@ -50,10 +52,8 @@ void wincon_hook_setcursorsize(int size) {
     SetConsoleCursorInfo(outhandle, &new_cursor);
 }
 void wincon_hook_positioncursor(int y, int x) {
-    COORD c;
-    c.X = x;
-    c.Y = y;
-    SetConsoleCursorPosition(outhandle, c);
+    save_cursor_x = x;
+    save_cursor_y = y;
 }
 
 void wincon_hook_init(int *h, int *w) {
@@ -71,6 +71,8 @@ void wincon_hook_init(int *h, int *w) {
     *h = orig_csbi.srWindow.Bottom - orig_csbi.srWindow.Top + 1;
     cur_w = *w;
     cur_h = *h;
+    if (drawn) free(drawn);
+    drawn = calloc(cur_w, cur_h);
     /* It's the size of the screen buffer that determines how far the window
        can be resized. So we need to resize the screen buffer to the maximum
        possible window size. TODO: Using a secondary screen buffer would allow
@@ -97,7 +99,43 @@ void wincon_hook_rawsignals(int raw) {
                    (raw_mode ? 0 : ENABLE_PROCESSED_INPUT));
 }
 
+static void wincon_doredraw(void) {
+    COORD c;
+    c.X = save_cursor_x;
+    c.Y = save_cursor_y;
+    SetConsoleCursorPosition(outhandle, c);
+
+    int x, y;
+
+    for (y = 0; y < cur_h; y++)
+        for (x = 0; x < cur_w; x++) {
+            if (drawn[x+y*cur_w]) continue;
+            drawn[x+y*cur_w] = 1;
+            WCHAR ch = uncursed_rhook_ucs2_at(y, x);
+            int a = uncursed_rhook_color_at(y, x);
+            WORD attr = 0;
+            COORD c;
+            DWORD unused;
+            if (a &   1) attr |= FOREGROUND_RED;
+            if (a &   2) attr |= FOREGROUND_GREEN;
+            if (a &   4) attr |= FOREGROUND_BLUE;
+            if (a &   8) attr |= FOREGROUND_INTENSITY;
+            if (a &  16) attr |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN;
+            if (a &  32) attr |= BACKGROUND_RED;
+            if (a &  64) attr |= BACKGROUND_GREEN;
+            if (a & 128) attr |= BACKGROUND_BLUE;
+            if (a & 256) attr |= BACKGROUND_INTENSITY;
+            /* Ignore 512s and 1024s bits; 512s bit = default background = black,
+               1024s bit = underline, which the console can't render */
+            c.Y = y;
+            c.X = x;
+            FillConsoleOutputCharacterW(outhandle, ch, 1, c, &unused);
+            FillConsoleOutputAttribute(outhandle, attr, 1, c, &unused);
+        }
+}
+
 void wincon_hook_delay(int ms) {
+    wincon_doredraw();
     /* TODO */
 }
 
@@ -108,6 +146,8 @@ int wincon_hook_getkeyorcodepoint(int timeout_ms) {
     PKEY_EVENT_RECORD kp;
     INPUT_RECORD inrecords[1];
     DWORD count = 0;
+
+    wincon_doredraw();
 
     /* Windows uses RLE encoding for its keypresses. Reverse that encoding
        here. */
@@ -127,6 +167,8 @@ int wincon_hook_getkeyorcodepoint(int timeout_ms) {
         if (w != cur_w || h != cur_h) {
             cur_w = w;
             cur_h = h;
+            if (drawn) free(drawn);
+            drawn = calloc(cur_w, cur_h);
             uncursed_rhook_setsize(cur_h, cur_w);
             return KEY_RESIZE + KEY_BIAS;
         }
@@ -146,6 +188,8 @@ recheck:
            size from now on and just use the buffer they requested. */
         cur_w = inrecords[0].Event.WindowBufferSizeEvent.dwSize.X;
         cur_h = inrecords[0].Event.WindowBufferSizeEvent.dwSize.Y;
+        if (drawn) free(drawn);
+        drawn = calloc(cur_w, cur_h);
 
         /* Is this us setting it? Or someone else? */
         if (cur_w != set_w || cur_h != set_h) {
@@ -178,7 +222,7 @@ recheck:
         VKK(F6,F6); VKK(F7,F7); VKK(F8,F8); VKK(F9,F9); VKK(F10,F10);
         VKK(F11,F11); VKK(F12,F12); VKK(F13,F13); VKK(F14,F14); VKK(F15,F15);
         VKK(F16,F16); VKK(F17,F17); VKK(F18,F18); VKK(F19,F19); VKK(F20,F20);
-        
+
     case VK_SHIFT: case VK_CONTROL: case VK_RWIN: case VK_LWIN:
     case VK_LSHIFT: case VK_RSHIFT: case VK_LCONTROL: case VK_RCONTROL:
     case VK_MENU: /* sent by Alt */
@@ -215,26 +259,9 @@ recheck:
 }
 
 void wincon_hook_update(int y, int x) {
-    WCHAR ch = uncursed_rhook_ucs2_at(y, x);
-    int a = uncursed_rhook_color_at(y, x);
-    WORD attr = 0;
-    COORD c;
-    DWORD unused;
-    if (a &   1) attr |= FOREGROUND_RED;
-    if (a &   2) attr |= FOREGROUND_GREEN;
-    if (a &   4) attr |= FOREGROUND_BLUE;
-    if (a &   8) attr |= FOREGROUND_INTENSITY;
-    if (a &  16) attr |= FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN;
-    if (a &  32) attr |= BACKGROUND_RED;
-    if (a &  64) attr |= BACKGROUND_GREEN;
-    if (a & 128) attr |= BACKGROUND_BLUE;
-    if (a & 256) attr |= BACKGROUND_INTENSITY;
-    /* Ignore 512s and 1024s bits; 512s bit = default background = black,
-       1024s bit = underline, which the console can't render */
-    c.Y = y;
-    c.X = x;
-    FillConsoleOutputCharacterW(outhandle, ch, 1, c, &unused);
-    FillConsoleOutputAttribute(outhandle, attr, 1, c, &unused);
+    /* We don't update immediately, but at the next attempt to delay or get a
+       keypress; this makes the (very slow) redraws less ugly. */
+    drawn[x+y*cur_w] = 0;
     uncursed_rhook_updated(y, x);
 }
 
