@@ -11,7 +11,9 @@
 
 /* Plugin wrapper for the Windows console backend to the uncursed rendering
    library. See tty.cxx for details; this is pretty much an exact copy with
-   s/tty/wincon/g. */
+   s/tty/wincon/g, and the priority reduced (although this depends only on
+   libuncursed and libraries that ship with Windows, it is also very slow
+   compared to most other backends). */
 
 #include "uncursed_hooks.h"
 #include "uncursed_wincon.h"
@@ -35,7 +37,7 @@ static struct uncursed_hooks wincon_uncursed_hooks = {
     NULL,
     uncursed_hook_type_input,
     "wincon",
-    80,
+    30,
     0
 };
 

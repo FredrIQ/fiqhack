@@ -373,6 +373,8 @@ extern uncursed_char_p EI(friendly_keyname)(int);
 #define KEY_F19       (KEY_FUNCTION | 33)
 #define KEY_F20       (KEY_FUNCTION | 34)
 
+#define KEY_LAST_FUNCTION (KEY_FUNCTION | 34)
+
 /* Numeric keypad keys */
 #define KEY_ENTER     (KEY_KEYPAD | 'M')  /* Numeric keypad Enter, not return */
 

@@ -47,6 +47,7 @@
             output => ['searchlib:z:symbol:compress',
                        'searchlib:png:symbol:png_create_write_struct',
                        'searchlib:pq:symbol:PQsetdbLogin',
+                       'searchlib:SDL2:symbol:SDL_Init',
                        'searchlib:ws2_32:symbol:connect'],
             outdepends => [],
             verb => 'determined',
@@ -271,6 +272,10 @@
         },
         _install_nhdat => {
             object => "bpath:libnethack/dat/nhdat",
+            install_dir => "gamesdatadir",
+        },
+        _install_images => {
+            object => qr{^bpath:tilesets/dat/(?:fonts|merged)/.*\.png$},
             install_dir => "gamesdatadir",
         },
         _install_license => {

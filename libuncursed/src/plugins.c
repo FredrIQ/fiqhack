@@ -40,6 +40,12 @@ void uncursed_load_plugin_or_error(const char *plugin_name) {
     if (uncursed_load_plugin(plugin_name)) return;
     fprintf(stderr, "Error initializing rendering library: "
             "could not find plugin '%s'\n", plugin_name);
+    /* Leaving a prompt on the screen is necessary, because we might have been
+       called from a GUI with no console; normally the plugins handle
+       abstracting that sort of thing, but when the issue is a failure to load
+       plugins... */
+    fprintf(stderr, "Press <return> to end.\n");
+    getchar();
     exit(5);
 }
 
