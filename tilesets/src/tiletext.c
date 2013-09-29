@@ -37,7 +37,7 @@ static pixel placeholder[MAX_TILE_Y][MAX_TILE_X];
 static FILE *in_file, *out_file, *map_file;
 static int tile_map_indx;
 
-static void read_text_colormap(FILE *);
+static void read_text_colormap(FILE *, int);
 static boolean write_text_colormap(FILE *);
 static boolean peek_txttile_info(FILE *, char *, int *, char *);
 static boolean read_txttile_info(
@@ -121,13 +121,14 @@ char2bysx(char c)
 }
 
 static void
-read_text_colormap(FILE *txtfile)
+read_text_colormap(FILE *txtfile, int noact)
 {
     int i, n, r, g, b;
     char c[3];
 
-    for (i = 0; i < TEXTCOLORMAPSPACE; i++)
-        color_index[i] = -1;
+    if (!noact)
+        for (i = 0; i < TEXTCOLORMAPSPACE; i++)
+            color_index[i] = -1;
 
     /* Skip comments at the start of the file. Comment lines start with
        an exclamation mark. */
@@ -141,6 +142,7 @@ read_text_colormap(FILE *txtfile)
 
     num_colors = 0;
     while (fscanf(txtfile, FORMAT_STRING, c, &r, &g, &b) == 4) {
+        if (noact) continue;
         if (c[1])
             n = char2bysx(c[0]) * 64 + char2bysx(c[1]);
         else
@@ -156,7 +158,7 @@ read_text_colormap(FILE *txtfile)
         ColorMap[CM_BLUE][num_colors] = b;
         num_colors++;
     }
-    colorsinmap = num_colors;
+    if (!noact) colorsinmap = num_colors;
 }
 
 #undef FORMAT_STRING
@@ -194,7 +196,7 @@ peek_txttile_info(FILE *txtfile, char ttype[BUFSZ],
     int retval;
 
     offset = ftell(txtfile);
-    retval = fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) == 3;
+    retval = fscanf(txtfile, "# %20s %d (%200[^)\n])", ttype, number, name) == 3;
     if (retval && !strncmp(name, "cmap / ", 7))
         memmove(name, name+7, strlen(name)-6);
     if (retval && strstr(name, " / ")) *(strstr(name, " / ")) = 0;
@@ -210,7 +212,7 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
     const char *fmt_string;
     char c[3];
 
-    if (fscanf(txtfile, "# %s %d (%[^)])", ttype, number, name) < 3) {
+    if (fscanf(txtfile, "# %20s %d (%200[^)\n])", ttype, number, name) < 3) {
         return FALSE;
     }
     if (!strncmp(name, "cmap / ", 7)) memmove(name, name+7, strlen(name)-6);
@@ -383,7 +385,7 @@ merge_colormap(void)
 
     for (i = 0; i < colorsinmap; i++) {
 #ifdef FUZZ
-        int fuzz = -1, totalfuzz;
+        int fuzz = -1, totalfuzz = 1000000;
         pixval best_r = 0, best_g = 0, best_b = 0;
 #endif
         for (j = 0; j < colorsinmainmap; j++) {
@@ -472,10 +474,7 @@ static boolean
 set_tile_size(FILE *txtfile)
 {
     int i, j, ch;
-    long pos;
     char c[2];
-
-    pos = ftell(txtfile);
 
     if (fscanf(txtfile, "# %*s %*d (%*[^)]%c", c) <= 0 || c[0] != ')') {
         Fprintf(stderr, "error: no tiles in file\n");
@@ -531,7 +530,14 @@ set_tile_size(FILE *txtfile)
         Fprintf(stderr, "error: tile height mismatch %d != %d\n", tile_y, j);
         return FALSE;
     }
-    fseek(txtfile, pos, SEEK_SET);
+
+    /* We want to read the first tile, then return to this point in the file.
+       The obvious thing to do is to use ftell and fseek; but on mingw, that
+       doesn't actually work correctly on files that use Unix newlines.
+       Instead, we rewind the file to the start, and read the colormap again. */
+    fseek(txtfile, 0, SEEK_SET);
+    read_text_colormap(txtfile, 1);
+
     return TRUE;
 }
 
@@ -545,7 +551,7 @@ read_text_file_colormap(const char *filename)
         Fprintf(stderr, "error: cannot open text file %s\n", filename);
         return FALSE;
     }
-    read_text_colormap(fp);
+    read_text_colormap(fp, 0);
     fclose(fp);
     return TRUE;
 }
@@ -592,7 +598,7 @@ fopen_text_file(const char *filename, const char *type)
                 ((char *)placeholder)[i] = i % 256;
         }
 
-        read_text_colormap(in_file);
+        read_text_colormap(in_file, 0);
         if (!set_tile_size(in_file))
             return FALSE;
         if (!colorsinmainmap)

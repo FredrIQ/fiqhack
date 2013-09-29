@@ -15,8 +15,10 @@
  * TODO HERE:
  *   + Would be nice if it didn't use so much memory...
  */
+#define PNG_SETJMP_SUPPORTED
 #include <png.h> /* must be included first, for complicated reasons to do with
                     <setjmp.h> */
+#include <zlib.h>
 #include <assert.h>
 
 #include "tile.h"
@@ -27,9 +29,6 @@
  *       of memory !
  */
 #define MAX_TILE_NUM  2048
-
-#define OUTNAME "gltiles.png"   /* Default output file name */
-
 
 int ntiles = 0;
 int max_rows = -1;
@@ -88,10 +87,11 @@ save_png(const char *filename, int width, int height)
 
     /* set error handling since we are using the setjmp/longjmp method (this is 
        the normal method of doing things with libpng). */
-    if (setjmp(png_ptr->jmpbuf)) {
+    if (setjmp(png_jmpbuf(png_ptr))) {
         fprintf(stderr, "error: Unknown problem while writing PNG.\n");
         goto failed;
     }
+
 
     png_init_io(png_ptr, fp);
 
@@ -288,8 +288,8 @@ process_file(const char *fname)
     if (!tile_palette) {
         tile_palette = malloc(256 * sizeof (*tile_palette));
         if (!tile_palette) {
-            Fprintf(stderr, "error: Not enough memory (%d bytes).\n",
-                    sizeof (*tile_palette));
+            Fprintf(stderr, "error: Not enough memory (%ld bytes).\n",
+                    (long)sizeof (*tile_palette));
             exit(1);
         }
         /* [ALI} PNG encoding is more efficient if the transparent colour is
@@ -314,7 +314,7 @@ static void
 usage(void)
 {
     Fprintf(stderr,
-            "Usage: export_tileset [-o out_file] [-t] [-f] [-a##] [-b######] "
+            "Usage: export_tileset -o out_file [-t] [-f] [-a##] [-b######] "
             "txt_file1 [txt_file2 ...]\n");
     fprintf(stderr, "Where: -t enables transparency\n");
     fprintf(stderr, "       -f is used for fonts\n");
@@ -329,7 +329,7 @@ main(int argc, const char **argv)
     int i, argn = 1;
     int num_down;
 
-    const char *outname = OUTNAME;
+    const char *outname = NULL;
 
     while (argn < argc) {
         if ((argv[argn][0] == '-' && argv[argn][1] == 'h') ||
@@ -412,7 +412,7 @@ main(int argc, const char **argv)
         break;
     }
 
-    if (argn == argc) {
+    if (argn == argc || !outname) {
         usage();
         exit(1);
     }
