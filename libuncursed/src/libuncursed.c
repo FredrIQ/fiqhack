@@ -81,7 +81,7 @@ void initialize_uncursed(int *p_argc, char **argv) {
          specified there (if they aren't alreay loaded), and error out if we
          can't, or if more than one input plugin is specified.
        - If there is no explicit --interface option, or if it didn't specify an
-         input plugin, we check the executable's filename; if it ends -foo for
+         input plugin, we check the executable's basename; if it ends -foo for
          any foo, we attempt to load a plugin named foo, and error out if we
          can't. (This leads to weirdness if a non-input plugin is specified as
          part of the filename, but we can't do much sensible with that anyway.)
@@ -131,7 +131,9 @@ void initialize_uncursed(int *p_argc, char **argv) {
     }
     if (!input_plugins && *argv) {
         char *argv_hyphen = strrchr(*argv, '-');
-        if (argv_hyphen) uncursed_load_plugin_or_error(argv_hyphen+1);
+        if (argv_hyphen &&
+            !strchr(argv_hyphen, '/') && !strchr(argv_hyphen, '\\'))
+            uncursed_load_plugin_or_error(argv_hyphen+1);
     }
     input_plugins = 0;
     for (h = uncursed_hook_list; h; h = h->next_hook)
