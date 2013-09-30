@@ -48,6 +48,10 @@ struct uncursed_hooks {
     void (*fullredraw)(void);  /* redraw from scratch */
     void (*flush)(void);       /* called at the end of updates */
 
+    /* Only graphical interfaces care about these; the others can ignore them
+       via setting them to NULL */
+    void (*set_faketerm_font_file)(char *);
+
     /*** Receiving input: called on input hooks only ***/
     void (*delay)(int);               /* milliseconds */
     void (*rawsignals)(int);          /* 0 or 1 */

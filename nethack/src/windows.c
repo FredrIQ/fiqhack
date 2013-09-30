@@ -46,17 +46,35 @@ struct nh_window_procs curses_windowprocs = {
 
 /*----------------------------------------------------------------------------*/
 
+static char *fontprefix;
+
 void
-init_curses_ui(void)
+set_font_file(char *fontfilename)
+{
+    char *namebuf = malloc(strlen(fontprefix) + strlen(fontfilename) + 1);
+    strcpy(namebuf, fontprefix);
+    strcat(namebuf, fontfilename);
+    set_faketerm_font_file(namebuf);
+    free(namebuf);
+}
+
+void
+init_curses_ui(char *dataprefix)
 {
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");
+
 
     if (!initscr()) {
         fprintf(stderr, "Could not initialise the UI, exiting...\n");
         endwin();
         exit(1);
     }
+
+    /* set up an appropriate font for faketerm; must happen after initscr, but
+       we want to do it ASAP or else no characters will be visible */
+    fontprefix = strdup(dataprefix);
+    set_font_file("font14.png");
 
     if (LINES < 24 || COLS < COLNO) {
         fprintf(stderr,

@@ -27,6 +27,7 @@ static struct uncursed_hooks wincon_uncursed_hooks = {
     wincon_hook_update,
     wincon_hook_fullredraw,
     wincon_hook_flush,
+    NULL,
     wincon_hook_delay,
     wincon_hook_rawsignals,
     wincon_hook_getkeyorcodepoint,

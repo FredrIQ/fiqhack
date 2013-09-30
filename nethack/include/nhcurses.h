@@ -405,8 +405,9 @@ extern void curses_update_status_silent(struct nh_player_info *pi);
 extern void show_topten(char *player, int top, int around, nh_bool own);
 
 /* windows.c */
-extern void init_curses_ui(void);
+extern void init_curses_ui(char *dataprefix);
 extern void exit_curses_ui(void);
+extern void set_font_file(char *fontfilename);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);

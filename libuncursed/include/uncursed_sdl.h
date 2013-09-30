@@ -21,6 +21,7 @@ extern "C" {
     extern void sdl_hook_update(int, int);
     extern void sdl_hook_fullredraw(void);
     extern void sdl_hook_flush(void);
+    extern void sdl_hook_set_faketerm_font_file(char *);
     extern void sdl_hook_delay(int);
     extern void sdl_hook_rawsignals(int);
     extern int  sdl_hook_getkeyorcodepoint(int);

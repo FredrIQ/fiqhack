@@ -334,14 +334,17 @@ main(int argc, char *argv[])
     init_options();
 
     gamepaths = init_game_paths(argv[0]);
+
     nh_lib_init(&curses_windowprocs, gamepaths);
+
+    setup_signals();
+    init_curses_ui(gamepaths[DATAPREFIX]);
+    read_nh_config();
+
     for (i = 0; i < PREFIX_COUNT; i++)
         free(gamepaths[i]);
     free(gamepaths);
 
-    setup_signals();
-    init_curses_ui();
-    read_nh_config();
 
     process_args(argc, argv);   /* other command line options */
     init_displaychars();

@@ -32,6 +32,7 @@ static struct uncursed_hooks tty_uncursed_hooks = {
     tty_hook_update,
     tty_hook_fullredraw,
     tty_hook_flush,
+    NULL,
     tty_hook_delay,
     tty_hook_rawsignals,
     tty_hook_getkeyorcodepoint,

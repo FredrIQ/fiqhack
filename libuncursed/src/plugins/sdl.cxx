@@ -10,9 +10,10 @@
  */
 
 /* Plugin wrapper for the SDL 2 backend to the uncursed rendering library. See
-   tty.cxx for details; this is pretty much an exact copy with s/tty/sdl/g,
-   and the priority reduced (it's quite highly preferred as graphical backends
-   go, but on at least Linux, people will generally prefer a terminal). */
+   tty.cxx for details; this is similar to that file with s/tty/sdl/g, the
+   priority reduced (it's quite highly preferred as graphical backends go, but
+   on at least Linux, people will generally prefer a terminal), and the
+   graphics-related hooks implemented. */
 
 #include "uncursed_hooks.h"
 #include "uncursed_sdl.h"
@@ -26,6 +27,7 @@ static struct uncursed_hooks sdl_uncursed_hooks = {
     sdl_hook_update,
     sdl_hook_fullredraw,
     sdl_hook_flush,
+    sdl_hook_set_faketerm_font_file,
     sdl_hook_delay,
     sdl_hook_rawsignals,
     sdl_hook_getkeyorcodepoint,

@@ -48,7 +48,10 @@
    changes in a backwards-incompatible way, the second number whenever the
    functionality changes in a backwards-compatible way, and the third number
    when there is no functionality change (e.g. bugfixes), resetting all numbers
-   beyond the number you change to 0. */
+   beyond the number you change to 0.
+
+   There's no need to change the numbers in alpha releases; leave it to actual
+   releases, or they'll get way too big way too fast. */
 AIMAKE_ABI_VERSION(1.0.1)
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -202,6 +205,12 @@ static void uncursed_hook_flush(void) {
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->used) h->flush();
 }
+static void uncursed_hook_set_faketerm_font_file(char *filename) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->set_faketerm_font_file)
+            h->set_faketerm_font_file(filename);
+}
 
 static void uncursed_hook_delay(int ms) {
     struct uncursed_hooks *h;
@@ -239,6 +248,11 @@ static void uncursed_hook_stoprecording(void) {
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->used && h->hook_type == uncursed_hook_type_recording)
             h->stoprecording();
+}
+
+/* control of graphical interfaces */
+void set_faketerm_font_file(char *filename) {
+    uncursed_hook_set_faketerm_font_file(filename);
 }
 
 /* manual page 3ncurses color */

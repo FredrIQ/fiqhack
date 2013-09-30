@@ -99,6 +99,8 @@ extern uncursed_WINDOW_p EI(stdscr);
 /* uncursed-specific */
 extern void EI(initialize_uncursed)(int*, char**);
 
+extern void EI(set_faketerm_font_file)(char *);
+
 /* manual page 3ncurses color */
 extern int EI(COLORS);
 extern int EI(COLOR_PAIRS);
