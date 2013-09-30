@@ -32,6 +32,10 @@ static int resize_queued = 0;
 static int suppress_resize = 0;
 static int ignore_resize_count = 0;
 
+static int cursor_x = 0;
+static int cursor_y = 0;
+static int cursor_visible = 1;
+
 static int hangup_mode = 0;
 
 /* force the minimum size as 80x24; many programs don't function properly with
@@ -61,7 +65,7 @@ static SDL_Texture* load_png_file_to_texture(char *filename, int *w, int *h) {
         perror(filename);
         goto cleanup_nothing;
     }
-    
+
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr) {
         fprintf(stderr, "Error allocating png_ptr for font file\n");
@@ -117,7 +121,7 @@ static SDL_Texture* load_png_file_to_texture(char *filename, int *w, int *h) {
     png_read_update_info(png_ptr, info_ptr);
     if (png_get_rowbytes(png_ptr, info_ptr) != width * 4) {
         fprintf(stderr, "Error in PNG memory allocation: expected %ld bytes, "
-                "found %ld bytes.\n", (long)width * 4, 
+                "found %ld bytes.\n", (long)width * 4,
                 (long)png_get_rowbytes(png_ptr, info_ptr));
     }
 
@@ -176,10 +180,17 @@ void sdl_hook_beep(void) {
 }
 
 void sdl_hook_setcursorsize(int size) {
-    /* TODO */
+    cursor_visible = size;
+    sdl_hook_update(cursor_y, cursor_x);
 }
+
 void sdl_hook_positioncursor(int y, int x) {
-    /* TODO */
+    int old_x = cursor_x;
+    int old_y = cursor_y;
+    cursor_x = x;
+    cursor_y = y;
+    sdl_hook_update(cursor_y, cursor_x);
+    sdl_hook_update(old_y, old_x);
 }
 
 /* Called whenever the window or font size changes. */
@@ -270,7 +281,7 @@ void sdl_hook_set_faketerm_font_file(char *filename) {
 void sdl_hook_rawsignals(int raw) {
     /* meaningless to this plugin */
 }
-    
+
 void sdl_hook_delay(int ms) {
     /* We want to discard keys for the given length of time. (If the window is
        resized during the delay, we keep quiet about the resize until the next
@@ -303,7 +314,7 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
             update_window_sizes();
             resize_queued = 0;
             uncursed_rhook_setsize(winheight, winwidth);
-            return KEY_RESIZE + KEY_BIAS;            
+            return KEY_RESIZE + KEY_BIAS;
         }
         if ((key_tick_target != -1 ?
              SDL_WaitEventTimeout(&e, key_tick_target - SDL_GetTicks()) :
@@ -400,10 +411,10 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
                 KK(F1); KK(F2); KK(F3); KK(F4); KK(F5); KK(F6); KK(F7);
                 KK(F8); KK(F9); KK(F10); KK(F11); KK(F12); KK(F13); KK(F14);
                 KK(F15); KK(F16); KK(F17); KK(F18); KK(F19); KK(F20);
-                    
+
                 KK(ESCAPE); KK(BACKSPACE);
                 K(PRINTSCREEN,PRINT); K(PAUSE,BREAK);
-                KK(HOME); KK(END); K(INSERT,IC); K(DELETE,DC); 
+                KK(HOME); KK(END); K(INSERT,IC); K(DELETE,DC);
                 K(PAGEUP,PPAGE); K(PAGEDOWN,NPAGE);
                 KK(RIGHT); KK(LEFT); KK(UP); KK(DOWN);
 
@@ -420,7 +431,7 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
             case SDLK_RCTRL: case SDLK_RSHIFT: case SDLK_RALT:
             case SDLK_MODE: case SDLK_LGUI: case SDLK_RGUI:
                 break;
-                    
+
             default:
                 /* Other keys are either printables, or else keys that
                    uncursed doesn't know about. If they're printables, we
@@ -506,6 +517,15 @@ void sdl_hook_update(int y, int x) {
                 .x = (ch % 16) * fontwidth, .y = (ch / 16) * fontheight,
                 .w = fontwidth, .h = fontheight
             }, &(SDL_Rect) { /* destination */
+                .x = x * fontwidth, .y = y * fontheight,
+                .w = fontwidth, .h = fontheight
+            });
+    }
+    /* Draw a cursor, if necessary. */
+    if (x == cursor_x && y == cursor_y && cursor_visible) {
+        SDL_SetRenderDrawColor(render, fgcolor[0], fgcolor[1], fgcolor[2],
+                               SDL_ALPHA_OPAQUE);
+        SDL_RenderDrawRect(render, &(SDL_Rect) {
                 .x = x * fontwidth, .y = y * fontheight,
                 .w = fontwidth, .h = fontheight
             });
