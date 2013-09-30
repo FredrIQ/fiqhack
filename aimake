@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-09-29
+# Last modified by Alex Smith, 2013-09-30
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -6233,6 +6233,7 @@ __DATA__
             verb => 'found',
             information_only => 1,
         },
+
         fhs_library_directory => {
             # Are we on a UNIX/Linux-like system? If so, there's a bunch of
             # extra library directories we should add, because some linkers
@@ -6731,7 +6732,7 @@ __DATA__
             propagate_usedeps => 2,
             output =>  'dependencies:symbolset_output_linux:',
             outdepends => "optpath:-o :extend:$dllext",
-            dependsarg => qr/^dependencies:symbolset_dependencies_linux:symbolset:([^:]*)/s,
+            dependsarg => qr/^symbolset:([^:]*)/s,
         },
 
         windows_headerlines => {
@@ -6761,7 +6762,7 @@ __DATA__
             output_from_optpath => ['-l '],
             in_subdir => 'bpath:',
             verb => 'generated',
-            avoid_rules => qr/^[bs]path_library_option_for_linking$/,
+            avoid_rules => qr/^library_option_for_linking$/,
         },
 
         # The setup for versioned shared libraries on Debian/Ubuntu, also used
@@ -6932,26 +6933,24 @@ __DATA__
             depends => ['dependencies:library_option:',
                         'optionset:rpath'],
         },
-        spath_library_option_for_linking => {
-            object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/s,
-            command => ['intcmd:echo', 'optpath::'],
+        library_option_for_linking => {
+            object => qr/^(?:spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z |
+                             bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z)/sx,
             propagate_usedeps => 2,
             output => 'dependencies:library_option:',
-            outdepends => 'optstring: -l',
-            # Libraries on the spath which are not lib* get no option; they
-            # probably don't get generated in the first place (apart from
-            # the dynamic loader, which shouldn't be mentioned anyway).
-            dependsarg => qr/^[bs]?path:
-                (?:(?:[^\\]|\\.)+\/)?lib((?:[^\\\/]|\\.)+?)
-                (?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/sx,
-        },
-        bpath_library_option_for_linking => {
-            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/s,
-            command => ['intcmd:echo', 'optpath::'],
-            propagate_usedeps => 2,
-            output => 'dependencies:library_option:',
+            # The obvious thing to do here is to try to construct an -l option
+            # from the name on the spath, but this can fail on Linux because a
+            # library's soname doesn't necessarily have to correlate with the
+            # unadorned version of the filename that's used for linking
+            # it. What we'd ideally have to do would be to realpath the
+            # spath library, then look for symlinks to it and pick the most
+            # unadorned one. Rather than that complexity, we just specify the
+            # path directly, the same way as is done for bpath libraries; it
+            # comes to the same thing anyway, except that it doesn't give the
+            # linker the chance to override the .a/.so choice that aimake made
+            # (and thus confuse it by linking to a library with different
+            # symbols, in the case where the two aren't identical).
             outdepends => 'optpath: :',
-            dependsarg => qr/^(.*)$/s,
         },
         library_option_for_import_libs => {
             object => qr/^(?:spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z |
