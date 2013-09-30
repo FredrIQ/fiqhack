@@ -26,8 +26,8 @@
 
 static int fontwidth = 8;
 static int fontheight = 14;
-static int winwidth = 120; /* width of the window, in units of fontwidth */
-static int winheight = 30; /* height of the window, in units of fontheight */
+static int winwidth = 132; /* width of the window, in units of fontwidth */
+static int winheight = 36; /* height of the window, in units of fontheight */
 static int resize_queued = 0;
 static int suppress_resize = 0;
 static int ignore_resize_count = 0;
