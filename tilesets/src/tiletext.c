@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-29 */
+/* Last modified by Alex Smith, 2013-09-30 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "config.h"
@@ -16,8 +16,8 @@
  * that are going to be merged produces maximum generality. Increasing
  * MAXCOLORMAPSIZE has performance issues for the game (TEXTCOLORMAPSPACE does
  * not). Windowing systems are required to cope with MAXCOLORMAPSIZE colours and
- * map them onto their possible palette (see tile.doc) so this also introduces
- * an additional burden.
+ * map them onto their possible palette (see doc/tilesets.txt) so this also
+ * introduces an additional burden.
  */
 
 #define TEXTCOLORMAPSPACE       4096
@@ -38,11 +38,11 @@ static FILE *in_file, *out_file, *map_file;
 static int tile_map_indx;
 
 static void read_text_colormap(FILE *, int);
-static boolean write_text_colormap(FILE *);
-static boolean peek_txttile_info(FILE *, char *, int *, char *);
-static boolean read_txttile_info(
+static tile_boolean write_text_colormap(FILE *);
+static tile_boolean peek_txttile_info(FILE *, char *, int *, char *);
+static tile_boolean read_txttile_info(
     FILE *, pixel(*)[MAX_TILE_X], char *, int *, char *);
-static boolean read_txttile(FILE *, pixel(*)[MAX_TILE_X]);
+static tile_boolean read_txttile(FILE *, pixel(*)[MAX_TILE_X]);
 static void write_txttile_info(
     FILE *, pixel(*)[MAX_TILE_X], const char *, int, const char *);
 static void write_txttile(FILE *, pixel(*)[MAX_TILE_X]);
@@ -163,7 +163,7 @@ read_text_colormap(FILE *txtfile, int noact)
 
 #undef FORMAT_STRING
 
-static boolean
+static tile_boolean
 write_text_colormap(FILE *txtfile)
 {
     int i;
@@ -188,9 +188,9 @@ write_text_colormap(FILE *txtfile)
     return TRUE;
 }
 
-static boolean
-peek_txttile_info(FILE *txtfile, char ttype[BUFSZ],
-                  int *number, char name[BUFSZ])
+static tile_boolean
+peek_txttile_info(FILE *txtfile, char ttype[TILEBUFSZ],
+                  int *number, char name[TILEBUFSZ])
 {
     long offset;
     int retval;
@@ -204,9 +204,9 @@ peek_txttile_info(FILE *txtfile, char ttype[BUFSZ],
     return retval;
 }
 
-static boolean
+static tile_boolean
 read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
-                  char ttype[BUFSZ], int *number, char name[BUFSZ])
+                  char ttype[TILEBUFSZ], int *number, char name[TILEBUFSZ])
 {
     int i, j, k, n;
     const char *fmt_string;
@@ -269,11 +269,11 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
     return TRUE;
 }
 
-static boolean
+static tile_boolean
 read_txttile(FILE *txtfile, pixel (*pixels)[MAX_TILE_X])
 {
     int ph, i, ok;
-    char buf[BUFSZ], ttype[BUFSZ], expected[BUFSZ];
+    char buf[TILEBUFSZ], ttype[TILEBUFSZ], expected[TILEBUFSZ];
 
     if (!read_txttile_info(txtfile, pixels, ttype, &i, buf))
         return FALSE;
@@ -287,8 +287,8 @@ read_txttile(FILE *txtfile, pixel (*pixels)[MAX_TILE_X])
     if (map_file) {
         /* check tile name; the number is ignored (although these routines
            number consecutively, that is not required) */
-        ok = !!fgets(expected, BUFSZ-1, map_file);
-        expected[BUFSZ-1] = 0;
+        ok = !!fgets(expected, TILEBUFSZ-1, map_file);
+        expected[TILEBUFSZ-1] = 0;
         if (!ok) strcpy(expected, "<eof>");
         else if (strrchr(expected, '\n')) *(strrchr(expected, '\n')) = 0;
         if (strcmp(expected, buf) != 0) {
@@ -340,7 +340,7 @@ write_txttile_info(FILE *txtfile, pixel(*pixels)[MAX_TILE_X],
 static void
 write_txttile(FILE *txtfile, pixel(*pixels)[MAX_TILE_X])
 {
-    char tilename[BUFSZ];
+    char tilename[TILEBUFSZ];
     const char *type;
     int ok;
 
@@ -352,8 +352,8 @@ write_txttile(FILE *txtfile, pixel(*pixels)[MAX_TILE_X])
     if (!map_file) {
         strcpy(tilename, "unknown");
     } else {
-        ok = !!fgets(tilename, BUFSZ-1, map_file);
-        tilename[BUFSZ-1] = 0;
+        ok = !!fgets(tilename, TILEBUFSZ-1, map_file);
+        tilename[TILEBUFSZ-1] = 0;
         if (!ok) strcpy(tilename, "<eof>");
         else if (strrchr(tilename, '\n')) *(strrchr(tilename, '\n')) = 0;
     }
@@ -470,7 +470,7 @@ merge_colormap(void)
  * just to detect it.
  */
 
-static boolean
+static tile_boolean
 set_tile_size(FILE *txtfile)
 {
     int i, j, ch;
@@ -541,7 +541,7 @@ set_tile_size(FILE *txtfile)
     return TRUE;
 }
 
-boolean
+tile_boolean
 read_text_file_colormap(const char *filename)
 {
     FILE *fp;
@@ -556,7 +556,7 @@ read_text_file_colormap(const char *filename)
     return TRUE;
 }
 
-boolean
+tile_boolean
 fopen_text_file(const char *filename, const char *type)
 {
     int i;
@@ -624,7 +624,7 @@ fopen_text_file(const char *filename, const char *type)
     return TRUE;
 }
 
-boolean
+tile_boolean
 set_tile_map(const char *filename)
 {
     tile_map_indx = 0;
@@ -641,26 +641,26 @@ set_tile_map(const char *filename)
     return TRUE;
 }
 
-boolean
-peek_text_tile_info(char ttype[BUFSZ], int *number, char name[BUFSZ])
+tile_boolean
+peek_text_tile_info(char ttype[TILEBUFSZ], int *number, char name[TILEBUFSZ])
 {
     return (peek_txttile_info(in_file, ttype, number, name));
 }
 
-boolean
+tile_boolean
 read_text_tile_info(pixel (*pixels)[MAX_TILE_X], char *ttype,
                     int *number, char *name)
 {
     return read_txttile_info(in_file, pixels, ttype, number, name);
 }
 
-boolean
+tile_boolean
 read_text_tile(pixel (*pixels)[MAX_TILE_X])
 {
     return (read_txttile(in_file, pixels));
 }
 
-boolean
+tile_boolean
 write_text_tile_info(pixel (*pixels)[MAX_TILE_X],
                      const char *ttype, int number, const char *name)
 {
@@ -668,28 +668,28 @@ write_text_tile_info(pixel (*pixels)[MAX_TILE_X],
     return TRUE;
 }
 
-boolean
+tile_boolean
 write_text_tile(pixel (*pixels)[MAX_TILE_X])
 {
     write_txttile(out_file, pixels);
     return TRUE;
 }
 
-boolean
+tile_boolean
 fclose_text_file(void)
 {
-    boolean ret = FALSE;
+    tile_boolean ret = FALSE;
 
     if (in_file) {
-        ret |= ! !fclose(in_file);
+        ret |= !!fclose(in_file);
         in_file = (FILE *) 0;
     }
     if (out_file) {
-        ret |= ! !fclose(out_file);
+        ret |= !!fclose(out_file);
         out_file = (FILE *) 0;
     }
     if (map_file) {
-        ret |= ! !fclose(map_file);
+        ret |= !!fclose(map_file);
         map_file = (FILE *) 0;
     }
     return ret;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-29 */
+/* Last modified by Alex Smith, 2013-09-30 */
 /*   Copyright (c) J. Ali Harlow 2000                               */
 /*   NetHack may be freely redistributed.  See license for details. */
 
@@ -62,9 +62,9 @@ set_background(pixel (*bitmap)[MAX_TILE_X])
 static void
 read_tilenames(void)
 {
-    char ttype[BUFSZ];
+    char ttype[TILEBUFSZ];
     int number;
-    char name[BUFSZ];
+    char name[TILEBUFSZ];
     pixel tile[MAX_TILE_Y][MAX_TILE_X];
     int i, nth;
 
@@ -114,12 +114,12 @@ read_mapfile(char *mapfile)
         exit(EXIT_FAILURE);
     }
 
-    char name[BUFSZ];
+    char name[TILEBUFSZ];
     for (;;) {
         int c, i = 0;
         unsigned j;
         c = getc(mapfp);
-        while (c != EOF && c != '\n' && i < BUFSZ-1) {
+        while (c != EOF && c != '\n' && i < TILEBUFSZ-1) {
             name[i++] = c;
             c = getc(mapfp);
         }
@@ -182,9 +182,9 @@ read_mapfile(char *mapfile)
 static void
 merge_tiles(void)
 {
-    char ttype[BUFSZ];
+    char ttype[TILEBUFSZ];
     int number;
-    char name[BUFSZ];
+    char name[TILEBUFSZ];
     pixel tile[MAX_TILE_Y][MAX_TILE_X], *p;
     int i, j, tile_in_file;
 
@@ -198,7 +198,7 @@ merge_tiles(void)
         }
         if (tilenames[tile_in_file].nth >= 0) {
             /* add the disambiguator */
-            snprintf(name + strlen(name), BUFSZ - strlen(name) - 1,
+            snprintf(name + strlen(name), TILEBUFSZ - strlen(name) - 1,
                      "s %d", tilenames[tile_in_file].nth);
         }
         tile_in_file++;
