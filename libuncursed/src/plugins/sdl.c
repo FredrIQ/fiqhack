@@ -30,6 +30,7 @@ static int winwidth = 120; /* width of the window, in units of fontwidth */
 static int winheight = 30; /* height of the window, in units of fontheight */
 static int resize_queued = 0;
 static int suppress_resize = 0;
+static int ignore_resize_count = 0;
 
 static int hangup_mode = 0;
 
@@ -200,6 +201,7 @@ static void update_window_sizes(void) {
         win, MINCHARWIDTH * fontwidth, MINCHARHEIGHT * fontheight);
     if (w != winwidth || h != winheight) resize_queued = 1;
     winwidth = w; winheight = h;
+    ignore_resize_count++;
 }
 
 static void exit_handler(void) {
@@ -299,11 +301,10 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
             uncursed_rhook_setsize(winheight, winwidth);
             return KEY_RESIZE + KEY_BIAS;            
         }
-        if ((!timeout_ms ? SDL_WaitEvent(&e) :
+        if ((timeout_ms == -1 ? SDL_WaitEvent(&e) :
              SDL_WaitEventTimeout(&e, tick_target - SDL_GetTicks())) == 0) {
-            /* The SDL documentation doesn't say what's returned in the case of
-               a timeout. However, because there's no other way to communicate
-               the fact, it returns its error code, of 0. */
+            /* WaitEventTimeout returns 0 on timeout expiry; both functions
+               return 0 on error. */
             return KEY_SILENCE + KEY_BIAS;
         }
         switch (e.type) {
@@ -311,6 +312,13 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
             /* The events we're interested in here are closing the window,
                and resizing the window. We also need to redraw, if the
                window manager requests that. */
+            if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED &&
+                ignore_resize_count) {
+                /* We don't want to trigger a resize in response to our
+                   own resize requests. */
+                ignore_resize_count--;
+                break;
+            }
             if (e.window.event == SDL_WINDOWEVENT_RESIZED ||
                 e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
                 update_window_sizes();
@@ -376,21 +384,30 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
 #undef KK
 #undef K
             if (kc) {
-                if (e.key.keysym.mod & KMOD_ALT) kc |= KEY_ALT;
                 if (kc >= KEY_BIAS) {
+                    if (e.key.keysym.mod & KMOD_ALT) kc |= KEY_ALT;
                     if (e.key.keysym.mod & KMOD_CTRL) kc |= KEY_CTRL;
                     if (e.key.keysym.mod & KMOD_SHIFT) kc |= KEY_SHIFT;
                 } else {
                     if (e.key.keysym.mod & KMOD_CTRL) kc &= ~64;
+                    if (e.key.keysym.mod & KMOD_SHIFT) {
+                        /* SDL doesn't do uppercase letters... */
+                        if (kc >= 'a' && kc <= 'z')
+                            kc -= 'a' - 'A';
+                    }
                 }
+                if (kc > 0 && kc <= 127 && e.key.keysym.mod & KMOD_ALT) {
+                    kc |= KEY_ALT;
+                    kc += KEY_BIAS;
+                }
+                return kc;
             }
-            if (kc) return kc;
             break;
         case SDL_QUIT:
             hangup_mode = 1;
             return KEY_HANGUP + KEY_BIAS;
         }
-    } while (timeout_ms == 0 || SDL_GetTicks() < tick_target);
+    } while (timeout_ms == -1 || SDL_GetTicks() < tick_target);
     return KEY_SILENCE + KEY_BIAS;
 }
 
