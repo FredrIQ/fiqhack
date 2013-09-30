@@ -1302,10 +1302,12 @@ int doupdate(void) {
     return OK;
 }
 void uncursed_rhook_updated(int y, int x) {
+    if(y > nout_win->maxy || x > nout_win->maxx) return;
     disp_win->chararray[x + y * disp_win->stride] =
         nout_win->chararray[x + y * nout_win->stride];
 }
 int uncursed_rhook_needsupdate(int y, int x) {
+    if(y > nout_win->maxy || x > nout_win->maxx) return 0;
     cchar_t *p = nout_win->chararray + x + y * nout_win->stride;
     cchar_t *q = disp_win->chararray + x + y * disp_win->stride;
     if (p->attr != q->attr) return 1;
@@ -1318,6 +1320,7 @@ int uncursed_rhook_needsupdate(int y, int x) {
 }
 
 int uncursed_rhook_color_at(int y, int x) {
+    if(y > nout_win->maxy || x > nout_win->maxx) return 0;
     attr_t a = nout_win->chararray[x + y * nout_win->stride].attr;
     int p = PAIR_NUMBER(a);
     uncursed_color f, b;
@@ -1335,6 +1338,7 @@ int uncursed_rhook_color_at(int y, int x) {
     return f | (b << 5) | (!!(a & A_UNDERLINE) << 10);
 }
 char uncursed_rhook_cp437_at(int y, int x) {
+    if(y > nout_win->maxy || x > nout_win->maxx) return 0xa8;
     wchar_t wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
     int i;
     for (i = 0; i < 256; i++)
@@ -1352,12 +1356,15 @@ char uncursed_rhook_cp437_at(int y, int x) {
 #endif
 
 unsigned short uncursed_rhook_ucs2_at(int y, int x) {
+    if(y > nout_win->maxy || x > nout_win->maxx) return 0xfffdu;
     wchar_t wc = nout_win->chararray[x + y * nout_win->stride].chars[0];
     if (wc < 65536) return (unsigned short) wc;
     return 0xfffdu; /* REPLACEMENT CHARACTER */
 }
 char *uncursed_rhook_utf8_at(int y, int x) {
-    wchar_t *c = nout_win->chararray[x + y * nout_win->stride].chars;
+    wchar_t *c = 0xfffdu;
+    if(y <= nout_win->maxy && x <= nout_win->maxx)
+        c = nout_win->chararray[x + y * nout_win->stride].chars;
     /* The maximum number of UTF-8 bytes for one codepoint is 4. */
     static char utf8[CCHARW_MAX * 4 + 1];
     char *r = utf8;
