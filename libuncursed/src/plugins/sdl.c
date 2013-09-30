@@ -194,7 +194,7 @@ void sdl_hook_positioncursor(int y, int x) {
 }
 
 /* Called whenever the window or font size changes. */
-static void update_window_sizes(void) {
+static void update_window_sizes(int font_size_changed) {
     /* We set the window's minimum size to 80x24 times the font size; increase
        the window to the minimum size if necessary; and decrease the window to
        an integer multiple of the font size if possible. */
@@ -204,15 +204,26 @@ static void update_window_sizes(void) {
     w /= fontwidth; h /= fontheight;
     if (w < MINCHARWIDTH) w = MINCHARWIDTH;
     if (h < MINCHARHEIGHT) h = MINCHARHEIGHT;
-    if (w != worig || h != horig) {
+    if (w * fontwidth != worig || h * fontheight != horig) {
         SDL_SetWindowSize(win, w * fontwidth, h * fontheight);
-        SDL_RenderSetLogicalSize(render, w * fontwidth, h * fontheight);
+        ignore_resize_count++;
     }
-    SDL_SetWindowMinimumSize(
-        win, MINCHARWIDTH * fontwidth, MINCHARHEIGHT * fontheight);
-    if (w != winwidth || h != winheight) resize_queued = 1;
+    if (font_size_changed)
+        SDL_SetWindowMinimumSize(
+            win, MINCHARWIDTH * fontwidth, MINCHARHEIGHT * fontheight);
+
+    if (w != winwidth || h != winheight || font_size_changed) {
+        SDL_RenderSetLogicalSize(render, w * fontwidth, h * fontheight);
+
+        /* Don't do a full redraw if the window size actually changed; that may
+           involve reading OoB. Otherwise, do do a full redraw, because with no
+           KEY_RESIZE sent the program using this plugin won't do it itself. */
+        if (w != winwidth || h != winheight)
+            resize_queued = 1;
+        else
+            sdl_hook_fullredraw();
+    }
     winwidth = w; winheight = h;
-    ignore_resize_count++;
 }
 
 static void exit_handler(void) {
@@ -240,7 +251,8 @@ void sdl_hook_init(int *h, int *w) {
             exit(EXIT_FAILURE);
         }
         atexit(exit_handler);
-        update_window_sizes();
+        winwidth = winheight = 0;
+        update_window_sizes(1);
         resize_queued = 0;
         *w = winwidth; *h = winheight;
         render = SDL_CreateRenderer(
@@ -273,7 +285,7 @@ void sdl_hook_set_faketerm_font_file(char *filename) {
         /* Fonts are 16x16 grids. */
         fontwidth = w / 16;
         fontheight = h / 16;
-        update_window_sizes();
+        update_window_sizes(1);
         sdl_hook_fullredraw(); /* draw with the new font */
     }
 }
@@ -311,7 +323,7 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
     do {
         SDL_Event e;
         if (!suppress_resize && resize_queued) {
-            update_window_sizes();
+            update_window_sizes(0);
             resize_queued = 0;
             uncursed_rhook_setsize(winheight, winwidth);
             return KEY_RESIZE + KEY_BIAS;
@@ -340,7 +352,7 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
             }
             if (e.window.event == SDL_WINDOWEVENT_RESIZED ||
                 e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-                update_window_sizes();
+                update_window_sizes(0);
             if (e.window.event == SDL_WINDOWEVENT_EXPOSED)
                 sdl_hook_fullredraw();
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
