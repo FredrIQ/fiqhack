@@ -239,6 +239,7 @@ void sdl_hook_init(int *h, int *w) {
                     SDL_GetError());
             exit(EXIT_FAILURE);
         }
+        SDL_StartTextInput();
     }
 }
 void sdl_hook_exit(void) {
@@ -287,9 +288,12 @@ void sdl_hook_delay(int ms) {
     suppress_resize = 0;
 }
 
+#define TEXTEDITING_FILTER_TIME 2 /* milliseconds */
 int sdl_hook_getkeyorcodepoint(int timeout_ms) {
     long tick_target = SDL_GetTicks() + timeout_ms;
-    int kc;
+    long key_tick_target = -1;
+    long last_textediting_tick = -1 - TEXTEDITING_FILTER_TIME;
+    int kc = KEY_INVALID + KEY_BIAS, i, j, k;
 
     if (hangup_mode) return KEY_HANGUP + KEY_BIAS;
 
@@ -301,10 +305,14 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
             uncursed_rhook_setsize(winheight, winwidth);
             return KEY_RESIZE + KEY_BIAS;            
         }
-        if ((timeout_ms == -1 ? SDL_WaitEvent(&e) :
+        if ((key_tick_target != -1 ?
+             SDL_WaitEventTimeout(&e, key_tick_target - SDL_GetTicks()) :
+             timeout_ms == -1 ? SDL_WaitEvent(&e) :
              SDL_WaitEventTimeout(&e, tick_target - SDL_GetTicks())) == 0) {
             /* WaitEventTimeout returns 0 on timeout expiry; both functions
                return 0 on error. */
+
+            if (key_tick_target != -1) return kc;
             return KEY_SILENCE + KEY_BIAS;
         }
         switch (e.type) {
@@ -329,7 +337,54 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
                 return KEY_HANGUP + KEY_BIAS;
             }
             break;
+
+        case SDL_TEXTEDITING:
+            key_tick_target = -1;
+            last_textediting_tick = SDL_GetTicks();
+            break;
+
+        case SDL_TEXTINPUT:
+            /* The user pressed a key that's interpreted as a printable.
+               Convert it from UTF-8 to UTF-32. */
+            k = 0;
+#define ett ((unsigned char)*e.text.text)
+            if      (ett < 0x80) {k = ett & 0x7F; i = 0;}
+            else if (ett < 0xD0) {k = ett & 0x1F; i = 1;}
+            else if (ett < 0xF0) {k = ett & 0x0F; i = 2;}
+            else if (ett < 0xF8) {k = ett & 0x07; i = 3;}
+#undef ett
+            else return KEY_INVALID + KEY_BIAS;
+            k <<= i * 6;
+            for (j = 1; i > 0; i--) {
+                k += (((unsigned char)e.text.text[i]) & 0x3F) * j;
+                j <<= 6;
+            }
+            if (k > 0x10ffff) return KEY_INVALID + KEY_BIAS;
+
+            /* Hack for X11 (i.e. most practical uses of this on Linux as of
+               2013): If the user presses Alt + an ASCII printable, prefer to
+               send the key combination (Alt+letter), rather than the Unicode
+               key it produces (just the letter by itself). */
+            if (k >= ' ' && k <= '~' && kc == (k | KEY_ALT) + KEY_BIAS)
+                return kc;
+
+            return k;
+
         case SDL_KEYDOWN:
+            /* We care about this if it's a function key (i.e. not corresponding
+               to text), but not if it's used as part of an input method. The
+               heuristic used is to try to handle the key itself if it didn't
+               cause an SDL_TEXTEDITING or SDL_TEXTINPUT within 2 ms.
+
+               First, though, in case that event doesn't happen, we try to
+               calculate a code for the key itself, so that we can return it
+               2 ms later, except in the easy case where there was a text
+               editing/input event within the /previous/ 2ms. */
+            if ((long)SDL_GetTicks() <
+                last_textediting_tick + TEXTEDITING_FILTER_TIME) {
+                break;
+            }
+
             kc = 0;
 #define K(x,y) case SDLK_##x: kc = KEY_BIAS + KEY_##y; break
 #define KK(x) K(x,x)
@@ -389,20 +444,20 @@ int sdl_hook_getkeyorcodepoint(int timeout_ms) {
                     if (e.key.keysym.mod & KMOD_CTRL) kc |= KEY_CTRL;
                     if (e.key.keysym.mod & KMOD_SHIFT) kc |= KEY_SHIFT;
                 } else {
-                    if (e.key.keysym.mod & KMOD_CTRL) kc &= ~64;
-                    if (e.key.keysym.mod & KMOD_SHIFT) {
-                        /* SDL doesn't do uppercase letters... */
+                    if (e.key.keysym.mod & KMOD_CTRL) kc &= ~96;
+                    else if (e.key.keysym.mod & KMOD_SHIFT) {
                         if (kc >= 'a' && kc <= 'z')
                             kc -= 'a' - 'A';
                     }
                 }
-                if (kc > 0 && kc <= 127 && e.key.keysym.mod & KMOD_ALT) {
+                if (kc <= 127 && e.key.keysym.mod & KMOD_ALT) {
                     kc |= KEY_ALT;
                     kc += KEY_BIAS;
                 }
-                return kc;
+                key_tick_target = SDL_GetTicks() + TEXTEDITING_FILTER_TIME;
             }
             break;
+
         case SDL_QUIT:
             hangup_mode = 1;
             return KEY_HANGUP + KEY_BIAS;
