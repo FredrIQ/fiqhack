@@ -1,11 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-30 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 #include <signal.h>
 #include <locale.h>
+#include "tile.h"
 
 #if !defined(PDCURSES)
 /*
@@ -46,15 +47,28 @@ struct nh_window_procs curses_windowprocs = {
 
 /*----------------------------------------------------------------------------*/
 
-static char *fontprefix;
+static char *tileprefix;
 
 void
 set_font_file(char *fontfilename)
 {
-    char *namebuf = malloc(strlen(fontprefix) + strlen(fontfilename) + 1);
-    strcpy(namebuf, fontprefix);
+    char *namebuf = malloc(strlen(tileprefix) + strlen(fontfilename) + 1);
+    strcpy(namebuf, tileprefix);
     strcat(namebuf, fontfilename);
     set_faketerm_font_file(namebuf);
+    free(namebuf);
+}
+void
+set_tile_file(char *tilefilename)
+{
+    if (!tilefilename) {
+        set_tiles_tile_file(NULL, TILES_PER_ROW, TILES_PER_COL);
+        return;
+    }
+    char *namebuf = malloc(strlen(tileprefix) + strlen(tilefilename) + 1);
+    strcpy(namebuf, tileprefix);
+    strcat(namebuf, tilefilename);
+    set_tiles_tile_file(namebuf, TILES_PER_ROW, TILES_PER_COL);
     free(namebuf);
 }
 
@@ -73,8 +87,9 @@ init_curses_ui(char *dataprefix)
 
     /* set up an appropriate font for faketerm; must happen after initscr, but
        we want to do it ASAP or else no characters will be visible */
-    fontprefix = strdup(dataprefix);
+    tileprefix = strdup(dataprefix);
     set_font_file("font14.png");
+    set_tile_file("tile-16.png"); /* for testing */
 
     if (LINES < 24 || COLS < COLNO) {
         fprintf(stderr,
@@ -228,6 +243,8 @@ create_game_windows(void)
                 derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
 
+    wset_tiles_region(mapwin, ROWNO, COLNO, 0, 0, ROWNO, COLNO, 0, 0);
+
     keypad(mapwin, TRUE);
     keypad(msgwin, TRUE);
     leaveok(mapwin, FALSE);
@@ -259,6 +276,8 @@ resize_game_windows(void)
         sidebar = NULL;
     }
 
+    if (mapwin) wdelete_tiles_region(mapwin);
+
     statusheight = ui_flags.status3 ? 3 : 2;
     if (ui_flags.draw_frame) {
         mvwin(msgwin, 1, 1);
@@ -286,6 +305,9 @@ resize_game_windows(void)
             sidebar =
                 derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
+
+    if (mapwin)
+        wset_tiles_region(mapwin, ROWNO, COLNO, 0, 0, ROWNO, COLNO, 0, 0);
 
     leaveok(statuswin, TRUE);
     if (sidebar)

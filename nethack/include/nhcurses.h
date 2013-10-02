@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-30 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -368,7 +368,9 @@ extern int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
                     int *bg_color);
 extern void set_rogue_level(nh_bool enable);
 extern void switch_graphics(enum nh_text_mode mode);
-extern void print_sym(WINDOW * win, struct curses_symdef *sym, int extra_attrs,
+extern void print_tile(WINDOW *win, struct curses_symdef *api_name,
+                       struct curses_symdef *api_type, int offset);
+extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs,
                       int bg_color);
 extern void curses_notify_level_changed(int dmode);
 
@@ -407,7 +409,8 @@ extern void show_topten(char *player, int top, int around, nh_bool own);
 /* windows.c */
 extern void init_curses_ui(char *dataprefix);
 extern void exit_curses_ui(void);
-extern void set_font_file(char *fontfilename);
+extern void set_font_file(char *);
+extern void set_tile_file(char *);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);

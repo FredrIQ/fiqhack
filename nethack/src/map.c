@@ -1,9 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "tilesequence.h"
+#include "brandings.h"
 #include <ctype.h>
 
 #ifdef WIN32
@@ -19,8 +21,8 @@ struct coord {
 };
 
 static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
-static const int xdir[DIR_SELF + 1] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0 };
-static const int ydir[DIR_SELF + 1] = { 0, -1, -1, -1, 0, 1, 1, 1, 0, 0 };
+static const int mxdir[DIR_SELF + 1] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0 };
+static const int mydir[DIR_SELF + 1] = { 0, -1, -1, -1, 0, 1, 1, 1, 0, 0 };
 
 /* GetTickCount() returns milliseconds since the system was started, with a
  * resolution of around 15ms. gettimeofday() returns a value since the start of
@@ -104,32 +106,88 @@ draw_map(int cx, int cy)
     for (y = 0; y < ROWNO; y++) {
         for (x = 1; x < COLNO; x++) {
             int bg_color = 0;
+            struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
 
             /* set the position for each character to prevent incorrect
                positioning due to charset issues (IBM chars on a unicode term
                or vice versa) */
             wmove(mapwin, y, x - 1);
 
-            symcount = mapglyph(&display_buffer[y][x], syms, &bg_color);
+            /* draw the tile first, because doing that doesn't move the
+               cursor; we always draw floor as the extreme background so as to
+               avoid issues with transparency */
+            wset_tiles_tile(mapwin, tileno_from_name(
+                                "the floor of a room", TILESEQ_CMAP_OFF));
+            /* cmap */
+            print_tile(mapwin, cur_drawing->bgelements + dbyx->bg,
+                       NULL, TILESEQ_CMAP_OFF);
+            /* TODO: Brandings */
+            /* traps */
+            if (dbyx->trap)
+                print_tile(mapwin, cur_drawing->traps + dbyx->trap-1,
+                           NULL, TILESEQ_TRAP_OFF);
+            /* objects */
+            if (dbyx->obj)
+                print_tile(mapwin, cur_drawing->objects + dbyx->obj-1,
+                           NULL, TILESEQ_OBJ_OFF);
+            /* invisible monster symbol; just use the tile number directly, no
+               need to go via an API name because there is only one */
+            if (dbyx->invis)
+                wset_tiles_tile(mapwin, TILESEQ_INVIS_OFF + 0);
+            /* monsters */
+            if (dbyx->mon && dbyx->mon <= cur_drawing->num_monsters)
+                print_tile(mapwin, cur_drawing->monsters + dbyx->mon-1,
+                           NULL, TILESEQ_MON_OFF);
+            /* warnings */
+            if (dbyx->mon > cur_drawing->num_monsters &&
+                (dbyx->monflags & MON_WARNING))
+                print_tile(mapwin, cur_drawing->warnings +
+                               dbyx->mon-1-cur_drawing->num_monsters,
+                           NULL, TILESEQ_WARN_OFF);
+            /* effects */
+            if (dbyx->effect) {
+                int id = NH_EFFECT_ID(dbyx->effect);
+                switch (NH_EFFECT_TYPE(dbyx->effect)) {
+                case E_EXPLOSION:
+                    print_tile(mapwin,
+                               cur_drawing->explsyms + (id % NUMEXPCHARS),
+                               cur_drawing->expltypes + (id / NUMEXPCHARS),
+                               TILESEQ_EXPLODE_OFF);
+                    break;
+                case E_SWALLOW:
+                    print_tile(mapwin,
+                               cur_drawing->swallowsyms + (id & 0x7),
+                               NULL, TILESEQ_SWALLOW_OFF);
+                    break;
+                case E_ZAP:
+                    print_tile(mapwin,
+                               cur_drawing->zapsyms + (id & 0x3),
+                               cur_drawing->zaptypes + (id >> 2),
+                               TILESEQ_ZAP_OFF);
+                    break;
+                case E_MISC:
+                    print_tile(mapwin,
+                               cur_drawing->effects + id,
+                               NULL, TILESEQ_EFFECT_OFF);
+                    break;
+                }
+            }
+
+            symcount = mapglyph(dbyx, syms, &bg_color);
             attr = A_NORMAL;
             if (!(COLOR_PAIRS >= 113 || (COLORS < 16 && COLOR_PAIRS >= 57))) {
                 /* we don't have background colors available */
                 bg_color = 0;
-                if (((display_buffer[y][x].monflags & MON_TAME) &&
-                     settings.hilite_pet) ||
-                    ((display_buffer[y][x].monflags & MON_DETECTED) &&
-                     settings.use_inverse))
+                if (((dbyx->monflags & MON_TAME) && settings.hilite_pet) ||
+                    ((dbyx->monflags & MON_DETECTED) && settings.use_inverse))
                     attr |= A_REVERSE;
             } else if (bg_color == 0) {
                 /* we do have background colors available */
-                if ((display_buffer[y][x].monflags & MON_DETECTED) &&
-                    settings.use_inverse)
+                if ((dbyx->monflags & MON_DETECTED) && settings.use_inverse)
                     bg_color = CLR_MAGENTA;
-                if ((display_buffer[y][x].monflags & MON_PEACEFUL) &&
-                    settings.hilite_pet)
+                if ((dbyx->monflags & MON_PEACEFUL) && settings.hilite_pet)
                     bg_color = CLR_BROWN;
-                if ((display_buffer[y][x].monflags & MON_TAME) &&
-                    settings.hilite_pet)
+                if ((dbyx->monflags & MON_TAME) && settings.hilite_pet)
                     bg_color = CLR_BLUE;
             }
             print_sym(mapwin, &syms[frame % symcount], attr, bg_color);
@@ -246,12 +304,12 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 
         dir = key_to_dir(key);
         if (dir != DIR_NONE) {
-            dx = xdir[dir];
-            dy = ydir[dir];
+            dx = mxdir[dir];
+            dy = mydir[dir];
         } else if ((dir = key_to_dir(tolower((char)key))) != DIR_NONE) {
             /* a shifted movement letter */
-            dx = xdir[dir] * 8;
-            dy = ydir[dir] * 8;
+            dx = mxdir[dir] * 8;
+            dy = mydir[dir] * 8;
         }
 
         if (dx || dy) {
