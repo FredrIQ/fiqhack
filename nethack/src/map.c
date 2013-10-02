@@ -121,7 +121,8 @@ draw_map(int cx, int cy)
             /* cmap */
             print_tile(mapwin, cur_drawing->bgelements + dbyx->bg,
                        NULL, TILESEQ_CMAP_OFF);
-            /* TODO: Brandings */
+            /* low-priority general brandings */
+            print_low_priority_brandings(mapwin, dbyx);
             /* traps */
             if (dbyx->trap)
                 print_tile(mapwin, cur_drawing->traps + dbyx->trap-1,
@@ -144,6 +145,8 @@ draw_map(int cx, int cy)
                 print_tile(mapwin, cur_drawing->warnings +
                                dbyx->mon-1-cur_drawing->num_monsters,
                            NULL, TILESEQ_WARN_OFF);
+            /* high-priority brandings */
+            print_high_priority_brandings(mapwin, dbyx);
             /* effects */
             if (dbyx->effect) {
                 int id = NH_EFFECT_ID(dbyx->effect);

@@ -457,6 +457,51 @@ free_displaychars(void)
 }
 
 
+void
+print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
+{
+    enum nhcurses_brandings branding = nhcurses_no_branding;
+    if (dbe->bg == vcdoor_id || dbe->bg == hcdoor_id) {
+        if (dbe->branding & NH_BRANDING_LOCKED)
+            branding = nhcurses_genbranding_locked;
+        else if (dbe->branding & NH_BRANDING_UNLOCKED)
+            branding = nhcurses_genbranding_unlocked;
+    }
+    if (settings.floorcolor) {
+        if ((dbe->bg == room_id || dbe->bg == corr_id ||
+             dbe->bg == litcorr_id || dbe->bg == darkroom_id)
+            && dbe->branding & NH_BRANDING_STEPPED)
+            branding = nhcurses_genbranding_stepped;
+    }
+    if (branding != nhcurses_no_branding) {
+        wset_tiles_tile(win, tileno_from_name(
+                            nhcurses_branding_names[branding],
+                            TILESEQ_GENBRAND_OFF));
+    }
+}
+
+void
+print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
+{
+    enum nhcurses_brandings branding = nhcurses_no_branding;
+    if ((dbe->monflags & MON_TAME) && settings.hilite_pet)
+        branding = nhcurses_monbranding_tame;
+    if ((dbe->monflags & MON_PEACEFUL) && settings.hilite_pet)
+        branding = nhcurses_monbranding_peaceful;
+
+    if (branding != nhcurses_no_branding) {
+        wset_tiles_tile(win, tileno_from_name(
+                            nhcurses_branding_names[branding],
+                            TILESEQ_MONBRAND_OFF));
+    }
+
+    if (dbe->trap || (dbe->branding & NH_BRANDING_TRAPPED))
+        wset_tiles_tile(win, tileno_from_name(
+                            nhcurses_branding_names[
+                                nhcurses_genbranding_trapped],
+                            TILESEQ_GENBRAND_OFF));
+}
+
 int
 mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
 {
