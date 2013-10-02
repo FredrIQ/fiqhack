@@ -69,9 +69,12 @@ struct sdl_tile_region {
     char dirty; /* used as a boolean */
 };
 
+static void update_cell(int y, int x, struct sdl_tile_region *current_region);
+
 static SDL_Window *win = NULL;
 static SDL_Renderer *render = NULL;
 static SDL_Texture *font = NULL;
+static SDL_Texture *rendertarget = NULL;
 
 static SDL_Texture* load_png_file_to_texture(char *filename, int *w, int *h) {
     /* Based on a public domain example that ships with libpng */
@@ -239,6 +242,8 @@ static void update_window_sizes(int font_size_changed) {
         SDL_SetWindowMinimumSize(
             win, MINCHARWIDTH * fontwidth, MINCHARHEIGHT * fontheight);
 
+    SDL_SetRenderTarget(render, NULL);
+    rendertarget = NULL;
     if (w != winwidth || h != winheight || font_size_changed) {
         SDL_RenderSetLogicalSize(render, w * fontwidth, h * fontheight);
 
@@ -321,6 +326,7 @@ void sdl_hook_init(int *h, int *w) {
                                         SDL_RENDERER_ACCELERATED |
                                         SDL_RENDERER_PRESENTVSYNC |
                                         SDL_RENDERER_TARGETTEXTURE);
+            rendertarget = NULL;
         } else {
             fprintf(stderr, "Could not find a renderer that targets textures\n");
             exit(EXIT_FAILURE);
@@ -386,6 +392,8 @@ void *sdl_hook_allocate_tiles_region(int height, int width,
     region->tilesize_h /= tileset_rows;
     region->texsize_w = region->tilesize_w * width;
     region->texsize_h = region->tilesize_h * height;
+    SDL_SetRenderTarget(render, NULL);
+    rendertarget = NULL;
     region->texture = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
                                         SDL_TEXTUREACCESS_TARGET,
                                         region->texsize_w, region->texsize_h);
@@ -420,7 +428,11 @@ void sdl_hook_draw_tile_at(int tile, void *r, int y, int x) {
     if (x < 0 || y < 0 ||
         x >= region->tilecount_w || y >= region->tilecount_h)
         return;
-    SDL_SetRenderTarget(render, region->texture);
+    if (tile == region->tiles[y * region->tilecount_w + x])
+        return;
+    if (rendertarget != region->texture)
+        SDL_SetRenderTarget(render, region->texture);
+    rendertarget = region->texture;
     SDL_RenderCopy(render, region->tileset, &(SDL_Rect) { /* source */
             .x = (tile % region->tileset_cols) * region->tilesize_w,
             .y = (tile / region->tileset_cols) * region->tilesize_h,
@@ -429,7 +441,6 @@ void sdl_hook_draw_tile_at(int tile, void *r, int y, int x) {
             .x = x * region->tilesize_w, .y = y * region->tilesize_h,
             .w = region->tilesize_w, .h = region->tilesize_h
         });
-    SDL_SetRenderTarget(render, NULL);
     region->dirty = 1;
     region->tiles[y * region->tilecount_w + x] = tile;
 }
@@ -679,20 +690,26 @@ static int update_region(struct sdl_tile_region *r) {
             r->pixelshift_y = pixelshift_y;
         }
         if (nctx != r->cursortile_x || ncty != r->cursortile_y) {
-            if (r->cursortile_x > -1)
+            if (r->cursortile_x > -1) {
+                /* Force a redraw of the location where the cursor was */
+                r->tiles[r->cursortile_x +
+                         r->cursortile_y * r->tilecount_w] = -1;
                 sdl_hook_draw_tile_at(
                     r->tiles[r->cursortile_x +
                              r->cursortile_y * r->tilecount_w],
                     r, r->cursortile_y, r->cursortile_x);
+            }
             if (nctx > -1) {
-                SDL_SetRenderTarget(render, r->texture);
+                /* Draw a new cursor */
+                if (rendertarget != r->texture)
+                    SDL_SetRenderTarget(render, r->texture);
+                rendertarget = r->texture;
                 SDL_SetRenderDrawColor(render, 255, 255, 255, SDL_ALPHA_OPAQUE);
                 SDL_RenderDrawRect(render, &(SDL_Rect) {
                         .x = nctx * r->tilesize_w,
                         .y = ncty * r->tilesize_h,
                         .w = r->tilesize_w, .h = r->tilesize_h
                     });                
-                SDL_SetRenderTarget(render, NULL);
             }
             r->cursortile_x = nctx;
             r->cursortile_y = ncty;
@@ -700,28 +717,56 @@ static int update_region(struct sdl_tile_region *r) {
         }
     }
     if (r->dirty) {
+        /* Draw the entire screen at once, to save on drawing lots of individual
+           tiles. */
+        SDL_SetRenderTarget(render, NULL);
+        rendertarget = NULL;
+        int lf = r->pixelshift_x;
+        int tf = r->pixelshift_y;
+        int lt = r->loc_l * fontwidth;
+        int tt = r->loc_t * fontheight;
+        int w = r->loc_w * fontwidth;
+        int h = r->loc_h * fontheight;
+        if (lf < 0) {w -= -lf; lt += -lf; lf = 0;}
+        if (tf < 0) {h -= -tf; tt += -tf; tf = 0;}
+        if (lf + w > r->texsize_w) w -= (lf + w - r->texsize_w);
+        if (tf + h > r->texsize_h) h -= (tf + h - r->texsize_h);
+        if (w > 0 && h > 0)
+            SDL_RenderCopy(render, r->texture,
+                           &(SDL_Rect) {.x = lf, .y = tf, .w = w, .h = h},
+                           &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
+
+        /* Now draw any cells that contain something other than tiles. */
         int i, j;
         r->dirty = 0;
         for (i = 0; i < r->loc_w; i++)
             for (j = 0; j < r->loc_h; j++)
-                sdl_hook_update(j + r->loc_t, i + r->loc_l);
+                update_cell(j + r->loc_t, i + r->loc_l, r);
         return 1;
     } else
         return 0;
 }
 
-void sdl_hook_update(int y, int x) {
+static void update_cell(int y, int x, struct sdl_tile_region *current_region) {
     unsigned char ch = uncursed_rhook_cp437_at(y, x);
     int a = uncursed_rhook_color_at(y, x);
     struct sdl_tile_region *region = uncursed_rhook_region_at(y, x);
 
-    if (region && update_region(region)) return;
+    if (region && region == current_region) {
+        uncursed_rhook_updated(y, x);
+        return;
+    }
+    if (region && !current_region && update_region(region)) return;
 
     Uint8 *fgcolor = palette[a & 15];
     Uint8 *bgcolor = palette[(a >> 5) & 15];
     if (a & 16)  fgcolor = palette[7];
     if (a & 512) bgcolor = palette[0];
     /* TODO: Underlining (1024s bit) */
+
+    if (rendertarget != NULL)
+        SDL_SetRenderTarget(render, NULL);
+    rendertarget = NULL;
 
     /* Draw the background. */
     if (!region) {
@@ -785,6 +830,10 @@ void sdl_hook_update(int y, int x) {
     uncursed_rhook_updated(y, x);
 }
 
+void sdl_hook_update(int y, int x) {
+    update_cell(y, x, NULL);
+}
+
 void sdl_hook_fullredraw(void) {
     int i, j;
 
@@ -794,5 +843,7 @@ void sdl_hook_fullredraw(void) {
 }
 
 void sdl_hook_flush(void) {
+    if (rendertarget) SDL_SetRenderTarget(render, NULL);
+    rendertarget = NULL;
     SDL_RenderPresent(render);
 }
