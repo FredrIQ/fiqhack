@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-30 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -51,6 +51,10 @@ struct uncursed_hooks {
     /* Only graphical interfaces care about these; the others can ignore them
        via setting them to NULL */
     void (*set_faketerm_font_file)(char *);
+    void (*set_tiles_tile_file)(char *, int, int);
+    void *(*allocate_tiles_region)(int, int, int, int, int, int);
+    void (*deallocate_tiles_region)(void *);
+    void (*draw_tile_at)(int, void *, int, int);
 
     /*** Receiving input: called on input hooks only ***/
     void (*delay)(int);               /* milliseconds */
@@ -79,22 +83,34 @@ struct uncursed_hooks {
 extern struct uncursed_hooks *uncursed_hook_list;
 #endif
 
-/***** Calls from implementation libraries into uncursed.c *****/
-extern char uncursed_rhook_cp437_at(int, int); /* y, x */
-extern char *uncursed_rhook_utf8_at(int, int); /* y, x; static buffer */
-extern unsigned short uncursed_rhook_ucs2_at(int, int); /* y, x */
+#ifdef UNCURSED_MAIN_PROGRAM
+# define REI(x) AIMAKE_REVERSE_EXPORT(x)
+#else
+# define REI(x) AIMAKE_REVERSE_IMPORT(x)
+#endif
+
+typedef char *uncursed_hook_char_p;
+typedef void *uncursed_hook_void_p;
+
+/***** Calls from implementation plugins into uncursed.c *****/
+extern char REI(uncursed_rhook_cp437_at)(int, int); /* y, x */
+extern uncursed_hook_char_p REI(uncursed_rhook_utf8_at)(int, int); /* y, x */
+extern unsigned short REI(uncursed_rhook_ucs2_at)(int, int); /* y, x */
 /* This returns fg|bg<<5|ul<<10; i.e. color and underlining information.
    Default color is given as 16, not as -1. */
-extern int uncursed_rhook_color_at(int, int);  /* y, x */
-extern int uncursed_rhook_needsupdate(int, int); /* y, x */
+extern int REI(uncursed_rhook_color_at)(int, int);  /* y, x */
+extern uncursed_hook_void_p REI(uncursed_rhook_region_at)(int, int); /* y, x */
+extern int REI(uncursed_rhook_needsupdate)(int, int); /* y, x */
 
-extern void uncursed_rhook_updated(int, int);  /* y, x */
-extern void uncursed_rhook_setsize(int, int);  /* rows, columns */
+extern void REI(uncursed_rhook_updated)(int, int);  /* y, x */
+extern void REI(uncursed_rhook_setsize)(int, int);  /* rows, columns */
 
 /***** Calls from uncursed.c into plugins.c *****/
 extern int uncursed_load_plugin(const char *); /* plugin name; 1 on success */
 extern void uncursed_load_plugin_or_error(const char *); /* fatal version */
 extern void uncursed_load_default_plugin_or_error(void);
+
+#undef REI
 
 #ifdef __cplusplus
 }

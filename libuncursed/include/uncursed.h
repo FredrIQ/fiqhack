@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-30 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -72,7 +72,7 @@ typedef int uncursed_bool;
 typedef unsigned long attr_t;
 typedef unsigned long chtype; /* attr_t | char */
 #define CCHARW_MAX 5
-typedef struct { /* same shape as ncurses's cchar_t */
+typedef struct {
     attr_t attr;
     wchar_t chars[CCHARW_MAX];
 } cchar_t;
@@ -83,10 +83,13 @@ typedef struct WINDOW {
     int maxy, maxx; /* maximum legal coordinate, e.g. maxy = 1 means height 2 */
     int stride;     /* (y,x) is at chararray[x+y*stride] */
     int scry, scrx; /* top, right on screen */
+    int regy, regx; /* top, left of character region */
+    void *region;   /* tile region */
     struct WINDOW *parent;  /* so parents aren't freed while children exist */
     struct WINDOW *child;   /* for resizing */
     struct WINDOW *sibling; /* ditto */
     cchar_t *chararray;
+    void **regionarray; /* like chararray, but for tile regions */
     int timeout;
     uncursed_bool clear_on_refresh;
 } WINDOW, *uncursed_WINDOW_p;
@@ -100,6 +103,11 @@ extern uncursed_WINDOW_p EI(stdscr);
 extern void EI(initialize_uncursed)(int*, char**);
 
 extern void EI(set_faketerm_font_file)(char *);
+
+extern void EI(set_tiles_tile_file)(char *, int, int);
+UNCURSED_ANDWINDOW(int, set_tiles_region, int, int, int, int, int, int, int, int);
+UNCURSED_ANDWINDOWV(int, delete_tiles_region);
+UNCURSED_ANDMVWINDOW(int, set_tiles_tile, int);
 
 /* manual page 3ncurses color */
 extern int EI(COLORS);
@@ -224,11 +232,11 @@ UNCURSED_ANDWINDOW(int, echochar, const chtype);
 
 /* manual page 3ncurses addchstr */
 UNCURSED_ANDMVWINDOW(int, addchstr, const chtype *);
-UNCURSED_ANDMVWINDOW(int, addchnstr, const chtype *, int n);
+UNCURSED_ANDMVWINDOW(int, addchnstr, const chtype *, int);
 
 /* manual page 3ncurses addstr */
 UNCURSED_ANDMVWINDOW(int, addstr, const char *);
-UNCURSED_ANDMVWINDOW(int, addnstr, const char *, int n);
+UNCURSED_ANDMVWINDOW(int, addnstr, const char *, int);
 
 /* manual page 3ncurses addwstr */
 UNCURSED_ANDMVWINDOW(int, addwstr, const wchar_t *);
@@ -284,9 +292,6 @@ extern void EI(timeout)(int); /* can't use ANDWINDOW, it returns void */
 extern void EI(wtimeout)(WINDOW*, int);
 extern int EI(typeahead)(int); /* ignored */
 
-/* manual page 3ncurses outopts */
-/* TODO */
-
 /* manual page 3ncurses overlay */
 extern int EI(overlay)(const WINDOW *, const WINDOW *);
 extern int EI(overwrite)(const WINDOW *, const WINDOW *);
@@ -311,7 +316,7 @@ extern int EI(curs_set)(int visibility);
 extern uncursed_char_p EI(unctrl)(char);
 extern uncursed_wchar_tp EI(wunctrl)(wchar_t);
 extern uncursed_char_p EI(keyname)(int);
-extern uncursed_char_p EI(key_name)(wchar_t); /* not wchar_t* :( */
+extern uncursed_char_p EI(key_name)(wint_t);
 extern int EI(delay_output)(int);
 /* unimplemented: getwin, putwin, use_env, filter, nofilter, flushinp */
 
@@ -381,7 +386,7 @@ extern uncursed_char_p EI(friendly_keyname)(int);
 #define KEY_ENTER     (KEY_KEYPAD | 'M')  /* Numeric keypad Enter, not return */
 
 /* These may well be F1-F4 (say, on xterm) rather than PF1-PF4
-   (NumLock, Num+, Num*, Num/). */
+   (NumLock, Num/, Num*, Num-. */
 #define KEY_PF1       (KEY_KEYPAD | 'P')
 #define KEY_PF2       (KEY_KEYPAD | 'Q')
 #define KEY_PF3       (KEY_KEYPAD | 'R')
@@ -471,6 +476,7 @@ extern int EI(wredrawln)(WINDOW *win, int, int);
 /* manual page 3ncurses get_wch */
 UNCURSED_ANDMVWINDOW(int, get_wch, wint_t *);
 extern int EI(unget_wch)(wchar_t);
+extern int EI(timeout_get_wch)(int, wint_t *);
 
 /* manual page 3ncurses getyx, legacy; these are all macros */
 #define getyx(win, yy, xx) do {(yy) = (win)->y; (xx) = (win)->x;} while(0)
@@ -498,7 +504,7 @@ UNCURSED_ANDWINDOW(int, move, int, int);
 
 /* manual page 3ncurses touch */
 /* These are all no-ops for now, and probably forever unless we turn out to
-   have insurmountable performance proble,s. */
+   have insurmountable performance problems. */
 extern int EI(touchwin)(WINDOW *);
 extern int EI(touchline)(WINDOW *, int, int);
 extern int EI(untouchwin)(WINDOW *);

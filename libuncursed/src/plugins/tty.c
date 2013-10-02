@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-30 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -19,7 +19,6 @@
    Terminals built into operating systems:
    Linux console (fbcon)
    DOSBOx emulation of the DOS console
-   Windows console (Vista and higher)
 
    Terminal emulation software:
    xterm

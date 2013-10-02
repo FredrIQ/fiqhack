@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-30 */
+/* Last modified by Alex Smith, 2013-10-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -55,6 +55,9 @@
 AIMAKE_ABI_VERSION(1.0.1)
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
+
+static WINDOW *nout_win = 0; /* Window drawn onto by wnoutrefresh */
+static WINDOW *disp_win = 0; /* WINDOW drawn onto by doupdate */
 
 /* uncursed hook handling */
 struct uncursed_hooks *uncursed_hook_list = NULL;
@@ -205,11 +208,56 @@ static void uncursed_hook_flush(void) {
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->used) h->flush();
 }
+
 static void uncursed_hook_set_faketerm_font_file(char *filename) {
     struct uncursed_hooks *h;
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->used && h->set_faketerm_font_file)
             h->set_faketerm_font_file(filename);
+}
+
+/* Setting more than one hook to tiles mode at once would be a problem; we'd
+   have multiple sets of tile regions floating around and nowhere to store
+   them. A 100% solution to this would require some sort of associative array;
+   we can make it work in all common configurations by only setting one of the
+   hooks (arbitrarily, the first one in the list) to tiles mode.
+
+   If no graphical interfaces are in use, we allocate and free dummy tiles
+   regions ourself. */
+static void uncursed_hook_set_tiles_tile_file(
+    char *filename, int down, int across) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->set_tiles_tile_file) {
+            h->set_tiles_tile_file(filename, down, across);
+            break;
+        }
+}
+static void *uncursed_hook_allocate_tiles_region(int tiles_h, int tiles_w,
+    int char_h, int char_w, int char_t, int char_l) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->allocate_tiles_region)
+            return h->allocate_tiles_region(
+                tiles_h, tiles_w, char_h, char_w, char_t, char_l);
+    return malloc(1); /* create a dummy region */
+}
+static void uncursed_hook_deallocate_tiles_region(void *region) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->deallocate_tiles_region) {
+            h->deallocate_tiles_region(region);
+            return;
+        }
+    free(region); /* free the dummy region */
+}
+static void uncursed_hook_draw_tile_at(int tile, void *region, int y, int x) {
+    struct uncursed_hooks *h;
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->draw_tile_at) {
+            h->draw_tile_at(tile, region, y, x);
+            return;
+        }
 }
 
 static void uncursed_hook_delay(int ms) {
@@ -253,6 +301,76 @@ static void uncursed_hook_stoprecording(void) {
 /* control of graphical interfaces */
 void set_faketerm_font_file(char *filename) {
     uncursed_hook_set_faketerm_font_file(filename);
+}
+
+static char invalid_region; /* &invalid_region is used as a sentinel */
+void set_tiles_tile_file(char *filename, int down, int across) {
+    uncursed_hook_set_tiles_tile_file(filename, down, across);
+}
+UNCURSED_ANDWINDOWDEF(int, set_tiles_region,
+                      int tiles_h; int tiles_w; int tiles_t; int tiles_l;
+                      int char_h; int char_w; int char_t; int char_l,
+                      tiles_h, tiles_w, tiles_t, tiles_l,
+                      char_h, char_w, char_t, char_l) {
+    if (tiles_h + tiles_t > win->maxy + 1 ||
+        tiles_w + tiles_l > win->maxx + 1 ||
+        char_h + char_t > win->maxy + 1 ||
+        char_w + char_l > win->maxx + 1) return ERR;
+    if (tiles_h < 1 || tiles_w < 1 || char_h < 1 || char_w < 1 ||
+        tiles_t < 0 || tiles_l < 0 || char_t < 0 || char_l < 0) return ERR;
+
+    wdelete_tiles_region(win);
+    void *region = uncursed_hook_allocate_tiles_region(char_h, char_w,
+        tiles_h, tiles_w, tiles_t+win->scry, tiles_l+win->scrx);
+    if (!region) return ERR;
+    win->regy = char_t;
+    win->regx = char_l;
+    win->region = region;
+
+    int j, i;
+
+    for (j = char_t; j < char_t + char_h; j++)
+        for (i = char_l; i < char_l + char_w; i++)
+            win->regionarray[j * (win->maxx+1) + i] = region;
+
+    return OK;
+}
+UNCURSED_ANDWINDOWVDEF(int, delete_tiles_region) {
+    if (!win->region) return OK;
+
+    /* We need to clear the tiles region from all existing structures before
+       deallocating it. However, because the only way to move tiles regions
+       around is via copywin, and that's banned unless the target is disp_win or
+       nout_win, we only have to check those two windows and the target
+       itself. We set existing uses in most places to NULL, and existing uses
+       in disp_win to the sentinel &invalid_region (that is, we want to draw
+       non-tiles at those locations, and currently are drawing garbage). */
+    int i;
+    for (i = 0; i < (disp_win->maxx+1) * (disp_win->maxy+1); i++)
+        if (disp_win->regionarray[i] == win->region)
+            disp_win->regionarray[i] = &invalid_region;
+    for (i = 0; i < (nout_win->maxx+1) * (nout_win->maxy+1); i++)
+        if (nout_win->regionarray[i] == win->region)
+            nout_win->regionarray[i] = NULL;
+    for (i = 0; i < (win->maxx+1) * (win->maxy+1); i++)
+        win->regionarray[i] = NULL;
+
+    uncursed_hook_deallocate_tiles_region(win->region);
+    win->region = NULL;
+
+    return OK;
+}
+UNCURSED_ANDMVWINDOWDEF(int, set_tiles_tile, int tile, tile) {
+    /* Check to make sure that the window has a tiles region. We don't check
+       against regionarray, because that measures the place where the tiles
+       are drawn, not the characters they correspond to. (Instead, we let the
+       interfaces do the bounds checks on the region.) */
+    if (!win->region) return ERR;
+
+    uncursed_hook_draw_tile_at(tile, win->region,
+                               win->y-win->regy, win->x-win->regx);
+
+    return OK;
 }
 
 /* manual page 3ncurses color */
@@ -450,9 +568,9 @@ static const cchar_t WACS[] = {
     {0, {0x2265, 0}}, {0, {0x2500, 0}}, {0, {0x2603, 0}}, {0, {0x2190, 0}},
     {0, {0x2264, 0}}, {0, {0x2514, 0}}, {0, {0x2518, 0}}, {0, {0x2524, 0}},
     {0, {0x2260, 0}}, {0, {0x03c0, 0}}, {0, {0x00b1, 0}}, {0, {0x253c, 0}},
-    {0, {0x2192, 0}}, {0, {0x261c, 0}}, {0, {0x23ba, 0}}, {0, {0x23bb, 0}},
+    {0, {0x2192, 0}}, {0, {0x251c, 0}}, {0, {0x23ba, 0}}, {0, {0x23bb, 0}},
     {0, {0x23bc, 0}}, {0, {0x23bd, 0}}, {0, {0x00a3, 0}}, {0, {0x252c, 0}},
-    {0, {0x2192, 0}}, {0, {0x250c, 0}}, {0, {0x2510, 0}}, {0, {0x2502, 0}}};
+    {0, {0x2191, 0}}, {0, {0x250c, 0}}, {0, {0x2510, 0}}, {0, {0x2502, 0}}};
 const uncursed_cchar_tp WACS_BLOCK    = WACS+0;
 const uncursed_cchar_tp WACS_BOARD    = WACS+1;
 const uncursed_cchar_tp WACS_BTEE     = WACS+2;
@@ -637,7 +755,6 @@ int assume_default_colors(int fgcolor, int bgcolor) {
 }
 
 /* manual page 3ncurses beep */
-static WINDOW *nout_win = 0; /* Window drawn onto by wnoutrefresh */
 int beep(void) {
     uncursed_hook_beep();
     return OK;
@@ -829,6 +946,8 @@ int overwrite(const WINDOW *from, const WINDOW *to) {
 int copywin(const WINDOW *from, const WINDOW *to,
             int from_miny, int from_minx, int to_miny, int to_minx,
             int to_maxy, int to_maxx, int skip_blanks) {
+    if (to != disp_win && to != nout_win)
+        if (from->region || to->region) return ERR;
     int i, j;
     for (j = to_miny; j <= to_maxy; j++) {
         if (j < 0 || j - to_miny + from_miny < 0) continue;
@@ -841,6 +960,10 @@ int copywin(const WINDOW *from, const WINDOW *to,
             cchar_t *t = to->chararray + i + j * to->stride;
             if (skip_blanks && f->chars[0] == 32) continue;
             *t = *f;
+            void **rf = from->regionarray + i - to_minx + from_minx +
+                (j - to_miny + from_miny) * (from->maxx+1);
+            void **rt = to->regionarray + i + j * (to->maxx+1);
+            *rt = *rf;
         }
     }
     return OK;
@@ -1005,13 +1128,8 @@ char *keyname(int c) {
     }
     return keybuf;
 }
-char *key_name(wchar_t c) {
-    /* For some reason, this returns a narrow string not a wide string, and as
-       such, we can't return wide characters at all, so we just return NULL.
-       (TODO: add a wide string version for uncursed). Wide character key codes
-       are the same as narrow character key codes. */
-    if (c < 128) return unctrl(c);
-    if (c < 256) return 0; /* according to documentation */
+char *key_name(wint_t c) {
+    if (c < 256) return 0; /* it's not a key code */
     return keyname(c);
 }
 
@@ -1041,12 +1159,12 @@ char *friendly_keyname(int c) {
         KEYNAME(F9,F9); KEYNAME(F10,F10); KEYNAME(F11,F11); KEYNAME(F12,F12);
         KEYNAME(F13,F13); KEYNAME(F14,F14); KEYNAME(F15,F15); KEYNAME(F16,F16);
         KEYNAME(F17,F17); KEYNAME(F18,F18); KEYNAME(F19,F19); KEYNAME(F20,F20);
-        KEYNAME(ENTER,Enter); KEYNAME(PF1,F1/NumLock); KEYNAME(PF2,F2/NumPlus);
-        KEYNAME(PF3,F3/NumTimes); KEYNAME(PF4,F4/NumDivide);
+        KEYNAME(PF1,F1/NumLock); KEYNAME(PF2,F2/NumDivide);
+        KEYNAME(PF3,F3/NumTimes); KEYNAME(PF4,F4/NumMinus);
         KEYNAME(A1,NumHome); KEYNAME(A2,NumUp); KEYNAME(A3,NumPgUp);
         KEYNAME(B1,NumLeft); KEYNAME(B2,Num5); KEYNAME(B3,NumRight);
         KEYNAME(C1,NumEnd); KEYNAME(C2,NumDown); KEYNAME(C3,NumPgDn);
-        KEYNAME(D1,NumIns); KEYNAME(D3,NumDel);
+        KEYNAME(D1,NumIns); KEYNAME(D3,NumDel); KEYNAME(ENTER,Enter);
         KEYNAME(NUMPLUS,NumPlus); KEYNAME(NUMMINUS,NumMinus);
         KEYNAME(NUMTIMES,NumTimes); KEYNAME(NUMDIVIDE,NumDivide);
         KEYNAME(BACKSPACE,BkSp); KEYNAME(ESCAPE,Escape);
@@ -1111,7 +1229,6 @@ UNCURSED_ANDWINDOWDEF(int, insdelln, int n, n) {
 /* manual page 3ncurses initscr */
 WINDOW *stdscr = 0;
 static WINDOW *save_stdscr = 0;
-static WINDOW *disp_win = 0; /* WINDOW drawn onto by doupdate */
 int LINES, COLS;
 
 WINDOW *initscr(void) {
@@ -1119,17 +1236,18 @@ WINDOW *initscr(void) {
         /* UB, and very bad UB at that. Take the opportunity to crash the
            program. */
         fprintf(stderr, "Do not call initscr() without first calling "
-                "initialize_uncursed.\n");
+                "initialize_uncursed().\n");
         abort();
     }
     if (save_stdscr || stdscr) return 0;
     uncursed_hook_init(&LINES, &COLS);
     nout_win = newwin(0, 0, 0, 0);
-    if (!nout_win) return 0;
     disp_win = newwin(0, 0, 0, 0);
-    if (!disp_win) {free(nout_win); return 0;}
     stdscr = newwin(0, 0, 0, 0);
-    if (!stdscr) {free(nout_win); free(disp_win); return 0;}
+    if (!nout_win || !disp_win || !stdscr) {
+        fprintf(stderr, "uncursed: could not allocate memory!\n");
+        exit(5);
+    }
     return stdscr;
 }
 int endwin(void) {
@@ -1157,20 +1275,27 @@ void uncursed_rhook_setsize(int h, int w) {
 }
 
 /* manual page 3ncurses window */
-WINDOW *newwin(int h, int w, int t, int r) {
+WINDOW *newwin(int h, int w, int t, int l) {
     WINDOW *win = malloc(sizeof (WINDOW));
+    int i;
     if (!win) return 0;
     if (h == 0) h = LINES;
     if (w == 0) w = COLS;
     win->chararray = malloc(w*h * sizeof *(win->chararray));
     if (!win->chararray) { free(win); return 0; }
+    win->regionarray = malloc(w*h * sizeof *(win->regionarray));
+    if (!win->regionarray) { free(win->chararray); free(win); return 0; }
+    for (i = 0; i < w*h; i++) win->regionarray[i] = NULL;
     win->current_attr = 0;
     win->y = win->x = 0;
     win->maxx = w-1;
     win->maxy = h-1;
     win->stride = w; /* no reason to use any other packing scheme */
     win->scry = t;
-    win->scrx = r;
+    win->scrx = l;
+    win->regy = 0;
+    win->regx = 0;
+    win->region = 0;
     win->parent = 0;
     win->child = 0;
     win->sibling = 0;
@@ -1179,9 +1304,13 @@ WINDOW *newwin(int h, int w, int t, int r) {
     werase(win);
     return win;
 }
-WINDOW *subwin(WINDOW *parent, int h, int w, int t, int r) {
+WINDOW *subwin(WINDOW *parent, int h, int w, int t, int l) {
     WINDOW *win = malloc(sizeof (WINDOW));
+    int i;
     if (!win) return 0;
+    win->regionarray = malloc(w*h * sizeof *(win->regionarray));
+    if (!win->regionarray) { free(win->chararray); free(win); return 0; }
+    for (i = 0; i < w*h; i++) win->regionarray[i] = NULL;
     win->parent = parent;
     win->child = 0;
     win->sibling = win->parent->child;
@@ -1193,14 +1322,17 @@ WINDOW *subwin(WINDOW *parent, int h, int w, int t, int r) {
     win->maxy = h-1;
     win->stride = parent->stride;
     win->scry = t;
-    win->scrx = r;
+    win->scrx = l;
+    win->regy = 0;
+    win->regx = 0;
+    win->region = 0;
     win->timeout = -1;
     win->clear_on_refresh = 0;
     return win;
 }
-WINDOW *derwin(WINDOW *parent, int h, int w, int t, int r) {
-    WINDOW *rv = subwin(parent, h, w, t+parent->scry, r+parent->scrx);
-    if (rv) mvderwin(rv, t, r);
+WINDOW *derwin(WINDOW *parent, int h, int w, int t, int l) {
+    WINDOW *rv = subwin(parent, h, w, t+parent->scry, l+parent->scrx);
+    if (rv) mvderwin(rv, t, l);
     return rv;
 }
 
@@ -1217,6 +1349,8 @@ int delwin(WINDOW *win) {
             prevsibling->sibling = win->sibling;
         if (win->parent->child == win) win->parent->child = win->sibling;
     } else free(win->chararray);
+    wdelete_tiles_region(win);
+    free(win->regionarray);
     free(win);
     return OK;
 }
@@ -1226,6 +1360,7 @@ int mvwin(WINDOW *win, int y, int x) {
     if (win->maxx + x >= COLS || x < 0) return ERR;
     win->scry = y;
     win->scrx = x;
+    wdelete_tiles_region(win);
     return OK;
 }
 int mvderwin(WINDOW *win, int y, int x) {
@@ -1284,9 +1419,11 @@ int doupdate(void) {
     nout_win->clear_on_refresh = 0;
     cchar_t *p = nout_win->chararray;
     cchar_t *q = disp_win->chararray;
+    void **rp = nout_win->regionarray;
+    void **rq = disp_win->regionarray;
     for (j = 0; j <= nout_win->maxy; j++) {
         for (i = 0; i <= nout_win->maxx; i++) {
-            if (p->attr != q->attr)
+            if (p->attr != q->attr || *rp != *rq || *rq == &invalid_region)
                 uncursed_hook_update(j, i);
             int k;
             for (k = 0; k < CCHARW_MAX; k++) {
@@ -1294,7 +1431,7 @@ int doupdate(void) {
                     uncursed_hook_update(j, i);
                 if (p->chars[k] == 0) break;
             }
-            p++; q++;
+            p++; q++; rp++; rq++;
         }
     }
     uncursed_hook_positioncursor(nout_win->y, nout_win->x);
@@ -1305,18 +1442,29 @@ void uncursed_rhook_updated(int y, int x) {
     if(y > nout_win->maxy || x > nout_win->maxx) return;
     disp_win->chararray[x + y * disp_win->stride] =
         nout_win->chararray[x + y * nout_win->stride];
+    disp_win->regionarray[x + y * (disp_win->maxx+1)] =
+        nout_win->regionarray[x + y * (nout_win->maxx+1)];
 }
 int uncursed_rhook_needsupdate(int y, int x) {
     if(y > nout_win->maxy || x > nout_win->maxx) return 0;
     cchar_t *p = nout_win->chararray + x + y * nout_win->stride;
     cchar_t *q = disp_win->chararray + x + y * disp_win->stride;
     if (p->attr != q->attr) return 1;
+    if (disp_win->regionarray + x + y * (disp_win->maxx+1) ==
+        (void *)&invalid_region) return 1;
+    if (nout_win->regionarray + x + y * (nout_win->maxx+1) !=
+        disp_win->regionarray + x + y * (disp_win->maxx+1)) return 1;
     int k;
     for (k = 0; k < CCHARW_MAX; k++) {
         if (p->chars[k] != q->chars[k]) return 1;
         if (p->chars[k] == 0) return 0;
     }
     return 0;
+}
+
+void *uncursed_rhook_region_at(int y, int x) {
+    if(y > nout_win->maxy || x > nout_win->maxx) return 0;
+    return nout_win->regionarray[x + y * (nout_win->maxx+1)];
 }
 
 int uncursed_rhook_color_at(int y, int x) {
@@ -1361,8 +1509,9 @@ unsigned short uncursed_rhook_ucs2_at(int y, int x) {
     if (wc < 65536) return (unsigned short) wc;
     return 0xfffdu; /* REPLACEMENT CHARACTER */
 }
+static const wchar_t replacement_char_array[CCHARW_MAX] = {0xfffdu,};
 char *uncursed_rhook_utf8_at(int y, int x) {
-    wchar_t *c = 0xfffdu;
+    const wchar_t *c = replacement_char_array;
     if(y <= nout_win->maxy && x <= nout_win->maxx)
         c = nout_win->chararray[x + y * nout_win->stride].chars;
     /* The maximum number of UTF-8 bytes for one codepoint is 4. */
@@ -1406,14 +1555,15 @@ int unget_wch(wchar_t c) {
     pushback_w = c;
     return OK;
 }
-UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
+int timeout_get_wch(int timeout, wint_t *rv)
+{
     int r;
     if (pushback_w < 0x110000) {
         *rv = pushback_w;
         pushback_w = 0x110000;
         return OK;
     }
-    r = uncursed_hook_getkeyorcodepoint(win->timeout);
+    r = uncursed_hook_getkeyorcodepoint(timeout);
     /* When we have multiple possible key codes for certain keys, pick one
        and merge them together. */
     if (r >= 0x110000) {
@@ -1437,6 +1587,9 @@ UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
     }
     *rv = r;
     return OK;
+}
+UNCURSED_ANDMVWINDOWDEF(int, get_wch, wint_t *rv, rv) {
+    return timeout_get_wch(win->timeout, rv);
 }
 
 /* manual page 3ncurses getcchar */
@@ -1563,17 +1716,19 @@ int scroll(WINDOW *win) { return wscrl(win, 1); }
 UNCURSED_ANDWINDOWDEF(int, scrl, int n, n) {
     int y = win->y;
     win->y = 0;
-    winsdelln(win, n);
+    winsdelln(win, -n);
     win->y = y;
     return OK;
 }
 
 /* manual page 3ncurses wresize */
 int wresize(WINDOW *win, int newh, int neww) {
-    /* TODO: When dealing with subwindows, we currently don't take the case
-       into account where the subwindows don't fit inside the parent window.
-       It's not clear what we should do if they're resized outside the
-       parent, or the parent is resized to not enclose the child. */
+    /* If a window is resized such that a child is outside the bounds of a
+       parent, we permit this, but drawing to the window will cause memory
+       corruption until the application rectifies this.  At the moment, we
+       merely document the limitation; ideally, we should set some sort of flag
+       that drawing commands check and error out on, or even do some sort of
+       clipping. */
     if (win->parent) {
         win->maxy = newh-1;
         win->maxx = neww-1;
@@ -1581,7 +1736,9 @@ int wresize(WINDOW *win, int newh, int neww) {
     }
     WINDOW *temp = newwin(newh, neww, win->scry, win->scrx);
     if (!temp) return ERR;
+    wdelete_tiles_region(win);
     overwrite(win, temp);
+    free(win->regionarray);
     cchar_t *old_chararray = win->chararray;
     WINDOW *oldchild = win->child;
     *win = *temp;
