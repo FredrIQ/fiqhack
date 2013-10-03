@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-29
+# Last modified by Alex Smith, 2013-10-03
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -53,16 +53,29 @@
             verb => 'determined',
         },
         _statically_link_uncursed_plugins => {
-            # If we can generate a plugin plugins/foo_c.o, for a static link, we
-            # should link in its wrapper plugins/foo_cxx.o. (Thus the rather
-            # hacky "extend:" in the depends.)
+            # Most uncursed plugins are loaded as libraries. However, there's
+            # no reason to do that in the case of terminal-based plugins that
+            # require no external library support of their own (tty and
+            # wincon), so we just link those in directly.
             object => "bpath:libuncursed/src/libuncursed_c$objext",
-            command => ["sys:rebuild_late", "intcmd:listtree",
-                        "optstring:0",
-                        "optpath::bpath:libuncursed/src/plugins"],
-            depends => ["extend:xx$objext:", "optpath::extend:xx$objext:"],
-            dependsarg => qr=^(bpath:.*_c)\Q$objext\E$=s,
-            verb => 'found',
+            depends => "optionset:_uncursed_static_plugins",
+        },
+        _uncursed_plugins_to_link_statically => {
+            object => qr=^bpath:libuncursed/src/plugins/(?:wincon|tty)_c\Q$objext\E$=,
+            output => 'optionset:_uncursed_static_plugins',
+            propagate_usedeps => 1,
+            # If the _c.o file exists, we want to link the _cxx.o file. We'd
+            # normally do this via echo and regex trickery, but in this case,
+            # there's an easier way.
+            outdepends => ["extend:xx$objext:", "optpath::extend:xx$objext:"]
+        },
+        _uncursed_plugins_to_link_dynamically => {
+            object => qr=^path:libuncursed/src/plugins/(?!wincon|tty).*\.c$=,
+            command => ['intcmd:echo', 'optpath::'],
+            output => 'symbolset::extend:.so:bpath:libuncursed/src/plugins/libuncursed_',
+            outputarg => qr=^path:libuncursed/src/plugins/(.*)\.c$=,
+            propagate_usedeps => 1,
+            outdepends => ["extend:_cxx$objext:", "optpath::extend:_cxx$objext:"]
         },
         _build_desfile => {
             object => qr/^path:.*\.des$/s,
