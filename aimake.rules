@@ -72,9 +72,9 @@
         _uncursed_plugins_to_link_dynamically => {
             object => qr=^path:libuncursed/src/plugins/(?!wincon|tty).*\.c$=,
             command => ['intcmd:echo', 'optpath::'],
-            output => 'symbolset::extend:.so:bpath:libuncursed/src/plugins/libuncursed_',
+            output => "symbolset::bpath:libuncursed/src/plugins/libuncursed_",
             outputarg => qr=^path:libuncursed/src/plugins/(.*)\.c$=,
-            propagate_usedeps => 1,
+            propagate_usedeps => 2,
             outdepends => ["extend:_cxx$objext:", "optpath::extend:_cxx$objext:"]
         },
         _build_desfile => {
