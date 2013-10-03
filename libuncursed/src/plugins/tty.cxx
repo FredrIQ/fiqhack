@@ -20,6 +20,9 @@
    symbol whenever a new backend were added. It also does not work correctly
    with shared libraries.) */
 
+/* tty.cxx is always linked statically. */
+#define UNCURSED_MAIN_PROGRAM
+
 #include "uncursed_hooks.h"
 #include "uncursed_tty.h"
 

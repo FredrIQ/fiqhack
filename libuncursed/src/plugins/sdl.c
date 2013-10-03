@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-02 */
+/* Last modified by Alex Smith, 2013-10-03 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -116,7 +116,7 @@ static SDL_Texture* load_png_file_to_texture(char *filename, int *w, int *h) {
 
     png_read_info(png_ptr, info_ptr);
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
-                 &interlace_type, int_p_NULL, int_p_NULL);
+                 &interlace_type, NULL, NULL);
 
     /* Change the data to a standard format (32bpp RGBA). */
 
@@ -192,11 +192,11 @@ cleanup_info_and_rowpointers:
     if (rowpointers) free(rowpointers);
     png_ptr_nv = png_ptr;
     info_ptr_nv = info_ptr;
-    png_destroy_read_struct(&png_ptr_nv, &info_ptr_nv, png_infopp_NULL);
+    png_destroy_read_struct(&png_ptr_nv, &info_ptr_nv, NULL);
     goto cleanup_fopen;
 cleanup_png_ptr:
     png_ptr_nv = png_ptr;
-    png_destroy_read_struct(&png_ptr_nv, png_infopp_NULL, png_infopp_NULL);
+    png_destroy_read_struct(&png_ptr_nv, NULL, NULL);
 cleanup_fopen:
     fclose(in);
 cleanup_nothing:

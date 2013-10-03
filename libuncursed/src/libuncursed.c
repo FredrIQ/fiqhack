@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-02 */
+/* Last modified by Alex Smith, 2013-10-03 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -138,8 +138,12 @@ void initialize_uncursed(int *p_argc, char **argv) {
     if (!input_plugins && *argv) {
         char *argv_hyphen = strrchr(*argv, '-');
         if (argv_hyphen &&
-            !strchr(argv_hyphen, '/') && !strchr(argv_hyphen, '\\'))
-            uncursed_load_plugin_or_error(argv_hyphen+1);
+            !strchr(argv_hyphen, '/') && !strchr(argv_hyphen, '\\')) {
+            char *argv_plugin = strdup(argv_hyphen+1);
+            if (strchr(argv_plugin, '.')) *(strchr(argv_plugin, '.')) = '\0';
+            uncursed_load_plugin_or_error(argv_plugin);
+            free(argv_plugin);
+        }
     }
     input_plugins = 0;
     for (h = uncursed_hook_list; h; h = h->next_hook)

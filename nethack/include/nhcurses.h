@@ -22,7 +22,9 @@
 #  define FILE_OPEN_MASK 0660
 # else/* WINDOWS */
 
+#  define boolean windows_h_boolean /* resolve symbol conflict */
 #  include <windows.h>
+#  undef boolean
 #  include <shlobj.h>
 #  undef MOUSE_MOVED    /* this definition from windows.h conflicts with a
                            definition from curses */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-02 */
+/* Last modified by Alex Smith, 2013-10-03 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -79,6 +79,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+
+/* tty.c is always linked statically. */
+#define UNCURSED_MAIN_PROGRAM
 
 #include "uncursed_hooks.h"
 #include "uncursed.h"

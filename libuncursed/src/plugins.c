@@ -13,6 +13,7 @@
    platform-specific maner.
 */
 
+#define UNCURSED_MAIN_PROGRAM
 #include "uncursed_hooks.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,6 +21,8 @@
 
 #ifndef AIMAKE_BUILDOS_MSWin32
 #include <dlfcn.h>
+#else
+#include <windows.h>
 #endif
 
 #define MAX_PLUGINS 10
@@ -31,7 +34,12 @@ static void unload_handle(void *handle) {
 #ifdef AIMAKE_BUILDOS_linux
     dlclose(handle);
 #else
-#error plugins.c requires dynamic library unloading code for your OS.
+#ifdef AIMAKE_BUILDOS_MSWin32
+    FreeLibrary(*(HMODULE*)handle);
+    free(handle);
+#else
+#error plugins.c requires dynamic library loading code for your OS.
+#endif
 #endif
 }
 
@@ -64,7 +72,8 @@ int uncursed_load_plugin(const char *plugin_name) {
     /* dlopen() uses much the same search path rules as ld.so, so this will
        look for the plugins in the rpath, which includes the libdir where
        they should have been installed. */
-    char fname[strlen("libuncursed_") + strlen(plugin_name) + strlen(".so") + 1];
+    char fname[strlen("libuncursed_") + strlen(plugin_name) +
+               strlen(".so") + 1];
     strcpy(fname, "libuncursed_");
     strcat(fname, plugin_name);
     strcat(fname, ".so");
@@ -73,7 +82,23 @@ int uncursed_load_plugin(const char *plugin_name) {
         fprintf(stderr, "Warning: could not load %s: %s\n",
                 fname, dlerror());
 #else
+#ifdef AIMAKE_BUILDOS_MSWin32
+    char fname[strlen("libuncursed_") + strlen(plugin_name) +
+               strlen(".dll") + 1];
+    strcpy(fname, "libuncursed_");
+    strcat(fname, plugin_name);
+    strcat(fname, ".dll");
+    handle = malloc(sizeof(HMODULE));
+    if (handle) {
+        *(HMODULE*)handle = LoadLibraryA(fname);
+        if (!*(HMODULE*)handle) {
+            free(handle);
+            handle = 0;
+        }
+    }
+#else
 #error plugins.c requires dynamic library loading code for your OS.
+#endif
 #endif
 
     if (!handle) return 0;

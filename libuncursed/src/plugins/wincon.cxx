@@ -15,6 +15,9 @@
    libuncursed and libraries that ship with Windows, it is also very slow
    compared to most other backends). */
 
+/* wincon.cxx is always linked statically. */
+#define UNCURSED_MAIN_PROGRAM
+
 #include "uncursed_hooks.h"
 #include "uncursed_wincon.h"
 
