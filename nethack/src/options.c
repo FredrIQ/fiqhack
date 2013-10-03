@@ -54,8 +54,11 @@ static struct nh_enum_option menu_headings_spec =
     { menu_headings_list, listlen(menu_headings_list) };
 
 static struct nh_listitem graphics_list[] = {
-    {ASCII_GRAPHICS, "plain"},
-    {UNICODE_GRAPHICS, "Unicode graphics"}
+    {ASCII_GRAPHICS, "Text (ASCII only)"},
+    {UNICODE_GRAPHICS, "Text (Unicode)"},
+    {TILESET_16, "Tiles (16x16)"},
+    {TILESET_32, "Tiles (32x32)"},
+    {TILESET_3D, "Tiles (3D effect)"},
 };
 static struct nh_enum_option graphics_spec =
     { graphics_list, listlen(graphics_list) };
@@ -89,7 +92,7 @@ struct nh_option_desc curses_options[] = {
     {"floorcolor", "change the color of the floor to show where you walked",
      OPTTYPE_BOOL, {VTRUE}},
     {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, {VTRUE}},
-    {"graphics", "enhanced line drawing style", OPTTYPE_ENUM,
+    {"graphics", "characters or tiles to use for the map", OPTTYPE_ENUM,
      {(void *)UNICODE_GRAPHICS}},
     {"hilite_pet", "use background colors to show monster attitude",
      OPTTYPE_BOOL, {VTRUE}},
@@ -163,6 +166,7 @@ option_change_callback(struct nh_option_desc *option)
         settings.graphics = option->value.e;
         switch_graphics(option->value.e);
         if (ui_flags.ingame) {
+            rebuild_ui(); /* sets up tiles/ASCII mode */
             draw_map(player.x, player.y);
             redraw_game_windows();
         }

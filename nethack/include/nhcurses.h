@@ -218,9 +218,11 @@ struct curses_drawing_info {
  * Graphics sets for display symbols
  */
 enum nh_text_mode {
-    ASCII_GRAPHICS,     /* regular characters: '-', '+', &c */
-    UNICODE_GRAPHICS    /* uses whatever charecters we want: they're ALL
-                           available */
+    ASCII_GRAPHICS,     /* ASCII only */
+    UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
+    TILESET_16,         /* 16x16 tiles, or Unicode on non-tiles ports */
+    TILESET_32,         /* 32x32 tiles, or Unicode on non-tiles ports */
+    TILESET_3D,         /*    3D tiles, or Unicode on non-tiles ports */
 };
 
 typedef nh_bool(*getlin_hook_proc) (char *, void *);

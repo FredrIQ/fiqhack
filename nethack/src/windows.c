@@ -86,11 +86,9 @@ init_curses_ui(char *dataprefix)
         exit(1);
     }
 
-    /* set up an appropriate font for faketerm; must happen after initscr, but
-       we want to do it ASAP or else no characters will be visible */
     tileprefix = strdup(dataprefix);
+    set_tile_file(NULL);
     set_font_file("font14.png");
-    set_tile_file("tile-16.png"); /* for testing */
 
     if (LINES < 24 || COLS < COLNO) {
         fprintf(stderr,
@@ -211,6 +209,28 @@ layout_game_windows(void)
 }
 
 
+static void
+setup_tiles(void)
+{
+    switch (settings.graphics) {
+    case TILESET_16:
+        set_tile_file("tile-16.png");
+        break;
+    case TILESET_32:
+        set_tile_file("tile-32.png");
+        break;
+    case TILESET_3D:
+        set_tile_file("tile-3d.png");
+        break;
+    default: /* text */
+        set_tile_file(NULL);
+        wdelete_tiles_region(mapwin);
+        return;
+    }
+    /* only reached if some tileset is selected */
+    wset_tiles_region(mapwin, ROWNO, COLNO, 0, 0, ROWNO, COLNO, 0, 0);
+}
+
 void
 create_game_windows(void)
 {
@@ -244,7 +264,7 @@ create_game_windows(void)
                 derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
 
-    wset_tiles_region(mapwin, ROWNO, COLNO, 0, 0, ROWNO, COLNO, 0, 0);
+    setup_tiles();
 
     keypad(mapwin, TRUE);
     keypad(msgwin, TRUE);
@@ -307,8 +327,7 @@ resize_game_windows(void)
                 derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
     }
 
-    if (mapwin)
-        wset_tiles_region(mapwin, ROWNO, COLNO, 0, 0, ROWNO, COLNO, 0, 0);
+    if (mapwin) setup_tiles();
 
     leaveok(statuswin, TRUE);
     if (sidebar)
