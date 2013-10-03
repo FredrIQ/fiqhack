@@ -2712,7 +2712,7 @@ sub run_command;
         $ldiff < 0 and $str .= ' ' x -$ldiff;
         if ($level <= $opt_verbose + 0.5 && $level > $opt_verbose
             && $level < 3 && !$opt_nocr) {
-            $str = substr $str, 0, screenwidth - 1;
+            $str = substr $str, 0, screenwidth() - 1;
             print_stderr_tl "$str\r";
             $str =~ s/ +$//;
             $last_report_msg = $str;
@@ -4740,7 +4740,7 @@ eval {
 } or do {
     my $locale = $ENV{LC_ALL};
     defined $locale or $locale = $ENV{LANG};
-    $locale =~ /\.([^.]+)$/ and $codeset = $1;
+    defined $locale and $locale =~ /\.([^.]+)$/ and $codeset = $1;
 };
 
 # We support two types of file: text and binary.
@@ -6753,7 +6753,7 @@ __DATA__
                 '#__define_AIMAKE\\_EXPORT(x)_\\_\\_declspec(dllexport)_x ' .
                 '#__define_AIMAKE\\_REVERSE\\_EXPORT(x)_' .
                 '\\_\\_declspec(dllexport)_x ' .
-                '# endif'
+                '#_endif'
         },
         windows_generate_import_library => {
             # Windows won't create a shared library if it has missing
