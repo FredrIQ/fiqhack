@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-10-03
+# Last modified by Alex Smith, 2013-10-04
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -232,7 +232,7 @@
             require_match => 1,
         },
         _merge_tilesets => {
-            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            object => qr=^path:tilesets/dat/catalogues/tile-16\.txt$=s,
             command => ["bpath:tilesets/util/convert_tileset_c$exeext",
                         "optpath:-p :path:tilesets/dat/palette.txt",
                         "optpath:-m :bpath:tilesets/dat/maps/nethack4.map"],
@@ -248,7 +248,7 @@
             output_from_optpath => '-o ',
         },
         _build_fonts => {
-            object => qr=^path:tilesets/dat/fonts/.*\.txt=s,
+            object => qr=^path:tilesets/dat/fonts/font14\.txt=s,
             command => ["bpath:tilesets/util/export_tileset_c$exeext",
                         "optpath:-o :extend:.png:",
                         "optstring:-f",
