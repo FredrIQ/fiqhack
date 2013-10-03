@@ -59,7 +59,8 @@ void wincon_hook_positioncursor(int y, int x) {
     save_cursor_y = y;
 }
 
-void wincon_hook_init(int *h, int *w) {
+void wincon_hook_init(int *h, int *w, char *title) {
+    (void)title;
     COORD c;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     inhandle = GetStdHandle(STD_INPUT_HANDLE);

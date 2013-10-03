@@ -30,13 +30,13 @@ struct uncursed_hooks {
 
     /* Note: init can be called multiple times, with exit in between; also init
        is allowed to exit the program in case of disaster */
-    void (*init)(int *, int *);       /* rows, columns */
+    void (*init)(int *, int *, char *);       /* rows, columns, title */
     void (*exit)(void);
 
     void (*beep)(void);
 
-    void (*setcursorsize)(int);       /* 0 to 2 */
-    void (*positioncursor)(int, int); /* y, x */
+    void (*setcursorsize)(int);               /* 0 to 2 */
+    void (*positioncursor)(int, int);         /* y, x */
 
     /* The way updates work is that uncursed.c calls update on some changed
        character, then the implementation library requests state using the

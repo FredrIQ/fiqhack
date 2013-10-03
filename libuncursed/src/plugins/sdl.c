@@ -265,14 +265,14 @@ static void exit_handler(void) {
     }
     win = NULL;
 }
-void sdl_hook_init(int *h, int *w) {
+void sdl_hook_init(int *h, int *w, char *title) {
     if (!win) {
         if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
             fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
             exit(EXIT_FAILURE);
         }
         win = SDL_CreateWindow(
-            "Uncursed",   /* title */
+            title,   /* title */
             SDL_WINDOWPOS_UNDEFINED, /* initial x */
             SDL_WINDOWPOS_UNDEFINED, /* initial y */
             fontwidth * winwidth, fontheight * winheight, /* size */

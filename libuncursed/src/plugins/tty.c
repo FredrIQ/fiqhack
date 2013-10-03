@@ -444,7 +444,8 @@ void tty_hook_positioncursor(int y, int x) {
     last_y = y; last_x = x;
 }
 
-void tty_hook_init(int *h, int *w) {
+void tty_hook_init(int *h, int *w, char *title) {
+    (void)title;
     platform_specific_init();
     /* Save the character sets. */
     fputs("\x1b""7", ofile);

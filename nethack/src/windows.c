@@ -78,6 +78,7 @@ init_curses_ui(char *dataprefix)
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");
 
+    uncursed_set_title("NetHack 4");
 
     if (!initscr()) {
         fprintf(stderr, "Could not initialise the UI, exiting...\n");

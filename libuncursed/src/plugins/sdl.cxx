@@ -9,12 +9,10 @@
  * the files libnethack/dat/license and libnethack/dat/gpl respectively.
  */
 
-/* Plugin wrapper for the SDL 2 backend to the uncursed rendering library. See
-   tty.cxx for details; this is similar to that file with s/tty/sdl/g, the
-   priority reduced (it's quite highly preferred as graphical backends go, but
-   on at least Linux, people will generally prefer a terminal), and the
-   graphics-related hooks implemented. */
+/* Plugin wrapper for the SDL 2 backend to the uncursed rendering library.
+   Based on tty.cxx. */
 
+/* Don't define UNCURSED_MAIN_PROGRAM; this goes into a separate library. */
 #include "uncursed_hooks.h"
 #include "uncursed_sdl.h"
 

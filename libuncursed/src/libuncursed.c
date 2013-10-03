@@ -168,14 +168,16 @@ void initialize_uncursed(int *p_argc, char **argv) {
     }
     uncursed_hooks_inited = 1;
 }
-static void uncursed_hook_init(int *r, int *c) {
+static void uncursed_hook_init(int *r, int *c, char *title) {
     struct uncursed_hooks *h;
     /* We call this on the input plugin first, so that other plugins can see
        the returned values for the window size. */
     for (h = uncursed_hook_list; h; h = h->next_hook)
-        if (h->used && h->hook_type == uncursed_hook_type_input) h->init(r, c);
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            h->init(r, c, title);
     for (h = uncursed_hook_list; h; h = h->next_hook)
-        if (h->used && h->hook_type != uncursed_hook_type_input) h->init(r, c);
+        if (h->used && h->hook_type != uncursed_hook_type_input)
+            h->init(r, c, title);
 }
 static void uncursed_hook_exit(void) {
     struct uncursed_hooks *h;
@@ -1233,8 +1235,13 @@ UNCURSED_ANDWINDOWDEF(int, insdelln, int n, n) {
 /* manual page 3ncurses initscr */
 WINDOW *stdscr = 0;
 static WINDOW *save_stdscr = 0;
+static char title[120] = "Uncursed";
 int LINES, COLS;
 
+void uncursed_set_title(char *t) {
+    strncpy(title, t, sizeof(title)-1);
+    title[sizeof(title)-1] = '\0';
+}
 WINDOW *initscr(void) {
     if (!uncursed_hooks_inited) {
         /* UB, and very bad UB at that. Take the opportunity to crash the
@@ -1244,7 +1251,7 @@ WINDOW *initscr(void) {
         abort();
     }
     if (save_stdscr || stdscr) return 0;
-    uncursed_hook_init(&LINES, &COLS);
+    uncursed_hook_init(&LINES, &COLS, title);
     nout_win = newwin(0, 0, 0, 0);
     disp_win = newwin(0, 0, 0, 0);
     stdscr = newwin(0, 0, 0, 0);
@@ -1405,7 +1412,7 @@ int wnoutrefresh(WINDOW *win) {
         win = stdscr = save_stdscr; save_stdscr = 0;
         wunclear(disp_win);
         win->clear_on_refresh = 1;
-        uncursed_hook_init(&LINES, &COLS);
+        uncursed_hook_init(&LINES, &COLS, title);
         uncursed_rhook_setsize(LINES, COLS);
     }
     if (win->clear_on_refresh) nout_win->clear_on_refresh = 1;

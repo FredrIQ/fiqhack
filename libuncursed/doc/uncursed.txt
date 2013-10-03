@@ -653,19 +653,25 @@ arguments parsed by uncursed itself.
 The requirement to call this function is the largest reason that uncursed is
 not a drop-in replacement for ncurses (although the two are very similar).
 
+    void uncursed_set_title(char *title)
+
+Plugins that create a window need to know what title to give it, at window
+creation time.  The default is "Uncursed"; if you want to set your own title,
+call this routine before calling `initscr`.
+
     WINDOW *initscr(void)
 
 This function tells libuncursed to take control of the terminal, and should be
-called before any other uncursed functions apart from `initialize_uncursed`
-and `isendwin` (variables like `stdscr` and `LINES` are not meaningful before
-running this function, although for compatibility with some other curses
-implementations `stdscr` will be `NULL` before `initscr` is called, and most
-of the rendering and input functions will cause segfaults or otherwise
-malfunction).  Under most error conditions, it will exit the program (and if
-uncursed has not been initialized, it will *crash* the program with an abort
-signal, because this is a fault of the program itself rather than something
-like a failure to allocate memory).  Otherwise, it will return `stdscr`
-(allowing you to avoid the use of global variables, if you wish).
+called before any other uncursed functions apart from `initialize_uncursed`,
+`uncursed_set_title`, and `isendwin` (variables like `stdscr` and `LINES` are
+not meaningful before running this function, although for compatibility with
+some other curses implementations `stdscr` will be `NULL` before `initscr` is
+called, and most of the rendering and input functions will cause segfaults or
+otherwise malfunction).  Under most error conditions, it will exit the program
+(and if uncursed has not been initialized, it will *crash* the program with an
+abort signal, because this is a fault of the program itself rather than
+something like a failure to allocate memory).  Otherwise, it will return
+`stdscr` (allowing you to avoid the use of global variables, if you wish).
 
 After calling `initscr`, uncursed may gain control of stdin, stdout and
 stderr; your application should not try to uses these standard file handles
@@ -1297,19 +1303,20 @@ Each of these is a function pointer stored in a field of the plugin's
 
 ### Initialization, shutdown
 
-    void (*init)(int *lines, int *cols)
+    void (*init)(int *lines, int *cols, char *title)
     void (*exit)(void)
 
 The `init` function implements `initscr` and the `endwin`-cancelling effect of
 `refresh`, and tells the plugin to do what is necessary to start up and (if
-necessary) take control of the terminal.  (The `lines` and `cols` arguments
+necessary) take control of the terminal.  The `lines` and `cols` arguments
 should be filled with the size of the terminal, and will be used by
 libuncursed to allocate data structures, as well as being available to a user
-of uncursed in the `LINES` and `COLS` variables.)  `exit` handles any shutdown
-code required to relinquish control of the terminal.  (For plugins that create
-fake terminals, it should be a no-op, or nearly so; if they need to do special
-handling on exit, it should be in an `atexit`-registered function, because
-nothing tells libuncursed when the program is about to exit.)
+of uncursed in the `LINES` and `COLS` variables.  `title` specifies the window
+title, for ports that care.  `exit` handles any shutdown code required to
+relinquish control of the terminal.  (For plugins that create fake terminals,
+it should be a no-op, or nearly so; if they need to do special handling on
+exit, it should be in an `atexit`-registered function, because nothing tells
+libuncursed when the program is about to exit.)
 
 ### Cursor handling
 
