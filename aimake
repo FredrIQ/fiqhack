@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-09-30
+# Last modified by Alex Smith, 2013-10-03
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -2854,8 +2854,12 @@ sub resolve_extend {
     my $objname = shift;
     my ($objtype, $objvalue, $objinner) = parse_objname $objname;
 
-    $objtype eq 'extend' or return $objname;
-    $objinner = resolve_extend $objinner;
+    if ($objinner) {
+        $objinner = resolve_extend $objinner;
+        $objtype eq 'extend' or return "$objtype:$objvalue:$objinner";
+    } else {
+        $objtype eq 'extend' or return $objname;
+    }
 
     $objvalue eq '..' and return aipath_parent $objinner;
 
@@ -6177,9 +6181,7 @@ __DATA__
             output => 'optionset:CFLAGS',
             outdepends => ['optstring:-g',
                            'optstring:-O2',
-                           'optstring:-Wall',
-                           'optpath:-include :bpath:aimake/aimake_1.h',
-                           'bpath:aimake/aimake_1.h'],
+                           'optstring:-Wall'],
             verb => 'determined',
             low_message_priority => 1,
         },
@@ -6187,15 +6189,14 @@ __DATA__
             output => 'optionset:CXXFLAGS',
             outdepends => ['optstring:-g',
                            'optstring:-O2',
-                           'optstring:-Wall',
-                           'optpath:-include :bpath:aimake/aimake_1.h',
-                           'bpath:aimake/aimake_1.h'],
+                           'optstring:-Wall'],
             verb => 'determined',
             low_message_priority => 1,
         },
         default_iflags => {
             output => 'optionset:IFLAGS',
-            outdepends => [],
+            outdepends => ['optpath:-include :bpath:aimake/aimake_1.h',
+                           'bpath:aimake/aimake_1.h'],
             verb => 'determined',
             low_message_priority => 1,
         },
@@ -6211,14 +6212,15 @@ __DATA__
             verb => 'determined',
         },
         cxxflags_includes_iflags => {
-            object => 'optionset:CFLAGS',
+            object => 'optionset:CXXFLAGS',
             depends => 'optionset:IFLAGS',
             verb => 'determined',
         },
 
         default_libraries => {
             # some likely guesses, not including the system libc
-            output => ['searchlib:m:symbol:sin'],
+            output => ['searchlib:m:symbol:sin',
+                       'searchlib:dl:symbol:dlopen'],
             outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
@@ -6472,11 +6474,11 @@ __DATA__
             command => [
                 'intcmd:writefile', 'optpath::bpath:aimake/aimake_1.h',
                 'optstring:' .
-                '#ifndef_AIMAKE\_HEADER\_INCLUDED ' .
-                '#_define_AIMAKE\_HEADER\_INCLUDED ' .
-                "#_define_AIMAKE\_BUILDOS\_$^O_1",
+                '#ifndef_AIMAKE\\_HEADER\\_INCLUDED ' .
+                '#_define_AIMAKE\\_HEADER\\_INCLUDED ' .
+                "#_define_AIMAKE\\_BUILDOS\\_$^O_1",
                 'optionset:aimake_header_lines',
-                'optstring:#endif'],
+                'optstring: #endif'],
             output => 'bpath:aimake/aimake_1.h',
             verb => 'generated',
             low_message_priority => 1,
@@ -6629,6 +6631,7 @@ __DATA__
         ch_embedded_aimake_export => {
             object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
+                        "optstring:-DAIMAKE_OVERRIDE_DEFINES",
                         "optstring:-DAIMAKE_EXPORT(x)=${longrandomstring}##x[]",
                         "optstring:-DAIMAKE_ABI_VERSION(x)=${longrandomstring}[x]",],
             output => 'shared_symbol:',
@@ -6654,6 +6657,7 @@ __DATA__
             # should link them "properly".
             object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
+                        "optstring:-DAIMAKE_OVERRIDE_DEFINES",
                         "optstring:-DAIMAKE_REVERSE_IMPORT(x)=${longrandomstring}##x"],
             output => ['symbol:', 'symbol:__imp_'],
             outputarg => qr/${longrandomstring}(\w+)/,
@@ -6710,13 +6714,15 @@ __DATA__
             command => ['intcmd:nop', 'optionset:os_osx_linux'],
             output => 'optionset:aimake_header_lines',
             outdepends => 'optstring:' .
-                '#_define_AIMAKE\\_ABI\\_VERSION(x) ' .
-                '#_define_AIMAKE\\_IMPORT(x)_x ' .
-                '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
-                '#_define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                '#_ifndef_AIMAKE\\_OVERRIDE\\_DEFINES ' .
+                '#__define_AIMAKE\\_ABI\\_VERSION(x) ' .
+                '#__define_AIMAKE\\_IMPORT(x)_x ' .
+                '#__define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
+                '#__define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
                 'visibility("default")))_x '.
-                '#_define_AIMAKE\\_REVERSE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
-                'visibility("default")))_x'
+                '#__define_AIMAKE\\_REVERSE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x ' .
+                '#_endif'
         },
         symbolset_soname_linux => {
             object => qr/^symbolset:/,
@@ -6739,13 +6745,15 @@ __DATA__
             command => ['intcmd:nop', 'optionset:os_windows'],
             output => 'optionset:aimake_header_lines',
             outdepends => 'optstring:' .
-                '#_define_AIMAKE\\_ABI\\_VERSION(x) ' .
-                '#_define_AIMAKE\\_IMPORT(x)_\\_\\_declspec(dllimport)_x ' .
-                '#_define_AIMAKE\\_REVERSE\\_IMPORT(x)_' .
+                '#_ifndef_AIMAKE\\_OVERRIDE\\_DEFINES ' .
+                '#__define_AIMAKE\\_ABI\\_VERSION(x) ' .
+                '#__define_AIMAKE\\_IMPORT(x)_\\_\\_declspec(dllimport)_x ' .
+                '#__define_AIMAKE\\_REVERSE\\_IMPORT(x)_' .
                 '\\_\\_declspec(dllimport)_x ' .
-                '#_define_AIMAKE\\_EXPORT(x)_\\_\\_declspec(dllexport)_x ' .
-                '#_define_AIMAKE\\_REVERSE\\_EXPORT(x)_' .
-                '\\_\\_declspec(dllexport)_x'
+                '#__define_AIMAKE\\_EXPORT(x)_\\_\\_declspec(dllexport)_x ' .
+                '#__define_AIMAKE\\_REVERSE\\_EXPORT(x)_' .
+                '\\_\\_declspec(dllexport)_x ' .
+                '# endif'
         },
         windows_generate_import_library => {
             # Windows won't create a shared library if it has missing
