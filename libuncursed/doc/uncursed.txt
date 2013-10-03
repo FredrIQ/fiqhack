@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-10-02
+Last modified by Alex Smith, 2013-10-03
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
