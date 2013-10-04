@@ -161,12 +161,21 @@ What license is the code under?
 
 Just like previous versions of NetHack, NetHack 4 is licensed under
 the NetHack General Public License (which is similar to old versions
-of the GNU General Public License.  Some of the newer files are
+of the GNU General Public License).  Some of the newer files are
 dual-licensed and also allow other licensing options in addition to
 the NHGPL.  (The build system, aimake version 3, is licensed under
 version 3 of the GNU GPL, rather than under the NHGPL; however, its
 license does not extend onto the license of the code it compiles,
 leaving the resulting executables as purely NHGPL.)
+
+Several of the libraries on which NetHack 4 depends have other
+licenses; for instance, libjansson (which ships with the NetHack 4
+source, nowadays) is licensed under the Expat license, and SDL2 (which
+does not ship with the source, but which does ship with the binaries)
+is licensed under the zlib license.  The file `copyright` in the root
+of a source or binary distribution gives a machine-readable
+explanation of the copyright status of the source files in the
+distribution.
 
 Please note that there is no warranty for NetHack 4.
 
@@ -192,10 +201,9 @@ How can I play on a public server?
 ----------------------------------
 
 The official (and to our knowledge, only) public server is
-nethack4.org.  Open a terminal in your favourite terminal emulator (or
-use an actual physical VT100 or compatible if you're *really*
-old-school), and use telnet (default settings) or ssh (username
-"nethack", password "nethack") to connect. At the command prompt:
+nethack4.org.  Open a terminal in your favourite terminal emulator,
+and use telnet (default settings) or ssh (username "nethack", password
+"nethack") to connect. At the command prompt:
 
     telnet nethack4.org
 
@@ -208,18 +216,20 @@ you use a currently unknown username, you'll be prompted to create an
 account.
 
 If you're using Windows, this is rather harder to do than on Linux or
-Mac OS X, because Windows doesn't come with ssh, its telnet client (if
-it even exists at all) is buried in an obscure corner of the menus and
-is disabled by default, and its default terminal emulator is woefully
-inadequate for pretty much anything (and probably doesn't run NetHack
-4 correctly; I'm not sure if anyone has tried).  As such, it is
-probably best to install a separate terminal emulator / telnet / ssh
-package.  The most commonly used is [PuTTY][6].  Note that PuTTY's
-defaults are somewhat dubious (e.g. the cursor looks a little out of
-place), so it may need some amount of configuration.  Also, it has
-something called "NetHack mode"; it's a workaround for keybinding
-issues in considerably older versions of NetHack, and may well be more
-harmful than useful, so try with it turned off first.
+Mac OS X, because Windows doesn't come with ssh, its telnet client
+(when it even exists at all) is buried in an obscure corner of the
+menus and is disabled by default, and its default terminal emulator is
+woefully inadequate for pretty much anything (and probably doesn't run
+NetHack 4 over telnet correctly; I'm not sure if anyone has tried).
+As such, it is probably best to install a separate terminal emulator /
+telnet / ssh package.  The most commonly used is [PuTTY][6].  Note
+that PuTTY's defaults are somewhat dubious (e.g. the cursor looks a
+little out of place), so it may need some amount of configuration in
+order to provide the best play experience.  Note that it has something
+called "NetHack mode"; this is a workaround for keybinding issues in
+considerably older versions of NetHack, and may well be more harmful
+than useful, so try to get things working with it turned off first,
+and use it only as a last resort.
 
 
 How can I compile the game for local play?
@@ -229,11 +239,7 @@ NetHack 4 can be compiled on most commonly used systems; we've tested
 Linux, OS X, and Windows.  Linux and Mac OS X work out of the box.
 Windows is a little harder but still relatively easy to compile on, if
 you don't mind downloading several extra tools to do the compilation
-with. (However, the performance of the Windows console is very bad,
-making the game close to unplayably slow; at present there is no tiles
-version, nor a tty version with an alternative rendering method, so if
-you're on Windows it's probably best to stick to online play for the
-time being.)
+with.
 
 In order to compile NetHack 4 locally, you can get a copy of the
 source from the repository, and follow the instructions in the README
@@ -249,26 +255,30 @@ previous versions also depended on libncursesw, but that dependency no
 longer exists (NetHack 4 now uses its own rendering library, named
 libuncursed).
 
+To build a binary capable of tiles play, you will also need version 2
+of the [Simple DirectMedia Layer][8] library (and its development
+headers and (on Windows) import libraries).  On Linux, you may have to
+compile it yourself; most distributions only offer version 1, which is
+not sufficient to compile a tiles port.
+
 You'll additionally need a copy of Perl in order to run the build
 system: this will likely come with your system on Linux and Mac OS X.
-If you're on Windows, get [Strawberry Perl][8]; it comes with a
-working C toolchain and all the libraries required, meaning that you
-can avoid the usual problems of trying to set up a C toolchain on
-Windows.  On Mac OS X, the usual C toolchain is Xcode, which is
-available from Apple; most Linux systems come with a C toolchain, but
-if you're on Debian or a derivative (such as Ubuntu or Linux Mint),
-you'll need to install the `build-essential` package (and also `bison`
-and `flex`).
+If you're on Windows, get [Strawberry Perl][9]; it comes with a
+working C toolchain and all the libraries required (except for SDL),
+meaning that you can avoid the usual problems of trying to set up a C
+toolchain on Windows.  On Mac OS X, the usual C toolchain is Xcode,
+which is available from Apple; most Linux systems come with a C
+toolchain, but if you're on Debian or a derivative (such as Ubuntu or
+Linux Mint), you'll need to install the `build-essential` package (and
+also `bison` and `flex`).
 
 
 Are precompiled binaries available?
 -----------------------------------
 
-Not currently; we're planning to offer these eventually, but the code
-isn't in a stable enough state for it to be worthwhile yet.  They'd be
-most useful on Windows, which currently suffers from performance
-issues, and there doesn't seem to be much point in offering a really
-slow game.
+Currently, precompiled binaries are available from the NetHack 4
+website, but only for Windows, and they are not regularly updated.  If
+you can, we recommend you compile your own binaries from source.
 
 
 Does NetHack 4 depend on curses/ncurses?
@@ -277,12 +287,56 @@ Does NetHack 4 depend on curses/ncurses?
 Not any more; it used to, but that dependency has since been removed.
 
 
+How do I select which interface NetHack 4 uses?
+-----------------------------------------------
+
+NetHack 4 does its rendering via the libuncursed rendering library.
+By default, it will use a terminal for rendering, using its `tty` or
+`wincon` interface (depending on your platform).  In order to use
+other interfaces, you will need a plugin for libuncursed; for
+instance, `libuncursed_sdl.dll` ships with the Windows executables
+(and the sources for that plugin ship with the NetHack 4 source,
+meaning that it will be built when you compile the source on other
+operating systems, too).
+
+In order to load the `sdl` rather than `tty` or `wincon` interface,
+you will need to make this request known to libuncursed via any of the
+following methods:
+
+  * Use the `--interface sdl` command line option when starting
+    NetHack 4; or
+  * Rename the executable to end `-sdl` (i.e. `nethack4-sdl.exe`);
+    this is probably the easiest method on Windows; or
+  * Create a symbolic link `nethack4-sdl` that links to the NetHack 4
+    executable, and use it to launch the game rather than running the
+    game directly.
+
+The `sdl` interface is a "fake terminal" port that simulates a
+terminal itself, rather than using an actual terminal; this allows you
+to avoid any problems that the terminals provided with your platform
+might have.  (For instance, the Windows console is rather slow.)
+Unlike the other interfaces, it is also capable of displaying tiles.
+
+
 Is there a graphical/tiles version?
 -----------------------------------
 
-Not yet.  We're planning one.  (The main problem is that NitroHack
-rewrote the interface code, meaning that existing tiles patches don't
-apply.)
+Yes.  For tiles play, you will need to be playing on a graphical
+interface (not a terminal interface; thus tiles play on a server won't
+work); and you will also need to change the "graphics" option in-game
+to specify tiles play.  (The option exists even for terminal players,
+but will have no effect for those players unless they subsequently
+load a tiles interface; all interfaces share the same option files.)
+The `libuncursed_sdl` interface plugin is currently recommended for
+tiles play (being the only current graphical interface plugin for
+libuncursed).
+
+The tiles port is currently very new and experimental; probably the
+major drawbacks with it at the moment are that only one tileset is
+available (two others exist in the source distribution but neither
+works correctly), and that it's currently impossible to resize the
+area of the screen that is used to draw tiles.  Both these problems
+are likely to be fixed in time, but perhaps not immediately.
 
 
 Gameplay
@@ -299,9 +353,9 @@ they tend to not mingle with the NetHack-playing community at large,
 but many people have reported enjoying it before they became spoiled.
 
 Note that without spoilers, it is likely to take a very long time
-before you win (most likely years); there's a lot to learn, and to
-figure it out.  Of course, another way to look at that is that you can
-have years of exciting gameplay discovery ahead of you!  One
+before you win (most likely years); there's a lot to learn, and even
+more to figure out.  Of course, another way to look at that is that
+you can have years of exciting gameplay discovery ahead of you!  One
 interesting middle ground might be to find other players unspoiled on
 external sources, and share your findings among yourselves; this is
 the way that NetHack was played for many years, in UNIX computer labs
@@ -309,7 +363,7 @@ all over the world, and it still works today.
 
 If you're interested in reading spoilers, good resources include IRC
 (#acehack and #nethack on irc.freenode.net), and the
-[NetHack wiki][9].  NetHack 4 has some deviations from 3.4.3, but the
+[NetHack wiki][10].  NetHack 4 has some deviations from 3.4.3, but the
 changes are relatively conservative, so spoilers for 3.4.3 will still
 be mostly applicable.
 
@@ -324,10 +378,11 @@ eventually winning with the easier ones.
 There's widespread disagreement about role difficulty (some people
 think Wizards are the easiest role, others one of the hardest; they do
 seem to be good for unusual challenge runs, though), but if you're
-just looking for a win, Valkyries seem to have the easiest time
-overall.  (Not that any role is particularly easy; NetHack is much
-harder than typical modern games are, and only the most experienced
-players can get anything like a consistent win rate at it.)
+just looking for a win, dwarven Valkyries seem to have the easiest
+time overall.  (Not that any role is particularly easy; NetHack is
+much harder than typical modern games are, and only the most
+experienced players can get anything like a consistent win rate at
+it.)
 
 
 What are the main gameplay changes from NetHack 3.4.3?
@@ -352,11 +407,11 @@ of sense to give the player less information than the character would
 have.  In real life, nobody (well, hardly anybody over the age of 3)
 eats something by mistake when they were merely trying to hold it in
 their hands; dungeoneers shouldn't become more likely to just because
-`e` and `w` are next to each other on the keyboard.  Likewise, it can
-be assumed that an adventurer who wasn't blind or otherwise impaired
-would notice a sea of lava right next to them, and not accidentally
-walk into it because they'd pressed a key on a keyboard too many
-times.
+`e` and `w` are next to each other on their keyboard.  Likewise, it
+can be assumed that an adventurer who wasn't blind or otherwise
+impaired would notice a sea of lava right next to them, and not
+accidentally walk into it because they'd pressed a key on a keyboard
+too many times.
 
 It's certainly possible to imagine an interesting game whose main
 challenge comes from a hostile interface.  It shouldn't, however, be a
@@ -389,14 +444,15 @@ commands to be less context-sensitive was thus a priority.)
 How do I change between number_pad and vi-keys settings?
 --------------------------------------------------------
 
-In theory, if you turn NumLock off, the number keys on the numeric
-keypad should work for movement, and the number keys on the main
-keyboard for command repeat, so the longstanding roguelike flamewar
-between using `hjklyubn` and `42867913` for movement should no longer
-be something the game has to be aware of.  On some terminal emulators,
-this may not work correctly, in which case you might have to rebind
-the keys in-game.  (Rebinding the keys is also useful if you have a
-German keyboard and want to move using `hjklzubn`.)
+In theory, the number keys on the numeric keypad should work for
+movement, and the number keys on the main keyboard for command repeat;
+on a few terminal emulators, you may have to turn NumLock off for this
+to work.  Hopefully, the longstanding roguelike flamewar between using
+`hjklyubn` and `42867913` for movement should no longer be something
+the game has to be aware of.  On a very few terminal emulators, this
+may not work correctly, in which case you might have to rebind the
+keys in-game.  (Rebinding the keys is also useful if you have a German
+keyboard and want to move using `hjklzubn`.)
 
 
 How do I configure the game options?
@@ -468,8 +524,8 @@ is in 3.4.3 as well; the main innovation in NitroHack was exposing
 this over a network and adding a separate server daemon).  As such,
 there is no reason why the server and client should be on the same
 system.  It's possible to get some of the benefits of online play by
-using a local executable that connects to a remote server (and this
-will be necessary for tiles play, when that's implemented); the code
+using a local executable that connects to a remote server (which is
+necessary to play tiles on a server); the code for making connections
 is in the client by default, and at the moment, the only obstacle to
 doing this is that there are no servers that accept connections from
 remote clients (nethack4.org firewalls them out, because the server
@@ -477,16 +533,18 @@ has not been security audited yet).  The server/client code is used
 internally on nethack4.org; connecting to it via telnet or ssh spawns
 a client, which connects to the separate server daemon internally.
 
-There are five separate directories in the distribution, which handle
+There are seven separate directories in the distribution, which handle
 the separate codebases: `libnethack` for the game logic,
 `libnethack_client` to allow clients to connect to the server,
 `nethack` for the interface code (that calculates what to draw on
 screen), `libuncursed` for the rendering code (that actually draws
-it), and `nethack_server` for the server-specific logic (creating
-accounts, keeping separate save games for separate user accounts, that
-sort of thing).  Various executables are built out of code from
-various directories (but not with a 1:1 correspondence; most of them
-use code from multiple directories).
+it), `tilesets` for the tiles-handling utilities, `libjansson` for the
+JSON encoding between the client and the server, and `nethack_server`
+for the server-specific logic (creating accounts, keeping separate
+save games for separate user accounts, that sort of thing).  Various
+executables are built out of code from various directories (but not
+with a 1:1 correspondence; most of them use code from multiple
+directories).
 
 
 What is grammartree?
@@ -497,7 +555,12 @@ An experimental project, that's nowhere near finished, to give NetHack
 outputs.  This should hopefully allow us to eventually output combined
 messages to heavily reduce message spam, such as "Ten fire elementals
 step on fire traps!  They don't seem harmed.".  As a nice side effect,
-this should make the game much easier to internationalize.
+this should make the game much easier to internationalize.  The
+project is mostly stalled, because it ended up with
+design-by-committee problems, and then was put on hold so that we
+could actually get other changes done rather than spending all our
+time trying to get the design behind grammartree perfect; we do plan
+to start it up again someday, though.
 
 If you're interested in our progress on grammartree, or want to help
 out, look at the `grammartree` branch in the repository to see how far
@@ -511,5 +574,6 @@ we've got.
 [5]: http://junethack.de
 [6]: http://www.chiark.greenend.org.uk/~sgtatham/putty/
 [7]: http://www.digip.org/jansson
-[8]: http://strawberryperl.com
-[9]: http://nethackwiki.com
+[8]: http://www.libsdl.org
+[9]: http://strawberryperl.com
+[10]: http://nethackwiki.com

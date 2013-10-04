@@ -278,6 +278,12 @@ compile errors as it tries to compile the server, but the programs that do
 install (including the game itself, which can run locally without needing to
 connect to a server) will work fine.
 
+If you want to build the tiles port, you will also need to install version 2
+of the Simple DirectMedia Layer; http://www.libsdl.org is the correct site
+from which to download the source code, or it's possible it's available in
+your package manager. However, at the time of writing (October 2013), many
+distributions don't have it yet; it was released quite recently.
+
 Assuming you just want to run NetHack 4 from your home directory, from the top
 source directory, run:
 
@@ -354,6 +360,20 @@ in Control Panel, on recent versions of Windows).
 You will also need to create two more folders, `build` and `install`; I
 recommend that both are parallel to the `nethack4` folder that contains the
 entire NetHack 4 distribution.
+
+If you want to build a tiles or fake terminal port (recommended even if you
+aren't a tiles player, because Windows' terminal is rather slow), you will
+need version 2 of the Simple DirectMedia Layer. Download the MinGW version of
+the development headers and import libraries from http://www.libsdl.org; also
+download the library itself. Then copy the entire `include/SDL2` subdirectory
+from the appropriate processor-dependent directory of the SDL distribution, to
+the `c/include` folder that was created when you installed Strawberry Perl (so
+that it beomes `c/include/SDL`); and all the files `lib/*.a` from the
+appropriate processor-dependent directory of the SDL distribution to the
+`c/lib` folder that was created when you installed Strawberry Perl (so that
+they become `c/lib/libSDL2.a`, etc.). Finally, copy the file `SDL2.dll` that
+you obtained when you downloaded the library itself to the `install` folder
+you just created.
 
 Once you've done this, open a command prompt, change to the build directory,
 and type:
