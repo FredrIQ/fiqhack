@@ -24,9 +24,8 @@ struct proto_dungeon {
     int n_brs;  /* number of tmpbranch entries */
 };
 
-int n_dgns;     /* number of dungeons (used here, */
+int n_dgns;     /* number of dungeons (used here, and mklev.c) */
 
-                                        /* and mklev.c) */
 static branch *branches = NULL; /* dungeon branch list */
 
 struct lchoice {
@@ -92,7 +91,7 @@ save_d_flags(struct memfile *mf, d_flags f)
     /* bitfield layouts are architecture and compiler-dependent, so d_flags
        can't be written directly */
     dflags = (f.town << 31) | (f.hellish << 30) | (f.maze_like << 29) |
-             (f.rogue_like << 28) | (f.  align << 25);
+        (f.rogue_like << 28) | (f.  align << 25);
     mwrite32(mf, dflags);
 }
 
@@ -435,10 +434,10 @@ insert_branch(branch * new_branch, boolean extract_first)
     new_branch->next = NULL;
 
 /* Convert the branch into a unique number so we can sort them. */
-#define branch_val(bp) \
-        ((((long)(bp)->end1.dnum * (MAXLEVEL+1) + \
-          (long)(bp)->end1.dlevel) * (MAXDUNGEON+1) * (MAXLEVEL+1)) + \
-         ((long)(bp)->end2.dnum * (MAXLEVEL+1) + (long)(bp)->end2.dlevel))
+#define branch_val(bp)                                                  \
+    ((((long)(bp)->end1.dnum * (MAXLEVEL+1) +                           \
+       (long)(bp)->end1.dlevel) * (MAXDUNGEON+1) * (MAXLEVEL+1)) +      \
+     ((long)(bp)->end2.dnum * (MAXLEVEL+1) + (long)(bp)->end2.dlevel))
 
     /* 
      * Insert the new branch into the correct place in the branch list.
@@ -1514,9 +1513,9 @@ lev_by_name(const char *nam)
             idx &= 0x00FF;
             if (        /* either wizard mode, or else _both_ sides of branch
                            seen */
-                   wizard || ((levels[idx] && !levels[idx]->flags.forgotten) &&
-                              (levels[idxtoo] &&
-                               !levels[idxtoo]->flags.forgotten))) {
+                wizard || ((levels[idx] && !levels[idx]->flags.forgotten) &&
+                           (levels[idxtoo] &&
+                            !levels[idxtoo]->flags.forgotten))) {
                 if (ledger_to_dnum(idxtoo) == u.uz.dnum)
                     idx = idxtoo;
                 dlev.dnum = ledger_to_dnum(idx);
@@ -1806,14 +1805,14 @@ overview_scan(const struct level *lev, struct overview_info *oi)
             case S_upsstair:
             case S_dnsstair:
                 if (lev->sstairs.sx == x && lev->sstairs.sy == y &&
-			    lev->sstairs.tolev.dnum != lev->z.dnum) {
+                    lev->sstairs.tolev.dnum != lev->z.dnum) {
                     oi->branch = TRUE;
-			    if (levels[ledger_no(&lev->sstairs.tolev)]) {
-				oi->branch_dst_known = TRUE;
-                    oi->branch_dst = lev->sstairs.tolev;
-			    } else {
-				oi->branch_dst_known = FALSE;
-			    }
+                    if (levels[ledger_no(&lev->sstairs.tolev)]) {
+                        oi->branch_dst_known = TRUE;
+                        oi->branch_dst = lev->sstairs.tolev;
+                    } else {
+                        oi->branch_dst_known = FALSE;
+                    }
                 }
                 break;
 
@@ -1863,14 +1862,14 @@ overview_scan(const struct level *lev, struct overview_info *oi)
         if (trap->tseen && trap->ttyp == MAGIC_PORTAL &&
             trap->dst.dnum != lev->z.dnum) {
             oi->portal = TRUE;
-		if (levels[ledger_no(&trap->dst)]) {
-		    oi->portal_dst_known = TRUE;
-            oi->portal_dst = trap->dst;
-		} else {
-		    oi->portal_dst_known = FALSE;
-		}
-	    }
+            if (levels[ledger_no(&trap->dst)]) {
+                oi->portal_dst_known = TRUE;
+                oi->portal_dst = trap->dst;
+            } else {
+                oi->portal_dst_known = FALSE;
+            }
         }
+}
 }
 
 
@@ -1952,9 +1951,9 @@ seen_string(xchar x, const char *obj)
 
 
 #define COMMA (i++ > 0 ? ", " : "      ")
-#define ADDNTOBUF(nam, var) do { if (var) \
-        sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
-        ((var) != 1 ? "s" : "")); } while(0)
+#define ADDNTOBUF(nam, var) do { if (var)                               \
+            sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
+                    ((var) != 1 ? "s" : "")); } while(0)
 
 #if MAXRTYPE != CANDLESHOP
 # warning you must extend the shopnames array!
@@ -2004,22 +2003,22 @@ overview_print_info(char *buf, const struct overview_info *oi)
 static void
 overview_print_branch(char *buf, const struct overview_info *oi)
 {
-	if (oi->portal) {
-	    if (oi->portal_dst_known) {
-		sprintf(buf, "      portal to %s",
-			dungeons[oi->portal_dst.dnum].dname);
-	    } else {
-		sprintf(buf, "      a magic portal");
-	    }
-	}
-	if (oi->branch) {
-	    if (oi->branch_dst_known) {
-		sprintf(buf, "      stairs to %s",
-			dungeons[oi->branch_dst.dnum].dname);
-	    } else {
-		sprintf(buf, "      a long staircase");
-	    }
-	}
+    if (oi->portal) {
+        if (oi->portal_dst_known) {
+            sprintf(buf, "      portal to %s",
+                    dungeons[oi->portal_dst.dnum].dname);
+        } else {
+            sprintf(buf, "      a magic portal");
+        }
+    }
+    if (oi->branch) {
+        if (oi->branch_dst_known) {
+            sprintf(buf, "      stairs to %s",
+                    dungeons[oi->branch_dst.dnum].dname);
+        } else {
+            sprintf(buf, "      a long staircase");
+        }
+    }
 }
 
 

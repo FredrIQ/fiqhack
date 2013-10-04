@@ -97,7 +97,7 @@ struct overview_info {
     schar shoptype;     /* -1: multiple shops */
     boolean branch, portal;     /* branch, magic portal on this level */
     struct d_level branch_dst, portal_dst;      /* where to? */
-	boolean branch_dst_known, portal_dst_known; /* destination known? */
+    boolean branch_dst_known, portal_dst_known; /* destination known? */
 };
 
 
@@ -139,8 +139,8 @@ struct overview_info {
 # define Inhell                 In_hell(&u.uz)  /* now gehennom */
 # define In_endgame(x)          ((x)->dnum == astral_level.dnum)
 
-# define within_bounded_area(X,Y,LX,LY,HX,HY) \
-                ((X) >= (LX) && (X) <= (HX) && (Y) >= (LY) && (Y) <= (HY))
+# define within_bounded_area(X,Y,LX,LY,HX,HY)                   \
+    ((X) >= (LX) && (X) <= (HX) && (Y) >= (LY) && (Y) <= (HY))
 
 # define isok(x, y) ((x) >= 1 && (x) <= COLNO-1 && (y) >= 0 && (y) <= ROWNO-1)
 
