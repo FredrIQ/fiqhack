@@ -449,6 +449,11 @@ cleanup_messages(void)
 {
     int i;
 
+    for (i = 0; i < histsize; i++) {
+        if (msghistory[i].msg)
+            free(msghistory[i].msg);
+    }
+
     free(msghistory);
     prevturn = 0;
 
