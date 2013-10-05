@@ -2387,14 +2387,15 @@ eat_floorfood:
 
         sprintf(qbuf, "%c%s what?", highc(*verb), verb + 1);
         n = query_objlist(qbuf, level->objects[u.ux][u.uy],
-                          BY_NEXTHERE | INVORDER_SORT, &floorfood_list,
-                          PICK_ONE, floorfood_check);
+                          BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
+                          &floorfood_list, PICK_ONE, floorfood_check);
         if (n) {
             otmp = floorfood_list[0].obj;
             free(floorfood_list);
         } else {
             otmp = NULL;
         }
+        return otmp;
     }
 
 skipfloor:
