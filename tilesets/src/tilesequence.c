@@ -49,7 +49,7 @@ tileno_name_from_symdef_array(const char *name, const char *type,
             if (!sa->types) return i + sa->offset;
             int j;
             for (j = 0; j < sa->typeslen; j++) {
-                if (strcmp(sa->types[i].symname, name) == 0)
+                if (strcmp(sa->types[j].symname, type) == 0)
                     return j * sa->symslen + i + sa->offset;
             }
         }
