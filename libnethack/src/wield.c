@@ -462,18 +462,10 @@ can_twoweapon(void)
             pline("You can't use two weapons in your current form.");
         } else {
             char buf[BUFSZ];
-            boolean disallowed_by_role =
-                P_MAX_SKILL(P_TWO_WEAPON_COMBAT) < P_BASIC;
-            boolean disallowed_by_race =
-                youmonst.data->mattk[1].aatyp != AT_WEAP;
-            buf[0] = '\0';
-            if (disallowed_by_race)
-                strcpy(buf, urace.noun);
-            else if (disallowed_by_role)
-                strcat(buf, (flags.female && urole.name.f) ?
-                       urole.name.f : urole.name.m);
+            strcpy(buf, (flags.female && urole.name.f) ?
+                   urole.name.f : urole.name.m);
             pline("%s aren't able to use two weapons at once.",
-                  makeplural(upstart(buf)));
+                  upstart(makeplural(buf)));
         }
     } else if (!uwep || !uswapwep)
         pline("Your %s%s%s empty.", uwep ? "left " : uswapwep ? "right " : "",
