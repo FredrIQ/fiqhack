@@ -4,6 +4,7 @@
 
 #include "hack.h"
 #include "epri.h"
+#include "hungerstatus.h"
 
 static int prayer_done(void);
 static struct obj *worst_cursed_item(void);
@@ -113,17 +114,6 @@ but that's really hard.
 #define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow)
 #define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
 #define a_align(x,y)    ((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
-
-/* Borrowed from eat.c */
-
-#define SATIATED        0
-#define NOT_HUNGRY      1
-#define HUNGRY          2
-#define WEAK            3
-#define FAINTING        4
-#define FAINTED         5
-#define STARVED         6
-
 
 static int
 in_trouble(void)

@@ -4,6 +4,7 @@
 
 #include "hack.h"
 #include "edog.h"
+#include "hungerstatus.h"
 
 static const char tools[] = { ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
     TOOL_CLASS, WEAPON_CLASS, 0
@@ -612,9 +613,6 @@ check_leash(xchar x, xchar y)
         }
     }
 }
-
-
-#define WEAK    3       /* from eat.c */
 
 static const char look_str[] = "You look %s.";
 
