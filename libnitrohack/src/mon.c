@@ -1346,17 +1346,9 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     unstuck(mtmp);
     fill_pit(mtmp->dlevel, mtmp->mx, mtmp->my);
 
-<<<<<<< HEAD
-    if (mtmp->isshk)
-        shkgone(mtmp);
-    if (mtmp->wormno)
-        wormgone(mtmp);
-    iflags.purge_monsters++;
-=======
-	if (mtmp->isshk) shkgone(mtmp);
-	if (mtmp->wormno) wormgone(mtmp);
-	mtmp->dlevel->flags.purge_monsters++;
->>>>>>> 378f5c3... Fix spurious dmonsfree impossible errors
+    if (mtmp->isshk) shkgone(mtmp);
+    if (mtmp->wormno) wormgone(mtmp);
+    mtmp->dlevel->flags.purge_monsters++;
 }
 
 /* find the worn amulet of life saving which will save a monster */
