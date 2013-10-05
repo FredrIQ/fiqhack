@@ -292,8 +292,8 @@ print_option_string(struct nh_option_desc *option, char *buf)
 
     default:
     case OPTSTYLE_FULL:
-	    sprintf(fmt, "%%s\t[%%s]\t%%.%ds", COLS - 42);
-	    snprintf(buf, BUFSZ, fmt, option->name, valstr, option->helptxt);
+        sprintf(fmt, "%%s\t[%%s]\t%%.%ds", COLS - 42);
+        snprintf(buf, BUFSZ, fmt, option->name, valstr, option->helptxt);
         break;
     }
 }
@@ -324,29 +324,31 @@ menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
 
 
 /* display a selecton menu for boolean options */
-static void select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
+static void
+select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
     struct nh_menuitem *items;
     int icount, size;
     int n, pick_list[2];
 
-    icount = 0; size = 4;
-    items = malloc(sizeof(struct nh_menuitem) * size);
+    icount = 0;
+    size = 4;
+    items = malloc(sizeof (struct nh_menuitem) * size);
 
     add_menu_txt(items, size, icount, option->helptxt, MI_TEXT);
     add_menu_txt(items, size, icount, "", MI_TEXT);
     add_menu_item(items, size, icount, 1,
-		  option->value.b ? "true (set)" : "true", 't', 0);
+                  option->value.b ? "true (set)" : "true", 't', 0);
     add_menu_item(items, size, icount, 2,
-		  option->value.b ? "false" : "false (set)", 'f', 0);
+                  option->value.b ? "false" : "false (set)", 'f', 0);
 
-    n = curses_display_menu(items, icount, option->name, PICK_ONE,
-                            PLHINT_RIGHT, pick_list);
+    n = curses_display_menu(items, icount, option->name, PICK_ONE, PLHINT_RIGHT,
+                            pick_list);
     free(items);
 
     value->b = option->value.b; /* in case of ESC */
     if (n == 1)
-	value->b = pick_list[0] == 1;
+        value->b = pick_list[0] == 1;
 }
 
 
@@ -366,21 +368,22 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
     add_menu_txt(items, size, icount, "", MI_TEXT);
 
     for (i = 0; i < option->e.numchoices; i++) {
-	char capbuf[QBUFSZ];
-	char *cap;
-	if (option->value.e == option->e.choices[i].id) {
-	    snprintf(capbuf, QBUFSZ, "%s (set)", option->e.choices[i].caption);
-	    cap = capbuf;
-	} else {
-	    cap = option->e.choices[i].caption;
-	}
+        char capbuf[QBUFSZ];
+        char *cap;
+
+        if (option->value.e == option->e.choices[i].id) {
+            snprintf(capbuf, QBUFSZ, "%s (set)", option->e.choices[i].caption);
+            cap = capbuf;
+        } else {
+            cap = option->e.choices[i].caption;
+        }
         /* don't use the choice ids directly, 0 is a valid value for those */
-	add_menu_item(items, size, icount, i+1, cap, 0, 0);
+        add_menu_item(items, size, icount, i + 1, cap, 0, 0);
     }
 
     pick_list = malloc(sizeof (int) * icount);
-    n = curses_display_menu(items, icount, option->name, PICK_ONE,
-                            PLHINT_RIGHT, pick_list);
+    n = curses_display_menu(items, icount, option->name, PICK_ONE, PLHINT_RIGHT,
+                            pick_list);
     free(items);
 
     value->e = option->value.e; /* in case of ESC */
@@ -427,7 +430,7 @@ get_option_value(struct win_menu *mdat, int idx)
 
     switch ((int)option->type) {
     case OPTTYPE_BOOL:
-	    select_boolean_value(&value, option);
+        select_boolean_value(&value, option);
         break;
 
     case OPTTYPE_INT:
@@ -1012,7 +1015,8 @@ get_config_name(fnchar * buf, nh_bool ui)
 #ifdef WIN32
     wchar_t usernamew[BUFSZ];
     int i = 0;
-    while (i < BUFSZ-2 && ui_flags.username[i]) {
+
+    while (i < BUFSZ - 2 && ui_flags.username[i]) {
         usernamew[i] = ui_flags.username[i];
         i++;
     }
@@ -1021,11 +1025,11 @@ get_config_name(fnchar * buf, nh_bool ui)
 
     fnncat(buf, ui_flags.connection_only ?
 #ifdef WIN32
-                usernamew :
+           usernamew :
 #else
-                ui_flags.username :
+           ui_flags.username:
 #endif
-                ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+           ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
     if (ui_flags.connection_only)
         fnncat(buf, FN(".rc"), BUFSZ);
 

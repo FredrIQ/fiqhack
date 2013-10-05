@@ -42,21 +42,21 @@ struct shclass {
  */
 
 /* values for rtype in the room definition structure */
-# define OROOM          0  /* ordinary room */
-# define COURT          2  /* contains a throne */
-# define SWAMP          3  /* contains pools */
-# define VAULT          4  /* contains piles of gold */
-# define BEEHIVE        5  /* contains killer bees and royal jelly */
-# define MORGUE         6  /* contains corpses, undead and ghosts */
-# define BARRACKS       7  /* contains soldiers and their gear */
-# define ZOO            8  /* floor covered with treasure and monsters */
-# define DELPHI         9  /* contains Oracle and peripherals */
-# define TEMPLE         10 /* contains a shrine */
-# define LEPREHALL      11 /* leprechaun hall (Tom Proudfoot) */
-# define COCKNEST       12 /* cockatrice nest (Tom Proudfoot) */
-# define ANTHOLE        13 /* ants (Tom Proudfoot) */
-# define SHOPBASE       14 /* everything above this is a shop */
-# define ARMORSHOP      15 /* specific shop defines for level compiler */
+# define OROOM          0       /* ordinary room */
+# define COURT          2       /* contains a throne */
+# define SWAMP          3       /* contains pools */
+# define VAULT          4       /* contains piles of gold */
+# define BEEHIVE        5       /* contains killer bees and royal jelly */
+# define MORGUE         6       /* contains corpses, undead and ghosts */
+# define BARRACKS       7       /* contains soldiers and their gear */
+# define ZOO            8       /* floor covered with treasure and monsters */
+# define DELPHI         9       /* contains Oracle and peripherals */
+# define TEMPLE         10      /* contains a shrine */
+# define LEPREHALL      11      /* leprechaun hall (Tom Proudfoot) */
+# define COCKNEST       12      /* cockatrice nest (Tom Proudfoot) */
+# define ANTHOLE        13      /* ants (Tom Proudfoot) */
+# define SHOPBASE       14      /* everything above this is a shop */
+# define ARMORSHOP      15      /* specific shop defines for level compiler */
 # define SCROLLSHOP     16
 # define POTIONSHOP     17
 # define WEAPONSHOP     18
@@ -65,24 +65,24 @@ struct shclass {
 # define WANDSHOP       21
 # define TOOLSHOP       22
 # define BOOKSHOP       23
-# define UNIQUESHOP     24 /* shops here & above not randomly gen'd. */
+# define UNIQUESHOP     24      /* shops here & above not randomly gen'd. */
 # define CANDLESHOP     24
-# define MAXRTYPE       24 /* maximum valid room type */
+# define MAXRTYPE       24      /* maximum valid room type */
 
 /* Special type for search_special() */
 # define ANY_TYPE       (-1)
 # define ANY_SHOP       (-2)
 
-# define NO_ROOM        0 /* indicates lack of room-occupancy */
-# define SHARED         1 /* indicates normal shared boundary */
-# define SHARED_PLUS    2 /* indicates shared boundary - extra adjacent-
-                             square searching required */
+# define NO_ROOM        0       /* indicates lack of room-occupancy */
+# define SHARED         1       /* indicates normal shared boundary */
+# define SHARED_PLUS    2       /* indicates shared boundary - extra adjacent-
+                                   square searching required */
 
-# define ROOMOFFSET     3 /* 
-                           * (level->locations[x][y].roomno - ROOMOFFSET) gives
-                           * rooms[] index, for inside-squares and
-                           * non-shared boundaries.
-                           */
+# define ROOMOFFSET     3       /* 
+                                 * (level->locations[x][y].roomno - ROOMOFFSET) gives
+                                 * rooms[] index, for inside-squares and
+                                 * non-shared boundaries.
+                                 */
 
 # define IS_ROOM_PTR(x)         ((x) >= level->rooms && (x) < level->rooms + MAXNROFROOMS)
 # define IS_ROOM_INDEX(x)       ((x) >= 0 && (x) < MAXNROFROOMS)

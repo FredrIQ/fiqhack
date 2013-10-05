@@ -41,8 +41,8 @@ struct trap {
 # define ANIMATE_SPELL    2
 
 /* reasons for animate_statue's failure */
-# define AS_OK            0      /* didn't fail */
-# define AS_NO_MON        1      /* makemon failed */
+# define AS_OK            0     /* didn't fail */
+# define AS_NO_MON        1     /* makemon failed */
 # define AS_MON_IS_UNIQUE 2     /* statue monster is unique */
 
 /* Note: if adding/removing a trap, adjust trap_engravings[] in mklev.c */

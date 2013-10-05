@@ -44,10 +44,10 @@ vpline(const char *line, va_list the_args)
         return;
 
 
-	vsnprintf(pbuf, BUFSZ, line, the_args);
-    
-    /* Sanitize, otherwise the line can mess up
-     * the message window and message history. */
+    vsnprintf(pbuf, BUFSZ, line, the_args);
+
+    /* Sanitize, otherwise the line can mess up the message window and message
+       history. */
     for (c = pbuf; *c && c < pbuf + BUFSZ; c++) {
         if (*c == '\n' || *c == '\t')
             *c = ' ';
@@ -291,9 +291,9 @@ mstatusline(struct monst *mtmp)
         strcat(info, ", invisible");
     if (mtmp == u.ustuck)
         strcat(info,
-               (sticks(youmonst.data)) ? ", held by you" : u.
-               uswallow ? (is_animal(u.ustuck->data) ? ", swallowed you" :
-                           ", engulfed you") : ", holding you");
+               (sticks(youmonst.data)) ? ", held by you" : u.uswallow
+               ? (is_animal(u.ustuck->data) ? ", swallowed you" :
+                  ", engulfed you") : ", holding you");
     if (mtmp == u.usteed)
         strcat(info, ", carrying you");
 

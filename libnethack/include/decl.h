@@ -312,15 +312,15 @@ extern struct histevent *histevents;
 
 
 extern unsigned long long turntime;
-extern int current_timezone,
-    replay_timezone;   /* difference from UTC in seconds */
+extern int current_timezone, replay_timezone;   /* difference from UTC in
+                                                   seconds */
 extern unsigned int timer_id;
 
 extern struct nh_option_desc *active_birth_options;
 extern struct nh_option_desc *birth_options;
 extern struct nh_option_desc *options;
 
-#define MSGCOUNT 30
+# define MSGCOUNT 30
 
 extern char toplines[MSGCOUNT][BUFSZ];
 extern int toplines_count[MSGCOUNT];

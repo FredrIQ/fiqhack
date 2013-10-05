@@ -23,7 +23,7 @@ newdialog(int height, int width)
         width = COLS;
 
     if (game_is_running) {
-        /* instead of covering up messages, draw the dialog as if it were a 
+        /* instead of covering up messages, draw the dialog as if it were a
            message */
         fresh_message_line(FALSE);
         draw_msgwin();
@@ -46,7 +46,8 @@ newdialog(int height, int width)
 }
 
 
-void reset_last_dir(void)
+void
+reset_last_dir(void)
 {
     last_dir = DIR_NONE;
 }
@@ -61,14 +62,13 @@ curses_getdir(const char *query, nh_bool restricted)
     nh_bool repeat_hint = check_prev_cmd_same();
     int curr_key = get_current_cmd_key();
 
-    snprintf(qbuf, QBUFSZ, "%s%s%s%s",
-	     query ? query : "In what direction?",
-	     repeat_hint ? " (" : "",
-	     repeat_hint ? curses_keyname(curr_key): "",
-	     repeat_hint ? " to repeat)" : "");
+    snprintf(qbuf, QBUFSZ, "%s%s%s%s", query ? query : "In what direction?",
+             repeat_hint ? " (" : "",
+             repeat_hint ? curses_keyname(curr_key) : "",
+             repeat_hint ? " to repeat)" : "");
     key = curses_msgwin(qbuf);
     if (key == '.' || key == 's') {
-	last_dir = DIR_SELF;
+        last_dir = DIR_SELF;
         return DIR_SELF;
     } else if (key == KEY_ESCAPE) {
         return DIR_NONE;
@@ -76,14 +76,14 @@ curses_getdir(const char *query, nh_bool restricted)
 
     dir = key_to_dir(key);
     if (dir == DIR_NONE) {
-	/* Repeat last direction if the command key for this action is used in
-	   this direction prompt. */
-	if (curr_key == key && last_dir != DIR_NONE)
-	    dir = last_dir;
-	else
+        /* Repeat last direction if the command key for this action is used in
+           this direction prompt. */
+        if (curr_key == key && last_dir != DIR_NONE)
+            dir = last_dir;
+        else
             curses_msgwin("What a strange direction!");
     } else {
-	last_dir = dir;
+        last_dir = dir;
     }
 
     return dir;
@@ -159,18 +159,18 @@ curses_query_key(const char *query, int *count)
 
     key = nh_wgetch(win);
     while ((isdigit(key) || key == KEY_BACKSPACE) && count != NULL) {
-	if (isdigit(key)) {
-	    hascount = TRUE;
-	    /* prevent int overflow */
-	    if (cnt < INT_MAX / 10 || (cnt == INT_MAX / 10 &&
-				       (key - '0') <= INT_MAX % 10))
-		cnt = 10 * cnt + (key - '0');
-	    else
-		cnt = INT_MAX;
-	} else {
-	    hascount = (cnt > 0);
-	    cnt /= 10;
-	}
+        if (isdigit(key)) {
+            hascount = TRUE;
+            /* prevent int overflow */
+            if (cnt < INT_MAX / 10 ||
+                (cnt == INT_MAX / 10 && (key - '0') <= INT_MAX % 10))
+                cnt = 10 * cnt + (key - '0');
+            else
+                cnt = INT_MAX;
+        } else {
+            hascount = (cnt > 0);
+            cnt /= 10;
+        }
         key = nh_wgetch(win);
         hascount = TRUE;
     }

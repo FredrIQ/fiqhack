@@ -123,8 +123,8 @@ cursed_book(struct obj *bp)
                 } else {
                     pline("Your gloves corrode%s!",
                           uarmg->oeroded2 + 1 ==
-                          MAX_ERODE ? " completely" : uarmg->
-                          oeroded2 ? " further" : "");
+                          MAX_ERODE ? " completely" : uarmg->oeroded2 ?
+                          " further" : "");
                     uarmg->oeroded2++;
                 }
             } else

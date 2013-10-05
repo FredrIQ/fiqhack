@@ -448,9 +448,8 @@ peffects(struct obj *otmp)
             break;
         } else {
             pline("Wow!  This makes you feel %s!",
-                  (otmp->
-                   blessed) ? (unfixable_trouble_count(FALSE) ? "better" :
-                               "great")
+                  (otmp->blessed) ? (unfixable_trouble_count(FALSE) ? "better" :
+                                     "great")
                   : "good");
             i = rn2(A_MAX);     /* start at a random point */
             for (ii = 0; ii < A_MAX; ii++) {
@@ -758,7 +757,7 @@ peffects(struct obj *otmp)
         }
         break;
     case POT_SPEED:
-        if (Wounded_legs && !otmp->cursed && !u.usteed 
+        if (Wounded_legs && !otmp->cursed && !u.usteed
             /* heal_legs() would heal steeds legs */ ) {
             heal_legs();
             unkn++;
@@ -1080,7 +1079,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
         case POT_SICKNESS:
             if (mon->data == &mons[PM_PESTILENCE])
                 goto do_healing;
-            if (dmgtype(mon->data, AD_DISE) || dmgtype(mon->data, AD_PEST) || 
+            if (dmgtype(mon->data, AD_DISE) || dmgtype(mon->data, AD_PEST) ||
                 /* won't happen, see prior goto */
                 resists_poison(mon)) {
                 if (canseemon(mon))
@@ -1613,9 +1612,8 @@ dodip(struct obj *potion)
         /* Is there a fountain to dip into here? */
         if (IS_FOUNTAIN(here)) {
             sprintf(qbuf, "Dip %s into the fountain?",
-                    safe_qbuf("", sizeof("Dip  into the fountain?"),
-                              the(xname(obj)),
-                              the(simple_typename(obj->otyp)),
+                    safe_qbuf("", sizeof ("Dip  into the fountain?"),
+                              the(xname(obj)), the(simple_typename(obj->otyp)),
                               "this item"));
             if (yn(qbuf) == 'y') {
                 dipfountain(obj);
@@ -1624,12 +1622,9 @@ dodip(struct obj *potion)
         } else if (is_pool(level, u.ux, u.uy)) {
             tmp = waterbody_name(u.ux, u.uy);
             sprintf(qbuf, "Dip %s into the %s?",
-                    safe_qbuf("",
-                              sizeof("Dip  into the pool of water?"),
-                              the(xname(obj)),
-                              the(simple_typename(obj->otyp)),
-                              "this item"),
-                    tmp);
+                    safe_qbuf("", sizeof ("Dip  into the pool of water?"),
+                              the(xname(obj)), the(simple_typename(obj->otyp)),
+                              "this item"), tmp);
             if (yn(qbuf) == 'y') {
                 if (Levitation) {
                     floating_above(tmp);
@@ -1645,10 +1640,8 @@ dodip(struct obj *potion)
             }
         }
         sprintf(qbuf, "dip %s into",
-                safe_qbuf("", sizeof("dip  into"),
-                          the(xname(obj)),
-                          the(simple_typename(obj->otyp)),
-                          "this item"));
+                safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
+                          the(simple_typename(obj->otyp)), "this item"));
         potion = getobj(beverages, qbuf);
     }
 

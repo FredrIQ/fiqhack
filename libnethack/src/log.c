@@ -247,6 +247,7 @@ void
 log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 {
     uint_least64_t turntime_l64 = (uint_least64_t) turntime;
+
     if (iflags.disable_log || logfile == -1)
         return;
 

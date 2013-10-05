@@ -156,7 +156,7 @@ m_initthrow(struct monst *mtmp, int otyp, int oquan)
 {
     struct obj *otmp;
 
-	otmp = mksobj(mtmp->dlevel, otyp, TRUE, FALSE);
+    otmp = mksobj(mtmp->dlevel, otyp, TRUE, FALSE);
     otmp->quan = (long)rn1(oquan, 3);
     otmp->owt = weight(otmp);
     if (otyp == ORCISH_ARROW)
@@ -201,7 +201,7 @@ m_initweap(struct level *lev, struct monst *mtmp)
                     w2 = rn2(2) ? DAGGER : KNIFE;
                 } else
                     w1 = rn2(2) ? SPEAR : SHORT_SWORD;
-                        break;
+                break;
             case PM_SERGEANT:
                 w1 = rn2(2) ? FLAIL : MACE;
                 break;
@@ -274,31 +274,32 @@ m_initweap(struct level *lev, struct monst *mtmp)
         break;
 
     case S_ANGEL:
-    {
-        int spe2;
+        {
+            int spe2;
 
-        /* create minion stuff; can't use mongets */
-        otmp = mksobj(lev, LONG_SWORD, FALSE, FALSE);
+            /* create minion stuff; can't use mongets */
+            otmp = mksobj(lev, LONG_SWORD, FALSE, FALSE);
 
-        /* maybe make it special */
-        if (!rn2(20) || is_lord(ptr))
-            otmp = oname(otmp,
-                         artiname(rn2(2) ? ART_DEMONBANE : ART_SUNSWORD));
-        bless(otmp);
-        otmp->oerodeproof = TRUE;
-        spe2 = rn2(4);
-        otmp->spe = max(otmp->spe, spe2);
-        mpickobj(mtmp, otmp);
+            /* maybe make it special */
+            if (!rn2(20) || is_lord(ptr))
+                otmp =
+                    oname(otmp,
+                          artiname(rn2(2) ? ART_DEMONBANE : ART_SUNSWORD));
+            bless(otmp);
+            otmp->oerodeproof = TRUE;
+            spe2 = rn2(4);
+            otmp->spe = max(otmp->spe, spe2);
+            mpickobj(mtmp, otmp);
 
-        otmp = mksobj(lev, !rn2(4) || is_lord(ptr) ?
-                      SHIELD_OF_REFLECTION : LARGE_SHIELD,
-                      FALSE, FALSE);
-        otmp->cursed = FALSE;
-        otmp->oerodeproof = TRUE;
-        otmp->spe = 0;
-        mpickobj(mtmp, otmp);
-    }
-    break;
+            otmp = mksobj(lev, !rn2(4) ||
+                          is_lord(ptr) ? SHIELD_OF_REFLECTION : LARGE_SHIELD,
+                          FALSE, FALSE);
+            otmp->cursed = FALSE;
+            otmp->oerodeproof = TRUE;
+            otmp->spe = 0;
+            mpickobj(mtmp, otmp);
+        }
+        break;
 
     case S_HUMANOID:
         if (mm == PM_HOBBIT) {
@@ -464,46 +465,46 @@ m_initweap(struct level *lev, struct monst *mtmp)
  * of monsters will get a bonus chance or different selections.
  */
     default:
-    {
-        int bias;
+        {
+            int bias;
 
-        bias = is_lord(ptr) + is_prince(ptr) * 2 + extra_nasty(ptr);
-        switch (rnd(14 - (2 * bias))) {
-        case 1:
-            if (strongmonst(ptr))
-                mongets(mtmp, BATTLE_AXE);
-            else
-                m_initthrow(mtmp, DART, 12);
-            break;
-        case 2:
-            if (strongmonst(ptr))
-                mongets(mtmp, TWO_HANDED_SWORD);
-            else {
-                mongets(mtmp, CROSSBOW);
-                m_initthrow(mtmp, CROSSBOW_BOLT, 12);
+            bias = is_lord(ptr) + is_prince(ptr) * 2 + extra_nasty(ptr);
+            switch (rnd(14 - (2 * bias))) {
+            case 1:
+                if (strongmonst(ptr))
+                    mongets(mtmp, BATTLE_AXE);
+                else
+                    m_initthrow(mtmp, DART, 12);
+                break;
+            case 2:
+                if (strongmonst(ptr))
+                    mongets(mtmp, TWO_HANDED_SWORD);
+                else {
+                    mongets(mtmp, CROSSBOW);
+                    m_initthrow(mtmp, CROSSBOW_BOLT, 12);
+                }
+                break;
+            case 3:
+                mongets(mtmp, BOW);
+                m_initthrow(mtmp, ARROW, 12);
+                break;
+            case 4:
+                if (strongmonst(ptr))
+                    mongets(mtmp, LONG_SWORD);
+                else
+                    m_initthrow(mtmp, DAGGER, 3);
+                break;
+            case 5:
+                if (strongmonst(ptr))
+                    mongets(mtmp, LUCERN_HAMMER);
+                else
+                    mongets(mtmp, AKLYS);
+                break;
+            default:
+                break;
             }
-            break;
-        case 3:
-            mongets(mtmp, BOW);
-            m_initthrow(mtmp, ARROW, 12);
-            break;
-        case 4:
-            if (strongmonst(ptr))
-                mongets(mtmp, LONG_SWORD);
-            else
-                m_initthrow(mtmp, DAGGER, 3);
-            break;
-        case 5:
-            if (strongmonst(ptr))
-                mongets(mtmp, LUCERN_HAMMER);
-            else
-                mongets(mtmp, AKLYS);
-            break;
-        default:
-            break;
         }
-    }
-    break;
+        break;
     }
     if ((int)mtmp->m_lev > rn2(75))
         mongets(mtmp, rnd_offensive_item(mtmp));
@@ -532,7 +533,8 @@ m_initinv(struct monst *mtmp)
     const struct permonst *ptr = mtmp->data;
     struct level *lev = mtmp->dlevel;
 
-    if (Is_rogue_level(&lev->z)) return;
+    if (Is_rogue_level(&lev->z))
+        return;
 
 /*
  * Soldiers get armour & rations - armour approximates their ac.
@@ -647,12 +649,13 @@ m_initinv(struct monst *mtmp)
         break;
     case S_GIANT:
         if (ptr == &mons[PM_MINOTAUR]) {
-		    if (!rn2(3) || (in_mklev && Is_earthlevel(&lev->z)))
+            if (!rn2(3) || (in_mklev && Is_earthlevel(&lev->z)))
                 mongets(mtmp, WAN_DIGGING);
         } else if (is_giant(ptr)) {
             for (cnt = rn2((int)(mtmp->m_lev / 2)); cnt; cnt--) {
-                otmp = mksobj(lev, rnd_class(DILITHIUM_CRYSTAL,LUCKSTONE-1),
-                              FALSE, FALSE);
+                otmp =
+                    mksobj(lev, rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1),
+                           FALSE, FALSE);
                 otmp->quan = (long)rn1(2, 3);
                 otmp->owt = weight(otmp);
                 mpickobj(mtmp, otmp);
@@ -661,7 +664,7 @@ m_initinv(struct monst *mtmp)
         break;
     case S_WRAITH:
         if (ptr == &mons[PM_NAZGUL]) {
-			otmp = mksobj(lev, RIN_INVISIBILITY, FALSE, FALSE);
+            otmp = mksobj(lev, RIN_INVISIBILITY, FALSE, FALSE);
             curse(otmp);
             mpickobj(mtmp, otmp);
         }
@@ -670,8 +673,9 @@ m_initinv(struct monst *mtmp)
         if (ptr == &mons[PM_MASTER_LICH] && !rn2(13))
             mongets(mtmp, (rn2(7) ? ATHAME : WAN_NOTHING));
         else if (ptr == &mons[PM_ARCH_LICH] && !rn2(3)) {
-            otmp = mksobj(lev, rn2(3) ? ATHAME : QUARTERSTAFF, TRUE,
-                          rn2(13) ? FALSE : TRUE);
+            otmp =
+                mksobj(lev, rn2(3) ? ATHAME : QUARTERSTAFF, TRUE,
+                       rn2(13) ? FALSE : TRUE);
             if (otmp->spe < 2)
                 otmp->spe = rnd(3);
             if (!rn2(4))
@@ -685,14 +689,14 @@ m_initinv(struct monst *mtmp)
         break;
     case S_QUANTMECH:
         if (!rn2(20)) {
-			otmp = mksobj(lev, LARGE_BOX, FALSE, FALSE);
+            otmp = mksobj(lev, LARGE_BOX, FALSE, FALSE);
             otmp->spe = 1;      /* flag for special box */
             otmp->owt = weight(otmp);
             mpickobj(mtmp, otmp);
         }
         break;
     case S_LEPRECHAUN:
-		mkmonmoney(mtmp, (long) dice(level_difficulty(&lev->z), 30));
+        mkmonmoney(mtmp, (long)dice(level_difficulty(&lev->z), 30));
         break;
     case S_DEMON:
         /* moved here from m_initweap() because these don't have AT_WEAP so
@@ -727,8 +731,9 @@ m_initinv(struct monst *mtmp)
     if ((int)mtmp->m_lev > rn2(100))
         mongets(mtmp, rnd_misc_item(mtmp));
     if (likes_gold(ptr) && !findgold(mtmp->minvent) && !rn2(5))
-        mkmonmoney(mtmp, (long) dice(level_difficulty(&lev->z),
-                                     mtmp->minvent ? 5 : 10));
+        mkmonmoney(mtmp,
+                   (long)dice(level_difficulty(&lev->z),
+                              mtmp->minvent ? 5 : 10));
 }
 
 /* Note: for long worms, always call cutworm (cutworm calls clone_mon) */
@@ -1134,7 +1139,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     if (allow_minvent) {
         if (is_armed(ptr))
-		m_initweap(lev, mtmp);	/* equip with weapons / armor */
+            m_initweap(lev, mtmp);      /* equip with weapons / armor */
         m_initinv(mtmp);        /* add on a few special items incl. more armor */
         m_dowear(mtmp, TRUE);
     } else {
@@ -1550,7 +1555,8 @@ mongets(struct monst *mtmp, int otyp)
     struct obj *otmp;
     int spe;
 
-    if (!otyp) return 0;
+    if (!otyp)
+        return 0;
     otmp = mksobj(mtmp->dlevel, otyp, TRUE, FALSE);
 
     if (otmp) {
@@ -2226,8 +2232,8 @@ save_mon(struct memfile *mf, const struct monst *mon)
         shk = ESHK(mon);
         mwrite32(mf,
                  (shk->bill_p ==
-                  (struct bill_x *)-1000) ? -1000 : !shk->
-                 bill_p ? -2000 : (shk->bill_p - shk->bill));
+                  (struct bill_x *)-1000) ? -1000 : !shk->bill_p ? -2000
+                 : (shk->bill_p - shk->bill));
         mwrite8(mf, shk->shk.x);
         mwrite8(mf, shk->shk.y);
         mwrite8(mf, shk->shd.x);

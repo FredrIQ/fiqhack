@@ -748,7 +748,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                     {
 #define useup_eggs(o) { if (thrown) obfree(o,NULL); \
                         else useupall(o); \
-                        o = NULL; }   /* now gone */
+                        o = NULL; }     /* now gone */
                         long cnt = obj->quan;
 
                         tmp = 1;        /* nominal physical damage */

@@ -77,7 +77,7 @@ const struct cmd_desc cmdlist[] = {
      FALSE, doautoexplore, CMD_ARG_NONE},
     {"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
     {"chat", "talk to someone", 'c', M('c'), TRUE, dotalk,
-     CMD_ARG_NONE | CMD_ARG_DIR | CMD_EXT},       /* converse? */
+     CMD_ARG_NONE | CMD_ARG_DIR | CMD_EXT},     /* converse? */
     {"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_NONE | CMD_ARG_DIR},
     {"conduct", "list status of voluntary challenges", 0, 0, TRUE, doconduct,
      CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
@@ -142,7 +142,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_DIR},
     {"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview,
      CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
-    {"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay, CMD_ARG_NONE | CMD_ARG_OBJ},
+    {"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay,
+     CMD_ARG_NONE | CMD_ARG_OBJ},
     {"pickup", "take items from the floor", ',', 0, FALSE, dopickup,
      CMD_ARG_NONE},
     {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray,
@@ -500,8 +501,7 @@ static int
 wiz_togglegen(void)
 {
     iflags.mon_generation = !iflags.mon_generation;
-    pline("Monster generation is %s.",
-          iflags.mon_generation ? "on" : "off");
+    pline("Monster generation is %s.", iflags.mon_generation ? "on" : "off");
     return 0;
 }
 
@@ -790,10 +790,10 @@ enlightenment(int final)
     else
         you_have(&menu, "transgressed");
     if (wizard) {
-		sprintf(buf, " %d", u.uhunger);
-		enl_msg(&menu, "Hunger level ", "is", "was", buf);
+        sprintf(buf, " %d", u.uhunger);
+        enl_msg(&menu, "Hunger level ", "is", "was", buf);
 
-		sprintf(buf, " %d / %ld", u.ualign.record, ALIGNLIM);
+        sprintf(buf, " %d / %ld", u.ualign.record, ALIGNLIM);
         enl_msg(&menu, "Your alignment ", "is", "was", buf);
     }
 
@@ -1565,15 +1565,18 @@ nh_get_commands(int *count)
 /* for better readability below */
 static void
 set_obj_cmd(char caccel, struct nh_cmd_desc *obj_cmd, struct obj *obj, size_t i,
-            const char *cname, const char *cdesc, bool singular ) {
+            const char *cname, const char *cdesc, bool singular)
+{
     int _o_c_idx = get_command_idx(cname);
     char dbuf[80], nbuf[80];
+
     obj_cmd[i].defkey = caccel;
-    strncpy(obj_cmd[i].name, cname, sizeof(obj_cmd[i].name));
-    snprintf(nbuf, 80, "%s %s", obj->quan > 1 ?
-                  (singular ? "one of these" : "these") : "this", cxname(obj));
+    strncpy(obj_cmd[i].name, cname, sizeof (obj_cmd[i].name));
+    snprintf(nbuf, 80, "%s %s",
+             obj->quan > 1 ? (singular ? "one of these" : "these") : "this",
+             cxname(obj));
     snprintf(dbuf, 80, cdesc, nbuf);
-    strncpy(obj_cmd[i].desc, dbuf, sizeof(obj_cmd[i].desc));
+    strncpy(obj_cmd[i].desc, dbuf, sizeof (obj_cmd[i].desc));
     obj_cmd[i].flags = cmdlist[_o_c_idx].flags;
 }
 
@@ -1597,7 +1600,7 @@ nh_get_object_commands(int *count, char invlet)
     int i, cmdcount = 0;
     struct nh_cmd_desc *obj_cmd;
     struct obj *obj;
-	struct monst *shkp;
+    struct monst *shkp;
 
     /* returning a list of commands when .viewing is true doesn't hurt
        anything, but since they won't work there is no point. */
@@ -1616,7 +1619,7 @@ nh_get_object_commands(int *count, char invlet)
             cmdcount++;
 
     /* alloc space for all potential commands, even if fewer will apply to the
-     * given object. This greatly simplifies the counting above. */
+       given object. This greatly simplifies the counting above. */
     obj_cmd = xmalloc(sizeof (struct nh_cmd_desc) * cmdcount);
     if (!obj_cmd)
         return NULL;
@@ -1718,17 +1721,17 @@ nh_get_object_commands(int *count, char invlet)
              obj->oclass == GEM_CLASS || obj->oclass == RING_CLASS)
         SET_OBJ_CMD('E', "engrave", "Write on the floor with %s", 0);
 
-	/* pay for this item */
-	if ((shkp = shop_keeper(level, *in_rooms(level, u.ux, u.uy, SHOPBASE))) &&
-	    inhishop(shkp) && obj->unpaid) {
-	    char desc[80];	/* == sizeof(obj_cmd[i].desc) */
-	    long price = unpaid_cost(obj);
-	    boolean unpaid_contents = Has_contents(obj) &&
-				      contained_cost(obj, shkp, 0L, FALSE, TRUE) > 0;
-	    snprintf(desc, 80, "pay (%ld %s%s)", price, currency(price),
-		     unpaid_contents ? ", excluding contents" : "");
-	    SET_OBJ_CMD2('p', "pay", desc);
-	}
+    /* pay for this item */
+    if ((shkp = shop_keeper(level, *in_rooms(level, u.ux, u.uy, SHOPBASE))) &&
+        inhishop(shkp) && obj->unpaid) {
+        char desc[80];  /* == sizeof(obj_cmd[i].desc) */
+        long price = unpaid_cost(obj);
+        boolean unpaid_contents = Has_contents(obj) &&
+            contained_cost(obj, shkp, 0L, FALSE, TRUE) > 0;
+        snprintf(desc, 80, "pay (%ld %s%s)", price, currency(price),
+                 unpaid_contents ? ", excluding contents" : "");
+        SET_OBJ_CMD2('p', "pay", desc);
+    }
 
     /* drink item; strangely, this one seems to have no exceptions */
     if (obj->oclass == POTION_CLASS)
@@ -2260,8 +2263,8 @@ dotravel(int x, int y)
         }
         pline("Where do you want to travel to?");
         if (getpos(&cc, FALSE, "the desired destination") < 0) {
-		if (flags.verbose)
-		    pline("Never mind.");
+            if (flags.verbose)
+                pline("Never mind.");
             return 0;
         }
     } else {
@@ -2281,7 +2284,7 @@ dotravel(int x, int y)
     u.last_str_turn = 0;
     flags.mv = TRUE;
 
-	return domove(0, 0, 0);
+    return domove(0, 0, 0);
 }
 
 /*cmd.c*/

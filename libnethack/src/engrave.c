@@ -365,7 +365,7 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
     if ((ep = engr_at(lev, x, y)) != 0)
         del_engr(ep, lev);
     ep = newengr(engr_len + 1);
-    memset(ep, 0, sizeof(struct engr) + engr_len + 1);
+    memset(ep, 0, sizeof (struct engr) + engr_len + 1);
 
     ep->nxt_engr = lev->lev_engr;
     lev->lev_engr = ep;
@@ -1085,8 +1085,7 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
         if (multi)
             nomovemsg =
                 is_ice(level, u.ux,
-                       u.
-                       uy) ? "You finish melting your message into the ice." :
+                       u.uy) ? "You finish melting your message into the ice." :
                 "You finish burning your message into the floor.";
         break;
     case MARK:
@@ -1212,7 +1211,7 @@ free_engravings(struct level *lev)
 void
 rest_engravings(struct memfile *mf, struct level *lev)
 {
-	struct engr *ep, *eprev, *enext;
+    struct engr *ep, *eprev, *enext;
     unsigned lth;
 
     mfmagic_check(mf, ENGRAVE_MAGIC);
@@ -1220,9 +1219,9 @@ rest_engravings(struct memfile *mf, struct level *lev)
     while (1) {
         lth = mread32(mf);
         if (!lth)       /* no more engravings */
-		    break;
-		if (lth > BUFSZ)
-		    panic("rest_engravings: engraving length too long! (%d)", lth);
+            break;
+        if (lth > BUFSZ)
+            panic("rest_engravings: engraving length too long! (%d)", lth);
 
         ep = newengr(lth);
         ep->engr_lth = lth;
@@ -1241,16 +1240,16 @@ rest_engravings(struct memfile *mf, struct level *lev)
         ep->engr_time = moves;
     }
 
-	/* engravings loaded above are reversed, so put it back in the right order */
-	ep = lev->lev_engr;
-	eprev = NULL;
-	while (ep) {
-		enext = ep->nxt_engr;
-		ep->nxt_engr = eprev;
-		eprev = ep;
-		ep = enext;
-	}
-	lev->lev_engr = eprev;
+    /* engravings loaded above are reversed, so put it back in the right order */
+    ep = lev->lev_engr;
+    eprev = NULL;
+    while (ep) {
+        enext = ep->nxt_engr;
+        ep->nxt_engr = eprev;
+        eprev = ep;
+        ep = enext;
+    }
+    lev->lev_engr = eprev;
 }
 
 void

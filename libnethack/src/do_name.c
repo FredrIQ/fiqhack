@@ -315,8 +315,8 @@ do_tname(struct obj *obj)
     if (!obj)
         obj = getobj(callable, "call");
     if (obj) {
-        /* behave as if examining it in inventory; this might set dknown if 
-           it was picked up while blind and the hero can now see */
+        /* behave as if examining it in inventory; this might set dknown if it 
+           was picked up while blind and the hero can now see */
         xname(obj);
 
         if (!obj->dknown) {

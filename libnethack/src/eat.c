@@ -286,7 +286,7 @@ touchfood(struct obj *otmp)
 
     if (carried(otmp)) {
         freeinv(otmp);
-        otmp->oxlth++;      /* hack to prevent merge */
+        otmp->oxlth++;  /* hack to prevent merge */
         if (!can_hold(otmp)) {
             sellobj_state(SELL_DONTSELL);
             dropy(otmp);
@@ -809,9 +809,9 @@ cpostfx(int pm)
                chance of getting the third, and a 1/4 chance of getting the
                fourth. And now a proof by induction: it works for 1 intrinsic (1
                in 1 of getting it) for 2 you have a 1 in 2 chance of getting the
-               second, otherwise you keep the first for 3 you have a 1 in 3 chance 
-               of getting the third, otherwise you keep the first or the second
-               for n+1 you have a 1 in n+1 chance of getting the (n+1)st,
+               second, otherwise you keep the first for 3 you have a 1 in 3
+               chance of getting the third, otherwise you keep the first or the
+               second for n+1 you have a 1 in n+1 chance of getting the (n+1)st,
                otherwise you keep the previous one. Elliott Kleinrock, October 5,
                1990 */
 
@@ -1978,7 +1978,7 @@ doeat(struct obj *otmp)
         victual.reqtime = objects[otmp->otyp].oc_delay;
         if (otmp->otyp != FORTUNE_COOKIE &&
             (otmp->cursed ||
-		 (((moves - otmp->age) > (otmp->blessed ? 50 : 30)) &&
+             (((moves - otmp->age) > (otmp->blessed ? 50 : 30)) &&
               (otmp->orotten || !rn2(7))))) {
 
             if (rottenfood(otmp)) {
@@ -2260,8 +2260,8 @@ newuhs(boolean incr)
             if (incr && occupation &&
                 (occupation != eatfood && occupation != opentin))
                 stop_occupation();
-			if (incr && flags.run)
-			    nomul(0, NULL);
+            if (incr && flags.run)
+                nomul(0, NULL);
             break;
         case WEAK:
             if (Hallucination)
@@ -2279,8 +2279,8 @@ newuhs(boolean incr)
             if (incr && occupation &&
                 (occupation != eatfood && occupation != opentin))
                 stop_occupation();
-			if (incr && flags.run)
-			    nomul(0, NULL);
+            if (incr && flags.run)
+                nomul(0, NULL);
             break;
         }
         u.uhs = newhs;
@@ -2296,16 +2296,17 @@ newuhs(boolean incr)
     }
 }
 
-static boolean can_sacrifice(const struct obj *otmp)
+static boolean
+can_sacrifice(const struct obj *otmp)
 {
-	return (otmp->otyp == CORPSE ||
-		otmp->otyp == AMULET_OF_YENDOR ||
-		otmp->otyp == FAKE_AMULET_OF_YENDOR);
+    return (otmp->otyp == CORPSE || otmp->otyp == AMULET_OF_YENDOR ||
+            otmp->otyp == FAKE_AMULET_OF_YENDOR);
 }
 
-static boolean other_floorfood(const struct obj *otmp)
+static boolean
+other_floorfood(const struct obj *otmp)
 {
-	return otmp->oclass == FOOD_CLASS;
+    return otmp->oclass == FOOD_CLASS;
 }
 
 /* Returns an object representing food.  Object may be either on floor or in
@@ -2332,14 +2333,14 @@ floorfood(const char *verb)
                        feeding ? is_edible : other_floorfood);
     
     /* if we can't touch floor objects then use invent food only */
-    if (!can_reach_floor() ||
-        (feeding && u.usteed) ||  /* can't eat off floor while riding */
+    if (!can_reach_floor() || (feeding && u.usteed) ||  /* can't eat off floor
+                                                           while riding */
         ((is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) &&
          (Wwalking || is_clinger(youmonst.data) || (Flying && !Breathless))) ||
         (ttmp && ttmp->tseen && (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT)
          && (!u.utrap || (u.utrap && u.utraptype != TT_PIT)) && !Passes_walls))
         goto skipfloor;
-    
+
 eat_floorfood:
     if (feeding && metallivorous(youmonst.data)) {
 	/* Two passes:
@@ -2371,7 +2372,7 @@ eat_floorfood:
                 can_floorfood++;
         }
     }
-        
+
     if (checking_can_floorfood) {
         for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
             if ((*floorfood_check)(otmp)) {
@@ -2383,9 +2384,10 @@ eat_floorfood:
         struct object_pick *floorfood_list;
         char qbuf[QBUFSZ];
         int n;
+
         sprintf(qbuf, "%c%s what?", highc(*verb), verb + 1);
         n = query_objlist(qbuf, level->objects[u.ux][u.uy],
-                          BY_NEXTHERE|INVORDER_SORT, &floorfood_list,
+                          BY_NEXTHERE | INVORDER_SORT, &floorfood_list,
                           PICK_ONE, floorfood_check);
         if (n) {
             otmp = floorfood_list[0].obj;
@@ -2429,9 +2431,8 @@ eaten_stat(int base, struct obj *obj)
 
     uneaten_amt = (long)obj->oeaten;
     full_amount =
-        (obj->otyp ==
-         CORPSE) ? (long)mons[obj->corpsenm].cnutrit : (long)objects[obj->otyp].
-        oc_nutrition;
+         (obj->otyp == CORPSE) ? (long)mons[obj->corpsenm].cnutrit :
+         (long)objects[obj->otyp].oc_nutrition;
     if (uneaten_amt > full_amount) {
         impossible
             ("partly eaten food (%ld) more nutritious than untouched food (%ld)",

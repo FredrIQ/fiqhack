@@ -1493,13 +1493,11 @@ lev_by_name(const char *nam)
         idx = ledger_no(&dlev);
         if ((dlev.dnum == u.uz.dnum ||
              /* within same branch, or else main dungeon <-> gehennom */
-             (u.uz.dnum == valley_level.dnum &&
-              dlev.dnum == medusa_level.dnum) ||
-             (u.uz.dnum == medusa_level.dnum &&
-              dlev.dnum == valley_level.dnum)) &&
+             (u.uz.dnum == valley_level.dnum && dlev.dnum == medusa_level.dnum)
+             || (u.uz.dnum == medusa_level.dnum &&
+                 dlev.dnum == valley_level.dnum)) &&
             /* either wizard mode or else seen and not forgotten */
-            (wizard || (levels [idx] && !levels [idx]->flags.forgotten)))
-        {
+            (wizard || (levels[idx] && !levels[idx]->flags.forgotten))) {
             lev = depth(&slev->dlevel);
         }
     } else {    /* not a specific level; try branch names */
@@ -1513,9 +1511,9 @@ lev_by_name(const char *nam)
             idx &= 0x00FF;
             if (        /* either wizard mode, or else _both_ sides of branch
                            seen */
-                wizard || ((levels[idx] && !levels[idx]->flags.forgotten) &&
-                           (levels[idxtoo] &&
-                            !levels[idxtoo]->flags.forgotten))) {
+                   wizard || ((levels[idx] && !levels[idx]->flags.forgotten) &&
+                              (levels[idxtoo] &&
+                               !levels[idxtoo]->flags.forgotten))) {
                 if (ledger_to_dnum(idxtoo) == u.uz.dnum)
                     idx = idxtoo;
                 dlev.dnum = ledger_to_dnum(idx);
@@ -1564,12 +1562,15 @@ print_branch(struct menulist *menu, int dnum, int lower_bound, int upper_bound,
                 lchoices->lev[lchoices->idx] = br->end1.dlevel;
                 lchoices->dgn[lchoices->idx] = br->end1.dnum;
                 lchoices->playerlev[lchoices->idx] = depth(&br->end1);
-                
-                add_menuitem(menu, lchoices->idx + 1, buf,
-                             lchoices->menuletter, FALSE);
-                if (lchoices->menuletter == 'z') lchoices->menuletter = 'A';
-                else if (lchoices->menuletter == 'Z') lchoices->menuletter = 'a';
-                else lchoices->menuletter++;
+
+                add_menuitem(menu, lchoices->idx + 1, buf, lchoices->menuletter,
+                             FALSE);
+                if (lchoices->menuletter == 'z')
+                    lchoices->menuletter = 'A';
+                else if (lchoices->menuletter == 'Z')
+                    lchoices->menuletter = 'a';
+                else
+                    lchoices->menuletter++;
                 lchoices->idx++;
             } else
                 add_menutext(menu, buf);
@@ -1645,10 +1646,14 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
                 }
                 lchoices.playerlev[lchoices.idx] = depth(&slev->dlevel);
 
-		add_menuitem(&menu, lchoices.idx + 1, buf, lchoices.menuletter, FALSE);
-		if (lchoices.menuletter == 'z') lchoices.menuletter = 'A';
-		else if (lchoices.menuletter == 'Z') lchoices.menuletter = 'a';
-		else lchoices.menuletter++;
+                add_menuitem(&menu, lchoices.idx + 1, buf, lchoices.menuletter,
+                             FALSE);
+                if (lchoices.menuletter == 'z')
+                    lchoices.menuletter = 'A';
+                else if (lchoices.menuletter == 'Z')
+                    lchoices.menuletter = 'a';
+                else
+                    lchoices.menuletter++;
                 lchoices.idx++;
             } else
                 add_menutext(&menu, buf);
@@ -1828,9 +1833,9 @@ overview_scan(const struct level *lev, struct overview_info *oi)
             case S_altar:
                 oi->altars++;
                 oi->altaralign |= (lev->locations[x][y].altarmask & AM_MASK);
-			rnum = lev->locations[x][y].roomno;
-			if (rnum >= ROOMOFFSET &&
-			    lev->rooms[rnum - ROOMOFFSET].rtype == TEMPLE)
+                rnum = lev->locations[x][y].roomno;
+                if (rnum >= ROOMOFFSET &&
+                    lev->rooms[rnum - ROOMOFFSET].rtype == TEMPLE)
                     oi->temples++;
                 break;
 
@@ -1923,8 +1928,8 @@ overview_print_lev(char *buf, const struct level *lev)
 
     sprintf(eos(buf), "%s",
             lev ==
-            level ? (program_state.
-                     gameover ? " <- You were here" : " <- You are here") : "");
+            level ? (program_state.gameover ? " <- You were here" :
+                     " <- You are here") : "");
 }
 
 
@@ -1987,7 +1992,7 @@ overview_print_info(char *buf, const struct overview_info *oi)
         ADDNTOBUF("temple", oi->temples);
 
     /* only print out altar's god if they are all to your god */
-	if (oi->altars && oi->altaralign == Align2amask(u.ualign.type))
+    if (oi->altars && oi->altaralign == Align2amask(u.ualign.type))
         sprintf(eos(buf), " to %s", align_gname(u.ualign.type));
 
     ADDNTOBUF("fountain", oi->fountains);
@@ -2093,10 +2098,10 @@ dooverview(void)
     overview_print_lev(buf, lev);
     pline("Now viewing %s%s.  Press any key to return.",
           Is_astralevel(&lev->z) ? "the " : "", buf);
-	notify_levelchange(&lev->z);
+    notify_levelchange(&lev->z);
     flush_screen_nopos();
     win_pause_output(P_MAP);
-	notify_levelchange(NULL);
+    notify_levelchange(NULL);
     doredraw();
 
     return 0;

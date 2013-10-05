@@ -1470,8 +1470,8 @@ hito_stone_to_flesh(struct obj *obj)
             if (!animate_statue(obj, oox, ooy, ANIMATE_SPELL, NULL)) {
                 struct obj *item;
 
-            makecorpse:if (mons[obj->corpsenm].
-                    geno & (G_NOCORPSE | G_UNIQ)) {
+            makecorpse:
+                if (mons[obj->corpsenm].geno & (G_NOCORPSE | G_UNIQ)) {
                     res = 0;
                     break;
                 }
@@ -2935,7 +2935,7 @@ boomhit(int dx, int dy)
         if (IS_SINK(level->locations[bhitpos.x][bhitpos.y].typ))
             break;      /* boomerang falls on sink */
     }
-    tmpsym_end(tsym); /* do not leave last symbol */
+    tmpsym_end(tsym);   /* do not leave last symbol */
     return NULL;
 }
 
@@ -3221,7 +3221,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
         break;
     }
 
-    if (Half_spell_damage && dam && type < 0 && (type > -20 || type < -29)) 
+    if (Half_spell_damage && dam && type < 0 && (type > -20 || type < -29))
         /* !Breath */
         dam = (dam + 1) / 2;
     losehp(dam, fltxt, KILLED_BY_AN);
@@ -4222,8 +4222,7 @@ retry:
         examine_object(otmp);
         /* The(aobjnam()) is safe since otmp is unidentified -dlc */
         hold_another_object(otmp,
-                            u.
-                            uswallow ? "Oops!  %s out of your reach!"
+                            u.uswallow ? "Oops!  %s out of your reach!"
                             : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
                                level->locations[u.ux][u.uy].typ < IRONBARS ||
                                level->locations[u.ux][u.uy].typ >=

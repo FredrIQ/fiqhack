@@ -696,8 +696,9 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
         } else if (mode == TEST_TRAV) {
             struct obj *obj;
 
-	    /* never travel through boulders in Sokoban */
-	    if (In_sokoban(&u.uz)) return FALSE;
+            /* never travel through boulders in Sokoban */
+            if (In_sokoban(&u.uz))
+                return FALSE;
 
             /* don't pick two boulders in a row, unless there's a way thru */
             if (sobj_at(BOULDER, level, ux, uy) && !In_sokoban(&u.uz)) {
@@ -730,7 +731,8 @@ unexplored(int x, int y)
     const struct trap *ttmp;
     int mem_bg;
 
-    if (!isok(x, y)) return FALSE;
+    if (!isok(x, y))
+        return FALSE;
     ttmp = t_at(level, x, y);
     mem_bg = level->locations[x][y].mem_bg;
 
@@ -752,11 +754,10 @@ unexplored(int x, int y)
     if (level->locations[x][y].mem_obj && inside_shop(level, x, y))
         return FALSE;
 
-    if (mem_bg == S_altar    || mem_bg == S_throne   ||
-        mem_bg == S_sink     || mem_bg == S_fountain ||
-        mem_bg == S_dnstair  || mem_bg == S_upstair  ||
-        mem_bg == S_dnsstair || mem_bg == S_upsstair ||
-        mem_bg == S_dnladder || mem_bg == S_upladder)
+    if (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
+        mem_bg == S_fountain || mem_bg == S_dnstair || mem_bg == S_upstair ||
+        mem_bg == S_dnsstair || mem_bg == S_upsstair || mem_bg == S_dnladder ||
+        mem_bg == S_upladder)
         return TRUE;
 
     if (level->locations[x][y].mem_obj)
@@ -764,11 +765,11 @@ unexplored(int x, int y)
 
     for (i = -1; i <= 1; i++)
         for (j = -1; j <= 1; j++) {
-		/* corridors with only unexplored diagonals aren't interesting */
-		if ((mem_bg == S_corr || mem_bg == S_litcorr) && i && j)
-		    continue;
+            /* corridors with only unexplored diagonals aren't interesting */
+            if ((mem_bg == S_corr || mem_bg == S_litcorr) && i && j)
+                continue;
             if (isok(x + i, y + j) &&
-		    level->locations[x+i][y+j].mem_bg == S_unexplored) {
+                level->locations[x + i][y + j].mem_bg == S_unexplored) {
                 int flag = TRUE;
 
                 for (k = -1; k <= 1; k++)
@@ -785,32 +786,32 @@ unexplored(int x, int y)
 
 /* Returns a distance modified by a constant factor.
  * The lower the value the better.*/
-static int autotravel_weighting(int x, int y, unsigned distance)
+static int
+autotravel_weighting(int x, int y, unsigned distance)
 {
-	const struct rm *loc = &level->locations[x][y];
-	int mem_bg = loc->mem_bg;
+    const struct rm *loc = &level->locations[x][y];
+    int mem_bg = loc->mem_bg;
 
-	    /* greedy for items */
-	if (loc->mem_obj)
-	    return distance;
+    /* greedy for items */
+    if (loc->mem_obj)
+        return distance;
 
-	/* some dungeon features */
-	if (mem_bg == S_altar || mem_bg == S_throne ||
-	    mem_bg == S_sink  || mem_bg == S_fountain)
-	    return distance;
+    /* some dungeon features */
+    if (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
+        mem_bg == S_fountain)
+        return distance;
 
-	/* stairs and ladders */
-	if (mem_bg == S_dnstair  || mem_bg == S_upstair  ||
-	    mem_bg == S_dnsstair || mem_bg == S_upsstair ||
-	    mem_bg == S_dnladder || mem_bg == S_upladder)
-	    return distance;
+    /* stairs and ladders */
+    if (mem_bg == S_dnstair || mem_bg == S_upstair || mem_bg == S_dnsstair ||
+        mem_bg == S_upsstair || mem_bg == S_dnladder || mem_bg == S_upladder)
+        return distance;
 
-	/* favor rooms, but not closed doors */
-	if (loc->roomno && !(mem_bg == S_hcdoor || mem_bg == S_vcdoor))
-	    return distance * 2;
+    /* favor rooms, but not closed doors */
+    if (loc->roomno && !(mem_bg == S_hcdoor || mem_bg == S_vcdoor))
+        return distance * 2;
 
-	/* by default return distance multiplied by a large constant factor */
-	return distance * 10;
+    /* by default return distance multiplied by a large constant factor */
+    return distance * 10;
 }
 
 /*
@@ -880,7 +881,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                 for (dir = 0; dir < dirmax; ++dir) {
                     int nx = x + xdir[ordered[dir]];
                     int ny = y + ydir[ordered[dir]];
-		    /*
+
+                    /* 
                      * When guessing and trying to travel as close as possible
                      * to an unreachable target space, don't include spaces
                      * that would never be picked as a guessed target in the
@@ -915,7 +917,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                      * By limiting the travel matrix here, space a in the example
                      * above is never included in it, preventing the cycle.
                      */
-                    if (!isok(nx, ny) || (guess == couldsee_func && !guess(nx, ny)))
+                    if (!isok(nx, ny) ||
+                        (guess == couldsee_func && !guess(nx, ny)))
                         continue;
 
                     if ((!Passes_walls && !can_ooze(&youmonst) &&
@@ -972,20 +975,21 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
         if (guess) {
             int px = tx, py = ty;       /* pick location */
             int dist, nxtdist, d2, nd2;
-	    boolean autoexploring = (guess == unexplored);
+            boolean autoexploring = (guess == unexplored);
 
             dist = distmin(ux, uy, tx, ty);
             d2 = dist2(ux, uy, tx, ty);
-	    if (autoexploring) {
-		dist = INT_MAX;
-		d2 = INT_MAX;
+            if (autoexploring) {
+                dist = INT_MAX;
+                d2 = INT_MAX;
             }
-	    for (tx = 1; tx < COLNO; ++tx) {
-		for (ty = 0; ty < ROWNO; ++ty) {
+            for (tx = 1; tx < COLNO; ++tx) {
+                for (ty = 0; ty < ROWNO; ++ty) {
                     if (travel[tx][ty]) {
                         nxtdist = distmin(ux, uy, tx, ty);
-			if (autoexploring)
-			    nxtdist = autotravel_weighting(tx, ty, travel[tx][ty]);
+                        if (autoexploring)
+                            nxtdist =
+                                autotravel_weighting(tx, ty, travel[tx][ty]);
                         if (nxtdist == dist && guess(tx, ty)) {
                             nd2 = dist2(ux, uy, tx, ty);
                             if (nd2 < d2) {
@@ -1001,8 +1005,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                             d2 = dist2(ux, uy, tx, ty);
                         }
                     }
-		}
-	    }
+                }
+            }
 
             if (px == u.ux && py == u.uy) {
                 /* no guesses, just go in the general direction */
@@ -1068,23 +1072,24 @@ domove(schar dx, schar dy, schar dz)
 
     u_wipe_engr(rnd(5));
 
-	/* Don't allow running, travel or autoexplore when stunned or confused. */
-	if (Stunned || Confusion) {
-	    const char *stop_which = NULL;
-	    if (flags.travel) {
-		if (iflags.autoexplore)
-		    stop_which = "explore";
-		else
-		    stop_which = "travel";
-	    } else if (flags.run) {
-		stop_which = "run";
-	    }
-	    if (stop_which) {
-		pline("Your head is spinning too badly to %s.", stop_which);
-		nomul(0, NULL);
-		return 0;
-	    }
-	}
+    /* Don't allow running, travel or autoexplore when stunned or confused. */
+    if (Stunned || Confusion) {
+        const char *stop_which = NULL;
+
+        if (flags.travel) {
+            if (iflags.autoexplore)
+                stop_which = "explore";
+            else
+                stop_which = "travel";
+        } else if (flags.run) {
+            stop_which = "run";
+        }
+        if (stop_which) {
+            pline("Your head is spinning too badly to %s.", stop_which);
+            nomul(0, NULL);
+            return 0;
+        }
+    }
 
     if (flags.travel) {
         if (iflags.autoexplore) {
@@ -1099,11 +1104,11 @@ domove(schar dx, schar dy, schar dz)
                 nomul(0, NULL);
                 return 0;
             }
-		if (u.uhs >= WEAK) {
-		    pline("You feel too weak from hunger to explore.");
-		    nomul(0, NULL);
-		    return 0;
-		}
+            if (u.uhs >= WEAK) {
+                pline("You feel too weak from hunger to explore.");
+                nomul(0, NULL);
+                return 0;
+            }
             u.tx = u.ux;
             u.ty = u.uy;
             if (!findtravelpath(unexplored, &dx, &dy)) {
@@ -1120,17 +1125,16 @@ domove(schar dx, schar dy, schar dz)
         }
     }
 
-    /* Travel hit an obstacle, or domove() was called with
-     * dx, dy and dz all zero, which they shouldn't do. */
-    if (dx == 0 && dy == 0) {	/* dz is always zero here from above */
+    /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
+       zero, which they shouldn't do. */
+    if (dx == 0 && dy == 0) {   /* dz is always zero here from above */
         nomul(0, NULL);
         return 0;
     }
 
-    if (((wtcap = near_capacity()) >= OVERLOADED
-         || (wtcap > SLT_ENCUMBER &&
-             (Upolyd ? (u.mh < 5 && u.mh != u.mhmax)
-              : (u.uhp < 10 && u.uhp != u.uhpmax))))
+    if (((wtcap = near_capacity()) >= OVERLOADED ||
+         (wtcap > SLT_ENCUMBER && (Upolyd ? (u.mh < 5 && u.mh != u.mhmax)
+                                   : (u.uhp < 10 && u.uhp != u.uhpmax))))
         && !Is_airlevel(&u.uz)) {
         if (wtcap < OVERLOADED) {
             pline("You don't have enough stamina to move.");
@@ -1218,8 +1222,7 @@ domove(schar dx, schar dy, schar dz)
              (is_pool(level, x, y) || is_lava(level, x, y)) &&
              level->locations[x][y].seenv)) {
             if (flags.run >= 2) {
-                if (trap && trap->tseen && flags.run == 8 &&
-                    iflags.autoexplore)
+                if (trap && trap->tseen && flags.run == 8 && iflags.autoexplore)
                     autoexplore_msg("a trap", DO_MOVE);
                 nomul(0, NULL);
                 return 0;
@@ -1384,8 +1387,8 @@ domove(schar dx, schar dy, schar dz)
                 pline("You %s to the edge of the pit.",
                       (In_sokoban(&u.uz) &&
                        Levitation) ?
-                      "struggle against the air currents and float" : u.
-                      usteed ? "ride" : "crawl");
+                      "struggle against the air currents and float" : u.usteed ?
+                      "ride" : "crawl");
                 fill_pit(level, u.ux, u.uy);
                 vision_full_recalc = 1; /* vision limits change */
             } else if (flags.verbose) {
@@ -1616,12 +1619,12 @@ domove(schar dx, schar dy, schar dz)
                 nomul(0, NULL);
         } else if (flags.travel && iflags.autoexplore) {
             int wallcount, mem_bg;
+
             /* autoexplore stoppers: being orthogonally adjacent to a boulder,
-             * being orthogonally adjacent to 3 or more walls; this logic could
-             * be incorrect when blind, but we check for that earlier; while not
-             * blind, we'll assume the hero knows about adjacent walls and
-             * boulders due to being able to see them
-             */
+               being orthogonally adjacent to 3 or more walls; this logic could
+               be incorrect when blind, but we check for that earlier; while not
+               blind, we'll assume the hero knows about adjacent walls and
+               boulders due to being able to see them */
             wallcount = 0;
             if (isok(u.ux - 1, u.uy))
                 wallcount +=
@@ -1639,18 +1642,19 @@ domove(schar dx, schar dy, schar dz)
                 wallcount +=
                     IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
                     ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
-            if (wallcount >= 3) nomul(0, NULL);
-            /*
+            if (wallcount >= 3)
+                nomul(0, NULL);
+            /* 
              * More autoexplore stoppers: interesting dungeon features
              * that haven't been stepped on yet.
              */
             mem_bg = tmpr->mem_bg;
             if (tmpr->mem_stepped == 0 &&
-                (mem_bg == S_altar    || mem_bg == S_throne   ||
-                 mem_bg == S_sink     || mem_bg == S_fountain ||
-                 mem_bg == S_dnstair  || mem_bg == S_upstair  ||
-                 mem_bg == S_dnsstair || mem_bg == S_upsstair ||
-                 mem_bg == S_dnladder || mem_bg == S_upladder))
+                (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
+                 mem_bg == S_fountain || mem_bg == S_dnstair ||
+                 mem_bg == S_upstair || mem_bg == S_dnsstair ||
+                 mem_bg == S_upsstair || mem_bg == S_dnladder ||
+                 mem_bg == S_upladder))
                 nomul(0, NULL);
         }
     }
@@ -2656,7 +2660,7 @@ do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 {
     int ret;
 
-	iflags.autoexplore = FALSE;
+    iflags.autoexplore = FALSE;
     flags.travel = iflags.travel1 = 0;
     flags.run = runmode;
 

@@ -281,6 +281,7 @@ rogue_vision(char **next,       /* could_see array pointers */
              char *rmin, char *rmax)
 {
     int rnum = level->locations[u.ux][u.uy].roomno - ROOMOFFSET;
+
     /* no SHARED... */
 
     int start, stop, in_door, xhi, xlo, yhi, ylo;

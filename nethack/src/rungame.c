@@ -27,7 +27,9 @@ get_gamedir(enum game_dirs dirtype, wchar_t * buf)
            an alternative command line parser.) */
         wchar_t *r1 = nhPath;
         char *r2 = override_userdir;
-        while (*r2) *r1++ = *r2++;
+
+        while (*r2)
+            *r1++ = *r2++;
     } else {
         /* Get the location of "AppData\Roaming" (Vista, 7) or "Application
            Data" (XP). The returned Path does not include a trailing backslash. 
@@ -246,8 +248,9 @@ rungame(void)
 
     sprintf(prompt + strlen(prompt), " %s %s. What is your name?",
             info->racenames[race], (gend &&
-                                    info->rolenames_f[role] ? info->
-                                    rolenames_f : info->rolenames_m)[role]);
+                                    info->
+                                    rolenames_f[role] ? info->rolenames_f :
+                                    info->rolenames_m)[role]);
 
     strncpy(plname, settings.plname, PL_NSIZ);
     /* The player name is set to "wizard" (again) in nh_start_game, so setting

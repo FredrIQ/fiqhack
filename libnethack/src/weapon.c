@@ -11,7 +11,7 @@
 
 /* Categories whose names don't come from OBJ_NAME(objects[type])
  */
-#define PN_BARE_HANDED       (-1)    /* includes martial arts */
+#define PN_BARE_HANDED       (-1)       /* includes martial arts */
 #define PN_TWO_WEAPONS       (-2)
 #define PN_RIDING            (-3)
 #define PN_POLEARMS          (-4)
@@ -1039,8 +1039,9 @@ enhance_weapon_skill(void)
                 add_menuitem(&menu, id, buf, 0, FALSE);
             }
 
-        strcpy(buf, (to_advance > 0) ?
-               "Pick a skill to advance:" : "Current skills:");
+        strcpy(buf,
+               (to_advance >
+                0) ? "Pick a skill to advance:" : "Current skills:");
         if (!(wizard && speedy))
             sprintf(eos(buf), "  (%d slot%s available)", u.weapon_slots,
                     plur(u.weapon_slots));

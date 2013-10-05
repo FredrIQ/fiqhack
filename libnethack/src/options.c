@@ -9,7 +9,7 @@
 
 static int change_inv_order(char *op);
 static struct nh_autopickup_rules *copy_autopickup_rules(
-  const struct nh_autopickup_rules *in);
+    const struct nh_autopickup_rules *in);
 
 /* -------------------------------------------------------------------------- */
 
@@ -141,7 +141,7 @@ static const struct nh_option_desc const_options[] = {
     {"confirm", "ask before hitting tame or peaceful monsters", OPTTYPE_BOOL,
      {VTRUE}},
     {"delay_msg", "minimum turns to show message of turns spent (0 to disable)",
-     OPTTYPE_INT, {(void*)2}},
+     OPTTYPE_INT, {(void *)2}},
     {"disclose", "whether to disclose information at end of game", OPTTYPE_ENUM,
      {(void *)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING,

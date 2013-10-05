@@ -302,14 +302,14 @@ nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     flags.move = 0;
     set_wear();
     pickup(1);
-    
+
     log_command_result();
-    
+
     program_state.game_running = TRUE;
     youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
     realtime_tasks();
     post_init_tasks();
-    
+
     api_exit();
     return TRUE;
 
@@ -414,7 +414,7 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     doredraw();
 
     /* nh_start_game() does this via newgame(), but since this function doesn't
-     * call newgame(), we have to do it here instead. */
+       call newgame(), we have to do it here instead. */
     notify_levelchange(NULL);
 
     bot();
@@ -454,7 +454,7 @@ you_moved(void)
 
     /* Begin turn-tracking for delay_msg. */
     if (iflags.delay_msg > 0 && delay_start == 0)
-	delay_start = moves;
+        delay_start = moves;
 
     /* actual time passed */
     youmonst.movement -= NORMAL_SPEED;
@@ -781,10 +781,8 @@ pre_move_tasks(boolean didmove)
     if (iflags.botl)
         bot();
 
-    if (didmove &&
-        (u.uhave.amulet || Clairvoyant) &&
-        !In_endgame(&u.uz) && !BClairvoyant &&
-        !(moves % 15) && !rn2(2))
+    if (didmove && (u.uhave.amulet || Clairvoyant) && !In_endgame(&u.uz) &&
+        !BClairvoyant && !(moves % 15) && !rn2(2))
         do_vicinity_map();
 
     u.umoved = FALSE;
@@ -805,34 +803,37 @@ pre_move_tasks(boolean didmove)
     update_location(FALSE);
 
     if (didmove) {
-        /* Mark the current square as stepped on unless blind,
-         * since that would imply that we had properly explored it. */
+        /* Mark the current square as stepped on unless blind, since that would 
+           imply that we had properly explored it. */
         struct rm *loc = &level->locations[u.ux][u.uy];
+
         if (!Blind && !loc->mem_stepped)
             loc->mem_stepped = 1;
     }
 }
 
 
-static boolean is_delayed(void)
+static boolean
+is_delayed(void)
 {
     /* See multi/occupation comment in nh_command() for details. */
-    return (multi >= 0 && occupation) || /* occupied, e.g. forcing lock */
-	   multi > 0 ||			 /* command with count */
-	   multi < 0;			 /* delayed, e.g. wearing/removing armor */
+    return (multi >= 0 && occupation) ||        /* occupied, e.g. forcing lock */
+        multi > 0 ||    /* command with count */
+        multi < 0;      /* delayed, e.g. wearing/removing armor */
 }
 
 
-static void do_delay_msg(void)
+static void
+do_delay_msg(void)
 {
     /* End turn-tracking for delay_msg. */
     /* Be careful not to print and reset if still delayed somehow. */
     if (iflags.delay_msg > 0 && delay_start && !is_delayed()) {
-	if (moves - delay_start >= iflags.delay_msg) {
-	    pline("[%d %s]", moves - delay_start,
-		  iflags.delay_msg == 1 ? "turn" : "turns");
-	}
-	delay_start = 0;
+        if (moves - delay_start >= iflags.delay_msg) {
+            pline("[%d %s]", moves - delay_start,
+                  iflags.delay_msg == 1 ? "turn" : "turns");
+        }
+        delay_start = 0;
     }
 }
 
@@ -860,9 +861,9 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
             if (!domove(u.dx, u.dy, 0)) {
-		/* Don't use a move when travelling into an obstacle. */
+                /* Don't use a move when travelling into an obstacle. */
                 flags.move = FALSE;
-		nomul(0, NULL);
+                nomul(0, NULL);
             }
         } else
             do_command(saved_cmd, multi, FALSE, arg);
@@ -902,10 +903,10 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 
     pre_move_tasks(didmove);
     do_delay_msg();
-    
+
     if (multi == 0 && !occupation)
         flush_screen(); /* Flush screen buffer */
-    
+
     return -1;
 }
 

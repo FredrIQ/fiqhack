@@ -206,7 +206,7 @@ extern void feel_location(xchar, xchar);
 extern void newsym(int, int);
 extern void shieldeff(xchar, xchar);
 extern struct tmp_sym *tmpsym_init(int style, int sym);
-extern struct tmp_sym *tmpsym_initobj(struct obj* obj);
+extern struct tmp_sym *tmpsym_initobj(struct obj *obj);
 extern void tmpsym_change(struct tmp_sym *tsym, int sym);
 extern void tmpsym_end(struct tmp_sym *tsym);
 extern void tmpsym_at(struct tmp_sym *tsym, int x, int y);

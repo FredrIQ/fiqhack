@@ -473,8 +473,8 @@ fillholetyp(int x, int y)
             if (is_moat(level, x1, y1))
                 moat_cnt++;
             else if (is_pool(level, x1, y1))
-                /* This must come after is_moat since moats are pools but
-                 * not vice-versa. */
+                /* This must come after is_moat since moats are pools but not
+                   vice-versa. */
                 pool_cnt++;
             else if (is_lava(level, x1, y1))
                 lava_cnt++;

@@ -257,8 +257,7 @@ cmd_update_status(json_t * params, int display_only)
             player.nr_items = STATUSITEMS_MAX;
         for (i = 0; i < player.nr_items; i++)
             strncpy(player.statusitems[i],
-                   json_string_value(json_array_get(p, i)),
-                   ITEMLEN-1);
+                    json_string_value(json_array_get(p, i)), ITEMLEN - 1);
     }
 
     cur_wndprocs.win_update_status(&player);

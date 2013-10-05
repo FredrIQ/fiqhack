@@ -450,8 +450,8 @@ mattacku(struct monst *mtmp)
             char buf[BUFSZ];
 
             sprintf(buf, "You appear to be %s again.",
-                    Upolyd ? (const char *)an(youmonst.data->
-                                              mname) : (const char *)
+                    Upolyd ? (const char *)an(youmonst.
+                                              data->mname) : (const char *)
                     "yourself");
             unmul(buf); /* immediately stop mimicking */
         }
@@ -628,8 +628,8 @@ mattacku(struct monst *mtmp)
                         pline("%s lunges forward and recoils!", Monnam(mtmp));
                     else
                         You_hear("a %s nearby.",
-                                 is_whirly(mtmp->
-                                           data) ? "rushing noise" : "splat");
+                                 is_whirly(mtmp->data) ? "rushing noise" :
+                                 "splat");
                 }
             }
             break;
@@ -1305,8 +1305,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                    || dmgtype(youmonst.data, AD_SSEX)
             ) {
             pline("%s %s.", Monnam(mtmp),
-                  mtmp->
-                  minvent ?
+                  mtmp->minvent ?
                   "brags about the goods some dungeon explorer provided" :
                   "makes some remarks about how difficult theft is lately");
             if (!tele_restrict(mtmp))
@@ -1406,8 +1405,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
         /* this condition must match the one in sounds.c for MS_NURSE */
         if (!(uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep))) &&
-            !uarmu && !uarm && !uarmh &&
-            !uarms && !uarmg && !uarmc && !uarmf) {
+            !uarmu && !uarm && !uarmh && !uarms && !uarmg && !uarmc && !uarmf) {
             boolean goaway = FALSE;
 
             pline("%s hits!  (I hope you don't mind.)", Monnam(mtmp));
@@ -1989,8 +1987,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
                 break;  /* silently */
             pline("%s %s.", Monnam(mtmp),
                   (mtmp->data == &mons[PM_MEDUSA] &&
-                   mtmp->
-                   mcan) ? "doesn't look all that ugly" :
+                   mtmp->mcan) ? "doesn't look all that ugly" :
                   "gazes ineffectually");
             break;
         }
@@ -2696,15 +2693,15 @@ cloneu(void)
         return NULL;
 
     mon = makemon(youmonst.data, level, u.ux, u.uy, NO_MINVENT | MM_EDOG);
-	if (mon) {
-    mon = christen_monst(mon, plname);
-    initedog(mon);
-    mon->m_lev = youmonst.data->mlevel;
-    mon->mhpmax = u.mhmax;
-    mon->mhp = u.mh / 2;
-    u.mh -= mon->mhp;
-    iflags.botl = 1;
-	}
+    if (mon) {
+        mon = christen_monst(mon, plname);
+        initedog(mon);
+        mon->m_lev = youmonst.data->mlevel;
+        mon->mhpmax = u.mhmax;
+        mon->mhp = u.mh / 2;
+        u.mh -= mon->mhp;
+        iflags.botl = 1;
+    }
     return mon;
 }
 

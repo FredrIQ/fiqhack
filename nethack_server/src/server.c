@@ -747,15 +747,16 @@ handle_communication(int fd, int epfd, unsigned int event_mask)
                 ret = read(client->pipe_in, buf, sizeof (buf));
                 errno_orig = errno;
                 if (ret == -1 && errno == EINTR)
-                    goto redo; /* not "continue", we don't want to check the
-                                  loop condition */
+                    goto redo;  /* not "continue", we don't want to check the
+                                   loop condition */
                 else if (ret > 0) {
                     /* write to the socket; be careful to write all of it... */
                     write_count = send_to_client(client, buf, ret);
                     /* write_count != ret if no more data could be sent and the
                        remainder buf was copied to client->unsent_data for later
                        sending */
-                } else write_count = ret;
+                } else
+                    write_count = ret;
             } while (ret == write_count && ret == sizeof (buf));
             if (ret == -1)
                 log_msg("error while reading from pipe: %s",

@@ -175,9 +175,9 @@ init_game_paths(const char *argv0)
     /* WIN32 / UNIX is set by the header files, /but/ those aren't included
        during dependency calculation. We want to error out if neither is set,
        but not in a way that will confuse dependencies. Thus, we want something
-       here that the preprocessor is OK with but the compiler will reject.
-       A negative-size array is the standard "portable" way to do a static
-       assert, like is needed here (it works in practice, albeit possibly not in
+       here that the preprocessor is OK with but the compiler will reject. A
+       negative-size array is the standard "portable" way to do a static assert, 
+       like is needed here (it works in practice, albeit possibly not in
        theory). */
 
     int please_define_UNIX_or_WIN32[-1];
@@ -261,7 +261,8 @@ mainmenu(void)
         wattron(basewin, A_BOLD | COLOR_PAIR(4));
         for (i = 0; i < logoheight; i++) {
             wmove(basewin, i, (COLS - strlen(nhlogo[0])) / 2);
-            if (nhlogo[i]) waddstr(basewin, nhlogo[i]);
+            if (nhlogo[i])
+                waddstr(basewin, nhlogo[i]);
         }
         wattroff(basewin, A_BOLD | COLOR_PAIR(4));
         mvwaddstr(basewin, LINES - 3, 0, copybanner[0]);
@@ -313,7 +314,7 @@ mainmenu(void)
             break;
 
         case EXITGAME:
-		n = -1; /* simulate menu cancel */
+            n = -1;     /* simulate menu cancel */
             return;
         }
     }

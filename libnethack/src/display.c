@@ -450,8 +450,8 @@ display_monster(xchar x, xchar y,       /* display position */
             }
 
         case M_AP_MONSTER:
-		/* Visible monsters always clear 'I' symbols. */
-		level->locations[x][y].mem_invis = 0;
+            /* Visible monsters always clear 'I' symbols. */
+            level->locations[x][y].mem_invis = 0;
             dbuf_set(x, y, level->locations[x][y].mem_bg,
                      level->locations[x][y].mem_trap,
                      level->locations[x][y].mem_obj,
@@ -486,8 +486,8 @@ display_monster(xchar x, xchar y,       /* display position */
            remember the 'invisible' state. */
         level->locations[x][y].mem_invis = 0;
 
-	/* Visible monsters always clear 'I' symbols. */
-	level->locations[x][y].mem_invis = 0;
+        /* Visible monsters always clear 'I' symbols. */
+        level->locations[x][y].mem_invis = 0;
 
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap,
@@ -673,7 +673,7 @@ feel_location(xchar x, xchar y)
         }
 
         /* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-	if (loc->typ == ROOM && loc->mem_bg == S_room && !loc->waslit) {
+        if (loc->typ == ROOM && loc->mem_bg == S_room && !loc->waslit) {
             loc->mem_bg = S_darkroom;
             loc->mem_door_l = 0;
             loc->mem_door_t = 0;
@@ -902,8 +902,8 @@ tmpsym_initimpl(int style, int sym, int extra)
     tsym->style = style;
     tsym->sym = sym;
     tsym->extra = extra;
-    flush_screen(); /* flush buffered glyphs */
-    
+    flush_screen();     /* flush buffered glyphs */
+
     tsym->prev = NULL;
     if (tsym_head) {
         tsym_head->prev = tsym;
@@ -983,8 +983,8 @@ tmpsym_end(struct tmp_sym *tsym)
         /* Erase (reset) from source to end */
         for (i = 0; i < tsym->sidx; i++)
             newsym(tsym->saved[i].x, tsym->saved[i].y);
-    } else {        /* DISP_FLASH or DISP_ALWAYS */
-        if (tsym->sidx)     /* been called at least once */
+    } else {    /* DISP_FLASH or DISP_ALWAYS */
+        if (tsym->sidx) /* been called at least once */
             newsym(tsym->saved[0].x, tsym->saved[0].y);
     }
     /* tsym->sidx = 0; -- about to be freed, so not necessary */
@@ -1014,10 +1014,10 @@ tmpsym_at(struct tmp_sym *tsym, int x, int y)
         tsym->saved[tsym->sidx].x = x;
         tsym->saved[tsym->sidx].y = y;
         tsym->sidx += 1;
-    } else {        /* DISP_FLASH/ALWAYS */
-        if (tsym->sidx) {   /* not first call, so reset previous pos */
+    } else {    /* DISP_FLASH/ALWAYS */
+        if (tsym->sidx) {       /* not first call, so reset previous pos */
             newsym(tsym->saved[0].x, tsym->saved[0].y);
-            tsym->sidx = 0; /* display is presently up to date */
+            tsym->sidx = 0;     /* display is presently up to date */
         }
         if (!cansee(x, y) && tsym->style != DISP_ALWAYS)
             return;
@@ -1029,8 +1029,8 @@ tmpsym_at(struct tmp_sym *tsym, int x, int y)
     if (tsym->style == DISP_OBJECT)
         dbuf_set_object(x, y, tsym->sym, tsym->extra);
     else
-        dbuf_set_effect(x, y, tsym->sym);   /* show it */
-    flush_screen(); /* make sure it shows up */
+        dbuf_set_effect(x, y, tsym->sym);       /* show it */
+    flush_screen();     /* make sure it shows up */
 }
 
 /*
@@ -1039,9 +1039,11 @@ tmpsym_at(struct tmp_sym *tsym, int x, int y)
  * Free all still-extant tmp_sym data structures. Used for when the game ends
  * while temporary symbols are still active.
  */
-void tmpsym_freeall(void)
+void
+tmpsym_freeall(void)
 {
     struct tmp_sym *tsym;
+
     while (tsym_head) {
         tsym = tsym_head->next;
         free(tsym_head);

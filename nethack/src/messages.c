@@ -153,10 +153,10 @@ draw_msgwin(void)
         pos = curline - getmaxy(msgwin) + 1 + i;
         if (pos < 0)
             pos += MAX_MSGLINES;
-	if (pos == start_of_turn_curline) {
-	    wattron(msgwin, curses_color_attr(COLOR_BLACK, 0));
-	    drew_older = TRUE;
-	}
+        if (pos == start_of_turn_curline) {
+            wattron(msgwin, curses_color_attr(COLOR_BLACK, 0));
+            drew_older = TRUE;
+        }
         wmove(msgwin, i, 0);
         waddstr(msgwin, msglines[pos]);
         /* Only clear the remainder of the line if the cursor did not wrap. */
@@ -165,10 +165,10 @@ draw_msgwin(void)
     }
 
     if (drew_older) {
-	wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
+        wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
     } else {
-	/* Don't dim out messages if the message buffer wraps. */
-	start_of_turn_curline = -1;
+        /* Don't dim out messages if the message buffer wraps. */
+        start_of_turn_curline = -1;
     }
 
     wnoutrefresh(msgwin);
@@ -195,8 +195,8 @@ more(void)
     } else {
         newline();
         draw_msgwin();
-	wmove(msgwin, getmaxy(msgwin)-1, 0);
-	wclrtoeol(msgwin);
+        wmove(msgwin, getmaxy(msgwin) - 1, 0);
+        wclrtoeol(msgwin);
         wmove(msgwin, getmaxy(msgwin) - 1, COLNO / 2 - 4);
         wattron(msgwin, attr);
         waddstr(msgwin, "--More--");
@@ -218,8 +218,8 @@ more(void)
     if (getmaxy(msgwin) == 1) {
         newline();
     } else {
-	wmove(msgwin, getmaxy(msgwin)-1, 0);
-	wclrtoeol(msgwin);
+        wmove(msgwin, getmaxy(msgwin) - 1, 0);
+        wclrtoeol(msgwin);
     }
     draw_msgwin();
 
@@ -375,17 +375,17 @@ doprev_message(void)
     /* keep the previous messages window within 80 characters */
     maxturn = 0;
     for (i = 0; i < histsize; i++) {
-	pos = (histpos + i + 1) % histsize;
-	if (msghistory[pos].turn > maxturn)
-	    maxturn = msghistory[pos].turn;
+        pos = (histpos + i + 1) % histsize;
+        if (msghistory[pos].turn > maxturn)
+            maxturn = msghistory[pos].turn;
     }
     maxturn_width = 0;
     while (maxturn) {
-	maxturn_width++;
-	maxturn /= 10;
+        maxturn_width++;
+        maxturn /= 10;
     }
     if (maxturn_width < 1)
-	maxturn_width = 1;
+        maxturn_width = 1;
 
     /* Prevent duplicate turn stamps. */
     prevturn = 0;
@@ -395,44 +395,47 @@ doprev_message(void)
     items = malloc(size * sizeof (struct nh_menuitem));
 
     for (i = 0; i < histsize; i++) {
-	int turn;
-	const char *msg;
+        int turn;
+        const char *msg;
 
-	pos = (histpos + i + 1) % histsize;
+        pos = (histpos + i + 1) % histsize;
 
         if (!msghistory[pos].turn)
             continue;
 
-	turn = msghistory[pos].turn;
-	msg = msghistory[pos].msg;
+        turn = msghistory[pos].turn;
+        msg = msghistory[pos].msg;
 
-	if (strlen(msg) <= hist_msg_width - maxturn_width) {
-	    if (turn != prevturn)
-		snprintf(buf, MSGLEN+1, "T:%*d\t%s", maxturn_width, turn, msg);
-	    else
-		snprintf(buf, MSGLEN+1, "\t%s", msg);
+        if (strlen(msg) <= hist_msg_width - maxturn_width) {
+            if (turn != prevturn)
+                snprintf(buf, MSGLEN + 1, "T:%*d\t%s", maxturn_width, turn,
+                         msg);
+            else
+                snprintf(buf, MSGLEN + 1, "\t%s", msg);
             add_menu_txt(items, size, icount, buf, MI_TEXT);
-	} else {
-	    int output_count, j;
-	    char **output;
+        } else {
+            int output_count, j;
+            char **output;
 
-	    wrap_text(hist_msg_width - maxturn_width, msg, &output_count, &output);
+            wrap_text(hist_msg_width - maxturn_width, msg, &output_count,
+                      &output);
 
-	    if (turn != prevturn)
-		snprintf(buf, MSGLEN+1, "T:%*d\t%s", maxturn_width, turn, output[0]);
-	    else
-		snprintf(buf, MSGLEN+1, "\t%s", output[0]);
-	    add_menu_txt(items, size, icount, buf, MI_TEXT);
+            if (turn != prevturn)
+                snprintf(buf, MSGLEN + 1, "T:%*d\t%s", maxturn_width, turn,
+                         output[0]);
+            else
+                snprintf(buf, MSGLEN + 1, "\t%s", output[0]);
+            add_menu_txt(items, size, icount, buf, MI_TEXT);
 
-	    for (j = 1; j < output_count; j++) {
-		snprintf(buf, MSGLEN+1, "\t%s", output[j]);
-		add_menu_txt(items, size, icount, buf, MI_TEXT);
-	    }
+            for (j = 1; j < output_count; j++) {
+                snprintf(buf, MSGLEN + 1, "\t%s", output[j]);
+                add_menu_txt(items, size, icount, buf, MI_TEXT);
+            }
 
-	    free_wrap(output);
-	}
+            free_wrap(output);
+        }
 
-	prevturn = turn;
+        prevturn = turn;
     }
 
     curses_display_menu(items, icount, "Message history:", PICK_NONE,

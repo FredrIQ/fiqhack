@@ -216,8 +216,8 @@ invault(void)
         /* next find a good place for a door in the wall */
         x = u.ux;
         y = u.uy;
-        if (level->locations[x][y].typ != ROOM) { /* player dug a door
-                                                     and is in it */
+        if (level->locations[x][y].typ != ROOM) {       /* player dug a door
+                                                           and is in it */
             if (level->locations[x + 1][y].typ == ROOM)
                 x = x + 1;
             else if (level->locations[x][y + 1].typ == ROOM)

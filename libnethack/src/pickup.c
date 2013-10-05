@@ -56,8 +56,8 @@ check_here(boolean picked_some)
 {
     struct obj *obj;
     int ct = 0;
-	boolean autoexploring = (flags.run == 8 &&
-				 flags.travel && iflags.autoexplore);
+    boolean autoexploring = (flags.run == 8 && flags.travel &&
+                             iflags.autoexplore);
 
     /* count the objects here */
     for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere) {
@@ -68,7 +68,8 @@ check_here(boolean picked_some)
     /* If there are objects here, take a look unless autoexploring a previously
        explored space. */
     if (ct && !(autoexploring && level->locations[u.ux][u.uy].mem_stepped)) {
-        if (flags.run) nomul(0, NULL);
+        if (flags.run)
+            nomul(0, NULL);
         flush_screen();
         look_here(ct, picked_some);
     } else {
@@ -153,9 +154,9 @@ is_worn_by_type(const struct obj * otmp)
 {
     return ((boolean)
             (! !
-             (otmp->
-              owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP |
-                           W_SWAPWEP | W_QUIVER)))
+             (otmp->owornmask &
+              (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
+               W_QUIVER)))
             && (strchr(valid_menu_classes, otmp->oclass) != NULL));
 }
 
@@ -231,8 +232,7 @@ pickup(int what)
         }
 
         /* If there's anything here, stop running and travel, but not
-           autoexplore unless it picks something up, which is handled later.
-        */
+           autoexplore unless it picks something up, which is handled later. */
         if (OBJ_AT(u.ux, u.uy) && flags.run &&
             (flags.run != 8 || (flags.travel && !iflags.autoexplore)) &&
             !flags.nopick)
@@ -299,10 +299,11 @@ menu_pickup:
             check_here(n_picked > 0);
     }
 
-    /* Stop autoexplore if this pile hasn't been explored or
-     * auto-pickup (tried to) pick up anything. */
+    /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
+       to) pick up anything. */
     if (flags.run == 8 && flags.travel && iflags.autoexplore &&
-        (!level->locations[u.ux][u.uy].mem_stepped || (autopickup && n_tried > 0)))
+        (!level->locations[u.ux][u.uy].mem_stepped ||
+         (autopickup && n_tried > 0)))
         nomul(0, NULL);
 
     return n_tried > 0;
@@ -411,7 +412,7 @@ add_objitem(struct nh_objitem **items, int *nr_items,
         it->group_accel = def_oc_syms[(int)obj->oclass];
         it->otype = obfuscate_object(obj->otyp + 1);
         it->oclass = obj->oclass;
-        it->worn = !!(obj->owornmask & ~(u.twoweap ? 0 : W_SWAPWEP));
+        it->worn = ! !(obj->owornmask & ~(u.twoweap ? 0 : W_SWAPWEP));
 
         /* don't unconditionally reveal weight, otherwise lodestones on the
            floor could be identified by their weight in the pickup dialog */
@@ -451,7 +452,7 @@ invo_obj_compare(const void *o1, const void *o2)
     if (pos1 != pos2)
         return pos1 - pos2;
 
-	return 0;
+    return 0;
 }
 
 /* object comparison function for qsort */
@@ -459,11 +460,12 @@ int
 obj_compare(const void *o1, const void *o2)
 {
     int cmp, val1, val2;
-    struct obj *obj1 = *(struct obj**)o1;
-    struct obj *obj2 = *(struct obj**)o2;
+    struct obj *obj1 = *(struct obj **)o1;
+    struct obj *obj2 = *(struct obj **)o2;
 
     /* compare positions in inv_order */
     int inv_order_cmp = invo_obj_compare(o1, o2);
+
     if (inv_order_cmp)
         return inv_order_cmp;
 
@@ -572,13 +574,13 @@ query_objlist(const char *qstr, /* query string */
             objlist[nr_objects++] = curr;
     }
 
-	/* sort the list in place according to (1) inv_order and... */
-	if (qflags & INVORDER_SORT) {
-	    if (qflags & USE_INVLET)	/* ... (2) only inv_order. */
-		qsort(objlist, nr_objects, sizeof(struct obj*), invo_obj_compare);
-	    else			/* ... (2) object name. */
-        qsort(objlist, nr_objects, sizeof (struct obj *), obj_compare);
-	}
+    /* sort the list in place according to (1) inv_order and... */
+    if (qflags & INVORDER_SORT) {
+        if (qflags & USE_INVLET)        /* ... (2) only inv_order. */
+            qsort(objlist, nr_objects, sizeof (struct obj *), invo_obj_compare);
+        else    /* ... (2) object name. */
+            qsort(objlist, nr_objects, sizeof (struct obj *), obj_compare);
+    }
 
     /* nr_items will be greater than nr_objects, because it counts headers, too 
      */
@@ -617,8 +619,8 @@ query_objlist(const char *qstr, /* query string */
                 (*pick_list)[i].count = selection[i].count;
         }
     } else if (n < 0) {
-	    /* callers don't expect -1 by this point */
-	    n = (qflags & SIGNAL_ESCAPE) ? -2 : 0;
+        /* callers don't expect -1 by this point */
+        n = (qflags & SIGNAL_ESCAPE) ? -2 : 0;
     }
     free(selection);
     free(objlist);
@@ -679,9 +681,9 @@ query_category(const char *qstr,        /* query string */
         !(qflags & BILLED_TYPES)) {
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
             if ((qflags & WORN_TYPES) &&
-                !(curr->
-                  owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP |
-                               W_SWAPWEP | W_QUIVER)))
+                !(curr->owornmask &
+                  (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
+                   W_QUIVER)))
                 continue;
             break;
         }
@@ -708,9 +710,9 @@ query_category(const char *qstr,        /* query string */
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
             if (curr->oclass == *pack) {
                 if ((qflags & WORN_TYPES) &&
-                    !(curr->
-                      owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP |
-                                   W_SWAPWEP | W_QUIVER)))
+                    !(curr->owornmask &
+                      (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
+                       W_QUIVER)))
                     continue;
                 if (!collected_type_name) {
                     add_menuitem(&menu, curr->oclass, let_to_name(*pack, FALSE),
@@ -781,9 +783,9 @@ count_categories(struct obj *olist, int qflags)
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
             if (curr->oclass == *pack) {
                 if ((qflags & WORN_TYPES) &&
-                    !(curr->
-                      owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP |
-                                   W_SWAPWEP | W_QUIVER)))
+                    !(curr->owornmask &
+                      (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
+                       W_QUIVER)))
                     continue;
                 if (!counted_category) {
                     ccount++;
@@ -948,9 +950,9 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
     if (obj->otyp == LOADSTONE)
         return 1;       /* lift regardless of current situation */
 
-    *cnt_p = carry_count(obj, container, *cnt_p, telekinesis, &old_wt,
-                         &new_wt);
-    if (obj->otyp == BOULDER && throws_rocks(youmonst.data)) *cnt_p = 1;
+    *cnt_p = carry_count(obj, container, *cnt_p, telekinesis, &old_wt, &new_wt);
+    if (obj->otyp == BOULDER && throws_rocks(youmonst.data))
+        *cnt_p = 1;
 
     if (*cnt_p < 1L) {
         result = -1;    /* nothing lifted */
@@ -1142,7 +1144,8 @@ pick_obj(struct obj *otmp)
 /*
  * Reset state for encumber_msg() so it doesn't bleed between games.
  */
-void reset_encumber_msg(void)
+void
+reset_encumber_msg(void)
 {
     oldcap = UNENCUMBERED;
 }
@@ -1254,9 +1257,10 @@ mon_beside(int x, int y)
     return FALSE;
 }
 
-static boolean Is_container_func(const struct obj *otmp)
+static boolean
+Is_container_func(const struct obj *otmp)
 {
-	return Is_container(otmp);
+    return Is_container(otmp);
 }
 
 /* loot a container on the floor or loot saddle from mon. */
@@ -1288,23 +1292,24 @@ doloot(void)
 lootcont:
 
     if ((container_count = container_at(cc.x, cc.y, TRUE))) {
-	struct object_pick *lootlist;
-	int i, n;
+        struct object_pick *lootlist;
+        int i, n;
 
-	if (!able_to_loot(cc.x, cc.y)) return 0;
+        if (!able_to_loot(cc.x, cc.y))
+            return 0;
 
-	n = query_objlist("Loot which containers?", level->objects[cc.x][cc.y],
-			  BY_NEXTHERE | SIGNAL_ESCAPE | AUTOSELECT_SINGLE,
-			  &lootlist, PICK_ANY, Is_container_func);
-                
-	if (n < 0) {
-	    return 0;
-	} else if (n == 0) {
-	    c = 'n';
-	} else if (n > 0) {
-	    c = 'y';
-	    for (i = 0; i < n; i++) {
-		cobj = lootlist[i].obj;
+        n = query_objlist("Loot which containers?", level->objects[cc.x][cc.y],
+                          BY_NEXTHERE | SIGNAL_ESCAPE | AUTOSELECT_SINGLE,
+                          &lootlist, PICK_ANY, Is_container_func);
+
+        if (n < 0) {
+            return 0;
+        } else if (n == 0) {
+            c = 'n';
+        } else if (n > 0) {
+            c = 'y';
+            for (i = 0; i < n; i++) {
+                cobj = lootlist[i].obj;
                 if (cobj->olocked) {
                     pline("Hmmm, it seems to be locked.");
                     continue;
@@ -1319,18 +1324,18 @@ lootcont:
                         tmp = (tmp + 1) / 2;
                     losehp(tmp, "carnivorous bag", KILLED_BY_AN);
                     makeknown(BAG_OF_TRICKS);
-		    free(lootlist);
-		    return 1;
+                    free(lootlist);
+                    return 1;
                 }
 
                 pline("You carefully open %s...", the(xname(cobj)));
                 timepassed |= use_container(cobj, 0);
-		if (multi < 0) { /* e.g. a chest trap */
-		    free(lootlist);
-		    return 1;
-		}
+                if (multi < 0) {        /* e.g. a chest trap */
+                    free(lootlist);
+                    return 1;
+                }
             }
-	    free(lootlist);
+            free(lootlist);
         }
     } else if (Confusion) {
         struct obj *goldob;
@@ -1456,8 +1461,8 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
         if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
             if (nolimbs(youmonst.data)) {
                 pline("You can't do that without limbs.");
-                /* not body_part(HAND); we're talking about an appendage
-                   that we /don't/ have */
+                /* not body_part(HAND); we're talking about an appendage that
+                   we /don't/ have */
                 return 0;
             }
             if (otmp->cursed) {
@@ -1560,11 +1565,10 @@ in_container(struct obj *obj)
     if (obj == uball || obj == uchain) {
         pline("You must be kidding.");
         return 0;
-	} else if (obj == current_container &&
-		   objects[obj->otyp].oc_name_known &&
-		   obj->otyp == BAG_OF_HOLDING) {
-		pline("Creating an artificial black hole could ruin your whole day!");
-		return 0;
+    } else if (obj == current_container && objects[obj->otyp].oc_name_known &&
+               obj->otyp == BAG_OF_HOLDING) {
+        pline("Creating an artificial black hole could ruin your whole day!");
+        return 0;
     } else if (obj == current_container) {
         pline("That would be an interesting topological exercise.");
         return 0;
@@ -1689,7 +1693,7 @@ in_container(struct obj *obj)
             panic("in_container:  bag not found.");
 
         losehp(dice(6, 6), "magical explosion", KILLED_BY_AN);
-        current_container = NULL;	/* baggone = TRUE; */
+        current_container = NULL;       /* baggone = TRUE; */
 
         /* stop multi-looting; other containers might be destroyed */
         if (multi >= 0) {

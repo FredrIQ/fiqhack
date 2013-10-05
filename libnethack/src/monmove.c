@@ -200,8 +200,8 @@ monflee(struct monst *mtmp, int fleetime, boolean first, boolean fleemsg)
         mtmp->mflee = 1;
     }
 
-	/* ignore recently-stepped spaces when made to flee */
-	memset(mtmp->mtrack, MTSZ, sizeof(coord));
+    /* ignore recently-stepped spaces when made to flee */
+    memset(mtmp->mtrack, MTSZ, sizeof (coord));
 }
 
 static void
@@ -934,7 +934,7 @@ not_special:
             ny = poss[i].y;
 
             if (appr != 0) {
-		    /* avoid stepping back onto recently-stepped spaces */
+                /* avoid stepping back onto recently-stepped spaces */
                 mtrk = &mtmp->mtrack[0];
                 for (j = 0; j < jcnt; mtrk++, j++)
                     if (nx == mtrk->x && ny == mtrk->y)

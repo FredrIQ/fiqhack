@@ -173,14 +173,13 @@ panic(const char *str, ...)
     if (program_state.panicking++)
         terminate();    /* avoid loops - this should never happen */
 
-    raw_print(program_state.
-              gameover ? "Postgame wrapup disrupted.\n" : !program_state.
-              something_worth_saving ? "Program initialization has failed.\n" :
+    raw_print(program_state.gameover ? "Postgame wrapup disrupted.\n" :
+              !program_state.something_worth_saving ?
+              "Program initialization has failed.\n" :
               "Suddenly, the dungeon collapses.\n");
     if (!wizard)
         raw_printf("Report error to \"%s\"%s.\n", WIZARD,
-                   !program_state.
-                   something_worth_saving ? "" :
+                   !program_state.something_worth_saving ? "" :
                    " and it may be possible to rebuild.");
     if (program_state.something_worth_saving)
         dosave0(TRUE);

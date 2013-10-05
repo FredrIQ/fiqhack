@@ -8,7 +8,7 @@
 
 /* mon summons a monster */
 void
-msummon(struct monst *mon, const d_level *dlev)
+msummon(struct monst *mon, const d_level * dlev)
 {
     const struct permonst *ptr;
     int dtype = NON_PM, cnt = 0;
@@ -228,9 +228,9 @@ bribe(struct monst *mtmp)
     } else if (offer == 0L) {
         pline("You refuse.");
         return 0L;
-	} else if (umoney == 0L) {
-		pline("You open your purse, but realize you have no gold.");
-		return 0L;
+    } else if (umoney == 0L) {
+        pline("You open your purse, but realize you have no gold.");
+        return 0L;
     } else if (offer >= umoney) {
         pline("You give %s all your gold.", mon_nam(mtmp));
         offer = umoney;

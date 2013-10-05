@@ -239,7 +239,7 @@ castmu(struct monst *mtmp, const struct attack *mattk,
               " at you");
     }
 
-    /*
+    /* 
      * As these are spells, the damage is related to the level
      * of the monster casting the spell.
      */

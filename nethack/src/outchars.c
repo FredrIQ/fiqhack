@@ -80,10 +80,10 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"zap_h", -1, {0x2500, 0}, 0},      /* ─ horizontal rule */
 
     /* swallow */
-    {"swallow_top_c", -1, {0x2500, 0}, 0}, /* ─ horizontal rule */
-    {"swallow_mid_l", -1, {0x2502, 0}, 0}, /* │ vertical rule */
-    {"swallow_mid_r", -1, {0x2502, 0}, 0}, /* │ vertical rule */
-    {"swallow_bot_c", -1, {0x2500, 0}, 0}, /* ─ horizontal rule */
+    {"swallow_top_c", -1, {0x2500, 0}, 0},      /* ─ horizontal rule */
+    {"swallow_mid_l", -1, {0x2502, 0}, 0},      /* │ vertical rule */
+    {"swallow_mid_r", -1, {0x2502, 0}, 0},      /* │ vertical rule */
+    {"swallow_bot_c", -1, {0x2500, 0}, 0},      /* ─ horizontal rule */
 
     /* explosion */
     {"exp_top_c", -1, {0x2500, 0}, 0},  /* ─ horizontal rule */
@@ -355,8 +355,8 @@ init_displaychars(void)
     unicode_drawing = load_nh_drawing_info(dinfo);
     rogue_drawing = load_nh_drawing_info(dinfo);
 
-    apply_override(default_drawing, default_ovr,
-                   array_size(default_ovr), FALSE);
+    apply_override(default_drawing, default_ovr, array_size(default_ovr),
+                   FALSE);
     apply_override(unicode_drawing, unicode_graphics_ovr,
                    array_size(unicode_graphics_ovr), FALSE);
     apply_override(rogue_drawing, rogue_graphics_ovr,

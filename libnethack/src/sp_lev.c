@@ -1011,7 +1011,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
             struct monst *was;
             struct obj *obj;
             int wastyp;
-	    int i;
+            int i;
 
             /* Named random statues are of player types, and aren't stone-
                resistant (if they were, we'd have to reset the name as well as
@@ -1025,9 +1025,9 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
                         break;
                     mongone(was);
                 }
-		wastyp = rndmonnum(&lev->z);
-	    }
-	    if (was) {
+                wastyp = rndmonnum(&lev->z);
+            }
+            if (was) {
                 otmp->corpsenm = wastyp;
                 while (was->minvent) {
                     obj = was->minvent;

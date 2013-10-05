@@ -293,7 +293,7 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
     if (Stoned) /* 11 */
         strncpy(pi->statusitems[pi->nr_items++], "Petrify", ITEMLEN);
-    if (u.ustuck && !u.uswallow && !sticks(youmonst.data))  /* 12 */
+    if (u.ustuck && !u.uswallow && !sticks(youmonst.data))      /* 12 */
         strncpy(pi->statusitems[pi->nr_items++], "Held", ITEMLEN);
     if (enc_stat[cap])  /* 13 */
         strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);

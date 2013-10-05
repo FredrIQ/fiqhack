@@ -298,7 +298,8 @@ loadfruitchn(struct memfile *mf)
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
 
-    if (!count) return flist;
+    if (!count)
+        return flist;
 
     while (count--) {
         fnext = newfruit();
@@ -476,7 +477,7 @@ restgamestate(struct memfile *mf)
 
     if (u.ustuck) {
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-            if (mtmp->m_id == (intptr_t)u.ustuck)
+            if (mtmp->m_id == (intptr_t) u.ustuck)
                 break;
         if (!mtmp)
             panic("Cannot find the monster ustuck.");
@@ -484,7 +485,7 @@ restgamestate(struct memfile *mf)
     }
     if (u.usteed) {
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-            if (mtmp->m_id == (intptr_t)u.usteed)
+            if (mtmp->m_id == (intptr_t) u.usteed)
                 break;
         if (!mtmp)
             panic("Cannot find the monster usteed.");
@@ -625,7 +626,7 @@ dorecover(struct memfile *mf)
     vision_full_recalc = 1;     /* recompute vision (not saved) */
 
     /* help the window port get it's display charset/tiles sorted out */
-	notify_levelchange(NULL);
+    notify_levelchange(NULL);
 
     run_timers();       /* expire all timers that have gone off while away */
     doredraw();

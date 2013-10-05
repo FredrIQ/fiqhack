@@ -237,8 +237,8 @@ steal(struct monst *mtmp, char *objnambuf)
 #endif
             )
             tmp +=
-                ((otmp->
-                  owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 : 1);
+                ((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 :
+                 1);
     if (!tmp)
         goto nothing_to_steal;
     tmp = rn2(tmp);
@@ -249,9 +249,8 @@ steal(struct monst *mtmp, char *objnambuf)
 #endif
             )
             if ((tmp -=
-                 ((otmp->
-                   owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 : 1)) <
-                0)
+                 ((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 :
+                  1)) < 0)
                 break;
     if (!otmp) {
         impossible("Steal fails!");

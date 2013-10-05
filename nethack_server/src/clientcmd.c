@@ -112,8 +112,8 @@ ccmd_start_game(json_t * params)
     if (ret) {
         struct nh_roles_info *ri = nh_get_roles();
         const char *rolename = (gend &&
-                                ri->rolenames_f[role]) ? ri->
-            rolenames_f[role] : ri->rolenames_m[role];
+                                ri->rolenames_f[role]) ?
+            ri->rolenames_f[role] : ri->rolenames_m[role];
         gamefd = fd;
         gameid =
             db_add_new_game(user_info.uid, basename, rolename,

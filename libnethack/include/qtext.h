@@ -5,8 +5,7 @@
 #ifndef QTEXT_H
 # define QTEXT_H
 
-# define N_HDR   16     /* Maximum number of categories
-                               (i.e., num roles + 1) */
+# define N_HDR   16     /* Maximum number of categories (i.e., num roles + 1) */
 # define LEN_HDR 3      /* Maximum length of a category name */
 
 struct qtmsg {
@@ -55,8 +54,8 @@ struct qtlists {
 #  define QT_NEXTTIME     2
 #  define QT_OTHERTIME    3
 
-#  define QT_GUARDTALK    5   /* 5 random things guards say before quest */
-#  define QT_GUARDTALK2   10  /* 5 random things guards say after quest */
+#  define QT_GUARDTALK    5     /* 5 random things guards say before quest */
+#  define QT_GUARDTALK2   10    /* 5 random things guards say after quest */
 
 #  define QT_FIRSTLEADER  15
 #  define QT_NEXTLEADER   16
@@ -66,7 +65,7 @@ struct qtlists {
 #  define QT_BADALIGN     20
 #  define QT_ASSIGNQUEST  21
 
-#  define QT_ENCOURAGE    25  /* 1-10 random encouragement messages */
+#  define QT_ENCOURAGE    25    /* 1-10 random encouragement messages */
 
 #  define QT_FIRSTLOCATE  35
 #  define QT_NEXTLOCATE   36
@@ -77,9 +76,9 @@ struct qtlists {
 #  define QT_FIRSTNEMESIS 50
 #  define QT_NEXTNEMESIS  51
 #  define QT_OTHERNEMESIS 52
-#  define QT_NEMWANTSIT   53  /* you somehow got the artifact */
+#  define QT_NEMWANTSIT   53    /* you somehow got the artifact */
 
-#  define QT_DISCOURAGE   60  /* 1-10 random maledictive messages */
+#  define QT_DISCOURAGE   60    /* 1-10 random maledictive messages */
 
 #  define QT_GOTIT        70
 
@@ -93,7 +92,7 @@ struct qtlists {
 /*
  * Message defines for common text used in maledictions.
  */
-#  define COMMON_ID       "-"  /* Common message id value */
+#  define COMMON_ID       "-"   /* Common message id value */
 
 #  define QT_ANGELIC      10
 #  define QTN_ANGELIC     10

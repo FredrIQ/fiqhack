@@ -155,7 +155,8 @@ mk_artifact(
 
         /* make an appropriate object if necessary, then christen it */
     make_artif:
-        if (by_align) otmp = mksobj(lev, (int)a->otyp, TRUE, FALSE);
+        if (by_align)
+            otmp = mksobj(lev, (int)a->otyp, TRUE, FALSE);
         otmp = oname(otmp, a->name);
         otmp->oartifact = m;
         artiexist[m] = TRUE;

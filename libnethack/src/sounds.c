@@ -455,8 +455,9 @@ domonnoise(struct monst *mtmp)
                                    u.umonnum == PM_WINTER_WOLF ||
                                    u.umonnum == PM_WINTER_WOLF_CUB));
             const char *racenoun = (flags.female &&
-                                    urace.individual.f) ? urace.individual.
-                f : (urace.individual.m) ? urace.individual.m : urace.noun;
+                                    urace.individual.f) ? urace.
+                individual.f : (urace.individual.m) ? urace.individual.
+                m : urace.noun;
 
             if (mtmp->mtame) {
                 if (kindred) {
@@ -511,8 +512,8 @@ domonnoise(struct monst *mtmp)
                         verbl_msg = verbuf;
                     } else if (vampindex == 1) {
                         sprintf(verbuf, vampmsg[vampindex],
-                                Upolyd ? an(mons[u.umonnum].
-                                            mname) : an(racenoun));
+                                Upolyd ? an(mons[u.umonnum].mname) :
+                                an(racenoun));
                         verbl_msg = verbuf;
                     } else
                         verbl_msg = vampmsg[vampindex];
@@ -541,8 +542,8 @@ domonnoise(struct monst *mtmp)
             else if (mtmp->mtame && EDOG(mtmp)->hungrytime > moves + 1000)
                 pline_msg = "yips.";
             else {
-                if (mtmp->data != &mons[PM_DINGO])  /* dingos do not
-                                                       actually bark */
+                if (mtmp->data != &mons[PM_DINGO])      /* dingos do not
+                                                           actually bark */
                     pline_msg = "barks.";
             }
         } else {

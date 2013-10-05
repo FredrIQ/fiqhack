@@ -65,7 +65,7 @@
  */
 
 /* "an uncursed greased partly eaten guardian naga hatchling [corpse]" */
-#define PREFIX    80      /* (56) */
+#define PREFIX    80    /* (56) */
 #define SCHAR_LIM 127
 #define NUMOBUF   12
 
@@ -782,8 +782,9 @@ doname_base(const struct obj *obj, boolean with_price)
         }
         if (ignitable(obj) && obj->known && obj->otyp != MAGIC_LAMP &&
             !artifact_light(obj)) {
-            long timeout = obj->lamplit ?
-                report_timer(obj->olev, BURN_OBJECT, (void *)obj) : moves;
+            long timeout =
+                obj->lamplit ? report_timer(obj->olev, BURN_OBJECT,
+                                            (void *)obj) : moves;
 
             /* obj->age is the fuel remaining when the timer runs out. So we
                add it to the turns the timer has remaining to get remaining

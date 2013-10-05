@@ -661,11 +661,11 @@ use_defensive(struct monst *mtmp, struct musable *m)
             coord cc;
 
             /* pm: 0 => random, eel => aquatic, croc => amphibious */
-            const struct permonst *pm =
-                !is_pool(level, mtmp->mx,
-                         mtmp->my) ? 0 : &mons[u.
-                                               uinwater ? PM_GIANT_EEL :
-                                               PM_CROCODILE];
+            const struct permonst *pm = !is_pool(level, mtmp->mx,
+                                                 mtmp->
+                                                 my) ? 0 : &mons[u.uinwater ?
+                                                                 PM_GIANT_EEL :
+                                                                 PM_CROCODILE];
             struct monst *mon;
 
             if (!enexto(&cc, level, mtmp->mx, mtmp->my, pm))
@@ -1240,8 +1240,8 @@ mbhit(struct monst *mon,        /* monster shooting the wand */
         }
         if (!ZAP_POS(typ) ||
             (IS_DOOR(typ) &&
-             (level->
-              locations[bhitpos.x][bhitpos.y].doormask & (D_LOCKED | D_CLOSED)))
+             (level->locations[bhitpos.x][bhitpos.y].
+              doormask & (D_LOCKED | D_CLOSED)))
             ) {
             bhitpos.x -= ddx;
             bhitpos.y -= ddy;

@@ -718,11 +718,11 @@ adjalign(int n)
 /* Return "beautiful", "handsome" or "ugly"
  * according to gender and charisma.
  */
-const char *beautiful(void)
+const char *
+beautiful(void)
 {
-	return ACURR(A_CHA) > 14 ?
-	       (poly_gender() == 1 ? "beautiful" : "handsome") :
-	       "ugly";
+    return ACURR(A_CHA) > 14 ?
+        (poly_gender() == 1 ? "beautiful" : "handsome") : "ugly";
 }
 
 /* make sure u.abon is correct; it is dead-reckoned during the move,
@@ -768,9 +768,9 @@ calc_attr_bonus(void)
             ABON(A_WIS) += spe;
             break;
 
-			case CORNUTHAUM:
-			    ABON(A_CHA) += (Role_if(PM_WIZARD) ? 1 : -1);
-			    break;
+        case CORNUTHAUM:
+            ABON(A_CHA) += (Role_if(PM_WIZARD) ? 1 : -1);
+            break;
         }
     }
 }

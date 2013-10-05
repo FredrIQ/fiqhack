@@ -7,7 +7,7 @@
 #include "hack.h"
 #include "edog.h"
 
-static int throw_obj(struct obj *,int,boolean);
+static int throw_obj(struct obj *, int, boolean);
 static void autoquiver(void);
 static int gem_accept(struct monst *, struct obj *);
 static void tmiss(struct obj *, struct monst *);
@@ -287,7 +287,7 @@ int
 dofire(void)
 {
     int shotlimit;
-	boolean cancel_unquivers = FALSE;
+    boolean cancel_unquivers = FALSE;
 
     if (notake(youmonst.data)) {
         pline("You are physically incapable of doing that.");
@@ -301,10 +301,10 @@ dofire(void)
             /* Don't automatically fill the quiver */
             pline("You have no ammunition readied!");
             dowieldquiver(NULL);
-			/* Allow this quiver to be unset if the throw is cancelled,
-			 * so vi-keys players don't have to do it manually after
-			 * typo-ing an object when entering a firing direction. */
-			cancel_unquivers = TRUE;
+            /* Allow this quiver to be unset if the throw is cancelled, so
+               vi-keys players don't have to do it manually after typo-ing an
+               object when entering a firing direction. */
+            cancel_unquivers = TRUE;
             if (!uquiver)
                 return dothrow(NULL);
         }
@@ -331,7 +331,7 @@ dofire(void)
     shotlimit = multi;
     multi = 0;  /* reset; it's been used up */
 
-	return throw_obj(uquiver, shotlimit, cancel_unquivers);
+    return throw_obj(uquiver, shotlimit, cancel_unquivers);
 }
 
 
@@ -834,7 +834,7 @@ toss_up(struct obj *obj, boolean hitsroof)
 
 /* return true for weapon meant to be thrown; excludes ammo */
 boolean
-throwing_weapon(const struct obj *obj)
+throwing_weapon(const struct obj * obj)
 {
     return (is_missile(obj) || is_spear(obj) ||
             /* daggers and knife (excludes scalpel) */
@@ -854,6 +854,7 @@ sho_obj_return_to_u(struct obj *obj, schar dx, schar dy)
         int y = bhitpos.y - dy;
 
         struct tmp_sym *tsym = tmpsym_initobj(obj);
+
         while (x != u.ux || y != u.uy) {
             tmpsym_at(tsym, x, y);
             win_delay_output();
@@ -1084,6 +1085,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         if (!IS_SOFT(level->locations[bhitpos.x][bhitpos.y].typ) &&
             breaktest(obj)) {
             struct tmp_sym *tsym = tmpsym_initobj(obj);
+
             tmpsym_at(tsym, bhitpos.x, bhitpos.y);
             win_delay_output();
             tmpsym_end(tsym);
@@ -1121,10 +1123,10 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
         if (obj_sheds_light(obj))
             vision_full_recalc = 1;
 
-		/* Lead autoexplore back over thrown object if it's seen again.
-		 * Technically the player may not see where it lands, but they
-		 * could probably guess it anyway. */
-		level->locations[bhitpos.x][bhitpos.y].mem_stepped = 0;
+        /* Lead autoexplore back over thrown object if it's seen again.
+           Technically the player may not see where it lands, but they could
+           probably guess it anyway. */
+        level->locations[bhitpos.x][bhitpos.y].mem_stepped = 0;
 
         if (!IS_SOFT(level->locations[bhitpos.x][bhitpos.y].typ))
             container_impact_dmg(obj);

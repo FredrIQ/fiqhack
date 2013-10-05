@@ -101,6 +101,7 @@ mkshop(struct level *lev)
         ep = nh_getenv("SHOPTYPE");
         if (ep) {
             int i;
+
             for (i = 0; shtypes[i].name; i++) {
                 if (!strcmp(shtypes[i].name, ep) ||
                     ep[0] == def_oc_syms[(int)shtypes[i].symb]) {
@@ -184,8 +185,7 @@ gottype:
         for (styp = 0; (j -= shtypes[styp].prob) > 0; styp++)
             continue;
 
-        /* big rooms cannot be wand or book shops,
-           so make them general stores */
+        /* big rooms cannot be wand or book shops, so make them general stores */
         if (isbig(sroom) &&
             (shtypes[styp].symb == WAND_CLASS ||
              shtypes[styp].symb == SPBOOK_CLASS))
@@ -193,10 +193,10 @@ gottype:
     }
 
     sroom->rtype = SHOPBASE + styp;
-    
+
     /* set room bits before stocking the shop */
     topologize(lev, sroom);
-    
+
     /* stock the room with a shopkeeper and artifacts */
     stock_room(styp, lev, sroom);
 }

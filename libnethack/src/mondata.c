@@ -113,7 +113,7 @@ resists_blnd(struct monst * mon)
         return TRUE;
     o = is_you ? invent : mon->minvent;
     for (; o; o = o->nobj)
-	    if (o->oartifact && protects(AD_BLND, o))
+        if (o->oartifact && protects(AD_BLND, o))
             return TRUE;
     return FALSE;
 }
@@ -652,9 +652,8 @@ locomotion(const struct permonst *ptr, const char *def)
                ptr->msize <= MZ_SMALL) ? flys[capitalize] :
             (is_flyer(ptr) && ptr->msize > MZ_SMALL) ?
             flyl[capitalize] : slithy(ptr) ? slither[capitalize] :
-            amorphous(ptr) ? ooze[capitalize] : !ptr->
-            mmove ? immobile[capitalize] : nolimbs(ptr) ? crawl[capitalize] :
-            def);
+            amorphous(ptr) ? ooze[capitalize] : !ptr->mmove ?
+            immobile[capitalize] : nolimbs(ptr) ? crawl[capitalize] : def);
 
 }
 
@@ -668,9 +667,8 @@ stagger(const struct permonst *ptr, const char *def)
                ptr->msize <= MZ_SMALL) ? flys[capitalize] :
             (is_flyer(ptr) && ptr->msize > MZ_SMALL) ?
             flyl[capitalize] : slithy(ptr) ? slither[capitalize] :
-            amorphous(ptr) ? ooze[capitalize] : !ptr->
-            mmove ? immobile[capitalize] : nolimbs(ptr) ? crawl[capitalize] :
-            def);
+            amorphous(ptr) ? ooze[capitalize] : !ptr->mmove ?
+            immobile[capitalize] : nolimbs(ptr) ? crawl[capitalize] : def);
 
 }
 

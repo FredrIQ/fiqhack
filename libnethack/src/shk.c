@@ -265,19 +265,19 @@ setpaid(struct monst *shkp)
     if (thrownobj && onbill(thrownobj, shkp, TRUE))
         thrownobj->unpaid = 0;
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-		clear_unpaid(shkp, mtmp->minvent);
+        clear_unpaid(shkp, mtmp->minvent);
     for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)
-		clear_unpaid(shkp, mtmp->minvent);
+        clear_unpaid(shkp, mtmp->minvent);
 
     while ((obj = level->billobjs) != 0) {
         obj_extract_self(obj);
         dealloc_obj(obj);
     }
-        ESHK(shkp)->billct = 0;
-        ESHK(shkp)->credit = 0L;
-        ESHK(shkp)->debit = 0L;
-        ESHK(shkp)->loan = 0L;
-    }
+    ESHK(shkp)->billct = 0;
+    ESHK(shkp)->credit = 0L;
+    ESHK(shkp)->debit = 0L;
+    ESHK(shkp)->loan = 0L;
+}
 
 static long
 addupbill(struct monst *shkp)
@@ -1267,6 +1267,7 @@ proceed:
     if (eshkp->billct) {
         boolean itemize;
         boolean oneitem_found = FALSE;
+
         umoney = money_cnt(invent);
         if (!umoney && !eshkp->credit) {
             pline("You %shave no money or credit%s.",
@@ -1518,8 +1519,7 @@ inherits(struct monst *shkp, int numsk, int croaked)
             pline("%s %slooks at your corpse%s and %s.", Monnam(shkp),
                   (!shkp->mcanmove ||
                    shkp->msleeping) ? "wakes up, " : "",
-                  !rn2(2) ? (shkp->
-                             female ? ", shakes her head," :
+                  !rn2(2) ? (shkp->female ? ", shakes her head," :
                              ", shakes his head,") : "",
                   !inhishop(shkp) ? "disappears" : "sighs");
         rouse_shk(shkp, FALSE); /* wake shk for bones */

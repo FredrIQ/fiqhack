@@ -133,8 +133,8 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define USE_INVLET       0x4   /* use object's invlet */
 # define INVORDER_SORT    0x8   /* sort objects by packorder */
 # define SIGNAL_NOMENU    0x10  /* return -1 rather than 0 if none allowed */
-#define SIGNAL_ESCAPE	  0x20	/* return -2 rather than 0 if menu escaped */
-#define FEEL_COCKATRICE	  0x40	/* engage cockatrice checks and react */
+# define SIGNAL_ESCAPE	  0x20  /* return -2 rather than 0 if menu escaped */
+# define FEEL_COCKATRICE 0x40  /* engage cockatrice checks and react */
 
 /* Flags to control query_category() */
 /* BY_NEXTHERE used by query_category() too, so skip 0x01 */
@@ -153,22 +153,22 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define ALL_TYPES_SELECTED -2
 
 /* Flags to control find_mid() */
-# define FM_FMON          0x01    /* search the level->monlist chain */
-# define FM_MIGRATE       0x02    /* search the migrating monster chain */
-# define FM_MYDOGS        0x04    /* search mydogs */
+# define FM_FMON          0x01  /* search the level->monlist chain */
+# define FM_MIGRATE       0x02  /* search the migrating monster chain */
+# define FM_MYDOGS        0x04  /* search mydogs */
 # define FM_EVERYWHERE  (FM_FMON | FM_MIGRATE | FM_MYDOGS)
 
 /* Flags to control dotrap() in trap.c */
-# define NOWEBMSG         0x01    /* suppress stumble into web message */
-# define FORCEBUNGLE      0x02    /* adjustments appropriate for bungling */
-# define RECURSIVETRAP    0x04    /* trap changed into another type this same
-                                     turn */
+# define NOWEBMSG         0x01  /* suppress stumble into web message */
+# define FORCEBUNGLE      0x02  /* adjustments appropriate for bungling */
+# define RECURSIVETRAP    0x04  /* trap changed into another type this same
+                                   turn */
 
 /* Flags to control test_move in hack.c */
-# define DO_MOVE          0       /* really doing the move */
-# define TEST_MOVE        1       /* test a normal move (move there next) */
-# define TEST_TRAV        2       /* test a future travel location */
-# define TEST_TRAP        3       /* check if a future travel location is a trap */
+# define DO_MOVE          0     /* really doing the move */
+# define TEST_MOVE        1     /* test a normal move (move there next) */
+# define TEST_TRAV        2     /* test a future travel location */
+# define TEST_TRAP        3     /* check if a future travel location is a trap */
 
 /*** some utility macros ***/
 # define yn(query) yn_function(query,ynchars, 'n')
@@ -177,18 +177,18 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define nyaq(query) yn_function(query,ynaqchars, 'n')
 
 /* Macros for scatter */
-# define VIS_EFFECTS      0x01    /* display visual effects */
-# define MAY_HITMON       0x02    /* objects may hit monsters */
-# define MAY_HITYOU       0x04    /* objects may hit you */
+# define VIS_EFFECTS      0x01  /* display visual effects */
+# define MAY_HITMON       0x02  /* objects may hit monsters */
+# define MAY_HITYOU       0x04  /* objects may hit you */
 # define MAY_HIT          (MAY_HITMON|MAY_HITYOU)
-# define MAY_DESTROY      0x08    /* objects may be destroyed at random */
-# define MAY_FRACTURE     0x10    /* boulders & statues may fracture */
+# define MAY_DESTROY      0x08  /* objects may be destroyed at random */
+# define MAY_FRACTURE     0x10  /* boulders & statues may fracture */
 
 /* Macros for launching objects */
-# define ROLL             0x01    /* the object is rolling */
-# define FLING            0x02    /* the object is flying thru the air */
-# define LAUNCH_UNSEEN    0x40    /* hero neither caused nor saw it */
-# define LAUNCH_KNOWN     0x80    /* the hero caused this by explicit action */
+# define ROLL             0x01  /* the object is rolling */
+# define FLING            0x02  /* the object is flying thru the air */
+# define LAUNCH_UNSEEN    0x40  /* hero neither caused nor saw it */
+# define LAUNCH_KNOWN     0x80  /* the hero caused this by explicit action */
 
 /* Macros for explosion types */
 # define EXPL_DARK        0

@@ -321,8 +321,8 @@ make_corpse(struct monst *mtmp)
        unseen monster referred to as "it" could be killed and leave a corpse.
        If a hider then hid underneath it, you could be told the corpse type of
        a monster that you never knew was there without this.  The code in
-       hitmu() substitutes the word "something" if the corpses obj->dknown is 0. 
-     */
+       hitmu() substitutes the word "something" if the corpses obj->dknown is
+       0. */
     if (Blind && !sensemon(mtmp))
         obj->dknown = 0;
 
@@ -1196,35 +1196,35 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
     if (mdef->mtame && !magr->mpeaceful)
         return ALLOW_M | ALLOW_TM;
 
-    /* Since the quest guardians are under siege, it makes sense to have
-       them fight hostiles.  (But don't put the quest leader in danger.) */
+    /* Since the quest guardians are under siege, it makes sense to have them
+       fight hostiles.  (But don't put the quest leader in danger.) */
     if (ma->msound == MS_GUARDIAN && mdef->mpeaceful == FALSE)
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
     /* ... and vice versa */
     if (md->msound == MS_GUARDIAN && magr->mpeaceful == FALSE)
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
 
     /* elves vs. orcs */
     if (is_elf(ma) && is_orc(md))
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
     /* ... and vice versa */
     if (is_elf(md) && is_orc(ma))
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
 
     /* angels vs. demons */
     if (ma->mlet == S_ANGEL && is_demon(md))
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
     /* ... and vice versa */
     if (md->mlet == S_ANGEL && is_demon(ma))
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
 
     /* woodchucks vs. The Oracle */
     if (ma == &mons[PM_WOODCHUCK] && md == &mons[PM_ORACLE])
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
 
     /* ravens like eyes */
     if (ma == &mons[PM_RAVEN] && md == &mons[PM_FLOATING_EYE])
-        return ALLOW_M|ALLOW_TM;
+        return ALLOW_M | ALLOW_TM;
 
     return 0L;
 }
@@ -1260,8 +1260,8 @@ dmonsfree(struct level *lev)
     }
 
     if (count != lev->flags.purge_monsters)
-	impossible("dmonsfree: %d removed doesn't match %d pending",
-		   count, lev->flags.purge_monsters);
+        impossible("dmonsfree: %d removed doesn't match %d pending", count,
+                   lev->flags.purge_monsters);
     lev->flags.purge_monsters = 0;
 }
 
@@ -1349,8 +1349,10 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
     unstuck(mtmp);
     fill_pit(mtmp->dlevel, mtmp->mx, mtmp->my);
 
-    if (mtmp->isshk) shkgone(mtmp);
-    if (mtmp->wormno) wormgone(mtmp);
+    if (mtmp->isshk)
+        shkgone(mtmp);
+    if (mtmp->wormno)
+        wormgone(mtmp);
     mtmp->dlevel->flags.purge_monsters++;
 }
 
@@ -1432,8 +1434,7 @@ mondead(struct monst *mtmp)
     if ((!mtmp->minvis || See_invisible) &&
         ((mtmp->m_ap_type == M_AP_FURNITURE &&
           (mtmp->mappearance == S_vcdoor || mtmp->mappearance == S_hcdoor)) ||
-         (mtmp->m_ap_type == M_AP_OBJECT &&
-          mtmp->mappearance == BOULDER)))
+         (mtmp->m_ap_type == M_AP_OBJECT && mtmp->mappearance == BOULDER)))
         unblock_point(mtmp->mx, mtmp->my);
 
     mptr = mtmp->data;  /* save this for m_detach() */
@@ -1581,13 +1582,12 @@ mongone(struct monst *mdef)
     if (mdef == u.usteed)
         dismount_steed(DISMOUNT_GENERIC);
 
-	/* monster should no longer block vision */
-	if ((!mdef->minvis || See_invisible) &&
-	    ((mdef->m_ap_type == M_AP_FURNITURE &&
-	      (mdef->mappearance == S_vcdoor || mdef->mappearance == S_hcdoor)) ||
-	     (mdef->m_ap_type == M_AP_OBJECT &&
-	      mdef->mappearance == BOULDER)))
-	    unblock_point(mdef->mx, mdef->my);
+    /* monster should no longer block vision */
+    if ((!mdef->minvis || See_invisible) &&
+        ((mdef->m_ap_type == M_AP_FURNITURE &&
+          (mdef->mappearance == S_vcdoor || mdef->mappearance == S_hcdoor)) ||
+         (mdef->m_ap_type == M_AP_OBJECT && mdef->mappearance == BOULDER)))
+        unblock_point(mdef->mx, mdef->my);
 
     /* drop special items like the Amulet so that a dismissed Kop or nurse
        can't remove them from the game */

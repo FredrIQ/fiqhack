@@ -101,8 +101,8 @@ setuwep(struct obj *obj)
     if (obj) {
         unweapon = (obj->oclass == WEAPON_CLASS) ? is_launcher(obj) ||
             is_ammo(obj) || is_missile(obj) || (is_pole(obj)
-                                                && !u.
-                                                usteed) : !is_weptool(obj);
+                                                && !u.usteed) :
+            !is_weptool(obj);
     } else
         unweapon = TRUE;        /* for "bare hands" message */
     update_inventory();
@@ -350,8 +350,8 @@ dowieldquiver(struct obj *newquiver)
         pline("%s already being used as a weapon!",
               !is_plural(uwep) ? "That is" : "They are");
         return 0;
-    } else if (newquiver->
-               owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE)) {
+    } else if (newquiver->owornmask &
+               (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE)) {
         pline("You cannot ready that!");
         return 0;
     } else {

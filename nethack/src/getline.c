@@ -59,7 +59,7 @@ draw_getline_inner(struct gamewin *gw, int echo)
 
     wrap_text(COLNO - 4, glw->query, &output_count, &output);
     for (i = 0; i < output_count; i++)
-	mvwaddstr(gw->win, i + 1, 2, output[i]);
+        mvwaddstr(gw->win, i + 1, 2, output[i]);
     free_wrap(output);
 
     if (glw->pos > width - 4)

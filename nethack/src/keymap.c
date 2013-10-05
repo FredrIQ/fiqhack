@@ -83,8 +83,8 @@ struct nh_cmd_desc builtin_commands[] = {
     {"go_south_west", "run southwest until something interesting is seen",
      Ctrl('b'), 0, CMD_UI | DIRCMD_CTRL | DIR_SW},
     {"go_west", "run west until something interesting is seen", Ctrl('h'), 0,
-     CMD_UI | DIRCMD_CTRL | DIR_W}, /* nutty konsole sends KEY_BACKSPACE when ^H
-                                       is pressed...  */
+     CMD_UI | DIRCMD_CTRL | DIR_W},     /* nutty konsole sends KEY_BACKSPACE
+                                           when ^H is pressed...  */
 
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
@@ -106,6 +106,7 @@ static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count, unknown_size;
 static struct nh_cmd_desc *prev_cmd;
 static struct nh_cmd_arg prev_arg = { CMD_ARG_NONE }, next_command_arg;
+
 static nh_bool prev_cmd_same = FALSE;
 static int current_cmd_key;
 
@@ -121,40 +122,45 @@ static struct nh_cmd_desc *doextcmd(void);
 static void dostop(void);
 
 
-void reset_prev_cmd(void)
+void
+reset_prev_cmd(void)
 {
     prev_cmd = NULL;
     prev_cmd_same = FALSE;
 }
 
 
-nh_bool check_prev_cmd_same(void)
+nh_bool
+check_prev_cmd_same(void)
 {
     return prev_cmd_same;
 }
 
 
-int get_current_cmd_key(void)
+int
+get_current_cmd_key(void)
 {
     return current_cmd_key;
 }
 
 
-const char *curses_keyname(int key)
+const char *
+curses_keyname(int key)
 {
     static char knbuf[16];
     const char *kname;
+
     if (key == ' ')
-	return "SPACE";
+        return "SPACE";
     else if (key == '\033')
-	return "ESC";
-    
-    /* if ncurses doesn't know a key, keyname() returns NULL.
-     * This can happen if you create a keymap with pdcurses, and then read it with ncurses */
+        return "ESC";
+
+    /* if ncurses doesn't know a key, keyname() returns NULL. This can happen
+       if you create a keymap with pdcurses, and then read it with ncurses */
     kname = keyname(key);
     if (kname && strcmp(kname, "UNKNOWN KEY"))
-	return kname;
-    snprintf(knbuf, sizeof(knbuf), "KEY_#%d", key);
+        return kname;
+    snprintf(knbuf, sizeof (knbuf), "KEY_#%d", key);
     return knbuf;
 }
 
@@ -268,7 +274,8 @@ get_command(int *count, struct nh_cmd_arg *arg)
         arg->argtype = CMD_ARG_NONE;
 
         key = get_map_key(TRUE);
-        while ((key >= '0' && key <= '9') || (multi > 0 && key == KEY_BACKSPACE)) {
+        while ((key >= '0' && key <= '9') ||
+               (multi > 0 && key == KEY_BACKSPACE)) {
             if (key == KEY_BACKSPACE)
                 multi /= 10;
             else {
@@ -286,7 +293,7 @@ get_command(int *count, struct nh_cmd_arg *arg)
         new_action();   /* use a new message line for this action */
         *count = multi;
         cmd = keymap[key];
-	current_cmd_key = key;
+        current_cmd_key = key;
 
         if (cmd != NULL) {
             /* handle internal commands. The command handler may alter * cmd,
@@ -355,7 +362,7 @@ key_to_dir(int key)
     struct nh_cmd_desc *cmd;
 
     if (key <= 0)
-	return DIR_NONE;
+        return DIR_NONE;
 
     cmd = keymap[key];
 
@@ -553,18 +560,19 @@ read_keymap(void)
 #ifdef WIN32
         wchar_t usernamew[BUFSZ];
         int i = 0;
-        while (i < BUFSZ-2 && ui_flags.username[i]) {
+
+        while (i < BUFSZ - 2 && ui_flags.username[i]) {
             usernamew[i] = ui_flags.username[i];
             i++;
         }
         usernamew[i] = 0;
-        fnncat(filename, usernamew, BUFSZ-1);
+        fnncat(filename, usernamew, BUFSZ - 1);
 #else
-        fnncat(filename, ui_flags.username, BUFSZ-1);
+        fnncat(filename, ui_flags.username, BUFSZ - 1);
 #endif
-        fnncat(filename, FN(".keymap"), BUFSZ-1);
+        fnncat(filename, FN(".keymap"), BUFSZ - 1);
     } else
-        fnncat(filename, FN("keymap.conf"), BUFSZ-1);
+        fnncat(filename, FN("keymap.conf"), BUFSZ - 1);
 
     fd = sys_open(filename, O_RDONLY, 0);
     if (fd == -1)
@@ -595,8 +603,9 @@ read_keymap(void)
         cmd = find_command(&line[pos]);
         if (line[pos] == '-') {
             /* old version of the keymap, with dangerously wrong keybindings */
-            curses_msgwin("keymap.conf has changed format. Your keybindings have "
-                          "reverted to defaults.");
+            curses_msgwin
+                ("keymap.conf has changed format. Your keybindings have "
+                 "reverted to defaults.");
             init_keymap();
             write_keymap();
             return FALSE;
@@ -686,18 +695,19 @@ write_keymap(void)
 #ifdef WIN32
         wchar_t usernamew[BUFSZ];
         int i = 0;
-        while (i < BUFSZ-2 && ui_flags.username[i]) {
+
+        while (i < BUFSZ - 2 && ui_flags.username[i]) {
             usernamew[i] = ui_flags.username[i];
             i++;
         }
         usernamew[i] = 0;
-        fnncat(filename, usernamew, BUFSZ-1);
+        fnncat(filename, usernamew, BUFSZ - 1);
 #else
-        fnncat(filename, ui_flags.username, BUFSZ-1);
+        fnncat(filename, ui_flags.username, BUFSZ - 1);
 #endif
-        fnncat(filename, FN(".keymap"), BUFSZ-1);
+        fnncat(filename, FN(".keymap"), BUFSZ - 1);
     } else
-        fnncat(filename, FN("keymap.conf"), BUFSZ-1);
+        fnncat(filename, FN("keymap.conf"), BUFSZ - 1);
 
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)
@@ -705,10 +715,11 @@ write_keymap(void)
 
     for (key = 1; key < KEY_MAX; key++) {
         name =
-            keymap[key] ? keymap[key]->
-            name : (unknown_keymap[key] ? unknown_keymap[key]->name : "-");
+            keymap[key] ? keymap[key]->name : (unknown_keymap[key] ?
+                                               unknown_keymap[key]->name : "-");
         sprintf(buf, "%x %s\n", key, name);
-        if (strcmp(name, "-")) write(fd, buf, strlen(buf));
+        if (strcmp(name, "-"))
+            write(fd, buf, strlen(buf));
     }
 
     for (i = 0; i < cmdcount; i++) {
@@ -748,8 +759,8 @@ init_keymap(void)
     keymap[KEY_DOWN] = find_command("south");
     keymap[KEY_LEFT] = find_command("west");
     keymap[KEY_RIGHT] = find_command("east");
-    /* if the terminal gives us sufficient control over the numpad,
-       we can do this */
+    /* if the terminal gives us sufficient control over the numpad, we can do
+       this */
     keymap[KEY_A2] = find_command("north");
     keymap[KEY_C2] = find_command("south");
     keymap[KEY_B1] = find_command("west");
@@ -784,8 +795,7 @@ init_keymap(void)
     }
 
     for (i = 0; i < count; i++) {
-        if (builtin_commands[i].altkey &&
-            !keymap[commandlist[i].altkey])
+        if (builtin_commands[i].altkey && !keymap[commandlist[i].altkey])
             keymap[builtin_commands[i].altkey] = &builtin_commands[i];
     }
 

@@ -37,21 +37,21 @@
 # define TRCORNER        4
 # define BLCORNER        5
 # define BRCORNER        6
-# define CROSSWALL       7       /* For pretty mazes and special levels */
+# define CROSSWALL       7      /* For pretty mazes and special levels */
 # define TUWALL          8
 # define TDWALL          9
 # define TLWALL          10
 # define TRWALL          11
 # define DBWALL          12
-# define TREE            13      /* KMH */
+# define TREE            13     /* KMH */
 # define SDOOR           14
 # define SCORR           15
 # define POOL            16
-# define MOAT            17      /* pool that doesn't boil, adjust messages */
+# define MOAT            17     /* pool that doesn't boil, adjust messages */
 # define WATER           18
 # define DRAWBRIDGE_UP   19
 # define LAVAPOOL        20
-# define IRONBARS        21      /* KMH */
+# define IRONBARS        21     /* KMH */
 # define DOOR            22
 # define CORR            23
 # define ROOM            24
@@ -76,13 +76,13 @@
  * Instead, use one of the macros below.
  */
 # define IS_WALL(typ)       ((typ) && (typ) <= DBWALL)
-# define IS_STWALL(typ)     ((typ) <= DBWALL) /* STONE <= (typ) <= DBWALL */
-# define IS_ROCK(typ)       ((typ) < POOL)    /* absolutely nonaccessible */
+# define IS_STWALL(typ)     ((typ) <= DBWALL)   /* STONE <= (typ) <= DBWALL */
+# define IS_ROCK(typ)       ((typ) < POOL)      /* absolutely nonaccessible */
 # define IS_DOOR(typ)       ((typ) == DOOR)
 # define IS_TREE(typ)       ((typ) == TREE || \
                             (level->flags.arboreal && (typ) == STONE))
-# define ACCESSIBLE(typ)    ((typ) >= DOOR)   /* good position */
-# define IS_ROOM(typ)       ((typ) >= ROOM)   /* ROOM, STAIRS, furniture.. */
+# define ACCESSIBLE(typ)    ((typ) >= DOOR)     /* good position */
+# define IS_ROOM(typ)       ((typ) >= ROOM)     /* ROOM, STAIRS, furniture.. */
 # define ZAP_POS(typ)       ((typ) >= POOL)
 # define SPACE_POS(typ)     ((typ) > DOOR)
 # define IS_POOL(typ)       ((typ) >= POOL && (typ) <= DRAWBRIDGE_UP)
@@ -173,11 +173,11 @@ enum dungeon_symbols {
 
 /* end dungeon characters, begin special effects */
 
-# define E_digbeam      0 /* dig beam symbol */
-# define E_flashbeam    1 /* camera flash symbol */
-# define E_boomleft     2 /* thrown boomerang, open left, e.g ')' */
-# define E_boomright    3 /* thrown boomerang, open right, e.g. '(' */
-# define E_ss1          4 /* 4 magic shield glyphs */
+# define E_digbeam      0       /* dig beam symbol */
+# define E_flashbeam    1       /* camera flash symbol */
+# define E_boomleft     2       /* thrown boomerang, open left, e.g ')' */
+# define E_boomright    3       /* thrown boomerang, open right, e.g. '(' */
+# define E_ss1          4       /* 4 magic shield glyphs */
 # define E_ss2          5
 # define E_ss3          6
 # define E_ss4          7
@@ -185,24 +185,24 @@ enum dungeon_symbols {
 
 /* The 8 swallow symbols.  Do NOT separate.  To change order or add, see */
 /* the function swallow_to_effect() in display.c.                        */
-# define S_sw_tl        0 /* swallow top left [1] */
-# define S_sw_tc        1 /* swallow top center [2] Order: */
-# define S_sw_tr        2 /* swallow top right [3] */
-# define S_sw_ml        3 /* swallow middle left [4] 1 2 3 */
-# define S_sw_mr        4 /* swallow middle right [6] 4 5 6 */
-# define S_sw_bl        5 /* swallow bottom left [7] 7 8 9 */
-# define S_sw_bc        6 /* swallow bottom center [8] */
-# define S_sw_br        7 /* swallow bottom right [9] */
+# define S_sw_tl        0       /* swallow top left [1] */
+# define S_sw_tc        1       /* swallow top center [2] Order: */
+# define S_sw_tr        2       /* swallow top right [3] */
+# define S_sw_ml        3       /* swallow middle left [4] 1 2 3 */
+# define S_sw_mr        4       /* swallow middle right [6] 4 5 6 */
+# define S_sw_bl        5       /* swallow bottom left [7] 7 8 9 */
+# define S_sw_bc        6       /* swallow bottom center [8] */
+# define S_sw_br        7       /* swallow bottom right [9] */
 
-# define E_explode1     0 /* explosion top left */
-# define E_explode2     1 /* explosion top center */
-# define E_explode3     2 /* explosion top right Ex. */
-# define E_explode4     3 /* explosion middle left */
-# define E_explode5     4 /* explosion middle center /-\ */
-# define E_explode6     5 /* explosion middle right |@| */
-# define E_explode7     6 /* explosion bottom left \-/ */
-# define E_explode8     7 /* explosion bottom center */
-# define E_explode9     8 /* explosion bottom right */
+# define E_explode1     0       /* explosion top left */
+# define E_explode2     1       /* explosion top center */
+# define E_explode3     2       /* explosion top right Ex. */
+# define E_explode4     3       /* explosion middle left */
+# define E_explode5     4       /* explosion middle center /-\ */
+# define E_explode6     5       /* explosion middle right |@| */
+# define E_explode7     6       /* explosion bottom left \-/ */
+# define E_explode8     7       /* explosion bottom center */
+# define E_explode9     8       /* explosion bottom right */
 
 /* end effects */
 
@@ -437,7 +437,7 @@ struct damage {
 struct levelflags {
     uchar nfountains;   /* number of fountains on level */
     uchar nsinks;       /* number of sinks on the level */
-	int	purge_monsters;	/* number of dead monsters still on level->monlist */
+    int purge_monsters; /* number of dead monsters still on level->monlist */
 
     /* Several flags that give hints about what's on the level */
     unsigned has_shop:1;

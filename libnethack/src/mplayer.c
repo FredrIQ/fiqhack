@@ -92,11 +92,15 @@ mk_mplayer_armor(struct monst *mon, short typ)
 {
     struct obj *obj;
 
-    if (typ == STRANGE_OBJECT) return;
+    if (typ == STRANGE_OBJECT)
+        return;
     obj = mksobj(mon->dlevel, typ, FALSE, FALSE);
-    if (!rn2(3)) obj->oerodeproof = 1;
-    if (!rn2(3)) curse(obj);
-    if (!rn2(3)) bless(obj);
+    if (!rn2(3))
+        obj->oerodeproof = 1;
+    if (!rn2(3))
+        curse(obj);
+    if (!rn2(3))
+        bless(obj);
     /* Most players who get to the endgame who have cursed equipment have it
        because the wizard or other monsters cursed it, so its chances of having
        plusses is the same as usual.... */
@@ -252,7 +256,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             else if (!rn2(2))
                 otmp->greased = 1;
             if (special && rn2(2))
-		    otmp = mk_artifact(lev, otmp, A_NONE);
+                otmp = mk_artifact(lev, otmp, A_NONE);
             /* mplayers knew better than to overenchant Magicbane */
             if (otmp->oartifact == ART_MAGICBANE)
                 otmp->spe = rnd(4);
@@ -352,8 +356,7 @@ mplayer_talk(struct monst *mtmp)
     pline("Talk? -- %s",
           (mtmp->data == &mons[urole.malenum] ||
            mtmp->data ==
-           &mons[urole.
-                 femalenum]) ? same_class_msg[rn2(3)] :
+           &mons[urole.femalenum]) ? same_class_msg[rn2(3)] :
           other_class_msg[rn2(3)]);
 }
 

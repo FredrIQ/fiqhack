@@ -299,7 +299,7 @@ struct obj *
 addinv(struct obj *obj)
 {
     struct obj *otmp;
-	boolean obj_was_thrown;
+    boolean obj_was_thrown;
 
     if (obj->where != OBJ_FREE)
         panic("addinv: obj not free");
@@ -326,10 +326,10 @@ addinv(struct obj *obj)
     reorder_invent();
     obj->where = OBJ_INVENT;
 
-	/* fill empty quiver if obj was thrown */
-	if (iflags.pickup_thrown && !uquiver && obj_was_thrown &&
-	    (throwing_weapon(obj) || is_ammo(obj)))
-	    setuqwep(obj);
+    /* fill empty quiver if obj was thrown */
+    if (iflags.pickup_thrown && !uquiver && obj_was_thrown &&
+        (throwing_weapon(obj) || is_ammo(obj)))
+        setuqwep(obj);
 
 added:
     addinv_core2(obj);
@@ -430,7 +430,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
 
         obj = addinv(obj);
         if (obj->invlet == NOINVSYM || ((obj->otyp != LOADSTONE || !obj->cursed)
-                               && near_capacity() > prev_encumbr)) {
+                                        && near_capacity() > prev_encumbr)) {
             if (drop_fmt)
                 pline(drop_fmt, drop_arg);
             /* undo any merge which took place */
@@ -688,8 +688,8 @@ compactify(char *buf)
 
     ilet2 = buf[0];
     ilet1 = buf[1];
-	++i2;
-	++i1;
+    ++i2;
+    ++i1;
     ilet = buf[i1];
     while (ilet) {
         if (ilet == ilet1 + 1) {
@@ -737,10 +737,10 @@ object_selection_checks(struct obj *otmp, const char *word)
     if ((taking_off(word) &&
          (!(otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))
           || (otmp == uarm && uarmc) || (otmp == uarmu && (uarm || uarmc))))
-        || (putting_on(word) && (otmp->owornmask & /* already worn */
+        || (putting_on(word) && (otmp->owornmask &      /* already worn */
                                  (W_ARMOR | W_RING | W_AMUL | W_TOOL)))
-        ||(!strcmp(word, "ready") &&
-           (otmp == uwep || (otmp == uswapwep && u.twoweap))))
+        || (!strcmp(word, "ready") &&
+            (otmp == uwep || (otmp == uswapwep && u.twoweap))))
         return ALREADY_IN_USE;
 
     /* Second ugly check; unlike the first it won't trigger an "else" in "you
@@ -1070,9 +1070,9 @@ is_worn(const struct obj * otmp)
 {
     return ((boolean)
             (! !
-             (otmp->
-              owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE | W_WEP
-                           | W_SWAPWEP | W_QUIVER))));
+             (otmp->owornmask &
+              (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE | W_WEP | W_SWAPWEP
+               | W_QUIVER))));
 }
 
 

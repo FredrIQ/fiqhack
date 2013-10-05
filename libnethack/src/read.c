@@ -107,8 +107,8 @@ doread(struct obj *scroll)
         }
     }
 
-    /* TODO: When we add a conduct assistance option, add a condition here.
-     *   Or better yet, check for all reading of things. */
+    /* TODO: When we add a conduct assistance option, add a condition here.  Or 
+       better yet, check for all reading of things. */
     if (scroll->otyp == SPE_BOOK_OF_THE_DEAD && !u.uconduct.literate &&
         yn("You are currently illiterate and could invoke the Book "
            "instead. Read it nonetheless?") != 'y')
@@ -332,7 +332,7 @@ recharge(struct obj *obj, int curse_bless)
         case EXPENSIVE_CAMERA:
             if (is_cursed)
                 stripspe(obj);
-            else if (rechrg && obj->otyp == MAGIC_MARKER) { 
+            else if (rechrg && obj->otyp == MAGIC_MARKER) {
                 /* previously recharged */
                 obj->recharged = 1;     /* override increment done above */
                 if (obj->spe < 3)
@@ -616,9 +616,8 @@ seffects(struct obj *sobj, boolean * known)
                           otense(otmp, "are"),
                           sobj->cursed ? "mottled" : "shimmering",
                           hcolor(sobj->cursed ? "black" : "golden"),
-                          sobj->
-                          cursed ? "glow" : (is_shield(otmp) ? "layer" :
-                                             "shield"));
+                          sobj->cursed ? "glow" : (is_shield(otmp) ? "layer" :
+                                                   "shield"));
                 }
                 if (otmp->oerodeproof && (otmp->oeroded || otmp->oeroded2)) {
                     otmp->oeroded = otmp->oeroded2 = 0;
@@ -628,8 +627,8 @@ seffects(struct obj *sobj, boolean * known)
                 break;
             }
             /* elven armor vibrates warningly when enchanted beyond a limit */
-            special_armor = is_elven_armor(otmp) ||
-              (Role_if(PM_WIZARD) && otmp->otyp == CORNUTHAUM);
+            special_armor = is_elven_armor(otmp) || (Role_if(PM_WIZARD) &&
+                                                     otmp->otyp == CORNUTHAUM);
             if (sobj->cursed)
                 same_color = (otmp->otyp == BLACK_DRAGON_SCALE_MAIL ||
                               otmp->otyp == BLACK_DRAGON_SCALES);
@@ -1553,6 +1552,7 @@ do_level_genocide(void)
     struct monst *mtmp, *mtmp2;
 
     int gonecnt = 0;
+
     for (mtmp = level->monlist; mtmp; mtmp = mtmp2) {
         mtmp2 = mtmp->nmon;
         if (DEADMONSTER(mtmp))

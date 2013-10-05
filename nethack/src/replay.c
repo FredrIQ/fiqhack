@@ -271,7 +271,7 @@ replay_commandloop(int fd)
             nh_view_replay_step(&rinfo, REPLAY_GOTO, move);
             break;
 
-        case KEY_F12:        /* timetest! */
+        case KEY_F12:  /* timetest! */
             if (allow_timetest())
                 timetest(fd, &rinfo);
             break;
@@ -345,15 +345,15 @@ replay(void)
         size = filecount + 2;
         items = malloc(size * sizeof (struct nh_menuitem));
 
-	if (dir == logdir && *savedir) {
-	    add_menu_item(items, size, icount, -1,
-			  "View saved games instead", '!', FALSE);
-	    add_menu_txt(items, size, icount, "", MI_NORMAL);
-	} else if (dir == savedir && *logdir) {
-	    add_menu_item(items, size, icount, -1,
-			  "View completed games instead", '!', FALSE);
-	    add_menu_txt(items, size, icount, "", MI_NORMAL);
-	}
+        if (dir == logdir && *savedir) {
+            add_menu_item(items, size, icount, -1, "View saved games instead",
+                          '!', FALSE);
+            add_menu_txt(items, size, icount, "", MI_NORMAL);
+        } else if (dir == savedir && *logdir) {
+            add_menu_item(items, size, icount, -1,
+                          "View completed games instead", '!', FALSE);
+            add_menu_txt(items, size, icount, "", MI_NORMAL);
+        }
 
         /* add all the files to the menu */
         for (i = 0; i < filecount; i++) {
@@ -363,15 +363,15 @@ replay(void)
 
             describe_game(buf, status, &gi);
             add_menu_item(items, size, icount,
-                          (status == LS_IN_PROGRESS) ? 0 : i + 1,
-                          buf, 0, FALSE);
+                          (status == LS_IN_PROGRESS) ? 0 : i + 1, buf, 0,
+                          FALSE);
         }
 
-	n = curses_display_menu(items, icount,
-				(dir == savedir ?
-				 "Pick a saved game to view" :
-				 "Pick a completed game to view"),
-				PICK_ONE, PLHINT_ANYWHERE, pick);
+        n = curses_display_menu(items, icount,
+                                (dir ==
+                                 savedir ? "Pick a saved game to view" :
+                                 "Pick a completed game to view"), PICK_ONE,
+                                PLHINT_ANYWHERE, pick);
         free(items);
         filename[0] = '\0';
         if (n > 0 && pick[0] != -1)

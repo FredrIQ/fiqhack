@@ -1181,8 +1181,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->uconduct.puddings = mread32(mf);
 
     /* at this point, ustuck and usteed are mon ids rather than pointers */
-    y->ustuck = (void *)(intptr_t)mread32(mf);
-    y->usteed = (void *)(intptr_t)mread32(mf);
+    y->ustuck = (void *)(intptr_t) mread32(mf);
+    y->usteed = (void *)(intptr_t) mread32(mf);
 
     y->ux = mread8(mf);
     y->uy = mread8(mf);

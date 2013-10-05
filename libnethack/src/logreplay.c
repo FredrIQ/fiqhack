@@ -798,10 +798,11 @@ replay_read_command(char *cmdtok, char **cmd, int *count,
     if (!cmdtok)
         return;
 
-    n = sscanf(cmdtok, ">%" SCNxLEAST64 ":%x:%d", &turntime_l64, &cmdidx, count);
+    n = sscanf(cmdtok, ">%" SCNxLEAST64 ":%x:%d", &turntime_l64, &cmdidx,
+               count);
     if (n != 3 || cmdidx > cmdcount)
         parse_error("Error: Incorrect command spec\n");
-    turntime = (unsigned long long) turntime_l64;
+    turntime = (unsigned long long)turntime_l64;
 
     *cmd = commands[cmdidx];
 
@@ -1472,10 +1473,10 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
     if (read(fd, header, 127) <= 0)
         return LS_INVALID;
     header[127] = '\0';
-    n = sscanf(header, "NHGAME %4s %x %*8s %d.%d.%d\n%"
-               SCNxLEAST64 " %x %x %s %s %s %s %s",
-               status, &savepos, &v1, &v2, &v3, &starttime, &seed, &playmode,
-               encplname, role, race, gend, algn);
+    n = sscanf(header,
+               "NHGAME %4s %x %*8s %d.%d.%d\n%" SCNxLEAST64
+               " %x %x %s %s %s %s %s", status, &savepos, &v1, &v2, &v3,
+               &starttime, &seed, &playmode, encplname, role, race, gend, algn);
     if (n != 13)
         return LS_INVALID;
 
