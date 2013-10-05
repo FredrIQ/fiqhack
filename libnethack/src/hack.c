@@ -5,6 +5,7 @@
 #include <limits.h>
 
 #include "hack.h"
+#include "hungerstatus.h"
 
 static void maybe_wail(void);
 static int moverock(schar dx, schar dy);
@@ -917,20 +918,6 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                     if (!isok(nx, ny) || (guess == couldsee_func && !guess(nx, ny)))
                         continue;
 
-		    /* Walk around monsters that just get in the way. */
-		    mtmp = m_at(level, nx, ny);
-		    divert_mon = (mtmp &&
-				  /* can be seen or spotted */
-				  canspotmon(level, mtmp) &&
-				  mtmp->m_ap_type != M_AP_FURNITURE &&
-				  mtmp->m_ap_type != M_AP_OBJECT &&
-				  !(is_hider(mtmp->data) || mtmp->mundetected) &&
-				  /* peaceful monsters */
-				  ((mtmp->mpeaceful && !Hallucination) ||
-				   /* monsters with no attacks */
-				   noattacks(mtmp->data)));
-
->>>>>>> 02da53e... Fix travel moving player back and forth repeatedly
                     if ((!Passes_walls && !can_ooze(&youmonst) &&
                          closed_door(level, nx, ny)) ||
                         sobj_at(BOULDER, level, nx, ny) ||
@@ -1233,7 +1220,7 @@ domove(schar dx, schar dy, schar dz)
             if (flags.run >= 2) {
                 if (trap && trap->tseen && flags.run == 8 &&
                     iflags.autoexplore)
-                    autoexplore_msg("a trap");
+                    autoexplore_msg("a trap", DO_MOVE);
                 nomul(0, NULL);
                 return 0;
             } else
@@ -2254,7 +2241,7 @@ lookaround(void)
                      (mtmp && mtmp->m_ap_type == M_AP_FURNITURE &&
                       (mtmp->mappearance == S_hcdoor ||
                        mtmp->mappearance == S_vcdoor))) {
-                if (flags.run == 8 || x != u.ux && y != u.uy)
+                if (flags.run == 8 || (x != u.ux && y != u.uy))
                     continue;
                 if (flags.run != 1)
                     goto stop;
@@ -2398,7 +2385,7 @@ unmul(const char *msg_override)
 {
     boolean previously_unconscious = unconscious();
 
-    nomul(0);
+    nomul(0, NULL);
     if (msg_override)
         nomovemsg = msg_override;
     else if (!nomovemsg)

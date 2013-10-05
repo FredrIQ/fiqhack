@@ -340,7 +340,8 @@ static void select_boolean_value(union nh_optvalue *value, struct nh_option_desc
     add_menu_item(items, size, icount, 2,
 		  option->value.b ? "false" : "false (set)", 'f', 0);
 
-    n = curses_display_menu(items, icount, option->name, PICK_ONE, pick_list);
+    n = curses_display_menu(items, icount, option->name, PICK_ONE,
+                            PLHINT_RIGHT, pick_list);
     free(items);
 
     value->b = option->value.b; /* in case of ESC */

@@ -1025,7 +1025,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
                         break;
                     mongone(was);
                 }
-		wastyp = rndmonnum(lev);
+		wastyp = rndmonnum(&lev->z);
 	    }
 	    if (was) {
                 otmp->corpsenm = wastyp;

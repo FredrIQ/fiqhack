@@ -1180,9 +1180,12 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
                                          where to move */
               struct monst *mdef)     /* another monster which is next to it */
 {
+    const struct permonst *ma = magr->data;
+    const struct permonst *md = mdef->data;
+
     /* supposedly purple worms are attracted to shrieking because they like to
        eat shriekers, so attack the latter when feasible */
-    if (magr->data == &mons[PM_PURPLE_WORM] && mdef->data == &mons[PM_SHRIEKER])
+    if (ma == &mons[PM_PURPLE_WORM] && md == &mons[PM_SHRIEKER])
         return ALLOW_M | ALLOW_TM;
 
     /* pets attack hostile monsters */

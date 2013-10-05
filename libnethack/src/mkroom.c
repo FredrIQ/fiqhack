@@ -120,10 +120,6 @@ mkshop(struct level *lev)
                 mkzoo(lev, BEEHIVE);
                 return;
             }
-            if (ep[0] == 'p' || ep[0] == 'P') {
-                mkzoo(lev, LEMUREPIT);
-                return;
-            }
             if (ep[0] == 't' || ep[0] == 'T') {
                 mkzoo(lev, COURT);
                 return;
@@ -140,20 +136,12 @@ mkshop(struct level *lev)
                 mkzoo(lev, COCKNEST);
                 return;
             }
-            if (ep[0] == 'r' || ep[0] == 'R') {
-                mkzoo(lev, ARMORY);
-                return;
-            }
             if (ep[0] == 'l' || ep[0] == 'L') {
                 mkzoo(lev, LEPREHALL);
                 return;
             }
             if (ep[0] == '_') {
                 mktemple(lev);
-                return;
-            }
-            if (ep[0] == 'n') {
-                mkgarden(lev, NULL);
                 return;
             }
             if (ep[0] == '}') {

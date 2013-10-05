@@ -14,18 +14,19 @@ msummon(struct monst *mon, const d_level *dlev)
     int dtype = NON_PM, cnt = 0;
     aligntyp atyp;
     struct monst *mtmp;
-    struct d_level *dlev;
 
     if (mon) {
         ptr = mon->data;
-        dlev = &mon->dlevel->z;
+        if (dlev != &mon->dlevel->z)
+            impossible("dlev mismatch for monster in msummon");
         atyp = (ptr->maligntyp == A_NONE) ? A_NONE : sgn(ptr->maligntyp);
         if (mon->ispriest || roamer_type(mon->data))
             atyp = EPRI(mon)->shralign;
     } else {
         ptr = &mons[PM_WIZARD_OF_YENDOR];
         atyp = (ptr->maligntyp == A_NONE) ? A_NONE : sgn(ptr->maligntyp);
-        dlev = &u.uz;
+        if (dlev != &u.uz)
+            impossible("dlev mismatch for player in msummon");
     }
 
     if (is_dprince(ptr) || (ptr == &mons[PM_WIZARD_OF_YENDOR])) {

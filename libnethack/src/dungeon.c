@@ -1645,19 +1645,10 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
                 }
                 lchoices.playerlev[lchoices.idx] = depth(&slev->dlevel);
 
-<<<<<<< HEAD
-                add_menuitem(&menu, lchoices.idx + 1, buf, lchoices.menuletter,
-                             FALSE);
-                if (lchoices.menuletter == 'z')
-                    lchoices.menuletter = 'A';
-                else
-                    lchoices.menuletter++;
-=======
 		add_menuitem(&menu, lchoices.idx + 1, buf, lchoices.menuletter, FALSE);
 		if (lchoices.menuletter == 'z') lchoices.menuletter = 'A';
 		else if (lchoices.menuletter == 'Z') lchoices.menuletter = 'a';
 		else lchoices.menuletter++;
->>>>>>> a429cad... CS1182: Wrap from Z to a in level teleport menu
                 lchoices.idx++;
             } else
                 add_menutext(&menu, buf);

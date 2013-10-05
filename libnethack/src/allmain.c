@@ -18,7 +18,7 @@ static const char *const copyright_banner[] =
     { COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL };
 
 static void wd_message(void);
-static void pre_move_tasks(void);
+static void pre_move_tasks(boolean);
 
 static void newgame(void);
 static void welcome(boolean);
@@ -258,7 +258,7 @@ post_init_tasks(void)
     u.uz0.dlevel = u.uz.dlevel;
 
     /* prepare for the first move */
-    pre_move_tasks();
+    pre_move_tasks(0);
 }
 
 
@@ -770,7 +770,7 @@ special_vision_handling(void)
 
 
 static void
-pre_move_tasks(void)
+pre_move_tasks(boolean didmove)
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();

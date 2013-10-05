@@ -241,8 +241,6 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
             dealloc_obj(otmp);
             otmp = vobj_at(x, y);       /* make sure we don't point to the temp 
                                            obj any more */
-        } else {
-            strcpy(buf, "strange object");
         }
     } else
         strcpy(buf, distant_name(otmp, xname));

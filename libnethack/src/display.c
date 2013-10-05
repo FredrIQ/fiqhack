@@ -276,8 +276,6 @@ map_object(struct obj *obj, int show)
         loc = &tmp_location;
     }
 
-    struct rm *loc = &level->locations[x][y];
-
     if (objtyp == CORPSE || objtyp == STATUE || objtyp == FIGURINE) {
         if (Hallucination)
             monnum = random_monster();
@@ -675,8 +673,7 @@ feel_location(xchar x, xchar y)
         }
 
         /* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-	if (loc->typ == ROOM && loc->mem_bg == S_room &&
-	    (!loc->waslit || iflags.dark_room)) {
+	if (loc->typ == ROOM && loc->mem_bg == S_room && !loc->waslit) {
             loc->mem_bg = S_darkroom;
             loc->mem_door_l = 0;
             loc->mem_door_t = 0;

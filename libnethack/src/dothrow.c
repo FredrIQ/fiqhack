@@ -16,7 +16,6 @@ static void check_shop_obj(struct obj *, xchar, xchar, boolean);
 static void breakobj(struct obj *, xchar, xchar, boolean, boolean);
 static void breakmsg(struct obj *, boolean);
 static boolean toss_up(struct obj *, boolean);
-static boolean throwing_weapon(struct obj *);
 static void sho_obj_return_to_u(struct obj *obj, schar, schar);
 static boolean mhurtle_step(void *, int, int);
 
@@ -53,6 +52,7 @@ throw_obj(struct obj *obj, int shotlimit, boolean cancel_unquivers)
             setuqwep(NULL);
         }
         return 0;
+    }
 
     /* 
        Throwing money is usually for getting rid of it when a leprechaun
@@ -834,7 +834,7 @@ toss_up(struct obj *obj, boolean hitsroof)
 
 /* return true for weapon meant to be thrown; excludes ammo */
 boolean
-throwing_weapon(struct obj *obj)
+throwing_weapon(const struct obj *obj)
 {
     return (is_missile(obj) || is_spear(obj) ||
             /* daggers and knife (excludes scalpel) */

@@ -1263,7 +1263,7 @@ static boolean Is_container_func(const struct obj *otmp)
 int
 doloot(void)
 {
-    struct obj *cobj, *pobj;
+    struct obj *cobj;
     int c = -1;
     int timepassed = 0;
     coord cc;
@@ -1291,10 +1291,10 @@ lootcont:
 	struct object_pick *lootlist;
 	int i, n;
 
-	if (!able_to_loot(cc.x, cc.y, "loot")) return 0;
+	if (!able_to_loot(cc.x, cc.y)) return 0;
 
 	n = query_objlist("Loot which containers?", level->objects[cc.x][cc.y],
-			  BY_NEXTHERE | SIGNAL_ESCAPE | AUTOSELECT_SINGLE),
+			  BY_NEXTHERE | SIGNAL_ESCAPE | AUTOSELECT_SINGLE,
 			  &lootlist, PICK_ANY, Is_container_func);
                 
 	if (n < 0) {

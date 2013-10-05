@@ -240,11 +240,11 @@ restshk(struct monst *shkp, boolean ghostly)
 
 /* Clear the unpaid bit on all of the objects in the list. */
 static void
-clear_unpaid(struct obj *list)
+clear_unpaid(struct monst *shkp, struct obj *list)
 {
     while (list) {
         if (Has_contents(list))
-            clear_unpaid(list->cobj);
+            clear_unpaid(shkp, list->cobj);
         if (onbill(list, shkp, TRUE))
             list->unpaid = 0;
         list = list->nobj;

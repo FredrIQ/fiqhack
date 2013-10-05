@@ -186,7 +186,7 @@ attack_checks(struct monst *mtmp,
     if (canspotmon(mtmp) && !Confusion && !Hallucination && !Stunned) {
         if (mtmp->isshk && mtmp->mpeaceful &&
             (ESHK(mtmp)->billct || ESHK(mtmp)->debit)) {
-            dopay();
+            dopay(NULL);
             return TRUE;
         }
         if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
