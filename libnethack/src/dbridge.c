@@ -36,8 +36,7 @@ is_pool(struct level *lev, int x, int y)
         return FALSE;
     ltyp = lev->locations[x][y].typ;
     /* The ltyp == MOAT is not redundant to is_moat due to drawbridges and the
-     * Juiblex level. There is probably a better way to express this.
-     */
+       Juiblex level. There is probably a better way to express this. */
     if (ltyp == POOL || ltyp == WATER || ltyp == MOAT || is_moat(lev, x, y))
         return TRUE;
     return FALSE;
@@ -82,8 +81,9 @@ is_moat(struct level * lev, int x, int y)
         return FALSE;
     ltyp = lev->locations[x][y].typ;
     if (!Is_juiblex_level(&lev->z) &&
-        (ltyp == MOAT || (ltyp == DRAWBRIDGE_UP &&
-         (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT)))
+        (ltyp == MOAT ||
+         (ltyp == DRAWBRIDGE_UP &&
+          (lev->locations[x][y].drawbridgemask & DB_UNDER) == DB_MOAT)))
         return TRUE;
     return FALSE;
 }

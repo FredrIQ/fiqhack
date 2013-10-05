@@ -6,6 +6,7 @@
 /*  attribute modification routines. */
 
 #include "hack.h"
+#include "hungerstatus.h"
 
 /* #define DEBUG *//* uncomment for debugging info */
 
@@ -272,15 +273,6 @@ exercise(int i, boolean inc_or_dec)
     if (moves > 0 && (i == A_STR || i == A_CON))
         encumber_msg();
 }
-
-/* hunger values - from eat.c */
-#define SATIATED        0
-#define NOT_HUNGRY      1
-#define HUNGRY          2
-#define WEAK            3
-#define FAINTING        4
-#define FAINTED         5
-#define STARVED         6
 
 static void
 exerper(void)
@@ -724,6 +716,15 @@ adjalign(int n)
     }
 }
 
+/* Return "beautiful", "handsome" or "ugly"
+ * according to gender and charisma.
+ */
+const char *
+beautiful(void)
+{
+    return ACURR(A_CHA) > 14 ?
+        (poly_gender() == 1 ? "beautiful" : "handsome") : "ugly";
+}
 
 /* make sure u.abon is correct; it is dead-reckoned during the move,
  * but this produces some incorrect edge cases. */
@@ -766,6 +767,10 @@ calc_attr_bonus(void)
         case HELM_OF_BRILLIANCE:
             ABON(A_INT) += spe;
             ABON(A_WIS) += spe;
+            break;
+
+        case CORNUTHAUM:
+            ABON(A_CHA) += (Role_if(PM_WIZARD) ? 1 : -1);
             break;
         }
     }

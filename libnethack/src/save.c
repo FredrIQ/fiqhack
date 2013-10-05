@@ -343,7 +343,7 @@ savelev(struct memfile *mf, xchar levnum)
     struct level *lev = levels[levnum];
 
     /* The purge_monsters count refers to monsters on the current level. */
-    if (iflags.purge_monsters && levnum == ledger_no(&u.uz)) {
+    if (lev->flags.purge_monsters) {
         /* purge any dead monsters (necessary if we're starting a panic save
            rather than a normal one, or sometimes when changing levels without
            taking time -- e.g. create statue trap then immediately level
@@ -667,7 +667,7 @@ freedynamicdata(void)
     unload_qtlist();
     free_invbuf();      /* let_to_name (invent.c) */
     free_youbuf();      /* You_buf,&c (pline.c) */
-    tmpsym_freeall();    /* temporary display effects */
+    tmpsym_freeall();   /* temporary display effects */
 #define free_animals()   mon_animal_list(FALSE)
 
     for (i = 0; i < MAXLINFO; i++) {

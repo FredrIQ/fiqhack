@@ -125,7 +125,7 @@ drop_throw(struct obj *obj, boolean ohit, int x, int y)
             objgone = ship_object(obj, x, y, FALSE);
         if (!objgone) {
             if (!flooreffects(obj, x, y, "fall")) {
-              /* don't double-dip on damage */
+                /* don't double-dip on damage */
                 place_object(obj, level, x, y);
                 if (!mtmp && x == u.ux && y == u.uy)
                     mtmp = &youmonst;
@@ -352,7 +352,8 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
             if (multi)
                 nomul(0, NULL);
 
-            if (singleobj->oclass == GEM_CLASS && singleobj->otyp <= LAST_GEM + 9
+            if (singleobj->oclass == GEM_CLASS &&
+                singleobj->otyp <= LAST_GEM + 9
                 /* 9 glass colors */
                 && is_unicorn(youmonst.data)
                 && multi >= 0) {
@@ -461,8 +462,8 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                    /* missile hits edge of screen */
                    || !isok(bhitpos.x + dx, bhitpos.y + dy)
                    /* missile hits the wall */
-                   || IS_ROCK(level->locations[bhitpos.x + dx][bhitpos.y + dy].
-                              typ)
+                   || IS_ROCK(level->
+                              locations[bhitpos.x + dx][bhitpos.y + dy].typ)
                    /* missile hit closed door */
                    || closed_door(level, bhitpos.x + dx, bhitpos.y + dy)
                    /* missile might hit iron bars */
@@ -487,6 +488,8 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
         make_blinded(Blinded + (long)blindinc, FALSE);
         if (!Blind)
             pline("Your vision quickly clears.");
+        else if (flags.verbose)
+            pline("Use the command #wipe to clean your %s.", body_part(FACE));
     }
 }
 

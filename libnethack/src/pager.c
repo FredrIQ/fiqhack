@@ -230,7 +230,9 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
     otmp = vobj_at(x, y);
 
     if (!otmp || otmp->otyp != votyp) {
-        if (votyp != STRANGE_OBJECT) {
+        if (votyp == STRANGE_OBJECT) {
+            strcpy(buf, "strange object");
+        } else {
             otmp = mksobj(level, votyp, FALSE, FALSE);
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
@@ -240,8 +242,6 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
             dealloc_obj(otmp);
             otmp = vobj_at(x, y);       /* make sure we don't point to the temp 
                                            obj any more */
-        } else {
-            strcpy(buf, "strange object");
         }
     } else
         strcpy(buf, distant_name(otmp, xname));
@@ -669,6 +669,8 @@ do_look(boolean quick)
         ans = getpos(&cc, FALSE, what_is_an_unknown_object);
         if (ans < 0 || cc.x < 0) {
             flags.verbose = save_verbose;
+            if (flags.verbose)
+                pline(quick ? "Never mind." : "Done.");
             return 0;   /* done */
         }
         flags.verbose = FALSE;  /* only print long question once */
@@ -723,6 +725,8 @@ do_look(boolean quick)
     } while (!quick && ans != LOOK_ONCE);
 
     flags.verbose = save_verbose;
+    if (!quick && flags.verbose)
+        pline("Done.");
 
     return 0;
 }

@@ -289,6 +289,7 @@ extern void set_darkgray(void);
 
 /* dialog.c */
 extern WINDOW *newdialog(int height, int width);
+extern void reset_last_dir(void);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern char curses_query_key(const char *query, int *count);
@@ -308,6 +309,10 @@ extern void curses_getline(const char *query, char *buffer);
 extern void curses_getline_pw(const char *query, char *buffer);
 
 /* keymap.c */
+extern void reset_prev_cmd(void);
+extern nh_bool check_prev_cmd_same(void);
+extern int get_current_cmd_key(void);
+extern const char *curses_keyname(int key);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
                                 struct nh_cmd_arg *arg, int *count);
 extern const char *get_command(int *count, struct nh_cmd_arg *arg);

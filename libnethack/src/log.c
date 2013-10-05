@@ -42,7 +42,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len)
     unsigned long olen = compressBound(len);
     unsigned char *o = malloc(olen);
 
-    if (compress(o, &olen, in, len) != Z_OK) {
+    if (compress2(o, &olen, in, len, Z_BEST_COMPRESSION) != Z_OK) {
         panic("Could not compress input data!");
     }
 
@@ -248,6 +248,7 @@ void
 log_command(int cmd, int rep, struct nh_cmd_arg *arg)
 {
     uint_least64_t turntime_l64 = (uint_least64_t) turntime;
+
     if (iflags.disable_log || logfile == -1)
         return;
 

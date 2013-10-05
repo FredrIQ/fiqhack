@@ -33,7 +33,7 @@ extern boolean snuff_candle(struct obj *);
 extern boolean snuff_lit(struct obj *);
 extern boolean catch_lit(struct obj *);
 extern void use_unicorn_horn(struct obj *);
-extern boolean tinnable(struct obj *);
+extern boolean tinnable(const struct obj *);
 extern void reset_trapset(void);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
@@ -46,7 +46,7 @@ extern void init_artifacts(void);
 extern void save_artifacts(struct memfile *mf);
 extern void restore_artifacts(struct memfile *mf);
 extern const char *artiname(int);
-extern struct obj *mk_artifact(struct obj *, aligntyp);
+extern struct obj *mk_artifact(struct level *lev, struct obj *, aligntyp);
 extern const char *artifact_name(const char *, short *);
 extern boolean exist_artifact(int, const char *);
 extern void artifact_exists(struct obj *, const char *, boolean);
@@ -91,6 +91,7 @@ extern schar acurr(int);
 extern schar acurrstr(void);
 extern void adjalign(int);
 extern void calc_attr_bonus(void);
+extern const char *beautiful(void);
 
 /* ### ball.c ### */
 
@@ -207,7 +208,7 @@ extern void feel_location(xchar, xchar);
 extern void newsym(int, int);
 extern void shieldeff(xchar, xchar);
 extern struct tmp_sym *tmpsym_init(int style, int sym);
-extern struct tmp_sym *tmpsym_initobj(struct obj* obj);
+extern struct tmp_sym *tmpsym_initobj(struct obj *obj);
 extern void tmpsym_change(struct tmp_sym *tsym, int sym);
 extern void tmpsym_end(struct tmp_sym *tsym);
 extern void tmpsym_at(struct tmp_sym *tsym, int x, int y);
@@ -253,7 +254,7 @@ extern void obj_no_longer_held(struct obj *);
 extern int doddrop(void);
 extern int dodown(void);
 extern int doup(void);
-extern void notify_levelchange(void);
+extern void notify_levelchange(const d_level *);
 extern void goto_level(d_level *, boolean, boolean, boolean);
 extern void schedule_goto(d_level *, boolean, boolean, int, const char *,
                           const char *);
@@ -374,6 +375,7 @@ extern int dofire(void);
 extern void hitfloor(struct obj *);
 extern void hurtle(int, int, int, boolean);
 extern void mhurtle(struct monst *, int, int, int);
+extern boolean throwing_weapon(const struct obj *);
 extern void throwit(struct obj *, long, boolean, schar, schar, schar);
 extern int omon_adj(struct monst *, struct obj *, boolean);
 extern int thitmonst(struct monst *, struct obj *);
@@ -445,7 +447,7 @@ extern int dooverview(void);
 
 /* ### eat.c ### */
 
-extern boolean is_edible(struct obj *);
+extern boolean is_edible(const struct obj *);
 extern void init_uhunger(void);
 extern int Hear_again(void);
 extern void reset_eat(void);
@@ -456,7 +458,7 @@ extern boolean is_fainted(void);
 extern void reset_faint(void);
 extern void violated_vegetarian(void);
 extern void newuhs(boolean);
-extern struct obj *floorfood(const char *, int);
+extern struct obj *floorfood(const char *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
 extern void food_disappears(struct obj *);
@@ -830,7 +832,7 @@ extern int doseduce(struct monst *);
 
 /* ### minion.c ### */
 
-extern void msummon(struct monst *);
+extern void msummon(struct monst *, const d_level *);
 extern void summon_minion(aligntyp, boolean);
 extern int demon_talk(struct monst *);
 extern long bribe(struct monst *);
@@ -1201,6 +1203,7 @@ extern int query_objlist(const char *, struct obj *, int, struct object_pick **,
 extern void add_objitem(struct nh_objitem **, int *, enum nh_menuitem_role, int,
                         int, char *, struct obj *, boolean);
 extern struct obj *pick_obj(struct obj *);
+extern void reset_encumber_msg(void);
 extern int encumber_msg(void);
 extern int doloot(void);
 extern void observe_quantum_cat(struct obj *);
@@ -1430,7 +1433,7 @@ extern void home_shk(struct monst *, boolean);
 extern void make_happy_shk(struct monst *, boolean);
 extern void hot_pursuit(struct monst *);
 extern void make_angry_shk(struct monst *, xchar, xchar);
-extern int dopay(void);
+extern int dopay(struct obj *);
 extern boolean paybill(int);
 extern void finish_paybill(void);
 extern struct obj *find_oid(unsigned id);

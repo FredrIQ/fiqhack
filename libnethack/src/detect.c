@@ -318,6 +318,7 @@ food_detect(struct obj *sobj, boolean * scr_known)
             if (sobj->blessed && !u.uedibility) {
                 /* prevent non-delivery of message */
                 boolean savebeginner = flags.beginner;
+
                 flags.beginner = FALSE;
                 strange_feeling(sobj, buf);
                 flags.beginner = savebeginner;
@@ -1082,8 +1083,7 @@ openone(int zx, int zy, void *num)
             else
                 Norep("You %s an explosion!",
                       cansee(zx,
-                             zy) ? "see" : (flags.
-                                            soundok ? "hear" :
+                             zy) ? "see" : (flags.soundok ? "hear" :
                                             "feel the shock of"));
             wake_nearto(zx, zy, 11 * 11);
             level->locations[zx][zy].doormask = D_NODOOR;
@@ -1317,6 +1317,7 @@ sokoban_detect(struct level *lev)
                 lev->locations[x][y].mem_door_l = 0;
                 lev->locations[x][y].mem_door_t = 0;
             }
+
             for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
                 if (obj->otyp == BOULDER)
                     lev->locations[x][y].mem_obj = what_obj(BOULDER) + 1;

@@ -33,7 +33,7 @@ static struct monst *next_shkp(struct monst *, boolean);
 static long shop_debt(struct eshk *);
 static char *shk_owns(char *, const struct obj *);
 static char *mon_owns(char *, const struct obj *);
-static void clear_unpaid(struct obj *);
+static void clear_unpaid(struct monst *, struct obj *);
 static long check_credit(long, struct monst *);
 static void pay(long, struct monst *);
 static long get_cost(const struct obj *, struct monst *);
@@ -241,12 +241,13 @@ restshk(struct monst *shkp, boolean ghostly)
 
 /* Clear the unpaid bit on all of the objects in the list. */
 static void
-clear_unpaid(struct obj *list)
+clear_unpaid(struct monst *shkp, struct obj *list)
 {
     while (list) {
         if (Has_contents(list))
-            clear_unpaid(list->cobj);
-        list->unpaid = 0;
+            clear_unpaid(shkp, list->cobj);
+        if (onbill(list, shkp, TRUE))
+            list->unpaid = 0;
         list = list->nobj;
     }
 }
@@ -259,29 +260,24 @@ setpaid(struct monst *shkp)
     struct obj *obj;
     struct monst *mtmp;
 
-    /* FIXME: object handling should be limited to items which are on this
-       particular shk's bill */
-
-    clear_unpaid(invent);
-    clear_unpaid(level->objlist);
-    clear_unpaid(level->buriedobjlist);
-    if (thrownobj)
+    clear_unpaid(shkp, invent);
+    clear_unpaid(shkp, level->objlist);
+    clear_unpaid(shkp, level->buriedobjlist);
+    if (thrownobj && onbill(thrownobj, shkp, TRUE))
         thrownobj->unpaid = 0;
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-        clear_unpaid(mtmp->minvent);
+        clear_unpaid(shkp, mtmp->minvent);
     for (mtmp = migrating_mons; mtmp; mtmp = mtmp->nmon)
-        clear_unpaid(mtmp->minvent);
+        clear_unpaid(shkp, mtmp->minvent);
 
     while ((obj = level->billobjs) != 0) {
         obj_extract_self(obj);
         dealloc_obj(obj);
     }
-    if (shkp) {
-        ESHK(shkp)->billct = 0;
-        ESHK(shkp)->credit = 0L;
-        ESHK(shkp)->debit = 0L;
-        ESHK(shkp)->loan = 0L;
-    }
+    ESHK(shkp)->billct = 0;
+    ESHK(shkp)->credit = 0L;
+    ESHK(shkp)->debit = 0L;
+    ESHK(shkp)->loan = 0L;
 }
 
 static long
@@ -1030,7 +1026,7 @@ cheapest_item(struct monst *shkp)
 
 
 int
-dopay(void)
+dopay(struct obj *oneitem)
 {
     struct eshk *eshkp;
     struct monst *shkp;
@@ -1271,6 +1267,7 @@ proceed:
     /* now check items on bill */
     if (eshkp->billct) {
         boolean itemize;
+        boolean oneitem_found = FALSE;
 
         umoney = money_cnt(invent);
         if (!umoney && !eshkp->credit) {
@@ -1288,10 +1285,15 @@ proceed:
 
         /* this isn't quite right; it itemizes without asking if the single
            item on the bill is partly used up and partly unpaid */
-        iprompt = (eshkp->billct > 1 ? ynq("Itemized billing?") : 'y');
-        itemize = iprompt == 'y';
-        if (iprompt == 'q')
-            goto thanks;
+        if (!oneitem) {
+            iprompt = (eshkp->billct > 1 ? ynq("Itemized billing?") : 'y');
+            itemize = iprompt == 'y';
+            if (iprompt == 'q')
+                goto thanks;
+        } else {
+            /* Paying for an item can't be undone, so put up a prompt. */
+            itemize = TRUE;
+        }
 
         for (pass = 0; pass <= 1; pass++) {
             tmp = 0;
@@ -1317,7 +1319,9 @@ proceed:
                        things which are partly used up are processed on both
                        passes */
                     tmp++;
-                } else {
+                } else if (oneitem == NULL || otmp == oneitem) {
+                    if (oneitem && !oneitem_found)
+                        oneitem_found = TRUE;
                     switch (dopayobj(shkp, bp, &otmp, pass, itemize)) {
                     case PAY_CANT:
                         return 1;       /* break */
@@ -1339,9 +1343,15 @@ proceed:
                     if (itemize)
                         bot();
                     *bp = eshkp->bill_p[--eshkp->billct];
+                } else {
+                    /* Paying for one item, but this otmp isn't it. */
+                    tmp++;
                 }
             }
         }
+        if (oneitem && !oneitem_found)
+            pline("%s does not own %s.", shkname(shkp),
+                  oneitem->quan == 1L ? "that" : "those");
     thanks:
         if (!itemize)
             update_inventory(); /* Done in dopayobj() if itemize. */
@@ -1506,12 +1516,11 @@ inherits(struct monst *shkp, int numsk, int croaked)
     /* the simplifying principle is that first-come */
     /* already took everything you had.  */
     if (numsk > 1) {
-        if (cansee(shkp->mx, shkp->my && croaked))
+        if (cansee(shkp->mx, shkp->my) && croaked)
             pline("%s %slooks at your corpse%s and %s.", Monnam(shkp),
                   (!shkp->mcanmove ||
                    shkp->msleeping) ? "wakes up, " : "",
-                  !rn2(2) ? (shkp->
-                             female ? ", shakes her head," :
+                  !rn2(2) ? (shkp->female ? ", shakes her head," :
                              ", shakes his head,") : "",
                   !inhishop(shkp) ? "disappears" : "sighs");
         rouse_shk(shkp, FALSE); /* wake shk for bones */

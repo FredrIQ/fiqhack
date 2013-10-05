@@ -293,29 +293,34 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 static struct fruit *
 loadfruitchn(struct memfile *mf)
 {
-    struct fruit *flist = NULL, *fnext;
+    struct fruit *flist = NULL, *fnext, *fcurr, *fprev;
     unsigned int count;
-    boolean first = TRUE;
 
     mfmagic_check(mf, FRUITCHAIN_MAGIC);
     count = mread32(mf);
 
-    if (!count) return flist;
+    if (!count)
+        return flist;
 
-    /* We must take care to load front-to-back as that's the save order. */
     while (count--) {
-        if (first) {
-          flist = newfruit();
-          fnext = flist;
-        } else {
-          fnext->nextf = newfruit();
-          fnext = fnext->nextf;
-        }
-
-        mread(mf, fnext->fname, sizeof(fnext->fname));
+        fnext = newfruit();
+        mread(mf, fnext->fname, sizeof (fnext->fname));
         fnext->fid = mread32(mf);
+        fnext->nextf = flist;
+        flist = fnext;
     }
-    fnext->nextf = 0;
+
+    /* fruit list loaded above is reversed, so put it back in the right order */
+    fcurr = flist;
+    fprev = NULL;
+    while (fcurr) {
+        fnext = fcurr->nextf;
+        fcurr->nextf = fprev;
+        fprev = fcurr;
+        fcurr = fnext;
+    }
+    flist = fprev;
+
     return flist;
 }
 
@@ -473,7 +478,7 @@ restgamestate(struct memfile *mf)
 
     if (u.ustuck) {
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-            if (mtmp->m_id == (intptr_t)u.ustuck)
+            if (mtmp->m_id == (intptr_t) u.ustuck)
                 break;
         if (!mtmp)
             panic("Cannot find the monster ustuck.");
@@ -481,7 +486,7 @@ restgamestate(struct memfile *mf)
     }
     if (u.usteed) {
         for (mtmp = lev->monlist; mtmp; mtmp = mtmp->nmon)
-            if (mtmp->m_id == (intptr_t)u.usteed)
+            if (mtmp->m_id == (intptr_t) u.usteed)
                 break;
         if (!mtmp)
             panic("Cannot find the monster usteed.");
@@ -622,7 +627,7 @@ dorecover(struct memfile *mf)
     vision_full_recalc = 1;     /* recompute vision (not saved) */
 
     /* help the window port get it's display charset/tiles sorted out */
-    notify_levelchange();
+    notify_levelchange(NULL);
 
     run_timers();       /* expire all timers that have gone off while away */
     doredraw();

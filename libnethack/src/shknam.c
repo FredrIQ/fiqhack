@@ -358,7 +358,10 @@ shkinit(const struct shclass *shp, struct level *lev, struct mkroom *sroom)
     ESHK(shk)->visitct = 0;
     ESHK(shk)->following = 0;
     ESHK(shk)->billct = 0;
+    ESHK(shk)->bill_p = &ESHK(shk)->bill[0];
+
     mkmonmoney(shk, 1000L + 30L * (long)rnd(100));      /* initial capital */
+
     if (shp->shknms == shkrings)
         mongets(shk, TOUCHSTONE);
     nameshk(shk, shp->shknms, lev);

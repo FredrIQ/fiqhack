@@ -298,8 +298,8 @@ maketrap(struct level *lev, int x, int y, int typ)
             loc->typ = CORR;
         else if (IS_WALL(loc->typ) || loc->typ == SDOOR)
             loc->typ =
-                lev->flags.is_maze_lev ? ROOM : lev->flags.
-                is_cavernous_lev ? CORR : DOOR;
+                lev->flags.is_maze_lev ? ROOM : lev->
+                flags.is_cavernous_lev ? CORR : DOOR;
 
         unearth_objs(lev, x, y);
         break;
@@ -349,7 +349,7 @@ fall_through(boolean td)
         pline("The %s opens up under you!", surface(u.ux, u.uy));
 
     if (In_sokoban(&u.uz) && can_fall_thru(level)) ;
-        /* KMH -- You can't escape the Sokoban level traps */
+    /* KMH -- You can't escape the Sokoban level traps */
     else if (Levitation || u.ustuck || !can_fall_thru(level)
              || Flying || is_clinger(youmonst.data)
              || (Inhell && !u.uevent.invoked &&
@@ -871,15 +871,15 @@ dotrap(struct trap *trap, unsigned trflags)
                 if ((trflags & RECURSIVETRAP) != 0)
                     sprintf(verbbuf, "and %s fall",
                             x_monnam(u.usteed,
-                                     u.usteed->
-                                     mnamelth ? ARTICLE_NONE : ARTICLE_THE,
-                                     NULL, SUPPRESS_SADDLE, FALSE));
+                                     u.usteed->mnamelth ? ARTICLE_NONE :
+                                     ARTICLE_THE, NULL, SUPPRESS_SADDLE,
+                                     FALSE));
                 else
                     sprintf(verbbuf, "lead %s",
                             x_monnam(u.usteed,
-                                     u.usteed->
-                                     mnamelth ? ARTICLE_NONE : ARTICLE_THE,
-                                     "poor", SUPPRESS_SADDLE, FALSE));
+                                     u.usteed->mnamelth ? ARTICLE_NONE :
+                                     ARTICLE_THE, "poor", SUPPRESS_SADDLE,
+                                     FALSE));
             } else
                 strcpy(verbbuf, "fall");
             pline("You %s into %s pit!", verbbuf, a_your[trap->madeby_u]);
@@ -968,8 +968,7 @@ dotrap(struct trap *trap, unsigned trflags)
         }
         if (webmaker(youmonst.data)) {
             if (webmsgok)
-                pline(trap->
-                      madeby_u ? "You take a walk on your web." :
+                pline(trap->madeby_u ? "You take a walk on your web." :
                       "There is a spider web here.");
             break;
         }
@@ -1111,8 +1110,8 @@ dotrap(struct trap *trap, unsigned trflags)
                 seetrap(trap);
                 pline("%s %s in a pile of soil below you.",
                       already_seen ? "There is" : "You discover",
-                      trap->
-                      madeby_u ? "the trigger of your mine" : "a trigger");
+                      trap->madeby_u ? "the trigger of your mine" :
+                      "a trigger");
                 if (already_seen && rn2(3))
                     break;
                 pline("KAABLAMM!!!  %s %s%s off!",
@@ -1441,8 +1440,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                     if (rn2(10) > 2) {
                         pline("KAABLAMM!!!%s",
                               cansee(bhitpos.x,
-                                     bhitpos.
-                                     y) ?
+                                     bhitpos.y) ?
                               " The rolling boulder triggers a land mine." :
                               "");
                         deltrap(level, t);
@@ -1504,8 +1502,8 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                 const char *bmsg = " as one boulder sets another in motion";
 
                 if (!isok(bhitpos.x + dx, bhitpos.y + dy) || !dist ||
-                    IS_ROCK(level->locations[bhitpos.x + dx][bhitpos.y + dy].
-                            typ))
+                    IS_ROCK(level->
+                            locations[bhitpos.x + dx][bhitpos.y + dy].typ))
                     bmsg = " as one boulder hits another";
 
                 You_hear("a loud crash%s!",
@@ -1621,7 +1619,7 @@ mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
         cc.x = bcc.x = x;
         cc.y = bcc.y = y;
     } else {
-        otmp = mksobj(level, otyp, TRUE, FALSE);
+        otmp = mksobj(lev, otyp, TRUE, FALSE);
         otmp->quan = ocount;
         otmp->owt = weight(otmp);
         place_object(otmp, lev, cc.x, cc.y);
@@ -2409,8 +2407,7 @@ float_down(long hmask, long emask)
                 if (Hallucination)
                     pline("Bummer!  You've %s.",
                           is_pool(level, u.ux,
-                                  u.
-                                  uy) ? "splashed down" : sokoban_trap ?
+                                  u.uy) ? "splashed down" : sokoban_trap ?
                           "crashed" : "hit the ground");
                 else {
                     if (!sokoban_trap) {
@@ -2748,8 +2745,8 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
             if (in_sight) {
                 pline("%s %s%s.", Yname2(obj), otense(obj, "burn"),
                       obj->oeroded + 1 ==
-                      MAX_ERODE ? " completely" : obj->
-                      oeroded ? " further" : "");
+                      MAX_ERODE ? " completely" : obj->oeroded ? " further" :
+                      "");
             }
             obj->oeroded++;
         }
@@ -3500,8 +3497,7 @@ untrap(boolean force)
         if (box_here) {
             if (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT) {
                 pline("You can't do much about %s%s.", the_trap,
-                      u.
-                      utrap ? " that you're stuck in" :
+                      u.utrap ? " that you're stuck in" :
                       " while standing on the edge of it");
                 trap_skipped = TRUE;
                 deal_with_floor_trap = FALSE;

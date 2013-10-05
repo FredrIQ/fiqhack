@@ -674,9 +674,8 @@ fill_nh_score_entry(struct toptenentry *in, struct nh_topten_entry *out,
 
 
 struct nh_topten_entry *
-nh_get_topten(int *out_len, char *statusbuf,
-              const char * volatile player, int top,
-              int around, boolean own)
+nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
+              int top, int around, boolean own)
 {
     struct toptenentry *ttlist, newtt;
     struct nh_topten_entry *score_list;

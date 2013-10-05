@@ -16,61 +16,59 @@
  */
 
 struct flag {
-    boolean autodig;        /* MRKR: Automatically dig */
-    boolean autoquiver;     /* Automatically fill quiver */
+    boolean autodig;    /* MRKR: Automatically dig */
+    boolean autoquiver; /* Automatically fill quiver */
     boolean beginner;
-    boolean confirm;        /* confirm before hitting tame monsters */
-    boolean debug;          /* in debugging mode */
+    boolean confirm;    /* confirm before hitting tame monsters */
+    boolean debug;      /* in debugging mode */
 # define wizard  flags.debug
-    boolean explore;        /* in exploration mode */
+    boolean explore;    /* in exploration mode */
 # define discover flags.explore
     boolean female;
     boolean forcefight;
-    boolean friday13;       /* it's Friday the 13th */
-    boolean legacy;         /* print game entry "story" */
-    boolean lit_corridor;   /* show a dark corr as lit if it is in sight */
+    boolean friday13;   /* it's Friday the 13th */
+    boolean legacy;     /* print game entry "story" */
+    boolean lit_corridor;       /* show a dark corr as lit if it is in sight */
     boolean made_amulet;
-    boolean mon_moving;     /* monsters' turn to move */
-    boolean move;           /* normally 1, unless an action during your turn did
-                               NOT use up the move */
+    boolean mon_moving; /* monsters' turn to move */
+    boolean move;       /* normally 1, unless an action during your turn did
+                           NOT use up the move */
     boolean mv;
-    boolean bypasses;       /* bypass flag is set on at least one fobj */
-    boolean nopick;         /* do not pickup objects (as when running) */
-    boolean null;           /* OK to send nulls to the terminal */
-    boolean pickup;         /* whether you pickup or move and look */
+    boolean bypasses;   /* bypass flag is set on at least one fobj */
+    boolean nopick;     /* do not pickup objects (as when running) */
+    boolean null;       /* OK to send nulls to the terminal */
+    boolean pickup;     /* whether you pickup or move and look */
 
-    boolean pushweapon;     /* When wielding, push old weapon into second
-                               slot */
-    boolean rest_on_space;  /* space means rest */
-    boolean safe_dog;       /* give complete protection to the dog */
-    boolean silent;         /* whether the bell rings or not */
-    boolean sortpack;       /* sorted inventory */
-    boolean soundok;        /* ok to tell about sounds heard */
-    boolean sparkle;        /* show "resisting" special FX (Scott Bigham) */
-    boolean tombstone;      /* print tombstone */
-    boolean verbose;        /* max battle info */
-    boolean prayconfirm;    /* confirm before praying */
-    unsigned ident;         /* social security number for each monster */
+    boolean pushweapon; /* When wielding, push old weapon into second slot */
+    boolean rest_on_space;      /* space means rest */
+    boolean safe_dog;   /* give complete protection to the dog */
+    boolean silent;     /* whether the bell rings or not */
+    boolean sortpack;   /* sorted inventory */
+    boolean soundok;    /* ok to tell about sounds heard */
+    boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
+    boolean tombstone;  /* print tombstone */
+    boolean verbose;    /* max battle info */
+    boolean prayconfirm;        /* confirm before praying */
+    unsigned ident;     /* social security number for each monster */
     unsigned moonphase;
 # define NEW_MOON       0
 # define FULL_MOON      4
-    unsigned no_of_wizards; /* 0, 1 or 2 (wizard and his shadow) */
-    boolean travel;         /* find way automatically to u.tx,u.ty */
-    unsigned run;           /* 0: h (etc), 1: H (etc), 2: fh (etc)
-                               3: FH, 4: ff+, 5: ff-, 6: FF+, 7: FF-
-                               8: travel */
-    unsigned int warntype;  /* warn_of_mon monster type M2 */
+    unsigned no_of_wizards;     /* 0, 1 or 2 (wizard and his shadow) */
+    boolean travel;     /* find way automatically to u.tx,u.ty */
+    unsigned run;       /* 0: h (etc), 1: H (etc), 2: fh (etc) 3: FH, 4: ff+,
+                           5: ff-, 6: FF+, 7: FF- 8: travel */
+    unsigned int warntype;      /* warn_of_mon monster type M2 */
     int warnlevel;
-    int djinni_count, ghost_count; /* potion effect tuning */
-    int pickup_burden;      /* maximum burden before prompt */
-    int recently_broken_otyp; /* object that broke recently */
+    int djinni_count, ghost_count;      /* potion effect tuning */
+    int pickup_burden;  /* maximum burden before prompt */
+    int recently_broken_otyp;   /* object that broke recently */
     char inv_order[MAXOCLASSES];
 # define DISCLOSE_PROMPT_DEFAULT_YES    'y'
 # define DISCLOSE_PROMPT_DEFAULT_NO     'n'
 # define DISCLOSE_YES_WITHOUT_PROMPT    '+'
 # define DISCLOSE_NO_WITHOUT_PROMPT     '-'
-    char end_disclose;      /* disclose various info upon exit */
-    char menu_style;        /* User interface style setting */
+    char end_disclose;  /* disclose various info upon exit */
+    char menu_style;    /* User interface style setting */
 
     /* KMH, role patch -- Variables used during startup. If the user wishes to
        select a role, race, gender, and/or alignment during startup, the
@@ -117,7 +115,6 @@ struct flag {
  */
 struct instance_flags {
     boolean vision_inited;      /* true if vision is ready */
-    int purge_monsters; /* # of dead monsters still on level->monlist list */
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean travel1;    /* first travel step */
     coord travelcc;     /* coordinates for travel_cache */
@@ -125,6 +122,9 @@ struct instance_flags {
     boolean mon_generation;     /* debug: control monster generaion */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
+    boolean autodigdown;        /* autodigging works downwadrds */
+
+    int delay_msg;      /* # turns before msg shown for multi-turn actions. */
 
     /* Items which belong in flags, but are here to allow save compatibility */
     boolean show_uncursed;      /* always show uncursed items as such */

@@ -164,8 +164,8 @@ flood_fill_rm(struct level *lev, int sx, int sy, int rmno, boolean lit,
 
     /* back up to find leftmost uninitialized location */
     while (sx > 0 &&
-           (anyroom ? IS_ROOM(lev->locations[sx][sy].typ) : lev->
-            locations[sx][sy].typ == fg_typ) &&
+           (anyroom ? IS_ROOM(lev->locations[sx][sy].typ) :
+            lev->locations[sx][sy].typ == fg_typ) &&
            (int)lev->locations[sx][sy].roomno != rmno)
         sx--;
     sx++;       /* compensate for extra decrement */
@@ -432,9 +432,9 @@ remove_room(struct level *lev, unsigned roomno)
     maxroom->hx = -1;   /* just like add_room */
 }
 
-#define N_P1_ITER 1       /* tune map generation via this value */
-#define N_P2_ITER 1       /* tune map generation via this value */
-#define N_P3_ITER 2       /* tune map smoothing via this value */
+#define N_P1_ITER 1     /* tune map generation via this value */
+#define N_P2_ITER 1     /* tune map generation via this value */
+#define N_P3_ITER 2     /* tune map smoothing via this value */
 
 void
 mkmap(struct level *lev, lev_init * init_lev)

@@ -288,7 +288,9 @@ read_engr_at(int x, int y)
 
     /* Sensing an engraving does not require sight, nor does it necessarily
        imply comprehension (literacy). */
-    if (ep && ep->engr_txt[0]) {
+    if (ep && ep->engr_txt[0] &&
+        /* Don't stop if travelling or autoexploring. */
+        !(flags.run == 8 && level->locations[x][y].mem_stepped)) {
         switch (ep->engr_type) {
         case DUST:
             if (!Blind) {
@@ -352,17 +354,27 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
              xchar e_type)
 {
     struct engr *ep;
+    size_t engr_len;
+
+    if (!s || !*s)
+        return;
+
+    engr_len = strlen(s);
+    if (engr_len > BUFSZ - 1)
+        engr_len = BUFSZ - 1;
 
     if ((ep = engr_at(lev, x, y)) != 0)
         del_engr(ep, lev);
-    ep = newengr(strlen(s) + 1);
-    memset(ep, 0, sizeof (struct engr) + strlen(s) + 1);
+    ep = newengr(engr_len + 1);
+    memset(ep, 0, sizeof (struct engr) + engr_len + 1);
+
     ep->nxt_engr = lev->lev_engr;
     lev->lev_engr = ep;
     ep->engr_x = x;
     ep->engr_y = y;
     ep->engr_txt = (char *)(ep + 1);
-    strcpy(ep->engr_txt, s);
+    strncpy(ep->engr_txt, s, engr_len);
+    ep->engr_txt[engr_len] = '\0';
     while (ep->engr_txt[0] == ' ')
         ep->engr_txt++;
     /* engraving Elbereth shows wisdom */
@@ -370,7 +382,7 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
         exercise(A_WIS, TRUE);
     ep->engr_time = e_time;
     ep->engr_type = e_type > 0 ? e_type : rnd(N_ENGRAVE - 1);
-    ep->engr_lth = strlen(s) + 1;
+    ep->engr_lth = engr_len + 1;
 }
 
 /* delete any engraving at location <x,y> */
@@ -1074,8 +1086,7 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
         if (multi)
             nomovemsg =
                 is_ice(level, u.ux,
-                       u.
-                       uy) ? "You finish melting your message into the ice." :
+                       u.uy) ? "You finish melting your message into the ice." :
                 "You finish burning your message into the floor.";
         break;
     case MARK:
@@ -1201,7 +1212,7 @@ free_engravings(struct level *lev)
 void
 rest_engravings(struct memfile *mf, struct level *lev)
 {
-    struct engr *ep;
+    struct engr *ep, *eprev, *enext;
     unsigned lth;
 
     mfmagic_check(mf, ENGRAVE_MAGIC);
@@ -1209,7 +1220,9 @@ rest_engravings(struct memfile *mf, struct level *lev)
     while (1) {
         lth = mread32(mf);
         if (!lth)       /* no more engravings */
-            return;
+            break;
+        if (lth > BUFSZ)
+            panic("rest_engravings: engraving length too long! (%d)", lth);
 
         ep = newengr(lth);
         ep->engr_lth = lth;
@@ -1227,6 +1240,17 @@ rest_engravings(struct memfile *mf, struct level *lev)
            the player must have finished engraving to be able to move again */
         ep->engr_time = moves;
     }
+
+    /* engravings loaded above are reversed, so put it back in the right order */
+    ep = lev->lev_engr;
+    eprev = NULL;
+    while (ep) {
+        enext = ep->nxt_engr;
+        ep->nxt_engr = eprev;
+        eprev = ep;
+        ep = enext;
+    }
+    lev->lev_engr = eprev;
 }
 
 void

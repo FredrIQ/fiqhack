@@ -6,7 +6,7 @@
 #include "nhcurses.h"
 
 
-static nh_bool do_item_actions(char invlet);
+static nh_bool do_item_actions(const struct nh_objitem *item);
 
 static int
 calc_colwidths(char *menustr, int *colwidth)
@@ -147,7 +147,8 @@ draw_menu(struct gamewin *gw)
             for (j = 0; j <= col; j++) {
                 wprintw(mdat->content, "%-*s",
                         mdat->colpos[j + 1] - mdat->colpos[j] - 1, colstrs[j]);
-                if (j < col) wmove(mdat->content, i, mdat->colpos[j + 1]);
+                if (j < col)
+                    wmove(mdat->content, i, mdat->colpos[j + 1]);
         } else
             waddstr(mdat->content, caption);
 
@@ -945,7 +946,7 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
 
                 /* inventory special case: show item actions menu */
                 else if (inventory_special)
-                    if (do_item_actions(mdat->items[idx].accel))
+                    if (do_item_actions(&mdat->items[idx]))
                         done = TRUE;
 
             } else if (mdat->how == PICK_ANY) { /* maybe it's a group accel? */
@@ -997,10 +998,11 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
 
 
 static nh_bool
-do_item_actions(char invlet)
+do_item_actions(const struct nh_objitem *item)
 {
     int ccount = 0, i, selected[1];
-    struct nh_cmd_desc *obj_cmd = nh_get_object_commands(&ccount, invlet);
+    struct nh_cmd_desc *obj_cmd = nh_get_object_commands(&ccount, item->accel);
+    char title[QBUFSZ];
     struct nh_menuitem *items;
     struct nh_cmd_arg arg;
 
@@ -1010,17 +1012,24 @@ do_item_actions(char invlet)
     items = malloc(sizeof (struct nh_menuitem) * ccount);
 
     for (i = 0; i < ccount; i++)
-        set_menuitem(&items[i], i + 1, MI_NORMAL, obj_cmd[i].desc, 0, FALSE);
+        set_menuitem(&items[i], i + 1, MI_NORMAL, obj_cmd[i].desc,
+                     obj_cmd[i].defkey, FALSE);
 
-    i = curses_display_menu(items, ccount, "Item actions:", PICK_ONE,
-                            PLHINT_INVENTORY, selected);
+    if (settings.invweight && item->weight != -1) {
+        snprintf(title, QBUFSZ, "%c - %s {%d}", item->accel, item->caption,
+                 item->weight);
+    } else {
+        snprintf(title, QBUFSZ, "%c - %s", item->accel, item->caption);
+    }
+    i = curses_display_menu(items, ccount, title, PICK_ONE, PLHINT_INVENTORY,
+                            selected);
     free(items);
 
     if (i <= 0)
         return FALSE;
 
     arg.argtype = CMD_ARG_OBJ;
-    arg.invlet = invlet;
+    arg.invlet = item->accel;
     set_next_command(obj_cmd[selected[0] - 1].name, &arg);
 
     return TRUE;

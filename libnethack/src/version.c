@@ -59,9 +59,8 @@ check_version(struct version_info * version_data, const char *filename,
         if (complain)
             pline("Version mismatch for file \"%s\".", filename);
         return FALSE;
-    } else if (
-                  version_data->feature_set != VERSION_FEATURES ||
-                  version_data->entity_count != VERSION_SANITY1) {
+    } else if (version_data->feature_set != VERSION_FEATURES ||
+               version_data->entity_count != VERSION_SANITY1) {
         if (complain)
             pline("Configuration incompatibility for file \"%s\".", filename);
         return FALSE;

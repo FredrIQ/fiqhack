@@ -1239,8 +1239,8 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
                dowear() put them back on... */
             if (noisy)
                 pline("You have too many hooves to wear %s.", c_boots);
-                /* makeplural(body_part(FOOT)) yields "rear hooves"
-                   which sounds odd */
+            /* makeplural(body_part(FOOT)) yields "rear hooves" which sounds
+               odd */
             err++;
         } else if (u.utrap &&
                    (u.utraptype == TT_BEARTRAP || u.utraptype == TT_INFLOOR)) {

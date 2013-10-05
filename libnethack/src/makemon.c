@@ -24,7 +24,7 @@ static boolean wrong_elem_type(const struct d_level *dlev,
                                const struct permonst *);
 static void m_initgrp(struct monst *, struct level *lev, int, int, int);
 static void m_initthrow(struct monst *, int, int);
-static void m_initweap(struct monst *);
+static void m_initweap(struct level *lev, struct monst *);
 static void m_initinv(struct monst *);
 
 extern const int monstr[];
@@ -140,12 +140,14 @@ m_initgrp(struct monst *mtmp, struct level *lev, int x, int y, int n)
            and some are not, the result will just be a smaller group. */
         if (enexto(&mm, lev, mm.x, mm.y, mtmp->data)) {
             mon = makemon(mtmp->data, lev, mm.x, mm.y, NO_MM_FLAGS);
-            mon->mpeaceful = FALSE;
-            mon->mavenge = 0;
-            set_malign(mon);
-            /* Undo the second peace_minded() check in makemon(); if the
-               monster turned out to be peaceful the first time we didn't
-               create it at all; we don't want a second check. */
+            if (mon) {
+                mon->mpeaceful = FALSE;
+                mon->mavenge = 0;
+                set_malign(mon);
+                /* Undo the second peace_minded() check in makemon(); if the
+                   monster turned out to be peaceful the first time we didn't
+                   create it at all; we don't want a second check. */
+            }
         }
     }
 }
@@ -155,7 +157,7 @@ m_initthrow(struct monst *mtmp, int otyp, int oquan)
 {
     struct obj *otmp;
 
-    otmp = mksobj(level, otyp, TRUE, FALSE);
+    otmp = mksobj(mtmp->dlevel, otyp, TRUE, FALSE);
     otmp->quan = (long)rn1(oquan, 3);
     otmp->owt = weight(otmp);
     if (otyp == ORCISH_ARROW)
@@ -163,15 +165,14 @@ m_initthrow(struct monst *mtmp, int otyp, int oquan)
     mpickobj(mtmp, otmp);
 }
 
-
 static void
-m_initweap(struct monst *mtmp)
+m_initweap(struct level *lev, struct monst *mtmp)
 {
     const struct permonst *ptr = mtmp->data;
     int mm = monsndx(ptr);
     struct obj *otmp;
 
-    if (Is_rogue_level(&mtmp->dlevel->z))
+    if (Is_rogue_level(&lev->z))
         return;
 /*
  * first a few special cases:
@@ -263,7 +264,7 @@ m_initweap(struct monst *mtmp)
             }
         } else if (ptr->msound == MS_PRIEST ||
                    quest_mon_represents_role(ptr, PM_PRIEST)) {
-            otmp = mksobj(level, MACE, FALSE, FALSE);
+            otmp = mksobj(lev, MACE, FALSE, FALSE);
             if (otmp) {
                 otmp->spe = rnd(3);
                 if (!rn2(2))
@@ -278,7 +279,7 @@ m_initweap(struct monst *mtmp)
             int spe2;
 
             /* create minion stuff; can't use mongets */
-            otmp = mksobj(level, LONG_SWORD, FALSE, FALSE);
+            otmp = mksobj(lev, LONG_SWORD, FALSE, FALSE);
 
             /* maybe make it special */
             if (!rn2(20) || is_lord(ptr))
@@ -291,7 +292,7 @@ m_initweap(struct monst *mtmp)
             otmp->spe = max(otmp->spe, spe2);
             mpickobj(mtmp, otmp);
 
-            otmp = mksobj(level, !rn2(4) ||
+            otmp = mksobj(lev, !rn2(4) ||
                           is_lord(ptr) ? SHIELD_OF_REFLECTION : LARGE_SHIELD,
                           FALSE, FALSE);
             otmp->cursed = FALSE;
@@ -341,7 +342,7 @@ m_initweap(struct monst *mtmp)
         }
         break;
     case S_KOP:        /* create Keystone Kops with cream pies to throw. As
-                           suggested by KAA.  [MRS] */
+                          suggested by KAA.  [MRS] */
         if (!rn2(4))
             m_initthrow(mtmp, CREAM_PIE, 2);
         if (!rn2(3))
@@ -518,7 +519,7 @@ m_initweap(struct monst *mtmp)
 void
 mkmonmoney(struct monst *mtmp, long amount)
 {
-    struct obj *gold = mksobj(level, GOLD_PIECE, FALSE, FALSE);
+    struct obj *gold = mksobj(mtmp->dlevel, GOLD_PIECE, FALSE, FALSE);
 
     gold->quan = amount;
     add_to_minv(mtmp, gold);
@@ -531,9 +532,11 @@ m_initinv(struct monst *mtmp)
     int cnt;
     struct obj *otmp;
     const struct permonst *ptr = mtmp->data;
+    struct level *lev = mtmp->dlevel;
 
-    if (Is_rogue_level(&mtmp->dlevel->z))
+    if (Is_rogue_level(&lev->z))
         return;
+
 /*
  * Soldiers get armour & rations - armour approximates their ac.
  * Nymphs may get mirror or potion of object detection.
@@ -647,12 +650,12 @@ m_initinv(struct monst *mtmp)
         break;
     case S_GIANT:
         if (ptr == &mons[PM_MINOTAUR]) {
-            if (!rn2(3) || (in_mklev && Is_earthlevel(&mtmp->dlevel->z)))
+            if (!rn2(3) || (in_mklev && Is_earthlevel(&lev->z)))
                 mongets(mtmp, WAN_DIGGING);
         } else if (is_giant(ptr)) {
             for (cnt = rn2((int)(mtmp->m_lev / 2)); cnt; cnt--) {
                 otmp =
-                    mksobj(level, rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1),
+                    mksobj(lev, rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1),
                            FALSE, FALSE);
                 otmp->quan = (long)rn1(2, 3);
                 otmp->owt = weight(otmp);
@@ -662,7 +665,7 @@ m_initinv(struct monst *mtmp)
         break;
     case S_WRAITH:
         if (ptr == &mons[PM_NAZGUL]) {
-            otmp = mksobj(level, RIN_INVISIBILITY, FALSE, FALSE);
+            otmp = mksobj(lev, RIN_INVISIBILITY, FALSE, FALSE);
             curse(otmp);
             mpickobj(mtmp, otmp);
         }
@@ -672,7 +675,7 @@ m_initinv(struct monst *mtmp)
             mongets(mtmp, (rn2(7) ? ATHAME : WAN_NOTHING));
         else if (ptr == &mons[PM_ARCH_LICH] && !rn2(3)) {
             otmp =
-                mksobj(level, rn2(3) ? ATHAME : QUARTERSTAFF, TRUE,
+                mksobj(lev, rn2(3) ? ATHAME : QUARTERSTAFF, TRUE,
                        rn2(13) ? FALSE : TRUE);
             if (otmp->spe < 2)
                 otmp->spe = rnd(3);
@@ -687,14 +690,14 @@ m_initinv(struct monst *mtmp)
         break;
     case S_QUANTMECH:
         if (!rn2(20)) {
-            otmp = mksobj(level, LARGE_BOX, FALSE, FALSE);
+            otmp = mksobj(lev, LARGE_BOX, FALSE, FALSE);
             otmp->spe = 1;      /* flag for special box */
             otmp->owt = weight(otmp);
             mpickobj(mtmp, otmp);
         }
         break;
     case S_LEPRECHAUN:
-        mkmonmoney(mtmp, (long)dice(level_difficulty(&mtmp->dlevel->z), 30));
+        mkmonmoney(mtmp, (long)dice(level_difficulty(&lev->z), 30));
         break;
     case S_DEMON:
         /* moved here from m_initweap() because these don't have AT_WEAP so
@@ -730,7 +733,7 @@ m_initinv(struct monst *mtmp)
         mongets(mtmp, rnd_misc_item(mtmp));
     if (likes_gold(ptr) && !findgold(mtmp->minvent) && !rn2(5))
         mkmonmoney(mtmp,
-                   (long)dice(level_difficulty(&mtmp->dlevel->z),
+                   (long)dice(level_difficulty(&lev->z),
                               mtmp->minvent ? 5 : 10));
 }
 
@@ -1137,7 +1140,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     if (allow_minvent) {
         if (is_armed(ptr))
-            m_initweap(mtmp);   /* equip with weapons / armor */
+            m_initweap(lev, mtmp);      /* equip with weapons / armor */
         m_initinv(mtmp);        /* add on a few special items incl. more armor */
         m_dowear(mtmp, TRUE);
     } else {
@@ -1555,7 +1558,8 @@ mongets(struct monst *mtmp, int otyp)
 
     if (!otyp)
         return 0;
-    otmp = mksobj(level, otyp, TRUE, FALSE);
+    otmp = mksobj(mtmp->dlevel, otyp, TRUE, FALSE);
+
     if (otmp) {
         if (mtmp->data->mlet == S_DEMON) {
             /* demons never get blessed objects */
@@ -2229,8 +2233,8 @@ save_mon(struct memfile *mf, const struct monst *mon)
         shk = ESHK(mon);
         mwrite32(mf,
                  (shk->bill_p ==
-                  (struct bill_x *)-1000) ? -1000 : !shk->
-                 bill_p ? -2000 : (shk->bill_p - shk->bill));
+                  (struct bill_x *)-1000) ? -1000 : !shk->bill_p ? -2000
+                 : (shk->bill_p - shk->bill));
         mwrite8(mf, shk->shk.x);
         mwrite8(mf, shk->shk.y);
         mwrite8(mf, shk->shd.x);

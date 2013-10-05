@@ -253,7 +253,8 @@ lib_dlb_fopen(dlb * dp, const char *name, const char *mode)
 {
     long start, size;
     library *lp;
-    (void) mode;
+
+    (void)mode;
     /* look up file in directory */
     if (find_file(name, &lp, &start, &size)) {
         dp->lib = lp;
@@ -270,7 +271,7 @@ static int
 lib_dlb_fclose(dlb * dp)
 {
     /* nothing needs to be done */
-    (void) dp;
+    (void)dp;
     return 0;
 }
 

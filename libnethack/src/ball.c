@@ -281,9 +281,8 @@ move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx,
 
                 /* Pick up mem_obj at new position. */
                 u.bglyph = (ballx != chainx ||
-                            bally !=
-                            chainy) ? level->locations[ballx][bally].
-                    mem_obj : u.cglyph;
+                            bally != chainy) ?
+                    level->locations[ballx][bally].mem_obj : u.cglyph;
 
                 movobj(uball, ballx, bally);
             } else if (control & BC_CHAIN) {
@@ -303,9 +302,8 @@ move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx,
                 }
                 /* Pick up mem_obj at new position. */
                 u.cglyph = (ballx != chainx ||
-                            bally !=
-                            chainy) ? level->locations[chainx][chainy].
-                    mem_obj : u.bglyph;
+                            bally != chainy) ?
+                    level->locations[chainx][chainy].mem_obj : u.bglyph;
 
                 movobj(uchain, chainx, chainy);
             }

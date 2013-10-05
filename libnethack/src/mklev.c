@@ -143,13 +143,13 @@ do_room_or_subroom(struct level *lev, struct mkroom *croom, int lowx, int lowy,
             for (y = lowy - 1; y <= hiy + 1; y += (hiy - lowy + 2)) {
                 lev->locations[x][y].typ = HWALL;
                 lev->locations[x][y].horizontal = 1;
-                    /* For open/secret doors. */
+                /* For open/secret doors. */
             }
         for (x = lowx - 1; x <= hix + 1; x += (hix - lowx + 2))
             for (y = lowy; y <= hiy; y++) {
                 lev->locations[x][y].typ = VWALL;
                 lev->locations[x][y].horizontal = 0;
-                    /* For open/secret doors. */
+                /* For open/secret doors. */
             }
         for (x = lowx; x <= hix; x++) {
             loc = &lev->locations[x][lowy];
@@ -348,8 +348,8 @@ dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, int type)
 {
     boolean shdoor = ((*in_rooms(lev, x, y, SHOPBASE)) ? TRUE : FALSE);
 
-    if (!IS_WALL(lev->locations[x][y].typ))  /* avoid SDOORs on already made 
-                                                doors */
+    if (!IS_WALL(lev->locations[x][y].typ))     /* avoid SDOORs on already made 
+                                                   doors */
         type = DOOR;
     lev->locations[x][y].typ = type;
     if (type == DOOR) {
@@ -838,7 +838,7 @@ mineralize(struct level *lev)
      */
     for (x = 2; x < (COLNO - 2); x++)
         for (y = 1; y < (ROWNO - 1); y++)
-            if (lev->locations[x][y + 1].typ != STONE) { 
+            if (lev->locations[x][y + 1].typ != STONE) {
                 /* <x,y> spot not eligible */
                 y += 2; /* next two spots aren't eligible either */
             } else if (lev->locations[x][y].typ != STONE) {
@@ -1565,8 +1565,8 @@ mk_knox_portal(struct level *lev, xchar x, xchar y)
         return;
 
     if (!(lev->z.dnum == oracle_level.dnum      /* in main dungeon */
-          && !at_dgn_entrance(&lev->z, "The Quest")  /* but not Quest's
-                                                        entry */
+          && !at_dgn_entrance(&lev->z, "The Quest")     /* but not Quest's
+                                                           entry */
           &&(u_depth = depth(&lev->z)) > 10     /* beneath 10 */
           && u_depth < depth(&medusa_level)))   /* and above Medusa */
         return;

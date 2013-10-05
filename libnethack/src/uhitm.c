@@ -187,7 +187,7 @@ attack_checks(struct monst *mtmp,
     if (canspotmon(mtmp) && !Confusion && !Hallucination && !Stunned) {
         if (mtmp->isshk && mtmp->mpeaceful &&
             (ESHK(mtmp)->billct || ESHK(mtmp)->debit)) {
-            dopay();
+            dopay(NULL);
             return TRUE;
         }
         if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
@@ -749,7 +749,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                     {
 #define useup_eggs(o) { if (thrown) obfree(o,NULL); \
                         else useupall(o); \
-                        o = NULL; }   /* now gone */
+                        o = NULL; }     /* now gone */
                         long cnt = obj->quan;
 
                         tmp = 1;        /* nominal physical damage */

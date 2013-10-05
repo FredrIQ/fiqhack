@@ -213,6 +213,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
     if (visible) {
         struct tmp_sym *tsym = tmpsym_init(DISP_BEAM, 0);
+
         /* Start the explosion */
         for (i = 0; i < 3; i++)
             for (j = 0; j < 3; j++) {
@@ -233,9 +234,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
                              * directly to the buffered screen.  tmpsym_at()
                              * will clean up the location for us later.
                              */
-                            dbuf_set_effect(
-                                i + x - 1, j + y - 1, dbuf_effect(
-                                    E_MISC, shield_static[k]));
+                            dbuf_set_effect(i + x - 1, j + y - 1,
+                                            dbuf_effect(E_MISC,
+                                                        shield_static[k]));
                     }
                 flush_screen(); /* will flush screen and output */
                 win_delay_output();
@@ -245,9 +246,9 @@ explode(int x, int y, int type, /* the same as in zap.c */
             for (i = 0; i < 3; i++)
                 for (j = 0; j < 3; j++) {
                     if (explmask[i][j] == 1)
-                        dbuf_set_effect(
-                            i + x - 1, j + y - 1, dbuf_explosion(
-                                expltype, explosion[i][j]));
+                        dbuf_set_effect(i + x - 1, j + y - 1,
+                                        dbuf_explosion(expltype,
+                                                       explosion[i][j]));
                 }
 
         } else {        /* delay a little bit. */
@@ -255,7 +256,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             win_delay_output();
         }
 
-        tmpsym_end(tsym);    /* clear the explosion */
+        tmpsym_end(tsym);       /* clear the explosion */
     } else {
         if (olet == MON_EXPLODE) {
             str = "explosion";

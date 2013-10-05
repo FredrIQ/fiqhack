@@ -5,6 +5,7 @@
 
 #include "hack.h"
 #include "edog.h"
+#include "hungerstatus.h"
 
 static const char tools[] = { ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
     TOOL_CLASS, WEAPON_CLASS, 0
@@ -614,9 +615,6 @@ check_leash(xchar x, xchar y)
     }
 }
 
-
-#define WEAK    3       /* from eat.c */
-
 static const char look_str[] = "You look %s.";
 
 static int
@@ -662,15 +660,9 @@ use_mirror(struct obj *obj)
             else if (u.uhs >= WEAK)
                 pline(look_str, "undernourished");
             else
-                pline("You look as %s as ever.",
-                      ACURR(A_CHA) > 14 ? (poly_gender() ==
-                                           1 ? "beautiful" : "handsome") :
-                      "ugly");
+                pline("You look as %s as ever.", beautiful());
         } else {
-            pline("You can't see your %s %s.",
-                  ACURR(A_CHA) > 14 ? (poly_gender() ==
-                                       1 ? "beautiful" : "handsome") : "ugly",
-                  body_part(FACE));
+            pline("You can't see your %s %s.", beautiful(), body_part(FACE));
         }
         return 1;
     }
@@ -1430,7 +1422,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
 }
 
 boolean
-tinnable(struct obj * corpse)
+tinnable(const struct obj * corpse)
 {
     if (corpse->oeaten)
         return 0;
@@ -1450,7 +1442,8 @@ use_tinning_kit(struct obj *obj)
         pline("You seem to be out of tins.");
         return 1;
     }
-    if (!(corpse = floorfood("tin", 2)))
+
+    if (!(corpse = floorfood("tin")))
         return 0;
     if (corpse->oeaten) {
         pline("You cannot tin something which is partly eaten.");
@@ -1685,7 +1678,7 @@ fig_transform(void *arg, long timeout)
     if (timeout < 0)
         silent = TRUE;
     else
-        silent = ((unsigned long)timeout != moves);        /* happened while away */
+        silent = ((unsigned long)timeout != moves);     /* happened while away */
 
     okay_spot = get_obj_location(figurine, &cc.x, &cc.y, 0);
     if (figurine->where == OBJ_INVENT || figurine->where == OBJ_MINVENT)
@@ -1775,8 +1768,8 @@ figurine_location_checks(struct obj *obj, coord * cc, boolean quietly)
         !(passes_walls(&mons[obj->corpsenm]) && may_passwall(level, x, y))) {
         if (!quietly)
             pline("You cannot place a figurine in %s!",
-                  IS_TREE(level->locations[x][y].
-                          typ) ? "a tree" : "solid rock");
+                  IS_TREE(level->
+                          locations[x][y].typ) ? "a tree" : "solid rock");
         return FALSE;
     }
     if (sobj_at(BOULDER, level, x, y) && !passes_walls(&mons[obj->corpsenm])
@@ -2283,8 +2276,7 @@ use_whip(struct obj *obj)
 
         if (!isok(rx, ry)) {
             pline("%s",
-                  Is_airlevel(&u.
-                              uz) ? "You snap your whip through thin air." :
+                  Is_airlevel(&u.uz) ? "You snap your whip through thin air." :
                   msg_snap);
             return 1;
         }
@@ -2536,6 +2528,8 @@ use_cream_pie(struct obj **objp)
         else    /* Blind && !wasblind */
             pline("You can't see through all the sticky goop on your %s.",
                   body_part(FACE));
+        if (flags.verbose)
+            pline("Use the command #wipe to clean your %s.", body_part(FACE));
     }
     if (obj->unpaid) {
         verbalize("You used it, you bought it!");
@@ -3070,8 +3064,7 @@ doapply(struct obj *obj)
             otmp->cursed = obj->cursed;
             otmp->owt = weight(otmp);
             hold_another_object(otmp,
-                                u.
-                                uswallow ? "Oops!  %s out of your reach!"
+                                u.uswallow ? "Oops!  %s out of your reach!"
                                 : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
                                    level->locations[u.ux][u.uy].typ < IRONBARS
                                    || level->locations[u.ux][u.uy].typ >=

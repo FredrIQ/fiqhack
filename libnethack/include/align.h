@@ -16,7 +16,7 @@ typedef struct align {  /* alignment & record */
 /* bounds for "record" -- respect initial alignments of 10 */
 # define ALIGNLIM       (10L + (moves/200L))
 
-# define A_NONE         (-128)    /* the value range of type */
+# define A_NONE         (-128)  /* the value range of type */
 /* A_{CHAOTIC,NEUTRAL,LAWFUL} moved to nethack_types.h */
 
 # define A_COALIGNED    1

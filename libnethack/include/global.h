@@ -22,7 +22,7 @@
  * Files expected to exist in the playground directory.
  */
 
-# define RECORD        "record"  /* file containing list of topscorers */
+# define RECORD        "record" /* file containing list of topscorers */
 # define LOGFILE       "logfile"/* records all game endings regardless of score
                                    for debugging purposes */
 # define XLOGFILE      "xlogfile"       /* records game endings in detail */
@@ -123,7 +123,7 @@ struct version_info {
 # define PL_CSIZ        32      /* sizeof pl_character */
 # define PL_FSIZ        32      /* fruit name */
 # define PL_PSIZ        63      /* player-given names for pets, other monsters, 
-                                           objects */
+                                   objects */
 
 # define MAXDUNGEON     16      /* current maximum number of dungeons */
 # define MAXLEVEL       32      /* max number of levels in one dungeon */

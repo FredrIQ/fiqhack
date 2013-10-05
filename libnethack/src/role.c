@@ -579,8 +579,8 @@ validgend(int rolenum, int racenum, int gendnum)
 {
     /* Assumes nh_validrole and nh_validrace */
     return (gendnum >= 0 && gendnum < ROLE_GENDERS &&
-            (roles[rolenum].allow & races[racenum].allow & genders[gendnum].
-             allow & ROLE_GENDMASK));
+            (roles[rolenum].allow & races[racenum].allow &
+             genders[gendnum].allow & ROLE_GENDMASK));
 }
 
 
@@ -617,8 +617,8 @@ validalign(int rolenum, int racenum, int alignnum)
 {
     /* Assumes nh_validrole and nh_validrace */
     return (alignnum >= 0 && alignnum < ROLE_ALIGNS &&
-            (roles[rolenum].allow & races[racenum].allow & aligns[alignnum].
-             allow & ROLE_ALIGNMASK));
+            (roles[rolenum].allow & races[racenum].allow &
+             aligns[alignnum].allow & ROLE_ALIGNMASK));
 }
 
 
@@ -629,16 +629,16 @@ randalign(int rolenum, int racenum)
 
     /* Count the number of valid alignments */
     for (i = 0; i < ROLE_ALIGNS; i++)
-        if (roles[rolenum].allow & races[racenum].allow & aligns[i].
-            allow & ROLE_ALIGNMASK)
+        if (roles[rolenum].allow & races[racenum].allow &
+            aligns[i].allow & ROLE_ALIGNMASK)
             n++;
 
     /* Pick a random alignment */
     if (n)
         n = rn2(n);
     for (i = 0; i < ROLE_ALIGNS; i++)
-        if (roles[rolenum].allow & races[racenum].allow & aligns[i].
-            allow & ROLE_ALIGNMASK) {
+        if (roles[rolenum].allow & races[racenum].allow &
+            aligns[i].allow & ROLE_ALIGNMASK) {
             if (n)
                 n--;
             else

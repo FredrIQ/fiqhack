@@ -322,8 +322,8 @@ make_corpse(struct monst *mtmp)
        unseen monster referred to as "it" could be killed and leave a corpse.
        If a hider then hid underneath it, you could be told the corpse type of
        a monster that you never knew was there without this.  The code in
-       hitmu() substitutes the word "something" if the corpses obj->dknown is 0. 
-     */
+       hitmu() substitutes the word "something" if the corpses obj->dknown is
+       0. */
     if (Blind && !sensemon(mtmp))
         obj->dknown = 0;
 
@@ -1177,13 +1177,16 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
    other monsters; just hand to hand fighting when they happen to be
    next to each other. */
 long
-mm_aggression(struct monst *magr,       /* monster that is currently deciding
-                                           where to move */
-              struct monst *mdef)
-{       /* another monster which is next to it */
+mm_aggression(struct monst *magr,     /* monster that is currently deciding
+                                         where to move */
+              struct monst *mdef)     /* another monster which is next to it */
+{
+    const struct permonst *ma = magr->data;
+    const struct permonst *md = mdef->data;
+
     /* supposedly purple worms are attracted to shrieking because they like to
        eat shriekers, so attack the latter when feasible */
-    if (magr->data == &mons[PM_PURPLE_WORM] && mdef->data == &mons[PM_SHRIEKER])
+    if (ma == &mons[PM_PURPLE_WORM] && md == &mons[PM_SHRIEKER])
         return ALLOW_M | ALLOW_TM;
 
     /* pets attack hostile monsters */
@@ -1194,8 +1197,36 @@ mm_aggression(struct monst *magr,       /* monster that is currently deciding
     if (mdef->mtame && !magr->mpeaceful)
         return ALLOW_M | ALLOW_TM;
 
-    /* Various other combinations such as dog vs cat, cat vs rat, and elf vs
-       orc have been suggested.  For the time being we don't support those. */
+    /* Since the quest guardians are under siege, it makes sense to have them
+       fight hostiles.  (But don't put the quest leader in danger.) */
+    if (ma->msound == MS_GUARDIAN && mdef->mpeaceful == FALSE)
+        return ALLOW_M | ALLOW_TM;
+    /* ... and vice versa */
+    if (md->msound == MS_GUARDIAN && magr->mpeaceful == FALSE)
+        return ALLOW_M | ALLOW_TM;
+
+    /* elves vs. orcs */
+    if (is_elf(ma) && is_orc(md))
+        return ALLOW_M | ALLOW_TM;
+    /* ... and vice versa */
+    if (is_elf(md) && is_orc(ma))
+        return ALLOW_M | ALLOW_TM;
+
+    /* angels vs. demons */
+    if (ma->mlet == S_ANGEL && is_demon(md))
+        return ALLOW_M | ALLOW_TM;
+    /* ... and vice versa */
+    if (md->mlet == S_ANGEL && is_demon(ma))
+        return ALLOW_M | ALLOW_TM;
+
+    /* woodchucks vs. The Oracle */
+    if (ma == &mons[PM_WOODCHUCK] && md == &mons[PM_ORACLE])
+        return ALLOW_M | ALLOW_TM;
+
+    /* ravens like eyes */
+    if (ma == &mons[PM_RAVEN] && md == &mons[PM_FLOATING_EYE])
+        return ALLOW_M | ALLOW_TM;
+
     return 0L;
 }
 
@@ -1229,10 +1260,10 @@ dmonsfree(struct level *lev)
             mtmp = &(*mtmp)->nmon;
     }
 
-    if (count != iflags.purge_monsters)
+    if (count != lev->flags.purge_monsters)
         impossible("dmonsfree: %d removed doesn't match %d pending", count,
-                   iflags.purge_monsters);
-    iflags.purge_monsters = 0;
+                   lev->flags.purge_monsters);
+    lev->flags.purge_monsters = 0;
 }
 
 
@@ -1323,7 +1354,7 @@ m_detach(struct monst *mtmp, const struct permonst *mptr)
         shkgone(mtmp);
     if (mtmp->wormno)
         wormgone(mtmp);
-    iflags.purge_monsters++;
+    mtmp->dlevel->flags.purge_monsters++;
 }
 
 /* find the worn amulet of life saving which will save a monster */
@@ -1399,6 +1430,13 @@ mondead(struct monst *mtmp)
     /* Player is thrown from his steed when it dies */
     if (mtmp == u.usteed)
         dismount_steed(DISMOUNT_GENERIC);
+
+    /* monster should no longer block vision */
+    if ((!mtmp->minvis || See_invisible) &&
+        ((mtmp->m_ap_type == M_AP_FURNITURE &&
+          (mtmp->mappearance == S_vcdoor || mtmp->mappearance == S_hcdoor)) ||
+         (mtmp->m_ap_type == M_AP_OBJECT && mtmp->mappearance == BOULDER)))
+        unblock_point(mtmp->mx, mtmp->my);
 
     mptr = mtmp->data;  /* save this for m_detach() */
     /* restore chameleon, lycanthropes to true form at death */
@@ -1544,6 +1582,13 @@ mongone(struct monst *mdef)
     /* Player is thrown from his steed when it disappears */
     if (mdef == u.usteed)
         dismount_steed(DISMOUNT_GENERIC);
+
+    /* monster should no longer block vision */
+    if ((!mdef->minvis || See_invisible) &&
+        ((mdef->m_ap_type == M_AP_FURNITURE &&
+          (mdef->mappearance == S_vcdoor || mdef->mappearance == S_hcdoor)) ||
+         (mdef->m_ap_type == M_AP_OBJECT && mdef->mappearance == BOULDER)))
+        unblock_point(mdef->mx, mdef->my);
 
     /* drop special items like the Amulet so that a dismissed Kop or nurse
        can't remove them from the game */

@@ -33,23 +33,45 @@ pline(const char *line, ...)
 static void
 vpline(const char *line, va_list the_args)
 {
-    char pbuf[BUFSZ];
+    char pbuf[BUFSZ], *c;
+    boolean repeated;
+    int lastline;
+
+    lastline = curline - 1;
+    if (lastline < 0)
+        lastline += MSGCOUNT;
 
     if (!line || !*line)
         return;
-    if (strchr(line, '%')) {
-        vsprintf(pbuf, line, the_args);
-        line = pbuf;
+
+
+    vsnprintf(pbuf, BUFSZ, line, the_args);
+
+    /* Sanitize, otherwise the line can mess up the message window and message
+       history. */
+    for (c = pbuf; *c && c < pbuf + BUFSZ; c++) {
+        if (*c == '\n' || *c == '\t')
+            *c = ' ';
     }
-    if (no_repeat && !strcmp(line, toplines[curline]))
+
+    line = pbuf;
+
+    repeated = !strcmp(line, toplines[lastline]);
+    if (no_repeat && repeated)
         return;
     if (vision_full_recalc)
         vision_recalc(0);
     if (u.ux)
         flush_screen();
 
-    strcpy(toplines[curline++], line);
-    curline %= MSGCOUNT;
+    if (repeated) {
+        toplines_count[lastline]++;
+    } else {
+        strcpy(toplines[curline], line);
+        toplines_count[curline] = 1;
+        curline++;
+        curline %= MSGCOUNT;
+    }
     if (iflags.next_msg_nonblocking)
         (*windowprocs.win_print_message_nonblocking) (moves, line);
     else
@@ -270,9 +292,9 @@ mstatusline(struct monst *mtmp)
         strcat(info, ", invisible");
     if (mtmp == u.ustuck)
         strcat(info,
-               (sticks(youmonst.data)) ? ", held by you" : u.
-               uswallow ? (is_animal(u.ustuck->data) ? ", swallowed you" :
-                           ", engulfed you") : ", holding you");
+               (sticks(youmonst.data)) ? ", held by you" : u.uswallow
+               ? (is_animal(u.ustuck->data) ? ", swallowed you" :
+                  ", engulfed you") : ", holding you");
     if (mtmp == u.usteed)
         strcat(info, ", carrying you");
 

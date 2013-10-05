@@ -508,8 +508,8 @@ do_play_instrument(struct obj *instr)
                     for (x = u.ux - 1; x <= u.ux + 1; x++)
                         if (isok(x, y))
                             if (find_drawbridge(&x, &y)) {
-                                u.uevent.uheard_tune = 2; /* tune now
-                                                             fully known */
+                                u.uevent.uheard_tune = 2;       /* tune now
+                                                                   fully known */
                                 if (level->locations[x][y].typ ==
                                     DRAWBRIDGE_DOWN)
                                     close_drawbridge(x, y);

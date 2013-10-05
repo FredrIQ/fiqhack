@@ -8,7 +8,6 @@
 #include "hack.h"
 #include "lev.h"
 
-static void trycall(struct obj *);
 static void dosinkring(struct obj *);
 static int drop(struct obj *);
 static int wipeoff(void);
@@ -211,8 +210,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                (t->ttyp == PIT || t->ttyp == SPIKED_PIT)) {
         /* you escaped a pit and are standing on the precipice */
         if (Blind && flags.soundok)
-            You_hear("%s %s downwards.", The(xname(obj)),
-                     otense(obj, "tumble"));
+            You_hear("%s tumble downwards.", the(xname(obj)));
         else
             pline("%s %s into %s pit.", The(xname(obj)), otense(obj, "tumble"),
                   the_your[t->madeby_u]);
@@ -259,19 +257,11 @@ doaltarobj(struct obj *obj)
                   the(xname(obj)));
         }
     }
-
 }
 
 static void
-trycall(struct obj *obj)
+dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
 {
-    if (!objects[obj->otyp].oc_name_known && !objects[obj->otyp].oc_uname)
-        docall(obj);
-}
-
-static void
-dosinkring(struct obj *obj)
-{       /* obj is a ring being dropped over a kitchen sink */
     struct obj *otmp, *otmp2;
     boolean ideed = TRUE;
 
@@ -287,7 +277,7 @@ dosinkring(struct obj *obj)
     giveback:
         obj->in_use = FALSE;
         dropx(obj);
-        trycall(obj);
+        makeknown(obj->otyp);
         return;
     case RIN_LEVITATION:
         pline("The sink quivers upward for a moment.");
@@ -398,7 +388,7 @@ dosinkring(struct obj *obj)
         }
     }
     if (ideed)
-        trycall(obj);
+        makeknown(obj->otyp);
     else
         You_hear("the ring bouncing down the drainpipe.");
     if (!rn2(20)) {
@@ -745,10 +735,12 @@ dodown(void)
         trap = t_at(level, u.ux, u.uy);
         can_fall = trap && (trap->ttyp == TRAPDOOR || trap->ttyp == HOLE);
         if (!trap ||
-            (trap->ttyp != TRAPDOOR && trap->ttyp != HOLE && trap->ttyp != PIT)
+            (trap->ttyp != TRAPDOOR && trap->ttyp != HOLE && trap->ttyp != PIT
+             && trap->ttyp != SPIKED_PIT)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
 
-            if (flags.autodig && !flags.nopick && uwep && is_pick(uwep)) {
+            if (flags.autodig && !flags.nopick && iflags.autodigdown && uwep &&
+                is_pick(uwep)) {
                 return use_pick_axe2(uwep, 0, 0, 1);
             } else {
                 pline("You can't go down here.");
@@ -778,9 +770,10 @@ dodown(void)
     }
 
     if (trap) {
-        if (trap->ttyp == PIT) {
+        if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
-                if (flags.autodig && !flags.nopick && uwep && is_pick(uwep)) {
+                if (flags.autodig && !flags.nopick && iflags.autodigdown && uwep
+                    && is_pick(uwep)) {
                     return use_pick_axe2(uwep, 0, 0, 1);
                 } else {
                     pline("You are already in the pit.");       /* YAFM needed */
@@ -855,19 +848,20 @@ doup(void)
 
 
 void
-notify_levelchange(void)
+notify_levelchange(const d_level * dlev)
 {
     int mode;
+    const d_level *z = dlev ? dlev : &u.uz;
 
-    if (In_hell(&u.uz))
+    if (In_hell(z))
         mode = LDM_HELL;
-    else if (In_quest(&u.uz))
+    else if (In_quest(z))
         mode = LDM_QUEST;
-    else if (In_mines(&u.uz))
+    else if (In_mines(z))
         mode = LDM_MINES;
-    else if (In_sokoban(&u.uz))
+    else if (In_sokoban(z))
         mode = LDM_SOKOBAN;
-    else if (Is_rogue_level(&u.uz))
+    else if (Is_rogue_level(z))
         mode = LDM_ROGUE;
     else if (Is_knox(&u.uz))
         mode = LDM_KNOX;
@@ -970,7 +964,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
      */
     vision_recalc(2);
 
-    if (iflags.purge_monsters) {
+    if (level->flags.purge_monsters) {
         /* purge any dead monsters */
         dmonsfree(level);
     }
@@ -1169,6 +1163,9 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         }
     }
 
+    /* Stop autoexplore revisiting the entrance stairs. */
+    level->locations[u.ux][u.uy].mem_stepped = 1;
+
     /* initial movement of bubbles just before vision_recalc */
     if (Is_waterlevel(&u.uz))
         movebubbles();
@@ -1178,8 +1175,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         level->flags.forgotten = FALSE;
     }
 
-    notify_levelchange();       /* inform the window code about the level
-                                   change */
+    notify_levelchange(NULL);   /* inform window code of the level change */
 
     /* Reset the screen. */
     vision_reset();     /* reset the blockages */

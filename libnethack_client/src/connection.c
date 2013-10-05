@@ -301,6 +301,7 @@ parse_ip_addr(const char *host, int port, int want_v4,
     int res;
     char portstr[16];
     struct addrinfo *gai_res = NULL;
+
 #ifndef WIN32
     struct addrinfo *next;
 #endif

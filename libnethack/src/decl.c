@@ -13,6 +13,7 @@ int bases[MAXOCLASSES];
 int multi;
 char multi_txt[BUFSZ];
 int occtime;
+int delay_start;        /* used purely for delay_msg */
 
 int x_maze_max, y_maze_max;     /* initialized in main, used in mkmaze.c */
 int otg_temp;   /* used by object_to_glyph() [otg] */
@@ -208,6 +209,7 @@ struct nh_option_desc *birth_options;
 struct nh_option_desc *options;
 
 char toplines[MSGCOUNT][BUFSZ];
+int toplines_count[MSGCOUNT];
 int curline;
 
 
@@ -242,9 +244,11 @@ init_data(void)
     memset(&digging, 0, sizeof (digging));
     memset(&inv_pos, 0, sizeof (inv_pos));
     memset(multi_txt, 0, sizeof (multi_txt));
+    memset(toplines, 0, sizeof (toplines));
+    memset(toplines_count, 0, sizeof (toplines_count));
 
     level = NULL;
-    multi = occtime = killer_format = 0;
+    multi = occtime = delay_start = killer_format = 0;
     afternmv = NULL;
     occupation = NULL;
     killer = NULL;
@@ -270,6 +274,7 @@ init_data(void)
     histevents = NULL;
     histcount = 0;
     timer_id = 1;
+    curline = 0;
 
     program_state.restoring = in_restore;
     iflags.disable_log = nolog;

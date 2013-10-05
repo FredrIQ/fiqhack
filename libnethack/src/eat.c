@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "hungerstatus.h"
 
 static int eatmdone(void);
 static int eatfood(void);
@@ -38,16 +39,6 @@ static void lesshungry(int);
 
 char msgbuf[BUFSZ];
 
-
-/* hunger texts used on bottom line (each 8 chars long) */
-#define SATIATED        0
-#define NOT_HUNGRY      1
-#define HUNGRY          2
-#define WEAK            3
-#define FAINTING        4
-#define FAINTED         5
-#define STARVED         6
-
 /* also used to see if you're allowed to eat cats and dogs */
 #define CANNIBAL_ALLOWED() (Role_if (PM_CAVEMAN) || Race_if(PM_ORC))
 
@@ -70,7 +61,7 @@ static boolean newuhs_saved_hs = FALSE;
  * polymorphed character.  Not used for monster checks.
  */
 boolean
-is_edible(struct obj *obj)
+is_edible(const struct obj *obj)
 {
     /* protect invocation tools but not Rider corpses (handled elsewhere) */
     /* if (obj->oclass != FOOD_CLASS && obj_resists(obj, 0, 0)) */
@@ -296,7 +287,7 @@ touchfood(struct obj *otmp)
 
     if (carried(otmp)) {
         freeinv(otmp);
-        otmp->oxlth++;      /* hack to prevent merge */
+        otmp->oxlth++;  /* hack to prevent merge */
         if (!can_hold(otmp)) {
             sellobj_state(SELL_DONTSELL);
             dropy(otmp);
@@ -819,9 +810,9 @@ cpostfx(int pm)
                chance of getting the third, and a 1/4 chance of getting the
                fourth. And now a proof by induction: it works for 1 intrinsic (1
                in 1 of getting it) for 2 you have a 1 in 2 chance of getting the
-               second, otherwise you keep the first for 3 you have a 1 in 3 chance 
-               of getting the third, otherwise you keep the first or the second
-               for n+1 you have a 1 in n+1 chance of getting the (n+1)st,
+               second, otherwise you keep the first for 3 you have a 1 in 3
+               chance of getting the third, otherwise you keep the first or the
+               second for n+1 you have a 1 in n+1 chance of getting the (n+1)st,
                otherwise you keep the previous one. Elliott Kleinrock, October 5,
                1990 */
 
@@ -1807,7 +1798,7 @@ doeat(struct obj *otmp)
     if (otmp && !validate_object(otmp, allobj + 2, "eat"))
         return 0;
     else if (!otmp)
-        otmp = floorfood("eat", 0);
+        otmp = floorfood("eat");
     if (!otmp)
         return 0;
     if (check_capacity(NULL))
@@ -1988,7 +1979,7 @@ doeat(struct obj *otmp)
         victual.reqtime = objects[otmp->otyp].oc_delay;
         if (otmp->otyp != FORTUNE_COOKIE &&
             (otmp->cursed ||
-             (((moves - otmp->age) > (int)otmp->blessed ? 50 : 30) &&
+             (((moves - otmp->age) > (otmp->blessed ? 50 : 30)) &&
               (otmp->orotten || !rn2(7))))) {
 
             if (rottenfood(otmp)) {
@@ -2270,6 +2261,8 @@ newuhs(boolean incr)
             if (incr && occupation &&
                 (occupation != eatfood && occupation != opentin))
                 stop_occupation();
+            if (incr && flags.run)
+                nomul(0, NULL);
             break;
         case WEAK:
             if (Hallucination)
@@ -2287,6 +2280,8 @@ newuhs(boolean incr)
             if (incr && occupation &&
                 (occupation != eatfood && occupation != opentin))
                 stop_occupation();
+            if (incr && flags.run)
+                nomul(0, NULL);
             break;
         }
         u.uhs = newhs;
@@ -2302,25 +2297,45 @@ newuhs(boolean incr)
     }
 }
 
+static boolean
+can_sacrifice(const struct obj *otmp)
+{
+    return (otmp->otyp == CORPSE || otmp->otyp == AMULET_OF_YENDOR ||
+            otmp->otyp == FAKE_AMULET_OF_YENDOR);
+}
 
-/* Returns an object representing food.  Object may be either on floor or
- * in inventory.
- */
+static boolean
+other_floorfood(const struct obj *otmp)
+{
+    return otmp->oclass == FOOD_CLASS;
+}
+
+/* Returns an object representing food.  Object may be either on floor or in
+   inventory. */
 struct obj *
-floorfood(      /* get food from floor or pack */
-             const char *verb, int corpsecheck)
-{       /* 0, no check, 1, corpses, 2, tinnable corpses */
+floorfood(const char *verb)
+{
     struct obj *otmp;
     char qbuf[QBUFSZ];
     char c;
     struct trap *ttmp = t_at(level, u.ux, u.uy);
     boolean feeding = (!strcmp(verb, "eat"));
-    int can_floorfood = 0;
+    boolean sacrificing = (!strcmp(verb, "sacrifice"));
+    boolean tinning = (!strcmp(verb, "tin"));
+    boolean can_floorfood = FALSE;
     boolean checking_can_floorfood = TRUE;
-
+    boolean (*floorfood_check)(const struct obj *);
+    
+    if (!verb || !*verb)
+        impossible("floorfood: no verb given");
+    
+    floorfood_check = (sacrificing ? can_sacrifice :
+                       tinning ? tinnable :
+                       feeding ? is_edible : other_floorfood);
+    
     /* if we can't touch floor objects then use invent food only */
-    if (!can_reach_floor() ||
-        (feeding && u.usteed) ||  /* can't eat off floor while riding */
+    if (!can_reach_floor() || (feeding && u.usteed) ||  /* can't eat off floor
+                                                           while riding */
         ((is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) &&
          (Wwalking || is_clinger(youmonst.data) || (Flying && !Breathless))) ||
         (ttmp && ttmp->tseen && (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT)
@@ -2329,7 +2344,15 @@ floorfood(      /* get food from floor or pack */
 
 eat_floorfood:
     if (feeding && metallivorous(youmonst.data)) {
-        struct obj *gold;
+	/* Two passes:
+	 *
+	 * 1) Check if anything on the floor can be chosen and make it available
+	 *    from the object picking prompt.
+	 * 2) If the floor was chosen (,) from that prompt, go through again,
+	 *    this time asking for the specific floor option.
+	 */
+
+        struct trap *ttmp = t_at(level, u.ux, u.uy);
 
         if (ttmp && ttmp->tseen && ttmp->ttyp == BEAR_TRAP) {
             if (!checking_can_floorfood) {
@@ -2349,44 +2372,31 @@ eat_floorfood:
             } else
                 can_floorfood++;
         }
-
-        if (youmonst.data != &mons[PM_RUST_MONSTER] &&
-            (gold = gold_at(level, u.ux, u.uy)) != 0) {
-            if (!checking_can_floorfood) {
-                if (gold->quan == 1L)
-                    sprintf(qbuf, "There is 1 gold piece here; eat it?");
-                else
-                    sprintf(qbuf, "There are %d gold pieces here; eat them?",
-                            gold->quan);
-                if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
-                    return gold;
-                } else if (c == 'q') {
-                    return NULL;
-                }
-            } else
-                can_floorfood++;
-        }
     }
 
-    /* Is there some food (probably a heavy corpse) here on the ground? */
-    for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
-        if (corpsecheck
-            ? (otmp->otyp == CORPSE &&
-               (corpsecheck == 1 ||
-                tinnable(otmp))) : feeding ? (otmp->oclass != COIN_CLASS &&
-                                              is_edible(otmp)) : otmp->oclass ==
-            FOOD_CLASS) {
-            if (!checking_can_floorfood) {
-                sprintf(qbuf, "There %s %s here; %s %s?", otense(otmp, "are"),
-                        doname(otmp), verb, (otmp->quan == 1L) ? "it" : "one");
-                if (can_floorfood == 1 ||
-                    (c = yn_function(qbuf, ynqchars, 'n')) == 'y')
-                    return otmp;
-                else if (c == 'q')
-                    return NULL;
-            } else
-                can_floorfood++;
+    if (checking_can_floorfood) {
+        for (otmp = level->objects[u.ux][u.uy]; otmp; otmp = otmp->nexthere) {
+            if ((*floorfood_check)(otmp)) {
+                can_floorfood = TRUE;
+                break;
+            }
         }
+    } else {
+        struct object_pick *floorfood_list;
+        char qbuf[QBUFSZ];
+        int n;
+
+        sprintf(qbuf, "%c%s what?", highc(*verb), verb + 1);
+        n = query_objlist(qbuf, level->objects[u.ux][u.uy],
+                          BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
+                          &floorfood_list, PICK_ONE, floorfood_check);
+        if (n) {
+            otmp = floorfood_list[0].obj;
+            free(floorfood_list);
+        } else {
+            otmp = NULL;
+        }
+        return otmp;
     }
 
 skipfloor:
@@ -2399,11 +2409,11 @@ skipfloor:
         checking_can_floorfood = FALSE;
         goto eat_floorfood;
     }
-    if (corpsecheck && otmp)
-        if (otmp->otyp != CORPSE || (corpsecheck == 2 && !tinnable(otmp))) {
-            pline("You can't %s that!", verb);
-            return NULL;
-        }
+
+    if (otmp && !(*floorfood_check)(otmp)) {
+        pline("You can't %s that!", verb);
+        return NULL;
+    }
     return otmp;
 }
 
@@ -2423,9 +2433,8 @@ eaten_stat(int base, struct obj *obj)
 
     uneaten_amt = (long)obj->oeaten;
     full_amount =
-        (obj->otyp ==
-         CORPSE) ? (long)mons[obj->corpsenm].cnutrit : (long)objects[obj->otyp].
-        oc_nutrition;
+         (obj->otyp == CORPSE) ? (long)mons[obj->corpsenm].cnutrit :
+         (long)objects[obj->otyp].oc_nutrition;
     if (uneaten_amt > full_amount) {
         impossible
             ("partly eaten food (%ld) more nutritious than untouched food (%ld)",

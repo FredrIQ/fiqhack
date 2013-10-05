@@ -102,8 +102,8 @@ setuwep(struct obj *obj)
     if (obj) {
         unweapon = (obj->oclass == WEAPON_CLASS) ? is_launcher(obj) ||
             is_ammo(obj) || is_missile(obj) || (is_pole(obj)
-                                                && !u.
-                                                usteed) : !is_weptool(obj);
+                                                && !u.usteed) :
+            !is_weptool(obj);
     } else
         unweapon = TRUE;        /* for "bare hands" message */
     update_inventory();
@@ -351,8 +351,8 @@ dowieldquiver(struct obj *newquiver)
         pline("%s already being used as a weapon!",
               !is_plural(uwep) ? "That is" : "They are");
         return 0;
-    } else if (newquiver->
-               owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE)) {
+    } else if (newquiver->owornmask &
+               (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE)) {
         pline("You cannot ready that!");
         return 0;
     } else {
@@ -457,12 +457,17 @@ can_twoweapon(void)
 
 #define NOT_WEAPON(obj) (!is_weptool(obj) && obj->oclass != WEAPON_CLASS)
     if (!could_twoweap(youmonst.data)) {
-        if (Upolyd)
+        if (cantwield(youmonst.data)) {
+            pline("Don't be ridiculous!");
+        } else if (Upolyd) {
             pline("You can't use two weapons in your current form.");
-        else
+        } else {
+            char buf[BUFSZ];
+            strcpy(buf, (flags.female && urole.name.f) ?
+                   urole.name.f : urole.name.m);
             pline("%s aren't able to use two weapons at once.",
-                  makeplural((flags.female &&
-                              urole.name.f) ? urole.name.f : urole.name.m));
+                  upstart(makeplural(buf)));
+        }
     } else if (!uwep || !uswapwep)
         pline("Your %s%s%s empty.", uwep ? "left " : uswapwep ? "right " : "",
               body_part(HAND), (!uwep && !uswapwep) ? "s are" : " is");

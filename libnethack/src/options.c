@@ -10,7 +10,7 @@
 
 static int change_inv_order(char *op);
 static struct nh_autopickup_rules *copy_autopickup_rules(
-  const struct nh_autopickup_rules *in);
+    const struct nh_autopickup_rules *in);
 
 /* -------------------------------------------------------------------------- */
 
@@ -128,6 +128,8 @@ static const struct nh_autopickup_rules def_autopickup =
 static const struct nh_option_desc const_options[] = {
     {"autodig", "dig if moving and wielding digging tool", OPTTYPE_BOOL,
      {VFALSE}},
+    {"autodigdown", "autodig downwards tries to create a pit or hole",
+     OPTTYPE_BOOL, {VFALSE}},
     {"autopickup", "automatically pick up objects you move over", OPTTYPE_BOOL,
      {VTRUE}},
     {"autopickup_rules",
@@ -139,6 +141,8 @@ static const struct nh_option_desc const_options[] = {
     {"comment", "has no effect", OPTTYPE_STRING, {""}},
     {"confirm", "ask before hitting tame or peaceful monsters", OPTTYPE_BOOL,
      {VTRUE}},
+    {"delay_msg", "minimum turns to show message of turns spent (0 to disable)",
+     OPTTYPE_INT, {(void *)2}},
     {"disclose", "whether to disclose information at end of game", OPTTYPE_ENUM,
      {(void *)DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING,
@@ -155,8 +159,7 @@ static const struct nh_option_desc const_options[] = {
      {VTRUE}},
     {"prayconfirm", "use confirmation prompt when #pray command issued",
      OPTTYPE_BOOL, {VTRUE}},
-    {"pushweapon",
-     "when wielding a new weapon, put your previous weapon into the secondary weapon slot",
+    {"pushweapon", "offhand the old weapon when wielding a new one",
      OPTTYPE_BOOL, {VFALSE}},
     {"runmode", "display frequency when `running' or `travelling'",
      OPTTYPE_ENUM, {(void *)RUN_LEAP}},
@@ -203,6 +206,7 @@ static const struct nh_option_desc const_birth_options[] = {
 /* associate boolean options with variables directly */
 static const struct nh_boolopt_map boolopt_map[] = {
     {"autodig", &flags.autodig},
+    {"autodigdown", &iflags.autodigdown},
     {"autopickup", &flags.pickup},
     {"autoquiver", &flags.autoquiver},
     {"confirm", &flags.confirm},
@@ -335,6 +339,8 @@ init_opt_struct(void)
 
     /* initialize option definitions */
     find_option(options, "comment")->s.maxlen = BUFSZ;
+    find_option(options, "delay_msg")->i.min = 0;
+    find_option(options, "delay_msg")->i.max = 9999;
     find_option(options, "disclose")->e = disclose_spec;
     find_option(options, "fruit")->s.maxlen = PL_FSIZ;
     find_option(options, "menustyle")->e = menustyle_spec;
@@ -641,6 +647,8 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     /* regular non-boolean options */
     else if (!strcmp("comment", option->name)) {
         /* do nothing */
+    } else if (!strcmp("delay_msg", option->name)) {
+        iflags.delay_msg = option->value.i;
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
     } else if (!strcmp("fruit", option->name)) {

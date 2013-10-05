@@ -222,9 +222,9 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
 
 static const char *hallu_priest_types[] = {
     "priestess",
-    "poohbah", /* The Mikado */
+    "poohbah",  /* The Mikado */
     "priest",
-    "prior" /* Stargate */
+    "prior"     /* Stargate */
 };
 
 /*
@@ -278,7 +278,8 @@ priestname(const struct monst *mon, char *pname)
                        hallu_priest_types[rn2(sizeof hallu_priest_types /
                                               sizeof *hallu_priest_types)]);
                 strcat(pname, " ");
-            } else if (mon->female) strcat(pname, "priestess ");
+            } else if (mon->female)
+                strcat(pname, "priestess ");
             else
                 strcat(pname, "priest ");
         }

@@ -408,8 +408,8 @@ polymon(int mntmp)
         pline("You %s %s%s!",
               (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
               (is_male(&mons[mntmp]) ||
-               is_female(&mons[mntmp])) ? "" : flags.
-              female ? "female " : "male ", mons[mntmp].mname);
+               is_female(&mons[mntmp])) ? "" : flags.female ? "female " :
+              "male ", mons[mntmp].mname);
     } else {
         if (u.umonnum != mntmp)
             pline("You turn into %s!", an(mons[mntmp].mname));

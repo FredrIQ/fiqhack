@@ -139,12 +139,14 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
     draw_bar(15, pi->en, pi->enmax, FALSE);
     wprintw(statuswin, " %c%ld S:%ld T:%ld", pi->coinsym, pi->gold, pi->score,
             pi->moves);
-    if (getcurx(statuswin) > 0) wclrtoeol(statuswin);
+    if (getcurx(statuswin) > 0)
+        wclrtoeol(statuswin);
 
     /* status */
     j = getmaxx(statuswin) + 1;
     for (i = 0; i < pi->nr_items; i++) {
         int color = CLR_WHITE, colorattr;
+
         j -= strlen(pi->statusitems[i]) + 1;
         for (k = 0; statuscolors[k].name; k++) {
             if (!strcmp(pi->statusitems[i], statuscolors[k].name)) {
@@ -171,7 +173,8 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         wmove(statuswin, 0, getmaxx(statuswin) - strlen(buf));
     }
     wprintw(statuswin, "%s", buf);
-    if (getcurx(statuswin) > 0) wclrtoeol(statuswin);
+    if (getcurx(statuswin) > 0)
+        wclrtoeol(statuswin);
 
     /* abilities (in threeline mode) "In:18 Wi:18 Ch:18" = 17 chars */
     if (threeline) {

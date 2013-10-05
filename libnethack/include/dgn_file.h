@@ -22,7 +22,7 @@ struct tmpdungeon {
     char name[24], protoname[24];
     struct couple lev;
     int flags, chance, levels, branches;
-    int entry_lev;     /* entry level for this dungeon */
+    int entry_lev;      /* entry level for this dungeon */
     char boneschar;
 };
 
@@ -52,7 +52,7 @@ struct tmpbranch {
 /*
  *      Flags that map into the dungeon flags bitfields.
  */
-# define TOWN        1   /* levels only */
+# define TOWN        1  /* levels only */
 # define HELLISH     2
 # define MAZELIKE    4
 # define ROGUELIKE   8

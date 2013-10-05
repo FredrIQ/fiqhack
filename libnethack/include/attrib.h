@@ -33,8 +33,8 @@
 # define ATIME(x)   (u.atime.a[x])
 
 /* KMH -- Conveniences when dealing with strength constants */
-# define STR18(x)   (18+(x))        /* 18/xx */
-# define STR19(x)   (100+(x))       /* For 19 and above */
+# define STR18(x)   (18+(x))    /* 18/xx */
+# define STR19(x)   (100+(x))   /* For 19 and above */
 
 struct attribs {
     schar a[A_MAX];

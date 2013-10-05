@@ -120,12 +120,14 @@ artiname(int artinum)
    given, then unaligned ones also become eligible for this.)
    If no alignment is given, then 'otmp' is converted
    into an artifact of matching type, or returned as-is if that's not possible.
-   For the 2nd case, caller should use ``obj = mk_artifact(obj, A_NONE);''
-   for the 1st, ``obj = mk_artifact(NULL, some_alignment);''.
+   For the 2nd case, caller should use ``obj = mk_artifact(lev, obj, A_NONE);''
+   for the 1st, ``obj = mk_artifact(lev, NULL, some_alignment);''.
  */
-struct obj *mk_artifact(struct obj *otmp,       /* existing object; ignored if
-                                                   alignment specified */
-                        aligntyp alignment      /* target alignment, or A_NONE */
+struct obj *
+mk_artifact(
+    struct level *lev,	/* level to create artifact on if otmp not given */
+    struct obj *otmp,	/* existing object; ignored if alignment specified */
+    aligntyp alignment      /* target alignment, or A_NONE */
     ) {
     const struct artifact *a;
     int n, m;
@@ -153,8 +155,9 @@ struct obj *mk_artifact(struct obj *otmp,       /* existing object; ignored if
         a = &artilist[m];
 
         /* make an appropriate object if necessary, then christen it */
-    make_artif:if (by_align)
-            otmp = mksobj(level, (int)a->otyp, TRUE, FALSE);
+    make_artif:
+        if (by_align)
+            otmp = mksobj(lev, (int)a->otyp, TRUE, FALSE);
         otmp = oname(otmp, a->name);
         otmp->oartifact = m;
         artiexist[m] = TRUE;

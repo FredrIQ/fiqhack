@@ -246,12 +246,13 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     int key, dx, dy;
     int sidx;
     static const char pick_chars[] = " \r\n.,;:";
-    static const int pick_vals[] = {1, 1, 1, 1, 2, 3, 4};
+    static const int pick_vals[] = { 1, 1, 1, 1, 2, 3, 4 };
     const char *cp;
     char printbuf[BUFSZ];
     char *matching = NULL;
     enum nh_direction dir;
     struct coord *monpos = NULL;
+
     /* Actually, the initial valus for moncount and monidx are irrelevant
        because they're never used while monpos == NULL. But a typical compiler
        can't figure that out, because the control flow is too complex. */
@@ -263,7 +264,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
               "Move the cursor with the direction keys. Press "
               "the letter of a dungeon symbol");
     mvwaddstr(statuswin, 1, 0,
-              "to select it or use m to move to a nearby "
+              "to select it or use m/M to move to a nearby "
               "monster. Finish with one of .,;:");
     wrefresh(statuswin);
 
@@ -330,7 +331,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
             goto nxtc;
         }
 
-        if (key == 'm') {
+        if (key == 'm' || key == 'M') {
             if (!monpos) {
                 int i, j;
 
@@ -350,15 +351,22 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                             monpos[monidx].y = i;
                             monidx++;
                         }
-                monidx = 0;
                 qsort(monpos, moncount, sizeof (struct coord),
                       compare_coord_dist);
+                /* ready this for first increment/decrement to change to zero */
+                monidx = (key == 'm') ? -1 : 1;
             }
 
             if (moncount) {     /* there is at least one monster to move to */
+                if (key == 'm') {
+                    monidx = (monidx + 1) % moncount;
+                } else {
+                    monidx--;
+                    if (monidx < 0)
+                        monidx += moncount;
+                }
                 cx = monpos[monidx].x;
                 cy = monpos[monidx].y;
-                monidx = (monidx + 1) % moncount;
             }
         } else {
             int k = 0, tx, ty;
@@ -393,13 +401,13 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                         (char)key);
                 curses_msgwin(printbuf);
             } else {
-                sprintf(printbuf, "Unknown direction%s.",
+                sprintf(printbuf, "Unknown targeting key%s.",
                         !force ? " (ESC to abort)" : "");
                 curses_msgwin(printbuf);
             }
         }
-        /* fall through; an invalid command at the direction screen
-           shouldn't cause us to abort (that's what ESC is for) */
+        /* fall through; an invalid command at the direction screen shouldn't
+           cause us to abort (that's what ESC is for) */
 
     nxtc:
         wmove(mapwin, cy, cx - 1);

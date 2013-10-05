@@ -202,7 +202,7 @@ nhnet_start_game(const char *name, int role, int race, int gend, int align,
 
 
 int
-nhnet_command(const char * volatile cmd, int rep, struct nh_cmd_arg *arg)
+nhnet_command(const char *volatile cmd, int rep, struct nh_cmd_arg *arg)
 {
     int ret;
     json_t *jmsg, *jarg;
@@ -667,8 +667,8 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
                 json_array_append_new(joval, jobj);
             }
         } else {
-            /* Shouldn't happen; if it does, put an easily searchable string
-               in as the value to ease debuging */
+            /* Shouldn't happen; if it does, put an easily searchable string in 
+               as the value to ease debugging */
             joval = json_string("<unused>");
         }
 
@@ -864,7 +864,7 @@ nhnet_get_roles(void)
 
 
 char *
-nhnet_build_plselection_prompt(char * const buf, int buflen, int rolenum,
+nhnet_build_plselection_prompt(char *const buf, int buflen, int rolenum,
                                int racenum, int gendnum, int alignnum)
 {
     json_t *jmsg;
@@ -898,7 +898,7 @@ nhnet_build_plselection_prompt(char * const buf, int buflen, int rolenum,
 
 
 const char *
-nhnet_root_plselection_prompt(char * const buf, int buflen, int rolenum,
+nhnet_root_plselection_prompt(char *const buf, int buflen, int rolenum,
                               int racenum, int gendnum, int alignnum)
 {
     json_t *jmsg;
@@ -931,7 +931,7 @@ nhnet_root_plselection_prompt(char * const buf, int buflen, int rolenum,
 
 
 struct nh_topten_entry *
-nhnet_get_topten(int *out_len, char *statusbuf, const char * volatile player,
+nhnet_get_topten(int *out_len, char *statusbuf, const char *volatile player,
                  int top, int around, nh_bool own)
 {
     struct nh_topten_entry *ttlist;

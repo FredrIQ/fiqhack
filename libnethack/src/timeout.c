@@ -1565,12 +1565,12 @@ write_timer(struct memfile *mf, timer_element * timer)
     case TIMER_GLOBAL:
     case TIMER_LEVEL:
         /* assume no pointers in arg */
-        argval = (intptr_t)timer->arg;
+        argval = (intptr_t) timer->arg;
         break;
 
     case TIMER_OBJECT:
         if (timer->needs_fixup)
-            argval = (intptr_t)timer->arg;
+            argval = (intptr_t) timer->arg;
         else {
             /* replace object pointer with id */
             argval = ((struct obj *)timer->arg)->o_id;
@@ -1805,10 +1805,10 @@ relink_timers(boolean ghostly, struct level *lev)
         if (curr->needs_fixup) {
             if (curr->kind == TIMER_OBJECT) {
                 if (ghostly) {
-                    if (!lookup_id_mapping((intptr_t)curr->arg, &nid))
+                    if (!lookup_id_mapping((intptr_t) curr->arg, &nid))
                         panic("relink_timers 1");
                 } else
-                    nid = (intptr_t)curr->arg;
+                    nid = (intptr_t) curr->arg;
                 curr->arg = find_oid(nid);
                 if (!curr->arg)
                     panic("cant find o_id %d", nid);

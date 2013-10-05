@@ -61,9 +61,7 @@ do_mname(void)
             mtmp = u.usteed;
         else {
             pline("This %s creature is called %s and cannot be renamed.",
-                  ACURR(A_CHA) >
-                  14 ? (flags.female ? "beautiful" : "handsome") : "ugly",
-                  plname);
+                  beautiful(), plname);
             return 0;
         }
     } else
@@ -120,7 +118,10 @@ do_oname(struct obj *obj)
         return 0;
 
     sprintf(qbuf, "What do you want to name %s %s?",
-            is_plural(obj) ? "these" : "this", xname(obj));
+		is_plural(obj) ? "these" : "this",
+		safe_qbuf("", sizeof("What do you want to name these ?"),
+			  xname(obj), simple_typename(obj->otyp),
+			  is_plural(obj) ? "things" : "thing"));
     getlin(qbuf, buf);
     if (!*buf || *buf == '\033')
         return 0;
@@ -315,8 +316,8 @@ do_tname(struct obj *obj)
     if (!obj)
         obj = getobj(callable, "call");
     if (obj) {
-        /* behave as if examining it in inventory; this might set dknown if 
-           it was picked up while blind and the hero can now see */
+        /* behave as if examining it in inventory; this might set dknown if it 
+           was picked up while blind and the hero can now see */
         xname(obj);
 
         if (!obj->dknown) {

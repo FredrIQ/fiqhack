@@ -108,7 +108,7 @@ init_curses_ui(char *dataprefix)
 
     init_nhcolors();
     ui_flags.playmode = MODE_NORMAL;
-    ui_flags.unicode = 1; /* uncursed will back-translate if needed */
+    ui_flags.unicode = 1;       /* uncursed will back-translate if needed */
     basewin = stdscr;
 }
 
@@ -179,9 +179,9 @@ layout_game_windows(void)
     /* 3 variable elements contribute to height: - message area (most
        important) - better status - horizontal frame lines (least important) */
 
-    /* space for the frame? */                 /* horiz lines */
-    if (settings.frame && COLS >= COLNO + 2 && LINES >= ROWNO + 4
-        + settings.msgheight + statusheight)
+    /* space for the frame? *//* horiz lines */
+    if (settings.frame && COLS >= COLNO + 2 &&
+        LINES >= ROWNO + 4 + settings.msgheight + statusheight)
         ui_flags.draw_frame = TRUE;
 
     if (settings.sidebar && COLS >= COLNO + 20)

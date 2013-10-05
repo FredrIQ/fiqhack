@@ -5,6 +5,7 @@
 
 #include "hack.h"
 #include "epri.h"
+#include "hungerstatus.h"
 
 static int prayer_done(void);
 static struct obj *worst_cursed_item(void);
@@ -114,17 +115,6 @@ but that's really hard.
 #define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow)
 #define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
 #define a_align(x,y)    ((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
-
-/* Borrowed from eat.c */
-
-#define SATIATED        0
-#define NOT_HUNGRY      1
-#define HUNGRY          2
-#define WEAK            3
-#define FAINTING        4
-#define FAINTED         5
-#define STARVED         6
-
 
 static int
 in_trouble(void)
@@ -810,8 +800,8 @@ pleased(aligntyp g_align)
 
     pline("You feel that %s is %s.", align_gname(g_align),
           u.ualign.record >=
-          DEVOUT ? Hallucination ? "pleased as punch" : "well-pleased" : u.
-          ualign.record >=
+          DEVOUT ? Hallucination ? "pleased as punch" : "well-pleased" :
+          u.ualign.record >=
           STRIDENT ? Hallucination ? "ticklish" : "pleased" : Hallucination ?
           "full" : "satisfied");
 
@@ -1192,7 +1182,7 @@ dosacrifice(struct obj *otmp)
             pline("You can't sacrifice that!");
             return 0;
         } else if (!otmp)
-            otmp = floorfood("sacrifice", 1);
+            otmp = floorfood("sacrifice");
         if (!otmp)
             return 0;
     }
@@ -1473,8 +1463,8 @@ dosacrifice(struct obj *otmp)
                     if (!Blind)
                         pline("The altar glows %s.",
                               hcolor(u.ualign.type ==
-                                     A_LAWFUL ? "white" : u.ualign.
-                                     type ? "black" : "gray"));
+                                     A_LAWFUL ? "white" : u.
+                                     ualign.type ? "black" : "gray"));
 
                     if (rnl(u.ulevel) > 6 && u.ualign.record > 0 &&
                         rnd(u.ualign.record) > (3 * ALIGNLIM) / 4)
@@ -1562,7 +1552,7 @@ dosacrifice(struct obj *otmp)
             /* The chance goes down as the number of artifacts goes up */
             if (u.ulevel > 2 && u.uluck >= 0 &&
                 !rn2(10 + (2 * u.ugifts * nartifacts))) {
-                otmp = mk_artifact(NULL, a_align(u.ux, u.uy));
+                otmp = mk_artifact(level, NULL, a_align(u.ux, u.uy));
                 if (otmp) {
                     if (otmp->spe < 0)
                         otmp->spe = 0;
@@ -1905,20 +1895,20 @@ align_gname(aligntyp alignment)
     return gnam;
 }
 
-static const char* hallu_gods[] = {
-    "the Flying Spaghetti Monster", /* Church of the FSM */
-    "Eris", /* Discordianism */
-    "the Martians", /* every science fiction ever */
-    "Xom", /* Crawl */
-    "AnDoR dRaKoN", /* ADOM */
-    "the Central Bank of Yendor", /* economics */
-    "Tooth Fairy", /* real world(?) */
-    "Om", /* Discworld */
+static const char *hallu_gods[] = {
+    "the Flying Spaghetti Monster",     /* Church of the FSM */
+    "Eris",     /* Discordianism */
+    "the Martians",     /* every science fiction ever */
+    "Xom",      /* Crawl */
+    "AnDoR dRaKoN",     /* ADOM */
+    "the Central Bank of Yendor",       /* economics */
+    "Tooth Fairy",      /* real world(?) */
+    "Om",       /* Discworld */
     "Yawgmoth", /* Magic: the Gathering */
-    "Morgoth", /* LoTR */
-    "Cthulhu", /* Lovecraft */
-    "the Ori", /* Stargate */
-    "destiny", /* why not? */
+    "Morgoth",  /* LoTR */
+    "Cthulhu",  /* Lovecraft */
+    "the Ori",  /* Stargate */
+    "destiny",  /* why not? */
 };
 
 /* hallucination handling for priest/minion names: select a random god
@@ -1934,17 +1924,21 @@ halu_gname(aligntyp alignment)
 
     which = randrole();
     switch (rn2(9)) {
-    case 0: case 1:
+    case 0:
+    case 1:
         gnam = roles[which].lgod;
         break;
-    case 2: case 3:
+    case 2:
+    case 3:
         gnam = roles[which].ngod;
         break;
-    case 4: case 5:
+    case 4:
+    case 5:
         gnam = roles[which].cgod;
         break;
-    case 6: case 7:
-        gnam = hallu_gods[rn2(sizeof hallu_gods/sizeof *hallu_gods)];
+    case 6:
+    case 7:
+        gnam = hallu_gods[rn2(sizeof hallu_gods / sizeof *hallu_gods)];
         break;
     case 8:
         gnam = Moloch;

@@ -19,7 +19,7 @@ static const char *const copyright_banner[] =
     { COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL };
 
 static void wd_message(void);
-static void pre_move_tasks(void);
+static void pre_move_tasks(boolean);
 
 static void newgame(void);
 static void welcome(boolean);
@@ -151,6 +151,7 @@ startup_common(const char *name, int playmode)
     reset_food();       /* zero out victual and tin */
     reset_steal();
     reset_dig_status();
+    reset_encumber_msg();
 
     /* create mutable copies of object and artifact liss */
     init_objlist();
@@ -200,41 +201,65 @@ startup_common(const char *name, int playmode)
 
 
 static void
+realtime_messages(boolean moon, boolean fri13)
+{
+    if (moon) {
+        switch (flags.moonphase) {
+        case FULL_MOON:
+            pline("You are lucky!  Full moon tonight.");
+            break;
+        case NEW_MOON:
+            pline("Be careful!  New moon tonight.");
+            break;
+        }
+    }
+
+    if (fri13 && flags.friday13)
+        pline("Watch out!  Bad things can happen on Friday the 13th.");
+}
+
+
+static void
 realtime_tasks(void)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
+    boolean msg_moonphase = TRUE;
+    boolean msg_friday13 = TRUE;
 
     flags.moonphase = phase_of_the_moon();
     if (flags.moonphase == FULL_MOON && prev_moonphase != FULL_MOON) {
-        pline("You are lucky!  Full moon tonight.");
         change_luck(1);
     } else if (flags.moonphase != FULL_MOON && prev_moonphase == FULL_MOON) {
         change_luck(-1);
     } else if (flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) {
-        pline("Be careful!  New moon tonight.");
+        /* Do nothing, but show message. */
+    } else {
+        msg_moonphase = FALSE;
     }
 
     flags.friday13 = friday_13th();
     if (flags.friday13 && !prev_friday13) {
-        pline("Watch out!  Bad things can happen on Friday the 13th.");
         change_luck(-1);
     } else if (!flags.friday13 && prev_friday13) {
         change_luck(1);
+    } else {
+        msg_friday13 = FALSE;
     }
+
+    realtime_messages(msg_moonphase, msg_friday13);
 }
 
 
 static void
 post_init_tasks(void)
 {
-    realtime_tasks();
     encumber_msg();     /* in case they auto-picked up something */
 
     u.uz0.dlevel = u.uz.dlevel;
 
     /* prepare for the first move */
-    pre_move_tasks();
+    pre_move_tasks(0);
 }
 
 
@@ -274,6 +299,17 @@ nh_start_game(int fd, const char *name, int irole, int irace, int igend,
 
     newgame();
     wd_message();
+
+    flags.move = 0;
+    set_wear();
+    pickup(1);
+
+    log_command_result();
+
+    program_state.game_running = TRUE;
+    youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
+    realtime_tasks();
+    post_init_tasks();
 
     api_exit();
     return TRUE;
@@ -377,10 +413,16 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     /* info might not have reached the ui while alternate window procs were set 
      */
     doredraw();
+
+    /* nh_start_game() does this via newgame(), but since this function doesn't
+       call newgame(), we have to do it here instead. */
+    notify_levelchange(NULL);
+
     bot();
     flush_screen();
 
     welcome(FALSE);
+    realtime_messages(TRUE, TRUE);
     update_inventory();
 
     api_exit();
@@ -410,6 +452,10 @@ you_moved(void)
 {
     int moveamt = 0, wtcap = 0, change = 0;
     boolean monscanmove = FALSE;
+
+    /* Begin turn-tracking for delay_msg. */
+    if (iflags.delay_msg > 0 && delay_start == 0)
+        delay_start = moves;
 
     /* actual time passed */
     youmonst.movement -= NORMAL_SPEED;
@@ -725,7 +771,7 @@ special_vision_handling(void)
 
 
 static void
-pre_move_tasks(void)
+pre_move_tasks(boolean didmove)
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
@@ -736,8 +782,8 @@ pre_move_tasks(void)
     if (iflags.botl)
         bot();
 
-    if ((u.uhave.amulet || Clairvoyant) && !In_endgame(&u.uz) && !BClairvoyant
-        && !(moves % 15) && !rn2(2))
+    if (didmove && (u.uhave.amulet || Clairvoyant) && !In_endgame(&u.uz) &&
+        !BClairvoyant && !(moves % 15) && !rn2(2))
         do_vicinity_map();
 
     u.umoved = FALSE;
@@ -751,11 +797,45 @@ pre_move_tasks(void)
         }
     }
 
-    if (moves % 100 == 0)
+    if (didmove && moves % 100 == 0)
         realtime_tasks();
 
     update_inventory();
     update_location(FALSE);
+
+    if (didmove) {
+        /* Mark the current square as stepped on unless blind, since that would 
+           imply that we had properly explored it. */
+        struct rm *loc = &level->locations[u.ux][u.uy];
+
+        if (!Blind && !loc->mem_stepped)
+            loc->mem_stepped = 1;
+    }
+}
+
+
+static boolean
+is_delayed(void)
+{
+    /* See multi/occupation comment in nh_command() for details. */
+    return (multi >= 0 && occupation) ||        /* occupied, e.g. forcing lock */
+        multi > 0 ||    /* command with count */
+        multi < 0;      /* delayed, e.g. wearing/removing armor */
+}
+
+
+static void
+do_delay_msg(void)
+{
+    /* End turn-tracking for delay_msg. */
+    /* Be careful not to print and reset if still delayed somehow. */
+    if (iflags.delay_msg > 0 && delay_start && !is_delayed()) {
+        if (moves - delay_start >= iflags.delay_msg) {
+            pline("[%d %s]", moves - delay_start,
+                  iflags.delay_msg == 1 ? "turn" : "turns");
+        }
+        delay_start = 0;
+    }
 }
 
 
@@ -781,7 +861,11 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
         if (flags.mv) {
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-            domove(u.dx, u.dy, 0);
+            if (!domove(u.dx, u.dy, 0)) {
+                /* Don't use a move when travelling into an obstacle. */
+                flags.move = FALSE;
+                nomul(0, NULL);
+            }
         } else
             do_command(saved_cmd, multi, FALSE, arg);
     }
@@ -817,7 +901,10 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 
     /* prepare for the next move */
     flags.move = 1;
-    pre_move_tasks();
+
+    pre_move_tasks(didmove);
+    do_delay_msg();
+
     if (multi == 0 && !occupation)
         flush_screen(); /* Flush screen buffer */
 
@@ -907,10 +994,10 @@ stop_occupation(void)
             pline("You stop %s.", occtxt);
         occupation = 0;
         iflags.botl = 1;        /* in case u.uhs changed */
-        nomul(0, NULL);
         /* fainting stops your occupation, there's no reason to sync.
            sync_hunger(); */
     }
+    nomul(0, NULL); /* running, travel and autotravel don't count as occupations */
 }
 
 
@@ -956,12 +1043,15 @@ newgame(void)
     doredraw();
 
     /* help the window port get it's display charset/tiles sorted out */
-    notify_levelchange();
+    notify_levelchange(NULL);
 
     if (flags.legacy) {
         flush_screen();
         com_pager(1);
     }
+
+    /* Stop autoexplore revisiting the entrance stairs (or position). */
+    level->locations[u.ux][u.uy].mem_stepped = 1;
 
     program_state.something_worth_saving++;     /* useful data now exists */
 
@@ -1013,6 +1103,9 @@ welcome(boolean new_game)
           "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL), plname,
           buf, urace.adj, (currentgend &&
                            urole.name.f) ? urole.name.f : urole.name.m);
+
+    if (*level->levname)
+        pline("You named this level: %s.", level->levname);
 }
 
 /*allmain.c*/

@@ -240,7 +240,7 @@ castmu(struct monst *mtmp, const struct attack *mattk,
               " at you");
     }
 
-    /*
+    /* 
      * As these are spells, the damage is related to the level
      * of the monster casting the spell.
      */
@@ -1214,7 +1214,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                 if (yours)
                     demonpet();
                 else
-                    msummon(mattk);
+                    msummon(mattk, &mattk->dlevel->z);
             } else {
                 int i, j;
                 int makeindex, tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1;
