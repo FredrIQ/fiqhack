@@ -124,8 +124,6 @@ struct instance_flags {
                                            message */
     boolean autodigdown;        /* autodigging works downwadrds */
 
-    int delay_msg;      /* # turns before msg shown for multi-turn actions. */
-
     /* Items which belong in flags, but are here to allow save compatibility */
     boolean show_uncursed;      /* always show uncursed items as such */
     boolean showrace;   /* show hero glyph by race rather than by role */

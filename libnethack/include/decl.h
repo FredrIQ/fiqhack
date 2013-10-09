@@ -14,7 +14,6 @@ extern int bases[MAXOCLASSES];
 extern int multi;
 extern char multi_txt[BUFSZ];
 extern int occtime;
-extern int delay_start;
 
 # define WARNCOUNT 6    /* number of different warning levels */
 
