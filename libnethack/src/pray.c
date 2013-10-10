@@ -1918,6 +1918,7 @@ static const char* hallu_gods[] = {
     "Cthulhu", /* Lovecraft */
     "the Ori", /* Stargate */
     "destiny", /* why not? */
+    "your Friend the Computer", /* Paranoia */
 };
 
 /* hallucination handling for priest/minion names: select a random god
@@ -1925,7 +1926,7 @@ static const char* hallu_gods[] = {
 const char *
 halu_gname(aligntyp alignment)
 {
-    const char *gnam;
+    const char *gnam = NULL;
     int which;
 
     if (!Hallucination)
@@ -1953,7 +1954,7 @@ halu_gname(aligntyp alignment)
     }
     if (!gnam) {
         impossible("No random god name?");
-        gnam = Moloch;
+        gnam = "your Friend the Computer"; /* Paranoia */
     }
     if (*gnam == '_')
         ++gnam;

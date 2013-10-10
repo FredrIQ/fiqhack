@@ -32,6 +32,9 @@
 # pragma GCC diagnostic ignored "-Wold-style-definition"
 # pragma GCC diagnostic warning "-Wstrict-prototypes"
 #endif
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wknr-promoted-parameter"
+#endif
 
 #define _ISOC99_SOURCE
 #include <limits.h>
@@ -695,7 +698,7 @@ int curs_set(int vis) { uncursed_hook_setcursorsize(vis); return OK; }
 /* manual page 3ncurses util */
 char *unctrl(char d) {
     int c = d;
-    if (c < c) c += 256;
+    if (c < 0) c += 256;
     static char s[5] = {'M', '-'};
     char *r = s+2;
     if (c > 127) { c -= 128; r = s; }
