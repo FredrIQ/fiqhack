@@ -996,9 +996,6 @@ cancel_don(void)
     taking_off = 0L;
 }
 
-static const char clothes[] = { ARMOR_CLASS, 0 };
-static const char accessories[] =
-    { RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS, 0 };
 static const char clothes_and_accessories[] =
     { ARMOR_CLASS, RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS, 0 };
 
@@ -1006,7 +1003,7 @@ static const char clothes_and_accessories[] =
 int
 dotakeoff(struct obj *otmp)
 {
-    if (otmp && !validate_object(otmp, clothes, "take off"))
+    if (otmp && !validate_object(otmp, clothes_and_accessories, "take off"))
         return 0;
     else if (!otmp)
         otmp = getobj(clothes_and_accessories, "take off");

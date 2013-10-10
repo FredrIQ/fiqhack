@@ -33,6 +33,9 @@
 # pragma GCC diagnostic ignored "-Wold-style-definition"
 # pragma GCC diagnostic warning "-Wstrict-prototypes"
 #endif
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wknr-promoted-parameter"
+#endif
 
 #define _ISOC99_SOURCE
 #include <limits.h>

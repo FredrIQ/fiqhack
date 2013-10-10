@@ -11,6 +11,19 @@
 #include <ctype.h>
 #include <signal.h>
 
+# ifdef AIMAKE_OPTION_gamesdatadir
+#  ifndef NETHACKDIR
+#   define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesdatadir)
+#   ifndef STRINGIFY_OPTION
+#    define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+#    define STRINGIFY_OPTION_1(x) #x
+#   endif
+#  endif
+# endif
+
+# ifndef NETHACKDIR
+#  define NETHACKDIR "/usr/share/NetHack4/"
+# endif
 
 static void process_args(int, char **);
 void append_slash(char *name);
