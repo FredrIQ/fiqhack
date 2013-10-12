@@ -1,0 +1,522 @@
+About this document:
+Last modified by Alex Smith, 2013-10-11
+
+Copyright (C) 2013 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+Saving, Watching and Replaying in NetHack 4
+===========================================
+
+History
+-------
+
+NetHack 3.4.3 used a save system that was effectively just a data dump of the
+various internal structures used by the game; there were some modifications
+used, e.g. to convert pointer values to indexes before storing them to disk,
+but many parts of the save were simply a straight read(2) or write(2) system
+call.  Although simple, this had many disadvantages.  For instance, save files
+would typically not be transferrable from one computer to another unless they
+were running effectively the same executable (same platform, configuration
+options, port, etc.).
+
+If something went wrong, recovery options were limited.  Power failures or
+game crashes were recoverable because the game stored save files in unpacked
+form in the lock directory, updated every level change; and thus, after a
+crash, the player could be returned to the start of the level via running the
+recover(6) program to pack the files into a save file.  However, any problem
+with the game which lead to a malformed save file being written, or caused
+internal state corruption in the portion of the gamestate that was saved,
+would lead to a completely unrecoverable save.  This was very rare (because
+the NetHack 3.4 series went so long with no significant changes, and was
+relatively conservative even compared to the 3.3 series), but did happen on
+occasion, especially in the devnull tournament held every November (which made
+tournament-specific changes to the game which could often cause problems).
+
+NitroHack used an entirely different save system.  There were two ways in
+which a game was saved: a log of all the commands inputted by the user, and a
+binary save produced via serializing the game's internal structures in a
+processor-independent way.  NitroHack would attempt to load the binary save
+first; if it didn't exist or was corrupted (perhaps due to a game crash), it
+would attempt to replay the game from scratch instead.  In theory, this
+avoided all the problems that NetHack 3.4.3's save system had.
+
+However, it came with worse problems of its own.  The log-based save system
+was very prone to failing altogether, due to uninitialized memory, inputs to
+the game that weren't correctly saved, or similar issues.  Even if these
+issues were entirely avoided, any change to the game engine at all could
+change what effect a command had in some context, causing a desync and thus a
+failure to load the save.  This meant that most of the time, the game was
+relying entirely on the binary save; and the binary save would not be written
+(or at least, not be written correctly) in situations such as a timeout at a
+prompt.  Idling at prompts would therefore typically delete your save file,
+which is not an ideal property for a save system to have.
+
+The NetHack 4.2 series worked around this issue by adding a third storage
+format to the save file: every action, it would store the diff of the binary
+save between that action and the previous action.  This cut down on problems
+involving loss of the binary save; no matter how uncleanly the process exited,
+it would always be possible to rewind to the start of the turn and reconstruct
+the binary save via adding together all the diffs to that point.  It also
+stored messages in the save; this meant that when replaying a game, it would
+be possible to see what commands the player entered even if the game engine
+had changed to the extent that the saved commands were meaningless.
+
+There were several issues with this save system, too.  The first is that it
+was unnecessarily complex in theory; it was storing commands, but they were
+rarely usable for anything at all.  It was unnecessarily complex in practice,
+too; there were numerous special cases, for things like options and timezones,
+as well as things like a hardcoded dictionary of commands (meaning that it
+would be impossible to add new commands while the game was being played and
+have the commands in the save file remain meaningful).  The complexity meant
+that it was hard to debug; there were several instances where a save file
+would end up with mysterious stray newlines, or blocks of options written into
+the middle of the file with impossible values, or the occasional block of NUL
+bytes, and there was no obvious reason why.  This corruption was also hard to
+detect; because there was so much redundant information in the save file, most
+of it was never actually read except when something went wrong.  (One good
+point, however, was that the huge amount of redundant information also made
+even highly corrupted saves possible to recover.)
+
+
+The NetHack 4.3 Log Format
+--------------------------
+
+In NetHack 4.3, the save system is changed yet again, to keep the advantages
+of the NetHack 4.2 save system, while avoiding most of the disadvantages, and
+hopefully not introducing new ones.
+
+A NetHack 4.3 log is a binary file, but which contains only ASCII codepoints
+(and thus can be read easily in a text editor), using the byte 0x0A for
+newline.  Each file starts with a header, consisting of several fields
+separated by spaces: `NHGAME`, a four-letter code indicating the state of the
+file (`save` if the game can be resumed, `done` if it's ended, `inpr` if the
+file is in the middle of an update, `reco` if the file is in the middle of a
+recovery), two 8-digit hexadecimal numbers (turn count and recovery count
+respectively), and the version number (e.g. `4.3.0`).  For example:
+
+    NHGAME save 00001234 00000001 4.3.0
+
+Apart from the version number, the header is a fixed length, meaning that the
+fields in it that need updating can be updated merely by seeking to them, then
+writing.
+
+The second line of the file is also a header, and lists summary
+information for use in identifying the game: start time, initial RNG seed,
+game play mode (an `enum nh_game_modes` stored as a hexadecimal integer),
+player name (encoded in base 64), and class, race, gender, and alignment, as
+ASCII strings.  The start time, and all other times in the save format, are
+encoded in hexadecimal and count UTC UNIX time in millseconds (that is,
+milliseconds since the epoch, except that time around leap seconds is
+distorted such that each day appears to be 86400000 milliseconds long).
+
+The NitroHack/NetHack 4.2 save systems contained other header information, but
+this is not the case with the 4.3 system, which moves straight on to a list of
+lines, separated by newlines:
+
+  * A 'save backup' line starts with `*`, followed by eight hexadecimal
+    digits that represent the location of the next save backup line in the
+    file, followed by an entire binary save, encoded in base 64.  (This save
+    can be, and typically will be, compressed using raw zlib compression to
+    save space; in such a circumstance, the base 64 will be prefixed by the
+    uncompressed length of the save, between dollars, e.g. `$100$`.)  There is
+    a space between the location and the save, but no spaces within the save
+    itself.
+
+    Save backup lines are generated upon new game (as the first line in the
+    file apart from the headers), and just after each new level is entered for
+    the first time.
+
+  * A 'save diff' line starts with `~`, followed by a binary save diff against
+    the previous save diff or (if more recent) save backup line, and encoded
+    in (potentially compressed) base 64.  It contains no whitespace.  These
+    lines are generated whenever a command completes running, unless the only
+    change it makes to the gamestate is to the current time (in which case a
+    time line, being shorter, will be used instead).
+
+    These lines (and save backup lines) explicitly may not be used in any
+    circumstance where a binary save would not load correctly: this includes
+    multi or occupation being set, inside a command, and similar issues.  If
+    the save loading code observes one of these lines in an inappropriate
+    context, it will calculate the contents of the new save file (in order to
+    act as a base for future diffs), but not attempt to load it.
+
+  * A 'command' line starts with the name of a game command (and is recognised
+    via the fact that it starts with a lowercase letter).  If the command
+    takes no argument, the line ends there.  Commands with an argument have
+    the argument specified after a space: a direction is a single decimal
+    integer (an `enum nh_direction` value), a position is two decimal integers
+    with a comma in between (and no space), and an object is an inventory
+    letter (a lowercase or uppercase letter, `$` for gold, or `#` for the
+    inventory overflow slot).
+
+  * A 'time' line starts with `+`, and contains a number of milliseconds in
+    hexadecimal; this is a relative offset from the previous save backup, save
+    diff, or time line in the file (whichever is most recent), and lists the
+    time at which future lines occurred.  Although legal in any context
+    (except right at the start of the file), these are typically only
+    generated in situations where the engine is waiting for user input, to
+    indicate when it arrived, and only when the time isn't given by a save
+    diff or backup line instead.
+
+  * A 'message' line starts with a hyphen, and is followed by a message that
+    was output by the game, in plaintext; the line ends at a newline.  (The
+    engine should not output messages with embedded newlines.  If for some
+    reason it does anyway, the save code will replace these with spaces.)
+
+  * A 'user input' line starts with a capital letter, and specifies the input
+    that the user provided to a prompt.  The various sorts of user input lines
+    are as follows, specified in terms of an example for each (all numbers are
+    in decimal unless otherwise stated):
+
+      * `P!`    getpos request was cancelled
+      * `P1,2`  position provided at getpos (x, y coordinates)
+      * `D!`    getdir request was cancelled
+      * `D0`    direction provided at getdir (an `enum nh_direction` value)
+      * `K!`    query_key request was cancelled
+      * `K65`   ASCII character provided at query_key (ASCII code)
+      * `K65,2` as above, with explicit count
+      * `Yy`    ASCII character provided at yn_function (as a literal)
+      * `M!`    menu was cancelled
+      * `M`     menu was closed normally, with no selections
+      * `M2a`   menu had 1 selected item (in hexadecimal)
+      * `M1:c`  menu, most general form (`:`-separated list, in hexadecimal)
+      * `O!`    object menu was cancelled
+      * `O`     object menu was closed normally, with no selections
+      * general form of object menus is `O` followed by a `:`-separated list;
+        list items are ID or ID,count, ID is in hexadecimal, count is in
+        decimal
+
+    There is one other sort of user input line: `L` followed by base 64 data,
+    representing the value given by the user as a response to a getlin
+    request.  If the user cancels a getlin requset, the base 64 data will be
+    the base 64 encoding of the string consisting of nothing but a single
+    codepoint 27 (0x1b).
+
+The 4.2 system also logged bones files, options, and RNG state.  Options are
+now stored in the binary save (and thus stored in save diffs); the RNG state
+was stored in the binary save all along; and bones files no longer need to be
+saved at all, because the game never prompts for a partial command after
+loading them (and thus the first time they become relevant is the save backup
+that appears immediately after they are loaded, which contains all the
+relevant information).
+
+
+Save file locking and I/O discipline
+------------------------------------
+
+Previous versions of NetHack allowed a save file to be opened by only one
+process at a time, as a solution to the problem of save file corruption due to
+multiple processes writing to the same file.  This was typically accomplished
+via locking the files.  (The locking on some previous versions, such as
+NetHack 4.2, seems to have been buggy, which may explain some cases of save
+file corruption.)
+
+NetHack 4.3 uses a different approach.  Instead of limiting save files to be
+open by one process at a time, any number of processes can have a save file
+open at any given time, and the save file has no notion of whether it is open
+or not.  This gives several advantages over the previous method:
+
+  * If a player becomes disconnected from the game in a way that leaves their
+    process still running, they can continue to play the game in a new
+    process, while the old process just watches (and eventually times out).
+    This avoids the situation seen occasionally on NAO where a player locks
+    themself out of their own game, and needs to ask the server admin for help
+    in killing the process that has the file open.
+
+  * A process can be exited via just exiting it (even with a `kill -9`),
+    without causing any harm to the save file.  This means that game crashes
+    will not require a separate recovery process.
+
+  * Unlike with previous save systems, there is an obvious way to implement
+    game watching: open the file with multiple processes at the same time,
+    with the "watching" processes unable to write to the file but otherwise
+    identical to processes that would be used to play the game.  For the same
+    reason, it is possible for one process to replay a game while another
+    process is playing it.
+  
+  * There is no distinction between watching and replaying a game, and
+    converting between watching and playing a game is very easy (a process
+    simply changes its mind about whether it's willing to write to the file or
+    not).  This makes it possible to implement an "instant replay" feature
+    which allows reviewing the recent game turns.
+
+  * There are also some minor advantages, e.g. it is possible to have two
+    people open the same game and both be able to control the character, which
+    is not particularly useful but is a strict improvement over previous
+    systems.  This capability also seems like a promising way to eventually
+    implement the input for an AceHack-style multiplayer mode.
+
+To be able to ensure that this works correctly, processes that manipulate
+NetHack save files need to follow the following rules:
+
+  * The only ways in which the save file may ever be written to are:
+  
+     * Creating the file (together with its header information);
+     * Updating the turn count or location of the next save backup line, via
+       overwriting an existing value (these values are all specified as
+       exactly 8 hexadecimal digits to make overwriting them possible), and
+       only when that turn or save backup line is already correctly written in
+       the save file;
+     * Changing the file state code in the file header;
+     * Recovering the file, via increasing the recovery count, removing one or
+       more bytes from the end of the file, and possibly altering the save
+       backup line chain;
+     * Appending to the end of the file.
+
+    A process must always leave a file with exactly one trailing newline after
+    writing to it. 
+
+  * A process may only ever write to a save file if it holds a write lock on
+    the file.  (On POSIX systems, these locks are obtained using fcntl(2); on
+    other operating systems, other locking APIs may be needed.)  Before doing
+    any actual writing (but after obtaining the lock), it must change the file
+    status in the header from `save` to `inpr` or `reco` as appropriate; after
+    the writing (but before obtaining the lock), it changes the file header to
+    `save` or `done` as appropriate.  A file with `done` in the header should
+    not be changed further except via rewinding it.
+
+  * Processes may only read from and write to a file using the POSIX read(2)
+    and write(2) system calls (or equivalents, such as pread(2)).  In
+    particular, stdio should not be used, because the buffering it uses can
+    mess up the lock discipline.
+
+  * If a process aims to write to a file, but (after obtaining the write lock)
+    determines that the file is longer than it expected, it should cancel its
+    attempt to write, and ignore the input that caused it to try to write.
+  
+  * A process should never react to user input in a way that changes the
+    gamestate, unless it has first managed to log that user input to the file.
+    This means that all processes will always have the same opinion about what
+    the current gamestate is.
+    
+  * If a process ever discovers an `inpr` in a file header while it has at
+    least a read lock on the file, then some other process must have crashed
+    while writing to the file.  In such a situation, it must not react in any
+    way to the contents of the file, except for the `inpr` itself, apart from
+    to recover the file.  A file is recovered via the following mechanism:
+
+      * Obtain a write lock on the file;
+      * Change the filestate in the header to `reco`;
+      * Increase the recovery count;
+      * Delete characters from the end of the file until the file ends with a
+        newline (this step is skipped if the file already ends with a
+        newline);
+      * Change the filestate in the header to `save`;
+      * Relinquish the write lock.
+    
+    A process that discovers `reco` in the file header must go through the
+    same routine, except that it additionally must update all the save backup
+    line locations to refer to each other correctly, as a file that was left
+    halfway through recovery may have them in an inconsistent state.
+
+  * If a process ever discovers that the recovery count in the file header has
+    increased since its last read (and holds at least a read lock on the
+    file), either because it just recovered it or because some other process
+    discovered it, it should discard its entire knowledge about the contents
+    of the file and reread it from scratch.  (This prevents corruption at the
+    end of the file if a process recovers a file, then writes to the end of
+    it, and happens to leave the file the same length as some other process
+    was expecting.)  It may, someday, be worth changing this rule to allow
+    some sort of method of communicating how much of the file was deleted;
+    this might be needed for reasonable performance in multiplayer, where
+    recoveries happen every time one player completes a turn while the other
+    player is halfway through theirs.
+
+  * A process should aim to hold write locks for as short a time as possible.
+    If a write lock is held for more than a second, something has gone wrong;
+    a process that notices a long-held write lock on a save file should notify
+    the user with a phrase such as "stuck process", "undergoing maintenance",
+    or the like (depending on whether the proces holding the lock is a NetHack
+    4 process or something else).  In the case of a stuck process, it may
+    attempt to free the lock using `SIGHUP`, `SIGTERM` or `SIGKILL` (in that
+    order), but only upon request from the user.
+
+  * A process may not even read from a save file, not even to check the status
+    in the header, unless it has a read lock on it.  (It is possible for
+    multiple processes to have a read lock on the file at the same time; this
+    does not cause problems.)
+
+  * If a process wishes to receive notification about changes to a file (the
+    usual case when watching a game, and also true while playing a game
+    because it will need to know about moves made from another process), on an
+    operating system where it is possible to query which processes have a file
+    locked, it should maintain a read lock on the file.  (It doesn't need to
+    do any actual reading; the lock is simply to notify other processes that
+    the file is interesting to them.)  On operating systems where it is
+    impossible to determine which process has a file locked, processes will
+    need to use polling instead; they should read lock the file at the start
+    of each second to check its length, and relinquish the lock before the end
+    of the second.
+
+  * In order to establish a write lock on a file, a process should start by
+    attempting to grab the lock in a non-blocking way.  If it fails, it should
+    check to see which processes are blocking the lock:
+    
+      * If there are no processes blocking the placement of the lock, it should
+        try again immediately;
+
+      * If there is a conflicting write lock, then the process should block on
+        the placement of the lock (and complain that something is wrong after
+        2 seconds);
+      
+      * If there are one or more conflicting read locks, then the process
+        should request all existing readers to relinquish their lock.  The way
+        in which this is done is to send SIGUSR1 to one reader, then block on
+        the placement of the lock.  To protect against a very unlikely race
+        condition (the file becoming completly unlocked, then some new process
+        placing a read lock before its write lock establishes), it should
+        repeat this check every 500 milliseconds for 2 seconds.  If it cannot
+        place the lock within 2 seconds, it should complain that something is
+        wrong.  If it does manage to place the lock correctly, it should send
+        SIGUSR2 to the process or processes it sent SIGUSR1 before it does any
+        actual writing.
+
+    On systems where it is impossible to determine which process is holding a
+    lock, this entire procedure is unavailable, and instead the process should
+    just block for 2 seconds on grabbing the lock, and complain if it cannot
+    grab it within that time.
+
+  * Whenever a process holding a read lock receives SIGUSR1, it should
+    relinquish its read lock as soon as possible, then check to see if any
+    other processes are holding read locks, and send SIGUSR1 to one of them.
+    This means that eventually, every process holding a read lock will be
+    signalled.  It should then wait for a SIGUSR2 signal, or for 1 second,
+    before re-establishing the lock; before re-establishing the lock, it
+    should send SIGUSR2 to any process it sent SIGUSR1 to.  This way, every
+    monitoring process will be notified about changes to the file (via
+    SIGUSR2) as soon as it is written to.
+
+These rules collectively ensure that processes will never operate on an
+inconsistent view of the file, and can (on operating systems with appropriate
+support) request notifications of changes to a file.
+
+
+Playing, watching or replaying a game
+-------------------------------------
+
+Processes that are playing, watching or replaying a game all operate the same
+way.  Unlike previous systems, the actual location of the file pointer is
+mostly immaterial; it's used like the cursor in curses, being moved to an
+appropriate location immediately before reading or writing, with its current
+position being irrelevant.  Instead, the process remembers the location in the
+save file that corresponds to its currently loaded binary save, and the save
+itself (this can be done lazily, i.e. only loading it if required); and the
+location that corresponds to its currently loaded game structures (if any),
+together with the game structures themselves.  The game structures may get
+ahead of the binary save, because binary saves cannot save halfway through a
+turn, or in the middle of a multi-turn action.  The binary save must, however,
+always be the most recent binary save in the file before the game structure
+location (otherwise, diffs would be generated against the wrong save, making
+the save file impossible to load).
+
+A process also has a "target location" that represents the place in the file
+that it wants its current game structures to represent (for watching or
+playing, this is the end of the file; for replaying, it could well be much
+earlier in the file).  A process should always know whether it's before or
+after its target location, but apart from that it can represent the target
+location in any units it likes (bytes relative to some anchor, actions,
+turns...).
+
+A process accepts user input only while its gamestate location is at its
+target location.  If its target location is the end of the file, it also
+requests changes to the file (via read locks or polling).  A process only
+allows changing of the gamestate (i.e. playing turns) while its gamestate
+location is at the end of the file.  (Also, remember that if the file changes
+after the process accepts user input that changes the gamestate but before it
+can record it, it discards that input; this deals with the situation where two
+processes try to make different moves simultaneously.)
+
+If a process is not at its target location, it tries to seek its gamestate
+location to that location; first it tries to move its binary save location to
+the last possible point in the file before the target location, then it sets
+its gamestate location to the binary save location (unless it's already after
+the binary save location but before the target location), and seeks that
+forwards to the target location.  If its binary save location is beyond its
+target location, it starts by rewinding to the start of the file (via moving
+the save file location to the first save backup in the file, starting on the
+third line of the file).  If it's before its target location, then it attempts
+to move its binary save location forward in the file:
+
+  * If the next save backup in the file exists and is before the target
+    location, the binary save location is moved forward to that backup (the
+    current binary save is marked as unloaded, and will be loaded from that
+    save backup if it becomes relevant);
+    
+  * Otherwise, if the next save diff in the file exists and is before the
+    target location, the current binary save is loaded (causing a desync if
+    the binary save cannot be loaded), then the binary save location is moved
+    forwards to that diff, and the binary save is changed via applying that
+    diff;
+    
+  * Otherwise, the binary save location is in the right place; the game is
+    loaded from the binary save (setting the gamestate location to the binary
+    save location), then the game is replayed one step at a time via reading
+    command, message, and user input lines.  If a line appears in the wrong
+    context (e.g. a message line shows the wrong message, a command line
+    appears when no command is expected, or a user input line provides the
+    wrong sort of input), then it's possible that the save was generated via
+    a different version of the engine:
+    
+      * If watching or replaying a game, the gamestate is reloaded from the
+        current binary save, and frozen until the next save diff.  Attempts to
+        reconstruct the gamestate between the diffs are done entirely from
+        message and time lines (i.e. the only thing that changes is displayed
+        messages, so the map will freeze until the next turn).
+
+      * If playing the game, it causes a desync.
+
+
+The file is only changed when actually playing the game; any messages, input,
+etc. that occurs is recorded in the log file.  (The turn count in the header
+is also updated.  It has two purposes: identifying the save file to allow it
+to be loaded easily, and identifying the length that the save file "should"
+have to determine how to recover it if it somehow becomes corrupted).
+Whenever it is safe to write a save diff, the game uses the following
+algorithm (to insure against mistakes in the binary save code):
+
+  * The game is saved into a binary save in memory, diffing against the
+    previous binary save;
+  * The game is loaded from the new binary save;
+  * The game is saved again, as a diff against the new binary save;
+  * If the saves differ, it causes a desync.
+  * If the saves don't differ, the diff (or possibly the entire binary save)
+    is recorded in the log file.
+
+
+Recovery
+--------
+
+When a desync happens (whether because the binary save mechanism failed, or
+because the game engine was upgraded mid-turn), the user is notified, and
+given the option to end the process or to rewind the save.  The game engine
+determines how far to rewind the save via using binary search to determine the
+last point at which the game can successfully be loaded, and tells the user
+how many turns would have to be rewound to recover the save.
+
+Alternatively, saves can be rewound via an administrator.  This is most useful
+to undo the effects of game-breaking bugs, whether they make the game
+unwinnable, spam `impossible`s every turn, cause panics on any attempt to
+perform actions, or just kill the character outright.  This is done via means
+of a command `#rewind` while watching a game.  (The nature of NetHack 4.3
+logfiles means that it is possible to recover a save even while someone is
+playing it, and everything should work correctly.)  The `#rewind` command is
+only available if the *game* is an explore or wizard mode game, or the *user*
+using it is capable of entering wizard mode and is rewinding someone else's
+game (in order to reduce the possibilities for abuse).
+
+Rewinding a file for recovery purposes is much the same as rewinding it
+because a process had crashed and left `inpr` in the header, except that it
+rewinds further.  The process doing the rewinding picks a location to rewind
+to: for a manual rewind, this is the gamestate pointer of the game doing the
+rewind, and for recovery from a desync, this is the last save diff that can be
+successfully loaded.  (Automatic desync recovery always recovers to a diff
+because this gives a player the best possible chance at avoiding doing
+whatever it was they did to cause the desync.)  `reco` is used in the header
+while recovering (to allow recovery from an interrupted recovery).  The file
+is truncated just after the final newline of the line that is being rewound
+to; the recovery count in the header is increased; and the chain of save
+backup lines is reconstructed (it's entirely possible that the last one in the
+file will be pointing beyond the end of the file if this step is not taken).
