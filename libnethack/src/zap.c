@@ -1408,9 +1408,7 @@ poly_obj(struct obj *obj, int id)
         int old_mask = obj->owornmask, new_mask;
         /* boolean save_twoweap = u.twoweap; */
         remove_worn_item(obj, TRUE);
-        freeinv_core(obj);
-        addinv_core1(otmp);
-        addinv_core2(otmp);
+        swapinv(obj, otmp);
 
         /* This code counts the number of bits set in the mask. We want to
          * be sure that only one bit is set, because otherwise we're very

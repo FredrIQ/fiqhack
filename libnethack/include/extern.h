@@ -614,8 +614,6 @@ extern const char *hist_lev_name(const d_level * l, boolean in_or_on);
 extern void assigninvlet(struct obj *);
 extern struct obj *merge_choice(struct obj *, struct obj *);
 extern int merged(struct obj **, struct obj **);
-extern void addinv_core1(struct obj *);
-extern void addinv_core2(struct obj *);
 extern struct obj *addinv(struct obj *);
 extern boolean can_hold(struct obj *);
 extern struct obj *hold_another_object(struct obj *, const char *, const char *,
@@ -623,8 +621,8 @@ extern struct obj *hold_another_object(struct obj *, const char *, const char *,
 extern void useupall(struct obj *);
 extern void useup(struct obj *);
 extern void consume_obj_charge(struct obj *, boolean);
-extern void freeinv_core(struct obj *);
 extern void freeinv(struct obj *);
+extern void swapinv(struct obj *oldobj, struct obj *newobj);
 extern void delallobj(int, int);
 extern void delobj(struct obj *);
 extern struct obj *sobj_at(int otyp, struct level *lev, int x, int y);
