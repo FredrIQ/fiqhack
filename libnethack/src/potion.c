@@ -1718,7 +1718,9 @@ dodip(struct obj *potion)
             if (!obj || obj->otyp != save_otyp) {
                 makeknown(POT_POLYMORPH);
                 useup(potion);
-                if (obj)
+                if (obj && !(obj->owornmask &
+                             (W_WORN | W_WEP | W_QUIVER | W_SWAPWEP)))
+                    /* If equipped, this will already have been done. */
                     prinv(NULL, obj, 0L);
                 return 1;
             } else {

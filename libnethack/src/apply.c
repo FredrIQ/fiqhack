@@ -2894,6 +2894,8 @@ doapply(struct obj *obj)
             if (!cursed(obj))
                 Blindf_off(obj);
         } else if (!ublindf) {
+            unwield_silently(obj);
+            setworn(obj, W_TOOL);
             Blindf_on(obj);
         } else {
             pline("You are already %s.",

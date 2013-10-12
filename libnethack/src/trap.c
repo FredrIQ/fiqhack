@@ -4079,12 +4079,7 @@ lava_effects(void)
                         Blindf_off(obj);
                     else if (obj == uamul)
                         Amulet_off();
-                    else if (obj == uwep)
-                        uwepgone();
-                    else if (obj == uquiver)
-                        uqwepgone();
-                    else if (obj == uswapwep)
-                        uswapwepgone();
+                    unwield_silently(obj);
                 }
                 useupall(obj);
             }

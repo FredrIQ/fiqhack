@@ -51,7 +51,8 @@ on_msg(struct obj *otmp)
         how[0] = '\0';
         if (otmp->otyp == TOWEL)
             sprintf(how, " around your %s", body_part(HEAD));
-        pline("You are now wearing %s%s.",
+        pline("You are now %s %s%s.",
+              otmp->owornmask & W_ARMS ? "holding" : "wearing",
               obj_is_pname(otmp) ? the(xname(otmp)) : an(xname(otmp)), how);
     }
 }
@@ -67,6 +68,7 @@ Boots_on(void)
     long oldprop =
         u.uprops[objects[uarmf->otyp].oc_oprop].extrinsic & ~WORN_BOOTS;
 
+    uarmf->known = TRUE;
     switch (uarmf->otyp) {
     case LOW_BOOTS:
     case IRON_SHOES:
@@ -111,6 +113,8 @@ Boots_on(void)
     default:
         impossible(unknown_type, c_boots, uarmf->otyp);
     }
+
+    on_msg(uarmf);
     return 0;
 }
 
@@ -178,6 +182,7 @@ Cloak_on(void)
     long oldprop =
         u.uprops[objects[uarmc->otyp].oc_oprop].extrinsic & ~WORN_CLOAK;
 
+    uarmc->known = TRUE;
     switch (uarmc->otyp) {
     case ELVEN_CLOAK:
     case CLOAK_OF_PROTECTION:
@@ -219,6 +224,7 @@ Cloak_on(void)
     default:
         impossible(unknown_type, c_cloak, uarmc->otyp);
     }
+    on_msg(uarmc);
     return 0;
 }
 
@@ -272,6 +278,7 @@ Cloak_off(void)
 int
 Helmet_on(void)
 {
+    uarmh->known = TRUE;
     switch (uarmh->otyp) {
     case FEDORA:
     case HELMET:
@@ -326,6 +333,7 @@ Helmet_on(void)
     default:
         impossible(unknown_type, c_helmet, uarmh->otyp);
     }
+    on_msg(uarmh);
     return 0;
 }
 
@@ -380,6 +388,7 @@ Gloves_on(void)
     long oldprop =
         u.uprops[objects[uarmg->otyp].oc_oprop].extrinsic & ~WORN_GLOVES;
 
+    uarmg->known = TRUE;
     switch (uarmg->otyp) {
     case LEATHER_GLOVES:
         break;
@@ -397,6 +406,7 @@ Gloves_on(void)
     default:
         impossible(unknown_type, c_gloves, uarmg->otyp);
     }
+    on_msg(uarmg);
     return 0;
 }
 
@@ -461,6 +471,8 @@ Gloves_off(void)
 int
 Shield_on(void)
 {
+    uarms->known = TRUE;
+    on_msg(uarms);
     return 0;
 }
 
@@ -476,6 +488,8 @@ Shield_off(void)
 int
 Shirt_on(void)
 {
+    uarmu->known = TRUE;
+    on_msg(uarmu);
     return 0;
 }
 
@@ -495,6 +509,8 @@ Shirt_off(void)
 int
 Armor_on(void)
 {
+    uarm->known = TRUE;
+    on_msg(uarm);
     return 0;
 }
 
@@ -629,13 +645,6 @@ Ring_on(struct obj *obj)
 {
     long oldprop = u.uprops[objects[obj->otyp].oc_oprop].extrinsic;
     int old_attrib, which;
-
-    if (obj == uwep)
-        setuwep(NULL);
-    if (obj == uswapwep)
-        setuswapwep(NULL);
-    if (obj == uquiver)
-        setuqwep(NULL);
 
     /* only mask out W_RING when we don't have both left and right rings of the 
        same type */
@@ -857,14 +866,6 @@ Blindf_on(struct obj *otmp)
 {
     boolean already_blind = Blind, changed = FALSE;
 
-    if (otmp == uwep)
-        setuwep(NULL);
-    if (otmp == uswapwep)
-        setuswapwep(NULL);
-    if (otmp == uquiver)
-        setuqwep(NULL);
-    setworn(otmp, W_TOOL);
-    on_msg(otmp);
 
     if (Blind && !already_blind) {
         changed = TRUE;
@@ -885,6 +886,7 @@ Blindf_on(struct obj *otmp)
         vision_full_recalc = 1; /* recalc vision limits */
         iflags.botl = 1;
     }
+    on_msg(otmp);
 }
 
 void
@@ -1343,34 +1345,35 @@ dowear(struct obj *otmp)
         return 1;
     }
 
-    otmp->known = TRUE;
-    if (otmp == uwep)
-        setuwep(NULL);
-    if (otmp == uswapwep)
-        setuswapwep(NULL);
-    if (otmp == uquiver)
-        setuqwep(NULL);
+    unwield_silently(otmp);
     setworn(otmp, mask);
     delay = -objects[otmp->otyp].oc_delay;
-    if (delay) {
+
+    int (*after) (void) = NULL;
+
+    if (is_boots(otmp))
+        after = Boots_on;
+    if (is_helmet(otmp))
+        after = Helmet_on;
+    if (is_gloves(otmp))
+        after = Gloves_on;
+    if (otmp == uarm)
+        after = Armor_on;
+    if (is_cloak(otmp))
+        after = Cloak_on;
+    if (is_shirt(otmp))
+        after = Shirt_on;
+    if (is_shield(otmp))
+        after = Shield_on;
+
+    if (!after) {
+        impossible("No after function for equipping?");
+    } else if (delay) {
         nomul(delay, "dressing up");
-        if (is_boots(otmp))
-            afternmv = Boots_on;
-        if (is_helmet(otmp))
-            afternmv = Helmet_on;
-        if (is_gloves(otmp))
-            afternmv = Gloves_on;
-        if (otmp == uarm)
-            afternmv = Armor_on;
+        afternmv = after;
         nomovemsg = "You finish your dressing maneuver.";
     } else {
-        if (is_cloak(otmp))
-            Cloak_on();
-        if (is_shield(otmp))
-            Shield_on();
-        if (is_shirt(otmp))
-            Shirt_on();
-        on_msg(otmp);
+        after();
     }
     takeoff_mask = taking_off = 0L;
     return 1;
@@ -1398,12 +1401,7 @@ doputon(struct obj *otmp)
         weldmsg(otmp);
         return 0;
     }
-    if (otmp == uwep)
-        setuwep(NULL);
-    if (otmp == uswapwep)
-        setuswapwep(NULL);
-    if (otmp == uquiver)
-        setuqwep(NULL);
+    unwield_silently(otmp);
     if (otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING) {
         if (nolimbs(youmonst.data)) {
             pline("You cannot make the ring stick to your body.");
@@ -1496,6 +1494,7 @@ doputon(struct obj *otmp)
         }
         if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
             return 1;
+        setworn(otmp, W_TOOL);
         Blindf_on(otmp);
         return 1;
     }

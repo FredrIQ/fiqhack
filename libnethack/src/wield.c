@@ -799,4 +799,16 @@ unwield_weapons_silently(void)
     u.twoweap = FALSE;
 }
 
+/* Unwields a given weapon silently. */
+void
+unwield_silently(struct obj *obj)
+{
+    if (obj == uwep)
+        setuwep(NULL);
+    if (obj == uswapwep)
+        setuswapwep(NULL);
+    if (obj == uquiver)
+        setuqwep(NULL);
+}
+
 /*wield.c*/
