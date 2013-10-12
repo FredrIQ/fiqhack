@@ -308,6 +308,7 @@ Helmet_on(void)
                 pline("%s %s for a moment.", Tobjnam(uarmh, "glow"),
                       hcolor("black"));
             curse(uarmh);
+            uarmh->bknown = TRUE;
         }
         iflags.botl = 1;        /* reveal new alignment or INT & WIS */
         if (Hallucination) {
