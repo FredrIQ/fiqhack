@@ -731,7 +731,7 @@ putting_on(const char *action)
 static enum obj_use_status
 object_selection_checks(struct obj *otmp, const char *word)
 {
-    long dummymask;
+    int dummymask;
     int otyp = otmp->otyp;
 
     /* ugly check: remove inappropriate things */

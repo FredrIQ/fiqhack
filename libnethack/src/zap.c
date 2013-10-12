@@ -1188,6 +1188,25 @@ do_osshock(struct obj *obj)
     delobj(obj);
 }
 
+/* Is the object immune to polymorphing?
+ *
+ * Currently true for items of polymorph and amulets of unchanging.
+ */
+boolean
+poly_proof(struct obj *obj)
+{
+    if (obj == uskin || obj == uball)
+        return TRUE;
+
+    switch (obj->otyp) {
+    case POT_POLYMORPH: case WAN_POLYMORPH: case SPE_POLYMORPH:
+    case AMULET_OF_UNCHANGING:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 /*
  * Polymorph the object to the given object ID.  If the ID is STRANGE_OBJECT
  * then pick random object from the source's class (this is the standard
@@ -1196,6 +1215,10 @@ do_osshock(struct obj *obj)
  * it is tied to not being the standard polymorph case. The new polymorphed
  * object replaces obj in its link chains.  Return value is a pointer to
  * the new object.
+ *
+ * A worn object remains worn if possible, with any attendant effects. This may
+ * cause the object to be destroyed (e.g. an amulet of change), in which case
+ * the return value will be 0.
  *
  * This should be safe to call for an object anywhere.
  */
@@ -1206,6 +1229,11 @@ poly_obj(struct obj *obj, int id)
     xchar ox, oy;
     boolean can_merge = (id == STRANGE_OBJECT);
     int obj_location = obj->where;
+
+    if (obj->owornmask & (W_BALL | W_SADDLE | W_CHAIN)) {
+        impossible("Polymorphing a chain, ball, or saddle!");
+        return obj;
+    }
 
     if (obj->otyp == BOULDER && In_sokoban(&u.uz))
         change_luck(-1);        /* Sokoban guilt */
@@ -1253,7 +1281,7 @@ poly_obj(struct obj *obj, int id)
         otmp->corpsenm = NON_PM;
         otmp->spe = 0;
 
-        /* now change it into something layed by the hero */
+        /* now change it into something laid by the hero */
         while (tryct--) {
             mnum = can_be_hatched(rn2(NUMMONS));
             if (mnum != NON_PM && !dead_species(mnum, TRUE)) {
@@ -1312,6 +1340,10 @@ poly_obj(struct obj *obj, int id)
         otmp->quan = 1L;
 
     switch (otmp->oclass) {
+    case AMULET_CLASS:
+        while (otmp->otyp == AMULET_OF_UNCHANGING)
+            otmp->otyp = rnd_class(AMULET_OF_ESP, AMULET_OF_MAGICAL_BREATHING);
+        break;
 
     case TOOL_CLASS:
         if (otmp->otyp == MAGIC_LAMP) {
@@ -1357,36 +1389,6 @@ poly_obj(struct obj *obj, int id)
     /* update the weight */
     otmp->owt = weight(otmp);
 
-    /* for now, take off worn items being polymorphed */
-    if (obj_location == OBJ_INVENT) {
-        if (id == STRANGE_OBJECT)
-            remove_worn_item(obj, TRUE);
-        else {
-            /* This is called only for stone to flesh.  It's a lot simpler than 
-               it otherwise might be.  We don't need to check for special
-               effects when putting them on (no meat objects have any) and only 
-               three worn masks are possible. */
-            otmp->owornmask = obj->owornmask;
-            remove_worn_item(obj, TRUE);
-            setworn(otmp, otmp->owornmask);
-            if (otmp->owornmask & LEFT_RING)
-                uleft = otmp;
-            if (otmp->owornmask & RIGHT_RING)
-                uright = otmp;
-            if (otmp->owornmask & W_WEP)
-                uwep = otmp;
-            if (otmp->owornmask & W_SWAPWEP)
-                uswapwep = otmp;
-            if (otmp->owornmask & W_QUIVER)
-                uquiver = otmp;
-            goto no_unwear;
-        }
-    }
-
-    /* preserve the mask in case being used by something else */
-    otmp->owornmask = obj->owornmask;
-no_unwear:
-
     if (obj_location == OBJ_FLOOR && obj->otyp == BOULDER &&
         otmp->otyp != BOULDER)
         unblock_point(obj->ox, obj->oy);
@@ -1403,9 +1405,97 @@ no_unwear:
          * equivalent to calling freeinv on obj and addinv on otmp,
          * while doing an in-place swap of the actual objects.
          */
+        int old_mask = obj->owornmask, new_mask;
+        /* boolean save_twoweap = u.twoweap; */
+        remove_worn_item(obj, TRUE);
         freeinv_core(obj);
         addinv_core1(otmp);
         addinv_core2(otmp);
+
+        /* This code counts the number of bits set in the mask. We want to
+         * be sure that only one bit is set, because otherwise we're very
+         * confused. */
+        int v = old_mask & (W_WORN | W_WEP | W_QUIVER | W_SWAPWEP);
+        v = v - ((v >> 1) & 0x55555555);
+        v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+        v = ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+        if (v > 1) {
+            impossible("More than one worn mask set in poly_obj?!?");
+        } else if ((old_mask & W_ARMOR) && canwearobj(otmp, &new_mask, FALSE)) {
+            /* canwearobj only checks for wearable armor */
+            switch (new_mask) {
+            case W_ARM:
+                if (old_mask & (W_ARM | W_ARMC | W_ARMU)) {
+                    setworn(otmp, new_mask);
+                    Armor_on();
+                }
+                break;
+            case W_ARMC:
+                if (old_mask & (W_ARM | W_ARMC | W_ARMU)) {
+                    setworn(otmp, new_mask);
+                    Cloak_on();
+                }
+                break;
+            case W_ARMH:
+                if (old_mask & (W_ARMH)) {
+                    setworn(otmp, new_mask);
+                    Helmet_on();
+                }
+                break;
+            case W_ARMS:
+                if (old_mask & (W_ARMS)) {
+                    setworn(otmp, new_mask);
+                    Shield_on();
+                }
+                break;
+            case W_ARMG:
+                if (old_mask & (W_ARMG)) {
+                    setworn(otmp, new_mask);
+                    Gloves_on();
+                }
+                break;
+            case W_ARMF:
+                if (old_mask & (W_ARMF)) {
+                    setworn(otmp, new_mask);
+                    Boots_on();
+                }
+                break;
+            case W_ARMU:
+                if (old_mask & (W_ARM | W_ARMC | W_ARMU)) {
+                    setworn(otmp, new_mask);
+                    Shirt_on();
+                }
+                break;
+            }
+        } else if (otmp->oclass == AMULET_CLASS && (old_mask & W_AMUL)) {
+            setworn(otmp, W_AMUL);
+            /* Wearing an amulet can destroy it */
+            if (Amulet_on()) {
+                if (obj->unpaid)
+                    costly_damage_obj(obj);
+                delobj(obj);
+                return NULL;
+            }
+        } else if ((otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING) &&
+                   (old_mask & W_RING)) {
+            setworn(otmp, old_mask & W_RING);
+            Ring_on(otmp);
+        } else if ((otmp->otyp == BLINDFOLD || otmp->otyp == LENSES ||
+                    otmp->otyp == TOWEL) &&
+                   (old_mask & W_TOOL)) {
+            setworn(otmp, W_TOOL);
+            Blindf_on(otmp);
+        } else if (old_mask & W_WEP) {
+            if (!ready_weapon(otmp))
+                impossible("Failed to ready polymorphed weapon?");
+            /* FIXME: two-weaponing */
+        } else if (old_mask & W_SWAPWEP) {
+            setuswapwep(otmp);
+            /* FIXME: two-weaponing */
+        }
+    } else if (otmp->owornmask) {
+        impossible("owornmask not in inventory in poly_obj?");
+        otmp->owornmask = obj->owornmask;
     }
 
     if ((!carried(otmp) || obj->unpaid) &&
@@ -1476,9 +1566,10 @@ hito_stone_to_flesh(struct obj *obj)
                     res = 0;
                     break;
                 }
-                /* Unlikely to get here since genociding * monsters also sets
-                   the G_NOCORPSE flag. * Drop the contents, poly_obj looses
-                   them. */
+                /* Unlikely to get here since genociding
+                 * monsters also sets the G_NOCORPSE flag.
+                 * Drop the contents, poly_obj loses them.
+                 */
                 while ((item = obj->cobj) != 0) {
                     obj_extract_self(item);
                     place_object(item, level, oox, ooy);
@@ -1598,9 +1689,9 @@ bhito(struct obj *obj, struct obj *otmp)
     } else
         switch (otmp->otyp) {
         case WAN_POLYMORPH:
-        case SPE_POLYMORPH:
-            if (obj->otyp == WAN_POLYMORPH || obj->otyp == SPE_POLYMORPH ||
-                obj->otyp == POT_POLYMORPH || obj_resists(obj, 5, 95)) {
+        case SPE_POLYMORPH: {
+            int ox, oy;
+            if (poly_proof(obj) || obj_resists(obj, 5, 95)) {
                 res = 0;
                 break;
             }
@@ -1616,12 +1707,17 @@ bhito(struct obj *obj, struct obj *otmp)
                 do_osshock(obj);
                 break;
             }
+
+            ox = obj->ox, oy = obj->oy;
             obj = poly_obj(obj, STRANGE_OBJECT);
             /* poly_obj doesn't block vision, do that ourselves now. */
-            if (obj->where == OBJ_FLOOR && obj->otyp == BOULDER)
+            if (obj && obj->where == OBJ_FLOOR && obj->otyp == BOULDER)
                 block_point(obj->ox, obj->oy);
-            newsym(obj->ox, obj->oy);
+            if (obj && (obj->ox != ox || obj->oy != oy))
+                impossible("Polymorphed object moved?!?");
+            newsym(ox, oy);
             break;
+        }
         case WAN_PROBING:
             res = !obj->dknown;
             /* target object has now been "seen (up close)" */

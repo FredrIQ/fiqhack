@@ -1703,40 +1703,23 @@ dodip(struct obj *potion)
             }
         } else if (get_wet(obj))
             goto poof;
-    } else if (obj->otyp == POT_POLYMORPH || potion->otyp == POT_POLYMORPH) {
+    } else if (potion->otyp == POT_POLYMORPH) {
         /* some objects can't be polymorphed */
-        if (obj->otyp == potion->otyp ||        /* both POT_POLY */
-            obj->otyp == WAN_POLYMORPH || obj->otyp == SPE_POLYMORPH ||
-            obj == uball || obj == uskin ||
-            obj_resists(obj->otyp == POT_POLYMORPH ? potion : obj, 5, 95)) {
+        if (poly_proof(obj) || obj_resists(obj, 5, 95)) {
             pline("Nothing happens.");
         } else {
-            boolean was_wep = FALSE, was_swapwep = FALSE, was_quiver = FALSE;
-            short save_otyp = obj->otyp;
+            int save_otyp = obj->otyp;
 
             /* KMH, conduct */
             u.uconduct.polypiles++;
 
-            if (obj == uwep)
-                was_wep = TRUE;
-            else if (obj == uswapwep)
-                was_swapwep = TRUE;
-            else if (obj == uquiver)
-                was_quiver = TRUE;
-
             obj = poly_obj(obj, STRANGE_OBJECT);
 
-            if (was_wep)
-                setuwep(obj);
-            else if (was_swapwep)
-                setuswapwep(obj);
-            else if (was_quiver)
-                setuqwep(obj);
-
-            if (obj->otyp != save_otyp) {
+            if (!obj || obj->otyp != save_otyp) {
                 makeknown(POT_POLYMORPH);
                 useup(potion);
-                prinv(NULL, obj, 0L);
+                if (obj)
+                    prinv(NULL, obj, 0L);
                 return 1;
             } else {
                 pline("Nothing seems to happen.");
