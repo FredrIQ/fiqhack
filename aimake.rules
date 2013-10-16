@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-10-04
+# Last modified by Alex Smith, 2013-10-16
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -51,6 +51,16 @@
                        'searchlib:ws2_32:symbol:connect'],
             outdepends => [],
             verb => 'determined',
+        },
+        _warn_about_global_variables => {
+            object => "bpath:libnethack$dllext",
+            command => ['optionset:os_osx_linux',
+                        'cmd:sh',
+                        'path:libnethack/util/checkglobals.sh',
+                        'optpath::path:libnethack/util/checkglobals.sh',
+                        'optpath::'],
+            propagate_usedeps => 1,
+            output => [],
         },
         _statically_link_uncursed_plugins => {
             # Most uncursed plugins are loaded as libraries. However, there's
