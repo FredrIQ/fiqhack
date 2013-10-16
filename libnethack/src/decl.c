@@ -3,14 +3,8 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#define IN_DECL_C
 #include "hack.h"
-
-int (*afternmv) (void);
-int (*occupation) (void);
-
-int multi;
-char multi_txt[BUFSZ];
-int occtime;
 
 /*
  * The following structure will be initialized at startup time with
@@ -30,8 +24,8 @@ const char *delayed_killer;
 int done_money;
 char killer_buf[BUFSZ];
 const char *nomovemsg;
-const char nul[40];     /* contains zeros */
-char plname[PL_NSIZ];   /* player name */
+const char nul[40] = {0};     /* contains zeros */
+char plname[PL_NSIZ];         /* player name */
 char pl_character[PL_CSIZ];
 char pl_race;
 
@@ -206,6 +200,20 @@ char toplines[MSGCOUNT][BUFSZ];
 int toplines_count[MSGCOUNT];
 int curline;
 
+static const struct turnstate default_turnstate = {
+    .occupation = NULL,
+    .multi = 0,
+    .afternmv = NULL,
+    .multi_txt = "",
+};
+
+struct turnstate turnstate;
+
+void
+init_turnstate(void)
+{
+    memcpy(&turnstate, &default_turnstate, sizeof turnstate);
+}
 
 void
 init_data(void)
@@ -217,6 +225,8 @@ init_data(void)
      */
     boolean nolog = iflags.disable_log;
     struct nh_autopickup_rules *rules = iflags.ap_rules;
+
+    init_turnstate();
 
     moves = 1;
 
@@ -236,14 +246,11 @@ init_data(void)
     memset(disco, 0, sizeof (disco));
     memset(&digging, 0, sizeof (digging));
     memset(&inv_pos, 0, sizeof (inv_pos));
-    memset(multi_txt, 0, sizeof (multi_txt));
     memset(toplines, 0, sizeof (toplines));
     memset(toplines_count, 0, sizeof (toplines_count));
 
     level = NULL;
-    multi = occtime = killer_format = 0;
-    afternmv = NULL;
-    occupation = NULL;
+    killer_format = 0;
     killer = NULL;
     ffruit = NULL;
     current_fruit = 0;

@@ -322,7 +322,6 @@ set_occupation(int (*fn) (void), const char *txt, int xtime)
     } else
         occupation = fn;
     occtxt = txt;
-    occtime = 0;
     return;
 }
 

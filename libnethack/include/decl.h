@@ -6,18 +6,27 @@
 #ifndef DECL_H
 # define DECL_H
 
-extern int (*occupation) (void);
-extern int (*afternmv) (void);
-
-extern const int bases[MAXOCLASSES];
-
-extern int multi;
-extern char multi_txt[BUFSZ];
-extern int occtime;
+# include "flag.h"
 
 # define WARNCOUNT 6    /* number of different warning levels */
 
+/* Read-only data */
 extern const int x_maze_max, y_maze_max;
+
+extern const int bases[MAXOCLASSES];
+
+extern const char quitchars[];
+extern const char vowels[];
+extern const char ynchars[];
+extern const char ynqchars[];
+extern const char ynaqchars[];
+
+extern const char disclosure_options[];
+
+extern const char nul[];
+
+extern const schar xdir[], ydir[], zdir[];
+
 
 extern struct dgn_topology {    /* special dungeon levels for speed */
     d_level d_oracle_level;
@@ -122,13 +131,6 @@ extern char tune[6];
 
 # define MAXLINFO (MAXDUNGEON * MAXLEVEL)
 
-extern const char quitchars[];
-extern const char vowels[];
-extern const char ynchars[];
-extern const char ynqchars[];
-extern const char ynaqchars[];
-
-extern const char disclosure_options[];
 
 extern int smeq[];
 extern int saved_cmd;
@@ -149,9 +151,6 @@ extern char horsename[];
 extern char preferred_pet;
 extern const char *occtxt;      /* defined when occupation != NULL */
 extern const char *nomovemsg;
-extern const char nul[];
-
-extern const schar xdir[], ydir[], zdir[];
 
 extern schar tbx, tby;  /* set in mthrowu.c */
 

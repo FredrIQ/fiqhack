@@ -1,14 +1,32 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-09 */
+/* Last modified by Alex Smith, 2013-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/* If you change the flag structure make sure you increment EDITLEVEL in   */
-/* patchlevel.h if needed.  Changing the instance_flags structure does     */
-/* not require incrementing EDITLEVEL.                                     */
-
 #ifndef FLAG_H
 # define FLAG_H
+
+/* Information that is reset every time the user has a chance to give commands
+   (from default_turnstate).  This is never saved in a binary save; if it needs
+   to be reconstructed, the reconstruction is done via replaying user actions
+   from the last command (when it had a known value.) */
+struct turnstate {
+
+    /* Multi-turn commands */
+    int (*occupation) (void);    /* what the player is currently doing */
+    int multi;                   /* negative = helpless, positive = repeating */
+    int (*afternmv) (void);      /* what to do after helplessness ends */
+    char multi_txt[BUFSZ];       /* the reason the player is helpless */
+};
+
+extern struct turnstate turnstate;
+
+# ifndef IN_DECL_C
+#  define occupation turnstate.occupation
+#  define multi      turnstate.multi
+#  define afternmv   turnstate.afternmv
+#  define multi_txt  turnstate.multi_txt
+# endif
 
 /*
  * Persistent flags that are saved and restored with the game.
