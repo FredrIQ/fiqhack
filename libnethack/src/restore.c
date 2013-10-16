@@ -42,7 +42,6 @@ static struct bucket *id_map = 0;
 
 #include "quest.h"
 
-boolean restoring = FALSE;
 static struct fruit *oldfruit;
 
 #define Is_IceBox(o) ((o)->otyp == ICE_BOX ? TRUE : FALSE)
@@ -631,7 +630,6 @@ dorecover(struct memfile *mf)
 
     run_timers();       /* expire all timers that have gone off while away */
     doredraw();
-    restoring = FALSE;
     program_state.something_worth_saving++;     /* useful data now exists */
 
     flags.move = 0;
@@ -651,8 +649,6 @@ dorecover_fd(int infd)
     long initial_pos;
 
     mnew(&mf, NULL);
-
-    restoring = TRUE;
 
     initial_pos = lseek(infd, 0, SEEK_CUR);
     mf.buf = loadfile(infd, &mf.len);

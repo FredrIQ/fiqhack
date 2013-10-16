@@ -279,7 +279,7 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
         }
     }
 
-    if (changed) {
+    if (changed && !program_state.restoring) {
         if (u.uswallow) {
             swallowed(0);       /* redraw swallow display */
         } else {

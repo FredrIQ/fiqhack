@@ -421,7 +421,8 @@ set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
         /* restoring needed because this is the only artifact intrinsic that
            can print a message--need to guard against being printed when
            restoring a game */
-        make_hallucinated((long)!on, restoring ? FALSE : TRUE, wp_mask);
+        make_hallucinated((long)!on,
+                          program_state.restoring ? FALSE : TRUE, wp_mask);
     }
     if (spfx & SPFX_ESP) {
         if (on)

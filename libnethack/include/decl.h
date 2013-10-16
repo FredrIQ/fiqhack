@@ -121,7 +121,6 @@ extern struct sinfo {
 extern char tune[6];
 
 # define MAXLINFO (MAXDUNGEON * MAXLEVEL)
-extern boolean restoring;
 
 extern const char quitchars[];
 extern const char vowels[];
