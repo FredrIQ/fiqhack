@@ -2378,9 +2378,9 @@ nomul(int nval, const char *txt)
     u.usleep = 0;
     multi = nval;
     if (txt && txt[0])
-        strncpy(multi_txt, txt, BUFSZ);
+        strncpy(turnstate.multi_txt, txt, BUFSZ);
     else
-        memset(multi_txt, 0, BUFSZ);
+        memset(turnstate.multi_txt, 0, BUFSZ);
     flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
 }
 

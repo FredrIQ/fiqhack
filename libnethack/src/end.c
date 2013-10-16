@@ -138,8 +138,8 @@ done_in_by(struct monst *mtmp)
     }
 
     if (multi) {
-        if (*multi_txt)
-            sprintf(eos(buf), ", while %s", multi_txt);
+        if (*(turnstate.multi_txt))
+            sprintf(eos(buf), ", while %s", turnstate.multi_txt);
         else
             strcat(buf, ", while helpless");
     }

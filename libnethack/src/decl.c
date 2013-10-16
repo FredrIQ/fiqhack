@@ -34,7 +34,6 @@ struct fruit *ffruit;
 
 char tune[6];
 
-const char *occtxt;
 const char quitchars[] = " \r\n\033";
 const char vowels[] = "aeiouAEIOU";
 const char ynchars[] = "yn";
@@ -204,6 +203,7 @@ static const struct turnstate default_turnstate = {
     .multi = 0,
     .afternmv = NULL,
     .multi_txt = "",
+    .occupation_txt = "",
     .saved_cmd = -1,
 };
 

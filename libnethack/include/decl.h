@@ -144,7 +144,6 @@ extern char dogname[];
 extern char catname[];
 extern char horsename[];
 extern char preferred_pet;
-extern const char *occtxt;      /* defined when occupation != NULL */
 extern const char *nomovemsg;
 
 extern schar tbx, tby;  /* set in mthrowu.c */

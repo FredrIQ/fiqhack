@@ -321,7 +321,8 @@ set_occupation(int (*fn) (void), const char *txt, int xtime)
         timed_occ_fn = fn;
     } else
         occupation = fn;
-    occtxt = txt;
+    strncpy(turnstate.occupation_txt, txt,
+            (sizeof turnstate.occupation_txt)-2);
     return;
 }
 

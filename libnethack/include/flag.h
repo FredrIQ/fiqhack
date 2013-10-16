@@ -14,6 +14,7 @@ struct turnstate {
 
     /* Multi-turn commands */
     int (*occupation) (void);   /* what the player is currently doing */
+    char occupation_txt[BUFSZ]; /* the reason the player is occupied */
     int multi;                  /* negative = helpless, positive = repeating */
     int (*afternmv) (void);     /* what to do after helplessness ends */
     char multi_txt[BUFSZ];      /* the reason the player is helpless */
@@ -26,7 +27,6 @@ extern struct turnstate turnstate;
 #  define occupation turnstate.occupation
 #  define multi      turnstate.multi
 #  define afternmv   turnstate.afternmv
-#  define multi_txt  turnstate.multi_txt
 # endif
 
 /*

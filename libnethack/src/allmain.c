@@ -952,7 +952,7 @@ stop_occupation(void)
 {
     if (occupation) {
         if (!maybe_finished_meal(TRUE))
-            pline("You stop %s.", occtxt);
+            pline("You stop %s.", turnstate.occupation_txt);
         occupation = 0;
         iflags.botl = 1;        /* in case u.uhs changed */
         /* fainting stops your occupation, there's no reason to sync.
