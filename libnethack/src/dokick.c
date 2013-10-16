@@ -1409,12 +1409,7 @@ ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
             otmp->no_charge = 0;
     }
 
-    if (otmp == uwep)
-        setuwep(NULL);
-    if (otmp == uquiver)
-        setuqwep(NULL);
-    if (otmp == uswapwep)
-        setuswapwep(NULL);
+    unwield_silently(otmp);
 
     /* some things break rather than ship */
     if (breaktest(otmp)) {

@@ -1273,7 +1273,6 @@ discard_minvent(struct monst *mtmp)
  *      OBJ_CONTAINED   cobj chain of container object
  *      OBJ_INVENT      hero's invent chain (use freeinv)
  *      OBJ_MINVENT     monster's invent chain
- *      OBJ_MIGRATING   migrating chain
  *      OBJ_BURIED      level->buriedobjs chain
  *      OBJ_ONBILL      on billobjs chain
  */

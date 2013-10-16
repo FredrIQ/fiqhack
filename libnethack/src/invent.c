@@ -25,6 +25,9 @@ static char obj_to_let(struct obj *);
 static int identify(struct obj *);
 static const char *dfeature_at(int, int, char *);
 
+static void addinv_stats(struct obj *);
+static void freeinv_stats(struct obj *);
+
 
 enum obj_use_status {
     OBJECT_USABLE,
@@ -240,8 +243,8 @@ in-place.
 
 It may be valid to merge this code with with addinv_core2().
 */
-void
-addinv_core1(struct obj *obj)
+static void
+addinv_stats(struct obj *obj)
 {
     if (obj->oclass == COIN_CLASS) {
         iflags.botl = 1;
@@ -271,20 +274,7 @@ addinv_core1(struct obj *obj)
         }
         set_artifact_intrinsic(obj, 1, W_ART);
     }
-}
 
-/*
-Adjust hero intrinsics as if this object was being added to the hero's
-inventory.  Called _after_ the object has been added to the hero's
-inventory.
-
-This is called when adding objects to the hero's inventory normally (via
-addinv) or when an object in the hero's inventory has been polymorphed
-in-place.
-*/
-void
-addinv_core2(struct obj *obj)
-{
     if (confers_luck(obj)) {
         /* new luckstone must be in inventory by this point for correct
            calculation */
@@ -311,7 +301,6 @@ addinv(struct obj *obj)
     obj->was_thrown = 0;
 
     examine_object(obj);
-    addinv_core1(obj);
 
     /* merge if possible; find end of chain in the process */
     for (otmp = invent; otmp; otmp = otmp->nobj)
@@ -333,7 +322,7 @@ addinv(struct obj *obj)
         setuqwep(obj);
 
 added:
-    addinv_core2(obj);
+    addinv_stats(obj);
     carry_obj_effects(obj);     /* carrying affects the obj */
     update_inventory();
     return obj;
@@ -494,8 +483,8 @@ where we are polymorphing an object already in the hero's inventory.
 
 Should think of a better name...
 */
-void
-freeinv_core(struct obj *obj)
+static void
+freeinv_stats(struct obj *obj)
 {
     if (obj->oclass == COIN_CLASS) {
         iflags.botl = 1;
@@ -548,8 +537,19 @@ freeinv(struct obj *obj)
         setuwep(NULL);
     if (uswapwep == obj)
         setuswapwep(NULL);
-    freeinv_core(obj);
+    freeinv_stats(obj);
     update_inventory();
+}
+
+/* swap one object for another in the inventory
+ *
+ * it is assumed that replace_obj() has been used already
+ */
+void
+swapinv(struct obj *oldobj, struct obj *newobj)
+{
+    freeinv_stats(oldobj);
+    addinv_stats(newobj);
 }
 
 void
@@ -731,7 +731,7 @@ putting_on(const char *action)
 static enum obj_use_status
 object_selection_checks(struct obj *otmp, const char *word)
 {
-    long dummymask;
+    int dummymask;
     int otyp = otmp->otyp;
 
     /* ugly check: remove inappropriate things */

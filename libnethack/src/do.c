@@ -513,12 +513,7 @@ dropx(struct obj *obj)
 void
 dropy(struct obj *obj)
 {
-    if (obj == uwep)
-        setuwep(NULL);
-    if (obj == uquiver)
-        setuqwep(NULL);
-    if (obj == uswapwep)
-        setuswapwep(NULL);
+    unwield_silently(obj);
 
     if (!u.uswallow && flooreffects(obj, u.ux, u.uy, "drop"))
         return;

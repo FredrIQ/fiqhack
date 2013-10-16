@@ -167,14 +167,8 @@ remove_worn_item(struct obj *obj, boolean unchain_ball)
         Ring_gone(obj);
     } else if (obj->owornmask & W_TOOL) {
         Blindf_off(obj);
-    } else if (obj->owornmask & (W_WEP | W_SWAPWEP | W_QUIVER)) {
-        if (obj == uwep)
-            uwepgone();
-        if (obj == uswapwep)
-            uswapwepgone();
-        if (obj == uquiver)
-            uqwepgone();
     }
+    unwield_silently(obj);
 
     if (obj->owornmask & (W_BALL | W_CHAIN)) {
         if (unchain_ball)

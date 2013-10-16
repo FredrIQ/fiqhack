@@ -785,12 +785,7 @@ obfree(struct obj *obj, struct obj *merge)
         }
     }
 
-    if (obj == uwep)
-        uwepgone();
-    if (obj == uswapwep)
-        uswapwepgone();
-    if (obj == uquiver)
-        uqwepgone();
+    unwield_silently(obj);
 
     dealloc_obj(obj);
 }

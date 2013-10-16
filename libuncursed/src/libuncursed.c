@@ -33,6 +33,9 @@
 # pragma GCC diagnostic ignored "-Wold-style-definition"
 # pragma GCC diagnostic warning "-Wstrict-prototypes"
 #endif
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wknr-promoted-parameter"
+#endif
 
 #define _ISOC99_SOURCE
 #include <limits.h>
@@ -291,12 +294,18 @@ static int uncursed_hook_getkeyorcodepoint(int ms) {
             h->recordkeyorcodepoint(kc);
     return kc;
 }
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static void uncursed_hook_startrecording(char *fn) {
     struct uncursed_hooks *h;
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->hook_type == uncursed_hook_type_recording)
             h->startrecording(fn);
 }
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static void uncursed_hook_stoprecording(void) {
     struct uncursed_hooks *h;
     for (h = uncursed_hook_list; h; h = h->next_hook)

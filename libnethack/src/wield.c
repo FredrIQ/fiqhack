@@ -51,8 +51,6 @@
  */
 
 
-static int ready_weapon(struct obj *);
-
 /* used by will_weld() */
 /* probably should be renamed */
 #define erodeable_wep(optr) ((optr)->oclass == WEAPON_CLASS \
@@ -109,7 +107,7 @@ setuwep(struct obj *obj)
     update_inventory();
 }
 
-static int
+int
 ready_weapon(struct obj *wep)
 {
     /* Separated function so swapping works easily */
@@ -799,6 +797,18 @@ unwield_weapons_silently(void)
     setuswapwep(NULL);
     setuqwep(NULL);
     u.twoweap = FALSE;
+}
+
+/* Unwields a given weapon silently. */
+void
+unwield_silently(struct obj *obj)
+{
+    if (obj == uwep)
+        setuwep(NULL);
+    if (obj == uswapwep)
+        setuswapwep(NULL);
+    if (obj == uquiver)
+        setuqwep(NULL);
 }
 
 /*wield.c*/

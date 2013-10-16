@@ -301,7 +301,9 @@ nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     wd_message();
 
     flags.move = 0;
+    flags.verbose = FALSE;
     set_wear();
+    flags.verbose = TRUE;
     pickup(1);
 
     log_command_result();

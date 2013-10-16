@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-10-03
+# Last modified by Alex Smith, 2013-10-16
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -6439,7 +6439,7 @@ __DATA__
             # -t prints each found object file on its own line on stderr. We
             # recognise the object files via the extension, and the fact that
             # they're existing, binary files.
-            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\z)/s,
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?\/.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\([^\/]*\)|\z)/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
@@ -6459,12 +6459,13 @@ __DATA__
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
                         'optpath:-l:',
                         'optstring:-Wl,-t'],
-            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\z)/s,
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?\/.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\([^\/]*\)|\z)/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
             verb => 'found',
             fail_silently => 1,
+            also_match_stderr => 1,
             information_only => 1,
             low_message_priority => 1,
         },
@@ -6539,13 +6540,14 @@ __DATA__
         ch_embedded_aimake_option => {
             object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['intcmd:cat', 'optpath::'],
-            depends => 'config_option:',
+            depends => 'dependencies:embedded_aimake_option:config_option:',
             dependsarg => qr'AIMAKE_OPTION_([a-zA-Z0-9_]+)',
         },
         embedded_aimake_option_define => {
             object => qr/^config_option:/,
             command => ['intcmd:optionvalues', 'optpath::'],
-            depends => 'optstring:-DAIMAKE_OPTION_',
+            output => 'dependencies:embedded_aimake_option:',
+            outdepends => 'optstring:-DAIMAKE_OPTION_',
             dependsarg => qr/^(.*)$/,
         },
         header_files_are_files => {
@@ -6974,6 +6976,8 @@ __DATA__
             # so we do both.
             output => 'optionset:linux_rpath',
             command => ['intcmd:optionvalues',
+                        'config_option:libdir',
+                        'config_option:specificlibdir',
                         'optpath::config_option:libdir',
                         'optpath::config_option:specificlibdir'],
             outdepends => 'optpath:-Wl,-rpath=:',

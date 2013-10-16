@@ -303,14 +303,22 @@ extern void off_msg(struct obj *);
 extern void set_wear(void);
 extern boolean donning(struct obj *);
 extern void cancel_don(void);
+extern int Armor_on(void);
 extern int Armor_off(void);
 extern int Armor_gone(void);
+extern int Helmet_on(void);
 extern int Helmet_off(void);
+extern int Gloves_on(void);
 extern int Gloves_off(void);
+extern int Boots_on(void);
 extern int Boots_off(void);
+extern int Cloak_on(void);
 extern int Cloak_off(void);
+extern int Shield_on(void);
 extern int Shield_off(void);
+extern int Shirt_on(void);
 extern int Shirt_off(void);
+extern boolean Amulet_on(void);
 extern void Amulet_off(void);
 extern void Ring_on(struct obj *);
 extern void Ring_off(struct obj *);
@@ -320,7 +328,7 @@ extern void Blindf_off(struct obj *);
 extern int dotakeoff(struct obj *otmp);
 extern int doremring(struct obj *otmp);
 extern int cursed(struct obj *);
-extern int canwearobj(struct obj *, long *, boolean);
+extern boolean canwearobj(struct obj *, int *, boolean);
 extern int dowear(struct obj *otmp);
 extern int doputon(struct obj *otmp);
 extern void find_ac(void);
@@ -606,8 +614,6 @@ extern const char *hist_lev_name(const d_level * l, boolean in_or_on);
 extern void assigninvlet(struct obj *);
 extern struct obj *merge_choice(struct obj *, struct obj *);
 extern int merged(struct obj **, struct obj **);
-extern void addinv_core1(struct obj *);
-extern void addinv_core2(struct obj *);
 extern struct obj *addinv(struct obj *);
 extern boolean can_hold(struct obj *);
 extern struct obj *hold_another_object(struct obj *, const char *, const char *,
@@ -615,8 +621,8 @@ extern struct obj *hold_another_object(struct obj *, const char *, const char *,
 extern void useupall(struct obj *);
 extern void useup(struct obj *);
 extern void consume_obj_charge(struct obj *, boolean);
-extern void freeinv_core(struct obj *);
 extern void freeinv(struct obj *);
+extern void swapinv(struct obj *oldobj, struct obj *newobj);
 extern void delallobj(int, int);
 extern void delobj(struct obj *);
 extern struct obj *sobj_at(int otyp, struct level *lev, int x, int y);
@@ -1756,6 +1762,7 @@ extern void you_unwere(boolean);
 
 /* ### wield.c ### */
 
+extern int ready_weapon(struct obj *);
 extern void setuwep(struct obj *);
 extern void setuqwep(struct obj *);
 extern void setuswapwep(struct obj *);
@@ -1776,6 +1783,7 @@ extern int welded(struct obj *);
 extern void weldmsg(struct obj *);
 extern void setmnotwielded(struct monst *, struct obj *);
 extern void unwield_weapons_silently(void);
+extern void unwield_silently(struct obj *obj);
 
 /* ### windows.c ### */
 
@@ -1864,6 +1872,7 @@ extern struct monst *montraits(struct obj *, coord *);
 extern struct monst *revive(struct obj *);
 extern int unturn_dead(struct monst *);
 extern boolean drain_item(struct obj *);
+extern boolean poly_proof(struct obj *);
 extern struct obj *poly_obj(struct obj *, int);
 extern boolean obj_resists(struct obj *, int, int);
 extern int bhito(struct obj *, struct obj *);

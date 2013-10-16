@@ -2322,6 +2322,7 @@ doseduce(struct monst *mon)
                 setworn(ring, LEFT_RING);
             } else
                 impossible("ring replacement");
+            unwield_silently(ring);
             Ring_on(ring);
             prinv(NULL, ring, 0L);
         }
