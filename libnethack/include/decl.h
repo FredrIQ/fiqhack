@@ -17,8 +17,7 @@ extern int occtime;
 
 # define WARNCOUNT 6    /* number of different warning levels */
 
-extern int x_maze_max, y_maze_max;
-extern int otg_temp;
+extern const int x_maze_max, y_maze_max;
 
 extern struct dgn_topology {    /* special dungeon levels for speed */
     d_level d_oracle_level;

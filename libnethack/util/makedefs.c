@@ -19,6 +19,7 @@
 #include "you.h"
 #include "flag.h"
 #include "dlb.h"
+#include "nethack_types.h"
 
 #ifdef __GNUC__
 # define noreturn __attribute__((noreturn))
@@ -875,6 +876,10 @@ do_readonly(const char *outfile)
         }
     }
     fprintf(ofp, "%s};\n", j > 0 ? "\n" : "");
+
+    /* x_maze_max, y_maze_max */
+    fprintf(ofp, "const int x_maze_max = %d;\n", (COLNO - 1) & ~1);
+    fprintf(ofp, "const int y_maze_max = %d;\n", (ROWNO - 1) & ~1);
 
     fprintf(ofp, "\n/*readonly.c*/\n");
 
