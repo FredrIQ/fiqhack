@@ -2044,6 +2044,12 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
         repcount = prev_repcount;
     }
 
+    /* protection from out-of-range values from the client */
+    if (command < 0)
+        return COMMAND_UNKNOWN;
+    if (command >= (sizeof cmdlist / sizeof *cmdlist))
+        return COMMAND_UNKNOWN;
+
     /* NULL arg is synonymous to CMD_ARG_NONE */
     if (!arg)
         arg = &noarg;
@@ -2059,9 +2065,6 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
         u.last_str_turn = 0;    /* for flags.run > 1 movement */
         flags.nopick = 0;
     }
-
-    if (command == -1)
-        return COMMAND_UNKNOWN;
 
     /* in some cases, a command function will accept either it's proper
        argument type or no argument; we're looking for the possible type of the 

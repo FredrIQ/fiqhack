@@ -812,7 +812,7 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
     if (multi >= 0 && occupation)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
-        saved_cmd = cmdidx;
+        turnstate.saved_cmd = cmdidx;
         do_command(cmdidx, rep, TRUE, arg);
     } else if (multi > 0) {
         /* allow interruption of multi-turn commands */
@@ -830,7 +830,7 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
                 nomul(0, NULL);
             }
         } else
-            do_command(saved_cmd, multi, FALSE, arg);
+            do_command(turnstate.saved_cmd, multi, FALSE, arg);
     }
     /* no need to do anything here for multi < 0 */
 

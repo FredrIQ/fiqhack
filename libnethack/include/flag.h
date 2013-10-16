@@ -13,10 +13,11 @@
 struct turnstate {
 
     /* Multi-turn commands */
-    int (*occupation) (void);    /* what the player is currently doing */
-    int multi;                   /* negative = helpless, positive = repeating */
-    int (*afternmv) (void);      /* what to do after helplessness ends */
-    char multi_txt[BUFSZ];       /* the reason the player is helpless */
+    int (*occupation) (void);   /* what the player is currently doing */
+    int multi;                  /* negative = helpless, positive = repeating */
+    int (*afternmv) (void);     /* what to do after helplessness ends */
+    char multi_txt[BUFSZ];      /* the reason the player is helpless */
+    int saved_cmd;              /* command being repeated by positive multi */
 };
 
 extern struct turnstate turnstate;

@@ -27,6 +27,7 @@ extern const char nul[];
 
 extern const schar xdir[], ydir[], zdir[];
 
+/* Dungeon topology */
 
 extern struct dgn_topology {    /* special dungeon levels for speed */
     d_level d_oracle_level;
@@ -86,11 +87,6 @@ extern struct dgn_topology {    /* special dungeon levels for speed */
 # define nemesis_level          (dungeon_topology.d_nemesis_level)
 # define knox_level             (dungeon_topology.d_knox_level)
 
-# define xdnstair               (dnstair.sx)
-# define ydnstair               (dnstair.sy)
-# define xupstair               (upstair.sx)
-# define yupstair               (upstair.sy)
-
 extern int branch_id;
 extern coord inv_pos;
 extern dungeon dungeons[];
@@ -133,7 +129,6 @@ extern char tune[6];
 
 
 extern int smeq[];
-extern int saved_cmd;
 
 # define KILLED_BY_AN    0
 # define KILLED_BY       1

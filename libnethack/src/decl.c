@@ -17,7 +17,6 @@ struct q_score quest_status;
 
 int smeq[MAXNROFROOMS + 1];
 
-int saved_cmd;
 int killer_format;
 const char *killer;
 const char *delayed_killer;
@@ -205,6 +204,7 @@ static const struct turnstate default_turnstate = {
     .multi = 0,
     .afternmv = NULL,
     .multi_txt = "",
+    .saved_cmd = -1,
 };
 
 struct turnstate turnstate;
