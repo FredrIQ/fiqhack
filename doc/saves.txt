@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-10-11
+Last modified by Alex Smith, 2013-10-16
 
 Copyright (C) 2013 Alex Smith.
 
@@ -520,3 +520,60 @@ is truncated just after the final newline of the line that is being rewound
 to; the recovery count in the header is increased; and the chain of save
 backup lines is reconstructed (it's entirely possible that the last one in the
 file will be pointing beyond the end of the file if this step is not taken).
+
+
+Binary saves
+------------
+
+The above log format, used for saving, is mostly based around binary saves,
+which contain the entire gamestate of the game.  In order to ensure the
+correctness of the save system, all global and static variables are divided
+into the following categories:
+
+  * Read-only variables; this contains things like tables of data.  These must
+    be marked as `const`, and are either hardcoded into the file, or generated
+    by `makedefs`.  Because their value never changes during the course of a
+    game or from game to game, they do not need to be saved.
+
+  * Game options set by the user (excluding interface options).  These are
+    stored in the `options` and `birth_options` variables.  They are saved two
+    different ways: each game has its own set of options and birth options,
+    saved in the binary file; and each user account also has its own set of
+    options and birth options, saved in dotfiles for local play and in the
+    database for server play.  At new game, the game options are initialized
+    to copies of the user account options, and thereafter do not change unless
+    the user specifically changes them (e.g. using the `O` command).  Options
+    never change except in response to a specific request by the user.
+    
+    In the NetHack 3.4 series, these were supposed to be saved in the `flags`
+    struct, but because that structure was saved via what was effectively a
+    straight `memcpy`, any changes to which options existed would break save
+    compatibility.  This lead to all sorts of hacks (the main one being the
+    addition of various state to `iflags` instead).  Options are saved by
+    name, not index, in the NetHack 4.3 series; any options that are not saved
+    in the save file will be assumed to be newly introduced options and given
+    default values, and unrecognised options will be assumed to be recently
+    deleted options and ignored.
+
+  * State that tracks the current progress of commands being executed, in the
+    global variable `turnstate`.  This contains information about, say,
+    whether the pathfinding is doing a travel or an autoexplore, or whether
+    the player has consumed any gametime yet in their turn.  There are two
+    special fields here, `occupation` and `multi`; either being nonzero means
+    that the command is not complete yet (even if the action is), and thus
+    that a binary save should not be produced.  When a command is complete (or
+    when a new game is started or a binary save is loaded), all the fields are
+    reset.
+
+  * Information about an entire dungeon, a single dungeon level, or a single
+    player within the dungeon.  (In previous versions of NetHack, dungeons
+    were conflated with players within the dungeon, because only one player
+    could be handled at one time.  The NetHack 4.3 series introduced a
+    distinction in preparation for the implementation of multiplayer.)  This
+    is responsible for the entire binary save.  (Birth options are saved as
+    dungeon state; regular options as player state.)
+
+    While the program is running, these are stored in `gamestate`, `levels`,
+    and `us` respectively.  (`level` is a pointer into `levels`, and `u` a
+    pointer into `us`, that describe the current player's dungeon level, and
+    the current player, respectively.)
