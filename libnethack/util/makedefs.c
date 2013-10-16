@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -56,7 +56,7 @@ void do_objs(const char *);
 void do_data(const char *, const char *);
 void do_dungeon(const char *, const char *);
 void do_date(const char *, int, const char *);
-void do_monstr(const char *);
+void do_readonly(const char *);
 void do_permonst(const char *);
 void do_questtxt(const char *, const char *);
 void do_rumors(const char *, const char *, const char *);
@@ -97,7 +97,7 @@ static const char *usage_info[] = {
     "       %s -o [OUT (onames.h)]\n",
     "       %s -d [IN (data.base)] [OUT (data)]\n",
     "       %s -e [IN (dungeon.def)] [OUT (dungeon.pdf)]\n",
-    "       %s -m [OUT (monstr.c)]\n",
+    "       %s -m [OUT (readonly.c)]\n",
     "       %s -v [OUT (date.h)]\n",
     "       %s -w [OUT (verinfo.h)] [OPTIONAL-STR (version string)]\n",
     "       %s -p [OUT (permonst.h)]\n",
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
     case 'M':
         if (argc != 3)
             usage(argv[0], argv[1][1], 3);
-        do_monstr(argv[2]);
+        do_readonly(argv[2]);
         break;
 
     case 'v':
@@ -820,31 +820,63 @@ mstrength(const struct permonst *ptr)
     return (tmp >= 0) ? tmp : 0;
 }
 
+/* Generate the following read-only data tables:
+ *
+ * monstr:    mstrength values for monsters
+ * bases:     the first object of each class
+ */
 void
-do_monstr(const char *outfile)
+do_readonly(const char *outfile)
 {
     const struct permonst *ptr;
     int i, j;
 
-    /* 
-     * create the source file, "monstr.c"
-     */
+    /* create the source file, "readonly.c" */
     if (!(ofp = fopen(outfile, WRTMODE))) {
         perror(outfile);
         exit(EXIT_FAILURE);
     }
 
     fprintf(ofp, "%s", Dont_Edit_Code);
+    fprintf(ofp,
+            "/* This file contains generated tables of read-only data. */\n");
     fprintf(ofp, "#include \"config.h\"\n");
-    fprintf(ofp, "\nconst int monstr[] = {\n");
-    for (ptr = &mons[0], j = 0; ptr->mlet; ptr++) {
-        i = mstrength(ptr);
-        fprintf(ofp, "%2d,%c", i, (++j & 15) ? ' ' : '\n');
-    }
-    /* might want to insert a final 0 entry here instead of just newline */
-    fprintf(ofp, "%s};\n", (j & 15) ? "\n" : "");
+    fprintf(ofp, "#include \"objclass.h\"\n");
 
-    fprintf(ofp, "\n/*monstr.c*/\n");
+    /* monstr */
+    fprintf(ofp, "\nconst int monstr[] = {\n");
+    j = 0;
+    for (ptr = &mons[0]; ptr->mlet; ptr++) {
+        i = mstrength(ptr);
+        j += fprintf(ofp, "%2d, ", i);
+        if (j > 70) {
+            fprintf(ofp, "\n");
+            j = 0;
+        }
+    }
+    fprintf(ofp, "%s};\n", j > 0 ? "\n" : "");
+
+    /* bases: based on code previously in o_init.c */
+    int bases[MAXOCLASSES];
+    for (j = 0; j < MAXOCLASSES; j++)
+        bases[j] = 0;
+    for (i = 0; !i || objects[i].oc_class != ILLOBJ_CLASS;) {
+        j = objects[i].oc_class;
+        bases[j] = i;
+        while (objects[i].oc_class == j) i++;
+    }
+    fprintf(ofp, "\nconst int bases[MAXOCLASSES] = {\n");
+    j = 0;
+    for (i = 0; i < MAXOCLASSES; i++) {
+        j += fprintf(ofp, "%3d, ", bases[i]);
+        if (j > 70) {
+            fprintf(ofp, "\n");
+            j = 0;
+        }
+    }
+    fprintf(ofp, "%s};\n", j > 0 ? "\n" : "");
+
+    fprintf(ofp, "\n/*readonly.c*/\n");
 
     fclose(ofp);
     return;

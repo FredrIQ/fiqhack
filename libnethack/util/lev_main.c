@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-16 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,7 +74,6 @@ static boolean write_objects(int, char *, object ***);
 static boolean write_engravings(int, char *, engraving ***);
 static boolean write_maze(int, specialmaze *);
 static boolean write_rooms(int, splev *);
-static void init_obj_classes(void);
 
 static struct {
     const char *name;
@@ -190,7 +189,6 @@ main(int argc, char **argv)
     boolean errors_encountered = FALSE;
 
     init_objlist();
-    init_obj_classes();
 
     init_yyout(stdout);
     if (argc == 1) {    /* Read standard input */
@@ -350,29 +348,23 @@ get_object_id(char *s, char c)
     if (class == MAXOCLASSES)
         return ERR;
 
-    for (i = class ? bases[class] : 0; i < NUM_OBJECTS; i++) {
-        if (class && objects[i].oc_class != class)
+    for (i = (class ? bases[class] : 0); i < NUM_OBJECTS; i++) {
+        if (class && objects[i].oc_class != class) {
+            if (i == bases[class]) {
+                /* Sanity check: ensure we're using a current copy of
+                   readonly.c */
+                char msg[256];
+                sprintf(msg, "Object class %d has base %d with class %d",
+                        class, i, objects[i].oc_class);
+                yyerror(msg);
+            }
             break;
+        }
         objname = obj_descr[i].oc_name;
         if (objname && !strcmp(s, objname))
             return i;
     }
     return ERR;
-}
-
-static void
-init_obj_classes(void)
-{
-    int i, class, prev_class;
-
-    prev_class = -1;
-    for (i = 0; i < NUM_OBJECTS; i++) {
-        class = objects[i].oc_class;
-        if (class != prev_class) {
-            bases[class] = i;
-            prev_class = class;
-        }
-    }
 }
 
 /*

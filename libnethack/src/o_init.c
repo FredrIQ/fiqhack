@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,10 +86,6 @@ init_objects(void)
     int i, first, last, sum;
     char oclass;
 
-    /* bug fix to prevent "initialization error" abort on Intel Xenix. reported 
-       by mikew@semike */
-    for (i = 0; i < MAXOCLASSES; i++)
-        bases[i] = 0;
     /* initialize object descriptions */
     for (i = 0; i < NUM_OBJECTS; i++)
         objects[i].oc_name_idx = objects[i].oc_descr_idx = i;
@@ -101,7 +97,6 @@ init_objects(void)
         last = first + 1;
         while (last < NUM_OBJECTS && objects[last].oc_class == oclass)
             last++;
-        bases[(int)oclass] = first;
 
         if (oclass == GEM_CLASS) {
             setgemprobs(NULL);
@@ -261,8 +256,6 @@ savenames(struct memfile *mf)
 
     mtag(mf, 0, MTAG_OCLASSES);
     mfmagic_set(mf, OCLASSES_MAGIC);
-    for (i = 0; i < MAXOCLASSES; i++)
-        mwrite32(mf, bases[i]);
 
     for (i = 0; i < NUM_OBJECTS; i++)
         mwrite32(mf, disco[i]);
@@ -339,9 +332,6 @@ restnames(struct memfile *mf)
     int i;
 
     mfmagic_check(mf, OCLASSES_MAGIC);
-
-    for (i = 0; i < MAXOCLASSES; i++)
-        bases[i] = mread32(mf);
 
     for (i = 0; i < NUM_OBJECTS; i++)
         disco[i] = mread32(mf);

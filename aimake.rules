@@ -136,10 +136,10 @@
                         "optpath:-p :bpath:libnethack/include/pm.h"],
             output => 'bpath:libnethack/include/pm.h',
         },
-        _makedefs_monstr => {
+        _makedefs_readonly => {
             command => ["bpath:libnethack/util/makedefs_c$exeext",
-                        "optpath:-m :bpath:libnethack/src/monstr.c"],
-            output => 'bpath:libnethack/src/monstr.c',
+                        "optpath:-m :bpath:libnethack/src/readonly.c"],
+            output => 'bpath:libnethack/src/readonly.c',
         },
         _makedefs_data => {
             object => "path:libnethack/dat/data.base",

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-09 */
+/* Last modified by Alex Smith, 2013-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,8 +7,6 @@
 
 int (*afternmv) (void);
 int (*occupation) (void);
-
-int bases[MAXOCLASSES];
 
 int multi;
 char multi_txt[BUFSZ];
@@ -230,7 +228,6 @@ init_data(void)
     memset(&iflags, 0, sizeof (iflags));
     memset(&quest_status, 0, sizeof (quest_status));
     memset(&levels, 0, sizeof (levels));
-    memset(bases, 0, sizeof (bases));
     memset(&u, 0, sizeof (u));
     memset(dogname, 0, sizeof (dogname));
     memset(catname, 0, sizeof (catname));
