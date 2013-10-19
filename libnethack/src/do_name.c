@@ -260,7 +260,7 @@ oname(struct obj *obj, const char *name)
             untwoweapon();
         /* activate warning if you've just named your weapon "Sting" */
         if (obj == uwep)
-            set_artifact_intrinsic(obj, TRUE, W_WEP);
+            set_artifact_intrinsic(obj, TRUE, W_MASK(os_wep));
     }
     if (carried(obj))
         update_inventory();
@@ -593,7 +593,7 @@ x_monnam(const struct monst *mtmp,
     if (do_invis)
         strcat(buf, "invisible ");
 
-    if (do_saddle && (mtmp->misc_worn_check & W_SADDLE) && !Blind &&
+    if (do_saddle && (mtmp->misc_worn_check & W_MASK(os_saddle)) && !Blind &&
         !Hallucination)
         strcat(buf, "saddled ");
 

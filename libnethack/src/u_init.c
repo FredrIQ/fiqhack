@@ -1035,22 +1035,12 @@ ini_inv(const struct trobj *trop, short nocreate[4])
         knows_object(POT_OIL);
 
         if (obj->oclass == ARMOR_CLASS) {
-            if (is_shield(obj) && !uarms) {
-                setworn(obj, W_ARMS);
-                if (uswapwep)
-                    setuswapwep(NULL);
-            } else if (is_helmet(obj) && !uarmh)
-                setworn(obj, W_ARMH);
-            else if (is_gloves(obj) && !uarmg)
-                setworn(obj, W_ARMG);
-            else if (is_shirt(obj) && !uarmu)
-                setworn(obj, W_ARMU);
-            else if (is_cloak(obj) && !uarmc)
-                setworn(obj, W_ARMC);
-            else if (is_boots(obj) && !uarmf)
-                setworn(obj, W_ARMF);
-            else if (is_suit(obj) && !uarm)
-                setworn(obj, W_ARM);
+            long mask;
+            if (is_shield(obj) && uswapwep)
+                setuswapwep(NULL);
+
+            if (canwearobj(obj, &mask, FALSE) && mask & W_ARMOR)
+                setworn(obj, mask);
         }
 
         if (obj->oclass == WEAPON_CLASS || is_weptool(obj) || otyp == TIN_OPENER

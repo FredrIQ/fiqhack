@@ -263,7 +263,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 
         if (mtmp->mw) {
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
-                if (obj->owornmask & W_WEP)
+                if (obj->owornmask & W_MASK(os_wep))
                     break;
             if (obj)
                 mtmp->mw = obj;

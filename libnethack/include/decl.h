@@ -187,13 +187,9 @@ extern const char def_oc_syms[MAXOCLASSES];     /* default class symbols */
 extern const char def_monsyms[MAXMCLASSES];     /* default class symbols */
 
 # include "obj.h"
-extern struct obj *invent, *uarm, *uarmc, *uarmh, *uarms, *uarmg, *uarmf,
-    *uarmu,       /* under-wear, so to speak */
-    *uskin, *uamul, *uleft, *uright, *ublindf, *uwep, *uswapwep, *uquiver;
 extern int lastinvnr;
 
-extern struct obj *uchain;      /* defined only when punished */
-extern struct obj *uball;
+extern struct obj *invent;
 extern struct obj *book;
 extern struct obj zeroobj;      /* init'd and defined in decl.c */
 

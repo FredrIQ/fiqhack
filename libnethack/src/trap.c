@@ -54,7 +54,7 @@ burnarmor(struct monst *victim)
     while (1) {
         switch (rn2(5)) {
         case 0:
-            item = (victim == &youmonst) ? uarmh : which_armor(victim, W_ARMH);
+            item = (victim == &youmonst) ? uarmh : which_armor(victim, os_armh);
             if (item) {
                 mat_idx = objects[item->otyp].oc_material;
                 sprintf(buf, "%s %s", materialnm[mat_idx], helmet_name(item));
@@ -63,32 +63,32 @@ burnarmor(struct monst *victim)
                 continue;
             break;
         case 1:
-            item = (victim == &youmonst) ? uarmc : which_armor(victim, W_ARMC);
+            item = (victim == &youmonst) ? uarmc : which_armor(victim, os_armc);
             if (item) {
                 burn_dmg(item, cloak_simple_name(item));
                 return TRUE;
             }
-            item = (victim == &youmonst) ? uarm : which_armor(victim, W_ARM);
+            item = (victim == &youmonst) ? uarm : which_armor(victim, os_arm);
             if (item) {
                 burn_dmg(item, xname(item));
                 return TRUE;
             }
-            item = (victim == &youmonst) ? uarmu : which_armor(victim, W_ARMU);
+            item = (victim == &youmonst) ? uarmu : which_armor(victim, os_armu);
             if (item)
                 burn_dmg(item, "shirt");
             return TRUE;
         case 2:
-            item = (victim == &youmonst) ? uarms : which_armor(victim, W_ARMS);
+            item = (victim == &youmonst) ? uarms : which_armor(victim, os_arms);
             if (!burn_dmg(item, "wooden shield"))
                 continue;
             break;
         case 3:
-            item = (victim == &youmonst) ? uarmg : which_armor(victim, W_ARMG);
+            item = (victim == &youmonst) ? uarmg : which_armor(victim, os_armg);
             if (!burn_dmg(item, "gloves"))
                 continue;
             break;
         case 4:
-            item = (victim == &youmonst) ? uarmf : which_armor(victim, W_ARMF);
+            item = (victim == &youmonst) ? uarmf : which_armor(victim, os_armf);
             if (!burn_dmg(item, "boots"))
                 continue;
             break;
@@ -1845,21 +1845,22 @@ mintrap(struct monst *mtmp)
                     if (in_sight)
                         pline("%s %s on the %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, HEAD));
-                    target = which_armor(mtmp, W_ARMH);
+                    target = which_armor(mtmp, os_armh);
                     rust_dmg(target, maybe_helmet_name(target), 1, TRUE, mtmp);
                     break;
                 case 1:
                     if (in_sight)
                         pline("%s %s's left %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, ARM));
-                    target = which_armor(mtmp, W_ARMS);
+                    target = which_armor(mtmp, os_arms);
                     if (rust_dmg(target, "shield", 1, TRUE, mtmp))
                         break;
                     target = MON_WEP(mtmp);
                     if (target && bimanual(target))
                         erode_obj(target, FALSE, TRUE);
-                glovecheck:target =
-                        which_armor(mtmp, W_ARMG);
+                glovecheck:
+                    target =
+                        which_armor(mtmp, os_armg);
                     rust_dmg(target, "gauntlets", 1, TRUE, mtmp);
                     break;
                 case 2:
@@ -1873,16 +1874,16 @@ mintrap(struct monst *mtmp)
                         pline("%s %s!", A_gush_of_water_hits, mon_nam(mtmp));
                     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
                         snuff_lit(otmp);
-                    target = which_armor(mtmp, W_ARMC);
+                    target = which_armor(mtmp, os_armc);
                     if (target)
                         rust_dmg(target, cloak_simple_name(target), 1, TRUE,
                                  mtmp);
                     else {
-                        target = which_armor(mtmp, W_ARM);
+                        target = which_armor(mtmp, os_arm);
                         if (target)
                             rust_dmg(target, "armor", 1, TRUE, mtmp);
                         else {
-                            target = which_armor(mtmp, W_ARMU);
+                            target = which_armor(mtmp, os_armu);
                             rust_dmg(target, "shirt", 1, TRUE, mtmp);
                         }
                     }
@@ -2401,7 +2402,7 @@ float_down(long hmask, long emask)
             pline("You feel heavier.");
         /* u.uinwater msgs already in spoteffects()/drown() */
         else if (!u.uinwater && !no_msg) {
-            if (!(emask & W_SADDLE)) {
+            if (!(emask & W_MASK(os_saddle))) {
                 boolean sokoban_trap = (In_sokoban(&u.uz) && trap);
 
                 if (Hallucination)

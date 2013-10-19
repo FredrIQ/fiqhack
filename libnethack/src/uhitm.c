@@ -55,34 +55,34 @@ hurtmarmor(struct monst *mdef, int attk)
     while (1) {
         switch (rn2(5)) {
         case 0:
-            target = which_armor(mdef, W_ARMH);
+            target = which_armor(mdef, os_armh);
             if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
                 continue;
             break;
         case 1:
-            target = which_armor(mdef, W_ARMC);
+            target = which_armor(mdef, os_armc);
             if (target) {
                 rust_dmg(target, xname(target), hurt, TRUE, mdef);
                 break;
             }
-            if ((target = which_armor(mdef, W_ARM)) != NULL) {
+            if ((target = which_armor(mdef, os_arm)) != NULL) {
                 rust_dmg(target, xname(target), hurt, TRUE, mdef);
-            } else if ((target = which_armor(mdef, W_ARMU)) != NULL) {
+            } else if ((target = which_armor(mdef, os_armu)) != NULL) {
                 rust_dmg(target, xname(target), hurt, TRUE, mdef);
             }
             break;
         case 2:
-            target = which_armor(mdef, W_ARMS);
+            target = which_armor(mdef, os_arms);
             if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
                 continue;
             break;
         case 3:
-            target = which_armor(mdef, W_ARMG);
+            target = which_armor(mdef, os_armg);
             if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
                 continue;
             break;
         case 4:
-            target = which_armor(mdef, W_ARMF);
+            target = which_armor(mdef, os_armf);
             if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
                 continue;
             break;
@@ -1123,14 +1123,14 @@ m_slips_free(struct monst *mdef, const struct attack *mattk)
 
     if (mattk->adtyp == AD_DRIN) {
         /* intelligence drain attacks the head */
-        obj = which_armor(mdef, W_ARMH);
+        obj = which_armor(mdef, os_armh);
     } else {
         /* grabbing attacks the body */
-        obj = which_armor(mdef, W_ARMC);        /* cloak */
+        obj = which_armor(mdef, os_armc);        /* cloak */
         if (!obj)
-            obj = which_armor(mdef, W_ARM);     /* suit */
+            obj = which_armor(mdef, os_arm);     /* suit */
         if (!obj)
-            obj = which_armor(mdef, W_ARMU);    /* shirt */
+            obj = which_armor(mdef, os_armu);    /* shirt */
     }
 
     /* if your cloak/armor is greased, monster slips off; this protection might 
@@ -1237,7 +1237,7 @@ steal_it(struct monst *mdef, const struct attack *mattk)
         /* find armor, and move it to end of inventory in the process */
         minvent_ptr = &mdef->minvent;
         while ((otmp = *minvent_ptr) != 0)
-            if (otmp->owornmask & W_ARM) {
+            if (otmp->owornmask & W_MASK(os_arm)) {
                 if (stealoid)
                     panic("steal_it: multiple worn suits");
                 *minvent_ptr = otmp->nobj;      /* take armor out of minvent */
@@ -1265,7 +1265,7 @@ steal_it(struct monst *mdef, const struct attack *mattk)
         obj_extract_self(otmp);
         if ((unwornmask = otmp->owornmask) != 0L) {
             mdef->misc_worn_check &= ~unwornmask;
-            if (otmp->owornmask & W_WEP) {
+            if (otmp->owornmask & W_MASK(os_wep)) {
                 setmnotwielded(mdef, otmp);
                 MON_NOWEP(mdef);
             }
@@ -1291,9 +1291,9 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             break;      /* stop the theft even if hero survives */
         }
         /* more take-away handling, after theft message */
-        if (unwornmask & W_WEP) {       /* stole wielded weapon */
+        if (unwornmask & W_MASK(os_wep)) {         /* stole wielded weapon */
             possibly_unwield(mdef, FALSE);
-        } else if (unwornmask & W_ARMG) {       /* stole worn gloves */
+        } else if (unwornmask & W_MASK(os_armg)) {    /* stole worn gloves */
             mselftouch(mdef, NULL, TRUE);
             if (mdef->mhp <= 0) /* it's now a statue */
                 return; /* can't continue stealing */
@@ -1561,10 +1561,10 @@ damageum(struct monst *mdef, const struct attack *mattk)
         if (m_slips_free(mdef, mattk))
             break;
 
-        if ((mdef->misc_worn_check & W_ARMH) && rn2(8)) {
+        if ((mdef->misc_worn_check & W_MASK(os_armh)) && rn2(8)) {
             pline("%s %s blocks your attack to %s head.",
                   s_suffix(Monnam(mdef)),
-                  helmet_name(which_armor(mdef, W_ARMH)), mhis(mdef));
+                  helmet_name(which_armor(mdef, os_armh)), mhis(mdef));
             break;
         }
 
@@ -2215,13 +2215,14 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             /* hero using monsters' AT_MAGC attack is hitting hand to hand
                rather than casting a spell */
             if (aatyp == AT_MAGC)
-                protector = W_ARMG;
+                protector = W_MASK(os_armg);
 
             if (protector == 0L ||      /* no protection */
-                (protector == W_ARMG && !uarmg && !uwep) ||
-                (protector == W_ARMF && !uarmf) ||
-                (protector == W_ARMH && !uarmh) ||
-                (protector == (W_ARMC | W_ARMG) && (!uarmc || !uarmg))) {
+                (protector == W_MASK(os_armg) && !uarmg && !uwep) ||
+                (protector == W_MASK(os_armf) && !uarmf) ||
+                (protector == W_MASK(os_armh) && !uarmh) ||
+                (protector == (W_MASK(os_armc) | W_MASK(os_armg)) &&
+                 (!uarmc || !uarmg))) {
                 if (!Stone_resistance &&
                     !(poly_when_stoned(youmonst.data) &&
                       polymon(PM_STONE_GOLEM))) {

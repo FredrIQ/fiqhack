@@ -468,7 +468,7 @@ dosinkfall(void)
         HLevitation = save_HLev;
     }
 
-    ELevitation &= ~W_ARTI;
+    ELevitation &= ~W_MASK(os_invoked);
     HLevitation &= ~(I_SPECIAL | TIMEOUT);
     HLevitation++;
     if (uleft && uleft->otyp == RIN_LEVITATION) {

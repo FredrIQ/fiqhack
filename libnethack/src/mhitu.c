@@ -371,7 +371,7 @@ mattacku(struct monst *mtmp)
             if (youmonst.data->mlet != S_PIERCER)
                 return 0;       /* trappers don't attack */
 
-            obj = which_armor(mtmp, WORN_HELMET);
+            obj = which_armor(mtmp, os_armh);
             if (obj && is_metallic(obj)) {
                 pline("Your blow glances off %s %s.", s_suffix(mon_nam(mtmp)),
                       helmet_name(obj));
@@ -832,34 +832,19 @@ magic_negation(struct monst *mon)
 {
     struct obj *armor;
     int armpro = 0;
+    enum objslot i;
 
-    armor = (mon == &youmonst) ? uarm : which_armor(mon, W_ARM);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
-    armor = (mon == &youmonst) ? uarmc : which_armor(mon, W_ARMC);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
-    armor = (mon == &youmonst) ? uarmh : which_armor(mon, W_ARMH);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
-
-    /* armor types for shirt, gloves, shoes, and shield don't currently provide 
-       any magic cancellation but we might as well be complete */
-    armor = (mon == &youmonst) ? uarmu : which_armor(mon, W_ARMU);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
-    armor = (mon == &youmonst) ? uarmg : which_armor(mon, W_ARMG);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
-    armor = (mon == &youmonst) ? uarmf : which_armor(mon, W_ARMF);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
-    armor = (mon == &youmonst) ? uarms : which_armor(mon, W_ARMS);
-    if (armor && armpro < objects[armor->otyp].a_can)
-        armpro = objects[armor->otyp].a_can;
+    /* Loop over all the armor slots. Armor types for shirt, gloves, shoes, and
+       shield don't currently provide any magic cancellation, but we might as
+       well be complete. */
+    for (i = 0; i <= os_last_armor; i++) {
+        armor = (mon == &youmonst) ? EQUIP(i) : which_armor(mon, i);
+        if (armor && armpro < objects[armor->otyp].a_can)
+            armpro = objects[armor->otyp].a_can;
+    }
 
     /* this one is really a stretch... */
-    armor = (mon == &youmonst) ? 0 : which_armor(mon, W_SADDLE);
+    armor = (mon == &youmonst) ? 0 : which_armor(mon, os_saddle);
     if (armor && armpro < objects[armor->otyp].a_can)
         armpro = objects[armor->otyp].a_can;
 
@@ -2303,23 +2288,23 @@ doseduce(struct monst *mon)
                 pline("%s puts %s on your right %s.",
                       Blind ? "He" : Monnam(mon), the(xname(ring)),
                       body_part(HAND));
-                setworn(ring, RIGHT_RING);
+                setworn(ring, W_MASK(os_ringr));
             } else if (!uleft) {
                 pline("%s puts %s on your left %s.", Blind ? "He" : Monnam(mon),
                       the(xname(ring)), body_part(HAND));
-                setworn(ring, LEFT_RING);
+                setworn(ring, W_MASK(os_ringl));
             } else if (uright && uright->otyp != RIN_ADORNMENT) {
                 strcpy(buf, xname(uright));
                 pline("%s replaces your %s with your %s.",
                       Blind ? "He" : Monnam(mon), buf, xname(ring));
                 Ring_gone(uright);
-                setworn(ring, RIGHT_RING);
+                setworn(ring, W_MASK(os_ringr));
             } else if (uleft && uleft->otyp != RIN_ADORNMENT) {
                 strcpy(buf, xname(uleft));
                 pline("%s replaces your %s with your %s.",
                       Blind ? "He" : Monnam(mon), buf, xname(ring));
                 Ring_gone(uleft);
-                setworn(ring, LEFT_RING);
+                setworn(ring, W_MASK(os_ringl));
             } else
                 impossible("ring replacement");
             unwield_silently(ring);
@@ -2547,12 +2532,12 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
         goto assess_dmg;
     case AD_STON:      /* cockatrice */
         {
-            long protector = attk_protection((int)mattk->aatyp), wornitems =
-                mtmp->misc_worn_check;
+            long protector = attk_protection((int)mattk->aatyp);
+            long wornitems = mtmp->misc_worn_check;
 
             /* wielded weapon gives same protection as gloves here */
             if (MON_WEP(mtmp) != 0)
-                wornitems |= W_ARMG;
+                wornitems |= W_MASK(os_armg);
 
             if (!resists_ston(mtmp) &&
                 (protector == 0L ||

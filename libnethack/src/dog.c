@@ -164,9 +164,9 @@ makedog(void)
     if (pettype == PM_PONY && ! !(otmp = mksobj(level, SADDLE, TRUE, FALSE))) {
         if (mpickobj(mtmp, otmp))
             panic("merged saddle?");
-        mtmp->misc_worn_check |= W_SADDLE;
+        mtmp->misc_worn_check |= W_MASK(os_saddle);
         otmp->dknown = otmp->bknown = otmp->rknown = 1;
-        otmp->owornmask = W_SADDLE;
+        otmp->owornmask = W_MASK(os_saddle);
         otmp->leashmon = mtmp->m_id;
         update_mon_intrinsics(mtmp, otmp, TRUE, TRUE);
     }
@@ -381,7 +381,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
             while ((obj = mtmp->minvent) != 0) {
                 obj_extract_self(obj);
                 obj_no_longer_held(obj);
-                if (obj->owornmask & W_WEP)
+                if (obj->owornmask & W_MASK(os_wep))
                     setmnotwielded(mtmp, obj);
                 obj->owornmask = 0L;
                 if (xlocale && ylocale)

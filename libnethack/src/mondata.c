@@ -196,7 +196,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
     if (check_visor) {
         o = (mdef == &youmonst) ? invent : mdef->minvent;
         for (; o; o = o->nobj)
-            if ((o->owornmask & W_ARMH) &&
+            if ((o->owornmask & W_MASK(os_armh)) &&
                 (s = OBJ_DESCR(objects[o->otyp])) != NULL &&
                 !strcmp(s, "visored helmet"))
                 return FALSE;

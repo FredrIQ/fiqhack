@@ -230,9 +230,9 @@
                                  is_floater(youmonst.data))
         /* Can't touch surface, can't go under water; overrides all others */
 # define Lev_at_will            (((HLevitation & I_SPECIAL) != 0L || \
-                                 (ELevitation & W_ARTI) != 0L) && \
+                                 (ELevitation & W_ARTIFACT) != 0L) && \
                                  (HLevitation & ~(I_SPECIAL|TIMEOUT)) == 0L && \
-                                 (ELevitation & ~W_ARTI) == 0L && \
+                                 (ELevitation & ~W_ARTIFACT) == 0L && \
                                  !is_floater(youmonst.data))
 
 # define EFlying                u.uprops[FLYING].extrinsic

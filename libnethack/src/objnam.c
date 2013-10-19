@@ -732,7 +732,7 @@ doname_base(const struct obj *obj, boolean with_price)
 
     switch (obj->oclass) {
     case AMULET_CLASS:
-        if (obj->owornmask & W_AMUL)
+        if (obj->owornmask & W_WORN)
             strcat(bp, " (being worn)");
         break;
     case WEAPON_CLASS:
@@ -746,17 +746,16 @@ doname_base(const struct obj *obj, boolean with_price)
         }
         break;
     case ARMOR_CLASS:
-        if (obj->owornmask & W_ARMOR)
-            strcat(bp,
-                   (obj ==
-                    uskin) ? " (embedded in your skin)" : " (being worn)");
+        if (obj->owornmask & W_WORN)
+            strcat(bp, (obj == uskin) ?
+                   " (embedded in your skin)" :
+                   " (being worn)");
         goto plus;
     case TOOL_CLASS:
         /* weptools already get this done when we go to the +n code */
         if (!is_weptool(obj))
             add_erosion_words(obj, prefix);
-        if (obj->owornmask & (W_TOOL    /* blindfold */
-                              | W_SADDLE)) {
+        if (obj->owornmask & (W_WORN | W_MASK(os_saddle))) {
             strcat(bp, " (being worn)");
             break;
         }
@@ -811,9 +810,9 @@ doname_base(const struct obj *obj, boolean with_price)
     case RING_CLASS:
         add_erosion_words(obj, prefix);
     ring:
-        if (obj->owornmask & W_RINGR)
+        if (obj->owornmask & W_MASK(os_ringr))
             strcat(bp, " (on right ");
-        if (obj->owornmask & W_RINGL)
+        if (obj->owornmask & W_MASK(os_ringl))
             strcat(bp, " (on left ");
         if (obj->owornmask & W_RING) {
             strcat(bp, body_part(HAND));
@@ -853,12 +852,12 @@ doname_base(const struct obj *obj, boolean with_price)
     case BALL_CLASS:
     case CHAIN_CLASS:
         add_erosion_words(obj, prefix);
-        if (obj->owornmask & W_BALL)
+        if (obj->owornmask & W_MASK(os_ball))
             strcat(bp, " (chained to you)");
         break;
     }
 
-    if ((obj->owornmask & W_WEP) && !mrg_to_wielded) {
+    if ((obj->owornmask & W_MASK(os_wep)) && !mrg_to_wielded) {
         if (obj->quan != 1L) {
             strcat(bp, " (wielded)");
         } else {
@@ -869,13 +868,13 @@ doname_base(const struct obj *obj, boolean with_price)
             sprintf(eos(bp), " (weapon in %s)", hand_s);
         }
     }
-    if (obj->owornmask & W_SWAPWEP) {
+    if (obj->owornmask & W_MASK(os_swapwep)) {
         if (u.twoweap)
             sprintf(eos(bp), " (wielded in other %s)", body_part(HAND));
         else
             strcat(bp, " (alternate weapon; not wielded)");
     }
-    if (obj->owornmask & W_QUIVER)
+    if (obj->owornmask & W_MASK(os_quiver))
         strcat(bp, " (in quiver)");
     if (obj->unpaid) {
         xchar ox, oy;
@@ -1068,7 +1067,8 @@ an(const char *str)
 
     if (strncmpi(str, "the ", 4) && strcmp(str, "molten lava") &&
         strcmp(str, "iron bars") && strcmp(str, "ice") &&
-        strcmp(str, "solid rock")) {
+        strcmp(str, "solid rock") && strcmp(str, "eyewear") &&
+        strcmp(str, "boots") && strcmp(str, "gloves")) {
         if (strchr(vowels, *str) && strncmp(str, "one-", 4) &&
             strncmp(str, "useful", 6) && strncmp(str, "unicorn", 7) &&
             strncmp(str, "uranium", 7) && strncmp(str, "eucalyptus", 10))

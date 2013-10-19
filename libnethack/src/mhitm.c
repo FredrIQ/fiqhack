@@ -666,12 +666,12 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
     boolean cancelled;
 
     if (touch_petrifies(pd) && !resists_ston(magr)) {
-        long protector = attk_protection((int)mattk->aatyp), wornitems =
-            magr->misc_worn_check;
+        long protector = attk_protection((int)mattk->aatyp);
+        long wornitems = magr->misc_worn_check;
 
         /* wielded weapon gives same protection as gloves here */
         if (otmp != 0)
-            wornitems |= W_ARMG;
+            wornitems |= W_MASK(os_armg);
 
         if (protector == 0L ||
             (protector != ~0L && (wornitems & protector) != protector)) {
@@ -1104,13 +1104,13 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             strcpy(mdefnambuf, x_monnam(mdef, ARTICLE_THE, NULL, 0, FALSE));
 
             otmp = obj;
-            if (u.usteed == mdef && otmp == which_armor(mdef, W_SADDLE))
+            if (u.usteed == mdef && otmp == which_armor(mdef, os_saddle))
                 /* "You can no longer ride <steed>." */
                 dismount_steed(DISMOUNT_POLY);
             obj_extract_self(otmp);
             if (otmp->owornmask) {
                 mdef->misc_worn_check &= ~otmp->owornmask;
-                if (otmp->owornmask & W_WEP)
+                if (otmp->owornmask & W_MASK(os_wep))
                     setmnotwielded(mdef, otmp);
                 otmp->owornmask = 0L;
                 update_mon_intrinsics(mdef, otmp, FALSE, FALSE);
@@ -1166,11 +1166,11 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             tmp = 0;
             break;
         }
-        if ((mdef->misc_worn_check & W_ARMH) && rn2(8)) {
+        if ((mdef->misc_worn_check & W_MASK(os_armh)) && rn2(8)) {
             if (vis) {
                 strcpy(buf, s_suffix(Monnam(mdef)));
                 pline("%s %s blocks %s attack to %s head.", buf,
-                      helmet_name(which_armor(mdef, W_ARMH)),
+                      helmet_name(which_armor(mdef, os_armh)),
                       s_suffix(mon_nam(magr)), mhis(mdef));
             }
             break;
@@ -1596,16 +1596,17 @@ attk_protection(int aatyp)
     case AT_CLAW:
     case AT_TUCH:
     case AT_WEAP:
-        w_mask = W_ARMG;        /* caller needs to check for weapon */
+        w_mask = W_MASK(os_armg);   /* caller needs to check for weapon */
         break;
     case AT_KICK:
-        w_mask = W_ARMF;
+        w_mask = W_MASK(os_armf);
         break;
     case AT_BUTT:
-        w_mask = W_ARMH;
+        w_mask = W_MASK(os_armh);
         break;
     case AT_HUGS:
-        w_mask = (W_ARMC | W_ARMG);     /* attacker needs both to be protected */
+        /* attacker needs both cloak and gloves to be protected */
+        w_mask = (W_MASK(os_armc) | W_MASK(os_armg));
         break;
     case AT_BITE:
     case AT_STNG:

@@ -69,7 +69,8 @@ use_saddle(struct obj *otmp)
     }
 
     /* Is this a valid monster? */
-    if (mtmp->misc_worn_check & W_SADDLE || which_armor(mtmp, W_SADDLE)) {
+    if (mtmp->misc_worn_check & W_MASK(os_saddle) ||
+        which_armor(mtmp, os_saddle)) {
         pline("%s doesn't need another one.", Monnam(mtmp));
         return 0;
     }
@@ -142,8 +143,8 @@ use_saddle(struct obj *otmp)
         /* mpickobj may free otmp it if merges, but we have already checked for 
            a saddle above, so no merger should happen */
         mpickobj(mtmp, otmp);
-        mtmp->misc_worn_check |= W_SADDLE;
-        otmp->owornmask = W_SADDLE;
+        mtmp->misc_worn_check |= W_MASK(os_saddle);
+        otmp->owornmask = W_MASK(os_saddle);
         otmp->leashmon = mtmp->m_id;
         update_mon_intrinsics(mtmp, otmp, TRUE, FALSE);
     } else
@@ -248,7 +249,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     }
 
     /* Is this a valid monster? */
-    otmp = which_armor(mtmp, W_SADDLE);
+    otmp = which_armor(mtmp, os_saddle);
     if (!otmp) {
         pline("%s is not saddled.", Monnam(mtmp));
         return FALSE;
@@ -471,7 +472,7 @@ dismount_steed(int reason)
         return;
 
     /* Check the reason for dismounting */
-    otmp = which_armor(mtmp, W_SADDLE);
+    otmp = which_armor(mtmp, os_saddle);
     switch (reason) {
     case DISMOUNT_THROWN:
         verb = "are thrown";
@@ -599,7 +600,7 @@ dismount_steed(int reason)
     /* Return the player to the floor */
     if (reason != DISMOUNT_ENGULFED) {
         in_steed_dismounting = TRUE;
-        float_down(0L, W_SADDLE);
+        float_down(0L, W_MASK(os_saddle));
         in_steed_dismounting = FALSE;
         iflags.botl = 1;
         encumber_msg();

@@ -89,11 +89,7 @@ struct flag flags;
 struct instance_flags iflags;
 struct you u;
 
-struct obj *invent, *uwep, *uarm, *uswapwep, *uquiver,  /* quiver */
-   *uarmu,      /* under-wear, so to speak */
-   *uskin,      /* dragon armor, if a dragon */
-   *uarmc, *uarmh, *uarms, *uarmg, *uarmf, *uamul, *uright, *uleft, *ublindf,
-    *uchain, *uball;
+struct obj *invent;
 int lastinvnr;  /* 0 ... 51 */
 
 const int shield_static[SHIELD_COUNT] = {

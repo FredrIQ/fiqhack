@@ -210,12 +210,12 @@ merged(struct obj **potmp, struct obj **pobj)
                (Prior to 3.3.0, it was not possible for the two stacks to be
                worn in different slots and `obj' didn't need to be unworn when
                merging.) */
-            if (wmask & W_WEP)
-                wmask = W_WEP;
-            else if (wmask & W_SWAPWEP)
-                wmask = W_SWAPWEP;
-            else if (wmask & W_QUIVER)
-                wmask = W_QUIVER;
+            if (wmask & W_MASK(os_wep))
+                wmask = W_MASK(os_wep);
+            else if (wmask & W_MASK(os_swapwep))
+                wmask = W_MASK(os_swapwep);
+            else if (wmask & W_MASK(os_quiver))
+                wmask = W_MASK(os_quiver);
             else {
                 impossible("merging strangely worn items (%lx)", wmask);
                 wmask = otmp->owornmask;
@@ -272,7 +272,7 @@ addinv_stats(struct obj *obj)
             u.uhave.questart = 1;
             artitouch();
         }
-        set_artifact_intrinsic(obj, 1, W_ART);
+        set_artifact_intrinsic(obj, 1, W_MASK(os_carried));
     }
 
     if (confers_luck(obj)) {
@@ -515,7 +515,7 @@ freeinv_stats(struct obj *obj)
                 impossible("don't have quest artifact?");
             u.uhave.questart = 0;
         }
-        set_artifact_intrinsic(obj, 0, W_ART);
+        set_artifact_intrinsic(obj, 0, W_MASK(os_carried));
     }
 
     if (obj->otyp == LOADSTONE) {
@@ -731,15 +731,14 @@ putting_on(const char *action)
 static enum obj_use_status
 object_selection_checks(struct obj *otmp, const char *word)
 {
-    int dummymask;
+    long dummymask;
     int otyp = otmp->otyp;
 
     /* ugly check: remove inappropriate things */
     if ((taking_off(word) &&
-         (!(otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))
+         (!(otmp->owornmask & W_WORN)
           || (otmp == uarm && uarmc) || (otmp == uarmu && (uarm || uarmc))))
-        || (putting_on(word) && (otmp->owornmask &      /* already worn */
-                                 (W_ARMOR | W_RING | W_AMUL | W_TOOL)))
+        || (putting_on(word) && (otmp->owornmask & W_WORN))
         || (!strcmp(word, "ready") &&
             (otmp == uwep || (otmp == uswapwep && u.twoweap))))
         return ALREADY_IN_USE;
@@ -1069,11 +1068,7 @@ wearing_armor(void)
 boolean
 is_worn(const struct obj * otmp)
 {
-    return ((boolean)
-            (! !
-             (otmp->owornmask &
-              (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE | W_WEP | W_SWAPWEP
-               | W_QUIVER))));
+    return ((boolean) (!!(otmp->owornmask & (W_EQUIP | W_MASK(os_saddle)))));
 }
 
 
@@ -2113,7 +2108,7 @@ dopramulet(void)
 static boolean
 tool_in_use(struct obj *obj)
 {
-    if ((obj->owornmask & (W_TOOL | W_SADDLE)) != 0L)
+    if ((obj->owornmask & (W_MASK(os_tool) | W_MASK(os_saddle))) != 0L)
         return TRUE;
     if (obj->oclass != TOOL_CLASS)
         return FALSE;

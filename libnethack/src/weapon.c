@@ -378,7 +378,8 @@ would_prefer_rwep(struct monst *mtmp, struct obj *otmp)
             return TRUE;
     }
 
-    if (((strongmonst(mtmp->data) && (mtmp->misc_worn_check & W_ARMS) == 0)
+    if (((strongmonst(mtmp->data) &&
+          (mtmp->misc_worn_check & W_MASK(os_arms)) == 0)
          || !objects[pwep[i]].oc_bimanual) &&
         (objects[pwep[i]].oc_material != SILVER || !hates_silver(mtmp->data))) {
         for (i = 0; i < SIZE(pwep); i++) {
@@ -438,7 +439,7 @@ select_rwep(struct monst *mtmp)
                weapon is basically the same as bimanual. All monsters can wield 
                the remaining weapons. */
             if (((strongmonst(mtmp->data) &&
-                  (mtmp->misc_worn_check & W_ARMS) == 0)
+                  (mtmp->misc_worn_check & W_MASK(os_arms)) == 0)
                  || !objects[pwep[i]].oc_bimanual) &&
                 (objects[pwep[i]].oc_material != SILVER ||
                  !hates_silver(mtmp->data))) {
@@ -556,7 +557,7 @@ would_prefer_hwep(struct monst *mtmp, struct obj *otmp)
     }
 
     for (i = 0; i < SIZE(hwep); i++) {
-        if (hwep[i] == CORPSE && !(mtmp->misc_worn_check & W_ARMG))
+        if (hwep[i] == CORPSE && !(mtmp->misc_worn_check & W_MASK(os_armg)))
             continue;
 
         if (wep && wep->otyp == hwep[i] &&
@@ -578,7 +579,7 @@ select_hwep(struct monst *mtmp)
     struct obj *otmp;
     int i;
     boolean strong = strongmonst(mtmp->data);
-    boolean wearing_shield = (mtmp->misc_worn_check & W_ARMS) != 0;
+    boolean wearing_shield = (mtmp->misc_worn_check & W_MASK(os_arms)) != 0;
 
     /* prefer artifacts to everything else */
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
@@ -596,7 +597,7 @@ select_hwep(struct monst *mtmp)
     /* big weapon is basically the same as bimanual */
     /* all monsters can wield the remaining weapons */
     for (i = 0; i < SIZE(hwep); i++) {
-        if (hwep[i] == CORPSE && !(mtmp->misc_worn_check & W_ARMG))
+        if (hwep[i] == CORPSE && !(mtmp->misc_worn_check & W_MASK(os_armg)))
             continue;
         if (((strong && !wearing_shield)
              || !objects[hwep[i]].oc_bimanual) &&
@@ -683,13 +684,13 @@ mon_wield_item(struct monst *mon)
     case NEED_PICK_AXE:
         obj = m_carrying(mon, PICK_AXE);
         /* KMH -- allow other picks */
-        if (!obj && !which_armor(mon, W_ARMS))
+        if (!obj && !which_armor(mon, os_arms))
             obj = m_carrying(mon, DWARVISH_MATTOCK);
         break;
     case NEED_AXE:
         /* currently, only 2 types of axe */
         obj = m_carrying(mon, BATTLE_AXE);
-        if (!obj || which_armor(mon, W_ARMS))
+        if (!obj || which_armor(mon, os_arms))
             obj = m_carrying(mon, AXE);
         break;
     case NEED_PICK_OR_AXE:
@@ -697,7 +698,7 @@ mon_wield_item(struct monst *mon)
         obj = m_carrying(mon, DWARVISH_MATTOCK);
         if (!obj)
             obj = m_carrying(mon, BATTLE_AXE);
-        if (!obj || which_armor(mon, W_ARMS)) {
+        if (!obj || which_armor(mon, os_arms)) {
             obj = m_carrying(mon, PICK_AXE);
             if (!obj)
                 obj = m_carrying(mon, AXE);
@@ -762,7 +763,7 @@ mon_wield_item(struct monst *mon)
                 pline("%s brilliantly in %s %s!", Tobjnam(obj, "glow"),
                       s_suffix(mon_nam(mon)), mbodypart(mon, HAND));
         }
-        obj->owornmask = W_WEP;
+        obj->owornmask = W_MASK(os_wep);
         return 1;
     }
     mon->weapon_check = NEED_WEAPON;
@@ -1492,7 +1493,7 @@ setmnotwielded(struct monst *mon, struct obj *obj)
                   s_suffix(mon_nam(mon)), mbodypart(mon, HAND),
                   otense(obj, "stop"));
     }
-    obj->owornmask &= ~W_WEP;
+    obj->owornmask &= ~W_MASK(os_wep);
 }
 
 /*weapon.c*/

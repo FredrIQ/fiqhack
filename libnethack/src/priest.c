@@ -211,7 +211,7 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
             mpickobj(priest, mkobj(level, SPBOOK_CLASS, FALSE));
         }
         /* robe [via makemon()] */
-        if (rn2(2) && (otmp = which_armor(priest, W_ARMC)) != 0) {
+        if (rn2(2) && (otmp = which_armor(priest, os_armc)) != 0) {
             if (p_coaligned(priest))
                 uncurse(otmp);
             else

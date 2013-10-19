@@ -1853,12 +1853,12 @@ use_grease(struct obj *obj)
         otmp = getobj(lubricables, "grease");
         if (!otmp)
             return 0;
-        if ((otmp->owornmask & WORN_ARMOR) && uarmc) {
+        if ((otmp->owornmask & W_MASK(os_arm)) && uarmc) {
             strcpy(buf, xname(uarmc));
             pline(need_to_remove_outer_armor, buf, xname(otmp));
             return 0;
         }
-        if ((otmp->owornmask & WORN_SHIRT) && (uarmc || uarm)) {
+        if ((otmp->owornmask & W_MASK(os_armc)) && (uarmc || uarm)) {
             strcpy(buf, uarmc ? xname(uarmc) : "");
             if (uarmc && uarm)
                 strcat(buf, " and ");
@@ -2895,7 +2895,7 @@ doapply(struct obj *obj)
                 Blindf_off(obj);
         } else if (!ublindf) {
             unwield_silently(obj);
-            setworn(obj, W_TOOL);
+            setworn(obj, W_MASK(os_tool));
             Blindf_on(obj);
         } else {
             pline("You are already %s.",

@@ -372,7 +372,7 @@ rndcurse(void)
 
     /* treat steed's saddle as extended part of hero's inventory */
     if (u.usteed && !rn2(4) &&
-        (otmp = which_armor(u.usteed, W_SADDLE)) != 0 &&
+        (otmp = which_armor(u.usteed, os_saddle)) != 0 &&
         !otmp->cursed) { /* skip if already cursed */
         if (otmp->blessed)
             unbless(otmp);

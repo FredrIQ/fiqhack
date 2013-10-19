@@ -237,7 +237,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
                     pline("%s opens its mouth!", Monnam(mtmp));
             }
             expels(mtmp, mtmp->data, TRUE);
-        } else if (! !(obj = which_armor(mtmp, W_SADDLE))) {
+        } else if (! !(obj = which_armor(mtmp, os_saddle))) {
             mtmp->misc_worn_check &= ~obj->owornmask;
             update_mon_intrinsics(mtmp, obj, FALSE, FALSE);
             obj->owornmask = 0L;
@@ -826,44 +826,45 @@ costly_cancel(struct obj *obj)
 void
 cancel_item(struct obj *obj)
 {
-    boolean u_ring = (obj == uleft) || (obj == uright);
     boolean holy = (obj->otyp == POT_WATER && (obj->blessed || obj->cursed));
+    boolean obj_worn_as_ring =
+        obj_worn_on(obj, os_ringl) || obj_worn_on(obj, os_ringr);
 
     switch (obj->otyp) {
     case RIN_GAIN_STRENGTH:
-        if ((obj->owornmask & W_RING) && u_ring) {
+        if (obj_worn_as_ring) {
             ABON(A_STR) -= obj->spe;
             iflags.botl = 1;
         }
         break;
     case RIN_GAIN_CONSTITUTION:
-        if ((obj->owornmask & W_RING) && u_ring) {
+        if (obj_worn_as_ring) {
             ABON(A_CON) -= obj->spe;
             iflags.botl = 1;
         }
         break;
     case RIN_ADORNMENT:
-        if ((obj->owornmask & W_RING) && u_ring) {
+        if (obj_worn_as_ring) {
             ABON(A_CHA) -= obj->spe;
             iflags.botl = 1;
         }
         break;
     case RIN_INCREASE_ACCURACY:
-        if ((obj->owornmask & W_RING) && u_ring)
+        if (obj_worn_as_ring)
             u.uhitinc -= obj->spe;
         break;
     case RIN_INCREASE_DAMAGE:
-        if ((obj->owornmask & W_RING) && u_ring)
+        if (obj_worn_as_ring)
             u.udaminc -= obj->spe;
         break;
     case GAUNTLETS_OF_DEXTERITY:
-        if ((obj->owornmask & W_ARMG) && (obj == uarmg)) {
+        if (obj_worn_on(obj, os_armg)) {
             ABON(A_DEX) -= obj->spe;
             iflags.botl = 1;
         }
         break;
     case HELM_OF_BRILLIANCE:
-        if ((obj->owornmask & W_ARMH) && (obj == uarmh)) {
+        if (obj_worn_on(obj, os_armh)) {
             ABON(A_INT) -= obj->spe;
             ABON(A_WIS) -= obj->spe;
             iflags.botl = 1;
@@ -927,7 +928,8 @@ cancel_item(struct obj *obj)
 boolean
 drain_item(struct obj * obj)
 {
-    boolean u_ring;
+    boolean obj_worn_as_ring =
+        obj_worn_on(obj, os_ringl) || obj_worn_on(obj, os_ringr);
 
     /* Is this a charged/enchanted object? */
     if (!obj ||
@@ -944,43 +946,43 @@ drain_item(struct obj * obj)
 
     /* Drain the object and any implied effects */
     obj->spe--;
-    u_ring = (obj == uleft) || (obj == uright);
+
     switch (obj->otyp) {
     case RIN_GAIN_STRENGTH:
-        if ((obj->owornmask & W_RING) && u_ring) {
+        if (obj_worn_as_ring) {
             ABON(A_STR)--;
             iflags.botl = 1;
         }
         break;
     case RIN_GAIN_CONSTITUTION:
-        if ((obj->owornmask & W_RING) && u_ring) {
+        if (obj_worn_as_ring) {
             ABON(A_CON)--;
             iflags.botl = 1;
         }
         break;
     case RIN_ADORNMENT:
-        if ((obj->owornmask & W_RING) && u_ring) {
+        if (obj_worn_as_ring) {
             ABON(A_CHA)--;
             iflags.botl = 1;
         }
         break;
     case RIN_INCREASE_ACCURACY:
-        if ((obj->owornmask & W_RING) && u_ring)
+        if (obj_worn_as_ring)
             u.uhitinc--;
         break;
     case RIN_INCREASE_DAMAGE:
-        if ((obj->owornmask & W_RING) && u_ring)
+        if (obj_worn_as_ring)
             u.udaminc--;
         break;
     case HELM_OF_BRILLIANCE:
-        if ((obj->owornmask & W_ARMH) && (obj == uarmh)) {
+        if (obj_worn_on(obj, os_armh)) {
             ABON(A_INT)--;
             ABON(A_WIS)--;
             iflags.botl = 1;
         }
         break;
     case GAUNTLETS_OF_DEXTERITY:
-        if ((obj->owornmask & W_ARMG) && (obj == uarmg)) {
+        if (obj_worn_on(obj, os_armg)) {
             ABON(A_DEX)--;
             iflags.botl = 1;
         }
@@ -1230,7 +1232,8 @@ poly_obj(struct obj *obj, int id)
     boolean can_merge = (id == STRANGE_OBJECT);
     int obj_location = obj->where;
 
-    if (obj->owornmask & (W_BALL | W_SADDLE | W_CHAIN)) {
+    if (obj->owornmask &
+        (W_MASK(os_ball) | W_MASK(os_chain) | W_MASK(os_saddle))) {
         impossible("Polymorphing a chain, ball, or saddle!");
         return obj;
     }
@@ -1399,95 +1402,42 @@ poly_obj(struct obj *obj, int id)
     /* swap otmp for obj */
     replace_object(obj, otmp);
     if (obj_location == OBJ_INVENT) {
-        /* 
-         * We may need to do extra adjustments for the hero if we're
-         * messing with the hero's inventory.  The following calls are
-         * equivalent to calling freeinv on obj and addinv on otmp,
-         * while doing an in-place swap of the actual objects.
-         */
-        int old_mask = obj->owornmask, new_mask;
+        /* We may need to do extra adjustments for the hero if we're messing
+           with the hero's inventory.  The following calls are equivalent to
+           calling freeinv on obj and addinv on otmp, while doing an in-place
+           swap of the actual objects. */
+        long old_mask = obj->owornmask, new_mask;
         /* boolean save_twoweap = u.twoweap; */
         remove_worn_item(obj, TRUE);
         swapinv(obj, otmp);
 
-        /* This code counts the number of bits set in the mask. We want to
-         * be sure that only one bit is set, because otherwise we're very
-         * confused. */
-        int v = old_mask & (W_WORN | W_WEP | W_QUIVER | W_SWAPWEP);
-        v = v - ((v >> 1) & 0x55555555);
-        v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-        v = ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-        if (v > 1) {
+        /* This code counts the number of bits set in the mask.  We want to be
+           sure that only one bit is set, because otherwise we're very
+           confused.  v&(v-1) is nonzero whenever multiple bits are set. */
+        long v = old_mask & W_EQUIP;
+        if (v & (v-1)) {
             impossible("More than one worn mask set in poly_obj?!?");
-        } else if ((old_mask & W_ARMOR) && canwearobj(otmp, &new_mask, FALSE)) {
+        } else if (canwearobj(otmp, &new_mask, FALSE)) {
             /* canwearobj only checks for wearable armor */
-            switch (new_mask) {
-            case W_ARM:
-                if (old_mask & (W_ARM | W_ARMC | W_ARMU)) {
-                    setworn(otmp, new_mask);
-                    Armor_on();
+            const int body_slots = 
+                (W_MASK(os_arm) | W_MASK(os_armc) | W_MASK(os_armu));
+            if (old_mask == new_mask ||
+                (old_mask & body_slots && new_mask & body_slots) ||
+                (old_mask & W_RING && new_mask & W_RING)) {
+                if (new_mask == W_RING) new_mask = old_mask;
+                setworn(otmp, new_mask);
+                if (Slot_on(objslot_from_mask(new_mask))) {
+                    if (obj->unpaid)
+                        costly_damage_obj(obj);
+                    delobj(obj);
+                    return NULL;
                 }
-                break;
-            case W_ARMC:
-                if (old_mask & (W_ARM | W_ARMC | W_ARMU)) {
-                    setworn(otmp, new_mask);
-                    Cloak_on();
-                }
-                break;
-            case W_ARMH:
-                if (old_mask & (W_ARMH)) {
-                    setworn(otmp, new_mask);
-                    Helmet_on();
-                }
-                break;
-            case W_ARMS:
-                if (old_mask & (W_ARMS)) {
-                    setworn(otmp, new_mask);
-                    Shield_on();
-                }
-                break;
-            case W_ARMG:
-                if (old_mask & (W_ARMG)) {
-                    setworn(otmp, new_mask);
-                    Gloves_on();
-                }
-                break;
-            case W_ARMF:
-                if (old_mask & (W_ARMF)) {
-                    setworn(otmp, new_mask);
-                    Boots_on();
-                }
-                break;
-            case W_ARMU:
-                if (old_mask & (W_ARM | W_ARMC | W_ARMU)) {
-                    setworn(otmp, new_mask);
-                    Shirt_on();
-                }
-                break;
             }
-        } else if (otmp->oclass == AMULET_CLASS && (old_mask & W_AMUL)) {
-            setworn(otmp, W_AMUL);
-            /* Wearing an amulet can destroy it */
-            if (Amulet_on()) {
-                if (obj->unpaid)
-                    costly_damage_obj(obj);
-                delobj(obj);
-                return NULL;
-            }
-        } else if ((otmp->oclass == RING_CLASS || otmp->otyp == MEAT_RING) &&
-                   (old_mask & W_RING)) {
-            setworn(otmp, old_mask & W_RING);
-            Ring_on(otmp);
-        } else if ((otmp->otyp == BLINDFOLD || otmp->otyp == LENSES ||
-                    otmp->otyp == TOWEL) &&
-                   (old_mask & W_TOOL)) {
-            setworn(otmp, W_TOOL);
-            Blindf_on(otmp);
-        } else if (old_mask & W_WEP) {
+        } else if (old_mask & W_MASK(os_wep)) {
             if (!ready_weapon(otmp))
                 impossible("Failed to ready polymorphed weapon?");
             /* FIXME: two-weaponing */
-        } else if (old_mask & W_SWAPWEP) {
+        } else if (old_mask & W_MASK(os_swapwep)) {
             setuswapwep(otmp);
             /* FIXME: two-weaponing */
         }
@@ -3113,21 +3063,21 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
 
             if (resists_disint(mon)) {
                 sho_shieldeff = TRUE;
-            } else if (mon->misc_worn_check & W_ARMS) {
+            } else if (mon->misc_worn_check & W_MASK(os_arms)) {
                 /* destroy shield; victim survives */
-                *ootmp = which_armor(mon, W_ARMS);
-            } else if (mon->misc_worn_check & W_ARM) {
+                *ootmp = which_armor(mon, os_arms);
+            } else if (mon->misc_worn_check & W_MASK(os_arm)) {
                 /* destroy body armor, also cloak if present */
-                *ootmp = which_armor(mon, W_ARM);
-                if ((otmp2 = which_armor(mon, W_ARMC)) != 0)
+                *ootmp = which_armor(mon, os_arm);
+                if ((otmp2 = which_armor(mon, os_armc)) != 0)
                     m_useup(mon, otmp2);
             } else {
                 /* no body armor, victim dies; destroy cloak and shirt now in
                    case target gets life-saved */
                 tmp = MAGIC_COOKIE;
-                if ((otmp2 = which_armor(mon, W_ARMC)) != 0)
+                if ((otmp2 = which_armor(mon, os_armc)) != 0)
                     m_useup(mon, otmp2);
-                if ((otmp2 = which_armor(mon, W_ARMU)) != 0)
+                if ((otmp2 = which_armor(mon, os_armu)) != 0)
                     m_useup(mon, otmp2);
             }
             type = -1;  /* no saving throw wanted */
@@ -3545,7 +3495,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                                 /* update the monsters intrinsics and saddle in
                                    case it is lifesaved. */
                                 if (otmp->owornmask && otmp->otyp == SADDLE)
-                                    mon->misc_worn_check &= ~W_SADDLE;
+                                    mon->misc_worn_check &= ~W_MASK(os_saddle);
                                 update_mon_intrinsics(mon, otmp, FALSE, TRUE);
                                 obj_extract_self(otmp);
                                 obfree(otmp, NULL);

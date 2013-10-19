@@ -153,12 +153,8 @@ allow_category(const struct obj * obj)
 boolean
 is_worn_by_type(const struct obj * otmp)
 {
-    return ((boolean)
-            (! !
-             (otmp->owornmask &
-              (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
-               W_QUIVER)))
-            && (strchr(valid_menu_classes, otmp->oclass) != NULL));
+    return (otmp->owornmask & W_EQUIP) &&
+        (strchr(valid_menu_classes, otmp->oclass) != NULL);
 }
 
 /*
@@ -413,7 +409,7 @@ add_objitem(struct nh_objitem **items, int *nr_items,
         it->group_accel = def_oc_syms[(int)obj->oclass];
         it->otype = obfuscate_object(obj->otyp + 1);
         it->oclass = obj->oclass;
-        it->worn = ! !(obj->owornmask & ~(u.twoweap ? 0 : W_SWAPWEP));
+        it->worn = ! !(obj->owornmask & ~(u.twoweap ? 0 : W_MASK(os_swapwep)));
 
         /* don't unconditionally reveal weight, otherwise lodestones on the
            floor could be identified by their weight in the pickup dialog */
@@ -681,10 +677,7 @@ query_category(const char *qstr,        /* query string */
     if (ccount == 1 && !do_unpaid && num_buc_types <= 1 &&
         !(qflags & BILLED_TYPES)) {
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
-            if ((qflags & WORN_TYPES) &&
-                !(curr->owornmask &
-                  (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
-                   W_QUIVER)))
+            if ((qflags & WORN_TYPES) && !(curr->owornmask & W_EQUIP))
                 continue;
             break;
         }
@@ -710,10 +703,7 @@ query_category(const char *qstr,        /* query string */
         collected_type_name = FALSE;
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
             if (curr->oclass == *pack) {
-                if ((qflags & WORN_TYPES) &&
-                    !(curr->owornmask &
-                      (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
-                       W_QUIVER)))
+                if ((qflags & WORN_TYPES) && !(curr->owornmask & W_EQUIP))
                     continue;
                 if (!collected_type_name) {
                     add_menuitem(&menu, curr->oclass, let_to_name(*pack, FALSE),
@@ -783,10 +773,7 @@ count_categories(struct obj *olist, int qflags)
         counted_category = FALSE;
         for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
             if (curr->oclass == *pack) {
-                if ((qflags & WORN_TYPES) &&
-                    !(curr->owornmask &
-                      (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_WEP | W_SWAPWEP |
-                       W_QUIVER)))
+                if ((qflags & WORN_TYPES) && !(curr->owornmask & W_EQUIP))
                     continue;
                 if (!counted_category) {
                     ccount++;
@@ -1452,7 +1439,7 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
     /* 3.3.1 introduced the ability to remove saddle from a steed */
     /* *passed_info is set to TRUE if a loot query was given.  */
     /* *prev_loot is set to TRUE if something was actually acquired in here. */
-    if (mtmp && mtmp != u.usteed && (otmp = which_armor(mtmp, W_SADDLE))) {
+    if (mtmp && mtmp != u.usteed && (otmp = which_armor(mtmp, os_saddle))) {
         long unwornmask;
 
         if (passed_info)
@@ -1580,7 +1567,7 @@ in_container(struct obj *obj)
     if (mbag_explodes_reason == 2)
         return 0;
 
-    if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) {
+    if (obj->owornmask & W_WORN) {
         Norep("You cannot %s something you are wearing.",
               Icebox ? "refrigerate" : "stash");
         return 0;

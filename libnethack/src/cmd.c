@@ -1760,7 +1760,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD('V', "rub", "Rub something on %s", 0);
 
     /* throw item, works on almost everything */
-    if (!(obj->owornmask & (W_WORN | W_SADDLE))) {
+    if (!(obj->owornmask & (W_WORN | W_MASK(os_saddle)))) {
         /* you automatically throw only 1 item - except for gold */
         if (obj->oclass == COIN_CLASS)
             SET_OBJ_CMD('t', "throw", "Throw %s", 0);
@@ -1769,7 +1769,7 @@ nh_get_object_commands(int *count, char invlet)
     }
 
     /* unequip armor */
-    if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))
+    if (obj->owornmask & W_WORN)
         SET_OBJ_CMD('T', "remove", "Take %s off", 0);
 
     /* invoke */

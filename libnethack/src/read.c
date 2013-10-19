@@ -296,7 +296,7 @@ recharge(struct obj *obj, int curse_bless)
             useup(obj);
             losehp(s, "exploding ring", KILLED_BY_AN);
         } else {
-            long mask = is_on ? (obj == uleft ? LEFT_RING : RIGHT_RING) : 0L;
+            long mask = is_on ? W_MASK(obj == uleft ? os_ringl : os_ringr) : 0L;
 
             pline("Your %s spins %sclockwise for a moment.", xname(obj),
                   s < 0 ? "counter" : "");
@@ -675,7 +675,7 @@ seffects(struct obj *sobj, boolean * known)
                 otmp->otyp <= YELLOW_DRAGON_SCALES) {
                 /* dragon scales get turned into dragon scale mail */
                 pline("Your %s merges and hardens!", xname(otmp));
-                setworn(NULL, W_ARM);
+                setworn(NULL, W_MASK(os_arm));
                 /* assumes same order */
                 otmp->otyp =
                     GRAY_DRAGON_SCALE_MAIL + otmp->otyp - GRAY_DRAGON_SCALES;
@@ -685,7 +685,7 @@ seffects(struct obj *sobj, boolean * known)
                     otmp->blessed = 1;
                 }
                 otmp->known = 1;
-                setworn(otmp, W_ARM);
+                setworn(otmp, W_MASK(os_arm));
                 if (otmp->unpaid && s > 0)
                     adjust_bill_val(otmp);
                 break;
@@ -860,7 +860,9 @@ seffects(struct obj *sobj, boolean * known)
                     if (obj->oclass == COIN_CLASS)
                         continue;
 
-                    wornmask = (obj->owornmask & ~(W_BALL | W_ART | W_ARTI));
+                    /* Don't allow equipped-only curse removal to work on the
+                       ball (although it does work on the chain) */
+                    wornmask = obj->owornmask & ~W_MASK(os_ball) & W_MASKABLE;
                     if (wornmask && !sobj->blessed) {
                         /* handle a couple of special cases; we don't allow
                            auxiliary weapon slots to be used to artificially
@@ -1169,7 +1171,7 @@ seffects(struct obj *sobj, boolean * known)
                                 !passes_walls(mtmp->data) &&
                                 !noncorporeal(mtmp->data) &&
                                 !unsolid(mtmp->data)) {
-                                struct obj *helmet = which_armor(mtmp, W_ARMH);
+                                struct obj *helmet = which_armor(mtmp, os_armh);
                                 int mdmg;
 
                                 if (cansee(mtmp->mx, mtmp->my)) {
@@ -1738,8 +1740,8 @@ punish(struct obj *sobj)
         dropy(mkobj(level, BALL_CLASS, TRUE));
         return;
     }
-    setworn(mkobj(level, CHAIN_CLASS, TRUE), W_CHAIN);
-    setworn(mkobj(level, BALL_CLASS, TRUE), W_BALL);
+    setworn(mkobj(level, CHAIN_CLASS, TRUE), W_MASK(os_chain));
+    setworn(mkobj(level, BALL_CLASS, TRUE), W_MASK(os_ball));
     uball->spe = 1;     /* special ball (see save) */
 
     /* 
@@ -1761,10 +1763,10 @@ unpunish(void)
 
     obj_extract_self(uchain);
     newsym(uchain->ox, uchain->oy);
-    setworn(NULL, W_CHAIN);
+    setworn(NULL, W_MASK(os_chain));
     dealloc_obj(savechain);
     uball->spe = 0;
-    setworn(NULL, W_BALL);
+    setworn(NULL, W_MASK(os_ball));
 }
 
 /* some creatures have special data structures that only make sense in their

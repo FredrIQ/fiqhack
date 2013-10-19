@@ -922,7 +922,7 @@ can_carry(struct monst *mtmp, struct obj *otmp)
         return FALSE;   /* can't carry anything */
 
     if (otyp == CORPSE && touch_petrifies(&mons[otmp->corpsenm]) &&
-        !(mtmp->misc_worn_check & W_ARMG) && !resists_ston(mtmp))
+        !(mtmp->misc_worn_check & W_MASK(os_armg)) && !resists_ston(mtmp))
         return FALSE;
     if (otyp == CORPSE && is_rider(&mons[otmp->corpsenm]))
         return FALSE;
@@ -992,10 +992,10 @@ mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
         } else {
             rockok = (m_carrying(mon, PICK_AXE) ||
                       (m_carrying(mon, DWARVISH_MATTOCK) &&
-                       !which_armor(mon, W_ARMS)));
+                       !which_armor(mon, os_arms)));
             treeok = (m_carrying(mon, AXE) ||
                       (m_carrying(mon, BATTLE_AXE) &&
-                       !which_armor(mon, W_ARMS)));
+                       !which_armor(mon, os_arms)));
         }
         thrudoor |= rockok || treeok;
     }
@@ -1362,7 +1362,7 @@ struct obj *
 mlifesaver(struct monst *mon)
 {
     if (!nonliving(mon->data)) {
-        struct obj *otmp = which_armor(mon, W_AMUL);
+        struct obj *otmp = which_armor(mon, os_amul);
 
         if (otmp && otmp->otyp == AMULET_OF_LIFE_SAVING)
             return otmp;
@@ -1624,7 +1624,7 @@ monstone(struct monst *mdef)
             if (obj->owornmask)
                 update_mon_intrinsics(mdef, obj, FALSE, TRUE);
             obj_no_longer_held(obj);
-            if (obj->owornmask & W_WEP)
+            if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mdef, obj);
             obj->owornmask = 0L;
             if (obj->otyp == BOULDER || obj_resists(obj, 0, 0)) {
@@ -2331,7 +2331,7 @@ select_newcham_form(struct monst *mon)
         break;
     case CHAM_ORDINARY:
         {
-            struct obj *m_armr = which_armor(mon, W_ARM);
+            struct obj *m_armr = which_armor(mon, os_arm);
 
             if (m_armr && Is_dragon_scales(m_armr))
                 mndx = Dragon_scales_to_pm(m_armr) - mons;
@@ -2523,7 +2523,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
 
     possibly_unwield(mtmp, polyspot);   /* might lose use of weapon */
     mon_break_armor(mtmp, polyspot);
-    if (!(mtmp->misc_worn_check & W_ARMG))
+    if (!(mtmp->misc_worn_check & W_MASK(os_armg)))
         mselftouch(mtmp, "No longer petrify-resistant, ", !flags.mon_moving);
     m_dowear(mtmp, FALSE);
 

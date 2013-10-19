@@ -429,7 +429,7 @@ canletgo(struct obj *obj, const char *word)
             pline("The leash is tied around your %s.", body_part(HAND));
         return FALSE;
     }
-    if (obj->owornmask & W_SADDLE) {
+    if (obj->owornmask & W_MASK(os_saddle)) {
         if (*word)
             pline("You cannot %s something you are sitting on.", word);
         return FALSE;
@@ -694,9 +694,9 @@ dodown(void)
         pline("%s is still eating.", Monnam(u.usteed));
         return 0;
     } else if (Levitation) {
-        if ((HLevitation & I_SPECIAL) || (ELevitation & W_ARTI)) {
+        if ((HLevitation & I_SPECIAL) || (ELevitation & W_MASK(os_invoked))) {
             /* end controlled levitation */
-            if (ELevitation & W_ARTI) {
+            if (ELevitation & W_MASK(os_invoked)) {
                 struct obj *obj;
 
                 for (obj = invent; obj; obj = obj->nobj) {
@@ -708,7 +708,7 @@ dodown(void)
                     }
                 }
             }
-            if (float_down(I_SPECIAL | TIMEOUT, W_ARTI))
+            if (float_down(I_SPECIAL | TIMEOUT, W_MASK(os_invoked)))
                 return 1;       /* came down, so moved */
         }
         if (level->locations[u.ux][u.uy].seenv &&
@@ -1324,7 +1324,7 @@ final_level(void)
                 bless(otmp);
                 if (otmp->spe < 4)
                     otmp->spe += rnd(4);
-                if ((otmp = which_armor(mtmp, W_ARMS)) == 0 ||
+                if ((otmp = which_armor(mtmp, os_arms)) == 0 ||
                     otmp->otyp != SHIELD_OF_REFLECTION) {
                     mongets(mtmp, AMULET_OF_REFLECTION);
                     m_dowear(mtmp, TRUE);

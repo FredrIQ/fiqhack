@@ -8,9 +8,7 @@
 
 # include "attrib.h"
 # include "monst.h"
-# ifndef PROP_H
-#  include "prop.h"     /* (needed here for util/makedefs.c) */
-# endif
+# include "prop.h"     /* for makedefs, enum objslot */
 # include "skills.h"
 
 /*** Substructures ***/
@@ -95,6 +93,8 @@ struct you {
     unsigned uhs;       /* hunger state - see eat.c */
 
     struct prop uprops[LAST_PROP + 1];
+
+    struct obj *uobjslot[os_last_saved + 1];     /* equipment, etc. */
 
     unsigned umconf;
     char usick_cause[PL_PSIZ + 20];     /* sizeof "unicorn horn named "+1 */

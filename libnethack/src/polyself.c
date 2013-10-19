@@ -284,8 +284,6 @@ polyself(boolean forcecontrol)
                 pline("You merge with your scaly armor.");
                 uskin = uarm;
                 uarm = NULL;
-                /* save/restore hack */
-                uskin->owornmask |= I_SPECIAL;
             }
         } else if (iswere) {
             if (is_were(youmonst.data))
@@ -655,7 +653,7 @@ break_armor(void)
                 pline("You seep right through your shirt!");
             else
                 pline("You become much too small for your shirt!");
-            setworn(NULL, otmp->owornmask & W_ARMU);
+            setworn(NULL, otmp->owornmask & W_MASK(os_armu));
             dropx(otmp);
         }
     }
@@ -1176,8 +1174,6 @@ skinback(boolean silently)
             pline("Your skin returns to its original form.");
         uarm = uskin;
         uskin = NULL;
-        /* undo save/restore hack */
-        uarm->owornmask &= ~I_SPECIAL;
     }
 }
 

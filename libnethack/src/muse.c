@@ -955,7 +955,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
     struct obj *obj;
     boolean ranged_stuff = FALSE;
     boolean reflection_skip = FALSE;
-    struct obj *helmet = which_armor(mtmp, W_ARMH);
+    struct obj *helmet = which_armor(mtmp, os_armh);
 
     struct monst *target = mfind_target(mtmp);
 
@@ -1360,7 +1360,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                             !passes_walls(mtmp2->data) &&
                             !noncorporeal(mtmp2->data) &&
                             !unsolid(mtmp2->data)) {
-                            struct obj *helmet = which_armor(mtmp2, W_ARMH);
+                            struct obj *helmet = which_armor(mtmp2, os_armh);
                             int mdmg;
 
                             if (cansee(mtmp2->mx, mtmp2->my)) {
@@ -1482,7 +1482,7 @@ rnd_offensive_item(struct monst *mtmp)
         return WAN_DEATH;
     switch (rn2(9 - (difficulty < 4) + 4 * (difficulty > 6))) {
     case 0:{
-            struct obj *helmet = which_armor(mtmp, W_ARMH);
+            struct obj *helmet = which_armor(mtmp, os_armh);
 
             if ((helmet && is_metallic(helmet)) || amorphous(pm) ||
                 passes_walls(pm) || noncorporeal(pm) || unsolid(pm))
@@ -1641,7 +1641,7 @@ muse_newcham_mon(struct monst *mon)
 {
     struct obj *m_armr;
 
-    if ((m_armr = which_armor(mon, W_ARM)) != 0) {
+    if ((m_armr = which_armor(mon, os_arm)) != 0) {
         if (Is_dragon_scales(m_armr))
             return Dragon_scales_to_pm(m_armr);
         else if (Is_dragon_mail(m_armr))
@@ -1994,7 +1994,7 @@ searches_for_item(struct monst * mon, struct obj * obj)
         break;
     case FOOD_CLASS:
         if (typ == CORPSE)
-            return (boolean) (((mon->misc_worn_check & W_ARMG) &&
+            return (boolean) (((mon->misc_worn_check & W_MASK(os_armg)) &&
                                touch_petrifies(&mons[obj->corpsenm])) ||
                               (!resists_ston(mon) &&
                                (obj->corpsenm == PM_LIZARD ||
@@ -2013,7 +2013,7 @@ searches_for_item(struct monst * mon, struct obj * obj)
 boolean
 mon_reflects(struct monst * mon, const char *str)
 {
-    struct obj *orefl = which_armor(mon, W_ARMS);
+    struct obj *orefl = which_armor(mon, os_arms);
 
     if (orefl && orefl->otyp == SHIELD_OF_REFLECTION) {
         if (str) {
@@ -2026,14 +2026,14 @@ mon_reflects(struct monst * mon, const char *str)
         if (str)
             pline(str, s_suffix(mon_nam(mon)), "weapon");
         return TRUE;
-    } else if ((orefl = which_armor(mon, W_AMUL)) &&
+    } else if ((orefl = which_armor(mon, os_amul)) &&
                orefl->otyp == AMULET_OF_REFLECTION) {
         if (str) {
             pline(str, s_suffix(mon_nam(mon)), "amulet");
             makeknown(AMULET_OF_REFLECTION);
         }
         return TRUE;
-    } else if ((orefl = which_armor(mon, W_ARM)) &&
+    } else if ((orefl = which_armor(mon, os_arm)) &&
                (orefl->otyp == SILVER_DRAGON_SCALES ||
                 orefl->otyp == SILVER_DRAGON_SCALE_MAIL)) {
         if (str)
@@ -2053,24 +2053,24 @@ boolean
 ureflects(const char *fmt, const char *str)
 {
     /* Check from outermost to innermost objects */
-    if (EReflecting & W_ARMS) {
+    if (EReflecting & W_MASK(os_arms)) {
         if (fmt && str) {
             pline(fmt, str, "shield");
             makeknown(SHIELD_OF_REFLECTION);
         }
         return TRUE;
-    } else if (EReflecting & W_WEP) {
+    } else if (EReflecting & W_MASK(os_wep)) {
         /* Due to wielded artifact weapon */
         if (fmt && str)
             pline(fmt, str, "weapon");
         return TRUE;
-    } else if (EReflecting & W_AMUL) {
+    } else if (EReflecting & W_MASK(os_amul)) {
         if (fmt && str) {
             pline(fmt, str, "medallion");
             makeknown(AMULET_OF_REFLECTION);
         }
         return TRUE;
-    } else if (EReflecting & W_ARM) {
+    } else if (EReflecting & W_MASK(os_arm)) {
         if (fmt && str)
             pline(fmt, str, "armor");
         return TRUE;

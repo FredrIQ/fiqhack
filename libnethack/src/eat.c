@@ -1824,7 +1824,8 @@ doeat(struct obj *otmp)
     if (!is_edible(otmp)) {
         pline("You cannot eat that!");
         return 0;
-    } else if ((otmp->owornmask & (W_ARMOR | W_TOOL | W_AMUL | W_SADDLE)) != 0) {
+    } else if ((otmp->owornmask & (W_ARMOR | W_MASK(os_tool) |
+                                   W_MASK(os_amul) | W_MASK(os_saddle))) != 0) {
         /* let them eat rings */
         pline("You can't eat something you're wearing.");
         return 0;
@@ -2060,8 +2061,8 @@ gethungry(void)
     if (moves % 2) {    /* odd turns */
         /* Regeneration uses up food, unless due to an artifact */
         if (HRegeneration ||
-            ((ERegeneration & (~W_ART)) &&
-             (ERegeneration != W_WEP || !uwep->oartifact)))
+            ((ERegeneration & (~W_ARTIFACT)) &&
+             (ERegeneration != W_MASK(os_wep) || !uwep->oartifact)))
             u.uhunger--;
         if (near_capacity() > SLT_ENCUMBER)
             u.uhunger--;
@@ -2069,7 +2070,7 @@ gethungry(void)
         if (Hunger)
             u.uhunger--;
         /* Conflict uses up food too */
-        if (HConflict || (EConflict & (~W_ARTI)))
+        if (HConflict || (EConflict & (~W_ARTIFACT)))
             u.uhunger--;
         /* +0 charged rings don't do anything, so don't affect hunger */
         /* Slow digestion still uses ring hunger */

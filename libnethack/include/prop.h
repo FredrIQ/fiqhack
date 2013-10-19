@@ -76,41 +76,107 @@
 # define DETECT_MONSTERS          66
 # define LAST_PROP                (DETECT_MONSTERS)
 
+/* This enum holds all the objects that are tracked indirectly in struct you;
+   that is, u.uobjslot is an array of pointers into other chains. The object
+   handling code ensures that u.uobjslot is updated appropriately upon object
+   deallocation and reallocation, and for save and restore. */
+enum objslot {
+/* Armor */
+    os_arm,       /* body armor */
+    os_armc,      /* cloak */
+    os_armh,      /* helmet/hat */
+    os_arms,      /* shield */
+    os_armg,      /* gloves/gauntlets */
+    os_armf,      /* footwear */
+    os_armu,      /* undershirt */
+
+    os_last_armor = os_armu,
+
+/* Other worn equipment */
+    os_amul,      /* amulet */
+    os_ringl,     /* left ring */
+    os_ringr,     /* right ring */
+    os_tool,      /* eyewear */
+
+    os_last_worn = os_tool,
+
+/* Other non-worn equipment */
+    os_wep,       /* wielded weapon */
+    os_quiver,    /* quiver for the "fire" command */
+    os_swapwep,   /* readied or offhanded weapon */
+
+    os_last_equip = os_swapwep,
+
+/* Other object slot codes that appear in a wear mask */
+    os_ball,      /* punishment ball */
+    os_chain,     /* punishment chain */
+
+    os_saddle,    /* for riding */
+
+    os_last_maskable = os_saddle,
+
+/* Other codes that are saved */
+
+    os_skin,      /* armor embedded in skin */
+
+    os_food,      /* food that you were interrupted eating */
+    os_book,      /* book that you were interrutped reading */
+    os_last_saved = os_book,
+
+/* Slot codes that are not part of u.uobjslot */
+    os_carried,   /* carried artifact */
+    os_invoked,   /* invoked artifact */
+
+    os_last_slot = os_invoked,
+
+    os_invalid = -1,
+};
+
+# define EQUIP(oslot) u.uobjslot[oslot]
+# define W_MASK(oslot) (1 << (oslot))
+
+/* W_ARMOR is the bitwise or of all W_MASKs up to and including os_last_armor,
+   etc.. To generate this, we double and subtract 1. */
+# define W_ARMOR     (W_MASK(os_last_armor) * 2 - 1)
+# define W_WORN      (W_MASK(os_last_worn)  * 2 - 1)
+# define W_EQUIP     (W_MASK(os_last_equip) * 2 - 1)
+# define W_MASKABLE  (W_MASK(os_last_maskable) * 2 - 1)
+# define W_RING      (W_MASK(os_ringl) | W_MASK(os_ringr))
+# define W_ARTIFACT  (W_MASK(os_carried) | W_MASK(os_invoked))
+
+/* Ring extrinsic values are also used for wounded legs. */
+# define LEFT_SIDE   W_MASK(os_ringl)
+# define RIGHT_SIDE  W_MASK(os_ringr)
+# define BOTH_SIDES  (LEFT_SIDE | RIGHT_SIDE)
+
+# define uarm     EQUIP(os_arm)
+# define uarmc    EQUIP(os_armc)
+# define uarmh    EQUIP(os_armh)
+# define uarms    EQUIP(os_arms)
+# define uarmg    EQUIP(os_armg)
+# define uarmf    EQUIP(os_armf)
+# define uarmu    EQUIP(os_armu)
+# define uskin    EQUIP(os_skin)
+# define uamul    EQUIP(os_amul)
+# define uleft    EQUIP(os_ringl)
+# define uright   EQUIP(os_ringr)
+# define ublindf  EQUIP(os_tool)
+# define uwep     EQUIP(os_wep)
+# define uswapwep EQUIP(os_swapwep)
+# define uquiver  EQUIP(os_quiver)
+# define uball    EQUIP(os_ball)
+# define uchain   EQUIP(os_chain)
+
 /*** Where the properties come from ***/
 /* Definitions were moved here from obj.h and you.h */
 struct prop {
-        /*** Properties conveyed by objects ***/
-    unsigned int extrinsic;
-    /* Armor */
-# define W_ARM        0x00000001U       /* Body armor */
-# define W_ARMC       0x00000002U       /* Cloak */
-# define W_ARMH       0x00000004U       /* Helmet/hat */
-# define W_ARMS       0x00000008U       /* Shield */
-# define W_ARMG       0x00000010U       /* Gloves/gauntlets */
-# define W_ARMF       0x00000020U       /* Footwear */
-# define W_ARMU       0x00000040U       /* Undershirt */
-# define W_ARMOR       (W_ARM | W_ARMC | W_ARMH | W_ARMS | W_ARMG | W_ARMF | W_ARMU)
-    /* Weapons and artifacts */
-# define W_WEP        0x00000100U       /* Wielded weapon */
-# define W_QUIVER     0x00000200U       /* Quiver for (f)iring ammo */
-# define W_SWAPWEP    0x00000400U       /* Secondary weapon */
-# define W_ART        0x00001000U       /* Carrying artifact (not really worn) */
-# define W_ARTI       0x00002000U       /* Invoked artifact (not really worn) */
-    /* Amulets, rings, tools, and other items */
-# define W_AMUL       0x00010000U       /* Amulet */
-# define W_RINGL      0x00020000U       /* Left ring */
-# define W_RINGR      0x00040000U       /* Right ring */
-# define W_RING       (W_RINGL | W_RINGR)
-# define W_TOOL       0x00080000U       /* Eyewear */
-# define W_SADDLE     0x00100000U       /* KMH -- For riding monsters */
-# define W_BALL       0x00200000U       /* Punishment ball */
-# define W_CHAIN      0x00400000U       /* Punishment chain */
-# define W_WORN       (W_ARMOR | W_AMUL | W_RING | W_TOOL)
-
-        /*** Property is blocked by an object ***/
+    /*** Properties conveyed by objects ***/
+    unsigned int extrinsic;     /* bitmask of W_MASK(os_*) */
+    
+    /*** Property is blocked by an object ***/
     unsigned int blocked;       /* Same assignments as extrinsic */
-
-        /*** Timeouts, permanent properties, and other flags ***/
+    
+    /*** Timeouts, permanent properties, and other flags ***/
     unsigned int intrinsic;
     /* Timed properties */
 # define TIMEOUT      0x00ffffffU       /* Up to 16 million turns */
@@ -122,21 +188,5 @@ struct prop {
     /* Control flags */
 # define I_SPECIAL    0x10000000U       /* Property is controllable */
 };
-
-/*** Definitions for backwards compatibility ***/
-# define LEFT_RING      W_RINGL
-# define RIGHT_RING     W_RINGR
-# define LEFT_SIDE      LEFT_RING
-# define RIGHT_SIDE     RIGHT_RING
-# define BOTH_SIDES     (LEFT_SIDE | RIGHT_SIDE)
-# define WORN_ARMOR     W_ARM
-# define WORN_CLOAK     W_ARMC
-# define WORN_HELMET    W_ARMH
-# define WORN_SHIELD    W_ARMS
-# define WORN_GLOVES    W_ARMG
-# define WORN_BOOTS     W_ARMF
-# define WORN_AMUL      W_AMUL
-# define WORN_BLINDF    W_TOOL
-# define WORN_SHIRT     W_ARMU
 
 #endif /* PROP_H */

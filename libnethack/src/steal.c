@@ -139,38 +139,17 @@ remove_worn_item(struct obj *obj, boolean unchain_ball)
     if (!obj->owornmask)
         return;
 
-    if (obj->owornmask & W_ARMOR) {
+    if (obj->owornmask & W_WORN) {
         if (obj == uskin) {
             impossible("Removing embedded scales?");
             skinback(TRUE);     /* uarm = uskin; uskin = 0; */
         }
-        if (obj == uarm)
-            Armor_off();
-        else if (obj == uarmc)
-            Cloak_off();
-        else if (obj == uarmf)
-            Boots_off();
-        else if (obj == uarmg)
-            Gloves_off();
-        else if (obj == uarmh)
-            Helmet_off();
-        else if (obj == uarms)
-            Shield_off();
-        else if (obj == uarmu)
-            Shirt_off();
-        /* catchall -- should never happen */
-        else
-            setworn(NULL, obj->owornmask & W_ARMOR);
-    } else if (obj->owornmask & W_AMUL) {
-        Amulet_off();
-    } else if (obj->owornmask & W_RING) {
-        Ring_gone(obj);
-    } else if (obj->owornmask & W_TOOL) {
-        Blindf_off(obj);
+        
+        Slot_off(objslot_from_mask(obj->owornmask));
     }
     unwield_silently(obj);
 
-    if (obj->owornmask & (W_BALL | W_CHAIN)) {
+    if (obj->owornmask & (W_MASK(os_ball) | W_MASK(os_chain))) {
         if (unchain_ball)
             unpunish();
     } else if (obj->owornmask) {
@@ -216,10 +195,10 @@ steal(struct monst *mtmp, char *objnambuf)
     monkey_business = is_animal(mtmp->data);
     if (monkey_business) {
         ;       /* skip ring special cases */
-    } else if (Adornment & LEFT_RING) {
+    } else if (Adornment & W_MASK(os_ringl)) {
         otmp = uleft;
         goto gotobj;
-    } else if (Adornment & RIGHT_RING) {
+    } else if (Adornment & W_MASK(os_ringr)) {
         otmp = uright;
         goto gotobj;
     }
@@ -231,9 +210,7 @@ steal(struct monst *mtmp, char *objnambuf)
             && (!otmp->oinvis || perceives(mtmp->data))
 #endif
             )
-            tmp +=
-                ((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 :
-                 1);
+            tmp += ((otmp->owornmask & W_WORN) ? 5 : 1);
     if (!tmp)
         goto nothing_to_steal;
     tmp = rn2(tmp);
@@ -243,9 +220,7 @@ steal(struct monst *mtmp, char *objnambuf)
             && (!otmp->oinvis || perceives(mtmp->data))
 #endif
             )
-            if ((tmp -=
-                 ((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) ? 5 :
-                  1)) < 0)
+            if ((tmp -= ((otmp->owornmask & W_WORN) ? 5 : 1)) < 0)
                 break;
     if (!otmp) {
         impossible("Steal fails!");
@@ -300,7 +275,7 @@ gotobj:
     /* you're going to notice the theft... */
     stop_occupation();
 
-    if ((otmp->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL))) {
+    if (otmp->owornmask & W_WORN) {
         switch (otmp->oclass) {
         case TOOL_CLASS:
         case AMULET_CLASS:
@@ -383,7 +358,7 @@ gotobj:
     could_petrify = (otmp->otyp == CORPSE &&
                      touch_petrifies(&mons[otmp->corpsenm]));
     mpickobj(mtmp, otmp);       /* may free otmp */
-    if (could_petrify && !(mtmp->misc_worn_check & W_ARMG)) {
+    if (could_petrify && !(mtmp->misc_worn_check & W_MASK(os_armg))) {
         minstapetrify(mtmp, TRUE);
         return -1;
     }
@@ -481,11 +456,11 @@ mdrop_obj(struct monst *mon, struct obj *obj, boolean verbosely)
             mon->misc_worn_check &= ~obj->owornmask;
             update_mon_intrinsics(mon, obj, FALSE, TRUE);
             /* obj_no_longer_held(obj); -- done by place_object */
-            if (obj->owornmask & W_WEP)
+            if (obj->owornmask & W_MASK(os_wep))
                 setmnotwielded(mon, obj);
             /* don't charge for an owned saddle on dead steed */
-        } else if (mon->mtame && (obj->owornmask & W_SADDLE) && !obj->unpaid &&
-                   costly_spot(omx, omy)) {
+        } else if (mon->mtame && (obj->owornmask & W_MASK(os_saddle)) &&
+                   !obj->unpaid && costly_spot(omx, omy)) {
             obj->no_charge = 1;
         }
         obj->owornmask = 0L;

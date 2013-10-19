@@ -88,7 +88,7 @@ setuwep(struct obj *obj)
         return; /* necessary to not set unweapon */
     /* This message isn't printed in the caller because it happens *whenever*
        Sunsword is unwielded, from whatever cause. */
-    setworn(obj, W_WEP);
+    setworn(obj, W_MASK(os_wep));
     if (uwep == obj && artifact_light(olduwep) && olduwep->lamplit) {
         end_burn(olduwep, FALSE);
         if (!Blind)
@@ -160,7 +160,7 @@ ready_weapon(struct obj *wep)
                the message to say "weapon in hand", thus this kludge. */
             long dummy = wep->owornmask;
 
-            wep->owornmask |= W_WEP;
+            wep->owornmask |= W_MASK(os_wep);
             prinv(NULL, wep, 0L);
             wep->owornmask = dummy;
         }
@@ -191,14 +191,14 @@ ready_weapon(struct obj *wep)
 void
 setuqwep(struct obj *obj)
 {
-    setworn(obj, W_QUIVER);
+    setworn(obj, W_MASK(os_quiver));
     update_inventory();
 }
 
 void
 setuswapwep(struct obj *obj)
 {
-    setworn(obj, W_SWAPWEP);
+    setworn(obj, W_MASK(os_swapwep));
     update_inventory();
 }
 
@@ -252,7 +252,7 @@ dowield(struct obj *wep)
         return doswapweapon();
     else if (wep == uquiver)
         setuqwep(NULL);
-    else if (wep->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE)) {
+    else if (wep->owornmask & (W_WORN | W_MASK(os_saddle))) {
         pline("You cannot wield that!");
         return 0;
     }
@@ -349,8 +349,7 @@ dowieldquiver(struct obj *newquiver)
         pline("%s already being used as a weapon!",
               !is_plural(uwep) ? "That is" : "They are");
         return 0;
-    } else if (newquiver->owornmask &
-               (W_ARMOR | W_RING | W_AMUL | W_TOOL | W_SADDLE)) {
+    } else if (newquiver->owornmask & (W_WORN | W_MASK(os_saddle))) {
         pline("You cannot ready that!");
         return 0;
     } else {
@@ -365,7 +364,7 @@ dowieldquiver(struct obj *newquiver)
 
         /* Okay to put in quiver; print it */
         dummy = newquiver->owornmask;
-        newquiver->owornmask |= W_QUIVER;
+        newquiver->owornmask |= W_MASK(os_quiver);
         prinv(NULL, newquiver, 0L);
         newquiver->owornmask = dummy;
     }
@@ -393,7 +392,7 @@ wield_tool(struct obj * obj, const char *verb)
     more_than_1 = (obj->quan > 1L || strstri(what, "pair of ") != 0 ||
                    strstri(what, "s of ") != 0);
 
-    if (obj->owornmask & (W_ARMOR | W_RING | W_AMUL | W_TOOL)) {
+    if (obj->owornmask & W_WORN) {
         char yourbuf[BUFSZ];
 
         pline("You can't %s %s %s while wearing %s.", verb,
@@ -549,7 +548,7 @@ uwepgone(void)
             if (!Blind)
                 pline("%s glowing.", Tobjnam(uwep, "stop"));
         }
-        setworn(NULL, W_WEP);
+        setworn(NULL, W_MASK(os_wep));
         unweapon = TRUE;
         update_inventory();
     }
@@ -559,7 +558,7 @@ void
 uswapwepgone(void)
 {
     if (uswapwep) {
-        setworn(NULL, W_SWAPWEP);
+        setworn(NULL, W_MASK(os_swapwep));
         update_inventory();
     }
 }
@@ -568,7 +567,7 @@ void
 uqwepgone(void)
 {
     if (uquiver) {
-        setworn(NULL, W_QUIVER);
+        setworn(NULL, W_MASK(os_quiver));
         update_inventory();
     }
 }

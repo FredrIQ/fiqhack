@@ -41,7 +41,7 @@ is_better_armor(struct monst *mtmp, struct obj *otmp)
         !(is_cloak(otmp) && mtmp->data->msize == MZ_SMALL))
         return FALSE;
 
-    if (is_shirt(otmp) && (mtmp->misc_worn_check & W_ARM))
+    if (is_shirt(otmp) && (mtmp->misc_worn_check & W_MASK(os_arm)))
         return FALSE;
 
     if (is_shield(otmp) && (mtmp == &youmonst) ? (uwep && bimanual(uwep))
@@ -164,7 +164,7 @@ DROPPABLES(struct monst *mon)
         item1 = TRUE;
     for (obj = mon->minvent; obj; obj = obj->nobj) {
         if (!item1 && is_pick(obj) &&
-            (obj->otyp != DWARVISH_MATTOCK || !which_armor(mon, W_ARMS))) {
+            (obj->otyp != DWARVISH_MATTOCK || !which_armor(mon, os_arms))) {
             item1 = TRUE;
             continue;
         }

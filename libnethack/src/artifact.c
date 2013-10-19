@@ -272,7 +272,8 @@ arti_reflects(struct obj * obj)
 
     if (arti) {
         /* while being worn */
-        if ((obj->owornmask & ~W_ART) && (arti->spfx & SPFX_REFLECT))
+        if ((obj->owornmask & W_MASKABLE) &&
+            (arti->spfx & SPFX_REFLECT))
             return TRUE;
         /* just being carried */
         if (arti->cspfx & SPFX_REFLECT)
@@ -344,7 +345,7 @@ protects(int adtyp, struct obj * otmp)
 
 /*
  * a potential artifact has just been worn/wielded/picked-up or
- * unworn/unwielded/dropped.  Pickup/drop only set/reset the W_ART mask.
+ * unworn/unwielded/dropped.  Pickup/drop only set/reset the carried mask.
  */
 void
 set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
@@ -358,7 +359,8 @@ set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
         return;
 
     /* effects from the defn field */
-    dtyp = (wp_mask != W_ART) ? oart->defn.adtyp : oart->cary.adtyp;
+    dtyp = (wp_mask != W_MASK(os_carried)) ?
+        oart->defn.adtyp : oart->cary.adtyp;
 
     if (dtyp == AD_FIRE)
         mask = &EFire_resistance;
@@ -373,7 +375,7 @@ set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
     else if (dtyp == AD_DRST)
         mask = &EPoison_resistance;
 
-    if (mask && wp_mask == W_ART && !on) {
+    if (mask && wp_mask == W_MASK(os_carried) && !on) {
         /* find out if some other artifact also confers this intrinsic */
         /* if so, leave the mask alone */
         struct obj *obj;
@@ -396,8 +398,8 @@ set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
     }
 
     /* intrinsics from the spfx field; there could be more than one */
-    spfx = (wp_mask != W_ART) ? oart->spfx : oart->cspfx;
-    if (spfx && wp_mask == W_ART && !on) {
+    spfx = (wp_mask != W_MASK(os_carried)) ? oart->spfx : oart->cspfx;
+    if (spfx && wp_mask == W_MASK(os_carried) && !on) {
         /* don't change any spfx also conferred by other artifacts */
         struct obj *obj;
 
@@ -492,17 +494,17 @@ set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
             u.xray_range = -1;
         vision_full_recalc = 1;
     }
-    if ((spfx & SPFX_REFLECT) && (wp_mask & W_WEP)) {
+    if ((spfx & SPFX_REFLECT) && (wp_mask & W_MASK(os_wep))) {
         if (on)
             EReflecting |= wp_mask;
         else
             EReflecting &= ~wp_mask;
     }
 
-    if (wp_mask == W_ART && !on && oart->inv_prop) {
+    if (wp_mask == W_MASK(os_carried) && !on && oart->inv_prop) {
         /* might have to turn off invoked power too */
         if (oart->inv_prop <= LAST_PROP &&
-            (u.uprops[oart->inv_prop].extrinsic & W_ARTI))
+            (u.uprops[oart->inv_prop].extrinsic & W_MASK(os_invoked)))
             arti_invoke(otmp);
     }
 }
@@ -1435,13 +1437,14 @@ arti_invoke(struct obj *obj)
             }
         }
     } else {
-        long eprop = (u.uprops[oart->inv_prop].extrinsic ^= W_ARTI), iprop =
-            u.uprops[oart->inv_prop].intrinsic;
-        boolean on = (eprop & W_ARTI) != 0;  /* true if invoked prop just set */
+        long eprop = (u.uprops[oart->inv_prop].extrinsic ^= W_MASK(os_invoked));
+        long iprop = u.uprops[oart->inv_prop].intrinsic;
+        /* on is true if invoked prop just set */
+        boolean on = !!(eprop & W_MASK(os_invoked));
 
         if (on && obj->age > moves) {
             /* the artifact is tired :-) */
-            u.uprops[oart->inv_prop].extrinsic ^= W_ARTI;
+            u.uprops[oart->inv_prop].extrinsic ^= W_MASK(os_invoked);
             pline("You feel that %s %s ignoring you.", the(xname(obj)),
                   otense(obj, "are"));
             /* can't just keep repeatedly trying */
@@ -1453,7 +1456,7 @@ arti_invoke(struct obj *obj)
             obj->age = moves + rnz(100);
         }
 
-        if ((eprop & ~W_ARTI) || iprop) {
+        if ((eprop & ~W_MASK(os_invoked)) || iprop) {
         nothing_special:
             /* you had the property from some other source too */
             if (carried(obj))
@@ -1473,7 +1476,7 @@ arti_invoke(struct obj *obj)
                 float_up();
                 spoteffects(FALSE);
             } else
-                float_down(I_SPECIAL | TIMEOUT, W_ARTI);
+                float_down(I_SPECIAL | TIMEOUT, W_MASK(os_invoked));
             break;
         case INVIS:
             if (BInvis || Blind)

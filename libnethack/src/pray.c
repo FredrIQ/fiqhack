@@ -184,7 +184,7 @@ in_trouble(void)
     if (worst_cursed_item())
         return TROUBLE_CURSED_ITEMS;
     if (u.usteed) {     /* can't voluntarily dismount from a cursed saddle */
-        otmp = which_armor(u.usteed, W_SADDLE);
+        otmp = which_armor(u.usteed, os_saddle);
         if (Cursed_obj(otmp, SADDLE))
             return TROUBLE_SADDLE;
     }
@@ -447,7 +447,7 @@ fix_worst_trouble(int trouble)
         make_hallucinated(0L, FALSE, 0L);
         break;
     case TROUBLE_SADDLE:
-        otmp = which_armor(u.usteed, W_SADDLE);
+        otmp = which_armor(u.usteed, os_saddle);
         uncurse(otmp);
         if (!Blind) {
             pline("%s %s %s.", s_suffix(upstart(y_monnam(u.usteed))),
@@ -508,13 +508,15 @@ god_zaps_you(aligntyp resp_god)
 
         /* disintegrate shield and body armor before disintegrating the
            impudent mortal, like black dragon breath -3. */
-        if (uarms && !(EReflecting & W_ARMS) && !(EDisint_resistance & W_ARMS))
+#define slot_affected(slot) EQUIP(slot) && !(EReflecting & W_MASK(slot)) \
+            && !(EDisint_resistance & W_MASK(slot))
+        if (slot_affected(os_arms))
             destroy_arm(uarms);
-        if (uarmc && !(EReflecting & W_ARMC) && !(EDisint_resistance & W_ARMC))
+        if (slot_affected(os_armc))
             destroy_arm(uarmc);
-        if (uarm && !(EReflecting & W_ARM) && !(EDisint_resistance & W_ARM) &&
-            !uarmc)
+        if (slot_affected(os_arm) && !uarmc)
             destroy_arm(uarm);
+#undef slot_affected
         if (uarmu && !uarm && !uarmc)
             destroy_arm(uarmu);
         if (!Disint_resistance)

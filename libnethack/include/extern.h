@@ -9,6 +9,8 @@
 # include "winprocs.h"
 # include "hacklib.h"
 
+# include "prop.h"
+
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
@@ -326,10 +328,13 @@ extern void Ring_off(struct obj *);
 extern void Ring_gone(struct obj *);
 extern void Blindf_on(struct obj *);
 extern void Blindf_off(struct obj *);
+extern boolean Slot_on(enum objslot);
+extern void Slot_off(enum objslot);
+extern enum objslot objslot_from_mask(int);
 extern int dotakeoff(struct obj *otmp);
 extern int doremring(struct obj *otmp);
 extern int cursed(struct obj *);
-extern boolean canwearobj(struct obj *, int *, boolean);
+extern boolean canwearobj(struct obj *, long *, boolean);
 extern int dowear(struct obj *otmp);
 extern int doputon(struct obj *otmp);
 extern void find_ac(void);
@@ -1840,13 +1845,14 @@ extern boolean worm_known(const struct monst *);
 
 extern void setworn(struct obj *, long);
 extern void setnotworn(struct obj *);
+extern boolean obj_worn_on(struct obj *, enum objslot);
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
 extern void update_mon_intrinsics(struct monst *, struct obj *, boolean,
                                   boolean);
 extern int find_mac(struct monst *);
 extern void m_dowear(struct monst *, boolean);
-extern struct obj *which_armor(struct monst *, long);
+extern struct obj *which_armor(struct monst *, enum objslot);
 extern void mon_break_armor(struct monst *, boolean);
 extern void bypass_obj(struct obj *);
 extern void clear_bypasses(void);
