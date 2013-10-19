@@ -94,7 +94,8 @@ struct you {
 
     struct prop uprops[LAST_PROP + 1];
 
-    struct obj *uobjslot[os_last_saved + 1];     /* equipment, etc. */
+    struct obj *uequip[os_last_maskable + 1];     /* equipment */
+    struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
 
     unsigned umconf;
     char usick_cause[PL_PSIZ + 20];     /* sizeof "unicorn horn named "+1 */

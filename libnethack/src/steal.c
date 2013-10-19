@@ -140,9 +140,8 @@ remove_worn_item(struct obj *obj, boolean unchain_ball)
         return;
 
     if (obj->owornmask & W_WORN) {
-        if (obj == uskin) {
+        if (obj == uskin()) {
             impossible("Removing embedded scales?");
-            skinback(TRUE);     /* uarm = uskin; uskin = 0; */
         }
         
         Slot_off(objslot_from_mask(obj->owornmask));
@@ -181,7 +180,7 @@ steal(struct monst *mtmp, char *objnambuf)
     if (occupation)
         maybe_finished_meal(FALSE);
 
-    if (!invent || (inv_cnt(FALSE) == 1 && uskin)) {
+    if (!invent || (inv_cnt(FALSE) == 1 && uskin())) {
     nothing_to_steal:
         /* Not even a thousand men in armor can strip a naked man. */
         if (Blind)
@@ -205,7 +204,7 @@ steal(struct monst *mtmp, char *objnambuf)
 
     tmp = 0;
     for (otmp = invent; otmp; otmp = otmp->nobj)
-        if ((!uarm || otmp != uarmc) && otmp != uskin
+        if ((!uarm || otmp != uarmc) && otmp != uskin()
 #ifdef INVISIBLE_OBJECTS
             && (!otmp->oinvis || perceives(mtmp->data))
 #endif
@@ -215,7 +214,7 @@ steal(struct monst *mtmp, char *objnambuf)
         goto nothing_to_steal;
     tmp = rn2(tmp);
     for (otmp = invent; otmp; otmp = otmp->nobj)
-        if ((!uarm || otmp != uarmc) && otmp != uskin
+        if ((!uarm || otmp != uarmc) && otmp != uskin()
 #ifdef INVISIBLE_OBJECTS
             && (!otmp->oinvis || perceives(mtmp->data))
 #endif
@@ -234,7 +233,7 @@ steal(struct monst *mtmp, char *objnambuf)
         otmp = uarmc;
     else if (otmp == uarmu && uarmc)
         otmp = uarmc;
-    else if (otmp == uarmu && uarm)
+    else if (otmp == uarmu && uarm && !uskin())
         otmp = uarm;
 gotobj:
     if (otmp->o_id == stealoid)

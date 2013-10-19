@@ -1076,11 +1076,12 @@ dotakeoff(struct obj *otmp)
         pline("You are not wearing that.");
         return 0;
     }
-    if (otmp == uskin) {
+    if (otmp == uskin()) {
         pline("The %s merged with your skin!",
-              uskin->otyp >=
+              uskin()->otyp >=
               GRAY_DRAGON_SCALES ? "dragon scales are" :
               "dragon scale mail is");
+        return 0;
     }
     if (((otmp == uarm) && uarmc) || ((otmp == uarmu) && (uarmc || uarm))) {
         /* TODO: replace this with a multistep remove */
@@ -1579,7 +1580,9 @@ find_ac(void)
 {
     int uac = mons[u.umonnum].ac;
 
-    if (uarm)
+    /* Armor transformed into dragon skin gives no AC bonus. TODO: Should it at
+       least give a bonus/penaltyt from its enchantment? */
+    if (uarm && !uskin())
         uac -= ARM_BONUS(uarm);
     if (uarmc)
         uac -= ARM_BONUS(uarmc);
@@ -1675,7 +1678,7 @@ some_armor(struct monst *victim)
     struct obj *otmph, *otmp;
 
     otmph = (victim == &youmonst) ? uarmc : which_armor(victim, os_armc);
-    if (!otmph)
+    if (!otmph && !uskin())
         otmph = (victim == &youmonst) ? uarm : which_armor(victim, os_arm);
     if (!otmph)
         otmph = (victim == &youmonst) ? uarmu : which_armor(victim, os_armu);
@@ -1809,6 +1812,8 @@ select_off(struct obj *otmp)
             sprintf(buf, "remove your %s", cloak_simple_name(uarmc));
             why = uarmc;
         } else if (otmp == uarmu && uarm && uarm->cursed) {
+            /* We could add a check for removing a shirt underneath skin, but
+               that scenario is kind-of absurd and currently can't happen. */
             sprintf(buf, "remove your armor");
             why = uarm;
         } else if (welded(uwep) && bimanual(uwep)) {
@@ -2028,8 +2033,8 @@ destroy_arm(struct obj *atmp)
 {
     struct obj *otmp;
 
-#define DESTROY_ARM(o) ((otmp = (o)) != 0 && \
-                        (!atmp || atmp == otmp) && \
+#define DESTROY_ARM(o) ((otmp = (o)) != 0 && otmp != uskin() &&    \
+                        (!atmp || atmp == otmp) &&                 \
                         (!obj_resists(otmp, 0, 90)))
 
     if (DESTROY_ARM(uarmc)) {

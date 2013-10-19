@@ -2838,12 +2838,10 @@ emergency_disrobe(boolean * lostsome)
         if (invc > 0) {
             i = rn2(invc);
             for (obj = invent; obj; obj = obj->nobj) {
-                /* 
-                 * Undroppables are: body armor, boots, gloves,
-                 * amulets, and rings because of the time and effort
-                 * in removing them + loadstone and other cursed stuff
-                 * for obvious reasons.
-                 */
+                /* Undroppables are: body armor (including skin), boots, gloves,
+                   amulets, and rings because of the time and effort in removing
+                   them; and loadstones and other cursed stuff for obvious
+                   reasons. */
                 if (!
                     ((obj->otyp == LOADSTONE && obj->cursed) || obj == uamul ||
                      obj == uleft || obj == uright || obj == ublindf ||
@@ -4047,7 +4045,10 @@ lava_effects(void)
 
         for (obj = invent; obj; obj = obj2) {
             obj2 = obj->nobj;
-            if (is_organic(obj) && !obj->oerodeproof) {
+            /* 3.4.3 doesn't have a uskin check here. It's not clear what to do
+               about embedded scales, but just leaving them alone is simplest,
+               and this code may be unreachable for a draconic player anyway. */
+            if (is_organic(obj) && !obj->oerodeproof && obj != uskin()) {
                 if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
                     if (!Blind && usurvive)
                         pline("%s glows a strange %s, but remains intact.",

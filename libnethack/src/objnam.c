@@ -747,7 +747,7 @@ doname_base(const struct obj *obj, boolean with_price)
         break;
     case ARMOR_CLASS:
         if (obj->owornmask & W_WORN)
-            strcat(bp, (obj == uskin) ?
+            strcat(bp, (obj == uskin()) ?
                    " (embedded in your skin)" :
                    " (being worn)");
         goto plus;

@@ -1391,7 +1391,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
         /* this condition must match the one in sounds.c for MS_NURSE */
         if (!(uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep))) &&
-            !uarmu && !uarm && !uarmh && !uarms && !uarmg && !uarmc && !uarmf) {
+            !uarmu && (!uarm || uskin()) && !uarmh && !uarms && !uarmg &&
+            !uarmc && !uarmf) {
             boolean goaway = FALSE;
 
             pline("%s hits!  (I hope you don't mind.)", Monnam(mtmp));
@@ -2320,7 +2321,7 @@ doseduce(struct monst *mon)
         pline("%s murmurs in your ear, while helping you undress.",
               Blind ? (fem ? "She" : "He") : Monnam(mon));
     mayberem(uarmc, cloak_simple_name(uarmc));
-    if (!uarmc)
+    if (!uarmc && !uskin())
         mayberem(uarm, "suit");
     mayberem(uarmf, "boots");
     if (!uwep || !welded(uwep))
@@ -2330,7 +2331,7 @@ doseduce(struct monst *mon)
     if (!uarmc && !uarm)
         mayberem(uarmu, "shirt");
 
-    if (uarm || uarmc) {
+    if ((uarm && !uskin()) || uarmc) {
         verbalize("You're such a %s; I wish...",
                   flags.female ? "sweet lady" : "nice guy");
         if (!tele_restrict(mon))

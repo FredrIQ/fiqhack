@@ -514,7 +514,7 @@ god_zaps_you(aligntyp resp_god)
             destroy_arm(uarms);
         if (slot_affected(os_armc))
             destroy_arm(uarmc);
-        if (slot_affected(os_arm) && !uarmc)
+        if (slot_affected(os_arm) && !uarmc && !uskin())
             destroy_arm(uarm);
 #undef slot_affected
         if (uarmu && !uarm && !uarmc)

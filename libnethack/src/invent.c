@@ -736,7 +736,7 @@ object_selection_checks(struct obj *otmp, const char *word)
 
     /* ugly check: remove inappropriate things */
     if ((taking_off(word) &&
-         (!(otmp->owornmask & W_WORN)
+         (!(otmp->owornmask & W_WORN) || (otmp == uskin())
           || (otmp == uarm && uarmc) || (otmp == uarmu && (uarm || uarmc))))
         || (putting_on(word) && (otmp->owornmask & W_WORN))
         || (!strcmp(word, "ready") &&
@@ -1061,8 +1061,8 @@ silly_thing(const char *word, struct obj *otmp)
 boolean
 wearing_armor(void)
 {
-    return ((boolean)
-            (uarm || uarmc || uarmf || uarmg || uarmh || uarms || uarmu));
+    return ((boolean) ((uarm && !uskin()) || 
+                       uarmc || uarmf || uarmg || uarmh || uarms || uarmu));
 }
 
 boolean

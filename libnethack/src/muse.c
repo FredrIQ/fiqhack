@@ -975,8 +975,8 @@ find_offensive(struct monst * mtmp, struct musable * m)
             return FALSE;
         if (in_your_sanctuary(mtmp, 0, 0))
             return FALSE;
-        if (dmgtype(mtmp->data, AD_HEAL) && !uwep && !uarmu && !uarm && !uarmh
-            && !uarms && !uarmg && !uarmc && !uarmf)
+        if (dmgtype(mtmp->data, AD_HEAL) && !uwep && !uarmu && !uarmh
+            && !uarms && !uarmg && !uarmc && !uarmf && (!uarm || uskin()))
             return FALSE;
     }
 

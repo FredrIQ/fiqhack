@@ -212,9 +212,10 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
 
     if (Fumbling)
         clumsy = TRUE;
-
-    else if (uarm && objects[uarm->otyp].oc_bulky && ACURR(A_DEX) < rnd(25))
+    else if (uarm && !uskin() && objects[uarm->otyp].oc_bulky &&
+             ACURR(A_DEX) < rnd(25))
         clumsy = TRUE;
+
 doit:
     pline("You kick %s.", mon_nam(mon));
     if (!enexto(&bypos, level, u.ux, u.uy, mon->data) ||

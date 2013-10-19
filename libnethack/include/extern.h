@@ -1254,7 +1254,7 @@ extern int dosummon(void);
 extern int dogaze(void);
 extern int dohide(void);
 extern int domindblast(void);
-extern void skinback(boolean);
+extern struct obj *uskin(void);
 extern const char *mbodypart(struct monst *, int);
 extern const char *body_part(int);
 extern int poly_gender(void);

@@ -50,7 +50,6 @@ polyman(const char *fmt, const char *arg)
 
     u.mh = u.mhmax = 0;
     u.mtimedone = 0;
-    skinback(FALSE);
     u.uundetected = 0;
 
     if (sticky)
@@ -234,7 +233,8 @@ polyself(boolean forcecontrol)
     int old_light, new_light;
     int mntmp = NON_PM;
     int tries = 0;
-    boolean draconian = (uarm && uarm->otyp >= GRAY_DRAGON_SCALE_MAIL &&
+    boolean draconian = (uarm && !uskin() &&
+                         uarm->otyp >= GRAY_DRAGON_SCALE_MAIL &&
                          uarm->otyp <= YELLOW_DRAGON_SCALES);
     boolean iswere = (u.ulycn >= LOW_PM || is_were(youmonst.data));
     boolean isvamp = (youmonst.data->mlet == S_VAMPIRE ||
@@ -282,8 +282,6 @@ polyself(boolean forcecontrol)
             if (!(mvitals[mntmp].mvflags & G_GENOD)) {
                 /* allow G_EXTINCT */
                 pline("You merge with your scaly armor.");
-                uskin = uarm;
-                uarm = NULL;
             }
         } else if (iswere) {
             if (is_were(youmonst.data))
@@ -484,8 +482,8 @@ polymon(int mntmp)
         u.mtimedone = u.mtimedone * u.ulevel / mlvl;
     }
 
-    if (uskin && mntmp != armor_to_dragon(uskin->otyp))
-        skinback(FALSE);
+    /* At this point, if we're wearing dragon scales, umonnum and thus uskin()
+       will be set correctly, so break_armor will behave correctly. */
     break_armor();
     drop_weapon(1);
     if (hides_under(youmonst.data))
@@ -609,7 +607,7 @@ break_armor(void)
     struct obj *otmp;
 
     if (breakarm(youmonst.data)) {
-        if ((otmp = uarm) != 0) {
+        if ((otmp = uarm) != 0 && otmp != uskin()) {
             if (donning(otmp))
                 cancel_don();
             pline("You break out of your armor!");
@@ -633,7 +631,9 @@ break_armor(void)
             useup(uarmu);
         }
     } else if (sliparm(youmonst.data)) {
-        if (((otmp = uarm) != 0) && (racial_exception(&youmonst, otmp) < 1)) {
+        /* uskin check is paranoia */
+        if (((otmp = uarm) != 0) && (otmp != uskin()) &&
+            (racial_exception(&youmonst, otmp) < 1)) {
             if (donning(otmp))
                 cancel_don();
             pline("Your armor falls around you!");
@@ -1166,17 +1166,16 @@ uunstick(void)
     u.ustuck = 0;
 }
 
-void
-skinback(boolean silently)
+/* Returns uarm if it's embedded in your skin, otherwise NULL. */
+struct obj *
+uskin(void)
 {
-    if (uskin) {
-        if (!silently)
-            pline("Your skin returns to its original form.");
-        uarm = uskin;
-        uskin = NULL;
-    }
+    if (!uarm) return NULL;
+    int mntmp = armor_to_dragon(uarm->otyp);
+    if (u.umonnum == mntmp)
+        return uarm;
+    return NULL;
 }
-
 
 const char *
 mbodypart(struct monst *mon, int part)

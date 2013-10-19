@@ -764,7 +764,8 @@ domonnoise(struct monst *mtmp)
     case MS_NURSE:
         if (uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep)))
             verbl_msg = "Put that weapon away before you hurt someone!";
-        else if (uarmc || uarm || uarmh || uarms || uarmg || uarmf)
+        else if (uarmc || (uarm && !uskin()) ||
+                 uarmh || uarms || uarmg || uarmf)
             verbl_msg =
                 Role_if(PM_HEALER) ?
                 "Doc, I can't help you unless you cooperate." :

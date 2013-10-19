@@ -76,10 +76,10 @@
 # define DETECT_MONSTERS          66
 # define LAST_PROP                (DETECT_MONSTERS)
 
-/* This enum holds all the objects that are tracked indirectly in struct you;
-   that is, u.uobjslot is an array of pointers into other chains. The object
-   handling code ensures that u.uobjslot is updated appropriately upon object
-   deallocation and reallocation, and for save and restore. */
+/* This enum holds all the equipment that is tracked indirectly in struct you;
+   that is, u.uequip is an array of pointers into other chains. These objects
+   are recalculated from owornmask during game restore, rather than being saved
+   in the binary save. */
 enum objslot {
 /* Armor */
     os_arm,       /* body armor */
@@ -115,14 +115,6 @@ enum objslot {
 
     os_last_maskable = os_saddle,
 
-/* Other codes that are saved */
-
-    os_skin,      /* armor embedded in skin */
-
-    os_food,      /* food that you were interrupted eating */
-    os_book,      /* book that you were interrutped reading */
-    os_last_saved = os_book,
-
 /* Slot codes that are not part of u.uobjslot */
     os_carried,   /* carried artifact */
     os_invoked,   /* invoked artifact */
@@ -132,7 +124,18 @@ enum objslot {
     os_invalid = -1,
 };
 
-# define EQUIP(oslot) u.uobjslot[oslot]
+/* This enum holds non-equipment object pointers that are tracked indirectly in
+   struct you (mostly state for handling interrupted occupations). These are
+   saved and restored, and also updated when the object is reallocated and
+   nulled out when the object is freed. */
+enum tracked_object_slots {
+    tos_book,    /* book we were interrupted reading */
+    tos_food,    /* food we were interrupted eating */
+
+    tos_last_slot = tos_food,
+};
+
+# define EQUIP(oslot) u.uequip[oslot]
 # define W_MASK(oslot) (1 << (oslot))
 
 /* W_ARMOR is the bitwise or of all W_MASKs up to and including os_last_armor,
@@ -156,7 +159,6 @@ enum objslot {
 # define uarmg    EQUIP(os_armg)
 # define uarmf    EQUIP(os_armf)
 # define uarmu    EQUIP(os_armu)
-# define uskin    EQUIP(os_skin)
 # define uamul    EQUIP(os_amul)
 # define uleft    EQUIP(os_ringl)
 # define uright   EQUIP(os_ringr)

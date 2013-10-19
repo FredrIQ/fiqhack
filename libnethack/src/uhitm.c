@@ -263,7 +263,7 @@ find_roll_to_hit(struct monst *mtmp)
         maybe_polyd(is_elf(youmonst.data), Race_if(PM_ELF)))
         tmp++;
     if (Role_if(PM_MONK) && !Upolyd) {
-        if (uarm) {
+        if (uarm && !uskin()) {
             pline("Your armor is rather cumbersome...");
             tmp -= urole.spelarmr;
         } else if (!uwep && !uarms) {
@@ -521,7 +521,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     boolean ispoisoned = FALSE, needpoismsg = FALSE, poiskilled = FALSE;
     boolean silvermsg = FALSE, silverobj = FALSE;
     boolean valid_weapon_attack = FALSE;
-    boolean unarmed = !uwep && !uarm && !uarms;
+    boolean unarmed = !uwep && (!uarm || uskin()) && !uarms;
     int jousting = 0;
     int wtype;
     struct obj *monwep;

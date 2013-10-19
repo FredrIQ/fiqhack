@@ -1858,7 +1858,7 @@ use_grease(struct obj *obj)
             pline(need_to_remove_outer_armor, buf, xname(otmp));
             return 0;
         }
-        if ((otmp->owornmask & W_MASK(os_armc)) && (uarmc || uarm)) {
+        if ((otmp->owornmask & W_MASK(os_armu)) && (uarmc || uarm)) {
             strcpy(buf, uarmc ? xname(uarmc) : "");
             if (uarmc && uarm)
                 strcat(buf, " and ");

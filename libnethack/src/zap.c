@@ -1197,7 +1197,7 @@ do_osshock(struct obj *obj)
 boolean
 poly_proof(struct obj *obj)
 {
-    if (obj == uskin || obj == uball)
+    if (obj == uskin() || obj == uball)
         return TRUE;
 
     switch (obj->otyp) {
@@ -3203,7 +3203,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
                 /* destroy shield; other possessions are safe */
                 destroy_arm(uarms);
                 break;
-            } else if (uarm) {
+            } else if (uarm && uarm != uskin()) {
                 /* destroy suit; if present, cloak goes too */
                 if (uarmc)
                     destroy_arm(uarmc);
