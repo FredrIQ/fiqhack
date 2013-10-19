@@ -1677,22 +1677,22 @@ some_armor(struct monst *victim)
 {
     struct obj *otmph, *otmp;
 
-    otmph = (victim == &youmonst) ? uarmc : which_armor(victim, os_armc);
+    otmph = which_armor(victim, os_armc);
     if (!otmph && !uskin())
-        otmph = (victim == &youmonst) ? uarm : which_armor(victim, os_arm);
+        otmph = which_armor(victim, os_arm);
     if (!otmph)
-        otmph = (victim == &youmonst) ? uarmu : which_armor(victim, os_armu);
+        otmph = which_armor(victim, os_armu);
 
-    otmp = (victim == &youmonst) ? uarmh : which_armor(victim, os_armh);
+    otmp = which_armor(victim, os_armh);
     if (otmp && (!otmph || !rn2(4)))
         otmph = otmp;
-    otmp = (victim == &youmonst) ? uarmg : which_armor(victim, os_armg);
+    otmp = which_armor(victim, os_armg);
     if (otmp && (!otmph || !rn2(4)))
         otmph = otmp;
-    otmp = (victim == &youmonst) ? uarmf : which_armor(victim, os_armf);
+    otmp = which_armor(victim, os_armf);
     if (otmp && (!otmph || !rn2(4)))
         otmph = otmp;
-    otmp = (victim == &youmonst) ? uarms : which_armor(victim, os_arms);
+    otmp = which_armor(victim, os_arms);
     if (otmp && (!otmph || !rn2(4)))
         otmph = otmp;
     return otmph;

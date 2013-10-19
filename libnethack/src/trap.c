@@ -54,7 +54,7 @@ burnarmor(struct monst *victim)
     while (1) {
         switch (rn2(5)) {
         case 0:
-            item = (victim == &youmonst) ? uarmh : which_armor(victim, os_armh);
+            item = which_armor(victim, os_armh);
             if (item) {
                 mat_idx = objects[item->otyp].oc_material;
                 sprintf(buf, "%s %s", materialnm[mat_idx], helmet_name(item));
@@ -63,32 +63,32 @@ burnarmor(struct monst *victim)
                 continue;
             break;
         case 1:
-            item = (victim == &youmonst) ? uarmc : which_armor(victim, os_armc);
+            item = which_armor(victim, os_armc);
             if (item) {
                 burn_dmg(item, cloak_simple_name(item));
                 return TRUE;
             }
-            item = (victim == &youmonst) ? uarm : which_armor(victim, os_arm);
+            item = which_armor(victim, os_arm);
             if (item) {
                 burn_dmg(item, xname(item));
                 return TRUE;
             }
-            item = (victim == &youmonst) ? uarmu : which_armor(victim, os_armu);
+            item = which_armor(victim, os_armu);
             if (item)
                 burn_dmg(item, "shirt");
             return TRUE;
         case 2:
-            item = (victim == &youmonst) ? uarms : which_armor(victim, os_arms);
+            item = which_armor(victim, os_arms);
             if (!burn_dmg(item, "wooden shield"))
                 continue;
             break;
         case 3:
-            item = (victim == &youmonst) ? uarmg : which_armor(victim, os_armg);
+            item = which_armor(victim, os_armg);
             if (!burn_dmg(item, "gloves"))
                 continue;
             break;
         case 4:
-            item = (victim == &youmonst) ? uarmf : which_armor(victim, os_armf);
+            item = which_armor(victim, os_armf);
             if (!burn_dmg(item, "boots"))
                 continue;
             break;

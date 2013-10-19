@@ -142,12 +142,13 @@ drop_upon_death(struct monst *mtmp, struct obj *cont)
         if (otmp->otyp == SLIME_MOLD)
             goodfruit(otmp->spe);
 
-    uswapwep = 0;       /* ensure curse() won't cause swapwep to drop twice */
     while ((otmp = invent) != 0) {
         obj_extract_self(otmp);
         obj_no_longer_held(otmp);
 
+        /* ensure otmp isn't dropped by curse() */
         otmp->owornmask = 0;
+
         /* lamps don't go out when dropped */
         if ((cont || artifact_light(otmp)) && obj_is_burning(otmp))
             end_burn(otmp, TRUE);       /* smother in statue */

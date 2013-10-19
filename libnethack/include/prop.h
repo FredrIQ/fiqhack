@@ -135,7 +135,7 @@ enum tracked_object_slots {
     tos_last_slot = tos_food,
 };
 
-# define EQUIP(oslot) u.uequip[oslot]
+# define EQUIP(oslot) which_armor(&youmonst, oslot)
 # define W_MASK(oslot) (1 << (oslot))
 
 /* W_ARMOR is the bitwise or of all W_MASKs up to and including os_last_armor,

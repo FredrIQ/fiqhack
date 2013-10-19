@@ -94,7 +94,6 @@ struct you {
 
     struct prop uprops[LAST_PROP + 1];
 
-    struct obj *uequip[os_last_maskable + 1];     /* equipment */
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
 
     unsigned umconf;

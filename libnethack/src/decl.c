@@ -252,9 +252,7 @@ init_data(void)
     current_fruit = 0;
     sp_levchn = NULL;
     in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
-    current_wand = invent = uwep = uarm = uswapwep = uquiver = uarmu =
-        uarmc = uarmh = uarms = uarmg = uarmf = uamul = uright = uleft =
-        ublindf = uchain = uball = NULL;
+    current_wand = invent = NULL;
     book = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = 0;

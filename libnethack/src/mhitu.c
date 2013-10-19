@@ -838,13 +838,13 @@ magic_negation(struct monst *mon)
        shield don't currently provide any magic cancellation, but we might as
        well be complete. */
     for (i = 0; i <= os_last_armor; i++) {
-        armor = (mon == &youmonst) ? EQUIP(i) : which_armor(mon, i);
+        armor = which_armor(mon, i);
         if (armor && armpro < objects[armor->otyp].a_can)
             armpro = objects[armor->otyp].a_can;
     }
 
     /* this one is really a stretch... */
-    armor = (mon == &youmonst) ? 0 : which_armor(mon, os_saddle);
+    armor = which_armor(mon, os_saddle);
     if (armor && armpro < objects[armor->otyp].a_can)
         armpro = objects[armor->otyp].a_can;
 

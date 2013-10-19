@@ -28,12 +28,11 @@ setworn(struct obj *obj, long mask)
     for (i = 0; i <= os_last_maskable; i++)
         if (W_MASK(i) & mask) {
             oobj = EQUIP(i);
-            if (oobj && !(oobj->owornmask & W_MASK(i)))
-                impossible("Setworn: %s: mask = %ld, expected %ld.",
-                           doname(oobj), oobj->owornmask, W_MASK(i));
             if (oobj) {
                 if (oobj->owornmask & (W_MASK(os_wep) | W_MASK(os_swapwep)))
                     u.twoweap = 0;
+                /* Equipment slots are now based entirely on owornmask.
+                   So this clears the equipment slot. */
                 oobj->owornmask &= ~W_MASK(i);
                 if (W_MASK(i) & ~(W_MASK(os_swapwep) | W_MASK(os_quiver))) {
                     p = objects[oobj->otyp].oc_oprop;
@@ -44,9 +43,11 @@ setworn(struct obj *obj, long mask)
                         set_artifact_intrinsic(oobj, 0, mask);
                 }
             }
-            EQUIP(i) = obj;
+
             if (obj) {
+                /* Put the new object in the slot. */
                 obj->owornmask |= W_MASK(i);
+
                 /* Prevent getting/blocking intrinsics from wielding
                    potions, through the quiver, etc. Allow weapon-tools,
                    too. W_MASK(i) should be same as mask at this point. */
@@ -81,10 +82,9 @@ setnotworn(struct obj *obj)
         u.twoweap = 0;
     for (i = 0; i <= os_last_maskable; i++)
         if (obj == EQUIP(i)) {
-            EQUIP(i) = NULL;
+            obj->owornmask &= ~W_MASK(i);
             p = objects[obj->otyp].oc_oprop;
             u.uprops[p].extrinsic = u.uprops[p].extrinsic & W_MASK(i);
-            obj->owornmask &= ~W_MASK(i);
             if (obj->oartifact)
                 set_artifact_intrinsic(obj, 0, W_MASK(i));
             if (((p = w_blocks(obj, W_MASK(i)))) != 0)
@@ -527,12 +527,16 @@ outer_break:
 
 #undef RACE_EXCEPTION
 
+/* The centralised function for finding equipment; given an equipment slot,
+   finds worn armor in that slot for the player (mon == &youmonst) or a
+   monster. */
 struct obj *
 which_armor(struct monst *mon, enum objslot slot)
 {
     struct obj *obj;
 
-    for (obj = mon->minvent; obj; obj = obj->nobj)
+    for (obj = (mon == &youmonst ? invent : mon->minvent);
+         obj; obj = obj->nobj)
         if (obj->owornmask & W_MASK(slot))
             return obj;
     return NULL;
