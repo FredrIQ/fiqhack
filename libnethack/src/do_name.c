@@ -181,6 +181,7 @@ realloc_obj(struct obj *obj, int oextra_size, void *oextra_src, int oname_size,
        or to it is valid. Re-equipping, timer linking, etc. will happen
        elsewhere in that case. */
     if (obj->olev) {
+        int i;
         if (obj->owornmask) {
             boolean save_twoweap = u.twoweap;
 
@@ -212,10 +213,16 @@ realloc_obj(struct obj *obj, int oextra_size, void *oextra_src, int oname_size,
 
         /* objects possibly being manipulated by multi-turn occupations which
            have been interrupted but might be subsequently resumed */
-        if (obj->oclass == FOOD_CLASS)
-            food_substitution(obj, otmp);       /* eat food or open tin */
-        else if (obj->oclass == SPBOOK_CLASS)
-            book_substitution(obj, otmp);       /* read spellbook */
+        for (i = 0; i <= tos_last_slot; i++) {
+            if (obj == u.utracked[i])
+                u.utracked[i] = otmp;
+        }
+        /* This is probably paranoia; it would only come up if an item can
+           end up being specific-named as a result of trying to use it. */
+        for (i = 0; i <= ttos_last_slot; i++) {
+            if (obj == turnstate.tracked[i])
+                turnstate.tracked[i] = otmp;
+        }
     } else {
         /* make sure dealloc_obj doesn't explode */
         obj->where = OBJ_FREE;

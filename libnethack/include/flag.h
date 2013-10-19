@@ -6,6 +6,8 @@
 #ifndef FLAG_H
 # define FLAG_H
 
+# include "prop.h"
+
 /* Information that is reset every time the user has a chance to give commands
    (from default_turnstate).  This is never saved in a binary save; if it needs
    to be reconstructed, the reconstruction is done via replaying user actions
@@ -19,6 +21,10 @@ struct turnstate {
     int (*afternmv) (void);     /* what to do after helplessness ends */
     char multi_txt[BUFSZ];      /* the reason the player is helpless */
     int saved_cmd;              /* command being repeated by positive multi */
+
+    /* Objects that might potentially be destroyed or otherwise changed during
+       a turn. */
+    struct obj *tracked[ttos_last_slot + 1];
 };
 
 extern struct turnstate turnstate;

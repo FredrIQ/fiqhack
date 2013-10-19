@@ -1234,6 +1234,17 @@ restore_you(struct memfile *mf, struct you *y)
     }
 }
 
+void
+restore_utracked(struct memfile *mf, struct you *y)
+{
+    int i;
+    for (i = 0; i <= tos_last_slot; i++) {
+        int oid;
+        y->utracked[i] = NULL;
+        oid = mread32(mf);
+        if (oid) y->utracked[i] = find_oid(oid);
+    }
+}
 
 void
 save_you(struct memfile *mf, struct you *y)
@@ -1390,6 +1401,15 @@ save_you(struct memfile *mf, struct you *y)
         mwrite8(mf, y->weapon_skills[i].skill);
         mwrite8(mf, y->weapon_skills[i].max_skill);
         mwrite16(mf, y->weapon_skills[i].advance);
+    }
+}
+
+void
+save_utracked(struct memfile *mf, struct you *y)
+{
+    int i;
+    for (i = 0; i <= tos_last_slot; i++) {
+        mwrite32(mf, y->utracked[i] ? y->utracked[i]->o_id : 0);
     }
 }
 

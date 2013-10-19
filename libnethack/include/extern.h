@@ -475,8 +475,6 @@ extern void newuhs(boolean);
 extern struct obj *floorfood(const char *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
-extern void food_disappears(struct obj *);
-extern void food_substitution(struct obj *, struct obj *);
 extern void fix_petrification(void);
 extern void consume_oeaten(struct obj *, int);
 extern boolean maybe_finished_meal(boolean);
@@ -1526,8 +1524,6 @@ extern boolean load_special(struct level *lev, const char *);
 
 extern void deadbook(struct obj *book2, boolean invoked);
 extern int study_book(struct obj *);
-extern void book_disappears(struct obj *);
-extern void book_substitution(struct obj *, struct obj *);
 extern void age_spells(void);
 extern int docast(void);
 extern int spell_skilltype(int);
@@ -1686,6 +1682,8 @@ extern void u_init(void);
 extern void u_init_inv_skills(void);
 extern void restore_you(struct memfile *mf, struct you *y);
 extern void save_you(struct memfile *mf, struct you *y);
+extern void restore_utracked(struct memfile *mf, struct you *y);
+extern void save_utracked(struct memfile *mf, struct you *y);
 
 /* ### uhitm.c ### */
 

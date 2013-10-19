@@ -1944,10 +1944,10 @@ dozap(struct obj *obj)
            priest) -> attack -> hitum -> known_hitum -> ghod_hitsu ->
            buzz(AD_ELEC) -> destroy_item(WAND_CLASS) -> useup -> obfree ->
            dealloc_obj -> free(obj) */
-        current_wand = obj;
+        turnstate.tracked[ttos_wand] = obj;
         weffects(obj, dx, dy, dz);
-        obj = current_wand;
-        current_wand = 0;
+        obj = turnstate.tracked[ttos_wand];
+        turnstate.tracked[ttos_wand] = 0;
     }
     if (obj && obj->spe < 0) {
         pline("%s to dust.", Tobjnam(obj, "turn"));
@@ -4035,8 +4035,11 @@ destroy_item(int osym, int dmgtyp)
                 else
                     setnotworn(obj);
             }
-            if (obj == current_wand)
-                current_wand = 0;       /* destroyed */
+            /* If destroying the item that (perhaps indirectly) caused the
+               destruction, we need to notify the caller, but obfree() does that
+               (via modifying turnstate), and obfree() is a better place (it
+               handles more possible reasons that the item might be
+               destroyed). */
             for (i = 0; i < cnt; i++)
                 useup(obj);
             if (dmg) {

@@ -2700,7 +2700,7 @@ do_break_wand(struct obj *obj)
         bill_dummy_object(obj);
     }
 
-    current_wand = obj; /* destroy_item might reset this */
+    turnstate.tracked[ttos_wand] = obj; /* destroy_item might reset this */
     freeinv(obj);       /* hide it from destroy_item instead... */
     setnotworn(obj);    /* so we need to do this ourselves */
 
@@ -2821,8 +2821,8 @@ do_break_wand(struct obj *obj)
         litroom(TRUE, obj);     /* only needs to be done once */
 
 discard_broken_wand:
-    obj = current_wand; /* [see dozap() and destroy_item()] */
-    current_wand = 0;
+    obj = turnstate.tracked[ttos_wand]; /* [see dozap() and destroy_item()] */
+    turnstate.tracked[ttos_wand] = 0;
     if (obj)
         delobj(obj);
     nomul(0, NULL);

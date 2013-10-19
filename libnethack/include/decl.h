@@ -172,7 +172,6 @@ extern boolean in_mklev;
 extern boolean stoned;
 extern boolean unweapon;
 extern boolean mrg_to_wielded;
-extern struct obj *current_wand;
 
 extern boolean in_steed_dismounting;
 
@@ -190,7 +189,6 @@ extern const char def_monsyms[MAXMCLASSES];     /* default class symbols */
 extern int lastinvnr;
 
 extern struct obj *invent;
-extern struct obj *book;
 extern struct obj zeroobj;      /* init'd and defined in decl.c */
 
 # include "role.h"

@@ -125,14 +125,27 @@ enum objslot {
 };
 
 /* This enum holds non-equipment object pointers that are tracked indirectly in
-   struct you (mostly state for handling interrupted occupations). These are
-   saved and restored, and also updated when the object is reallocated and
-   nulled out when the object is freed. */
+   struct you (mostly state for handling occupations that might be interrupted,
+   which is why it can't go in struct turnstate). These are saved and restored,
+   and also updated when the object is reallocated and nulled out when the
+   object is freed. */
 enum tracked_object_slots {
     tos_book,    /* book we were interrupted reading */
     tos_food,    /* food we were interrupted eating */
+    tos_tin,     /* tin we were interrupted eating */
 
-    tos_last_slot = tos_food,
+    tos_first_equip,   /* equipment we were interrupted equipping */
+    tos_last_equip = tos_first_equip + os_last_maskable,
+
+    tos_last_slot = tos_last_equip,
+};
+/* Ditto, for struct turnstate. These objects are not saved or restored, and
+   have to be NULL between turns, just like with everything else in the
+   turnstate struct. */
+enum turntracked_object_slots {
+    ttos_wand,    /* item that is currently being zapped */
+
+    ttos_last_slot = ttos_wand,
 };
 
 # define EQUIP(oslot) which_armor(&youmonst, oslot)

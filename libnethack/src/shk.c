@@ -737,12 +737,29 @@ obfree(struct obj *obj, struct obj *merge)
     struct bill_x *bpm;
     struct monst *shkp;
 
+    int i;
+
     if (obj->otyp == LEASH && obj->leashmon)
         o_unleash(obj);
-    if (obj->oclass == FOOD_CLASS)
-        food_disappears(obj);
-    if (obj->oclass == SPBOOK_CLASS)
-        book_disappears(obj);
+
+    /* The FOOD_CLASS check here is very very suspicious, but has been left in
+       from 3.4.3 so as not to unexpectedly break things. It's unclear whether
+       it was a bizarre optimization ("this will only do anything for food, so
+       check that first"), actually required to not break things, or simply a
+       no-op all along. */
+    if (obj->oclass == FOOD_CLASS && obj->timed)
+        obj_stop_timers(obj);
+
+    /* If tracking the object, report the fact that it's been freed */
+    for (i = 0; i <= tos_last_slot; i++) {
+        if (obj == u.utracked[i])
+            u.utracked[i] = NULL;
+    }
+    for (i = 0; i <= ttos_last_slot; i++) {
+        if (obj == turnstate.tracked[i])
+            turnstate.tracked[i] = NULL;
+    }
+
     if (Has_contents(obj))
         delete_contents(obj);
 
@@ -3270,7 +3287,7 @@ shopdig(int fall)
                 (obj == uswapwep && u.twoweap) ||
                 (obj->otyp == LEASH && obj->leashmon))
                 continue;
-            if (obj == current_wand)
+            if (obj == turnstate.tracked[ttos_wand])
                 continue;
             setnotworn(obj);
             freeinv(obj);

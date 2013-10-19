@@ -72,10 +72,7 @@ coord inv_pos;  /* vibrating square position */
 boolean in_mklev;
 boolean stoned; /* done to monsters hit by 'c' */
 boolean unweapon;
-boolean mrg_to_wielded;
-
-                         /* weapon picked is merged with wielded one */
-struct obj *current_wand;       /* wand currently zapped/applied */
+boolean mrg_to_wielded; /* weapon picked is merged with wielded one */
 
 boolean in_steed_dismounting;
 
@@ -103,10 +100,8 @@ struct spell spl_book[MAXSPELL + 1];
 unsigned int moves;
 long wailmsg;
 
-/* last/current book being read */
-struct obj *book;
-
-/* used to zero all elements of a struct obj */
+/* used to zero all elements of a struct obj, also as a flag to mean a
+   non-object */
 struct obj zeroobj;
 
 /* originally from dog.c */
@@ -201,6 +196,7 @@ static const struct turnstate default_turnstate = {
     .multi_txt = "",
     .occupation_txt = "",
     .saved_cmd = -1,
+    .tracked = {0},
 };
 
 struct turnstate turnstate;
@@ -252,8 +248,7 @@ init_data(void)
     current_fruit = 0;
     sp_levchn = NULL;
     in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
-    current_wand = invent = NULL;
-    book = NULL;
+    invent = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;

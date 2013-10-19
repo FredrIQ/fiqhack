@@ -411,7 +411,6 @@ static void
 restgamestate(struct memfile *mf)
 {
     struct obj *otmp;
-    unsigned int bookid = 0;
     struct monst *mtmp;
     struct level *lev;
 
@@ -455,9 +454,6 @@ restgamestate(struct memfile *mf)
     restore_food(mf);
     restore_steal(mf);
     restore_dig_status(mf);
-    bookid = mread32(mf);
-    if (bookid)
-        book = find_oid(bookid);
     stetho_last_used_move = mread32(mf);
     stetho_last_used_movement = mread32(mf);
     multi = mread32(mf);
@@ -598,6 +594,10 @@ dorecover(struct memfile *mf)
 
     restgamestate(mf);
 
+    /* utracked is read last, because it might need to find items on any level
+       or in the player inventory */
+    restore_utracked(mf, &u);
+
     /* all data has been read, prepare for player */
     level = levels[ledger_no(&u.uz)];
 
@@ -606,10 +606,11 @@ dorecover(struct memfile *mf)
     for (otmp = level->objlist; otmp; otmp = otmp->nobj)
         if (otmp->owornmask)
             setworn(otmp, otmp->owornmask);
-
-    /* in_use processing must be after: + The inventory has been read so that
-       freeinv() works.  + The current level has been restored so billing
-       information is available. */
+    /*
+     * in_use processing must be after:
+     * + The inventory has been read so that freeinv() works.
+     * + The current level has been restored so billing information is
+     *   available. */
     inven_inuse(FALSE);
 
     load_qtlist();      /* re-load the quest text info */

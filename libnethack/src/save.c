@@ -122,6 +122,9 @@ savegame(struct memfile *mf)
         savelev(mf, ltmp);      /* actual level */
     }
     savegamestate(mf);
+
+    /* must come last, because it needs to be restored last */
+    save_utracked(mf, &u);
 }
 
 
@@ -239,8 +242,6 @@ save_spellbook(struct memfile *mf)
 static void
 savegamestate(struct memfile *mf)
 {
-    unsigned book_id;
-
     mtag(mf, 0, MTAG_GAMESTATE);
     mfmagic_set(mf, STATE_MAGIC);
 
@@ -269,8 +270,6 @@ savegamestate(struct memfile *mf)
     save_food(mf);
     save_steal(mf);
     save_dig_status(mf);
-    book_id = book ? book->o_id : 0;
-    mwrite32(mf, book_id);
     mwrite32(mf, stetho_last_used_move);
     mwrite32(mf, stetho_last_used_movement);
     mwrite32(mf, multi);
