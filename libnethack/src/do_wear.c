@@ -77,6 +77,8 @@ on_msg(struct obj *otmp)
 int
 Boots_on(void)
 {
+    if (!uarmf) return 0;
+
     long oldprop =
         worn_extrinsic(objects[uarmf->otyp].oc_oprop) & ~W_MASK(os_armf);
 
@@ -119,7 +121,8 @@ Boots_on(void)
         if (!oldprop && !HLevitation) {
             makeknown(uarmf->otyp);
             float_up();
-            spoteffects(FALSE);
+            spoteffects(FALSE); /* can deallocate uarmf */
+            if (!uarmf) return 0;
         }
         break;
     default:
@@ -133,6 +136,8 @@ Boots_on(void)
 int
 Boots_off(void)
 {
+    if (!uarmf) return 0;
+
     int otyp = uarmf->otyp;
     long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armf);
 
@@ -191,6 +196,8 @@ Boots_off(void)
 int
 Cloak_on(void)
 {
+    if (!uarmc) return 0;
+
     long oldprop =
         worn_extrinsic(objects[uarmc->otyp].oc_oprop) & ~W_MASK(os_armc);
 
@@ -240,6 +247,8 @@ Cloak_on(void)
 int
 Cloak_off(void)
 {
+    if (!uarmc) return 0;
+
     int otyp = uarmc->otyp;
     long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armc);
 
@@ -284,6 +293,8 @@ Cloak_off(void)
 int
 Helmet_on(void)
 {
+    if (!uarmh) return 0;
+
     uarmh->known = TRUE;
     switch (uarmh->otyp) {
     case FEDORA:
@@ -346,6 +357,8 @@ Helmet_on(void)
 int
 Helmet_off(void)
 {
+    if (!uarmh) return 0;
+
     takeoff_mask &= ~W_MASK(os_armh);
 
     switch (uarmh->otyp) {
@@ -391,6 +404,8 @@ Helmet_off(void)
 int
 Gloves_on(void)
 {
+    if (!uarmg) return 0;
+
     long oldprop =
         worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
 
@@ -419,6 +434,8 @@ Gloves_on(void)
 int
 Gloves_off(void)
 {
+    if (!uarmg) return 0;
+
     long oldprop =
         worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
 
@@ -477,6 +494,8 @@ Gloves_off(void)
 int
 Shield_on(void)
 {
+    if (!uarms) return 0;
+
     uarms->known = TRUE;
     on_msg(uarms);
     return 0;
@@ -485,6 +504,8 @@ Shield_on(void)
 int
 Shield_off(void)
 {
+    if (!uarms) return 0;
+
     takeoff_mask &= ~W_MASK(os_arms);
 
     setworn(NULL, W_MASK(os_arms));
@@ -494,6 +515,8 @@ Shield_off(void)
 int
 Shirt_on(void)
 {
+    if (!uarmu) return 0;
+
     uarmu->known = TRUE;
     on_msg(uarmu);
     return 0;
@@ -502,6 +525,8 @@ Shirt_on(void)
 int
 Shirt_off(void)
 {
+    if (!uarmu) return 0;
+
     takeoff_mask &= ~W_MASK(os_armu);
 
     setworn(NULL, W_MASK(os_armu));
@@ -515,6 +540,8 @@ Shirt_off(void)
 int
 Armor_on(void)
 {
+    if (!uarm) return 0;
+
     uarm->known = TRUE;
     on_msg(uarm);
     return 0;
@@ -523,6 +550,8 @@ Armor_on(void)
 int
 Armor_off(void)
 {
+    if (!uarm) return 0;
+
     takeoff_mask &= ~W_MASK(os_arm);
     setworn(NULL, W_MASK(os_arm));
     cancelled_don = FALSE;
@@ -535,6 +564,8 @@ Armor_off(void)
 int
 Armor_gone(void)
 {
+    if (!uarm) return 0;
+
     takeoff_mask &= ~W_MASK(os_arm);
     setnotworn(uarm);
     cancelled_don = FALSE;
@@ -545,6 +576,8 @@ Armor_gone(void)
 boolean
 Amulet_on(void)
 {
+    if (!uamul) return TRUE;
+
     switch (uamul->otyp) {
     case AMULET_OF_ESP:
     case AMULET_OF_LIFE_SAVING:
@@ -601,6 +634,8 @@ Amulet_on(void)
 void
 Amulet_off(void)
 {
+    if (!uamul) return;
+
     takeoff_mask &= ~W_MASK(os_amul);
 
     switch (uamul->otyp) {
@@ -649,6 +684,8 @@ Amulet_off(void)
 void
 Ring_on(struct obj *obj)
 {
+    if (!obj) return;
+
     long oldprop = worn_extrinsic(objects[obj->otyp].oc_oprop);
     int old_attrib, which;
 
@@ -752,6 +789,8 @@ Ring_on(struct obj *obj)
 static void
 Ring_off_or_gone(struct obj *obj, boolean gone)
 {
+    if (!obj) return;
+
     long mask = (obj->owornmask & W_RING);
     int old_attrib, which;
 
@@ -872,7 +911,6 @@ void
 Blindf_on(struct obj *otmp)
 {
     boolean already_blind = Blind, changed = FALSE;
-
 
     if (Blind && !already_blind) {
         changed = TRUE;
