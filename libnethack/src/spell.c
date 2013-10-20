@@ -525,7 +525,7 @@ study_book(struct obj *spellbook)
     }
 
     u.utracked[tos_book] = spellbook;
-    set_occupation(learn, "studying", 0);
+    set_occupation(learn, "studying");
     return 1;
 }
 

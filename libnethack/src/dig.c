@@ -972,7 +972,7 @@ use_pick_axe2(struct obj *obj, schar dx, schar dy, schar dz)
                       d_action[dig_target]);
                 digging.chew = FALSE;
             }
-            set_occupation(dig, verbing, 0);
+            set_occupation(dig, verbing);
         }
     } else if (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)) {
         /* it must be air -- water checked above */
@@ -1014,7 +1014,7 @@ use_pick_axe2(struct obj *obj, schar dx, schar dy, schar dz)
             return 1;
         }
         did_dig_msg = FALSE;
-        set_occupation(dig, verbing, 0);
+        set_occupation(dig, verbing);
     }
     return 1;
 }

@@ -2071,7 +2071,7 @@ use_trap(struct obj *otmp)
     if (otmp == trapinfo.tobj && u.ux == trapinfo.tx && u.uy == trapinfo.ty) {
         pline("You resume setting %s %s.", shk_your(buf, otmp),
               trapexplain[what_trap(ttyp) - 1]);
-        set_occupation(set_trap, occutext, 0);
+        set_occupation(set_trap, occutext);
         return 1;
     }
     trapinfo.tobj = otmp;
@@ -2119,7 +2119,7 @@ use_trap(struct obj *otmp)
 
     pline("You begin setting %s %s.", shk_your(buf, otmp),
           trapexplain[what_trap(ttyp) - 1]);
-    set_occupation(set_trap, occutext, 0);
+    set_occupation(set_trap, occutext);
     return 1;
 }
 

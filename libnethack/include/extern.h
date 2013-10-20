@@ -123,7 +123,7 @@ extern const char *rank_of(int, short, boolean);
 /* ### cmd.c ### */
 
 extern void reset_occupations(void);
-extern void set_occupation(int (*)(void), const char *, int);
+extern void set_occupation(int (*)(void), const char *);
 extern int get_command_idx(const char *cmd);
 extern int do_command(int cmd, int, boolean, struct nh_cmd_arg *);
 extern void enlightenment(int);

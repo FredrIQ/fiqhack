@@ -1037,7 +1037,7 @@ start_tin(struct obj *otmp)
     tin.reqtime = tmp;
     tin.usedtime = 0;
     u.utracked[tos_tin] = otmp;
-    set_occupation(opentin, "opening the tin", 0);
+    set_occupation(opentin, "opening the tin");
     return;
 }
 
@@ -1227,7 +1227,7 @@ start_eating(struct obj *otmp)
     }
 
     sprintf(msgbuf, "eating %s", food_xname(otmp, TRUE));
-    set_occupation(eatfood, msgbuf, 0);
+    set_occupation(eatfood, msgbuf);
 }
 
 
@@ -1455,7 +1455,7 @@ eatspecial(void)
     struct obj *otmp = u.utracked[tos_food];
 
     /* lesshungry wants an occupation to handle choke messages correctly */
-    set_occupation(eatfood, "eating non-food", 0);
+    set_occupation(eatfood, "eating non-food");
     lesshungry(victual.nmod);
     occupation = 0;
     u.utracked[tos_food] = NULL;

@@ -18,7 +18,7 @@
 
 static int (*timed_occ_fn) (void);
 
-static int timed_occupation(void);
+static int command_repeat_occupation(void);
 static int domonability(void);
 static int dotravel(int x, int y);
 static int doautoexplore(void);
@@ -280,7 +280,7 @@ const struct cmd_desc cmdlist[] = {
 
 /* Count down by decrementing multi */
 static int
-timed_occupation(void)
+command_repeat_occupation(void)
 {
     (*timed_occ_fn) ();
     if (multi > 0)
@@ -310,17 +310,10 @@ reset_occupations(void)
     reset_trapset();
 }
 
-/* If a time is given, use it to timeout this function, otherwise the
- * function times out by its own means.
- */
 void
-set_occupation(int (*fn) (void), const char *txt, int xtime)
+set_occupation(int (*fn) (void), const char *txt)
 {
-    if (xtime) {
-        occupation = timed_occupation;
-        timed_occ_fn = fn;
-    } else
-        occupation = fn;
+    occupation = fn;
     strncpy(turnstate.occupation_txt, txt,
             (sizeof turnstate.occupation_txt)-2);
     return;
@@ -2087,8 +2080,11 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
         switch (functype) {
         case CMD_ARG_NONE:
             func = cmdlist[command].func;
-            if (cmdlist[command].text && !occupation && multi > 1)
-                set_occupation(func, cmdlist[command].text, multi - 1);
+            if (cmdlist[command].text && !occupation && multi > 1) {
+                timed_occ_fn = func;
+                set_occupation(command_repeat_occupation,
+                               cmdlist[command].text);
+            }
             flags.move = TRUE;
             res = (*func) ();   /* perform the command */
             break;

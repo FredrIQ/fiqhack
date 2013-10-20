@@ -1550,7 +1550,7 @@ dowipe(void)
         static char buf[39];
 
         sprintf(buf, "wiping off your %s", body_part(FACE));
-        set_occupation(wipeoff, buf, 0);
+        set_occupation(wipeoff, buf);
         /* Not totally correct; what if they change back after now but before
            they're finished wiping? */
         return 1;
