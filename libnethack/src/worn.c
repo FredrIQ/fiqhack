@@ -1,14 +1,15 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
+static long find_extrinsic(struct obj *, int, int *, boolean *);
 static void m_lose_armor(struct monst *, struct obj *);
 static void m_dowear_type(struct monst *, enum objslot, boolean, boolean);
 
-/* This only allows for one blocking item per property */
+/* This only allows for one blocked property per item */
 #define w_blocks(o,m) \
     ((o->otyp == MUMMY_WRAPPING && ((m) & W_MASK(os_armc))) ? INVIS :   \
      (o->otyp == CORNUTHAUM && ((m) & W_MASK(os_armh)) &&               \
@@ -16,14 +17,56 @@ static void m_dowear_type(struct monst *, enum objslot, boolean, boolean);
                 /* note: monsters don't have clairvoyance, so your role has no
                    significant effect on their use of w_blocks() */
 
+/* Finds all items on the given chain with the given extrinsic. */
+static long
+find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
+               boolean *blocked)
+{
+    if (program_state.restoring) return 0L; /* invent may not be linked yet */
 
-/* Updated to use the extrinsic and blocked fields. */
+    long mask = 0L;
+    *blocked = FALSE;
+    while (chain) {
+        mask |= item_provides_extrinsic(chain, extrinsic, warntype);
+        if (extrinsic == w_blocks(chain, chain->owornmask))
+            *blocked = TRUE;
+        chain = chain->nobj;
+    }
+    if (*blocked) return 0L;
+    return mask;
+}
+
+long
+worn_extrinsic(int extrinsic)
+{
+    int warntype;
+    boolean blocked;
+    return find_extrinsic(invent, extrinsic, &warntype, &blocked);
+}
+
+boolean
+worn_blocked(int extrinsic)
+{
+    int warntype;
+    boolean blocked;
+    find_extrinsic(invent, extrinsic, &warntype, &blocked);
+    return blocked;
+}
+
+int
+worn_warntype(void)
+{
+    int warntype;
+    boolean blocked;
+    return find_extrinsic(invent, WARN_OF_MON, &warntype, &blocked)
+        ? warntype : 0;
+}
+
 void
 setworn(struct obj *obj, long mask)
 {
     enum objslot i;
     struct obj *oobj;
-    int p;
 
     for (i = 0; i <= os_last_maskable; i++)
         if (W_MASK(i) & mask) {
@@ -31,65 +74,36 @@ setworn(struct obj *obj, long mask)
             if (oobj) {
                 if (oobj->owornmask & (W_MASK(os_wep) | W_MASK(os_swapwep)))
                     u.twoweap = 0;
+
                 /* Equipment slots are now based entirely on owornmask.
                    So this clears the equipment slot. */
                 oobj->owornmask &= ~W_MASK(i);
-                if (W_MASK(i) & ~(W_MASK(os_swapwep) | W_MASK(os_quiver))) {
-                    p = objects[oobj->otyp].oc_oprop;
-                    u.uprops[p].extrinsic &= ~W_MASK(i);
-                    if ((p = w_blocks(oobj, mask)) != 0)
-                        u.uprops[p].blocked &= ~W_MASK(i);
-                    if (oobj->oartifact)
-                        set_artifact_intrinsic(oobj, 0, mask);
-                }
             }
 
             if (obj) {
                 /* Put the new object in the slot. */
                 obj->owornmask |= W_MASK(i);
-
-                /* Prevent getting/blocking intrinsics from wielding
-                   potions, through the quiver, etc. Allow weapon-tools,
-                   too. W_MASK(i) should be same as mask at this point. */
-                if (W_MASK(i) & (W_WORN | W_MASK(os_wep))) {
-                    if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
-                        mask != W_MASK(os_wep)) {
-                        p = objects[obj->otyp].oc_oprop;
-                        u.uprops[p].extrinsic =
-                            u.uprops[p].extrinsic | W_MASK(i);
-                        if (((p = w_blocks(obj, mask))) != 0)
-                            u.uprops[p].blocked |= W_MASK(i);
-                    }
-                    if (obj->oartifact)
-                        set_artifact_intrinsic(obj, 1, mask);
-                }
             }
         }
-    update_inventory();
+    vision_full_recalc = 1; /* this might have changed the XRAY property */
+    see_monsters();         /* or the WARN_OF_MON property */
+    update_inventory();     /* and it definitely changed equip slots */
 }
 
 /* called e.g. when obj is destroyed */
-/* Updated to use the extrinsic and blocked fields. */
 void
 setnotworn(struct obj *obj)
 {
-    enum objslot i;
-    int p;
-
     if (!obj)
         return;
     if (obj == uwep || obj == uswapwep)
         u.twoweap = 0;
-    for (i = 0; i <= os_last_maskable; i++)
-        if (obj == EQUIP(i)) {
-            obj->owornmask &= ~W_MASK(i);
-            p = objects[obj->otyp].oc_oprop;
-            u.uprops[p].extrinsic = u.uprops[p].extrinsic & W_MASK(i);
-            if (obj->oartifact)
-                set_artifact_intrinsic(obj, 0, W_MASK(i));
-            if (((p = w_blocks(obj, W_MASK(i)))) != 0)
-                u.uprops[p].blocked &= ~W_MASK(i);
-        }
+    if (obj->oartifact)
+        uninvoke_artifact(obj);
+    obj->owornmask = 0L;
+
+    vision_full_recalc = 1;
+    see_monsters();
     update_inventory();
 }
 

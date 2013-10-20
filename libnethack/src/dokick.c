@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -686,14 +686,14 @@ dokick(void)
         }
     } else if (Wounded_legs) {
         /* note: jump() has similar code */
-        long wl = (EWounded_legs & BOTH_SIDES);
         const char *bp = body_part(LEG);
 
-        if (wl == BOTH_SIDES)
+        if (LWounded_legs && RWounded_legs)
             bp = makeplural(bp);
         pline("Your %s%s %s in no shape for kicking.",
-              (wl == LEFT_SIDE) ? "left " : (wl == RIGHT_SIDE) ? "right " : "",
-              bp, (wl == BOTH_SIDES) ? "are" : "is");
+              (!RWounded_legs) ? "left " :
+              (!LWounded_legs) ? "right " : "",
+              bp, (LWounded_legs && RWounded_legs) ? "are" : "is");
         no_kick = TRUE;
     } else if (near_capacity() > SLT_ENCUMBER) {
         pline("Your load is too heavy to balance yourself for a kick.");

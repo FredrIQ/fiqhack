@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -444,33 +444,8 @@ dosinkfall(void)
 {
     struct obj *obj;
 
-    if (is_floater(youmonst.data) || (HLevitation & FROMOUTSIDE)) {
-        pline("You wobble unsteadily for a moment.");
-    } else {
-        long save_ELev = ELevitation, save_HLev = HLevitation;
-
-        /* fake removal of levitation in advance so that final disclosure will
-           be right in case this turns out to be fatal; fortunately the fact
-           that rings and boots are really still worn has no effect on bones
-           data */
-        ELevitation = HLevitation = 0L;
-        pline("You crash to the floor!");
-        losehp(rn1(8, 25 - (int)ACURR(A_CON)), fell_on_sink, NO_KILLER_PREFIX);
-        exercise(A_DEX, FALSE);
-        selftouch("Falling, you", "crashing to the floor while wielding");
-        for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere)
-            if (obj->oclass == WEAPON_CLASS || is_weptool(obj)) {
-                pline("You fell on %s.", doname(obj));
-                losehp(rnd(3), fell_on_sink, NO_KILLER_PREFIX);
-                exercise(A_CON, FALSE);
-            }
-        ELevitation = save_ELev;
-        HLevitation = save_HLev;
-    }
-
-    ELevitation &= ~W_MASK(os_invoked);
+    /* Turn off levitation before printing messages */
     HLevitation &= ~(I_SPECIAL | TIMEOUT);
-    HLevitation++;
     if (uleft && uleft->otyp == RIN_LEVITATION) {
         obj = uleft;
         Ring_off(obj);
@@ -486,7 +461,25 @@ dosinkfall(void)
         Boots_off();
         off_msg(obj);
     }
-    HLevitation--;
+    for (obj = invent; obj; obj = obj->nobj) {
+        if (obj->oartifact && artifact_has_invprop(obj, LEVITATION))
+            uninvoke_artifact(obj);
+    }
+
+    if (is_floater(youmonst.data) || (HLevitation & FROMOUTSIDE)) {
+        pline("You wobble unsteadily for a moment.");
+    } else {
+        pline("You crash to the floor!");
+        losehp(rn1(8, 25 - (int)ACURR(A_CON)), fell_on_sink, NO_KILLER_PREFIX);
+        exercise(A_DEX, FALSE);
+        selftouch("Falling, you", "crashing to the floor while wielding");
+        for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere)
+            if (obj->oclass == WEAPON_CLASS || is_weptool(obj)) {
+                pline("You fell on %s.", doname(obj));
+                losehp(rnd(3), fell_on_sink, NO_KILLER_PREFIX);
+                exercise(A_CON, FALSE);
+            }
+    }
 }
 
 boolean
@@ -2432,7 +2425,7 @@ maybe_wail(void)
             pline("%s is about to die.", who);
         } else {
             for (i = 0, powercnt = 0; i < SIZE(powers); ++i)
-                if (u.uprops[powers[i]].intrinsic & INTRINSIC)
+                if (u.uintrinsic[powers[i]])
                     ++powercnt;
 
             pline(powercnt >=
@@ -2502,9 +2495,9 @@ weight_cap(void)
         if (carrcap > MAX_CARR_CAP)
             carrcap = MAX_CARR_CAP;
         if (!Flying) {
-            if (EWounded_legs & LEFT_SIDE)
+            if (LWounded_legs)
                 carrcap -= 100;
-            if (EWounded_legs & RIGHT_SIDE)
+            if (RWounded_legs)
                 carrcap -= 100;
         }
         if (carrcap < 0)

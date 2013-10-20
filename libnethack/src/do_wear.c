@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,7 +78,7 @@ int
 Boots_on(void)
 {
     long oldprop =
-        u.uprops[objects[uarmf->otyp].oc_oprop].extrinsic & ~W_MASK(os_armf);
+        worn_extrinsic(objects[uarmf->otyp].oc_oprop) & ~W_MASK(os_armf);
 
     uarmf->known = TRUE;
     switch (uarmf->otyp) {
@@ -134,8 +134,7 @@ int
 Boots_off(void)
 {
     int otyp = uarmf->otyp;
-    long oldprop = u.uprops[objects[otyp].oc_oprop].extrinsic &
-        ~W_MASK(os_armf);
+    long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armf);
 
     takeoff_mask &= ~W_MASK(os_armf);
     /* For levitation, float_down() returns if Levitation, so we must do a
@@ -164,11 +163,11 @@ Boots_off(void)
         break;
     case FUMBLE_BOOTS:
         if (!oldprop && !(HFumbling & ~TIMEOUT))
-            HFumbling = EFumbling = 0;
+            HFumbling = 0;
         break;
     case LEVITATION_BOOTS:
         if (!oldprop && !HLevitation && !cancelled_don) {
-            float_down(0L, 0L);
+            float_down(0L);
             makeknown(otyp);
         }
         break;
@@ -193,7 +192,7 @@ int
 Cloak_on(void)
 {
     long oldprop =
-        u.uprops[objects[uarmc->otyp].oc_oprop].extrinsic & ~W_MASK(os_armc);
+        worn_extrinsic(objects[uarmc->otyp].oc_oprop) & ~W_MASK(os_armc);
 
     uarmc->known = TRUE;
     switch (uarmc->otyp) {
@@ -207,6 +206,7 @@ Cloak_on(void)
     case CLOAK_OF_MAGIC_RESISTANCE:
     case ROBE:
     case LEATHER_CLOAK:
+    case ALCHEMY_SMOCK:
         break;
     case MUMMY_WRAPPING:
         /* Note: it's already being worn, so we have to cheat here. */
@@ -230,10 +230,6 @@ Cloak_on(void)
     case OILSKIN_CLOAK:
         pline("%s very tightly.", Tobjnam(uarmc, "fit"));
         break;
-        /* Alchemy smock gives poison _and_ acid resistance */
-    case ALCHEMY_SMOCK:
-        EAcid_resistance |= W_MASK(os_armc);
-        break;
     default:
         impossible(unknown_type, c_slotnames[os_armc], uarmc->otyp);
     }
@@ -245,8 +241,7 @@ int
 Cloak_off(void)
 {
     int otyp = uarmc->otyp;
-    long oldprop = u.uprops[objects[otyp].oc_oprop].extrinsic &
-        ~W_MASK(os_armc);
+    long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armc);
 
     takeoff_mask &= ~W_MASK(os_armc);
     /* For mummy wrapping, taking it off first resets `Invisible'. */
@@ -261,6 +256,7 @@ Cloak_off(void)
     case OILSKIN_CLOAK:
     case ROBE:
     case LEATHER_CLOAK:
+    case ALCHEMY_SMOCK:
         break;
     case MUMMY_WRAPPING:
         if (Invis && !Blind) {
@@ -278,10 +274,6 @@ Cloak_off(void)
                   See_invisible ? "no longer see through yourself" :
                   see_yourself);
         }
-        break;
-        /* Alchemy smock gives poison _and_ acid resistance */
-    case ALCHEMY_SMOCK:
-        EAcid_resistance &= ~W_MASK(os_armc);
         break;
     default:
         impossible(unknown_type, c_slotnames[os_armc], otyp);
@@ -400,7 +392,7 @@ int
 Gloves_on(void)
 {
     long oldprop =
-        u.uprops[objects[uarmg->otyp].oc_oprop].extrinsic & ~W_MASK(os_armg);
+        worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
 
     uarmg->known = TRUE;
     switch (uarmg->otyp) {
@@ -428,7 +420,7 @@ int
 Gloves_off(void)
 {
     long oldprop =
-        u.uprops[objects[uarmg->otyp].oc_oprop].extrinsic & ~W_MASK(os_armg);
+        worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
 
     takeoff_mask &= ~W_MASK(os_armg);
 
@@ -437,7 +429,7 @@ Gloves_off(void)
         break;
     case GAUNTLETS_OF_FUMBLING:
         if (!oldprop && !(HFumbling & ~TIMEOUT))
-            HFumbling = EFumbling = 0;
+            HFumbling = 0;
         break;
     case GAUNTLETS_OF_POWER:
         makeknown(uarmg->otyp);
@@ -657,7 +649,7 @@ Amulet_off(void)
 void
 Ring_on(struct obj *obj)
 {
-    long oldprop = u.uprops[objects[obj->otyp].oc_oprop].extrinsic;
+    long oldprop = worn_extrinsic(objects[obj->otyp].oc_oprop);
     int old_attrib, which;
 
     /* only mask out W_RING when we don't have both left and right rings of the 
@@ -764,7 +756,8 @@ Ring_off_or_gone(struct obj *obj, boolean gone)
     int old_attrib, which;
 
     takeoff_mask &= ~mask;
-    if (!(u.uprops[objects[obj->otyp].oc_oprop].extrinsic & mask))
+    if (objects[obj->otyp].oc_oprop &&
+        !(worn_extrinsic(objects[obj->otyp].oc_oprop) & mask))
         impossible("Strange... I didn't know you had that ring.");
     if (gone)
         setnotworn(obj);
@@ -819,7 +812,7 @@ Ring_off_or_gone(struct obj *obj, boolean gone)
         }
         break;
     case RIN_LEVITATION:
-        float_down(0L, 0L);
+        float_down(0L);
         if (!Levitation)
             makeknown(RIN_LEVITATION);
         break;

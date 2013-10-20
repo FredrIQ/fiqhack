@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,41 +39,43 @@
 # define SICK                     29
 # define BLINDED                  30
 # define SLEEPING                 31
-# define WOUNDED_LEGS             32
-# define STONED                   33
-# define STRANGLED                34
-# define HALLUC                   35
-# define HALLUC_RES               36
-# define FUMBLING                 37
-# define JUMPING                  38
-# define WWALKING                 39
-# define HUNGER                   40
-# define GLIB                     41
-# define REFLECTING               42
-# define LIFESAVED                43
-# define ANTIMAGIC                44
-# define DISPLACED                45
-# define CLAIRVOYANT              46
-# define VOMITING                 47
-# define ENERGY_REGENERATION      48
-# define MAGICAL_BREATHING        49
-# define HALF_SPDAM               50
-# define HALF_PHDAM               51
-# define SICK_RES                 52
-# define DRAIN_RES                53
-# define WARN_UNDEAD              54
-# define INVULNERABLE             55
-# define FREE_ACTION              56
-# define SWIMMING                 57
-# define SLIMED                   58
-# define FIXED_ABIL               59
-# define FLYING                   60
-# define UNCHANGING               61
-# define PASSES_WALLS             62
-# define SLOW_DIGESTION           63
-# define INFRAVISION              64
-# define WARN_OF_MON              65
-# define DETECT_MONSTERS          66
+# define LWOUNDED_LEGS            32
+# define RWOUNDED_LEGS            33
+# define STONED                   34
+# define STRANGLED                35
+# define HALLUC                   36
+# define HALLUC_RES               37
+# define FUMBLING                 38
+# define JUMPING                  39
+# define WWALKING                 40
+# define HUNGER                   41
+# define GLIB                     42
+# define REFLECTING               43
+# define LIFESAVED                44
+# define ANTIMAGIC                45
+# define DISPLACED                46
+# define CLAIRVOYANT              47
+# define VOMITING                 48
+# define ENERGY_REGENERATION      49
+# define MAGICAL_BREATHING        50
+# define HALF_SPDAM               51
+# define HALF_PHDAM               52
+# define SICK_RES                 53
+# define DRAIN_RES                54
+# define WARN_UNDEAD              55
+# define INVULNERABLE             56
+# define FREE_ACTION              57
+# define SWIMMING                 58
+# define SLIMED                   59
+# define FIXED_ABIL               60
+# define FLYING                   61
+# define UNCHANGING               62
+# define PASSES_WALLS             63
+# define SLOW_DIGESTION           64
+# define INFRAVISION              65
+# define WARN_OF_MON              66
+# define XRAY_VISION              67
+# define DETECT_MONSTERS          68
 # define LAST_PROP                (DETECT_MONSTERS)
 
 /* This enum holds all the equipment that is tracked indirectly in struct you;
@@ -115,9 +117,9 @@ enum objslot {
 
     os_last_maskable = os_saddle,
 
-/* Slot codes that are not part of u.uobjslot */
-    os_carried,   /* carried artifact */
-    os_invoked,   /* invoked artifact */
+/* "slot" codes that are not part of u.uobjslot, but are used for extrinsics */
+    os_carried,   /* extrinsic comes from a carried artifact */
+    os_invoked,   /* extrinsic comes from an invoked artifact */
 
     os_last_slot = os_invoked,
 
@@ -182,26 +184,16 @@ enum turntracked_object_slots {
 # define uball    EQUIP(os_ball)
 # define uchain   EQUIP(os_chain)
 
-/*** Where the properties come from ***/
-/* Definitions were moved here from obj.h and you.h */
-struct prop {
-    /*** Properties conveyed by objects ***/
-    unsigned int extrinsic;     /* bitmask of W_MASK(os_*) */
-    
-    /*** Property is blocked by an object ***/
-    unsigned int blocked;       /* Same assignments as extrinsic */
-    
-    /*** Timeouts, permanent properties, and other flags ***/
-    unsigned int intrinsic;
-    /* Timed properties */
+/* Flags for intrinsics */
+
+/* Timed properties */
 # define TIMEOUT      0x00ffffffU       /* Up to 16 million turns */
-    /* Permanent properties */
+/* Permanent properties */
 # define FROMEXPER    0x01000000U       /* Gain/lose with experience, for role */
 # define FROMRACE     0x02000000U       /* Gain/lose with experience, for race */
 # define FROMOUTSIDE  0x04000000U       /* By corpses, prayer, thrones, etc. */
 # define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMEXPER)
-    /* Control flags */
+/* Control flags */
 # define I_SPECIAL    0x10000000U       /* Property is controllable */
-};
 
 #endif /* PROP_H */

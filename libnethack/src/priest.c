@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -240,16 +240,18 @@ static const char *hallu_priest_types[] = {
  *          the true name even when under that influence
  */
 char *
-priestname(const struct monst *mon, char *pname)
+priestname(const struct monst *mon, char *pname, boolean override_hallu)
 {       /* caller-supplied output buffer */
     const char *what;
     boolean do_the = TRUE;
+    const char * (*gname_function)(aligntyp) = align_gname;
 
-    if (Hallucination) {
+    if (Hallucination && !override_hallu) {
         int idx = rndmonidx();
 
         what = monnam_for_index(idx);
         do_the = !monnam_is_pname(idx);
+        gname_function = halu_gname;
     } else {
         what = mon->data->mname;
     }
@@ -273,7 +275,7 @@ priestname(const struct monst *mon, char *pname)
                 strcat(pname, "renegade ");
             if (mon->data == &mons[PM_HIGH_PRIEST])
                 strcat(pname, "high ");
-            if (Hallucination) {
+            if (Hallucination && !override_hallu) {
                 strcat(pname,
                        hallu_priest_types[rn2(sizeof hallu_priest_types /
                                               sizeof *hallu_priest_types)]);
@@ -284,13 +286,13 @@ priestname(const struct monst *mon, char *pname)
                 strcat(pname, "priest ");
         }
         strcat(pname, "of ");
-        strcat(pname, halu_gname((int)EPRI(mon)->shralign));
+        strcat(pname, gname_function((int)EPRI(mon)->shralign));
         return pname;
     }
     /* use emin instead of epri */
     strcat(pname, what);
     strcat(pname, " of ");
-    strcat(pname, halu_gname(EMIN(mon)->min_align));
+    strcat(pname, gname_function(EMIN(mon)->min_align));
     return pname;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -599,46 +599,38 @@ vision_recalc(int control)
         /* 
          * Set the IN_SIGHT bit for xray and night vision.
          */
-        if (u.xray_range >= 0) {
-            if (u.xray_range) {
-                ranges = circle_ptr(u.xray_range);
-
-                for (row = u.uy - u.xray_range; row <= u.uy + u.xray_range;
-                     row++) {
-                    if (row < 0)
-                        continue;
-                    if (row >= ROWNO)
-                        break;
-                    dy = v_abs(u.uy - row);
-                    next_row = next_array[row];
-
-                    start = max(0, u.ux - ranges[dy]);
-                    stop = min(COLNO - 1, u.ux + ranges[dy]);
-
-                    for (col = start; col <= stop; col++) {
-                        char old_row_val = next_row[col];
-
-                        next_row[col] |= IN_SIGHT;
-                        oldseenv = level->locations[col][row].seenv;
-                        level->locations[col][row].seenv = SVALL; /* see all! */
-                        /* Update if previously not in sight or new angle. */
-                        if (!(old_row_val & IN_SIGHT) || oldseenv != SVALL)
-                            newsym(col, row);
-                    }
-
-                    next_rmin[row] = min(start, next_rmin[row]);
-                    next_rmax[row] = max(stop, next_rmax[row]);
+        if (Xray_vision) {
+            ranges = circle_ptr(XRAY_RANGE);
+                
+            for (row = u.uy - XRAY_RANGE; row <= u.uy + XRAY_RANGE;
+                 row++) {
+                if (row < 0)
+                    continue;
+                if (row >= ROWNO)
+                    break;
+                dy = v_abs(u.uy - row);
+                next_row = next_array[row];
+                    
+                start = max(0, u.ux - ranges[dy]);
+                stop = min(COLNO - 1, u.ux + ranges[dy]);
+                    
+                for (col = start; col <= stop; col++) {
+                    char old_row_val = next_row[col];
+                        
+                    next_row[col] |= IN_SIGHT;
+                    oldseenv = level->locations[col][row].seenv;
+                    level->locations[col][row].seenv = SVALL; /* see all! */
+                    /* Update if previously not in sight or new angle. */
+                    if (!(old_row_val & IN_SIGHT) || oldseenv != SVALL)
+                        newsym(col, row);
                 }
-
-            } else {    /* range is 0 */
-                next_array[u.uy][u.ux] |= IN_SIGHT;
-                level->locations[u.ux][u.uy].seenv = SVALL;
-                next_rmin[u.uy] = min(u.ux, next_rmin[u.uy]);
-                next_rmax[u.uy] = max(u.ux, next_rmax[u.uy]);
+                    
+                next_rmin[row] = min(start, next_rmin[row]);
+                next_rmax[row] = max(stop, next_rmax[row]);
             }
         }
 
-        if (has_night_vision && u.xray_range < u.nv_range) {
+        if (has_night_vision && (!Xray_vision || XRAY_RANGE < u.nv_range)) {
             if (!u.nv_range) {  /* range is 0 */
                 next_array[u.uy][u.ux] |= IN_SIGHT;
                 level->locations[u.ux][u.uy].seenv = SVALL;

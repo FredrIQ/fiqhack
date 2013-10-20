@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -213,7 +213,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
         pline("Your %s are in no shape for riding.",
               makeplural(body_part(LEG)));
         if (force && wizard && yn("Heal your legs?") == 'y')
-            HWounded_legs = EWounded_legs = 0;
+            LWounded_legs = RWounded_legs = 0;
         else
             return FALSE;
     }
@@ -481,7 +481,8 @@ dismount_steed(int reason)
         if (!have_spot)
             have_spot = landing_spot(&cc, reason, 1);
         losehp(rn1(10, 10), "riding accident", KILLED_BY_AN);
-        set_wounded_legs(BOTH_SIDES, (int)HWounded_legs + rn1(5, 5));
+        set_wounded_legs(LEFT_SIDE, (int)LWounded_legs + rn1(5, 5));
+        set_wounded_legs(RIGHT_SIDE, (int)RWounded_legs + rn1(5, 5));
         repair_leg_damage = FALSE;
         break;
     case DISMOUNT_POLY:
@@ -521,7 +522,7 @@ dismount_steed(int reason)
     /* While riding these refer to the steed's legs so after dismounting they
        refer to the player's legs once again. */
     if (repair_leg_damage)
-        HWounded_legs = EWounded_legs = 0;
+        LWounded_legs = RWounded_legs = 0;
 
     /* Release the steed and saddle */
     u.usteed = 0;
@@ -600,7 +601,7 @@ dismount_steed(int reason)
     /* Return the player to the floor */
     if (reason != DISMOUNT_ENGULFED) {
         in_steed_dismounting = TRUE;
-        float_down(0L, W_MASK(os_saddle));
+        float_down(0L);
         in_steed_dismounting = FALSE;
         iflags.botl = 1;
         encumber_msg();

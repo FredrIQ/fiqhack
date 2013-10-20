@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -349,7 +349,7 @@ ustatusline(void)
     if (!u.usteed && Wounded_legs) {
         const char *what = body_part(LEG);
 
-        if ((Wounded_legs & BOTH_SIDES) == BOTH_SIDES)
+        if (LWounded_legs && RWounded_legs)
             what = makeplural(what);
         sprintf(eos(info), ", injured %s", what);
     }

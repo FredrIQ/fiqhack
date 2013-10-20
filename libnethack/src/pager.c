@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -108,7 +108,7 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
 
     outbuf[0] = '\0';
 
-    xraydist = (u.xray_range < 0) ? -1 : u.xray_range * u.xray_range;
+    xraydist = Xray_vision ? -1 : XRAY_RANGE * XRAY_RANGE;
     /* normal vision */
     if ((mtmp->wormno ? worm_known(mtmp) : couldsee(mtmp->mx, mtmp->my) &&
          cansee(mtmp->mx, mtmp->my)) && mon_visible(mtmp) && !mtmp->minvis) {

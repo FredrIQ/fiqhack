@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -233,15 +233,14 @@ merged(struct obj **potmp, struct obj **pobj)
 }
 
 /*
-Adjust hero intrinsics as if this object was being added to the hero's
-inventory.  Called _before_ the object has been added to the hero's
-inventory.
+  Adjust hero intrinsics as if this object was being added to the hero's
+  inventory.  Called _before_ the object has been added to the hero's inventory.
 
-This is called when adding objects to the hero's inventory normally (via
-addinv) or when an object in the hero's inventory has been polymorphed
-in-place.
+  This is called when adding objects to the hero's inventory normally (via
+  addinv) or when an object in the hero's inventory has been polymorphed
+  in-place.
 
-It may be valid to merge this code with with addinv_core2().
+  It may be valid to merge this code with with addinv_core2().
 */
 static void
 addinv_stats(struct obj *obj)
@@ -272,7 +271,6 @@ addinv_stats(struct obj *obj)
             u.uhave.questart = 1;
             artitouch();
         }
-        set_artifact_intrinsic(obj, 1, W_MASK(os_carried));
     }
 
     if (confers_luck(obj)) {
@@ -515,7 +513,7 @@ freeinv_stats(struct obj *obj)
                 impossible("don't have quest artifact?");
             u.uhave.questart = 0;
         }
-        set_artifact_intrinsic(obj, 0, W_MASK(os_carried));
+        uninvoke_artifact(obj);
     }
 
     if (obj->otyp == LOADSTONE) {

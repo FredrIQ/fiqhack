@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -92,7 +92,7 @@ struct you {
     int uhunger;        /* refd only in eat.c and shk.c */
     unsigned uhs;       /* hunger state - see eat.c */
 
-    struct prop uprops[LAST_PROP + 1];
+    unsigned uintrinsic[LAST_PROP + 1];     /* uses defines from prop.h */
 
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
 
@@ -103,9 +103,8 @@ struct you {
 # define SICK_NONVOMITABLE 0x02
 # define SICK_ALL 0x03
 
-    /* These ranges can never be more than MAX_RANGE (vision.h). */
+    /* This range can never be more than MAX_RANGE (vision.h). */
     int nv_range;       /* current night vision range */
-    int xray_range;     /* current xray vision range */
 
     /* 
      * These variables are valid globally only when punished and blind.

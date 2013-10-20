@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -822,7 +822,7 @@ use_crystal_ball(struct obj *obj)
             break;
         case 4:
             pline("%s your mind!", Tobjnam(obj, "zap"));
-            make_hallucinated(HHallucination + rnd(100), FALSE, 0L);
+            make_hallucinated(HHallucination + rnd(100), FALSE);
             break;
         case 5:
             pline("%s!", Tobjnam(obj, "explode"));

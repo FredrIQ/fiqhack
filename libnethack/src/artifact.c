@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -343,170 +343,104 @@ protects(int adtyp, struct obj * otmp)
     return FALSE;
 }
 
-/*
- * a potential artifact has just been worn/wielded/picked-up or
- * unworn/unwielded/dropped.  Pickup/drop only set/reset the carried mask.
- */
-void
-set_artifact_intrinsic(struct obj *otmp, boolean on, long wp_mask)
+
+/* Given an item and an extrinsic, returns whether that item provides that
+   extrinsic, either through artifact properties or through a "normal" item
+   property. In the special case of warning about a particular type of monster,
+   returns that in *warntype.  Returns the artifact's worn mask (if it's
+   relevant), bitwise-or W_MASK(os_carried), bitwise-or W_MASK(os_invoked) if
+   relevant. */
+long
+item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
 {
-    unsigned int *mask = 0;
     const struct artifact *oart = get_artifact(otmp);
     uchar dtyp;
     long spfx;
+    boolean equipped;
+    long mask;    
+
+    /* Artifacts can provide elemental defense, either when equipped, or when
+       carried. Non-artifact items (and artifact properties that depend on their
+       base item) only work when equipped. Our definition of "equipped" depends
+       on the base type; wearing is always enough, wielding is only enough for
+       weapons and weapon-tools.
+
+       TODO: Wielding as the secondary weapon while twoweaponing. This currently
+       isn't allowed for artifacts, and never comes up for non-artifacts (no
+       non-artifact weapons currently have properties), but it's unclear whether
+       that's for technical or balance reasons. We should at least fix the
+       technical issues here, even though balance considerations imply that it
+       probably shouldn't be allowed anyway. */
+    mask = W_WORN | W_MASK(os_invoked);
+    if (otmp->oclass == WEAPON_CLASS || is_weptool(otmp))
+        mask |= W_MASK(os_wep);
+    mask &= otmp->owornmask;
+    equipped = !!(mask & W_EQUIP);
+
+    /* Does the base item (artifact or not) provide the property in question?
+       Skip WARN_OF_MON for paranoia reasons; it wouldn't work if it were
+       used, because there'd be no way to communicate which monster is being
+       warned against. */
+    if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON)
+        return mask & W_EQUIP;
+
+    /* Non-artifact item properties go here. At the moment, there is only the
+       one: alchemy smocks give two extrinsics, and so only one can be placed in
+       its item property field, with the other one being special-cased. */
+    if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
+        return mask & W_EQUIP;
 
     if (!oart)
-        return;
+        return 0L;
 
-    /* effects from the defn field */
-    dtyp = (wp_mask != W_MASK(os_carried)) ?
-        oart->defn.adtyp : oart->cary.adtyp;
+    if (oart->inv_prop == extrinsic && mask & W_MASK(os_invoked))
+        return mask;
 
-    if (dtyp == AD_FIRE)
-        mask = &EFire_resistance;
-    else if (dtyp == AD_COLD)
-        mask = &ECold_resistance;
-    else if (dtyp == AD_ELEC)
-        mask = &EShock_resistance;
-    else if (dtyp == AD_MAGM)
-        mask = &EAntimagic;
-    else if (dtyp == AD_DISN)
-        mask = &EDisint_resistance;
-    else if (dtyp == AD_DRST)
-        mask = &EPoison_resistance;
+    /* Anything from here on is based on artifact properties */
+    mask |= W_MASK(os_carried);
 
-    if (mask && wp_mask == W_MASK(os_carried) && !on) {
-        /* find out if some other artifact also confers this intrinsic */
-        /* if so, leave the mask alone */
-        struct obj *obj;
+    dtyp = equipped ? oart->defn.adtyp : oart->cary.adtyp;
 
-        for (obj = invent; obj; obj = obj->nobj)
-            if (obj != otmp && obj->oartifact) {
-                const struct artifact *art = get_artifact(obj);
+    if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
+        (dtyp == AD_COLD && extrinsic == COLD_RES) ||
+        (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
+        (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
+        (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
+        (dtyp == AD_DRST && extrinsic == POISON_RES))
+        return mask;
 
-                if (art->cary.adtyp == dtyp) {
-                    mask = NULL;
-                    break;
-                }
-            }
-    }
-    if (mask) {
-        if (on)
-            *mask |= wp_mask;
-        else
-            *mask &= ~wp_mask;
-    }
+    /* extrinsics from the spfx field; there could be more than one */
+    spfx = equipped ? oart->spfx : oart->cspfx;
 
-    /* intrinsics from the spfx field; there could be more than one */
-    spfx = (wp_mask != W_MASK(os_carried)) ? oart->spfx : oart->cspfx;
-    if (spfx && wp_mask == W_MASK(os_carried) && !on) {
-        /* don't change any spfx also conferred by other artifacts */
-        struct obj *obj;
+    /* TODO: this function used to print a message for hallucination
+       resistance, but it's definitely the wrong place. Discover where the
+       correct place is. */
+    if ((spfx & SPFX_SEARCH  && extrinsic == SEARCHING) ||
+        (spfx & SPFX_ESP     && extrinsic == TELEPAT) ||
+        (spfx & SPFX_STLTH   && extrinsic == STEALTH) ||
+        (spfx & SPFX_REGEN   && extrinsic == REGENERATION) ||
+        (spfx & SPFX_TCTRL   && extrinsic == TELEPORT_CONTROL) ||
+        (spfx & SPFX_EREGEN  && extrinsic == ENERGY_REGENERATION) ||
+        (spfx & SPFX_HSPDAM  && extrinsic == HALF_SPDAM) ||
+        (spfx & SPFX_HPHDAM  && extrinsic == HALF_PHDAM) ||
+        (spfx & SPFX_HALRES  && extrinsic == HALLUC_RES) ||
+        (spfx & SPFX_REFLECT && extrinsic == REFLECTING) ||
+        (spfx & SPFX_XRAY    && extrinsic == XRAY_VISION))
+        return mask;
 
-        for (obj = invent; obj; obj = obj->nobj)
-            if (obj != otmp && obj->oartifact) {
-                const struct artifact *art = get_artifact(obj);
-
-                spfx &= ~art->cspfx;
-            }
-    }
-
-    if (spfx & SPFX_SEARCH) {
-        if (on)
-            ESearching |= wp_mask;
-        else
-            ESearching &= ~wp_mask;
-    }
-    if (spfx & SPFX_HALRES) {
-        /* make_hallucinated must (re)set the mask itself to get the display
-           right */
-        /* restoring needed because this is the only artifact intrinsic that
-           can print a message--need to guard against being printed when
-           restoring a game */
-        make_hallucinated((long)!on,
-                          program_state.restoring ? FALSE : TRUE, wp_mask);
-    }
-    if (spfx & SPFX_ESP) {
-        if (on)
-            ETelepat |= wp_mask;
-        else
-            ETelepat &= ~wp_mask;
-        see_monsters();
-    }
-    if (spfx & SPFX_STLTH) {
-        if (on)
-            EStealth |= wp_mask;
-        else
-            EStealth &= ~wp_mask;
-    }
-    if (spfx & SPFX_REGEN) {
-        if (on)
-            ERegeneration |= wp_mask;
-        else
-            ERegeneration &= ~wp_mask;
-    }
-    if (spfx & SPFX_TCTRL) {
-        if (on)
-            ETeleport_control |= wp_mask;
-        else
-            ETeleport_control &= ~wp_mask;
-    }
     if (spfx & SPFX_WARN) {
         if (spec_m2(otmp)) {
-            if (on) {
-                EWarn_of_mon |= wp_mask;
-                flags.warntype |= spec_m2(otmp);
-            } else {
-                EWarn_of_mon &= ~wp_mask;
-                flags.warntype &= ~spec_m2(otmp);
+            if (extrinsic == WARN_OF_MON) {
+                *warntype = spec_m2(otmp);
+                return mask;
             }
-            see_monsters();
         } else {
-            if (on)
-                EWarning |= wp_mask;
-            else
-                EWarning &= ~wp_mask;
+            if (extrinsic == WARNING)
+                return mask;
         }
     }
-    if (spfx & SPFX_EREGEN) {
-        if (on)
-            EEnergy_regeneration |= wp_mask;
-        else
-            EEnergy_regeneration &= ~wp_mask;
-    }
-    if (spfx & SPFX_HSPDAM) {
-        if (on)
-            EHalf_spell_damage |= wp_mask;
-        else
-            EHalf_spell_damage &= ~wp_mask;
-    }
-    if (spfx & SPFX_HPHDAM) {
-        if (on)
-            EHalf_physical_damage |= wp_mask;
-        else
-            EHalf_physical_damage &= ~wp_mask;
-    }
-    if (spfx & SPFX_XRAY) {
-        /* this assumes that no one else is using xray_range */
-        if (on)
-            u.xray_range = 3;
-        else
-            u.xray_range = -1;
-        vision_full_recalc = 1;
-    }
-    if ((spfx & SPFX_REFLECT) && (wp_mask & W_MASK(os_wep))) {
-        if (on)
-            EReflecting |= wp_mask;
-        else
-            EReflecting &= ~wp_mask;
-    }
 
-    if (wp_mask == W_MASK(os_carried) && !on && oart->inv_prop) {
-        /* might have to turn off invoked power too */
-        if (oart->inv_prop <= LAST_PROP &&
-            (u.uprops[oart->inv_prop].extrinsic & W_MASK(os_invoked)))
-            arti_invoke(otmp);
-    }
+    return 0L;
 }
 
 /*
@@ -1235,6 +1169,17 @@ doinvoke(struct obj *obj)
     return arti_invoke(obj);
 }
 
+/* Turns off any toggled-by-invoking artifact powers that this artifact might
+   have. The caller should verify that the item in question is actually an
+   artifact, but does not need to verify that it's been invoked. */
+void
+uninvoke_artifact(struct obj *obj)
+{
+    if (!(obj->owornmask & W_MASK(os_invoked)))
+        return;
+    arti_invoke(obj);
+}
+
 static int
 arti_invoke(struct obj *obj)
 {
@@ -1437,14 +1382,13 @@ arti_invoke(struct obj *obj)
             }
         }
     } else {
-        long eprop = (u.uprops[oart->inv_prop].extrinsic ^= W_MASK(os_invoked));
-        long iprop = u.uprops[oart->inv_prop].intrinsic;
-        /* on is true if invoked prop just set */
-        boolean on = !!(eprop & W_MASK(os_invoked));
+        /* on is true if invoked prop is about to be set */
+        boolean on = !(obj->owornmask & W_MASK(os_invoked));
+        boolean redundant = u.uintrinsic[oart->inv_prop] ||
+            worn_extrinsic(oart->inv_prop) & ~W_MASK(os_invoked);
 
         if (on && obj->age > moves) {
             /* the artifact is tired :-) */
-            u.uprops[oart->inv_prop].extrinsic ^= W_MASK(os_invoked);
             pline("You feel that %s %s ignoring you.", the(xname(obj)),
                   otense(obj, "are"));
             /* can't just keep repeatedly trying */
@@ -1455,8 +1399,9 @@ arti_invoke(struct obj *obj)
             /* arbitrary for now until we can tune this -dlc */
             obj->age = moves + rnz(100);
         }
+        obj->owornmask ^= W_MASK(os_invoked);
 
-        if ((eprop & ~W_MASK(os_invoked)) || iprop) {
+        if (redundant) {
         nothing_special:
             /* you had the property from some other source too */
             if (carried(obj))
@@ -1476,7 +1421,7 @@ arti_invoke(struct obj *obj)
                 float_up();
                 spoteffects(FALSE);
             } else
-                float_down(I_SPECIAL | TIMEOUT, W_MASK(os_invoked));
+                float_down(I_SPECIAL | TIMEOUT);
             break;
         case INVIS:
             if (BInvis || Blind)

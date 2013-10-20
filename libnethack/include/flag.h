@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,7 +82,6 @@ struct flag {
     boolean travel;     /* find way automatically to u.tx,u.ty */
     unsigned run;       /* 0: h (etc), 1: H (etc), 2: fh (etc) 3: FH, 4: ff+,
                            5: ff-, 6: FF+, 7: FF- 8: travel */
-    unsigned int warntype;      /* warn_of_mon monster type M2 */
     int warnlevel;
     int djinni_count, ghost_count;      /* potion effect tuning */
     int pickup_burden;  /* maximum burden before prompt */

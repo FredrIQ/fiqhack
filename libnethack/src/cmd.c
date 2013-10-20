@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -874,10 +874,11 @@ enlightenment(int final)
         you_are(&menu, "telepathic");
     if (Warning)
         you_are(&menu, "warned");
-    if (Warn_of_mon && flags.warntype) {
+    if (Warn_of_mon) {
+        int warntype = worn_warntype();
         sprintf(buf, "aware of the presence of %s",
-                (flags.warntype & M2_ORC) ? "orcs" :
-                (flags.warntype & M2_DEMON) ? "demons" : "something");
+                (warntype & M2_ORC) ? "orcs" :
+                (warntype & M2_DEMON) ? "demons" : "something");
         you_are(&menu, buf);
     }
     if (Undead_warning)

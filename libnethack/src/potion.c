@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -238,7 +238,7 @@ make_blinded(long xtime, boolean talk)
 boolean
 make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
                                    hallucination */
-                  boolean talk, long mask)
+                  boolean talk)
 {       /* nonzero if resistance status should change by mask */
     long old = HHallucination;
     boolean changed = 0;
@@ -249,33 +249,23 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
         "Oh wow!  Everything %s so cosmic!";
     verb = (!Blind) ? "looks" : "feels";
 
-    if (mask) {
-        if (HHallucination)
-            changed = TRUE;
-
-        if (!xtime)
-            EHalluc_resistance |= mask;
-        else
-            EHalluc_resistance &= ~mask;
-    } else {
-        if (!EHalluc_resistance && (! !HHallucination != ! !xtime))
-            changed = TRUE;
-        set_itimeout(&HHallucination, xtime);
-
-        /* clearing temporary hallucination without toggling vision */
-        if (!changed && !HHallucination && old && talk) {
-            if (!haseyes(youmonst.data)) {
-                strange_feeling(NULL, NULL);
-            } else if (Blind) {
-                char buf[BUFSZ];
-                int eyecnt = eyecount(youmonst.data);
-
-                strcpy(buf, body_part(EYE));
-                pline(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
-                      (eyecnt == 1) ? "itches" : "itch");
-            } else {    /* Grayswandir */
-                pline(vismsg, "flatten", "normal");
-            }
+    if (!EHalluc_resistance && (! !HHallucination != ! !xtime))
+        changed = TRUE;
+    set_itimeout(&HHallucination, xtime);
+    
+    /* clearing temporary hallucination without toggling vision */
+    if (!changed && !HHallucination && old && talk) {
+        if (!haseyes(youmonst.data)) {
+            strange_feeling(NULL, NULL);
+        } else if (Blind) {
+            char buf[BUFSZ];
+            int eyecnt = eyecount(youmonst.data);
+            
+            strcpy(buf, body_part(EYE));
+            pline(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
+                  (eyecnt == 1) ? "itches" : "itch");
+        } else {    /* Grayswandir */
+            pline(vismsg, "flatten", "normal");
         }
     }
 
@@ -474,7 +464,7 @@ peffects(struct obj *otmp)
             nothing++;
         make_hallucinated(itimeout_incr
                           (HHallucination, rn1(200, 600 - 300 * bcsign(otmp))),
-                          TRUE, 0L);
+                          TRUE);
         break;
     case POT_WATER:
         if (!otmp->blessed && !otmp->cursed) {
@@ -722,7 +712,7 @@ peffects(struct obj *otmp)
         }
         if (Hallucination) {
             pline("You are shocked back to your senses!");
-            make_hallucinated(0L, FALSE, 0L);
+            make_hallucinated(0L, FALSE);
         }
         break;
     case POT_CONFUSION:
@@ -823,7 +813,7 @@ peffects(struct obj *otmp)
         pline("You feel much better.");
         healup(dice(6 + 2 * bcsign(otmp), 8),
                otmp->blessed ? 5 : !otmp->cursed ? 2 : 0, !otmp->cursed, TRUE);
-        make_hallucinated(0L, TRUE, 0L);
+        make_hallucinated(0L, TRUE);
         exercise(A_CON, TRUE);
         exercise(A_STR, TRUE);
         break;
@@ -837,7 +827,7 @@ peffects(struct obj *otmp)
             u.ulevelmax -= 1;
             pluslvl(FALSE);
         }
-        make_hallucinated(0L, TRUE, 0L);
+        make_hallucinated(0L, TRUE);
         exercise(A_STR, TRUE);
         exercise(A_CON, TRUE);
         break;

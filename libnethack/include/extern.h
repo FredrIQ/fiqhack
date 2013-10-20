@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -59,7 +59,8 @@ extern boolean arti_reflects(struct obj *);
 extern boolean restrict_name(struct obj *, const char *);
 extern boolean defends(int, struct obj *);
 extern boolean protects(int, struct obj *);
-extern void set_artifact_intrinsic(struct obj *, boolean, long);
+extern long item_provides_extrinsic(struct obj *, int, int *);
+extern void uninvoke_artifact(struct obj *);
 extern int touch_artifact(struct obj *, struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
 extern int spec_dbon(struct obj *, struct monst *, int);
@@ -268,6 +269,7 @@ extern int donull(void);
 extern int dowipe(void);
 extern void set_wounded_legs(long, int);
 extern void heal_legs(void);
+extern void heal_one_leg(int);
 
 /* ### do_name.c ### */
 
@@ -1267,7 +1269,7 @@ extern void make_stunned(long, boolean);
 extern void make_blinded(long, boolean);
 extern void make_sick(long, const char *, boolean, int);
 extern void make_vomiting(long, boolean);
-extern boolean make_hallucinated(long, boolean, long);
+extern boolean make_hallucinated(long, boolean);
 extern int dodrink(struct obj *potion);
 extern int dopotion(struct obj *);
 extern int peffects(struct obj *);
@@ -1303,7 +1305,7 @@ extern int move_special(struct monst *, boolean, schar, boolean, boolean, xchar,
 extern char temple_occupied(char *);
 extern int pri_move(struct monst *);
 extern void priestini(struct level *lev, struct mkroom *, int, int, boolean);
-extern char *priestname(const struct monst *, char *);
+extern char *priestname(const struct monst *, char *, boolean);
 extern boolean p_coaligned(const struct monst *mon);
 extern struct monst *findpriest(char);
 extern void intemple(int);
@@ -1657,7 +1659,7 @@ extern void selftouch(const char *, const char *);
 extern void mselftouch(struct monst *, const char *, boolean);
 extern void float_up(void);
 extern void fill_pit(struct level *lev, int x, int y);
-extern int float_down(long, long);
+extern int float_down(long);
 extern int fire_damage(struct obj *, boolean, boolean, xchar, xchar);
 extern boolean water_damage(struct obj *, boolean, boolean);
 extern boolean drown(void);
@@ -1844,6 +1846,10 @@ extern boolean worm_known(const struct monst *);
 extern void setworn(struct obj *, long);
 extern void setnotworn(struct obj *);
 extern boolean obj_worn_on(struct obj *, enum objslot);
+extern long worn_extrinsic(int);
+extern boolean worn_blocked(int);
+extern int worn_warntype(void);
+
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
 extern void update_mon_intrinsics(struct monst *, struct obj *, boolean,

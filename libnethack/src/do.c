@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -698,17 +698,13 @@ dodown(void)
             /* end controlled levitation */
             if (ELevitation & W_MASK(os_invoked)) {
                 struct obj *obj;
-
+                
                 for (obj = invent; obj; obj = obj->nobj) {
-                    if (obj->oartifact && artifact_has_invprop(obj, LEVITATION)) {
-                        if (obj->age < moves)
-                            obj->age = moves + rnz(100);
-                        else
-                            obj->age += rnz(100);
-                    }
+                    if (obj->oartifact && artifact_has_invprop(obj, LEVITATION))
+                        uninvoke_artifact(obj);
                 }
             }
-            if (float_down(I_SPECIAL | TIMEOUT, W_MASK(os_invoked)))
+            if (float_down(I_SPECIAL | TIMEOUT))
                 return 1;       /* came down, so moved */
         }
         if (level->locations[u.ux][u.uy].seenv &&
@@ -1571,9 +1567,14 @@ set_wounded_legs(long side, int timex)
         iflags.botl = 1;
     }
 
-    if (!Wounded_legs || (HWounded_legs & TIMEOUT))
-        HWounded_legs = timex;
-    EWounded_legs = side;
+    if (side & LEFT_SIDE)
+        if (!LWounded_legs || (LWounded_legs & TIMEOUT))
+            LWounded_legs = timex;
+
+    if (side & RIGHT_SIDE)
+        if (!RWounded_legs || (RWounded_legs & TIMEOUT))
+            RWounded_legs = timex;
+
     encumber_msg();
 }
 
@@ -1588,16 +1589,30 @@ heal_legs(void)
 
         if (!u.usteed) {
             /* KMH, intrinsics patch */
-            if ((EWounded_legs & BOTH_SIDES) == BOTH_SIDES) {
+            if (LWounded_legs && RWounded_legs) {
                 pline("Your %s feel somewhat better.",
                       makeplural(body_part(LEG)));
             } else {
                 pline("Your %s feels somewhat better.", body_part(LEG));
             }
         }
-        HWounded_legs = EWounded_legs = 0;
+        LWounded_legs = RWounded_legs = 0;
     }
     encumber_msg();
+}
+
+void
+heal_one_leg(int side)
+{
+    if (!LWounded_legs || !RWounded_legs) {
+        heal_legs();
+        return;
+    }
+    if (side == LEFT_SIDE) LWounded_legs = 0;
+    if (side == RIGHT_SIDE) RWounded_legs = 0;
+    if (!u.usteed)
+        pline("One of your %s feels somewhat better.",
+              makeplural(body_part(LEG)));
 }
 
 /*do.c*/

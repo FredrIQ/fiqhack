@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -575,12 +575,8 @@ u_init(void)
 
     u.ubirthday = turntime;
 
-    /* 
-     *  For now, everyone starts out with a night vision range of 1 and
-     *  their xray range disabled.
-     */
+    /* For now, everyone starts out with a night vision range of 1. */
     u.nv_range = 1;
-    u.xray_range = -1;
     u.next_attr_check = 600;    /* arbitrary initial setting */
 }
 
@@ -1130,7 +1126,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->uhs = mread32(mf);
     y->umconf = mread32(mf);
     y->nv_range = mread32(mf);
-    y->xray_range = mread32(mf);
     y->bglyph = mread32(mf);
     y->cglyph = mread32(mf);
     y->bc_order = mread32(mf);
@@ -1223,9 +1218,7 @@ restore_you(struct memfile *mf, struct you *y)
     mread(mf, y->skill_record, sizeof (y->skill_record));
 
     for (i = 0; i <= LAST_PROP; i++) {
-        y->uprops[i].extrinsic = mread32(mf);
-        y->uprops[i].blocked = mread32(mf);
-        y->uprops[i].intrinsic = mread32(mf);
+        y->uintrinsic[i] = mread32(mf);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
         y->weapon_skills[i].skill = mread8(mf);
@@ -1301,7 +1294,6 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->uhs);
     mwrite32(mf, y->umconf);
     mwrite32(mf, y->nv_range);
-    mwrite32(mf, y->xray_range);
     mwrite32(mf, y->bglyph);
     mwrite32(mf, y->cglyph);
     mwrite32(mf, y->bc_order);
@@ -1393,9 +1385,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite(mf, y->skill_record, sizeof (y->skill_record));
 
     for (i = 0; i <= LAST_PROP; i++) {
-        mwrite32(mf, y->uprops[i].extrinsic);
-        mwrite32(mf, y->uprops[i].blocked);
-        mwrite32(mf, y->uprops[i].intrinsic);
+        mwrite32(mf, y->uintrinsic[i]);
     }
     for (i = 0; i < P_NUM_SKILLS; i++) {
         mwrite8(mf, y->weapon_skills[i].skill);

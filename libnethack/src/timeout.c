@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -174,7 +174,7 @@ burn_away_slime(void)
 void
 nh_timeout(void)
 {
-    struct prop *upp;
+    unsigned *upp;
     int sleeptime;
     int m_idx;
     int baseluck = (flags.moonphase == FULL_MOON) ? 1 : 0;
@@ -232,9 +232,9 @@ nh_timeout(void)
             pline("%s stops galloping.", Monnam(u.usteed));
     }
 
-    for (upp = u.uprops; upp < u.uprops + SIZE(u.uprops); upp++)
-        if ((upp->intrinsic & TIMEOUT) && !(--upp->intrinsic & TIMEOUT)) {
-            switch (upp - u.uprops) {
+    for (upp = u.uintrinsic; upp < u.uintrinsic + SIZE(u.uintrinsic); upp++)
+        if ((*upp & TIMEOUT) && !(--*upp & TIMEOUT)) {
+            switch (upp - u.uintrinsic) {
             case STONED:
                 if (delayed_killer && !killer) {
                     killer = delayed_killer;
@@ -312,13 +312,17 @@ nh_timeout(void)
                 newsym(u.ux, u.uy);     /* make self appear */
                 stop_occupation();
                 break;
-            case WOUNDED_LEGS:
-                heal_legs();
+            case LWOUNDED_LEGS:
+                heal_one_leg(LEFT_SIDE);
+                stop_occupation();
+                break;
+            case RWOUNDED_LEGS:
+                heal_one_leg(RIGHT_SIDE);
                 stop_occupation();
                 break;
             case HALLUC:
                 HHallucination = 1;
-                make_hallucinated(0L, TRUE, 0L);
+                make_hallucinated(0L, TRUE);
                 stop_occupation();
                 break;
             case SLEEPING:
@@ -332,7 +336,7 @@ nh_timeout(void)
                 }
                 break;
             case LEVITATION:
-                float_down(I_SPECIAL | TIMEOUT, 0L);
+                float_down(I_SPECIAL | TIMEOUT);
                 break;
             case STRANGLED:
                 killer_format = KILLED_BY;

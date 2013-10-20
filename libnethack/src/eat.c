@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -770,7 +770,7 @@ cpostfx(int pm)
             if (dmgtype(ptr, AD_STUN) || dmgtype(ptr, AD_HALU) ||
                 pm == PM_VIOLET_FUNGUS) {
                 pline("Oh wow!  Great stuff!");
-                make_hallucinated(HHallucination + 200, FALSE, 0L);
+                make_hallucinated(HHallucination + 200, FALSE);
             }
             if (is_giant(ptr))
                 gainstr(NULL, 0);
@@ -1326,7 +1326,7 @@ eataccessory(struct obj *otmp)
 
     /* Note: rings are not so common that this is unbalancing. */
     /* (How often do you even _find_ 3 rings of polymorph in a game?) */
-    oldprop = u.uprops[objects[typ].oc_oprop].intrinsic;
+    oldprop = u.uintrinsic[objects[typ].oc_oprop];
     if (otmp == uleft || otmp == uright) {
         Ring_gone(otmp);
         if (u.uhp <= 0)
@@ -1339,10 +1339,10 @@ eataccessory(struct obj *otmp)
             if (!objects[typ].oc_oprop)
                 break;  /* should never happen */
 
-            if (!(u.uprops[objects[typ].oc_oprop].intrinsic & FROMOUTSIDE))
+            if (!(u.uintrinsic[objects[typ].oc_oprop] & FROMOUTSIDE))
                 accessory_has_effect(otmp);
 
-            u.uprops[objects[typ].oc_oprop].intrinsic |= FROMOUTSIDE;
+            u.uintrinsic[objects[typ].oc_oprop] |= FROMOUTSIDE;
 
             switch (typ) {
             case RIN_SEE_INVISIBLE:
@@ -1368,7 +1368,7 @@ eataccessory(struct obj *otmp)
                 break;
             case RIN_LEVITATION:
                 /* undo the `.intrinsic |= FROMOUTSIDE' done above */
-                u.uprops[LEVITATION].intrinsic = oldprop;
+                u.uintrinsic[LEVITATION] = oldprop;
                 if (!Levitation) {
                     float_up();
                     incr_itimeout(&HLevitation, dice(10, 20));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1319,18 +1319,17 @@ jump(int magic  /* 0=Physical, otherwise skill level */
         pline("You lack the strength to jump!");
         return 0;
     } else if (Wounded_legs) {
-        long wl = (Wounded_legs & BOTH_SIDES);
         const char *bp = body_part(LEG);
 
-        if (wl == BOTH_SIDES)
+        if (LWounded_legs && RWounded_legs)
             bp = makeplural(bp);
         if (u.usteed)
             pline("%s is in no shape for jumping.", Monnam(u.usteed));
         else
             pline("Your %s%s %s in no shape for jumping.",
-                  (wl == LEFT_SIDE) ? "left " : (wl ==
-                                                 RIGHT_SIDE) ? "right " : "",
-                  bp, (wl == BOTH_SIDES) ? "are" : "is");
+                  (!RWounded_legs) ? "left " :
+                  (!LWounded_legs) ? "right " : "",
+                  bp, (LWounded_legs && RWounded_legs) ? "are" : "is");
         return 0;
     } else if (u.usteed && u.utrap) {
         pline("%s is stuck in a trap.", Monnam(u.usteed));
@@ -1532,7 +1531,7 @@ use_unicorn_horn(struct obj *obj)
             adjattrib(rn2(A_MAX), -1, FALSE);
             break;
         case 5:
-            make_hallucinated(HHallucination + lcount, TRUE, 0L);
+            make_hallucinated(HHallucination + lcount, TRUE);
             break;
         }
         return;
@@ -1618,7 +1617,7 @@ use_unicorn_horn(struct obj *obj)
             did_prop++;
             break;
         case prop2trbl(HALLUC):
-            make_hallucinated(0L, TRUE, 0L);
+            make_hallucinated(0L, TRUE);
             did_prop++;
             break;
         case prop2trbl(VOMITING):

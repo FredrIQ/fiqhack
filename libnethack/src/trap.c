@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2337,14 +2337,14 @@ fill_pit(struct level *lev, int x, int y)
 }
 
 int
-float_down(long hmask, long emask)
+float_down(long hmask)
 {       /* might cancel timeout */
     struct trap *trap = NULL;
     d_level current_dungeon_level;
     boolean no_msg = FALSE;
 
     HLevitation &= ~hmask;
-    ELevitation &= ~emask;
+
     if (Levitation)
         return 0;       /* maybe another ring/potion/boots */
     if (u.uswallow) {
@@ -2353,6 +2353,10 @@ float_down(long hmask, long emask)
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
         return 1;
     }
+
+    /* Don't print "you float gently..." if it's actually violent. */
+    if (IS_SINK(level->locations[u.ux][u.uy].typ))
+        no_msg = TRUE;
 
     if (Punished && !carried(uball) &&
         (is_pool(level, uball->ox, uball->oy) ||
@@ -2402,7 +2406,7 @@ float_down(long hmask, long emask)
             pline("You feel heavier.");
         /* u.uinwater msgs already in spoteffects()/drown() */
         else if (!u.uinwater && !no_msg) {
-            if (!(emask & W_MASK(os_saddle))) {
+            if (!in_steed_dismounting) {
                 boolean sokoban_trap = (In_sokoban(&u.uz) && trap);
 
                 if (Hallucination)
@@ -3858,7 +3862,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                           stagger(youmonst.data, "stagger"));
             }
             make_stunned(HStun + rn1(7, 16), FALSE);
-            make_hallucinated(HHallucination + rn1(5, 16), FALSE, 0L);
+            make_hallucinated(HHallucination + rn1(5, 16), FALSE);
             break;
         default:
             impossible("bad chest trap");
